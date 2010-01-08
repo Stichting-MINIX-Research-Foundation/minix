@@ -144,8 +144,7 @@ PUBLIC int do_fork(message *msg)
   vmc->vm_flags &= (VMF_INUSE|VMF_SEPARATE|VMF_HASPT);
 
   /* inherit the priv call bitmaps */
-  memcpy(&vmc->vm_call_priv_mask, &vmp->vm_call_priv_mask,
-	 sizeof(vmc->vm_call_priv_mask));
+  memcpy(&vmc->vm_call_mask, &vmp->vm_call_mask, sizeof(vmc->vm_call_mask));
 
   /* Tell kernel about the (now successful) FORK. */
   if((r=sys_fork(vmp->vm_endpoint, childproc,

@@ -18,6 +18,10 @@ PRIVATE char sef_debug_header_buff[SEF_DEBUG_HEADER_MAXLEN];
 FORWARD _PROTOTYPE( void sef_debug_refresh_params, (void) );
 PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
 
+/* SEF Init prototypes. */
+EXTERN _PROTOTYPE( int do_sef_rs_init, (void) );
+EXTERN _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
+
 /* SEF Live update prototypes. */
 EXTERN _PROTOTYPE( void do_sef_lu_before_receive, (void) );
 EXTERN _PROTOTYPE( int do_sef_lu_request, (message *m_ptr) );
@@ -39,6 +43,30 @@ PUBLIC void sef_startup()
       sef_self_endpoint = SELF;
       sprintf(sef_self_name, "%s", "Unknown");
   }
+
+#if INTERCEPT_SEF_INIT_REQUESTS
+  /* Intercept SEF Init requests. */
+  if(sef_self_endpoint == RS_PROC_NR) {
+      if((r = do_sef_rs_init()) != OK) {
+          panic("SEF", "unable to complete init", r);
+      }
+  }
+  else {
+      message m;
+
+      if((r = receive(RS_PROC_NR, &m)) != OK) {
+          panic("SEF", "unable to receive from RS", r);
+      }
+      if(IS_SEF_INIT_REQUEST(&m)) {
+          if((r = do_sef_init_request(&m)) != OK) {
+              panic("SEF", "unable to process init request", r);
+          }
+      }
+      else {
+          panic("SEF", "unable to receive init request", NO_NUM);
+      }
+  }
+#endif
 }
 
 /*===========================================================================*

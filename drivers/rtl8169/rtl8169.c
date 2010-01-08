@@ -286,46 +286,21 @@ u32_t system_hz;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
 int main(int argc, char *argv[])
 {
-	u32_t inet_proc_nr;
 	int r;
-	re_t *rep;
-	long v;
 
 	/* SEF local startup. */
+	env_setargs(argc, argv);
 	sef_local_startup();
 
-	system_hz = sys_hz();
-
-	(progname = strrchr(argv[0], '/')) ? progname++ : (progname = argv[0]);
-
-	env_setargs(argc, argv);
-
-	v = 0;
-	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-	eth_ign_proto = htons((u16_t) v);
-
-	/* Claim buffer memory now under Minix, before MM takes it all. */
-	for (rep = &re_table[0]; rep < re_table + RE_PORT_NR; rep++)
-		rl_init_buf(rep);
-
-	/*
-	 * Try to notify INET that we are present (again). If INET cannot
-	 * be found, assume this is the first time we started and INET is
-	 * not yet alive.
-	 */
-#if 0
-	r = ds_retrieve_u32("inet", &inet_proc_nr);
-	if (r == OK)
-		notify(inet_proc_nr);
-	else if (r != ESRCH)
-		printf("rtl8169: ds_retrieve_u32 failed for 'inet': %d\n", r);
-#endif
 	while (TRUE) {
 		if ((r = sef_receive(ANY, &m)) != OK)
 			panic("rtl8169", "sef_receive failed", r);
@@ -391,10 +366,54 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the rtl8169 driver. */
+	u32_t inet_proc_nr;
+	int r;
+	re_t *rep;
+	long v;
+
+	system_hz = sys_hz();
+
+	(progname = strrchr(env_argv[0], '/')) ? progname++
+		: (progname = env_argv[0]);
+
+	v = 0;
+	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
+	eth_ign_proto = htons((u16_t) v);
+
+	/* Claim buffer memory now under Minix, before MM takes it all. */
+	for (rep = &re_table[0]; rep < re_table + RE_PORT_NR; rep++)
+		rl_init_buf(rep);
+
+	/*
+	 * Try to notify INET that we are present (again). If INET cannot
+	 * be found, assume this is the first time we started and INET is
+	 * not yet alive.
+	 */
+#if 0
+	r = ds_retrieve_u32("inet", &inet_proc_nr);
+	if (r == OK)
+		notify(inet_proc_nr);
+	else if (r != ESRCH)
+		printf("rtl8169: ds_retrieve_u32 failed for 'inet': %d\n", r);
+#endif
+
+	return(OK);
 }
 
 static void mdio_write(U16_t port, int regaddr, int value)

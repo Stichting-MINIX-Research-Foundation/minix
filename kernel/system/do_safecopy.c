@@ -113,7 +113,8 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 
 			/* Verify actual grantee. */
 			if(g.cp_u.cp_indirect.cp_who_to != grantee &&
-				grantee != ANY) {
+				grantee != ANY &&
+				g.cp_u.cp_indirect.cp_who_to != ANY) {
 				kprintf(
 					"verify_grant: indirect grant verify "
 					"failed: bad grantee\n");
@@ -147,7 +148,8 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		}
 
 		/* Verify actual grantee. */
-		if(g.cp_u.cp_direct.cp_who_to != grantee && grantee != ANY) {
+		if(g.cp_u.cp_direct.cp_who_to != grantee && grantee != ANY
+			&& g.cp_u.cp_direct.cp_who_to != ANY) {
 			kprintf(
 		"verify_grant: direct grant verify failed: bad grantee\n");
 			return EPERM;
@@ -180,7 +182,8 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		}
 
 		/* Verify actual grantee. */
-		if(g.cp_u.cp_magic.cp_who_to != grantee && grantee != ANY) {
+		if(g.cp_u.cp_magic.cp_who_to != grantee && grantee != ANY
+			&& g.cp_u.cp_direct.cp_who_to != ANY) {
 			kprintf(
 		"verify_grant: magic grant verify failed: bad grantee\n");
 			return EPERM;

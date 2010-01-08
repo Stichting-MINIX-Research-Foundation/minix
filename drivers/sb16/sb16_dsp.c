@@ -37,7 +37,6 @@ FORWARD _PROTOTYPE( void dsp_hardware_msg, (void) );
 FORWARD _PROTOTYPE( void dsp_status, (message *m_ptr) );
 
 FORWARD _PROTOTYPE( void reply, (int code, int replyee, int process, int status) );
-FORWARD _PROTOTYPE( void init_buffer, (void) );
 FORWARD _PROTOTYPE( int dsp_init, (void) );
 FORWARD _PROTOTYPE( int dsp_reset, (void) );
 FORWARD _PROTOTYPE( int dsp_command, (int value) );
@@ -79,6 +78,7 @@ PRIVATE int reviveProcNr;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
@@ -90,16 +90,11 @@ PUBLIC int is_status_msg_expected = FALSE;
  *===========================================================================*/
 PUBLIC void main() 
 {	
-	int r, caller, proc_nr, s;
+	int r, caller, proc_nr;
 	message mess;
 
 	/* SEF local startup. */
 	sef_local_startup();
-
-	dprint("sb16_dsp.c: main()\n");
-
-	/* Get a DMA buffer. */
-	init_buffer();
 
 	while(TRUE) {
 		/* Wait for an incoming message */
@@ -152,6 +147,11 @@ send_reply:
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
@@ -159,6 +159,33 @@ PRIVATE void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the rtl8169 driver. */
+	unsigned left;
+
+	/* Select a buffer that can safely be used for dma transfers.  
+	 * Its absolute address is 'DmaPhys', the normal address is 'DmaPtr'.
+	 */
+#if (CHIP == INTEL)
+	DmaPtr = DmaBuffer;
+	sys_umap(SELF, D, (vir_bytes)DmaBuffer, (phys_bytes)sizeof(DmaBuffer), &DmaPhys);
+
+	if((left = dma_bytes_left(DmaPhys)) < DMA_SIZE) {
+		/* First half of buffer crosses a 64K boundary, can't DMA into that */
+		DmaPtr += left;
+		DmaPhys += left;
+	}
+#else /* CHIP != INTEL */
+	panic("SB16DSP","initialization failed, CHIP != INTEL", 0);
+#endif /* CHIP == INTEL */
+
+	return(OK);
 }
 
 /*===========================================================================*
@@ -391,33 +418,6 @@ int status;
 
 	send(replyee, &m);
 }
-
-
-/*===========================================================================*
- *				init_buffer
- *===========================================================================*/
-PRIVATE void init_buffer()
-{
-/* Select a buffer that can safely be used for dma transfers.  
- * Its absolute address is 'DmaPhys', the normal address is 'DmaPtr'.
- */
-
-#if (CHIP == INTEL)
-	unsigned left;
-
-	DmaPtr = DmaBuffer;
-	sys_umap(SELF, D, (vir_bytes)DmaBuffer, (phys_bytes)sizeof(DmaBuffer), &DmaPhys);
-
-	if((left = dma_bytes_left(DmaPhys)) < DMA_SIZE) {
-		/* First half of buffer crosses a 64K boundary, can't DMA into that */
-		DmaPtr += left;
-		DmaPhys += left;
-	}
-#else /* CHIP != INTEL */
-	panic("SB16DSP","init_buffer() failed, CHIP != INTEL", 0);
-#endif /* CHIP == INTEL */
-}
-
 
 /*===========================================================================*
  *				dsp_init

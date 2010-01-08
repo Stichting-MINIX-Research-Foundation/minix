@@ -352,6 +352,7 @@
 #  define SYS_RUNCTL     (KERNEL_CALL + 46)	/* sys_runctl() */
 
 #define NR_SYS_CALLS	47	/* number of system calls */ 
+#define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -626,6 +627,7 @@
 
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 
+#define RS_INIT 	(RS_RQ_BASE + 20)	/* service init message */
 #define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
@@ -637,6 +639,10 @@
 
 #  define RS_NAME		m1_p1		/* name */
 #  define RS_NAME_LEN		m1_i1		/* namelen */
+
+#  define RS_INIT_RESULT        m1_i1           /* init result */
+#  define RS_INIT_TYPE          m1_i2           /* init type */
+#  define RS_INIT_RPROCTAB_GID  m1_i3           /* init rproc table gid */
 
 #  define RS_LU_RESULT          m1_i1           /* live update result */
 #  define RS_LU_STATE           m1_i2           /* state required to update */
@@ -959,7 +965,12 @@
 #define VCTLP_STATS_EP			2
 
 /* Total. */
-#define VM_NCALLS				41
+#define NR_VM_CALLS				41
+#define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
+
+/* Basic vm calls allowed to every process. */
+#define VM_BASIC_CALLS \
+    VM_MMAP, VM_MUNMAP, VM_MUNMAP_TEXT, VM_MAP_PHYS, VM_UNMAP_PHYS
 
 /*===========================================================================*
  *                Messages for IPC server				     *

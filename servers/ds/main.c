@@ -19,7 +19,6 @@ int sys_panic;		/* flag to indicate system-wide panic */
 extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
 FORWARD _PROTOTYPE(void exit_server, (void)				);
 FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr)			);
@@ -42,10 +41,8 @@ PUBLIC int main(int argc, char **argv)
   sigset_t sigset;
 
   /* SEF local startup. */
+  env_setargs(argc, argv);
   sef_local_startup();
-
-  /* Initialize the server, then go to work. */
-  init_server(argc, argv);
 
   /* Main loop - get work and do it, forever. */         
   while (TRUE) {              
@@ -104,23 +101,14 @@ send_reply:
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
-}
-
-/*===========================================================================*
- *				 init_server                                 *
- *===========================================================================*/
-PRIVATE void init_server(int argc, char **argv)
-{
-/* Initialize the data store server. */
-  int i, s;
-  struct sigaction sigact;
-
-  /* Initialize DS. */
-  ds_init();
 }
 
 /*===========================================================================*

@@ -30,6 +30,7 @@ libsys_FILES=" \
 	sef.c \
 	sef_liveupdate.c \
 	sef_ping.c \
+	sef_init.c \
 	sys_abort.c \
 	sys_cprof.c \
 	sys_endsig.c \

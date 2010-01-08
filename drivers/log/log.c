@@ -56,6 +56,7 @@ extern int device_caller;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
@@ -65,10 +66,41 @@ EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
  *===========================================================================*/
 PUBLIC int main(void)
 {
-  int i;
-
   /* SEF local startup. */
   sef_local_startup();
+
+  /* Call the generic receive loop. */
+  driver_task(&log_dtab, DRIVER_ASYN);
+
+  return(OK);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
+  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the log driver. */
+  int i;
 
   /* Initialize log devices. */
   for(i = 0; i < NR_DEVS; i++) {
@@ -82,22 +114,8 @@ PUBLIC int main(void)
  	logdevices[i].log_proc_nr = 0;
  	logdevices[i].log_revive_alerted = 0;
   }
-  driver_task(&log_dtab, DRIVER_ASYN);
+
   return(OK);
-}
-
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-PRIVATE void sef_local_startup()
-{
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
-  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
-
-  /* Let SEF perform startup. */
-  sef_startup();
 }
 
 /*===========================================================================*

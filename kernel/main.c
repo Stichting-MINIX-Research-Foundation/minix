@@ -126,7 +126,7 @@ PUBLIC void main()
 	    }
 
             /* Fill in kernel call mask. */
-            for(j = 0; j < CALL_MASK_SIZE; j++) {
+            for(j = 0; j < SYS_CALL_MASK_SIZE; j++) {
                 priv(rp)->s_k_call_mask[j] = (kcalls == NO_C ? 0 : (~0));
             }
 	}

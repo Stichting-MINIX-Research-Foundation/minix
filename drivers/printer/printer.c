@@ -117,6 +117,7 @@ FORWARD _PROTOTYPE( void do_signal, (void) );
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
@@ -129,18 +130,10 @@ PUBLIC void main(void)
 {
 /* Main routine of the printer task. */
   message pr_mess;		/* buffer for all incoming messages */
-  struct sigaction sa;
-  int s;
 
   /* SEF local startup. */
   sef_local_startup();
 
-  /* Install signal handlers. Ask PM to transform signal into message. */
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("PRN","sigaction failed", errno);
-  
   while (TRUE) {
 	sef_receive(ANY, &pr_mess);
 
@@ -180,6 +173,11 @@ PUBLIC void main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
@@ -187,6 +185,23 @@ PRIVATE void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the printer driver. */
+  struct sigaction sa;
+
+  /* Install signal handlers. Ask PM to transform signal into message. */
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("PRN","sigaction failed", errno);
+
+  return(OK);
 }
 
 /*===========================================================================*

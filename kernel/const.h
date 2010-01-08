@@ -30,7 +30,6 @@
 	( MAP_CHUNK(map.chunk,bit) |= (1 << CHUNK_OFFSET(bit) )
 #define unset_sys_bit(map,bit) \
 	( MAP_CHUNK(map.chunk,bit) &= ~(1 << CHUNK_OFFSET(bit) )
-#define NR_SYS_CHUNKS	BITMAP_CHUNKS(NR_SYS_PROCS)
 
 #define reallock  do { int d; d = intr_disabled(); intr_disable(); locklevel++; if(d && locklevel == 1) { minix_panic("reallock while interrupts disabled first time", __LINE__); } } while(0)
 

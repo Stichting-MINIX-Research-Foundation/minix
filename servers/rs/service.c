@@ -196,12 +196,12 @@ PRIVATE int parse_arguments(int argc, char **argv)
   }
 
   if (req_nr == RS_UP) {
-      rs_start.rss_flags= RF_IPC_VALID;
+      rs_start.rss_flags= RSS_IPC_VALID;
       if (c_flag)
-	rs_start.rss_flags |= RF_COPY;
+	rs_start.rss_flags |= RSS_COPY;
 
       if(r_flag)
-        rs_start.rss_flags |= RF_REUSE;
+        rs_start.rss_flags |= RSS_REUSE;
         
       if (do_run)
       {
@@ -610,10 +610,10 @@ PRIVATE void do_pci_device(config_t *cpe)
 			fatal("do_pci_device: bad ID '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
 		}
-		if (rs_start.rss_nr_pci_id >= RSS_NR_PCI_ID)
+		if (rs_start.rss_nr_pci_id >= RS_NR_PCI_DEVICE)
 		{
 			fatal("do_pci_device: too many device IDs (max %d)",
-				RSS_NR_PCI_ID);
+				RS_NR_PCI_DEVICE);
 		}
 		rs_start.rss_pci_id[rs_start.rss_nr_pci_id].vid= vid;
 		rs_start.rss_pci_id[rs_start.rss_nr_pci_id].did= did;
@@ -662,10 +662,10 @@ PRIVATE void do_pci_class(config_t *cpe)
 				cpe->word, cpe->file, cpe->line);
 		}
 		class_id= (baseclass << 16) | (subclass << 8) | interface;
-		if (rs_start.rss_nr_pci_class >= RSS_NR_PCI_CLASS)
+		if (rs_start.rss_nr_pci_class >= RS_NR_PCI_CLASS)
 		{
 			fatal("do_pci_class: too many class IDs (max %d)",
-				RSS_NR_PCI_CLASS);
+				RS_NR_PCI_CLASS);
 		}
 		rs_start.rss_pci_class[rs_start.rss_nr_pci_class].class=
 			class_id;
@@ -877,10 +877,10 @@ PRIVATE void do_system(config_t *cpe)
 		word= call_nr / bits_per_word;
 		mask= (1UL << (call_nr % bits_per_word));
 
-		if (word >= RSS_NR_SYSTEM)
+		if (word >= RS_SYS_CALL_MASK_SIZE)
 		{
 			fatal(
-			"do_system: RSS_NR_SYSTEM is too small (%d needed)",
+			"RS_SYS_CALL_MASK_SIZE is too small (%d needed)",
 				word+1);
 		}
 		rs_start.rss_system[word] |= mask;
@@ -904,10 +904,10 @@ PRIVATE void do_control(config_t *cpe)
 			fatal("do_control: unexpected string at %s:%d",
 				cpe->file, cpe->line);
 		}
-		if (nr_control >= RSS_NR_CONTROL)
+		if (nr_control >= RS_NR_CONTROL)
 		{
 			fatal(
-			"do_control: RSS_NR_CONTROL is too small (%d needed)",
+			"do_control: RS_NR_CONTROL is too small (%d needed)",
 				nr_control+1);
 		}
 

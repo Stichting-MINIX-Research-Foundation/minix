@@ -41,15 +41,17 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 FORWARD _PROTOTYPE( void get_work, (void)				);
-FORWARD _PROTOTYPE( void pm_init, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
 FORWARD _PROTOTYPE( void handle_fs_reply, (void)			);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
+extern int unmap_ok;
+
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main					     *
@@ -63,8 +65,6 @@ PUBLIC int main()
 
   /* SEF local startup. */
   sef_local_startup();
-
-  pm_init();			/* initialize process manager tables */
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
@@ -166,6 +166,10 @@ send_reply:
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
@@ -173,55 +177,9 @@ PRIVATE void sef_local_startup()
 }
 
 /*===========================================================================*
- *				get_work				     *
+ *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE void get_work()
-{
-/* Wait for the next message and extract useful information from it. */
-  if (sef_receive(ANY, &m_in) != OK)
-	panic(__FILE__,"PM sef_receive error", NO_NUM);
-  who_e = m_in.m_source;	/* who sent the message */
-  if(pm_isokendpt(who_e, &who_p) != OK)
-	panic(__FILE__, "PM got message from invalid endpoint", who_e);
-  call_nr = m_in.m_type;	/* system call number */
-
-  /* Process slot of caller. Misuse PM's own process slot if the kernel is
-   * calling. This can happen in case of synchronous alarms (CLOCK) or or 
-   * event like pending kernel signals (SYSTEM).
-   */
-  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
-  if(who_p >= 0 && mp->mp_endpoint != who_e) {
-	panic(__FILE__, "PM endpoint number out of sync with source",
-		mp->mp_endpoint);
-  }
-}
-
-/*===========================================================================*
- *				setreply				     *
- *===========================================================================*/
-PUBLIC void setreply(proc_nr, result)
-int proc_nr;			/* process to reply to */
-int result;			/* result of call (usually OK or error #) */
-{
-/* Fill in a reply message to be sent later to a user process.  System calls
- * may occasionally fill in other fields, this is only for the main return
- * value, and for setting the "must send reply" flag.
- */
-  register struct mproc *rmp = &mproc[proc_nr];
-
-  if(proc_nr < 0 || proc_nr >= NR_PROCS)
-      panic(__FILE__,"setreply arg out of range", proc_nr);
-
-  rmp->mp_reply.reply_res = result;
-  rmp->mp_flags |= REPLY;	/* reply pending */
-}
-
-extern int unmap_ok;
-
-/*===========================================================================*
- *				pm_init					     *
- *===========================================================================*/
-PRIVATE void pm_init()
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the process manager. 
  * Memory use info is collected from the boot monitor, the kernel, and
@@ -351,6 +309,52 @@ PRIVATE void pm_init()
   */
   unmap_ok = 1;
   _minix_unmapzero();
+
+  return(OK);
+}
+
+/*===========================================================================*
+ *				get_work				     *
+ *===========================================================================*/
+PRIVATE void get_work()
+{
+/* Wait for the next message and extract useful information from it. */
+  if (sef_receive(ANY, &m_in) != OK)
+	panic(__FILE__,"PM sef_receive error", NO_NUM);
+  who_e = m_in.m_source;	/* who sent the message */
+  if(pm_isokendpt(who_e, &who_p) != OK)
+	panic(__FILE__, "PM got message from invalid endpoint", who_e);
+  call_nr = m_in.m_type;	/* system call number */
+
+  /* Process slot of caller. Misuse PM's own process slot if the kernel is
+   * calling. This can happen in case of synchronous alarms (CLOCK) or or 
+   * event like pending kernel signals (SYSTEM).
+   */
+  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
+  if(who_p >= 0 && mp->mp_endpoint != who_e) {
+	panic(__FILE__, "PM endpoint number out of sync with source",
+		mp->mp_endpoint);
+  }
+}
+
+/*===========================================================================*
+ *				setreply				     *
+ *===========================================================================*/
+PUBLIC void setreply(proc_nr, result)
+int proc_nr;			/* process to reply to */
+int result;			/* result of call (usually OK or error #) */
+{
+/* Fill in a reply message to be sent later to a user process.  System calls
+ * may occasionally fill in other fields, this is only for the main return
+ * value, and for setting the "must send reply" flag.
+ */
+  register struct mproc *rmp = &mproc[proc_nr];
+
+  if(proc_nr < 0 || proc_nr >= NR_PROCS)
+      panic(__FILE__,"setreply arg out of range", proc_nr);
+
+  rmp->mp_reply.reply_res = result;
+  rmp->mp_flags |= REPLY;	/* reply pending */
 }
 
 /*===========================================================================*

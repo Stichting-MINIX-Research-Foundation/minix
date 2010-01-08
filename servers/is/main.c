@@ -19,13 +19,13 @@ int callnr;		/* system call number */
 extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
 FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main                                         *
@@ -40,10 +40,8 @@ PUBLIC int main(int argc, char **argv)
   sigset_t sigset;
 
   /* SEF local startup. */
+  env_setargs(argc, argv);
   sef_local_startup();
-
-  /* Initialize the server, then go to work. */
-  init_server(argc, argv);
 
   /* Main loop - get work and do it, forever. */         
   while (TRUE) {              
@@ -87,6 +85,11 @@ PUBLIC int main(int argc, char **argv)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
@@ -96,11 +99,11 @@ PRIVATE void sef_local_startup()
 }
 
 /*===========================================================================*
- *				 init_server                                 *
+ *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE void init_server(int argc, char **argv)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-/* Initialize the information service. */
+/* Initialize the information server. */
   struct sigaction sigact;
 
   /* Install signal handler. Ask PM to transform signal into message. */
@@ -112,6 +115,8 @@ PRIVATE void init_server(int argc, char **argv)
 
   /* Set key mappings. */
   map_unmap_fkeys(TRUE /*map*/);
+
+  return(OK);
 }
 
 /*===========================================================================*

@@ -49,6 +49,7 @@
 #define SI_KPROC_TAB	   7	/* copy of kernel process table */
 #define SI_CALL_STATS	   8	/* system call statistics */
 #define SI_PCI_INFO	   9	/* get kernel info via PM */
+#define SI_PROCPUB_TAB	  10	/* copy of public entries of process table */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)

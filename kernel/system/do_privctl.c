@@ -97,7 +97,7 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_id = priv_id;		/* restore privilege id */
 	priv(rp)->s_proc_nr = proc_nr;		/* reassociate process nr */
 
-	for (i=0; i< BITMAP_CHUNKS(NR_SYS_PROCS); i++)	/* remove pending: */
+	for (i=0; i< NR_SYS_CHUNKS; i++)		/* remove pending: */
 	      priv(rp)->s_notify_pending.chunk[i] = 0;	/* - notifications */
 	priv(rp)->s_int_pending = 0;			/* - interrupts */
 	sigemptyset(&priv(rp)->s_sig_pending);		/* - signals */
@@ -107,7 +107,7 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_trap_mask= DEF_SYS_T;       /* allowed traps */
 	ipc_to_m = DEF_SYS_M;                   /* allowed targets */
 	kcalls = DEF_SYS_KC;                    /* allowed kernel calls */
-	for(i = 0; i < CALL_MASK_SIZE; i++) {
+	for(i = 0; i < SYS_CALL_MASK_SIZE; i++) {
 		priv(rp)->s_k_call_mask[i] = (kcalls == NO_C ? 0 : (~0));
 	}
 

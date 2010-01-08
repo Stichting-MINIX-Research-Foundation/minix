@@ -10,13 +10,7 @@ main.c
 
 #include "pci.h"
 
-#define NR_DRIVERS	NR_SYS_PROCS
-
-PRIVATE struct acl
-{
-	int inuse;
-	struct rs_pci acl;
-} acl[NR_DRIVERS];
+PUBLIC struct pci_acl pci_acl[NR_DRIVERS];
 
 FORWARD _PROTOTYPE( void do_init, (message *mp)				);
 FORWARD _PROTOTYPE( void do_first_dev, (message *mp)			);
@@ -51,8 +45,6 @@ int main(void)
 
 	/* SEF local startup. */
 	sef_local_startup();
-
-	pci_init();
 
 	for(;;)
 	{
@@ -112,6 +104,11 @@ int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
@@ -126,7 +123,7 @@ message *mp;
 	int r;
 
 #if DEBUG
-	printf("PCI: pci_init: called by '%d'\n", mp->m_source);
+	printf("PCI: do_init: called by '%d'\n", mp->m_source);
 #endif
 
 	mp->m_type= 0;
@@ -363,7 +360,7 @@ message *mp;
 
 	for (i= 0; i<NR_DRIVERS; i++)
 	{
-		if (!acl[i].inuse)
+		if (!pci_acl[i].inuse)
 			break;
 	}
 	if (i >= NR_DRIVERS)
@@ -375,18 +372,18 @@ message *mp;
 
 	gid= mp->m1_i1;
 
-	r= sys_safecopyfrom(mp->m_source, gid, 0, (vir_bytes)&acl[i].acl,
-		sizeof(acl[i].acl), D);
+	r= sys_safecopyfrom(mp->m_source, gid, 0, (vir_bytes)&pci_acl[i].acl,
+		sizeof(pci_acl[i].acl), D);
 	if (r != OK)
 	{
 		printf("PCI: do_set_acl: safecopyfrom failed\n");
 		reply(mp, r);
 		return;
 	}
-	acl[i].inuse= 1;
+	pci_acl[i].inuse= 1;
 	if(debug)
 	  printf("PCI: do_acl: setting ACL for %d ('%s') at entry %d\n",
-		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label,
+		pci_acl[i].acl.rsp_endpoint, pci_acl[i].acl.rsp_label,
 		i);
 
 	reply(mp, OK);
@@ -408,9 +405,9 @@ message *mp;
 
 	for (i= 0; i<NR_DRIVERS; i++)
 	{
-		if (!acl[i].inuse)
+		if (!pci_acl[i].inuse)
 			continue;
-		if (acl[i].acl.rsp_endpoint == proc_nr)
+		if (pci_acl[i].acl.rsp_endpoint == proc_nr)
 			break;
 	}
 
@@ -421,10 +418,10 @@ message *mp;
 		return;
 	}
 
-	acl[i].inuse= 0;
+	pci_acl[i].inuse= 0;
 #if 0
 	printf("do_acl: deleting ACL for %d ('%s') at entry %d\n",
-		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label, i);
+		pci_acl[i].acl.rsp_endpoint, pci_acl[i].acl.rsp_label, i);
 #endif
 
 	/* Also release all devices held by this process */
@@ -621,10 +618,10 @@ int endpoint;
 	/* Find ACL entry for caller */
 	for (i= 0; i<NR_DRIVERS; i++)
 	{
-		if (!acl[i].inuse)
+		if (!pci_acl[i].inuse)
 			continue;
-		if (acl[i].acl.rsp_endpoint == endpoint)
-			return &acl[i].acl;
+		if (pci_acl[i].acl.rsp_endpoint == endpoint)
+			return &pci_acl[i].acl;
 	}
 	return NULL;
 }

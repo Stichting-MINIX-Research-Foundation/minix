@@ -25,18 +25,15 @@ int verbose = 0;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 PUBLIC int main(int argc, char *argv[])
 {
 	message m;
 
 	/* SEF local startup. */
+	env_setargs(argc, argv);
 	sef_local_startup();
-
-	SELF_E = getprocnr();
-
-	if(verbose)
-		printf("IPC: self: %d\n", SELF_E);
 
 	while (TRUE) {
 		int r;
@@ -111,9 +108,28 @@ PUBLIC int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the ipc server. */
+
+  SELF_E = getprocnr();
+
+  if(verbose)
+      printf("IPC: self: %d\n", SELF_E);
+
+  return(OK);
 }
 

@@ -37,6 +37,8 @@
 	}							\
    }
 
+#define NR_STATIC_GRANTS 2
+PRIVATE cp_grant_t static_grants[NR_STATIC_GRANTS];
 PRIVATE cp_grant_t *grants = NULL;
 PRIVATE int ngrants = 0;
 
@@ -48,12 +50,19 @@ cpf_grow(void)
 	cp_grant_id_t g;
 	int new_size;
 
-	new_size = (1+ngrants)*2;
-	assert(new_size > ngrants);
+	if(!ngrants) {
+		/* Use statically allocated grants the first time. */
+		new_size = NR_STATIC_GRANTS;
+		new_grants = static_grants;
+	}
+	else {
+		new_size = (1+ngrants)*2;
+		assert(new_size > ngrants);
 
-	/* Allocate a block of new size. */
-	if(!(new_grants=malloc(new_size * sizeof(grants[0])))) {
-		return;
+		/* Allocate a block of new size. */
+		if(!(new_grants=malloc(new_size * sizeof(grants[0])))) {
+			return;
+		}
 	}
 
 	/* Copy old block to new block. */
@@ -66,12 +75,12 @@ cpf_grow(void)
 
 	/* Inform kernel about new size (and possibly new location). */
 	if((sys_setgrant(new_grants, new_size))) {
-		free(new_grants);
+                if(new_grants != static_grants) free(new_grants);
 		return;	/* Failed - don't grow then. */
 	}
 
 	/* Update internal data. */
-	if(grants && ngrants > 0) free(grants);
+	if(grants && ngrants > 0 && grants != static_grants) free(grants);
 	grants = new_grants;
 	ngrants = new_size;
 }

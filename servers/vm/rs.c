@@ -46,8 +46,8 @@ PUBLIC int do_rs_set_priv(message *m)
 
 	if (m->VM_RS_BUF) {
 		r = sys_datacopy(m->m_source, (vir_bytes) m->VM_RS_BUF,
-				 SELF, (vir_bytes) vmp->vm_call_priv_mask,
-				 sizeof(vmp->vm_call_priv_mask));
+				 SELF, (vir_bytes) vmp->vm_call_mask,
+				 sizeof(vmp->vm_call_mask));
 		if (r != OK)
 			return r;
 	}

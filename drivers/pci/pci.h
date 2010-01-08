@@ -4,6 +4,8 @@ pci.h
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
+#include <minix/rs.h>
+
 /* tempory functions: to be replaced later (see pci_intel.h) */
 _PROTOTYPE( unsigned pci_inb, (U16_t port) );
 _PROTOTYPE( unsigned pci_inw, (U16_t port) );
@@ -61,6 +63,14 @@ struct pci_pcibridge
 	int type;
 };
 
+struct pci_acl
+{
+	int inuse;
+	struct rs_pci acl;
+};
+
+#define NR_DRIVERS	NR_SYS_PROCS
+
 #define PCI_IB_PIIX	1	/* Intel PIIX compatible ISA bridge */
 #define PCI_IB_VIA	2	/* VIA compatible ISA bridge */
 #define PCI_IB_AMD	3	/* AMD compatible ISA bridge */
@@ -81,7 +91,9 @@ extern struct pci_intel_ctrl pci_intel_ctrl[];
 extern struct pci_isabridge pci_isabridge[];
 extern struct pci_pcibridge pci_pcibridge[];
 
-/* Utility functions */
+/* Function prototypes. */
+_PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) 	);
+_PROTOTYPE( int map_service, (struct rprocpub *rpub)			);
 _PROTOTYPE( int pci_reserve2, (int devind, endpoint_t proc)		);
 _PROTOTYPE( void pci_release, (endpoint_t proc)				);
 _PROTOTYPE( int pci_first_dev_a, (struct rs_pci *aclp, int *devindp,

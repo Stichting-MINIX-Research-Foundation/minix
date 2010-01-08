@@ -12,7 +12,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <ibm/pci.h>
 #include <sys/vm_i386.h>
 #include <minix/com.h>
-#include <minix/rs.h>
 #include <minix/syslib.h>
 
 #include "pci.h"
@@ -86,6 +85,8 @@ PRIVATE struct pcidev
 	int pd_bar_nr;
 } pcidev[NR_PCIDEV];
 
+EXTERN struct pci_acl *pci_acl;
+
 /* pb_flags */
 #define PBF_IO		1	/* I/O else memory */
 #define PBF_INCOMPLETE	2	/* not allocated */
@@ -150,6 +151,75 @@ FORWARD _PROTOTYPE( int visible, (struct rs_pci *aclp, int devind)	);
 FORWARD _PROTOTYPE( void print_hyper_cap, (int devind, U8_t capptr)	);
 
 /*===========================================================================*
+ *				sef_cb_init_fresh			     *
+ *===========================================================================*/
+PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the pci driver. */
+	long v;
+	int i, r;
+	struct rprocpub rprocpub[NR_BOOT_PROCS];
+
+	v= 0;
+	env_parse("pci_debug", "d", 0, &v, 0, 1);
+	debug= v;
+
+	/* Only Intel (compatible) PCI controllers are supported at the
+	 * moment.
+	 */
+	pci_intel_init();
+
+	/* Map all the services in the boot image. */
+	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
+		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
+		panic("pci", "sys_safecopyfrom failed", r);
+	}
+	for(i=0;i < NR_BOOT_PROCS;i++) {
+		if(rprocpub[i].in_use) {
+			if((r = map_service(&rprocpub[i])) != OK) {
+				panic("pci", "unable to map service", r);
+			}
+		}
+	}
+
+	return(OK);
+}
+
+/*===========================================================================*
+ *		               map_service                                   *
+ *===========================================================================*/
+PUBLIC int map_service(rpub)
+struct rprocpub *rpub;
+{
+/* Map a new service by registering a new acl entry if required. */
+	int i;
+
+	/* Stop right now if no pci device or class is found. */
+	if(rpub->pci_acl.rsp_nr_device == 0
+		&& rpub->pci_acl.rsp_nr_class == 0) {
+		return(OK);
+	}
+
+	/* Find a free acl slot. */
+	for (i= 0; i<NR_DRIVERS; i++)
+	{
+		if (!pci_acl[i].inuse)
+			break;
+	}
+	if (i >= NR_DRIVERS)
+	{
+		printf("PCI: map_service: table is full\n");
+		return ENOMEM;
+	}
+
+	/* Initialize acl slot. */
+	pci_acl[i].inuse = 1;
+	pci_acl[i].acl = rpub->pci_acl;
+
+	return(OK);
+}
+
+/*===========================================================================*
  *			helper functions for I/O			     *
  *===========================================================================*/
 PUBLIC unsigned pci_inb(U16_t port) {
@@ -187,34 +257,6 @@ PUBLIC void pci_outl(U16_t port, U32_t value) {
 	int s;
 	if ((s=sys_outl(port, value)) !=OK)
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-}
-
-/*===========================================================================*
- *				pci_init				     *
- *===========================================================================*/
-PUBLIC void pci_init()
-{
-	static int first_time= 1;
-
-	long v;
-
-	if (!first_time)
-		return;
-
-	v= 0;
-	env_parse("pci_debug", "d", 0, &v, 0, 1);
-	debug= v;
-
-	/* We don't expect to interrupted */
-	assert(first_time == 1);
-	first_time= -1;
-
-	/* Only Intel (compatible) PCI controllers are supported at the
-	 * moment.
-	 */
-	pci_intel_init();
-
-	first_time= 0;
 }
 
 /*===========================================================================*

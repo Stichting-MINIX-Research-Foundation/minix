@@ -79,6 +79,7 @@ PRIVATE device_available = 0;/*todo*/
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
@@ -91,8 +92,6 @@ PUBLIC void main(void)
 
 	/* SEF local startup. */
 	sef_local_startup();
-
-	drv_init();
 
 	/* Here is the main loop of the dma driver.  It waits for a message, 
 	   carries it out, and sends a reply. */
@@ -185,6 +184,11 @@ PUBLIC void main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
@@ -192,6 +196,15 @@ PRIVATE void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the audio driver framework. */
+  return init_driver();
 }
 
 PRIVATE int init_driver(void) {

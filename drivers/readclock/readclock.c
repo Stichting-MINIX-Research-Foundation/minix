@@ -52,6 +52,7 @@
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/syslib.h>
+#include <minix/sysutil.h>
 #include <minix/com.h>
 #include <minix/portio.h>
 #include <ibm/cmos.h>
@@ -103,6 +104,7 @@ int main(int argc, char **argv)
   struct sysgetenv sysgetenv;
 
   /* SEF local startup. */
+  env_setargs(argc, argv);
   sef_local_startup();
 
   if((s=sys_readbios(MACH_ID_ADDR, &mach_id, sizeof(mach_id))) != OK) {

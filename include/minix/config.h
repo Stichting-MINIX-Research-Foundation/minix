@@ -38,6 +38,7 @@
  */
 #define NR_PROCS 	  _NR_PROCS 
 #define NR_SYS_PROCS      _NR_SYS_PROCS
+#define NR_SYS_CHUNKS	  BITMAP_CHUNKS(NR_SYS_PROCS)
 
 /* Number of controller tasks (/dev/cN device classes). */
 #define NR_CTRLRS          2

@@ -91,6 +91,8 @@ PRIVATE struct {
 	{ 0x0000, 0x0000 }
 };
 
+long instance;
+
 /*===========================================================================*
  *				atl2_read_vpd				     *
  *===========================================================================*/
@@ -1237,39 +1239,19 @@ PRIVATE void atl2_dump(void)
 }
 
 /*===========================================================================*
- *				sef_local_startup			     *
+ *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE void sef_local_startup(void)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-	/* Initialize the System Event Framework.
-	 */
-
-	/* No support for live update yet. */
-	sef_startup();
-}
-
-/*===========================================================================*
- *				main					     *
- *===========================================================================*/
-int main(int argc, char **argv)
-{
-	/* Driver task.
-	 */
+/* Initialize the atl2 driver. */
 	u32_t inet_endpt;
-	message m;
-	sigset_t set;
 	int r, devind;
-	long instance;
 #if ATL2_FKEY
 	int fkeys, sfkeys;
 #endif
 
-	/* Initialize SEF. */
-	sef_local_startup();
-
 	/* How many matching devices should we skip? */
 	instance = 0;
-	env_setargs(argc, argv);
 	env_parse("atl2_instance", "d", 0, &instance, 0, 32);
 
 	/* Try to find a recognized device. */
@@ -1295,6 +1277,39 @@ int main(int argc, char **argv)
 	if ((r = fkey_map(&fkeys, &sfkeys)) != OK)
 		printf("ATL2: warning, could not map Shift+F11 key (%d)\n", r);
 #endif
+
+	return(OK);
+}
+
+/*===========================================================================*
+ *				sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup(void)
+{
+	/* Register init callbacks. */
+	sef_setcb_init_fresh(sef_cb_init_fresh);
+	sef_setcb_init_restart(sef_cb_init_fresh);
+
+	/* No support for live update yet. */
+
+	/* Let SEF perform startup. */
+	sef_startup();
+}
+
+/*===========================================================================*
+ *				main					     *
+ *===========================================================================*/
+int main(int argc, char **argv)
+{
+	/* Driver task.
+	 */
+	message m;
+	sigset_t set;
+	int r;
+
+	/* Initialize SEF. */
+	env_setargs(argc, argv);
+	sef_local_startup();
 
 	while (TRUE) {
 		if ((r = sef_receive(ANY, &m)) != OK)

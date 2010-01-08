@@ -73,6 +73,12 @@ static cp_grant_id_t grant_id;			/* IO_GRANT */
 /* Data buffers. */
 static char *buf_array, *buffer;		/* contiguous buffer */
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
+
 /*===========================================================================*
  *				carry					     *
  *===========================================================================*/
@@ -385,17 +391,6 @@ static void got_signal(void)
 }
 
 /*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-static void sef_local_startup(void)
-{
-	/* No live update support for now. */
-
-	/* Let SEF perform startup. */
-	sef_startup();
-}
-
-/*===========================================================================*
  *				main					     *
  *===========================================================================*/
 int main(int argc, char *argv[])
@@ -404,20 +399,8 @@ int main(int argc, char *argv[])
 	int r;
 
 	/* SEF local startup. */
+	env_setargs(argc, argv);
 	sef_local_startup();
-
-	r = parse_arguments(argc, argv);
-	if(r != OK) {
-		printf("Filter: wrong argument!\n");
-		return 1;
-	}
-
-	if ((buf_array = flt_malloc(BUF_SIZE, NULL, 0)) == NULL)
-		panic(__FILE__, "no memory available", NO_NUM);
-
-	sum_init();
-
-	driver_init();
 
 	for (;;) {
 		/* Wait for request. */
@@ -466,3 +449,43 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup(void)
+{
+	/* Register init callbacks. */
+	sef_setcb_init_fresh(sef_cb_init_fresh);
+	sef_setcb_init_restart(sef_cb_init_fresh);
+
+	/* No live update support for now. */
+
+	/* Let SEF perform startup. */
+	sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the filter driver. */
+	int r;
+
+	r = parse_arguments(env_argc, env_argv);
+	if(r != OK) {
+		printf("Filter: wrong argument!\n");
+		return 1;
+	}
+
+	if ((buf_array = flt_malloc(BUF_SIZE, NULL, 0)) == NULL)
+		panic(__FILE__, "no memory available", NO_NUM);
+
+	sum_init();
+
+	driver_init();
+
+	return(OK);
+}
+

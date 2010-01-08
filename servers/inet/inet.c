@@ -95,98 +95,17 @@ FORWARD _PROTOTYPE( void nw_init, (void) );
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 PUBLIC void main()
 {
 	mq_t *mq;
 	int r;
-	int source, m_type, timerand, fd;
-	u32_t tasknr;
-	struct fssignon device;
-	u8_t randbits[32];
-	struct timeval tv;
+	int source, m_type;
 
 	/* SEF local startup. */
 	sef_local_startup();
 
-#if DEBUG
-	printf("Starting inet...\n");
-	printf("%s\n", version);
-#endif
-
-#if HZ_DYNAMIC
-	system_hz = sys_hz();
-#endif
-
-	/* Read configuration. */
-	nw_conf();
-
-	/* Get a random number */
-	timerand= 1;
-	fd= open(RANDOM_DEV_NAME, O_RDONLY | O_NONBLOCK);
-	if (fd != -1)
-	{
-		r= read(fd, randbits, sizeof(randbits));
-		if (r == sizeof(randbits))
-			timerand= 0;
-		else
-		{
-			printf("inet: unable to read random data from %s: %s\n",
-				RANDOM_DEV_NAME, r == -1 ? strerror(errno) :
-				r == 0 ? "EOF" : "not enough data");
-		}
-		close(fd);
-	}
-	else
-	{
-		printf("inet: unable to open random device %s: %s\n",
-			RANDOM_DEV_NAME, strerror(errno));
-	}
-	if (timerand)
-	{
-		printf("inet: using current time for random-number seed\n");
-		r= gettimeofday(&tv, NULL);
-		if (r == -1)
-		{
-			printf("sysutime failed: %s\n", strerror(errno));
-			exit(1);
-		}
-		memcpy(randbits, &tv, sizeof(tv));
-	}
-	init_rand256(randbits);
-
-	/* Our new identity as a server. */
-	r= ds_retrieve_u32("inet", &tasknr);
-	if (r != OK)
-		ip_panic(("inet: ds_retrieve_u32 failed for 'inet': %d", r));
-	this_proc= tasknr;
-
-	/* Register the device group. */
-	device.dev= ip_dev;
-	device.style= STYLE_CLONE;
-	if (svrctl(FSSIGNON, (void *) &device) == -1) {
-		printf("inet: error %d on registering ethernet devices\n",
-			errno);
-		pause();
-	}
-
-#ifdef BUF_CONSISTENCY_CHECK
-	inet_buf_debug= (getenv("inetbufdebug") && 
-		(strcmp(getenv("inetbufdebug"), "on") == 0));
-	inet_buf_debug= 100;
-	if (inet_buf_debug)
-	{
-		ip_warning(( "buffer consistency check enabled" ));
-	}
-#endif
-
-	if (getenv("killerinet"))
-	{
-		ip_warning(( "killer inet active" ));
-		killer_inet= 1;
-	}
-
-	nw_init();
 	while (TRUE)
 	{
 #ifdef BUF_CONSISTENCY_CHECK
@@ -269,10 +188,109 @@ PUBLIC void main()
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the inet server. */
+	int r;
+	int timerand, fd;
+	u32_t tasknr;
+	struct fssignon device;
+	u8_t randbits[32];
+	struct timeval tv;
+
+#if DEBUG
+	printf("Starting inet...\n");
+	printf("%s\n", version);
+#endif
+
+#if HZ_DYNAMIC
+	system_hz = sys_hz();
+#endif
+
+	/* Read configuration. */
+	nw_conf();
+
+	/* Get a random number */
+	timerand= 1;
+	fd= open(RANDOM_DEV_NAME, O_RDONLY | O_NONBLOCK);
+	if (fd != -1)
+	{
+		r= read(fd, randbits, sizeof(randbits));
+		if (r == sizeof(randbits))
+			timerand= 0;
+		else
+		{
+			printf("inet: unable to read random data from %s: %s\n",
+				RANDOM_DEV_NAME, r == -1 ? strerror(errno) :
+				r == 0 ? "EOF" : "not enough data");
+		}
+		close(fd);
+	}
+	else
+	{
+		printf("inet: unable to open random device %s: %s\n",
+			RANDOM_DEV_NAME, strerror(errno));
+	}
+	if (timerand)
+	{
+		printf("inet: using current time for random-number seed\n");
+		r= gettimeofday(&tv, NULL);
+		if (r == -1)
+		{
+			printf("sysutime failed: %s\n", strerror(errno));
+			exit(1);
+		}
+		memcpy(randbits, &tv, sizeof(tv));
+	}
+	init_rand256(randbits);
+
+	/* Our new identity as a server. */
+	r= ds_retrieve_u32("inet", &tasknr);
+	if (r != OK)
+		ip_panic(("inet: ds_retrieve_u32 failed for 'inet': %d", r));
+	this_proc= tasknr;
+
+	/* Register the device group. */
+	device.dev= ip_dev;
+	device.style= STYLE_CLONE;
+	if (svrctl(FSSIGNON, (void *) &device) == -1) {
+		printf("inet: error %d on registering ethernet devices\n",
+			errno);
+		pause();
+	}
+
+#ifdef BUF_CONSISTENCY_CHECK
+	inet_buf_debug= (getenv("inetbufdebug") && 
+		(strcmp(getenv("inetbufdebug"), "on") == 0));
+	inet_buf_debug= 100;
+	if (inet_buf_debug)
+	{
+		ip_warning(( "buffer consistency check enabled" ));
+	}
+#endif
+
+	if (getenv("killerinet"))
+	{
+		ip_warning(( "killer inet active" ));
+		killer_inet= 1;
+	}
+
+	nw_init();
+
+	return(OK);
 }
 
 PRIVATE void nw_conf()

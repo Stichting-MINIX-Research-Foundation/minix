@@ -303,6 +303,9 @@ PRIVATE void handle_hw_intr(void)
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *
@@ -310,41 +313,11 @@ FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 int main(int argc, char *argv[])
 {
 	message m;
-	int i, r;
-	u32_t tasknr;
-	long v;
-	vir_bytes ft = sizeof(*fxp_table)*FXP_PORT_NR;
+	int r;
 
 	/* SEF local startup. */
+	env_setargs(argc, argv);
 	sef_local_startup();
-
-	system_hz = sys_hz();
-
-	if (argc < 1)
-		panic("FXP", "A head which at this time has no name", NO_NUM);
-	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
-	v= 0;
-#if 0
-	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-#endif
-	eth_ign_proto= htons((u16_t) v);
-
-	if(!(fxp_table = alloc_contig(ft, 0, &fxp_table_phys)))
-		panic("FXP","couldn't allocate table", r);
-
-	memset(fxp_table, 0, ft);
-
-	if((r=micro_delay_calibrate()) != OK)
-		panic("FXP","rmicro_delay_calibrate failed", r);
-
-	/* Try to notify inet that we are present (again) */
-	r= ds_retrieve_u32("inet", &tasknr);
-	if (r == OK)
-		notify(tasknr);
-	else if (r != ESRCH)
-		printf("fxp: ds_retrieve_u32 failed for 'inet': %d\n", r);
-
 
 	while (TRUE)
 	{
@@ -401,10 +374,57 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the fxp driver. */
+	int r;
+	u32_t tasknr;
+	long v;
+	vir_bytes ft;
+
+	ft = sizeof(*fxp_table)*FXP_PORT_NR;
+	system_hz = sys_hz();
+
+	if (env_argc < 1)
+		panic("FXP", "A head which at this time has no name", NO_NUM);
+	(progname=strrchr(env_argv[0],'/')) ? progname++
+		: (progname=env_argv[0]);
+
+	v= 0;
+#if 0
+	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
+#endif
+	eth_ign_proto= htons((u16_t) v);
+
+	if(!(fxp_table = alloc_contig(ft, 0, &fxp_table_phys)))
+		panic("FXP","couldn't allocate table", r);
+
+	memset(fxp_table, 0, ft);
+
+	if((r=micro_delay_calibrate()) != OK)
+		panic("FXP","rmicro_delay_calibrate failed", r);
+
+	/* Try to notify inet that we are present (again) */
+	r= ds_retrieve_u32("inet", &tasknr);
+	if (r == OK)
+		notify(tasknr);
+	else if (r != ESRCH)
+		printf("fxp: ds_retrieve_u32 failed for 'inet': %d\n", r);
+
+	return(OK);
 }
 
 /*===========================================================================*

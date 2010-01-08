@@ -52,7 +52,7 @@ PUBLIC int fs_readsuper()
   r = ds_retrieve_u32(fs_dev_label, &tasknr);
   if (r != OK) {
 	printf("%s:%d fs_readsuper: ds_retrieve_u32 failed for '%s': %d\n",
-	       fs_dev_label, __FILE__, __LINE__, r);
+	       __FILE__, __LINE__, fs_dev_label, r);
 	return(EINVAL);
   }
 

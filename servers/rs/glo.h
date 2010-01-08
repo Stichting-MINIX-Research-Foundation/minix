@@ -27,6 +27,7 @@ extern struct boot_image_dev boot_image_dev_table[];
  * services (servers and drivers), and thus is not directly indexed by
  * slot number.
  */
+EXTERN struct rprocpub rprocpub[NR_SYS_PROCS];  /* public entries */
 EXTERN struct rproc rproc[NR_SYS_PROCS];
 EXTERN struct rproc *rproc_ptr[NR_PROCS];       /* mapping for fast access */
 
@@ -36,6 +37,11 @@ EXTERN struct rproc *rproc_ptr[NR_PROCS];       /* mapping for fast access */
  * a non-blocking read retrieves the slot number from the pipe.
  */
 EXTERN int exec_pipe[2];
+
+/* Global init descriptor. This descriptor holds data to initialize system
+ * services.
+ */
+EXTERN sef_init_info_t rinit;
 
 /* Global update descriptor. This descriptor holds data when a live update
  * is in progress.

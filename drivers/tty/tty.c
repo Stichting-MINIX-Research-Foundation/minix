@@ -149,6 +149,7 @@ extern PUBLIC phys_bytes vid_base;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				tty_task				     *
@@ -159,22 +160,11 @@ PUBLIC int main(void)
 
   message tty_mess;		/* buffer for all incoming messages */
   unsigned line;
-  int r, s;
+  int r;
   register tty_t *tp;
 
   /* SEF local startup. */
   sef_local_startup();
-
-  /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
-  if (OK != (s=sys_getmachine(&machine))) {
-    panic("TTY","Couldn't obtain kernel environment.", s);
-  }
-
-  /* Initialize the TTY driver. */
-  tty_init();
-
-  /* Final one-time keyboard initialization. */
-  kb_init_once();
 
   while (TRUE) {
 	int adflag = 0;
@@ -338,10 +328,36 @@ PUBLIC int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the tty driver. */
+  int r;
+
+  /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
+  if (OK != (r=sys_getmachine(&machine))) {
+    panic("TTY","Couldn't obtain kernel environment.", r);
+  }
+
+  /* Initialize the TTY driver. */
+  tty_init();
+
+  /* Final one-time keyboard initialization. */
+  kb_init_once();
+
+  return(OK);
 }
 
 /*===========================================================================*

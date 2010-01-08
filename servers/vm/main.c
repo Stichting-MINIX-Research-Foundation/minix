@@ -18,6 +18,7 @@
 #include <minix/const.h>
 #include <minix/bitmap.h>
 #include <minix/crtso.h>
+#include <minix/rs.h>
 
 #include <errno.h>
 #include <string.h>
@@ -40,21 +41,11 @@ extern int missing_spares;
 #include "../../kernel/config.h" 
 #include "../../kernel/proc.h"
 
-typedef u32_t mask_t;
-#define MINEPM 0
-#define MAXMASK (sizeof(mask_t)*8)
-#define ANYEPM (MINEPM+MAXMASK-1)
-#define NEEDACL (MINEPM+MAXMASK-2)
-#define MAXEPM (NEEDACL-1)
-#define EPM(e) ((1L) << ((e)-MINEPM))
-#define EPMOK(mask, ep) (((mask) & EPM(ANYEPM)) || ((ep) >= MINEPM && (ep) <= MAXEPM && (EPM(ep) & (mask))))
-
 /* Table of calls and a macro to test for being in range. */
 struct {
-	mask_t vmc_callers;		/* bitmap of endpoint numbers */
 	int (*vmc_func)(message *);	/* Call handles message. */
 	char *vmc_name;			/* Human-readable string. */
-} vm_calls[VM_NCALLS];
+} vm_calls[NR_VM_CALLS];
 
 /* Macro to verify call range and map 'high' range to 'base' range
  * (starting at 0) in one. Evaluates to zero-based call number if call
@@ -64,11 +55,14 @@ struct {
 			(c) < VM_RQ_BASE + ELEMENTS(vm_calls)) ?	\
 			((c) - VM_RQ_BASE) : -1)
 
-FORWARD _PROTOTYPE(void vm_init, (void));
+FORWARD _PROTOTYPE(int map_service, (struct rprocpub *rpub));
 FORWARD _PROTOTYPE(int vm_acl_ok, (endpoint_t caller, int call));
+
+extern int unmap_ok;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main					     *
@@ -80,19 +74,6 @@ PUBLIC int main(void)
 
   /* SEF local startup. */
   sef_local_startup();
-
-#if SANITYCHECKS
-  incheck = nocheck = 0;
-  FIXME("VM SANITYCHECKS are on");
-#endif
-
-  vm_paged = 1;
-  env_parse("vm_paged", "d", 0, &vm_paged, 0, 1);
-#if SANITYCHECKS
-  env_parse("vm_sanitychecklevel", "d", 0, &vm_sanitychecklevel, 0, SCL_MAX);
-#endif
-
-  vm_init();
 
   /* This is VM's main loop. */
   while (TRUE) {
@@ -171,25 +152,40 @@ PUBLIC int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
 }
 
-extern int unmap_ok;
-
 /*===========================================================================*
- *				vm_init					     *
+ *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PRIVATE void vm_init(void)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
+/* Initialize the vm server. */
 	int s, i;
 	int click, clicksforgotten = 0;
 	struct memory mem_chunks[NR_MEMS];
 	struct boot_image image[NR_BOOT_PROCS];
 	struct boot_image *ip;
+	struct rprocpub rprocpub[NR_BOOT_PROCS];
 	phys_bytes limit = 0;
+
+#if SANITYCHECKS
+	incheck = nocheck = 0;
+	FIXME("VM SANITYCHECKS are on");
+#endif
+
+	vm_paged = 1;
+	env_parse("vm_paged", "d", 0, &vm_paged, 0, 1);
+#if SANITYCHECKS
+	env_parse("vm_sanitychecklevel", "d", 0, &vm_sanitychecklevel, 0, SCL_MAX);
+#endif
 
 	/* Get chunks of available memory. */
 	get_mem_chunks(mem_chunks);
@@ -285,7 +281,7 @@ PRIVATE void vm_init(void)
 			vmp->vm_arch.vm_seg[D].mem_len;
 
         	if(pt_new(&vmp->vm_pt) != OK)
-			vm_panic("vm_init: no new pagetable", NO_NUM);
+			vm_panic("VM: no new pagetable", NO_NUM);
 #define BASICSTACK VM_PAGE_SIZE
 		old_stacktop = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
 				vmp->vm_arch.vm_seg[S].mem_len);
@@ -314,17 +310,11 @@ PRIVATE void vm_init(void)
 	}
 
 	/* Set up table of calls. */
-#define CALLMAP(code, func, thecaller) { int i;			      \
+#define CALLMAP(code, func) { int i;			      \
 	if((i=CALLNUMBER(code)) < 0) { vm_panic(#code " invalid", (code)); } \
-	if(i >= VM_NCALLS) { vm_panic(#code " invalid", (code)); } \
+	if(i >= NR_VM_CALLS) { vm_panic(#code " invalid", (code)); } \
 	vm_calls[i].vmc_func = (func); 				      \
 	vm_calls[i].vmc_name = #code; 				      \
-	if(((thecaller) < MINEPM || (thecaller) > MAXEPM) 		\
-		&& (thecaller) != ANYEPM				\
-		&& (thecaller) != NEEDACL ) {				\
-		vm_panic(#thecaller " invalid", (code));  		\
-	}								\
-	vm_calls[i].vmc_callers |= EPM(thecaller);		      \
 }
 
 	/* Set call table to 0. This invalidates all calls (clear
@@ -332,35 +322,35 @@ PRIVATE void vm_init(void)
 	 */
 	memset(vm_calls, 0, sizeof(vm_calls));
 
-	/* Requests from PM (restricted to be from PM only). */
-	CALLMAP(VM_EXIT, do_exit, PM_PROC_NR);
-	CALLMAP(VM_FORK, do_fork, PM_PROC_NR);
-	CALLMAP(VM_BRK, do_brk, PM_PROC_NR);
-	CALLMAP(VM_EXEC_NEWMEM, do_exec_newmem, PM_PROC_NR);
-	CALLMAP(VM_PUSH_SIG, do_push_sig, PM_PROC_NR);
-	CALLMAP(VM_WILLEXIT, do_willexit, PM_PROC_NR);
-	CALLMAP(VM_ADDDMA, do_adddma, PM_PROC_NR);
-	CALLMAP(VM_DELDMA, do_deldma, PM_PROC_NR);
-	CALLMAP(VM_GETDMA, do_getdma, PM_PROC_NR);
-	CALLMAP(VM_NOTIFY_SIG, do_notify_sig, PM_PROC_NR);
+	/* Basic VM calls. */
+	CALLMAP(VM_MMAP, do_mmap);
+	CALLMAP(VM_MUNMAP, do_munmap);
+	CALLMAP(VM_MUNMAP_TEXT, do_munmap);
+	CALLMAP(VM_MAP_PHYS, do_map_phys);
+	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys);
 
-	/* Requests from RS */
-	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv, RS_PROC_NR);
+	/* Calls from PM. */
+	CALLMAP(VM_EXIT, do_exit);
+	CALLMAP(VM_FORK, do_fork);
+	CALLMAP(VM_BRK, do_brk);
+	CALLMAP(VM_EXEC_NEWMEM, do_exec_newmem);
+	CALLMAP(VM_PUSH_SIG, do_push_sig);
+	CALLMAP(VM_WILLEXIT, do_willexit);
+	CALLMAP(VM_ADDDMA, do_adddma);
+	CALLMAP(VM_DELDMA, do_deldma);
+	CALLMAP(VM_GETDMA, do_getdma);
+	CALLMAP(VM_NOTIFY_SIG, do_notify_sig);
 
-	/* Requests from userland (source unrestricted). */
-	CALLMAP(VM_MMAP, do_mmap, ANYEPM);
-	CALLMAP(VM_MUNMAP, do_munmap, ANYEPM);
-	CALLMAP(VM_MUNMAP_TEXT, do_munmap, ANYEPM);
-	CALLMAP(VM_MAP_PHYS, do_map_phys, ANYEPM); /* Does its own checking. */
-	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys, ANYEPM);
+	/* Calls from RS */
+	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
 
-	/* Requests from userland (anyone can call but need an ACL bit). */
-	CALLMAP(VM_REMAP, do_remap, NEEDACL);
-	CALLMAP(VM_GETPHYS, do_get_phys, NEEDACL);
-	CALLMAP(VM_SHM_UNMAP, do_shared_unmap, NEEDACL);
-	CALLMAP(VM_GETREF, do_get_refcount, NEEDACL);
-	CALLMAP(VM_CTL, do_ctl, NEEDACL);
-	CALLMAP(VM_QUERY_EXIT, do_query_exit, NEEDACL);
+	/* Generic calls. */
+	CALLMAP(VM_REMAP, do_remap);
+	CALLMAP(VM_GETPHYS, do_get_phys);
+	CALLMAP(VM_SHM_UNMAP, do_shared_unmap);
+	CALLMAP(VM_GETREF, do_get_refcount);
+	CALLMAP(VM_CTL, do_ctl);
+	CALLMAP(VM_QUERY_EXIT, do_query_exit);
 
 	/* Sanity checks */
 	if(find_kernel_top() >= VM_PROCSTART)
@@ -372,6 +362,41 @@ PRIVATE void vm_init(void)
 	/* Unmap our own low pages. */
 	unmap_ok = 1;
 	_minix_unmapzero();
+
+	/* Map all the services in the boot image. */
+	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
+		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
+		panic("VM", "sys_safecopyfrom failed", s);
+	}
+	for(i=0;i < NR_BOOT_PROCS;i++) {
+		if(rprocpub[i].in_use) {
+			if((s = map_service(&rprocpub[i])) != OK) {
+				vm_panic("unable to map service", s);
+			}
+		}
+	}
+
+	return(OK);
+}
+
+/*===========================================================================*
+ *		               map_service                                   *
+ *===========================================================================*/
+PRIVATE int map_service(rpub)
+struct rprocpub *rpub;
+{
+/* Map a new service by initializing its call mask. */
+	int r, proc_nr;
+
+	if ((r = vm_isokendpt(rpub->endpoint, &proc_nr)) != OK) {
+		return r;
+	}
+
+	/* Copy the call mask. */
+	memcpy(&vmproc[proc_nr].vm_call_mask, &rpub->vm_call_mask,
+		sizeof(vmproc[proc_nr].vm_call_mask));
+
+	return(OK);
 }
 
 /*===========================================================================*
@@ -381,23 +406,14 @@ PRIVATE int vm_acl_ok(endpoint_t caller, int call)
 {
 	int n, r;
 
-	/* Some calls are always allowed by some, or all, processes. */
-	if(EPMOK(vm_calls[call].vmc_callers, caller)) {
-		return OK;
-	}
-
 	if ((r = vm_isokendpt(caller, &n)) != OK)
 		vm_panic("VM: from strange source.", caller);
 
-	/* Other calls need an ACL bit. */
-	if (!(vm_calls[call].vmc_callers & EPM(NEEDACL))) {
-		return EPERM;
-	}
-	if (!GET_BIT(vmproc[n].vm_call_priv_mask, call)) {
-		printf("VM: no ACL for %s for %d\n",
-			vm_calls[call].vmc_name, caller);
+	/* See if the call is allowed. */
+	if (!GET_BIT(vmproc[n].vm_call_mask, call)) {
 		return EPERM;
 	}
 
 	return OK;
 }
+

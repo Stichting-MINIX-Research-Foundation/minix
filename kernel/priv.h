@@ -40,8 +40,7 @@ struct priv {
   sys_map_t s_ipc_to;		/* allowed destination processes */
 
   /* allowed kernel calls */
-#define CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
-  bitchunk_t s_k_call_mask[CALL_MASK_SIZE];  
+  bitchunk_t s_k_call_mask[SYS_CALL_MASK_SIZE];  
 
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
   irq_id_t s_int_pending;	/* pending hardware interrupts */

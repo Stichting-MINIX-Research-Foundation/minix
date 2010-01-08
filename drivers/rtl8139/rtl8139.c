@@ -193,52 +193,23 @@ u32_t system_hz;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*===========================================================================*
- *				main				     *
+ *				main					     *
  *===========================================================================*/
 int main(int argc, char *argv[])
 {
-	int fkeys, sfkeys;
-	u32_t inet_proc_nr;
-	int i, r;
-	re_t *rep;
-	long v;
+	int r;
 
 	/* SEF local startup. */
-	sef_local_startup();
-
-	system_hz = sys_hz();
-
-	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
 	env_setargs(argc, argv);
-
-	v= 0;
-	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-	eth_ign_proto= htons((u16_t) v);
-
-	/* Observe some function key for debug dumps. */
-	fkeys = sfkeys = 0; bit_set(sfkeys, 9);
-	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
-	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
-
-	/* Claim buffer memory now under Minix, before MM takes it all. */
-	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
-		rl_init_buf(rep);
-
-	/* Try to notify INET that we are present (again). If INET cannot
-	 * be found, assume this is the first time we started and INET is
-	 * not yet alive.
-	 */
-	r= ds_retrieve_u32("inet", &inet_proc_nr);
-	if (r == OK)
-		notify(inet_proc_nr);
-	else if (r != ESRCH)
-		printf("rtl8139: ds_retrieve_u32 failed for 'inet': %d\n", r);
+	sef_local_startup();
 
 	while (TRUE)
 	{
@@ -317,6 +288,11 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
@@ -324,6 +300,49 @@ PRIVATE void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the rtl8139 driver. */
+	int fkeys, sfkeys;
+	u32_t inet_proc_nr;
+	int r;
+	re_t *rep;
+	long v;
+
+	system_hz = sys_hz();
+
+	(progname=strrchr(env_argv[0],'/')) ? progname++
+		: (progname=env_argv[0]);
+
+	v= 0;
+	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
+	eth_ign_proto= htons((u16_t) v);
+
+	/* Observe some function key for debug dumps. */
+	fkeys = sfkeys = 0; bit_set(sfkeys, 9);
+	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
+	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
+
+	/* Claim buffer memory now under Minix, before MM takes it all. */
+	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
+		rl_init_buf(rep);
+
+	/* Try to notify INET that we are present (again). If INET cannot
+	 * be found, assume this is the first time we started and INET is
+	 * not yet alive.
+	 */
+	r= ds_retrieve_u32("inet", &inet_proc_nr);
+	if (r == OK)
+		notify(inet_proc_nr);
+	else if (r != ESRCH)
+		printf("rtl8139: ds_retrieve_u32 failed for 'inet': %d\n", r);
+
+	return(OK);
 }
 
 /*===========================================================================*

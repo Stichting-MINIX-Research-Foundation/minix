@@ -2,6 +2,6 @@
 #include "../libdriver/driver.h"
 #include "../libdriver/drvlib.h"
 
-_PROTOTYPE(void main, (void));
+_PROTOTYPE(int main, (void));
 
 

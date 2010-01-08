@@ -14,6 +14,61 @@ _PROTOTYPE( int sef_receive, (endpoint_t src, message *m_ptr) );
 #define sef_debug_end()                 fflush(stdout)
 
 /*===========================================================================*
+ *				  SEF Init				     *
+ *===========================================================================*/
+/* What to intercept. */
+#define INTERCEPT_SEF_INIT_REQUESTS 1
+#define IS_SEF_INIT_REQUEST(mp) ((mp)->m_type == RS_INIT \
+    && (mp)->m_source == RS_PROC_NR)
+
+/* Type definitions. */
+typedef struct {
+    int rproctab_gid;
+} sef_init_info_t;
+
+/* Callback type definitions. */
+typedef int(*sef_cb_init_fresh_t)(int type, sef_init_info_t *info);
+typedef int(*sef_cb_init_lu_t)(int type, sef_init_info_t *info);
+typedef int(*sef_cb_init_restart_t)(int type, sef_init_info_t *info);
+
+/* Callback registration helpers. */
+_PROTOTYPE( void sef_setcb_init_fresh, (sef_cb_init_fresh_t cb));
+_PROTOTYPE( void sef_setcb_init_lu, (sef_cb_init_lu_t cb));
+_PROTOTYPE( void sef_setcb_init_restart, (sef_cb_init_restart_t cb));
+
+/* Predefined callback implementations. */
+_PROTOTYPE( int sef_cb_init_fresh_null, (int type, sef_init_info_t *info) );
+_PROTOTYPE( int sef_cb_init_lu_null, (int type, sef_init_info_t *info) );
+_PROTOTYPE( int sef_cb_init_restart_null, (int type, sef_init_info_t *info) );
+
+_PROTOTYPE( int sef_cb_init_restart_fail, (int type, sef_init_info_t *info) );
+
+/* Macros for predefined callback implementations. */
+#define SEF_CB_INIT_FRESH_NULL          sef_cb_init_fresh_null
+#define SEF_CB_INIT_LU_NULL             sef_cb_init_lu_null
+#define SEF_CB_INIT_RESTART_NULL        sef_cb_init_restart_null
+
+#define SEF_CB_INIT_FRESH_DEFAULT       sef_cb_init_fresh_null
+#define SEF_CB_INIT_LU_DEFAULT          sef_cb_init_lu_null
+#define SEF_CB_INIT_RESTART_DEFAULT     sef_cb_init_restart_null
+
+/* Init types. */
+#define SEF_INIT_FRESH                  0    /* init fresh */
+#define SEF_INIT_LU                     1    /* init after live update */
+#define SEF_INIT_RESTART                2    /* init after restart */
+
+/* Debug. */
+#define SEF_INIT_DEBUG_DEFAULT 0
+
+#ifndef SEF_INIT_DEBUG
+#define SEF_INIT_DEBUG                  SEF_INIT_DEBUG_DEFAULT
+#endif
+
+#define sef_init_dprint                 sef_dprint
+#define sef_init_debug_begin            sef_debug_begin
+#define sef_init_debug_end              sef_debug_end
+
+/*===========================================================================*
  *				  SEF Ping				     *
  *===========================================================================*/
 /* What to intercept. */

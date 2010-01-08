@@ -26,7 +26,6 @@ FORWARD _PROTOTYPE( struct device *r_prepare, (int device) );
 FORWARD _PROTOTYPE( int r_transfer, (int proc_nr, int opcode, u64_t position,
 				iovec_t *iov, unsigned nr_req) );
 FORWARD _PROTOTYPE( int r_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void r_init, (void) );
 FORWARD _PROTOTYPE( int r_ioctl, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void r_geometry, (struct partition *entry) );
 FORWARD _PROTOTYPE( void r_random, (struct driver *dp, message *m_ptr) );
@@ -56,6 +55,7 @@ PRIVATE char random_buf[RANDOM_BUF_SIZE];
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				   main 				     *
@@ -65,8 +65,9 @@ PUBLIC int main(void)
   /* SEF local startup. */
   sef_local_startup();
 
-  r_init();				/* initialize the memory driver */
-  driver_task(&r_dtab, DRIVER_ASYN);	/* start driver's main loop */
+  /* Call the generic receive loop. */
+  driver_task(&r_dtab, DRIVER_ASYN);
+
   return(OK);
 }
 
@@ -75,12 +76,51 @@ PUBLIC int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the random driver. */
+  static struct k_randomness krandom;
+  int i, s;
+
+  random_init();
+  r_random(NULL, NULL);				/* also set periodic timer */
+
+  /* Retrieve first randomness buffer with parameters. */
+  if (OK != (s=sys_getrandomness(&krandom))) {
+  	report("RANDOM", "sys_getrandomness failed", s);
+	exit(1);
+  }
+
+  /* Do sanity check on parameters. */
+  if(krandom.random_sources != RANDOM_SOURCES ||
+     krandom.random_elements != RANDOM_ELEMENTS) {
+     printf("random: parameters (%d, %d) don't match kernel's (%d, %d)\n",
+	RANDOM_SOURCES, RANDOM_ELEMENTS,
+	krandom.random_sources, krandom.random_elements);
+     exit(1);
+  }
+
+  /* Feed initial batch. */
+  for(i = 0; i < RANDOM_SOURCES; i++)
+	r_updatebin(i, &krandom.bin[i]);
+
+  return(OK);
 }
 
 /*===========================================================================*
@@ -197,37 +237,6 @@ message *m_ptr;
   if (r_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
 
   return(OK);
-}
-
-/*===========================================================================*
- *				r_init					     *
- *===========================================================================*/
-PRIVATE void r_init()
-{
-  static struct k_randomness krandom;
-  int i, s;
-
-  random_init();
-  r_random(NULL, NULL);				/* also set periodic timer */
-
-  /* Retrieve first randomness buffer with parameters. */
-  if (OK != (s=sys_getrandomness(&krandom))) {
-  	report("RANDOM", "sys_getrandomness failed", s);
-	exit(1);
-  }
-
-  /* Do sanity check on parameters. */
-  if(krandom.random_sources != RANDOM_SOURCES ||
-     krandom.random_elements != RANDOM_ELEMENTS) {
-     printf("random: parameters (%d, %d) don't match kernel's (%d, %d)\n",
-	RANDOM_SOURCES, RANDOM_ELEMENTS,
-	krandom.random_sources, krandom.random_elements);
-     exit(1);
-  }
-
-  /* Feed initial batch. */
-  for(i = 0; i < RANDOM_SOURCES; i++)
-	r_updatebin(i, &krandom.bin[i]);
 }
 
 /*===========================================================================*

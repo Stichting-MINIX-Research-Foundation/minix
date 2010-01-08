@@ -64,6 +64,9 @@ _PROTOTYPE( PRIVATE void mess_reply, (message *req, message *reply)	);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *
@@ -71,39 +74,11 @@ FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 int main(int argc, char *argv[])
 {
     message m;
-    int i, r;
-    u32_t tasknr;
-    e1000_t *e;
-    long v;
+    int r;
 
     /* SEF local startup. */
+    env_setargs(argc, argv);
     sef_local_startup();
-
-    /* Verify command-line arguments. */
-    if (argc < 1)
-    {
-	panic("e1000", "no program name given in argc/argv", NO_NUM);
-    }
-    else
-	(progname = strrchr(argv[0],'/')) ? progname++ : (progname = argv[0]);
-
-    /* Clear state. */
-    memset(e1000_table, 0, sizeof(e1000_table));
-
-    /* Perform calibration. */
-    if((r = micro_delay_calibrate()) != OK)
-    {
-        panic("e1000", "rmicro_delay_calibrate failed", r);
-    }
-    /* Try to notify inet that we are present (again) */
-    if ((r = ds_retrieve_u32("inet", &tasknr)) == OK)
-    {
-        notify(tasknr);
-    }
-    else if (r != ESRCH)
-    {
-        printf("e1000: ds_retrieve_u32 failed for 'inet': %d\n", r);
-    }
 
     /*
      * Enter the main driver loop.
@@ -150,10 +125,53 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the e1000 driver. */
+    int r;
+    u32_t tasknr;
+
+    /* Verify command-line arguments. */
+    if (env_argc < 1)
+    {
+	panic("e1000", "no program name given in argc/argv", NO_NUM);
+    }
+    else
+	(progname = strrchr(env_argv[0],'/')) ? progname++
+		: (progname = env_argv[0]);
+
+    /* Clear state. */
+    memset(e1000_table, 0, sizeof(e1000_table));
+
+    /* Perform calibration. */
+    if((r = micro_delay_calibrate()) != OK)
+    {
+        panic("e1000", "rmicro_delay_calibrate failed", r);
+    }
+    /* Try to notify inet that we are present (again) */
+    if ((r = ds_retrieve_u32("inet", &tasknr)) == OK)
+    {
+        notify(tasknr);
+    }
+    else if (r != ESRCH)
+    {
+        printf("e1000: ds_retrieve_u32 failed for 'inet': %d\n", r);
+    }
+
+    return(OK);
 }
 
 /*===========================================================================*

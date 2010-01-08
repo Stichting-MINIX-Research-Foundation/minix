@@ -234,6 +234,9 @@ PRIVATE int handle_hw_intr(void)
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*===========================================================================*
  *				dpeth_task				     *
@@ -241,38 +244,11 @@ FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 int main(int argc, char *argv[])
 {
 	message m;
-	int i, r, tasknr;
-	dpeth_t *dep;
-	long v;
+	int r;
 
 	/* SEF local startup. */
-	sef_local_startup();
-
-	system_hz = sys_hz();
-
-	if (argc < 1)
-	{
-		panic("DP8390",
-			"A head which at this time has no name", NO_NUM);
-	}
-	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
 	env_setargs(argc, argv);
-
-	for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
-	{
-		strcpy(dep->de_name, "dp8390#0");
-		dep->de_name[7] += i;
-	}
-
-	v= 0;
-	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-	eth_ign_proto= htons((u16_t) v);
-
-	/* Try to notify inet that we are present (again) */
-	r = _pm_findproc("inet", &tasknr);
-	if (r == OK)
-		notify(tasknr);
+	sef_local_startup();
 
 	while (TRUE)
 	{
@@ -331,10 +307,52 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the dp8390 driver. */
+	int i, r, tasknr;
+	dpeth_t *dep;
+	long v;
+
+	system_hz = sys_hz();
+
+	if (env_argc < 1)
+	{
+		panic("DP8390",
+			"A head which at this time has no name", NO_NUM);
+	}
+	(progname=strrchr(env_argv[0],'/')) ? progname++
+		: (progname=env_argv[0]);
+
+	for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
+	{
+		strcpy(dep->de_name, "dp8390#0");
+		dep->de_name[7] += i;
+	}
+
+	v= 0;
+	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
+	eth_ign_proto= htons((u16_t) v);
+
+	/* Try to notify inet that we are present (again) */
+	r = _pm_findproc("inet", &tasknr);
+	if (r == OK)
+		notify(tasknr);
+
+	return(OK);
 }
 
 #if 0

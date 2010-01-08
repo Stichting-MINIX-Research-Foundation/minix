@@ -14,14 +14,15 @@ PRIVATE _PROTOTYPE(void check_subscribers, (struct data_store *dsp));
 
 
 /*===========================================================================*
- *				ds_init				     	     *
+ *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PUBLIC void ds_init(void)
+PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-	int i;
+/* Initialize the data store server. */
+	int i, r;
+	struct rprocpub rprocpub[NR_BOOT_PROCS];
 
 	/* Reset data store: data and subscriptions. */
-
 	for(i = 0; i < NR_DS_KEYS; i++) {
 		int b;
 		ds_store[i].ds_flags = 0;
@@ -32,7 +33,42 @@ PUBLIC void ds_init(void)
 	for(i = 0; i < NR_DS_SUBS; i++)
 		ds_subs[i].sub_flags = 0;
 
-	return;
+	/* Map all the services in the boot image. */
+	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
+		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
+		panic("DS", "sys_safecopyfrom failed", r);
+	}
+	for(i=0;i < NR_BOOT_PROCS;i++) {
+		if(rprocpub[i].in_use) {
+			if((r = map_service(&rprocpub[i])) != OK) {
+				panic("DS", "unable to map service", r);
+			}
+		}
+	}
+
+	return(OK);
+}
+
+/*===========================================================================*
+ *		               map_service                                   *
+ *===========================================================================*/
+PUBLIC int map_service(rpub)
+struct rprocpub *rpub;
+{
+/* Map a new service by registering its label. */
+  struct data_store *dsp;
+
+  dsp = &ds_store[nr_in_use];			/* new slot found */
+  strcpy(dsp->ds_key, rpub->label);
+  dsp->ds_flags = DS_IN_USE | DS_TYPE_U32;	/* initialize slot */
+  nr_in_use++;
+
+  dsp->ds_val.ds_val_u32 = (u32_t) rpub->endpoint;	/* store data */
+
+  /* If anyone has a matching subscription, update them. */
+  check_subscribers(dsp);
+
+  return(OK);
 }
 
 PRIVATE int set_owner(dsp, auth)

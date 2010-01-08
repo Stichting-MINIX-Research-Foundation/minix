@@ -2,8 +2,8 @@
 #include <minix/config.h>
 #include <string.h>
 
-PRIVATE int argc = 0;
-PRIVATE char **argv = NULL;
+PUBLIC int env_argc = 0;
+PUBLIC char **env_argv = NULL;
 
 FORWARD _PROTOTYPE( char *find_key, (const char *params, const char *key));
 
@@ -14,8 +14,8 @@ PUBLIC void env_setargs(arg_c, arg_v)
 int arg_c;
 char *arg_v[];
 {
-	argc= arg_c;
-	argv= arg_v;
+	env_argc= arg_c;
+	env_argv= arg_v;
 }
 
 /*===========================================================================*
@@ -35,15 +35,15 @@ int max_len;				/* maximum length of value */
   	return EINVAL;
 
   keylen= strlen(key);
-  for (i= 1; i<argc; i++)
+  for (i= 1; i<env_argc; i++)
   {
-  	if (strncmp(argv[i], key, keylen) != 0)
+  	if (strncmp(env_argv[i], key, keylen) != 0)
   		continue;
-	if (strlen(argv[i]) <= keylen)
+	if (strlen(env_argv[i]) <= keylen)
 		continue;
-	if (argv[i][keylen] != '=')
+	if (env_argv[i][keylen] != '=')
 		continue;
-	key_value= argv[i]+keylen+1;
+	key_value= env_argv[i]+keylen+1;
 	if (strlen(key_value)+1 > max_len)
 	      return(E2BIG);
 	strcpy(value, key_value);

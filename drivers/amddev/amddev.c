@@ -49,7 +49,6 @@ static int dev_devind;
 static u8_t dev_capptr;
 static u8_t *table;
 
-static int init(void);
 static int find_dev(int *devindp, u8_t *capaddrp);
 static u32_t read_reg(int function, int index);
 static void write_reg(int function, int index, u32_t value);
@@ -65,6 +64,7 @@ static void report_exceptions(void);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 int main(void)
 {
@@ -73,10 +73,6 @@ int main(void)
 
 	/* SEF local startup. */
 	sef_local_startup();
-
-	printf("amddev: starting\n");
-
-	init();
 
 	for(;;)
 	{
@@ -106,6 +102,11 @@ int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
@@ -114,11 +115,17 @@ PRIVATE void sef_local_startup()
   sef_startup();
 }
 
-static int init()
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
+/* Initialize the amddev driver. */
 	int r, n_maps, n_domains, revision;
 	u16_t flags;
 	u32_t bits;
+
+	printf("amddev: starting\n");
 
 	r= find_dev(&dev_devind, &dev_capptr);
 	if (!r)
@@ -147,6 +154,8 @@ static int init()
 	write_reg(DEVF_CR, 0, 0x10 | 0x8 | 0x4 | 1);
 
 	printf("after write: DEVF_CR: 0x%x\n", read_reg(DEVF_CR, 0));
+
+	return(OK);
 }
 
 static int find_dev(devindp, capaddrp)

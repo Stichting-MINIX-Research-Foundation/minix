@@ -96,23 +96,19 @@ PRIVATE struct driver w_dtab = {
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				bios_winchester_task			     *
  *===========================================================================*/
 PUBLIC int main()
 {
-  long v;
-
   /* SEF local startup. */
   sef_local_startup();
 
-  v= 0;
-  env_parse("bios_remap_first", "d", 0, &v, 0, 1);
-  remap_first= v;
-
-/* Set special disk parameters then call the generic main loop. */
+  /* Call the generic receive loop. */
   driver_task(&w_dtab, DRIVER_STD);
+
   return(OK);
 }
 
@@ -121,12 +117,32 @@ PUBLIC int main()
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the bios_wini driver. */
+  long v;
+
+  v = 0;
+  env_parse("bios_remap_first", "d", 0, &v, 0, 1);
+  remap_first = v;
+
+  return(OK);
 }
 
 /*===========================================================================*

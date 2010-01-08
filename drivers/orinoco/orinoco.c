@@ -238,6 +238,9 @@ extern int errno;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*****************************************************************************
  *            main                                                           *
@@ -246,33 +249,11 @@ FORWARD _PROTOTYPE( void sef_local_startup, (void) );
  * The main function of the driver, receiving and processing messages        *
  *****************************************************************************/
 int main(int argc, char *argv[]) {
-	int fkeys, sfkeys, r, i, ret;
-	u32_t inet_proc_nr;
-	long v = 0;
-	t_or *orp;
+	int r;
 
 	/* SEF local startup. */
-	sef_local_startup();
-
-	system_hz = sys_hz();
-
-	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
 	env_setargs(argc, argv);
-
-	/* Observe some function key for debug dumps. */
-	fkeys = sfkeys = 0; bit_set(sfkeys, 11);
-	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
-	    printf("Warning: orinoco couldn't observe F-key(s): %d\n",r);
-
-	/* Try to notify INET that we are present (again). If INET cannot
-	 * be found, assume this is the first time we started and INET is
-	 * not yet alive. */
-	r = ds_retrieve_u32("inet", &inet_proc_nr);
-	if (r == OK) 
-		notify(inet_proc_nr);
-	else if (r != ESRCH)
-		printf("orinoco: ds_retrieve_u32 failed for 'inet': %d\n", r);
+	sef_local_startup();
 
 	while (TRUE) {
 		if ((r = sef_receive (ANY, &m)) != OK)
@@ -354,10 +335,45 @@ int main(int argc, char *argv[]) {
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the orinoco driver. */
+	int fkeys, sfkeys, r;
+	u32_t inet_proc_nr;
+
+	system_hz = sys_hz();
+
+	(progname=strrchr(env_argv[0],'/')) ? progname++
+		: (progname=env_argv[0]);
+
+	/* Observe some function key for debug dumps. */
+	fkeys = sfkeys = 0; bit_set(sfkeys, 11);
+	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
+	    printf("Warning: orinoco couldn't observe F-key(s): %d\n",r);
+
+	/* Try to notify INET that we are present (again). If INET cannot
+	 * be found, assume this is the first time we started and INET is
+	 * not yet alive. */
+	r = ds_retrieve_u32("inet", &inet_proc_nr);
+	if (r == OK) 
+		notify(inet_proc_nr);
+	else if (r != ESRCH)
+		printf("orinoco: ds_retrieve_u32 failed for 'inet': %d\n", r);
+
+	return(OK);
 }
 
 /*****************************************************************************

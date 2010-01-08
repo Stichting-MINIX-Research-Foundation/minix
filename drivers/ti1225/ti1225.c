@@ -51,7 +51,6 @@ PRIVATE struct pcitab pcitab_ti[]=
 PRIVATE char *progname;
 PRIVATE int debug;
 
-FORWARD _PROTOTYPE( void init, (void)					);
 FORWARD _PROTOTYPE( void hw_init, (struct port *pp)			);
 FORWARD _PROTOTYPE( void map_regs, (struct port *pp, u32_t base)	);
 FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
@@ -61,32 +60,21 @@ FORWARD _PROTOTYPE( u8_t do_inb, (port_t port)				);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
+/*===========================================================================*
+ *				main					     *
+ *===========================================================================*/
 int main(int argc, char *argv[])
 {
-	int c, r;
+	int r;
 	message m;
 
 	/* SEF local startup. */
+	env_setargs(argc, argv);
 	sef_local_startup();
-
-	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
-	if((r=micro_delay_calibrate()) != OK)
-		panic("ti1225", "micro_delay_calibrate failed", r);
-
-	debug= 0;
-	while (c= getopt(argc, argv, "d?"), c != -1)
-	{
-		switch(c)
-		{
-		case '?': panic("ti1225", "Usage: ti1225 [-d]", NO_NUM);
-		case 'd': debug++; break;
-		default: panic("ti1225", "getopt failed", NO_NUM);
-		}
-	}
-
-	init();
 
 	for (;;)
 	{
@@ -104,6 +92,11 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
@@ -112,10 +105,31 @@ PRIVATE void sef_local_startup()
   sef_startup();
 }
 
-PRIVATE void init()
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-	int i, r, first, devind, port;
+/* Initialize the ti1225 driver. */
+	int c, i, r, first, devind, port;
 	u16_t vid, did;
+
+	(progname=strrchr(env_argv[0],'/')) ? progname++
+		: (progname=env_argv[0]);
+
+	if((r=micro_delay_calibrate()) != OK)
+		panic("ti1225", "micro_delay_calibrate failed", r);
+
+	debug= 0;
+	while (c= getopt(env_argc, env_argv, "d?"), c != -1)
+	{
+		switch(c)
+		{
+		case '?': panic("ti1225", "Usage: ti1225 [-d]", NO_NUM);
+		case 'd': debug++; break;
+		default: panic("ti1225", "getopt failed", NO_NUM);
+		}
+	}
 
 	pci_init1(progname);
 
@@ -167,6 +181,8 @@ PRIVATE void init()
 			continue;
 		hw_init(&ports[i]);
 	}
+
+	return(OK);
 }
 
 PRIVATE void hw_init(pp)

@@ -39,13 +39,13 @@
 EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
-FORWARD _PROTOTYPE( void fs_init, (void)				);
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void init_root, (void)				);
 FORWARD _PROTOTYPE( void service_pm, (void)				);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main					     *
@@ -60,14 +60,6 @@ PUBLIC int main(void)
 
   /* SEF local startup. */
   sef_local_startup();
-
-  fs_init();
-
-  SANITYCHECK;
-
-#if DO_SANITYCHECKS
-  FIXME("VFS: DO_SANITYCHECKS is on");
-#endif
 
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
@@ -228,10 +220,104 @@ PUBLIC int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *				sef_cb_init_fresh			     *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the virtual file server. */
+  int s;
+  register struct fproc *rfp;
+  struct vmnt *vmp;
+  struct vnode *root_vp;
+  message mess;
+
+  /* Clear endpoint field */
+  last_login_fs_e = NONE;
+  mount_m_in.m1_p3 = (char *) NONE;
+
+  /* Initialize the process table with help of the process manager messages. 
+   * Expect one message for each system process with its slot number and pid. 
+   * When no more processes follow, the magic process number NONE is sent. 
+   * Then, stop and synchronize with the PM.
+   */
+  do {
+  	if (OK != (s=sef_receive(PM_PROC_NR, &mess)))
+  		panic(__FILE__,"FS couldn't receive from PM", s);
+
+	if (mess.m_type != PM_INIT)
+		panic(__FILE__, "unexpected message from PM", mess.m_type);
+
+  	if (NONE == mess.PM_PROC) break; 
+
+	rfp = &fproc[mess.PM_SLOT];
+	rfp->fp_pid = mess.PM_PID;
+	rfp->fp_endpoint = mess.PM_PROC;
+	rfp->fp_realuid = (uid_t) SYS_UID;
+	rfp->fp_effuid = (uid_t) SYS_UID;
+	rfp->fp_realgid = (gid_t) SYS_GID;
+	rfp->fp_effgid = (gid_t) SYS_GID;
+	rfp->fp_umask = ~0;
+	rfp->fp_grant = GRANT_INVALID;
+	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
+	rfp->fp_revived = NOT_REVIVING;
+   
+  } while (TRUE);			/* continue until process NONE */
+  mess.m_type = OK;			/* tell PM that we succeeded */
+  s = send(PM_PROC_NR, &mess);		/* send synchronization message */
+
+  /* All process table entries have been set. Continue with FS initialization.
+   * Certain relations must hold for the file system to work at all. Some 
+   * extra block_size requirements are checked at super-block-read-in time.
+   */
+  if (OPEN_MAX > 127) panic(__FILE__,"OPEN_MAX > 127", NO_NUM);
+  
+  /* The following initializations are needed to let dev_opcl succeed .*/
+  fp = (struct fproc *) NULL;
+  who_e = who_p = FS_PROC_NR;
+
+  build_dmap();			/* build device table and map boot driver */
+  init_root();			/* init root device and load super block */
+  init_select();		/* init select() structures */
+
+
+  vmp = &vmnt[0];		/* Should be the root filesystem */
+  if (vmp->m_dev == NO_DEV)
+	panic(__FILE__, "vfs: no root filesystem", NO_NUM);
+  root_vp= vmp->m_root_node;
+
+  /* The root device can now be accessed; set process directories. */
+  for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+	FD_ZERO(&(rfp->fp_filp_inuse));
+  	if (rfp->fp_pid != PID_FREE) {
+                
+		dup_vnode(root_vp);
+                rfp->fp_rd = root_vp;
+		dup_vnode(root_vp);
+                rfp->fp_wd = root_vp;
+		
+  	} else  rfp->fp_endpoint = NONE;
+  }
+
+  system_hz = sys_hz();
+
+  SANITYCHECK;
+
+#if DO_SANITYCHECKS
+  FIXME("VFS: DO_SANITYCHECKS is on");
+#endif
+
+  return(OK);
 }
 
 /*===========================================================================*
@@ -345,88 +431,6 @@ int result;			/* result of the call (usually OK or error #) */
   s = sendnb(whom, &m_out);
   if (s != OK) printf("VFS: couldn't send reply %d to %d: %d\n",
 	result, whom, s);
-}
-
-/*===========================================================================*
- *				fs_init					     *
- *===========================================================================*/
-PRIVATE void fs_init()
-{
-/* Initialize global variables, tables, etc. */
-  int s;
-  register struct fproc *rfp;
-  struct vmnt *vmp;
-  struct vnode *root_vp;
-  message mess;
-
-  /* Clear endpoint field */
-  last_login_fs_e = NONE;
-  mount_m_in.m1_p3 = (char *) NONE;
-
-  /* Initialize the process table with help of the process manager messages. 
-   * Expect one message for each system process with its slot number and pid. 
-   * When no more processes follow, the magic process number NONE is sent. 
-   * Then, stop and synchronize with the PM.
-   */
-  do {
-  	if (OK != (s=sef_receive(PM_PROC_NR, &mess)))
-  		panic(__FILE__,"FS couldn't receive from PM", s);
-
-	if (mess.m_type != PM_INIT)
-		panic(__FILE__, "unexpected message from PM", mess.m_type);
-
-  	if (NONE == mess.PM_PROC) break; 
-
-	rfp = &fproc[mess.PM_SLOT];
-	rfp->fp_pid = mess.PM_PID;
-	rfp->fp_endpoint = mess.PM_PROC;
-	rfp->fp_realuid = (uid_t) SYS_UID;
-	rfp->fp_effuid = (uid_t) SYS_UID;
-	rfp->fp_realgid = (gid_t) SYS_GID;
-	rfp->fp_effgid = (gid_t) SYS_GID;
-	rfp->fp_umask = ~0;
-	rfp->fp_grant = GRANT_INVALID;
-	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	rfp->fp_revived = NOT_REVIVING;
-   
-  } while (TRUE);			/* continue until process NONE */
-  mess.m_type = OK;			/* tell PM that we succeeded */
-  s = send(PM_PROC_NR, &mess);		/* send synchronization message */
-
-  /* All process table entries have been set. Continue with FS initialization.
-   * Certain relations must hold for the file system to work at all. Some 
-   * extra block_size requirements are checked at super-block-read-in time.
-   */
-  if (OPEN_MAX > 127) panic(__FILE__,"OPEN_MAX > 127", NO_NUM);
-  
-  /* The following initializations are needed to let dev_opcl succeed .*/
-  fp = (struct fproc *) NULL;
-  who_e = who_p = FS_PROC_NR;
-
-  build_dmap();			/* build device table and map boot driver */
-  init_root();			/* init root device and load super block */
-  init_select();		/* init select() structures */
-
-
-  vmp = &vmnt[0];		/* Should be the root filesystem */
-  if (vmp->m_dev == NO_DEV)
-	panic(__FILE__, "vfs:fs_init: no root filesystem", NO_NUM);
-  root_vp= vmp->m_root_node;
-
-  /* The root device can now be accessed; set process directories. */
-  for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	FD_ZERO(&(rfp->fp_filp_inuse));
-  	if (rfp->fp_pid != PID_FREE) {
-                
-		dup_vnode(root_vp);
-                rfp->fp_rd = root_vp;
-		dup_vnode(root_vp);
-                rfp->fp_wd = root_vp;
-		
-  	} else  rfp->fp_endpoint = NONE;
-  }
-
-  system_hz = sys_hz();
 }
 
 /*===========================================================================*

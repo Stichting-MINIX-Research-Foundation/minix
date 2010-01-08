@@ -579,6 +579,9 @@ PRIVATE void handle_hw_intr(void)
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*
 **  Name:	int dpeth_task(void)
@@ -588,34 +591,11 @@ PUBLIC int main(int argc, char **argv)
 {
   message m;
   dpeth_t *dep;
-  int rc, fkeys, sfkeys, tasknr;
+  int rc;
 
   /* SEF local startup. */
-  sef_local_startup();
-
-  (progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
   env_setargs(argc, argv);
-
-  /* Request function key for debug dumps */
-  fkeys = sfkeys = 0; bit_set(sfkeys, 8);
-  if ((fkey_map(&fkeys, &sfkeys)) != OK) 
-	printf("%s: couldn't program Shift+F8 key (%d)\n", DevName, errno);
-
-#ifdef ETH_IGN_PROTO
-  {
-	static u16_t eth_ign_proto = 0;
-	long val;
-	val = 0xFFFF;
-	env_parse("ETH_IGN_PROTO", "x", 0, &val, 0x0000L, 0xFFFFL);
-	eth_ign_proto = htons((u16_t) val);
-  }
-#endif
-
-  /* Try to notify inet that we are present (again) */
-  rc = _pm_findproc("inet", &tasknr);
-  if (rc == OK)
-	notify(tasknr);
+  sef_local_startup();
 
   while (TRUE) {
 	if ((rc = sef_receive(ANY, &m)) != OK) panic(dep->de_name, RecvErrMsg, rc);
@@ -680,10 +660,48 @@ PUBLIC int main(int argc, char **argv)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the dpeth driver. */
+  dpeth_t *dep;
+  int rc, fkeys, sfkeys, tasknr;
+
+  (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
+
+  /* Request function key for debug dumps */
+  fkeys = sfkeys = 0; bit_set(sfkeys, 8);
+  if ((fkey_map(&fkeys, &sfkeys)) != OK) 
+	printf("%s: couldn't program Shift+F8 key (%d)\n", DevName, errno);
+
+#ifdef ETH_IGN_PROTO
+  {
+	static u16_t eth_ign_proto = 0;
+	long val;
+	val = 0xFFFF;
+	env_parse("ETH_IGN_PROTO", "x", 0, &val, 0x0000L, 0xFFFFL);
+	eth_ign_proto = htons((u16_t) val);
+  }
+#endif
+
+  /* Try to notify inet that we are present (again) */
+  rc = _pm_findproc("inet", &tasknr);
+  if (rc == OK)
+	notify(tasknr);
+
+  return(OK);
 }
 
 /** dp.c **/

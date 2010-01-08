@@ -47,7 +47,7 @@ FORWARD _PROTOTYPE( void sef_local_startup, (void) );
  *				main
  *===========================================================================*/
 PUBLIC void main() {
-message mess;
+	message mess;
 	int err, caller, proc_nr;
 
 	/* SEF local startup. */

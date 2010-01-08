@@ -73,12 +73,14 @@ char *label;
 {
   int control_allowed = 0;
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   int c;
   char *progname;
 
   /* Find name of binary for given label. */
   for (rp = BEG_RPROC_ADDR; rp < END_RPROC_ADDR; rp++) {
-	if (strcmp(rp->r_label, label) == 0) {
+	rpub = rp->r_pub;
+	if (strcmp(rpub->label, label) == 0) {
 		break;
 	}
   }
@@ -91,7 +93,8 @@ char *label;
 
   /* Check if label is listed in caller's isolation policy. */
   for (rp = BEG_RPROC_ADDR; rp < END_RPROC_ADDR; rp++) {
-	if (rp->r_proc_nr_e == endpoint) {
+	rpub = rp->r_pub;
+	if (rpub->endpoint == endpoint) {
 		break;
 	}
   }
@@ -141,6 +144,7 @@ message *m_ptr;					/* request message pointer */
 /* A request was made to start a new system service. 
  */
   register struct rproc *rp;			/* system process table */
+  register struct rprocpub *rpub;		/* public entry */
   int slot_nr;					/* local table entry */
   int arg_count;				/* number of arguments */
   char *cmd_ptr;				/* parse command string */
@@ -152,6 +156,7 @@ message *m_ptr;					/* request message pointer */
   int r;
   endpoint_t ep;
   struct rproc *tmp_rp;
+  struct rprocpub *tmp_rpub;
   struct rs_start rs_start;
 
   /* This call requires special privileges. */
@@ -168,6 +173,7 @@ message *m_ptr;					/* request message pointer */
       printf("RS: do_up: system process table full\n");
 	return ENOMEM;
   }
+  rpub = rp->r_pub;
 
   /* Ok, there is space. Get the request structure. */
   s= sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
@@ -210,38 +216,36 @@ message *m_ptr;					/* request message pointer */
   else
   	cmd_ptr= rp->r_argv[0];
   len= strlen(cmd_ptr);
-  if (len > P_NAME_LEN-1)
-  	len= P_NAME_LEN-1;	/* truncate name */
-  memcpy(rp->r_proc_name, cmd_ptr, len);
-  rp->r_proc_name[len]= '\0';
+  if (len > RS_MAX_LABEL_LEN-1)
+  	len= RS_MAX_LABEL_LEN-1;	/* truncate name */
+  memcpy(rpub->proc_name, cmd_ptr, len);
+  rpub->proc_name[len]= '\0';
   if(rs_verbose)
       printf("RS: do_up: using proc_name (from binary %s) '%s'\n",
-          rp->r_argv[0], rp->r_proc_name);
+          rp->r_argv[0], rpub->proc_name);
 
   if(rs_start.rss_label.l_len > 0) {
 	/* RS_UP caller has supplied a custom label for this service. */
 	int s = copy_label(m_ptr->m_source, &rs_start.rss_label,
-		rp->r_label, sizeof(rp->r_label));
+		rpub->label, sizeof(rpub->label));
 	if(s != OK)
 		return s;
         if(rs_verbose)
-	  printf("RS: do_up: using label (custom) '%s'\n", rp->r_label);
+	  printf("RS: do_up: using label (custom) '%s'\n", rpub->label);
   } else {
 	/* Default label for the service. */
-	label = rp->r_proc_name;
+	label = rpub->proc_name;
   	len= strlen(label);
-  	if (len > MAX_LABEL_LEN-1)
-		len= MAX_LABEL_LEN-1;	/* truncate name */
-  	memcpy(rp->r_label, label, len);
-  	rp->r_label[len]= '\0';
+  	memcpy(rpub->label, label, len);
+  	rpub->label[len]= '\0';
         if(rs_verbose)
           printf("RS: do_up: using label (from proc_name) '%s'\n",
-		rp->r_label);
+		rpub->label);
   }
 
   if(rs_start.rss_nr_control > 0) {
 	int i, s;
-	if (rs_start.rss_nr_control > RSS_NR_CONTROL)
+	if (rs_start.rss_nr_control > RS_NR_CONTROL)
 	{
 		printf("RS: do_up: too many control labels\n");
 		return EINVAL;
@@ -269,10 +273,11 @@ message *m_ptr;					/* request message pointer */
 	  continue;
       if (tmp_rp == rp)
 	  continue;				/* Our slot */
-      if (strcmp(tmp_rp->r_label, rp->r_label) == 0)
+      tmp_rpub = tmp_rp->r_pub;
+      if (strcmp(tmp_rpub->label, rpub->label) == 0)
       {
 	  printf("RS: found duplicate label '%s': slot %d\n",
-		rp->r_label, slot_nr);
+		rpub->label, slot_nr);
 	  return EBUSY;
       }
   }
@@ -289,11 +294,11 @@ message *m_ptr;					/* request message pointer */
   rp->r_uid= rs_start.rss_uid;
   rp->r_nice= rs_start.rss_nice;
 
-  if (rs_start.rss_flags & RF_IPC_VALID)
+  if (rs_start.rss_flags & RSS_IPC_VALID)
   {
 	if (rs_start.rss_ipclen+1 > sizeof(rp->r_ipc_list))
 	{
-		printf("rs: ipc list too long for '%s'\n", rp->r_label);
+		printf("rs: ipc list too long for '%s'\n", rpub->label);
 		return EINVAL;
 	}
 	s=sys_datacopy(m_ptr->m_source, (vir_bytes) rs_start.rss_ipc, 
@@ -304,20 +309,22 @@ message *m_ptr;					/* request message pointer */
   else
 	rp->r_ipc_list[0]= '\0';
 
-  rp->r_sys_flags = DSRV_SF;
+  rpub->sys_flags = DSRV_SF;
   rp->r_exec= NULL;
-  if (rs_start.rss_flags & RF_COPY) {
+  if (rs_start.rss_flags & RSS_COPY) {
 	int exst_cpy;
 	struct rproc *rp2;
+	struct rprocpub *rpub2;
 	exst_cpy = 0;
 	
-	if(rs_start.rss_flags & RF_REUSE) {
+	if(rs_start.rss_flags & RSS_REUSE) {
                 int i;
 
                 for(i = 0; i < NR_SYS_PROCS; i++) {
                 	rp2 = &rproc[i];
-                        if(strcmp(rp->r_proc_name, rp2->r_proc_name) == 0 &&
-                           (rp2->r_sys_flags & SF_USE_COPY)) {
+                	rpub2 = rproc[i].r_pub;
+                        if(strcmp(rpub->proc_name, rpub2->proc_name) == 0 &&
+                           (rpub2->sys_flags & SF_USE_COPY)) {
                                 /* We have found the same binary that's
                                  * already been copied */
                                  exst_cpy = 1;
@@ -334,7 +341,7 @@ message *m_ptr;					/* request message pointer */
 	if (s != OK)
 		return s;
 
-	rp->r_sys_flags |= SF_USE_COPY;
+	rpub->sys_flags |= SF_USE_COPY;
   }
 
   /* All dynamically created services get the same privilege flags, and
@@ -375,40 +382,42 @@ message *m_ptr;					/* request message pointer */
 		rp->r_priv.s_io_tab[i].ior_limit);
   }
 
-  if (rs_start.rss_nr_pci_id > RSS_NR_PCI_ID)
+  if (rs_start.rss_nr_pci_id > RS_NR_PCI_DEVICE)
   {
 	printf("RS: do_up: too many PCI device IDs\n");
 	return EINVAL;
   }
-  rp->r_nr_pci_id= rs_start.rss_nr_pci_id;
-  for (i= 0; i<rp->r_nr_pci_id; i++)
+  rpub->pci_acl.rsp_nr_device = rs_start.rss_nr_pci_id;
+  for (i= 0; i<rpub->pci_acl.rsp_nr_device; i++)
   {
-	rp->r_pci_id[i].vid= rs_start.rss_pci_id[i].vid;
-	rp->r_pci_id[i].did= rs_start.rss_pci_id[i].did;
+	rpub->pci_acl.rsp_device[i].vid= rs_start.rss_pci_id[i].vid;
+	rpub->pci_acl.rsp_device[i].did= rs_start.rss_pci_id[i].did;
 	if(rs_verbose)
 	   printf("RS: do_up: PCI %04x/%04x\n",
-		rp->r_pci_id[i].vid, rp->r_pci_id[i].did);
+		rpub->pci_acl.rsp_device[i].vid,
+		rpub->pci_acl.rsp_device[i].did);
   }
-  if (rs_start.rss_nr_pci_class > RSS_NR_PCI_CLASS)
+  if (rs_start.rss_nr_pci_class > RS_NR_PCI_CLASS)
   {
 	printf("RS: do_up: too many PCI class IDs\n");
 	return EINVAL;
   }
-  rp->r_nr_pci_class= rs_start.rss_nr_pci_class;
-  for (i= 0; i<rp->r_nr_pci_class; i++)
+  rpub->pci_acl.rsp_nr_class= rs_start.rss_nr_pci_class;
+  for (i= 0; i<rpub->pci_acl.rsp_nr_class; i++)
   {
-	rp->r_pci_class[i].class= rs_start.rss_pci_class[i].class;
-	rp->r_pci_class[i].mask= rs_start.rss_pci_class[i].mask;
+	rpub->pci_acl.rsp_class[i].class= rs_start.rss_pci_class[i].class;
+	rpub->pci_acl.rsp_class[i].mask= rs_start.rss_pci_class[i].mask;
 	if(rs_verbose)
 	    printf("RS: do_up: PCI class %06x mask %06x\n",
-		rp->r_pci_class[i].class, rp->r_pci_class[i].mask);
+		rpub->pci_acl.rsp_class[i].class,
+		rpub->pci_acl.rsp_class[i].mask);
   }
 
   /* Copy 'system' call number bits */
   if (sizeof(rs_start.rss_system[0]) == sizeof(rp->r_call_mask[0]) &&
 	sizeof(rs_start.rss_system) == sizeof(rp->r_call_mask))
   {
-	for (i= 0; i<RSS_NR_SYSTEM; i++)
+	for (i= 0; i<RS_SYS_CALL_MASK_SIZE; i++)
 		rp->r_call_mask[i]= rs_start.rss_system[i];
   }
   else
@@ -419,21 +428,25 @@ message *m_ptr;					/* request message pointer */
   }
 
   /* Initialize some fields. */
-  rp->r_period = rs_start.rss_period;
-  rp->r_dev_nr = rs_start.rss_major;
-  rp->r_dev_style = STYLE_DEV; 
+  rpub->period = rs_start.rss_period;
+  rpub->dev_nr = rs_start.rss_major;
+  rpub->dev_style = STYLE_DEV; 
   rp->r_restarts = -1; 				/* will be incremented */
   rp->r_set_resources= 1;			/* set resources */
 
-  if (sizeof(rp->r_vm) == sizeof(rs_start.rss_vm) &&
-      sizeof(rp->r_vm[0]) == sizeof(rs_start.rss_vm[0]))
+  if (sizeof(rpub->vm_call_mask) == sizeof(rs_start.rss_vm) &&
+      sizeof(rpub->vm_call_mask[0]) == sizeof(rs_start.rss_vm[0]))
   {
-	  memcpy(rp->r_vm, rs_start.rss_vm, sizeof(rp->r_vm));
+          int basic_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C };
+	  memcpy(rpub->vm_call_mask, rs_start.rss_vm,
+	  	sizeof(rpub->vm_call_mask));
+	  fill_call_mask(basic_vmc, NR_VM_CALLS,
+	  	rpub->vm_call_mask, VM_RQ_BASE, FALSE);
   }
   else
   {
-	  printf("RS: do_up: internal inconsistency: bad size of r_vm\n");
-	  memset(rp->r_vm, '\0', sizeof(rp->r_vm));
+	  printf("RS: internal inconsistency: bad size of vm_call_mask\n");
+	  memset(rpub->vm_call_mask, '\0', sizeof(rpub->vm_call_mask));
   }
 
   /* All information was gathered. Now try to start the system service. */
@@ -449,9 +462,10 @@ message *m_ptr;					/* request message pointer */
 PUBLIC int do_down(message *m_ptr)
 {
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   size_t len;
   int s, proc;
-  char label[MAX_LABEL_LEN];
+  char label[RS_MAX_LABEL_LEN];
 
   /* This call requires special privileges. */
   if (!caller_is_root(m_ptr->m_source)) return(EPERM);
@@ -466,7 +480,11 @@ PUBLIC int do_down(message *m_ptr)
   label[len]= '\0';
 
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
+      rpub = rp->r_pub;
+      if (rp->r_flags & RS_IN_USE && strcmp(rpub->label, label) == 0) {
+	/* Core system services should never go down. */
+	if (rpub->sys_flags & SF_CORE_SRV) return(EPERM);
+
 	if(rs_verbose)
 	  printf("RS: stopping '%s' (%d)\n", label, rp->r_pid);
 	stop_service(rp,RS_EXITING);
@@ -494,9 +512,10 @@ PUBLIC int do_down(message *m_ptr)
 PUBLIC int do_restart(message *m_ptr)
 {
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   size_t len;
   int s, proc, r;
-  char label[MAX_LABEL_LEN];
+  char label[RS_MAX_LABEL_LEN];
   endpoint_t ep;
 
   len= m_ptr->RS_CMD_LEN;
@@ -515,7 +534,8 @@ PUBLIC int do_restart(message *m_ptr)
   }
 
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if ((rp->r_flags & RS_IN_USE) && strcmp(rp->r_label, label) == 0) {
+      rpub = rp->r_pub;
+      if ((rp->r_flags & RS_IN_USE) && strcmp(rpub->label, label) == 0) {
 	  if(rs_verbose) printf("RS: restarting '%s' (%d)\n", label, rp->r_pid);
 	  if (rp->r_pid >= 0)
 	  {
@@ -545,9 +565,10 @@ PUBLIC int do_restart(message *m_ptr)
 PUBLIC int do_refresh(message *m_ptr)
 {
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   size_t len;
   int s;
-  char label[MAX_LABEL_LEN];
+  char label[RS_MAX_LABEL_LEN];
 
   len= m_ptr->RS_CMD_LEN;
   if (len >= sizeof(label))
@@ -565,9 +586,15 @@ PUBLIC int do_refresh(message *m_ptr)
   }
 
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
+      rpub = rp->r_pub;
+      if (rp->r_flags & RS_IN_USE && strcmp(rpub->label, label) == 0) {
+          /* Only system processes not including RS can refresh. */
+          if(!(rp->r_priv.s_flags & SYS_PROC) || rpub->endpoint == RS_PROC_NR) {
+              return EPERM;
+          }
+
           if(rs_verbose) {
-              printf("RS: refreshing %s (%d)\n", rp->r_label, rp->r_pid);
+              printf("RS: refreshing %s (%d)\n", rpub->label, rp->r_pid);
           }
 	  stop_service(rp,RS_REFRESHING);
 	  return(OK);
@@ -593,15 +620,65 @@ PUBLIC int do_shutdown(message *m_ptr)
   return(OK);
 }
 
+
+/*===========================================================================*
+ *				do_init_ready				     *
+ *===========================================================================*/
+PUBLIC int do_init_ready(message *m_ptr)
+{
+  int who_p;
+  struct rproc *rp;
+  struct rprocpub *rpub;
+  int result;
+
+  who_p = _ENDPOINT_P(m_ptr->m_source);
+  rp = rproc_ptr[who_p];
+  rpub = rp->r_pub;
+  result = m_ptr->RS_INIT_RESULT;
+
+  /* Make sure the originating service was requested to initialize. */
+  if(! (rp->r_flags & RS_INITIALIZING) ) {
+      if(rs_verbose) {
+          printf("RS: do_init_ready: got unexpected init ready msg from %d\n",
+              m_ptr->m_source);
+      }
+      return(EINVAL);
+  }
+
+  /* Mark the slot as no longer initializing. */
+  rp->r_flags &= ~RS_INITIALIZING;
+  rp->r_check_tm = 0;
+  getuptime(&rp->r_alive_tm);
+
+  /* Check if something went wrong and the service failed to init.
+   * In that case, kill it and make sure it won't be restarted.
+   */
+  if(result != OK) {
+      if(rs_verbose)
+          printf("RS: initialization failed for service %d: %d\n",
+              rpub->endpoint, result);
+      rp->r_flags |= RS_EXITING;
+      kill(rp->r_pid, SIGKILL);
+  }
+  else {
+      if(rs_verbose)
+          printf("RS: initialization succeeded for service %d\n",
+              rpub->endpoint);
+  }
+
+  return(EDONTREPLY);
+}
+
 /*===========================================================================*
  *				do_update				     *
  *===========================================================================*/
 PUBLIC int do_update(message *m_ptr)
 {
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   size_t len;
   int s;
-  char label[MAX_LABEL_LEN];
+  char label[RS_MAX_LABEL_LEN];
   int lu_state;
   int prepare_maxtime;
 
@@ -613,6 +690,12 @@ PUBLIC int do_update(message *m_ptr)
       SELF, (vir_bytes) label, len);
   if (s != OK) return(s);
   label[len]= '\0';
+
+  /* This call requires special privileges. */
+  if (! (caller_can_control(m_ptr->m_source, label) ||
+      caller_is_root(m_ptr->m_source))) {
+      return(EPERM);
+  }
 
   /* Retrieve live update state. */
   lu_state = m_ptr->RS_LU_STATE;
@@ -641,20 +724,26 @@ PUBLIC int do_update(message *m_ptr)
 
   /* Try to start the update process. */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
+      rpub = rp->r_pub;
+      if (rp->r_flags & RS_IN_USE && strcmp(rpub->label, label) == 0) {
+          /* Only system processes not including RS can update. */
+          if(!(rp->r_priv.s_flags & SYS_PROC) || rpub->endpoint == RS_PROC_NR) {
+              return EPERM;
+          }
+
           if(rs_verbose) {
-	      printf("RS: updating %s (%d)\n", rp->r_label, rp->r_pid);
+	      printf("RS: updating %s (%d)\n", rpub->label, rp->r_pid);
 	  }
-	  
+
 	  rp->r_flags |= RS_UPDATING;
 	  rupdate.flags |= RS_UPDATING;
 	  getuptime(&rupdate.prepare_tm);
           rupdate.prepare_maxtime = prepare_maxtime;
 	  rupdate.rp = rp;
-	  
+
 	  m_ptr->m_type = RS_LU_PREPARE;
-	  asynsend(rp->r_proc_nr_e, m_ptr);  /* request to prepare for update */
-	  
+	  asynsend(rpub->endpoint, m_ptr);  /* request to update */
+
 	  return(OK);
       }
   }
@@ -679,7 +768,7 @@ PUBLIC int do_upd_ready(message *m_ptr)
   rp = rproc_ptr[who_p];
   result = m_ptr->RS_LU_RESULT;
 
-  /* Make sure the originating process was requested to prepare for update. */
+  /* Make sure the originating service was requested to prepare for update. */
   if(! (rp->r_flags & RS_UPDATING) ) {
       if(rs_verbose) {
           printf("RS: do_upd_ready: got unexpected update ready msg from %d\n",
@@ -688,7 +777,7 @@ PUBLIC int do_upd_ready(message *m_ptr)
       return(EINVAL);
   }
 
-  /* Check if something went wrong and the process failed to prepare
+  /* Check if something went wrong and the service failed to prepare
    * for the update. In that case, end the update process.
    */
   if(result != OK) {
@@ -696,17 +785,17 @@ PUBLIC int do_upd_ready(message *m_ptr)
       switch(result) {
           case EACCES:
               printf("RS: update failed: %s\n",
-                  "process does not support live update");
+                  "service does not support live update");
           break;
 
           case EINVAL:
               printf("RS: update failed: %s\n",
-                  "process does not support the required state");
+                  "service does not support the required state");
           break;
 
           case EBUSY:
               printf("RS: update failed: %s\n",
-                  "process is not able to prepare for the update now");
+                  "service is not able to prepare for the update now");
           break;
 
           case EGENERIC:
@@ -721,7 +810,7 @@ PUBLIC int do_upd_ready(message *m_ptr)
           break;
       }
 
-      return ENOTREADY;
+      return(OK);
   }
 
   /* Kill the process now and mark it for refresh, the new version will
@@ -731,7 +820,7 @@ PUBLIC int do_upd_ready(message *m_ptr)
   rp->r_flags |= RS_REFRESHING;
   kill(rp->r_pid, SIGKILL);
 
-  return(OK);
+  return(EDONTREPLY);
 }
 
 /*===========================================================================*
@@ -742,6 +831,9 @@ PRIVATE void update_period(message *m_ptr)
   clock_t now = m_ptr->NOTIFY_TIMESTAMP;
   short has_update_timed_out;
   message m;
+  struct rprocpub *rpub;
+
+  rpub = rupdate.rp->r_pub;
 
   /* See if a timeout has occurred. */
   has_update_timed_out = (now - rupdate.prepare_tm > rupdate.prepare_maxtime);
@@ -754,7 +846,7 @@ PRIVATE void update_period(message *m_ptr)
       /* Prepare cancel request. */
       m.m_type = RS_LU_PREPARE;
       m.RS_LU_STATE = SEF_LU_STATE_NULL;
-      asynsend(rupdate.rp->r_proc_nr_e, &m);
+      asynsend(rpub->endpoint, &m);
   }
 }
 
@@ -766,15 +858,12 @@ PRIVATE void end_update(clock_t now)
   /* End the update process and mark the affected service as no longer under
    * update. Eventual late ready to update message (if any) will simply be
    * ignored and the service can continue executing.
-   * Also, if the service has a period, update the alive and check timestamps
-   * of the service to force a status request in the next period.
+   * We reset the check timestamp, so that if the service has a period a status
+   * request will be forced in the next period.
    */
   rupdate.flags &= ~RS_UPDATING;
   rupdate.rp->r_flags &= ~RS_UPDATING;
-  if(rupdate.rp->r_period > 0 ) {
-      rupdate.rp->r_alive_tm = now;
-      rupdate.rp->r_check_tm = now - rupdate.rp->r_period - 1;
-  }
+  rupdate.rp->r_check_tm = 0;
 }
 
 /*===========================================================================*
@@ -783,6 +872,7 @@ PRIVATE void end_update(clock_t now)
 PUBLIC void do_exit(message *m_ptr)
 {
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   pid_t exit_pid;
   int exit_status, r, slot_nr;
   endpoint_t ep;
@@ -841,16 +931,17 @@ PUBLIC void do_exit(message *m_ptr)
        * This should always succeed. 
        */
       for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
+          rpub = rp->r_pub;
           if ((rp->r_flags & RS_IN_USE) && rp->r_pid == exit_pid) {
 	      int proc;
-	      proc = _ENDPOINT_P(rp->r_proc_nr_e);
+	      proc = _ENDPOINT_P(rpub->endpoint);
 
               rproc_ptr[proc] = NULL;		/* invalidate */
 	      rp->r_pid= -1;
 
 	      /* If PCI properties are set, inform the PCI driver. */
-              if(rp->r_nr_pci_id || rp->r_nr_pci_class) {
-                  pci_del_acl(rp->r_proc_nr_e);
+              if(rpub->pci_acl.rsp_nr_device || rpub->pci_acl.rsp_nr_class) {
+                  pci_del_acl(rpub->endpoint);
               }
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
@@ -868,7 +959,6 @@ PUBLIC void do_exit(message *m_ptr)
 		      short is_updating = rp->r_flags & RS_UPDATING;
 
 		      /* Refresh */
-		      rp->r_restarts = -1;		/* reset counter */
 		      if (rp->r_script[0] != '\0')
 			run_script(rp);
 		      else {
@@ -911,7 +1001,7 @@ rp->r_restarts= 0;
 				rp->r_cmd, rp->r_backoff);
 		      rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-2));
 		      rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
-		      if ((rp->r_sys_flags & SF_USE_COPY) && rp->r_backoff > 1)
+		      if ((rpub->sys_flags & SF_USE_COPY) && rp->r_backoff > 1)
 			rp->r_backoff= 1;
 		  }
 		  else {
@@ -937,9 +1027,11 @@ PUBLIC void do_period(m_ptr)
 message *m_ptr;
 {
   register struct rproc *rp;
+  register struct rprocpub *rpub;
   clock_t now = m_ptr->NOTIFY_TIMESTAMP;
   int s;
   endpoint_t ep;
+  long period;
 
   /* If an update is in progress, check its status. */
   if(rupdate.flags & RS_UPDATING) {
@@ -950,7 +1042,14 @@ message *m_ptr;
    * updating.
    */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
+      rpub = rp->r_pub;
       if ((rp->r_flags & RS_IN_USE) && !(rp->r_flags & RS_UPDATING)) {
+
+          /* Compute period. */
+          period = rpub->period;
+          if(rp->r_flags & RS_INITIALIZING) {
+              period = RS_INIT_T;
+          }
 
           /* If the service is to be revived (because it repeatedly exited, 
 	   * and was not directly restarted), the binary backoff field is  
@@ -975,7 +1074,7 @@ message *m_ptr;
 	  /* There seems to be no special conditions. If the service has a 
 	   * period assigned check its status. 
 	   */
-	  else if (rp->r_period > 0) {
+	  else if (period > 0) {
 
 	      /* Check if an answer to a status request is still pending. If 
 	       * the service didn't respond within time, kill it to simulate 
@@ -983,12 +1082,15 @@ message *m_ptr;
 	       * be restarted automatically.
 	       */
               if (rp->r_alive_tm < rp->r_check_tm) { 
-	          if (now - rp->r_alive_tm > 2*rp->r_period &&
+	          if (now - rp->r_alive_tm > 2*period &&
 		      rp->r_pid > 0 && !(rp->r_flags & RS_NOPINGREPLY)) { 
 		      if(rs_verbose)
                            printf("RS: service %d reported late\n",
-				rp->r_proc_nr_e); 
+				rpub->endpoint); 
 		      rp->r_flags |= RS_NOPINGREPLY;
+		      if(rp->r_flags & RS_INITIALIZING) {
+                           rp->r_flags |= RS_EXITING;   /* don't restart */
+		      }
                       kill(rp->r_pid, SIGKILL);		/* simulate crash */
 		  }
 	      }
@@ -996,12 +1098,12 @@ message *m_ptr;
 	      /* No answer pending. Check if a period expired since the last
 	       * check and, if so request the system service's status.
 	       */
-	      else if (now - rp->r_check_tm > rp->r_period) {
+	      else if (now - rp->r_check_tm > rpub->period) {
 #if 0
 		if(rs_verbose)
-                  printf("RS: status request sent to %d\n", rp->r_proc_nr_e);
+                  printf("RS: status request sent to %d\n", rpub->endpoint);
 #endif
-		  notify(rp->r_proc_nr_e);		/* request status */
+		  notify(rpub->endpoint);		/* request status */
 		  rp->r_check_tm = now;			/* mark time */
               }
           }
@@ -1029,17 +1131,20 @@ endpoint_t *endpoint;
   int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
   pid_t child_pid;				/* child's process id */
   char *file_only;
-  int s, use_copy, slot_nr;
+  int s, use_copy, slot_nr, init_type;
   bitchunk_t *vm_mask;
   message m;
   char * null_env = NULL;
+  struct rprocpub *rpub;
 
-  use_copy= (rp->r_sys_flags & SF_USE_COPY);
+  rpub = rp->r_pub;
+  use_copy= (rpub->sys_flags & SF_USE_COPY);
 
   /* See if we are not using a copy but we do need one to start the service. */
-  if(!use_copy && (rp->r_sys_flags & SF_NEED_COPY)) {
+  if(!use_copy && (rpub->sys_flags & SF_NEED_COPY)) {
 	printf("RS: unable to start service %s without an in-memory copy\n",
-	    rp->r_label);
+	    rpub->label);
+	free_slot(rp);
 	return(EPERM);
   }
 
@@ -1097,13 +1202,14 @@ endpoint_t *endpoint;
   child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
   rp->r_flags = RS_IN_USE | flags;		/* mark slot in use */
   rp->r_restarts += 1;				/* raise nr of restarts */
-  rp->r_proc_nr_e = child_proc_nr_e;		/* set child details */
+  rpub->endpoint = child_proc_nr_e;		/* set child details */
   rp->r_pid = child_pid;
   rp->r_check_tm = 0;				/* not checked yet */
   getuptime(&rp->r_alive_tm); 			/* currently alive */
   rp->r_stop_tm = 0;				/* not exiting yet */
   rp->r_backoff = 0;				/* not to be restarted */
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
+  rpub->in_use = TRUE;				/* public entry is now in use */
 
   /* If any of the calls below fail, the RS_EXITING flag is set. This implies
    * that the process will be removed from RS's process table once it has
@@ -1136,7 +1242,7 @@ endpoint_t *endpoint;
 	init_privs(rp, &rp->r_priv);
 
 	/* Tell VM about allowed calls. */
-	vm_mask = &rp->r_vm[0];
+	vm_mask = &rpub->vm_call_mask[0];
 	if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
 	    report("RS", "vm_set_priv call failed", s);
 	    kill(child_pid, SIGKILL);
@@ -1155,7 +1261,7 @@ endpoint_t *endpoint;
   }
 
   /* If PCI properties are set, inform the PCI driver about the new service. */
-  if(rp->r_nr_pci_id || rp->r_nr_pci_class) {
+  if(rpub->pci_acl.rsp_nr_device || rpub->pci_acl.rsp_nr_class) {
       init_pci(rp, child_proc_nr_e);
   }
 
@@ -1166,7 +1272,7 @@ endpoint_t *endpoint;
   }
 
   /* Allow the service to run.
-   * XXX FIXME: we should let the service run only after publishing information
+   * XXX: We should let the service run/init only after publishing information
    * about the new system service, but this is not currently possible due to
    * the blocking nature of mapdriver() that expects the service to be running.
    * The current solution is not race-free. This hack can go once service
@@ -1177,6 +1283,12 @@ endpoint_t *endpoint;
       kill(child_pid, SIGKILL);				/* kill the service */
       rp->r_flags |= RS_EXITING;			/* expect exit */
       return(s);					/* return error */
+  }
+
+  /* Initialize service. */
+  init_type = rp->r_restarts > 0 ? SEF_INIT_RESTART : SEF_INIT_FRESH;
+  if((s = init_service(rp, init_type)) != OK) {
+      panic("RS", "unable to initialize service", s);
   }
 
   /* The purpose of non-blocking forks is to avoid involving VFS in the forking
@@ -1193,16 +1305,16 @@ endpoint_t *endpoint;
 	setuid(0);
 
   /* Map the new service. */
-  if (rp->r_dev_nr > 0) {				/* set driver map */
-      if ((s=mapdriver(rp->r_label,
-	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
+  if (rpub->dev_nr > 0) {				/* set driver map */
+      if ((s=mapdriver(rpub->label,
+	      rpub->dev_nr, rpub->dev_style, !!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver (continuing)", errno);
       }
   }
 
   if(rs_verbose)
       printf("RS: started '%s', major %d, pid %d, endpoint %d, proc %d\n", 
-          rp->r_cmd, rp->r_dev_nr, child_pid,
+          rp->r_cmd, rpub->dev_nr, child_pid,
 	  child_proc_nr_e, child_proc_nr_n);
 
   /* The system service now has been successfully started. The only thing
@@ -1254,6 +1366,10 @@ message *m_ptr;
   	src_addr = (vir_bytes) rproc;
   	len = sizeof(struct rproc) * NR_SYS_PROCS;
   	break; 
+  case SI_PROCPUB_TAB:
+  	src_addr = (vir_bytes) rprocpub;
+  	len = sizeof(struct rprocpub) * NR_SYS_PROCS;
+  	break; 
   default:
   	return(EINVAL);
   }
@@ -1281,9 +1397,15 @@ PRIVATE pid_t fork_nb()
 PRIVATE int share_exec(rp_dst, rp_src)
 struct rproc *rp_dst, *rp_src;
 {
+  struct rprocpub *rpub_src;
+  struct rprocpub *rpub_dst;
+
+  rpub_src = rp_src->r_pub;
+  rpub_dst = rp_dst->r_pub;
+
   if(rs_verbose) {
       printf("RS: share_exec: sharing exec image from %s to %s\n",
-          rp_src->r_label, rp_dst->r_label);
+          rpub_src->label, rpub_dst->label);
   }
 
   /* Share exec image from rp_src to rp_dst. */
@@ -1350,10 +1472,13 @@ PRIVATE void free_slot(rp)
 struct rproc *rp;
 {
   int slot_nr, has_shared_exec;
+  struct rprocpub *rpub;
   struct rproc *other_rp;
 
+  rpub = rp->r_pub;
+
   /* Free memory if necessary. */
-  if(rp->r_sys_flags & SF_USE_COPY) {
+  if(rpub->sys_flags & SF_USE_COPY) {
       /* Search for some other slot sharing the same exec image. */
       has_shared_exec = FALSE;
       for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
@@ -1367,7 +1492,8 @@ struct rproc *rp;
       /* If nobody uses our copy of the exec image, we can get rid of it. */
       if(!has_shared_exec) {
           if(rs_verbose) {
-              printf("RS: free_slot: free exec image from %s\n", rp->r_label);
+              printf("RS: free_slot: free exec image from %s\n",
+                  rpub->label);
           }
           free(rp->r_exec);
           rp->r_exec = NULL;
@@ -1377,7 +1503,8 @@ struct rproc *rp;
 
   /* Mark slot as no longer in use.. */
   rp->r_flags = 0;
-  rproc_ptr[_ENDPOINT_P(rp->r_proc_nr_e)] = NULL;
+  rpub->in_use = FALSE;
+  rproc_ptr[_ENDPOINT_P(rpub->endpoint)] = NULL;
 }
 
 /*===========================================================================*
@@ -1386,12 +1513,14 @@ struct rproc *rp;
 PRIVATE void run_script(rp)
 struct rproc *rp;
 {
-	int r, proc_nr_e;
+	int r, endpoint;
 	pid_t pid;
 	char *reason;
 	char incarnation_str[20];	/* Enough for a counter? */
 	char *envp[1] = { NULL };
+	struct rprocpub *rpub;
 
+	rpub = rp->r_pub;
 	if (rp->r_flags & RS_REFRESHING)
 		reason= "restart";
 	else if (rp->r_flags & RS_NOPINGREPLY)
@@ -1406,14 +1535,14 @@ struct rproc *rp;
 	{
 		printf(
 		"RS: run_script: can't find reason for termination of '%s'\n",
-			rp->r_label);
+			rpub->label);
 		return;
 	}
 	sprintf(incarnation_str, "%d", rp->r_restarts);
 
  	if(rs_verbose) {
 	  printf("RS: calling script '%s'\n", rp->r_script);
-	  printf("RS: sevice name: '%s'\n", rp->r_label);
+	  printf("RS: sevice name: '%s'\n", rpub->label);
 	  printf("RS: reason: '%s'\n", reason);
 	  printf("RS: incarnation: '%s'\n", incarnation_str);
 	}
@@ -1425,20 +1554,20 @@ struct rproc *rp;
 		printf("RS: run_script: fork failed: %s\n", strerror(errno));
 		break;
 	case 0:
-		execle(rp->r_script, rp->r_script, rp->r_label, reason,
+		execle(rp->r_script, rp->r_script, rpub->label, reason,
 			incarnation_str, NULL, envp);
 		printf("RS: run_script: execl '%s' failed: %s\n",
 			rp->r_script, strerror(errno));
 		exit(1);
 	default:
 		/* Set the privilege structure for the child process. */
-		proc_nr_e = getnprocnr(pid);
-		if ((r = sys_privctl(proc_nr_e, SYS_PRIV_SET_USER, NULL))
+		endpoint = getnprocnr(pid);
+		if ((r = sys_privctl(endpoint, SYS_PRIV_SET_USER, NULL))
 			!= OK) {
 			printf("RS: run_script: can't set privileges: %d\n",r);
 		}
-		/* Allow the process to run. */
-		if ((r = sys_privctl(proc_nr_e, SYS_PRIV_ALLOW, NULL)) != OK) {
+		/* Allow the service to run. */
+		if ((r = sys_privctl(endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
 			printf("RS: run_script: process can't run: %d\n",r);
 		}
 		/* Do not wait for the child */
@@ -1473,7 +1602,7 @@ char *caller_label;
 		if (q == p)
 			continue;
 		len= q-p;
-		if (len > MAX_LABEL_LEN)
+		if (len > RS_MAX_LABEL_LEN)
 		{
 			printf(
 	"rs:get_next_label: bad ipc list entry '.*s' for %s: too long\n",
@@ -1499,35 +1628,38 @@ struct priv *privp;
 	/* Add IPC send permissions to a process based on that process's IPC
 	 * list.
 	 */
-	char label[MAX_LABEL_LEN+1], *p;
+	char label[RS_MAX_LABEL_LEN+1], *p;
 	struct rproc *tmp_rp;
-	endpoint_t proc_nr_e;
+	struct rprocpub *tmp_rpub;
+	endpoint_t endpoint;
 	int r;
 	int slot_nr, priv_id;
 	struct priv priv;
+	struct rprocpub *rpub;
 
+	rpub = rp->r_pub;
 	p = rp->r_ipc_list;
 
-	while ((p = get_next_label(p, label, rp->r_label)) != NULL) {
+	while ((p = get_next_label(p, label, rpub->label)) != NULL) {
 
 		if (strcmp(label, "SYSTEM") == 0)
-			proc_nr_e= SYSTEM;
+			endpoint= SYSTEM;
 		else if (strcmp(label, "USER") == 0)
-			proc_nr_e= INIT_PROC_NR; /* all user procs */
+			endpoint= INIT_PROC_NR; /* all user procs */
 		else if (strcmp(label, "PM") == 0)
-			proc_nr_e= PM_PROC_NR;
+			endpoint= PM_PROC_NR;
 		else if (strcmp(label, "VFS") == 0)
-			proc_nr_e= FS_PROC_NR;
+			endpoint= FS_PROC_NR;
 		else if (strcmp(label, "RS") == 0)
-			proc_nr_e= RS_PROC_NR;
+			endpoint= RS_PROC_NR;
 		else if (strcmp(label, "LOG") == 0)
-			proc_nr_e= LOG_PROC_NR;
+			endpoint= LOG_PROC_NR;
 		else if (strcmp(label, "TTY") == 0)
-			proc_nr_e= TTY_PROC_NR;
+			endpoint= TTY_PROC_NR;
 		else if (strcmp(label, "DS") == 0)
-			proc_nr_e= DS_PROC_NR;
+			endpoint= DS_PROC_NR;
 		else if (strcmp(label, "VM") == 0)
-			proc_nr_e= VM_PROC_NR;
+			endpoint= VM_PROC_NR;
 		else
 		{
 			/* Try to find process */
@@ -1537,7 +1669,8 @@ struct priv *privp;
 				tmp_rp = &rproc[slot_nr];
 				if (!(tmp_rp->r_flags & RS_IN_USE))
 					continue;
-				if (strcmp(tmp_rp->r_label, label) == 0)
+				tmp_rpub = tmp_rp->r_pub;
+				if (strcmp(tmp_rpub->label, label) == 0)
 					break;
 			}
 			if (slot_nr >= NR_SYS_PROCS)
@@ -1547,10 +1680,10 @@ struct priv *privp;
 			"add_forward_ipc: unable to find '%s'\n", label);
 				continue;
 			}
-			proc_nr_e= tmp_rp->r_proc_nr_e;
+			endpoint= tmp_rpub->endpoint;
 		}
 
-		if ((r = sys_getpriv(&priv, proc_nr_e)) < 0)
+		if ((r = sys_getpriv(&priv, endpoint)) < 0)
 		{
 			printf(
 		"add_forward_ipc: unable to get priv_id for '%s': %d\n",
@@ -1576,8 +1709,9 @@ struct priv *privp;
 	 * add these permissions now because the current process may not yet
 	 * have existed at the time that the other process was initialized.
 	 */
-	char label[MAX_LABEL_LEN+1], *p;
+	char label[RS_MAX_LABEL_LEN+1], *p;
 	struct rproc *rrp;
+	struct rprocpub *rrpub;
 	int priv_id, found;
 
 	for (rrp=BEG_RPROC_ADDR; rrp<END_RPROC_ADDR; rrp++) {
@@ -1591,11 +1725,12 @@ struct priv *privp;
 		if (rrp->r_ipc_list[0]) {
 			found = 0;
 
+			rrpub = rrp->r_pub;
 			p = rrp->r_ipc_list;
 
-			while ((p = get_next_label(p, label, rp->r_label)) !=
-									NULL) {
-				if (!strcmp(rp->r_label, label)) {
+			while ((p = get_next_label(p, label,
+				rrpub->label)) != NULL) {
+				if (!strcmp(rrpub->label, label)) {
 					found = 1;
 					break;
 				}
@@ -1628,7 +1763,7 @@ struct priv *privp;
 
 	src_bits_per_word= 8*sizeof(rp->r_call_mask[0]);
 	dst_bits_per_word= 8*sizeof(privp->s_k_call_mask[0]);
-	for (src_word= 0; src_word < RSS_NR_SYSTEM; src_word++)
+	for (src_word= 0; src_word < RS_SYS_CALL_MASK_SIZE; src_word++)
 	{
 		for (src_bit= 0; src_bit < src_bits_per_word; src_bit++)
 		{
@@ -1642,7 +1777,7 @@ struct priv *privp;
 #endif
 			dst_word= call_nr / dst_bits_per_word;
 			mask= (1UL << (call_nr % dst_bits_per_word));
-			if (dst_word >= CALL_MASK_SIZE)
+			if (dst_word >= SYS_CALL_MASK_SIZE)
 			{
 				printf(
 				"RS: init_privs: call number %d doesn't fit\n",
@@ -1682,52 +1817,12 @@ int endpoint;
 	size_t len;
 	int i, r;
 	struct rs_pci rs_pci;
+	struct rprocpub *rpub;
 
-	if (strcmp(rp->r_label, "pci") == 0)
-	{
-		if(rs_verbose)
-			printf("RS: init_pci: not when starting 'pci'\n");
-		return;
-	}
-
-	len= strlen(rp->r_label);
-	if (len+1 > sizeof(rs_pci.rsp_label))
-	{
-		if(rs_verbose)
-		  printf("RS: init_pci: label '%s' too long for rsp_label\n",
-			rp->r_label);
-		return;
-	}
-	strcpy(rs_pci.rsp_label, rp->r_label);
+	rpub = rp->r_pub;
+	rs_pci = rpub->pci_acl;
+	strcpy(rs_pci.rsp_label, rpub->label);
 	rs_pci.rsp_endpoint= endpoint;
-
-	rs_pci.rsp_nr_device= rp->r_nr_pci_id;
-	if (rs_pci.rsp_nr_device > RSP_NR_DEVICE)
-	{
-		printf("RS: init_pci: too many PCI devices (max %d) "
-		  "truncating\n",
-			RSP_NR_DEVICE);
-		rs_pci.rsp_nr_device= RSP_NR_DEVICE;
-	}
-	for (i= 0; i<rs_pci.rsp_nr_device; i++)
-	{
-		rs_pci.rsp_device[i].vid= rp->r_pci_id[i].vid;
-		rs_pci.rsp_device[i].did= rp->r_pci_id[i].did;
-	}
-
-	rs_pci.rsp_nr_class= rp->r_nr_pci_class;
-	if (rs_pci.rsp_nr_class > RSP_NR_CLASS)
-	{
-		printf("RS: init_pci: too many PCI classes "
-		   "(max %d) truncating\n",
-			RSP_NR_CLASS);
-		rs_pci.rsp_nr_class= RSP_NR_CLASS;
-	}
-	for (i= 0; i<rs_pci.rsp_nr_class; i++)
-	{
-		rs_pci.rsp_class[i].class= rp->r_pci_class[i].class;
-		rs_pci.rsp_class[i].mask= rp->r_pci_class[i].mask;
-	}
 
 	if(rs_verbose)
 		printf("RS: init_pci: calling pci_set_acl\n");
@@ -1754,6 +1849,7 @@ message *m_ptr;
 	static char namebuf[100];
 	int len, r;
 	struct rproc *rrp;
+	struct rprocpub *rrpub;
 
 	len = m_ptr->RS_NAME_LEN;
 
@@ -1774,8 +1870,9 @@ message *m_ptr;
 	for (rrp=BEG_RPROC_ADDR; rrp<END_RPROC_ADDR; rrp++) {
 		if (!(rrp->r_flags & RS_IN_USE))
 			continue;
-		if (!strcmp(rrp->r_label, namebuf)) {
-			m_ptr->RS_ENDPOINT = rrp->r_proc_nr_e;
+		rrpub = rrp->r_pub;
+		if (!strcmp(rrpub->label, namebuf)) {
+			m_ptr->RS_ENDPOINT = rrpub->endpoint;
 			return OK;
 		}
 	}

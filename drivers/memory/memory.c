@@ -55,7 +55,6 @@ FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode,
 			u64_t position, iovec_t *iov, unsigned nr_req)	);
 FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( int m_do_close, (struct driver *dp, message *m_ptr)	);
-FORWARD _PROTOTYPE( void m_init, (void) );
 FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr)	);
 FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) 		);
 
@@ -86,25 +85,19 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
 PUBLIC int main(void)
 {
-/* Main program. Initialize the memory driver and start the main loop. */
-  struct sigaction sa;
-
   /* SEF local startup. */
   sef_local_startup();
 
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("MEM","sigaction failed", errno);
-
-  m_init();
+  /* Call the generic receive loop. */
   driver_task(&m_dtab, DRIVER_STD);
+
   return(OK);
 }
 
@@ -113,12 +106,69 @@ PUBLIC int main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the memory driver. */
+  struct sigaction sa;
+  u32_t ramdev_size;
+  int i, s;
+
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("MEM","sigaction failed", errno);
+
+  /* Initialize all minor devices one by one. */
+  if (OK != (s=sys_getkinfo(&kinfo))) {
+      panic("MEM","Couldn't get kernel information.",s);
+  }
+
+#if 0
+  /* Map in kernel memory for /dev/kmem. */
+  m_geom[KMEM_DEV].dv_base = cvul64(kinfo.kmem_base);
+  m_geom[KMEM_DEV].dv_size = cvul64(kinfo.kmem_size);
+  if((m_vaddrs[KMEM_DEV] = vm_map_phys(SELF, (void *) kinfo.kmem_base,
+	kinfo.kmem_size)) == MAP_FAILED) {
+	printf("MEM: Couldn't map in /dev/kmem.");
+  }
+#endif
+
+  /* Ramdisk image built into the memory driver */
+  m_geom[IMGRD_DEV].dv_base= cvul64(0);
+  m_geom[IMGRD_DEV].dv_size= cvul64(imgrd_size);
+  m_vaddrs[IMGRD_DEV] = (vir_bytes) imgrd;
+
+  /* Initialize /dev/zero. Simply write zeros into the buffer. */
+  for (i=0; i<ZERO_BUF_SIZE; i++) {
+       dev_zero[i] = '\0';
+  }
+
+  for(i = 0; i < NR_DEVS; i++)
+	openct[i] = 0;
+
+  /* Set up memory range for /dev/mem. */
+  m_geom[MEM_DEV].dv_base = cvul64(0);
+  m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);
+
+  m_vaddrs[MEM_DEV] = (vir_bytes) MAP_FAILED; /* we are not mapping this in. */
+
+  return(OK);
 }
 
 /*===========================================================================*
@@ -355,50 +405,6 @@ message *m_ptr;
   openct[m_device]--;
 
   return(OK);
-}
-
-
-/*===========================================================================*
- *				m_init					     *
- *===========================================================================*/
-PRIVATE void m_init()
-{
-  /* Initialize this task. All minor devices are initialized one by one. */
-  u32_t ramdev_size;
-  int i, s;
-
-  if (OK != (s=sys_getkinfo(&kinfo))) {
-      panic("MEM","Couldn't get kernel information.",s);
-  }
-
-#if 0
-  /* Map in kernel memory for /dev/kmem. */
-  m_geom[KMEM_DEV].dv_base = cvul64(kinfo.kmem_base);
-  m_geom[KMEM_DEV].dv_size = cvul64(kinfo.kmem_size);
-  if((m_vaddrs[KMEM_DEV] = vm_map_phys(SELF, (void *) kinfo.kmem_base,
-	kinfo.kmem_size)) == MAP_FAILED) {
-	printf("MEM: Couldn't map in /dev/kmem.");
-  }
-#endif
-
-  /* Ramdisk image built into the memory driver */
-  m_geom[IMGRD_DEV].dv_base= cvul64(0);
-  m_geom[IMGRD_DEV].dv_size= cvul64(imgrd_size);
-  m_vaddrs[IMGRD_DEV] = (vir_bytes) imgrd;
-
-  /* Initialize /dev/zero. Simply write zeros into the buffer. */
-  for (i=0; i<ZERO_BUF_SIZE; i++) {
-       dev_zero[i] = '\0';
-  }
-
-  for(i = 0; i < NR_DEVS; i++)
-	openct[i] = 0;
-
-  /* Set up memory range for /dev/mem. */
-  m_geom[MEM_DEV].dv_base = cvul64(0);
-  m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);
-
-  m_vaddrs[MEM_DEV] = (vir_bytes) MAP_FAILED; /* we are not mapping this in. */
 }
 
 /*===========================================================================*

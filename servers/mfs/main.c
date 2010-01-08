@@ -10,12 +10,12 @@
 
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 FORWARD _PROTOTYPE(void cch_check, (void)				);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main                                         *
@@ -30,17 +30,8 @@ PUBLIC int main(int argc, char *argv[])
   message m;
 
   /* SEF local startup. */
+  env_setargs(argc, argv);
   sef_local_startup();
-
-  /* Initialize the server, then go to work. */
-  init_server();	
-
-  fs_m_in.m_type = FS_READY;
-
-  if (send(FS_PROC_NR, &fs_m_in) != OK) {
-	printf("MFS(%d): Error sending login to VFS\n", SELF_E);
-	return(-1);
-  }
 
   while(!unmountdone || !exitsignaled) {
 	endpoint_t src;
@@ -94,6 +85,10 @@ PUBLIC int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
@@ -101,11 +96,12 @@ PRIVATE void sef_local_startup()
 }
 
 /*===========================================================================*
- *				init_server                                  *
+ *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE void init_server(void)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-  int i;
+/* Initialize the Minix file server. */
+  int i, r;
 
   /* Init inode table */
   for (i = 0; i < NR_INODES; ++i) {
@@ -122,6 +118,14 @@ PRIVATE void init_server(void)
   SELF_E = getprocnr();
   buf_pool();
   fs_block_size = _MIN_BLOCK_SIZE;
+
+  fs_m_in.m_type = FS_READY;
+
+  if ((r = send(FS_PROC_NR, &fs_m_in)) != OK) {
+	panic("MFS", "Error sending login to VFS", r);
+  }
+
+  return(OK);
 }
 
 

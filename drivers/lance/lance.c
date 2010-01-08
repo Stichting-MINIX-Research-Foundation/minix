@@ -267,6 +267,9 @@ phys_bytes lance_buf_phys;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
 
 /*===========================================================================*
  *                              main                                         *
@@ -275,37 +278,11 @@ void main( int argc, char **argv )
 {
    message m;
    int i,irq,r;
-   u32_t tasknr;
    ether_card_t *ec;
-   long v;
-#if LANCE_FKEY
-   int fkeys, sfkeys;
-#endif
 
    /* SEF local startup. */
+   env_setargs(argc, argv);
    sef_local_startup();
-
-   (progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
-   env_setargs( argc, argv );
-
-#if LANCE_FKEY
-   fkeys = sfkeys = 0;
-   bit_set( sfkeys, 7 );
-   if ( (r = fkey_map(&fkeys, &sfkeys)) != OK )
-      printf("Warning: lance couldn't observe Shift+F7 key: %d\n",r);
-#endif
-
-   v= 0;
-   (void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-   eth_ign_proto= htons((u16_t) v);
-
-   /* Try to notify inet that we are present (again) */
-   r= ds_retrieve_u32("inet", &tasknr);
-   if (r == OK)
-      notify(tasknr);
-   else if (r != ESRCH)
-      printf("lance: ds_retrieve_u32 failed for 'inet': %d\n", r);
 
    while (TRUE)
    {
@@ -396,10 +373,50 @@ void main( int argc, char **argv )
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the lance driver. */
+   int r;
+   u32_t tasknr;
+   long v;
+#if LANCE_FKEY
+   int fkeys, sfkeys;
+#endif
+
+   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
+
+#if LANCE_FKEY
+   fkeys = sfkeys = 0;
+   bit_set( sfkeys, 7 );
+   if ( (r = fkey_map(&fkeys, &sfkeys)) != OK )
+      printf("Warning: lance couldn't observe Shift+F7 key: %d\n",r);
+#endif
+
+   v= 0;
+   (void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
+   eth_ign_proto= htons((u16_t) v);
+
+   /* Try to notify inet that we are present (again) */
+   r= ds_retrieve_u32("inet", &tasknr);
+   if (r == OK)
+      notify(tasknr);
+   else if (r != ESRCH)
+      printf("lance: ds_retrieve_u32 failed for 'inet': %d\n", r);
+
+  return(OK);
 }
 
 /*===========================================================================*

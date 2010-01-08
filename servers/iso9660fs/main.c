@@ -9,11 +9,11 @@
 #include "glo.h"
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main                                         *
@@ -24,16 +24,6 @@ PUBLIC int main(void) {
 
   /* SEF local startup. */
   sef_local_startup();
-
-  /* Initialize the server, then go to work. */
-  init_server();
-
-  fs_m_in.m_type = FS_READY;
-  
-  if (send(FS_PROC_NR, &fs_m_in) != OK) {
-      printf("ISOFS (%d): Error sending login to VFS\n", SELF_E);
-      return -1;
-  }
 
   for (;;) {
 
@@ -76,6 +66,10 @@ PUBLIC int main(void) {
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_restart_fail);
+
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
@@ -83,11 +77,12 @@ PRIVATE void sef_local_startup()
 }
 
 /*===========================================================================*
- *				init_server                                  *
+ *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE void init_server(void)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-   int i;
+/* Initialize the iso9660fs server. */
+   int i, r;
 
    /* Init driver mapping */
    for (i = 0; i < NR_DEVICES; ++i) 
@@ -96,6 +91,14 @@ PRIVATE void init_server(void)
    SELF_E = getprocnr();
 /*    hash_init(); */			/* Init the table with the ids */
    setenv("TZ","",1);		/* Used to calculate the time */
+
+   fs_m_in.m_type = FS_READY;
+
+   if ((r = send(FS_PROC_NR, &fs_m_in)) != OK) {
+       panic("ISOFS", "Error sending login to VFS", r);
+   }
+
+   return(OK);
 }
 
 /*===========================================================================*
