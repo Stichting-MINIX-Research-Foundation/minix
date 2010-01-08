@@ -100,6 +100,6 @@ libc_FILES=" \
 	v8regerror.c \
 	v8regexp.c \
 	v8regsub.c \
-	writev.c"
+	vectorio.c"
 
 TYPE=both

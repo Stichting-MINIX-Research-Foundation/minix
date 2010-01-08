@@ -14,6 +14,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <assert.h>
+#include <sys/uio.h>
 
 #define NOCRASH 1		/* test11(), 2nd pipe */
 #define PDPNOHANG  1		/* test03(), write_standards() */
@@ -45,7 +47,9 @@
 #define UMASK   "umask"
 #define CREAT   "creat"
 #define WRITE   "write"
+#define WRITEV  "writev"
 #define READ    "read"
+#define READV   "readv"
 #define OPEN    "open"
 #define CLOSE   "close"
 #define LSEEK   "lseek"
@@ -92,6 +96,12 @@ _PROTOTYPE(void try_open, (char *fname, int mode, int test));
 _PROTOTYPE(void test06, (void));
 _PROTOTYPE(void test07, (void));
 _PROTOTYPE(void access_standards, (void));
+_PROTOTYPE(void test08, (void));
+_PROTOTYPE(static int iovec_is_equal, 
+	(struct iovec *x, struct iovec *y, size_t size));
+_PROTOTYPE(static size_t iovec_setup, 
+	(int pattern, struct iovec *iovec, char *buffer, int count));
+_PROTOTYPE(static int power, (int base, int exponent));
 _PROTOTYPE(void try_access, (char *fname, int mode, int test));
 _PROTOTYPE(void e, (char *string));
 _PROTOTYPE(void nlcr, (void));
@@ -159,6 +169,7 @@ void test()
   test05();
   test06();
   test07();
+  test08();
   umask(022);
 }				/* test */
 
@@ -854,6 +865,124 @@ char *fname;
    try_close, try_unlink, Remove, get_mode, check, open_alot,
    close_alot, clean_up_the_mess.
 */
+
+/*****************************************************************************
+ *                              test READV/WRITEV                            *
+ ****************************************************************************/
+#define TEST8_BUFSZCOUNT 3
+#define TEST8_BUFSZMAX 65536
+#define TEST8_IOVCOUNT 4
+
+void test08()
+{
+  char buffer_read[TEST8_IOVCOUNT * TEST8_BUFSZMAX];
+  char buffer_write[TEST8_IOVCOUNT * TEST8_BUFSZMAX];
+  struct iovec iovec_read[TEST8_IOVCOUNT];
+  struct iovec iovec_write[TEST8_IOVCOUNT];
+  int fd, i, j, k, l, m;
+  ssize_t sz_read, sz_write;
+  size_t sz_read_exp, sz_read_sum, sz_write_sum;
+
+  /* try various combinations of buffer sizes */
+  for (i = 0; i <= TEST8_IOVCOUNT; i++)
+  for (j = 0; j < power(TEST8_BUFSZCOUNT, i); j++)
+  for (k = 0; k <= TEST8_IOVCOUNT; k++)
+  for (l = 0; l < power(TEST8_BUFSZCOUNT, k); l++)
+  {
+	/* put data in the buffers */
+	for (m = 0; m < sizeof(buffer_write); m++)
+	{
+		buffer_write[m] = m ^ (m >> 8);
+		buffer_read[m] = ~buffer_write[m];
+	} 
+
+	/* set up the vectors to point to the buffers */
+	sz_read_sum = iovec_setup(j, iovec_read, buffer_read, i);
+	sz_write_sum = iovec_setup(l, iovec_write, buffer_write, k);
+	sz_read_exp = (sz_read_sum < sz_write_sum) ? 
+		sz_read_sum : sz_write_sum;
+
+	/* test reading and writing */
+	if ((fd = open("file08", O_RDWR | O_CREAT | O_TRUNC, 0644)) < 0)
+		err(13, OPEN, "'file08'");
+	else {
+		sz_write = writev(fd, iovec_write, k);
+		if (sz_write != sz_write_sum) err(5, WRITEV, "'file08'");
+		if (lseek(fd, 0, SEEK_SET) != 0) err(5, LSEEK, "'file08'");
+		sz_read = readv(fd, iovec_read, i);
+		if (sz_read != sz_read_exp) 
+			err(5, READV, "'file08'");
+		else
+		{
+			if (!iovec_is_equal(iovec_read, iovec_write, sz_read)) 
+				err(8, READV, "'file08'");
+		}
+
+  		/* Remove testfile */
+ 		Remove(fd, "file08");
+	}
+  }
+}				/* test08 */
+
+static int iovec_is_equal(struct iovec *x, struct iovec *y, size_t size)
+{
+  int xpos = 0, xvec = 0, ypos = 0, yvec = 0;
+
+  /* compare byte by byte */
+  while (size-- > 0)
+  {
+	/* skip over zero-byte buffers and those that have been completed */
+	while (xpos >= x[xvec].iov_len)
+	{
+		xpos -= x[xvec++].iov_len;
+		assert(xvec < TEST8_IOVCOUNT);
+	}
+	while (ypos >= y[yvec].iov_len)
+	{
+		ypos -= y[yvec++].iov_len;
+		assert(yvec < TEST8_IOVCOUNT);
+	}
+
+	/* compare */
+	if (((char *) x[xvec].iov_base)[xpos++] != 
+		((char *) y[yvec].iov_base)[ypos++])
+		return 0;
+  }
+
+  /* no difference found */
+  return 1;
+}
+
+static size_t iovec_setup(int pattern, struct iovec *iovec, char *buffer, int count)
+{
+	static const size_t bufsizes[TEST8_BUFSZCOUNT] = { 0, 1, TEST8_BUFSZMAX };
+	int i;
+	size_t sum = 0;
+
+	/* the pattern specifies each buffer */
+	for (i = 0; i < TEST8_IOVCOUNT; i++)
+	{
+		iovec->iov_base = buffer;
+		sum += iovec->iov_len = bufsizes[pattern % TEST8_BUFSZCOUNT];
+
+		iovec++;
+		buffer += TEST8_BUFSZMAX;
+		pattern /= TEST8_BUFSZCOUNT;
+	}
+
+	return sum;
+}
+
+static int power(int base, int exponent)
+{
+	int result = 1;
+
+	/* compute base^exponent */
+	while (exponent-- > 0)
+		result *= base;
+
+	return result;
+}
 
 /***********************************************************************
  *				EXTENDED FIONS			       *

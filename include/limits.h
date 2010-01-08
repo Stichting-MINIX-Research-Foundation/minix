@@ -104,7 +104,7 @@
 				 * be reliably traversed in the resolution of
 				 * a pathname in the absence of a loop.
 				 */
-
+#define IOV_MAX        INT_MAX  /* maximum number of buffers for readv/writev */
 #endif /* _POSIX_SOURCE */
 
 #endif /* _LIMITS_H */
