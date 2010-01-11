@@ -81,7 +81,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   if(value)
 	config_no_apic = atoi(value);
   else
-	config_no_apic = 0;
+	config_no_apic = 1;
 #endif
 
   /* Return to assembler code to switch to protected mode (if 286), 
