@@ -59,7 +59,7 @@ static int do_del_phys(message *m);
 static int do_add4pci(message *m);
 static void add_range(u32_t busaddr, u32_t size);
 static void del_range(u32_t busaddr, u32_t size);
-static int do_pm_notify(message *m);
+static void do_pm_notify(message *m);
 static void report_exceptions(void);
 
 /* SEF functions and variables. */
@@ -158,6 +158,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	return(OK);
 }
 
+/* Returns 0 if no device found, or 1 if a device is found. */
 static int find_dev(devindp, capaddrp)
 int *devindp;
 u8_t *capaddrp;
@@ -178,7 +179,7 @@ u8_t *capaddrp;
 			if (!r)
 			{
 				printf("amddev`find_dev: no first dev\n");
-				return;
+				return 0;
 			}
 		}
 		else
@@ -187,7 +188,7 @@ u8_t *capaddrp;
 			if (!r)
 			{
 				printf("amddev`find_dev: no next dev\n");
-				return;
+				return 0;
 			}
 		}
 
@@ -485,7 +486,7 @@ static void del_range(u32_t busaddr, u32_t size)
 	}
 }
 
-static int do_pm_notify(message *m)
+static void do_pm_notify(message *m)
 {
 	int r;
 	endpoint_t proc_e;

@@ -67,6 +67,8 @@ PUBLIC int drv_init(void) {
 	special_file[2].write_chan = NO_CHANNEL;
 	special_file[2].read_chan = NO_CHANNEL;
 	special_file[2].io_ctl = MIXER;
+
+	return OK;
 }
 
 

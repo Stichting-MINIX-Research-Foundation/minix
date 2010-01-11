@@ -109,6 +109,8 @@ PUBLIC int drv_init(void) {
 	special_file[3].write_chan = DAC2_CHAN;
 	special_file[3].read_chan = NO_CHANNEL;
 	special_file[3].io_ctl = DAC2_CHAN;
+
+	return OK;
 }
 
 
@@ -324,7 +326,7 @@ int drv_io_ctl(int request, void * val, int * len, int sub_dev) {
 			status = EINVAL; break;
 	}
 
-	return OK;
+	return status;
 }
 
 
@@ -597,6 +599,7 @@ PRIVATE int disable_int(int chan) {
 	/* clear the interrupt */
 	ser_interface = pci_inw(reg(SERIAL_INTERFACE_CTRL));
 	pci_outw(reg(SERIAL_INTERFACE_CTRL), ser_interface & ~int_en_bit);
+	return OK;
 }
 
 

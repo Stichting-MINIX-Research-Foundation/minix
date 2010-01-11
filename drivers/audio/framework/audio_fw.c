@@ -403,6 +403,7 @@ PRIVATE int close_sub_dev(int sub_dev_nr) {
 	/* free the buffers */
 	free(sub_dev_ptr->DmaBuf);
 	free(sub_dev_ptr->ExtraBuf);
+	return OK;
 }
 
 

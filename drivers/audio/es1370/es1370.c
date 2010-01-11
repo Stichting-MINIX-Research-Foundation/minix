@@ -103,6 +103,8 @@ PUBLIC int drv_init(void) {
 	special_file[3].write_chan = DAC2_CHAN;
 	special_file[3].read_chan = NO_CHANNEL;
 	special_file[3].io_ctl = DAC2_CHAN;
+
+	return OK;
 }
 
 
@@ -267,6 +269,7 @@ int drv_start(int sub_dev, int DmaMode) {
 int drv_stop(int sub_dev)
 {
 	u32_t enable_bit;
+	int status;
 
 	switch(sub_dev) {
 		case ADC1_CHAN: enable_bit = ADC1_EN;break;
@@ -279,9 +282,9 @@ int drv_stop(int sub_dev)
 	pci_outw(reg(CHIP_SEL_CTRL),
 			pci_inw(reg(CHIP_SEL_CTRL)) & ~enable_bit);
 	aud_conf[sub_dev].busy = 0;
-	disable_int(sub_dev);
+	status = disable_int(sub_dev);
 
-	return OK;
+	return status;
 }
 
 
@@ -321,7 +324,7 @@ int drv_io_ctl(int request, void * val, int * len, int sub_dev) {
 			status = EINVAL; break;
 	}
 
-	return OK;
+	return status;
 }
 
 
@@ -593,6 +596,7 @@ PRIVATE int disable_int(int chan) {
 	/* clear the interrupt */
 	ser_interface = pci_inw(reg(SERIAL_INTERFACE_CTRL));
 	pci_outw(reg(SERIAL_INTERFACE_CTRL), ser_interface & ~int_en_bit);
+	return OK;
 }
 
 
