@@ -56,6 +56,8 @@ _PROTOTYPE(void test37l, (void));
 _PROTOTYPE(void func_m1, (void));
 _PROTOTYPE(void func_m2, (void));
 _PROTOTYPE(void test37m, (void));
+_PROTOTYPE(void test37p, (void));
+_PROTOTYPE(void test37q, (void));
 _PROTOTYPE(void longjerr, (void));
 _PROTOTYPE(void catch14, (int signo, int code, struct sigcontext * scp));
 _PROTOTYPE(void test37n, (void));
@@ -70,7 +72,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int i, m = 0xFFFF;
+  int i, m = 0377777;
 
   sync();
 
@@ -99,6 +101,8 @@ char *argv[];
 	if (m & 0010000) test37m();
 	if (m & 0020000) test37n();
 	if (m & 0040000) test37o();
+	if (m & 0100000) test37p();
+	if (m & 0200000) test37q();
   }
 
   quit();
@@ -871,25 +875,31 @@ void test37l()
 * signal mask is properly restored.
 */
 
-void test37m()
-{
-  jmp_buf jb;
-  sigset_t ss;
-
-  subtest = 13;
-  clearsigstate();
-
-  ss = 0x32;
-  if (sigprocmask(SIG_SETMASK, &ss, (sigset_t *)NULL) == -1) e(1);
-  if (setjmp(jb)) {
-	if (sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &ss) == -1) e(2);
-	if (ss != 0x32) e(388);
-	return;
-  }
-  ss = 0x3abc;
-  if (sigprocmask(SIG_SETMASK, &ss, (sigset_t *)NULL) == -1) e(4);
-  longjmp(jb, 1);
+#define TEST_SETJMP(_name, _subtest, _type, _setjmp, _longjmp, _save)	\
+void _name(void)							\
+{									\
+  _type jb;								\
+  sigset_t ss, ssexp;							\
+									\
+  subtest = _subtest;							\
+  clearsigstate();							\
+									\
+  ss = 0x32;								\
+  if (sigprocmask(SIG_SETMASK, &ss, (sigset_t *)NULL) == -1) e(1);	\
+  if (_setjmp) {							\
+	if (sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &ss) == -1) e(2);	\
+	ssexp = _save ? 0x32 : 0x3abc;					\
+	if ((ss ^ ssexp) & ~(1 << SIGKILL)) e(388);			\
+	return;								\
+  }									\
+  ss = 0x3abc;								\
+  if (sigprocmask(SIG_SETMASK, &ss, (sigset_t *)NULL) == -1) e(4);	\
+  _longjmp;								\
 }
+
+TEST_SETJMP(test37m, 13, jmp_buf,    setjmp(jb),       longjmp(jb, 1),    1)
+TEST_SETJMP(test37p, 16, sigjmp_buf, sigsetjmp(jb, 0), siglongjmp(jb, 1), 0)
+TEST_SETJMP(test37q, 17, sigjmp_buf, sigsetjmp(jb, 1), siglongjmp(jb, 1), 1)
 
 void longjerr()
 {
