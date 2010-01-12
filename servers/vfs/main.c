@@ -517,6 +517,7 @@ PRIVATE void init_root()
   /* Root directory is not mounted on a vnode. */
   vmp->m_mounted_on = NULL;
   vmp->m_root_node = root_node;
+  strcpy(vmp->m_label, "fs_imgrd");	/* FIXME: obtain this from RS */
 }
 
 /*===========================================================================*

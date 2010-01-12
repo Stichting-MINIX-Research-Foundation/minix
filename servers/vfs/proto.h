@@ -94,7 +94,7 @@ _PROTOTYPE( int do_vm_mmap, (void)					);
 _PROTOTYPE( int do_fslogin, (void)                                      );
 _PROTOTYPE( int do_mount, (void)					);
 _PROTOTYPE( int do_umount, (void)					);
-_PROTOTYPE( int unmount, (Dev_t dev)					);
+_PROTOTYPE( int unmount, (Dev_t dev, char *label)			);
 
 /* open.c */
 _PROTOTYPE( int do_close, (void)					);

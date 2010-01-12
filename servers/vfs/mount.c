@@ -1,8 +1,10 @@
 /* This file performs the MOUNT and UMOUNT system calls.
  *
  * The entry points into this file are
- *   do_mount:  perform the MOUNT system call
- *   do_umount: perform the UMOUNT system call
+ *   do_fslogin:	perform the FSLOGIN system call
+ *   do_mount:		perform the MOUNT system call
+ *   do_umount:		perform the UMOUNT system call
+ *   unmount:		unmount a file system
  */
 
 #include "fs.h"
@@ -14,8 +16,11 @@
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <minix/syslib.h>
+#include <minix/bitmap.h>
+#include <minix/ds.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <dirent.h>
 #include "file.h"
 #include "fproc.h"
@@ -27,9 +32,16 @@
 /* Allow the root to be replaced before the first 'real' mount. */
 PRIVATE int allow_newroot = 1;
 
-FORWARD _PROTOTYPE( dev_t name_to_dev, (void)                           );
-FORWARD _PROTOTYPE( int mount_fs, (endpoint_t fs_e)                     );
+/* Bitmap of in-use "none" pseudo devices. */
+PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 
+#define alloc_nonedev(dev) SET_BIT(nonedev, minor(dev) - 1)
+#define free_nonedev(dev) UNSET_BIT(nonedev, minor(dev) - 1)
+
+FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt)		);
+FORWARD _PROTOTYPE( int mount_fs, (endpoint_t fs_e)			);
+FORWARD _PROTOTYPE( int is_nonedev, (Dev_t dev)				);
+FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)				);
 
 /*===========================================================================*
  *                              do_fslogin                                   *
@@ -39,7 +51,7 @@ PUBLIC int do_fslogin()
   int r;
 
   /* Login before mount request */
-  if ((unsigned long)mount_m_in.m1_p3 != who_e) {
+  if (mount_fs_e != who_e) {
       last_login_fs_e = who_e;
       r = SUSPEND;
   }
@@ -58,7 +70,7 @@ PUBLIC int do_fslogin()
 	fp = &fproc[who_p];       /* pointer to proc table struct */
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
       
-	r = do_mount();
+	r = mount_fs(mount_fs_e);
   }
   return(r);
 }
@@ -69,13 +81,30 @@ PUBLIC int do_fslogin()
  *===========================================================================*/
 PUBLIC int do_mount()
 {
-  endpoint_t fs_e; 
+  u32_t fs_e;
+  int r, proc_nr;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
 	
   /* FS process' endpoint number */ 
-  fs_e = (unsigned long) m_in.fs_endpt;
+  if (m_in.mount_flags & MS_LABEL16) {
+	/* Get the label from the caller, and ask DS for the endpoint. */
+	r = sys_datacopy(who_e, (vir_bytes) m_in.fs_label, SELF,
+		(vir_bytes) mount_label, (phys_bytes) sizeof(mount_label));
+	if (r != OK) return(r);
+
+	mount_label[sizeof(mount_label)-1] = 0;
+
+	r = ds_retrieve_u32(mount_label, &fs_e);
+	if (r != OK) return(r);
+
+	if (isokendpt(fs_e, &proc_nr) != OK) return(EINVAL);
+  } else {
+	/* Legacy support: get the endpoint from the request itself. */
+	fs_e = (unsigned long) m_in.fs_label;
+	mount_label[0] = 0;
+  }
 
   /* Sanity check on process number. */
   if(fs_e <= 0) {
@@ -93,9 +122,9 @@ PUBLIC int do_mount()
  *===========================================================================*/
 PRIVATE int mount_fs(endpoint_t fs_e)
 {
-/* Perform the mount(name, mfile, rd_only) system call. */
+/* Perform the mount(name, mfile, mount_flags) system call. */
   int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
-  int i, r, found, isroot, replace_root;
+  int i, r, found, rdonly, nodev, isroot, replace_root;
   struct fproc *tfp;
   struct dmap *dp;
   dev_t dev;
@@ -110,19 +139,37 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   /* If FS not yet logged in, save message and suspend mount */
   if (last_login_fs_e != fs_e) {
-	mount_m_in = m_in; 
+	mount_m_in = m_in;
+	mount_fs_e = fs_e;
+	/* mount_label is already saved */
 	return(SUSPEND);
   }
   
-  /* Mount request got after FS login or FS login arrived after a suspended mount */
+  /* Mount request got after FS login or FS login arrived after a suspended
+   * mount.
+   */
   last_login_fs_e = NONE;
   
   /* Clear endpoint field */
-  mount_m_in.fs_endpt = (char *) NONE;
+  mount_fs_e = NONE;
 
-  /* If 'name' is not for a block special file, return error. */
-  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((dev = name_to_dev()) == NO_DEV) return(err_code);
+  /* Should the file system be mounted read-only? */
+  rdonly = (m_in.mount_flags & MS_RDONLY);
+
+  /* A null string for block special device means don't use a device at all. */
+  nodev = (m_in.name1_length == 0);
+
+  if (!nodev) {
+	/* If 'name' is not for a block special file, return error. */
+	if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK)
+		return(err_code);
+	if ((dev = name_to_dev(FALSE /*allow_mountpt*/)) == NO_DEV)
+		return(err_code);
+  } else {
+	/* Find a free pseudo-device as substitute for an actual device. */
+	if ((dev = find_free_nonedev()) == NO_DEV)
+		return(err_code);
+  }
 
   /* Check whether there is a block special file open which uses the 
    * same device (partition) */
@@ -158,24 +205,13 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Partition was/is already mounted */
   if (found) {
 	/* It is possible that we have an old root lying around that 
-	 * needs to be remounted. */
-	if(vmp->m_mounted_on || vmp->m_mounted_on == fproc[FS_PROC_NR].fp_rd) {
-		/* Normally, m_mounted_on refers to the mount point. For a
-		 * root filesystem, m_mounted_on is equal to the root vnode.
-		 * We assume that the root of FS is always the real root. If
-		 * the two vnodes are different or if the root of FS is equal
-		 * to the root of the filesystem we found, we found a
-		 * filesystem that is in use.
-		 */
-		return(EBUSY);   /* already mounted */
+	 * needs to be remounted. This could for example be a boot
+	 * ramdisk that has already been replaced by the real root.
+	 */
+	if(vmp->m_mounted_on || root_dev == vmp->m_dev) {
+		return(EBUSY);   /* not a root or still mounted */
 	}
-	  
-	if(vmp->m_mounted_on)
-		panic("vfs", "root unexpectedly mounted somewhere", NO_NUM);
-	  
-	if (root_dev == vmp->m_dev)
-		panic("vfs", "inconsistency remounting old root", NO_NUM);
-	  
+  
 	/* Now get the inode of the file to be mounted on. */
 	if (fetch_name(m_in.name2, m_in.name2_length, M1)!=OK) return(err_code);
 	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
@@ -201,8 +237,10 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
 	/* Nothing else can go wrong.  Perform the mount. */
 	vmp->m_mounted_on = vp;
-	vmp->m_flags = m_in.rd_only;
-	allow_newroot = 0;              /* The root is now fixed */
+	vmp->m_flags = rdonly;
+	strcpy(vmp->m_label, mount_label);
+	allow_newroot = 0;             	/* The root is now fixed */
+	if (nodev) alloc_nonedev(dev);	/* Make the allocation final */
 
 	return(OK);
   }
@@ -224,21 +262,29 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   }
 
   /* We'll need a vnode for the root inode, check whether there is one */
-  if ((root_node = get_free_vnode()) == NIL_VNODE) return(ENFILE);  
-
-  /* Get driver process' endpoint */  
-  dp = &dmap[(dev >> MAJOR) & BYTE];
-  if (dp->dmap_driver == NONE) {
-	  printf("VFS: no driver for dev %x\n", dev);
-	  return(EINVAL);
+  if ((root_node = get_free_vnode()) == NIL_VNODE) {
+	if (vp != NIL_VNODE) put_vnode(vp);
+	return(ENFILE);
   }
 
-  label = dp->dmap_label;
-  if (strlen(label) == 0)
-	panic(__FILE__, "VFS mount_fs: no label for major", dev >> MAJOR);
+  label = "";
+  if (!nodev) {
+	/* Get driver process' endpoint */
+	dp = &dmap[(dev >> MAJOR) & BYTE];
+	if (dp->dmap_driver == NONE) {
+		printf("VFS: no driver for dev %x\n", dev);
+		if (vp != NIL_VNODE) put_vnode(vp);
+		return(EINVAL);
+	}
+
+	label = dp->dmap_label;
+	if (strlen(label) == 0)
+		panic(__FILE__, "VFS mount_fs: no label for major",
+			dev >> MAJOR);
+  }
 
   /* Tell FS which device to mount */
-  if ((r = req_readsuper(fs_e, label, dev, m_in.rd_only, isroot, &res)) != OK){
+  if ((r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res)) != OK) {
 	if (vp != NIL_VNODE) put_vnode(vp);
 	return(r);
   }
@@ -257,7 +303,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Fill in max file size and blocksize for the vmnt */
   vmp->m_fs_e = res.fs_e;
   vmp->m_dev = dev;
-  vmp->m_flags = m_in.rd_only;
+  vmp->m_flags = rdonly;
   
   /* Root node is indeed on the partition */
   root_node->v_vmnt = vmp;
@@ -268,6 +314,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	 * Nothing else can go wrong. Perform the mount. */
 	vmp->m_root_node = root_node;
 	vmp->m_mounted_on = NULL;
+	strcpy(vmp->m_label, mount_label);
+	if (nodev) alloc_nonedev(dev);
 
 	root_dev = dev;
 	ROOT_FS_E = fs_e;
@@ -291,11 +339,9 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   }
   
   /* File types may not conflict. */
-  if (r == OK) {
-	mdir = ((vp->v_mode & I_TYPE) == I_DIRECTORY); /*TRUE iff dir*/
-	rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
-	if (!mdir && rdir) r = EISDIR;
-  }
+  mdir = ((vp->v_mode & I_TYPE) == I_DIRECTORY); /*TRUE iff dir*/
+  rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
+  if (!mdir && rdir) r = EISDIR;
 
   /* If error, return the super block and both inodes; release the vmnt. */
   if (r != OK) {
@@ -308,9 +354,13 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Nothing else can go wrong.  Perform the mount. */
   vmp->m_mounted_on = vp;
   vmp->m_root_node = root_node;
+  strcpy(vmp->m_label, mount_label);
   
   /* The root is now fixed */
-  allow_newroot = 0;            
+  allow_newroot = 0;
+
+  /* Allocate the pseudo device that was found, if not using a real device. */
+  if (nodev) alloc_nonedev(dev);
 
   /* There was a block spec file open, and it should be handled by the 
    * new FS proc now */
@@ -326,23 +376,35 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 PUBLIC int do_umount()
 {
 /* Perform the umount(name) system call. */
+  char label[LABEL_MAX];
   dev_t dev;
+  int r;
 	
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);
 	
-  /* If 'name' is not for a block special file, return error. */
+  /* If 'name' is not for a block special file or mountpoint, return error. */
   if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if((dev = name_to_dev()) == NO_DEV) return(err_code);
-  return unmount(dev);
+  if((dev = name_to_dev(TRUE /*allow_mountpt*/)) == NO_DEV) return(err_code);
+
+  if((r = unmount(dev, label)) != OK) return(r);
+
+  /* Return the label of the mounted file system, so that the caller
+   * can shut down the corresponding server process.
+   */
+  if (strlen(label) >= M3_LONG_STRING)	/* should never evaluate to true */
+	label[M3_LONG_STRING-1] = 0;
+  strcpy(m_out.umount_label, label);
+  return(OK);
 }
 
 
 /*===========================================================================*
  *                              unmount                                      *
  *===========================================================================*/
-PUBLIC int unmount(dev)
-Dev_t dev;
+PUBLIC int unmount(dev, label)
+Dev_t dev;				/* block-special device */
+char *label;				/* buffer to retrieve label, or NULL */
 {
   struct vnode *vp, *vi;
   struct vmnt *vmp_i = NULL, *vmp = NULL;
@@ -371,19 +433,25 @@ Dev_t dev;
   
   /* Tell FS to drop all inode references for root inode except 1. */
   vnode_clean_refs(vmp->m_root_node);
-	  
+
   if (vmp->m_mounted_on) {
 	put_vnode(vmp->m_mounted_on);
 	vmp->m_mounted_on = NIL_VNODE;
   }
-	
+
   /* Tell FS to unmount */
   if(vmp->m_fs_e <= 0 || vmp->m_fs_e == NONE)
 	panic(__FILE__, "unmount: strange fs endpoint", vmp->m_fs_e);
 
   if ((r = req_unmount(vmp->m_fs_e)) != OK)              /* Not recoverable. */
 	printf("VFS: ignoring failed umount attempt (%d)\n", r);
-  
+
+  if (is_nonedev(vmp->m_dev))
+	free_nonedev(vmp->m_dev);
+
+  if (label != NULL)
+	strcpy(label, vmp->m_label);
+ 
   vmp->m_root_node->v_ref_count = 0;
   vmp->m_root_node->v_fs_count = 0;
   vmp->m_root_node->v_sdev = NO_DEV;
@@ -421,27 +489,63 @@ Dev_t dev;
 /*===========================================================================*
  *                              name_to_dev                                  *
  *===========================================================================*/
-PRIVATE dev_t name_to_dev()
+PRIVATE dev_t name_to_dev(allow_mountpt)
+int allow_mountpt;
 {
-/* Convert the block special file 'path' to a device number.  If 'path'
- * is not a block special file, return error code in 'err_code'. */
+/* Convert the block special file in 'user_fullpath' to a device number.
+ * If the given path is not a block special file, but 'allow_mountpt' is set
+ * and the path is the root node of a mounted file system, return that device
+ * number. In all other cases, return NO_DEV and an error code in 'err_code'.
+ */
   int r;
   dev_t dev;
   struct vnode *vp;
   
   /* Request lookup */
   if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) {
-	printf("VFS: name_to_dev: lookup of '%s' failed\n", user_fullpath);
 	return(NO_DEV);
   }
 
-  if ((vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) {
+  if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL) {
+	dev = vp->v_sdev;
+  } else if (allow_mountpt && vp->v_vmnt->m_root_node == vp) {
+	dev = vp->v_dev;
+  } else {
   	err_code = ENOTBLK;
 	dev = NO_DEV;
-  } else
-	dev = vp->v_sdev;
+  }
 
   put_vnode(vp);
   return(dev);
 }
 
+
+/*===========================================================================*
+ *                              is_nonedev				     *
+ *===========================================================================*/
+PRIVATE int is_nonedev(dev)
+{
+/* Return whether the given device is a "none" pseudo device.
+ */
+
+  return (major(dev) == NONE_MAJOR &&
+	minor(dev) > 0 && minor(dev) <= NR_NONEDEVS);
+}
+
+
+/*===========================================================================*
+ *                              find_free_nonedev			     *
+ *===========================================================================*/
+PRIVATE dev_t find_free_nonedev()
+{
+/* Find a free "none" pseudo device. Do not allocate it yet.
+ */
+  int i;
+
+  for (i = 0; i < NR_NONEDEVS; i++)
+	if (!GET_BIT(nonedev, i))
+		return makedev(NONE_MAJOR, i + 1);
+
+  err_code = EMFILE;
+  return NO_DEV;
+}

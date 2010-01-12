@@ -31,11 +31,12 @@
 #define dev_nr	      m4_l3
 #define dev_style     m4_l4
 #define m_force	      m4_l5
-#define rd_only	      m1_i3
+#define mount_flags   m1_i3
 #define request       m1_i2
 #define sig	      m1_i2
 #define endpt1	      m1_i1
-#define fs_endpt      m1_p3
+#define fs_label      m1_p3
+#define umount_label  m3_ca1
 #define tp	      m2_l1
 #define utime_actime  m2_l1
 #define utime_modtime m2_l2

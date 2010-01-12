@@ -27,12 +27,18 @@ is a directory, then
 .I name
 must also be a directory.
 .I Special
-must be a block special file, except for loopback mounts.  For loopback
-mounts a normal file or directory is used for
-.IR special ,
-which must be seen as the root of a virtual device.
-.I Flag
-is 0 for a read-write mount, 1 for read-only.
+must be a block special file, or a NULL pointer.
+If a NULL pointer is passed, the file system is
+mounted without a block device.
+.I Mountflags
+may be a bitwise combination of the following flags:
+.TP 2
+.B MS_RDONLY
+Mount file system read-only, rather than read-write.
+.TP
+.B MS_REUSE
+Reuse the file system server image if possible.
+.PP
 .I Type
 is the type of the file system (e.g. "mfs"), used to pick a file system server.
 If this parameter is NULL, the default type is used.

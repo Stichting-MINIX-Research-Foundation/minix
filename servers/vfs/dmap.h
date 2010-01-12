@@ -20,7 +20,7 @@ extern struct dmap {
   int _PROTOTYPE ((*dmap_io), (int, message *) );
   endpoint_t dmap_driver;
   int dmap_flags;
-  char dmap_label[16];
+  char dmap_label[LABEL_MAX];
   int dmap_async_driver;
   struct filp *dmap_sel_filp;
 } dmap[];

@@ -65,7 +65,7 @@ PUBLIC int do_mapdriver()
 	unsigned long tasknr;
 	vir_bytes label_vir;
 	size_t label_len;
-	char label[16];
+	char label[LABEL_MAX];
 
 	if (!super_user)
 	{

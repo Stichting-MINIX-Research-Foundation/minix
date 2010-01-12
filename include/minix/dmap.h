@@ -11,7 +11,11 @@ enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
  *===========================================================================*/
 
 /* Total number of different devices. */
-#define NR_DEVICES   		  32			/* number of (major) devices */
+#define NR_DEVICES   		  32		/* number of (major) devices */
+
+#define NONE_MAJOR		   0	/* pseudo device for mounting file
+					 * systems without a real block device
+					 */
 
 /* Major and minor device numbers for MEMORY driver. */
 #define MEMORY_MAJOR  		   1	/* major device for memory devices */

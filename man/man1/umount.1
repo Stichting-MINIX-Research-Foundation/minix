@@ -2,7 +2,7 @@
 .SH NAME
 umount \- unmount a mounted file system
 .SH SYNOPSIS
-\fBumount \fIspecial\fR
+\fBumount \fIname\fR
 .br
 .de FL
 .TP
@@ -16,8 +16,13 @@ umount \- unmount a mounted file system
 ..
 .SH EXAMPLES
 .EX "umount /dev/fd1" "Unmount diskette 1"
+.EX "umount /mnt" "Unmount the file system mounted on /mnt"
 .SH DESCRIPTION
 .PP
+This command unmounts a file system identified by
+.IR name .
+This name may be either a block special file, or the path name of a mount
+point.
 A mounted file system is unmounted after the cache has been flushed to disk.
 A diskette should never be removed while it is mounted.
 If this happens, and is discovered before another diskette is inserted, the

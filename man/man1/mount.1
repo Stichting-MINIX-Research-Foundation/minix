@@ -20,10 +20,13 @@ mount \- mount a file system
 .FL "\-o" "Options passed to FS server"
 .SH EXAMPLES
 .EX "mount /dev/fd1 /user" "Mount diskette 1 on \fI/user\fP"
+.EX "mount -t procfs none /proc" "Mount proc file system on \fI/proc\fP"
 .SH DESCRIPTION
 .PP
-The file system contained on the special file is mounted on \fIfile\fP.
-In the example above, the root directory of the file system in drive 1
+The file system contained on the special file \fIspecial\fP is mounted on
+\fIfile\fP. If the value of "\fBnone\fP" is given for \fIspecial\fP,
+the file system is mounted without a block special device underneath it.
+In the first example above, the root directory of the file system in drive 1
 can be accessed as
 .B /user
 after the mount.
@@ -37,6 +40,10 @@ The
 .B \-o
 flag may be used to pass options to the file system server.
 The interpretation of these options is up to the server.
+.PP
+If \fBmount\fP is invoked without any parameters, it will print the list of
+currently mounted file systems according to
+.BR mtab (5).
 .SH "SEE ALSO"
 .BR df (1),
 .BR mkfs (1),

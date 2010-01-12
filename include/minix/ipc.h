@@ -10,12 +10,13 @@
 #define M1                 1
 #define M3                 3
 #define M4                 4
-#define M3_STRING         14
+#define M3_STRING         14	/* legacy m3_ca1 size (must not be changed) */
+#define M3_LONG_STRING    16	/* current m3_ca1 size (may be increased) */
 
 typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3;} mess_1;
 typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1; 
         short m2s1;} mess_2;
-typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_STRING];} mess_3;
+typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_LONG_STRING];} mess_3;
 typedef struct {long m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
 typedef struct {short m5c1, m5c2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
 typedef struct {long m6l1, m6l2, m6l3; short m6s1, m6s2, m6s3; char m6c1, m6c2;

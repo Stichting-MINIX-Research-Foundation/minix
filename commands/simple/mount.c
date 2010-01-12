@@ -21,14 +21,13 @@
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void list, (void));
 _PROTOTYPE(void usage, (void));
-_PROTOTYPE(void tell, (char *this));
 
 int main(argc, argv)
 int argc;
 char *argv[];
 {
   int i, n, v, mountflags;
-  char **ap, *vs, *opt, *err, *type, *args;
+  char **ap, *vs, *opt, *err, *type, *args, *device;
   char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
 
   if (argc == 1) list();	/* just list /etc/mtab */
@@ -57,25 +56,21 @@ char *argv[];
   *ap = NULL;
   argc = (ap - argv);
 
-  if (argc != 3) usage();
-  if (mount(argv[1], argv[2], mountflags, type, args) < 0) {
+  if (argc != 3 || *argv[1] == 0) usage();
+
+  device = argv[1];
+  if (!strcmp(device, "none")) device = NULL;
+
+  if (mount(device, argv[2], mountflags, type, args) < 0) {
 	err = strerror(errno);
-	std_err("mount: Can't mount ");
-	std_err(argv[1]);
-	std_err(" on ");
-	std_err(argv[2]);
-	std_err(": ");
-	std_err(err);
-	std_err("\n");
+	fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
+		argv[1], argv[2], err);
 	exit(1);
   }
+
   /* The mount has completed successfully. Tell the user. */
-  tell(argv[1]);
-  tell(" is read-");
-  tell(mountflags & MS_RDONLY ? "only" : "write");
-  tell(" mounted on ");
-  tell(argv[2]);
-  tell("\n");
+  printf("%s is read-%s mounted on %s\n",
+	argv[1], mountflags & MS_RDONLY ? "only" : "write", argv[2]);
 
   /* Update /etc/mtab. */
   n = load_mtab("mount");
@@ -133,12 +128,9 @@ void list()
   while (1) {
 	n = get_mtab_entry(special, mounted_on, version, rw_flag);
 	if  (n < 0) break;
-	write(1, special, strlen(special));
-	tell(" is read-");
-	tell(strcmp(rw_flag, "rw") == 0 ? "write" : "only");
-	tell(" mounted on ");
-	tell(mounted_on);
-	tell("\n");
+	printf("%s is read-%s mounted on %s (type %s)\n",
+		special, strcmp(rw_flag, "rw") == 0 ? "write" : "only",
+		mounted_on, version);
   }
   exit(0);
 }
@@ -148,11 +140,4 @@ void usage()
 {
   std_err("Usage: mount [-r] [-t type] [-o options] special name\n");
   exit(1);
-}
-
-
-void tell(this)
-char *this;
-{
-  write(1, this, strlen(this));
 }

@@ -25,40 +25,17 @@ PRIVATE int rs_down(char *label)
 	return system(cmd);
 }
 
-PRIVATE char *makelabel(_CONST char *special)
-{
-  static char label[40];
-  _CONST char *dev;
-
-  /* Make label name. */
-  dev = strrchr(special, '/');
-  if(dev) dev++;
-  else dev = special;
-  if(strchr(dev, '\'') != NULL) {
-  	errno = EINVAL;
-  	return NULL;
-  }
-  if(strlen(dev)+4 >= sizeof(label)) {
-  	errno = E2BIG;
-	return NULL;
-  }
-  sprintf(label, "fs_%s", dev);
-  return label;
-}
-
 PUBLIC int mount(special, name, mountflags, type, args)
 char *name, *special, *type, *args;
 int mountflags;
 {
   int r;
   message m;
-  struct rs_start rs_start;
   struct stat statbuf;
-  char *label;
+  char label[16];
   char path[60];
   char cmd[200];
-  FILE *pipe;
-  int ep;
+  char *p;
   int reuse;
 
   /* Default values. */
@@ -68,14 +45,32 @@ int mountflags;
 
   /* Check mount flags */
   if(mountflags & MS_REUSE) {
-    reuse = 1;
-    mountflags &= ~MS_REUSE; /* Temporary: turn off to not confuse VFS */
+	reuse = 1;
+	mountflags &= ~MS_REUSE; /* Temporary: turn off to not confuse VFS */
   }
 
-  /* Make FS process label for RS from special name. */
-  if(!(label=makelabel(special))) {
-	return -1;
+  /* Make a label for the file system process. This label must be unique and
+   * may currently not exceed 16 characters including terminating null. For
+   * requests with an associated block device, we use the last path component
+   * name of the block special file (truncated to 12 characters, which is
+   * hopefully enough). For requests with no associated block device, we use
+   * the device number and inode of the mount point, in hexadecimal form.
+   */
+  if (special) {
+	p = strrchr(special, '/');
+	p = p ? p + 1 : special;
+	if (strchr(p, '\'')) {
+		errno = EINVAL;
+		return -1;
+	}
+	sprintf(label, "fs_%.12s", p);
+  } else {
+	if (stat(name, &statbuf) < 0) return -1;
+	sprintf(label, "fs_%04x%x", statbuf.st_dev, statbuf.st_ino);
   }
+
+  /* Tell VFS that we are passing in a 16-byte label. */
+  mountflags |= MS_LABEL16;
 
   /* See if the given type is even remotely valid. */
   if(strlen(FSPATH)+strlen(type) >= sizeof(path)) {
@@ -102,32 +97,23 @@ int mountflags;
 	return -1;
   }
 
-
-
   sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -config " _PATH_SYSTEM_CONF
-	" -args '%s%s' -printep yes",
+	" -args '%s%s'",
 	  reuse ? "-r ": "", path, label, args[0] ? "-o " : "", args);
 
-  if(!(pipe = popen(cmd, "r"))) {
+  if((r = system(cmd)) != 0) {
 	fprintf(stderr, "mount: couldn't run %s\n", cmd);
+	errno = r;
 	return -1;
   }
-  
-  if(fscanf(pipe, "%d", &ep) != 1 || ep <= 0) {
-	fprintf(stderr, "mount: couldn't parse endpoint from %s\n", cmd);
-	errno = EINVAL;
-	pclose(pipe);
-	return -1;
-  }
-  pclose(pipe);
   
   /* Now perform mount(). */
-  m.m1_i1 = strlen(special) + 1;
+  m.m1_i1 = special ? strlen(special) + 1 : 0;
   m.m1_i2 = strlen(name) + 1;
   m.m1_i3 = mountflags;
   m.m1_p1 = special;
   m.m1_p2 = name;
-  m.m1_p3 = (char*) ep;
+  m.m1_p3 = label;
   r = _syscall(FS, MOUNT, &m);
 
   if(r != OK) {
@@ -144,19 +130,16 @@ PUBLIC int umount(name)
 _CONST char *name;
 {
   message m;
-  char *label;
   int r;
-
-  /* Make MFS process label for RS from special name. */
-  if(!(label=makelabel(name))) {
-	return -1;
-  }
 
   _loadname(name, &m);
   r = _syscall(FS, UMOUNT, &m);
 
   if(r == OK) {
-	rs_down(label);
+	/* VFS returns the label of the unmounted file system in the reply.
+	 * As of writing, the size of the m3_ca1 field is 16 bytes.
+	 */
+	rs_down(m.m3_ca1);
   }
 
   return r;

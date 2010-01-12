@@ -15,5 +15,5 @@ message *msgptr;
   k = strlen(name) + 1;
   msgptr->m3_i1 = k;
   msgptr->m3_p1 = (char *) name;
-  if (k <= sizeof msgptr->m3_ca1) strcpy(msgptr->m3_ca1, name);
+  if (k <= M3_STRING) strcpy(msgptr->m3_ca1, name);
 }

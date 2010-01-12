@@ -24,7 +24,6 @@ PRIVATE struct {
   int g_who_p;				/* slot number of caller process */
   int g_call_nr;			/* call number */
   int g_super_user;			/* is the caller root? */
-  short g_cum_path_processed;		/* how many path chars processed? */
   char g_user_fullpath[PATH_MAX+1];	/* path to look up */
 } globals[MAX_DEPTH];
 
@@ -56,7 +55,6 @@ PRIVATE int push_globals()
   globals[depth].g_who_p = who_p;
   globals[depth].g_call_nr = call_nr;
   globals[depth].g_super_user = super_user;
-  globals[depth].g_cum_path_processed = cum_path_processed;
 
   /* XXX is it safe to strcpy this? */
   assert(sizeof(globals[0].g_user_fullpath) == sizeof(user_fullpath));
@@ -89,7 +87,6 @@ PRIVATE void pop_globals()
   who_p = globals[depth].g_who_p;
   call_nr = globals[depth].g_call_nr;
   super_user = globals[depth].g_super_user;
-  cum_path_processed = globals[depth].g_cum_path_processed;
 
   memcpy(user_fullpath, globals[depth].g_user_fullpath, sizeof(user_fullpath));
 }

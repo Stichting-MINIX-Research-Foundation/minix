@@ -4,6 +4,8 @@
 #define NR_MNTS             8	/* # slots in mount table */
 #define NR_VNODES         512	/* # slots in vnode table */
 
+#define NR_NONEDEVS	NR_MNTS	/* # slots in nonedev bitmap */
+
 /* Miscellaneous constants */
 #define SU_UID 	 ((uid_t) 0)	/* super_user's uid_t */
 #define SERVERS_UID ((uid_t) 11) /* who may do FSSIGNON */
@@ -32,6 +34,11 @@
 #define SYMLOOP		16
 
 #define ROOT_INODE         1		/* inode number for root directory */
+
+#define LABEL_MAX	16	/* maximum label size (including '\0'). Should
+				 * not be smaller than 16 or bigger than
+				 * M3_LONG_STRING.
+				 */
 
 /* Args to dev_io */
 #define VFS_DEV_READ	2001
