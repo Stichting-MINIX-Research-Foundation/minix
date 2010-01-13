@@ -1050,8 +1050,8 @@ PRIVATE void do_config(char *label, char *filename)
 	}
 	if (cp == NULL)
 	{
-		fprintf(stderr, "service: service '%s' not found in config\n",
-			label);
+		fprintf(stderr, "service: service '%s' not found in '%s'\n",
+			label, filename);
 		exit(1);
 	}
 

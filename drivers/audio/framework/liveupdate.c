@@ -23,10 +23,10 @@ PRIVATE void load_state_info(void)
       if(sub_dev[i].RevivePending) {
           dma_mode = sub_dev[i].DmaMode;
 
-          if(dma_mode = DEV_READ_S) {
+          if(dma_mode == DEV_READ_S) {
               is_read_pending = TRUE;
           }
-          else if (dma_mode = DEV_WRITE_S){
+          else if (dma_mode == DEV_WRITE_S){
               is_write_pending = TRUE;
           }
       }

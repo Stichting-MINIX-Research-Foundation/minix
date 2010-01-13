@@ -278,7 +278,7 @@ PUBLIC void lapic_set_timer_periodic(unsigned freq)
 PUBLIC void lapic_stop_timer(void)
 {
 	u32_t lvtt;
-	lapic_read(LAPIC_LVTTR);
+	lvtt = lapic_read(LAPIC_LVTTR);
 	lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
 }
 
