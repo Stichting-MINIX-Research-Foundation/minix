@@ -155,9 +155,7 @@ PRIVATE int calib_clk_handler(irq_hook_t * hook)
 	u64_t tsc;
 
 	probe_ticks++;
-	if (cpu_has_tsc) {
-		read_tsc_64(&tsc);
-	}
+	read_tsc_64(&tsc);
 	tcrt = lapic_read(LAPIC_TIMER_CCR);
 
 
@@ -385,6 +383,13 @@ PUBLIC int lapic_enable(void)
 	if (!lapic_addr)
 		return 0;
 
+	cpu_has_tsc = _cpufeature(_CPUF_I386_TSC);
+	if (!cpu_has_tsc) {
+		kprintf("CPU lacks timestamp counter, "
+			"cannot calibrate LAPIC timer\n");
+		return 0;
+	}
+
 	if (!lapic_enable_in_msr())
 		return 0;
 
@@ -438,10 +443,6 @@ PUBLIC int lapic_enable(void)
 
 	lapic_read (LAPIC_SIVR);
 	*((u32_t *)lapic_eoi_addr) = 0;
-
-
-	cpu_has_tsc = _cpufeature(_CPUF_I386_TSC);
-	BOOT_VERBOSE(if (cpu_has_tsc) kprintf("CPU has Timestamp counter\n"));
 
 	apic_calibrate_clocks();
 	BOOT_VERBOSE(kprintf("APIC timer calibrated\n"));
