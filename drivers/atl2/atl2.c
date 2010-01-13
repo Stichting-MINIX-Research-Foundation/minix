@@ -91,7 +91,7 @@ PRIVATE struct {
 	{ 0x0000, 0x0000 }
 };
 
-long instance;
+PRIVATE long instance;
 
 /*===========================================================================*
  *				atl2_read_vpd				     *
@@ -523,14 +523,6 @@ PRIVATE void atl2_init(int devind)
 	state.recv_count = 0;
 
 	memset(&state.stat, 0, sizeof(state.stat));
-
-	/* FIXME: zero out the upper half of the 64-bit BAR. This is currently
-	 * needed because the BIOS sets it to a nonzero value, and our PCI
-	 * driver does not yet recognize 64-bit BARs at all. If either ever
-	 * gets fixed, this will be a no-op, but for the time being, we simply
-	 * hope that it will do the job.
-	 */
-	pci_attr_w32(devind, PCI_BAR_2, 0);
 
 	bar = pci_attr_r32(devind, PCI_BAR) & 0xfffffff0;
 
@@ -1243,7 +1235,8 @@ PRIVATE void atl2_dump(void)
  *===========================================================================*/
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
-/* Initialize the atl2 driver. */
+	/* Initialize the atl2 driver.
+	 */
 	u32_t inet_endpt;
 	int r, devind;
 #if ATL2_FKEY
@@ -1286,6 +1279,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
  *===========================================================================*/
 PRIVATE void sef_local_startup(void)
 {
+	/* Initialize SEF.
+	 */
+
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
 	sef_setcb_init_restart(sef_cb_init_fresh);

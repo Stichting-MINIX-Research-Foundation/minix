@@ -97,10 +97,11 @@ FORWARD _PROTOTYPE( void pci_intel_init, (void)				);
 FORWARD _PROTOTYPE( void probe_bus, (int busind)			);
 FORWARD _PROTOTYPE( int is_duplicate, (U8_t busnr, U8_t dev, U8_t func)	);
 FORWARD _PROTOTYPE( void record_irq, (int devind)			);
-FORWARD _PROTOTYPE( void record_bars, (int devind)			);
+FORWARD _PROTOTYPE( void record_bars_normal, (int devind)		);
 FORWARD _PROTOTYPE( void record_bars_bridge, (int devind)		);
 FORWARD _PROTOTYPE( void record_bars_cardbus, (int devind)		);
-FORWARD _PROTOTYPE( void record_bar, (int devind, int bar_nr)		);
+FORWARD _PROTOTYPE( void record_bars, (int devind, int last_reg)	);
+FORWARD _PROTOTYPE( int record_bar, (int devind, int bar_nr, int last)	);
 FORWARD _PROTOTYPE( void complete_bridges, (void)			);
 FORWARD _PROTOTYPE( void complete_bars, (void)				);
 FORWARD _PROTOTYPE( void update_bridge4dev_io, (int devind,
@@ -870,7 +871,7 @@ printf("probe_bus(%d)\n", busind);
 			switch(headt & PHT_MASK)
 			{
 			case PHT_NORMAL:
-				record_bars(devind);
+				record_bars_normal(devind);
 				break;
 			case PHT_BRIDGE:
 				record_bars_bridge(devind);
@@ -993,18 +994,15 @@ int devind;
 }
 
 /*===========================================================================*
- *				record_bars				     *
+ *				record_bars_normal			     *
  *===========================================================================*/
-PRIVATE void record_bars(devind)
+PRIVATE void record_bars_normal(devind)
 int devind;
 {
-	int i, j, reg, prefetch, type, clear_01, clear_23, pb_nr;
-	u32_t bar, bar2;
+	int i, j, clear_01, clear_23, pb_nr;
 
-	for (i= 0, reg= PCI_BAR; reg <= PCI_BAR_6; i++, reg += 4)
-	{
-		record_bar(devind, i);
-	}
+	/* The BAR area of normal devices is six DWORDs in size. */
+	record_bars(devind, PCI_BAR_6);
 
 	/* Special case code for IDE controllers in compatibility mode */
 	if (pcidev[devind].pd_baseclass == PCI_BCR_MASS_STORAGE &&
@@ -1067,8 +1065,10 @@ int devind;
 {
 	u32_t base, limit, size;
 
-	record_bar(devind, 0);
-	record_bar(devind, 1);
+	/* The generic BAR area of PCI-to-PCI bridges is two DWORDs in size.
+	 * It may contain up to two 32-bit BARs, or one 64-bit BAR.
+	 */
+	record_bars(devind, PCI_BAR_2);
 
 	base= ((pci_attr_r8_u(devind, PPB_IOBASE) & PPB_IOB_MASK) << 8) |
 		(pci_attr_r16(devind, PPB_IOBASEU16) << 16);
@@ -1117,7 +1117,8 @@ int devind;
 {
 	u32_t base, limit, size;
 
-	record_bar(devind, 0);
+	/* The generic BAR area of CardBus devices is one DWORD in size. */
+	record_bars(devind, PCI_BAR);
 
 	base= pci_attr_r32_u(devind, CBB_MEMBASE_0);
 	limit= pci_attr_r32_u(devind, CBB_MEMLIMIT_0) |
@@ -1161,15 +1162,32 @@ int devind;
 }
 
 /*===========================================================================*
+ *				record_bars				     *
+ *===========================================================================*/
+PRIVATE void record_bars(devind, last_reg)
+{
+	int i, reg, width;
+
+	for (i= 0, reg= PCI_BAR; reg <= last_reg; i += width, reg += 4 * width)
+	{
+		width = record_bar(devind, i, reg == last_reg);
+	}
+}
+
+/*===========================================================================*
  *				record_bar				     *
  *===========================================================================*/
-PRIVATE void record_bar(devind, bar_nr)
+PRIVATE int record_bar(devind, bar_nr, last)
 int devind;
 int bar_nr;
+int last;
 {
-	int reg, prefetch, type, dev_bar_nr;
+	int reg, prefetch, type, dev_bar_nr, width;
 	u32_t bar, bar2;
 	u16_t cmd;
+
+	/* Start by assuming that this is a 32-bit bar, taking up one DWORD. */
+	width = 1;
 
 	reg= PCI_BAR+4*bar_nr;
 
@@ -1210,6 +1228,56 @@ int bar_nr;
 	}
 	else
 	{
+		type= (bar & PCI_BAR_TYPE);
+
+		switch(type) {
+		case PCI_TYPE_32:
+		case PCI_TYPE_32_1M:
+			break;
+
+		case PCI_TYPE_64:
+			/* A 64-bit BAR takes up two consecutive DWORDs. */
+			if (last)
+			{
+				printf("PCI: device %d.%d.%d BAR %d extends"
+					" beyond designated area\n",
+					pcidev[devind].pd_busnr,
+					pcidev[devind].pd_dev,
+					pcidev[devind].pd_func, bar_nr);
+
+				return width;
+			}
+			width++;
+
+			bar2= pci_attr_r32_u(devind, reg+4);
+
+			/* If the upper 32 bits of the BAR are not zero, the
+			 * memory is inaccessible to us; ignore the BAR.
+			 */
+			if (bar2 != 0)
+			{
+				if (debug)
+				{
+					printf("\tbar_%d: (64-bit BAR with"
+						" high bits set)\n", bar_nr);
+				}
+
+				return width;
+			}
+
+			break;
+
+		default:
+			/* Ignore the BAR. */
+			if (debug)
+			{
+				printf("\tbar_%d: (unknown type %x)\n",
+					bar_nr, type);
+			}
+
+			return width;
+		}
+
 		/* Disable mem access before probing for BAR's size */
 		cmd = pci_attr_r16(devind, PCI_CR);
 		pci_attr_w16(devind, PCI_CR, cmd & ~PCI_CR_MEM_EN);
@@ -1223,20 +1291,18 @@ int bar_nr;
 		pci_attr_w16(devind, PCI_CR, cmd);
 
 		if (bar2 == 0)
-			return;	/* Reg. is not implemented */
+			return width;	/* Reg. is not implemented */
 
 		prefetch= !!(bar & PCI_BAR_PREFETCH);
-		type= (bar & PCI_BAR_TYPE);
 		bar &= ~(u32_t)0xf;	/* Clear non-address bits */
 		bar2 &= ~(u32_t)0xf;
 		bar2= (~bar2)+1;
 		if (debug)
 		{
-			printf("\tbar_%d: 0x%x bytes at 0x%x%s memory\n",
+			printf("\tbar_%d: 0x%x bytes at 0x%x%s memory%s\n",
 				bar_nr, bar2, bar,
-				prefetch ? " prefetchable" : "");
-			if (type != 0)
-				printf("type = 0x%x\n", type);
+				prefetch ? " prefetchable" : "",
+				type == PCI_TYPE_64 ? ", 64-bit" : "");
 		}
 
 		dev_bar_nr= pcidev[devind].pd_bar_nr++;
@@ -1250,6 +1316,8 @@ int bar_nr;
 				PBF_INCOMPLETE;
 		}
 	}
+
+	return width;
 }
 
 /*===========================================================================*

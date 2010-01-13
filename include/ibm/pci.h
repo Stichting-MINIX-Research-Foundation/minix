@@ -32,6 +32,9 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define PCI_BAR		0x10	/* Base Address Register */
 #define	    PCI_BAR_IO		0x00000001	/* Reg. refers to I/O space */
 #define	    PCI_BAR_TYPE	0x00000006	/* Memory BAR type */
+#define	        PCI_TYPE_32	0x00000000	/* 32-bit BAR */
+#define	        PCI_TYPE_32_1M	0x00000002	/* 32-bit below 1MB (legacy) */
+#define	        PCI_TYPE_64	0x00000004	/* 64-bit BAR */
 #define	    PCI_BAR_PREFETCH	0x00000008	/* Memory is prefetchable */
 #define PCI_BAR_2	0x14	/* Base Address Register */
 #define PCI_BAR_3	0x18	/* Base Address Register */
