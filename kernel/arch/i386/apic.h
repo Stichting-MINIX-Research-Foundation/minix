@@ -95,9 +95,9 @@ _PROTOTYPE(void lapic_stop_timer, (void));
 
 #define cpu_feature_apic_on_chip() _cpufeature(_CPUF_I386_APIC_ON_CHIP)
 
-#define lapic_read(what)	(*((u32_t *)((char*)(what))))
-#define lapic_write(what, data)	do {					\
-	(*((u32_t *)((char*)(what)))) = data;			\
+#define lapic_read(what)	(*((u32_t *)((what))))
+#define lapic_write(what, data)	do {			\
+	(*((u32_t *)((what)))) = data;			\
 } while(0)
 
 #endif /* __ASSEMBLY__ */
