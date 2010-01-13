@@ -15,6 +15,10 @@ mkdir -p $TMPDIR
 URL1=http://www.minix3.org/packages/$PACKDIR
 SRCURL1=http://www.minix3.org/software
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
+pack=""
+cdpackages=""
+netpackages=""
+cdmounted=""
 
 if [ ! "$PAGER" ]
 then	PAGER=more
@@ -34,6 +38,16 @@ myread()
 	fi
 }
 
+myexit()
+{
+	if [ -n "$cdmounted" -a -n "$pack" ]
+	then
+		umount $pack || true
+	fi
+
+	exit $1
+}
+
 # can we execute bunzip2?
 if bunzip2 --help 2>&1 | grep usage >/dev/null
 then    BUNZIP2=bunzip2 
@@ -43,7 +57,7 @@ fi
 if id | fgrep "uid=0(" >/dev/null
 then	:
 else	echo "Please run $0 as root."
-	exit 1
+	myexit 1
 fi
 
 chmod 700 $TMPDIR
@@ -56,11 +70,10 @@ cd /
 
 # Make sure there is a $SRC dir
 if [ ! -d "$SRC" ]
-then	mkdir $SRC || exit
+then	mkdir $SRC || myexit 1
 fi
 
 # Is there a usable CD to install packages from?
-cdpackages=""
 if [ -n "$cddrive" ]
 then	pack=${cddrive}p2
 	umount $pack >/dev/null 2>&1 || true
@@ -68,6 +81,7 @@ then	pack=${cddrive}p2
 	if mount -r $pack $CDMP 2>/dev/null
 	then	fn="$CDPACK/List"
 		echo "Found."
+		cdmounted=1
 		cdpackages=$fn
 		if [ ! -f $cdpackages ]
 		then	cdpackages=""
@@ -83,7 +97,6 @@ rm -f $TMPF
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
 
 # Check for network packages too
-netpackages=""
 if ( : </dev/tcp ) 2>/dev/null
 then	echo -n "Update package list from network? (Y/n) "
 	y=`myread`
@@ -101,7 +114,7 @@ fi
 # Is there at least one package type?
 if [ ! -n "$netpackages" -a ! -n "$cdpackages"  ]
 then	echo "No packages found."
-	exit 1
+	myexit 1
 fi
 
 # Is there more than one package type?
@@ -144,7 +157,7 @@ do	cd $TMPDIR
 	echo -n "Package(s) to install (RETURN or q to exit)? "
 	packnolist=`myread`
 	if [ "$packnolist" = "" -o "$packnolist" = "q" ]
-	then	exit 0
+	then	myexit 0
 	fi
 	if [ "$packnolist" = all ]
 	then	packnolist=1-$highest
@@ -196,12 +209,12 @@ do	cd $TMPDIR
 			else	echo "Retrieval failed."
 			fi
 			if [ "$getsources" = y -o "$getsources" = Y ]
-			then	(	cd $SRC || exit
+			then	(	cd $SRC || myexit 2
 					srcfile=${packagename}-src.tar.bz2
 					echo "Retrieving source from $srcurl .."
-					urlget $srcurl >$srcfile || exit
+					urlget $srcurl >$srcfile || myexit 3
 					echo "Source retrieved in $SRC/$srcfile."
-					$BUNZIP2 -dc $srcfile | tar xf - >/dev/null || exit
+					$BUNZIP2 -dc $srcfile | tar xf - >/dev/null || myexit 3
 					echo "Source unpacked in $SRC."
 				)
 			fi
@@ -215,8 +228,8 @@ do	cd $TMPDIR
 			srcfile=$CDSRC/${packagename}.tar.bz2
 			if [ -f $srcfile -a "$getsources" = y ]
 			then 
-					(	cd $SRC || exit
-						$BUNZIP2 -dc $srcfile | tar xf - || exit
+					(	cd $SRC || myexit 2
+						$BUNZIP2 -dc $srcfile | tar xf - || myexit 3
 						echo "Source $srcfile unpacked in $SRC."
 					)
 			fi
@@ -230,3 +243,4 @@ do	cd $TMPDIR
 done
 
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
+myexit 0

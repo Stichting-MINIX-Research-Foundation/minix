@@ -1,0 +1,29 @@
+.TH PACKIT 8
+.SH NAME
+packit \- install binary packman package
+.SH SYNOPSIS
+\fBpackit
+.RB <package file> 
+\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH DESCRIPTION
+.PP
+.I packit
+is used to install binary packman packages. In case a 
+.B .postinstall
+file is present in the package, it will be executed using sh -e. Finally,
+.I packit 
+installs (newly added) man pages located in the directories /usr/man,
+/usr/local/man, /usr/gnu/man, and /usr/X11R6/man.
+.SH "SEE ALSO"
+.BR packman (8).

@@ -1,0 +1,33 @@
+.TH PACKMAN 8
+.SH NAME
+packman \- install binary and source packages
+.SH SYNOPSIS
+\fBpackman\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH DESCRIPTION
+.PP
+\s-1MINIX 3\s-1
+uses
+.I packman
+to install binary and source packages from CD or repository. 
+.I packman
+checks if a CD with packages (i.e. 
+\s-1MINIX 3\s-1
+install disk) and a working network connection is present, and interactively 
+ask you which of the available sources to use. In case you have a working 
+networking connection,
+.I packman
+inquires to retrieve the latest package list. Subsequently, a list of available
+packages is shown and you are asked which packages to install.
+.SH "SEE ALSO"
+.BR packit (8).
