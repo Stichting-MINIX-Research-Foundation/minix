@@ -21,8 +21,9 @@
 /*===========================================================================*
  *			        do_sdevio                                    *
  *===========================================================================*/
-PUBLIC int do_sdevio(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_sdevio(
+  register message *m_ptr	/* pointer to request message */
+)
 {
   vir_bytes newoffset;
   endpoint_t newep;
@@ -30,7 +31,7 @@ register message *m_ptr;	/* pointer to request message */
   int count = m_ptr->DIO_VEC_SIZE;
   long port = m_ptr->DIO_PORT;
   phys_bytes phys_buf;
-  int i, req_type, req_dir, io_type, size, nr_io_range;
+  int i, req_type, req_dir, size, nr_io_range;
   struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
@@ -103,25 +104,18 @@ register message *m_ptr;	/* pointer to request message */
 
   vm_set_cr3(destproc);
 
-	switch (io_type)
-	{
+  switch (req_type)
+  {
 	case _DIO_BYTE: size= 1; break;
 	case _DIO_WORD: size= 2; break;
 	case _DIO_LONG: size= 4; break;
 	default: size= 4; break;	/* Be conservative */
-	}
+  }
 
   rp= proc_addr(who_p);
   privp= priv(rp);
   if (privp && privp->s_flags & CHECK_IO_PORT)
   {
-	switch (io_type)
-	{
-	case _DIO_BYTE: size= 1; break;
-	case _DIO_WORD: size= 2; break;
-	case _DIO_LONG: size= 4; break;
-	default: size= 4; break;	/* Be conservative */
-	}
 	port= m_ptr->DIO_PORT;
 	nr_io_range= privp->s_nr_io_range;
 	for (i= 0, iorp= privp->s_io_tab; i<nr_io_range; i++, iorp++)

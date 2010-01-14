@@ -17,8 +17,9 @@
 /*===========================================================================*
  *			        do_devio                                     *
  *===========================================================================*/
-PUBLIC int do_devio(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_devio(
+    register message *m_ptr	/* pointer to request message */
+)
 {
     struct proc *rp;
     struct priv *privp;
@@ -30,13 +31,13 @@ register message *m_ptr;	/* pointer to request message */
     io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
     io_dir  = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
 
-	switch (io_type)
-	{
+    switch (io_type)
+    {
 	case _DIO_BYTE: size= 1; break;
 	case _DIO_WORD: size= 2; break;
 	case _DIO_LONG: size= 4; break;
 	default: size= 4; break;	/* Be conservative */
-	}
+    }
 
     rp= proc_addr(who_p);
     privp= priv(rp);
@@ -47,13 +48,6 @@ register message *m_ptr;	/* pointer to request message */
     }
     if (privp->s_flags & CHECK_IO_PORT)
     {
-	switch (io_type)
-	{
-	case _DIO_BYTE: size= 1; break;
-	case _DIO_WORD: size= 2; break;
-	case _DIO_LONG: size= 4; break;
-	default: size= 4; break;	/* Be conservative */
-	}
 	port= m_ptr->DIO_PORT;
 	nr_io_range= privp->s_nr_io_range;
 	for (i= 0, iorp= privp->s_io_tab; i<nr_io_range; i++, iorp++)
