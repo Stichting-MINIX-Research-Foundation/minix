@@ -387,7 +387,6 @@ int priority;
 	{
 		for (i= 0, ip_ass= ip_ass_table; i<IP_ASS_NR; i++, ip_ass++)
 		{
-			next_pack= ip_ass->ia_frags;
 			while(ip_ass->ia_frags != NULL)
 			{
 				pack= ip_ass->ia_frags;

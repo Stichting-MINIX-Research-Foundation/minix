@@ -15,7 +15,6 @@ Copyright 1995 Philip Homburg
 #include "buf.h"
 #include "eth.h"
 #include "eth_int.h"
-#include "io.h"
 #include "sr.h"
 
 THIS_FILE
@@ -742,10 +741,8 @@ eth_fd_t *eth_fd;
 
 	unsigned long flags;
 	unsigned int en_di_flags;
-	eth_port_t *eth_port;
 	acc_t *pack;
 
-	eth_port= eth_fd->ef_port;
 	flags= eth_fd->ef_ethopt.nweo_flags;
 	en_di_flags= (flags >>16) | (flags & 0xffff);
 

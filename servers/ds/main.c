@@ -38,7 +38,6 @@ PUBLIC int main(int argc, char **argv)
  */
   message m;
   int result;                 
-  sigset_t sigset;
 
   /* SEF local startup. */
   env_setargs(argc, argv);
@@ -118,7 +117,6 @@ PRIVATE void sig_handler()
 {
 /* Signal handler. */
   sigset_t sigset;
-  int sig;
 
   /* Try to obtain signal set from PM. */
   if (getsigset(&sigset) != 0) return;

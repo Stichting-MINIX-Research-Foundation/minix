@@ -209,7 +209,7 @@ void onterm(int sig)
 
 void onabrt(int sig)
 {
-  static int count;
+  static int count = 0;
 
   if (++count == 2) reboot(RBT_HALT);
   gotabrt = 1;

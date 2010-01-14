@@ -504,15 +504,13 @@ PUBLIC int ip_setconf(ip_port_nr, ipconf)
 int ip_port_nr;
 nwio_ipconf_t *ipconf;
 {
-	int i, old_ip_flags, do_report;
+	int i, do_report;
 	ip_port_t *ip_port;
 	ip_fd_t *ip_fd;
 	ipaddr_t ipaddr;
 	u32_t mtu;
 
 	ip_port= &ip_port_table[ip_port_nr];
-
-	old_ip_flags= ip_port->ip_flags;
 
 	if (ipconf->nwic_flags & ~NWIC_FLAGS)
 		return EBADMODE;

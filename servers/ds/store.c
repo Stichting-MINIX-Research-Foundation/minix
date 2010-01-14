@@ -262,7 +262,6 @@ message *m_ptr;					/* request message */
  * created or updated) matching that subscription. Return
  * a message and copy the key and value for every one.
  */
-	struct data_store *dsp;
 	int r, s, d, type = m_ptr->DS_FLAGS & DS_TYPE_MASK;
 	if(!type) return EINVAL;
 	for(s = 0; s < NR_DS_SUBS; s++) {

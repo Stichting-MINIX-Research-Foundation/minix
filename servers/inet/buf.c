@@ -4,8 +4,6 @@ This file contains routines for buffer management.
 Copyright 1995 Philip Homburg
 */
 
-#define BUF_IMPLEMENTATION	1	/* Avoid some macros */
-
 #include "inet.h"
 
 #include <stdlib.h>
@@ -13,7 +11,6 @@ Copyright 1995 Philip Homburg
 
 #include "generic/assert.h"
 #include "generic/buf.h"
-#include "generic/type.h"
 
 THIS_FILE
 

@@ -272,7 +272,7 @@ int type;
 	size_t pack_size;
 	eth_hdr_t *eth_hdr;
 	xmit_hdr_t *xmit_hdr;
-	ipaddr_t hostpart, tmpaddr;
+	ipaddr_t tmpaddr;
 	time_t t;
 	u32_t *p;
 
@@ -321,7 +321,6 @@ int type;
 			ip_panic(( "invalid destination" ));
 		}
 
-		hostpart= (dest & ~ip_port->ip_subnetmask);
 		assert(dest != ip_port->ip_ipaddr);
 
 		r= arp_ip_eth(ip_port->ip_dl.dl_eth.de_port,

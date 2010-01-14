@@ -20,8 +20,6 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-#define NOT_IMPLEMENTED 0
-
 PUBLIC tcp_port_t *tcp_port_table;
 PUBLIC tcp_fd_t tcp_fd_table[TCP_FD_NR];
 PUBLIC tcp_conn_t tcp_conn_table[TCP_CONN_NR];

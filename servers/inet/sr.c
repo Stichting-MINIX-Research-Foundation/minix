@@ -459,12 +459,11 @@ message *m;
 {
 	sr_fd_t *sr_fd;
 	int result;
-	int proc_nr, ref, operation;
+	int proc_nr, ref;
 
         result=EINTR;
 	proc_nr=  m->IO_ENDPT;
 	ref=  (int)m->IO_GRANT;
-	operation= 0;
 	sr_fd= sr_getchannel(m->DEVICE);
 	assert (sr_fd);
 
@@ -496,12 +495,8 @@ PRIVATE int sr_select(m)
 message *m;
 {
 	sr_fd_t *sr_fd;
-	mq_t **q_head_ptr, **q_tail_ptr;
-	int ip_flag, susp_flag;
-	int r, ops;
+	int r;
 	unsigned m_ops, i_ops;
-	ioreq_t request;
-	size_t size;
 
 	sr_fd= sr_getchannel(m->DEVICE);
 	assert (sr_fd);
@@ -651,12 +646,11 @@ mq_t *mq;
 int status;
 int is_revive;
 {
-	int result, proc, ref,operation;
+	int result, proc, ref;
 	message reply, *mp;
 
 	proc= mq->mq_mess.IO_ENDPT;
 	ref= (int)mq->mq_mess.IO_GRANT;
-	operation= mq->mq_mess.m_type;
 
 	if (is_revive)
 		mp= &mq->mq_mess;

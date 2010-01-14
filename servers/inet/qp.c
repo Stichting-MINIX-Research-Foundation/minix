@@ -157,8 +157,7 @@ PRIVATE int qp_read(fd, count)
 int fd;
 size_t count;
 {
-	int r, err;
-	size_t len;
+	int r;
 	acc_t *pkt;
 	qp_fd_t *qp_fd;
 
@@ -329,7 +328,7 @@ int c;
 	/* Send one character back to the user. */
 	acc_t *pkt;
 	qp_fd_t *qp_fd;
-	size_t n, bytes_left;
+	size_t bytes_left;
 	off_t off;
 
 	bytes_left= qv->rd_bytes_left;

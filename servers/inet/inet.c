@@ -47,7 +47,6 @@ from DL_ETH:
 #define _MINIX_SOURCE 1
 
 #include <fcntl.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/svrctl.h>
 #include <minix/ds.h>

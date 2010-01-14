@@ -219,12 +219,6 @@ PUBLIC void eth_write_port(eth_port, pack)
 eth_port_t *eth_port;
 acc_t *pack;
 {
-	eth_port_t *loc_port;
-	message mess1, block_msg;
-	u8_t *eth_dst_ptr;
-	int multicast, r;
-	ev_arg_t ev_arg;
-
 	assert(!no_ethWritePort);
 	assert(!eth_port->etp_vlan);
 
@@ -245,8 +239,7 @@ acc_t *pack;
 PRIVATE int notification_count;
 #endif
 
-PUBLIC void eth_rec(m)
-message *m;
+PUBLIC void eth_rec(message *m)
 {
 	int i, r, m_type, stat;
 	eth_port_t *loc_port, *vlan_port;
@@ -487,10 +480,9 @@ message *m;
 	}
 }
 
-PUBLIC void eth_check_drivers(m)
-message *m;
+PUBLIC void eth_check_drivers(message *m)
 {
-	int i, r, tasknr;
+	int r, tasknr;
 
 	tasknr= m->m_source;
 #if 0
@@ -516,7 +508,6 @@ PUBLIC int eth_get_stat(eth_port, eth_stat)
 eth_port_t *eth_port;
 eth_stat_t *eth_stat;
 {
-	int r;
 	cp_grant_id_t gid;
 
 	assert(!eth_port->etp_vlan);
@@ -552,7 +543,7 @@ u32_t flags;
 {
 	int r;
 	unsigned dl_flags, mask;
-	message mess, repl_mess;
+	message mess;
 
 	assert(!eth_port->etp_vlan);
 
@@ -764,11 +755,9 @@ int count;
 PRIVATE void setup_read(eth_port)
 eth_port_t *eth_port;
 {
-	eth_port_t *loc_port;
 	acc_t *pack, *pack_ptr;
-	message mess1, block_msg;
+	message mess1;
 	iovec_s_t *iovec;
-	ev_arg_t ev_arg;
 	int i, r;
 
 	assert(!eth_port->etp_vlan);
@@ -908,7 +897,7 @@ static void eth_restart(eth_port, tasknr)
 eth_port_t *eth_port;
 int tasknr;
 {
-	int i, r;
+	int r;
 	unsigned flags, dl_flags;
 	cp_grant_id_t gid;
 	message mess;

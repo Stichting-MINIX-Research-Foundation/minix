@@ -9,7 +9,6 @@ Copyright 1995 Philip Homburg
 #include "generic/assert.h"
 #include "generic/buf.h"
 #include "generic/clock.h"
-#include "generic/type.h"
 
 THIS_FILE
 
@@ -25,8 +24,6 @@ FORWARD _PROTOTYPE( void set_timer, (void) );
 
 PUBLIC void clck_init()
 {
-	int r;
-
 	clck_call_expire= 0;
 	curr_time= 0;
 	prev_time= 0;
@@ -38,8 +35,7 @@ PUBLIC time_t get_time()
 {
 	if (!curr_time)
 	{
-		int s;
-		if ((s=getuptime(&curr_time)) != OK)
+		if (getuptime(&curr_time) != OK)
 			ip_panic(("can't read clock"));
 		assert(curr_time >= prev_time);
 	}

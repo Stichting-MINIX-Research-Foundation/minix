@@ -672,7 +672,6 @@ acc_t *reply_ip_hdr;
 		if (r == -1)
 		{
 			bf_afree(reply_ip_hdr);
-			reply_ip_hdr= NULL;
 			return;
 		}
 
@@ -1118,7 +1117,7 @@ icmp_hdr_t **icmp_hdr_pp;
 	acc_t *ip_pack, *icmp_pack, *tmp_pack;
 	int ip_hdr_len, icmp_hdr_len, ih_type;
 	size_t size, pack_len;
-	ipaddr_t dest, netmask;
+	ipaddr_t dest;
 	nettype_t nettype;
 
 	pack= bf_packIffLess(pack, IP_MIN_HDR_SIZE);
@@ -1163,7 +1162,6 @@ icmp_hdr_t **icmp_hdr_pp;
 	}
 	dest= ip_hdr->ih_src;
 	nettype= ip_nettype(dest);
-	netmask= ip_netmask(nettype);
 	if (nettype != IPNT_CLASS_A && nettype != IPNT_LOCAL &&
 		nettype != IPNT_CLASS_B && nettype != IPNT_CLASS_C)
 	{

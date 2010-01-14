@@ -14,7 +14,6 @@ Copyright 1995 Philip Homburg
 #include "event.h"
 #include "eth.h"
 #include "io.h"
-#include "sr.h"
 
 THIS_FILE
 
