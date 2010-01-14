@@ -69,7 +69,7 @@
 #define vmassert(t) { }
 #endif
 
-#define NOT_REACHABLE(__x) do {						\
+#define NOT_REACHABLE	do {						\
 	kprintf("NOT_REACHABLE at %s:%d\n", __FILE__, __LINE__);	\
 	minix_panic("execution at an unexpected location\n", NO_NUM);	\
 	for(;;);							\

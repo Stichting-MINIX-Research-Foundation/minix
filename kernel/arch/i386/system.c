@@ -286,6 +286,9 @@ PRIVATE void ser_debug(int c)
 
 	switch(c)
 	{
+	case 'Q':
+		minix_shutdown(NULL);
+		NOT_REACHABLE;
 	case '1':
 		ser_dump_proc();
 		break;
