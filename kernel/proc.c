@@ -856,16 +856,12 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 /*===========================================================================*
  *				mini_senda				     *
  *===========================================================================*/
-PRIVATE int mini_senda(caller_ptr, table, size)
-struct proc *caller_ptr;
-asynmsg_t *table;
-size_t size;
+PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 {
 	int i, dst_p, done, do_notify, r;
 	unsigned flags;
 	struct proc *dst_ptr;
 	struct priv *privp;
-	message *m_ptr;
 	asynmsg_t tabent;
 	vir_bytes table_v = (vir_bytes) table;
 	vir_bytes linaddr;
@@ -1002,9 +998,6 @@ size_t size;
 			!(dst_ptr->p_misc_flags & MF_REPLY_PEND)))
 		{
 			/* Destination is indeed waiting for this message. */
-			m_ptr= &table[i].msg;	/* Note: pointer in the
-						 * caller's address space.
-						 */
 			/* Copy message from sender. */
 			tabent.result= QueueMess(caller_ptr->p_endpoint,
 				linaddr + (vir_bytes) &table[i].msg -
@@ -1075,17 +1068,12 @@ struct proc *caller_ptr;
 /*===========================================================================*
  *				try_one					     *
  *===========================================================================*/
-PRIVATE int try_one(src_ptr, dst_ptr, postponed)
-struct proc *src_ptr;
-struct proc *dst_ptr;
-int *postponed;
+PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 {
 	int i, do_notify, done;
 	unsigned flags;
 	size_t size;
 	endpoint_t dst_e;
-	asynmsg_t *table_ptr;
-	message *m_ptr;
 	struct priv *privp;
 	asynmsg_t tabent;
 	vir_bytes table_v;
@@ -1162,10 +1150,6 @@ int *postponed;
 		}
 
 		/* Deliver message */
-		table_ptr= (asynmsg_t *)privp->s_asyntab;
-		m_ptr= &table_ptr[i].msg;	/* Note: pointer in the
-					 	 * caller's address space.
-					 	 */
 		A_RETRIEVE(i, msg);
 		r = QueueMess(src_ptr->p_endpoint, vir2phys(&tabent.msg),
 			dst_ptr);
