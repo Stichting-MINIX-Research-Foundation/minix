@@ -117,8 +117,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	(progname=strrchr(env_argv[0],'/')) ? progname++
 		: (progname=env_argv[0]);
 
-	if((r=micro_delay_calibrate()) != OK)
-		panic("ti1225", "micro_delay_calibrate failed", r);
+	if((r=tsc_calibrate()) != OK)
+		panic("ti1225", "tsc_calibrate failed", r);
 
 	debug= 0;
 	while (c= getopt(env_argc, env_argv, "d?"), c != -1)

@@ -49,11 +49,12 @@ PUBLIC int fs_readsuper()
 	return(EINVAL);
   }
 
-  r = ds_retrieve_u32(fs_dev_label, &tasknr);
-  if (r != OK) {
-	printf("%s:%d fs_readsuper: ds_retrieve_u32 failed for '%s': %d\n",
-	       __FILE__, __LINE__, fs_dev_label, r);
-	return(EINVAL);
+  r= ds_retrieve_label_num(fs_dev_label, &tasknr);
+  if (r != OK)
+  {
+	printf("mfs:fs_readsuper: ds_retrieve_label_num failed for '%s': %d\n",
+		fs_dev_label, r);
+	return EINVAL;
   }
 
   driver_e = tasknr;

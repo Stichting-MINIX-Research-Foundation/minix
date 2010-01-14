@@ -44,6 +44,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_privctl.o) \
 	$(SYSTEM)(do_segctl.o) \
 	$(SYSTEM)(do_safecopy.o) \
+	$(SYSTEM)(do_safemap.o) \
 	$(SYSTEM)(do_sysctl.o) \
 	$(SYSTEM)(do_getksig.o) \
 	$(SYSTEM)(do_endksig.o) \
@@ -154,6 +155,9 @@ $(SYSTEM)(do_privctl.o):	do_privctl.c
 
 $(SYSTEM)(do_safecopy.o):	do_safecopy.c
 	$(CC) do_safecopy.c
+
+$(SYSTEM)(do_safemap.o):	do_safemap.c
+	$(CC) do_safemap.c
 
 $(SYSTEM)(do_sysctl.o):	do_sysctl.c
 	$(CC) do_sysctl.c

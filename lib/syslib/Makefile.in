@@ -52,6 +52,7 @@ libsys_FILES=" \
 	sys_readbios.c \
 	sys_runctl.c \
 	sys_safecopy.c \
+	sys_safemap.c \
 	sys_sysctl.c \
 	sys_vsafecopy.c \
 	sys_profbuf.c \

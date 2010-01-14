@@ -22,9 +22,9 @@ char *name;
 	size_t len;
 	message m;
 
-	r= ds_retrieve_u32("pci", &u32);
+	r= ds_retrieve_label_num("pci", &u32);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_init1: ds_retrieve_u32 failed for 'pci'", r);
+		panic("syslib/" __FILE__, "pci_init1: ds_retrieve_label_num failed for 'pci'", r);
 	pci_procnr= u32;
 
 	m.m_type= BUSC_PCI_INIT;

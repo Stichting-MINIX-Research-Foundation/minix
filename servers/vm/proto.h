@@ -4,6 +4,8 @@ struct vmproc;
 struct stat;
 struct mem_map;
 struct memory;
+struct vir_region;
+struct phys_region;
 
 #include <minix/ipc.h>
 #include <minix/endpoint.h>
@@ -75,6 +77,12 @@ _PROTOTYPE( int vfs_open, (struct vmproc *for_who, callback_t callback,
         cp_grant_id_t filename_gid, int filename_len, int flags, int mode));
 _PROTOTYPE( int vfs_close, (struct vmproc *for_who, callback_t callback,
 	int fd));
+
+/* map_mem.c */
+_PROTOTYPE( int map_memory, (endpoint_t sour, endpoint_t dest,
+	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag));
+_PROTOTYPE( int unmap_memory, (endpoint_t sour, endpoint_t dest,
+	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag));
 
 /* mmap.c */
 _PROTOTYPE(int do_mmap, (message *msg)					);
@@ -156,6 +164,10 @@ _PROTOTYPE(int map_remap, (struct vmproc *dvmp, vir_bytes da, size_t size,
 _PROTOTYPE(int map_get_phys, (struct vmproc *vmp, vir_bytes addr, phys_bytes *r));
 _PROTOTYPE(int map_get_ref, (struct vmproc *vmp, vir_bytes addr, u8_t *cnt));
 
+_PROTOTYPE(int map_copy_ph_block, (struct vmproc *vmp,
+	struct vir_region *region, struct phys_region *ph));
+_PROTOTYPE(void pb_unreferenced, (struct vir_region *region,
+	struct phys_region *pr));
 #if SANITYCHECKS
 _PROTOTYPE(void map_sanitycheck,(char *file, int line));
 #endif

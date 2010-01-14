@@ -45,7 +45,7 @@ struct rproc *rp;				/* pointer to process slot */
   rpub = rp->r_pub;
 
   /* Register its label with DS. */
-  s= ds_publish_u32(rpub->label, rpub->endpoint);
+  s= ds_publish_label(rpub->label, rpub->endpoint, DSF_OVERWRITE);
   if (s != OK) {
       return s;
   }

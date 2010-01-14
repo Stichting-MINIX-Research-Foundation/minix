@@ -22,11 +22,11 @@ struct rs_pci *rs_pci;
 
 	if (pci_procnr == ANY)
 	{
-		r= ds_retrieve_u32("pci", &u32);
+		r= ds_retrieve_label_num("pci", &u32);
 		if (r != 0)
 		{
 			panic("syslib/" __FILE__,
-				"pci_set_acl: ds_retrieve_u32 failed for 'pci'",
+				"pci_set_acl: ds_retrieve_label_num failed for 'pci'",
 				r);
 		}
 		pci_procnr = u32;

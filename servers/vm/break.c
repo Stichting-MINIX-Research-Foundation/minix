@@ -96,7 +96,7 @@ vir_bytes sp;			/* new value of sp */
 
   /* Add a safety margin for future stack growth. Impossible to do right. */
 #define SAFETY_BYTES  (384 * sizeof(char *))
-#define SAFETY_CLICKS ((SAFETY_BYTES + CLICK_SIZE - 1) / CLICK_SIZE)
+#define SAFETY_CLICKS ((vir_clicks) (CLICK_CEIL(SAFETY_BYTES) >> CLICK_SHIFT))
   gap_base = mem_dp->mem_vir + data_clicks + SAFETY_CLICKS;
   if (sp_lower < gap_base)
   {
@@ -165,7 +165,7 @@ vir_bytes v;
 	vir_clicks new_clicks;
 	int r;
 
-	new_clicks = (vir_clicks) ( ((long) v + CLICK_SIZE - 1) >> CLICK_SHIFT);
+	new_clicks = (vir_clicks) (CLICK_CEIL(v) >> CLICK_SHIFT);
 	if (new_clicks < vmp->vm_arch.vm_seg[D].mem_vir) {
 		printf("VM: real_brk failed because new_clicks too high: %d\n",
 			new_clicks);

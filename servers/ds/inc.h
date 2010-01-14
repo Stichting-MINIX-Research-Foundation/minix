@@ -7,12 +7,14 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
+#include <regex.h>
 
 #include <minix/callnr.h>
 #include <minix/config.h>
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/com.h>
+#include <minix/ds.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
@@ -27,5 +29,4 @@
 
 #include "proto.h"
 #include "glo.h"
-#include "store.h"
 

@@ -1,0 +1,8 @@
+Test Program for Safemap
+
+How to run
+==========
+
+  1. Type `make run` to prepare and run test.
+  2. When done testing, type `make clean` to clean up.
+

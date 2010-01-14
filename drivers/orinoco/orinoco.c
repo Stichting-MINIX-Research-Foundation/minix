@@ -367,11 +367,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Try to notify INET that we are present (again). If INET cannot
 	 * be found, assume this is the first time we started and INET is
 	 * not yet alive. */
-	r = ds_retrieve_u32("inet", &inet_proc_nr);
+	r = ds_retrieve_label_num("inet", &inet_proc_nr);
 	if (r == OK) 
 		notify(inet_proc_nr);
 	else if (r != ESRCH)
-		printf("orinoco: ds_retrieve_u32 failed for 'inet': %d\n", r);
+		printf("orinoco: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
 	return(OK);
 }

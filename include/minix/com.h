@@ -350,8 +350,11 @@
 
 #  define SYS_VTIMER     (KERNEL_CALL + 45)	/* sys_vtimer() */
 #  define SYS_RUNCTL     (KERNEL_CALL + 46)	/* sys_runctl() */
+#  define SYS_SAFEMAP	 (KERNEL_CALL + 47)	/* sys_safemap() */
+#  define SYS_SAFEREVMAP (KERNEL_CALL + 48)	/* sys_saferevmap() sys_saferevmap2() */
+#  define SYS_SAFEUNMAP	 (KERNEL_CALL + 49)	/* sys_safeunmap() */
 
-#define NR_SYS_CALLS	47	/* number of system calls */ 
+#define NR_SYS_CALLS	50	/* number of system calls */ 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
 /* Field names for SYS_MEMSET. */
@@ -536,6 +539,15 @@
 #define VSCP_VEC_ADDR	m2_p1	/* start of vector */
 #define VSCP_VEC_SIZE	m2_l2	/* elements in vector */
 
+/* Field names for SYS_SAFEMAPs */
+#define SMAP_EP		m2_i1
+#define SMAP_GID	m2_i2
+#define SMAP_OFFSET	m2_i3
+#define SMAP_SEG	m2_p1
+#define SMAP_ADDRESS	m2_l1
+#define SMAP_BYTES	m2_l2
+#define SMAP_FLAG	m2_s1
+
 /* Field names for SYS_SPROF, _CPROF, _PROFBUF. */
 #define PROF_ACTION    m7_i1    /* start/stop/reset/get */
 #define PROF_MEM_SIZE  m7_i2    /* available memory for data */ 
@@ -556,11 +568,13 @@
 #define SVMCTL_PF_WHO		m1_i1	/* GET_PAGEFAULT reply: process ep */
 #define SVMCTL_PF_I386_CR2	m1_i2	/* GET_PAGEFAULT reply: CR2 */
 #define SVMCTL_PF_I386_ERR	m1_i3	/* GET_PAGEFAULT reply: error code */
-#define SVMCTL_MRG_ADDR		m1_p1	/* MEMREQ_GET reply: address */
-#define SVMCTL_MRG_LEN		m1_i1	/* MEMREQ_GET reply: length */
-#define SVMCTL_MRG_WRITE	m1_i2	/* MEMREQ_GET reply: writeflag */
-#define SVMCTL_MRG_EP		m1_i3	/* MEMREQ_GET reply: process */
-#define SVMCTL_MRG_REQUESTOR	m1_p2	/* MEMREQ_GET reply: requestor */
+#define	SVMCTL_MRG_TARGET	m2_i1	/* MEMREQ_GET reply: target process */
+#define	SVMCTL_MRG_ADDR		m2_i2	/* MEMREQ_GET reply: address */
+#define	SVMCTL_MRG_LENGTH	m2_i3	/* MEMREQ_GET reply: length */
+#define	SVMCTL_MRG_FLAG		m2_s1	/* MEMREQ_GET reply: flag */
+#define	SVMCTL_MRG_EP2		m2_l1	/* MEMREQ_GET reply: source process */
+#define	SVMCTL_MRG_ADDR2	m2_l2	/* MEMREQ_GET reply: source address */
+#define SVMCTL_MRG_REQUESTOR	m2_p1	/* MEMREQ_GET reply: requestor */
 #define SVMCTL_MAP_VIR_ADDR	m1_p1
 
 /* Reply message for VMCTL_KERN_PHYSMAP */
@@ -654,19 +668,23 @@
 
 #define DS_RQ_BASE		0x800
 
-#define DS_PUBLISH	(DS_RQ_BASE + 0)	/* publish information */
-#define DS_SUBSCRIBE	(DS_RQ_BASE + 1)	/* subscribe to information */
-#define DS_RETRIEVE	(DS_RQ_BASE + 2)	/* retrieve information by name */
-#define DS_CHECK	(DS_RQ_BASE + 3)	/* retrieve updated information */
+#define DS_PUBLISH	(DS_RQ_BASE + 0)	/* publish data */
+#define DS_RETRIEVE	(DS_RQ_BASE + 1)	/* retrieve data by name */
+#define DS_SUBSCRIBE	(DS_RQ_BASE + 2)	/* subscribe to data updates */
+#define DS_CHECK	(DS_RQ_BASE + 3)	/* retrieve updated data */
+#define DS_DELETE	(DS_RQ_BASE + 4)	/* delete data */
+#define DS_SNAPSHOT	(DS_RQ_BASE + 5)	/* take a snapshot */
+#define DS_RETRIEVE_LABEL  (DS_RQ_BASE + 6)	/* retrieve label's name */
 
-/* DS field names: DS_SUBSCRIBE, DS_PUBLISH, DS_RETRIEVE */
-#  define DS_KEY_GRANT		m2_p1		/* key for the information */
-#  define DS_KEY_LEN		m2_i1		/* length of key incl. '\0' */
+/* DS field names */
+#  define DS_KEY_GRANT		m2_i1		/* key for the data */
+#  define DS_KEY_LEN		m2_s1		/* length of key incl. '\0' */
 #  define DS_FLAGS		m2_i2		/* flags provided by caller */
 
-/* DS_PUBLISH, DS_RETRIEVE */
 #  define DS_VAL		m2_l1		/* data (u32, char *, etc.) */
 #  define DS_VAL_LEN		m2_l2		/* data length */
+#  define DS_NR_SNAPSHOT	m2_i3		/* number of snapshot */
+#  define DS_STRING		m2_i3		/* inline string */
 
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *

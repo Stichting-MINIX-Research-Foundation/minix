@@ -44,12 +44,13 @@
 #define SI_PROC_TAB	   2	/* copy of entire process table */
 #define SI_DMAP_TAB	   3	/* get device <-> driver mappings */
 #define SI_MEM_ALLOC	   4	/* get memory allocation data */
-#define SI_DATA_STORE	   5	/* get copy of data store */
-#define SI_LOADINFO	   6	/* get copy of load average structure */
-#define SI_KPROC_TAB	   7	/* copy of kernel process table */
-#define SI_CALL_STATS	   8	/* system call statistics */
-#define SI_PCI_INFO	   9	/* get kernel info via PM */
-#define SI_PROCPUB_TAB	  10	/* copy of public entries of process table */
+#define SI_DATA_STORE	   5	/* get copy of data store mappings */
+#define SI_SUBSCRIPTION	   6	/* get copy of data store subscriptions */
+#define SI_LOADINFO	   7	/* get copy of load average structure */
+#define SI_KPROC_TAB	   8	/* copy of kernel process table */
+#define SI_CALL_STATS	   9	/* system call statistics */
+#define SI_PCI_INFO	   10	/* get kernel info via PM */
+#define SI_PROCPUB_TAB	   11	/* copy of public entries of process table */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)

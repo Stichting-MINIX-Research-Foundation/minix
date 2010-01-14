@@ -1,0 +1,4 @@
+#!/bin/sh
+
+service down dstest
+service down subs

@@ -49,12 +49,6 @@ register message *m_ptr;	/* pointer to request message */
 	return EINVAL;
   }
 
-  /* memory becomes readonly */
-  if (priv(rpp)->s_asynsize > 0) {
-	printf("kernel: process with waiting asynsend table can't fork\n");
-	return EINVAL;
-  }
-
   map_ptr= (struct mem_map *) m_ptr->PR_MEM_PTR;
 
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */

@@ -71,11 +71,20 @@ PUBLIC int main(int argc, char **argv)
       case DS_RETRIEVE:
 	  result = do_retrieve(&m);
 	  break;
+      case DS_RETRIEVE_LABEL:
+	  result = do_retrieve_label(&m);
+	  break;
+      case DS_DELETE:
+	  result = do_delete(&m);
+	  break;
       case DS_SUBSCRIBE:
 	  result = do_subscribe(&m);
 	  break;
       case DS_CHECK:
 	  result = do_check(&m);
+	  break;
+      case DS_SNAPSHOT:
+	  result = do_snapshot(&m);
 	  break;
       case GETSYSINFO:
 	  result = do_getsysinfo(&m);

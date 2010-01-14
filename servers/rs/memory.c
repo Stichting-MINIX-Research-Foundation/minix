@@ -45,8 +45,8 @@ PRIVATE int check_mem_available(char *new_brksize)
   mem_sp = &proc.p_memmap[S];            /* pointer to stack segment map */
 
   /* Compute how many clicks the data segment is to become. */
-  data_clicks = (vir_clicks) ( ((long) new_brksize + CLICK_SIZE - 1) >>
-      CLICK_SHIFT) - mem_dp->mem_vir;
+  data_clicks = (vir_clicks) (CLICK_CEIL(new_brksize) >> CLICK_SHIFT)
+	- mem_dp->mem_vir;
 
   /* See if stack size has gone negative (i.e., sp too close to 0xFFFF...) */
   base_of_stack = (long) mem_sp->mem_vir + (long) mem_sp->mem_len;
@@ -62,7 +62,7 @@ PRIVATE int check_mem_available(char *new_brksize)
 
   /* Add a safety margin for future stack growth. Impossible to do right. */
 #define SAFETY_BYTES  (384 * sizeof(char *))
-#define SAFETY_CLICKS ((SAFETY_BYTES + CLICK_SIZE - 1) / CLICK_SIZE)
+#define SAFETY_CLICKS ((vir_clicks) (CLICK_CEIL(SAFETY_BYTES) >> CLICK_SHIFT))
   gap_base = mem_dp->mem_vir + data_clicks + SAFETY_CLICKS;
   if (sp_lower < gap_base)
   {

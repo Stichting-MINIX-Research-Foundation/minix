@@ -1,66 +1,54 @@
-/* This file contains procedures to dump DS data structures.
- *
- * The entry points into this file are
- *   data_store_dmp:   	display DS data store contents 
- *
- * Created:
- *   Oct 18, 2005:	by Jorrit N. Herder
- */
-
 #include "inc.h"
 #include "../ds/store.h"
 
-PUBLIC struct data_store store[NR_DS_KEYS];
+PRIVATE struct data_store ds_store[NR_DS_KEYS];
 
-FORWARD _PROTOTYPE( char *s_flags_str, (int flags)		);
-
-/*===========================================================================*
- *				data_store_dmp				     *
- *===========================================================================*/
 PUBLIC void data_store_dmp()
 {
-  struct data_store *dsp;
-  int i,j, n=0, s;
-  static int prev_i=0;
+  struct data_store *p;
+  static int prev_i = 0;
+  int r, i, n = 0;
 
-
-  printf("Data Store (DS) contents dump\n");
-
-  if((s=getsysinfo(DS_PROC_NR, SI_DATA_STORE, store)) != OK) {
-	printf("Couldn't talk to DS: %d.\n", s);
+  if((r=getsysinfo(DS_PROC_NR, SI_DATA_STORE, ds_store)) != OK) {
+	printf("Couldn't talk to DS: %d.\n", r);
 	return;
   }
 
-  printf("slot key                  type value\n");
+  printf("Data store contents:\n");
+  printf("-slot- ------key------ -----owner----- ---type--- ----value---\n");
+  for(i = prev_i; i < NR_DS_KEYS; i++) {
+	p = &ds_store[i];
+	if(!(p->flags & DSF_IN_USE))
+		continue;
 
-  for (i=prev_i; i<NR_DS_KEYS; i++) {
-  	dsp = &store[i];
-  	if (! dsp->ds_flags & DS_IN_USE) continue;
-  	if (++n > 22) break;
-  	printf("%3d  %-20s ",
-		i, dsp->ds_key);
-	if(dsp->ds_flags & DS_TYPE_U32) {
-		printf("u32  %lu\n", dsp->ds_val.ds_val_u32);
-	} else if(dsp->ds_flags & DS_TYPE_STR) {
-		printf("str  \"%s\"\n", dsp->ds_val.ds_val_str);
-	} else {
-		printf("Bogus type\n");
+	printf("%6d %-15s %-15s ", i, p->key, p->owner);
+	switch(p->flags & DSF_MASK_TYPE) {
+	case DSF_TYPE_U32:
+		printf("%-10s %12u\n", "U32", p->u.u32);
+		break;
+	case DSF_TYPE_STR:
+		printf("%-10s %12s\n", "STR", p->u.string);
+		break;
+	case DSF_TYPE_MEM:
+		printf("%-10s %12u\n", "MEM", p->u.mem.length);
+		break;
+	case DSF_TYPE_MAP:
+		printf("%-10s %9u/%3u\n", "MAP", p->u.map.length,
+			p->u.map.sindex);
+		break;
+	case DSF_TYPE_LABEL:
+		printf("%-10s %12u\n", "LABEL", p->u.u32);
+		break;
+	default:
+		return;
 	}
+
+	if(n++ == 21)
+		break;
   }
+
   if (i >= NR_DS_KEYS) i = 0;
   else printf("--more--\r");
   prev_i = i;
-}
-
-
-PRIVATE char *s_flags_str(int flags)
-{
-	static char str[5];
-	str[0] = (flags & DS_IN_USE) ? 'U' : '-';
-	str[1] = (flags & DS_PUBLIC) ? 'P' : '-';
-	str[2] = '-';
-	str[3] = '\0';
-
-	return(str);
 }
 

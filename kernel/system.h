@@ -181,6 +181,10 @@ _PROTOTYPE( int do_setgrant, (message *m_ptr) );
 _PROTOTYPE( int do_readbios, (message *m_ptr) );	
 _PROTOTYPE( int do_mapdma, (message *m_ptr) );	
 
+_PROTOTYPE( int do_safemap, (message *m_ptr) );	
+_PROTOTYPE( int do_saferevmap, (message *m_ptr) );	
+_PROTOTYPE( int do_safeunmap, (message *m_ptr) );	
+
 _PROTOTYPE( int do_sprofile, (message *m_ptr) );
 #if ! SPROFILE
 #define do_sprofile do_unused

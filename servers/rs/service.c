@@ -112,7 +112,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [-c] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
+  "    %s [-c -r] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
 	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
   fprintf(stderr, "    %s down label\n", app_name);
   fprintf(stderr, "    %s refresh label\n", app_name);
@@ -729,6 +729,9 @@ struct
 	{ "GETINFO",		SYS_GETINFO },
 	{ "SAFECOPYFROM",	SYS_SAFECOPYFROM },
 	{ "SAFECOPYTO",		SYS_SAFECOPYTO },
+	{ "SAFEMAP",		SYS_SAFEMAP },
+	{ "SAFEREVMAP",		SYS_SAFEREVMAP },
+	{ "SAFEUNMAP",		SYS_SAFEUNMAP },
 	{ "VSAFECOPY",		SYS_VSAFECOPY },
 	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },

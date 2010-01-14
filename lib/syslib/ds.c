@@ -4,260 +4,257 @@
 
 #include "syslib.h"
 
-#define GRANTBAD -1001
+static message m;
 
-int
-ds_subscribe(ds_name_regexp, type, flags)
-char *ds_name_regexp;
-int type;
-int flags;
+PRIVATE int do_invoke_ds(int type, const char *ds_name)
 {
-	int r;
-	message m;
-	cp_grant_id_t g;
-	size_t len;
+	cp_grant_id_t g_key;
+	size_t len_key;
+	int access, r;
 
-	len = strlen(ds_name_regexp)+1;
-	g = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_name_regexp, len, CPF_READ);
+	if(type == DS_CHECK || type == DS_RETRIEVE_LABEL) {
+		len_key = DS_MAX_KEYLEN;
+		access = CPF_WRITE;
+	} else {
+		len_key = strlen(ds_name)+1;
+		access = CPF_READ;
+	}
 
-	if(!GRANT_VALID(g)) 
-		return GRANTBAD;
+	/* Grant for key. */
+	g_key = cpf_grant_direct(DS_PROC_NR, (vir_bytes) ds_name,
+		len_key, access);
+	if(!GRANT_VALID(g_key)) 
+		return errno;
 
-	flags &= DS_INITIAL;
+	m.DS_KEY_GRANT = g_key;
+	m.DS_KEY_LEN = len_key;
 
-	m.DS_KEY_GRANT = (char *) g;
-	m.DS_KEY_LEN = len;
-	m.DS_FLAGS = flags | (type & DS_TYPE_MASK);
+	r = _taskcall(DS_PROC_NR, type, &m);
 
-	r = _taskcall(DS_PROC_NR, DS_SUBSCRIBE, &m);
-
-	cpf_revoke(g);
-
+	cpf_revoke(g_key);
 	return r;
 }
 
-int ds_publish_u32(ds_name, value)
-char *ds_name;
-u32_t value;
+int ds_publish_label(const char *ds_name, u32_t value, int flags)
 {
-	int r;
-	message m;
-	cp_grant_id_t g;
-	size_t len;
-
-	len = strlen(ds_name)+1;
-	g = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_name, len, CPF_READ);
-
-	if(!GRANT_VALID(g)) 
-		return GRANTBAD;
-
-	m.DS_KEY_GRANT = (char *) g;
-	m.DS_KEY_LEN = len;
-	m.DS_FLAGS = DS_TYPE_U32;
 	m.DS_VAL = value;
-	m.DS_VAL_LEN = sizeof(value);
+	m.DS_FLAGS = DSF_TYPE_LABEL | flags;
+	return do_invoke_ds(DS_PUBLISH, ds_name);
+}
 
-	r = _taskcall(DS_PROC_NR, DS_PUBLISH, &m);
+int ds_publish_u32(const char *ds_name, u32_t value, int flags)
+{
+	m.DS_VAL = value;
+	m.DS_FLAGS = DSF_TYPE_U32 | flags;
+	return do_invoke_ds(DS_PUBLISH, ds_name);
+}
 
-	cpf_revoke(g);
+int ds_publish_str(const char *ds_name, char *value, int flags)
+{
+	if(strlen(value) >= DS_MAX_STRLEN)
+		return EINVAL;
+	strcpy((char *)(&m.DS_STRING), value);
+	m.DS_FLAGS = DSF_TYPE_STR | flags;
+	return do_invoke_ds(DS_PUBLISH, ds_name);
+}
+
+int ds_publish_mem(const char *ds_name, void *vaddr, size_t length, int flags)
+{
+	cp_grant_id_t gid;
+	int r;
+
+	/* Grant for memory range. */
+	gid = cpf_grant_direct(DS_PROC_NR, (vir_bytes)vaddr, length, CPF_READ);
+	if(!GRANT_VALID(gid))
+		return errno;
+
+	m.DS_VAL = gid;
+	m.DS_VAL_LEN = length;
+	m.DS_FLAGS = DSF_TYPE_MEM | flags;
+
+	r = do_invoke_ds(DS_PUBLISH, ds_name);
+	cpf_revoke(gid);
 
 	return r;
 }
 
-int ds_publish_str(ds_name, value)
-char *ds_name;
-char *value;
+int ds_publish_map(const char *ds_name, void *vaddr, size_t length, int flags)
 {
+	cp_grant_id_t gid;
 	int r;
-	message m;
-	cp_grant_id_t g_key, g_str;
-	size_t len_key, len_str;
 
-	/* Grant for key. */
-	len_key = strlen(ds_name)+1;
-	g_key = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_name, len_key, CPF_READ);
-	if(!GRANT_VALID(g_key)) 
-		return GRANTBAD;
+	if(((vir_bytes)vaddr % CLICK_SIZE != 0) || (length % CLICK_SIZE != 0))
+		return EINVAL;
 
-	/* Grant for value. */
-	len_str = strlen(value)+1;
-	g_str = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) value, len_str, CPF_READ);
+	/* Grant for mapped memory range. */
+	gid = cpf_grant_direct(DS_PROC_NR, (vir_bytes)vaddr, length,
+			CPF_READ | CPF_MAP);
+	if(!GRANT_VALID(gid))
+		return errno;
 
-	if(!GRANT_VALID(g_str))  {
-		cpf_revoke(g_key);
-		return GRANTBAD;
-	}
+	m.DS_VAL = gid;
+	m.DS_VAL_LEN = length;
+	m.DS_FLAGS = DSF_TYPE_MAP | flags;
 
-	m.DS_KEY_GRANT = (char *) g_key;
-	m.DS_KEY_LEN = len_key;
-	m.DS_FLAGS = DS_TYPE_STR;
-	m.DS_VAL = g_str;
-	m.DS_VAL_LEN = len_str;
-
-	r = _taskcall(DS_PROC_NR, DS_PUBLISH, &m);
-
-	cpf_revoke(g_key);
-	cpf_revoke(g_str);
+	r = do_invoke_ds(DS_PUBLISH, ds_name);
+	cpf_revoke(gid);
 
 	return r;
 }
 
-int ds_retrieve_u32(ds_name, value)
-char *ds_name;
-u32_t *value;
+int ds_snapshot_map(const char *ds_name, int *nr_snapshot)
 {
 	int r;
-	message m;
-	cp_grant_id_t g_key;
-	size_t len_key;
-
-	/* Grant for key. */
-	len_key = strlen(ds_name)+1;
-	g_key = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_name, len_key, CPF_READ);
-	if(!GRANT_VALID(g_key)) 
-		return GRANTBAD;
-
-	/* Do request. */
-	m.DS_KEY_GRANT = (char *) g_key;
-	m.DS_KEY_LEN = len_key;
-	m.DS_FLAGS = DS_TYPE_U32;
-
-	r = _taskcall(DS_PROC_NR, DS_RETRIEVE, &m);
-
-	cpf_revoke(g_key);
-
-	if(r == OK) {
-		/* Assign u32 value. */
-		*value = m.DS_VAL;
-	}
-
+	r = do_invoke_ds(DS_SNAPSHOT, ds_name);
+	*nr_snapshot = m.DS_NR_SNAPSHOT;
 	return r;
 }
 
-int ds_retrieve_str(ds_name, value, len_str)
-char *ds_name;
-char *value;
-size_t len_str;
+int ds_retrieve_label_name(char *ds_name, u32_t num)
 {
 	int r;
-	message m;
-	cp_grant_id_t g_key, g_str;
-	size_t len_key;
-
-	/* Grant for key. */
-	len_key = strlen(ds_name)+1;
-	g_key = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_name, len_key, CPF_READ);
-	if(!GRANT_VALID(g_key)) 
-		return GRANTBAD;
-
-	/* Grant for value. */
-	g_str = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) value, len_str, CPF_WRITE);
-
-	if(!GRANT_VALID(g_str))  {
-		cpf_revoke(g_key);
-		return GRANTBAD;
-	}
-
-	/* Do request. */
-
-	m.DS_KEY_GRANT = (char *) g_key;
-	m.DS_KEY_LEN = len_key;
-	m.DS_FLAGS = DS_TYPE_STR;
-	m.DS_VAL = g_str;
-	m.DS_VAL_LEN = len_str;
-
-	r = _taskcall(DS_PROC_NR, DS_RETRIEVE, &m);
-
-	cpf_revoke(g_key);
-	cpf_revoke(g_str);
-
+	m.DS_VAL = num;
+	r = do_invoke_ds(DS_RETRIEVE_LABEL, ds_name);
 	return r;
 }
 
-int ds_check_str(ds_key, len_key, value, len_str)
-char *ds_key;
-size_t len_key;
-char *value;
-size_t len_str;
+int ds_retrieve_label_num(const char *ds_name, u32_t *value)
 {
 	int r;
-	message m;
-	cp_grant_id_t g_key, g_str;
-
-	if(len_key < 1 || len_str < 1) return -1002;
-
-	/* Grant for key. */
-	g_key = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_key, len_key, CPF_WRITE);
-	if(!GRANT_VALID(g_key)) 
-		return GRANTBAD;
-
-	/* Grant for value. */
-	g_str = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) value, len_str, CPF_WRITE);
-
-	if(!GRANT_VALID(g_str))  {
-		cpf_revoke(g_key);
-		return GRANTBAD;
-	}
-
-	/* Do request. */
-
-	m.DS_KEY_GRANT = (char *) g_key;
-	m.DS_KEY_LEN = len_key;
-	m.DS_FLAGS = DS_TYPE_STR;
-	m.DS_VAL = g_str;
-	m.DS_VAL_LEN = len_str;
-
-	r = _taskcall(DS_PROC_NR, DS_CHECK, &m);
-
-	cpf_revoke(g_key);
-	cpf_revoke(g_str);
-
-	ds_key[len_key-1] = '\0';
-	value[len_str-1] = '\0';
-
-	return r;
-}
-
-int ds_check_u32(ds_key, len_key, value)
-char *ds_key;
-size_t len_key;
-u32_t *value;
-{
-	int r;
-	message m;
-	cp_grant_id_t g_key;
-
-	if(len_key < 1) return -1;
-
-	/* Grant for key. */
-	g_key = cpf_grant_direct(DS_PROC_NR,
-		(vir_bytes) ds_key, len_key, CPF_WRITE);
-	if(!GRANT_VALID(g_key)) 
-		return GRANTBAD;
-
-	/* Do request. */
-	m.DS_KEY_GRANT = (char *) g_key;
-	m.DS_KEY_LEN = len_key;
-	m.DS_FLAGS = DS_TYPE_U32;
-
-	r = _taskcall(DS_PROC_NR, DS_CHECK, &m);
-
-	cpf_revoke(g_key);
-
-	ds_key[len_key-1] = '\0';
-
-	/* Assign u32 value. */
+	m.DS_FLAGS = DSF_TYPE_LABEL;
+	r = do_invoke_ds(DS_RETRIEVE, ds_name);
 	*value = m.DS_VAL;
+	return r;
+}
+
+int ds_retrieve_u32(const char *ds_name, u32_t *value)
+{
+	int r;
+	m.DS_FLAGS = DSF_TYPE_U32;
+	r = do_invoke_ds(DS_RETRIEVE, ds_name);
+	*value = m.DS_VAL;
+	return r;
+}
+
+int ds_retrieve_str(const char *ds_name, char *value, size_t len_str)
+{
+	int r;
+	m.DS_FLAGS = DSF_TYPE_STR;
+	r = do_invoke_ds(DS_RETRIEVE, ds_name);
+	strncpy(value, (char *)(&m.DS_STRING), DS_MAX_STRLEN);
+	value[DS_MAX_STRLEN - 1] = '\0';
+	return r;
+}
+
+int ds_retrieve_mem(const char *ds_name, char *vaddr, size_t *length)
+{
+	cp_grant_id_t gid;
+	int r;
+
+	/* Grant for memory range. */
+	gid = cpf_grant_direct(DS_PROC_NR, (vir_bytes)vaddr, *length, CPF_WRITE);
+	if(!GRANT_VALID(gid))
+		return errno;
+
+	m.DS_VAL = gid;
+	m.DS_VAL_LEN = *length;
+	m.DS_FLAGS = DSF_TYPE_MEM;
+	r = do_invoke_ds(DS_RETRIEVE, ds_name);
+	*length = m.DS_VAL_LEN;
+	cpf_revoke(gid);
 
 	return r;
 }
 
+int ds_retrieve_map(const char *ds_name, char *vaddr, size_t *length,
+		int nr_snapshot, int flags)
+{
+	cp_grant_id_t gid;
+	int r;
+
+	/* Map a mapped memory range. */
+	if(flags & DSMF_MAP_MAPPED) {
+		/* Request DS to grant. */
+		m.DS_FLAGS = DSF_TYPE_MAP | DSMF_MAP_MAPPED;
+		r = do_invoke_ds(DS_RETRIEVE, ds_name);
+		if(r != OK)
+			return r;
+
+		/* Do the safemap. */
+		if(*length > m.DS_VAL_LEN)
+			*length = m.DS_VAL_LEN;
+		*length = (size_t) CLICK_FLOOR(*length);
+		r = sys_safemap(DS_PROC_NR, m.DS_VAL, 0,
+				(vir_bytes)vaddr, *length, D, 0);
+
+	/* Copy mapped memory range or a snapshot. */
+	} else if(flags & (DSMF_COPY_MAPPED|DSMF_COPY_SNAPSHOT)) {
+		/* Grant for memory range first. */
+		gid = cpf_grant_direct(DS_PROC_NR, (vir_bytes)vaddr,
+				*length, CPF_WRITE);
+		if(!GRANT_VALID(gid))
+			return errno;
+
+		m.DS_VAL = gid;
+		m.DS_VAL_LEN = *length;
+		if(flags & DSMF_COPY_MAPPED) {
+			m.DS_FLAGS = DSF_TYPE_MAP | DSMF_COPY_MAPPED;
+		}
+		else {
+			m.DS_NR_SNAPSHOT = nr_snapshot;
+			m.DS_FLAGS = DSF_TYPE_MAP | DSMF_COPY_SNAPSHOT;
+		}
+		r = do_invoke_ds(DS_RETRIEVE, ds_name);
+		*length = m.DS_VAL_LEN;
+		cpf_revoke(gid);
+	}
+	else {
+		return EINVAL;
+	}
+
+	return r;
+}
+
+int ds_delete_u32(const char *ds_name)
+{
+	m.DS_FLAGS = DSF_TYPE_U32;
+	return do_invoke_ds(DS_DELETE, ds_name);
+}
+
+int ds_delete_str(const char *ds_name)
+{
+	m.DS_FLAGS = DSF_TYPE_STR;
+	return do_invoke_ds(DS_DELETE, ds_name);
+}
+
+int ds_delete_mem(const char *ds_name)
+{
+	m.DS_FLAGS = DSF_TYPE_MEM;
+	return do_invoke_ds(DS_DELETE, ds_name);
+}
+
+int ds_delete_map(const char *ds_name)
+{
+	m.DS_FLAGS = DSF_TYPE_MAP;
+	return do_invoke_ds(DS_DELETE, ds_name);
+}
+
+int ds_delete_label(const char *ds_name)
+{
+	m.DS_FLAGS = DSF_TYPE_LABEL;
+	return do_invoke_ds(DS_DELETE, ds_name);
+}
+
+int ds_subscribe(const char *regexp, int flags)
+{
+	m.DS_FLAGS = flags;
+	return do_invoke_ds(DS_SUBSCRIBE, regexp);
+}
+
+int ds_check(char *ds_key, int *type)
+{
+	int r;
+	r = do_invoke_ds(DS_CHECK, ds_key);
+	*type = m.DS_FLAGS;
+	return r;
+}

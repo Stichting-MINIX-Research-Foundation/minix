@@ -65,21 +65,51 @@ register message *m_ptr;	/* pointer to request message */
 #endif
 
 		/* Reply with request fields. */
-		m_ptr->SVMCTL_MRG_ADDR = (char *) rp->p_vmrequest.start;
-		m_ptr->SVMCTL_MRG_LEN = rp->p_vmrequest.length;
-		m_ptr->SVMCTL_MRG_WRITE = rp->p_vmrequest.writeflag;
-		m_ptr->SVMCTL_MRG_EP = rp->p_vmrequest.who;
-		m_ptr->SVMCTL_MRG_REQUESTOR = (void *) rp->p_endpoint;
+		switch(rp->p_vmrequest.req_type) {
+		case VMPTYPE_CHECK:
+			m_ptr->SVMCTL_MRG_TARGET	=
+				rp->p_vmrequest.target;
+			m_ptr->SVMCTL_MRG_ADDR		=
+				rp->p_vmrequest.params.check.start;
+			m_ptr->SVMCTL_MRG_LENGTH	=
+				rp->p_vmrequest.params.check.length;
+			m_ptr->SVMCTL_MRG_FLAG		=
+				rp->p_vmrequest.params.check.writeflag;
+			m_ptr->SVMCTL_MRG_REQUESTOR	=
+				(void *) rp->p_endpoint;
+			break;
+		case VMPTYPE_COWMAP:
+		case VMPTYPE_SMAP:
+		case VMPTYPE_SUNMAP:
+			m_ptr->SVMCTL_MRG_TARGET	=
+				rp->p_vmrequest.target;
+			m_ptr->SVMCTL_MRG_ADDR		=
+				rp->p_vmrequest.params.map.vir_d;
+			m_ptr->SVMCTL_MRG_EP2		=
+				rp->p_vmrequest.params.map.ep_s;
+			m_ptr->SVMCTL_MRG_ADDR2		=
+				rp->p_vmrequest.params.map.vir_s;
+			m_ptr->SVMCTL_MRG_LENGTH	=
+				rp->p_vmrequest.params.map.length;
+			m_ptr->SVMCTL_MRG_FLAG		=
+				rp->p_vmrequest.params.map.writeflag;
+			m_ptr->SVMCTL_MRG_REQUESTOR	=
+				(void *) rp->p_endpoint;
+			break;
+		default:
+			minix_panic("VMREQUEST wrong type", NO_NUM);
+		}
+
 		rp->p_vmrequest.vmresult = VMSUSPEND;
 
 		/* Remove from request chain. */
 		vmrequest = vmrequest->p_vmrequest.nextrequestor;
 
-		return OK;
+		return rp->p_vmrequest.req_type;
 	case VMCTL_MEMREQ_REPLY:
 		vmassert(RTS_ISSET(p, RTS_VMREQUEST));
 		vmassert(p->p_vmrequest.vmresult == VMSUSPEND);
-  		okendpt(p->p_vmrequest.who, &proc_nr);
+  		okendpt(p->p_vmrequest.target, &proc_nr);
 		target = proc_addr(proc_nr);
 		p->p_vmrequest.vmresult = m_ptr->SVMCTL_VALUE;
 		vmassert(p->p_vmrequest.vmresult != VMSUSPEND);
@@ -94,21 +124,28 @@ register message *m_ptr;	/* pointer to request message */
 			p->p_vmrequest.start + p->p_vmrequest.length,
 			p->p_vmrequest.writeflag, p->p_vmrequest.stacktrace);
 		printf("type %d\n", p->p_vmrequest.type);
+#endif
 
 		vmassert(RTS_ISSET(target, RTS_VMREQTARGET));
 		RTS_LOCK_UNSET(target, RTS_VMREQTARGET);
-#endif
 
-		if(p->p_vmrequest.type == VMSTYPE_KERNELCALL) {
+		switch(p->p_vmrequest.type) {
+		case VMSTYPE_KERNELCALL:
 			/* Put on restart chain. */
 			p->p_vmrequest.nextrestart = vmrestart;
 			vmrestart = p;
-		} else if(p->p_vmrequest.type == VMSTYPE_DELIVERMSG) {
+			break;
+		case VMSTYPE_DELIVERMSG:
 			vmassert(p->p_misc_flags & MF_DELIVERMSG);
 			vmassert(p == target);
 			vmassert(RTS_ISSET(p, RTS_VMREQUEST));
 			RTS_LOCK_UNSET(p, RTS_VMREQUEST);
-		} else {
+			break;
+		case VMSTYPE_MAP:
+			vmassert(RTS_ISSET(p, RTS_VMREQUEST));
+			RTS_LOCK_UNSET(p, RTS_VMREQUEST);
+			break;
+		default:
 #if DEBUG_VMASSERT
 			printf("suspended with stack: %s\n",
 				p->p_vmrequest.stacktrace);

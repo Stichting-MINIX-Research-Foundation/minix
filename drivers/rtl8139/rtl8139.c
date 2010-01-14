@@ -336,11 +336,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	 * be found, assume this is the first time we started and INET is
 	 * not yet alive.
 	 */
-	r= ds_retrieve_u32("inet", &inet_proc_nr);
+	r= ds_retrieve_label_num("inet", &inet_proc_nr);
 	if (r == OK)
 		notify(inet_proc_nr);
 	else if (r != ESRCH)
-		printf("rtl8139: ds_retrieve_u32 failed for 'inet': %d\n", r);
+		printf("rtl8139: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
 	return(OK);
 }
@@ -3017,12 +3017,12 @@ int pci_func;
 	u32_t u32;
 	message m;
 
-	r= ds_retrieve_u32("amddev", &u32);
+	r= ds_retrieve_label_num("amddev", &u32);
 	if (r != OK)
 	{
 #if 0
 		printf(
-		"rtl8139`tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
+		"rtl8139`tell_dev: ds_retrieve_label_num failed for 'amddev': %d\n",
 			r);
 #endif
 		return;

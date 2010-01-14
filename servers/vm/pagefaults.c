@@ -127,26 +127,42 @@ PUBLIC void do_pagefaults(void)
 }
 
 /*===========================================================================*
- *				do_memory	     		     *
+ *				   do_memory	     			     *
  *===========================================================================*/
 PUBLIC void do_memory(void)
 {
-	int r, s;
-	endpoint_t who, requestor;
-	vir_bytes mem;
+	endpoint_t who, who_s, requestor;
+	vir_bytes mem, mem_s;
 	vir_bytes len;
 	int wrflag;
 
-	while((r=sys_vmctl_get_memreq(&who, &mem, &len, &wrflag, &requestor))
-	  == OK) {
+	while(1) {
 		int p, r = OK;
 		struct vmproc *vmp;
 
-		if(vm_isokendpt(who, &p) != OK)
-			vm_panic("do_memory: endpoint wrong", who);
-		vmp = &vmproc[p];
+		r = sys_vmctl_get_memreq(&who, &mem, &len, &wrflag, &who_s,
+			&mem_s, &requestor);
 
-		r = handle_memory(vmp, mem, len, wrflag);
+		switch(r) {
+		case VMPTYPE_CHECK:
+			if(vm_isokendpt(who, &p) != OK)
+				vm_panic("do_memory: bad endpoint", who);
+			vmp = &vmproc[p];
+
+			r = handle_memory(vmp, mem, len, wrflag);
+			break;
+		case VMPTYPE_COWMAP:
+			r = map_memory(who_s, who, mem_s, mem, len, -1);
+			break;
+		case VMPTYPE_SMAP:
+			r = map_memory(who_s, who, mem_s, mem, len, wrflag);
+			break;
+		case VMPTYPE_SUNMAP:
+			r = unmap_memory(who_s, who, mem_s, mem, len, wrflag);
+			break;
+		default:
+			return;
+		}
 
 		if(sys_vmctl(requestor, VMCTL_MEMREQ_REPLY, r) != OK)
 			vm_panic("do_memory: sys_vmctl failed", r);

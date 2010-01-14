@@ -110,10 +110,10 @@ SANITYCHECK(SCL_DETAIL);
 	}
 
 	/* Check to see if segment sizes are feasible. */
-	tc = ((unsigned long) args.text_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
-	dc = (args.data_bytes+args.bss_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
-	totc = (args.tot_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
-	sc = (args.args_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
+	tc = (vir_clicks) (CLICK_CEIL(args.text_bytes) >> CLICK_SHIFT);
+	dc = (vir_clicks) (CLICK_CEIL(args.data_bytes+args.bss_bytes) >> CLICK_SHIFT);
+	totc = (vir_clicks) (CLICK_CEIL(args.tot_bytes) >> CLICK_SHIFT);
+	sc = (vir_clicks) (CLICK_CEIL(args.args_bytes) >> CLICK_SHIFT);
 	if (dc >= totc) {
 		printf("VM: newmem: no stack?\n");
 		return(ENOEXEC); /* stack must be at least 1 click */
@@ -204,10 +204,10 @@ vir_bytes *stack_top;		/* top of process stack */
    * and stack occupies an integral number of clicks, starting at click
    * boundary.  The data and bss parts are run together with no space.
    */
-  text_clicks = ((unsigned long) text_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
-  data_clicks = (data_bytes + bss_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
-  stack_clicks = (stk_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
-  tot_clicks = (tot_bytes + CLICK_SIZE - 1) >> CLICK_SHIFT;
+  text_clicks = (vir_clicks) (CLICK_CEIL(text_bytes) >> CLICK_SHIFT);
+  data_clicks = (vir_clicks) (CLICK_CEIL(data_bytes + bss_bytes) >> CLICK_SHIFT);
+  stack_clicks = (vir_clicks) (CLICK_CEIL(stk_bytes) >> CLICK_SHIFT);
+  tot_clicks = (vir_clicks) (CLICK_CEIL(tot_bytes) >> CLICK_SHIFT);
   gap_clicks = tot_clicks - data_clicks - stack_clicks;
   if ( (int) gap_clicks < 0) {
 	printf("VM: new_mem: no gap?\n");

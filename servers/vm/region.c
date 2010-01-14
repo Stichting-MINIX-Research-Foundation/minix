@@ -40,8 +40,6 @@ FORWARD _PROTOTYPE(struct phys_region *map_new_physblock, (struct vmproc *vmp,
 FORWARD _PROTOTYPE(int map_ph_writept, (struct vmproc *vmp, struct vir_region *vr,
 	struct phys_region *pr));
 
-FORWARD _PROTOTYPE(int map_copy_ph_block, (struct vmproc *vmp, struct vir_region *region, struct phys_region *ph));
-
 FORWARD _PROTOTYPE(struct vir_region *map_copy_region, (struct vmproc *vmp, struct vir_region *vr));
 
 PRIVATE char *map_name(struct vir_region *vr)
@@ -422,7 +420,7 @@ USE(newregion,
 /*===========================================================================*
  *				pb_unreferenced				     *
  *===========================================================================*/
-void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
+PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 {
 	struct phys_block *pb;
 	int remap = 0;
@@ -460,20 +458,6 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 			vm_panic("strange phys flags", NO_NUM);
 		}
 		SLABFREE(pb);
-	} else if(WRITABLE(region, pb)) {
-		/* If a writable piece of physical memory is now only
-		 * referenced once, map it writable right away instead of
-		 * waiting for a page fault.
-		 */
-			vm_assert(pb);
-			vm_assert(pb->firstregion);
-			vm_assert(!pb->firstregion->next_ph_list);
-			vm_assert(pb->firstregion->ph == pb);
-			vm_assert(pb->firstregion->ph == pb);
-			if(map_ph_writept(pb->firstregion->parent->parent,
-				pb->firstregion->parent, pb->firstregion) != OK) {
-				vm_panic("pb_unreferenced: writept", NO_NUM);
-			}
 	}
 }
 
@@ -709,7 +693,7 @@ phys_bytes what_mem;
 /*===========================================================================*
  *				map_copy_ph_block			     *
  *===========================================================================*/
-PRIVATE int map_copy_ph_block(vmp, region, ph)
+PUBLIC int map_copy_ph_block(vmp, region, ph)
 struct vmproc *vmp;
 struct vir_region *region;
 struct phys_region *ph;
@@ -816,9 +800,13 @@ int write;
 			if(r != OK)
 				printf("map_ph_writept failed\n");
 		} else {
-			r = map_copy_ph_block(vmp, region, ph);
-			if(r != OK)
-				printf("map_copy_ph_block failed\n");
+			if(ph->ph->refcount > 0
+				&& ph->ph->share_flag != PBSH_COW) {
+				printf("VM: write RO mapped pages.\n");
+				return EFAULT;
+			} else {
+				r = map_copy_ph_block(vmp, region, ph);
+			}
 		}
 	} else {
 		/* Pagefault in non-existing block. Map in new block. */
@@ -959,9 +947,12 @@ int write;
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	if(changes < 1) {
+#if VERBOSE
 		printf("region start at 0x%lx offset 0x%lx len 0x%lx write %d\n", 
 			region->vaddr, offset, length, write);
-		vm_panic("no changes in map_handle_memory", NO_NUM);
+		printf("no changes in map_handle_memory\n");
+#endif
+		return EFAULT;
 	}
 
 #if SANITYCHECKS
@@ -1065,11 +1056,19 @@ PUBLIC int map_writept(struct vmproc *vmp)
 		physr_iter iter;
 		physr_start_iter_least(vr->phys, &iter);
 		while((ph = physr_get_iter(&iter))) {
+			physr_incr_iter(&iter);
+
+			/* If this phys block is shared as SMAP, then do
+			 * not update the page table. */
+			if(ph->ph->refcount > 1
+				&& ph->ph->share_flag == PBSH_SMAP) {
+				continue;
+			}
+
 			if((r=map_ph_writept(vmp, vr, ph)) != OK) {
 				printf("VM: map_writept: failed\n");
 				return r;
 			}
-			physr_incr_iter(&iter);
 		}
 	}
 
@@ -1124,6 +1123,14 @@ struct vmproc *src;
 			vm_assert(pb->refcount > 0);
 			USE(pb, pb->refcount++;);
 			vm_assert(pb->refcount > 1);
+
+			/* If the phys block has been shared as SMAP,
+			 * do the regular copy. */
+			if(pb->refcount > 2 && pb->share_flag == PBSH_SMAP) {
+				map_copy_ph_block(dst, newvr, new_ph);
+			} else {
+				pb->share_flag = PBSH_COW;
+			}
 
 			/* Get next new physregion */
 			physr_incr_iter(&iter_orig);

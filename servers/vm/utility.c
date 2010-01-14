@@ -76,8 +76,8 @@ struct memory *mem_chunks;                      /* store mem chunks here */
         base = mem_chunks[i].base;
         size = mem_chunks[i].size;
         limit = base + size;
-        base = (base + CLICK_SIZE-1) & ~(long)(CLICK_SIZE-1);
-        limit &= ~(long)(CLICK_SIZE-1);
+        base = (phys_bytes) (CLICK_CEIL(base));
+        limit = (phys_bytes) (CLICK_FLOOR(limit));
         if (limit <= base) {
                 memp->base = memp->size = 0;
         } else { 

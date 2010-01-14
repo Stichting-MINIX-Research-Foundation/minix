@@ -1,0 +1,6 @@
+#!/bin/sh
+
+PWD=`pwd`
+
+service up ${PWD}/subs -config ${PWD}/system.conf -script ${PWD}/down
+service up ${PWD}/dstest -config ${PWD}/system.conf -script ${PWD}/down

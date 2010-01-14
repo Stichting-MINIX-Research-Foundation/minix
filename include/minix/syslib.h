@@ -62,7 +62,8 @@ _PROTOTYPE( int sys_vmctl, (endpoint_t who, int param, u32_t value));
 _PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_t *err));
 _PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
 _PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
-        vir_bytes *len, int *wrflag, endpoint_t *) );
+        vir_bytes *len, int *wrflag, endpoint_t *who_s, vir_bytes *mem_s,
+        endpoint_t *) );
 _PROTOTYPE( int sys_vmctl_enable_paging, (struct mem_map *));
 
 _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
@@ -148,6 +149,14 @@ _PROTOTYPE(int sys_vsafecopy, (struct vscp_vec *copyvec, int elements));
 
 _PROTOTYPE(int sys_memset, (unsigned long pattern, 
 		phys_bytes base, phys_bytes bytes));
+
+/* Grant-based map functions. */
+_PROTOTYPE(int sys_safemap, (endpoint_t grantor, cp_grant_id_t grant,
+	vir_bytes grant_offset, vir_bytes my_address, size_t bytes, int my_seg,
+	int writable));
+_PROTOTYPE(int sys_saferevmap_gid, (cp_grant_id_t grant));
+_PROTOTYPE(int sys_saferevmap_addr, (vir_bytes addr));
+_PROTOTYPE(int sys_safeunmap, (int my_seg, vir_bytes my_address));
 
 _PROTOTYPE(int sys_umap, (endpoint_t proc_ep, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));

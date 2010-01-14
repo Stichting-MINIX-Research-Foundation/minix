@@ -2,8 +2,6 @@
 #define _SYSTEM 1
 #define _POSIX_SOURCE 1
 
-#define VERBOSE 0
-
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>

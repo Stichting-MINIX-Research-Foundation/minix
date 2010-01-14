@@ -24,6 +24,8 @@
 
 #define MEM_TOP 0xFFFFFFFFUL
 
+#define USE_COW_SAFECOPY 0
+
 FORWARD _PROTOTYPE(int safecopy, (endpoint_t, endpoint_t, cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
 
 #define HASGRANTTABLE(gr) \
@@ -229,9 +231,10 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 {
 	static struct vir_addr v_src, v_dst;
 	static vir_bytes v_offset;
-	int r;
 	endpoint_t new_granter, *src, *dst;
 	struct proc *granter_p;
+	vir_bytes size;
+	int r;
 
 	/* See if there is a reasonable grant table. */
 	if(!(granter_p = endpoint_lookup(granter))) return EINVAL;
@@ -279,8 +282,48 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	}
 
 	/* Do the regular copy. */
-	return virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+#if USE_COW_SAFECOPY
+	if(v_offset % CLICK_SIZE != addr % CLICK_SIZE || bytes < CLICK_SIZE) {
+		/* Give up on COW immediately when offsets are not aligned
+		 * or we are copying less than a page.
+		 */
+		return virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+	}
 
+	if((size = v_offset % CLICK_SIZE) != 0) {
+		/* Normal copy for everything before the first page boundary. */
+		size = CLICK_SIZE - size;
+		r = virtual_copy_vmcheck(&v_src, &v_dst, size);
+		if(r != OK)
+			return r;
+		v_src.offset += size;
+		v_dst.offset += size;
+		bytes -= size;
+	}
+	if((size = bytes / CLICK_SIZE) != 0) {
+		/* Use COW optimization when copying entire pages. */
+		size *= CLICK_SIZE;
+		r = map_invoke_vm(VMPTYPE_COWMAP,
+			v_dst.proc_nr_e, v_dst.segment, v_dst.offset,
+			v_src.proc_nr_e, v_src.segment, v_src.offset,
+			size, 0);
+		if(r != OK)
+			return r;
+		v_src.offset += size;
+		v_dst.offset += size;
+		bytes -= size;
+	}
+	if(bytes != 0) {
+		/* Normal copy for everything after the last page boundary. */
+		r = virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+		if(r != OK)
+			return r;
+	}
+
+	return OK;
+#else
+	return virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+#endif
 }
 
 /*===========================================================================*

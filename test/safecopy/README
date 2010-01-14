@@ -1,0 +1,19 @@
+Test Program for Safecopy with or without COW
+
+How to run
+==========
+
+Test safecopy with COW:
+  1. Set USE_COW_SAFECOPY to 1 in /usr/src/kernel/system/do_safecopy.c
+  2. Type `make run` to prepare and run test.
+  3. When done testing, type `make clean` to clean up.
+
+Test safecopy without COW:
+  1. Set USE_COW_SAFECOPY to 0 in /usr/src/kernel/system/do_safecopy.c
+  2. Type `make run` to prepare and run test.
+  3. When done testing, type `make clean` to clean up.
+
+If you want to modify the test buffer size:
+  1. Modify TEST_PAGE_NUM in inc.h
+  2. Modify TEST_PAGE_SHIFT in inc.h
+

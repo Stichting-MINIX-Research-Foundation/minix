@@ -414,15 +414,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	memset(fxp_table, 0, ft);
 
-	if((r=micro_delay_calibrate()) != OK)
-		panic("FXP","rmicro_delay_calibrate failed", r);
+	if((r=tsc_calibrate()) != OK)
+		panic("FXP","tsc_calibrate failed", r);
 
 	/* Try to notify inet that we are present (again) */
-	r= ds_retrieve_u32("inet", &tasknr);
+	r= ds_retrieve_label_num("inet", &tasknr);
 	if (r == OK)
 		notify(tasknr);
 	else if (r != ESRCH)
-		printf("fxp: ds_retrieve_u32 failed for 'inet': %d\n", r);
+		printf("fxp: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
 	return(OK);
 }
@@ -3013,12 +3013,12 @@ int pci_func;
 	u32_t u32;
 	message m;
 
-	r= ds_retrieve_u32("amddev", &u32);
+	r= ds_retrieve_label_num("amddev", &u32);
 	if (r != OK)
 	{
 #if 0
 		printf(
-		"fxp`tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
+		"fxp`tell_dev: ds_retrieve_label_num failed for 'amddev': %d\n",
 			r);
 #endif
 		return;

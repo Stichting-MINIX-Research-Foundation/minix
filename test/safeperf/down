@@ -1,0 +1,5 @@
+#!/bin/sh
+
+service down grantor
+service down requestor
+

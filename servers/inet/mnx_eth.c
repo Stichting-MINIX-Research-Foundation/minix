@@ -99,10 +99,10 @@ PUBLIC void osdep_eth_init()
 		}
 		eth_port->etp_osdep.etp_rd_vec_grant= gid;
 
-		r= ds_retrieve_u32(ecp->ec_task, &tasknr);
+		r= ds_retrieve_label_num(ecp->ec_task, &tasknr);
 		if (r != OK && r != ESRCH)
 		{
-			printf("inet: ds_retrieve_u32 failed for '%s': %d\n",
+			printf("inet: ds_retrieve_label_num failed for '%s': %d\n",
 				ecp->ec_task, r);
 		}
 		if (r != OK)

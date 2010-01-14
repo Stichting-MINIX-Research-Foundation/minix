@@ -61,7 +61,7 @@ struct proc {
    * memory that isn't present, VM has to fix it. Until it has asked
    * what needs to be done and fixed it, save necessary state here.
    *
-   * The requester gets a copy of its request message in reqmsg and gets
+   * The requestor gets a copy of its request message in reqmsg and gets
    * VMREQUEST set.
    */
   struct {
@@ -70,6 +70,8 @@ struct proc {
 #define VMSTYPE_SYS_NONE	0
 #define VMSTYPE_KERNELCALL	1
 #define VMSTYPE_DELIVERMSG	2
+#define VMSTYPE_MAP		3
+
 	int		type;		/* suspended operation */
 	union {
 		/* VMSTYPE_SYS_MESSAGE */
@@ -77,10 +79,20 @@ struct proc {
 	} saved;
 
 	/* Parameters of request to VM */
-	vir_bytes 	start, length;	/* memory range */
-	u8_t		writeflag;	/* nonzero for write access */
-	endpoint_t	who;
-
+	int		req_type;
+	endpoint_t	target;
+	union {
+		struct {
+			vir_bytes 	start, length;	/* memory range */
+			u8_t		writeflag;	/* nonzero for write access */
+		} check;
+		struct {
+			char		writeflag;
+			endpoint_t	ep_s;
+			vir_bytes	vir_s, vir_d;
+			vir_bytes	length;
+		} map;
+	} params;
 	/* VM result when available */
 	int		vmresult;
 

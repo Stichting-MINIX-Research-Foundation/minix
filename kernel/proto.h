@@ -89,6 +89,12 @@ _PROTOTYPE( void check_runqueues_f, (char *file, int line) );
 _PROTOTYPE( char *rtsflagstr, (int flags) );
 _PROTOTYPE( char *miscflagstr, (int flags) );
 
+/* system/do_safemap.c */
+_PROTOTYPE( int map_invoke_vm, (int req_type,
+		endpoint_t end_d, int seg_d, vir_bytes off_d,
+		endpoint_t end_s, int seg_s, vir_bytes off_s,
+		size_t size, int flag));
+
 /* system/do_safecopy.c */
 _PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
 	int, vir_bytes, vir_bytes *, endpoint_t *));

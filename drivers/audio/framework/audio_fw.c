@@ -1027,11 +1027,11 @@ int pci_func;
 	u32_t u32;
 	message m;
 
-	r= ds_retrieve_u32("amddev", &u32);
+	r= ds_retrieve_label_num("amddev", &u32);
 	if (r != OK)
 	{
 #if 0
-		printf("tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
+		printf("tell_dev: ds_retrieve_label_num failed for 'amddev': %d\n",
 			r);
 #endif
 		return;

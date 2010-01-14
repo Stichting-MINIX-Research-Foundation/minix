@@ -17,15 +17,15 @@
 #define CALIBRATE 						\
 	if(!calibrated) {					\
 		int r;						\
-		if((r=micro_delay_calibrate()) != OK)		\
-			panic(__FILE__, "micro_delay: calibrate failed\n", r); \
+		if((r=tsc_calibrate()) != OK)			\
+			panic(__FILE__, "calibrate failed\n", r); \
 	}
 
 static u32_t calib_tsc, Hz = 0;
 static int calibrated = 0;
 
 int
-micro_delay_calibrate(void)
+tsc_calibrate(void)
 {
 	u64_t start, end, diff;
 	struct tms tms;
@@ -50,11 +50,11 @@ micro_delay_calibrate(void)
 	diff = sub64(end, start);
 	if(ex64hi(diff) != 0)
 	  panic(__FILE__,
-		"micro_delay_calibrate: CALIBRATE_TICKS too high "
+		"tsc_calibrate: CALIBRATE_TICKS too high "
 			"for TSC frequency\n", NO_NUM);
 	calib_tsc = ex64lo(diff);
 #if 0
-	printf("micro_delay_calibrate: "
+	printf("tsc_calibrate: "
 		"%lu cycles/%d ticks of %d Hz; %lu cycles/s\n",
 			calib_tsc, CALIBRATE_TICKS(Hz), Hz,
 			div64u(mul64u(calib_tsc, Hz), CALIBRATE_TICKS(Hz)));
@@ -92,5 +92,25 @@ micro_delay(u32_t micros)
 		read_tsc_64(&now);
 
 	return OK;
+}
+
+u32_t tsc_64_to_micros(u64_t tsc)
+{
+	return tsc_to_micros(ex64lo(tsc), ex64hi(tsc));
+}
+
+u32_t tsc_to_micros(u32_t low, u32_t high)
+{
+	u32_t micros;
+
+	if(high) {
+		return 0;
+	}
+	CALIBRATE;
+
+	micros = (div64u(mul64u(low, MICROHZ * CALIBRATE_TICKS(Hz)),
+		calib_tsc)/Hz);
+
+	return micros;
 }
 

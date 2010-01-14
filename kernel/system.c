@@ -208,6 +208,11 @@ PRIVATE void initialize(void)
   map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
 
+  /* Mapping. */
+  map(SYS_SAFEMAP, do_safemap);		/* map pages from other process */
+  map(SYS_SAFEREVMAP, do_saferevmap);	/* grantor revokes the map grant */
+  map(SYS_SAFEUNMAP, do_safeunmap);	/* requestor unmaps the mapped pages */
+
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */
   map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */
@@ -262,10 +267,6 @@ int priv_id;				/* privilege id */
   }
   rc->p_priv = sp;			    /* assign new slot */
   rc->p_priv->s_proc_nr = proc_nr(rc);	    /* set association */
-  
-  /* Clear some fields */
-  sp->s_asyntab= -1;
-  sp->s_asynsize= 0;
 
   return(OK);
 }
@@ -482,9 +483,11 @@ register struct proc *rc;		/* slot of process to clean up */
   if (priv(rc)->s_flags & SYS_PROC)
   {
 	if (priv(rc)->s_asynsize) {
+#if 0
 		kprintf("clear_endpoint: clearing s_asynsize of %s / %d\n",
 			rc->p_name, rc->p_endpoint);
 		proc_stacktrace(rc);
+#endif
 	}
 	priv(rc)->s_asynsize= 0;
   }

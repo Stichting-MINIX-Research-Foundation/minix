@@ -79,6 +79,10 @@
 #define CLICK_SHIFT	  12	/* log2 of CLICK_SIZE */
 #endif
 
+/* Click alignment macros. */
+#define CLICK_FLOOR(n)  (((vir_bytes)(n) / CLICK_SIZE) * CLICK_SIZE)
+#define CLICK_CEIL(n)   CLICK_FLOOR((vir_bytes)(n) + CLICK_SIZE-1)
+
 /* Sizes of memory tables. The boot monitor distinguishes three memory areas,
  * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
  * for DOS MINIX.

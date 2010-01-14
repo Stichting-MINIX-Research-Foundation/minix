@@ -137,12 +137,7 @@ PUBLIC void prot_init(void)
   /* Click-round kernel. */
   if(kinfo.data_base % CLICK_SIZE)
 	minix_panic("kinfo.data_base not aligned", NO_NUM);
-  kinfo.data_size = ((kinfo.data_size+CLICK_SIZE-1)/CLICK_SIZE) * CLICK_SIZE;
-
-  /* Click-round kernel. */
-  if(kinfo.data_base % CLICK_SIZE)
-	minix_panic("kinfo.data_base not aligned", NO_NUM);
-  kinfo.data_size = ((kinfo.data_size+CLICK_SIZE-1)/CLICK_SIZE) * CLICK_SIZE;
+  kinfo.data_size = (phys_bytes) (CLICK_CEIL(kinfo.data_size));
 
   /* Build gdt and idt pointers in GDT where the BIOS expects them. */
   dtp= (struct desctableptr_s *) &gdt[GDT_INDEX];

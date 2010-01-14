@@ -157,9 +157,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
     memset(e1000_table, 0, sizeof(e1000_table));
 
     /* Perform calibration. */
-    if((r = micro_delay_calibrate()) != OK)
+    if((r = tsc_calibrate()) != OK)
     {
-        panic("e1000", "rmicro_delay_calibrate failed", r);
+        panic("e1000", "tsc_calibrate failed", r);
     }
     /* Try to notify inet that we are present (again) */
     if ((r = ds_retrieve_u32("inet", &tasknr)) == OK)

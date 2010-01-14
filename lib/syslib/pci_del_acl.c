@@ -21,7 +21,7 @@ endpoint_t proc_ep;
 
 	if (pci_procnr == ANY)
 	{
-		r= ds_retrieve_u32("pci", &u32);
+		r= ds_retrieve_label_num("pci", &u32);
 		if (r != 0)
 		{
 			panic("syslib/" __FILE__,

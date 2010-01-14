@@ -96,7 +96,7 @@ PUBLIC int do_mount()
 
 	mount_label[sizeof(mount_label)-1] = 0;
 
-	r = ds_retrieve_u32(mount_label, &fs_e);
+	r = ds_retrieve_label_num(mount_label, &fs_e);
 	if (r != OK) return(r);
 
 	if (isokendpt(fs_e, &proc_nr) != OK) return(EINVAL);

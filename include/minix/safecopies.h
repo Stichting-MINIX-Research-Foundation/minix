@@ -49,6 +49,13 @@ struct vscp_vec {
         size_t          v_bytes;        /* no. of bytes */
 };
 
+/* Types on VM invocation. */
+#define VMPTYPE_NONE		0
+#define VMPTYPE_CHECK		1
+#define VMPTYPE_COWMAP		2
+#define VMPTYPE_SMAP		3
+#define VMPTYPE_SUNMAP		4
+
 /* Invalid grant number. */
 #define GRANT_INVALID	-1
 #define GRANT_VALID(g)	((g) > GRANT_INVALID)
@@ -56,6 +63,7 @@ struct vscp_vec {
 /* Operations: any combination is ok. */
 #define CPF_READ	0x000001 /* Granted process may read. */
 #define CPF_WRITE	0x000002 /* Granted process may write. */
+#define CPF_MAP		0x000004 /* Granted process may map. */
 
 /* Internal flags. */
 #define CPF_USED	0x000100 /* Grant slot in use. */

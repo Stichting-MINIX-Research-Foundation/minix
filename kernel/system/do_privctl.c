@@ -101,6 +101,8 @@ message *m_ptr;			/* pointer to request message */
 	      priv(rp)->s_notify_pending.chunk[i] = 0;	/* - notifications */
 	priv(rp)->s_int_pending = 0;			/* - interrupts */
 	sigemptyset(&priv(rp)->s_sig_pending);		/* - signals */
+	priv(rp)->s_asyntab= -1;			/* - asynsends */
+	priv(rp)->s_asynsize= 0;
 
 	/* Set defaults for privilege bitmaps. */
 	priv(rp)->s_flags= DEF_SYS_F;           /* privilege flags */

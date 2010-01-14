@@ -257,9 +257,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	init_rand256(randbits);
 
 	/* Our new identity as a server. */
-	r= ds_retrieve_u32("inet", &tasknr);
+	r= ds_retrieve_label_num("inet", &tasknr);
 	if (r != OK)
-		ip_panic(("inet: ds_retrieve_u32 failed for 'inet': %d", r));
+		ip_panic(("inet: ds_retrieve_label_num failed for 'inet': %d", r));
 	this_proc= tasknr;
 
 	/* Register the device group. */

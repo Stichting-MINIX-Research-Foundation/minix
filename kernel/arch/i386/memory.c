@@ -613,10 +613,11 @@ PUBLIC int vm_suspend(struct proc *caller, struct proc *target,
 	util_stacktrace_strcat(caller->p_vmrequest.stacktrace);
 #endif
 
-	caller->p_vmrequest.writeflag = 1;
-	caller->p_vmrequest.start = linaddr;
-	caller->p_vmrequest.length = len;
-	caller->p_vmrequest.who = target->p_endpoint;
+	caller->p_vmrequest.req_type = VMPTYPE_CHECK;
+	caller->p_vmrequest.target = target->p_endpoint;
+	caller->p_vmrequest.params.check.start = linaddr;
+	caller->p_vmrequest.params.check.length = len;
+	caller->p_vmrequest.params.check.writeflag = 1;
 	caller->p_vmrequest.type = type;
 							
 	/* Connect caller on vmrequest wait queue. */	

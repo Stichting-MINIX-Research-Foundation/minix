@@ -1,0 +1,11 @@
+Performance Test Program for Safecopy and Safemap
+
+How to run
+==========
+
+  1. Set USE_COW_SAFECOPY to 1 or 0 in kernel/system/do_safecopy.c
+     to run safecopy tests with or without COW optimization.
+  2. Type `make run` to prepare and run tests. Configuration parameters
+     for performance tests are in ./run.
+  3. When done testing, type `make clean` to clean up.
+
