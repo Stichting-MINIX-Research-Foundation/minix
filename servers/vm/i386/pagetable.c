@@ -785,7 +785,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	{
 		int kernmap_pde;
 		phys_bytes addr, len;
-		int flags, index;
+		int flags, index = 0;
 		u32_t offset = 0;
 
 		kernmap_pde = free_pde++;
