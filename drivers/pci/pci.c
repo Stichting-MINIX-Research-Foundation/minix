@@ -85,7 +85,7 @@ PRIVATE struct pcidev
 	int pd_bar_nr;
 } pcidev[NR_PCIDEV];
 
-EXTERN struct pci_acl *pci_acl;
+EXTERN struct pci_acl pci_acl[NR_DRIVERS];
 
 /* pb_flags */
 #define PBF_IO		1	/* I/O else memory */
