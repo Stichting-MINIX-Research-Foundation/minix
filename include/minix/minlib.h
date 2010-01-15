@@ -15,7 +15,7 @@ _PROTOTYPE(void std_err, (char *_s));
 _PROTOTYPE(void prints, (const char *_s, ...));
 _PROTOTYPE(int fsversion, (char *_dev, char *_prog));
 _PROTOTYPE(int getprocessor, (void));
-_PROTOTYPE(void _cpuid, (u32_t eax_in, u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx));
+_PROTOTYPE(void _cpuid, (u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx));
 _PROTOTYPE(int load_mtab, (char *_prog_name));
 _PROTOTYPE(int rewrite_mtab, (char *_prog_name));
 _PROTOTYPE(int get_mtab_entry, (char *_s1, char *_s2, char *_s3, char *_s4));

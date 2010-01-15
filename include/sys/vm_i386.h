@@ -75,6 +75,7 @@ sys/vm_i386.h
 #define CPUID1_EDX_PGE 		(1L << 13)	/* Page Global (bit) Enable */
 #define CPUID1_EDX_APIC_ON_CHIP (1L << 9)	/* APIC is present on the chip */
 #define CPUID1_EDX_TSC		(1L << 4)	/* Timestamp counter present */
+#define CPUID1_EDX_HTT		(1L << 28)	/* Supports HTT */
 #define CPUID1_EDX_FXSR		(1L << 24)
 #define CPUID1_EDX_SSE		(1L << 25)
 #define CPUID1_EDX_SSE2		(1L << 26)

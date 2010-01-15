@@ -18,6 +18,9 @@
 #define _CPUF_I386_SSE4_1	11
 #define _CPUF_I386_SSE4_2	12
 
+#define _CPUF_I386_HTT		13	/* Supports HTT */
+#define _CPUF_I386_HTT_MAX_NUM	14	/* Maximal num of threads */
+
 _PROTOTYPE(int _cpufeature, (int featureno));
 
 #endif

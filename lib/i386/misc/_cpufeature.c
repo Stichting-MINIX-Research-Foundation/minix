@@ -6,57 +6,61 @@
 
 int _cpufeature(int cpufeature)
 {
-	u32_t cpuid_feature_edx = 0;
-	u32_t cpuid_feature_ecx = 0;
+	u32_t eax, ebx, ecx, edx;
 	int proc;
 
+	eax = ebx = ecx = edx = 0;
 	proc = getprocessor();
 
 	/* If processor supports CPUID and its CPUID supports enough
 	 * parameters, retrieve EDX feature flags to test against.
 	 */
 	if(proc >= 586) {
-		u32_t params, a, b, c, d;
-		_cpuid(0, &params, &b, &c, &d);
-		if(params > 0) {
-			_cpuid(1, &a, &b, &cpuid_feature_ecx,
-					  &cpuid_feature_edx);
+		eax = 0;
+		_cpuid(&eax, &ebx, &ecx, &edx);
+		if(eax > 0) {
+			eax = 1;
+			_cpuid(&eax, &ebx, &ecx, &edx);
 		}
 	}
 
 	switch(cpufeature) {
 		case _CPUF_I386_PSE:
-			return cpuid_feature_edx & CPUID1_EDX_PSE;
+			return edx & CPUID1_EDX_PSE;
 		case _CPUF_I386_PGE:
-			return cpuid_feature_edx & CPUID1_EDX_PGE;
+			return edx & CPUID1_EDX_PGE;
 		case _CPUF_I386_APIC_ON_CHIP:
-			return cpuid_feature_edx & CPUID1_EDX_APIC_ON_CHIP;
+			return edx & CPUID1_EDX_APIC_ON_CHIP;
 		case _CPUF_I386_TSC:
-			return cpuid_feature_edx & CPUID1_EDX_TSC;
+			return edx & CPUID1_EDX_TSC;
 		case _CPUF_I386_FPU:
-			return cpuid_feature_edx & CPUID1_EDX_FPU;
+			return edx & CPUID1_EDX_FPU;
 		case _CPUF_I386_SSEx:
-			return (cpuid_feature_edx & (CPUID1_EDX_FXSR |
-						     CPUID1_EDX_SSE |
-						     CPUID1_EDX_SSE2)) &&
-			       (cpuid_feature_ecx & (CPUID1_ECX_SSE3 |
-						     CPUID1_ECX_SSSE3 |
-						     CPUID1_ECX_SSE4_1 |
-						     CPUID1_ECX_SSE4_2));
+			return (edx & (CPUID1_EDX_FXSR |
+					CPUID1_EDX_SSE |
+					CPUID1_EDX_SSE2)) &&
+					(ecx & (CPUID1_ECX_SSE3 |
+					CPUID1_ECX_SSSE3 |
+					CPUID1_ECX_SSE4_1 |
+					CPUID1_ECX_SSE4_2));
 		case _CPUF_I386_FXSR:
-			return cpuid_feature_edx & CPUID1_EDX_FXSR;
+			return edx & CPUID1_EDX_FXSR;
 		case _CPUF_I386_SSE:
-			return cpuid_feature_edx & CPUID1_EDX_SSE;
+			return edx & CPUID1_EDX_SSE;
 		case _CPUF_I386_SSE2:
-			return cpuid_feature_edx & CPUID1_EDX_SSE2;
+			return edx & CPUID1_EDX_SSE2;
 		case _CPUF_I386_SSE3:
-			return cpuid_feature_ecx & CPUID1_ECX_SSE3;
+			return ecx & CPUID1_ECX_SSE3;
 		case _CPUF_I386_SSSE3:
-			return cpuid_feature_ecx & CPUID1_ECX_SSSE3;
+			return ecx & CPUID1_ECX_SSSE3;
 		case _CPUF_I386_SSE4_1:
-			return cpuid_feature_ecx & CPUID1_ECX_SSE4_1;
+			return ecx & CPUID1_ECX_SSE4_1;
 		case _CPUF_I386_SSE4_2:
-			return cpuid_feature_ecx & CPUID1_ECX_SSE4_2;
+			return ecx & CPUID1_ECX_SSE4_2;
+		case _CPUF_I386_HTT:
+			return edx & CPUID1_EDX_HTT;
+		case _CPUF_I386_HTT_MAX_NUM:
+			return (ebx >> 16) & 0xff;
 	}
 
 	return 0;
