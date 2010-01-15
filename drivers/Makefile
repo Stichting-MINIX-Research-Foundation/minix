@@ -26,6 +26,7 @@ all install depend clean:
 	cd ./rtl8169 && $(MAKE) $@
 	cd ./orinoco && $(MAKE) $@
 	cd ./fxp && $(MAKE) $@
+	cd ./e1000 && $(MAKE) $@
 	cd ./dpeth && $(MAKE) $@
 	cd ./atl2 && $(MAKE) $@
 	cd ./log && $(MAKE) $@
