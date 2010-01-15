@@ -73,7 +73,7 @@ PUBLIC int drv_init(void) {
 
 
 PUBLIC int drv_init_hw(void) {
-	int i, s;
+	int i;
 	int DspVersion[2];
 	dprint("drv_init_hw():\n");
 
@@ -413,7 +413,7 @@ PRIVATE int dsp_get_max_frag_size(u32_t *val, int *len) {
 
 
 PUBLIC int dsp_command(int value) {
-	int i, status;
+	int i;
 
 	for (i = 0; i < SB_TIMEOUT; i++) {
 		if((sb16_inb(DSP_STATUS) & 0x80) == 0) {

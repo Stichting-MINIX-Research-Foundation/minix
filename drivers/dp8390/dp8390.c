@@ -1502,8 +1502,6 @@ size_t offset;
 size_t size;
 void *dst;
 {
-	int r;
-
 	offset = page * DP_PAGESIZE + offset;
 
 	memcpy(dst, dep->de_locmem + offset, size);
@@ -1636,7 +1634,7 @@ vir_bytes offset;
 int nic_addr;
 vir_bytes count;
 {
-	vir_bytes vir_hw, vir_user;
+	vir_bytes vir_hw;
 	int bytes, i, r;
 
 	vir_hw = (vir_bytes)dep->de_locmem + nic_addr;
@@ -1684,7 +1682,7 @@ vir_bytes offset;
 int nic_addr;
 vir_bytes count;
 {
-	vir_bytes vir_hw, vir_user;
+	vir_bytes vir_hw;
 	int bytes, i, r;
 
 	vir_hw = (vir_bytes)dep->de_locmem + nic_addr;
@@ -1735,7 +1733,6 @@ vir_bytes offset;
 int nic_addr;
 vir_bytes count;
 {
-	phys_bytes phys_user;
 	int bytes, i;
 
 	outb_reg0(dep, DP_ISR, ISR_RDC);
@@ -1794,7 +1791,6 @@ vir_bytes offset;
 int nic_addr;
 vir_bytes count;
 {
-	phys_bytes phys_user;
 	int bytes, i, r;
 
 	outb_reg0(dep, DP_ISR, ISR_RDC);
@@ -2084,10 +2080,9 @@ iovec_dat_t *iovp;
 vir_bytes offset;
 vir_bytes count;
 {
-	vir_bytes vir_hw, vir_user;
 	int bytes, i, r;
 
-	vir_hw = (vir_bytes)dep->de_locmem + nic_addr;
+	vir_bytes vir_hw = (vir_bytes) (dep->de_locmem + nic_addr);
 
 	i= 0;
 	while (count > 0)
@@ -2132,7 +2127,7 @@ iovec_dat_s_t *iovp;
 vir_bytes offset;
 vir_bytes count;
 {
-	vir_bytes vir_hw, vir_user;
+	vir_bytes vir_hw;
 	int bytes, i, r;
 
 	vir_hw = (vir_bytes)dep->de_locmem + nic_addr;
@@ -2181,7 +2176,6 @@ iovec_dat_t *iovp;
 vir_bytes offset;
 vir_bytes count;
 {
-	phys_bytes phys_user;
 	int bytes, i;
 
 	outb_reg0(dep, DP_RBCR0, count & 0xFF);
@@ -2228,7 +2222,6 @@ iovec_dat_s_t *iovp;
 vir_bytes offset;
 vir_bytes count;
 {
-	phys_bytes phys_user;
 	int bytes, i, r;
 
 	outb_reg0(dep, DP_RBCR0, count & 0xFF);

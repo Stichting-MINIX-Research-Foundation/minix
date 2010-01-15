@@ -850,7 +850,6 @@ static int paired_grant(char *buf1, char *buf2, int request,
 {
 	/* Create memory grants, either to one or to both drivers.
 	 */
-	cp_grant_id_t gid;
 	int count, access;
 
 	count = 0;
@@ -869,6 +868,7 @@ static int paired_grant(char *buf1, char *buf2, int request,
 				vectors[1], &sizes[1]);
 		}
 	}
+        return count;
 }
 
 /*===========================================================================*

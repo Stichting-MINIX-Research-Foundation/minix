@@ -430,9 +430,7 @@ PRIVATE int AC97_get_volume(struct volume_level *level) {
 					&(level->left), &(level->right), 0x1f, 1);
 			break;
 		case Speaker:
-			cmd = AC97_PC_BEEP_VOLUME;
 			return EINVAL;
-			break;
 		case Treble:
 			cmd = AC97_MASTER_TONE;
 			get_volume(&left, &right, cmd);
@@ -464,7 +462,6 @@ PRIVATE int AC97_set_volume(struct volume_level *level) {
 			break;
 		case Dac:
 			return EINVAL;
-			break;
 		case Fm:
 			cmd = AC97_PCM_OUT_VOLUME;
 			convert(level->left, level->right, 0x1f, &left, &right, 0x1f, 0);
@@ -482,17 +479,11 @@ PRIVATE int AC97_set_volume(struct volume_level *level) {
 			convert(level->left, level->right, 0x1f, &left, &right, 0x1f, 1);
 			break;
 		case Speaker:
-			cmd = AC97_PC_BEEP_VOLUME;
 			return EINVAL;
-			break;
 		case Treble:
-			cmd = AC97_MASTER_TONE;
 			return EINVAL;
-			break;
 		case Bass:  
-			cmd = AC97_MASTER_TONE;
 			return EINVAL;
-			break;
 		default:     
 			return EINVAL;
 	}

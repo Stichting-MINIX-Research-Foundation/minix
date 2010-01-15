@@ -4,8 +4,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <minix/sysutil.h>
 #include <errno.h>
 
 

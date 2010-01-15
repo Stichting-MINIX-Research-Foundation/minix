@@ -576,7 +576,6 @@ PRIVATE void msg_read(message *m_ptr)
 PRIVATE void msg_hardware(void) {
 
 	u32_t     i;
-	int j = 0;
 
 	dprint("%s: handling hardware message\n", drv.DriverName);
 
@@ -659,7 +658,6 @@ PRIVATE void msg_sig_stop(void)
 PRIVATE void handle_int_write(int sub_dev_nr) 
 {
 	sub_dev_t *sub_dev_ptr;
-	int r;
 
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
@@ -710,7 +708,7 @@ PRIVATE void handle_int_write(int sub_dev_nr)
 	drv_reenable_int(sub_dev_nr);
 #if 0
 	/* reenable irq_hook*/
-	if ((r=sys_irqenable(&irq_hook_id)) != OK) {
+	if (sys_irqenable(&irq_hook_id != OK) {
 		error("%s Couldn't enable IRQ\n", drv.DriverName);
 	}
 #endif
@@ -720,7 +718,7 @@ PRIVATE void handle_int_write(int sub_dev_nr)
 /* handle interrupt for specified sub device; DmaMode == DEV_READ_S */
 PRIVATE void handle_int_read(int sub_dev_nr) 
 {
-	sub_dev_t *sub_dev_ptr; int r,i;
+	sub_dev_t *sub_dev_ptr;
 
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
@@ -765,7 +763,7 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 
 #if 0
 	/* reenable irq_hook*/
-	if ((r=sys_irqenable(&irq_hook_id)) != OK) {
+	if (sys_irqenable(&irq_hook_id) != OK) {
 		error("%s: Couldn't reenable IRQ", drv.DriverName);
 	}
 #endif
@@ -773,7 +771,7 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 
 
 PRIVATE int get_started(sub_dev_t *sub_dev_ptr) {
-	u32_t i;char c;  
+	u32_t i;
 
 	/* enable interrupt messages from MINIX */
 	if ((i=sys_irqenable(&irq_hook_id)) != OK) {

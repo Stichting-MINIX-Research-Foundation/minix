@@ -109,7 +109,6 @@ PUBLIC void init_buff(dpeth_t *dep, buff_t **tx_buff)
 */
 PUBLIC void mem2user(dpeth_t *dep, buff_t *rxbuff)
 {
-  phys_bytes phys_user;
   int bytes, ix = 0;
   iovec_dat_s_t *iovp = &dep->de_read_iovec;
   int r, pktsize = rxbuff->size;
@@ -142,7 +141,6 @@ PUBLIC void mem2user(dpeth_t *dep, buff_t *rxbuff)
 */
 PUBLIC void user2mem(dpeth_t *dep, buff_t *txbuff)
 {
-  phys_bytes phys_user;
   int bytes, ix = 0;
   iovec_dat_s_t *iovp = &dep->de_write_iovec;
   int r, pktsize = txbuff->size;

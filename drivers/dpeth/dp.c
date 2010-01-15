@@ -676,7 +676,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the dpeth driver. */
-  dpeth_t *dep;
   int rc, fkeys, sfkeys, tasknr;
 
   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);

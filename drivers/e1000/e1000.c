@@ -31,7 +31,7 @@ PRIVATE u16_t pcitab_e1000[] =
 PRIVATE char *progname;
 PRIVATE e1000_t e1000_table[E1000_PORT_NR];
 
-_PROTOTYPE( PRIVATE int  e1000_init, (message *mp)			);
+_PROTOTYPE( PRIVATE void e1000_init, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_init_pci, (void)				);
 _PROTOTYPE( PRIVATE int  e1000_probe, (e1000_t *e)			);
 _PROTOTYPE( PRIVATE int  e1000_init_hw, (e1000_t *e)			);
@@ -177,8 +177,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *				e1000_init				     *
  *===========================================================================*/
-PRIVATE int e1000_init(mp)
-message *mp;
+PRIVATE void e1000_init(message *mp)
 {
     static int first_time = 1;
     message reply_mess;
@@ -235,14 +234,13 @@ PRIVATE void e1000_init_pci()
 /*===========================================================================*
  *				e1000_probe				     *
  *===========================================================================*/
-PRIVATE int e1000_probe(e)
-e1000_t *e;
+PRIVATE int e1000_probe(e1000_t *e)
 {
     int i, r, devind;
     u16_t vid, did;
     u32_t status[2];
     u32_t gfpreg, sector_base_addr, sector_end_addr;
-    char *dname, *str;
+    char *dname;
 
     E1000_DEBUG(3, ("%s: probe()\n", e->name));
 
@@ -868,7 +866,6 @@ message *mp;
 PRIVATE void e1000_signal(void)
 {
     sigset_t sigset;
-    int sig;
 
     E1000_DEBUG(3, ("e1000: signal()\n"));
 

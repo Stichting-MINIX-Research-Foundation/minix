@@ -17,7 +17,6 @@
 #include "at_wini.h"
 
 #include <minix/sysutil.h>
-#include <minix/keymap.h>
 #include <minix/type.h>
 #include <minix/endpoint.h>
 #include <sys/ioc_disk.h>
@@ -483,8 +482,6 @@ PRIVATE void init_params_pci(int skip)
 
   	/* Any non-compat drives? */
   	if (raid || (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2))) {
-  		int s;
-
 		if (w_next_drive >= MAX_DRIVES)
 		{
 			/* We can't accept more drives, but have to search for
@@ -510,11 +507,11 @@ PRIVATE void init_params_pci(int skip)
 				w_instance, devind);
 			continue;
 		}
-  		if ((s=sys_irqsetpolicy(irq, 0, &irq_hook)) != OK) {
+  		if (sys_irqsetpolicy(irq, 0, &irq_hook) != OK) {
 		  	printf("atapci: couldn't set IRQ policy %d\n", irq);
 		  	continue;
 		}
-		if ((s=sys_irqenable(&irq_hook)) != OK) {
+		if (sys_irqenable(&irq_hook) != OK) {
 			printf("atapci: couldn't enable IRQ line %d\n", irq);
 		  	continue;
 		}
@@ -671,9 +668,7 @@ message *m_ptr;
  *===========================================================================*/
 PRIVATE struct device *w_prepare(int device)
 {
-/* Prepare for I/O on a device. */
-struct wini *prev_wn;
-prev_wn = w_wn;
+  /* Prepare for I/O on a device. */
   w_device = device;
 
   if (device < NR_MINORS) {			/* d0, d0p[0-3], d1, ... */

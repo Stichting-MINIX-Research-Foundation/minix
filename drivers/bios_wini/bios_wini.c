@@ -523,11 +523,9 @@ struct partition *entry;
 /*============================================================================*
  *				w_other				      *
  *============================================================================*/
-PRIVATE int w_other(dr, m)
-struct driver *dr;
-message *m;
+PRIVATE int w_other(struct driver *dr, message *m)
 {
-        int r, timeout, prev;
+        int r;
 
         if (m->m_type != DEV_IOCTL_S )
                 return EINVAL;
