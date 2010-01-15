@@ -3,6 +3,7 @@ setgroups.c
 */
 
 #include <lib.h>
+#define setgroups _setgroups
 #include <unistd.h>
 
 int setgroups(int ngroups, const gid_t *gidset)

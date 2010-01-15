@@ -2,6 +2,7 @@
 initgroups.c
 */
 #include <sys/param.h>
+#define setgroups _setgroups
 #include <unistd.h>
 #include <string.h>
 #include <grp.h>
