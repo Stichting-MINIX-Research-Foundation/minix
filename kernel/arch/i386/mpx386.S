@@ -42,6 +42,8 @@
  * and modified by the boot monitor before the kernel starts.
  */
 
+#include "../../kernel.h" /* configures the kernel */
+
 /* sections */
 
 #include <sys/vm_i386.h>
@@ -466,31 +468,43 @@ restart:
 	call	schedcheck
 
 	/* %eax is set by schedcheck() to the process to run */
-	mov	%eax, %esp	/* will assume P_STACKBASE == 0 */
+	mov	%eax, %ebp	/* will assume P_STACKBASE == 0 */
 
-	lldt	P_LDT_SEL(%esp)	/* enable process' segment descriptors  */
-	cmpl	$0, P_CR3(%esp)
+	cmpl	$0, P_CR3(%ebp)
 	jz	0f
 
 	/*
 	 * test if the cr3 is loaded with the current value to avoid unnecessary
 	 * TLB flushes
 	 */
-	mov	P_CR3(%esp), %eax
+	mov	P_CR3(%ebp), %eax
 	mov	%cr3, %ecx
 	cmp	%ecx, %eax
 	jz	0f
 	mov	%eax, %cr3
-	mov	%esp, ptproc
+	mov	%ebp, ptproc
 	movl	$0, dirtypde
 0:
 
-	popw	%gs
-	popw	%fs
-	popw	%es
-	popw	%ds
-	popal
-	add	$4, %esp	/* skip return adr FIXME unused value */
+	/* reconstruct the stack for iret */
+	movl	SSREG(%ebp), %eax
+	push	%eax
+	movl	SPREG(%ebp), %eax
+	push	%eax
+	movl	PSWREG(%ebp), %eax
+	push	%eax
+	movl	CSREG(%ebp), %eax
+	push	%eax
+	movl	PCREG(%ebp), %eax
+	push	%eax
+
+	RESTORE_GP_REGS(%ebp)
+
+	lldt	P_LDT_SEL(%ebp)	/* enable process' segment descriptors  */
+	RESTORE_SEGS(%ebp)
+
+	movl	%ss:BPREG(%ebp), %ebp
+
 	iret	/* continue process */
 
 /*===========================================================================*/
@@ -512,7 +526,50 @@ single_step_exception:
 	EXCEPTION_NO_ERR_CODE(DEBUG_VECTOR)
 
 nmi:
+#ifndef CONFIG_WATCHDOG
 	EXCEPTION_NO_ERR_CODE(NMI_VECTOR)
+#else
+	/*
+	 * We have to be very careful as this interrupt can occur anytime. On
+	 * the other hand, if it interrupts a user process, we will resume the
+	 * same process which makes things a little simpler. We know that we are
+	 * already on kernel stack whenever it happened and we can be
+	 * conservative and save everything as we don't need to be extremely
+	 * efficient as the interrupt is infrequent and some overhead is already
+	 * expected.
+	 */
+
+	/*
+	 * save the important registers. We don't save %cs and %ss and they are
+	 * saved and restored by CPU
+	 */
+	pushw	%ds
+	pushw	%es
+	pushw	%fs
+	pushw	%gs
+	pusha
+
+	/*
+	 * We cannot be sure about the state of the kernel segment register,
+	 * however, we always set %ds and %es to the same as %ss
+	 */
+	mov	%ss, %si
+	mov	%si, %ds
+	mov	%si, %es
+
+	push	%esp
+	call	nmi_watchdog_handler
+	add	$4, %esp
+
+	/* restore all the important registers as they were before the trap */
+	popa
+	popw	%gs
+	popw	%fs
+	popw	%es
+	popw	%ds
+
+	iret
+#endif
 
 breakpoint_exception:
 	EXCEPTION_NO_ERR_CODE(BREAKPOINT_VECTOR)

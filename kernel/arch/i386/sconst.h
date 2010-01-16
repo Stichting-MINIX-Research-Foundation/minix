@@ -90,7 +90,10 @@
 #define RESTORE_KERNEL_SEGS	\
 	mov	%ss, %si	;\
 	mov	%si, %ds	;\
-	mov	%si, %es	;
+	mov	%si, %es	;\
+	movw	$0, %si		;\
+	mov	%si, %gs	;\
+	mov	%si, %fs	;
 
 #define SAVE_GP_REGS(pptr)	\
 	mov	%eax, %ss:AXREG(pptr)		;\

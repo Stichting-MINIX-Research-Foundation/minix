@@ -8,6 +8,10 @@
 #include <archconst.h>
 #include "proto.h"
 
+#ifdef CONFIG_WATCHDOG
+#include "watchdog.h"
+#endif
+
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 /*===========================================================================*
  *				cstart					     *
@@ -82,6 +86,12 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 	config_no_apic = atoi(value);
   else
 	config_no_apic = 1;
+#endif
+
+#ifdef CONFIG_WATCHDOG
+  value = get_value(params_buffer, "watchdog");
+  if (value)
+	  watchdog_enabled = atoi(value);
 #endif
 
   /* Return to assembler code to switch to protected mode (if 286), 

@@ -38,6 +38,10 @@
 
 #include "clock.h"
 
+#ifdef CONFIG_WATCHDOG
+#include "watchdog.h"
+#endif
+
 /* Function prototype for PRIVATE functions.
  */ 
 FORWARD _PROTOTYPE( void init_clock, (void) );
@@ -231,6 +235,15 @@ PUBLIC int ap_timer_int_handler(void)
 	struct proc * p, * billp;
 
 	IDLE_STOP;
+
+#ifdef CONFIG_WATCHDOG
+	/*
+	 * we need to know whether local timer ticks are happening or whether
+	 * the kernel is locked up. We don't care about overflows as we only
+	 * need to know that it's still ticking or not
+	 */
+	watchdog_local_timer_ticks++;
+#endif
 
 	/* Update user and system accounting times. Charge the current process
 	 * for user time. If the current process is not billable, that is, if a

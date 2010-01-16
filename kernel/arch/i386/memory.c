@@ -20,6 +20,9 @@
 
 #ifdef CONFIG_APIC
 #include "apic.h"
+#ifdef CONFIG_WATCHDOG
+#include "../../watchdog.h"
+#endif
 #endif
 
 PRIVATE int psok = 0;
@@ -1073,5 +1076,15 @@ PUBLIC int arch_enable_paging(void)
 		lapic_eoi_addr = LAPIC_EOI;
 	}
 #endif
+#ifdef CONFIG_WATCHDOG
+	/*
+	 * We make sure that we don't enable the watchdog until paging is turned
+	 * on as we might get a NMI while switching and we might still use wrong
+	 * lapic address. Bad things would happen. It is unfortunate but such is
+	 * life
+	 */
+	level0(i386_watchdog_start);
+#endif
+
 	return OK;
 }

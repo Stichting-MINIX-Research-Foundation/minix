@@ -5,6 +5,14 @@
 #define CONFIG_APIC
 /* boot verbose */
 #define CONFIG_BOOT_VERBOSE
+/*
+ * compile in the nmi watchdog by default. It is not enabled until watchdog=1
+ * (non-zero) is set in monitor
+ */
+#define CONFIG_WATCHDOG
+/* We only support 1 cpu now */
+#define CONFIG_MAX_CPUS	1
+#define cpuid		0
 /* measure cumulative idle timestamp counter ticks */
 #undef CONFIG_IDLE_TSC
 
@@ -14,6 +22,12 @@
 #define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 #define _SYSTEM            1	/* tell headers that this is the kernel */
+
+/*
+ * we need the defines above in assembly files to configure the kernel
+ * correctly. However we don't need the rest
+ */
+#ifndef __ASSEMBLY__
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* global configuration, MUST be first */
@@ -35,5 +49,7 @@
 #include "ipc.h"		/* IPC constants */
 #include "profile.h"		/* system profiling */
 #include "debug.h"		/* debugging, MUST be last kernel header */
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* KERNEL_H */

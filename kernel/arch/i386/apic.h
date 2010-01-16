@@ -1,6 +1,61 @@
 #ifndef __APIC_H__
 #define __APIC_H__
 
+#define APIC_ENABLE		0x100
+#define APIC_FOCUS_DISABLED	(1 << 9)
+#define APIC_SIV		0xFF
+
+#define APIC_TDCR_2	0x00
+#define APIC_TDCR_4	0x01
+#define APIC_TDCR_8	0x02
+#define APIC_TDCR_16	0x03
+#define APIC_TDCR_32	0x08
+#define APIC_TDCR_64	0x09
+#define APIC_TDCR_128	0x0a
+#define APIC_TDCR_1	0x0b
+
+#define APIC_LVTT_VECTOR_MASK	0x000000FF
+#define APIC_LVTT_DS_PENDING	(1 << 12)
+#define APIC_LVTT_MASK		(1 << 16)
+#define APIC_LVTT_TM		(1 << 17)
+
+#define APIC_LVT_IIPP_MASK	0x00002000
+#define APIC_LVT_IIPP_AH	0x00002000
+#define APIC_LVT_IIPP_AL	0x00000000
+
+#define IOAPIC_REGSEL		0x0
+#define IOAPIC_RW		0x10
+
+#define APIC_ICR_DM_MASK		0x00000700
+#define APIC_ICR_VECTOR			APIC_LVTT_VECTOR_MASK
+#define APIC_ICR_DM_FIXED		(0 << 8)
+#define APIC_ICR_DM_LOWEST_PRIORITY	(1 << 8)
+#define APIC_ICR_DM_SMI			(2 << 8)
+#define APIC_ICR_DM_RESERVED		(3 << 8)
+#define APIC_ICR_DM_NMI			(4 << 8)
+#define APIC_ICR_DM_INIT		(5 << 8)
+#define APIC_ICR_DM_STARTUP		(6 << 8)
+#define APIC_ICR_DM_EXTINT		(7 << 8)
+
+#define APIC_ICR_DM_PHYSICAL		(0 << 11)
+#define APIC_ICR_DM_LOGICAL		(1 << 11)
+
+#define APIC_ICR_DELIVERY_PENDING	(1 << 12)
+
+#define APIC_ICR_INT_POLARITY		(1 << 13)
+
+#define APIC_ICR_LEVEL_ASSERT		(1 << 14)
+#define APIC_ICR_LEVEL_DEASSERT		(0 << 14)
+
+#define APIC_ICR_TRIGGER		(1 << 15)
+
+#define APIC_ICR_INT_MASK		(1 << 16)
+
+#define APIC_ICR_DEST_FIELD		(0 << 18)
+#define APIC_ICR_DEST_SELF		(1 << 18)
+#define APIC_ICR_DEST_ALL		(2 << 18)
+#define APIC_ICR_DEST_ALL_BUT_SELF	(3 << 18)
+
 #define LOCAL_APIC_DEF_ADDR	0xfee00000 /* default local apic address */
 #define IO_APIC_DEF_ADDR	0xfec00000 /* default i/o apic address */
 

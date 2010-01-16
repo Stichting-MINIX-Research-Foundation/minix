@@ -72,6 +72,11 @@ EXTERN u64_t idle_stop;
 EXTERN int idle_active;
 #endif
 
+EXTERN unsigned cpu_hz[CONFIG_MAX_CPUS];
+
+#define cpu_set_freq(cpu, freq)	do {cpu_hz[cpu] = freq;} while (0)
+#define cpu_get_freq(cpu)	cpu_hz[cpu]
+
 /* VM */
 EXTERN int vm_running;
 EXTERN int catch_pagefaults;
@@ -84,5 +89,7 @@ EXTERN util_timingdata_t timingdata[TIMING_CATEGORIES];
 extern struct boot_image image[]; 	/* system image processes */
 extern char *t_stack[];			/* task stack space */
 extern struct segdesc_s gdt[];		/* global descriptor table */
+
+EXTERN volatile int serial_debug_active;
 
 #endif /* GLO_H */

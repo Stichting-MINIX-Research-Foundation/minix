@@ -188,8 +188,8 @@ struct proc *t;
 	kprintf("\n%s\n", ep->msg);
   kprintf("is_nested = %d ", is_nested);
 
-  kprintf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x\n",
-	frame->vector, frame->errcode, frame->eip, frame->cs, frame->eflags);
+  kprintf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
+	frame->vector, frame->errcode, frame->eip, frame->cs, frame->eflags, frame);
   /* TODO should we enable this only when compiled for some debug mode? */
   if (saved_proc) {
 	  kprintf("scheduled was: process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);

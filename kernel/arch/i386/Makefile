@@ -22,7 +22,8 @@ OBJS=	arch_do_vmctl.o \
 	protect.o \
 	system.o \
 	apic.o \
-	apic_asm.o
+	apic_asm.o \
+	watchdog.o
 
 CPPFLAGS=-Iinclude
 CFLAGS=$(CPPFLAGS) -Wall $(CPROFILE)

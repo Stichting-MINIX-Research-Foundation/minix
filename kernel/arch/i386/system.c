@@ -280,7 +280,7 @@ PRIVATE void ser_debug(int c)
 {
 	int u = 0;
 
-	do_serial_debug++;
+	serial_debug_active = 1;
 	/* Disable interrupts so that we get a consistent state. */
 	if(!intr_disabled()) { lock; u = 1; };
 
@@ -314,7 +314,7 @@ PRIVATE void ser_debug(int c)
 	TOGGLECASE('9', VF_PICKPROC)
 #endif
 	}
-	do_serial_debug--;
+	serial_debug_active = 0;
 	if(u) { unlock; }
 }
 

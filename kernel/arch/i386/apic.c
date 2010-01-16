@@ -21,73 +21,9 @@
 #include "../../clock.h"
 #include "glo.h"
 
-#define APIC_ENABLE		0x100
-#define APIC_FOCUS		(~(1 << 9))
-#define APIC_SIV		0xFF
-
-#define APIC_TDCR_2	0x00
-#define APIC_TDCR_4	0x01
-#define APIC_TDCR_8	0x02
-#define APIC_TDCR_16	0x03
-#define APIC_TDCR_32	0x08
-#define APIC_TDCR_64	0x09
-#define APIC_TDCR_128	0x0a
-#define APIC_TDCR_1	0x0b
-
-#define IS_SET(mask)		(mask)
-#define IS_CLEAR(mask)		0
-
-#define APIC_LVTT_VECTOR_MASK	0x000000FF
-#define APIC_LVTT_DS_PENDING	(1 << 12)
-#define APIC_LVTT_MASK		(1 << 16)
-#define APIC_LVTT_TM		(1 << 17)
-
-#define APIC_LVT_IIPP_MASK	0x00002000
-#define APIC_LVT_IIPP_AH	0x00002000
-#define APIC_LVT_IIPP_AL	0x00000000
-
-#define APIC_LVT_TM_ONESHOT	IS_CLEAR(APIC_LVTT_TM)
-#define APIC_LVT_TM_PERIODIC	IS_SET(APIC_LVTT_TM)
-
-#define APIC_SVR_SWEN		0x00000100
-#define APIC_SVR_FOCUS		0x00000200
-
-#define IOAPIC_REGSEL		0x0
-#define IOAPIC_RW		0x10
-
-#define APIC_ICR_DM_MASK		0x00000700
-#define APIC_ICR_VECTOR			APIC_LVTT_VECTOR_MASK
-#define APIC_ICR_DM_FIXED		(0 << 8)
-#define APIC_ICR_DM_LOWEST_PRIORITY	(1 << 8)
-#define APIC_ICR_DM_SMI			(2 << 8)
-#define APIC_ICR_DM_RESERVED		(3 << 8)
-#define APIC_ICR_DM_NMI			(4 << 8)
-#define APIC_ICR_DM_INIT		(5 << 8)
-#define APIC_ICR_DM_STARTUP		(6 << 8)
-#define APIC_ICR_DM_EXTINT		(7 << 8)
-
-#define APIC_ICR_DM_PHYSICAL		(0 << 11)
-#define APIC_ICR_DM_LOGICAL		(1 << 11)
-
-#define APIC_ICR_DELIVERY_PENDING	(1 << 12)
-
-#define APIC_ICR_INT_POLARITY		(1 << 13)
-#define APIC_ICR_INTPOL_LOW		IS_SET(APIC_ICR_INT_POLARITY)
-#define APIC_ICR_INTPOL_HIGH		IS_CLEAR(APIC_ICR_INT_POLARITY)
-
-#define APIC_ICR_LEVEL_ASSERT		(1 << 14)
-#define APIC_ICR_LEVEL_DEASSERT		(0 << 14)
-
-#define APIC_ICR_TRIGGER		(1 << 15)
-#define APIC_ICR_TM_LEVEL		IS_CLEAR(APIC_ICR_TRIGGER)
-#define APIC_ICR_TM_EDGE		IS_CLEAR(APIC_ICR_TRIGGER)
-
-#define APIC_ICR_INT_MASK		(1 << 16)
-
-#define APIC_ICR_DEST_FIELD		(0 << 18)
-#define APIC_ICR_DEST_SELF		(1 << 18)
-#define APIC_ICR_DEST_ALL		(2 << 18)
-#define APIC_ICR_DEST_ALL_BUT_SELF	(3 << 18)
+#ifdef CONFIG_WATCHDOG
+#include "../../watchdog.h"
+#endif
 
 #define IA32_APIC_BASE	0x1b
 #define IA32_APIC_BASE_ENABLE_BIT	11
@@ -102,11 +38,6 @@
  */
 #define CONFIG_MAX_CPUS 1
 #define cpu_is_bsp(x) 1
-
-PRIVATE int cpuid(void)
-{
-	return 0;
-}
 
 #define lapic_write_icr1(val)	lapic_write(LAPIC_ICR1, val)
 #define lapic_write_icr2(val)	lapic_write(LAPIC_ICR2, val)
@@ -226,12 +157,14 @@ PUBLIC void apic_calibrate_clocks(void)
 	lapic_delta = lapic_tctr0 - lapic_tctr1;
 	tsc_delta = sub64(tsc1, tsc0);
 
-	lapic_bus_freq[cpuid()] = system_hz * lapic_delta / (PROBE_TICKS - 1);
+	lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
 	BOOT_VERBOSE(kprintf("APIC bus freq %lu MHz\n",
-				lapic_bus_freq[cpuid()] / 1000000));
+				lapic_bus_freq[cpuid] / 1000000));
 	cpu_freq = div64u(tsc_delta, PROBE_TICKS - 1) * system_hz;
-	BOOT_VERBOSE(kprintf("CPU %d freq %lu MHz\n", cpuid(),
+	BOOT_VERBOSE(kprintf("CPU %d freq %lu MHz\n", cpuid,
 				cpu_freq / 1000000));
+
+	cpu_set_freq(cpuid, cpu_freq);
 }
 
 PRIVATE void lapic_set_timer_one_shot(u32_t value)
@@ -239,7 +172,7 @@ PRIVATE void lapic_set_timer_one_shot(u32_t value)
 	/* sleep in micro seconds */
 	u32_t lvtt;
 	u32_t ticks_per_us;
-	u8_t cpu = cpuid ();
+	u8_t cpu = cpuid;
 
 	ticks_per_us = lapic_bus_freq[cpu] / 1000000;
 
@@ -259,7 +192,7 @@ PUBLIC void lapic_set_timer_periodic(unsigned freq)
 	/* sleep in micro seconds */
 	u32_t lvtt;
 	u32_t lapic_ticks_per_clock_tick;
-	u8_t cpu = cpuid();
+	u8_t cpu = cpuid;
 
 	lapic_ticks_per_clock_tick = lapic_bus_freq[cpu] / freq;
 
@@ -267,7 +200,7 @@ PUBLIC void lapic_set_timer_periodic(unsigned freq)
 	lapic_write(LAPIC_TIMER_DCR, lvtt);
 
 	/* configure timer as periodic */
-	lvtt = APIC_LVT_TM_PERIODIC | APIC_TIMER_INT_VECTOR;
+	lvtt = APIC_LVTT_TM | APIC_TIMER_INT_VECTOR;
 	lapic_write(LAPIC_LVTTR, lvtt);
 
 	lapic_write(LAPIC_TIMER_ICR, lapic_ticks_per_clock_tick);
@@ -329,7 +262,7 @@ PRIVATE void lapic_enable_no_lints(void)
 	lapic_extint_assigned =	(val & APIC_ICR_DM_MASK) == APIC_ICR_DM_EXTINT;
 	val &= ~(APIC_ICR_DM_MASK|APIC_ICR_INT_MASK);
 
-	if (!ioapic_enabled && cpu_is_bsp(cpuid()))
+	if (!ioapic_enabled && cpu_is_bsp(cpuid))
 		val |= (APIC_ICR_DM_EXTINT); /* ExtINT at LINT0 */
 	else
 		val |= (APIC_ICR_DM_EXTINT|APIC_ICR_INT_MASK); /* Masked ExtINT at LINT0 */
@@ -339,7 +272,7 @@ PRIVATE void lapic_enable_no_lints(void)
 	val = lapic_read(LAPIC_LINT1);
 	val &= ~(APIC_ICR_DM_MASK|APIC_ICR_INT_MASK);
 
-	if (!ioapic_enabled && cpu_is_bsp(cpuid()))
+	if (!ioapic_enabled && cpu_is_bsp(cpuid))
 		val |= APIC_ICR_DM_NMI;
 	else
 		val |= (APIC_ICR_DM_NMI | APIC_ICR_INT_MASK); /* NMI at LINT1 */
@@ -378,7 +311,7 @@ PUBLIC int lapic_enable(void)
 	u32_t timeout = 0xFFFF;
 	u32_t errstatus = 0;
 	int i;
-	unsigned cpu = cpuid ();
+	unsigned cpu = cpuid;
 
 	if (!lapic_addr)
 		return 0;
@@ -400,13 +333,14 @@ PUBLIC int lapic_enable(void)
 	/* Enable Local APIC and set the spurious vector to 0xff. */
 
 	val = lapic_read(LAPIC_SIVR) & 0xFFFFFF00;
-	val |= (APIC_ENABLE | APIC_FOCUS | APIC_SPURIOUS_INT_VECTOR);
+	val |= APIC_ENABLE | APIC_SPURIOUS_INT_VECTOR;
+	val &= ~APIC_FOCUS_DISABLED;
 	lapic_write(LAPIC_SIVR, val);
 	lapic_read(LAPIC_SIVR);
 
 	*((u32_t *)lapic_eoi_addr) = 0;
 
-	cpu = cpuid ();
+	cpu = cpuid;
 
 	/* Program Logical Destination Register. */
 	val = lapic_read(LAPIC_LDR) & ~0xFF000000;
@@ -514,7 +448,7 @@ PUBLIC void apic_idt_init(int reset)
 	}
 
 #ifdef CONFIG_APIC_DEBUG
-	if (cpu_is_bsp(cpuid()))
+	if (cpu_is_bsp(cpuid))
 		kprintf("APIC debugging is enabled\n");
 	lapic_set_dummy_handlers();
 #endif
@@ -528,7 +462,7 @@ PUBLIC void apic_idt_init(int reset)
 	idt_copy_vectors(gate_table_common);
 
 	/* configure the timer interupt handler */
-	if (cpu_is_bsp(cpuid())) {
+	if (cpu_is_bsp(cpuid)) {
 		local_timer_intr_handler = (vir_bytes) lapic_bsp_timer_int_handler;
 		BOOT_VERBOSE(kprintf("Initiating BSP timer handler\n"));
 	} else {

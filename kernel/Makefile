@@ -21,7 +21,8 @@ LDFLAGS=-i
 HEAD =	$a/mpx386.o
 
 OBJS =	start.o table.o main.o proc.o \
-	system.o clock.o utility.o debug.o profile.o interrupt.o
+	system.o clock.o utility.o debug.o profile.o interrupt.o \
+	watchdog.o
 SYSTEM = system.a
 ARCHLIB = $a/$(ARCH).a
 LIBS = -ltimers -lsys
