@@ -395,6 +395,7 @@ int drv_int(int sub_dev) {
 		case DAC1_CHAN:  bit = DAC1;break;
 		case DAC2_CHAN:  bit = DAC2;break;
 		case ADC1_CHAN:  bit = ADC;break;
+		default: return EINVAL;
 	}
 
 	int_status = pci_inl(reg(INTERRUPT_STATUS)) & bit;
@@ -410,7 +411,7 @@ int drv_reenable_int(int chan) {
 		case ADC1_CHAN: int_en_bit = R1_INT_EN; break;
 		case DAC1_CHAN: int_en_bit = P1_INTR_EN; break;
 		case DAC2_CHAN: int_en_bit = P2_INTR_EN; break;    
-		default: EINVAL;
+		default: return EINVAL;
 	}
 
 	/* clear and reenable an interrupt */
@@ -594,7 +595,7 @@ PRIVATE int disable_int(int chan) {
 		case ADC1_CHAN: int_en_bit = R1_INT_EN; break;
 		case DAC1_CHAN: int_en_bit = P1_INTR_EN; break;
 		case DAC2_CHAN: int_en_bit = P2_INTR_EN; break;    
-		default: EINVAL;
+		default: return EINVAL;
 	}
 	/* clear the interrupt */
 	ser_interface = pci_inw(reg(SERIAL_INTERFACE_CTRL));
