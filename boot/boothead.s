@@ -41,19 +41,30 @@
 .extern _rem_part				! To pass partition info
 .extern _k_flags				! Special kernel flags
 .extern _mem					! Free memory list
+.extern _cdbooted				! Whether we booted from CD
+.extern _cddevice				! Whether we booted from CD
 
 .text
 
-! Set segment registers and stack pointer using the programs own header!
-! The header is either 32 bytes (short form) or 48 bytes (long form).  The
-! bootblock will jump to address 0x10030 in both cases, calling one of the
-! two jmpf instructions below.
+! We assume boot is always linked with a short (32 byte) a.out header and has
+! 16 bytes of its own prefix, so 48 bytes to skip. bootblock jumps into us
+! at offset 0x30, cd boot code at 0x40
 
-	jmpf	boot, LOADSEG+3	! Set cs right (skipping long a.out header)
-	.space	11		! jmpf + 11 = 16 bytes
-	jmpf	boot, LOADSEG+2	! Set cs right (skipping short a.out header)
+	! Set cs right
+	! (skip short a.out header plus 16 byte preefix)
+	jmpf	boot, LOADSEG+3		
+	.space	11
+
+	! entry point when booting from CD
+	jmpf	cdboot, LOADSEG+3
+	.space	11
+cdboot:
+	mov	bx, #1
+	jmp	commonboot
 boot:
-	mov	ax, #LOADSEG
+	mov	bx, #0
+commonboot:
+	mov	ax, #LOADSEG+1
 	mov	ds, ax		! ds = header
 
 	movb	al, a_flags
@@ -96,6 +107,7 @@ sepID:
 	mov	_device, dx	! Boot device (probably 0x00 or 0x80)
 	mov	_rem_part+0, si	! Remote partition table offset
 	pop	_rem_part+2	! and segment (saved es)
+	mov	_cdbooted, bx	! Booted from CD? (bx set above)
 
 ! Remember the current video mode for restoration on exit.
 	movb	ah, #0x0F	! Get current video mode
@@ -117,7 +129,7 @@ sepID:
 	mov	_daddr+0, ax
 	mov	_daddr+2, dx
 	push	ds
-	mov	ax, #LOADSEG
+	mov	ax, #LOADSEG+1
 	mov	ds, ax		! Back to the header once more
 	mov	ax, a_total+0
 	mov	dx, a_total+2	! dx:ax = data + bss + heap + stack
@@ -416,6 +428,8 @@ _dev_open:
 	push	es
 	push	di		! Save registers used by BIOS calls
 	movb	dl, _device	! The default device
+	cmpb	dl, _cddevice
+	je	cdopen
 	cmpb	dl, #0x80	! Floppy < 0x80, winchester >= 0x80
 	jae	winchester
 floppy:
@@ -463,6 +477,10 @@ winchester:
 	jc	geoerr		! No such drive?
 	andb	cl, #0x3F	! cl = max sector number (1-origin)
 	incb	dh		! dh = 1 + max head number (0-origin)
+	jmp geoboth
+cdopen:
+	movb	cl, #0x3F	! Think up geometry for CD's
+	movb	dh, #0x2
 geoboth:
 	movb	sectors, cl	! Sectors per track
 	movb	al, cl		! al = sectors per track
@@ -515,20 +533,20 @@ _dev_boundary:
 	neg	ax		! ax = (sector % sectors) == 0
 	ret
 
-! int readsectors(u32_t bufaddr, u32_t sector, u8_t count)
+! int biosreadsectors(u32_t bufaddr, u32_t sector, u8_t count)
 ! int writesectors(u32_t bufaddr, u32_t sector, u8_t count)
 !	Read/write several sectors from/to disk or floppy.  The buffer must
 !	be between 64K boundaries!  Count must fit in a byte.  The external
 !	variables _device, sectors and secspcyl describe the disk and its
 !	geometry.  Returns 0 for success, otherwise the BIOS error code.
 !
-.define _readsectors, _writesectors
+.define _biosreadsectors, _writesectors
 _writesectors:
 	push	bp
 	mov	bp, sp
 	movb	13(bp), #0x03	! Code for a disk write
 	jmp	rwsec
-_readsectors:
+_biosreadsectors:
 	push	bp
 	mov	bp, sp
 	movb	13(bp), #0x02	! Code for a disk read
@@ -555,6 +573,9 @@ more:	mov	ax, 8(bp)
 	mov	dx, 10(bp)	! dx:ax = abs sector.  Divide it by sectors/cyl
 	cmp	dx, #[1024*255*63-255]>>16  ! Near 8G limit?
 	jae	bigdisk
+	mov	si, _device	
+	cmp	si, _cddevice	! Is it a CD?
+	je	bigdisk		! CD's need extended read.
 	div	secspcyl	! ax = cylinder, dx = sector within cylinder
 	xchg	ax, dx		! ax = sector within cylinder, dx = cylinder
 	movb	ch, dl		! ch = low 8 bits of cylinder
@@ -1512,5 +1533,3 @@ p_mcs_desc:
 	.comm	bus, 2		! Saved return value of _get_bus
 	.comm	unchar, 2	! Char returned by ungetch(c)
 	.comm	line, 2		! Serial line I/O port to copy console I/O to.
-
-

@@ -36,9 +36,16 @@ rawfs86.o:	rawfs.c rawfs.o
 	-cmp -s rawfs.o rawfs86.o && ln -f rawfs.o rawfs86.o
 
 boot:	boothead.s boot.o bootimage.o rawfs86.o
-	$(LD86) -o $@ \
+	$(LD86) -o bootexec \
 		boothead.s boot.o bootimage.o rawfs86.o $(LIBS)
-	install -S 8kb boot
+	install -S 12kb bootexec
+	# This is code that is executed when used on a bootable
+	# CD, as its entry point is the start of the file then.
+	# It jumps over the a.out header into the part of the
+	# code in boothead.s where the code knows it's booting
+	# from CD if entered there.
+	( printf '\xeb\x3e              ' ; cat bootexec ) >boot
+	chmod 755 boot
 
 edparams.o:	boot.c
 	ln -f boot.c edparams.c
@@ -112,5 +119,5 @@ $(BIN)/edparams:	edparams
 
 clean:
 	rm -f *.bak *.o
-	rm -f bootblock addaout installboot boot masterboot jumpboot edparams 
+	rm -f bootblock addaout installboot boot masterboot jumpboot edparams
 	rm -f dosboot boot.com mkfile mkfile.com

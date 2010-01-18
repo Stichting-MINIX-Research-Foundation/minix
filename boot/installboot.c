@@ -496,7 +496,8 @@ void make_bootable(enum howto how, char *device, char *bootblock,
 			boothdr.a_magic[0]= !A_MAGIC0;
 		} else {
 			readblock(addr, buf, block_size);
-			memcpy(&boothdr, buf, sizeof(struct exec));
+			/* Must skip 16 bytes of 'boot' as that contains code. */
+			memcpy(&boothdr, buf + 16, sizeof(struct exec));
 		}
 		bootf= nil;
 		dummy.process= boothdr;

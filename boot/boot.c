@@ -122,6 +122,44 @@ char *bios_err(int err)
 	return "Unknown error";
 }
 
+/* CD's are addressed in 2048-byte sectors.
+ * In order to be able to read CD's but maintain the same interface of 512-byte
+ * sector addressing, we check if the device is a CD in readsectors() and if so,
+ * read it into our own buffer first 
+ */
+int readsectors(u32_t bufaddr, u32_t sector, U8_t count)
+{
+#define CDSECTOR_SIZE 2048
+	static char cdbuf[CDSECTOR_SIZE];
+	static i32_t cdbuf_sec = -1;
+	i32_t cdsec;
+
+	if(device != cddevice) {
+		return biosreadsectors(bufaddr, sector, count);
+	}
+
+	while(count > 0) {
+		u32_t offset;
+#define FACTOR (CDSECTOR_SIZE/SECTOR_SIZE)
+		cdsec = sector / FACTOR;
+		offset = (sector % FACTOR) * SECTOR_SIZE;
+		if(cdsec != cdbuf_sec) {
+			int r;
+			if((r=biosreadsectors(mon2abs(cdbuf), cdsec, 1)) != 0) {
+				printf("error %d\n", r);
+				return r;
+			}
+			cdbuf_sec = cdsec;
+		}
+		raw_copy(bufaddr, mon2abs(cdbuf) + offset, SECTOR_SIZE);
+		bufaddr += SECTOR_SIZE;
+		count--;
+		sector++;
+	}
+
+	return 0;
+}
+
 char *unix_err(int err)
 /* Translate the few errors rawfs can give. */
 {
@@ -515,6 +553,12 @@ void initialize(void)
 	}
 #endif
 
+	/* If we were booted from CD, remember what device it was. */
+	if(cdbooted)
+		cddevice = device;
+	else
+		cddevice = 0xff;	/* Invalid. */
+
 	/* Set the new caddr for relocate. */
 	caddr= newaddr;
 
@@ -564,6 +608,14 @@ void initialize(void)
 			readerr(masterpos, r); exit(1);
 		}
 
+		/* If we're a CD, we know what we want. */
+		if(device == cddevice) {
+			p = 1;	/* We know this is the root FS. */
+			lowsec = table[p]->lowsec;
+			bootdev.primary = p;
+			break;	/* Found! */
+		}
+
 		/* See if you can find "lowsec" back. */
 		for (p= 0; p < NR_PARTITIONS; p++) {
 			if (lowsec - table[p]->lowsec < table[p]->size) break;
@@ -590,12 +642,17 @@ void initialize(void)
 		bootdev.primary= p;
 		masterpos= table[p]->lowsec;
 	}
-	strcpy(bootdev.name, "d0p0");
-	bootdev.name[1] += (device - 0x80);
-	bootdev.name[3] += bootdev.primary;
-	if (bootdev.secondary >= 0) {
-		strcat(bootdev.name, "s0");
-		bootdev.name[5] += bootdev.secondary;
+
+	if(device == cddevice) {
+		strcpy(bootdev.name, CDNAME);
+	} else {
+		strcpy(bootdev.name, "d0p0");
+		bootdev.name[1] += (device - 0x80);
+		bootdev.name[3] += bootdev.primary;
+		if (bootdev.secondary >= 0) {
+			strcat(bootdev.name, "s0");
+			bootdev.name[5] += bootdev.secondary;
+		}
 	}
 
 	/* Find out about the video hardware. */
@@ -1087,7 +1144,7 @@ dev_t name2dev(char *name)
 	n= name;
 	if (strncmp(n, "/dev/", 5) == 0) n+= 5;
 
-	if (strcmp(n, "ram") == 0) {
+	if (strcmp(n, "ram") == 0 || strcmp(n, CDNAME) == 0) {
 		dev= DEV_RAM;
 	} else
 	if (n[0] == 'f' && n[1] == 'd' && numeric(n+2)) {
@@ -1879,7 +1936,6 @@ void monitor(void)
 void boot(void)
 /* Load Minix and start it, among other things. */
 {
-
 	/* Initialize tables. */
 	initialize();
 
@@ -1928,8 +1984,7 @@ void main(int argc, char **argv)
 		fatal(bootdev.name);
 
 	/* Check if it is a bootable Minix device. */
-	if (readsectors(mon2abs(bootcode), lowsec, 1) != 0
-		|| memcmp(bootcode, boot_magic, sizeof(boot_magic)) != 0) {
+	if (readsectors(mon2abs(bootcode), lowsec, 1) != 0) {
 		fprintf(stderr, "edparams: %s: not a bootable Minix device\n",
 			bootdev.name);
 		exit(1);

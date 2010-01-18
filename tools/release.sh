@@ -107,7 +107,7 @@ usr=/dev/c0d7p0s2
 RELEASEDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
-IMAGE=cdfdimage
+IMAGE=../boot/boot
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
@@ -210,7 +210,7 @@ then
 fi
 
 echo " * Cleanup old files"
-rm -rf $RELEASEDIR $IMG $IMAGE $ROOTIMAGE $CDFILES image*
+rm -rf $RELEASEDIR $IMG $ROOTIMAGE $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -i 2000 -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
@@ -288,18 +288,20 @@ then
 #define _SVN_REVISION \"$REVTAG\"
 #endif" >>$RELEASEDIR/usr/src/include/minix/sys_config.h
 
+# output image name
+if [ "$USB" -ne 0 ]; then
+	IMG=${IMG_BASE}_${REVTAG}.img
+else
+	IMG=${IMG_BASE}_${REVTAG}.iso
+fi
+
 else
 	( cd .. && make depend && make clean )
 	srcdir=/usr/$SRC
 	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
 	REVTAG=copy
 	REVISION=unknown
-fi
-
-if [ "$USB" -ne 0 ]; then
-	IMG=${IMG_BASE}_${REVTAG}.img
-else
-	IMG=${IMG_BASE}_${REVTAG}.iso
+	IMG=${IMG_BASE}_copy.iso
 fi
 
 echo " * Fixups for owners and modes of dirs and files"
@@ -354,26 +356,37 @@ umount $TMPDISK1 || exit
 umount $TMPDISK2 || exit
 umount $TMPDISK3 || exit
 
+# Boot monitor variables for boot CD
+edparams $TMPDISK3 'unset bootopts;
+unset servers;
+unset rootdev;
+unset leader;
+unset image;
+disable=inet;
+bootcd=1;
+cdproberoot=1;
+ata_id_timeout=2;
+bootbig(1, Regular MINIX 3) { unset image; boot }
+leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
+save' 
+
 (cd ../boot && make)
 dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
-sh mkboot cdfdboot $TMPDISK3 $ROOTKB
-# image no longer fits on a floppy
-#cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES || true
 echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
 
-h_opt=
+boottype=-n
 bootimage=$IMAGE
 if [ "$HDEMU" -ne 0 ]; then
 	make_hdimage
-	h_opt='-h'
+	boottype='-h'
 	bootimage=hdimage
 fi
 
 if [ "$USB" -ne 0 ]; then
 	mv $bootimage $IMG
 else
-	writeisofs -l MINIX -b $bootimage $h_opt $CDFILES $IMG || exit 1
+	writeisofs -s0x1000 -l MINIX -b $bootimage $boottype $CDFILES $IMG || exit 1
 
 	if [ "$HDEMU" -eq 0 ]
 	then

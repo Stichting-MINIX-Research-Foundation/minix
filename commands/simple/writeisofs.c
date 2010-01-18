@@ -108,6 +108,7 @@ struct bc_validation {
 
 #define INDICATE_BOOTABLE	0x88
 
+#define BOOTMEDIA_UNSPECIFIED	-1
 #define BOOTMEDIA_NONE		0
 #define BOOTMEDIA_120M		1
 #define BOOTMEDIA_144M		2
@@ -160,7 +161,8 @@ struct node {
 };
 
 int n_reserved_pathtableentries = 0, n_used_pathtableentries = 0;
-int harddisk_emulation = 0;
+int bootmedia = BOOTMEDIA_UNSPECIFIED;
+unsigned long bootseg = 0;
 int system_type = 0;
 
 int get_system_type(int fd);
@@ -736,15 +738,17 @@ writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
 	memset(&initial, 0, sizeof(initial));
 
 	initial.indicator = INDICATE_BOOTABLE;
-	if (harddisk_emulation)
+	initial.media = bootmedia;
+	initial.seg = (u_int16_t) (bootseg & 0xFFFF);
+	initial.sectors = 1;
+	if (bootmedia == BOOTMEDIA_HARDDISK)
 	{
-		initial.media = BOOTMEDIA_HARDDISK;
 		initial.type = system_type;
 	}
-	else
-		initial.media = BOOTMEDIA_144M;
-	/* initial.sectors = imagesectors; */
-	initial.sectors = 1;
+	if (bootmedia == BOOTMEDIA_NONE)
+	{
+		initial.sectors = imagesectors;
+	}
 	initial.startsector = imagesector;
 
 	written += Write(fd, &initial, sizeof(initial));
@@ -857,10 +861,24 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	while ((ch = getopt(argc, argv, "Rb:hl:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:s:Rb:hl:nf")) != -1) {
 		switch(ch) {
+			case 's':
+				if(optarg[0] != '0' || optarg[1] != 'x') {
+					fprintf(stderr, "%s: -s<hex>\n",
+						argv[0]);
+					return 1;
+				}
+				bootseg = strtoul(optarg+2, NULL, 16);
+				break;
 			case 'h':
-				harddisk_emulation= 1;
+				bootmedia= BOOTMEDIA_HARDDISK;
+				break;
+			case 'n':
+				bootmedia= BOOTMEDIA_NONE;
+				break;
+			case 'f':
+				bootmedia= BOOTMEDIA_144M;
 				break;
 			case 'l':
 				label = optarg;
@@ -881,8 +899,23 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	/* Args check */
+
 	if(argc != 2) {
-		fprintf(stderr, "usage: %s [-l <label>] [-b <bootfloppyimage>] <dir> <isofile>\n",
+		fprintf(stderr, "usage: %s [-l <label>] [-b <bootimage> [-n] [-f] [-h] [-s <bootsegment>] ] <dir> <isofile>\n",
+			prog);
+		return 1;
+	}
+
+	if((bootimage && bootmedia == BOOTMEDIA_UNSPECIFIED) ||
+		(!bootimage && bootmedia != BOOTMEDIA_UNSPECIFIED)) {
+		fprintf(stderr, "%s: provide both boot image and boot type or neither.\n",
+			prog);
+		return 1;
+	}
+
+	if(!bootimage && bootseg) {
+		fprintf(stderr, "%s: boot seg provided but no boot image\n",
 			prog);
 		return 1;
 	}
@@ -971,9 +1004,9 @@ main(int argc, char *argv[])
 		/* write the boot catalog */
 		fprintf(stderr, " * writing the boot catalog\n");
 		bootcatalogsector = currentsector;
-		if (harddisk_emulation)
+		if (bootmedia == BOOTMEDIA_HARDDISK)
 			system_type = get_system_type(bootfd);
-		writebootcatalog(fd, &currentsector, imagesector, imagesectors);
+		writebootcatalog(fd, &currentsector, 0, 0);
 
 		/* write boot image */
 		fprintf(stderr, " * writing the boot image\n");

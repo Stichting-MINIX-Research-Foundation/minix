@@ -58,6 +58,9 @@ EXTERN u32_t caddr, daddr;	/* Code and data address of the boot program. */
 EXTERN u32_t runsize;		/* Size of this program. */
 
 EXTERN u16_t device;		/* Drive being booted from. */
+EXTERN u16_t cddevice;		/* Drive that is CD if known. */
+
+#define CDNAME	"cd"		/* Name of the CD device. */
 
 typedef struct {		/* One chunk of free memory. */
 	u32_t	base;		/* Start byte. */
@@ -66,6 +69,7 @@ typedef struct {		/* One chunk of free memory. */
 
 EXTERN memory mem[3];		/* List of available memory. */
 EXTERN int mon_return;		/* Monitor stays in memory? */
+EXTERN int cdbooted;		/* Did we boot from CD? (Set by boothead.s.) */
 
 typedef struct bios_env
 {
@@ -101,6 +105,9 @@ int readsectors(u32_t bufaddr, u32_t sector, U8_t count);
 			/* Read 1 or more sectors from "device". */
 int writesectors(u32_t bufaddr, u32_t sector, U8_t count);
 			/* Write 1 or more sectors to "device". */
+
+int biosreadsectors(u32_t bufaddr, u32_t sector, U8_t count);
+
 int getch(void);
 			/* Read a keypress. */
 void scan_keyboard(void);	
