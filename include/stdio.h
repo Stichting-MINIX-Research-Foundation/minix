@@ -143,9 +143,7 @@ _PROTOTYPE (FILE *fdopen, (int _fildes, const char *_types) );
 #define	fileno(stream)		((stream)->_fd)
 #define L_ctermid 255	/* required by POSIX */
 #define L_cuserid 255	/* required by POSIX */
-#endif
 
-#ifdef _MINIX
 _PROTOTYPE(FILE *popen, (const char *_command, const char *_type));
 _PROTOTYPE(int pclose, (FILE *_stream));
 _PROTOTYPE(int snprintf, (char *_s, size_t _n, const char *_format, ...));
