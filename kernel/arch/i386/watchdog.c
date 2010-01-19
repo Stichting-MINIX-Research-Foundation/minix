@@ -1,5 +1,7 @@
 #include "../../kernel.h"
 #include "../../watchdog.h"
+#include "proto.h"
+#include <minix/minlib.h>
 
 #include "apic.h"
 
@@ -55,7 +57,7 @@ PRIVATE struct arch_watchdog intel_arch_watchdog = {
 
 int arch_watchdog_init(void)
 {
-	reg_t eax, ebx, ecx, edx;
+	u32_t eax, ebx, ecx, edx;
 
 	eax = 0xA;
 
