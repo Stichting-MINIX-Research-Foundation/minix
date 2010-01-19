@@ -2,8 +2,8 @@
  *   m_type:	SYS_IRQCTL
  *
  * The parameters for this kernel call are:
- *    m5_c1:	IRQ_REQUEST	(control operation to perform)	
- *    m5_c2:	IRQ_VECTOR	(irq line that must be controlled)
+ *    m5_s1:	IRQ_REQUEST	(control operation to perform)	
+ *    m5_s2:	IRQ_VECTOR	(irq line that must be controlled)
  *    m5_i1:	IRQ_POLICY	(irq policy allows reenabling interrupts)
  *    m5_l3:	IRQ_HOOK_ID	(provides index to be returned on interrupt)
  *      ,,          ,,          (returns index of irq hook assigned at kernel)

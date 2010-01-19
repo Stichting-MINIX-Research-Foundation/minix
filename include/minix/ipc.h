@@ -18,7 +18,7 @@ typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1;
         short m2s1;} mess_2;
 typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_LONG_STRING];} mess_3;
 typedef struct {long m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
-typedef struct {short m5c1, m5c2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
+typedef struct {short m5s1, m5s2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
 typedef struct {long m6l1, m6l2, m6l3; short m6s1, m6s2, m6s3; char m6c1, m6c2;
         char *m6p1, *m6p2;} mess_6;
 typedef struct {int m7i1, m7i2, m7i3, m7i4; char *m7p1, *m7p2;} mess_7;
@@ -70,8 +70,8 @@ typedef struct {
 #define m4_l4  m_u.m_m4.m4l4
 #define m4_l5  m_u.m_m4.m4l5
 
-#define m5_c1  m_u.m_m5.m5c1
-#define m5_c2  m_u.m_m5.m5c2
+#define m5_s1  m_u.m_m5.m5s1
+#define m5_s2  m_u.m_m5.m5s2
 #define m5_i1  m_u.m_m5.m5i1
 #define m5_i2  m_u.m_m5.m5i2
 #define m5_l1  m_u.m_m5.m5l1

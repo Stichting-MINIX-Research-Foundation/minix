@@ -398,12 +398,12 @@
 #define ALRM_TIME_LEFT  m2_l1	/* how many ticks were remaining */
 
 /* Field names for SYS_IRQCTL. */
-#define IRQ_REQUEST     m5_c1	/* what to do? */
+#define IRQ_REQUEST     m5_s1	/* what to do? */
 #  define IRQ_SETPOLICY     1	/* manage a slot of the IRQ table */
 #  define IRQ_RMPOLICY      2	/* remove a slot of the IRQ table */
 #  define IRQ_ENABLE        3	/* enable interrupts */
 #  define IRQ_DISABLE       4	/* disable interrupts */
-#define IRQ_VECTOR	m5_c2   /* irq vector */
+#define IRQ_VECTOR	m5_s2   /* irq vector */
 #define IRQ_POLICY	m5_i1   /* options for IRQCTL request */
 #  define IRQ_REENABLE  0x001	/* reenable IRQ line after interrupt */
 #  define IRQ_BYTE      0x100	/* byte values */      
@@ -425,10 +425,10 @@
 #define ABRT_MON_ADDR   m1_p1	/* virtual address of monitor params */
 
 /* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
-#define CP_SRC_SPACE 	m5_c1	/* T or D space (stack is also D) */
+#define CP_SRC_SPACE 	m5_s1	/* T or D space (stack is also D) */
 #define CP_SRC_ENDPT	m5_i1	/* process to copy from */
 #define CP_SRC_ADDR	m5_l1	/* address where data come from */
-#define CP_DST_SPACE	m5_c2	/* T or D space (stack is also D) */
+#define CP_DST_SPACE	m5_s2	/* T or D space (stack is also D) */
 #define CP_DST_ENDPT	m5_i2	/* process to copy to */
 #define CP_DST_ADDR	m5_l2	/* address where data go to */
 #define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
@@ -879,8 +879,8 @@
 #define VM_MMAP			(VM_RQ_BASE+10)
 #	define VMM_ADDR			m5_l1
 #	define VMM_LEN			m5_l2
-#	define VMM_PROT			m5_c1
-#	define VMM_FLAGS		m5_c2
+#	define VMM_PROT			m5_s1
+#	define VMM_FLAGS		m5_s2
 #	define VMM_FD			m5_i1
 #	define VMM_OFFSET		m5_i2
 #	define VMM_RETADDR		m5_l1	/* result */

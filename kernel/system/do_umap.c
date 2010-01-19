@@ -3,7 +3,7 @@
  *
  * The parameters for this kernel call are:
  *    m5_i1:	CP_SRC_PROC_NR	(process number)	
- *    m5_c1:	CP_SRC_SPACE	(segment where address is: T, D, or S)
+ *    m5_s1:	CP_SRC_SPACE	(segment where address is: T, D, or S)
  *    m5_l1:	CP_SRC_ADDR	(virtual address)	
  *    m5_l2:	CP_DST_ADDR	(returns physical address)	
  *    m5_l3:	CP_NR_BYTES	(size of datastructure) 	
