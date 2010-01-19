@@ -26,6 +26,7 @@ libc_FILES=" \
 	_reboot.c \
 	_sbrk.c \
 	_seekdir.c \
+	_setgroups.c \
 	_sprofile.c \
 	_svrctl.c \
 	_sysuname.c \
@@ -79,7 +80,6 @@ libc_FILES=" \
 	rindex.c \
 	rlimit.c \
 	setenv.c \
-	setgroups.c \
 	settimeofday.c \
 	stderr.c \
 	strdup.c \
