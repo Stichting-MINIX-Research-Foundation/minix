@@ -344,7 +344,6 @@
 
 #  define SYS_STIME      (KERNEL_CALL + 39)	/* sys_stime() */
 
-#  define SYS_MAPDMA     (KERNEL_CALL + 42)	/* sys_mapdma() */
 #  define SYS_VMCTL      (KERNEL_CALL + 43)	/* sys_vmctl() */
 #  define SYS_SYSCTL     (KERNEL_CALL + 44)	/* sys_sysctl() */
 
