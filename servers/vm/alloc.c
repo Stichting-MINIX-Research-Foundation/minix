@@ -405,6 +405,8 @@ struct memory *chunks;		/* list of free memory chunks */
 
   addr_init(&addravl);
 
+  total_pages = 0;
+
   /* Use the chunks of physical memory to allocate holes. */
   for (i=NR_MEMS-1; i>=0; i--) {
   	if (chunks[i].size > 0) {
@@ -413,6 +415,7 @@ struct memory *chunks;		/* list of free memory chunks */
 		if(first || from < mem_low) mem_low = from;
 		if(first || to > mem_high) mem_high = to;
 		FREE_MEM(chunks[i].base, chunks[i].size);
+		total_pages += chunks[i].size;
 		first = 0;
 	}
   }

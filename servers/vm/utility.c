@@ -122,7 +122,7 @@ PUBLIC int vm_isokendpt(endpoint_t endpoint, int *proc)
 {
         *proc = _ENDPOINT_P(endpoint);
         if(*proc < 0 || *proc >= NR_PROCS)
-        	vm_panic("crazy slot number", *proc); 
+		return EINVAL;
         if(*proc >= 0 && endpoint != vmproc[*proc].vm_endpoint)
                 return EDEADSRCDST;
         if(*proc >= 0 && !(vmproc[*proc].vm_flags & VMF_INUSE))
@@ -166,27 +166,82 @@ char *brk_addr;
 }
 
 /*===========================================================================*
- *                              do_ctl                                        *
+ *                              do_info                                      *
  *===========================================================================*/
-PUBLIC int do_ctl(message *m)
+PUBLIC int do_info(message *m)
 {
-	int pages, nodes;
-	int pr;
+	struct vm_stats_info vsi;
+	struct vm_usage_info vui;
+	static struct vm_region_info vri[MAX_VRI_COUNT];
 	struct vmproc *vmp;
+	vir_bytes addr, size, next, ptr;
+	int r, pr, dummy, count;
 
-	switch(m->VCTL_WHAT) {
-		case VCTLP_STATS_MEM:
-			printmemstats();
-			break;
-		case VCTLP_STATS_EP:
-			if(vm_isokendpt(m->VCTL_PARAM, &pr) != OK)
-				return EINVAL;
-			printregionstats(&vmproc[pr]);
-			break;
-		default:
+	if (vm_isokendpt(m->m_source, &pr) != OK)
+		return EINVAL;
+	vmp = &vmproc[pr];
+
+	ptr = (vir_bytes) m->VMI_PTR;
+
+	switch(m->VMI_WHAT) {
+	case VMIW_STATS:
+		vsi.vsi_pagesize = VM_PAGE_SIZE;
+		vsi.vsi_total = total_pages;
+		memstats(&dummy, &vsi.vsi_free, &vsi.vsi_largest);
+
+		addr = (vir_bytes) &vsi;
+		size = sizeof(vsi);
+
+		break;
+
+	case VMIW_USAGE:
+		if (vm_isokendpt(m->VMI_EP, &pr) != OK)
 			return EINVAL;
+
+		get_usage_info(&vmproc[pr], &vui);
+
+		addr = (vir_bytes) &vui;
+		size = sizeof(vui);
+
+		break;
+
+	case VMIW_REGION:
+		if (vm_isokendpt(m->VMI_EP, &pr) != OK)
+			return EINVAL;
+
+		count = MIN(m->VMI_COUNT, MAX_VRI_COUNT);
+		next = m->VMI_NEXT;
+
+		count = get_region_info(&vmproc[pr], vri, count, &next);
+
+		m->VMI_COUNT = count;
+		m->VMI_NEXT = next;
+
+		addr = (vir_bytes) vri;
+		size = sizeof(vri[0]) * count;
+
+		break;
+
+	default:
+		return EINVAL;
 	}
 
-	return OK;
+	if (size == 0)
+		return OK;
+
+	/* Make sure that no page faults can occur while copying out. A page
+	 * fault would cause the kernel to send a notify to us, while we would
+	 * be waiting for the result of the copy system call, resulting in a
+	 * deadlock. Note that no memory mapping can be undone without the
+	 * involvement of VM, so we are safe until we're done.
+	 */
+	r = handle_memory(vmp, arch_vir2map(vmp, ptr), size, 1 /*wrflag*/);
+	if (r != OK) return r;
+
+	/* Now that we know the copy out will succeed, perform the actual copy
+	 * operation.
+	 */
+	return sys_datacopy(SELF, addr,
+		(vir_bytes) vmp->vm_endpoint, ptr, size);
 }
 

@@ -1,6 +1,8 @@
 #include "inc.h"
 #include "../ds/store.h"
 
+#define LINES 22
+
 PRIVATE struct data_store ds_store[NR_DS_KEYS];
 
 PUBLIC void data_store_dmp()
@@ -16,7 +18,7 @@ PUBLIC void data_store_dmp()
 
   printf("Data store contents:\n");
   printf("-slot- ------key------ -----owner----- ---type--- ----value---\n");
-  for(i = prev_i; i < NR_DS_KEYS; i++) {
+  for(i = prev_i; i < NR_DS_KEYS && n < LINES; i++) {
 	p = &ds_store[i];
 	if(!(p->flags & DSF_IN_USE))
 		continue;
@@ -43,8 +45,7 @@ PUBLIC void data_store_dmp()
 		return;
 	}
 
-	if(n++ == 21)
-		break;
+	n++;
   }
 
   if (i >= NR_DS_KEYS) i = 0;

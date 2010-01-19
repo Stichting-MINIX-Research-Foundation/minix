@@ -803,7 +803,7 @@ struct
 	{ "GETPHYS",		VM_GETPHYS },
 	{ "GETREFCNT",		VM_GETREF },
 	{ "QUERYEXIT",		VM_QUERY_EXIT },
-	{ "CTL",		VM_CTL },
+	{ "INFO",		VM_INFO },
 	{ NULL,			0 },
 };
 

@@ -1455,6 +1455,76 @@ PUBLIC int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 	return OK;
 }
 
+/*========================================================================*
+ *				get_usage_info				  *
+ *========================================================================*/
+PUBLIC void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)
+{
+	struct vir_region *vr;
+	physr_iter iter;
+	struct phys_region *ph;
+	vir_bytes len;
+
+	memset(vui, 0, sizeof(*vui));
+
+	for(vr = vmp->vm_regions; vr; vr = vr->next) {
+		physr_start_iter_least(vr->phys, &iter);
+		while((ph = physr_get_iter(&iter))) {
+			len = ph->ph->length;
+
+			/* All present pages are counted towards the total. */
+			vui->vui_total += len;
+
+			if (ph->ph->refcount > 1) {
+				/* Any page with a refcount > 1 is common. */
+				vui->vui_common += len;
+	
+				/* Any common, non-COW page is shared. */
+				if (vr->flags & VR_SHARED ||
+					ph->ph->share_flag == PBSH_SMAP)
+					vui->vui_shared += len;
+			}
+			physr_incr_iter(&iter);
+		}
+	}
+}
+
+/*===========================================================================*
+ *				get_region_info				     *
+ *===========================================================================*/
+PUBLIC int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
+	int max, vir_bytes *nextp)
+{
+	struct vir_region *vr;
+	vir_bytes next;
+	int count;
+
+	next = *nextp;
+
+	if (!max) return 0;
+
+	for(vr = vmp->vm_regions; vr; vr = vr->next)
+		if (vr->vaddr >= next) break;
+
+	if (!vr) return 0;
+
+	for(count = 0; vr && count < max; vr = vr->next, count++, vri++) {
+		vri->vri_addr = arch_map2info(vmp, vr->vaddr, &vri->vri_seg,
+			&vri->vri_prot);
+		vri->vri_length = vr->length;
+
+		/* "AND" the provided protection with per-page protection. */
+		if (!(vr->flags & VR_WRITABLE))
+			vri->vri_prot &= ~PROT_WRITE;
+
+		vri->vri_flags = (vr->flags & VR_SHARED) ? MAP_SHARED : 0;
+
+		next = vr->vaddr + vr->length;
+	}
+
+	*nextp = next;
+	return count;
+}
 
 /*========================================================================*
  *				regionprintstats			  *

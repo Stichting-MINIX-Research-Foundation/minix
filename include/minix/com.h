@@ -974,13 +974,17 @@
 #	define VM_NOTIFY_SIG_ENDPOINT	m1_i1
 #	define VM_NOTIFY_SIG_IPC	m1_i2
 
-#define VM_CTL			(VM_RQ_BASE+40)
-#define VCTL_WHAT			m1_i1
-#define VCTL_PARAM			m1_i2
+#define VM_INFO			(VM_RQ_BASE+40)
+#	define VMI_WHAT			m2_i1
+#	define VMI_EP			m2_i2
+#	define VMI_COUNT		m2_i3
+#	define VMI_PTR			m2_p1
+#	define VMI_NEXT			m2_l1
 
-/* VCTL_PARAMs */
-#define VCTLP_STATS_MEM			1
-#define VCTLP_STATS_EP			2
+/* VMI_WHAT values. */
+#define VMIW_STATS			1
+#define VMIW_USAGE			2
+#define VMIW_REGION			3
 
 /* Total. */
 #define NR_VM_CALLS				41

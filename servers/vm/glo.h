@@ -24,6 +24,9 @@ EXTERN int incheck;
 EXTERN long vm_sanitychecklevel;
 #endif
 
+/* total number of memory pages */
+EXTERN int total_pages;
+
 /* vm operation mode state and values */
 EXTERN long vm_paged;
 

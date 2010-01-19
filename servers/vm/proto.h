@@ -10,6 +10,7 @@ struct phys_region;
 #include <minix/ipc.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
+#include <minix/vm.h>
 #include <timers.h>
 #include <stdio.h>
 #include <pagetable.h>
@@ -42,7 +43,7 @@ _PROTOTYPE( void reserve_proc_mem, (struct memory *mem_chunks,
         struct mem_map *map_ptr));
 _PROTOTYPE( int vm_isokendpt, (endpoint_t ep, int *proc)	     );
 _PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)             );
-_PROTOTYPE( int do_ctl, (message *)             );
+_PROTOTYPE( int do_info, (message *)					);
 
 /* exit.c */
 _PROTOTYPE( void clear_proc, (struct vmproc *vmp)			);
@@ -168,16 +169,22 @@ _PROTOTYPE(int map_copy_ph_block, (struct vmproc *vmp,
 	struct vir_region *region, struct phys_region *ph));
 _PROTOTYPE(void pb_unreferenced, (struct vir_region *region,
 	struct phys_region *pr));
+_PROTOTYPE(void get_usage_info, (struct vmproc *vmp,
+	struct vm_usage_info *vui));
+_PROTOTYPE(int get_region_info, (struct vmproc *vmp,
+	struct vm_region_info *vri, int count, vir_bytes *nextp));
 #if SANITYCHECKS
 _PROTOTYPE(void map_sanitycheck,(char *file, int line));
 #endif
 
 /* $(ARCH)/vm.c */
-_PROTOTYPE( vir_bytes, arch_map2vir(struct vmproc *vmp, vir_bytes addr));
-_PROTOTYPE( char *, arch_map2str(struct vmproc *vmp, vir_bytes addr));
-_PROTOTYPE( vir_bytes, arch_vir2map(struct vmproc *vmp, vir_bytes addr));
-_PROTOTYPE( vir_bytes, arch_vir2map_text(struct vmproc *vmp, vir_bytes addr));
-_PROTOTYPE( vir_bytes, arch_addrok(struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( vir_bytes arch_map2vir, (struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( char *arch_map2str, (struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( vir_bytes arch_map2info, (struct vmproc *vmp, vir_bytes addr,
+	int *space, int *prot));
+_PROTOTYPE( vir_bytes arch_vir2map, (struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( vir_bytes arch_vir2map_text, (struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( vir_bytes arch_addrok, (struct vmproc *vmp, vir_bytes addr));
 
 /* rs.c */
 _PROTOTYPE(int do_rs_set_priv, (message *m));

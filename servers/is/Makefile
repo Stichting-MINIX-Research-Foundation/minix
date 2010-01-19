@@ -20,7 +20,7 @@ CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 LIBS = -lsys 
 
-OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o dmp_rs.o dmp_ds.o 
+OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o dmp_rs.o dmp_ds.o dmp_vm.o
 
 # build local binary
 all build:	$(SERVER)

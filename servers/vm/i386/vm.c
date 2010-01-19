@@ -62,6 +62,36 @@ PUBLIC char *arch_map2str(struct vmproc *vmp, vir_bytes addr)
 }
 
 /*===========================================================================*
+ *				arch_map2info				     *
+ *===========================================================================*/
+PUBLIC vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *seg,
+	int *prot)
+{
+	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
+	vir_bytes textend = textstart +
+		CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len);
+	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
+
+	/* The protection to be returned here is that of the segment. */
+	if(addr < textstart) {
+		*seg = D;
+		*prot = PROT_READ | PROT_WRITE | PROT_EXEC;
+		return addr;
+	} else if(addr < datastart) {
+		*seg = T;
+		*prot = PROT_READ | PROT_EXEC;
+		return addr - textstart;
+	} else {
+		*seg = D;
+		if (textstart == textend)	/* common I&D? */
+			*prot = PROT_READ | PROT_WRITE | PROT_EXEC;
+		else
+			*prot = PROT_READ | PROT_WRITE;
+		return addr - datastart;
+	}
+}
+
+/*===========================================================================*
  *				arch_addrok				     *
  *===========================================================================*/
 PUBLIC vir_bytes arch_addrok(struct vmproc *vmp, vir_bytes addr)

@@ -347,7 +347,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_GETPHYS, do_get_phys);
 	CALLMAP(VM_SHM_UNMAP, do_shared_unmap);
 	CALLMAP(VM_GETREF, do_get_refcount);
-	CALLMAP(VM_CTL, do_ctl);
+	CALLMAP(VM_INFO, do_info);
 	CALLMAP(VM_QUERY_EXIT, do_query_exit);
 
 	/* Sanity checks */

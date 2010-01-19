@@ -27,5 +27,34 @@ _PROTOTYPE( int vm_ctl, (int what, int param));
 _PROTOTYPE( int vm_set_priv, (int procnr, void *buf));
 _PROTOTYPE( int vm_query_exit, (int *endpt));
 
+struct vm_stats_info {
+  int vsi_pagesize;		/* page size */
+  int vsi_total;		/* total number of memory pages */
+  int vsi_free;			/* number of free pages */
+  int vsi_largest;		/* largest number of consecutive free pages */
+};
+
+struct vm_usage_info {
+  vir_bytes vui_total;		/* total amount of process memory */
+  vir_bytes vui_common;		/* part of memory mapped in more than once */
+  vir_bytes vui_shared;		/* shared (non-COW) part of common memory */
+};
+
+struct vm_region_info {
+  int vri_seg;			/* segment of virtual region (T or D) */
+  vir_bytes vri_addr;		/* base address of region */
+  vir_bytes vri_length;		/* length of region */
+  int vri_prot;			/* protection flags (PROT_) */
+  int vri_flags;		/* memory flags (subset of MAP_) */
+};
+
+#define MAX_VRI_COUNT	64	/* max. number of regions provided at once */
+
+_PROTOTYPE( int vm_info_stats, (struct vm_stats_info *vfi)		);
+_PROTOTYPE( int vm_info_usage, (endpoint_t who,
+	struct vm_usage_info *vui)					);
+_PROTOTYPE( int vm_info_region, (endpoint_t who,
+	struct vm_region_info *vri, int count, vir_bytes *next)		);
+
 #endif /* _MINIX_VM_H */
 

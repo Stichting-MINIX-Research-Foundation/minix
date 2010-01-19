@@ -80,11 +80,11 @@ libsys_FILES=" \
 	taskcall.c \
 	ds.c	\
 	vm_brk.c \
-	vm_ctl.c \
 	vm_exec_newmem.c \
 	vm_exit.c \
 	vm_notify_sig.c \
 	vm_fork.c \
+	vm_info.c \
 	vm_map_phys.c \
 	vm_umap.c \
 	vm_push_sig.c"
