@@ -106,7 +106,7 @@ extern int errno;		  /* place where the error numbers go */
 #define ENOTSOCK      (_SIGN 74)  /* Socket operation on non-socket */
 #define ENOPROTOOPT   (_SIGN 75)  /* Protocol not available */
 #define EOPNOTSUPP    (_SIGN 76)  /* Operation not supported */
-#define ENOTSUP       EOPNOTSUP   /* Not supported */
+#define ENOTSUP       EOPNOTSUPP  /* Not supported */
 #define ENETDOWN      (_SIGN 77)  /* network is down */
 
 /* The following are not POSIX errors, but they can still happen. 
