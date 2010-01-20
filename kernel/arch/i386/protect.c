@@ -363,7 +363,7 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 
 	if(selector & TI) {
 		kprintf("LDT");
-		if(index < 0 || index >= LDT_SIZE) {
+		if(index >= LDT_SIZE) {
 			kprintf("invalid index in ldt\n");
 			return;
 		}
@@ -374,7 +374,7 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 		desc = &pr->p_seg.p_ldt[index];
 	} else {
 		kprintf("GDT");
-		if(index < 0 || index >= GDT_SIZE) {
+		if(index >= GDT_SIZE) {
 			kprintf("invalid index in gdt\n");
 			return;
 		}

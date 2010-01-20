@@ -225,8 +225,7 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 }
 
 
-PRIVATE u32_t phys_get32(addr)
-phys_bytes addr;
+PRIVATE u32_t phys_get32(phys_bytes addr)
 {
 	u32_t v;
 	int r;

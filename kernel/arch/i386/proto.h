@@ -148,7 +148,6 @@ EXTERN struct gate_table_s gate_table_pic[];
 
 /* copies an array of vectors to the IDT. The last vector must be zero filled */
 _PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
-_PROTOTYPE(void idt_reload, (void));
 
 EXTERN void * k_boot_stktop;
 _PROTOTYPE(void tss_init, (struct tss_s * tss, void * kernel_stack, unsigned cpu));
