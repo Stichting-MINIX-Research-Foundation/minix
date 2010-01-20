@@ -1002,7 +1002,6 @@ icmp_hdr_t *icmp_hdr;
 	u16_t lifetime;
 	int i;
 	char *bufp;
-	ip_port_t *ip_port;
 
 	if (icmp_len < 8)
 	{
@@ -1051,7 +1050,6 @@ icmp_hdr_t *icmp_hdr;
 			lifetime));
 		return;
 	}
-	ip_port= &ip_port_table[icmp_port->icp_ipport];
 	for (i= 0, bufp= (char *)&icmp_hdr->ih_dun.uhd_data[0]; i< entries; i++,
 		bufp += entry_size)
 	{
