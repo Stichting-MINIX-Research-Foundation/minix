@@ -980,7 +980,6 @@ static void rl_readv(message *mp, int from_int, int vectored)
 	port_t port;
 	unsigned amount, totlen, packlen;
 	phys_bytes src_phys, dst_phys;
-	phys_bytes iov_src = 0;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1080,7 +1079,6 @@ static void rl_readv(message *mp, int from_int, int vectored)
 		o= d_start+4;
 		src_phys= rep->re_rx_buf;
 		for (i= 0; i<count; i += IOVEC_NR,
-			iov_src += IOVEC_NR * sizeof(rep->re_iovec[0]),
 			iov_offset += IOVEC_NR * sizeof(rep->re_iovec[0]))
 		{
 			n= IOVEC_NR;
@@ -1230,7 +1228,6 @@ static void rl_readv_s(message *mp, int from_int)
 	port_t port;
 	unsigned amount, totlen, packlen;
 	phys_bytes src_phys, dst_phys;
-	phys_bytes iov_src = 0;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1327,7 +1324,6 @@ static void rl_readv_s(message *mp, int from_int)
 	o= d_start+4;
 	src_phys= rep->re_rx_buf;
 	for (i= 0; i<count; i += IOVEC_NR,
-		iov_src += IOVEC_NR * sizeof(rep->re_iovec_s[0]),
 		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
 	{
 		n= IOVEC_NR;
@@ -1463,7 +1459,6 @@ suspend:
  *===========================================================================*/
 static void rl_writev(message *mp, int from_int, int vectored)
 {
-	phys_bytes iov_src = 0;
 	phys_bytes phys_user;
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
@@ -1520,7 +1515,6 @@ static void rl_writev(message *mp, int from_int, int vectored)
 		size= 0;
 		ret = rep->re_tx[tx_head].v_ret_buf;
 		for (i= 0; i<count; i += IOVEC_NR,
-			iov_src += IOVEC_NR * sizeof(rep->re_iovec[0]),
 			iov_offset += IOVEC_NR * sizeof(rep->re_iovec[0]))
 		{
 			n= IOVEC_NR;
@@ -1608,7 +1602,6 @@ suspend:
  *===========================================================================*/
 static void rl_writev_s(message *mp, int from_int)
 {
-	phys_bytes iov_src = 0;
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
 	re_t *rep;
@@ -1661,7 +1654,6 @@ static void rl_writev_s(message *mp, int from_int)
 	size= 0;
 	ret = rep->re_tx[tx_head].v_ret_buf;
 	for (i= 0; i<count; i += IOVEC_NR,
-		iov_src += IOVEC_NR * sizeof(rep->re_iovec_s[0]),
 		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
 	{
 		n= IOVEC_NR;

@@ -1306,7 +1306,6 @@ static void rl_readv_s(message *mp, int from_int)
 	port_t port;
 	unsigned totlen, packlen;
 	phys_bytes src_phys;
-	phys_bytes iov_src = 0;
 	re_desc *desc;
 	u32_t rxstat = 0x12345678;
 	re_t *rep;
@@ -1375,7 +1374,6 @@ readvs_loop:
 	size = 0;
 	src_phys = rep->re_rx[index].ret_buf;
 	for (i = 0; i < count; i += IOVEC_NR,
-		iov_src += IOVEC_NR * sizeof(rep->re_iovec_s[0]),
 		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
 	{
 		n = IOVEC_NR;
@@ -1450,7 +1448,6 @@ suspend:
  *===========================================================================*/
 static void rl_writev_s(message *mp, int from_int)
 {
-	phys_bytes iov_src = 0;
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
 	re_t *rep;
@@ -1521,7 +1518,6 @@ static void rl_writev_s(message *mp, int from_int)
 	size = 0;
 	ret = rep->re_tx[tx_head].v_ret_buf;
 	for (i = 0; i < count; i += IOVEC_NR,
-		iov_src += IOVEC_NR * sizeof(rep->re_iovec_s[0]),
 		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
 	{
 		n = IOVEC_NR;

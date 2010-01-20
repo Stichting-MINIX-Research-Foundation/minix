@@ -1376,7 +1376,6 @@ static void or_writev (message * mp, int from_int, int vectored) {
 	t_or *orp;
 	clock_t timebefore, t0;	
 	phys_bytes phys_user;
-	phys_bytes iov_src = 0;
 	hermes_t *hw;
 	struct hermes_tx_descriptor desc;
 	struct header_struct hdr;
@@ -1420,7 +1419,6 @@ static void or_writev (message * mp, int from_int, int vectored) {
 		o = 0;
 
 		for (i = 0; i < count; i += IOVEC_NR,
-		     iov_src += IOVEC_NR * sizeof (orp->or_iovec[0]), 
 			 iov_offset += IOVEC_NR * sizeof (orp->or_iovec[0])) {
 
 			n = IOVEC_NR;
@@ -1545,7 +1543,6 @@ static void or_writev_s (message * mp, int from_int) {
 	t_or *orp;
 	clock_t timebefore, t0;	
 	phys_bytes phys_user;
-	phys_bytes iov_src = 0;
 	hermes_t *hw;
 	struct hermes_tx_descriptor desc;
 	int iov_offset = 0;
@@ -1606,7 +1603,6 @@ static void or_writev_s (message * mp, int from_int) {
 	size = 0;
 	o = 0;
 	for (i = 0; i < count; i += IOVEC_NR,
-	     iov_src += IOVEC_NR * sizeof (orp->or_iovec_s[0]),
 		 iov_offset += IOVEC_NR * sizeof (orp->or_iovec_s[0])) {
 
 		n = IOVEC_NR;
@@ -1993,7 +1989,6 @@ static void or_readv (message * mp, int from_int, int vectored) {
 	unsigned amount, totlen, packlen;
 	struct hermes_rx_descriptor desc;
 	phys_bytes dst_phys;
-	phys_bytes iov_src = 0;
 	u16_t d_start, d_end, rxfid, status;
 	struct header_struct hdr;
 	int length, offset;
@@ -2039,7 +2034,6 @@ static void or_readv (message * mp, int from_int, int vectored) {
 		size = 0;
 
 		for (i = 0; i < count; i += IOVEC_NR,
- 			iov_src += IOVEC_NR * sizeof (orp->or_iovec[0]),
 			iov_offset += IOVEC_NR * sizeof(orp->or_iovec[0])) {
 
 			n = IOVEC_NR;
@@ -2117,7 +2111,6 @@ static void or_readv_s (message * mp, int from_int) {
 	unsigned amount, totlen, packlen;
 	struct hermes_rx_descriptor desc;
 	phys_bytes dst_phys;
-	phys_bytes iov_src = 0;
 	u16_t d_start, d_end, rxfid, status;
 	struct header_struct hdr;
 	u32_t l, rxstat;
@@ -2174,7 +2167,6 @@ static void or_readv_s (message * mp, int from_int) {
 	 * *databuf and will be copied to the vecor below */
 	size = 0;
 	for (i = 0; i < count; i += IOVEC_NR,
-		iov_src += IOVEC_NR * sizeof (orp->or_iovec_s[0]),
 		iov_offset += IOVEC_NR * sizeof(orp->or_iovec_s[0])) {
 		n = IOVEC_NR;
 		if (i + n > count)
