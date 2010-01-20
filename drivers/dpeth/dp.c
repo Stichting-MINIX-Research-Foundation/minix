@@ -390,7 +390,7 @@ static int calc_iovec_size(iovec_dat_s_t * iovp)
 }
 
 /*
-**  Name:	void do_vwrite_s(message *mp, int vectored)
+**  Name:	void do_vwrite_s(message *mp)
 **  Function:
 */
 static void do_vwrite_s(message * mp)
@@ -400,7 +400,7 @@ static void do_vwrite_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(dep->de_name, PortErrMsg, port);
+	panic(__FILE__, PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -441,7 +441,7 @@ static void do_vread_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(dep->de_name, PortErrMsg, port);
+	panic(__FILE__, PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -484,7 +484,7 @@ static void do_getstat_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(dep->de_name, PortErrMsg, port);
+	panic(__FILE__, PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -522,7 +522,7 @@ static void do_stop(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(dep->de_name, PortErrMsg, port);
+	panic(__FILE__, PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   if (dep->de_mode == DEM_ENABLED && (dep->de_flags & DEF_ENABLED)) {
@@ -598,7 +598,9 @@ PUBLIC int main(int argc, char **argv)
   sef_local_startup();
 
   while (TRUE) {
-	if ((rc = sef_receive(ANY, &m)) != OK) panic(dep->de_name, RecvErrMsg, rc);
+	if ((rc = sef_receive(ANY, &m)) != OK){
+		panic(__FILE__, RecvErrMsg, rc);
+	}
 
 	DEBUG(printf("eth: got message %d, ", m.m_type));
 

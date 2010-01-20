@@ -974,15 +974,13 @@ re_t *rep;
 /*===========================================================================*
  *				rl_readv				     *
  *===========================================================================*/
-static void rl_readv(mp, from_int, vectored)
-message *mp;
-int from_int;
-int vectored;
+static void rl_readv(message *mp, int from_int, int vectored)
 {
 	int i, j, n, o, s, s1, dl_port, re_client, count, size;
 	port_t port;
 	unsigned amount, totlen, packlen;
-	phys_bytes src_phys, dst_phys, iov_src;
+	phys_bytes src_phys, dst_phys;
+	phys_bytes iov_src = 0;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1226,14 +1224,13 @@ suspend:
 /*===========================================================================*
  *				rl_readv_s				     *
  *===========================================================================*/
-static void rl_readv_s(mp, from_int)
-message *mp;
-int from_int;
+static void rl_readv_s(message *mp, int from_int)
 {
 	int i, j, n, o, s, s1, dl_port, re_client, count, size;
 	port_t port;
 	unsigned amount, totlen, packlen;
-	phys_bytes src_phys, dst_phys, iov_src;
+	phys_bytes src_phys, dst_phys;
+	phys_bytes iov_src = 0;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1464,12 +1461,10 @@ suspend:
 /*===========================================================================*
  *				rl_writev				     *
  *===========================================================================*/
-static void rl_writev(mp, from_int, vectored)
-message *mp;
-int from_int;
-int vectored;
+static void rl_writev(message *mp, int from_int, int vectored)
 {
-	phys_bytes iov_src, phys_user;
+	phys_bytes iov_src = 0;
+	phys_bytes phys_user;
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
 	re_t *rep;
@@ -1611,11 +1606,9 @@ suspend:
 /*===========================================================================*
  *				rl_writev_s				     *
  *===========================================================================*/
-static void rl_writev_s(mp, from_int)
-message *mp;
-int from_int;
+static void rl_writev_s(message *mp, int from_int)
 {
-	phys_bytes iov_src;
+	phys_bytes iov_src = 0;
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
 	re_t *rep;

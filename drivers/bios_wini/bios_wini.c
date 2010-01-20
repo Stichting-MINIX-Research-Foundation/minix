@@ -422,7 +422,7 @@ PRIVATE void w_init()
 
   /* Ask the system task for a suitable buffer */
   if(!(bios_buf_v = alloc_contig(BIOSBUF, AC_LOWER1M, &bios_buf_phys))) {
-  	panic(ME, "allocating bios buffer failed", r);
+  	panic(ME, "allocating bios buffer failed", ENOMEM);
   }
 
   if (bios_buf_phys+BIOSBUF > 0x100000)

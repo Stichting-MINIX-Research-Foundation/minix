@@ -1300,14 +1300,13 @@ void transmittest(re_t *rep)
 /*===========================================================================*
  *				rl_readv_s				     *
  *===========================================================================*/
-static void rl_readv_s(mp, from_int)
-message *mp;
-int from_int;
+static void rl_readv_s(message *mp, int from_int)
 {
 	int i, j, n, s, dl_port, re_client, count, size, index;
 	port_t port;
 	unsigned totlen, packlen;
-	phys_bytes src_phys, iov_src;
+	phys_bytes src_phys;
+	phys_bytes iov_src = 0;
 	re_desc *desc;
 	u32_t rxstat = 0x12345678;
 	re_t *rep;
@@ -1449,11 +1448,9 @@ suspend:
 /*===========================================================================*
  *				rl_writev_s				     *
  *===========================================================================*/
-static void rl_writev_s(mp, from_int)
-message *mp;
-int from_int;
+static void rl_writev_s(message *mp, int from_int)
 {
-	phys_bytes iov_src;
+	phys_bytes iov_src = 0;
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
 	re_t *rep;

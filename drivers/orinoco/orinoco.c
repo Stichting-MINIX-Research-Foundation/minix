@@ -472,7 +472,6 @@ static void or_reset() {
 	t_or *orp;
 	int i, j, r;
 	u16_t irqmask;
-	hermes_t *hw = &(orp->hw);
 
 	if (OK != (r = getuptime(&now)))
 		panic(__FILE__, "orinoco: getuptime() failed:", r);
@@ -518,7 +517,6 @@ static void or_dump (message *m) {
 	t_or *orp;
 	int i, err;
 	u16_t evstat =0, d;
-	hermes_t *hw;
 
 	for (i = 0, orp = or_table; orp < or_table + OR_PORT_NR; i++, orp++) {
 		if(orp->or_mode == OR_M_DISABLED) {
@@ -1377,7 +1375,8 @@ static void or_writev (message * mp, int from_int, int vectored) {
 	struct ethhdr *eh;
 	t_or *orp;
 	clock_t timebefore, t0;	
-	phys_bytes phys_user, iov_src;
+	phys_bytes phys_user;
+	phys_bytes iov_src = 0;
 	hermes_t *hw;
 	struct hermes_tx_descriptor desc;
 	struct header_struct hdr;
@@ -1545,7 +1544,8 @@ static void or_writev_s (message * mp, int from_int) {
 	struct ethhdr *eh;
 	t_or *orp;
 	clock_t timebefore, t0;	
-	phys_bytes phys_user, iov_src;
+	phys_bytes phys_user;
+	phys_bytes iov_src = 0;
 	hermes_t *hw;
 	struct hermes_tx_descriptor desc;
 	int iov_offset = 0;
@@ -1992,7 +1992,8 @@ static void or_readv (message * mp, int from_int, int vectored) {
 	clock_t timebefore;
 	unsigned amount, totlen, packlen;
 	struct hermes_rx_descriptor desc;
-	phys_bytes dst_phys, iov_src;
+	phys_bytes dst_phys;
+	phys_bytes iov_src = 0;
 	u16_t d_start, d_end, rxfid, status;
 	struct header_struct hdr;
 	int length, offset;
@@ -2115,7 +2116,8 @@ static void or_readv_s (message * mp, int from_int) {
 	clock_t timebefore;
 	unsigned amount, totlen, packlen;
 	struct hermes_rx_descriptor desc;
-	phys_bytes dst_phys, iov_src;
+	phys_bytes dst_phys;
+	phys_bytes iov_src = 0;
 	u16_t d_start, d_end, rxfid, status;
 	struct header_struct hdr;
 	u32_t l, rxstat;

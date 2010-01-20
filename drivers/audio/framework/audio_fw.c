@@ -936,8 +936,8 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	size= sub_dev_ptr->DmaSize + 64 * 1024;
 	base= alloc_contig(size, AC_ALIGN4K, &ph);
 	if (!base) {
-		error("%s: failed to allocate dma buffer for channel %d\n", 
-				drv.DriverName,i);
+		error("%s: failed to allocate dma buffer for a channel\n", 
+				drv.DriverName);
 		return EIO;
 	}
 	sub_dev_ptr->DmaBuf= base;

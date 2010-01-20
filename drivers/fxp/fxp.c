@@ -410,7 +410,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	eth_ign_proto= htons((u16_t) v);
 
 	if(!(fxp_table = alloc_contig(ft, 0, &fxp_table_phys)))
-		panic("FXP","couldn't allocate table", r);
+		panic("FXP","couldn't allocate table", ENOMEM);
 
 	memset(fxp_table, 0, ft);
 
