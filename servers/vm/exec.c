@@ -281,7 +281,7 @@ SANITYCHECK(SCL_DETAIL);
 			/* We secretly know that making a new pagetable
 			 * in the same slot if one was there will never fail.
 			 */
-				vm_panic("new_mem: pt_new failed", s);
+				vm_panic("new_mem: pt_new failed", ENOMEM);
 			}
 			rmp->vm_flags |= VMF_HASPT;
 			SANITYCHECK(SCL_DETAIL);

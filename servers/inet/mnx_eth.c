@@ -145,8 +145,6 @@ PUBLIC void osdep_eth_init()
 			}
 		}
 
-		r= ENXIO;
-			
 		sr_add_minor(if2minor(ecp->ec_ifno, ETH_DEV_OFF),
 			i, eth_open, eth_close, eth_read, 
 			eth_write, eth_ioctl, eth_cancel, eth_select);
@@ -156,13 +154,6 @@ PUBLIC void osdep_eth_init()
 		eth_port->etp_vlan_port= NULL;
 		eth_port->etp_wr_pack= 0;
 		eth_port->etp_rd_pack= 0;
-		if (r == OK)
-		{
-			eth_port->etp_ethaddr= *(ether_addr_t *)mess.m3_ca1;
-			printf("osdep_eth_init: setting EPF_GOT_ADDR\n");
-			eth_port->etp_flags |= EPF_GOT_ADDR;
-			setup_read (eth_port);
-		}
 	}
 
 	/* And now come the VLANs */
