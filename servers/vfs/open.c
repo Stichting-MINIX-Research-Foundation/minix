@@ -142,6 +142,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			r = dev_open(dev, who_e, bits | (oflags & ~O_ACCMODE));
+			if (r != OK) break;
 
 			/* Check whether the device is mounted or not. If so,
 			   then that FS is responsible for this device. Else
@@ -624,8 +625,9 @@ struct filp *fp;
 		}
 		/* Do any special processing on device close. */
 		(void) dev_close(dev, fp-filp);
-
 		/* Ignore any errors, even SUSPEND. */
+
+		fp->filp_mode = FILP_CLOSED;
 	}
   }
 
