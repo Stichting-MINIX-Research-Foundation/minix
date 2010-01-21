@@ -134,7 +134,10 @@ void get_args()
 				args[arg_ptr] = 10 * args[arg_ptr] + line[i++] - '0';
 			if (!args[arg_ptr]) cuterror(POSITION_ERROR);
 			arg_ptr++;
+		} else if (line[i] != '-') {
+			cuterror(SYNTAX_ERROR);
 		}
+
 		if (line[i] == '-') {
 			arg_ptr |= 1;
 			i++;
@@ -208,6 +211,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
+  char *linearg;
   int i = 1;
   int numberFilenames = 0;
   name = argv[0];
@@ -220,22 +224,29 @@ char *argv[];
 		    case 'd':
 			if (mode == OPTIONC || mode == OPTIONB)
 				warn(DELIMITER_NOT_APPLICABLE, "d");
-			delim = argv[i++][0];
+			delim = argv[i - 1][2] ? 
+				argv[i - 1][2] : argv[i++][0];
 			break;
 		    case 'f':
-			sprintf(line, "%s", argv[i++]);
+			linearg = argv[i - 1][2] ? 
+			    (argv[i - 1] + 2) : argv[i++];
+			sprintf(line, "%s", linearg);
 			if (mode == OPTIONC || mode == OPTIONB)
 				warn(OVERRIDING_PREVIOUS_MODE, "f");
 			mode = OPTIONF;
 			break;
 		    case 'b':
-			sprintf(line, "%s", argv[i++]);
+			linearg = argv[i - 1][2] ? 
+			    (argv[i - 1] + 2) : argv[i++];
+			sprintf(line, "%s", linearg);
 			if (mode == OPTIONF || mode == OPTIONC)
 				warn(OVERRIDING_PREVIOUS_MODE, "b");
 			mode = OPTIONB;
 			break;
 		    case 'c':
-			sprintf(line, "%s", argv[i++]);
+			linearg = argv[i - 1][2] ? 
+			    (argv[i - 1] + 2) : argv[i++];
+			sprintf(line, "%s", linearg);
 			if (mode == OPTIONF || mode == OPTIONB)
 				warn(OVERRIDING_PREVIOUS_MODE, "c");
 			mode = OPTIONC;
@@ -281,7 +292,7 @@ char *argv[];
 			    case 'f':
 			    case 'c':
 			    case 'b':
-			    case 'd':	i += 2;	break;
+			    case 'd':	i += argv[i][2] ? 1 : 2; break;
 			    case 'n':
 			    case 'i':
 			    case 's':	i++;	break;

@@ -59,6 +59,8 @@ _PROTOTYPE( char *asctime, (const struct tm *_timeptr)			);
 _PROTOTYPE( char *ctime, (const time_t *_timer)			);
 _PROTOTYPE( struct tm *gmtime, (const time_t *_timer)			);
 _PROTOTYPE( struct tm *localtime, (const time_t *_timer)		);
+_PROTOTYPE( struct tm *localtime_r, (const time_t *const timep,
+					struct tm *tmp)			);
 _PROTOTYPE( size_t strftime, (char *_s, size_t _max, const char *_fmt,
 				const struct tm *_timep)		);
 
