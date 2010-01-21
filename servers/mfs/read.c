@@ -584,7 +584,7 @@ PUBLIC int fs_getdents(void)
 	  else
 		  dp = &bp->b_dir[0];
 	  for (; dp < &bp->b_dir[NR_DIR_ENTRIES(block_size)]; dp++) {
-		  if (dp->d_ino == 0)
+		  if (dp->d_ino == 0) 
 			  continue;	/* Entry is not in use */
 
 		  /* Compute the length of the name */
@@ -600,7 +600,7 @@ PUBLIC int fs_getdents(void)
 		  if (o != 0)
 			  reclen += sizeof(long) - o;
 
-		  /* Need the postition of this entry in the directory */
+		  /* Need the position of this entry in the directory */
 		  ent_pos = block_pos + ((char *)dp - bp->b_data);
 
 		  if(tmpbuf_off + reclen > GETDENTS_BUFSIZ) {
@@ -620,7 +620,7 @@ PUBLIC int fs_getdents(void)
 			  /* The user has no space for one more record */
 			  done = TRUE;
 			  
-			  /* Record the postion of this entry, it is the
+			  /* Record the position of this entry, it is the
 			   * starting point of the next request (unless the
 			   * postion is modified with lseek).
 			   */

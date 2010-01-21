@@ -15,9 +15,6 @@ typedef struct node_details {
 	uid_t uid;
 	gid_t gid;
 
-	/* For faster access */
-	unsigned short inode_index;
-
 	/* For char/block special files */
 	dev_t dev;
 } node_details_t;

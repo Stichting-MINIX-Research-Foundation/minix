@@ -665,14 +665,25 @@ void test25e()
   if (fd != -1) e(40);
   if (errno != EEXIST) e(41);
 
+  /* open should fail when O_CREAT|O_EXCL are set and a symbolic link names
+     a file with EEXIST (regardless of link actually works or not) */
+  if (symlink("exists", "slinktoexists") == -1) e(42);
+  if (open("slinktoexists", O_RDWR | O_CREAT | O_EXCL, 0777) != -1) e(43);
+  if (unlink("exists") == -1) e(44);
+  /* "slinktoexists has become a dangling symlink. open(2) should still fail
+     with EEXIST */
+  if (open("slinktoexists", O_RDWR | O_CREAT | O_EXCL, 0777) != -1) e(45);
+  if (errno != EEXIST) e(46);
+  
+
   /* Test ToLongName and ToLongPath */
-  if ((fd = open(ToLongName, O_RDWR | O_CREAT, 0777)) != 3) e(45);
-  if (close(fd) != 0) e(46);
+  if ((fd = open(ToLongName, O_RDWR | O_CREAT, 0777)) != 3) e(47);
+  if (close(fd) != 0) e(48);
   ToLongPath[PATH_MAX - 2] = '/';
   ToLongPath[PATH_MAX - 1] = 'a';
-  if ((fd = open(ToLongPath, O_RDWR | O_CREAT, 0777)) != -1) e(47);
-  if (errno != ENAMETOOLONG) e(48);
-  if (close(fd) != -1) e(49);
+  if ((fd = open(ToLongPath, O_RDWR | O_CREAT, 0777)) != -1) e(49);
+  if (errno != ENAMETOOLONG) e(50);
+  if (close(fd) != -1) e(51);
   ToLongPath[PATH_MAX - 1] = '/';
 }
 

@@ -58,11 +58,11 @@
 #define REQ_RDONLY		001
 #define REQ_ISROOT		002
 #define PATH_NOFLAGS		000
-#define PATH_RET_SYMLINK	001	/* Return a symlink object (i.e.
+#define PATH_RET_SYMLINK	010	/* Return a symlink object (i.e.
 					 * do not continue with the contents
 					 * of the symlink if it is the last
 					 * component in a path). */
-#define PATH_GET_UCRED		002	/* Request provides a grant ID in m9_l1
+#define PATH_GET_UCRED		020	/* Request provides a grant ID in m9_l1
 					 * and struct ucred size in m9_s4 (as
 					 * opposed to a REQ_UID). */
 

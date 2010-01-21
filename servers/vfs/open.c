@@ -31,7 +31,7 @@
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
-FORWARD _PROTOTYPE( struct vnode *new_node, (mode_t bits)		);
+FORWARD _PROTOTYPE( struct vnode *new_node, (int oflags, mode_t bits)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
 
 
@@ -96,7 +96,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
         omode = I_REGULAR | (omode & ALL_MODES & fp->fp_umask);
-	vp = new_node(omode);
+	vp = new_node(oflags, omode);
 	r = err_code;
 	if (r == OK) exist = FALSE; /* We just created the file */
 	else if (r != EEXIST) return(r);  /* other error */ 
@@ -114,7 +114,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   fil_ptr->filp_vno = vp;
   fil_ptr->filp_flags = oflags;
 
-  /* Only do the normal open code if didn't just create the file. */
+  /* Only do the normal open code if we didn't just create the file. */
   if(exist) {
 	/* Check protections. */
 	if ((r = forbidden(vp, bits)) == OK) {
@@ -236,18 +236,33 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct vnode *new_node(mode_t bits)
+PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 {
+/* Try to create a new inode and return a pointer to it. If the inode already
+   exists, return a pointer to it as well, but set err_code accordingly.
+   NIL_VNODE is returned if the path cannot be resolved up to the last
+   directory, or when the inode cannot be created due to permissions or
+   otherwise. */ 
   struct vnode *dirp, *vp;
-  int r;
+  int r, flags;
   struct node_details res;
   struct vnode *rest;
+
+  /* When O_CREAT and O_EXCL flags are set, the path may not be named by a
+   * symbolic link. */
+  flags = PATH_NOFLAGS;
+  if (oflags & O_EXCL) flags |= PATH_RET_SYMLINK;
 
   /* See if the path can be opened down to the last directory. */
   if ((dirp = last_dir()) == NIL_VNODE) return(NIL_VNODE);
 
   /* The final directory is accessible. Get final component of the path. */
-  vp = advance(dirp, 0);
+  vp = advance(dirp, flags);
+
+  /* The combination of a symlink with absolute path followed by a danglink
+   * symlink results in a new path that needs to be re-resolved entirely. */
+  if (user_fullpath[0] == '/') return new_node(oflags, bits);
+
   if (vp == NIL_VNODE && err_code == ENOENT) {
 	/* Last path component does not exist. Make a new directory entry. */
 	if ((vp = get_free_vnode()) == NIL_VNODE) {
@@ -258,10 +273,61 @@ PRIVATE struct vnode *new_node(mode_t bits)
 	if ((r = forbidden(dirp, W_BIT|X_BIT)) != OK ||
 	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
 			    fp->fp_effgid, user_fullpath, &res)) != OK ) {
-		/* Can't create new directory entry: either no permission or
-		   something else is wrong. */
+		/* Can't create inode either due to permissions or some other
+		 * problem. In case r is EEXIST, we might be dealing with a
+		 * dangling symlink.*/
+		if (r == EEXIST) {
+			struct vnode *slp, *old_wd;
+
+			/* Resolve path up to symlink */
+			slp = advance(dirp, PATH_RET_SYMLINK);
+			if (slp != NIL_VNODE) {
+				if (S_ISLNK(slp->v_mode)) {
+					/* Get contents of link */
+
+					int max_linklen;
+					max_linklen = sizeof(user_fullpath)-1;
+					r = req_rdlink(slp->v_fs_e,
+						       slp->v_inode_nr,
+					   	       VFS_PROC_NR,
+					   	       user_fullpath,
+					   	       max_linklen);
+					if (r < 0) {
+						/* Failed to read link */
+						put_vnode(slp);
+						put_vnode(dirp);
+						err_code = r;
+						return(NIL_VNODE);
+					}
+					user_fullpath[r] = '\0';/* Term. path*/
+				} 
+				put_vnode(slp);
+			}
+
+			/* Try to create the inode the dangling symlink was
+			 * pointing to. We have to use dirp as starting point
+			 * as there might be multiple successive symlinks
+			 * crossing multiple mountpoints. */
+			old_wd = fp->fp_wd; /* Save orig. working dirp */
+			fp->fp_wd = dirp;
+			vp = new_node(oflags, bits);
+			fp->fp_wd = old_wd; /* Restore */
+
+			if (vp != NIL_VNODE) {
+				put_vnode(dirp);
+				return(vp);
+			}
+			r = err_code;
+		} 
+
+		if (r == EEXIST) 
+			err_code = EIO; /* Impossible, we have verified that
+					 * the last component doesn't exist and
+					 * is not a dangling symlink. */
+		else
+			err_code = r;
+
 		put_vnode(dirp);
-		err_code = r;
 		return(NIL_VNODE);
 	}
 	
@@ -280,9 +346,10 @@ PRIVATE struct vnode *new_node(mode_t bits)
   } else {
   	/* Either last component exists, or there is some other problem. */
   	if (vp != NIL_VNODE)
-  		r = EEXIST;
+  		r = EEXIST;	/* File exists or a symlink names a file while
+  				 * O_EXCL is set. */ 
   	else
-		r = err_code; 
+		r = err_code;	/* Other problem. */
   }
 
   err_code = r;

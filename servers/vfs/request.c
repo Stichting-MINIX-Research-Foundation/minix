@@ -149,10 +149,13 @@ node_details_t *res;
   size_t len;
   message m;
 
+  if (path[0] == '/')
+  	panic(__FILE__, "req_create: filename starts with '/'", NO_NUM);
+
   len = strlen(path) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) path, len, CPF_READ);
   if (grant_id == -1)
-	  panic(__FILE__, "req_create: cpf_grant_direct failed", NO_NUM);
+	panic(__FILE__, "req_create: cpf_grant_direct failed", NO_NUM);
 
   /* Fill in request message */
   m.m_type	= REQ_CREATE;

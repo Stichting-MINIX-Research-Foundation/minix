@@ -174,7 +174,10 @@ allocating the inode for O_CREAT.
 points outside the process's allocated address space.
 .TP 15
 [EEXIST]
-O_CREAT and O_EXCL were specified and the file exists.
+O_CREAT and O_EXCL were specified and the file exists or
+.I
+path
+names a symbolic link (regardless of contents of the link).
 .SH "SEE ALSO"
 .BR chmod (2),
 .BR close (2),
