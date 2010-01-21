@@ -112,13 +112,10 @@ WINDOW *scr;
 /* Like the corresponding line in _cursvar.tmpwin.		*/
 /****************************************************************/
 
-static void transformline(lineno)
-register int lineno;
+static void transformline(register int lineno)
 {
   register int *dstp;
   register int *srcp;
-  register int dstc;
-  register int srcc;
   int x;
   int endx;
 
@@ -128,9 +125,9 @@ register int lineno;
   srcp = twin->_line[lineno] + x;
 
   while (x <= endx) {
-	if ((*dstp != *srcp) || (dstc != srcc)) {
+	if (*dstp != *srcp) {
 		gotoxy(lineno, x);
-		while (x <= endx && ((*dstp != *srcp) || (dstc != srcc))) {
+		while (x <= endx && (*dstp != *srcp)) {
 			Putchar(*srcp);
 			*dstp++ = *srcp++;
 			x++;

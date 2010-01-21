@@ -1,9 +1,6 @@
 #include <curses.h>
 #include "curspriv.h"
 
-static bool hasold = FALSE;	/* for remembering old cursor type */
-static int oldmode;
-
 /****************************************************************/
 /* Idlok() is used to set  flag for using the terminal insert/	*/
 /* Delete line capabilities. This is not relevant for the PC	*/

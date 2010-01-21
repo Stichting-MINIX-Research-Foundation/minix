@@ -4,7 +4,7 @@
 #define	_FULLWIN	4		/* window fills screen */
 #define	_SCROLLWIN	8		/* window lwr rgt is screen lwr rgt */
 
-#define	_NO_CHANGE	-1		/* flags line edge unchanged */
+#define	_NO_CHANGE	(-1)		/* flags line edge unchanged */
 #define	_BREAKCHAR	0x03		/* ^C character */
 #define _DCCHAR		0x08		/* Delete Char char (BS) */
 #define _DLCHAR		0x1b		/* Delete Line char (ESC) */

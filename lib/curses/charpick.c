@@ -1,5 +1,4 @@
 #include <curses.h>
-#include "curspriv.h"
 
 /****************************************************************/
 /* Winch(win) returns the character at the current position in	*/

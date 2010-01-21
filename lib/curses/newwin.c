@@ -27,14 +27,14 @@ int num_lines, num_columns, begy, begx;
 
   /* Allocate the minchng and maxchng arrays */
   if ((win->_minchng = (int *) calloc(num_lines, sizeof(int))) == NULL) {
-	free(win);
 	free(win->_line);
+	free(win);
 	return((WINDOW *) ERR);
   }
   if ((win->_maxchng = (int *) calloc(num_lines, sizeof(int))) == NULL) {
-	free(win);
 	free(win->_line);
 	free(win->_minchng);
+	free(win);
 	return((WINDOW *) ERR);
   }
 

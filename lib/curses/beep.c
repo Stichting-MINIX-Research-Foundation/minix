@@ -1,5 +1,4 @@
 #include <curses.h>
-#include "curspriv.h"
 #include <termcap.h>
 
 extern char *bl, *vb;
