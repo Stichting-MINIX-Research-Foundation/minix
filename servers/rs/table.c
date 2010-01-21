@@ -82,7 +82,7 @@ PUBLIC struct boot_image_sys boot_image_sys_table[] = {
   { RS_PROC_NR,       SRV_SF                            },
   { VM_PROC_NR,       VM_SF                             },
   { LOG_PROC_NR,      SRVC_SF                           },
-  { MFS_PROC_NR,      SRVC_SF                           },
+  { MFS_PROC_NR,      SF_USE_COPY | SF_NEED_COPY        },
   { PFS_PROC_NR,      SRVC_SF                           },
   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
 };

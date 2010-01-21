@@ -73,6 +73,9 @@ start)
     # /etc/fstab lists the root, tmp and usr devices.
     . /etc/fstab
 
+    # Unmount now defunct ramdisk
+    umount /dev/imgrd > /dev/null || echo "Failed to unmount boot ramdisk"
+
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
     then
