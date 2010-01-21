@@ -1,0 +1,1868 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use POSIX qw(strftime);
+use Time::HiRes;
+use IO::Handle;
+
+
+############################################################################
+#  UnixBench - Release 5.1.1, based on:
+#  The BYTE UNIX Benchmarks - Release 3
+#          Module: Run   SID: 3.11 5/15/91 19:30:14
+# Original Byte benchmarks written by:
+#       Ben Smith,              Tom Yager at BYTE Magazine
+#       ben@bytepb.byte.com     tyager@bytepb.byte.com
+# BIX:  bensmith                tyager
+#
+#######################################################################
+# General Purpose Benchmark
+# based on the work by Ken McDonell, Computer Science, Monash University
+#
+#  You will need ...
+#       perl Time::HiRes IO::Handlecat cc chmod comm cp date dc df echo
+#       kill ls make mkdir rm sed test time touch tty umask who
+###############################################################################
+#  Modification Log:
+# $Header: run,v 5.2 88/01/12 06:23:43 kenj Exp $
+#     Ken McDonell, Computer Science, Monash University
+#     August 1, 1983
+# 3/89 - Ben Smith - BYTE: globalized many variables, modernized syntax
+# 5/89 - commented and modernized. Removed workload items till they
+#        have been modernized. Added database server test.
+# 11/14/89 - Made modifications to reflect new version of fstime
+#        and elimination of mem tests.
+# 10/22/90 - Many tests have been flipped so that they run for
+#        a specified length of time and loops are counted.
+# 4/3/91 - Cleaned up and debugged several test parameters - Ben
+# 4/9/91 - Added structure for creating index and determing flavor of UNIX
+# 4/26/91 - Made changes and corrections suggested by Tin Le of Sony
+# 5/15/91 - Removed db from distribution
+# 4/4/92    Jon Tombs <jon@robots.ox.ac.uk> fixed for GNU time to look like
+#               BSD (don't know the format of sysV!)
+# 12/95   - Massive changes for portability, speed, and more meaningful index
+#               DCN     David C Niemi <niemi@tux.org>
+# 1997.06.20    DCN     Fixed overflow condition in fstime.c on fast machines
+# 1997.08.24    DCN     Modified "system", replaced double with
+#                       whetstone-double in "index"
+# 1997.09.10    DCN     Added perlbench as an Exhibition benchmark
+# 1997.09.23    DCN     Added rgooch's select as an Exhibition benchmark
+# 1999.07.28    DCN     "select" not compiled or run by default, because it
+#                       does not compile on many platforms.  PerlBench also
+#                       not run by default.
+# 2007.09.26    IS      Huge rewrite -- see release notes in README.
+# 2007.10.12    IS      Added graphics tests, categories feature.
+# 2007.10.14    IS      Set and report LANG.  Added "grep" and "sysexec".
+# 2007.12.22    IS      Tiny fixes; see README.
+
+
+############################################################################
+# CONFIGURATION
+############################################################################
+
+# Version number of the script.
+my $version = "5.1.2";
+
+# The setting of LANG makes a huge difference to some of the scores,
+# particularly depending on whether UTF-8 is used.  So we always set
+# it to the same value, which is configured here.
+#
+# If you want your results to be meaningful when compared to other peoples'
+# results, you should not change this.  Change it if you want to measure the
+# effect of different languages.
+my $language = "en_US.utf8";
+
+# The number of iterations per test.
+my $longIterCount = 10;
+my $shortIterCount = 3;
+
+# C compiler to use in compilation tests.
+my $cCompiler = $ENV{CC};
+
+# Establish full paths to directories.  These need to be full pathnames
+# (or do they, any more?).  They can be set in env.
+# variables whose names are the first parameter to getDir() below.
+my $BASEDIR = `pwd`;
+chomp($BASEDIR);
+
+# Directory where the test programs live.
+my $BINDIR = getDir('UB_BINDIR', $BASEDIR . "/pgms");
+
+# Temp directory, for temp files.
+my $TMPDIR = getDir('UB_TMPDIR', $BASEDIR . "/tmp");
+
+# Directory to put results in.
+my $RESULTDIR = getDir('UB_RESULTDIR', $BASEDIR . "/results");
+
+# Directory where the tests are executed.
+my $TESTDIR = getDir('UB_TESTDIR', $BASEDIR . "/testdir");
+
+
+############################################################################
+# TEST SPECIFICATIONS
+############################################################################
+
+# Configure the categories to which tests can belong.
+my $testCats = {
+    'system'    => { 'name' => "System Benchmarks", 'maxCopies' => 16 },
+    '2d'        => { 'name' => "2D Graphics Benchmarks", 'maxCopies' => 1 },
+    '3d'        => { 'name' => "3D Graphics Benchmarks", 'maxCopies' => 1 },
+    'misc'      => { 'name' => "Non-Index Benchmarks", 'maxCopies' => 16 },
+};
+
+
+my $arithmetic = [
+    "arithoh", "short", "int", "long", "float", "double", "whetstone-double"
+];
+
+my $fs = [
+    "fstime-w", "fstime-r", "fstime",
+    "fsbuffer-w", "fsbuffer-r", "fsbuffer",
+    "fsdisk-w", "fsdisk-r", "fsdisk"
+];
+
+my $oldsystem = [
+    "execl", "fstime", "fsbuffer", "fsdisk", "pipe", "context1", "spawn",
+    "syscall"
+];
+
+my $system = [
+    @$oldsystem, "shell1", "shell8" # , "shell16"
+];
+
+my $index = [
+   "dhry2reg", "whetstone-double", @$oldsystem, "shell1", "shell8"
+];
+
+my $graphics = [
+    "2d-rects", "2d-ellipse", "2d-aashapes", "2d-text", "2d-blit",
+    "2d-window", "ubgears"
+];
+
+
+# List of all supported test names.
+my $testList = {
+    # Individual tests.
+    "dhry2reg"      => undef,
+    "whetstone-double"   => undef,
+    "syscall"       => undef,
+    "pipe"          => undef,
+    "context1"      => undef,
+    "spawn"         => undef,
+    "execl"         => undef,
+    "fstime-w"      => undef,
+    "fstime-r"      => undef,
+    "fstime"        => undef,
+    "fsbuffer-w"    => undef,
+    "fsbuffer-r"    => undef,
+    "fsbuffer"      => undef,
+    "fsdisk-w"      => undef,
+    "fsdisk-r"      => undef,
+    "fsdisk"        => undef,
+    "shell1"        => undef,
+    "shell8"        => undef,
+    "shell16"       => undef,
+    "short"         => undef,
+    "int"           => undef,
+    "long"          => undef,
+    "float"         => undef,
+    "double"        => undef,
+    "arithoh"       => undef,
+    "C"             => undef,
+    "dc"            => undef,
+    "hanoi"         => undef,
+    "grep"          => undef,
+    "sysexec"       => undef,
+
+    "2d-rects"      => undef,
+    "2d-lines"      => undef,
+    "2d-circle"     => undef,
+    "2d-ellipse"    => undef,
+    "2d-shapes"     => undef,
+    "2d-aashapes"   => undef,
+    "2d-polys"      => undef,
+    "2d-text"       => undef,
+    "2d-blit"       => undef,
+    "2d-window"     => undef,
+
+    "ubgears"       => undef,
+
+    # Named combos and shorthands.
+    "arithmetic"    => $arithmetic,
+    "dhry"          => [ "dhry2reg" ],
+    "dhrystone"     => [ "dhry2reg" ],
+    "whets"         => [ "whetstone-double" ],
+    "whetstone"     => [ "whetstone-double" ],
+    "load"          => [ "shell" ],
+    "misc"          => [ "C", "dc", "hanoi" ],
+    "speed"         => [ @$arithmetic, @$system ],
+    "oldsystem"     => $oldsystem,
+    "system"        => $system,
+    "fs"            => $fs,
+    "shell"         => [ "shell1", "shell8" ],
+    "graphics"      => $graphics,
+
+    # The tests which constitute the official index.
+    "index"         => $index,
+
+    # The tests which constitute the official index plus the graphics
+    # index.
+    "gindex"         => [ @$index, @$graphics ],
+};
+
+
+# Default parameters for benchmarks.  Note that if "prog" is used,
+# it must contain just the program name, as it will be quoted (this
+# is necessary if BINDIR contains spaces).  Put any options in "options".
+my $baseParams = {
+    "prog" => undef,
+    "options" => "",
+    "repeat" => 'short',
+    "stdout" => 1,                  # Non-0 to keep stdout.
+    "stdin" => "",
+    "logmsg" => "",
+};
+
+
+# Individual parameters for all benchmarks.
+my $testParams = {
+
+    ##########################
+    ## System Benchmarks    ##
+    ##########################
+
+    "dhry2reg" => {
+        "logmsg" => "Dhrystone 2 using register variables",
+        "cat"    => 'system',
+        "options" => "10",
+        "repeat" => 'long',
+    },
+    "whetstone-double" => {
+        "logmsg" => "Double-Precision Whetstone",
+        "cat"    => 'system',
+        "repeat" => 'long',
+    },
+    "syscall" => {
+        "logmsg" => "System Call Overhead",
+        "cat"    => 'system',
+        "repeat" => 'long',
+        "options" => "10",
+    },
+    "context1" => {
+        "logmsg" => "Pipe-based Context Switching",
+        "cat"    => 'system',
+        "repeat" => 'long',
+        "options" => "10",
+    },
+    "pipe" => {
+        "logmsg" => "Pipe Throughput",
+        "cat"    => 'system',
+        "repeat" => 'long',
+        "options" => "10",
+    },
+    "spawn" => {
+        "logmsg" => "Process Creation",
+        "cat"    => 'system',
+        "options" => "30",
+    },
+    "execl" => {
+        "logmsg" => "Execl Throughput",
+        "cat"    => 'system',
+        "options" => "30",
+    },
+    "fstime-w" => {
+        "logmsg" => "File Write 1024 bufsize 2000 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-w -t 30 -d \"${TMPDIR}\" -b 1024 -m 2000",
+    },
+    "fstime-r" => {
+        "logmsg" => "File Read 1024 bufsize 2000 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-r -t 30 -d \"${TMPDIR}\" -b 1024 -m 2000",
+    },
+   "fstime" => {
+        "logmsg" => "File Copy 1024 bufsize 2000 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-c -t 30 -d \"${TMPDIR}\" -b 1024 -m 2000",
+    },
+    "fsbuffer-w" => {
+        "logmsg" => "File Write 256 bufsize 500 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-w -t 30 -d \"${TMPDIR}\" -b 256 -m 500",
+    },
+    "fsbuffer-r" => {
+        "logmsg" => "File Read 256 bufsize 500 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-r -t 30 -d \"${TMPDIR}\" -b 256 -m 500",
+    },
+    "fsbuffer" => {
+        "logmsg" => "File Copy 256 bufsize 500 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-c -t 30 -d \"${TMPDIR}\" -b 256 -m 500",
+    },
+    "fsdisk-w" => {
+        "logmsg" => "File Write 4096 bufsize 8000 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-w -t 30 -d \"${TMPDIR}\" -b 4096 -m 8000",
+    },
+    "fsdisk-r" => {
+        "logmsg" => "File Read 4096 bufsize 8000 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-r -t 30 -d \"${TMPDIR}\" -b 4096 -m 8000",
+    },
+    "fsdisk" => {
+        "logmsg" => "File Copy 4096 bufsize 8000 maxblocks",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/fstime",
+        "options" => "-c -t 30 -d \"${TMPDIR}\" -b 4096 -m 8000",
+    },
+    "shell1" => {
+        "logmsg" => "Shell Scripts (1 concurrent)",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/looper",
+        "options" => "60 \"${BINDIR}/multi.sh\" 1",
+    },
+    "shell8" => {
+        "logmsg" => "Shell Scripts (8 concurrent)",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/looper",
+        "options" => "60 \"${BINDIR}/multi.sh\" 8",
+    },
+    "shell16" => {
+        "logmsg" => "Shell Scripts (16 concurrent)",
+        "cat"    => 'system',
+        "prog" => "${BINDIR}/looper",
+        "options" => "60 \"${BINDIR}/multi.sh\" 16",
+    },
+
+    ##########################
+    ## Graphics Benchmarks  ##
+    ##########################
+
+    "2d-rects" => {
+        "logmsg" => "2D graphics: rectangles",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "rects 3 2",
+    },
+
+    "2d-lines" => {
+        "logmsg" => "2D graphics: lines",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "lines 3 2",
+    },
+
+    "2d-circle" => {
+        "logmsg" => "2D graphics: circles",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "circle 3 2",
+    },
+
+    "2d-ellipse" => {
+        "logmsg" => "2D graphics: ellipses",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "ellipse 3 2",
+    },
+
+    "2d-shapes" => {
+        "logmsg" => "2D graphics: polygons",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "shapes 3 2",
+    },
+
+    "2d-aashapes" => {
+        "logmsg" => "2D graphics: aa polygons",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "aashapes 3 2",
+    },
+
+    "2d-polys" => {
+        "logmsg" => "2D graphics: complex polygons",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "polys 3 2",
+    },
+
+    "2d-text" => {
+        "logmsg" => "2D graphics: text",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "text 3 2",
+    },
+
+    "2d-blit" => {
+        "logmsg" => "2D graphics: images and blits",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "blit 3 2",
+    },
+
+    "2d-window" => {
+        "logmsg" => "2D graphics: windows",
+        "cat"    => '2d',
+        "prog" => "${BINDIR}/gfx-x11",
+        "options" => "window 3 2",
+    },
+
+    "ubgears" => {
+        "logmsg" => "3D graphics: gears",
+        "cat"    => '3d',
+        "options" => "-time 20 -v",
+    },
+
+
+    ##########################
+    ## Non-Index Benchmarks ##
+    ##########################
+
+    "C" => {
+        "logmsg" => "C Compiler Throughput ($cCompiler)",
+        "cat"    => 'misc',
+        "prog" => "${BINDIR}/looper",
+        "options" => "60 $cCompiler cctest.c",
+    },
+    "arithoh" => {
+        "logmsg" => "Arithoh",
+        "cat"    => 'misc',
+        "options" => "10",
+    },
+    "short" => {
+        "logmsg" => "Arithmetic Test (short)",
+        "cat"    => 'misc',
+        "options" => "10",
+    },
+    "int" => {
+        "logmsg" => "Arithmetic Test (int)",
+        "cat"    => 'misc',
+        "options" => "10",
+    },
+    "long" => {
+        "logmsg" => "Arithmetic Test (long)",
+        "cat"    => 'misc',
+        "options" => "10",
+    },
+    "float" => {
+        "logmsg" => "Arithmetic Test (float)",
+        "cat"    => 'misc',
+        "options" => "10",
+    },
+    "double" => {
+        "logmsg" => "Arithmetic Test (double)",
+        "cat"    => 'misc',
+        "options" => "10",
+    },
+    "dc" => {
+        "logmsg" => "Dc: sqrt(2) to 99 decimal places",
+        "cat"    => 'misc',
+        "prog" => "${BINDIR}/looper",
+        "options" => "30 dc",
+        "stdin" => "dc.dat",
+    },
+    "hanoi" => {
+        "logmsg" => "Recursion Test -- Tower of Hanoi",
+        "cat"    => 'misc',
+        "options" => "20",
+    },
+    "grep" => {
+        "logmsg" => "Grep a large file (system's grep)",
+        "cat"    => 'misc',
+        "prog" => "${BINDIR}/looper",
+        "options" => "30 grep -c gimp large.txt",
+    },
+    "sysexec" => {
+        "logmsg" => "Exec System Call Overhead",
+        "cat"    => 'misc',
+        "repeat" => 'long',
+        "prog" => "${BINDIR}/syscall",
+        "options" => "10 exec",
+    },
+};
+
+
+# CPU flags of interest.
+my $x86CpuFlags = {
+    'pae' => "Physical Address Ext",
+    'sep' => "SYSENTER/SYSEXIT",
+    'syscall' => "SYSCALL/SYSRET",
+    'mmx' => "MMX",
+    'mmxext' => "AMD MMX",
+    'cxmmx' => "Cyrix MMX",
+    'xmm' => "Streaming SIMD",
+    'xmm2' => "Streaming SIMD-2",
+    'xmm3' => "Streaming SIMD-3",
+    'ht' => "Hyper-Threading",
+    'ia64' => "IA-64 processor",
+    'lm' => "x86-64",
+    'vmx' => "Intel virtualization",
+    'svm' => "AMD virtualization",
+};
+
+
+############################################################################
+# UTILITIES
+############################################################################
+
+# Exec the given command, and catch its standard output.
+# We return an array containing the PID and the filehandle on the
+# process' standard output.  It's up to the caller to wait for the command
+# to terminate.
+sub command {
+    my ( $cmd ) = @_;
+
+    my $pid = open(my $childFd, "-|");
+    if (!defined($pid)) {
+        die("Run: fork() failed (undef)\n");
+    } elsif ($pid == 0) {
+        exec($cmd);
+        die("Run: exec() failed (returned)\n");
+    }
+
+    return ( $pid, $childFd );
+}
+
+
+# Get data from running a system command.  Used for things like getting
+# the host OS from `uname -o` etc.
+#
+# Ignores initial blank lines from the command and returns the first
+# non-blank line, with white space trimmed off.  Returns a blank string
+# if there is no output; undef if the command fails.
+sub getCmdOutput {
+    my ( $cmd ) = @_;
+
+    my ( $pid, $fd ) = command($cmd . " 2>/dev/null");
+    my $result = "";
+    while (<$fd>) {
+        chomp;
+        next if /^[ \t]*$/;
+
+        $result = $_;
+        $result =~ s/^[ \t]+//;
+        $result =~ s/[ \t]+$//;
+        last;
+    }
+
+    # Close the command and wait for it to die.
+    waitpid($pid, 0);
+    my $status = $?;
+
+    return $status == 0 ? $result : undef;
+}
+
+
+# Get a directory pathname from an environment variable, or the given
+# default.  Canonicalise and return the value.
+sub getDir {
+    my ( $var, $def ) = @_;
+
+    my $val = $ENV{$var} || $def;
+
+    # Canonicalise the value.
+    my $wd;
+    chomp($wd = `pwd`);
+    chdir($val);
+    chomp($val = `pwd`);
+    chdir($wd);
+    $ENV{$var} = $val;
+
+    $val;
+}
+
+
+# Get the name of the file we're going to log to.  The name uses the hostname
+# and date, plus a sequence number to make it unique.
+sub logFile {
+    my ( $sysInfo ) = @_;
+
+    my $count = 1;
+
+    # Use the date in the base file name.
+    my $ymd = strftime "%Y-%m-%d", localtime;
+
+    while (1) {
+        my $log = sprintf "%s/%s-%s-%02d",
+                        ${RESULTDIR}, $sysInfo->{'name'}, $ymd, $count;
+        return $log if (! -e $log);
+        ++$count;
+    }
+}
+
+
+# Print a message to the named log file.  We use this method rather than
+# keeping the FD open because we use shell redirection to send command
+# output to the same file.
+sub printLog {
+    my ( $logFile, @args ) = @_;
+
+    open(my $fd, ">>", $logFile) || abortRun("can't append to $logFile");
+    printf $fd @args;
+    close($fd);
+}
+
+
+# Display a number of something, auto-selecting the plural form
+# if appropriate.  We are given the number, the singular, and the
+# plural; if the plural is omitted, it defaults to singular + "s".
+sub number {
+    my ( $n, $what, $plural ) = @_;
+
+    $plural = $what . "s" if !defined($plural);
+
+    if (!defined($n)) {
+        return sprintf "unknown %s", $plural;
+    } else {
+        return sprintf "%d %s", $n, $n == 1 ? $what : $plural;
+    }
+}
+
+
+# Merge two sets of test parameters -- defaults and actual parameters.
+# Return the merged parameter hash.
+sub mergeParams {
+    my ( $def, $vals ) = @_;
+
+    my $params = { };
+    foreach my $k (keys(%$def)) {
+        $params->{$k} = $def->{$k};
+    }
+    foreach my $k (keys(%$vals)) {
+        $params->{$k} = $vals->{$k};
+    }
+
+    $params;
+}
+
+
+############################################################################
+# SYSTEM ANALYSIS
+############################################################################
+
+# Extract interesting flags from the given processor flags string and
+# convert them to descriptive names.
+sub processCpuFlags {
+    my ( $flagStr ) = @_;
+
+    my @names;
+    foreach my $f (sort split(/\s+/, $flagStr)) {
+        my $name = $x86CpuFlags->{$f};
+        push(@names, $name) if $name;
+    }
+
+    join(", ", @names);
+}
+
+
+# Get information on the CPUs in the system.  Returns a reference to an
+# array of N entries, one per CPU, where each entry is a hash containing
+# these fields:
+# describing the model etc.  Returns undef if the information can't be got.
+sub getCpuInfo {
+    open(my $fd, "<", "/proc/cpuinfo") || return undef;
+
+    my $cpus = [ ];
+    my $cpu = 0;
+    while (<$fd>) {
+        chomp;
+        my ( $field, $val ) = split(/[ \t]*:[ \t]*/);
+        next if (!$field || !$val);
+        if ($field eq "processor") {
+            $cpu = $val;
+        } elsif ($field eq "model name") {
+            my $model = $val;
+            $model =~ s/  +/ /g;
+            $cpus->[$cpu]{'model'} = $model;
+        } elsif ($field eq "bogomips") {
+            $cpus->[$cpu]{'bogo'} = $val;
+        } elsif ($field eq "flags") {
+            $cpus->[$cpu]{'flags'} = processCpuFlags($val);
+        }
+    }
+
+    close($fd);
+
+    $cpus;
+}
+
+
+# Get information on the host system.  Returns a reference to a hash
+# with the following fields:
+#    name           Host name
+#    os             Host OS name
+#    osRel          Host OS release
+#    osVer          Host OS version
+#    mach           Host machine name (eg. "SparcStation 20", but on
+#                   PC/Linux usually "i686" etc.)
+#    platform       Hardware platform; on Linux, the base CPU type?
+#    system         System name (eg. hostname and Linux distro, like
+#                   "hostname: openSUSE 10.2 (i586)").
+#    cpus           Value returned by getCpuInfo(), undef if not avail.
+#    numCpus        Number of CPUs if known, else undef.
+#    load           System load message as per "uptime".
+#    numUsers       Number of users and/or open shell sessions.
+sub getSystemInfo {
+    my $info = { };
+
+    # Get host system data.
+    if ($ENV{MINIX}) {
+        $info->{'name'} = getCmdOutput("uname -a");
+    } else {
+        $info->{'name'} = getCmdOutput("hostname");
+    }
+    $info->{'os'} = getCmdOutput("uname -o") || getCmdOutput("uname -s");
+    $info->{'osRel'} = getCmdOutput("uname -r");
+    $info->{'osVer'} = getCmdOutput("uname -v");
+    $info->{'mach'} = getCmdOutput("uname -m");
+    if (!$ENV{MINIX}) {
+        $info->{'platform'} = getCmdOutput("uname -i");
+    }
+
+    # Get the system name (SUSE, Red Hat, etc.) if possible.
+    $info->{'system'} = $info->{'os'};
+    if ( -r "/etc/SuSE-release" ) {
+        $info->{'system'} = getCmdOutput("cat /etc/SuSE-release");
+    } elsif ( -r "/etc/release" ) {
+        $info->{'system'} = getCmdOutput("cat /etc/release");
+    }
+
+    # Get the language info.
+    if (!$ENV{MINIX}) {
+        my $lang = getCmdOutput("printenv LANG");
+        my $map = getCmdOutput("locale -k LC_CTYPE | grep charmap");
+        $map =~ s/.*=//;
+        my $coll = getCmdOutput("locale -k LC_COLLATE | grep collate-codeset");
+        $coll =~ s/.*=//;
+        $info->{'language'} = sprintf "%s (charmap=%s, collate=%s)",
+                                      $lang, $map, $coll;
+    }
+
+    # Get details on the CPUs, if possible.
+    my $cpus = getCpuInfo();
+    if (defined($cpus)) {
+        $info->{'cpus'} = $cpus;
+        $info->{'numCpus'} = scalar(@$cpus);
+    }
+
+    # Get graphics hardware info.
+    # if (!$ENV{MINIX}) {
+    #     $info->{'graphics'} = getCmdOutput("3dinfo | cut -f1 -d\'(\'");
+    # }
+
+    # Get system run state, load and usage info.
+    if (!$ENV{MINIX}) {
+        $info->{'runlevel'} = getCmdOutput("runlevel | cut -f2 -d\" \"");
+    }
+    $info->{'load'} = getCmdOutput("uptime");
+    $info->{'numUsers'} = getCmdOutput("who | wc -l");
+
+    $info;
+}
+
+
+############################################################################
+# ERROR HANDLING
+############################################################################
+
+# Abort the benchmarking run with an error message.
+sub abortRun {
+    my ( $err ) = @_;
+
+    printf STDERR "\n**********************************************\n";
+    printf STDERR "Run: %s; aborting\n", $err;
+    exit(1);
+}
+
+
+############################################################################
+# TEST SETUP
+############################################################################
+
+# Do checks that everything's ready for testing.
+sub preChecks {
+    # Set the language.
+    $ENV{'LANG'} = $language;
+
+    # Check that the required files are in the proper places.
+    system("make check");
+    if ($? != 0) {
+        system("make all");
+        if ($? != 0) {
+            abortRun("\"make all\" failed");
+        }
+    }
+
+    # Create a script to kill this run.
+    system("echo \"kill -9 $$\" > \"${TMPDIR}/kill_run\"");
+    chmod(0755, $TMPDIR . "/kill_run");
+}
+
+
+# Parse the command arguments.
+sub parseArgs {
+    my @words = @_;
+
+    # The accumulator for the bench units to be run.
+    my $tests = [ ];
+    my $params = { 'tests' => $tests };
+
+    # Generate the requested list of bench programs.
+    my $opt;
+    my $word;
+    while ($word = shift(@words)) {
+        if ($word !~ m/^-/) {               # A test name.
+            if ($word eq "all") {
+                foreach my $t (keys(%$testList)) {
+                    push(@$tests, $t) if (!defined($testList->{$t}));
+                }
+            } elsif (exists($testList->{$word})) {
+                my $val = $testList->{$word} || [ $word ];
+                push(@$tests, @$val);
+            } else {
+                die("Run: unknown test \"$word\"\n");
+            }
+        } elsif ($word eq "-q") {
+            $params->{'verbose'} = 0;
+        } elsif ($word eq "-v") {
+            $params->{'verbose'} = 2;
+        } elsif ($word eq "-i") {
+            $params->{'iterations'} = shift(@words);
+        } elsif ($word eq "-c") {
+            if (!defined($params->{'copies'})) {
+                $params->{'copies'} = [ ];
+            }
+            push(@{$params->{'copies'}}, shift(@words));
+        } else {
+            die("Run: unknown option $word\n");
+        }
+    }
+
+    $params;
+}
+
+
+############################################################################
+# RESULTS INPUT / OUTPUT
+############################################################################
+
+# Read a set of benchmarking results from the given file.
+# Returns results in the form returned by runTests(), but without the
+# individual pass results.
+sub readResultsFromFile {
+    my ( $file ) = @_;
+
+    # Attempt to get the baseline data file; if we can't, just return undef.
+    open(my $fd, "<", $file) || return undef;
+
+    my $results = { };
+    while (<$fd>) {
+        chomp;
+
+        # Dump comments, ignore blank lines.
+        s/#.*//;
+        next if /^\s*$/;
+
+        my ( $name, $time, $slab, $sum, $score, $iters ) = split(/\|/);
+        my $bresult = { };
+        $bresult->{'score'} = $score;
+        $bresult->{'scorelabel'} = $slab;
+        $bresult->{'time'} = $time;
+        $bresult->{'iterations'} = $iters;
+
+        $results->{$name} = $bresult;
+    }
+
+    close($fd);
+
+    $results;
+}
+
+
+############################################################################
+# RESULTS PROCESSING
+############################################################################
+
+# Process a set of results from a single test by averaging the individal
+# pass results into a single final value.
+# First, though, dump the worst 1/3 of the scores.  The logic is that a
+# glitch in the system (background process waking up, for example) may
+# make one or two runs go slow, so let's discard those.
+#
+# $bresult is a hashed array representing the results of a single test;
+# $bresult->{'passes'} is an array of the output from the individual
+# passes.
+sub combinePassResults {
+    my ( $bench, $tdata, $bresult, $logFile ) = @_;
+
+    $bresult->{'cat'} = $tdata->{'cat'};
+
+    # Computed results.
+    my $iterations = 0;
+    my $totalTime = 0;
+    my $sum = 0;
+    my $product = 0;
+    my $label;
+
+    my $pres = $bresult->{'passes'};
+
+    # We're going to throw away the worst 1/3 of the pass results.
+    # Figure out how many to keep.
+    my $npasses = scalar(@$pres);
+    my $ndump = int($npasses / 3);
+
+    foreach my $presult (sort { $a->{'COUNT0'} <=> $b->{'COUNT0'} } @$pres) {
+        my $count = $presult->{'COUNT0'};
+        my $timebase = $presult->{'COUNT1'};
+        $label = $presult->{'COUNT2'};
+        my $time = $presult->{'TIME'} || $presult->{'elapsed'};
+
+        # Skip this result if it's one of the worst ones.
+        if ($ndump > 0) {
+            printLog($logFile, "*Dump score: %12.1f\n", $count);
+            --$ndump;
+            next;
+        }
+
+        # Count this result.
+        ++$iterations;
+        printLog($logFile, "Count score: %12.1f\n", $count);
+
+        # If $timebase is 0 the figure is a rate; else compute
+        # counts per $timebase.  $time is always seconds.
+        if ($timebase > 0) {
+            $sum += $count / ($time / $timebase);
+            $product += log($count) - log($time / $timebase);
+        } else {
+            $sum += $count;
+            $product += log($count);
+        }
+        $totalTime += $time;
+    }
+
+    # Save the results for the benchmark.
+    if ($iterations > 0) {
+        $bresult->{'score'} = exp($product / $iterations);
+        $bresult->{'scorelabel'} = $label;
+        $bresult->{'time'} = $totalTime / $iterations;
+        $bresult->{'iterations'} = $iterations;
+    } else {
+        $bresult->{'error'} = "No measured results";
+    }
+}
+
+
+# Index the given full benchmark results against the baseline results.
+# $results is a hashed array of test names to test results.
+#
+# Adds the following fields to each benchmark result:
+#    iscore         The baseline score for this test
+#    index          The index of this test against the baseline
+# Adds the following fields to $results:
+#    indexed        The number of tests for which index values were
+#                   generated
+#    fullindex      Non-0 if all the index tests were indexed
+#    index          The computed overall index for the run
+# Note that the index values are computed as
+#    result / baseline * 10
+# so an index of 523 indicates that a test ran 52.3 times faster than
+# the baseline.
+sub indexResults {
+    my ( $results ) = @_;
+
+    # Read in the baseline result data.  If we can't get it, just return
+    # without making indexed results.
+    my $index = readResultsFromFile($BINDIR . "/index.base");
+    if (!defined($index)) {
+        return;
+    }
+
+    # Count the number of results we have (indexed or not) in
+    # each category.
+    my $numCat = { };
+    foreach my $bench (@{$results->{'list'}}) {
+        my $bresult = $results->{$bench};
+        ++$numCat->{$bresult->{'cat'}};
+    }
+    $results->{'numCat'} = $numCat;
+
+    my $numIndex = { };
+    my $indexed = { };
+    my $sum = { };
+    foreach my $bench (sort(keys(%$index))) {
+        # Get the test data for this benchmark.
+        my $tdata = $testParams->{$bench};
+        if (!defined($tdata)) {
+            abortRun("unknown benchmark \"$bench\" in $BINDIR/index.base");
+        }
+
+        # Get the test category.  Count the total tests in this cat.
+        my $cat = $tdata->{'cat'};
+        ++$numIndex->{$cat};
+
+        # If we don't have a result for this test, skip.
+        next if (!defined($results->{$bench}));
+
+        # Get the index and actual results.  Calcluate the score.
+        my $iresult = $index->{$bench};
+        my $bresult = $results->{$bench};
+        my $ratio = $bresult->{'score'} / $iresult->{'score'};
+
+        # Save the indexed score.
+        $bresult->{'iscore'} = $iresult->{'score'};
+        $bresult->{'index'} = $ratio * 10;
+
+        # Sun the scores, and count this test for this category.
+        $sum->{$cat} += log($ratio);
+        ++$indexed->{$cat};
+    }
+
+    # Calculate the index scores per category.
+    $results->{'indexed'} = $indexed;
+    $results->{'numIndex'} = $numIndex;
+    foreach my $c (keys(%$indexed)) {
+        if ($indexed->{$c} > 0) {
+            $results->{'index'}{$c} = exp($sum->{$c} / $indexed->{$c}) * 10;
+        }
+    }
+}
+
+
+############################################################################
+# TEST EXECUTION
+############################################################################
+
+# Exec the given command in a sub-process.
+#
+# In the child process, we run the command and store its standard output.
+# We also time its execution, and catch its exit status.  We then write
+# the command's output, plus lines containing the execution time and status,
+# to a pipe.
+#
+# In the parent process, we immediately return an array containing the
+# child PID and the filehandle to the pipe.  This allows the caller to
+# kick off multiple commands in parallel, then gather their output.
+sub commandBuffered {
+    my ( $cmd ) = @_;
+
+    # Create a pipe for parent-child communication.
+    my $childReader;
+    my $parentWriter;
+    pipe($childReader, $parentWriter) || abortRun("pipe() failed");
+    $parentWriter->autoflush(1);
+
+    # Fork off the child process.
+    my $pid = fork();
+    if (!defined($pid)) {
+        abortRun("fork() failed (undef)");
+    } elsif ($pid == 0) {
+        # Close the other end of the pipe.
+        close $childReader;
+
+        # Start the clock and spawn the command.
+        my $benchStart = Time::HiRes::time();
+        my ( $cmdPid, $cmdFd ) = command($cmd);
+
+        # Read and buffer all the command's output.
+        my $output = [ ];
+        while (<$cmdFd>) {
+            push(@$output, $_);
+        }
+
+        # Stop the clock and save the time.
+        my $elTime = Time::HiRes::time() - $benchStart;
+        push(@$output, sprintf "elapsed|%f\n", $elTime);
+
+        # Wait for the child to die so we can get its status.
+        # close($cmdFd);  Doesn't work???
+        waitpid($cmdPid, 0);
+        my $status = $?;
+        push(@$output, sprintf "status|%d\n", $status);
+
+        # Now that we've got the time, play back all the output to the pipe.
+        # The parent can read this at its leisure.
+        foreach my $line (@$output) {
+            print $parentWriter $line;
+        }
+
+        # Terminate this child.
+        close $parentWriter;
+        exit(0);
+    }
+
+    # Close the other end of the pipe.
+    close $parentWriter;
+
+    return ( $pid, $childReader );
+}
+
+
+# Read the results of a benchmark execution from a child process, given
+# its process ID and its filehandle.  Create a results hash structure
+# containing the fields returned by the child, plus:
+#    pid            The child's process ID
+#    status         The child's exit status
+#    ERROR          Any stderr output from the child that isn't result data
+# Note that ay result fields with ultiple values are split; so eg.
+#    COUNT|x|y|x
+# becomes
+#    COUNT0 = x
+#    COUNT1 = y
+#    COUNT2 = z
+sub readResults {
+    my ( $pid, $fd ) = @_;
+
+    my $presult = { 'pid' => $pid };
+
+    # Read all the result lines from the child.
+    while (<$fd>) {
+        chomp;
+
+        my ( $field, @params ) = split(/\|/);
+        if (scalar(@params) == 0) {            # Error message.
+            $presult->{'ERROR'} .= "\n" if ($presult->{'ERROR'});
+            $presult->{'ERROR'} .= $field;
+        } elsif (scalar(@params) == 1) {       # Simple data.
+            $presult->{$field} = $params[0];
+        } else {                               # Compound data.
+            # Store the values in separate fields, named "FIELD$i".
+            for (my $x = 0; $x < scalar(@params); ++$x) {
+                $presult->{$field . $x} = $params[$x];
+            }
+        }
+    }
+
+    # If the command had an error, make an appropriate message if we
+    # don't have one.
+    if ($presult->{'status'} != 0 && !defined($presult->{'ERROR'})) {
+        $presult->{'ERROR'} = "command returned status " . $presult->{'status'};
+    }
+
+    # Wait for the child to die.
+    close($fd);
+    waitpid($pid, 0);
+
+    $presult;
+}
+
+
+# Execute a benchmark command.  We set off a given number of copies in
+# parallel to exercise multiple CPUs.
+#
+# We return an array of results hashes, one per copy; each one is as
+# returned by readResults().
+sub executeBenchmark {
+    my ( $command, $copies ) = @_;
+
+    # Array of contexts for all the copies we're running.
+    my $ctxt = [ ];
+
+    # Kick off all the commands at once.
+    for (my $i = 0; $i < $copies; ++$i) {
+        my ( $cmdPid, $cmdFd ) = commandBuffered($command);
+        $ctxt->[$i] = {
+            'pid'     => $cmdPid,
+            'fd'      => $cmdFd,
+        };
+    }
+
+    # Now, we can simply read back the command results in order.  Because
+    # the child processes read and buffer the results and time the commands,
+    # there's no need to use select() to read the results as they appear.
+    my $pres = [ ];
+    for (my $i = 0; $i < $copies; ++$i) {
+        my $presult = readResults($ctxt->[$i]{'pid'}, $ctxt->[$i]{'fd'});
+        push(@$pres, $presult);
+    }
+
+    $pres;
+}
+
+
+# Run one iteration of a benchmark, as specified by the given
+# benchmark parameters.  We run multiple parallel copies as
+# specified by $copies.
+sub runOnePass {
+    my ( $params, $verbose, $logFile, $copies ) = @_;
+
+    # Get the command to run.
+    my $command = $params->{'command'};
+    if ($verbose > 1) {
+        printf "\n";
+        printf "COMMAND: \"%s\"\n", $command;
+        printf "COPIES: \"%d\"\n", $copies;
+    }
+
+    # Remember where we are, and move to the test directory.
+    my $pwd = `pwd`;
+    chdir($TESTDIR);
+
+    # Execute N copies of the benchmark in parallel.
+    my $copyResults = executeBenchmark($command, $copies);
+    printLog($logFile, "\n");
+
+    # Move back home.
+    chdir($pwd);
+
+    # Sum up the scores of the copies.
+    my $count = 0;
+    my $time = 0;
+    my $elap = 0;
+    foreach my $res (@$copyResults) {
+        # Log the result data for each copy.
+        foreach my $k (sort(keys(%$res))) {
+            printLog($logFile, "# %s: %s\n", $k, $res->{$k});
+        }
+        printLog($logFile, "\n");
+
+        # If it failed, bomb out.
+        if (defined($res->{'ERROR'})) {
+            my $name = $params->{'logmsg'};
+            abortRun("\"$name\": " . $res->{'ERROR'});
+        }
+
+        # Count up the score.
+        $count += $res->{'COUNT0'};
+        $time += $res->{'TIME'} || $res->{'elapsed'};
+        $elap += $res->{'elapsed'};
+    }
+
+    # Make up a combined result.
+    my $passResult = $copyResults->[0];
+    $passResult->{'COUNT0'} = $count;
+    $passResult->{'TIME'} = $time / $copies;
+    $passResult->{'elapsed'} = $elap / $copies;
+
+    $passResult;
+}
+
+
+sub runBenchmark {
+    my ( $bench, $tparams, $verbose, $logFile, $copies ) = @_;
+
+    # Make up the actual benchmark parameters.
+    my $params = mergeParams($baseParams, $tparams);
+
+    # Make up the command string based on the parameters.
+    my $prog = $params->{'prog'} || $BINDIR . "/" . $bench;
+    my $command = sprintf "\"%s\" %s", $prog, $params->{'options'};
+    $command .= " < \"" . $params->{'stdin'} . "\"" if ($params->{'stdin'});
+    $command .= " 2>&1";
+    $command .= $params->{'stdout'} ? (" >> \"" . $logFile . "\"") : " > /dev/null";
+    $params->{'command'} = $command;
+
+    # Set up the benchmark results structure.
+    my $bresult = { 'name' => $bench, 'msg' => $params->{'logmsg'} };
+
+    if ($verbose > 0) {
+        printf "\n%d x %s ", $copies, $params->{'logmsg'};
+    }
+
+    printLog($logFile,
+             "\n########################################################\n");
+    printLog($logFile, "%s -- %s\n",
+             $params->{'logmsg'}, number($copies, "copy", "copies"));
+    printLog($logFile, "==> %s\n\n", $command);
+
+    # Run the test iterations, as given by the "repeat" parameter.
+    my $repeats = $shortIterCount;
+    $repeats = $longIterCount if $params->{'repeat'} eq 'long';
+    $repeats = 1 if $params->{'repeat'} eq 'single';
+    my $pres = [ ];
+    for (my $i = 1; $i <= $repeats; ++$i) {
+        printLog($logFile, "#### Pass %d\n\n", $i);
+
+        # make an attempt to flush buffers
+        system("sync; sleep 1; sync; sleep 2");
+        # display heartbeat
+        if ($verbose > 0) {
+            printf " %d", $i;
+        }
+
+        # Execute one pass of the benchmark.
+        my $presult = runOnePass($params, $verbose, $logFile, $copies);
+        push(@$pres, $presult);
+    }
+    $bresult->{'passes'} = $pres;
+
+    # Calculate the averaged results for this benchmark.
+    combinePassResults($bench, $tparams, $bresult, $logFile);
+
+    # Log the results.
+    if ($copies == 1) {
+        printLog($logFile, "\n>>>> Results of 1 copy\n");
+    } else {
+        printLog($logFile, "\n>>>> Sum of %d copies\n", $copies);
+    }
+    foreach my $k ( 'score', 'time', 'iterations' ) {
+        printLog($logFile, ">>>> %s: %s\n", $k, $bresult->{$k});
+    }
+    printLog($logFile, "\n");
+
+    # Some specific cleanup routines.
+    if ($bench eq "C") {
+        unlink(${TESTDIR} . "/cctest.o");
+        unlink(${TESTDIR} . "/a.out");
+    }
+
+    if ($verbose > 0) {
+        printf "\n";
+    }
+
+    $bresult;
+}
+
+
+# Run the named benchmarks.
+sub runTests {
+    my ( $tests, $verbose, $logFile, $copies ) = @_;
+
+    # Run all the requested tests and gather the results.
+    my $results = { 'start' => time(), 'copies' => $copies };
+    foreach my $bench (@$tests) {
+        # Get the parameters for this benchmark.
+        my $params = $testParams->{$bench};
+        if (!defined($params)) {
+            abortRun("unknown benchmark \"$bench\"");
+        }
+
+        # If the benchmark doesn't want to run with this many copies, skip it.
+        my $cat = $params->{'cat'};
+        my $maxCopies = $testCats->{$cat}{'maxCopies'};
+        next if ($copies > $maxCopies);
+
+        # Run the benchmark.
+        my $bresult = runBenchmark($bench, $params, $verbose, $logFile, $copies);
+        $results->{$bench} = $bresult;
+    }
+    $results->{'end'} = time();
+
+    # Generate a sorted list of benchmarks for which we have results.
+    my @benches = grep {
+        ref($results->{$_}) eq "HASH" && defined($results->{$_}{'msg'})
+    } keys(%$results);
+    @benches = sort {
+        $results->{$a}{'msg'} cmp $results->{$b}{'msg'}
+    } @benches;
+    $results->{'list'} = \@benches;
+
+    # Generate index scores for the results relative to the baseline data.
+    indexResults($results);
+
+    $results;
+}
+
+
+############################################################################
+# TEXT REPORTS
+############################################################################
+
+# Display a banner indicating the configuration of the system under test
+# to the given file desc.
+sub displaySystem {
+    my ( $info, $fd ) = @_;
+
+    # Display basic system info.
+    printf $fd "   System: %s: %s\n", $info->{'name'}, $info->{'system'};
+    printf $fd "   OS: %s -- %s -- %s\n",
+                        $info->{'os'}, $info->{'osRel'}, $info->{'osVer'};
+    if (!$ENV{MINIX}) {
+        printf $fd "   Machine: %s (%s)\n", $info->{'mach'}, $info->{'platform'};
+    }
+    printf $fd "   Machine: %s\n", $info->{'mach'};
+    if (!$ENV{MINIX}) {
+        printf $fd "   Language: %s\n", $info->{'language'};
+    }
+
+    # Get and display details on the CPUs, if possible.
+    my $cpus = $info->{'cpus'};
+    if (!defined($cpus)) {
+        printf $fd "   CPU: no details available\n";
+    } else {
+        for (my $i = 0; $i <= $#$cpus; ++$i) {
+            printf $fd "   CPU %d: %s (%.1f bogomips)\n",
+                       $i, $cpus->[$i]{'model'}, $cpus->[$i]{'bogo'};
+            printf $fd "          %s\n", $cpus->[$i]{'flags'};
+        }
+    }
+
+    # if (!$ENV{MINIX}) {    
+    #     if ($info->{'graphics'}) {
+    #         printf $fd "   Graphics: %s\n", $info->{'graphics'};
+    #     }
+    # }
+
+    # Display system load and usage info.
+    if (!$ENV{MINIX}) {
+        printf $fd "   %s; runlevel %s\n\n", $info->{'load'}, $info->{'runlevel'};
+    }
+}
+
+
+# Display the test scores from the given set of test results.
+sub logResults {
+    my ( $results, $outFd ) = @_;
+
+    # Display the individual test scores.
+    foreach my $bench (@{$results->{'list'}}) {
+        my $bresult = $results->{$bench};
+
+        printf $outFd "%-40s %12.1f %-5s (%.1f s, %d samples)\n",
+                      $bresult->{'msg'},
+                      $bresult->{'score'},
+                      $bresult->{'scorelabel'},
+                      $bresult->{'time'},
+                      $bresult->{'iterations'};
+    }
+
+    printf $outFd "\n";
+}
+
+
+# Display index scores, if any, for the given run results.
+sub logIndexCat {
+    my ( $results, $cat, $outFd ) = @_;
+
+    my $total = $results->{'numIndex'}{$cat};
+    my $indexed = $results->{'indexed'}{$cat};
+    my $iscore = $results->{'index'}{$cat};
+    my $full = $total == $indexed;
+
+    # If there are no indexed scores, just say so.
+    if (!defined($indexed) || $indexed == 0) {
+        printf $outFd "No index results available for %s\n\n",
+                      $testCats->{$cat}{'name'};
+        return;
+    }
+
+    # Display the header, depending on whether we have a full set of index
+    # scores, or a partial set.
+    my $head = $testCats->{$cat}{'name'} .
+                        ($full ? " Index Values" : " Partial Index");
+    printf $outFd "%-40s %12s %12s %8s\n",
+                  $head, "BASELINE", "RESULT", "INDEX";
+
+    # Display the individual test scores.
+    foreach my $bench (@{$results->{'list'}}) {
+        my $bresult = $results->{$bench};
+        next if $bresult->{'cat'} ne $cat;
+
+	if (defined($bresult->{'iscore'}) && defined($bresult->{'index'})) {
+            printf $outFd "%-40s %12.1f %12.1f %8.1f\n",
+                      $bresult->{'msg'}, $bresult->{'iscore'},
+                      $bresult->{'score'}, $bresult->{'index'};
+	} else {
+            printf $outFd "%-40s %12s %12.1f %8s\n",
+                      $bresult->{'msg'}, "---",
+                      $bresult->{'score'}, "---";
+	}
+    }
+
+    # Display the overall score.
+    my $title = $testCats->{$cat}{'name'} . " Index Score";
+    if (!$full) {
+        $title .= " (Partial Only)";
+    }
+    printf $outFd "%-40s %12s %12s %8s\n", "", "", "", "========";
+    printf $outFd "%-66s %8.1f\n", $title, $iscore;
+
+    printf $outFd "\n";
+}
+
+
+# Display index scores, if any, for the given run results.
+sub logIndex {
+    my ( $results, $outFd ) = @_;
+
+    my $count = $results->{'indexed'};
+    foreach my $cat (keys(%$count)) {
+        logIndexCat($results, $cat, $outFd);
+    }
+}
+
+
+# Dump the given run results into the given report file.
+sub summarizeRun {
+    my ( $systemInfo, $results, $verbose, $reportFd ) = @_;
+
+    # Display information about this test run.
+    printf $reportFd "------------------------------------------------------------------------\n";
+    printf $reportFd "Benchmark Run: %s %s - %s\n",
+           strftime("%a %b %d %Y", localtime($results->{'start'})),
+           strftime("%H:%M:%S", localtime($results->{'start'})),
+           strftime("%H:%M:%S", localtime($results->{'end'}));
+    printf $reportFd "%s in system; running %s of tests\n",
+           number($systemInfo->{'numCpus'}, "CPU"),
+           number($results->{'copies'}, "parallel copy", "parallel copies");
+    printf $reportFd "\n";
+
+    # Display the run scores.
+    logResults($results, $reportFd);
+
+    # Display the indexed scores, if any.
+    logIndex($results, $reportFd);
+}
+
+
+############################################################################
+# HTML REPORTS
+############################################################################
+
+# Dump the given run results into the given report file.
+sub runHeaderHtml {
+    my ( $systemInfo, $reportFd ) = @_;
+
+    # Display information about this test run.
+    my $title = sprintf "Benchmark of %s / %s on %s",
+                     $systemInfo->{'name'}, $systemInfo->{'system'},
+                     strftime("%a %b %d %Y", localtime());
+
+    print $reportFd <<EOF;
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="keywords" content="linux, benchmarks, benchmarking">
+  <title>$title</title>
+  <style type="text/css">
+    table {
+      margin: 1em 1em 1em 0;
+      background: #f9f9f9;
+      border: 1px #aaaaaa solid;
+      border-collapse: collapse;
+    }
+
+    table th, table td {
+      border: 1px #aaaaaa solid;
+      padding: 0.2em;
+    }
+
+    table th {
+      background: #f2f2f2;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+EOF
+
+    # Display information about this test run.
+    printf $reportFd "<h2>%s</h2>\n", $title;
+    printf $reportFd "<p><b>BYTE UNIX Benchmarks (Version %s)</b></p>\n\n",
+                     $version;
+}
+
+
+# Display a banner indicating the configuration of the system under test
+# to the given file desc.
+sub displaySystemHtml {
+    my ( $info, $fd ) = @_;
+
+    printf $fd "<h3>Test System Information</h3>\n";
+    printf $fd "<p><table>\n";
+
+    # Display basic system info.
+    printf $fd "<tr>\n";
+    printf $fd "   <td><b>System:</b></td>\n";
+    printf $fd "   <td colspan=2>%s: %s</td>\n",
+               $info->{'name'}, $info->{'system'};
+    printf $fd "</tr><tr>\n";
+    printf $fd "   <td><b>OS:</b></td>\n";
+    printf $fd "   <td colspan=2>%s -- %s -- %s</td>\n",
+               $info->{'os'}, $info->{'osRel'}, $info->{'osVer'};
+    printf $fd "</tr><tr>\n";
+    printf $fd "   <td><b>Machine:</b></td>\n";
+    if (!$ENV{MINIX}) {
+        printf $fd "   <td colspan=2>%s: %s</td>\n",
+                   $info->{'mach'}, $info->{'platform'};
+    }
+    printf $fd "   <td colspan=2>%s</td>\n",
+                   $info->{'mach'};
+    if (!$ENV{MINIX}) {
+        printf $fd "</tr><tr>\n";
+        printf $fd "   <td><b>Language:</b></td>\n";
+        printf $fd "   <td colspan=2>%s</td>\n", $info->{'language'};
+    }
+    printf $fd "</tr>\n";
+
+    # Get and display details on the CPUs, if possible.
+    my $cpus = $info->{'cpus'};
+    if (!defined($cpus)) {
+        printf $fd "<tr>\n";
+        printf $fd "   <td><b>CPUs:</b></td>\n";
+        printf $fd "   <td colspan=2>no details available</td>\n";
+        printf $fd "</tr>\n";
+    } else {
+        for (my $i = 0; $i <= $#$cpus; ++$i) {
+            printf $fd "<tr>\n";
+            if ($i == 0) {
+                printf $fd "   <td rowspan=%d><b>CPUs:</b></td>\n", $#$cpus + 1;
+            }
+            printf $fd "   <td><b>%d:</b></td>\n", $i;
+            printf $fd "   <td>%s (%.1f bogomips)<br/>\n",
+                        $cpus->[$i]{'model'}, $cpus->[$i]{'bogo'};
+            printf $fd "       %s</td>\n", $cpus->[$i]{'flags'};
+            printf $fd "</tr>\n";
+        }
+    }
+
+    # Display graphics hardware info.
+    # if (!$ENV{MINIX}) {
+    #     if ($info->{'graphics'}) {
+    #         printf $fd "<tr>\n";
+    #         printf $fd "   <td><b>Graphics:</b></td>\n";
+    #         printf $fd "   <td colspan=2>%s</td>\n", $info->{'graphics'};
+    #         printf $fd "</tr>\n";
+    #     }
+    # }
+
+    # Display system runlevel, load and usage info.
+    printf $fd "<tr>\n";
+    printf $fd "   <td><b>Uptime:</b></td>\n";
+    if (!$ENV{MINIX}) {
+        printf $fd "   <td colspan=2>%s; runlevel %s</td>\n",
+                       $info->{'load'}, $info->{'runlevel'};
+    }
+    printf $fd "   <td colspan=2>%s\n",
+                   $info->{'load'};
+    printf $fd "</tr>\n";
+
+    printf $fd "</table></p>\n\n";
+}
+
+
+# Display the test scores from the given set of test results
+# for a given category of tests.
+sub logCatResultsHtml {
+    my ( $results, $cat, $fd ) = @_;
+
+    my $numIndex = $results->{'numIndex'}{$cat};
+    my $indexed = $results->{'indexed'}{$cat};
+    my $iscore = $results->{'index'}{$cat};
+    my $full = defined($indexed) && $indexed == $numIndex;
+
+    # If there are no results in this category, just ignore it.
+    if (!defined($results->{'numCat'}{$cat}) ||
+                            $results->{'numCat'}{$cat} == 0) {
+        return;
+    }
+
+    # Say the category.  If there are no indexed scores, just say so.
+    my $warn = "";
+    if (!defined($indexed) || $indexed == 0) {
+        $warn = " — no index results available";
+    } elsif (!$full) {
+        $warn = " — not all index tests were run;" .
+                " only a partial index score is available";
+    }
+    printf $fd "<h4>%s%s</h4>\n", $testCats->{$cat}{'name'}, $warn;
+
+    printf $fd "<p><table width=\"100%%\">\n";
+
+    printf $fd "<tr>\n";
+    printf $fd "   <th align=left>Test</th>\n";
+    printf $fd "   <th align=right>Score</th>\n";
+    printf $fd "   <th align=left>Unit</th>\n";
+    printf $fd "   <th align=right>Time</th>\n";
+    printf $fd "   <th align=right>Iters.</th>\n";
+    printf $fd "   <th align=right>Baseline</th>\n";
+    printf $fd "   <th align=right>Index</th>\n";
+    printf $fd "</tr>\n";
+
+    # Display the individual test scores.
+    foreach my $bench (@{$results->{'list'}}) {
+        my $bresult = $results->{$bench};
+        next if $bresult->{'cat'} ne $cat;
+
+        printf $fd "<tr>\n";
+        printf $fd "   <td><b>%s</b></td>\n", $bresult->{'msg'};
+        printf $fd "   <td align=right><tt>%.1f</tt></td>\n",
+                   $bresult->{'score'};
+        printf $fd "   <td align=left><tt>%s</tt></td>\n",
+                   $bresult->{'scorelabel'};
+        printf $fd "   <td align=right><tt>%.1f s</tt></td>\n",
+                   $bresult->{'time'};
+        printf $fd "   <td align=right><tt>%d</tt></td>\n",
+                   $bresult->{'iterations'};
+
+        if (defined($bresult->{'index'})) {
+            printf $fd "   <td align=right><tt>%.1f</tt></td>\n",
+                       $bresult->{'iscore'};
+            printf $fd "   <td align=right><tt>%.1f</tt></td>\n",
+                       $bresult->{'index'};
+        }
+        printf $fd "</tr>\n";
+    }
+
+    # Display the overall score.
+    if (defined($indexed) && $indexed > 0) {
+        my $title = $testCats->{$cat}{'name'} . " Index Score";
+        if (!$full) {
+            $title .= " (Partial Only)";
+        }
+        printf $fd "<tr>\n";
+        printf $fd "   <td colspan=6><b>%s:</b></td>\n", $title;
+        printf $fd "   <td align=right><b><tt>%.1f</tt></b></td>\n", $iscore;
+        printf $fd "</tr>\n";
+    }
+
+    printf $fd "</table></p>\n\n";
+}
+
+
+# Display index scores, if any, for the given run results.
+sub logResultsHtml {
+    my ( $results, $fd ) = @_;
+
+    foreach my $cat (keys(%$testCats)) {
+        logCatResultsHtml($results, $cat, $fd);
+    }
+}
+
+
+# Dump the given run results into the given report file.
+sub summarizeRunHtml {
+    my ( $systemInfo, $results, $verbose, $reportFd ) = @_;
+
+    # Display information about this test run.
+    my $time = $results->{'end'} - $results->{'start'};
+    printf $reportFd "<p><hr/></p>\n";
+    printf $reportFd "<h3>Benchmark Run: %s; %s</h3>\n",
+           number($systemInfo->{'numCpus'}, "CPU"),
+           number($results->{'copies'}, "parallel process", "parallel processes");
+    printf $reportFd "<p>Time: %s - %s; %dm %02ds</p>\n",
+                     strftime("%H:%M:%S", localtime($results->{'start'})),
+                     strftime("%H:%M:%S", localtime($results->{'end'})),
+                     int($time / 60), $time % 60;
+    printf $reportFd "\n";
+
+    # Display the run scores.
+    logResultsHtml($results, $reportFd);
+}
+
+
+sub runFooterHtml {
+    my ( $reportFd ) = @_;
+
+    print $reportFd <<EOF;
+<p><hr/></p>
+<div><b>No Warranties:</b> This information is provided free of charge and "as
+is" without any warranty, condition, or representation of any kind,
+either express or implied, including but not limited to, any warranty
+respecting non-infringement, and the implied warranties of conditions
+of merchantability and fitness for a particular purpose. All logos or
+trademarks on this site are the property of their respective owner. In
+no event shall the author be liable for any
+direct, indirect, special, incidental, consequential or other damages
+howsoever caused whether arising in contract, tort, or otherwise,
+arising out of or in connection with the use or performance of the
+information contained on this web site.</div>
+</body>
+</html>
+EOF
+}
+
+
+############################################################################
+# MAIN
+############################################################################
+
+sub main {
+    my @args = @_;
+
+    my $params = parseArgs(@args);
+    my $verbose = $params->{'verbose'} || 1;
+    if ($params->{'iterations'}) {
+        $longIterCount = $params->{'iterations'};
+        $shortIterCount = int(($params->{'iterations'} + 1) / 3);
+        $shortIterCount = 1 if ($shortIterCount < 1);
+    }
+
+    # If no benchmark units have be specified, do "index".
+    my $tests = $params->{'tests'};
+    if ($#$tests < 0) {
+        $tests = $index;
+    }
+
+    preChecks();
+    my $systemInfo = getSystemInfo();
+
+    # If the number of copies to run was not set, set it to 1
+    # and the number of CPUs in the system (if > 1).
+    my $copies = $params->{'copies'};
+    if (!$copies || scalar(@$copies) == 0) {
+        push(@$copies, 1);
+        if (defined($systemInfo->{'numCpus'}) && $systemInfo->{'numCpus'} > 1) {
+            push(@$copies, $systemInfo->{'numCpus'});
+        }
+    }
+
+    # Display the program banner.
+    system("cat \"${BINDIR}/unixbench.logo\"");
+
+    if ($verbose > 1) {
+        printf "\n", join(", ", @$tests);
+        printf "Tests to run: %s\n", join(", ", @$tests);
+    }
+
+    # Generate unique file names for the report and log file.
+    my $reportFile = logFile($systemInfo);
+    my $reportHtml = $reportFile . ".html";
+    my $logFile = $reportFile . ".log";
+
+    # Open the log file for writing.
+    open(my $reportFd, ">", $reportFile) ||
+                            die("Run: can't write to $reportFile\n");
+    open(my $reportFd2, ">", $reportHtml) ||
+                            die("Run: can't write to $reportHtml\n");
+    printf $reportFd "   BYTE UNIX Benchmarks (Version %s)\n\n", $version;
+    runHeaderHtml($systemInfo, $reportFd2);
+
+    # Dump information about the system under test.
+    displaySystem($systemInfo, $reportFd);
+    displaySystemHtml($systemInfo, $reportFd2);
+
+    # Run the tests!  Do a test run once for each desired number of copies;
+    # for example, on a 2-CPU system, we may do a single-processing run
+    # followed by a dual-processing run.
+    foreach my $c (@$copies) {
+        if ($verbose > 1) {
+            printf "Run with %s\n", number($c, "copy", "copies");
+        }
+        my $results = runTests($tests, $verbose, $logFile, $c);
+
+        summarizeRun($systemInfo, $results, $verbose, $reportFd);
+        summarizeRunHtml($systemInfo, $results, $verbose, $reportFd2);
+    }
+
+    runFooterHtml($reportFd2);
+
+    # Finish the report.
+    close($reportFd);
+    close($reportFd2);
+
+    # Display the report, if not in quiet mode.
+    if ($verbose > 0) {
+        printf "\n";
+        printf  "========================================================================\n";
+        system("cat \"$reportFile\"");
+    }
+
+    0;
+}
+
+
+exit(main(@ARGV));
+

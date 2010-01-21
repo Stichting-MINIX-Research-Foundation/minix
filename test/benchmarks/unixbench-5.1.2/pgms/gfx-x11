@@ -1,0 +1,476 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+
+############################################################################
+#  gfx-x11: a front-end for x11perf.  Runs a selected x11perf test, and
+#  produces output in the format needed by UnixBench.
+############################################################################
+#  Modification Log:
+# 2007.09.26  Ian Smith     Created
+############################################################################
+
+# This program runs sets of x11perf tests, indexes the results against
+# a common base reference system (see $testData below), and reports the
+# final score.
+#
+# Usage:
+#    gfx-x11 <group> <reps> <time>
+# where:
+#    <group>   is one of the test groups defined in $testGroups below
+#    <reps>    is the number of repeats to do per test (the -repeat
+#              argument to x11perf)
+#    <time>    is the number of seconds to run each repeat for (the
+#              -time argument to x11perf)
+# Note that x11perf runs a calibration pass before the requested number
+# of test passes.  The score we compute for a test is the average of the
+# test passes, divided by the base value in $testData, times 1000.0.
+# The final score we report is the average of the test scores.
+
+
+############################################################################
+# TEST DATA
+############################################################################
+
+# This array lists all of the x11perf tests, together with their scores
+# on an HP Compaq nc8430, with an ATI Mobility Radeon X1600 (256MB)
+# graphics adapter.  There isn't anything special about this reference
+# system, but scaling all the scores back to a single reference system
+# allows us to average them in a roughly meaningful way, which in turn
+# allows us to produce sensible scores for the test groups defined below.
+#
+# The results we report are indexed to these values, at a base of 1000.0.
+my $testData = {
+    'dot' => [ 31700000.0, "Dot" ],
+    'rect1' => [ 18400000.0, "1x1 rectangle" ],
+    'rect10' => [ 7180000.0, "10x10 rectangle" ],
+    'rect100' => [ 110000.0, "100x100 rectangle" ],
+    'rect500' => [ 4110.0, "500x500 rectangle" ],
+    'srect1' => [ 15800000.0, "1x1 stippled rectangle (8x8 stipple)" ],
+    'srect10' => [ 7400000.0, "10x10 stippled rectangle (8x8 stipple)" ],
+    'srect100' => [ 110000.0, "100x100 stippled rectangle (8x8 stipple)" ],
+    'srect500' => [ 4110.0, "500x500 stippled rectangle (8x8 stipple)" ],
+    'osrect1' => [ 15900000.0, "1x1 opaque stippled rectangle (8x8 stipple)" ],
+    'osrect10' => [ 7170000.0, "10x10 opaque stippled rectangle (8x8 stipple)" ],
+    'osrect100' => [ 110000.0, "100x100 opaque stippled rectangle (8x8 stipple)" ],
+    'osrect500' => [ 4110.0, "500x500 opaque stippled rectangle (8x8 stipple)" ],
+    'tilerect1' => [ 15800000.0, "1x1 tiled rectangle (4x4 tile)" ],
+    'tilerect10' => [ 7170000.0, "10x10 tiled rectangle (4x4 tile)" ],
+    'tilerect100' => [ 110000.0, "100x100 tiled rectangle (4x4 tile)" ],
+    'tilerect500' => [ 4110.0, "500x500 tiled rectangle (4x4 tile)" ],
+    'oddsrect1' => [ 2990000.0, "1x1 stippled rectangle (17x15 stipple)" ],
+    'oddsrect10' => [ 1490000.0, "10x10 stippled rectangle (17x15 stipple)" ],
+    'oddsrect100' => [ 55600.0, "100x100 stippled rectangle (17x15 stipple)" ],
+    'oddsrect500' => [ 2360.0, "500x500 stippled rectangle (17x15 stipple)" ],
+    'oddosrect1' => [ 2990000.0, "1x1 opaque stippled rectangle (17x15 stipple)" ],
+    'oddosrect10' => [ 1430000.0, "10x10 opaque stippled rectangle (17x15 stipple)" ],
+    'oddosrect100' => [ 54500.0, "100x100 opaque stippled rectangle (17x15 stipple)" ],
+    'oddosrect500' => [ 2320.0, "500x500 opaque stippled rectangle (17x15 stipple)" ],
+    'oddtilerect1' => [ 2990000.0, "1x1 tiled rectangle (17x15 tile)" ],
+    'oddtilerect10' => [ 1430000.0, "10x10 tiled rectangle (17x15 tile)" ],
+    'oddtilerect100' => [ 54500.0, "100x100 tiled rectangle (17x15 tile)" ],
+    'oddtilerect500' => [ 2320.0, "500x500 tiled rectangle (17x15 tile)" ],
+    'bigsrect1' => [ 4300000.0, "1x1 stippled rectangle (161x145 stipple)" ],
+    'bigsrect10' => [ 705000.0, "10x10 stippled rectangle (161x145 stipple)" ],
+    'bigsrect100' => [ 12300.0, "100x100 stippled rectangle (161x145 stipple)" ],
+    'bigsrect500' => [ 524.0, "500x500 stippled rectangle (161x145 stipple)" ],
+    'bigosrect1' => [ 3980000.0, "1x1 opaque stippled rectangle (161x145 stipple)" ],
+    'bigosrect10' => [ 644000.0, "10x10 opaque stippled rectangle (161x145 stipple)" ],
+    'bigosrect100' => [ 12800.0, "100x100 opaque stippled rectangle (161x145 stipple)" ],
+    'bigosrect500' => [ 584.0, "500x500 opaque stippled rectangle (161x145 stipple)" ],
+    'bigtilerect1' => [ 5970000.0, "1x1 tiled rectangle (161x145 tile)" ],
+    'bigtilerect10' => [ 684000.0, "10x10 tiled rectangle (161x145 tile)" ],
+    'bigtilerect100' => [ 16200.0, "100x100 tiled rectangle (161x145 tile)" ],
+    'bigtilerect500' => [ 872.0, "500x500 tiled rectangle (161x145 tile)" ],
+    'eschertilerect1' => [ 5940000.0, "1x1 tiled rectangle (216x208 tile)" ],
+    'eschertilerect10' => [ 639000.0, "10x10 tiled rectangle (216x208 tile)" ],
+    'eschertilerect100' => [ 18000.0, "100x100 tiled rectangle (216x208 tile)" ],
+    'eschertilerect500' => [ 922.0, "500x500 tiled rectangle (216x208 tile)" ],
+    'seg1' => [ 28800000.0, "1-pixel line segment" ],
+    'seg10' => [ 4460000.0, "10-pixel line segment" ],
+    'seg100' => [ 470000.0, "100-pixel line segment" ],
+    'seg500' => [ 94600.0, "500-pixel line segment" ],
+    'seg100c1' => [ 449000.0, "100-pixel line segment (1 kid)" ],
+    'seg100c2' => [ 432000.0, "100-pixel line segment (2 kids)" ],
+    'seg100c3' => [ 421000.0, "100-pixel line segment (3 kids)" ],
+    'dseg10' => [ 3720000.0, "10-pixel dashed segment" ],
+    'dseg100' => [ 687000.0, "100-pixel dashed segment" ],
+    'ddseg100' => [ 454000.0, "100-pixel double-dashed segment" ],
+    'hseg10' => [ 7020000.0, "10-pixel horizontal line segment" ],
+    'hseg100' => [ 2170000.0, "100-pixel horizontal line segment" ],
+    'hseg500' => [ 456000.0, "500-pixel horizontal line segment" ],
+    'vseg10' => [ 3990000.0, "10-pixel vertical line segment" ],
+    'vseg100' => [ 411000.0, "100-pixel vertical line segment" ],
+    'vseg500' => [ 82400.0, "500-pixel vertical line segment" ],
+    'whseg10' => [ 2880000.0, "10x1 wide horizontal line segment" ],
+    'whseg100' => [ 616000.0, "100x10 wide horizontal line segment" ],
+    'whseg500' => [ 33300.0, "500x50 wide horizontal line segment" ],
+    'wvseg10' => [ 2890000.0, "10x1 wide vertical line segment" ],
+    'wvseg100' => [ 584000.0, "100x10 wide vertical line segment" ],
+    'wvseg500' => [ 31700.0, "500x50 wide vertical line segment" ],
+    'line1' => [ 28300000.0, "1-pixel line" ],
+    'line10' => [ 4470000.0, "10-pixel line" ],
+    'line100' => [ 472000.0, "100-pixel line" ],
+    'line500' => [ 94200.0, "500-pixel line" ],
+    'dline10' => [ 3640000.0, "10-pixel dashed line" ],
+    'dline100' => [ 673000.0, "100-pixel dashed line" ],
+    'ddline100' => [ 453000.0, "100-pixel double-dashed line" ],
+    'wline10' => [ 908000.0, "10x1 wide line" ],
+    'wline100' => [ 146000.0, "100x10 wide line" ],
+    'wline500' => [ 30600.0, "500x50 wide line" ],
+    'wdline100' => [ 69900.0, "100x10 wide dashed line" ],
+    'wddline100' => [ 60600.0, "100x10 wide double-dashed line" ],
+    'orect10' => [ 5100000.0, "10x10 rectangle outline" ],
+    'orect100' => [ 709000.0, "100x100 rectangle outline" ],
+    'orect500' => [ 146000.0, "500x500 rectangle outline" ],
+    'worect10' => [ 4530000.0, "10x10 wide rectangle outline" ],
+    'worect100' => [ 204000.0, "100x100 wide rectangle outline" ],
+    'worect500' => [ 9790.0, "500x500 wide rectangle outline" ],
+    'circle1' => [ 5160000.0, "1-pixel circle" ],
+    'circle10' => [ 1160000.0, "10-pixel circle" ],
+    'circle100' => [ 141000.0, "100-pixel circle" ],
+    'circle500' => [ 28900.0, "500-pixel circle" ],
+    'dcircle100' => [ 98400.0, "100-pixel dashed circle" ],
+    'ddcircle100' => [ 75000.0, "100-pixel double-dashed circle" ],
+    'wcircle10' => [ 780000.0, "10-pixel wide circle" ],
+    'wcircle100' => [ 90900.0, "100-pixel wide circle" ],
+    'wcircle500' => [ 11300.0, "500-pixel wide circle" ],
+    'wdcircle100' => [ 8100.0, "100-pixel wide dashed circle" ],
+    'wddcircle100' => [ 8300.0, "100-pixel wide double-dashed circle" ],
+    'pcircle10' => [ 1270000.0, "10-pixel partial circle" ],
+    'pcircle100' => [ 212000.0, "100-pixel partial circle" ],
+    'wpcircle10' => [ 104000.0, "10-pixel wide partial circle" ],
+    'wpcircle100' => [ 39000.0, "100-pixel wide partial circle" ],
+    'fcircle1' => [ 61300000.0, "1-pixel solid circle" ],
+    'fcircle10' => [ 1720000.0, "10-pixel solid circle" ],
+    'fcircle100' => [ 120000.0, "100-pixel solid circle" ],
+    'fcircle500' => [ 5170.0, "500-pixel solid circle" ],
+    'fcpcircle10' => [ 981000.0, "10-pixel fill chord partial circle" ],
+    'fcpcircle100' => [ 205000.0, "100-pixel fill chord partial circle" ],
+    'fspcircle10' => [ 876000.0, "10-pixel fill slice partial circle" ],
+    'fspcircle100' => [ 187000.0, "100-pixel fill slice partial circle" ],
+    'ellipse10' => [ 1410000.0, "10-pixel ellipse" ],
+    'ellipse100' => [ 172000.0, "100-pixel ellipse" ],
+    'ellipse500' => [ 35100.0, "500-pixel ellipse" ],
+    'dellipse100' => [ 114000.0, "100-pixel dashed ellipse" ],
+    'ddellipse100' => [ 88900.0, "100-pixel double-dashed ellipse" ],
+    'wellipse10' => [ 889000.0, "10-pixel wide ellipse" ],
+    'wellipse100' => [ 124000.0, "100-pixel wide ellipse" ],
+    'wellipse500' => [ 15600.0, "500-pixel wide ellipse" ],
+    'wdellipse100' => [ 7730.0, "100-pixel wide dashed ellipse" ],
+    'wddellipse100' => [ 6680.0, "100-pixel wide double-dashed ellipse" ],
+    'pellipse10' => [ 1350000.0, "10-pixel partial ellipse" ],
+    'pellipse100' => [ 260000.0, "100-pixel partial ellipse" ],
+    'wpellipse10' => [ 97900.0, "10-pixel wide partial ellipse" ],
+    'wpellipse100' => [ 16800.0, "100-pixel wide partial ellipse" ],
+    'fellipse10' => [ 2110000.0, "10-pixel filled ellipse" ],
+    'fellipse100' => [ 212000.0, "100-pixel filled ellipse" ],
+    'fellipse500' => [ 11000.0, "500-pixel filled ellipse" ],
+    'fcpellipse10' => [ 1060000.0, "10-pixel fill chord partial ellipse" ],
+    'fcpellipse100' => [ 296000.0, "100-pixel fill chord partial ellipse" ],
+    'fspellipse10' => [ 945000.0, "10-pixel fill slice partial ellipse" ],
+    'fspellipse100' => [ 269000.0, "100-pixel fill slice partial ellipse" ],
+    'triangle1' => [ 2460000.0, "Fill 1x1 equivalent triangle" ],
+    'triangle10' => [ 969000.0, "Fill 10x10 equivalent triangle" ],
+    'triangle100' => [ 97000.0, "Fill 100x100 equivalent triangle" ],
+    'trap1' => [ 2630000.0, "Fill 1x1 trapezoid" ],
+    'trap10' => [ 1260000.0, "Fill 10x10 trapezoid" ],
+    'trap100' => [ 106000.0, "Fill 100x100 trapezoid" ],
+    'trap300' => [ 11600.0, "Fill 300x300 trapezoid" ],
+    'strap1' => [ 2010000.0, "Fill 1x1 stippled trapezoid (8x8 stipple)" ],
+    'strap10' => [ 910000.0, "Fill 10x10 stippled trapezoid (8x8 stipple)" ],
+    'strap100' => [ 104000.0, "Fill 100x100 stippled trapezoid (8x8 stipple)" ],
+    'strap300' => [ 11700.0, "Fill 300x300 stippled trapezoid (8x8 stipple)" ],
+    'ostrap1' => [ 2000000.0, "Fill 1x1 opaque stippled trapezoid (8x8 stipple)" ],
+    'ostrap10' => [ 907000.0, "Fill 10x10 opaque stippled trapezoid (8x8 stipple)" ],
+    'ostrap100' => [ 104000.0, "Fill 100x100 opaque stippled trapezoid (8x8 stipple)" ],
+    'ostrap300' => [ 11600.0, "Fill 300x300 opaque stippled trapezoid (8x8 stipple)" ],
+    'tiletrap1' => [ 1430000.0, "Fill 1x1 tiled trapezoid (4x4 tile)" ],
+    'tiletrap10' => [ 778000.0, "Fill 10x10 tiled trapezoid (4x4 tile)" ],
+    'tiletrap100' => [ 104000.0, "Fill 100x100 tiled trapezoid (4x4 tile)" ],
+    'tiletrap300' => [ 11600.0, "Fill 300x300 tiled trapezoid (4x4 tile)" ],
+    'oddstrap1' => [ 1700000.0, "Fill 1x1 stippled trapezoid (17x15 stipple)" ],
+    'oddstrap10' => [ 296000.0, "Fill 10x10 stippled trapezoid (17x15 stipple)" ],
+    'oddstrap100' => [ 18600.0, "Fill 100x100 stippled trapezoid (17x15 stipple)" ],
+    'oddstrap300' => [ 2090.0, "Fill 300x300 stippled trapezoid (17x15 stipple)" ],
+    'oddostrap1' => [ 1830000.0, "Fill 1x1 opaque stippled trapezoid (17x15 stipple)" ],
+    'oddostrap10' => [ 296000.0, "Fill 10x10 opaque stippled trapezoid (17x15 stipple)" ],
+    'oddostrap100' => [ 18400.0, "Fill 100x100 opaque stippled trapezoid (17x15 stipple)" ],
+    'oddostrap300' => [ 2080.0, "Fill 300x300 opaque stippled trapezoid (17x15 stipple)" ],
+    'oddtiletrap1' => [ 1710000.0, "Fill 1x1 tiled trapezoid (17x15 tile)" ],
+    'oddtiletrap10' => [ 296000.0, "Fill 10x10 tiled trapezoid (17x15 tile)" ],
+    'oddtiletrap100' => [ 18400.0, "Fill 100x100 tiled trapezoid (17x15 tile)" ],
+    'oddtiletrap300' => [ 2080.0, "Fill 300x300 tiled trapezoid (17x15 tile)" ],
+    'bigstrap1' => [ 1510000.0, "Fill 1x1 stippled trapezoid (161x145 stipple)" ],
+    'bigstrap10' => [ 235000.0, "Fill 10x10 stippled trapezoid (161x145 stipple)" ],
+    'bigstrap100' => [ 9110.0, "Fill 100x100 stippled trapezoid (161x145 stipple)" ],
+    'bigstrap300' => [ 1260.0, "Fill 300x300 stippled trapezoid (161x145 stipple)" ],
+    'bigostrap1' => [ 1480000.0, "Fill 1x1 opaque stippled trapezoid (161x145 stipple)" ],
+    'bigostrap10' => [ 213000.0, "Fill 10x10 opaque stippled trapezoid (161x145 stipple)" ],
+    'bigostrap100' => [ 8830.0, "Fill 100x100 opaque stippled trapezoid (161x145 stipple)" ],
+    'bigostrap300' => [ 1420.0, "Fill 300x300 opaque stippled trapezoid (161x145 stipple)" ],
+    'bigtiletrap1' => [ 1630000.0, "Fill 1x1 tiled trapezoid (161x145 tile)" ],
+    'bigtiletrap10' => [ 272000.0, "Fill 10x10 tiled trapezoid (161x145 tile)" ],
+    'bigtiletrap100' => [ 12900.0, "Fill 100x100 tiled trapezoid (161x145 tile)" ],
+    'bigtiletrap300' => [ 2350.0, "Fill 300x300 tiled trapezoid (161x145 tile)" ],
+    'eschertiletrap1' => [ 1650000.0, "Fill 1x1 tiled trapezoid (216x208 tile)" ],
+    'eschertiletrap10' => [ 273000.0, "Fill 10x10 tiled trapezoid (216x208 tile)" ],
+    'eschertiletrap100' => [ 13400.0, "Fill 100x100 tiled trapezoid (216x208 tile)" ],
+    'eschertiletrap300' => [ 2450.0, "Fill 300x300 tiled trapezoid (216x208 tile)" ],
+    'aatrap1' => [ 260000.0, "Fill 1x1 aa trap" ],
+    'aatrap10' => [ 23500.0, "Fill 10x10 aa trap" ],
+    'aatrap100' => [ 13300.0, "Fill 100x100 aa trap" ],
+    'aatrap300' => [ 4450.0, "Fill 300x300 aa trap" ],
+    'aa4trap1' => [ 2150.0, "Fill 1x1 aa trap with 4 bit alpha" ],
+    'aa4trap10' => [ 2130.0, "Fill 10x10 aa trap with 4 bit alpha" ],
+    'aa4trap100' => [ 1890.0, "Fill 100x100 aa trap with 4 bit alpha" ],
+    'aa4trap300' => [ 1460.0, "Fill 300x300 aa trap with 4 bit alpha" ],
+    'aa1trap1' => [ 2200000.0, "Fill 1x1 aa trap with 1 bit alpha" ],
+    'aa1trap10' => [ 357000.0, "Fill 10x10 aa trap with 1 bit alpha" ],
+    'aa1trap100' => [ 167000.0, "Fill 100x100 aa trap with 1 bit alpha" ],
+    'aa1trap300' => [ 67000.0, "Fill 300x300 aa trap with 1 bit alpha" ],
+    'aatrap2x1' => [ 368000.0, "Fill 2x1 aa trap" ],
+    'aatrap2x10' => [ 25700.0, "Fill 2x10 aa trap" ],
+    'aatrap2x100' => [ 12400.0, "Fill 2x100 aa trap" ],
+    'aatrap2x300' => [ 5710.0, "Fill 2x300 aa trap" ],
+    'aatrapezoid1' => [ 372000.0, "Fill 1x1 aa trapezoid" ],
+    'aatrapezoid10' => [ 137000.0, "Fill 10x10 aa trapezoid" ],
+    'aatrapezoid100' => [ 9590.0, "Fill 100x100 aa trapezoid" ],
+    'aatrapezoid300' => [ 1420.0, "Fill 300x300 aa trapezoid" ],
+    'addaatrapezoid1' => [ 433000.0, "Fill 1x1 aa pre-added trapezoid" ],
+    'addaatrapezoid10' => [ 24100.0, "Fill 10x10 aa pre-added trapezoid" ],
+    'addaatrapezoid100' => [ 13300.0, "Fill 100x100 aa pre-added trapezoid" ],
+    'addaatrapezoid300' => [ 4460.0, "Fill 300x300 aa pre-added trapezoid" ],
+    'complex10' => [ 655000.0, "Fill 10x10 equivalent complex polygon" ],
+    'complex100' => [ 87000.0, "Fill 100x100 equivalent complex polygons" ],
+    '64poly10convex' => [ 481000.0, "Fill 10x10 64-gon (Convex)" ],
+    '64poly100convex' => [ 105000.0, "Fill 100x100 64-gon (Convex)" ],
+    '64poly10complex' => [ 353000.0, "Fill 10x10 64-gon (Complex)" ],
+    '64poly100complex' => [ 105000.0, "Fill 100x100 64-gon (Complex)" ],
+    'ftext' => [ 2200000.0, "Char in 80-char line (6x13)" ],
+    'f8text' => [ 1970000.0, "Char in 70-char line (8x13)" ],
+    'f9text' => [ 1690000.0, "Char in 60-char line (9x15)" ],
+    'f14text16' => [ 679000.0, "Char16 in 40-char line (k14)" ],
+    'f24text16' => [ 272000.0, "Char16 in 23-char line (k24)" ],
+    'tr10text' => [ 2520000.0, "Char in 80-char line (TR 10)" ],
+    'tr24text' => [ 940000.0, "Char in 30-char line (TR 24)" ],
+    'polytext' => [ 2230000.0, "Char in 20/40/20 line (6x13, TR 10)" ],
+    'polytext16' => [ 369000.0, "Char16 in 7/14/7 line (k14, k24)" ],
+    'fitext' => [ 1350000.0, "Char in 80-char image line (6x13)" ],
+    'f8itext' => [ 1130000.0, "Char in 70-char image line (8x13)" ],
+    'f9itext' => [ 902000.0, "Char in 60-char image line (9x15)" ],
+    'f14itext16' => [ 449000.0, "Char16 in 40-char image line (k14)" ],
+    'f24itext16' => [ 169000.0, "Char16 in 23-char image line (k24)" ],
+    'tr10itext' => [ 1590000.0, "Char in 80-char image line (TR 10)" ],
+    'tr24itext' => [ 435000.0, "Char in 30-char image line (TR 24)" ],
+    'aa10text' => [ 53200.0, "Char in 80-char aa line (Charter 10)" ],
+    'aa24text' => [ 13300.0, "Char in 30-char aa line (Charter 24)" ],
+    'aaftext' => [ 45200.0, "Char in 80-char aa line (Courier 12)" ],
+    'a10text' => [ 53100.0, "Char in 80-char a line (Charter 10)" ],
+    'a24text' => [ 13300.0, "Char in 30-char a line (Charter 24)" ],
+    'aftext' => [ 45200.0, "Char in 80-char a line (Courier 12)" ],
+    'rgb10text' => [ 49400.0, "Char in 80-char rgb line (Charter 10)" ],
+    'rgb24text' => [ 10200.0, "Char in 30-char rgb line (Charter 24)" ],
+    'rgbftext' => [ 42200.0, "Char in 80-char rgb line (Courier 12)" ],
+    'caa10text' => [ 15300.0, "Char in 80-char aa core line (Charter 10)" ],
+    'caa24text' => [ 2540.0, "Char in 30-char aa core line (Charter 24)" ],
+    'caaftext' => [ 10900.0, "Char in 80-char aa core line (Courier 12)" ],
+    'ca10text' => [ 15300.0, "Char in 80-char a core line (Charter 10)" ],
+    'ca24text' => [ 2540.0, "Char in 30-char a core line (Charter 24)" ],
+    'caftext' => [ 10900.0, "Char in 80-char a core line (Courier 12)" ],
+    'rgb10text' => [ 15000.0, "Char in 80-char rgb core line (Charter 10)" ],
+    'rgb24text' => [ 2510.0, "Char in 30-char rgb core line (Charter 24)" ],
+    'rgbftext' => [ 10700.0, "Char in 80-char rgb core line (Courier 12)" ],
+    'scroll10' => [ 1310000.0, "Scroll 10x10 pixels" ],
+    'scroll100' => [ 52000.0, "Scroll 100x100 pixels" ],
+    'scroll500' => [ 2190.0, "Scroll 500x500 pixels" ],
+    'copywinwin10' => [ 1030000.0, "Copy 10x10 from window to window" ],
+    'copywinwin100' => [ 52200.0, "Copy 100x100 from window to window" ],
+    'copywinwin500' => [ 2080.0, "Copy 500x500 from window to window" ],
+    'copypixwin10' => [ 502000.0, "Copy 10x10 from pixmap to window" ],
+    'copypixwin100' => [ 20300.0, "Copy 100x100 from pixmap to window" ],
+    'copypixwin500' => [ 1020.0, "Copy 500x500 from pixmap to window" ],
+    'copywinpix10' => [ 7730.0, "Copy 10x10 from window to pixmap" ],
+    'copywinpix100' => [ 127.0, "Copy 100x100 from window to pixmap" ],
+    'copywinpix500' => [ 5.0, "Copy 500x500 from window to pixmap" ],
+    'copypixpix10' => [ 1260000.0, "Copy 10x10 from pixmap to pixmap" ],
+    'copypixpix100' => [ 56300.0, "Copy 100x100 from pixmap to pixmap" ],
+    'copypixpix500' => [ 2470.0, "Copy 500x500 from pixmap to pixmap" ],
+    'copyplane10' => [ 466000.0, "Copy 10x10 1-bit deep plane" ],
+    'copyplane100' => [ 13700.0, "Copy 100x100 1-bit deep plane" ],
+    'copyplane500' => [ 671.0, "Copy 500x500 1-bit deep plane" ],
+    'deepcopyplane10' => [ 151000.0, "Copy 10x10 n-bit deep plane" ],
+    'deepcopyplane100' => [ 6090.0, "Copy 100x100 n-bit deep plane" ],
+    'deepcopyplane500' => [ 278.0, "Copy 500x500 n-bit deep plane" ],
+    'putimage10' => [ 434000.0, "PutImage 10x10 square" ],
+    'putimage100' => [ 13600.0, "PutImage 100x100 square" ],
+    'putimage500' => [ 713.0, "PutImage 500x500 square" ],
+    'putimagexy10' => [ 321.0, "PutImage XY 10x10 square" ],
+    'putimagexy100' => [ 3.2, "PutImage XY 100x100 square" ],
+    'putimagexy500' => [ 0.1, "PutImage XY 500x500 square" ],
+    'shmput10' => [ 465000.0, "ShmPutImage 10x10 square" ],
+    'shmput100' => [ 20200.0, "ShmPutImage 100x100 square" ],
+    'shmput500' => [ 1020.0, "ShmPutImage 500x500 square" ],
+    'shmputxy10' => [ 31400.0, "ShmPutImage XY 10x10 square" ],
+    'shmputxy100' => [ 458.0, "ShmPutImage XY 100x100 square" ],
+    'shmputxy500' => [ 19.0, "ShmPutImage XY 500x500 square" ],
+    'getimage10' => [ 6650.0, "GetImage 10x10 square" ],
+    'getimage100' => [ 77.0, "GetImage 100x100 square" ],
+    'getimage500' => [ 3.1, "GetImage 500x500 square" ],
+    'getimagexy10' => [ 320.0, "GetImage XY 10x10 square" ],
+    'getimagexy100' => [ 3.2, "GetImage XY 100x100 square" ],
+    'getimagexy500' => [ 0.1, "GetImage XY 500x500 square" ],
+    'noop' => [ 8760000.0, "X protocol NoOperation" ],
+    'pointer' => [ 54800.0, "QueryPointer" ],
+    'prop' => [ 50900.0, "GetProperty" ],
+    'gc' => [ 1190000.0, "Change graphics context" ],
+    'create' => [ 597000.0, "Create and map subwindows (25 kids)" ],
+    'ucreate' => [ 1100000.0, "Create unmapped window (25 kids)" ],
+    'map' => [ 1350000.0, "Map window via parent (25 kids)" ],
+    'unmap' => [ 3360000.0, "Unmap window via parent (25 kids)" ],
+    'destroy' => [ 1190000.0, "Destroy window via parent (25 kids)" ],
+    'popup' => [ 660000.0, "Hide/expose window via popup (25 kids)" ],
+    'move' => [ 120000.0, "Move window (25 kids)" ],
+    'umove' => [ 1990000.0, "Moved unmapped window (25 kids)" ],
+    'movetree' => [ 877000.0, "Move window via parent (25 kids)" ],
+    'resize' => [ 136000.0, "Resize window (25 kids)" ],
+    'uresize' => [ 1870000.0, "Resize unmapped window (25 kids)" ],
+    'circulate' => [ 56300.0, "Circulate window (25 kids)" ],
+    'ucirculate' => [ 3630000.0, "Circulate Unmapped window (25 kids)" ],
+};
+
+
+# This array defines named groups of tests.  This is designed to allow
+# for simpler runs of related tests.
+#
+# Note that this array does *not* include all the x11perf tests.  The idea
+# here is to run a representative sampling of the available tests, to get
+# a general idea of a system's performance, without taking forever to
+# do it.  If you want to do detailed analysis of an X server or graphics
+# chip, then use x11perf directly.
+my $testGroups = {
+    'rects' => [ "rect10", "rect100", "oddtilerect10", "eschertilerect100" ],
+    'lines' => [ "seg100c3", "wvseg100", "ddline100", "worect500" ],
+    'circle' => [ "circle500", "wddcircle100", "wpcircle100", "fspcircle100" ],
+    'ellipse' => [ "ddellipse100", "wddellipse100", "pellipse10", "fspellipse100" ],
+    'shapes' => [ "triangle10", "trap300", "oddostrap300", "eschertiletrap300" ],
+    'aashapes' => [ "aa4trap300", "aa1trap10", "aatrap2x300", "addaatrapezoid300" ],
+    'polys' => [ "complex10", "64poly100convex", "64poly10complex", "64poly100complex" ],
+    'text' => [ "polytext16", "rgb24text", "caa10text", "ca24text" ],
+    'blit' => [ "scroll100", "copypixwin10", "deepcopyplane10", "putimagexy500" ],
+    'window' => [ "popup", "move", "movetree", "resize" ],
+};
+
+
+############################################################################
+# CODE
+############################################################################
+
+# Exec the given command, and catch its standard output.
+# We return an array containing the PID and the filehandle on the
+# process' standard output.  It's up to the caller to wait for the command
+# to terminate.
+sub command {
+    my ( $cmd ) = @_;
+
+    my $pid = open(my $childFd, "-|");
+    if (!defined($pid)) {
+        die("Run: fork() failed (undef)\n");
+    } elsif ($pid == 0) {
+        exec($cmd);
+        die("Run: exec() failed (returned)\n");
+    }
+
+    return ( $pid, $childFd );
+}
+
+
+# Get data from running a system command.  Used for things like getting
+# the host OS from `uname -o` etc.
+#
+# Ignores initial blank lines from the command and returns the first
+# non-blank line, with white space trimmed off.
+sub runTest {
+    my ( $test, $reps, $time ) = @_;
+
+    my $tdata = $testData->{$test};
+    if (!defined($tdata)) {
+        printf STDERR "gfx-x11: No such test: %s\n", $test;
+        exit(9);
+    }
+
+    my $cmd = sprintf "x11perf -repeat %d -subs 25 -time %d -%s",
+                      $reps, $time, $test;
+    my ( $pid, $fd ) = command($cmd);
+    my $average = 0;
+    while (<$fd>) {
+        chomp;
+
+        # Display the output for logging.
+        printf "%s\n", $_;
+
+        # Save the score.
+        my ( $reps, $per, $rate ) =
+            ( m:([0-9]+)\s+trep\s+@\s+([0-9.]+)\s+msec\s+\(\s*([0-9.]+)/sec\): );
+        $average = $rate if (defined($rate));
+    }
+
+    # Close the command and wait for it to die.  Bomb out if it failed.
+    # close($fd);
+    my $p = waitpid($pid, 0);
+    my $status = $?;
+    exit($status) if ($status != 0);
+
+    # Calculate and return the weighted result.
+    my $score = $average / $tdata->[0] * 1000.0;
+    printf "Test %s: %d --> %.1f\n", $test, $average, $score;
+    return $score;
+}
+
+
+sub runGroup {
+    my ( $group, $reps, $time ) = @_;
+
+    my $gdata = $testGroups->{$group};
+    if (!defined($gdata)) {
+        printf STDERR "gfx-x11: No such test group: %s\n", $group;
+        exit(9);
+    }
+
+    my $count = 0;
+    my $total = 0;
+    foreach my $test (@$gdata) {
+        $total += runTest($test, $reps, $time);
+        ++$count;
+    }
+    $total /= $count;
+
+    $total;
+}
+
+
+############################################################################
+# MAIN
+############################################################################
+
+sub main {
+    my @args = @_;
+
+    if (scalar(@args) < 3) {
+        printf STDERR "Usage: gfx-x11 group reps time\n";
+        exit(9);
+    }
+
+    my $reps = $args[1];
+    my $time = $args[2];
+
+    my $score = runGroup($args[0], $reps, $time);
+    printf STDERR "COUNT|%.1f|0|score\n", $score;
+
+    return 0;
+}
+
+
+exit(main(@ARGV));
+

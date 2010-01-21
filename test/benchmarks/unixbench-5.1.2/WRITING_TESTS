@@ -1,0 +1,133 @@
+Writing a Test
+==============
+
+Writing a test program is pretty easy.  Basically, a test is configured via
+a monster array in the Run script, which specifics (among other things) the
+program to execute and the parameters to pass it.
+
+The test itself is simply a program which is given the optional parameters
+on the command line, and produces logging data on stdout and its results on
+stderr.
+
+
+============================================================================
+
+Test Configuration
+==================
+
+In Run, all tests are named in the "$testList" array.  This names the
+individual tests, and also sets up aliases for groups of tests, eg. "index".
+
+The test specifications are in the "$testParams" array.  This contains the
+details of each individual test as a hash.  The fields in the hash are:
+
+ * "logmsg": the full name to display for this test.
+ * "cat": the category this test belongs to; must be configured
+   in $testCats.
+ * "prog": the name of the program to execute; defaults to the name of
+   the benchmark.
+ * "repeat": number of passes to run; either 'short' (the default),
+   'long', or 'single'.   For 'short' and 'long', the actual numbers of
+   passes are given by $shortIterCount and $longIterCount, which are
+   configured at the top of the script or by the "-i" flag.  'single'
+   means just run one pass; this should be used for test which do their
+   own multi-pass handling internally.
+ * "stdout": non-0 to add the test's stdout to the log file; defaults to 1.
+   Set to 0 for tests that are too wordy.
+ * "stdin": name of a file to send to the program's stdin; default null.
+ * "options": options to be put on the program's command line; default null.
+
+
+============================================================================
+
+Output Format
+=============
+
+The results on stderr take the form of a line header and fields, separated
+by "|" characters.  A result line can be one of:
+
+    COUNT|score|timebase|label
+    TIME|seconds
+    ERROR|message
+
+Any other text on stderr is treated as if it were:
+
+    ERROR|text
+
+Any output to stdout is placed in a log file, and can be used for debugging.
+
+COUNT
+-----
+
+The COUNT line is the line used to report a test score.
+
+ * "score" is the result, typically the number of loops performed during
+   the run
+ * "timebase" is the time base used for the final report to the user.  A
+   value of 1 reports the score as is; a value of 60, for example, divides
+   the time taken by 60 to get loops per minute.  Atimebase of zero indicates
+   that the score is already a rate, ie. a count of things per second.
+ * "label" is the label to use for the score; like "lps" (loops per
+   second), etc.
+
+TIME
+----
+
+The TIME line is optionally used to report the time taken.  The Run script
+normally measures this, but if your test has signifant overhead outside the
+actual test loop, you should use TIME to report the time taken for the actual
+test.  The argument is the time in seconds in floating-point.
+
+ERROR
+-----
+
+The argument is an error message; this will abort the benchmarking run and
+display the message.
+
+Any output to stderr which is not a formatted line will be treated as an
+error message, so use of ERROR is optional.
+
+
+============================================================================
+
+Test Examples
+=============
+
+Iteration Count
+---------------
+
+The simplest thing is to count the number of loops executed in a given time;
+see eg. arith.c.  The utlilty functions in timeit.c can be used to implement
+the fixed time interval, which is generally passed in on the command line.
+
+The result is reported simply as the number of iterations completed:
+
+        fprintf(stderr,"COUNT|%lu|1|lps\n", iterations);
+
+The bnenchmark framework will measure the time taken itself.  If the test
+code has significant overhead (eg. a "pump-priming" pass), then you should
+explicitly report the time taken for the test by adding a line like this:
+
+        fprintf(stderr, "TIME|%.1f\n", seconds);
+
+If you want results reported as loops per minute, then set timebase to 60:
+
+        fprintf(stderr,"COUNT|%lu|60|lpm\n", iterations);
+
+Note that this only affects the final report; all times passed to or
+from the test are still in seconds.
+
+Rate
+----
+
+The other technique is to calculate the rate (things per second) in the test,
+and report that directly.  To do this, just set timebase to 0:
+
+        fprintf(stderr, "COUNT|%ld|0|KBps\n", kbytes_per_sec);
+
+Again, you can use TIME to explicitly report the time taken:
+
+        fprintf(stderr, "TIME|%.1f\n", end - start);
+
+but this isn't so important since you've already calculated the rate.
+

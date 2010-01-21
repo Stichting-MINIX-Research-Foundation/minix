@@ -1,0 +1,406 @@
+Version 5.1.2 -- 2007-12-26
+
+================================================================
+To use Unixbench:
+
+1. UnixBench from version 5.1 on has both system and graphics tests.
+   If you want to use the graphic tests, edit the Makefile and make sure
+   that the line "GRAPHIC_TESTS = defined" is not commented out; then check
+   that the "GL_LIBS" definition is OK for your system.  Also make sure
+   that the "x11perf" command is on your search path.
+
+   If you don't want the graphics tests, then comment out the
+   "GRAPHIC_TESTS = defined" line.  Note: comment it out, don't
+   set it to anything.
+
+2. Do "make".
+
+3. Do "Run" to run the system test; "Run graphics" to run the graphics
+   tests; "Run gindex" to run both.
+
+You will need perl, as Run is written in perl.
+
+For more information on using the tests, read "USAGE".
+
+For information on adding tests into the benchmark, see "WRITING_TESTS".
+
+
+===================== RELEASE NOTES =====================================
+
+========================  Dec 07 ==========================
+
+v5.1.2
+
+One big fix: if unixbench is installed in a directory whose pathname contains
+a space, it should now run (previously it failed).
+
+To avoid possible clashes, the environment variables unixbench uses are now
+prefixed with "UB_".  These are all optional, and for most people will be
+completely unnecessary, but if you want you can set these:
+
+    UB_BINDIR      Directory where the test programs live.
+    UB_TMPDIR      Temp directory, for temp files.
+    UB_RESULTDIR   Directory to put results in.
+    UB_TESTDIR     Directory where the tests are executed.
+
+And a couple of tiny fixes:
+* In pgms/tst.sh, changed "sort -n +1" to "sort -n -k 1"
+* In Makefile, made it clearer that GRAPHIC_TESTS should be commented
+  out (not set to 0) to disable graphics
+Thanks to nordi for pointing these out.
+
+
+Ian Smith, December 26, 2007
+johantheghost at yahoo period com
+
+
+========================  Oct 07 ==========================
+
+v5.1.1
+
+It turns out that the setting of LANG is crucial to the results.  This
+explains why people in different regions were seeing odd results, and also
+why runlevel 1 produced odd results -- runlevel 1 doesn't set LANG, and
+hence reverts to ASCII, whereas most people use a UTF-8 encoding, which is
+much slower in some tests (eg. shell tests).
+
+So now we manually set LANG to "en_US.utf8", which is configured with the
+variable "$language".  Don't change this if you want to share your results.
+We also report the language settings in use.
+
+See "The Language Setting" in USAGE for more info.  Thanks to nordi for
+pointing out the LANG issue.
+
+I also added the "grep" and "sysexec" tests.  These are non-index tests,
+and "grep" uses the system's grep, so it's not much use for comparing
+different systems.  But some folks on the OpenSuSE list have been finding
+these useful.  They aren't in any of the main test groups; do "Run grep
+sysexec" to run them.
+
+Index Changes
+-------------
+
+The setting of LANG will affect consistency with systems where this is
+not the default value.  However, it should produce more consistent results
+in future.
+
+
+Ian Smith, October 15, 2007
+johantheghost at yahoo period com
+
+
+========================  Oct 07 ==========================
+
+v5.1
+
+The major new feature in this version is the addition of graphical
+benchmarks.  Since these may not compile on all systems, you can enable/
+disable them with the GRAPHIC_TESTS variable in the Makefile.
+
+As before, each test is run for 3 or 10 iterations.  However, we now discard
+the worst 1/3 of the scores before averaging the remainder.  The logic is
+that a glitch in the system (background process waking up, for example) may
+make one or two runs go slow, so let's discard those.  Hopefully this will
+produce more consistent and repeatable results.  Check the log file
+for a test run to see the discarded scores.
+
+Made the tests compile and run on x86-64/Linux (fixed an execl bug passing
+int instead of pointer).
+
+Also fixed some general bugs.
+
+Thanks to Stefan Esser for help and testing / bug reporting.
+
+Index Changes
+-------------
+
+The tests are now divided into categories, and each category generates
+its own index.  This keeps the graphics test results separate from
+the system tests.
+
+The "graphics" test and corresponding index are new.
+
+The "discard the worst scores" strategy should produce slightly higher
+test scores, but at least they should (hopefully!) be more consistent.
+The scores should not be higher than the best scores you would have got
+with 5.0, so this should not be a huge consistency issue.
+
+Ian Smith, October 11, 2007
+johantheghost at yahoo period com
+
+
+========================  Sep 07 ==========================
+
+v5.0
+
+All the work I've done on this release is Linux-based, because that's
+the only Unix I have access to.  I've tried to make it more OS-agnostic
+if anything; for example, it no longer has to figure out the format reported
+by /usr/bin/time.  However, it's possible that portability has been damaged.
+If anyone wants to fix this, please feel free to mail me patches.
+
+In particular, the analysis of the system's CPUs is done via /proc/cpuinfo.
+For systems which don't have this, please make appropriate changes in
+getCpuInfo() and getSystemInfo().
+
+The big change has been to make the tests multi-CPU aware.  See the
+"Multiple CPUs" section in "USAGE" for details.  Other changes:
+
+* Completely rewrote Run in Perl; drastically simplified the way data is
+  processed.  The confusing system of interlocking shell and awk scripts is
+  now just one script.  Various intermediate files used to store and process
+  results are now replaced by Perl data structures internal to the script.
+
+* Removed from the index runs file system read and write tests which were
+  ignored for the index and wasted about 10 minutes per run (see fstime.c).
+  The read and write tests can now be selected individually.  Made fstime.c
+  take parameters, so we no longer need to build 3 versions of it.
+
+* Made the output file names unique; they are built from
+  hostname-date-sequence.
+
+* Worked on result reporting, error handling, and logging.  See TESTS.
+  We now generate both text and HTML reports.
+
+* Removed some obsolete files.
+
+Index Changes
+-------------
+
+The index is still based on David Niemi's SPARCstation 20-61 (rated at 10.0),
+and the intention in the changes I've made has been to keep the tests
+unchanged, in order to maintain consistency with old result sets.
+
+However, the following changes have been made to the index:
+
+* The Pipe-based Context Switching test (context1) was being dropped
+  from the index report in v4.1.0 due to a bug; I've put it back in.
+
+* I've added shell1 to the index, to get a measure of how the shell tests
+  scale with multiple CPUs (shell8 already exercises all the CPUs, even
+  in single-copy mode).  I made up the baseline score for this by
+  extrapolation.
+
+Both of these test can be dropped, if you wish, by editing the "TEST
+SPECIFICATIONS" section of Run.
+
+Ian Smith, September 20, 2007
+johantheghost at yahoo period com
+
+========================  Aug 97 ==========================
+
+v4.1.0
+
+Double precision Whetstone put in place instead of the old "double" benchmark.
+
+Removal of some obsolete files.
+
+"system" suite adds shell8.
+
+perlbench and poll added as "exhibition" (non-index) benchmarks.
+
+Incorporates several suggestions by Andre Derrick Balsa <andrewbalsa@usa.net>
+
+Code cleanups to reduce compiler warnings by David C Niemi <niemi@tux.org>
+and Andy Kahn <kahn@zk3.dec.com>; Digital Unix options by Andy Kahn.
+
+========================  Jun 97 ==========================
+
+v4.0.1
+
+Minor change to fstime.c to fix overflow problems on fast machines.  Counting
+is now done in units of 256 (smallest BUFSIZE) and unsigned longs are used,
+giving another 23 dB or so of headroom ;^)  Results should be virtually
+identical aside from very small rounding errors.
+
+========================  Dec 95 ==========================
+
+v4.0
+
+Byte no longer seems to have anything to do with this benchmark, and I was
+unable to reach any of the original authors; so I have taken it upon myself
+to clean it up.
+
+This is version 4.  Major assumptions made in these benchmarks have changed
+since they were written, but they are nonetheless popular (particularly for
+measuring hardware for Linux).  Some changes made:
+
+-	The biggest change is to put a lot more operating system-oriented
+	tests into the index.  I experimented for a while with a decibel-like
+	logarithmic scale, but finally settled on using a geometric mean for
+	the final index (the individual scores are a normalized, and their
+	logs are averaged; the resulting value is exponentiated).
+
+	"George", certain SPARCstation 20-61 with 128 MB RAM, a SPARC Storage
+	Array, and Solaris 2.3 is my new baseline; it is rated at 10.0 in each
+	of the index scores for a final score of 10.0.
+
+	Overall I find the geometric averaging is a big improvement for
+	avoiding the skew that was once possible (e.g. a Pentium-75 which got
+	40 on the buggy version of fstime, such that fstime accounted for over
+	half of its total score and hence wildly skewed its average).
+
+	I also expect that the new numbers look different enough from the old
+	ones that no one is too likely to casually mistake them for each other.
+
+	I am finding new SPARCs running Solaris 2.4 getting about 15-20, and
+	my 486 DX2-66 Compaq running Linux 1.3.45 got a 9.1.  It got
+	understandably poor scores on CPU and FPU benchmarks (a horrible
+	1.8 on "double" and 1.3 on "fsdisk"); but made up for it by averaging
+	over 20 on the OS-oriented benchmarks.  The Pentium-75 running
+	Linux gets about 20 (and it *still* runs Windows 3.1 slowly.  Oh well).
+
+-	It is difficult to get a modern compiler to even consider making
+	dhry2 without registers, short of turning off *all* optimizations.
+	This is also not a terribly meaningful test, even if it were possible,
+	as noone compiles without registers nowadays.  Replaced this benchmark
+	with dhry2reg in the index, and dropped it out of usage in general as
+	it is so hard to make a legitimate one.
+
+-	fstime: this had some bugs when compiled on modern systems which return
+	the number of bytes read/written for read(2)/write(2) calls.  The code
+	assumed that a negative return code was given for EOF, but most modern
+	systems return 0 (certainly on SunOS 4, Solaris2, and Linux, which is
+	what counts for me).  The old code yielded wildly inflated read scores,
+	would eat up tens of MB of disk space on fast systems, and yielded
+	roughly 50% lower than normal copy scores than it should have.
+
+	Also, it counted partial blocks *fully*; made it count the proportional
+	part of the block which was actually finished.
+
+	Made bigger and smaller variants of fstime which are designed to beat
+	up the disk I/O and the buffer cache, respectively.  Adjusted the
+	sleeps so that they are short for short benchmarks.
+
+-	Instead of 1,2,4, and 8-shell benchmarks, went to 1, 8, and 16 to
+	give a broader range of information (and to run 1 fewer test).
+	The only real problem with this is that not many iterations get
+	done with 16 at a time on slow systems, so there are some significant
+	rounding errors; 8 therefore still used for the benchmark.  There is
+	also the problem that the last (uncompleted) loop is counted as a full
+	loop, so it is impossible to score below 1.0 lpm (which gave my laptop
+	a break).  Probably redesigning Shell to do each loop a bit more
+	quickly (but with less intensity) would be a good idea.
+
+	This benchmark appears to be very heavily influenced by the speed
+	of the loader, by which shell is being used as /bin/sh, and by how
+	well-compiled some of the common shell utilities like grep, sed, and
+	sort are.  With a consistent tool set it is also a good indicator of
+	the bandwidth between main memory and the CPU (e.g. Pentia score about
+	twice as high as 486es due to their 64-bit bus).  Small, sometimes
+	broken shells like "ash-linux" do particularly well here, while big,
+	robust shells like bash do not.
+
+-	"dc" is a somewhat iffy benchmark, because there are two versions of
+	it floating around, one being small, very fast, and buggy, and one
+	being more correct but slow.  It was never in the index anyway.
+
+-	Execl is a somewhat troubling benchmark in that it yields much higher
+	scores if compiled statically.  I frown on this practice because it
+	distorts the scores away from reflecting how programs are really used
+	(i.e. dynamically linked).
+
+-	Arithoh is really more an indicator of the compiler quality than of
+	the computer itself.  For example, GCC 2.7.x with -O2 and a few extra
+	options optimizes much of it away, resulting in about a 1200% boost
+	to the score.  Clearly not a good one for the index.
+
+I am still a bit unhappy with the variance in some of the benchmarks, most
+notably the fstime suite; and with how long it takes to run.  But I think
+it gets significantly more reliable results than the older version in less
+time.
+
+If anyone has ideas on how to make these benchmarks faster, lower-variance,
+or more meaningful; or has nice, new, portable benchmarks to add, don't
+hesitate to e-mail me.
+
+David C Niemi <niemi@tux.org>		7 Dec 1995
+
+========================  May 91 ==========================
+This is version 3. This set of programs should be able to determine if
+your system is BSD or SysV. (It uses the output format of time (1)
+to see. If you have any problems, contact me (by email,
+preferably): ben@bytepb.byte.com
+
+---
+
+The document doc/bench.doc describes the basic flow of the
+benchmark system. The document doc/bench3.doc describes the major
+changes in design of this version. As a user of the benchmarks,
+you should understand some of the methods that have been
+implemented to generate loop counts:
+
+Tests that are compiled C code:
+  The function wake_me(second, func) is included (from the file
+timeit.c). This function uses signal and alarm to set a countdown
+for the time request by the benchmark administration script
+(Run). As soon as the clock is started, the test is run with a
+counter keeping track of the number of loops that the test makes.
+When alarm sends its signal, the loop counter value is sent to stderr
+and the program terminates. Since the time resolution, signal
+trapping and other factors don't insure that the test is for the
+precise time that was requested, the test program is also run
+from the time (1) command. The real time value returned from time
+(1) is what is used in calculating the number of loops per second
+(or minute, depending on the test).  As is obvious, there is some
+overhead time that is not taken into account, therefore the
+number of loops per second is not absolute. The overhead of the
+test starting and stopping and the signal and alarm calls is
+common to the overhead of real applications. If a program loads
+quickly, the number of loops per second increases; a phenomenon
+that favors systems that can load programs quickly. (Setting the
+sticky bit of the test programs is not considered fair play.)
+
+Test that use existing UNIX programs or shell scripts:
+  The concept is the same as that of compiled tests, except the
+alarm and signal are contained in separate compiled program,
+looper (source is looper.c). Looper uses an execvp to invoke the
+test with its arguments. Here, the overhead includes the
+invocation and execution of looper.
+
+--
+
+The index numbers are generated from a baseline file that is in
+pgms/index.base. You can put tests that you wish in this file.
+All you need to do is take the results/log file from your
+baseline machine, edit out the comment and blank lines, and sort
+the result (vi/ex command: 1,$!sort). The sort in necessary
+because the process of generating the index report uses join (1).
+You can regenerate the reports by running "make report."
+
+--
+
+========================= Jan 90 =============================
+Tom Yager has joined the effort here at BYTE; he is responsible
+for many refinements in the UNIX benchmarks.
+
+The memory access tests have been deleted from the benchmarks.
+The file access tests have been reversed so that the test is run
+for a fixed time. The amount of data transfered (written, read,
+and copied) is the variable. !WARNING! This test can eat up a
+large hunk of disk space.
+
+The initial line of all shell scripts has been changed from the
+SCO and XENIX form (:) to the more standard form "#! /bin/sh".
+But different systems handle shell switching differently. Check
+the documentation on your system and find out how you are
+supposed to do it. Or, simpler yet, just run the benchmarks from
+the Bourne shell. (You may need to set SHELL=/bin/sh as well.)
+
+The options to Run have not been checked in a while. They may no
+longer function. Next time, I'll get back on them. There needs to
+be another option added (next time) that halts testing between
+each test. !WARNING! Some systems have caches that are not getting flushed
+before the next test or iteration is run. This can cause
+erroneous values.
+
+========================= Sept 89 =============================
+The database (db) programs now have a tuneable message queue space.
+queue space. The default set in the Run script is 1024 bytes.
+Other major changes are in the format of the times. We now show
+Arithmetic and Geometric mean and standard deviation for User
+Time, System Time, and Real Time. Generally, in reporting, we
+plan on using the Real Time values with the benchs run with one
+active user (the bench user). Comments and arguments are requested.
+
+contact: BIX bensmith or rick_g

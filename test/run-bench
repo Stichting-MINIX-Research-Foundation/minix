@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+
+cd benchmarks
+
+benchmarks=`echo *bench*`
+
+runbench() {
+	out="Results/$1.`date +%Y%m%d.%H%M%S`"
+	echo "Running $1, saving output to $out."
+	( cd $1 && sh run.sh 2>&1 ) | tee $out
+}
+
+clear
+n=1
+for b in $benchmarks
+do	echo "$n. $b"
+	eval "n$n=$b"
+	n=`expr $n + 1`
+done
+echo
+echo -n "Run which benchmark or 'all'? "
+read bench
+var=`eval echo "\\$n$bench"`
+if [ "$bench" = all ]
+then	for b in $benchmarks
+	do	runbench $b
+	done
+else	if [ -d "$var" ]
+	then	runbench $var
+	else	echo "Unknown benchmark."
+		exit 1
+	fi
+fi

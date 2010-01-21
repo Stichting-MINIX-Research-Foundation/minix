@@ -1,0 +1,46 @@
+# Baseline benchmark scores, used for calculating index results.
+
+# Scores from "George", a SPARCstation 20-61.
+dhry2reg|10|lps|116700|116700|2
+whetstone-double|10|MWIPS|55.0|55.0|2
+execl|20|lps|43.0|43.0|1
+fstime|20|KBps|3960|3960|1
+fsbuffer|20|KBps|1655|1655|1
+fsdisk|20|KBps|5800|5800|1
+pipe|10|lps|12440|12440|2
+context1|10|lps|4000|4000|2
+spawn|20|lps|126|126|1
+shell8|60|lpm|6|6|1
+syscall|10|lps|15000|15000|2
+
+# The shell1 test was added to the index in 5.0, and this baseline score
+# was extrapolated to roughly match George's performance.
+shell1|60|lpm|42.4|42.4|1
+
+# The 2D baseline scores were derived from a test run on an HP Compaq nc8430
+# with an ATI Mobility Radeon X1600 Video (256MB) — this is a fairly
+# common modern adaptor with 3D.  The baseline scores here are then
+# 1/66.6 of the values from that run, to bring them roughly in line with
+# George.  (The HP has an index score of 666.6 single-process.)
+2d-rects|3|score|15|15|1
+#2d-lines|3|score|15|15|1
+#2d-circle|3|score|15|15|1
+2d-ellipse|3|score|15|15|1
+#2d-shapes|3|score|15|15|1
+2d-aashapes|3|score|15|15|1
+#2d-polys|3|score|15|15|1
+2d-text|3|score|15|15|1
+2d-blit|3|score|15|15|1
+2d-window|3|score|15|15|1
+
+# The gears test score is derived from a test run on an HP Compaq nc8430
+# with an ATI Mobility Radeon X1600 Video (256MB) — this is a fairly
+# common modern adaptor with 3D.  The baseline scores here are then
+# 1/66.6 of the values from that run, to bring them roughly in line with
+# George.
+ubgears|20|fps|33.4|33.4|3
+
+# The grep and sysexec tests were added in 5.1.1; they are not index tests,
+# but these baseline scores were added for convenience.
+grep|30|lpm|1|1|3
+sysexec|10|lps|25|25|10

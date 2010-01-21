@@ -1,0 +1,394 @@
+Running the Tests
+=================
+
+All the tests are executed using the "Run" script in the top-level directory.
+
+The simplest way to generate results is with the commmand:
+    ./Run
+
+This will run a standard "index" test (see "The BYTE Index" below), and
+save the report in the "results" directory, with a filename like
+    hostname-2007-09-23-01
+An HTML version is also saved.
+
+If you want to generate both the basic system index and the graphics index,
+then do:
+    ./Run gindex
+
+If your system has more than one CPU, the tests will be run twice -- once
+with a single copy of each test running at once, and once with N copies,
+where N is the number of CPUs.  Some categories of tests, however (currently
+the graphics tests) will only run with a single copy.
+
+Since the tests are based on constant time (variable work), a "system"
+run usually takes about 29 minutes; the "graphics" part about 18 minutes.
+A "gindex" run on a dual-core machine will do 2 "system" passes (single-
+and dual-processing) and one "graphics" run, for a total around one and
+a quarter hours.
+
+============================================================================
+
+Detailed Usage
+==============
+
+The Run script takes a number of options which you can use to customise a
+test, and you can specify the names of the tests to run.  The full usage
+is:
+
+    Run [ -q | -v ] [-i <n> ] [-c <n> [-c <n> ...]] [test ...]
+
+The option flags are:
+
+  -q            Run in quiet mode.
+  -v            Run in verbose mode.
+  -i <count>    Run <count> iterations for each test -- slower tests
+                use <count> / 3, but at least 1.  Defaults to 10 (3 for
+                slow tests).
+  -c <n>        Run <n> copies of each test in parallel.
+
+The -c option can be given multiple times; for example:
+
+    ./Run -c 1 -c 4
+
+will run a single-streamed pass, then a 4-streamed pass.  Note that some
+tests (currently the graphics tests) will only run in a single-streamed pass.
+
+The remaining non-flag arguments are taken to be the names of tests to run.
+The default is to run "index".  See "Tests" below.
+
+When running the tests, I do *not* recommend switching to single-user mode
+("init 1").  This seems to change the results in ways I don't understand,
+and it's not realistic (unless your system will actually be running in this
+mode, of course).  However, if using a windowing system, you may want to
+switch to a minimal window setup (for example, log in to a "twm" session),
+so that randomly-churning background processes don't randomise the results
+too much.  This is particularly true for the graphics tests.
+
+
+============================================================================
+
+Tests
+=====
+
+The available tests are organised into categories; when generating index
+scores (see "The BYTE Index" below) the results for each category are
+produced separately.  The categories are:
+
+   system          The original Unix system tests (not all are actually
+                   in the index)
+   2d              2D graphics tests (not all are actually in the index)
+   3d              3D graphics tests
+   misc            Various non-indexed tests
+
+The following individual tests are available:
+
+  system:
+    dhry2reg         Dhrystone 2 using register variables
+    whetstone-double Double-Precision Whetstone
+    syscall          System Call Overhead
+    pipe             Pipe Throughput
+    context1         Pipe-based Context Switching
+    spawn            Process Creation
+    execl            Execl Throughput
+    fstime-w         File Write 1024 bufsize 2000 maxblocks
+    fstime-r         File Read 1024 bufsize 2000 maxblocks
+    fstime           File Copy 1024 bufsize 2000 maxblocks
+    fsbuffer-w       File Write 256 bufsize 500 maxblocks
+    fsbuffer-r       File Read 256 bufsize 500 maxblocks
+    fsbuffer         File Copy 256 bufsize 500 maxblocks
+    fsdisk-w         File Write 4096 bufsize 8000 maxblocks
+    fsdisk-r         File Read 4096 bufsize 8000 maxblocks
+    fsdisk           File Copy 4096 bufsize 8000 maxblocks
+    shell1           Shell Scripts (1 concurrent) (runs "looper 60 multi.sh 1")
+    shell8           Shell Scripts (8 concurrent) (runs "looper 60 multi.sh 8")
+    shell16          Shell Scripts (8 concurrent) (runs "looper 60 multi.sh 16")
+
+  2d:
+    2d-rects         2D graphics: rectangles
+    2d-lines         2D graphics: lines
+    2d-circle        2D graphics: circles
+    2d-ellipse       2D graphics: ellipses
+    2d-shapes        2D graphics: polygons
+    2d-aashapes      2D graphics: aa polygons
+    2d-polys         2D graphics: complex polygons
+    2d-text          2D graphics: text
+    2d-blit          2D graphics: images and blits
+    2d-window        2D graphics: windows
+
+  3d:
+    ubgears          3D graphics: gears
+
+  misc:
+    C                C Compiler Throughput ("looper 60 $cCompiler cctest.c")
+    arithoh          Arithoh (huh?)
+    short            Arithmetic Test (short) (this is arith.c configured for
+                     "short" variables; ditto for the ones below)
+    int              Arithmetic Test (int)
+    long             Arithmetic Test (long)
+    float            Arithmetic Test (float)
+    double           Arithmetic Test (double)
+    dc               Dc: sqrt(2) to 99 decimal places (runs
+                     "looper 30 dc < dc.dat", using your system's copy of "dc")
+    hanoi            Recursion Test -- Tower of Hanoi
+    grep             Grep for a string in a large file, using your system's
+                     copy of "grep"
+    sysexec          Exercise fork() and exec().
+
+The following pseudo-test names are aliases for combinations of other
+tests:
+
+    arithmetic       Runs arithoh, short, int, long, float, double,
+                     and whetstone-double
+    dhry             Alias for dhry2reg
+    dhrystone        Alias for dhry2reg
+    whets            Alias for whetstone-double
+    whetstone        Alias for whetstone-double
+    load             Runs shell1, shell8, and shell16
+    misc             Runs C, dc, and hanoi
+    speed            Runs the arithmetic and system groups
+    oldsystem        Runs execl, fstime, fsbuffer, fsdisk, pipe, context1,
+                     spawn, and syscall
+    system           Runs oldsystem plus shell1, shell8, and shell16
+    fs               Runs fstime-w, fstime-r, fstime, fsbuffer-w,
+                     fsbuffer-r, fsbuffer, fsdisk-w, fsdisk-r, and fsdisk
+    shell            Runs shell1, shell8, and shell16
+
+    index            Runs the tests which constitute the official index:
+                     the oldsystem group, plus dhry2reg, whetstone-double,
+                     shell1, and shell8
+                     See "The BYTE Index" below for more information.
+    graphics         Runs the tests which constitute the graphics index:
+                     2d-rects, 2d-ellipse, 2d-aashapes, 2d-text, 2d-blit,
+                     2d-window, and ubgears
+    gindex           Runs the index and graphics groups, to generate both
+                     sets of index results
+
+    all              Runs all tests
+
+
+============================================================================
+
+The BYTE Index
+==============
+
+The purpose of this test is to provide a basic indicator of the performance
+of a Unix-like system; hence, multiple tests are used to test various
+aspects of the system's performance.  These test results are then compared
+to the scores from a baseline system to produce an index value, which is
+generally easier to handle than the raw sores.  The entire set of index
+values is then combined to make an overall index for the system.
+
+Since 1995, the baseline system has been "George", a SPARCstation 20-61
+with 128 MB RAM, a SPARC Storage Array, and Solaris 2.3, whose ratings
+were set at 10.0.  (So a system which scores 520 is 52 times faster than
+this machine.)  Since the numbers are really only useful in a relative
+sense, there's no particular reason to update the base system, so for the
+sake of consistency it's probably best to leave it alone.  George's scores
+are in the file "pgms/index.base"; this file is used to calculate the
+index scores for any particular run.
+
+Over the years, various changes have been made to the set of tests in the
+index.  Although there is a desire for a consistent baseline, various tests
+have been determined to be misleading, and have been removed; and a few
+alternatives have been added.  These changes are detailed in the README,
+and should be born in mind when looking at old scores.
+
+A number of tests are included in the benchmark suite which are not part of
+the index, for various reasons; these tests can of course be run manually.
+See "Tests" above.
+
+
+============================================================================
+
+Graphics Tests
+==============
+
+As of version 5.1, UnixBench now contains some graphics benchmarks.  These
+are intended to give a rough idea of the general graphics performance of
+a system.
+
+The graphics tests are in categories "2d" and "3d", so the index scores
+for these tests are separate from the basic system index.  This seems
+like a sensible division, since the graphics performance of a system
+depends largely on the graphics adaptor.
+
+The tests currently consist of some 2D "x11perf" tests and "ubgears".
+
+* The 2D tests are a selection of the x11perf tests, using the host
+  system's x11perf command (which must be installed and in the search
+  path).  Only a few of the x11perf tests are used, in the interests
+  of completing a test run in a reasonable time; if you want to do
+  detailed diagnosis of an X server or graphics chip, then use x11perf
+  directly.
+
+* The 3D test is "ubgears", a modified version of the familiar "glxgears".
+  This version runs for 5 seconds to "warm up", then performs a timed
+  run and displays the average frames-per-second.
+
+On multi-CPU systems, the graphics tests will only run in single-processing
+mode.  This is because the meaning of running two copies of a test at once
+is dubious; and the test windows tend to overlay each other, meaning that
+the window behind isn't actually doing any work.
+
+
+============================================================================
+
+Multiple CPUs
+=============
+
+If your system has multiple CPUs, the default behaviour is to run the selected
+tests twice -- once with one copy of each test program running at a time,
+and once with N copies, where N is the number of CPUs.  (You can override
+this with the "-c" option; see "Detailed Usage" above.)  This is designed to
+allow you to assess:
+
+ - the performance of your system when running a single task
+ - the performance of your system when running multiple tasks
+ - the gain from your system's implementation of parallel processing
+
+The results, however, need to be handled with care.  Here are the results
+of two runs on a dual-processor system, one in single-processing mode, one
+dual-processing:
+
+  Test                    Single     Dual   Gain
+  --------------------    ------   ------   ----
+  Dhrystone 2              562.5   1110.3    97%
+  Double Whetstone         320.0    640.4   100%
+  Execl Throughput         450.4    880.3    95%
+  File Copy 1024           759.4    595.9   -22%
+  File Copy 256            535.8    438.8   -18%
+  File Copy 4096          1261.8   1043.4   -17%
+  Pipe Throughput          481.0    979.3   104%
+  Pipe-based Switching     326.8   1229.0   276%
+  Process Creation         917.2   1714.1    87%
+  Shell Scripts (1)       1064.9   1566.3    47%
+  Shell Scripts (8)       1567.7   1709.9     9%
+  System Call Overhead     944.2   1445.5    53%
+  --------------------    ------   ------   ----
+  Index Score:             678.2   1026.2    51%
+
+As expected, the heavily CPU-dependent tasks -- dhrystone, whetstone,
+execl, pipe throughput, process creation -- show close to 100% gain when
+running 2 copies in parallel.
+
+The Pipe-based Context Switching test measures context switching overhead
+by sending messages back and forth between 2 processes.  I don't know why
+it shows such a huge gain with 2 copies (ie. 4 processes total) running,
+but it seems to be consistent on my system.  I think this may be an issue
+with the SMP implementation.
+
+The System Call Overhead shows a lesser gain, presumably because it uses a
+lot of CPU time in single-threaded kernel code.  The shell scripts test with
+8 concurrent processes shows no gain -- because the test itself runs 8
+scripts in parallel, it's already using both CPUs, even when the benchmark
+is run in single-stream mode.  The same test with one process per copy
+shows a real gain.
+
+The filesystem throughput tests show a loss, instead of a gain, when
+multi-processing.  That there's no gain is to be expected, since the tests
+are presumably constrained by the throughput of the I/O subsystem and the
+disk drive itself; the drop in performance is presumably down to the
+increased contention for resources, and perhaps greater disk head movement.
+
+So what tests should you use, how many copies should you run, and how should
+you interpret the results?  Well, that's up to you, since it depends on
+what it is you're trying to measure.
+
+Implementation
+--------------
+
+The multi-processing mode is implemented at the level of test iterations.
+During each iteration of a test, N slave processes are started using fork().
+Each of these slaves executes the test program using fork() and exec(),
+reads and stores the entire output, times the run, and prints all the
+results to a pipe.  The Run script reads the pipes for each of the slaves
+in turn to get the results and times.  The scores are added, and the times
+averaged.
+
+The result is that each test program has N copies running at once.  They
+should all finish at around the same time, since they run for constant time.
+
+If a test program itself starts off K multiple processes (as with the shell8
+test), then the effect will be that there are N * K processes running at
+once.  This is probably not very useful for testing multi-CPU performance.
+
+
+============================================================================
+
+The Language Setting
+====================
+
+The $LANG environment variable determines how programs abnd library
+routines interpret text.  This can have a big impact on the test results.
+
+If $LANG is set to POSIX, or is left unset, text is treated as ASCII; if
+it is set to en_US.UTF-8, foir example, then text is treated as being
+encoded in UTF-8, which is more complex and therefore slower.  Setting
+it to other languages can have varying results.
+
+To ensure consistency between test runs, the Run script now (as of version
+5.1.1) sets $LANG to "en_US.utf8".
+
+This setting which is configured with the variable "$language".  You
+should not change this if you want to share your results to allow
+comparisons between systems; however, you may want to change it to see
+how different language settings affect performance.
+
+Each test report now includes the language settings in use.  The reported
+language is what is set in $LANG, and is not necessarily supported by the
+system; but we also report the character mapping and collation order which
+are actually in use (as reported by "locale").
+
+
+============================================================================
+
+Interpreting the Results
+========================
+
+Interpreting the results of these tests is tricky, and totally depends on
+what you're trying to measure.
+
+For example, are you trying to measure how fast your CPU is?  Or how good
+your compiler is?  Because these tests are all recompiled using your host
+system's compiler, the performance of the compiler will inevitably impact
+the performance of the tests.  Is this a problem?  If you're choosing a
+system, you probably care about its overall speed, which may well depend
+on how good its compiler is; so including that in the test results may be
+the right answer.  But you may want to ensure that the right compiler is
+used to build the tests.
+
+On the other hand, with the vast majority of Unix systems being x86 / PC
+compatibles, running Linux and the GNU C compiler, the results will tend
+to be more dependent on the hardware; but the versions of the compiler and
+OS can make a big difference.  (I measured a 50% gain between SUSE 10.1
+and OpenSUSE 10.2 on the same machine.)  So you may want to make sure that
+all your test systems are running the same version of the OS; or at least
+publish the OS and compuiler versions with your results.  Then again, it may
+be compiler performance that you're interested in.
+
+The C test is very dubious -- it tests the speed of compilation.  If you're
+running the exact same compiler on each system, OK; but otherwise, the
+results should probably be discarded.  A slower compilation doesn't say
+anything about the speed of your system, since the compiler may simply be
+spending more time to super-optimise the code, which would actually make it
+faster.
+
+This will be particularly true on architectures like IA-64 (Itanium etc.)
+where the compiler spends huge amounts of effort scheduling instructions
+to run in parallel, with a resultant significant gain in execution speed.
+
+Some tests are even more dubious in terms of host-dependency -- for example,
+the "dc" test uses the host's version of dc (a calculator program).  The
+version of this which is available can make a huge difference to the score,
+which is why it's not in the index group.  Read through the release notes
+for more on these kinds of issues.
+
+Another age-old issue is that of the benchmarks being too trivial to be
+meaningful.  With compilers getting ever smarter, and performing more
+wide-ranging flow path analyses, the danger of parts of the benchmarks
+simply being optimised out of existance is always present.
+
+All in all, the "index" and "gindex" tests (see above) are designed to
+give a reasonable measure of overall system performance; but the results
+of any test run should always be used with care.
+
