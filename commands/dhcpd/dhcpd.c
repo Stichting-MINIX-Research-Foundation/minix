@@ -386,7 +386,7 @@ static udpport_t portbyname(const char *name)
     return se->s_port;
 }
 
-static int send(network_t *np, void *data, size_t len)
+static int sendpacket(network_t *np, void *data, size_t len)
 {
     /* Send out a packet using a filedescriptor that is probably in async mode,
      * so first dup() a sync version, then write.  Return true on success.
@@ -957,7 +957,8 @@ int main(int argc, char **argv)
 		if (!(np->flags & NF_BOUND)) {
 		    /* Rebind over Ethernet. */
 		    udp2ether(bp, np);
-		    if (send(np, bp->eth, sizeof(eth_hdr_t) + sizeof(ip_hdr_t)
+		    if (sendpacket(np, bp->eth, 
+		    			sizeof(eth_hdr_t) + sizeof(ip_hdr_t)
 					+ sizeof(udp_hdr_t) + sizeof(dhcp_t))) {
 			if (debug >= 1) {
 			    printf("%s: Broadcast DHCP %s\n",
@@ -967,7 +968,7 @@ int main(int argc, char **argv)
 		    }
 		} else {
 		    /* Renew over UDP. */
-		    if (send(np, bp->udpio, sizeof(udp_io_hdr_t)
+		    if (sendpacket(np, bp->udpio, sizeof(udp_io_hdr_t)
 							+ sizeof(dhcp_t))) {
 			if (debug >= 1) {
 			    printf("%s: Sent DHCP %s to %s\n",
@@ -1123,7 +1124,7 @@ int main(int argc, char **argv)
 		     * is in use already.
 		     */
 		    make_arp(bp, np);
-		    if (send(np, bp->eth, sizeof(arp46_t))) {
+		    if (sendpacket(np, bp->eth, sizeof(arp46_t))) {
 			if (debug >= 2) {
 			    printf("Sent ARP for %s\n", inet_ntoa(np->ip));
 			}
@@ -1191,7 +1192,8 @@ int main(int argc, char **argv)
 		    bp->udpio->uih_data_len= sizeof(dhcp_t);
 		    udp2ether(bp, np);
 
-		    if (send(np, bp->eth, sizeof(eth_hdr_t) + sizeof(ip_hdr_t)
+		    if (sendpacket(np, bp->eth, 
+		    			sizeof(eth_hdr_t) + sizeof(ip_hdr_t)
 					+ sizeof(udp_hdr_t) + sizeof(dhcp_t))) {
 			if (debug >= 1) {
 			    printf("%s: Broadcast DHCP %s\n",
@@ -1255,7 +1257,7 @@ int main(int argc, char **argv)
 		     * by DHCP to my own interface.
 		     */
 		    icmp_advert(bp, np);
-		    if (send(np, bp->ip, sizeof(ip_hdr_t) + 16)) {
+		    if (sendpacket(np, bp->ip, sizeof(ip_hdr_t) + 16)) {
 			if (debug >= 2) {
 			    printf("%s: Sent advert for %s to self\n",
 				np->fdp->device, inet_ntoa(np->gateway));
@@ -1267,7 +1269,7 @@ int main(int argc, char **argv)
 		if (np->sol_ct >= 0 && --np->sol_ct >= 0) {
 		    /* Send a router solicitation. */
 		    icmp_solicit(bp);
-		    if (send(np, bp->ip, sizeof(*bp->ip) + 8)) {
+		    if (sendpacket(np, bp->ip, sizeof(*bp->ip) + 8)) {
 			if (debug >= 2) {
 			    printf("%s: Broadcast router solicitation\n",
 				np->fdp->device);
@@ -1365,7 +1367,7 @@ int main(int argc, char **argv)
 	    /* Can we do something with this DHCP packet? */
 	    if ((r= servdhcp(np, bp, r)) > 0) {
 		/* Yes, we have something to send somewhere. */
-		if (send(np, bp->udpio, r)) {
+		if (sendpacket(np, bp->udpio, r)) {
 		    if (debug >= 1) {
 			printf("%s: Sent DHCP packet to %s\n",
 			    np->fdp->device,

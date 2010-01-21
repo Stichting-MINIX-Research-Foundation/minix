@@ -1,0 +1,66 @@
+.TH GETADDRINFO 3  "January 19, 2010"
+.UC 4
+.SH NAME
+getaddrinfo, freeaddrinfo, gai_strerror, getnameinfo \- address information
+.SH SYNOPSIS
+.nf
+.ft B
+#include <netdb.h>
+
+void freeaddrinfo(struct addrinfo *\fIai\fP);
+int getaddrinfo(const char *\fInodename\fP,
+       const char *\fIservname\fP,
+       const struct addrinfo *\fIhints\fP,
+       struct addrinfo **\fIres\fP);
+int getnameinfo(const struct sockaddr *\fIsa\fP, socklen_t \fIsalen\fP,
+       char *\fInode\fP, socklen_t \fInodelen\fP, char *\fIservice\fP,
+       socklen_t \fIservicelen\fP, int \fIflags\fP);
+const char *gai_strerror(int \fIecode\fP);
+.fi
+.SH DESCRIPTION
+These functions provide to convert between host and service names on the one
+hand and network addresses and ports on the other. 
+.PP
+getaddrinfo converts the hostname specified in \fInodename\fP and/or the service
+name in \fIservname\fP into a socket address that can be used to connect to that
+service or listen for incoming connections. One of the parameters may be NULL. 
+If \fInodename\fP is NULL, an address for the local host is provided. If 
+\fIservname\fP is NULL, the network port is not filled in (and therefore set to 
+zero). Buffers are allocated to store the results and a pointer to the first 
+element of a linked list of addresses is stored in \fIai\fP. These buffers must
+be freed by calling freeaddrinfo on the pointer returned in \fIai\fP.
+.PP
+getnameinfo converts the specified socket address into a hostname and/or service
+name. These are stored in the buffers pointed to by \fInode\fP and \fIservice\fP
+resepectively. \fInodelen\fP and \fIservicelen\fP specify the sizes of these 
+buffers. If the result string including null terminator does not fit in the
+buffer, the function fails and EAI_OVERFLOW is returned.
+.PP
+For both functions, some flags may be specified to alter their behaviour. For
+getaddrinfo these flags are specified in the ai_flags field of the optional 
+\fIhints\fP parameter. AI_PASSIVE indicates that an address suitable for the 
+bind function should be returned, otherwise an address suitable for connect is 
+provided. AI_CANONNAME requests that the canonical name of the host be retrieved 
+and stored in the ai_canonname field of the result. AI_NUMERICHOST and 
+AI_NUMERICSERV indicate respectively that \fInodename\fP is an IP address and
+\fIservname\fP is a port number, avoiding a lookup. Search can be limited to a
+specific socket type by setting \fIhints\fP\->ai_socktype to SOCK_STREAM or 
+SOCK_DGRAM. \fIhints\fP\->ai_family can be set to AF_UNSPEC or AF_INET but this
+doesn't make a difference as MINIX supports only IPv4. Unused fields of 
+\fIhints\fP must be set to zero.
+.PP
+Flags for getnameinfo are specified in the \fIflags\fP parameter. NI_NUMERICHOST
+and NI_NUMERICSERV respectively cause \fInode\fP to be set to an IP address
+and \fIservice\fP to be set to a port number. NI_NAMEREQD causes the function
+to fail with EAI_NONAME if a name is not found for the host (otherwise the IP
+address is returned). NI_DGRAM indicates that a datagram service is specified,
+the default being a stream service.
+.SH "RETURN VALUE
+If the functions succeed, they return 0. If they fail, one of the EAI_* values
+defined in netdb.h is returned. This value can be converted into a string using
+gai_strerror. The most important ones are EAI_NONAME (host name not found), 
+EAI_SERVICE (service name not found) and EAI_OVERFLOW (buffer too small, only
+for getnameinfo).
+.SH "KNOWN ISSUES
+Since MINIX does not support IPv6, the related flags are not supported. 
+The NI_NOFQDN flag is also not (yet) supported. 

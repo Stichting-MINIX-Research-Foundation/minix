@@ -125,4 +125,74 @@ int		servxcheck _ARGS((unsigned long _peer, const char *_service,
 char		*servxfile _ARGS((const char *_file));
 #endif
 
+/*  
+ * The definitions below are based on 
+ * http://www.opengroup.org/onlinepubs/009695399/basedefs/netdb.h.html
+ */
+
+#ifdef _POSIX_SOURCE
+
+/* headers exposed by netdb.h */
+#include <inttypes.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+/* struct for use with getaddrinfo() */
+struct addrinfo
+{
+	int              ai_flags;     /* Input flags */
+	int              ai_family;    /* Address family of socket */
+	int              ai_socktype;  /* Socket type */
+	int              ai_protocol;  /* Protocol of socket */
+	socklen_t        ai_addrlen;   /* Length of socket address */
+	struct sockaddr *ai_addr;      /* Socket address of socket */
+	char            *ai_canonname; /* Canonical name of service location */
+	struct addrinfo *ai_next;      /* Pointer to next in list */
+};
+
+/* values for struct addrinfo.ai_flags */
+#define AI_PASSIVE	0x00000001
+#define AI_CANONNAME	0x00000002
+#define AI_NUMERICHOST	0x00000004
+#define AI_NUMERICSERV	0x00000008
+/* 
+#define AI_V4MAPPED	0x00000010
+#define AI_ALL		0x00000020
+#define AI_ADDRCONFIG	0x00000040
+*/
+
+/* flags for getnameinfo() */
+/* #define NI_NOFQDN	0x00000001 */
+#define NI_NUMERICHOST	0x00000002
+#define NI_NAMEREQD	0x00000004
+#define NI_NUMERICSERV	0x00000008
+/* #define NI_NUMERICSCOPE	0x00000010 */
+#define NI_DGRAM	0x00000020
+
+/* error values for getaddrinfo() and getnameinfo() */
+#define EAI_AGAIN	1
+#define EAI_BADFLAGS	2
+#define EAI_FAIL	3
+#define EAI_FAMILY	4
+#define EAI_MEMORY	5
+#define EAI_NONAME	6
+#define EAI_SERVICE	7
+#define EAI_SOCKTYPE	8
+#define EAI_SYSTEM	9
+#define EAI_OVERFLOW	10
+
+/* getaddrinfo() and friends */
+void freeaddrinfo(struct addrinfo *ai);
+int getaddrinfo(const char *nodename,
+       const char *servname,
+       const struct addrinfo *hints,
+       struct addrinfo **res);
+int getnameinfo(const struct sockaddr *sa, socklen_t salen,
+       char *node, socklen_t nodelen, char *service,
+       socklen_t servicelen, int flags);
+const char *gai_strerror(int ecode);
+
+#endif
+
 #endif /* !_NETDB_H_ */
+

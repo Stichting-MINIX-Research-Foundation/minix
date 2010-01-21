@@ -9,6 +9,7 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 #include <inet/inet.h>
 #undef printf
+#undef send
 
 #include <fcntl.h>
 #include <stdio.h>

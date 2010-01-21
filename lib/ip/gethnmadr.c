@@ -54,10 +54,6 @@ static char sccsid[] = "@(#)gethostnamadr.c	6.41 (Berkeley) 6/1/90";
 static char *h_addr_ptrs[MAXADDRS + 1];
 
 #ifdef _MINIX
-struct in_addr
-{
-	ipaddr_t s_addr;
-};
 union querybuf;
 
 extern int dn_skipname _ARGS(( const u_char *comp_dn, const u_char *eom ));

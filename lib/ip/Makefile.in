@@ -8,6 +8,7 @@ LIBRARIES=libc
 
 libc_FILES=" \
 	accept.c \
+	addrinfo.c \
 	bind.c \
 	connect.c \
 	dhcp_gettag.c \
@@ -18,6 +19,7 @@ libc_FILES=" \
 	ethere2a.c \
 	etherh2n.c \
 	ethern2h.c \
+	gai_strerror.c \
 	getdomain.c \
 	gethnmadr.c \
 	gethostent.c \
@@ -41,6 +43,7 @@ libc_FILES=" \
 	inet_ntoa.c \
 	listen.c \
 	memcspn.c \
+	nameinfo.c \
 	oneC_sum.c \
 	rcmd.c \
 	recv.c \
