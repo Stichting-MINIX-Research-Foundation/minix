@@ -55,6 +55,8 @@
  *
  */
 
+#define RTL8139_FKEY 0 /* Use function key to dump RTL8139 status */
+
 #include "rtl8139.h"
 
 PRIVATE struct pcitab
@@ -308,7 +310,9 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the rtl8139 driver. */
+#if RTL8139_FKEY
 	int fkeys, sfkeys;
+#endif
 	u32_t inet_proc_nr;
 	int r;
 	re_t *rep;
@@ -323,10 +327,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
 	eth_ign_proto= htons((u16_t) v);
 
+#if RTL8139_FKEY
 	/* Observe some function key for debug dumps. */
 	fkeys = sfkeys = 0; bit_set(sfkeys, 9);
 	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
 	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
+#endif
 
 	/* Claim buffer memory now under Minix, before MM takes it all. */
 	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
