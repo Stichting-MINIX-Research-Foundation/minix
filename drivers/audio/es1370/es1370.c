@@ -227,7 +227,6 @@ int drv_reset() {
 
 int drv_start(int sub_dev, int DmaMode) {
 	u32_t enable_bit, result = 0;
-	u32_t debug;
 
 	/* Write default values to device in case user failed to configure.
 	   If user did configure properly, everything is written twice.
@@ -386,7 +385,6 @@ int drv_int_sum(void) {
 int drv_int(int sub_dev) {
 	u32_t int_status;
 	u32_t bit;
-	u32_t debug;
 
 	/* return status of interrupt bit of specified channel*/
 	switch (sub_dev) {

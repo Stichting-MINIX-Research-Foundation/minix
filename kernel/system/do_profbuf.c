@@ -24,7 +24,6 @@ register message *m_ptr;    /* pointer to request message */
  * which is used to enable the kernel to have the tables cleared.
  */ 
   int proc_nr;
-  vir_bytes vir_dst;
   struct proc *rp;                          
 
   /* Store process name, control struct, table locations. */

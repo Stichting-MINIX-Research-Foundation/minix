@@ -7,7 +7,6 @@
  */
 
 #include "../system.h"
-#include "../vm.h"
 
 
 /*===========================================================================*
@@ -18,7 +17,7 @@ register message *m_ptr;	/* pointer to request message */
 {
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];
-  struct proc *caller, *target;
+  struct proc *caller;
   int s, i, proc_nr;
 
   caller = proc_addr(who_p);

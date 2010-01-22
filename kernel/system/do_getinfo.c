@@ -29,7 +29,7 @@ register message *m_ptr;	/* pointer to request message */
  */
   size_t length;
   vir_bytes src_vir; 
-  int proc_nr, nr_e, nr, r;
+  int nr_e, nr, r;
   struct proc *caller;
   int wipe_rnd_bin = -1;
   struct exec e_hdr;
@@ -122,7 +122,7 @@ register message *m_ptr;	/* pointer to request message */
     	break;
     }
     case GET_RANDOMNESS_BIN: {		
-	int i, bin = m_ptr->I_VAL_LEN2_E;
+	int bin = m_ptr->I_VAL_LEN2_E;
 
 	if(bin < 0 || bin >= RANDOM_SOURCES) {
 		kprintf("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin);

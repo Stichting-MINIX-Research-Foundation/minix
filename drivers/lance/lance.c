@@ -1486,14 +1486,12 @@ ether_card_t *ec;
 static int lance_probe(ec)
 ether_card_t *ec;
 {
-   unsigned short    pci_cmd, attached = 0;
+   unsigned short    pci_cmd;
    unsigned short    ioaddr;
    int               lance_version, chip_version;
    int devind, just_one, i, r;
 
    u16_t vid, did;
-   u32_t bar;
-   u8_t ilr;
    char *dname;
 
    if ((ec->ec_pcibus | ec->ec_pcidev | ec->ec_pcifunc) != 0)

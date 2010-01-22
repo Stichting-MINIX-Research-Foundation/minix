@@ -296,7 +296,6 @@ PRIVATE int udp_select(fd, operations)
 int fd;
 unsigned operations;
 {
-	int i;
 	unsigned resops;
 	udp_fd_t *udp_fd;
 

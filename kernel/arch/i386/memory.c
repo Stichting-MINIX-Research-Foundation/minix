@@ -50,7 +50,6 @@ FORWARD _PROTOTYPE( void set_cr3, (void)			);
 
 PUBLIC void vm_init(struct proc *newptproc)
 {
-	int i;
 	if(vm_running)
 		minix_panic("vm_init: vm_running", NO_NUM);
 	vm_set_cr3(newptproc);
@@ -156,9 +155,7 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
 {
 	u32_t addr;
-	int o1, o2;
 	int procslot;
-	int firstloop = 1;
 
 	NOREC_ENTER(linlincopy);
 
@@ -217,8 +214,6 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		bytes -= chunk;
 		srclinaddr += chunk;
 		dstlinaddr += chunk;
-
-		firstloop = 0;
 	}
 
 	NOREC_RETURN(linlincopy, OK);
@@ -692,7 +687,7 @@ char *flagstr(u32_t e, int dir)
 
 void vm_pt_print(u32_t *pagetable, u32_t v)
 {
-	int pte, l = 0;
+	int pte;
 	int col = 0;
 
 	vmassert(!((u32_t) pagetable % I386_PAGE_SIZE));
@@ -758,7 +753,6 @@ u32_t read_cr3(void)
  *===========================================================================*/
 int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 {
-	char *v;
 	u32_t p;
 	NOREC_ENTER(physmemset);
 
@@ -808,7 +802,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
   phys_bytes phys_addr[2];	/* absolute source and destination */ 
   int seg_index;
-  int i, r;
+  int i;
   struct proc *procs[2];
   NOREC_ENTER(virtualcopy);
 
@@ -887,8 +881,6 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	caller = proc_addr(who_p);
 
 	if(RTS_ISSET(caller, RTS_VMREQUEST)) {
-		struct proc *target;
-		int pn;
 		vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
 		RTS_LOCK_UNSET(caller, RTS_VMREQUEST);
 		if(caller->p_vmrequest.vmresult != OK) {

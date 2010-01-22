@@ -308,9 +308,6 @@ PRIVATE int lapic_enable_in_msr(void)
 PUBLIC int lapic_enable(void)
 {
 	u32_t val, nlvt;
-	u32_t timeout = 0xFFFF;
-	u32_t errstatus = 0;
-	int i;
 	unsigned cpu = cpuid;
 
 	if (!lapic_addr)

@@ -11,7 +11,6 @@
 #include "../vm.h"
 #include "../debug.h"
 #include <minix/type.h>
-#include <minix/config.h>
 
 /*===========================================================================*
  *				do_vmctl				     *
@@ -19,7 +18,7 @@
 PUBLIC int do_vmctl(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-  int proc_nr, i;
+  int proc_nr;
   endpoint_t ep = m_ptr->SVMCTL_WHO;
   struct proc *p, *rp, *target;
   int err;

@@ -19,10 +19,6 @@ void pagefault( struct proc *pr,
 		struct exception_frame * frame,
 		int is_nested)
 {
-	int s;
-	vir_bytes ph;
-	u32_t pte;
-	int procok = 0, pcok = 0, rangeok = 0;
 	int in_physcopy = 0;
 
 	reg_t pagefaultcr2;
@@ -107,8 +103,6 @@ void pagefault( struct proc *pr,
 PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 {
 /* An exception or unexpected interrupt has occurred. */
-
-struct proc *t;
 
   struct ex_s {
 	char *msg;
@@ -210,7 +204,7 @@ struct proc *t;
  *===========================================================================*/
 PUBLIC void proc_stacktrace(struct proc *whichproc)
 {
-	reg_t bp, v_bp, v_pc, v_hbp;
+	reg_t v_bp, v_pc, v_hbp;
 	int iskernel;
 
 	v_bp = whichproc->p_reg.fp;

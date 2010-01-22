@@ -38,7 +38,7 @@ PRIVATE irq_hook_t profile_clock_hook;
  *===========================================================================*/
 PUBLIC void init_profile_clock(u32_t freq)
 {
-  int r, irq;
+  int irq;
 
   intr_disable();
 

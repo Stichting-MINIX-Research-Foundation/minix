@@ -360,7 +360,6 @@ PRIVATE int e1000_init_hw(e)
 e1000_t *e;
 {
     int r, i;
-    u16_t word;
 
     e->status  |= E1000_ENABLED;
     e->irq_hook = e->irq;

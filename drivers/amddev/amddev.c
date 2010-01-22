@@ -243,7 +243,7 @@ static void write_reg(int function, int index, u32_t value)
 
 static void init_domain(int index)
 {
-	size_t o, size, memsize;
+	size_t size, memsize;
 	phys_bytes busaddr;
 
 	size= 0x100000 / 8;
@@ -332,7 +332,7 @@ static int do_add(message *m)
 
 static int do_add_phys(message *m)
 {
-	int i, r;
+	int i;
 	phys_bytes start;
 	size_t size;
 
@@ -368,7 +368,6 @@ static int do_add_phys(message *m)
 
 static int do_del_phys(message *m)
 {
-	int r;
 	phys_bytes start;
 	size_t size;
 

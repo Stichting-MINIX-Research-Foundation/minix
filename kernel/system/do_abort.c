@@ -23,8 +23,6 @@ message *m_ptr;			/* pointer to request message */
  * in the PM (normal abort or panic) or TTY (after CTRL-ALT-DEL).
  */
   int how = m_ptr->ABRT_HOW;
-  int length;
-  phys_bytes src_phys;
 
   /* See if the monitor is to run the specified instructions. */
   if (how == RBT_MONITOR) {

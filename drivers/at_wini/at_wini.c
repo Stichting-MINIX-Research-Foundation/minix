@@ -792,7 +792,7 @@ PRIVATE int w_identify()
 
   struct wini *wn = w_wn;
   struct command cmd;
-  int i, s;
+  int s;
   u16_t w;
   unsigned long size;
   int prev_wakeup;
@@ -1191,9 +1191,9 @@ unsigned nr_req;		/* length of request vector */
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
   int n, r, s, errors, do_dma, do_write, do_copyout;
-  unsigned long v, block, w_status;
+  unsigned long block, w_status;
   u64_t dv_size = w_dv->dv_size;
-  unsigned cylinder, head, sector, nbytes;
+  unsigned nbytes;
   unsigned dma_buf_offset;
   size_t addr_offset = 0;
 
@@ -1475,7 +1475,6 @@ struct command *cmd;		/* Command block */
   unsigned base_ctl = wn->base_ctl;
   pvb_pair_t outbyte[11];		/* vector for sys_voutb() */
   int s;				/* status for sys_(v)outb() */
-  unsigned long w_status;
 
   if (w_wn->state & IGNORING) return ERR;
 

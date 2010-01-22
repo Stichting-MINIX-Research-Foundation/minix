@@ -129,7 +129,6 @@ PUBLIC void prot_init(void)
 /* Set up tables for protected mode.
  * All GDT slots are allocated at compile time.
  */
-  struct gate_table_s *gtp;
   struct desctableptr_s *dtp;
   unsigned ldt_index;
   register struct proc *rp;
@@ -439,7 +438,6 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 PUBLIC int prot_set_kern_seg_limit(vir_bytes limit)
 {
 	struct proc *rp;
-	vir_bytes prev;
 	int orig_click;
 	int incr_clicks;
 

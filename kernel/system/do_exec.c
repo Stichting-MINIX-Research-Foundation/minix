@@ -22,8 +22,6 @@ register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_exec().  A process has done a successful EXEC. Patch it up. */
   register struct proc *rp;
-  phys_bytes phys_name;
-  char *np;
   int proc_nr;
 
   if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr))

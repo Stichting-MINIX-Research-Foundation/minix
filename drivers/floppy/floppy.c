@@ -381,7 +381,6 @@ PRIVATE void f_expire_tmrs(struct driver *dp, message *m_ptr)
  * timers. Possibly reschedule the next alarm.  
  */
   clock_t now;				/* current time */
-  timer_t *tp;
   int s;
 
   /* Get the current time to compare the timers against. */

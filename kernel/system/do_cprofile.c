@@ -22,9 +22,9 @@
 PUBLIC int do_cprofile(m_ptr)
 register message *m_ptr;    /* pointer to request message */
 {
-  int proc_nr, i, err = 0, k = 0;
+  int proc_nr, i;
   phys_bytes len;
-  vir_bytes vir_dst, vir_src;
+  vir_bytes vir_dst;
 
   switch (m_ptr->PROF_ACTION) {
 

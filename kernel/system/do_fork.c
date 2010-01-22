@@ -31,7 +31,7 @@ register message *m_ptr;	/* pointer to request message */
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
   struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
-  int i, gen, r;
+  int gen, r;
   int p_proc;
 
   if(!isokendpt(m_ptr->PR_ENDPT, &p_proc))

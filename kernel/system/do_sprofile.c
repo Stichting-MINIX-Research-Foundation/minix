@@ -26,9 +26,7 @@ PRIVATE vir_bytes sprof_info_addr_vir;
 PUBLIC int do_sprofile(m_ptr)
 register message *m_ptr;    /* pointer to request message */
 {
-  int proc_nr, i;
-  vir_bytes vir_dst;
-  phys_bytes length;
+  int proc_nr;
 
   switch(m_ptr->PROF_ACTION) {
 

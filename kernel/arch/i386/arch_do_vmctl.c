@@ -64,7 +64,6 @@ struct proc *p;
 	}
 	case VMCTL_I386_PAGEDIRS:
 	{
-		int pde;
 		vm_pagedirs = (u32_t *) m_ptr->SVMCTL_VALUE;
 		return OK;
 	}

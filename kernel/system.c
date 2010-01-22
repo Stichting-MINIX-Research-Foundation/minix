@@ -43,8 +43,6 @@
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
 #include <minix/portio.h>
-#include <minix/u64.h>
-#include <sys/vm_i386.h>
 
 /* Declaration of the call vector that defines the mapping of system calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
@@ -74,7 +72,6 @@ PUBLIC void sys_task()
   register struct proc *caller_ptr;
   int s;
   int call_nr;
-  int n = 0;
 
   /* Initialize the system task. */
   initialize();
@@ -462,7 +459,6 @@ register struct proc *rc;		/* slot of process to clean up */
 {
   register struct proc *rp;		/* iterate over process table */
   register struct proc **xpp;		/* iterate over caller queue */
-  struct proc *np;
 
   if(isemptyp(rc)) minix_panic("clear_proc: empty process", rc->p_endpoint);
 
@@ -551,7 +547,7 @@ register struct proc *rc;		/* slot of process to clean up */
  *===========================================================================*/
 PRIVATE struct proc *vmrestart_check(message *m)
 {
-	int type, r;
+	int type;
 	struct proc *restarting;
 
       /* Anyone waiting to be vm-restarted? */

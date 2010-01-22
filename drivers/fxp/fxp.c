@@ -2938,7 +2938,6 @@ PRIVATE void fxp_expire_timers()
  * timers. Possibly reschedule the next alarm.  
  */
   clock_t now;				/* current time */
-  timer_t *tp;
   int r;
 
   /* Get the current time to compare the timers against. */

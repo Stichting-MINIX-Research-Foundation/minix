@@ -33,7 +33,7 @@ PUBLIC void main()
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register struct priv *sp;	/* privilege structure pointer */
-  register int i, j, s;
+  register int i, j;
   int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
   vir_clicks text_clicks, data_clicks, st_clicks;
@@ -75,7 +75,6 @@ PUBLIC void main()
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	int schedulable_proc, proc_nr;
 	int ipc_to_m, kcalls;
-	bitchunk_t fv;
 
 	ip = &image[i];				/* process' attributes */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
@@ -278,8 +277,6 @@ int how;
 {
 /* This function prepares to shutdown MINIX. */
   static timer_t shutdown_timer;
-  register struct proc *rp; 
-  message m;
 
   /* Continue after 1 second, to give processes a chance to get scheduled to 
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 

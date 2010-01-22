@@ -35,8 +35,6 @@ PUBLIC int do_sdevio(
   struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
-  int rem;
-  vir_bytes addr;
   struct proc *destproc;
 
   /* Allow safe copies and accesses to SELF */

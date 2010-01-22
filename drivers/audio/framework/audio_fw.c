@@ -87,7 +87,7 @@ PUBLIC int is_status_msg_expected = FALSE;
 
 PUBLIC void main(void) 
 {	
-	int r, caller, proc_nr, chan;
+	int r, caller, proc_nr;
 	message mess, repl_mess;
 
 	/* SEF local startup. */
@@ -311,7 +311,7 @@ PRIVATE int msg_open (int minor_dev_nr) {
 
 
 PRIVATE int open_sub_dev(int sub_dev_nr, int dma_mode) {
-	sub_dev_t* sub_dev_ptr; int i;
+	sub_dev_t* sub_dev_ptr;
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
 	/* Only one open at a time per sub device */
@@ -410,7 +410,6 @@ PRIVATE int close_sub_dev(int sub_dev_nr) {
 PRIVATE int msg_ioctl(message *m_ptr)
 {
 	int status, len, chan;
-	phys_bytes user_phys;
 	sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
@@ -473,7 +472,7 @@ PRIVATE int msg_ioctl(message *m_ptr)
 
 PRIVATE void msg_write(message *m_ptr) 
 {
-	int s, chan; sub_dev_t *sub_dev_ptr;
+	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
 	dprint("%s: msg_write() device %d\n", drv.DriverName, m_ptr->DEVICE);
@@ -524,7 +523,7 @@ PRIVATE void msg_write(message *m_ptr)
 
 PRIVATE void msg_read(message *m_ptr) 
 {
-	int s, chan; sub_dev_t *sub_dev_ptr;
+	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
 	dprint("%s: msg_read() device %d\n", drv.DriverName, m_ptr->DEVICE);

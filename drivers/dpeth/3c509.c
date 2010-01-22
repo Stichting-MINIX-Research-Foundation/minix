@@ -120,7 +120,6 @@ static void el3_reset(dpeth_t * dep)
 */
 static void el3_write_fifo(dpeth_t * dep, int pktsize)
 {
-  phys_bytes phys_user;
   int bytes, ix = 0;
   iovec_dat_s_t *iovp = &dep->de_write_iovec;
   int r, padding = pktsize;

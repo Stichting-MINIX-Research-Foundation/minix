@@ -90,7 +90,7 @@ static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 */
 static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 {
-  phys_bytes offset, phys_user;
+  phys_bytes offset;
   iovec_dat_s_t *iovp = &dep->de_read_iovec;
   int bytes, ix = 0;
 
@@ -197,7 +197,6 @@ static void pio_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 */
 static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 {
-  phys_bytes phys_user;
   iovec_dat_s_t *iovp = &dep->de_read_iovec;
   unsigned offset, iov_offset; int r, bytes, ix = 0;
 
@@ -253,7 +252,6 @@ static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 */
 static void pio_user2nic(dpeth_t *dep, int pageno, int pktsize)
 {
-  phys_bytes phys_user;
   iovec_dat_s_t *iovp = &dep->de_write_iovec;
   int r, bytes, ix = 0;
 
@@ -478,7 +476,7 @@ static void ns_recv(dpeth_t *dep, int fromint, int size)
 static void ns_interrupt(dpeth_t * dep)
 {
   int isr, tsr;
-  int size, queue;
+  int queue;
 
   while ((isr = inb_reg0(dep, DP_ISR)) != 0) {
 

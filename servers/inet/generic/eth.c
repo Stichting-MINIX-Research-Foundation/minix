@@ -658,7 +658,6 @@ PUBLIC int eth_select(fd, operations)
 int fd;
 unsigned operations;
 {
-	int i;
 	unsigned resops;
 	eth_fd_t *eth_fd;
 
@@ -1115,8 +1114,7 @@ printf("eth_restart_ioctl: clearing etp_getstat in port %d\n",
 PRIVATE int eth_sel_read (eth_fd)
 eth_fd_t *eth_fd;
 {
-	acc_t *pack, *tmp_acc, *next_acc;
-	int result;
+	acc_t *tmp_acc, *next_acc;
 
 	if (!(eth_fd->ef_flags & EFF_OPTSET))
 		return 1;	/* Read will not block */

@@ -290,7 +290,6 @@ unsigned nr_req;		/* length of request vector */
   unsigned long dv_size;
   int accumulated_read = 0;
   struct logdevice *log;
-  static int f;
   size_t vir_offset = 0;
 
   if(log_device < 0 || log_device >= NR_DEVS)

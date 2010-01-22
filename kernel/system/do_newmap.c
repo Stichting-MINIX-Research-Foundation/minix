@@ -19,7 +19,6 @@ message *m_ptr;			/* pointer to request message */
 /* Handle sys_newmap().  Fetch the memory map. */
   register struct proc *rp;	/* process whose map is to be loaded */
   struct mem_map *map_ptr;	/* virtual address of map inside caller */
-  phys_bytes src_phys;		/* physical address of map at the */
   int proc_nr;
 
   map_ptr = (struct mem_map *) m_ptr->PR_MEM_PTR;

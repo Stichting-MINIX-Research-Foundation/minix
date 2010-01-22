@@ -255,8 +255,6 @@ PUBLIC void init_buffer(void)
  * 'tmp_phys', the normal address is 'tmp_buf'.
  */
 
-  unsigned left;
-
   if(!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, AC_ALIGN4K, &tmp_phys)))
 	panic(__FILE__, "can't allocate tmp_buf", DMA_BUF_SIZE);
 }
@@ -271,7 +269,6 @@ message *mp;			/* pointer to read or write message */
 /* Carry out a single read or write request. */
   iovec_t iovec1;
   int r, opcode;
-  phys_bytes phys_addr;
   u64_t position;
 
   /* Disk address?  Address and length of the user buffer? */
@@ -309,7 +306,7 @@ message *mp;		/* pointer to read or write message */
   static iovec_t iovec[NR_IOREQS];
   phys_bytes iovec_size;
   unsigned nr_req;
-  int r, j, opcode;
+  int r, opcode;
   u64_t position;
 
   nr_req = mp->COUNT;	/* Length of I/O vector */

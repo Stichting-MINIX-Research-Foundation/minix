@@ -289,7 +289,7 @@ PUBLIC int do_publish(message *m_ptr)
   char key_name[DS_MAX_KEYLEN];
   int flags = m_ptr->DS_FLAGS;
   size_t length;
-  int nr, r;
+  int r;
 
   /* MAP should not be overwritten. */
   if((flags & DSF_TYPE_MAP) && (flags & DSF_OVERWRITE))

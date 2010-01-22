@@ -48,17 +48,13 @@ message *m_ptr;			/* pointer to request message */
 PRIVATE void clear_proc(rc)
 register struct proc *rc;		/* slot of process to clean up */
 {
-  register struct proc *rp;		/* iterate over process table */
-  register struct proc **xpp;		/* iterate over caller queue */
   int i;
-  int sys_id;
 
   /* Don't clear if already cleared. */
   if(isemptyp(rc)) return;
 
   /* Check the table with IRQ hooks to see if hooks should be released. */
   for (i=0; i < NR_IRQ_HOOKS; i++) {
-      int proc;
       if (rc->p_endpoint == irq_hooks[i].proc_nr_e) {
         rm_irq_handler(&irq_hooks[i]);	/* remove interrupt handler */
         irq_hooks[i].proc_nr_e = NONE;	/* mark hook as free */
