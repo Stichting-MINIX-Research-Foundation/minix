@@ -296,7 +296,6 @@ long bit_map;			/* notification event set or flags */
  * (or both). The caller is always given by 'proc_ptr'.
  */
   register struct proc *caller_ptr = proc_ptr;	/* get pointer to caller */
-  int mask_entry;				/* bit to check in send mask */
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
   size_t msg_size;
@@ -519,14 +518,12 @@ int src_dst;					/* src or dst process */
  */
   register struct proc *xp;			/* process pointer */
   int group_size = 1;				/* start with only caller */
-  int trap_flags;
 #if DEBUG_ENABLE_IPC_WARNINGS
   static struct proc *processes[NR_PROCS + NR_TASKS];
   processes[0] = cp;
 #endif
 
   while (src_dst != ANY) { 			/* check while process nr */
-      int src_dst_e;
       xp = proc_addr(src_dst);			/* follow chain of processes */
 #if DEBUG_ENABLE_IPC_WARNINGS
       processes[group_size] = xp;
@@ -654,9 +651,7 @@ int flags;
  * is available block the caller.
  */
   register struct proc **xpp;
-  register struct notification **ntf_q_pp;
   message m;
-  int bit_nr;
   sys_map_t *map;
   bitchunk_t *chunk;
   int i, r, src_id, src_proc_nr, src_p;
@@ -790,7 +785,6 @@ endpoint_t dst_e;			/* which process to notify */
   int src_id;				/* source id for late delivery */
   message m;				/* the notification message */
   int r;
-  int proc_nr;
   int dst_p;
 
   vmassert(intr_disabled());
@@ -858,7 +852,7 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
  *===========================================================================*/
 PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 {
-	int i, dst_p, done, do_notify, r;
+	int i, dst_p, done, do_notify;
 	unsigned flags;
 	struct proc *dst_ptr;
 	struct priv *privp;
@@ -1415,7 +1409,6 @@ PRIVATE struct proc * pick_proc(void)
    * The lowest queue contains IDLE, which is always ready.
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
-	int found = 0;
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("queue %d empty\n", q););
 		continue;
