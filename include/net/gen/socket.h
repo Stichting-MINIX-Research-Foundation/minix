@@ -35,7 +35,8 @@ server/ip/gen/socket.h
 #define	AF_X25		20		/* CCITT X.25 in particular */
 #define	AF_OSINET	21		/* AFI = 47, IDI = 4 */
 #define	AF_GOSIP	22		/* U.S. Government OSI */
+#define	AF_INET6	23		/* IP version 6 */
 
-#define	AF_MAX		21
+#define	AF_MAX		23
 
 #endif /* __SERVER__IP__GEN__SOCKET_H__ */
