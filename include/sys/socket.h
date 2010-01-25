@@ -87,4 +87,17 @@ _PROTOTYPE( int socket, (int _domain, int _type, int _protocol)		);
 #define PF_UNIX		AF_UNIX
 #define PF_UNSPEC	AF_UNSPEC
 
+/* based on http://tools.ietf.org/html/rfc2553 */
+struct sockaddr_storage
+{
+	sa_family_t	__ss_family;
+	char		__ss_pad1[6];
+#ifdef __LONG_LONG_SUPPORTED
+	int64_t		__ss_align;
+#else
+	int32_t		__ss_align[2];
+#endif
+	char		__ss_pad2[112];
+};
+
 #endif /* SYS_SOCKET_H */
