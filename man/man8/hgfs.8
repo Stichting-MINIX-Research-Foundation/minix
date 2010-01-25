@@ -1,0 +1,76 @@
+.TH HGFS 8
+.SH NAME
+hgfs \- Host/Guest File System server
+.SH SYNOPSIS
+\fBmount \-t hgfs \fR[\fB\-r\fR] [\fB\-o \fIoptions\fR] \fBnone \fImountpoint
+.SH DESCRIPTION
+The Host/Guest File System (HGFS) server allows one to mount
+VMware Shared Folders as a file system. This makes it possible to access
+selected portions of the VMware host file system when MINIX is run as a
+VMware guest.
+.PP
+The above mount command will mount the hgfs file system onto the directory
+\fImountpoint\fR. The \fB\-r\fR mount option makes the file system read-only;
+note that shared folders may independently have been configured as read-only
+on the VMware host. The \fIoptions\fR field is a string consisting of
+comma-delimited \fIkey\fR or \fIkey\fB=\fIvalue\fR options. The following
+options are supported.
+.TP 4
+\fBprefix=\fIpath\fR
+This option sets a path prefix that will be prepended to all file system
+operations on the host system. When mounted without a prefix (the default),
+the root directory of an HGFS mount will contain all the names of the
+available shares. The prefix option can be used to mount one of those shares,
+by specifying its name as the prefix. Multi-component path prefixes are
+supported as well.
+.TP
+\fBuid=\fInumber\fR
+This sets the user ID used for all the files and directories in the file
+system, allowing a non-root user to be the owner. The value must be specified
+as a decimal number.
+The default is root (the number \fB0\fR).
+.TP
+\fBgid=\fInumber\fR
+Likewise, sets the group ID for all files and directories.
+The default is operator (the number \fB0\fR).
+.TP
+\fBfmask=\fInumber\fR
+This option sets the file permission mask of regular files. It is specified as
+an octal number. For example, a value of \fB600\fR makes all files readable and
+writable by the owning user (see the "\fBuid\fR" option).
+The default is \fB755\fR.
+.TP
+\fBdmask=\fInumber\fR
+Likewise, sets the file permission mask of directories.
+The default is also \fB755\fR.
+.TP
+\fBicase\fR
+This option tells HGFS to treat names as case-insensitive.
+.TP
+\fBnoicase\fR
+This option, set by default, reverts the effect of an earlier specified
+"\fBicase\fR" option.
+.SH EXAMPLES
+.TP 20
+.B mount \-t hgfs none /mnt
+# Mount the entire shared folders tree on \fI/mnt\fR
+.TP 20
+.B mount \-t hgfs \-o prefix=shared,uid=20,fmask=644,icase none /usr/shared
+Mount the "\fIshared\fR" shared folder on \fI/usr/shared\fR
+.SH LIMITATIONS
+HGFS uses the first and original version of the VMware Shared Folders protocol
+to talk to the VMware host. That means that HGFS should work with all VMware
+products that support shared folders. However, this also imposes a number of
+limitations. For example, the first version of the protocol supports only
+regular files and directories (and not links), and does not have support for
+automatic case sensitivity handling.
+.PP
+Some file system operations may not behave as expected, because the behavior
+of HGFS is determined largely by the host. Other file system operations
+(in particular, using directories as mountpoints) are not implemented,
+because the file system structure as perceived by HGFS may change arbitrarily
+at any time, due to modifications on the host side.
+.SH "SEE ALSO"
+.BR mount (1)
+.SH AUTHOR
+David van Moolenbroek <dcvmoole@cs.vu.nl>

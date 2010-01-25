@@ -20,6 +20,7 @@ all install depend clean:
 	cd ./mfs && $(MAKE) $@
 	cd ./pfs && $(MAKE) $@
 	cd ./iso9660fs && $(MAKE) $@
+	cd ./hgfs && $(MAKE) $@
 	cd ./rs && $(MAKE) $@
 	cd ./ds && $(MAKE) $@
 	cd ./is && $(MAKE) $@
