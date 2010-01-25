@@ -65,7 +65,7 @@ struct ip_mreq
 };
 
 /* 
- * IPv6 is not supportedn, but some programs need these declarations 
+ * IPv6 is not supported, but some programs need these declarations 
  * nevertheless; these declarations are based on
  * http://www.opengroup.org/onlinepubs/000095399/basedefs/netinet/in.h.html
  */
