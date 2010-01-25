@@ -21,8 +21,8 @@
 #include <sys/wait.h>
 #include <string.h>
 
-#define TERMINALW "/dev/ttyp0"
-#define TERMINALR "/dev/ptyp0"
+#define TERMINALW "/dev/ttypf"
+#define TERMINALR "/dev/ptypf"
 #define SENDSTRING "minixrocks"
 #define MAX_ERROR 5
 
