@@ -78,8 +78,6 @@ _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 _PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)                      );
 _PROTOTYPE( void enable_irq, (irq_hook_t *hook)                        	);
 _PROTOTYPE( int disable_irq, (irq_hook_t *hook)                        );
-_PROTOTYPE( void cons_setc, (int pos, int c)				);
-_PROTOTYPE( void cons_seth, (int pos, int n)				);
 
 /* debug.c */
 #if DEBUG_SCHED_CHECK
@@ -122,12 +120,8 @@ _PROTOTYPE( int data_copy, (endpoint_t from, vir_bytes from_addr,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
 _PROTOTYPE( int data_copy_vmcheck, (endpoint_t from, vir_bytes from_addr,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
-#define data_copy_to(d, p, v, n) data_copy(SYSTEM, (d), (p), (v), (n));
-#define data_copy_from(d, p, v, n) data_copy((p), (v), SYSTEM, (d), (n));
 _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
 _PROTOTYPE( void vm_init, (struct proc *first)        			);
-_PROTOTYPE( int vm_copy, (vir_bytes src, struct proc *srcproc,
-	vir_bytes dst, struct proc *dstproc, phys_bytes bytes));
 _PROTOTYPE( phys_bytes umap_local, (register struct proc *rp, int seg,
 	vir_bytes vir_addr, vir_bytes bytes));
 _PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,
@@ -164,8 +158,6 @@ _PROTOTYPE( int arch_do_vmctl, (message *m_ptr, struct proc *p));
 _PROTOTYPE( int vm_contiguous, (struct proc *targetproc, u32_t vir_buf, size_t count));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
-_PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target,
-	phys_bytes lin, phys_bytes size, int wrflag, int type));
 _PROTOTYPE( int delivermsg, (struct proc *target));
 _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,

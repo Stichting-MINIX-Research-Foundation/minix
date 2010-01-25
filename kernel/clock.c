@@ -217,7 +217,7 @@ PRIVATE void load_update(void)
 }
 
 /*
- * Timer interupt handler. This is the only think executed on non boot
+ * Timer interupt handler. This is the only thing executed on non boot
  * processors. It is called by bsp_timer_int_handler() on the boot processor
  */
 PUBLIC int ap_timer_int_handler(void)

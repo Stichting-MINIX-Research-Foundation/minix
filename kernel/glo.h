@@ -16,10 +16,6 @@
 #include "config.h"
 #include "debug.h"
 
-/* Variables relating to shutting down MINIX. */
-EXTERN char kernel_exception;		/* TRUE after system exceptions */
-EXTERN char shutdown_started;		/* TRUE after shutdowns / reboots */
-
 /* Kernel information structures. This groups vital kernel information. */
 EXTERN struct kinfo kinfo;		/* kernel information for users */
 EXTERN struct machine machine;		/* machine information for users */

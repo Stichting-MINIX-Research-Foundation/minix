@@ -35,7 +35,7 @@ u8_t *vm_pagedirs = NULL;
 
 #define NOPDE (-1)
 #define PDEMASK(n) (1L << (n))
-PUBLIC u32_t dirtypde;
+PUBLIC u32_t dirtypde;  /* Accessed from assembly code. */
 #define WANT_FREEPDES (sizeof(dirtypde)*8-5)
 PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
 
@@ -151,7 +151,7 @@ PUBLIC void vm_init(struct proc *newptproc)
 /*===========================================================================*
  *				lin_lin_copy				     *
  *===========================================================================*/
-int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
+PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
 	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
 {
 	u32_t addr;
@@ -257,7 +257,7 @@ PUBLIC void vm_set_cr3(struct proc *newptproc)
 	if(u) { unlock; }
 }
 
-char *cr0_str(u32_t e)
+PRIVATE char *cr0_str(u32_t e)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -273,7 +273,7 @@ char *cr0_str(u32_t e)
 	return str;
 }
 
-char *cr4_str(u32_t e)
+PRIVATE char *cr4_str(u32_t e)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -594,7 +594,7 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 /*===========================================================================*
  *                              vm_suspend                                *
  *===========================================================================*/
-PUBLIC int vm_suspend(struct proc *caller, struct proc *target,
+PRIVATE int vm_suspend(struct proc *caller, struct proc *target,
 	vir_bytes linaddr, vir_bytes len, int wrflag, int type)
 {
 	/* This range is not OK for this process. Set parameters  
@@ -668,7 +668,7 @@ int delivermsg(struct proc *rp)
 	NOREC_RETURN(deliver, r);
 }
 
-char *flagstr(u32_t e, int dir)
+PRIVATE char *flagstr(u32_t e, int dir)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -685,7 +685,7 @@ char *flagstr(u32_t e, int dir)
 	return str;
 }
 
-void vm_pt_print(u32_t *pagetable, u32_t v)
+PRIVATE void vm_pt_print(u32_t *pagetable, u32_t v)
 {
 	int pte;
 	int col = 0;
@@ -709,7 +709,7 @@ void vm_pt_print(u32_t *pagetable, u32_t v)
 	return;
 }
 
-void vm_print(u32_t *root)
+PRIVATE void vm_print(u32_t *root)
 {
 	int pde;
 

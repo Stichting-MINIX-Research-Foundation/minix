@@ -126,8 +126,6 @@ struct tss_s {
 EXTERN struct tss_s tss;
 
 _PROTOTYPE( void idt_init, (void)                     			);
-_PROTOTYPE( void init_codeseg, (struct segdesc_s *segdp, phys_bytes base,
-                vir_bytes size, int privilege)                          );
 _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
                 vir_bytes size, int privilege)                          );
 _PROTOTYPE( void enable_iop, (struct proc *pp)                          );
@@ -151,11 +149,9 @@ _PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
 _PROTOTYPE(void idt_reload,(void));
 
 EXTERN void * k_boot_stktop;
-_PROTOTYPE(void tss_init, (struct tss_s * tss, void * kernel_stack, unsigned cpu));
 
 _PROTOTYPE( void int_gate, (unsigned vec_nr, vir_bytes offset,
 		unsigned dpl_type) );
-_PROTOTYPE(void i8259_disable, (void));
 
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"

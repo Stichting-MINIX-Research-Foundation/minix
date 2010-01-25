@@ -66,13 +66,13 @@ PUBLIC phys_bytes seg2phys(U16_t seg)
 /*===========================================================================*
  *				phys2seg				     *
  *===========================================================================*/
-PUBLIC void phys2seg(u16_t *seg, vir_bytes *off, phys_bytes phys)
+PRIVATE void phys2seg(u16_t *seg, vir_bytes *off, phys_bytes phys)
 {
 /* Return a segment selector and offset that can be used to reach a physical
  * address, for use by a driver doing memory I/O in the A0000 - DFFFF range.
  */
   *seg = FLAT_DS_SELECTOR;
-  *off = phys;
+  *off = (vir_bytes) phys;
 }
 
 /*===========================================================================*
@@ -91,7 +91,7 @@ PUBLIC void init_dataseg(register struct segdesc_s *segdp,
 /*===========================================================================*
  *				init_codeseg				     *
  *===========================================================================*/
-PUBLIC void init_codeseg(register struct segdesc_s *segdp, phys_bytes base,
+PRIVATE void init_codeseg(register struct segdesc_s *segdp, phys_bytes base,
 	vir_bytes size, int privilege)
 {
 	/* Build descriptor for a code segment. */
@@ -305,7 +305,7 @@ PUBLIC void alloc_segments(register struct proc *rp)
 /*===========================================================================*
  *				check_segments				     *
  *===========================================================================*/
-PUBLIC void check_segments(char *File, int line)
+PRIVATE void check_segments(char *File, int line)
 {
   int checked = 0;
 int fail = 0;

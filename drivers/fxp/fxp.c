@@ -109,12 +109,6 @@ PRIVATE struct pcitab pcitab_fxp[]=
 
 typedef int irq_hook_t;
 
-/* Translate a pointer to a field in a structure to a pointer to the structure
- * itself.  So it translates '&struct_ptr->field' back to 'struct_ptr'.
- */
-#define structof(type, field, ptr) \
-	((type *) (((char *) (ptr)) - offsetof(type, field)))
-
 static timer_t *fxp_timers= NULL;
 static clock_t fxp_next_timeout= 0;
 

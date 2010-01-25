@@ -8,12 +8,6 @@
 #include "config.h"
 #include "debug.h"
 
-/* Translate a pointer to a field in a structure to a pointer to the structure
- * itself. So it translates '&struct_ptr->field' back to 'struct_ptr'.
- */
-#define structof(type, field, ptr) \
-	((type *) (((char *) (ptr)) - offsetof(type, field)))
-
 /* Translate an endpoint number to a process number, return success. */
 #define isokendpt(e,p) isokendpt_d((e),(p),0)
 #define okendpt(e,p)   isokendpt_d((e),(p),1)

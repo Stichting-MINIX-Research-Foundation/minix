@@ -262,7 +262,6 @@ struct proc {
 #define iskerneln(n)	  ((n) < 0)
 #define isuserp(p)        isusern((p) >= BEG_USER_ADDR)
 #define isusern(n)        ((n) >= 0)
-#define isrootsysp(p)	  isrootsysn((p)->p_nr)
 #define isrootsysn(n)	  ((n) == ROOT_SYS_PROC_NR)
 
 #ifndef __ASSEMBLY__

@@ -119,7 +119,7 @@ PUBLIC void arch_get_aout_headers(int i, struct exec *h)
 	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
 
-PUBLIC void tss_init(struct tss_s * tss, void * kernel_stack, unsigned cpu)
+PRIVATE void tss_init(struct tss_s * tss, void * kernel_stack, unsigned cpu)
 {
 	/*
 	 * make space for process pointer and cpu id and point to the first
@@ -428,7 +428,7 @@ PUBLIC void arch_ack_profile_clock(void)
 
 #define COLOR_BASE	0xB8000L
 
-PUBLIC void cons_setc(int pos, int c)
+PRIVATE void cons_setc(int pos, int c)
 {
 	char ch;
 
@@ -436,7 +436,7 @@ PUBLIC void cons_setc(int pos, int c)
 	phys_copy(vir2phys((vir_bytes)&ch), COLOR_BASE+(20*80+pos)*2, 1);
 }
 
-PUBLIC void cons_seth(int pos, int n)
+PRIVATE void cons_seth(int pos, int n)
 {
 	n &= 0xf;
 	if (n < 10)

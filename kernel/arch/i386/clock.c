@@ -54,7 +54,7 @@ PUBLIC void stop_8253A_timer(void)
 /*===========================================================================*
  *				read_8235A_timer			     *
  *===========================================================================*/
-PUBLIC clock_t read_8253A_timer(void)
+PRIVATE clock_t read_8253A_timer(void)
 {
 	/* Read the counter of channel 0 of the 8253A timer.  This counter
 	 * counts down at a rate of TIMER_FREQ and restarts at
