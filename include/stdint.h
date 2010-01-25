@@ -87,8 +87,14 @@ typedef unsigned	uintptr_t;
 typedef long		intptr_t;
 typedef unsigned long	uintptr_t;
 #endif
+
+#if defined(__LONG_LONG_SUPPORTED) || (_WORD_SIZE > 2 && __L64)
+typedef int64_t		intmax_t;
+typedef uint64_t	uintmax_t;
+#else
 typedef long		intmax_t;
 typedef unsigned long	uintmax_t;
+#endif
 
 #if !__cplusplus || defined(__STDC_LIMIT_MACROS)
 #ifndef _LIMITS_H
@@ -178,9 +184,16 @@ typedef unsigned long	uintmax_t;
 #define INTPTR_MAX		LONG_MAX
 #define UINTPTR_MAX		ULONG_MAX
 #endif
+
+#if defined(__LONG_LONG_SUPPORTED) || (_WORD_SIZE > 2 && __L64)
+#define INTMAX_MIN		INT64_MIN
+#define INTMAX_MAX		INT64_MAX
+#define UINTMAX_MAX		UINT64_MAX
+#else
 #define INTMAX_MIN		LONG_MIN
 #define INTMAX_MAX		LONG_MAX
 #define UINTMAX_MAX		ULONG_MAX
+#endif
 
 #endif /* !__cplusplus || __STDC_LIMIT_MACROS */
 
