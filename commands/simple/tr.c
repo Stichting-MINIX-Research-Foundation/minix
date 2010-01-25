@@ -117,11 +117,47 @@ register unsigned char *string1, *string2;
   }
 }
 
+static int starts_with(const char *s1, const char *s2)
+{
+	while (*s1 && *s1 == *s2)
+	{
+		s1++;
+		s2++;
+	}
+	return *s1 == 0;
+}
+
+/* 
+ * character classes from 
+ * http://www.opengroup.org/onlinepubs/009695399/utilities/tr.html
+ * missing: blank, punct, cntrl, graph, print, space 
+ */
+static struct
+{
+	const char *keyword;
+	char first;
+	char last;
+} expand_keywords[] = {
+	{ "[:alnum:]", 'A', 'Z' },
+	{ "[:alnum:]", 'a', 'z' },
+	{ "[:alnum:]", '0', '9' },
+	{ "[:alpha:]", 'A', 'Z' },
+	{ "[:alpha:]", 'a', 'z' },
+	{ "[:digit:]", '0', '9' },
+	{ "[:lower:]", 'a', 'z' },
+	{ "[:upper:]", 'A', 'Z' },
+	{ "[:xdigit:]", '0', '9' },		
+	{ "[:xdigit:]", 'A', 'F' },
+	{ "[:xdigit:]", 'a', 'f' }
+};
+
+#define LENGTH(a) ((sizeof((a))) / (sizeof((a)[0])))
+
 void expand(arg, buffer)
 register char *arg;
 register unsigned char *buffer;
 {
-  int i, ac;
+  int i, ac, keyword_index;
 
   while (*arg) {
 	if (*arg == '\\') {
@@ -136,16 +172,35 @@ register unsigned char *buffer;
 		} else if (*arg != '\0')
 			*buffer++ = *arg++;
 	} else if (*arg == '[') {
-		arg++;
-		i = *arg++;
-		if (*arg++ != '-') {
-			*buffer++ = '[';
-			arg -= 2;
-			continue;
+		/* does one of the keywords match? */
+		keyword_index = -1;
+		for (i = 0; i < LENGTH(expand_keywords); i++)
+			if (starts_with(expand_keywords[i].keyword, arg))
+			{
+				/* we have a match, remember and expand */
+				keyword_index = i;
+				ac = expand_keywords[i].first;
+				while (ac <= expand_keywords[i].last)
+					*buffer++ = ac++;
+			}
+
+		/* skip keyword if found, otherwise expand range */
+		if (keyword_index >= 0)
+			arg += strlen(expand_keywords[keyword_index].keyword);
+		else
+		{
+			/* expand range */
+			arg++;
+			i = *arg++;
+			if (*arg++ != '-') {
+				*buffer++ = '[';
+				arg -= 2;
+				continue;
+			}
+			ac = *arg++;
+			while (i <= ac) *buffer++ = i++;
+			arg++;		/* Skip ']' */
 		}
-		ac = *arg++;
-		while (i <= ac) *buffer++ = i++;
-		arg++;		/* Skip ']' */
 	} else
 		*buffer++ = *arg++;
   }

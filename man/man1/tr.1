@@ -45,3 +45,12 @@ Use [ and ] if you want to be portable, because a
 .I tr
 that doesn't need them will still accept the syntax and mindlessly
 translate [ into [ and ] into ].
+.PP
+MINIX tr supports the following character classes: alnum, alpha, digit, lower,
+upper and xdigit. If any of these keywords is encountered between backets and 
+colons, it is replaced by respectively alphanumeric characters, alphabetic
+characters, decimal digits, lowercase letters, uppercase letters and 
+hexadecimal digits. The following are equivalent with the given examples:
+.EX "tr \(fm[:upper:]\(fm \(fm[:lower:]\(fm <x >y     " "Convert upper case to lower case"
+.EX "tr \-d \(fm[:digit:]\(fm <f1 >f2  " "Delete all digits from \fIf1\fR"
+
