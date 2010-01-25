@@ -15,6 +15,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <limits.h>
+#include <lib.h>
 #include <minix/config.h>
 #include <minix/com.h>
 #include <minix/const.h>
@@ -124,10 +125,10 @@ PRIVATE void print_usage(char *app_name, char *problem)
 
 /* A request to the RS server failed. Report and exit. 
  */
-PRIVATE void failure(int num) 
+PRIVATE void failure(void) 
 {
-  fprintf(stderr, "Request to RS failed: %s (error %d)\n", strerror(num), num);
-  exit(num);
+  fprintf(stderr, "Request to RS failed: %s (error %d)\n", strerror(errno), errno);
+  exit(errno);
 }
 
 
@@ -1069,7 +1070,7 @@ PUBLIC int main(int argc, char **argv)
   message m;
   int result;
   int request;
-  int i, s;
+  int i;
   char *label, *progname = NULL;
   struct passwd *pw;
 
@@ -1141,8 +1142,8 @@ PUBLIC int main(int argc, char **argv)
       m.RS_CMD_ADDR = (char *) &rs_start;
 
       /* Build request message and send the request. */
-      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
-          failure(-s);
+      if (_syscall(RS_PROC_NR, request, &m) == -1) 
+          failure();
       else if(req_printep)
 	printf("%d\n", m.RS_ENDPOINT);	
       result = m.m_type;
@@ -1153,20 +1154,20 @@ PUBLIC int main(int argc, char **argv)
   case RS_RESTART:
       m.RS_CMD_ADDR = req_label;
       m.RS_CMD_LEN = strlen(req_label);
-      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
-          failure(-s);
+      if (_syscall(RS_PROC_NR, request, &m) == -1) 
+          failure();
       break;
   case RS_SHUTDOWN:
-      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
-          failure(-s);
+      if (_syscall(RS_PROC_NR, request, &m) == -1) 
+          failure();
       break;
   case RS_UPDATE:
       m.RS_CMD_ADDR = req_label;
       m.RS_CMD_LEN = strlen(req_label);
       m.RS_LU_STATE = req_lu_state;
       m.RS_LU_PREPARE_MAXTIME = req_prepare_maxtime;
-      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
-          failure(-s);
+      if (_syscall(RS_PROC_NR, request, &m) == -1) 
+          failure();
       break;
   default:
       print_usage(argv[ARG_NAME], "request is not yet supported");

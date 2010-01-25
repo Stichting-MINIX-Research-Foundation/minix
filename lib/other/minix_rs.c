@@ -16,10 +16,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <lib.h>
 
 int minix_rs_lookup(const char *name, endpoint_t *value)
 {
-	int r;
 	message m;
 	size_t len_key;
 
@@ -28,12 +28,11 @@ int minix_rs_lookup(const char *name, endpoint_t *value)
 	m.RS_NAME = (char *) name;
 	m.RS_NAME_LEN = len_key;
 
-	r = _taskcall(RS_PROC_NR, RS_LOOKUP, &m);
-
-	if(r == OK) {
+	if (_syscall(RS_PROC_NR, RS_LOOKUP, &m) != -1) {
 		*value = m.RS_ENDPOINT;
+		return OK;
 	}
 
-	return r;
+	return -1;
 }
 

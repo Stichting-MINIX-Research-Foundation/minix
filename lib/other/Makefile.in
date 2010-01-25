@@ -88,11 +88,9 @@ libc_FILES=" \
 	strtok_r.c \
 	strtoll.c \
 	swab.c \
-	sys_eniop.c \
 	syscall.c \
 	sysconf.c \
 	syslog.c \
-	taskcall.c \
 	telldir.c \
 	termcap.c \
 	ttyname.c \
