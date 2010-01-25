@@ -642,7 +642,7 @@ void ack_emit_instruction(asm86_t *a)
 		}
 		/* unsupported fnstsw */
 		if (a->opcode == FNSTSW) {
-			ack_printf(".data1 0xDF, 0xD0\n"); /* FNSTSW [eax] */
+			ack_printf(".data1 0xDF, 0xE0\n"); /* FNSTSW [eax] */
 			return;
 		}
 		/* unsupported frstor */
