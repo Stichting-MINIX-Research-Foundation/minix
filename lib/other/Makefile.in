@@ -42,6 +42,7 @@ libc_FILES=" \
 	crypt.c \
 	ctermid.c \
 	cuserid.c \
+	dirname.c \
 	environ.c \
 	errno.c \
 	fdopen.c \
@@ -52,6 +53,7 @@ libc_FILES=" \
 	fsversion.c \
 	getgrent.c \
 	getlogin.c \
+	getopt_long.c \
 	getpagesize.c \
 	getpass.c \
 	getpwent.c \
@@ -98,6 +100,8 @@ libc_FILES=" \
 	v8regerror.c \
 	v8regexp.c \
 	v8regsub.c \
-	vectorio.c"
+	vectorio.c \
+	vwarnx.c \
+	warnx.c"
 
 TYPE=both
