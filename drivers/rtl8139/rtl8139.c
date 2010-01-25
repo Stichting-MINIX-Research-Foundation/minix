@@ -346,7 +346,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	if (r == OK)
 		notify(inet_proc_nr);
 	else if (r != ESRCH)
-		printf("rtl8139: ds_retrieve_label_num failed for 'inet': %d\n", r);
+		printf("rtl8139: ds_retrieve_label_num failed for 'inet': %d\n",
+			r);
 
 	return(OK);
 }

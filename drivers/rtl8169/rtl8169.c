@@ -406,11 +406,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	 * not yet alive.
 	 */
 #if 0
-	r = ds_retrieve_u32("inet", &inet_proc_nr);
+	r = ds_retrieve_label_num("inet", &inet_proc_nr);
 	if (r == OK)
 		notify(inet_proc_nr);
 	else if (r != ESRCH)
-		printf("rtl8169: ds_retrieve_u32 failed for 'inet': %d\n", r);
+		printf("rtl8169: ds_retrieve_label_num failed for 'inet': %d\n",
+			r);
 #endif
 
 	return(OK);

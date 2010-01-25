@@ -162,13 +162,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
         panic("e1000", "tsc_calibrate failed", r);
     }
     /* Try to notify inet that we are present (again) */
-    if ((r = ds_retrieve_u32("inet", &tasknr)) == OK)
+    if ((r = ds_retrieve_label_num("inet", &tasknr)) == OK)
     {
         notify(tasknr);
     }
     else if (r != ESRCH)
     {
-        printf("e1000: ds_retrieve_u32 failed for 'inet': %d\n", r);
+        printf("e1000: ds_retrieve_label_num failed for 'inet': %d\n", r);
     }
 
     return(OK);

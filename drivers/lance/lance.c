@@ -410,11 +410,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    eth_ign_proto= htons((u16_t) v);
 
    /* Try to notify inet that we are present (again) */
-   r= ds_retrieve_u32("inet", &tasknr);
+   r= ds_retrieve_label_num("inet", &tasknr);
    if (r == OK)
       notify(tasknr);
    else if (r != ESRCH)
-      printf("lance: ds_retrieve_u32 failed for 'inet': %d\n", r);
+      printf("lance: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
   return(OK);
 }

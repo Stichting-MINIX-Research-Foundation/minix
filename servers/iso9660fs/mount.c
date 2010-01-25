@@ -35,9 +35,9 @@ PUBLIC int fs_readsuper() {
 	return(EINVAL);
   }
 
-  r = ds_retrieve_u32(fs_dev_label, &tasknr);
+  r = ds_retrieve_label_num(fs_dev_label, &tasknr);
   if (r != OK) {
-	printf("ISOFS %s:%d ds_retrieve_u32 failed for '%s': %d\n",
+	printf("ISOFS %s:%d ds_retrieve_label_num failed for '%s': %d\n",
 		__FILE__, __LINE__, fs_dev_label, r);
 	return(EINVAL);
   }

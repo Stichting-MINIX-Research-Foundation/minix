@@ -156,7 +156,7 @@ void driver_init(void)
 	driver[DRIVER_MAIN].label = MAIN_LABEL;
 	driver[DRIVER_MAIN].minor = MAIN_MINOR;
 
-	r = ds_retrieve_u32(driver[DRIVER_MAIN].label,
+	r = ds_retrieve_label_num(driver[DRIVER_MAIN].label,
 		(u32_t *) &driver[DRIVER_MAIN].endpt);
 	if (r != OK) {
 		printf("Filter: failed to get main disk driver's endpoint: "
@@ -177,7 +177,7 @@ void driver_init(void)
 			panic(__FILE__, "same driver: not tested", NO_NUM);
 		}
 
-		r = ds_retrieve_u32(driver[DRIVER_BACKUP].label,
+		r = ds_retrieve_label_num(driver[DRIVER_BACKUP].label,
 			(u32_t *) &driver[DRIVER_BACKUP].endpt);
 		if (r != OK) {
 			printf("Filter: failed to get backup disk driver's "
@@ -263,7 +263,7 @@ static int new_driver_ep(int which)
 	int r;
 	endpoint_t endpt;
 
-	r = ds_retrieve_u32(driver[which].label, (u32_t *) &endpt);
+	r = ds_retrieve_label_num(driver[which].label, (u32_t *) &endpt);
 
 	if (r != OK) {
 		printf("Filter: DS query for %s failed\n",
@@ -458,7 +458,8 @@ static void restart_driver(int which, int tell_rs)
 		if(w) flt_sleep(1);
 		w = 1;
 
-		r = ds_retrieve_u32(driver[which].label, (u32_t *) &endpt);
+		r = ds_retrieve_label_num(driver[which].label,
+			(u32_t *) &endpt);
 
 #if DEBUG2
 		if (r != OK)

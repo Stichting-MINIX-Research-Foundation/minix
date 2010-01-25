@@ -1257,11 +1257,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	atl2_init(devind);
 
 	/* Notify Inet of our presence, if it has already been started. */
-	r = ds_retrieve_u32("inet", &inet_endpt);
+	r = ds_retrieve_label_num("inet", &inet_endpt);
 	if (r == OK)
 		notify(inet_endpt);
 	else if (r != ESRCH)
-		printf("ATL2: ds_retrieve_u32 failed for 'inet': %d\n", r);
+		printf("ATL2: ds_retrieve_label_num failed for 'inet': %d\n",
+			r);
 
 #if ATL2_FKEY
 	/* Register debug dump function key. */
