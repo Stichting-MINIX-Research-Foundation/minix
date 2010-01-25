@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -328,6 +329,36 @@ static void cleanup(const char *path)
 	if (rmdir(path) < 0) ERR;
 }
 
+static void test_dirname(const char *path, const char *exp)
+{
+	char buffer[PATH_MAX];
+	int i, j;
+	size_t pathlen = strlen(path);
+	char *pathout;
+
+	assert(pathlen + 3 < PATH_MAX);
+
+	/* try with no, one or two trailing slashes */
+	for (i = 0; i < 3; i++)
+	{
+		/* no trailing slashes for empty string */
+		if (pathlen < 1 && i > 0)
+			continue;
+			
+		/* prepare buffer */
+		strcpy(buffer, path);
+		for (j = 0; j < i; j++)
+			buffer[pathlen + j] = '/';
+	
+		buffer[pathlen + i] = 0;
+	
+		/* perform test */
+		pathout = dirname(buffer);
+		if (strcmp(pathout, exp) != 0)
+			ERR;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	char buffer1[PATH_MAX + 1], buffer2[PATH_MAX + 1];
@@ -357,6 +388,36 @@ int main(int argc, char **argv)
 
 	/* delete the symlinks */
 	cleanup(addbasepath(buffer1, PATH_BASE));
+
+	/* also test dirname */
+	test_dirname("", ".");	
+	test_dirname(".", ".");	
+	test_dirname("..", ".");	
+	test_dirname("x", ".");	
+	test_dirname("xy", ".");	
+	test_dirname("x/y", "x");	
+	test_dirname("xy/z", "xy");	
+	test_dirname("x/yz", "x");	
+	test_dirname("ab/cd", "ab");	
+	test_dirname("x//y", "x");	
+	test_dirname("xy//z", "xy");	
+	test_dirname("x//yz", "x");	
+	test_dirname("ab//cd", "ab");	
+	test_dirname("/", "/");	
+	test_dirname("/x", "/");	
+	test_dirname("/xy", "/");	
+	test_dirname("/x/y", "/x");	
+	test_dirname("/xy/z", "/xy");	
+	test_dirname("/x/yz", "/x");	
+	test_dirname("/ab/cd", "/ab");	
+	test_dirname("/x//y", "/x");	
+	test_dirname("/xy//z", "/xy");	
+	test_dirname("/x//yz", "/x");	
+	test_dirname("/ab//cd", "/ab");	
+	test_dirname("/usr/src", "/usr");	
+	test_dirname("/usr/src/test", "/usr/src");	
+	test_dirname("usr/src", "usr");	
+	test_dirname("usr/src/test", "usr/src");	
 
 	/* done */
 	quit();

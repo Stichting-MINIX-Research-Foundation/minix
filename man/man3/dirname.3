@@ -1,0 +1,19 @@
+.TH DIRNAME 3
+.SH NAME
+dirname \- determine name of containing directory
+.SH SYNOPSIS
+.nf
+.ft B
+#include <libgen.h>
+
+char *dirname(char *\fIpath\fP);
+.SH DESCRIPTION
+The dirname function returns the name of the directory containing \fIpath\fP.
+If the path does not contain slashes, the string "." is returned. Trailing 
+slashes are ignored.
+.SH "SEE ALSO"
+.BR basename (3).
+.SH NOTES
+This function may, but need not, overwrite the buffer passed to it.
+Although MINIX' implementation of this function is re-entrant, POSIX does not
+guarantee this property and portable programs should not rely on it.
