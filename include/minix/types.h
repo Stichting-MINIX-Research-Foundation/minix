@@ -13,7 +13,7 @@
 
 typedef unsigned char   u8_t;	   /* 8 bit type */
 typedef unsigned short u16_t;	   /* 16 bit type */
-typedef char            i8_t;      /* 8 bit signed type */
+typedef signed char     i8_t;      /* 8 bit signed type */
 typedef short          i16_t;      /* 16 bit signed type */
 
 #if __SIZEOF_LONG__ > 4
