@@ -9,14 +9,11 @@
  *   prepare_shutdown:	prepare to take MINIX down
  */
 #include "kernel.h"
-#include <signal.h>
 #include <string.h>
 #include <unistd.h>
 #include <a.out.h>
-#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
-#include <minix/u64.h>
 #include "proc.h"
 #include "debug.h"
 #include "clock.h"

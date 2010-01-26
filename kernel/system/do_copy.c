@@ -12,7 +12,6 @@
  */
 
 #include "../system.h"
-#include "../vm.h"
 #include <minix/type.h>
 
 #if (USE_VIRCOPY || USE_PHYSCOPY)

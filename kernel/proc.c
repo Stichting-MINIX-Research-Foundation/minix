@@ -34,12 +34,10 @@
  */
 
 #include <minix/com.h>
-#include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <stddef.h>
 #include <signal.h>
 #include <minix/portio.h>
-#include <minix/u64.h>
 #include <minix/syslib.h>
 
 #include "debug.h"

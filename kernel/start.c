@@ -5,7 +5,6 @@
 #include "proc.h"
 #include <stdlib.h>
 #include <string.h>
-#include <archconst.h>
 #include "proto.h"
 
 #ifdef CONFIG_WATCHDOG

@@ -55,9 +55,7 @@
 */
 
 #include "drivers.h"
-#include <minix/keymap.h>
 #include <minix/endpoint.h>
-#include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 
@@ -283,6 +281,7 @@ static void do_init(message * mp)
   dpeth_t *dep;
   dp_conf_t *dcp;
   message reply_mess;
+  const char *portname;
 
   port = mp->DL_PORT;
   if (port >= 0 && port < DE_PORT_NR) {
@@ -291,6 +290,7 @@ static void do_init(message * mp)
 	dcp = &dp_conf[port];
 	strcpy(dep->de_name, DevName);
 	dep->de_name[4] = '0' + port;
+	portname = dep->de_name;
 
 	if (dep->de_mode == DEM_DISABLED) {
 
@@ -341,15 +341,17 @@ static void do_init(message * mp)
 	}
 	*(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
 
-  } else			/* Port number is out of range */
+  } else {			/* Port number is out of range */
 	port = ENXIO;
+	portname = "(illegal dpeth port)";
+  }
 
   reply_mess.m_type = DL_CONF_REPLY;
   reply_mess.m3_i1 = port;
   reply_mess.m3_i2 = DE_PORT_NR;
   DEBUG(printf("\t reply %d\n", reply_mess.m_type));
   if (send(mp->m_source, &reply_mess) != OK)	/* Can't send */
-	panic(dep->de_name, SendErrMsg, mp->m_source);
+	panic(portname, SendErrMsg, mp->m_source);
 
   return;
 }

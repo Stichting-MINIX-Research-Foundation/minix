@@ -1,6 +1,5 @@
 #include <lib.h>
 #define stime	_stime
-#include <minix/minlib.h>
 #include <time.h>
 
 PUBLIC int stime(top)

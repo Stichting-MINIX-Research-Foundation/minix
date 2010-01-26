@@ -1,5 +1,4 @@
 #include "sysutil.h"
-#include <minix/config.h>
 #include <string.h>
 
 PUBLIC int env_argc = 0;

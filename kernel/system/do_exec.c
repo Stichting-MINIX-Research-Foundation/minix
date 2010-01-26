@@ -9,7 +9,6 @@
  */
 #include "../system.h"
 #include <string.h>
-#include <signal.h>
 #include <minix/endpoint.h>
 
 #if USE_EXEC

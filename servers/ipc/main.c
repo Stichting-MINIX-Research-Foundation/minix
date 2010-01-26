@@ -5,7 +5,7 @@ PUBLIC endpoint_t who_e;
 PUBLIC int call_type;
 PUBLIC endpoint_t SELF_E;
 
-struct {
+PRIVATE struct {
 	int type;
 	int (*func)(message *);
 	int reply;	/* whether the reply action is passed through */
@@ -21,7 +21,7 @@ struct {
 
 #define SIZE(a) (sizeof(a)/sizeof(a[0]))
 
-int verbose = 0;
+PRIVATE int verbose = 0;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );

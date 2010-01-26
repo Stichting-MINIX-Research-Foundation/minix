@@ -5,7 +5,6 @@
 /* $Header$ */
 
 #include	<stdlib.h>
-#include	<limits.h>
 
 int
 /* was: wctomb(char *s, wchar_t wchar) 

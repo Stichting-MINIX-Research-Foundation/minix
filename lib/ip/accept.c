@@ -5,7 +5,6 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 
 #include <net/netlib.h>
 #include <net/gen/in.h>

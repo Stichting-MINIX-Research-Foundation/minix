@@ -7,7 +7,6 @@
 
 #include "../system.h"
 #include <signal.h>
-#include <sys/sigcontext.h>
 
 #if USE_ENDKSIG 
 

@@ -328,7 +328,7 @@ PUBLIC int do_shmctl(message *m)
 	return OK;
 }
 
-PUBLIC void list_shm_ds(void)
+PRIVATE void list_shm_ds(void)
 {
 	int i;
 	printf("key\tid\tpage\n");

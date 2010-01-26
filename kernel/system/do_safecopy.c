@@ -18,7 +18,6 @@
 #include <minix/safecopies.h>
 
 #include "../system.h"
-#include "../vm.h"
 
 #define MAX_INDIRECT_DEPTH 5	/* up to how many indirect grants to follow? */
 

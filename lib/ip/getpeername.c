@@ -9,7 +9,6 @@
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 #include <net/gen/udp.h>
-#include <net/gen/udp_io.h>
 
 #define DEBUG 0
 

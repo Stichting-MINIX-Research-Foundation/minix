@@ -4,7 +4,6 @@
 
 #include <lib.h>
 #define nanosleep _nanosleep
-#include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>

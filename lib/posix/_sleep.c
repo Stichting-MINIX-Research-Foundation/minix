@@ -5,7 +5,6 @@
 
 #include <lib.h>
 #define sleep _sleep
-#include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>

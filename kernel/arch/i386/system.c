@@ -8,7 +8,6 @@
 #include <ibm/cmos.h>
 #include <ibm/bios.h>
 #include <minix/portio.h>
-#include <minix/u64.h>
 #include <minix/cpufeature.h>
 #include <a.out.h>
 #include <archconst.h>

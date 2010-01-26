@@ -24,7 +24,6 @@ static char sccsid[] = "@(#)gethostnamadr.c	6.41 (Berkeley) 6/1/90";
 #ifdef _MINIX
 #include <sys/types.h>
 #include <ctype.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -42,7 +41,6 @@ static char sccsid[] = "@(#)gethostnamadr.c	6.41 (Berkeley) 6/1/90";
 #include <ctype.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <errno.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 #include <resolv.h>

@@ -8,7 +8,6 @@
 #include "../../kernel.h"
 #include "../../proc.h"
 #include "proto.h"
-#include <minix/com.h>
 #include <minix/portio.h>
 #include <ibm/cpu.h>
 

@@ -9,7 +9,6 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <string.h>
 
 #include <minix/sys_config.h>
 

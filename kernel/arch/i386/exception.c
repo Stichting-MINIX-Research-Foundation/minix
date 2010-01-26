@@ -6,11 +6,9 @@
 #include "../../kernel.h"
 #include "proto.h"
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 #include "../../proc.h"
 #include "../../proto.h"
-#include "../../vm.h"
 
 extern int vm_copy_in_progress, catch_pagefaults;
 extern struct proc *vm_copy_from, *vm_copy_to;

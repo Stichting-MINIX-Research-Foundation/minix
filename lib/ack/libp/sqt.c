@@ -7,7 +7,6 @@
 
 /* $Header$ */
 #define __NO_DEFS
-#include <math.h>
 #include <pc_err.h>
 extern	_trp();
 

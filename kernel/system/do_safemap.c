@@ -15,7 +15,6 @@
 #include <minix/safecopies.h>
 
 #include "../system.h"
-#include "../vm.h"
 
 
 struct map_info_s {

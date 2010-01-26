@@ -9,7 +9,6 @@ Implementation of isnan that directly tests the bits in an ieee float
 #define _MINIX_SOURCE
 
 #include <sys/types.h>
-#include <math.h>
 
 #include "ieee_float.h"
 

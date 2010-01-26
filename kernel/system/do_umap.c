@@ -10,7 +10,6 @@
  */
 
 #include "../system.h"
-#include "../vm.h"
 
 #if USE_UMAP
 

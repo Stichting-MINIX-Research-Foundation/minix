@@ -9,7 +9,6 @@
  */
 
 #include "../system.h"
-#include "../vm.h"
 #include <signal.h>
 #include <string.h>
 #include <sys/sigcontext.h>

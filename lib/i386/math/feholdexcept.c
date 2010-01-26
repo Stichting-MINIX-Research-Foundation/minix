@@ -1,4 +1,3 @@
-#include <errno.h>
 #include <fenv.h>
 
 #include "fpu_cw.h"

@@ -49,7 +49,6 @@ static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
 #include <ctype.h>
 #endif
-#include <limits.h>
 #include <stdlib.h>
 #include <regex.h>
 

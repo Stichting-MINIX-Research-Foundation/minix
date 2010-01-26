@@ -5,7 +5,6 @@
 /* $Header$ */
 
 #include	<stdlib.h>
-#include	<limits.h>
 
 #define	CHAR_SHIFT	8
 

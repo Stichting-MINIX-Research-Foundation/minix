@@ -1,7 +1,6 @@
 #define _SYSTEM	1
 #define _MINIX 1
 
-#include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/config.h>
 #include <minix/ipc.h>
@@ -15,8 +14,6 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <time.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 

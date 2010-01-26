@@ -55,8 +55,6 @@
 
 #include "lance.h"
 
-#include <sys/ioc_memory.h>
-
 static ether_card_t ec_table[EC_PORT_NR_MAX];
 static int eth_tasknr= ANY;
 static u16_t eth_ign_proto;

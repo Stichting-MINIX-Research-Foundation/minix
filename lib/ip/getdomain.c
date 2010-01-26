@@ -3,7 +3,6 @@
  */
 #define nil 0
 #include <sys/types.h>
-#include <sys/utsname.h>
 #include <unistd.h>
 #include <string.h>
 

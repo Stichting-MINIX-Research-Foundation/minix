@@ -4,7 +4,6 @@ gettimeofday.c
 
 #include <sys/time.h>
 #include <lib.h>
-#include <time.h>
 
 int gettimeofday(struct timeval *_RESTRICT tp, void *_RESTRICT tzp)
 {

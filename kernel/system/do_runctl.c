@@ -8,7 +8,6 @@
  */
 
 #include "../system.h"
-#include <minix/type.h>
 
 #if USE_RUNCTL
 

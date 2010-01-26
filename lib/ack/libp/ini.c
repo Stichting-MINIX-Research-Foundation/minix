@@ -19,7 +19,6 @@
 /* Author: J.W. Stevenson */
 
 #include        <pc_file.h>
-#include        <pc_err.h>
 
 extern          (*_sig())();
 extern          _catch();

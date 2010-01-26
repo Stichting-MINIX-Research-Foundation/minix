@@ -3,7 +3,6 @@ pci_init.c
 */
 
 #include "syslib.h"
-#include <minix/sysutil.h>
 
 /*===========================================================================*
  *				pci_init				     *

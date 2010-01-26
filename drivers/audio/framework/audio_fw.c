@@ -43,10 +43,8 @@
 
 
 #include "audio_fw.h"
-#include <sys/vm.h>
 #include <minix/endpoint.h>
 #include <minix/ds.h>
-#include <sys/vm_i386.h>
 
 
 FORWARD _PROTOTYPE( int msg_open, (int minor_dev_nr) );

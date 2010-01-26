@@ -31,7 +31,6 @@ _PROTOTYPE( int do_shmat, (message *)                                    );
 _PROTOTYPE( int do_shmdt, (message *)                                    );
 _PROTOTYPE( int do_shmctl, (message *)                                   );
 _PROTOTYPE( int check_perm, (struct ipc_perm *, endpoint_t, int)         );
-_PROTOTYPE( void list_shm_ds, (void)                                     );
 _PROTOTYPE( void update_refcount_and_destroy, (void)                     );
 _PROTOTYPE( int do_semget, (message *)                                   );
 _PROTOTYPE( int do_semctl, (message *)                                   );

@@ -13,7 +13,6 @@
 #include <minix/endpoint.h>
 
 #include "../system.h"
-#include "../vm.h"
 
 
 #if USE_GETINFO

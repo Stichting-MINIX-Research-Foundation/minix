@@ -4,8 +4,6 @@
 #include "../../kernel.h"
 
 #include <unistd.h>
-#include <ibm/cmos.h>
-#include <ibm/bios.h>
 #include <minix/portio.h>
 
 #include <minix/syslib.h>

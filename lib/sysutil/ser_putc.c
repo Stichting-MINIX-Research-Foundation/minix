@@ -1,5 +1,4 @@
 #include "sysutil.h"
-#include <timers.h>
 
 #define COM1_BASE       0x3F8
 #define COM1_THR        (COM1_BASE + 0)

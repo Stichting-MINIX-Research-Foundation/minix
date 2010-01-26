@@ -21,14 +21,12 @@ char version[]=		"2.20";
 #include <ibm/bios.h>
 #include <minix/config.h>
 #include <minix/type.h>
-#include <minix/com.h>
 #include <minix/dmap.h>
 #include <minix/const.h>
 #include <minix/minlib.h>
 #include <minix/syslib.h>
 #if BIOS
 #include <kernel/const.h>
-#include <kernel/type.h>
 #include <sys/video.h>
 #endif
 #if UNIX

@@ -31,10 +31,8 @@
 
 #include "kernel.h"
 #include "proc.h"
-#include <signal.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
-#include <minix/portio.h>
 
 #include "clock.h"
 

@@ -1,6 +1,5 @@
 #include <lib.h>
 #define sigaction _sigaction
-#include <sys/sigcontext.h>
 #include <signal.h>
 
 _PROTOTYPE(int __sigreturn, (void));

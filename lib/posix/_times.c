@@ -1,7 +1,6 @@
 #include <lib.h>
 #define times	_times
 #include <sys/times.h>
-#include <time.h>
 
 PUBLIC clock_t times(buf)
 struct tms *buf;

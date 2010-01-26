@@ -5,7 +5,6 @@
 /* $Header$ */
 
 #include	<stdlib.h>
-#include	<limits.h>
 
 int
 mbtowc(wchar_t *pwc, register const char *s, size_t n)

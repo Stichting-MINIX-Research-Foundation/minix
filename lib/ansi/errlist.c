@@ -4,8 +4,6 @@
  */
 /* $Header$ */
 
-#include	<errno.h>
-
 static const char unknown[] = "Unknown error";
 
 const char *_sys_errlist[] = {

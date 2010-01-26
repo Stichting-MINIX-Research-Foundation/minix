@@ -25,7 +25,6 @@
 #include "../libdriver/drvlib.h"
 #include <minix/sysutil.h>
 #include <minix/safecopies.h>
-#include <minix/keymap.h>
 #include <sys/ioc_disk.h>
 #include <ibm/int86.h>
 #include <assert.h>

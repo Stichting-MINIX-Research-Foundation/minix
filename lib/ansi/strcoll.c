@@ -5,7 +5,6 @@
 /* $Header$ */
 
 #include	<string.h>
-#include	<locale.h>
 
 int
 strcoll(register const char *s1, register const char *s2)

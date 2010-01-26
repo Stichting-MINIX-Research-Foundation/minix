@@ -8,7 +8,6 @@ Created:	Nov 17, 1992 by Philip Homburg
 
 #include <sys/types.h>
 #include <stdlib.h>
-#include <net/netlib.h>
 #include <net/gen/ether.h>
 #include <net/gen/if_ether.h>
 

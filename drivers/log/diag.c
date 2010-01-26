@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include <fcntl.h>
 #include <minix/type.h>
 #include <minix/safecopies.h>
 #include <minix/sys_config.h>
