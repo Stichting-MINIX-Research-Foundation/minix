@@ -23,8 +23,6 @@
 #define ICW4_PC_AEOI_SLAVE   0x0B /* not SFNM, buffered, auto EOI, 8086 */
 #define ICW4_PC_AEOI_MASTER  0x0F /* not SFNM, buffered, auto EOI, 8086 */
 
-#define set_vec(nr, addr)	((void)0)
-
 /*===========================================================================*
  *				intr_init				     *
  *===========================================================================*/

@@ -15,10 +15,7 @@
 /*===========================================================================*
  *			panic                                        *
  *===========================================================================*/
-PUBLIC void panic(what, mess,nr)
-char *what;
-char *mess;
-int nr;
+PUBLIC void panic(char *what, char *mess,int nr)
 {
 /* This function is for when a library call wants to panic.
  * The library call calls printf() and tries to exit a process,
@@ -30,9 +27,7 @@ int nr;
 /*===========================================================================*
  *			minix_panic                                        *
  *===========================================================================*/
-PUBLIC void minix_panic(mess,nr)
-char *mess;
-int nr;
+PUBLIC void minix_panic(char *mess,int nr)
 {
 /* The system has run aground of a fatal kernel error. Terminate execution. */
 if (minix_panicing++) {

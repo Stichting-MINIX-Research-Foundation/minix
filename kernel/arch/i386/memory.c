@@ -31,7 +31,7 @@ PRIVATE int psok = 0;
 				I386_PAGE_SIZE * pr->p_nr +	\
 				I386_VM_PT_ENT_SIZE * pi))
 
-u8_t *vm_pagedirs = NULL;
+PUBLIC u8_t *vm_pagedirs = NULL;
 
 #define NOPDE (-1)
 #define PDEMASK(n) (1L << (n))
@@ -41,7 +41,7 @@ PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
-FORWARD _PROTOTYPE( u32_t phys_get32, (vir_bytes v)			);
+FORWARD _PROTOTYPE( u32_t phys_get32, (phys_bytes v)			);
 FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 FORWARD _PROTOTYPE( void set_cr3, (void)			);
 
@@ -423,9 +423,10 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	u32_t phys = 0;
 
 	if(seg == MEM_GRANT) {
-		phys = umap_grant(rp, vir_addr, bytes);
-	} else {
-		if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {
+		return umap_grant(rp, vir_addr, bytes);
+	}
+	
+	if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {
 			kprintf("SYSTEM:umap_virtual: umap_local failed\n");
 			phys = 0;
 		} else {
@@ -436,7 +437,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 			if(phys == 0)
 				minix_panic("vm_lookup returned phys", phys);
 		}
-	}
+	
 
 	if(phys == 0) {
 		kprintf("SYSTEM:umap_virtual: lookup failed\n");
@@ -516,22 +517,6 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 
 	NOREC_RETURN(vmlookup, OK);
 }
-
-/* From virtual address v in process p,
- * lookup physical address and assign it to d.
- * If p is NULL, assume it's already a physical address.
- */
-#define LOOKUP(d, p, v, flagsp) {	\
-	int r; 				\
-	if(!(p)) { (d) = (v); } 	\
-	else {				\
-		if((r=vm_lookup((p), (v), &(d), flagsp)) != OK) { \
-			kprintf("vm_copy: lookup failed of 0x%lx in %d (%s)\n"\
-				"kernel stacktrace: ", (v), (p)->p_endpoint, \
-					(p)->p_name);		\
-			util_stacktrace();			\
-			return r;				\
-		} } }
 
 /*===========================================================================*
  *                              vm_contiguous                                *
@@ -770,7 +755,7 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 	 */
 	while(bytes > 0) {
 		int pde, t;
-		vir_bytes chunk = bytes;
+		vir_bytes chunk = (vir_bytes) bytes;
 		phys_bytes ptr;
 		inusepde = NOPDE;
 		CREATEPDE(((struct proc *) NULL), ptr, ph, chunk, bytes, pde, t);
@@ -1047,7 +1032,7 @@ PUBLIC arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flags)
 #endif
 }
 
-PUBLIC arch_phys_map_reply(int index, vir_bytes addr)
+PUBLIC int arch_phys_map_reply(int index, vir_bytes addr)
 {
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */

@@ -28,7 +28,7 @@ message *m_ptr;			/* pointer to request message */
   proc_nr_t proc_nr, proc_nr_e;
   int sig_nr = m_ptr->SIG_NUMBER;
 
-  proc_nr_e= m_ptr->SIG_ENDPT;
+  proc_nr_e= (proc_nr_t) m_ptr->SIG_ENDPT;
 
   if (!isokendpt(proc_nr_e, &proc_nr)) return(EINVAL);
   if (sig_nr >= _NSIG) return(EINVAL);

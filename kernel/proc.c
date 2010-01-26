@@ -506,7 +506,7 @@ long bit_map;			/* notification event set or flags */
 PRIVATE int deadlock(function, cp, src_dst) 
 int function;					/* trap number */
 register struct proc *cp;			/* pointer to caller */
-int src_dst;					/* src or dst process */
+proc_nr_t src_dst;				/* src or dst process */
 {
 /* Check for deadlock. This can happen if 'caller_ptr' and 'src_dst' have
  * a cyclic dependency of blocking send and receive calls. The only cyclic 

@@ -12,7 +12,7 @@
 
 #include "proto.h"
 
-extern u32_t *vm_pagedirs;
+extern u8_t *vm_pagedirs;
 
 /*===========================================================================*
  *				arch_do_vmctl				     *
@@ -64,7 +64,7 @@ struct proc *p;
 	}
 	case VMCTL_I386_PAGEDIRS:
 	{
-		vm_pagedirs = (u32_t *) m_ptr->SVMCTL_VALUE;
+		vm_pagedirs = (u8_t *) m_ptr->SVMCTL_VALUE;
 		return OK;
 	}
 	case VMCTL_I386_FREEPDE:

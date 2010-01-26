@@ -45,7 +45,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 {
 	static cp_grant_t g;
 	static int proc_nr;
-	static struct proc *granter_proc;
+	static const struct proc *granter_proc;
 	int r, depth = 0;
 
 	do {

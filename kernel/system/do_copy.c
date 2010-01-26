@@ -83,7 +83,7 @@ register message *m_ptr;	/* pointer to request message */
   /* Check for overflow. This would happen for 64K segments and 16-bit 
    * vir_bytes. Especially copying by the PM on do_fork() is affected. 
    */
-  if (bytes != (vir_bytes) bytes) return(E2BIG);
+  if (bytes != (phys_bytes) (vir_bytes) bytes) return(E2BIG);
 
   /* Now try to make the actual virtual copy. */
   return( virtual_copy_vmcheck(&vir_addr[_SRC_], &vir_addr[_DST_], bytes) );

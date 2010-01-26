@@ -337,7 +337,7 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
  *				cause_sig				     *
  *===========================================================================*/
 PUBLIC void cause_sig(proc_nr, sig_nr)
-int proc_nr;			/* process to be signalled */
+proc_nr_t proc_nr;		/* process to be signalled */
 int sig_nr;			/* signal to be sent */
 {
 /* A system process wants to send a signal to a process.  Examples are:

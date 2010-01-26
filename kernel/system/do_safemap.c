@@ -121,7 +121,7 @@ PUBLIC int map_invoke_vm(int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
 		size_t size, int flag)
 {
 	struct proc *caller, *src, *dst;
-	vir_bytes lin_src, lin_dst;
+	phys_bytes lin_src, lin_dst;
 
 	src = endpoint_lookup(end_s);
 	dst = endpoint_lookup(end_d);
@@ -154,7 +154,7 @@ PUBLIC int map_invoke_vm(int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
 	caller->p_vmrequest.params.map.vir_d = lin_dst;	/* destination addr */
 	caller->p_vmrequest.params.map.ep_s = end_s;	/* source process */
 	caller->p_vmrequest.params.map.vir_s = lin_src;	/* source address */
-	caller->p_vmrequest.params.map.length = size;
+	caller->p_vmrequest.params.map.length = (vir_bytes) size;
 	caller->p_vmrequest.params.map.writeflag = flag;
 
 	caller->p_vmrequest.type = VMSTYPE_MAP;
@@ -175,10 +175,10 @@ register message *m_ptr;
 {
 	endpoint_t grantor	= m_ptr->SMAP_EP;
 	cp_grant_id_t gid	= m_ptr->SMAP_GID;
-	vir_bytes offset	= m_ptr->SMAP_OFFSET;
-	int seg			= (int)m_ptr->SMAP_SEG;
-	vir_bytes address	= m_ptr->SMAP_ADDRESS;
-	vir_bytes bytes		= m_ptr->SMAP_BYTES;
+	vir_bytes offset	= (vir_bytes) m_ptr->SMAP_OFFSET;
+	int seg			= (int) m_ptr->SMAP_SEG;
+	vir_bytes address	= (vir_bytes) m_ptr->SMAP_ADDRESS;
+	vir_bytes bytes		= (vir_bytes) m_ptr->SMAP_BYTES;
 	int flag		= m_ptr->SMAP_FLAG;
 
 	vir_bytes offset_result;

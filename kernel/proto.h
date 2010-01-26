@@ -56,7 +56,7 @@ _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( void set_sendto_bit, (struct proc *rc, int id)		);
 _PROTOTYPE( void unset_sendto_bit, (struct proc *rc, int id)		);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
-_PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
+_PROTOTYPE( void cause_sig, (proc_nr_t proc_nr, int sig_nr)			);
 _PROTOTYPE( void sig_delay_done, (struct proc *rp)			);
 _PROTOTYPE( void sys_task, (void)					);
 #define numap_local(proc_nr, vir_addr, bytes) \

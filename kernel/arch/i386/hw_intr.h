@@ -5,8 +5,8 @@
 
 /* legacy PIC */
 
-_PROTOTYPE(int irq_8259_unmask,(int irq));
-_PROTOTYPE(int irq_8259_mask,(int irq));
+_PROTOTYPE(void irq_8259_unmask,(int irq));
+_PROTOTYPE(void irq_8259_mask,(int irq));
 _PROTOTYPE(void irq_handle,(int irq));
 
 #define hw_intr_mask(irq)	irq_8259_mask(irq)

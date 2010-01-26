@@ -54,7 +54,7 @@ PUBLIC void main()
   }
   for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 	sp->s_proc_nr = NONE;			/* initialize as free */
-	sp->s_id = i;				/* priv structure index */
+	sp->s_id = (proc_nr_t) i;		/* priv structure index */
 	ppriv_addr[i] = sp;			/* priv ptr from number */
   }
 
@@ -70,7 +70,8 @@ PUBLIC void main()
   ktsb = (reg_t) t_stack;
 
   for (i=0; i < NR_BOOT_PROCS; ++i) {
-	int schedulable_proc, proc_nr;
+	int schedulable_proc;
+	proc_nr_t proc_nr;
 	int ipc_to_m, kcalls;
 
 	ip = &image[i];				/* process' attributes */
@@ -111,6 +112,10 @@ PUBLIC void main()
                 priv(rp)->s_trap_mask= RSYS_T;     /* allowed traps */
                 ipc_to_m = RSYS_M;                 /* allowed targets */
                 kcalls = RSYS_KC;                  /* allowed kernel calls */
+            }
+            /* Priviliges for ordinary process. */
+            else {
+		NOT_REACHABLE;
             }
 
             /* Fill in target mask. */
