@@ -79,6 +79,8 @@ int main(void)
 
  key = (key_t) getpid() ;
 
+ signal(SIGUSR1, SIG_DFL);
+
  sigemptyset(&sigset);
  sigaddset(&sigset,SIGUSR1);
  sigprocmask(SIG_BLOCK,&sigset,NULL);

@@ -209,6 +209,7 @@ cleanup(void)
 	rm_sema(sem_id_2);
 
 	/* Remove the temporary directory */
+	seteuid(getuid());
 	tst_rmdir();
 
 	/*
