@@ -112,7 +112,8 @@ cards()
     card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
     card 8 "Intel PRO/1000 Gigabit" "8086:100E" "8086:107C" "8086:10CD"
     card 9 "Attansic/Atheros L2 FastEthernet" "1969:2048"
-    card 10 "Different Ethernet card (no networking)"
+    card 10 "DEC Tulip 21140A in VirtualPC" "1011:0009"
+    card 11 "Different Ethernet card (no networking)"
 }
 
 warn()
@@ -160,7 +161,8 @@ drv_params()
         7) driver="lance"; ;;    
 	8) driver="e1000"; ;;
         9) driver="atl2";   ;;
-        10) driver="psip0"; ;;    
+        10) driver="dec21140A"; ;;    
+        11) driver="psip0"; ;;    
         *) warn "choose a number"
       esac
 }

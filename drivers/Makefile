@@ -37,6 +37,7 @@ all install depend clean:
 	cd ./dp8390 && $(MAKE) $@
 	cd ./sb16 && $(MAKE) $@
 	cd ./lance && $(MAKE) $@
+	cd ./dec21140A && $(MAKE) $@
 	cd ./pci && $(MAKE) $@
 	cd ./ti1225 && $(MAKE) $@
 	cd ./memory && $(MAKE) $@	# Must be last for ramdisk image
