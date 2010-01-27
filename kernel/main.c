@@ -266,7 +266,7 @@ PRIVATE void announce(void)
 #ifdef _SVN_REVISION
 	"(" _SVN_REVISION ")\n"
 #endif
-      "Copyright 2009, Vrije Universiteit, Amsterdam, The Netherlands\n",
+      "Copyright 2010, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
   kprintf("MINIX is open source software, see http://www.minix3.org\n");
 }

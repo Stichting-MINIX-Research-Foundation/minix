@@ -1,8 +1,5 @@
 
-Welcome to MINIX 3.1.5.
-
-This snapshot is an interim release, not final release quality. It is
-intended as a prerelease for developers.
+Welcome to MINIX 3.1.6.
 
 The system is now running and many commands work normally.  To use MINIX
 in a serious way, you need to install it to your hard disk, which you
@@ -15,7 +12,3 @@ setup.  Keep the CD-ROM in the drive, login as root and type 'packman'
 to begin installing the many software packages available.  After you
 have installed the packages, type 'xdm' to start X Windows if you have
 installed it.
-
-Before you begin the installation process, it is strongly recommended
-that you print and carefully read the installation instructions
-available on the MINIX 3 website: http://www.minix3.org.
