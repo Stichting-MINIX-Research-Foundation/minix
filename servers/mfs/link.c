@@ -327,6 +327,8 @@ PUBLIC int fs_rename()
   
   if(old_ip != NIL_INODE)
 	  odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY); /* TRUE iff dir */
+  else
+	  odir = FALSE; /* FIXME: is this a safe default? */
 
   /* If it is ok, check for a variety of possible errors. */
   if(r == OK) {

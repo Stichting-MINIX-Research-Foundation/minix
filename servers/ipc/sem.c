@@ -446,7 +446,7 @@ PUBLIC int do_semop(message *m)
 	struct sembuf *sops;
 	unsigned int nsops;
 	struct sem_struct *sem;
-	int no_reply;
+	int no_reply = 0;
 
 	id = m->SEMOP_ID;
 	nsops = (unsigned int) m->SEMOP_SIZE;
@@ -515,7 +515,6 @@ PUBLIC int do_semop(message *m)
 
 	}
 	/* there will be no errors left, so we can go ahead */
-	no_reply = 0;
 	for (i = 0; i < nsops; i++) {
 		struct semaphore *s;
 		int op_n;

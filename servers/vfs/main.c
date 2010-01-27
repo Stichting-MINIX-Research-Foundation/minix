@@ -168,6 +168,7 @@ PUBLIC int main(void)
 			break;
 		default:
 			caught = 0;
+			error = 0; /* To satisfy lints. */
 			break;
 	   }
 	   if(caught) {

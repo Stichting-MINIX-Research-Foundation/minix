@@ -444,7 +444,7 @@ PUBLIC int do_retrieve(message *m_ptr)
 		if(!GRANT_VALID(gid))
 			return -1;
 		m_ptr->DS_VAL = gid;
-		m_ptr->DS_VAL_LEN = length;
+		m_ptr->DS_VAL_LEN = dsp->u.map.length;
 	}
 
 	/* The caller requested a copy of a mapped mem range or a snapshot. */

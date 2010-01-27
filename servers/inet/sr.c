@@ -176,6 +176,7 @@ mq_t *m;
 		break;
 	case DEV_STATUS:
 		sr_status(&m->mq_mess);
+		result= OK;   /* Satisfy lint. */
 		send_reply= 0;
 		free_mess= 1;
 		break;

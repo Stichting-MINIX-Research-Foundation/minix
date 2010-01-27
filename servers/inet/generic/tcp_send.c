@@ -162,8 +162,8 @@ PRIVATE acc_t *make_pack(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
 	acc_t *pack2write, *tmp_pack, *tcp_pack;
-	tcp_hdr_t *tcp_hdr;
-	ip_hdr_t *ip_hdr;
+	tcp_hdr_t *tcp_hdr = NULL;
+	ip_hdr_t *ip_hdr = NULL;
 	int tot_hdr_size, ip_hdr_len, no_push, head, more2write;
 	u32_t seg_seq, seg_lo_data, queue_lo_data, seg_hi, seg_hi_data;
 	u16_t seg_up, mss;
@@ -495,6 +495,8 @@ after_data:
 			return NULL;
 		}
 
+		assert( tcp_hdr != NULL );
+		assert( ip_hdr != NULL );
 		tcp_hdr->th_seq_nr= htonl(seg_seq);
 		tcp_hdr->th_ack_nr= htonl(tcp_conn->tc_RCV_NXT);
 		tcp_hdr->th_flags= seg_flags;

@@ -46,6 +46,7 @@ o_collect(register int c, register FILE *stream, char type,
 	case 'u':	base = 10;	break;
 	case 'o':	base = 8;	break;
 	case 'b':	base = 2;	break;
+	default:	base = 10;	break;
 	}
 
 	if (c == '-' || c == '+') {

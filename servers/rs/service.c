@@ -1068,7 +1068,7 @@ PRIVATE void do_config(char *label, char *filename)
 PUBLIC int main(int argc, char **argv)
 {
   message m;
-  int result;
+  int result = EXIT_SUCCESS;
   int request;
   int i;
   char *label, *progname = NULL;

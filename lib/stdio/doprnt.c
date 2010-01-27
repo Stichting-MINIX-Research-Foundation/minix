@@ -107,6 +107,7 @@ o_print(va_list *ap, int flags, char *s, char c, int precision, int is_signed)
 	case 'x':
 	case 'X':
 	case 'p':	base = 16;	break;
+	default:	base = 10;	break;
 	}
 
 	s = _i_compute(unsigned_val, base, s, precision);

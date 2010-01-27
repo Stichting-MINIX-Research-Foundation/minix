@@ -143,6 +143,9 @@ PUBLIC int do_itimer()
 
   		r = OK;
   		break;
+
+	default:
+		panic(__FILE__, "invalid timer type", m_in.which_timer);
   }
 
   /* If requested, copy the old interval timer to user space. */

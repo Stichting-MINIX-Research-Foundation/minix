@@ -197,7 +197,8 @@ PUBLIC int do_lookup()
 /* Resolve a path string to an inode.
  */
   ino_t dir_ino_nr, root_ino_nr;
-  struct inode *cur_ino, *next_ino, *root_ino;
+  struct inode *cur_ino, *root_ino;
+  struct inode *next_ino = NIL_INODE;
   struct hgfs_attr attr;
   char buf[PATH_MAX], path[PATH_MAX];
   char name[NAME_MAX+1];

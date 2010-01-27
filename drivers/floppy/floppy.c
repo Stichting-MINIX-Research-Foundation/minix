@@ -642,18 +642,18 @@ unsigned nr_req;		/* length of request vector */
 				if (*up != NO_OFFSET) break;
 				fp->fl_sector++;
 			}
-		}
 
-		if (r == OK && opcode == DEV_SCATTER_S) {
-			/* Copy the user bytes to the DMA buffer. */
-			if(proc_nr != SELF) {
-		   	   s=sys_safecopyfrom(proc_nr, *ug, *up,
-				(vir_bytes) floppy_buf,
-			  	 (phys_bytes) SECTOR_SIZE, D);
-			   if(s != OK)
-				panic("FLOPPY", "sys_safecopyfrom failed", s);
-			} else {
-			   memcpy(floppy_buf, (void *) (*ug + *up), SECTOR_SIZE);
+			if (opcode == DEV_SCATTER_S) {
+				/* Copy the user bytes to the DMA buffer. */
+				if(proc_nr != SELF) {
+				   s=sys_safecopyfrom(proc_nr, *ug, *up,
+					(vir_bytes) floppy_buf,
+					 (phys_bytes) SECTOR_SIZE, D);
+				   if(s != OK)
+					panic("FLOPPY", "sys_safecopyfrom failed", s);
+				} else {
+				   memcpy(floppy_buf, (void *) (*ug + *up), SECTOR_SIZE);
+				}
 			}
 		}
 

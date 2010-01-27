@@ -64,6 +64,10 @@ PUBLIC int main(int argc, char **argv)
 		      case TTY_PROC_NR:
 			      result = do_fkey_pressed(&m_in);
 			      break;
+		      default:
+			      /* FIXME: error message. */
+			      result = EDONTREPLY;
+			      break;
 	      }
       }
       else {

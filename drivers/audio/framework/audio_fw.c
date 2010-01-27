@@ -945,8 +945,8 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	if (!(sub_dev_ptr->ExtraBuf = malloc(sub_dev_ptr->NrOfExtraBuffers * 
 					sub_dev_ptr->DmaSize / 
 					sub_dev_ptr->NrOfDmaFragments))) {
-		error("%s failed to allocate extra buffer for channel %d\n", 
-				drv.DriverName,i);
+		error("%s failed to allocate extra buffer for a channel\n", 
+				drv.DriverName);
 		return EIO;
 	}
 
