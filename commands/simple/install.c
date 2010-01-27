@@ -60,6 +60,7 @@ void deallocate(void *mem)
 int lflag= 0;		/* Make a hard link if possible. */
 int cflag= 0;		/* Copy if you can't link, otherwise symlink. */
 int dflag= 0;		/* Create a directory. */
+int pflag= 0;		/* Preserve timestamps. */
 int strip= 0;		/* Strip the copy. */
 char **compress= nil;	/* Compress utility to make a compressed executable. */
 char *zcat= nil;	/* Line one to decompress. */
@@ -168,6 +169,17 @@ void makedir(char *dir, int mode, int owner, int group)
 			}
 			/* Set the mode again, chown may have wrecked it. */
 			(void) chmod(dir, mode);
+		}
+		
+		if (pflag) {
+			struct utimbuf ubuf;
+
+			ubuf.actime= st.st_atime;
+			ubuf.modtime= st.st_mtime;
+
+			if (utime(dir, &ubuf) < 0 && errno != EPERM) {
+				report(dir); return;
+			}
 		}
 	}
 }
@@ -382,7 +394,7 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 		/* Set the mode again, chown may have wrecked it. */
 		(void) chmod(dest, mode);
 	}
-	if (!change) {
+	if (!change || pflag) {
 		struct utimbuf ubuf;
 
 		ubuf.actime= dst.st_atime;
@@ -398,8 +410,8 @@ void usage(void)
 {
 	fprintf(stderr, "\
 Usage:\n\
-  install [-lcsz#] [-o owner] [-g group] [-m mode] [-S stack] [file1] file2\n\
-  install [-lcsz#] [-o owner] [-g group] [-m mode] [-S stack] file ... dir\n\
+  install [-lcpsz#] [-o owner] [-g group] [-m mode] [-S stack] [file1] file2\n\
+  install [-lcpsz#] [-o owner] [-g group] [-m mode] [-S stack] file ... dir\n\
   install -d [-o owner] [-g group] [-m mode] directory\n");
 	exit(1);
 }
@@ -447,6 +459,7 @@ void main(int argc, char **argv)
 			case 'c':	cflag= 1;	break;
 			case 's':	strip= 1;	break;
 			case 'd':	dflag= 1;	break;
+			case 'p':	pflag= 1;	break;
 			case 'z':
 				if (compress == nil) {
 					compress= COMPRESS;

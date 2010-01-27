@@ -5,7 +5,7 @@ install \- install files
 .in +5
 .ti -5
 .B install
-.RB [ \-lcsz\fIN\fP "] [" \-o
+.RB [ \-lcpsz\fIN\fP "] [" \-o
 .IR owner ]
 .RB [ \-g
 .IR group ]
@@ -18,7 +18,7 @@ install \- install files
 .br
 .ti -5
 .B install
-.RB [ \-lcsz\fIN\fP "] [" \-o
+.RB [ \-lcpsz\fIN\fP "] [" \-o
 .IR owner ]
 .RB [ \-g
 .IR group ]
@@ -79,6 +79,9 @@ Copy the source file to its proper place.  This option is the default if
 is not given.  With
 .BR \-l ,
 the file is copied if the link fails.
+.TP
+.B \-p
+Preserve timestamp on source file or directory.
 .TP
 .B \-s
 Strip the destination file of its symbol table,
