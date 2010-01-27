@@ -212,9 +212,7 @@ PRIVATE int my_inb(port_t port)
 /*===========================================================================*
  *				rs_write				     *
  *===========================================================================*/
-PRIVATE int rs_write(tp, try)
-register tty_t *tp;
-int try;
+PRIVATE int rs_write(register tty_t *tp, int try)
 {
 /* (*devwrite)() routine for RS232. */
 
@@ -335,9 +333,8 @@ int c;				/* character to echo */
 /*===========================================================================*
  *				rs_ioctl				     *
  *===========================================================================*/
-PRIVATE int rs_ioctl(tp, dummy)
-tty_t *tp;			/* which TTY */
-int dummy;
+PRIVATE int rs_ioctl(tty_t *tp, int dummy)
+/* tp;			which TTY */
 {
 /* Reconfigure the line as soon as the output has drained. */
   rs232_t *rs = tp->tty_priv;
@@ -349,8 +346,8 @@ int dummy;
 /*===========================================================================*
  *				rs_config				     *
  *===========================================================================*/
-PRIVATE void rs_config(rs)
-rs232_t *rs;			/* which line */
+PRIVATE void rs_config(rs232_t *rs)
+/* rs			which line */
 {
 /* Set various line control parameters for RS232 I/O.
  * If DataBits == 5 and StopBits == 2, 8250 will generate 1.5 stop bits.
@@ -435,8 +432,8 @@ rs232_t *rs;			/* which line */
 /*===========================================================================*
  *				rs_init					     *
  *===========================================================================*/
-PUBLIC void rs_init(tp)
-tty_t *tp;			/* which TTY */
+PUBLIC void rs_init(tty_t *tp)
+/* tp			which TTY */
 {
   unsigned long dummy;
 /* Initialize RS232 for one line. */
@@ -539,8 +536,7 @@ tty_t *tp;			/* which TTY */
 /*===========================================================================*
  *				rs_interrupt				     *
  *===========================================================================*/
-PUBLIC void rs_interrupt(m)
-message *m;			/* which TTY */
+PUBLIC void rs_interrupt(message *m)
 {
 	unsigned long irq_set;
 	int i;
@@ -557,9 +553,7 @@ message *m;			/* which TTY */
 /*===========================================================================*
  *				rs_icancel				     *
  *===========================================================================*/
-PRIVATE int rs_icancel(tp, dummy)
-tty_t *tp;			/* which TTY */
-int dummy;
+PRIVATE int rs_icancel(tty_t *tp, int dummy)
 {
 /* Cancel waiting input. */
   rs232_t *rs = tp->tty_priv;
@@ -576,9 +570,7 @@ int dummy;
 /*===========================================================================*
  *				rs_ocancel				     *
  *===========================================================================*/
-PRIVATE int rs_ocancel(tp, dummy)
-tty_t *tp;			/* which TTY */
-int dummy;
+PRIVATE int rs_ocancel(tty_t *tp, int dummy)
 {
 /* Cancel pending output. */
   rs232_t *rs = tp->tty_priv;
@@ -595,9 +587,7 @@ int dummy;
 /*===========================================================================*
  *				rs_read					     *
  *===========================================================================*/
-PRIVATE int rs_read(tp, try)
-tty_t *tp;			/* which tty */
-int try;
+PRIVATE int rs_read(tty_t *tp, int try)
 {
 /* Process characters from the circular input buffer. */
 
@@ -644,8 +634,7 @@ int try;
 /*===========================================================================*
  *				rs_ostart				     *
  *===========================================================================*/
-PRIVATE void rs_ostart(rs)
-rs232_t *rs;			/* which rs line */
+PRIVATE void rs_ostart(rs232_t *rs)
 {
 /* Tell RS232 there is something waiting in the output buffer. */
 
@@ -656,9 +645,7 @@ rs232_t *rs;			/* which rs line */
 /*===========================================================================*
  *				rs_break				     *
  *===========================================================================*/
-PRIVATE int rs_break(tp, dummy)
-tty_t *tp;			/* which tty */
-int dummy;
+PRIVATE int rs_break(tty_t *tp, int dummy)
 {
 /* Generate a break condition by setting the BREAK bit for 0.4 sec. */
   rs232_t *rs = tp->tty_priv;
@@ -676,9 +663,7 @@ int dummy;
 /*===========================================================================*
  *				rs_close				     *
  *===========================================================================*/
-PRIVATE int rs_close(tp, dummy)
-tty_t *tp;			/* which tty */
-int dummy;
+PRIVATE int rs_close(tty_t *tp, int dummy)
 {
 /* The line is closed; optionally hang up. */
   rs232_t *rs = tp->tty_priv;
@@ -694,8 +679,7 @@ int dummy;
 /*===========================================================================*
  *				rs232_handler				     *
  *===========================================================================*/
-PRIVATE void rs232_handler(rs)
-struct rs232 *rs;
+PRIVATE void rs232_handler(struct rs232 *rs)
 {
 /* Interrupt hander for RS232. */
 
@@ -728,8 +712,8 @@ struct rs232 *rs;
 /*===========================================================================*
  *				in_int					     *
  *===========================================================================*/
-PRIVATE void in_int(rs)
-register rs232_t *rs;		/* line with input interrupt */
+PRIVATE void in_int(register rs232_t *rs)
+/* rs	line with input interrupt */
 {
 /* Read the data which just arrived.
  * If it is the oxoff char, clear OSWREADY, else if OSWREADY was clear, set
@@ -776,12 +760,12 @@ register rs232_t *rs;		/* line with input interrupt */
 /*===========================================================================*
  *				line_int				     *
  *===========================================================================*/
-PRIVATE void line_int(rs)
-register rs232_t *rs;		/* line with line status interrupt */
+PRIVATE void line_int(register rs232_t *rs)
+/* rs		line with line status interrupt */
 {
 /* Check for and record errors. */
 
- unsigned long s;
+  unsigned long s;
   sys_inb(rs->line_status_port, &s);
   rs->lstatus = s;
   if (rs->lstatus & LS_FRAMING_ERR) ++rs->framing_errors;
@@ -793,8 +777,8 @@ register rs232_t *rs;		/* line with line status interrupt */
 /*===========================================================================*
  *				modem_int				     *
  *===========================================================================*/
-PRIVATE void modem_int(rs)
-register rs232_t *rs;		/* line with modem interrupt */
+PRIVATE void modem_int(register rs232_t *rs)
+/* rs	line with modem interrupt */
 {
 /* Get possibly new device-ready status, and clear ODEVREADY if necessary.
  * If the device just became ready, restart output.
@@ -817,8 +801,8 @@ register rs232_t *rs;		/* line with modem interrupt */
 /*===========================================================================*
  *				out_int					    *
  *===========================================================================*/
-PRIVATE void out_int(rs)
-register rs232_t *rs;		/* line with output interrupt */
+PRIVATE void out_int(register rs232_t *rs)
+/* rs;	line with output interrupt */
 {
 /* If there is output to do and everything is ready, do it (local device is
  * known ready).

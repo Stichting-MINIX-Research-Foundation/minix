@@ -4,7 +4,6 @@ main.c
 
 #include "../drivers.h"
 
-#include <ibm/pci.h>
 #include <minix/rs.h>
 #include <minix/endpoint.h>
 

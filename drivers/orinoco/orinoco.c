@@ -55,13 +55,10 @@
 
 #include 	"../drivers.h" 
 #include	<string.h>
-#include 	<stddef.h>
-#include	<minix/keymap.h>
 #include	<minix/syslib.h>
 #include	<minix/type.h>
 #include	<minix/sysutil.h>
 #include	<timers.h>
-#include 	<sys/ioc_memory.h>
 #include	<ibm/pci.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
@@ -96,7 +93,6 @@ static tmra_ut or_watchdog;
 #include	<net/gen/eth_io.h>
 #include	<sys/vm_i386.h>
 #include	<sys/types.h>
-#include	<fcntl.h>
 #include 	<unistd.h>
 #include	<errno.h>
 

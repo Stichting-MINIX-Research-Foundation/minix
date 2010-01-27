@@ -11,10 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stddef.h>
 #include <minix/com.h>
 #include <minix/ds.h>
-#include <minix/keymap.h>
 #include <minix/syslib.h>
 #include <minix/type.h>
 #include <minix/sysutil.h>
@@ -26,10 +24,8 @@
 #include <ibm/pci.h>
 
 #include <sys/types.h>
-#include <fcntl.h>
 #include <assert.h>
 #include <unistd.h>
-#include <sys/ioc_memory.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"

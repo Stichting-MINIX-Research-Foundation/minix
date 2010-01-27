@@ -6,7 +6,6 @@ Created:	Dec 2005 by Philip Homburg
 
 #include "../drivers.h"
 #include <ibm/pci.h>
-#include <sys/vm.h>
 #include <sys/vm_i386.h>
 
 #include "ti1225.h"

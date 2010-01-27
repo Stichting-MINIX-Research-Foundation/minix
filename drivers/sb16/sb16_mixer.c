@@ -109,8 +109,7 @@ PRIVATE void sef_local_startup()
 /*=========================================================================*
  *				mixer_open				   	
  *=========================================================================*/
-PRIVATE int mixer_open(m_ptr)
-message *m_ptr;
+PRIVATE int mixer_open(message *m_ptr)
 {
 	dprint("mixer_open\n");
 
@@ -124,8 +123,7 @@ message *m_ptr;
 /*=========================================================================*
  *				mixer_close				   	
  *=========================================================================*/
-PRIVATE int mixer_close(m_ptr)
-message *m_ptr;
+PRIVATE int mixer_close(message *m_ptr)
 {
 	dprint("mixer_close\n");
 
@@ -136,8 +134,7 @@ message *m_ptr;
 /*=========================================================================*
  *				mixer_ioctl				   	
  *=========================================================================*/
-PRIVATE int mixer_ioctl(m_ptr)
-message *m_ptr;
+PRIVATE int mixer_ioctl(message *m_ptr)
 {
 	int status;
 
@@ -188,8 +185,7 @@ PRIVATE int mixer_init()
 /*=========================================================================*
  *				mixer_get				  
  *=========================================================================*/
-PRIVATE int mixer_get(reg)
-int reg;
+PRIVATE int mixer_get(int reg)
 {
 	int i;
 
@@ -202,9 +198,8 @@ int reg;
 /*=========================================================================*
  *				get_set_volume				   *
  *=========================================================================*/
-PRIVATE int get_set_volume(m_ptr, flag)
-message *m_ptr;
-int flag;	/* 0 = get, 1 = set */
+PRIVATE int get_set_volume(message *m_ptr, int flag)
+/* flag	0 = get, 1 = set */
 {
 	phys_bytes user_phys;
 	struct volume_level level;
@@ -286,10 +281,11 @@ int flag;	/* 0 = get, 1 = set */
 /*=========================================================================*
  *				get_set_input				   *
  *=========================================================================*/
-PRIVATE int get_set_input(m_ptr, flag, channel)
-message *m_ptr;
-int flag;	/* 0 = get, 1 = set */
-int channel;    /* 0 = left, 1 = right */
+PRIVATE int get_set_input(message *m_ptr, int flag, int channel)
+/*
+ * flag		0 = get, 1 = set
+ * channel      0 = left, 1 = right
+ */
 {
 	phys_bytes user_phys;
 	struct inout_ctrl input;
@@ -351,9 +347,8 @@ int channel;    /* 0 = left, 1 = right */
 /*=========================================================================*
  *				get_set_output				   *
  *=========================================================================*/
-PRIVATE int get_set_output(m_ptr, flag)
-message *m_ptr;
-int flag;	/* 0 = get, 1 = set */
+PRIVATE int get_set_output(message *m_ptr, int flag)
+/* flag	 0 = get, 1 = set */
 {
 	phys_bytes user_phys;
 	struct inout_ctrl output;

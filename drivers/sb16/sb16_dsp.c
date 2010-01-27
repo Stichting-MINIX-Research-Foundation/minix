@@ -233,8 +233,7 @@ PRIVATE int dsp_close()
 /*===========================================================================*
  *				dsp_ioctl
  *===========================================================================*/
-PRIVATE int dsp_ioctl(m_ptr)
-message *m_ptr;
+PRIVATE int dsp_ioctl(message *m_ptr)
 {
 	int status;
 	phys_bytes user_phys;
@@ -274,8 +273,7 @@ message *m_ptr;
 /*===========================================================================*
  *				dsp_write
  *===========================================================================*/
-PRIVATE void dsp_write(m_ptr)
-message *m_ptr;
+PRIVATE void dsp_write(message *m_ptr)
 {
 	int s;
 	message mess;
@@ -381,8 +379,8 @@ PRIVATE void dsp_hardware_msg()
 /*===========================================================================*
  *				dsp_status				     *
  *===========================================================================*/
-PRIVATE void dsp_status(m_ptr)
-message *m_ptr;	/* pointer to the newly arrived message */
+PRIVATE void dsp_status(message *m_ptr)
+/* m_ptr	pointer to the newly arrived message */
 {
 	if(revivePending) {
 		m_ptr->m_type = DEV_REVIVE;			/* build message */
@@ -404,11 +402,7 @@ message *m_ptr;	/* pointer to the newly arrived message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(code, replyee, process, status)
-int code;
-int replyee;
-int process;
-int status;
+PRIVATE void reply(int code, int replyee, int process, int status)
 {
 	message m;
 
@@ -491,8 +485,7 @@ PRIVATE int dsp_reset()
 /*===========================================================================*
  *				dsp_command
  *===========================================================================*/
-PRIVATE int dsp_command(value)
-int value;
+PRIVATE int dsp_command(int value)
 {
 	int i, status;
 
@@ -511,8 +504,7 @@ int value;
 /*===========================================================================*
  *				dsp_set_size
  *===========================================================================*/
-static int dsp_set_size(size)
-unsigned int size;
+static int dsp_set_size(unsigned int size)
 {
 	dprint("dsp_set_size(): set fragment size to %u\n", size);
 
@@ -530,8 +522,7 @@ unsigned int size;
 /*===========================================================================*
  *				dsp_set_speed
  *===========================================================================*/
-static int dsp_set_speed(speed)
-unsigned int speed;
+static int dsp_set_speed(unsigned int speed)
 {
 	dprint("sb16: setting speed to %u, stereo = %d\n", speed, DspStereo);
 
@@ -562,8 +553,7 @@ unsigned int speed;
 /*===========================================================================*
  *				dsp_set_stereo
  *===========================================================================*/
-static int dsp_set_stereo(stereo)
-unsigned int stereo;
+static int dsp_set_stereo(unsigned int stereo)
 {
 	if(stereo) { 
 		DspStereo = 1;
@@ -578,8 +568,7 @@ unsigned int stereo;
 /*===========================================================================*
  *				dsp_set_bits
  *===========================================================================*/
-static int dsp_set_bits(bits)
-unsigned int bits;
+static int dsp_set_bits(unsigned int bits)
 {
 	/* Sanity checks */
 	if(bits != 8 && bits != 16) {
@@ -595,8 +584,7 @@ unsigned int bits;
 /*===========================================================================*
  *				dsp_set_sign
  *===========================================================================*/
-static int dsp_set_sign(sign)
-unsigned int sign;
+static int dsp_set_sign(unsigned int sign)
 {
 	dprint("sb16: set sign to %u\n", sign);
 
@@ -609,9 +597,7 @@ unsigned int sign;
 /*===========================================================================*
  *				dsp_dma_setup
  *===========================================================================*/
-PRIVATE void dsp_dma_setup(address, count)
-phys_bytes address;
-int count;
+PRIVATE void dsp_dma_setup(phys_bytes address, int count)
 {
 	pvb_pair_t pvb[9];
 

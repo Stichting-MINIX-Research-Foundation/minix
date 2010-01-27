@@ -20,18 +20,18 @@
 
 #define SECTOR_SIZE	512
 
-enum {
+typedef enum {
   ST_NIL,		/* Zero checksums */
   ST_XOR,		/* XOR-based checksums */
   ST_CRC,		/* CRC32-based checksums */
   ST_MD5		/* MD5-based checksums */
-};
+} checksum_type;
 
-enum {
+typedef enum {
   FLT_WRITE,		/* write to up to two disks */
   FLT_READ,		/* read from one disk */
   FLT_READ2		/* read from both disks */
-};
+} disk_operation;
 
 /* Something was wrong and the disk driver has been restarted/refreshed,
  * so the request needs to be redone.
@@ -43,13 +43,13 @@ enum {
  * BD_PROTO: a protocol error has occurred. Refresh it.
  * BD_DATA: a data error has occurred. Refresh it.
  */
-enum {
+typedef enum {
   BD_NONE,
   BD_DEAD,
   BD_PROTO,
   BD_DATA,
   BD_LAST
-};
+} driver_state;
 
 #define DRIVER_MAIN	0
 #define DRIVER_BACKUP	1

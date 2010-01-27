@@ -5,7 +5,6 @@
 
 #include "../drivers.h"
 #include "../libdriver/driver.h"
-#include <sys/ioc_memory.h>
 #include <minix/type.h>
 
 #include "assert.h"

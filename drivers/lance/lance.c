@@ -42,7 +42,6 @@
 
 #include "../drivers.h"
 
-#include <minix/keymap.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

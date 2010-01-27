@@ -1,11 +1,11 @@
 #ifndef _OPTSET_H
 #define _OPTSET_H
 
-enum {
+typedef enum {
   OPT_BOOL,
   OPT_STRING,
   OPT_INT
-};
+} opt_type;
 
 /* An entry for the parser of an options set. The 'os_name' field must point
  * to a string, which is treated case-insensitively; the last entry of a table
@@ -20,7 +20,7 @@ enum {
  */
 struct optset {
   char *os_name;
-  int os_type;
+  opt_type os_type;
   void *os_ptr;
   int os_val;
 };

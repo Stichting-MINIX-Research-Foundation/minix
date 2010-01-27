@@ -14,8 +14,8 @@ for initializing a character array in C.
 #include <string.h>
 #include <unistd.h>
 
-char *progname;
-unsigned char buf[1024];
+static char *progname;
+static unsigned char buf[1024];
 
 static void fatal(char *fmt, ...);
 static void usage(void);

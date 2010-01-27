@@ -18,7 +18,6 @@
 #include "../drivers.h"
 #include "../libdriver/driver.h"
 #include <sys/ioc_memory.h>
-#include <env.h>
 #include <minix/ds.h>
 #include <minix/vm.h>
 #include <sys/mman.h>
@@ -26,10 +25,7 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
-#include <sys/vm.h>
 #include <sys/vm_i386.h>
-
-#include "assert.h"
 
 #include "local.h"
 

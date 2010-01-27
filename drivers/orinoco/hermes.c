@@ -37,12 +37,8 @@
  */
 
 #include "hermes.h"
-#include <sys/vm.h>
-#include "assert.h"
-#include <ibm/pci.h>
 
-#include "string.h"
-int this_proc;
+PRIVATE int this_proc;
 
 /*****************************************************************************
  *            milli_delay                                                    *

@@ -82,9 +82,7 @@ FORWARD _PROTOTYPE( int pty_select, (tty_t *tp, message *m)		);
 /*===========================================================================*
  *				do_pty					     *
  *===========================================================================*/
-PUBLIC void do_pty(tp, m_ptr)
-tty_t *tp;
-message *m_ptr;
+PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 {
 /* Perform an open/close/read/write call on a /dev/ptypX device. */
   pty_t *pp = tp->tty_priv;
@@ -203,9 +201,7 @@ message *m_ptr;
 /*===========================================================================*
  *				pty_write				     *
  *===========================================================================*/
-PRIVATE int pty_write(tp, try)
-tty_t *tp;
-int try;
+PRIVATE int pty_write(tty_t *tp, int try)
 {
 /* (*dev_write)() routine for PTYs.  Transfer bytes from the writer on
  * /dev/ttypX to the output buffer.
@@ -289,9 +285,7 @@ int try;
 /*===========================================================================*
  *				pty_echo				     *
  *===========================================================================*/
-PRIVATE void pty_echo(tp, c)
-tty_t *tp;
-int c;
+PRIVATE void pty_echo(tty_t *tp, int c)
 {
 /* Echo one character.  (Like pty_write, but only one character, optionally.) */
 
@@ -314,8 +308,7 @@ int c;
 /*===========================================================================*
  *				pty_start				     *
  *===========================================================================*/
-PRIVATE void pty_start(pp)
-pty_t *pp;
+PRIVATE void pty_start(pty_t *pp)
 {
 /* Transfer bytes written to the output buffer to the PTY reader. */
   int count;
@@ -355,8 +348,7 @@ pty_t *pp;
 /*===========================================================================*
  *				pty_finish				     *
  *===========================================================================*/
-PRIVATE void pty_finish(pp)
-pty_t *pp;
+PRIVATE void pty_finish(pty_t *pp)
 {
 /* Finish the read request of a PTY reader if there is at least one byte
  * transferred.
@@ -375,9 +367,7 @@ pty_t *pp;
 /*===========================================================================*
  *				pty_read				     *
  *===========================================================================*/
-PRIVATE int pty_read(tp, try)
-tty_t *tp;
-int try;
+PRIVATE int pty_read(tty_t *tp, int try)
 {
 /* Offer bytes from the PTY writer for input on the TTY.  (Do it one byte at
  * a time, 99% of the writes will be for one byte, so no sense in being smart.)
@@ -448,9 +438,7 @@ int try;
 /*===========================================================================*
  *				pty_close				     *
  *===========================================================================*/
-PRIVATE int pty_close(tp, try)
-tty_t *tp;
-int try;
+PRIVATE int pty_close(tty_t *tp, int try)
 {
 /* The tty side has closed, so shut down the pty side. */
   pty_t *pp = tp->tty_priv;
@@ -475,9 +463,7 @@ int try;
 /*===========================================================================*
  *				pty_icancel				     *
  *===========================================================================*/
-PRIVATE int pty_icancel(tp, try)
-tty_t *tp;
-int try;
+PRIVATE int pty_icancel(tty_t *tp, int try)
 {
 /* Discard waiting input. */
   pty_t *pp = tp->tty_priv;
@@ -494,9 +480,7 @@ int try;
 /*===========================================================================*
  *				pty_ocancel				     *
  *===========================================================================*/
-PRIVATE int pty_ocancel(tp, try)
-tty_t *tp;
-int try;
+PRIVATE int pty_ocancel(tty_t *tp, int try)
 {
 /* Drain the output buffer. */
   pty_t *pp = tp->tty_priv;
@@ -510,8 +494,7 @@ int try;
 /*===========================================================================*
  *				pty_init				     *
  *===========================================================================*/
-PUBLIC void pty_init(tp)
-tty_t *tp;
+PUBLIC void pty_init(tty_t *tp)
 {
   pty_t *pp;
   int line;

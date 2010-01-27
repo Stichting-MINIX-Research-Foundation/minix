@@ -29,7 +29,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <minix/sysutil.h>
 
 #define PBT_INTEL_HOST	 1
