@@ -82,6 +82,7 @@ int num()
 #define NOERROR 0x0008
 #define SYNC 0x0010
 #define SILENT 0x0020
+#define NOTRUNC 0x0040
 #define BLANK ' '
 #define DEFAULT 512
 
@@ -142,7 +143,7 @@ char *argv[];
   void (*convert) ();
 #endif
   char *iptr;
-  int i, j;
+  int i, j, oflags;
 
   convert = null;
   argc--;
@@ -213,6 +214,10 @@ char *argv[];
 				convflag |= NOERROR;
 				continue;
 			}
+			if (is("notrunc")) {
+				convflag |= NOTRUNC;
+				continue;
+			}
 			if (is("sync")) {
 				convflag |= SYNC;
 				continue;
@@ -241,8 +246,10 @@ char *argv[];
 		(ifilename) ? ifilename : "stdin", strerror(errno));
 	exit(1);
   }
-  if ((ofd = ((ofilename) ? open(ofilename, seekseen ? O_WRONLY | O_CREAT
-					: O_WRONLY | O_CREAT | O_TRUNC, 0666)
+  oflags = O_WRONLY | O_CREAT;
+  if (!seekseen && (convflag & NOTRUNC) != NOTRUNC)
+  	oflags |= O_TRUNC;
+  if ((ofd = ((ofilename) ? open(ofilename, oflags, 0666)
 			: dup(1))) < 0) {
 	fprintf(stderr, "dd: Can't open %s: %s\n",
 		(ofilename) ? ofilename : "stdout", strerror(errno));
