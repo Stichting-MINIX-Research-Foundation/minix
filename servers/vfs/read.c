@@ -230,20 +230,15 @@ size_t req_size;
 	size = vp->v_size - pos32;
   }
 
-  if (vp->v_mapfs_e != 0) {
-	r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag,
-			  usr_e, buf, size, &new_pos, &cum_io_incr);
-  }
-#if 0
+  if (vp->v_mapfs_e == 0) 
+	panic(__FILE__, "unmapped pipe", NO_NUM);
 
-	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, usr_e,
-			  buf, size, &new_pos, &cum_io_incr);
-  }
-#endif
+  r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
+		    buf, size, &new_pos, &cum_io_incr);
 
   if (r >= 0) {
 	if (ex64hi(new_pos))
-		panic(__FILE__, "read_write: bad new pos", NO_NUM);
+		panic(__FILE__, "rw_pipe: bad new pos", NO_NUM);
 
 	position = new_pos;
 	cum_io += cum_io_incr;
