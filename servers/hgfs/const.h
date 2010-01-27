@@ -2,7 +2,6 @@
 /* Number of inodes. */
 /* The following number must not exceed 16. The i_num field is only a short. */
 #define NUM_INODE_BITS	8
-#define NUM_INODES	((1 << NUM_INODE_BITS) - 1)
 
 /* Number of entries in the name hashtable. */
 #define NUM_HASH_SLOTS	1023

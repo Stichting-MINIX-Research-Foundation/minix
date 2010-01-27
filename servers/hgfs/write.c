@@ -101,7 +101,7 @@ PUBLIC int do_write()
   count = m_in.REQ_NBYTES;
   grant = m_in.REQ_GRANT;
 
-  if (count <= 0) return EINVAL;
+  if (count == 0) return EINVAL;
 
   if ((r = write_file(ino, &pos, &count, &grant)) != OK)
 	return r;

@@ -51,7 +51,7 @@
  * - A CACHED or FREE inode may be reused for other purposes at any time.
  */
 
-EXTERN struct inode {
+struct inode {
   struct inode *i_parent;		/* parent inode pointer */
   LIST_HEAD(child_head, inode) i_child;	/* child inode anchor */
   LIST_ENTRY(inode) i_next;		/* sibling inode chain entry */
@@ -66,7 +66,7 @@ EXTERN struct inode {
 	hgfs_dir_t u_dir;		/* handle to open HGFS directory */
   } i_u;
   char i_name[NAME_MAX+1];		/* entry name in parent directory */
-} inodes[NUM_INODES];
+};
 
 #define i_free		i_u.u_free
 #define i_file		i_u.u_file

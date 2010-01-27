@@ -18,6 +18,8 @@
 
 #include "inc.h"
 
+PRIVATE struct inode inodes[NUM_INODES];
+
 PRIVATE TAILQ_HEAD(free_head, inode) free_list;
 
 /*===========================================================================*
@@ -32,7 +34,7 @@ PUBLIC struct inode *init_inode()
 
   TAILQ_INIT(&free_list);
 
-  dprintf(("HGFS: %d inodes, %d bytes each, equals %d bytes\n",
+  dprintf(("HGFS: %d inodes, %u bytes each, equals %u bytes\n",
 	NUM_INODES, sizeof(struct inode), sizeof(inodes)));
 
   /* Mark all inodes except the root inode as free. */
@@ -69,7 +71,7 @@ ino_t ino_nr;
 /* Get an inode based on its inode number. Do not increase its reference count.
  */
   struct inode *ino;
-  unsigned int index;
+  int index;
 
   /* Inode 0 (= index -1) is not a valid inode number. */
   index = INODE_INDEX(ino_nr);

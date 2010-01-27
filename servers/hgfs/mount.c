@@ -23,7 +23,7 @@ PUBLIC int do_readsuper()
   int r;
 
   dprintf(("HGFS: readsuper (dev %x, flags %x)\n",
-	m_in.REQ_DEV, m_in.REQ_FLAGS));
+	(dev_t) m_in.REQ_DEV, m_in.REQ_FLAGS));
 
   if (m_in.REQ_FLAGS & REQ_ISROOT) {
 	printf("HGFS: attempt to mount as root device\n");

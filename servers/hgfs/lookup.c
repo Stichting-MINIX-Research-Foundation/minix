@@ -315,7 +315,7 @@ PUBLIC int do_lookup()
 	assert(r != EENTERMOUNT && r != ESYMLINK);
 
 	if (r == ELEAVEMOUNT) {
-		m_out.RES_OFFSET = (int)(last - buf);
+		m_out.RES_OFFSET = (int) (last - buf);
 		m_out.RES_SYMLOOP = 0;
 	}
 
