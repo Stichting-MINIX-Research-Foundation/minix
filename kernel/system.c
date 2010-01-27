@@ -115,7 +115,7 @@ PUBLIC void sys_task()
 	 */
         vmassert(RTS_ISSET(caller_ptr, RTS_VMREQUEST));
 	vmassert(caller_ptr->p_vmrequest.type == VMSTYPE_KERNELCALL);
-	memcpy(&caller_ptr->p_vmrequest.saved.reqmsg, &m, sizeof(m));
+	caller_ptr->p_vmrequest.saved.reqmsg = m;
       } else if (result != EDONTREPLY) {
 	/* Send a reply, unless inhibited by a handler function.
 	 * Use the kernel function lock_send() to prevent a system
@@ -564,7 +564,7 @@ PRIVATE struct proc *vmrestart_check(message *m)
 
 	switch(type) {
 		case VMSTYPE_KERNELCALL:
-			memcpy(m, &restarting->p_vmrequest.saved.reqmsg, sizeof(*m));
+			*m = restarting->p_vmrequest.saved.reqmsg;
 			restarting->p_vmrequest.saved.reqmsg.m_source = NONE;
 			vmassert(m->m_source == restarting->p_endpoint);
 			/* Original caller could've disappeared in the meantime. */
