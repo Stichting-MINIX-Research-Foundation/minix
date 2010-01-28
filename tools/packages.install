@@ -85,7 +85,7 @@ pine-4.64
 pkg-config-0.20
 psutils
 python-2.4.3
-qemu-0.10.5
+qemu-0.12.2
 rcs-5.7
 readline-5.1
 rman-3.2
