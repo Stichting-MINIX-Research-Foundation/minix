@@ -10,7 +10,8 @@ apr-0.9.12
 apr-util-0.9.12
 ascii-3.8
 atk-1.9.0
-automake-1.9
+autoconf-2.60
+automake-1.10.3
 avra-0.7
 bash-3.0
 bc-1.06
@@ -29,7 +30,6 @@ exim-4.66
 fb
 flawfinder-1.26
 flex-2.5.4
-fltk-1.1.7
 fltk-2.0.0-5220
 gawk-3.1.4
 gcc-4.1.1
@@ -38,6 +38,7 @@ gettext-0.14
 ghostscript-8.54-gpl
 ghostscript-fonts-std-8.11
 glib-1.2.10
+glib-2.10.0
 gnu-coreutils-5.2.1
 gnupg-1.4.8
 grep-2.5.1a
@@ -61,7 +62,7 @@ libxml2-2.6.28
 links-2.1pre26
 lpr
 lynx2-8-5
-m4-1.4.3
+m4-1.4.8
 make-3.80
 mdf2iso
 mtools-3.9.7
@@ -91,7 +92,7 @@ rman-3.2
 rsync-2.6.7
 postgresql-8.4.0
 screen-4.0.2
-sed-3.02
+sed-4.2.1
 shhmsg-1.4.1
 simhv35-2
 sip-0.4
