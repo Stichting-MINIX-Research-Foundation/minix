@@ -26,7 +26,7 @@ FORWARD _PROTOTYPE( int copy_label, (endpoint_t src_e,
 	struct rss_label *src_label, char *dst_label, size_t dst_len) );
 FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags,
 	endpoint_t *ep) );
-FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
+FORWARD _PROTOTYPE( void stop_service, (struct rproc *rp,int how) );
 FORWARD _PROTOTYPE( int fork_nb, (void) );
 FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
 FORWARD _PROTOTYPE( int share_exec, (struct rproc *rp_src,
@@ -1329,9 +1329,7 @@ endpoint_t *endpoint;
 /*===========================================================================*
  *				stop_service				     *
  *===========================================================================*/
-PRIVATE int stop_service(rp,how)
-struct rproc *rp;
-int how;
+PRIVATE void stop_service(struct rproc *rp,int how)
 {
   /* Try to stop the system service. First send a SIGTERM signal to ask the
    * system service to terminate. If the service didn't install a signal 

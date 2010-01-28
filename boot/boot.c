@@ -726,10 +726,10 @@ char resnames[][6] = {
 /* Using this for all null strings saves a lot of memory. */
 #define null (resnames[0])
 
-int reserved(char *s)
+enum resnames reserved(char *s)
 /* Recognize reserved strings. */
 {
-	int r;
+	enum resnames r;
 
 	for (r= R_BOOT; r <= R_UNSET; r++) {
 		if (strcmp(s, resnames[r]) == 0) return r;
@@ -1415,6 +1415,7 @@ int exec_bootstrap(void)
 		return r;
 
 	bootstrap(device, active);
+	return 0;
 }
 
 void boot_device(char *devname)
@@ -1659,7 +1660,7 @@ void execute(void)
 {
 	token *second, *third, *fourth, *sep;
 	char *name;
-	int res;
+	enum resnames res;
 	size_t n= 0;
 
 	if (err) {

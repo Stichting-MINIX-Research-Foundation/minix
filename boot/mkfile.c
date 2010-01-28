@@ -21,7 +21,7 @@ int printf(const char *fmt, ...);
 #define SEEK_END	2
 
 /* Kernel printf requires a putk() function. */
-int putk(int c)
+void putk(int c)
 {
 	char ch = c;
 

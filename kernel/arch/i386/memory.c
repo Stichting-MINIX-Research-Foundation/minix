@@ -579,7 +579,7 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 /*===========================================================================*
  *                              vm_suspend                                *
  *===========================================================================*/
-PRIVATE int vm_suspend(struct proc *caller, struct proc *target,
+PRIVATE void vm_suspend(struct proc *caller, struct proc *target,
 	vir_bytes linaddr, vir_bytes len, int wrflag, int type)
 {
 	/* This range is not OK for this process. Set parameters  
@@ -979,7 +979,7 @@ PUBLIC int data_copy_vmcheck(
 /*===========================================================================*
  *				arch_pre_exec				     *
  *===========================================================================*/
-PUBLIC int arch_pre_exec(struct proc *pr, u32_t ip, u32_t sp)
+PUBLIC void arch_pre_exec(struct proc *pr, u32_t ip, u32_t sp)
 {
 /* wipe extra LDT entries, set program counter, and stack pointer. */
 	memset(pr->p_seg.p_ldt + EXTRA_LDT_INDEX, 0,

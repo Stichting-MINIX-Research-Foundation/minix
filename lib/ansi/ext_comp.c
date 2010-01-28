@@ -17,9 +17,9 @@
 #include	<ctype.h>
 
 static int b64_add(struct mantissa *e1, struct mantissa *e2);
-static b64_sft(struct mantissa *e1, int n);
+static void b64_sft(struct mantissa *e1, int n);
 
-static
+static void
 mul_ext(struct EXTEND *e1, struct EXTEND *e2, struct EXTEND *e3)
 {
 	/*	Multiply the extended numbers e1 and e2, and put the
@@ -93,7 +93,7 @@ mul_ext(struct EXTEND *e1, struct EXTEND *e2, struct EXTEND *e3)
 	}
 }
 
-static
+static void
 add_ext(struct EXTEND *e1, struct EXTEND *e2, struct EXTEND *e3)
 {
 	/*	Add two extended numbers e1 and e2, and put the result
@@ -182,7 +182,7 @@ cmp_ext(struct EXTEND *e1, struct EXTEND *e2)
         return 1;
 }
 
-static
+static void
 b64_sft(struct mantissa *e1, int n)
 {
 	if (n > 0) {
@@ -435,7 +435,7 @@ static struct EXTEND r_big_ten_powers[] = { /* representation of 10 ** -(28*i) *
 #define BTP	(int)(sizeof(big_ten_powers)/sizeof(big_ten_powers[0]))
 #define MAX_EXP	(TP * BTP - 1)
 
-static
+static void
 add_exponent(struct EXTEND *e, int exp)
 {
 	int neg = exp < 0;
@@ -455,7 +455,7 @@ add_exponent(struct EXTEND *e, int exp)
 	}
 }
 
-_str_ext_cvt(const char *s, char **ss, struct EXTEND *e)
+void _str_ext_cvt(const char *s, char **ss, struct EXTEND *e)
 {
 	/*	Like strtod, but for extended precision */
 	register int	c;
@@ -538,7 +538,8 @@ _str_ext_cvt(const char *s, char **ss, struct EXTEND *e)
 
 #include	<math.h>
 
-static
+
+static void
 ten_mult(struct EXTEND *e)
 {
 	struct EXTEND e1 = *e;
@@ -696,7 +697,7 @@ _ext_str_cvt(struct EXTEND *e, int ndigit, int *decpt, int *sign, int ecvtflag)
 	return buf;
 }
 
-_dbl_ext_cvt(double value, struct EXTEND *e)
+void _dbl_ext_cvt(double value, struct EXTEND *e)
 {
 	/*	Convert double to extended
 	*/

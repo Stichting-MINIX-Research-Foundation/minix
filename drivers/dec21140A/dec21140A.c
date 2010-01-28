@@ -85,6 +85,7 @@ int sef_cb_init(int type, sef_init_info_t *info)
     notify(tasknr);
   else if(r != ESRCH)
     printf("%s unable to notify inet: %d\n", str_DevName, r);
+  return r;
 }
 
 /*===========================================================================*

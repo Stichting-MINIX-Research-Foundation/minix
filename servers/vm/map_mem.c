@@ -134,7 +134,7 @@ PRIVATE void clean_phys_regions(struct vir_region *region,
 /*===========================================================================*
  *				do_map_memory				     *
  *===========================================================================*/
-PRIVATE int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
+PRIVATE void do_map_memory(struct vmproc *vms, struct vmproc *vmd,
 	struct vir_region *vrs, struct vir_region *vrd,
 	vir_bytes offset_s, vir_bytes offset_d,
 	vir_bytes length, int flag)
