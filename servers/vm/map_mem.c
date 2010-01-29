@@ -1,18 +1,13 @@
 
 #define _SYSTEM 1
 
-#include <minix/com.h>
-#include <minix/callnr.h>
 #include <minix/type.h>
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 
-#include <sys/mman.h>
-
 #include <limits.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <stdint.h>
@@ -134,7 +129,7 @@ PRIVATE void clean_phys_regions(struct vir_region *region,
 /*===========================================================================*
  *				do_map_memory				     *
  *===========================================================================*/
-PRIVATE void do_map_memory(struct vmproc *vms, struct vmproc *vmd,
+PRIVATE int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
 	struct vir_region *vrs, struct vir_region *vrd,
 	vir_bytes offset_s, vir_bytes offset_d,
 	vir_bytes length, int flag)
@@ -215,6 +210,7 @@ PRIVATE void do_map_memory(struct vmproc *vms, struct vmproc *vmd,
 		offset_d += pb->length;
 		offset_s += pb->length;
 	}
+	return OK;
 }
 
 /*===========================================================================*
@@ -228,10 +224,10 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
  */
 	struct vmproc *vms, *vmd;
 	struct vir_region *vrs, *vrd;
-	struct phys_region *prs, *prd;
-	physr_iter iters, iterd;
+	physr_iter iterd;
 	vir_bytes offset_s, offset_d;
 	int p;
+	int r;
 
 	if(vm_isokendpt(sour, &p) != OK)
 		vm_panic("handle_memory: endpoint wrong", sour);
@@ -274,13 +270,13 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
 	map_printregion(vmd, vrd);
 
 	/* Map memory. */
-	do_map_memory(vms, vmd, vrs, vrd, offset_s, offset_d, length, flag);
+	r = do_map_memory(vms, vmd, vrs, vrd, offset_s, offset_d, length, flag);
 	printf("after map (dst) with offset, length: %d, %d\n", offset_d, length);
 	map_printregion(vmd, vrd);
 	#undef map_printregion
 	#undef printf
 
-	return OK;
+	return r;
 }
 
 /*===========================================================================*
