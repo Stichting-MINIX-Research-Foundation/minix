@@ -85,6 +85,8 @@ int sef_cb_init(int type, sef_init_info_t *info)
     notify(tasknr);
   else if(r != ESRCH)
     printf("%s unable to notify inet: %d\n", str_DevName, r);
+
+  return OK;
 }
 
 /*===========================================================================*
@@ -731,7 +733,6 @@ PRIVATE void do_interrupt(dpeth_t *dep){
 
 PRIVATE void de_reset(dpeth_t *dep){
   io_outl(CSR_ADDR(dep, CSR0), CSR0_SWR);
-  micro_delay(1000000);
 }
 
 PRIVATE void de_hw_conf(dpeth_t *dep){
