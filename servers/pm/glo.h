@@ -21,6 +21,7 @@ EXTERN int call_nr;		/* system call number */
 extern _PROTOTYPE (int (*call_vec[]), (void) );	/* system call handlers */
 EXTERN sigset_t core_sset;	/* which signals cause core images */
 EXTERN sigset_t ign_sset;	/* which signals are by default ignored */
+EXTERN sigset_t noign_sset;	/* which signals cannot be ignored */
 
 EXTERN u32_t system_hz;		/* System clock frequency. */
 EXTERN int abort_flag;

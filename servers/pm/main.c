@@ -200,6 +200,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 				SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
   static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
   static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
+  static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
+				SIGBUS, SIGSEGV };
   register struct mproc *rmp;
   register char *sig_ptr;
   message mess;
@@ -218,6 +220,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   sigemptyset(&ign_sset);
   for (sig_ptr = ign_sigs; sig_ptr < ign_sigs+sizeof(ign_sigs); sig_ptr++)
 	sigaddset(&ign_sset, *sig_ptr);
+  sigemptyset(&noign_sset);
+  for (sig_ptr = noign_sigs; sig_ptr < noign_sigs+sizeof(noign_sigs); sig_ptr++)
+	sigaddset(&noign_sset, *sig_ptr);
 
   /* Obtain a copy of the boot monitor parameters and the kernel info struct.  
    * Parse the list of free memory chunks. This list is what the boot monitor 

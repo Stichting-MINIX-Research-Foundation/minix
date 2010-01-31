@@ -130,19 +130,19 @@ signal	num	notes	description
 SIGHUP	1	km	Hangup
 SIGINT	2	k	Interrupt (usually DEL or CTRL\-C)
 SIGQUIT	3	kcm	Quit (usually CTRL\-\e)
-SIGILL	4	kc	Illegal instruction
-SIGTRAP	5	kc	Trace trap
+SIGILL	4	Kc	Illegal instruction
+SIGTRAP	5	Kc	Trace trap
 SIGABRT	6	kcm	Abort program
-SIGBUS	7	kc	Bus error
-SIGFPE	8	kc	Floating point exception
+SIGBUS	7	Kc	Bus error
+SIGFPE	8	Kc	Floating point exception
 SIGKILL	9	k	Kill
 SIGUSR1	10	k	User defined signal #1
-SIGSEGV	11	kc	Segmentation fault
+SIGSEGV	11	Kc	Segmentation fault
 SIGUSR2	12	k	User defined signal #2
 SIGPIPE	13	k	Write to a pipe with no reader
 SIGALRM	14	k	Alarm clock
 SIGTERM	15	km	Terminate (default for kill(1))
-SIGEMT	16	xkc	Emulator trap
+SIGEMT	16	xKc	Emulator trap
 SIGCHLD	17	pi	Child process terminated
 SIGCONT	18	pi	Continue if stopped
 SIGSTOP	19	ps	Stop signal
@@ -160,6 +160,11 @@ The letters in the notes column indicate:
 .TP 5
 .B k
 The process is killed if the signal is not caught.
+.TP
+.B K
+The process is killed if the signal is not caught. If the signal is received
+while ignored or masked, the process is killed even if a handler is defined to 
+catch the signal.
 .TP
 .B c
 The signal causes a core dump.

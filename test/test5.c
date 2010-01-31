@@ -279,11 +279,11 @@ void test5g()
   int n;
 
   subtest = 7;
-  Signal(11, func11);
-  Signal(11, SIG_IGN);
+  Signal(SIGUSR1, func11);
+  Signal(SIGUSR1, SIG_IGN);
   n = getpid();
-  if (kill(n, 11) != 0) e(1);
-  Signal(11, SIG_DFL);
+  if (kill(n, SIGUSR1) != 0) e(1);
+  Signal(SIGUSR1, SIG_DFL);
 }
 
 void funcalrm(s)

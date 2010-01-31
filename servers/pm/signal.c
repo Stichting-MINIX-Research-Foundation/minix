@@ -351,7 +351,7 @@ int trace;			/* pass signal to tracer first? */
  * context from the sigcontext structure.
  * If there is insufficient stack space, kill the process.
  */
-  int r, slot;
+  int r, slot, badignore;
 
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
@@ -387,16 +387,22 @@ int trace;			/* pass signal to tracer first? */
 	return;
   }
 
-  if (sigismember(&rmp->mp_ignore, signo)) { 
+  /* some signals cannot be safely ignored */
+  badignore = sigismember(&noign_sset, signo) && (
+	  sigismember(&rmp->mp_ignore, signo) ||
+	  sigismember(&rmp->mp_sigmask, signo) ||
+	  sigismember(&rmp->mp_sig2mess, signo));
+
+  if (!badignore && sigismember(&rmp->mp_ignore, signo)) { 
 	/* Signal should be ignored. */
 	return;
   }
-  if (sigismember(&rmp->mp_sigmask, signo)) {
+  if (!badignore && sigismember(&rmp->mp_sigmask, signo)) {
 	/* Signal should be blocked. */
 	sigaddset(&rmp->mp_sigpending, signo);
 	return;
   }
-  if (sigismember(&rmp->mp_sig2mess, signo)) {
+  if (!badignore && sigismember(&rmp->mp_sig2mess, signo)) {
 	/* Mark event pending in process slot and send notification. */
 	sigaddset(&rmp->mp_sigpending, signo);
 	notify(rmp->mp_endpoint);
@@ -412,7 +418,7 @@ int trace;			/* pass signal to tracer first? */
 	return;
   }
 
-  if (sigismember(&rmp->mp_catch, signo)) {
+  if (!badignore && sigismember(&rmp->mp_catch, signo)) {
 	/* Signal is caught. First interrupt the process's current call, if
 	 * applicable. This may involve a roundtrip to FS, in which case we'll
 	 * have to check back later.
@@ -436,7 +442,7 @@ int trace;			/* pass signal to tracer first? */
 
 	/* We were unable to spawn a signal handler. Kill the process. */
   }
-  else if (sigismember(&ign_sset, signo)) {
+  else if (!badignore && sigismember(&ign_sset, signo)) {
 	/* Signal defaults to being ignored. */
 	return;
   }
