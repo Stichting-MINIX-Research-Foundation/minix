@@ -1482,7 +1482,7 @@ int vectored;
 		goto suspend;
 	}
 
-	if (!rfd_status & RFDS_OK)
+	if (!(rfd_status & RFDS_OK))
 	{
 		/* Not OK? What happened? */
 		assert(0);
@@ -1662,7 +1662,7 @@ int from_int;
 		goto suspend;
 	}
 
-	if (!rfd_status & RFDS_OK)
+	if (!(rfd_status & RFDS_OK))
 	{
 		/* Not OK? What happened? */
 		assert(0);
