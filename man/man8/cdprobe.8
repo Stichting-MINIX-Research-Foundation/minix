@@ -1,0 +1,40 @@
+.TH CDPROBE 8 "February 1st, 2010"
+.SH NAME
+cdprobe \- guess where the Minix CD is
+.SH SYNOPSIS
+.B cdprobe
+.SH DESCRIPTION
+.B Cdprobe
+prints on standard output the name of the device (in
+.BI /dev/c X d Y
+form) of a device containing a CD with the proper layout to install Minix from it.
+.br
+Such a CD should have a MINIX cd label,
+an IBM-format partition table at the beginning (like any hardisk),
+and the file systems pointed to at positions
+.IR p1
+and
+.IR p2
+of that partition table, should be valid (mountable) Minix file systems.
+.SH DIAGNOSTICS
+The return code is
+.B 0
+after successfully printing the device, or
+.B 1
+if some error or unexpected condition occured.
+Appropriate diagnostic messages are printed on standard error. 
+.SH NOTES
+.B Cdprobe
+probes all the possible drives on the system, so can try for a long time,
+particularly when there are no readable CD, or when the controller cannot be
+successfully addressed at hardware level.
+.SH BUGS
+There is some nasty hard-codery (like MINIX cd label) that can be improved on.
+.SH "SEE ALSO"
+.BR at (4),
+.BR /etc/rc 
+on the initial ramdisk.
+.SH AUTHOR
+.I Cdprobe.c 
+was written by Ben Gras and Philip Homburg. 
+.\" This manual page by A. Leca, last revised 2010-02-01.

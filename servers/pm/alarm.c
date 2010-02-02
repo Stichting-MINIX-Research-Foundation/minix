@@ -374,5 +374,5 @@ struct timer *tp;
 	set_alarm(rmp, rmp->mp_interval[ITIMER_REAL]);
   else rmp->mp_flags &= ~ALARM_ON;
 
-  check_sig(rmp->mp_pid, SIGALRM);
+  check_sig(rmp->mp_pid, SIGALRM, FALSE /* ksig */);
 }

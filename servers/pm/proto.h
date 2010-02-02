@@ -64,8 +64,9 @@ _PROTOTYPE( int do_cprofile, (void)					);
 _PROTOTYPE( int do_kill, (void)						);
 _PROTOTYPE( int ksig_pending, (void)					);
 _PROTOTYPE( int do_pause, (void)					);
-_PROTOTYPE( int check_sig, (pid_t proc_id, int signo)			);
-_PROTOTYPE( void sig_proc, (struct mproc *rmp, int signo, int trace)	);
+_PROTOTYPE( int check_sig, (pid_t proc_id, int signo, int ksig)		);
+_PROTOTYPE( void sig_proc, (struct mproc *rmp, int signo, int trace,
+							int ksig)	);
 _PROTOTYPE( int do_sigaction, (void)					);
 _PROTOTYPE( int do_sigpending, (void)					);
 _PROTOTYPE( int do_sigprocmask, (void)					);

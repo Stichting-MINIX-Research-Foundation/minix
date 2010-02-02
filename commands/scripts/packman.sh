@@ -240,6 +240,9 @@ do	cd $TMPDIR
 	fi
      done # Iterate package range
    done # Iterate package range list
+   
+   # Do not repeat after installing all packages if -y is specified
+   [ "$YESMODE" ] && cont=n
 done
 
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*

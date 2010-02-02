@@ -1,0 +1,25 @@
+.TH LOADRAMDISK 8 "February 1st, 2010"
+.SH NAME
+loadramdisk \- copy an image of a file system to /dev/ram
+.SH SYNOPSIS
+.B loadramdisk
+.IR file
+.SH DESCRIPTION
+.B Loadramdisk
+copies the content of a device or a file containing an image of a file system,
+specified by the
+.I file
+argument, to \fB/dev/ram\fP. This way the source is preserved
+untouched, and can resides on a read-only media like a CD, while the copied-to
+version may be mounted as read-write file system and used as root device.
+.SH NOTES
+A ramdisk can be initialized only once.
+.SH "SEE ALSO"
+.BR dev (4),
+.BR init (8),
+.BR mount (2),
+.BR newroot (8).
+.SH AUTHOR
+.I Loadramdisk.c 
+was written by Philip Homburg. 
+.\" This manual page by A. Leca, last revised 2010-02-01.

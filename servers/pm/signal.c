@@ -196,7 +196,7 @@ PUBLIC int do_kill()
 {
 /* Perform the kill(pid, signo) system call. */
 
-  return check_sig(m_in.pid, m_in.sig_nr);
+  return check_sig(m_in.pid, m_in.sig_nr, FALSE /* ksig */);
 }
 
 /*===========================================================================*
@@ -295,7 +295,7 @@ sigset_t sig_map;
 		id = proc_id;
 		break;
 	}
-	check_sig(id, i);
+	check_sig(id, i, TRUE /* ksig */);
   }
 
   /* If SIGNDELAY is set, an earlier sys_stop() failed because the process was
@@ -333,10 +333,11 @@ PUBLIC int do_pause()
 /*===========================================================================*
  *				sig_proc				     *
  *===========================================================================*/
-PUBLIC void sig_proc(rmp, signo, trace)
+PUBLIC void sig_proc(rmp, signo, trace, ksig)
 register struct mproc *rmp;	/* pointer to the process to be signaled */
 int signo;			/* signal to send to process (1 to _NSIG-1) */
 int trace;			/* pass signal to tracer first? */
+int ksig;			/* non-zero means signal comes from kernel  */
 {
 /* Send a signal to a process.  Check to see if the signal is to be caught,
  * ignored, tranformed into a message (for system processes) or blocked.  
@@ -388,7 +389,7 @@ int trace;			/* pass signal to tracer first? */
   }
 
   /* some signals cannot be safely ignored */
-  badignore = sigismember(&noign_sset, signo) && (
+  badignore = ksig && sigismember(&noign_sset, signo) && (
 	  sigismember(&rmp->mp_ignore, signo) ||
 	  sigismember(&rmp->mp_sigmask, signo) ||
 	  sigismember(&rmp->mp_sig2mess, signo));
@@ -462,9 +463,10 @@ int trace;			/* pass signal to tracer first? */
 /*===========================================================================*
  *				check_sig				     *
  *===========================================================================*/
-PUBLIC int check_sig(proc_id, signo)
+PUBLIC int check_sig(proc_id, signo, ksig)
 pid_t proc_id;			/* pid of proc to sig, or 0 or -1, or -pgrp */
 int signo;			/* signal to send to process (0 to _NSIG-1) */
+int ksig;			/* non-zero means signal comes from kernel  */
 {
 /* Check to see if it is possible to send a signal.  The signal may have to be
  * sent to a group of processes.  This routine is invoked by the KILL system
@@ -515,7 +517,7 @@ int signo;			/* signal to send to process (0 to _NSIG-1) */
 	 * signal may be caught, blocked, ignored, or cause process
 	 * termination, possibly with core dump.
 	 */
-	sig_proc(rmp, signo, TRUE /*trace*/);
+	sig_proc(rmp, signo, TRUE /*trace*/, ksig);
 
 	if (proc_id > 0) break;	/* only one process being signaled */
   }
@@ -545,7 +547,7 @@ register struct mproc *rmp;
 	if (sigismember(&rmp->mp_sigpending, i) &&
 		!sigismember(&rmp->mp_sigmask, i)) {
 		sigdelset(&rmp->mp_sigpending, i);
-		sig_proc(rmp, i, FALSE /*trace*/);
+		sig_proc(rmp, i, FALSE /*trace*/, FALSE /* ksig */);
 
 		if (rmp->mp_flags & FS_CALL)
 			break;

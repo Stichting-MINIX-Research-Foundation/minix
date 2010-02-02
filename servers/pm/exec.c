@@ -185,7 +185,7 @@ int result;
 	{
 		sn = (rmp->mp_trace_flags & TO_ALTEXEC) ? SIGSTOP : SIGTRAP;
 
-		check_sig(rmp->mp_pid, sn);
+		check_sig(rmp->mp_pid, sn, FALSE /* ksig */);
 	}
 
 	new_sp= (char *)rmp->mp_procargs;

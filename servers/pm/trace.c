@@ -85,7 +85,7 @@ PUBLIC int do_trace()
 	child->mp_tracer = who_p;
 	child->mp_trace_flags = TO_NOEXEC;
 
-	sig_proc(child, SIGSTOP, TRUE /*trace*/);
+	sig_proc(child, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
 
 	mp->mp_reply.reply_trace = 0;
 	return(OK);
@@ -192,12 +192,13 @@ PUBLIC int do_trace()
 	for (i = 1; i < _NSIG; i++) {
 		if (sigismember(&child->mp_sigtrace, i)) {
 			sigdelset(&child->mp_sigtrace, i);
-			check_sig(child->mp_pid, i);
+			check_sig(child->mp_pid, i, FALSE /* ksig */);
 		}
 	}
 
 	if (m_in.data > 0) {		/* issue signal */
-		sig_proc(child, (int) m_in.data, TRUE /*trace*/);
+		sig_proc(child, (int) m_in.data, TRUE /*trace*/, 
+			FALSE /* ksig */);
 	}
 
 	/* Resume the child as if nothing ever happened. */ 
@@ -214,7 +215,8 @@ PUBLIC int do_trace()
 	if (m_in.data < 0 || m_in.data >= _NSIG) return(EINVAL);
 
 	if (m_in.data > 0) {		/* issue signal */
-		sig_proc(child, (int) m_in.data, FALSE /*trace*/);
+		sig_proc(child, (int) m_in.data, FALSE /*trace*/,
+			FALSE /* ksig */);
 	}
 
 	/* If there are any other signals waiting to be delivered,

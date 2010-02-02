@@ -114,7 +114,7 @@ PUBLIC int do_fork()
 
   /* Tell the tracer, if any, about the new child */
   if (rmc->mp_tracer != NO_TRACER)
-	sig_proc(rmc, SIGSTOP, TRUE /*trace*/);
+	sig_proc(rmc, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
 
   /* Do not reply until FS is ready to process the fork
   * request
@@ -201,7 +201,7 @@ PUBLIC int do_fork_nb()
 
   /* Tell the tracer, if any, about the new child */
   if (rmc->mp_tracer != NO_TRACER)
-	sig_proc(rmc, SIGSTOP, TRUE /*trace*/);
+	sig_proc(rmc, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
 
   /* Wakeup the newly created process */
   setreply(rmc-mproc, OK);
@@ -341,7 +341,7 @@ int dump_core;			/* flag indicating whether to dump core */
   }
 
   /* Send a hangup to the process' process group if it was a session leader. */
-  if (procgrp != 0) check_sig(-procgrp, SIGHUP);
+  if (procgrp != 0) check_sig(-procgrp, SIGHUP, FALSE /* ksig */);
 }
 
 /*===========================================================================*
@@ -564,7 +564,7 @@ int try_cleanup;			/* clean up the child when done? */
   }
   else {
 	/* Parent is not waiting. */
-	sig_proc(p_mp, SIGCHLD, TRUE /*trace*/);
+	sig_proc(p_mp, SIGCHLD, TRUE /*trace*/, FALSE /* ksig */);
   }
 }
 
@@ -637,7 +637,7 @@ struct mproc *child;			/* process being traced */
    * Note that this may cause cascading exits.
    */
   if (!(child->mp_flags & EXITING)) {
-	sig_proc(child, SIGKILL, TRUE /*trace*/);
+	sig_proc(child, SIGKILL, TRUE /*trace*/, FALSE /* ksig */);
 
 	return;
   }

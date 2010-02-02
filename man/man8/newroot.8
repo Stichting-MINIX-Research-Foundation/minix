@@ -1,0 +1,40 @@
+.TH NEWROOT 8 "February 1st, 2010"
+.SH NAME
+newroot \- replace the current root with a new one
+.SH SYNOPSIS
+.B newroot
+.RB [ \-i ]
+.I block-special
+.SH OPTIONS
+.BR "\-i" " Copy mfs binary from boot image to memory"
+.SH DESCRIPTION
+.B Newroot
+causes the present \fB/\fP file system to be discarded and
+replaced by the one stored in the device indicated by
+.IR block-special .
+.PP
+The
+.B \-i
+option may be used to prevent loading the file system
+service for the new file system from disk. This is useful when
+for some reason the \fImfs\fP binary on disk malfunctions,
+rendering Minix unable to boot.
+.PP
+This command is normally used to replace the initial ramdisk
+loaded as part of the operating system, with the operational
+version stored on disk. As such, it should be invoked from the
+.B /etc/rc
+stored in the initial-ramdisk image.
+.SH NOTES
+.B Newroot
+should be used before any "real" use of the
+.IR mount (1)
+command.
+.SH "SEE ALSO"
+.BR init (8),
+.BR mount (1),
+.BR mount (2).
+.SH AUTHOR
+.I Newroot.c 
+was written by Philip Homburg. 
+.\" This manual page by A. Leca, last revised 2010-02-01.

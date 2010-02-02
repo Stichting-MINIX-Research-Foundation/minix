@@ -392,8 +392,8 @@ PUBLIC int do_reboot()
    * SIGKILL. So first kill, then reboot. 
    */
 
-  check_sig(-1, SIGKILL); 		/* kill all users except init */
-  sys_stop(INIT_PROC_NR);		/* stop init, but keep it around */
+  check_sig(-1, SIGKILL, FALSE /* ksig*/); /* kill all users except init */
+  sys_stop(INIT_PROC_NR);		   /* stop init, but keep it around */
 
   /* Tell FS to reboot */
   m.m_type = PM_REBOOT;
