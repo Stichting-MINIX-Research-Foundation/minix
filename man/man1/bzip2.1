@@ -1,7 +1,7 @@
 .PU
 .TH bzip2 1
 .SH NAME
-bzip2, bunzip2 \- a block-sorting file compressor, v1.0.3
+bzip2, bunzip2, smallbunzip2 \- a block-sorting file compressor, v1.0.3
 .br
 bzcat \- decompresses files to stdout
 .br
@@ -17,6 +17,12 @@ bzip2recover \- recovers data from damaged bzip2 files
 .ll -8
 .br
 .B bunzip2
+.RB [ " \-fkvsVL " ]
+[ 
+.I "filenames \&..."
+]
+.br
+.B smallbunzip2
 .RB [ " \-fkvsVL " ]
 [ 
 .I "filenames \&..."
@@ -76,7 +82,13 @@ incomprehensible and therefore pointless.
 (or
 .I bzip2 \-d) 
 decompresses all
-specified files.  Files which were not created by 
+specified files.  
+.I smallbunzip2
+is identical to 
+.I bunzip2 
+on modern MINIX, but used to use less memory 
+before virtual memory was introduced.
+Files which were not created by 
 .I bzip2
 will be detected and ignored, and a warning issued.  
 .I bzip2
