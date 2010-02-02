@@ -17,7 +17,7 @@ ROOTOBJ= test11 test33 test43 test46
 GCCOBJ=  test45-gcc test49-gcc
 
 all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(ROOTOBJ) Benchmarks
-	chmod 755 *.sh run
+	chmod 755 *.sh run run-bench
 
 Benchmarks:
 	cd benchmarks && for d in *bench*; do cd $$d && $(MAKE) || exit 1; done
