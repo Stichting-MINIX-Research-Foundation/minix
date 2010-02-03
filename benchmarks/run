@@ -2,8 +2,6 @@
 
 set -e
 
-cd benchmarks
-
 benchmarks=`echo *bench*`
 
 runbench() {
