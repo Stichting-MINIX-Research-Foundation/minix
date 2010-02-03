@@ -91,8 +91,7 @@ PUBLIC void sys_task()
 		minix_panic("receive() failed", r);
       } 
 
-      sys_call_code = (unsigned) m.m_type;
-      call_nr = sys_call_code - KERNEL_CALL;	
+      call_nr = m.m_type - KERNEL_CALL;
       who_e = m.m_source;
       okendpt(who_e, &who_p);
       caller_ptr = proc_addr(who_p);

@@ -42,7 +42,6 @@ EXTERN u32_t system_hz;				/* HZ value */
 EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
 EXTERN int do_serial_debug;
-EXTERN int sys_call_code;		/* kernel call number in SYSTEM */
 EXTERN time_t boottime;
 EXTERN char params_buffer[512];		/* boot monitor parameters */
 EXTERN int minix_panicing;
