@@ -10,30 +10,17 @@ usage:
 	@echo "Usage: make all          # Compile all commands" >&2
 	@echo "       make install      # Install the result (run as bin!)" >&2
 	@echo "       make clean        # Delete .o files and other junk" >&2
-	@echo "       make big          # Compile all big commands" >&2
-	@echo "       make biginstall   # Install all big commands" >&2
-	@echo "       make small        # Install all small commands" >&2
-	@echo "       make smallinstall # Install all small commands" >&2
-	@echo " "
-	@echo "big compiles the commands the require large compiler sizes."
-	@echo "small compiles the rest. all compiles all."
 
-all: big  small
-
-install: big biginstall small smallinstall
-
-big:
-	binsizes big
+all:
 	cd zmodem && make
 	cd $(BZIP2) && /bin/sh build build
-	binsizes normal
+	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
 
-biginstall: big
-	binsizes big
+install:
+	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
 	cd zmodem && make install
 	cd $(BZIP2) && make install
 	cd $(FLEX) && sh build
-	binsizes normal
 
 clean::
 	cd $(BZIP2) && make clean
@@ -41,9 +28,4 @@ clean::
 	if [ -f $(FLEX)/Makefile ]; then cd $(FLEX) && make distclean ; fi
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
-small::
-	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
-
-smallinstall::
-	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
 
