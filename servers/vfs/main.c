@@ -152,31 +152,6 @@ PUBLIC int main(void)
 		continue;
 	}
 
-	/* Calls from VM. */
-	if(who_e == VM_PROC_NR) {
-	    int caught = 1;
-	    switch(call_nr)
-	    {
-		case VM_VFS_OPEN:
-			error = do_vm_open();
-			break;
-		case VM_VFS_CLOSE:
-			error = do_vm_close();
-			break;
-		case VM_VFS_MMAP:
-			error = do_vm_mmap();
-			break;
-		default:
-			caught = 0;
-			error = 0; /* To satisfy lints. */
-			break;
-	   }
-	   if(caught) {
-		reply(who_e, error);
-		continue;
-	   }
-	}
-
 		SANITYCHECK;
 
 	  /* Other calls. */

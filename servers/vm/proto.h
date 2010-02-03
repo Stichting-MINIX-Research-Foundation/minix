@@ -72,13 +72,6 @@ _PROTOTYPE( int real_brk, (struct vmproc *vmp, vir_bytes v));
 /* signal.c */
 _PROTOTYPE( int do_push_sig, (message *msg)				);
 
-/* vfs.c */
-_PROTOTYPE( int do_vfs_reply, (message *msg)				);
-_PROTOTYPE( int vfs_open, (struct vmproc *for_who, callback_t callback,
-        cp_grant_id_t filename_gid, int filename_len, int flags, int mode));
-_PROTOTYPE( int vfs_close, (struct vmproc *for_who, callback_t callback,
-	int fd));
-
 /* map_mem.c */
 _PROTOTYPE( int map_memory, (endpoint_t sour, endpoint_t dest,
 	vir_bytes virt_s, vir_bytes virt_d, vir_bytes length, int flag));

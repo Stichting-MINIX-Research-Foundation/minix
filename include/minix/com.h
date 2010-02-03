@@ -804,23 +804,6 @@
 					 */
 
 /*===========================================================================*
- *                Messages used from VM to VFS				     *
- *===========================================================================*/
-
-/* Requests sent by VM to VFS, done on behalf of a user process. */
-#define VM_VFS_BASE	0xB00		
-#define VM_VFS_OPEN	(VM_VFS_BASE+0) /* open() on behalf of user process. */
-#	define VMVO_NAME_GRANT		m2_i1	/* 0-terminated */
-#	define VMVO_NAME_LENGTH		m2_i2	/* name length including 0 */
-#	define VMVO_FLAGS		m2_i3
-#	define VMVO_MODE		m2_l1
-#	define VMVO_ENDPOINT		m2_l2
-#define VM_VFS_MMAP	(VM_VFS_BASE+1) /* mmap() */
-#define VM_VFS_CLOSE	(VM_VFS_BASE+2) /* close() */
-#	define VMVC_FD			m1_i1
-#	define VMVC_ENDPOINT		m1_i2
-
-/*===========================================================================*
  *                Miscellaneous field names				     *
  *===========================================================================*/
 
