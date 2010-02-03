@@ -16,11 +16,8 @@ BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43 test46
 GCCOBJ=  test45-gcc test49-gcc
 
-all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(ROOTOBJ) Benchmarks
+all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(ROOTOBJ)
 	chmod 755 *.sh run
-
-Benchmarks:
-	cd benchmarks && for d in *bench*; do cd $$d && $(MAKE) || exit 1; done
 
 $(OBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
@@ -38,7 +35,6 @@ $(ROOTOBJ):
 
 clean:	
 	cd select && make clean
-	cd benchmarks && for d in *bench*; do cd $$d && $(MAKE) clean || exit 1; done
 	-rm -rf *.o *.s *.bak test? test?? test??-gcc t10a t11a t11b \
 		t40a t40b t40c t40d t40e t40f t43 DIR*
 
