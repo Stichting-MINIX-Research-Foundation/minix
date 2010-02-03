@@ -17,8 +17,7 @@
 /*===========================================================================*
  *			      do_sigreturn				     *
  *===========================================================================*/
-PUBLIC int do_sigreturn(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_sigreturn(struct proc * caller, message * m_ptr)
 {
 /* POSIX style signals require sys_sigreturn to put things in order before 
  * the signalled process can resume execution

@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				  do_nice				     *
  *===========================================================================*/
-PUBLIC int do_nice(message *m_ptr)
+PUBLIC int do_nice(struct proc * caller, message * m_ptr)
 {
 /* Change process priority or stop the process. */
   int proc_nr, pri, new_q ;

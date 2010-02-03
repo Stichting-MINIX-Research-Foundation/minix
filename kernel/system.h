@@ -36,161 +36,161 @@
 #include "proc.h"
 
 /* Default handler for unused kernel calls. */
-_PROTOTYPE( int do_unused, (message *m_ptr) );
+_PROTOTYPE( int do_unused, (struct proc * caller, message *m_ptr) );
 
-_PROTOTYPE( int do_exec, (message *m_ptr) );		
+_PROTOTYPE( int do_exec, (struct proc * caller, message *m_ptr) );
 #if ! USE_EXEC
 #define do_exec do_unused
 #endif
 
-_PROTOTYPE( int do_fork, (message *m_ptr) );
+_PROTOTYPE( int do_fork, (struct proc * caller, message *m_ptr) );
 #if ! USE_FORK
 #define do_fork do_unused
 #endif
 
-_PROTOTYPE( int do_newmap, (message *m_ptr) );
+_PROTOTYPE( int do_newmap, (struct proc * caller, message *m_ptr) );
 #if ! USE_NEWMAP
 #define do_newmap do_unused
 #endif
 
-_PROTOTYPE( int do_exit, (message *m_ptr) );
+_PROTOTYPE( int do_exit, (struct proc * caller, message *m_ptr) );
 #if ! USE_EXIT
 #define do_exit do_unused
 #endif
 
-_PROTOTYPE( int do_trace, (message *m_ptr) );	
+_PROTOTYPE( int do_trace, (struct proc * caller, message *m_ptr) );
 #if ! USE_TRACE
 #define do_trace do_unused
 #endif
 
-_PROTOTYPE( int do_nice, (message *m_ptr) );
+_PROTOTYPE( int do_nice, (struct proc * caller, message *m_ptr) );
 #if ! USE_NICE
 #define do_nice do_unused
 #endif
 
-_PROTOTYPE( int do_runctl, (message *m_ptr) );
+_PROTOTYPE( int do_runctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_RUNCTL
 #define do_runctl do_unused
 #endif
 
-_PROTOTYPE( int do_copy, (message *m_ptr) );	
+_PROTOTYPE( int do_copy, (struct proc * caller, message *m_ptr) );
 #define do_vircopy 	do_copy
 #if ! (USE_VIRCOPY || USE_PHYSCOPY)
 #define do_copy do_unused
 #endif
 
-_PROTOTYPE( int do_umap, (message *m_ptr) );
+_PROTOTYPE( int do_umap, (struct proc * caller, message *m_ptr) );
 #if ! USE_UMAP
 #define do_umap do_unused
 #endif
 
-_PROTOTYPE( int do_memset, (message *m_ptr) );
+_PROTOTYPE( int do_memset, (struct proc * caller, message *m_ptr) );
 #if ! USE_MEMSET
 #define do_memset do_unused
 #endif
 
-_PROTOTYPE( int do_abort, (message *m_ptr) );
+_PROTOTYPE( int do_abort, (struct proc * caller, message *m_ptr) );
 #if ! USE_ABORT
 #define do_abort do_unused
 #endif
 
-_PROTOTYPE( int do_getinfo, (message *m_ptr) );
+_PROTOTYPE( int do_getinfo, (struct proc * caller, message *m_ptr) );
 #if ! USE_GETINFO
 #define do_getinfo do_unused
 #endif
 
-_PROTOTYPE( int do_privctl, (message *m_ptr) );	
+_PROTOTYPE( int do_privctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_PRIVCTL
 #define do_privctl do_unused
 #endif
 
-_PROTOTYPE( int do_segctl, (message *m_ptr) );
+_PROTOTYPE( int do_segctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_SEGCTL
 #define do_segctl do_unused
 #endif
 
-_PROTOTYPE( int do_irqctl, (message *m_ptr) );
+_PROTOTYPE( int do_irqctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_IRQCTL
 #define do_irqctl do_unused
 #endif
 
-_PROTOTYPE( int do_devio, (message *m_ptr) );
+_PROTOTYPE( int do_devio, (struct proc * caller, message *m_ptr) );
 #if ! USE_DEVIO
 #define do_devio do_unused
 #endif
 
-_PROTOTYPE( int do_vdevio, (message *m_ptr) );
+_PROTOTYPE( int do_vdevio, (struct proc * caller, message *m_ptr) );
 #if ! USE_VDEVIO
 #define do_vdevio do_unused
 #endif
 
-_PROTOTYPE( int do_int86, (message *m_ptr) );
+_PROTOTYPE( int do_int86, (struct proc * caller, message *m_ptr) );
 
-_PROTOTYPE( int do_sdevio, (message *m_ptr) );
+_PROTOTYPE( int do_sdevio, (struct proc * caller, message *m_ptr) );
 #if ! USE_SDEVIO
 #define do_sdevio do_unused
 #endif
 
-_PROTOTYPE( int do_kill, (message *m_ptr) );
+_PROTOTYPE( int do_kill, (struct proc * caller, message *m_ptr) );
 #if ! USE_KILL
 #define do_kill do_unused
 #endif
 
-_PROTOTYPE( int do_getksig, (message *m_ptr) );
+_PROTOTYPE( int do_getksig, (struct proc * caller, message *m_ptr) );
 #if ! USE_GETKSIG
 #define do_getksig do_unused
 #endif
 
-_PROTOTYPE( int do_endksig, (message *m_ptr) );
+_PROTOTYPE( int do_endksig, (struct proc * caller, message *m_ptr) );
 #if ! USE_ENDKSIG
 #define do_endksig do_unused
 #endif
 
-_PROTOTYPE( int do_sigsend, (message *m_ptr) );
+_PROTOTYPE( int do_sigsend, (struct proc * caller, message *m_ptr) );
 #if ! USE_SIGSEND
 #define do_sigsend do_unused
 #endif
 
-_PROTOTYPE( int do_sigreturn, (message *m_ptr) );
+_PROTOTYPE( int do_sigreturn, (struct proc * caller, message *m_ptr) );
 #if ! USE_SIGRETURN
 #define do_sigreturn do_unused
 #endif
 
-_PROTOTYPE( int do_times, (message *m_ptr) );		
+_PROTOTYPE( int do_times, (struct proc * caller, message *m_ptr) );
 #if ! USE_TIMES
 #define do_times do_unused
 #endif
 
-_PROTOTYPE( int do_setalarm, (message *m_ptr) );	
+_PROTOTYPE( int do_setalarm, (struct proc * caller, message *m_ptr) );
 #if ! USE_SETALARM
 #define do_setalarm do_unused
 #endif
 
-_PROTOTYPE( int do_stime, (message *m_ptr) );	
+_PROTOTYPE( int do_stime, (struct proc * caller, message *m_ptr) );
 
-_PROTOTYPE( int do_vtimer, (message *m_ptr) );
+_PROTOTYPE( int do_vtimer, (struct proc * caller, message *m_ptr) );
 #if ! USE_VTIMER
 #define do_vtimer do_unused
 #endif
 
-_PROTOTYPE( int do_safecopy, (message *m_ptr) );	
-_PROTOTYPE( int do_vsafecopy, (message *m_ptr) );	
-_PROTOTYPE( int do_iopenable, (message *m_ptr) );	
-_PROTOTYPE( int do_vmctl, (message *m_ptr) );	
-_PROTOTYPE( int do_setgrant, (message *m_ptr) );	
-_PROTOTYPE( int do_readbios, (message *m_ptr) );	
+_PROTOTYPE( int do_safecopy, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_vsafecopy, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_iopenable, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_vmctl, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_setgrant, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_readbios, (struct proc * caller, message *m_ptr) );
 
-_PROTOTYPE( int do_safemap, (message *m_ptr) );	
-_PROTOTYPE( int do_saferevmap, (message *m_ptr) );	
-_PROTOTYPE( int do_safeunmap, (message *m_ptr) );	
+_PROTOTYPE( int do_safemap, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_saferevmap, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_safeunmap, (struct proc * caller, message *m_ptr) );
 
-_PROTOTYPE( int do_sprofile, (message *m_ptr) );
+_PROTOTYPE( int do_sprofile, (struct proc * caller, message *m_ptr) );
 #if ! SPROFILE
 #define do_sprofile do_unused
 #endif
 
-_PROTOTYPE( int do_cprofile, (message *m_ptr) );
-_PROTOTYPE( int do_profbuf, (message *m_ptr) );
+_PROTOTYPE( int do_cprofile, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_profbuf, (struct proc * caller, message *m_ptr) );
 
 #endif	/* SYSTEM_H */
 

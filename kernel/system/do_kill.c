@@ -14,8 +14,7 @@
 /*===========================================================================*
  *			          do_kill				     *
  *===========================================================================*/
-PUBLIC int do_kill(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_kill(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_kill(). Cause a signal to be sent to a process. The PM is the
  * central server where all signals are processed and handler policies can

@@ -16,8 +16,7 @@
 /*===========================================================================*
  *				do_abort				     *
  *===========================================================================*/
-PUBLIC int do_abort(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_abort(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_abort. MINIX is unable to continue. This can originate e.g.
  * in the PM (normal abort or panic) or TTY (after CTRL-ALT-DEL).
@@ -31,7 +30,8 @@ message *m_ptr;			/* pointer to request message */
       int len;
       len = MIN(m_ptr->ABRT_MON_LEN, sizeof(paramsbuffer)-1);
 
-      if((p=data_copy(m_ptr->ABRT_MON_ENDPT, (vir_bytes) m_ptr->ABRT_MON_ADDR,
+      if((p=data_copy(m_ptr->ABRT_MON_ENDPT,
+		(vir_bytes) m_ptr->ABRT_MON_ADDR,
 		SYSTEM, (vir_bytes) paramsbuffer, len)) != OK) {
 		return p;
       }

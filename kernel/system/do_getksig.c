@@ -15,8 +15,7 @@
 /*===========================================================================*
  *			      do_getksig				     *
  *===========================================================================*/
-PUBLIC int do_getksig(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_getksig(struct proc * caller, message * m_ptr)
 {
 /* PM is ready to accept signals and repeatedly does a kernel call to get 
  * one. Find a process with pending signals. If no signals are available, 

@@ -20,8 +20,7 @@
 /*===========================================================================*
  *				do_fork					     *
  *===========================================================================*/
-PUBLIC int do_fork(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
 #if (_MINIX_CHIP == _CHIP_INTEL)
@@ -101,7 +100,7 @@ register message *m_ptr;	/* pointer to request message */
   m_ptr->PR_FORK_MSGADDR = (char *) rpp->p_delivermsg_vir;
 
   /* Install new map */
-  r = newmap(rpc, map_ptr);
+  r = newmap(caller, rpc, map_ptr);
   FIXLINMSG(rpc);
 
   /* Don't schedule process in VM mode until it has a new pagetable. */

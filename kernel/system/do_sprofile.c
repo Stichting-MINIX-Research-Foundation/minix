@@ -23,8 +23,7 @@ PRIVATE vir_bytes sprof_info_addr_vir;
 /*===========================================================================*
  *				do_sprofile				     *
  *===========================================================================*/
-PUBLIC int do_sprofile(m_ptr)
-register message *m_ptr;    /* pointer to request message */
+PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
 

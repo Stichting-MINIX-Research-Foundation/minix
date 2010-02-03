@@ -19,8 +19,7 @@
 /*===========================================================================*
  *				do_copy					     *
  *===========================================================================*/
-PUBLIC int do_copy(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_copy(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_vircopy() and sys_physcopy().  Copy data using virtual or
  * physical addressing. Although a single handler function is used, there 
@@ -86,7 +85,8 @@ register message *m_ptr;	/* pointer to request message */
   if (bytes != (phys_bytes) (vir_bytes) bytes) return(E2BIG);
 
   /* Now try to make the actual virtual copy. */
-  return( virtual_copy_vmcheck(&vir_addr[_SRC_], &vir_addr[_DST_], bytes) );
+  return( virtual_copy_vmcheck(caller, &vir_addr[_SRC_],
+			  	&vir_addr[_DST_], bytes) );
 }
 #endif /* (USE_VIRCOPY || USE_PHYSCOPY) */
 

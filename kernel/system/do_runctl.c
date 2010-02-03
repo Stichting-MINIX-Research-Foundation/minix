@@ -14,7 +14,7 @@
 /*===========================================================================*
  *				  do_runctl				     *
  *===========================================================================*/
-PUBLIC int do_runctl(message *m_ptr)
+PUBLIC int do_runctl(struct proc * caller, message * m_ptr)
 {
 /* Control a process's RTS_PROC_STOP flag. Used for process management.
  * If the process is queued sending a message or stopped for system call

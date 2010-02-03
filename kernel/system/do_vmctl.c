@@ -15,8 +15,7 @@
 /*===========================================================================*
  *				do_vmctl				     *
  *===========================================================================*/
-PUBLIC int do_vmctl(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
   endpoint_t ep = m_ptr->SVMCTL_WHO;
@@ -171,7 +170,7 @@ register message *m_ptr;	/* pointer to request message */
 			unlock;
 			return err;
 		}
-		if(newmap(p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
+		if(newmap(caller, p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
 			minix_panic("do_vmctl: newmap failed", NO_NUM);
 		FIXLINMSG(p);
 		vmassert(p->p_delivermsg_lin);

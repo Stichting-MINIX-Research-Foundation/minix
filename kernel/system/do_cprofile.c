@@ -19,8 +19,7 @@
 /*===========================================================================*
  *				do_cprofile				     *
  *===========================================================================*/
-PUBLIC int do_cprofile(m_ptr)
-register message *m_ptr;    /* pointer to request message */
+PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 {
   int proc_nr, i;
   phys_bytes len;

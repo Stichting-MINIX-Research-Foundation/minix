@@ -13,8 +13,7 @@
 /*===========================================================================*
  *				do_readbios				     *
  *===========================================================================*/
-PUBLIC int do_readbios(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_readbios(struct proc * caller, message * m_ptr)
 {
   struct vir_addr src, dst;     
         
@@ -25,5 +24,5 @@ register message *m_ptr;	/* pointer to request message */
   src.proc_nr_e = NONE;
   dst.proc_nr_e = m_ptr->m_source;      
 
-  return virtual_copy_vmcheck(&src, &dst, m_ptr->RDB_SIZE);
+  return virtual_copy_vmcheck(caller, &src, &dst, m_ptr->RDB_SIZE);
 }

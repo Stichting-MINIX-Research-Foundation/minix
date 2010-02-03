@@ -18,11 +18,9 @@ FORWARD _PROTOTYPE( void cause_alarm, (timer_t *tp) );
 /*===========================================================================*
  *				do_setalarm				     *
  *===========================================================================*/
-PUBLIC int do_setalarm(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_setalarm(struct proc * caller, message * m_ptr)
 {
 /* A process requests a synchronous alarm, or wants to cancel its alarm. */
-  register struct proc *rp;	/* pointer to requesting process */
   long exp_time;		/* expiration time for this alarm */
   int use_abs_time;		/* use absolute or relative time */
   timer_t *tp;			/* the process' timer structure */
@@ -31,11 +29,10 @@ message *m_ptr;			/* pointer to request message */
   /* Extract shared parameters from the request message. */
   exp_time = m_ptr->ALRM_EXP_TIME;	/* alarm's expiration time */
   use_abs_time = m_ptr->ALRM_ABS_TIME;	/* flag for absolute time */
-  rp = proc_addr(who_p);
-  if (! (priv(rp)->s_flags & SYS_PROC)) return(EPERM);
+  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM);
 
   /* Get the timer structure and set the parameters for this alarm. */
-  tp = &(priv(rp)->s_alarm_timer);	
+  tp = &(priv(caller)->s_alarm_timer);
   tmr_arg(tp)->ta_int = m_ptr->m_source;
   tp->tmr_func = cause_alarm; 
 

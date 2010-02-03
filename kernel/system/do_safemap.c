@@ -115,17 +115,17 @@ static int clear_info(struct map_info_s *p)
 /*===========================================================================*
  *				map_invoke_vm				     *
  *===========================================================================*/
-PUBLIC int map_invoke_vm(int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
-		endpoint_t end_d, int seg_d, vir_bytes off_d,
-		endpoint_t end_s, int seg_s, vir_bytes off_s,
-		size_t size, int flag)
+PUBLIC int map_invoke_vm(struct proc * caller,
+			int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
+			endpoint_t end_d, int seg_d, vir_bytes off_d,
+			endpoint_t end_s, int seg_s, vir_bytes off_s,
+			size_t size, int flag)
 {
-	struct proc *caller, *src, *dst;
+	struct proc *src, *dst;
 	phys_bytes lin_src, lin_dst;
 
 	src = endpoint_lookup(end_s);
 	dst = endpoint_lookup(end_d);
-	caller = endpoint_lookup(who_e);
 
 	lin_src = umap_local(src, seg_s, off_s, size);
 	lin_dst = umap_local(dst, seg_d, off_d, size);
@@ -170,8 +170,7 @@ PUBLIC int map_invoke_vm(int req_type, /* VMPTYPE_... COWMAP, SMAP, SUNMAP */
 /*===========================================================================*
  *				do_safemap				     *
  *===========================================================================*/
-PUBLIC int do_safemap(m_ptr)
-register message *m_ptr;
+PUBLIC int do_safemap(struct proc * caller, message * m_ptr)
 {
 	endpoint_t grantor	= m_ptr->SMAP_EP;
 	cp_grant_id_t gid	= m_ptr->SMAP_GID;
@@ -199,42 +198,42 @@ register message *m_ptr;
 	 */
 	if(flag != 0)
 		access |= CPF_WRITE;
-	r = verify_grant(grantor, who_e, gid, bytes, access,
+	r = verify_grant(grantor, caller->p_endpoint, gid, bytes, access,
 		offset, &offset_result, &new_grantor);
 	if(r != OK) {
 		kprintf("verify_grant for gid %d from %d to %d failed: %d\n",
-			gid, grantor, who_e, r);
+			gid, grantor, caller->p_endpoint, r);
 		return r;
 	}
 
 	/* Add map info. */
-	r = add_info(new_grantor, who_e, gid, offset, offset_result, seg,
-		address, bytes);
+	r = add_info(new_grantor, caller->p_endpoint, gid, offset,
+			offset_result, seg, address, bytes);
 	if(r != OK)
 		return r;
 
 	/* Invoke VM. */
-	return map_invoke_vm(VMPTYPE_SMAP,
-		who_e, seg, address, new_grantor, D, offset_result, bytes,flag);
+	return map_invoke_vm(caller, VMPTYPE_SMAP,
+		caller->p_endpoint, seg, address, new_grantor, D, offset_result, bytes,flag);
 }
 
 /*===========================================================================*
  *				safeunmap				     *
  *===========================================================================*/
-PRIVATE int safeunmap(struct map_info_s *p)
+PRIVATE int safeunmap(struct proc * caller, struct map_info_s *p)
 {
 	vir_bytes offset_result;
 	endpoint_t new_grantor;
 	int r;
 
-	r = verify_grant(p->grantor, p->grantee, p->gid, p->bytes, CPF_MAP,
-		p->offset, &offset_result, &new_grantor);
+	r = verify_grant(p->grantor, p->grantee, p->gid, p->bytes,
+			CPF_MAP, p->offset, &offset_result, &new_grantor);
 	if(r != OK) {
 	    kprintf("safeunmap: error in verify_grant.\n");
 		return r;
 	}
 
-	r = map_invoke_vm(VMPTYPE_SUNMAP,
+	r = map_invoke_vm(caller, VMPTYPE_SUNMAP,
 		p->grantee, p->seg, p->address,
 		new_grantor, D, offset_result,
 		p->bytes, 0);
@@ -249,16 +248,15 @@ PRIVATE int safeunmap(struct map_info_s *p)
 /*===========================================================================*
  *				do_saferevmap				     *
  *===========================================================================*/
-PUBLIC int do_saferevmap(m_ptr)
-register message *m_ptr;
+PUBLIC int do_saferevmap(struct proc * caller, message * m_ptr)
 {
 	struct map_info_s *p;
 	int flag = m_ptr->SMAP_FLAG;
 	int arg = m_ptr->SMAP_GID; /* gid or address_Dseg */
 	int r;
 
-	while((p = get_revoke_info(who_e, flag, arg)) != NULL) {
-		if((r = safeunmap(p)) != OK)
+	while((p = get_revoke_info(caller->p_endpoint, flag, arg)) != NULL) {
+		if((r = safeunmap(caller, p)) != OK)
 			return r;
 	}
 	return OK;
@@ -267,16 +265,15 @@ register message *m_ptr;
 /*===========================================================================*
  *				do_safeunmap				     *
  *===========================================================================*/
-PUBLIC int do_safeunmap(m_ptr)
-register message *m_ptr;
+PUBLIC int do_safeunmap(struct proc * caller, message * m_ptr)
 {
 	vir_bytes address = m_ptr->SMAP_ADDRESS;
 	int seg = (int)m_ptr->SMAP_SEG;
 	struct map_info_s *p;
 	int r;
 
-	while((p = get_unmap_info(who_e, seg, address)) != NULL) {
-		if((r = safeunmap(p)) != OK)
+	while((p = get_unmap_info(caller->p_endpoint, seg, address)) != NULL) {
+		if((r = safeunmap(caller, p)) != OK)
 			return r;
 	}
 	return OK;

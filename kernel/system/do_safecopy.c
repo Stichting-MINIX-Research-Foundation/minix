@@ -25,7 +25,8 @@
 
 #define USE_COW_SAFECOPY 0
 
-FORWARD _PROTOTYPE(int safecopy, (endpoint_t, endpoint_t, cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
+FORWARD _PROTOTYPE(int safecopy, (struct proc *, endpoint_t, endpoint_t,
+		cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
 
 #define HASGRANTTABLE(gr) \
 	(!RTS_ISSET(gr, RTS_NO_PRIV) && priv(gr) && priv(gr)->s_grant_table > 0)
@@ -217,8 +218,9 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 /*===========================================================================*
  *				safecopy				     *
  *===========================================================================*/
-PRIVATE int safecopy(granter, grantee, grantid, src_seg, dst_seg, bytes,
+PRIVATE int safecopy(caller, granter, grantee, grantid, src_seg, dst_seg, bytes,
 	g_offset, addr, access)
+struct proc * caller;
 endpoint_t granter, grantee;
 cp_grant_id_t grantid;
 int src_seg, dst_seg;
@@ -232,8 +234,10 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	static vir_bytes v_offset;
 	endpoint_t new_granter, *src, *dst;
 	struct proc *granter_p;
-	vir_bytes size;
 	int r;
+#if USE_COW_SAFECOPY
+	vir_bytes size;
+#endif
 
 	/* See if there is a reasonable grant table. */
 	if(!(granter_p = endpoint_lookup(granter))) return EINVAL;
@@ -286,13 +290,13 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 		/* Give up on COW immediately when offsets are not aligned
 		 * or we are copying less than a page.
 		 */
-		return virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+		return virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
 	}
 
 	if((size = v_offset % CLICK_SIZE) != 0) {
 		/* Normal copy for everything before the first page boundary. */
 		size = CLICK_SIZE - size;
-		r = virtual_copy_vmcheck(&v_src, &v_dst, size);
+		r = virtual_copy_vmcheck(caller, &v_src, &v_dst, size);
 		if(r != OK)
 			return r;
 		v_src.offset += size;
@@ -314,22 +318,21 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	}
 	if(bytes != 0) {
 		/* Normal copy for everything after the last page boundary. */
-		r = virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+		r = virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
 		if(r != OK)
 			return r;
 	}
 
 	return OK;
 #else
-	return virtual_copy_vmcheck(&v_src, &v_dst, bytes);
+	return virtual_copy_vmcheck(caller, &v_src, &v_dst, bytes);
 #endif
 }
 
 /*===========================================================================*
  *				do_safecopy				     *
  *===========================================================================*/
-PUBLIC int do_safecopy(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_safecopy(struct proc * caller, message * m_ptr)
 {
 	static int access, src_seg, dst_seg;
 
@@ -344,16 +347,15 @@ register message *m_ptr;	/* pointer to request message */
 		access = CPF_WRITE;
 	} else minix_panic("Impossible system call nr. ", sys_call_code);
 
-	return safecopy(m_ptr->SCP_FROM_TO, who_e, m_ptr->SCP_GID,
-		src_seg, dst_seg, m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
-		(vir_bytes) m_ptr->SCP_ADDRESS, access);
+	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
+		m_ptr->SCP_GID, src_seg, dst_seg, m_ptr->SCP_BYTES,
+		m_ptr->SCP_OFFSET, (vir_bytes) m_ptr->SCP_ADDRESS, access);
 }
 
 /*===========================================================================*
  *				do_vsafecopy				     *
  *===========================================================================*/
-PUBLIC int do_vsafecopy(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_vsafecopy(struct proc * caller, message * m_ptr)
 {
 	static struct vscp_vec vec[SCPVEC_NR];
 	static struct vir_addr src, dst;
@@ -361,7 +363,7 @@ register message *m_ptr;	/* pointer to request message */
 	size_t bytes;
 
 	/* Set vector copy parameters. */
-	src.proc_nr_e = who_e;
+	src.proc_nr_e = caller->p_endpoint;
 	src.offset = (vir_bytes) m_ptr->VSCP_VEC_ADDR;
 	src.segment = dst.segment = D;
 	dst.proc_nr_e = SYSTEM;
@@ -372,7 +374,7 @@ register message *m_ptr;	/* pointer to request message */
 	bytes = els * sizeof(struct vscp_vec);
 
 	/* Obtain vector of copies. */
-	if((r=virtual_copy_vmcheck(&src, &dst, bytes)) != OK)
+	if((r=virtual_copy_vmcheck(caller, &src, &dst, bytes)) != OK)
 		return r;
 
 	/* Perform safecopies. */
@@ -387,12 +389,13 @@ register message *m_ptr;	/* pointer to request message */
 			granter = vec[i].v_from;
 		} else {
 			kprintf("vsafecopy: %d: element %d/%d: no SELF found\n",
-				who_e, i, els);
+				caller->p_endpoint, i, els);
 			return EINVAL;
 		}
 
 		/* Do safecopy for this element. */
-		if((r=safecopy(granter, who_e, vec[i].v_gid, D, D,
+		if((r=safecopy(caller, granter, caller->p_endpoint,
+			vec[i].v_gid, D, D,
 			vec[i].v_bytes, vec[i].v_offset,
 			vec[i].v_addr, access)) != OK) {
 			return r;

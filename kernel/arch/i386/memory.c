@@ -775,7 +775,8 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
-PUBLIC int virtual_copy_f(src_addr, dst_addr, bytes, vmcheck)
+PUBLIC int virtual_copy_f(caller, src_addr, dst_addr, bytes, vmcheck)
+struct proc * caller;
 struct vir_addr *src_addr;	/* source virtual address */
 struct vir_addr *dst_addr;	/* destination virtual address */
 vir_bytes bytes;		/* # of bytes to copy  */
@@ -790,6 +791,8 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   int i;
   struct proc *procs[2];
   NOREC_ENTER(virtualcopy);
+
+  vmassert((vmcheck && caller) || (!vmcheck && !caller));
 
   /* Check copy count. */
   if (bytes <= 0) return(EDOM);
@@ -823,8 +826,8 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	          phys_addr[i] = umap_local(p, seg_index, vir_addr[i]->offset,
 			bytes);
 	  else
-	  	phys_addr[i] = umap_virtual(p, seg_index, vir_addr[i]->offset,
-			bytes);
+	  	phys_addr[i] = umap_virtual(p, seg_index,
+				vir_addr[i]->offset, bytes);
 	  if(phys_addr[i] == 0) {
 		kprintf("virtual_copy: map 0x%x failed for %s seg %d, "
 			"offset %lx, len %d, i %d\n",
@@ -861,11 +864,8 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 
   if(vm_running) {
 	int r;
-	struct proc *caller;
 
-	caller = proc_addr(who_p);
-
-	if(RTS_ISSET(caller, RTS_VMREQUEST)) {
+	if(caller && RTS_ISSET(caller, RTS_VMREQUEST)) {
 		vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
 		RTS_LOCK_UNSET(caller, RTS_VMREQUEST);
 		if(caller->p_vmrequest.vmresult != OK) {
@@ -884,7 +884,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 		phys_bytes lin;
 		if(r != EFAULT_SRC && r != EFAULT_DST)
 			minix_panic("lin_lin_copy failed", r);
-		if(!vmcheck) {
+		if(!vmcheck || !caller) {
 	  		NOREC_RETURN(virtualcopy, r);
 		}
 
@@ -909,9 +909,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 #endif
 
 		vmassert(proc_ptr->p_endpoint == SYSTEM);
-		vm_suspend(caller, target, lin, bytes, wr, VMSTYPE_KERNELCALL);
-
-	  	NOREC_RETURN(virtualcopy, VMSUSPEND);
+		vm_suspend(caller, target, lin, bytes, wr,
+				VMSTYPE_KERNELCALL);
+		NOREC_RETURN(virtualcopy, VMSUSPEND);
 	}
 
   	NOREC_RETURN(virtualcopy, OK);
@@ -941,8 +941,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 /*===========================================================================*
  *				data_copy				     *
  *===========================================================================*/
-PUBLIC int data_copy(
-	endpoint_t from_proc, vir_bytes from_addr,
+PUBLIC int data_copy(endpoint_t from_proc, vir_bytes from_addr,
 	endpoint_t to_proc, vir_bytes to_addr,
 	size_t bytes)
 {
@@ -960,7 +959,7 @@ PUBLIC int data_copy(
 /*===========================================================================*
  *				data_copy_vmcheck			     *
  *===========================================================================*/
-PUBLIC int data_copy_vmcheck(
+PUBLIC int data_copy_vmcheck(struct proc * caller,
 	endpoint_t from_proc, vir_bytes from_addr,
 	endpoint_t to_proc, vir_bytes to_addr,
 	size_t bytes)
@@ -973,7 +972,7 @@ PUBLIC int data_copy_vmcheck(
   src.proc_nr_e = from_proc;
   dst.proc_nr_e = to_proc;
 
-  return virtual_copy_vmcheck(&src, &dst, bytes);
+  return virtual_copy_vmcheck(caller, &src, &dst, bytes);
 }
 
 /*===========================================================================*

@@ -21,9 +21,7 @@
 /*===========================================================================*
  *			        do_sdevio                                    *
  *===========================================================================*/
-PUBLIC int do_sdevio(
-  register message *m_ptr	/* pointer to request message */
-)
+PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
 {
   vir_bytes newoffset;
   endpoint_t newep;
@@ -32,7 +30,6 @@ PUBLIC int do_sdevio(
   long port = m_ptr->DIO_PORT;
   phys_bytes phys_buf;
   int i, req_type, req_dir, size, nr_io_range;
-  struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
   struct proc *destproc;
@@ -55,7 +52,7 @@ PUBLIC int do_sdevio(
    * that initiated the device I/O. Kernel processes, of course, are denied.
    */
   if (proc_nr_e == SELF)
-	proc_nr = who_p;
+	proc_nr = _ENDPOINT_P(caller->p_endpoint);
   else
 	if(!isokendpt(proc_nr_e, &proc_nr))
 		return(EINVAL);
@@ -68,7 +65,7 @@ PUBLIC int do_sdevio(
   /* Check for 'safe' variants. */
   if((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
-     if(verify_grant(proc_nr_e, who_e, 
+     if(verify_grant(proc_nr_e, caller->p_endpoint,
 	(vir_bytes) m_ptr->DIO_VEC_ADDR,
 	count,
 	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
@@ -86,10 +83,10 @@ PUBLIC int do_sdevio(
          return(EFAULT);
      }
   } else {
-     if(proc_nr != who_p)
+     if(proc_nr != _ENDPOINT_P(caller->p_endpoint))
      {
 	kprintf("do_sdevio: unsafe sdevio by %d in %d denied\n",
-		who_e, proc_nr_e);
+		caller->p_endpoint, proc_nr_e);
 	return EPERM;
      }
      /* Get and check physical address. */
@@ -110,8 +107,7 @@ PUBLIC int do_sdevio(
 	default: size= 4; break;	/* Be conservative */
   }
 
-  rp= proc_addr(who_p);
-  privp= priv(rp);
+  privp= priv(caller);
   if (privp && privp->s_flags & CHECK_IO_PORT)
   {
 	port= m_ptr->DIO_PORT;

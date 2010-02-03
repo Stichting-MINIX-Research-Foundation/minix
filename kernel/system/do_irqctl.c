@@ -20,8 +20,7 @@ FORWARD _PROTOTYPE(int generic_handler, (irq_hook_t *hook));
 /*===========================================================================*
  *				do_irqctl				     *
  *===========================================================================*/
-PUBLIC int do_irqctl(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
 {
   /* Dismember the request message. */
   int irq_vec;
@@ -30,7 +29,6 @@ register message *m_ptr;	/* pointer to request message */
   int r = OK;
   int i;
   irq_hook_t *hook_ptr;
-  struct proc *rp;
   struct priv *privp;
 
   /* Hook identifiers start at 1 and end at NR_IRQ_HOOKS. */
@@ -61,8 +59,7 @@ register message *m_ptr;	/* pointer to request message */
       /* Check if IRQ line is acceptable. */
       if (irq_vec < 0 || irq_vec >= NR_IRQ_VECTORS) return(EINVAL);
 
-      rp= proc_addr(who_p);
-      privp= priv(rp);
+      privp= priv(caller);
       if (!privp)
       {
 	kprintf("do_irqctl: no priv structure!\n");

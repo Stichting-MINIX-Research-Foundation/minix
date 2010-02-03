@@ -16,8 +16,7 @@
 /*===========================================================================*
  *				do_exec					     *
  *===========================================================================*/
-PUBLIC int do_exec(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_exec(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_exec().  A process has done a successful EXEC. Patch it up. */
   register struct proc *rp;
@@ -34,7 +33,7 @@ register message *m_ptr;	/* pointer to request message */
   }
 
   /* Save command name for debugging, ps(1) output, etc. */
-  if(data_copy(who_e, (vir_bytes) m_ptr->PR_NAME_PTR,
+  if(data_copy(caller->p_endpoint, (vir_bytes) m_ptr->PR_NAME_PTR,
 	SYSTEM, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)
   	strncpy(rp->p_name, "<unset>", P_NAME_LEN);
 

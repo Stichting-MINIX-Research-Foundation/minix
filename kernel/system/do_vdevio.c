@@ -23,8 +23,7 @@ PRIVATE pvl_pair_t *pvl = (pvl_pair_t *) vdevio_buf;
 /*===========================================================================*
  *			        do_vdevio                                    *
  *===========================================================================*/
-PUBLIC int do_vdevio(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
 {
 /* Perform a series of device I/O on behalf of a non-kernel process. The 
  * I/O addresses and I/O values are fetched from and returned to some buffer
@@ -38,7 +37,6 @@ register message *m_ptr;	/* pointer to request message */
   port_t port;
   int i, j, io_size, nr_io_range;
   int io_dir, io_type;
-  struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
   int r;
@@ -68,12 +66,11 @@ register message *m_ptr;	/* pointer to request message */
   if (bytes > sizeof(vdevio_buf))  return(E2BIG);
 
   /* Copy (port,value)-pairs from user. */
-  if((r=data_copy(who_e, (vir_bytes) m_ptr->DIO_VEC_ADDR,
+  if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->DIO_VEC_ADDR,
     SYSTEM, (vir_bytes) vdevio_buf, bytes)) != OK)
 	return r;
 
-  rp= proc_addr(who_p);
-  privp= priv(rp);
+  privp= priv(caller);
   if (privp && (privp->s_flags & CHECK_IO_PORT))
   {
 	/* Check whether the I/O is allowed */
@@ -173,7 +170,7 @@ register message *m_ptr;	/* pointer to request message */
   /* Almost done, copy back results for input requests. */
   if (io_in) 
 	if((r=data_copy(SYSTEM, (vir_bytes) vdevio_buf, 
-	  who_e, (vir_bytes) m_ptr->DIO_VEC_ADDR,
+	  caller->p_endpoint, (vir_bytes) m_ptr->DIO_VEC_ADDR,
 	  (phys_bytes) bytes)) != OK)
 		return r;
   return(OK);

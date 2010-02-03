@@ -12,20 +12,15 @@
 /*===========================================================================*
  *				do_setgrant				     *
  *===========================================================================*/
-PUBLIC int do_setgrant(m_ptr)
-message *m_ptr;
+PUBLIC int do_setgrant(struct proc * caller, message * m_ptr)
 {
-	struct proc *rp;
 	int r;
 
-	/* Who wants to set a parameter? */
-	rp = proc_addr(who_p);
-
 	/* Copy grant table set in priv. struct. */
-	if (RTS_ISSET(rp, RTS_NO_PRIV) || !(priv(rp))) {
+	if (RTS_ISSET(caller, RTS_NO_PRIV) || !(priv(caller))) {
 		r = EPERM;
 	} else {
-		_K_SET_GRANT_TABLE(rp, 
+		_K_SET_GRANT_TABLE(caller,
 			(vir_bytes) m_ptr->SG_ADDR,
 			m_ptr->SG_SIZE);
 		r = OK;

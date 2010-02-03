@@ -12,8 +12,7 @@
 /*===========================================================================*
  *				do_stime				     *
  *===========================================================================*/
-PUBLIC int do_stime(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_stime(struct proc * caller, message * m_ptr)
 {
   boottime= m_ptr->T_BOOTTIME;
   return(OK);

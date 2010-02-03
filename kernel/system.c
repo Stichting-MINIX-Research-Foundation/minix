@@ -50,7 +50,7 @@
  * because the dummy is declared extern. If an illegal call is given, the 
  * array size will be negative and this won't compile. 
  */
-PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
+PUBLIC int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
 char *callnames[NR_SYS_CALLS];
 
 #define map(call_nr, handler) \
@@ -72,6 +72,8 @@ PUBLIC void sys_task()
   register struct proc *caller_ptr;
   int s;
   int call_nr;
+  int who_p;
+  endpoint_t who_e;
 
   /* Initialize the system task. */
   initialize();
@@ -105,7 +107,8 @@ PUBLIC void sys_task()
 	  result = ECALLDENIED;			/* illegal message type */
       }
       else {
-          result = (*call_vec[call_nr])(&m); /* handle the system call */
+	  /* handle the system call */
+          result = (*call_vec[call_nr])(caller_ptr, &m);
       }
 
       if(result == VMSUSPEND) {
@@ -549,6 +552,7 @@ PRIVATE struct proc *vmrestart_check(message *m)
 {
 	int type;
 	struct proc *restarting;
+	int who_p;
 
       /* Anyone waiting to be vm-restarted? */
 
@@ -589,4 +593,5 @@ PRIVATE struct proc *vmrestart_check(message *m)
 	   		minix_panic("strange restart type", type);
 	}
 	minix_panic("fell out of switch", NO_NUM);
+	return NULL;
 }

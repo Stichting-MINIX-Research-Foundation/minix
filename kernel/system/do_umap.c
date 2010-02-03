@@ -11,13 +11,14 @@
 
 #include "../system.h"
 
+#include <minix/endpoint.h>
+
 #if USE_UMAP
 
 /*==========================================================================*
  *				do_umap					    *
  *==========================================================================*/
-PUBLIC int do_umap(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_umap(struct proc * caller, message * m_ptr)
 {
 /* Map virtual address to physical, for non-kernel processes. */
   int seg_type = m_ptr->CP_SRC_SPACE & SEGMENT_TYPE;
@@ -28,19 +29,15 @@ register message *m_ptr;	/* pointer to request message */
   int proc_nr, r;
   int naughty = 0;
   phys_bytes phys_addr = 0, lin_addr = 0;
-  int caller_pn;
-  struct proc *targetpr, *caller;
+  struct proc *targetpr;
 
   /* Verify process number. */
   if (endpt == SELF)
-	proc_nr = who_p;
+	proc_nr = _ENDPOINT_P(caller->p_endpoint);
   else
 	if (! isokendpt(endpt, &proc_nr))
 		return(EINVAL);
   targetpr = proc_addr(proc_nr);
-
-  okendpt(who_e, &caller_pn);
-  caller = proc_addr(caller_pn);
 
   /* See which mapping should be made. */
   switch(seg_type) {
@@ -110,7 +107,8 @@ register message *m_ptr;	/* pointer to request message */
   m_ptr->CP_DST_ADDR = phys_addr;
   if(naughty || phys_addr == 0) {
 	  kprintf("kernel: umap 0x%x done by %d / %s, pc 0x%lx, 0x%lx -> 0x%lx\n",
-		seg_type, who_e, caller->p_name, caller->p_reg.pc, offset, phys_addr);
+		seg_type, caller->p_endpoint, caller->p_name,
+		caller->p_reg.pc, offset, phys_addr);
 	kprintf("caller stack: ");
 	proc_stacktrace(caller);
   }

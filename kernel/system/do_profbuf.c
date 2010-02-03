@@ -14,8 +14,7 @@
 /*===========================================================================*
  *				do_profbuf				     *
  *===========================================================================*/
-PUBLIC int do_profbuf(m_ptr)
-register message *m_ptr;    /* pointer to request message */
+PUBLIC int do_profbuf(struct proc * caller, message * m_ptr)
 {
 /* This kernel call is used by profiled system processes when Call
  * Profiling is enabled. It is called on the first execution of procentry.
@@ -35,7 +34,7 @@ register message *m_ptr;    /* pointer to request message */
 
   rp = proc_addr(proc_nr);
 
-  cprof_proc_info[cprof_procs_no].endpt = who_e;
+  cprof_proc_info[cprof_procs_no].endpt = caller->p_endpoint;
   cprof_proc_info[cprof_procs_no].name = rp->p_name;
 
   cprof_proc_info[cprof_procs_no].ctl_v = (vir_bytes) m_ptr->PROF_CTL_PTR;

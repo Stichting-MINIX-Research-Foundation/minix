@@ -20,8 +20,7 @@
 /*===========================================================================*
  *			        do_getinfo				     *
  *===========================================================================*/
-PUBLIC int do_getinfo(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
 {
 /* Request system information to be copied to caller's address space. This
  * call simply copies entire data structures to the caller.
@@ -29,11 +28,8 @@ register message *m_ptr;	/* pointer to request message */
   size_t length;
   vir_bytes src_vir; 
   int nr_e, nr, r;
-  struct proc *caller;
   int wipe_rnd_bin = -1;
   struct exec e_hdr;
-
-  caller = proc_addr(who_p);
 
   /* Set source address and length based on request type. */
   switch (m_ptr->I_REQUEST) {
@@ -79,7 +75,7 @@ register message *m_ptr;	/* pointer to request message */
     }
     case GET_PROC: {
         nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
-		who_e : m_ptr->I_VAL_LEN2_E;
+		caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
 	if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         length = sizeof(struct proc);
         src_vir = (vir_bytes) proc_addr(nr);
@@ -87,7 +83,7 @@ register message *m_ptr;	/* pointer to request message */
     }
     case GET_PRIV: {
         nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
-            who_e : m_ptr->I_VAL_LEN2_E;
+            caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
         if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         length = sizeof(struct priv);
         src_vir = (vir_bytes) priv_addr(nr_to_id(nr));
@@ -188,7 +184,7 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Try to make the actual copy for the requested data. */
   if (m_ptr->I_VAL_LEN > 0 && length > m_ptr->I_VAL_LEN) return (E2BIG);
-  r = data_copy_vmcheck(SYSTEM, src_vir, who_e,
+  r = data_copy_vmcheck(caller, SYSTEM, src_vir, caller->p_endpoint,
 	(vir_bytes) m_ptr->I_VAL_PTR, length);
 
   if(r != OK) return r;

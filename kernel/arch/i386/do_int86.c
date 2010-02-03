@@ -18,17 +18,16 @@ struct reg86u reg86;
 /*===========================================================================*
  *				do_int86					     *
  *===========================================================================*/
-PUBLIC int do_int86(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_int86(struct proc * caller, message * m_ptr)
 {
-  data_copy(who_e, (vir_bytes) m_ptr->INT86_REG86,
+  data_copy(caller->p_endpoint, (vir_bytes) m_ptr->INT86_REG86,
 	SYSTEM, (vir_bytes) &reg86, sizeof(reg86));
 
   level0(int86);
 
   /* Copy results back to the caller */
   data_copy(SYSTEM, (vir_bytes) &reg86,
-	who_e, (vir_bytes) m_ptr->INT86_REG86, sizeof(reg86));
+	caller->p_endpoint, (vir_bytes) m_ptr->INT86_REG86, sizeof(reg86));
 
   /* The BIOS call eats interrupts. Call get_randomness to generate some
    * entropy. Normally, get_randomness is called from an interrupt handler.

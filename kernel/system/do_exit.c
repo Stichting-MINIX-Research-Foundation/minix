@@ -16,8 +16,7 @@ FORWARD _PROTOTYPE( void clear_proc, (register struct proc *rc));
 /*===========================================================================*
  *				do_exit					     *
  *===========================================================================*/
-PUBLIC int do_exit(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_exit(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_exit. A user process has exited or a system process requests 
  * to exit. Only the PM can request other process slots to be cleared.
@@ -28,7 +27,7 @@ message *m_ptr;			/* pointer to request message */
   int exit_e;				
 
   /* Determine what process exited. User processes are handled here. */
-  if (PM_PROC_NR == who_p) {
+  if (PM_PROC_NR == caller->p_endpoint) {
       if (m_ptr->PR_ENDPT != SELF) { 		/* PM tries to exit self */
           if(!isokendpt(m_ptr->PR_ENDPT, &exit_e)) /* get exiting process */
 	     return EINVAL;
@@ -38,7 +37,7 @@ message *m_ptr;			/* pointer to request message */
   } 
 
   /* The PM or some other system process requested to be exited. */
-  clear_proc(proc_addr(who_p));
+  clear_proc(caller);
   return(EDONTREPLY);
 }
 

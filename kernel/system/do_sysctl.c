@@ -12,15 +12,11 @@
 /*===========================================================================*
  *			        do_sysctl				     *
  *===========================================================================*/
-PUBLIC int do_sysctl(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PUBLIC int do_sysctl(struct proc * caller, message * m_ptr)
 {
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];
-  struct proc *caller;
   int s, i, proc_nr;
-
-  caller = proc_addr(who_p);
 
   switch (m_ptr->SYSCTL_CODE) {
     case SYSCTL_CODE_DIAG:
@@ -31,7 +27,8 @@ register message *m_ptr;	/* pointer to request message */
 			caller->p_endpoint, len);
 		return EINVAL;
 	}
-	if((s=data_copy_vmcheck(who_e, buf, SYSTEM, (vir_bytes) mybuf, len)) != OK) {
+	if((s=data_copy_vmcheck(caller, caller->p_endpoint, buf, SYSTEM,
+					(vir_bytes) mybuf, len)) != OK) {
 		kprintf("do_sysctl: diag for %d: len %d: copy failed: %d\n",
 			caller->p_endpoint, len, s);
 		return s;

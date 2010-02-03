@@ -16,8 +16,7 @@
 /*==========================================================================*
  *				do_trace				    *
  *==========================================================================*/
-PUBLIC int do_trace(m_ptr)
-register message *m_ptr;
+PUBLIC int do_trace(struct proc * caller, message * m_ptr)
 {
 /* Handle the debugging commands supported by the ptrace system call
  * The commands are:
@@ -61,7 +60,8 @@ register message *m_ptr;
 	toaddr.offset = (addr);				\
 	fromaddr.segment = D;				\
 	toaddr.segment = (seg);				\
-	if((r=virtual_copy_vmcheck(&fromaddr, &toaddr, length)) != OK) { \
+	if((r=virtual_copy_vmcheck(caller, &fromaddr,	\
+			&toaddr, length)) != OK) {	\
 		printf("Can't copy in sys_trace: %d\n", r);\
 		return r;\
 	}  \
@@ -76,7 +76,8 @@ register message *m_ptr;
 	toaddr.offset = (myaddr);			\
 	fromaddr.segment = (seg);			\
 	toaddr.segment = D;				\
-	if((r=virtual_copy_vmcheck(&fromaddr, &toaddr, length)) != OK) { \
+	if((r=virtual_copy_vmcheck(caller, &fromaddr,	\
+			&toaddr, length)) != OK) {	\
 		printf("Can't copy in sys_trace: %d\n", r);\
 		return r;\
 	}  \

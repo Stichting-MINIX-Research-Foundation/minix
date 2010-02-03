@@ -11,20 +11,19 @@
 #include "../ipc.h"
 #include <signal.h>
 #include <string.h>
+#include <minix/endpoint.h>
 
 #if USE_PRIVCTL
 
 /*===========================================================================*
  *				do_privctl				     *
  *===========================================================================*/
-PUBLIC int do_privctl(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_privctl(). Update a process' privileges. If the process is not
  * yet a system process, make sure it gets its own privilege structure.
  */
-  register struct proc *caller_ptr;
-  register struct proc *rp;
+  struct proc *rp;
   int proc_nr;
   int priv_id;
   int ipc_to_m, kcalls;
@@ -39,9 +38,8 @@ message *m_ptr;			/* pointer to request message */
    * running by the RTS_NO_PRIV flag. This flag is set when a privileged process
    * forks. 
    */
-  caller_ptr = proc_addr(who_p);
-  if (! (priv(caller_ptr)->s_flags & SYS_PROC)) return(EPERM); 
-  if(m_ptr->CTL_ENDPT == SELF) proc_nr = who_p;
+  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM);
+  if(m_ptr->CTL_ENDPT == SELF) proc_nr = _ENDPOINT_P(caller->p_endpoint);
   else if(!isokendpt(m_ptr->CTL_ENDPT, &proc_nr)) return(EINVAL);
   rp = proc_addr(proc_nr);
 
@@ -72,7 +70,7 @@ message *m_ptr;			/* pointer to request message */
 	if (m_ptr->CTL_ARG_PTR)
 	{
 		/* Copy privilege structure from caller */
-		if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+		if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
 			SYSTEM, (vir_bytes) &priv, sizeof(priv))) != OK)
 			return r;
 
@@ -93,7 +91,7 @@ message *m_ptr;			/* pointer to request message */
 		return(i);
 	}
 	priv_id = priv(rp)->s_id;		/* backup privilege id */
-	*priv(rp) = *priv(caller_ptr);		/* copy from caller */
+	*priv(rp) = *priv(caller);		/* copy from caller */
 	priv(rp)->s_id = priv_id;		/* restore privilege id */
 	priv(rp)->s_proc_nr = proc_nr;		/* reassociate process nr */
 
@@ -227,7 +225,7 @@ message *m_ptr;			/* pointer to request message */
 #endif
 
 	/* Get the I/O range */
-	data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
 		SYSTEM, (vir_bytes) &io_range, sizeof(io_range));
 	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
 	i= priv(rp)->s_nr_io_range;
@@ -249,7 +247,7 @@ message *m_ptr;			/* pointer to request message */
 		return EPERM;
 
 	/* Get the memory range */
-	if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+	if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
 		SYSTEM, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
 	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
@@ -271,7 +269,7 @@ message *m_ptr;			/* pointer to request message */
 	if (!(priv(rp)->s_flags & SYS_PROC))
 		return EPERM;
 
-	data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
 		SYSTEM, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
 

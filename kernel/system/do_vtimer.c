@@ -18,11 +18,9 @@
 /*===========================================================================*
  *				do_vtimer				     *
  *===========================================================================*/
-PUBLIC int do_vtimer(m_ptr)
-message *m_ptr;			/* pointer to request message */
+PUBLIC int do_vtimer(struct proc * caller, message * m_ptr)
 {
 /* Set and/or retrieve the value of one of a process' virtual timers. */
-  struct proc *rrp;		/* pointer to requesting process */
   struct proc *rp;		/* pointer to process the timer belongs to */
   register int pt_flag;		/* the misc on/off flag for the req.d timer */
   register clock_t *pt_left;	/* pointer to the process' ticks-left field */ 
@@ -30,8 +28,7 @@ message *m_ptr;			/* pointer to request message */
   int proc_nr, proc_nr_e;
 
   /* The requesting process must be privileged. */
-  rrp = proc_addr(who_p);
-  if (! (priv(rrp)->s_flags & SYS_PROC)) return(EPERM);
+  if (! (priv(caller)->s_flags & SYS_PROC)) return(EPERM);
 
   if (m_ptr->VT_WHICH != VT_VIRTUAL && m_ptr->VT_WHICH != VT_PROF)
       return(EINVAL);

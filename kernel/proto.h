@@ -61,13 +61,13 @@ _PROTOTYPE( void sig_delay_done, (struct proc *rp)			);
 _PROTOTYPE( void sys_task, (void)					);
 #define numap_local(proc_nr, vir_addr, bytes) \
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
-_PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t,
-	vir_bytes));
+_PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t, vir_bytes));
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
 _PROTOTYPE( phys_bytes umap_bios, (vir_bytes vir_addr, vir_bytes bytes));
 
 /* system/do_newmap.c */
-_PROTOTYPE( int newmap, (struct proc *rp, struct mem_map *map_ptr)	);
+_PROTOTYPE( int newmap, (struct proc * caller, struct proc *rp,
+					struct mem_map *map_ptr));
 
 /* system/do_vtimer.c */
 _PROTOTYPE( void vtimer_check, (struct proc *rp)			);
@@ -88,17 +88,18 @@ _PROTOTYPE( char *rtsflagstr, (int flags) );
 _PROTOTYPE( char *miscflagstr, (int flags) );
 
 /* system/do_safemap.c */
-_PROTOTYPE( int map_invoke_vm, (int req_type,
+_PROTOTYPE( int map_invoke_vm, (struct proc * caller, int req_type,
 		endpoint_t end_d, int seg_d, vir_bytes off_d,
 		endpoint_t end_s, int seg_s, vir_bytes off_s,
 		size_t size, int flag));
 
 /* system/do_safecopy.c */
-_PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
-	int, vir_bytes, vir_bytes *, endpoint_t *));
+_PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t,
+	cp_grant_id_t, vir_bytes, int,
+	vir_bytes, vir_bytes *, endpoint_t *));
 
 /* system/do_sysctl.c */
-_PROTOTYPE( int do_sysctl, (message *m));
+_PROTOTYPE( int do_sysctl, (struct proc * caller, message *m));
 
 #if SPROFILE
 /* profile.c */
@@ -112,13 +113,17 @@ _PROTOTYPE( phys_bytes phys_copy, (phys_bytes source, phys_bytes dest,
                 phys_bytes count)                                       );
 _PROTOTYPE( void phys_copy_fault, (void));
 _PROTOTYPE( void phys_copy_fault_in_kernel, (void));
-#define virtual_copy(src, dst, bytes) virtual_copy_f(src, dst, bytes, 0)
-#define virtual_copy_vmcheck(src, dst, bytes) virtual_copy_f(src, dst, bytes, 1)
-_PROTOTYPE( int virtual_copy_f, (struct vir_addr *src, struct vir_addr *dst, 
-				vir_bytes bytes, int vmcheck)		);
+#define virtual_copy(src, dst, bytes) \
+				virtual_copy_f(NULL, src, dst, bytes, 0)
+#define virtual_copy_vmcheck(caller, src, dst, bytes) \
+				virtual_copy_f(caller, src, dst, bytes, 1)
+_PROTOTYPE( int virtual_copy_f, (struct proc * caller,
+			struct vir_addr *src, struct vir_addr *dst,
+			vir_bytes bytes, int vmcheck)		);
 _PROTOTYPE( int data_copy, (endpoint_t from, vir_bytes from_addr,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
-_PROTOTYPE( int data_copy_vmcheck, (endpoint_t from, vir_bytes from_addr,
+_PROTOTYPE( int data_copy_vmcheck, (struct proc *,
+	endpoint_t from, vir_bytes from_addr,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
 _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
 _PROTOTYPE( void vm_init, (struct proc *first)        			);
@@ -128,8 +133,8 @@ _PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,
         vir_bytes src_offset, phys_clicks dst_clicks, vir_bytes dst_offset));
 _PROTOTYPE( phys_bytes umap_remote, (struct proc* rp, int seg,
         vir_bytes vir_addr, vir_bytes bytes)				);
-_PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp, int seg,
-        vir_bytes vir_addr, vir_bytes bytes)				);
+_PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp,
+			int seg, vir_bytes vir_addr, vir_bytes bytes)	);
 _PROTOTYPE( phys_bytes seg2phys, (U16_t)                                );
 _PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
                 phys_bytes count)                                       );

@@ -17,11 +17,8 @@
 /*===========================================================================*
  *			        do_devio                                     *
  *===========================================================================*/
-PUBLIC int do_devio(
-    register message *m_ptr	/* pointer to request message */
-)
+PUBLIC int do_devio(struct proc * caller, message * m_ptr)
 {
-    struct proc *rp;
     struct priv *privp;
     port_t port;
     struct io_range *iorp;
@@ -39,8 +36,7 @@ PUBLIC int do_devio(
 	default: size= 4; break;	/* Be conservative */
     }
 
-    rp= proc_addr(who_p);
-    privp= priv(rp);
+    privp= priv(caller);
     if (!privp)
     {
 	kprintf("no priv structure!\n");
