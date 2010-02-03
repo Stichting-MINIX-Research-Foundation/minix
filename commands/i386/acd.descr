@@ -36,7 +36,7 @@ ACK_CG =	$A/$ARCH/cg
 ACK_AS =	$A/$ARCH/as \-
 ACK_LED =	$A/em_led -a0:$W -a1:$W -a2:$W -a3:$W
 ACK_CV =	$A/cv
-ASMCONV =	$L/asmconv
+ASMCONV =	/usr/bin/asmconv
 AAL =		/usr/bin/aal
 
 # Minix predefined symbols.

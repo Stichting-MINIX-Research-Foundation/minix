@@ -506,6 +506,9 @@ void gnu_emit_instruction(asm86_t *a)
 		}
 	}
 
+	if (a->opcode == DOT_END) {
+		/* Ignore .end in gnu mode. */
+	} else
 	if (a->opcode == DOT_LABEL) {
 		assert(a->args->operator == ':');
 		gnu_printf("%s:", a->args->name);
