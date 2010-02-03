@@ -13,7 +13,7 @@ if [ "$1" != normal ]
 then	t=$t.$1
 fi
 
-chmem =250000 /usr/lib/em_* /usr/lib/cpp* /usr/lib/cv /usr/lib/asmconv >/dev/null 2>&1
+chmem =250000 /usr/lib/em_* /usr/lib/cpp* /usr/lib/cv >/dev/null 2>&1
 chmem =600000 /usr/lib/ego/*  >/dev/null 2>&1
 if [ -f $t ]
 then	cat "$t" | while read line

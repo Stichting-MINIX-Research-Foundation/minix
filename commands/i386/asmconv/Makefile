@@ -13,9 +13,9 @@ asmconv:	$(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ)
 	install -S 8kw $@
 
-install:	/usr/lib/asmconv
+install:	/usr/bin/asmconv
 
-/usr/lib/asmconv:	asmconv
+/usr/bin/asmconv:	asmconv
 	install -cs -o bin asmconv $@
 
 clean:

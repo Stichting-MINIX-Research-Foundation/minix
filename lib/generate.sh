@@ -133,7 +133,7 @@ gnuCommands()
 	
 	case $srcfile in
 	*.s )
-		echo "	gcc $CFLAGS -E -x assembler-with-cpp -I. $srcfile | asmconv -mi386 ack gnu > $GNUBASE/$OBJDIR/$srcfile.gnu || true"
+		echo "	gcc $CFLAGS -E -x assembler-with-cpp -I. $srcfile | asmconv -mi386 ack gnu > $GNUBASE/$OBJDIR/$srcfile.gnu"
 		echo "	gas -o $dstfile $GNUBASE/$OBJDIR/$srcfile.gnu"
 		
 		echo "	mkdep 'gcc $CFLAGS -E -x assembler-with-cpp -I.' $srcfile | $sedcmd >> .depend-gnu" >&4
