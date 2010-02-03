@@ -146,7 +146,6 @@ ALL	= \
 	prep \
 	printf \
 	printroot \
-	printenv \
 	proto \
 	pwd \
 	pwdauth \
@@ -633,10 +632,6 @@ prep:	prep.c
 	@install -S 4kw $@
 
 printf:	printf.c
-	$(CCLD) -o $@ $<
-	@install -S 4kw $@
-
-printenv:	printenv.c
 	$(CCLD) -o $@ $<
 	@install -S 4kw $@
 
@@ -1485,8 +1480,8 @@ install:	\
 /usr/bin/printf:	printf
 	install -cs -o bin $< $@
 
-/usr/bin/printenv:	printenv
-	install -cs -o bin $< $@
+/usr/bin/printenv:	/usr/bin/env
+	install -ls -o bin /usr/bin/env /usr/bin/printenv
 
 /usr/bin/printroot:	printroot
 	install -cs -o bin $< $@
