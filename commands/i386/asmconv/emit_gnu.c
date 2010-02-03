@@ -507,7 +507,8 @@ void gnu_emit_instruction(asm86_t *a)
 	}
 
 	if (a->opcode == DOT_END) {
-		/* Ignore .end in gnu mode. */
+		/* Stop translating after .sect .end. */
+		exit(0);
 	} else
 	if (a->opcode == DOT_LABEL) {
 		assert(a->args->operator == ':');
