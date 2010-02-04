@@ -4,17 +4,30 @@ set -e
 
 make
 
-benchmarks=`echo *bench*`
+BENCHDIR=/usr/local/benchmarks
+
+basebenchmarks=`echo *bench*`
+packagebenchmarks=`(cd $BENCHDIR && echo *bench*)`
 
 runbench() {
-	out="Results/$1.`date +%Y%m%d.%H%M%S`"
-	echo "Running $1, saving output to $out."
-	( cd $1 && sh run.sh 2>&1 ) | tee $out
+	bench=$1
+	out="Results/$bench.`date +%Y%m%d.%H%M%S`"
+	if [ -d $bench ]
+	then	dir=$bench
+	fi
+	if [ -d $BENCHDIR/$bench ]
+	then	dir=$BENCHDIR/$bench
+	fi
+	clear
+	echo "Running $dir."
+	echo "Saving output to $out."
+	echo ""
+	( cd $dir && sh run.sh 2>&1 ) | tee $out
 }
 
 clear
 n=1
-for b in $benchmarks
+for b in $basebenchmarks $packagebenchmarks
 do	echo "$n. $b"
 	eval "n$n=$b"
 	n=`expr $n + 1`
@@ -22,14 +35,14 @@ done
 echo
 echo -n "Run which benchmark or 'all'? "
 read bench
-var=`eval echo "\\$n$bench"`
+eval var=\$n$bench
 if [ "$bench" = all ]
-then	for b in $benchmarks
+then	for b in $basebenchmarks $packagebenchmarks
 	do	runbench $b
 	done
-else	if [ -d "$var" ]
+else	if [ -d "$var" -o -d "$BENCHDIR/$var" ]
 	then	runbench $var
-	else	echo "Unknown benchmark."
+	else	echo "Unknown benchmark $var."
 		exit 1
 	fi
 fi
