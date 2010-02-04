@@ -540,7 +540,7 @@ u16_t new_win;
 	acc_t *pack;
 	clock_t retrans_time, curr_time, rtt, artt, drtt, srtt;
 	u32_t queue_lo, queue_hi;
-	u16_t mss, cthresh;
+	u16_t mss, cthresh, new_cthresh;
 	unsigned window;
 
 	DBLOCK(0x10, printf("tcp_release_retrans, conn[%d]: ack %lu, win %u\n",
@@ -640,9 +640,11 @@ u16_t new_win;
 	cthresh= tcp_conn->tc_snd_cthresh;
 	if (window > cthresh)
 	{
-		cthresh += tcp_conn->tc_snd_cinc;
-		tcp_conn->tc_snd_cthresh= cthresh;
-		window= cthresh;
+		new_cthresh= cthresh + tcp_conn->tc_snd_cinc;
+		if (new_cthresh < cthresh)
+			new_cthresh= cthresh;		/* overflow */
+		tcp_conn->tc_snd_cthresh= new_cthresh;
+		window= new_cthresh;
 	}
 
 	/* If the window is larger than the window advertised by the
