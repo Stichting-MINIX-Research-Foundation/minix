@@ -7,7 +7,10 @@ make
 BENCHDIR=/usr/local/benchmarks
 
 basebenchmarks=`echo *bench*`
-packagebenchmarks=`(cd $BENCHDIR && echo *bench*)`
+
+if [ -d $BENCHDIR ]
+then	packagebenchmarks=`(cd $BENCHDIR && echo *bench*)`
+fi
 
 runbench() {
 	bench=$1
