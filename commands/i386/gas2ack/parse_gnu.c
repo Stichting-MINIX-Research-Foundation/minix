@@ -700,8 +700,9 @@ static expression_t *gnu_get_oplist(asm86_t * a, int *pn, int deref)
 	if ((e= gnu_get_operand(a, pn, deref)) == nil) return nil;
 
 	t = get_token(*pn);
-	
-	if (t->symbol == ':' && IS_REGSEG(sreg = isregister(e->name))) {
+
+	if (t->symbol == ':' && IS_REGSEG(sreg = isregister(e->name))
+						&& a->seg == DEFSEG) {
 		a->seg = segreg2seg(sreg);
 		del_expr(e);
 		(*pn)++;
