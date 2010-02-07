@@ -68,7 +68,7 @@ struct reloc {
   unsigned short r_type;	/* relocation type */
 };
 
-/* r_tyep values: */
+/* r_type values: */
 #define R_ABBS		0
 #define R_RELLBYTE	2
 #define R_PCRBYTE	3
