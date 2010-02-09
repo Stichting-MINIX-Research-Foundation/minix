@@ -380,8 +380,8 @@ hwint15:
  * syscall is only from a process to kernel
  */
 .balign 16
-.globl syscall_entry
-syscall_entry:
+.globl ipc_entry
+ipc_entry:
 
 	SAVE_PROCESS_CTX(0)
 
@@ -401,7 +401,7 @@ syscall_entry:
 	/* for stack trace */
 	movl	$0, %ebp
 
-	call	sys_call
+	call	do_ipc
 
 	/* restore the current process pointer and save the return value */
 	add	$4 * 4, %esp

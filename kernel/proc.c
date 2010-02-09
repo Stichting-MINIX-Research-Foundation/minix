@@ -283,7 +283,7 @@ check_misc_flags:
 /*===========================================================================*
  *				sys_call				     * 
  *===========================================================================*/
-PUBLIC int sys_call(call_nr, src_dst_e, m_ptr, bit_map)
+PUBLIC int do_ipc(call_nr, src_dst_e, m_ptr, bit_map)
 int call_nr;			/* system call number and flags */
 int src_dst_e;			/* src to receive from or dst to send to */
 message *m_ptr;			/* pointer to message in the caller's space */

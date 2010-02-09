@@ -28,7 +28,7 @@ _PROTOTYPE( int kprintf, (const char *fmt, ...)				);
 _PROTOTYPE( void minix_panic, (char *s, int n)				);
 
 /* proc.c */
-_PROTOTYPE( int sys_call, (int call_nr, int src_dst, 
+_PROTOTYPE( int do_ipc, (int call_nr, int src_dst, 
 					message *m_ptr, long bit_map)	);
 _PROTOTYPE( int lock_notify, (int src, int dst)				);
 _PROTOTYPE( int mini_notify, (struct proc *src, endpoint_t dst)		);

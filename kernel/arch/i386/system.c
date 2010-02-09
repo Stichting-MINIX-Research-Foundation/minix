@@ -477,11 +477,11 @@ PUBLIC void arch_do_syscall(struct proc *proc)
   m_ptr = (message *) proc->p_reg.bx;
   bit_map = proc->p_reg.dx;
 
-  /* sys_call() expects the given process's memory to be accessible. */
+  /* do_ipc() expects the given process's memory to be accessible. */
   vm_set_cr3(proc);
 
   /* Make the system call, for real this time. */
-  proc->p_reg.retreg = sys_call(call_nr, src_dst_e, m_ptr, bit_map);
+  proc->p_reg.retreg = do_ipc(call_nr, src_dst_e, m_ptr, bit_map);
 }
 
 PUBLIC struct proc * arch_finish_schedcheck(void)

@@ -43,7 +43,7 @@ void                              _PROTOTYPE( simd_exception, (void) );
 
 /* Software interrupt handlers, in numerical order. */
 _PROTOTYPE( void trp, (void) );
-_PROTOTYPE( void syscall_entry, (void) );
+_PROTOTYPE( void ipc_entry, (void) );
 _PROTOTYPE( void level0_call, (void) );
 
 /* memory.c */

@@ -407,7 +407,7 @@ PRIVATE struct gate_table_s gate_table_ioapic[] = {
 };
 
 PRIVATE struct gate_table_s gate_table_common[] = {
-	{ syscall_entry, SYS386_VECTOR, USER_PRIVILEGE },
+	{ ipc_entry, SYS386_VECTOR, USER_PRIVILEGE },
 	{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
 	{ NULL, 0, 0}
 };
