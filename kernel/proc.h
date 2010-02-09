@@ -163,23 +163,19 @@ struct proc {
 /* Set flag and dequeue if the process was runnable. */
 #define RTS_SET(rp, f)							\
 	do {								\
-		vmassert(intr_disabled());				\
 		if(proc_is_runnable(rp)) { dequeue(rp); }		\
 		(rp)->p_rts_flags |=  (f);				\
-		vmassert(intr_disabled());				\
 	} while(0)
 
 /* Clear flag and enqueue if the process was not runnable but is now. */
 #define RTS_UNSET(rp, f) 						\
 	do {								\
 		int rts;						\
-		vmassert(intr_disabled());				\
 		rts = (rp)->p_rts_flags;				\
 		(rp)->p_rts_flags &= ~(f);				\
 		if(!rts_f_is_runnable(rts) && proc_is_runnable(rp)) {	\
 			enqueue(rp);					\
 		}							\
-		vmassert(intr_disabled());				\
 	} while(0)
 
 /* Set flags to this value. */

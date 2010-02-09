@@ -52,7 +52,6 @@
 	varname = ENTERED;
 
 #define NOREC_RETURN(varname, v) do {				\
-	vmassert(intr_disabled());				\
 	vmassert(magictest == MAGICTEST);			\
 	vmassert(varname == ENTERED || varname == NOTENTERED);	\
 	varname = NOTENTERED;					\

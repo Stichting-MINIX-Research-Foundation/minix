@@ -154,7 +154,6 @@ PUBLIC struct proc * schedcheck(void)
 	 * to be scheduled again.
 	 */
   	NOREC_ENTER(schedch);
-	vmassert(intr_disabled());
 
 	/*
 	 * if the current process is still runnable check the misc flags and let
@@ -784,8 +783,6 @@ endpoint_t dst_e;			/* which process to notify */
   int r;
   int dst_p;
 
-  vmassert(intr_disabled());
-
   if (!isokendpt(dst_e, &dst_p)) {
 	util_stacktrace();
 	kprintf("mini_notify: bogus endpoint %d\n", dst_e);
@@ -1178,7 +1175,6 @@ register struct proc *rp;	/* this process is now runnable */
   NOREC_ENTER(enqueuefunc);
 
 #if DEBUG_SCHED_CHECK
-  if(!intr_disabled()) { minix_panic("enqueue with interrupts enabled", NO_NUM); }
   if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
 #endif
 
@@ -1238,7 +1234,6 @@ PRIVATE void enqueue_head(struct proc *rp)
   int q;	 				/* scheduling queue to use */
 
 #if DEBUG_SCHED_CHECK
-  if(!intr_disabled()) { minix_panic("enqueue with interrupts enabled", NO_NUM); }
   if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
 #endif
 
@@ -1292,7 +1287,6 @@ register struct proc *rp;	/* this process is no longer runnable */
 #endif
 
 #if DEBUG_SCHED_CHECK
-  if(!intr_disabled()) { minix_panic("dequeue with interrupts enabled", NO_NUM); }
   if (! rp->p_ready) minix_panic("dequeue() already unready process", NO_NUM);
 #endif
 
@@ -1403,8 +1397,6 @@ timer_t *tp;					/* watchdog timer pointer */
   register struct proc* rp;			/* process table pointer  */
   clock_t next_period;				/* time of next period  */
   int ticks_added = 0;				/* total time added */
-
-  vmassert(!intr_disabled());
 
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
       if (! isemptyp(rp)) {				/* check slot use */

@@ -21,10 +21,6 @@ check_runqueues_f(char *file, int line)
   int q, l = 0;
   register struct proc *xp;
 
-  if(!intr_disabled()) {
-	minix_panic("check_runqueues called with interrupts enabled", NO_NUM);
-  }
-
   FIXME("check_runqueues being done");
 
 #define MYPANIC(msg) {		\
