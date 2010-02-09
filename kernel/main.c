@@ -199,12 +199,8 @@ PUBLIC void main()
 	if(ip->flags & PROC_FULLVM)
 		RTS_SET(rp, RTS_VMINHIBIT);
 
-	/* Set ready. The HARDWARE task is never ready. */
-	if (rp->p_nr == HARDWARE) RTS_SET(rp, RTS_PROC_STOP);
-	/* IDLE task is never put on a run queue as it is never ready to run */
-	if (rp->p_nr == IDLE) RTS_SET(rp, RTS_PROC_STOP);
-	/* SYSTEM does not run anymore */
-	if (rp->p_nr == SYSTEM) RTS_SET(rp, RTS_PROC_STOP);
+	/* None of the kernel tasks run */
+	if (rp->p_nr < 0) RTS_SET(rp, RTS_PROC_STOP);
 	RTS_UNSET(rp, RTS_SLOT_FREE); /* remove RTS_SLOT_FREE and schedule */
 	alloc_segments(rp);
   }
@@ -214,6 +210,8 @@ PUBLIC void main()
 
   /* System and processes initialization */
   system_init();
+  /* Initialize timers handling */
+  clock_init();
 
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */

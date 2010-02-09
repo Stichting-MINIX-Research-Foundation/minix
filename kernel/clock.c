@@ -42,7 +42,6 @@
 
 /* Function prototype for PRIVATE functions.
  */ 
-FORWARD _PROTOTYPE( void init_clock, (void) );
 FORWARD _PROTOTYPE( void load_update, (void));
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
@@ -60,50 +59,9 @@ PRIVATE clock_t next_timeout;	/* realtime that next timer expires */
 PRIVATE clock_t realtime = 0;		      /* real time clock */
 
 /*===========================================================================*
- *				clock_task				     *
- *===========================================================================*/
-PUBLIC void clock_task()
-{
-/* Main program of clock task. If the call is not HARD_INT it is an error.
- */
-  message m;       /* message buffer for both input and output */
-  int result;      /* result returned by the handler */
-
-  init_clock();    /* initialize clock task */
-    
-  /* Main loop of the clock task.  Get work, process it. Never reply. */
-  while(TRUE) {
-	/* Go get a message. */
-	result = receive(ANY, &m);
-
-	if(result != OK)
-		minix_panic("receive() failed", result);
-
-	/* Handle the request. Only clock ticks are expected. */
-	if (is_notify(m.m_type)) {
-		switch (_ENDPOINT_P(m.m_source)) {
-			case HARDWARE:
-				tmrs_exptimers(&clock_timers, realtime, NULL);
-				next_timeout = (clock_timers == NULL) ?
-					TMR_NEVER : clock_timers->tmr_exp_time;
-				break;
-			default:	/* illegal request type */
-				kprintf("CLOCK: illegal notify %d from %d.\n",
-					m.m_type, m.m_source);
-		}
-	}
-	else {
-		/* illegal request type */
-		kprintf("CLOCK: illegal request %d from %d.\n",
-			m.m_type, m.m_source);
-	}
-  }
-}
-
-/*===========================================================================*
  *				init_clock				     *
  *===========================================================================*/
-PRIVATE void init_clock()
+PUBLIC void clock_init()
 {
    
 	/* Set a watchdog timer to periodically balance the scheduling queues.
@@ -134,7 +92,9 @@ PUBLIC int bsp_timer_int_handler(void)
 
 	/* if a timer expired, notify the clock task */
 	if ((next_timeout <= realtime)) {
-		mini_notify(proc_addr(HARDWARE), CLOCK); /* send notification */
+		tmrs_exptimers(&clock_timers, realtime, NULL);
+		next_timeout = (clock_timers == NULL) ?
+			TMR_NEVER : clock_timers->tmr_exp_time;
 	}
 
 	if (do_serial_debug)

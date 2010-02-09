@@ -12,7 +12,7 @@ struct proc;
 struct timer;
 
 /* clock.c */
-_PROTOTYPE( void clock_task, (void)					);
+_PROTOTYPE( void clock_init, (void) );
 _PROTOTYPE( clock_t get_uptime, (void)					);
 _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);

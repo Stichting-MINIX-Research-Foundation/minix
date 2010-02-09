@@ -62,7 +62,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 PUBLIC struct boot_image image[] = {
 /* process nr, pc, flags, qs,  queue, stack,   name */ 
 {IDLE,       NULL,     0,  0,      0, IDL_S, "idle"  },
-{CLOCK,clock_task,     0,  8, TASK_Q, TSK_S, "clock" },
+{CLOCK,      NULL,     0,  0,      0, IDL_S, "clock" },
 {SYSTEM,     NULL,     0,  0,      0, IDL_S, "system"},
 {HARDWARE,      0,     0,  8, TASK_Q, HRD_S, "kernel"},
 {PM_PROC_NR,    0,     0, 32,      4, 0,     "pm"    },
