@@ -409,7 +409,6 @@ PRIVATE struct gate_table_s gate_table_ioapic[] = {
 PRIVATE struct gate_table_s gate_table_common[] = {
 	{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
 	{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
-	{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
 	{ NULL, 0, 0}
 };
 

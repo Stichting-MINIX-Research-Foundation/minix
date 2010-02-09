@@ -31,7 +31,7 @@ FORWARD _PROTOTYPE( void ser_debug, (int c));
 
 PUBLIC void arch_monitor(void)
 {
-	level0(monitor);
+	monitor();
 }
 
 PUBLIC int cpu_has_tsc;
@@ -103,7 +103,7 @@ PUBLIC void arch_shutdown(int how)
 		u16_t magic = STOP_MEM_CHECK;
 		phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR,
        	 	SOFT_RESET_FLAG_SIZE);
-		level0(reset);
+		reset();
 	}
 }
 

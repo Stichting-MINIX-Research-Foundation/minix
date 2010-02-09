@@ -33,6 +33,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
   struct priv *privp;
   struct io_range *iorp;
   struct proc *destproc;
+  int retval;
 
   /* Allow safe copies and accesses to SELF */
   if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
@@ -97,7 +98,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
   }
      /* current process must be target for phys_* to be OK */
 
-  vm_set_cr3(destproc);
+  switch_address_space(destproc);
 
   switch (req_type)
   {
@@ -122,14 +123,16 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
 		kprintf(
 		"do_sdevio: I/O port check failed for proc %d, port 0x%x\n",
 			m_ptr->m_source, port);
-		return EPERM;
+		retval = EPERM;
+		goto return_error;
 	}
   }
 
   if (port & (size-1))
   {
 	kprintf("do_devio: unaligned port 0x%x (size %d)\n", port, size);
-	return EPERM;
+	retval = EPERM;
+	goto return_error;
   }
 
   /* Perform device I/O for bytes and words. Longs are not supported. */
@@ -137,19 +140,29 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
       switch (req_type) {
       case _DIO_BYTE: phys_insb(port, phys_buf, count); break; 
       case _DIO_WORD: phys_insw(port, phys_buf, count); break; 
-      default: return(EINVAL);
+      default:
+  		retval = EINVAL;
+		goto return_error;
       } 
   } else if (req_dir == _DIO_OUTPUT) { 
       switch (req_type) {
       case _DIO_BYTE: phys_outsb(port, phys_buf, count); break; 
       case _DIO_WORD: phys_outsw(port, phys_buf, count); break; 
-      default: return(EINVAL);
+      default:
+  		retval = EINVAL;
+		goto return_error;
       } 
   }
   else {
-      return(EINVAL);
+	  retval = EINVAL;
+	  goto return_error;
   }
-  return(OK);
+  retval = OK;
+
+return_error:
+  /* switch back to the address of the process which made the call */
+  switch_address_space(caller);
+  return retval;
 }
 
 #endif /* USE_SDEVIO */

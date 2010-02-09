@@ -52,8 +52,8 @@ PUBLIC void vm_init(struct proc *newptproc)
 {
 	if(vm_running)
 		minix_panic("vm_init: vm_running", NO_NUM);
-	vm_set_cr3(newptproc);
-	level0(vm_enable_paging);
+	switch_address_space(newptproc);
+	vm_enable_paging();
 	vm_running = 1;
 
 }
@@ -127,7 +127,7 @@ PUBLIC void vm_init(struct proc *newptproc)
 		PTR = I386_BIG_PAGE_SIZE*PDE + offset;			\
 		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
 		if(1 || mustinvl) {					\
-			level0(reload_cr3); 				\
+			reload_cr3(); 					\
 		}							\
 	}								\
 }
@@ -164,7 +164,7 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 
 	vmassert(ptproc);
 	vmassert(proc_ptr);
-	vmassert(read_cr3() == ptproc->p_seg.p_cr3);
+	vmassert(getcr3val() == ptproc->p_seg.p_cr3);
 
 	procslot = ptproc->p_nr;
 
@@ -236,25 +236,6 @@ PRIVATE u32_t phys_get32(phys_bytes addr)
 	}
 
 	return v;
-}
-
-PRIVATE u32_t vm_cr3;	/* temp arg to level0() func */
-
-PRIVATE void set_cr3()
-{
-	write_cr3(vm_cr3);
-}
-
-PUBLIC void vm_set_cr3(struct proc *newptproc)
-{
-	int u = 0;
-	if(!intr_disabled()) { lock; u = 1; }
-	vm_cr3= newptproc->p_seg.p_cr3;
-	if(vm_cr3) {
-		level0(set_cr3);
-		ptproc = newptproc;
-	}
-	if(u) { unlock; }
 }
 
 PRIVATE char *cr0_str(u32_t e)
@@ -632,8 +613,6 @@ int delivermsg(struct proc *rp)
 
 #endif
 
-	vm_set_cr3(rp);
-
 	PHYS_COPY_CATCH(vir2phys(&rp->p_delivermsg),
 		rp->p_delivermsg_lin, sizeof(message), addr);
 
@@ -723,15 +702,6 @@ PRIVATE void vm_print(u32_t *root)
 
 	return;
 }
-
-u32_t thecr3;
-
-u32_t read_cr3(void)
-{
-	level0(getcr3val);
-	return thecr3;
-}
-
 
 /*===========================================================================*
  *				lin_memset				     *
@@ -1058,7 +1028,7 @@ PUBLIC int arch_enable_paging(void)
 	 * lapic address. Bad things would happen. It is unfortunate but such is
 	 * life
 	 */
-	level0(i386_watchdog_start);
+	i386_watchdog_start();
 #endif
 
 	return OK;

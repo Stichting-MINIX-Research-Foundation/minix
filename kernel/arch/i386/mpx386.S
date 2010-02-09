@@ -86,7 +86,6 @@ begbss:
 
 .globl	restart
 .globl reload_cr3
-.globl write_cr3
 
 .globl	divide_error
 .globl	single_step_exception
@@ -130,8 +129,6 @@ begbss:
 .globl	hwint13
 .globl	hwint14
 .globl	hwint15
-
-.globl	level0_call
 
 /* Exported variables. */
 .globl	begbss
@@ -705,41 +702,6 @@ no_fpu_available:
 	pop	%eax
 	pop	%ebp
 	ret
-
-/*===========================================================================*/
-/*				write_cr3				     */
-/*===========================================================================*/
-/* PUBLIC void write_cr3(unsigned long value); */
-write_cr3:
-	push    %ebp
-	mov     %esp, %ebp
-	mov	8(%ebp), %eax
-	mov	%cr3, %ecx
-	cmp	%ecx, %eax
-	jz	0f
-	mov	%eax, %cr3
-	movl	$0, dirtypde
-0:
-	pop     %ebp
-	ret
-
-/*===========================================================================*/
-/*				level0_call				     */
-/*===========================================================================*/
-level0_call:
-/*
- * which level0 function to call was passed here by putting it in %eax
- */
-	SAVE_PROCESS_CTX(0)
-	/* for stack trace */
-	movl	$0, %ebp
-	/*
-	 * the function to call is in %eax, set in userspace. SAVE_PROCESS_CTX()
-	 * does not clobber this register so we can use it straightaway
-	 */
-	call	*%eax
-	jmp	restart
-
 
 /*===========================================================================*/
 /*				reload_cr3				     */

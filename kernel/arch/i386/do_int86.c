@@ -23,7 +23,7 @@ PUBLIC int do_int86(struct proc * caller, message * m_ptr)
   data_copy(caller->p_endpoint, (vir_bytes) m_ptr->INT86_REG86,
 	KERNEL, (vir_bytes) &reg86, sizeof(reg86));
 
-  level0(int86);
+  int86();
 
   /* Copy results back to the caller */
   data_copy(KERNEL, (vir_bytes) &reg86,

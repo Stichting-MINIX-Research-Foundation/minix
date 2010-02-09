@@ -74,7 +74,7 @@ struct proc *p;
 	}
 	case VMCTL_FLUSHTLB:
 	{
-		level0(reload_cr3);
+		reload_cr3();
 		return OK;
 	}
   }

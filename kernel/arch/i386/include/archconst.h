@@ -22,10 +22,8 @@
 #define SS_INDEX             5	/* kernel SS (386: monitor SS at startup) */
 #define CS_INDEX             6	/* kernel CS */
 #define MON_CS_INDEX         7	/* temp for BIOS (386: monitor CS at startup) */
-#define DS_286_INDEX         8	/* scratch 16-bit source segment */
-#define ES_286_INDEX         9	/* scratch 16-bit destination segment */
-#define TSS_INDEX           10	/* kernel TSS */
-#define FIRST_LDT_INDEX     11	/* rest of descriptors are LDT's */
+#define TSS_INDEX            8	/* kernel TSS */
+#define FIRST_LDT_INDEX      9	/* rest of descriptors are LDT's */
 
 /* Descriptor structure offsets. */
 #define DESC_BASE            2	/* to base_low */
@@ -42,17 +40,14 @@
 #define DS_SELECTOR		DS_INDEX * DESC_SIZE
 #define ES_SELECTOR		ES_INDEX * DESC_SIZE
 /* flat DS is less privileged ES */
-#define FLAT_DS_SELECTOR	ES_SELECTOR | TASK_PRIVILEGE
+#define FLAT_DS_SELECTOR	ES_SELECTOR
 #define SS_SELECTOR		SS_INDEX * DESC_SIZE
 #define CS_SELECTOR		CS_INDEX * DESC_SIZE
 #define MON_CS_SELECTOR		MON_CS_INDEX * DESC_SIZE
 #define TSS_SELECTOR		TSS_INDEX * DESC_SIZE
-#define DS_286_SELECTOR		DS_286_INDEX*DESC_SIZE | TASK_PRIVILEGE
-#define ES_286_SELECTOR		ES_286_INDEX*DESC_SIZE | TASK_PRIVILEGE
 
 /* Privileges. */
 #define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
-#define TASK_PRIVILEGE       1	/* kernel tasks */
 #define USER_PRIVILEGE       3	/* servers and user processes */
 #define RPL_MASK             0x03	/* bits in selector RPL */
 

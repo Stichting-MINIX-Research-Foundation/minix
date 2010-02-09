@@ -31,14 +31,13 @@
 .globl	mem_rdw	/* copy one word from [segment:offset] */
 .globl	reset	/* reset the system */
 .globl	halt_cpu/* halts the current cpu when idle */
-.globl	level0	/* call a function at level 0 */
 .globl	read_cpu_flags	/* read the cpu flags */
 .globl	read_cr0	/* read cr0 */
 .globl	read_cr2	/* read cr2 */
 .globl	getcr3val
 .globl	write_cr0	/* write a value in cr0 */
+.globl	read_cr3
 .globl	read_cr4
-.globl  thecr3
 .globl	write_cr4
 
 .globl	catch_pagefaults
@@ -615,33 +614,6 @@ halt_cpu:
 	ret
 
 /*===========================================================================*/
-/*			      level0					     */
-/*===========================================================================*/
-/*
- * PUBLIC void level0(void (*func)(void)) 
- * Call a function at permission level 0.  This allows kernel tasks to do 
- * things that are only possible at the most privileged CPU level. 
- */ 
-level0:
-	/* check whether we are already running in kernel, the kernel cs
-	 * selector has 3 lower bits zeroed */
-	mov	%cs, %ax
-	cmpw	$CS_SELECTOR, %ax
-	jne	0f
-
-	/* call the function directly as if it was a normal function call */
-	mov	4(%esp), %eax
-	call	*%eax
-	ret
-
-
-	/* if not runnig in the kernel yet, trap to kernel */
-0:
-	mov	4(%esp), %eax
-	int	$LEVEL0_VECTOR
-	ret
-
-/*===========================================================================*/
 /*			      read_flags				     */
 /*===========================================================================*/
 /*
@@ -728,6 +700,19 @@ read_cr2:
 	ret
 
 /*===========================================================================*/
+/*			      read_cr3					     */
+/*===========================================================================*/
+/* PUBLIC unsigned long read_cr3(void); */
+read_cr3:
+	push	%ebp
+	mov	%esp, %ebp
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
+	mov	%cr3, %eax
+	pop	%ebp
+	ret
+
+/*===========================================================================*/
 /*			      read_cr4					     */
 /*===========================================================================*/
 /* PUBLIC unsigned long read_cr4(void); */
@@ -761,7 +746,6 @@ write_cr4:
 /* PUBLIC unsigned long getcr3val(void); */
 getcr3val:
 	mov	%cr3, %eax
-	mov	%eax, thecr3
 	ret
 
 /*

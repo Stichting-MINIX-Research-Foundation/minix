@@ -152,11 +152,7 @@ PUBLIC void prot_init(void)
   	 kinfo.code_base, kinfo.code_size, INTR_PRIVILEGE);
   init_dataseg(&gdt[DS_INDEX],
   	 kinfo.data_base, kinfo.data_size, INTR_PRIVILEGE);
-  init_dataseg(&gdt[ES_INDEX], 0L, 0, TASK_PRIVILEGE);
-
-  /* Build scratch descriptors for functions in klib88. */
-  init_dataseg(&gdt[DS_286_INDEX], 0L, 0, TASK_PRIVILEGE);
-  init_dataseg(&gdt[ES_286_INDEX], 0L, 0, TASK_PRIVILEGE);
+  init_dataseg(&gdt[ES_INDEX], 0L, 0, INTR_PRIVILEGE);
 
   /* Build local descriptors in GDT for LDT's in process table.
    * The LDT's are allocated at compile time in the process table, and
@@ -214,7 +210,6 @@ PUBLIC void idt_init(void)
 		{ simd_exception, SIMD_EXCEPTION_VECTOR, INTR_PRIVILEGE },
 		{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
 		{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
-		{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
 		{ NULL, 0, 0}
 	};
 
@@ -273,7 +268,6 @@ PUBLIC void alloc_segments(register struct proc *rp)
 {
 /* This is called at system initialization from main() and by do_newmap(). 
  * The code has a separate function because of all hardware-dependencies.
- * Note that IDLE is part of the kernel and gets TASK_PRIVILEGE here.
  */
   phys_bytes code_bytes;
   phys_bytes data_bytes;
@@ -285,10 +279,7 @@ PUBLIC void alloc_segments(register struct proc *rp)
           code_bytes = data_bytes;	/* common I&D, poor protect */
       else
           code_bytes = (phys_bytes) rp->p_memmap[T].mem_len << CLICK_SHIFT;
-      if( (iskernelp(rp)))
-	privilege = TASK_PRIVILEGE;
-      else
-	privilege = USER_PRIVILEGE;
+      privilege = USER_PRIVILEGE;
       init_codeseg(&rp->p_seg.p_ldt[CS_LDT_INDEX],
           (phys_bytes) rp->p_memmap[T].mem_phys << CLICK_SHIFT,
           code_bytes, privilege);
@@ -319,9 +310,6 @@ for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
 		if (isemptyp(rp))
 			continue;
 
-      if( (iskernelp(rp)))
-	privilege = TASK_PRIVILEGE;
-      else
 	privilege = USER_PRIVILEGE;
 
 	cs = (CS_LDT_INDEX*DESC_SIZE) | TI | privilege;

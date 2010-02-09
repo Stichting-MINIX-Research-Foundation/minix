@@ -50,7 +50,6 @@ _PROTOTYPE( void level0_call, (void) );
 /* memory.c */
 _PROTOTYPE( void i386_freepde, (int pde));
 _PROTOTYPE( void getcr3val, (void));
-_PROTOTYPE( void vm_set_cr3, (struct proc *));
 
 
 /* exception.c */
@@ -67,16 +66,15 @@ struct exception_frame {
 _PROTOTYPE( void exception, (struct exception_frame * frame));
 
 /* klib386.s */
-_PROTOTYPE( void level0, (void (*func)(void))                           );
 _PROTOTYPE( void monitor, (void)                                        );
 _PROTOTYPE( void reset, (void)                                          );
 _PROTOTYPE( void int86, (void)                     			);
 _PROTOTYPE( reg_t read_cr0, (void)					);
 _PROTOTYPE( reg_t read_cr2, (void)					);
 _PROTOTYPE( void write_cr0, (unsigned long value)                       );
+_PROTOTYPE( unsigned long read_cr3, (void)                              );
 _PROTOTYPE( unsigned long read_cr4, (void)                              );
 _PROTOTYPE( void write_cr4, (unsigned long value)                       );
-_PROTOTYPE( void write_cr3, (unsigned long value)                       );
 _PROTOTYPE( unsigned long read_cpu_flags, (void)                        );
 _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)  );
