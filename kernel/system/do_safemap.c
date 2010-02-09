@@ -145,8 +145,8 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 	vmassert(!RTS_ISSET(caller, RTS_VMREQTARGET));
 	vmassert(!RTS_ISSET(dst, RTS_VMREQUEST));
 	vmassert(!RTS_ISSET(dst, RTS_VMREQTARGET));
-	RTS_LOCK_SET(caller, RTS_VMREQUEST);
-	RTS_LOCK_SET(dst, RTS_VMREQTARGET);
+	RTS_SET(caller, RTS_VMREQUEST);
+	RTS_SET(dst, RTS_VMREQTARGET);
 
 	/* Map to the destination. */
 	caller->p_vmrequest.req_type = req_type;
@@ -161,7 +161,7 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 
 	/* Connect caller on vmrequest wait queue. */
 	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
-		lock_notify(SYSTEM, VM_PROC_NR);
+		mini_notify(proc_addr(SYSTEM), VM_PROC_NR);
 	vmrequest = caller;
 
 	return OK;

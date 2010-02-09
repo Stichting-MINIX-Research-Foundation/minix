@@ -331,11 +331,7 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-  if(!intr_disabled()) {
-	  lock_notify(SYSTEM, rp->p_endpoint); 
-  } else {
-	  mini_notify(proc_addr(SYSTEM), rp->p_endpoint); 
-  }
+  mini_notify(proc_addr(SYSTEM), rp->p_endpoint);
 }
 
 /*===========================================================================*
@@ -368,7 +364,7 @@ int sig_nr;			/* signal to be sent */
   if (! sigismember(&rp->p_pending, sig_nr)) {
       sigaddset(&rp->p_pending, sig_nr);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */
-	  RTS_LOCK_SET(rp, RTS_SIGNALED | RTS_SIG_PENDING);
+	  RTS_SET(rp, RTS_SIGNALED | RTS_SIG_PENDING);
           send_sig(PM_PROC_NR, SIGKSIG);
       }
   }
@@ -479,7 +475,7 @@ register struct proc *rc;		/* slot of process to clean up */
   }
 
   /* Make sure that the exiting process is no longer scheduled. */
-  RTS_LOCK_SET(rc, RTS_NO_ENDPOINT);
+  RTS_SET(rc, RTS_NO_ENDPOINT);
   if (priv(rc)->s_flags & SYS_PROC)
   {
 	if (priv(rc)->s_asynsize) {
@@ -529,7 +525,7 @@ register struct proc *rc;		/* slot of process to clean up */
       /* Check if process is receiving from exiting process. */
       if (RTS_ISSET(rp, RTS_RECEIVING) && rp->p_getfrom_e == rc->p_endpoint) {
           rp->p_reg.retreg = ESRCDIED;		/* report source died */
-	  RTS_LOCK_UNSET(rp, RTS_RECEIVING);	/* no longer receiving */
+	  RTS_UNSET(rp, RTS_RECEIVING);	/* no longer receiving */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("endpoint %d / %s receiving from dead src ep %d / %s\n",
 		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
@@ -538,7 +534,7 @@ register struct proc *rc;		/* slot of process to clean up */
       if (RTS_ISSET(rp, RTS_SENDING) &&
 	  rp->p_sendto_e == rc->p_endpoint) {
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
-	  RTS_LOCK_UNSET(rp, RTS_SENDING);
+	  RTS_UNSET(rp, RTS_SENDING);
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("endpoint %d / %s send to dying dst ep %d (%s)\n",
 		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);

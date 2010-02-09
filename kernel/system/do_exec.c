@@ -41,7 +41,7 @@ PUBLIC int do_exec(struct proc * caller, message * m_ptr)
   arch_pre_exec(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR);
 
   /* No reply to EXEC call */
-  RTS_LOCK_UNSET(rp, RTS_RECEIVING);
+  RTS_UNSET(rp, RTS_RECEIVING);
 
   /* Mark fpu_regs contents as not significant, so fpu
    * will be initialized, when it's used next time. */

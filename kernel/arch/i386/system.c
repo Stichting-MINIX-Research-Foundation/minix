@@ -277,11 +277,7 @@ PRIVATE void ser_dump_segs(void)
 
 PRIVATE void ser_debug(int c)
 {
-	int u = 0;
-
 	serial_debug_active = 1;
-	/* Disable interrupts so that we get a consistent state. */
-	if(!intr_disabled()) { lock; u = 1; };
 
 	switch(c)
 	{
@@ -314,7 +310,6 @@ PRIVATE void ser_debug(int c)
 #endif
 	}
 	serial_debug_active = 0;
-	if(u) { unlock; }
 }
 
 PRIVATE void printslot(struct proc *pp, int level)

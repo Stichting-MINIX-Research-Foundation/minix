@@ -569,7 +569,7 @@ PRIVATE void vm_suspend(struct proc *caller, struct proc *target,
 	vmassert(!RTS_ISSET(caller, RTS_VMREQUEST));
 	vmassert(!RTS_ISSET(target, RTS_VMREQUEST));
 
-	RTS_LOCK_SET(caller, RTS_VMREQUEST);
+	RTS_SET(caller, RTS_VMREQUEST);
 
 #if DEBUG_VMASSERT
 	caller->p_vmrequest.stacktrace[0] = '\0';
@@ -837,7 +837,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 
 	if(caller && RTS_ISSET(caller, RTS_VMREQUEST)) {
 		vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
-		RTS_LOCK_UNSET(caller, RTS_VMREQUEST);
+		RTS_UNSET(caller, RTS_VMREQUEST);
 		if(caller->p_vmrequest.vmresult != OK) {
 #if DEBUG_VMASSERT
 			printf("virtual_copy: returning VM error %d\n",

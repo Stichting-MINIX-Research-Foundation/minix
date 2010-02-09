@@ -37,12 +37,10 @@ PUBLIC int do_nice(struct proc * caller, message * m_ptr)
   if (new_q < MAX_USER_Q) new_q = MAX_USER_Q;	/* shouldn't happen */
   if (new_q > MIN_USER_Q) new_q = MIN_USER_Q;	/* shouldn't happen */
 
-  /* Make sure the process is not running while changing its priority. 
-   * Put the process back in its new queue if it is runnable.
-   */
-  RTS_LOCK_SET(rp, RTS_SYS_LOCK);
+  /* Dequeue the process and put it in its new queue if it is runnable. */
+  RTS_SET(rp, RTS_SYS_LOCK);
   rp->p_max_priority = rp->p_priority = new_q;
-  RTS_LOCK_UNSET(rp, RTS_SYS_LOCK);
+  RTS_UNSET(rp, RTS_SYS_LOCK);
 
   return(OK);
 }

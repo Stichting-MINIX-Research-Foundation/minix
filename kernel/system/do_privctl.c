@@ -52,13 +52,13 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	if (!RTS_ISSET(rp, RTS_NO_PRIV) || priv(rp)->s_proc_nr == NONE) {
 		return(EPERM);
 	}
-	RTS_LOCK_UNSET(rp, RTS_NO_PRIV);
+	RTS_UNSET(rp, RTS_NO_PRIV);
 	return(OK);
 
   case SYS_PRIV_DISALLOW:
 	/* Disallow process from running. */
 	if (RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);
-	RTS_LOCK_SET(rp, RTS_NO_PRIV);
+	RTS_SET(rp, RTS_NO_PRIV);
 	return(OK);
 
   case SYS_PRIV_SET_SYS:

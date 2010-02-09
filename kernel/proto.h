@@ -30,9 +30,7 @@ _PROTOTYPE( void minix_panic, (char *s, int n)				);
 /* proc.c */
 _PROTOTYPE( int do_ipc, (int call_nr, int src_dst, 
 					message *m_ptr, long bit_map)	);
-_PROTOTYPE( int lock_notify, (int src, int dst)				);
 _PROTOTYPE( int mini_notify, (struct proc *src, endpoint_t dst)		);
-_PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (struct proc *rp)				);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);

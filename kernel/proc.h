@@ -182,38 +182,11 @@ struct proc {
 		vmassert(intr_disabled());				\
 	} while(0)
 
-/* Set flag and dequeue if the process was runnable. */
-#define RTS_LOCK_SET(rp, f)						\
-	do {								\
-		int u = 0;						\
-		if(!intr_disabled()) { u = 1; lock; }			\
-		if(proc_is_runnable(rp)) { dequeue(rp); }		\
-		(rp)->p_rts_flags |=  (f);				\
-		if(u) { unlock;	}					\
-	} while(0)
-
-/* Clear flag and enqueue if the process was not runnable but is now. */
-#define RTS_LOCK_UNSET(rp, f) 						\
-	do {								\
-		int rts;						\
-		int u = 0;						\
-		if(!intr_disabled()) { u = 1; lock; }			\
-		rts = (rp)->p_rts_flags;				\
-		(rp)->p_rts_flags &= ~(f);				\
-		if(!rts_f_is_runnable(rts) && proc_is_runnable(rp)) {	\
-			enqueue(rp);					\
-		}							\
-		if(u) { unlock;	}					\
-	} while(0)
-
 /* Set flags to this value. */
-#define RTS_LOCK_SETFLAGS(rp, f)					\
+#define RTS_SETFLAGS(rp, f)					\
 	do {								\
-		int u = 0;						\
-		if(!intr_disabled()) { u = 1; lock; }			\
 		if(proc_is_runnable(rp) && (f)) { dequeue(rp); }		\
 		(rp)->p_rts_flags = (f);				\
-		if(u) { unlock;	}					\
 	} while(0)
 
 /* Misc flags */

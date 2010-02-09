@@ -25,16 +25,6 @@
 #define unset_sys_bit(map,bit) \
 	( MAP_CHUNK(map.chunk,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 
-#define reallock
-
-#define realunlock
-
-/* Disable/ enable hardware interrupts. The parameters of lock() and unlock()
- * are used when debugging is enabled. See debug.h for more information.
- */
-#define lock      reallock
-#define unlock    realunlock
-
 #ifdef CONFIG_IDLE_TSC
 #define IDLE_STOP if(idle_active) { read_tsc_64(&idle_stop); idle_active = 0; }
 #else

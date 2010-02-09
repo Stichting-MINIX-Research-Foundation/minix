@@ -4,10 +4,6 @@
  *
  *   sys_call: 	      a system call, i.e., the kernel is trapped with an INT
  *
- * As well as several entry points used from the interrupt and task level:
- *
- *   lock_send:	      send a message to a process
- *
  * Changes:
  *   Aug 19, 2005     rewrote scheduling code  (Jorrit N. Herder)
  *   Jul 25, 2005     rewrote system call handling  (Jorrit N. Herder)
@@ -45,10 +41,7 @@
 #include "proc.h"
 #include "vm.h"
 
-/* Scheduling and message passing functions. The functions are available to 
- * other parts of the kernel through lock_...(). The lock temporarily disables 
- * interrupts to prevent race conditions. 
- */
+/* Scheduling and message passing functions */
 FORWARD _PROTOTYPE( void idle, (void));
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst_e,
 		message *m_ptr, int flags));
@@ -1168,38 +1161,6 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 	return EAGAIN;
 }
 
- /*===========================================================================*
- *				lock_notify				     *
- *===========================================================================*/
-PUBLIC int lock_notify(src_e, dst_e)
-int src_e;			/* (endpoint) sender of the notification */
-int dst_e;			/* (endpoint) who is to be notified */
-{
-/* Safe gateway to mini_notify() for tasks and interrupt handlers. The sender
- * is explicitely given to prevent confusion where the call comes from. MINIX 
- * kernel is not reentrant, which means to interrupts are disabled after 
- * the first kernel entry (hardware interrupt, trap, or exception). Locking
- * is done by temporarily disabling interrupts. 
- */
-  int result, src_p;
-
-  vmassert(!intr_disabled());
-
-  if (!isokendpt(src_e, &src_p)) {
-	kprintf("lock_notify: bogus src: %d\n", src_e);
-	return EDEADSRCDST;
-  }
-
-      lock;
-  vmassert(intr_disabled());
-      result = mini_notify(proc_addr(src_p), dst_e); 
-  vmassert(intr_disabled());
-      unlock;
-  vmassert(!intr_disabled());
-
-  return(result);
-}
-
 /*===========================================================================*
  *				enqueue					     * 
  *===========================================================================*/
@@ -1445,7 +1406,6 @@ timer_t *tp;					/* watchdog timer pointer */
 
   vmassert(!intr_disabled());
 
-  lock;
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
       if (! isemptyp(rp)) {				/* check slot use */
 	  if (rp->p_priority > rp->p_max_priority) {	/* update priority? */
@@ -1460,28 +1420,12 @@ timer_t *tp;					/* watchdog timer pointer */
 	  }
       }
   }
-  unlock;
 
   /* Now schedule a new watchdog timer to balance the queues again.  The 
    * period depends on the total amount of quantum ticks added.
    */
   next_period = MAX(Q_BALANCE_TICKS, ticks_added);	/* calculate next */
   set_timer(&queue_timer, get_uptime() + next_period, balance_queues);
-}
-
-/*===========================================================================*
- *				lock_send				     *
- *===========================================================================*/
-PUBLIC int lock_send(dst_e, m_ptr)
-int dst_e;			/* to whom is message being sent? */
-message *m_ptr;			/* pointer to message buffer */
-{
-/* Safe gateway to mini_send() for tasks. */
-  int result;
-  lock;
-  result = mini_send(proc_ptr, dst_e, m_ptr, 0);
-  unlock;
-  return(result);
 }
 
 /*===========================================================================*

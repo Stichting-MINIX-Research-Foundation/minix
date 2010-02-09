@@ -65,7 +65,7 @@ timer_t *tp;
  * process with a notification message from CLOCK.
  */
   int proc_nr_e = tmr_arg(tp)->ta_int;		/* get process number */
-  lock_notify(CLOCK, proc_nr_e);		/* notify process */
+  mini_notify(proc_addr(CLOCK), proc_nr_e);	/* notify process */
 }
 
 #endif /* USE_SETALARM */

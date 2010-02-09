@@ -33,7 +33,7 @@ PUBLIC int do_endksig(struct proc * caller, message * m_ptr)
 
   /* PM has finished one kernel signal. Perhaps process is ready now? */
   if (!RTS_ISSET(rp, RTS_SIGNALED)) 		/* new signal arrived */
-	RTS_LOCK_UNSET(rp, RTS_SIG_PENDING);	/* remove pending flag */
+	RTS_UNSET(rp, RTS_SIG_PENDING);	/* remove pending flag */
   return(OK);
 }
 

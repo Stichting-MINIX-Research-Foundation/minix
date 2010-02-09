@@ -78,7 +78,7 @@ void pagefault( struct proc *pr,
 	/* Don't schedule this process until pagefault is handled. */
 	vmassert(pr->p_seg.p_cr3 == read_cr3());
 	vmassert(!RTS_ISSET(pr, RTS_PAGEFAULT));
-	RTS_LOCK_SET(pr, RTS_PAGEFAULT);
+	RTS_SET(pr, RTS_PAGEFAULT);
 
 	/* Save pagefault details, suspend process,
 	 * add process to pagefault chain,

@@ -100,11 +100,7 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
 	}
   }
 
-  /* Perform actual device I/O for byte, word, and long values. Note that 
-   * the entire switch is wrapped in lock() and unlock() to prevent the I/O
-   * batch from being interrupted. 
-   */  
-  lock;
+  /* Perform actual device I/O for byte, word, and long values */
   switch (io_type) {
   case _DIO_BYTE: 					 /* byte values */
       if (io_in) for (i=0; i<vec_size; i++) 
@@ -152,7 +148,6 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
 	}
       }
   }
-  unlock;
     
   /* Almost done, copy back results for input requests. */
   if (io_in) 

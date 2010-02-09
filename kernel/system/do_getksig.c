@@ -32,7 +32,7 @@ PUBLIC int do_getksig(struct proc * caller, message * m_ptr)
           m_ptr->SIG_ENDPT = rp->p_endpoint;
           m_ptr->SIG_MAP = rp->p_pending;	/* pending signals map */
           sigemptyset(&rp->p_pending); 		/* ball is in PM's court */
-	  RTS_LOCK_UNSET(rp, RTS_SIGNALED);		/* blocked by SIG_PENDING */
+	  RTS_UNSET(rp, RTS_SIGNALED);		/* blocked by SIG_PENDING */
           return(OK);
       }
   }

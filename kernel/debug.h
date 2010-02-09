@@ -46,8 +46,6 @@
 
 #define NOREC_ENTER(varname) 					\
 	static int varname = NOTENTERED;			\
-	int mustunlock = 0; 					\
-	if(!intr_disabled()) { lock; mustunlock = 1; }		\
 	vmassert(varname == ENTERED || varname == NOTENTERED);	\
 	vmassert(magictest == MAGICTEST);			\
 	vmassert(varname != ENTERED);				\
@@ -58,7 +56,6 @@
 	vmassert(magictest == MAGICTEST);			\
 	vmassert(varname == ENTERED || varname == NOTENTERED);	\
 	varname = NOTENTERED;					\
-	if(mustunlock)	{ unlock;	} 			\
 	return v;						\
 } while(0)
 

@@ -34,9 +34,7 @@ PUBLIC int do_int86(struct proc * caller, message * m_ptr)
    * Figuring out the exact source is too complicated. CLOCK_IRQ is normally
    * not very random.
    */
-  lock;
   get_randomness(&krandom, CLOCK_IRQ);
-  unlock;
 
   return(OK);
 }

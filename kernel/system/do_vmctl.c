@@ -33,7 +33,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 
   switch(m_ptr->SVMCTL_PARAM) {
 	case VMCTL_CLEAR_PAGEFAULT:
-		RTS_LOCK_UNSET(p, RTS_PAGEFAULT);
+		RTS_UNSET(p, RTS_PAGEFAULT);
 		return OK;
 	case VMCTL_MEMREQ_GET:
 		/* Send VM the information about the memory request.  */
@@ -125,7 +125,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 #endif
 
 		vmassert(RTS_ISSET(target, RTS_VMREQTARGET));
-		RTS_LOCK_UNSET(target, RTS_VMREQTARGET);
+		RTS_UNSET(target, RTS_VMREQTARGET);
 
 		switch(p->p_vmrequest.type) {
 		case VMSTYPE_KERNELCALL:
@@ -152,15 +152,10 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 				p->p_vmrequest.type);
 		}
 
-		RTS_LOCK_UNSET(p, RTS_VMREQUEST);
+		RTS_UNSET(p, RTS_VMREQUEST);
 		return OK;
 
 	case VMCTL_ENABLE_PAGING:
-		/*
-		 * system task must not get preempted while switching to paging,
-		 * interrupt handling is not safe
-		 */
-		lock;
 		if(vm_running) 
 			minix_panic("do_vmctl: paging already enabled", NO_NUM);
 		vm_init(p);
@@ -169,14 +164,12 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 		vmassert(p->p_delivermsg_lin ==
 		  umap_local(p, D, p->p_delivermsg_vir, sizeof(message)));
 		if ((err = arch_enable_paging()) != OK) {
-			unlock;
 			return err;
 		}
 		if(newmap(caller, p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
 			minix_panic("do_vmctl: newmap failed", NO_NUM);
 		FIXLINMSG(p);
 		vmassert(p->p_delivermsg_lin);
-		unlock;
 		return OK;
 	case VMCTL_KERN_PHYSMAP:
 	{

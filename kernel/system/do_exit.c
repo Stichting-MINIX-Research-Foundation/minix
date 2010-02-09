@@ -70,7 +70,7 @@ register struct proc *rc;		/* slot of process to clean up */
   /* Make sure that the exiting process is no longer scheduled,
    * and mark slot as FREE. Also mark saved fpu contents as not significant.
    */
-  RTS_LOCK_SETFLAGS(rc, RTS_SLOT_FREE);
+  RTS_SETFLAGS(rc, RTS_SLOT_FREE);
   rc->p_misc_flags &= ~MF_FPU_INITIALIZED;
 
   /* Release the process table slot. If this is a system process, also

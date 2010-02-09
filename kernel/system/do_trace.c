@@ -90,7 +90,7 @@ PUBLIC int do_trace(struct proc * caller, message * m_ptr)
   if (isemptyp(rp)) return(EINVAL);
   switch (tr_request) {
   case T_STOP:			/* stop process */
-	RTS_LOCK_SET(rp, RTS_P_STOP);
+	RTS_SET(rp, RTS_P_STOP);
 	rp->p_reg.psw &= ~TRACEBIT;	/* clear trace bit */
 	rp->p_misc_flags &= ~MF_SC_TRACE;	/* clear syscall trace flag */
 	return(OK);
@@ -167,19 +167,19 @@ PUBLIC int do_trace(struct proc * caller, message * m_ptr)
 
 	/* fall through */
   case T_RESUME:		/* resume execution */
-	RTS_LOCK_UNSET(rp, RTS_P_STOP);
+	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->CTL_DATA = 0;
 	break;
 
   case T_STEP:			/* set trace bit */
 	rp->p_reg.psw |= TRACEBIT;
-	RTS_LOCK_UNSET(rp, RTS_P_STOP);
+	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->CTL_DATA = 0;
 	break;
 
   case T_SYSCALL:		/* trace system call */
 	rp->p_misc_flags |= MF_SC_TRACE;
-	RTS_LOCK_UNSET(rp, RTS_P_STOP);
+	RTS_UNSET(rp, RTS_P_STOP);
 	m_ptr->CTL_DATA = 0;
 	break;
 

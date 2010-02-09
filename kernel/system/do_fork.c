@@ -105,13 +105,13 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 
   /* Don't schedule process in VM mode until it has a new pagetable. */
   if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {
-  	RTS_LOCK_SET(rpc, RTS_VMINHIBIT);
+  	RTS_SET(rpc, RTS_VMINHIBIT);
   }
 
   /* 
    * Only one in group should have RTS_SIGNALED, child doesn't inherit tracing.
    */
-  RTS_LOCK_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
+  RTS_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
   sigemptyset(&rpc->p_pending);
 
   return r;

@@ -40,14 +40,14 @@ PUBLIC int do_runctl(struct proc * caller, message * m_ptr)
    * should not also install signal handlers *and* expect POSIX compliance.
    */
   if (action == RC_STOP && (flags & RC_DELAY)) {
-	RTS_LOCK_SET(rp, RTS_SYS_LOCK);
+	RTS_SET(rp, RTS_SYS_LOCK);
 
 	if (RTS_ISSET(rp, RTS_SENDING) || (rp->p_misc_flags & MF_SC_DEFER))
 		rp->p_misc_flags |= MF_SIG_DELAY;
 
 	delayed = (rp->p_misc_flags & MF_SIG_DELAY);
 
-	RTS_LOCK_UNSET(rp, RTS_SYS_LOCK);
+	RTS_UNSET(rp, RTS_SYS_LOCK);
 
 	if (delayed) return(EBUSY);
   }
@@ -55,10 +55,10 @@ PUBLIC int do_runctl(struct proc * caller, message * m_ptr)
   /* Either set or clear the stop flag. */
   switch (action) {
   case RC_STOP:
-	RTS_LOCK_SET(rp, RTS_PROC_STOP);
+	RTS_SET(rp, RTS_PROC_STOP);
 	break;
   case RC_RESUME:
-	RTS_LOCK_UNSET(rp, RTS_PROC_STOP);
+	RTS_UNSET(rp, RTS_PROC_STOP);
 	break;
   default:
 	return(EINVAL);

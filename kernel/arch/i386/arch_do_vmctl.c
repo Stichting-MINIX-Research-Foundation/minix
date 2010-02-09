@@ -35,7 +35,7 @@ struct proc *p;
 			p->p_seg.p_cr3 = 0;
 			p->p_misc_flags &= ~MF_FULLVM;
 		}
-		RTS_LOCK_UNSET(p, RTS_VMINHIBIT);
+		RTS_UNSET(p, RTS_VMINHIBIT);
 		return OK;
 	case VMCTL_INCSP:
 		/* Increase process SP. */
