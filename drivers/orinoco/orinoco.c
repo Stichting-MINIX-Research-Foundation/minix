@@ -62,9 +62,9 @@
 #include	<ibm/pci.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
-#include	<kernel/const.h>
-#include	<kernel/config.h>
-#include	<kernel/type.h>
+#include	"../../kernel/const.h"
+#include	"../../kernel/config.h"
+#include	"../../kernel/type.h"
 
 #define		VERBOSE		1	/* display message during init */
 
