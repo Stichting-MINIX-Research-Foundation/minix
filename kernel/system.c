@@ -75,10 +75,6 @@ PUBLIC void sys_task()
   int who_p;
   endpoint_t who_e;
 
-  /* Initialize the system task. */
-  initialize();
-
-
   while (TRUE) {
       struct proc *restarting;
 
@@ -146,7 +142,7 @@ PUBLIC void sys_task()
 /*===========================================================================*
  *				initialize				     *
  *===========================================================================*/
-PRIVATE void initialize(void)
+PUBLIC void system_init(void)
 {
   register struct priv *sp;
   int i;

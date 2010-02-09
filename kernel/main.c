@@ -210,6 +210,9 @@ PUBLIC void main()
   /* Architecture-dependent initialization. */
   arch_init();
 
+  /* System and processes initialization */
+  system_init();
+
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */

@@ -59,6 +59,7 @@ _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (proc_nr_t proc_nr, int sig_nr)			);
 _PROTOTYPE( void sig_delay_done, (struct proc *rp)			);
 _PROTOTYPE( void sys_task, (void)					);
+_PROTOTYPE( void system_init, (void)					);
 #define numap_local(proc_nr, vir_addr, bytes) \
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 _PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t, vir_bytes));
