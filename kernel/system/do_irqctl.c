@@ -116,6 +116,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
       }
       /* Remove the handler and return. */
       rm_irq_handler(&irq_hooks[irq_hook_id]);
+      irq_hooks[irq_hook_id].proc_nr_e = NONE;
       break;
 
   default:
