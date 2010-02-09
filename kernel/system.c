@@ -58,85 +58,92 @@ char *callnames[NR_SYS_CALLS];
     callnames[(call_nr-KERNEL_CALL)] = #call_nr;	\
     call_vec[(call_nr-KERNEL_CALL)] = (handler)  
 
-FORWARD _PROTOTYPE( void initialize, (void));
-FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
+PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
+{
+  if(result == VMSUSPEND) {
+	  /* Special case: message has to be saved for handling
+	   * until VM tells us it's allowed. VM has been notified
+	   * and we must wait for its reply to restart the call.
+	   */
+	  vmassert(RTS_ISSET(caller, RTS_VMREQUEST));
+	  vmassert(caller->p_vmrequest.type == VMSTYPE_KERNELCALL);
+	  caller->p_vmrequest.saved.reqmsg = *msg;
+	  caller->p_misc_flags |= MF_KCALL_RESUME;
+  } else {
+	  /*
+	   * call is finished, we could have been suspended because of VM,
+	   * remove the request message
+	   */
+	  caller->p_vmrequest.saved.reqmsg.m_source = NONE;
+	  if (result != EDONTREPLY) {
+		  /* copy the result as a message to the original user buffer */
+		  msg->m_source = SYSTEM;
+		  msg->m_type = result;		/* report status of call */
+		  if (copy_msg_to_user(caller, msg,
+				  (message *)caller->p_delivermsg_vir)) {
+			  kprintf("WARNING wrong user pointer 0x%08x from "
+					  "process %s / %d\n",
+					  caller->p_delivermsg_vir,
+					  caller->p_name,
+					  caller->p_endpoint);
+			  result = EBADREQUEST;
+		  }
+	  }
+  }
+}
+
+PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
+{
+  int result = OK;
+  int call_nr;
+
+  call_nr = msg->m_type - KERNEL_CALL;
+
+  /* See if the caller made a valid request and try to handle it. */
+  if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
+	  kprintf("SYSTEM: illegal request %d from %d.\n",
+			  call_nr,msg->m_source);
+	  result = EBADREQUEST;			/* illegal message type */
+  }
+  else if (!GET_BIT(priv(caller)->s_k_call_mask, call_nr)) {
+	  result = ECALLDENIED;			/* illegal message type */
+  } else {
+	  /* handle the system call */
+	  result = (*call_vec[call_nr])(caller, msg);
+  }
+
+  return result;
+}
 
 /*===========================================================================*
- *				sys_task				     *
+ *				kernel_call				     *
  *===========================================================================*/
-PUBLIC void sys_task()
+/*
+ * this function checks the basic syscall parameters and if accepted it
+ * dispatches its handling to the right handler
+ */
+PUBLIC void kernel_call(message *m_user, struct proc * caller)
 {
-/* Main entry point of sys_task.  Get the message and dispatch on type. */
-  static message m;
-  register int result;
-  register struct proc *caller_ptr;
-  int s;
-  int call_nr;
-  int who_p;
-  endpoint_t who_e;
+  int result = OK;
+  message msg;
 
-  while (TRUE) {
-      struct proc *restarting;
-
-      restarting = vmrestart_check(&m);
-
-      if(!restarting) {
-        int r;
-	/* Get work. Block and wait until a request message arrives. */
-	if((r=receive(ANY, &m)) != OK)
-		minix_panic("receive() failed", r);
-      } 
-
-      call_nr = m.m_type - KERNEL_CALL;
-      who_e = m.m_source;
-      okendpt(who_e, &who_p);
-      caller_ptr = proc_addr(who_p);
-
-      /* See if the caller made a valid request and try to handle it. */
-      if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
-	  kprintf("SYSTEM: illegal request %d from %d.\n",
-		call_nr,m.m_source);
-	  result = EBADREQUEST;			/* illegal message type */
-      } 
-      else if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
-	  result = ECALLDENIED;			/* illegal message type */
-      }
-      else {
-	  /* handle the system call */
-          result = (*call_vec[call_nr])(caller_ptr, &m);
-      }
-
-      if(result == VMSUSPEND) {
-	/* Special case: message has to be saved for handling
-	 * until VM tells us it's allowed. VM has been notified
-	 * and we must wait for its reply to restart the call.
-	 */
-        vmassert(RTS_ISSET(caller_ptr, RTS_VMREQUEST));
-	vmassert(caller_ptr->p_vmrequest.type == VMSTYPE_KERNELCALL);
-	caller_ptr->p_vmrequest.saved.reqmsg = m;
-      } else if (result != EDONTREPLY) {
-	/* Send a reply, unless inhibited by a handler function.
-	 * Use the kernel function lock_send() to prevent a system
-	 * call trap.
-	 */
-		if(restarting) {
-        		vmassert(!RTS_ISSET(restarting, RTS_VMREQUEST));
-#if 0
-        		vmassert(!RTS_ISSET(restarting, RTS_VMREQTARGET));
-#endif
-		}
-		m.m_type = result;		/* report status of call */
-		if(WILLRECEIVE(caller_ptr, SYSTEM)) {
-		  if (OK != (s=lock_send(m.m_source, &m))) {
-			kprintf("SYSTEM, reply to %d failed: %d\n",
-			m.m_source, s);
-		  }
-		} else {
-			kprintf("SYSTEM: not replying to %d; not ready\n", 
-				caller_ptr->p_endpoint);
-		}
-	}
+  caller->p_delivermsg_vir = (vir_bytes) m_user;
+  /*
+   * the ldt and cr3 of the caller process is loaded because it just've trapped
+   * into the kernel or was already set in schedcheck() before we resume
+   * execution of an interrupted kernel call
+   */
+  if (copy_msg_from_user(caller, m_user, &msg) == 0) {
+	  msg.m_source = caller->p_endpoint;
+	  result = kernel_call_dispatch(caller, &msg);
   }
+  else {
+	  kprintf("WARNING wrong user pointer 0x%08x from process %s / %d\n",
+			  m_user, caller->p_name, caller->p_endpoint);
+	  result = EBADREQUEST;
+  }
+
+  kernel_call_finish(caller, &msg, result);
 }
 
 /*===========================================================================*
@@ -541,52 +548,28 @@ register struct proc *rc;		/* slot of process to clean up */
 }
 
 /*===========================================================================*
- *                              vmrestart_check                            *
+ *                              kernel_call_resume                           *
  *===========================================================================*/
-PRIVATE struct proc *vmrestart_check(message *m)
+PUBLIC void kernel_call_resume(struct proc *caller)
 {
-	int type;
-	struct proc *restarting;
-	int who_p;
+	int result;
 
-      /* Anyone waiting to be vm-restarted? */
+	vmassert(!RTS_ISSET(p, RTS_SLOT_FREE));
+	vmassert(!RTS_ISSET(p, RTS_VMREQUEST));
 
-	if(!(restarting = vmrestart))
-		return NULL;
+	vmassert(p->p_vmrequest.saved.reqmsg.m_source == p->p_endpoint);
 
-	vmassert(!RTS_ISSET(restarting, RTS_SLOT_FREE));
-	vmassert(RTS_ISSET(restarting, RTS_VMREQUEST));
+	/*
+	printf("KERNEL_CALL restart from %s / %d rts 0x%08x misc 0x%08x\n",
+			caller->p_name, caller->p_endpoint,
+			caller->p_rts_flags, caller->p_misc_flags);
+	 */
 
-	type = restarting->p_vmrequest.type;
-	restarting->p_vmrequest.type = VMSTYPE_SYS_NONE;
-	vmrestart = restarting->p_vmrequest.nextrestart;
-
-	switch(type) {
-		case VMSTYPE_KERNELCALL:
-			*m = restarting->p_vmrequest.saved.reqmsg;
-			restarting->p_vmrequest.saved.reqmsg.m_source = NONE;
-			vmassert(m->m_source == restarting->p_endpoint);
-			/* Original caller could've disappeared in the meantime. */
-		        if(!isokendpt(m->m_source, &who_p)) {
-				kprintf("SYSTEM: ignoring call %d from dead %d\n",
-					m->m_type, m->m_source);
-				return NULL;
-			}
-			{ int i;
-				i = m->m_type - KERNEL_CALL;
-				if(i >= 0 && i < NR_SYS_CALLS) {
-#if 0
-					kprintf("SYSTEM: restart %s from %d\n",
-					callnames[i], m->m_source);
-#endif
-				} else {
-	   				minix_panic("call number out of range", i);
-				}
-			}
-			return restarting;
-		default:
-	   		minix_panic("strange restart type", type);
-	}
-	minix_panic("fell out of switch", NO_NUM);
-	return NULL;
+	/*
+	 * we are resuming the kernel call so we have to remove this flag so it
+	 * can be set again
+	 */
+	caller->p_misc_flags &= ~MF_KCALL_RESUME;
+	result = kernel_call_dispatch(caller, &caller->p_vmrequest.saved.reqmsg);
+	kernel_call_finish(caller, &caller->p_vmrequest.saved.reqmsg, result);
 }

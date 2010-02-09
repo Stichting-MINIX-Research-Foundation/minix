@@ -83,7 +83,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		 */
 		if((r=data_copy(granter,
 			priv(granter_proc)->s_grant_table + sizeof(g)*grant,
-			SYSTEM, (vir_bytes) &g, sizeof(g))) != OK) {
+			KERNEL, (vir_bytes) &g, sizeof(g))) != OK) {
 			kprintf(
 			"verify_grant: grant verify: data_copy failed\n");
 			return EPERM;
@@ -366,7 +366,7 @@ PUBLIC int do_vsafecopy(struct proc * caller, message * m_ptr)
 	src.proc_nr_e = caller->p_endpoint;
 	src.offset = (vir_bytes) m_ptr->VSCP_VEC_ADDR;
 	src.segment = dst.segment = D;
-	dst.proc_nr_e = SYSTEM;
+	dst.proc_nr_e = KERNEL;
 	dst.offset = (vir_bytes) vec;
 
 	/* No. of vector elements. */

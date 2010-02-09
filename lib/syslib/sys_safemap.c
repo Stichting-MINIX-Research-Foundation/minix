@@ -24,7 +24,7 @@ PUBLIC int sys_safemap(endpoint_t grantor, cp_grant_id_t grant,
 	copy_mess.SMAP_BYTES = bytes;
 	copy_mess.SMAP_FLAG = writable;
 
-	return(_taskcall(SYSTASK, SYS_SAFEMAP, &copy_mess));
+	return(_kernel_call(SYS_SAFEMAP, &copy_mess));
 
 }
 
@@ -39,7 +39,7 @@ PUBLIC int sys_saferevmap_gid(cp_grant_id_t grant)
 	copy_mess.SMAP_FLAG = 1;
 	copy_mess.SMAP_GID = grant;
 
-	return(_taskcall(SYSTASK, SYS_SAFEREVMAP, &copy_mess));
+	return(_kernel_call(SYS_SAFEREVMAP, &copy_mess));
 }
 
 /*===========================================================================*
@@ -53,7 +53,7 @@ PUBLIC int sys_saferevmap_addr(vir_bytes addr)
 	copy_mess.SMAP_FLAG = 0;
 	copy_mess.SMAP_GID = addr;
 
-	return(_taskcall(SYSTASK, SYS_SAFEREVMAP, &copy_mess));
+	return(_kernel_call(SYS_SAFEREVMAP, &copy_mess));
 }
 
 /*===========================================================================*
@@ -67,6 +67,6 @@ PUBLIC int sys_safeunmap(int my_seg, vir_bytes my_address)
 	copy_mess.SMAP_SEG = (void*) my_seg;
 	copy_mess.SMAP_ADDRESS = my_address;
 
-	return(_taskcall(SYSTASK, SYS_SAFEUNMAP, &copy_mess));
+	return(_kernel_call(SYS_SAFEUNMAP, &copy_mess));
 }
 

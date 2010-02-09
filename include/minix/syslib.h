@@ -30,6 +30,7 @@ struct rs_pci;
  * Minix system library. 						    *
  *==========================================================================*/ 
 _PROTOTYPE( int _taskcall, (endpoint_t who, int syscallnr, message *msgptr));
+_PROTOTYPE( int _kernel_call, (int syscallnr, message *msgptr));
 
 _PROTOTYPE( int sys_abort, (int how, ...));
 _PROTOTYPE( int sys_enable_iop, (endpoint_t proc_ep));

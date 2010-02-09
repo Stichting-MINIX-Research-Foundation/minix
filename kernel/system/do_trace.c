@@ -54,7 +54,7 @@ PUBLIC int do_trace(struct proc * caller, message * m_ptr)
 #define COPYTOPROC(seg, addr, myaddr, length) {		\
 	struct vir_addr fromaddr, toaddr;		\
 	int r;	\
-	fromaddr.proc_nr_e = SYSTEM;			\
+	fromaddr.proc_nr_e = KERNEL;			\
 	toaddr.proc_nr_e = tr_proc_nr_e;		\
 	fromaddr.offset = (myaddr);			\
 	toaddr.offset = (addr);				\
@@ -71,7 +71,7 @@ PUBLIC int do_trace(struct proc * caller, message * m_ptr)
 	struct vir_addr fromaddr, toaddr;		\
 	int r;	\
 	fromaddr.proc_nr_e = tr_proc_nr_e;		\
-	toaddr.proc_nr_e = SYSTEM;			\
+	toaddr.proc_nr_e = KERNEL;			\
 	fromaddr.offset = (addr);			\
 	toaddr.offset = (myaddr);			\
 	fromaddr.segment = (seg);			\

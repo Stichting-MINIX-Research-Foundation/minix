@@ -377,7 +377,7 @@ hwint15:
 	hwint_slave(15)
 
 /*
- * syscall is only from a process to kernel
+ * IPC is only from a process to kernel
  */
 .balign 16
 .globl ipc_entry
@@ -407,6 +407,36 @@ ipc_entry:
 	add	$4 * 4, %esp
 	pop	%esi
 	mov     %eax, AXREG(%esi)
+
+	jmp	restart
+
+
+/*
+ * kernel call is only from a process to kernel
+ */
+.balign 16
+.globl kernel_call_entry
+kernel_call_entry:
+
+	SAVE_PROCESS_CTX(0)
+
+	/* save the pointer to the current process */
+	push	%ebp
+
+	/* for stack trace */
+	movl	$0, %ebp
+
+	/*
+	 * pass the syscall arguments from userspace to the handler.
+	 * SAVE_PROCESS_CTX() does not clobber these registers, they are still
+	 * set as the userspace have set them
+	 */
+	push	%eax
+
+	call	kernel_call
+
+	/* restore the current process pointer and save the return value */
+	add	$8, %esp
 
 	jmp	restart
 

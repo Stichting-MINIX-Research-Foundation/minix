@@ -18,7 +18,7 @@ clock_t *oldval;		/* if non-NULL, old value is stored here */
       m.VT_SET = 0;
   }
 
-  r = _taskcall(SYSTASK, SYS_VTIMER, &m);
+  r = _kernel_call(SYS_VTIMER, &m);
 
   if (oldval != NULL) {
       *oldval = m.VT_VALUE;

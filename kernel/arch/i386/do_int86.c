@@ -21,12 +21,12 @@ struct reg86u reg86;
 PUBLIC int do_int86(struct proc * caller, message * m_ptr)
 {
   data_copy(caller->p_endpoint, (vir_bytes) m_ptr->INT86_REG86,
-	SYSTEM, (vir_bytes) &reg86, sizeof(reg86));
+	KERNEL, (vir_bytes) &reg86, sizeof(reg86));
 
   level0(int86);
 
   /* Copy results back to the caller */
-  data_copy(SYSTEM, (vir_bytes) &reg86,
+  data_copy(KERNEL, (vir_bytes) &reg86,
 	caller->p_endpoint, (vir_bytes) m_ptr->INT86_REG86, sizeof(reg86));
 
   /* The BIOS call eats interrupts. Call get_randomness to generate some

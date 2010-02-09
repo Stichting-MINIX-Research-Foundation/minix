@@ -14,5 +14,5 @@ vir_bytes initpc;
   m.PR_STACK_PTR = ptr;
   m.PR_NAME_PTR = prog_name;
   m.PR_IP_PTR = (char *)initpc;
-  return(_taskcall(SYSTASK, SYS_EXEC, &m));
+  return(_kernel_call(SYS_EXEC, &m));
 }

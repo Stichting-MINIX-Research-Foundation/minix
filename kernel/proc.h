@@ -220,6 +220,12 @@ struct proc {
 #define MF_REPLY_PEND	0x001	/* reply to IPC_REQUEST is pending */
 #define MF_VIRT_TIMER	0x002	/* process-virtual timer is running */
 #define MF_PROF_TIMER	0x004	/* process-virtual profile timer is running */
+#define MF_KCALL_RESUME 0x008	/* processing a kernel call was interrupted,
+				   most likely because we need VM to resolve a
+				   problem or a long running copy was preempted.
+				   We need to resume the kernel call execution
+				   now
+				 */
 #define MF_ASYNMSG	0x010	/* Asynchrous message pending */
 #define MF_FULLVM	0x020
 #define MF_DELIVERMSG	0x040	/* Copy message for him before running */

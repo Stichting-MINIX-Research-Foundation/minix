@@ -184,7 +184,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
 
   /* Try to make the actual copy for the requested data. */
   if (m_ptr->I_VAL_LEN > 0 && length > m_ptr->I_VAL_LEN) return (E2BIG);
-  r = data_copy_vmcheck(caller, SYSTEM, src_vir, caller->p_endpoint,
+  r = data_copy_vmcheck(caller, KERNEL, src_vir, caller->p_endpoint,
 	(vir_bytes) m_ptr->I_VAL_PTR, length);
 
   if(r != OK) return r;

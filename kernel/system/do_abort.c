@@ -30,9 +30,8 @@ PUBLIC int do_abort(struct proc * caller, message * m_ptr)
       int len;
       len = MIN(m_ptr->ABRT_MON_LEN, sizeof(paramsbuffer)-1);
 
-      if((p=data_copy(m_ptr->ABRT_MON_ENDPT,
-		(vir_bytes) m_ptr->ABRT_MON_ADDR,
-		SYSTEM, (vir_bytes) paramsbuffer, len)) != OK) {
+      if((p=data_copy(m_ptr->ABRT_MON_ENDPT, (vir_bytes) m_ptr->ABRT_MON_ADDR,
+		KERNEL, (vir_bytes) paramsbuffer, len)) != OK) {
 		return p;
       }
       paramsbuffer[len] = '\0';

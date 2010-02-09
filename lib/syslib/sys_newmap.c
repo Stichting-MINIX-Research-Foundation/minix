@@ -10,5 +10,5 @@ struct mem_map *ptr;		/* pointer to new map */
 
   m.PR_ENDPT = proc_ep;
   m.PR_MEM_PTR = (char *) ptr;
-  return(_taskcall(SYSTASK, SYS_NEWMAP, &m));
+  return(_kernel_call(SYS_NEWMAP, &m));
 }

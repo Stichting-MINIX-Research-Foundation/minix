@@ -17,7 +17,7 @@ vir_bytes *msgaddr;
   m.PR_SLOT = child;
   m.PR_MEM_PTR = (char *) map_ptr;
   m.PR_FORK_FLAGS = flags;
-  r = _taskcall(SYSTASK, SYS_FORK, &m);
+  r = _kernel_call(SYS_FORK, &m);
   *child_endpoint = m.PR_ENDPT;
   *msgaddr = (vir_bytes) m.PR_FORK_MSGADDR;
   return r;

@@ -17,5 +17,5 @@ PUBLIC int sys_abort(int how, ...)
   }
   va_end(ap);
 
-  return(_taskcall(SYSTASK, SYS_ABORT, &m));
+  return(_kernel_call(SYS_ABORT, &m));
 }

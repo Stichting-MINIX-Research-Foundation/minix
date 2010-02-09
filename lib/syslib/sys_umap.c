@@ -18,7 +18,7 @@ phys_bytes *phys_addr;			/* placeholder for result */
     m.CP_SRC_ADDR = vir_addr;
     m.CP_NR_BYTES = bytes;
 
-    result = _taskcall(SYSTASK, SYS_UMAP, &m);
+    result = _kernel_call(SYS_UMAP, &m);
     *phys_addr = m.CP_DST_ADDR;
     return(result);
 }

@@ -12,6 +12,6 @@ int nr_ports;				/* nr of pairs to be processed */
     m_io.DIO_REQUEST = _DIO_INPUT | _DIO_LONG;
     m_io.DIO_VEC_ADDR = (char *) pvl_pairs;
     m_io.DIO_VEC_SIZE = nr_ports;
-    return _taskcall(SYSTASK, SYS_VDEVIO, &m_io);
+    return _kernel_call(SYS_VDEVIO, &m_io);
 }
 

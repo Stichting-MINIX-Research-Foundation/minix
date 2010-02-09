@@ -152,4 +152,6 @@ _PROTOTYPE( int send, (endpoint_t dest, message *m_ptr)			);
 _PROTOTYPE( int sendnb, (endpoint_t dest, message *m_ptr)		);
 _PROTOTYPE( int senda, (asynmsg_t *table, size_t count)			);
 
+_PROTOTYPE( int _do_kernel_call, (message *m_ptr)			);
+
 #endif /* _IPC_H */

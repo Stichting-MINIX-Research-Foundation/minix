@@ -8,7 +8,7 @@ PUBLIC int sys_vmctl(endpoint_t who, int param, u32_t value)
   m.SVMCTL_WHO = who;
   m.SVMCTL_PARAM = param;
   m.SVMCTL_VALUE = value;
-  r = _taskcall(SYSTASK, SYS_VMCTL, &m);
+  r = _kernel_call(SYS_VMCTL, &m);
   return(r);
 }
 
@@ -19,7 +19,7 @@ PUBLIC int sys_vmctl_get_pagefault_i386(endpoint_t *who, u32_t *cr2, u32_t *err)
 
   m.SVMCTL_WHO = SELF;
   m.SVMCTL_PARAM = VMCTL_GET_PAGEFAULT;
-  r = _taskcall(SYSTASK, SYS_VMCTL, &m);
+  r = _kernel_call(SYS_VMCTL, &m);
   if(r == OK) {
 	*who = m.SVMCTL_PF_WHO;
 	*cr2 = m.SVMCTL_PF_I386_CR2;
@@ -35,7 +35,7 @@ PUBLIC int sys_vmctl_get_cr3_i386(endpoint_t who, u32_t *cr3)
 
   m.SVMCTL_WHO = who;
   m.SVMCTL_PARAM = VMCTL_I386_GETCR3;
-  r = _taskcall(SYSTASK, SYS_VMCTL, &m);
+  r = _kernel_call(SYS_VMCTL, &m);
   if(r == OK) {
 	*cr3 = m.SVMCTL_VALUE;
   }
@@ -51,7 +51,7 @@ PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
 
   m.SVMCTL_WHO = SELF;
   m.SVMCTL_PARAM = VMCTL_MEMREQ_GET;
-  r = _taskcall(SYSTASK, SYS_VMCTL, &m);
+  r = _kernel_call(SYS_VMCTL, &m);
   if(r >= 0) {
 	*who = m.SVMCTL_MRG_TARGET;
 	*mem = m.SVMCTL_MRG_ADDR;
@@ -70,7 +70,7 @@ PUBLIC int sys_vmctl_enable_paging(struct mem_map *map)
 	m.SVMCTL_WHO = SELF;
 	m.SVMCTL_PARAM = VMCTL_ENABLE_PAGING;
 	m.SVMCTL_VALUE = (int) map;
-	return _taskcall(SYSTASK, SYS_VMCTL, &m);
+	return _kernel_call(SYS_VMCTL, &m);
 }
 
 PUBLIC int sys_vmctl_get_mapping(int index,
@@ -83,7 +83,7 @@ PUBLIC int sys_vmctl_get_mapping(int index,
 	m.SVMCTL_PARAM = VMCTL_KERN_PHYSMAP;
 	m.SVMCTL_VALUE = (int) index;
 
-	r = _taskcall(SYSTASK, SYS_VMCTL, &m);
+	r = _kernel_call(SYS_VMCTL, &m);
 
 	if(r != OK)
 		return r;
@@ -105,5 +105,5 @@ PUBLIC int sys_vmctl_reply_mapping(int index, vir_bytes addr)
 	m.SVMCTL_VALUE = index;
 	m.SVMCTL_MAP_VIR_ADDR = (char *) addr;
 
-	return _taskcall(SYSTASK, SYS_VMCTL, &m);
+	return _kernel_call(SYS_VMCTL, &m);
 }

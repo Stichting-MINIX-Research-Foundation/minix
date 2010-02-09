@@ -11,6 +11,6 @@ PUBLIC int sys_memset(unsigned long pattern, phys_bytes base, phys_bytes bytes)
   mess.MEM_COUNT   = bytes;
   mess.MEM_PATTERN = pattern;
 
-  return(_taskcall(SYSTASK, SYS_MEMSET, &mess));
+  return(_kernel_call(SYS_MEMSET, &mess));
 }
 

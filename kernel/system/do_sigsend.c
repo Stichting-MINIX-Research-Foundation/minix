@@ -37,7 +37,7 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
 
   /* Get the sigmsg structure into our address space.  */
   if((r=data_copy_vmcheck(caller, caller->p_endpoint,
-		(vir_bytes) m_ptr->SIG_CTXT_PTR, SYSTEM, (vir_bytes) &smsg,
+		(vir_bytes) m_ptr->SIG_CTXT_PTR, KERNEL, (vir_bytes) &smsg,
 		(phys_bytes) sizeof(struct sigmsg))) != OK)
 	return r;
 
@@ -57,7 +57,7 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   sc.sc_flags = 0 | rp->p_misc_flags & MF_FPU_INITIALIZED;
 
   /* Copy the sigcontext structure to the user's stack. */
-  if((r=data_copy_vmcheck(caller, SYSTEM, (vir_bytes) &sc, m_ptr->SIG_ENDPT,
+  if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &sc, m_ptr->SIG_ENDPT,
 	(vir_bytes) scp, (vir_bytes) sizeof(struct sigcontext))) != OK)
       return r;
 
@@ -106,7 +106,7 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
 
   /* Copy the sigframe structure to the user's stack. */
-  if((r=data_copy_vmcheck(caller, SYSTEM, (vir_bytes) &fr,
+  if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &fr,
 	m_ptr->SIG_ENDPT, (vir_bytes) frp, 
       (vir_bytes) sizeof(struct sigframe))) != OK)
       return r;

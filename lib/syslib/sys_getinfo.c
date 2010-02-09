@@ -22,7 +22,7 @@ int len2;				/* length or process nr */
     m.I_VAL_PTR2 = ptr2;
     m.I_VAL_LEN2_E = len2;
 
-    return(_taskcall(SYSTASK, SYS_GETINFO, &m));
+    return(_kernel_call(SYS_GETINFO, &m));
 }
 
 /*===========================================================================*
@@ -39,7 +39,7 @@ PUBLIC int sys_whoami(endpoint_t *who_ep, char *who_name, int len)
 	if(len < 2)
 		return EINVAL;
 
-	if((r = _taskcall(SYSTASK, SYS_GETINFO, &m)) != OK)
+	if((r = _kernel_call(SYS_GETINFO, &m)) != OK)
 		return r;
 
 	lenmin = MIN(len, sizeof(m.GIWHO_NAME)) - 1;

@@ -145,6 +145,7 @@ miscflagstr(int flags)
 	FLAG(MF_ASYNMSG);
 	FLAG(MF_FULLVM);
 	FLAG(MF_DELIVERMSG);
+	FLAG(MF_KCALL_RESUME);
 
 	return str;
 }

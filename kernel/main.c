@@ -203,6 +203,8 @@ PUBLIC void main()
 	if (rp->p_nr == HARDWARE) RTS_SET(rp, RTS_PROC_STOP);
 	/* IDLE task is never put on a run queue as it is never ready to run */
 	if (rp->p_nr == IDLE) RTS_SET(rp, RTS_PROC_STOP);
+	/* SYSTEM does not run anymore */
+	if (rp->p_nr == SYSTEM) RTS_SET(rp, RTS_PROC_STOP);
 	RTS_UNSET(rp, RTS_SLOT_FREE); /* remove RTS_SLOT_FREE and schedule */
 	alloc_segments(rp);
   }

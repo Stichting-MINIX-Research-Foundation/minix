@@ -205,10 +205,14 @@ check_misc_flags:
 	vmassert(proc_ptr);
 	vmassert(proc_is_runnable(proc_ptr));
 	while (proc_ptr->p_misc_flags &
-		(MF_DELIVERMSG | MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
+		(MF_KCALL_RESUME | MF_DELIVERMSG |
+		 MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
 
 		vmassert(proc_is_runnable(proc_ptr));
-		if (proc_ptr->p_misc_flags & MF_DELIVERMSG) {
+		if (proc_ptr->p_misc_flags & MF_KCALL_RESUME) {
+			kernel_call_resume(proc_ptr);
+		}
+		else if (proc_ptr->p_misc_flags & MF_DELIVERMSG) {
 			TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
 				proc_ptr->p_name, proc_ptr->p_endpoint););
 			if(delivermsg(proc_ptr) == VMSUSPEND) {
@@ -832,14 +836,14 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 #define A_RETRIEVE(entry, field)	\
   if(data_copy(caller_ptr->p_endpoint,	\
 	 table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
-		SYSTEM, (vir_bytes) &tabent.field,	\
+		KERNEL, (vir_bytes) &tabent.field,	\
 			sizeof(tabent.field)) != OK) {\
 		ASCOMPLAIN(caller_ptr, entry, #field);	\
 		return EFAULT; \
 	}
 
 #define A_INSERT(entry, field)	\
-  if(data_copy(SYSTEM, (vir_bytes) &tabent.field, \
+  if(data_copy(KERNEL, (vir_bytes) &tabent.field, \
 	caller_ptr->p_endpoint,	\
  	table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
 		sizeof(tabent.field)) != OK) {\

@@ -20,7 +20,7 @@ long ticks;				/* number of ticks to wait */
 
     m.ALRM_EXP_TIME = ticks;		/* request message after ticks */
     m.ALRM_ABS_TIME = 0;		/* ticks are relative to now */
-    s = _taskcall(SYSTASK, SYS_SETALARM, &m);
+    s = _kernel_call(SYS_SETALARM, &m);
     if (s != OK) return(s);
 
     receive(CLOCK,&m_alarm);		/* await synchronous alarm */
@@ -30,7 +30,7 @@ long ticks;				/* number of ticks to wait */
     	m.ALRM_EXP_TIME = m.ALRM_TIME_LEFT - ticks;
     	if (m.ALRM_EXP_TIME <= 0) 
     		m.ALRM_EXP_TIME = 1;
-    	s = _taskcall(SYSTASK, SYS_SETALARM, &m);
+    	s = _kernel_call(SYS_SETALARM, &m);
     }
 
     return(s);

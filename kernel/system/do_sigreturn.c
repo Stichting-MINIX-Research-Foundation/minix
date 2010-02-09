@@ -32,7 +32,7 @@ PUBLIC int do_sigreturn(struct proc * caller, message * m_ptr)
 
   /* Copy in the sigcontext structure. */
   if((r=data_copy(m_ptr->SIG_ENDPT, (vir_bytes) m_ptr->SIG_CTXT_PTR,
-	SYSTEM, (vir_bytes) &sc, sizeof(struct sigcontext))) != OK)
+	KERNEL, (vir_bytes) &sc, sizeof(struct sigcontext))) != OK)
 	return r;
 
   /* Restore user bits of psw from sc, maintain system bits from proc. */

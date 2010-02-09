@@ -71,7 +71,7 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	{
 		/* Copy privilege structure from caller */
 		if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-			SYSTEM, (vir_bytes) &priv, sizeof(priv))) != OK)
+			KERNEL, (vir_bytes) &priv, sizeof(priv))) != OK)
 			return r;
 
 		/* See if the caller wants to assign a static privilege id. */
@@ -226,7 +226,7 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 
 	/* Get the I/O range */
 	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		SYSTEM, (vir_bytes) &io_range, sizeof(io_range));
+		KERNEL, (vir_bytes) &io_range, sizeof(io_range));
 	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
 	i= priv(rp)->s_nr_io_range;
 	if (i >= NR_IO_RANGE)
@@ -248,7 +248,7 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 
 	/* Get the memory range */
 	if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		SYSTEM, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
+		KERNEL, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
 	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
 	i= priv(rp)->s_nr_mem_range;
@@ -270,7 +270,7 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 		return EPERM;
 
 	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		SYSTEM, (vir_bytes) &irq, sizeof(irq));
+		KERNEL, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
 
 	i= priv(rp)->s_nr_irq;

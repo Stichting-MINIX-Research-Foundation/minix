@@ -47,7 +47,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 		}
 
 		/* Set reset flag. */
-		data_copy(SYSTEM, (vir_bytes) &cprof_ctl_inst.reset,
+		data_copy(KERNEL, (vir_bytes) &cprof_ctl_inst.reset,
 			cprof_proc_info[i].endpt, cprof_proc_info[i].ctl_v,
 			sizeof(cprof_ctl_inst.reset));
 	}
@@ -90,7 +90,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 
 		/* Copy control struct from proc to local variable. */
 		data_copy(cprof_proc_info[i].endpt, cprof_proc_info[i].ctl_v,
-			SYSTEM, (vir_bytes) &cprof_ctl_inst,
+			KERNEL, (vir_bytes) &cprof_ctl_inst,
 			sizeof(cprof_ctl_inst));
 
 	       	/* Calculate memory used. */
@@ -108,7 +108,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 	if (cprof_mem_size < cprof_info.mem_used) cprof_info.mem_used = -1;
 
 	/* Copy the info struct to the user process. */
-	data_copy(SYSTEM, (vir_bytes) &cprof_info,
+	data_copy(KERNEL, (vir_bytes) &cprof_info,
 		m_ptr->PROF_ENDPT, (vir_bytes) m_ptr->PROF_CTL_PTR,
 		sizeof(cprof_info));
 
@@ -120,7 +120,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 	vir_dst = (vir_bytes) m_ptr->PROF_MEM_PTR;
 	for (i=0; i<cprof_procs_no; i++) {
 		len = (phys_bytes) strlen(cprof_proc_info[i].name);
-		data_copy(SYSTEM, (vir_bytes) cprof_proc_info[i].name,
+		data_copy(KERNEL, (vir_bytes) cprof_proc_info[i].name,
 			m_ptr->PROF_ENDPT, vir_dst, len);
 		vir_dst += CPROF_PROCNAME_LEN;
 

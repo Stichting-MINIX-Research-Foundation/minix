@@ -14,6 +14,6 @@ int type;				/* byte, word, long */
     m_io.DIO_PORT = port;
     m_io.DIO_VALUE = value;
 
-    return _taskcall(SYSTASK, SYS_DEVIO, &m_io);
+    return _kernel_call(SYS_DEVIO, &m_io);
 }
 

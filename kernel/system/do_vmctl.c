@@ -129,19 +129,19 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 
 		switch(p->p_vmrequest.type) {
 		case VMSTYPE_KERNELCALL:
-			/* Put on restart chain. */
-			p->p_vmrequest.nextrestart = vmrestart;
-			vmrestart = p;
+			/*
+			 * we will have to resume execution of the kernel call
+			 * as soon the scheduler picks up this process again
+			 */
+			p->p_misc_flags |= MF_KCALL_RESUME;
 			break;
 		case VMSTYPE_DELIVERMSG:
 			vmassert(p->p_misc_flags & MF_DELIVERMSG);
 			vmassert(p == target);
 			vmassert(RTS_ISSET(p, RTS_VMREQUEST));
-			RTS_LOCK_UNSET(p, RTS_VMREQUEST);
 			break;
 		case VMSTYPE_MAP:
 			vmassert(RTS_ISSET(p, RTS_VMREQUEST));
-			RTS_LOCK_UNSET(p, RTS_VMREQUEST);
 			break;
 		default:
 #if DEBUG_VMASSERT
@@ -152,7 +152,9 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 				p->p_vmrequest.type);
 		}
 
+		RTS_LOCK_UNSET(p, RTS_VMREQUEST);
 		return OK;
+
 	case VMCTL_ENABLE_PAGING:
 		/*
 		 * system task must not get preempted while switching to paging,

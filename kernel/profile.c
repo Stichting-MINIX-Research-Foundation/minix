@@ -94,11 +94,11 @@ irq_hook_t *hook;
 	/* Note: k_reenter is always 0 here. */
 
 	/* Store sample (process name and program counter). */
-	data_copy(SYSTEM, (vir_bytes) proc_ptr->p_name,
+	data_copy(KERNEL, (vir_bytes) proc_ptr->p_name,
 		sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
 		strlen(proc_ptr->p_name));
 
-	data_copy(SYSTEM, (vir_bytes) &proc_ptr->p_reg.pc, sprof_ep,
+	data_copy(KERNEL, (vir_bytes) &proc_ptr->p_reg.pc, sprof_ep,
 		(vir_bytes) (sprof_data_addr_vir + sprof_info.mem_used +
 					sizeof(proc_ptr->p_name)),
 		(vir_bytes) sizeof(proc_ptr->p_reg.pc));

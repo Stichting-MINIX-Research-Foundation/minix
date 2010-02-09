@@ -14,7 +14,7 @@ vir_bytes size;				/* size of segment */
     int s;
     m.SEG_PHYS = phys;
     m.SEG_SIZE = size;
-    s = _taskcall(SYSTASK, SYS_SEGCTL, &m);
+    s = _kernel_call(SYS_SEGCTL, &m);
     *index = (int) m.SEG_INDEX;
     *seg = (u16_t) m.SEG_SELECT;
     *off = (vir_bytes) m.SEG_OFFSET;

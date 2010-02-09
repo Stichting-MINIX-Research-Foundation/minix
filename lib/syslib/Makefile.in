@@ -7,6 +7,7 @@ LIBRARIES=libsys
 libsys_FILES=" \
 	alloc_util.c \
 	assert.c \
+	kernel_call.c \
 	panic.c \
 	pci_attr_r16.c \
 	pci_attr_r32.c \

@@ -34,7 +34,7 @@ PUBLIC int do_exec(struct proc * caller, message * m_ptr)
 
   /* Save command name for debugging, ps(1) output, etc. */
   if(data_copy(caller->p_endpoint, (vir_bytes) m_ptr->PR_NAME_PTR,
-	SYSTEM, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)
+	KERNEL, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)
   	strncpy(rp->p_name, "<unset>", P_NAME_LEN);
 
   /* Do architecture-specific exec() stuff. */

@@ -22,7 +22,7 @@ void *mem_ptr;				/* location of profiling memory */
   m.PROF_CTL_PTR        = ctl_ptr;
   m.PROF_MEM_PTR        = mem_ptr;
 
-  return(_taskcall(SYSTASK, SYS_SPROF, &m));
+  return(_kernel_call(SYS_SPROF, &m));
 }
 
 #endif

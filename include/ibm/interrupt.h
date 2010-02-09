@@ -22,8 +22,8 @@
 #define OVERFLOW_VECTOR    4	/* from INTO */
 
 /* Fixed system call vector. */
-#define SYS_VECTOR        32	/* system calls are made with int SYSVEC */
-#define SYS386_VECTOR     33	/* except 386 system calls use this */
+#define KERN_CALL_VECTOR  32	/* system calls are made with int SYSVEC */
+#define IPC_VECTOR        33	/* interrupt vector for ipc */
 #define LEVEL0_VECTOR     34	/* for execution of a function at level 0 */
 
 /* Suitable irq bases for hardware interrupts.  Reprogram the 8259(s) from

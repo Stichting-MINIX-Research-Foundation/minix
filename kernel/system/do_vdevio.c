@@ -67,7 +67,7 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
 
   /* Copy (port,value)-pairs from user. */
   if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->DIO_VEC_ADDR,
-    SYSTEM, (vir_bytes) vdevio_buf, bytes)) != OK)
+    KERNEL, (vir_bytes) vdevio_buf, bytes)) != OK)
 	return r;
 
   privp= priv(caller);
@@ -104,19 +104,6 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
    * the entire switch is wrapped in lock() and unlock() to prevent the I/O
    * batch from being interrupted. 
    */  
-#if 0
-  if(who_e == 71091)  {
-	static int vd = 0;
-	if(vd++ < 100) {
-		  kprintf("proc %d does vdevio no %d; type %d, direction %s\n",
-		who_e, vd, io_type, io_in ? "input" : "output");
-		kprintf("(");
-		for (i=0; i<vec_size; i++) 
-			kprintf("%2d:0x%x,0x%x  ", i, pvb[i].port, pvb[i].value); 
-		kprintf(")\n");
-	}
-  }
-#endif
   lock;
   switch (io_type) {
   case _DIO_BYTE: 					 /* byte values */
@@ -169,7 +156,7 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
     
   /* Almost done, copy back results for input requests. */
   if (io_in) 
-	if((r=data_copy(SYSTEM, (vir_bytes) vdevio_buf, 
+	if((r=data_copy(KERNEL, (vir_bytes) vdevio_buf,
 	  caller->p_endpoint, (vir_bytes) m_ptr->DIO_VEC_ADDR,
 	  (phys_bytes) bytes)) != OK)
 		return r;

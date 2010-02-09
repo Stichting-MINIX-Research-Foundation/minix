@@ -11,7 +11,7 @@ struct reg86u *reg86p;
 
     m.m1_p1= (char *)reg86p;
 
-    result = _taskcall(SYSTASK, SYS_INT86, &m);
+    result = _kernel_call(SYS_INT86, &m);
     return(result);
 }
 

@@ -79,7 +79,7 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 
 	stop_profile_clock();
 
-	data_copy(SYSTEM, (vir_bytes) &sprof_info,
+	data_copy(KERNEL, (vir_bytes) &sprof_info,
 		sprof_ep, sprof_info_addr_vir, sizeof(sprof_info));
 
   	return OK;

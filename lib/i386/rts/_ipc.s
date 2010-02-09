@@ -1,5 +1,5 @@
 .sect .text; .sect .rom; .sect .data; .sect .bss
-.define __notify, __send, __senda, __sendnb, __receive, __sendrec 
+.define __notify, __send, __senda, __sendnb, __receive, __sendrec, __do_kernel_call
 
 ! See src/kernel/ipc.h for C definitions
 SEND = 1
@@ -7,7 +7,8 @@ RECEIVE = 2
 SENDREC = 3 
 NOTIFY = 4
 SENDNB = 5
-SYSVEC = 33			! trap to kernel 
+IPCVEC = 33	! ipc trap to kernel
+KERVEC = 32	! syscall trap to kernel
 
 SRC_DST = 8			! source/ destination process 
 MESSAGE = 12			! message pointer 
@@ -24,7 +25,7 @@ __send:
 	mov	eax, SRC_DST(ebp)	! eax = dest-src
 	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
 	mov	ecx, SEND		! _send(dest, ptr)
-	int	SYSVEC			! trap to the kernel
+	int	IPCVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
 	ret
@@ -36,7 +37,7 @@ __receive:
 	mov	eax, SRC_DST(ebp)	! eax = dest-src
 	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
 	mov	ecx, RECEIVE		! _receive(src, ptr)
-	int	SYSVEC			! trap to the kernel
+	int	IPCVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
 	ret
@@ -48,7 +49,7 @@ __sendrec:
 	mov	eax, SRC_DST(ebp)	! eax = dest-src
 	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
 	mov	ecx, SENDREC		! _sendrec(srcdest, ptr)
-	int	SYSVEC			! trap to the kernel
+	int	IPCVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
 	ret
@@ -59,7 +60,7 @@ __notify:
 	push	ebx
 	mov	eax, SRC_DST(ebp)	! eax = destination 
 	mov	ecx, NOTIFY		! _notify(srcdst)
-	int	SYSVEC			! trap to the kernel
+	int	IPCVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
 	ret
@@ -71,9 +72,13 @@ __sendnb:
 	mov	eax, SRC_DST(ebp)	! eax = dest-src
 	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
 	mov	ecx, SENDNB		! _sendnb(dest, ptr)
-	int	SYSVEC			! trap to the kernel
+	int	IPCVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
 	ret
 
-
+__do_kernel_call:
+	! pass the message pointer to kernel in the %eax register
+	mov	eax, 4(esp)
+	int	KERVEC
+	ret

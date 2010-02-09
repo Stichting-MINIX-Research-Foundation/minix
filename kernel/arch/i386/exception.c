@@ -243,7 +243,7 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
 
 #define PRCOPY(pr, pv, v, n) \
   (iskernel ? (memcpy((char *) v, (char *) pv, n), OK) : \
-     data_copy(pr->p_endpoint, pv, SYSTEM, (vir_bytes) (v), n))
+     data_copy(pr->p_endpoint, pv, KERNEL, (vir_bytes) (v), n))
 
 	        if(PRCOPY(whichproc, v_bp, &v_hbp, sizeof(v_hbp)) != OK) {
 			kprintf("(v_bp 0x%lx ?)", v_bp);

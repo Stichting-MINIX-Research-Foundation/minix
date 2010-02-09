@@ -212,7 +212,8 @@ PUBLIC void idt_init(void)
 		{ alignment_check, ALIGNMENT_CHECK_VECTOR, INTR_PRIVILEGE },
 		{ machine_check, MACHINE_CHECK_VECTOR, INTR_PRIVILEGE },
 		{ simd_exception, SIMD_EXCEPTION_VECTOR, INTR_PRIVILEGE },
-		{ ipc_entry, SYS386_VECTOR, USER_PRIVILEGE },/* 386 system call */
+		{ ipc_entry, IPC_VECTOR, USER_PRIVILEGE },
+		{ kernel_call_entry, KERN_CALL_VECTOR, USER_PRIVILEGE },
 		{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
 		{ NULL, 0, 0}
 	};

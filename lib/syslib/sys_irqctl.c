@@ -18,7 +18,7 @@ int *hook_id;				/* ID of IRQ hook at kernel */
     m_irq.IRQ_POLICY = policy;
     m_irq.IRQ_HOOK_ID = *hook_id;
     
-    s = _taskcall(SYSTASK, SYS_IRQCTL, &m_irq);
+    s = _kernel_call(SYS_IRQCTL, &m_irq);
     if (req == IRQ_SETPOLICY) *hook_id = m_irq.IRQ_HOOK_ID;
     return(s);
 }

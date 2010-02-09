@@ -27,7 +27,7 @@ PUBLIC int do_sysctl(struct proc * caller, message * m_ptr)
 			caller->p_endpoint, len);
 		return EINVAL;
 	}
-	if((s=data_copy_vmcheck(caller, caller->p_endpoint, buf, SYSTEM,
+	if((s=data_copy_vmcheck(caller, caller->p_endpoint, buf, KERNEL,
 					(vir_bytes) mybuf, len)) != OK) {
 		kprintf("do_sysctl: diag for %d: len %d: copy failed: %d\n",
 			caller->p_endpoint, len, s);
