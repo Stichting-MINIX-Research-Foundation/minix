@@ -171,5 +171,9 @@ _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,
 _PROTOTYPE( int arch_phys_map_reply, (int index, vir_bytes addr));
 _PROTOTYPE( int arch_enable_paging, (void));
 
+_PROTOTYPE( int copy_msg_from_user, (struct proc * p, message * user_mbuf,
+							message * dst));
+_PROTOTYPE( int copy_msg_to_user, (struct proc * p, message * src,
+							message * user_mbuf));
 _PROTOTYPE(void switch_address_space, (struct proc * p));
 #endif /* PROTO_H */

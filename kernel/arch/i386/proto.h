@@ -44,6 +44,7 @@ void                              _PROTOTYPE( simd_exception, (void) );
 /* Software interrupt handlers, in numerical order. */
 _PROTOTYPE( void trp, (void) );
 _PROTOTYPE( void ipc_entry, (void) );
+_PROTOTYPE( void kernel_call_entry, (void) );
 _PROTOTYPE( void level0_call, (void) );
 
 /* memory.c */
@@ -152,6 +153,10 @@ EXTERN void * k_boot_stktop;
 
 _PROTOTYPE( void int_gate, (unsigned vec_nr, vir_bytes offset,
 		unsigned dpl_type) );
+
+_PROTOTYPE(void __copy_msg_from_user_end, (void));
+_PROTOTYPE(void __copy_msg_to_user_end, (void));
+_PROTOTYPE(void __user_copy_msg_pointer_failure, (void));
 
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"

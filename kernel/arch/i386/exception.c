@@ -142,6 +142,33 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 	return;
   }
 
+  /*
+   * handle special cases for nested problems as they might be tricky or filter
+   * them out quickly if the traps are not nested
+   */
+  if (is_nested) {
+	  /*
+	   * if a problem occured while copying a message from userspace because
+	   * of a wrong pointer supplied by userland, handle it the only way we
+	   * can handle it ...
+	   */
+	  if (((void*)frame->eip >= copy_msg_to_user &&
+			  (void*)frame->eip <= __copy_msg_to_user_end) ||
+			  ((void*)frame->eip >= copy_msg_from_user &&
+			  (void*)frame->eip <= __copy_msg_from_user_end)) {
+		  switch(frame->vector) {
+		  /* these error are expected */
+		  case PAGE_FAULT_VECTOR:
+		  case PROTECTION_VECTOR:
+			  frame->eip = (reg_t) __user_copy_msg_pointer_failure;
+			  return;
+		  default:
+			  minix_panic("Copy involving a user pointer "
+					  "failed unexpectedly!", NO_NUM);
+		  }
+	  }
+  }
+
   if(frame->vector == PAGE_FAULT_VECTOR) {
 	pagefault(saved_proc, frame, is_nested);
 	return;

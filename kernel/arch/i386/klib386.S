@@ -387,6 +387,137 @@ phys_copy_fault_in_kernel:			/* kernel can send us here */
 	ret
 
 /*===========================================================================*/
+/*				copy_msg_from_user			     */
+/*===========================================================================*/
+/*
+ * int copy_msg_from_user(struct proc * p, message * user_mbuf, message * dst);
+ *
+ * Copies a message of 36 bytes from user process space to a kernel buffer. This
+ * function assumes that the process address space is installed (cr3 loaded) and
+ * the local descriptor table of this process is loaded too.
+ *
+ * The %gs segment register is used to access the userspace memory. We load the
+ * process' data segment in this register.
+ *
+ * This function from the callers point of view either succeeds or returns an
+ * error which gives the caller a chance to respond accordingly. In fact it
+ * either succeeds or if it generates a pagefault, general protection or other
+ * exception, the trap handler has to redirect the execution to
+ * __user_copy_msg_pointer_failure where the error is reported to the caller
+ * without resolving the pagefault. It is not kernel's problem to deal with
+ * wrong pointers from userspace and the caller should return an error to
+ * userspace as if wrong values or request were passed to the kernel
+ */
+
+.balign 16
+.globl copy_msg_from_user
+copy_msg_from_user:
+	push	%gs
+
+	mov	8(%esp), %eax
+	movw	DSREG(%eax), %gs
+
+	/* load the source pointer */
+	mov	12(%esp), %ecx
+	/* load the destination pointer */
+	mov	16(%esp), %edx
+
+	mov	%gs:0*4(%ecx), %eax
+	mov	%eax, 0*4(%edx)
+	mov	%gs:1*4(%ecx), %eax
+	mov	%eax, 1*4(%edx)
+	mov	%gs:2*4(%ecx), %eax
+	mov	%eax, 2*4(%edx)
+	mov	%gs:3*4(%ecx), %eax
+	mov	%eax, 3*4(%edx)
+	mov	%gs:4*4(%ecx), %eax
+	mov	%eax, 4*4(%edx)
+	mov	%gs:5*4(%ecx), %eax
+	mov	%eax, 5*4(%edx)
+	mov	%gs:6*4(%ecx), %eax
+	mov	%eax, 6*4(%edx)
+	mov	%gs:7*4(%ecx), %eax
+	mov	%eax, 7*4(%edx)
+	mov	%gs:8*4(%ecx), %eax
+	mov	%eax, 8*4(%edx)
+
+.globl __copy_msg_from_user_end
+__copy_msg_from_user_end:
+
+	pop	%gs
+
+	movl	$0, %eax
+	ret
+
+/*===========================================================================*/
+/*				copy_msg_to_user			     */
+/*===========================================================================*/
+/*
+ * void copy_msg_to_user(struct proc * p, message * src, message * user_mbuf);
+ *
+ * Copies a message of 36 bytes to user process space from a kernel buffer. This
+ * function assumes that the process address space is installed (cr3 loaded) and
+ * the local descriptor table of this process is loaded too.
+ *
+ * All the other copy_msg_from_user() comments apply here as well!
+ */
+
+.balign 16
+.globl copy_msg_to_user
+copy_msg_to_user:
+	push	%gs
+
+	mov	8(%esp), %eax
+	movw	DSREG(%eax), %gs
+
+	/* load the source pointer */
+	mov	12(%esp), %ecx
+	/* load the destination pointer */
+	mov	16(%esp), %edx
+
+	mov	0*4(%ecx), %eax
+	mov	%eax, %gs:0*4(%edx)
+	mov	1*4(%ecx), %eax
+	mov	%eax, %gs:1*4(%edx)
+	mov	2*4(%ecx), %eax
+	mov	%eax, %gs:2*4(%edx)
+	mov	3*4(%ecx), %eax
+	mov	%eax, %gs:3*4(%edx)
+	mov	4*4(%ecx), %eax
+	mov	%eax, %gs:4*4(%edx)
+	mov	5*4(%ecx), %eax
+	mov	%eax, %gs:5*4(%edx)
+	mov	6*4(%ecx), %eax
+	mov	%eax, %gs:6*4(%edx)
+	mov	7*4(%ecx), %eax
+	mov	%eax, %gs:7*4(%edx)
+	mov	8*4(%ecx), %eax
+	mov	%eax, %gs:8*4(%edx)
+
+.globl __copy_msg_to_user_end
+__copy_msg_to_user_end:
+
+	pop	%gs
+
+	movl	$0, %eax
+	ret
+
+/*
+ * if a function from a selected set of copies from or to userspace fails, it is
+ * because of a wrong pointer supplied by the userspace. We have to clean up and
+ * and return -1 to indicated that something wrong has happend. The place it was
+ * called from has to handle this situation. The exception handler redirect us
+ * here to continue, clean up and report the error
+ */
+.balign 16
+.globl __user_copy_msg_pointer_failure
+__user_copy_msg_pointer_failure:
+	pop	%gs
+
+	movl	$-1, %eax
+	ret
+
+/*===========================================================================*/
 /*				phys_memset				     */
 /*===========================================================================*/
 /*
