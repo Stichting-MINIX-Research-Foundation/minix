@@ -188,7 +188,7 @@ MD5Final (digest, ctx)
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void
+static void
 MD5Transform (buf, inraw)
      uint32 buf[4];
      const unsigned char inraw[64];

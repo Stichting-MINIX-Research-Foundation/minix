@@ -70,7 +70,7 @@
 
 static dpeth_t de_table[DE_PORT_NR];
 static u16_t eth_ign_proto;
-static char *progname;
+static const char *progname;
 
 u32_t system_hz;
 
@@ -83,7 +83,7 @@ typedef struct dp_conf
 	char *dpc_envvar;
 } dp_conf_t;
 
-dp_conf_t dp_conf[]=	/* Card addresses */
+PRIVATE dp_conf_t dp_conf[]=	/* Card addresses */
 {
 	/* I/O port, IRQ,  Buffer address,  Env. var. */
 	{  0x280,     3,    0xD0000,        "DPETH0"	},

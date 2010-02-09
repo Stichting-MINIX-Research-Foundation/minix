@@ -222,6 +222,31 @@ PRIVATE void update_subscribers(struct data_store *dsp, int set)
 }
 
 /*===========================================================================*
+ *		               map_service                                   *
+ *===========================================================================*/
+PRIVATE int map_service(struct rprocpub *rpub)
+{
+/* Map a new service by registering its label. */
+  struct data_store *dsp;
+
+  /* Allocate a new data slot. */
+  if((dsp = alloc_data_slot()) == NULL) {
+	return ENOMEM;
+  }
+
+  /* Set attributes. */
+  strcpy(dsp->key, rpub->label);
+  dsp->u.u32 = (u32_t) rpub->endpoint;
+  strcpy(dsp->owner, ds_getprocname(DS_PROC_NR));
+  dsp->flags = DSF_IN_USE | DSF_TYPE_LABEL;
+
+  /* Update subscribers having a matching subscription. */
+  update_subscribers(dsp, 1);
+
+  return(OK);
+}
+
+/*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
 PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
@@ -252,32 +277,6 @@ PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	}
 
 	return(OK);
-}
-
-/*===========================================================================*
- *		               map_service                                   *
- *===========================================================================*/
-PUBLIC int map_service(rpub)
-struct rprocpub *rpub;
-{
-/* Map a new service by registering its label. */
-  struct data_store *dsp;
-
-  /* Allocate a new data slot. */
-  if((dsp = alloc_data_slot()) == NULL) {
-	return ENOMEM;
-  }
-
-  /* Set attributes. */
-  strcpy(dsp->key, rpub->label);
-  dsp->u.u32 = (u32_t) rpub->endpoint;
-  strcpy(dsp->owner, ds_getprocname(DS_PROC_NR));
-  dsp->flags = DSF_IN_USE | DSF_TYPE_LABEL;
-
-  /* Update subscribers having a matching subscription. */
-  update_subscribers(dsp, 1);
-
-  return(OK);
 }
 
 /*===========================================================================*

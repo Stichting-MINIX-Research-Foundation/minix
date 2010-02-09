@@ -4,7 +4,7 @@ ti1225.c
 Created:	Dec 2005 by Philip Homburg
 */
 
-#include "../drivers.h"
+#include <drivers.h>
 #include <ibm/pci.h>
 #include <sys/vm_i386.h>
 
@@ -53,7 +53,6 @@ PRIVATE int debug;
 FORWARD _PROTOTYPE( void hw_init, (struct port *pp)			);
 FORWARD _PROTOTYPE( void map_regs, (struct port *pp, u32_t base)	);
 FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
-FORWARD _PROTOTYPE( u8_t read_exca, (struct port *pp, int socket, int reg) );
 FORWARD _PROTOTYPE( void do_outb, (port_t port, u8_t value)		);
 FORWARD _PROTOTYPE( u8_t do_inb, (port_t port)				);
 
@@ -237,7 +236,7 @@ struct port *pp;
 	}
 
 	if (v32 == 0)
-		panic("ti1225", "bad lagacy-mode base address 0x%x\n", v32);
+		panic("ti1225", "bad legacy-mode base address 0x%x\n", v32);
 	pp->p_exca_port= v32;
 
 	if (debug)
@@ -497,19 +496,6 @@ struct port *pp;
 
 }
 
-PRIVATE u8_t read_exca(pp, socket, reg)
-struct port *pp;
-int socket;
-int reg;
-{
-	u16_t port;
-
-	port= pp->p_exca_port;
-	if (port == 0)
-		panic("ti1225", "read_exca: bad port", NO_NUM);
-	do_outb(port, socket * 0x40 + reg);
-	return do_inb(port+1);
-}
 
 PRIVATE u8_t do_inb(port_t port)
 {

@@ -29,7 +29,6 @@
 _PROTOTYPE( PRIVATE u32_t io_inl,            (u16_t);                        );
 _PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t);                 );
 _PROTOTYPE( PRIVATE void  do_conf,           (message *);                    );
-_PROTOTYPE( PRIVATE void  do_fkey,           (message *);                    );
 _PROTOTYPE( PRIVATE void  do_get_name,       (message *);                    );
 _PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *);                    );
 _PROTOTYPE( PRIVATE void  do_interrupt,      (dpeth_t *);                    );
@@ -55,19 +54,16 @@ _PROTOTYPE( PRIVATE void  de_get_userdata_s, (int, cp_grant_id_t,
 /* Error messages */
 static char str_CopyErrMsg[]  = "unable to read/write user data";
 static char str_PortErrMsg[]  = "illegal port";
-static char str_RecvErrMsg[]  = "receive failed";
 static char str_SendErrMsg[]  = "send failed";
 static char str_SizeErrMsg[]  = "illegal packet size";
-static char str_TypeErrMsg[]  = "illegal message type";
 static char str_UmapErrMsg[]  = "Unable to sys_umap";
 static char str_BusyErrMsg[]  = "Send/Recv failed: busy";
 static char str_StatErrMsg[]  = "Unable to send stats";
 static char str_AlignErrMsg[] = "Bad align of buffer/descriptor";
 static char str_DevName[]     = "dec21140A:eth#?";
 
-extern int     errno;
-static dpeth_t de_table[DE_PORT_NR];
-static char    *progname;
+PRIVATE dpeth_t de_table[DE_PORT_NR];
+PRIVATE const char *progname;
 
 int sef_cb_init(int type, sef_init_info_t *info)
 {
@@ -593,32 +589,8 @@ PRIVATE void de_conf_addr(dpeth_t * dep)
   return;
 }
 
-PRIVATE void do_fkey(message *mp)
+PRIVATE void de_first_init(dpeth_t *dep)
 {
-  dpeth_t *dep;
-  int port,i;
-
-  printf("\n");
-  for (port = 0, dep = de_table; port < DE_PORT_NR; port += 1, dep += 1) {
-    if (dep->de_mode == DEM_DISABLED) continue;
-    printf("%s status:\n", dep->de_name);
-    printf("hwaddr: ");
-    for(i=0;i<6;i++)
-      printf("%02X%c",dep->de_address.ea_addr[i], i!=5?':':'\n');
-    printf("Tx packets: %-16d Tx kb: %d.%02d\n", dep->de_stat.ets_packetT,
-	   dep->bytes_tx/1024, 
-	   (int)(((dep->bytes_tx%1024)/1024.0)*100));
-    printf("Rx packets: %-16d Rx kb: %d.%02d\n", dep->de_stat.ets_packetR,
-	   dep->bytes_rx/1024,
-	   (int)(((dep->bytes_rx%1024)/1024.0)*100));
-    printf("Rx errors:  %-16d Tx errors: %d\n", 
-	   dep->de_stat.ets_recvErr,
-	   dep->de_stat.ets_sendErr);
-  }
-  return;
-}
-
-PRIVATE void de_first_init(dpeth_t *dep){
   int i,j,r;
   vir_bytes descr_vir = dep->sendrecv_descr_buf;
   vir_bytes buffer_vir = dep->sendrecv_buf;

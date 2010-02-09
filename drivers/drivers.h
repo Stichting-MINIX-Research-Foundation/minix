@@ -1,6 +1,10 @@
 /* This is the master header for all device drivers. It includes some other
  * files and defines the principal constants.
  */
+
+#ifndef _INC_DRIVERS_H
+#define _INC_DRIVERS_H
+
 #define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 #define _SYSTEM		   1	/* get negative error number in <errno.h> */
@@ -31,3 +35,4 @@
 #include <errno.h>
 #include <unistd.h>
 
+#endif

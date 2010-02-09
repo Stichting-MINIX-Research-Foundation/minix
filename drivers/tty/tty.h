@@ -157,7 +157,6 @@ _PROTOTYPE( void tty_wakeup, (clock_t now)				);
 #define tty_reply(c, r, p, s) tty_reply_f(__FILE__, __LINE__, (c), (r), (p), (s))
 _PROTOTYPE( void tty_reply_f, (char *f, int l, int code, int replyee, int proc_nr,
 							int status)	);
-_PROTOTYPE( int tty_devnop, (struct tty *tp, int try)			);
 _PROTOTYPE( int select_try, (struct tty *tp, int ops)			);
 _PROTOTYPE( int select_retry, (struct tty *tp)				);
 
@@ -184,7 +183,6 @@ _PROTOTYPE( void do_video, (message *m)					);
 _PROTOTYPE( void kb_init, (struct tty *tp)				);
 _PROTOTYPE( void kb_init_once, (void)					);
 _PROTOTYPE( int kbd_loadmap, (message *m, int safe)			);
-_PROTOTYPE( void do_panic_dumps, (message *m)				);
 _PROTOTYPE( void do_fkey_ctl, (message *m)				);
 _PROTOTYPE( void kbd_interrupt, (message *m)				);
 _PROTOTYPE( void do_kbd, (message *m)					);

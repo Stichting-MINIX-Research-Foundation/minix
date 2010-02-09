@@ -6,6 +6,9 @@ Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
 Definitions for the Media Independent (Ethernet) Interface
 */
 
+#ifndef _INC_MII_H
+#define _INC_MII_H
+
 /* Registers in the Machine Independent Interface (MII) to the PHY.
  * IEEE 802.3 (2000 Edition) Clause 22.
  */
@@ -111,6 +114,7 @@ Definitions for the Media Independent (Ethernet) Interface
 _PROTOTYPE( void mii_print_stat_speed, (U16_t stat, U16_t extstat)	);
 _PROTOTYPE( void mii_print_techab, (U16_t techab)			);
 
+#endif
 /*
  * $PchId: mii.h,v 1.1 2004/12/27 13:33:30 philip Exp $
  */

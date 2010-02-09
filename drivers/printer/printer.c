@@ -91,7 +91,7 @@ PRIVATE int revive_status;	/* revive status */
 PRIVATE int done_status;	/* status of last output completion */
 PRIVATE int oleft;		/* bytes of output left in obuf */
 PRIVATE unsigned char obuf[128];	/* output buffer */
-PRIVATE unsigned char *optr;		/* ptr to next char in obuf to print */
+PRIVATE unsigned const char *optr;	/* ptr to next char in obuf to print */
 PRIVATE int orig_count;		/* original byte count */
 PRIVATE int port_base;		/* I/O port for printer */
 PRIVATE int proc_nr;		/* user requesting the printing */
@@ -102,8 +102,6 @@ PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
 PRIVATE int user_safe;		/* address or grant? */
 PUBLIC int writing;		/* nonzero while write is in progress */
 PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
-
-extern int errno;		/* error number */
 
 FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( void output_done, (void) );

@@ -12,11 +12,8 @@
 #include <minix/endpoint.h>
 
 /* Allocate space for the global variables. */
-endpoint_t who_e;	/* caller's proc number */
-int callnr;		/* system call number */
-int sys_panic;		/* flag to indicate system-wide panic */
-
-extern int errno;	/* error number set by system library */
+PRIVATE endpoint_t who_e;	/* caller's proc number */
+PRIVATE int callnr;		/* system call number */
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void exit_server, (void)				);

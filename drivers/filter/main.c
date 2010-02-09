@@ -36,7 +36,7 @@ char BACKUP_LABEL[LABEL_SIZE] = "";		/* backup disk driver label */
 int MAIN_MINOR = -1;				/* main partition minor nr */
 int BACKUP_MINOR = -1;				/* backup partition minor nr */
 
-struct optset optset_table[] = {
+PRIVATE struct optset optset_table[] = {
   { "label0",	OPT_STRING,	MAIN_LABEL,		LABEL_SIZE	},
   { "label1",	OPT_STRING,	BACKUP_LABEL,		LABEL_SIZE	},
   { "minor0",	OPT_INT,	&MAIN_MINOR,		10		},

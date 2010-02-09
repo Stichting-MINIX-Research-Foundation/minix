@@ -28,5 +28,4 @@
 #include <signal.h>
 
 #include "proto.h"
-#include "glo.h"
 

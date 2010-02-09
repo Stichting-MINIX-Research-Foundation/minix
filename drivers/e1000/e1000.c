@@ -28,7 +28,7 @@ PRIVATE u16_t pcitab_e1000[] =
     0,
 };
 
-PRIVATE char *progname;
+PRIVATE const char *progname;
 PRIVATE e1000_t e1000_table[E1000_PORT_NR];
 
 _PROTOTYPE( PRIVATE void e1000_init, (message *mp)			);
@@ -45,7 +45,6 @@ _PROTOTYPE( PRIVATE void e1000_getname, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_interrupt, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_signal, (void)                           );
 _PROTOTYPE( PRIVATE int  e1000_link_changed, (e1000_t *e)		);
-_PROTOTYPE( PRIVATE void e1000_report_link, (e1000_t *e)		);
 _PROTOTYPE( PRIVATE void e1000_stop, (void)                             );
 _PROTOTYPE( PRIVATE e1000_t * e1000_port, (int port)                    );
 _PROTOTYPE( PRIVATE uint32_t e1000_reg_read, (e1000_t *e, uint32_t reg) );
@@ -888,15 +887,6 @@ e1000_t *e;
 {
     E1000_DEBUG(4, ("%s: link_changed()\n", e->name));
     return FALSE;
-}
-
-/*===========================================================================*
- *				e1000_report_link			     *
- *===========================================================================*/
-PRIVATE void e1000_report_link(e)
-e1000_t *e;
-{
-    E1000_DEBUG(4, ("%s: report_link()\n", e->name));
 }
 
 /*===========================================================================*

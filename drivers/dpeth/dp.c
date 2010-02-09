@@ -66,7 +66,7 @@
 */
 extern int errno;
 static dpeth_t de_table[DE_PORT_NR];
-static char *progname;
+static const char *progname;
 
 typedef struct dp_conf {	/* Configuration description structure */
   port_t dpc_port;
@@ -582,7 +582,6 @@ PRIVATE void handle_hw_intr(void)
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN int env_argc;
 EXTERN char **env_argv;
 
 /*

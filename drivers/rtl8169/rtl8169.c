@@ -6,7 +6,7 @@
  *
  */
 
-#include "../drivers.h"
+#include <drivers.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,13 +26,10 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <unistd.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
+#include <kernel/const.h>
+#include <kernel/config.h>
+#include <kernel/type.h>
 
-#define tmra_ut			timer_t
-#define tmra_inittimer(tp)	tmr_inittimer(tp)
-#define Proc_number(p)		proc_number(p)
 #define debug			1
 #define printW()		((void)0)
 
@@ -182,7 +179,7 @@ re_t;
 static re_t re_table[RE_PORT_NR];
 
 static u16_t eth_ign_proto;
-static tmra_ut rl_watchdog;
+static timer_t rl_watchdog;
 
 FORWARD _PROTOTYPE(unsigned my_inb, (U16_t port));
 FORWARD _PROTOTYPE(unsigned my_inw, (U16_t port));
@@ -618,7 +615,7 @@ message *mp;
 		first_time = 0;
 		rl_pci_conf();	/* Configure PCI devices. */
 
-		tmra_inittimer(&rl_watchdog);
+		tmr_inittimer(&rl_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
 		sys_setalarm(system_hz, 0);
 	}

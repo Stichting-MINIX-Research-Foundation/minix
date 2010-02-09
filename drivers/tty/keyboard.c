@@ -6,7 +6,7 @@
  *   Feb 04, 1994   loadable keymaps  (Marcus Hampel)
  */
 
-#include "../drivers.h"
+#include <drivers.h>
 #include <sys/ioctl.h>
 #include <sys/kbdio.h>
 #include <sys/time.h>
@@ -19,21 +19,21 @@
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include "tty.h"
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
+#include <kernel/const.h>
+#include <kernel/config.h>
+#include <kernel/type.h>
+#include <kernel/proc.h>
 
-u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
+PRIVATE u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std.src"
 };
 
-u16_t keymap_escaped[NR_SCAN_CODES * MAP_COLS] = {
+PRIVATE u16_t keymap_escaped[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std-esc.src"
 };
 
-int irq_hook_id = -1;
-int aux_irq_hook_id = -1;
+PRIVATE int irq_hook_id = -1;
+PRIVATE int aux_irq_hook_id = -1;
 
 /* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
 #define KEYBD		0x60	/* I/O port for keyboard data */

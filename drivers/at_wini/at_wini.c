@@ -43,16 +43,23 @@ struct command {
 };
 
 /* Timeouts and max retries. */
-int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
-long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0,
-	disable_dma = 0, atapi_debug = 0, w_identify_wakeup_ticks,
-	wakeup_ticks, w_atapi_dma;
+PRIVATE int timeout_ticks = DEF_TIMEOUT_TICKS;
+PRIVATE int max_errors = MAX_ERRORS;
+PRIVATE long w_standard_timeouts = 0;
+PRIVATE long w_pci_debug = 0;
+PRIVATE long w_instance = 0;
+PRIVATE long disable_dma = 0;
+PRIVATE long atapi_debug = 0;
+PRIVATE long w_identify_wakeup_ticks;
+PRIVATE long wakeup_ticks;
+PRIVATE long w_atapi_dma;
 
-int w_testing = 0, w_silent = 0;
+PRIVATE int w_testing = 0;
+PRIVATE int w_silent = 0;
 
-int w_next_drive = 0;
+PRIVATE int w_next_drive = 0;
 
-u32_t system_hz;
+PRIVATE u32_t system_hz;
 
 /* The struct wini is indexed by controller first, then drive (0-3).
  * Controller 0 is always the 'compatability' ide controller, at
@@ -85,14 +92,9 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
 } wini[MAX_DRIVES], *w_wn;
 
 PRIVATE int w_device = -1;
-PRIVATE int w_controller = -1;
-PRIVATE int w_major = -1;
 
-PRIVATE int win_tasknr;			/* my task number */
 PUBLIC int w_command;			/* current command in execution */
-PRIVATE u8_t w_byteval;			/* used for SYS_IRQCTL */
 PRIVATE int w_drive;			/* selected drive */
-PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
 /* Unfortunately, DMA_SECTORS and DMA_BUF_SIZE are already defined libdriver
@@ -179,10 +181,7 @@ FORWARD _PROTOTYPE( int at_vinb, (int line, pvb_pair_t *, int n));
 
 #undef sys_outb
 #undef sys_inb
-#undef sys_outw
-#undef sys_inw
 #undef sys_outl
-#undef sys_inl
 
 FORWARD _PROTOTYPE( int at_out, (int line, u32_t port, u32_t value,
 	char *typename, int type));
@@ -191,10 +190,7 @@ FORWARD _PROTOTYPE( int at_in, (int line, u32_t port, u32_t *value,
 
 #define sys_outb(p, v) at_out(__LINE__, (p), (v), "outb", _DIO_BYTE)
 #define sys_inb(p, v) at_in(__LINE__, (p), (v), "inb", _DIO_BYTE)
-#define sys_outw(p, v) at_out(__LINE__, (p), (v), "outw", _DIO_WORD)
-#define sys_inw(p, v) at_in(__LINE__, (p), (v), "inw", _DIO_WORD)
 #define sys_outl(p, v) at_out(__LINE__, (p), (v), "outl", _DIO_LONG)
-#define sys_inl(p, v) at_in(__LINE__, (p), (v), "inl", _DIO_LONG)
 
 /* Entry points to this driver. */
 PRIVATE struct driver w_dtab = {
@@ -601,9 +597,7 @@ PRIVATE void init_params_pci(int skip)
 /*===========================================================================*
  *				w_do_open				     *
  *===========================================================================*/
-PRIVATE int w_do_open(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int w_do_open(struct driver *dp, message *m_ptr)
 {
 /* Device open: Initialize the controller and read the partition table. */
 
@@ -625,7 +619,12 @@ message *m_ptr;
 #if VERBOSE
   		printf("%s: probe failed\n", w_name());
 #endif
-		if (wn->state & DEAF) w_reset();
+		if (wn->state & DEAF){
+			int err = w_reset();
+			if( err != OK ){
+				return err;
+			}
+		}
 		wn->state = IGNORING;
 		return(ENXIO);
 	}
@@ -698,7 +697,7 @@ PRIVATE struct device *w_prepare(int device)
 /*===========================================================================*
  *				check_dma				     *
  *===========================================================================*/
-void
+PRIVATE void
 check_dma(struct wini *wn)
 {
 	unsigned long dma_status = 0;
@@ -1121,7 +1120,7 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 	return com_out(&cmd);
 }
 
-void stop_dma(struct wini *wn)
+PRIVATE void stop_dma(struct wini *wn)
 {
 	int r;
 
@@ -1130,7 +1129,7 @@ void stop_dma(struct wini *wn)
 	if (r != 0) panic("at_wini", "stop_dma: sys_outb failed", r);
 }
 
-void start_dma(struct wini *wn, int do_write)
+PRIVATE void start_dma(struct wini *wn, int do_write)
 {
 	u32_t v;
 	int r;
@@ -1146,7 +1145,7 @@ void start_dma(struct wini *wn, int do_write)
 	if (r != 0) panic("at_wini", "start_dma: sys_outb failed", r);
 }
 
-int error_dma(struct wini *wn)
+PRIVATE int error_dma(struct wini *wn)
 {
 	int r;
 	u32_t v;
@@ -1765,9 +1764,7 @@ PRIVATE void w_need_reset()
 /*===========================================================================*
  *				w_do_close				     *
  *===========================================================================*/
-PRIVATE int w_do_close(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int w_do_close(struct driver *dp, message *m_ptr)
 {
 /* Device close: Release a device. */
   if (w_prepare(m_ptr->DEVICE) == NIL_DEV)
@@ -1870,7 +1867,6 @@ PRIVATE int w_reset()
 		}
 	}
   }
-		
 
   return(OK);
 }
@@ -2058,7 +2054,7 @@ PRIVATE void atapi_close()
 /* Should unlock the device.  For now do nothing.  (XXX) */
 }
 
-void sense_request(void)
+PRIVATE void sense_request(void)
 {
 	int r, i;
 	static u8_t sense[100], packet[ATAPI_PACKETSIZE];
@@ -2455,7 +2451,7 @@ PRIVATE void ack_irqs(unsigned int irqs)
 
 #define STSTR(a) if (status & STATUS_ ## a) { strcat(str, #a); strcat(str, " "); }
 #define ERRSTR(a) if (e & ERROR_ ## a) { strcat(str, #a); strcat(str, " "); }
-char *strstatus(int status)
+PRIVATE char *strstatus(int status)
 {
 	static char str[200];
 	str[0] = '\0';
@@ -2470,7 +2466,7 @@ char *strstatus(int status)
 	return str;
 }
 
-char *strerr(int e)
+PRIVATE char *strerr(int e)
 {
 	static char str[200];
 	str[0] = '\0';

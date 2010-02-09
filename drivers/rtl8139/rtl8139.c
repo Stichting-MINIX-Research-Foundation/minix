@@ -189,9 +189,8 @@ _PROTOTYPE( static void tell_dev, (vir_bytes start, size_t size,
 PRIVATE message m;
 PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 
-static char *progname;
-extern int errno;
-u32_t system_hz;
+static const char *progname;
+PRIVATE u32_t system_hz;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );

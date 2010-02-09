@@ -166,7 +166,7 @@ typedef struct rs232 {
   char obuf[RS_OBUFSIZE];	/* output buffer */
 } rs232_t;
 
-PUBLIC rs232_t rs_lines[NR_RS_LINES];
+PRIVATE rs232_t rs_lines[NR_RS_LINES];
 
 #if (MACHINE == IBM_PC)
 /* 8250 base addresses. */

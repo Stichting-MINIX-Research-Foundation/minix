@@ -20,9 +20,9 @@
  *	14 May 2000 by Kees J. Bot: d-d/i rewrite.
  */
 
-#include "../drivers.h"
-#include "../libdriver/driver.h"
-#include "../libdriver/drvlib.h"
+#include <drivers.h>
+#include <libdriver/driver.h>
+#include <libdriver/drvlib.h>
 #include <minix/sysutil.h>
 #include <minix/safecopies.h>
 #include <sys/ioc_disk.h>
@@ -31,12 +31,8 @@
 
 #define ME "BIOS_WINI"
 
-/* Error codes */
-#define ERR		 (-1)	/* general error */
-
 /* Parameters for the disk drive. */
 #define MAX_DRIVES         8	/* this driver supports 8 drives (d0 - d7)*/
-#define MAX_SECS	 255	/* bios can transfer this many sectors */
 #define NR_MINORS      (MAX_DRIVES * DEV_PER_DRIVE)
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
@@ -62,7 +58,6 @@ PRIVATE char *bios_buf_v;
 PRIVATE phys_bytes bios_buf_phys;
 PRIVATE int remap_first = 0;		/* Remap drives for CD HD emulation */
 #define BIOSBUF 16384
-PRIVATE cp_grant_id_t my_bios_grant_id;
 
 _PROTOTYPE(int main, (void) );
 FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );

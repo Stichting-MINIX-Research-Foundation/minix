@@ -62,18 +62,6 @@ PUBLIC void insb(unsigned short int port, int proc_nr, void *buffer, int count)
   return;
 }
 
-/*
-**  Name:	unsigned int insw(unsigned short int port, int proc_nr, void *buffer, int count);
-**  Function:	Reads a sequence of words from specified i/o port to user space buffer.
-*/
-PUBLIC void insw(unsigned short int port, int proc_nr, void *buffer, int count)
-{
-  int rc;
-
-  if ((rc = sys_insw(port, proc_nr, buffer, count)) != OK)
-	warning("insw", rc);
-  return;
-}
 
 /*
 **  Name:	void outb(unsigned short int port, unsigned long value);
@@ -109,19 +97,6 @@ PUBLIC void outsb(unsigned short port, int proc_nr, void *buffer, int count)
 
   if ((rc = sys_outsb(port, proc_nr, buffer, count)) != OK)
 	warning("outsb", rc);
-  return;
-}
-
-/*
-**  Name:	void outsw(unsigned short int port, int proc_nr, void *buffer, int count);
-**  Function:	Writes a sequence of bytes from user space to specified i/o port.
-*/
-PUBLIC void outsw(unsigned short port, int proc_nr, void *buffer, int count)
-{
-  int rc;
-
-  if ((rc = sys_outsw(port, proc_nr, buffer, count)) != OK)
-	warning("outsw", rc);
   return;
 }
 

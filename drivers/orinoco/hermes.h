@@ -19,7 +19,7 @@
 #ifndef _HERMES_H
 #define _HERMES_H
 
-#include "../drivers.h"
+#include <drivers.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <net/hton.h>
@@ -316,18 +316,11 @@ _PROTOTYPE (int  hermes_bap_pwrite, (hermes_t * hw, int bap,
 				    u16_t offset));
 _PROTOTYPE (void hermes_read_words, (hermes_t * hw, int off, void *buf,
 				    	unsigned count));
-_PROTOTYPE (void hermes_write_words, (hermes_t * hw, int off,
-					const void *buf, unsigned count));
 _PROTOTYPE (int  hermes_read_ltv, (hermes_t * hw, int bap, u16_t rid,
 					unsigned buflen, u16_t * length,
 					void *buf));
 _PROTOTYPE (int  hermes_write_ltv, (hermes_t * hw, int bap, u16_t rid,
 					u16_t length, const void *value));
-_PROTOTYPE (int  hermes_present, (hermes_t * hw));
-_PROTOTYPE (int  myfunc_read, (vir_bytes src));
-_PROTOTYPE (void myfunc_write, (vir_bytes dst, int val));
-_PROTOTYPE (void hermes_print_ioarea, (hermes_t * hw, int first_reg,
-					int last_reg));
 _PROTOTYPE (int  hermes_set_irqmask, (hermes_t * hw, u16_t events));
 _PROTOTYPE (u16_t hermes_get_irqmask, (hermes_t * hw));
 _PROTOTYPE (int  hermes_read_wordrec, (hermes_t * hw, int bap, u16_t rid,
@@ -335,5 +328,4 @@ _PROTOTYPE (int  hermes_read_wordrec, (hermes_t * hw, int bap, u16_t rid,
 _PROTOTYPE (int  hermes_write_wordrec, (hermes_t * hw, int bap, u16_t rid,
 				   	u16_t word));
 _PROTOTYPE (int  hermes_cor_reset, (hermes_t *hw));
-_PROTOTYPE (void milli_delay, (unsigned int msecs));
 #endif /* _HERMES_H */

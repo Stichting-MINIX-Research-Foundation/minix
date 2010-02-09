@@ -7,6 +7,9 @@ and 82562 fast ethernet controllers.
 Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
 */
 
+#ifndef _INC_FXP_H
+#define _INC_FXP_H
+
 #define VERBOSE 	0	/* display output during intialization */
 
 /* Revisions in PCI_REV */
@@ -575,3 +578,5 @@ struct rfd
 /*
  * $PchId: fxp.h,v 1.1 2004/11/23 14:34:03 philip Exp $
  */
+
+#endif

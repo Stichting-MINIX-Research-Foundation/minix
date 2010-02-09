@@ -57,7 +57,7 @@
  *   Jul 13, 2004   support for function key observers  (Jorrit N. Herder)  
  */
 
-#include "../drivers.h"
+#include <drivers.h>
 #include <termios.h>
 #include <sys/ioc_tty.h>
 #include <signal.h>
@@ -142,10 +142,6 @@ PUBLIC timer_t *tty_timers;		/* queue of TTY timers */
 PUBLIC clock_t tty_next_timeout;	/* time that the next alarm is due */
 PUBLIC struct machine machine;		/* kernel environment variables */
 PUBLIC u32_t system_hz;
-
-extern PUBLIC unsigned info_location;
-extern PUBLIC phys_bytes vid_size;     /* 0x2000 for color or 0x0800 for mono */
-extern PUBLIC phys_bytes vid_base;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -1598,6 +1594,15 @@ register tty_t *tp;
 }
 
 /*===========================================================================*
+ *				tty_devnop				     *
+ *===========================================================================*/
+PRIVATE int tty_devnop(tty_t *tp, int try)
+{
+  /* Some functions need not be implemented at the device level. */
+  return 0;
+}
+
+/*===========================================================================*
  *				tty_init				     *
  *===========================================================================*/
 PRIVATE void tty_init()
@@ -1713,17 +1718,6 @@ int enable;			/* set timer if true, otherwise unset */
   	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
  		panic("TTY","Couldn't set synchronous alarm.", s);
   }
-}
-
-/*===========================================================================*
- *				tty_devnop				     *
- *===========================================================================*/
-PUBLIC int tty_devnop(tp, try)
-tty_t *tp;
-int try;
-{
-  /* Some functions need not be implemented at the device level. */
-  return 0;
 }
 
 /*===========================================================================*

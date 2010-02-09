@@ -13,7 +13,7 @@ p = ../libpci
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
+CFLAGS = -I$i -I.. $(CPROFILE)
 LDFLAGS = -i -L../libdriver
 LIBS = -ldriver -lsys -ltimers 
 

@@ -11,7 +11,7 @@ d = ..
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
+CFLAGS = -I.. -I$i $(CPROFILE)
 LDFLAGS = -i
 LIBS = -lsys -ltimers
 

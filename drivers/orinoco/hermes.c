@@ -38,14 +38,12 @@
 
 #include "hermes.h"
 
-PRIVATE int this_proc;
-
 /*****************************************************************************
  *            milli_delay                                                    *
  *                                                                           *
  * Wait msecs milli seconds                                                  *
  *****************************************************************************/
-void milli_delay(unsigned int msecs)
+PRIVATE void milli_delay(unsigned int msecs)
 {
 	micro_delay((long)msecs * 1000);
 }
@@ -95,7 +93,6 @@ void hermes_struct_init (hermes_t * hw, u32_t address,
 	hw->io_space = io_space;
 	hw->reg_spacing = reg_spacing;
 	hw->inten = 0x0;
-	this_proc = getprocnr();
 }
 
 
@@ -137,6 +134,19 @@ int hermes_cor_reset (hermes_t *hw) {
 	return (0);
 }
 
+
+/*****************************************************************************
+ *            hermes_present                                                 *
+ *                                                                           *
+ * Check whether we have access to the card. Does the SWSUPPORT0 contain the *
+ * value we put in it earlier?                                               *
+ *****************************************************************************/
+PRIVATE int hermes_present (hermes_t * hw) {
+	int i = hermes_read_reg (hw, HERMES_SWSUPPORT0) == HERMES_MAGIC;
+	if (!i)
+		printf("Hermes: Error, card not present?\n");
+	return i;
+}
 
 
 /*****************************************************************************
@@ -487,6 +497,20 @@ int hermes_bap_pread (hermes_t * hw, int bap, void *buf, unsigned len,
 }
 
 /*****************************************************************************
+ *            hermes_write_words                                             *
+ *                                                                           *
+ * Write a sequence of words of the buffer to the card                       *
+ *****************************************************************************/
+void hermes_write_words (hermes_t * hw, int off, const void *buf, 
+						unsigned count) {
+	int i = 0;
+
+	for (i = 0; i < count; i++)	{
+		hermes_write_reg (hw, off, *((u16_t *) buf + i));
+	}
+}
+
+/*****************************************************************************
  *            hermes_bap_pwrite                                              *
  *                                                                           *
  * Write a block of data to the chip's buffer, via the BAP. len must be even.*
@@ -518,19 +542,6 @@ int hermes_bap_pwrite (hermes_t * hw, int bap, const void *buf, unsigned len,
 	return err;
 }
 
-
-/*****************************************************************************
- *            hermes_present                                                 *
- *                                                                           *
- * Check whether we have access to the card. Does the SWSUPPORT0 contain the *
- * value we put in it earlier?                                               *
- *****************************************************************************/
-int hermes_present (hermes_t * hw) {
-	int i = hermes_read_reg (hw, HERMES_SWSUPPORT0) == HERMES_MAGIC;
-	if (!i)
-		printf("Hermes: Error, card not present?\n");
-	return i;
-}
 
 
 /*****************************************************************************
@@ -720,20 +731,6 @@ void hermes_read_words (hermes_t * hw, int off, void *buf, unsigned count) {
 	for (i = 0; i < count; i++)	{
 		reg = hermes_read_reg (hw, off);
 		*((u16_t *) buf + i) = (u16_t) reg;
-	}
-}
-
-/*****************************************************************************
- *            hermes_write_words                                             *
- *                                                                           *
- * Write a sequence of words of the buffer to the card                       *
- *****************************************************************************/
-void hermes_write_words (hermes_t * hw, int off, const void *buf, 
-						unsigned count) {
-	int i = 0;
-
-	for (i = 0; i < count; i++)	{
-		hermes_write_reg (hw, off, *((u16_t *) buf + i));
 	}
 }
 

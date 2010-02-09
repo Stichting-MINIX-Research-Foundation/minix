@@ -16,7 +16,7 @@
  * and the scrolling function worries about wrapping.
  */
 
-#include "../drivers.h"
+#include <drivers.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/vm.h>
@@ -38,10 +38,10 @@
 #define TIMER_FREQ  1193182L    /* clock frequency for timer in PC and AT */
 
 /* Global variables used by the console driver and assembly support. */
-PUBLIC phys_bytes vid_size;	/* 0x2000 for color or 0x0800 for mono */
-PUBLIC phys_bytes vid_base;
-PUBLIC unsigned vid_mask;	/* 0x1FFF for color or 0x07FF for mono */
-PUBLIC unsigned blank_color = BLANK_COLOR; /* display code for blank */
+PRIVATE phys_bytes vid_size;	/* 0x2000 for color or 0x0800 for mono */
+PRIVATE phys_bytes vid_base;
+PRIVATE unsigned vid_mask;	/* 0x1FFF for color or 0x07FF for mono */
+PRIVATE unsigned blank_color = BLANK_COLOR; /* display code for blank */
 
 /* Private variables used by the console driver. */
 PRIVATE int vid_port;		/* I/O port for accessing 6845 */
@@ -63,8 +63,8 @@ PRIVATE int disabled_sm;	/* Scroll mode to be restored when re-enabling
 				 * console
 				 */
 
-char *console_memory = NULL;
-char *font_memory = NULL;
+PRIVATE char *console_memory = NULL;
+PRIVATE char *font_memory = NULL;
 
 /* Per console data. */
 typedef struct console {
@@ -1040,8 +1040,7 @@ tty_t *tp;
 /*===========================================================================*
  *				kputc					     *
  *===========================================================================*/
-PUBLIC void kputc(c)
-int c;
+PUBLIC void kputc(int c)
 {
 /* Accumulate a single character for a kernel message. Send a notification
  * the to output driver if an END_OF_KMESS is encountered. 

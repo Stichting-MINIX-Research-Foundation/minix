@@ -40,12 +40,9 @@
 
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
@@ -54,7 +51,6 @@
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/com.h>
-#include <minix/portio.h>
 #include <ibm/cmos.h>
 #include <sys/svrctl.h>
 
@@ -62,8 +58,6 @@ int nflag = 0;		/* Tell what, but don't do it. */
 int wflag = 0;		/* Set the CMOS clock. */
 int Wflag = 0;		/* Also set the CMOS clock register bits. */
 int y2kflag = 0;	/* Interpret 1980 as 2000 for clock with Y2K bug. */
-
-char clocktz[128];	/* Timezone of the clock. */
 
 #define MACH_ID_ADDR	0xFFFFE		/* BIOS Machine ID at FFFF:000E */
 

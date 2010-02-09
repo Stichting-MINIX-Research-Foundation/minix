@@ -53,9 +53,7 @@ static int find_dev(int *devindp, u8_t *capaddrp);
 static u32_t read_reg(int function, int index);
 static void write_reg(int function, int index, u32_t value);
 static void init_domain(int index);
-static void init_map(int index);
-static int do_add_phys(message *m);
-static int do_del_phys(message *m);
+static void init_map(unsigned int ix);
 static int do_add4pci(message *m);
 static void add_range(u32_t busaddr, u32_t size);
 static void del_range(u32_t busaddr, u32_t size);
@@ -272,7 +270,7 @@ printf("init_domain: busaddr = %p\n", busaddr);
 		read_reg(DEVF_BASE_LO, index));
 }
 
-static void init_map(int index)
+static void init_map(unsigned int ix)
 {
 	u32_t v, dom, busno, unit0, unit1;
 
@@ -283,9 +281,9 @@ static void init_map(int index)
 	v= (dom << 26) | (dom << 20) | (busno << 12) |
 		(0 << 11) | (unit1 << 6) |
 		(0 << 5) | (unit0 << 0);
-	write_reg(DEVF_MAP, index, v);
+	write_reg(DEVF_MAP, ix, v);
 
-	printf("after write: DEVF_MAP: 0x%x\n", read_reg(DEVF_MAP, index));
+	printf("after write: DEVF_MAP: 0x%x\n", read_reg(DEVF_MAP, ix));
 }
 
 #if 0
@@ -330,71 +328,7 @@ static int do_add(message *m)
 }
 #endif
 
-static int do_add_phys(message *m)
-{
-	int i;
-	phys_bytes start;
-	size_t size;
 
-	start= m->m2_l1;
-	size= m->m2_l2;
-
-#if 0
-	printf("amddev`do_add_phys: got request for 0x%x@0x%x\n",
-		size, start);
-#endif
-
-	if (start % I386_PAGE_SIZE)
-	{
-		printf("amddev`do_add_phys: bad start 0x%x\n", start);
-		return EINVAL;
-	}
-	if (size % I386_PAGE_SIZE)
-	{
-		printf("amddev`do_add_phys: bad size 0x%x\n", size);
-		return EINVAL;
-	}
-	add_range(start, size);
-
-	write_reg(DEVF_CR, 0, 0x10);
-	for (i= 0; i<1000000; i++)
-	{
-		if (read_reg(DEVF_CR, 0) & 0x10)
-			continue;
-		return OK;
-	}
-	return EBUSY;
-}
-
-static int do_del_phys(message *m)
-{
-	phys_bytes start;
-	size_t size;
-
-	start= m->m2_l1;
-	size= m->m2_l2;
-
-#if 0
-	printf("amddev`do_del_phys: got request for 0x%x@0x%x\n",
-		size, start);
-#endif
-
-	if (start % I386_PAGE_SIZE)
-	{
-		printf("amddev`do_del_phys: bad start 0x%x\n", start);
-		return EINVAL;
-	}
-	if (size % I386_PAGE_SIZE)
-	{
-		printf("amddev`do_del_phys: bad size 0x%x\n", size);
-		return EINVAL;
-	}
-	del_range(start, size);
-
-	write_reg(DEVF_CR, 0, 0x10);
-
-	return OK;
-}
 
 static int do_add4pci(message *m)
 {
@@ -457,7 +391,7 @@ static int do_add4pci(message *m)
 
 static void add_range(u32_t busaddr, u32_t size)
 {
-	u32_t o, bit;
+	u32_t o;
 
 #if 0
 	printf("add_range: mapping 0x%x@0x%x\n", size, busaddr);
@@ -465,8 +399,8 @@ static void add_range(u32_t busaddr, u32_t size)
 
 	for (o= 0; o<size; o += I386_PAGE_SIZE)
 	{
-		bit= (busaddr+o)/I386_PAGE_SIZE;
-		table[bit/8] &= ~(1 << (bit % 8));
+		u32_t bit= (busaddr+o)/I386_PAGE_SIZE;
+		table[bit/8] &= ~(1U << (bit % 8));
 	}
 }
 

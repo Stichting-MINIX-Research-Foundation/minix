@@ -3,7 +3,7 @@ DRIVER = filter
 
 # programs, flags, etc.
 CC = cc
-CFLAGS = -DDEBUG=1 -DDEBUG2=0
+CFLAGS = -I.. -DDEBUG=1 -DDEBUG2=0
 LDFLAGS = 
 LIBS = -lsys
 

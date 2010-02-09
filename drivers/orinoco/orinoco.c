@@ -62,12 +62,10 @@
 #include	<ibm/pci.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
-#include	"../../kernel/const.h"
-#include	"../../kernel/config.h"
-#include	"../../kernel/type.h"
+#include	<kernel/const.h>
+#include	<kernel/config.h>
+#include	<kernel/type.h>
 
-#define		tmra_ut			timer_t
-#define		tmra_inittimer(tp)	tmr_inittimer(tp)
 #define		VERBOSE		1	/* display message during init */
 
 PRIVATE struct pcitab {
@@ -82,7 +80,7 @@ PRIVATE struct pcitab {
 };
 
 
-static tmra_ut or_watchdog;
+static timer_t or_watchdog;
 
 #include 	<stdio.h>
 #include	<stdlib.h>
@@ -127,8 +125,7 @@ static tmra_ut or_watchdog;
 #define 	IRQ_BAP 1
 #define		ETH_HLEN		14
 
-static int or_nr_task = ANY;
-static t_or or_table[OR_PORT_NR];
+PRIVATE t_or or_table[OR_PORT_NR];
 
 struct ethhdr {
 	u8_t h_dest[ETH_ALEN];
@@ -160,7 +157,7 @@ u8_t encaps_hdr[] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 };
  ********************************************************************/
 
 /* The frequency of each channel in MHz */
-const long channel_frequency[] = {
+PRIVATE const long channel_frequency[] = {
 	2412, 2417, 2422, 2427, 2432, 2437, 2442,
 	2447, 2452, 2457, 2462, 2467, 2472, 2484
 };
@@ -227,15 +224,13 @@ _PROTOTYPE (static void or_dump, (message *m));
 PRIVATE message m;
 PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 
-u32_t system_hz;
+PRIVATE u32_t system_hz;
 
-static char *progname;
-extern int errno;
+PRIVATE const char *progname;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN int env_argc;
 EXTERN char **env_argv;
 
 /*****************************************************************************
@@ -550,7 +545,7 @@ static void or_init (message * mp) {
 		first_time = 0;
 		or_pci_conf ();	/* Configure PCI devices. */
 	
-		tmra_inittimer(&or_watchdog);
+		tmr_inittimer(&or_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
 		sys_setalarm(system_hz, 0);
 	}	

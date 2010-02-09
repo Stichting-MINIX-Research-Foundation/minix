@@ -131,7 +131,6 @@ _PROTOTYPE( static void lance_init_card, (ether_card_t *ec)             );
 /* Accesses Lance Control and Status Registers */
 _PROTOTYPE( static u8_t  in_byte, (port_t port)                         );
 _PROTOTYPE( static u16_t in_word, (port_t port)                         );
-_PROTOTYPE( static void  out_byte, (port_t port, u8_t value)            );
 _PROTOTYPE( static void  out_word, (port_t port, u16_t value)           );
 _PROTOTYPE( static u16_t read_csr, (port_t ioaddr, u16_t csrno)         );
 _PROTOTYPE( static void  write_csr, (port_t ioaddr, u16_t csrno, u16_t value));
@@ -258,14 +257,13 @@ static int rx_slot_nr = 0;          /* Rx-slot number */
 static int tx_slot_nr = 0;          /* Tx-slot number */
 static int cur_tx_slot_nr = 0;      /* Tx-slot number */
 static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
-static char *progname;
+static const char *progname;
 
 phys_bytes lance_buf_phys;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN int env_argc;
 EXTERN char **env_argv;
 
 /*===========================================================================*
@@ -1755,17 +1753,6 @@ static u16_t in_word(port_t port)
 	return value;
 }
 
-/*===========================================================================*
- *                              out_byte                                     *
- *===========================================================================*/
-static void out_byte(port_t port, u8_t value)
-{
-	int r;
-
-	r= sys_outb(port, value);
-	if (r != OK)
-		panic("lance","sys_outb failed", r);
-}
 
 /*===========================================================================*
  *                              out_word                                     *

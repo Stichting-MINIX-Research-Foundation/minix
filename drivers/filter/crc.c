@@ -8,7 +8,7 @@
 
 #include <sys/types.h>
 
-unsigned long crctab[] = {
+static unsigned long crctab[] = {
   0x7fffffff,
   0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
   0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e,

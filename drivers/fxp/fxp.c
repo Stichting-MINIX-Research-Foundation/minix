@@ -66,11 +66,9 @@
 
 #define tmra_ut			timer_t
 #define tmra_inittimer(tp)	tmr_inittimer(tp)
-#define Proc_number(p)		proc_number(p)
 #define debug			0
 #define RAND_UPDATE		/**/
 #define printW()		((void)0)
-#define vm_1phys2bus(p)		(p)
 
 #include "assert.h"
 #include "fxp.h"
@@ -115,7 +113,7 @@ static clock_t fxp_next_timeout= 0;
 /* ignore interrupt for the moment */
 #define interrupt(x)	0
 
-union tmpbuf
+PRIVATE union tmpbuf
 {
 	char pad[4096];
 	struct cbl_conf cc;
@@ -209,22 +207,18 @@ fxp_t;
 #define FT_82559	0x4
 #define FT_82801	0x8
 
-static fxp_t *fxp_table;
-phys_bytes fxp_table_phys;
+PRIVATE fxp_t *fxp_table;
+PRIVATE phys_bytes fxp_table_phys;
 
-static u16_t eth_ign_proto;
-static tmra_ut fxp_watchdog;
-static char *progname;
+PRIVATE u16_t eth_ign_proto;
+PRIVATE tmra_ut fxp_watchdog;
+PRIVATE const char *progname;
 
-extern int errno;
-
-u32_t system_hz;
+PRIVATE u32_t system_hz;
 
 #define fxp_inb(port, offset)	(do_inb((port) + (offset)))
-#define fxp_inw(port, offset)	(do_inw((port) + (offset)))
 #define fxp_inl(port, offset)	(do_inl((port) + (offset)))
 #define fxp_outb(port, offset, value)	(do_outb((port) + (offset), (value)))
-#define fxp_outw(port, offset, value)	(do_outw((port) + (offset), (value)))
 #define fxp_outl(port, offset, value)	(do_outl((port) + (offset), (value)))
 
 _PROTOTYPE( static void fxp_init, (message *mp)				);
@@ -251,7 +245,7 @@ _PROTOTYPE( static void fxp_restart_ru, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_getstat, (message *mp)			);
 _PROTOTYPE( static void fxp_getstat_s, (message *mp)			);
 _PROTOTYPE( static void fxp_getname, (message *mp)			);
-_PROTOTYPE( static int fxp_handler, (fxp_t *fp)				);
+_PROTOTYPE( static void fxp_handler, (fxp_t *fp)				);
 _PROTOTYPE( static void fxp_check_ints, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_watchdog_f, (timer_t *tp)			);
 _PROTOTYPE( static int fxp_link_changed, (fxp_t *fp)			);
@@ -2111,8 +2105,7 @@ message *mp;
 /*===========================================================================*
  *				fxp_getname				     *
  *===========================================================================*/
-static void fxp_getname(mp)
-message *mp;
+static void fxp_getname(message *mp)
 {
 	int r;
 
@@ -2127,8 +2120,7 @@ message *mp;
 /*===========================================================================*
  *				fxp_handler				     *
  *===========================================================================*/
-static int fxp_handler(fp)
-fxp_t *fp;
+static void fxp_handler(fxp_t *fp)
 {
 	int port;
 	u16_t isr;
@@ -2178,15 +2170,12 @@ fxp_t *fp;
 		printf("fxp_handler: unhandled interrupt: isr = 0x%02x\n",
 			isr);
 	}
-
-	return 1;
 }
 
 /*===========================================================================*
  *				fxp_check_ints				     *
  *===========================================================================*/
-static void fxp_check_ints(fp)
-fxp_t *fp;
+static void fxp_check_ints(fxp_t *fp)
 {
 	int n, fxp_flags, prev_tail;
 	int fxp_tx_tail, fxp_tx_nbuf, fxp_tx_threshold;

@@ -27,8 +27,8 @@
 #define DEFAULT_STEREO		0	   /* 0 = mono, 1 = stereo */
 
 /* DMA port addresses */
-#define DMA8_ADDR	((SB_DMA_8 & 3) << 1) + 0x00
-#define DMA8_COUNT	((SB_DMA_8 & 3) << 1) + 0x01 
+#define DMA8_ADDR	(((SB_DMA_8 & 3) << 1) + 0x00)
+#define DMA8_COUNT	(((SB_DMA_8 & 3) << 1) + 0x01)
 #define DMA8_MASK	0x0A
 #define DMA8_MODE	0x0B
 #define DMA8_CLEAR	0x0C
@@ -50,8 +50,8 @@
 #endif
 
 	
-#define DMA16_ADDR	((SB_DMA_16 & 3) << 2) + 0xC0
-#define DMA16_COUNT	((SB_DMA_16 & 3) << 2) + 0xC2 
+#define DMA16_ADDR	(((SB_DMA_16 & 3) << 2) + 0xC0)
+#define DMA16_COUNT	(((SB_DMA_16 & 3) << 2) + 0xC2)
 #define DMA16_MASK	0xD4
 #define DMA16_MODE	0xD6
 #define DMA16_CLEAR	0xD8
@@ -74,25 +74,25 @@
 
 
 /* DMA modes */
-#define DMA16_AUTO_PLAY		0x58 + (SB_DMA_16 & 3)
-#define DMA16_AUTO_REC		0x54 + (SB_DMA_16 & 3)
-#define DMA8_AUTO_PLAY		0x58 + SB_DMA_8
-#define DMA8_AUTO_REC		0x54 + SB_DMA_8
+#define DMA16_AUTO_PLAY		(0x58 + (SB_DMA_16 & 3))
+#define DMA16_AUTO_REC		(0x54 + (SB_DMA_16 & 3))
+#define DMA8_AUTO_PLAY		(0x58 + SB_DMA_8)
+#define DMA8_AUTO_REC		(0x54 + SB_DMA_8)
 
 
 /* IO ports for soundblaster */
-#define DSP_RESET	0x6 + SB_BASE_ADDR
-#define DSP_READ	0xA + SB_BASE_ADDR
-#define DSP_WRITE	0xC + SB_BASE_ADDR
-#define DSP_COMMAND	0xC + SB_BASE_ADDR
-#define DSP_STATUS	0xC + SB_BASE_ADDR
-#define DSP_DATA_AVL	0xE + SB_BASE_ADDR
-#define DSP_DATA16_AVL	0xF + SB_BASE_ADDR
-#define MIXER_REG	0x4 + SB_BASE_ADDR
-#define MIXER_DATA	0x5 + SB_BASE_ADDR
-#define OPL3_LEFT	0x0 + SB_BASE_ADDR
-#define OPL3_RIGHT	0x2 + SB_BASE_ADDR
-#define OPL3_BOTH	0x8 + SB_BASE_ADDR
+#define DSP_RESET	(0x6 + SB_BASE_ADDR)
+#define DSP_READ	(0xA + SB_BASE_ADDR)
+#define DSP_WRITE	(0xC + SB_BASE_ADDR)
+#define DSP_COMMAND	(0xC + SB_BASE_ADDR)
+#define DSP_STATUS	(0xC + SB_BASE_ADDR)
+#define DSP_DATA_AVL	(0xE + SB_BASE_ADDR)
+#define DSP_DATA16_AVL	(0xF + SB_BASE_ADDR)
+#define MIXER_REG	(0x4 + SB_BASE_ADDR)
+#define MIXER_DATA	(0x5 + SB_BASE_ADDR)
+#define OPL3_LEFT	(0x0 + SB_BASE_ADDR)
+#define OPL3_RIGHT	(0x2 + SB_BASE_ADDR)
+#define OPL3_BOTH	(0x8 + SB_BASE_ADDR)
 
 
 /* DSP Commands */
@@ -164,7 +164,7 @@
 #define DMA_NR_OF_BUFFERS		2
 #define DSP_MAX_SPEED			44100      /* Max sample speed in KHz */
 #define DSP_MIN_SPEED			4000       /* Min sample speed in KHz */
-#define DSP_MAX_FRAGMENT_SIZE	DMA_SIZE /  DMA_NR_OF_BUFFERS /* Maximum fragment size */
+#define DSP_MAX_FRAGMENT_SIZE	(DMA_SIZE /  DMA_NR_OF_BUFFERS) /* Maximum fragment size */
 #define DSP_MIN_FRAGMENT_SIZE	1024 	   /* Minimum fragment size */
 #define DSP_NR_OF_BUFFERS		8
 
