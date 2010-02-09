@@ -11,14 +11,16 @@
 #define SAME 1000
 
 FORWARD _PROTOTYPE( int remove_dir, (struct inode *rldirp,
-			struct inode *rip, char dir_name[NAME_MAX])			);
+			struct inode *rip, char dir_name[NAME_MAX])	);
 FORWARD _PROTOTYPE( int unlink_file, (struct inode *dirp,
-			struct inode *rip, char file_name[NAME_MAX])			);
-FORWARD _PROTOTYPE( off_t nextblock, (off_t pos, int zonesize)		);
-FORWARD _PROTOTYPE( void zeroblock_half, (struct inode *i, off_t p, int l));
-FORWARD _PROTOTYPE( void zeroblock_range, (struct inode *i, off_t p, off_t h));
+			struct inode *rip, char file_name[NAME_MAX])	);
+FORWARD _PROTOTYPE( off_t nextblock, (off_t pos, int zone_size)		);
+FORWARD _PROTOTYPE( void zerozone_half, (struct inode *rip, off_t pos,
+			int half, int zone_size)			);
+FORWARD _PROTOTYPE( void zerozone_range, (struct inode *rip, off_t pos,
+			off_t len)					);
 
-/* Args to zeroblock_half() */
+/* Args to zerozone_half() */
 #define FIRST_HALF	0
 #define LAST_HALF	1
 
@@ -513,8 +515,11 @@ off_t newsize;			/* inode must become this size */
   scale = rip->i_sp->s_log_zone_size;
   zone_size = (zone_t) rip->i_sp->s_block_size << scale;
 
-  /* Free the actual space if relevant. */
+  /* Free the actual space if truncating. */
   if(newsize < rip->i_size) freesp_inode(rip, newsize, rip->i_size);
+
+  /* Clear the rest of the last zone if expanding. */
+  if(newsize > rip->i_size) clear_zone(rip, rip->i_size, 0);
 
   /* Next correct the inode size. */
   rip->i_size = newsize;
@@ -545,6 +550,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
  */
   off_t p, e;
   int zone_size, dev;
+  int zero_last, zero_first;
 
   if(end > rip->i_size)		/* freeing beyond end makes no sense */
 	end = rip->i_size;
@@ -555,27 +561,29 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
   dev = rip->i_dev;             /* device on which inode resides */
 
   /* If freeing doesn't cross a zone boundary, then we may only zero
-   * a range of the block.
+   * a range of the zone, unless we are freeing up that entire zone.
    */
-  if(start/zone_size == (end-1)/zone_size) {
-	zeroblock_range(rip, start, end-start);
+  zero_last = start % zone_size;
+  zero_first = end % zone_size && end < rip->i_size;
+  if(start/zone_size == (end-1)/zone_size && (zero_last || zero_first)) {
+	zerozone_range(rip, start, end-start);
   } else { 
-	/* First zero unused part of partly used blocks. */
-	if(start%zone_size)
-		zeroblock_half(rip, start, LAST_HALF);
-	if(end%zone_size && end < rip->i_size)
-		zeroblock_half(rip, end, FIRST_HALF);
-  }
+	/* First zero unused part of partly used zones. */
+	if(zero_last)
+		zerozone_half(rip, start, LAST_HALF, zone_size);
+	if(zero_first)
+		zerozone_half(rip, end, FIRST_HALF, zone_size);
 
-  /* Now completely free the completely unused blocks.
-   * write_map() will free unused (double) indirect
-   * blocks too. Converting the range to zone numbers avoids
-   * overflow on p when doing e.g. 'p += zone_size'.
-   */
-  e = end/zone_size;
-  if(end == rip->i_size && (end % zone_size)) e++;
-  for(p = nextblock(start, zone_size)/zone_size; p < e; p ++)
-	write_map(rip, p*zone_size, NO_ZONE, WMAP_FREE);
+	/* Now completely free the completely unused zones.
+	 * write_map() will free unused (double) indirect
+	 * blocks too. Converting the range to zone numbers avoids
+	 * overflow on p when doing e.g. 'p += zone_size'.
+	 */
+	e = end/zone_size;
+	if(end == rip->i_size && (end % zone_size)) e++;
+	for(p = nextblock(start, zone_size)/zone_size; p < e; p ++)
+		write_map(rip, p*zone_size, NO_ZONE, WMAP_FREE);
+  }
 
   rip->i_update |= CTIME | MTIME;
   rip->i_dirt = DIRTY;
@@ -603,62 +611,69 @@ int zone_size;
 
 
 /*===========================================================================*
- *				zeroblock_half				     *
+ *				zerozone_half				     *
  *===========================================================================*/
-PRIVATE void zeroblock_half(rip, pos, half)
+PRIVATE void zerozone_half(rip, pos, half, zone_size)
 struct inode *rip;
 off_t pos;
 int half;
+int zone_size;
 {
-/* Zero the upper or lower 'half' of a block that holds position 'pos'.
+/* Zero the upper or lower 'half' of a zone that holds position 'pos'.
  * half can be FIRST_HALF or LAST_HALF.
  *
  * FIRST_HALF: 0..pos-1 will be zeroed
- * LAST_HALF:  pos..blocksize-1 will be zeroed
+ * LAST_HALF:  pos..zone_size-1 will be zeroed
  */
   int offset, len;
 
   /* Offset of zeroing boundary. */
-  offset = pos % rip->i_sp->s_block_size;
+  offset = pos % zone_size;
 
   if(half == LAST_HALF)  {
-   	len = rip->i_sp->s_block_size - offset;
+   	len = zone_size - offset;
   } else {
 	len = offset;
 	pos -= offset;
-	offset = 0;
   }
 
-  zeroblock_range(rip, pos, len);
+  zerozone_range(rip, pos, len);
 }
 
 
 /*===========================================================================*
- *				zeroblock_range				     *
+ *				zerozone_range				     *
  *===========================================================================*/
-PRIVATE void zeroblock_range(rip, pos, len)
+PRIVATE void zerozone_range(rip, pos, len)
 struct inode *rip;
 off_t pos;
 off_t len;
 {
-/* Zero a range in a block.
- * This function is used to zero a segment of a block, either 
- * FIRST_HALF of LAST_HALF.
- * 
+/* Zero an arbitrary byte range in a zone, possibly spanning multiple blocks.
  */
   block_t b;
   struct buf *bp;
   off_t offset;
+  int bytes, block_size;
+
+  block_size = rip->i_sp->s_block_size;
 
   if(!len) return; /* no zeroing to be done. */
   if( (b = read_map(rip, pos)) == NO_BLOCK) return;
-  if( (bp = get_block(rip->i_dev, b, NORMAL)) == NIL_BUF)
-	panic(__FILE__, "zeroblock_range: no block", NO_NUM);
-  offset = pos % rip->i_sp->s_block_size;
-  if(offset + len > rip->i_sp->s_block_size)
-	panic(__FILE__, "zeroblock_range: len too long", len);
-  memset(bp->b_data + offset, 0, len);
-  bp->b_dirt = DIRTY;
-  put_block(bp, FULL_DATA_BLOCK);
+  while (len > 0) {
+	if( (bp = get_block(rip->i_dev, b, NORMAL)) == NIL_BUF)
+		panic(__FILE__, "zerozone_range: no block", NO_NUM);
+	offset = pos % block_size;
+	bytes = block_size - offset;
+	if (bytes > len)
+		bytes = len;
+	memset(bp->b_data + offset, 0, bytes);
+	bp->b_dirt = DIRTY;
+	put_block(bp, FULL_DATA_BLOCK);
+
+	pos += bytes;
+	len -= bytes;
+	b++;
+  }
 }
 

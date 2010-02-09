@@ -220,7 +220,7 @@ PUBLIC int do_fcntl()
 
 	/* Figure out starting position base. */
 	switch(flock_arg.l_whence) {
-	   case SEEK_SET: start = 0; if(offset < 0) return EINVAL; break;
+	   case SEEK_SET: start = 0; break;
 	   case SEEK_CUR:
 	      if (ex64hi(f->filp_pos) != 0) 
 			panic(__FILE__, "do_fcntl: position in file too high",
@@ -236,15 +236,24 @@ PUBLIC int do_fcntl()
 	if(offset > 0 && start + offset < start) return EINVAL;
 	if(offset < 0 && start + offset > start) return EINVAL; 
 	start += offset;
-	if(flock_arg.l_len > 0) {
+	if(start < 0) return EINVAL;
+
+	if(flock_arg.l_len != 0) {
+		if(start >= f->filp_vno->v_size) return EINVAL;
 		end = start + flock_arg.l_len;
 		if(end <= start) return EINVAL;
+		if(end > f->filp_vno->v_size) end = f->filp_vno->v_size;
 	} else {
                 end = 0;
 	}
-  
-        return req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr, start,
-        		  end);
+
+	r = req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr, start,
+		end);
+
+	if(r == OK && flock_arg.l_len == 0)
+		f->filp_vno->v_size = start;
+
+	return(r);
      }
 
      default:

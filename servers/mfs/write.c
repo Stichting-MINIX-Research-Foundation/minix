@@ -1,5 +1,5 @@
 /* This file is the counterpart of "read.c".  It contains the code for writing
- * insofar as this is not contained in read_write().
+ * insofar as this is not contained in fs_readwrite().
  *
  * The entry points into this file are
  *   write_map:    write a new zone into an inode
@@ -142,7 +142,7 @@ int op;				/* special actions */
 		}
 
 		/* Last reference in the indirect block gone? Then
-		 * Free the indirect block.
+		 * free the indirect block.
 		 */
 		if(empty_indir(bp, rip->i_sp)) {
 			free_zone(rip->i_dev, z1);
@@ -161,15 +161,18 @@ int op;				/* special actions */
 	} else {
 		wr_indir(bp, ex, new_zone);
 	}
-	bp->b_dirt = DIRTY;
+	/* z1 equals NO_ZONE only when we are freeing up the indirect block. */
+	bp->b_dirt = (z1 == NO_ZONE) ? CLEAN : DIRTY;
 	put_block(bp, INDIRECT_BLOCK);
   }
 
   /* If the single indirect block isn't there (or was just freed),
    * see if we have to keep the double indirect block, if any.
+   * If we don't have to keep it, don't bother writing it out.
    */
   if(z1 == NO_ZONE && !single && z2 != NO_ZONE &&
      empty_indir(bp_dindir, rip->i_sp)) {
+	bp_dindir->b_dirt = CLEAN;
 	free_zone(rip->i_dev, z2);
 	rip->i_zone[zones+1] = NO_ZONE;
   }
@@ -236,11 +239,11 @@ struct super_block *sb;		/* superblock of device block resides on */
 PUBLIC void clear_zone(rip, pos, flag)
 register struct inode *rip;	/* inode to clear */
 off_t pos;			/* points to block to clear */
-int flag;			/* 0 if called by read_write, 1 by new_block */
+int flag;			/* 1 if called by new_block, 0 otherwise */
 {
 /* Zero a zone, possibly starting in the middle.  The parameter 'pos' gives
  * a byte in the first block to be zeroed.  Clearzone() is called from 
- * read_write and new_block().
+ * fs_readwrite(), truncate_inode(), and new_block().
  */
 
   register struct buf *bp;

@@ -197,6 +197,8 @@ PUBLIC int do_truncate()
   struct vnode *vp;
   int r;
 
+  if ((off_t) m_in.flength < 0) return(EINVAL);
+
   /* Temporarily open file */
   if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return(err_code);
   if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
@@ -219,10 +221,12 @@ PUBLIC int do_ftruncate()
   int r;
   struct filp *rfilp;
   
+  if ((off_t) m_in.flength < 0) return(EINVAL);
+
   /* File is already opened; get a vnode pointer from filp */
   if ((rfilp = get_filp(m_in.m2_i1)) == NIL_FILP) return(err_code);
   if (!(rfilp->filp_mode & W_BIT)) return(EBADF);
-  return truncate_vnode(rfilp->filp_vno, m_in.m2_l1);
+  return truncate_vnode(rfilp->filp_vno, m_in.flength);
 }
 
 

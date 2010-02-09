@@ -94,7 +94,6 @@ _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
 			u64_t position, unsigned bytes_ahead)		);
 _PROTOTYPE( void read_ahead, (void)					);
 _PROTOTYPE( block_t read_map, (struct inode *rip, off_t pos)		);
-_PROTOTYPE( int read_write, (int rw_flag)				);
 _PROTOTYPE( zone_t rd_indir, (struct buf *bp, int index)		);
 
 /* stadir.c */
