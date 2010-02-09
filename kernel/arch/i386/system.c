@@ -477,9 +477,6 @@ PUBLIC void arch_do_syscall(struct proc *proc)
   m_ptr = (message *) proc->p_reg.bx;
   bit_map = proc->p_reg.dx;
 
-  /* do_ipc() expects the given process's memory to be accessible. */
-  vm_set_cr3(proc);
-
   /* Make the system call, for real this time. */
   proc->p_reg.retreg = do_ipc(call_nr, src_dst_e, m_ptr, bit_map);
 }

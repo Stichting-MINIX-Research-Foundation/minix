@@ -198,6 +198,8 @@ not_runnable_pick_new:
 		idle();
 	}
 
+	switch_address_space(proc_ptr);
+
 check_misc_flags:
 
 	vmassert(proc_ptr);

@@ -692,3 +692,39 @@ idt_reload:
 reload_ds:
 	RELOAD_SEG_REG(%ds)
 	ret
+
+/*===========================================================================*/
+/*			      switch_address_space			     */
+/*===========================================================================*/
+/* PUBLIC void switch_address_space(struct proc *p)
+ *
+ * sets the %cr3 register to the supplied value if it is not already set to the
+ * same value in which case it would only result in an extra TLB flush which is
+ * not desirable
+ */
+ .balign 16
+.globl switch_address_space
+switch_address_space:
+
+	/* read the process pointer */
+	mov	4(%esp), %edx
+	/* enable process' segment descriptors  */
+	lldt	P_LDT_SEL(%edx)
+	/* get the new cr3 value */
+	movl	P_CR3(%edx), %eax
+	/* test if the new cr3 != NULL */
+	cmpl	$0, %eax
+	je	0f
+
+	/*
+	 * test if the cr3 is loaded with the current value to avoid unnecessary
+	 * TLB flushes
+	 */
+	mov	%cr3, %ecx
+	cmp	%ecx, %eax
+	je	0f
+	mov	%eax, %cr3
+	mov	%edx, ptproc
+	movl	$0, dirtypde
+0:
+	ret

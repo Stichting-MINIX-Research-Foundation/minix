@@ -470,22 +470,6 @@ restart:
 	/* %eax is set by schedcheck() to the process to run */
 	mov	%eax, %ebp	/* will assume P_STACKBASE == 0 */
 
-	cmpl	$0, P_CR3(%ebp)
-	jz	0f
-
-	/*
-	 * test if the cr3 is loaded with the current value to avoid unnecessary
-	 * TLB flushes
-	 */
-	mov	P_CR3(%ebp), %eax
-	mov	%cr3, %ecx
-	cmp	%ecx, %eax
-	jz	0f
-	mov	%eax, %cr3
-	mov	%ebp, ptproc
-	movl	$0, dirtypde
-0:
-
 	/* reconstruct the stack for iret */
 	movl	SSREG(%ebp), %eax
 	push	%eax
@@ -500,7 +484,6 @@ restart:
 
 	RESTORE_GP_REGS(%ebp)
 
-	lldt	P_LDT_SEL(%ebp)	/* enable process' segment descriptors  */
 	RESTORE_SEGS(%ebp)
 
 	movl	%ss:BPREG(%ebp), %ebp

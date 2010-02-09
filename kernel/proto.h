@@ -171,4 +171,5 @@ _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,
 _PROTOTYPE( int arch_phys_map_reply, (int index, vir_bytes addr));
 _PROTOTYPE( int arch_enable_paging, (void));
 
+_PROTOTYPE(void switch_address_space, (struct proc * p));
 #endif /* PROTO_H */
