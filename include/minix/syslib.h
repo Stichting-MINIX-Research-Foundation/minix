@@ -95,6 +95,8 @@ _PROTOTYPE( int sys_vmctl_reply_mapping, (int index, vir_bytes addr));
 _PROTOTYPE( int sys_sdevio, (int req, long port, endpoint_t proc_ep,
 	void *buffer, int count, vir_bytes offset));
 _PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
+_PROTOTYPE(int free_contig, (void *addr, size_t len));
+
 #define AC_ALIGN4K	0x01
 #define AC_LOWER16M	0x02
 #define AC_ALIGN64K	0x04

@@ -318,29 +318,11 @@ PRIVATE void init_params()
 	printf("at_wini%d: DMA for ATA devices is disabled.\n", w_instance);
   } else {
 	/* Ask for anonymous memory for DMA, that is physically contiguous. */
-	dma_buf = mmap(0, ATA_DMA_BUF_SIZE, PROT_READ|PROT_WRITE,
-		MAP_PREALLOC | MAP_CONTIG | MAP_ANON, -1, 0);
-	prdt = mmap(0, PRDT_BYTES,
-		PROT_READ|PROT_WRITE,
-		MAP_PREALLOC | MAP_CONTIG | MAP_ANON, -1, 0);
-	if(dma_buf == MAP_FAILED || prdt == MAP_FAILED) {
+	dma_buf = alloc_contig(ATA_DMA_BUF_SIZE, 0, &dma_buf_phys);
+	prdt = alloc_contig(PRDT_BYTES, 0, &prdt_phys);
+	if(!dma_buf || !prdt) {
 		disable_dma = 1;
 		printf("at_wini%d: no dma\n", w_instance);
-	} else {
-		s= sys_umap(SELF, VM_D, (vir_bytes)dma_buf,
-			ATA_DMA_BUF_SIZE, &dma_buf_phys);
-		if (s != 0)
-			panic("at_wini", "can't map dma buffer", s);
-
-		s= sys_umap(SELF, VM_D, (vir_bytes)prdt,
-			PRDT_BYTES, &prdt_phys);
-		if (s != 0)
-			panic("at_wini", "can't map prd table", s);
-#if 0
-		printf("at_wini%d: physical dma_buf: 0x%lx, "
-			"prdt tab: 0x%lx\n",
-			w_instance, dma_buf_phys, prdt_phys);
-#endif
 	}
   }
 

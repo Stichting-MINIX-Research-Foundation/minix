@@ -73,3 +73,8 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 	return (void *) buf;
 }
 
+int free_contig(void *addr, size_t len)
+{
+	return munmap(addr, len);
+}
+

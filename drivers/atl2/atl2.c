@@ -1137,9 +1137,9 @@ PRIVATE void atl2_shutdown(void)
 	if ((r = sys_irqrmpolicy(&state.hook_id)) != OK)
 		panic("atl2", "unable to deregister IRQ", r);
 
-	munmap(state.txd_base, ATL2_TXD_BUFSIZE);
-	munmap(state.txs_base, ATL2_TXS_COUNT * sizeof(u32_t));
-	munmap(state.rxd_base_u,
+	free_contig(state.txd_base, ATL2_TXD_BUFSIZE);
+	free_contig(state.txs_base, ATL2_TXS_COUNT * sizeof(u32_t));
+	free_contig(state.rxd_base_u,
 		state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
 
 	vm_unmap_phys(SELF, state.base, ATL2_MMAP_SIZE);
