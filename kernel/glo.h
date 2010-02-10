@@ -58,12 +58,6 @@ EXTERN int verboseflags;
 EXTERN int config_no_apic; /* optionaly turn off apic */
 #endif
 
-#ifdef CONFIG_IDLE_TSC
-EXTERN u64_t idle_tsc;
-EXTERN u64_t idle_stop;
-EXTERN int idle_active;
-#endif
-
 EXTERN unsigned cpu_hz[CONFIG_MAX_CPUS];
 
 #define cpu_set_freq(cpu, freq)	do {cpu_hz[cpu] = freq;} while (0)

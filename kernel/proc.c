@@ -119,30 +119,21 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 /*===========================================================================*
  *				idle					     * 
  *===========================================================================*/
-PRIVATE void idle()
+PRIVATE void idle(void)
 {
 	/* This function is called whenever there is no work to do.
 	 * Halt the CPU, and measure how many timestamp counter ticks are
 	 * spent not doing anything. This allows test setups to measure
 	 * the CPU utiliziation of certain workloads with high precision.
 	 */
-#ifdef CONFIG_IDLE_TSC
-	u64_t idle_start;
 
-	read_tsc_64(&idle_start);
-	idle_active = 1;
-#endif
-
+	/* start accounting for the idle time */
+	cycles_accounting_stop(proc_addr(KERNEL));
 	halt_cpu();
-
-#ifdef CONFIG_IDLE_TSC
-	if (idle_active) {
-		IDLE_STOP;
-		printf("Kernel: idle active after resuming CPU\n");
-	}
-
-	idle_tsc = add64(idle_tsc, sub64(idle_stop, idle_start));
-#endif
+	/*
+	 * end of accounting for the idle task does not happen here, the kernel
+	 * is handling stuff for quite a while before it gets back here!
+	 */
 }
 
 /*===========================================================================*
@@ -274,6 +265,7 @@ check_misc_flags:
 #endif
 
 	proc_ptr = arch_finish_schedcheck();
+	cycles_accounting_stop(proc_addr(KERNEL));
 
 	NOREC_RETURN(schedch, proc_ptr);
 }

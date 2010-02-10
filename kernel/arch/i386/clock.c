@@ -7,6 +7,9 @@
 #include "../../kernel.h"
 
 #include "../../clock.h"
+#include "../../proc.h"
+#include <minix/u64.h>
+
 
 #ifdef CONFIG_APIC
 #include "apic.h"
@@ -21,6 +24,9 @@
                                 /*   11x11, 11 = LSB then MSB, x11 = sq wave */
 #define TIMER_FREQ  1193182    /* clock frequency for timer in PC and AT */
 #define TIMER_COUNT(freq) (TIMER_FREQ/(freq)) /* initial value for counter*/
+
+/* FIXME make it cpu local! */
+PRIVATE u64_t tsc_ctr_switch; /* when did we switched time accounting */
 
 PRIVATE irq_hook_t pic_timer_hook;		/* interrupt handler hook */
 
@@ -118,4 +124,23 @@ PUBLIC int arch_register_local_timer_handler(irq_handler_t handler)
 	}
 
 	return 0;
+}
+
+PUBLIC void cycles_accounting_init(void)
+{
+	read_tsc_64(&tsc_ctr_switch);
+}
+
+PUBLIC void cycles_accounting_stop(struct proc * p)
+{
+	u64_t tsc;
+
+	read_tsc_64(&tsc);
+	p->p_cycles = add64(p->p_cycles, sub64(tsc, tsc_ctr_switch));
+	tsc_ctr_switch = tsc;
+}
+
+PUBLIC void cycles_accounting_stop_idle(void)
+{
+	cycles_accounting_stop(proc_addr(IDLE));
 }

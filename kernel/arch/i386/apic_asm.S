@@ -36,12 +36,16 @@
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
 	SAVE_PROCESS_CTX(0)						;\
+	push	%ebp							;\
+	call	cycles_accounting_stop					;\
+	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	APIC_IRQ_HANDLER(irq)						;\
 	jmp	restart							;\
 									\
 0:									\
 	pusha								;\
+	call	cycles_accounting_stop_idle				;\
 	APIC_IRQ_HANDLER(irq)						;\
 	popa								;\
 	iret								;
@@ -142,12 +146,16 @@ apic_hwint15:
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
 	SAVE_PROCESS_CTX(0)						;\
+	push	%ebp							;\
+	call	cycles_accounting_stop					;\
+	add	$4, %esp						;\
 	movl	$0, %ebp		/* for stack trace */		;\
 	LAPIC_INTR_HANDLER(func)					;\
 	jmp	restart							;\
 	\
 0:	\
 	pusha								;\
+	call	cycles_accounting_stop_idle				;\
 	LAPIC_INTR_HANDLER(func)					;\
 	popa								;\
 	iret								;

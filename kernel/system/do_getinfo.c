@@ -152,14 +152,12 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         break;
     }
     case GET_IDLETSC: {
-#ifdef CONFIG_IDLE_TSC
-        length = sizeof(idle_tsc);
-        src_vir = (vir_bytes) &idle_tsc;
+	struct proc * idl;
+
+	idl = proc_addr(IDLE);
+        length = sizeof(idl->p_cycles);
+        src_vir = (vir_bytes) &idl->p_cycles;
         break;
-#else
-        kprintf("do_getinfo: kernel not compiled with CONFIG_IDLE_TSC\n");
-        return(EINVAL);
-#endif
     }
     case GET_AOUTHEADER: {
         int hdrindex, index = m_ptr->I_VAL_LEN2_E;

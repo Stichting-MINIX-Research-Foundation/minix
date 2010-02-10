@@ -18,6 +18,18 @@ _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 _PROTOTYPE( void ser_dump_proc, (void)					);
 
+_PROTOTYPE( void cycles_accounting_init, (void)				);
+/*
+ * This functions start and stop accounting for process, kernel or idle cycles.
+ * It inherently have to account for some kernel cycles for process too,
+ * therefore it should be called asap after trapping to kernel and as late as
+ * possible before returning to userspace. These function is architecture
+ * dependent
+ */
+_PROTOTYPE( void cycles_accounting_stop, (struct proc * p)		);
+/* this is a wrapper to make calling it from assembly easier */
+_PROTOTYPE( void cycles_accounting_stop_idle, (void)			);
+
 /* main.c */
 _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);

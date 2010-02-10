@@ -13,8 +13,6 @@
 /* We only support 1 cpu now */
 #define CONFIG_MAX_CPUS	1
 #define cpuid		0
-/* measure cumulative idle timestamp counter ticks */
-#undef CONFIG_IDLE_TSC
 
 /* This is the master header for the kernel.  It includes some other files
  * and defines the principal constants.

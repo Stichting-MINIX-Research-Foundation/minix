@@ -325,10 +325,10 @@ PRIVATE void printslot(struct proc *pp, int level)
 
 	COL
 
-	kprintf("%d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s misc %s",
+	kprintf("%d: %s %d prio %d/%d time %d/%d cycles 0x%x%08x cr3 0x%lx rts %s misc %s",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_max_priority, pp->p_user_time,
-		pp->p_sys_time, pp->p_seg.p_cr3,
+		pp->p_sys_time, pp->p_cycles.hi, pp->p_cycles.lo, pp->p_seg.p_cr3,
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
 
 	if(pp->p_rts_flags & RTS_SENDING) {

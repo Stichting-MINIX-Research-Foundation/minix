@@ -253,6 +253,9 @@ csinit:
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
 	SAVE_PROCESS_CTX(0)						;\
+	push	%ebp							;\
+	call	cycles_accounting_stop					;\
+	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
@@ -261,6 +264,7 @@ csinit:
 									\
 0:									\
 	pusha								;\
+	call	cycles_accounting_stop_idle				;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -316,6 +320,9 @@ hwint07:
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
 	SAVE_PROCESS_CTX(0)						;\
+	push	%ebp							;\
+	call	cycles_accounting_stop					;\
+	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
@@ -325,6 +332,7 @@ hwint07:
 									\
 0:									\
 	pusha								;\
+	call	cycles_accounting_stop_idle				;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -395,6 +403,11 @@ ipc_entry:
 	push	%eax
 	push	%ecx
 
+	/* stop user process cycles */
+	push	%ebp
+	call	cycles_accounting_stop
+	add	$4, %esp
+
 	/* for stack trace */
 	movl	$0, %ebp
 
@@ -420,15 +433,20 @@ kernel_call_entry:
 	/* save the pointer to the current process */
 	push	%ebp
 
-	/* for stack trace */
-	movl	$0, %ebp
-
 	/*
 	 * pass the syscall arguments from userspace to the handler.
 	 * SAVE_PROCESS_CTX() does not clobber these registers, they are still
 	 * set as the userspace have set them
 	 */
 	push	%eax
+
+	/* stop user process cycles */
+	push	%ebp
+	call	cycles_accounting_stop
+	add	$4, %esp
+
+	/* for stack trace */
+	movl	$0, %ebp
 
 	call	kernel_call
 
@@ -457,6 +475,11 @@ exception_entry_from_user:
 	cld
 
 	SAVE_PROCESS_CTX(8)
+
+	/* stop user process cycles */
+	push	%ebp
+	call	cycles_accounting_stop
+	add	$4, %esp
 
 	/* for stack trace clear %ebp */
 	movl	$0, %ebp
@@ -604,6 +627,10 @@ copr_not_available:
 	jnz	0f			/* jump if FPU is already initialized */
 	orw	$MF_FPU_INITIALIZED, (%ebx)
 	fninit
+	/* stop user process cycles */
+	push	%ebp
+	call	cycles_accounting_stop
+	add	$4, %esp
 	jmp	copr_return
 0:					/* load FPU context for current process */
 	mov	%ss:FP_SAVE_AREA_P(%ebp), %eax
