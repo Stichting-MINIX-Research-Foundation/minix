@@ -32,6 +32,8 @@
 #include <minix/type.h>
 #include <minix/const.h>
 
+#include <minix/u64.h>
+
 #include "../../kernel/arch/i386/include/archtypes.h"
 #include "../../servers/pm/mproc.h"
 #include "../../kernel/const.h"
@@ -101,15 +103,22 @@ int print_proc_summary(struct proc *proc)
 
 static struct tp {
 	struct proc *p;
-	int ticks;
+	u64_t ticks;
 } tick_procs[PROCS];
 
 int cmp_ticks(const void *v1, const void *v2)
 {
 	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
-	if(p1->ticks < p2->ticks)
+
+	if (p1->ticks.hi == p2->ticks.hi) {
+		if(p1->ticks.lo < p2->ticks.lo)
+			return 1;
+		if(p1->ticks.lo > p2->ticks.lo)
+			return -1;
+	}
+	if(p1->ticks.hi < p2->ticks.hi)
 		return 1;
-	if(p1->ticks > p2->ticks)
+	if(p1->ticks.hi > p2->ticks.hi)
 		return -1;
 	if(p1->p->p_nr < p2->p->p_nr)
 		return -1;
@@ -118,14 +127,27 @@ int cmp_ticks(const void *v1, const void *v2)
 	return 0;
 }
 
+/*
+ * since we don't have true div64(u64_t, u64_t) we scale the 64 bit counters to
+ * 32. Since the samplig happens every ~1s and the counters count CPU cycles
+ * during this period, unless we have extremely fast CPU, shifting the counters
+ * by 12 make them 32bit counters which we can use for normal integer
+ * arithmetics
+ */
+#define SCALE	(1 << 12)
+
 void print_procs(int maxlines,
-	struct proc *proc1, struct proc *proc2, int dt,
+	struct proc *proc1, struct proc *proc2,
 	struct mproc *mproc)
 {
 	int p, nprocs, tot=0;
-	int idleticks = 0, kernelticks = 0, systemticks = 0;
-
-	if(dt < 1) return;
+	u64_t idleticks = cvu64(0);
+	u64_t kernelticks = cvu64(0);
+	u64_t systemticks = cvu64(0);
+	u64_t userticks = cvu64(0);
+	u64_t total_ticks = cvu64(0);
+	unsigned long tcyc;
+	unsigned long tmp;
 
 	for(p = nprocs = 0; p < PROCS; p++) {
 		if(isemptyp(&proc2[p]))
@@ -133,31 +155,47 @@ void print_procs(int maxlines,
 		tick_procs[nprocs].p = proc2 + p;
 		if(proc1[p].p_endpoint == proc2[p].p_endpoint) {
 			tick_procs[nprocs].ticks =
-				proc2[p].p_user_time-proc1[p].p_user_time;
+				sub64(proc2[p].p_cycles, proc1[p].p_cycles);
 		} else {
 			tick_procs[nprocs].ticks =
-				proc2[p].p_user_time;
+				proc2[p].p_cycles;
 		}
+		total_ticks = add64(total_ticks, tick_procs[nprocs].ticks);
 		if(p-NR_TASKS == IDLE) {
 			idleticks = tick_procs[nprocs].ticks;
 			continue;
 		}
+		if(p-NR_TASKS == KERNEL) {
+			kernelticks = tick_procs[nprocs].ticks;
+			continue;
+		}
+		if(mproc[proc2[p].p_nr].mp_procgrp == 0)
+			systemticks = add64(systemticks, tick_procs[nprocs].ticks);
+		else if (p > NR_TASKS)
+			userticks = add64(userticks, tick_procs[nprocs].ticks);
 
-		/* Kernel task time, not counting IDLE */
-		if(proc2[p].p_nr < 0)
-			kernelticks += tick_procs[nprocs].ticks;
-		else if(mproc[proc2[p].p_nr].mp_procgrp == 0)
-			systemticks += tick_procs[nprocs].ticks;
 		nprocs++;
 	}
 
+	if (!cmp64u(total_ticks, 0))
+		return;
+
 	qsort(tick_procs, nprocs, sizeof(tick_procs[0]), cmp_ticks);
 
-	printf("CPU states: %6.2f%% user, %6.2f%% system, %6.2f%% kernel, %6.2f%% idle",
-		100.0*(dt-systemticks-kernelticks-idleticks)/dt,
-		100.0*systemticks/dt,
-		100.0*kernelticks/dt,
-		100.0*idleticks/dt);
+	tcyc = div64u(total_ticks, SCALE);
+
+	tmp = div64u(userticks, SCALE);
+	printf("CPU states: %6.2f%% user, ", 100.0*(tmp)/tcyc);
+
+	tmp = div64u(systemticks, SCALE);
+	printf("%6.2f%% system, ", 100.0*tmp/tcyc);
+
+	tmp = div64u(kernelticks, SCALE);
+	printf("%6.2f%% kernel, ", 100.0*tmp/tcyc);
+
+	tmp = div64u(idleticks, SCALE);
+	printf("%6.2f%% idle", 100.0*tmp/tcyc);
+
 	printf("\n\n");
 	maxlines -= 2;
 
@@ -171,6 +209,8 @@ void print_procs(int maxlines,
 		static struct passwd *who = NULL;
 		static int last_who = -1;
 
+		unsigned long pcyc;
+
 		if(maxlines-- <= 0) break;
 
 		pnr = tick_procs[p].p->p_nr;
@@ -180,10 +220,9 @@ void print_procs(int maxlines,
 			printf("%5d ", mproc[pnr].mp_pid);
 			euid = mproc[pnr].mp_effuid;
 			name = mproc[pnr].mp_name;
-		} else	{
-			printf("[%3d] ", pnr);
-			name = pr->p_name;
-		}
+		} else
+			/* skip old kernel tasks as they don't run anymore */
+			continue;
 		if(last_who != euid || !who) {
 			who = getpwuid(euid);
 			last_who = euid;
@@ -203,8 +242,10 @@ void print_procs(int maxlines,
 		printf("%6s", pr->p_rts_flags ? "" : "RUN");
 		printf(" %3d:%02d ", (ticks/system_hz/60), (ticks/system_hz)%60);
 
+		pcyc = div64u(tick_procs[p].ticks, SCALE);
+
 		printf("%6.2f%% %s\n",
-			100.0*tick_procs[p].ticks/dt, name);
+			100.0*pcyc/tcyc, name);
 	}
 }
 
@@ -214,16 +255,13 @@ void showtop(int r)
 	double loads[NLOADS];
 	int nloads, i, p, lines = 0;
 	static struct proc prev_proc[PROCS], proc[PROCS];
+	static int preheated = 0;
 	struct winsize winsize;
         /*
 	static struct pm_mem_info pmi;
 	*/
-	static int prev_uptime, uptime;
 	static struct mproc mproc[NR_PROCS];
-	struct tms tms;
 	int mem = 0;
-
-	uptime = times(&tms);
 
 	if(ioctl(STDIN_FILENO, TIOCGWINSZ, &winsize) != 0) {
 		perror("TIOCGWINSZ");
@@ -239,9 +277,15 @@ void showtop(int r)
 	} else mem = 1;
 #endif
 
+retry:
 	if(getsysinfo(PM_PROC_NR, SI_KPROC_TAB, proc) < 0) {
 		fprintf(stderr, "getsysinfo() for SI_KPROC_TAB failed.\n");
 		exit(1);
+	}
+	if (!preheated) {
+		preheated = 1;
+		memcpy(prev_proc, proc, sizeof(prev_proc));
+		goto retry;;
 	}
 
 	if(getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc) < 0) {
@@ -266,10 +310,9 @@ void showtop(int r)
 	if(winsize.ws_row > 0) r = winsize.ws_row;
 
 	print_procs(r - lines - 2, prev_proc,
-		proc, uptime-prev_uptime, mproc);
+		proc, mproc);
 
 	memcpy(prev_proc, proc, sizeof(prev_proc));
-	prev_uptime = uptime;
 }
 
 void init(int *rows)
