@@ -71,8 +71,6 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-extern int irq_hook_id;
-
 unsigned long kbd_irq_set = 0;
 unsigned long rs_irq_set = 0;
 

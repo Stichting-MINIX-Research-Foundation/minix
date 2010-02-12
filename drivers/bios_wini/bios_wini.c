@@ -20,9 +20,9 @@
  *	14 May 2000 by Kees J. Bot: d-d/i rewrite.
  */
 
-#include <drivers.h>
-#include <libdriver/driver.h>
-#include <libdriver/drvlib.h>
+#include "../drivers.h"
+#include "../libdriver/driver.h"
+#include "../libdriver/drvlib.h"
 #include <minix/sysutil.h>
 #include <minix/safecopies.h>
 #include <sys/ioc_disk.h>

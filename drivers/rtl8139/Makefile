@@ -12,7 +12,7 @@ d = ..
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CFLAGS = -I.. -I../.. -I$i $(CPROFILE)
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
 LIBS = -lsys -ltimers 
 

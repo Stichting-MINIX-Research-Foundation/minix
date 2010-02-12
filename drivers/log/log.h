@@ -1,6 +1,6 @@
 /* Includes. */
-#include <drivers.h>
-#include <libdriver/driver.h>
+#include "../drivers.h"
+#include "../libdriver/driver.h"
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/com.h>

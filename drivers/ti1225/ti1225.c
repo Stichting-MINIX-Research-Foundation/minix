@@ -4,7 +4,7 @@ ti1225.c
 Created:	Dec 2005 by Philip Homburg
 */
 
-#include <drivers.h>
+#include "../drivers.h"
 #include <ibm/pci.h>
 #include <sys/vm_i386.h>
 

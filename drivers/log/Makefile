@@ -11,7 +11,7 @@ d = ..
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CFLAGS = -I.. -I$i $(CPROFILE)
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver
 LIBS = -ldriver  -lsys 
 LIB_DEP = ../libdriver/libdriver.a

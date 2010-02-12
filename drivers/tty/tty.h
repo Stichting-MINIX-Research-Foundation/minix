@@ -106,7 +106,6 @@ typedef struct tty {
 /* Memory allocated in tty.c, so extern here. */
 extern tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
 extern int ccurrent;		/* currently visible console */
-extern int irq_hook_id;		/* hook id for keyboard irq */
 extern u32_t system_hz;		/* system clock frequency */
 
 extern unsigned long kbd_irq_set;

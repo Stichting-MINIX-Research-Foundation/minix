@@ -300,7 +300,7 @@ PUBLIC int last_transfer_opcode;
 /*===========================================================================*
  *				floppy_task				     *
  *===========================================================================*/
-PUBLIC int main()
+PUBLIC int main(void)
 {
   /* SEF local startup. */
   sef_local_startup();
