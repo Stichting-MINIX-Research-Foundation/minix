@@ -40,6 +40,8 @@ PUBLIC void main()
    /* Global value to test segment sanity. */
    magictest = MAGICTEST;
  
+   DEBUGMAX(("main()\n"));
+
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
    * privilege structures for the system processes. 
@@ -75,6 +77,7 @@ PUBLIC void main()
 	int ipc_to_m, kcalls;
 
 	ip = &image[i];				/* process' attributes */
+	DEBUGMAX(("initializing %s... ", ip->proc_name));
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
@@ -203,15 +206,22 @@ PUBLIC void main()
 	if (rp->p_nr < 0) RTS_SET(rp, RTS_PROC_STOP);
 	RTS_UNSET(rp, RTS_SLOT_FREE); /* remove RTS_SLOT_FREE and schedule */
 	alloc_segments(rp);
+	DEBUGMAX(("done\n"));
   }
 
   /* Architecture-dependent initialization. */
+  DEBUGMAX(("arch_init()... "));
   arch_init();
+  DEBUGMAX(("done\n"));
 
   /* System and processes initialization */
+  DEBUGMAX(("system_init()... "));
   system_init();
+  DEBUGMAX(("done\n"));
   /* Initialize timers handling */
+  DEBUGMAX(("clock_init()... "));
   clock_init();
+  DEBUGMAX(("done\n"));
 
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
@@ -251,7 +261,9 @@ PUBLIC void main()
   FIXME("PROC check enabled");
 #endif
 
+  DEBUGMAX(("cycles_accounting_init()... "));
   cycles_accounting_init();
+  DEBUGMAX(("done\n"));
 
   restart();
   NOT_REACHABLE;

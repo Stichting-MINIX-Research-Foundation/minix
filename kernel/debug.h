@@ -82,4 +82,11 @@
 #define BOOT_VERBOSE(x)
 #endif
 
+#ifdef _SYSTEM
+#define DEBUG_PRINT(params, level) do { \
+	if (verboseboot >= (level)) kprintf params; } while (0)
+#define DEBUGBASIC(params) DEBUG_PRINT(params, VERBOSEBOOT_BASIC)
+#define DEBUGMAX(params)   DEBUG_PRINT(params, VERBOSEBOOT_MAX)
+#endif
+
 #endif /* DEBUG_H */

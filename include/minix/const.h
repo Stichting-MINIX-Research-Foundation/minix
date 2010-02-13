@@ -146,3 +146,9 @@
 #define CHECK_IO_PORT   0x20    /* check if I/O request is allowed */
 #define CHECK_IRQ       0x40    /* check if IRQ can be used */
 #define CHECK_MEM       0x80    /* check if (VM) mem map request is allowed */
+
+/* Values for the "verbose" boot monitor variable */
+#define VERBOSEBOOT_QUIET 0
+#define VERBOSEBOOT_BASIC 1
+#define VERBOSEBOOT_MAX   2
+#define VERBOSEBOOTVARNAME "verbose"

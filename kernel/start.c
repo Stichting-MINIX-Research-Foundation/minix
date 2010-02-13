@@ -39,6 +39,12 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   /* Copy the boot parameters to the local buffer. */
   arch_get_params(params_buffer, sizeof(params_buffer));
 
+  /* determine verbosity */
+  if ((value = get_value(params_buffer, VERBOSEBOOTVARNAME)))
+	  verboseboot = atoi(value);
+
+  DEBUGMAX(("cstart\n"));
+
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
   kinfo.nr_tasks = NR_TASKS;
@@ -97,6 +103,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
    * reload selectors and call main().
    */
 
+  DEBUGMAX(("intr_init(%d, 0)\n", INTS_MINIX));
   intr_init(INTS_MINIX, 0);
 }
 
