@@ -12,6 +12,7 @@
  *   May 2009 (D.C. van Moolenbroek)
  */
 
+#define _MINIX 1
 #include <stdlib.h>
 #include <string.h>
 #include <minix/config.h>
