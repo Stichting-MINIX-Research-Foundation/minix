@@ -51,11 +51,7 @@
 
 #if (CHIP == M68000)
 #define __mc68000__	/* controls processor-dependent stuff */
-#if (MACHINE == ATARI)
-#define MINIX_ST	/* controls system-dependent stuff */
-#else
 #error "only the MINIX_ST 1.5.x implementation works on 68K's"
-#endif
 #endif
 
 #if (CHIP == INTEL)

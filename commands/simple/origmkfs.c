@@ -69,10 +69,6 @@ maybedefine O_RDONLY 4		/* O_RDONLY | BINARY_BIT */
  maybedefine BWRITE 5		/* O_WRONLY | BINARY_BIT */
 #endif
 
-#if (MACHINE == ATARI)
-int isdev;
-#endif
-
 extern char *optarg;
 extern int optind;
 
@@ -297,25 +293,7 @@ char *argv[];
 
   cache_init();
 
-#if (MACHINE == ATARI)
-  if (isdev) {
-	char block0[BLOCK_SIZE];
-	get_block((block_t) 0, block0);
-	/* Need to read twice; first time gets an empty block */
-	get_block((block_t) 0, block0);
-	/* Zero parts of the boot block so the disk won't be
-	 * recognized as a tos disk any more. */
-	block0[0] = block0[1] = 0;	/* branch code to boot code    */
-	strncpy(&block0[2], "MINIX ", (size_t) 6);
-	block0[16] = 0;		/* number of FATS              */
-	block0[17] = block0[18] = 0;	/* number of dir entries       */
-	block0[22] = block0[23] = 0;	/* sectors/FAT                 */
-	bzero(&block0[30], 480);/* boot code                   */
-	put_block((block_t) 0, block0);
-  } else
-#endif
-
-	put_block((block_t) 0, zero);	/* Write a null boot block. */
+  put_block((block_t) 0, zero);	/* Write a null boot block. */
 
   zone_shift = 0;		/* for future use */
   zones = nrblocks >> zone_shift;
@@ -1306,17 +1284,6 @@ char *string;
   close(fd);
   fd = open(string, O_RDWR);
   if (fd < 0) pexit("Can't open special file");
-#if (MACHINE == ATARI)
-  {
-	struct stat statbuf;
-
-	if (fstat(fd, &statbuf) < 0) return;
-	isdev = (statbuf.st_mode & S_IFMT) == S_IFCHR
-		||
-		(statbuf.st_mode & S_IFMT) == S_IFBLK
-		;
-  }
-#endif
 }
 
 

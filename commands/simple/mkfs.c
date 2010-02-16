@@ -66,10 +66,6 @@ maybedefine O_RDONLY 4		/* O_RDONLY | BINARY_BIT */
  maybedefine BWRITE 5		/* O_WRONLY | BINARY_BIT */
 #endif
 
-#if (MACHINE == ATARI)
-int isdev;
-#endif
-
 extern char *optarg;
 extern int optind;
 
@@ -1504,17 +1500,6 @@ char *string;
   close(fd);
   fd = open(string, O_RDWR);
   if (fd < 0) pexit("Can't open special file");
-#if (MACHINE == ATARI)
-  {
-	struct stat statbuf;
-
-	if (fstat(fd, &statbuf) < 0) return;
-	isdev = (statbuf.st_mode & S_IFMT) == S_IFCHR
-		||
-		(statbuf.st_mode & S_IFMT) == S_IFBLK
-		;
-  }
-#endif
 }
 
 

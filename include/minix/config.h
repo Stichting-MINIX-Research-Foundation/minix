@@ -25,10 +25,6 @@
 #define MACHINE      _MINIX_MACHINE
 
 #define IBM_PC       _MACHINE_IBM_PC
-#define SUN_4        _MACHINE_SUN_4
-#define SUN_4_60     _MACHINE_SUN_4_60
-#define ATARI        _MACHINE_ATARI
-#define MACINTOSH    _MACHINE_MACINTOSH
 
 /* Number of slots in the process table for non-kernel processes. The number
  * of system processes defines how many processes with special privileges 
