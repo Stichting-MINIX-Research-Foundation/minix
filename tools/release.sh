@@ -236,7 +236,7 @@ echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/bigsh /bin/sh /bin/echo $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/flex $RELEASEDIR/usr/bin
+cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/flex /usr/bin/asmconv $RELEASEDIR/usr/bin
 
 if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a -f $PACKAGELIST -a -f $PACKAGESOURCELIST -a $PACKAGES -ne 0 ]
 then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
@@ -320,6 +320,9 @@ then	date >$RELEASEDIR/CD
 fi
 echo " * Chroot build"
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
+mkdir -p $RELEASEDIR/etc/mk
+chmod -R 755 $RELEASEDIR/etc/
+cp ../etc/mk/* $RELEASEDIR/etc/mk/
 chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 # Copy built images for cd booting
 cp $RELEASEDIR/boot/image_big image

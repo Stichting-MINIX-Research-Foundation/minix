@@ -74,18 +74,6 @@ if $PROGRAM = cc
 		RTSO = -.c
 	LIBS = $LIBS + -.c
 
-arg -.mod
-if $PROGRAM = m2
-	ifndef RTSO
-		RTSO = -.mod
-	LIBS = $LIBS + -.mod
-
-arg -.p
-if $PROGRAM = pc
-	ifndef RTSO
-		RTSO = -.p
-	LIBS = $LIBS + -.p
-
 # Omit the runtime startoff, but keep the libraries.
 arg -.o
 	RTSO =
@@ -315,24 +303,6 @@ transform .i .k
 		RTSO = -.c
 	LIBS = $LIBS + -.c
 
-# Compile Modula-2 source to EM-code.
-transform .mod .k
-	ifhash $*
-		apply .c .i
-	$ACK_M2 $* $>
-	ifndef RTSO
-		RTSO = -.mod
-	LIBS = $LIBS + -.mod
-
-# Compile Pascal source to EM-code.
-transform .p .k
-	ifhash $*
-		apply .c .i
-	$ACK_PC $* $>
-	ifndef RTSO
-		RTSO = -.p
-	LIBS = $LIBS + -.p
-
 # Compact EM to readable EM.
 transform .k .e
 transform .m .e
@@ -393,23 +363,13 @@ combine (.o .a) .out
 	rtso =
 	if $RTSO = -.c
 		rtso = $A/$ARCH/crtso.o
-	if $RTSO = -.mod
-		rtso = $A/$ARCH/m2rtso.o
-	if $RTSO = -.p
-		rtso = $A/$ARCH/prtso.o
-	libm2 = ; libp = ; libd = ; libc = ; libfp =
-	if (-.mod - $LIBS) = ()
-		libm2 = $A/$ARCH/libm2.a
-		libc = $A/$ARCH/libc.a
-	if (-.p - $LIBS) = ()
-		libp = $A/$ARCH/libp.a
-		libc = $A/$ARCH/libc.a
+	libd = ; libc = ; libfp =
 	if (-.c - $LIBS) = ()
 		libd = $A/$ARCH/libd.a
 		libc = $A/$ARCH/libc.a
 	if (-fsoft - $LIBS) = ()
 		libfp = $A/$ARCH/libfp.a
-	libs = $libm2 $libp $libd $libc $libfp $A/$ARCH/libe.a
+	libs = $libd $libc $libfp $A/$ARCH/libe.a
 	ifndef OUT
 		OUT = a.out
 	if (-r - $MODEL) = ()
@@ -418,7 +378,7 @@ combine (.o .a) .out
 	else
 		# Combine to an executable.
 		mktemp EXE
-		$ACK_LED $model -o $EXE $rtso $* $libs $A/$ARCH/end.a
+		$ACK_LED $model -o $EXE $rtso $* $libs $A/$ARCH/libend.a
 		$ACK_CV -x -m$ARCH $EXE $OUT
 
 # Add object files to a library.

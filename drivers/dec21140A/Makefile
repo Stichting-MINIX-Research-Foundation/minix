@@ -37,7 +37,3 @@ depend:
 ##  Clean directory
 clean:
 	@rm -f $(DRIVER) *.o *.BAK *~
-
-include .depend
-
-##  end

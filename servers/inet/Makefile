@@ -29,7 +29,7 @@ inet:	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) version.c $(LIBS)
 
 install: inet
-	install -c $< /usr/sbin/inet
+	install -c inet /usr/sbin/inet
 
 clean:
 	rm -f $(OBJ) inet *.bak
@@ -37,8 +37,6 @@ clean:
 depend: 
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c generic/*.c > .depend
 
-# Include generated dependencies.
-include .depend
 
 #
 # $PchId: Makefile.mnx3,v 1.1 2005/06/28 14:28:45 philip Exp $

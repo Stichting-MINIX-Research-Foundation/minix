@@ -1,9 +1,0 @@
-# Makefile for lib/ack/i386/head.
-
-#ASFLAGS = -I.
-
-LIBRARIES=libe
-
-libe_FILES=em_head.s
-
-TYPE=ack

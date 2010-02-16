@@ -1,22 +1,54 @@
-# Makefile for make (!)
+#	$NetBSD: Makefile.boot,v 1.19 2009/01/24 11:59:39 dsl Exp $
+#
+# a very simple makefile...
+#
+# You only want to use this if you aren't running NetBSD.
+#
+# modify MACHINE and MACHINE_ARCH as appropriate for your target architecture
+#
+#CC=gcc -O -g
+CC=cc
+CFLAGS=-g -Wall -DHAVE_SETENV -DHAVE_STRERROR -DHAVE_STRDUP -DHAVE_STRFTIME -DHAVE_VSNPRINTF -DUSE_SELECT -D_POSIX_SOURCE -D_MINIX
 
-CFLAGS = -O -Dunix -D_MINIX -D_POSIX_SOURCE
-CC = exec cc
+.c.o:
+	${CC} ${CFLAGS} -c $< -o $@
 
-OBJ =	check.o input.o macro.o main.o make.o reader.o rules.o archive.o
+MACHINE=i386
+MACHINE_ARCH=i386
+# tested on HP-UX 10.20
+#MAKE_MACHINE=hp700
+#MAKE_MACHINE_ARCH=hppa
+CFLAGS+= -DTARGET_MACHINE=\"${MACHINE}\" \
+	-DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
+	-DMAKE_MACHINE=\"${MACHINE}\"
+LIBS=
 
-all:	make
+OBJ=arch.o buf.o compat.o cond.o dir.o for.o hash.o job.o main.o make.o \
+    make_malloc.o parse.o str.o strlist.o suff.o targ.o trace.o var.o util.o
 
-make :	$(OBJ)
-	$(CC) -i -o make $(OBJ)
-	install -S 330k make
+LIBOBJ= lst.lib/lstAppend.o lst.lib/lstAtEnd.o lst.lib/lstAtFront.o \
+	lst.lib/lstClose.o lst.lib/lstConcat.o lst.lib/lstDatum.o \
+	lst.lib/lstDeQueue.o lst.lib/lstDestroy.o lst.lib/lstDupl.o \
+	lst.lib/lstEnQueue.o lst.lib/lstFind.o lst.lib/lstFindFrom.o \
+	lst.lib/lstFirst.o lst.lib/lstForEach.o lst.lib/lstForEachFrom.o \
+	lst.lib/lstInit.o lst.lib/lstInsert.o lst.lib/lstIsAtEnd.o \
+	lst.lib/lstIsEmpty.o lst.lib/lstLast.o lst.lib/lstMember.o \
+	lst.lib/lstNext.o lst.lib/lstOpen.o lst.lib/lstRemove.o \
+	lst.lib/lstReplace.o lst.lib/lstSucc.o lst.lib/lstPrev.o
 
-install:	/usr/bin/make
+all:    make
 
-/usr/bin/make:	make
+make: ${OBJ} ${LIBOBJ}
+#	@echo 'make of make and make.0 started.'
+	${CC} ${CFLAGS} ${OBJ} ${LIBOBJ} -o make ${LIBS}
+	@ls -l $@
+#	nroff -h -man make.1 > make.0
+#	@echo 'make of make and make.0 completed.'
+
+install:        /usr/bin/make
+
+/usr/bin/make:  make
 	install -c -o bin make $@
- 
-$(OBJ): h.h
 
 clean:
-	rm -f *.o *.bak core make
+	rm -f ${OBJ} ${LIBOBJ} ${PORTOBJ} make

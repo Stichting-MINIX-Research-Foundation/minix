@@ -465,7 +465,7 @@ in.rshd:	in.rshd.c
 	@install -S 8kw $@
 
 installx:	install.c	# Note: avoided confict with 'install' rule.
-	$(CCLD) -o $@ $<
+	$(CCLD) -o $@ install.c
 
 intr:	intr.c
 	$(CCLD) -o $@ intr.c
@@ -1123,617 +1123,618 @@ install:	\
 	#
 
 /usr/bin/add_route:	add_route
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/del_route:	/usr/bin/add_route
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/arp:	arp
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/at:	at
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/backup:	backup
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/restore:	/usr/bin/backup
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/badblocks:	badblocks
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/banner:	banner
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/basename:	basename
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cal:	cal
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/calendar:	calendar
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cat:	cat
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cdiff:	cdiff
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cdprobe: cdprobe
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cgrep:	cgrep
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/chmem:	chmem
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/chmod:	chmod
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/chown:	chown
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/chroot:	chroot
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/chgrp:	/usr/bin/chown
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/ci:	ci
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cksum:	cksum
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cleantmp:	cleantmp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cmp:	cmp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/co:	co
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/comm:	comm
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/compress:	compress
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/uncompress /usr/bin/zcat:	/usr/bin/compress
-	install -l $< $@
+	install -l $> $@
 
 /bin/cp:	cp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cp:	cp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/clone /usr/bin/cpdir \
 /usr/bin/ln /usr/bin/mv /usr/bin/rm:	/usr/bin/cp
-	install -l $< $@
+	install -l $> $@
 
 /bin/ln /bin/mv /bin/rm:	/bin/cp
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/crc:	crc
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/cut:	cut
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/dd:	dd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/dev2name:	dev2name
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/devsize:	devsize
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/decomp16:	decomp16
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/df:	df
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/dhrystone:	dhrystone
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/diff:	diff
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/dirname:	dirname
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/du:	du
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/dumpcore:	dumpcore
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/ed:	ed
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/eject:	eject
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/env:	env
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/expand:	expand
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/factor:	factor
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fgrep:	fgrep
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/file:	file
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/find:	find
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/finger:	finger
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fix:	fix
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fold:	fold
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fortune:	fortune
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fsck:	fsck
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fsck1:	fsck1
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/getty:	getty
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/getty:	getty
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/gomoku:	gomoku
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/grep:	grep
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/egrep:	/usr/bin/grep
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/head:	head
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/host:	host
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/hostaddr:	hostaddr
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/id:	id
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/ifconfig:	ifconfig
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/ifdef:	ifdef
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/in.fingerd:	in.fingerd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/in.rshd:	in.rshd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/install:	installx
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/install:	installx
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/intr:	intr
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/ipcs:	ipcs
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/ipcrm:	ipcrm
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/irdpd:	irdpd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/isoread:	isoread
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/isodir /usr/bin/isoinfo:	/usr/bin/isoread
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/join:	join
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/kill:	kill
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/last:	last
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/uptime:	/usr/bin/last
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/leave:	leave
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/life:	life
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/loadramdisk:	loadramdisk
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/login:	login
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/look:	look
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/lp:	lp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/lpd:	lpd
-	install -cs -o daemon -m 4755 $< $@
+	install -cs -o daemon -m 4755 $> $@
 
 /usr/bin/ls:	ls
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/ls:	ls
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/lspci:	lspci
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mail:	mail
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/man:	man
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mesg:	mesg
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mkdir:	mkdir
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mkfifo:	mkfifo
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mkfs:	mkfs
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mknod:	mknod
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mkproto:	mkproto
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/modem:	modem
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/mount:	mount
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/mt:	mt
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/newroot:	newroot
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/nm:	nm
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/nice:	nice
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/nohup:	nohup
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/nonamed:	nonamed
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/od:	od
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/passwd:	passwd
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/chfn /usr/bin/chsh:	/usr/bin/passwd
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/paste:	paste
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/ping:	ping
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/pr:	pr
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/pr_routes:	pr_routes
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/progressbar:	progressbar
-	install -cs -o root -m 755 $< $@
+	install -cs -o root -m 755 $> $@
 
 /usr/bin/prep:	prep
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/printf:	printf
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/printenv:	/usr/bin/env
 	install -ls -o bin /usr/bin/env /usr/bin/printenv
 
 /usr/bin/printroot:	printroot
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/proto:	proto
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/pwd:	pwd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/lib/pwdauth:	pwdauth
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/ramdisk:	ramdisk
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rarpd:	rarpd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rcp:	rcp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rawspeed:	rawspeed
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rdate:	rdate
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/readall:	readall
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/readlink:	/usr/bin/stat
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/readfs:	readfs
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/remsync:	remsync
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rev:	rev
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rget:	rget
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rput:	/usr/bin/rget
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/rlogin:	rlogin
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rmdir:	rmdir
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/rsh:	rsh
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/sed:	sed
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/sed:	sed
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/shar:	shar
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/size:	size
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/sleep:	sleep
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/slip:	slip
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/sort:	sort
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/split:	split
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/stat:	stat
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/fstat:	/usr/bin/stat
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/strings:	strings
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/strip:	strip
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/stty:	stty
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/su:	su
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/sum:	sum
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/swapfs:	swapfs
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/sync:	sync
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/synctree:	synctree
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/sysenv:	sysenv
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/sysenv:	sysenv
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tail:	tail
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tar:	tar
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tcpd:	tcpd
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tcpdp:	tcpdp
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tcpstat:	tcpstat
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tee:	tee
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/term:	term
-	install -cs -o bin -g uucp -m 2755 $< $@
+	install -cs -o bin -g uucp -m 2755 $> $@
 
 /usr/bin/termcap:	termcap
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tget:	tget
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/time:	time
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/top:	top
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/touch:	touch
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tr:	tr
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/truncate:	truncate
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tsort:	tsort
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/ttt:	ttt
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/tty:	tty
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/udpstat:	udpstat
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/umount:	umount
-	install -cs -o root -m 4755 $< $@
+	install -cs -o root -m 4755 $> $@
 
 /usr/bin/uname:	uname
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/arch:	/usr/bin/uname
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/unexpand:	unexpand
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/uniq:	uniq
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/update:	update
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/uud:	uud
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/uudecode:	/usr/bin/uud
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/uue:	uue
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/uuencode:	/usr/bin/uue
-	install -l $< $@
+	install -l $> $@
 
 /usr/bin/vol:	vol
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/wc:	wc
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/which:	which
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/who:	who
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/whoami:	whoami
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/write:	write
-	install -cs -o bin -g tty -m 2755 $< $@
+	install -cs -o bin -g tty -m 2755 $> $@
 
 /usr/bin/writeisofs:	writeisofs
-	install -cs -S 2M -o bin $< $@
+	install -cs -S 2M -o bin $> $@
 
 /usr/bin/xargs:	xargs
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/yes:	yes
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /bin/cat:	/usr/bin/cat
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/fsck:	/usr/bin/fsck
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/intr:	/usr/bin/intr
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/mount:	/usr/bin/mount
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/printroot:	/usr/bin/printroot
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/pwd:	/usr/bin/pwd
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/sync:	/usr/bin/sync
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/umount:	/usr/bin/umount
-	install -lcs $< $@
+	install -lcs $> $@
 
 clean:
 	rm -rf $(ALL) a.out core
+

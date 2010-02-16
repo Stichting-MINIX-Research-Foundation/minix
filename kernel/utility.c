@@ -1,6 +1,6 @@
 /* This file contains a collection of miscellaneous procedures:
  *   minix_panic:    abort MINIX due to a fatal error
- *   kprintf:       (from lib/sysutil/kprintf.c)
+ *   kprintf:       (from libsys/kprintf.c)
  *   kputc:         buffered putc used by kernel kprintf
  */
 
@@ -52,7 +52,7 @@ if (minix_panicing++) {
 /* Include system printf() implementation named kprintf() */
 
 #define printf kprintf
-#include "../lib/sysutil/kprintf.c"
+#include "../lib/libsys/kprintf.c"
 
 /*===========================================================================*
  *				kputc				     	     *

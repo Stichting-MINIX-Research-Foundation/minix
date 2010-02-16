@@ -3,11 +3,11 @@ set -e
 export SHELL=/bin/sh
 cd /usr/src 
 make etcfiles
-su bin -c 'make world install' 
+su bin -c 'make world'
 cd tools 
 rm revision
 rm /boot/image/*
-make install 
+make install
 cp /boot/image/* /boot/image_big  # Make big image accessible by this name
 cp ../boot/boot /boot/boot 
 cd /usr/src 

@@ -38,6 +38,4 @@ clean:
 depend: 
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
 
-# Include generated dependencies.
-include .depend
 

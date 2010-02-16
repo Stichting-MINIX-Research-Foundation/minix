@@ -109,6 +109,4 @@ depend:
 proto.gen: $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
 
-# Include generated dependencies.
-include .depend
 

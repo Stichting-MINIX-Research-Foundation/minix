@@ -31,6 +31,4 @@ depend:
 phony:
 	@:
 
-# Include generated dependencies.
-include .depend
 

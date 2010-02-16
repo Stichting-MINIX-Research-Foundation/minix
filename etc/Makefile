@@ -7,6 +7,7 @@ FILES1=fstab group hostname.file inet.conf motd.install mtab passwd profile \
 	rs.inet rs.single make.conf system.conf
 FILES2=shadow
 FILES3=daily dhcptags.conf rc
+DIR1=mk
 
 all::
 
@@ -17,6 +18,7 @@ install::
 	mkdir -p $(ETC)
 	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
 	@for f in $(FILES2); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 600 $(ETC)/$$f; fi; done
+	@for d in $(DIR1); do if [ -d $(ETC)/$$d ]; then :; else cp -r $$d $(ETC)/; chmod -r 755 $(ETC)/$$d; fi; done
 	@echo "Making hierarchy.."
 	sh mtree.sh mtree/minix.tree
 	@for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then :; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done

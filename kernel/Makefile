@@ -50,5 +50,3 @@ depend:
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Include generated dependencies.
-include .depend

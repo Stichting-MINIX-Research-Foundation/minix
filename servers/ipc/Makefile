@@ -13,7 +13,7 @@ CFLAGS = $(CPROFILE) $(CPPFLAGS)
 all build:	$(SERVER)
 
 install: $(SERVER)
-	install -o root -c $< /usr/sbin/$(SERVER) 
+	install -o root -c $(SERVER) /usr/sbin/$(SERVER)
 
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys  
@@ -25,6 +25,4 @@ clean:
 depend: 
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
-# Include generated dependencies.
-include .depend
 

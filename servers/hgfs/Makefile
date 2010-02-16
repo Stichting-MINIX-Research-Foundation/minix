@@ -29,6 +29,3 @@ clean:
 depend:
 	cd $(LIBHGFSDIR) && $(MAKE) $@
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-# Include generated dependencies.
-include .depend

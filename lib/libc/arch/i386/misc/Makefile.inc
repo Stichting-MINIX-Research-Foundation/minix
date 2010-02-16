@@ -1,0 +1,23 @@
+# misc sources
+.PATH: ${.CURDIR}/arch/${ARCH}/misc
+
+SRCS+=  \
+	_cpuid.s \
+	_cpufeature.c \
+	alloca.s \
+	get_bp.s \
+	getprocessor.s \
+	io_inb.s \
+	io_inl.s \
+	io_insb.s \
+	io_insl.s \
+	io_insw.s \
+	io_intr.s \
+	io_inw.s \
+	io_outb.s \
+	io_outl.s \
+	io_outsb.s \
+	io_outsl.s \
+	io_outsw.s \
+	io_outw.s \
+	oneC_sum.s

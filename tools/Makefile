@@ -29,7 +29,6 @@ usage:
 	@echo "	make depend     # Generate dependency files" >&2
 	@echo "	make libraries  # Make system libraries" >&2
 	@echo "	make services   # Compile and install all services" >&2
-	@echo "	make fresh      # Make clean, libraries, and services" >&2
 	@echo "	make image      # Make needed services and create boot image" >&2
 	@echo "	make install    # Make image, and install to hard disk" >&2
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
@@ -41,12 +40,6 @@ usage:
 	@echo "	make clean install      # new boot image" >&2
 	@echo "	make fresh install      # new everything" >&2
 	@echo " " >&2
-
-# create a fresh configuration or system image
-fresh: 
-	cd ../lib && $(MAKE) clean
-	$(MAKE) clean 
-	$(MAKE) libraries services
 
 all: services image
 
@@ -75,10 +68,7 @@ services: includes
 	cd ../drivers && $(MAKE) install
 
 libraries: includes
-	cd ../lib && $(MAKE) clean
-	cd ../lib && $(MAKE) all
-	cd ../lib && $(MAKE) install
-
+	cd ../lib && sh ack_build.sh clean obj depend all install
 
 # make bootable and place system images
 bootable:

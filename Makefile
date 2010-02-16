@@ -1,6 +1,6 @@
 # Master Makefile to compile everything in /usr/src except the system.
 
-MAKE	= exec make -$(MAKEFLAGS)
+MAKE=make
 
 usage:
 	@echo "" 
@@ -11,7 +11,7 @@ usage:
 	@echo "	make world      # Compile everything (libraries & commands)" 
 	@echo "	make includes   # Install include files from src/" 
 	@echo "	make libraries  # Compile and install libraries" 
-	@echo "	make cmds       # Compile all, commands, but don't install" 
+	@echo "	make commands   # Compile all, commands, but don't install"
 	@echo "	make install    # Compile and install commands" 
 	@echo "	make depend     # Generate required .depend files" 
 	@echo "	make clean      # Remove all compiler results" 
@@ -27,19 +27,19 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: includes depend libraries cmds install postinstall
+world: includes depend libraries install postinstall
 
 includes:
 	cd include && $(MAKE) install gcc
 
 libraries:
-	cd lib && $(MAKE) all install
+	cd lib && sh ack_build.sh obj depend all install
 
-cmds:
-	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) all; fi
+gnu-libraries:
+	cd lib && sh gnu_build.sh obj depend all install
 
-install::
-	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) install; fi
+commands:
+	cd commands && $(MAKE) all
 
 depend::
 	mkdep kernel
@@ -49,23 +49,33 @@ depend::
 	cd servers && $(MAKE) $@
 	cd drivers && $(MAKE) $@
 
-
-clean::
-	cd lib && $(MAKE) $@
-	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
-
 etcfiles::
 	cd etc && $(MAKE) install
 
-clean::
-	cd test && $(MAKE) $@
+all::
+	cd boot && $(MAKE) all
+	cd man && $(MAKE) all
+	cd commands && $(MAKE) all
+	cd tools && $(MAKE) all
+	cd servers && $(MAKE) all
 
-all install clean::
-	cd boot && $(MAKE) $@
-	cd man && $(MAKE) $@	# First manpages, then commands
-	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
-	cd tools && $(MAKE) $@
-	cd servers && $(MAKE) $@
+install::
+	cd boot && $(MAKE) all install
+	cd man && $(MAKE) all install
+	cd commands && $(MAKE) all install
+	cd tools && $(MAKE) all install
+	cd servers && $(MAKE) all install
+
+clean::
+	cd boot && $(MAKE) clean
+	cd man && $(MAKE) clean
+	cd commands && $(MAKE) clean
+	cd tools && $(MAKE) clean
+	cd servers && $(MAKE) clean
+	cd lib && sh ack_build.sh clean
+	cd lib && sh gnu_build.sh clean
+	cd commands && $(MAKE) clean
+	cd test && $(MAKE) clean
 
 postinstall:
 	cd etc && $(MAKE) $@

@@ -8,6 +8,8 @@
 # Added option to generate .depend files in subdirectories of given dir.
 # 							Jorrit N. Herder
 
+set -e
+
 case $# in
 
 # Display help ...
@@ -36,6 +38,7 @@ case $# in
 		: < "$f" || exit
 
 		o=`expr "$f" : '\(.*\)\..*'`.o
+		o=`basename $o`
 
 		echo
 
@@ -43,6 +46,8 @@ case $# in
 			sed -e '/^#/!d
 				s/.*"\(.*\)".*/\1/
 				s:^\./::' \
+			    -e '/^<built-in>$/d' \
+			    -e '/^<command line>$/d' \
 			    -e "s:^:$o\:	:" | \
 			sort -u
 	done

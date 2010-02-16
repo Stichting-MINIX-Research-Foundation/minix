@@ -54,9 +54,6 @@ For C, the typical idiom is to add in all your
 		# repeat for each subdirectory
 		mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend 
 .PP
-	# Include generated dependencies.
-	include .depend 
-.PP
 .fi 
 .SH "SEE ALSO"
 .BR cc (1),

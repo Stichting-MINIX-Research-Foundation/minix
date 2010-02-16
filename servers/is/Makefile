@@ -30,7 +30,7 @@ $(SERVER):	$(OBJ)
 
 # install with other servers
 install:	$(SERVER)
-	install -o root -c $< /sbin/$(SERVER) 
+	install -o root -c $(SERVER) /sbin/$(SERVER)
 
 # clean up local files
 clean:
@@ -39,6 +39,4 @@ clean:
 depend: 
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
-# Include generated dependencies.
-include .depend
 

@@ -1,4 +1,0 @@
-
-SUBDIRS="em head"
-
-TYPE=ack

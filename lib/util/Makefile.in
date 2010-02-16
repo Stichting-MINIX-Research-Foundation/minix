@@ -1,9 +1,0 @@
-# Makefile for lib/util.
-
-CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
-
-LIBRARIES=libutil
-
-libutil_FILES=openpty.c
-
-TYPE=both

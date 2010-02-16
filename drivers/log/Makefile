@@ -26,7 +26,7 @@ $(DRIVER):	$(OBJ) $(LIB_DEP)
 
 # install with other drivers
 install:	$(DRIVER)
-	install -o root -cs $< /sbin/$(DRIVER) 
+	install -o root -cs $(DRIVER) /sbin/$(DRIVER)
 
 # clean up local files
 clean:
@@ -36,6 +36,4 @@ clean:
 depend: 
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
 
-# Include generated dependencies.
-include .depend
 

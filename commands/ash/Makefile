@@ -55,16 +55,16 @@ sh:	$(OBJS)
 install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 
 /usr/bin/ash:	sh
-	install -cs -o bin $< $@
+	install -cs -o bin $> $@
 
 /usr/bin/sh:	/usr/bin/ash
-	install -l $< $@
+	install -l $> $@
 
 /bin/sh:	/usr/bin/ash
-	install -lcs $< $@
+	install -lcs $> $@
 
 /bin/bigsh:	/usr/bin/ash
-	install -S 6600k -lcs $< $@
+	install -S 6600k -lcs $> $@
 
 clean:
 	rm -f $(CLEANFILES) sh core
@@ -109,6 +109,9 @@ mksyntax: mksyntax.c parser.h
 	$(CC) $(CFLAGS) mksyntax.c -o $@
 
 bltin/operators.h:	bltin/mkexpr bltin/unary_op bltin/binary_op
+	cd bltin && sh mkexpr unary_op binary_op
+
+bltin/operators.c:	bltin/mkexpr bltin/unary_op bltin/binary_op
 	cd bltin && sh mkexpr unary_op binary_op
 
 # Dependencies you say?  This will have to do.

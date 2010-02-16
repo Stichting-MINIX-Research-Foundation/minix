@@ -1,3 +1,13 @@
+20100215:
+        Make(1) has been replaced: Run 'make install' in commands/make
+        Mkdep updates: Copy commands/scripts/mkdep.sh to /usr/bin/mkdep
+        Make(1) needs mkfiles: Copy files in etc/mk to /etc/mk
+        ACK update: Copy commands/i386/acd.descr to /usr/lib/descr
+        End.a renamed:
+           -Copy /usr/lib/i86/end.a to /usr/lib/i86/libend.a
+           -Copy /usr/lib/i386/end.a to /usr/lib/i386/libend.a
+           -Copy /usr/gnu/lib/end.a to /usr/gnu/lib/libend.a
+        Asmconv updates: Run 'make install' in commands/i386/asmconv
 20091212:
         /etc/drivers.conf has been renamed to /etc/system.conf.
         user "service" has been added to password file /etc/passwd.
