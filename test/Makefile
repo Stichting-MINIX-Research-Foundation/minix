@@ -26,7 +26,7 @@ $(BIGOBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
 
 $(GCCOBJ):
-	[ ! -x $(GCC) ] || $(GCC) $(CFLAGS-GCC) -o $@ $<
+	[ ! -x $(GCC) ] || $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c
 
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
