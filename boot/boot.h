@@ -187,9 +187,9 @@ void readerr(off_t sec, int err);
 			/* Report a read error. */
 char *ul2a(u32_t n, unsigned b), *ul2a10(u32_t n);
 			/* Transform u32_t to ASCII at base b or base 10. */
-long a2l(char *a);
+long a2l(const char *a);
 			/* Cheap atol(). */
-unsigned a2x(char *a);
+unsigned a2x(const char *a);
 			/* ASCII to hex. */
 dev_t name2dev(char *name);
 			/* Translate a device name to a device number. */

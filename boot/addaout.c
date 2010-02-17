@@ -20,34 +20,35 @@
 #define OUTPUT_FILE	2
 
 /* Report problems. */
-void report(char *problem, char *message) 
+static void report(const char *problem, const char *message) 
 {
   fprintf(stderr, "%s:\n", problem);
   fprintf(stderr, "   %s\n\n", message);
 }
 
 
-int copy_data(int srcfd, int dstfd) 
+static int copy_data(int srcfd, int dstfd) 
 {
     char buf[8192];
     ssize_t n;
     int total=0;
 
+    /** FIXME: handle error from read() */
+
     /* Copy the little bytes themselves. (Source from cp.c). */
     while ((n= read(srcfd, buf, sizeof(buf))) > 0) {
 	char *bp = buf;
-	ssize_t r;
+	ssize_t r = 0;
 
+        /** FIXME: handle error from write() */
 	while (n > 0 && (r= write(dstfd, bp, n)) > 0) {
 	    bp += r;
 	    n -= r;
 	    total += r;
 	}
-	if (r <= 0) {
-	    if (r == 0) {
-		fprintf(stderr, "Warning: EOF writing to output file.\n");
-		return(-1);
-	    }
+	if (r == 0) {
+            fprintf(stderr, "Warning: EOF writing to output file.\n");
+            return(-1);
 	}
     }
     return(total);
@@ -62,8 +63,7 @@ int main(int argc, char **argv)
   int fdin, fdout;
   char * bp;
   int n,r;
-  int total_size=0;
-  int result;
+  int total_size;
 
   /* Check if command line arguments are present, or print usage. */
   if (argc!=3) {
@@ -113,13 +113,13 @@ int main(int argc, char **argv)
 
   bp = (char *) &aout;
   n = sizeof(aout);
-  lseek(fdout, 0, SEEK_SET);
+  lseek(fdout, 0L, SEEK_SET);
   while (n > 0 && (r= write(fdout, bp, n)) > 0) {
   	bp += r;
   	n -= r;
   }
 
-  printf("Prepended data file (%u bytes) with a.out header (%u bytes).\n", 
+  printf("Prepended data file (%d bytes) with a.out header (%u bytes).\n", 
 	total_size, sizeof(aout));
   printf("Done.\n");
 

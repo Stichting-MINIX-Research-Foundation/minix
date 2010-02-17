@@ -30,14 +30,19 @@
  *			errors.
  */
 
+#ifndef INC_RAWFS_H
+#define INC_RAWFS_H
+
 #define ROOT_INO	((ino_t) 1)	/* Inode nr of root dir. */
 
-off_t r_super(int *);
-void r_stat(Ino_t file, struct stat *stp);
-off_t r_vir2abs(off_t virblockno);
-ino_t r_readdir(char *name);
-ino_t r_lookup(Ino_t cwd, char *path);
+extern off_t r_super(int *);
+extern void r_stat(Ino_t file, struct stat *stp);
+extern off_t r_vir2abs(off_t virblockno);
+extern ino_t r_readdir(char *name);
+extern ino_t r_lookup(Ino_t cwd, char *path);
 
 /*
  * $PchId: rawfs.h,v 1.4 1996/04/19 08:16:36 philip Exp $
  */
+
+#endif

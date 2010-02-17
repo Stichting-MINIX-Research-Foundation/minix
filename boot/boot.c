@@ -64,7 +64,7 @@ static int block_size;
  */
 unsigned char boot_spec[24];
 
-char *bios_err(int err)
+static const char *bios_err(int err)
 /* Translate BIOS error code to a readable string.  (This is a rare trait
  * known as error checking and reporting.  Take a good look at it, you won't
  * see it often.)
@@ -168,7 +168,7 @@ char *unix_err(int err)
 	}
 }
 
-void rwerr(char *rw, off_t sec, int err)
+static void rwerr(const char *rw, off_t sec, int err)
 {
 	printf("\n%s error 0x%02x (%s) at sector %ld absolute\n",
 		rw, err, bios_err(err), sec);
@@ -208,8 +208,8 @@ struct biosdev {
 	int device;		/* Device to edit parameters. */
 } bootdev;
 
-struct termios termbuf;
-int istty;
+static struct termios termbuf;
+static int istty;
 
 void quit(int status)
 {
@@ -219,13 +219,13 @@ void quit(int status)
 
 #define exit(s)	quit(s)
 
-void report(char *label)
+void report(const char *label)
 /* edparams: label: No such file or directory */
 {
 	fprintf(stderr, "edparams: %s: %s\n", label, strerror(errno));
 }
 
-void fatal(char *label)
+void fatal(const char *label)
 {
 	report(label);
 	exit(1);
@@ -338,7 +338,7 @@ int getch(void)
 
 #endif /* UNIX */
 
-char *readline(void)
+static char *readline(void)
 /* Read a line including a newline with echoing. */
 {
 	char *line;
@@ -375,13 +375,13 @@ char *readline(void)
 	return line;
 }
 
-int sugar(char *tok)
+static int sugar(const char *tok)
 /* Recognize special tokens. */
 {
 	return strchr("=(){};\n", tok[0]) != nil;
 }
 
-char *onetoken(char **aline)
+static char *onetoken(char **aline)
 /* Returns a string with one token for tokenize. */
 {
 	char *line= *aline;
@@ -429,7 +429,7 @@ typedef struct token {
 	char		*token;
 } token;
 
-token **tokenize(token **acmds, char *line)
+static token **tokenize(token **acmds, char *line)
 /* Takes a line apart to form tokens.  The tokens are inserted into a command
  * chain at *acmds.  Tokenize returns a reference to where another line could
  * be added.  Tokenize looks at spaces as token separators, and recognizes only
@@ -450,10 +450,10 @@ token **tokenize(token **acmds, char *line)
 	return acmds;
 }
 
-token *cmds;		/* String of commands to execute. */
-int err;		/* Set on an error. */
+static token *cmds;		/* String of commands to execute. */
+static int err;		/* Set on an error. */
 
-char *poptoken(void)
+static char *poptoken(void)
 /* Pop one token off the command chain. */
 {
 	token *cmd= cmds;
@@ -465,7 +465,7 @@ char *poptoken(void)
 	return tok;
 }
 
-void voidtoken(void)
+static void voidtoken(void)
 /* Remove one token from the command chain. */
 {
 	free(poptoken());
@@ -480,7 +480,7 @@ void parse_code(char *code)
 	(void) tokenize(&cmds, code);
 }
 
-int interrupt(void)
+static int interrupt(void)
 /* Clean up after an ESC has been typed. */
 {
 	if (escape()) {
@@ -493,14 +493,14 @@ int interrupt(void)
 
 #if BIOS
 
-int activate;
+static int activate;
 
 struct biosdev {
 	char name[8];
 	int device, primary, secondary;
 } bootdev, tmpdev;
 
-int get_master(char *master, struct part_entry **table, u32_t pos)
+static int get_master(char *master, struct part_entry **table, u32_t pos)
 /* Read a master boot sector and its partition table. */
 {
 	int r, n;
@@ -526,7 +526,7 @@ int get_master(char *master, struct part_entry **table, u32_t pos)
 	return 0;
 }
 
-void initialize(void)
+static void initialize(void)
 {
 	char master[SECTOR_SIZE];
 	struct part_entry *table[NR_PARTITIONS];
@@ -718,7 +718,7 @@ enum resnames {
 	R_LS, R_MENU, R_OFF, R_SAVE, R_SET, R_TRAP, R_UNSET
 };
 
-char resnames[][6] = {
+static char resnames[][6] = {
 	"", "boot", "ctty", "delay", "echo", "exit", "help",
 	"ls", "menu", "off", "save", "set", "trap", "unset",
 };
@@ -726,7 +726,7 @@ char resnames[][6] = {
 /* Using this for all null strings saves a lot of memory. */
 #define null (resnames[0])
 
-enum resnames reserved(char *s)
+static enum resnames reserved(const char *s)
 /* Recognize reserved strings. */
 {
 	enum resnames r;
@@ -737,13 +737,13 @@ enum resnames reserved(char *s)
 	return R_NULL;
 }
 
-void sfree(char *s)
+static void sfree(char *s)
 /* Free a non-null string. */
 {
 	if (s != nil && s != null) free(s);
 }
 
-char *copystr(char *s)
+static char *copystr(char *s)
 /* Copy a non-null string using malloc. */
 {
 	char *c;
@@ -754,12 +754,12 @@ char *copystr(char *s)
 	return c;
 }
 
-int is_default(environment *e)
+static int is_default(environment *e)
 {
 	return (e->flags & E_SPECIAL) && e->defval == nil;
 }
 
-environment **searchenv(char *name)
+static environment **searchenv(char *name)
 {
 	environment **aenv= &env;
 
@@ -781,7 +781,7 @@ char *b_value(char *name)
 	return e == nil || !(e->flags & E_VAR) ? nil : e->value;
 }
 
-char *b_body(char *name)
+static char *b_body(char *name)
 /* The value of a function. */
 {
 	environment *e= b_getenv(name);
@@ -789,7 +789,7 @@ char *b_body(char *name)
 	return e == nil || !(e->flags & E_FUNCTION) ? nil : e->value;
 }
 
-int b_setenv(int flags, char *name, char *arg, char *value)
+static int b_setenv(int flags, char *name, char *arg, char *value)
 /* Change the value of an environment variable.  Returns the flags of the
  * variable if you are not allowed to change it, 0 otherwise.
  */
@@ -864,7 +864,7 @@ void b_unset(char *name)
 	}
 }
 
-long a2l(char *a)
+long a2l(const char *a)
 /* Cheap atol(). */
 {
 	int sign= 1;
@@ -894,7 +894,7 @@ char *ul2a10(u32_t n)
 	return ul2a(n, 10);
 }
 
-unsigned a2x(char *a)
+unsigned a2x(const char *a)
 /* Ascii to hex. */
 {
 	unsigned n= 0;
@@ -915,7 +915,7 @@ unsigned a2x(char *a)
 	return n;
 }
 
-void get_parameters(void)
+static void get_parameters(void)
 {
 	char params[SECTOR_SIZE + 1];
 	token **acmds;
@@ -997,14 +997,14 @@ void get_parameters(void)
 #endif
 }
 
-char *addptr;
+static char *addptr;
 
-void addparm(char *n)
+static void addparm(const char *n)
 {
 	while (*n != 0 && *addptr != 0) *addptr++ = *n++;
 }
 
-void save_parameters(void)
+static void save_parameters(void)
 /* Save nondefault environment variables to the bootparams sector. */
 {
 	environment *e;
@@ -1045,7 +1045,7 @@ void save_parameters(void)
 	}
 }
 
-void show_env(void)
+static void show_env(void)
 /* Show the environment settings. */
 {
 	environment *e;
@@ -1418,15 +1418,16 @@ int exec_bootstrap(void)
 	return 0;
 }
 
-void boot_device(char *devname)
+static void boot_device(char *devname)
 /* Boot the device named by devname. */
 {
 	dev_t dev= name2dev(devname);
 	int save_dev= device;
 	int r;
-	char *err;
+	const char *err;
 
 	if (tmpdev.device < 0) {
+                /* FIXME: clearer error message. */
 		if (dev != -1) printf("Can't boot from %s\n", devname);
 		return;
 	}
@@ -1444,7 +1445,7 @@ void boot_device(char *devname)
 	(void) dev_open();
 }
 
-void ctty(char *line)
+static void ctty(char *line)
 {
 	if (line == nil) {
 		serial_line = -1;
@@ -1459,13 +1460,13 @@ void ctty(char *line)
 
 #else /* DOS */
 
-void boot_device(char *devname)
+static void boot_device(char *devname)
 /* No booting of other devices under DOS. */
 {
 	printf("Can't boot devices under DOS\n");
 }
 
-void ctty(char *line)
+static void ctty(char *line)
 /* Don't know how to handle serial lines under DOS. */
 {
 	printf("No serial line support under DOS\n");
@@ -1474,7 +1475,7 @@ void ctty(char *line)
 #endif /* DOS */
 #endif /* BIOS */
 
-void ls(char *dir)
+static void ls(char *dir)
 /* List the contents of a directory. */
 {
 	ino_t ino;
@@ -1496,21 +1497,21 @@ void ls(char *dir)
 	while ((ino= r_readdir(name)) != 0) printf("%s/%s\n", dir, name);
 }
 
-u32_t milli_time(void)
+static u32_t milli_time(void)
 {
 	return get_tick() * MSEC_PER_TICK;
 }
 
-u32_t milli_since(u32_t base)
+static u32_t milli_since(u32_t base)
 {
 	return (milli_time() + (TICKS_PER_DAY*MSEC_PER_TICK) - base)
 			% (TICKS_PER_DAY*MSEC_PER_TICK);
 }
 
-char *Thandler;
-u32_t Tbase, Tcount;
+static char *Thandler;
+static u32_t Tbase, Tcount;
 
-void unschedule(void)
+static void unschedule(void)
 /* Invalidate a waiting command. */
 {
 	alarm(0);
@@ -1521,7 +1522,7 @@ void unschedule(void)
 	}
 }
 
-void schedule(long msec, char *cmd)
+static void schedule(long msec, char *cmd)
 /* Schedule command at a certain time from now. */
 {
 	unschedule();
@@ -1552,7 +1553,7 @@ void delay(char *msec)
 	} while (!interrupt() && !expired() && milli_since(base) < count);
 }
 
-enum whatfun { NOFUN, SELECT, DEFFUN, USERFUN } menufun(environment *e)
+static enum whatfun { NOFUN, SELECT, DEFFUN, USERFUN } menufun(environment *e)
 {
 	if (!(e->flags & E_FUNCTION) || e->arg[0] == 0) return NOFUN;
 	if (e->arg[1] != ',') return SELECT;
@@ -1587,6 +1588,7 @@ void menu(void)
 		case SELECT:
 			printf("    %c  Select %s kernel\n", e->arg[0],e->name);
 			break;
+                case NOFUN:
 		default:;
 		}
 	}
@@ -1655,7 +1657,7 @@ void help(void)
 	}
 }
 
-void execute(void)
+static void execute(void)
 /* Get one command from the command chain and execute it. */
 {
 	token *second, *third, *fourth, *sep;
@@ -1915,7 +1917,7 @@ int run_trailer(void)
 	return !err;
 }
 
-void monitor(void)
+static void monitor(void)
 /* Read a line and tokenize it. */
 {
 	char *line;
