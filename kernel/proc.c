@@ -33,7 +33,6 @@
 #include <minix/endpoint.h>
 #include <stddef.h>
 #include <signal.h>
-#include <minix/portio.h>
 #include <minix/syslib.h>
 
 #include "debug.h"
@@ -1050,7 +1049,7 @@ struct proc *caller_ptr;
  *===========================================================================*/
 PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 {
-	int i, do_notify, done;
+	int i, done;
 	unsigned flags;
 	size_t size;
 	endpoint_t dst_e;
@@ -1074,7 +1073,6 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 	dst_e= dst_ptr->p_endpoint;
 
 	/* Scan the table */
-	do_notify= FALSE;	
 	done= TRUE;
 	for (i= 0; i<size; i++)
 	{

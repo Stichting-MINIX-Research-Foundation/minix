@@ -31,7 +31,6 @@
 
 #include "kernel.h"
 #include "proc.h"
-#include <minix/com.h>
 #include <minix/endpoint.h>
 
 #include "clock.h"
@@ -187,7 +186,6 @@ PUBLIC int ap_timer_int_handler(void)
 	 */
 
 	unsigned ticks = 1;
-	int expired = 0;
 	struct proc * p, * billp;
 
 #ifdef CONFIG_WATCHDOG
@@ -225,13 +223,16 @@ PUBLIC int ap_timer_int_handler(void)
 	 * well.  If any of the timers expire, do_clocktick() will send out
 	 * signals.
 	 */
-	if ((p->p_misc_flags & MF_VIRT_TIMER) &&
-			(p->p_virt_left -= ticks) <= 0) expired = 1;
-	if ((p->p_misc_flags & MF_PROF_TIMER) &&
-			(p->p_prof_left -= ticks) <= 0) expired = 1;
+	if ((p->p_misc_flags & MF_VIRT_TIMER)){
+		p->p_virt_left -= ticks;
+	}
+	if ((p->p_misc_flags & MF_PROF_TIMER)){
+		p->p_prof_left -= ticks;
+	}
 	if (! (priv(p)->s_flags & BILLABLE) &&
-			(billp->p_misc_flags & MF_PROF_TIMER) &&
-			(billp->p_prof_left -= ticks) <= 0) expired = 1;
+			(billp->p_misc_flags & MF_PROF_TIMER)){
+		billp->p_prof_left -= ticks;
+	}
 
 	/*
 	 * Check if a process-virtual timer expired. Check current process, but

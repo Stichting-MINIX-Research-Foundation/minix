@@ -8,7 +8,6 @@
 #include "../../system.h"
 #include <minix/type.h>
 #include <minix/endpoint.h>
-#include <minix/portio.h>
 #include <ibm/int86.h>
 
 #include "proto.h"

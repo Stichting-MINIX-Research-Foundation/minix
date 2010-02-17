@@ -6,7 +6,6 @@
  */
 
 #include "../system.h"
-#include <signal.h>
 
 #if USE_ENDKSIG 
 

@@ -11,8 +11,6 @@
 
 #include <sys/vm_i386.h>
 
-#include <minix/portio.h>
-
 #include "proto.h"
 #include "../../proto.h"
 #include "../../proto.h"
@@ -85,7 +83,7 @@ PUBLIC void vm_init(struct proc *newptproc)
 	} else {						\
 		int fp;						\
 		int mustinvl;					\
-		u32_t pdeval, *pdevalptr, mask;			\
+		u32_t pdeval, mask;			        \
 		phys_bytes offset;				\
 		vmassert(psok);					\
 		if(PROC) {					\
@@ -116,9 +114,9 @@ PUBLIC void vm_init(struct proc *newptproc)
 		vmassert(PDE != NOPDE);					\
 		vmassert(mask);						\
 		if(dirtypde & mask) {					\
-			mustinvl = 1;					\
+			mustinvl = TRUE;					\
 		} else {						\
-			mustinvl = 0;					\
+			mustinvl = FALSE;					\
 		}							\
 		inusepde = PDE;						\
 		*PROCPDEPTR(ptproc, PDE) = pdeval;			\
@@ -503,9 +501,8 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
  *===========================================================================*/
 PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 {
-	int first = 1, r, boundaries = 0;
+	int first = 1, r;
 	u32_t prev_phys, po;
-	u32_t prev_vir;
 
 	vmassert(targetproc);
 	vmassert(bytes > 0);
@@ -547,10 +544,8 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 		first = 0;
 
 		prev_phys = phys;
-		prev_vir = vir_buf;
 		vir_buf += I386_PAGE_SIZE;
 		bytes -= I386_PAGE_SIZE;
-		boundaries++;
 	}
 
 	return 1;
@@ -560,7 +555,7 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
  *                              vm_suspend                                *
  *===========================================================================*/
 PRIVATE void vm_suspend(struct proc *caller, struct proc *target,
-	vir_bytes linaddr, vir_bytes len, int wrflag, int type)
+	vir_bytes linaddr, vir_bytes len, int type)
 {
 	/* This range is not OK for this process. Set parameters  
 	 * of the request and notify VM about the pending request. 
@@ -616,7 +611,7 @@ int delivermsg(struct proc *rp)
 		rp->p_delivermsg_lin, sizeof(message), addr);
 
 	if(addr) {
-		vm_suspend(rp, rp, rp->p_delivermsg_lin, sizeof(message), 1,
+		vm_suspend(rp, rp, rp->p_delivermsg_lin, sizeof(message),
 			VMSTYPE_DELIVERMSG);
 		r = VMSUSPEND;
 	} else {
@@ -849,7 +844,6 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	if((r=lin_lin_copy(procs[_SRC_], phys_addr[_SRC_],
 		procs[_DST_], phys_addr[_DST_], bytes)) != OK) {
 		struct proc *target;
-		int wr;
 		phys_bytes lin;
 		if(r != EFAULT_SRC && r != EFAULT_DST)
 			minix_panic("lin_lin_copy failed", r);
@@ -862,11 +856,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 		if(r == EFAULT_SRC) {
 			lin = phys_addr[_SRC_];
 			target = procs[_SRC_];
-			wr = 0;
 		} else if(r == EFAULT_DST) {
 			lin = phys_addr[_DST_];
 			target = procs[_DST_];
-			wr = 1;
 		} else {
 			minix_panic("r strange", r);
 		}
@@ -878,7 +870,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 #endif
 
 		vmassert(proc_ptr->p_endpoint == SYSTEM);
-		vm_suspend(caller, target, lin, bytes, wr,
+		vm_suspend(caller, target, lin, bytes,
 				VMSTYPE_KERNELCALL);
 		NOREC_RETURN(virtualcopy, VMSUSPEND);
 	}

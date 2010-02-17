@@ -38,11 +38,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
-#include <minix/portio.h>
 
 /* Declaration of the call vector that defines the mapping of system calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
@@ -324,7 +322,6 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
  * send a notification with source SYSTEM.
  */ 
   register struct proc *rp;
-  static int n;
 
   if(!isokprocn(proc_nr) || isemptyn(proc_nr))
 	minix_panic("send_sig to empty process", proc_nr);
