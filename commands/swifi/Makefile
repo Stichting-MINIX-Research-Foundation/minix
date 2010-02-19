@@ -7,6 +7,9 @@ CFLAGS=$(DEFINES)
 
 all:	swifi rnd socket
 
+install: swifi
+	install swifi /usr/bin/swifi
+
 swifi:	$(OBJ)
 	$(CC) -o swifi $(OBJ)
 

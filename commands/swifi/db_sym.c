@@ -406,7 +406,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
     /* 4a) bail out if instruction is leave (0xc9) */
     if(cur_value-prev_value == 1) {
       unsigned char *c;
-      c=(char *) prev_value;
+      c=(unsigned char *) prev_value;
       if(text_read_ub(c)==0xc9)	{
 	if(verbose) printk("bailing out as we hit a leave\n");
 	found=0;
@@ -418,7 +418,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
      */
     if(type==INIT_FAULT) {
       unsigned char *c;
-      c=(char *) prev_value;
+      c=(unsigned char *) prev_value;
 
       if(*c==0x66 || *c==0x67) 
 	c++;	/* override prefix */
@@ -458,7 +458,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
        */
       unsigned char *c;
 
-      c=(char *) prev_value;
+      c=(unsigned char *) prev_value;
 
       /* look for repX prefix */
 
@@ -492,7 +492,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
        */
       if(cur_value>off && modAddr) {
 	unsigned char *c;
-	c=(char *) modAddr;
+	c=(unsigned char *) modAddr;
 	if( text_read_ub(c)>0x3f && text_read_ub(c)<0xc0 &&
 		(text_read_ub(c)&7)!=5 ) {
 	  found=1;
@@ -505,7 +505,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
        *     movl=0x8a, movb=0x8b, mod=01XXX101 (disp8[ebp]), disp>0 
        */
       unsigned char *c;
-      c=(char *) prev_value;
+      c=(unsigned char *) prev_value;
       if( text_read_ub(c)==0x8a || text_read_ub(c)==0x8b) {
 	c++;
 	if( ((text_read_ub(c++))&0xc7)==0x45 && (text_read_ub(c)&0x80)==0 ) {
@@ -524,7 +524,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
        *     movl=0x8a, movb=0x8b, mod=01XXX101 (disp8[ebp]), disp>0 
        */
       unsigned char *c;
-      c=(char *) prev_value;
+      c=(unsigned char *) prev_value;
       if (((text_read_ub(c) & 0xf8) == 0x50) || 
 	  (text_read_ub(c) == 0xff)) {
 	if (text_read_ub(c) == 0xff) {
