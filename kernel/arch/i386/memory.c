@@ -502,7 +502,8 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 {
 	int first = 1, r;
-	u32_t prev_phys, po;
+	u32_t prev_phys = 0;    /* Keep lints happy. */
+	u32_t po;
 
 	vmassert(targetproc);
 	vmassert(bytes > 0);

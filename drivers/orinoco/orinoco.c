@@ -1402,6 +1402,9 @@ static void or_writev (message * mp, int from_int, int vectored) {
 	assert (orp->or_mode == OR_M_ENABLED);
 	assert (orp->or_flags & OR_F_ENABLED);
 
+	/* CvR: copied from or_writev_s(), since txfid was not initialized. */
+	txfid = orp->or_tx.or_txfid;
+
 	if (vectored) {
 
 		int iov_offset = 0;

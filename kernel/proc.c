@@ -1221,7 +1221,7 @@ register struct proc *rp;	/* this process is now runnable */
  */
 PRIVATE void enqueue_head(struct proc *rp)
 {
-  int q;	 				/* scheduling queue to use */
+  int q = rp->p_priority;	 		/* scheduling queue to use */
 
 #if DEBUG_SCHED_CHECK
   if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
@@ -1235,7 +1235,6 @@ PRIVATE void enqueue_head(struct proc *rp)
 
   vmassert(q >= 0);
 
-  q = rp->p_priority;
 
   /* Now add the process to the queue. */
   if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */

@@ -149,7 +149,7 @@ char *
 sbe_mlst(p)
 int p;
 {	register struct smblk *sm, *smf, *smb;
-	char *nextaddr;
+	char *nextaddr = NULL;
 	int i;
 	struct ptab smtab;		/* For loop detection */
 
