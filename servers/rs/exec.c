@@ -307,7 +307,6 @@ vir_bytes *pc;			/* program entry point (initial PC) */
 int *hdrlenp;
 {
 /* Read the header and extract the text, data, bss and total sizes from it. */
-  off_t pos;
   block_t b;
   struct exec hdr;		/* a.out header is read in here */
 
@@ -338,8 +337,6 @@ int *hdrlenp;
    * is ignored here.
    */
   int r;
-
-  pos= 0;	/* Read from the start of the file */
 
   if (exec_len < sizeof(hdr)) return(ENOEXEC);
 

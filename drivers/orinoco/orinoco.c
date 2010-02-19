@@ -504,12 +504,13 @@ static void or_reset() {
  * Dump interesting information about the card on F-key pressed.             *
  * Not implemented yet                                                       *
  *****************************************************************************/
-static void or_dump (message *m) {
+static void or_dump (message *m)
+ {
 	t_or *orp;
-	int i, err;
+	int err;
 	u16_t evstat =0, d;
 
-	for (i = 0, orp = or_table; orp < or_table + OR_PORT_NR; i++, orp++) {
+	for (orp = or_table; orp < or_table + OR_PORT_NR; orp++) {
 		if(orp->or_mode == OR_M_DISABLED) {
 			printf("%s is disabled\n", orp->or_name);
 		}
@@ -538,7 +539,6 @@ static void or_init (message * mp) {
 	t_or *orp;
 	message reply;
 	static int first_time = 1;
-	hermes_t *hw;
 	clock_t t0,t1;
 
 	if (first_time) {
@@ -562,7 +562,6 @@ static void or_init (message * mp) {
 	/* the port resolves to the main orinoco structure */
 	orp = &or_table[port];
 	/* resolving to the main hardware structure */
-	hw = &(orp->hw);
 
 	if (orp->or_mode == OR_M_DISABLED) {
 		/* Initialize the orp structure */
@@ -1980,14 +1979,13 @@ static void or_readv (message * mp, int from_int, int vectored) {
 	unsigned amount, totlen, packlen;
 	struct hermes_rx_descriptor desc;
 	phys_bytes dst_phys;
-	u16_t d_start, d_end, rxfid, status;
+	u16_t d_start, d_end, status;
 	struct header_struct hdr;
 	int length, offset;
 	u32_t l, rxstat;
 	struct ethhdr *eh;
 	struct header_struct *h;
 	t_or *orp;
-	hermes_t *hw;
 	iovec_t *iovp;
 	u8_t *databuf;
 
@@ -1999,7 +1997,6 @@ static void or_readv (message * mp, int from_int, int vectored) {
 	orp = &or_table[dl_port];
 	or_client = mp->DL_PROC;
 	orp->or_client = or_client;
-	hw = &(orp->hw);
 
 	assert (orp->or_mode == OR_M_ENABLED);
 	assert (orp->or_flags & OR_F_ENABLED);
@@ -2008,7 +2005,6 @@ static void or_readv (message * mp, int from_int, int vectored) {
 		goto suspend_readv;
 	}
 
-	rxfid = orp->rxfid[orp->rx_first];
 	databuf = &(orp->rx_buf[orp->rx_first][0]);
 	length = orp->rx_length[orp->rx_first];
 
@@ -2102,13 +2098,12 @@ static void or_readv_s (message * mp, int from_int) {
 	unsigned amount, totlen, packlen;
 	struct hermes_rx_descriptor desc;
 	phys_bytes dst_phys;
-	u16_t d_start, d_end, rxfid, status;
+	u16_t d_start, d_end, status;
 	struct header_struct hdr;
 	u32_t l, rxstat;
 	struct ethhdr *eh;
 	struct header_struct *h;
 	t_or *orp;
-	hermes_t *hw;
 
 	iovec_s_t *iovp;
 	phys_bytes databuf_phys;
@@ -2123,7 +2118,6 @@ static void or_readv_s (message * mp, int from_int) {
 	orp = &or_table[dl_port];
 	or_client = mp->DL_PROC;
 	orp->or_client = or_client;
-	hw = &(orp->hw);
 
 	assert (orp->or_mode == OR_M_ENABLED);
 	assert (orp->or_flags & OR_F_ENABLED);
@@ -2140,8 +2134,6 @@ static void or_readv_s (message * mp, int from_int) {
 	
 
 
-	/* get the buffer which contains new data */
-	rxfid = orp->rxfid[orp->rx_first];
 	/* and store the pointer to this data in databuf */
 	databuf = &(orp->rx_buf[orp->rx_first][0]);
 	length = orp->rx_length[orp->rx_first];
@@ -2236,7 +2228,6 @@ static int or_get_recvd_packet(t_or *orp, u16_t rxfid, u8_t *databuf) {
 	hermes_t *hw;
 	struct header_struct hdr;
 	int err, length, offset;
-	struct ethhdr *eh;
 	u16_t status;
 	
 	memset(databuf, 0, IEEE802_11_FRAME_LEN);
@@ -2316,7 +2307,6 @@ static int or_get_recvd_packet(t_or *orp, u16_t rxfid, u8_t *databuf) {
 	/* Some types of firmware give us the SNAP and OUI headers. Remove these.
 	 */
 	if (is_ethersnap(&hdr))	{
-		eh = (struct ethhdr *) databuf;
 		length -= 8;
 
 		

@@ -194,8 +194,8 @@ struct filp *f;
 char *buf;
 size_t req_size;
 {
-  int r, oflags, op, partial_pipe = 0, r2;
-  size_t size, size2, cum_io, cum_io_incr, cum_io_incr2;
+  int r, oflags, partial_pipe = 0, r2;
+  size_t size, cum_io, cum_io_incr, cum_io_incr2;
   struct vnode *vp;
   u64_t position, new_pos, new_pos2;
 
@@ -205,7 +205,6 @@ size_t req_size;
 	vp->v_pipe_wr_pos);
   /* fp->fp_cum_io_partial is only nonzero when doing partial writes */
   cum_io = fp->fp_cum_io_partial; 
-  op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
 
   r = pipe_check(vp, rw_flag, oflags, req_size, position, 0);
   if (r <= 0) {
@@ -226,7 +225,6 @@ size_t req_size;
 	pos32 = cv64ul(position);
 	assert(pos32 >= 0);
 	assert(pos32 <= LONG_MAX);
-	size2 = size;
 	size = vp->v_size - pos32;
   }
 

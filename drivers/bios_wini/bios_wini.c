@@ -192,7 +192,6 @@ unsigned nr_req;		/* length of request vector */
   unsigned nbytes, count, chunk;
   unsigned long block;
   vir_bytes i13e_rw_off, rem_buf_size;
-  size_t vir_offset = 0;
   unsigned secspcyl = wn->heads * wn->sectors;
   struct int13ext_rw {
 	u8_t	len;
@@ -336,12 +335,10 @@ unsigned nr_req;		/* length of request vector */
 	for (;;) {
 		if (nbytes < iov->iov_size) {
 			/* Not done with this one yet. */
-			vir_offset += nbytes;
 			iov->iov_size -= nbytes;
 			break;
 		}
 		nbytes -= iov->iov_size;
-		vir_offset = 0;
 		iov->iov_size = 0;
 		if (nbytes == 0) {
 			/* The rest is optional, so we return to give FS a

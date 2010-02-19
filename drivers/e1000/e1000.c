@@ -7,7 +7,6 @@
 
 #include "../drivers.h"
 #include <stdlib.h>
-#include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <ibm/pci.h>

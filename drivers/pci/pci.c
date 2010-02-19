@@ -1,6 +1,7 @@
 #define USER_SPACE 1
 /*
 pci.c
+#define USER_SPACE 1
 
 Configure devices on the PCI bus
 
@@ -126,7 +127,7 @@ FORWARD _PROTOTYPE( u8_t pci_attr_r8_u, (int devind, int port)		);
 FORWARD _PROTOTYPE( u32_t pci_attr_r32_u, (int devind, int port)	);
 
 FORWARD _PROTOTYPE( u16_t pci_attr_rsts, (int devind)			);
-FORWARD _PROTOTYPE( void pci_attr_wsts, (int devind, U16_t value)	);
+FORWARD _PROTOTYPE( void pci_attr_wsts, (int devind, u16_t value)	);
 FORWARD _PROTOTYPE( u16_t pcibr_std_rsts, (int busind)		);
 FORWARD _PROTOTYPE( void pcibr_std_wsts, (int busind, U16_t value)	);
 FORWARD _PROTOTYPE( u16_t pcibr_cb_rsts, (int busind)		);
@@ -752,8 +753,7 @@ PRIVATE void pci_intel_init()
 /*===========================================================================*
  *				probe_bus				     *
  *===========================================================================*/
-PRIVATE void probe_bus(busind)
-int busind;
+PRIVATE void probe_bus(int busind)
 {
 	u32_t dev, func, t3;
 	u16_t vid, did, sts;
@@ -1919,17 +1919,14 @@ int busnr;
 /*===========================================================================*
  *				do_piix					     *
  *===========================================================================*/
-PRIVATE int do_piix(devind)
-int devind;
+PRIVATE int do_piix(int devind)
 {
-	int i, s, dev, func, irqrc, irq;
+	int i, s, irqrc, irq;
 	u32_t elcr1, elcr2, elcr;
 
 #if DEBUG
 	printf("in piix\n");
 #endif
-	dev= pcidev[devind].pd_dev;
-	func= pcidev[devind].pd_func;
 #if USER_SPACE
 	if (OK != (s=sys_inb(PIIX_ELCR1, &elcr1)))
 		printf("Warning, sys_inb failed: %d\n", s);
@@ -1971,8 +1968,7 @@ int devind;
 /*===========================================================================*
  *				do_amd_isabr				     *
  *===========================================================================*/
-PRIVATE int do_amd_isabr(devind)
-int devind;
+PRIVATE int do_amd_isabr(int devind)
 {
 	int i, busnr, dev, func, xdevind, irq, edge;
 	u8_t levmask;
@@ -2024,13 +2020,10 @@ int devind;
 /*===========================================================================*
  *				do_sis_isabr				     *
  *===========================================================================*/
-PRIVATE int do_sis_isabr(devind)
-int devind;
+PRIVATE int do_sis_isabr(int devind)
 {
-	int i, dev, func, irq;
+	int i, irq;
 
-	dev= pcidev[devind].pd_dev;
-	func= pcidev[devind].pd_func;
 	irq= 0;	/* lint */
 	for (i= 0; i<4; i++)
 	{
@@ -2054,14 +2047,11 @@ int devind;
 /*===========================================================================*
  *				do_via_isabr				     *
  *===========================================================================*/
-PRIVATE int do_via_isabr(devind)
-int devind;
+PRIVATE int do_via_isabr(int devind)
 {
-	int i, dev, func, irq, edge;
+	int i, irq, edge;
 	u8_t levmask;
 
-	dev= pcidev[devind].pd_dev;
-	func= pcidev[devind].pd_func;
 	levmask= pci_attr_r8_u(devind, VIA_ISABR_EL);
 	irq= 0;	/* lint */
 	edge= 0; /* lint */
@@ -2347,9 +2337,7 @@ u16_t value;
 /*===========================================================================*
  *				pci_attr_wsts				     *
  *===========================================================================*/
-PRIVATE void pci_attr_wsts(devind, value)
-int devind;
-u16_t value;
+PRIVATE void pci_attr_wsts(int devind, u16_t value)
 {
 	int busnr, busind;
 

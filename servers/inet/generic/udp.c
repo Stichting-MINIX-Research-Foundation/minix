@@ -1185,15 +1185,11 @@ int fd;
 	udp_fd->uf_rdbuf_head= NULL;
 }
 
-PUBLIC int udp_write(fd, count)
-int fd;
-size_t count;
+PUBLIC int udp_write(int fd, size_t count)
 {
 	udp_fd_t *udp_fd;
-	udp_port_t *udp_port;
 
 	udp_fd= &udp_fd_table[fd];
-	udp_port= udp_fd->uf_port;
 
 	if (!(udp_fd->uf_flags & UFF_OPTSET))
 	{

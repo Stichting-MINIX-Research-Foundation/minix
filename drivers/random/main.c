@@ -160,13 +160,11 @@ unsigned nr_req;		/* length of request vector */
   unsigned count, left, chunk;
   vir_bytes user_vir;
   struct device *dv;
-  unsigned long dv_size;
   int r;
   size_t vir_offset = 0;
 
   /* Get minor device number and check for /dev/null. */
   dv = &m_geom[m_device];
-  dv_size = cv64ul(dv->dv_size);
 
   while (nr_req > 0) {
 
@@ -245,8 +243,7 @@ PRIVATE int r_ioctl(dp, m_ptr)
 struct driver *dp;			/* pointer to driver structure */
 message *m_ptr;				/* pointer to control message */
 {
-  struct device *dv;
-  if ((dv = r_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
+  if (r_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
 
   switch (m_ptr->REQUEST) {
 
@@ -257,7 +254,7 @@ message *m_ptr;				/* pointer to control message */
 }
 
 #define UPDATE(binnumber, bp, startitem, elems) 	{	\
-		rand_t *r, *r2;					\
+		rand_t *r;					\
 		int n = elems, item = startitem;\
 		int high;					\
 		assert(binnumber >= 0 && binnumber < RANDOM_SOURCES);	 \
@@ -267,7 +264,6 @@ message *m_ptr;				/* pointer to control message */
 			assert(high >= item);				\
 			assert(high >= 0 && high < RANDOM_ELEMENTS);	\
 			r = &bp->r_buf[item];		\
-			r2 = &bp->r_buf[high];		\
 	  		random_update(binnumber, r, n);			\
 		}							\
 }
@@ -327,8 +323,7 @@ message *m_ptr;				/* pointer to alarm message */
 /*============================================================================*
  *				r_geometry				      *
  *============================================================================*/
-PRIVATE void r_geometry(entry)
-struct partition *entry;
+PRIVATE void r_geometry(struct partition *entry)
 {
   /* Memory devices don't have a geometry, but the outside world insists. */
   entry->cylinders = div64u(m_geom[m_device].dv_size, SECTOR_SIZE) / (64 * 32);

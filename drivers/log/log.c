@@ -287,7 +287,6 @@ unsigned nr_req;		/* length of request vector */
   unsigned count;
   vir_bytes user_vir;
   struct device *dv;
-  unsigned long dv_size;
   int accumulated_read = 0;
   struct logdevice *log;
   size_t vir_offset = 0;
@@ -297,7 +296,6 @@ unsigned nr_req;		/* length of request vector */
 
   /* Get minor device number and check for /dev/null. */
   dv = &log_geom[log_device];
-  dv_size = cv64ul(dv->dv_size);
   log = &logdevices[log_device];
 
   while (nr_req > 0) {

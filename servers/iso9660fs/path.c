@@ -17,12 +17,11 @@ FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino, int flags,
 PUBLIC int fs_lookup() {
   cp_grant_id_t grant;
   int r, r1, len, flags;
-  size_t offset, size;
+  size_t offset;
   ino_t dir_ino, root_ino;
   struct dir_record *dir;
 
   grant		= fs_m_in.REQ_GRANT;
-  size		= fs_m_in.REQ_PATH_SIZE;	/* Size of the buffer */
   len		= fs_m_in.REQ_PATH_LEN;	/* including terminating nul */
   dir_ino	= fs_m_in.REQ_DIR_INO;
   root_ino	= fs_m_in.REQ_ROOT_INO;
@@ -89,7 +88,7 @@ PUBLIC int search_dir(ldir_ptr,string,numb)
 {
   struct dir_record *dir_tmp;
   register struct buf *bp,*bp2;
-  int pos,r,len;
+  int pos,len;
   char* comma_pos = NULL;
   char tmp_string[NAME_MAX];
 
@@ -103,8 +102,6 @@ PUBLIC int search_dir(ldir_ptr,string,numb)
     return(ENOTDIR);
   }
   
-  r = OK;
-
   if (strcmp(string,".") == 0) {
     *numb = ID_DIR_RECORD(ldir_ptr);
     return OK;

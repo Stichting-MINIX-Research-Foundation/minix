@@ -501,9 +501,7 @@ off_t newsize;			/* inode must become this size */
  * O_APPEND mode, as this is different per fd and is checked when 
  * writing is done.
  */
-  zone_t zone_size;
   int scale, file_type;
-  dev_t dev;
 
   file_type = rip->i_mode & I_TYPE;	/* check to see if file is special */
   if (file_type == I_CHAR_SPECIAL || file_type == I_BLOCK_SPECIAL)
@@ -511,9 +509,7 @@ off_t newsize;			/* inode must become this size */
   if(newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
 	return(EFBIG);
 
-  dev = rip->i_dev;		/* device on which inode resides */
   scale = rip->i_sp->s_log_zone_size;
-  zone_size = (zone_t) rip->i_sp->s_block_size << scale;
 
   /* Free the actual space if truncating. */
   if(newsize < rip->i_size) freesp_inode(rip, newsize, rip->i_size);
@@ -549,7 +545,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
  * fcntl().
  */
   off_t p, e;
-  int zone_size, dev;
+  int zone_size;
   int zero_last, zero_first;
 
   if(end > rip->i_size)		/* freeing beyond end makes no sense */
@@ -558,7 +554,6 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
 	return(EINVAL);
 
   zone_size = rip->i_sp->s_block_size << rip->i_sp->s_log_zone_size;
-  dev = rip->i_dev;             /* device on which inode resides */
 
   /* If freeing doesn't cross a zone boundary, then we may only zero
    * a range of the zone, unless we are freeing up that entire zone.

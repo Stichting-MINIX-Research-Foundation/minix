@@ -985,7 +985,7 @@ static void rl_readv(message *mp, int from_int, int vectored)
 	int i, j, n, o, s, s1, dl_port, re_client, count, size;
 	port_t port;
 	unsigned amount, totlen, packlen;
-	phys_bytes src_phys, dst_phys;
+	phys_bytes dst_phys;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1083,7 +1083,6 @@ static void rl_readv(message *mp, int from_int, int vectored)
 
 		size= 0;
 		o= d_start+4;
-		src_phys= rep->re_rx_buf;
 		for (i= 0; i<count; i += IOVEC_NR,
 			iov_offset += IOVEC_NR * sizeof(rep->re_iovec[0]))
 		{
@@ -1233,7 +1232,7 @@ static void rl_readv_s(message *mp, int from_int)
 	int i, j, n, o, s, s1, dl_port, re_client, count, size;
 	port_t port;
 	unsigned amount, totlen, packlen;
-	phys_bytes src_phys, dst_phys;
+	phys_bytes dst_phys;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1328,7 +1327,6 @@ static void rl_readv_s(message *mp, int from_int)
 
 	size= 0;
 	o= d_start+4;
-	src_phys= rep->re_rx_buf;
 	for (i= 0; i<count; i += IOVEC_NR,
 		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
 	{

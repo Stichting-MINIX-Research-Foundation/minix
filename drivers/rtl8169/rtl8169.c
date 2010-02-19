@@ -1271,11 +1271,8 @@ re_t *rep;
 void transmittest(re_t *rep)
 {
 	int tx_head;
-	re_desc *desc;
 
 	tx_head = rep->re_tx_head;
-	desc = rep->re_tx_desc;
-	desc += tx_head;
 
 	if(rep->re_tx[tx_head].ret_busy) {
 		do {
@@ -1299,7 +1296,6 @@ static void rl_readv_s(message *mp, int from_int)
 	int i, j, n, s, dl_port, re_client, count, size, index;
 	port_t port;
 	unsigned totlen, packlen;
-	phys_bytes src_phys;
 	re_desc *desc;
 	u32_t rxstat = 0x12345678;
 	re_t *rep;
@@ -1366,7 +1362,6 @@ readvs_loop:
 	packlen = totlen - ETH_CRC_SIZE;
 
 	size = 0;
-	src_phys = rep->re_rx[index].ret_buf;
 	for (i = 0; i < count; i += IOVEC_NR,
 		iov_offset += IOVEC_NR * sizeof(rep->re_iovec_s[0]))
 	{

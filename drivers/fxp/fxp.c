@@ -556,8 +556,7 @@ static void fxp_pci_conf()
 /*===========================================================================*
  *				fxp_probe				     *
  *===========================================================================*/
-static int fxp_probe(fp)
-fxp_t *fp;
+static int fxp_probe(fxp_t *fp)
 {
 	int i, r, devind, just_one;
 	u16_t vid, did;
@@ -1025,18 +1024,14 @@ fxp_t *fp;
 /*===========================================================================*
  *				fxp_confaddr				     *
  *===========================================================================*/
-static void fxp_confaddr(fp)
-fxp_t *fp;
+static void fxp_confaddr(fxp_t *fp)
 {
 	static char eakey[]= FXP_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
 	clock_t t0,t1;
 	int i, r;
-	port_t port;
 	u32_t bus_addr;
 	long v;
-
-	port= fp->fxp_base_port;
 
 	/* User defined ethernet address? */
 	eakey[sizeof(FXP_ENVVAR)-1]= '0' + (fp-fxp_table);
@@ -1290,9 +1285,7 @@ suspend:
 /*===========================================================================*
  *				fxp_writev_s				     *
  *===========================================================================*/
-static void fxp_writev_s(mp, from_int)
-message *mp;
-int from_int;
+static void fxp_writev_s(message *mp, int from_int)
 {
 	cp_grant_id_t iov_grant;
 	vir_bytes iov_offset;
@@ -1942,7 +1935,6 @@ message *mp;
 {
 	clock_t t0,t1;
 	int r, dl_port;
-	port_t port;
 	fxp_t *fp;
 	u32_t *p;
 	eth_stat_t stats;
@@ -1955,8 +1947,6 @@ message *mp;
 
 	assert(fp->fxp_mode == FM_ENABLED);
 	assert(fp->fxp_flags & FF_ENABLED);
-
-	port= fp->fxp_base_port;
 
 	p= &fp->fxp_stat.sc_tx_fcp;
 	*p= 0;
@@ -2021,12 +2011,10 @@ message *mp;
 /*===========================================================================*
  *				fxp_getstat_s				     *
  *===========================================================================*/
-static void fxp_getstat_s(mp)
-message *mp;
+static void fxp_getstat_s(message *mp)
 {
 	clock_t t0,t1;
 	int r, dl_port;
-	port_t port;
 	fxp_t *fp;
 	u32_t *p;
 	eth_stat_t stats;
@@ -2039,8 +2027,6 @@ message *mp;
 
 	assert(fp->fxp_mode == FM_ENABLED);
 	assert(fp->fxp_flags & FF_ENABLED);
-
-	port= fp->fxp_base_port;
 
 	p= &fp->fxp_stat.sc_tx_fcp;
 	*p= 0;
@@ -2398,10 +2384,8 @@ fxp_t *fp;
 /*===========================================================================*
  *				fxp_report_link				     *
  *===========================================================================*/
-static void fxp_report_link(fp)
-fxp_t *fp;
+static void fxp_report_link(fxp_t *fp)
 {
-	port_t port;
 	u16_t mii_ctrl, mii_status, mii_id1, mii_id2, 
 		mii_ana, mii_anlpa, mii_ane, mii_extstat,
 		mii_ms_ctrl, mii_ms_status, scr;
@@ -2415,7 +2399,6 @@ fxp_t *fp;
 	ms_regs= 0;	/* No master/slave registers. */
 
 	fp->fxp_report_link= FALSE;
-	port= fp->fxp_base_port;
 
 	scr= mii_read(fp, MII_SCR);
 	scr &= ~(MII_SCR_RES|MII_SCR_RES_1);

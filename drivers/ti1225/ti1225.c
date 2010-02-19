@@ -283,9 +283,7 @@ struct port *pp;
 #endif
 }
 
-PRIVATE void map_regs(pp, base)
-struct port *pp;
-u32_t base;
+PRIVATE void map_regs(struct port *pp, u32_t base)
 {
 	int r;
 	vir_bytes buf_base;

@@ -272,7 +272,7 @@ EXTERN char **env_argv;
 void main( int argc, char **argv )
 {
    message m;
-   int i,irq,r;
+   int i,r;
    ether_card_t *ec;
 
    /* SEF local startup. */
@@ -310,7 +310,6 @@ void main( int argc, char **argv )
 				      if (ec->mode != EC_ENABLED)
 					      continue;
 
-				      irq=ec->ec_irq;
 				      {
 					      ec->ec_int_pending = 0;
 					      ec_check_ints(ec);
@@ -1074,10 +1073,9 @@ ether_card_t *ec;
 /*===========================================================================*
  *                              do_vread_s                                   *
  *===========================================================================*/
-static void do_vread_s(mp)
-message *mp;
+static void do_vread_s(message *mp)
 {
-   int port, count, size, r;
+   int port, count, r;
    ether_card_t *ec;
 
    port = mp->DL_PORT;
@@ -1098,7 +1096,6 @@ message *mp;
    ec->read_iovec.iod_iovec_offset = 0;
 
    ec->tmp_iovec = ec->read_iovec;
-   size= calc_iovec_size(&ec->tmp_iovec);
 
    ec->flags |= ECF_READING;
 
@@ -1338,8 +1335,7 @@ vir_bytes count;
 /*===========================================================================*
  *                              calc_iovec_size                              *
  *===========================================================================*/
-static int calc_iovec_size(iovp)
-iovec_dat_t *iovp;
+static int calc_iovec_size(iovec_dat_t *iovp)
 {
    int size,i;
 

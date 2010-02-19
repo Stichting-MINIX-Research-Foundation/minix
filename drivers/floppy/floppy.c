@@ -314,7 +314,7 @@ PUBLIC int main(void)
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+PRIVATE void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -432,8 +432,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 /*===========================================================================*
  *				f_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *f_prepare(device)
-int device;
+PRIVATE struct device *f_prepare(int device)
 {
 /* Prepare for I/O on a device. */
 
@@ -460,7 +459,7 @@ int device;
 /*===========================================================================*
  *				f_name					     *
  *===========================================================================*/
-PRIVATE char *f_name()
+PRIVATE char *f_name(void)
 {
 /* Return a name for the current device. */
   static char name[] = "fd0";
@@ -472,7 +471,7 @@ PRIVATE char *f_name()
 /*===========================================================================*
  *				f_cleanup				     *
  *===========================================================================*/
-PRIVATE void f_cleanup()
+PRIVATE void f_cleanup(void)
 {
   /* Start a timer to turn the motor off in a few seconds. */
   tmr_arg(&f_fp->fl_tmr_stop)->ta_int = f_drive;
@@ -725,8 +724,9 @@ unsigned nr_req;		/* length of request vector */
 /*===========================================================================*
  *				dma_setup				     *
  *===========================================================================*/
-PRIVATE int dma_setup(opcode)
-int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
+PRIVATE int dma_setup(
+  int opcode			/* DEV_GATHER_S or DEV_SCATTER_S */
+)
 {
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
  * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
@@ -770,7 +770,7 @@ int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 /*===========================================================================*
  *				start_motor				     *
  *===========================================================================*/
-PRIVATE void start_motor()
+PRIVATE void start_motor(void)
 {
 /* Control of the floppy disk motors is a big pain.  If a motor is off, you
  * have to turn it on first, which takes 1/2 second.  You can't leave it on
@@ -823,8 +823,7 @@ PRIVATE void start_motor()
 /*===========================================================================*
  *				stop_motor				     *
  *===========================================================================*/
-PRIVATE void stop_motor(tp)
-timer_t *tp;
+PRIVATE void stop_motor(timer_t *tp)
 {
 /* This routine is called from an alarm timer after several seconds have
  * elapsed with no floppy disk activity.  It turns the drive motor off.
@@ -852,7 +851,7 @@ PRIVATE void floppy_stop(struct driver *dp, sigset_t *set)
 /*===========================================================================*
  *				seek					     *
  *===========================================================================*/
-PRIVATE int seek()
+PRIVATE int seek(void)
 {
 /* Issue a SEEK command on the indicated drive unless the arm is already
  * positioned on the correct cylinder.
@@ -915,8 +914,9 @@ PRIVATE int seek()
 /*===========================================================================*
  *				fdc_transfer				     *
  *===========================================================================*/
-PRIVATE int fdc_transfer(opcode)
-int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
+PRIVATE int fdc_transfer(
+  int opcode			/* DEV_GATHER_S or DEV_SCATTER_S */
+)
 {
 /* The drive is now on the proper cylinder.  Read, write or format 1 block. */
 
@@ -988,7 +988,7 @@ int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 /*===========================================================================*
  *				fdc_results				     *
  *===========================================================================*/
-PRIVATE int fdc_results()
+PRIVATE int fdc_results(void)
 {
 /* Extract results from the controller after an operation, then allow floppy
  * interrupts again.
@@ -1039,9 +1039,10 @@ PRIVATE int fdc_results()
 /*===========================================================================*
  *				fdc_command				     *
  *===========================================================================*/
-PRIVATE int fdc_command(cmd, len)
-u8_t *cmd;		/* command bytes */
-int len;		/* command length */
+PRIVATE int fdc_command(
+  u8_t *cmd,		/* command bytes */
+  int len		/* command length */
+)
 {
 /* Output a command to the controller. */
 
@@ -1063,8 +1064,9 @@ int len;		/* command length */
 /*===========================================================================*
  *				fdc_out					     *
  *===========================================================================*/
-PRIVATE void fdc_out(val)
-int val;		/* write this byte to floppy disk controller */
+PRIVATE void fdc_out(
+  int val		/* write this byte to floppy disk controller */
+)
 {
 /* Output a byte to the controller.  This is not entirely trivial, since you
  * can only write to it when it is listening, and it decides when to listen.
@@ -1096,7 +1098,7 @@ int val;		/* write this byte to floppy disk controller */
 /*===========================================================================*
  *				recalibrate				     *
  *===========================================================================*/
-PRIVATE int recalibrate()
+PRIVATE int recalibrate(void)
 {
 /* The floppy disk controller has no way of determining its absolute arm
  * position (cylinder).  Instead, it steps the arm a cylinder at a time and
@@ -1138,7 +1140,7 @@ PRIVATE int recalibrate()
 /*===========================================================================*
  *				f_reset					     *
  *===========================================================================*/
-PRIVATE void f_reset()
+PRIVATE void f_reset(void)
 {
 /* Issue a reset to the controller.  This is done after any catastrophe,
  * like the controller refusing to respond.
@@ -1210,7 +1212,7 @@ PRIVATE void f_reset()
 /*===========================================================================*
  *				f_intr_wait				     *
  *===========================================================================*/
-PRIVATE int f_intr_wait()
+PRIVATE int f_intr_wait(void)
 {
 /* Wait for an interrupt, but not forever.  The FDC may have all the time of
  * the world, but we humans do not.
@@ -1248,8 +1250,7 @@ PRIVATE int f_intr_wait()
 /*===========================================================================*
  *				f_timeout				     *
  *===========================================================================*/
-PRIVATE void f_timeout(tp)
-timer_t *tp;
+PRIVATE void f_timeout(timer_t *tp)
 {
 /* This routine is called when a timer expires.  Usually to tell that a
  * motor has spun up, but also to forge an interrupt when it takes too long
@@ -1264,7 +1265,7 @@ timer_t *tp;
 /*===========================================================================*
  *				read_id					     *
  *===========================================================================*/
-PRIVATE int read_id()
+PRIVATE int read_id(void)
 {
 /* Determine current cylinder and sector. */
 
@@ -1358,8 +1359,7 @@ message *m_ptr;			/* pointer to open message */
 /*===========================================================================*
  *				test_read				     *
  *===========================================================================*/
-PRIVATE int test_read(density)
-int density;
+PRIVATE int test_read(int density)
 {
 /* Try to read the highest numbered sector on cylinder 2.  Not all floppy
  * types have as many sectors per track, and trying cylinder 2 finds the
@@ -1388,8 +1388,7 @@ int density;
 /*===========================================================================*
  *				f_geometry				     *
  *===========================================================================*/
-PRIVATE void f_geometry(entry)
-struct partition *entry;
+PRIVATE void f_geometry(struct partition *entry)
 {
   entry->cylinders = f_dp->cyls;
   entry->heads = NR_HEADS;

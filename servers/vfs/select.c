@@ -89,7 +89,7 @@ PUBLIC int do_select(void)
  * timeout and wait for either the file descriptors to become ready or the 
  * timer to go off. If no timeout value was provided, we wait indefinitely. */
 
-  int r, nfds, do_timeout = 0, nonzero_timeout = 0, fd, s, fd_setsize;
+  int r, nfds, do_timeout = 0, nonzero_timeout = 0, fd, s;
   struct timeval timeout;
   struct selectentry *se;
 
@@ -97,7 +97,6 @@ PUBLIC int do_select(void)
 
   /* Sane amount of file descriptors? */
   if (nfds < 0 || nfds > OPEN_MAX) return(EINVAL);
-  fd_setsize = _FDSETWORDS(nfds) * _FDSETBITSPERWORD/8;
 
   /* Find a slot to store this select request */
   for (s = 0; s < MAXSELECTS; s++)
@@ -479,7 +478,7 @@ PRIVATE void select_wakeup(struct selectentry *e, int r)
  *===========================================================================*/
 PRIVATE int select_reevaluate(struct filp *fp)
 {
-	int s, remain_ops = 0, fd, type = -1;
+	int s, remain_ops = 0, fd;
 
 	if (!fp) {
 		printf("fs: select: reevalute NULL fp\n");
@@ -492,7 +491,6 @@ PRIVATE int select_reevaluate(struct filp *fp)
 		for(fd = 0; fd < selecttab[s].nfds; fd++)
 			if (fp == selecttab[s].filps[fd]) {
 				remain_ops |= tab2ops(fd, &selecttab[s]);
-				type = selecttab[s].type[fd];
 			}
 	}
 
@@ -526,15 +524,13 @@ PRIVATE void select_return(struct selectentry *se, int r)
  *===========================================================================*/
 PUBLIC int select_callback(struct filp *fp, int ops)
 {
-	int s, fd, want_ops, type;
+	int s, fd;
 
 	/* We are being notified that file pointer fp is available for
 	 * operations 'ops'. We must re-register the select for
 	 * operations that we are still interested in, if any.
 	 */
 
-	want_ops = 0;
-	type = -1;
 	for(s = 0; s < MAXSELECTS; s++) {
 		int wakehim = 0;
 		if (selecttab[s].requestor == NULL) continue;
@@ -545,13 +541,11 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 			if (selecttab[s].filps[fd] == fp) {
 				int this_want_ops;
 				this_want_ops = tab2ops(fd, &selecttab[s]);
-				want_ops |= this_want_ops;
 				if (this_want_ops & ops) {
 					/* this select() has been satisfied. */
 					ops2tab(ops, fd, &selecttab[s]);
 					wakehim = 1;
 				}
-				type = selecttab[s].type[fd];
 			}
 		}
 		if (wakehim)

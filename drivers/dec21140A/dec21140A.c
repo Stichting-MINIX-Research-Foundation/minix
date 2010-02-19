@@ -18,7 +18,6 @@
 #include <minix/com.h>
 #include <minix/sef.h>
 #include <minix/ds.h>
-#include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <stdlib.h>

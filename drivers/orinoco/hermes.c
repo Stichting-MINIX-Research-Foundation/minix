@@ -154,7 +154,8 @@ PRIVATE int hermes_present (hermes_t * hw) {
  *                                                                           *
  * Initialize the card                                                       *
  *****************************************************************************/
-int hermes_init (hermes_t * hw) {
+int hermes_init (hermes_t * hw)
+{
 	u32_t status, reg, resp0;
 	int err = 0;
 	int k;

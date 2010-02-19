@@ -73,7 +73,7 @@ FORWARD _PROTOTYPE( void tell_dev, (vir_bytes buf, size_t size, int pci_bus,
 PRIVATE char io_ctl_buf[_IOCPARM_MASK];
 PRIVATE int irq_hook_id = 0;	/* id of irq hook at the kernel */
 PRIVATE int irq_hook_set = FALSE;
-PRIVATE device_available = 0;/*todo*/
+PRIVATE int device_available = 0;/*todo*/
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -85,7 +85,7 @@ PUBLIC int is_status_msg_expected = FALSE;
 
 PUBLIC void main(void) 
 {	
-	int r, caller, proc_nr;
+	int r, caller;
 	message mess, repl_mess;
 
 	/* SEF local startup. */
@@ -97,7 +97,6 @@ PUBLIC void main(void)
 	while(1) {
 		sef_receive(ANY, &mess);
 		caller = mess.m_source;
-		proc_nr = mess.IO_ENDPT;
 
 		/* Now carry out the work. First check for notifications. */
 		if (is_notify(mess.m_type)) {
@@ -772,7 +771,7 @@ PRIVATE int get_started(sub_dev_t *sub_dev_ptr) {
 
 	/* enable interrupt messages from MINIX */
 	if ((i=sys_irqenable(&irq_hook_id)) != OK) {
-		error("%s: Couldn't enable IRQs",drv.DriverName);
+		error("%s: Couldn't enable IRQs: error code %u",drv.DriverName, (unsigned int) i);
 		return EIO;
 	}
 	/* let the lower part of the driver start the device */

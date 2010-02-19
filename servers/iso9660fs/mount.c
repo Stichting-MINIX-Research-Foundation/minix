@@ -17,13 +17,12 @@ PUBLIC int fs_readsuper() {
   int r = OK;
   unsigned long tasknr;
   endpoint_t driver_e;
-  int readonly, isroot;
+  int readonly;
 
   fs_dev    = fs_m_in.REQ_DEV;
   label_gid = fs_m_in.REQ_GRANT;
   label_len = fs_m_in.REQ_PATH_LEN;
   readonly  = 1;			/* Always mount devices read only. */
-  isroot    = (fs_m_in.REQ_FLAGS & REQ_ISROOT) ? 1 : 0;
 
   if (label_len > sizeof(fs_dev_label)) 
 	return(EINVAL);

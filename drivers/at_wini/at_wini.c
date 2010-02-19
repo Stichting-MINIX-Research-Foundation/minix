@@ -1733,9 +1733,8 @@ PRIVATE void w_need_reset()
 {
 /* The controller needs to be reset. */
   struct wini *wn;
-  int dr = 0;
 
-  for (wn = wini; wn < &wini[MAX_DRIVES]; wn++, dr++) {
+  for (wn = wini; wn < &wini[MAX_DRIVES]; wn++) {
 	if (wn->base_cmd == w_wn->base_cmd) {
 		wn->state |= DEAF;
 		wn->state &= ~INITIALIZED;

@@ -136,7 +136,7 @@ PUBLIC int fs_getdents(void) {
   struct dir_record *dir;
   ino_t ino;
   cp_grant_id_t gid;
-  size_t size_to_read, block_size;
+  size_t block_size;
   off_t pos, block_pos, block, cur_pos, tmpbuf_offset, userbuf_off;
   struct buf *bp;
   struct dir_record *dir_tmp;
@@ -153,7 +153,6 @@ PUBLIC int fs_getdents(void) {
   /* Get input parameters */
   ino = fs_m_in.REQ_INODE_NR;
   gid = fs_m_in.REQ_GRANT;
-  size_to_read = fs_m_in.REQ_MEM_SIZE;
   pos = fs_m_in.REQ_SEEK_POS_LO;
 
   block_size = v_pri.logical_block_size_l;

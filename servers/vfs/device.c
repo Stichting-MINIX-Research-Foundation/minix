@@ -341,7 +341,7 @@ int suspend_reopen;		/* Just suspend the process */
   message dev_mess;
   cp_grant_id_t gid = GRANT_INVALID;
   static cp_grant_id_t gids[NR_IOREQS];
-  int vec_grants = 0, orig_op, safe;
+  int vec_grants = 0, safe;
   void *buf_used;
   endpoint_t ioproc;
 
@@ -350,7 +350,6 @@ int suspend_reopen;		/* Just suspend the process */
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
-  orig_op = op;
 
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE) {
@@ -655,9 +654,7 @@ message *mess_ptr;		/* pointer to message for task */
  * pairs.  These lead to calls on the following routines via the dmap table.
  */
 
-  int r, proc_e;
-
-  proc_e = mess_ptr->IO_ENDPT;
+  int r;
 
   r = asynsend(task_nr, mess_ptr);
   if (r != OK) panic(__FILE__, "asyn_io: asynsend failed", r);

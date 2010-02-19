@@ -1071,7 +1071,7 @@ PUBLIC int main(int argc, char **argv)
   int result = EXIT_SUCCESS;
   int request;
   int i;
-  char *label, *progname = NULL;
+  char *progname = NULL;
   struct passwd *pw;
 
   /* Verify and parse the command line arguments. All arguments are checked
@@ -1119,9 +1119,6 @@ PUBLIC int main(int argc, char **argv)
       if (pw == NULL)
 	fatal("no passwd file entry for '%s'", SERVICE_LOGIN);
       rs_start.rss_uid= pw->pw_uid;
-
-      /* The name of the system service. */
-      (label= strrchr(req_path, '/')) ? label++ : (label= req_path);
 
       if (req_config) {
 	assert(progname);
