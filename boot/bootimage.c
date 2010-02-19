@@ -28,6 +28,12 @@
 #include "boot.h"
 
 static int block_size = 0;
+static int verboseboot = VERBOSEBOOT_QUIET;
+
+#define DEBUGBASIC(params) do { \
+	if (verboseboot >= VERBOSEBOOT_BASIC) printf params; } while (0)
+#define DEBUGMAX(params) do { \
+	if (verboseboot >= VERBOSEBOOT_MAX) printf params; } while (0)
 
 extern int serial_line;
 extern u16_t vid_port;         /* Video i/o port. */
@@ -46,7 +52,8 @@ extern u32_t vid_mem_size;     /* Video memory size. */
 #define K_INT86	 0x0040	/* Requires generic INT support. */
 #define K_MEML	 0x0080	/* Pass a list of free memory. */
 #define K_BRET	 0x0100	/* New monitor code on shutdown in boot parameters. */
-#define K_ALL	 0x01FF	/* All feature bits this monitor supports. */
+#define K_KHIGH  0x0200	/* Load kernel in extended memory. */
+#define K_ALL	 0x03FF	/* All feature bits this monitor supports. */
 
 
 /* Data about the different processes. */
@@ -365,10 +372,20 @@ int get_segment(u32_t *vsec, long *size, u32_t *addr, u32_t limit)
 			if ((buf= get_sector((*vsec)++)) == nil) return 0;
 			cnt= SECTOR_SIZE;
 		}
-		if (*addr + click_size > limit) { errno= ENOMEM; return 0; }
+		if (*addr + click_size > limit) 
+		{ 
+			DEBUGMAX(("get_segment: out of memory; "
+				"addr=0x%lx; limit=0x%lx; size=%lx\n", 
+				*addr, limit, size));
+			errno= ENOMEM; 
+			return 0; 
+		}
 		n= click_size;
 		if (n > cnt) n= cnt;
+		DEBUGMAX(("raw_copy(0x%lx, 0x%lx/0x%x, 0x%lx)... ", 
+			*addr, mon2abs(buf), buf, n));
 		raw_copy(*addr, mon2abs(buf), n);
+		DEBUGMAX(("done\n"));
 		*addr+= n;
 		*size-= n;
 		buf+= n;
@@ -377,7 +394,9 @@ int get_segment(u32_t *vsec, long *size, u32_t *addr, u32_t limit)
 
 	/* Zero extend to a click. */
 	n= align(*addr, click_size) - *addr;
+	DEBUGMAX(("raw_clear(0x%lx, 0x%lx)... ", *addr, n));
 	raw_clear(*addr, n);
+	DEBUGMAX(("done\n"));
 	*addr+= n;
 	*size-= n;
 	return 1;
@@ -419,11 +438,6 @@ static void restore_screen(void)
         }
 }
 
-#define DEBUGBASIC(params) do { \
-	if (verbose >= VERBOSEBOOT_BASIC) printf params; } while (0)
-#define DEBUGMAX(params) do { \
-	if (verbose >= VERBOSEBOOT_MAX) printf params; } while (0)
-
 void exec_image(char *image)
 /* Get a Minix image into core, patch it up and execute. */
 {
@@ -435,18 +449,17 @@ void exec_image(char *image)
 	long a_text, a_data, a_bss, a_stack;
 	int banner= 0;
 	long processor= a2l(b_value("processor"));
-	u16_t mode;
+	u16_t kmagic, mode;
 	char *console;
 	char params[SECTOR_SIZE];
 	extern char *sbrk(int);
 	char *verb;
-	int verbose = VERBOSEBOOT_QUIET;
 
 	/* The stack is pretty deep here, so check if heap and stack collide. */
 	(void) sbrk(0);
 
 	if ((verb= b_value(VERBOSEBOOTVARNAME)) != nil)
-		verbose = a2l(verb);
+		verboseboot = a2l(verb);
 
 	printf("\nLoading ");
 	pretty_image(image);
@@ -504,12 +517,18 @@ void exec_image(char *image)
 		if (i == KERNEL_IDX) {
 			if (!get_clickshift(vsec, &hdr)) return;
 			addr= align(addr, click_size);
+
+			/* big kernels must be loaded into extended memory */
+			if (k_flags & K_KHIGH) {
+				addr= mem[1].base;
+				limit= mem[1].base + mem[1].size;
+			}
 		}
 
 		/* Save a copy of the header for the kernel, with a_syms
 		 * misused as the address where the process is loaded at.
 		 */
-		DEBUGMAX(("raw_copy(0x%x, 0x%x, 0x%x)... ", 
+		DEBUGMAX(("raw_copy(0x%x, 0x%lx, 0x%x)... ", 
 			aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR));
 		hdr.process.a_syms= addr;
 		raw_copy(aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR);
@@ -523,6 +542,10 @@ void exec_image(char *image)
 		}
 
 		/* Segment sizes. */
+		DEBUGMAX(("a_text=0x%lx; a_data=0x%lx; a_bss=0x%lx; a_flags=0x%x)\n",
+			hdr.process.a_text, hdr.process.a_data, 
+			hdr.process.a_bss, hdr.process.a_flags));
+
 		a_text= hdr.process.a_text;
 		a_data= hdr.process.a_data;
 		a_bss= hdr.process.a_bss;
@@ -546,10 +569,11 @@ void exec_image(char *image)
 		/* Separate I&D: two segments.  Common I&D: only one. */
 		if (hdr.process.a_flags & A_SEP) {
 			/* Read the text segment. */
-			DEBUGMAX(("get_segment(0x%x, &a_text, 0x%x, 0x%x)... ",
-				vsec, addr, limit));
+			DEBUGMAX(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
+				vsec, a_text, addr, limit));
 			if (!get_segment(&vsec, &a_text, &addr, limit)) return;
-			DEBUGMAX(("vsec=0x%x a_text=0x%x addr=0x%x\n", 
+			DEBUGMAX(("get_segment done vsec=0x%lx a_text=0x%lx "
+				"addr=0x%lx\n", 
 				vsec, a_text, addr));
 
 			/* The data segment follows. */
@@ -564,10 +588,11 @@ void exec_image(char *image)
 		}
 
 		/* Read the data segment. */
-		DEBUGMAX(("get_segment(0x%x, &a_data, 0x%x, 0x%x)... ", 
-			vsec, addr, limit));
+		DEBUGMAX(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n", 
+			vsec, a_data, addr, limit));
 		if (!get_segment(&vsec, &a_data, &addr, limit)) return;
-		DEBUGMAX(("vsec=0x%x a_data=0x%x addr=0x%x\n", 
+		DEBUGMAX(("get_segment done vsec=0x%lx a_data=0x%lx "
+			"addr=0x%lx\n", 
 			vsec, a_data, addr));
 
 		/* Make space for bss and stack unless... */
@@ -588,8 +613,8 @@ void exec_image(char *image)
 		a_bss-= n;
 
 		/* Zero out bss. */
+		DEBUGMAX(("\nraw_clear(0x%lx, 0x%lx); limit=0x%lx... ", addr, n, limit));
 		if (addr + n > limit) { errno= ENOMEM; return; }
-		DEBUGMAX(("\nraw_clear(0x%x, 0x%x)... ", addr, n));
 		raw_clear(addr, n);
 		DEBUGMAX(("done\n"));
 		addr+= n;
@@ -605,7 +630,7 @@ void exec_image(char *image)
 		/* Process endpoint. */
 		procp->end= addr;
 
-		if (verbose >= VERBOSEBOOT_BASIC)
+		if (verboseboot >= VERBOSEBOOT_BASIC)
 			printf("  %s\n", hdr.name);
 		else {
 			u32_t mem;
@@ -614,14 +639,14 @@ void exec_image(char *image)
 			totalmem += mem;
 		}
 
-		if (i == 0 && (k_flags & K_HIGH)) {
+		if (i == 0 && (k_flags & (K_HIGH | K_KHIGH)) == K_HIGH) {
 			/* Load the rest in extended memory. */
 			addr= mem[1].base;
 			limit= mem[1].base + mem[1].size;
 		}
 	}
 
-	if (verbose < VERBOSEBOOT_BASIC)
+	if (verboseboot < VERBOSEBOOT_BASIC)
 		printf("(%dk)\n", totalmem/1024);
 
 	if ((n_procs= i) == 0) {
@@ -631,8 +656,11 @@ void exec_image(char *image)
 	}
 
 	/* Check the kernel magic number. */
-	if (get_word(process[KERNEL_IDX].data + MAGIC_OFF) != KERNEL_D_MAGIC) {
-		printf("Kernel magic number is incorrect\n");
+	raw_copy(mon2abs(&kmagic), 
+		process[KERNEL_IDX].data + MAGIC_OFF, sizeof(kmagic));
+	if (kmagic != KERNEL_D_MAGIC) {
+		printf("Kernel magic number is incorrect (0x%x@0x%lx)\n", 
+			kmagic, process[KERNEL_IDX].data + MAGIC_OFF);
 		errno= 0;
 		return;
 	}
@@ -674,7 +702,7 @@ void exec_image(char *image)
 	DEBUGMAX(("done\n"));
 
 	/* Minix. */
-	DEBUGMAX(("minix(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)\n", 
+	DEBUGMAX(("minix(0x%lx, 0x%lx, 0x%lx, 0x%x, 0x%x, 0x%lx)\n", 
 		process[KERNEL_IDX].entry, process[KERNEL_IDX].cs,
 		process[KERNEL_IDX].ds, params, sizeof(params), aout));
 	minix(process[KERNEL_IDX].entry, process[KERNEL_IDX].cs,
