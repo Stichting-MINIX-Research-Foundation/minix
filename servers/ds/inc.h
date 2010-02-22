@@ -1,3 +1,6 @@
+#ifndef _INC_INC_H
+#define _INC_INC_H
+
 /* Header file including all needed system headers. */
 
 #define _SYSTEM            1    /* get OK and negative error codes */
@@ -28,4 +31,4 @@
 #include <signal.h>
 
 #include "proto.h"
-
+#endif

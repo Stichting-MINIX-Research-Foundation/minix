@@ -325,7 +325,7 @@ PUBLIC int do_publish(message *m_ptr)
 	break;
   case DSF_TYPE_STR:
 	strncpy(dsp->u.string, (char *)(&m_ptr->DS_STRING), DS_MAX_STRLEN);
-	dsp->u.string[DS_MAX_KEYLEN - 1] = '\0';
+	dsp->u.string[DS_MAX_STRLEN - 1] = '\0';
 	break;
   case DSF_TYPE_MEM:
 	length = m_ptr->DS_VAL_LEN;

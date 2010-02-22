@@ -1,3 +1,6 @@
+#ifndef _INC_PROTO_H
+#define _INC_PROTO_H
+
 /* Function prototypes. */
 
 /* main.c */
@@ -14,3 +17,4 @@ _PROTOTYPE(int do_snapshot, (message *m_ptr));
 _PROTOTYPE(int do_getsysinfo, (message *m_ptr));
 _PROTOTYPE(int sef_cb_init_fresh, (int type, sef_init_info_t *info));
 
+#endif

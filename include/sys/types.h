@@ -1,3 +1,6 @@
+#ifndef _INC_SYS_TYPE_H
+#define _INC_SYS_TYPE_H
+
 /*
  * this files resolves conflicts between the file of the host system and
  * the minix specific one. This file is included directly only on Minix
@@ -8,4 +11,6 @@
 #error "Including Minix specific file in program targeted for other system"
 #else
 #include <minix/types.h>
+#endif
+
 #endif
