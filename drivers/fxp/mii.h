@@ -6,8 +6,8 @@ Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
 Definitions for the Media Independent (Ethernet) Interface
 */
 
-#ifndef _INC_MII_H
-#define _INC_MII_H
+#ifndef _FXP_MII_H
+#define _FXP_MII_H
 
 /* Registers in the Machine Independent Interface (MII) to the PHY.
  * IEEE 802.3 (2000 Edition) Clause 22.

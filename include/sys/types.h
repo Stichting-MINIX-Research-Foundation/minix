@@ -1,5 +1,5 @@
-#ifndef _INC_SYS_TYPE_H
-#define _INC_SYS_TYPE_H
+#ifndef _INCLUDE_SYS_TYPE_H
+#define _INCLUDE_SYS_TYPE_H
 
 /*
  * this files resolves conflicts between the file of the host system and

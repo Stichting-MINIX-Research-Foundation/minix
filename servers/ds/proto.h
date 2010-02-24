@@ -1,5 +1,5 @@
-#ifndef _INC_PROTO_H
-#define _INC_PROTO_H
+#ifndef _DS_PROTO_H
+#define _DS_PROTO_H
 
 /* Function prototypes. */
 

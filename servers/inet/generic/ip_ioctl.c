@@ -43,7 +43,7 @@ ioreq_t req;
 	int ent_no, r;
 	nwio_ipconf_t ipconf_var;
 
-	assert (fd>=0 && fd<=IP_FD_NR);
+	assert (fd>=0 && fd<IP_FD_NR);
 	ip_fd= &ip_fd_table[fd];
 
 	assert (ip_fd->if_flags & IFF_INUSE);

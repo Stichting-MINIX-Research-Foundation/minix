@@ -997,8 +997,6 @@ icmp_hdr_t *icmp_hdr;
 {
 	int entries;
 	int entry_size;
-	u32_t addr;
-	i32_t pref;
 	u16_t lifetime;
 	int i;
 	char *bufp;
@@ -1053,6 +1051,9 @@ icmp_hdr_t *icmp_hdr;
 	for (i= 0, bufp= (char *)&icmp_hdr->ih_dun.uhd_data[0]; i< entries; i++,
 		bufp += entry_size)
 	{
+		u32_t addr;
+		i32_t pref;
+
 		addr= *(ipaddr_t *)bufp;
 		pref= ntohl(*(u32_t *)(bufp+4));
 		ipr_add_oroute(icmp_port->icp_ipport, HTONL(0L), HTONL(0L), 

@@ -385,7 +385,7 @@ static void el3_read_StationAddress(dpeth_t * dep)
 {
   unsigned int ix, rc;
 
-  for (ix = EE_3COM_NODE_ADDR; ix < SA_ADDR_LEN;) {
+  for (ix = EE_3COM_NODE_ADDR; ix < SA_ADDR_LEN+EE_3COM_NODE_ADDR;) {
 	/* Accesses with word No. */
 	rc = el3_read_eeprom(dep->de_id_port, ix / 2);
 	/* Swaps bytes of word */

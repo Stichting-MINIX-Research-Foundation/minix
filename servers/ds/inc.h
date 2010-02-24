@@ -1,5 +1,5 @@
-#ifndef _INC_INC_H
-#define _INC_INC_H
+#ifndef _DS_INC_H
+#define _DS_INC_H
 
 /* Header file including all needed system headers. */
 

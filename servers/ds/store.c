@@ -553,7 +553,7 @@ PUBLIC int do_subscribe(message *m_ptr)
 
   subp->flags = DSF_IN_USE | type_set;
   strcpy(subp->owner, owner);
-  for(b = 0; b < BITMAP_CHUNKS(NR_DS_SUBS); b++)
+  for(b = 0; b < BITMAP_CHUNKS(NR_DS_KEYS); b++)
 	subp->old_subs[b] = 0;
 
   /* See if caller requested an instant initial list. */
