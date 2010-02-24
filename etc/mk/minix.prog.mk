@@ -52,6 +52,11 @@ MKDEP_SUFFIXES?=	.o .ln
 	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
+.if ${COMPILER_TYPE} == "ack"
+LIB${_lib:tu}=	${DESTDIR}/usr/lib/i386/lib${_lib}.a
+.elif ${COMPILER_TYPE} == "gnu"
+LIB${_lib:tu}=	${DESTDIR}/usr/gnu/lib/lib${_lib}.a
+.endif
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
@@ -203,7 +208,7 @@ LOBJS.${_P}+=	${LSRCS:.c=.ln} ${SRCS.${_P}:M*.c:.c=.ln}
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${_P}: ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
@@ -351,16 +356,16 @@ scriptsinstall::
 LINKSOWN?= ${BINOWN}
 LINKSGRP?= ${BINGRP}
 LINKSMODE?= ${BINMODE}
-# .include <minix.man.mk>
+.include <minix.man.mk>
 .include <minix.files.mk>
 # .include <minix.inc.mk>
-# .include <minix.links.mk>
+.include <minix.links.mk>
 .include <minix.sys.mk>
 .include <minix.dep.mk>
 
-.if (${COMPILER_TYPE} == ack)
+.if ${COMPILER_TYPE} == "ack"
 .include <minix.ack.mk>
-.elif (${COMPILER_TYPE} == gnu)
+.elif ${COMPILER_TYPE} == "gnu"
 .include <minix.gcc.mk>
 .endif
 

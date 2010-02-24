@@ -1,0 +1,1 @@
+.include <minix.own.mk>

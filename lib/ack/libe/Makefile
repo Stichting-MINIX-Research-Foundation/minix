@@ -1,5 +1,7 @@
 # Makefile for libe
 
+.include <minix.own.mk>
+
 LIB=		e
 
 AFLAGS+=-O -D_MINIX -D_POSIX_SOURCE -Was-ack

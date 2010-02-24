@@ -135,8 +135,8 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 .include <minix.files.mk>
 .include <minix.dep.mk>
 
-.if (${COMPILER_TYPE} == ack)
+.if ${COMPILER_TYPE} == "ack"
 .include <minix.ack.mk>
-.elif (${COMPILER_TYPE} == gnu)
+.elif ${COMPILER_TYPE} == "gnu"
 .include <minix.gcc.mk>
 .endif

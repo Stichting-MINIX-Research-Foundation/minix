@@ -2,7 +2,7 @@
 
 SUBDIR= csu libc libcurses libend libedit libm libsys libtimers libutil
 
-.if (${COMPILER_TYPE} == ack)
+.if ${COMPILER_TYPE} == "ack"
 SUBDIR+= ack/libd ack/libe ack/libfp ack/liby
 .endif
 

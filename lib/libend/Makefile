@@ -1,5 +1,7 @@
 # Makefile for libend
 
+.include "Makefile.inc"
+
 LIB=end
 
 SRCS=	\
@@ -8,7 +10,7 @@ SRCS=	\
 	end.s \
 	etext.s
 
-.if (${COMPILER_TYPE} == gnu)
+.if ${COMPILER_TYPE} == "gnu"
 .include "${.CURDIR}/gnu/Makefile.inc"
 .endif
 

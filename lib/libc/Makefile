@@ -1,5 +1,7 @@
 # Makefile for libc
 
+.include "Makefile.inc"
+
 LIB=		c
 
 CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
@@ -21,11 +23,11 @@ CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
 .include "${.CURDIR}/arch/${ARCH}/rts/Makefile.inc"
 .include "${.CURDIR}/arch/${ARCH}/string/Makefile.inc"
 
-.if (${COMPILER_TYPE} == ack)
+.if ${COMPILER_TYPE} == "ack"
 .include "${.CURDIR}/ack/fphook/Makefile.inc"
 .include "${.CURDIR}/ack/math/Makefile.inc"
 .include "${.CURDIR}/ack/rts/Makefile.inc"
-.elif (${COMPILER_TYPE} == gnu)
+.elif ${COMPILER_TYPE} == "gnu"
 .include "${.CURDIR}/gnu/ieee_float/Makefile.inc"
 .include "${.CURDIR}/gnu/arch/${ARCH}/rts/Makefile.inc"
 .endif

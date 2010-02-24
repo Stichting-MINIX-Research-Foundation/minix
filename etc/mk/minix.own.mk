@@ -3,8 +3,11 @@
 .if !defined(_MINIX_OWN_MK_)
 _MINIX_OWN_MK_=1
 
-MAKECONF?=	/etc/mk.conf
+MAKECONF?=	/etc/make.conf
 .-include "${MAKECONF}"
+
+#Set to ack by default
+COMPILER_TYPE?=ack
 
 #
 # CPU model, derived from MACHINE_ARCH
@@ -419,11 +422,14 @@ BINOWN?=	root
 BINMODE?=	555
 NONBINMODE?=	444
 
-MANDIR?=	/usr/share/man
-MANGRP?=	wheel
+#MANDIR?=	/usr/share/man
+MANDIR?=	/usr/man
+#MANGRP?=	wheel
+MANGRP?=	operator
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	catinstall htmlinstall maninstall
+#MANINSTALL?=	catinstall htmlinstall maninstall
+MANINSTALL?=	maninstall
 
 INFODIR?=	/usr/share/info
 INFOGRP?=	wheel
@@ -431,9 +437,9 @@ INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
 #LIBDIR?=	/usr/lib
-.if (${COMPILER_TYPE} == ack)
+.if ${COMPILER_TYPE} == "ack"
 LIBDIR?=	/usr/lib/i386
-.elif (${COMPILER_TYPE} == gnu)
+.elif ${COMPILER_TYPE} == "gnu"
 LIBDIR?=	/usr/gnu/lib
 .endif
 
@@ -763,7 +769,9 @@ PRESERVE?=	-p
 .endif
 #XXX: Not supported by MINIX install
 #RENAME?=	-r
-HRDLINK?=	-l h
+#XXX: MINIX install only supports hard link
+#HRDLINK?=	-l h
+HRDLINK?=	-l
 SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG
