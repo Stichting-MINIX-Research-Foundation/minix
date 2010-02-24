@@ -180,7 +180,6 @@ ALL	= \
 	synctree \
 	sysenv \
 	tail \
-	tar \
 	tcpd \
 	tcpdp \
 	tcpstat \
@@ -775,10 +774,6 @@ tail:	tail.c
 	$(CCLD) -o $@ $<
 	@install -S 16kw $@
 
-tar:	tar.c
-	$(CCLD) -o $@ $<
-	@install -S 256kw $@
-
 tcpd:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=0 tcpd.c
 	@install -S 8kw $@
@@ -1075,7 +1070,6 @@ install:	\
 	/usr/bin/sysenv \
 	/bin/sysenv \
 	/usr/bin/tail \
-	/usr/bin/tar \
 	/usr/bin/tcpd \
 	/usr/bin/tcpdp \
 	/usr/bin/tcpstat \
@@ -1601,9 +1595,6 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/tail:	tail
-	install -cs -o bin $> $@
-
-/usr/bin/tar:	tar
 	install -cs -o bin $> $@
 
 /usr/bin/tcpd:	tcpd
