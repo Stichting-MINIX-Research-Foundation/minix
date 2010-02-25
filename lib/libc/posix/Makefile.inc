@@ -98,10 +98,12 @@ SRCS+= 	 \
 	_wait.c \
 	_waitpid.c \
 	_write.c \
+	fnmatch.c \
 	getloadavg.c \
 	getopt.c \
 	gettimeofday.c \
 	glob.c \
 	nice.c \
 	priority.c \
+	pread.c \
 	usleep.c

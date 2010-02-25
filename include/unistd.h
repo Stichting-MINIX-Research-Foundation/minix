@@ -133,6 +133,7 @@ _PROTOTYPE( long pathconf, (const char *_path, int _name)		);
 _PROTOTYPE( int pause, (void)						);
 _PROTOTYPE( int pipe, (int _fildes[2])					);
 _PROTOTYPE( ssize_t read, (int _fd, void *_buf, size_t _n)		);
+_PROTOTYPE( ssize_t pread, (int, void *, size_t, off_t)			);
 _PROTOTYPE( int rmdir, (const char *_path)				);
 _PROTOTYPE( int setgid, (_mnx_Gid_t _gid)				);
 _PROTOTYPE( int setegid, (_mnx_Gid_t _gid)				);

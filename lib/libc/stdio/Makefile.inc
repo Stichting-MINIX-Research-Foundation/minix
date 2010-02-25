@@ -44,6 +44,7 @@ SRCS+=  \
 	setbuf.c \
 	setvbuf.c \
 	sprintf.c \
+	snprintf.c \
 	sscanf.c \
 	tmpfile.c \
 	tmpnam.c \

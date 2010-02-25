@@ -7,7 +7,7 @@
 .TH READ 2 "May 23, 1986"
 .UC 4
 .SH NAME
-read \- read input
+read, pread \- read input
 .SH SYNOPSIS
 .nf
 .ft B
@@ -15,6 +15,7 @@ read \- read input
 #include <unistd.h>
 
 ssize_t read(int \fId\fP, void *\fIbuf\fP, size_t \fInbytes\fP)
+ssize_t pread(int \fId\fP, void *\fIbuf\fP, size_t \fInbytes\fP, off_t \fIoffset\fP)
 .fi
 .SH DESCRIPTION
 .B Read
@@ -49,6 +50,11 @@ before the end-of-file, but in no other case.
 .PP
 If the returned value is 0, then
 end-of-file has been reached.
+.PP
+The
+.B pread
+system call performs the same functions, but reads from the specified
+position in the file without modifying the file pointer.
 .SH "RETURN VALUE
 If successful, the
 number of bytes actually read is returned.
@@ -57,6 +63,8 @@ Otherwise, a \-1 is returned and the global variable
 is set to indicate the error.
 .SH "ERRORS
 .B Read
+and 
+.B pread
 will fail if one or more of the following are true:
 .TP 15
 [EBADF]
@@ -75,9 +83,19 @@ any data arrived by the delivery of a signal.
 [EAGAIN]
 The file was marked for non-blocking I/O,
 and no data were ready to be read.
+.PP
+The
+.B pread
+system call may also return any of the
+.B lseek
+errors.
 .SH "SEE ALSO"
 .BR dup (2),
 .BR fcntl (2),
 .BR open (2),
 .BR pipe (2),
+.BR lseek (2),
 .BR write (2).
+.SH NOTES
+.B pread
+is currently implemented as a library function instead of a system call.
