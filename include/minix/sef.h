@@ -3,7 +3,7 @@
 #ifndef _SEF_H
 #define _SEF_H
 
-#include <minix.ipc.h>
+#include <minix/ipc.h>
 
 /* SEF entry points for system processes. */
 _PROTOTYPE( void sef_startup, (void) );
