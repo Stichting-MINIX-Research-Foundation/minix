@@ -18,10 +18,14 @@ install::
 	mkdir -p $(ETC)
 	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
 	@for f in $(FILES2); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 600 $(ETC)/$$f; fi; done
-	@for d in $(DIR1); do if [ -d $(ETC)/$$d ]; then :; else cp -r $$d $(ETC)/; chmod -r 755 $(ETC)/$$d; fi; done
 	@echo "Making hierarchy.."
 	sh mtree.sh mtree/minix.tree
 	@for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then :; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done
+	@echo "Installing /etc/mk.."
+	rm $(ETC)/$(DIR1)/*
+	cp $(DIR1)/*.mk $(ETC)/$(DIR1)
+	chmod 644 $(ETC)/$(DIR1)/*
+	chown bin $(ETC)/$(DIR1)/*
 	@echo "Making devices.."
 	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh null 
 	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh std  2>/dev/null

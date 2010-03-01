@@ -318,11 +318,16 @@ rm -rf $RELEASEDIR/usr/$SRC/doc/bugs
 if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
 fi
+echo " * Bootstrap /etc/mk files"
+# Need /etc/mk in the new system to invoke make. Real ownerships
+# and permissions will be set by its own src/etc/Makefile.
+# They have to be owned by bin so that the new make can do its work.
+mkdir -p $RELEASEDIR/etc/mk
+chmod 755 $RELEASEDIR/etc/mk
+cp $RELEASEDIR/usr/src/etc/mk/* $RELEASEDIR/etc/mk/
+chown -R bin $RELEASEDIR/etc/mk
 echo " * Chroot build"
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
-mkdir -p $RELEASEDIR/etc/mk
-chmod -R 755 $RELEASEDIR/etc/
-cp ../etc/mk/* $RELEASEDIR/etc/mk/
 chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 # Copy built images for cd booting
 cp $RELEASEDIR/boot/image_big image
