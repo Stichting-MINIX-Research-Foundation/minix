@@ -25,7 +25,7 @@ _PROTOTYPE( int sef_receive, (endpoint_t src, message *m_ptr) );
 
 /* Type definitions. */
 typedef struct {
-    int rproctab_gid;
+    cp_grant_id_t rproctab_gid;
 } sef_init_info_t;
 
 /* Callback type definitions. */

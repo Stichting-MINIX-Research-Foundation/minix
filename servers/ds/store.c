@@ -342,8 +342,8 @@ PUBLIC int do_publish(message *m_ptr)
 	}
 
 	/* Copy the memory range. */
-	r = sys_safecopyfrom(m_ptr->m_source, m_ptr->DS_VAL, 0,
-		(vir_bytes) dsp->u.mem.data, length, D);
+	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL,
+	        0, (vir_bytes) dsp->u.mem.data, length, D);
 	if(r != OK) {
 		printf("DS: publish: memory map/copy failed from %d: %d\n",
 			m_ptr->m_source, r);
@@ -360,7 +360,7 @@ PUBLIC int do_publish(message *m_ptr)
 	dsp->u.map.data = (void*) CLICK_CEIL(dsp->u.map.realpointer);
 
 	/* Map memory. */
-	r = sys_safemap(m_ptr->m_source, m_ptr->DS_VAL, 0,
+	r = sys_safemap(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
 		(vir_bytes) dsp->u.map.data, length, D, 0);
 	if(r != OK) {
 		printf("DS: publish: memory map/copy failed from %d: %d\n",
@@ -420,7 +420,7 @@ PUBLIC int do_retrieve(message *m_ptr)
 	break;
   case DSF_TYPE_MEM:
 	length = MIN(m_ptr->DS_VAL_LEN, dsp->u.mem.length);
-	r = sys_safecopyto(m_ptr->m_source, m_ptr->DS_VAL, 0,
+	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
 		(vir_bytes) dsp->u.mem.data, length, D);
 	if(r != OK) {
 		printf("DS: retrieve: copy failed to %d: %d\n",	
@@ -458,7 +458,8 @@ PUBLIC int do_retrieve(message *m_ptr)
 		}
 
 		length = MIN(m_ptr->DS_VAL_LEN, dsp->u.map.length);
-		r = sys_safecopyto(m_ptr->m_source, m_ptr->DS_VAL, 0,
+		r = sys_safecopyto(m_ptr->m_source,
+		        (cp_grant_id_t) m_ptr->DS_VAL, (vir_bytes) 0,
 			(vir_bytes) data, length, D);
 		if(r != OK) {
 			printf("DS: retrieve: copy failed to %d: %d\n",	
@@ -492,7 +493,7 @@ PUBLIC int do_retrieve_label(message *m_ptr)
 
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
-	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, 0,
+	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0,
 	(vir_bytes) dsp->key, strlen(dsp->key) + 1, D);
   if(r != OK) {
 	printf("DS: copy failed from %d: %d\n", m_ptr->m_source, r);
@@ -607,7 +608,7 @@ PUBLIC int do_check(message *m_ptr)
 
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
-	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, 0, 
+	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0, 
 	(vir_bytes) ds_store[i].key, strlen(ds_store[i].key), D);
   if(r != OK) {
 	printf("DS: check: copy failed from %d: %d\n", m_ptr->m_source, r);

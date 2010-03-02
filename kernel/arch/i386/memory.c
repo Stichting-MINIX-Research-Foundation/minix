@@ -401,7 +401,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	u32_t phys = 0;
 
 	if(seg == MEM_GRANT) {
-		return umap_grant(rp, vir_addr, bytes);
+		return umap_grant(rp, (cp_grant_id_t) vir_addr, bytes);
 	}
 	
 	if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {

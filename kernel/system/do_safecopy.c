@@ -53,9 +53,14 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Get granter process slot (if valid), and check range of
 		 * grant id.
 		 */
-		if(!isokendpt(granter, &proc_nr) || !GRANT_VALID(grant)) {
+		if(!isokendpt(granter, &proc_nr) ) {
 			kprintf(
-			"grant verify failed: invalid granter or grant\n");
+			"grant verify failed: invalid granter %d\n", (int) granter);
+			return(EINVAL);
+		}
+		if(!GRANT_VALID(grant)) {
+			kprintf(
+			"grant verify failed: invalid grant %d\n", (int) grant);
 			return(EINVAL);
 		}
 		granter_proc = proc_addr(proc_nr);
@@ -348,8 +353,9 @@ PUBLIC int do_safecopy(struct proc * caller, message * m_ptr)
 	} else minix_panic("Impossible system call nr. ", m_ptr->m_type);
 
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
-		m_ptr->SCP_GID, src_seg, dst_seg, m_ptr->SCP_BYTES,
-		m_ptr->SCP_OFFSET, (vir_bytes) m_ptr->SCP_ADDRESS, access);
+		(cp_grant_id_t) m_ptr->SCP_GID, src_seg, dst_seg,
+		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
+		(vir_bytes) m_ptr->SCP_ADDRESS, access);
 }
 
 /*===========================================================================*

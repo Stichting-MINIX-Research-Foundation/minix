@@ -22,7 +22,7 @@ struct map_info_s {
 
 	/* Grantor. */
 	endpoint_t grantor;
-	int gid;
+	cp_grant_id_t gid;
 	vir_bytes offset;
 	vir_bytes address_Dseg; /* seg always is D */
 
@@ -41,7 +41,7 @@ static struct map_info_s map_info[MAX_MAP_INFO];
 /*===========================================================================*
  *				add_info				     *
  *===========================================================================*/
-static int add_info(endpoint_t grantor, endpoint_t grantee, int gid,
+static int add_info(endpoint_t grantor, endpoint_t grantee, cp_grant_id_t gid,
 		vir_bytes offset, vir_bytes address_Dseg,
 		int seg, vir_bytes address, vir_bytes bytes)
 {
@@ -105,11 +105,9 @@ static struct map_info_s *get_unmap_info(endpoint_t grantee, int seg,
 /*===========================================================================*
  *				clear_info				     *
  *===========================================================================*/
-static int clear_info(struct map_info_s *p)
+static void clear_info(struct map_info_s *p)
 {
 	p->flag = 0;
-
-	return 0;
 }
 
 /*===========================================================================*
@@ -173,7 +171,7 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 PUBLIC int do_safemap(struct proc * caller, message * m_ptr)
 {
 	endpoint_t grantor	= m_ptr->SMAP_EP;
-	cp_grant_id_t gid	= m_ptr->SMAP_GID;
+	cp_grant_id_t gid	= (cp_grant_id_t) m_ptr->SMAP_GID;
 	vir_bytes offset	= (vir_bytes) m_ptr->SMAP_OFFSET;
 	int seg			= (int) m_ptr->SMAP_SEG;
 	vir_bytes address	= (vir_bytes) m_ptr->SMAP_ADDRESS;
@@ -267,7 +265,7 @@ PUBLIC int do_saferevmap(struct proc * caller, message * m_ptr)
  *===========================================================================*/
 PUBLIC int do_safeunmap(struct proc * caller, message * m_ptr)
 {
-	vir_bytes address = m_ptr->SMAP_ADDRESS;
+	vir_bytes address = (vir_bytes) m_ptr->SMAP_ADDRESS;
 	int seg = (int)m_ptr->SMAP_SEG;
 	struct map_info_s *p;
 	int r;

@@ -56,10 +56,12 @@ PUBLIC int do_umap(struct proc * caller, message * m_ptr)
 	vir_bytes newoffset;
 	endpoint_t newep;
 	int new_proc_nr;
+	cp_grant_id_t grant = (cp_grant_id_t) offset;
 
-        if(verify_grant(targetpr->p_endpoint, ANY, offset, count, 0, 0,
+        if(verify_grant(targetpr->p_endpoint, ANY, grant, count, 0, 0,
                 &newoffset, &newep) != OK) {
-                kprintf("SYSTEM: do_umap: verify_grant in %s, grant %d, bytes 0x%lx, failed, caller %s\n", targetpr->p_name, offset, count, caller->p_name);
+                kprintf("SYSTEM: do_umap: verify_grant in %s, grant %d, bytes 0x%lx, failed, caller %s\n",
+                  targetpr->p_name, (int) grant, count, caller->p_name);
 		proc_stacktrace(caller);
                 return EFAULT;
         }

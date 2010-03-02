@@ -32,9 +32,9 @@
  *===========================================================================*/
 
 /* These may not be any valid endpoint (see <minix/endpoint.h>). */
-#define ANY		0x7ace	/* used to indicate 'any process' */
-#define NONE 		0x6ace  /* used to indicate 'no process at all' */
-#define SELF		0x8ace 	/* used to indicate 'own process' */
+#define ANY	((endpoint_t) 0x7ace)	/* used to indicate 'any process' */
+#define NONE 	((endpoint_t) 0x6ace)   /* used to indicate 'no process at all' */
+#define SELF	((endpoint_t) 0x8ace) 	/* used to indicate 'own process' */
 #define _MAX_MAGIC_PROC (SELF)	/* used by <minix/endpoint.h> 
 				   to determine generation size */
 
@@ -50,10 +50,10 @@
  */
 
 /* Kernel tasks. These all run in the same address space. */
-#define IDLE             -4	/* runs when no one else can run */
-#define CLOCK  		 -3	/* alarms and other clock functions */
-#define SYSTEM           -2	/* request system functionality */
-#define KERNEL           -1	/* pseudo-process for IPC and scheduling */
+#define IDLE    ((endpoint_t) -4) /* runs when no one else can run */
+#define CLOCK  	((endpoint_t) -3) /* alarms and other clock functions */
+#define SYSTEM  ((endpoint_t) -2) /* request system functionality */
+#define KERNEL  ((endpoint_t) -1) /* pseudo-process for IPC and scheduling */
 #define HARDWARE     KERNEL	/* for hardware interrupt handlers */
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
@@ -61,25 +61,28 @@
 #define NR_TASKS	  4 
 
 /* User-space processes, that is, device drivers, servers, and INIT. */
-#define PM_PROC_NR	  0	/* process manager */
-#define FS_PROC_NR 	  1	/* file system */
+#define PM_PROC_NR   ((endpoint_t) 0)	/* process manager */
+#define FS_PROC_NR   ((endpoint_t) 1)	/* file system */
 #define VFS_PROC_NR 	  FS_PROC_NR /* FS has been renamed to VFS. */
-#define RS_PROC_NR 	  2  	/* reincarnation server */
-#define MEM_PROC_NR 	  3  	/* memory driver (RAM disk, null, etc.) */
-#define LOG_PROC_NR	  4	/* log device driver */
-#define TTY_PROC_NR	  5	/* terminal (TTY) driver */
-#define DS_PROC_NR	  6    	/* data store server */
-#define MFS_PROC_NR       7     /* minix root filesystem */
-#define VM_PROC_NR        8     /* memory server */
-#define PFS_PROC_NR       9     /* pipe filesystem */
-#define INIT_PROC_NR	  10   	/* init -- goes multiuser */
+#define RS_PROC_NR   ((endpoint_t) 2)  	/* reincarnation server */
+#define MEM_PROC_NR  ((endpoint_t) 3)  	/* memory driver (RAM disk, null, etc.) */
+#define LOG_PROC_NR  ((endpoint_t) 4)	/* log device driver */
+#define TTY_PROC_NR  ((endpoint_t) 5)	/* terminal (TTY) driver */
+#define DS_PROC_NR   ((endpoint_t) 6)   /* data store server */
+#define MFS_PROC_NR  ((endpoint_t) 7)   /* minix root filesystem */
+#define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
+#define PFS_PROC_NR  ((endpoint_t) 9)   /* pipe filesystem */
+#define LAST_SPECIAL_PROC_NR	10	/* An untyped version for
+                                           computation in macros.*/
+#define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
+                                                        -- goes multiuser */
 
 /* Root system process and root user process. */
 #define ROOT_SYS_PROC_NR  RS_PROC_NR
 #define ROOT_USR_PROC_NR  INIT_PROC_NR
 
 /* Number of processes contained in the system image. */
-#define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
+#define NR_BOOT_PROCS 	(NR_TASKS + LAST_SPECIAL_PROC_NR + 1)
 
 /*===========================================================================*
  *                	   Kernel notification types                         *

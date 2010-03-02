@@ -57,7 +57,7 @@ struct vscp_vec {
 #define VMPTYPE_SUNMAP		4
 
 /* Invalid grant number. */
-#define GRANT_INVALID	-1
+#define GRANT_INVALID	((cp_grant_id_t) -1)
 #define GRANT_VALID(g)	((g) > GRANT_INVALID)
 
 /* Operations: any combination is ok. */

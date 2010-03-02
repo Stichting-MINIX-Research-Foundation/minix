@@ -67,7 +67,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
   if((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
      if(verify_grant(proc_nr_e, caller->p_endpoint,
-	(vir_bytes) m_ptr->DIO_VEC_ADDR,
+	(cp_grant_id_t) m_ptr->DIO_VEC_ADDR,
 	count,
 	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
 	(vir_bytes) m_ptr->DIO_OFFSET, 
