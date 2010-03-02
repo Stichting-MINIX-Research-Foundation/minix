@@ -37,7 +37,7 @@ PUBLIC void rproc_dmp()
   for (i=prev_i; i<NR_SYS_PROCS; i++) {
   	rp = &rproc[i];
   	rpub = &rprocpub[i];
-  	if (! rp->r_flags & RS_IN_USE) continue;
+  	if (! (rp->r_flags & RS_IN_USE)) continue;
   	if (++n > 22) break;
   	printf("%13s %9d %5d %5s %3d/%1d %3u %8u %5dx %s",
   		rpub->label, rpub->endpoint, rp->r_pid,

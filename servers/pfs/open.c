@@ -26,7 +26,7 @@ PUBLIC int fs_newnode()
   /* Try to allocate the inode */
   if( (rip = alloc_inode(dev, bits) ) == NIL_INODE) return(err_code);
 
-  if (bits & S_IFMT != S_IFIFO) {
+  if ((bits & S_IFMT) != S_IFIFO) {
 		r = EIO; /* We only support pipes */
   } else if ((get_block(dev, rip->i_num)) == NIL_BUF)
   		r = EIO; 

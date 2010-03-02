@@ -94,7 +94,7 @@ PUBLIC int do_unlink()
   
   /* Also, if the sticky bit is set, only the owner of the file or a privileged
      user is allowed to unlink */
-  if (vldirp->v_mode & S_ISVTX == S_ISVTX) {
+  if ((vldirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
 	vp = advance(vldirp, PATH_RET_SYMLINK);
 	if (vp != NIL_VNODE) {
@@ -136,7 +136,7 @@ PUBLIC int do_rename()
 
   /* If the sticky bit is set, only the owner of the file or a privileged
      user is allowed to rename */
-  if(old_dirp->v_mode & S_ISVTX == S_ISVTX) {
+  if((old_dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
 	vp = advance(old_dirp, PATH_RET_SYMLINK);
 	if (vp != NIL_VNODE) {
