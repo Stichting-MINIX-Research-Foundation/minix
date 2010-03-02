@@ -846,7 +846,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 
 	/* Tell kernel how to get at the page directories. */
 	if((r=sys_vmctl(SELF, VMCTL_I386_PAGEDIRS, kpagedir)) != OK) {
-                vm_panic("VMCTL_I386_KERNELLIMIT failed", r);
+                vm_panic("VMCTL_I386_PAGEDIRS failed", r);
 	}
        
         /* Give our process the new, copied, private page table. */
