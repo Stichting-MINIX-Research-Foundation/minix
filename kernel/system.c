@@ -519,21 +519,12 @@ register struct proc *rc;		/* slot of process to clean up */
       /* Unset pending notification bits. */
       unset_sys_bit(priv(rp)->s_notify_pending, priv(rc)->s_id);
 
-      /* Check if process is receiving from exiting process. */
-      if (RTS_ISSET(rp, RTS_RECEIVING) && rp->p_getfrom_e == rc->p_endpoint) {
-          rp->p_reg.retreg = ESRCDIED;		/* report source died */
-	  RTS_UNSET(rp, RTS_RECEIVING);	/* no longer receiving */
+      /* Check if process is depends on exiting process. */
+      if (P_BLOCKEDON(rp) == rc->p_endpoint) {
+          rp->p_reg.retreg = EDEADSRCDST;		/* report source died */
+	  RTS_UNSET(rp, (RTS_RECEIVING|RTS_SENDING)); /* no longer blocking */
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("endpoint %d / %s receiving from dead src ep %d / %s\n",
-		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
-#endif
-      } 
-      if (RTS_ISSET(rp, RTS_SENDING) &&
-	  rp->p_sendto_e == rc->p_endpoint) {
-          rp->p_reg.retreg = EDSTDIED;		/* report destination died */
-	  RTS_UNSET(rp, RTS_SENDING);
-#if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("endpoint %d / %s send to dying dst ep %d (%s)\n",
+	  kprintf("endpoint %d / %s blocked on dead src ep %d / %s\n",
 		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
 #endif
       } 

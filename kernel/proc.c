@@ -511,6 +511,7 @@ proc_nr_t src_dst;				/* src or dst process */
 #endif
 
   while (src_dst != ANY) { 			/* check while process nr */
+      endpoint_t dep;
       xp = proc_addr(src_dst);			/* follow chain of processes */
 #if DEBUG_ENABLE_IPC_WARNINGS
       processes[group_size] = xp;
@@ -520,14 +521,13 @@ proc_nr_t src_dst;				/* src or dst process */
       /* Check whether the last process in the chain has a dependency. If it 
        * has not, the cycle cannot be closed and we are done.
        */
-      if (RTS_ISSET(xp, RTS_RECEIVING)) {	/* xp has dependency */
-	  if(xp->p_getfrom_e == ANY) src_dst = ANY;
-	  else okendpt(xp->p_getfrom_e, &src_dst);
-      } else if (RTS_ISSET(xp, RTS_SENDING)) {	/* xp has dependency */
-	  okendpt(xp->p_sendto_e, &src_dst);
-      } else {
-	  return(0);				/* not a deadlock */
-      }
+      if((dep = P_BLOCKEDON(xp)) == NONE)
+	return 0;
+
+      if(dep == ANY)
+	src_dst = ANY;
+      else
+	okendpt(dep, &src_dst);
 
       /* Now check if there is a cyclic dependency. For group sizes of two,  
        * a combination of SEND(REC) and RECEIVE is not fatal. Larger groups
@@ -585,7 +585,7 @@ int flags;
 
   if (RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT))
   {
-	return EDSTDIED;
+	return EDEADSRCDST;
   }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
@@ -661,7 +661,7 @@ int flags;
 	okendpt(src_e, &src_p);
 	if (RTS_ISSET(proc_addr(src_p), RTS_NO_ENDPOINT))
 	{
-		return ESRCDIED;
+		return EDEADSRCDST;
 	}
   }
 
@@ -958,7 +958,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		/* RTS_NO_ENDPOINT should be removed */
 		if (dst_ptr->p_rts_flags & RTS_NO_ENDPOINT)
 		{
-			tabent.result= EDSTDIED;
+			tabent.result= EDEADSRCDST;
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
 			A_INSERT(i, flags);

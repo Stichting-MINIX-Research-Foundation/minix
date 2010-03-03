@@ -157,6 +157,25 @@ struct proc {
 #define proc_is_preempted(p)	((p)->p_rts_flags & RTS_PREEMPTED)
 #define proc_no_quantum(p)	((p)->p_rts_flags & RTS_NO_QUANTUM)
 
+/* Macro to return: on which process is a certain process blocked?
+ * return endpoint number (can be ANY) or NONE. It's important to
+ * check RTS_SENDING first, and then RTS_RECEIVING, as they could
+ * both be on (if a sendrec() blocks on sending), and p_getfrom_e
+ * could be nonsense even though RTS_RECEIVING is on.
+ */
+#define P_BLOCKEDON(p)							\
+	(								\
+		((p)->p_rts_flags & RTS_SENDING) ? 			\
+		(p)->p_sendto_e : 					\
+		(							\
+			(						\
+				((p)->p_rts_flags & RTS_RECEIVING) ?	\
+				(p)->p_getfrom_e : 			\
+				NONE					\
+			) 						\
+		)							\
+	)
+
 /* These runtime flags can be tested and manipulated by these macros. */
 
 #define RTS_ISSET(rp, f) (((rp)->p_rts_flags & (f)) == (f))

@@ -315,7 +315,7 @@ PRIVATE void ser_debug(int c)
 PRIVATE void printslot(struct proc *pp, int level)
 {
 	struct proc *depproc = NULL;
-	int dep = NONE;
+	endpoint_t dep;
 #define COL { int i; for(i = 0; i < level; i++) printf("> "); }
 
 	if(level >= NR_PROCS) {
@@ -331,15 +331,8 @@ PRIVATE void printslot(struct proc *pp, int level)
 		pp->p_sys_time, pp->p_cycles.hi, pp->p_cycles.lo, pp->p_seg.p_cr3,
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
 
-	if(pp->p_rts_flags & RTS_SENDING) {
-		dep = pp->p_sendto_e;
-		kprintf(" to: ");
-	} else if(pp->p_rts_flags & RTS_RECEIVING) {
-		dep = pp->p_getfrom_e;
-		kprintf(" from: ");
-	}
-
-	if(dep != NONE) {
+	if((dep = P_BLOCKEDON(pp)) != NONE) {
+		kprintf(" blocked on: ");
 		if(dep == ANY) {
 			kprintf(" ANY\n");
 		} else {
