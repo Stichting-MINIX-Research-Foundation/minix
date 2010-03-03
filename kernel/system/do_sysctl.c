@@ -23,13 +23,13 @@ PUBLIC int do_sysctl(struct proc * caller, message * m_ptr)
         buf = (vir_bytes) m_ptr->SYSCTL_ARG1;
         len = (vir_bytes) m_ptr->SYSCTL_ARG2;
 	if(len < 1 || len > DIAG_BUFSIZE) {
-		kprintf("do_sysctl: diag for %d: len %d out of range\n",
+		printf("do_sysctl: diag for %d: len %d out of range\n",
 			caller->p_endpoint, len);
 		return EINVAL;
 	}
 	if((s=data_copy_vmcheck(caller, caller->p_endpoint, buf, KERNEL,
 					(vir_bytes) mybuf, len)) != OK) {
-		kprintf("do_sysctl: diag for %d: len %d: copy failed: %d\n",
+		printf("do_sysctl: diag for %d: len %d: copy failed: %d\n",
 			caller->p_endpoint, len, s);
 		return s;
 	}
@@ -43,7 +43,7 @@ PUBLIC int do_sysctl(struct proc * caller, message * m_ptr)
 	proc_stacktrace(proc_addr(proc_nr));
 	return OK;
     default:
-	kprintf("do_sysctl: invalid request %d\n", m_ptr->SYSCTL_CODE);
+	printf("do_sysctl: invalid request %d\n", m_ptr->SYSCTL_CODE);
         return(EINVAL);
   }
 

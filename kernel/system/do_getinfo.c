@@ -120,7 +120,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
 	int bin = m_ptr->I_VAL_LEN2_E;
 
 	if(bin < 0 || bin >= RANDOM_SOURCES) {
-		kprintf("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin);
+		printf("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin);
 		return EINVAL;
 	}
 
@@ -176,7 +176,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
     }
 
     default:
-	kprintf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
+	printf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
         return(EINVAL);
   }
 

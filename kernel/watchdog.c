@@ -26,7 +26,7 @@ void nmi_watchdog_handler(struct nmi_frame * frame)
 
 	if (last_tick_count != watchdog_local_timer_ticks) {
 		if (no_ticks == 1) {
-			kprintf("watchdog : kernel unlocked\n");
+			printf("watchdog : kernel unlocked\n");
 			no_ticks = 0;
 		}
 		/* we are still ticking, everything seems good */
@@ -40,7 +40,7 @@ void nmi_watchdog_handler(struct nmi_frame * frame)
 	 */
 	if (++no_ticks < 10) {
 		if (no_ticks == 1)
-			kprintf("WARNING watchdog : possible kernel lockup\n");
+			printf("WARNING watchdog : possible kernel lockup\n");
 		goto reset_and_continue;
 	}
 

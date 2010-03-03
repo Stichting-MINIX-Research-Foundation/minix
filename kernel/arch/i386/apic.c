@@ -108,7 +108,7 @@ PUBLIC void apic_calibrate_clocks(void)
 
 	irq_hook_t calib_clk;
 
-	BOOT_VERBOSE(kprintf("Calibrating clock\n"));
+	BOOT_VERBOSE(printf("Calibrating clock\n"));
 	/*
 	 * Set Initial count register to the highest value so it does not
 	 * underflow during the testing period
@@ -156,10 +156,10 @@ PUBLIC void apic_calibrate_clocks(void)
 	tsc_delta = sub64(tsc1, tsc0);
 
 	lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
-	BOOT_VERBOSE(kprintf("APIC bus freq %lu MHz\n",
+	BOOT_VERBOSE(printf("APIC bus freq %lu MHz\n",
 				lapic_bus_freq[cpuid] / 1000000));
 	cpu_freq = div64u(tsc_delta, PROBE_TICKS - 1) * system_hz;
-	BOOT_VERBOSE(kprintf("CPU %d freq %lu MHz\n", cpuid,
+	BOOT_VERBOSE(printf("CPU %d freq %lu MHz\n", cpuid,
 				cpu_freq / 1000000));
 
 	cpu_set_freq(cpuid, cpu_freq);
@@ -291,7 +291,7 @@ PRIVATE int lapic_enable_in_msr(void)
 	addr = (msr.lo >> 12) | ((msr.hi & 0xf) << 20);
 	if (phys2vir(addr) != (lapic_addr >> 12)) {
 		if (msr.hi & 0xf) {
-			kprintf("ERROR : APIC address needs more then 32 bits\n");
+			printf("ERROR : APIC address needs more then 32 bits\n");
 			return 0;
 		}
 		lapic_addr = phys2vir(msr.lo & ~((1 << 12) - 1));
@@ -313,7 +313,7 @@ PUBLIC int lapic_enable(void)
 
 	cpu_has_tsc = _cpufeature(_CPUF_I386_TSC);
 	if (!cpu_has_tsc) {
-		kprintf("CPU lacks timestamp counter, "
+		printf("CPU lacks timestamp counter, "
 			"cannot calibrate LAPIC timer\n");
 		return 0;
 	}
@@ -374,14 +374,14 @@ PUBLIC int lapic_enable(void)
 	*((u32_t *)lapic_eoi_addr) = 0;
 
 	apic_calibrate_clocks();
-	BOOT_VERBOSE(kprintf("APIC timer calibrated\n"));
+	BOOT_VERBOSE(printf("APIC timer calibrated\n"));
 
 	return 1;
 }
 
 PRIVATE void apic_spurios_intr(void)
 {
-	kprintf("WARNING spurious interrupt\n");
+	printf("WARNING spurious interrupt\n");
 	for(;;);
 }
 
@@ -444,7 +444,7 @@ PUBLIC void apic_idt_init(int reset)
 
 #ifdef CONFIG_APIC_DEBUG
 	if (cpu_is_bsp(cpuid))
-		kprintf("APIC debugging is enabled\n");
+		printf("APIC debugging is enabled\n");
 	lapic_set_dummy_handlers();
 #endif
 
@@ -459,10 +459,10 @@ PUBLIC void apic_idt_init(int reset)
 	/* configure the timer interupt handler */
 	if (cpu_is_bsp(cpuid)) {
 		local_timer_intr_handler = (vir_bytes) lapic_bsp_timer_int_handler;
-		BOOT_VERBOSE(kprintf("Initiating BSP timer handler\n"));
+		BOOT_VERBOSE(printf("Initiating BSP timer handler\n"));
 	} else {
 		local_timer_intr_handler = (vir_bytes) lapic_ap_timer_int_handler;
-		BOOT_VERBOSE(kprintf("Initiating AP timer handler\n"));
+		BOOT_VERBOSE(printf("Initiating AP timer handler\n"));
 	}
 
 	/* register the timer interrupt handler for this CPU */

@@ -320,7 +320,7 @@ long bit_map;			/* notification event set or flags */
 
 #if DEBUG_SCHED_CHECK
   if(caller_ptr->p_misc_flags & MF_DELIVERMSG) {
-	kprintf("sys_call: MF_DELIVERMSG on for %s / %d\n",
+	printf("sys_call: MF_DELIVERMSG on for %s / %d\n",
 		caller_ptr->p_name, caller_ptr->p_endpoint);
 	minix_panic("MF_DELIVERMSG on", NO_NUM);
   }
@@ -330,20 +330,20 @@ long bit_map;			/* notification event set or flags */
   if(src_dst_e != 4 && src_dst_e != 5 &&
 	caller_ptr->p_endpoint != 4 && caller_ptr->p_endpoint != 5) {
 	if(call_nr == SEND)
-		kprintf("(%d SEND to %d) ", caller_ptr->p_endpoint, src_dst_e);
+		printf("(%d SEND to %d) ", caller_ptr->p_endpoint, src_dst_e);
 	else if(call_nr == RECEIVE)
-		kprintf("(%d RECEIVE from %d) ", caller_ptr->p_endpoint, src_dst_e);
+		printf("(%d RECEIVE from %d) ", caller_ptr->p_endpoint, src_dst_e);
 	else if(call_nr == SENDREC)
-		kprintf("(%d SENDREC to %d) ", caller_ptr->p_endpoint, src_dst_e);
+		printf("(%d SENDREC to %d) ", caller_ptr->p_endpoint, src_dst_e);
 	else
-		kprintf("(%d %d to/from %d) ", caller_ptr->p_endpoint, call_nr, src_dst_e);
+		printf("(%d %d to/from %d) ", caller_ptr->p_endpoint, call_nr, src_dst_e);
   }
 #endif
 
 #if DEBUG_SCHED_CHECK
   if (RTS_ISSET(caller_ptr, RTS_SLOT_FREE))
   {
-	kprintf("called by the dead?!?\n");
+	printf("called by the dead?!?\n");
 	return EINVAL;
   }
 #endif
@@ -364,7 +364,7 @@ long bit_map;			/* notification event set or flags */
 	if (call_nr != RECEIVE)
 	{
 #if 0
-		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
+		printf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
 		return EINVAL;
@@ -376,7 +376,7 @@ long bit_map;			/* notification event set or flags */
 	/* Require a valid source and/or destination process. */
 	if(!isokendpt(src_dst_e, &src_dst_p)) {
 #if 0
-		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
+		printf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
 		return EDEADSRCDST;
@@ -390,7 +390,7 @@ long bit_map;			/* notification event set or flags */
 	{
 		if (!may_send_to(caller_ptr, src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-			kprintf(
+			printf(
 			"sys_call: ipc mask denied trap %d from %d to %d\n",
 				call_nr, caller_ptr->p_endpoint, src_dst_e);
 #endif
@@ -403,7 +403,7 @@ long bit_map;			/* notification event set or flags */
   if (call_nr < 0 || call_nr >= 32)
   {
 #if DEBUG_ENABLE_IPC_WARNINGS
-      kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
+      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
@@ -415,7 +415,7 @@ long bit_map;			/* notification event set or flags */
    */
   if (!(priv(caller_ptr)->s_trap_mask & (1 << call_nr))) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-      kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
+      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
@@ -426,7 +426,7 @@ long bit_map;			/* notification event set or flags */
   if (call_nr != SENDREC && call_nr != RECEIVE && call_nr != SENDA &&
 	iskerneln(src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-      kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
+      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
@@ -543,9 +543,9 @@ proc_nr_t src_dst;				/* src or dst process */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  {
 		int i;
-		kprintf("deadlock between these processes:\n");
+		printf("deadlock between these processes:\n");
 		for(i = 0; i < group_size; i++) {
-			kprintf(" %10s ", processes[i]->p_name);
+			printf(" %10s ", processes[i]->p_name);
 			proc_stacktrace(processes[i]);
 		}
 	  }
@@ -687,7 +687,7 @@ int flags;
             src_proc_nr = id_to_nr(src_id);		/* get source proc */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	    if(src_proc_nr == NONE) {
-		kprintf("mini_receive: sending notify from NONE\n");
+		printf("mini_receive: sending notify from NONE\n");
 	    }
 #endif
             if (src_e!=ANY && src_p != src_proc_nr) continue;/* source not ok */
@@ -712,7 +712,7 @@ int flags;
 #if DEBUG_SCHED_CHECK
 	    if (RTS_ISSET(*xpp, RTS_SLOT_FREE) || RTS_ISSET(*xpp, RTS_NO_ENDPOINT))
 	    {
-		kprintf("%d: receive from %d; found dead %d (%s)?\n",
+		printf("%d: receive from %d; found dead %d (%s)?\n",
 			caller_ptr->p_endpoint, src_e, (*xpp)->p_endpoint,
 			(*xpp)->p_name);
 		return EINVAL;
@@ -776,7 +776,7 @@ endpoint_t dst_e;			/* which process to notify */
 
   if (!isokendpt(dst_e, &dst_p)) {
 	util_stacktrace();
-	kprintf("mini_notify: bogus endpoint %d\n", dst_e);
+	printf("mini_notify: bogus endpoint %d\n", dst_e);
 	return EDEADSRCDST;
   }
 
@@ -810,7 +810,7 @@ endpoint_t dst_e;			/* which process to notify */
 }
 
 #define ASCOMPLAIN(caller, entry, field)	\
-	kprintf("kernel:%s:%d: asyn failed for %s in %s "	\
+	printf("kernel:%s:%d: asyn failed for %s in %s "	\
 	"(%d/%d, tab 0x%lx)\n",__FILE__,__LINE__,	\
 field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 
@@ -848,7 +848,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	privp= priv(caller_ptr);
 	if (!(privp->s_flags & SYS_PROC))
 	{
-		kprintf(
+		printf(
 		"mini_senda: warning caller has no privilege structure\n");
 		return EPERM;
 	}
@@ -949,7 +949,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		}
 
 #if 0
-		kprintf("mini_senda: entry[%d]: flags 0x%x dst %d/%d\n",
+		printf("mini_senda: entry[%d]: flags 0x%x dst %d/%d\n",
 			i, tabent.flags, tabent.dst, dst_p);
 #endif
 
@@ -1001,7 +1001,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		} 
 	}
 	if (do_notify)
-		kprintf("mini_senda: should notify caller\n");
+		printf("mini_senda: should notify caller\n");
 	if (!done)
 	{
 		privp->s_asyntab= (vir_bytes)table;
@@ -1090,7 +1090,7 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY) ||
 			!(flags & AMF_VALID))
 		{
-			kprintf("try_one: bad bits in table\n");
+			printf("try_one: bad bits in table\n");
 			privp->s_asynsize= 0;
 			return EINVAL;
 		}
@@ -1139,7 +1139,7 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 
 		if (flags & AMF_NOTIFY)
 		{
-			kprintf("try_one: should notify caller\n");
+			printf("try_one: should notify caller\n");
 		}
 		return OK;
 	}
@@ -1451,16 +1451,16 @@ int *p, fatalflag;
 	*p = _ENDPOINT_P(e);
 	if(!isokprocn(*p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-		kprintf("kernel:%s:%d: bad endpoint %d: proc %d out of range\n",
+		printf("kernel:%s:%d: bad endpoint %d: proc %d out of range\n",
 		file, line, e, *p);
 #endif
 	} else if(isemptyn(*p)) {
 #if 0
-	kprintf("kernel:%s:%d: bad endpoint %d: proc %d empty\n", file, line, e, *p);
+	printf("kernel:%s:%d: bad endpoint %d: proc %d empty\n", file, line, e, *p);
 #endif
 	} else if(proc_addr(*p)->p_endpoint != e) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-		kprintf("kernel:%s:%d: bad endpoint %d: proc %d has ept %d (generation %d vs. %d)\n", file, line,
+		printf("kernel:%s:%d: bad endpoint %d: proc %d has ept %d (generation %d vs. %d)\n", file, line,
 		e, *p, proc_addr(*p)->p_endpoint,
 		_ENDPOINT_G(e), _ENDPOINT_G(proc_addr(*p)->p_endpoint));
 #endif

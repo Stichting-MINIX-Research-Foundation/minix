@@ -66,13 +66,13 @@
 #endif
 
 #define NOT_REACHABLE	do {						\
-	kprintf("NOT_REACHABLE at %s:%d\n", __FILE__, __LINE__);	\
+	printf("NOT_REACHABLE at %s:%d\n", __FILE__, __LINE__);	\
 	minix_panic("execution at an unexpected location\n", NO_NUM);	\
 	for(;;);							\
 } while(0)
 
 #define NOT_IMPLEMENTED do {	\
-		kprintf("NOT_IMPLEMENTED at %s:%d\n", __FILE__, __LINE__); \
+		printf("NOT_IMPLEMENTED at %s:%d\n", __FILE__, __LINE__); \
 		minix_panic("NOT_IMPLEMENTED", NO_NUM); \
 } while(0)
 
@@ -84,7 +84,7 @@
 
 #ifdef _SYSTEM
 #define DEBUG_PRINT(params, level) do { \
-	if (verboseboot >= (level)) kprintf params; } while (0)
+	if (verboseboot >= (level)) printf params; } while (0)
 #define DEBUGBASIC(params) DEBUG_PRINT(params, VERBOSEBOOT_BASIC)
 #define DEBUGMAX(params)   DEBUG_PRINT(params, VERBOSEBOOT_MAX)
 #endif

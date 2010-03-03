@@ -79,7 +79,7 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 		  msg->m_type = result;		/* report status of call */
 		  if (copy_msg_to_user(caller, msg,
 				  (message *)caller->p_delivermsg_vir)) {
-			  kprintf("WARNING wrong user pointer 0x%08x from "
+			  printf("WARNING wrong user pointer 0x%08x from "
 					  "process %s / %d\n",
 					  caller->p_delivermsg_vir,
 					  caller->p_name,
@@ -99,7 +99,7 @@ PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
 
   /* See if the caller made a valid request and try to handle it. */
   if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
-	  kprintf("SYSTEM: illegal request %d from %d.\n",
+	  printf("SYSTEM: illegal request %d from %d.\n",
 			  call_nr,msg->m_source);
 	  result = EBADREQUEST;			/* illegal message type */
   }
@@ -136,7 +136,7 @@ PUBLIC void kernel_call(message *m_user, struct proc * caller)
 	  result = kernel_call_dispatch(caller, &msg);
   }
   else {
-	  kprintf("WARNING wrong user pointer 0x%08x from process %s / %d\n",
+	  printf("WARNING wrong user pointer 0x%08x from process %s / %d\n",
 			  m_user, caller->p_name, caller->p_endpoint);
 	  result = EBADREQUEST;
   }
@@ -405,7 +405,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
   else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
 
-  kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
+  printf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
   return 0;
 }
 #endif
@@ -430,19 +430,19 @@ vir_bytes bytes;                /* size */
          */
         if(verify_grant(rp->p_endpoint, ANY, grant, bytes, 0, 0,
                 &offset, &granter) != OK) {
-		kprintf("SYSTEM: umap_grant: verify_grant failed\n");
+		printf("SYSTEM: umap_grant: verify_grant failed\n");
                 return 0;
         }
 
         if(!isokendpt(granter, &proc_nr)) {
-		kprintf("SYSTEM: umap_grant: isokendpt failed\n");
+		printf("SYSTEM: umap_grant: isokendpt failed\n");
                 return 0;
         }
  
         /* Do the mapping from virtual to physical. */
         ret = umap_virtual(proc_addr(proc_nr), D, offset, bytes);
 	if(!ret) {
-		kprintf("SYSTEM:umap_grant:umap_virtual failed; grant %s:%d -> %s: vir 0x%lx\n",
+		printf("SYSTEM:umap_grant:umap_virtual failed; grant %s:%d -> %s: vir 0x%lx\n",
 			rp->p_name, grant, 
 			proc_addr(proc_nr)->p_name, offset);
 	}
@@ -466,7 +466,7 @@ register struct proc *rc;		/* slot of process to clean up */
 	/* This test is great for debugging system processes dying,
 	 * but as this happens normally on reboot, not good permanent code.
 	 */
-	kprintf("died: ");
+	printf("died: ");
 	proc_stacktrace(rc);
 	minix_panic("system process died", rc->p_endpoint);
   }
@@ -477,7 +477,7 @@ register struct proc *rc;		/* slot of process to clean up */
   {
 	if (priv(rc)->s_asynsize) {
 #if 0
-		kprintf("clear_endpoint: clearing s_asynsize of %s / %d\n",
+		printf("clear_endpoint: clearing s_asynsize of %s / %d\n",
 			rc->p_name, rc->p_endpoint);
 		proc_stacktrace(rc);
 #endif
@@ -497,7 +497,7 @@ register struct proc *rc;		/* slot of process to clean up */
           if (*xpp == rc) {			/* process is on the queue */
               *xpp = (*xpp)->p_q_link;		/* replace by next process */
 #if DEBUG_ENABLE_IPC_WARNINGS
-	      kprintf("endpoint %d / %s removed from queue at %d\n",
+	      printf("endpoint %d / %s removed from queue at %d\n",
 	          rc->p_endpoint, rc->p_name, rc->p_sendto_e);
 #endif
               break;				/* can only be queued once */
@@ -523,10 +523,8 @@ register struct proc *rc;		/* slot of process to clean up */
       if (P_BLOCKEDON(rp) == rc->p_endpoint) {
           rp->p_reg.retreg = EDEADSRCDST;		/* report source died */
 	  RTS_UNSET(rp, (RTS_RECEIVING|RTS_SENDING)); /* no longer blocking */
-#if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("endpoint %d / %s blocked on dead src ep %d / %s\n",
+	  printf("endpoint %d / %s blocked on dead src ep %d / %s\n",
 		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
-#endif
       } 
   }
 }

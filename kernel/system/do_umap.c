@@ -60,14 +60,13 @@ PUBLIC int do_umap(struct proc * caller, message * m_ptr)
 
         if(verify_grant(targetpr->p_endpoint, ANY, grant, count, 0, 0,
                 &newoffset, &newep) != OK) {
-                kprintf("SYSTEM: do_umap: verify_grant in %s, grant %d, bytes 0x%lx, failed, caller %s\n",
-                  targetpr->p_name, (int) grant, count, caller->p_name);
+                printf("SYSTEM: do_umap: verify_grant in %s, grant %d, bytes 0x%lx, failed, caller %s\n", targetpr->p_name, offset, count, caller->p_name);
 		proc_stacktrace(caller);
                 return EFAULT;
         }
 
         if(!isokendpt(newep, &new_proc_nr)) {
-                kprintf("SYSTEM: do_umap: isokendpt failed\n");
+                printf("SYSTEM: do_umap: isokendpt failed\n");
                 return EFAULT;
         }
 
@@ -80,15 +79,15 @@ PUBLIC int do_umap(struct proc * caller, message * m_ptr)
       if(seg_index == T || seg_index == D || seg_index == S) {
         phys_addr = lin_addr = umap_local(targetpr, seg_index, offset, count); 
       } else {
-	kprintf("SYSTEM: bogus seg type 0x%lx\n", seg_index);
+	printf("SYSTEM: bogus seg type 0x%lx\n", seg_index);
 	return EFAULT;
       }
       if(!lin_addr) {
-	kprintf("SYSTEM:do_umap: umap_local failed\n");
+	printf("SYSTEM:do_umap: umap_local failed\n");
 	return EFAULT;
       }
       if(vm_lookup(targetpr, lin_addr, &phys_addr, NULL) != OK) {
-	kprintf("SYSTEM:do_umap: vm_lookup failed\n");
+	printf("SYSTEM:do_umap: vm_lookup failed\n");
 	return EFAULT;
       }
       if(phys_addr == 0)
@@ -102,16 +101,16 @@ PUBLIC int do_umap(struct proc * caller, message * m_ptr)
   }
 
   if(vm_running && !vm_contiguous(targetpr, lin_addr, count)) {
-	kprintf("SYSTEM:do_umap: not contiguous\n");
+	printf("SYSTEM:do_umap: not contiguous\n");
 	return EFAULT;
   }
 
   m_ptr->CP_DST_ADDR = phys_addr;
   if(naughty || phys_addr == 0) {
-	  kprintf("kernel: umap 0x%x done by %d / %s, pc 0x%lx, 0x%lx -> 0x%lx\n",
+	  printf("kernel: umap 0x%x done by %d / %s, pc 0x%lx, 0x%lx -> 0x%lx\n",
 		seg_type, caller->p_endpoint, caller->p_name,
 		caller->p_reg.pc, offset, phys_addr);
-	kprintf("caller stack: ");
+	printf("caller stack: ");
 	proc_stacktrace(caller);
   }
   return (phys_addr == 0) ? EFAULT: OK;

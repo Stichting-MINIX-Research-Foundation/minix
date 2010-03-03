@@ -88,7 +88,7 @@ int arch_watchdog_init(void)
 
 void arch_watchdog_lockup(struct nmi_frame * frame)
 {
-	kprintf("KERNEL LOCK UP\n"
+	printf("KERNEL LOCK UP\n"
 			"eax    0x%08x\n"
 			"ecx    0x%08x\n"
 			"edx    0x%08x\n"
@@ -125,11 +125,11 @@ void i386_watchdog_start(void)
 {
 	if (watchdog_enabled) {
 		if (arch_watchdog_init()) {
-			kprintf("WARNING watchdog initialization "
+			printf("WARNING watchdog initialization "
 					"failed! Disabled\n");
 			watchdog_enabled = 0;
 		}
 		else
-			BOOT_VERBOSE(kprintf("Watchdog enabled\n"););
+			BOOT_VERBOSE(printf("Watchdog enabled\n"););
 	}
 }

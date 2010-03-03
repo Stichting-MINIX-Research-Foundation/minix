@@ -1,7 +1,6 @@
 /* This file contains a collection of miscellaneous procedures:
  *   minix_panic:    abort MINIX due to a fatal error
- *   kprintf:       (from libsys/kprintf.c)
- *   kputc:         buffered putc used by kernel kprintf
+ *   kputc:          buffered putc used by kernel printf
  */
 
 #include "kernel.h"
@@ -35,24 +34,18 @@ if (minix_panicing++) {
 }
 
   if (mess != NULL) {
-	kprintf("kernel panic: %s", mess);
+	printf("kernel panic: %s", mess);
 	if(nr != NO_NUM)
-		kprintf(" %d", nr);
-	kprintf("\n");
+		printf(" %d", nr);
+	printf("\n");
   }
 
-  kprintf("kernel: ");
+  printf("kernel: ");
   util_stacktrace();
 
   /* Abort MINIX. */
   minix_shutdown(NULL);
 }
-
-
-/* Include system printf() implementation named kprintf() */
-
-#define printf kprintf
-#include "../lib/libsys/kprintf.c"
 
 /*===========================================================================*
  *				kputc				     	     *

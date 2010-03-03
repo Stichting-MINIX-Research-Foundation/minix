@@ -36,7 +36,6 @@ _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
 
 /* utility.c */
-_PROTOTYPE( int kprintf, (const char *fmt, ...)				);
 _PROTOTYPE( void minix_panic, (char *s, int n)				);
 
 /* proc.c */

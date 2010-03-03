@@ -342,28 +342,28 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 	u32_t base, limit, index, dpl;
 	struct segdesc_s *desc;
 
-	if(banner) { kprintf("%s", banner); }
+	if(banner) { printf("%s", banner); }
 
 	index = selector >> 3;
 
-	kprintf("RPL %d, ind %d of ",
+	printf("RPL %d, ind %d of ",
 		(selector & RPL_MASK), index);
 
 	if(selector & TI) {
-		kprintf("LDT");
+		printf("LDT");
 		if(index >= LDT_SIZE) {
-			kprintf("invalid index in ldt\n");
+			printf("invalid index in ldt\n");
 			return;
 		}
 		if(!pr) {
-			kprintf("local selector but unknown process\n");
+			printf("local selector but unknown process\n");
 			return;
 		}
 		desc = &pr->p_seg.p_ldt[index];
 	} else {
-		kprintf("GDT");
+		printf("GDT");
 		if(index >= GDT_SIZE) {
-			kprintf("invalid index in gdt\n");
+			printf("invalid index in gdt\n");
 			return;
 		}
 		desc = &gdt[index];
@@ -380,14 +380,14 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 		((u32_t) desc->base_middle << BASE_MIDDLE_SHIFT) |
 		((u32_t) desc->base_high << BASE_HIGH_SHIFT);
 
-	kprintf(" -> base 0x%08lx size 0x%08lx ", base, limit+1);
+	printf(" -> base 0x%08lx size 0x%08lx ", base, limit+1);
 
 	if(iscs) {
 		if(!(desc->granularity & BIG))
-			kprintf("16bit ");
+			printf("16bit ");
 	} else {
 		if(!(desc->granularity & BIG)) 
-			kprintf("not big ");
+			printf("not big ");
 	}
 
 	if(desc->granularity & 0x20) {	/* reserved */
@@ -395,28 +395,28 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 	}
 
 	if(!(desc->access & PRESENT))
-		kprintf("notpresent ");
+		printf("notpresent ");
 
 	if(!(desc->access & SEGMENT))
-		kprintf("system ");
+		printf("system ");
 
 	if(desc->access & EXECUTABLE) {
-		kprintf("   exec ");
-		if(desc->access & CONFORMING) kprintf("conforming ");
-		if(!(desc->access & READABLE)) kprintf("non-readable ");
+		printf("   exec ");
+		if(desc->access & CONFORMING) printf("conforming ");
+		if(!(desc->access & READABLE)) printf("non-readable ");
 	} else {
-		kprintf("nonexec ");
-		if(desc->access & EXPAND_DOWN) kprintf("non-expand-down ");
-		if(!(desc->access & WRITEABLE)) kprintf("non-writable ");
+		printf("nonexec ");
+		if(desc->access & EXPAND_DOWN) printf("non-expand-down ");
+		if(!(desc->access & WRITEABLE)) printf("non-writable ");
 	}
 
 	if(!(desc->access & ACCESSED)) {
-		kprintf("nonacc ");
+		printf("nonacc ");
 	}
 
 	dpl = ((u32_t) desc->access & DPL) >> DPL_SHIFT;
 
-	kprintf("DPL %d\n", dpl);
+	printf("DPL %d\n", dpl);
 
 	return;
 }
@@ -431,7 +431,7 @@ PUBLIC int prot_set_kern_seg_limit(vir_bytes limit)
 	int incr_clicks;
 
 	if(limit <= kinfo.data_base) {
-		kprintf("prot_set_kern_seg_limit: limit bogus\n");
+		printf("prot_set_kern_seg_limit: limit bogus\n");
 		return EINVAL;
 	}
 

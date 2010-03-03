@@ -39,7 +39,7 @@ PUBLIC int do_devio(struct proc * caller, message * m_ptr)
     privp= priv(caller);
     if (!privp)
     {
-	kprintf("no priv structure!\n");
+	printf("no priv structure!\n");
 	goto doit;
     }
     if (privp->s_flags & CHECK_IO_PORT)
@@ -53,7 +53,7 @@ PUBLIC int do_devio(struct proc * caller, message * m_ptr)
 	}
 	if (i >= nr_io_range)
 	{
-			kprintf("do_devio: port 0x%x (size %d) not allowed\n",
+			printf("do_devio: port 0x%x (size %d) not allowed\n",
 				m_ptr->DIO_PORT, size);
 		return EPERM;
 	}
@@ -62,7 +62,7 @@ PUBLIC int do_devio(struct proc * caller, message * m_ptr)
 doit:
     if (m_ptr->DIO_PORT & (size-1))
     {
-		kprintf("do_devio: unaligned port 0x%x (size %d)\n",
+		printf("do_devio: unaligned port 0x%x (size %d)\n",
 			m_ptr->DIO_PORT, size);
 	return EPERM;
     }

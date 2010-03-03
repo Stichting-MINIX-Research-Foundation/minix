@@ -33,15 +33,15 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 
 	cprof_ctl_inst.reset = 1;
 
-	kprintf("CPROFILE notice: resetting tables:");
+	printf("CPROFILE notice: resetting tables:");
 
 	for (i=0; i<cprof_procs_no; i++) {
 
-		kprintf(" %s", cprof_proc_info[i].name);
+		printf(" %s", cprof_proc_info[i].name);
 
 		/* Test whether proc still alive. */
 		if (!isokendpt(cprof_proc_info[i].endpt, &proc_nr)) {
-			kprintf("endpt not valid %u (%s)\n",
+			printf("endpt not valid %u (%s)\n",
 			cprof_proc_info[i].endpt, cprof_proc_info[i].name);
 			continue;
 		}
@@ -51,7 +51,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 			cprof_proc_info[i].endpt, cprof_proc_info[i].ctl_v,
 			sizeof(cprof_ctl_inst.reset));
 	}
-	kprintf("\n");
+	printf("\n");
 	
 	return OK;
 
@@ -69,7 +69,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 
 	cprof_mem_size = m_ptr->PROF_MEM_SIZE;
 
-	kprintf("CPROFILE notice: getting tables:");
+	printf("CPROFILE notice: getting tables:");
 
 	/* Copy control structs of profiled processes to calculate total
 	 * nr of bytes to be copied to user program and find out if any
@@ -79,11 +79,11 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 
 	for (i=0; i<cprof_procs_no; i++) {
 
-		kprintf(" %s", cprof_proc_info[i].name);
+		printf(" %s", cprof_proc_info[i].name);
 
 		/* Test whether proc still alive. */
 		if (!isokendpt(cprof_proc_info[i].endpt, &proc_nr)) {
-			kprintf("endpt not valid %u (%s)\n",
+			printf("endpt not valid %u (%s)\n",
 			cprof_proc_info[i].endpt, cprof_proc_info[i].name);
 			continue;
 		}
@@ -102,7 +102,7 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
 		/* Collect errors. */
 		cprof_info.err |= cprof_ctl_inst.err;
 	}
-	kprintf("\n");
+	printf("\n");
 
 	/* Do we have the space available? */
 	if (cprof_mem_size < cprof_info.mem_used) cprof_info.mem_used = -1;

@@ -62,14 +62,14 @@ void pagefault( struct proc *pr,
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		kprintf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
+		printf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
 			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
 			pagefaultcr2, frame->errcode, is_nested);
 		proc_stacktrace(pr);
 		if(pr->p_endpoint != SYSTEM) {
 			proc_stacktrace(proc_addr(SYSTEM));
 		}
-		kprintf("pc of pagefault: 0x%lx\n", frame->eip);
+		printf("pc of pagefault: 0x%lx\n", frame->eip);
   		minix_panic("page fault in system process", pr->p_endpoint);
 
 		return;
@@ -138,7 +138,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
   ep = &ex_data[frame->vector];
 
   if (frame->vector == 2) {		/* spurious NMI on some machines */
-	kprintf("got spurious NMI\n");
+	printf("got spurious NMI\n");
 	return;
   }
 
@@ -182,7 +182,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 #if 0
 	{
 
-  		kprintf(
+  		printf(
   "vec_nr= %d, trap_errno= 0x%lx, eip= 0x%lx, cs= 0x%x, eflags= 0x%lx\n",
 			frame->vector, (unsigned long)frame->errcode,
 			(unsigned long)frame->eip, frame->cs,
@@ -202,17 +202,17 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 
   /* Exception in system code. This is not supposed to happen. */
   if (ep->msg == NIL_PTR || machine.processor < ep->minprocessor)
-	kprintf("\nIntel-reserved exception %d\n", frame->vector);
+	printf("\nIntel-reserved exception %d\n", frame->vector);
   else
-	kprintf("\n%s\n", ep->msg);
-  kprintf("is_nested = %d ", is_nested);
+	printf("\n%s\n", ep->msg);
+  printf("is_nested = %d ", is_nested);
 
-  kprintf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
+  printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
 	frame->vector, frame->errcode, frame->eip, frame->cs, frame->eflags, frame);
   /* TODO should we enable this only when compiled for some debug mode? */
   if (saved_proc) {
-	  kprintf("scheduled was: process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
-	  kprintf("pc = %u:0x%x\n", (unsigned) saved_proc->p_reg.cs,
+	  printf("scheduled was: process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
+	  printf("pc = %u:0x%x\n", (unsigned) saved_proc->p_reg.cs,
 			  (unsigned) saved_proc->p_reg.pc);
 	  proc_stacktrace(saved_proc);
 
@@ -236,7 +236,7 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
 
 	iskernel = iskernelp(whichproc);
 
-	kprintf("%-8.8s %6d 0x%lx ",
+	printf("%-8.8s %6d 0x%lx ",
 		whichproc->p_name, whichproc->p_endpoint, whichproc->p_reg.pc);
 
 	while(v_bp) {
@@ -246,19 +246,19 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
      data_copy(pr->p_endpoint, pv, KERNEL, (vir_bytes) (v), n))
 
 	        if(PRCOPY(whichproc, v_bp, &v_hbp, sizeof(v_hbp)) != OK) {
-			kprintf("(v_bp 0x%lx ?)", v_bp);
+			printf("(v_bp 0x%lx ?)", v_bp);
 			break;
 		}
 		if(PRCOPY(whichproc, v_bp + sizeof(v_pc), &v_pc, sizeof(v_pc)) != OK) {
-			kprintf("(v_pc 0x%lx ?)", v_bp + sizeof(v_pc));
+			printf("(v_pc 0x%lx ?)", v_bp + sizeof(v_pc));
 			break;
 		}
-		kprintf("0x%lx ", (unsigned long) v_pc);
+		printf("0x%lx ", (unsigned long) v_pc);
 		if(v_hbp != 0 && v_hbp <= v_bp) {
-			kprintf("(hbp %lx ?)", v_hbp);
+			printf("(hbp %lx ?)", v_hbp);
 			break;
 		}
 		v_bp = v_hbp;
 	}
-	kprintf("\n");
+	printf("\n");
 }

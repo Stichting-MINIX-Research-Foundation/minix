@@ -38,7 +38,7 @@ PUBLIC int newmap(struct proc *caller, struct proc *rp, struct mem_map *map_ptr)
 /* Fetch the memory map. */
   if((r=data_copy(caller->p_endpoint, (vir_bytes) map_ptr,
 	KERNEL, (vir_bytes) rp->p_memmap, sizeof(rp->p_memmap))) != OK) {
-	kprintf("newmap: data_copy failed! (%d)\n", r);
+	printf("newmap: data_copy failed! (%d)\n", r);
 	return r;
   }
 

@@ -199,10 +199,10 @@ PUBLIC void arch_init(void)
 
 #if defined(CONFIG_APIC) && !defined(CONFIG_SMP)
 	if (config_no_apic) {
-		BOOT_VERBOSE(kprintf("APIC disabled, using legacy PIC\n"));
+		BOOT_VERBOSE(printf("APIC disabled, using legacy PIC\n"));
 	}
 	else if (!apic_single_cpu_init()) {
-		BOOT_VERBOSE(kprintf("APIC not present, using legacy PIC\n"));
+		BOOT_VERBOSE(printf("APIC not present, using legacy PIC\n"));
 	}
 #endif
 
@@ -266,7 +266,7 @@ PRIVATE void ser_dump_segs(void)
 	{
 		if (isemptyp(pp))
 			continue;
-		kprintf("%d: %s ep %d\n", proc_nr(pp), pp->p_name, pp->p_endpoint);
+		printf("%d: %s ep %d\n", proc_nr(pp), pp->p_name, pp->p_endpoint);
 		printseg("cs: ", 1, pp, pp->p_reg.cs);
 		printseg("ds: ", 0, pp, pp->p_reg.ds);
 		if(pp->p_reg.ss != pp->p_reg.ds) {
@@ -319,38 +319,38 @@ PRIVATE void printslot(struct proc *pp, int level)
 #define COL { int i; for(i = 0; i < level; i++) printf("> "); }
 
 	if(level >= NR_PROCS) {
-		kprintf("loop??\n");
+		printf("loop??\n");
 		return;
 	}
 
 	COL
 
-	kprintf("%d: %s %d prio %d/%d time %d/%d cycles 0x%x%08x cr3 0x%lx rts %s misc %s",
+	printf("%d: %s %d prio %d/%d time %d/%d cycles 0x%x%08x cr3 0x%lx rts %s misc %s",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_max_priority, pp->p_user_time,
 		pp->p_sys_time, pp->p_cycles.hi, pp->p_cycles.lo, pp->p_seg.p_cr3,
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
 
 	if((dep = P_BLOCKEDON(pp)) != NONE) {
-		kprintf(" blocked on: ");
+		printf(" blocked on: ");
 		if(dep == ANY) {
-			kprintf(" ANY\n");
+			printf(" ANY\n");
 		} else {
 			int procno;
 			if(!isokendpt(dep, &procno)) {
-				kprintf(" ??? %d\n", dep);
+				printf(" ??? %d\n", dep);
 			} else {
 				depproc = proc_addr(procno);
 				if(isemptyp(depproc)) {
-					kprintf(" empty slot %d???\n", procno);
+					printf(" empty slot %d???\n", procno);
 					depproc = NULL;
 				} else {
-					kprintf(" %s\n", depproc->p_name);
+					printf(" %s\n", depproc->p_name);
 				}
 			}
 		}
 	} else {
-		kprintf("\n");
+		printf("\n");
 	}
 
 	COL

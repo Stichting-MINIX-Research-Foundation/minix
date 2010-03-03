@@ -38,7 +38,7 @@ PUBLIC int do_copy(struct proc * caller, message * m_ptr)
 	if (first)
 	{
 		first= 0;
-		kprintf(
+		printf(
 "do_copy: got request from %d (source %d, seg %d, destination %d, seg %d)\n",
 			m_ptr->m_source,
 			m_ptr->CP_SRC_ENDPT,
@@ -68,7 +68,7 @@ PUBLIC int do_copy(struct proc * caller, message * m_ptr)
 	vir_addr[i].proc_nr_e = m_ptr->m_source;
       if (vir_addr[i].segment != PHYS_SEG) {
 	if(! isokendpt(vir_addr[i].proc_nr_e, &p)) {
-	  kprintf("do_copy: %d: seg 0x%x, %d not ok endpoint\n",
+	  printf("do_copy: %d: seg 0x%x, %d not ok endpoint\n",
 		i, vir_addr[i].segment, vir_addr[i].proc_nr_e);
           return(EINVAL); 
         }

@@ -37,7 +37,7 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 	 * Turn on profiling.
 	 */
 	if (sprofiling) {
-		kprintf("SYSTEM: start s-profiling: already started\n");
+		printf("SYSTEM: start s-profiling: already started\n");
 		return EBUSY;
 	}
 
@@ -71,7 +71,7 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 	 * Stop CMOS timer.  Copy info struct to user process.
 	 */
 	if (!sprofiling) {
-		kprintf("SYSTEM: stop s-profiling: not started\n");
+		printf("SYSTEM: stop s-profiling: not started\n");
 		return EBUSY;
 	}
 

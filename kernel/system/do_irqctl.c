@@ -62,7 +62,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
       privp= priv(caller);
       if (!privp)
       {
-	kprintf("do_irqctl: no priv structure!\n");
+	printf("do_irqctl: no priv structure!\n");
 	return EPERM;
       }
       if (privp->s_flags & CHECK_IRQ)
@@ -74,7 +74,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
 	}
 	if (i >= privp->s_nr_irq)
 	{
-		kprintf(
+		printf(
 		"do_irqctl: IRQ check failed for proc %d, IRQ %d\n",
 			m_ptr->m_source, irq_vec);
 		return EPERM;

@@ -92,7 +92,7 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
 		}
 		if (j >= nr_io_range)
 		{
-			kprintf(
+			printf(
 		"do_vdevio: I/O port check failed for proc %d, port 0x%x\n",
 				m_ptr->m_source, port);
 			return EPERM;

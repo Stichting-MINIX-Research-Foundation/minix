@@ -119,8 +119,8 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
 
   if(!RTS_ISSET(rp, RTS_PROC_STOP)) {
-	kprintf("system: warning: sigsend a running process\n");
-	kprintf("caller stack: ");
+	printf("system: warning: sigsend a running process\n");
+	printf("caller stack: ");
 	proc_stacktrace(caller);
   }
 

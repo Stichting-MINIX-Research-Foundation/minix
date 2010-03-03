@@ -405,11 +405,11 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	}
 	
 	if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {
-			kprintf("SYSTEM:umap_virtual: umap_local failed\n");
+			printf("SYSTEM:umap_virtual: umap_local failed\n");
 			phys = 0;
 		} else {
 			if(vm_lookup(rp, linear, &phys, NULL) != OK) {
-				kprintf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%lx: 0x%lx failed\n", rp->p_name, seg, vir_addr);
+				printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%lx: 0x%lx failed\n", rp->p_name, seg, vir_addr);
 				phys = 0;
 			}
 			if(phys == 0)
@@ -418,7 +418,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	
 
 	if(phys == 0) {
-		kprintf("SYSTEM:umap_virtual: lookup failed\n");
+		printf("SYSTEM:umap_virtual: lookup failed\n");
 		return 0;
 	}
 
@@ -426,7 +426,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	 * so that the umap makes sense.
 	 */
 	if(bytes > 0 && !vm_contiguous(rp, linear, bytes)) {
-		kprintf("umap_virtual: %s: %d at 0x%lx (vir 0x%lx) not contiguous\n",
+		printf("umap_virtual: %s: %d at 0x%lx (vir 0x%lx) not contiguous\n",
 			rp->p_name, bytes, linear, vir_addr);
 		return 0;
 	}
@@ -526,17 +526,17 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 		u32_t phys;
 
 		if((r=vm_lookup(targetproc, vir_buf, &phys, NULL)) != OK) {
-			kprintf("vm_contiguous: vm_lookup failed, %d\n", r);
-			kprintf("kernel stack: ");
+			printf("vm_contiguous: vm_lookup failed, %d\n", r);
+			printf("kernel stack: ");
 			util_stacktrace();
 			return 0;
 		}
 
 		if(!first) {
 			if(prev_phys+I386_PAGE_SIZE != phys) {
-				kprintf("vm_contiguous: no (0x%lx, 0x%lx)\n",
+				printf("vm_contiguous: no (0x%lx, 0x%lx)\n",
 					prev_phys, phys);
-				kprintf("kernel stack: ");
+				printf("kernel stack: ");
 				util_stacktrace();
 				return 0;
 			}
@@ -657,13 +657,13 @@ PRIVATE void vm_pt_print(u32_t *pagetable, u32_t v)
 		if(!(pte_v & I386_VM_PRESENT))
 			continue;
 		pfa = I386_VM_PFA(pte_v);
-		kprintf("%4d:%08lx:%08lx %2s ",
+		printf("%4d:%08lx:%08lx %2s ",
 			pte, v + I386_PAGE_SIZE*pte, pfa,
 			(pte_v & I386_VM_WRITE) ? "rw":"RO");
 		col++;
-		if(col == 3) { kprintf("\n"); col = 0; }
+		if(col == 3) { printf("\n"); col = 0; }
 	}
-	if(col > 0) kprintf("\n");
+	if(col > 0) printf("\n");
 
 	return;
 }
@@ -683,14 +683,14 @@ PRIVATE void vm_print(u32_t *root)
 		if(!(pde_v & I386_VM_PRESENT))
 			continue;
 		if(pde_v & I386_VM_BIGPAGE) {
-			kprintf("%4d: 0x%lx, flags %s\n",
+			printf("%4d: 0x%lx, flags %s\n",
 				pde, I386_VM_PFA(pde_v), flagstr(pde_v, 1));
 		} else {
 			pte_a = (u32_t *) I386_VM_PFA(pde_v);
-			kprintf("%4d: pt %08lx %s\n",
+			printf("%4d: pt %08lx %s\n",
 				pde, pte_a, flagstr(pde_v, 1));
 			vm_pt_print(pte_a, pde * I386_VM_PT_ENTRIES * I386_PAGE_SIZE);
-			kprintf("\n");
+			printf("\n");
 		}
 	}
 
@@ -794,7 +794,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	  	phys_addr[i] = umap_virtual(p, seg_index,
 				vir_addr[i]->offset, bytes);
 	  if(phys_addr[i] == 0) {
-		kprintf("virtual_copy: map 0x%x failed for %s seg %d, "
+		printf("virtual_copy: map 0x%x failed for %s seg %d, "
 			"offset %lx, len %d, i %d\n",
 			type, p->p_name, seg_index, vir_addr[i]->offset,
 			bytes, i);
@@ -816,13 +816,13 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
           phys_addr[i] = vir_addr[i]->offset;
           break;
       default:
-	  kprintf("virtual_copy: strange type 0x%x\n", type);
+	  printf("virtual_copy: strange type 0x%x\n", type);
 	  NOREC_RETURN(virtualcopy, EINVAL);
       }
 
       /* Check if mapping succeeded. */
       if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG)  {
-      kprintf("virtual_copy EFAULT\n");
+      printf("virtual_copy EFAULT\n");
 	  NOREC_RETURN(virtualcopy, EFAULT);
       }
   }
@@ -884,11 +884,11 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   /* can't copy to/from process with PT without VM */
 #define NOPT(p) (!(p) || !HASPT(p))
   if(!NOPT(procs[_SRC_])) {
-	kprintf("ignoring page table src: %s / %d at 0x%lx\n",
+	printf("ignoring page table src: %s / %d at 0x%lx\n",
 		procs[_SRC_]->p_name, procs[_SRC_]->p_endpoint, procs[_SRC_]->p_seg.p_cr3);
 }
   if(!NOPT(procs[_DST_])) {
-	kprintf("ignoring page table dst: %s / %d at 0x%lx\n",
+	printf("ignoring page table dst: %s / %d at 0x%lx\n",
 		procs[_DST_]->p_name, procs[_DST_]->p_endpoint,
 		procs[_DST_]->p_seg.p_cr3);
   }

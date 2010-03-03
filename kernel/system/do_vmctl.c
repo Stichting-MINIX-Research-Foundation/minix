@@ -25,7 +25,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
   if(ep == SELF) { ep = m_ptr->m_source; }
 
   if(!isokendpt(ep, &proc_nr)) {
-	kprintf("do_vmctl: unexpected endpoint %d from VM\n", ep);
+	printf("do_vmctl: unexpected endpoint %d from VM\n", ep);
 	return EINVAL;
   }
 
@@ -113,7 +113,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 		vmassert(p->p_vmrequest.vmresult != VMSUSPEND);
 #if DEBUG_VMASSERT
 		if(p->p_vmrequest.vmresult != OK)
-			kprintf("SYSTEM: VM replied %d to mem request\n",
+			printf("SYSTEM: VM replied %d to mem request\n",
 				p->p_vmrequest.vmresult);
 
 		printf("memreq reply: vm request sent by: %s / %d about %d; 0x%lx-0x%lx, wr %d, stack: %s ",

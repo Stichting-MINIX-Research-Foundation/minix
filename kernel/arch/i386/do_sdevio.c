@@ -43,7 +43,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
 	if (first)
 	{
 		first= 0;
-		kprintf("do_sdevio: for %d, req %d\n",
+		printf("do_sdevio: for %d, req %d\n",
 			m_ptr->m_source, m_ptr->DIO_REQUEST);
 	}
   }
@@ -86,7 +86,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
   } else {
      if(proc_nr != _ENDPOINT_P(caller->p_endpoint))
      {
-	kprintf("do_sdevio: unsafe sdevio by %d in %d denied\n",
+	printf("do_sdevio: unsafe sdevio by %d in %d denied\n",
 		caller->p_endpoint, proc_nr_e);
 	return EPERM;
      }
@@ -120,7 +120,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
 	}
 	if (i >= nr_io_range)
 	{
-		kprintf(
+		printf(
 		"do_sdevio: I/O port check failed for proc %d, port 0x%x\n",
 			m_ptr->m_source, port);
 		retval = EPERM;
@@ -130,7 +130,7 @@ PUBLIC int do_sdevio(struct proc * caller, message *m_ptr)
 
   if (port & (size-1))
   {
-	kprintf("do_devio: unaligned port 0x%x (size %d)\n", port, size);
+	printf("do_devio: unaligned port 0x%x (size %d)\n", port, size);
 	retval = EPERM;
 	goto return_error;
   }

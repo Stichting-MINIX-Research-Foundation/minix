@@ -275,13 +275,13 @@ PUBLIC void main()
 PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
-  kprintf("\nMINIX %s.%s. "
+  printf("\nMINIX %s.%s. "
 #ifdef _SVN_REVISION
 	"(" _SVN_REVISION ")\n"
 #endif
       "Copyright 2010, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
-  kprintf("MINIX is open source software, see http://www.minix3.org\n");
+  printf("MINIX is open source software, see http://www.minix3.org\n");
 }
 
 /*===========================================================================*
@@ -297,7 +297,7 @@ int how;
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
    * argument passes the shutdown status. 
    */
-  kprintf("MINIX will now be shut down ...\n");
+  printf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
   set_timer(&shutdown_timer, get_uptime() + system_hz, minix_shutdown);
 }

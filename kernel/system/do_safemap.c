@@ -128,14 +128,14 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 	lin_src = umap_local(src, seg_s, off_s, size);
 	lin_dst = umap_local(dst, seg_d, off_d, size);
 	if(lin_src == 0 || lin_dst == 0) {
-		kprintf("map_invoke_vm: error in umap_local.\n");
+		printf("map_invoke_vm: error in umap_local.\n");
 		return EINVAL;
 	}
 
 	/* Make sure the linear addresses are both page aligned. */
 	if(lin_src % CLICK_SIZE != 0
 		|| lin_dst % CLICK_SIZE != 0) {
-		kprintf("map_invoke_vm: linear addresses not page aligned.\n");
+		printf("map_invoke_vm: linear addresses not page aligned.\n");
 		return EINVAL;
 	}
 
@@ -199,7 +199,7 @@ PUBLIC int do_safemap(struct proc * caller, message * m_ptr)
 	r = verify_grant(grantor, caller->p_endpoint, gid, bytes, access,
 		offset, &offset_result, &new_grantor);
 	if(r != OK) {
-		kprintf("verify_grant for gid %d from %d to %d failed: %d\n",
+		printf("verify_grant for gid %d from %d to %d failed: %d\n",
 			gid, grantor, caller->p_endpoint, r);
 		return r;
 	}
@@ -227,7 +227,7 @@ PRIVATE int safeunmap(struct proc * caller, struct map_info_s *p)
 	r = verify_grant(p->grantor, p->grantee, p->gid, p->bytes,
 			CPF_MAP, p->offset, &offset_result, &new_grantor);
 	if(r != OK) {
-	    kprintf("safeunmap: error in verify_grant.\n");
+	    printf("safeunmap: error in verify_grant.\n");
 		return r;
 	}
 
@@ -237,7 +237,7 @@ PRIVATE int safeunmap(struct proc * caller, struct map_info_s *p)
 		p->bytes, 0);
 	clear_info(p);
 	if(r != OK) {
-		kprintf("safeunmap: error in map_invoke_vm.\n");
+		printf("safeunmap: error in map_invoke_vm.\n");
 		return r;
 	}
 	return OK;

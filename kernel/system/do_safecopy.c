@@ -54,12 +54,12 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		 * grant id.
 		 */
 		if(!isokendpt(granter, &proc_nr) ) {
-			kprintf(
+			printf(
 			"grant verify failed: invalid granter %d\n", (int) granter);
 			return(EINVAL);
 		}
 		if(!GRANT_VALID(grant)) {
-			kprintf(
+			printf(
 			"grant verify failed: invalid grant %d\n", (int) grant);
 			return(EINVAL);
 		}
@@ -72,7 +72,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		if(!HASGRANTTABLE(granter_proc)) return EPERM;
 
 		if(priv(granter_proc)->s_grant_entries <= grant) {
-				kprintf(
+				printf(
 				"verify_grant: grant verify failed in ep %d "
 				"proc %d: grant %d out of range "
 				"for table size %d\n",
@@ -89,7 +89,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		if((r=data_copy(granter,
 			priv(granter_proc)->s_grant_table + sizeof(g)*grant,
 			KERNEL, (vir_bytes) &g, sizeof(g))) != OK) {
-			kprintf(
+			printf(
 			"verify_grant: grant verify: data_copy failed\n");
 			return EPERM;
 		}
@@ -97,7 +97,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Check validity. */
 		if((g.cp_flags & (CPF_USED | CPF_VALID)) !=
 			(CPF_USED | CPF_VALID)) {
-			kprintf(
+			printf(
 			"verify_grant: grant failed: invalid (%d flags 0x%lx)\n",
 				grant, g.cp_flags);
 			return EPERM;
@@ -111,7 +111,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		if((g.cp_flags & CPF_INDIRECT)) {
 			/* Stop after a few iterations. There may be a loop. */
 			if (depth == MAX_INDIRECT_DEPTH) {
-				kprintf(
+				printf(
 					"verify grant: indirect grant verify "
 					"failed: exceeded maximum depth\n");
 				return ELOOP;
@@ -122,7 +122,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 			if(g.cp_u.cp_indirect.cp_who_to != grantee &&
 				grantee != ANY &&
 				g.cp_u.cp_indirect.cp_who_to != ANY) {
-				kprintf(
+				printf(
 					"verify_grant: indirect grant verify "
 					"failed: bad grantee\n");
 				return EPERM;
@@ -137,7 +137,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 
 	/* Check access of grant. */
 	if(((g.cp_flags & access) != access)) {
-		kprintf(
+		printf(
 	"verify_grant: grant verify failed: access invalid; want 0x%x, have 0x%x\n",
 			access, g.cp_flags);
 		return EPERM;
@@ -149,7 +149,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		 */
 		if(MEM_TOP - g.cp_u.cp_direct.cp_len <
 			g.cp_u.cp_direct.cp_start - 1) {
-			kprintf(
+			printf(
 		"verify_grant: direct grant verify failed: len too long\n");
 			return EPERM;
 		}
@@ -157,7 +157,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Verify actual grantee. */
 		if(g.cp_u.cp_direct.cp_who_to != grantee && grantee != ANY
 			&& g.cp_u.cp_direct.cp_who_to != ANY) {
-			kprintf(
+			printf(
 		"verify_grant: direct grant verify failed: bad grantee\n");
 			return EPERM;
 		}
@@ -165,7 +165,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Verify actual copy range. */
 		if((offset_in+bytes < offset_in) ||
 		    offset_in+bytes > g.cp_u.cp_direct.cp_len) {
-			kprintf(
+			printf(
 		"verify_grant: direct grant verify failed: bad size or range. "
 		"granted %d bytes @ 0x%lx; wanted %d bytes @ 0x%lx\n",
 				g.cp_u.cp_direct.cp_len,
@@ -182,7 +182,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		 * magic grants.
 		 */
 		if(granter != FS_PROC_NR) {
-			kprintf(
+			printf(
 		"verify_grant: magic grant verify failed: granter (%d) "
 		"is not FS (%d)\n", granter, FS_PROC_NR);
 			return EPERM;
@@ -191,7 +191,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Verify actual grantee. */
 		if(g.cp_u.cp_magic.cp_who_to != grantee && grantee != ANY
 			&& g.cp_u.cp_direct.cp_who_to != ANY) {
-			kprintf(
+			printf(
 		"verify_grant: magic grant verify failed: bad grantee\n");
 			return EPERM;
 		}
@@ -199,7 +199,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Verify actual copy range. */
 		if((offset_in+bytes < offset_in) ||
 		    offset_in+bytes > g.cp_u.cp_magic.cp_len) {
-			kprintf(
+			printf(
 		"verify_grant: magic grant verify failed: bad size or range. "
 		"granted %d bytes @ 0x%lx; wanted %d bytes @ 0x%lx\n",
 				g.cp_u.cp_magic.cp_len,
@@ -212,7 +212,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		*offset_result = g.cp_u.cp_magic.cp_start + offset_in;
 		*e_granter = g.cp_u.cp_magic.cp_who_from;
 	} else {
-		kprintf(
+		printf(
 		"verify_grant: grant verify failed: unknown grant type\n");
 		return EPERM;
 	}
@@ -260,7 +260,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	/* Verify permission exists. */
 	if((r=verify_grant(granter, grantee, grantid, bytes, access,
 	    g_offset, &v_offset, &new_granter)) != OK) {
-			kprintf(
+			printf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
 				grantid, *src, *dst, grantee, r);
 		return r;
@@ -394,7 +394,7 @@ PUBLIC int do_vsafecopy(struct proc * caller, message * m_ptr)
 			access = CPF_READ;
 			granter = vec[i].v_from;
 		} else {
-			kprintf("vsafecopy: %d: element %d/%d: no SELF found\n",
+			printf("vsafecopy: %d: element %d/%d: no SELF found\n",
 				caller->p_endpoint, i, els);
 			return EINVAL;
 		}
