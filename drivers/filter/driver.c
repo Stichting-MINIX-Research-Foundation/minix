@@ -564,8 +564,7 @@ static int check_senda(int which)
 
 	amp = &amsgtable[which];
 
-	if ((amp->flags & AMF_DONE) &&
-		(amp->result == EDEADSRCDST || amp->result == EDSTDIED)) {
+	if ((amp->flags & AMF_DONE) && (amp->result == EDEADSRCDST)) {
 
 		return BD_DEAD;
 	}

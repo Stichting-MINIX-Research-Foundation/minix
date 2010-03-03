@@ -119,8 +119,6 @@ extern int errno;		  /* place where the error numbers go */
 #define EDEADSRCDST  (_SIGN 105)  /* source or destination is not alive */
 #define ENOTREADY    (_SIGN 106)  /* source or destination is not ready */
 #define EBADREQUEST  (_SIGN 107)  /* destination cannot handle request */
-#define ESRCDIED     (_SIGN 108)  /* source just died */
-#define EDSTDIED     (_SIGN 109)  /* destination just died */
 #define ETRAPDENIED  (_SIGN 110)  /* IPC trap not allowed */
 #define EDONTREPLY   (_SIGN 201)  /* pseudo-code: don't send a reply */
 

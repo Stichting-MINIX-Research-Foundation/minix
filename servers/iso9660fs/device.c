@@ -188,7 +188,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   driver_e = driver_endpoints[(dev >> MAJOR) & BYTE].driver_e;
   
   /* See if driver is roughly valid. */
-  if (driver_e == NONE) return(EDSTDIED);
+  if (driver_e == NONE) return(EDEADSRCDST);
   
   /* The io vector copying relies on this I/O being for FS itself. */
   if(proc_e != SELF_E) {
@@ -229,7 +229,7 @@ int flags;			/* special flags, like O_NONBLOCK */
    * - VFS sends the new driver endp for the FS proc and the request again 
    */
   if (r != OK) {
-      if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
+      if (r == EDEADSRCDST) {
           printf("ISOFS(%d) dead driver %d\n", SELF_E, driver_e);
           driver_endpoints[(dev >> MAJOR) & BYTE].driver_e = NONE;
           return(r);
@@ -302,7 +302,7 @@ message *mess_ptr;		/* pointer to message for task */
 
   r = sendrec(task_nr, mess_ptr);
 	if (r != OK) {
-		if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
+		if (r == EDEADSRCDST) {
 			printf("fs: dead driver %d\n", task_nr);
 			panic(__FILE__, "should handle crashed drivers",
 				NO_NUM);

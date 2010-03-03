@@ -158,8 +158,6 @@ PUBLIC void dev_status(message *m)
 		if ((r = sendrec(m->m_source, &st)) != OK) {
 			printf("DEV_STATUS failed to %d: %d\n", m->m_source, r);
 			if (r == EDEADSRCDST) return;
-			if (r == EDSTDIED) return;
-			if (r == ESRCDIED) return;
 			panic(__FILE__,"couldn't sendrec for DEV_STATUS", r);
 		}
 
@@ -619,7 +617,7 @@ message *mess_ptr;		/* pointer to message for task */
   proc_e = mess_ptr->IO_ENDPT;
   r = sendrec(task_nr, mess_ptr);
   if (r != OK) {
-	if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
+	if (r == EDEADSRCDST) {
 		printf("fs: dead driver %d\n", task_nr);
 		dmap_unmap_by_endpt(task_nr);
 		return(r);
