@@ -46,6 +46,8 @@ u32_t system_hz;
 
 char *Tclr_all;
 
+int blockedverbose = 0;
+
 #if 0
 int print_memory(struct pm_mem_info *pmi)
 {
@@ -104,27 +106,57 @@ int print_proc_summary(struct proc *proc)
 static struct tp {
 	struct proc *p;
 	u64_t ticks;
-} tick_procs[PROCS];
+};
 
 int cmp_ticks(const void *v1, const void *v2)
 {
+	int c;
 	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
+	int p1blocked, p2blocked;
 
-	if (p1->ticks.hi == p2->ticks.hi) {
-		if(p1->ticks.lo < p2->ticks.lo)
-			return 1;
-		if(p1->ticks.lo > p2->ticks.lo)
+	p1blocked = !!p1->p->p_rts_flags;
+	p2blocked = !!p2->p->p_rts_flags;
+
+	/* Primarily order by used number of cpu cycles.
+	 * 
+	 * Exception: if in blockedverbose mode, a blocked
+	 * process is always printed after an unblocked
+	 * process, and used cpu cycles don't matter.
+	 *
+	 * In both cases, process slot number is a tie breaker.
+	 */
+
+	if(blockedverbose && (p1blocked || p2blocked)) {
+		if(!p1blocked &&  p2blocked)
 			return -1;
-	}
-	if(p1->ticks.hi < p2->ticks.hi)
-		return 1;
-	if(p1->ticks.hi > p2->ticks.hi)
-		return -1;
+		if( p2blocked && !p1blocked)
+			return 1;
+	} else if((c=cmp64(p1->ticks, p2->ticks)) != 0)
+		return -c;
+
+	/* Process slot number is a tie breaker. */
+
 	if(p1->p->p_nr < p2->p->p_nr)
 		return -1;
 	if(p1->p->p_nr > p2->p->p_nr)
 		return 1;
-	return 0;
+
+	fprintf(stderr, "unreachable.\n");
+	abort();
+}
+
+struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
+{
+	int t;
+
+	for(t = 0; t < np; t++)
+		if(who == tptab[t].p->p_endpoint)
+			return &tptab[t];
+
+	fprintf(stderr, "lookup: tp %d (0x%x) not found.\n", who, who);
+	abort();
+
+	return NULL;
 }
 
 /*
@@ -135,6 +167,45 @@ int cmp_ticks(const void *v1, const void *v2)
  * arithmetics
  */
 #define SCALE	(1 << 12)
+
+void print_proc(struct tp *tp, struct mproc *mpr, u32_t tcyc)
+{
+	int euid = 0;
+	static struct passwd *who = NULL;
+	static int last_who = -1;
+	char *name = "";
+	unsigned long pcyc;
+	int ticks;
+	struct proc *pr = tp->p;
+
+	printf("%5d ", mpr->mp_pid);
+	euid = mpr->mp_effuid;
+	name = mpr->mp_name;
+
+	if(last_who != euid || !who) {
+		who = getpwuid(euid);
+		last_who = euid;
+	}
+
+	if(who && who->pw_name) printf("%-8s ", who->pw_name);
+	else if(pr->p_nr >= 0) printf("%8d ", mpr->mp_effuid);
+	else printf("         ");
+
+	printf(" %2d ", pr->p_priority);
+	if(pr->p_nr >= 0) {
+		printf(" %3d ", mpr->mp_nice);
+	} else printf("     ");
+	printf("%5dK",
+		((pr->p_memmap[T].mem_len + 
+		pr->p_memmap[D].mem_len) << CLICK_SHIFT)/1024);
+	printf("%6s", pr->p_rts_flags ? "" : "RUN");
+	ticks = pr->p_user_time;
+	printf(" %3d:%02d ", (ticks/system_hz/60), (ticks/system_hz)%60);
+
+	pcyc = div64u(tp->ticks, SCALE);
+
+	printf("%6.2f%% %s", 100.0*pcyc/tcyc, name);
+}
 
 void print_procs(int maxlines,
 	struct proc *proc1, struct proc *proc2,
@@ -148,6 +219,8 @@ void print_procs(int maxlines,
 	u64_t total_ticks = cvu64(0);
 	unsigned long tcyc;
 	unsigned long tmp;
+	int blockedseen = 0;
+	struct tp tick_procs[PROCS];
 
 	for(p = nprocs = 0; p < PROCS; p++) {
 		if(isemptyp(&proc2[p]))
@@ -196,56 +269,63 @@ void print_procs(int maxlines,
 	tmp = div64u(idleticks, SCALE);
 	printf("%6.2f%% idle", 100.0*tmp/tcyc);
 
-	printf("\n\n");
-	maxlines -= 2;
+#define NEWLINE do { printf("\n"); if(--maxlines <= 0) { return; } } while(0) 
+	NEWLINE;
+	NEWLINE;
 
-	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME     CPU COMMAND\n");
-	maxlines--;
+	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME     CPU COMMAND");
+	NEWLINE;
 	for(p = 0; p < nprocs; p++) {
-		int euid = 0;
 		struct proc *pr;
-		int pnr, ticks;
-		char *name = "";
-		static struct passwd *who = NULL;
-		static int last_who = -1;
-
-		unsigned long pcyc;
-
-		if(maxlines-- <= 0) break;
+		int pnr;
+		int level = 0;
 
 		pnr = tick_procs[p].p->p_nr;
-		pr = tick_procs[p].p;
-		ticks = pr->p_user_time;
-		if(pnr >= 0) {
-			printf("%5d ", mproc[pnr].mp_pid);
-			euid = mproc[pnr].mp_effuid;
-			name = mproc[pnr].mp_name;
-		} else
+
+		if(pnr < 0) {
 			/* skip old kernel tasks as they don't run anymore */
 			continue;
-		if(last_who != euid || !who) {
-			who = getpwuid(euid);
-			last_who = euid;
 		}
 
-		if(who && who->pw_name) printf("%-8s ", who->pw_name);
-		else if(pnr >= 0) printf("%8d ", mproc[pnr].mp_effuid);
-		else printf("         ");
+		pr = tick_procs[p].p;
 
-		printf(" %2d ", pr->p_priority);
-		if(pnr >= 0) {
-			printf(" %3d ", mproc[pnr].mp_nice);
-		} else printf("     ");
-		printf("%5dK",
-			((pr->p_memmap[T].mem_len + 
-			pr->p_memmap[D].mem_len) << CLICK_SHIFT)/1024);
-		printf("%6s", pr->p_rts_flags ? "" : "RUN");
-		printf(" %3d:%02d ", (ticks/system_hz/60), (ticks/system_hz)%60);
+		/* If we're in blocked verbose mode, indicate start of
+		 * blocked processes.
+		 */
+		if(blockedverbose && pr->p_rts_flags && !blockedseen) {
+			NEWLINE;
+			printf("Blocked processes:");
+			NEWLINE;
+			blockedseen = 1;
+		}
 
-		pcyc = div64u(tick_procs[p].ticks, SCALE);
+		print_proc(&tick_procs[p], &mproc[pnr], tcyc);
+		NEWLINE;
 
-		printf("%6.2f%% %s\n",
-			100.0*pcyc/tcyc, name);
+		if(!blockedverbose)
+			continue;
+
+		/* Traverse dependency chain if blocked. */
+		while(pr->p_rts_flags) {
+			endpoint_t dep = NONE;
+			struct tp *tpdep;
+			level += 5;
+
+			if((dep = P_BLOCKEDON(pr)) == NONE) {
+				printf("not blocked on a process");
+				NEWLINE;
+				break;
+			}
+
+			if(dep == ANY)
+				break;
+
+			tpdep = lookup(dep, tick_procs, nprocs);
+			pr = tpdep->p;
+			printf("%*s> ", level, "");
+			print_proc(tpdep, &mproc[pr->p_nr], tcyc);
+			NEWLINE;
+		}
 	}
 }
 
@@ -357,14 +437,18 @@ int main(int argc, char *argv[])
 
 	init(&r);
 
-	while((c=getopt(argc, argv, "s:")) != EOF) {
+	while((c=getopt(argc, argv, "s:B")) != EOF) {
 		switch(c) {
 			case 's':
 				s = atoi(optarg);
 				break;
+			case 'B':
+				blockedverbose = 1;
+				break;
 			default:
 				fprintf(stderr,
-					"Usage: %s [-s<secdelay>]\n", argv[0]);
+					"Usage: %s [-s<secdelay>] [-B]\n",
+						argv[0]);
 				return 1;
 		}
 	}
@@ -372,7 +456,9 @@ int main(int argc, char *argv[])
 	if(s < 1) 
 		s = 2;
 
-	/* Catch window size changes so display is updated properly right away. */
+	/* Catch window size changes so display is updated properly
+	 * right away.
+	 */
 	signal(SIGWINCH, sigwinch);
 
 	while(1) {
