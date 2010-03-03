@@ -5,7 +5,7 @@ OBJ=backdoor.o attr.o channel.o dir.o error.o file.o \
 	link.o misc.o path.o rpc.o time.o
 
 AR=ar
-GAS2ACK=gas2ack
+GAS2ACK=gas2ack -u
 
 all build: $(LIBNAME)
 

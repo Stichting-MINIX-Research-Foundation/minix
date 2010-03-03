@@ -43,17 +43,17 @@ clean:
 # How to build it
 klib386.o: klib386.S
 	$(CC) $(CFLAGS)  -E -D__ASSEMBLY__ -o $@.tmp $<
-	gas2ack $@.tmp $@.s
+	gas2ack -u $@.tmp $@.s
 	$(CC) $(CFLAGS) -c -o $@ $@.s
 
 mpx386.o: mpx386.S
 	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
-	gas2ack $@.tmp $@.s
+	gas2ack -u $@.tmp $@.s
 	$(CC) $(CFLAGS) -c -o $@ $@.s
 
 apic_asm.o: apic_asm.S
 	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
-	gas2ack $@.tmp $@.s
+	gas2ack -u $@.tmp $@.s
 	$(CC) $(CFLAGS) -c -o $@ $@.s
 
 $(HEAD): mpx386.o

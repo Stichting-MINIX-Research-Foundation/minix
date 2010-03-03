@@ -1,3 +1,5 @@
+20100303:
+        Gas2ack updates: Run 'make install' in commands/i386/gas2ack
 20100215:
         Make(1) has been replaced: Run 'make install' in commands/make
         Mkdep updates: Copy commands/scripts/mkdep.sh to /usr/bin/mkdep

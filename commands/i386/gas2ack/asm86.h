@@ -97,7 +97,7 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	FSIN,
 	FSINCOS,
 	FSQRT,
-	FSTD,	FSTS,	FSTPX,	FSTPD,	FSTPS,
+	FSTD,	FSTS,	FSTP,	FSTPX,	FSTPD,	FSTPS,
 	FSTCW,
 	FSTENV,
 	FSTSW,

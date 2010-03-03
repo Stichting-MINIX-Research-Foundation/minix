@@ -10,6 +10,7 @@ static char version[] = "1.11";
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <getopt.h>
 #include "asmconv.h"
 #include "asm86.h"
 #include "languages.h"
@@ -55,6 +56,8 @@ int isanumber(const char *s)
 /* "Invisible" globals. */
 int asm_mode32= (sizeof(int) == 4);
 int err_code= EXIT_SUCCESS;
+/* Prepend underscores to symbols */
+int prepend_underscores = 0;
 
 int main(int argc, char **argv)
 {
@@ -65,28 +68,40 @@ int main(int argc, char **argv)
 	char *lang_parse, *lang_emit, *input_file, *output_file;
 	asm86_t *instr;
 	char banner[80];
+	char c;
+	opterr = 0;
 
-	if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'm') {
-		if (strcmp(argv[1], "-mi86") == 0) {
-			set_use16();
-		} else
-		if (strcmp(argv[1], "-mi386") == 0) {
-			set_use32();
-		} else {
-			fprintf(stderr, "asmconv: '%s': unknown machine\n",
-				argv[1]+2);
-		}
-		argc--;
-		argv++;
-	}
+   while ((c = getopt (argc, argv, "m:u")) != -1)
+      switch (c)
+      {
+      case 'm':
+         if (strcmp(optarg, "i86") == 0) {
+            set_use16();
+         } else
+         if (strcmp(optarg, "i386") == 0) {
+            set_use32();
+         }
+         else {
+            fprintf(stderr, "asmconv: '%s': unknown machine\n",
+                    optarg);
+            exit(EXIT_FAILURE);
+         }
+         break;
+      case 'u':
+         enable_underscore_mode();
+         break;
+      default:
+         fprintf(stderr, "Usage: gas2ack [input-file [output-file]]\n");
+         exit(EXIT_FAILURE);
+      }
 
-	if (argc > 3) {
+	if ((argc - optind < 1) || (argc - optind  > 2)) {
 		fprintf(stderr, "Usage: gas2ack [input-file [output-file]]\n");
 		exit(EXIT_FAILURE);
 	}
 
-	input_file= argc < 1 ? nil : argv[1];
-	output_file= argc < 2 ? nil : argv[2];
+	input_file= (argc - optind) < 1 ? nil : argv[optind];
+	output_file= (argc - optind) < 2 ? nil : argv[optind+1];
 
 	parse_init= gnu_parse_init;
 	get_instruction= gnu_get_instruction;

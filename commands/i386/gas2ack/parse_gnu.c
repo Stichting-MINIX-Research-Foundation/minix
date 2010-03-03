@@ -20,7 +20,12 @@ typedef struct mnemonic {	/* GNU as86 mnemonics translation table. */
 	optype_t	optype;
 } mnemonic_t;
 
-static mnemonic_t mnemtab[] = {			/* This array is sorted. */
+/***************************************************************
+  *                                                            *
+  * NOTE: You MUST keep this array sorted by the first column. *
+  *                                                            *
+  **************************************************************/
+static mnemonic_t mnemtab[] = {
 	{ ".ascii",	DOT_ASCII,	PSEUDO },
 	{ ".asciz",	DOT_ASCIZ,	PSEUDO },
 	{ ".assert",	DOT_ASSERT,	PSEUDO },
@@ -30,9 +35,6 @@ static mnemonic_t mnemtab[] = {			/* This array is sorted. */
 	{ ".byte",	DOT_DATA1,	PSEUDO },
 	{ ".comm",	DOT_COMM,	PSEUDO },
 	{ ".data",	DOT_DATA,	PSEUDO },
-	{ ".data1",	DOT_DATA1,	PSEUDO },
-	{ ".data2",	DOT_DATA2,	PSEUDO },
-	{ ".data4",	DOT_DATA4,	PSEUDO },
 	{ ".end",	DOT_END,	PSEUDO },
 	{ ".extern",	DOT_EXTERN,	PSEUDO },
 	{ ".file",	DOT_FILE,	PSEUDO },
@@ -85,10 +87,9 @@ static mnemonic_t mnemtab[] = {			/* This array is sorted. */
 	{ "cmc",	CMC,		WORD },
 	{ "cmpb",	CMP,		BYTE },
 	{ "cmpl",	CMP,		WORD },
-	{ "cmps",	CMPS,		WORD },
 	{ "cmpsb",	CMPS,		BYTE },
-	{ "cmpsl",	CMPS,		OWORD },
-	{ "cmpsw",	CMPS,		WORD },
+	{ "cmpsl",	CMPS,		WORD },
+	{ "cmpsw",	CMPS,		OWORD },
 	{ "cmpw",	CMP,		OWORD },
 	{ "cmpxchg",	CMPXCHG,	WORD },
 	{ "cpuid",	CPUID,		WORD },
@@ -152,8 +153,8 @@ static mnemonic_t mnemtab[] = {			/* This array is sorted. */
 	{ "fisubs",	FISUBS,		WORD },
 	{ "fld1",	FLD1,		WORD },
 	{ "fldcw",	FLDCW,		WORD },
-	{ "fldd",	FLDD,		WORD },
 	{ "fldenv",	FLDENV,		WORD },
+	{ "fldl",	FLDD,		WORD },
 	{ "fldl2e",	FLDL2E,		WORD },
 	{ "fldl2t",	FLDL2T,		WORD },
 	{ "fldlg2",	FLDLG2,		WORD },
@@ -170,8 +171,8 @@ static mnemonic_t mnemtab[] = {			/* This array is sorted. */
 	{ "fnop",	FNOP,		WORD },
 	{ "fnsave",	FNSAVE,		WORD },
 	{ "fnstcw",	FNSTCW,		WORD },
-	{ "fnstsw",	FNSTSW,		WORD },
 	{ "fnstenv",	FSTENV,		WORD },
+	{ "fnstsw",	FNSTSW,		WORD },
 	{ "fpatan",	FPATAN,		WORD },
 	{ "fprem",	FPREM,		WORD },
 	{ "fprem1",	FPREM1,		WORD },
@@ -183,12 +184,13 @@ static mnemonic_t mnemtab[] = {			/* This array is sorted. */
 	{ "fsin",	FSIN,		WORD },
 	{ "fsincos",	FSINCOS,	WORD },
 	{ "fsqrt",	FSQRT,		WORD },
+	{ "fstcw",	FSTCW,		WORD },
 	{ "fstd",	FSTD,		WORD },
-	{ "fstpd",	FSTPD,		WORD },
+	{ "fstp",	FSTP,		WORD },
+	{ "fstpl",	FSTPD,		WORD },
 	{ "fstps",	FSTPS,		WORD },
 	{ "fstpx",	FSTPX,		WORD },
 	{ "fsts",	FSTS,		WORD },
-	{ "fstcw",	FSTCW,		WORD },
 	{ "fstsw",	FSTSW,		WORD },
 	{ "fsubd",	FSUBD,		WORD },
 	{ "fsubp",	FSUBP,		WORD },
@@ -697,6 +699,7 @@ static expression_t *gnu_get_oplist(asm86_t * a, int *pn, int deref)
 	token_t *t;
 	int sreg;
 
+
 	if ((e= gnu_get_operand(a, pn, deref)) == nil) return nil;
 
 	t = get_token(*pn);
@@ -862,13 +865,16 @@ static asm86_t *gnu_get_statement(void)
 		break;
 	case DOT_DEFINE:
 	case DOT_EXTERN:
-		syms_add_global_csl(a->args);
+      if (underscore_mode())
+         syms_add_global_csl(a->args);
 		break;
 	case DOT_COMM:
-		syms_add_global(a->args->left->name);
+      if (underscore_mode())
+          syms_add_global(a->args->left->name);
 		break;
 	case DOT_LCOMM:
-		syms_add(a->args->left->name);
+      if(underscore_mode())
+         syms_add(a->args->left->name);
 		break;
 	case JMPF:
 	case CALLF:
@@ -940,7 +946,8 @@ asm86_t *gnu_get_instruction(void)
 		a->args= e= new_expr();
 		e->operator= ':';
 		e->name= copystr(t->name);
-		syms_add(t->name);
+      if (underscore_mode())
+         syms_add(t->name);
 		skip_token(2);
 	} else
 	if (t->type == T_WORD && get_token(1)->symbol == '=') {
@@ -971,7 +978,8 @@ asm86_t *gnu_get_instruction(void)
 			a->args= new_expr();
 			a->args->operator= '=';
 			a->args->name= copystr(t->name);
-			syms_add(t->name);
+         if (underscore_mode())
+            syms_add(t->name);
 			a->args->middle= e;
 			skip_token(n+1);
 		}

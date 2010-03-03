@@ -1,4 +1,4 @@
-.SUFFIXES:	.o .e
+.SUFFIXES:	.o .e .S
 
 # Treated like a C file
 .e.o:
@@ -8,3 +8,15 @@
 # 	${OBJCOPY} -x ${.TARGET}
 # .endif
 
+ASMCONV=gas2ack
+AFLAGS+=-D__ASSEMBLY__ -D_EM_WSIZE=4 -D__minix -I/usr/src/include -w -wo
+CPP.s=${CC} -E ${AFLAGS}
+ASMCONVFLAGS+=-mi386
+
+# Need to convert ACK assembly files to GNU assembly before building
+.S.o:
+	${_MKTARGET_COMPILE}
+	${CPP.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.PREFIX}.gnu.s
+	${ASMCONV} ${ASMCONVFLAGS} ${.PREFIX}.gnu.s ${.PREFIX}.ack.s
+	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.PREFIX}.ack.s -o ${.TARGET}
+	rm -rf ${.PREFIX}.ack.s ${.PREFIX}.gnu.s

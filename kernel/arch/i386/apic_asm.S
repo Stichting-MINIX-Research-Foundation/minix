@@ -20,6 +20,7 @@
 .globl	apic_hwint14
 .globl	apic_hwint15
 
+.text
 #define APIC_IRQ_HANDLER(irq)	\
 	push	$irq							    	;\
 	call	irq_handle		/* intr_handle(irq_handlers[irq]) */	;\

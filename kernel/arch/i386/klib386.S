@@ -1,6 +1,5 @@
 /* sections */
 
-.text; .data; .data; .bss
 
 #include <minix/config.h>
 #include <minix/const.h>

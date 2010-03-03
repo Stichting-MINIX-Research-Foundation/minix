@@ -5,10 +5,10 @@
 LIB=end
 
 SRCS=	\
-	edata.s \
-	em_end.s \
-	end.s \
-	etext.s
+	edata.S \
+	em_end.S \
+	end.S \
+	etext.S
 
 .if ${COMPILER_TYPE} == "gnu"
 .include "${.CURDIR}/gnu/Makefile.inc"

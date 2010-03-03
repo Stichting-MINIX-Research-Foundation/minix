@@ -2,5 +2,5 @@
 .PATH: ${.CURDIR}/gnu/arch/${ARCH}/rts
 
 SRCS+=  \
-	__setjmp.gs \
-	longjmp.gs
+	__setjmp.S \
+	longjmp.S

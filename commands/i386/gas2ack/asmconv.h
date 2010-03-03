@@ -14,11 +14,15 @@ char *copystr(const char *s);
 int isanumber(const char *s);
 
 extern int asm_mode32;	/* In 32 bit mode if true. */
+extern int prepend_underscores; /* Prepend underscores to symbols */
 
 #define use16()		(!asm_mode32)
 #define use32()		((int) asm_mode32)
 #define set_use16()	((void) (asm_mode32= 0))
 #define set_use32()	((void) (asm_mode32= 1))
+
+#define underscore_mode() (prepend_underscores)
+#define enable_underscore_mode() ((void)(prepend_underscores= 1))
 
 extern int err_code;	/* Exit code. */
 #define set_error()	((void) (err_code= EXIT_FAILURE))

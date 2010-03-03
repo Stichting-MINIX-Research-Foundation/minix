@@ -2,22 +2,22 @@
 .PATH: ${.CURDIR}/arch/${ARCH}/misc
 
 SRCS+=  \
-	_cpuid.s \
+	_cpuid.S \
 	_cpufeature.c \
-	alloca.s \
-	get_bp.s \
-	getprocessor.s \
-	io_inb.s \
-	io_inl.s \
-	io_insb.s \
-	io_insl.s \
-	io_insw.s \
-	io_intr.s \
-	io_inw.s \
-	io_outb.s \
-	io_outl.s \
-	io_outsb.s \
-	io_outsl.s \
-	io_outsw.s \
-	io_outw.s \
-	oneC_sum.s
+	alloca.S \
+	get_bp.S \
+	getprocessor.S \
+	io_inb.S \
+	io_inl.S \
+	io_insb.S \
+	io_insl.S \
+	io_insw.S \
+	io_intr.S \
+	io_inw.S \
+	io_outb.S \
+	io_outl.S \
+	io_outsb.S \
+	io_outsl.S \
+	io_outsw.S \
+	io_outw.S \
+	oneC_sum.S

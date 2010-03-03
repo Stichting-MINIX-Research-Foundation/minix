@@ -4,7 +4,7 @@
 
 AFLAGS+=	-O -D_MINIX -D_POSIX_SOURCE
 
-SRCS=	crtso.s
+SRCS=	crtso.S
 OBJS=	crtso.o
 
 realall: ${OBJS}

@@ -160,6 +160,7 @@ static mnemonic_t mnemtab[] = {
 	{ FSTCW,	"fstcw"		},
 	{ FSTD,		"fstd"		},
 	{ FSTENV,	"fstenv"	},
+	{ FSTP,		"fstp"		},
 	{ FSTPD,	"fstpd"		},
 	{ FSTPS,	"fstps"		},
 	{ FSTPX,	"fstpx"		},
@@ -311,6 +312,8 @@ static mnemonic_t mnemtab[] = {
 };
 
 #define farjmp(o)	((o) == JMPF || (o) == CALLF)
+#define data_op(o) ((o) == DOT_DATA1 || (o) == DOT_DATA2 || (o) == DOT_DATA4)
+#define define_op(o) ((o) == DOT_DEFINE)
 
 static FILE *ef;
 static long eline= 1;
@@ -393,11 +396,15 @@ static void ack_put_expression(asm86_t *a, expression_t *e, int deref)
 
 	assert(e != nil);
 
-	isglob = syms_is_global(e->name);
+   if (underscore_mode())
+      isglob = syms_is_global(e->name);
+   else
+      isglob = 0;
 
 	switch (e->operator) {
 	case ',':
-		if (dialect == NCC && farjmp(a->opcode)) {
+      if (data_op(a->opcode) || define_op(a->opcode)
+                 || (dialect == NCC && farjmp(a->opcode))) {
 			/* ACK jmpf seg:off  ->  NCC jmpf off,seg */
 			ack_put_expression(a, e->right, deref);
 			ack_printf(", ");
@@ -546,7 +553,7 @@ void ack_emit_instruction(asm86_t *a)
 	} else
 	if (a->opcode == DOT_LABEL) {
 		assert(a->args->operator == ':');
-		if (syms_is_global(a->args->name))
+		if (underscore_mode() && syms_is_global(a->args->name))
 			ack_printf("_%s:", a->args->name);
 		else
 			ack_printf("%s:", a->args->name);
@@ -599,7 +606,7 @@ void ack_emit_instruction(asm86_t *a)
 			&& a->args->operator == ','
 			&& a->args->left->operator == 'W'
 		) {
-			if (syms_is_global(a->args->left->name))
+			if (underscore_mode() && syms_is_global(a->args->left->name))
 				ack_printf(".define\t_%s; ", a->args->left->name);
 			else
 				ack_printf(".define\t%s; ", a->args->left->name);
@@ -668,7 +675,9 @@ void ack_emit_instruction(asm86_t *a)
 		/* we are translating from GNU */
 		if (a->args && a->args->operator == ','
 				/* don't swap ljmp prefixed with segment */
-				&& a->opcode != JMPF) {
+				&& a->opcode != JMPF
+				&& !data_op(a->opcode)
+				&& !define_op(a->opcode)) {
 			expression_t * tmp;
 
 			tmp = a->args->right;

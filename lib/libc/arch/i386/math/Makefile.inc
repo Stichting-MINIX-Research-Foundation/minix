@@ -4,9 +4,9 @@
 SRCS+=   \
 	arch_compare.c \
 	arch_round.c   \
-	fpu_cw.s       \
-	fpu_sw.s       \
-	fpu_round.s    \
+	fpu_cw.S       \
+	fpu_sw.S       \
+	fpu_round.S    \
 	fegetround.c   \
 	feholdexcept.c \
 	fesetround.c
