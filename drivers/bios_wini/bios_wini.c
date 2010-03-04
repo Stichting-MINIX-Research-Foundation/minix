@@ -525,7 +525,7 @@ PRIVATE int w_other(struct driver *dr, message *m)
                 int count;
                 if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
                 count = w_wn->open_ct;
-	        r=sys_safecopyto(m->IO_ENDPT, (vir_bytes)m->IO_GRANT,
+	        r=sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t)m->IO_GRANT,
 		       0, (vir_bytes)&count, sizeof(count), D);
 
 		if(r != OK)

@@ -6,8 +6,6 @@
 #include <minix/types.h>
 #include <stdint.h>
 
-typedef int32_t cp_grant_id_t;
-
 typedef struct {
 	int cp_flags;	/* CPF_* below */
 	union {

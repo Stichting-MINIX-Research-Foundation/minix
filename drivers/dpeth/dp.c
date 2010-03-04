@@ -416,7 +416,7 @@ static void do_vwrite_s(message * mp)
 	get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
 	       mp->DL_COUNT, dep->de_write_iovec.iod_iovec);
 	dep->de_write_iovec.iod_iovec_s = mp->DL_COUNT;
-	dep->de_write_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+	dep->de_write_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
 	dep->de_write_iovec.iod_iovec_offset = 0;
 	size = calc_iovec_size(&dep->de_write_iovec);
 	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)
@@ -454,10 +454,10 @@ static void do_vread_s(message * mp)
 		panic(dep->de_name, "read already in progress", NO_NUM);
 
 	dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
-	get_userdata_s(mp->DL_PROC, (vir_bytes) mp->DL_GRANT, 0,
+	get_userdata_s(mp->DL_PROC, (cp_grant_id_t) mp->DL_GRANT, 0,
 		mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
 	dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
-	dep->de_read_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+	dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
 	dep->de_read_iovec.iod_iovec_offset = 0;
 	size = calc_iovec_size(&dep->de_read_iovec);
 	if (size < ETH_MAX_PACK_SIZE) panic(dep->de_name, SizeErrMsg, size);

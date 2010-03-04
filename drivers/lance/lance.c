@@ -1092,7 +1092,7 @@ static void do_vread_s(message *mp)
             "do_vread_s: sys_safecopyfrom failed: %d\n", r);
    ec->read_iovec.iod_iovec_s    = count;
    ec->read_iovec.iod_proc_nr    = mp->DL_PROC;
-   ec->read_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+   ec->read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
    ec->read_iovec.iod_iovec_offset = 0;
 
    ec->tmp_iovec = ec->read_iovec;

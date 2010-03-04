@@ -481,10 +481,10 @@ PRIVATE void do_vread_s(message * mp, int from_int)
        client layer
     */
     dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
-    de_get_userdata_s(mp->DL_PROC, (vir_bytes) mp->DL_GRANT, 0,
+    de_get_userdata_s(mp->DL_PROC, (cp_grant_id_t) mp->DL_GRANT, 0,
 		      mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
     dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
-    dep->de_read_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+    dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
     dep->de_read_iovec.iod_iovec_offset = 0;
     size = de_calc_iov_size(&dep->de_read_iovec);
     if (size < ETH_MAX_PACK_SIZE) 
@@ -841,7 +841,7 @@ PRIVATE void do_vwrite_s(message * mp, int from_int){
     de_get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
 		      mp->DL_COUNT, iovp->iod_iovec);
     iovp->iod_iovec_s = mp->DL_COUNT;
-    iovp->iod_grant = (vir_bytes) mp->DL_GRANT;
+    iovp->iod_grant = (cp_grant_id_t) mp->DL_GRANT;
     iovp->iod_iovec_offset = 0;
     totalsize = size = de_calc_iov_size(iovp);
     if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)

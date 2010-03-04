@@ -9,11 +9,15 @@
 #include <minix/types.h>
 #endif
 
+#include <stdint.h>
+
 /* Type definitions. */
 typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
 typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
 typedef unsigned int phys_clicks;	/* physical addr/length in clicks */
 typedef int endpoint_t;			/* process identifier */
+
+typedef int32_t cp_grant_id_t;		/* A grant ID. */
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
 typedef long unsigned int vir_bytes;	/* virtual addresses/lengths in bytes */
@@ -43,7 +47,7 @@ struct far_mem {
 
 /* Structure for virtual copying by means of a vector with requests. */
 struct vir_addr {
-  int proc_nr_e;
+  endpoint_t proc_nr_e;
   int segment;
   vir_bytes offset;
 };
@@ -61,7 +65,7 @@ typedef struct {
 } iovec_t;
 
 typedef struct {
-  int iov_grant;		/* grant ID of an I/O buffer */
+  cp_grant_id_t iov_grant;	/* grant ID of an I/O buffer */
   vir_bytes iov_size;		/* sizeof an I/O buffer */
 } iovec_s_t;
 
