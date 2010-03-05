@@ -621,16 +621,16 @@ copr_not_available:
 	clts
 	cld				/* set direction flag to a known value */
 	SAVE_PROCESS_CTX_NON_LAZY(0)
+	/* stop user process cycles */
+	push	%ebp
+	call	cycles_accounting_stop
+	pop	%ebp
 	lea	P_MISC_FLAGS(%ebp), %ebx
 	movw	(%ebx), %cx
 	and	$MF_FPU_INITIALIZED, %cx
 	jnz	0f			/* jump if FPU is already initialized */
 	orw	$MF_FPU_INITIALIZED, (%ebx)
 	fninit
-	/* stop user process cycles */
-	push	%ebp
-	call	cycles_accounting_stop
-	add	$4, %esp
 	jmp	copr_return
 0:					/* load FPU context for current process */
 	mov	%ss:FP_SAVE_AREA_P(%ebp), %eax
