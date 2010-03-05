@@ -21,7 +21,7 @@ char *flt_malloc(size_t size, char *sbuf, size_t ssize)
 		return sbuf;
 
 	if(!(p = alloc_contig(size, 0, NULL)))
-		panic(__FILE__, "out of memory", size);
+		panic("out of memory: %d", size);
 
 	return p;
 }
@@ -66,17 +66,17 @@ clock_t flt_alarm(clock_t dt)
 	r = sys_setalarm(dt, 0);
 
 	if(r != OK)
-		panic(__FILE__, "sys_setalarm failed", r);
+		panic("sys_setalarm failed: %d", r);
 
 	if(dt == 0) {
 		if(!next_alarm)
-			panic(__FILE__, "clearing unset alarm", r);
+			panic("clearing unset alarm: %d", r);
 		next_alarm = 0;
 	} else {
 		if(next_alarm)
-			panic(__FILE__, "overwriting alarm", r);
+			panic("overwriting alarm: %d", r);
 		if ((r = getuptime(&next_alarm)) != OK)
-			panic(__FILE__, "getuptime failed", r);
+			panic("getuptime failed: %d", r);
 		next_alarm += dt;
 	}
 

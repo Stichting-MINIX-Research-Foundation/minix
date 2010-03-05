@@ -255,7 +255,7 @@ int signo;
   int r;
 
   r = sys_trace(T_STOP, rmp->mp_endpoint, 0L, (long *) 0);
-  if (r != OK) panic("pm", "sys_trace failed", r);
+  if (r != OK) panic("sys_trace failed: %d", r);
  
   rmp->mp_flags |= STOPPED;
   if (wait_test(rpmp, rmp)) {

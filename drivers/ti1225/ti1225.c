@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	{
 		r= sef_receive(ANY, &m);
 		if (r != OK)
-			panic("ti1225", "sef_receive failed", r);
+			panic("sef_receive failed: %d", r);
 		printf("ti1225: got message %u from %d\n",
 			m.m_type, m.m_source);
 	}
@@ -116,16 +116,16 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		: (progname=env_argv[0]);
 
 	if((r=tsc_calibrate()) != OK)
-		panic("ti1225", "tsc_calibrate failed", r);
+		panic("tsc_calibrate failed: %d", r);
 
 	debug= 0;
 	while (c= getopt(env_argc, env_argv, "d?"), c != -1)
 	{
 		switch(c)
 		{
-		case '?': panic("ti1225", "Usage: ti1225 [-d]", NO_NUM);
+		case '?': panic("Usage: ti1225 [-d]");
 		case 'd': debug++; break;
-		default: panic("ti1225", "getopt failed", NO_NUM);
+		default: panic("getopt failed");
 		}
 	}
 
@@ -151,11 +151,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 				continue;
 			if (pcitab_ti[i].did != did)
 				continue;
-			if (pcitab_ti[i].checkclass)
-			{
-				panic("ti1225",
-				"fxp_probe: class check not implemented",
-					NO_NUM);
+			if (pcitab_ti[i].checkclass) {
+				panic("fxp_probe: class check not implemented");
 			}
 			break;
 		}
@@ -236,7 +233,7 @@ struct port *pp;
 	}
 
 	if (v32 == 0)
-		panic("ti1225", "bad legacy-mode base address 0x%x\n", v32);
+		panic("bad legacy-mode base address: %d", v32);
 	pp->p_exca_port= v32;
 
 	if (debug)
@@ -249,7 +246,7 @@ struct port *pp;
  	pp->p_hook = pp->p_irq;
 	r= sys_irqsetpolicy(pp->p_irq, 0, &pp->p_hook);
 	if (r != OK)
-		panic("ti1225","sys_irqsetpolicy failed", r);
+		panic("sys_irqsetpolicy failed: %d", r);
 #endif
 
 	/* Clear CBB_BC_INTEXCA */
@@ -279,7 +276,7 @@ struct port *pp;
 #if USE_INTS
 	r= sys_irqenable(&pp->p_hook);
 	if (r != OK)
-		panic("ti1225","unable enable interrupts", r);
+		panic("unable enable interrupts: %d", r);
 #endif
 }
 
@@ -308,7 +305,7 @@ PRIVATE void map_regs(struct port *pp, u32_t base)
 	r = ENOSYS;
 #endif
 	if (r != OK)
-		panic("ti1225", "map_regs: sys_vm_map failed", r);
+		panic("map_regs: sys_vm_map failed: %d", r);
 }
 
 PRIVATE void do_int(pp)
@@ -489,7 +486,7 @@ struct port *pp;
 #if USE_INTS
 	r= sys_irqenable(&pp->p_hook);
 	if (r != OK)
-		panic("ti1225","unable enable interrupts", r);
+		panic("unable enable interrupts: %d", r);
 #endif
 
 }
@@ -502,7 +499,7 @@ PRIVATE u8_t do_inb(port_t port)
 
 	r= sys_inb(port, &value);
 	if (r != OK)
-		panic("ti1225","sys_inb failed", r);
+		panic("sys_inb failed: %d", r);
 	return value;
 }
 
@@ -512,7 +509,7 @@ PRIVATE void do_outb(port_t port, u8_t value)
 
 	r= sys_outb(port, value);
 	if (r != OK)
-		panic("ti1225","sys_outb failed", r);
+		panic("sys_outb failed: %d", r);
 }
 
 

@@ -17,7 +17,7 @@
 	if(!calibrated) {					\
 		int r;						\
 		if((r=tsc_calibrate()) != OK)			\
-			panic(__FILE__, "calibrate failed\n", r); \
+			panic("calibrate failed: %d", r); \
 	}
 
 static u32_t calib_tsc, Hz = 0;
@@ -48,9 +48,7 @@ tsc_calibrate(void)
 
 	diff = sub64(end, start);
 	if(ex64hi(diff) != 0)
-	  panic(__FILE__,
-		"tsc_calibrate: CALIBRATE_TICKS too high "
-			"for TSC frequency\n", NO_NUM);
+	  panic("tsc_calibrate: CALIBRATE_TICKS too high for TSC frequency");
 	calib_tsc = ex64lo(diff);
 #if 0
 	printf("tsc_calibrate: "

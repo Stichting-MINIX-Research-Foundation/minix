@@ -63,7 +63,7 @@ PUBLIC void do_pagefaults(void)
 		int p, wr = PFERR_WRITE(err);
 
 		if(vm_isokendpt(ep, &p) != OK)
-			vm_panic("do_pagefaults: endpoint wrong", ep);
+			panic("do_pagefaults: endpoint wrong: %d", ep);
 
 		vmp = &vmproc[p];
 		vm_assert(vmp->vm_flags & VMF_INUSE);
@@ -75,9 +75,9 @@ PUBLIC void do_pagefaults(void)
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
 			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				vm_panic("sys_kill failed", s);
+				panic("sys_kill failed: %d", s);
 			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-				vm_panic("do_pagefaults: sys_vmctl failed", ep);
+				panic("do_pagefaults: sys_vmctl failed: %d", ep);
 			continue;
 		}
 
@@ -97,9 +97,9 @@ PUBLIC void do_pagefaults(void)
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
 			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				vm_panic("sys_kill failed", s);
+				panic("sys_kill failed: %d", s);
 			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-				vm_panic("do_pagefaults: sys_vmctl failed", ep);
+				panic("do_pagefaults: sys_vmctl failed: %d", ep);
 			continue;
 		}
 
@@ -111,15 +111,15 @@ PUBLIC void do_pagefaults(void)
 			printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
 			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				vm_panic("sys_kill failed", s);
+				panic("sys_kill failed: %d", s);
 			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-				vm_panic("do_pagefaults: sys_vmctl failed", ep);
+				panic("do_pagefaults: sys_vmctl failed: %d", ep);
 			continue;
 		}
 
 		/* Pagefault is handled, so now reactivate the process. */
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-			vm_panic("do_pagefaults: sys_vmctl failed", ep);
+			panic("do_pagefaults: sys_vmctl failed: %d", ep);
 
 	}
 
@@ -146,7 +146,7 @@ PUBLIC void do_memory(void)
 		switch(r) {
 		case VMPTYPE_CHECK:
 			if(vm_isokendpt(who, &p) != OK)
-				vm_panic("do_memory: bad endpoint", who);
+				panic("do_memory: bad endpoint: %d", who);
 			vmp = &vmproc[p];
 
 			r = handle_memory(vmp, mem, len, wrflag);
@@ -165,7 +165,7 @@ PUBLIC void do_memory(void)
 		}
 
 		if(sys_vmctl(requestor, VMCTL_MEMREQ_REPLY, r) != OK)
-			vm_panic("do_memory: sys_vmctl failed", r);
+			panic("do_memory: sys_vmctl failed: %d", r);
 	}
 }
 

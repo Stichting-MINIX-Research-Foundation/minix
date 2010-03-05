@@ -24,7 +24,7 @@ char *name;
 
 	r= ds_retrieve_label_num("pci", &u32);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_init1: ds_retrieve_label_num failed for 'pci'", r);
+		panic("pci_init1: ds_retrieve_label_num failed for 'pci': %d", r);
 	pci_procnr= u32;
 
 	m.m_type= BUSC_PCI_INIT;
@@ -39,8 +39,8 @@ char *name;
 	}
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_init1: can't talk to PCI", r);
+		panic("pci_init1: can't talk to PCI: %d", r);
 	if (m.m_type != 0)
-		panic("syslib/" __FILE__, "pci_init1: got bad reply from PCI", m.m_type);
+		panic("pci_init1: got bad reply from PCI: %d", m.m_type);
 }
 

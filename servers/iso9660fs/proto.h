@@ -72,5 +72,4 @@ _PROTOTYPE(int create_v_pri, (struct iso9660_vd_pri *v_pri, char *buffer,
 
 /* utility.c */
 _PROTOTYPE(int no_sys, (void));
-_PROTOTYPE(void panic, (char *who, char *mess, int num));
 

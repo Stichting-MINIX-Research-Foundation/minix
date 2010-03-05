@@ -78,7 +78,7 @@ int main(void)
 
 		r= sef_receive(ANY, &m);
 		if (r != OK)
-			panic(__FILE__, "sef_receive failed", r);
+			panic("sef_receive failed: %d", r);
 		if (is_notify(m.m_type)) {
 			if (_ENDPOINT_P(m.m_source) == PM_PROC_NR) {
 				do_pm_notify(&m);
@@ -247,7 +247,7 @@ static void init_domain(int index)
 	size= 0x100000 / 8;
 	table= alloc_contig(size, AC_ALIGN4K, &busaddr);
 	if (table == NULL)
-		panic("AMDDEV","malloc failed", NO_NUM);
+		panic("malloc failed");
 	if (index == 0)
 	{
 		memset(table, 0, size);

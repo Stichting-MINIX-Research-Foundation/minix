@@ -158,7 +158,7 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
   return(OK);
 
 bad:
-	minix_panic("do_vdevio: unaligned port", port);
+	panic("do_vdevio: unaligned port: %d", port);
 	return EPERM;
 }
 

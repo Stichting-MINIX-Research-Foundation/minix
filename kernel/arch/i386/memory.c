@@ -48,7 +48,7 @@ FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 PUBLIC void vm_init(struct proc *newptproc)
 {
 	if(vm_running)
-		minix_panic("vm_init: vm_running", NO_NUM);
+		panic("vm_init: vm_running");
 	switch_address_space(newptproc);
 	vm_enable_paging();
 	vm_running = 1;
@@ -198,7 +198,7 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 				NOREC_RETURN(linlincopy, EFAULT_DST);
 			}
 
-			minix_panic("lin_lin_copy fault out of range", NO_NUM);
+			panic("lin_lin_copy fault out of range");
 
 			/* Not reached. */
 			NOREC_RETURN(linlincopy, EFAULT);
@@ -229,7 +229,7 @@ PRIVATE u32_t phys_get32(phys_bytes addr)
 
 	if((r=lin_lin_copy(NULL, addr, 
 		proc_addr(SYSTEM), vir2phys(&v), sizeof(v))) != OK) {
-		minix_panic("lin_lin_copy for phys_get32 failed", r);
+		panic("lin_lin_copy for phys_get32 failed: %d",  r);
 	}
 
 	return v;
@@ -364,7 +364,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
   phys_bytes seg_base;
 
   if(seg != T && seg != D && seg != S)
-	minix_panic("umap_local: wrong seg", seg);
+	panic("umap_local: wrong seg: %d",  seg);
 
   if (bytes <= 0) return( (phys_bytes) 0);
   if (vir_addr + bytes <= vir_addr) return 0;   /* overflow */
@@ -413,7 +413,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 				phys = 0;
 			}
 			if(phys == 0)
-				minix_panic("vm_lookup returned phys", phys);
+				panic("vm_lookup returned phys: %d",  phys);
 		}
 	
 
@@ -603,7 +603,7 @@ int delivermsg(struct proc *rp)
 		printf("vir: 0x%lx lin was: 0x%lx umap now: 0x%lx\n",
 		rp->p_delivermsg_vir, rp->p_delivermsg_lin,
 		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message)));
-		minix_panic("that's wrong", NO_NUM);
+		panic("that's wrong");
 	}
 
 #endif
@@ -847,7 +847,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 		struct proc *target;
 		phys_bytes lin;
 		if(r != EFAULT_SRC && r != EFAULT_DST)
-			minix_panic("lin_lin_copy failed", r);
+			panic("lin_lin_copy failed: %d",  r);
 		if(!vmcheck || !caller) {
 	  		NOREC_RETURN(virtualcopy, r);
 		}
@@ -861,7 +861,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 			lin = phys_addr[_DST_];
 			target = procs[_DST_];
 		} else {
-			minix_panic("r strange", r);
+			panic("r strange: %d",  r);
 		}
 
 #if 0

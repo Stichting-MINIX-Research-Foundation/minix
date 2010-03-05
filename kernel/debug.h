@@ -60,20 +60,18 @@
 
 #if DEBUG_VMASSERT
 #define vmassert(t) { \
-	if(!(t)) { minix_panic("vm: assert " #t " failed in " __FILE__, __LINE__); } }
+	if(!(t)) { panic("kernel:%s:%d: assert %s failed", __FILE__, __LINE__, #t); } }
 #else
 #define vmassert(t) { }
 #endif
 
 #define NOT_REACHABLE	do {						\
-	printf("NOT_REACHABLE at %s:%d\n", __FILE__, __LINE__);	\
-	minix_panic("execution at an unexpected location\n", NO_NUM);	\
+	panic("NOT_REACHABLE at %s:%d", __FILE__, __LINE__);	\
 	for(;;);							\
 } while(0)
 
 #define NOT_IMPLEMENTED do {	\
-		printf("NOT_IMPLEMENTED at %s:%d\n", __FILE__, __LINE__); \
-		minix_panic("NOT_IMPLEMENTED", NO_NUM); \
+		panic("NOT_IMPLEMENTED at %s:%d", __FILE__, __LINE__); \
 } while(0)
 
 #ifdef CONFIG_BOOT_VERBOSE

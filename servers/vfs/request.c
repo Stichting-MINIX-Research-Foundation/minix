@@ -53,7 +53,7 @@ unsigned int *cum_iop;
   grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
 			(rw_flag == READING ? CPF_WRITE : CPF_READ));
   if(grant_id == -1)
-	  panic(__FILE__, "req_breadwrite: cpf_grant_magic failed", NO_NUM);
+	  panic("req_breadwrite: cpf_grant_magic failed");
 
   /* Fill in request message */
   m.m_type = rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
@@ -150,12 +150,12 @@ node_details_t *res;
   message m;
 
   if (path[0] == '/')
-  	panic(__FILE__, "req_create: filename starts with '/'", NO_NUM);
+  	panic("req_create: filename starts with '/'");
 
   len = strlen(path) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) path, len, CPF_READ);
   if (grant_id == -1)
-	panic(__FILE__, "req_create: cpf_grant_direct failed", NO_NUM);
+	panic("req_create: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type	= REQ_CREATE;
@@ -217,7 +217,7 @@ char *buf;
   grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, sizeof(struct statfs),
 			CPF_WRITE);
   if(grant_id == -1) 
-	  panic(__FILE__, "req_fstatfs: cpf_grant_magic failed", NO_NUM);
+	  panic("req_fstatfs: cpf_grant_magic failed");
 
   /* Fill in request message */
   m.m_type = REQ_FSTATFS;
@@ -272,7 +272,7 @@ u64_t *new_pos;
   
   grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size, CPF_WRITE);
   if (grant_id < 0)
-  	panic(__FILE__, "req_getdents: cpf_grant_magic failed", grant_id);
+  	panic("req_getdents: cpf_grant_magic failed: %d", grant_id);
 
   m.m_type = REQ_GETDENTS;
   m.REQ_INODE_NR = inode_nr;
@@ -328,7 +328,7 @@ ino_t linked_file;
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
-	  panic(__FILE__, "req_link: cpf_grant_direct failed", NO_NUM);
+	  panic("req_link: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_LINK;
@@ -366,7 +366,7 @@ lookup_res_t *res;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) user_fullpath,
 			      sizeof(user_fullpath), CPF_READ | CPF_WRITE);
   if(grant_id == -1)
-	  panic(__FILE__, "req_lookup: cpf_grant_direct failed", NO_NUM);
+	  panic("req_lookup: cpf_grant_direct failed");
 
   len = strlen(user_fullpath) + 1;
 
@@ -391,7 +391,7 @@ lookup_res_t *res;
 	grant_id2 = cpf_grant_direct(fs_e, (vir_bytes) &credentials,
 				     sizeof(credentials), CPF_READ);
 	if(grant_id2 == -1)
-		panic(__FILE__, "req_lookup: cpf_grant_direct failed", NO_NUM);
+		panic("req_lookup: cpf_grant_direct failed");
 
 	m.REQ_GRANT2	= grant_id2;
 	m.REQ_UCRED_SIZE= sizeof(credentials);
@@ -462,7 +462,7 @@ mode_t dmode;
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
-	  panic(__FILE__, "req_mkdir: cpf_grant_direct failed", NO_NUM);
+	  panic("req_mkdir: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_MKDIR;
@@ -501,7 +501,7 @@ dev_t dev;
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
-	  panic(__FILE__, "req_mknod: cpf_grant_direct failed", NO_NUM);
+	  panic("req_mknod: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_MKNOD;
@@ -646,7 +646,7 @@ size_t len;
 
   grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, len, CPF_WRITE);
   if(grant_id == -1)
-	  panic(__FILE__, "req_rdlink: cpf_grant_magic failed", NO_NUM);
+	  panic("req_rdlink: cpf_grant_magic failed");
 
   /* Fill in request message */
   m.m_type = REQ_RDLINK;
@@ -683,7 +683,7 @@ struct node_details *res_nodep;
   len = strlen(label)+1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) label, len, CPF_READ);
   if (grant_id == -1)
-	  panic(__FILE__, "req_readsuper: cpf_grant_direct failed", NO_NUM);
+	  panic("req_readsuper: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_READSUPER;
@@ -732,12 +732,12 @@ unsigned int *cum_iop;
   message m;
 
   if (ex64hi(pos) != 0)
-	  panic(__FILE__, "req_readwrite: pos too large", NO_NUM);
+	  panic("req_readwrite: pos too large");
 
   grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
   			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
   if (grant_id == -1)
-	  panic(__FILE__, "req_readwrite: cpf_grant_magic failed", NO_NUM);
+	  panic("req_readwrite: cpf_grant_magic failed");
 
   /* Fill in request message */
   m.m_type = rw_flag == READING ? REQ_READ : REQ_WRITE;
@@ -779,12 +779,12 @@ char *new_name;
   len_old = strlen(old_name) + 1;
   gid_old = cpf_grant_direct(fs_e, (vir_bytes) old_name, len_old, CPF_READ);
   if(gid_old == -1)
-	  panic(__FILE__, "req_rename: cpf_grant_direct failed", NO_NUM);
+	  panic("req_rename: cpf_grant_direct failed");
 
   len_new = strlen(new_name) + 1;
   gid_new = cpf_grant_direct(fs_e, (vir_bytes) new_name, len_new, CPF_READ);
   if(gid_new == -1)
-	  panic(__FILE__, "req_rename: cpf_grant_direct failed", NO_NUM);
+	  panic("req_rename: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_RENAME;
@@ -820,7 +820,7 @@ char *lastc;
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(grant_id == -1)
-	  panic(__FILE__, "req_rmdir: cpf_grant_direct failed", NO_NUM);
+	  panic("req_rmdir: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_RMDIR;
@@ -858,13 +858,13 @@ gid_t gid;
   len = strlen(lastc) + 1;
   gid_name = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(gid_name == -1)
-	  panic(__FILE__, "req_slink: cpf_grant_direct failed", NO_NUM);
+	  panic("req_slink: cpf_grant_direct failed");
 
   gid_buf = cpf_grant_magic(fs_e, who_e, (vir_bytes) path_addr, path_length,
 			    CPF_READ);
   if(gid_buf == -1) {
 	  cpf_revoke(gid_name);
-	  panic(__FILE__, "req_slink: cpf_grant_magic failed", NO_NUM);
+	  panic("req_slink: cpf_grant_magic failed");
   }
 
   /* Fill in request message */
@@ -909,7 +909,7 @@ int pos;
 				sizeof(struct stat), CPF_WRITE);
 
   if (grant_id < 0)
-	panic(__FILE__, "req_stat: cpf_grant_* failed", NO_NUM);
+	panic("req_stat: cpf_grant_* failed");
 
   /* Fill in request message */
   m.m_type = REQ_STAT;
@@ -962,7 +962,7 @@ char *lastc;
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(grant_id == -1)
-	  panic(__FILE__, "req_unlink: cpf_grant_direct failed", NO_NUM);
+	  panic("req_unlink: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_UNLINK;
@@ -1030,7 +1030,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
   struct vmnt *vmp;
 
   if(fs_e <= 0 || fs_e == NONE)
-	panic(__FILE__, "talking to bogus endpoint", fs_e);
+	panic("talking to bogus endpoint: %d", fs_e);
 
   /* Make a copy of the request so that we can load it back in
    * case of a dead driver */
@@ -1094,7 +1094,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
          
           /* No FS ?? */
           if (old_driver_e == NONE)
-              panic(__FILE__, "VFSdead_driver: couldn't find FS\n", fs_e);
+              panic("VFSdead_driver: couldn't find FS: %d", fs_e);
 
           /* Wait for a new driver. */
           for (;;) {
@@ -1102,8 +1102,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
               printf("VFSdead_driver: waiting for new driver\n");
               r = sef_receive(RS_PROC_NR, &m);
               if (r != OK) {
-                  panic(__FILE__, "VFSdead_driver: unable to receive from RS", 
-				  r);
+			panic("VFSdead_driver: unable to receive from RS: %d",  r);
               }
               if (m.m_type == DEVCTL) {
                   /* Map new driver */
@@ -1116,13 +1115,11 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
                   }
               }
               else {
-                  panic(__FILE__, "VFSdead_driver: got message from RS, type", 
-                          m.m_type);
+			panic("VFSdead_driver: got message from RS type: %d", m.m_type);
               }
               m.m_type = r;
               if ((r = send(RS_PROC_NR, &m)) != OK) {
-                  panic(__FILE__, "VFSdead_driver: unable to send to RS",
-                          r);
+			panic("VFSdead_driver: unable to send to RS: %d", r);
               }
               /* New driver is ready */
               if (new_driver_e) break;
@@ -1134,7 +1131,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
       }
 
        printf("fs_sendrec: unhandled error %d sending to %d\n", r, fs_e);
-       panic(__FILE__, "fs_sendrec: unhandled error", NO_NUM);
+       panic("fs_sendrec: unhandled error");
   }
 #endif
 

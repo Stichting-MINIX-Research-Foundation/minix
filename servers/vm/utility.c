@@ -68,7 +68,7 @@ struct memory *mem_chunks;                      /* store mem chunks here */
 
   /* Obtain and parse memory from system environment. */
   if(env_memory_parse(mem_chunks, NR_MEMS) != OK) 
-        vm_panic("couldn't obtain memory chunks", NO_NUM); 
+        panic("couldn't obtain memory chunks"); 
    
   /* Round physical memory to clicks. Round start up, round end down. */
   for (i = 0; i < NR_MEMS; i++) {
@@ -110,8 +110,8 @@ struct mem_map *map_ptr;                        /* memory to remove */
   }
   if (memp >= &mem_chunks[NR_MEMS])
   {
-        vm_panic("reserve_proc_mem: can't find map in mem_chunks ",
-                map_ptr[T].mem_phys);
+		panic("reserve_proc_mem: can't find map in mem_chunks: 0x%lx",
+			map_ptr[T].mem_phys);
   }
 } 
 
@@ -160,7 +160,7 @@ char *brk_addr;
 
 /* VM wants to call brk() itself. */
         if((r=real_brk(vmm, (vir_bytes) brk_addr)) != OK)
-		vm_panic("VM: brk() on myself failed\n", NO_NUM);
+		panic("VM: brk() on myself failed");
         _brksize = brk_addr;
         return 0;
 }

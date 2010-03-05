@@ -76,7 +76,7 @@ static void ns_start_xmit(dpeth_t * dep, int size, int pageno)
 */
 static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 {
-  panic(__FILE__, "mem_getblock: not converted to safecopies", NO_NUM);
+  panic("mem_getblock: not converted to safecopies");
 #if 0
   sys_nic2mem(dep->de_linmem + offset, SELF, dst, size);
   return;
@@ -93,7 +93,7 @@ static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
   iovec_dat_s_t *iovp = &dep->de_read_iovec;
   int bytes, ix = 0;
 
-  panic(__FILE__, "mem_nic2user: not converted to safecopies", NO_NUM);
+  panic("mem_nic2user: not converted to safecopies");
 #if 0
 
   /* Computes shared memory address (skipping receive header) */
@@ -141,7 +141,7 @@ static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
   iovec_dat_s_t *iovp = &dep->de_write_iovec;
   int bytes, ix = 0;
 
-  panic(__FILE__, "mem_user2nic: not converted to safecopies", NO_NUM);
+  panic("mem_user2nic: not converted to safecopies");
 #if 0
 
   /* Computes shared memory address */
@@ -217,10 +217,8 @@ static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 		bytes = dep->de_stoppage * DP_PAGESIZE - offset;
 		r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr, 
 			iovp->iod_iovec[ix].iov_grant, iov_offset, bytes);
-		if (r != OK)
-		{
-			panic(__FILE__, "pio_nic2user: sys_safe_insb failed",
-				r);
+		if (r != OK) {
+			panic("pio_nic2user: sys_safe_insb failed: %d", 				r);
 		}
 		pktsize -= bytes;
 		iov_offset += bytes;
@@ -232,7 +230,7 @@ static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 	r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr,
 		iovp->iod_iovec[ix].iov_grant, iov_offset, bytes);
 	if (r != OK)
-		panic(__FILE__, "pio_nic2user: sys_safe_insb failed", r);
+		panic("pio_nic2user: sys_safe_insb failed: %d", r);
 	offset += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -264,7 +262,7 @@ static void pio_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	r= sys_safe_outsb(dep->de_data_port, iovp->iod_proc_nr,
 	      iovp->iod_iovec[ix].iov_grant, 0, bytes);
 	if (r != OK)
-		panic(__FILE__, "pio_user2nic: sys_safe_outsb failed", r);
+		panic("pio_user2nic: sys_safe_outsb failed: %d", r);
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of I/O vector */
 		dp_next_iovec(iovp);
@@ -277,7 +275,7 @@ static void pio_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	if (inb_reg0(dep, DP_ISR) & ISR_RDC) break;
   }
   if (ix == 100) {
-	panic(dep->de_name, RdmaErrMsg, NO_NUM);
+	panic(RdmaErrMsg);
   }
   return;
 }
@@ -331,7 +329,7 @@ static void ns_send(dpeth_t * dep, int from_int, int size)
   int queue;
 
   if (queue = dep->de_sendq_head, dep->de_sendq[queue].sq_filled) {
-	if (from_int) panic(dep->de_name, "should not be sending ", NO_NUM);
+	if (from_int) panic("should not be sending ");
 	dep->de_send_s = size;
 	return;
   }
@@ -654,7 +652,7 @@ static void dp_pio16_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	if (bytes > pktsize) bytes = pktsize;
 
 	phys_user = numap(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr, bytes);
-	if (!phys_user) panic(dep->de_name, UmapErrMsg, NO_NUM);
+	if (!phys_user) panic(UmapErrMsg);
 
 	if (odd_byte) {
 		phys_copy(phys_user, phys_2bytes + 1, (phys_bytes) 1);
@@ -691,7 +689,7 @@ static void dp_pio16_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	if (inb_reg0(dep, DP_ISR) & ISR_RDC) break;
   }
   if (ix == 100) {
-	panic(dep->de_name, RdmaErrMsg, NO_NUM);
+	panic(RdmaErrMsg);
   }
   return;
 }
@@ -727,7 +725,7 @@ static void dp_pio16_nic2user(dpeth_t * dep, int nic_addr, int count)
 
 	phys_user = numap(iovp->iod_proc_nr,
 			  iovp->iod_iovec[i].iov_addr, bytes);
-	if (!phys_user) panic(dep->de_name, UmapErrMsg, NO_NUM);
+	if (!phys_user) panic(UmapErrMsg);
 	if (odd_byte) {
 		phys_copy(phys_2bytes + 1, phys_user, (phys_bytes) 1);
 		count--;

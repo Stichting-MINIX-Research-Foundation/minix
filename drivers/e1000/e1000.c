@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     {
 	if ((r= sef_receive(ANY, &m)) != OK)
 	{
-	    panic("e1000", "sef_receive failed", r);
+	    panic("sef_receive failed: %d", r);
 	}
 	if (is_notify(m.m_type))
 	{
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 	    case DL_GETSTAT_S:  e1000_getstat_s(&m);		break;
 	    case DL_GETNAME:    e1000_getname(&m);		break;
 	    default:
-		panic("e1000", "illegal message", m.m_type);
+		panic("illegal message: %d", m.m_type);
 	}
     }
 }
@@ -145,7 +145,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
     /* Verify command-line arguments. */
     if (env_argc < 1)
     {
-	panic("e1000", "no program name given in argc/argv", NO_NUM);
+	panic("no program name given in argc/argv");
     }
     else
 	(progname = strrchr(env_argv[0],'/')) ? progname++
@@ -157,7 +157,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
     /* Perform calibration. */
     if((r = tsc_calibrate()) != OK)
     {
-        panic("e1000", "tsc_calibrate failed", r);
+        panic("tsc_calibrate failed: %d", r);
     }
     /* Try to notify inet that we are present (again) */
     if ((r = ds_retrieve_label_num("inet", &tasknr)) == OK)
@@ -308,7 +308,7 @@ PRIVATE int e1000_probe(e1000_t *e)
     /* Reserve PCI resources found. */
     if ((r = pci_reserve_ok(devind)) != OK)
     {
-        panic("e1000", "failed to reserve PCI device", r);
+        panic("failed to reserve PCI device: %d", r);
     }
     /* Read PCI configuration. */
     e->irq   = pci_attr_r8(devind, PCI_ILR);
@@ -316,10 +316,8 @@ PRIVATE int e1000_probe(e1000_t *e)
 			   0x20000);
 			   
     /* Verify mapped registers. */
-    if (e->regs == (u8_t *) -1)
-    {
-	panic("e1000", "failed to map hardware registers from PCI\n", 
-			NO_NUM);
+    if (e->regs == (u8_t *) -1) {
+		panic("failed to map hardware registers from PCI");
     }
     /* Optionally map flash memory. */
     if (pci_attr_r32(devind, PCI_BAR_3))
@@ -368,11 +366,11 @@ e1000_t *e;
      */
     if ((r = sys_irqsetpolicy(e->irq, 0, &e->irq_hook)) != OK)
     {
-        panic(e->name, "sys_irqsetpolicy failed", r);
+        panic("sys_irqsetpolicy failed: %d", r);
     }
     if ((r = sys_irqenable(&e->irq_hook)) != OK)
     {
-	panic(e->name, "sys_irqenable failed", r);
+	panic("sys_irqenable failed: %d", r);
     }
     /* Reset hardware. */
     e1000_reset_hw(e);
@@ -487,10 +485,8 @@ e1000_t *e;
     {
     	if ((e->rx_desc = alloc_contig(sizeof(e1000_rx_desc_t) * 
 				       e->rx_desc_count, AC_ALIGN4K, 
-				      &rx_desc_p)) == NULL)
-    	{
-        	panic(e->name, "failed to allocate RX descriptors", 
-				NO_NUM);
+				      &rx_desc_p)) == NULL) {
+		panic("failed to allocate RX descriptors");
     	}
     	memset(e->rx_desc, 0, sizeof(e1000_rx_desc_t) * e->rx_desc_count);
 
@@ -503,7 +499,7 @@ e1000_t *e;
 	if ((e->rx_buffer = alloc_contig(e->rx_buffer_size,
 					 AC_ALIGN4K, &rx_buff_p)) == NULL)
 	{
-	    panic(e->name, "failed to allocate RX buffers", NO_NUM);
+	    panic("failed to allocate RX buffers");
 	}
 	/* Setup receive descriptors. */
 	for (i = 0; i < E1000_RXDESC_NR; i++)
@@ -518,10 +514,8 @@ e1000_t *e;
     {
         if ((e->tx_desc = alloc_contig(sizeof(e1000_tx_desc_t) * 
 				       e->tx_desc_count, AC_ALIGN4K, 
-				      &tx_desc_p)) == NULL)
-    	{
-        	panic(e->name, "failed to allocate TX descriptors", 
-				NO_NUM);
+				      &tx_desc_p)) == NULL) {
+		panic("failed to allocate TX descriptors");
     	}
     	memset(e->tx_desc, 0, sizeof(e1000_tx_desc_t) * e->tx_desc_count);
 
@@ -534,7 +528,7 @@ e1000_t *e;
 	if ((e->tx_buffer = alloc_contig(e->tx_buffer_size,
 					 AC_ALIGN4K, &tx_buff_p)) == NULL)
 	{
-	    panic(e->name, "failed to allocate TX buffers", NO_NUM);
+	    panic("failed to allocate TX buffers");
 	}
 	/* Setup transmit descriptors. */
 	for (i = 0; i < E1000_RXDESC_NR; i++)
@@ -614,7 +608,7 @@ int from_int;
 				  (vir_bytes) iovec, e->tx_message.DL_COUNT *
 				  sizeof(iovec_s_t), D)) != OK)
 	{
-	    panic(e->name, "sys_safecopyfrom() failed", r);
+	    panic("sys_safecopyfrom() failed: %d", r);
 	}
 	/* Find the head, tail and current descriptors. */
 	head =  e1000_reg_read(e, E1000_REG_TDH);
@@ -638,7 +632,7 @@ int from_int;
 				     (tail * E1000_IOBUF_SIZE),
 				      size, D)) != OK)
 	    {
-		panic(e->name, "sys_safecopyfrom() failed", r);
+		panic("sys_safecopyfrom() failed: %d", r);
 	    }
 	    /* Mark this descriptor ready. */
 	    desc->status  = 0;
@@ -702,7 +696,7 @@ int from_int;
 				  (vir_bytes) iovec, e->rx_message.DL_COUNT *
 				  sizeof(iovec_s_t), D)) != OK)
 	{
-	    panic(e->name, "sys_safecopyfrom() failed", r);
+	    panic("sys_safecopyfrom() failed: %d", r);
 	}
 	/* Find the head, tail and current descriptors. */
 	head = e1000_reg_read(e, E1000_REG_RDH);
@@ -737,7 +731,7 @@ int from_int;
 				   (cur * E1000_IOBUF_SIZE),
 				    size, D)) != OK)
 	    {
-		panic(e->name, "sys_safecopyto() failed", r);
+		panic("sys_safecopyto() failed: %d", r);
 	    }
 	    bytes += size;
 	}
@@ -790,7 +784,7 @@ message *mp;
     mp->DL_PORT = mp->DL_PORT;
     mp->DL_STAT = OK;
     if((r=send(mp->m_source, mp)) != OK)
-	panic("e1000", "e1000_getstat: send() failed", r);
+	panic("e1000_getstat: send() failed: %d", r);
 }
 
 /*===========================================================================*
@@ -811,7 +805,7 @@ message *mp;
     mp->m_type = DL_NAME_REPLY;
     if ((r = send(mp->m_source, mp)) != OK)
     {
-	panic("e1000", "e1000_getname: send() failed", r);
+	panic("e1000_getname: send() failed: %d", r);
     }
 }
 
@@ -837,7 +831,7 @@ message *mp;
         /* Re-enable interrupts. */
         if (sys_irqenable(&e->irq_hook) != OK)
         {
-	    panic("e1000", "failed to re-enable IRQ", NO_NUM);
+	    panic("failed to re-enable IRQ");
         }
 
 	/* Read the Interrupt Cause Read register. */
@@ -908,7 +902,7 @@ int num;
      */
     if (num < 0 || num >= E1000_PORT_NR)
     {
-	panic("e1000", "invalid port number given", num);
+	panic("invalid port number given: %d", num);
     }
 
     /*
@@ -916,7 +910,7 @@ int num;
      */
     if (!(e1000_table[num].status & E1000_DETECTED))
     {
-	panic("e1000", "inactive port number given", num);
+	panic("inactive port number given: %d", num);
     }
     return &e1000_table[num];
 }
@@ -1260,7 +1254,7 @@ int may_block;
     /* Acknowledge to INET. */
     if ((r = send(e->client, &msg)) != OK)
     {
-        panic("e1000", "send() failed", r);
+        panic("send() failed: %d", r);
     }
 }
 
@@ -1273,6 +1267,6 @@ message *reply_mess;
 {
     if (send(req->m_source, reply_mess) != OK)
     {
-        panic("e1000", "unable to send reply message", NO_NUM);
+        panic("unable to send reply message");
     }
 }

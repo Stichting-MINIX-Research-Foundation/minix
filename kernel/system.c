@@ -324,7 +324,7 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
   register struct proc *rp;
 
   if(!isokprocn(proc_nr) || isemptyn(proc_nr))
-	minix_panic("send_sig to empty process", proc_nr);
+	panic("send_sig to empty process: %d",  proc_nr);
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
@@ -354,7 +354,7 @@ int sig_nr;			/* signal to be sent */
   register struct proc *rp;
 
   if (proc_nr == PM_PROC_NR)
-	minix_panic("cause_sig: PM gets signal", NO_NUM);
+	panic("cause_sig: PM gets signal");
 
   /* Check if the signal is already pending. Process it otherwise. */
   rp = proc_addr(proc_nr);
@@ -458,7 +458,7 @@ register struct proc *rc;		/* slot of process to clean up */
   register struct proc *rp;		/* iterate over process table */
   register struct proc **xpp;		/* iterate over caller queue */
 
-  if(isemptyp(rc)) minix_panic("clear_proc: empty process", rc->p_endpoint);
+  if(isemptyp(rc)) panic("clear_proc: empty process: %d",  rc->p_endpoint);
 
   if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR ||
 	rc->p_endpoint == VM_PROC_NR)
@@ -468,7 +468,7 @@ register struct proc *rc;		/* slot of process to clean up */
 	 */
 	printf("died: ");
 	proc_stacktrace(rc);
-	minix_panic("system process died", rc->p_endpoint);
+	panic("system process died: %d",  rc->p_endpoint);
   }
 
   /* Make sure that the exiting process is no longer scheduled. */

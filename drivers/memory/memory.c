@@ -128,11 +128,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("MEM","sigaction failed", errno);
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
 
   /* Initialize all minor devices one by one. */
   if (OK != (s=sys_getkinfo(&kinfo))) {
-      panic("MEM","Couldn't get kernel information.",s);
+      panic("Couldn't get kernel information: %d", s);
   }
 
 #if 0
@@ -255,7 +255,7 @@ unsigned nr_req;		/* length of request vector */
 	  	  dev_vaddr + position, count, D);
 	    }
 	    if(r != OK) {
-              panic("MEM","I/O copy failed",r);
+              panic("I/O copy failed: %d", r);
 	    }
 	    break;
 
@@ -287,7 +287,7 @@ unsigned nr_req;		/* length of request vector */
 	    if(!any_mapped || pagestart_mapped != pagestart) {
 	     if(any_mapped) {
 		if(vm_unmap_phys(SELF, vaddr, I386_PAGE_SIZE) != OK)
-      			panic("MEM","vm_unmap_phys failed",NO_NUM);
+      			panic("vm_unmap_phys failed");
 		any_mapped = 0;
 	     }
 	     vaddr = vm_map_phys(SELF, (void *) pagestart, I386_PAGE_SIZE);
@@ -331,7 +331,7 @@ unsigned nr_req;		/* length of request vector */
 	             s=sys_safecopyto(proc_nr, user_vir,
 		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk, D);
 		    if(s != OK)
-	    	        report("MEM","sys_safecopyto failed", s);
+	    	        printf("MEM: sys_safecopyto failed: %d\n", s);
 	    	    left -= chunk;
  	            suboffset += chunk;
 	    	}
@@ -372,7 +372,7 @@ message *m_ptr;
   }
 
   if(m_device < 0 || m_device >= NR_DEVS) {
-      panic("MEM","wrong m_device",m_device);
+      panic("wrong m_device: %d", m_device);
   }
 
   openct[m_device]++;
@@ -392,11 +392,11 @@ message *m_ptr;
   if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
 
   if(m_device < 0 || m_device >= NR_DEVS) {
-      panic("MEM","wrong m_device",m_device);
+      panic("wrong m_device: %d", m_device);
   }
 
   if(openct[m_device] < 1) {
-      panic("MEM","closed too often",NO_NUM);
+      panic("closed too often");
   }
   openct[m_device]--;
 
@@ -449,7 +449,7 @@ message *m_ptr;				/* pointer to control message */
 	if(m_vaddrs[dev]) {
 		u32_t size;
 		if(ex64hi(dv->dv_size)) {
-			panic("MEM","huge old ramdisk", NO_NUM);
+			panic("huge old ramdisk");
 		}
 		size = ex64lo(dv->dv_size);
 		free((void *) m_vaddrs[dev]);

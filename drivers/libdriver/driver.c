@@ -146,7 +146,7 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 		int s;
 		/* Wait for a request to read or write a disk block. */
 		if ((s=sef_receive(ANY, &mess)) != OK)
-        		panic((*dp->dr_name)(),"sef_receive() failed", s);
+        		panic("sef_receive() failed: %d", s);
 	}
 
 	device_caller = mess.m_source;
@@ -239,7 +239,7 @@ send_reply:
 		break;
 
 	default:
-		panic(__FILE__, "unknown driver type", type);
+		panic("unknown driver type: %d", type);
 	}
   }
 }
@@ -256,7 +256,7 @@ PUBLIC void init_buffer(void)
  */
 
   if(!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, AC_ALIGN4K, &tmp_phys)))
-	panic(__FILE__, "can't allocate tmp_buf", DMA_BUF_SIZE);
+	panic("can't allocate tmp_buf: %d", DMA_BUF_SIZE);
 }
 
 /*===========================================================================*
@@ -317,7 +317,7 @@ message *mp;		/* pointer to read or write message */
 
   if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) iovec, iovec_size, D)) {
-	panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
+	panic("bad I/O vector by: %d", mp->m_source);
   }
 
   /* Prepare for I/O. */
@@ -331,7 +331,7 @@ message *mp;		/* pointer to read or write message */
   /* Copy the I/O vector back to the caller. */
   if (OK != sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) iovec, iovec_size, D)) {
-	panic((*dp->dr_name)(),"couldn't return I/O vector", mp->m_source);
+	panic("couldn't return I/O vector: %d", mp->m_source);
   }
 
   return(r);
@@ -485,7 +485,7 @@ PUBLIC int mq_queue(message *m)
 	mq_t *mq, *mi;
 
 	if(!(mq = mq_get()))
-        	panic("libdriver","mq_queue: mq_get failed", NO_NUM);
+        	panic("mq_queue: mq_get failed");
 	memcpy(&mq->mq_mess, m, sizeof(mq->mq_mess));
 	mq->mq_next = NULL;
 	if(!queue_head) {

@@ -147,7 +147,7 @@ irq_hook_t *hook;
    * automatically get their interrupt hooks unhooked.
    */
   if(!isokendpt(hook->proc_nr_e, &proc_nr))
-     minix_panic("invalid interrupt handler", hook->proc_nr_e);
+     panic("invalid interrupt handler: %d", hook->proc_nr_e);
 
   /* Add a bit for this interrupt to the process' pending interrupts. When 
    * sending the notification message, this bit map will be magically set

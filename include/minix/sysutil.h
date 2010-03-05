@@ -44,8 +44,7 @@ _PROTOTYPE( int fkey_ctl, (int req, int *fkeys, int *sfkeys)		);
 
 _PROTOTYPE( int printf, (const char *fmt, ...));
 _PROTOTYPE( void kputc, (int c));
-_PROTOTYPE( void report, (char *who, char *mess, int num));
-_PROTOTYPE( void panic, (char *who, char *mess, int num));
+_PROTOTYPE( void panic, (const char *fmt, ...));
 _PROTOTYPE( int getuptime, (clock_t *ticks));
 _PROTOTYPE( int getuptime2, (clock_t *ticks, time_t *boottime));
 _PROTOTYPE( int tickdelay, (clock_t ticks));
@@ -65,7 +64,7 @@ _PROTOTYPE( void get_randomness, (struct k_randomness *, int));
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
 _PROTOTYPE( int asynsend3, (endpoint_t ep, message *msg, int flags));
 
-#define ASSERT(c) if(!(c)) { panic(__FILE__, "assert " #c " failed at line", __LINE__); }
+#define ASSERT(c) if(!(c)) { panic("%s:%d: assert %s failed", __FILE__, __LINE__, #c); }
 
 /* timing library */
 #define TIMING_CATEGORIES       20

@@ -52,7 +52,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 	case SEEK_SET:	first = 0; break;
 	case SEEK_CUR:
 	   if (ex64hi(f->filp_pos) != 0) 
-		panic(__FILE__, "lock_op: position in file too high", NO_NUM);
+		panic("lock_op: position in file too high");
 	   first = ex64lo(f->filp_pos);
 	   break;
 	case SEEK_END:	first = f->filp_vno->v_size; break;

@@ -70,7 +70,7 @@ void pagefault( struct proc *pr,
 			proc_stacktrace(proc_addr(SYSTEM));
 		}
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
-  		minix_panic("page fault in system process", pr->p_endpoint);
+  		panic("page fault in system process: %d",  pr->p_endpoint);
 
 		return;
 	}
@@ -163,8 +163,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 			frame->eip = (reg_t) __user_copy_msg_pointer_failure;
 			return;
 		default:
-			minix_panic("Copy involving a user pointer "
-					"failed unexpectedly!", NO_NUM);
+			panic("Copy involving a user pointer failed unexpectedly!");
 		}
 	}
   }
@@ -216,11 +215,11 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 			  (unsigned) saved_proc->p_reg.pc);
 	  proc_stacktrace(saved_proc);
 
-	  minix_panic("exception in a kernel task", saved_proc->p_endpoint);
+	  panic("exception in a kernel task: %d",  saved_proc->p_endpoint);
   }
   else {
 	  /* in an early stage of boot process we don't have processes yet */
-	  minix_panic("exception in kernel while booting", NO_NUM);
+	  panic("exception in kernel while booting");
   }
 }
 

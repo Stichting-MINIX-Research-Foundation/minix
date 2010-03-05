@@ -350,7 +350,7 @@ PUBLIC int do_safecopy(struct proc * caller, message * m_ptr)
 		src_seg = m_ptr->SCP_SEG;
 		dst_seg = D;
 		access = CPF_WRITE;
-	} else minix_panic("Impossible system call nr. ", m_ptr->m_type);
+	} else panic("Impossible system call nr.: %d", m_ptr->m_type);
 
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
 		(cp_grant_id_t) m_ptr->SCP_GID, src_seg, dst_seg,

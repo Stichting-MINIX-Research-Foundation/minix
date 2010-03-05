@@ -228,7 +228,7 @@ int *completed;			/* number of bytes copied */
 	dev = (dev_t) rip->i_zone[0];
   } else {
 	if (ex64hi(position) != 0)
-		panic(__FILE__, "rw_chunk: position too high", NO_NUM);
+		panic("rw_chunk: position too high");
 	b = read_map(rip, ex64lo(position));
 	dev = rip->i_dev;
   }
@@ -259,7 +259,7 @@ int *completed;			/* number of bytes copied */
 
   /* In all cases, bp now points to a valid buffer. */
   if (bp == NIL_BUF) 
-  	panic(__FILE__,"bp not valid in rw_chunk, this can't happen", NO_NUM);
+  	panic("bp not valid in rw_chunk; this can't happen");
   
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
 				ex64lo(position) >= rip->i_size && off == 0) {
@@ -367,7 +367,7 @@ int index;			/* index into *bp */
   zone_t zone;			/* V2 zones are longs (shorts in V1) */
 
   if(bp == NIL_BUF)
-	panic(__FILE__, "rd_indir() on NIL_BUF", NO_NUM);
+	panic("rd_indir() on NIL_BUF");
 
   sp = get_super(bp->b_dev);	/* need super block to find file sys type */
 
@@ -381,7 +381,7 @@ int index;			/* index into *bp */
 		(zone < (zone_t) sp->s_firstdatazone || zone >= sp->s_zones)) {
 	printf("Illegal zone number %ld in indirect block, index %d\n",
 	       (long) zone, index);
-	panic(__FILE__,"check file system", NO_NUM);
+	panic("check file system");
   }
   
   return(zone);
@@ -576,7 +576,7 @@ PUBLIC int fs_getdents(void)
 	  bp = get_block(rip->i_dev, b, NORMAL);	/* get a dir block */
 
 	  if(bp == NO_BLOCK)
-		  panic(__FILE__,"get_block returned NO_BLOCK", NO_NUM);
+		  panic("get_block returned NO_BLOCK");
 
 	  /* Search a directory block. */
 	  if (block_pos < pos)
@@ -608,9 +608,7 @@ PUBLIC int fs_getdents(void)
 					     (vir_bytes)getdents_buf,
 					     tmpbuf_off, D);
 			  if (r != OK)
-				  panic(__FILE__,
-					"fs_getdents: sys_safecopyto failed\n",
-					r);
+				panic("fs_getdents: sys_safecopyto failed: %d", r);
 
 			  userbuf_off += tmpbuf_off;
 			  tmpbuf_off = 0;
@@ -646,7 +644,7 @@ PUBLIC int fs_getdents(void)
 	  r = sys_safecopyto(FS_PROC_NR, gid, userbuf_off, 
 		(vir_bytes) getdents_buf, tmpbuf_off, D);
 	  if (r != OK)
-		  panic(__FILE__, "fs_getdents: sys_safecopyto failed\n", r);
+		  panic("fs_getdents: sys_safecopyto failed: %d", r);
 
 	  userbuf_off += tmpbuf_off;
   }

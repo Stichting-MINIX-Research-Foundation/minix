@@ -52,7 +52,7 @@ PUBLIC int main(int argc, char **argv)
 			      sig_handler();
 			      break;
 		      default:
-			      report("DS","warning, got illegal notify from:",
+			      printf("DS: warning, got illegal notify from: %d\n",
 					     			 m.m_source);
 			      result = EINVAL;
 			      goto send_reply;
@@ -87,7 +87,7 @@ PUBLIC int main(int argc, char **argv)
 	  result = do_getsysinfo(&m);
 	  break;
       default: 
-          report("DS","warning, got illegal request from:", m.m_source);
+          printf("DS: warning, got illegal request from %d\n", m.m_source);
           result = EINVAL;
       }
 
@@ -153,7 +153,7 @@ message *m_ptr;				/* message buffer */
     int status = 0;
     status = sef_receive(ANY, m_ptr);   /* this blocks until message arrives */
     if (OK != status)
-        panic("DS","failed to receive message!", status);
+        panic("failed to receive message!: %d", status);
     who_e = m_ptr->m_source;        /* message arrived! set sender */
     callnr = m_ptr->m_type;       /* set function call number */
 }

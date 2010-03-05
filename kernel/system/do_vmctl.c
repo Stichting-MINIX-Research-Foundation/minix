@@ -56,8 +56,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 #if 0
 		if(!RTS_ISSET(target, RTS_VMREQTARGET)) {
 			printf("set stack: %s\n", rp->p_vmrequest.stacktrace);
-			minix_panic("RTS_VMREQTARGET not set for target",
-				NO_NUM);
+			panic( "RTS_VMREQTARGET not set for target");
 		}
 #endif
 #endif
@@ -95,7 +94,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 				(void *) rp->p_endpoint;
 			break;
 		default:
-			minix_panic("VMREQUEST wrong type", NO_NUM);
+			panic("VMREQUEST wrong type");
 		}
 
 		rp->p_vmrequest.vmresult = VMSUSPEND;
@@ -148,8 +147,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 			printf("suspended with stack: %s\n",
 				p->p_vmrequest.stacktrace);
 #endif
-			minix_panic("strange request type",
-				p->p_vmrequest.type);
+			panic( "strange request type: %d",p->p_vmrequest.type);
 		}
 
 		RTS_UNSET(p, RTS_VMREQUEST);
@@ -157,17 +155,17 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 
 	case VMCTL_ENABLE_PAGING:
 		if(vm_running) 
-			minix_panic("do_vmctl: paging already enabled", NO_NUM);
+			panic("do_vmctl: paging already enabled");
 		vm_init(p);
 		if(!vm_running)
-			minix_panic("do_vmctl: paging enabling failed", NO_NUM);
+			panic("do_vmctl: paging enabling failed");
 		vmassert(p->p_delivermsg_lin ==
 		  umap_local(p, D, p->p_delivermsg_vir, sizeof(message)));
 		if ((err = arch_enable_paging()) != OK) {
 			return err;
 		}
 		if(newmap(caller, p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
-			minix_panic("do_vmctl: newmap failed", NO_NUM);
+			panic("do_vmctl: newmap failed");
 		FIXLINMSG(p);
 		vmassert(p->p_delivermsg_lin);
 		return OK;

@@ -60,7 +60,6 @@
 #define BYTE            0377	/* mask for 8 bits */
 #define READING            0	/* copy data to user */
 #define WRITING            1	/* copy data from user */
-#define NO_NUM        0x8000	/* used as numerical argument to panic() */
 #define NIL_PTR   (char *) 0	/* generally useful expression */
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 

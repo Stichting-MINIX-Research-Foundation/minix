@@ -141,7 +141,7 @@ PUBLIC int main(void)
 	if(fp_is_blocked(fp)) {
 		printf("VFS: requester %d call %d: suspended\n",
 			who_e, call_nr);
-		panic(__FILE__, "requester suspended", NO_NUM);
+		panic("requester suspended");
 	}
 #endif
 
@@ -229,10 +229,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    */
   do {
   	if (OK != (s=sef_receive(PM_PROC_NR, &mess)))
-  		panic(__FILE__,"FS couldn't receive from PM", s);
+  		panic("FS couldn't receive from PM: %d", s);
 
 	if (mess.m_type != PM_INIT)
-		panic(__FILE__, "unexpected message from PM", mess.m_type);
+		panic("unexpected message from PM: %d", mess.m_type);
 
   	if (NONE == mess.PM_PROC) break; 
 
@@ -256,7 +256,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    * Certain relations must hold for the file system to work at all. Some 
    * extra block_size requirements are checked at super-block-read-in time.
    */
-  if (OPEN_MAX > 127) panic(__FILE__,"OPEN_MAX > 127", NO_NUM);
+  if (OPEN_MAX > 127) panic("OPEN_MAX > 127");
   
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
@@ -269,7 +269,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   vmp = &vmnt[0];		/* Should be the root filesystem */
   if (vmp->m_dev == NO_DEV)
-	panic(__FILE__, "vfs: no root filesystem", NO_NUM);
+	panic("vfs: no root filesystem");
   root_vp= vmp->m_root_node;
 
   /* The root device can now be accessed; set process directories. */
@@ -349,14 +349,14 @@ PRIVATE void get_work()
 			return;
 		}
 	if (!found_one)
-		panic(__FILE__,"get_work couldn't revive anyone", NO_NUM);
+		panic("get_work couldn't revive anyone");
   }
 
   for(;;) {
     int r;
     /* Normal case.  No one to revive. */
     if ((r=sef_receive(ANY, &m_in)) != OK)
-	panic(__FILE__,"fs sef_receive error", r);
+	panic("fs sef_receive error: %d", r);
     who_e = m_in.m_source;
     who_p = _ENDPOINT_P(who_e);
 
@@ -365,7 +365,7 @@ PRIVATE void get_work()
      * (kernel tasks) are treated in a special way
      */
     if(who_p >= (int)(sizeof(fproc) / sizeof(struct fproc)))
-     	panic(__FILE__,"receive process out of range", who_p);
+     	panic("receive process out of range: %d", who_p);
     if(who_p >= 0 && fproc[who_p].fp_endpoint == NONE) {
     	printf("FS: ignoring request from %d, endpointless slot %d (%d)\n",
 		m_in.m_source, who_p, m_in.m_type);
@@ -378,7 +378,7 @@ PRIVATE void get_work()
     	printf("FS: receive endpoint inconsistent (source %d, who_p %d, stored ep %d, who_e %d).\n",
 		m_in.m_source, who_p, fproc[who_p].fp_endpoint, who_e);
 #if 0
-	panic(__FILE__, "FS: inconsistent endpoint ", NO_NUM);
+	panic("FS: inconsistent endpoint ");
 #endif
 	continue;
     }
@@ -432,12 +432,12 @@ PRIVATE void init_root()
 	  if (sef_receive(ROOT_FS_E, &m) != OK) {
 		  printf("VFS: Error receiving login request from FS_e %d\n", 
 				  ROOT_FS_E);
-		  panic(__FILE__, "Error receiving login request from root filesystem\n", ROOT_FS_E);
+		  panic("Error receiving login request from root filesystem: %d", ROOT_FS_E);
 	  }
 	  if (m.m_type != FS_READY) {
 		  printf("VFS: Invalid login request from FS_e %d\n", 
 				  ROOT_FS_E);
-		  panic(__FILE__, "Error receiving login request from root filesystem\n", ROOT_FS_E);
+		  panic("Error receiving login request from root filesystem: %d", ROOT_FS_E);
 	  }
   }
   last_login_fs_e = NONE;
@@ -450,26 +450,26 @@ PRIVATE void init_root()
  
   /* We'll need a vnode for the root inode, check whether there is one */
   if ((root_node = get_free_vnode()) == NIL_VNODE) 
-	panic(__FILE__,"Cannot get free vnode", r);
+	panic("Cannot get free vnode: %d", r);
 
   
   /* Get driver process' endpoint */  
   dp = &dmap[(root_dev >> MAJOR) & BYTE];
   if (dp->dmap_driver == NONE) {
-	panic(__FILE__,"No driver for root device", r);
+	panic("No driver for root device: %d", r);
   }
 
   label= dp->dmap_label;
   if (strlen(label) == 0)
   {
-	panic(__FILE__, "vfs:init_root: no label for major", root_dev >> MAJOR);
+	panic("vfs:init_root: no label for major: %d", root_dev >> MAJOR);
   }
 
   /* Issue request */
   r = req_readsuper(ROOT_FS_E, label, root_dev, 0 /*!readonly*/,
 	1 /*isroot*/, &res);
   if (r != OK) {
-      panic(__FILE__,"Cannot read superblock from root", r);
+      panic("Cannot read superblock from root: %d", r);
   }
   
   /* Fill in root node's fields */
@@ -599,7 +599,7 @@ PRIVATE void service_pm()
 
   r = send(PM_PROC_NR, &m_out);
   if (r != OK)
-	panic(__FILE__, "service_pm: send failed", r);
+	panic("service_pm: send failed: %d", r);
 
 }
 

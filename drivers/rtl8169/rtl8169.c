@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
 
 	while (TRUE) {
 		if ((r = sef_receive(ANY, &m)) != OK)
-			panic("rtl8169", "sef_receive failed", r);
+			panic("sef_receive failed: %d", r);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
@@ -333,8 +333,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 			default:
-				panic("rtl8169", "illegal notify from",
-					m.m_type);
+				panic("illegal notify from: %d",	m.m_type);
 			}
 
 			/* done, get nwe message */
@@ -349,7 +348,7 @@ int main(int argc, char *argv[])
 		case DL_GETSTAT_S:	rl_getstat_s(&m);	 break;
 		case DL_GETNAME:	rl_getname(&m);		 break;
 		default:
-			panic("rtl8169", "illegal message", m.m_type);
+			panic("illegal message: %d", m.m_type);
 		}
 	}
 }
@@ -750,8 +749,7 @@ re_t *rep;
 			if (pcitab[i].did != did)
 				continue;
 			if (pcitab[i].checkclass) {
-				panic("rtl_probe",
-					"class check not implemented", NO_NUM);
+				panic("class check not implemented");
 			}
 			break;
 		}
@@ -780,8 +778,7 @@ re_t *rep;
 	pci_reserve(devind);
 	bar = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 	if (bar < 0x400) {
-		panic("rtl_probe",
-			"base address is not properly configured", NO_NUM);
+		panic("base address is not properly configured");
 	}
 	rep->re_base_port = bar;
 
@@ -855,7 +852,7 @@ re_t *rep;
 		tot_bufsize += 4096 - (tot_bufsize % 4096);
 
 	if (!(mallocbuf = alloc_contig(tot_bufsize, AC_ALIGN64K, &buf)))
-		panic("RTL8169", "Couldn't allocate kernel buffer", NO_NUM);
+		panic("Couldn't allocate kernel buffer");
 
 	/* Rx Descriptor */
 	rep->re_rx_desc = (re_desc *)mallocbuf;
@@ -1279,7 +1276,7 @@ void transmittest(re_t *rep)
 			message m;
 			int r;
 			if ((r = sef_receive(ANY, &m)) != OK)
-				panic("rtl8169", "sef_receive failed", r);
+				panic("sef_receive failed: %d", r);
 		} while(m.m_source != HARDWARE);
 		assert(!(rep->re_flags & REF_SEND_AVAIL));
 		rep->re_flags |= REF_SEND_AVAIL;
@@ -1306,7 +1303,7 @@ static void rl_readv_s(message *mp, int from_int)
 	dl_port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (dl_port < 0 || dl_port >= RE_PORT_NR)
-		panic("rtl8169", " illegal port", dl_port);
+		panic(" illegal port: %d", dl_port);
 	rep = &re_table[dl_port];
 	re_client = mp->DL_PROC;
 	rep->re_client = re_client;
@@ -1355,7 +1352,7 @@ readvs_loop:
 		/* Someting went wrong */
 		printf("rl_readv_s: bad length (%u) in status 0x%08lx\n",
 			totlen, rxstat);
-		panic(NULL, NULL, NO_NUM);
+		panic(NULL);
 	}
 
 	/* Should subtract the CRC */
@@ -1372,8 +1369,7 @@ readvs_loop:
 			(vir_bytes) rep->re_iovec_s,
 			n * sizeof(rep->re_iovec_s[0]), D);
 		if (cps != OK) {
-			panic(__FILE__, "rl_readv_s: sys_safecopyfrom failed",
-				cps);
+			panic("rl_readv_s: sys_safecopyfrom failed: %d", 				cps);
 		}
 
 		for (j = 0, iovp = rep->re_iovec_s; j < n; j++, iovp++) {
@@ -1386,8 +1382,7 @@ readvs_loop:
 			cps = sys_safecopyto(re_client, iovp->iov_grant, 0,
 				(vir_bytes) rep->re_rx[index].v_ret_buf + size, s, D);
 			if (cps != OK)
-				panic(__FILE__,
-				"rl_readv_s: sys_safecopyto failed", cps);
+				panic("rl_readv_s: sys_safecopyto failed: %d", cps);
 
 			size += s;
 			if (size == packlen)
@@ -1449,7 +1444,7 @@ static void rl_writev_s(message *mp, int from_int)
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8169", "illegal port", port);
+		panic("illegal port: %d", port);
 	rep = &re_table[port];
 	assert(mp);
 	assert(port >= 0 && port < RE_PORT_NR);
@@ -1516,21 +1511,18 @@ static void rl_writev_s(message *mp, int from_int)
 			(vir_bytes) rep->re_iovec_s,
 			n * sizeof(rep->re_iovec_s[0]), D);
 		if (cps != OK) {
-			panic(__FILE__, "rl_writev_s: sys_safecopyfrom failed",
-				cps);
+			panic("rl_writev_s: sys_safecopyfrom failed: %d", 				cps);
 		}
 
 		for (j = 0, iovp = rep->re_iovec_s; j < n; j++, iovp++) {
 			s = iovp->iov_size;
 			if (size + s > ETH_MAX_PACK_SIZE_TAGGED)
-				panic("rtl8169", "invalid packet size", NO_NUM);
+				panic("invalid packet size");
 
 			cps = sys_safecopyfrom(re_client, iovp->iov_grant, 0,
 				(vir_bytes) ret, s, D);
 			if (cps != OK) {
-				panic(__FILE__,
-					"rl_writev_s: sys_safecopyfrom failed",
-					cps);
+				panic("rl_writev_s: sys_safecopyfrom failed: %d", cps);
 			}
 			size += s;
 			ret += s;
@@ -1538,7 +1530,7 @@ static void rl_writev_s(message *mp, int from_int)
 	}
 	assert(desc);
 	if (size < ETH_MIN_PACK_SIZE)
-		panic("rtl8169", "invalid packet size", size);
+		panic("invalid packet size: %d", size);
 
 	rep->re_tx[tx_head].ret_busy = TRUE;
 
@@ -1567,7 +1559,7 @@ static void rl_writev_s(message *mp, int from_int)
 
 suspend:
 	if (from_int)
-		panic("rtl8169", "should not be sending\n", NO_NUM);
+		panic("should not be sending");
 
 	rep->re_tx_mess = *mp;
 	reply(rep, OK, FALSE);
@@ -1673,7 +1665,7 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8169", "illegal port", port);
+		panic("illegal port: %d", port);
 	rep = &re_table[port];
 	rep->re_client = mp->DL_PROC;
 
@@ -1685,14 +1677,14 @@ message *mp;
 	r = sys_datacopy(SELF, (vir_bytes) &stats, mp->DL_PROC,
 		(vir_bytes) mp->DL_ADDR, sizeof(stats));
 	if (r != OK)
-		panic(__FILE__, "rl_getstat: sys_datacopy failed", r);
+		panic("rl_getstat: sys_datacopy failed: %d", r);
 
 	mp->m_type = DL_STAT_REPLY;
 	mp->DL_PORT = port;
 	mp->DL_STAT = OK;
 	r = send(mp->m_source, mp);
 	if (r != OK)
-		panic("RTL8169", "rl_getstat: send failed: %d\n", r);
+		panic("rl_getstat: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1707,7 +1699,7 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8169", "illegal port", port);
+		panic("illegal port: %d", port);
 	rep = &re_table[port];
 	rep->re_client = mp->DL_PROC;
 
@@ -1719,14 +1711,14 @@ message *mp;
 	r = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
 		(vir_bytes) &stats, sizeof(stats), D);
 	if (r != OK)
-		panic(__FILE__, "rl_getstat_s: sys_safecopyto failed", r);
+		panic("rl_getstat_s: sys_safecopyto failed: %d", r);
 
 	mp->m_type = DL_STAT_REPLY;
 	mp->DL_PORT = port;
 	mp->DL_STAT = OK;
 	r = send(mp->m_source, mp);
 	if (r != OK)
-		panic("RTL8169", "rl_getstat_s: send failed: %d\n", r);
+		panic("rl_getstat_s: send failed: %d", r);
 }
 
 
@@ -1743,7 +1735,7 @@ message *mp;
 	mp->m_type = DL_NAME_REPLY;
 	r = send(mp->m_source, mp);
 	if (r != OK)
-		panic("RTL8169", "rl_getname: send failed: %d\n", r);
+		panic("rl_getname: send failed: %d", r);
 }
 
 
@@ -1772,7 +1764,7 @@ int may_block;
 	reply.DL_STAT = status | ((u32_t) err << 16);
 	reply.DL_COUNT = rep->re_read_s;
 	if (OK != (r = getuptime(&now)))
-		panic("rtl8169", "getuptime() failed:", r);
+		panic("getuptime() failed: %d", r);
 	reply.DL_CLCK = now;
 
 	r = send(rep->re_client, &reply);
@@ -1785,7 +1777,7 @@ int may_block;
 	if (r < 0) {
 		printf("RTL8169 tried sending to %d, type %d\n",
 			rep->re_client, reply.m_type);
-		panic("rtl8169", "send failed:", r);
+		panic("send failed: %d", r);
 	}
 
 	rep->re_read_s = 0;
@@ -1800,7 +1792,7 @@ message *req;
 message *reply_mess;
 {
 	if (send(req->m_source, reply_mess) != OK)
-		panic("rtl8169", "unable to mess_reply", NO_NUM);
+		panic("unable to mess_reply");
 }
 
 static void dump_phy(re_t *rep)

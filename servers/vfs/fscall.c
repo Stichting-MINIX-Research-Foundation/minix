@@ -76,7 +76,7 @@ PRIVATE void pop_globals()
  */
 
   if (depth == 0)
-	panic("VFS", "Popping from empty globals stack!", NO_NUM);
+	panic("Popping from empty globals stack!");
 
   depth--;
 

@@ -914,14 +914,12 @@ PUBLIC void do_exit(message *m_ptr)
 		}
 		if (r != sizeof(slot_nr))
 		{
-			panic("RS", "do_exit: unaligned read from exec pipe",
-				r);
+			panic("do_exit: unaligned read from exec pipe: %d", r);
 		}
 		printf("do_exit: got slot %d\n", slot_nr);
 		if (slot_nr < 0 || slot_nr >= NR_SYS_PROCS)
 		{
-			panic("RS", "do_exit: bad slot number from exec pipe",
-				slot_nr);
+			panic("do_exit: bad slot number from exec pipe: %d", slot_nr);
 		}
 		rp= &rproc[slot_nr];
 		rp->r_flags |= RS_EXITING;
@@ -1112,7 +1110,7 @@ message *m_ptr;
 
   /* Reschedule a synchronous alarm for the next period. */
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
-      panic("RS", "couldn't set alarm", s);
+      panic("couldn't set alarm: %d", s);
 }
 
 
@@ -1159,7 +1157,7 @@ endpoint_t *endpoint;
 
   switch(child_pid) {					/* see fork(2) */
   case -1:						/* fork failed */
-      report("RS", "warning, fork() failed", errno);	/* shouldn't happen */
+      printf("RS: warning, fork() failed: %d\n", errno); /* shouldn't happen */
       return(errno);					/* return error */
 
   case 0:						/* child process */
@@ -1228,7 +1226,7 @@ endpoint_t *endpoint;
 	s = dev_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
 		environ);
 	if (s != OK) {
-		report("RS", "dev_execve call failed", s);
+		printf("RS: dev_execve call failed: %d\n", s);
 		kill(child_pid, SIGKILL);
 		rp->r_flags |= RS_EXITING;	/* don't try again */
 		return(s);
@@ -1244,7 +1242,7 @@ endpoint_t *endpoint;
 	/* Tell VM about allowed calls. */
 	vm_mask = &rpub->vm_call_mask[0];
 	if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
-	    report("RS", "vm_set_priv call failed", s);
+	    printf("RS: vm_set_priv call failed: %d\n", s);
 	    kill(child_pid, SIGKILL);
 	    rp->r_flags |= RS_EXITING;
 	    return (s);
@@ -1254,7 +1252,7 @@ endpoint_t *endpoint;
   /* Set and synch the privilege structure for the new service. */
   if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_SET_SYS, &rp->r_priv)) != OK
       || (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
-      report("RS","unable to set privileges", s);
+      printf("RS: unable to set privileges: %d\n", s);
       kill(child_pid, SIGKILL);				/* kill the service */
       rp->r_flags |= RS_EXITING;			/* expect exit */
       return(s);					/* return error */
@@ -1279,7 +1277,7 @@ endpoint_t *endpoint;
    * publishing is made fully asynchronous in RS.
    */
   if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_ALLOW, NULL)) != OK) {
-      report("RS","unable to allow the service to run", s);
+      printf("RS: unable to allow the service to run: %d\n", s);
       kill(child_pid, SIGKILL);				/* kill the service */
       rp->r_flags |= RS_EXITING;			/* expect exit */
       return(s);					/* return error */
@@ -1288,7 +1286,7 @@ endpoint_t *endpoint;
   /* Initialize service. */
   init_type = rp->r_restarts > 0 ? SEF_INIT_RESTART : SEF_INIT_FRESH;
   if((s = init_service(rp, init_type)) != OK) {
-      panic("RS", "unable to initialize service", s);
+      panic("unable to initialize service: %d", s);
   }
 
   /* The purpose of non-blocking forks is to avoid involving VFS in the forking
@@ -1308,7 +1306,7 @@ endpoint_t *endpoint;
   if (rpub->dev_nr > 0) {				/* set driver map */
       if ((s=mapdriver(rpub->label,
 	      rpub->dev_nr, rpub->dev_style, !!use_copy /* force */)) < 0) {
-          report("RS", "couldn't map driver (continuing)", errno);
+          printf("RS: couldn't map driver (continuing): %d\n", errno);
       }
   }
 

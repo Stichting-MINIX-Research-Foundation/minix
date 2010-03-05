@@ -100,7 +100,7 @@ SANITYCHECK(SCL_DETAIL);
 	r= sys_datacopy(msg->m_source, (vir_bytes)ptr,
 		SELF, (vir_bytes)&args, sizeof(args));
 	if (r != OK)
-		vm_panic("exec_newmem: sys_datacopy failed", r);
+		panic("exec_newmem: sys_datacopy failed: %d", r);
 
 	/* Minimum stack region (not preallocated)
 	 * Stopgap for better rlimit-based stack size system
@@ -281,7 +281,7 @@ SANITYCHECK(SCL_DETAIL);
 			/* We secretly know that making a new pagetable
 			 * in the same slot if one was there will never fail.
 			 */
-				vm_panic("new_mem: pt_new failed", ENOMEM);
+				panic("new_mem: pt_new failed: %d", ENOMEM);
 			}
 			rmp->vm_flags |= VMF_HASPT;
 			SANITYCHECK(SCL_DETAIL);
@@ -325,7 +325,7 @@ SANITYCHECK(SCL_DETAIL);
 			 */
 			base = (phys_bytes)(new_base+text_clicks-1) << CLICK_SHIFT;
 			if ((s= sys_memset(0, base, CLICK_SIZE)) != OK)
-				vm_panic("new_mem: sys_memset failed", s);
+				panic("new_mem: sys_memset failed: %d", s);
 		}
   	}
 
@@ -351,7 +351,7 @@ SANITYCHECK(SCL_DETAIL);
 
 	  if((r2=sys_newmap(rmp->vm_endpoint, rmp->vm_arch.vm_seg)) != OK) {
 		/* report new map to the kernel */
-		vm_panic("sys_newmap failed", r2);
+		panic("sys_newmap failed: %d", r2);
 	  }
 
 	  /* Zero the bss, gap, and stack segment. */
@@ -362,12 +362,12 @@ SANITYCHECK(SCL_DETAIL);
 	  bytes -= bss_offset;
 
 	  if ((s=sys_memset(0, base, bytes)) != OK) {
-		vm_panic("new_mem can't zero", s);
+		panic("new_mem can't zero: %d", s);
 	  }
 
 	  /* Tell kernel this thing has no page table. */
 	  if((s=pt_bind(NULL, rmp)) != OK)
-		vm_panic("exec_newmem: pt_bind failed", s);
+		panic("exec_newmem: pt_bind failed: %d", s);
 	*stack_top= ((vir_bytes)rmp->vm_arch.vm_seg[S].mem_vir << CLICK_SHIFT) +
                ((vir_bytes)rmp->vm_arch.vm_seg[S].mem_len << CLICK_SHIFT);
   }
@@ -474,7 +474,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	if(!map_page_region(vmp, vstart + text_bytes + data_bytes + hole_bytes,
 	  0, stack_bytes + gap_bytes, MAP_NONE,
 	  VR_ANON | VR_WRITABLE, 0) != OK) {
-	  	vm_panic("map_page_region failed for stack", NO_NUM);
+	  	panic("map_page_region failed for stack");
 	}
 
 	vmp->vm_arch.vm_seg[D].mem_phys = ABS2CLICK(vstart + text_bytes);
@@ -506,10 +506,10 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	vmp->vm_flags |= VMF_HASPT;
 
 	if((s=sys_newmap(vmp->vm_endpoint, vmp->vm_arch.vm_seg)) != OK)
-		vm_panic("sys_newmap (vm) failed", s);
+		panic("sys_newmap (vm) failed: %d", s);
 
 	if((s=pt_bind(&vmp->vm_pt, vmp)) != OK)
-		vm_panic("exec_newmem: pt_bind failed", s);
+		panic("exec_newmem: pt_bind failed: %d", s);
 
 	return OK;
 }

@@ -131,7 +131,7 @@ static void el3_write_fifo(dpeth_t * dep, int pktsize)
 	r= sys_safe_outsb(dep->de_data_port, iovp->iod_proc_nr,
 		iovp->iod_iovec[ix].iov_grant, 0, bytes);
 	if (r != OK)
-		panic(__FILE__, "el3_write_fifo: sys_safe_outsb failed", r);
+		panic("el3_write_fifo: sys_safe_outsb failed: %d", r);
 		
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
 		dp_next_iovec(iovp);
@@ -416,11 +416,11 @@ static void el3_open(dpeth_t * dep)
 
   AddrCfgReg = ((AddrCfgReg & EL3_CONFIG_IOBASE_MASK) << 4) + EL3_IO_BASE_ADDR;
   if (AddrCfgReg != dep->de_base_port)
-	panic(dep->de_name, "Bad I/O port for Etherlink board", NO_NUM);
+	panic("Bad I/O port for Etherlink board");
 
   ResCfgReg >>= 12;
   dep->de_irq &= NOT(DEI_DEFAULT);	/* Strips the default flag */
-  if (ResCfgReg != dep->de_irq) panic(dep->de_name, "Bad IRQ for Etherlink board", NO_NUM);
+  if (ResCfgReg != dep->de_irq) panic("Bad IRQ for Etherlink board");
 
   SetWindow(WNO_Setup);
 

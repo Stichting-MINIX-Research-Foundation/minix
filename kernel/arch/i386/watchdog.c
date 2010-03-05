@@ -118,7 +118,7 @@ void arch_watchdog_lockup(struct nmi_frame * frame)
 			frame->cs,
 			frame->eflags
 			);
-	minix_panic("Kernel lockup\n", NO_NUM);
+	panic("Kernel lockup");
 }
 
 void i386_watchdog_start(void)

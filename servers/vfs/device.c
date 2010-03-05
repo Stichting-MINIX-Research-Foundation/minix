@@ -90,7 +90,7 @@ int flags;			/* mode bits and flags */
   dp = &dmap[major];
   if (dp->dmap_driver == NONE) return(ENXIO);
   r = (*dp->dmap_opcl)(DEV_REOPEN, dev, filp_no, flags);
-  if (r == OK) panic(__FILE__,"OK on reopen from", dp->dmap_driver);
+  if (r == OK) panic("OK on reopen from: %d", dp->dmap_driver);
   if (r == SUSPEND) r = OK;
   return(r);
 }
@@ -158,7 +158,7 @@ PUBLIC void dev_status(message *m)
 		if ((r = sendrec(m->m_source, &st)) != OK) {
 			printf("DEV_STATUS failed to %d: %d\n", m->m_source, r);
 			if (r == EDEADSRCDST) return;
-			panic(__FILE__,"couldn't sendrec for DEV_STATUS", r);
+			panic("couldn't sendrec for DEV_STATUS: %d", r);
 		}
 
 		switch(st.m_type) {
@@ -229,7 +229,7 @@ u32_t *pos_lo;
 	   *gid = cpf_grant_magic(driver, *io_ept, (vir_bytes) *buf, bytes,
 	   			  *op == DEV_READ_S ? CPF_WRITE : CPF_READ);
 	   if (*gid < 0)
-		panic(__FILE__, "cpf_grant_magic of buffer failed\n", NO_NUM);
+		panic("cpf_grant_magic of buffer failed");
 	   break;
 	case VFS_DEV_GATHER:
 	case VFS_DEV_SCATTER:
@@ -240,12 +240,12 @@ u32_t *pos_lo;
 	   *gid = cpf_grant_direct(driver, (vir_bytes) new_iovec,
 				  bytes * sizeof(iovec_t), CPF_READ|CPF_WRITE);
 	   if (*gid < 0) 
-		panic(__FILE__, "cpf_grant_direct of vector failed", NO_NUM);
+		panic("cpf_grant_direct of vector failed");
 			
 	   v = (iovec_t *) *buf;
 	   /* Grant access to i/o buffers. */
 	   for(j = 0; j < bytes; j++) {
-		if(j >= NR_IOREQS) panic(__FILE__, "vec too big", bytes);
+		if(j >= NR_IOREQS) panic("vec too big: %d", bytes);
 
 		new_iovec[j].iov_addr = 
 		gids[j] = 
@@ -253,7 +253,7 @@ u32_t *pos_lo;
 				 *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
 
 		if(!GRANT_VALID(gids[j])) 
-			panic(__FILE__, "grant to iovec buf failed", NO_NUM);
+			panic("grant to iovec buf failed");
 			   
 		new_iovec[j].iov_size = v[j].iov_size;
 		(*vec_grants)++;
@@ -279,14 +279,14 @@ u32_t *pos_lo;
 	   *gid = cpf_grant_magic(driver, *io_ept, (vir_bytes) *buf, size,
 	   			  access);
 	   if (*gid < 0) 
-		panic(__FILE__, "cpf_grant_magic failed (ioctl)\n", NO_NUM);
+		panic("cpf_grant_magic failed (ioctl)");
 			
 	   break;
 	case VFS_DEV_SELECT:
 	   *op = DEV_SELECT;
 	   break;
 	default:
-	   panic(__FILE__,"safe_io_conversion: unknown operation", *op);
+	   panic("safe_io_conversion: unknown operation: %d", *op);
   }
 
   /* If we have converted to a safe operation, I/O
@@ -380,7 +380,7 @@ int suspend_reopen;		/* Just suspend the process */
 			    &vec_grants, bytes, &pos_lo);
 
   if(buf != buf_used)
-	panic(__FILE__,"dev_io: safe_io_conversion changed buffer", NO_NUM);
+	panic("dev_io: safe_io_conversion changed buffer");
 
   /* If the safe conversion was done, set the ADDRESS to
    * the grant id.
@@ -409,10 +409,10 @@ int suspend_reopen;		/* Just suspend the process */
 
   /* Task has completed.  See if call completed. */
   if (dev_mess.REP_STATUS == SUSPEND) {
-	if(vec_grants > 0) panic(__FILE__,"SUSPEND on vectored i/o", NO_NUM);
+	if(vec_grants > 0) panic("SUSPEND on vectored i/o");
 	
 	/* fp is uninitialized at init time. */
-	if(!fp) panic(__FILE__,"SUSPEND on NULL fp", NO_NUM);
+	if(!fp) panic("SUSPEND on NULL fp");
 
 	if ((flags & O_NONBLOCK) && !dp->dmap_async_driver) {
 		/* Not supposed to block. */
@@ -626,7 +626,7 @@ message *mess_ptr;		/* pointer to message for task */
 		printf("fs: ELOCKED talking to %d\n", task_nr);
 		return(r);
 	}
-	panic(__FILE__,"call_task: can't send/receive", r);
+	panic("call_task: can't send/receive: %d", r);
   }
 
   /* Did the process we did the sendrec() for get a result? */
@@ -655,7 +655,7 @@ message *mess_ptr;		/* pointer to message for task */
   int r;
 
   r = asynsend(task_nr, mess_ptr);
-  if (r != OK) panic(__FILE__, "asyn_io: asynsend failed", r);
+  if (r != OK) panic("asyn_io: asynsend failed: %d", r);
 
   /* Fake a SUSPEND */
   mess_ptr->REP_STATUS = SUSPEND;
@@ -868,7 +868,7 @@ PUBLIC void dev_up(int maj)
 	fd_nr = (rfp->fp_fd >> 8);
 	fp = rfp->fp_filp[fd_nr];
 	vp = fp->filp_vno;
-	if (!vp) panic(__FILE__, "restart_reopen: no vp", NO_NUM);
+	if (!vp) panic("restart_reopen: no vp");
 	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
 	if (((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
 
@@ -971,7 +971,7 @@ int maj;
 	}
 
 	vp = fp->filp_vno;
-	if (!vp) panic(__FILE__, "restart_reopen: no vp", NO_NUM);
+	if (!vp) panic("restart_reopen: no vp");
 	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
 	if (((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
 
@@ -1089,7 +1089,7 @@ message *mp;
 		/* Tell the kernel to stop processing */
 		r= senda(NULL, 0);
 		if (r != OK)
-			panic(__FILE__, "asynsend: senda failed", r);
+			panic("asynsend: senda failed: %d", r);
 
 		dst_ind= 0;
 		for (src_ind= first_slot; src_ind<next_slot; src_ind++)
@@ -1120,7 +1120,7 @@ message *mp;
 		first_slot= 0;
 		next_slot= dst_ind;
 		if (next_slot >= ASYN_NR)
-			panic(__FILE__, "asynsend: msgtable full", NO_NUM);
+			panic("asynsend: msgtable full");
 	}
 
 	msgtable[next_slot].dst= dst;

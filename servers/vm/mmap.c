@@ -41,7 +41,7 @@ PUBLIC int do_mmap(message *m)
 	struct vir_region *vr = NULL;
 
 	if((r=vm_isokendpt(m->m_source, &n)) != OK) {
-		vm_panic("do_mmap: message from strange source", m->m_source);
+		panic("do_mmap: message from strange source: %d", m->m_source);
 	}
 
 	vmp = &vmproc[n];
@@ -281,7 +281,7 @@ PUBLIC int do_shared_unmap(message *m)
 	}
 
 	if(map_unmap_region(vmp, vr, vr->length) != OK)
-		vm_panic("do_shared_unmap: map_unmap_region failed", NO_NUM);
+		panic("do_shared_unmap: map_unmap_region failed");
 
 	return OK;
 }
@@ -349,7 +349,7 @@ PUBLIC int do_munmap(message *m)
 	struct vir_region *vr;
         
         if((r=vm_isokendpt(m->m_source, &n)) != OK) {
-                vm_panic("do_mmap: message from strange source", m->m_source);
+                panic("do_mmap: message from strange source: %d", m->m_source);
         }
  
         vmp = &vmproc[n];
@@ -362,7 +362,7 @@ PUBLIC int do_munmap(message *m)
 	} else if(m->m_type == VM_MUNMAP_TEXT) {
 	        addr = (vir_bytes) arch_vir2map_text(vmp, (vir_bytes) m->VMUM_ADDR);
 	} else {
-		vm_panic("do_munmap: strange type", NO_NUM);
+		panic("do_munmap: strange type");
 	}
 
         if(!(vr = map_lookup(vmp, addr))) {
@@ -380,7 +380,7 @@ PUBLIC int do_munmap(message *m)
         }       
 
 	if(map_unmap_region(vmp, vr, len) != OK)
-		vm_panic("do_munmap: map_unmap_region failed", NO_NUM);
+		panic("do_munmap: map_unmap_region failed");
 
 	return OK;
 }

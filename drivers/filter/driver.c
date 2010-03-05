@@ -61,7 +61,7 @@ static int driver_open(int which)
 	gid = cpf_grant_direct(driver[which].endpt,
 		(vir_bytes) &part, sizeof(part), CPF_WRITE);
 	if(!GRANT_VALID(gid))
-		panic(__FILE__, "invalid grant", gid);
+		panic("invalid grant: %d", gid);
 
 	msg.m_type = DEV_IOCTL_S;
 	msg.REQUEST = DIOCGETP;
@@ -165,7 +165,7 @@ void driver_init(void)
 		check_driver(DRIVER_MAIN);
 	}
 	else if (driver_open(DRIVER_MAIN) != OK) {
-		panic(__FILE__, "unhandled driver_open failure", NO_NUM);
+		panic("unhandled driver_open failure");
 	}
 
 	if(USE_MIRROR) {
@@ -174,7 +174,7 @@ void driver_init(void)
 
 		if(!strcmp(driver[DRIVER_MAIN].label,
 				driver[DRIVER_BACKUP].label)) {
-			panic(__FILE__, "same driver: not tested", NO_NUM);
+			panic("same driver: not tested");
 		}
 
 		r = ds_retrieve_label_num(driver[DRIVER_BACKUP].label,
@@ -186,8 +186,7 @@ void driver_init(void)
 			check_driver(DRIVER_BACKUP);
 		}
 		else if (driver_open(DRIVER_BACKUP) != OK) {
-			panic(__FILE__, "unhandled driver_open failure",
-				NO_NUM);
+			panic("unhandled driver_open failure");
 		}
 	}
 }
@@ -377,7 +376,7 @@ static int check_problem(int which, int problem, int retries, int *tell_rs)
 		break;
 
 	default:
-		panic(__FILE__, "invalid problem", problem);
+		panic("invalid problem: %d", problem);
 	}
 
 	/* At this point, the driver will be restarted. */
@@ -441,7 +440,7 @@ static void restart_driver(int which, int tell_rs)
 		r = sendrec(RS_PROC_NR, &msg);
 
 		if (r != OK || msg.m_type != OK)
-			panic(__FILE__, "RS request failed", r);
+			panic("RS request failed: %d", r);
 
 #if DEBUG
 		printf("Filter: RS call succeeded\n");
@@ -545,7 +544,7 @@ static int flt_senda(message *mess, int which)
 	r = senda(amsgtable, 2);
 
 	if(r != OK)
-		panic(__FILE__, "senda returned error", r);
+		panic("senda returned error: %d", r);
 
 	return r;
 }
@@ -585,7 +584,7 @@ static int flt_receive(message *mess, int which)
 	for (;;) {
 		r = sef_receive(ANY, mess);
 		if(r != OK)
-			panic(__FILE__, "sef_receive returned error", r);
+			panic("sef_receive returned error: %d", r);
 
 		if(mess->m_source == CLOCK && is_notify(mess->m_type)) {
 			if (mess->NOTIFY_TIMESTAMP < flt_alarm(-1)) {
@@ -727,7 +726,7 @@ static int do_sendrec_both(message *m1, message *m2)
 	} else if (ma.m_source == driver[DRIVER_BACKUP].endpt) {
 		which = DRIVER_MAIN;
 	} else {
-		panic(__FILE__, "message from unexpected source",
+		panic("message from unexpected source: %d",
 			ma.m_source);
 	}
 
@@ -822,7 +821,7 @@ static int single_grant(endpoint_t endpt, vir_bytes buf, int access,
 
 		grant = cpf_grant_direct(endpt, buf, chunk, access);
 		if (!GRANT_VALID(grant))
-			panic(__FILE__, "invalid grant", grant);
+			panic("invalid grant: %d", grant);
 
 		vector[count].iov_grant = grant;
 		vector[count].iov_size = chunk;
@@ -836,7 +835,7 @@ static int single_grant(endpoint_t endpt, vir_bytes buf, int access,
 		sizeof(vector[0]) * count, CPF_READ | CPF_WRITE);
 
 	if (!GRANT_VALID(*gid))
-		panic(__FILE__, "invalid grant", *gid);
+		panic("invalid grant: %d", *gid);
 
 	return count;
 }

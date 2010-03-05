@@ -773,7 +773,7 @@ PRIVATE void beep()
   
   /* Fetch current time in advance to prevent beeping delay. */
   if ((s=getuptime(&now)) != OK)
-  	panic("TTY","Console couldn't get clock's uptime.", s);
+  	panic("Console couldn't get clock's uptime: %d", s);
   if (!beeping) {
 	/* Set timer channel 2, square wave, with given frequency. */
         pv_set(char_out[0], TIMER_MODE, 0xB6);	
@@ -790,7 +790,7 @@ PRIVATE void beep()
   if (tty_timers->tmr_exp_time != tty_next_timeout) {
   	tty_next_timeout = tty_timers->tmr_exp_time;
   	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
-  		panic("TTY","Console couldn't set alarm.", s);
+  		panic("Console couldn't set alarm: %d", s);
   }
 }
 
@@ -901,7 +901,7 @@ clock_t dur;
 
   /* Fetch current time in advance to prevent beeping delay. */
   if ((s=getuptime(&now)) != OK)
-  	panic("TTY","Console couldn't get clock's uptime.", s);
+  	panic("Console couldn't get clock's uptime: %d", s);
   if (!beeping) {
 	/* Set timer channel 2, square wave, with given frequency. */
         pv_set(char_out[0], TIMER_MODE, 0xB6);	
@@ -918,7 +918,7 @@ clock_t dur;
   if (tty_timers->tmr_exp_time != tty_next_timeout) {
   	tty_next_timeout = tty_timers->tmr_exp_time;
   	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
-  		panic("TTY","Console couldn't set alarm.", s);
+  		panic("Console couldn't set alarm: %d", s);
   }
 }
 
@@ -994,12 +994,12 @@ tty_t *tp;
 	console_memory = vm_map_phys(SELF, (void *) vid_base, vid_size);
 
 	if(console_memory == MAP_FAILED) 
-  		panic("TTY","Console couldn't map video memory", NO_NUM);
+  		panic("Console couldn't map video memory");
 
 	font_memory = vm_map_phys(SELF, (void *)GA_VIDEO_ADDRESS, GA_FONT_SIZE);
 
 	if(font_memory == MAP_FAILED) 
-  		panic("TTY","Console couldn't map font memory", NO_NUM);
+  		panic("Console couldn't map font memory");
 
 
   	vid_size >>= 1;		/* word count */
@@ -1050,10 +1050,6 @@ PUBLIC void kputc(int c)
   return;
 #endif
 
-#if 0
-  if (panicing)
-#endif
-	cons_putk(c);
   if (c != 0) {
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       if (kmess.km_size < _KMESS_BUF_SIZE)

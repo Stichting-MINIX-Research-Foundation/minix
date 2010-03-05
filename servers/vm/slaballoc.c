@@ -354,7 +354,7 @@ PUBLIC void *slaballoc(int bytes)
 		printf("slaballoc: odd, bytes %d?\n", bytes);
 	}
 			if(!slabsane_f(__FILE__, __LINE__, ret, bytes))
-				vm_panic("slaballoc: slabsane failed", NO_NUM);
+				panic("slaballoc: slabsane failed");
 #endif
 
 			return ret;
@@ -365,7 +365,7 @@ PUBLIC void *slaballoc(int bytes)
 	}
 	SLABSANITYCHECK(SCL_FUNCTIONS);
 
-	vm_panic("slaballoc: no space in 'used' slabdata", NO_NUM);
+	panic("slaballoc: no space in 'used' slabdata");
 
 	/* Not reached. */
 	return NULL;
@@ -442,7 +442,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 	SLABSANITYCHECK(SCL_FUNCTIONS);
 
 	if(objstats(mem, bytes, &s, &f, &i) != OK) {
-		vm_panic("slabfree objstats failed", NO_NUM);
+		panic("slabfree objstats failed");
 	}
 
 #if SANITYCHECKS
@@ -498,7 +498,7 @@ PUBLIC void slablock(void *mem, int bytes)
 	struct slabdata *f;
 
 	if(objstats(mem, bytes, &s, &f, &i) != OK)
-		vm_panic("slablock objstats failed", NO_NUM);
+		panic("slablock objstats failed");
 
 	SLABDATAUNWRITABLE(f);
 
@@ -517,7 +517,7 @@ PUBLIC void slabunlock(void *mem, int bytes)
 	struct slabdata *f;
 
 	if(objstats(mem, bytes, &s, &f, &i) != OK)
-		vm_panic("slablock objstats failed", NO_NUM);
+		panic("slablock objstats failed");
 
 	SLABDATAWRITABLE(f, i);
 

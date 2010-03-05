@@ -11,7 +11,7 @@
  */
 #define MYASSERT(c) do { if(!(c)) { \
         printf("VM:%s:%d: %s failed\n", file, line, #c); \
-	vm_panic("sanity check failed", NO_NUM); } } while(0)
+	panic("sanity check failed"); } } while(0)
 
 #define SLABSANITYCHECK(l) if((l) <= vm_sanitychecklevel) { \
 	slab_sanitycheck(__FILE__, __LINE__); }
@@ -46,17 +46,17 @@
 #define SLABSANE(ptr) { \
 	if(!slabsane_f(__FILE__, __LINE__, ptr, sizeof(*(ptr)))) { \
 		printf("VM:%s:%d: SLABSANE(%s)\n", __FILE__, __LINE__, #ptr); \
-		vm_panic("SLABSANE failed", NO_NUM);	\
+		panic("SLABSANE failed");	\
 	} \
 }
 
 #define NOTRUNNABLE(ep) {			\
 	struct proc pr;				\
 	if(sys_getproc(&pr, ep) != OK) {	\
-		vm_panic("VM: sys_getproc failed", ep);	\
+		panic("VM: sys_getproc failed: %d", ep);	\
 	}					\
 	if(!pr.p_rts_flags) {			\
-		vm_panic("VM: runnable", ep);	\
+		panic("VM: runnable: %d", ep);	\
 	}					\
 }
 

@@ -241,10 +241,10 @@ PUBLIC void main()
   /*
    * enable timer interrupts and clock task on the boot CPU
    */
+
   if (boot_cpu_init_timer(system_hz)) {
-	  minix_panic("FATAL : failed to initialize timer interrupts, "
-			  "cannot continue without any clock source!",
-			  NO_NUM);
+	  panic( "FATAL : failed to initialize timer interrupts; "
+		"cannot continue without any clock source!");
   }
 
 /* Warnings for sanity checks that take time. These warnings are printed

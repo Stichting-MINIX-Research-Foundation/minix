@@ -176,7 +176,7 @@ endpoint_t *who_e;
   int r;
 
   if ((r = sef_receive(ANY, &m_in)) != OK)
-	panic("HGFS", "receive failed", r);
+	panic("receive failed: %d", r);
 
   *who_e = m_in.m_source;
 

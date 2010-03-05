@@ -84,11 +84,8 @@ struct dpeth *dep;
 				continue;
 			if (pcitab[i].did != did)
 				continue;
-			if (pcitab[i].checkclass)
-			{
-				panic("",
-				"rtl_probe: class check not implemented",
-					NO_NUM);
+			if (pcitab[i].checkclass) {
+				panic("rtl_probe: class check not implemented");
 			}
 			break;
 		}
@@ -121,7 +118,7 @@ struct dpeth *dep;
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 
 	if (bar < 0x400)
-		panic("", "base address is not properly configured", NO_NUM);
+		panic("base address is not properly configured");
 
 	dep->de_base_port= bar;
 
@@ -340,7 +337,7 @@ u16_t w;
 		micro_delay(1);
 	}
 	if (!(inb_reg3(dep, 1) & 1))
-		panic("", "set_ee_word: device remains busy", NO_NUM);
+		panic("set_ee_word: device remains busy");
 }
 
 static void ee_wds(dep)

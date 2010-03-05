@@ -14,6 +14,6 @@ char *key;		/* environment variable whose value is bogus */
   	printf("WARNING: env_get_param() failed in env_panic(): %d\n", s);
   }
   printf("Bad environment setting: '%s = %s'\n", key, value);
-  panic("","", NO_NUM);
+  panic("");
 }
 

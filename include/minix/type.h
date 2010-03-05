@@ -167,7 +167,7 @@ struct memory {
 #define STATICINIT(v, n) \
 	if(!(v)) {	\
 		if(!((v) = alloc_contig(sizeof(*(v)) * (n), 0, NULL))) { \
-			panic(__FILE__, "allocating " #v " failed", n);	\
+			panic("allocating " #v " failed: %d", n);	\
 		}	\
 	}
 

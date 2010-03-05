@@ -102,7 +102,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   /* Retrieve first randomness buffer with parameters. */
   if (OK != (s=sys_getrandomness(&krandom))) {
-  	report("RANDOM", "sys_getrandomness failed", s);
+  	printf("RANDOM: sys_getrandomness failed: %d\n", s);
 	exit(1);
   }
 
@@ -317,7 +317,7 @@ message *m_ptr;				/* pointer to alarm message */
 
   /* Schedule new alarm for next m_random call. */
   if (OK != (s=sys_setalarm(KRANDOM_PERIOD, 0)))
-  	report("RANDOM", "sys_setalarm failed", s);
+  	printf("RANDOM: sys_setalarm failed: %d\n", s);
 }
 
 /*============================================================================*

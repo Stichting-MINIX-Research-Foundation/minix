@@ -123,7 +123,7 @@ PUBLIC int do_fork(message *msg)
 	child_abs = (phys_bytes) child_base << CLICK_SHIFT;
 	parent_abs = (phys_bytes) vmp->vm_arch.vm_seg[D].mem_phys << CLICK_SHIFT;
 	s = sys_abscopy(parent_abs, child_abs, prog_bytes);
-	if (s < 0) vm_panic("do_fork can't copy", s);
+	if (s < 0) panic("do_fork can't copy: %d", s);
 
 	/* A separate I&D child keeps the parents text segment.  The data and stack
 	* segments must refer to the new copy.
@@ -150,7 +150,7 @@ PUBLIC int do_fork(message *msg)
   if((r=sys_fork(vmp->vm_endpoint, childproc,
 	&vmc->vm_endpoint, vmc->vm_arch.vm_seg,
 	PFF_VMINHIBIT, &msgaddr)) != OK) {
-        vm_panic("do_fork can't sys_fork", r);
+        panic("do_fork can't sys_fork: %d", r);
   }
 
   NOTRUNNABLE(vmp->vm_endpoint);
@@ -168,7 +168,7 @@ PUBLIC int do_fork(message *msg)
   }
 
   if((r=pt_bind(&vmc->vm_pt, vmc)) != OK)
-	vm_panic("fork can't pt_bind", r);
+	panic("fork can't pt_bind: %d", r);
 
   /* Inform caller of new child endpoint. */
   msg->VMF_CHILD_ENDPOINT = vmc->vm_endpoint;

@@ -329,7 +329,7 @@ PUBLIC void inet_panic()
 {
 	printf("\ninet stacktrace: ");
 	util_stacktrace();
-	(panic)("INET","aborted due to a panic",NO_NUM);
+	(panic)("aborted due to a panic");
 	for(;;);
 }
 

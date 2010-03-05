@@ -20,10 +20,10 @@ int devind;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_reserve: can't talk to PCI", r);
+		panic("pci_reserve: can't talk to PCI: %d", r);
 
 	if (m.m_type != 0)
-		panic("syslib/" __FILE__, "pci_reserve: got bad reply from PCI", m.m_type);
+		panic("pci_reserve: got bad reply from PCI: %d", m.m_type);
 }
 
 /*===========================================================================*

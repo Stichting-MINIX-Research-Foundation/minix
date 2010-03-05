@@ -229,9 +229,7 @@ PUBLIC int fs_getdents(void) {
 				    (vir_bytes)getdents_buf, tmpbuf_offset, D);
 
 				if (r != OK)
-				    panic(__FILE__,
-				      "fs_getdents: sys_safecopyto failed\n",r);
-	  
+					panic("fs_getdents: sys_safecopyto failed: %d", r);
 				userbuf_off += tmpbuf_offset;
 				tmpbuf_offset= 0;
 			}
@@ -264,7 +262,7 @@ PUBLIC int fs_getdents(void) {
 	r = sys_safecopyto(FS_PROC_NR, gid, userbuf_off,
 			   (vir_bytes) getdents_buf, tmpbuf_offset, D);
 	if (r != OK)
-		panic(__FILE__, "fs_getdents: sys_safecopyto failed\n", r);
+		panic("fs_getdents: sys_safecopyto failed: %d", r);
  
 	userbuf_off += tmpbuf_offset;
   }
@@ -324,7 +322,7 @@ int *completed;			/* number of bytes copied */
 
   /* In all cases, bp now points to a valid buffer. */
   if (bp == NIL_BUF) {
-    panic(__FILE__,"bp not valid in rw_chunk, this can't happen", NO_NUM);
+    panic("bp not valid in rw_chunk; this can't happen");
   }
   
   r = sys_safecopyto(FS_PROC_NR, gid, buf_off,

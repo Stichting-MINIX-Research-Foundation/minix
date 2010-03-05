@@ -196,7 +196,7 @@ zone_t zone;			/* zone to write */
   struct super_block *sp;
 
   if(bp == NIL_BUF)
-	panic(__FILE__, "wr_indir() on NIL_BUF", NO_NUM);
+	panic("wr_indir() on NIL_BUF");
 
   sp = get_super(bp->b_dev);	/* need super block to find file sys type */
 

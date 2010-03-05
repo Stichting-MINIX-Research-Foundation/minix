@@ -96,7 +96,7 @@ dpeth_t * dep;
   /* Set interrupt level for 3c503 */
   irq = (dep->de_irq &= ~DEI_DEFAULT);	/* Strip the default flag. */
   if (irq == 9) irq = 2;
-  if (irq < 2 || irq > 5) panic("", "bad 3c503 irq configuration", irq);
+  if (irq < 2 || irq > 5) panic("bad 3c503 irq configuration: %d", irq);
   outb_el2(dep, EL2_IDCFG, (0x04 << irq));
 
   outb_el2(dep, EL2_DRQCNT, 0x08);	/* Set burst size to 8 */

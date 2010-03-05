@@ -19,7 +19,7 @@ void read_write_buff(char* buff, int size, int is_write)
 	char c;
 
 	if(size % CLICK_SIZE != 0) {
-		panic("REQUESTOR", "buff_size not page aligned", NO_NUM);
+		panic("buff_size not page aligned");
 	}
 	if(is_write) {
 	    for(i=0;i<size;i+=CLICK_SIZE) buff[i] = 1;

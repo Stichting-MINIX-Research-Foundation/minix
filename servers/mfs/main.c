@@ -122,7 +122,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   fs_m_in.m_type = FS_READY;
 
   if ((r = send(FS_PROC_NR, &fs_m_in)) != OK) {
-	panic("MFS", "Error sending login to VFS", r);
+	panic("Error sending login to VFS: %d", r);
   }
 
   return(OK);
@@ -140,7 +140,7 @@ message *m_in;				/* pointer to message */
 
   do {
 	if ((r = sef_receive(ANY, m_in)) != OK) 	/* wait for message */
-		panic("MFS","sef_receive failed", r);
+		panic("sef_receive failed: %d", r);
 	src = fs_m_in.m_source;
 
 	if (src != FS_PROC_NR) {

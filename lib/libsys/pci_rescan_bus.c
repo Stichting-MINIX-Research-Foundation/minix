@@ -20,12 +20,11 @@ u8_t busnr;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_rescan_bus: can't talk to PCI", r);
+		panic("pci_rescan_bus: can't talk to PCI: %d", r);
 
 	if (m.m_type != 0)
 	{
-		panic("syslib/" __FILE__, "pci_rescan_bus: got bad reply from PCI",
-			m.m_type);
+		panic("pci_rescan_bus: got bad reply from PCI: %d", m.m_type);
 	}
 }
 

@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 	while (TRUE)
 	{
 		if ((r= sef_receive(ANY, &m)) != OK)
-			panic("rtl8139","sef_receive failed", r);
+			panic("sef_receive failed: %d", r);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
@@ -255,8 +255,8 @@ int main(int argc, char *argv[])
 					break;
 				}
 				default:
-					panic("rtl8139","illegal notify from",
-								m.m_source);
+					panic("illegal notify from: %d",
+					m.m_source);
 			}
 
 			/* done, get nwe message */
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
 		case DL_STOP:	do_stop(&m);			break;
 #endif
 		default:
-			panic("rtl8139","illegal message", m.m_type);
+			panic("illegal message: %d", m.m_type);
 		}
 	}
 }
@@ -610,10 +610,8 @@ re_t *rep;
 				continue;
 			if (pcitab[i].did != did)
 				continue;
-			if (pcitab[i].checkclass)
-			{
-			  panic("rtl_probe",
-			    "class check not implemented", NO_NUM);
+			if (pcitab[i].checkclass) {
+				panic("class check not implemented");
 			}
 			break;
 		}
@@ -645,10 +643,8 @@ re_t *rep;
 	pci_reserve(devind);
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
-	if (bar < 0x400)
-	{
-		panic("rtl_probe",
-			"base address is not properly configured", NO_NUM);
+	if (bar < 0x400) {
+		panic("base address is not properly configured");
 	}
 	rep->re_base_port= bar;
 
@@ -720,7 +716,7 @@ re_t *rep;
 #define BUF_ALIGNMENT (64*1024)
 
 	if(!(mallocbuf = alloc_contig(BUF_ALIGNMENT + tot_bufsize, 0, &buf))) {
-	    panic("RTL8139","Couldn't allocate kernel buffer",NO_NUM);
+	    panic("Couldn't allocate kernel buffer");
 	}
 
 	/* click-align mallocced buffer. this is what we used to get
@@ -816,7 +812,7 @@ re_t *rep;
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
 	if (rl_inb(port, RL_BMCR) & MII_CTRL_RST)
-		panic("rtl8139","reset PHY failed to complete", NO_NUM);
+		panic("reset PHY failed to complete");
 #endif
 
 	/* Reset the device */
@@ -995,7 +991,7 @@ static void rl_readv(message *mp, int from_int, int vectored)
 	dl_port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (dl_port < 0 || dl_port >= RE_PORT_NR)
-		panic("rtl8139"," illegal port", dl_port);
+		panic(" illegal port: %d", dl_port);
 	rep= &re_table[dl_port];
 	re_client= mp->DL_PROC;
 	rep->re_client= re_client;
@@ -1048,7 +1044,7 @@ static void rl_readv(message *mp, int from_int, int vectored)
 		printf("rxstat = 0x%08lx\n", rxstat);
 		printf("d_start: 0x%x, d_end: 0x%x, rxstat: 0x%lx\n",
 			d_start, d_end, rxstat);
-		panic("rtl8139","received packet not OK", NO_NUM);
+		panic("received packet not OK");
 	}
 	totlen= (rxstat >> RL_RXS_LEN_S);
 	if (totlen < 8 || totlen > 2*ETH_MAX_PACK_SIZE)
@@ -1060,7 +1056,7 @@ static void rl_readv(message *mp, int from_int, int vectored)
 		printf(
 		"d_start: 0x%x, d_end: 0x%x, totlen: %d, rxstat: 0x%lx\n",
 			d_start, d_end, totlen, rxstat);
-		panic(NULL, NULL, NO_NUM);
+		panic(NULL);
 	}
 
 #if 0
@@ -1167,9 +1163,9 @@ static void rl_readv(message *mp, int from_int, int vectored)
 #if 0
 		size= mp->DL_COUNT;
 		if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
-			panic("rtl8139","invalid packet size", size);
+			panic("invalid packet size: %d", size);
 		if (OK != sys_umap(re_client, D, (vir_bytes)mp->DL_ADDR, size, &phys_user))
-			panic("rtl8139","umap_local failed", NO_NUM);
+			panic("umap_local failed");
 
 		p= rep->re_tx[tx_head].ret_buf;
 		cps = sys_abscopy(phys_user, p, size);
@@ -1243,7 +1239,7 @@ static void rl_readv_s(message *mp, int from_int)
 	dl_port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (dl_port < 0 || dl_port >= RE_PORT_NR)
-		panic("rtl8139"," illegal port", dl_port);
+		panic(" illegal port: %d", dl_port);
 	rep= &re_table[dl_port];
 	re_client= mp->DL_PROC;
 	rep->re_client= re_client;
@@ -1296,7 +1292,7 @@ static void rl_readv_s(message *mp, int from_int)
 		printf("rxstat = 0x%08lx\n", rxstat);
 		printf("d_start: 0x%x, d_end: 0x%x, rxstat: 0x%lx\n",
 			d_start, d_end, rxstat);
-		panic("rtl8139","received packet not OK", NO_NUM);
+		panic("received packet not OK");
 	}
 	totlen= (rxstat >> RL_RXS_LEN_S);
 	if (totlen < 8 || totlen > 2*ETH_MAX_PACK_SIZE)
@@ -1308,7 +1304,7 @@ static void rl_readv_s(message *mp, int from_int)
 		printf(
 		"d_start: 0x%x, d_end: 0x%x, totlen: %d, rxstat: 0x%lx\n",
 			d_start, d_end, totlen, rxstat);
-		panic(NULL, NULL, NO_NUM);
+		panic(NULL);
 	}
 
 #if 0
@@ -1337,9 +1333,8 @@ static void rl_readv_s(message *mp, int from_int)
 		cps = sys_safecopyfrom(re_client, mp->DL_GRANT, iov_offset,
 			(vir_bytes) rep->re_iovec_s,
 			n * sizeof(rep->re_iovec_s[0]), D);
-		if (cps != OK)
-		{
-			panic(__FILE__, "rl_readv_s: sys_safecopyfrom failed",
+		if (cps != OK) {
+			panic("rl_readv_s: sys_safecopyfrom failed: %d",
 				cps);
 		}
 
@@ -1354,7 +1349,7 @@ static void rl_readv_s(message *mp, int from_int)
 
 #if 0
 			if (sys_umap(re_client, D, iovp->iov_addr, s, &dst_phys) != OK)
-			  panic("rtl8139","umap_local failed\n", NO_NUM);
+			  panic("umap_local failed");
 #endif
 
 			if (o >= RX_BUFSIZE)
@@ -1371,20 +1366,15 @@ static void rl_readv_s(message *mp, int from_int)
 				cps = sys_safecopyto(re_client,
 					iovp->iov_grant, 0, 
 					(vir_bytes) rep->v_re_rx_buf+o, s1, D);
-				if (cps != OK)
-				{
-					panic(__FILE__,
-					"rl_readv_s: sys_safecopyto failed",
-						cps);
+				if (cps != OK) { 
+					panic("rl_readv_s: sys_safecopyto failed: %d",
+					cps);
 				}
 				cps = sys_safecopyto(re_client,
 					iovp->iov_grant, s1, 
 					(vir_bytes) rep->v_re_rx_buf, s-s1, S);
-				if (cps != OK)
-				{
-					panic(__FILE__,
-					"rl_readv_s: sys_safecopyto failed",
-						cps);
+				if (cps != OK) {
+					panic("rl_readv_s: sys_safecopyto failed: %d", cps);
 				}
 			}
 			else
@@ -1393,9 +1383,7 @@ static void rl_readv_s(message *mp, int from_int)
 					iovp->iov_grant, 0,
 					(vir_bytes) rep->v_re_rx_buf+o, s, D);
 				if (cps != OK)
-					panic(__FILE__,
-					"rl_readv_s: sys_safecopyto failed",
-						cps);
+					panic("rl_readv_s: sys_safecopyto failed: %d", cps);
 			}
 
 			size += s;
@@ -1474,7 +1462,7 @@ static void rl_writev(message *mp, int from_int, int vectored)
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8139","illegal port", port);
+		panic("illegal port: %d", port);
 	rep= &re_table[port];
 	re_client= mp->DL_PROC;
 	rep->re_client= re_client;
@@ -1532,14 +1520,12 @@ if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d\n", cps);
 			for (j= 0, iovp= rep->re_iovec; j<n; j++, iovp++)
 			{
 				s= iovp->iov_size;
-				if (size + s > ETH_MAX_PACK_SIZE_TAGGED)
-				{
-				  panic("rtl8139","invalid packet size",
-			  	    NO_NUM);
+				if (size + s > ETH_MAX_PACK_SIZE_TAGGED) { 
+					panic("invalid packet size");
 				}
 
 				if (OK != sys_umap(re_client, D, iovp->iov_addr, s, &phys_user))
-				  panic("rtl8139","umap_local failed\n", NO_NUM);
+				  panic("umap_local failed");
 
 				cps = sys_vircopy(re_client, D, iovp->iov_addr,
 					SELF, D, (vir_bytes) ret, s);
@@ -1549,13 +1535,13 @@ if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d\n", cps);
 			}
 		}
 		if (size < ETH_MIN_PACK_SIZE)
-			panic("rtl8139","invalid packet size", size);
+			panic("invalid packet size: %d", size);
 	}
 	else
 	{  
 		size= mp->DL_COUNT;
 		if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
-			panic("rtl8139","invalid packet size", size);
+			panic("invalid packet size: %d", size);
 		ret = rep->re_tx[tx_head].v_ret_buf;
 		cps = sys_vircopy(re_client, D, (vir_bytes)mp->DL_ADDR, 
 			SELF, D, (vir_bytes) ret, size);
@@ -1595,7 +1581,7 @@ suspend:
 #endif
 
 	if (from_int)
-		panic("rtl8139","should not be sending\n", NO_NUM);
+		panic("should not be sending");
 
 	rep->re_tx_mess= *mp;
 	reply(rep, OK, FALSE);
@@ -1617,7 +1603,7 @@ static void rl_writev_s(message *mp, int from_int)
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8139","illegal port", port);
+		panic("illegal port: %d", port);
 	rep= &re_table[port];
 	re_client= mp->DL_PROC;
 	rep->re_client= re_client;
@@ -1666,34 +1652,27 @@ static void rl_writev_s(message *mp, int from_int)
 		cps = sys_safecopyfrom(re_client, mp->DL_GRANT, iov_offset,
 			(vir_bytes) rep->re_iovec_s,
 			n * sizeof(rep->re_iovec_s[0]), D);
-		if (cps != OK)
-		{
-			panic(__FILE__, "rl_writev_s: sys_safecopyfrom failed",
-				cps);
+		if (cps != OK) {
+			panic("rl_writev_s: sys_safecopyfrom failed: %d", cps);
 		}
 
 		for (j= 0, iovp= rep->re_iovec_s; j<n; j++, iovp++)
 		{
 			s= iovp->iov_size;
-			if (size + s > ETH_MAX_PACK_SIZE_TAGGED)
-			{
-			  panic("rtl8139","invalid packet size",
-			    NO_NUM);
+			if (size + s > ETH_MAX_PACK_SIZE_TAGGED) {
+				panic("invalid packet size");
 			}
 			cps = sys_safecopyfrom(re_client, iovp->iov_grant, 0,
 				(vir_bytes) ret, s, D);
-			if (cps != OK)
-			{
-				panic(__FILE__,
-					"rl_writev_s: sys_safecopyfrom failed",
-					cps);
+			if (cps != OK) { 
+				panic("rl_writev_s: sys_safecopyfrom failed: %d",	cps);
 			}
 			size += s;
 			ret += s;
 		}
 	}
 	if (size < ETH_MIN_PACK_SIZE)
-		panic("rtl8139","invalid packet size", size);
+		panic("invalid packet size: %d", size);
 
 	rl_outl(rep->re_base_port, RL_TSD0+tx_head*4, 
 		rep->re_ertxth | size);
@@ -1728,7 +1707,7 @@ suspend:
 #endif
 
 	if (from_int)
-		panic("rtl8139","should not be sending\n", NO_NUM);
+		panic("should not be sending");
 
 	rep->re_tx_mess= *mp;
 	reply(rep, OK, FALSE);
@@ -2152,7 +2131,7 @@ re_t *rep;
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
 	if (rl_inb(port, RL_CR) & RL_CR_RE)
-		panic("rtl8139","cannot disable receiver", NO_NUM);
+		panic("cannot disable receiver");
 
 #if 0
 	printf("RBSTART = 0x%08x\n", rl_inl(port, RL_RBSTART));
@@ -2200,7 +2179,7 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8139","illegal port", port);
+		panic("illegal port: %d", port);
 	rep= &re_table[port];
 	rep->re_client= mp->DL_PROC;
 
@@ -2212,14 +2191,14 @@ message *mp;
 	r = sys_datacopy(SELF, (vir_bytes) &stats, mp->DL_PROC,
 		(vir_bytes) mp->DL_ADDR, sizeof(stats));
 	if (r != OK)
-		panic(__FILE__, "rl_getstat: sys_datacopy failed", r);
+		panic("rl_getstat: sys_datacopy failed: %d", r);
 
 	mp->m_type= DL_STAT_REPLY;
 	mp->DL_PORT= port;
 	mp->DL_STAT= OK;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic("RTL8139", "rl_getstat: send failed: %d\n", r);
+		panic("rl_getstat: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -2234,7 +2213,7 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= RE_PORT_NR)
-		panic("rtl8139","illegal port", port);
+		panic("illegal port: %d", port);
 	rep= &re_table[port];
 	rep->re_client= mp->DL_PROC;
 
@@ -2246,14 +2225,14 @@ message *mp;
 	r = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
 		(vir_bytes) &stats, sizeof(stats), D);
 	if (r != OK)
-		panic(__FILE__, "rl_getstat_s: sys_safecopyto failed", r);
+		panic("rl_getstat_s: sys_safecopyto failed: %d", r);
 
 	mp->m_type= DL_STAT_REPLY;
 	mp->DL_PORT= port;
 	mp->DL_STAT= OK;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic("RTL8139", "rl_getstat_s: send failed: %d\n", r);
+		panic("rl_getstat_s: send failed: %d", r);
 }
 
 
@@ -2270,7 +2249,7 @@ message *mp;
 	mp->m_type= DL_NAME_REPLY;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic("RTL8139", "rl_getname: send failed: %d\n", r);
+		panic("rl_getname: send failed: %d", r);
 }
 
 
@@ -2299,7 +2278,7 @@ int may_block;
 	reply.DL_STAT = status | ((u32_t) err << 16);
 	reply.DL_COUNT = rep->re_read_s;
 	if (OK != (r = getuptime(&now)))
-		panic("rtl8139","getuptime() failed:", r);
+		panic("getuptime() failed: %d", r);
 	reply.DL_CLCK = now;
 
 	r= send(rep->re_client, &reply);
@@ -2314,7 +2293,7 @@ int may_block;
 
 	if (r < 0) {
 		printf("RTL8139 tried sending to %d, type %d\n", rep->re_client, reply.m_type);
-		panic("rtl8139","send failed:", r);
+		panic("send failed: %d", r);
 	}
 	
 	rep->re_read_s = 0;
@@ -2329,7 +2308,7 @@ message *req;
 message *reply_mess;
 {
 	if (send(req->m_source, reply_mess) != OK)
-		panic("rtl8139","unable to mess_reply", NO_NUM);
+		panic("unable to mess_reply");
 }
 
 #if 0
@@ -2553,10 +2532,8 @@ re_t *rep;
 				if (!(rl_inb(port, RL_CR) & RL_CR_TE))
 					break;
 			} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
-			if (rl_inb(port, RL_CR) & RL_CR_TE)
-			{
-			  panic("rtl8139","cannot disable transmitter",
-					NO_NUM);
+			if (rl_inb(port, RL_CR) & RL_CR_TE) {
+				panic("cannot disable transmitter");
 			}
 			rl_outb(port, RL_CR, cr | RL_CR_TE);
 
@@ -2963,7 +2940,7 @@ u16_t w;
 			break;
 	} while (getuptime(&t1) == OK && (t1 == t0));
 	if (!(inb_reg3(dep, 1) & 1))
-		panic("set_ee_word","device remains busy", NO_NUM);
+		panic("device remains busy");
 }
 
 static void ee_wds(dep)

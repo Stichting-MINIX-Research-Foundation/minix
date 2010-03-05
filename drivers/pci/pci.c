@@ -173,12 +173,12 @@ PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Map all the services in the boot image. */
 	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
-		panic("pci", "sys_safecopyfrom failed", r);
+		panic("sys_safecopyfrom failed: %d", r);
 	}
 	for(i=0;i < NR_BOOT_PROCS;i++) {
 		if(rprocpub[i].in_use) {
 			if((r = map_service(&rprocpub[i])) != OK) {
-				panic("pci", "unable to map service", r);
+				panic("unable to map service: %d", r);
 			}
 		}
 	}
@@ -696,7 +696,7 @@ PRIVATE void pci_intel_init()
 #endif
 
 	if (nr_pcibus >= NR_PCIBUS)
-		panic("PCI","too many PCI busses", nr_pcibus);
+		panic("too many PCI busses: %d", nr_pcibus);
 	busind= nr_pcibus;
 	nr_pcibus++;
 	pcibus[busind].pb_type= PBT_INTEL_HOST;
@@ -766,7 +766,7 @@ PRIVATE void probe_bus(int busind)
 printf("probe_bus(%d)\n", busind);
 #endif
 	if (nr_pcidev >= NR_PCIDEV)
-		panic("PCI","too many PCI devices", nr_pcidev);
+		panic("too many PCI devices: %d", nr_pcidev);
 	devind= nr_pcidev;
 
 	busnr= pcibus[busind].pb_busnr;
@@ -894,7 +894,7 @@ printf("probe_bus(%d)\n", busind);
 #endif
 
 			if (nr_pcidev >= NR_PCIDEV)
-			  panic("PCI","too many PCI devices", nr_pcidev);
+			  panic("too many PCI devices: %d", nr_pcidev);
 			devind= nr_pcidev;
 
 			if (func == 0 && !(headt & PHT_MULTIFUNC))
@@ -1373,7 +1373,7 @@ PRIVATE void complete_bars(void)
 
 	r= env_get_param("memory", memstr, sizeof(memstr));
 	if (r != OK)
-		panic("pci", "env_get_param failed", r);
+		panic("env_get_param failed: %d", r);
 	
 	/* Set memgap_low to just above physical memory */
 	memgap_low= 0;
@@ -1444,7 +1444,7 @@ PRIVATE void complete_bars(void)
 	{
 		printf("PCI: bad memory gap: [0x%x .. 0x%x>\n",
 			memgap_low, memgap_high);
-		panic(NULL, NULL, NO_NUM);
+		panic(NULL);
 	}
 
 	iogap_high= 0x10000;
@@ -1488,7 +1488,7 @@ PRIVATE void complete_bars(void)
 			printf("iogap_high too low, should panic\n");
 		}
 		else
-			panic("pci", "iogap_high too low", iogap_high);
+			panic("iogap_high too low: %d", iogap_high);
 	}
 	if (debug)
 		printf("I/O range = [0x%x..0x%x>\n", iogap_low, iogap_high);
@@ -1507,7 +1507,7 @@ PRIVATE void complete_bars(void)
 			base= memgap_high-size;
 			base &= ~(u32_t)(size-1);
 			if (base < memgap_low)
-				panic("pci", "memory base too low", base);
+				panic("memory base too low: %d", base);
 			memgap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
 			reg= PCI_BAR + 4*bar_nr;
@@ -1542,7 +1542,7 @@ PRIVATE void complete_bars(void)
 			base &= 0xfcff;
 
 			if (base < iogap_low)
-				panic("pci", "I/O base too low", base);
+				panic("I/O base too low: %d", base);
 
 			iogap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
@@ -1581,7 +1581,7 @@ PRIVATE void complete_bars(void)
 
 bad_mem_string:
 	printf("PCI: bad memory environment string '%s'\n", memstr);
-	panic(NULL, NULL, NO_NUM);
+	panic(NULL);
 }
 
 /*===========================================================================*
@@ -1607,7 +1607,7 @@ u32_t io_size;
 		return;	
 	}
 	if (type != PBT_CARDBUS)
-		panic("pci", "update_bridge4dev_io: strange bus type", type);
+		panic("update_bridge4dev_io: strange bus type: %d", type);
 
 	if (debug)
 	{
@@ -1727,7 +1727,7 @@ int busind;
 			r= do_sis_isabr(bridge_dev);
 			break;
 		default:
-			panic("PCI","unknown ISA bridge type", type);
+			panic("unknown ISA bridge type: %d", type);
 		}
 		return r;
 	}
@@ -1847,7 +1847,7 @@ int busind;
 		sbusn= pci_attr_r8_u(devind, PPB_SECBN);
 
 		if (nr_pcibus >= NR_PCIBUS)
-			panic("PCI","too many PCI busses", nr_pcibus);
+			panic("too many PCI busses: %d", nr_pcibus);
 		ind= nr_pcibus;
 		nr_pcibus++;
 		pcibus[ind].pb_type= PBT_PCIBRIDGE;
@@ -1878,7 +1878,7 @@ int busind;
 			pcibus[ind].pb_wsts= pcibr_via_wsts;
 			break;
 		default:
-		    panic("PCI","unknown PCI-PCI bridge type", type);
+		    panic("unknown PCI-PCI bridge type: %d", type);
 		}
 		if (debug)
 		{
@@ -1913,7 +1913,7 @@ int busnr;
 		if (pcibus[i].pb_busnr == busnr)
 			return i;
 	}
-	panic("pci", "get_busind: can't find bus", busnr);
+	panic("get_busind: can't find bus: %d", busnr);
 }
 
 /*===========================================================================*
@@ -1981,7 +1981,7 @@ PRIVATE int do_amd_isabr(int devind)
 
 	/* Fake a device with the required function */
 	if (nr_pcidev >= NR_PCIDEV)
-		panic("PCI","too many PCI devices", nr_pcidev);
+		panic("too many PCI devices: %d", nr_pcidev);
 	xdevind= nr_pcidev;
 	pcidev[xdevind].pd_busnr= busnr;
 	pcidev[xdevind].pd_dev= dev;

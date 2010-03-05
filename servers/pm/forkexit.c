@@ -68,10 +68,10 @@ PUBLIC int do_fork()
 	n++;
   } while((mproc[next_child].mp_flags & IN_USE) && n <= NR_PROCS);
   if(n > NR_PROCS)
-	panic(__FILE__,"do_fork can't find child slot", NO_NUM);
+	panic("do_fork can't find child slot");
   if(next_child < 0 || next_child >= NR_PROCS
  || (mproc[next_child].mp_flags & IN_USE))
-	panic(__FILE__,"do_fork finds wrong child slot", next_child);
+	panic("do_fork finds wrong child slot: %d", next_child);
 
   /* Memory part of the forking. */
   if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
@@ -158,10 +158,10 @@ PUBLIC int do_fork_nb()
 	n++;
   } while((mproc[next_child].mp_flags & IN_USE) && n <= NR_PROCS);
   if(n > NR_PROCS)
-	panic(__FILE__,"do_fork can't find child slot", NO_NUM);
+	panic("do_fork can't find child slot");
   if(next_child < 0 || next_child >= NR_PROCS
  || (mproc[next_child].mp_flags & IN_USE))
-	panic(__FILE__,"do_fork finds wrong child slot", next_child);
+	panic("do_fork finds wrong child slot: %d", next_child);
 
   if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
 	printf("PM: vm_fork failed: %d\n", s);
@@ -261,7 +261,7 @@ int dump_core;			/* flag indicating whether to dump core */
 
   /* Do accounting: fetch usage times and accumulate at parent. */
   if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL, NULL)) != OK)
-  	panic(__FILE__,"exit_proc: sys_times failed", r);
+  	panic("exit_proc: sys_times failed: %d", r);
 
   p_mp = &mproc[rmp->mp_parent];			/* process' parent */
   p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
@@ -274,10 +274,10 @@ int dump_core;			/* flag indicating whether to dump core */
    * such as copying to/ from the exiting process, before it is gone.
    */
   if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
-  	panic(__FILE__, "sys_stop failed", r);
+  	panic("sys_stop failed: %d", r);
 
   if((r=vm_willexit(proc_nr_e)) != OK) {
-	panic(__FILE__, "exit_proc: vm_willexit failed", r);
+	panic("exit_proc: vm_willexit failed: %d", r);
   }
   vm_notify_sig_wrapper(rmp->mp_endpoint);
 
@@ -288,7 +288,7 @@ int dump_core;			/* flag indicating whether to dump core */
   }
   if (proc_nr_e == FS_PROC_NR)
   {
-	panic(__FILE__, "exit_proc: FS died", r);
+	panic("exit_proc: FS died: %d", r);
   }
 
   /* Tell FS about the exiting process. */
@@ -304,7 +304,7 @@ int dump_core;			/* flag indicating whether to dump core */
 	 * driver that FS is blocked waiting on.
 	 */
 	if((r= sys_exit(rmp->mp_endpoint)) != OK)
-		panic(__FILE__, "exit_proc: sys_exit failed", r);
+		panic("exit_proc: sys_exit failed: %d", r);
   }
 
   /* Clean up most of the flags describing the process's state before the exit,
@@ -364,12 +364,12 @@ int dump_core;			/* flag indicating whether to dump core */
   {
 	/* destroy the (user) process */
 	if((r=sys_exit(rmp->mp_endpoint)) != OK)
-		panic(__FILE__, "exit_restart: sys_exit failed", r);
+		panic("exit_restart: sys_exit failed: %d", r);
   }
 
   /* Release the memory occupied by the child. */
   if((r=vm_exit(rmp->mp_endpoint)) != OK) {
-  	panic(__FILE__, "exit_restart: vm_exit failed", r);
+  	panic("exit_restart: vm_exit failed: %d", r);
   }
 
   if (rmp->mp_flags & TRACE_EXIT)
@@ -508,7 +508,7 @@ struct mproc *rmp;
   struct mproc *t_mp;
 
   if (rmp->mp_flags & (TRACE_ZOMBIE | ZOMBIE))
-	panic(__FILE__, "zombify: process was already a zombie", NO_NUM);
+	panic("zombify: process was already a zombie");
 
   /* See if we have to notify a tracer process first. */
   if (rmp->mp_tracer != NO_TRACER && rmp->mp_tracer != rmp->mp_parent) {
@@ -579,11 +579,11 @@ register struct mproc *child;	/* tells which process is exiting */
 
   mp_parent= child->mp_parent;
   if (mp_parent <= 0)
-	panic(__FILE__, "tell_parent: bad value in mp_parent", mp_parent);
+	panic("tell_parent: bad value in mp_parent: %d", mp_parent);
   if(!(child->mp_flags & ZOMBIE))
-  	panic(__FILE__, "tell_parent: child not a zombie", NO_NUM);
+  	panic("tell_parent: child not a zombie");
   if(child->mp_flags & TOLD_PARENT)
-	panic(__FILE__, "tell_parent: telling parent again", NO_NUM);
+	panic("tell_parent: telling parent again");
   parent = &mproc[mp_parent];
 
   /* Wake up the parent by sending the reply message. */
@@ -606,9 +606,9 @@ struct mproc *child;			/* tells which process is exiting */
 
   mp_tracer = child->mp_tracer;
   if (mp_tracer <= 0)
-	panic(__FILE__, "tell_tracer: bad value in mp_tracer", mp_tracer);
+	panic("tell_tracer: bad value in mp_tracer: %d", mp_tracer);
   if(!(child->mp_flags & TRACE_ZOMBIE))
-  	panic(__FILE__, "tell_tracer: child not a zombie", NO_NUM);
+  	panic("tell_tracer: child not a zombie");
   tracer = &mproc[mp_tracer];
 
   exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);

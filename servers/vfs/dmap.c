@@ -180,7 +180,7 @@ int force;
   if (label != NULL) {
 	len= strlen(label);
 	if (len+1 > sizeof(dp->dmap_label))
-		panic(__FILE__, "map_driver: label too long", len);
+		panic("map_driver: label too long: %d", len);
 	strcpy(dp->dmap_label, label);
   }
 

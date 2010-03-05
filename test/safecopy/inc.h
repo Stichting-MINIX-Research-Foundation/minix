@@ -33,12 +33,12 @@
 #define FIFO_WAIT(fid) {                                                      \
 	int a;                                                                \
 	if(read(fid, &a, sizeof(a)) != sizeof(a))                             \
-		panic(__FILE__, "FIFO_WAIT failed", NO_NUM);                  \
+		panic("FIFO_WAIT failed");                  \
 }
 #define FIFO_NOTIFY(fid) {                                                    \
 	int a = 1;                                                            \
 	if(write(fid, &a, sizeof(a)) != sizeof(a))                            \
-		panic(__FILE__, "FIFO_NOTIFY failed", NO_NUM);                \
+		panic("FIFO_NOTIFY failed");                \
 }
 
 #define DEBUG 0

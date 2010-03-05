@@ -531,21 +531,21 @@ PRIVATE void atl2_init(int devind)
 	 */
 	state.base = vm_map_phys(SELF, (void *) bar, ATL2_MMAP_SIZE);
 	if (state.base == MAP_FAILED)
-		panic("atl2", "unable to map in registers", NO_NUM);
+		panic("unable to map in registers");
 
 	if ((r = atl2_alloc_dma()) != OK)
-		panic("atl2", "unable to allocate DMA buffers", r);
+		panic("unable to allocate DMA buffers: %d", r);
 
 	state.irq = pci_attr_r8(devind, PCI_ILR);
 
 	if ((r = sys_irqsetpolicy(state.irq, 0, &state.hook_id)) != OK)
-		panic("atl2", "unable to register IRQ", r);
+		panic("unable to register IRQ: %d", r);
 
 	if (!atl2_reset())
-		panic("atl2", "unable to reset hardware", NO_NUM);
+		panic("unable to reset hardware");
 
 	if ((r = sys_irqenable(&state.hook_id)) != OK)
-		panic("atl2", "unable to enable IRQ", r);
+		panic("unable to enable IRQ: %d", r);
 
 	atl2_get_hwaddr();
 
@@ -746,7 +746,7 @@ PRIVATE void atl2_reply(void)
 		m.DL_COUNT));
 
 	if ((r = send(state.task_endpt, &m)) != OK)
-		panic("atl2", "unable to reply", r);
+		panic("unable to reply: %d", r);
 
 	state.flags &= ~(ATL2_FLAG_PACK_SENT | ATL2_FLAG_PACK_RCVD);
 	state.recv_count = 0;
@@ -805,7 +805,7 @@ PRIVATE void atl2_readv(message *m, int from_int)
 		r = sys_safecopyfrom(m->DL_PROC, m->DL_GRANT, off, 
 			(vir_bytes) iovec, batch * sizeof(iovec[0]), D);
 		if (r != OK)
-			panic("atl2", "vector copy failed", r);
+			panic("vector copy failed: %d", r);
 
 		/* Copy out each element in the batch, until we run out. */
 		for (j = 0, iovp = iovec; j < batch && left > 0; j++, iovp++) {
@@ -814,7 +814,7 @@ PRIVATE void atl2_readv(message *m, int from_int)
 			r = sys_safecopyto(m->DL_PROC, iovp->iov_grant, 0,
 				(vir_bytes) pos, size, D);
 			if (r != OK)
-				panic("atl2", "safe copy failed", r);
+				panic("safe copy failed: %d", r);
 
 			pos += size;
 			left -= size;
@@ -908,7 +908,7 @@ PRIVATE void atl2_writev(message *m, int from_int)
 		r = sys_safecopyfrom(m->DL_PROC, m->DL_GRANT, off, 
 			(vir_bytes) iovec, batch * sizeof(iovec[0]), D);
 		if (r != OK)
-			panic("atl2", "vector copy failed", r);
+			panic("vector copy failed: %d", r);
 
 		/* Copy in each element in the batch. */
 		for (j = 0, iovp = iovec; j < batch; j++, iovp++) {
@@ -924,7 +924,7 @@ PRIVATE void atl2_writev(message *m, int from_int)
 					(vir_bytes) (state.txd_base + pos),
 					skip, D);
 				if (r != OK)
-					panic("atl2", "safe copy failed", r);
+					panic("safe copy failed: %d", r);
 				pos = 0;
 			}
 
@@ -932,7 +932,7 @@ PRIVATE void atl2_writev(message *m, int from_int)
 				(vir_bytes) (state.txd_base + pos),
 				size - skip, D);
 			if (r != OK)
-				panic("atl2", "safe copy failed", r);
+				panic("safe copy failed: %d", r);
 
 			pos = (pos + size - skip) % ATL2_TXD_BUFSIZE;
 			left -= size;
@@ -1029,7 +1029,7 @@ PRIVATE void atl2_intr(message *m)
 	ATL2_WRITE_U32(ATL2_ISR_REG, 0);
 
 	if ((r = sys_irqenable(&state.hook_id)) != OK)
-		panic("atl2", "unable to enable IRQ", r);
+		panic("unable to enable IRQ: %d", r);
 
 	/* Attempt to satisfy pending write and read requests. */
 	if (try_write)
@@ -1135,7 +1135,7 @@ PRIVATE void atl2_shutdown(void)
 	atl2_stop();
 
 	if ((r = sys_irqrmpolicy(&state.hook_id)) != OK)
-		panic("atl2", "unable to deregister IRQ", r);
+		panic("unable to deregister IRQ: %d", r);
 
 	free_contig(state.txd_base, ATL2_TXD_BUFSIZE);
 	free_contig(state.txs_base, ATL2_TXS_COUNT * sizeof(u32_t));
@@ -1251,7 +1251,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	devind = atl2_probe(instance);
 
 	if (devind < 0)
-		panic("atl2", "no matching device found", NO_NUM);
+		panic("no matching device found");
 
 	/* Initialize the device. */
 	atl2_init(devind);
@@ -1310,7 +1310,7 @@ int main(int argc, char **argv)
 
 	while (TRUE) {
 		if ((r = sef_receive(ANY, &m)) != OK)
-			panic("atl2", "sef_receive failed", r);
+			panic("sef_receive failed: %d", r);
 
 		if (is_notify(m.m_type)) {
 			switch (m.m_source) {

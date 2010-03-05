@@ -73,17 +73,15 @@ PUBLIC int do_exec_newmem()
 		return EPERM;
 
 	proc_e= m_in.EXC_NM_PROC;
-	if (pm_isokendpt(proc_e, &proc_n) != OK)
-	{
-		panic(__FILE__, "do_exec_newmem: got bad endpoint",
-			proc_e);
+	if (pm_isokendpt(proc_e, &proc_n) != OK) {
+		panic("do_exec_newmem: got bad endpoint: %d", proc_e);
 	}
 	rmp= &mproc[proc_n];
 	ptr= m_in.EXC_NM_PTR;
 	r= sys_datacopy(who_e, (vir_bytes)ptr,
 		SELF, (vir_bytes)&args, sizeof(args));
 	if (r != OK)
-		panic(__FILE__, "do_exec_newmem: sys_datacopy failed", r);
+		panic("do_exec_newmem: sys_datacopy failed: %d", r);
 
 	if((r=vm_exec_newmem(proc_e, &args, sizeof(args), &stack_top, &flags)) == OK) {
 		allow_setuid= 0;                /* Do not allow setuid execution */  
@@ -127,10 +125,8 @@ PUBLIC int do_execrestart()
 		return EPERM;
 
 	proc_e= m_in.EXC_RS_PROC;
-	if (pm_isokendpt(proc_e, &proc_n) != OK)
-	{
-		panic(__FILE__, "do_execrestart: got bad endpoint",
-			proc_e);
+	if (pm_isokendpt(proc_e, &proc_n) != OK) {
+		panic("do_execrestart: got bad endpoint: %d", proc_e);
 	}
 	rmp= &mproc[proc_n];
 	result= m_in.EXC_RS_RESULT;
@@ -191,6 +187,6 @@ int result;
 	new_sp= (char *)rmp->mp_procargs;
 	pc= 0;	/* for now */
 	r= sys_exec(rmp->mp_endpoint, new_sp, rmp->mp_name, pc);
-	if (r != OK) panic(__FILE__, "sys_exec failed", r);
+	if (r != OK) panic("sys_exec failed: %d", r);
 }
 

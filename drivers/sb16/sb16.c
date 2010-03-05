@@ -27,7 +27,7 @@ int port;
 	unsigned long value;
 
 	if ((s=sys_inb(port, &value)) != OK)
-		panic("SB16DSP","sys_inb() failed", s);
+		panic("sys_inb() failed: %d", s);
 	
 	return value;
 }
@@ -43,5 +43,5 @@ int value;
 	int s;
 	
 	if ((s=sys_outb(port, value)) != OK)
-		panic("SB16DSP","sys_outb() failed", s);
+		panic("sys_outb() failed: %d", s);
 }

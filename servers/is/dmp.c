@@ -63,7 +63,7 @@ int map;
   else s = fkey_unmap(&fkeys, &sfkeys);
 
   if (s != OK)
-	report("IS", "warning, fkey_ctl failed:", s);
+	printf("IS: warning, fkey_ctl failed: %d\n", s);
 }
 
 /*===========================================================================*
@@ -82,7 +82,7 @@ message *m;					/* notification message */
   m->m_type = FKEY_CONTROL;
   m->FKEY_REQUEST = FKEY_EVENTS;
   if (OK != (s=sendrec(TTY_PROC_NR, m)))
-      report("IS", "warning, sendrec to TTY failed", s);
+      printf("IS: warning, sendrec to TTY failed: %d\n", s);
 
   /* Now check which keys were pressed: F1-F12, SF1-SF12. */
   for(h=0; h < NHOOKS; h++)

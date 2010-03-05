@@ -65,7 +65,7 @@ PUBLIC int main(void)
       who_e = m.m_source;
       who_p = _ENDPOINT_P(who_e);
       if(who_p < -NR_TASKS || who_p >= NR_PROCS)
-	panic("RS","message from bogus source", who_e);
+	panic("message from bogus source: %d", who_e);
 
       call_nr = m.m_type;
 
@@ -176,7 +176,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   rinit.rproctab_gid = cpf_grant_direct(ANY, (vir_bytes) rprocpub,
       sizeof(rprocpub), CPF_READ);
   if(!GRANT_VALID(rinit.rproctab_gid)) {
-      panic("RS", "unable to create rprocpub table grant", rinit.rproctab_gid);
+      panic("unable to create rprocpub table grant: %d", rinit.rproctab_gid);
   }
 
   /* Initialize the global update descriptor. */
@@ -184,7 +184,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   /* Get a copy of the boot image table. */
   if ((s = sys_getimage(image)) != OK) {
-      panic("RS", "unable to get copy of boot image table", s);
+      panic("unable to get copy of boot image table: %d", s);
   }
 
   /* Determine the number of system services in the boot image table and
@@ -210,7 +210,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
        */
       if(boot_image_sys->flags & SF_USE_COPY) {
           if((s = sys_getaoutheader(&header, i)) != OK) {
-              panic("RS", "unable to get copy of a.out header", s);
+              panic("unable to get copy of a.out header: %d", s);
           }
           boot_image_buffer_size += header.a_hdrlen
               + header.a_text + header.a_data;
@@ -231,15 +231,14 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       nr_image_priv_srvs++;
   }
   if(nr_image_srvs != nr_image_priv_srvs) {
-      panic("RS", "boot image table and boot image priv table mismatch",
-          NO_NUM);
+	panic("boot image table and boot image priv table mismatch");
   }
 
   /* Allocate boot image buffer. */
   if(boot_image_buffer_size > 0) {
       boot_image_buffer = rs_startup_sbrk(boot_image_buffer_size);
       if(boot_image_buffer == (char *) -1) {
-          panic("RS", "unable to allocate boot image buffer", NO_NUM);
+          panic("unable to allocate boot image buffer");
       }
   }
 
@@ -304,13 +303,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           /* Set the privilege structure. */
           if ((s = sys_privctl(ip->endpoint, SYS_PRIV_SET_SYS, &(rp->r_priv)))
               != OK) {
-              panic("RS", "unable to set privilege structure", s);
+              panic("unable to set privilege structure: %d", s);
           }
       }
 
       /* Synch the privilege structure with the kernel. */
       if ((s = sys_getpriv(&(rp->r_priv), ip->endpoint)) != OK) {
-          panic("RS", "unable to synch privilege structure", s);
+          panic("unable to synch privilege structure: %d", s);
       }
 
       /*
@@ -379,7 +378,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
       /* Allow the service to run. */
       if ((s = sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
-          panic("RS", "unable to initialize privileges", s);
+          panic("unable to initialize privileges: %d", s);
       }
 
       /* Initialize service. We assume every service will always get
@@ -387,7 +386,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
        */
       if(boot_image_priv->flags & SYS_PROC) {
           if ((s = init_service(rp, SEF_INIT_FRESH)) != OK) {
-              panic("RS", "unable to initialize service", s);
+              panic("unable to initialize service: %d", s);
           }
           if(rpub->sys_flags & SF_SYNCH_BOOT) {
               /* Catch init ready message now to synchronize. */
@@ -413,7 +412,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    * with other system processes.
    */
   if ((s = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) {
-      panic("RS", "unable to get copy of PM process table", s);
+      panic("unable to get copy of PM process table: %d", s);
   }
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
@@ -436,7 +435,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           }
       }
       if(j == NR_PROCS) {
-          panic("RS", "unable to get pid", NO_NUM);
+          panic("unable to get pid");
       }
   }
 
@@ -448,38 +447,38 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if(boot_image_buffer_size > 0) {
       boot_image_buffer = rs_startup_sbrk_synch(boot_image_buffer_size);
       if(boot_image_buffer == (char *) -1) {
-          panic("RS", "unable to synch boot image buffer", NO_NUM);
+          panic("unable to synch boot image buffer");
       }
   }
 
   /* Set alarm to periodically check service status. */
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
-      panic("RS", "couldn't set alarm", s);
+      panic("couldn't set alarm: %d", s);
 
   /* Install signal handlers. Ask PM to transform signal into message. */
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  if (sigaction(SIGCHLD,&sa,NULL)<0) panic("RS","sigaction failed", errno);
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("RS","sigaction failed", errno);
+  if (sigaction(SIGCHLD,&sa,NULL)<0) panic("sigaction failed: %d", errno);
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
 
   /* Initialize the exec pipe. */
   if (pipe(exec_pipe) == -1)
-	panic("RS", "pipe failed", errno);
+	panic("pipe failed: %d", errno);
   if (fcntl(exec_pipe[0], F_SETFD,
 	fcntl(exec_pipe[0], F_GETFD) | FD_CLOEXEC) == -1)
   {
-	panic("RS", "fcntl set FD_CLOEXEC on pipe input failed", errno);
+	panic("fcntl set FD_CLOEXEC on pipe input failed: %d", errno);
   }
   if (fcntl(exec_pipe[1], F_SETFD,
 	fcntl(exec_pipe[1], F_GETFD) | FD_CLOEXEC) == -1)
   {
-	panic("RS", "fcntl set FD_CLOEXEC on pipe output failed", errno);
+	panic("fcntl set FD_CLOEXEC on pipe output failed: %d", errno);
   }
   if (fcntl(exec_pipe[0], F_SETFL,
 	fcntl(exec_pipe[0], F_GETFL) | O_NONBLOCK) == -1)
   {
-	panic("RS", "fcntl set O_NONBLOCK on pipe input failed", errno);
+	panic("fcntl set O_NONBLOCK on pipe input failed: %d", errno);
   }
 
  /* Map out our own text and data. This is normally done in crtso.o
@@ -512,12 +511,11 @@ struct rproc *rp;
   if(boot_image_ptr == NULL) {
       boot_image_ptr = boot_image_buffer;
   }
-  s = NO_NUM;
 
   /* Get a.out header. */
   if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < sizeof(header)
       || (s = sys_getaoutheader(&header, boot_proc_idx)) != OK) {
-      panic("RS", "unable to get copy of a.out header", s);
+      panic("unable to get copy of a.out header: %d", s);
   }
   memcpy(boot_image_ptr, &header, header.a_hdrlen);
   boot_image_ptr += header.a_hdrlen;
@@ -526,7 +524,7 @@ struct rproc *rp;
   if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < header.a_text
       || (s = rs_startup_segcopy(ip->endpoint, T, D, (vir_bytes) boot_image_ptr,
       header.a_text)) != OK) {
-      panic("RS", "unable to get copy of text segment", s);
+      panic("unable to get copy of text segment: %d", s);
   }
   boot_image_ptr += header.a_text;
 
@@ -534,7 +532,7 @@ struct rproc *rp;
   if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < header.a_data
       || (s = rs_startup_segcopy(ip->endpoint, D, D, (vir_bytes) boot_image_ptr,
       header.a_data)) != OK) {
-      panic("RS", "unable to get copy of data segment", s);
+      panic("unable to get copy of data segment: %d", s);
   }
   boot_image_ptr += header.a_data;
 
@@ -568,7 +566,7 @@ struct boot_image_dev **dp;
           }
       }
       if(i == NR_BOOT_PROCS) {
-          panic("RS", "boot image table lookup failed", NO_NUM);
+          panic("boot image table lookup failed");
       }
   }
 
@@ -583,7 +581,7 @@ struct boot_image_dev **dp;
           }
       }
       if(i == NULL_BOOT_NR) {
-          panic("RS", "boot image priv table lookup failed", NO_NUM);
+          panic("boot image priv table lookup failed");
       }
   }
 
@@ -632,17 +630,17 @@ endpoint_t endpoint;
 
   /* Receive init ready message. */
   if ((r = receive(endpoint, &m)) != OK) {
-      panic("RS", "unable to receive init reply", r);
+      panic("unable to receive init reply: %d", r);
   }
   if(m.m_type != RS_INIT) {
-      panic("RS", "unexpected reply from service", m.m_source);
+      panic("unexpected reply from service: %d", m.m_source);
   }
   result = m.RS_INIT_RESULT;
   rp = rproc_ptr[_ENDPOINT_P(m.m_source)];
 
   /* Check result. */
   if(result != OK) {
-      panic("RS", "unable to complete init for service", m.m_source);
+      panic("unable to complete init for service: %d", m.m_source);
   }
 
   /* Mark the slot as no longer initializing. */
@@ -675,7 +673,7 @@ message *m_in;				/* pointer to message */
 {
     int s;				/* receive status */
     if (OK != (s=sef_receive(ANY, m_in))) 	/* wait for message */
-        panic("RS", "sef_receive failed", s);
+        panic("sef_receive failed: %d", s);
 }
 
 /*===========================================================================*

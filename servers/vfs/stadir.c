@@ -146,8 +146,7 @@ PUBLIC int do_fstat()
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
 	if (rfilp->filp_mode & R_BIT) 
 		if (ex64hi(rfilp->filp_pos) != 0) {
-			panic(__FILE__, "do_fstat: bad position in pipe",
-				NO_NUM);
+			panic("do_fstat: bad position in pipe");
 		}
 	pipe_pos = ex64lo(rfilp->filp_pos);
   }

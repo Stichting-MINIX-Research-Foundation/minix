@@ -48,22 +48,22 @@ PUBLIC void sef_startup()
   /* Intercept SEF Init requests. */
   if(sef_self_endpoint == RS_PROC_NR) {
       if((r = do_sef_rs_init()) != OK) {
-          panic("SEF", "unable to complete init", r);
+          panic("unable to complete init: %d", r);
       }
   }
   else {
       message m;
 
       if((r = receive(RS_PROC_NR, &m)) != OK) {
-          panic("SEF", "unable to receive from RS", r);
+          panic("unable to receive from RS: %d", r);
       }
       if(IS_SEF_INIT_REQUEST(&m)) {
           if((r = do_sef_init_request(&m)) != OK) {
-              panic("SEF", "unable to process init request", r);
+              panic("unable to process init request: %d", r);
           }
       }
       else {
-          panic("SEF", "unable to receive init request", NO_NUM);
+          panic("unable to receive init request");
       }
   }
 #endif

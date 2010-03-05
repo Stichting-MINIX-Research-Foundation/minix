@@ -210,8 +210,7 @@ check_misc_flags:
 
 #if DEBUG_SCHED_CHECK
 			if (proc_ptr->p_misc_flags & MF_SC_ACTIVE)
-				minix_panic("MF_SC_ACTIVE and MF_SC_DEFER set",
-					NO_NUM);
+				panic("MF_SC_ACTIVE and MF_SC_DEFER set");
 #endif
 
 			arch_do_syscall(proc_ptr);
@@ -311,7 +310,7 @@ long bit_map;			/* notification event set or flags */
 
 #if DEBUG_SCHED_CHECK
 	if (caller_ptr->p_misc_flags & MF_SC_ACTIVE)
-		minix_panic("MF_SC_ACTIVE already set", NO_NUM);
+		panic("MF_SC_ACTIVE already set");
 #endif
 
 	/* Set a flag to allow reliable tracing of leaving the system call. */
@@ -322,7 +321,7 @@ long bit_map;			/* notification event set or flags */
   if(caller_ptr->p_misc_flags & MF_DELIVERMSG) {
 	printf("sys_call: MF_DELIVERMSG on for %s / %d\n",
 		caller_ptr->p_name, caller_ptr->p_endpoint);
-	minix_panic("MF_DELIVERMSG on", NO_NUM);
+	panic("MF_DELIVERMSG on");
   }
 #endif
 
@@ -699,7 +698,7 @@ int flags;
 	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));	
 	    vmassert(src_e == ANY || hisep == src_e);
 	    if((r=QueueMess(hisep, vir2phys(&m), caller_ptr)) != OK)  {
-		minix_panic("mini_receive: local QueueMess failed", NO_NUM);
+		panic("mini_receive: local QueueMess failed");
 	    }
             return(OK);					/* report success */
         }
@@ -794,7 +793,7 @@ endpoint_t dst_e;			/* which process to notify */
       BuildNotifyMessage(&m, proc_nr(caller_ptr), dst_ptr);
       vmassert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));
       if((r=QueueMess(caller_ptr->p_endpoint, vir2phys(&m), dst_ptr)) != OK) {
-	minix_panic("mini_notify: local QueueMess failed", NO_NUM);
+	panic("mini_notify: local QueueMess failed");
       }
       RTS_UNSET(dst_ptr, RTS_RECEIVING);
       return(OK);
@@ -1165,7 +1164,7 @@ register struct proc *rp;	/* this process is now runnable */
   NOREC_ENTER(enqueuefunc);
 
 #if DEBUG_SCHED_CHECK
-  if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
+  if (rp->p_ready) panic("enqueue already ready process");
 #endif
 
   /* Determine where to insert to process. */
@@ -1224,7 +1223,7 @@ PRIVATE void enqueue_head(struct proc *rp)
   int q = rp->p_priority;	 		/* scheduling queue to use */
 
 #if DEBUG_SCHED_CHECK
-  if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
+  if (rp->p_ready) panic("enqueue already ready process");
 #endif
 
   /*
@@ -1271,12 +1270,12 @@ register struct proc *rp;	/* this process is no longer runnable */
   /* Side-effect for kernel: check if the task's stack still is ok? */
   if (iskernelp(rp)) { 				
 	if (*priv(rp)->s_stack_guard != STACK_GUARD)
-		minix_panic("stack overrun by task", proc_nr(rp));
+		panic("stack overrun by task: %d",  proc_nr(rp));
   }
 #endif
 
 #if DEBUG_SCHED_CHECK
-  if (! rp->p_ready) minix_panic("dequeue() already unready process", NO_NUM);
+  if (! rp->p_ready) panic("dequeue() already unready process");
 #endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
@@ -1466,7 +1465,7 @@ int *p, fatalflag;
 #endif
 	} else ok = 1;
 	if(!ok && fatalflag) {
-		minix_panic("invalid endpoint ", e);
+		panic("invalid endpoint: %d",  e);
 	}
 	return ok;
 }

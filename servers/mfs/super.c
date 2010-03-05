@@ -40,7 +40,7 @@ bit_t origin;			/* number of bit to start searching at */
   bit_t i, b;
 
   if (sp->s_rd_only)
-	panic(__FILE__,"can't allocate bit on read-only filesys.", NO_NUM);
+	panic("can't allocate bit on read-only filesys");
 
   if (map == IMAP) {
 	start_block = START_BLOCK;
@@ -113,7 +113,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   block_t start_block;
 
   if (sp->s_rd_only)
-	panic(__FILE__,"can't free bit on read-only filesys.", NO_NUM);
+	panic("can't free bit on read-only filesys");
 
   if (map == IMAP) {
 	start_block = START_BLOCK;
@@ -131,8 +131,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 
   k = conv2(sp->s_native, (int) bp->b_bitmap[word]);
   if (!(k & mask)) {
-	panic(__FILE__,map == IMAP ? "tried to free unused inode" :
-	      "tried to free unused block", bit_returned);
+	panic(map == IMAP ? "tried to free unused inode" : "tried to free unused block: %d", bit_returned);
   }
 
   k &= ~mask;
@@ -150,10 +149,10 @@ PUBLIC struct super_block *get_super(dev)
 dev_t dev;			/* device number whose super_block is sought */
 {
   if (dev == NO_DEV)
-  	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
+  	panic("request for super_block of NO_DEV");
 
   if(superblock.s_dev != dev)
-  	panic(__FILE__,"wrong superblock", (int) dev);
+  	panic("wrong superblock: %d", (int) dev);
 
   return(&superblock);
 }
@@ -165,7 +164,7 @@ dev_t dev;			/* device number whose super_block is sought */
 PUBLIC int get_block_size(dev_t dev)
 {
   if (dev == NO_DEV)
-  	panic(__FILE__,"request for block size of NO_DEV", NO_NUM);
+  	panic("request for block size of NO_DEV");
 
   return(fs_block_size);
 
@@ -189,7 +188,7 @@ register struct super_block *sp; /* pointer to a superblock */
 
   dev = sp->s_dev;		/* save device (will be overwritten by copy) */
   if (dev == NO_DEV)
-  	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
+  	panic("request for super_block of NO_DEV");
   
   r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
   	sbbuf, cvu64(SUPER_BLOCK_BYTES), _MIN_BLOCK_SIZE, 0);

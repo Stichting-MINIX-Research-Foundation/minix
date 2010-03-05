@@ -24,9 +24,7 @@ endpoint_t proc_ep;
 		r= ds_retrieve_label_num("pci", &u32);
 		if (r != 0)
 		{
-			panic("syslib/" __FILE__,
-				"pci_del_acl: _pm_findproc failed for 'pci'",
-				r);
+			panic("pci_del_acl: _pm_findproc failed for 'pci': %d", r);
 		}
 		pci_procnr = u32;
 	}
@@ -37,7 +35,7 @@ endpoint_t proc_ep;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_del_acl: can't talk to PCI", r);
+		panic("pci_del_acl: can't talk to PCI: %d", r);
 
 	return m.m_type;
 }

@@ -73,7 +73,7 @@ int count;
 	printf("random_update: got %d samples for source %d\n", count, source);
 #endif
 	if (source < 0 || source >= TOTAL_SOURCES)
-		panic("memory", "random_update: bad source", source);
+		panic("random_update: bad source: %d", source);
 	for (i= 0; i<count; i++)
 		add_sample(source, buf[i]);
 	reseed();

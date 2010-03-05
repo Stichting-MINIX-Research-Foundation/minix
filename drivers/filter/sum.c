@@ -28,7 +28,7 @@ void sum_init(void)
 	rb1_array = flt_malloc(SBUF_SIZE, NULL, 0);
 
 	if (ext_array == NULL || rb0_array == NULL || rb1_array == NULL)
-		panic(__FILE__, "no memory available", NO_NUM);
+		panic("no memory available");
 }
 
 /*===========================================================================*
@@ -92,7 +92,7 @@ static void calc_sum(unsigned sector, char *data, char *sum)
 		break;
 
 	default:
-		panic(__FILE__, "invalid checksum type", SUM_TYPE);
+		panic("invalid checksum type: %d", SUM_TYPE);
 	}
 }
 
@@ -252,12 +252,12 @@ static int make_sum(sector_t current_sector, sector_t sectors_left)
 		size = sectors_left * SECTOR_SIZE;
 
 		if (group_left != NR_SUM_SEC - sector_in_group)
-			panic(__FILE__, "group_left assertion", 0);
+			panic("group_left assertion: %d", 0);
 
 		gap = group_left - sectors_left;
 
 		if (gap <= 0)
-			panic(__FILE__, "gap assertion", 0);
+			panic("gap assertion: %d", 0);
 
 		if ((r = read_sectors(extp + size,
 				LOG2PHYS(current_sector) + sectors_left,

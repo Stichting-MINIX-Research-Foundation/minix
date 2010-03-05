@@ -259,7 +259,7 @@ message *m;
 		if (kbdp->offset + n > KBD_BUFSZ)
 			n= KBD_BUFSZ-kbdp->offset;
 		if (n <= 0)
-			panic("TTY", "do_kbd(READ): bad n", n);
+			panic("do_kbd(READ): bad n: %d", n);
 		if(safecopy) {
 		  r= sys_safecopyto(m->IO_ENDPT, (vir_bytes) m->ADDRESS, 0, 
 			(vir_bytes) &kbdp->buf[kbdp->offset], n, D);
@@ -427,7 +427,7 @@ message *m;
 		if (kbdp->offset + n > KBD_BUFSZ)
 			n= KBD_BUFSZ-kbdp->offset;
 		if (n <= 0)
-			panic("TTY", "kbd_status: bad n", n);
+			panic("kbd_status: bad n: %d", n);
 		kbdp->req_size= 0;
 		if(kbdp->req_safe) {
 		  r= sys_safecopyto(kbdp->req_proc, kbdp->req_addr_g, 0,
@@ -519,7 +519,7 @@ message *m_ptr;
 
   if (isaux)
 	kbdp= &kbdaux;
-  else if (kbd.nr_open && !panicing)
+  else if (kbd.nr_open)
 	kbdp= &kbd;
   else
 	kbdp= NULL;
@@ -707,13 +707,13 @@ PRIVATE void kbd_send()
 		 * alarm.
 		 */
 		if ((r= getuptime(&now)) != OK)
-			panic("TTY","Keyboard couldn't get clock's uptime.", r);
+			panic("Keyboard couldn't get clock's uptime: %d", r);
 		tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+system_hz, kbd_watchdog,
 			NULL);
 		if (tty_timers->tmr_exp_time != tty_next_timeout) {
 			tty_next_timeout = tty_timers->tmr_exp_time;
 			if ((r= sys_setalarm(tty_next_timeout, 1)) != OK)
-				panic("TTY","Keyboard couldn't set alarm.", r);
+				panic("Keyboard couldn't set alarm: %d", r);
 		}
 		kbd_watchdog_set= 1;
 	 }
@@ -919,7 +919,7 @@ PRIVATE int kbc_read()
 #if 0
 	while (micro_elapsed(&ms) < 1000000);
 #endif
-	panic("TTY", "kbc_read failed to complete", NO_NUM);
+	panic("kbc_read failed to complete");
 	return EINVAL;
 }
 
@@ -1017,18 +1017,18 @@ PUBLIC void kb_init_once(void)
       /* Set interrupt handler and enable keyboard IRQ. */
       irq_hook_id = KEYBOARD_IRQ;	/* id to be returned on interrupt */
       if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
-          panic("TTY",  "Couldn't set keyboard IRQ policy", i);
+          panic("Couldn't set keyboard IRQ policy: %d", i);
       if ((i=sys_irqenable(&irq_hook_id)) != OK)
-          panic("TTY", "Couldn't enable keyboard IRQs", i);
+          panic("Couldn't enable keyboard IRQs: %d", i);
       kbd_irq_set |= (1 << KEYBOARD_IRQ);
 
       /* Set AUX interrupt handler and enable AUX IRQ. */
       aux_irq_hook_id = KBD_AUX_IRQ;	/* id to be returned on interrupt */
       if ((i=sys_irqsetpolicy(KBD_AUX_IRQ, IRQ_REENABLE,
 		&aux_irq_hook_id)) != OK)
-          panic("TTY",  "Couldn't set AUX IRQ policy", i);
+          panic("Couldn't set AUX IRQ policy: %d", i);
       if ((i=sys_irqenable(&aux_irq_hook_id)) != OK)
-          panic("TTY", "Couldn't enable AUX IRQs", i);
+          panic("Couldn't enable AUX IRQs: %d", i);
       kbd_irq_set |= (1 << KBD_AUX_IRQ);
 
 	/* Disable the keyboard and aux */
@@ -1319,13 +1319,13 @@ timer_t *tmrp;
 	kbd_alive= 0;
 
 	if ((r= getuptime(&now)) != OK)
-		panic("TTY","Keyboard couldn't get clock's uptime.", r);
+		panic("Keyboard couldn't get clock's uptime: %d", r);
 	tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+system_hz, kbd_watchdog,
 		NULL);
 	if (tty_timers->tmr_exp_time != tty_next_timeout) {
 		tty_next_timeout = tty_timers->tmr_exp_time;
 		if ((r= sys_setalarm(tty_next_timeout, 1)) != OK)
-			panic("TTY","Keyboard couldn't set alarm.", r);
+			panic("Keyboard couldn't set alarm: %d", r);
 	}
 	kbd_watchdog_set= 1;
 }

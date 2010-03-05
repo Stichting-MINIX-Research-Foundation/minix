@@ -12,7 +12,7 @@
 	if(!check_vrefs() || !check_pipe()) {				\
 	   printf("VFS:%s:%d: call_nr %d who_e %d\n", \
 			__FILE__, __LINE__, call_nr, who_e); 	\
-	   panic(__FILE__, "sanity check failed", NO_NUM);	\
+	   panic("sanity check failed");	\
 	}							\
 } while(0)
 #else

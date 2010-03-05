@@ -229,15 +229,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    * reported, but it must be corrected for the kernel and system processes.
    */
   if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
-      panic(__FILE__,"get monitor params failed",s);
+      panic("get monitor params failed: %d", s);
   if ((s=sys_getkinfo(&kinfo)) != OK)
-      panic(__FILE__,"get kernel info failed",s);
+      panic("get kernel info failed: %d", s);
 
   /* Initialize PM's process table. Request a copy of the system image table 
    * that is defined at the kernel level to see which slots to fill in.
    */
   if (OK != (s=sys_getimage(image))) 
-  	panic(__FILE__,"couldn't get image table: %d\n", s);
+  	panic("couldn't get image table: %d", s);
   procs_in_use = 0;				/* start populating table */
   for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
@@ -285,7 +285,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		mess.PM_PID = rmp->mp_pid;
 		mess.PM_PROC = rmp->mp_endpoint;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
-			panic(__FILE__,"can't sync up with FS", s);
+			panic("can't sync up with FS: %d", s);
   	}
   }
 
@@ -295,7 +295,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_ENDPT = NONE;
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
-	panic(__FILE__,"can't sync up with FS", NO_NUM);
+	panic("can't sync up with FS");
 
 #if (CHIP == INTEL)
         uts_val.machine[0] = 'i';
@@ -325,10 +325,10 @@ PRIVATE void get_work()
 {
 /* Wait for the next message and extract useful information from it. */
   if (sef_receive(ANY, &m_in) != OK)
-	panic(__FILE__,"PM sef_receive error", NO_NUM);
+	panic("PM sef_receive error");
   who_e = m_in.m_source;	/* who sent the message */
   if(pm_isokendpt(who_e, &who_p) != OK)
-	panic(__FILE__, "PM got message from invalid endpoint", who_e);
+	panic("PM got message from invalid endpoint: %d", who_e);
   call_nr = m_in.m_type;	/* system call number */
 
   /* Process slot of caller. Misuse PM's own process slot if the kernel is
@@ -337,8 +337,7 @@ PRIVATE void get_work()
    */
   mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
   if(who_p >= 0 && mp->mp_endpoint != who_e) {
-	panic(__FILE__, "PM endpoint number out of sync with source",
-		mp->mp_endpoint);
+	panic("PM endpoint number out of sync with source: %d", mp->mp_endpoint);
   }
 }
 
@@ -356,7 +355,7 @@ int result;			/* result of call (usually OK or error #) */
   register struct mproc *rmp = &mproc[proc_nr];
 
   if(proc_nr < 0 || proc_nr >= NR_PROCS)
-      panic(__FILE__,"setreply arg out of range", proc_nr);
+      panic("setreply arg out of range: %d", proc_nr);
 
   rmp->mp_reply.reply_res = result;
   rmp->mp_flags |= REPLY;	/* reply pending */
@@ -395,7 +394,7 @@ void checkme(char *str, int line)
 			   boned=1;
 			}
 		}
-		if(boned) panic(__FILE__, "corrupt mp_endpoint?", NO_NUM);
+		if(boned) panic("corrupt mp_endpoint?");
 	}
 }
 
@@ -430,19 +429,19 @@ PRIVATE void handle_fs_reply()
   proc_e = m_in.PM_PROC;
 
   if (pm_isokendpt(proc_e, &proc_n) != OK) {
-	panic(__FILE__, "handle_fs_reply: got bad endpoint from FS", proc_e);
+	panic("handle_fs_reply: got bad endpoint from FS: %d", proc_e);
   }
 
   rmp = &mproc[proc_n];
 
   /* Now that FS replied, mark the process as FS-idle again */
   if (!(rmp->mp_flags & FS_CALL))
-	panic(__FILE__, "handle_fs_reply: reply without request", call_nr);
+	panic("handle_fs_reply: reply without request: %d", call_nr);
 
   rmp->mp_flags &= ~FS_CALL;
 
   if (rmp->mp_flags & UNPAUSED)
-  	panic(__FILE__, "handle_fs_reply: UNPAUSED set on entry", call_nr);
+  	panic("handle_fs_reply: UNPAUSED set on entry: %d", call_nr);
 
   /* Call-specific handler code */
   switch (call_nr) {
@@ -499,7 +498,7 @@ PRIVATE void handle_fs_reply()
 	break;
 
   default:
-	panic(__FILE__, "handle_fs_reply: unknown reply code", call_nr);
+	panic("handle_fs_reply: unknown reply code: %d", call_nr);
   }
 
   /* Now that the process is idle again, look at pending signals */

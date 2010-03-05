@@ -51,7 +51,7 @@ PRIVATE char *map_name(struct vir_region *vr)
 		case VR_DIRECT:
 			return "direct";
 		default:
-			vm_panic("unknown mapping type", type);
+			panic("unknown mapping type: %d", type);
 	}
 
 	return "NOTREACHED";
@@ -455,7 +455,7 @@ PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 		} else if(region->flags & VR_DIRECT) {
 			; /* No action required. */
 		} else {
-			vm_panic("strange phys flags", NO_NUM);
+			panic("strange phys flags");
 		}
 		SLABFREE(pb);
 	}
@@ -588,7 +588,7 @@ vir_bytes offset;
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	if(!vmp->vm_regions)
-		vm_panic("process has no regions", vmp->vm_endpoint);
+		panic("process has no regions: %d", vmp->vm_endpoint);
 
 	for(r = vmp->vm_regions; r; r = r->next) {
 		if(offset >= r->vaddr && offset < r->vaddr + r->length)
@@ -758,7 +758,7 @@ USE(newpb,
 	 */
 	r = map_ph_writept(vmp, region, ph);
 	if(r != OK)
-		vm_panic("map_copy_ph_block: map_ph_writept failed", r);
+		panic("map_copy_ph_block: map_ph_writept failed: %d", r);
 
 	return OK;
 }
@@ -825,7 +825,7 @@ int write;
 
 #if SANITYCHECKS
 	if(OK != pt_checkrange(&vmp->vm_pt, region->vaddr+offset, VM_PAGE_SIZE, write)) {
-		vm_panic("map_pf: pt_checkrange failed", r);
+		panic("map_pf: pt_checkrange failed: %d", r);
 	}
 #endif	
 
@@ -885,8 +885,8 @@ int write;
 #define RESET_ITER(it, where, what) {	\
 	physr_start_iter(region->phys, &it, where, AVL_EQUAL);	\
 	what = physr_get_iter(&it); \
-	if(!what)  vm_panic("thing missing", NO_NUM); \
-	if(what->offset != where) vm_panic("thing wrong", NO_NUM);	\
+	if(!what)  panic("thing missing"); \
+	if(what->offset != where) panic("thing wrong");	\
 }
 
 	FREE_RANGE_HERE(NULL, physr);
@@ -960,7 +960,7 @@ int write;
 		printf("handle mem %s-", arch_map2str(vmp, region->vaddr+offset));
 		printf("%s failed\n", arch_map2str(vmp, region->vaddr+offset+length));
 		map_printregion(vmp, region);
-		vm_panic("checkrange failed", NO_NUM);
+		panic("checkrange failed");
 	}
 #endif
 
@@ -1269,7 +1269,7 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *region,
 	SANITYCHECK(SCL_DETAIL);
 
 	if(r == NULL)
-		vm_panic("map_unmap_region: region not found\n", NO_NUM);
+		panic("map_unmap_region: region not found");
 
 	if(len > r->length || (len % VM_PAGE_SIZE)) {
 		printf("VM: bogus length 0x%lx\n", len);
@@ -1388,7 +1388,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 		struct phys_block *pb = ph->ph;
 		USE(pb, pb->refcount++;);
 		if(map_ph_writept(dvmp, vr, ph) != OK) {
-			vm_panic("map_remap: map_ph_writept failed", NO_NUM);
+			panic("map_remap: map_ph_writept failed");
 		}
 
 		physr_incr_iter(&iter);

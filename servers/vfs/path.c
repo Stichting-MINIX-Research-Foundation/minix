@@ -69,7 +69,7 @@ int flags;
   new_vp->v_sdev = res.dev;
   
   if( (vmp = find_vmnt(new_vp->v_fs_e)) == NIL_VMNT)
-	  panic(__FILE__, "VFS advance: vmnt not found", NO_NUM);
+	  panic("VFS advance: vmnt not found");
 
   new_vp->v_vmnt = vmp; 
   new_vp->v_dev = vmp->m_dev;
@@ -248,17 +248,14 @@ node_details_t *node;
 		}
 
 		if (!dir_vp) {
-			panic(__FILE__,
-			      "VFS lookup: can't find mounted partition",
-			      NO_NUM);
+			panic("VFS lookup: can't find mounted partition");
 		}
 	} else {
 		/* Climbing up mount */
 		/* Find the vmnt that represents the partition on
 		 * which we "climb up". */
 		if ((vmp = find_vmnt(res.fs_e)) == NIL_VMNT) {
-			panic(__FILE__,
-			      "VFS lookup: can't find parent vmnt",NO_NUM);
+			panic("VFS lookup: can't find parent vmnt");
 		}	  
 
 		/* Make sure that the child FS does not feed a bogus path

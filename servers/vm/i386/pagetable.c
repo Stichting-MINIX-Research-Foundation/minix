@@ -107,7 +107,7 @@ PUBLIC void pt_sanitycheck(pt_t *pt, char *file, int line)
 	}
 
 	if(slot >= ELEMENTS(vmproc)) {
-		vm_panic("pt_sanitycheck: passed pt not in any proc", NO_NUM);
+		panic("pt_sanitycheck: passed pt not in any proc");
 	}
 
 	MYASSERT(usedpages_add(pt->pt_dir_phys, I386_PAGE_SIZE) == OK);
@@ -137,7 +137,7 @@ PRIVATE void *aalloc(size_t bytes)
 	u32_t b;
 
 	b = (u32_t) malloc(I386_PAGE_SIZE + bytes);
-	if(!b) vm_panic("aalloc: out of memory", bytes);
+	if(!b) panic("aalloc: out of memory: %d", bytes);
 	b += I386_PAGE_SIZE - (b % I386_PAGE_SIZE);
 
 	return (void *) b;
@@ -214,8 +214,7 @@ PRIVATE void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 		FREE_MEM(ABS2CLICK(phys), pages);
 		if(pt_writemap(&vmp->vm_pt, arch_vir2map(vmp, vir),
 			MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
-				vm_panic("vm_freepages: pt_writemap failed",
-					NO_NUM);
+			panic("vm_freepages: pt_writemap failed");
 	} else {
 		printf("VM: vm_freepages not freeing VM heap pages (%d)\n",
 			pages);
@@ -334,7 +333,7 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 	}
 
 	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-		vm_panic("VMCTL_FLUSHTLB failed", r);
+		panic("VMCTL_FLUSHTLB failed: %d", r);
 	}
 
 	level--;
@@ -367,11 +366,11 @@ PUBLIC void vm_pagelock(void *vir, int lockflag)
 	/* Update flags. */
 	if((r=pt_writemap(pt, m, 0, I386_PAGE_SIZE,
 		flags, WMF_OVERWRITE | WMF_WRITEFLAGSONLY)) != OK) {
-		vm_panic("vm_lockpage: pt_writemap failed\n", NO_NUM);
+		panic("vm_lockpage: pt_writemap failed");
 	}
 
 	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-		vm_panic("VMCTL_FLUSHTLB failed", r);
+		panic("VMCTL_FLUSHTLB failed: %d", r);
 	}
 
 	return;
@@ -439,10 +438,10 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 	 */
 #if SANITYCHECKS
 	if(physaddr != MAP_NONE && !(flags & I386_VM_PRESENT)) {
-		vm_panic("pt_writemap: writing dir with !P\n", NO_NUM);
+		panic("pt_writemap: writing dir with !P");
 	}
 	if(physaddr == MAP_NONE && flags) {
-		vm_panic("pt_writemap: writing 0 with flags\n", NO_NUM);
+		panic("pt_writemap: writing 0 with flags");
 	}
 #endif
 
@@ -458,7 +457,7 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 		if(pt->pt_dir[pdecheck] & I386_VM_BIGPAGE) {
 			printf("pt_writemap: trying to write 0x%lx into 0x%lx\n",
 				physaddr, v);
-                        vm_panic("pt_writemap: BIGPAGE found", NO_NUM);
+                        panic("pt_writemap: BIGPAGE found");
 		}
 		if(!(pt->pt_dir[pdecheck] & I386_VM_PRESENT)) {
 			int r;
@@ -615,7 +614,7 @@ PUBLIC int pt_new(pt_t *pt)
 
         /* Map in kernel. */
         if(pt_mapkernel(pt) != OK)
-                vm_panic("pt_new: pt_mapkernel failed", NO_NUM);
+                panic("pt_new: pt_mapkernel failed");
 
 	return OK;
 }
@@ -680,10 +679,10 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 
         /* Get ourselves spare pages. */
         if(!(sparepages_mem = (vir_bytes) aalloc(I386_PAGE_SIZE*SPAREPAGES)))
-		vm_panic("pt_init: aalloc for spare failed", NO_NUM);
+		panic("pt_init: aalloc for spare failed");
         if((r=sys_umap(SELF, VM_D, (vir_bytes) sparepages_mem,
                 I386_PAGE_SIZE*SPAREPAGES, &sparepages_ph)) != OK)
-                vm_panic("pt_init: sys_umap failed", r);
+                panic("pt_init: sys_umap failed: %d", r);
 
         for(s = 0; s < SPAREPAGES; s++) {
         	sparepages[s].page = (void *) (sparepages_mem + s*I386_PAGE_SIZE);
@@ -728,7 +727,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
          * from the current one.
          */     
         if(pt_new(newpt) != OK)
-                vm_panic("pt_init: pt_new failed", NO_NUM); 
+                panic("pt_init: pt_new failed"); 
 
         /* Set up mappings for VM process. */
         for(v = lo; v < hi; v += I386_PAGE_SIZE)  {
@@ -740,7 +739,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
                  */ 
                 if(pt_writemap(newpt, v+moveup, v, I386_PAGE_SIZE,
                         I386_VM_PRESENT|I386_VM_WRITE|I386_VM_USER, 0) != OK)
-                        vm_panic("pt_init: pt_writemap failed", NO_NUM);
+                        panic("pt_init: pt_writemap failed");
         }
        
         /* Move segments up too. */
@@ -753,7 +752,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	 */
 	if(!(page_directories = vm_allocpage(&page_directories_phys,
 		VMP_PAGETABLE)))
-                vm_panic("no virt addr for vm mappings", NO_NUM);
+                panic("no virt addr for vm mappings");
 
 	memset(page_directories, 0, I386_PAGE_SIZE);
        
@@ -793,7 +792,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 			&flags) == OK)  {
 			vir_bytes vir;
 			if(index >= MAX_KERNMAPPINGS)
-                		vm_panic("VM: too many kernel mappings", index);
+                		panic("VM: too many kernel mappings: %d", index);
 			kern_mappings[index].phys_addr = addr;
 			kern_mappings[index].len = len;
 			kern_mappings[index].flags = flags;
@@ -805,12 +804,12 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 				kern_mappings[index].flags |=
 					I386_VM_PWT | I386_VM_PCD;
 			if(addr % I386_PAGE_SIZE)
-                		vm_panic("VM: addr unaligned", addr);
+                		panic("VM: addr unaligned: %d", addr);
 			if(len % I386_PAGE_SIZE)
-                		vm_panic("VM: len unaligned", len);
+                		panic("VM: len unaligned: %d", len);
 			vir = arch_map2vir(&vmproc[VMP_SYSTEM], offset);
 			if(sys_vmctl_reply_mapping(index, vir) != OK)
-                		vm_panic("VM: reply failed", NO_NUM);
+                		panic("VM: reply failed");
 			offset += len;
 			index++;
 			kernmappings++;
@@ -827,7 +826,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	/* Tell kernel about free pde's. */
 	while(free_pde*I386_BIG_PAGE_SIZE < VM_PROCSTART) {
 		if((r=sys_vmctl(SELF, VMCTL_I386_FREEPDE, free_pde++)) != OK) {
-			vm_panic("VMCTL_I386_FREEPDE failed", r);
+			panic("VMCTL_I386_FREEPDE failed: %d", r);
 		}
 	}
 
@@ -838,7 +837,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 
 	/* Increase kernel segment to address this memory. */
 	if((r=sys_vmctl(SELF, VMCTL_I386_KERNELLIMIT, kernlimit)) != OK) {
-                vm_panic("VMCTL_I386_KERNELLIMIT failed", r);
+                panic("VMCTL_I386_KERNELLIMIT failed: %d", r);
 	}
 
 	kpagedir = arch_map2vir(&vmproc[VMP_SYSTEM],
@@ -846,7 +845,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 
 	/* Tell kernel how to get at the page directories. */
 	if((r=sys_vmctl(SELF, VMCTL_I386_PAGEDIRS, kpagedir)) != OK) {
-                vm_panic("VMCTL_I386_PAGEDIRS failed", r);
+                panic("VMCTL_I386_PAGEDIRS failed: %d", r);
 	}
        
         /* Give our process the new, copied, private page table. */
@@ -855,7 +854,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
        
 	/* Now actually enable paging. */
 	if(sys_vmctl_enable_paging(vmp->vm_arch.vm_seg) != OK)
-        	vm_panic("pt_init: enable paging failed", NO_NUM);
+        	panic("pt_init: enable paging failed");
 
         /* Back to reality - this is where the stack actually is. */
         vmp->vm_arch.vm_seg[S].mem_len -= extra_clicks;
@@ -934,7 +933,7 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 				I386_VM_WRITE | global_bit;
 		}
 	} else {
-		vm_panic("VM: pt_mapkernel: no bigpage", NO_NUM);
+		panic("VM: pt_mapkernel: no bigpage");
 	}
 
 	if(pagedir_pde >= 0) {
@@ -948,7 +947,7 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 			kern_mappings[i].phys_addr,
 			kern_mappings[i].len,
 			kern_mappings[i].flags, 0) != OK) {
-			vm_panic("pt_mapkernel: pt_writemap failed", NO_NUM);
+			panic("pt_mapkernel: pt_writemap failed");
 		}
 	}
 

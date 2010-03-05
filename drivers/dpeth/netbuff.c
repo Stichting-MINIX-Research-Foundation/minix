@@ -123,7 +123,7 @@ PUBLIC void mem2user(dpeth_t *dep, buff_t *rxbuff)
 	r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
 		(vir_bytes)buffer, bytes, D);
 	if (r != OK)
-		panic(__FILE__, "mem2user: sys_safecopyto failed", r);
+		panic("mem2user: sys_safecopyto failed: %d", r);
 	buffer += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -153,7 +153,7 @@ PUBLIC void user2mem(dpeth_t *dep, buff_t *txbuff)
 	r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
 		0, (vir_bytes)buffer, bytes, D);
 	if (r != OK)
-		panic(__FILE__, "user2mem: sys_safecopyfrom failed", r);
+		panic("user2mem: sys_safecopyfrom failed: %d", r);
 	buffer += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */

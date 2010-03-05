@@ -47,7 +47,7 @@ PUBLIC int do_sysctl(struct proc * caller, message * m_ptr)
         return(EINVAL);
   }
 
-  minix_panic("do_sysctl: can't happen", NO_NUM);
+  panic("do_sysctl: can't happen");
 
   return(OK);
 }

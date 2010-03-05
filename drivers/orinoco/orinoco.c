@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
 
 	while (TRUE) {
 		if ((r = sef_receive (ANY, &m)) != OK)
-			panic(__FILE__, "orinoco: sef_receive failed", NO_NUM);
+			panic("orinoco: sef_receive failed");
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
@@ -275,8 +275,7 @@ int main(int argc, char *argv[]) {
 					break;
 				}
 				default:
-					panic(__FILE__,
-						"orinoco: illegal notify from:",
+					panic("orinoco: illegal notify from: %d",
 						m.m_source);
 			}
 
@@ -316,7 +315,7 @@ int main(int argc, char *argv[]) {
 			or_getname(&m);
 			break;
 		default:
-			panic(__FILE__,"orinoco: illegal message:", m.m_type);
+			panic("orinoco: illegal message: %d", m.m_type);
 		}
 	}
 }
@@ -406,7 +405,7 @@ static void or_getname(message *mp) {
 
 	r = send(mp->m_source, mp);
 	if(r != OK) {
-		panic(__FILE__, "or_getname: send failed", r);
+		panic("or_getname: send failed: %d", r);
 	}
 }
 
@@ -465,7 +464,7 @@ static void or_reset() {
 	u16_t irqmask;
 
 	if (OK != (r = getuptime(&now)))
-		panic(__FILE__, "orinoco: getuptime() failed:", r);
+		panic("orinoco: getuptime() failed: %d", r);
 
 	if(now - last_reset < system_hz * 10) {
 		printf("Resetting card too often. Going to reset driver\n");
@@ -706,8 +705,7 @@ static int or_probe (t_or * orp) {
 			if (pcitab[i].did != did)
 				continue;
 			if (pcitab[i].checkclass) {
-                           panic(__FILE__, "or_probe:class check not implmnted", 
-                                 NO_NUM);
+				panic("or_probe:class check not implmnted");
 			}
 			/* we have found the card in the pci bus */
 			break;
@@ -769,7 +767,7 @@ static void map_hw_buffer(t_or *orp) {
 
 	buf = (char *)malloc(size);
 	if(buf == NULL) 
-		panic(__FILE__, "map_hw_buffer: cannot malloc size:", size);
+		panic("map_hw_buffer: cannot malloc size: %d", size);
 
 	/* Let the mapped memory by I386_PAGE_SIZE aligned */
 	o = I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
@@ -783,7 +781,7 @@ static void map_hw_buffer(t_or *orp) {
 #endif
 
 	if(r!=OK) 
-		panic(__FILE__, "map_hw_buffer: sys_vm_map failed:", r);
+		panic("map_hw_buffer: sys_vm_map failed: %d", r);
 
 
 	hw->locmem = abuf;
@@ -814,8 +812,7 @@ static u32_t or_get_bar (int devind, t_or * orp) {
 		bar = pci_attr_r32 (devind, PCI_BAR) & 0xffffffe0;
 
 		if ((bar & 0x3ff) >= 0x100 - 32 || bar < 0x400)
-			panic(__FILE__,"base address isn't properly configured",
-                              NO_NUM);
+			panic("base address isn't properly configured");
 
 		/* In I/O space registers are 2 bytes wide, without any spacing
 		 * in between */
@@ -827,7 +824,7 @@ static u32_t or_get_bar (int devind, t_or * orp) {
 				orp->or_name, bar, orp->or_irq);
 		}
 
-		panic(__FILE__, "Not implemente yet", NO_NUM);
+		panic("Not implemente yet");
 		/* Although we are able to find the desired bar and irq for an 
 		 * I/O spaced card, we haven't implemented the right register 
  		 * accessing functions. This wouldn't be difficult, but we were
@@ -1347,7 +1344,7 @@ static void or_watchdog_f(timer_t *tp) {
 
 static void mess_reply (message * req, message * reply_mess) {
 	if (send (req->m_source, reply_mess) != 0)
-		panic(__FILE__, "orinoco: unable to mess_reply", NO_NUM);
+		panic("orinoco: unable to mess_reply");
 
 }
 
@@ -1379,7 +1376,7 @@ static void or_writev (message * mp, int from_int, int vectored) {
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= OR_PORT_NR)
-		panic(__FILE__, "orinoco: illegal port", NO_NUM);
+		panic("orinoco: illegal port");
 	
 	or_client = mp->DL_PROC;
 	orp = &or_table[port];
@@ -1555,7 +1552,7 @@ static void or_writev_s (message * mp, int from_int) {
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= OR_PORT_NR)
-		panic(__FILE__, "orinoco: illegal port", NO_NUM);
+		panic("orinoco: illegal port");
 
 	or_client = mp->DL_PROC;
 	orp = &or_table[port];
@@ -1745,7 +1742,7 @@ static void reply (t_or * orp, int err, int may_block) {
 	reply.DL_COUNT = orp->or_read_s;
 
 	if (OK != (r = getuptime(&now)))
-		panic(__FILE__, "orinoco: getuptime() failed:", r);
+		panic("orinoco: getuptime() failed: %d", r);
 
 	reply.DL_CLCK = now;
 	r = send (orp->or_client, &reply);
@@ -1755,7 +1752,7 @@ static void reply (t_or * orp, int err, int may_block) {
 	}
 
 	if (r < 0)
-		panic(__FILE__, "orinoco: send failed:", r);
+		panic("orinoco: send failed: %d", r);
 
 	orp->or_read_s = 0;
 	orp->or_flags &= ~(OR_F_PACK_SENT | OR_F_PACK_RECV);
@@ -1995,7 +1992,7 @@ static void or_readv (message * mp, int from_int, int vectored) {
 	dl_port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (dl_port < 0 || dl_port >= OR_PORT_NR)
-		panic(__FILE__, "orinoco: illegal port:", dl_port);
+		panic("orinoco: illegal port: %d", dl_port);
 
 	orp = &or_table[dl_port];
 	or_client = mp->DL_PROC;
@@ -2116,7 +2113,7 @@ static void or_readv_s (message * mp, int from_int) {
 	dl_port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (dl_port < 0 || dl_port >= OR_PORT_NR)
-		panic(__FILE__, "orinoco: illegal port:", dl_port);
+		panic("orinoco: illegal port: %d", dl_port);
 
 	orp = &or_table[dl_port];
 	or_client = mp->DL_PROC;
@@ -2162,8 +2159,7 @@ static void or_readv_s (message * mp, int from_int) {
 				(vir_bytes)orp->or_iovec_s,
 				n * sizeof(orp->or_iovec_s[0]), D);
 		if (cps != OK) 
-			panic(__FILE__, 
-			"orinoco: warning, sys_safecopytp failed:", cps);
+			panic("orinoco: warning: sys_safecopytp failed: %d", cps);
 
 		for (j = 0, iovp = orp->or_iovec_s; j < n; j++, iovp++)	{
 			s = iovp->iov_size;
@@ -2174,9 +2170,7 @@ static void or_readv_s (message * mp, int from_int) {
 			cps = sys_safecopyto(or_client, iovp->iov_grant, 0, 
 					(vir_bytes) databuf + o, s, D);
 			if (cps != OK) 
-				panic(__FILE__, 
-				"orinoco: warning, sys_safecopy failed:", 
-				cps);
+				panic("orinoco: warning: sys_safecopy failed: %d", cps);
 
 			size += s;
 			if (size == length)
@@ -2336,7 +2330,7 @@ static void or_getstat (message * mp) {
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= OR_PORT_NR)
-		panic(__FILE__, "orinoco: illegal port:", port);
+		panic("orinoco: illegal port: %d", port);
 	orp = &or_table[port];
 	orp->or_client = mp->DL_PROC;
 
@@ -2348,7 +2342,7 @@ static void or_getstat (message * mp) {
 	r = sys_datacopy(SELF, (vir_bytes)&stats, mp->DL_PROC,
 			(vir_bytes) mp->DL_ADDR, sizeof(stats));
 	if(r != OK) {
-		panic(__FILE__, "or_getstat: send failed:", r);	
+		panic("or_getstat: send failed: %d", r);	
 	}
 
 	mp->m_type = DL_STAT_REPLY;
@@ -2357,7 +2351,7 @@ static void or_getstat (message * mp) {
 
 	r = send(mp->m_source, mp);
 	if(r != OK)
-		panic(__FILE__, "orinoco: getstat failed:", r);
+		panic("orinoco: getstat failed: %d", r);
 
 	/*reply (orp, OK, FALSE);*/
 
@@ -2376,7 +2370,7 @@ static void or_getstat_s (message * mp) {
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= OR_PORT_NR)
-		panic(__FILE__, "orinoco: illegal port:", port);
+		panic("orinoco: illegal port: %d", port);
 	assert(port==0);
 	orp = &or_table[port];
 	orp->or_client = mp->DL_PROC;
@@ -2389,7 +2383,7 @@ static void or_getstat_s (message * mp) {
 	r = sys_safecopyto(mp->DL_PROC,	mp->DL_GRANT, 0, 
 				(vir_bytes) &stats, sizeof(stats), D);
 	if(r != OK) {
-		panic(__FILE__, "or_getstat_s: sys_safecopyto failed:", r);
+		panic("or_getstat_s: sys_safecopyto failed: %d", r);
 	}
 
 	mp->m_type = DL_STAT_REPLY;
@@ -2398,6 +2392,6 @@ static void or_getstat_s (message * mp) {
 
 	r = send(mp->m_source, mp);
 	if(r != OK)
-		panic(__FILE__, "orinoco: getstat_s failed:", r);
+		panic("orinoco: getstat_s failed: %d", r);
 }
 

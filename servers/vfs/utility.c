@@ -42,7 +42,7 @@ int flag;			/* M3 means path may be in message */
   }
 
   if(len >= sizeof(user_fullpath)) 
-	panic(__FILE__, "fetch_name: len too much for user_fullpath", len);
+	panic("fetch_name: len too much for user_fullpath: %d", len);
 
   /* Check name length for validity. */
   if (len <= 0) {
@@ -113,7 +113,7 @@ PUBLIC int isokendpt_f(char *file, int line, int endpoint, int *proc, int fatal)
   }
 
   if(failed && fatal)
-	panic(__FILE__, "isokendpt_f failed", NO_NUM);
+	panic("isokendpt_f failed");
 
   return(failed ? EDEADSRCDST : OK);
 }
@@ -135,7 +135,7 @@ PUBLIC time_t clock_time()
 
   r = getuptime2(&uptime, &boottime);
   if (r != OK)
-	panic(__FILE__,"clock_time err", r);
+	panic("clock_time err: %d", r);
 
   return( (time_t) (boottime + (uptime/system_hz)));
 }

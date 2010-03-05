@@ -221,13 +221,13 @@ PUBLIC int ksig_pending()
    int r;
    /* get an arbitrary pending signal */
    if((r=sys_getksig(&proc_nr_e, &sig_map)) != OK)
-  	panic(__FILE__,"sys_getksig failed", r);
+  	panic("sys_getksig failed: %d", r);
    if (NONE == proc_nr_e) {		/* stop if no more pending signals */
  	break;
    } else {
  	int proc_nr_p;
  	if(pm_isokendpt(proc_nr_e, &proc_nr_p) != OK)
-  		panic(__FILE__,"sys_getksig strange process", proc_nr_e);
+  		panic("sys_getksig strange process: %d", proc_nr_e);
    	handle_ksig(proc_nr_e, sig_map);	/* handle the received signal */
 	/* If the process still exists to the kernel after the signal
 	 * has been handled ...
@@ -235,7 +235,7 @@ PUBLIC int ksig_pending()
         if ((mproc[proc_nr_p].mp_flags & (IN_USE | EXITING)) == IN_USE)
 	{
 	   if((r=sys_endksig(proc_nr_e)) != OK)	/* ... tell kernel it's done */
-  		panic(__FILE__,"sys_endksig failed", r);
+  		panic("sys_endksig failed: %d", r);
 	}
    }
  } 
@@ -309,13 +309,13 @@ sigset_t sig_map;
 	rmp->mp_flags &= ~DELAY_CALL;
 
 	if (rmp->mp_flags & (FS_CALL | PM_SIG_PENDING))
-		panic(__FILE__, "handle_ksig: bad process state", NO_NUM);
+		panic("handle_ksig: bad process state");
 
 	/* Process as many normal signals as possible. */
 	check_pending(rmp);
 
 	if (rmp->mp_flags & DELAY_CALL)
-		panic(__FILE__, "handle_ksig: multiple delay calls?", NO_NUM);
+		panic("handle_ksig: multiple delay calls?");
   }
 }
 
@@ -357,7 +357,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
 	printf("PM: signal %d sent to exiting process %d\n", signo, slot);
-	panic(__FILE__,"", NO_NUM);
+	panic("");
   }
 
   if (trace == TRUE && rmp->mp_tracer != NO_TRACER && signo != SIGKILL) {
@@ -380,7 +380,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	if (!(rmp->mp_flags & PM_SIG_PENDING)) {
 		/* No delay calls: FS_CALL implies the process called us. */
 		if ((r = sys_stop(rmp->mp_endpoint)) != OK)
-			panic(__FILE__, "sys_stop failed", r);
+			panic("sys_stop failed: %d", r);
 
 		rmp->mp_flags |= PM_SIG_PENDING;
 	}
@@ -585,7 +585,7 @@ struct mproc *rmp;
 		rmp->mp_flags &= ~(PM_SIG_PENDING | UNPAUSED);
 
 		if ((r = sys_resume(rmp->mp_endpoint)) != OK)
-			panic(__FILE__, "sys_resume failed", r);
+			panic("sys_resume failed: %d", r);
 	}
   }
 }
@@ -613,7 +613,7 @@ struct mproc *rmp;		/* which process */
   if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
 	/* Stop process from running. No delay calls: it called us. */
 	if ((r = sys_stop(rmp->mp_endpoint)) != OK)
-		panic(__FILE__, "sys_stop failed", r);
+		panic("sys_stop failed: %d", r);
 
 	rmp->mp_flags |= UNPAUSED;
 
@@ -635,7 +635,7 @@ struct mproc *rmp;		/* which process */
 
 		return;
 	}
-	else if (r != OK) panic(__FILE__, "sys_stop failed", r);
+	else if (r != OK) panic("sys_stop failed: %d", r);
 
 	rmp->mp_flags |= PM_SIG_PENDING;
   }
@@ -664,7 +664,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   int r, sigflags, slot;
 
   if (!(rmp->mp_flags & UNPAUSED))
-	panic(__FILE__, "sig_send: process not unpaused", NO_NUM);
+	panic("sig_send: process not unpaused");
 
   sigflags = rmp->mp_sigact[signo].sa_flags;
   slot = (int) (rmp - mproc);
@@ -698,7 +698,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   /* Ask the kernel to deliver the signal */
   r = sys_sigsend(rmp->mp_endpoint, &sigmsg);
   if (r != OK)
-	panic(__FILE__, "sys_sigsend failed", r);
+	panic("sys_sigsend failed: %d", r);
 
   /* Was the process suspended in PM? Then interrupt the blocking call. */
   if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
@@ -712,7 +712,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
 	rmp->mp_flags &= ~UNPAUSED;
 
 	if ((r = sys_resume(rmp->mp_endpoint)) != OK)
-		panic(__FILE__, "sys_resume failed", r);
+		panic("sys_resume failed: %d", r);
   }
 
   return(TRUE);

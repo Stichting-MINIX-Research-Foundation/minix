@@ -255,7 +255,7 @@ unsigned nr_req;		/* length of request vector */
 		       			0, (vir_bytes) (bios_buf_v+count),
 					chunk, D);
 				if (r != OK)
-					panic(ME, "copy failed", r);
+					panic("copy failed: %d", r);
 			} else {
 				memcpy(bios_buf_v+count,
 					(char *) iop->iov_addr, chunk);
@@ -299,7 +299,7 @@ unsigned nr_req;		/* length of request vector */
 
 	r= sys_int86(&reg86);
 	if (r != OK)
-		panic(ME, "BIOS call failed", r);
+		panic("BIOS call failed: %d", r);
 
 	if (reg86.u.w.f & 0x0001) {
 		/* An error occurred, try again sector by sector unless */
@@ -321,7 +321,7 @@ unsigned nr_req;		/* length of request vector */
 				       	chunk, D);
 
 				if (r != OK)
-					panic(ME, "sys_vircopy failed", r);
+					panic("sys_vircopy failed: %d", r);
 			} else {
 				memcpy((char *) iop->iov_addr,
 					bios_buf_v+count, chunk);
@@ -413,11 +413,11 @@ PRIVATE void w_init()
 
   /* Ask the system task for a suitable buffer */
   if(!(bios_buf_v = alloc_contig(BIOSBUF, AC_LOWER1M, &bios_buf_phys))) {
-  	panic(ME, "allocating bios buffer failed", ENOMEM);
+  	panic("allocating bios buffer failed: %d", ENOMEM);
   }
 
   if (bios_buf_phys+BIOSBUF > 0x100000)
-  	panic(ME, "bad BIOS buffer, phys", bios_buf_phys);
+  	panic("bad BIOS buffer / phys: %d", bios_buf_phys);
 #if 0
   printf("bios_wini: got buffer size %d, virtual 0x%x, phys 0x%x\n",
   		BIOSBUF, bios_buf_v, bios_buf_phys);
@@ -446,7 +446,7 @@ PRIVATE void w_init()
 	reg86.u.b.dl = drive_id;
 	r= sys_int86(&reg86);
 	if (r != OK)
-		panic(ME, "BIOS call failed", r);
+		panic("BIOS call failed: %d", r);
 
 	nr_drives = !(reg86.u.w.f & 0x0001) ? reg86.u.b.dl : drive;
 	if (drive_id >= 0x80 + nr_drives) continue;
@@ -466,7 +466,7 @@ PRIVATE void w_init()
 	if (pc_at) {
 		r= sys_int86(&reg86);
 		if (r != OK)
-			panic(ME, "BIOS call failed", r);
+			panic("BIOS call failed: %d", r);
 	}
 
 	if (!(reg86.u.w.f & 0x0001) && reg86.u.w.bx == 0xAA55
@@ -481,7 +481,7 @@ PRIVATE void w_init()
 
 		r= sys_int86(&reg86);
 		if (r != OK)
-			panic(ME, "BIOS call failed", r);
+			panic("BIOS call failed: %d", r);
 
 		if (!(reg86.u.w.f & 0x0001)) {
 			wn->int13ext = 1;	/* Extensions can be used. */

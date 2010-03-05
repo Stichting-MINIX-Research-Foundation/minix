@@ -122,7 +122,7 @@ PUBLIC void sef_lu_ready(int result)
       m.RS_LU_RESULT = result;
       r = sendrec(RS_PROC_NR, &m);
       if ( r != OK) {
-          panic("SEF", "sendrec failed", r);
+          panic("sendrec failed: %d", r);
       }
   }
 

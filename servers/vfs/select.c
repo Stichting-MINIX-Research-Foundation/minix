@@ -311,7 +311,7 @@ PRIVATE int select_request_asynch(struct filp *f, int *ops, int block)
 	return(SEL_ERR);
 
   if (r != SUSPEND) 
-	panic(__FILE__, "select_request_asynch: expected SUSPEND got", r);
+	panic("select_request_asynch: expected SUSPEND got: %d", r);
 
   f->filp_count++;
   dp->dmap_sel_filp = f;
@@ -385,7 +385,7 @@ PRIVATE int copy_fdsets(struct selectentry *se, int nfds, int direction)
   fd_set *src_fds, *dst_fds;
 
   if(nfds < 0 || nfds > OPEN_MAX)
-	panic(__FILE__, "select copy_fdsets: nfds wrong", nfds);
+	panic("select copy_fdsets: nfds wrong: %d", nfds);
 
   /* Only copy back as many bits as the user expects. */
   fd_setsize = _FDSETWORDS(nfds) * _FDSETBITSPERWORD/8;
@@ -747,16 +747,14 @@ PUBLIC void select_reply1()
 	}
 
 	if (!(fp->filp_select_flags & FSF_BUSY))
-		panic(__FILE__, "select_reply1: strange, not FSF_BUSY", NO_NUM);
+		panic("select_reply1: strange; not FSF_BUSY");
 
 	vp= fp->filp_vno;
 	if (!vp)
-		panic(__FILE__, "select_reply1: FSF_BUSY but no vp", NO_NUM);
+		panic("select_reply1: FSF_BUSY but no vp");
 
-	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
-	{
-		panic(__FILE__, "select_reply1: FSF_BUSY but not char special",
-			NO_NUM);
+	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) {
+		panic("select_reply1: FSF_BUSY but not char special");
 	}
 
 	if (vp->v_sdev != dev)
@@ -785,10 +783,8 @@ PUBLIC void select_reply1()
 		fp->filp_count--;
 	else
 	{
-		if (fp->filp_count != 1)
-		{
-			panic(__FILE__, "select_reply1: bad filp_count",
-				fp->filp_count);
+		if (fp->filp_count != 1) {
+			panic("select_reply1: bad filp_count: %d", fp->filp_count);
 		}
 		close_filp(fp);
 	}
@@ -893,17 +889,11 @@ PRIVATE void sel_restart_dev()
 				continue;
 
 			vp= fp->filp_vno;
-			if (!vp)
-			{
-				panic(__FILE__,
-					"sel_restart_dev: FSF_UPDATE but no vp",
-					NO_NUM);
+			if (!vp) {
+				panic("sel_restart_dev: FSF_UPDATE but no vp");
 			}
-			if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
-			{
-				panic(__FILE__,
-			"sel_restart_dev: FSF_UPDATE but not char special",
-					NO_NUM);
+			if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) {
+				panic("sel_restart_dev: FSF_UPDATE but not char special");
 			}
 
 			dp = &dmap[((vp->v_sdev) >> MAJOR) & BYTE];

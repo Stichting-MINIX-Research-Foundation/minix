@@ -173,7 +173,7 @@ vir_bytes v;
 	}
 	new_clicks -= vmp->vm_arch.vm_seg[D].mem_vir;
 	if ((r=get_stack_ptr(vmp->vm_endpoint, &new_sp)) != OK)
-  		vm_panic("couldn't get stack pointer", r);
+  		panic("couldn't get stack pointer: %d", r);
 	r = adjust(vmp, new_clicks, new_sp);
 	return r;
 }

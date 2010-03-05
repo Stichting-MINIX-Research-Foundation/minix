@@ -182,7 +182,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		DmaPhys += left;
 	}
 #else /* CHIP != INTEL */
-	panic("SB16DSP","initialization failed, CHIP != INTEL", 0);
+	panic("initialization failed: CHIP != INTEL: %d", 0);
 #endif /* CHIP == INTEL */
 
 	return(OK);
@@ -452,9 +452,9 @@ PRIVATE int dsp_init()
 
 	/* register interrupt vector and enable irq */
 	if ((s=sys_irqsetpolicy(SB_IRQ, IRQ_REENABLE, &irq_hook_id )) != OK)
-  		panic("SB16DSP", "Couldn't set IRQ policy", s);
+  		panic("Couldn't set IRQ policy: %d", s);
 	if ((s=sys_irqenable(&irq_hook_id)) != OK)
-  		panic("SB16DSP", "Couldn't enable IRQ", s);
+  		panic("Couldn't enable IRQ: %d", s);
 
 	DspAvail = 1;
 	return OK;

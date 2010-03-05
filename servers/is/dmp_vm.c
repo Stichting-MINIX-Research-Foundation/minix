@@ -39,7 +39,7 @@ PUBLIC void vm_dmp()
 
   if (prev_i == -1) {
 	if ((r = vm_info_stats(&vsi)) != OK) {
-		report("IS", "warning: couldn't talk to VM", r);
+		printf("IS: warning: couldn't talk to VM: %d\n", r);
 		return;
 	}
 
@@ -55,7 +55,7 @@ PUBLIC void vm_dmp()
   }
 
   if ((r = sys_getproctab(proc)) != OK) {
-	report("IS", "warning: couldn't get copy of process table", r);
+	printf("IS: warning: couldn't get copy of process table: %d\n", r);
 	return;
   }
 

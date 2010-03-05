@@ -166,7 +166,7 @@ PUBLIC int fs_unmount()
 
   if ((root_ip = find_inode(fs_dev, ROOT_INODE)) == NIL_INODE) {
   	printf("MFS: couldn't find root inode. Unmount failed.\n");
-  	panic(__FILE__, "MFS: couldn't find root inode", EINVAL);
+  	panic("MFS: couldn't find root inode: %d", EINVAL);
   	return(EINVAL);
   }
    

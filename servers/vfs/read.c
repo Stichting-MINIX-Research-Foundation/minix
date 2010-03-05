@@ -69,8 +69,7 @@ int rw_flag;			/* READING or WRITING */
 
   if (vp->v_pipe == I_PIPE) {
 	if (fp->fp_cum_io_partial != 0) {
-		panic(__FILE__, "read_write: fp_cum_io_partial not clear",
-		      NO_NUM);
+		panic("read_write: fp_cum_io_partial not clear");
 	}
 	return rw_pipe(rw_flag, who_e, m_in.fd, f, m_in.buffer, m_in.nbytes);
   }
@@ -81,15 +80,12 @@ int rw_flag;			/* READING or WRITING */
 
   if ((char_spec = (mode_word == I_CHAR_SPECIAL ? 1 : 0))) {
 	if (vp->v_sdev == NO_DEV)
-		panic(__FILE__, "read_write tries to read from "
-				"character device NO_DEV", NO_NUM);
-
+		panic("read_write tries to read from character device NO_DEV");
   }
 
   if ((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
 	if (vp->v_sdev == NO_DEV)
-		panic(__FILE__, "read_write tries to read from "
-				" block device NO_DEV", NO_NUM);
+		panic("read_write tries to read from block device NO_DEV");
   }
 
   if (char_spec) {			/* Character special files. */
@@ -123,7 +119,7 @@ int rw_flag;			/* READING or WRITING */
 
 	if (r >= 0) {
 		if (ex64hi(new_pos))
-			panic(__FILE__, "read_write: bad new pos", NO_NUM);
+			panic("read_write: bad new pos");
 
 		position = new_pos;
 		cum_io += cum_io_incr;
@@ -135,8 +131,7 @@ int rw_flag;			/* READING or WRITING */
 	if (regular || mode_word == I_DIRECTORY) {
 		if (cmp64ul(position, vp->v_size) > 0) {
 			if (ex64hi(position) != 0) {
-				panic(__FILE__,
-				      "read_write: file size too big ", NO_NUM);
+				panic("read_write: file size too big ");
 			}
 			vp->v_size = ex64lo(position);
 		}
@@ -172,7 +167,7 @@ PUBLIC int do_getdents()
 	return(EBADF);
 
   if (ex64hi(rfilp->filp_pos) != 0)
-	panic(__FILE__, "do_getdents: should handle large offsets", NO_NUM);
+	panic("do_getdents: should handle large offsets");
 	
   r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr, 
 		   rfilp->filp_pos, m_in.buffer, m_in.nbytes, &new_pos);
@@ -229,14 +224,14 @@ size_t req_size;
   }
 
   if (vp->v_mapfs_e == 0) 
-	panic(__FILE__, "unmapped pipe", NO_NUM);
+	panic("unmapped pipe");
 
   r = req_readwrite(vp->v_mapfs_e, vp->v_mapinode_nr, position, rw_flag, usr_e,
 		    buf, size, &new_pos, &cum_io_incr);
 
   if (r >= 0) {
 	if (ex64hi(new_pos))
-		panic(__FILE__, "rw_pipe: bad new pos", NO_NUM);
+		panic("rw_pipe: bad new pos");
 
 	position = new_pos;
 	cum_io += cum_io_incr;
@@ -248,9 +243,7 @@ size_t req_size;
   if (rw_flag == WRITING) {
 	if (cmp64ul(position, vp->v_size) > 0) {
 		if (ex64hi(position) != 0) {
-			panic(__FILE__,
-			      "read_write: file size too big for v_size",
-			      NO_NUM);
+			panic("read_write: file size too big for v_size");
 		}
 		vp->v_size = ex64lo(position);
 	}

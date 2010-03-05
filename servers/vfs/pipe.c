@@ -157,7 +157,7 @@ int notouch;			/* check only */
   int r = OK;
 
   if (ex64hi(position) != 0)
-	panic(__FILE__, "pipe_check: position too large in pipe", NO_NUM);
+	panic("pipe_check: position too large in pipe");
   pos = ex64lo(position);
 
   /* If reading, check for empty pipe. */
@@ -252,13 +252,13 @@ PUBLIC void suspend(int why)
 
 #if DO_SANITYCHECKS
   if (why == FP_BLOCKED_ON_PIPE)
-	panic(__FILE__, "suspend: called for FP_BLOCKED_ON_PIPE", NO_NUM);
+	panic("suspend: called for FP_BLOCKED_ON_PIPE");
 
   if(fp_is_blocked(fp))
-	panic(__FILE__, "suspend: called for suspended process", NO_NUM);
+	panic("suspend: called for suspended process");
   
   if(why == FP_BLOCKED_ON_NONE)
-	panic(__FILE__, "suspend: called for FP_BLOCKED_ON_NONE", NO_NUM);
+	panic("suspend: called for FP_BLOCKED_ON_NONE");
 #endif
 
   if (why == FP_BLOCKED_ON_POPEN)
@@ -287,7 +287,7 @@ PUBLIC void suspend(int why)
 PUBLIC void wait_for(endpoint_t who)
 {
   if(who == NONE || who == ANY)
-	panic(__FILE__,"suspend on NONE or ANY",NO_NUM);
+	panic("suspend on NONE or ANY");
   suspend(FP_BLOCKED_ON_OTHER);
   fp->fp_task = who;
 }
@@ -310,7 +310,7 @@ size_t size;
  */
 #if DO_SANITYCHECKS
   if(fp_is_blocked(fp))
-	panic(__FILE__, "pipe_suspend: called for suspended process", NO_NUM);
+	panic("pipe_suspend: called for suspended process");
 #endif
 
   susp_count++;					/* #procs susp'ed on pipe*/
@@ -389,7 +389,7 @@ int count;			/* max number of processes to release */
 		revive(rp->fp_endpoint, 0);
 		susp_count--;	/* keep track of who is suspended */
 		if(susp_count < 0)
-			panic("vfs", "susp_count now negative", susp_count);
+			panic("susp_count now negative: %d", susp_count);
 		if (--count == 0) return;
 	}
   }
@@ -434,7 +434,7 @@ int returned;			/* if hanging on task, how many bytes read */
 		rfp->fp_filp[fd_nr] = NIL_FILP;
 		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 		if (fil_ptr->filp_count != 1) {
-			panic(__FILE__, "revive: bad count in filp",
+			panic("revive: bad count in filp: %d",
 				fil_ptr->filp_count);
 		}
 		fil_ptr->filp_count = 0;
@@ -460,7 +460,7 @@ int returned;			/* if hanging on task, how many bytes read */
 		 */
 		if(GRANT_VALID(rfp->fp_grant)) {
 			if(cpf_revoke(rfp->fp_grant)) {
-				panic(__FILE__,"FS: revoke failed for grant",
+				panic("FS: revoke failed for grant: %d",
 					rfp->fp_grant);
 			} 
 			rfp->fp_grant = GRANT_INVALID;
@@ -533,7 +533,7 @@ int proc_nr_e;
 		
 		fild = (rfp->fp_fd >> 8) & BYTE;/* extract file descriptor */
 		if (fild < 0 || fild >= OPEN_MAX)
-			panic(__FILE__,"unpause err 2",NO_NUM);
+			panic("unpause err 2");
 		f = rfp->fp_filp[fild];
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
 		mess.TTY_LINE = (dev >> MINOR) & BYTE;
@@ -554,14 +554,14 @@ int proc_nr_e;
 		if(status == EAGAIN) status = EINTR;
 		if(GRANT_VALID(rfp->fp_grant)) {
 			if(cpf_revoke(rfp->fp_grant)) {
-				panic(__FILE__,"FS: revoke failed for grant (cancel)",
+				panic("FS: revoke failed for grant (cancel): %d",
 					rfp->fp_grant);
 			} 
 			rfp->fp_grant = GRANT_INVALID;
 		}
 		break;
 	default :
-		panic(__FILE__,"FS: unknown value", blocked_on);
+		panic("FS: unknown value: %d", blocked_on);
   }
 
   rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;

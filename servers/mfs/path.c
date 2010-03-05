@@ -337,9 +337,7 @@ char *suffix;			/* current remaining path. Has to point in the
   if (slen > 0) { /* Do we have path after the link? */
 	/* For simplicity we require that suffix starts with a slash */
 	if (suffix[0] != '/') {
-		panic(__FILE__,
-			"ltraverse: suffix does not start with a slash",
-			NO_NUM);
+		panic("ltraverse: suffix does not start with a slash");
 	}
 
 	/* To be able to expand the <link>, we have to move the 'suffix'
@@ -540,7 +538,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 	bp = get_block(ldir_ptr->i_dev, b, NORMAL);	/* get a dir block */
 
 	if (bp == NO_BLOCK)
-		panic(__FILE__,"get_block returned NO_BLOCK", NO_NUM);
+		panic("get_block returned NO_BLOCK");
 
 	/* Search a directory block. */
 	for (dp = &bp->b_dir[0];

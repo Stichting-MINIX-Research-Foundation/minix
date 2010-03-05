@@ -220,10 +220,8 @@ PRIVATE int handle_hw_intr(void)
 			dp_check_ints(dep);
 			do_int(dep);
 			r= sys_irqenable(&dep->de_hook);
-			if (r != OK)
-			{
-				panic("DP8390", 
-					"unable enable interrupts", r);
+			if (r != OK) {
+				panic("unable enable interrupts: %d", r);
 			}
 		}
 	}
@@ -252,7 +250,7 @@ int main(int argc, char *argv[])
 	while (TRUE)
 	{
 		if ((r= sef_receive(ANY, &m)) != OK)
-			panic("", "dp8390: sef_receive failed", r);
+			panic("dp8390: sef_receive failed: %d", r);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
@@ -274,8 +272,8 @@ int main(int argc, char *argv[])
 					printf("dp8390: notify from CLOCK\n");
 					break;
 				default:
-					panic("", "dp8390: illegal notify from",
-								m.m_source);
+					panic("dp8390: illegal notify from: %d",
+						m.m_source);
 			}
 
 			/* done, get a new message */
@@ -296,7 +294,7 @@ int main(int argc, char *argv[])
 		case DL_GETNAME: do_getname(&m); 		break;
 		case DL_STOP:	do_stop(&m);			break;
 		default:
-			panic("", "dp8390: illegal message", m.m_type);
+			panic("dp8390: illegal message: %d", m.m_type);
 		}
 	}
 }
@@ -328,10 +326,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	system_hz = sys_hz();
 
-	if (env_argc < 1)
-	{
-		panic("DP8390",
-			"A head which at this time has no name", NO_NUM);
+	if (env_argc < 1) {
+		panic("A head which at this time has no name");
 	}
 	(progname=strrchr(env_argv[0],'/')) ? progname++
 		: (progname=env_argv[0]);
@@ -493,7 +489,7 @@ int vectored;
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	dep->de_client= mp->DL_PROC;
 
@@ -507,13 +503,13 @@ int vectored;
 	assert(dep->de_mode == DEM_ENABLED);
 	assert(dep->de_flags & DEF_ENABLED);
 	if (dep->de_flags & DEF_SEND_AVAIL)
-		panic("", "dp8390: send already in progress", NO_NUM);
+		panic("dp8390: send already in progress");
 
 	sendq_head= dep->de_sendq_head;
 	if (dep->de_sendq[sendq_head].sq_filled)
 	{
 		if (from_int)
-			panic("", "dp8390: should not be sending\n", NO_NUM);
+			panic("dp8390: should not be sending");
 		dep->de_sendmsg= *mp;
 		dep->de_flags |= DEF_SEND_AVAIL;
 		reply(dep, OK, FALSE);
@@ -546,7 +542,7 @@ int vectored;
 	}
 	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
 	{
-		panic("", "dp8390: invalid packet size", size);
+		panic("dp8390: invalid packet size: %d", size);
 	}
 	(dep->de_user2nicf)(dep, &dep->de_write_iovec, 0,
 		dep->de_sendq[sendq_head].sq_sendpage * DP_PAGESIZE,
@@ -594,7 +590,7 @@ int from_int;
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	dep->de_client= mp->DL_PROC;
 
@@ -608,13 +604,13 @@ int from_int;
 	assert(dep->de_mode == DEM_ENABLED);
 	assert(dep->de_flags & DEF_ENABLED);
 	if (dep->de_flags & DEF_SEND_AVAIL)
-		panic("", "dp8390: send already in progress", NO_NUM);
+		panic("dp8390: send already in progress");
 
 	sendq_head= dep->de_sendq_head;
 	if (dep->de_sendq[sendq_head].sq_filled)
 	{
 		if (from_int)
-			panic("", "dp8390: should not be sending\n", NO_NUM);
+			panic("dp8390: should not be sending");
 		dep->de_sendmsg= *mp;
 		dep->de_flags |= DEF_SEND_AVAIL;
 		reply(dep, OK, FALSE);
@@ -636,7 +632,7 @@ int from_int;
 
 	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
 	{
-		panic("", "dp8390: invalid packet size", size);
+		panic("dp8390: invalid packet size: %d", size);
 	}
 	(dep->de_user2nicf_s)(dep, &dep->de_write_iovec_s, 0,
 		dep->de_sendq[sendq_head].sq_sendpage * DP_PAGESIZE,
@@ -684,7 +680,7 @@ int vectored;
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	dep->de_client= mp->DL_PROC;
 	if (dep->de_mode == DEM_SINK)
@@ -696,7 +692,7 @@ int vectored;
 	assert(dep->de_flags & DEF_ENABLED);
 
 	if(dep->de_flags & DEF_READING)
-		panic("", "dp8390: read already in progress", NO_NUM);
+		panic("dp8390: read already in progress");
 
 	dep->de_safecopy_read= 0;
 
@@ -724,7 +720,7 @@ int vectored;
 		size= count;
 	}
 	if (size < ETH_MAX_PACK_SIZE_TAGGED)
-		panic("", "dp8390: wrong packet size", size);
+		panic("dp8390: wrong packet size: %d", size);
 	dep->de_flags |= DEF_READING;
 
 	dp_recv(dep);
@@ -753,7 +749,7 @@ message *mp;
 	port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	dep->de_client= mp->DL_PROC;
 	if (dep->de_mode == DEM_SINK)
@@ -767,7 +763,7 @@ message *mp;
 	dep->de_safecopy_read= 1;
 
 	if(dep->de_flags & DEF_READING)
-		panic("", "dp8390: read already in progress", NO_NUM);
+		panic("dp8390: read already in progress");
 
 	get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
@@ -782,7 +778,7 @@ message *mp;
 	size= calc_iovec_size_s(&dep->de_tmp_iovec_s);
 
 	if (size < ETH_MAX_PACK_SIZE_TAGGED)
-		panic("", "dp8390: wrong packet size", size);
+		panic("dp8390: wrong packet size: %d", size);
 	dep->de_flags |= DEF_READING;
 
 	dp_recv(dep);
@@ -893,7 +889,7 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	dep->de_client= mp->DL_PROC;
 	if (dep->de_mode == DEM_SINK)
@@ -906,7 +902,7 @@ message *mp;
 		mp->DL_STAT= OK;
 		r= send(mp->m_source, mp);
 		if (r != OK)
-			panic(__FILE__, "do_getstat: send failed: %d\n", r);
+			panic("do_getstat: send failed: %d", r);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
@@ -924,7 +920,7 @@ message *mp;
 	mp->DL_STAT= OK;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic(__FILE__, "do_getstat: send failed: %d\n", r);
+		panic("do_getstat: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -938,7 +934,7 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	dep->de_client= mp->DL_PROC;
 	if (dep->de_mode == DEM_SINK)
@@ -951,7 +947,7 @@ message *mp;
 		mp->DL_STAT= OK;
 		r= send(mp->m_source, mp);
 		if (r != OK)
-			panic(__FILE__, "do_getstat: send failed: %d\n", r);
+			panic("do_getstat: send failed: %d", r);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
@@ -969,7 +965,7 @@ message *mp;
 	mp->DL_STAT= OK;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic(__FILE__, "do_getstat: send failed: %d\n", r);
+		panic("do_getstat: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -985,7 +981,7 @@ message *mp;
 	mp->m_type= DL_NAME_REPLY;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic("dp8390", "do_getname: send failed: %d\n", r);
+		panic("do_getname: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1000,7 +996,7 @@ message *mp;
 	port = mp->DL_PORT;
 
 	if (port < 0 || port >= DE_PORT_NR)
-		panic("", "dp8390: illegal port", port);
+		panic("dp8390: illegal port: %d", port);
 	dep= &de_table[port];
 	if (dep->de_mode == DEM_SINK)
 		return;
@@ -1141,12 +1137,12 @@ dpeth_t *dep;
  	dep->de_hook = dep->de_irq;
 	r= sys_irqsetpolicy(dep->de_irq, 0, &dep->de_hook);
 	if (r != OK)
-		panic("DP8390", "sys_irqsetpolicy failed", r);
+		panic("sys_irqsetpolicy failed: %d", r);
 
 	r= sys_irqenable(&dep->de_hook);
 	if (r != OK)
 	{
-		panic("DP8390", "unable enable interrupts", r);
+		panic("unable enable interrupts: %d", r);
 	}
 }
 
@@ -1242,7 +1238,7 @@ dpeth_t *dep;
 	int size, sendq_tail;
 
 	if (!(dep->de_flags & DEF_ENABLED))
-		panic("", "dp8390: got premature interrupt", NO_NUM);
+		panic("dp8390: got premature interrupt");
 
 	for(;;)
 	{
@@ -1486,7 +1482,7 @@ dpeth_t *dep;
 	case DL_WRITEV:	do_vwrite(&dep->de_sendmsg, TRUE, TRUE);	break;
 	case DL_WRITEV_S: do_vwrite_s(&dep->de_sendmsg, TRUE);	break;
 	default:
-		panic("", "dp8390: wrong type", dep->de_sendmsg.m_type);
+		panic("dp8390: wrong type: %d", dep->de_sendmsg.m_type);
 		break;
 	}
 }
@@ -1662,7 +1658,7 @@ vir_bytes count;
 			iovp->iod_iovec[i].iov_addr + offset,
 			SELF, D, vir_hw, bytes);
 		if (r != OK)
-			panic("DP8390", "dp_user2nic: sys_vircopy failed", r);
+			panic("dp_user2nic: sys_vircopy failed: %d", r);
 
 		count -= bytes;
 		vir_hw += bytes;
@@ -1709,10 +1705,8 @@ vir_bytes count;
 		r= sys_safecopyfrom(iovp->iod_proc_nr,
 			iovp->iod_iovec[i].iov_grant, offset,
 			vir_hw, bytes, D);
-		if (r != OK)
-		{
-			panic("DP8390",
-				"dp_user2nic_s: sys_safecopyfrom failed", r);
+		if (r != OK) {
+			panic("dp_user2nic_s: sys_safecopyfrom failed: %d", r);
 		}
 
 		count -= bytes;
@@ -1776,7 +1770,7 @@ vir_bytes count;
 	}
 	if (i == 100)
 	{
-		panic("", "dp8390: remote dma failed to complete", NO_NUM);
+		panic("dp8390: remote dma failed to complete");
 	}
 }
 
@@ -1822,11 +1816,9 @@ vir_bytes count;
 
 		r= sys_safe_outsb(dep->de_data_port, iovp->iod_proc_nr,
 			iovp->iod_iovec[i].iov_grant, offset, bytes);
-		if (r != OK)
-		{
-			panic(__FILE__,
-				"dp_pio8_user2nic_s: sys_safe_outsb failed",
-				r);
+		if (r != OK) {
+				panic("dp_pio8_user2nic_s: sys_safe_outsb failed: %d",
+					r);
 		}
 		count -= bytes;
 		offset += bytes;
@@ -1840,7 +1832,7 @@ vir_bytes count;
 	}
 	if (i == 100)
 	{
-		panic("", "dp8390: remote dma failed to complete", NO_NUM);
+		panic("dp8390: remote dma failed to complete");
 	}
 }
 
@@ -1896,10 +1888,8 @@ vir_bytes count;
 		{
 			r= sys_vircopy(user_proc, D, vir_user, 
 				SELF, D, (vir_bytes)&two_bytes[1], 1);
-			if (r != OK)
-			{
-				panic("DP8390",
-					"dp_pio16_user2nic: sys_vircopy failed",
+			if (r != OK) {
+				panic("dp_pio16_user2nic: sys_vircopy failed: %d",
 					r);
 			}
 			outw(dep->de_data_port, *(u16_t *)two_bytes);
@@ -1926,10 +1916,8 @@ vir_bytes count;
 			assert(bytes == 1);
 			r= sys_vircopy(user_proc, D, vir_user, 
 				SELF, D, (vir_bytes)&two_bytes[0], 1);
-			if (r != OK)
-			{
-				panic("DP8390",
-					"dp_pio16_user2nic: sys_vircopy failed",
+			if (r != OK) { 
+				panic("dp_pio16_user2nic: sys_vircopy failed: %d",
 					r);
 			}
 			count--;
@@ -1951,7 +1939,7 @@ vir_bytes count;
 	}
 	if (i == 100)
 	{
-		panic("", "dp8390: remote dma failed to complete", NO_NUM);
+		panic("dp8390: remote dma failed to complete");
 	}
 }
 
@@ -2007,11 +1995,8 @@ vir_bytes count;
 		{
 			r= sys_safecopyfrom(user_proc, gid, offset, 
 				(vir_bytes)&two_bytes[1], 1, D);
-			if (r != OK)
-			{
-				panic("DP8390",
-				"dp_pio16_user2nic: sys_safecopyfrom failed",
-					r);
+			if (r != OK) { 
+				panic("dp_pio16_user2nic: sys_safecopyfrom failed: %d", r);
 			}
 			outw(dep->de_data_port, *(u16_t *)two_bytes);
 			count--;
@@ -2026,11 +2011,8 @@ vir_bytes count;
 		{
 			r= sys_safe_outsw(dep->de_data_port, user_proc,
 				gid, offset, ecount);
-			if (r != OK)
-			{
-				panic("DP8390",
-				"dp_pio16_user2nic: sys_safe_outsw failed",
-					r);
+			if (r != OK) {
+				panic("dp_pio16_user2nic: sys_safe_outsw failed: %d", r);
 			}
 			count -= ecount;
 			offset += ecount;
@@ -2041,11 +2023,8 @@ vir_bytes count;
 			assert(bytes == 1);
 			r= sys_safecopyfrom(user_proc, gid, offset,
 				(vir_bytes)&two_bytes[0], 1, D);
-			if (r != OK)
-			{
-				panic("DP8390",
-				"dp_pio16_user2nic: sys_safecopyfrom failed",
-					r);
+			if (r != OK) {
+				panic("dp_pio16_user2nic: sys_safecopyfrom failed: %d", r);
 			}
 			count--;
 			offset++;
@@ -2065,7 +2044,7 @@ vir_bytes count;
 	}
 	if (i == 100)
 	{
-		panic("", "dp8390: remote dma failed to complete", NO_NUM);
+		panic("dp8390: remote dma failed to complete");
 	}
 }
 
@@ -2107,7 +2086,7 @@ vir_bytes count;
 			iovp->iod_proc_nr, D,
 			iovp->iod_iovec[i].iov_addr + offset, bytes);
 		if (r != OK)
-			panic("DP8390", "dp_nic2user: sys_vircopy failed", r);
+			panic("dp_nic2user: sys_vircopy failed: %d", r);
 
 		count -= bytes;
 		vir_hw += bytes;
@@ -2155,8 +2134,7 @@ vir_bytes count;
 			iovp->iod_iovec[i].iov_grant, offset,
 			vir_hw, bytes, D);
 		if (r != OK)
-			panic("DP8390",
-				"dp_nic2user_s: sys_safecopyto failed", r);
+			panic("dp_nic2user_s: sys_safecopyto failed: %d", r);
 
 		count -= bytes;
 		vir_hw += bytes;
@@ -2251,10 +2229,8 @@ vir_bytes count;
 
 		r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr,
 			iovp->iod_iovec[i].iov_grant, offset, bytes);
-		if (r != OK)
-		{
-			panic(__FILE__,
-				"dp_pio8_nic2user_s: sys_safe_insb failed", r);
+		if (r != OK) {
+			panic("dp_pio8_nic2user_s: sys_safe_insb failed: %d", r);
 		}
 		count -= bytes;
 		offset += bytes;
@@ -2313,10 +2289,8 @@ vir_bytes count;
 		{
 			r= sys_vircopy(SELF, D, (vir_bytes)&two_bytes[1],
 				user_proc, D, vir_user,  1);
-			if (r != OK)
-			{
-				panic("DP8390",
-					"dp_pio16_nic2user: sys_vircopy failed",
+			if (r != OK) {
+				panic("dp_pio16_nic2user: sys_vircopy failed: %d",
 					r);
 			}
 			count--;
@@ -2343,11 +2317,8 @@ vir_bytes count;
 			*(u16_t *)two_bytes= inw(dep->de_data_port);
 			r= sys_vircopy(SELF, D, (vir_bytes)&two_bytes[0],
 				user_proc, D, vir_user,  1);
-			if (r != OK)
-			{
-				panic("DP8390",
-					"dp_pio16_nic2user: sys_vircopy failed",
-					r);
+			if (r != OK) {
+				panic("dp_pio16_nic2user: sys_vircopy failed: %d", r);
 			}
 			count--;
 			offset++;
@@ -2410,11 +2381,8 @@ vir_bytes count;
 		{
 			r= sys_safecopyto(user_proc, gid, offset,
 				(vir_bytes)&two_bytes[1], 1, D);
-			if (r != OK)
-			{
-				panic("DP8390",
-				"dp_pio16_nic2user: sys_safecopyto failed",
-					r);
+			if (r != OK) {
+				panic("dp_pio16_nic2user: sys_safecopyto failed: %d", r);
 			}
 			count--;
 			offset++;
@@ -2428,11 +2396,9 @@ vir_bytes count;
 		{
 			r= sys_safe_insw(dep->de_data_port, user_proc, gid,
 				offset, ecount);
-			if (r != OK)
-			{
-				panic("DP8390",
-				"dp_pio16_nic2user: sys_safe_insw failed",
-					r);
+			if (r != OK) {
+				panic("dp_pio16_nic2user: sys_safe_insw failed: %d",
+				r);
 			}
 			count -= ecount;
 			offset += ecount;
@@ -2446,8 +2412,7 @@ vir_bytes count;
 				(vir_bytes)&two_bytes[0], 1, D);
 			if (r != OK)
 			{
-				panic("DP8390",
-				"dp_pio16_nic2user: sys_safecopyto failed",
+				panic("dp_pio16_nic2user: sys_safecopyto failed: %d",
 					r);
 			}
 			count--;
@@ -2602,7 +2567,7 @@ dpeth_t *dep;
 						 */
 	buf= malloc(size);
 	if (buf == NULL)
-		panic(__FILE__, "map_hw_buffer: cannot malloc size", size);
+		panic("map_hw_buffer: cannot malloc size: %d", size);
 	o= I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
 	abuf= buf + o;
 	printf("buf at 0x%x, abuf at 0x%x\n", buf, abuf);
@@ -2614,7 +2579,7 @@ dpeth_t *dep;
 	r = ENOSYS;
 #endif
 	if (r != OK)
-		panic(__FILE__, "map_hw_buffer: sys_vm_map failed", r);
+		panic("map_hw_buffer: sys_vm_map failed: %d", r);
 	dep->de_locmem = abuf;
 }
 
@@ -2709,7 +2674,7 @@ int may_block;
 	}
 
 	if (r < 0)
-		panic("", "dp8390: send failed:", r);
+		panic("dp8390: send failed: %d", r);
 	
 	dep->de_read_s = 0;
 	dep->de_flags &= ~(DEF_PACK_SEND | DEF_PACK_RECV);
@@ -2723,7 +2688,7 @@ message *req;
 message *reply_mess;
 {
 	if (send(req->m_source, reply_mess) != OK)
-		panic("", "dp8390: unable to mess_reply", NO_NUM);
+		panic("dp8390: unable to mess_reply");
 }
 
 /*===========================================================================*
@@ -2740,7 +2705,7 @@ void *loc_addr;
 	r= sys_vircopy(user_proc, D, user_addr,
 		SELF, D, (vir_bytes)loc_addr, count);
 	if (r != OK)
-		panic("DP8390", "get_userdata: sys_vircopy failed", r);
+		panic("get_userdata: sys_vircopy failed: %d", r);
 }
 
 /*===========================================================================*
@@ -2758,7 +2723,7 @@ void *loc_addr;
 	r= sys_safecopyfrom(user_proc, grant, offset,
 		(vir_bytes)loc_addr, count, D);
 	if (r != OK)
-		panic("DP8390", "get_userdata: sys_safecopyfrom failed", r);
+		panic("get_userdata: sys_safecopyfrom failed: %d", r);
 }
 
 /*===========================================================================*
@@ -2775,7 +2740,7 @@ void *loc_addr;
 	r= sys_vircopy(SELF, D, (vir_bytes)loc_addr, 
 		user_proc, D, user_addr, count);
 	if (r != OK)
-		panic("DP8390", "put_userdata: sys_vircopy failed", r);
+		panic("put_userdata: sys_vircopy failed: %d", r);
 }
 
 /*===========================================================================*
@@ -2792,7 +2757,7 @@ void *loc_addr;
 	r= sys_safecopyto(user_proc, grant, 0, (vir_bytes)loc_addr, 
 		count, D);
 	if (r != OK)
-		panic("DP8390", "put_userdata: sys_safecopyto failed", r);
+		panic("put_userdata: sys_safecopyto failed: %d", r);
 }
 
 u8_t inb(port_t port)
@@ -2804,7 +2769,7 @@ u8_t inb(port_t port)
 	if (r != OK)
 	{
 		printf("inb failed for port 0x%x\n", port);
-		panic("DP8390","sys_inb failed", r);
+		panic("sys_inb failed: %d", r);
 	}
 	return value;
 }
@@ -2816,7 +2781,7 @@ u16_t inw(port_t port)
 
 	r= sys_inw(port, &value);
 	if (r != OK)
-		panic("DP8390", "sys_inw failed", r);
+		panic("sys_inw failed: %d", r);
 	return (u16_t) value;
 }
 
@@ -2826,7 +2791,7 @@ void outb(port_t port, u8_t value)
 
 	r= sys_outb(port, value);
 	if (r != OK)
-		panic("DP8390", "sys_outb failed", r);
+		panic("sys_outb failed: %d", r);
 }
 
 void outw(port_t port, u16_t value)
@@ -2835,7 +2800,7 @@ void outw(port_t port, u16_t value)
 
 	r= sys_outw(port, value);
 	if (r != OK)
-		panic("DP8390", "sys_outw failed", r);
+		panic("sys_outw failed: %d", r);
 }
 
 static void insb(port_t port, void *buf, size_t size)
@@ -2854,7 +2819,7 @@ static void do_vir_insb(port_t port, int proc, vir_bytes buf, size_t size)
 
 	r= sys_insb(port, proc, (void *) buf, size);
 	if (r != OK)
-		panic("DP8390", "sys_sdevio failed", r);
+		panic("sys_sdevio failed: %d", r);
 }
 
 static void do_vir_insw(port_t port, int proc, vir_bytes buf, size_t size)
@@ -2863,7 +2828,7 @@ static void do_vir_insw(port_t port, int proc, vir_bytes buf, size_t size)
 
 	r= sys_insw(port, proc, (void *) buf, size);
 	if (r != OK)
-		panic("DP8390", "sys_sdevio failed", r);
+		panic("sys_sdevio failed: %d", r);
 }
 
 static void do_vir_outsb(port_t port, int proc, vir_bytes buf, size_t size)
@@ -2872,7 +2837,7 @@ static void do_vir_outsb(port_t port, int proc, vir_bytes buf, size_t size)
 
 	r= sys_outsb(port, proc, (void *) buf, size);
 	if (r != OK)
-		panic("DP8390", "sys_sdevio failed", r);
+		panic("sys_sdevio failed: %d", r);
 }
 
 static void do_vir_outsw(port_t port, int proc, vir_bytes buf, size_t size)
@@ -2881,7 +2846,7 @@ static void do_vir_outsw(port_t port, int proc, vir_bytes buf, size_t size)
 
 	r= sys_outsw(port, proc, (void *) buf, size);
 	if (r != OK)
-		panic("DP8390", "sys_sdevio failed", r);
+		panic("sys_sdevio failed: %d", r);
 }
 
 /*

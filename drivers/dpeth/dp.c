@@ -118,7 +118,7 @@ static void reply(dpeth_t * dep, int err, int m_type)
 	dep->de_flags &= NOT(DEF_ACK_SEND | DEF_ACK_RECV);
 
   } else if (status != ELOCKED || err == OK)
-	panic(dep->de_name, SendErrMsg, status);
+	panic(SendErrMsg, status);
 
   return;
 }
@@ -236,7 +236,7 @@ static void get_userdata_s(int user_proc, cp_grant_id_t grant,
 
   len = (count > IOVEC_NR ? IOVEC_NR : count) * sizeof(iovec_t);
   if ((rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len, D)) != OK)
-	panic(DevName, CopyErrMsg, rc);
+	panic(CopyErrMsg, rc);
   return;
 }
 
@@ -351,7 +351,7 @@ static void do_init(message * mp)
   reply_mess.m3_i2 = DE_PORT_NR;
   DEBUG(printf("\t reply %d\n", reply_mess.m_type));
   if (send(mp->m_source, &reply_mess) != OK)	/* Can't send */
-	panic(portname, SendErrMsg, mp->m_source);
+	panic(SendErrMsg, mp->m_source);
 
   return;
 }
@@ -402,7 +402,7 @@ static void do_vwrite_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(__FILE__, PortErrMsg, EINVAL);
+	panic(PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -410,7 +410,7 @@ static void do_vwrite_s(message * mp)
   if (dep->de_mode == DEM_ENABLED) {
 
 	if (dep->de_flags & DEF_SENDING)	/* Is sending in progress? */
-		panic(dep->de_name, "send already in progress ", NO_NUM);
+		panic("send already in progress ");
 
 	dep->de_write_iovec.iod_proc_nr = mp->DL_PROC;
 	get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
@@ -420,7 +420,7 @@ static void do_vwrite_s(message * mp)
 	dep->de_write_iovec.iod_iovec_offset = 0;
 	size = calc_iovec_size(&dep->de_write_iovec);
 	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)
-		panic(dep->de_name, SizeErrMsg, size);
+		panic(SizeErrMsg, size);
 
 	dep->de_flags |= DEF_SENDING;
 	(*dep->de_sendf) (dep, FALSE, size);
@@ -443,7 +443,7 @@ static void do_vread_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(__FILE__, PortErrMsg, EINVAL);
+	panic(PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -451,7 +451,7 @@ static void do_vread_s(message * mp)
   if (dep->de_mode == DEM_ENABLED) {
 
 	if (dep->de_flags & DEF_READING)	/* Reading in progress */
-		panic(dep->de_name, "read already in progress", NO_NUM);
+		panic("read already in progress");
 
 	dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
 	get_userdata_s(mp->DL_PROC, (cp_grant_id_t) mp->DL_GRANT, 0,
@@ -460,7 +460,7 @@ static void do_vread_s(message * mp)
 	dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
 	dep->de_read_iovec.iod_iovec_offset = 0;
 	size = calc_iovec_size(&dep->de_read_iovec);
-	if (size < ETH_MAX_PACK_SIZE) panic(dep->de_name, SizeErrMsg, size);
+	if (size < ETH_MAX_PACK_SIZE) panic(SizeErrMsg, size);
 
 	dep->de_flags |= DEF_READING;
 	(*dep->de_recvf) (dep, FALSE, size);
@@ -486,7 +486,7 @@ static void do_getstat_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(__FILE__, PortErrMsg, EINVAL);
+	panic(PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -495,7 +495,7 @@ static void do_getstat_s(message * mp)
   if ((rc = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
 			(vir_bytes)&dep->de_stat,
 			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
-        panic(DevName, CopyErrMsg, rc);
+        panic(CopyErrMsg, rc);
   reply(dep, OK, DL_STAT_REPLY);
   return;
 }
@@ -510,7 +510,7 @@ message *mp;
 	mp->m_type= DL_NAME_REPLY;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic("dpeth", "do_getname: send failed: %d\n", r);
+		panic("do_getname: send failed: %d", r);
 }
 
 /*
@@ -524,7 +524,7 @@ static void do_stop(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)	/* Check for illegal port number */
-	panic(__FILE__, PortErrMsg, EINVAL);
+	panic(PortErrMsg, EINVAL);
 
   dep = &de_table[port];
   if (dep->de_mode == DEM_ENABLED && (dep->de_flags & DEF_ENABLED)) {
@@ -600,7 +600,7 @@ PUBLIC int main(int argc, char **argv)
 
   while (TRUE) {
 	if ((rc = sef_receive(ANY, &m)) != OK){
-		panic(__FILE__, RecvErrMsg, rc);
+		panic(RecvErrMsg, rc);
 	}
 
 	DEBUG(printf("eth: got message %d, ", m.m_type));
@@ -624,7 +624,7 @@ PUBLIC int main(int argc, char **argv)
 				break;
 			default:	
 				/* Invalid message type */
-				panic(DevName, TypeErrMsg, m.m_type);
+				panic(TypeErrMsg, m.m_type);
 				break;
 		}
 		/* message processed, get another one */
@@ -651,7 +651,7 @@ PUBLIC int main(int argc, char **argv)
 		do_stop(&m);
 		break;
 	    default:		/* Invalid message type */
-		panic(DevName, TypeErrMsg, m.m_type);
+		panic(TypeErrMsg, m.m_type);
 		break;
 	}
   }

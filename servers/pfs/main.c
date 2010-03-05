@@ -121,7 +121,7 @@ message *m_in;				/* pointer to message */
 
   do {
 	if ((r = sef_receive(ANY, m_in)) != OK) 	/* wait for message */
-		panic("PFS","sef_receive failed", r);
+		panic("sef_receive failed: %d", r);
 	src = fs_m_in.m_source;
 
 	if (src != VFS_PROC_NR) {

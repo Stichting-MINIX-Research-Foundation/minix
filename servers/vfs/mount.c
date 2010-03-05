@@ -279,8 +279,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
 	label = dp->dmap_label;
 	if (strlen(label) == 0)
-		panic(__FILE__, "VFS mount_fs: no label for major",
-			dev >> MAJOR);
+		panic("VFS mount_fs: no label for major: 0x%x", dev >> MAJOR);
   }
 
   /* Tell FS which device to mount */
@@ -415,7 +414,7 @@ char *label;				/* buffer to retrieve label, or NULL */
   /* Find vmnt that is to be unmounted */
   for(vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
 	  if (vmp_i->m_dev == dev) {
-		  if(vmp) panic(__FILE__,"device mounted more than once", dev);
+		  if(vmp) panic("device mounted more than once: %d", dev);
 		  vmp = vmp_i;
 	  }
   }
@@ -441,7 +440,7 @@ char *label;				/* buffer to retrieve label, or NULL */
 
   /* Tell FS to unmount */
   if(vmp->m_fs_e <= 0 || vmp->m_fs_e == NONE)
-	panic(__FILE__, "unmount: strange fs endpoint", vmp->m_fs_e);
+	panic("unmount: strange fs endpoint: %d", vmp->m_fs_e);
 
   if ((r = req_unmount(vmp->m_fs_e)) != OK)              /* Not recoverable. */
 	printf("VFS: ignoring failed umount attempt (%d)\n", r);

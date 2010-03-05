@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
   while (TRUE)
     {
       if ((r= sef_receive(ANY, &m)) != OK)
-	panic(str_DevName, "minix msg sef_receive failed", r);
+	panic("minix msg sef_receive failed: %d", r);
 
 		if(is_notify(m.m_type)) {
 			switch(_ENDPOINT_P(m.m_source)) {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 	default:  
 		printf("message 0x%lx; %d from %d\n",
 			m.m_type, m.m_type-DL_RQ_BASE, m.m_source);
-		panic(str_DevName, "illegal message", m.m_type);
+		panic("illegal message: %d", m.m_type);
 	}
     }
 }
@@ -159,7 +159,7 @@ PRIVATE void do_get_stat_s(message * mp)
 
   port = mp->DL_PORT;
   if (port < 0 || port >= DE_PORT_NR)
-	panic(str_DevName, str_PortErrMsg, port);
+	panic(str_PortErrMsg, port);
 
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
@@ -167,14 +167,14 @@ PRIVATE void do_get_stat_s(message * mp)
   if ((rc = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
 			(vir_bytes)&dep->de_stat,
 			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
-        panic(str_DevName, str_CopyErrMsg, rc);
+        panic(str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;
   mp->DL_PORT = port;
   mp->DL_STAT = OK;
   rc = send(mp->m_source, mp);
   if( rc != OK )
-    panic(str_DevName, str_StatErrMsg, rc);
+    panic(str_StatErrMsg, rc);
   return;
 }
 
@@ -244,7 +244,7 @@ PRIVATE void do_conf(message * mp)
    *(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
   
   if (send(mp->m_source, &reply_mess) != OK)
-    panic(str_DevName, str_SendErrMsg, mp->m_source);
+    panic(str_SendErrMsg, mp->m_source);
 
   return;
 }
@@ -259,7 +259,7 @@ message *mp;
   mp->m_type= DL_NAME_REPLY;
   r = send(mp->m_source, mp);
   if (r!= OK)
-    panic(str_DevName, "do_getname: send failed", r);
+    panic("do_getname: send failed: %d", r);
 }
 
 PRIVATE void do_reply(dpeth_t * dep, int err, int may_block)
@@ -285,7 +285,7 @@ PRIVATE void do_reply(dpeth_t * dep, int err, int may_block)
   }
 
   if(status < 0)
-    panic(dep->de_name, str_SendErrMsg, status);
+    panic(str_SendErrMsg, status);
 
   dep->de_read_s = 0;
   dep->de_flags &= NOT(DEF_ACK_SEND | DEF_ACK_RECV);
@@ -325,7 +325,7 @@ PRIVATE int de_probe(dpeth_t *dep){
   dep->de_irq = pci_attr_r8(devind, PCI_ILR);
 
   if (dep->de_base_port < DE_MIN_BASE_ADDR)
-    panic(str_DevName,"de_probe: base address invalid ", dep->de_base_port);
+    panic("de_probe: base address invalid: %d", dep->de_base_port);
 
   DEBUG(printf("%s: using I/O address 0x%lx, IRQ %d\n",
 	       dep->de_name, (unsigned long)dep->de_base_port, 
@@ -443,7 +443,7 @@ PRIVATE void do_vread_s(message * mp, int from_int)
   iovec_dat_s_t *iovp = NULL;
 
   if (mp->DL_PORT < 0 || mp->DL_PORT >= DE_PORT_NR)
-    panic(dep->de_name, str_PortErrMsg, mp->DL_PORT);
+    panic(str_PortErrMsg, mp->DL_PORT);
 
   dep = &de_table[mp->DL_PORT];
   dep->de_client = mp->DL_PROC;
@@ -488,7 +488,7 @@ PRIVATE void do_vread_s(message * mp, int from_int)
     dep->de_read_iovec.iod_iovec_offset = 0;
     size = de_calc_iov_size(&dep->de_read_iovec);
     if (size < ETH_MAX_PACK_SIZE) 
-      panic(str_DevName, str_SizeErrMsg, size);
+      panic(str_SizeErrMsg, size);
 
     /* Copy buffer to user area  and clear ownage */
     size = (descr->descr->des[DES0]&DES0_FL)>>DES0_FL_SHIFT;
@@ -526,7 +526,7 @@ PRIVATE void do_vread_s(message * mp, int from_int)
       r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
 			(vir_bytes)buffer, bytes, D);
       if (r != OK)
-	panic(str_DevName, str_CopyErrMsg, r);
+	panic(str_CopyErrMsg, r);
       buffer += bytes;
       
       if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -624,7 +624,7 @@ PRIVATE void de_first_init(dpeth_t *dep)
       /* translate buffers physical address */
       r = sys_umap(SELF, VM_D, loc_descr->buf1, temp, 
 		   &(loc_descr->descr->des[DES_BUF1]));
-      if(r != OK) panic(dep->de_name, "umap failed", r);      
+      if(r != OK) panic("umap failed: %d", r);      
       loc_descr->descr->des[DES_BUF2] = 0;
       memset(&loc_descr->descr->des[DES0],0,sizeof(u32_t));
       loc_descr->descr->des[DES1] = temp;
@@ -639,11 +639,11 @@ PRIVATE void de_first_init(dpeth_t *dep)
   /* record physical location of two first descriptor */
   r = sys_umap(SELF, VM_D, dep->descr[DESCR_RECV][0].descr, 
 	       sizeof(de_descr_t), &dep->sendrecv_descr_phys_addr[DESCR_RECV]);
-  if(r != OK) panic(str_DevName, str_UmapErrMsg, r);
+  if(r != OK) panic(str_UmapErrMsg, r);
 
   r = sys_umap(SELF, VM_D, dep->descr[DESCR_TRAN][0].descr,
 	       sizeof(de_descr_t), &dep->sendrecv_descr_phys_addr[DESCR_TRAN]);
-  if(r != OK) panic(str_DevName, str_UmapErrMsg, r);
+  if(r != OK) panic(str_UmapErrMsg, r);
 
   DEBUG(printf("Descr: head tran=[%08X] head recv=[%08X]\n",
 	       dep->sendrecv_descr_phys_addr[DESCR_TRAN],
@@ -656,12 +656,12 @@ PRIVATE void de_first_init(dpeth_t *dep)
       r = sys_umap(SELF, VM_D, &(loc_descr->descr), sizeof(de_descr_t), 
 		   &temp);
       if(r != OK)
-	panic(str_DevName, str_UmapErrMsg, r);
+	panic(str_UmapErrMsg, r);
 
       if( ((loc_descr->descr->des[DES_BUF1] & 0x3) != 0) ||
 	  ((loc_descr->descr->des[DES_BUF2] & 0x3) != 0) ||
 	  ((temp&0x3)!=0) )
-	panic(str_DevName, str_AlignErrMsg, temp);
+	panic(str_AlignErrMsg, temp);
 
       loc_descr++;
     }
@@ -686,7 +686,7 @@ PRIVATE void do_interrupt(dpeth_t *dep){
   val = io_inl(CSR_ADDR(dep, CSR5));
 
   if(val & CSR5_AIS){
-    panic(dep->de_name, "Abnormal Int CSR5=", val);
+    panic("Abnormal Int CSR5=: %d", val);
   }
 
   if( (dep->de_flags & DEF_READING) && (val & CSR5_RI) ){
@@ -793,7 +793,7 @@ PRIVATE void de_get_userdata_s(int user_proc, cp_grant_id_t grant,
   len = (count > IOVEC_NR ? IOVEC_NR : count) * sizeof(iovec_t);
   rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len, D);
   if (rc != OK)
-    panic(str_DevName, str_CopyErrMsg, rc);
+    panic(str_CopyErrMsg, rc);
   return;
 }
 
@@ -815,7 +815,7 @@ PRIVATE void do_vwrite_s(message * mp, int from_int){
   char *buffer = NULL;
 
   if( mp->DL_PORT < 0 || mp->DL_PORT >= DE_PORT_NR)	
-    panic(str_DevName, str_PortErrMsg, mp->DL_PORT);
+    panic(str_PortErrMsg, mp->DL_PORT);
 
   dep = &de_table[mp->DL_PORT];
   dep->de_client = mp->DL_PROC;
@@ -823,7 +823,7 @@ PRIVATE void do_vwrite_s(message * mp, int from_int){
   if (dep->de_mode == DEM_ENABLED) {
     
     if (!from_int && (dep->de_flags & DEF_SENDING))
-      panic(str_DevName, str_BusyErrMsg, NO_NUM);
+      panic(str_BusyErrMsg);
 
     descr = &dep->descr[DESCR_TRAN][dep->cur_descr[DESCR_TRAN]];
 
@@ -845,7 +845,7 @@ PRIVATE void do_vwrite_s(message * mp, int from_int){
     iovp->iod_iovec_offset = 0;
     totalsize = size = de_calc_iov_size(iovp);
     if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)
-      panic(str_DevName, str_SizeErrMsg, size);
+      panic(str_SizeErrMsg, size);
 
     dep->bytes_tx += size;
     dep->de_stat.ets_packetT++;
@@ -859,7 +859,7 @@ PRIVATE void do_vwrite_s(message * mp, int from_int){
       r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
 			  0, (vir_bytes)buffer, bytes, D);
       if (r != OK)
-	panic(str_DevName, str_CopyErrMsg, r);
+	panic(str_CopyErrMsg, r);
       buffer += bytes;
 
       if (++ix >= IOVEC_NR) {	
@@ -889,7 +889,7 @@ PRIVATE void do_vwrite_s(message * mp, int from_int){
 
  suspend:
   if(from_int)
-    panic(str_DevName, "should not happen", 0);
+    panic("should not happen: %d", 0);
 
   dep->de_stat.ets_transDef++;
   dep->de_flags |= DEF_SENDING;

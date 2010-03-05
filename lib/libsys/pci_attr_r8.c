@@ -22,10 +22,10 @@ int port;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_attr_r8: can't talk to PCI", r);
+		panic("pci_attr_r8: can't talk to PCI: %d", r);
 
 	if (m.m_type != 0)
-		panic("syslib/" __FILE__, "pci_attr_r8: got bad reply from PCI", m.m_type);
+		panic("pci_attr_r8: got bad reply from PCI: %d", m.m_type);
 
 	return m.m2_l1;
 }

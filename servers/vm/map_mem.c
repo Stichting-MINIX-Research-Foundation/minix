@@ -145,7 +145,7 @@ PRIVATE int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
 	physr_start_iter(vrs->phys, &iter, offset_s, AVL_EQUAL);
 	prs = physr_get_iter(&iter);
 	if(!prs)
-		vm_panic("map_memory: no aligned phys region.", 0);
+		panic("map_memory: no aligned phys region: %d", 0);
 
 	/* flag: 0 -> read-only
 	 *       1 -> writable
@@ -230,10 +230,10 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
 	int r;
 
 	if(vm_isokendpt(sour, &p) != OK)
-		vm_panic("handle_memory: endpoint wrong", sour);
+		panic("handle_memory: endpoint wrong: %d", sour);
 	vms = &vmproc[p];
 	if(vm_isokendpt(dest, &p) != OK)
-		vm_panic("handle_memory: endpoint wrong", dest);
+		panic("handle_memory: endpoint wrong: %d", dest);
 	vmd = &vmproc[p];
 
 	vrs = map_lookup(vms, virt_s);
@@ -295,7 +295,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 
 	/* Use information on the destination process to unmap. */
 	if(vm_isokendpt(dest, &p) != OK)
-		vm_panic("handle_memory: endpoint wrong", dest);
+		panic("handle_memory: endpoint wrong: %d", dest);
 	vmd = &vmproc[p];
 
 	vrd = map_lookup(vmd, virt_d);
@@ -306,7 +306,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 	physr_start_iter(vrd->phys, &iter, off, AVL_EQUAL);
 	pr = physr_get_iter(&iter);
 	if(!pr)
-		vm_panic("map_memory: no aligned phys region.", 0);
+		panic("map_memory: no aligned phys region: %d", 0);
 
 	/* Copy the phys block now rather than doing COW. */
 	end = off + length;

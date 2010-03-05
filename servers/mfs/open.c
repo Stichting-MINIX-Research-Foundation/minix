@@ -160,7 +160,7 @@ PUBLIC int fs_mkdir()
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
 	  if(search_dir(ldirp, lastc, (ino_t *) 0, DELETE, IGN_PERM) != OK)
-		  panic(__FILE__, "Dir disappeared ", rip->i_num);
+		  panic("Dir disappeared: %d", rip->i_num);
 	  rip->i_nlinks--;	/* undo the increment done in new_node() */
   }
   rip->i_dirt = DIRTY;		/* either way, i_nlinks has changed */
@@ -232,7 +232,7 @@ PUBLIC int fs_slink()
 		  if(search_dir(ldirp, string, (ino_t *) 0, DELETE, 
 							IGN_PERM) != OK)
 					
-			  panic(__FILE__, "Symbolic link vanished", NO_NUM);
+			  panic("Symbolic link vanished");
 	  } 
   }
 

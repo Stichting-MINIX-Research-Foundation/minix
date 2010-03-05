@@ -189,7 +189,7 @@ static int do_vrdwt(int flag_rw)
 	grants = m_in.COUNT;
 	if((r = sys_safecopyfrom(who_e, grant_id, 0, (vir_bytes) iov_proc,
 		grants * sizeof(iovec_t), D)) != OK) {
-		panic(__FILE__, "copying in grant vector failed", r);
+		panic("copying in grant vector failed: %d", r);
 	}
 
 	pos = make64(m_in.POSITION, m_in.HIGHPOS);
@@ -240,7 +240,7 @@ static int do_vrdwt(int flag_rw)
 	/* Copy the caller's grant-table back. */
 	if((r = sys_safecopyto(who_e, grant_id, 0, (vir_bytes) iov_proc,
 		grants * sizeof(iovec_t), D)) != OK) {
-		panic(__FILE__, "copying out grant vector failed", r);
+		panic("copying out grant vector failed: %d", r);
 	}
 
 	flt_free(buffer, size, buf_array);
@@ -405,7 +405,7 @@ int main(int argc, char *argv[])
 	for (;;) {
 		/* Wait for request. */
 		if(sef_receive(ANY, &m_in) != OK) {
-			panic(__FILE__, "sef_receive failed", NO_NUM);
+			panic("sef_receive failed");
 		}
 
 #if DEBUG2
@@ -480,7 +480,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	}
 
 	if ((buf_array = flt_malloc(BUF_SIZE, NULL, 0)) == NULL)
-		panic(__FILE__, "no memory available", NO_NUM);
+		panic("no memory available");
 
 	sum_init();
 

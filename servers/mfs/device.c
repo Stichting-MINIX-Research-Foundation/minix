@@ -76,7 +76,7 @@ vir_bytes bytes;
 	  
 	  if((*gid=cpf_grant_direct(driver, (vir_bytes) *buf, bytes,
 				    *op == DEV_READ_S?CPF_WRITE:CPF_READ))<0) {
-		panic(__FILE__,"cpf_grant_magic of buffer failed\n", NO_NUM);
+		panic("cpf_grant_magic of buffer failed");
 	  }
 
 	  break;
@@ -89,20 +89,19 @@ vir_bytes bytes;
 	  if((*gid = cpf_grant_direct(driver, (vir_bytes) new_iovec,
 				      bytes * sizeof(iovec_t),
 				      CPF_READ | CPF_WRITE)) < 0) {
-		panic(__FILE__, "cpf_grant_direct of vector failed", NO_NUM);
+		panic("cpf_grant_direct of vector failed");
 	  }
 	  v = (iovec_t *) *buf;
 	  /* Grant access to i/o buffers. */
 	  for(j = 0; j < bytes; j++) {
 		if(j >= NR_IOREQS) 
-			panic(__FILE__, "vec too big", bytes);
+			panic("vec too big: %d", bytes);
 		new_iovec[j].iov_addr = gids[j] =
 		  cpf_grant_direct(driver, (vir_bytes) v[j].iov_addr,
 				   v[j].iov_size,
 				   *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
 		if(!GRANT_VALID(gids[j])) {
-			panic(__FILE__, "mfs: grant to iovec buf failed",
-			      NO_NUM);
+			panic("mfs: grant to iovec buf failed");
 		}
 		new_iovec[j].iov_size = v[j].iov_size;
 		(*vec_grants)++;
@@ -184,7 +183,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* The io vector copying relies on this I/O being for FS itself. */
   if(proc_e != SELF_E) {
       printf("MFS(%d) doing block_dev_io for non-self %d\n", SELF_E, proc_e);
-      panic(__FILE__, "doing block_dev_io for non-self", proc_e);
+      panic("doing block_dev_io for non-self: %d", proc_e);
   }
   
   /* By default, these are right. */
@@ -231,7 +230,7 @@ int flags;			/* special flags, like O_NONBLOCK */
           return r;
       }
       else 
-          panic(__FILE__,"call_task: can't send/receive", r);
+          panic("call_task: can't send/receive: %d", r);
   } 
   else {
       /* Did the process we did the sendrec() for get a result? */
@@ -243,7 +242,7 @@ int flags;			/* special flags, like O_NONBLOCK */
 
   /* Task has completed.  See if call completed. */
   if (m.REP_STATUS == SUSPEND) {
-      panic(__FILE__, "MFS block_dev_io: driver returned SUSPEND", NO_NUM);
+      panic("MFS block_dev_io: driver returned SUSPEND");
   }
 
   if(buf != buf_used && r == OK) {
@@ -271,7 +270,7 @@ int flags;			/* mode bits and flags */
   major = (dev >> MAJOR) & BYTE;
   if (major >= NR_DEVICES) major = 0;
   r = gen_opcl(driver_e, DEV_OPEN, dev, proc, flags);
-  if (r == SUSPEND) panic(__FILE__,"suspend on open from", NO_NUM);
+  if (r == SUSPEND) panic("suspend on open from");
   return(r);
 }
 
@@ -331,8 +330,7 @@ message *mess_ptr;		/* pointer to message for task */
 	if (r != OK) {
 		if (r == EDEADSRCDST) {
 			printf("fs: dead driver %d\n", task_nr);
-			panic(__FILE__, "should handle crashed drivers",
-				NO_NUM);
+			panic("should handle crashed drivers");
 			/* dmap_unmap_by_endpt(task_nr); */
 			return r;
 		}
@@ -340,7 +338,7 @@ message *mess_ptr;		/* pointer to message for task */
 			printf("fs: ELOCKED talking to %d\n", task_nr);
 			return r;
 		}
-		panic(__FILE__,"call_task: can't send/receive", r);
+		panic("call_task: can't send/receive: %d", r);
 	}
 
   	/* Did the process we did the sendrec() for get a result? */

@@ -103,7 +103,6 @@ SRCS=  \
 	env_prefix.c \
 	fkey_ctl.c \
 	tsc_util.c \
-	report.c \
 	read_tsc.S \
 	read_tsc_64.c \
 	ser_putc.c \
@@ -111,6 +110,7 @@ SRCS=  \
 	sys_hz.c \
 	timing.c \
 	profile_extern.c \
-	profile.c
+	profile.c \
+	vprintf.c
 
 .include <minix.lib.mk>

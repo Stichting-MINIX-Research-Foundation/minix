@@ -68,10 +68,10 @@ PUBLIC time_t clock_time()
 
   if (use_getuptime2) {
 	if ( (k=getuptime2(&uptime,&boottime)) != OK)
-		panic(__FILE__,"clock_time: getuptme2 failed", k);
+		panic("clock_time: getuptme2 failed: %d", k);
   } else {
 	if ( (k=getuptime(&uptime)) != OK)
-		panic(__FILE__,"clock_time err", k);
+		panic("clock_time err: %d", k);
   }
   
   return( (time_t) (boottime + (uptime/sys_hz())));
@@ -86,7 +86,7 @@ PUBLIC int mfs_min_f(char *file, int line, int v1, int v2)
 	if(v1 < 0 || v2 < 0) {
 		printf("mfs:%s:%d: strange string lengths: %d, %d\n",
 			file, line, v1, v2);
-		panic(file, "strange string lengths", NO_NUM);
+		panic("strange string lengths");
 	}
 	if(v2 >= v1) return v1;
 
@@ -101,7 +101,7 @@ PUBLIC void mfs_nul_f(char *file, int line, char *str, int len, int maxlen)
 {
 	if(len < 1) {
 		printf("mfs:%s:%d: %d-length string?!\n", file, line, len);
-		panic(file, "strange string length", NO_NUM);
+		panic("strange string length");
 	}
 	if(len < maxlen && str[len-1] != '\0') {
 		printf("mfs:%s:%d: string (length %d, maxlen %d) "
@@ -111,7 +111,7 @@ PUBLIC void mfs_nul_f(char *file, int line, char *str, int len, int maxlen)
 }
 
 #define MYASSERT(c) if(!(c)) { printf("MFS:%s:%d: sanity check: %s failed\n", \
-  file, line, #c); panic("MFS", "sanity check " #c " failed", __LINE__); }
+  file, line, #c); panic("sanity check " #c " failed: %d", __LINE__); }
 
 
 /*===========================================================================*

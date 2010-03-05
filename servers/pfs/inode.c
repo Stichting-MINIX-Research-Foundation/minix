@@ -41,18 +41,18 @@ PUBLIC int fs_putnode()
   if(!rip) {
 	  printf("%s:%d put_inode: inode #%d dev: %d not found\n", __FILE__,
 		 __LINE__, fs_m_in.REQ_INODE_NR, fs_m_in.REQ_DEV);
-	  panic(__FILE__, "fs_putnode failed", NO_NUM);
+	  panic("fs_putnode failed");
   }
 
   count = fs_m_in.REQ_COUNT;
   if (count <= 0) {
 	printf("%s:%d put_inode: bad value for count: %d\n", __FILE__,
 	       __LINE__, count);
-	panic(__FILE__, "fs_putnode failed", NO_NUM);
+	panic("fs_putnode failed");
   } else if(count > rip->i_count) {
 	printf("%s:%d put_inode: count too high: %d > %d\n", __FILE__,
 	       __LINE__, count, rip->i_count);
-	panic(__FILE__, "fs_putnode failed", NO_NUM);
+	panic("fs_putnode failed");
   }
 
   /* Decrease reference counter, but keep one reference; it will be consumed by
@@ -210,7 +210,7 @@ register struct inode *rip;	/* pointer to inode to be released */
   if (rip == NIL_INODE) return;	/* checking here is easier than in caller */
 
   if (rip->i_count < 1)
-	panic(__FILE__, "put_inode: i_count already below 1", rip->i_count);
+	panic("put_inode: i_count already below 1: %d", rip->i_count);
 
   if (--rip->i_count == 0) {	/* i_count == 0 means no one is using it now */
 	if (rip->i_nlinks == 0) {

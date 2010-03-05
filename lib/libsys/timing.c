@@ -22,7 +22,7 @@ void util_timer_start(util_timingdata_t *timingdata, char *name)
 	}
 
 	if (timingdata->starttimes[HIGHCOUNT]) {
-		panic(__FILE__, "restart timer?", NO_NUM);
+		panic("restart timer?");
 		return;
 	}
 
@@ -37,7 +37,7 @@ void util_timer_end(util_timingdata_t *timingdata)
 
 	read_tsc(&h, &l);
 	if (!timingdata->starttimes[HIGHCOUNT]) {
-		panic(__FILE__, "timer stopped but not started", NO_NUM);
+		panic("timer stopped but not started");
 		return;
 	}
 	if (timingdata->starttimes[HIGHCOUNT] == h) {
@@ -73,7 +73,7 @@ void util_timer_end(util_timingdata_t *timingdata)
 		timingdata->binsize;
 	if (bin < 0 || bin >= TIMING_POINTS) {
 		/* not serious, but can't happen, so shouldn't */
-		panic(__FILE__, "bin out of range", bin);
+		panic("bin out of range: %d", bin);
 	} else {
 		timingdata->lock_timings[bin]++;
 		timingdata->measurements++;

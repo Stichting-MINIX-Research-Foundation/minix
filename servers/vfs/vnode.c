@@ -28,7 +28,7 @@
 
 /* vp check that panics */
 #define ASSERTVP(v) if(!SANEVP(v)) { \
-	BADVP(v, __FILE__, __LINE__); panic("vfs", "bad vp", NO_NUM); }
+	BADVP(v, __FILE__, __LINE__); panic("bad vp"); }
 
 /*===========================================================================*
  *				get_free_vnode				     *
@@ -112,13 +112,13 @@ PUBLIC void put_vnode(struct vnode *vp)
   /* A vnode that's not in use can't be put. */
   if (vp->v_ref_count <= 0) {
 	printf("put_vnode: bad v_ref_count %d\n", vp->v_ref_count);
-	panic(__FILE__, "put_vnode failed", NO_NUM);
+	panic("put_vnode failed");
   }
 
   /* fs_count should indicate that the file is in use. */
   if (vp->v_fs_count <= 0) {
 	printf("put_vnode: bad v_fs_count %d\n", vp->v_fs_count);
-	panic(__FILE__, "put_vnode failed", NO_NUM);
+	panic("put_vnode failed");
   }
 
   /* Tell FS we don't need this inode to be open anymore. */

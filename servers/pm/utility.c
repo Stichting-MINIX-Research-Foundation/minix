@@ -130,11 +130,11 @@ message *m_ptr;
   int r;
 
   if (rmp->mp_flags & FS_CALL)
-	panic(__FILE__, "tell_fs: not idle", m_ptr->m_type);
+	panic("tell_fs: not idle: %d", m_ptr->m_type);
 
   r = asynsend3(FS_PROC_NR, m_ptr, AMF_NOREPLY);
   if (r != OK)
-  	panic(__FILE__, "unable to send to FS", r);
+  	panic("unable to send to FS: %d", r);
 
   rmp->mp_flags |= FS_CALL;
 }

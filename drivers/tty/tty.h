@@ -111,8 +111,6 @@ extern u32_t system_hz;		/* system clock frequency */
 extern unsigned long kbd_irq_set;
 extern unsigned long rs_irq_set;
 
-extern int panicing;	/* From panic.c in sysutil */
-
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */
 #define ESCAPED            1	/* previous character was LNEXT (^V) */

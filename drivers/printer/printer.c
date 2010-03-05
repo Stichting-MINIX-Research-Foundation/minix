@@ -197,7 +197,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("PRN","sigaction failed", errno);
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
 
   return(OK);
 }
@@ -258,7 +258,7 @@ int safe;			/* use virtual addresses or grant id's? */
         while (--retries > 0) {
             if(sys_inb(port_base + 1, &status) != OK) {
 		printf("printer: sys_inb of %x failed\n", port_base+1);
-		panic(__FILE__,"sys_inb failed", NO_NUM);
+		panic("sys_inb failed");
 	    }
             if ((status & ON_LINE)) {		/* printer online! */
 	        prepare_output();
@@ -387,21 +387,21 @@ PRIVATE void do_initialize()
   /* Get the base port for first printer.  */
   if(sys_vircopy(SELF, BIOS_SEG, LPT1_IO_PORT_ADDR, 
   	SELF, D, (vir_bytes) &port_base, LPT1_IO_PORT_SIZE) != OK) {
-	panic(__FILE__, "do_initialize: sys_vircopy failed", NO_NUM);
+	panic("do_initialize: sys_vircopy failed");
   }
   if(sys_outb(port_base + 2, INIT_PRINTER) != OK) {
 	printf("printer: sys_outb of %x failed\n", port_base+2);
-	panic(__FILE__, "do_initialize: sys_outb init failed", NO_NUM);
+	panic("do_initialize: sys_outb init failed");
   }
   micro_delay(1000000/20);	/* easily satisfies Centronics minimum */
   if(sys_outb(port_base + 2, PR_SELECT) != OK) {
 	printf("printer: sys_outb of %x failed\n", port_base+2);
-	panic(__FILE__, "do_initialize: sys_outb select failed", NO_NUM);
+	panic("do_initialize: sys_outb select failed");
   }
   irq_hook_id = 0;
   if(sys_irqsetpolicy(PRINTER_IRQ, 0, &irq_hook_id) != OK ||
      sys_irqenable(&irq_hook_id) != OK) {
-	panic(__FILE__, "do_initialize: irq enabling failed", NO_NUM);
+	panic("do_initialize: irq enabling failed");
   }
 }
 
@@ -453,10 +453,10 @@ PRIVATE void do_printer_output()
 	 */
 	if(sys_outb(port_base + 2, PR_SELECT) != OK) {
 		printf("printer: sys_outb of %x failed\n", port_base+2);
-		panic(__FILE__,"sys_outb failed", NO_NUM);
+		panic("sys_outb failed");
 	}
 	if(sys_irqenable(&irq_hook_id) != OK) {
-		panic(__FILE__,"sys_irqenable failed", NO_NUM);
+		panic("sys_irqenable failed");
 	}
 	return;
   }
@@ -467,7 +467,7 @@ PRIVATE void do_printer_output()
 	 */
 	if(sys_inb(port_base + 1, &status) != OK) {
 		printf("printer: sys_inb of %x failed\n", port_base+1);
-		panic(__FILE__,"sys_inb failed", NO_NUM);
+		panic("sys_inb failed");
 	}
 	if ((status & STATUS_MASK) == BUSY_STATUS) {
 		/* Still busy with last output.  This normally happens
@@ -477,7 +477,7 @@ PRIVATE void do_printer_output()
 		 * interrupts.  It may happen after a spurious interrupt.
 		 */
 		if(sys_irqenable(&irq_hook_id) != OK) {
-			panic(__FILE__, "sys_irqenable failed\n", NO_NUM);
+			panic("sys_irqenable failed");
 		}
 		return;
 	}
@@ -489,7 +489,7 @@ PRIVATE void do_printer_output()
 		pv_set(char_out[2], port_base+2, NEGATE_STROBE);
 		if(sys_voutb(char_out, 3) != OK) {
 			/* request series of port outb */
-			panic(__FILE__, "sys_voutb failed\n", NO_NUM);
+			panic("sys_voutb failed");
 		}
 
 		user_vir_d++;
@@ -499,7 +499,7 @@ PRIVATE void do_printer_output()
 		done_status = status;
 		output_done();
 		if(sys_irqenable(&irq_hook_id) != OK) {
-			panic(__FILE__, "sys_irqenable failed\n", NO_NUM);
+			panic("sys_irqenable failed");
 		}
 		return;
 	}
@@ -510,7 +510,7 @@ PRIVATE void do_printer_output()
   done_status = OK;
   output_done();
   if(sys_irqenable(&irq_hook_id) != OK) {
-	panic(__FILE__, "sys_irqenable failed\n", NO_NUM);
+	panic("sys_irqenable failed");
   }
 }
 

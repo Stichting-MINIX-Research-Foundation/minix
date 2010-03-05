@@ -657,7 +657,7 @@ off_t len;
   if( (b = read_map(rip, pos)) == NO_BLOCK) return;
   while (len > 0) {
 	if( (bp = get_block(rip->i_dev, b, NORMAL)) == NIL_BUF)
-		panic(__FILE__, "zerozone_range: no block", NO_NUM);
+		panic("zerozone_range: no block");
 	offset = pos % block_size;
 	bytes = block_size - offset;
 	if (bytes > len)

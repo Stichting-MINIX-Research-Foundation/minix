@@ -65,7 +65,7 @@ PUBLIC void timing_dmp()
   static int offsetlines = 0;
 
   if ((r = sys_getlocktimings(&timingdata[0])) != OK) {
-      report("IS","warning: couldn't get copy of lock timings", r);
+      printf("IS: warning: couldn't get copy of lock timings: %d\n", r);
       return;
   } 
 
@@ -103,7 +103,7 @@ PUBLIC void kmessages_dmp()
 
   /* Try to get a copy of the kernel messages. */
   if ((r = sys_getkmessages(&kmess)) != OK) {
-      report("IS","warning: couldn't get copy of kmessages", r);
+      printf("IS: warning: couldn't get copy of kmessages: %d\n", r);
       return;
   }
 
@@ -134,7 +134,7 @@ PUBLIC void monparams_dmp()
 
   /* Try to get a copy of the boot monitor parameters. */
   if ((r = sys_getmonparams(val, sizeof(val))) != OK) {
-      report("IS","warning: couldn't get copy of monitor params", r);
+      printf("IS: warning: couldn't get copy of monitor params: %d\n", r);
       return;
   }
 
@@ -161,11 +161,11 @@ PUBLIC void irqtab_dmp()
   struct irq_hook *e;	/* irq tab entry */
 
   if ((r = sys_getirqhooks(irq_hooks)) != OK) {
-      report("IS","warning: couldn't get copy of irq hooks", r);
+      printf("IS: warning: couldn't get copy of irq hooks: %d\n", r);
       return;
   }
   if ((r = sys_getirqactids(irq_actids)) != OK) {
-      report("IS","warning: couldn't get copy of irq mask", r);
+      printf("IS: warning: couldn't get copy of irq mask: %d\n", r);
       return;
   }
 
@@ -217,7 +217,7 @@ PUBLIC void image_dmp()
   struct boot_image *ip;
 	
   if ((r = sys_getimage(image)) != OK) {
-      report("IS","warning: couldn't get copy of image table", r);
+      printf("IS: warning: couldn't get copy of image table: %d\n", r);
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
@@ -241,11 +241,11 @@ PUBLIC void kenv_dmp()
     struct machine machine;
     int r;
     if ((r = sys_getkinfo(&kinfo)) != OK) {
-    	report("IS","warning: couldn't get copy of kernel info struct", r);
+    	printf("IS: warning: couldn't get copy of kernel info struct: %d\n", r);
     	return;
     }
     if ((r = sys_getmachine(&machine)) != OK) {
-    	report("IS","warning: couldn't get copy of kernel machine struct", r);
+    	printf("IS: warning: couldn't get copy of kernel machine struct: %d\n", r);
     	return;
     }
 
@@ -319,11 +319,11 @@ PUBLIC void privileges_dmp()
 
   /* First obtain a fresh copy of the current process and system table. */
   if ((r = sys_getprivtab(priv)) != OK) {
-      report("IS","warning: couldn't get copy of system privileges table", r);
+      printf("IS: warning: couldn't get copy of system privileges table: %d\n", r);
       return;
   }
   if ((r = sys_getproctab(proc)) != OK) {
-      report("IS","warning: couldn't get copy of process table", r);
+      printf("IS: warning: couldn't get copy of process table: %d\n", r);
       return;
   }
 
@@ -386,7 +386,7 @@ PUBLIC void proctab_dmp()
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
-      report("IS","warning: couldn't get copy of process table", r);
+      printf("IS: warning: couldn't get copy of process table: %d\n", r);
       return;
   }
 
@@ -422,7 +422,7 @@ PUBLIC void procstack_dmp()
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
-      report("IS","warning: couldn't get copy of process table", r);
+      printf("IS: warning: couldn't get copy of process table: %d\n", r);
       return;
   }
 
@@ -446,7 +446,7 @@ PUBLIC void memmap_dmp()
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
-      report("IS","warning: couldn't get copy of process table", r);
+      printf("IS: warning: couldn't get copy of process table: %d\n", r);
       return;
   }
 

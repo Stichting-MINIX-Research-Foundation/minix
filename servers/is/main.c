@@ -115,7 +115,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   sigact.sa_mask = ~0;			/* block all other signals */
   sigact.sa_flags = 0;			/* default behaviour */
   if (sigaction(SIGTERM, &sigact, NULL) < 0) 
-      report("IS","warning, sigaction() failed", errno);
+      printf("IS: warning, sigaction() failed: %d\n", errno);
 
   /* Set key mappings. */
   map_unmap_fkeys(TRUE /*map*/);
@@ -150,7 +150,7 @@ PRIVATE void get_work()
     int status = 0;
     status = sef_receive(ANY, &m_in);   /* this blocks until message arrives */
     if (OK != status)
-        panic("IS","sef_receive failed!", status);
+        panic("sef_receive failed!: %d", status);
     who_e = m_in.m_source;        /* message arrived! set sender */
     callnr = m_in.m_type;       /* set function call number */
 }
@@ -166,7 +166,7 @@ int result;                           	/* report result to replyee */
     m_out.m_type = result;  		/* build reply message */
     send_status = send(who, &m_out);    /* send the message */
     if (OK != send_status)
-        panic("IS", "unable to send reply!", send_status);
+        panic("unable to send reply!: %d", send_status);
 }
 
 

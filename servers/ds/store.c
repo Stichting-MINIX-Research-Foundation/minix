@@ -266,12 +266,12 @@ PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Map all the services in the boot image. */
 	if((r = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
-		panic("DS", "sys_safecopyfrom failed", r);
+		panic("sys_safecopyfrom failed: %d", r);
 	}
 	for(i=0;i < NR_BOOT_PROCS;i++) {
 		if(rprocpub[i].in_use) {
 			if((r = map_service(&rprocpub[i])) != OK) {
-				panic("DS", "unable to map service", r);
+				panic("unable to map service: %d", r);
 			}
 		}
 	}

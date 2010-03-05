@@ -127,7 +127,7 @@ int line;
   if(!(c)) { \
 	printf("holes_sanity_f:%s:%d: %s failed\n", file, line, #c); \
 	util_stacktrace();	\
-	vm_panic("assert failed.", NO_NUM); } \
+	panic("assert failed"); } \
   }	
 
 	int h, c = 0, n = 0;
@@ -227,7 +227,7 @@ CHECKHOLES;
 			if(memflags & PAF_CLEAR) {
 			  if ((s= sys_memset(0, CLICK_SIZE*old_base,
 				CLICK_SIZE*clicks)) != OK)   {
-				vm_panic("alloc_mem: sys_memset failed", s);
+				panic("alloc_mem: sys_memset failed: %d", s);
 			  }
 			}
 
@@ -284,7 +284,7 @@ CHECKHOLES;
   }
 
   if ( (new_ptr = free_slots) == NIL_HOLE) 
-  	vm_panic("hole table full", NO_NUM);
+  	panic("hole table full");
   new_ptr->h_base = base;
   new_ptr->h_len = clicks;
   free_slots = new_ptr->h_next;
@@ -520,7 +520,7 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 		printmemstats();
 #if SANITYCHECKS
 		if(largest >= pages) {
-			vm_panic("no memory but largest was enough", NO_NUM);
+			panic("no memory but largest was enough");
 		}
 #endif
 		return NO_MEM;
@@ -549,7 +549,7 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 		int s;
 		if ((s= sys_memset(0, CLICK_SIZE*mem,
 			VM_PAGE_SIZE*pages)) != OK) 
-			vm_panic("alloc_mem: sys_memset failed", s);
+			panic("alloc_mem: sys_memset failed: %d", s);
 	}
 
 #if SANITYCHECKS
@@ -589,7 +589,7 @@ PRIVATE void free_pages(phys_bytes pageno, int npages)
 			pr->size += npages;);
 	} else {
 		if(!SLABALLOC(pr))
-			vm_panic("alloc_pages: can't alloc", NO_NUM);
+			panic("alloc_pages: can't alloc");
 #if SANITYCHECKS
 		memstats(&firstnodes, &firstpages, &largest);
 
@@ -683,7 +683,7 @@ PUBLIC int do_adddma(message *msg)
 				dmatab[i].dt_base,
 				dmatab[i].dt_size);
 		}
-		vm_panic("adddma: table full", NO_NUM);
+		panic("adddma: table full");
 		return ENOSPC;
 	}
 
@@ -805,7 +805,7 @@ PUBLIC void release_dma(struct vmproc *vmp)
 {
 	int i, found_one;
 
-	vm_panic("release_dma not done", NO_NUM);
+	panic("release_dma not done");
 #if 0
 
 	found_one= FALSE;

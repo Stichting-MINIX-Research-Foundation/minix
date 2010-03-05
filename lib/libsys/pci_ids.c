@@ -22,10 +22,10 @@ u16_t *didp;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_ids: can't talk to PCI", r);
+		panic("pci_ids: can't talk to PCI: %d", r);
 
 	if (m.m_type != 0)
-		panic("syslib/" __FILE__, "pci_ids: got bad reply from PCI", m.m_type);
+		panic("pci_ids: got bad reply from PCI: %d", m.m_type);
 	*vidp= m.m1_i1;
 	*didp= m.m1_i2;
 	printf("pci_ids: %04x/%04x\n", *vidp, *didp);

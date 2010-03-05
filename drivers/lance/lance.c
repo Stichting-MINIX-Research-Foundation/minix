@@ -147,7 +147,7 @@ unsigned long vir2phys( unsigned long x )
 
    if ( (r=sys_umap( SELF, VM_D, x, 4, &value )) != OK ) {
       printf("lance: umap of 0x%lx failed\n",x );
-      panic( "lance", "sys_umap failed", r );
+      panic("sys_umap failed: %d", r);
    }
 
    return value;
@@ -289,7 +289,7 @@ void main( int argc, char **argv )
       }
 
       if ((r= sef_receive(ANY, &m)) != OK)
-        panic( "lance", "sef_receive failed", r);
+        panic("sef_receive failed: %d", r);
         
       for (i=0;i<EC_PORT_NR_MAX;++i)
       {
@@ -329,7 +329,7 @@ void main( int argc, char **argv )
 			      break;
 		      }
 		      default:
-			      panic( "lance", "illegal notify source", m.m_source);
+			      panic("illegal notify source: %d", m.m_source);
 	      }
 
 	      /* get next message */
@@ -357,7 +357,7 @@ void main( int argc, char **argv )
          do_getname(&m);
          break;
       default:
-         panic( "lance", "illegal message", m.m_type);
+         panic("illegal message: %d", m.m_type);
       }
    }
 }
@@ -516,7 +516,7 @@ message *mp;
    pci_init();
 
    if(!lance_buf && !(lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M, &lance_buf_phys))) {
-      panic( "lance", "alloc_contig failed", LANCE_BUF_SIZE);
+      panic("alloc_contig failed: %d", LANCE_BUF_SIZE);
    }
 
    port = mp->DL_PORT;
@@ -542,7 +542,7 @@ message *mp;
       }
       else
       {
-         report( "LANCE", "DMA denied because address out of range", NO_NUM );
+         printf("LANCE: DMA denied because address out of range\n" );
       }
 
       if (ec->mode == EC_DISABLED)
@@ -744,7 +744,7 @@ int may_block;
    reply.DL_COUNT = ec->read_s;
 
    if ((r=getuptime(&now)) != OK)
-      panic("lance", "getuptime() failed:", r);
+      panic("getuptime() failed: %d", r);
    reply.DL_CLCK = now;
 
    r = send(ec->client, &reply);
@@ -753,7 +753,7 @@ int may_block;
       return;
    }
    if (r < 0)
-      panic( "lance", "send failed:", r);
+      panic("send failed: %d", r);
 
    ec->read_s = 0;
    ec->flags &= ~(ECF_PACK_SEND | ECF_PACK_RECV);
@@ -768,7 +768,7 @@ message *req;
 message *reply_mess;
 {
    if (send(req->m_source, reply_mess) != OK)
-      panic( "lance", "unable to mess_reply", NO_NUM);
+      panic("unable to mess_reply");
 }
 
 
@@ -867,7 +867,7 @@ ether_card_t *ec;
    unsigned short ioaddr = ec->ec_port;
 
    if (!(ec->flags & ECF_ENABLED))
-      panic( "lance", "got premature interrupt", NO_NUM);
+      panic("got premature interrupt");
 
    for (;;)
    {
@@ -959,7 +959,7 @@ ether_card_t *ec;
          }
          else
          {
-            panic( "lance", "got premature TX INT...", NO_NUM);
+            panic("got premature TX INT..");
          }
          if (check==1)
          {
@@ -1065,7 +1065,7 @@ ether_card_t *ec;
    {
    case DL_WRITEV_S: do_vwrite_s(&ec->sendmsg, TRUE);        break;
    default:
-      panic( "lance", "wrong type:", ec->sendmsg.m_type);
+      panic("wrong type: %d", ec->sendmsg.m_type);
       break;
    }
 }
@@ -1088,8 +1088,7 @@ static void do_vread_s(message *mp)
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
-      panic(__FILE__,
-            "do_vread_s: sys_safecopyfrom failed: %d\n", r);
+	panic("do_vread_s: sys_safecopyfrom failed: %d", r);
    ec->read_iovec.iod_iovec_s    = count;
    ec->read_iovec.iod_proc_nr    = mp->DL_PROC;
    ec->read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
@@ -1207,9 +1206,7 @@ int from_int;
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
-      panic(__FILE__,
-            "do_vwrite_s: sys_safecopyfrom failed: %d\n", r);
-
+	panic("do_vwrite_s: sys_safecopyfrom failed: %d", r);
    ec->write_iovec.iod_iovec_s    = count;
    ec->write_iovec.iod_proc_nr    = mp->DL_PROC;
    ec->write_iovec.iod_grant      = mp->DL_GRANT;
@@ -1283,7 +1280,7 @@ vir_bytes count;
       if ( (r=sys_safecopyfrom(iovp->iod_proc_nr,
                                iovp->iod_iovec[i].iov_grant, offset,
                                nic_addr, bytes, D )) != OK )
-         panic( __FILE__, "ec_user2nic: sys_safecopyfrom failed", r );
+         panic("ec_user2nic: sys_safecopyfrom failed: %d", r);
 
       count -= bytes;
       nic_addr += bytes;
@@ -1323,7 +1320,7 @@ vir_bytes count;
          bytes = count;
       if ( (r=sys_safecopyto( iovp->iod_proc_nr, iovp->iod_iovec[i].iov_grant,
                               offset, nic_addr, bytes, D )) != OK )
-         panic( __FILE__, "ec_nic2user: sys_safecopyto failed: ", r );
+         panic("ec_nic2user: sys_safecopyto failed: %d", r);
       
       count -= bytes;
       nic_addr += bytes;
@@ -1374,8 +1371,7 @@ iovec_dat_t *iovp;
                          IOVEC_NR : iovp->iod_iovec_s) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
-      panic(__FILE__,
-            "ec_next_iovec: sys_safecopyfrom failed: %d\n", r);
+	panic("ec_next_iovec: sys_safecopyfrom failed: %d", r);
 }
 
 
@@ -1390,7 +1386,7 @@ message *mp;
 
    port = mp->DL_PORT;
    if (port < 0 || port >= EC_PORT_NR_MAX)
-      panic( "lance", "illegal port", port);
+      panic("illegal port: %d", port);
 
    ec= &ec_table[port];
    ec->client= mp->DL_PROC;
@@ -1399,15 +1395,14 @@ message *mp;
                       (vir_bytes)&ec->eth_stat, sizeof(ec->eth_stat), D);
 
    if (r != OK)
-      panic(__FILE__,
-            "do_getstat_s: sys_safecopyto failed: %d\n", r);
+	panic("do_getstat_s: sys_safecopyto failed: %d", r);
 
    mp->m_type= DL_STAT_REPLY;
    mp->DL_PORT= port;
    mp->DL_STAT= OK;
    r= send(mp->m_source, mp);
    if (r != OK)
-      panic(__FILE__, "do_getstat_s: send failed: %d\n", r);
+      panic("do_getstat_s: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1422,7 +1417,7 @@ message *mp;
 
    port = mp->DL_PORT;
    if (port < 0 || port >= EC_PORT_NR_MAX)
-      panic( "lance", "illegal port", port);
+      panic("illegal port: %d", port);
    ec = &ec_table[port];
 
    if (!(ec->flags & ECF_ENABLED))
@@ -1516,10 +1511,8 @@ ether_card_t *ec;
             continue;
          if (pcitab[i].did != did)
             continue;
-         if (pcitab[i].checkclass)
-         {
-            panic("lance",
-                  "class check not implemented", NO_NUM);
+         if (pcitab[i].checkclass) {
+		panic("class check not implemented");
          }
          break;
       }
@@ -1610,7 +1603,7 @@ message *mp;
    mp->m_type= DL_NAME_REPLY;
    r= send(mp->m_source, mp);
    if (r != OK)
-      panic("LANCE", "do_getname: send failed", r);
+      panic("do_getname: send failed: %d", r);
 }
 
 /*===========================================================================*
@@ -1731,7 +1724,7 @@ static u8_t in_byte(port_t port)
 
 	r= sys_inb(port, &value);
 	if (r != OK)
-		panic("lance","sys_inb failed", r);
+		panic("sys_inb failed: %d", r);
 	return value;
 }
 
@@ -1745,7 +1738,7 @@ static u16_t in_word(port_t port)
 
 	r= sys_inw(port, &value);
 	if (r != OK)
-		panic("lance","sys_inw failed", r);
+		panic("sys_inw failed: %d", r);
 	return value;
 }
 
@@ -1759,7 +1752,7 @@ static void out_word(port_t port, u16_t value)
 
 	r= sys_outw(port, value);
 	if (r != OK)
-		panic("lance","sys_outw failed", r);
+		panic("sys_outw failed: %d", r);
 }
 
 /*===========================================================================*

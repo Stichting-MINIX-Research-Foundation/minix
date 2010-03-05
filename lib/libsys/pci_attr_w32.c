@@ -24,9 +24,9 @@ u32_t value;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_attr_w32: can't talk to PCI", r);
+		panic("pci_attr_w32: can't talk to PCI: %d", r);
 
 	if (m.m_type != 0)
-		panic("syslib/" __FILE__, "pci_attr_w32: got bad reply from PCI", m.m_type);
+		panic("pci_attr_w32: got bad reply from PCI: %d", m.m_type);
 }
 

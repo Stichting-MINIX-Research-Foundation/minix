@@ -1,19 +1,15 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <minix/sysutil.h>
 
 #include "syslib.h"
 
-int panicing= 0;
-
 /*===========================================================================*
- *				panic					     *
+ *				panic				     *
  *===========================================================================*/
-PUBLIC void panic(who, mess, num)
-char *who;			/* server identification */
-char *mess;			/* message format string */
-int num;			/* number to go with format string */
+PUBLIC void panic(const char *fmt, ...)
 {
 /* Something awful has happened. Panics are caused when an internal
  * inconsistency is detected, e.g., a programming error or illegal 
@@ -23,23 +19,28 @@ int num;			/* number to go with format string */
   endpoint_t me = NONE;
   char name[20];
   void (*suicide)(void);
+  static int panicing= 0;
+  va_list args;
+
   if(panicing) return;
   panicing= 1;
 
   if(sys_whoami(&me, name, sizeof(name)) == OK && me != NONE)
-	printf("%s(%d): ", name, me);
+	printf("%s(%d): panic: ", name, me);
   else
-	printf("(sys_whoami failed): ");
+	printf("(sys_whoami failed): panic: ");
+
+  if(fmt) {
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(fmt);
+  } else {
+	printf("no message\n");
+  }
+  printf("\n");
+
   printf("syslib:panic.c: stacktrace: ");
   util_stacktrace();
-
-  if (NULL != who && NULL != mess) {
-      if (num != NO_NUM) {
-          printf("Panic in %s: %s: %d\n", who, mess, num); 
-      } else {
-          printf("Panic in %s: %s\n", who, mess); 
-      }
-  }
 
   /* Try exit */
   _exit(1);

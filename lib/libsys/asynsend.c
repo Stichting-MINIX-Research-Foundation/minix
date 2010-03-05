@@ -79,7 +79,7 @@ int fl;
 		/* Tell the kernel to stop processing */
 		r= senda(NULL, 0);
 		if (r != OK)
-			panic(__FILE__, "asynsend: senda failed", r);
+			panic("asynsend: senda failed: %d", r);
 
 		dst_ind= 0;
 		for (src_ind= first_slot; src_ind<next_slot; src_ind++)
@@ -112,7 +112,7 @@ int fl;
 		first_slot= 0;
 		next_slot= dst_ind;
 		if (next_slot >= ASYN_NR)
-			panic(__FILE__, "asynsend: msgtable full", NO_NUM);
+			panic("asynsend: msgtable full");
 	}
 
 	fl |= AMF_VALID;

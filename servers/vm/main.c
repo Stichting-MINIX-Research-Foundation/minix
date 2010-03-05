@@ -84,7 +84,7 @@ PUBLIC int main(void)
 	SANITYCHECK(SCL_DETAIL);
 
   	if ((r=sef_receive(ANY, &msg)) != OK)
-		vm_panic("sef_receive() error", r);
+		panic("sef_receive() error: %d", r);
 
 	SANITYCHECK(SCL_DETAIL);
 
@@ -136,7 +136,7 @@ PUBLIC int main(void)
 		if((r=send(who_e, &msg)) != OK) {
 			printf("VM: couldn't send %d to %d (err %d)\n",
 				msg.m_type, who_e, r);
-			vm_panic("send() error", NO_NUM);
+			panic("send() error");
 		}
 	SANITYCHECK(SCL_DETAIL);
 	}
@@ -193,7 +193,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	 * slots to fill in.
 	 */
 	if (OK != (s=sys_getimage(image)))
-		vm_panic("couldn't get image table: %d\n", s);
+		panic("couldn't get image table: %d", s);
 
 	/* Set table to 0. This invalidates all slots (clear VMF_INUSE). */
 	memset(vmproc, 0, sizeof(vmproc));
@@ -209,7 +209,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		phys_bytes proclimit;
 		struct vmproc *vmp;
 
-		if(ip->proc_nr >= _NR_PROCS) { vm_panic("proc", ip->proc_nr); }
+		if(ip->proc_nr >= _NR_PROCS) { panic("proc: %d", ip->proc_nr); }
 		if(ip->proc_nr < 0 && ip->proc_nr != SYSTEM) continue;
 
 #define GETVMP(v, nr)						\
@@ -218,7 +218,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		} else if(nr == SYSTEM) {			\
 			vmp = &vmproc[VMP_SYSTEM];		\
 		} else {					\
-			vm_panic("init: crazy proc_nr", nr);	\
+			panic("init: crazy proc_nr: %d", nr);	\
 		}
 
 		/* Initialize normal process table slot or special SYSTEM
@@ -231,7 +231,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 		/* Get memory map for this process from the kernel. */
 		if ((s=get_mem_map(ip->proc_nr, vmp->vm_arch.vm_seg)) != OK)
-			vm_panic("couldn't get process mem_map",s);
+			panic("couldn't get process mem_map: %d", s);
 
 		/* Remove this memory from the free list. */
 		reserve_proc_mem(mem_chunks, vmp->vm_arch.vm_seg);
@@ -279,13 +279,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			vmp->vm_arch.vm_seg[D].mem_len;
 
         	if(pt_new(&vmp->vm_pt) != OK)
-			vm_panic("VM: no new pagetable", NO_NUM);
+			panic("VM: no new pagetable");
 #define BASICSTACK VM_PAGE_SIZE
 		old_stacktop = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
 				vmp->vm_arch.vm_seg[S].mem_len);
 		if(sys_vmctl(vmp->vm_endpoint, VMCTL_INCSP,
 			VM_STACKTOP - old_stacktop) != OK) {
-			vm_panic("VM: vmctl for new stack failed", NO_NUM);
+			panic("VM: vmctl for new stack failed");
 		}
 
 		FREE_MEM(vmp->vm_arch.vm_seg[D].mem_phys +
@@ -303,14 +303,14 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
 				VM_STACKTOP) != OK) {
-			vm_panic("failed proc_new for boot process", NO_NUM);
+			panic("failed proc_new for boot process");
 		}
 	}
 
 	/* Set up table of calls. */
 #define CALLMAP(code, func) { int i;			      \
-	if((i=CALLNUMBER(code)) < 0) { vm_panic(#code " invalid", (code)); } \
-	if(i >= NR_VM_CALLS) { vm_panic(#code " invalid", (code)); } \
+	if((i=CALLNUMBER(code)) < 0) { panic(#code " invalid: %d", (code)); } \
+	if(i >= NR_VM_CALLS) { panic(#code " invalid: %d", (code)); } \
 	vm_calls[i].vmc_func = (func); 				      \
 	vm_calls[i].vmc_name = #code; 				      \
 }
@@ -352,7 +352,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Sanity checks */
 	if(find_kernel_top() >= VM_PROCSTART)
-		vm_panic("kernel loaded too high", NO_NUM);
+		panic("kernel loaded too high");
 
 	/* Initialize the structures for queryexit */
 	init_query_exit();
@@ -364,12 +364,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Map all the services in the boot image. */
 	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
-		panic("VM", "sys_safecopyfrom failed", s);
+		panic("sys_safecopyfrom failed: %d", s);
 	}
 	for(i=0;i < NR_BOOT_PROCS;i++) {
 		if(rprocpub[i].in_use) {
 			if((s = map_service(&rprocpub[i])) != OK) {
-				vm_panic("unable to map service", s);
+				panic("unable to map service: %d", s);
 			}
 		}
 	}
@@ -405,7 +405,7 @@ PRIVATE int vm_acl_ok(endpoint_t caller, int call)
 	int n, r;
 
 	if ((r = vm_isokendpt(caller, &n)) != OK)
-		vm_panic("VM: from strange source.", caller);
+		panic("VM: from strange source: %d", caller);
 
 	/* See if the call is allowed. */
 	if (!GET_BIT(vmproc[n].vm_call_mask, call)) {

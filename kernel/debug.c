@@ -24,8 +24,7 @@ check_runqueues_f(char *file, int line)
   FIXME("check_runqueues being done");
 
 #define MYPANIC(msg) {		\
-	printf("check_runqueues:%s:%d: %s\n", file, line, msg); \
-	minix_panic("check_runqueues failed", NO_NUM);	\
+	panic("check_runqueues:%s:%d: %s\n", file, line, msg); \
 	}
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {

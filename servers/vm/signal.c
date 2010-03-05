@@ -46,7 +46,7 @@ PUBLIC int do_push_sig(message *msg)
 	vmp = &vmproc[n];
 
         if ((r=get_stack_ptr(ep, &sp)) != OK)
-                vm_panic("couldn't get new stack pointer (for sig)",r);
+                panic("couldn't get new stack pointer (for sig): %d", r);
 	
 	/* Save old SP for caller */
 	msg->VMPS_OLD_SP = (char *) sp;

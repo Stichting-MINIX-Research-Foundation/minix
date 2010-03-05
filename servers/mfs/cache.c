@@ -79,7 +79,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   }
 
   /* Desired block is not on available chain.  Take oldest block ('front'). */
-  if ((bp = front) == NIL_BUF) panic(__FILE__,"all buffers in use", NR_BUFS);
+  if ((bp = front) == NIL_BUF) panic("all buffers in use: %d", NR_BUFS);
 
   if(bp->b_bytes < fs_block_size) {
 	ASSERT(!bp->bp);
@@ -90,7 +90,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 			bp && bp->b_bytes < fs_block_size; bp = bp->b_next)
 			;
 		if(!bp) {
-			panic("MFS", "no buffer available", NO_NUM);
+			panic("no buffer available");
 		}
 	} else {
   		bp->b_bytes = fs_block_size;
@@ -475,13 +475,11 @@ PUBLIC void set_blocksize(int blocksize)
 
         for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
 		if(bp->b_count != 0)
-			panic("MFS", "change blocksize with buffer in use",
-				NO_NUM);
+			panic("change blocksize with buffer in use");
 
 	for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 		if (rip->i_count > 0)
-			panic("MFS", "change blocksize with inode in use",
-				NO_NUM);
+			panic("change blocksize with inode in use");
 
 	fs_sync();
 

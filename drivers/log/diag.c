@@ -40,9 +40,6 @@ endpoint_t from;				/* who sent this message? */
 		CPF_WRITE);
 	if (gid == -1)
 	{
-#if 0
-		report("LOG","cpf_grant_direct failed for TTY", errno);
-#endif
 		return EDONTREPLY;
 	}
 
@@ -55,7 +52,7 @@ endpoint_t from;				/* who sent this message? */
 	if (r == OK) r= mess.m_type;
 	if (r != OK)
 	{
-		report("LOG","couldn't get copy of kmessages from TTY", r);
+		printf("log: couldn't get copy of kmessages from TTY: %d\n", r);
 		return EDONTREPLY;
 	}
   }
@@ -63,7 +60,7 @@ endpoint_t from;				/* who sent this message? */
   {
 	/* Try to get a fresh copy of the buffer with kernel messages. */
 	if ((r=sys_getkmessages(&kmess)) != OK) {
-		report("LOG","couldn't get copy of kmessages", r);
+		printf("log: couldn't get copy of kmessages: %d\n", r);
 		return EDONTREPLY;
 	}
 	prev_nextp= &kernel_prev_next;

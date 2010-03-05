@@ -120,7 +120,7 @@ struct inode *ino;
   ino->i_ref++;
 
   if (ino->i_ref == 0)
-	panic("HGFS", "inode reference count wrapped", NO_NUM);
+	panic("inode reference count wrapped");
 }
 
 /*===========================================================================*

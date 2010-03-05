@@ -25,9 +25,7 @@ struct rs_pci *rs_pci;
 		r= ds_retrieve_label_num("pci", &u32);
 		if (r != 0)
 		{
-			panic("syslib/" __FILE__,
-				"pci_set_acl: ds_retrieve_label_num failed for 'pci'",
-				r);
+			panic("pci_set_acl: ds_retrieve_label_num failed for 'pci': %d", r);
 		}
 		pci_procnr = u32;
 	}
@@ -48,7 +46,7 @@ struct rs_pci *rs_pci;
 	r= sendrec(pci_procnr, &m);
 	cpf_revoke(gid);
 	if (r != 0)
-		panic("syslib/" __FILE__, "pci_set_acl: can't talk to PCI", r);
+		panic("pci_set_acl: can't talk to PCI: %d", r);
 
 	return m.m_type;
 }

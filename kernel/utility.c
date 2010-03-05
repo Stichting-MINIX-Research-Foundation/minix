@@ -1,42 +1,35 @@
 /* This file contains a collection of miscellaneous procedures:
- *   minix_panic:    abort MINIX due to a fatal error
+ *   panic:    abort MINIX due to a fatal error
  *   kputc:          buffered putc used by kernel printf
  */
 
 #include "kernel.h"
 #include "proc.h"
 
+#include <minix/syslib.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <signal.h>
 
 #include <minix/sys_config.h>
 
-/*===========================================================================*
- *			panic                                        *
- *===========================================================================*/
-PUBLIC void panic(char *what, char *mess,int nr)
-{
-/* This function is for when a library call wants to panic.
- * The library call calls printf() and tries to exit a process,
- * which isn't applicable in the kernel.
- */
-	minix_panic(mess, nr);
-}
+#define ARE_PANICING 0xDEADC0FF
 
 /*===========================================================================*
- *			minix_panic                                        *
+ *			panic                                          *
  *===========================================================================*/
-PUBLIC void minix_panic(char *mess,int nr)
+PUBLIC void panic(const char *fmt, ...)
 {
-/* The system has run aground of a fatal kernel error. Terminate execution. */
-if (minix_panicing++) {
+  va_list arg;
+  /* The system has run aground of a fatal kernel error. Terminate execution. */
+  if (minix_panicing == ARE_PANICING) {
 	arch_monitor();
-}
-
-  if (mess != NULL) {
-	printf("kernel panic: %s", mess);
-	if(nr != NO_NUM)
-		printf(" %d", nr);
+  }
+  minix_panicing = ARE_PANICING;
+  if (fmt != NULL) {
+	printf("kernel panic: ");
+  	va_start(arg, fmt);
+	vprintf(fmt, arg);
 	printf("\n");
   }
 

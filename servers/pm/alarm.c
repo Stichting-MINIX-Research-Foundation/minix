@@ -145,7 +145,7 @@ PUBLIC int do_itimer()
   		break;
 
 	default:
-		panic(__FILE__, "invalid timer type", m_in.which_timer);
+		panic("invalid timer type: %d", m_in.which_timer);
   }
 
   /* If requested, copy the old interval timer to user space. */
@@ -227,14 +227,14 @@ struct itimerval *ovalue;
   switch (which) {
   case ITIMER_VIRTUAL: num = VT_VIRTUAL; break;
   case ITIMER_PROF:    num = VT_PROF;    break;
-  default:             panic(__FILE__, "invalid vtimer type", which);
+  default:             panic("invalid vtimer type: %d", which);
   }
 
   /* Make the kernel call. If requested, also retrieve and store
    * the old timer value.
    */
   if ((r = sys_vtimer(rmp->mp_endpoint, num, nptr, optr)) != OK)
-  	panic(__FILE__, "sys_vtimer failed", r);
+  	panic("sys_vtimer failed: %d", r);
 
   if (ovalue != NULL) {
   	/* If the alarm expired already, we should take into account the
@@ -262,7 +262,7 @@ int sig;
   switch (sig) {
   case SIGVTALRM: which = ITIMER_VIRTUAL; num = VT_VIRTUAL; break;
   case SIGPROF:   which = ITIMER_PROF;    num = VT_PROF;    break;
-  default: panic(__FILE__, "invalid vtimer signal", sig);
+  default: panic("invalid vtimer signal: %d", sig);
   }
 
   /* If a repetition interval was set for this virtual timer, tell the
@@ -287,7 +287,7 @@ struct itimerval *value;
   /* First determine remaining time, in ticks, of previous alarm, if set. */
   if (rmp->mp_flags & ALARM_ON) {
   	if ( (s = getuptime(&uptime)) != OK)
-  		panic(__FILE__, "get_realtimer couldn't get uptime", s);
+  		panic("get_realtimer couldn't get uptime: %d", s);
   	exptime = *tmr_exp_time(&rmp->mp_timer);
 
   	remaining = exptime - uptime;

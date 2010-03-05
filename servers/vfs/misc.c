@@ -223,9 +223,7 @@ PUBLIC int do_fcntl()
 	   case SEEK_SET: start = 0; break;
 	   case SEEK_CUR:
 	      if (ex64hi(f->filp_pos) != 0) 
-			panic(__FILE__, "do_fcntl: position in file too high",
-					NO_NUM);
-		
+			panic("do_fcntl: position in file too high");
 	      start = ex64lo(f->filp_pos);
 	      break;
 	   case SEEK_END: start = f->filp_vno->v_size; break;
@@ -366,9 +364,9 @@ int cpid;	/* Child process id */
    */
   childno = _ENDPOINT_P(cproc);
   if(childno < 0 || childno >= NR_PROCS)
-	panic(__FILE__, "FS: bogus child for forking", m_in.child_endpt);
+	panic("FS: bogus child for forking: %d", m_in.child_endpt);
   if(fproc[childno].fp_pid != PID_FREE)
-	panic(__FILE__, "FS: forking on top of in-use child", childno);
+	panic("FS: forking on top of in-use child: %d", childno);
 
   /* Copy the parent's fproc struct to the child. */
   fproc[childno] = fproc[parentno];
@@ -389,11 +387,11 @@ int cpid;	/* Child process id */
    */
   if(GRANT_VALID(fp->fp_grant)) {
 	printf("vfs: fork: fp (endpoint %d) has grant %d\n", fp->fp_endpoint, fp->fp_grant);
-	panic(__FILE__, "fp contains valid grant", NO_NUM);
+	panic("fp contains valid grant");
   }
   if(GRANT_VALID(cp->fp_grant)) {
 	printf("vfs: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint, cp->fp_grant);
-	panic(__FILE__, "cp contains valid grant", NO_NUM);
+	panic("cp contains valid grant");
   }
 
   /* A child is not a process leader. */
@@ -423,7 +421,7 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   fp = exiter;		/* get_filp() needs 'fp' */
 
   if(fp->fp_endpoint == NONE) {
-	panic(__FILE__, "free_proc: already free", NO_NUM);
+	panic("free_proc: already free");
   }
 
   if (fp_is_blocked(fp)) {
@@ -540,12 +538,12 @@ gid_t *groups;
   okendpt(proc_e, &slot);
   rfp = &fproc[slot];
   if (ngroups * sizeof(gid_t) > sizeof(rfp->fp_sgroups))
-  	panic(__FILE__, "VFS: pm_setgroups: too much data to copy\n", NO_NUM);
+  	panic("VFS: pm_setgroups: too much data to copy");
   if(sys_datacopy(who_e, (vir_bytes) groups, SELF, (vir_bytes) rfp->fp_sgroups,
   		   ngroups * sizeof(gid_t)) == OK) {
 	rfp->fp_ngroups = ngroups;
   } else
-  	panic(__FILE__, "VFS: pm_setgroups: datacopy failed\n", NO_NUM);
+  	panic("VFS: pm_setgroups: datacopy failed");
 }
 
 
