@@ -41,8 +41,10 @@ libraries:
 	cd lib && sh ack_build.sh obj depend all install
 
 MKHEADERS411=/usr/gnu/libexec/gcc/i386-pc-minix/4.1.1/install-tools/mkheaders
+MKHEADERS443=/usr/gnu/libexec/gcc/i686-pc-minix/4.4.3/install-tools/mkheaders
 gnu-includes: includes
 	SHELL=/bin/sh; if [ -f $(MKHEADERS411) ] ; then sh -e $(MKHEADERS411) ; fi
+	SHELL=/bin/sh; if [ -f $(MKHEADERS443) ] ; then sh -e $(MKHEADERS443) ; fi
 
 gnu-libraries:
 	cd lib && sh gnu_build.sh obj depend all install
