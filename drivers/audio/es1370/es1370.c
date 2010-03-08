@@ -15,7 +15,7 @@
  * based on ES1371 driver by Laurens Bronwasser
  */
 
-#include <ibm/pci.h>
+#include <machine/pci.h>
 
 #include "../framework/audio_fw.h"
 #include "es1370.h"

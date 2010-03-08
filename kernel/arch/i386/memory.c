@@ -9,7 +9,7 @@
 #include <minix/cpufeature.h>
 #include <string.h>
 
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 
 #include "proto.h"
 #include "../../proto.h"

@@ -31,7 +31,7 @@
 #include <minix/u64.h>
 #include <minix/com.h>
 #include <minix/sysinfo.h>
-#include <ibm/partition.h>
+#include <machine/partition.h>
 #include <termios.h>
 #include <stdarg.h>
 

@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <minix/minlib.h>
 #include <minix/cpufeature.h>
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 
 int _cpufeature(int cpufeature)
 {

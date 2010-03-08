@@ -33,7 +33,7 @@ install:	/usr/bin/aal /usr/bin/ar
 	install -cs -o bin aal $@
 
 /usr/bin/ar:	/usr/bin/aal
-	install -l $? $@
+	install -l h $? $@
 
 archiver.o:
 print.o:

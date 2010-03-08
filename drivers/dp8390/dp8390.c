@@ -60,7 +60,7 @@
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 #include "assert.h"
 
 #include "local.h"

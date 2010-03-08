@@ -49,7 +49,7 @@
 
 #include <minix/syslib.h>
 #include <minix/endpoint.h>
-#include <ibm/pci.h>
+#include <machine/pci.h>
 #include <minix/ds.h>
 
 #include "lance.h"

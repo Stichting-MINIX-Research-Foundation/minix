@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
-#include <ibm/cmos.h>
-#include <ibm/bios.h>
+#include <machine/cmos.h>
+#include <machine/bios.h>
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
 #include <a.out.h>

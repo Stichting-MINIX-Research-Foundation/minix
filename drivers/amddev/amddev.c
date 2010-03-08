@@ -15,14 +15,14 @@ Driver for the AMD Device Exclusion Vector (DEV)
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/ipc.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/endpoint.h>
-#include <ibm/pci.h>
+#include <machine/pci.h>
 
 /* Offsets from capability pointer */
 #define DEV_OP		4	/* Selects control/status register to access */

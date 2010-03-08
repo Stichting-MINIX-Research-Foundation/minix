@@ -10,8 +10,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 #include "../drivers.h"
 #include <assert.h>
-#include <ibm/pci.h>
-#include <sys/vm_i386.h>
+#include <machine/pci.h>
+#include <machine/vm.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
 

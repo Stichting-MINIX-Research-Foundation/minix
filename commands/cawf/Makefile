@@ -74,13 +74,13 @@ install:	\
 	install -cs -o bin bsfilt $@
 
 /usr/bin/colcrt:	/usr/bin/bsfilt
-	install -l /usr/bin/bsfilt $@
+	install -l h /usr/bin/bsfilt $@
 
 /usr/bin/cawf:	cawf
 	install -cs -o bin cawf $@
 
 /usr/bin/nroff:	/usr/bin/cawf
-	install -l /usr/bin/cawf $@
+	install -l h /usr/bin/cawf $@
 
 /usr/lib/cawf:	
 	install -d -o bin /usr/lib/cawf

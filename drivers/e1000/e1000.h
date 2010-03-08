@@ -23,7 +23,7 @@
 #include <net/hton.h> 
 #include <net/gen/ether.h> 
 #include <net/gen/eth_io.h> 
-#include <ibm/pci.h> 
+#include <machine/pci.h>
 #include <minix/ds.h> 
 #include "e1000_hw.h"
 

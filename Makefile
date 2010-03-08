@@ -8,13 +8,15 @@ usage:
 	@echo "Root privileges are required for some actions." 
 	@echo "" 
 	@echo "Usage:" 
-	@echo "	make world      # Compile everything (libraries & commands)" 
-	@echo "	make includes   # Install include files from src/" 
-	@echo "	make libraries  # Compile and install libraries" 
-	@echo "	make commands   # Compile all, commands, but don't install"
-	@echo "	make install    # Compile and install commands" 
-	@echo "	make depend     # Generate required .depend files" 
-	@echo "	make clean      # Remove all compiler results" 
+	@echo "	make world         # Compile everything (libraries & commands)"
+	@echo "	make includes      # Install include files from src/"
+	@echo "	make libraries     # Compile and install libraries"
+	@echo "	make commands      # Compile all, commands, but don't install"
+	@echo "	make install       # Compile and install commands"
+	@echo "	make depend        # Generate required .depend files"
+	@echo "	make gnu-includes  # Install include files for GCC"
+	@echo "	make gnu-libraries # Compile and install libraries for GCC"
+	@echo "	make clean         # Remove all compiler results"
 	@echo "" 
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." 
 	@echo "" 
@@ -33,10 +35,14 @@ mkfiles:
 	cp etc/mk/*.mk /etc/mk/
 
 includes:
-	cd include && $(MAKE) install gcc
+	cd include && $(MAKE) includes
 
 libraries:
 	cd lib && sh ack_build.sh obj depend all install
+
+MKHEADERS411=/usr/gnu/libexec/gcc/i386-pc-minix/4.1.1/install-tools/mkheaders
+gnu-includes: includes
+	SHELL=/bin/sh; if [ -f $(MKHEADERS411) ] ; then sh -e $(MKHEADERS411) ; fi
 
 gnu-libraries:
 	cd lib && sh gnu_build.sh obj depend all install

@@ -81,7 +81,7 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/U:	/usr/bin/M
-	install -m 755 -l $? $@
+	install -m 755 -l h $? $@
 
 /usr/bin/MAKEDEV:	MAKEDEV.sh
 	install -m 755 -c -o bin $? $@
@@ -104,7 +104,7 @@ clean:
 /usr/bin/[ /usr/bin/command /usr/bin/echo /usr/bin/expr /usr/bin/false \
 /usr/bin/getopts /usr/bin/read /usr/bin/test /usr/bin/true /usr/bin/umask \
 /usr/bin/wait:	/usr/bin/cd
-	install -m 755 -l $? $@
+	install -m 755 -l h $? $@
 
 /usr/bin/easypack:	easypack.sh
 	install -m 755 -c -o bin $? $@
@@ -116,7 +116,7 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/clr:	/usr/bin/clear
-	install -m 755 -l $? $@
+	install -m 755 -l h $? $@
 
 /usr/bin/makewhatis:	makewhatis.sh
 	install -m 755 -c -o bin $? $@
@@ -173,7 +173,7 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/apropos:	/usr/bin/whatis
-	install -m 755 -l $? $@
+	install -m 755 -l h $? $@
 
 /usr/bin/whereis:	whereis.sh
 	install -m 755 -c -o bin $? $@
@@ -182,11 +182,11 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /bin/U:	/bin/M
-	install -m 755 -l $? $@
+	install -m 755 -l h $? $@
 
 /bin/cd:	/usr/bin/cd
-	install -m 755 -lc $? $@
+	install -m 755 -l h -c $? $@
 
 /bin/[ /bin/command /bin/echo /bin/expr /bin/false /bin/getopts \
 /bin/read /bin/test /bin/true /bin/umask /bin/wait:	/bin/cd
-	install -m 755 -l $? $@
+	install -m 755 -l h $? $@

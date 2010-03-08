@@ -17,8 +17,8 @@ char version[]=		"2.20";
 #include <limits.h>
 #include <string.h>
 #include <errno.h>
-#include <ibm/partition.h>
-#include <ibm/bios.h>
+#include <machine/partition.h>
+#include <machine/bios.h>
 #include <minix/config.h>
 #include <minix/type.h>
 #include <minix/dmap.h>

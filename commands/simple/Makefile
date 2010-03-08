@@ -28,7 +28,7 @@ CC	= exec cc
 #					strip symbol table (-s)
 #
 # /bin/cat:	/usr/bin/cat
-#	install -lcs $< $@	install '/bin/cat' by linking (if possible)
+#	install -l h -cs $< $@	install '/bin/cat' by linking (if possible)
 #				or copying (otherwise)
 #
 # Some of the binaries are installed under more than one name.  The extra
@@ -1120,7 +1120,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/del_route:	/usr/bin/add_route
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/arp:	arp
 	install -cs -o root -m 4755 $> $@
@@ -1132,7 +1132,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/restore:	/usr/bin/backup
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/badblocks:	badblocks
 	install -cs -o bin $> $@
@@ -1174,7 +1174,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/chgrp:	/usr/bin/chown
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/ci:	ci
 	install -cs -o bin $> $@
@@ -1198,7 +1198,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/uncompress /usr/bin/zcat:	/usr/bin/compress
-	install -l $> $@
+	install -l h $> $@
 
 /bin/cp:	cp
 	install -cs -o bin $> $@
@@ -1208,10 +1208,10 @@ install:	\
 
 /usr/bin/clone /usr/bin/cpdir \
 /usr/bin/ln /usr/bin/mv /usr/bin/rm:	/usr/bin/cp
-	install -l $> $@
+	install -l h $> $@
 
 /bin/ln /bin/mv /bin/rm:	/bin/cp
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/crc:	crc
 	install -cs -o bin $> $@
@@ -1304,7 +1304,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/egrep:	/usr/bin/grep
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/head:	head
 	install -cs -o bin $> $@
@@ -1352,7 +1352,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/isodir /usr/bin/isoinfo:	/usr/bin/isoread
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/join:	join
 	install -cs -o bin $> $@
@@ -1364,7 +1364,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/uptime:	/usr/bin/last
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/leave:	leave
 	install -cs -o bin $> $@
@@ -1451,7 +1451,7 @@ install:	\
 	install -cs -o root -m 4755 $> $@
 
 /usr/bin/chfn /usr/bin/chsh:	/usr/bin/passwd
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/paste:	paste
 	install -cs -o bin $> $@
@@ -1475,7 +1475,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/printenv:	/usr/bin/env
-	install -ls -o bin /usr/bin/env /usr/bin/printenv
+	install -l h -s -o bin /usr/bin/env /usr/bin/printenv
 
 /usr/bin/printroot:	printroot
 	install -cs -o bin $> $@
@@ -1508,7 +1508,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/readlink:	/usr/bin/stat
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/readfs:	readfs
 	install -cs -o bin $> $@
@@ -1523,7 +1523,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/rput:	/usr/bin/rget
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/rlogin:	rlogin
 	install -cs -o bin $> $@
@@ -1562,7 +1562,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/fstat:	/usr/bin/stat
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/strings:	strings
 	install -cs -o bin $> $@
@@ -1652,7 +1652,7 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/arch:	/usr/bin/uname
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/unexpand:	unexpand
 	install -cs -o bin $> $@
@@ -1667,13 +1667,13 @@ install:	\
 	install -cs -o bin $> $@
 
 /usr/bin/uudecode:	/usr/bin/uud
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/uue:	uue
 	install -cs -o bin $> $@
 
 /usr/bin/uuencode:	/usr/bin/uue
-	install -l $> $@
+	install -l h $> $@
 
 /usr/bin/vol:	vol
 	install -cs -o bin $> $@
@@ -1703,28 +1703,28 @@ install:	\
 	install -cs -o bin $> $@
 
 /bin/cat:	/usr/bin/cat
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/fsck:	/usr/bin/fsck
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/intr:	/usr/bin/intr
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/mount:	/usr/bin/mount
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/printroot:	/usr/bin/printroot
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/pwd:	/usr/bin/pwd
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/sync:	/usr/bin/sync
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/umount:	/usr/bin/umount
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 clean:
 	rm -rf $(ALL) a.out core

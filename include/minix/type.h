@@ -179,7 +179,7 @@ struct kmessages {
 };
 
 #include <minix/config.h>
-#include <ibm/interrupt.h>
+#include <machine/interrupt.h>
 
 /* randomness struct: random sources after interrupts: */
 #define RANDOM_SOURCES			NR_IRQ_VECTORS

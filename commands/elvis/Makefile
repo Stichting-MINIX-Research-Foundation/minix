@@ -73,7 +73,7 @@ install:	/usr/bin/elvis \
 
 /usr/bin/vi:	/usr/bin/elvis
 	if [ ! -x $@ ];	\
-	then	install -l $? $@ ;	\
+	then	install -l h $? $@ ;	\
 	fi
 
 /usr/bin/ctags:	ctags

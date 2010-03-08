@@ -34,7 +34,7 @@
 */
 
 #include <sys/types.h>
-#include <ibm/partition.h>
+#include <machine/partition.h>
 #include <minix/partition.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>

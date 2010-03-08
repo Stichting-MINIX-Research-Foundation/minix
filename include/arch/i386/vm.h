@@ -1,7 +1,7 @@
 #ifndef __SYS_VM_386_H__
 #define __SYS_VM_386_H__
 /*
-sys/vm_i386.h
+i386/vm.h
 */
 
 #define I386_PAGE_SIZE		4096

@@ -18,7 +18,7 @@ install::	/usr/bin/acd /usr/bin/cc /usr/bin/m2 /usr/bin/pc \
 	install -cs -o bin $? $@
 
 /usr/bin/cc /usr/bin/m2 /usr/bin/pc:	/usr/bin/acd
-	install -l $? $@
+	install -l h $? $@
 
 /usr/lib/descr:	acd.descr
 	install $? $@

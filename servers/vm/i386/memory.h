@@ -1,4 +1,4 @@
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 
 /* As visible from the user space process, where is the top of the
  * stack (first non-stack byte), when in paged mode?

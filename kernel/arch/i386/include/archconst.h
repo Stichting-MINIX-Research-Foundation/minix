@@ -2,8 +2,8 @@
 #ifndef _I386_ACONST_H
 #define _I386_ACONST_H 1
 
-#include <ibm/interrupt.h>
-#include <ibm/memory.h>
+#include <machine/interrupt.h>
+#include <machine/memory.h>
 
 #define NR_REMOTE_SEGS     3    /* # remote memory regions (variable) */
 

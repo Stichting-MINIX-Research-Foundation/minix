@@ -58,13 +58,13 @@ install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 	install -cs -o bin $> $@
 
 /usr/bin/sh:	/usr/bin/ash
-	install -l $> $@
+	install -l h $> $@
 
 /bin/sh:	/usr/bin/ash
-	install -lcs $> $@
+	install -l h -cs $> $@
 
 /bin/bigsh:	/usr/bin/ash
-	install -S 6600k -lcs $> $@
+	install -S 6600k -l h -cs $> $@
 
 clean:
 	rm -f $(CLEANFILES) sh core

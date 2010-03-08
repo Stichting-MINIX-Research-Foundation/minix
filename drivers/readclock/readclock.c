@@ -51,7 +51,7 @@
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/com.h>
-#include <ibm/cmos.h>
+#include <machine/cmos.h>
 #include <sys/svrctl.h>
 
 int nflag = 0;		/* Tell what, but don't do it. */

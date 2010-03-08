@@ -12,7 +12,7 @@
 #include <time.h>
 #include <errno.h>
 #include <limits.h>
-#include <ibm/diskparm.h>
+#include <machine/diskparm.h>
 #include <minix/minlib.h>
 
 /* Constants. */

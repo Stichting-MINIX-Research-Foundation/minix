@@ -2,7 +2,7 @@
 #define TYPE_H
 
 #include <minix/com.h>
-#include <ibm/interrupt.h>
+#include <machine/interrupt.h>
 
 typedef _PROTOTYPE( void task_t, (void) );
 

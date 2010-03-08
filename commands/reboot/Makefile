@@ -28,7 +28,7 @@ install:	/usr/bin/halt /usr/bin/reboot /usr/bin/shutdown \
 	install -cs -o root -g operator -m 744 $? $@
 
 /usr/bin/reboot:	/usr/bin/halt
-	install -l $? $@
+	install -l h $? $@
 
 /usr/bin/shutdown:	shutdown
 	install -cs -o root -g operator -m 4754 $? $@
@@ -37,7 +37,7 @@ install:	/usr/bin/halt /usr/bin/reboot /usr/bin/shutdown \
 	install -cs -o root -g operator -m 744 $? $@
 
 /bin/reboot:	/bin/halt
-	install -l $? $@
+	install -l h $? $@
 
 clean:
 	rm -f *.o a.out core $(PROGRAMS)

@@ -26,7 +26,7 @@
 #include <minix/sysutil.h>
 #include <minix/safecopies.h>
 #include <sys/ioc_disk.h>
-#include <ibm/int86.h>
+#include <machine/int86.h>
 #include <assert.h>
 
 #define ME "BIOS_WINI"

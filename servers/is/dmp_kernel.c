@@ -2,7 +2,7 @@
 
 #include "inc.h"
 #include <timers.h>
-#include <ibm/interrupt.h>
+#include <machine/interrupt.h>
 #include <minix/endpoint.h>
 #include <minix/sysutil.h>
 #include <minix/sys_config.h>

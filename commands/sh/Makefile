@@ -18,10 +18,10 @@ install:	/usr/bin/msh
 	install -cs -o bin $? $@
 
 #/usr/bin/sh:	/usr/bin/msh
-#	install -l $? $@
+#	install -l h $? $@
 #
 #/bin/sh:	/usr/bin/msh
-#	install -lcs $? $@
+#	install -l h -cs $? $@
 
 $(OBJ):	sh.h
 

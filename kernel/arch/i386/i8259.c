@@ -9,7 +9,7 @@
 #include "../../proc.h"
 #include "proto.h"
 #include <minix/portio.h>
-#include <ibm/cpu.h>
+#include <machine/cpu.h>
 
 #define ICW1_AT         0x11	/* edge triggered, cascade, need ICW4 */
 #define ICW1_PC         0x13	/* edge triggered, no cascade, need ICW4 */

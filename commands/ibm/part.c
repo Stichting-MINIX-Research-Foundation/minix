@@ -24,7 +24,7 @@
 #include <minix/const.h>
 #include <minix/partition.h>
 #include <minix/u64.h>
-#include <ibm/partition.h>
+#include <machine/partition.h>
 #include <termios.h>
 
 /* True if a partition is an extended partition. */

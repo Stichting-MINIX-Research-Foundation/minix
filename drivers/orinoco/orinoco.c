@@ -59,7 +59,7 @@
 #include	<minix/type.h>
 #include	<minix/sysutil.h>
 #include	<timers.h>
-#include	<ibm/pci.h>
+#include	<machine/pci.h>
 #include 	<minix/ds.h>
 #include	<minix/endpoint.h>
 #include	"../../kernel/const.h"
@@ -89,7 +89,7 @@ static timer_t or_watchdog;
 #include	<net/hton.h>
 #include	<net/gen/ether.h>
 #include	<net/gen/eth_io.h>
-#include	<sys/vm_i386.h>
+#include	<machine/vm.h>
 #include	<sys/types.h>
 #include 	<unistd.h>
 #include	<errno.h>

@@ -117,7 +117,7 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/dosdir /usr/bin/doswrite:	/usr/bin/dosread
-	install -l $? $@
+	install -l h $? $@
 
 /usr/bin/fdisk:	fdisk
 	install -cs -o bin $? $@
@@ -135,7 +135,7 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/autopart:	autopart
-	install -lcs $? $@
+	install -l h -cs $? $@
 
 /usr/bin/part:	part
 	install -cs -o bin $? $@
@@ -162,7 +162,7 @@ install:	\
 	install -cs -o bin $? $@
 
 /bin/loadkeys:	/usr/bin/loadkeys
-	install -lcs $? $@
+	install -l h -cs $? $@
 
 clean:
 	rm -rf $(ALL) a.out core

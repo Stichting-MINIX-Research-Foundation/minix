@@ -25,7 +25,7 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 
 #include "local.h"
 

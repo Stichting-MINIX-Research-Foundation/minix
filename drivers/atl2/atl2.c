@@ -10,7 +10,7 @@
 #include <sys/mman.h>
 #include <minix/ds.h>
 #include <minix/vm.h>
-#include <ibm/pci.h>
+#include <machine/pci.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <assert.h>

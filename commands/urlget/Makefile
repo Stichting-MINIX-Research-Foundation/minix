@@ -31,6 +31,6 @@ $(BINDIR)/$(PROG):	$(PROG)
 	install -c $? $@
 
 $(BINDIR)/$(LINK1) $(BINDIR)/$(LINK2):	$(BINDIR)/$(PROG)
-	install -l $? $@
+	install -l h $? $@
 
 $(OBJS):	net.h

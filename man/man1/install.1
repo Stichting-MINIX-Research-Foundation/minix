@@ -5,7 +5,9 @@ install \- install files
 .in +5
 .ti -5
 .B install
-.RB [ \-lcpsz\fIN\fP "] [" \-o
+.RB [ \-cpsz\fIN\fP "] [" \-l
+.IR linktype ]
+.RB [ \-o
 .IR owner ]
 .RB [ \-g
 .IR group ]
@@ -18,7 +20,9 @@ install \- install files
 .br
 .ti -5
 .B install
-.RB [ \-lcpsz\fIN\fP "] [" \-o
+.RB [ \-cpsz\fIN\fP "] [" \-l
+.IR linktype ]
+.RB [ \-o
 .IR owner ]
 .RB [ \-g
 .IR group ]
@@ -68,10 +72,17 @@ if they are linked.  So copy the file if you change it in a way that makes
 it read-only.  You would otherwise not be able to compile a command again.
 .SH OPTIONS
 .TP
-.B \-l
+.BI \-l " linktype"
 Link the destination to the source file instead of copying it.  This is done
 to either save space on a file system with both the source and the bin
-directories on it, or to install synonyms to a command.
+directories on it, or to install synonyms to a command. The
+.I linktype
+argument can either be
+.I h
+(hard)
+or
+.I s
+(symbolic).
 .TP
 .B \-c
 Copy the source file to its proper place.  This option is the default if

@@ -1,7 +1,7 @@
 
 /* i386-specific clock functions. */
 
-#include <ibm/ports.h>
+#include <machine/ports.h>
 #include <minix/portio.h>
 
 #include "../../kernel.h"

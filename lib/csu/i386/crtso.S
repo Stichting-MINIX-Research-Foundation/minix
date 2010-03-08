@@ -6,7 +6,7 @@
 /* simplistic.  We simply check for some magic value, but there is no other */
 /* way. */
 
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 
 
 .globl	begtext, begdata, begbss

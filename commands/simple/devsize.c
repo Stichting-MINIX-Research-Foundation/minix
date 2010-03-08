@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
-#include <ibm/partition.h>
+#include <machine/partition.h>
 #include <minix/partition.h>
 #include <minix/u64.h>
 #include <sys/ioc_disk.h>

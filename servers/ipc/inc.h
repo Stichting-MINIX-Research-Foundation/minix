@@ -16,7 +16,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/mman.h>
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 #include <sys/vm.h>
 
 #include <time.h>

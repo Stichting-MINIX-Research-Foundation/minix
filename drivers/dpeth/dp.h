@@ -224,7 +224,7 @@ void dp_next_iovec(iovec_dat_s_t * iovp);
 
 /* devio.c */
 #if defined USE_IOPL
-#include <ibm/portio.h>
+#include <machine/portio.h>
 #else
 unsigned int inb(unsigned short int);
 unsigned int inw(unsigned short int);

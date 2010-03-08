@@ -24,7 +24,7 @@
 
 #include "floppy.h"
 #include <timers.h>
-#include <ibm/diskparm.h>
+#include <machine/diskparm.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/endpoint.h>

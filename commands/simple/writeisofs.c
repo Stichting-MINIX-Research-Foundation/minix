@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <ctype.h>
-#include <ibm/partition.h>
+#include <machine/partition.h>
 
 #include <sys/stat.h>
 

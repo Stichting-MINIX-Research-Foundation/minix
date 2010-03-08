@@ -12,7 +12,7 @@
 #include "../drivers.h"
 
 #include <assert.h>
-#include <ibm/pci.h>
+#include <machine/pci.h>
 #include <minix/syslib.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>

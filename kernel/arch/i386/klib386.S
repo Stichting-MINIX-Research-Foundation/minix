@@ -3,7 +3,7 @@
 
 #include <minix/config.h>
 #include <minix/const.h>
-#include <ibm/interrupt.h>
+#include <machine/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
 #include "sconst.h"

@@ -20,7 +20,7 @@
  * by Laurens Bronwasser
  */
 
-#include <ibm/pci.h>
+#include <machine/pci.h>
 
 #include "../framework/audio_fw.h"
 #include "es1371.h"

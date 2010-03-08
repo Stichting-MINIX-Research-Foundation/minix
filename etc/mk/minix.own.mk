@@ -769,9 +769,7 @@ PRESERVE?=	-p
 .endif
 #XXX: Not supported by MINIX install
 #RENAME?=	-r
-#XXX: MINIX install only supports hard link
-#HRDLINK?=	-l h
-HRDLINK?=	-l
+HRDLINK?=	-l h
 SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG

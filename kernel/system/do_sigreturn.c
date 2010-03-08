@@ -9,7 +9,7 @@
 
 #include "../system.h"
 #include <string.h>
-#include <ibm/cpu.h>
+#include <machine/cpu.h>
 #include <sys/sigcontext.h>
 
 #if USE_SIGRETURN 

@@ -1,3 +1,9 @@
+20100308:
+        Include directory reorganization:
+        # mv /usr/include/ibm /usr/include/i386
+        # ln -s /usr/include/i386 /usr/include/machine
+        Install(1) updates:
+        # cd commands/simple && make /bin/install
 20100303:
         Gas2ack updates: Run 'make install' in commands/i386/gas2ack
 20100215:

@@ -77,7 +77,7 @@ $(BINDIR)/yap:	yap
 		install -cs -o bin yap $@
 
 $(BINDIR)/more:	$(BINDIR)/yap
-		install -l $? $@
+		install -l h $? $@
 
 clean:
 		rm -f yap $(OFILES) a.out core *.bak

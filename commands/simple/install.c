@@ -57,13 +57,16 @@ void deallocate(void *mem)
 	if (mem != nil) free(mem);
 }
 
-int lflag= 0;		/* Make a hard link if possible. */
+int lflag= 0;		/* Make a link if possible. */
 int cflag= 0;		/* Copy if you can't link, otherwise symlink. */
 int dflag= 0;		/* Create a directory. */
 int pflag= 0;		/* Preserve timestamps. */
 int strip= 0;		/* Strip the copy. */
 char **compress= nil;	/* Compress utility to make a compressed executable. */
 char *zcat= nil;	/* Line one to decompress. */
+
+int make_hardlink = 0; /* Make a hard link */
+int make_symlink = 0;  /* Make a symbolic link */
 
 long stack= -1;		/* Amount of heap + stack. */
 int wordpow= 1;		/* Must be multiplied with wordsize ** wordpow */
@@ -238,16 +241,16 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 	if (owner == -1) owner= sst.st_uid;
 	if (group == -1) group= sst.st_gid;
 
-	if (!S_ISREG(sst.st_mode)) {
+	if (!make_symlink && !S_ISREG(sst.st_mode)) {
 		fprintf(stderr, "install: %s is not a regular file\n", source);
 		excode= 1;
 		return;
 	}
-	r= stat(dest, &dst);
+	r= lstat(dest, &dst);
 	if (r < 0) {
 		if (errno != ENOENT) { report(dest); return; }
 	} else {
-		if (!S_ISREG(dst.st_mode)) {
+		if (!make_symlink && !S_ISREG(dst.st_mode)) {
 			fprintf(stderr, "install: %s is not a regular file\n",
 									dest);
 			excode= 1;
@@ -267,14 +270,24 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 		}
 	}
 
-	if (lflag && !same) {
+	if (lflag) {
 		/* Try to link the files. */
 
 		if (r >= 0 && unlink(dest) < 0) {
 			report(dest); return;
 		}
 
-		if (link(source, dest) >= 0) {
+                if (make_hardlink) {
+                   r = link(source, dest);
+                }
+                else if (make_symlink) {
+                   r = symlink(source, dest);
+                } else {
+                   fprintf(stderr,
+                           "install: must specify hardlink or symlink\n");
+                }
+
+		if (r >= 0) {
 			docopy= 0;
 		} else {
 			if (!cflag || errno != EXDEV) {
@@ -382,6 +395,9 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 		}
 	}
 
+        /* Don't modify metadata if symlink target doesn't exist */
+        if (make_symlink && stat(dest, &dst) < 0) return;
+
 	if (stat(dest, &dst) < 0) { report(dest); return; }
 
 	if ((dst.st_mode & 07777) != mode) {
@@ -455,7 +471,6 @@ void main(int argc, char **argv)
 
 		while (*p != 0) {
 			switch (*p++) {
-			case 'l':	lflag= 1;	break;
 			case 'c':	cflag= 1;	break;
 			case 's':	strip= 1;	break;
 			case 'd':	dflag= 1;	break;
@@ -526,6 +541,25 @@ void main(int argc, char **argv)
 				}
 				p= "";
 				break;
+			case 'l':
+                                lflag= 1;
+				if (*p == 0) {
+					if (i == argc) usage();
+					p= argv[i++];
+					if (*p == 0) usage();
+				}
+                                switch(*p) {
+                                   case 'h':
+                                      make_hardlink = 1;
+                                      break;
+                                   case 's':
+                                      make_symlink = 1;
+                                      break;
+                                   default:
+                                      break;
+                                }
+				p= "";
+                              break;
 			case 'S':
 				if (*p == 0) {
 					if (i == argc) usage();
@@ -582,7 +616,7 @@ void main(int argc, char **argv)
 		if ((argc - i) < 1) usage();
 		if ((lflag || cflag) && (argc - i) == 1) usage();
 
-		if (stat(argv[argc-1], &st) >= 0 && S_ISDIR(st.st_mode)) {
+		if (lstat(argv[argc-1], &st) >= 0 && S_ISDIR(st.st_mode)) {
 			/* install file ... dir */
 			char *target= nil;
 			char *base;

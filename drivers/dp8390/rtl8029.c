@@ -12,7 +12,7 @@ Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include <sys/types.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
-#include <ibm/pci.h>
+#include <machine/pci.h>
 
 #include "assert.h"
 

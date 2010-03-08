@@ -46,7 +46,7 @@
 
 /* sections */
 
-#include <sys/vm_i386.h>
+#include <machine/vm.h>
 
 #ifdef __ACK__
 .text
@@ -67,7 +67,7 @@ begbss:
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/com.h>
-#include <ibm/interrupt.h>
+#include <machine/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
 #include "../../proc.h"

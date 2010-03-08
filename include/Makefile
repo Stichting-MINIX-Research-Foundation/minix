@@ -1,19 +1,45 @@
+# Doing a make includes builds /usr/include
 
-INC=/usr/include
-MKHEADERS343=/usr/gnu//libexec/gcc/i386-pc-minix/3.4.3/install-tools/mkheaders
-MKHEADERS411=/usr/gnu//libexec/gcc/i386-pc-minix/4.1.1/install-tools/mkheaders
+INCS=	alloca.h ansi.h a.out.h ar.h assert.h configfile.h ctype.h \
+	curses.h dirent.h env.h err.h errno.h fcntl.h fenv.h \
+	float.h fnmatch.h fts.h getopt.h glob.h grp.h ifaddrs.h \
+	inttypes.h libgen.h lib.h libutil.h limits.h locale.h \
+	mathconst.h math.h midiparser.h netdb.h pwd.h regex.h \
+	regexp.h setjmp.h sgtty.h signal.h stdarg.h stddef.h \
+	stdint.h stdio.h stdlib.h string.h strings.h sysexits.h \
+	syslog.h tar.h termcap.h termios.h time.h timers.h tools.h \
+	ttyent.h unistd.h utime.h utmp.h
+INCS+=	arpa/inet.h
+INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
+	minix/com.h minix/config.h minix/const.h minix/cpufeature.h \
+	minix/crtso.h minix/debug.h minix/devio.h minix/dirent.h \
+	minix/dir.h minix/dl_eth.h minix/dmap.h minix/ds.h \
+	minix/endpoint.h minix/fslib.h minix/ioctl.h minix/ipc.h \
+	minix/keymap.h minix/minlib.h minix/mq.h minix/partition.h \
+	minix/paths.h minix/portio.h minix/profile.h \
+	minix/queryparam.h minix/rs.h minix/safecopies.h \
+	minix/sef.h minix/sound.h minix/sys_config.h \
+	minix/sysinfo.h minix/syslib.h minix/sysutil.h minix/tty.h \
+	minix/type.h minix/types.h minix/u64.h minix/vfsif.h \
+	minix/vm.h
+INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
+INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
+	net/gen/eth_hdr.h net/gen/eth_io.h net/gen/icmp.h \
+	net/gen/icmp_hdr.h net/gen/if_ether.h net/gen/inet.h \
+	net/gen/in.h net/gen/ip_hdr.h net/gen/ip_io.h \
+	net/gen/nameser.h net/gen/netdb.h net/gen/oneCsum.h \
+	net/gen/psip_hdr.h net/gen/psip_io.h net/gen/resolv.h \
+	net/gen/rip.h net/gen/route.h net/gen/socket.h \
+	net/gen/tcp.h net/gen/tcp_hdr.h net/gen/tcp_io.h \
+	net/gen/udp.h net/gen/udp_hdr.h net/gen/udp_io.h \
+	net/gen/vjhc.h
+INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
 
-all::
+.include <minix.own.mk>
 
-clean::
+INCSDIR=        /usr/include
 
-install::
-	-rm -rf $(INC)
-	mkdir -p $(INC)
-	cpdir . $(INC)
-	@chown -R bin $(INC)
-	@rm -f $(INC)/Makefile
+SUBDIR=		sys arch
 
-gcc: install
-	SHELL=/bin/sh; if [ -f $(MKHEADERS343) ] ; then sh -e $(MKHEADERS343) ; fi
-	SHELL=/bin/sh; if [ -f $(MKHEADERS411) ] ; then sh -e $(MKHEADERS411) ; fi
+.include <minix.prog.mk>
+.include <minix.subdir.mk>

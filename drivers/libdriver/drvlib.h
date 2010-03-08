@@ -2,7 +2,7 @@
  *								7 Dec 1995
  */
 
-#include <ibm/partition.h>
+#include <machine/partition.h>
 
 _PROTOTYPE( void partition, (struct driver *dr, int device, int style, int atapi) );
 

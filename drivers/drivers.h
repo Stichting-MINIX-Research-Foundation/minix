@@ -23,9 +23,9 @@
 #include <minix/sysutil.h>
 #include <minix/bitmap.h>
 
-#include <ibm/interrupt.h>	/* IRQ vectors and miscellaneous ports */
-#include <ibm/bios.h>		/* BIOS index numbers */
-#include <ibm/ports.h>		/* Well-known ports */
+#include <machine/interrupt.h>	/* IRQ vectors and miscellaneous ports */
+#include <machine/bios.h>		/* BIOS index numbers */
+#include <machine/ports.h>		/* Well-known ports */
 
 #include <string.h>
 #include <signal.h>

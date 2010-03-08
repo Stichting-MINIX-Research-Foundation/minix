@@ -358,7 +358,7 @@ LINKSGRP?= ${BINGRP}
 LINKSMODE?= ${BINMODE}
 .include <minix.man.mk>
 .include <minix.files.mk>
-# .include <minix.inc.mk>
+.include <minix.inc.mk>
 .include <minix.links.mk>
 .include <minix.sys.mk>
 .include <minix.dep.mk>

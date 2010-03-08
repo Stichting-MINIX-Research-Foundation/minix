@@ -22,7 +22,7 @@
 #include <sys/video.h>
 #include <kernel/const.h>
 #include <kernel/type.h>
-#include <ibm/partition.h>
+#include <machine/partition.h>
 #include "rawfs.h"
 #include "image.h"
 #include "boot.h"

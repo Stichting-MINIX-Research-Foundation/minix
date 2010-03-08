@@ -20,7 +20,7 @@
 #include <minix/type.h>
 #include <minix/endpoint.h>
 #include <sys/ioc_disk.h>
-#include <ibm/pci.h>
+#include <machine/pci.h>
 #include <sys/mman.h>
 
 /* Variables. */
