@@ -262,7 +262,8 @@ node_details_t *node;
 		 * to the parent FS. That is, when we climb up the tree, we
 		 * must've encountered ".." in the path, and that is exactly
 		 * what we're going to feed to the parent */
-		if(strncmp(user_fullpath, "..", 2) != 0) {
+		if(strncmp(user_fullpath, "..", 2) != 0 ||
+			(user_fullpath[2] != '\0' && user_fullpath[2] != '/')) {
 			printf("VFS: bogus path: %s\n", user_fullpath);
 			return(ENOENT);
 		}
