@@ -56,8 +56,11 @@ _PROTOTYPE( double difftime, (time_t _time1, time_t _time0)		);
 _PROTOTYPE( time_t mktime, (struct tm *_timeptr)			);
 _PROTOTYPE( time_t time, (time_t *_timeptr)				);
 _PROTOTYPE( char *asctime, (const struct tm *_timeptr)			);
-_PROTOTYPE( char *ctime, (const time_t *_timer)			);
+_PROTOTYPE( char *asctime_r, (const struct tm *_timeptr, char *buf)			);
+_PROTOTYPE( char *ctime, (const time_t *_timer)				);
+_PROTOTYPE( char *ctime_r, (const time_t *_timer, char *buf)			);
 _PROTOTYPE( struct tm *gmtime, (const time_t *_timer)			);
+_PROTOTYPE( struct tm *gmtime_r, (const time_t *_timer,struct tm *tmp)			);
 _PROTOTYPE( struct tm *localtime, (const time_t *_timer)		);
 _PROTOTYPE( struct tm *localtime_r, (const time_t *const timep,
 					struct tm *tmp)			);
