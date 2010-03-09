@@ -11,7 +11,7 @@ YACC=/usr/bin/yacc RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./
 make clean all
 
 $INSTALL -m 755 flex /usr/bin
-$INSTALL -l /usr/bin/flex /usr/bin/flex++
+$INSTALL -l h /usr/bin/flex /usr/bin/flex++
 $INSTALL FlexLexer.h /usr/local/include
 $INSTALL libfl.a /usr/lib/i386
 
