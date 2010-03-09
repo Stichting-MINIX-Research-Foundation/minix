@@ -938,7 +938,7 @@ set_crc(ARCHD *arcn, int fd)
 	int i;
 	int res;
 	off_t cpcnt = 0L;
-	u_long size;
+	u_long size = FILEBLK;
 	unsigned long crc = 0L;
 	char tbuf[FILEBLK];
 	struct stat sb;
@@ -950,12 +950,6 @@ set_crc(ARCHD *arcn, int fd)
 		arcn->crc = 0L;
 		return(0);
 	}
-
-#if 0
-	/* not in minix */
-	if ((size = (u_long)arcn->sb.st_blksize) > (u_long)sizeof(tbuf))
-		size = (u_long)sizeof(tbuf);
-#endif
 
 	/*
 	 * read all the bytes we think that there are in the file. If the user
