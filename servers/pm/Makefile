@@ -12,7 +12,7 @@ k = $u/src/kernel
 
 # programs, flags, etc.
 CC =	exec cc
-CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$i 
+CPPFLAGS=-I$i
 CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 

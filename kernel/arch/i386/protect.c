@@ -5,7 +5,7 @@
 
 #include "../../kernel.h"
 #include "../../proc.h"
-#include <archconst.h>
+#include "archconst.h"
 
 #include "proto.h"
 

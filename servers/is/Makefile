@@ -15,7 +15,7 @@ f = $u/src/servers/fs
 
 # programs, flags, etc.
 CC =	exec cc
-CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$i 
+CPPFLAGS=-I$i
 CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 LIBS = -lsys 

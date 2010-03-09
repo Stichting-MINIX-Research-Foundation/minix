@@ -10,8 +10,8 @@
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
 #include <a.out.h>
-#include <archconst.h>
 
+#include "archconst.h"
 #include "proto.h"
 #include "../../proc.h"
 #include "../../debug.h"

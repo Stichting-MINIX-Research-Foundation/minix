@@ -14,7 +14,7 @@ d = ..
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CPPFLAGS = -I.. -I../.. -I../../kernel/arch/$(ARCH)/include -I$i 
+CPPFLAGS = -I.. -I../.. -I$i
 CFLAGS = $(CPPFLAGS)
 LDFLAGS = -i
 LIBS =  -lsys -ltimers

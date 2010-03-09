@@ -9,7 +9,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <archconst.h>
 
 #include "mproc.h"
 

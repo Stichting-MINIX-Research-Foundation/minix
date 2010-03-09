@@ -24,8 +24,7 @@
 #include <minix/type.h>
 #include <minix/vm.h>
 #include <string.h>
-#include <archconst.h>
-#include <archtypes.h>
+#include <machine/archtypes.h>
 #include <lib.h>
 #include <assert.h>
 #include "mproc.h"

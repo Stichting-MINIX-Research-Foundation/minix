@@ -15,7 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../kernel/arch/i386/include/archtypes.h"
+#include <machine/archtypes.h>
 #include "../../kernel/proc.h"
 
 #define CLICK_WORDS (CLICK_SIZE / sizeof(unsigned long))

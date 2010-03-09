@@ -3,9 +3,8 @@
 #define _I386_TYPES_H
 
 #include <minix/sys_config.h>
-#include "archconst.h"
-#include <sys/stackframe.h>
-#include <sys/fpu.h>
+#include <machine/stackframe.h>
+#include <machine/fpu.h>
 
 struct segdesc_s {		/* segment descriptor for protected mode */
   u16_t limit_low;

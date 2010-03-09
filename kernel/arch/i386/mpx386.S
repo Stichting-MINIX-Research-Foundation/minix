@@ -68,7 +68,7 @@ begbss:
 #include <minix/const.h>
 #include <minix/com.h>
 #include <machine/interrupt.h>
-#include <archconst.h>
+#include "archconst.h"
 #include "../../const.h"
 #include "../../proc.h"
 #include "sconst.h"

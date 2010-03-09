@@ -1,3 +1,5 @@
+#ifndef _MINIX_CONST_H
+#define _MINIX_CONST_H
 
 #ifndef CHIP
 #error CHIP is not defined
@@ -151,3 +153,5 @@
 #define VERBOSEBOOT_BASIC 1
 #define VERBOSEBOOT_MAX   2
 #define VERBOSEBOOTVARNAME "verbose"
+
+#endif /* _MINIX_CONST_H */

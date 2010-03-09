@@ -27,7 +27,7 @@
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
 
-#include <archtypes.h>
+#include <machine/archtypes.h>
 #include <timers.h>				/* For priv.h */
 #include "../../kernel/priv.h"
 #include "../../kernel/ipc.h"

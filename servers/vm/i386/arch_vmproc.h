@@ -1,5 +1,4 @@
 
-#include <archtypes.h>
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/type.h>

@@ -23,8 +23,8 @@
  * be added in a different struct.
  */
 #if (_MINIX_CHIP == _CHIP_INTEL)
-#include <sys/stackframe.h>
-#include <sys/fpu.h>
+#include <machine/stackframe.h>
+#include <machine/fpu.h>
 
 typedef struct stackframe_s sigregs;
 struct sigframe {		/* stack frame created for signalled process */

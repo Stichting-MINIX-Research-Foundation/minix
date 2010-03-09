@@ -34,7 +34,7 @@
 
 extern int missing_spares;
 
-#include <archtypes.h>
+#include <machine/archtypes.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h" 
 #include "../../kernel/proc.h"

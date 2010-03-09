@@ -12,7 +12,8 @@
 #endif
 
 #include <minix/config.h>
-#include <archtypes.h>
+#include <machine/archtypes.h>
+#include "archconst.h"
 #include "config.h"
 #include "debug.h"
 

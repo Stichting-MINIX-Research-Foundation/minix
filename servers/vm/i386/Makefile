@@ -3,7 +3,7 @@ include /etc/make.conf
 
 OBJ = vm.o pagetable.o arch_pagefaults.o util.o
 
-CPPFLAGS=-I../../../kernel/arch/$(ARCH)/include -I.
+CPPFLAGS=-I.
 CFLAGS = $(CPROFILE) $(CPPFLAGS)
 
 all:	$(OBJ)

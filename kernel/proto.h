@@ -4,7 +4,7 @@
 #define PROTO_H
 
 #include <minix/safecopies.h>
-#include <archtypes.h>
+#include <machine/archtypes.h>
 #include <a.out.h>
 
 /* Struct declarations. */

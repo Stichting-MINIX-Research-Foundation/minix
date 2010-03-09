@@ -15,7 +15,7 @@
 
 #include "kernel.h"
 #include "proc.h"
-#include <archconst.h>
+#include "archconst.h"
 
 #include "arch/i386/hw_intr.h"
 

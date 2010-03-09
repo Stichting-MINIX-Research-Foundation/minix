@@ -4,7 +4,7 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <machine/interrupt.h>
-#include <archconst.h>
+#include "archconst.h"
 #include "../../const.h"
 #include "sconst.h"
 

@@ -1,4 +1,4 @@
-#include <archconst.h>
+#include "archconst.h"
 #include "apic.h"
 #include "sconst.h"
 #include "apic_asm.h"

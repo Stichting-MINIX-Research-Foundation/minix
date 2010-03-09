@@ -10,7 +10,7 @@
 
 #undef EXTERN
 #define EXTERN
-#include "../../kernel/arch/i386/include/archtypes.h"
+#include <machine/archtypes.h>
 #include "../../servers/pm/const.h"
 #include "../../servers/pm/type.h"
 #include "../../servers/pm/mproc.h"
