@@ -66,9 +66,37 @@ _PROTOTYPE( int isless,         (double x, double y)	);
 _PROTOTYPE( int islessequal,    (double x, double y)	);
 _PROTOTYPE( int islessgreater,  (double x, double y)	);
 _PROTOTYPE( int isunordered,    (double x, double y)	);
-_PROTOTYPE( double nearbyint,   (double x)				);
+_PROTOTYPE( double nearbyint,   (double x)		);
 _PROTOTYPE( double remainder,   (double x, double y)	);
-_PROTOTYPE( double trunc,       (double x)				);
+_PROTOTYPE( double trunc,       (double x)		);
+#endif
+
+/* The following definitions are not implemented in the ACK math lib.
+ * We allow them in the GNU compiler because they are builtins there.
+ */
+#ifdef __GNUC__
+_PROTOTYPE( float powf,		(float, float)		);
+_PROTOTYPE( float fmodf,	(float, float)		);
+_PROTOTYPE( double erf,		(double)		);
+_PROTOTYPE( double erfc,	(double)		);
+_PROTOTYPE( double gamma,	(double)		);
+_PROTOTYPE( double j0,		(double)		);
+_PROTOTYPE( double j1,		(double)		);
+_PROTOTYPE( double jn,		(int, double)		);
+_PROTOTYPE( double lgamma,	(double)		);
+_PROTOTYPE( double y0,		(double)		);
+_PROTOTYPE( double y1,		(double)		);
+_PROTOTYPE( double yn,		(int, double)		);
+_PROTOTYPE( double acosh,	(double)		);
+_PROTOTYPE( double asinh,	(double)		);
+_PROTOTYPE( double atanh,	(double)		);
+_PROTOTYPE( double cbrt,	(double)		);
+_PROTOTYPE( double expm1,	(double)		);
+_PROTOTYPE( int    ilogb,	(double)		);
+_PROTOTYPE( double log1p,	(double)		);
+_PROTOTYPE( double logb,	(double)		);
+_PROTOTYPE( double nextafter,	(double, double)	);
+_PROTOTYPE( double scalb,	(double, double)	);
 #endif
 
 #endif /* _MATH_H */
