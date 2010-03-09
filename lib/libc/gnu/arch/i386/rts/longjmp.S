@@ -10,7 +10,7 @@ _longjmp:
 	je		1f
 	leal	4(%eax), %edx		/* pointer to sigset_t */
 	push	%edx
-	call	__oldsigset		/* restore mask */
+	call	___oldsigset		/* restore mask */
 	addl	$4, %esp
 	movl	4(%esp), %eax		/* jmp_buf */
 1:
