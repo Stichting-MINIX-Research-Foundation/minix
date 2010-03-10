@@ -11,6 +11,7 @@
 #include "kernel.h"
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 #include <a.out.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
@@ -48,9 +49,7 @@ PUBLIC void main()
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
   	rp->p_rts_flags = RTS_SLOT_FREE;		/* initialize free slot */
-#if DEBUG_SCHED_CHECK
 	rp->p_magic = PMAGIC;
-#endif
 	rp->p_nr = i;				/* proc number from ptr */
 	rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
   }
@@ -251,12 +250,6 @@ PUBLIC void main()
  * so it's a clear warning no full release should be done with them
  * enabled.
  */
-#if DEBUG_SCHED_CHECK
-  FIXME("DEBUG_SCHED_CHECK enabled");
-#endif
-#if DEBUG_VMASSERT
-  FIXME("DEBUG_VMASSERT enabled");
-#endif
 #if DEBUG_PROC_CHECK
   FIXME("PROC check enabled");
 #endif
@@ -264,6 +257,8 @@ PUBLIC void main()
   DEBUGMAX(("cycles_accounting_init()... "));
   cycles_accounting_init();
   DEBUGMAX(("done\n"));
+
+  assert(runqueues_ok());
 
   restart();
   NOT_REACHABLE;

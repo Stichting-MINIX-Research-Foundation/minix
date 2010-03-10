@@ -88,10 +88,7 @@ _PROTOTYPE( void enable_irq, (irq_hook_t *hook)                        	);
 _PROTOTYPE( int disable_irq, (irq_hook_t *hook)                        );
 
 /* debug.c */
-#if DEBUG_SCHED_CHECK
-#define CHECK_RUNQUEUES check_runqueues_f(__FILE__, __LINE__)
-_PROTOTYPE( void check_runqueues_f, (char *file, int line) );
-#endif
+_PROTOTYPE( int runqueues_ok, (void) );
 _PROTOTYPE( char *rtsflagstr, (int flags) );
 _PROTOTYPE( char *miscflagstr, (int flags) );
 

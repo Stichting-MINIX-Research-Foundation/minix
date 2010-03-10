@@ -24,10 +24,10 @@
 #define DEBUG_STACKTRACE		1
 #define DEBUG_TIME_LOCKS		1
 
-/* Runtime sanity checking. */
-#define DEBUG_VMASSERT			0
-#define DEBUG_SCHED_CHECK		0
-#define DEBUG_STACK_CHECK		0
+/* Sanity checks. */
+#define DEBUG_SANITYCHECKS		0
+
+/* Verbose messages. */
 #define DEBUG_TRACE			0
 
 #if DEBUG_TRACE
@@ -46,24 +46,17 @@
 
 #define NOREC_ENTER(varname) 					\
 	static int varname = NOTENTERED;			\
-	vmassert(varname == ENTERED || varname == NOTENTERED);	\
-	vmassert(magictest == MAGICTEST);			\
-	vmassert(varname != ENTERED);				\
+	assert(varname == ENTERED || varname == NOTENTERED);	\
+	assert(magictest == MAGICTEST);			\
+	assert(varname != ENTERED);				\
 	varname = ENTERED;
 
 #define NOREC_RETURN(varname, v) do {				\
-	vmassert(magictest == MAGICTEST);			\
-	vmassert(varname == ENTERED || varname == NOTENTERED);	\
+	assert(magictest == MAGICTEST);			\
+	assert(varname == ENTERED || varname == NOTENTERED);	\
 	varname = NOTENTERED;					\
 	return v;						\
 } while(0)
-
-#if DEBUG_VMASSERT
-#define vmassert(t) { \
-	if(!(t)) { panic("kernel:%s:%d: assert %s failed", __FILE__, __LINE__, #t); } }
-#else
-#define vmassert(t) { }
-#endif
 
 #define NOT_REACHABLE	do {						\
 	panic("NOT_REACHABLE at %s:%d", __FILE__, __LINE__);	\

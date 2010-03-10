@@ -7,6 +7,7 @@
 #include "proto.h"
 #include <signal.h>
 #include <string.h>
+#include <assert.h>
 #include "../../proc.h"
 #include "../../proto.h"
 
@@ -21,7 +22,7 @@ void pagefault( struct proc *pr,
 
 	reg_t pagefaultcr2;
 
-	vmassert(frame);
+	assert(frame);
 
 	pagefaultcr2 = read_cr2();
 
@@ -31,7 +32,7 @@ void pagefault( struct proc *pr,
 #endif
 
 	if(pr->p_seg.p_cr3) {
-		vmassert(pr->p_seg.p_cr3 == read_cr3());
+		assert(pr->p_seg.p_cr3 == read_cr3());
 	}
 
 	in_physcopy = (frame->eip > (vir_bytes) phys_copy) &&
@@ -76,8 +77,8 @@ void pagefault( struct proc *pr,
 	}
 
 	/* Don't schedule this process until pagefault is handled. */
-	vmassert(pr->p_seg.p_cr3 == read_cr3());
-	vmassert(!RTS_ISSET(pr, RTS_PAGEFAULT));
+	assert(pr->p_seg.p_cr3 == read_cr3());
+	assert(!RTS_ISSET(pr, RTS_PAGEFAULT));
 	RTS_SET(pr, RTS_PAGEFAULT);
 
 	/* Save pagefault details, suspend process,

@@ -36,6 +36,7 @@
 #include "proc.h"
 #include "vm.h"
 #include <stdlib.h>
+#include <assert.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/sigcontext.h>
@@ -63,8 +64,8 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 	   * until VM tells us it's allowed. VM has been notified
 	   * and we must wait for its reply to restart the call.
 	   */
-	  vmassert(RTS_ISSET(caller, RTS_VMREQUEST));
-	  vmassert(caller->p_vmrequest.type == VMSTYPE_KERNELCALL);
+	  assert(RTS_ISSET(caller, RTS_VMREQUEST));
+	  assert(caller->p_vmrequest.type == VMSTYPE_KERNELCALL);
 	  caller->p_vmrequest.saved.reqmsg = *msg;
 	  caller->p_misc_flags |= MF_KCALL_RESUME;
   } else {
@@ -536,10 +537,10 @@ PUBLIC void kernel_call_resume(struct proc *caller)
 {
 	int result;
 
-	vmassert(!RTS_ISSET(p, RTS_SLOT_FREE));
-	vmassert(!RTS_ISSET(p, RTS_VMREQUEST));
+	assert(!RTS_ISSET(caller, RTS_SLOT_FREE));
+	assert(!RTS_ISSET(caller, RTS_VMREQUEST));
 
-	vmassert(p->p_vmrequest.saved.reqmsg.m_source == p->p_endpoint);
+	assert(caller->p_vmrequest.saved.reqmsg.m_source == caller->p_endpoint);
 
 	/*
 	printf("KERNEL_CALL restart from %s / %d rts 0x%08x misc 0x%08x\n",

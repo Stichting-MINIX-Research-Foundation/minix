@@ -12,6 +12,7 @@
 #include "../vm.h"
 #include <signal.h>
 #include <string.h>
+#include <assert.h>
 
 #include <minix/endpoint.h>
 
@@ -40,7 +41,7 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   rpc = proc_addr(m_ptr->PR_SLOT);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
-  vmassert(!(rpp->p_misc_flags & MF_DELIVERMSG));
+  assert(!(rpp->p_misc_flags & MF_DELIVERMSG));
 
   /* needs to be receiving so we know where the message buffer is */
   if(!RTS_ISSET(rpp, RTS_RECEIVING)) {

@@ -11,97 +11,101 @@
 #include <limits.h>
 #include <string.h>
 
-#if DEBUG_SCHED_CHECK		/* only include code if enabled */
-
 #define MAX_LOOP (NR_PROCS + NR_TASKS)
 
-PUBLIC void
-check_runqueues_f(char *file, int line)
+PUBLIC int
+runqueues_ok(void)
 {
   int q, l = 0;
   register struct proc *xp;
 
-  FIXME("check_runqueues being done");
-
-#define MYPANIC(msg) {		\
-	panic("check_runqueues:%s:%d: %s\n", file, line, msg); \
-	}
-
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	xp->p_found = 0;
-	if (l++ > MAX_LOOP) {  MYPANIC("check error"); }
+	if (l++ > MAX_LOOP) panic("check error");
   }
 
   for (q=l=0; q < NR_SCHED_QUEUES; q++) {
     if (rdy_head[q] && !rdy_tail[q]) {
 	printf("head but no tail in %d\n", q);
-		 MYPANIC("scheduling error");
+	return 0;
     }
     if (!rdy_head[q] && rdy_tail[q]) {
 	printf("tail but no head in %d\n", q);
-		 MYPANIC("scheduling error");
+	return 0;
     }
     if (rdy_tail[q] && rdy_tail[q]->p_nextready != NIL_PROC) {
 	printf("tail and tail->next not null in %d\n", q);
-		 MYPANIC("scheduling error");
+	return 0;
     }
     for(xp = rdy_head[q]; xp != NIL_PROC; xp = xp->p_nextready) {
 	vir_bytes vxp = (vir_bytes) xp, dxp;
 	if(vxp < (vir_bytes) BEG_PROC_ADDR || vxp >= (vir_bytes) END_PROC_ADDR) {
-  		MYPANIC("xp out of range");
+  		printf("xp out of range\n");
+		return 0;
 	}
 	dxp = vxp - (vir_bytes) BEG_PROC_ADDR;
 	if(dxp % sizeof(struct proc)) {
-  		MYPANIC("xp not a real pointer");
+  		printf("xp not a real pointer");
+		return 0;
 	}
-	if(xp->p_magic != PMAGIC) {
-  		MYPANIC("magic wrong in xp");
+	if(!proc_ptr_ok(xp)) {
+  		printf("xp bogus pointer");
+		return 0;
 	}
 	if (RTS_ISSET(xp, RTS_SLOT_FREE)) {
 		printf("scheduling error: dead proc q %d %d\n",
 			q, xp->p_endpoint);
-  		MYPANIC("dead proc on run queue");
+		return 0;
 	}
-        if (!xp->p_ready) {
+        if (!proc_is_runnable(xp)) {
 		printf("scheduling error: unready on runq %d proc %d\n",
 			q, xp->p_nr);
-  		MYPANIC("found unready process on run queue");
+		return 0;
         }
         if (xp->p_priority != q) {
 		printf("scheduling error: wrong priority q %d proc %d ep %d name %s\n",
 			q, xp->p_nr, xp->p_endpoint, xp->p_name);
-		MYPANIC("wrong priority");
+		return 0;
 	}
 	if (xp->p_found) {
 		printf("scheduling error: double sched q %d proc %d\n",
 			q, xp->p_nr);
-		MYPANIC("proc more than once on scheduling queue");
+		return 0;
 	}
 	xp->p_found = 1;
 	if (xp->p_nextready == NIL_PROC && rdy_tail[q] != xp) {
 		printf("sched err: last element not tail q %d proc %d\n",
 			q, xp->p_nr);
-		MYPANIC("scheduling error");
+		return 0;
 	}
-	if (l++ > MAX_LOOP) MYPANIC("loop in schedule queue?");
+	if (l++ > MAX_LOOP) {
+		printf("loop in schedule queue?");
+		return 0;
+	}
     }
   }	
 
   l = 0;
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
-	if(xp->p_magic != PMAGIC) 
-		MYPANIC("p_magic wrong in proc table");
+	if(!proc_ptr_ok(xp)) {
+		printf("xp bogus pointer in proc table\n");
+		return 0;
+	}
 	if (isemptyp(xp))
 		continue;
-	if(xp->p_ready && ! xp->p_found) {
+	if(proc_is_runnable(xp) && !xp->p_found) {
 		printf("sched error: ready proc %d not on queue\n", xp->p_nr);
-		MYPANIC("ready proc not on scheduling queue");
-		if (l++ > MAX_LOOP) { MYPANIC("loop in debug.c?"); }
+		return 0;
+		if (l++ > MAX_LOOP) {
+			printf("loop in debug.c?\n"); 
+			return 0;
+		}
 	}
   }
-}
 
-#endif /* DEBUG_SCHED_CHECK */
+  /* All is ok. */
+  return 1;
+}
 
 PUBLIC char *
 rtsflagstr(int flags)

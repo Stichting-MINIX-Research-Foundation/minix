@@ -8,6 +8,7 @@
 #include <minix/syslib.h>
 #include <minix/cpufeature.h>
 #include <string.h>
+#include <assert.h>
 
 #include <machine/vm.h>
 
@@ -50,6 +51,7 @@ PUBLIC void vm_init(struct proc *newptproc)
 	if(vm_running)
 		panic("vm_init: vm_running");
 	switch_address_space(newptproc);
+	assert(ptproc == newptproc);
 	vm_enable_paging();
 	vm_running = 1;
 
@@ -85,11 +87,11 @@ PUBLIC void vm_init(struct proc *newptproc)
 		int mustinvl;					\
 		u32_t pdeval, mask;			        \
 		phys_bytes offset;				\
-		vmassert(psok);					\
+		assert(psok);					\
 		if(PROC) {					\
 			TYPE = TYPEPROCMAP;				\
-			vmassert(!iskernelp(PROC));		\
-			vmassert(HASPT(PROC));			\
+			assert(!iskernelp(PROC));		\
+			assert(HASPT(PROC));			\
 			pdeptr = PROCPDEPTR(PROC, proc_pde_index);	\
 			pdeval = *pdeptr;			\
 		} else {					\
@@ -104,15 +106,15 @@ PUBLIC void vm_init(struct proc *newptproc)
 				continue;				\
 			*PROCPDEPTR(ptproc, k) = 0;			\
 			PDE = k;					\
-			vmassert(k >= 0);				\
-			vmassert(k < sizeof(dirtypde)*8);		\
+			assert(k >= 0);				\
+			assert(k < sizeof(dirtypde)*8);		\
 			mask = PDEMASK(PDE);				\
 			if(dirtypde & mask)				\
 				continue;				\
 			break;						\
 		}							\
-		vmassert(PDE != NOPDE);					\
-		vmassert(mask);						\
+		assert(PDE != NOPDE);					\
+		assert(mask);						\
 		if(dirtypde & mask) {					\
 			mustinvl = TRUE;					\
 		} else {						\
@@ -131,16 +133,16 @@ PUBLIC void vm_init(struct proc *newptproc)
 
 #define DONEPDE(PDE)	{				\
 	if(PDE != NOPDE) {				\
-		vmassert(PDE > 0);			\
-		vmassert(PDE < sizeof(dirtypde)*8);	\
+		assert(PDE > 0);			\
+		assert(PDE < sizeof(dirtypde)*8);	\
 		dirtypde |= PDEMASK(PDE);		\
 	}						\
 }
 
 #define WIPEPDE(PDE)	{				\
 	if(PDE != NOPDE) {				\
-		vmassert(PDE > 0);			\
-		vmassert(PDE < sizeof(dirtypde)*8);	\
+		assert(PDE > 0);			\
+		assert(PDE < sizeof(dirtypde)*8);	\
 		*PROCPDEPTR(ptproc, PDE) = 0;		\
 	}						\
 }
@@ -156,16 +158,16 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 
 	NOREC_ENTER(linlincopy);
 
-	vmassert(vm_running);
-	vmassert(nfreepdes >= 3);
+	assert(vm_running);
+	assert(nfreepdes >= 3);
 
-	vmassert(ptproc);
-	vmassert(proc_ptr);
-	vmassert(getcr3val() == ptproc->p_seg.p_cr3);
+	assert(ptproc);
+	assert(proc_ptr);
+	assert(read_cr3() == ptproc->p_seg.p_cr3);
 
 	procslot = ptproc->p_nr;
 
-	vmassert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
+	assert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
 
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;
@@ -434,7 +436,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	/* phys must be larger than 0 (or the caller will think the call
 	 * failed), and address must not cross a page boundary.
 	 */
-	vmassert(phys);
+	assert(phys);
 
 	return phys;
 }
@@ -450,9 +452,9 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 	u32_t pde_v, pte_v;
 	NOREC_ENTER(vmlookup);
 
-	vmassert(proc);
-	vmassert(physical);
-	vmassert(!isemptyp(proc));
+	assert(proc);
+	assert(physical);
+	assert(!isemptyp(proc));
 
 	if(!HASPT(proc)) {
 		*physical = virtual;
@@ -461,9 +463,9 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 
 	/* Retrieve page directory entry. */
 	root = (u32_t *) proc->p_seg.p_cr3;
-	vmassert(!((u32_t) root % I386_PAGE_SIZE));
+	assert(!((u32_t) root % I386_PAGE_SIZE));
 	pde = I386_VM_PDE(virtual);
-	vmassert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
+	assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
 	pde_v = phys_get32((u32_t) (root + pde));
 
 	if(!(pde_v & I386_VM_PRESENT)) {
@@ -478,9 +480,9 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 	} else {
 		/* Retrieve page table entry. */
 		pt = (u32_t *) I386_VM_PFA(pde_v);
-		vmassert(!((u32_t) pt % I386_PAGE_SIZE));
+		assert(!((u32_t) pt % I386_PAGE_SIZE));
 		pte = I386_VM_PTE(virtual);
-		vmassert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
+		assert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
 		pte_v = phys_get32((u32_t) (pt + pte));
 		if(!(pte_v & I386_VM_PRESENT)) {
 			NOREC_RETURN(vmlookup, EFAULT);
@@ -505,8 +507,8 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 	u32_t prev_phys = 0;    /* Keep lints happy. */
 	u32_t po;
 
-	vmassert(targetproc);
-	vmassert(bytes > 0);
+	assert(targetproc);
+	assert(bytes > 0);
 
 	if(!HASPT(targetproc))
 		return 1;
@@ -561,15 +563,10 @@ PRIVATE void vm_suspend(struct proc *caller, struct proc *target,
 	/* This range is not OK for this process. Set parameters  
 	 * of the request and notify VM about the pending request. 
 	 */								
-	vmassert(!RTS_ISSET(caller, RTS_VMREQUEST));
-	vmassert(!RTS_ISSET(target, RTS_VMREQUEST));
+	assert(!RTS_ISSET(caller, RTS_VMREQUEST));
+	assert(!RTS_ISSET(target, RTS_VMREQUEST));
 
 	RTS_SET(caller, RTS_VMREQUEST);
-
-#if DEBUG_VMASSERT
-	caller->p_vmrequest.stacktrace[0] = '\0';
-	util_stacktrace_strcat(caller->p_vmrequest.stacktrace);
-#endif
 
 	caller->p_vmrequest.req_type = VMPTYPE_CHECK;
 	caller->p_vmrequest.target = target->p_endpoint;
@@ -593,20 +590,11 @@ int delivermsg(struct proc *rp)
 	int r;
 	NOREC_ENTER(deliver);
 
-	vmassert(rp->p_misc_flags & MF_DELIVERMSG);
-	vmassert(rp->p_delivermsg.m_source != NONE);
+	assert(rp->p_misc_flags & MF_DELIVERMSG);
+	assert(rp->p_delivermsg.m_source != NONE);
 
-	vmassert(rp->p_delivermsg_lin);
-#if DEBUG_VMASSERT
-	if(rp->p_delivermsg_lin !=
-		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message))) {
-		printf("vir: 0x%lx lin was: 0x%lx umap now: 0x%lx\n",
-		rp->p_delivermsg_vir, rp->p_delivermsg_lin,
-		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message)));
-		panic("that's wrong");
-	}
-
-#endif
+	assert(rp->p_delivermsg_lin);
+	assert(rp->p_delivermsg_lin == umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message)));
 
 	PHYS_COPY_CATCH(vir2phys(&rp->p_delivermsg),
 		rp->p_delivermsg_lin, sizeof(message), addr);
@@ -616,10 +604,10 @@ int delivermsg(struct proc *rp)
 			VMSTYPE_DELIVERMSG);
 		r = VMSUSPEND;
 	} else {
-#if DEBUG_VMASSERT
+		/* Indicate message has been delivered; address is 'used'. */
 		rp->p_delivermsg.m_source = NONE;
 		rp->p_delivermsg_lin = 0;
-#endif
+
 		rp->p_misc_flags &= ~MF_DELIVERMSG;
 		r = OK;
 	}
@@ -649,7 +637,7 @@ PRIVATE void vm_pt_print(u32_t *pagetable, u32_t v)
 	int pte;
 	int col = 0;
 
-	vmassert(!((u32_t) pagetable % I386_PAGE_SIZE));
+	assert(!((u32_t) pagetable % I386_PAGE_SIZE));
 
 	for(pte = 0; pte < I386_VM_PT_ENTRIES; pte++) {
 		u32_t pte_v, pfa;
@@ -672,7 +660,7 @@ PRIVATE void vm_print(u32_t *root)
 {
 	int pde;
 
-	vmassert(!((u32_t) root % I386_PAGE_SIZE));
+	assert(!((u32_t) root % I386_PAGE_SIZE));
 
 	printf("page table 0x%lx:\n", root);
 
@@ -713,7 +701,7 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 		NOREC_RETURN(physmemset, OK);
 	}
 
-	vmassert(nfreepdes >= 3);
+	assert(nfreepdes >= 3);
 
 	/* With VM, we have to map in the physical memory. 
 	 * We can do this 4MB at a time.
@@ -757,7 +745,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   struct proc *procs[2];
   NOREC_ENTER(virtualcopy);
 
-  vmassert((vmcheck && caller) || (!vmcheck && !caller));
+  assert((vmcheck && caller) || (!vmcheck && !caller));
 
   /* Check copy count. */
   if (bytes <= 0) return(EDOM);
@@ -831,13 +819,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	int r;
 
 	if(caller && RTS_ISSET(caller, RTS_VMREQUEST)) {
-		vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
+		assert(caller->p_vmrequest.vmresult != VMSUSPEND);
 		RTS_UNSET(caller, RTS_VMREQUEST);
 		if(caller->p_vmrequest.vmresult != OK) {
-#if DEBUG_VMASSERT
-			printf("virtual_copy: returning VM error %d\n",
-				caller->p_vmrequest.vmresult);
-#endif
 	  		NOREC_RETURN(virtualcopy, caller->p_vmrequest.vmresult);
 		}
 	}
@@ -852,7 +836,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	  		NOREC_RETURN(virtualcopy, r);
 		}
 
-		vmassert(procs[_SRC_] && procs[_DST_]);
+		assert(procs[_SRC_] && procs[_DST_]);
 
 		if(r == EFAULT_SRC) {
 			lin = phys_addr[_SRC_];
@@ -864,22 +848,14 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 			panic("r strange: %d",  r);
 		}
 
-#if 0
-		printf("virtual_copy: suspending caller %d / %s, target %d / %s\n",
-			caller->p_endpoint, caller->p_name,
-			target->p_endpoint, target->p_name);
-#endif
-
-		vmassert(proc_ptr->p_endpoint == SYSTEM);
-		vm_suspend(caller, target, lin, bytes,
-				VMSTYPE_KERNELCALL);
+		vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL);
 		NOREC_RETURN(virtualcopy, VMSUSPEND);
 	}
 
   	NOREC_RETURN(virtualcopy, OK);
   }
 
-  vmassert(!vm_running);
+  assert(!vm_running);
 
   /* can't copy to/from process with PT without VM */
 #define NOPT(p) (!(p) || !HASPT(p))

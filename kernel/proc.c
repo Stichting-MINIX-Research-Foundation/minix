@@ -34,6 +34,7 @@
 #include <stddef.h>
 #include <signal.h>
 #include <minix/syslib.h>
+#include <assert.h>
 
 #include "debug.h"
 #include "kernel.h"
@@ -86,9 +87,9 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 	 * process (using dst process table entry). Do actual copy to
 	 * kernel here; it's an error if the copy fails into kernel.
 	 */
-	vmassert(!(dst->p_misc_flags & MF_DELIVERMSG));	
-	vmassert(dst->p_delivermsg_lin);
-	vmassert(isokendpt(ep, &k));
+	assert(!(dst->p_misc_flags & MF_DELIVERMSG));	
+	assert(dst->p_delivermsg_lin);
+	assert(isokendpt(ep, &k));
 
 #if 0
 	if(INMEMORY(dst)) {
@@ -184,13 +185,13 @@ not_runnable_pick_new:
 
 check_misc_flags:
 
-	vmassert(proc_ptr);
-	vmassert(proc_is_runnable(proc_ptr));
+	assert(proc_ptr);
+	assert(proc_is_runnable(proc_ptr));
 	while (proc_ptr->p_misc_flags &
 		(MF_KCALL_RESUME | MF_DELIVERMSG |
 		 MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
 
-		vmassert(proc_is_runnable(proc_ptr));
+		assert(proc_is_runnable(proc_ptr));
 		if (proc_ptr->p_misc_flags & MF_KCALL_RESUME) {
 			kernel_call_resume(proc_ptr);
 		}
@@ -202,16 +203,13 @@ check_misc_flags:
 					printf("suspending %s / %d\n",
 					proc_ptr->p_name,
 					proc_ptr->p_endpoint););
-				vmassert(!proc_is_runnable(proc_ptr));
+				assert(!proc_is_runnable(proc_ptr));
 			}
 		}
 		else if (proc_ptr->p_misc_flags & MF_SC_DEFER) {
 			/* Perform the system call that we deferred earlier. */
 
-#if DEBUG_SCHED_CHECK
-			if (proc_ptr->p_misc_flags & MF_SC_ACTIVE)
-				panic("MF_SC_ACTIVE and MF_SC_DEFER set");
-#endif
+			assert (!(proc_ptr->p_misc_flags & MF_SC_ACTIVE));
 
 			arch_do_syscall(proc_ptr);
 
@@ -286,6 +284,8 @@ long bit_map;			/* notification event set or flags */
   int src_dst_p;				/* Process slot number */
   size_t msg_size;
 
+  assert(!RTS_ISSET(caller_ptr, RTS_SLOT_FREE));
+
   /* If this process is subject to system call tracing, handle that first. */
   if (caller_ptr->p_misc_flags & (MF_SC_TRACE | MF_SC_DEFER)) {
 	/* Are we tracing this process, and is it the first sys_call entry? */
@@ -308,44 +308,16 @@ long bit_map;			/* notification event set or flags */
 	/* If the MF_SC_DEFER flag is set, the syscall is now being resumed. */
 	caller_ptr->p_misc_flags &= ~MF_SC_DEFER;
 
-#if DEBUG_SCHED_CHECK
-	if (caller_ptr->p_misc_flags & MF_SC_ACTIVE)
-		panic("MF_SC_ACTIVE already set");
-#endif
+	assert (!(caller_ptr->p_misc_flags & MF_SC_ACTIVE));
 
 	/* Set a flag to allow reliable tracing of leaving the system call. */
 	caller_ptr->p_misc_flags |= MF_SC_ACTIVE;
   }
 
-#if DEBUG_SCHED_CHECK
   if(caller_ptr->p_misc_flags & MF_DELIVERMSG) {
-	printf("sys_call: MF_DELIVERMSG on for %s / %d\n",
+	panic("sys_call: MF_DELIVERMSG on for %s / %d\n",
 		caller_ptr->p_name, caller_ptr->p_endpoint);
-	panic("MF_DELIVERMSG on");
   }
-#endif
-
-#if 0
-  if(src_dst_e != 4 && src_dst_e != 5 &&
-	caller_ptr->p_endpoint != 4 && caller_ptr->p_endpoint != 5) {
-	if(call_nr == SEND)
-		printf("(%d SEND to %d) ", caller_ptr->p_endpoint, src_dst_e);
-	else if(call_nr == RECEIVE)
-		printf("(%d RECEIVE from %d) ", caller_ptr->p_endpoint, src_dst_e);
-	else if(call_nr == SENDREC)
-		printf("(%d SENDREC to %d) ", caller_ptr->p_endpoint, src_dst_e);
-	else
-		printf("(%d %d to/from %d) ", caller_ptr->p_endpoint, call_nr, src_dst_e);
-  }
-#endif
-
-#if DEBUG_SCHED_CHECK
-  if (RTS_ISSET(caller_ptr, RTS_SLOT_FREE))
-  {
-	printf("called by the dead?!?\n");
-	return EINVAL;
-  }
-#endif
 
   /* Check destination. SENDA is special because its argument is a table and
    * not a single destination. RECEIVE is the only call that accepts ANY (in
@@ -592,7 +564,7 @@ int flags;
    */
   if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint)) {
 	/* Destination is indeed waiting for this message. */
-	vmassert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
+	assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
 	if((r=QueueMess(caller_ptr->p_endpoint, linaddr, dst_ptr)) != OK)
 		return r;
 	RTS_UNSET(dst_ptr, RTS_RECEIVING);
@@ -643,7 +615,7 @@ int flags;
   int i, r, src_id, src_proc_nr, src_p;
   phys_bytes linaddr;
 
-  vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
+  assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 
   if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) m_ptr,
 	sizeof(message)))) {
@@ -695,8 +667,8 @@ int flags;
             /* Found a suitable source, deliver the notification message. */
 	    BuildNotifyMessage(&m, src_proc_nr, caller_ptr);	/* assemble message */
 	    hisep = proc_addr(src_proc_nr)->p_endpoint;
-	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));	
-	    vmassert(src_e == ANY || hisep == src_e);
+	    assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));	
+	    assert(src_e == ANY || hisep == src_e);
 	    if((r=QueueMess(hisep, vir2phys(&m), caller_ptr)) != OK)  {
 		panic("mini_receive: local QueueMess failed");
 	    }
@@ -708,18 +680,11 @@ int flags;
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
-#if DEBUG_SCHED_CHECK
-	    if (RTS_ISSET(*xpp, RTS_SLOT_FREE) || RTS_ISSET(*xpp, RTS_NO_ENDPOINT))
-	    {
-		printf("%d: receive from %d; found dead %d (%s)?\n",
-			caller_ptr->p_endpoint, src_e, (*xpp)->p_endpoint,
-			(*xpp)->p_name);
-		return EINVAL;
-	    }
-#endif
+	    assert(!RTS_ISSET(*xpp, RTS_SLOT_FREE));
+	    assert(!RTS_ISSET(*xpp, RTS_NO_ENDPOINT));
 
 	    /* Found acceptable message. Copy it and update status. */
-  	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
+  	    assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 	    QueueMess((*xpp)->p_endpoint,
 		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
 	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
@@ -791,7 +756,7 @@ endpoint_t dst_e;			/* which process to notify */
        * message is in the kernel's address space.
        */ 
       BuildNotifyMessage(&m, proc_nr(caller_ptr), dst_ptr);
-      vmassert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));
+      assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));
       if((r=QueueMess(caller_ptr->p_endpoint, vir2phys(&m), dst_ptr)) != OK) {
 	panic("mini_notify: local QueueMess failed");
       }
@@ -955,7 +920,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		dst_ptr = proc_addr(dst_p);
 
 		/* RTS_NO_ENDPOINT should be removed */
-		if (dst_ptr->p_rts_flags & RTS_NO_ENDPOINT)
+		if (RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT))
 		{
 			tabent.result= EDEADSRCDST;
 			A_INSERT(i, result);
@@ -1029,7 +994,7 @@ struct proc *caller_ptr;
 
 		src_ptr= proc_addr(privp->s_proc_nr);
 
-	  	vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
+	  	assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 		r= try_one(src_ptr, caller_ptr, &postponed);
 		if (r == OK)
 			return r;
@@ -1163,14 +1128,12 @@ register struct proc *rp;	/* this process is now runnable */
 
   NOREC_ENTER(enqueuefunc);
 
-#if DEBUG_SCHED_CHECK
-  if (rp->p_ready) panic("enqueue already ready process");
-#endif
+  assert(proc_is_runnable(rp));
 
   /* Determine where to insert to process. */
   sched(rp, &q, &front);
 
-  vmassert(q >= 0);
+  assert(q >= 0);
 
   /* Now add the process to the queue. */
   if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
@@ -1187,23 +1150,18 @@ register struct proc *rp;	/* this process is now runnable */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   }
 
-#if DEBUG_SCHED_CHECK
-  rp->p_ready = 1;
-  CHECK_RUNQUEUES;
-#endif
-
   /*
    * enqueueing a process with a higher priority than the current one, it gets
    * preempted. The current process must be preemptible. Testing the priority
    * also makes sure that a process does not preempt itself
    */
-  vmassert(proc_ptr);
+  assert(proc_ptr && proc_ptr_ok(proc_ptr));
   if ((proc_ptr->p_priority > rp->p_priority) &&
 		  (priv(proc_ptr)->s_flags & PREEMPTIBLE))
      RTS_SET(proc_ptr, RTS_PREEMPTED); /* calls dequeue() */
 
-#if DEBUG_SCHED_CHECK
-  CHECK_RUNQUEUES;
+#if DEBUG_SANITYCHECKS
+  assert(runqueues_ok());
 #endif
 
   NOREC_RETURN(enqueuefunc, );
@@ -1222,17 +1180,18 @@ PRIVATE void enqueue_head(struct proc *rp)
 {
   int q = rp->p_priority;	 		/* scheduling queue to use */
 
-#if DEBUG_SCHED_CHECK
-  if (rp->p_ready) panic("enqueue already ready process");
-#endif
+  assert(proc_ptr_ok(rp));
+  assert(proc_is_runnable(rp));
 
   /*
    * the process was runnable without its quantum expired when dequeued. A
    * process with no time left should vahe been handled else and differently
    */
-  vmassert(rp->p_ticks_left);
+#if 0
+  assert(rp->p_ticks_left);
+#endif
 
-  vmassert(q >= 0);
+  assert(q >= 0);
 
 
   /* Now add the process to the queue. */
@@ -1244,9 +1203,8 @@ PRIVATE void enqueue_head(struct proc *rp)
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
       rdy_head[q] = rp;				/* set new queue head */
 
-#if DEBUG_SCHED_CHECK
-  rp->p_ready = 1;
-  CHECK_RUNQUEUES;
+#if DEBUG_SANITYCHECKS
+  assert(runqueues_ok());
 #endif
 }
 
@@ -1266,17 +1224,11 @@ register struct proc *rp;	/* this process is no longer runnable */
 
   NOREC_ENTER(dequeuefunc);
 
-#if DEBUG_STACK_CHECK
-  /* Side-effect for kernel: check if the task's stack still is ok? */
-  if (iskernelp(rp)) { 				
-	if (*priv(rp)->s_stack_guard != STACK_GUARD)
-		panic("stack overrun by task: %d",  proc_nr(rp));
-  }
-#endif
+  assert(proc_ptr_ok(rp));
+  assert(!proc_is_runnable(rp));
 
-#if DEBUG_SCHED_CHECK
-  if (! rp->p_ready) panic("dequeue() already unready process");
-#endif
+  /* Side-effect for kernel: check if the task's stack still is ok? */
+  assert (!iskernelp(rp) || *priv(rp)->s_stack_guard == STACK_GUARD);
 
   /* Now make sure that the process is not in its ready queue. Remove the 
    * process if it is found. A process can be made unready even if it is not 
@@ -1284,23 +1236,19 @@ register struct proc *rp;	/* this process is no longer runnable */
    */
   prev_xp = NIL_PROC;				
   for (xpp = &rdy_head[q]; *xpp != NIL_PROC; xpp = &(*xpp)->p_nextready) {
-
       if (*xpp == rp) {				/* found process to remove */
           *xpp = (*xpp)->p_nextready;		/* replace with next chain */
-          if (rp == rdy_tail[q])		/* queue tail removed */
+          if (rp == rdy_tail[q]) {		/* queue tail removed */
               rdy_tail[q] = prev_xp;		/* set new tail */
+	  }
 
-#if DEBUG_SCHED_CHECK
-  		rp->p_ready = 0;
-		  CHECK_RUNQUEUES;
-#endif
           break;
       }
       prev_xp = *xpp;				/* save previous in chain */
   }
 
-#if DEBUG_SCHED_CHECK
-  CHECK_RUNQUEUES;
+#if DEBUG_SANITYCHECKS
+  assert(runqueues_ok());
 #endif
 
   NOREC_RETURN(dequeuefunc, );
@@ -1362,7 +1310,7 @@ PRIVATE struct proc * pick_proc(void)
 	}
 	TRACE(VF_PICKPROC, printf("found %s / %d on queue %d\n", 
 		rp->p_name, rp->p_endpoint, q););
-	vmassert(!proc_is_runnable(rp));
+	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)	 	
 		bill_ptr = rp;		/* bill for system time */
 	return rp;
@@ -1389,10 +1337,17 @@ timer_t *tp;					/* watchdog timer pointer */
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
       if (! isemptyp(rp)) {				/* check slot use */
 	  if (rp->p_priority > rp->p_max_priority) {	/* update priority? */
-	      if (proc_is_runnable(rp)) dequeue(rp);	/* take off queue */
+	      int paused = 0;
+	      if (proc_is_runnable(rp)) {
+		RTS_SET(rp, RTS_PROC_STOP);		/* take off queue */
+		paused = 1;
+	      }
 	      ticks_added += rp->p_quantum_size;	/* do accounting */
 	      rp->p_priority -= 1;			/* raise priority */
-	      if (proc_is_runnable(rp)) enqueue(rp);	/* put on queue */
+	      if(paused) {
+	      	RTS_UNSET(rp, RTS_PROC_STOP);
+	        assert(proc_is_runnable(rp));
+	      }
 	  }
 	  else {
 	      ticks_added += rp->p_quantum_size - rp->p_ticks_left;

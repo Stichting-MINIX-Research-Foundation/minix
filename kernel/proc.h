@@ -98,23 +98,14 @@ struct proc {
 	/* VM result when available */
 	int		vmresult;
 
-#if DEBUG_VMASSERT
-	char stacktrace[200];
-#endif
-
 	/* If the suspended operation is a sys_call, its details are
 	 * stored here.
 	 */
   } p_vmrequest;
 
-  struct proc *next_soft_notify;
-  int p_softnotified;
-
-#if DEBUG_SCHED_CHECK
-  int p_ready, p_found;
+  int p_found;	/* consistency checking variables */
 #define PMAGIC 0xC0FFEE1
-  int p_magic;	/* check validity of proc pointers */
-#endif
+  int p_magic;		/* check validity of proc pointers */
 
 #if DEBUG_TRACE
   int p_schedules;
@@ -156,6 +147,7 @@ struct proc {
 
 #define proc_is_preempted(p)	((p)->p_rts_flags & RTS_PREEMPTED)
 #define proc_no_quantum(p)	((p)->p_rts_flags & RTS_NO_QUANTUM)
+#define proc_ptr_ok(p)		((p)->p_magic == PMAGIC)
 
 /* Macro to return: on which process is a certain process blocked?
  * return endpoint number (can be ANY) or NONE. It's important to
@@ -184,8 +176,11 @@ struct proc {
 /* Set flag and dequeue if the process was runnable. */
 #define RTS_SET(rp, f)							\
 	do {								\
-		if(proc_is_runnable(rp)) { dequeue(rp); }		\
-		(rp)->p_rts_flags |=  (f);				\
+		int rts = (rp)->p_rts_flags;				\
+		(rp)->p_rts_flags |= (f);				\
+		if(rts_f_is_runnable(rts) && !proc_is_runnable(rp)) {	\
+			dequeue(rp);					\
+		}							\
 	} while(0)
 
 /* Clear flag and enqueue if the process was not runnable but is now. */

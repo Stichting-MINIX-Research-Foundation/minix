@@ -11,6 +11,8 @@
  *    	SMAP_FLAG	access, writable map or not?
  */
 
+#include <assert.h>
+
 #include <minix/type.h>
 #include <minix/safecopies.h>
 
@@ -139,10 +141,10 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 		return EINVAL;
 	}
 
-	vmassert(!RTS_ISSET(caller, RTS_VMREQUEST));
-	vmassert(!RTS_ISSET(caller, RTS_VMREQTARGET));
-	vmassert(!RTS_ISSET(dst, RTS_VMREQUEST));
-	vmassert(!RTS_ISSET(dst, RTS_VMREQTARGET));
+	assert(!RTS_ISSET(caller, RTS_VMREQUEST));
+	assert(!RTS_ISSET(caller, RTS_VMREQTARGET));
+	assert(!RTS_ISSET(dst, RTS_VMREQUEST));
+	assert(!RTS_ISSET(dst, RTS_VMREQTARGET));
 	RTS_SET(caller, RTS_VMREQUEST);
 	RTS_SET(dst, RTS_VMREQTARGET);
 
