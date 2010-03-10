@@ -109,16 +109,20 @@ void pretty_image(char *image)
 	}
 }
 
+#define RAW_ALIGN	16
+#define BUFSIZE_ZEROS	128
+
 void raw_clear(u32_t addr, u32_t count)
 /* Clear "count" bytes at absolute address "addr". */
 {
-	static char zeros[128];
+	static char zerosdata[BUFSIZE_ZEROS + RAW_ALIGN];
+	char *zeros = zerosdata + RAW_ALIGN - (unsigned) &zerosdata % RAW_ALIGN;
 	u32_t dst;
 	u32_t zct;
 
-	zct= sizeof(zeros);
+	zct= BUFSIZE_ZEROS;
 	if (zct > count) zct= count;
-	raw_copy(addr, mon2abs(&zeros), zct);
+	raw_copy(addr, mon2abs(zeros), zct);
 	count-= zct;
 
 	while (count > 0) {
@@ -289,9 +293,10 @@ char *get_sector(u32_t vsec)
 	u32_t sec;
 	int r;
 #define SECBUFS 16
-	static char buf[SECBUFS * SECTOR_SIZE];
+	static char bufdata[SECBUFS * SECTOR_SIZE + RAW_ALIGN];
 	static size_t count;		/* Number of sectors in the buffer. */
 	static u32_t bufsec;		/* First Sector now in the buffer. */
+	char *buf = bufdata + RAW_ALIGN - (unsigned) &bufdata % RAW_ALIGN;
 
 	if (vsec == 0) count= 0;	/* First sector; initialize. */
 
