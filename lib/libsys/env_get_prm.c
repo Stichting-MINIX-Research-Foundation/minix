@@ -28,7 +28,8 @@ int max_len;				/* maximum length of value */
   message m;
   static char mon_params[128*sizeof(char *)];	/* copy parameters here */
   char *key_value;
-  int i, s, keylen;
+  int i, s;
+  size_t keylen;
 
   if (key == NULL)
   	return EINVAL;
@@ -43,7 +44,7 @@ int max_len;				/* maximum length of value */
 	if (env_argv[i][keylen] != '=')
 		continue;
 	key_value= env_argv[i]+keylen+1;
-	if (strlen(key_value)+1 > max_len)
+	if (strlen(key_value)+1 > (size_t) max_len)
 	      return(E2BIG);
 	strcpy(value, key_value);
 	return OK;
@@ -67,7 +68,7 @@ int max_len;				/* maximum length of value */
   /* Value found, see if it fits in the client's buffer. Callers assume that
    * their buffer is unchanged on error, so don't make a partial copy.
    */
-  if ((strlen(key_value)+1) > max_len) return(E2BIG);
+  if ((strlen(key_value)+1) > (size_t) max_len) return(E2BIG);
 
   /* Make the actual copy. */
   strcpy(value, key_value);

@@ -3,8 +3,6 @@
 
 PUBLIC int _kernel_call(int syscallnr, message *msgptr)
 {
-  int status;
-
   msgptr->m_type = syscallnr;
   _do_kernel_call(msgptr);
   return(msgptr->m_type);

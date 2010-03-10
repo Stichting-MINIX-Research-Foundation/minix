@@ -15,7 +15,6 @@ PUBLIC void panic(const char *fmt, ...)
  * inconsistency is detected, e.g., a programming error or illegal 
  * value of a defined constant.
  */
-  message m;
   endpoint_t me = NONE;
   char name[20];
   void (*suicide)(void);

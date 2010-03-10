@@ -29,10 +29,8 @@ int devind;
 /*===========================================================================*
  *                              pci_reserve_ok                               *
  *===========================================================================*/
-PUBLIC int pci_reserve_ok(devind)
-int devind;
+PUBLIC int pci_reserve_ok(int devind)
 {
-        int r;
         message m;
 
         m.m1_i1= devind;

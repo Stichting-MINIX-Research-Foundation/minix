@@ -26,7 +26,6 @@ PUBLIC void *vm_map_phys(endpoint_t who, void *phaddr, size_t len)
 PUBLIC int vm_unmap_phys(endpoint_t who, void *vaddr, size_t len)
 {
 	message m;
-	int r;
 
 	m.VMUP_EP = who;
 	m.VMUP_VADDR = vaddr;

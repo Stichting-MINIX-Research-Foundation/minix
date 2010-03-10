@@ -23,7 +23,6 @@ int sys_umap_data_fb(endpoint_t ep, vir_bytes buf, vir_bytes len, phys_bytes *ph
 
 void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 {
-	int r;
 	vir_bytes buf;
 	int mmapflags = MAP_PREALLOC|MAP_CONTIG|MAP_ANON;
 

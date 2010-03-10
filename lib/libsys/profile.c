@@ -39,20 +39,16 @@ PRIVATE int cprof_announce;			/* announce on n-th execution
 						 * of procentry */
 PRIVATE int cprof_locked;			/* for reentrancy */
 
-_PROTOTYPE(void procentry, (char *name) );
-_PROTOTYPE(void procexit, (char *name) );
-
 FORWARD _PROTOTYPE(void cprof_init, (void) );
 FORWARD _PROTOTYPE(void reset, (void) );
 FORWARD _PROTOTYPE(void clear_tbl, (void) );
 
 
-PUBLIC void procentry (name)
-char *name;
+PUBLIC void procentry (char *name)
 {
   static int init = 0;
-  unsigned hash = 0, i = 0, x = 0;
-  unsigned long hi, lo;
+  unsigned hash = 0, x = 0;
+  int i = 0;
   struct cprof_tbl_s *last;
   char c;
   u64_t start;
@@ -171,8 +167,7 @@ char *name;
 }
 
 
-PUBLIC void procexit (name)
-char *name;
+PUBLIC void procexit (char *name)
 {
   u64_t stop, spent;
 
@@ -227,8 +222,8 @@ char *name;
 }
 
 
-PRIVATE void cprof_init() {
-  message m;
+PRIVATE void cprof_init()
+{
   int i;
 
   cpath[0] = '\0';

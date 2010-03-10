@@ -124,7 +124,6 @@ PRIVATE void sef_debug_refresh_params(void)
 {
 /* Refresh SEF debug params. */
   clock_t uptime;
-  endpoint_t endpoint;
   int r;
 
   /* Get boottime the first time. */
@@ -174,7 +173,7 @@ PUBLIC char* sef_debug_header(void)
 /* Build and return a SEF debug header. */
   sef_debug_refresh_params();
   sprintf(sef_debug_header_buff, "%s: time = %ds %06dus", 
-      sef_self_name, sef_debug_time_sec, sef_debug_time_us);
+      sef_self_name, (int) sef_debug_time_sec, (int) sef_debug_time_us);
 
   return sef_debug_header_buff;
 }

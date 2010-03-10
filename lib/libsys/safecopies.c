@@ -249,11 +249,8 @@ cpf_lookup(cp_grant_id_t g, endpoint_t *granter, endpoint_t *grantee)
 }
 
 PUBLIC int
-cpf_getgrants(grant_ids, n)
-cp_grant_id_t *grant_ids;
-int n;
+cpf_getgrants(cp_grant_id_t *grant_ids, int n)
 {
-	cp_grant_id_t g;
 	int i;
 
 	for(i = 0; i < n; i++) {

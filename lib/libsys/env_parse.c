@@ -118,7 +118,7 @@ int maxchunks;			/* how many were found */
 	return -1;
   s = memstr;
   for (i = 0; i < maxchunks && !done; i++) {
-  	phys_bytes base = 0, size = 0, limit;
+  	phys_bytes base = 0, size = 0;
 	memp = &mem_chunks[i];		/* next mem chunk is stored here */
 	if (*s != 0) {			/* get fresh data, unless at end */	
 

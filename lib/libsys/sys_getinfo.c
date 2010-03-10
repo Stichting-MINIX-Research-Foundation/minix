@@ -42,7 +42,7 @@ PUBLIC int sys_whoami(endpoint_t *who_ep, char *who_name, int len)
 	if((r = _kernel_call(SYS_GETINFO, &m)) != OK)
 		return r;
 
-	lenmin = MIN(len, sizeof(m.GIWHO_NAME)) - 1;
+	lenmin = MIN((size_t) len, sizeof(m.GIWHO_NAME)) - 1;
 
 	strncpy(who_name, m.GIWHO_NAME, lenmin);
 	who_name[lenmin] = '\0';

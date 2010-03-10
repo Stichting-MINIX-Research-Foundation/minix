@@ -12,7 +12,6 @@ int count;				/* number of elements */
 vir_bytes offset;			/* offset from grant */
 {
     message m_io;
-    int result;
 
     m_io.DIO_REQUEST = req;
     m_io.DIO_PORT = port;

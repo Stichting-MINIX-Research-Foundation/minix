@@ -33,7 +33,7 @@ static double make_double(u64_t d)
  * This whole thing should be replaced by something better eventually.
  */
   double value;
-  int i;
+  size_t i;
 
   value = (double) ex64hi(d);
   for (i = 0; i < sizeof(unsigned long); i += 2)

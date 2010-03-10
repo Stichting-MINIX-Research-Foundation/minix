@@ -14,12 +14,10 @@ static char print_buf[DIAG_BUFSIZE];	/* output is buffered here */
 /*===========================================================================*
  *				kputc					     *
  *===========================================================================*/
-void kputc(c)
-int c;
+void kputc(int c)
 {
 /* Accumulate another character.  If 0 or buffer full, print it. */
   static int buf_count;		/* # characters in the buffer */
-  message m;
 
   if ((c == 0 && buf_count > 0) || buf_count == sizeof(print_buf)) {
 	sys_sysctl(SYSCTL_CODE_DIAG, print_buf, buf_count);

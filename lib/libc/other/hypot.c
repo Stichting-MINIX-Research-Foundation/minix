@@ -17,8 +17,7 @@ _PROTOTYPE(double cabs, (struct complex p_compl ));
 /* $Header$ */
 
 double
-hypot(x, y)
-double x, y;
+hypot(double x, double y)
 {
 	/*	Computes sqrt(x*x+y*y), avoiding overflow */
 

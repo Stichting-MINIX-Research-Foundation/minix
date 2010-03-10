@@ -12,8 +12,7 @@
 
 void util_timer_start(util_timingdata_t *timingdata, char *name)
 {
-	unsigned long h, l;
-	int i;
+	size_t i;
 
 	if(timingdata->names[0] == '\0') {
 		for(i = 0; i < sizeof(timingdata->names) && *name; i++)
@@ -32,7 +31,7 @@ void util_timer_start(util_timingdata_t *timingdata, char *name)
 
 void util_timer_end(util_timingdata_t *timingdata)
 {
-	unsigned long h, l, d = 0, binsize;
+	unsigned long h, l, d = 0;
 	int bin;
 
 	read_tsc(&h, &l);

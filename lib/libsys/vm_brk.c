@@ -9,7 +9,6 @@
 PUBLIC int vm_brk(endpoint_t ep, char *addr)
 {
     message m;
-    int result;
 
     m.VMB_ENDPOINT = ep;
     m.VMB_ADDR = (void *) addr;

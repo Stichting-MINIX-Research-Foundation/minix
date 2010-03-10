@@ -97,7 +97,6 @@ PUBLIC int sys_vmctl_get_mapping(int index,
 
 PUBLIC int sys_vmctl_reply_mapping(int index, vir_bytes addr)
 {
-	int r;
 	message m;
 
 	m.SVMCTL_WHO = SELF;
