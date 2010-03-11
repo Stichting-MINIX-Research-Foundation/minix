@@ -167,7 +167,7 @@ PUBLIC void procentry (char *name)
 }
 
 
-PUBLIC void procexit (char *name)
+PUBLIC void procexit (char *UNUSED(name))
 {
   u64_t stop, spent;
 

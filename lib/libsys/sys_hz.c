@@ -18,7 +18,8 @@ sys_hz(void)
 		/* Get HZ. */
 		if((r=sys_getinfo(GET_HZ, &Hz, sizeof(Hz), 0, 0)) != OK) {
 			Hz = DEFAULT_HZ;
-			printf("sys_hz: %d: reverting to HZ = %d\n", r, Hz);
+			printf("sys_hz: can not get HZ: error %d.\nUsing default HZ = %u\n",
+			    r, (unsigned int) Hz);
 		}
 	}
 
@@ -35,5 +36,4 @@ micros_to_ticks(u32_t micros)
 
         return ticks;
 }
-
 

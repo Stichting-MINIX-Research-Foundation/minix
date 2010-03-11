@@ -192,14 +192,14 @@ PUBLIC void sef_setcb_lu_ready_pre(sef_cb_lu_ready_pre_t cb)
 /*===========================================================================*
  *      	            sef_cb_lu_prepare_null 	 	             *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_prepare_null(int state)
+PUBLIC void sef_cb_lu_prepare_null(int UNUSED(state))
 {
 }
 
 /*===========================================================================*
  *      	         sef_cb_lu_state_isvalid_null		             *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_state_isvalid_null(int state)
+PUBLIC int sef_cb_lu_state_isvalid_null(int UNUSED(state))
 {
   return FALSE;
 }
@@ -207,14 +207,15 @@ PUBLIC int sef_cb_lu_state_isvalid_null(int state)
 /*===========================================================================*
  *                       sef_cb_lu_state_changed_null        		     *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_changed_null(int old_state, int state)
+PUBLIC void sef_cb_lu_state_changed_null(int UNUSED(old_state),
+   int UNUSED(state))
 {
 }
 
 /*===========================================================================*
  *                       sef_cb_lu_state_dump_null        		     *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_state_dump_null(int state)
+PUBLIC void sef_cb_lu_state_dump_null(int UNUSED(state))
 {
   sef_lu_dprint("NULL\n");
 }
@@ -222,7 +223,7 @@ PUBLIC void sef_cb_lu_state_dump_null(int state)
 /*===========================================================================*
  *                       sef_cb_lu_ready_pre_null        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_ready_pre_null(int result)
+PUBLIC int sef_cb_lu_ready_pre_null(int UNUSED(result))
 {
   return(OK);
 }
@@ -230,7 +231,7 @@ PUBLIC int sef_cb_lu_ready_pre_null(int result)
 /*===========================================================================*
  *      	       sef_cb_lu_prepare_always_ready	                     *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_prepare_always_ready(int state)
+PUBLIC void sef_cb_lu_prepare_always_ready(int UNUSED(state))
 {
   sef_lu_ready(OK);
 }

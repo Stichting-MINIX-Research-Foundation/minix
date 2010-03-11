@@ -49,7 +49,7 @@ PUBLIC void sef_setcb_ping_reply(sef_cb_ping_reply_t cb)
 /*===========================================================================*
  *      	           sef_cb_ping_reply_null                            *
  *===========================================================================*/
-PUBLIC void sef_cb_ping_reply_null(message *m_ptr)
+PUBLIC void sef_cb_ping_reply_null(message *UNUSED(m_ptr))
 {
 }
 

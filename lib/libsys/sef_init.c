@@ -106,7 +106,8 @@ PUBLIC void sef_setcb_init_restart(sef_cb_init_restart_t cb)
 /*===========================================================================*
  *      	            sef_cb_init_fresh_null                           *
  *===========================================================================*/
-PUBLIC int sef_cb_init_fresh_null(int type, sef_init_info_t *info)
+PUBLIC int sef_cb_init_fresh_null(int UNUSED(type),
+   sef_init_info_t *UNUSED(info))
 {
   return(OK);
 }
@@ -114,7 +115,7 @@ PUBLIC int sef_cb_init_fresh_null(int type, sef_init_info_t *info)
 /*===========================================================================*
  *      	              sef_cb_init_lu_null                            *
  *===========================================================================*/
-PUBLIC int sef_cb_init_lu_null(int type, sef_init_info_t *info)
+PUBLIC int sef_cb_init_lu_null(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
   return(OK);
 }
@@ -122,7 +123,8 @@ PUBLIC int sef_cb_init_lu_null(int type, sef_init_info_t *info)
 /*===========================================================================*
  *      	            sef_cb_init_restart_null                         *
  *===========================================================================*/
-PUBLIC int sef_cb_init_restart_null(int type, sef_init_info_t *info)
+PUBLIC int sef_cb_init_restart_null(int UNUSED(type),
+     sef_init_info_t *UNUSED(info))
 {
   return(OK);
 }
@@ -130,7 +132,8 @@ PUBLIC int sef_cb_init_restart_null(int type, sef_init_info_t *info)
 /*===========================================================================*
  *      	            sef_cb_init_restart_fail                         *
  *===========================================================================*/
-PUBLIC int sef_cb_init_restart_fail(int type, sef_init_info_t *info)
+PUBLIC int sef_cb_init_restart_fail(int UNUSED(type),
+   sef_init_info_t *UNUSED(info))
 {
   return(ENOSYS);
 }

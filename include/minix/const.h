@@ -5,6 +5,33 @@
 #error CHIP is not defined
 #endif
 
+/* The UNUSED annotation tells the compiler or lint not to complain
+ * about an unused variable or function parameter.
+ *
+ * A number of different annotations are used, depending on the
+ * compiler or checker that is looking at the code.
+ *
+ * Note that some variants rename the parameter, so if you use
+ * the parameter after all, you'll get a complaint about a missing
+ * variable.
+ *
+ * You use it like this:
+ *
+ *   void foo(int UNUSED(x)){}
+ */
+
+#ifndef UNUSED
+#if defined(__GNUC__)
+# define UNUSED(v) UNUSED_ ## v __attribute((unused))
+#elif defined _lint
+# define UNUSED(v) /*lint -e(715)*/ v
+#elif defined __LCLINT__
+# define UNUSED(v) /*@unused@*/ v
+#else
+# define UNUSED(v) _UNUSED_ ## v
+#endif
+#endif
+
 #define EXTERN        extern	/* used in *.h files */
 #define PRIVATE       static	/* PRIVATE x limits the scope of x */
 #define PUBLIC			/* PUBLIC is the opposite of PRIVATE */
@@ -15,7 +42,7 @@
 
 #define DEFAULT_HZ        60	/* clock freq (software settable on IBM-PC) */
 
-#define SUPER_USER (uid_t) 0	/* uid_t of superuser */
+#define SUPER_USER ((uid_t) 0)	/* uid_t of superuser */
 
 #define NULL     ((void *)0)	/* null pointer */
 #define SCPVEC_NR	  64	/* max # of entries in a SYS_VSAFECOPY* request */
