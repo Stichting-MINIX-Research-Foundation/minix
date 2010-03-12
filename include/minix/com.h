@@ -355,8 +355,10 @@
 #  define SYS_SAFEMAP	 (KERNEL_CALL + 47)	/* sys_safemap() */
 #  define SYS_SAFEREVMAP (KERNEL_CALL + 48)	/* sys_saferevmap() sys_saferevmap2() */
 #  define SYS_SAFEUNMAP	 (KERNEL_CALL + 49)	/* sys_safeunmap() */
+#  define SYS_GETMCONTEXT (KERNEL_CALL + 50)    /* sys_getmcontext() */
+#  define SYS_SETMCONTEXT (KERNEL_CALL + 51)    /* sys_setmcontext() */
 
-#define NR_SYS_CALLS	50	/* number of system calls */ 
+#define NR_SYS_CALLS	52	/* number of system calls */ 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
 /* Field names for SYS_MEMSET. */
@@ -510,7 +512,7 @@
 #define SIG_MAP        m2_l1	/* used by kernel to pass signal bit map */
 #define SIG_CTXT_PTR   m2_p1	/* pointer to info to restore signal context */
 
-/* Field names for SYS_FORK, _EXEC, _EXIT, _NEWMAP. */
+/* Field names for SYS_FORK, _EXEC, _EXIT, _NEWMAP, GETMCONTEXT, SETMCONTEXT.*/
 #define PR_ENDPT        m1_i1	/* indicates a process */
 #define PR_PRIORITY     m1_i2	/* process priority */
 #define PR_SLOT         m1_i2	/* indicates a process slot */
@@ -522,6 +524,7 @@
 				 */
 #define PR_FORK_FLAGS	m1_i3	/* optional flags for fork operation */
 #define PR_FORK_MSGADDR m1_p1	/* reply message address of forked child */
+#define PR_CTX_PTR	m1_p1	/* pointer to mcontext_t structure */
 
 /* Flags for PR_FORK_FLAGS. */
 #define PFF_VMINHIBIT	0x01	/* Don't schedule until release by VM. */

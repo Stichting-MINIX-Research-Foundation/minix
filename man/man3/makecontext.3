@@ -1,0 +1,75 @@
+.TH MAKECONTEXT 3  "Mar 2, 2010"
+.SH NAME
+makecontext, swapcontext \- manipulate user contexts
+.SH SYNOPSIS
+.nf
+.ft B
+#include <ucontext.h>
+
+void makecontext(ucontext\_t *\fIucp\fP, void \fI(*func)(void)\fP, int \fIargc\fP, ...)
+int swapcontext(ucontext\_t *\fIoucp\fP, const ucontext\_t *\fIucp\fP)
+.SH DESCRIPTION
+The
+.BR makecontext (3)
+, 
+.BR swapcontext (3)
+, 
+.BR getcontext (3)
+, and 
+.BR setcontext (3)
+together form a set of functions that allow user-level context switching between multiple threads of control within a process.
+.PP
+The
+.BR makecontext ()
+function modifies the user thread pointed to by
+.I ucp
+to continue execution by invoking function
+.I func
+and passing that function a number of 
+.I argc
+integer arguments. The value of
+.I argc
+must match the number of integer arguments passed to
+.I func
+, otherwise the behavior is undefined. Context
+.I ucp
+must have been initialized by a call to 
+.BR getcontext (3)
+and have a stack allocated for it. The address of the stack must be assigned to  \fIucp\->uc_stack.ss_size\fP and the size of the stack to \fIucp\->uc_stack.ss_size\fP. The \fIucp\->uc_link\fP member is used to determine which successor context is run after the context modified by 
+.BR makecontext ()
+returns. If left NULL, the process exits. 
+.PP
+The
+.BR swapcontext ()
+function saves the current context in the context structure pointed to by
+.I oucp
+and sets the context to the context structure pointed to by \fIucp\fP.
+
+.SH "RETURN VALUE"
+When successful,
+.BR swapcontext ()
+returns 0. Otherwise, -1 is returned and
+.I errno
+is set to indicate the error. Note that a succesful call to
+.BR swapcontext ()
+actually does not return. Only after returning to the context that called
+.BR swapcontext ()
+, it appears as if
+.BR swapcontext ()
+returned 0.
+
+.SH "ERRORS"
+.TP 15
+[EFAULT]
+Either the \fIucp\fP or \fIoucp\fP is a NULL pointer.
+.TP 15
+[EINVAL]
+The context is not properly initialized.
+.TP 15
+[ENOMEM] 
+The \fIucp\fP argument does not have enough stack left to complete the operation.
+.SH "SEE ALSO"
+.BR getcontext (3).
+
+.SH "AUTHORS"
+Thomas Veerman

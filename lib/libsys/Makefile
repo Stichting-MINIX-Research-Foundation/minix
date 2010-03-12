@@ -33,6 +33,7 @@ SRCS=  \
 	sef_ping.c \
 	sef_init.c \
 	sys_abort.c \
+	sys_mcontext.c \
 	sys_cprof.c \
 	sys_endsig.c \
 	sys_eniop.c \

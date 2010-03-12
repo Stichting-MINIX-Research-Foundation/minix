@@ -56,6 +56,8 @@
 #define ITIMER		  64
 #define GETGROUPS	  65
 #define SETGROUPS	  66
+#define GETMCONTEXT       67
+#define SETMCONTEXT       68
 
 /* Posix signal handling. */
 #define SIGACTION	  71

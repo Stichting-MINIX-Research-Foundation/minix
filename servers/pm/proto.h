@@ -45,6 +45,10 @@ _PROTOTYPE( int do_set, (void)						);
 _PROTOTYPE( int main, (void)						);
 _PROTOTYPE( void setreply, (int proc_nr, int result)			);
 
+/* mcontext.c */
+_PROTOTYPE( int do_getmcontext, (void)					);
+_PROTOTYPE( int do_setmcontext, (void)					);
+
 /* misc.c */
 _PROTOTYPE( int do_reboot, (void)					);
 _PROTOTYPE( int do_procstat, (void)					);

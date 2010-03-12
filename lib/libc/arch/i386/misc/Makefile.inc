@@ -20,4 +20,6 @@ SRCS+=  \
 	io_outsl.S \
 	io_outsw.S \
 	io_outw.S \
-	oneC_sum.S
+	oneC_sum.S \
+	ucontext.S
+

@@ -236,6 +236,10 @@ PUBLIC void system_init(void)
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
+
+  /* Machine state switching. */
+  map(SYS_SETMCONTEXT, do_setmcontext); /* set machine context */
+  map(SYS_GETMCONTEXT, do_getmcontext); /* get machine context */
 #endif
 }
 

@@ -91,6 +91,7 @@ SRCS+= 	 \
 	_time.c \
 	_times.c \
 	_truncate.c \
+	_ucontext.c \
 	_umask.c \
 	_uname.c \
 	_unlink.c \

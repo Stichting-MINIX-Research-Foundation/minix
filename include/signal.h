@@ -113,6 +113,19 @@ struct sigaction {
 #define FPE_FLTINV      7      /* floating-point invalid operation */
 #define FPE_FLTSUB      8      /* subscript out of range */
 
+typedef struct sigaltstack {
+  void *ss_sp;
+  int ss_flags;
+  size_t ss_size;
+} stack_t;
+
+#define MINSIGSTKSZ	2048	/* Minimal stack size is 2k */
+
+/* Fields for ss_flags */
+#define SS_ONSTACK      1      /* Process is executing on an alternate stack */
+#define SS_DISABLE      2      /* Alternate stack is disabled */
+
+
 #endif	/* _POSIX_SOURCE */
 
 /* POSIX and ANSI function prototypes. */

@@ -75,7 +75,7 @@ vir_bytes sp;			/* new value of sp */
 
   register struct mem_map *mem_sp, *mem_dp;
   vir_clicks sp_click, gap_base, sp_lower, old_clicks;
-  int changed, r;
+  int changed, r, sp_in_dp;
   long base_of_stack, sp_delta;	/* longs avoid certain problems */
 
   mem_dp = &rmp->vm_arch.vm_seg[D];	/* pointer to data segment map */
@@ -90,9 +90,15 @@ vir_bytes sp;			/* new value of sp */
 	return(ENOMEM);	/* sp too high */
   }
 
+  /* In order to support user-space libraries, processes might change sp to
+     point to somewhere inside the data segment. If that's the case, be careful
+     not to erroneously think that the data and stack have collided. */
+  sp_in_dp = (mem_dp->mem_vir <= sp_click) &&
+	     (mem_dp->mem_vir + mem_dp->mem_len >= sp_click);
+
   /* Compute size of gap between stack and data segments. */
   sp_delta = (long) mem_sp->mem_vir - (long) sp_click;
-  sp_lower = (sp_delta > 0 ? sp_click : mem_sp->mem_vir);
+  sp_lower = ((sp_delta > 0 && !sp_in_dp) ? sp_click : mem_sp->mem_vir);
 
   /* Add a safety margin for future stack growth. Impossible to do right. */
 #define SAFETY_BYTES  (384 * sizeof(char *))
@@ -111,7 +117,7 @@ vir_bytes sp;			/* new value of sp */
   }
 
   /* Update stack length and origin due to change in stack pointer. */
-  if (sp_delta > 0) {
+  if (sp_delta > 0 && !sp_in_dp) {
 	mem_sp->mem_vir -= sp_delta;
 	mem_sp->mem_phys -= sp_delta;
 	mem_sp->mem_len += sp_delta;

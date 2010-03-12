@@ -192,5 +192,12 @@ _PROTOTYPE( int do_sprofile, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_cprofile, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_profbuf, (struct proc * caller, message *m_ptr) );
 
+_PROTOTYPE( int do_getmcontext, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_setmcontext, (struct proc * caller, message *m_ptr) );
+#if ! USE_MCONTEXT
+#define do_getmcontext do_unused
+#define do_setmcontext do_unused
+#endif
+
 #endif	/* SYSTEM_H */
 

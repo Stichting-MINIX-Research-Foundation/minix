@@ -22,6 +22,7 @@ SRCS+=  \
 	_getsysinfo.c \
 	_lseek64.c \
 	_mapdriver.c \
+	_mcontext.c \
 	_mount.c \
 	_reboot.c \
 	_sbrk.c \

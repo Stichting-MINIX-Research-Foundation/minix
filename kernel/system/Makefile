@@ -57,7 +57,8 @@ OBJECTS	= \
 	do_sprofile.o \
 	do_cprofile.o \
 	do_profbuf.o \
-	do_vmctl.o
+	do_vmctl.o \
+	do_mcontext.o
 
 build $(SYSTEM):	$(SYSTEM)($(OBJECTS))
 	aal cr $@ *.o
