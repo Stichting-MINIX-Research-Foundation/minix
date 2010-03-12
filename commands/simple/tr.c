@@ -169,6 +169,15 @@ register unsigned char *buffer;
 				i++;
 			} while (i < 4 && *arg >= '0' && *arg <= '7');
 			*buffer++ = ac;
+		} else if( *arg == 't' ){
+		    arg++;
+		    *buffer++ = '\t';
+		} else if( *arg == 'r' ){
+		    arg++;
+		    *buffer++ = '\r';
+		} else if( *arg == 'n' ){
+		    arg++;
+		    *buffer++ = '\n';
 		} else if (*arg != '\0')
 			*buffer++ = *arg++;
 	} else if (*arg == '[') {
