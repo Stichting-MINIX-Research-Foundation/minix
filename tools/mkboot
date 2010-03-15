@@ -53,7 +53,7 @@ hdboot)
 	# Install a new image on the root device.
 	if [ ! -d $rootdir/boot/image ]
 	then
-		 /boot/image is not yet a directory!  Fix it.
+		# /boot/image is not yet a directory!  Fix it.
 		su root -c \
 		    "exec mv $rootdir/boot/image /M"
 		install -d $rootdir/boot/image
