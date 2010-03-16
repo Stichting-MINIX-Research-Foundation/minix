@@ -81,21 +81,31 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
 	}
     }
 
-      /* Find a free IRQ hook for this mapping. */
-      hook_ptr = NULL;
-      for (irq_hook_id=0; irq_hook_id<NR_IRQ_HOOKS; irq_hook_id++) {
-          if (irq_hooks[irq_hook_id].proc_nr_e == NONE) {	
-              hook_ptr = &irq_hooks[irq_hook_id];	/* free hook */
-              break;
-          }
-      }
-      if (hook_ptr == NULL) return(ENOSPC);
-
       /* When setting a policy, the caller must provide an identifier that
        * is returned on the notification message if a interrupt occurs.
        */
       notify_id = (unsigned) m_ptr->IRQ_HOOK_ID;
       if (notify_id > CHAR_BIT * sizeof(irq_id_t) - 1) return(EINVAL);
+
+      /* Try to find an existing mapping to override. */
+      hook_ptr = NULL;
+      for (i=0; !hook_ptr && i<NR_IRQ_HOOKS; i++) {
+          if (irq_hooks[i].proc_nr_e == m_ptr->m_source
+              && irq_hooks[i].notify_id == notify_id) {
+              irq_hook_id = i;
+              hook_ptr = &irq_hooks[irq_hook_id];	/* existing hook */
+              rm_irq_handler(&irq_hooks[irq_hook_id]);
+          }
+      }
+
+      /* If there is nothing to override, find a free hook for this mapping. */
+      for (i=0; !hook_ptr && i<NR_IRQ_HOOKS; i++) {
+          if (irq_hooks[i].proc_nr_e == NONE) {
+              irq_hook_id = i;
+              hook_ptr = &irq_hooks[irq_hook_id];	/* free hook */
+          }
+      }
+      if (hook_ptr == NULL) return(ENOSPC);
 
       /* Install the handler. */
       hook_ptr->proc_nr_e = m_ptr->m_source;	/* process to notify */   	
