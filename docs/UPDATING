@@ -1,5 +1,5 @@
 20100316:
-        /usr/include/man9 is required
+        /usr/man/man9 is required
 	# mkdir /usr/man/man9
 20100308:
         Include directory reorganization:
