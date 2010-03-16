@@ -65,6 +65,7 @@
 775  bin     operator  /usr/local/src
 755  bin     operator  /usr/man
 755  bin     operator  /usr/man/man1
+755  bin     operator  /usr/man/man1x
 755  bin     operator  /usr/man/man2
 755  bin     operator  /usr/man/man3
 755  bin     operator  /usr/man/man4

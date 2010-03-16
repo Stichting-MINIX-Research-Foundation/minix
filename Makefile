@@ -65,21 +65,19 @@ etcfiles::
 
 all::
 	cd boot && $(MAKE) all
-	cd man && $(MAKE) all
 	cd commands && $(MAKE) all
 	cd tools && $(MAKE) all
 	cd servers && $(MAKE) all
 
 install::
 	cd boot && $(MAKE) all install
-	cd man && $(MAKE) all install
+	cd man && $(MAKE) all install makedb
 	cd commands && $(MAKE) all install
 	cd tools && $(MAKE) all install
 	cd servers && $(MAKE) all install
 
 clean::
 	cd boot && $(MAKE) clean
-	cd man && $(MAKE) clean
 	cd commands && $(MAKE) clean
 	cd tools && $(MAKE) clean
 	cd servers && $(MAKE) clean
