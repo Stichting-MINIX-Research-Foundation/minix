@@ -299,7 +299,7 @@ static int check_problem(int which, int problem, int retries, int *tell_rs)
 	 */
 
 #if DEBUG
-	printf("Filter: check_driver processing driver %d, problem %d\n",
+	printf("Filter: check_problem processing driver %d, problem %d\n",
 		which, problem);
 #endif
 
