@@ -45,4 +45,6 @@ enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
 #define LOG_MAJOR		  15	/* major device for log driver */
 #  define IS_KLOG_DEV		   0	/* minor device for /dev/klog */
 
+#define HELLO_MAJOR		  17	/* major device for hello driver */
+
 #endif /* _DMAP_H */

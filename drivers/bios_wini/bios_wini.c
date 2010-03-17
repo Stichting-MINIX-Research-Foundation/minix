@@ -80,7 +80,6 @@ PRIVATE struct driver w_dtab = {
   w_transfer,	/* do the I/O */
   nop_cleanup,	/* no cleanup needed */
   w_geometry,	/* tell the geometry of the disk */
-  nop_signal,		/* no cleanup needed on shutdown */
   nop_alarm,		/* ignore leftover alarms */
   nop_cancel,		/* ignore CANCELs */
   nop_select,		/* ignore selects */

@@ -111,6 +111,9 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 		priv(rp)->s_k_call_mask[i] = (kcalls == NO_C ? 0 : (~0));
 	}
 
+	/* Set the default signal manager. */
+	priv(rp)->s_sig_mgr = DEF_SYS_SM;
+
 	/* Set defaults for resources: no I/O resources, no memory resources,
 	 * no IRQs, no grant table
 	 */
@@ -123,8 +126,9 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	/* Override defaults if the caller has supplied a privilege structure. */
 	if (m_ptr->CTL_ARG_PTR)
 	{
-		/* Copy s_flags. */
+		/* Copy s_flags and signal manager. */
 		priv(rp)->s_flags = priv.s_flags;
+		priv(rp)->s_sig_mgr = priv.s_sig_mgr;
 
 		/* Copy IRQs */
 		if(priv.s_flags & CHECK_IRQ) {

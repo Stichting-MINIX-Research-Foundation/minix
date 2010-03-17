@@ -45,8 +45,8 @@ struct proc {
   struct proc *p_nextready;	/* pointer to next ready process */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */
-  int p_getfrom_e;		/* from whom does process want to receive? */
-  int p_sendto_e;		/* to whom does process want to send? */
+  endpoint_t p_getfrom_e;	/* from whom does process want to receive? */
+  endpoint_t p_sendto_e;	/* to whom does process want to send? */
 
   sigset_t p_pending;		/* bit map for pending kernel signals */
 

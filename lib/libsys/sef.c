@@ -5,8 +5,8 @@
 
 /* Self variables. */
 #define SEF_SELF_NAME_MAXLEN 20
-PRIVATE char sef_self_name[SEF_SELF_NAME_MAXLEN];
-PRIVATE endpoint_t sef_self_endpoint;
+PUBLIC char sef_self_name[SEF_SELF_NAME_MAXLEN];
+PUBLIC endpoint_t sef_self_endpoint;
 
 /* Debug. */
 #define SEF_DEBUG_HEADER_MAXLEN 32
@@ -22,19 +22,22 @@ PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
 EXTERN _PROTOTYPE( int do_sef_rs_init, (void) );
 EXTERN _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
 
+/* SEF Ping prototypes. */
+EXTERN _PROTOTYPE( int do_sef_ping_request, (message *m_ptr) );
+
 /* SEF Live update prototypes. */
 EXTERN _PROTOTYPE( void do_sef_lu_before_receive, (void) );
 EXTERN _PROTOTYPE( int do_sef_lu_request, (message *m_ptr) );
 
-/* SEF Ping prototypes. */
-EXTERN _PROTOTYPE( int do_sef_ping_request, (message *m_ptr) );
+/* SEF Signal prototypes. */
+EXTERN _PROTOTYPE( int do_sef_signal_request, (message *m_ptr) );
 
 /*===========================================================================*
  *				sef_startup				     *
  *===========================================================================*/
 PUBLIC void sef_startup()
 {
-/* SEF startup interface for system processes. */
+/* SEF startup interface for system services. */
   int r;
 
   /* Get information about self. */
@@ -63,7 +66,7 @@ PUBLIC void sef_startup()
           }
       }
       else {
-          panic("unable to receive init request");
+          panic("got an unexpected message type %d", m.m_type);
       }
   }
 #endif
@@ -74,7 +77,7 @@ PUBLIC void sef_startup()
  *===========================================================================*/
 PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
 {
-/* SEF receive() interface for system processes. */
+/* SEF receive() interface for system services. */
   int r;
 
   while(TRUE) {
@@ -108,6 +111,15 @@ PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
       }
 #endif
 
+#if INTERCEPT_SEF_SIGNAL_REQUESTS
+      /* Intercept SEF Signal requests. */
+      if(IS_SEF_SIGNAL_REQUEST(m_ptr)) {
+          if(do_sef_signal_request(m_ptr) == OK) {
+              continue;
+          }
+      }
+#endif
+
       /* If we get this far, this is not a valid SEF request, return and
        * let the caller deal with that.
        */
@@ -115,6 +127,46 @@ PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
   }
 
   return r;
+}
+
+/*===========================================================================*
+ *      	                  sef_exit                                   *
+ *===========================================================================*/
+PUBLIC void sef_exit(int status)
+{
+/* System services use a special version of exit() that generates a
+ * self-termination signal.
+ */
+  message m;
+
+  /* Ask the kernel to exit. */
+  sys_exit();
+
+  /* If sys_exit() fails, this is not a system service. Exit through PM. */
+  m.m1_i1 = status;
+  _syscall(PM_PROC_NR, EXIT, &m);
+
+  /* If everything else fails, hang. */
+  printf("Warning: system service %d couldn't exit\n", sef_self_endpoint);
+  for(;;) { }
+}
+
+/*===========================================================================*
+ *      	                     _exit                                   *
+ *===========================================================================*/
+PUBLIC void _exit(int status)
+{
+/* Make exit() an alias for sef_exit() for system services. */
+  sef_exit(status);
+}
+
+/*===========================================================================*
+ *      	                    __exit                                   *
+ *===========================================================================*/
+PUBLIC void __exit(int status)
+{
+/* Make exit() an alias for sef_exit() for system services. */
+  sef_exit(status);
 }
 
 /*===========================================================================*

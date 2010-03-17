@@ -224,3 +224,4 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 
 	return OK;
 }
+

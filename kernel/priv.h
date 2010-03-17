@@ -41,8 +41,9 @@ struct priv {
   sys_map_t s_ipc_to;		/* allowed destination processes */
 
   /* allowed kernel calls */
-  bitchunk_t s_k_call_mask[SYS_CALL_MASK_SIZE];  
+  bitchunk_t s_k_call_mask[SYS_CALL_MASK_SIZE];
 
+  endpoint_t s_sig_mgr;		/* signal manager for system signals */
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
   irq_id_t s_int_pending;	/* pending hardware interrupts */
   sigset_t s_sig_pending;	/* pending signals */
@@ -149,5 +150,9 @@ EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 #define TSK_KC     NO_C                                 /* all kernel tasks */
 #define RSYS_KC    ALL_C                                /* root system proc */
 #define DEF_SYS_KC RSYS_KC                              /* default sys proc */
+
+/* signal manager */
+#define RSYS_SM    ROOT_SYS_PROC_NR                     /* root system proc */
+#define DEF_SYS_SM ROOT_SYS_PROC_NR                     /* default sys proc */
 
 #endif /* PRIV_H */

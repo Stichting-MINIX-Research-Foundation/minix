@@ -40,7 +40,6 @@ PRIVATE struct driver r_dtab = {
   r_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
   r_geometry,	/* device "geometry" */
-  nop_signal,	/* system signals */
   r_random, 	/* get randomness from kernel (alarm) */
   nop_cancel,
   nop_select,

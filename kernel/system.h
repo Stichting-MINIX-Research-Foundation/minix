@@ -8,6 +8,7 @@
  * into a message with type SYS_CALL that is handled in a function do_call(). 
  * 
  * Changes:
+ *   Mar 01, 2010   SYS_CLEAR and SYS_EXIT split (Cristiano Giuffrida)
  *   Jul 30, 2005   created SYS_INT86 to support BIOS driver  (Philip Homburg) 
  *   Jul 13, 2005   created SYS_PRIVCTL to manage services  (Jorrit N. Herder) 
  *   Jul 09, 2005   updated SYS_KILL to signal services  (Jorrit N. Herder) 
@@ -53,9 +54,9 @@ _PROTOTYPE( int do_newmap, (struct proc * caller, message *m_ptr) );
 #define do_newmap do_unused
 #endif
 
-_PROTOTYPE( int do_exit, (struct proc * caller, message *m_ptr) );
-#if ! USE_EXIT
-#define do_exit do_unused
+_PROTOTYPE( int do_clear, (struct proc * caller, message *m_ptr) );
+#if ! USE_CLEAR
+#define do_clear do_unused
 #endif
 
 _PROTOTYPE( int do_trace, (struct proc * caller, message *m_ptr) );
@@ -71,6 +72,16 @@ _PROTOTYPE( int do_nice, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_runctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_RUNCTL
 #define do_runctl do_unused
+#endif
+
+_PROTOTYPE( int do_update, (struct proc * caller, message *m_ptr) );
+#if ! USE_UPDATE
+#define do_update do_unused
+#endif
+
+_PROTOTYPE( int do_exit, (struct proc * caller, message *m_ptr) );
+#if ! USE_EXIT
+#define do_exit do_unused
 #endif
 
 _PROTOTYPE( int do_copy, (struct proc * caller, message *m_ptr) );

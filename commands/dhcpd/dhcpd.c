@@ -673,10 +673,13 @@ int main(int argc, char **argv)
     int i;
     network_t *np;
     struct sigaction sa;
-    ssize_t r= -1;
-    buf_t *bp= nil;
+    ssize_t r;
+    buf_t *bp;
     static struct timeval eventtv;
 
+main:
+    r = -1;
+    bp = nil;
     program= argv[0];
     start= now= time(nil);
 
@@ -1403,6 +1406,9 @@ int main(int argc, char **argv)
 	    }
 	}
     }
-    if (debug >= 1) printf("Nothing more to do! Bailing out...\n");
+    if (debug >= 1) printf("Nothing more to do! Starting over...\n");
+    sleep(2);
+    goto main;
+
     return 0;
 }

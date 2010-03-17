@@ -14,10 +14,12 @@
 #include <assert.h>
 
 #include <minix/type.h>
+#include <minix/type.h>
 #include <minix/safecopies.h>
 
 #include "../system.h"
 
+#include <signal.h>
 
 struct map_info_s {
 	int flag;
@@ -161,7 +163,7 @@ PUBLIC int map_invoke_vm(struct proc * caller,
 
 	/* Connect caller on vmrequest wait queue. */
 	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
-		mini_notify(proc_addr(SYSTEM), VM_PROC_NR);
+		send_sig(VM_PROC_NR, SIGKMEM);
 	vmrequest = caller;
 
 	return OK;

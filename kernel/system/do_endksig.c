@@ -15,8 +15,8 @@
 PUBLIC int do_endksig(struct proc * caller, message * m_ptr)
 {
 /* Finish up after a kernel type signal, caused by a SYS_KILL message or a 
- * call to cause_sig by a task. This is called by the PM after processing a
- * signal it got with SYS_GETKSIG.
+ * call to cause_sig by a task. This is called by a signal manager after
+ * processing a signal it got with SYS_GETKSIG.
  */
   register struct proc *rp;
   int proc_nr;
@@ -28,9 +28,10 @@ PUBLIC int do_endksig(struct proc * caller, message * m_ptr)
 	return EINVAL;
 
   rp = proc_addr(proc_nr);
+  if (caller->p_endpoint != priv(rp)->s_sig_mgr) return(EPERM);
   if (!RTS_ISSET(rp, RTS_SIG_PENDING)) return(EINVAL);
 
-  /* PM has finished one kernel signal. Perhaps process is ready now? */
+  /* The signal manager has finished one kernel signal. Is the process ready? */
   if (!RTS_ISSET(rp, RTS_SIGNALED)) 		/* new signal arrived */
 	RTS_UNSET(rp, RTS_SIG_PENDING);	/* remove pending flag */
   return(OK);

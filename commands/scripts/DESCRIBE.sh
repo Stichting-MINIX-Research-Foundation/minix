@@ -190,6 +190,9 @@ do
     16,0)
 	des="pseudo random number generator" dev=urandom
 	;;
+    17,0)
+	des="hello" dev=hello
+	;;
     BAD,BAD)
 	des= dev=
 	;;

@@ -13,12 +13,9 @@
  * Calls are unordered lists, converted by RS to bitmasks
  * once at runtime.
  */
-#define FS_KC   SYS_KILL, SYS_VIRCOPY, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, \
-    SYS_UMAP, SYS_GETINFO, SYS_EXIT, SYS_TIMES, SYS_SETALARM, \
-    SYS_PRIVCTL, SYS_TRACE , SYS_SETGRANT, SYS_PROFBUF, SYS_SYSCTL, \
-    SYS_SAFEMAP, SYS_SAFEREVMAP, SYS_SAFEUNMAP
-#define DRV_KC	FS_KC, SYS_SEGCTL, SYS_IRQCTL, SYS_INT86, SYS_DEVIO, \
-    SYS_SDEVIO, SYS_VDEVIO, SYS_SETGRANT, SYS_PROFBUF, SYS_SYSCTL
+#define FS_KC   SYS_BASIC_CALLS, SYS_TRACE, SYS_UMAP, SYS_VIRCOPY, SYS_KILL
+#define DRV_KC	SYS_BASIC_CALLS, SYS_TRACE, SYS_UMAP, SYS_VIRCOPY, SYS_SEGCTL, \
+    SYS_IRQCTL, SYS_INT86, SYS_DEVIO, SYS_SDEVIO, SYS_VDEVIO
 
 PRIVATE int
   pm_kc[] =   { SYS_ALL_C, SYS_NULL_C },
@@ -26,7 +23,7 @@ PRIVATE int
   rs_kc[] =   { SYS_ALL_C, SYS_NULL_C },
   ds_kc[] =   { SYS_ALL_C, SYS_NULL_C },
   vm_kc[] =   { SYS_ALL_C, SYS_NULL_C },
-  tty_kc[] =  { DRV_KC, SYS_PHYSCOPY, SYS_ABORT, SYS_IOPENABLE,
+  tty_kc[] =  { DRV_KC, SYS_KILL, SYS_PHYSCOPY, SYS_ABORT, SYS_IOPENABLE,
       SYS_READBIOS, SYS_NULL_C },
   mem_kc[] =  { DRV_KC, SYS_PHYSCOPY, SYS_IOPENABLE, SYS_NULL_C},
   log_kc[] =  { DRV_KC, SYS_NULL_C },
@@ -45,7 +42,7 @@ PRIVATE int
       VM_PUSH_SIG, VM_WILLEXIT, VM_ADDDMA, VM_DELDMA, VM_GETDMA,
       VM_NOTIFY_SIG, SYS_NULL_C },
   vfs_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  rs_vmc[] =   { VM_BASIC_CALLS, VM_RS_SET_PRIV, SYS_NULL_C },
+  rs_vmc[] =   { VM_BASIC_CALLS, VM_RS_SET_PRIV, VM_RS_UPDATE, SYS_NULL_C },
   ds_vmc[] =   { VM_BASIC_CALLS, SYS_NULL_C },
   vm_vmc[] =   { SYS_NULL_C },
   tty_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
@@ -61,19 +58,19 @@ PRIVATE int
  * at boot time.
  */
 PUBLIC struct boot_image_priv boot_image_priv_table[] = {
-  /*endpoint,     label,      flags,  traps,  ipcto,  kcalls,  vmcalls  */
-  { RS_PROC_NR,   "rs",       RSYS_F, RSYS_T, RSYS_M, rs_kc,   rs_vmc   },
-  { VM_PROC_NR,   "vm",       VM_F,   SRV_T,  SRV_M,  vm_kc,   vm_vmc   },
-  { PM_PROC_NR,   "pm",       SRV_F,  SRV_T,  SRV_M,  pm_kc,   pm_vmc   },
-  { VFS_PROC_NR,  "vfs",      SRV_F,  SRV_T,  SRV_M,  vfs_kc,  vfs_vmc  },
-  { DS_PROC_NR,   "ds",       SRV_F,  SRV_T,  SRV_M,  ds_kc,   ds_vmc   },
-  { TTY_PROC_NR,  "tty",      SRV_F,  SRV_T,  SRV_M,  tty_kc,  tty_vmc  },
-  { MEM_PROC_NR,  "memory",   SRV_F,  SRV_T,  SRV_M,  mem_kc,  mem_vmc  },
-  { LOG_PROC_NR,  "log",      SRV_F,  SRV_T,  SRV_M,  log_kc,  log_vmc  },
-  { MFS_PROC_NR,  "fs_imgrd", SRV_F,  SRV_T,  SRV_M,  mfs_kc,  mfs_vmc  },
-  { PFS_PROC_NR,  "pfs",      SRV_F,  SRV_T,  SRV_M,  pfs_kc,  pfs_vmc  },
-  { INIT_PROC_NR, "init",     RUSR_F, RUSR_T, RUSR_M, rusr_kc, rusr_vmc },
-  { NULL_BOOT_NR, "",         0,      0,      0,      no_kc,   no_vmc   }
+/*endpoint,     label,     flags,  traps,  ipcto,  sigmgr,  kcalls,  vmcalls */
+{RS_PROC_NR,   "rs",       RSYS_F, RSYS_T, RSYS_M, RSYS_SM, rs_kc,   rs_vmc   },
+{VM_PROC_NR,   "vm",       VM_F,   SRV_T,  SRV_M,  SRV_SM,  vm_kc,   vm_vmc   },
+{PM_PROC_NR,   "pm",       SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pm_kc,   pm_vmc   },
+{VFS_PROC_NR,  "vfs",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  vfs_kc,  vfs_vmc  },
+{DS_PROC_NR,   "ds",       SRV_F,  SRV_T,  SRV_M,  SRV_SM,  ds_kc,   ds_vmc   },
+{TTY_PROC_NR,  "tty",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  tty_kc,  tty_vmc  },
+{MEM_PROC_NR,  "memory",   SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mem_kc,  mem_vmc  },
+{LOG_PROC_NR,  "log",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  log_kc,  log_vmc  },
+{MFS_PROC_NR,  "fs_imgrd", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mfs_kc,  mfs_vmc  },
+{PFS_PROC_NR,  "pfs",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pfs_kc,  pfs_vmc  },
+{INIT_PROC_NR, "init",     RUSR_F, RUSR_T, RUSR_M, RUSR_SM, rusr_kc, rusr_vmc },
+{NULL_BOOT_NR, "",         0,      0,      0,      0,       no_kc,   no_vmc   }
 };
 
 /* Definition of the boot image sys table. */

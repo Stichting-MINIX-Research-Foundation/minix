@@ -15,7 +15,7 @@
  *   set_sendto_bit:	allow a process to send messages to a new target
  *   unset_sendto_bit:	disallow a process from sending messages to a target
  *   send_sig:		send a signal directly to a system process
- *   cause_sig:		take action to cause a signal to occur via PM
+ *   cause_sig:		take action to cause a signal to occur via a signal mgr
  *   sig_delay_done:	tell PM that a process is not sending
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
  *   get_randomness:	accumulate randomness in a buffer
@@ -176,17 +176,19 @@ PUBLIC void system_init(void)
   /* Process management. */
   map(SYS_FORK, do_fork); 		/* a process forked a new process */
   map(SYS_EXEC, do_exec);		/* update process after execute */
-  map(SYS_EXIT, do_exit);		/* clean up after process exit */
+  map(SYS_CLEAR, do_clear);		/* clean up after process exit */
+  map(SYS_EXIT, do_exit);		/* a system process wants to exit */
   map(SYS_NICE, do_nice);		/* set scheduling priority */
   map(SYS_PRIVCTL, do_privctl);		/* system privileges control */
   map(SYS_TRACE, do_trace);		/* request a trace operation */
   map(SYS_SETGRANT, do_setgrant);	/* get/set own parameters */
   map(SYS_RUNCTL, do_runctl);		/* set/clear stop flag of a process */
+  map(SYS_UPDATE, do_update);		/* update a process into another */
 
   /* Signal handling. */
   map(SYS_KILL, do_kill); 		/* cause a process to be signaled */
-  map(SYS_GETKSIG, do_getksig);		/* PM checks for pending signals */
-  map(SYS_ENDKSIG, do_endksig);		/* PM finished processing signal */
+  map(SYS_GETKSIG, do_getksig);		/* signal manager checks for signals */
+  map(SYS_ENDKSIG, do_endksig);		/* signal manager finished signal */
   map(SYS_SIGSEND, do_sigsend);		/* start POSIX-style signal */
   map(SYS_SIGRETURN, do_sigreturn);	/* return from POSIX-style signal */
 
@@ -347,27 +349,38 @@ int sig_nr;			/* signal to be sent */
  *  - HARDWARE wanting to cause a SIGSEGV after a CPU exception
  *  - TTY wanting to cause SIGINT upon getting a DEL
  *  - FS wanting to cause SIGPIPE for a broken pipe 
- * Signals are handled by sending a message to PM.  This function handles the 
- * signals and makes sure the PM gets them by sending a notification. The 
- * process being signaled is blocked while PM has not finished all signals 
- * for it. 
+ * Signals are handled by sending a message to the signal manager assigned to
+ * the process. This function handles the signals and makes sure the signal
+ * manager gets them by sending a notification. The process being signaled
+ * is blocked while the signal manager has not finished all signals for it.
  * Race conditions between calls to this function and the system calls that
  * process pending kernel signals cannot exist. Signal related functions are
  * only called when a user process causes a CPU exception and from the kernel 
  * process level, which runs to completion.
  */
   register struct proc *rp;
+  endpoint_t sig_mgr;
 
-  if (proc_nr == PM_PROC_NR)
-	panic("cause_sig: PM gets signal");
+  /* Lookup signal manager. */
+  rp = proc_addr(proc_nr);
+  sig_mgr = priv(rp)->s_sig_mgr;
+
+  /* If the target is the signal manager of itself, send the signal directly. */
+  if(rp->p_endpoint == sig_mgr) {
+       if(SIGS_IS_LETHAL(sig_nr)) {
+           panic("cause_sig: signal manager gets lethal signal for itself");
+       }
+       sigaddset(&priv(rp)->s_sig_pending, sig_nr);
+       send_sig(rp->p_endpoint, SIGKSIGSM);
+       return;
+  }
 
   /* Check if the signal is already pending. Process it otherwise. */
-  rp = proc_addr(proc_nr);
   if (! sigismember(&rp->p_pending, sig_nr)) {
       sigaddset(&rp->p_pending, sig_nr);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */
 	  RTS_SET(rp, RTS_SIGNALED | RTS_SIG_PENDING);
-          send_sig(PM_PROC_NR, SIGKSIG);
+          send_sig(sig_mgr, SIGKSIG);
       }
   }
 }
@@ -385,7 +398,7 @@ struct proc *rp;
 
   rp->p_misc_flags &= ~MF_SIG_DELAY;
 
-  cause_sig(proc_nr(rp), SIGNDELAY);
+  cause_sig(proc_nr(rp), SIGKNDELAY);
 }
 
 #if _MINIX_CHIP == _CHIP_INTEL

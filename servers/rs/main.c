@@ -16,7 +16,6 @@
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 #include "../pm/mproc.h"
-#include "../pm/const.h"
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void exec_image_copy, ( int boot_proc_idx,
@@ -26,9 +25,7 @@ FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
     struct boot_image **ip, struct boot_image_priv **pp,
     struct boot_image_sys **sp, struct boot_image_dev **dp)             );
 FORWARD _PROTOTYPE(void catch_boot_init_ready, (endpoint_t endpoint)	);
-FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m)				);
-FORWARD _PROTOTYPE(void reply, (int whom, message *m_out)		);
 
 /* The buffer where the boot image is copied during initialization. */
 PRIVATE int boot_image_buffer_size;
@@ -40,6 +37,8 @@ EXTERN int unmap_ok;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void)                      );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD _PROTOTYPE( int sef_cb_signal_manager, (endpoint_t target, int signo) );
 
 /*===========================================================================*
  *				main                                         *
@@ -63,15 +62,15 @@ PUBLIC int main(void)
       /* Wait for request message. */
       get_work(&m);
       who_e = m.m_source;
-      who_p = _ENDPOINT_P(who_e);
-      if(who_p < -NR_TASKS || who_p >= NR_PROCS)
-	panic("message from bogus source: %d", who_e);
+      if(rs_isokendpt(who_e, &who_p) != OK) {
+          panic("message from bogus source: %d", who_e);
+      }
 
       call_nr = m.m_type;
 
       /* Now determine what to do.  Four types of requests are expected:
        * - Heartbeat messages (notifications from registered system services)
-       * - System notifications (POSIX signals or synchronous alarm)
+       * - System notifications (synchronous alarm)
        * - User requests (control messages to manage system services)
        * - Ready messages (reply messages from registered services)
        */
@@ -84,13 +83,11 @@ PUBLIC int main(void)
           case CLOCK:
 	      do_period(&m);			/* check services status */
 	      continue;
-          case PM_PROC_NR:                      /* signal or PM heartbeat */
-	      sig_handler();				
 	  default:				/* heartbeat notification */
 	      if (rproc_ptr[who_p] != NULL) {	/* mark heartbeat time */ 
 		  rproc_ptr[who_p]->r_alive_tm = m.NOTIFY_TIMESTAMP;
 	      } else {
-		  printf("Warning, RS got unexpected notify message from %d\n",
+		  printf("RS: warning: got unexpected notify message from %d\n",
 		      m.m_source);
 	      }
 	  }
@@ -104,7 +101,7 @@ PUBLIC int main(void)
 	  	(call_nr < RS_RQ_BASE || call_nr >= RS_RQ_BASE+0x100))
 	  {
 		/* Ignore invalid requests. Do not try to reply. */
-		printf("RS: got invalid request %d from endpoint %d\n",
+		printf("RS: warning: got invalid request %d from endpoint %d\n",
 			call_nr, m.m_source);
 		continue;
 	  }
@@ -124,7 +121,7 @@ PUBLIC int main(void)
 	  case RS_INIT: 	result = do_init_ready(&m); 	break;
 	  case RS_LU_PREPARE: 	result = do_upd_ready(&m); 	break;
           default: 
-              printf("Warning, RS got unexpected request %d from %d\n",
+              printf("RS: warning: got unexpected request %d from %d\n",
                   m.m_type, m.m_source);
               result = EINVAL;
           }
@@ -146,6 +143,10 @@ PRIVATE void sef_local_startup()
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);     /* RS can only start fresh. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+  sef_setcb_signal_manager(sef_cb_signal_manager);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -156,7 +157,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the reincarnation server. */
-  struct sigaction sa;
   struct boot_image *ip;
   int s,i,j;
   int nr_image_srvs, nr_image_priv_srvs, nr_uncaught_init_srvs;
@@ -179,8 +179,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       panic("unable to create rprocpub table grant: %d", rinit.rproctab_gid);
   }
 
-  /* Initialize the global update descriptor. */
+  /* Initialize some global variables. */
   rupdate.flags = 0;
+  shutting_down = FALSE;
 
   /* Get a copy of the boot image table. */
   if ((s = sys_getimage(image)) != OK) {
@@ -290,11 +291,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           rp->r_priv.s_id = static_priv_id(
               _ENDPOINT_P(boot_image_priv->endpoint));
 
-          /* Initialize privilege bitmaps. */
+          /* Initialize privilege bitmaps and signal manager. */
           rp->r_priv.s_flags = boot_image_priv->flags;         /* priv flags */
           rp->r_priv.s_trap_mask = boot_image_priv->trap_mask; /* traps */
           memcpy(&rp->r_priv.s_ipc_to, &boot_image_priv->ipc_to,
                             sizeof(rp->r_priv.s_ipc_to));      /* targets */
+          rp->r_priv.s_sig_mgr = boot_image_priv->sig_mgr;     /* sig mgr */
 
           /* Initialize kernel call mask bitmap from unordered set. */
           fill_call_mask(boot_image_priv->k_calls, NR_SYS_CALLS,
@@ -329,10 +331,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
       /* Get command settings. */
       rp->r_cmd[0]= '\0';
-      rp->r_argv[0] = rp->r_cmd;
-      rp->r_argv[1] = NULL;
-      rp->r_argc = 1;
       rp->r_script[0]= '\0';
+      build_cmd_dep(rp);
 
       /* Initialize vm call mask bitmap from unordered set. */
       fill_call_mask(boot_image_priv->vm_calls, NR_VM_CALLS,
@@ -343,6 +343,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rpub->endpoint = ip->endpoint;
 
       /* Set some defaults. */
+      rp->r_old_rp = NULL;                     /* no old version yet */
+      rp->r_new_rp = NULL;                     /* no new version yet */
+      rp->r_prev_rp = NULL;                    /* no prev replica yet */
+      rp->r_next_rp = NULL;                    /* no next replica yet */
       rp->r_uid = 0;                           /* root */
       rp->r_check_tm = 0;                      /* not checked yet */
       getuptime(&rp->r_alive_tm);              /* currently alive */
@@ -350,8 +354,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp->r_restarts = 0;                      /* no restarts so far */
       rp->r_set_resources = 0;                 /* don't set resources */
 
-      /* Mark as in use. */
-      rp->r_flags = RS_IN_USE;
+      /* Mark as in use and active. */
+      rp->r_flags = RS_IN_USE | RS_ACTIVE;
       rproc_ptr[_ENDPOINT_P(rpub->endpoint)]= rp;
       rpub->in_use = TRUE;
   }
@@ -409,7 +413,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   /* - Step 4: all the system services in the boot image are now running.
    * Complete the initialization of the system process table in collaboration
-   * with other system processes.
+   * with other system services.
    */
   if ((s = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) {
       panic("unable to get copy of PM process table: %d", s);
@@ -427,7 +431,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rpub = rp->r_pub;
 
       /* Get pid from PM process table. */
-      rp->r_pid = NO_PID;
+      rp->r_pid = -1;
       for (j = 0; j < NR_PROCS; j++) {
           if (mproc[j].mp_endpoint == rpub->endpoint) {
               rp->r_pid = mproc[j].mp_pid;
@@ -455,32 +459,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("couldn't set alarm: %d", s);
 
-  /* Install signal handlers. Ask PM to transform signal into message. */
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGCHLD,&sa,NULL)<0) panic("sigaction failed: %d", errno);
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
-
-  /* Initialize the exec pipe. */
-  if (pipe(exec_pipe) == -1)
-	panic("pipe failed: %d", errno);
-  if (fcntl(exec_pipe[0], F_SETFD,
-	fcntl(exec_pipe[0], F_GETFD) | FD_CLOEXEC) == -1)
-  {
-	panic("fcntl set FD_CLOEXEC on pipe input failed: %d", errno);
-  }
-  if (fcntl(exec_pipe[1], F_SETFD,
-	fcntl(exec_pipe[1], F_GETFD) | FD_CLOEXEC) == -1)
-  {
-	panic("fcntl set FD_CLOEXEC on pipe output failed: %d", errno);
-  }
-  if (fcntl(exec_pipe[0], F_SETFL,
-	fcntl(exec_pipe[0], F_GETFL) | O_NONBLOCK) == -1)
-  {
-	panic("fcntl set O_NONBLOCK on pipe input failed: %d", errno);
-  }
-
  /* Map out our own text and data. This is normally done in crtso.o
   * but RS is an exception - we don't get to talk to VM so early on.
   * That's why we override munmap() and munmap_text() in utility.c.
@@ -493,6 +471,70 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   _minix_unmapzero();
 
   return(OK);
+}
+
+/*===========================================================================*
+ *		            sef_cb_signal_handler                            *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  int exit_status;
+
+  /* Check for known signals, ignore anything else. */
+  switch(signo) {
+      case SIGCHLD:
+          do_sigchld();
+      break;
+      case SIGTERM:
+          do_shutdown(NULL);
+      break;
+  }
+}
+
+/*===========================================================================*
+ *		            sef_cb_signal_manager                            *
+ *===========================================================================*/
+PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
+{
+/* Process system signal on behalf of the kernel. */
+  int target_p;
+  struct rproc *rp;
+  struct rprocpub *rpub;
+  message m;
+
+  /* Lookup slot. */
+  if(rs_isokendpt(target, &target_p) != OK || rproc_ptr[target_p] == NULL) {
+      if(rs_verbose)
+          printf("RS: ignoring spurious signal %d for process %d\n",
+              signo, target);
+      return;
+  }
+  rp = rproc_ptr[target_p];
+  rpub = rp->r_pub;
+
+  /* Don't bother if a termination signal has already been processed. */
+  if( rp->r_flags & (RS_TERMINATED|RS_EXITING) == RS_TERMINATED ) {
+      return EDEADSRCDST; /* process is gone */
+  }
+
+  if(rs_verbose)
+      printf("RS: %s got %s signal %d\n", srv_to_string(rp),
+          SIGS_IS_TERMINATION(signo) ? "termination" : "non-termination",signo);
+
+  /* In case of termination signal handle the event. */
+  if(SIGS_IS_TERMINATION(signo)) {
+      rp->r_flags |= RS_TERMINATED;
+      terminate_service(rp);
+
+      return EDEADSRCDST; /* process is now gone */
+  }
+
+  /* Translate every non-termination signal into a message. */
+  m.m_type = SIGS_SIGNAL_RECEIVED;
+  m.SIGS_SIG_NUM = signo;
+  asynsend3(rpub->endpoint, &m, AMF_NOREPLY);
+
+  return OK; /* signal has been delivered */
 }
 
 /*===========================================================================*
@@ -643,26 +685,14 @@ endpoint_t endpoint;
       panic("unable to complete init for service: %d", m.m_source);
   }
 
+  /* Send a reply to unblock the service. */
+  m.m_type = OK;
+  reply(m.m_source, &m);
+
   /* Mark the slot as no longer initializing. */
   rp->r_flags &= ~RS_INITIALIZING;
   rp->r_check_tm = 0;
   getuptime(&rp->r_alive_tm);
-}
-
-/*===========================================================================*
- *				sig_handler                                  *
- *===========================================================================*/
-PRIVATE void sig_handler()
-{
-  sigset_t sigset;
-  int sig;
-
-  /* Try to obtain signal set from PM. */
-  if (getsigset(&sigset) != 0) return;
-
-  /* Check for known signals. */
-  if (sigismember(&sigset, SIGCHLD)) do_exit(NULL);
-  if (sigismember(&sigset, SIGTERM)) do_shutdown(NULL);
 }
 
 /*===========================================================================*
@@ -674,19 +704,5 @@ message *m_in;				/* pointer to message */
     int s;				/* receive status */
     if (OK != (s=sef_receive(ANY, m_in))) 	/* wait for message */
         panic("sef_receive failed: %d", s);
-}
-
-/*===========================================================================*
- *				reply					     *
- *===========================================================================*/
-PRIVATE void reply(who, m_out)
-int who;                           	/* replyee */
-message *m_out;                         /* reply message */
-{
-    int s;				/* send status */
-
-    s = sendnb(who, m_out);		/* send the message */
-    if (s != OK)
-        printf("RS: unable to send reply to %d: %d\n", who, s);
 }
 

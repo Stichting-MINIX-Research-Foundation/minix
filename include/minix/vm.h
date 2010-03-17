@@ -25,7 +25,15 @@ _PROTOTYPE( int vm_unmap_phys, (endpoint_t who, void *vaddr, size_t len));
 _PROTOTYPE( int vm_notify_sig, (endpoint_t ep, endpoint_t ipc_ep));
 _PROTOTYPE( int vm_ctl, (int what, int param));
 _PROTOTYPE( int vm_set_priv, (int procnr, void *buf));
+_PROTOTYPE( int vm_update, (endpoint_t src_e, endpoint_t dst_e));
 _PROTOTYPE( int vm_query_exit, (int *endpt));
+
+/* VM kernel request types. */
+#define VMPTYPE_NONE		0
+#define VMPTYPE_CHECK		1
+#define VMPTYPE_COWMAP		2
+#define VMPTYPE_SMAP		3
+#define VMPTYPE_SUNMAP		4
 
 struct vm_stats_info {
   int vsi_pagesize;		/* page size */

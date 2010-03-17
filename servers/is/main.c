@@ -19,13 +19,13 @@ int callnr;		/* system call number */
 extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				main                                         *
@@ -50,17 +50,6 @@ PUBLIC int main(int argc, char **argv)
 
       if (is_notify(callnr)) {
 	      switch (_ENDPOINT_P(who_e)) {
-		      case SYSTEM:
-			      printf("got message from SYSTEM\n");
-			      sigset = m_in.NOTIFY_ARG;
-			      for ( result=0; result< _NSIG; result++) {
-				      if (sigismember(&sigset, result))
-					      printf("signal %d found\n", result);
-			      }
-			      continue;
-		      case PM_PROC_NR:
-		              sig_handler();
-			      continue;
 		      case TTY_PROC_NR:
 			      result = do_fkey_pressed(&m_in);
 			      break;
@@ -98,6 +87,9 @@ PRIVATE void sef_local_startup()
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -108,14 +100,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the information server. */
-  struct sigaction sigact;
-
-  /* Install signal handler. Ask PM to transform signal into message. */
-  sigact.sa_handler = SIG_MESS;
-  sigact.sa_mask = ~0;			/* block all other signals */
-  sigact.sa_flags = 0;			/* default behaviour */
-  if (sigaction(SIGTERM, &sigact, NULL) < 0) 
-      printf("IS: warning, sigaction() failed: %d\n", errno);
 
   /* Set key mappings. */
   map_unmap_fkeys(TRUE /*map*/);
@@ -124,17 +108,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 }
 
 /*===========================================================================*
- *				sig_handler                                  *
+ *		            sef_cb_signal_handler                            *
  *===========================================================================*/
-PRIVATE void sig_handler()
+PRIVATE void sef_cb_signal_handler(int signo)
 {
-  sigset_t sigset;
-
-  /* Try to obtain signal set from PM. */
-  if (getsigset(&sigset) != 0) return;
-
-  /* Only check for termination signal. */
-  if (!sigismember(&sigset, SIGTERM)) return;
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
 
   /* Shutting down. Unset key mappings, and quit. */
   map_unmap_fkeys(FALSE /*map*/);

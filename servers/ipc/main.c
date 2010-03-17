@@ -26,6 +26,7 @@ PRIVATE int verbose = 0;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 PUBLIC int main(int argc, char *argv[])
 {
@@ -49,14 +50,6 @@ PUBLIC int main(int argc, char *argv[])
 
 		if (call_type & NOTIFY_MESSAGE) {
 			switch (who_e) {
-			case PM_PROC_NR:
-				/* PM sends a notify() on shutdown,
-				 * checkout if there are still IPC keys,
-				 * give warning messages.
-				 */
-				if (!is_sem_nil() || !is_shm_nil())
-					printf("IPC: exit with un-clean states.\n");
-				break;
 			case VM_PROC_NR:
 				/* currently, only semaphore needs such information. */
 				sem_process_vm_notify();
@@ -114,6 +107,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -131,5 +127,18 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       printf("IPC: self: %d\n", SELF_E);
 
   return(OK);
+}
+
+/*===========================================================================*
+ *		            sef_cb_signal_handler                            *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  /* Checkout if there are still IPC keys. Inform the user in that case. */
+  if (!is_sem_nil() || !is_shm_nil())
+      printf("IPC: exit with un-clean states.\n");
 }
 

@@ -22,7 +22,6 @@ Interface to the reincarnation server
 #define RSS_REUSE	0x04	/* Try to reuse previously copied binary */
 
 /* Common definitions. */
-#define RS_SYS_CALL_MASK_SIZE	 2
 #define RS_NR_CONTROL		 8
 #define RS_NR_PCI_DEVICE	32
 #define RS_NR_PCI_CLASS		 4
@@ -55,7 +54,7 @@ struct rs_start
 	struct { u16_t vid; u16_t did; } rss_pci_id[RS_NR_PCI_DEVICE];
 	int rss_nr_pci_class;
 	struct { u32_t class; u32_t mask; } rss_pci_class[RS_NR_PCI_CLASS];
-	u32_t rss_system[RS_SYS_CALL_MASK_SIZE];
+	bitchunk_t rss_system[SYS_CALL_MASK_SIZE];
 	struct rss_label rss_label;
 	char *rss_ipc;
 	size_t rss_ipclen;

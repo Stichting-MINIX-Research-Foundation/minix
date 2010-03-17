@@ -96,13 +96,10 @@ static void got_alarm(int sig)
  *===========================================================================*/
 void flt_sleep(int secs)
 {
-	/* Sleep for the given number of seconds. Don't use sleep(), as that
-	 * will end up calling select() to VFS. This implementation could be
-	 * improved.
-	 */
+	u32_t system_hz;
 
-	signal(SIGALRM, got_alarm);
-	alarm(secs);
-
-	pause();
+	/* Sleep for the given number of seconds. */
+	system_hz = sys_hz();
+	tickdelay(system_hz * secs);
 }
+

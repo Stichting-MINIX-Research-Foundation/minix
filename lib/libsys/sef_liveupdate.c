@@ -11,18 +11,21 @@ PRIVATE struct sef_cbs {
     sef_cb_lu_state_isvalid_t           sef_cb_lu_state_isvalid;
     sef_cb_lu_state_changed_t           sef_cb_lu_state_changed;
     sef_cb_lu_state_dump_t              sef_cb_lu_state_dump;
-    sef_cb_lu_ready_pre_t               sef_cb_lu_ready_pre;
+    sef_cb_lu_state_save_t              sef_cb_lu_state_save;
 } sef_cbs = {
     SEF_CB_LU_PREPARE_DEFAULT,
     SEF_CB_LU_STATE_ISVALID_DEFAULT,
     SEF_CB_LU_STATE_CHANGED_DEFAULT,
     SEF_CB_LU_STATE_DUMP_DEFAULT,
-    SEF_CB_LU_READY_PRE_DEFAULT,
+    SEF_CB_LU_STATE_SAVE_DEFAULT,
 };
 
 /* SEF Live update prototypes for sef_receive(). */
 PUBLIC _PROTOTYPE( void do_sef_lu_before_receive, (void) );
 PUBLIC _PROTOTYPE( int do_sef_lu_request, (message *m_ptr) );
+
+/* SEF Live update helpers. */
+PRIVATE _PROTOTYPE( void sef_lu_ready, (int result) );
 
 /* Debug. */
 EXTERN _PROTOTYPE( char* sef_debug_header, (void) );
@@ -34,6 +37,7 @@ PRIVATE int sef_lu_debug_cycle = 0;
 PUBLIC void do_sef_lu_before_receive()
 {
 /* Handle SEF Live update before receive events. */
+  int r;
 
   /* Nothing to do if we are not preparing for a live update. */
   if(sef_lu_state == SEF_LU_STATE_NULL) {
@@ -53,11 +57,12 @@ PUBLIC void do_sef_lu_before_receive()
   /* Let the callback code handle the event.
    * For SEF_LU_STATE_WORK_FREE, we're always ready, tell immediately.
    */
-  if(sef_lu_state == SEF_LU_STATE_WORK_FREE) {
-      sef_lu_ready(OK);
+  r = OK;
+  if(sef_lu_state != SEF_LU_STATE_WORK_FREE) {
+      r = sef_cbs.sef_cb_lu_prepare(sef_lu_state);
   }
-  else {
-      sef_cbs.sef_cb_lu_prepare(sef_lu_state);
+  if(r == OK) {
+      sef_lu_ready(OK);
   }
 }
 
@@ -67,19 +72,28 @@ PUBLIC void do_sef_lu_before_receive()
 PUBLIC int do_sef_lu_request(message *m_ptr)
 {
 /* Handle a SEF Live update request. */
-  int old_state, is_valid_state;
+  int state, old_state, is_valid_state;
 
   sef_lu_debug_cycle = 0;
   old_state = sef_lu_state;
+  state = m_ptr->RS_LU_STATE;
 
-  /* Only accept live update requests with a valid state. */
-  is_valid_state = sef_cbs.sef_cb_lu_state_isvalid(m_ptr->RS_LU_STATE);
+  /* Deal with prepare cancel requests first. */
+  is_valid_state = (state == SEF_LU_STATE_NULL);
+
+  /* Otherwise only accept live update requests with a valid state. */
+  is_valid_state = is_valid_state || sef_cbs.sef_cb_lu_state_isvalid(state);
   if(!is_valid_state) {
-      sef_lu_ready(EINVAL);
+      if(sef_cbs.sef_cb_lu_state_isvalid == SEF_CB_LU_STATE_ISVALID_NULL) {
+          sef_lu_ready(ENOSYS);
+      }
+      else {
+          sef_lu_ready(EINVAL);
+      }
   }
   else {
       /* Set the new live update state. */
-      sef_lu_state = m_ptr->RS_LU_STATE;
+      sef_lu_state = state;
 
       /* If the live update state changed, let the callback code
        * handle the rest.
@@ -96,10 +110,10 @@ PUBLIC int do_sef_lu_request(message *m_ptr)
 /*===========================================================================*
  *				  sef_lu_ready				     *
  *===========================================================================*/
-PUBLIC void sef_lu_ready(int result)
+PRIVATE void sef_lu_ready(int result)
 {
   message m;
-  int old_state, r;
+  int old_state, rs_result, r;
 
 #if SEF_LU_DEBUG
   sef_lu_debug_begin();
@@ -109,28 +123,33 @@ PUBLIC void sef_lu_ready(int result)
   sef_lu_debug_end();
 #endif
 
-  /* Let the callback code perform any pre-ready operations. */
-  r = sef_cbs.sef_cb_lu_ready_pre(result);
-  if(r != OK) {
-      /* Abort update if callback returned error. */
-      result = r;
-  }
-  else {
-      /* Inform RS that we're ready with the given result. */
-      m.m_type = RS_LU_PREPARE;
-      m.RS_LU_STATE = sef_lu_state;
-      m.RS_LU_RESULT = result;
-      r = sendrec(RS_PROC_NR, &m);
-      if ( r != OK) {
-          panic("sendrec failed: %d", r);
+  /* If result is OK, let the callback code save
+   * any state that must be carried over to the new version.
+   */
+  if(result == OK) {
+      r = sef_cbs.sef_cb_lu_state_save(sef_lu_state);
+      if(r != OK) {
+          /* Abort update if callback returned error. */
+          result = r;
       }
   }
 
+  /* Inform RS that we're ready with the given result. */
+  m.m_type = RS_LU_PREPARE;
+  m.RS_LU_STATE = sef_lu_state;
+  m.RS_LU_RESULT = result;
+  r = sendrec(RS_PROC_NR, &m);
+  if ( r != OK) {
+      panic("sendrec failed: %d", r);
+  }
+
 #if SEF_LU_DEBUG
+  rs_result = m.m_type == RS_LU_PREPARE ? EINTR : m.m_type;
   sef_lu_debug_begin();
-  sef_lu_dprint("%s, cycle=%d. The %s aborted the update!\n",
+  sef_lu_dprint("%s, cycle=%d. The %s aborted the update with result %d!\n",
       sef_debug_header(), sef_lu_debug_cycle,
-      (result == OK ? "server" : "client"));
+      (result == OK ? "server" : "client"),
+      (result == OK ? rs_result : result)); /* EINTR if update was canceled. */
   sef_lu_debug_end();
 #endif
 
@@ -181,19 +200,20 @@ PUBLIC void sef_setcb_lu_state_dump(sef_cb_lu_state_dump_t cb)
 }
 
 /*===========================================================================*
- *                          sef_setcb_lu_ready_pre                           *
+ *                          sef_setcb_lu_state_save                           *
  *===========================================================================*/
-PUBLIC void sef_setcb_lu_ready_pre(sef_cb_lu_ready_pre_t cb)
+PUBLIC void sef_setcb_lu_state_save(sef_cb_lu_state_save_t cb)
 {
   assert(cb != NULL);
-  sef_cbs.sef_cb_lu_ready_pre = cb;
+  sef_cbs.sef_cb_lu_state_save = cb;
 }
 
 /*===========================================================================*
  *      	            sef_cb_lu_prepare_null 	 	             *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_prepare_null(int UNUSED(state))
+PUBLIC int sef_cb_lu_prepare_null(int UNUSED(state))
 {
+  return ENOTREADY;
 }
 
 /*===========================================================================*
@@ -221,19 +241,44 @@ PUBLIC void sef_cb_lu_state_dump_null(int UNUSED(state))
 }
 
 /*===========================================================================*
- *                       sef_cb_lu_ready_pre_null        		     *
+ *                       sef_cb_lu_state_save_null        		     *
  *===========================================================================*/
-PUBLIC int sef_cb_lu_ready_pre_null(int UNUSED(result))
+PUBLIC int sef_cb_lu_state_save_null(int UNUSED(result))
 {
-  return(OK);
+  return OK;
 }
 
 /*===========================================================================*
  *      	       sef_cb_lu_prepare_always_ready	                     *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_prepare_always_ready(int UNUSED(state))
+PUBLIC int sef_cb_lu_prepare_always_ready(int UNUSED(state))
 {
-  sef_lu_ready(OK);
+  return OK;
+}
+
+/*===========================================================================*
+ *      	       sef_cb_lu_prepare_never_ready	                     *
+ *===========================================================================*/
+PUBLIC int sef_cb_lu_prepare_never_ready(int UNUSED(state))
+{
+#if SEF_LU_DEBUG
+  sef_lu_debug_begin();
+  sef_lu_dprint("%s, cycle=%d. Simulating a service never ready to update...\n",
+      sef_debug_header(), sef_lu_debug_cycle);
+  sef_lu_debug_end();
+#endif
+
+  return ENOTREADY;
+}
+
+/*===========================================================================*
+ *      	         sef_cb_lu_prepare_crash	                     *
+ *===========================================================================*/
+PUBLIC int sef_cb_lu_prepare_crash(int UNUSED(state))
+{
+  panic("Simulating a crash at update prepare time...");
+
+  return OK;
 }
 
 /*===========================================================================*

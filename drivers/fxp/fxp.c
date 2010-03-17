@@ -250,7 +250,6 @@ _PROTOTYPE( static void fxp_check_ints, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_watchdog_f, (timer_t *tp)			);
 _PROTOTYPE( static int fxp_link_changed, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_report_link, (fxp_t *fp)			);
-_PROTOTYPE( static void fxp_stop, (void));
 _PROTOTYPE( static void reply, (fxp_t *fp, int err, int may_block)	);
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
 _PROTOTYPE( static u16_t eeprom_read, (fxp_t *fp, int reg)		);
@@ -292,6 +291,7 @@ PRIVATE void handle_hw_intr(void)
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
@@ -317,17 +317,6 @@ int main(int argc, char *argv[])
 				case HARDWARE:
 					handle_hw_intr();
 					break;
-				case PM_PROC_NR:
-				{
-					sigset_t set;
-
-					if (getsigset(&set) != 0) break;
-
-					if (sigismember(&set, SIGTERM))
-						fxp_stop();
-
-					break;
-				}
 				case CLOCK:
 					fxp_expire_timers();
 					break;
@@ -367,6 +356,9 @@ PRIVATE void sef_local_startup()
   sef_setcb_init_restart(sef_cb_init_fresh);
 
   /* No live update support for now. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -413,6 +405,34 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		printf("fxp: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
 	return(OK);
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	int i;
+	port_t port;
+	fxp_t *fp;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	for (i= 0, fp= &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)
+	{
+		if (fp->fxp_mode != FM_ENABLED)
+			continue;
+		if (!(fp->fxp_flags & FF_ENABLED))
+			continue;
+		port= fp->fxp_base_port;
+
+		/* Reset device */
+		if (debug)
+			printf("%s: resetting device\n", fp->fxp_name);
+		fxp_outl(port, CSR_PORT, CP_CMD_SOFT_RESET);
+	}
+	exit(0);
 }
 
 /*===========================================================================*
@@ -2602,31 +2622,6 @@ resspeed:
 		(scr & MII_SCR_FD) ? "full" : "half");
 #endif
 	;
-}
-
-/*===========================================================================*
- *				fxp_stop				     *
- *===========================================================================*/
-static void fxp_stop()
-{
-	int i;
-	port_t port;
-	fxp_t *fp;
-
-	for (i= 0, fp= &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)
-	{
-		if (fp->fxp_mode != FM_ENABLED)
-			continue;
-		if (!(fp->fxp_flags & FF_ENABLED))
-			continue;
-		port= fp->fxp_base_port;
-
-		/* Reset device */
-		if (debug)
-			printf("%s: resetting device\n", fp->fxp_name);
-		fxp_outl(port, CSR_PORT, CP_CMD_SOFT_RESET);
-	}
-	exit(0);
 }
 
 /*===========================================================================*

@@ -63,10 +63,26 @@ typedef unsigned long sigset_t;
 
 /* MINIX specific signals. These signals are not used by user proceses, 
  * but meant to inform system processes, like the PM, about system events.
+ * The order here determines the order signals are processed by system
+ * processes in user-space. Higher-priority signals should be first.
  */
-#define SIGKMESS   	  29	/* new kernel message */
+#define SIGKPF		  26	/* kernel page fault request pending */
+#define SIGKMEM		  27	/* kernel memory request pending */
+#define SIGKMESS   	  28	/* new kernel message */
+#define SIGKSIGSM    	  29	/* kernel signal pending for signal manager */
 #define SIGKSIG    	  30	/* kernel signal pending */
-#define SIGNDELAY	  31	/* end of delay for signal delivery */
+#define SIGKNDELAY	  31	/* end of delay for signal delivery */
+
+#define SIGK_FIRST	  SIGKPF      /* first kernel signal */
+#define SIGK_LAST	  SIGKNDELAY   /* last kernel signal */
+#define IS_SIGK(signo)    (signo>=SIGK_FIRST && signo<=SIGK_LAST)
+
+/* Termination signals for Minix system processes. */
+#define SIGS_IS_LETHAL(sig) \
+    (sig == SIGILL || sig == SIGBUS || sig == SIGFPE || sig == SIGSEGV \
+    || sig == SIGEMT || sig == SIGABRT)
+#define SIGS_IS_TERMINATION(sig) (SIGS_IS_LETHAL(sig) \
+    || (sig == SIGKILL || sig == SIGPIPE))
 
 #endif
 
@@ -79,7 +95,6 @@ typedef void _PROTOTYPE( (*__sighandler_t), (int) );
 #define SIG_IGN	   ((__sighandler_t)  1)	/* ignore signal */
 #define SIG_HOLD   ((__sighandler_t)  2)	/* block signal */
 #define SIG_CATCH  ((__sighandler_t)  3)	/* catch signal */
-#define SIG_MESS   ((__sighandler_t)  4)	/* pass as message (MINIX) */
 
 #ifdef _POSIX_SOURCE
 struct sigaction {

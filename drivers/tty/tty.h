@@ -165,7 +165,7 @@ _PROTOTYPE( void rs_interrupt, (message *m)				);
 /* console.c */
 _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( void cons_stop, (void)					);
-_PROTOTYPE( void do_new_kmess, (message *m)				);
+_PROTOTYPE( void do_new_kmess, (void)					);
 _PROTOTYPE( void do_diagnostics, (message *m, int safe)			);
 _PROTOTYPE( void do_get_kmess, (message *m)				);
 _PROTOTYPE( void do_get_kmess_s, (message *m)				);

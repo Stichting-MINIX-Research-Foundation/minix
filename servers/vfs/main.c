@@ -106,11 +106,7 @@ PUBLIC int main(void)
 
  	/* Check for special control messages first. */
         if (is_notify(call_nr)) {
-		if (who_p == PM_PROC_NR)
-		{
-			/* Signaled by PM, ignore. */
-		}
-		else if (who_p == CLOCK)
+		if (who_p == CLOCK)
 		{
 			/* Alarm timer expired. Used only for select().
 			 * Check it.
@@ -198,7 +194,7 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
 
@@ -560,10 +556,10 @@ PRIVATE void service_pm()
 	break;
 
   case PM_FORK:
-  case PM_FORK_NB:
+  case PM_SRV_FORK:
 	pm_fork(m_in.PM_PPROC, m_in.PM_PROC, m_in.PM_CPID);
 
-	m_out.m_type = (call_nr == PM_FORK) ? PM_FORK_REPLY : PM_FORK_NB_REPLY;
+	m_out.m_type = (call_nr == PM_FORK) ? PM_FORK_REPLY : PM_SRV_FORK_REPLY;
 	m_out.PM_PROC = m_in.PM_PROC;
 
 	break;

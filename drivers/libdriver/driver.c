@@ -161,14 +161,6 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 					(*dp->dr_hw_int)(dp, &mess);
 				}
 				break;
-			case PM_PROC_NR:
-				if (getsigset(&set) != 0) break;
-				(*dp->dr_signal)(dp, &set);
-				break;
-			case SYSTEM:
-				set = mess.NOTIFY_ARG;
-				(*dp->dr_signal)(dp, &set);
-				break;
 			case CLOCK:
 				(*dp->dr_alarm)(dp, &mess);	
 				break;
@@ -378,16 +370,6 @@ struct driver *dp;
 message *mp;
 {
   return(ENOTTY);
-}
-
-/*============================================================================*
- *				nop_signal			  	      *
- *============================================================================*/
-PUBLIC void nop_signal(dp, set)
-struct driver *dp;
-sigset_t *set;
-{
-/* Default action for signal is to ignore. */
 }
 
 /*============================================================================*

@@ -40,7 +40,8 @@ _PROTOTYPE( int sys_exec, (endpoint_t proc_ep, char *ptr,
 _PROTOTYPE( int sys_fork, (endpoint_t parent, endpoint_t child, endpoint_t *,
 	struct mem_map *ptr, u32_t vm, vir_bytes *));
 _PROTOTYPE( int sys_newmap, (endpoint_t proc_ep, struct mem_map *ptr));
-_PROTOTYPE( int sys_exit, (endpoint_t proc_ep));
+_PROTOTYPE( int sys_clear, (endpoint_t proc_ep));
+_PROTOTYPE( int sys_exit, (void));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
 /* Shorthands for sys_runctl() system call. */
@@ -49,6 +50,7 @@ _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p
 #define sys_resume(proc_ep) sys_runctl(proc_ep, RC_RESUME, 0)
 _PROTOTYPE( int sys_runctl, (endpoint_t proc_ep, int action, int flags));
 
+_PROTOTYPE( int sys_update, (endpoint_t src_ep, endpoint_t dst_ep));
 _PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, void *p));
 _PROTOTYPE( int sys_privquery_mem, (endpoint_t proc_ep,
 	phys_bytes physstart, phys_bytes physlen));

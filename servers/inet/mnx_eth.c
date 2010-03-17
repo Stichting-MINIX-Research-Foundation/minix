@@ -462,7 +462,9 @@ PUBLIC void eth_rec(message *m)
 	}
 	if (loc_port->etp_osdep.etp_flags & OEPF_NEED_CONF)
 	{
+#if 0
 		printf("eth_rec: OEPF_NEED_CONF is set\n");
+#endif
 	}
 	if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
 		(loc_port->etp_osdep.etp_flags & OEPF_NEED_STAT))
@@ -899,12 +901,6 @@ int tasknr;
 			eth_port->etp_osdep.etp_port);
 	}
 
-	if (eth_port->etp_osdep.etp_task == tasknr)
-	{
-		printf(
-		"eth_restart: task number did not change. Aborting restart\n");
-		return;
-	}
 	eth_port->etp_osdep.etp_task= tasknr;
 
 	switch(eth_port->etp_osdep.etp_state)

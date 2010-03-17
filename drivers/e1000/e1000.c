@@ -42,7 +42,6 @@ _PROTOTYPE( PRIVATE void e1000_readv_s, (message *mp, int from_int)	);
 _PROTOTYPE( PRIVATE void e1000_getstat_s, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_getname, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_interrupt, (message *mp)			);
-_PROTOTYPE( PRIVATE void e1000_signal, (void)                           );
 _PROTOTYPE( PRIVATE int  e1000_link_changed, (e1000_t *e)		);
 _PROTOTYPE( PRIVATE void e1000_stop, (void)                             );
 _PROTOTYPE( PRIVATE e1000_t * e1000_port, (int port)                    );
@@ -63,6 +62,7 @@ _PROTOTYPE( PRIVATE void mess_reply, (message *req, message *reply)	);
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
@@ -94,11 +94,7 @@ int main(int argc, char *argv[])
                 case HARDWARE:
 		    e1000_interrupt(&m);
 		    break;
-                
-		case PM_PROC_NR:
-		    e1000_signal();
-		    break;
-                
+
 		case CLOCK:
                     break;
 	    }
@@ -128,6 +124,9 @@ PRIVATE void sef_local_startup()
   sef_setcb_init_restart(sef_cb_init_fresh);
 
   /* No live update support for now. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -170,6 +169,19 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
     }
 
     return(OK);
+}
+
+/*===========================================================================*
+ *			   sef_cb_signal_handler			     *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+    E1000_DEBUG(3, ("e1000: got signal\n"));
+
+    /* Only check for termination signal, ignore anything else. */
+    if (signo != SIGTERM) return;
+
+    e1000_stop();
 }
 
 /*===========================================================================*
@@ -848,27 +860,6 @@ message *mp;
 		e1000_writev_s(&e->tx_message, TRUE);
 
 	}
-    }
-}
-
-/*===========================================================================*
- *				e1000_signal				     *
- *===========================================================================*/
-PRIVATE void e1000_signal(void)
-{
-    sigset_t sigset;
-
-    E1000_DEBUG(3, ("e1000: signal()\n"));
-
-    /* Try to obtain signal set from PM. */
-    if (getsigset(&sigset) != 0)
-    {
-        return;
-    }
-    /* Check for known signals. */
-    if (sigismember(&sigset, SIGTERM))
-    {
-	e1000_stop();
     }
 }
 

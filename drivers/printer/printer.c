@@ -111,12 +111,10 @@ FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
 FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
-FORWARD _PROTOTYPE( void do_signal, (void) );
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 PUBLIC int is_status_msg_expected = FALSE;
@@ -139,9 +137,6 @@ PUBLIC void main(void)
 		switch (_ENDPOINT_P(pr_mess.m_source)) {
 			case HARDWARE:
 				do_printer_output();
-				break;
-			case PM_PROC_NR:
-				do_signal();
 				break;
 			default:
 				reply(TASK_REPLY, pr_mess.m_source,
@@ -171,51 +166,18 @@ PUBLIC void main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
+  /* Nothing to on initialization. */
 
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
   sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler_term);
+
   /* Let SEF perform startup. */
   sef_startup();
-}
-
-/*===========================================================================*
- *		            sef_cb_init_fresh                                *
- *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
-{
-/* Initialize the printer driver. */
-  struct sigaction sa;
-
-  /* Install signal handlers. Ask PM to transform signal into message. */
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
-
-  return(OK);
-}
-
-/*===========================================================================*
- *				 do_signal	                             *
- *===========================================================================*/
-PRIVATE void do_signal()
-{
-  sigset_t sigset;
-
-  if (getsigset(&sigset) != 0) return;
-  
-  /* Expect a SIGTERM signal when this server must shutdown. */
-  if (sigismember(&sigset, SIGTERM)) {
-	exit(0);
-  } 
-  /* Ignore all other signals. */
 }
 
 /*===========================================================================*

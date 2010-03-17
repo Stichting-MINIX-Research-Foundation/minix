@@ -119,13 +119,3 @@ PUBLIC int do_willexit(message *msg)
 	return OK;
 }
 
-PUBLIC void _exit(int code)
-{
-        sys_exit(SELF);
-}
-
-PUBLIC void __exit(int code)
-{
-        sys_exit(SELF);
-}
-

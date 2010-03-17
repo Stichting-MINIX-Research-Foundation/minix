@@ -4,6 +4,7 @@
 
 #include <minix/sys_config.h>
 #include <minix/types.h>
+#include <minix/vm.h>
 #include <stdint.h>
 
 typedef struct {
@@ -46,13 +47,6 @@ struct vscp_vec {
         vir_bytes       v_addr;         /* address in copier's space */
         size_t          v_bytes;        /* no. of bytes */
 };
-
-/* Types on VM invocation. */
-#define VMPTYPE_NONE		0
-#define VMPTYPE_CHECK		1
-#define VMPTYPE_COWMAP		2
-#define VMPTYPE_SMAP		3
-#define VMPTYPE_SUNMAP		4
 
 /* Invalid grant number. */
 #define GRANT_INVALID	((cp_grant_id_t) -1)

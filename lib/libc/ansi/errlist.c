@@ -48,7 +48,7 @@ const char *_sys_errlist[] = {
 	"Function not implemented",	/* ENOSYS */
 	"Directory not empty",		/* ENOTEMPTY */
 	"Too many levels of symbolic links",	/* ELOOP */
-	"Driver restarted",		/* ERESTART */
+	"Service restarted",		/* ERESTART */
 	unknown,			/* 42 */
 	"Identifier removed",		/* EIDRM */
 	"Illegal byte sequence",	/* EILSEQ */

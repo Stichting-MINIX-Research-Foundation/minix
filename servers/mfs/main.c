@@ -16,6 +16,7 @@ FORWARD _PROTOTYPE(void cch_check, (void)				);
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				main                                         *
@@ -43,13 +44,6 @@ PUBLIC int main(int argc, char *argv[])
 	error = OK;
 	caller_uid = -1;	/* To trap errors */
 	caller_gid = -1;
-
-	/* Exit request? */
-	if(src == PM_PROC_NR) {
-		exitsignaled = 1;
-		fs_sync();
-		continue;
-	}
 
 	/* This must be a regular VFS request. */
 	assert(src == VFS_PROC_NR && !unmountdone);
@@ -79,7 +73,6 @@ PUBLIC int main(int argc, char *argv[])
   }
 }
 
-
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
@@ -87,9 +80,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -128,6 +124,17 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   return(OK);
 }
 
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  exitsignaled = 1;
+  fs_sync();
+}
 
 /*===========================================================================*
  *				get_work				     *
@@ -143,15 +150,7 @@ message *m_in;				/* pointer to message */
 		panic("sef_receive failed: %d", r);
 	src = fs_m_in.m_source;
 
-	if (src != FS_PROC_NR) {
-		if(src == PM_PROC_NR) {
-			if(is_notify(fs_m_in.m_type))
-				srcok = 1;	/* Normal exit request. */
-		    	else
-				printf("MFS: unexpected message from PM\n");
-		} else
-			printf("MFS: unexpected source %d\n", src);
-	} else if(src == FS_PROC_NR) {
+	if(src == FS_PROC_NR) {
 		if(unmountdone) 
 			printf("MFS: unmounted: unexpected message from FS\n");
 		else 
@@ -161,8 +160,7 @@ message *m_in;				/* pointer to message */
 		printf("MFS: unexpected source %d\n", src);
   } while(!srcok);
 
-   assert((src == FS_PROC_NR && !unmountdone) || 
-	(src == PM_PROC_NR && is_notify(fs_m_in.m_type)));
+   assert((src == FS_PROC_NR && !unmountdone));
 }
 
 

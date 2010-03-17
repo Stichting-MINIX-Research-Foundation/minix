@@ -1063,8 +1063,7 @@ PUBLIC void kputc(int c)
 /*===========================================================================*
  *				do_new_kmess				     *
  *===========================================================================*/
-PUBLIC void do_new_kmess(m)
-message *m;
+PUBLIC void do_new_kmess()
 {
 /* Notification for a new kernel message. */
   static struct kmessages kmess;		/* kmessages structure */

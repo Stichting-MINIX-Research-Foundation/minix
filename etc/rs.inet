@@ -56,12 +56,13 @@ disabled()
 exec > /dev/console
 echo "Arguments: $@"
 
+service down "$1"
 kill_by_name dhcpd
 kill_by_name nonamed
 kill_by_name syslogd
-sleep 1
-service restart "$1"
-sleep 1
+sleep 3
+service up /usr/sbin/inet -script /etc/rs.inet
 daemonize dhcpd
 daemonize nonamed -L
 daemonize syslogd
+

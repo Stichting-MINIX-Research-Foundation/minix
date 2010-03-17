@@ -64,25 +64,10 @@ static char str_DevName[]     = "dec21140A:eth#?";
 PRIVATE dpeth_t de_table[DE_PORT_NR];
 PRIVATE const char *progname;
 
-int sef_cb_init(int type, sef_init_info_t *info)
-{
-  int r;
-  int fkeys, sfkeys;
-  endpoint_t tasknr;
-  /* Request function key for debug dumps */
-  fkeys = sfkeys = 0; bit_set(sfkeys, DE_FKEY);
-  if ((fkey_map(&fkeys, &sfkeys)) != OK) 
-    printf("%s: error using Shift+F%d key(%d)\n", str_DevName, DE_FKEY, errno);
-
-  /* Try to notify inet that we are present (again) */
-  r = ds_retrieve_label_num("inet", &tasknr);
-  if (r == OK)
-    notify(tasknr);
-  else if(r != ESRCH)
-    printf("%s unable to notify inet: %d\n", str_DevName, r);
-
-  return OK;
-}
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *
@@ -93,13 +78,9 @@ int main(int argc, char *argv[])
   message m;
   int r;
 
-  (progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-
+  /* SEF local startup. */
   env_setargs(argc, argv);
-
-  sef_setcb_init_fresh(sef_cb_init);
-  sef_setcb_init_restart(sef_cb_init);
-  sef_startup();
+  sef_local_startup();
   
   while (TRUE)
     {
@@ -125,9 +106,6 @@ int main(int argc, char *argv[])
 	    }
 	  }
 	  break;
-	 case PM_PROC_NR:
-	 	exit(0);
-	 	break;
 	 default:
 	 	printf("ignoring notify from %d\n", m.m_source);
 	 	break;
@@ -150,6 +128,51 @@ int main(int argc, char *argv[])
 		panic("illegal message: %d", m.m_type);
 	}
     }
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_setcb_init_fresh);
+
+  /* No support for live update yet. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler_term);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the DEC 21140A driver. */
+  int r;
+  int fkeys, sfkeys;
+  endpoint_t tasknr;
+
+  (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
+
+  /* Request function key for debug dumps */
+  fkeys = sfkeys = 0; bit_set(sfkeys, DE_FKEY);
+  if ((fkey_map(&fkeys, &sfkeys)) != OK) 
+    printf("%s: error using Shift+F%d key(%d)\n", str_DevName, DE_FKEY, errno);
+
+  /* Try to notify inet that we are present (again) */
+  r = ds_retrieve_label_num("inet", &tasknr);
+  if (r == OK)
+    notify(tasknr);
+  else if(r != ESRCH)
+    printf("%s unable to notify inet: %d\n", str_DevName, r);
+
+  return OK;
 }
 
 PRIVATE void do_get_stat_s(message * mp)

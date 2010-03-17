@@ -1,4 +1,4 @@
-#define NCALLS		 111	/* number of system calls allowed */
+#define NCALLS		 112	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -93,7 +93,7 @@
 #define EXEC_NEWMEM	100	/* from FS or RS to PM: new memory map for
 				 * exec
 				 */
-#define FORK_NB	  	101	/* to PM: special fork call for RS */
+#define SRV_FORK  	101	/* to PM: special fork call for RS */
 #define EXEC_RESTART	102	/* to PM: final part of exec for RS */
 #define PROCSTAT	103	/* to PM */
 #define GETPROCNR	104	/* to PM */
@@ -109,6 +109,7 @@
 				 * that should not be used for bus-master DMA
 				 * any longer
 				 */
+#define SRV_KILL  	111	/* to PM: special kill call for RS */
 
 #define TASK_REPLY	121	/* to FS: reply code from drivers, not 
 				 * really a standalone call.

@@ -129,10 +129,13 @@ PRIVATE endpoint_t ds_getprocep(char *s)
 PRIVATE int check_auth(struct data_store *p, endpoint_t ep, int perm)
 {
 /* Check authorization for a given type of permission. */
+	char *source;
+
 	if(!(p->flags & perm))
 		return 1;
 
-	return !strcmp(p->owner, ds_getprocname(ep));
+	source = ds_getprocname(ep);
+	return source && !strcmp(p->owner, source);
 }
 
 /*===========================================================================*
@@ -237,7 +240,7 @@ PRIVATE int map_service(struct rprocpub *rpub)
   /* Set attributes. */
   strcpy(dsp->key, rpub->label);
   dsp->u.u32 = (u32_t) rpub->endpoint;
-  strcpy(dsp->owner, ds_getprocname(DS_PROC_NR));
+  strcpy(dsp->owner, "rs");
   dsp->flags = DSF_IN_USE | DSF_TYPE_LABEL;
 
   /* Update subscribers having a matching subscription. */
@@ -286,9 +289,15 @@ PUBLIC int do_publish(message *m_ptr)
 {
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
+  char *source;
   int flags = m_ptr->DS_FLAGS;
   size_t length;
   int r;
+
+  /* Lookup the source. */
+  source = ds_getprocname(m_ptr->m_source);
+  if(source == NULL)
+	  return EPERM;
 
   /* MAP should not be overwritten. */
   if((flags & DSF_TYPE_MAP) && (flags & DSF_OVERWRITE))
@@ -324,9 +333,6 @@ PUBLIC int do_publish(message *m_ptr)
 	dsp->u.u32 = m_ptr->DS_VAL;
 	break;
   case DSF_TYPE_STR:
-	strncpy(dsp->u.string, (char *)(&m_ptr->DS_STRING), DS_MAX_STRLEN);
-	dsp->u.string[DS_MAX_STRLEN - 1] = '\0';
-	break;
   case DSF_TYPE_MEM:
 	length = m_ptr->DS_VAL_LEN;
 	/* Allocate a new data buffer if necessary. */
@@ -351,6 +357,9 @@ PUBLIC int do_publish(message *m_ptr)
 		return r;
 	}
 	dsp->u.mem.length = length;
+	if(flags & DSF_TYPE_STR) {
+		((char*)dsp->u.mem.data)[length-1] = '\0';
+	}
 	break;
   case DSF_TYPE_MAP:
   	/* Allocate buffer, the address should be aligned by CLICK_SIZE. */
@@ -377,7 +386,7 @@ PUBLIC int do_publish(message *m_ptr)
 
   /* Set attributes. */
   strcpy(dsp->key, key_name);
-  strcpy(dsp->owner, ds_getprocname(m_ptr->m_source));
+  strcpy(dsp->owner, source);
   dsp->flags = DSF_IN_USE | (flags & DSF_MASK_INTERNAL);
 
   /* Update subscribers having a matching subscription. */
@@ -416,8 +425,6 @@ PUBLIC int do_retrieve(message *m_ptr)
 	m_ptr->DS_VAL = dsp->u.u32;
 	break;
   case DSF_TYPE_STR:
-	strncpy((char *)(&m_ptr->DS_STRING), dsp->u.string, DS_MAX_STRLEN);
-	break;
   case DSF_TYPE_MEM:
 	length = MIN(m_ptr->DS_VAL_LEN, dsp->u.mem.length);
 	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->DS_VAL, 0,
@@ -631,8 +638,14 @@ PUBLIC int do_delete(message *m_ptr)
 {
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
+  char *source;
   int type = m_ptr->DS_FLAGS & DSF_MASK_TYPE;
   int top, i, r;
+
+  /* Lookup the source. */
+  source = ds_getprocname(m_ptr->m_source);
+  if(source == NULL)
+	  return EPERM;
 
   /* Get key name. */
   if((r = get_key_name(m_ptr, key_name)) != OK)
@@ -643,14 +656,14 @@ PUBLIC int do_delete(message *m_ptr)
 	return ESRCH;
 
   /* Only the owner can delete. */
-  if(strcmp(dsp->owner, ds_getprocname(m_ptr->m_source)))
+  if(strcmp(dsp->owner, source))
 	return EPERM;
 
   switch(type) {
   case DSF_TYPE_U32:
-  case DSF_TYPE_STR:
   case DSF_TYPE_LABEL:
 	break;
+  case DSF_TYPE_STR:
   case DSF_TYPE_MEM:
 	free(dsp->u.mem.data);
 	break;
@@ -658,7 +671,7 @@ PUBLIC int do_delete(message *m_ptr)
 	/* Unmap the mapped data. */
 	r = sys_safeunmap(D, (vir_bytes)dsp->u.map.data);
 	if(r != OK)
-		return r;
+		printf("DS: sys_safeunmap failed. Grant already revoked?\n");
 
 	/* Revoke all the mapped grants. */
 	r = sys_saferevmap_addr((vir_bytes)dsp->u.map.data);

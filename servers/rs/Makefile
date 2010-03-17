@@ -19,7 +19,7 @@ LDFLAGS = -i
 LIBS = -lsys 
 
 UTIL_OBJ = service.o
-OBJ = exec.o main.o manager.o table.o utility.o memory.o
+OBJ = exec.o main.o request.o manager.o table.o utility.o memory.o error.o
 
 # build local binary
 all build:	$(SERVER) $(UTIL)
@@ -27,7 +27,7 @@ $(UTIL):	$(UTIL_OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(UTIL_OBJ) $(UTIL_LIBS)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 450k $@
+	install -S 850k $@
 
 # install with other servers
 install:	/bin/$(UTIL) /usr/sbin/$(SERVER)

@@ -62,7 +62,7 @@ int main(void)
 			printf("U32: %d\n", num);
 			break;
 		case DSF_TYPE_STR:
-			r = ds_retrieve_str(key, string, 0);
+			r = ds_retrieve_str(key, string, sizeof(string)-1);
 			if(r != OK)
 				printf("error in ds_retrieve_str.\n");
 			printf("STR: %s\n", string);

@@ -1,5 +1,6 @@
 #include "fs.h"
 #include <assert.h>
+#include <signal.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
 #include <minix/vfsif.h>
@@ -12,6 +13,7 @@ FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				main                                         *
@@ -40,7 +42,6 @@ PUBLIC int main(int argc, char *argv[])
 	caller_uid = -1;	/* To trap errors */
 	caller_gid = -1;
 
-	if (src == PM_PROC_NR) continue; /* Exit signal */
 	assert(src == VFS_PROC_NR); /* Otherwise this must be VFS talking */
 	req_nr = fs_m_in.m_type;
 	if (req_nr < VFS_BASE) {
@@ -71,9 +72,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -109,6 +113,16 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   return(OK);
 }
 
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  exitsignaled = 1;
+}
 
 /*===========================================================================*
  *				get_work				     *
@@ -124,24 +138,13 @@ message *m_in;				/* pointer to message */
 		panic("sef_receive failed: %d", r);
 	src = fs_m_in.m_source;
 
-	if (src != VFS_PROC_NR) {
-		if(src == PM_PROC_NR) {
-			if(is_notify(fs_m_in.m_type)) {
-				exitsignaled = 1; /* Normal exit request. */
-				srcok = 1;	
-			} else
-				printf("PFS: unexpected message from PM\n");
-		} else
-			printf("PFS: unexpected source %d\n", src);
-	} else if(src == VFS_PROC_NR) {
+	if(src == VFS_PROC_NR) {
 		srcok = 1;		/* Normal FS request. */
 	} else
 		printf("PFS: unexpected source %d\n", src);
   } while(!srcok);
 
-   assert( src == VFS_PROC_NR || 
-	  (src == PM_PROC_NR && is_notify(fs_m_in.m_type))
-	 );
+   assert( src == VFS_PROC_NR );
 }
 
 

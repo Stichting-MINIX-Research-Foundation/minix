@@ -45,7 +45,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
-#include <signal.h>
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/syslib.h>
@@ -229,32 +228,15 @@ void errmsg(char *s)
 /*                                                                     */
 /***********************************************************************/
 
-int dead;
-void timeout(int sig) { dead= 1; }
-
 void get_time(struct tm *t)
 {
   int osec, n;
   unsigned long i;
-  struct sigaction sa;
-
-  /* Start a timer to keep us from getting stuck on a dead clock. */
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sa.sa_handler = timeout;
-  sigaction(SIGALRM, &sa, NULL);
-  dead = 0;
-  alarm(5);
 
   do {
 	osec = -1;
 	n = 0;
 	do {
-		if (dead) {
-			printf("readclock: CMOS clock appears dead\n");
-			exit(1);
-		}
-
 		/* Clock update in progress? */
 		if (read_register(RTC_REG_A) & RTC_A_UIP) continue;
 

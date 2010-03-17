@@ -12,7 +12,7 @@
  *   do_sigsuspend:	perform the SIGSUSPEND system call
  *   do_kill:		perform the KILL system call
  *   do_pause:		perform the PAUSE system call
- *   ksig_pending:	the kernel notified about pending signals
+ *   process_ksig:	process a signal an behalf of the kernel
  *   sig_proc:		interrupt or terminate a signaled process
  *   check_sig:		check which processes to signal with sig_proc()
  *   check_pending:	check if a pending signal can now be delivered
@@ -34,8 +34,8 @@
 #include "param.h"
 
 FORWARD _PROTOTYPE( void unpause, (struct mproc *rmp)			);
-FORWARD _PROTOTYPE( void handle_ksig, (int proc_nr, sigset_t sig_map)	);
 FORWARD _PROTOTYPE( int sig_send, (struct mproc *rmp, int signo)	);
+FORWARD _PROTOTYPE( void sig_proc_exit, (struct mproc *rmp, int signo)	);
 
 /*===========================================================================*
  *				do_sigaction				     *
@@ -48,6 +48,7 @@ PUBLIC int do_sigaction()
 
   if (m_in.sig_nr == SIGKILL) return(OK);
   if (m_in.sig_nr < 1 || m_in.sig_nr >= _NSIG) return(EINVAL);
+
   svp = &mp->mp_sigact[m_in.sig_nr];
   if ((struct sigaction *) m_in.sig_osa != (struct sigaction *) NULL) {
 	r = sys_datacopy(PM_PROC_NR,(vir_bytes) svp,
@@ -67,20 +68,12 @@ PUBLIC int do_sigaction()
 	sigaddset(&mp->mp_ignore, m_in.sig_nr);
 	sigdelset(&mp->mp_sigpending, m_in.sig_nr);
 	sigdelset(&mp->mp_catch, m_in.sig_nr);
-	sigdelset(&mp->mp_sig2mess, m_in.sig_nr);
   } else if (svec.sa_handler == SIG_DFL) {
 	sigdelset(&mp->mp_ignore, m_in.sig_nr);
-	sigdelset(&mp->mp_catch, m_in.sig_nr);
-	sigdelset(&mp->mp_sig2mess, m_in.sig_nr);
-  } else if (svec.sa_handler == SIG_MESS) {
-	if (! (mp->mp_flags & PRIV_PROC)) return(EPERM);
-	sigdelset(&mp->mp_ignore, m_in.sig_nr);
-	sigaddset(&mp->mp_sig2mess, m_in.sig_nr);
 	sigdelset(&mp->mp_catch, m_in.sig_nr);
   } else {
 	sigdelset(&mp->mp_ignore, m_in.sig_nr);
 	sigaddset(&mp->mp_catch, m_in.sig_nr);
-	sigdelset(&mp->mp_sig2mess, m_in.sig_nr);
   }
   mp->mp_sigact[m_in.sig_nr].sa_handler = svec.sa_handler;
   sigdelset(&svec.sa_mask, SIGKILL);
@@ -200,67 +193,42 @@ PUBLIC int do_kill()
 }
 
 /*===========================================================================*
- *				ksig_pending				     *
+ *			      do_srv_kill				     *
  *===========================================================================*/
-PUBLIC int ksig_pending()
+PUBLIC int do_srv_kill()
 {
-/* Certain signals, such as segmentation violations originate in the kernel.
- * When the kernel detects such signals, it notifies the PM to take further 
- * action. The PM requests the kernel to send messages with the process
- * slot and bit map for all signaled processes. The File System, for example,
- * uses this mechanism to signal writing on broken pipes (SIGPIPE). 
- *
- * The kernel has notified the PM about pending signals. Request pending
- * signals until all signals are handled. If there are no more signals,
- * NONE is returned in the process number field.
- */ 
- endpoint_t proc_nr_e;
- sigset_t sig_map;
+/* Perform the srv_kill(pid, signo) system call. */
 
- while (TRUE) {
-   int r;
-   /* get an arbitrary pending signal */
-   if((r=sys_getksig(&proc_nr_e, &sig_map)) != OK)
-  	panic("sys_getksig failed: %d", r);
-   if (NONE == proc_nr_e) {		/* stop if no more pending signals */
- 	break;
-   } else {
- 	int proc_nr_p;
- 	if(pm_isokendpt(proc_nr_e, &proc_nr_p) != OK)
-  		panic("sys_getksig strange process: %d", proc_nr_e);
-   	handle_ksig(proc_nr_e, sig_map);	/* handle the received signal */
-	/* If the process still exists to the kernel after the signal
-	 * has been handled ...
-	 */
-        if ((mproc[proc_nr_p].mp_flags & (IN_USE | EXITING)) == IN_USE)
-	{
-	   if((r=sys_endksig(proc_nr_e)) != OK)	/* ... tell kernel it's done */
-  		panic("sys_endksig failed: %d", r);
-	}
-   }
- } 
- return(SUSPEND);			/* prevents sending reply */
+  /* Only RS is allowed to use srv_kill. */
+  if (mp->mp_endpoint != RS_PROC_NR)
+	return EPERM;
+
+  /* Pretend the signal comes from the kernel when RS wants to deliver a signal
+   * to a system process. RS sends a SIGKILL when it wants to perform cleanup.
+   * In that case, ksig == TRUE forces PM to exit the process immediately.
+   */
+  return check_sig(m_in.pid, m_in.sig_nr, TRUE /* ksig */);
 }
 
 /*===========================================================================*
- *				handle_ksig				     *
+ *				process_ksig				     *
  *===========================================================================*/
-PRIVATE void handle_ksig(proc_nr_e, sig_map)
+PUBLIC int process_ksig(proc_nr_e, signo)
 int proc_nr_e;
-sigset_t sig_map;
+int signo;
 {
   register struct mproc *rmp;
-  int i, proc_nr;
+  int proc_nr;
   pid_t proc_id, id;
 
   if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0) {
-	printf("PM: handle_ksig: %d?? not ok\n", proc_nr_e);
+	printf("PM: process_ksig: %d?? not ok\n", proc_nr_e);
 	return;
   }
   rmp = &mproc[proc_nr];
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
 #if 0
-	printf("PM: handle_ksig: %d?? exiting / not in use\n", proc_nr_e);
+	printf("PM: process_ksig: %d?? exiting / not in use\n", proc_nr_e);
 #endif
 	return;
   }
@@ -268,54 +236,52 @@ sigset_t sig_map;
   mp = &mproc[0];			/* pretend signals are from PM */
   mp->mp_procgrp = rmp->mp_procgrp;	/* get process group right */
 
-  /* Check each bit in turn to see if a signal is to be sent.  Unlike
-   * kill(), the kernel may collect several unrelated signals for a
-   * process and pass them to PM in one blow.  Thus loop on the bit
-   * map. For SIGVTALRM and SIGPROF, see if we need to restart a
+  /* For SIGVTALRM and SIGPROF, see if we need to restart a
    * virtual timer. For SIGINT, SIGWINCH and SIGQUIT, use proc_id 0
    * to indicate a broadcast to the recipient's process group.  For
    * SIGKILL, use proc_id -1 to indicate a systemwide broadcast.
    */
-  for (i = 1; i < _NSIG; i++) {
-	if (!sigismember(&sig_map, i)) continue;
-#if 0
-	printf("PM: sig %d for %d from kernel\n", 
-		i, proc_nr_e);
-#endif
-	switch (i) {
-	    case SIGINT:
-	    case SIGQUIT:
-	    case SIGWINCH:
-		id = 0; break;	/* broadcast to process group */
-	    case SIGVTALRM:
-	    case SIGPROF:
-	    	check_vtimer(proc_nr, i);
-	    	/* fall-through */
-	    default:
-		id = proc_id;
-		break;
-	}
-	check_sig(id, i, TRUE /* ksig */);
+  switch (signo) {
+      case SIGINT:
+      case SIGQUIT:
+      case SIGWINCH:
+  	id = 0; break;	/* broadcast to process group */
+      case SIGVTALRM:
+      case SIGPROF:
+      	check_vtimer(proc_nr, signo);
+      	/* fall-through */
+      default:
+  	id = proc_id;
+  	break;
   }
+  check_sig(id, signo, TRUE /* ksig */);
 
-  /* If SIGNDELAY is set, an earlier sys_stop() failed because the process was
+  /* If SIGKNDELAY is set, an earlier sys_stop() failed because the process was
    * still sending, and the kernel hereby tells us that the process is now done
    * with that. We can now try to resume what we planned to do in the first
    * place: set up a signal handler. However, the process's message may have
    * been a call to PM, in which case the process may have changed any of its
    * signal settings. The process may also have forked, exited etcetera.
    */
-  if (sigismember(&sig_map, SIGNDELAY) && (rmp->mp_flags & DELAY_CALL)) {
+  if (signo == SIGKNDELAY && (rmp->mp_flags & DELAY_CALL)) {
 	rmp->mp_flags &= ~DELAY_CALL;
 
 	if (rmp->mp_flags & (FS_CALL | PM_SIG_PENDING))
-		panic("handle_ksig: bad process state");
+		panic("process_ksig: bad process state");
 
 	/* Process as many normal signals as possible. */
 	check_pending(rmp);
 
 	if (rmp->mp_flags & DELAY_CALL)
-		panic("handle_ksig: multiple delay calls?");
+		panic("process_ksig: multiple delay calls?");
+  }
+  
+  /* See if the process is still alive */
+  if ((mproc[proc_nr].mp_flags & (IN_USE | EXITING)) == IN_USE)  {
+      return OK; /* signal has been delivered */
+  }
+  else {
+      return EDEADSRCDST; /* process is gone */
   }
 }
 
@@ -388,11 +354,34 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	return;
   }
 
-  /* some signals cannot be safely ignored */
+  /* Handle system signals for system processes first. */
+  if(rmp->mp_flags & PRIV_PROC) {
+   	/* System signals have always to go through the kernel first to let it
+   	 * pick the right signal manager. If PM is the assigned signal manager,
+   	 * the signal will come back and will actually be processed.
+   	 */
+   	if(!ksig) {
+ 		sys_kill(rmp->mp_endpoint, signo);
+ 		return;
+   	}
+  	if(!SIGS_IS_TERMINATION(signo)) {
+		/* Translate every non-termination sys signal into a message. */
+		message m;
+		m.m_type = SIGS_SIGNAL_RECEIVED;
+		m.SIGS_SIG_NUM = signo;
+		asynsend3(rmp->mp_endpoint, &m, AMF_NOREPLY);
+	}
+	else {
+		/* Exit the process in case of termination system signal. */
+		sig_proc_exit(rmp, signo);
+	}
+	return;
+  }
+
+  /* Handle user processes now. See if the signal cannot be safely ignored. */
   badignore = ksig && sigismember(&noign_sset, signo) && (
 	  sigismember(&rmp->mp_ignore, signo) ||
-	  sigismember(&rmp->mp_sigmask, signo) ||
-	  sigismember(&rmp->mp_sig2mess, signo));
+	  sigismember(&rmp->mp_sigmask, signo));
 
   if (!badignore && sigismember(&rmp->mp_ignore, signo)) { 
 	/* Signal should be ignored. */
@@ -401,12 +390,6 @@ int ksig;			/* non-zero means signal comes from kernel  */
   if (!badignore && sigismember(&rmp->mp_sigmask, signo)) {
 	/* Signal should be blocked. */
 	sigaddset(&rmp->mp_sigpending, signo);
-	return;
-  }
-  if (!badignore && sigismember(&rmp->mp_sig2mess, signo)) {
-	/* Mark event pending in process slot and send notification. */
-	sigaddset(&rmp->mp_sigpending, signo);
-	notify(rmp->mp_endpoint);
 	return;
   }
 
@@ -418,7 +401,6 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	sigaddset(&rmp->mp_sigpending, signo);
 	return;
   }
-
   if (!badignore && sigismember(&rmp->mp_catch, signo)) {
 	/* Signal is caught. First interrupt the process's current call, if
 	 * applicable. This may involve a roundtrip to FS, in which case we'll
@@ -449,6 +431,16 @@ int ksig;			/* non-zero means signal comes from kernel  */
   }
 
   /* Terminate process */
+  sig_proc_exit(rmp, signo);
+}
+
+/*===========================================================================*
+ *				sig_proc_exit				     *
+ *===========================================================================*/
+PRIVATE void sig_proc_exit(rmp, signo)
+struct mproc *rmp;		/* process that must exit */
+int signo;			/* signal that caused termination */
+{
   rmp->mp_sigstatus = (char) signo;
   if (sigismember(&core_sset, signo)) {
 	printf("PM: coredump signal %d for %d / %s\n", signo, rmp->mp_pid,
@@ -482,12 +474,17 @@ int ksig;			/* non-zero means signal comes from kernel  */
   /* Return EINVAL for attempts to send SIGKILL to INIT alone. */
   if (proc_id == INIT_PID && signo == SIGKILL) return(EINVAL);
 
-  /* Search the proc table for processes to signal.  
+  /* Signal RS first when broadcasting SIGTERM. */
+  if (proc_id == -1 && signo == SIGTERM)
+      sys_kill(RS_PROC_NR, signo);
+
+  /* Search the proc table for processes to signal. Start from the end of the
+   * table to analyze core system processes at the end when broadcasting.
    * (See forkexit.c about pid magic.)
    */
   count = 0;
   error_code = ESRCH;
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+  for (rmp = &mproc[NR_PROCS-1]; rmp >= &mproc[0]; rmp--) {
 	if (!(rmp->mp_flags & IN_USE)) continue;
 
 	/* Check for selection. */
@@ -499,6 +496,12 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	/* Do not kill servers and drivers when broadcasting SIGKILL. */
 	if (proc_id == -1 && signo == SIGKILL &&
 		(rmp->mp_flags & PRIV_PROC)) continue;
+
+	/* Disallow lethal signals sent by user processes to sys processes. */
+	if (!ksig && SIGS_IS_LETHAL(signo) && (rmp->mp_flags & PRIV_PROC)) {
+	    error_code = EPERM;
+	    continue;
+	}
 
 	/* Check for permission. */
 	if (mp->mp_effuid != SUPER_USER
@@ -627,7 +630,7 @@ struct mproc *rmp;		/* which process */
 	r = sys_delay_stop(rmp->mp_endpoint);
 
 	/* If the process is still busy sending a message, the kernel will give
-	 * us EBUSY now and send a SIGNDELAY to the process as soon as sending
+	 * us EBUSY now and send a SIGKNDELAY to the process as soon as sending
 	 * is done.
 	 */
 	if (r == EBUSY) {

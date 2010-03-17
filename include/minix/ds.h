@@ -29,7 +29,6 @@
 
 /* DS constants. */
 #define DS_MAX_KEYLEN 80        /* Max length of a key, including '\0'. */
-#define DS_MAX_STRLEN 16        /* Max length of string, including '\0'. */
 
 /* ds.c */
 

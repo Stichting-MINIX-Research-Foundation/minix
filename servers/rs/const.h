@@ -3,6 +3,12 @@
 #ifndef RS_CONST_H
 #define RS_CONST_H
 
+#define DEBUG_DEFAULT 0
+
+#ifndef DEBUG
+#define DEBUG DEBUG_DEFAULT
+#endif
+
 /* Space reserved for program and arguments. */
 #define MAX_COMMAND_LEN     512         /* maximum argument string length */
 #define MAX_SCRIPT_LEN      256         /* maximum restart script name length */
@@ -14,23 +20,17 @@
 
 /* Flag values. */
 #define RS_IN_USE       0x001    /* set when process slot is in use */
-#define RS_EXITING      0x004    /* set when exit is expected */
-#define RS_REFRESHING   0x008    /* set when refresh must be done */
-#define RS_NOPINGREPLY  0x010    /* service failed to reply to a ping request */
-#define RS_KILLED       0x020    /* service is killed */
-#define RS_CRASHED      0x040    /* service crashed */
-#define RS_LATEREPLY    0x080    /* no reply sent to RS_DOWN caller yet */
-#define RS_SIGNALED     0x100    /* service crashed */
-#define RS_INITIALIZING 0x200    /* set when init is in progress */
-#define RS_UPDATING     0x400    /* set when update is in progress */
+#define RS_EXITING      0x002    /* set when exit is expected */
+#define RS_REFRESHING   0x004    /* set when refresh must be done */
+#define RS_NOPINGREPLY  0x008    /* service failed to reply to a ping request */
+#define RS_TERMINATED   0x010    /* service has terminated */
+#define RS_LATEREPLY    0x020    /* no reply sent to RS_DOWN caller yet */
+#define RS_INITIALIZING 0x040    /* set when init is in progress */
+#define RS_UPDATING     0x080    /* set when update is in progress */
+#define RS_ACTIVE       0x100    /* set for the active instance of a service */
 
 /* Sys flag values. */
-#define SF_CORE_SRV     0x001    /* set for core system services
-                                  * XXX FIXME: This should trigger a system
-                                  * panic when a CORE_SRV service cannot
-                                  * be restarted. We need better error-handling
-                                  * in RS to change this.
-                                  */
+#define SF_CORE_SRV     0x001    /* set for core system services */
 #define SF_SYNCH_BOOT   0X002    /* set when process needs synch boot init */
 #define SF_NEED_COPY    0x004    /* set when process needs copy to restart */
 #define SF_USE_COPY     0x008    /* set when process has a copy in memory */
@@ -76,6 +76,11 @@
 #define RUSR_M \
     ( spi_to(PM_PROC_NR) | spi_to(FS_PROC_NR) | spi_to(RS_PROC_NR) \
     | spi_to(VM_PROC_NR) )                         /* root user proc */
+
+/* Define the signal manager for the various process types. */
+#define SRV_SM  RS_PROC_NR                         /* system services */
+#define DSRV_SM RS_PROC_NR                         /* dynamic system services */
+#define RUSR_SM PM_PROC_NR                         /* root user proc */
 
 /* Define sys flags for the various process types. */
 #define SRV_SF   (SF_CORE_SRV | SF_NEED_COPY)  /* system services */

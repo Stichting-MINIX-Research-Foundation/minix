@@ -1,5 +1,7 @@
 
-#define _SYSTEM 1
+#define _POSIX_SOURCE      1
+#define _MINIX             1
+#define _SYSTEM            1
 
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -39,6 +41,8 @@ extern int missing_spares;
 #include "../../kernel/config.h" 
 #include "../../kernel/proc.h"
 
+#include <signal.h>
+
 /* Table of calls and a macro to test for being in range. */
 struct {
 	int (*vmc_func)(message *);	/* Call handles message. */
@@ -61,6 +65,7 @@ extern int unmap_ok;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				main					     *
@@ -69,6 +74,7 @@ PUBLIC int main(void)
 {
   message msg;
   int result, who_e;
+  sigset_t sigset;
 
   /* SEF local startup. */
   sef_local_startup();
@@ -89,27 +95,8 @@ PUBLIC int main(void)
 	SANITYCHECK(SCL_DETAIL);
 
 	if(msg.m_type & NOTIFY_MESSAGE) {
-		switch(msg.m_source) {
-			case SYSTEM:
-				/* Kernel wants to have memory ranges
-				 * verified, and/or pagefaults handled.
-				 */
-				do_memory();
-				break;
-			case HARDWARE:
-				do_pagefaults();
-				break;
-			case PM_PROC_NR:
-				/* PM sends a notify() on shutdown, which
-				 * is OK and we ignore.
-				 */
-				break;
-			default:
-				/* No-one else should send us notifies. */
-				printf("VM: ignoring notify() from %d\n",
-					msg.m_source);
-				break;
-		}
+		/* Unexpected notify(). */
+		printf("VM: ignoring notify() from %d\n", msg.m_source);
 		continue;
 	}
 	who_e = msg.m_source;
@@ -152,9 +139,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -341,6 +331,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Calls from RS */
 	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
+	CALLMAP(VM_RS_UPDATE, do_rs_update);
 
 	/* Generic calls. */
 	CALLMAP(VM_REMAP, do_remap);
@@ -375,6 +366,24 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	}
 
 	return(OK);
+}
+
+/*===========================================================================*
+ *		            sef_cb_signal_handler                            *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	/* Check for known kernel signals, ignore anything else. */
+	switch(signo) {
+		/* There is a pending memory request from the kernel. */
+		case SIGKMEM:
+			do_memory();
+		break;
+		/* There is a pending page fault request from the kernel. */
+		case SIGKPF:
+			do_pagefaults();
+		break;
+	}
 }
 
 /*===========================================================================*

@@ -365,7 +365,7 @@ endpoint_t proc;
 		printf("pci:pci_reserve2: bad devind: %d\n", devind);
 		return EINVAL;
 	}
-	if(pcidev[devind].pd_inuse)
+	if(pcidev[devind].pd_inuse && pcidev[devind].pd_proc != proc)
 		return EBUSY;
 	pcidev[devind].pd_inuse= 1;
 	pcidev[devind].pd_proc= proc;

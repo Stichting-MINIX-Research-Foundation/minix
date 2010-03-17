@@ -4,9 +4,9 @@
 
 /* SEF Init callbacks. */
 PRIVATE struct sef_cbs {
-    sef_cb_init_fresh_t                 sef_cb_init_fresh;
-    sef_cb_init_lu_t                    sef_cb_init_lu;
-    sef_cb_init_restart_t               sef_cb_init_restart;
+    sef_cb_init_t                       sef_cb_init_fresh;
+    sef_cb_init_t                       sef_cb_init_lu;
+    sef_cb_init_t                       sef_cb_init_restart;
 } sef_cbs = {
     SEF_CB_INIT_FRESH_DEFAULT,
     SEF_CB_INIT_LU_DEFAULT,
@@ -67,11 +67,9 @@ PUBLIC int do_sef_init_request(message *m_ptr)
       break;
   }
 
-  /* Report back to RS. XXX FIXME: we should use send, but this would cause
-   * a deadlock due to the current blocking nature of mapdriver().
-   */
+  /* Report back to RS. */
   m_ptr->RS_INIT_RESULT = r;
-  r = asynsend(RS_PROC_NR, m_ptr);
+  r = sendrec(RS_PROC_NR, m_ptr);
 
   return r;
 }
@@ -79,7 +77,7 @@ PUBLIC int do_sef_init_request(message *m_ptr)
 /*===========================================================================*
  *                         sef_setcb_init_fresh                              *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_fresh(sef_cb_init_fresh_t cb)
+PUBLIC void sef_setcb_init_fresh(sef_cb_init_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_fresh = cb;
@@ -88,7 +86,7 @@ PUBLIC void sef_setcb_init_fresh(sef_cb_init_fresh_t cb)
 /*===========================================================================*
  *                            sef_setcb_init_lu                              *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_lu(sef_cb_init_lu_t cb)
+PUBLIC void sef_setcb_init_lu(sef_cb_init_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_lu = cb;
@@ -97,44 +95,36 @@ PUBLIC void sef_setcb_init_lu(sef_cb_init_lu_t cb)
 /*===========================================================================*
  *                         sef_setcb_init_restart                            *
  *===========================================================================*/
-PUBLIC void sef_setcb_init_restart(sef_cb_init_restart_t cb)
+PUBLIC void sef_setcb_init_restart(sef_cb_init_t cb)
 {
   assert(cb != NULL);
   sef_cbs.sef_cb_init_restart = cb;
 }
 
 /*===========================================================================*
- *      	            sef_cb_init_fresh_null                           *
+ *      	              sef_cb_init_null                               *
  *===========================================================================*/
-PUBLIC int sef_cb_init_fresh_null(int UNUSED(type),
+PUBLIC int sef_cb_init_null(int UNUSED(type),
    sef_init_info_t *UNUSED(info))
 {
-  return(OK);
+  return OK;
 }
 
 /*===========================================================================*
- *      	              sef_cb_init_lu_null                            *
+ *      	              sef_cb_init_fail                               *
  *===========================================================================*/
-PUBLIC int sef_cb_init_lu_null(int UNUSED(type), sef_init_info_t *UNUSED(info))
+PUBLIC int sef_cb_init_fail(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
-  return(OK);
+  return ENOSYS;
 }
 
 /*===========================================================================*
- *      	            sef_cb_init_restart_null                         *
+ *      	              sef_cb_init_crash                              *
  *===========================================================================*/
-PUBLIC int sef_cb_init_restart_null(int UNUSED(type),
-     sef_init_info_t *UNUSED(info))
+PUBLIC int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
-  return(OK);
-}
+  panic("Simulating a crash at initialization time...");
 
-/*===========================================================================*
- *      	            sef_cb_init_restart_fail                         *
- *===========================================================================*/
-PUBLIC int sef_cb_init_restart_fail(int UNUSED(type),
-   sef_init_info_t *UNUSED(info))
-{
-  return(ENOSYS);
+  return OK;
 }
 

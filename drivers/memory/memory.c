@@ -64,7 +64,6 @@ PRIVATE struct driver m_dtab = {
   m_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
   m_geometry,	/* memory device "geometry" */
-  nop_signal,	/* system signals */
   nop_alarm,
   nop_cancel,
   nop_select,
@@ -121,14 +120,8 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the memory driver. */
-  struct sigaction sa;
   u32_t ramdev_size;
   int i, s;
-
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
 
   /* Initialize all minor devices one by one. */
   if (OK != (s=sys_getkinfo(&kinfo))) {

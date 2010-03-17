@@ -13,13 +13,10 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <stdlib.h>
 
-FORWARD _PROTOTYPE( int init, (int type, sef_init_info_t *info)		);
-FORWARD _PROTOTYPE( void sef_local_startup, (void)			);
-FORWARD _PROTOTYPE( void cleanup, (void)				);
 FORWARD _PROTOTYPE( int get_work, (endpoint_t *who_e)			);
 FORWARD _PROTOTYPE( void send_reply, (int err)				);
-FORWARD _PROTOTYPE( int proc_event, (void)				);
 
 PRIVATE struct optset optset_table[] = {
   { "prefix",   OPT_STRING, opt.prefix,       sizeof(opt.prefix) },
@@ -32,13 +29,17 @@ PRIVATE struct optset optset_table[] = {
   { NULL                                                         }
 };
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
 /*===========================================================================*
- *				init					     *
+ *			      sef_cb_init_fresh				     *
  *===========================================================================*/
-PRIVATE int init(type, info)
+PRIVATE int sef_cb_init_fresh(type, info)
 int type;
 sef_init_info_t *info;
 {
@@ -87,31 +88,43 @@ sef_init_info_t *info;
 }
 
 /*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  sigset_t set;
+  int r;
+
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  if (state.mounted) {
+      dprintf(("HGFS: got SIGTERM, still mounted\n"));
+  }
+  else {
+      dprintf(("HGFS: got SIGTERM, shutting down\n"));
+
+      /* Pass on the cleanup request to the HGFS library. */
+      hgfs_cleanup();
+      exit(0);
+  }
+}
+
+/*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
-/* Specify initialization routines and start the SEF framework.
- */
-
-  sef_setcb_init_fresh(init);
-  sef_setcb_init_restart(init);
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
 
   /* No live update support yet. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   sef_startup();
-}
-
-/*===========================================================================*
- *				cleanup					     *
- *===========================================================================*/
-PRIVATE void cleanup()
-{
-/* Clean up any resources in use by this file server. Called at shutdown time.
- */
-
-  /* Pass on the cleanup request to the HGFS library. */
-  hgfs_cleanup();
 }
 
 /*===========================================================================*
@@ -135,10 +148,6 @@ char *argv[];
 	call_nr = get_work(&who_e);
 
 	if (who_e != FS_PROC_NR) {
-		/* Is this PM telling us to shut down? */
-		if (who_e == PM_PROC_NR && is_notify(call_nr))
-			if (proc_event()) break;
-
 		continue;
 	}
 
@@ -159,8 +168,6 @@ char *argv[];
 
 	send_reply(err);
   }
-
-  cleanup();
 
   return 0;
 }
@@ -199,34 +206,3 @@ int err;				/* resulting error code */
 	printf("HGFS: send failed (%d)\n", r);
 }
 
-/*===========================================================================*
- *				proc_event				     *
- *===========================================================================*/
-PRIVATE int proc_event()
-{
-/* We got a notification from PM; see what it's about. Return TRUE if this
- * server has been told to shut down.
- */
-  sigset_t set;
-  int r;
-
-  if ((r = getsigset(&set)) != OK) {
-	printf("HGFS: unable to get pending signals from PM (%d)\n", r);
-
-	return FALSE;
-  }
-
-  if (sigismember(&set, SIGTERM)) {
-	if (state.mounted) {
-		dprintf(("HGFS: got SIGTERM, still mounted\n"));
-
-		return FALSE;
-	}
-
-	dprintf(("HGFS: got SIGTERM, shutting down\n"));
-
-	return TRUE;
-  }
-
-  return FALSE;
-}

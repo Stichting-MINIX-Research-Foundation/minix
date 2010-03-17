@@ -6,8 +6,6 @@
 
 #include "inc.h"
 
-#include <minix/ds.h>
-
 /*===========================================================================*
  *				 init_service				     *
  *===========================================================================*/
@@ -30,31 +28,6 @@ int type;					/* type of initialization */
   r = asynsend(rpub->endpoint, &m);
 
   return r;
-}
-
-/*===========================================================================*
- *				publish_service				     *
- *===========================================================================*/
-PUBLIC int publish_service(rp)
-struct rproc *rp;				/* pointer to process slot */
-{
-/* A new system service has been started. Publish the necessary information. */
-  int s;
-  struct rprocpub *rpub;
-
-  rpub = rp->r_pub;
-
-  /* Register its label with DS. */
-  s= ds_publish_label(rpub->label, rpub->endpoint, DSF_OVERWRITE);
-  if (s != OK) {
-      return s;
-  }
-  if (rs_verbose) {
-      printf("RS: publish_service: DS label registration done: %s -> %d\n", 
-          rpub->label, rpub->endpoint);
-  }
-
-  return(OK);
 }
 
 /*===========================================================================*
@@ -97,5 +70,93 @@ int is_init;                    /* set when initializing a call mask */
           SET_BIT(call_mask, calls[i] - call_base);
       }
   }
+}
+
+/*===========================================================================*
+ *			     srv_to_string				     *
+ *===========================================================================*/
+PUBLIC char* srv_to_string(rp)
+struct rproc *rp;			/* pointer to process slot */
+{
+  struct rprocpub *rpub;
+  int slot_nr;
+  char *srv_string;
+  static char srv_string_pool[3][RS_MAX_LABEL_LEN + (DEBUG ? 256 : 64)];
+  static int srv_string_pool_index = 0;
+
+  rpub = rp->r_pub;
+  slot_nr = rp - rproc;
+  srv_string = srv_string_pool[srv_string_pool_index];
+  srv_string_pool_index = (srv_string_pool_index + 1) % 3;
+
+#define srv_str(cmd) ((cmd) == NULL || (cmd)[0] == '\0' ? "_" : (cmd))
+#define srv_ep_str(rp) (itoa((rp)->r_pub->endpoint))
+#define srv_active_str(rp) ((rp)->r_flags & RS_ACTIVE ? "*" : " ")
+#define srv_version_str(rp) ((rp)->r_new_rp || (rp)->r_next_rp ? "-" : \
+    ((rp)->r_old_rp || (rp)->r_prev_rp ? "+" : " "))
+
+#if DEBUG
+  sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d, cmd %s, script %s, proc %s, major %d, style %d, flags 0x%03x, sys_flags 0x%02x)",
+      rpub->label, srv_active_str(rp), srv_version_str(rp),
+      slot_nr, rpub->endpoint, rp->r_pid, srv_str(rp->r_cmd),
+      srv_str(rp->r_script), srv_str(rpub->proc_name), rpub->dev_nr,
+      rpub->dev_style, rp->r_flags, rpub->sys_flags);
+#else
+  sprintf(srv_string, "service '%s'%s%s(slot %d, ep %d, pid %d)",
+      rpub->label, srv_active_str(rp), srv_version_str(rp),
+      slot_nr, rpub->endpoint, rp->r_pid);
+#endif
+
+  return srv_string;
+}
+
+/*===========================================================================*
+ *				reply					     *
+ *===========================================================================*/
+PUBLIC void reply(who, m_ptr)
+endpoint_t who;                        	/* replyee */
+message *m_ptr;                         /* reply message */
+{
+  int r;				/* send status */
+
+  r = sendnb(who, m_ptr);		/* send the message */
+  if (r != OK)
+      printf("RS: unable to send reply to %d: %d\n", who, r);
+}
+
+/*===========================================================================*
+ *			      late_reply				     *
+ *===========================================================================*/
+PUBLIC void late_reply(rp, code)
+struct rproc *rp;				/* pointer to process slot */
+int code;					/* status code */
+{
+/* If a caller is waiting for a reply, unblock it. */
+  struct rprocpub *rpub;
+
+  rpub = rp->r_pub;
+
+  if(rp->r_flags & RS_LATEREPLY) {
+      message m;
+      m.m_type = code;
+      if(rs_verbose)
+          printf("RS: %s late reply %d to %d for request %d\n",
+              srv_to_string(rp), code, rp->r_caller, rp->r_caller_request);
+
+      reply(rp->r_caller, &m);
+      rp->r_flags &= ~RS_LATEREPLY;
+  }
+}
+
+/*===========================================================================*
+ *				rs_isokendpt			 	     *
+ *===========================================================================*/
+PUBLIC int rs_isokendpt(int endpoint, int *proc)
+{
+	*proc = _ENDPOINT_P(endpoint);
+	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
+		return EINVAL;
+
+	return OK;
 }
 

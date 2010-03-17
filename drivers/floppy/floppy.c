@@ -264,7 +264,6 @@ FORWARD _PROTOTYPE( void f_reset, (void) 				);
 FORWARD _PROTOTYPE( int f_intr_wait, (void) 				);
 FORWARD _PROTOTYPE( int read_id, (void) 				);
 FORWARD _PROTOTYPE( int f_do_open, (struct driver *dp, message *m_ptr) 	);
-FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp, sigset_t *set));
 FORWARD _PROTOTYPE( int test_read, (int density)	 		);
 FORWARD _PROTOTYPE( void f_geometry, (struct partition *entry)		);
 
@@ -278,7 +277,6 @@ PRIVATE struct driver f_dtab = {
   f_transfer,	/* do the I/O */
   f_cleanup,	/* cleanup before sending reply to user process */
   f_geometry,	/* tell the geometry of the diskette */
-  floppy_stop,	/* floppy cleanup on shutdown */
   f_expire_tmrs,/* expire all alarm timers */
   nop_cancel,
   nop_select,
@@ -292,7 +290,8 @@ static phys_bytes floppy_buf_phys;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 PUBLIC int last_transfer_opcode;
@@ -325,6 +324,9 @@ PRIVATE void sef_local_startup(void)
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
   sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -365,10 +367,23 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
   	panic("Couldn't enable IRQs: %d", s);
 
-  /* Ignore signals */
-  signal(SIGHUP, SIG_IGN);
-
   return(OK);
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  int s;
+
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  /* Stop all activity and cleanly exit with the system. */
+  if ((s=sys_outb(DOR, ENABLE_INT)) != OK)
+      panic("Sys_outb failed: %d", s);
+  exit(0);
 }
 
 /*===========================================================================*
@@ -745,7 +760,7 @@ PRIVATE int dma_setup(
 
   /* First check the DMA memory address not to exceed maximum. */
   if (floppy_buf_phys != (floppy_buf_phys & DMA_ADDR_MASK)) {
-	printf("floppy: DMA denied because address out of range");
+	printf("floppy: DMA denied because address out of range\n");
 	return(EIO);
   }
 
@@ -832,20 +847,6 @@ PRIVATE void stop_motor(timer_t *tp)
   motor_status &= ~(1 << tmr_arg(tp)->ta_int);
   if ((s=sys_outb(DOR, (motor_status << MOTOR_SHIFT) | ENABLE_INT)) != OK)
 	panic("Sys_outb in stop_motor() failed: %d", s);
-}
-
-/*===========================================================================*
- *				floppy_stop				     *
- *===========================================================================*/
-PRIVATE void floppy_stop(struct driver *dp, sigset_t *set)
-{
-/* Stop all activity and cleanly exit with the system. */
-  int s;
-  if (sigismember(set, SIGTERM)) {
-      if ((s=sys_outb(DOR, ENABLE_INT)) != OK)
-		panic("Sys_outb in floppy_stop() failed: %d", s);
-      exit(0);	
-  }
 }
 
 /*===========================================================================*

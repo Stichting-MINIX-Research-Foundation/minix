@@ -29,10 +29,12 @@ SRCS=  \
 	pci_slot_name.c \
 	safecopies.c \
 	sef.c \
+	sef_init.c \
 	sef_liveupdate.c \
 	sef_ping.c \
-	sef_init.c \
+	sef_signal.c \
 	sys_abort.c \
+	sys_clear.c \
 	sys_mcontext.c \
 	sys_cprof.c \
 	sys_endsig.c \
@@ -53,6 +55,7 @@ SRCS=  \
 	sys_physcopy.c \
 	sys_readbios.c \
 	sys_runctl.c \
+	sys_update.c \
 	sys_safecopy.c \
 	sys_safemap.c \
 	sys_sysctl.c \

@@ -121,7 +121,6 @@ _PROTOTYPE( static void do_stop, (message *mp)                          );
 _PROTOTYPE( static void do_getname, (message *mp)                       );
 
 _PROTOTYPE( static void lance_dump, (void)            );
-_PROTOTYPE( static void lance_stop, (void)            );
 _PROTOTYPE( static void getAddressing, (int devind, ether_card_t *ec)   );
 
 /* probe+init LANCE cards */
@@ -264,6 +263,7 @@ phys_bytes lance_buf_phys;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN char **env_argv;
 
 /*===========================================================================*
@@ -317,17 +317,6 @@ void main( int argc, char **argv )
 				      }
 			      }
 			      break;
-		      case PM_PROC_NR:
-		      {
-			      sigset_t set;
-
-			      if (getsigset(&set) != 0) break;
-
-			      if (sigismember(&set, SIGTERM))
-				      lance_stop();
-
-			      break;
-		      }
 		      default:
 			      panic("illegal notify source: %d", m.m_source);
 	      }
@@ -373,6 +362,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -410,7 +402,34 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    else if (r != ESRCH)
       printf("lance: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
-  return(OK);
+   return OK;
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+   message mess;
+   int i;
+
+   /* Only check for termination signal, ignore anything else. */
+   if (signo != SIGTERM) return;
+
+   for (i= 0; i<EC_PORT_NR_MAX; i++)
+   {
+      if (ec_table[i].mode != EC_ENABLED)
+         continue;
+      mess.m_type= DL_STOP;
+      mess.DL_PORT= i;
+      do_stop(&mess);
+   }
+
+#if VERBOSE
+   printf("LANCE driver stopped.\n");
+#endif
+
+   exit(0);
 }
 
 /*===========================================================================*
@@ -477,31 +496,6 @@ static void lance_dump()
       
    }
 }
-
-/*===========================================================================*
- *                              lance_stop                                   *
- *===========================================================================*/
-static void lance_stop()
-{
-   message mess;
-   int i;
-
-   for (i= 0; i<EC_PORT_NR_MAX; i++)
-   {
-      if (ec_table[i].mode != EC_ENABLED)
-         continue;
-      mess.m_type= DL_STOP;
-      mess.DL_PORT= i;
-      do_stop(&mess);
-   }
-
-#if VERBOSE
-   printf("LANCE driver stopped.\n");
-#endif
-
-   exit( 0 );
-}
-
 
 /*===========================================================================*
  *                              do_init                                      *

@@ -29,7 +29,6 @@ FORWARD _PROTOTYPE( int log_transfer, (int proc_nr, int opcode, u64_t position,
 FORWARD _PROTOTYPE( int log_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_cancel, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_select, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void log_signal, (struct driver *dp, sigset_t *set) );
 FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
 FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, vir_bytes user_vir, size_t) );
@@ -44,7 +43,6 @@ PRIVATE struct driver log_dtab = {
   log_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
   log_geometry,	/* geometry */
-  log_signal,	/* handle system signal */
   nop_alarm, 	/* no alarm */
   log_cancel,	/* CANCEL request */
   log_select,	/* DEV_SELECT request */
@@ -57,9 +55,10 @@ extern int device_caller;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				   main 				     *
@@ -90,6 +89,9 @@ PRIVATE void sef_local_startup()
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
   sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -116,6 +118,17 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   return(OK);
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  /* Only check for a pending message from the kernel, ignore anything else. */
+  if (signo != SIGKMESS) return;
+
+  do_new_kmess(SYSTEM);
 }
 
 /*===========================================================================*
@@ -395,20 +408,6 @@ message *m_ptr;
   return(OK);
 }
 
-
-/*============================================================================*
- *				log_signal				      *
- *============================================================================*/
-PRIVATE void log_signal(dp, set)
-struct driver *dp;
-sigset_t *set;
-{
-  if (sigismember(set, SIGKMESS)) {
-	do_new_kmess(SYSTEM);
-  }	
-}
-
-	
 /*============================================================================*
  *				log_other				      *
  *============================================================================*/

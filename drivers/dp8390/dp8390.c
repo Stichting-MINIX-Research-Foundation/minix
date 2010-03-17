@@ -134,7 +134,6 @@ _PROTOTYPE( static void dp_reset, (dpeth_t *dep)			);
 _PROTOTYPE( static void dp_check_ints, (dpeth_t *dep)			);
 _PROTOTYPE( static void dp_recv, (dpeth_t *dep)				);
 _PROTOTYPE( static void dp_send, (dpeth_t *dep)				);
-_PROTOTYPE( static void dp8390_stop, (void)				);
 _PROTOTYPE( static void dp_getblock, (dpeth_t *dep, int page,
 				size_t offset, size_t size, void *dst)	);
 _PROTOTYPE( static void dp_pio8_getblock, (dpeth_t *dep, int page,
@@ -232,6 +231,7 @@ PRIVATE int handle_hw_intr(void)
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
@@ -257,17 +257,6 @@ int main(int argc, char *argv[])
 				case HARDWARE:
 					r = handle_hw_intr();
 					break;
-				case PM_PROC_NR:
-				{
-					sigset_t set;
-
-					if (getsigset(&set) != 0) break;
-
-					if (sigismember(&set, SIGTERM))
-						dp8390_stop();
-
-					break;
-				}
 				case CLOCK:
 					printf("dp8390: notify from CLOCK\n");
 					break;
@@ -310,6 +299,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -348,6 +340,27 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		notify(tasknr);
 
 	return(OK);
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	message mess;
+	int i;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	for (i= 0; i<DE_PORT_NR; i++)
+	{
+		if (de_table[i].de_mode != DEM_ENABLED)
+			continue;
+		mess.m_type= DL_STOP;
+		mess.DL_PORT= i;
+		do_stop(&mess);
+	}
 }
 
 #if 0
@@ -402,24 +415,6 @@ void dp8390_dump()
 	}
 }
 #endif
-
-/*===========================================================================*
- *				dp8390_stop				     *
- *===========================================================================*/
-static void dp8390_stop()
-{
-	message mess;
-	int i;
-
-	for (i= 0; i<DE_PORT_NR; i++)
-	{
-		if (de_table[i].de_mode != DEM_ENABLED)
-			continue;
-		mess.m_type= DL_STOP;
-		mess.DL_PORT= i;
-		do_stop(&mess);
-	}
-}
 
 #if ENABLE_PCI
 /*===========================================================================*

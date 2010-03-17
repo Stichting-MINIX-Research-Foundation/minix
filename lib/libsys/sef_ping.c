@@ -31,7 +31,7 @@ PUBLIC int do_sef_ping_request(message *m_ptr)
 #endif
 
   /* Let the callback code handle the request. */
-  sef_cbs.sef_cb_ping_reply(m_ptr);
+  sef_cbs.sef_cb_ping_reply(m_ptr->m_source);
 
   /* Return OK not to let anybody else intercept the request. */
   return(OK);
@@ -49,15 +49,15 @@ PUBLIC void sef_setcb_ping_reply(sef_cb_ping_reply_t cb)
 /*===========================================================================*
  *      	           sef_cb_ping_reply_null                            *
  *===========================================================================*/
-PUBLIC void sef_cb_ping_reply_null(message *UNUSED(m_ptr))
+PUBLIC void sef_cb_ping_reply_null(endpoint_t UNUSED(source))
 {
 }
 
 /*===========================================================================*
  *      	           sef_cb_ping_reply_pong                            *
  *===========================================================================*/
-PUBLIC void sef_cb_ping_reply_pong(message *m_ptr)
+PUBLIC void sef_cb_ping_reply_pong(endpoint_t source)
 {
-  notify(m_ptr->m_source);
+  notify(source);
 }
 

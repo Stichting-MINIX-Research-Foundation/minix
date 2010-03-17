@@ -19,6 +19,7 @@
  *    0xB00 -  0xBFF	Requests from VM to VFS
  *    0xC00 -  0xCFF	Virtual Memory (VM) requests
  *    0xD00 -  0xDFF	IPC server requests
+ *    0xE00 -  0xEFF	Common system messages (e.g. system signals)
  *   0x1000 - 0x10FF	Notify messages
  *
  * Zero and negative values are widely used for OK and error responses.
@@ -305,7 +306,7 @@
 
 #  define SYS_FORK       (KERNEL_CALL + 0)	/* sys_fork() */
 #  define SYS_EXEC       (KERNEL_CALL + 1)	/* sys_exec() */
-#  define SYS_EXIT	 (KERNEL_CALL + 2)	/* sys_exit() */
+#  define SYS_CLEAR	 (KERNEL_CALL + 2)	/* sys_clear() */
 #  define SYS_NICE       (KERNEL_CALL + 3)	/* sys_nice() */
 #  define SYS_PRIVCTL    (KERNEL_CALL + 4)	/* sys_privctl() */
 #  define SYS_TRACE      (KERNEL_CALL + 5)	/* sys_trace() */
@@ -358,8 +359,19 @@
 #  define SYS_GETMCONTEXT (KERNEL_CALL + 50)    /* sys_getmcontext() */
 #  define SYS_SETMCONTEXT (KERNEL_CALL + 51)    /* sys_setmcontext() */
 
-#define NR_SYS_CALLS	52	/* number of system calls */ 
+#  define SYS_UPDATE	 (KERNEL_CALL + 52)	/* sys_update() */
+#  define SYS_EXIT	 (KERNEL_CALL + 53)	/* sys_exit() */
+
+/* Total */
+#define NR_SYS_CALLS	54	/* number of system calls */ 
+
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
+
+/* Basic kernel calls allowed to every system process. */
+#define SYS_BASIC_CALLS \
+    SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
+    SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, SYS_SAFEMAP, SYS_SAFEREVMAP, \
+    SYS_SAFEUNMAP, SYS_PROFBUF, SYS_SYSCTL
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -631,6 +643,10 @@
 #define RC_FLAGS	m1_i3	/* request flags */
 #  define RC_DELAY          1	/* delay stop if process is sending */
 
+/* Field names for SYS_UPDATE. */
+#define SYS_UPD_SRC_ENDPT	m1_i1	/* source endpoint */
+#define SYS_UPD_DST_ENDPT	m1_i2	/* destination endpoint */
+
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
  *===========================================================================*/
@@ -689,7 +705,6 @@
 #  define DS_VAL		m2_l1		/* data (u32, char *, etc.) */
 #  define DS_VAL_LEN		m2_l2		/* data length */
 #  define DS_NR_SNAPSHOT	m2_i3		/* number of snapshot */
-#  define DS_STRING		m2_i3		/* inline string */
 
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *
@@ -732,7 +747,7 @@
 #define PM_DUMPCORE	(PM_RQ_BASE + 5)	/* Process is to dump core */
 #define PM_EXEC		(PM_RQ_BASE + 6)	/* Forwarded exec call */
 #define PM_FORK		(PM_RQ_BASE + 7)	/* Newly forked process */
-#define PM_FORK_NB	(PM_RQ_BASE + 8)	/* Non-blocking fork */
+#define PM_SRV_FORK	(PM_RQ_BASE + 8)	/* fork for system services */
 #define PM_UNPAUSE	(PM_RQ_BASE + 9)	/* Interrupt process call */
 #define PM_REBOOT	(PM_RQ_BASE + 10)	/* System reboot */
 #define PM_SETGROUPS	(PM_RQ_BASE + 11)	/* Tell VFS about setgroups */
@@ -745,7 +760,7 @@
 #define PM_CORE_REPLY	(PM_RS_BASE + 5)
 #define PM_EXEC_REPLY	(PM_RS_BASE + 6)
 #define PM_FORK_REPLY	(PM_RS_BASE + 7)
-#define PM_FORK_NB_REPLY	(PM_RS_BASE + 8)
+#define PM_SRV_FORK_REPLY	(PM_RS_BASE + 8)
 #define PM_UNPAUSE_REPLY	(PM_RS_BASE + 9)
 #define PM_REBOOT_REPLY	(PM_RS_BASE + 10)
 #define PM_SETGROUPS_REPLY	(PM_RS_BASE + 11)
@@ -755,7 +770,7 @@
 
 /* Additional parameters for PM_INIT */
 #  define PM_SLOT		m1_i2	/* process slot number */
-#  define PM_PID		m2_i3	/* process pid */
+#  define PM_PID		m1_i3	/* process pid */
 
 /* Additional parameters for PM_SETUID and PM_SETGID */
 #  define PM_EID		m1_i2	/* effective user/group id */
@@ -776,7 +791,7 @@
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
 #  define PM_STATUS		m1_i2	/* OK or failure */
 
-/* Additional parameters for PM_FORK and PM_FORK_NB */
+/* Additional parameters for PM_FORK and PM_SRV_FORK */
 #  define PM_PPROC		m1_i2	/* parent process endpoint */
 #  define PM_CPID		m1_i3	/* child pid */
 
@@ -813,6 +828,8 @@
  *                Miscellaneous field names				     *
  *===========================================================================*/
 
+#define COMMON_RQ_BASE		0xE00
+
 /* PM field names */
 /* BRK */
 #define PMBRK_ADDR				m1_p1
@@ -834,6 +851,10 @@
 #define SEL_WRITEFDS   m8_p2
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
+
+/* Field names for system signals (sent by a signal manager). */
+#define SIGS_SIGNAL_RECEIVED (COMMON_RQ_BASE+0)
+#	define SIGS_SIG_NUM      m2_i1
 
 /*===========================================================================*
  *                Messages for VM server				     *
@@ -974,8 +995,12 @@
 #define VMIW_USAGE			2
 #define VMIW_REGION			3
 
+#define VM_RS_UPDATE		(VM_RQ_BASE+41)
+#	define VM_RS_SRC_ENDPT		m1_i1
+#	define VM_RS_DST_ENDPT		m1_i2
+
 /* Total. */
-#define NR_VM_CALLS				41
+#define NR_VM_CALLS				42
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* Basic vm calls allowed to every process. */

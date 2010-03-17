@@ -74,6 +74,7 @@ SRCS+=  \
 	vm_remap.S \
 	vm_unmap.S \
 	vm_set_priv.S \
+	vm_update.S \
 	vm_query_exit.S \
 	mount.S \
 	nanosleep.S \

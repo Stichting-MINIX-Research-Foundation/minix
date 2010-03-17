@@ -39,6 +39,7 @@
 EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
+FORWARD _PROTOTYPE( void sendreply, (void)				);
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
 FORWARD _PROTOTYPE( void handle_fs_reply, (void)			);
@@ -51,6 +52,7 @@ extern int unmap_ok;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( int sef_cb_signal_manager, (endpoint_t target, int signo) );
 
 /*===========================================================================*
  *				main					     *
@@ -80,19 +82,14 @@ PUBLIC int main()
 				pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
 				result = SUSPEND;	/* don't reply */
 				break;
-			case SYSTEM:			/* signals pending */
-				sigset = m_in.NOTIFY_ARG;
-				if (sigismember(&sigset, SIGKSIG))  {
-					(void) ksig_pending();
-				} 
-				result = SUSPEND;	/* don't reply */
-				break;
 			default :
 				result = ENOSYS;
 		}
 
 		/* done, send reply and continue */
-		goto send_reply;
+		if (result != SUSPEND) setreply(who_p, result);
+		sendreply();
+		continue;
 	}
 
 	switch(call_nr)
@@ -104,7 +101,7 @@ PUBLIC int main()
 	case PM_EXIT_REPLY:
 	case PM_CORE_REPLY:
 	case PM_FORK_REPLY:
-	case PM_FORK_NB_REPLY:
+	case PM_SRV_FORK_REPLY:
 	case PM_UNPAUSE_REPLY:
 	case PM_REBOOT_REPLY:
 	case PM_SETGROUPS_REPLY:
@@ -133,29 +130,9 @@ PUBLIC int main()
 		break;
 	}
 
-send_reply:
-	/* Send the results back to the user to indicate completion. */
+	/* Send reply. */
 	if (result != SUSPEND) setreply(who_p, result);
-
-	/* Send out all pending reply messages, including the answer to
-	 * the call just made above.
-	 */
-	for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		/* In the meantime, the process may have been killed by a
-		 * signal (e.g. if a lethal pending signal was unblocked)
-		 * without the PM realizing it. If the slot is no longer in
-		 * use or the process is exiting, don't try to reply.
-		 */
-		if ((rmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
-		   (REPLY | IN_USE)) {
-			s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
-			if (s != OK) {
-				printf("PM can't reply to %d (%s): %d\n",
-					rmp->mp_endpoint, rmp->mp_name, s);
-			}
-			rmp->mp_flags &= ~REPLY;
-		}
-	}
+	sendreply();
   }
   return(OK);
 }
@@ -167,9 +144,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_manager(sef_cb_signal_manager);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -203,6 +183,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 				SIGBUS, SIGSEGV };
   register struct mproc *rmp;
   register char *sig_ptr;
+  register int signo;
   message mess;
 
   /* Initialize process table, including timers. */
@@ -246,7 +227,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
 		rmp->mp_nice = get_nice_value(ip->priority);
-  		sigemptyset(&rmp->mp_sig2mess);
   		sigemptyset(&rmp->mp_ignore);	
   		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
@@ -268,11 +248,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   				rmp->mp_parent = RS_PROC_NR;
   			}
   			rmp->mp_pid = get_free_pid();
-			rmp->mp_flags |= IN_USE | PRIV_PROC; 
-  			for (sig_ptr = mess_sigs; 
-				sig_ptr < mess_sigs+sizeof(mess_sigs); 
-				sig_ptr++)
-			sigaddset(&rmp->mp_sig2mess, *sig_ptr);
+			rmp->mp_flags |= IN_USE | PRIV_PROC;
 		}
 
 		/* Get kernel endpoint identifier. */
@@ -287,9 +263,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			panic("can't sync up with FS: %d", s);
   	}
   }
-
-  /* Override some details for PM. */
-  sigfillset(&mproc[PM_PROC_NR].mp_ignore); 	/* guard against signals */
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_ENDPT = NONE;
@@ -315,6 +288,20 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   _minix_unmapzero();
 
   return(OK);
+}
+
+/*===========================================================================*
+ *		            sef_cb_signal_manager                            *
+ *===========================================================================*/
+PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
+{
+/* Process signal on behalf of the kernel. */
+  int r;
+
+  r = process_ksig(target, signo);
+  sendreply();
+
+  return r;
 }
 
 /*===========================================================================*
@@ -358,6 +345,36 @@ int result;			/* result of call (usually OK or error #) */
 
   rmp->mp_reply.reply_res = result;
   rmp->mp_flags |= REPLY;	/* reply pending */
+}
+
+/*===========================================================================*
+ *				sendreply				     *
+ *===========================================================================*/
+PRIVATE void sendreply()
+{
+  int proc_nr;
+  int s;
+  struct mproc *rmp;
+
+  /* Send out all pending reply messages, including the answer to
+   * the call just made above.
+   */
+  for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+      /* In the meantime, the process may have been killed by a
+       * signal (e.g. if a lethal pending signal was unblocked)
+       * without the PM realizing it. If the slot is no longer in
+       * use or the process is exiting, don't try to reply.
+       */
+      if ((rmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
+          (REPLY | IN_USE)) {
+          s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
+          if (s != OK) {
+              printf("PM can't reply to %d (%s): %d\n",
+                  rmp->mp_endpoint, rmp->mp_name, s);
+          }
+          rmp->mp_flags &= ~REPLY;
+      }
+  }
 }
 
 /*===========================================================================*
@@ -485,7 +502,7 @@ PRIVATE void handle_fs_reply()
 
 	break;
 
-  case PM_FORK_NB_REPLY:
+  case PM_SRV_FORK_REPLY:
 	/* Nothing to do */
 
 	break;

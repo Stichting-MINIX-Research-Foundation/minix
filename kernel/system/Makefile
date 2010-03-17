@@ -27,10 +27,12 @@ OBJECTS	= \
 	do_fork.o \
 	do_exec.o \
 	do_newmap.o \
+	do_clear.o \
 	do_exit.o \
 	do_trace.o \
 	do_nice.o \
 	do_runctl.o \
+	do_update.o \
 	do_times.o \
 	do_setalarm.o \
 	do_stime.o \

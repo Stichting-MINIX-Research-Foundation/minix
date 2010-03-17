@@ -79,7 +79,7 @@ PRIVATE int reviveProcNr;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 PUBLIC int is_processing = FALSE;
@@ -107,8 +107,6 @@ PUBLIC void main()
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case HARDWARE:
 					dsp_hardware_msg();
-					continue; /* don't reply */
-				case SYSTEM:
 					continue; /* don't reply */
 				default:
 					r = EINVAL;

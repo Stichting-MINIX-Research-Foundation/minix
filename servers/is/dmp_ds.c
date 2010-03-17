@@ -29,7 +29,7 @@ PUBLIC void data_store_dmp()
 		printf("%-10s %12u\n", "U32", p->u.u32);
 		break;
 	case DSF_TYPE_STR:
-		printf("%-10s %12s\n", "STR", p->u.string);
+		printf("%-10s %12s\n", "STR", (char*) p->u.mem.data);
 		break;
 	case DSF_TYPE_MEM:
 		printf("%-10s %12u\n", "MEM", p->u.mem.length);

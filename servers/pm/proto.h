@@ -29,7 +29,7 @@ _PROTOTYPE( void exec_restart, (struct mproc *rmp, int result)		);
 
 /* forkexit.c */
 _PROTOTYPE( int do_fork, (void)						);
-_PROTOTYPE( int do_fork_nb, (void)					);
+_PROTOTYPE( int do_srv_fork, (void)					);
 _PROTOTYPE( int do_exit, (void)						);
 _PROTOTYPE( void exit_proc, (struct mproc *rmp, int exit_status,
 	int dump_core)							);
@@ -66,7 +66,8 @@ _PROTOTYPE( int do_cprofile, (void)					);
 
 /* signal.c */
 _PROTOTYPE( int do_kill, (void)						);
-_PROTOTYPE( int ksig_pending, (void)					);
+_PROTOTYPE( int do_srv_kill, (void)					);
+_PROTOTYPE( int process_ksig, (endpoint_t proc_nr_e, int signo)		);
 _PROTOTYPE( int do_pause, (void)					);
 _PROTOTYPE( int check_sig, (pid_t proc_id, int signo, int ksig)		);
 _PROTOTYPE( void sig_proc, (struct mproc *rmp, int signo, int trace,

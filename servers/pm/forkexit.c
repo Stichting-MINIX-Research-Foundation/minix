@@ -8,7 +8,7 @@
  *
  * The entry points into this file are:
  *   do_fork:		perform the FORK system call
- *   do_fork_nb:	special nonblocking version of FORK, for RS
+ *   do_srv_fork:	special FORK, used by RS to create sys services
  *   do_exit:		perform the EXIT system call (by calling exit_proc())
  *   exit_proc:		actually do the exiting, and tell FS about it
  *   exit_restart:	continue exiting a process after FS has replied
@@ -91,8 +91,8 @@ PUBLIC int do_fork()
 	rmc->mp_trace_flags = 0;
 	sigemptyset(&rmc->mp_sigtrace);
   }
-  /* inherit only these flags */
-  rmc->mp_flags &= (IN_USE|PRIV_PROC|DELAY_CALL);
+  /* Inherit only these flags. In normal fork(), PRIV_PROC is not inherited. */
+  rmc->mp_flags &= (IN_USE|DELAY_CALL);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
   rmc->mp_exitstatus = 0;
@@ -123,9 +123,9 @@ PUBLIC int do_fork()
 }
 
 /*===========================================================================*
- *				do_fork_nb				     *
+ *				do_srv_fork				     *
  *===========================================================================*/
-PUBLIC int do_fork_nb()
+PUBLIC int do_srv_fork()
 {
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
@@ -137,8 +137,8 @@ PUBLIC int do_fork_nb()
   endpoint_t child_ep;
   message m;
 
-  /* Only system processes are allowed to use fork_nb */
-  if (!(mp->mp_flags & PRIV_PROC))
+  /* Only RS is allowed to use srv_fork. */
+  if (mp->mp_endpoint != RS_PROC_NR)
 	return EPERM;
 
  /* If tables might fill up during FORK, don't even start since recovery half
@@ -192,7 +192,7 @@ PUBLIC int do_fork_nb()
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
-  m.m_type = PM_FORK_NB;
+  m.m_type = PM_SRV_FORK;
   m.PM_PROC = rmc->mp_endpoint;
   m.PM_PPROC = rmp->mp_endpoint;
   m.PM_CPID = rmc->mp_pid;
@@ -214,10 +214,19 @@ PUBLIC int do_fork_nb()
  *===========================================================================*/
 PUBLIC int do_exit()
 {
-/* Perform the exit(status) system call. The real work is done by exit_proc(),
- * which is also called when a process is killed by a signal.
- */
-  exit_proc(mp, m_in.status, FALSE /*dump_core*/);
+ /* Perform the exit(status) system call. The real work is done by exit_proc(),
+  * which is also called when a process is killed by a signal. System processes
+  * do not use PM's exit() to terminate. If they try to, we warn the user
+  * and send a SIGKILL signal to the system process.
+  */
+  if(mp->mp_flags & PRIV_PROC) {
+      printf("PM: system process %d (%s) tries to exit(), sending SIGKILL\n",
+          mp->mp_endpoint, mp->mp_name);
+      sys_kill(mp->mp_endpoint, SIGKILL);
+  }
+  else {
+      exit_proc(mp, m_in.status, FALSE /*dump_core*/);
+  }
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
 
@@ -280,7 +289,6 @@ int dump_core;			/* flag indicating whether to dump core */
 	panic("exit_proc: vm_willexit failed: %d", r);
   }
   vm_notify_sig_wrapper(rmp->mp_endpoint);
-
   if (proc_nr_e == INIT_PROC_NR)
   {
 	printf("PM: INIT died\n");
@@ -303,8 +311,8 @@ int dump_core;			/* flag indicating whether to dump core */
 	 * needed because the system process might be a block device
 	 * driver that FS is blocked waiting on.
 	 */
-	if((r= sys_exit(rmp->mp_endpoint)) != OK)
-		panic("exit_proc: sys_exit failed: %d", r);
+	if((r= sys_clear(rmp->mp_endpoint)) != OK)
+		panic("exit_proc: sys_clear failed: %d", r);
   }
 
   /* Clean up most of the flags describing the process's state before the exit,
@@ -363,8 +371,8 @@ int dump_core;			/* flag indicating whether to dump core */
   if (!(rmp->mp_flags & PRIV_PROC))
   {
 	/* destroy the (user) process */
-	if((r=sys_exit(rmp->mp_endpoint)) != OK)
-		panic("exit_restart: sys_exit failed: %d", r);
+	if((r=sys_clear(rmp->mp_endpoint)) != OK)
+		panic("exit_restart: sys_clear failed: %d", r);
   }
 
   /* Release the memory occupied by the child. */
@@ -667,12 +675,3 @@ register struct mproc *rmp;	/* tells which process is exiting */
   procs_in_use--;
 }
 
-PUBLIC void _exit(int code)
-{
-	sys_exit(SELF);
-}
-
-PUBLIC void __exit(int code)
-{
-	sys_exit(SELF);
-}

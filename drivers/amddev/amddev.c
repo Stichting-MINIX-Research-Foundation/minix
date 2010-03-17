@@ -16,6 +16,7 @@ Driver for the AMD Device Exclusion Vector (DEV)
 #include <string.h>
 #include <unistd.h>
 #include <machine/vm.h>
+#include <signal.h>
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/ipc.h>
@@ -57,12 +58,12 @@ static void init_map(unsigned int ix);
 static int do_add4pci(message *m);
 static void add_range(u32_t busaddr, u32_t size);
 static void del_range(u32_t busaddr, u32_t size);
-static void do_pm_notify(message *m);
 static void report_exceptions(void);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 int main(void)
 {
@@ -79,13 +80,7 @@ int main(void)
 		r= sef_receive(ANY, &m);
 		if (r != OK)
 			panic("sef_receive failed: %d", r);
-		if (is_notify(m.m_type)) {
-			if (_ENDPOINT_P(m.m_source) == PM_PROC_NR) {
-				do_pm_notify(&m);
-				continue;
-			}
-		}
-		else if (m.m_type == IOMMU_MAP) {
+		if (m.m_type == IOMMU_MAP) {
 			r= do_add4pci(&m);
 			m.m_type= r;
 			send(m.m_source, &m);
@@ -108,6 +103,9 @@ PRIVATE void sef_local_startup()
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -154,6 +152,47 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	printf("after write: DEVF_CR: 0x%x\n", read_reg(DEVF_CR, 0));
 
 	return(OK);
+}
+
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	int r;
+	endpoint_t proc_e;
+	phys_bytes base, size;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	for (;;)
+	{
+		r= getdma(&proc_e, &base, &size);
+		if (r == -1)
+		{
+			if (errno != -EAGAIN)
+			{
+				printf(
+				"amddev: getdma failed: %d\n",
+					errno);
+			}
+			break;
+		}
+
+		printf(
+		"amddev: deleting 0x%x@0x%x for proc %d\n",
+			size, base, proc_e);
+		del_range(base, size);
+		r= deldma(proc_e, base, size);
+		if (r == -1)
+		{
+			printf("amddev: deldma failed: %d\n",
+				errno);
+			break;
+		}
+	}
 }
 
 /* Returns 0 if no device found, or 1 if a device is found. */
@@ -416,47 +455,6 @@ static void del_range(u32_t busaddr, u32_t size)
 	{
 		bit= (busaddr+o)/I386_PAGE_SIZE;
 		table[bit/8] |= (1 << (bit % 8));
-	}
-}
-
-static void do_pm_notify(message *m)
-{
-	int r;
-	endpoint_t proc_e;
-	phys_bytes base, size;
-
-	if (m->m_source != PM_PROC_NR)
-	{
-		printf("amddev`do_pm_notify: notify not from PM (from %d)\n",
-			m->m_source);
-		return;
-	}
-
-	for (;;)
-	{
-		r= getdma(&proc_e, &base, &size);
-		if (r == -1)
-		{
-			if (errno != -EAGAIN)
-			{
-				printf(
-				"amddev`do_pm_notify: getdma failed: %d\n",
-					errno);
-			}
-			break;
-		}
-
-		printf(
-		"amddev`do_pm_notify: deleting 0x%x@0x%x for proc %d\n",
-			size, base, proc_e);
-		del_range(base, size);
-		r= deldma(proc_e, base, size);
-		if (r == -1)
-		{
-			printf("amddev`do_pm_notify: deldma failed: %d\n",
-				errno);
-			break;
-		}
 	}
 }
 

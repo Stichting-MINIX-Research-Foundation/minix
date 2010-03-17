@@ -52,7 +52,8 @@ PRIVATE struct dmap init_dmap[] = {
   DT(0, 0,   	  0,       0,		DMAP_MUTABLE, "")   /*14 = not used   */
   DT(1, gen_opcl, gen_io,  LOG_PROC_NR, 0, "")  	    /*15 = /dev/klog  */
   DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE, "")   /*16 = /dev/random*/
-  DT(0, 0,	  0,       0,		DMAP_MUTABLE, "")   /*17 = not used   */
+  DT(0, no_dev,	  0,       0,		DMAP_MUTABLE, "")   /*17 = /dev/hello */
+  DT(0, 0,	  0,       0,		DMAP_MUTABLE, "")   /*18 = not used   */
 #endif /* IBM_PC */
 };
 

@@ -17,21 +17,20 @@
  *===========================================================================*/
 PUBLIC int do_getksig(struct proc * caller, message * m_ptr)
 {
-/* PM is ready to accept signals and repeatedly does a kernel call to get 
- * one. Find a process with pending signals. If no signals are available, 
- * return NONE in the process number field.
- * It is not sufficient to ready the process when PM is informed, because 
- * PM can block waiting for FS to do a core dump.
+/* The signal manager is ready to accept signals and repeatedly does a kernel
+ * call to get one. Find a process with pending signals. If no signals are
+ * available, return NONE in the process number field.
  */
   register struct proc *rp;
 
   /* Find the next process with pending signals. */
   for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
       if (RTS_ISSET(rp, RTS_SIGNALED)) {
+          if (caller->p_endpoint != priv(rp)->s_sig_mgr) continue;
 	  /* store signaled process' endpoint */
           m_ptr->SIG_ENDPT = rp->p_endpoint;
           m_ptr->SIG_MAP = rp->p_pending;	/* pending signals map */
-          sigemptyset(&rp->p_pending); 		/* ball is in PM's court */
+          sigemptyset(&rp->p_pending); 		/* clear map in the kernel */
 	  RTS_UNSET(rp, RTS_SIGNALED);		/* blocked by SIG_PENDING */
           return(OK);
       }

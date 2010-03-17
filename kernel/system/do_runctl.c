@@ -19,7 +19,7 @@ PUBLIC int do_runctl(struct proc * caller, message * m_ptr)
 /* Control a process's RTS_PROC_STOP flag. Used for process management.
  * If the process is queued sending a message or stopped for system call
  * tracing, and the RC_DELAY request flag is given, set MF_SIG_DELAY instead
- * of RTS_PROC_STOP, and send a SIGNDELAY signal later when the process is done
+ * of RTS_PROC_STOP, and send a SIGKNDELAY signal later when the process is done
  * sending (ending the delay). Used by PM for safe signal delivery.
  */
   int proc_nr, action, flags, delayed;

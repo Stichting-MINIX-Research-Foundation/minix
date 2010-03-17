@@ -6,7 +6,6 @@
 
 #include "../drivers.h"
 
-#include <signal.h>
 #include <sys/mman.h>
 #include <minix/ds.h>
 #include <minix/vm.h>
@@ -1123,33 +1122,6 @@ PRIVATE void atl2_getname(message *m, int instance)
 }
 
 /*===========================================================================*
- *				atl2_shutdown				     *
- *===========================================================================*/
-PRIVATE void atl2_shutdown(void)
-{
-	/* Shut down this driver. Stop the device, and deallocate resources
-	 * as proof of concept.
-	 */
-	int r;
-
-	atl2_stop();
-
-	if ((r = sys_irqrmpolicy(&state.hook_id)) != OK)
-		panic("unable to deregister IRQ: %d", r);
-
-	free_contig(state.txd_base, ATL2_TXD_BUFSIZE);
-	free_contig(state.txs_base, ATL2_TXS_COUNT * sizeof(u32_t));
-	free_contig(state.rxd_base_u,
-		state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
-
-	vm_unmap_phys(SELF, state.base, ATL2_MMAP_SIZE);
-
-	/* We cannot free the PCI device at this time. */
-
-	exit(0);
-}
-
-/*===========================================================================*
  *				atl2_dump_link				     *
  *===========================================================================*/
 PRIVATE void atl2_dump_link(void)
@@ -1276,6 +1248,36 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 }
 
 /*===========================================================================*
+ *			    sef_cb_signal_handler			     *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	/* In case of a termination signal, shut down this driver.
+	 * Stop the device, and deallocate resources as proof of concept.
+	 */
+	int r;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	atl2_stop();
+
+	if ((r = sys_irqrmpolicy(&state.hook_id)) != OK)
+		panic("unable to deregister IRQ: %d", r);
+
+	free_contig(state.txd_base, ATL2_TXD_BUFSIZE);
+	free_contig(state.txs_base, ATL2_TXS_COUNT * sizeof(u32_t));
+	free_contig(state.rxd_base_u,
+		state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
+
+	vm_unmap_phys(SELF, state.base, ATL2_MMAP_SIZE);
+
+	/* We cannot free the PCI device at this time. */
+
+	exit(0);
+}
+
+/*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
 PRIVATE void sef_local_startup(void)
@@ -1288,6 +1290,9 @@ PRIVATE void sef_local_startup(void)
 	sef_setcb_init_restart(sef_cb_init_fresh);
 
 	/* No support for live update yet. */
+
+	/* Register signal callbacks. */
+	sef_setcb_signal_handler(sef_cb_signal_handler);
 
 	/* Let SEF perform startup. */
 	sef_startup();
@@ -1316,14 +1321,6 @@ int main(int argc, char **argv)
 			switch (m.m_source) {
 			case HARDWARE:		/* interrupt */
 				atl2_intr(&m);
-
-				break;
-
-			case PM_PROC_NR:	/* signal */
-				if (getsigset(&set) != 0) break;
-
-				if (sigismember(&set, SIGTERM))
-					atl2_shutdown();
 
 				break;
 

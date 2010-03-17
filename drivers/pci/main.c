@@ -55,14 +55,7 @@ int main(void)
 		}
 
 		if (is_notify(m.m_type)) {
-			switch (_ENDPOINT_P(m.m_source)) {
-				case PM_PROC_NR:
-					break;
-				default:
-					printf("PCI: got notify from %d\n",
-								m.m_source);
-					break;
-			}
+			printf("PCI: got notify from %d\n", m.m_source);
 
 			/* done, get a new message */
 			continue;

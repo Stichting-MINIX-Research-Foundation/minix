@@ -9,6 +9,7 @@
 #include <minix/cpufeature.h>
 #include <string.h>
 #include <assert.h>
+#include <signal.h>
 
 #include <machine/vm.h>
 
@@ -577,7 +578,7 @@ PRIVATE void vm_suspend(struct proc *caller, struct proc *target,
 							
 	/* Connect caller on vmrequest wait queue. */	
 	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
-		mini_notify(proc_addr(SYSTEM), VM_PROC_NR);
+		send_sig(VM_PROC_NR, SIGKMEM);
 	vmrequest = caller;
 }
 

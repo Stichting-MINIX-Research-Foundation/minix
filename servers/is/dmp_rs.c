@@ -43,7 +43,7 @@ PUBLIC void rproc_dmp()
   		rpub->label, rpub->endpoint, rp->r_pid,
 		s_flags_str(rp->r_flags), rpub->dev_nr, rpub->dev_style,
 		rpub->period, rp->r_alive_tm, rp->r_restarts,
-		rp->r_cmd
+		rp->r_args
   	);
 	printf("\n");
   }
@@ -56,9 +56,9 @@ PUBLIC void rproc_dmp()
 PRIVATE char *s_flags_str(int flags)
 {
 	static char str[10];
-	str[0] = (flags & RS_IN_USE) 	    ? 'U' : '-';
+	str[0] = (flags & RS_ACTIVE) 	    ? 'A' : '-';
 	str[1] = (flags & RS_INITIALIZING)  ? 'I' : '-';
-	str[2] = (flags & RS_UPDATING)      ? 'u' : '-';
+	str[2] = (flags & RS_UPDATING)      ? 'U' : '-';
 	str[3] = (flags & RS_EXITING)       ? 'E' : '-';
 	str[4] = (flags & RS_NOPINGREPLY)   ? 'N' : '-';
 	str[5] = '\0';

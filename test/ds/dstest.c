@@ -57,7 +57,7 @@ void test_str(void)
 	r = ds_publish_str(key_str, string, 0);
 	assert(r == OK);
 
-	r = ds_retrieve_str(key_str, buf, 0);
+	r = ds_retrieve_str(key_str, buf, sizeof(buf)-1);
 	assert(r == OK && strcmp(string, buf) == 0);
 
 	r = ds_delete_str(key_str);
@@ -65,7 +65,14 @@ void test_str(void)
 
 	/* Publish a long string. */
 	r = ds_publish_str(key_str, longstring, 0);
-	assert(r == EINVAL);
+	assert(r == OK);
+
+	r = ds_retrieve_str(key_str, buf, sizeof(buf)-1);
+	assert(r == OK && strcmp(string, buf) != 0
+		&& strncmp(longstring, buf, sizeof(buf)-1) == 0);
+
+	r = ds_delete_str(key_str);
+	assert(r == OK);
 
 	printf("DSTEST: STRING test successful!\n");
 }

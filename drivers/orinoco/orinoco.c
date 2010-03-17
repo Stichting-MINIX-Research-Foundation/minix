@@ -207,7 +207,6 @@ _PROTOTYPE (static void or_getstat_s, (message * mp));
 _PROTOTYPE (static void print_linkstatus, (t_or * orp, u16_t status));
 _PROTOTYPE (static int  or_get_recvd_packet, (t_or *orp, u16_t rxfid, 
 					u8_t *databuf));
-_PROTOTYPE (static void orinoco_stop, (void));
 _PROTOTYPE (static void or_reset, (void));
 _PROTOTYPE (static void or_watchdog_f, (timer_t *tp) );
 _PROTOTYPE (static void setup_wepkey, (t_or *orp, char *wepkey0) );
@@ -231,6 +230,7 @@ PRIVATE const char *progname;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN char **env_argv;
 
 /*****************************************************************************
@@ -263,17 +263,6 @@ int main(int argc, char *argv[]) {
 				case TTY_PROC_NR: 
 					or_dump(&m);	
 					break;
-				case PM_PROC_NR:
-				{
-					sigset_t set;
-
-					if (getsigset(&set) != 0) break;
-
-					if (sigismember(&set, SIGTERM))
-						orinoco_stop();
-
-					break;
-				}
 				default:
 					panic("orinoco: illegal notify from: %d",
 						m.m_source);
@@ -331,6 +320,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -364,6 +356,25 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		printf("orinoco: ds_retrieve_label_num failed for 'inet': %d\n", r);
 
 	return(OK);
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	int i;
+	t_or *orp;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	for (i= 0, orp= &or_table[0]; i<OR_PORT_NR; i++, orp++) {
+		if (orp->or_mode != OR_M_ENABLED)
+			continue;
+		/* TODO: send a signal to the card to shut it down */
+	}
+	exit(0);
 }
 
 /*****************************************************************************
@@ -430,25 +441,6 @@ static int do_hard_int(void) {
 			printf(" interrupts: %d\n", s);
 		}
 	}
-}
-
-
-
-/*****************************************************************************
- *                orinoco_stop                                               *
- *                                                                           *
- * Stops the card. The signal to the card itself is not implemented yet.     *
- *****************************************************************************/
-static void orinoco_stop () {
-	int i;
-	t_or *orp;
-
-	for (i= 0, orp= &or_table[0]; i<OR_PORT_NR; i++, orp++) {
-		if (orp->or_mode != OR_M_ENABLED)
-			continue;
-		/* TODO: send a signal to the card to shut it down */
-	}
-	exit(0);
 }
 
 /*****************************************************************************

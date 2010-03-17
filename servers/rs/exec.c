@@ -21,7 +21,7 @@ FORWARD _PROTOTYPE( void patch_ptr, (char stack[ARG_MAX],
 FORWARD _PROTOTYPE( int read_seg, (char *exec, size_t exec_len, off_t off,
 	int proc_e, int seg, phys_bytes seg_bytes)			);
 
-int dev_execve(int proc_e, char *exec, size_t exec_len, char **argv,
+int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	char **Xenvp)
 {
 	char * const *ap;
@@ -55,16 +55,6 @@ int dev_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 		string_off+= sizeof(*ap);
 		argc++;
 	}
-
-#if 0
-printf("here: %s, %d\n", __FILE__, __LINE__);
-	for (ep= envp; *ep != NULL; ep++) {
-		n = sizeof(*ep) + strlen(*ep) + 1;
-		frame_size+= n;
-		if (frame_size < n) ov= 1;
-		string_off+= sizeof(*ap);
-	}
-#endif
 
 	/* Add an argument count and two terminating nulls. */
 	frame_size+= sizeof(argc) + sizeof(*ap) + sizeof(*ep);
@@ -144,6 +134,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	if (r != OK)
 	{
 		printf("do_exec: read_header failed\n");
+		error= r;
 		goto fail;
 	}
 	need_restart= 1;

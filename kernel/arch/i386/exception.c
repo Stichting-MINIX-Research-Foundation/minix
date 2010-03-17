@@ -91,7 +91,7 @@ void pagefault( struct proc *pr,
 	pr->p_nextpagefault = pagefaults;
 	pagefaults = pr;
 		
-	mini_notify(proc_addr(HARDWARE), VM_PROC_NR);
+	send_sig(VM_PROC_NR, SIGKPF);
 
 	return;
 }

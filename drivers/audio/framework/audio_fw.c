@@ -53,7 +53,6 @@ FORWARD _PROTOTYPE( int msg_ioctl, (message *m_ptr) );
 FORWARD _PROTOTYPE( void msg_write, (message *m_ptr) );
 FORWARD _PROTOTYPE( void msg_read, (message *m_ptr) );
 FORWARD _PROTOTYPE( void msg_hardware, (void) );
-FORWARD _PROTOTYPE( void msg_sig_stop, (void) );
 FORWARD _PROTOTYPE( void msg_status, (message *m_ptr) );
 FORWARD _PROTOTYPE( int init_driver, (void) );
 FORWARD _PROTOTYPE( int open_sub_dev, (int sub_dev_nr, int operation) );
@@ -78,7 +77,8 @@ PRIVATE int device_available = 0;/*todo*/
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 PUBLIC int is_status_msg_expected = FALSE;
@@ -103,9 +103,6 @@ PUBLIC void main(void)
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case HARDWARE:
 					msg_hardware();
-					break;
-				case PM_PROC_NR:
-					msg_sig_stop();
 					break;
 				default:
 					dprint("%s: %d uncaught notify!\n",
@@ -191,6 +188,9 @@ PRIVATE void sef_local_startup()
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
   sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -248,10 +248,38 @@ PRIVATE int init_driver(void) {
 		error("%s: init driver couldn't set IRQ policy", drv.DriverName, i);
 		return EIO;
 	}
-	irq_hook_set = TRUE; /* now msg_sig_stop knows it must unregister policy*/
+	irq_hook_set = TRUE; /* now signal handler knows it must unregister policy*/
 	return OK;
 }
 
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	int i;
+	char irq;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	for (i = 0; i < drv.NrOfSubDevices; i++) {
+		drv_stop(i); /* stop all sub devices */
+	}
+	if (irq_hook_set) {
+		if (sys_irqdisable(&irq_hook_id) != OK) {
+			error("Could not disable IRQ\n");
+		}
+		/* get irq from device driver*/
+		if (drv_get_irq(&irq) != OK) {
+			error("Msg SIG_STOP Couldn't get IRQ");
+		}
+		/* remove the policy */
+		if (sys_irqrmpolicy(&irq_hook_id) != OK) {
+			error("%s: Could not disable IRQ\n",drv.DriverName);
+		}
+	}
+}
 
 PRIVATE int msg_open (int minor_dev_nr) {
 	int r, read_chan, write_chan, io_ctl;
@@ -626,29 +654,6 @@ PRIVATE void msg_status(message *m_ptr)
 	send(m_ptr->m_source, m_ptr);			/* send DEV_NO_STATUS message */
 	is_status_msg_expected = FALSE;
 }
-
-
-PRIVATE void msg_sig_stop(void) 
-{
-	int i; char irq;
-	for (i = 0; i < drv.NrOfSubDevices; i++) {
-		drv_stop(i); /* stop all sub devices */
-	}
-	if (irq_hook_set) {
-		if (sys_irqdisable(&irq_hook_id) != OK) {
-			error("Could not disable IRQ\n");
-		}
-		/* get irq from device driver*/
-		if (drv_get_irq(&irq) != OK) {
-			error("Msg SIG_STOP Couldn't get IRQ");
-		}
-		/* remove the policy */
-		if (sys_irqrmpolicy(&irq_hook_id) != OK) {
-			error("%s: Could not disable IRQ\n",drv.DriverName);
-		}
-	}
-}
-
 
 /* handle interrupt for specified sub device; DmaMode == DEV_WRITE_S*/
 PRIVATE void handle_int_write(int sub_dev_nr) 

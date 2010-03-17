@@ -76,6 +76,7 @@ static char *buf_array, *buffer;		/* contiguous buffer */
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
@@ -369,28 +370,6 @@ static int parse_arguments(int argc, char *argv[])
 }
 
 /*===========================================================================*
- *				got_signal				     *
- *===========================================================================*/
-static void got_signal(void)
-{
-	sigset_t set;
-
-	/* See if PM sent us a SIGTERM. */
-	if (getsigset(&set) != 0) return;
-
-	if (!sigismember(&set, SIGTERM)) return;
-
-	/* If so, shut down this driver. */
-#if DEBUG
-	printf("Filter: shutdown...\n");
-#endif
-
-	driver_shutdown();
-
-	exit(0);
-}
-
-/*===========================================================================*
  *				main					     *
  *===========================================================================*/
 int main(int argc, char *argv[])
@@ -412,9 +391,6 @@ int main(int argc, char *argv[])
 		printf("Filter: got request %d from %d\n",
 			m_in.m_type, m_in.m_source);
 #endif
-
-		if (is_notify(m_in.m_type) && m_in.m_source == PM_PROC_NR)
-			got_signal();
 
 		who_e = m_in.m_source;
 		proc_e = m_in.IO_ENDPT;
@@ -461,6 +437,9 @@ PRIVATE void sef_local_startup(void)
 
 	/* No live update support for now. */
 
+	/* Register signal callbacks. */
+	sef_setcb_signal_handler(sef_cb_signal_handler);
+
 	/* Let SEF perform startup. */
 	sef_startup();
 }
@@ -487,5 +466,23 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	driver_init();
 
 	return(OK);
+}
+
+/*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	/* If so, shut down this driver. */
+#if DEBUG
+	printf("Filter: shutdown...\n");
+#endif
+
+	driver_shutdown();
+
+	exit(0);
 }
 

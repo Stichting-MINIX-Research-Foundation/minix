@@ -100,7 +100,6 @@ unsigned long rs_irq_set = 0;
 
 struct kmessages kmess;
 
-FORWARD _PROTOTYPE( void got_signal, (void)				);
 FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
 FORWARD _PROTOTYPE( void expire_timers, (void)				);
 FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
@@ -144,6 +143,7 @@ PUBLIC u32_t system_hz;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				tty_task				     *
@@ -202,16 +202,6 @@ PUBLIC int main(void)
 #endif
 				/* run watchdogs of expired timers */
 				expire_timers();
-				break;
-			case PM_PROC_NR:
-				/* signal */
-				got_signal();
-				break;
-			case SYSTEM:
-				/* system signal */
-				if (sigismember((sigset_t*)&tty_mess.NOTIFY_ARG,
-								SIGKMESS))
-					do_new_kmess(&tty_mess);
 				break;
 			default:
 				/* do nothing */
@@ -328,6 +318,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -355,21 +348,21 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 }
 
 /*===========================================================================*
- *				got_signal				     *
+ *		           sef_cb_signal_handler                             *
  *===========================================================================*/
-PRIVATE void got_signal()
+PRIVATE void sef_cb_signal_handler(int signo)
 {
-/* PM notified us that we have received a signal. If it is a SIGTERM, assume
- * that the system is shutting down.
- */
-  sigset_t set;
-
-  if (getsigset(&set) != 0) return;
-
-  if (!sigismember(&set, SIGTERM)) return;
-
-  /* switch to primary console */
-  cons_stop();
+  /* Check for known signals, ignore anything else. */
+  switch(signo) {
+      /* There is a pending message from the kernel. */
+      case SIGKMESS:
+          do_new_kmess();
+      break;
+      /* Switch to primary console on termination. */
+      case SIGTERM:
+          cons_stop();
+      break;
+  }
 }
 
 /*===========================================================================*

@@ -18,7 +18,8 @@
 #define USE_FORK       	   1	/* fork a new process */
 #define USE_NEWMAP     	   1	/* set a new memory map */
 #define USE_EXEC       	   1	/* update process after execute */
-#define USE_EXIT	   1	/* clean up after process exit */
+#define USE_CLEAR	   1	/* clean up after process exit */
+#define USE_EXIT	   1	/* a system process wants to exit */
 #define USE_TRACE      	   1	/* process information and tracing */
 #define USE_GETKSIG    	   1	/* retrieve pending kernel signals */
 #define USE_ENDKSIG    	   1	/* finish pending kernel signals */
@@ -42,6 +43,7 @@
 #define USE_PHYSCOPY  	   1 	/* copy using physical addressing */
 #define USE_MEMSET  	   1	/* write char to a given memory area */
 #define USE_RUNCTL         1	/* control stop flags of a process */
+#define USE_UPDATE         1	/* update a process into another */
 #define USE_MCONTEXT       1    /* enable getting and setting of mach context*/
 
 /* Length of program names stored in the process table. This is only used

@@ -145,7 +145,7 @@ PRIVATE int do_map_memory(struct vmproc *vms, struct vmproc *vmd,
 	physr_start_iter(vrs->phys, &iter, offset_s, AVL_EQUAL);
 	prs = physr_get_iter(&iter);
 	if(!prs)
-		panic("map_memory: no aligned phys region: %d", 0);
+		panic("do_map_memory: no aligned phys region: %d", 0);
 
 	/* flag: 0 -> read-only
 	 *       1 -> writable
@@ -230,10 +230,10 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
 	int r;
 
 	if(vm_isokendpt(sour, &p) != OK)
-		panic("handle_memory: endpoint wrong: %d", sour);
+		panic("map_memory: bad endpoint: %d", sour);
 	vms = &vmproc[p];
 	if(vm_isokendpt(dest, &p) != OK)
-		panic("handle_memory: endpoint wrong: %d", dest);
+		panic("map_memory: bad endpoint: %d", dest);
 	vmd = &vmproc[p];
 
 	vrs = map_lookup(vms, virt_s);
@@ -251,30 +251,12 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
 	map_handle_memory(vms, vrs, offset_s, length, 0);
 
 	/* Prepare work. */
-	#define map_printregion(x, y) (x = x)
-	#define printf(x, y, z) (z = z)
-	printf("before clean with offset, length: %d, %d\n", offset_s, length);
-	map_printregion(vms, vrs);
 	clean_phys_regions(vrs, offset_s, length);
-	printf("after clean with offset, length: %d, %d\n", offset_s, length);
-	map_printregion(vms, vrs);
-
-	printf("before clean with offset, length: %d, %d\n", offset_d, length);
-	map_printregion(vmd, vrd);
 	clean_phys_regions(vrd, offset_d, length);
-	printf("after clean with offset, length: %d, %d\n", offset_d, length);
-	map_printregion(vmd, vrd);
-
 	rm_phys_regions(vrd, offset_d, length);
-	printf("after rm with offset, length: %d, %d\n", offset_d, length);
-	map_printregion(vmd, vrd);
 
 	/* Map memory. */
 	r = do_map_memory(vms, vmd, vrs, vrd, offset_s, offset_d, length, flag);
-	printf("after map (dst) with offset, length: %d, %d\n", offset_d, length);
-	map_printregion(vmd, vrd);
-	#undef map_printregion
-	#undef printf
 
 	return r;
 }
@@ -295,7 +277,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 
 	/* Use information on the destination process to unmap. */
 	if(vm_isokendpt(dest, &p) != OK)
-		panic("handle_memory: endpoint wrong: %d", dest);
+		panic("unmap_memory: bad endpoint: %d", dest);
 	vmd = &vmproc[p];
 
 	vrd = map_lookup(vmd, virt_d);
@@ -306,7 +288,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 	physr_start_iter(vrd->phys, &iter, off, AVL_EQUAL);
 	pr = physr_get_iter(&iter);
 	if(!pr)
-		panic("map_memory: no aligned phys region: %d", 0);
+		panic("unmap_memory: no aligned phys region: %d", 0);
 
 	/* Copy the phys block now rather than doing COW. */
 	end = off + length;

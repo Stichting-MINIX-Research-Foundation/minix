@@ -9,10 +9,16 @@
 
 #include <ansi.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/ptrace.h>
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <lib.h>
 
 #include <minix/callnr.h>
 #include <minix/config.h>
@@ -26,6 +32,9 @@
 #include <minix/rs.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
+#include <minix/vm.h>
+#include <minix/ds.h>
+#include <minix/minlib.h>
 
 #include <machine/archtypes.h>
 #include <timers.h>				/* For priv.h */

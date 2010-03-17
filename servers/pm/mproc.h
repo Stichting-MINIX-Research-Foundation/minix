@@ -38,7 +38,6 @@ EXTERN struct mproc {
   /* Signal handling information. */
   sigset_t mp_ignore;		/* 1 means ignore the signal, 0 means don't */
   sigset_t mp_catch;		/* 1 means catch the signal, 0 means don't */
-  sigset_t mp_sig2mess;		/* 1 means transform into notify message */
   sigset_t mp_sigmask;		/* signals to be blocked */
   sigset_t mp_sigmask2;		/* saved copy of mp_sigmask */
   sigset_t mp_sigpending;	/* pending signals to be handled */

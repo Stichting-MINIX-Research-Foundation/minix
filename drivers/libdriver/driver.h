@@ -37,7 +37,6 @@ struct driver {
 					iovec_t *iov, unsigned nr_req) );
   _PROTOTYPE( void (*dr_cleanup), (void) );
   _PROTOTYPE( void (*dr_geometry), (struct partition *entry) );
-  _PROTOTYPE( void (*dr_signal), (struct driver *dp, sigset_t *set) );
   _PROTOTYPE( void (*dr_alarm), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_cancel), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_select), (struct driver *dp, message *m_ptr) );
@@ -63,7 +62,6 @@ _PROTOTYPE( int do_nop, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( struct device *nop_prepare, (int device) );
 _PROTOTYPE( void nop_cleanup, (void) );
 _PROTOTYPE( void nop_task, (void) );
-_PROTOTYPE( void nop_signal, (struct driver *dp, sigset_t *set) );
 _PROTOTYPE( void nop_alarm, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_cancel, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );

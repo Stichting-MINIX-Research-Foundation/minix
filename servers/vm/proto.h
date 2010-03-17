@@ -181,6 +181,7 @@ _PROTOTYPE( vir_bytes arch_addrok, (struct vmproc *vmp, vir_bytes addr));
 
 /* rs.c */
 _PROTOTYPE(int do_rs_set_priv, (message *m));
+_PROTOTYPE(int do_rs_update, (message *m));
 
 /* queryexit.c */
 _PROTOTYPE(int do_query_exit, (message *m));

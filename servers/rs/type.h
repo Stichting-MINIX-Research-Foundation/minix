@@ -11,6 +11,7 @@ struct boot_image_priv {
   int flags;                   /* privilege flags */
   short trap_mask;             /* allowed system call traps */
   int ipc_to;                  /* send mask protection */
+  endpoint_t sig_mgr;          /* signal manager */
   int *k_calls;                /* allowed kernel calls */
   int *vm_calls;               /* allowed vm calls */
 };
@@ -34,6 +35,10 @@ struct boot_image_dev {
 /* Definition of an entry of the system process table. */
 struct rproc {
   struct rprocpub *r_pub;       /* pointer to the corresponding public entry */
+  struct rproc *r_old_rp;       /* pointer to the slot with the old version */
+  struct rproc *r_new_rp;       /* pointer to the slot with the new version */
+  struct rproc *r_prev_rp;      /* pointer to the slot with the prev replica */
+  struct rproc *r_next_rp;      /* pointer to the slot with the next replica */
   pid_t r_pid;			/* process id, -1 if the process is not there */
 
   int r_restarts;		/* number of restarts (initially zero) */
@@ -44,11 +49,13 @@ struct rproc {
   clock_t r_alive_tm;		/* timestamp of last heartbeat */
   clock_t r_stop_tm;		/* timestamp of SIGTERM signal */
   endpoint_t r_caller;		/* RS_LATEREPLY caller */
+  int r_caller_request;		/* RS_LATEREPLY caller request */
 
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
-  char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
+  char r_args[MAX_COMMAND_LEN];	/* null-separated raw command plus arguments */
   char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */
   int r_argc;  			/* number of arguments */
+  char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
 
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
@@ -60,7 +67,6 @@ struct rproc {
   uid_t r_uid;
   int r_nice;
 
-  u32_t r_call_mask[RS_SYS_CALL_MASK_SIZE];
   char r_ipc_list[MAX_IPC_LIST];
   int r_nr_control;
   char r_control[RS_NR_CONTROL][RS_MAX_LABEL_LEN];

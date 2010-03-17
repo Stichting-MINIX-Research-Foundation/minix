@@ -16,13 +16,11 @@
  *===========================================================================*/
 PUBLIC int do_kill(struct proc * caller, message * m_ptr)
 {
-/* Handle sys_kill(). Cause a signal to be sent to a process. The PM is the
- * central server where all signals are processed and handler policies can
- * be registered. Any request, except for PM requests, is added to the map
- * of pending signals and the PM is informed about the new signal.
- * Since system servers cannot use normal POSIX signal handlers (because they
- * are usually blocked on a RECEIVE), they can request the PM to transform 
- * signals into messages. This is done by the PM with a call to sys_kill(). 
+/* Handle sys_kill(). Cause a signal to be sent to a process. Any request
+ * is added to the map of pending signals and the signal manager
+ * associated to the process is informed about the new signal. The signal
+ * is then delivered using POSIX signal handlers for user processes, or
+ * translated into an IPC message for system services.
  */
   proc_nr_t proc_nr, proc_nr_e;
   int sig_nr = m_ptr->SIG_NUMBER;
@@ -33,10 +31,9 @@ PUBLIC int do_kill(struct proc * caller, message * m_ptr)
   if (sig_nr >= _NSIG) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
 
-  /* Set pending signal to be processed by the PM. */
+  /* Set pending signal to be processed by the signal manager. */
   cause_sig(proc_nr, sig_nr);
-  if (sig_nr == SIGKILL)
-	clear_endpoint(proc_addr(proc_nr));
+
   return(OK);
 }
 

@@ -544,24 +544,6 @@ static void do_watchdog(void *message)
   return;
 }
 
-PRIVATE void handle_system_signal(message *m)
-{
-	sigset_t set;
-	int port;
-
-	if (getsigset(&set) != 0) return;
-
-	if (sigismember(&set, SIGTERM)) {	/* Shut down */
-		for (port = 0; port < DE_PORT_NR; port += 1) {
-			if (de_table[port].de_mode == DEM_ENABLED) {
-				m->m_type = DL_STOP;
-				m->DL_PORT = port;
-				do_stop(m);
-			}
-		}
-	}
-}
-
 PRIVATE void handle_hw_intr(void)
 {
 	dpeth_t *dep;
@@ -582,6 +564,7 @@ PRIVATE void handle_hw_intr(void)
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN char **env_argv;
 
 /*
@@ -618,9 +601,6 @@ PUBLIC int main(int argc, char **argv)
 			case TTY_PROC_NR:
 				/* Function key pressed */
 				do_dump(&m);
-				break;
-			case PM_PROC_NR:
-				handle_system_signal(&m);
 				break;
 			default:	
 				/* Invalid message type */
@@ -669,6 +649,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -704,6 +687,26 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	notify(tasknr);
 
   return(OK);
+}
+
+/*===========================================================================*
+ *		            sef_cb_signal_handler                            *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  int port;
+  message m;
+
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  for (port = 0; port < DE_PORT_NR; port += 1) {
+      if (de_table[port].de_mode == DEM_ENABLED) {
+          m.m_type = DL_STOP;
+          m.DL_PORT = port;
+          do_stop(&m);
+      }
+  }
 }
 
 /** dp.c **/

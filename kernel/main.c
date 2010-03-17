@@ -114,6 +114,7 @@ PUBLIC void main()
                 priv(rp)->s_trap_mask= RSYS_T;     /* allowed traps */
                 ipc_to_m = RSYS_M;                 /* allowed targets */
                 kcalls = RSYS_KC;                  /* allowed kernel calls */
+                priv(rp)->s_sig_mgr = RSYS_SM;     /* signal manager */
             }
             /* Priviliges for ordinary process. */
             else {

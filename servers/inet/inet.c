@@ -189,7 +189,7 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fresh);
 
   /* No live update support for now. */
 
@@ -205,10 +205,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /* Initialize the inet server. */
 	int r;
 	int timerand, fd;
-	u32_t tasknr;
+	endpoint_t tasknr;
 	struct fssignon device;
 	u8_t randbits[32];
 	struct timeval tv;
+	char my_name[32];
 
 #if DEBUG
 	printf("Starting inet...\n");
@@ -257,9 +258,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	init_rand256(randbits);
 
 	/* Our new identity as a server. */
-	r= ds_retrieve_label_num("inet", &tasknr);
+	r = sys_whoami(&tasknr, my_name, sizeof(my_name));
 	if (r != OK)
-		ip_panic(("inet: ds_retrieve_label_num failed for 'inet': %d", r));
+		ip_panic(("inet: sys_whoami failed for 'inet': %d", r));
 	this_proc= tasknr;
 
 	/* Register the device group. */

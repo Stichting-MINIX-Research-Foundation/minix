@@ -49,6 +49,8 @@ PRIVATE char *known_requests[] = {
 #define RUN_CMD		"run"
 #define RUN_SCRIPT	"/etc/rs.single"	/* Default script for 'run' */
 #define PATH_CONFIG	_PATH_SYSTEM_CONF	/* Default config file */
+#define DEFAULT_LU_STATE   3                    /* Default live update state */
+#define DEFAULT_LU_MAXTIME 0                    /* Default lu max time */
 
 /* Define names for arguments provided to this utility. The first few 
  * arguments are required and have a known index. Thereafter, some optional
@@ -60,8 +62,6 @@ PRIVATE char *known_requests[] = {
 #define ARG_REQUEST	0		/* request to perform */
 #define ARG_PATH	1		/* system service */
 #define ARG_LABEL	1		/* name of system service */
-#define ARG_LU_STATE		2	/* the state required to update */
-#define ARG_PREPARE_MAXTIME	3	/* max time to prepare for the update */
 
 #define MIN_ARG_COUNT	1		/* require an action */
 
@@ -75,7 +75,9 @@ PRIVATE char *known_requests[] = {
 #define ARG_CONFIG	"-config"	/* name of the file with the resource
 					 * configuration 
 					 */
-#define ARG_PRINTEP	"-printep"	/* print endpoint number after start */
+
+#define ARG_LU_STATE	"-state"	/* the live update state required */
+#define ARG_LU_MAXTIME	"-maxtime"      /* max time to prepare for the update */
 
 #define SERVICE_LOGIN	"service"	/* passwd file entry for services */
 
@@ -95,10 +97,9 @@ PRIVATE long req_period;
 PRIVATE char *req_script;
 PRIVATE char *req_ipc;
 PRIVATE char *req_config = PATH_CONFIG;
-PRIVATE int req_printep;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
-PRIVATE int req_lu_state;
-PRIVATE int req_prepare_maxtime;
+PRIVATE int req_lu_state = DEFAULT_LU_STATE;
+PRIVATE int req_lu_maxtime = DEFAULT_LU_MAXTIME;
 
 /* Buffer to build "/command arg1 arg2 ..." string to pass to RS server. */
 PRIVATE char command[4096];	
@@ -113,12 +114,12 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [-c -r] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
-	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
+  "    %s [-c -r] (up|run|update) <binary> [%s <args>] [%s <special>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
+	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD, ARG_SCRIPT, ARG_LABELNAME,
+	ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
   fprintf(stderr, "    %s down label\n", app_name);
   fprintf(stderr, "    %s refresh label\n", app_name);
   fprintf(stderr, "    %s restart label\n", app_name);
-  fprintf(stderr, "    %s update label state maxtime\n", app_name);
   fprintf(stderr, "    %s shutdown\n", app_name);
   fprintf(stderr, "\n");
 }
@@ -196,7 +197,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 	req_nr = RS_RQ_BASE + req_type;
   }
 
-  if (req_nr == RS_UP) {
+  if (req_nr == RS_UP || req_nr == RS_UPDATE) {
+      u32_t system_hz;
+
       rs_start.rss_flags= RSS_IPC_VALID;
       if (c_flag)
 	rs_start.rss_flags |= RSS_COPY;
@@ -233,6 +236,14 @@ PRIVATE int parse_arguments(int argc, char **argv)
           exit(EINVAL);
       }
 
+      /* Get HZ. */
+      if(getsysinfo_up(PM_PROC_NR,
+          SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
+          system_hz = DEFAULT_HZ;
+          fprintf(stderr, "WARNING: reverting to default HZ %d\n",
+              system_hz);
+      }
+
       /* Check optional arguments that come in pairs like "-args arglist". */
       for (i=optind+MIN_ARG_COUNT+1; i<argc; i=i+2) {
           if (! (i+1 < argc)) {
@@ -243,14 +254,6 @@ PRIVATE int parse_arguments(int argc, char **argv)
               req_args = argv[i+1];
           }
           else if (strcmp(argv[i], ARG_PERIOD)==0) {
-		u32_t system_hz;
-		if(getsysinfo_up(PM_PROC_NR,
-			SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
-			system_hz = DEFAULT_HZ;
-			fprintf(stderr, "WARNING: reverting to default HZ %d\n",
-				system_hz);
-		} 
-
 	      req_period = strtol(argv[i+1], &hz, 10);
 	      if (strcmp(hz,"HZ")==0) req_period *= system_hz;
 	      if (req_period < 1) {
@@ -280,8 +283,30 @@ PRIVATE int parse_arguments(int argc, char **argv)
           else if (strcmp(argv[i], ARG_CONFIG)==0) {
               req_config = argv[i+1];
           }
-          else if (strcmp(argv[i], ARG_PRINTEP)==0) {
-              req_printep = 1;
+          else if (strcmp(argv[i], ARG_LU_STATE)==0) {
+              errno=0;
+              req_lu_state = strtol(argv[i+1], &buff, 10);
+              if(errno || strcmp(buff, "")) {
+                  print_usage(argv[ARG_NAME],
+                    "bad live update state");
+                  exit(EINVAL);
+              }
+              if(req_lu_state == SEF_LU_STATE_NULL) {
+                  print_usage(argv[ARG_NAME],
+                      "null live update state.");
+                  exit(EINVAL);
+              }
+          }
+          else if (strcmp(argv[i], ARG_LU_MAXTIME)==0) {
+              errno=0;
+              req_lu_maxtime = strtol(argv[i+1], &hz, 10);
+              if(errno || (strcmp(hz, "") && strcmp(hz, "HZ"))
+                  || req_lu_maxtime<0) {
+                  print_usage(argv[ARG_NAME],
+                      "bad live update max time");
+                  exit(EINVAL);
+              }
+              if (strcmp(hz,"HZ")==0) req_lu_maxtime *= system_hz;
           }
           else {
               print_usage(argv[ARG_NAME], "unknown optional argument given");
@@ -300,43 +325,6 @@ PRIVATE int parse_arguments(int argc, char **argv)
   } 
   else if (req_nr == RS_SHUTDOWN) {
         /* no extra arguments required */
-  }
-  else if (req_nr == RS_UPDATE) {
-      /* Check for mandatory arguments */ 
-      if (argc - 1 < optind+ARG_LU_STATE) {
-          print_usage(argv[ARG_NAME],
-              "action requires at least a label and a live update state");
-          exit(EINVAL);
-      }
-      
-      /* Label. */
-      req_label= argv[optind+ARG_LABEL];
-      
-      /* Live update state. */
-      errno=0;
-      req_lu_state=strtol(argv[optind+ARG_LU_STATE], &buff, 10);
-      if(errno || strcmp(buff, "")) {
-          print_usage(argv[ARG_NAME],
-              "action requires a correct live update state");
-          exit(EINVAL);
-      }
-      if(req_lu_state == SEF_LU_STATE_NULL) {
-          print_usage(argv[ARG_NAME],
-              "action requires a non-null live update state.");
-          exit(EINVAL);
-      }
-      
-      /* Prepare max time. */
-      req_prepare_maxtime=0;
-      if (argc - 1 >= optind+ARG_PREPARE_MAXTIME) {
-          req_prepare_maxtime=strtol(argv[optind+ARG_PREPARE_MAXTIME],
-              &buff, 10);
-          if(errno || strcmp(buff, "") || req_prepare_maxtime<0) {
-              print_usage(argv[ARG_NAME],
-                "action requires a correct max time to prepare for the update");
-              exit(EINVAL);
-          }
-      }
   }
 
   /* Return the request number if no error were found. */
@@ -714,7 +702,6 @@ struct
 	int call_nr;
 } system_tab[]=
 {
-	{ "EXIT",		SYS_EXIT },
 	{ "PRIVCTL",		SYS_PRIVCTL },
 	{ "TRACE",		SYS_TRACE },
 	{ "KILL",		SYS_KILL },
@@ -725,21 +712,9 @@ struct
 	{ "DEVIO",		SYS_DEVIO },
 	{ "SDEVIO",		SYS_SDEVIO },
 	{ "VDEVIO",		SYS_VDEVIO },
-	{ "SETALARM",		SYS_SETALARM },
-	{ "TIMES",		SYS_TIMES },
-	{ "GETINFO",		SYS_GETINFO },
-	{ "SAFECOPYFROM",	SYS_SAFECOPYFROM },
-	{ "SAFECOPYTO",		SYS_SAFECOPYTO },
-	{ "SAFEMAP",		SYS_SAFEMAP },
-	{ "SAFEREVMAP",		SYS_SAFEREVMAP },
-	{ "SAFEUNMAP",		SYS_SAFEUNMAP },
-	{ "VSAFECOPY",		SYS_VSAFECOPY },
-	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },
-	{ "PROFBUF",		SYS_PROFBUF },
 	{ "STIME",		SYS_STIME },
 	{ "VMCTL",		SYS_VMCTL },
-	{ "SYSCTL",		SYS_SYSCTL },
 	{ NULL,		0 }
 };
 
@@ -836,10 +811,7 @@ PRIVATE void do_vm(config_t *cpe)
 
 PRIVATE void do_system(config_t *cpe)
 {
-	int i, call_nr, word, bits_per_word;
-	unsigned long mask;
-
-	bits_per_word= sizeof(rs_start.rss_system[0])*8;
+	int i, call_nr;
 
 	/* Process a list of 'system' calls that are allowed */
 	for (; cpe; cpe= cpe->next)
@@ -855,38 +827,13 @@ PRIVATE void do_system(config_t *cpe)
 				cpe->file, cpe->line);
 		}
 
-		/* Get call number */
-		for (i= 0; system_tab[i].label != NULL; i++)
-		{
-			if (strcmp(cpe->word, system_tab[i].label) == 0)
+		for (i = 0; system_tab[i].label != NULL; i++)
+			if (!strcmp(cpe->word, system_tab[i].label))
 				break;
-		}
 		if (system_tab[i].label == NULL)
-		{
 			fatal("do_system: unknown call '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
-		}
-		call_nr= system_tab[i].call_nr;
-
-		/* Subtract KERNEL_CALL */
-		if (call_nr < KERNEL_CALL)
-		{
-			fatal(
-		"do_system: bad call number %d in system tab for '%s'",
-				call_nr, system_tab[i].label);
-		}
-		call_nr -= KERNEL_CALL;
-
-		word= call_nr / bits_per_word;
-		mask= (1UL << (call_nr % bits_per_word));
-
-		if (word >= RS_SYS_CALL_MASK_SIZE)
-		{
-			fatal(
-			"RS_SYS_CALL_MASK_SIZE is too small (%d needed)",
-				word+1);
-		}
-		rs_start.rss_system[word] |= mask;
+		SET_BIT(rs_start.rss_system, system_tab[i].call_nr - KERNEL_CALL);
 	}
 }
 
@@ -1081,19 +1028,20 @@ PUBLIC int main(int argc, char **argv)
    */
   request = parse_arguments(argc, argv);
 
-  if(req_path) {
-	/* Obtain binary name. */
-	progname = strrchr(req_path, '/');
-	assert(progname);	/* an absolute path was required */
-	progname++;	/* skip last slash */
-  }
-
   /* Arguments seem fine. Try to perform the request. Only valid requests 
    * should end up here. The default is used for not yet supported requests. 
    */
+  result = OK;
   switch(request) {
+  case RS_UPDATE:
+      m.RS_LU_STATE = req_lu_state;
+      m.RS_LU_PREPARE_MAXTIME = req_lu_maxtime;
+      /* fall through */
   case RS_UP:
       /* Build space-separated command string to be passed to RS server. */
+      progname = strrchr(req_path, '/');
+      assert(progname);	/* an absolute path was required */
+      progname++;	/* skip last slash */
       strcpy(command, req_path);
       command[strlen(req_path)] = ' ';
       strcpy(command+strlen(req_path)+1, req_args);
@@ -1137,39 +1085,27 @@ PUBLIC int main(int argc, char **argv)
       }
 
       m.RS_CMD_ADDR = (char *) &rs_start;
-
-      /* Build request message and send the request. */
-      if (_syscall(RS_PROC_NR, request, &m) == -1) 
-          failure();
-      else if(req_printep)
-	printf("%d\n", m.RS_ENDPOINT);	
-      result = m.m_type;
       break;
-
   case RS_DOWN:
   case RS_REFRESH:
   case RS_RESTART:
       m.RS_CMD_ADDR = req_label;
       m.RS_CMD_LEN = strlen(req_label);
-      if (_syscall(RS_PROC_NR, request, &m) == -1) 
-          failure();
       break;
   case RS_SHUTDOWN:
-      if (_syscall(RS_PROC_NR, request, &m) == -1) 
-          failure();
-      break;
-  case RS_UPDATE:
-      m.RS_CMD_ADDR = req_label;
-      m.RS_CMD_LEN = strlen(req_label);
-      m.RS_LU_STATE = req_lu_state;
-      m.RS_LU_PREPARE_MAXTIME = req_prepare_maxtime;
-      if (_syscall(RS_PROC_NR, request, &m) == -1) 
-          failure();
       break;
   default:
       print_usage(argv[ARG_NAME], "request is not yet supported");
       result = EGENERIC;
   }
+
+  /* Build request message and send the request. */
+  if(result == OK) {
+    if (_syscall(RS_PROC_NR, request, &m) == -1) 
+        failure();
+    result = m.m_type;
+  }
+
   return(result);
 }
 

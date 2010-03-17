@@ -56,7 +56,7 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq, irq_handler_t handler)
   hook->id = id;
   *line = hook;
   irq_use |= 1 << irq;  /* this does not work for irq >= 32 */
-  
+
   /* And as last enable the irq at the hardware.
    *
    * Internal this activates the line or source of the given interrupt.
@@ -78,25 +78,30 @@ PUBLIC void rm_irq_handler( irq_hook_t* hook ) {
   if( irq < 0 || irq >= NR_IRQ_VECTORS ) 
 	panic("invalid call to rm_irq_handler: %d",  irq);
 
-  /* disable the irq.  */
-  irq_actids[hook->irq] |= hook->id;
-  hw_intr_mask(hook->irq);
-    
-  /* remove the hook.  */
+  /* remove the hook  */
   line = &irq_handlers[irq];
-  
   while( (*line) != NULL ) {
-	if((*line)->id == id) {      
-		(*line) = (*line)->next;      
+	if((*line)->id == id) {
+		(*line) = (*line)->next;
 		if(!irq_handlers[irq])
 			irq_use &= ~(1 << irq);
 		if (irq_actids[irq] & id)
 			irq_actids[irq] &= ~id;
-		return;
-    	}          
-	line = &(*line)->next;
+    	}
+    	else {
+		line = &(*line)->next;
+    	}
   }
-  /* When the handler is not found, normally return here. */
+
+  /* Disable the irq if there are no other handlers registered.
+   * If the irq is shared, reenable it if there is no active handler.
+   */
+  if (irq_handlers[irq] == NULL) {
+	hw_intr_mask(irq);
+  }
+  else if (irq_actids[irq] == 0) {
+	hw_intr_unmask(irq);
+  }
 }
 
 /*===========================================================================*
@@ -114,6 +119,13 @@ PUBLIC void irq_handle(int irq)
   /* here we need not to get this IRQ until all the handlers had a say */
   hw_intr_mask(irq);
   hook = irq_handlers[irq];
+
+  /* Sanity check. */
+  if(hook == NULL) {
+      printf("%s: irq_handle:no handler registered, masking the IRQ...\n",
+          __FILE__);
+      return;
+  }
 
   /* Call list of handlers for an IRQ. */
   while( hook != NULL ) {

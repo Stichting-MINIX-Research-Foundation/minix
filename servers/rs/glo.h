@@ -25,18 +25,12 @@ extern struct boot_image_dev boot_image_dev_table[];
 
 /* The system process table. This table only has entries for system
  * services (servers and drivers), and thus is not directly indexed by
- * slot number.
+ * slot number. The size of the table must match the size of the privilege
+ * table in the kernel.
  */
 EXTERN struct rprocpub rprocpub[NR_SYS_PROCS];  /* public entries */
 EXTERN struct rproc rproc[NR_SYS_PROCS];
 EXTERN struct rproc *rproc_ptr[NR_PROCS];       /* mapping for fast access */
-
-/* Pipe for detection of exec failures. The pipe is close-on-exec, and
- * no data will be written to the pipe if the exec succeeds. After an 
- * exec failure, the slot number is written to the pipe. After each exit,
- * a non-blocking read retrieves the slot number from the pipe.
- */
-EXTERN int exec_pipe[2];
 
 /* Global init descriptor. This descriptor holds data to initialize system
  * services.
@@ -50,6 +44,9 @@ EXTERN struct rupdate rupdate;
 
 /* Enable/disable verbose output. */
 EXTERN long rs_verbose;
+
+/* Set when we are shutting down. */
+EXTERN int shutting_down;
 
 #endif /* RS_GLO_H */
 

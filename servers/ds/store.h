@@ -20,7 +20,6 @@ struct data_store {
 
 	union {
 		unsigned u32;
-		char string[DS_MAX_STRLEN];
 		struct {
 			void *data;
 			size_t length;

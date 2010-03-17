@@ -1,5 +1,6 @@
-#define _SYSTEM	1
-#define _MINIX 1
+#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
+#define _MINIX             1	/* tell headers to include MINIX stuff */
+#define _SYSTEM            1    /* get OK and negative error codes */
 
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -25,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 _PROTOTYPE( int do_shmget, (message *)                                   );
 _PROTOTYPE( int do_shmat, (message *)                                    );

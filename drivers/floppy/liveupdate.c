@@ -22,7 +22,7 @@ EXTERN int last_transfer_opcode;
 /*===========================================================================*
  *       			 sef_cb_lu_prepare 	 	             *
  *===========================================================================*/
-PUBLIC void sef_cb_lu_prepare(int state)
+PUBLIC int sef_cb_lu_prepare(int state)
 {
   int is_ready;
 
@@ -43,9 +43,7 @@ PUBLIC void sef_cb_lu_prepare(int state)
   }
 
   /* Tell SEF if we are ready. */
-  if(is_ready) {
-      sef_lu_ready(OK);
-  }
+  return is_ready ? OK : ENOTREADY;
 }
 
 /*===========================================================================*

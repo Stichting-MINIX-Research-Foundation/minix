@@ -202,7 +202,6 @@ PRIVATE struct driver w_dtab = {
   w_transfer,		/* do the I/O */
   nop_cleanup,		/* nothing to clean up */
   w_geometry,		/* tell the geometry of the disk */
-  nop_signal,		/* no cleanup needed on shutdown */
   nop_alarm,		/* ignore leftover alarms */
   nop_cancel,		/* ignore CANCELs */
   nop_select,		/* ignore selects */
@@ -213,7 +212,7 @@ PRIVATE struct driver w_dtab = {
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 
@@ -257,9 +256,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the at_wini driver. */
-  struct sigaction sa;
-  
-  /* Install signal handlers. Ask PM to transform signal into message. */
   system_hz = sys_hz();
 
   init_buffer();
@@ -267,14 +263,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   w_identify_wakeup_ticks = WAKEUP_TICKS;
   wakeup_ticks = WAKEUP_TICKS;
 
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("sigaction failed: %d", errno);
-
   /* Set special disk parameters. */
   init_params();
-  signal(SIGTERM, SIG_IGN);
 
   return(OK);
 }

@@ -171,7 +171,6 @@ _PROTOTYPE( static void rl_getstat_s, (message *mp)			);
 _PROTOTYPE( static void rl_getname, (message *mp)			);
 _PROTOTYPE( static void reply, (re_t *rep, int err, int may_block)	);
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
-_PROTOTYPE( static void rtl8139_stop, (void)				);
 _PROTOTYPE( static void check_int_events, (void)				);
 _PROTOTYPE( static int do_hard_int, (void)				);
 _PROTOTYPE( static void rtl8139_dump, (message *m)				);
@@ -195,7 +194,8 @@ PRIVATE u32_t system_hz;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 EXTERN int env_argc;
@@ -243,17 +243,6 @@ int main(int argc, char *argv[])
 				case TTY_PROC_NR:
 					rtl8139_dump(&m);
 					break;
-				case PM_PROC_NR:
-				{
-					sigset_t set;
-
-					if (getsigset(&set) != 0) break;
-
-					if (sigismember(&set, SIGTERM))
-						rtl8139_stop();
-
-					break;
-				}
 				default:
 					panic("illegal notify from: %d",
 					m.m_source);
@@ -298,6 +287,9 @@ PRIVATE void sef_local_startup()
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
   sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
   sef_startup();
@@ -352,6 +344,26 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 }
 
 /*===========================================================================*
+ *		           sef_cb_signal_handler                             *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+	int i;
+	re_t *rep;
+
+	/* Only check for termination signal, ignore anything else. */
+	if (signo != SIGTERM) return;
+
+	for (i= 0, rep= &re_table[0]; i<RE_PORT_NR; i++, rep++)
+	{
+		if (rep->re_mode != REM_ENABLED)
+			continue;
+		rl_outb(rep->re_base_port, RL_CR, 0);
+	}
+	exit(0);
+}
+
+/*===========================================================================*
  *				check_int_events			     *
  *===========================================================================*/
 static void check_int_events(void) 
@@ -368,23 +380,6 @@ static void check_int_events(void)
 				assert(rep->re_flags & REF_ENABLED);
 				rl_check_ints(rep);
 			}
-}
-
-/*===========================================================================*
- *				rtl8139_stop				     *
- *===========================================================================*/
-static void rtl8139_stop()
-{
-	int i;
-	re_t *rep;
-
-	for (i= 0, rep= &re_table[0]; i<RE_PORT_NR; i++, rep++)
-	{
-		if (rep->re_mode != REM_ENABLED)
-			continue;
-		rl_outb(rep->re_base_port, RL_CR, 0);
-	}
-	exit(0);
 }
 
 /*===========================================================================*

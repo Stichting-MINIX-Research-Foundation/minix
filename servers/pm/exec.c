@@ -152,9 +152,8 @@ int result;
 	{
 		if (rmp->mp_flags & PARTIAL_EXEC)
 		{
-			/* Use SIGILL signal that something went wrong */
-			rmp->mp_sigstatus = SIGILL;
-			exit_proc(rmp, 0, FALSE /*dump_core*/);
+			/* Use SIGKILL to signal that something went wrong */
+			sys_kill(rmp->mp_endpoint, SIGKILL);
 			return;
 		}
 		setreply(rmp-mproc, result);

@@ -16,8 +16,6 @@ PRIVATE endpoint_t who_e;	/* caller's proc number */
 PRIVATE int callnr;		/* system call number */
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void exit_server, (void)				);
-FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr)			);
 FORWARD _PROTOTYPE(void reply, (int whom, message *m_ptr)		);
 
@@ -47,18 +45,9 @@ PUBLIC int main(int argc, char **argv)
       get_work(&m);
 
       if (is_notify(callnr)) {
-	      switch (_ENDPOINT_P(who_e)) {
-		      case PM_PROC_NR:
-			      sig_handler();
-			      break;
-		      default:
-			      printf("DS: warning, got illegal notify from: %d\n",
-					     			 m.m_source);
-			      result = EINVAL;
-			      goto send_reply;
-	      }
-
-	      /* done, get a new message */
+          printf("DS: warning, got illegal notify from: %d\n", m.m_source);
+          result = EINVAL;
+          goto send_reply;
       }
 
       switch (callnr) {
@@ -108,40 +97,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_restart_fail);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
 
   /* Let SEF perform startup. */
   sef_startup();
-}
-
-/*===========================================================================*
- *				 sig_handler                                 *
- *===========================================================================*/
-PRIVATE void sig_handler()
-{
-/* Signal handler. */
-  sigset_t sigset;
-
-  /* Try to obtain signal set from PM. */
-  if (getsigset(&sigset) != 0) return;
-
-  /* Check for known signals. */
-  if (sigismember(&sigset, SIGTERM)) {
-      exit_server();
-  }
-}
-
-/*===========================================================================*
- *				exit_server                                  *
- *===========================================================================*/
-PRIVATE void exit_server()
-{
-/* Shut down the information service. */
-
-  /* Done. Now exit. */
-  exit(0);
 }
 
 /*===========================================================================*

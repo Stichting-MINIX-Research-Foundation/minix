@@ -49,16 +49,8 @@ int ds_publish_u32(const char *ds_name, u32_t value, int flags)
 	return do_invoke_ds(DS_PUBLISH, ds_name);
 }
 
-int ds_publish_str(const char *ds_name, char *value, int flags)
-{
-	if(strlen(value) >= DS_MAX_STRLEN)
-		return EINVAL;
-	strcpy((char *)(&m.DS_STRING), value);
-	m.DS_FLAGS = DSF_TYPE_STR | flags;
-	return do_invoke_ds(DS_PUBLISH, ds_name);
-}
-
-int ds_publish_mem(const char *ds_name, void *vaddr, size_t length, int flags)
+static int ds_publish_raw(const char *ds_name, void *vaddr, size_t length,
+	int flags)
 {
 	cp_grant_id_t gid;
 	int r;
@@ -70,12 +62,25 @@ int ds_publish_mem(const char *ds_name, void *vaddr, size_t length, int flags)
 
 	m.DS_VAL = gid;
 	m.DS_VAL_LEN = length;
-	m.DS_FLAGS = DSF_TYPE_MEM | flags;
+	m.DS_FLAGS = flags;
 
 	r = do_invoke_ds(DS_PUBLISH, ds_name);
 	cpf_revoke(gid);
 
 	return r;
+}
+
+int ds_publish_str(const char *ds_name, char *value, int flags)
+{
+	size_t length;
+	length = strlen(value) + 1;
+	value[length - 1] = '\0';
+	return ds_publish_raw(ds_name, value, length, flags | DSF_TYPE_STR);
+}
+
+int ds_publish_mem(const char *ds_name, void *vaddr, size_t length, int flags)
+{
+	return ds_publish_raw(ds_name, vaddr, length, flags | DSF_TYPE_MEM);
 }
 
 int ds_publish_map(const char *ds_name, void *vaddr, size_t length, int flags)
@@ -97,7 +102,6 @@ int ds_publish_map(const char *ds_name, void *vaddr, size_t length, int flags)
 	m.DS_FLAGS = DSF_TYPE_MAP | flags;
 
 	r = do_invoke_ds(DS_PUBLISH, ds_name);
-	cpf_revoke(gid);
 
 	return r;
 }
@@ -136,17 +140,8 @@ int ds_retrieve_u32(const char *ds_name, u32_t *value)
 	return r;
 }
 
-int ds_retrieve_str(const char *ds_name, char *value, size_t len_str)
-{
-	int r;
-	m.DS_FLAGS = DSF_TYPE_STR;
-	r = do_invoke_ds(DS_RETRIEVE, ds_name);
-	strncpy(value, (char *)(&m.DS_STRING), DS_MAX_STRLEN);
-	value[DS_MAX_STRLEN - 1] = '\0';
-	return r;
-}
-
-int ds_retrieve_mem(const char *ds_name, char *vaddr, size_t *length)
+static int ds_retrieve_raw(const char *ds_name, char *vaddr, size_t *length,
+	int flags)
 {
 	cp_grant_id_t gid;
 	int r;
@@ -158,12 +153,26 @@ int ds_retrieve_mem(const char *ds_name, char *vaddr, size_t *length)
 
 	m.DS_VAL = gid;
 	m.DS_VAL_LEN = *length;
-	m.DS_FLAGS = DSF_TYPE_MEM;
+	m.DS_FLAGS = flags;
 	r = do_invoke_ds(DS_RETRIEVE, ds_name);
 	*length = m.DS_VAL_LEN;
 	cpf_revoke(gid);
 
 	return r;
+}
+
+int ds_retrieve_str(const char *ds_name, char *value, size_t len_str)
+{
+	int r;
+	size_t length = len_str + 1;
+	r = ds_retrieve_raw(ds_name, value, &length, DSF_TYPE_STR);
+	value[length - 1] = '\0';
+	return r;
+}
+
+int ds_retrieve_mem(const char *ds_name, char *vaddr, size_t *length)
+{
+	return ds_retrieve_raw(ds_name, vaddr, length, DSF_TYPE_MEM);
 }
 
 int ds_retrieve_map(const char *ds_name, char *vaddr, size_t *length,
