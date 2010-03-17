@@ -57,6 +57,7 @@ typedef unsigned long sigset_t;
 #define SIGTTOU           23	/* background process wants to write */
 
 #define _NSIG             26	/* highest signal number plus one */
+#define NSIG             _NSIG
 
 #ifdef _MINIX
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */
