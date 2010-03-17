@@ -105,6 +105,8 @@ PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
 	  result = EBADREQUEST;			/* illegal message type */
   }
   else if (!GET_BIT(priv(caller)->s_k_call_mask, call_nr)) {
+	  printf("SYSTEM: denied request %d from %d.\n",
+			  call_nr,msg->m_source);
 	  result = ECALLDENIED;			/* illegal message type */
   } else {
 	  /* handle the system call */
