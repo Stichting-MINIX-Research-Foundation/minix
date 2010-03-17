@@ -6,19 +6,19 @@ LDFLAGS	= -i -f
 
 OBJS = m.o e.o n.o l.o r.o v.o y.o regexp.o k.o
 
-all:	awk
+all:	awk.old
 
-awk:	$(OBJS)
+awk.old:	$(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) #-lm
 	install -S 32kw $@
 
-install:	/usr/bin/awk
+install:	/usr/bin/awk.old
 
-/usr/bin/awk:	awk
+/usr/bin/awk.old:	awk.old
 	install -cs -o bin $? $@
 
 clean:
-	rm -f awk *.o a.out *.bak core
+	rm -f awk awk.old *.o a.out *.bak core
 
 e.o:	awk.h regexp.h
 l.o:	awk.h
