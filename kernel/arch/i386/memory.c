@@ -33,11 +33,8 @@ PRIVATE int psok = 0;
 
 PUBLIC u8_t *vm_pagedirs = NULL;
 
-#define NOPDE (-1)
-#define PDEMASK(n) (1L << (n))
-PUBLIC u32_t dirtypde;  /* Accessed from assembly code. */
-#define WANT_FREEPDES (sizeof(dirtypde)*8-5)
-PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
+#define MAX_FREEPDES 3
+PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
@@ -58,96 +55,84 @@ PUBLIC void vm_init(struct proc *newptproc)
 
 }
 
-#define TYPEDIRECT	0
-#define TYPEPROCMAP	1
-#define TYPEPHYS	2
-
-/* This macro sets up a mapping from within the kernel's address
+/* This function sets up a mapping from within the kernel's address
  * space to any other area of memory, either straight physical
- * memory (PROC == NULL) or a process view of memory, in 4MB chunks.
- * It recognizes PROC having kernel address space as a special case.
+ * memory (pr == NULL) or a process view of memory, in 4MB windows.
+ * I.e., it maps in 4MB chunks of virtual (or physical) address space
+ * to 4MB chunks of kernel virtual address space.
  *
- * It sets PTR to the pointer within kernel address space at the start
- * of the 4MB chunk, and OFFSET to the offset within that chunk
- * that corresponds to LINADDR.
+ * It recognizes pr already being in memory as a special case (no
+ * mapping required).
  *
- * It needs FREEPDE (available and addressable PDE within kernel
- * address space), SEG (hardware segment), VIRT (in-datasegment
- * address if known).
+ * The target (i.e. in-kernel) mapping area is one of the freepdes[]
+ * VM has earlier already told the kernel about that is available. It is
+ * identified as the 'pde' parameter. This value can be chosen freely
+ * by the caller, as long as it is in range (i.e. 0 or higher and corresonds
+ * to a known freepde slot). It is up to the caller to keep track of which
+ * freepde's are in use, and to determine which ones are free to use.
+ *
+ * The logical number supplied by the caller is translated into an actual
+ * pde number to be used, and a pointer to it (linear address) is returned
+ * for actual use by phys_copy or phys_memset.
  */
-#define CREATEPDE(PROC, PTR, LINADDR, REMAIN, BYTES, PDE, TYPE) { \
-	u32_t *pdeptr = NULL; 				\
-	int proc_pde_index;					\
-	proc_pde_index = I386_VM_PDE(LINADDR);			\
-	PDE = NOPDE;						\
-	if((PROC) && (((PROC) == ptproc) || !HASPT(PROC))) {	\
-		PTR = LINADDR;					\
-		TYPE = TYPEDIRECT;				\
-	} else {						\
-		int fp;						\
-		int mustinvl;					\
-		u32_t pdeval, mask;			        \
-		phys_bytes offset;				\
-		assert(psok);					\
-		if(PROC) {					\
-			TYPE = TYPEPROCMAP;				\
-			assert(!iskernelp(PROC));		\
-			assert(HASPT(PROC));			\
-			pdeptr = PROCPDEPTR(PROC, proc_pde_index);	\
-			pdeval = *pdeptr;			\
-		} else {					\
-			TYPE = TYPEPHYS;				\
-			pdeval = (LINADDR & I386_VM_ADDR_MASK_4MB) | 	\
-				I386_VM_BIGPAGE | I386_VM_PRESENT | 	\
-				I386_VM_WRITE | I386_VM_USER;		\
-		}							\
-		for(fp = 0; fp < nfreepdes; fp++) {			\
-			int k = freepdes[fp];				\
-			if(inusepde == k)				\
-				continue;				\
-			*PROCPDEPTR(ptproc, k) = 0;			\
-			PDE = k;					\
-			assert(k >= 0);				\
-			assert(k < sizeof(dirtypde)*8);		\
-			mask = PDEMASK(PDE);				\
-			if(dirtypde & mask)				\
-				continue;				\
-			break;						\
-		}							\
-		assert(PDE != NOPDE);					\
-		assert(mask);						\
-		if(dirtypde & mask) {					\
-			mustinvl = TRUE;					\
-		} else {						\
-			mustinvl = FALSE;					\
-		}							\
-		inusepde = PDE;						\
-		*PROCPDEPTR(ptproc, PDE) = pdeval;			\
-		offset = LINADDR & I386_VM_OFFSET_MASK_4MB;		\
-		PTR = I386_BIG_PAGE_SIZE*PDE + offset;			\
-		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
-		if(1 || mustinvl) {					\
-			reload_cr3(); 					\
-		}							\
-	}								\
-}
+PRIVATE phys_bytes createpde(
+	struct proc *pr,	/* Requested process, NULL for physical. */
+	phys_bytes linaddr,	/* Address after segment translation. */
+	phys_bytes *bytes,	/* Size of chunk, function may truncate it. */
+	int pde,		/* freepde number to use for the mapping. */
+	int *changed		/* If mapping is made, this is set to 1. */
+	)
+{
+	u32_t pdeval;
+	phys_bytes offset;
 
-#define DONEPDE(PDE)	{				\
-	if(PDE != NOPDE) {				\
-		assert(PDE > 0);			\
-		assert(PDE < sizeof(dirtypde)*8);	\
-		dirtypde |= PDEMASK(PDE);		\
-	}						\
-}
+	assert(pde >= 0 && pde < nfreepdes);
+	pde = freepdes[pde];
 
-#define WIPEPDE(PDE)	{				\
-	if(PDE != NOPDE) {				\
-		assert(PDE > 0);			\
-		assert(PDE < sizeof(dirtypde)*8);	\
-		*PROCPDEPTR(ptproc, PDE) = 0;		\
-	}						\
-}
+	if(pr && ((pr == ptproc) || !HASPT(pr))) {
+		/* Process memory is requested, and
+		 * it's a process that is already in current page table, or
+		 * a process that is in every page table.
+		 * Therefore linaddr is valid directly, with the requested
+		 * size.
+		 */
+		return linaddr;
+	}
 
+	if(pr) {
+		/* Requested address is in a process that is not currently
+		 * accessible directly. Grab the PDE entry of that process'
+		 * page table that corresponds to the requested address.
+		 */
+		pdeval = *PROCPDEPTR(pr, I386_VM_PDE(linaddr));
+	} else {
+		/* Requested address is physical. Make up the PDE entry. */
+		pdeval = (linaddr & I386_VM_ADDR_MASK_4MB) | 
+			I386_VM_BIGPAGE | I386_VM_PRESENT | 
+			I386_VM_WRITE | I386_VM_USER;
+	}
+
+	/* Write the pde value that we need into a pde that the kernel
+	 * can access, into the currently loaded page table so it becomes
+	 * visible.
+	 */
+	if(*PROCPDEPTR(ptproc, pde) != pdeval) {
+		*PROCPDEPTR(ptproc, pde) = pdeval;
+		*changed = 1;
+	}
+
+	/* Memory is now available, but only the 4MB window of virtual
+	 * address space that we have mapped; calculate how much of
+	 * the requested range is visible and return that in *bytes,
+	 * if that is less than the requested range.
+	 */
+	offset = linaddr & I386_VM_OFFSET_MASK_4MB; /* Offset in 4MB window. */
+	*bytes = MIN(*bytes, I386_BIG_PAGE_SIZE - offset); 
+
+	/* Return the linear address of the start of the new mapping. */
+	return I386_BIG_PAGE_SIZE*pde + offset;
+}
+  
 /*===========================================================================*
  *				lin_lin_copy				     *
  *===========================================================================*/
@@ -173,31 +158,24 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;
 		vir_bytes chunk = bytes;
-		int srcpde, dstpde;
-		int srctype, dsttype;
+		int changed = 0;
 
 		/* Set up 4MB ranges. */
-		inusepde = NOPDE;
-		CREATEPDE(srcproc, srcptr, srclinaddr, chunk, bytes, srcpde, srctype);
-		CREATEPDE(dstproc, dstptr, dstlinaddr, chunk, bytes, dstpde, dsttype);
+		srcptr = createpde(srcproc, srclinaddr, &chunk, 0, &changed);
+		dstptr = createpde(dstproc, dstlinaddr, &chunk, 1, &changed);
+		if(changed)
+			reload_cr3(); 
 
 		/* Copy pages. */
 		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
-
-		DONEPDE(srcpde);
-		DONEPDE(dstpde);
 
 		if(addr) {
 			/* If addr is nonzero, a page fault was caught. */
 
 			if(addr >= srcptr && addr < (srcptr + chunk)) {
-				WIPEPDE(srcpde);
-				WIPEPDE(dstpde);
 				NOREC_RETURN(linlincopy, EFAULT_SRC);
 			}
 			if(addr >= dstptr && addr < (dstptr + chunk)) {
-				WIPEPDE(srcpde);
-				WIPEPDE(dstpde);
 				NOREC_RETURN(linlincopy, EFAULT_DST);
 			}
 
@@ -206,9 +184,6 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 			/* Not reached. */
 			NOREC_RETURN(linlincopy, EFAULT);
 		}
-
-		WIPEPDE(srcpde);
-		WIPEPDE(dstpde);
 
 		/* Update counter and addresses for next iteration, if any. */
 		bytes -= chunk;
@@ -708,16 +683,16 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 	 * We can do this 4MB at a time.
 	 */
 	while(bytes > 0) {
-		int pde, t;
-		vir_bytes chunk = (vir_bytes) bytes;
-		phys_bytes ptr;
-		inusepde = NOPDE;
-		CREATEPDE(((struct proc *) NULL), ptr, ph, chunk, bytes, pde, t);
+		int changed = 0;
+		phys_bytes chunk = bytes, ptr;
+		ptr = createpde(NULL, ph, &chunk, 0, &changed);
+		if(changed)
+			reload_cr3(); 
+
 		/* We can memset as many bytes as we have remaining,
 		 * or as many as remain in the 4MB chunk we mapped in.
 		 */
 		phys_memset(ptr, p, chunk);
-		DONEPDE(pde);
 		bytes -= chunk;
 		ph += chunk;
 	}
@@ -948,7 +923,7 @@ PUBLIC int arch_umap(struct proc *pr, vir_bytes offset, vir_bytes count,
 /* VM reports page directory slot we're allowed to use freely. */
 void i386_freepde(int pde)
 {
-	if(nfreepdes >= WANT_FREEPDES)
+	if(nfreepdes >= MAX_FREEPDES)
 		return;
 	freepdes[nfreepdes++] = pde;
 }

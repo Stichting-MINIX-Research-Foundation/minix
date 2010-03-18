@@ -839,6 +839,5 @@ switch_address_space:
 	je	0f
 	mov	%eax, %cr3
 	mov	%edx, ptproc
-	movl	$0, dirtypde
 0:
 	ret

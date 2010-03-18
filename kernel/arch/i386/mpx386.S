@@ -110,7 +110,6 @@ begbss:
 .globl	params_offset
 .globl	mon_ds
 .globl  schedcheck
-.globl  dirtypde
 .globl  lazy_fpu
 
 .globl	hwint00	/* handlers for hardware interrupts */
@@ -736,7 +735,6 @@ no_fpu_available:
 reload_cr3:
 	push    %ebp
 	mov     %esp, %ebp
-	movl	$0, dirtypde
 	mov	%cr3, %eax
 	mov	%eax, %cr3
 	pop     %ebp
