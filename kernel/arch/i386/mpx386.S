@@ -753,8 +753,7 @@ reload_cr3:
 
 .bss
 /*
- * this stack is used temporarily for booting only. We switch to a proper kernel
- * stack after the first trap to kernel
+ * the kernel stack
  */
 .globl k_boot_stktop
 k_boot_stack:
