@@ -266,8 +266,8 @@ SANITYCHECK(SCL_DETAIL);
 	 CLICK2ABS(stack_clicks),/* how big is stack, page-aligned */
 	 CLICK2ABS(gap_clicks),	/* how big is gap, page-aligned */
 	 0,0,			/* not preallocated */
-	 VM_STACKTOP		/* regular stack top */
-	 )) != OK) {
+	 VM_STACKTOP,		/* regular stack top */
+	 0)) != OK) {
 		SANITYCHECK(SCL_DETAIL);
 		printf("VM: new_mem: failed\n");
 		if(ptok) {
@@ -408,12 +408,14 @@ PUBLIC int proc_new(struct vmproc *vmp,
   phys_bytes gap_bytes,   /* gap bytes, page aligned */
   phys_bytes text_start,  /* text starts here, if preallocated, otherwise 0 */
   phys_bytes data_start,  /* data starts here, if preallocated, otherwise 0 */
-  phys_bytes stacktop
+  phys_bytes stacktop,
+  int prealloc_stack
 )
 {
 	int s;
 	vir_bytes hole_bytes;
 	int prealloc;
+	struct vir_region *reg;
 
 	vm_assert(!(vstart % VM_PAGE_SIZE));
 	vm_assert(!(text_bytes % VM_PAGE_SIZE));
@@ -435,15 +437,16 @@ PUBLIC int proc_new(struct vmproc *vmp,
 #define TEXTFLAGS (PTF_PRESENT | PTF_USER)
 	SANITYCHECK(SCL_DETAIL);
 	if(text_bytes > 0) {
-		if(!map_page_region(vmp, vstart, 0, text_bytes,
+		if(!(reg=map_page_region(vmp, vstart, 0, text_bytes,
 		  text_start ? text_start : MAP_NONE,
-		  VR_ANON | VR_WRITABLE, text_start ? 0 : MF_PREALLOC)) {
+		  VR_ANON | VR_WRITABLE, text_start ? 0 : MF_PREALLOC))) {
 			SANITYCHECK(SCL_DETAIL);
 			printf("VM: proc_new: map_page_region failed (text)\n");
 			map_free_proc(vmp);
 			SANITYCHECK(SCL_DETAIL);
 			return(ENOMEM);
 		}
+		map_region_set_tag(reg, VRT_TEXT);
 		SANITYCHECK(SCL_DETAIL);
 	}
 	SANITYCHECK(SCL_DETAIL);
@@ -471,11 +474,14 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	 */
 	hole_bytes = stacktop - data_bytes - stack_bytes - gap_bytes;
 
-	if(!map_page_region(vmp, vstart + text_bytes + data_bytes + hole_bytes,
+	if(!(reg=map_page_region(vmp,
+		vstart + text_bytes + data_bytes + hole_bytes,
 	  0, stack_bytes + gap_bytes, MAP_NONE,
-	  VR_ANON | VR_WRITABLE, 0) != OK) {
+	  VR_ANON | VR_WRITABLE, prealloc_stack ? MF_PREALLOC : 0)) != OK) {
 	  	panic("map_page_region failed for stack");
 	}
+
+	map_region_set_tag(reg, VRT_STACK);
 
 	vmp->vm_arch.vm_seg[D].mem_phys = ABS2CLICK(vstart + text_bytes);
 	vmp->vm_arch.vm_seg[D].mem_vir = 0;
@@ -485,6 +491,15 @@ PUBLIC int proc_new(struct vmproc *vmp,
 		text_bytes + data_bytes + gap_bytes + hole_bytes);
 	vmp->vm_arch.vm_seg[S].mem_vir = ABS2CLICK(data_bytes + gap_bytes + hole_bytes);
 
+	/* Where are we allowed to start using the rest of the virtual
+	 * address space?
+	 */
+	vmp->vm_stacktop = stacktop;
+
+	vmp->vm_flags |= VMF_HASPT;
+
+	if(vmp->vm_endpoint != NONE) {
+
 	/* Pretend the stack is the full size of the data segment, so 
 	 * we get a full-sized data segment, up to VM_DATATOP.
 	 * After sys_newmap(), change the stack to what we know the
@@ -493,23 +508,16 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	vmp->vm_arch.vm_seg[S].mem_len = (VM_DATATOP >> CLICK_SHIFT) -
 		vmp->vm_arch.vm_seg[S].mem_vir - ABS2CLICK(vstart) - ABS2CLICK(text_bytes);
 
-	/* Where are we allowed to start using the rest of the virtual
-	 * address space?
-	 */
-	vmp->vm_stacktop = stacktop;
-
 	/* What is the final size of the data segment in bytes? */
 	vmp->vm_arch.vm_data_top = 
 		(vmp->vm_arch.vm_seg[S].mem_vir + 
 		vmp->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
 
-	vmp->vm_flags |= VMF_HASPT;
-
-	if((s=sys_newmap(vmp->vm_endpoint, vmp->vm_arch.vm_seg)) != OK)
-		panic("sys_newmap (vm) failed: %d", s);
-
-	if((s=pt_bind(&vmp->vm_pt, vmp)) != OK)
-		panic("exec_newmem: pt_bind failed: %d", s);
+		if((s=sys_newmap(vmp->vm_endpoint, vmp->vm_arch.vm_seg)) != OK)
+			panic("sys_newmap (vm) failed: %d", s);
+		if((s=pt_bind(&vmp->vm_pt, vmp)) != OK)
+			panic("exec_newmem: pt_bind failed: %d", s);
+	}
 
 	return OK;
 }

@@ -44,17 +44,41 @@ FORWARD _PROTOTYPE(struct vir_region *map_copy_region, (struct vmproc *vmp, stru
 
 PRIVATE char *map_name(struct vir_region *vr)
 {
+	static char name[100];
+	char *typename, *tag;
 	int type = vr->flags & (VR_ANON|VR_DIRECT);
 	switch(type) {
 		case VR_ANON:
-			return "anonymous";
+			typename = "anonymous";
+			break;
 		case VR_DIRECT:
-			return "direct";
+			typename = "direct";
+			break;
 		default:
 			panic("unknown mapping type: %d", type);
 	}
 
-	return "NOTREACHED";
+	switch(vr->tag) {
+		case VRT_TEXT:
+			tag = "text";
+			break;
+		case VRT_STACK:
+			tag = "stack";
+			break;
+		case VRT_HEAP:
+			tag = "heap";
+			break;
+		case VRT_NONE:
+			tag = "untagged";
+			break;
+		default:
+			tag = "unknown tag value";
+			break;
+	}
+
+	sprintf(name, "%s, %s", typename, tag);
+
+	return name;
 }
 
 PUBLIC void map_printregion(struct vmproc *vmp, struct vir_region *vr)
@@ -62,9 +86,9 @@ PUBLIC void map_printregion(struct vmproc *vmp, struct vir_region *vr)
 	physr_iter iter;
 	struct phys_region *ph;
 	printf("map_printmap: map_name: %s\n", map_name(vr));
-	printf("\t%s (len 0x%lx), %s\n",
+	printf("\t%s (len 0x%lx, %dkB), %s\n",
 		arch_map2str(vmp, vr->vaddr), vr->length,
-		map_name(vr));
+			vr->length/1024, map_name(vr));
 	printf("\t\tphysblocks:\n");
 	physr_start_iter_least(vr->phys, &iter);
 	while((ph = physr_get_iter(&iter))) {
@@ -1550,5 +1574,35 @@ PUBLIC void printregionstats(struct vmproc *vmp)
 	printf("%6dkB  %6dkB\n", used/1024, weighted/1024);
 
 	return;
+}
+
+/*========================================================================*
+ *				map_lookup_phys			  	*
+ *========================================================================*/
+phys_bytes
+map_lookup_phys(struct vmproc *vmp, u32_t tag)
+{
+	struct vir_region *vr;
+	struct phys_region *pr;
+	physr_iter iter;
+
+	if(!(vr = map_region_lookup_tag(vmp, tag))) {
+		printf("VM: request for phys of missing region\n");
+		return MAP_NONE;
+	}
+
+	physr_start_iter_least(vr->phys, &iter);
+
+	if(!(pr = physr_get_iter(&iter))) {
+		printf("VM: request for phys of unmapped region\n");
+		return MAP_NONE;
+	}
+
+	if(pr->offset != 0 || pr->ph->length != vr->length) {
+		printf("VM: request for phys of partially mapped region\n");
+		return MAP_NONE;
+	}
+
+	return pr->ph->phys;
 }
 

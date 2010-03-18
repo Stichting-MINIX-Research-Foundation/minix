@@ -60,7 +60,8 @@ _PROTOTYPE( struct vmproc *find_share, (struct vmproc *vmp_ign, Ino_t ino,
 _PROTOTYPE( int do_exec_newmem, (message *msg)				);
 _PROTOTYPE( int proc_new, (struct vmproc *vmp, phys_bytes start,
 	phys_bytes text, phys_bytes data, phys_bytes stack, phys_bytes gap,
-	phys_bytes text_here, phys_bytes data_here, vir_bytes stacktop));
+	phys_bytes text_here, phys_bytes data_here, vir_bytes stacktop,
+	int prealloc_stack));
 _PROTOTYPE( phys_bytes find_kernel_top, (void)				);
 
 /* break.c */
@@ -99,7 +100,6 @@ _PROTOTYPE( int handle_memory, (struct vmproc *vmp, vir_bytes mem,
 _PROTOTYPE( void pt_init, (phys_bytes limit)				);
 _PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
-_PROTOTYPE( int pt_identity, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));
@@ -149,6 +149,7 @@ _PROTOTYPE(int map_handle_memory,(struct vmproc *vmp,
 _PROTOTYPE(void map_printmap, (struct vmproc *vmp));
 _PROTOTYPE(int map_writept, (struct vmproc *vmp));
 _PROTOTYPE(void printregionstats, (struct vmproc *vmp));
+_PROTOTYPE(phys_bytes map_lookup_phys, (struct vmproc *vmp, u32_t tag));
 
 _PROTOTYPE(struct vir_region * map_region_lookup_tag, (struct vmproc *vmp, u32_t tag));
 _PROTOTYPE(void map_region_set_tag, (struct vir_region *vr, u32_t tag));

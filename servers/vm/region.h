@@ -74,7 +74,8 @@ struct vir_region {
 /* Tag values: */
 #define VRT_NONE	0xBEEF0000
 #define VRT_HEAP	0xBEEF0001
-#define VRT_CODE	0xBEEF0002
+#define VRT_TEXT	0xBEEF0002
+#define VRT_STACK	0xBEEF0003
 
 /* map_page_region flags */
 #define MF_PREALLOC	0x01

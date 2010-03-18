@@ -292,7 +292,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 				vmp->vm_arch.vm_seg[D].mem_len) - BASICSTACK,
 			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
-				VM_STACKTOP) != OK) {
+				VM_STACKTOP, 0) != OK) {
 			panic("failed proc_new for boot process");
 		}
 	}

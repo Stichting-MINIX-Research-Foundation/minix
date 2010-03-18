@@ -19,6 +19,7 @@
 #include <string.h>
 #include <errno.h>
 #include <env.h>
+#include <assert.h>
 
 #include "glo.h"
 #include "vm.h"
@@ -26,6 +27,7 @@
 #include "util.h"
 #include "sanitycheck.h"
 #include "region.h"
+#include "memory.h"
 
 /*===========================================================================*
  *				do_fork					     *
@@ -78,16 +80,12 @@ PUBLIC int do_fork(message *msg)
   vmc->vm_bytecopies = 0;
 #endif
 
-  SANITYCHECK(SCL_DETAIL);
+  if(pt_new(&vmc->vm_pt) != OK) {
+	printf("VM: fork: pt_new failed\n");
+	return ENOMEM;
+  }
 
   if(fullvm) {
-	SANITYCHECK(SCL_DETAIL);
-
-	if(pt_new(&vmc->vm_pt) != OK) {
-		printf("VM: fork: pt_new failed\n");
-		return ENOMEM;
-	}
-
 	SANITYCHECK(SCL_DETAIL);
 
 	if(map_proc_copy(vmc, vmp) != OK) {
@@ -103,41 +101,77 @@ PUBLIC int do_fork(message *msg)
 
 	SANITYCHECK(SCL_DETAIL);
   } else {
-        phys_bytes prog_bytes, parent_abs, child_abs; /* Intel only */
-        phys_clicks prog_clicks, child_base;
+	vir_bytes sp;
+	phys_bytes d_abs, s_abs;
+	vir_bytes text_bytes, data_bytes, stack_bytes, parent_gap_bytes,
+		child_gap_bytes;
 
-	/* Determine how much memory to allocate.  Only the data and stack
-	 * need to be copied, because the text segment is either shared or
-	 * of zero length.
-	 */
-
-	prog_clicks = (phys_clicks) vmp->vm_arch.vm_seg[S].mem_len;
-	prog_clicks += (vmp->vm_arch.vm_seg[S].mem_vir - vmp->vm_arch.vm_seg[D].mem_vir);
-	prog_bytes = (phys_bytes) prog_clicks << CLICK_SHIFT;
-	if ( (child_base = ALLOC_MEM(prog_clicks, 0)) == NO_MEM) {
-  SANITYCHECK(SCL_FUNCTIONS);
-		return(ENOMEM);
-	}
-
-	/* Create a copy of the parent's core image for the child. */
-	child_abs = (phys_bytes) child_base << CLICK_SHIFT;
-	parent_abs = (phys_bytes) vmp->vm_arch.vm_seg[D].mem_phys << CLICK_SHIFT;
-	s = sys_abscopy(parent_abs, child_abs, prog_bytes);
-	if (s < 0) panic("do_fork can't copy: %d", s);
-
-	/* A separate I&D child keeps the parents text segment.  The data and stack
-	* segments must refer to the new copy.
-	*/
-	if (!(vmc->vm_flags & VMF_SEPARATE))
-		vmc->vm_arch.vm_seg[T].mem_phys = child_base;
-	vmc->vm_arch.vm_seg[D].mem_phys = child_base;
-	vmc->vm_arch.vm_seg[S].mem_phys = vmc->vm_arch.vm_seg[D].mem_phys +
-           (vmp->vm_arch.vm_seg[S].mem_vir - vmp->vm_arch.vm_seg[D].mem_vir);
-
-	if(pt_identity(&vmc->vm_pt) != OK) {
-		printf("VM: fork: pt_identity failed\n");
+	/* Get SP of new process (using parent). */
+	if(get_stack_ptr(vmp->vm_endpoint, &sp) != OK) {
+		printf("VM: fork: get_stack_ptr failed for %d\n",
+			vmp->vm_endpoint);
 		return ENOMEM;
 	}
+
+	/* Update size of stack segment using current SP. */
+	if(adjust(vmp, vmp->vm_arch.vm_seg[D].mem_len, sp) != OK) {
+		printf("VM: fork: adjust failed for %d\n",
+			vmp->vm_endpoint);
+		return ENOMEM;
+	}
+
+	/* Copy newly adjust()ed stack segment size to child. */
+	vmc->vm_arch.vm_seg[S] = vmp->vm_arch.vm_seg[S];
+
+        text_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[T].mem_len);
+        data_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[D].mem_len);
+	stack_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_len);
+
+	/* how much space after break and before lower end (which is the
+	 * logical top) of stack for the parent
+	 */
+	parent_gap_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_vir -
+		vmc->vm_arch.vm_seg[D].mem_len);
+
+	/* how much space can the child stack grow downwards, below
+	 * the current SP? The rest of the gap is available for the
+	 * heap to grow upwards.
+	 */
+	child_gap_bytes = VM_PAGE_SIZE;
+
+        if((r=proc_new(vmc, VM_PROCSTART,
+		text_bytes, data_bytes, stack_bytes, child_gap_bytes, 0, 0,
+		CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_vir +
+                        vmc->vm_arch.vm_seg[S].mem_len), 1)) != OK) {
+			printf("VM: fork: proc_new failed\n");
+			return r;
+	}
+
+	if((d_abs = map_lookup_phys(vmc, VRT_HEAP)) == MAP_NONE)
+		panic("couldn't lookup data");
+	if((s_abs = map_lookup_phys(vmc, VRT_STACK)) == MAP_NONE)
+		panic("couldn't lookup stack");
+
+	/* Now copy the memory regions. */
+
+	if(vmc->vm_arch.vm_seg[T].mem_len > 0) {
+		phys_bytes t_abs;
+		if((t_abs = map_lookup_phys(vmc, VRT_TEXT)) == MAP_NONE)
+			panic("couldn't lookup text");
+		if(sys_abscopy(CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
+			t_abs, text_bytes) != OK)
+				panic("couldn't copy text");
+	}
+
+	if(sys_abscopy(CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
+		d_abs, data_bytes) != OK)
+			panic("couldn't copy data");
+
+	if(sys_abscopy(
+		CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys +
+			vmc->vm_arch.vm_seg[D].mem_len) + parent_gap_bytes,
+			s_abs + child_gap_bytes, stack_bytes) != OK)
+			panic("couldn't copy stack");
   }
 
   /* Only inherit these flags. */

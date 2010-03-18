@@ -620,36 +620,6 @@ PUBLIC int pt_new(pt_t *pt)
 }
 
 /*===========================================================================*
- *				pt_identity		     		     *
- *===========================================================================*/
-PUBLIC int pt_identity(pt_t *pt)
-{
-/* Allocate a pagetable that does a 1:1 mapping. */
-	int i;
-
-	/* Allocate page directory. */
-        if(!pt->pt_dir &&
-          !(pt->pt_dir = vm_allocpage(&pt->pt_dir_phys, VMP_PAGEDIR))) {
-		return ENOMEM;
-	}
-
-	for(i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-		phys_bytes addr;
-		addr = I386_BIG_PAGE_SIZE*i;
-		pt->pt_dir[i] = (addr & I386_VM_ADDR_MASK_4MB) |
-				I386_VM_BIGPAGE|
-				I386_VM_USER|
-				I386_VM_PRESENT|I386_VM_WRITE;
-		pt->pt_pt[i] = NULL;
-	}
-
-	/* Where to start looking for free virtual address space? */
-	pt->pt_virtop = 0;
-
-	return OK;
-}
-
-/*===========================================================================*
  *                              pt_init                                      *
  *===========================================================================*/
 PUBLIC void pt_init(phys_bytes usedlimit)
