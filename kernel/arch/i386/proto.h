@@ -156,6 +156,23 @@ _PROTOTYPE(void __copy_msg_from_user_end, (void));
 _PROTOTYPE(void __copy_msg_to_user_end, (void));
 _PROTOTYPE(void __user_copy_msg_pointer_failure, (void));
 
+/* breakpoints.c */
+#define BREAKPOINT_COUNT		4
+#define BREAKPOINT_FLAG_RW_MASK		(3 << 0)
+#define BREAKPOINT_FLAG_RW_EXEC		(0 << 0)
+#define BREAKPOINT_FLAG_RW_WRITE	(1 << 0)
+#define BREAKPOINT_FLAG_RW_RW		(2 << 0)
+#define BREAKPOINT_FLAG_LEN_MASK	(3 << 2)
+#define BREAKPOINT_FLAG_LEN_1		(0 << 2)
+#define BREAKPOINT_FLAG_LEN_2		(1 << 2)
+#define BREAKPOINT_FLAG_LEN_4		(2 << 2)
+#define BREAKPOINT_FLAG_MODE_MASK	(3 << 4)
+#define BREAKPOINT_FLAG_MODE_OFF	(0 << 4)
+#define BREAKPOINT_FLAG_MODE_LOCAL	(1 << 4)
+#define BREAKPOINT_FLAG_MODE_GLOBAL	(2 << 4)
+
+_PROTOTYPE(int breakpoint_set, (phys_bytes linaddr, int index, int flags));
+
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"
 

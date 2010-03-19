@@ -70,4 +70,6 @@
         The hello driver (/dev/hello) added to the distribution:
         # cd /usr/src/commands/scripts && make clean install
         # cd /dev && MAKEDEV hello
+20100318:
+        Gas2ack updates: Run 'make install' in commands/i386/gas2ack
 

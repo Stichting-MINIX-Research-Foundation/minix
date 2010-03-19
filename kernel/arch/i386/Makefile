@@ -9,7 +9,9 @@ ARCHAR=$(ARCH).a
 # by an upper level Makefile.
 
 OBJS=	arch_do_vmctl.o \
+	breakpoints.o \
 	clock.o \
+	debugreg.o \
 	do_int86.o \
 	do_iopenable.o \
 	do_readbios.o \
@@ -52,6 +54,11 @@ mpx386.o: mpx386.S
 	$(CC) $(CFLAGS) -c -o $@ $@.s
 
 apic_asm.o: apic_asm.S
+	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
+	gas2ack -u $@.tmp $@.s
+	$(CC) $(CFLAGS) -c -o $@ $@.s
+
+debugreg.o: debugreg.S
 	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
 	gas2ack -u $@.tmp $@.s
 	$(CC) $(CFLAGS) -c -o $@ $@.s

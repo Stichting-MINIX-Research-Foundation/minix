@@ -75,6 +75,7 @@ int isregister(const char *name)
 		"eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp",
 		"cs", "ds", "es", "fs", "gs", "ss",
 		"cr0", "cr1", "cr2", "cr3", "cr4",
+		"dr0", "dr1", "dr2", "dr3", "dr6", "dr7",
 		"st",
 	};
 	int reg;
