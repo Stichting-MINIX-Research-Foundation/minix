@@ -928,7 +928,7 @@ void i386_freepde(int pde)
 	freepdes[nfreepdes++] = pde;
 }
 
-PUBLIC arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flags)
+PUBLIC int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flags)
 {
 #ifdef CONFIG_APIC
 	/* map the local APIC if enabled */
