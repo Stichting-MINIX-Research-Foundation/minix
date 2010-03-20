@@ -207,8 +207,25 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 	printf("\n%s\n", ep->msg);
   printf("is_nested = %d ", is_nested);
 
-  printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
-	frame->vector, frame->errcode, frame->eip, frame->cs, frame->eflags, frame);
+  printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, "
+	"cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
+	frame->vector, frame->errcode, frame->eip,
+	frame->cs, frame->eflags, frame);
+  printf("KERNEL registers :\n");
+  printf(
+		  "\t%%eax 0x%08x %%ebx 0x%08x %%ecx 0x%08x %%edx 0x%08x\n"
+		  "\t%%esp 0x%08x %%ebp 0x%08x %%esi 0x%08x %%edi 0x%08x\n",
+		  ((u32_t *)frame)[-1],
+		  ((u32_t *)frame)[-2],
+		  ((u32_t *)frame)[-3],
+		  ((u32_t *)frame)[-4],
+		  ((u32_t *)frame)[-5],
+		  ((u32_t *)frame)[-6],
+		  ((u32_t *)frame)[-7],
+		  ((u32_t *)frame)[-8]
+	 );
+  printseg("ker cs: ", 1, NULL, frame->cs);
+  printseg("ker ds: ", 0, NULL, DS_SELECTOR);
   /* TODO should we enable this only when compiled for some debug mode? */
   if (saved_proc) {
 	  printf("scheduled was: process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
