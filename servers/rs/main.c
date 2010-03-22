@@ -521,6 +521,11 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
       printf("RS: %s got %s signal %d\n", srv_to_string(rp),
           SIGS_IS_TERMINATION(signo) ? "termination" : "non-termination",signo);
 
+  /* Print stacktrace if necessary. */
+  if(SIGS_IS_STACKTRACE(signo)) {
+       sys_sysctl_stacktrace(target);
+  }
+
   /* In case of termination signal handle the event. */
   if(SIGS_IS_TERMINATION(signo)) {
       rp->r_flags |= RS_TERMINATED;

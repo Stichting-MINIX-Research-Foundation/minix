@@ -84,6 +84,7 @@ typedef unsigned long sigset_t;
     || sig == SIGEMT || sig == SIGABRT)
 #define SIGS_IS_TERMINATION(sig) (SIGS_IS_LETHAL(sig) \
     || (sig == SIGKILL || sig == SIGPIPE))
+#define SIGS_IS_STACKTRACE(sig) (SIGS_IS_LETHAL(sig) && sig != SIGABRT)
 
 #endif
 

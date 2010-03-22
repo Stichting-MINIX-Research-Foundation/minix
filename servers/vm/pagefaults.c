@@ -73,7 +73,6 @@ PUBLIC void do_pagefaults(void)
 			vm_assert(PFERR_NOPAGE(err));
 			printf("VM: pagefault: SIGSEGV %d bad addr 0x%lx %s\n", 
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
-			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 				panic("sys_kill failed: %d", s);
 			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
@@ -95,7 +94,6 @@ PUBLIC void do_pagefaults(void)
 		if(!(region->flags & VR_WRITABLE) && wr) {
 			printf("VM: pagefault: SIGSEGV %d ro map 0x%lx %s\n", 
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
-			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 				panic("sys_kill failed: %d", s);
 			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
@@ -109,7 +107,6 @@ PUBLIC void do_pagefaults(void)
 		/* Access is allowed; handle it. */
 		if((r=map_pf(vmp, region, offset, wr)) != OK) {
 			printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
-			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 				panic("sys_kill failed: %d", s);
 			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
