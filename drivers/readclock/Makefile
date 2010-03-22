@@ -1,31 +1,14 @@
 # Makefile for readclock 'driver'
-DRIVER = readclock.drv
+PROG=	readclock.drv
+SRCS=	readclock.c
 
-# programs, flags, etc.
-MAKE = exec make
-CC =	exec cc
-CFLAGS=-D_MINIX=1 -D_POSIX_SOURCE=1 -D_SYSTEM=1
-LDFLAGS = -i
-LIBS =  -lsys
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-OBJ = readclock.o 
+MAN=
 
-# build local binary
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install $(DRIVER)
+BINDIR?= /sbin
 
-# install with other drivers
-install:	/sbin/$(DRIVER)
-/sbin/$(DRIVER):	$(DRIVER)
-	install -o root -cs $? $@
+CPPFLAGS+= -D_MINIX=1 -D_POSIX_SOURCE=1 -D_SYSTEM=1
 
-# clean up local files
-clean:
-	rm -f $(DRIVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

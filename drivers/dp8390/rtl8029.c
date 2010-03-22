@@ -6,7 +6,7 @@ Initialization of PCI DP8390-based ethernet cards
 Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <stdlib.h>
 #include <sys/types.h>

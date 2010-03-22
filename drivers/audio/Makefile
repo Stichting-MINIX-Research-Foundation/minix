@@ -1,9 +1,7 @@
 # Makefile for all audio drivers.
-MAKE = exec make -$(MAKEFLAGS)
 
-build: all
+.include <minix.own.mk>
 
-all install depend clean:
-	cd ./es1370 && $(MAKE) $@
-	cd ./es1371 && $(MAKE) $@
+SUBDIR=	common .WAIT es1370 es1371 sb16
 
+.include <minix.subdir.mk>

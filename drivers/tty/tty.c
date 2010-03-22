@@ -57,7 +57,7 @@
  *   Jul 13, 2004   support for function key observers  (Jorrit N. Herder)  
  */
 
-#include <drivers.h>
+#include <minix/drivers.h>
 #include <termios.h>
 #include <sys/ioc_tty.h>
 #include <signal.h>

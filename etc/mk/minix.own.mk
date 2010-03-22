@@ -783,7 +783,9 @@ INSTPRIV.unpriv=
 .endif
 INSTPRIV?=	${INSTPRIV.unpriv} -N ${NETBSDSRCDIR}/etc
 .endif
-STRIPFLAG?=	
+STRIPFLAG?=
+#XXX: Strip flag for MINIX
+#STRIPFLAG?=	-s
 
 .if ${NEED_OWN_INSTALL_TARGET} != "no"
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d

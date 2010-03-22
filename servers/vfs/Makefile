@@ -1,35 +1,17 @@
-# Makefile for File System (FS)
-SERVER = vfs
+# Makefile for Virtual File System (VFS)
+PROG=	vfs
+SRCS=	main.c open.c read.c write.c pipe.c dmap.c \
+	path.c device.c mount.c link.c exec.c \
+	filedes.c stadir.c protect.c time.c \
+	lock.c misc.c utility.c select.c timers.c table.c \
+	vnode.c vmnt.c request.c fscall.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-h = $i/minix
+DPADD+=	${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lsys -ltimers
 
-# programs, flags, etc.
-CC =	exec cc
-CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE)
-LDFLAGS = -i
-LIBS = -lsys -ltimers
+MAN=
 
-OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
-	path.o device.o mount.o link.o exec.o \
-	filedes.o stadir.o protect.o time.o \
-	lock.o misc.o utility.o select.o timers.o table.o \
-	vnode.o vmnt.o request.o fscall.o
+BINDIR?= /usr/sbin
+INSTALLFLAGS+=	-S 16k
 
-# build local binary 
-install all build:	$(SERVER)
-
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 16k $@
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
+.include <minix.prog.mk>

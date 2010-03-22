@@ -1,34 +1,22 @@
 # Makefile for VM server
-SERVER = vm
+.include <minix.own.mk>
 
-include /etc/make.conf
+PROG=	vm
+SRCS=	main.c alloc.c utility.c exec.c exit.c fork.c break.c \
+	signal.c mmap.c slaballoc.c region.c pagefaults.c addravl.c \
+	physravl.c rs.c queryexit.c map_mem.c
 
-OBJ = main.o alloc.o utility.o exec.o exit.o fork.o break.o \
-	signal.o mmap.o slaballoc.o region.o pagefaults.o addravl.o \
-	physravl.o rs.o queryexit.o map_mem.o
-ARCHOBJ =  $(ARCH)/vm.o $(ARCH)/pagetable.o $(ARCH)/arch_pagefaults.o $(ARCH)/util.o 
+#Arch-specific sources
+.PATH: ${.CURDIR}/arch/${ARCH}
+SRCS+=	vm.c pagetable.c arch_pagefaults.c util.S
 
-CPPFLAGS=-I$(ARCH)
-CFLAGS = $(CPROFILE) $(CPPFLAGS)
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# build local binary
+MAN=
 
-all build install:	$(SERVER)
+BINDIR?= /usr/sbin
 
-$(SERVER):	$(OBJ) phony
-	cd $(ARCH) && $(MAKE)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(ARCHOBJ)  -lsys  
+CPPFLAGS+= -I${.CURDIR} -Iarch/${ARCH}
 
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-	cd $(ARCH) && $(MAKE) $@
-
-depend: 
-	cd $(ARCH) && $(MAKE) $@
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c $(ARCH)/*.c > .depend
-
-phony:
-	@:
-
-
+.include <minix.prog.mk>

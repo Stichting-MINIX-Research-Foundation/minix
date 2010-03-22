@@ -53,7 +53,7 @@
  *
  */
 
-#include 	"../drivers.h" 
+#include 	<minix/drivers.h>
 #include	<string.h>
 #include	<minix/syslib.h>
 #include	<minix/type.h>

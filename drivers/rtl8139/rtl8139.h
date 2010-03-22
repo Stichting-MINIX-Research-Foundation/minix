@@ -4,7 +4,7 @@ ibm/rtl8139.h
 Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <stdlib.h>
 #include <stdio.h>

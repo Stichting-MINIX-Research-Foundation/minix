@@ -1,36 +1,14 @@
 # Makefile for the init program (INIT)
-SERVER = init
+PROG=	init
+SRCS=	init.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-h = $i/minix
-k = $u/src/kernel
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# programs, flags, etc.
-CC =	exec cc
-CFLAGS = -I$i -O -D_MINIX -D_POSIX_SOURCE
-LDFLAGS = -i
+MAN=
 
-OBJ = 	init.o
+BINDIR?= /usr/sbin
 
-# build local binary
-all build:	$(SERVER)
-$(SERVER):	$(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $(OBJ) -lsys
-	install -S 64k $@
+CPPFLAGS+= -O -D_MINIX -D_POSIX_SOURCE
 
-# install with other servers
-install:	/usr/sbin/$(SERVER)
-/usr/sbin/$(SERVER):	$(SERVER)
-	install -o root -cs $? $@
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

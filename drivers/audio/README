@@ -1,7 +1,7 @@
 ***** Minix 3 Audio drivers *****
 
 Directories:
-framework/         Generic driver framework
+common/            Generic driver framework
 es1370/            ES1370 driver
 es1371/            ES1371 driver
 

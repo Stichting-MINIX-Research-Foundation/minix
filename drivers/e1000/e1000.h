@@ -18,7 +18,7 @@
 #ifndef __E1000_H
 #define __E1000_H
 
-#include "../drivers.h" 
+#include <minix/drivers.h>
 #include <stdlib.h> 
 #include <net/hton.h> 
 #include <net/gen/ether.h> 

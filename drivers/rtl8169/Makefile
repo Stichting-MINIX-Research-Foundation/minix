@@ -1,39 +1,12 @@
 # Makefile for the Realtek RTL8169 ethernet driver (RTL8169)
-DRIVER = rtl8169
+PROG=	rtl8169
+SRCS=	rtl8169.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-d = ..
+DPADD+=	${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lsys -ltimers
 
-# programs, flags, etc.
-MAKE = exec make
-CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i
-LIBS = -lsys -ltimers
+MAN=
 
-OBJ = rtl8169.o
+BINDIR?= /usr/sbin
 
-# build local binary
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 64kw $(DRIVER)
-
-# install with other drivers
-install:	/usr/sbin/$(DRIVER)
-/usr/sbin/$(DRIVER):	$(DRIVER)
-	install -o root -cs $? $@
-
-# clean up local files
-clean:
-	rm -f $(DRIVER) *.o *.bak
-
-depend:
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

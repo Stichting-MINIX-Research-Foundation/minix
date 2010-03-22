@@ -4,8 +4,8 @@
  *   partition:	partition a disk to the partition table(s) on it.
  */
 
-#include "driver.h"
-#include "drvlib.h"
+#include <minix/driver.h>
+#include <minix/drvlib.h>
 #include <unistd.h>
 
 /* Extended partition? */

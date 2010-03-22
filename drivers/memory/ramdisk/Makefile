@@ -6,16 +6,13 @@ EXTRA=system.conf passwd
 
 MAKEDEV=/usr/bin/MAKEDEV
 
-all:	image.c image.s
+all:	image.c
 
 clean:
-	rm -rf $(PROGRAMS) $(EXTRA) bintoc image image.c image.s t proto.gen
+	rm -rf $(PROGRAMS) $(EXTRA) bintoc image image.c t proto.gen
 
 image.c:	bintoc image
 	./bintoc -o $@ image
-
-image.s:	image.c
-	sed < image.c > $@ 's/^/.data1 /;s/,$$//' || { rm -f $@; false; }
 
 # Note for cross compilation: this executable has to be compiled for the
 # host system
@@ -85,8 +82,8 @@ sh:	../../../commands/ash/sh
 ../../../commands/ash/sh: 
 	cd ../../../commands/ash && make sh
 
-service: ../../../servers/rs/service
-	install -s ../../../servers/rs/$@ $@
+service: ../../../servers/rs/service/service
+	install -s ../../../servers/rs/service/$@ $@
 
 ../../../servers/rs/service: 
 	cd ../../../servers/rs && make service
@@ -103,10 +100,7 @@ system.conf: ../../../etc/system.conf
 passwd: ../../../etc/passwd
 	install -s ../../../etc/$@ $@
 
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
 proto.gen: $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
 
-
+.include <minix.prog.mk>

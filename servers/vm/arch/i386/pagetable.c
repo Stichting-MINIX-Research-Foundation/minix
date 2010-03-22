@@ -27,11 +27,11 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-#include "../proto.h"
-#include "../glo.h"
-#include "../util.h"
-#include "../vm.h"
-#include "../sanitycheck.h"
+#include "proto.h"
+#include "glo.h"
+#include "util.h"
+#include "vm.h"
+#include "sanitycheck.h"
 
 #include "memory.h"
 

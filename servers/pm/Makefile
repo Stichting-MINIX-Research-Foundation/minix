@@ -1,41 +1,15 @@
 # Makefile for Process Manager (PM)
-SERVER = pm
+PROG=	pm
+SRCS=	main.c forkexit.c break.c exec.c time.c timers.c alarm.c \
+	signal.c utility.c table.c trace.c getset.c misc.c \
+	profile.c dma.c mcontext.c
 
-include /etc/make.conf
+DPADD+=	${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lsys -ltimers
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-h = $i/minix
-k = $u/src/kernel
+MAN=
 
-# programs, flags, etc.
-CC =	exec cc
-CPPFLAGS=-I$i
-CFLAGS = $(CPROFILE) $(CPPFLAGS)
-LDFLAGS = -i
+BINDIR?= /usr/sbin
+INSTALLFLAGS+=	-S 32k
 
-OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o alarm.o \
-	signal.o utility.o table.o trace.o getset.o misc.o \
-	profile.o dma.o mcontext.o
-
-# build local binary
-all build:	$(SERVER)
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys -ltimers
-	install -S 32k $@
-
-# install with other servers
-install:	/usr/sbin/$(SERVER)
-/usr/sbin/$(SERVER):	$(SERVER)
-	install -o root -cs $? $@
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

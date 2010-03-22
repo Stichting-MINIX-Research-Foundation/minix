@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <minix3/queryparam.h>
+#include "queryparam.h"
 
 #if EXAMPLE
 struct stat st[2];

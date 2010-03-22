@@ -24,8 +24,8 @@
 #include <minix/bitmap.h>
 
 #include <machine/interrupt.h>	/* IRQ vectors and miscellaneous ports */
-#include <machine/bios.h>		/* BIOS index numbers */
-#include <machine/ports.h>		/* Well-known ports */
+#include <machine/bios.h>	/* BIOS index numbers */
+#include <machine/ports.h>	/* Well-known ports */
 
 #include <string.h>
 #include <signal.h>

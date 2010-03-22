@@ -19,7 +19,7 @@
 #ifndef _HERMES_H
 #define _HERMES_H
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <net/hton.h>

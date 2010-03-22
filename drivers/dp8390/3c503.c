@@ -11,7 +11,7 @@
  *	I/O could be used as well but would result in poor performance.
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

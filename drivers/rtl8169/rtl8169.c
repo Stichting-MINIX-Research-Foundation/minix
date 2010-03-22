@@ -6,7 +6,7 @@
  *
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <stdlib.h>
 #include <stdio.h>

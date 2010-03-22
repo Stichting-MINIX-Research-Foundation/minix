@@ -7,7 +7,7 @@ The random number generator collects data from the kernel and compressed
 that data into a seed for a psuedo random number generator.
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include "../../kernel/const.h"
 #include "assert.h"
 

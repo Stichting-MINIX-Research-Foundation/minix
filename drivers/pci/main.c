@@ -2,7 +2,7 @@
 main.c
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <minix/rs.h>
 #include <minix/endpoint.h>

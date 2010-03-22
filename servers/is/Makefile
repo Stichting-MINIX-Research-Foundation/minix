@@ -1,42 +1,12 @@
 # Makefile for Information Server (IS)
-SERVER = is
+PROG=	is
+SRCS=	main.c dmp.c dmp_kernel.c dmp_pm.c dmp_fs.c dmp_rs.c dmp_ds.c dmp_vm.c
 
-include /etc/make.conf
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-k = $u/src/kernel
-p = $u/src/servers/pm
-f = $u/src/servers/fs
+MAN=
 
-# programs, flags, etc.
-CC =	exec cc
-CPPFLAGS=-I$i
-CFLAGS = $(CPROFILE) $(CPPFLAGS)
-LDFLAGS = -i
-LIBS = -lsys 
+BINDIR?= /sbin
 
-OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o dmp_rs.o dmp_ds.o dmp_vm.o
-
-# build local binary
-all build:	$(SERVER)
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-#	install -S 256w $@
-
-# install with other servers
-install:	$(SERVER)
-	install -o root -c $(SERVER) /sbin/$(SERVER)
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

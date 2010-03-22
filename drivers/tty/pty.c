@@ -16,7 +16,7 @@
  * end are to be read at the other end and vice-versa.
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <assert.h>
 #include <termios.h>
 #include <signal.h>

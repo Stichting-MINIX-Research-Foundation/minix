@@ -1,7 +1,7 @@
 #ifndef SB16_H
 #define SB16_H
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <sys/ioc_sound.h>
 #include <minix/sound.h>
 

@@ -1,5 +1,5 @@
-#include "../drivers.h"
-#include "../libdriver/driver.h"
+#include <minix/drivers.h>
+#include <minix/driver.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <minix/ds.h>

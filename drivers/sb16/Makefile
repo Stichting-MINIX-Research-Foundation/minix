@@ -1,39 +1,7 @@
-# Makefile for the Sound Blaster 16 driver (SB16)
+# Makefile for the Sound Blaster 16 (SB16) driver
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-d = ..
+.include <minix.own.mk>
 
-# programs, flags, etc.
-CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i
-LIBS = -lsys
+SUBDIR=	common .WAIT dsp mixer
 
-
-# build local binary
-all build:	sb16_dsp sb16_mixer
-sb16_dsp:	sb16.o sb16_dsp.o sb16_dsp_liveupdate.o
-	$(CC) -o $@ $(LDFLAGS) sb16.o sb16_dsp.o sb16_dsp_liveupdate.o $(LIBS)
-sb16_mixer:	sb16.o sb16_mixer.o
-	$(CC) -o $@ $(LDFLAGS) sb16.o sb16_mixer.o $(LIBS)
-
-# install with other drivers
-install:	/usr/sbin/sb16_dsp /usr/sbin/sb16_mixer
-/usr/sbin/sb16_dsp:	sb16_dsp
-	install -o root -c $? $@
-/usr/sbin/sb16_mixer:	sb16_mixer
-	install -o root -c $? $@
-
-# clean up local files
-clean:
-	rm -f *.o *.bak sb16 sb16_dsp sb16_mixer
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.subdir.mk>

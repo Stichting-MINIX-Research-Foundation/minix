@@ -1,7 +1,7 @@
 #ifndef AUDIO_FW_H
 #define AUDIO_FW_H
 
-#include "../../drivers.h"
+#include <minix/drivers.h>
 #include <sys/ioc_sound.h>
 
 

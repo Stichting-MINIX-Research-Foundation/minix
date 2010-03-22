@@ -37,19 +37,21 @@ MKDEP_SUFFIXES?=	.o .ln
 #		LIBX11?=${DESTDIR}/usr/X11R7/lib/libX11.a
 #	etc..
 
+# .for _lib in \
+# 	archive asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat \
+# 	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
+# 	curses dbm des edit event \
+# 	fetch form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
+# 	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r \
+# 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
+# 	puffs radius resolv rmt roken rpcsvc rt rump rumpuser skey sl ss \
+# 	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
+# 	\
+# 	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
+# 	rumpfs_lfs rumpfs_msdosfs rumpfs_nfs rumpfs_ntfs rumpfs_syspuffs \
+# 	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
 .for _lib in \
-	archive asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat \
-	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
-	curses dbm des edit event \
-	fetch form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
-	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r \
-	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	puffs radius resolv rmt roken rpcsvc rt rump rumpuser skey sl ss \
-	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
-	\
-	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
-	rumpfs_lfs rumpfs_msdosfs rumpfs_nfs rumpfs_ntfs rumpfs_syspuffs \
-	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
+	c curses driver edit end m sys timers util
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .if ${COMPILER_TYPE} == "ack"
@@ -90,12 +92,12 @@ CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
+		${INSTALLFLAGS} ${STRIPFLAG} ${.ALLSRC} ${.TARGET}
 
 __progdebuginstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
-		${.ALLSRC} ${.TARGET}
+		${INSTALLFLAGS} ${.ALLSRC} ${.TARGET}
 
 
 
@@ -376,5 +378,13 @@ cleanextra: .PHONY
 .endif
 
 ${TARGETS}:	# ensure existence
+
+###### Minix rule to set up mem allocations for boot image services
+.if defined(INSTALLFLAGS)
+all: .PHONY memalloc
+
+memalloc: realall
+	${INSTALL} ${INSTALLFLAGS} ${PROG}
+.endif
 
 .endif	# HOSTPROG

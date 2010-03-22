@@ -10,7 +10,7 @@ PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/vfs/vfs \
 	../servers/rs/rs \
-	../drivers/memory/memory \
+	../drivers/memory/memory_driver/memory \
 	../drivers/log/log \
 	../drivers/tty/tty \
 	../servers/ds/ds \
@@ -45,14 +45,8 @@ all: services image
 
 image:  includes
 	cd ../kernel && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS)
-	cd ../servers && $(MAKE) image
-	cd ../drivers && $(MAKE) image
-	installboot -image $@ $(PROGRAMS)
-
-image_small:  includes
-	cd ../kernel && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS)
-	cd ../servers && $(MAKE) EXTRA_OPTS=-D_MINIX_SMALL=1 image
-	cd ../drivers && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) image
+	cd ../servers && $(MAKE) all
+	cd ../drivers && $(MAKE) all
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
@@ -64,8 +58,8 @@ depend: includes
 
 services: includes 
 	cd ../kernel && $(MAKE) 
-	cd ../servers && $(MAKE) install
-	cd ../drivers && $(MAKE) install
+	cd ../servers && $(MAKE) all install
+	cd ../drivers && $(MAKE) all install
 
 libraries: includes
 	cd ../lib && sh ack_build.sh clean obj depend all install
@@ -89,5 +83,5 @@ clean:
 	cd ../kernel && $(MAKE) $@
 	cd ../servers && $(MAKE) $@
 	cd ../drivers && $(MAKE) $@
-	rm -rf *.bak image image_small *.iso *.iso.gz cdfdimage rootimage src
+	rm -rf *.bak image *.iso *.iso.gz cdfdimage rootimage src
 

@@ -54,8 +54,6 @@ commands:
 
 depend::
 	mkdep kernel
-	mkdep servers
-	mkdep drivers
 	cd kernel && $(MAKE) $@
 	cd servers && $(MAKE) $@
 	cd drivers && $(MAKE) $@
@@ -68,6 +66,7 @@ all::
 	cd commands && $(MAKE) all
 	cd tools && $(MAKE) all
 	cd servers && $(MAKE) all
+	cd drivers && $(MAKE) all
 
 install::
 	cd boot && $(MAKE) all install
@@ -75,6 +74,7 @@ install::
 	cd commands && $(MAKE) all install
 	cd tools && $(MAKE) all install
 	cd servers && $(MAKE) all install
+	cd drivers && $(MAKE) all install
 
 clean::
 	cd boot && $(MAKE) clean

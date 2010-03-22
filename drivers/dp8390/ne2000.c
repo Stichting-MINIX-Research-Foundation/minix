@@ -7,7 +7,7 @@ specific code, the rest is in dp8390.c
 Created:	March 15, 1994 by Philip Homburg <philip@f-mnx.phicoh.com>
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

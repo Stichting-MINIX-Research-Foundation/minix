@@ -100,7 +100,9 @@ PIE_AFLAGS?=	    -fPIC -DPIC
 
 # Helpers for cross-compiling
 HOST_CC?=	cc
-HOST_CFLAGS?=	-O
+#XXX: Temporarily disable -O for MINIX
+#HOST_CFLAGS?=	-O
+HOST_CFLAGS?=
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
 HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
 .if defined(HOSTPROG_CXX) 
@@ -110,7 +112,9 @@ HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
 .endif
 
 HOST_CXX?=	c++
-HOST_CXXFLAGS?=	-O
+#XXX: Temporarily disable -O for MINIX
+#HOST_CXXFLAGS?=	-O
+HOST_CXXFLAGS?=
 
 HOST_CPP?=	cpp
 HOST_CPPFLAGS?=

@@ -1,23 +1,9 @@
 # Makefile for HGFS library
-LIBNAME=libhgfs.a
 
-OBJ=backdoor.o attr.o channel.o dir.o error.o file.o \
-	link.o misc.o path.o rpc.o time.o
+LIBISPRIVATE=   yes
 
-AR=ar
-GAS2ACK=gas2ack -u
+LIB=    hgfs
+SRCS=	backdoor.S attr.c channel.c dir.c error.c file.c \
+	link.c misc.c path.c rpc.c time.c
 
-all build: $(LIBNAME)
-
-$(LIBNAME): $(OBJ)
-	$(AR) cr $@ $(OBJ)
-
-backdoor.o: backdoor.S
-	$(GAS2ACK) $< $@.s
-	$(CC) $(CFLAGS) -c -o $@ $@.s
-
-clean distclean:
-	rm -f $(LIBNAME) $(OBJ) *.o.s
-
-depend:
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+.include <minix.lib.mk>

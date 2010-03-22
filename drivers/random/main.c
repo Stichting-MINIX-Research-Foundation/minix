@@ -3,8 +3,8 @@
  *     /dev/random	- random number generator
  */
 
-#include "../drivers.h"
-#include "../libdriver/driver.h"
+#include <minix/drivers.h>
+#include <minix/driver.h>
 #include <minix/type.h>
 
 #include "assert.h"

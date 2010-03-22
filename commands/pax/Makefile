@@ -37,6 +37,5 @@ LINKS+= ${BINDIR}/pax ${BINDIR}/tar
 LINKS+= ${BINDIR}/pax ${BINDIR}/cpio
 
 CFLAGS+= -O -D_POSIX_SOURCE -DNET2_STAT=1 -D_MINIX=1
-LDFLAGS+= -i
 
 .include <minix.prog.mk>

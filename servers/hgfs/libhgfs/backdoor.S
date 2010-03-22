@@ -1,8 +1,8 @@
-# Part of libhgfs - (c) 2009, D.C. van Moolenbroek
+/* Part of libhgfs - (c) 2009, D.C. van Moolenbroek */
 
-.globl	__libhgfs_backdoor
-.globl	__libhgfs_backdoor_in
-.globl	__libhgfs_backdoor_out
+.globl	___libhgfs_backdoor
+.globl	___libhgfs_backdoor_in
+.globl	___libhgfs_backdoor_out
 
 .text
 
@@ -11,7 +11,7 @@
 	IO_PORT = 0x5659
 
 .balign	16
-__libhgfs_backdoor:
+___libhgfs_backdoor:
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -38,7 +38,7 @@ __libhgfs_backdoor:
 	ret
 
 .balign	16
-__libhgfs_backdoor_in:
+___libhgfs_backdoor_in:
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -72,7 +72,7 @@ __libhgfs_backdoor_in:
 	ret
 
 .balign	16
-__libhgfs_backdoor_out:
+___libhgfs_backdoor_out:
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi

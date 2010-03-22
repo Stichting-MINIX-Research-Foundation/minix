@@ -4,7 +4,7 @@
  * heavily on the official Linux driver; this driver is based heavily on both.
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <sys/mman.h>
 #include <minix/ds.h>

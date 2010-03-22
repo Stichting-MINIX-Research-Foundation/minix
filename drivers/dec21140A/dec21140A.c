@@ -9,7 +9,7 @@
  * Created:	Mar 2008 by Nicolas Tittley <first.last@ google's mail>
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <assert.h>
 #include <machine/pci.h>

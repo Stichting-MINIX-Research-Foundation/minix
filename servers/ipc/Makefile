@@ -1,28 +1,12 @@
 # Makefile for IPC server
-SERVER = ipc
+PROG=	ipc
+SRCS=	main.c utility.c shm.c sem.c
 
-include /etc/make.conf
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-OBJ = main.o utility.o shm.o sem.o
+MAN=
 
-CPPFLAGS=
-CFLAGS = $(CPROFILE) $(CPPFLAGS)
+BINDIR?= /usr/sbin
 
-# build local binary
-
-all build:	$(SERVER)
-
-install: $(SERVER)
-	install -o root -c $(SERVER) /usr/sbin/$(SERVER)
-
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys  
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

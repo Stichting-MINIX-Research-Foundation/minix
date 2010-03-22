@@ -13,15 +13,15 @@ INCS+=	arpa/inet.h
 INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/com.h minix/config.h minix/const.h minix/cpufeature.h \
 	minix/crtso.h minix/debug.h minix/devio.h minix/dirent.h \
-	minix/dir.h minix/dl_eth.h minix/dmap.h minix/ds.h \
-	minix/endpoint.h minix/fslib.h minix/ioctl.h minix/ipc.h \
-	minix/keymap.h minix/minlib.h minix/mq.h minix/partition.h \
-	minix/paths.h minix/portio.h minix/profile.h \
-	minix/queryparam.h minix/rs.h minix/safecopies.h \
-	minix/sef.h minix/sound.h minix/sys_config.h \
-	minix/sysinfo.h minix/syslib.h minix/sysutil.h minix/tty.h \
-	minix/type.h minix/types.h minix/u64.h minix/vfsif.h \
-	minix/vm.h
+	minix/dir.h minix/dl_eth.h minix/dmap.h minix/driver.h \
+	minix/drivers.h minix/drvlib.h minix/ds.h minix/endpoint.h \
+	minix/fslib.h minix/ioctl.h minix/ipc.h minix/keymap.h \
+	minix/minlib.h minix/mq.h minix/partition.h minix/paths.h \
+	minix/portio.h minix/profile.h minix/queryparam.h \
+	minix/rs.h minix/safecopies.h minix/sef.h minix/sound.h \
+	minix/sys_config.h minix/sysinfo.h minix/syslib.h \
+	minix/sysutil.h minix/tty.h minix/type.h minix/types.h \
+	minix/u64.h minix/vfsif.h minix/vm.h
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
 INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
 	net/gen/eth_hdr.h net/gen/eth_io.h net/gen/icmp.h \

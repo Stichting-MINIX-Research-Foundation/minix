@@ -54,7 +54,7 @@
 **   DL_STAT_REPLY)
 */
 
-#include "drivers.h"
+#include <minix/drivers.h>
 #include <minix/endpoint.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

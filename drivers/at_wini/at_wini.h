@@ -1,6 +1,6 @@
-#include "../drivers.h"
-#include "../libdriver/driver.h"
-#include "../libdriver/drvlib.h"
+#include <minix/drivers.h>
+#include <minix/driver.h>
+#include <minix/drvlib.h>
 
 #define VERBOSE		   0	/* display identify messages during boot */
 #define ENABLE_ATAPI	   1	/* add ATAPI cd-rom support to driver */

@@ -6,6 +6,8 @@
 # Pull in <minix.sys.mk> here so we can override its .c.o rule
 .include <minix.sys.mk>
 
+LIBISPRIVATE?=	no
+
 ##### Basic targets
 .PHONY:		libinstall
 realinstall:	libinstall
@@ -81,6 +83,11 @@ STOBJS+=${OBJS}
 
 LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
+.if ${LIBISPRIVATE} != "no"
+# No installation is required
+libinstall::
+.endif	# ${LIBISPRIVATE} == "no"					# {
+
 ALLOBJS=
 
 ALLOBJS+=${STOBJS}
@@ -119,6 +126,7 @@ cleanlib: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f lib${LIB}.a ${STOBJS}
 
+.if !target(libinstall)							# {
 
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
@@ -131,8 +139,15 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 .endif
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 
+.endif	# !target(libinstall)						# }
 
+##### Pull in related .mk logic
+LINKSOWN?= ${LIBOWN}
+LINKSGRP?= ${LIBGRP}
+LINKSMODE?= ${LIBMODE}
 .include <minix.files.mk>
+.include <minix.inc.mk>
+.include <minix.links.mk>
 .include <minix.dep.mk>
 
 .if ${COMPILER_TYPE} == "ack"

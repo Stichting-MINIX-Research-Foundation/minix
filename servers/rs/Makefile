@@ -1,46 +1,18 @@
 # Makefile for Reincarnation Server (RS)
-SERVER = rs
-UTIL = service
+.include <minix.own.mk>
 
-include /etc/make.conf
+PROG=	rs
+SRCS=	exec.c main.c request.c manager.c table.c utility.c memory.c error.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# programs, flags, etc.
-CC =	exec cc
-CPPFLAGS =
-CFLAGS = -I$i $(CPROFILE) $(CPPFLAGS)
-LDFLAGS = -i
-LIBS = -lsys 
+MAN=
 
-UTIL_OBJ = service.o
-OBJ = exec.o main.o request.o manager.o table.o utility.o memory.o error.o
+BINDIR?= /usr/sbin
+INSTALLFLAGS+=	-S 850k
 
-# build local binary
-all build:	$(SERVER) $(UTIL)
-$(UTIL):	$(UTIL_OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(UTIL_OBJ) $(UTIL_LIBS)
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 850k $@
+SUBDIR= service
 
-# install with other servers
-install:	/bin/$(UTIL) /usr/sbin/$(SERVER)
-/bin/$(UTIL):	$(UTIL)
-	install -c $? $@
-/usr/sbin/$(SERVER):	$(SERVER)
-	install -o root -c $? $@
-
-# clean up local files
-clean:
-	rm -f $(UTIL) $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>
+.include <minix.subdir.mk>

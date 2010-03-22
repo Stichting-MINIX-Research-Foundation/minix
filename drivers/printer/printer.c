@@ -33,7 +33,7 @@
  */
 
 #include <minix/endpoint.h>
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 /* Control bits (in port_base + 2).  "+" means positive logic and "-" means
  * negative logic.  Most of the signals are negative logic on the pins but

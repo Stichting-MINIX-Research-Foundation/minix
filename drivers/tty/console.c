@@ -16,7 +16,7 @@
  * and the scrolling function worries about wrapping.
  */
 
-#include <drivers.h>
+#include <minix/drivers.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/vm.h>

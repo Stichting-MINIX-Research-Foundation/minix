@@ -1,39 +1,17 @@
 ##
 ##  Makefile for Dec21140A ethernet board driver
 ##
+PROG=	dec21140A
+SRCS=	dec21140A.c
 
-##  Programs, flags, etc.
-DRIVER	= dec21140A
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-debug	= 0
+MAN=
 
-CC	= exec cc
-LD	= $(CC)
-CPPFLAGS= -I.. -I/usr/include -Ddebug=$(debug) $(CPROFILE)
-CFLAGS	= -ws -w -Wall $(CPPFLAGS)
-LDFLAGS	= -i -o $@
+BINDIR?= /usr/sbin
 
-SRCS	= dec21140A.c
-OBJS	= dec21140A.o
-LIBS	=  -lsys # -ltimers
+debug=		0
+CPPFLAGS+=	-Ddebug=${debug} -ws -w -Wall
 
-##  Build rules
-all build:	$(DRIVER)
-
-$(DRIVER):	$(OBJS)
-	$(CC) $(OBJS) $(LIBS) $(LDFLAGS)
-	install -S 16k $(DRIVER)
-
-##  Install with other drivers
-install:	/usr/sbin/$(DRIVER)
-/usr/sbin/$(DRIVER):	$(DRIVER)
-	install -o root -cs $? $@
-
-##  Generate dependencies
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-##  Clean directory
-clean:
-	@rm -f $(DRIVER) *.o *.BAK *~
+.include <minix.prog.mk>

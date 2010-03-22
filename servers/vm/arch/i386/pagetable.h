@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <machine/vm.h>
 
-#include "../vm.h"
+#include "vm.h"
 
 /* An i386 pagetable. */
 typedef struct {

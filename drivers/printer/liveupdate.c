@@ -1,4 +1,4 @@
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 /* State management variables. */
 EXTERN int writing;

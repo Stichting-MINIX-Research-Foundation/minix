@@ -1,4 +1,4 @@
-#include "../../drivers.h"
+#include <minix/drivers.h>
 #include <sys/types.h>
 #include "pci_helper.h"
 

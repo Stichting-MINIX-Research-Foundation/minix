@@ -1,39 +1,12 @@
 # Makefile for the BIOS disk driver (BIOS_WINI)
-DRIVER = bios_wini
+PROG=	bios_wini
+SRCS=	bios_wini.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-d = ..
+DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-ldriver -lsys -ltimers
 
-# programs, flags, etc.
-MAKE = exec make
-CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i -L../libdriver 
-LIBS = -ldriver    -lsys  -lsys -ltimers 
+MAN=
 
-OBJ = bios_wini.o 
+BINDIR?= /sbin
 
-# build local binary
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install $(DRIVER)
-
-# install with other drivers
-install:	/sbin/$(DRIVER)
-/sbin/$(DRIVER):	$(DRIVER)
-	install -o root -cs $? $@
-
-# clean up local files
-clean:
-	rm -f $(DRIVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
-
-
+.include <minix.prog.mk>

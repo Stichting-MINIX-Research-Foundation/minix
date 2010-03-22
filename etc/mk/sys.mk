@@ -41,7 +41,9 @@ DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 # see src/doc/HACKS for details
 DBG?=	-O1
 .else
-DBG?=	-O
+#XXX: Temporarily disable -O for MINIX
+#DBG?=	-O
+DBG?=
 .endif
 CFLAGS?=	${DBG}
 LDFLAGS?=

@@ -1,41 +1,18 @@
 # Makefile for Minix File System (MFS)
-SERVER = mfs
-DEST=/sbin/$(SERVER)
-NR_BUFS=1024
-BS=4096
+PROG=	mfs
+SRCS=	cache.c device.c link.c \
+	mount.c misc.c open.c protect.c read.c \
+	stadir.c table.c time.c utility.c \
+	write.c inode.c main.c path.c super.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-h = $i/minix
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# programs, flags, etc.
-CC =	exec cc
-CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE) -DNR_BUFS=$(NR_BUFS)
-LDFLAGS = -i
-LIBS =  -lsys 
+MAN=
 
-OBJ =	cache.o device.o link.o \
-	mount.o misc.o open.o protect.o read.o \
-	stadir.o table.o time.o utility.o \
-	write.o inode.o main.o path.o super.o
+BINDIR?= /sbin
 
-# build local binary 
-all build:	$(SERVER)
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
+NR_BUFS= 1024
+CPPFLAGS+= -DNR_BUFS=${NR_BUFS}
 
-install: $(SERVER)
-	-mv $(DEST) $(DEST).prev
-	install $(SERVER) $(DEST)
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
-
+.include <minix.prog.mk>

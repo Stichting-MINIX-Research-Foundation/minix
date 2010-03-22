@@ -1,46 +1,21 @@
 # Makefile for terminal driver (TTY)
-DRIVER = tty
 
-include /etc/make.conf
+.include <minix.own.mk>
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-d = ..
+PROG=	tty
+SRCS=	tty.c console.c keyboard.c pty.c rs232.c
 
-# programs, flags, etc.
-MAKE = exec make
-CC =	exec cc
-CPPFLAGS = -I.. -I../.. -I$i
-CFLAGS = $(CPPFLAGS)
-LDFLAGS = -i
-LIBS =  -lsys -ltimers
+DPADD+=	${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lsys -ltimers
 
-OBJ = tty.o console.o keyboard.o pty.o rs232.o 
+MAN=
 
-# build local binary 
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) 
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 16k $(DRIVER)
+BINDIR?= /sbin
 
-# install with other drivers
-install:	
-	cd keymaps && $(MAKE) -$(MAKEFLAGS) install
+SUBDIR= keymaps
 
-#/sbin/$(DRIVER):	$(DRIVER)
-#	install -o root -cs $? $@
+# Needs kernel/const.h, etc
+CPPFLAGS+=      -I ../..
 
-# clean up local files
-clean:
-	cd keymaps && $(MAKE) -$(MAKEFLAGS) $@
-	rm -f $(DRIVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
-
+.include <minix.prog.mk>
+.include <minix.subdir.mk>

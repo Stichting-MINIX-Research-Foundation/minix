@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#include "../glo.h"
-#include "../proto.h"
-#include "../util.h"
+#include "glo.h"
+#include "proto.h"
+#include "util.h"
 
 /*===========================================================================*
  *				arch_handle_pagefaults	     		     *

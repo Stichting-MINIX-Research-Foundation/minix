@@ -1,6 +1,6 @@
 /* best viewed with tabsize 4 */
 
-#include "../../drivers.h"
+#include <minix/drivers.h>
 
 #include <stdlib.h>
 #include <stdio.h>

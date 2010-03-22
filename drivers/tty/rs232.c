@@ -4,7 +4,7 @@
  *		Added support for Atari ST M68901 and YM-2149	--kub	     *
  *---------------------------------------------------------------------------*/
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <termios.h>
 #include <signal.h>
 #include "tty.h"

@@ -8,7 +8,7 @@ Configure devices on the PCI bus
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <assert.h>
 #include <machine/pci.h>
 #include <machine/vm.h>

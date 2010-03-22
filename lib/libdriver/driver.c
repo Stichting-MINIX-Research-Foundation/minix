@@ -36,11 +36,11 @@
  */
 
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <sys/ioc_disk.h>
 #include <minix/mq.h>
 #include <minix/endpoint.h>
-#include "driver.h"
+#include <minix/driver.h>
 
 /* Claim space for variables. */
 u8_t *tmp_buf = NULL;		/* the DMA buffer eventually */

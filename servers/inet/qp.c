@@ -10,7 +10,7 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include "generic/assert.h"
 
 #include <sys/svrctl.h>
-#include <minix3/queryparam.h>
+#include "queryparam.h"
 
 #include "generic/buf.h"
 #include "generic/clock.h"

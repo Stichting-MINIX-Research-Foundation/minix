@@ -1,4 +1,4 @@
-#include "../drivers.h"
-#include "../libdriver/driver.h"
-#include "../libdriver/drvlib.h"
+#include <minix/drivers.h>
+#include <minix/driver.h>
+#include <minix/drvlib.h>
 

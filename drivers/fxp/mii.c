@@ -6,7 +6,7 @@ Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
 Media Independent (Ethernet) Interface functions
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #if __minix_vmd
 #include "config.h"
 #endif

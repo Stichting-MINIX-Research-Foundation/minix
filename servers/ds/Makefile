@@ -1,38 +1,12 @@
 # Makefile for Data Store Server (DS)
-SERVER = ds
+PROG=	ds
+SRCS=	main.c store.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-k = $u/src/kernel
-p = $u/src/servers/pm
-f = $u/src/servers/fs
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# programs, flags, etc.
-CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i
-LIBS = -lsys 
+MAN=
 
-OBJ = main.o store.o 
+BINDIR?= /usr/sbin
 
-# build local binary
-all build:	$(SERVER)
-$(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 16k $@
-
-# install with other servers
-install: $(SERVER)
-
-# clean up local files
-clean:
-	rm -f $(SERVER) *.o *.bak 
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>

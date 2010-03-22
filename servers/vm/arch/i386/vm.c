@@ -20,9 +20,9 @@
 #include <errno.h>
 #include <env.h>
 
-#include "../proto.h"
-#include "../vm.h"
-#include "../util.h"
+#include "proto.h"
+#include "vm.h"
+#include "util.h"
 
 #include "memory.h"
 

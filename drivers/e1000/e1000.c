@@ -5,7 +5,7 @@
  *        Gigabit Ethernet Controllers.
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <stdlib.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

@@ -40,7 +40,7 @@
 #define VERBOSE 0 /* Verbose debugging output */
 #define LANCE_FKEY 0 /* Use function key to dump Lance stats */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 
 #include <net/hton.h>
 #include <net/gen/ether.h>

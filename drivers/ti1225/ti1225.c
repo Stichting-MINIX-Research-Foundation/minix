@@ -4,7 +4,7 @@ ti1225.c
 Created:	Dec 2005 by Philip Homburg
 */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include <machine/pci.h>
 #include <machine/vm.h>
 

@@ -13,7 +13,7 @@ See the Linux PCI ID Repository <http://pciids.sourceforge.net/>.
  * 2004-08-08 (asw) add Intel 82371AB (0x8086, 0x7100) 
  */
 
-#include "../drivers.h"
+#include <minix/drivers.h>
 #include "pci.h"
 #if __minix_vmd
 #include "config.h"

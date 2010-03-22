@@ -6,7 +6,7 @@
  *   Feb 04, 1994   loadable keymaps  (Marcus Hampel)
  */
 
-#include <drivers.h>
+#include <minix/drivers.h>
 #include <sys/ioctl.h>
 #include <sys/kbdio.h>
 #include <sys/time.h>

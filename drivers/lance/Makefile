@@ -1,38 +1,12 @@
-# Makefile for Intel Pro/100 driver (FXP)
-DRIVER = lance
+# Makefile for Lance driver
+PROG=	lance
+SRCS=	lance.c
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-d = ..
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-# programs, flags, etc.
-CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i 
-LIBS =  -lsys 
-#-lutils -ltimers
+MAN=
 
-OBJ = lance.o
+BINDIR?= /usr/sbin
 
-# build local binary
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) 
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 128k $(DRIVER)
-
-# install with other drivers
-install:	/usr/sbin/$(DRIVER)
-/usr/sbin/$(DRIVER):	$(DRIVER)
-	install -o root -cs $? $@
-
-# clean up local files
-clean:
-	rm -f *.o *.bak $(DRIVER)
-
-depend:
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
+.include <minix.prog.mk>

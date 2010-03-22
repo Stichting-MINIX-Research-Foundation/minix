@@ -8,7 +8,7 @@ Ramdisk that is part of the image
 
 unsigned char imgrd[]=
 {
-#include "ramdisk/image.c"
+#include "image.c"
 };
 
 size_t imgrd_size= sizeof(imgrd);

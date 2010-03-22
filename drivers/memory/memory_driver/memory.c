@@ -15,15 +15,15 @@
  *	Apr 20, 1992	device dependent/independent split  (Kees J. Bot)
  */
 
-#include "../drivers.h"
-#include "../libdriver/driver.h"
+#include <minix/drivers.h>
+#include <minix/driver.h>
 #include <sys/ioc_memory.h>
 #include <minix/ds.h>
 #include <minix/vm.h>
 #include <sys/mman.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
+#include "../../../kernel/const.h"
+#include "../../../kernel/config.h"
+#include "../../../kernel/type.h"
 
 #include <machine/vm.h>
 

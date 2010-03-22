@@ -1,29 +1,14 @@
 # Makefile for filter driver
-DRIVER = filter
+PROG=	filter
+SRCS=	main.c sum.c driver.c util.c optset.c crc.c md5.c
 
-# programs, flags, etc.
-CC = cc
-CFLAGS = -I.. -DDEBUG=1 -DDEBUG2=0
-LDFLAGS = 
-LIBS = -lsys
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
-OBJ = main.o sum.o driver.o util.o optset.o crc.o md5.o
+MAN=
 
-# build local binary
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) 
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
+BINDIR?= /usr/sbin
 
-# install with other drivers
-install:	/usr/sbin/$(DRIVER)
-/usr/sbin/$(DRIVER):	$(DRIVER)
-	install -o root -c $? $@
+CPPFLAGS+= -DDEBUG=1 -DDEBUG2=0
 
-# clean up local files
-clean:
-	rm -f *.o *.bak $(DRIVER)
-
-depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
-
+.include <minix.prog.mk>
