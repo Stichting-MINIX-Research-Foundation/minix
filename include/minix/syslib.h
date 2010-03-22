@@ -68,7 +68,7 @@ _PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
 _PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
         vir_bytes *len, int *wrflag, endpoint_t *who_s, vir_bytes *mem_s,
         endpoint_t *) );
-_PROTOTYPE( int sys_vmctl_enable_paging, (struct mem_map *));
+_PROTOTYPE( int sys_vmctl_enable_paging, (void * data));
 
 _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
 _PROTOTYPE( int sys_stime, (time_t boottime));

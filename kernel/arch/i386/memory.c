@@ -4,6 +4,8 @@
 #include "../../proc.h"
 #include "../../vm.h"
 
+#include <machine/vm.h>
+
 #include <minix/type.h>
 #include <minix/syslib.h>
 #include <minix/cpufeature.h>
@@ -956,8 +958,37 @@ PUBLIC int arch_phys_map_reply(int index, vir_bytes addr)
 	return OK;
 }
 
-PUBLIC int arch_enable_paging(void)
+PUBLIC int arch_enable_paging(struct proc * caller, message * m_ptr)
 {
+	struct vm_ep_data ep_data;
+	int r;
+
+	/*
+	 * copy the extra data associated with the call from userspace
+	 */
+	if((r=data_copy(caller->p_endpoint, (vir_bytes)m_ptr->SVMCTL_VALUE,
+		KERNEL, (vir_bytes) &ep_data, sizeof(ep_data))) != OK) {
+		printf("vmctl_enable_paging: data_copy failed! (%d)\n", r);
+		return r;
+	}
+
+	/*
+	 * when turning paging on i386 we also change the segment limits to make
+	 * the special mappings requested by the kernel reachable
+	 */
+	if ((r = prot_set_kern_seg_limit(ep_data.data_seg_limit)) != OK)
+		return r;
+
+	/*
+	 * install the new map provided by the call
+	 */
+	if (newmap(caller, caller, ep_data.mem_map) != OK)
+		panic("arch_enable_paging: newmap failed");
+
+	FIXLINMSG(caller);
+	assert(caller->p_delivermsg_lin == umap_local(caller, D,
+				caller->p_delivermsg_vir, sizeof(message)));
+
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */
 	if (lapic_addr) {

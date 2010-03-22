@@ -639,7 +639,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	int global_bit_ok = 0;
 	int free_pde;
 	int p;
-	vir_bytes kernlimit;
+	struct vm_ep_data ep_data;
 	vir_bytes sparepages_mem;
 	phys_bytes sparepages_ph;
 
@@ -803,13 +803,6 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	/* first pde in use by process. */
 	proc_pde = free_pde;
 
-	kernlimit = free_pde*I386_BIG_PAGE_SIZE;
-
-	/* Increase kernel segment to address this memory. */
-	if((r=sys_vmctl(SELF, VMCTL_I386_KERNELLIMIT, kernlimit)) != OK) {
-                panic("VMCTL_I386_KERNELLIMIT failed: %d", r);
-	}
-
 	kpagedir = arch_map2vir(&vmproc[VMP_SYSTEM],
 		pagedir_pde*I386_BIG_PAGE_SIZE);
 
@@ -822,8 +815,13 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	pt_mapkernel(newpt);	/* didn't know about vm_dir pages earlier */
         pt_bind(newpt, vmp);
        
+	/* new segment limit for the kernel after paging is enabled */
+	ep_data.data_seg_limit = free_pde*I386_BIG_PAGE_SIZE;
+	/* the memory map which must be installed after paging is enabled */
+	ep_data.mem_map = vmp->vm_arch.vm_seg;
+
 	/* Now actually enable paging. */
-	if(sys_vmctl_enable_paging(vmp->vm_arch.vm_seg) != OK)
+	if(sys_vmctl_enable_paging(&ep_data) != OK)
         	panic("pt_init: enable paging failed");
 
         /* Back to reality - this is where the stack actually is. */

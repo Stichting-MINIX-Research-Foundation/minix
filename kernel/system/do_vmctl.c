@@ -127,15 +127,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 		vm_init(p);
 		if(!vm_running)
 			panic("do_vmctl: paging enabling failed");
-		if ((err = arch_enable_paging()) != OK) {
-			return err;
-		}
-		if(newmap(caller, p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
-			panic("do_vmctl: newmap failed");
-		FIXLINMSG(p);
-		assert(p->p_delivermsg_lin ==
-		  umap_local(p, D, p->p_delivermsg_vir, sizeof(message)));
-		return OK;
+		return arch_enable_paging(caller, m_ptr);
 	case VMCTL_KERN_PHYSMAP:
 	{
 		int i = m_ptr->SVMCTL_VALUE;

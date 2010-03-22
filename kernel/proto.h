@@ -173,7 +173,7 @@ _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,
 	phys_bytes *len, int *flags));
 _PROTOTYPE( int arch_phys_map_reply, (int index, vir_bytes addr));
-_PROTOTYPE( int arch_enable_paging, (void));
+_PROTOTYPE( int arch_enable_paging, (struct proc * caller, message * m_ptr));
 
 _PROTOTYPE( int copy_msg_from_user, (struct proc * p, message * user_mbuf,
 							message * dst));

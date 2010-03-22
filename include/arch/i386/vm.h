@@ -84,4 +84,15 @@ i386/vm.h
 #define CPUID1_ECX_SSE4_1	(1L << 19)
 #define CPUID1_ECX_SSE4_2	(1L << 20)
 
+#ifndef __ASSEMBLY__
+
+#include <minix/type.h>
+
+/* structure used by VM to pass data to the kernel while enabling paging */
+struct vm_ep_data {
+	struct mem_map	* mem_map;
+	vir_bytes	data_seg_limit;
+};
+#endif
+
 #endif /* __SYS_VM_386_H__ */
