@@ -142,7 +142,7 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
 {
 	u32_t addr;
-	int procslot;
+	proc_nr_t procslot;
 
 	NOREC_ENTER(linlincopy);
 

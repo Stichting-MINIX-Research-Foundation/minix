@@ -85,7 +85,6 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 					  caller->p_delivermsg_vir,
 					  caller->p_name,
 					  caller->p_endpoint);
-			  result = EBADREQUEST;
 		  }
 	  }
   }

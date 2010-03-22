@@ -13,9 +13,9 @@
 #include <errno.h>
 
 #define	STARTDAY	0	/* see ctime(3)	 */
-#define	LEAPDAY		STARTDAY+59
-#define	MAXDAYNR	STARTDAY+365
-#define	NODAY		-2
+#define	LEAPDAY		(STARTDAY+59)
+#define	MAXDAYNR	(STARTDAY+365)
+#define	NODAY		(-2)
 char CRONPID[]	=	"/usr/run/cron.pid";
 
 _PROTOTYPE(int main, (int argc, char **argv, char **envp));

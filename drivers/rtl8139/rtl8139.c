@@ -172,7 +172,7 @@ _PROTOTYPE( static void rl_getname, (message *mp)			);
 _PROTOTYPE( static void reply, (re_t *rep, int err, int may_block)	);
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
 _PROTOTYPE( static void check_int_events, (void)				);
-_PROTOTYPE( static int do_hard_int, (void)				);
+_PROTOTYPE( static void do_hard_int, (void)				);
 _PROTOTYPE( static void rtl8139_dump, (message *m)				);
 #if 0
 _PROTOTYPE( static void dump_phy, (re_t *rep)				);
@@ -2402,7 +2402,7 @@ re_t *rep;
 }
 #endif
 
-static int do_hard_int(void)
+static void do_hard_int(void)
 {
 	int i,s;
 

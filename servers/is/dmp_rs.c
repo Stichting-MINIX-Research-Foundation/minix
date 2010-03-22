@@ -26,7 +26,7 @@ PUBLIC void rproc_dmp()
 {
   struct rproc *rp;
   struct rprocpub *rpub;
-  int i,j, n=0;
+  int i, n=0;
   static int prev_i=0;
 
   getsysinfo(RS_PROC_NR, SI_PROCPUB_TAB, rprocpub);

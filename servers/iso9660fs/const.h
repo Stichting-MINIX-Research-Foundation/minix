@@ -13,8 +13,8 @@
 				 * maximum number of ids the filesystem can 
 				 * handle */
 
-#define NO_ADDRESS -1		/* Error constants */
-#define NO_FREE_INODES -1
+#define NO_ADDRESS (-1)		/* Error constants */
+#define NO_FREE_INODES (-1)
 
 #define PATH_PENULTIMATE 001   /* parse_path stops at last but one name */
 #define PATH_NONSYMBOLIC 004   /* parse_path scans final name if symbolic */

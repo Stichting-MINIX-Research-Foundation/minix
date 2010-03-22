@@ -184,10 +184,9 @@ PUBLIC void update_refcount_and_destroy(void)
  *===========================================================================*/
 PUBLIC int do_shmdt(message *m)
 {
-	struct shm_struct *shm;
 	vir_bytes addr;
 	phys_bytes paddr;
-	int n, i;
+	int i;
 
 	addr = m->SHMDT_ADDR;
 

@@ -89,7 +89,7 @@ PUBLIC int do_select(void)
  * timeout and wait for either the file descriptors to become ready or the 
  * timer to go off. If no timeout value was provided, we wait indefinitely. */
 
-  int r, nfds, do_timeout = 0, nonzero_timeout = 0, fd, s;
+  int r, nfds, do_timeout = 0, fd, s;
   struct timeval timeout;
   struct selectentry *se;
 

@@ -1,6 +1,4 @@
 #include "inc.h"
-#include <string.h>
-#include <minix/com.h>
 #include <minix/vfsif.h>
 #include <minix/ds.h>
 #include "const.h"
@@ -71,14 +69,14 @@ PUBLIC int fs_readsuper() {
 /*===========================================================================*
  *				fs_mountpoint				     *
  *===========================================================================*/
-PUBLIC int fs_mountpoint() {
+PUBLIC int fs_mountpoint()
+{
 /* This function looks up the mount point, it checks the condition whether
  * the partition can be mounted on the inode or not. 
  */
 
   register struct dir_record *rip;
   int r = OK;
-  mode_t bits;
   
   /* Temporarily open the file. */
   if ((rip = get_dir_record(fs_m_in.REQ_INODE_NR)) == NULL)

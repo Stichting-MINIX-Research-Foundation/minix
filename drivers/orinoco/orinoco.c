@@ -211,10 +211,10 @@ _PROTOTYPE (static void or_reset, (void));
 _PROTOTYPE (static void or_watchdog_f, (timer_t *tp) );
 _PROTOTYPE (static void setup_wepkey, (t_or *orp, char *wepkey0) );
 _PROTOTYPE (static void or_getstat, (message *m));
-_PROTOTYPE (static int  do_hard_int, (void));
+_PROTOTYPE (static void do_hard_int, (void));
 _PROTOTYPE (static void check_int_events, (void));
 _PROTOTYPE (static void or_getname, (message *m));
-_PROTOTYPE (static int or_handler, (t_or *orp));
+_PROTOTYPE (static void or_handler, (t_or *orp));
 _PROTOTYPE (static void or_dump, (message *m));
 
 /* The message used in the main loop is made global, so that rl_watchdog_f()
@@ -425,7 +425,8 @@ static void or_getname(message *mp) {
  *                                                                           *
  * Process the interrupts which the card generated                           *
  *****************************************************************************/
-static int do_hard_int(void) {
+static void do_hard_int(void)
+{
 	u16_t evstat;
 	hermes_t *hw;
 	int i,s;
@@ -1108,7 +1109,8 @@ static void or_rec_mode (t_or * orp) {
  * like EV_INFO and EV_RX have to be handled before an acknowledgement for   *
  * the event is returned to the card. See also the documentation             *
  *****************************************************************************/
-static int or_handler (t_or *orp) {
+static void or_handler (t_or *orp)
+{
 	int i, err, length, nr = 0;
 	u16_t evstat, events, fid;
 	hermes_t *hw;

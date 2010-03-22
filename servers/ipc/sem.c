@@ -287,7 +287,6 @@ PUBLIC int do_semctl(message *m)
 	unsigned short *buf;
 	struct semid_ds *ds, tmp_ds;
 	struct sem_struct *sem;
-	struct semaphore *semaphore;
 
 	id = m->SEMCTL_ID;
 	num = m->SEMCTL_NUM;

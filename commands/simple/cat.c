@@ -20,11 +20,10 @@ static char ibuf[CHUNK_SIZE];
 static char obuf[CHUNK_SIZE];
 static char *op = obuf;
 
-int main(int argc, char **argv);
 static void copyout(char *file, int fd);
 static void output(char *buf, size_t count);
-static void report(char *label);
-static void fatal(char *label);
+static void report(const char *label);
+static void fatal(const char *label);
 
 static char STDIN[] = "standard input";
 static char STDOUT[] = "standard output";
@@ -76,7 +75,7 @@ int main(int argc, char *argv[])
   return(excode);
 }
 
-static void copyout(char *file, int fd)
+static void copyout(const char *file, int fd)
 {
   int n;
 
@@ -120,7 +119,7 @@ static void output(char *buf, size_t count)
   }
 }
 
-static void report(char *label)
+static void report(const char *label)
 {
   int e = errno;
   std_err("cat: ");
@@ -131,7 +130,7 @@ static void report(char *label)
   excode = 1;
 }
 
-static void fatal(char *label)
+static void fatal(const char *label)
 {
   report(label);
   exit(1);

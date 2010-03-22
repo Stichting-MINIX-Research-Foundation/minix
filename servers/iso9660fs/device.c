@@ -41,7 +41,7 @@ void **buf;
 int *vec_grants;
 vir_bytes bytes;
 {
-	int access = 0, size;
+	int size;
 	int j;
 	iovec_t *v;
 	static iovec_t new_iovec[NR_IOREQS];

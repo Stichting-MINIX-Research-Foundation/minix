@@ -93,7 +93,7 @@
 #include "../../kernel.h"
 
 EXTERN int ioapic_enabled;
-EXTERN u32_t lapic_addr;
+EXTERN vir_bytes lapic_addr;
 EXTERN u32_t lapic_eoi_addr;
 EXTERN u32_t lapic_taskpri_addr;
 EXTERN int bsp_lapic_id;

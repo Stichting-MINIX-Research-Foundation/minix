@@ -11,8 +11,7 @@
 #include "../../proc.h"
 #include "../../proto.h"
 
-extern int vm_copy_in_progress, catch_pagefaults;
-extern struct proc *vm_copy_from, *vm_copy_to;
+extern int catch_pagefaults;
 
 void pagefault( struct proc *pr,
 		struct exception_frame * frame,

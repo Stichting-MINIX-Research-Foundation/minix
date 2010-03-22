@@ -806,11 +806,9 @@ udp_fd_t *udp_fd;
 	return NW_SUSPEND;
 }
 
-PRIVATE int udp_sel_read (udp_fd)
-udp_fd_t *udp_fd;
+PRIVATE int udp_sel_read (udp_fd_t *udp_fd)
 {
-	acc_t *pack, *tmp_acc, *next_acc;
-	int result;
+	acc_t *tmp_acc, *next_acc;
 
 	if (!(udp_fd->uf_flags & UFF_OPTSET))
 		return 1;	/* Read will not block */
