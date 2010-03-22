@@ -51,6 +51,11 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
  * in the boot image and all kernel tasks must come first.
+ * The order of the entries here matches the priority NOTIFY messages are
+ * delivered to a given process. NOTIFY messages are always delivered with
+ * the highest priority. DS must be the first system process in the list to
+ * allow reliable asynchronous publishing of system events. RS comes right after
+ * to prioritize ping messages periodically delivered to system processes.
  *
  * Each entry provides the process number, flags, quantum size, scheduling
  * queue, and a name for the process table. The initial program counter and
@@ -65,13 +70,15 @@ PUBLIC struct boot_image image[] = {
 {CLOCK,      NULL,     0,  0,      0, IDL_S, "clock" },
 {SYSTEM,     NULL,     0,  0,      0, IDL_S, "system"},
 {HARDWARE,      0,     0,  8, TASK_Q, HRD_S, "kernel"},
+
+{DS_PROC_NR,    0, BVM_F,  4,      4, 0,     "ds"    },
+{RS_PROC_NR,    0,     0,  4,      4, 0,     "rs"    },
+
 {PM_PROC_NR,    0,     0, 32,      4, 0,     "pm"    },
 {FS_PROC_NR,    0,     0, 32,      5, 0,     "vfs"   },
-{RS_PROC_NR,    0,     0,  4,      4, 0,     "rs"    },
 {MEM_PROC_NR,   0, BVM_F,  4,      3, 0,     "memory"},
 {LOG_PROC_NR,   0, BVM_F,  4,      2, 0,     "log"   },
 {TTY_PROC_NR,   0, BVM_F,  4,      1, 0,     "tty"   },
-{DS_PROC_NR,    0, BVM_F,  4,      4, 0,     "ds"    },
 {MFS_PROC_NR,   0, BVM_F, 32,      5, 0,     "mfs"   },
 {VM_PROC_NR,    0,     0, 32,      2, 0,     "vm"    },
 {PFS_PROC_NR,   0, BVM_F, 32,      5, 0,     "pfs"   },

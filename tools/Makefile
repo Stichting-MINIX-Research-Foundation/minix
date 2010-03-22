@@ -7,13 +7,13 @@ MDEC=	/usr/mdec
 
 # Specify the programs that are part of the system image.
 PROGRAMS=	../kernel/kernel \
+	../servers/ds/ds \
+	../servers/rs/rs \
 	../servers/pm/pm \
 	../servers/vfs/vfs \
-	../servers/rs/rs \
 	../drivers/memory/memory_driver/memory \
 	../drivers/log/log \
 	../drivers/tty/tty \
-	../servers/ds/ds \
 	../servers/mfs/mfs \
 	../servers/vm/vm \
 	../servers/pfs/pfs \
