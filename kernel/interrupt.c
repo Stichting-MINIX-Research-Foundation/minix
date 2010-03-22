@@ -13,6 +13,8 @@
  *   disable_irq:     disable hook for IRQ.
  */
 
+#include <assert.h>
+
 #include "kernel.h"
 #include "proc.h"
 #include "archconst.h"
@@ -117,13 +119,18 @@ PUBLIC void irq_handle(int irq)
   irq_hook_t * hook;
 
   /* here we need not to get this IRQ until all the handlers had a say */
+  assert(irq >= 0 && irq < NR_IRQ_VECTORS);
   hw_intr_mask(irq);
   hook = irq_handlers[irq];
 
-  /* Sanity check. */
+  /* Check for spurious interrupts. */
   if(hook == NULL) {
-      printf("%s: irq_handle:no handler registered, masking the IRQ...\n",
-          __FILE__);
+      static int nspurious[NR_IRQ_VECTORS];
+      nspurious[irq]++;
+      if(nspurious[irq] == 1 || !(nspurious[irq] % 1000)) {
+      	printf("irq_handle: spurious irq %d (count: %d); keeping masked\n",
+		irq, nspurious[irq]);
+      }
       return;
   }
 
