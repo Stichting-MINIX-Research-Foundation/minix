@@ -1,6 +1,7 @@
 #ifndef _IPC_H
 #define _IPC_H
 
+#include <minix/ipcconst.h>
 #include <minix/type.h>
 
 /*==========================================================================* 
@@ -147,7 +148,7 @@ typedef struct asynmsg
 _PROTOTYPE( int echo, (message *m_ptr)					);
 _PROTOTYPE( int notify, (endpoint_t dest)				);
 _PROTOTYPE( int sendrec, (endpoint_t src_dest, message *m_ptr)		);
-_PROTOTYPE( int receive, (endpoint_t src, message *m_ptr)	        );
+_PROTOTYPE( int receive, (endpoint_t src, message *m_ptr, int *status_ptr));
 _PROTOTYPE( int send, (endpoint_t dest, message *m_ptr)			);
 _PROTOTYPE( int sendnb, (endpoint_t dest, message *m_ptr)		);
 _PROTOTYPE( int senda, (asynmsg_t *table, size_t count)			);

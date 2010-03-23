@@ -1,21 +1,18 @@
+#include <minix/ipcconst.h>
+
 .globl	__notify, __send, __senda, __sendnb, __receive, __sendrec, __do_kernel_call
 
-/* See src/kernel/ipc.h for C definitions */
-	SEND = 1
-	RECEIVE = 2
-	SENDREC = 3
-	NOTIFY = 4
-	SENDNB = 5
 	IPCVEC = 33	/* ipc trap to kernel  */
 	KERVEC = 32	/* syscall trap to kernel */
 
 	SRC_DST = 8	/* source/ destination process  */
 	MESSAGE = 12	/* message pointer  */
+	STATUS = 16	/* status pointer  */
 
 /**========================================================================* */
 /*                           IPC assembly routines			  * */
 /**========================================================================* */
-/* all message passing routines save ebp, but destroy eax and ecx. */
+/* all message passing routines save ebx, but destroy eax and ecx. */
 .text
 __send:
 	push	%ebp
@@ -37,6 +34,8 @@ __receive:
 	movl	MESSAGE(%ebp), %ebx	/* ebx = message pointer */
 	movl	$RECEIVE, %ecx	/* _receive(src, ptr) */
 	int	$IPCVEC	/* trap to the kernel */
+	movl	STATUS(%ebp), %ecx	/* ecx = status pointer */
+	movl	%ebx, (%ecx)
 	pop	%ebx
 	pop	%ebp
 	ret

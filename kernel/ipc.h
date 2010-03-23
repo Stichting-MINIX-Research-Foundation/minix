@@ -9,17 +9,15 @@
 /* Masks and flags for system calls. */
 #define NON_BLOCKING    0x0080  /* do not block if target not ready */
 
-/* System call numbers that are passed when trapping to the kernel. */
-#define SEND		   1	/* blocking send */
-#define RECEIVE		   2	/* blocking receive */
-#define SENDREC	 	   3  	/* SEND + RECEIVE */
-#define NOTIFY		   4	/* asynchronous notify */
-#define SENDNB             5    /* nonblocking send */
-#define SENDA		   16	/* asynchronous send */
-
 #define WILLRECEIVE(target, source_ep) \
   ((RTS_ISSET(target, RTS_RECEIVING) && !RTS_ISSET(target, RTS_SENDING)) &&	\
     (target->p_getfrom_e == ANY || target->p_getfrom_e == source_ep))
 
+/* IPC status code macros. */
+#define IPC_STATUS_REG		bx
+#define IPC_STATUS_GET(p)	((p)->p_reg.IPC_STATUS_REG)
+#define IPC_STATUS_SET(p, m)	((p)->p_reg.IPC_STATUS_REG = m)
+#define IPC_STATUS_CLEAR(p)	IPC_STATUS_SET(p, 0)
+#define IPC_STATUS_ADD(p, m)	((p)->p_reg.IPC_STATUS_REG |= m)
 
 #endif /* IPC_H */

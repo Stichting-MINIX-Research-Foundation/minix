@@ -96,7 +96,8 @@
  * offset are used for the per-process notification bit maps. 
  */
 #define NOTIFY_MESSAGE		  0x1000
-/* FIXME will be is_notify(a)		((a) == NOTIFY_MESSAGE) */
+/* FIXME the old is_notify(a) should be replaced by is_ipc_notify(status). */
+#define is_ipc_notify(status)	 (IPC_STATUS_CALL(status) == NOTIFY)
 #define is_notify(a)		 ((unsigned) ((a) - NOTIFY_MESSAGE) < 0x100)
 #define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
 

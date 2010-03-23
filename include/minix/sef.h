@@ -7,8 +7,10 @@
 
 /* SEF entry points for system processes. */
 _PROTOTYPE( void sef_startup, (void) );
-_PROTOTYPE( int sef_receive, (endpoint_t src, message *m_ptr) );
+_PROTOTYPE( int sef_receive_status, (endpoint_t src, message *m_ptr,
+    int *status_ptr) );
 _PROTOTYPE( void sef_exit, (int status) );
+#define sef_receive(src, m_ptr) sef_receive_status(src, m_ptr, NULL)
 
 /* SEF Debug. */
 #include <stdio.h>
@@ -73,7 +75,7 @@ _PROTOTYPE( int sef_cb_init_crash, (int type, sef_init_info_t *info) );
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_PING_REQUESTS 1
-#define IS_SEF_PING_REQUEST(mp) (is_notify((mp)->m_type) \
+#define IS_SEF_PING_REQUEST(mp, status) (is_ipc_notify(status) \
     && (mp)->m_source == RS_PROC_NR)
 
 /* Callback type definitions. */
@@ -108,7 +110,7 @@ _PROTOTYPE( void sef_cb_ping_reply_pong, (endpoint_t source) );
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_LU_REQUESTS 1
-#define IS_SEF_LU_REQUEST(mp) ((mp)->m_type == RS_LU_PREPARE \
+#define IS_SEF_LU_REQUEST(mp, status) ((mp)->m_type == RS_LU_PREPARE \
     && (mp)->m_source == RS_PROC_NR)
 
 /* Callback type definitions. */
@@ -175,9 +177,9 @@ _PROTOTYPE(  int sef_cb_lu_state_isvalid_standard, (int state) );
  *===========================================================================*/
 /* What to intercept. */
 #define INTERCEPT_SEF_SIGNAL_REQUESTS 1
-#define IS_SEF_SIGNAL_REQUEST(mp) \
+#define IS_SEF_SIGNAL_REQUEST(mp, status) \
     (((mp)->m_type == SIGS_SIGNAL_RECEIVED && (mp)->m_source < INIT_PROC_NR) \
-    || (is_notify((mp)->m_type) && (mp)->m_source == SYSTEM))
+    || (is_ipc_notify(status) && (mp)->m_source == SYSTEM))
 
 /* Callback type definitions. */
 typedef void(*sef_cb_signal_handler_t)(int signo);

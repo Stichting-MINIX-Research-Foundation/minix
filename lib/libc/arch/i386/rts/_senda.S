@@ -1,6 +1,7 @@
+#include <minix/ipcconst.h>
+
 .globl	__senda
 
-	SENDA = 16
 	SYSVEC = 33
 
 	MSGTAB = 8	/* message table */

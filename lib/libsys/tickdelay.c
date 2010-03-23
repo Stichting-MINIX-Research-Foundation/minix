@@ -23,7 +23,7 @@ long ticks;				/* number of ticks to wait */
     s = _kernel_call(SYS_SETALARM, &m);
     if (s != OK) return(s);
 
-    receive(CLOCK,&m_alarm);		/* await synchronous alarm */
+    sef_receive(CLOCK,&m_alarm);		/* await synchronous alarm */
 
     /* Check if we must reschedule the current alarm. */
     if (m.ALRM_TIME_LEFT > 0 && m.ALRM_TIME_LEFT != TMR_NEVER) {

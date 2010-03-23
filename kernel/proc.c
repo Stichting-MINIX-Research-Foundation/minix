@@ -319,6 +319,9 @@ long bit_map;			/* notification event set or flags */
 		caller_ptr->p_name, caller_ptr->p_endpoint);
   }
 
+  /* Clear IPC status code. */
+  IPC_STATUS_CLEAR(caller_ptr);
+
   /* Check destination. SENDA is special because its argument is a table and
    * not a single destination. RECEIVE is the only call that accepts ANY (in
    * addition to a real endpoint). The other calls (SEND, SENDREC,
@@ -563,10 +566,14 @@ int flags;
    * RTS_SENDING flag may be set when its SENDREC call blocked while sending.  
    */
   if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint)) {
+	int call;
 	/* Destination is indeed waiting for this message. */
 	assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
 	if((r=QueueMess(caller_ptr->p_endpoint, linaddr, dst_ptr)) != OK)
 		return r;
+	call = (caller_ptr->p_misc_flags & MF_REPLY_PEND ? SENDREC
+		: (flags & NON_BLOCKING ? SENDNB : SEND));
+	IPC_STATUS_ADD(dst_ptr, IPC_STATUS_CALL_TO(call));
 	RTS_UNSET(dst_ptr, RTS_RECEIVING);
   } else {
 	if(flags & NON_BLOCKING) {
@@ -672,6 +679,7 @@ int flags;
 	    if((r=QueueMess(hisep, vir2phys(&m), caller_ptr)) != OK)  {
 		panic("mini_receive: local QueueMess failed");
 	    }
+	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(NOTIFY));
             return(OK);					/* report success */
         }
     }
@@ -680,6 +688,7 @@ int flags;
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
+            int call;
 	    assert(!RTS_ISSET(*xpp, RTS_SLOT_FREE));
 	    assert(!RTS_ISSET(*xpp, RTS_NO_ENDPOINT));
 
@@ -687,6 +696,8 @@ int flags;
   	    assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 	    QueueMess((*xpp)->p_endpoint,
 		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
+	    call = ((*xpp)->p_misc_flags & MF_REPLY_PEND ? SENDREC : SEND);
+	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(call));
 	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
 		sig_delay_done(*xpp);
 	    RTS_UNSET(*xpp, RTS_SENDING);
@@ -703,8 +714,10 @@ int flags;
 	else
 		r= try_async(caller_ptr);
 
-	if (r == OK)
+	if (r == OK) {
+		IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(SENDA));
 		return OK;	/* Got a message */
+	}
     }
   }
 
@@ -760,6 +773,7 @@ endpoint_t dst_e;			/* which process to notify */
       if((r=QueueMess(caller_ptr->p_endpoint, vir2phys(&m), dst_ptr)) != OK) {
 	panic("mini_notify: local QueueMess failed");
       }
+      IPC_STATUS_ADD(dst_ptr, IPC_STATUS_CALL_TO(NOTIFY));
       RTS_UNSET(dst_ptr, RTS_RECEIVING);
       return(OK);
   } 
@@ -945,8 +959,11 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 			tabent.result= QueueMess(caller_ptr->p_endpoint,
 				linaddr + (vir_bytes) &table[i].msg -
 					(vir_bytes) table, dst_ptr);
-			if(tabent.result == OK)
+			if(tabent.result == OK) {
+				IPC_STATUS_ADD(dst_ptr,
+					IPC_STATUS_CALL_TO(SENDA));
 				RTS_UNSET(dst_ptr, RTS_RECEIVING);
+			}
 
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;

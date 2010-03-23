@@ -38,7 +38,7 @@ EXTERN _PROTOTYPE( int do_sef_signal_request, (message *m_ptr) );
 PUBLIC void sef_startup()
 {
 /* SEF startup interface for system services. */
-  int r;
+  int r, status;
 
   /* Get information about self. */
   r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN);
@@ -57,7 +57,8 @@ PUBLIC void sef_startup()
   else {
       message m;
 
-      if((r = receive(RS_PROC_NR, &m)) != OK) {
+      r = receive(RS_PROC_NR, &m, &status);
+      if(r != OK) {
           panic("unable to receive from RS: %d", r);
       }
       if(IS_SEF_INIT_REQUEST(&m)) {
@@ -73,12 +74,12 @@ PUBLIC void sef_startup()
 }
 
 /*===========================================================================*
- *				sef_receive				     *
+ *				sef_receive_status			     *
  *===========================================================================*/
-PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
+PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
 {
 /* SEF receive() interface for system services. */
-  int r;
+  int r, status;
 
   while(TRUE) {
 
@@ -88,14 +89,15 @@ PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
 #endif
 
       /* Receive and return in case of error. */
-      r = receive(src, m_ptr);
+      r = receive(src, m_ptr, &status);
+      if(status_ptr) *status_ptr = status;
       if(r != OK) {
           return r;
       }
 
 #if INTERCEPT_SEF_PING_REQUESTS
       /* Intercept SEF Ping requests. */
-      if(IS_SEF_PING_REQUEST(m_ptr)) {
+      if(IS_SEF_PING_REQUEST(m_ptr, status)) {
           if(do_sef_ping_request(m_ptr) == OK) {
               continue;
           }
@@ -104,7 +106,7 @@ PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
 
 #if INTERCEPT_SEF_LU_REQUESTS
       /* Intercept SEF Live update requests. */
-      if(IS_SEF_LU_REQUEST(m_ptr)) {
+      if(IS_SEF_LU_REQUEST(m_ptr, status)) {
           if(do_sef_lu_request(m_ptr) == OK) {
               continue;
           }
@@ -113,7 +115,7 @@ PUBLIC int sef_receive(endpoint_t src, message *m_ptr)
 
 #if INTERCEPT_SEF_SIGNAL_REQUESTS
       /* Intercept SEF Signal requests. */
-      if(IS_SEF_SIGNAL_REQUEST(m_ptr)) {
+      if(IS_SEF_SIGNAL_REQUEST(m_ptr, status)) {
           if(do_sef_signal_request(m_ptr) == OK) {
               continue;
           }

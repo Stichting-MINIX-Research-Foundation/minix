@@ -25,7 +25,7 @@ FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
     struct boot_image **ip, struct boot_image_priv **pp,
     struct boot_image_sys **sp, struct boot_image_dev **dp)             );
 FORWARD _PROTOTYPE(void catch_boot_init_ready, (endpoint_t endpoint)	);
-FORWARD _PROTOTYPE(void get_work, (message *m)				);
+FORWARD _PROTOTYPE(void get_work, (message *m_ptr, int *status_ptr)	);
 
 /* The buffer where the boot image is copied during initialization. */
 PRIVATE int boot_image_buffer_size;
@@ -50,6 +50,7 @@ PUBLIC int main(void)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
   message m;					/* request message */
+  int status;					/* status code */
   int call_nr, who_e,who_p;			/* call number and caller */
   int result;                 			/* result to return */
 
@@ -60,7 +61,7 @@ PUBLIC int main(void)
   while (TRUE) {              
 
       /* Wait for request message. */
-      get_work(&m);
+      get_work(&m, &status);
       who_e = m.m_source;
       if(rs_isokendpt(who_e, &who_p) != OK) {
           panic("message from bogus source: %d", who_e);
@@ -78,7 +79,7 @@ PUBLIC int main(void)
       /* Notification messages are control messages and do not need a reply.
        * These include heartbeat messages and system notifications.
        */
-      if (is_notify(m.m_type)) {
+      if (is_ipc_notify(status)) {
           switch (who_p) {
           case CLOCK:
 	      do_period(&m);			/* check services status */
@@ -671,12 +672,13 @@ endpoint_t endpoint;
 {
 /* Block and catch an init ready message from the given source. */
   int r;
+  int status;
   message m;
   struct rproc *rp;
   int result;
 
   /* Receive init ready message. */
-  if ((r = receive(endpoint, &m)) != OK) {
+  if ((r = sef_receive_status(endpoint, &m, &status)) != OK) {
       panic("unable to receive init reply: %d", r);
   }
   if(m.m_type != RS_INIT) {
@@ -703,11 +705,12 @@ endpoint_t endpoint;
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-PRIVATE void get_work(m_in)
-message *m_in;				/* pointer to message */
+PRIVATE void get_work(m_ptr, status_ptr)
+message *m_ptr;				/* pointer to message */
+int *status_ptr;			/* pointer to status */
 {
-    int s;				/* receive status */
-    if (OK != (s=sef_receive(ANY, m_in))) 	/* wait for message */
-        panic("sef_receive failed: %d", s);
+    int r;
+    if (OK != (r=sef_receive_status(ANY, m_ptr, status_ptr)))
+        panic("sef_receive_status failed: %d", r);
 }
 
