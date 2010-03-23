@@ -1287,8 +1287,6 @@ next:
 	if(evstat != 0 && !(evstat & HERMES_EV_TICK)) {
 		goto beginning;
 	}
-
-	return (1);
 }
 
 

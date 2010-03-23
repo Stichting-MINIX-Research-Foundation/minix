@@ -11,7 +11,7 @@ _PROTOTYPE(char *itoa, (int _n));
 _PROTOTYPE(char *getpass, (const char *_prompt));
 
 /* Miscellaneous MINIX. */
-_PROTOTYPE(void std_err, (char *_s));
+_PROTOTYPE(void std_err, (const char *_s));
 _PROTOTYPE(void prints, (const char *_s, ...));
 _PROTOTYPE(int fsversion, (char *_dev, char *_prog));
 _PROTOTYPE(int getprocessor, (void));

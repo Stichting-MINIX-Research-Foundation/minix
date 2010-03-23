@@ -137,7 +137,6 @@ _PROTOTYPE( ssize_t pread, (int, void *, size_t, off_t)			);
 _PROTOTYPE( int rmdir, (const char *_path)				);
 _PROTOTYPE( int setgid, (_mnx_Gid_t _gid)				);
 _PROTOTYPE( int setegid, (_mnx_Gid_t _gid)				);
-_PROTOTYPE( int setpgid, (pid_t _pid, pid_t _pgid)			);
 _PROTOTYPE( pid_t setsid, (void)					);
 _PROTOTYPE( int setuid, (_mnx_Uid_t _uid)				);
 _PROTOTYPE( int seteuid, (_mnx_Uid_t _uid)				);
