@@ -267,6 +267,7 @@ csinit:
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
+	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
 	iret								;
 
@@ -336,6 +337,7 @@ hwint07:
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
 	outb	$INT2_CTL	/* reenable slave 8259		  */	;\
+	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
 	iret								;
 

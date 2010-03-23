@@ -144,7 +144,9 @@ PUBLIC void apic_calibrate_clocks(void)
 	init_8253A_timer(system_hz);
 
 	/* loop for some time to get a sample */
-	while(probe_ticks < PROBE_TICKS);
+	while(probe_ticks < PROBE_TICKS) {
+		intr_enable();
+	}
 
 	intr_disable();
 	stop_8253A_timer();

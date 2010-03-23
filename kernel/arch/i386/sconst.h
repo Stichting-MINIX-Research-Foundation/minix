@@ -141,4 +141,13 @@
 	call	lazy_fpu					;\
 	add	$4, %esp					;
 
+/*
+ * clear the IF flag in eflags which are stored somewhere in memory, e.g. on
+ * stack. iret or popf will load the new value later
+ */
+#define CLEAR_IF(where)	\
+	mov	where, %eax						;\
+	andl	$0xfffffdff, %eax					;\
+	mov	%eax, where						;
+
 #endif /* __SCONST_H__ */

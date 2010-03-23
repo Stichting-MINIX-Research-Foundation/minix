@@ -608,8 +608,11 @@ idt_zero:
  */
 halt_cpu:
 	sti
-	hlt
-	cli
+	hlt /* interrupts enabled only after this instruction is executed! */
+	/*
+	 * interrupt handlers make sure that the interrupts are disabled when we
+	 * get here so we take only _one_ interrupt after halting the CPU
+	 */
 	ret
 
 /*===========================================================================*/

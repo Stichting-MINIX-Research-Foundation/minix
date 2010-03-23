@@ -48,6 +48,7 @@
 	pusha								;\
 	call	cycles_accounting_stop_idle				;\
 	APIC_IRQ_HANDLER(irq)						;\
+	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
 	iret								;
 
@@ -158,6 +159,7 @@ apic_hwint15:
 	pusha								;\
 	call	cycles_accounting_stop_idle				;\
 	LAPIC_INTR_HANDLER(func)					;\
+	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
 	iret								;
 
