@@ -1,5 +1,7 @@
 /*	add64u() - unsigned to 64 bit addition		Author: Kees J. Bot */
 /*								7 Dec 1995 */
+#include <minix/compiler.h>
+
 .text
 .globl	_add64u, _add64ul
 
@@ -14,7 +16,7 @@ _add64ul:
 	movl	12(%esp), %edx
 	adcl	$0, %edx
 	movl	%edx, 4(%eax)
-	ret
+	ret BYTES_TO_POP_ON_STRUCT_RETURN
 
 /* */
 /* $PchId: add64u.ack.s,v 1.2 1996/04/11 18:59:57 philip Exp $ */

@@ -1,5 +1,7 @@
 /*	cvu64() - unsigned converted to 64 bit		Author: Kees J. Bot */
 /*								7 Dec 1995 */
+#include <minix/compiler.h>
+
 .text
 .globl	_cvu64, _cvul64
 
@@ -11,7 +13,7 @@ _cvul64:
 	movl	8(%esp), %edx
 	movl	%edx, (%eax)
 	movl	$0, 4(%eax)
-	ret
+	ret BYTES_TO_POP_ON_STRUCT_RETURN
 
 /* */
 /* $PchId: cvu64.ack.s,v 1.2 1996/04/11 18:59:57 philip Exp $ */

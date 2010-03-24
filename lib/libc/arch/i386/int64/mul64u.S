@@ -1,6 +1,8 @@
 /*	mul64u() - unsigned long by unsigned multiply giving 64 bit result */
 /*							Author: Kees J. Bot */
 /*								7 Dec 1995 */
+#include <minix/compiler.h>
+
 .text
 .globl	_mul64u
 
@@ -12,7 +14,7 @@ _mul64u:
 	movl	%eax, (%ecx)
 	movl	%edx, 4(%ecx)
 	movl	%ecx, %eax
-	ret
+	ret BYTES_TO_POP_ON_STRUCT_RETURN
 
 /* */
 /* $PchId: mul64u.ack.s,v 1.2 1996/04/11 18:59:57 philip Exp $ */

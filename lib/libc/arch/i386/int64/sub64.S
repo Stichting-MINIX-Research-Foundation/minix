@@ -1,5 +1,7 @@
 /*	sub64() - 64 bit subtraction			Author: Kees J. Bot */
 /*								7 Dec 1995 */
+#include <minix/compiler.h>
+
 .text
 .globl	_sub64
 
@@ -12,7 +14,7 @@ _sub64:
 	movl	12(%esp), %edx
 	sbbl	20(%esp), %edx
 	movl	%edx, 4(%eax)
-	ret
+	ret BYTES_TO_POP_ON_STRUCT_RETURN
 
 /* */
 /* $PchId: sub64.ack.s,v 1.2 1996/04/11 18:59:57 philip Exp $ */
