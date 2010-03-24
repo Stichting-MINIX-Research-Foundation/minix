@@ -9,7 +9,7 @@
 # .endif
 
 ASMCONV=gas2ack
-AFLAGS+=-D__ASSEMBLY__ -D_EM_WSIZE=4 -D__minix -I/usr/src/include -w -wo
+AFLAGS+=-D__ASSEMBLY__ -D_EM_WSIZE=4 -D__minix -w -wo
 CPP.s=${CC} -E ${AFLAGS}
 ASMCONVFLAGS+=-mi386
 
