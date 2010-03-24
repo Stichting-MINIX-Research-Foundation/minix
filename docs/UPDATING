@@ -1,11 +1,50 @@
-20060818:
-	You need flex in your $PATH, which has become part of the base
-	system. This needs bigger binaries.
-	If you don't have flex yet, you can compile it first by doing:
-	# cp /usr/src/etc/binary_sizes* /etc
-	# binsizes big
-	# cd /usr/src/commands/flex-2.5.4 
-	# sh build
+20100318:
+        Gas2ack updates: Run 'make install' in commands/i386/gas2ack
+20100317:
+        /usr/src/etc/system.conf updated to ignore default kernel calls: copy
+        it (or merge it) to /etc/system.conf.
+        The hello driver (/dev/hello) added to the distribution:
+        # cd /usr/src/commands/scripts && make clean install
+        # cd /dev && MAKEDEV hello
+20100316:
+        /usr/man/man9 is required
+	# mkdir /usr/man/man9
+20100308:
+        Include directory reorganization:
+        # mv /usr/include/ibm /usr/include/i386
+        # ln -s /usr/include/arch/i386 /usr/include/machine
+        Install(1) updates:
+        # cd commands/simple && make /bin/install
+20100303:
+        Gas2ack updates: Run 'make install' in commands/i386/gas2ack
+20100215:
+        Make(1) has been replaced: Run 'make install' in commands/make
+        Mkdep updates: Copy commands/scripts/mkdep.sh to /usr/bin/mkdep
+        Make(1) needs mkfiles: Copy files in etc/mk to /etc/mk
+        ACK update: Copy commands/i386/acd.descr to /usr/lib/descr
+        End.a renamed:
+           -Copy /usr/lib/i86/end.a to /usr/lib/i86/libend.a
+           -Copy /usr/lib/i386/end.a to /usr/lib/i386/libend.a
+           -Copy /usr/gnu/lib/end.a to /usr/gnu/lib/libend.a
+        Asmconv updates: Run 'make install' in commands/i386/asmconv
+20091212:
+        /etc/drivers.conf has been renamed to /etc/system.conf.
+        user "service" has been added to password file /etc/passwd.
+20091006 (r5422):
+	OSS requires an improved make to be compiled; run "make install"
+	in /usr/src/commands/make before running "make world".
+20070212 (r2751):
+	mkfs needs more memory to make an image; chmem it or do
+	# touch mkfs.c ; make /usr/bin/mkfs
+	in /usr/src/commands/simple.
+20070118:
+	drivers.conf has been updated to include an ACL for mfs. it has
+	to be installed before rebooting after an update of the mount command.
+20061222:
+	The archictecture-dependent/-independent split needs ARCH=<arch>
+	in /etc/make.conf, included by some Makefiles and sourced by
+	some shell scripts. To install it, type 'make install' in
+	src/etc, or simply copy the file over.
 20061222:
 	Install binaries in the right order because the new readdir
 	implementation and the new mount program are incompatible
@@ -25,51 +64,11 @@
 	Now install everything
 	# cd /usr/src
 	# make install
-20061222:
-	The archictecture-dependent/-independent split needs ARCH=<arch>
-	in /etc/make.conf, included by some Makefiles and sourced by
-	some shell scripts. To install it, type 'make install' in
-	src/etc, or simply copy the file over.
-20070118:
-	drivers.conf has been updated to include an ACL for mfs. it has
-	to be installed before rebooting after an update of the mount command.
-20070212 (r2751):
-	mkfs needs more memory to make an image; chmem it or do
-	# touch mkfs.c ; make /usr/bin/mkfs
-	in /usr/src/commands/simple.
-20091006 (r5422):
-	OSS requires an improved make to be compiled; run "make install"
-	in /usr/src/commands/make before running "make world".
-20091212:
-        /etc/drivers.conf has been renamed to /etc/system.conf.
-        user "service" has been added to password file /etc/passwd.
-20100215:
-        Make(1) has been replaced: Run 'make install' in commands/make
-        Mkdep updates: Copy commands/scripts/mkdep.sh to /usr/bin/mkdep
-        Make(1) needs mkfiles: Copy files in etc/mk to /etc/mk
-        ACK update: Copy commands/i386/acd.descr to /usr/lib/descr
-        End.a renamed:
-           -Copy /usr/lib/i86/end.a to /usr/lib/i86/libend.a
-           -Copy /usr/lib/i386/end.a to /usr/lib/i386/libend.a
-           -Copy /usr/gnu/lib/end.a to /usr/gnu/lib/libend.a
-        Asmconv updates: Run 'make install' in commands/i386/asmconv
-20100303:
-        Gas2ack updates: Run 'make install' in commands/i386/gas2ack
-20100308:
-        Include directory reorganization:
-        # mv /usr/include/ibm /usr/include/i386
-        # ln -s /usr/include/arch/i386 /usr/include/machine
-        Install(1) updates:
-        # cd commands/simple && make /bin/install
-20100316:
-        /usr/man/man9 is required
-	# mkdir /usr/man/man9
-20100317:
-        /usr/src/etc/system.conf updated to ignore default kernel calls: copy
-        it (or merge it) to /etc/system.conf.
-        The hello driver (/dev/hello) added to the distribution:
-        # cd /usr/src/commands/scripts && make clean install
-        # cd /dev && MAKEDEV hello
-20100318:
-        Gas2ack updates: Run 'make install' in commands/i386/gas2ack
-
+20060818:
+	You need flex in your $PATH, which has become part of the base
+	system. This needs bigger binaries.
+	If you don't have flex yet, you can compile it first by doing:
+	# cp /usr/src/etc/binary_sizes* /etc
+	# binsizes big
+	# cd /usr/src/commands/flex-2.5.4
+	# sh build
