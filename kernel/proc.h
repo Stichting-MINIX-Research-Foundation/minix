@@ -257,11 +257,6 @@ struct proc {
 
 #ifndef __ASSEMBLY__
 
-/* The process table and pointers to process table slots. The pointers allow
- * faster access because now a process entry can be found by indexing the
- * pproc_addr array, while accessing an element i requires a multiplication
- * with sizeof(struct proc) to determine the address. 
- */
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
 EXTERN struct proc *rdy_head[NR_SCHED_QUEUES]; /* ptrs to ready list headers */
 EXTERN struct proc *rdy_tail[NR_SCHED_QUEUES]; /* ptrs to ready list tails */
