@@ -472,9 +472,6 @@ exception_entry:
 	TEST_INT_IN_KERNEL(12, exception_entry_nested)
 
 exception_entry_from_user:
-
-	cld
-
 	SAVE_PROCESS_CTX(8)
 
 	/* stop user process cycles */
