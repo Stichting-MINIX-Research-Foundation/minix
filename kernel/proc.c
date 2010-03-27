@@ -684,6 +684,20 @@ int flags;
         }
     }
 
+    /* Check if there are pending senda(). */
+    if (caller_ptr->p_misc_flags & MF_ASYNMSG)
+    {
+	if (src_e != ANY)
+		r= try_one(proc_addr(src_p), caller_ptr, NULL);
+	else
+		r= try_async(caller_ptr);
+
+	if (r == OK) {
+		IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(SENDA));
+		return OK;	/* Got a message */
+	}
+    }
+
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
@@ -705,19 +719,6 @@ int flags;
             return(OK);				/* report success */
 	}
 	xpp = &(*xpp)->p_q_link;		/* proceed to next */
-    }
-
-    if (caller_ptr->p_misc_flags & MF_ASYNMSG)
-    {
-	if (src_e != ANY)
-		r= try_one(proc_addr(src_p), caller_ptr, NULL);
-	else
-		r= try_async(caller_ptr);
-
-	if (r == OK) {
-		IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(SENDA));
-		return OK;	/* Got a message */
-	}
     }
   }
 
