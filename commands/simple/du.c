@@ -138,7 +138,7 @@ nlink_t nlink;
   return(0);
 }
 
-int get_block_size(char *dir, struct stat *st)
+int get_block_size(const char *dir, const struct stat *st)
 {
   struct statfs stfs;
   static int fs_block_size = -1, fs_dev = -1;

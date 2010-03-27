@@ -43,7 +43,7 @@ static void delete(char *hostname);
 static void do_set(char *hostname, char *ethername, int temp, int pub,
 	int optdelete);
 static ipaddr_t nametoipaddr(char *hostname);
-static void fatal(char *fmt, ...);
+static void fatal(const char *fmt, ...);
 static void usage(void);
 
 int main(int argc, char *argv[])
@@ -444,7 +444,7 @@ static char *ether_ntoa(struct ether_addr *eap)
 }
 #endif
 
-static void fatal(char *fmt, ...)
+static void fatal(const char *fmt, ...)
 {
 	va_list ap;
 

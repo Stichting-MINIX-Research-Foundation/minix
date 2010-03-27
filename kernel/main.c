@@ -283,8 +283,7 @@ PRIVATE void announce(void)
 /*===========================================================================*
  *				prepare_shutdown			     *
  *===========================================================================*/
-PUBLIC void prepare_shutdown(how)
-int how;
+PUBLIC void prepare_shutdown(const int how)
 {
 /* This function prepares to shutdown MINIX. */
   static timer_t shutdown_timer;
@@ -301,8 +300,7 @@ int how;
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
-PUBLIC void minix_shutdown(tp)
-timer_t *tp;
+PUBLIC void minix_shutdown(timer_t *tp)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the

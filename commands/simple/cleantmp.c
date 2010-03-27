@@ -83,7 +83,7 @@ void days2time(unsigned long days, time_t *retired, time_t *dotretired)
 char *path;	/* Path name constructed in path[]. */
 int plen= 0, pidx= 0;	/* Lenght/index for path[]. */
 
-void addpath(int *didx, char *name)
+void addpath(int *didx, const char *name)
 /* Add a component to path. (name may also be a full path at the first call)
  * The index where the current path ends is stored in *pdi.
  */
@@ -171,7 +171,7 @@ struct file *shorten(struct file *list)
 struct file *ignore_list[1024];
 size_t n_ignored= 0;
 
-unsigned ihash(char *name)
+unsigned ihash(const char *name)
 /* A simple hashing function on a file name. */
 {
 	unsigned h= 0;

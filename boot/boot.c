@@ -743,7 +743,7 @@ static void sfree(char *s)
 	if (s != nil && s != null) free(s);
 }
 
-static char *copystr(char *s)
+static char *copystr(const char *s)
 /* Copy a non-null string using malloc. */
 {
 	char *c;
@@ -754,12 +754,12 @@ static char *copystr(char *s)
 	return c;
 }
 
-static int is_default(environment *e)
+static int is_default(const environment *e)
 {
 	return (e->flags & E_SPECIAL) && e->defval == nil;
 }
 
-static environment **searchenv(char *name)
+static environment **searchenv(const char *name)
 {
 	environment **aenv= &env;
 
@@ -1538,7 +1538,7 @@ int expired(void)
 	return (Thandler != nil && milli_since(Tbase) >= Tcount);
 }
 
-void delay(char *msec)
+void delay(const char *msec)
 /* Delay for a given time. */
 {
 	u32_t base, count;
@@ -1553,7 +1553,7 @@ void delay(char *msec)
 	} while (!interrupt() && !expired() && milli_since(base) < count);
 }
 
-static enum whatfun { NOFUN, SELECT, DEFFUN, USERFUN } menufun(environment *e)
+static enum whatfun { NOFUN, SELECT, DEFFUN, USERFUN } menufun(const environment *e)
 {
 	if (!(e->flags & E_FUNCTION) || e->arg[0] == 0) return NOFUN;
 	if (e->arg[1] != ',') return SELECT;

@@ -185,7 +185,7 @@ PUBLIC int ap_timer_int_handler(void)
 	 * user's system time.
 	 */
 
-	unsigned ticks = 1;
+	const unsigned ticks = 1;
 	struct proc * p, * billp;
 
 #ifdef CONFIG_WATCHDOG

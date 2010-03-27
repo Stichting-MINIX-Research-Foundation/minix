@@ -38,18 +38,15 @@
 
 char *prog = 0, *processing = 0;
 
-_PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(char *getline, (FILE *fp, char *b));
 _PROTOTYPE(char *range, (char *s, int *p1, int *p2));
 _PROTOTYPE(int getcommand, (FILE *fp, int *o1, int *o2, char *pcmd, int *n1, int *n2));
-_PROTOTYPE(void fatal, (char *s, ...));
+_PROTOTYPE(void fatal, (const char *s, ...));
 _PROTOTYPE(int strwcmp, (char *s1, char *s2));
 _PROTOTYPE(int whitespace, (int ch));
 
 char *
- getline(fp, b)
-FILE *fp;
-char *b;
+getline(FILE *fp, char *b)
 {
   if (fgets(b, LINELEN, fp) == NULL) fatal("unexpected eof");
 
@@ -58,9 +55,7 @@ char *b;
 
 #define copy(str) printf("%s", str)
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
   char cmd, *fl, *fd, obuf[LINELEN], nbuf[LINELEN];
   int o1, o2, n1, n2, here;
@@ -155,7 +150,7 @@ char *pcmd;
 }
 
 #ifdef __STDC__
-void fatal(char *s, ...)
+void fatal(const char *s, ...)
 {
   va_list args;
 
@@ -169,7 +164,7 @@ void fatal(char *s, ...)
 #else
 /* the K&R lib does not have vfprintf */
 void fatal(s, a)
-char *s, *a;
+const char *s, *a;
 {
   fprintf(stderr, "%s: processing: %s fatal: ", prog, processing);
   fprintf(stderr, s, a);

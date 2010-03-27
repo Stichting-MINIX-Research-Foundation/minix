@@ -26,7 +26,7 @@
 /*===========================================================================*
  *				intr_init				     *
  *===========================================================================*/
-PUBLIC int intr_init(int mine, int auto_eoi)
+PUBLIC int intr_init(const int mine, const int auto_eoi)
 {
 /* Initialize the 8259s, finishing with all interrupts disabled.  This is
  * only done in protected mode, in real mode we don't touch the 8259s, but
@@ -83,15 +83,15 @@ PUBLIC int intr_disabled(void)
 	return 0;
 }
 
-PUBLIC void irq_8259_unmask(int irq)
+PUBLIC void irq_8259_unmask(const int irq)
 {
-	unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
+	const unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
 	outb(ctl_mask, inb(ctl_mask) & ~(1 << (irq & 0x7)));
 }
 
-PUBLIC void irq_8259_mask(int irq)
+PUBLIC void irq_8259_mask(const int irq)
 {
-	unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
+	const unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
 	outb(ctl_mask, inb(ctl_mask) | (1 << (irq & 0x7)));
 }
 

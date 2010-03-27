@@ -279,7 +279,7 @@ long bit_map;			/* notification event set or flags */
  * The trap is caught and sys_call() is called to send or receive a message
  * (or both). The caller is always given by 'proc_ptr'.
  */
-  register struct proc *caller_ptr = proc_ptr;	/* get pointer to caller */
+  struct proc *const caller_ptr = proc_ptr;	/* get pointer to caller */
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
   size_t msg_size;
@@ -537,7 +537,7 @@ PRIVATE int mini_send(caller_ptr, dst_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* who is trying to send a message? */
 int dst_e;				/* to whom is message being sent? */
 message *m_ptr;				/* pointer to message buffer */
-int flags;
+const int flags;
 {
 /* Send a message from 'caller_ptr' to 'dst'. If 'dst' is blocked waiting
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
@@ -609,7 +609,7 @@ PRIVATE int mini_receive(caller_ptr, src_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* process trying to get message */
 int src_e;				/* which message source is wanted */
 message *m_ptr;				/* pointer to message buffer */
-int flags;
+const int flags;
 {
 /* A process or task wants to get a message.  If a message is already queued,
  * acquire it and deblock the sender.  If no message from the desired source
@@ -742,9 +742,10 @@ int flags;
 /*===========================================================================*
  *				mini_notify				     * 
  *===========================================================================*/
-PUBLIC int mini_notify(caller_ptr, dst_e)
-register struct proc *caller_ptr;	/* sender of the notification */
-endpoint_t dst_e;			/* which process to notify */
+PUBLIC int mini_notify(
+  const struct proc *caller_ptr,	/* sender of the notification */
+  endpoint_t dst_e			/* which process to notify */
+)
 {
   register struct proc *dst_ptr;
   int src_id;				/* source id for late delivery */
@@ -821,7 +822,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	struct proc *dst_ptr;
 	struct priv *privp;
 	asynmsg_t tabent;
-	vir_bytes table_v = (vir_bytes) table;
+	const vir_bytes table_v = (vir_bytes) table;
 	vir_bytes linaddr;
 
 	privp= priv(caller_ptr);
@@ -1133,8 +1134,9 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 /*===========================================================================*
  *				enqueue					     * 
  *===========================================================================*/
-PUBLIC void enqueue(rp)
-register struct proc *rp;	/* this process is now runnable */
+PUBLIC void enqueue(
+  register struct proc *rp	/* this process is now runnable */
+)
 {
 /* Add 'rp' to one of the queues of runnable processes.  This function is 
  * responsible for inserting a process into one of the scheduling queues. 
@@ -1196,7 +1198,7 @@ register struct proc *rp;	/* this process is now runnable */
  */
 PRIVATE void enqueue_head(struct proc *rp)
 {
-  int q = rp->p_priority;	 		/* scheduling queue to use */
+  const int q = rp->p_priority;	 		/* scheduling queue to use */
 
   assert(proc_ptr_ok(rp));
   assert(proc_is_runnable(rp));
@@ -1229,8 +1231,8 @@ PRIVATE void enqueue_head(struct proc *rp)
 /*===========================================================================*
  *				dequeue					     * 
  *===========================================================================*/
-PUBLIC void dequeue(rp)
-register struct proc *rp;	/* this process is no longer runnable */
+PUBLIC void dequeue(const struct proc *rp)
+/* this process is no longer runnable */
 {
 /* A process must be removed from the scheduling queues, for example, because
  * it has blocked.  If the currently active process is removed, a new process
@@ -1284,7 +1286,7 @@ int *front;					/* return: front or back */
  * process must be added to one of the scheduling queues to decide where to
  * insert it.  As a side-effect the process' priority may be updated.  
  */
-  int time_left = (rp->p_ticks_left > 0);	/* quantum fully consumed */
+  const int time_left = (rp->p_ticks_left > 0);	/* quantum fully consumed? */
 
   /* Check whether the process has time left. Otherwise give a new quantum 
    * and lower the process' priority, unless the process already is in the 
@@ -1340,8 +1342,9 @@ PRIVATE struct proc * pick_proc(void)
  *				balance_queues				     *
  *===========================================================================*/
 #define Q_BALANCE_TICKS	 100
-PUBLIC void balance_queues(tp)
-timer_t *tp;					/* watchdog timer pointer */
+PUBLIC void balance_queues(
+  timer_t *tp				/* watchdog timer pointer */
+)
 {
 /* Check entire process table and give all process a higher priority. This
  * effectively means giving a new quantum. If a process already is at its 
@@ -1398,13 +1401,14 @@ PUBLIC struct proc *endpoint_lookup(endpoint_t e)
  *===========================================================================*/
 #if DEBUG_ENABLE_IPC_WARNINGS
 PUBLIC int isokendpt_f(file, line, e, p, fatalflag)
-char *file;
+const char *file;
 int line;
 #else
 PUBLIC int isokendpt_f(e, p, fatalflag)
 #endif
 endpoint_t e;
-int *p, fatalflag;
+int *p;
+const int fatalflag;
 {
 	int ok = 0;
 	/* Convert an endpoint number into a process number.

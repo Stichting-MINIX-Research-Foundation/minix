@@ -84,7 +84,7 @@ int n_procs;			/* Number of processes. */
 
 #define between(a, c, z)	((unsigned) ((c) - (a)) <= ((z) - (a)))
 
-void pretty_image(char *image)
+void pretty_image(const char *image)
 /* Pretty print the name of the image to load.  Translate '/' and '_' to
  * space, first letter goes uppercase.  An 'r' before a digit prints as
  * 'revision'.  E.g. 'minix/1.6.16r10' -> 'Minix 1.6.16 revision 10'.
@@ -234,7 +234,7 @@ void patch_sizes(void)
 	put_word(process[FS].data + P_INIT_OFF+4, data_size);
 }
 
-int selected(char *name)
+int selected(const char *name)
 /* True iff name has no label or the proper label. */
 {
 	char *colon, *label;
@@ -249,7 +249,7 @@ int selected(char *name)
 	return cmp == 0;
 }
 
-u32_t proc_size(struct image_header *hdr)
+static u32_t proc_size(const struct image_header *hdr)
 /* Return the size of a process in sectors as found in an image. */
 {
 	u32_t len= hdr->process.a_text;

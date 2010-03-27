@@ -176,7 +176,7 @@ struct proc {
 /* Set flag and dequeue if the process was runnable. */
 #define RTS_SET(rp, f)							\
 	do {								\
-		int rts = (rp)->p_rts_flags;				\
+		const int rts = (rp)->p_rts_flags;			\
 		(rp)->p_rts_flags |= (f);				\
 		if(rts_f_is_runnable(rts) && !proc_is_runnable(rp)) {	\
 			dequeue(rp);					\

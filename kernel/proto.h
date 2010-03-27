@@ -38,15 +38,15 @@ _PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
 /* proc.c */
 _PROTOTYPE( int do_ipc, (int call_nr, int src_dst, 
 					message *m_ptr, long bit_map)	);
-_PROTOTYPE( int mini_notify, (struct proc *src, endpoint_t dst)		);
+_PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
-_PROTOTYPE( void dequeue, (struct proc *rp)				);
+_PROTOTYPE( void dequeue, (const struct proc *rp)			);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
 _PROTOTYPE( struct proc * schedcheck, (void)				);
 _PROTOTYPE( struct proc * arch_finish_schedcheck, (void)		);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
 #if DEBUG_ENABLE_IPC_WARNINGS
-_PROTOTYPE( int isokendpt_f, (char *file, int line, endpoint_t e, int *p, int f));
+_PROTOTYPE( int isokendpt_f, (const char *file, int line, endpoint_t e, int *p, int f));
 #define isokendpt_d(e, p, f) isokendpt_f(__FILE__, __LINE__, (e), (p), (f))
 #else
 _PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
@@ -59,8 +59,8 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 
 /* system.c */
 _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
-_PROTOTYPE( void set_sendto_bit, (struct proc *rc, int id)		);
-_PROTOTYPE( void unset_sendto_bit, (struct proc *rc, int id)		);
+_PROTOTYPE( void set_sendto_bit, (const struct proc *rc, int id)	);
+_PROTOTYPE( void unset_sendto_bit, (const struct proc *rc, int id)	);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (proc_nr_t proc_nr, int sig_nr)			);
 _PROTOTYPE( void sig_delay_done, (struct proc *rp)			);
@@ -83,9 +83,9 @@ _PROTOTYPE( void vtimer_check, (struct proc *rp)			);
 /* interrupt.c */
 _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 						 irq_handler_t handler)  );
-_PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)                      );
-_PROTOTYPE( void enable_irq, (irq_hook_t *hook)                        	);
-_PROTOTYPE( int disable_irq, (irq_hook_t *hook)                        );
+_PROTOTYPE( void rm_irq_handler, (const irq_hook_t *hook)		);
+_PROTOTYPE( void enable_irq, (const irq_hook_t *hook)			);
+_PROTOTYPE( int disable_irq, (const irq_hook_t *hook)			);
 
 /* debug.c */
 _PROTOTYPE( int runqueues_ok, (void) );
@@ -136,7 +136,7 @@ _PROTOTYPE( phys_bytes umap_local, (register struct proc *rp, int seg,
 	vir_bytes vir_addr, vir_bytes bytes));
 _PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,
         vir_bytes src_offset, phys_clicks dst_clicks, vir_bytes dst_offset));
-_PROTOTYPE( phys_bytes umap_remote, (struct proc* rp, int seg,
+_PROTOTYPE( phys_bytes umap_remote, (const struct proc* rp, int seg,
         vir_bytes vir_addr, vir_bytes bytes)				);
 _PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp,
 			int seg, vir_bytes vir_addr, vir_bytes bytes)	);
@@ -167,13 +167,13 @@ _PROTOTYPE( int arch_umap, (struct proc *pr, vir_bytes, vir_bytes,
 _PROTOTYPE( int arch_do_vmctl, (message *m_ptr, struct proc *p)); 
 _PROTOTYPE( int vm_contiguous, (struct proc *targetproc, u32_t vir_buf, size_t count));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
-_PROTOTYPE( int vm_lookup, (struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
+_PROTOTYPE( int vm_lookup, (const struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
 _PROTOTYPE( int delivermsg, (struct proc *target));
 _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,
 	phys_bytes *len, int *flags));
 _PROTOTYPE( int arch_phys_map_reply, (int index, vir_bytes addr));
-_PROTOTYPE( int arch_enable_paging, (struct proc * caller, message * m_ptr));
+_PROTOTYPE( int arch_enable_paging, (struct proc * caller, const message * m_ptr));
 
 _PROTOTYPE( int copy_msg_from_user, (struct proc * p, message * user_mbuf,
 							message * dst));

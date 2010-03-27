@@ -188,7 +188,7 @@ parseRule(register char *buf, register const char *p)
 }
 
 static int
-last_sunday(register int day, register struct tm *timep)
+last_sunday(register int day, const register struct tm *timep)
 {
 	int first = FIRSTSUNDAY(timep);
 
@@ -198,7 +198,7 @@ last_sunday(register int day, register struct tm *timep)
 }
 
 static int
-date_of(register struct dsttype *dst, struct tm *timep)
+date_of(const register struct dsttype *dst, const struct tm *timep)
 {
 	int leap = LEAPYEAR(YEAR0 + timep->tm_year);
 	int firstday, tmpday;

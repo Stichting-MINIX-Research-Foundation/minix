@@ -55,7 +55,7 @@ struct mtab {	/* List of mounted devices from /etc/mtab. */
 } *mtab= NULL;
 
 struct mtab *searchtab(char *name);
-void readmtab(char *type);
+static void readmtab(const char *type);
 int df(const struct mtab *mt);
 bit_t bit_count(unsigned blocks, bit_t bits, int fd, int bs);
 
@@ -132,7 +132,7 @@ Filesystem          Files       Free       Used    % BUsed%   Mounted on"
   exit(ex);
 }
 
-void readmtab(char *type)
+static void readmtab(const char *type)
 /* Turn the mounted file table into a list. */
 {
   struct mtab **amt= &mtab, *new;

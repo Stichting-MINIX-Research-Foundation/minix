@@ -38,7 +38,8 @@ runqueues_ok(void)
 	return 0;
     }
     for(xp = rdy_head[q]; xp != NIL_PROC; xp = xp->p_nextready) {
-	vir_bytes vxp = (vir_bytes) xp, dxp;
+	const vir_bytes vxp = (vir_bytes) xp;
+	vir_bytes dxp;
 	if(vxp < (vir_bytes) BEG_PROC_ADDR || vxp >= (vir_bytes) END_PROC_ADDR) {
   		printf("xp out of range\n");
 		return 0;
@@ -108,7 +109,7 @@ runqueues_ok(void)
 }
 
 PUBLIC char *
-rtsflagstr(int flags)
+rtsflagstr(const int flags)
 {
 	static char str[100];
 	str[0] = '\0';
@@ -135,7 +136,7 @@ rtsflagstr(int flags)
 }
 
 PUBLIC char *
-miscflagstr(int flags)
+miscflagstr(const int flags)
 {
 	static char str[100];
 	str[0] = '\0';

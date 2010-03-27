@@ -48,7 +48,7 @@ PUBLIC void enable_iop(struct proc *pp)
 /*===========================================================================*
  *				seg2phys				     *
  *===========================================================================*/
-PUBLIC phys_bytes seg2phys(U16_t seg)
+PUBLIC phys_bytes seg2phys(const U16_t seg)
 {
 /* Return the base address of a segment, with seg being a 
  * register, or a 286/386 segment selector.
@@ -79,7 +79,7 @@ PRIVATE void phys2seg(u16_t *seg, vir_bytes *off, phys_bytes phys)
  *				init_dataseg				     *
  *===========================================================================*/
 PUBLIC void init_dataseg(register struct segdesc_s *segdp,
-	phys_bytes base, vir_bytes size, int privilege)
+	phys_bytes base, vir_bytes size, const int privilege)
 {
 	/* Build descriptor for a data segment. */
 	sdesc(segdp, base, size);
@@ -247,9 +247,9 @@ vir_bytes size;
  *				int_gate				     *
  *===========================================================================*/
 PUBLIC void int_gate(vec_nr, offset, dpl_type)
-unsigned vec_nr;
-vir_bytes offset;
-unsigned dpl_type;
+const unsigned vec_nr;
+const vir_bytes offset;
+const unsigned dpl_type;
 {
 /* Build descriptor for an interrupt gate. */
   register struct gatedesc_s *idp;
@@ -337,7 +337,8 @@ for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
 /*===========================================================================*
  *				printseg			     *
  *===========================================================================*/
-PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
+PUBLIC void printseg(char *banner, const int iscs, struct proc *pr,
+  const u32_t selector)
 {
 	u32_t base, limit, index, dpl;
 	struct segdesc_s *desc;
@@ -424,7 +425,7 @@ PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
 /*===========================================================================*
  *				prot_set_kern_seg_limit			     *
  *===========================================================================*/
-PUBLIC int prot_set_kern_seg_limit(vir_bytes limit)
+PUBLIC int prot_set_kern_seg_limit(const vir_bytes limit)
 {
 	struct proc *rp;
 	int orig_click;

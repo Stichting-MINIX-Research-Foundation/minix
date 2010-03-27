@@ -378,7 +378,7 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 	}
 }
 
-int first(Node *p)	/* collects initially active leaves of p into setvec */
+int first(const Node *p)	/* collects initially active leaves of p into setvec */
 			/* returns 0 if p matches empty string */
 {
 	int b, lp;

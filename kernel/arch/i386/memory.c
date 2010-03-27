@@ -78,8 +78,8 @@ PUBLIC void vm_init(struct proc *newptproc)
  * for actual use by phys_copy or phys_memset.
  */
 PRIVATE phys_bytes createpde(
-	struct proc *pr,	/* Requested process, NULL for physical. */
-	phys_bytes linaddr,	/* Address after segment translation. */
+	const struct proc *pr,	/* Requested process, NULL for physical. */
+	const phys_bytes linaddr,/* Address after segment translation. */
 	phys_bytes *bytes,	/* Size of chunk, function may truncate it. */
 	int pde,		/* freepde number to use for the mapping. */
 	int *changed		/* If mapping is made, this is set to 1. */
@@ -199,7 +199,7 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 
 PRIVATE u32_t phys_get32(phys_bytes addr)
 {
-	u32_t v;
+	const u32_t v;
 	int r;
 
 	if(!vm_running) {
@@ -285,8 +285,8 @@ PRIVATE void vm_enable_paging(void)
 }
 
 PUBLIC vir_bytes alloc_remote_segment(u32_t *selector,
-	segframe_t *segments, int index, phys_bytes phys, vir_bytes size,
-	int priv)
+	segframe_t *segments, const int index, phys_bytes phys,
+	vir_bytes size, int priv)
 {
 	phys_bytes offset = 0;
 	/* Check if the segment size can be recorded in bytes, that is, check
@@ -309,8 +309,8 @@ PUBLIC vir_bytes alloc_remote_segment(u32_t *selector,
 	return offset;
 }
 
-PUBLIC phys_bytes umap_remote(struct proc* rp, int seg,
-	vir_bytes vir_addr, vir_bytes bytes)
+PUBLIC phys_bytes umap_remote(const struct proc* rp, const int seg,
+	const vir_bytes vir_addr, const vir_bytes bytes)
 {
 /* Calculate the physical memory address for a given virtual address. */
   struct far_mem *fm;
@@ -423,7 +423,8 @@ vir_bytes bytes;                /* # of bytes to be copied */
 /*===========================================================================*
  *                              vm_lookup                                    *
  *===========================================================================*/
-PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, u32_t *ptent)
+PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
+ vir_bytes *physical, u32_t *ptent)
 {
 	u32_t *root, *pt;
 	int pde, pte;
@@ -535,8 +536,8 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 /*===========================================================================*
  *                              vm_suspend                                *
  *===========================================================================*/
-PRIVATE void vm_suspend(struct proc *caller, struct proc *target,
-	vir_bytes linaddr, vir_bytes len, int type)
+PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
+	const vir_bytes linaddr, const vir_bytes len, const int type)
 {
 	/* This range is not OK for this process. Set parameters  
 	 * of the request and notify VM about the pending request. 
@@ -593,7 +594,7 @@ int delivermsg(struct proc *rp)
 	NOREC_RETURN(deliver, r);
 }
 
-PRIVATE char *flagstr(u32_t e, int dir)
+PRIVATE char *flagstr(u32_t e, const int dir)
 {
 	static char str[80];
 	strcpy(str, "");
@@ -610,7 +611,7 @@ PRIVATE char *flagstr(u32_t e, int dir)
 	return str;
 }
 
-PRIVATE void vm_pt_print(u32_t *pagetable, u32_t v)
+PRIVATE void vm_pt_print(u32_t *pagetable, const u32_t v)
 {
 	int pte;
 	int col = 0;
@@ -667,7 +668,7 @@ PRIVATE void vm_print(u32_t *root)
 /*===========================================================================*
  *				lin_memset				     *
  *===========================================================================*/
-int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
+int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 {
 	u32_t p;
 	NOREC_ENTER(physmemset);
@@ -857,8 +858,8 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 /*===========================================================================*
  *				data_copy				     *
  *===========================================================================*/
-PUBLIC int data_copy(endpoint_t from_proc, vir_bytes from_addr,
-	endpoint_t to_proc, vir_bytes to_addr,
+PUBLIC int data_copy(const endpoint_t from_proc, const vir_bytes from_addr,
+	const endpoint_t to_proc, const vir_bytes to_addr,
 	size_t bytes)
 {
   struct vir_addr src, dst;
@@ -876,8 +877,8 @@ PUBLIC int data_copy(endpoint_t from_proc, vir_bytes from_addr,
  *				data_copy_vmcheck			     *
  *===========================================================================*/
 PUBLIC int data_copy_vmcheck(struct proc * caller,
-	endpoint_t from_proc, vir_bytes from_addr,
-	endpoint_t to_proc, vir_bytes to_addr,
+	const endpoint_t from_proc, const vir_bytes from_addr,
+	const endpoint_t to_proc, const vir_bytes to_addr,
 	size_t bytes)
 {
   struct vir_addr src, dst;
@@ -894,7 +895,7 @@ PUBLIC int data_copy_vmcheck(struct proc * caller,
 /*===========================================================================*
  *				arch_pre_exec				     *
  *===========================================================================*/
-PUBLIC void arch_pre_exec(struct proc *pr, u32_t ip, u32_t sp)
+PUBLIC void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
 {
 /* wipe extra LDT entries, set program counter, and stack pointer. */
 	memset(pr->p_seg.p_ldt + EXTRA_LDT_INDEX, 0,
@@ -923,14 +924,15 @@ PUBLIC int arch_umap(struct proc *pr, vir_bytes offset, vir_bytes count,
 }
 
 /* VM reports page directory slot we're allowed to use freely. */
-void i386_freepde(int pde)
+void i386_freepde(const int pde)
 {
 	if(nfreepdes >= MAX_FREEPDES)
 		return;
 	freepdes[nfreepdes++] = pde;
 }
 
-PUBLIC int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flags)
+PUBLIC int arch_phys_map(const int index, phys_bytes *addr,
+  phys_bytes *len, int *flags)
 {
 #ifdef CONFIG_APIC
 	/* map the local APIC if enabled */
@@ -947,7 +949,7 @@ PUBLIC int arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flag
 #endif
 }
 
-PUBLIC int arch_phys_map_reply(int index, vir_bytes addr)
+PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */
@@ -958,7 +960,7 @@ PUBLIC int arch_phys_map_reply(int index, vir_bytes addr)
 	return OK;
 }
 
-PUBLIC int arch_enable_paging(struct proc * caller, message * m_ptr)
+PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 {
 	struct vm_ep_data ep_data;
 	int r;

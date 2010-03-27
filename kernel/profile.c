@@ -69,8 +69,7 @@ PUBLIC void stop_profile_clock()
 /*===========================================================================*
  *			profile_clock_handler                           *
  *===========================================================================*/
-PRIVATE int profile_clock_handler(hook)
-irq_hook_t *hook;
+PRIVATE int profile_clock_handler(irq_hook_t *hook)
 {
 /* This executes on every tick of the CMOS timer. */
 

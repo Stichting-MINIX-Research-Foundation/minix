@@ -33,7 +33,7 @@ PRIVATE irq_hook_t pic_timer_hook;		/* interrupt handler hook */
 /*===========================================================================*
  *				init_8235A_timer			     *
  *===========================================================================*/
-PUBLIC int init_8253A_timer(unsigned freq)
+PUBLIC int init_8253A_timer(const unsigned freq)
 {
 	/* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz,
 	 * and register the CLOCK task's interrupt handler to be run
@@ -107,7 +107,7 @@ PUBLIC void arch_stop_local_timer(void)
 	}
 }
 
-PUBLIC int arch_register_local_timer_handler(irq_handler_t handler)
+PUBLIC int arch_register_local_timer_handler(const irq_handler_t handler)
 {
 #ifdef CONFIG_APIC
 	if (lapic_addr) {

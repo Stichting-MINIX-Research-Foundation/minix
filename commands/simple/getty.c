@@ -47,7 +47,7 @@ char *tty_name;			/* name of the line */
 /* Crude indication of a tty being physically secure: */
 #define securetty(dev)		((unsigned) ((dev) - 0x0400) < (unsigned) 8)
 
-void std_out(char *s)
+void std_out(const char *s)
 {
   write(1, s, strlen(s));
 }

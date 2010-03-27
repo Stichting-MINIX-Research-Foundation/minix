@@ -281,7 +281,7 @@ int priv_id;				/* privilege id */
 /*===========================================================================*
  *				set_sendto_bit				     *
  *===========================================================================*/
-PUBLIC void set_sendto_bit(struct proc *rp, int id)
+PUBLIC void set_sendto_bit(const struct proc *rp, int id)
 {
 /* Allow a process to send messages to the process(es) associated with the
  * system privilege structure with the given ID. 
@@ -309,7 +309,7 @@ PUBLIC void set_sendto_bit(struct proc *rp, int id)
 /*===========================================================================*
  *				unset_sendto_bit			     *
  *===========================================================================*/
-PUBLIC void unset_sendto_bit(struct proc *rp, int id)
+PUBLIC void unset_sendto_bit(const struct proc *rp, int id)
 {
 /* Prevent a process from sending to another process. Retain the send mask
  * symmetry by also unsetting the bit for the other direction.

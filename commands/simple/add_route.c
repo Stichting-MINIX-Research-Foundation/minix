@@ -28,8 +28,8 @@ static char *prog_name;
 static enum { ADD, DEL } action;
 
 static void usage(void);
-static int name_to_ip(char *name, ipaddr_t *addr);
-static int parse_cidr(char *cidr, ipaddr_t *addr, ipaddr_t *mask);
+static int name_to_ip(const char *name, ipaddr_t *addr);
+static int parse_cidr(const char *cidr, ipaddr_t *addr, ipaddr_t *mask);
 
 int main(int argc, char *argv[])
 {
@@ -297,7 +297,7 @@ static void usage(void)
 	exit(1);
 }
 
-static int name_to_ip(char *name, ipaddr_t *addr)
+static int name_to_ip(const char *name, ipaddr_t *addr)
 {
 	/* Translate a name to an IP address.  Try first with inet_aton(), then
 	 * with gethostbyname().  (The latter can also recognize an IP address,
@@ -314,7 +314,7 @@ static int name_to_ip(char *name, ipaddr_t *addr)
 	return 1;
 }
 
-static int parse_cidr(char *cidr, ipaddr_t *addr, ipaddr_t *mask)
+static int parse_cidr(const char *cidr, ipaddr_t *addr, ipaddr_t *mask)
 {
 	char *slash, *check;
 	ipaddr_t a;

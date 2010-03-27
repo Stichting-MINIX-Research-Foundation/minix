@@ -17,7 +17,7 @@
  *			Return next directory entry or 0 if there are no more.
  *			Returns -1 and sets errno on error.
  *
- *		ino_t r_lookup(ino_t cwd, char *path);
+ *		ino_t r_lookup(ino_t cwd, const char *path);
  *			A utility function that translates a pathname to an
  *			inode number.  It starts from directory "cwd" unless
  *			path starts with a '/', then from ROOT_INO.
@@ -39,7 +39,7 @@ extern off_t r_super(int *);
 extern void r_stat(Ino_t file, struct stat *stp);
 extern off_t r_vir2abs(off_t virblockno);
 extern ino_t r_readdir(char *name);
-extern ino_t r_lookup(Ino_t cwd, char *path);
+extern ino_t r_lookup(Ino_t cwd, const char *path);
 
 /*
  * $PchId: rawfs.h,v 1.4 1996/04/19 08:16:36 philip Exp $

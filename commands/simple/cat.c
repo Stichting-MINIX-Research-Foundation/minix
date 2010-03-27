@@ -21,7 +21,7 @@ static char obuf[CHUNK_SIZE];
 static char *op = obuf;
 
 static void copyout(const char *file, int fd);
-static void output(char *buf, size_t count);
+static void output(const char *buf, size_t count);
 static void report(const char *label);
 static void fatal(const char *label);
 
@@ -103,7 +103,7 @@ static void copyout(const char *file, int fd)
   }
 }
 
-static void output(char *buf, size_t count)
+static void output(const char *buf, size_t count)
 {
   ssize_t n;
 

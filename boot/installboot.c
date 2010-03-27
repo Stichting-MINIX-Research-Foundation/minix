@@ -40,13 +40,13 @@
 
 #define BOOT_BLOCK_SIZE 1024
 
-void report(char *label)
+static void report(const char *label)
 /* installboot: label: No such file or directory */
 {
 	fprintf(stderr, "installboot: %s: %s\n", label, strerror(errno));
 }
 
-void fatal(char *label)
+static void fatal(const char *label)
 {
 	report(label);
 	exit(1);
@@ -75,7 +75,7 @@ char *basename(char *name)
 	return base;
 }
 
-void bread(FILE *f, char *name, void *buf, size_t len)
+static void bread(FILE *f, char *name, void *buf, size_t len)
 /* Read len bytes.  Don't dare return without them. */
 {
 	if (len > 0 && fread(buf, len, 1, f) != 1) {
@@ -85,7 +85,7 @@ void bread(FILE *f, char *name, void *buf, size_t len)
 	}
 }
 
-void bwrite(FILE *f, char *name, void *buf, size_t len)
+static void bwrite(FILE *f, char *name, const void *buf, size_t len)
 {
 	if (len > 0 && fwrite(buf, len, 1, f) != 1) fatal(name);
 }
@@ -351,7 +351,7 @@ void readblock(off_t blk, char *buf, int block_size)
 	}
 }
 
-void writeblock(off_t blk, char *buf, int block_size)
+void writeblock(off_t blk, const char *buf, int block_size)
 /* Add a function to write blocks for local use. */
 {
 	if (lseek(rawfd, blk * block_size, SEEK_SET) < 0
@@ -685,7 +685,7 @@ void make_bootable(enum howto how, char *device, char *bootblock,
 	}
 }
 
-void install_master(char *device, char *masterboot, char **guide)
+static void install_master(char *device, char *masterboot, char **guide)
 /* Booting a hard disk is a two stage process:  The master bootstrap in sector
  * 0 loads the bootstrap from sector 0 of the active partition which in turn
  * starts the operating system.  This code installs such a master bootstrap
@@ -727,8 +727,8 @@ void install_master(char *device, char *masterboot, char **guide)
 
 	if (guide[0] != nil) {
 		/* Fixate partition to boot. */
-		char *keys= guide[0];
-		char *logical= guide[1];
+		const char *keys= guide[0];
+		const char *logical= guide[1];
 		size_t i;
 		int logfd;
 		u32_t offset;
@@ -782,7 +782,7 @@ void install_master(char *device, char *masterboot, char **guide)
 	writeblock(BOOTBLOCK, buf, BOOT_BLOCK_SIZE);
 }
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
 	  "Usage: installboot -i(mage) image kernel mm fs ... init\n"
@@ -793,7 +793,7 @@ void usage(void)
 	exit(1);
 }
 
-int isoption(char *option, char *test)
+static int isoption(const char *option, char *test)
 /* Check if the option argument is equals "test".  Also accept -i as short
  * for -image, and the special case -x for -extract.
  */

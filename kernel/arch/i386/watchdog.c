@@ -44,7 +44,7 @@ PRIVATE void intel_arch_watchdog_init(int cpu)
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 }
 
-PRIVATE void intel_arch_watchdog_reinit(int cpu)
+PRIVATE void intel_arch_watchdog_reinit(const int cpu)
 {
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 	ia32_msr_write(MSR_PERFMON_CRT0, 0, -watchdog->resetval);
@@ -86,7 +86,7 @@ int arch_watchdog_init(void)
 	return 0;
 }
 
-void arch_watchdog_lockup(struct nmi_frame * frame)
+void arch_watchdog_lockup(const struct nmi_frame * frame)
 {
 	printf("KERNEL LOCK UP\n"
 			"eax    0x%08x\n"

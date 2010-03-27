@@ -11,7 +11,7 @@
 #include "watchdog.h"
 #endif
 
-FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
+FORWARD _PROTOTYPE( char *get_value, (const char *params, const char *key));
 /*===========================================================================*
  *				cstart					     *
  *===========================================================================*/
@@ -112,13 +112,13 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
  *===========================================================================*/
 
 PRIVATE char *get_value(params, name)
-_CONST char *params;				/* boot monitor parameters */
-_CONST char *name;				/* key to look up */
+  const char *params;				/* boot monitor parameters */
+  const char *name;				/* key to look up */
 {
 /* Get environment value - kernel version of getenv to avoid setting up the
  * usual environment array.
  */
-  register _CONST char *namep;
+  register const char *namep;
   register char *envp;
 
   for (envp = (char *) params; *envp != 0;) {

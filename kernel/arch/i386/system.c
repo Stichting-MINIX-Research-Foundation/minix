@@ -36,7 +36,7 @@ PUBLIC void arch_monitor(void)
 
 PUBLIC int cpu_has_tsc;
 
-PUBLIC void arch_shutdown(int how)
+PUBLIC void arch_shutdown(const int how)
 {
 	/* Mask all interrupts, including the clock. */
 	outb( INT_CTLMASK, ~0);
@@ -66,8 +66,8 @@ PUBLIC void arch_shutdown(int how)
 		if(minix_panicing) {
 			int source, dest;
 			static char mybuffer[sizeof(params_buffer)];
-			char *lead = "echo \\n*** kernel messages:\\n";
-			int leadlen = strlen(lead);
+			const char *lead = "echo \\n*** kernel messages:\\n";
+			const int leadlen = strlen(lead);
 			strcpy(mybuffer, lead);
 
 #define DECSOURCE source = (source - 1 + _KMESS_BUF_SIZE) % _KMESS_BUF_SIZE
@@ -79,7 +79,7 @@ PUBLIC void arch_shutdown(int how)
 			DECSOURCE; 
 
 			while(dest >= leadlen) {
-				char c = kmess.km_buf[source];
+				const char c = kmess.km_buf[source];
 				if(c == '\n') {
 					mybuffer[dest--] = 'n';
 					mybuffer[dest] = '\\';
@@ -110,7 +110,7 @@ PUBLIC void arch_shutdown(int how)
 /* address of a.out headers, set in mpx386.s */
 phys_bytes aout;
 
-PUBLIC void arch_get_aout_headers(int i, struct exec *h)
+PUBLIC void arch_get_aout_headers(const int i, struct exec *h)
 {
 	/* The bootstrap loader created an array of the a.out headers at
 	 * absolute address 'aout'. Get one element to h.
@@ -118,7 +118,8 @@ PUBLIC void arch_get_aout_headers(int i, struct exec *h)
 	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
 
-PRIVATE void tss_init(struct tss_s * tss, void * kernel_stack, unsigned cpu)
+PRIVATE void tss_init(struct tss_s * tss, void * kernel_stack,
+ const unsigned cpu)
 {
 	/*
 	 * make space for process pointer and cpu id and point to the first
@@ -275,7 +276,7 @@ PRIVATE void ser_dump_segs(void)
 	}
 }
 
-PRIVATE void ser_debug(int c)
+PRIVATE void ser_debug(const int c)
 {
 	serial_debug_active = 1;
 
@@ -312,7 +313,7 @@ PRIVATE void ser_debug(int c)
 	serial_debug_active = 0;
 }
 
-PRIVATE void printslot(struct proc *pp, int level)
+PRIVATE void printslot(struct proc *pp, const int level)
 {
 	struct proc *depproc = NULL;
 	endpoint_t dep;
@@ -376,7 +377,7 @@ PUBLIC void ser_dump_proc()
 
 #if SPROFILE
 
-PUBLIC int arch_init_profile_clock(u32_t freq)
+PUBLIC int arch_init_profile_clock(const u32_t freq)
 {
   int r;
   /* Set CMOS timer frequency. */
@@ -415,7 +416,7 @@ PUBLIC void arch_ack_profile_clock(void)
 
 #define COLOR_BASE	0xB8000L
 
-PRIVATE void cons_setc(int pos, int c)
+PRIVATE void cons_setc(const int pos, const int c)
 {
 	char ch;
 

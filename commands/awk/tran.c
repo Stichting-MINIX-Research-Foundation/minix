@@ -154,7 +154,7 @@ Array *makesymtab(int n)	/* make a new symbol table */
 	return(ap);
 }
 
-void freesymtab(Cell *ap)	/* free a symbol table */
+void freesymtab(const Cell *ap)	/* free a symbol table */
 {
 	Cell *cp, *temp;
 	Array *tp;
@@ -182,7 +182,8 @@ void freesymtab(Cell *ap)	/* free a symbol table */
 	free(tp);
 }
 
-void freeelem(Cell *ap, const char *s)	/* free elem s from ap (i.e., ap["s"] */
+void freeelem(const Cell *ap, const char *s)
+/* free elem s from ap (i.e., ap["s"] */
 {
 	Array *tp;
 	Cell *p, *prev = NULL;
@@ -266,7 +267,7 @@ void rehash(Array *tp)	/* rehash items in small table into big one */
 	tp->size = nsz;
 }
 
-Cell *lookup(const char *s, Array *tp)	/* look for s in tp */
+Cell *lookup(const char *s, const Array *tp)	/* look for s in tp */
 {
 	Cell *p;
 	int h;
@@ -359,7 +360,8 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	return(vp->fval);
 }
 
-static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cell */
+static char *get_str_val(Cell *vp, char **fmt)
+/* get string val of a Cell */
 {
 	char s[100];	/* BUG: unchecked */
 	double dtemp;

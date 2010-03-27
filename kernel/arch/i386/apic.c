@@ -167,12 +167,12 @@ PUBLIC void apic_calibrate_clocks(void)
 	cpu_set_freq(cpuid, cpu_freq);
 }
 
-PRIVATE void lapic_set_timer_one_shot(u32_t value)
+PRIVATE void lapic_set_timer_one_shot(const u32_t value)
 {
 	/* sleep in micro seconds */
 	u32_t lvtt;
 	u32_t ticks_per_us;
-	u8_t cpu = cpuid;
+	const u8_t cpu = cpuid;
 
 	ticks_per_us = lapic_bus_freq[cpu] / 1000000;
 
@@ -187,12 +187,12 @@ PRIVATE void lapic_set_timer_one_shot(u32_t value)
 	lapic_write(LAPIC_TIMER_ICR, value * ticks_per_us);
 }
 
-PUBLIC void lapic_set_timer_periodic(unsigned freq)
+PUBLIC void lapic_set_timer_periodic(const unsigned freq)
 {
 	/* sleep in micro seconds */
 	u32_t lvtt;
 	u32_t lapic_ticks_per_clock_tick;
-	u8_t cpu = cpuid;
+	const u8_t cpu = cpuid;
 
 	lapic_ticks_per_clock_tick = lapic_bus_freq[cpu] / freq;
 
@@ -432,7 +432,7 @@ PRIVATE void lapic_set_dummy_handlers(void)
 #endif
 
 /* Build descriptors for interrupt gates in IDT. */
-PUBLIC void apic_idt_init(int reset)
+PUBLIC void apic_idt_init(const int reset)
 {
 	/* Set up idt tables for smp mode.
 	 */

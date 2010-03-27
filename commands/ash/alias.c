@@ -57,7 +57,7 @@ STATIC struct alias *atab[ATABSIZE];
 
 STATIC void setalias(char *, char *);
 STATIC int unalias(char *);
-STATIC struct alias **hashalias(char *);
+STATIC struct alias **hashalias(const char *);
 
 STATIC
 void
@@ -250,7 +250,7 @@ unaliascmd(int argc __unused, char **argv __unused)
 }
 
 STATIC struct alias **
-hashalias(char *p)
+hashalias(const char *p)
 {
 	unsigned int hashval;
 

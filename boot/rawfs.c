@@ -286,7 +286,7 @@ off_t r_vir2abs(off_t virblk)
 	return z;
 }
 
-ino_t r_lookup(Ino_t cwd, char *path)
+ino_t r_lookup(Ino_t cwd, const char *path)
 /* Translates a pathname to an inode number.  This is just a nice utility
  * function, it only needs r_stat and r_readdir.
  */

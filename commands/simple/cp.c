@@ -238,7 +238,7 @@ int writable(const struct stat *stp)
 #define PATH_MAX	1024
 #endif
 
-static char *link_islink(struct stat *stp, const char *file)
+static char *link_islink(const struct stat *stp, const char *file)
 {
     /* Tell if a file, which stat(2) information in '*stp', has been seen
      * earlier by this function under a different name.  If not return a
@@ -347,7 +347,7 @@ static char *link_islink(struct stat *stp, const char *file)
 }
 
 int trylink(const char *src, const char *dst, struct stat *srcst,
-			struct stat *dstst)
+			const struct stat *dstst)
 /* Keep the link structure intact if src has been seen before. */
 {
     char *olddst;
@@ -679,7 +679,7 @@ void copy1(const char *src, const char *dst, struct stat *srcst,
     }
 }
 
-void remove1(const char *src, struct stat *srcst)
+void remove1(const char *src, const struct stat *srcst)
 {
     if (iflag || (!fflag && !writable(srcst))) {
 	fprintf(stderr, "Remove %s? (mode = %03o) ", src,
@@ -693,8 +693,8 @@ void remove1(const char *src, struct stat *srcst)
     }
 }
 
-void link1(const char *src, const char *dst, struct stat *srcst,
-			    struct stat *dstst)
+void link1(const char *src, const char *dst, const struct stat *srcst,
+			    const struct stat *dstst)
 {
     pathname_t sym;
     const char *p;

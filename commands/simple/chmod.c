@@ -39,13 +39,11 @@ int rflag, errors;
 struct stat st;
 char path[PATH_MAX + 1];
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(mode_t parsemode, (char *symbolic, mode_t oldmode));
 _PROTOTYPE(int do_change, (char *name));
 _PROTOTYPE(void usage, (void));
 
 /* Parse a P1003.2 4.7.7-conformant symbolic mode. */
-mode_t parsemode(char *symbolic, mode_t oldmode)
+mode_t parsemode(const char *symbolic, mode_t oldmode)
 {
   mode_t who, mask, newmode, tmpmask;
   char action;
@@ -160,9 +158,7 @@ mode_t parsemode(char *symbolic, mode_t oldmode)
 /* Main module. The single option possible (-R) does not warrant a call to
  * the getopt() stuff.
  */
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int ex_code = 0;
 
