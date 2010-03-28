@@ -512,7 +512,7 @@ register struct proc *rc;		/* slot of process to clean up */
 
       okendpt(rc->p_sendto_e, &target_proc);
       xpp = &proc_addr(target_proc)->p_caller_q; /* destination's queue */
-      while (*xpp != NIL_PROC) {		/* check entire queue */
+      while (*xpp) {		/* check entire queue */
           if (*xpp == rc) {			/* process is on the queue */
               *xpp = (*xpp)->p_q_link;		/* replace by next process */
 #if DEBUG_ENABLE_IPC_WARNINGS

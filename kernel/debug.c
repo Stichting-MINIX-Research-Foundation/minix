@@ -33,11 +33,11 @@ runqueues_ok(void)
 	printf("tail but no head in %d\n", q);
 	return 0;
     }
-    if (rdy_tail[q] && rdy_tail[q]->p_nextready != NIL_PROC) {
+    if (rdy_tail[q] && rdy_tail[q]->p_nextready) {
 	printf("tail and tail->next not null in %d\n", q);
 	return 0;
     }
-    for(xp = rdy_head[q]; xp != NIL_PROC; xp = xp->p_nextready) {
+    for(xp = rdy_head[q]; xp; xp = xp->p_nextready) {
 	const vir_bytes vxp = (vir_bytes) xp;
 	vir_bytes dxp;
 	if(vxp < (vir_bytes) BEG_PROC_ADDR || vxp >= (vir_bytes) END_PROC_ADDR) {
@@ -74,7 +74,7 @@ runqueues_ok(void)
 		return 0;
 	}
 	xp->p_found = 1;
-	if (xp->p_nextready == NIL_PROC && rdy_tail[q] != xp) {
+	if (!xp->p_nextready && rdy_tail[q] != xp) {
 		printf("sched err: last element not tail q %d proc %d\n",
 			q, xp->p_nr);
 		return 0;

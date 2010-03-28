@@ -595,9 +595,9 @@ const int flags;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
 	xpp = &dst_ptr->p_caller_q;		/* find end of list */
-	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_q_link;	
+	while (*xpp) xpp = &(*xpp)->p_q_link;	
 	*xpp = caller_ptr;			/* add caller to end */
-	caller_ptr->p_q_link = NIL_PROC;	/* mark new end of list */
+	caller_ptr->p_q_link = NULL;	/* mark new end of list */
   }
   return(OK);
 }
@@ -700,7 +700,7 @@ const int flags;
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;
-    while (*xpp != NIL_PROC) {
+    while (*xpp) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
             int call;
 	    assert(!RTS_ISSET(*xpp, RTS_SLOT_FREE));
@@ -1156,9 +1156,9 @@ PUBLIC void enqueue(
   assert(q >= 0);
 
   /* Now add the process to the queue. */
-  if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
+  if (!rdy_head[q]) {		/* add to empty queue */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
-      rp->p_nextready = NIL_PROC;		/* mark new end */
+      rp->p_nextready = NULL;		/* mark new end */
   } 
   else if (front) {				/* add to head of queue */
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
@@ -1167,7 +1167,7 @@ PUBLIC void enqueue(
   else {					/* add to tail of queue */
       rdy_tail[q]->p_nextready = rp;		/* chain tail of queue */	
       rdy_tail[q] = rp;				/* set new queue tail */
-      rp->p_nextready = NIL_PROC;		/* mark new end */
+      rp->p_nextready = NULL;		/* mark new end */
   }
 
   /*
@@ -1215,9 +1215,9 @@ PRIVATE void enqueue_head(struct proc *rp)
 
 
   /* Now add the process to the queue. */
-  if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
+  if (!rdy_head[q]) {		/* add to empty queue */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
-      rp->p_nextready = NIL_PROC;		/* mark new end */
+      rp->p_nextready = NULL;		/* mark new end */
   }
   else						/* add to head of queue */
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
@@ -1254,8 +1254,8 @@ PUBLIC void dequeue(const struct proc *rp)
    * process if it is found. A process can be made unready even if it is not 
    * running by being sent a signal that kills it.
    */
-  prev_xp = NIL_PROC;				
-  for (xpp = &rdy_head[q]; *xpp != NIL_PROC; xpp = &(*xpp)->p_nextready) {
+  prev_xp = NULL;				
+  for (xpp = &rdy_head[q]; *xpp; xpp = &(*xpp)->p_nextready) {
       if (*xpp == rp) {				/* found process to remove */
           *xpp = (*xpp)->p_nextready;		/* replace with next chain */
           if (rp == rdy_tail[q]) {		/* queue tail removed */

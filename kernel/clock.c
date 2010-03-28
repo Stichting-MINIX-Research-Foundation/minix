@@ -162,7 +162,7 @@ PRIVATE void load_update(void)
 
 	/* Cumulation. How many processes are ready now? */
 	for(q = 0; q < NR_SCHED_QUEUES; q++)
-		for(p = rdy_head[q]; p != NIL_PROC; p = p->p_nextready)
+		for(p = rdy_head[q]; p; p = p->p_nextready)
 			enqueued++;
 
 	kloadinfo.proc_load_history[slot] += enqueued;
