@@ -41,23 +41,6 @@
 #define TRACE(code, statement)
 #endif
 
-#define ENTERED		0xBA5E1514
-#define NOTENTERED	0x1415BEE1
-
-#define NOREC_ENTER(varname) 					\
-	static int varname = NOTENTERED;			\
-	assert(varname == ENTERED || varname == NOTENTERED);	\
-	assert(magictest == MAGICTEST);			\
-	assert(varname != ENTERED);				\
-	varname = ENTERED;
-
-#define NOREC_RETURN(varname, v) do {				\
-	assert(magictest == MAGICTEST);			\
-	assert(varname == ENTERED || varname == NOTENTERED);	\
-	varname = NOTENTERED;					\
-	return v;						\
-} while(0)
-
 #define NOT_REACHABLE	do {						\
 	panic("NOT_REACHABLE at %s:%d", __FILE__, __LINE__);	\
 	for(;;);							\

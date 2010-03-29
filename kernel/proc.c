@@ -105,7 +105,6 @@ PUBLIC struct proc * schedcheck(void)
 	/* This function is called an instant before proc_ptr is
 	 * to be scheduled again.
 	 */
-  	NOREC_ENTER(schedch);
 
 	/*
 	 * if the current process is still runnable check the misc flags and let
@@ -238,7 +237,7 @@ check_misc_flags:
 
 	cycles_accounting_stop(proc_addr(KERNEL));
 
-	NOREC_RETURN(schedch, proc_ptr);
+	return proc_ptr;
 }
 
 /*===========================================================================*
@@ -1143,8 +1142,6 @@ PUBLIC void enqueue(
  */
   int q = rp->p_priority;	 		/* scheduling queue to use */
 
-  NOREC_ENTER(enqueuefunc);
-
   assert(proc_is_runnable(rp));
 
   assert(q >= 0);
@@ -1173,8 +1170,6 @@ PUBLIC void enqueue(
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok());
 #endif
-
-  NOREC_RETURN(enqueuefunc, );
 }
 
 /*===========================================================================*
@@ -1230,8 +1225,6 @@ PUBLIC void dequeue(const struct proc *rp)
   register struct proc **xpp;			/* iterate over queue */
   register struct proc *prev_xp;
 
-  NOREC_ENTER(dequeuefunc);
-
   assert(proc_ptr_ok(rp));
   assert(!proc_is_runnable(rp));
 
@@ -1258,8 +1251,6 @@ PUBLIC void dequeue(const struct proc *rp)
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok());
 #endif
-
-  NOREC_RETURN(dequeuefunc, );
 }
 
 /*===========================================================================*
