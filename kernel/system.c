@@ -179,7 +179,6 @@ PUBLIC void system_init(void)
   map(SYS_EXEC, do_exec);		/* update process after execute */
   map(SYS_CLEAR, do_clear);		/* clean up after process exit */
   map(SYS_EXIT, do_exit);		/* a system process wants to exit */
-  map(SYS_NICE, do_nice);		/* set scheduling priority */
   map(SYS_PRIVCTL, do_privctl);		/* system privileges control */
   map(SYS_TRACE, do_trace);		/* request a trace operation */
   map(SYS_SETGRANT, do_setgrant);	/* get/set own parameters */
@@ -244,8 +243,12 @@ PUBLIC void system_init(void)
   map(SYS_SETMCONTEXT, do_setmcontext); /* set machine context */
   map(SYS_GETMCONTEXT, do_getmcontext); /* get machine context */
 #endif
-}
 
+  /* Scheduling */
+  map(SYS_SCHEDULE, do_schedule);	/* reschedule a process */
+  map(SYS_SCHEDCTL, do_schedctl);	/* change process scheduler */
+
+}
 /*===========================================================================*
  *				get_priv				     *
  *===========================================================================*/

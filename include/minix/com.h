@@ -20,6 +20,7 @@
  *    0xC00 -  0xCFF	Virtual Memory (VM) requests
  *    0xD00 -  0xDFF	IPC server requests
  *    0xE00 -  0xEFF	Common system messages (e.g. system signals)
+ *    0xF00 -  0xFFF    Scheduling messages
  *   0x1000 - 0x10FF	Notify messages
  *
  * Zero and negative values are widely used for OK and error responses.
@@ -308,7 +309,7 @@
 #  define SYS_FORK       (KERNEL_CALL + 0)	/* sys_fork() */
 #  define SYS_EXEC       (KERNEL_CALL + 1)	/* sys_exec() */
 #  define SYS_CLEAR	 (KERNEL_CALL + 2)	/* sys_clear() */
-#  define SYS_NICE       (KERNEL_CALL + 3)	/* sys_nice() */
+#  define SYS_SCHEDULE 	 (KERNEL_CALL + 3)	/* sys_schedule() */
 #  define SYS_PRIVCTL    (KERNEL_CALL + 4)	/* sys_privctl() */
 #  define SYS_TRACE      (KERNEL_CALL + 5)	/* sys_trace() */
 #  define SYS_KILL       (KERNEL_CALL + 6)	/* sys_kill() */
@@ -363,8 +364,10 @@
 #  define SYS_UPDATE	 (KERNEL_CALL + 52)	/* sys_update() */
 #  define SYS_EXIT	 (KERNEL_CALL + 53)	/* sys_exit() */
 
+#  define SYS_SCHEDCTL (KERNEL_CALL + 54)	/* sys_schedctl() */
+
 /* Total */
-#define NR_SYS_CALLS	54	/* number of system calls */ 
+#define NR_SYS_CALLS	55	/* number of system calls */
 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
@@ -1048,4 +1051,15 @@
 #	define SEMOP_OPS	m2_l1
 #	define SEMOP_SIZE	m2_i2
 
-#endif /* _MINIX_COM_H */ 
+/*===========================================================================*
+ *                Messages for Scheduling				     *
+ *===========================================================================*/
+#define SCHEDULING_BASE	0xF00
+
+#define SCHEDULING_NO_QUANTUM	(SCHEDULING_BASE+1)
+#	define SCHEDULING_ENDPOINT	m1_i1
+#	define SCHEDULING_PRIORITY	m1_i2
+#	define SCHEDULING_QUANTUM	m1_i3
+#endif
+
+/* _MINIX_COM_H */

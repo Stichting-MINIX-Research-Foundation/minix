@@ -32,6 +32,7 @@
 #include "kernel.h"
 #include "proc.h"
 #include <minix/endpoint.h>
+#include <assert.h>
 
 #include "clock.h"
 
@@ -57,18 +58,6 @@ PRIVATE clock_t next_timeout;	/* realtime that next timer expires */
  */
 PRIVATE clock_t realtime = 0;		      /* real time clock */
 
-/*===========================================================================*
- *				init_clock				     *
- *===========================================================================*/
-PUBLIC void clock_init()
-{
-   
-	/* Set a watchdog timer to periodically balance the scheduling queues.
-	   Side-effect sets new timer */
-
-	balance_queues(NULL);
-}
-
 /*
  * The boot processor timer interrupt handler. In addition to non-boot cpus it
  * keeps real time and notifies the clock task if need be
@@ -86,6 +75,7 @@ PUBLIC int bsp_timer_int_handler(void)
 	realtime += ticks;
 
 	ap_timer_int_handler();
+	assert(!proc_is_runnable(proc_ptr) || proc_ptr->p_ticks_left > 0);
 
 	/* if a timer expired, notify the clock task */
 	if ((next_timeout <= realtime)) {
@@ -214,7 +204,6 @@ PUBLIC int ap_timer_int_handler(void)
 	}
 	if (! (priv(p)->s_flags & BILLABLE)) {
 		billp->p_sys_time += ticks;
-		billp->p_ticks_left -= ticks;
 	}
 
 	/* Decrement virtual timers, if applicable. We decrement both the
@@ -247,12 +236,8 @@ PUBLIC int ap_timer_int_handler(void)
 	/* Update load average. */
 	load_update();
 
-	/* check if the process is still runnable after checking the vtimer */
-	if (p->p_rts_flags == 0 && p->p_ticks_left <= 0 &&
-			priv(p)->s_flags & PREEMPTIBLE) {
-		/* this dequeues the process */
-		RTS_SET(p, RTS_NO_QUANTUM);
-	}
+	/* check if the processes still have some ticks left */
+	check_ticks_left(p);
 
 	return 1;
 }

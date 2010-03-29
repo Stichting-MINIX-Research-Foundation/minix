@@ -44,6 +44,9 @@ _PROTOTYPE( int sys_clear, (endpoint_t proc_ep));
 _PROTOTYPE( int sys_exit, (void));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
+_PROTOTYPE( int sys_schedule, (endpoint_t proc_ep, char priority, char quantum));
+_PROTOTYPE( int sys_schedctl, (endpoint_t proc_ep));
+
 /* Shorthands for sys_runctl() system call. */
 #define sys_stop(proc_ep) sys_runctl(proc_ep, RC_STOP, 0)
 #define sys_delay_stop(proc_ep) sys_runctl(proc_ep, RC_STOP, RC_DELAY)
@@ -55,7 +58,6 @@ _PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, void *p));
 _PROTOTYPE( int sys_privquery_mem, (endpoint_t proc_ep,
 	phys_bytes physstart, phys_bytes physlen));
 _PROTOTYPE( int sys_setgrant, (cp_grant_t *grants, int ngrants));
-_PROTOTYPE( int sys_nice, (endpoint_t proc_ep, int priority));
 
 _PROTOTYPE( int sys_int86, (struct reg86u *reg86p));
 _PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,

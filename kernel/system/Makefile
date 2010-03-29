@@ -30,7 +30,6 @@ OBJECTS	= \
 	do_clear.o \
 	do_exit.o \
 	do_trace.o \
-	do_nice.o \
 	do_runctl.o \
 	do_update.o \
 	do_times.o \
@@ -60,7 +59,9 @@ OBJECTS	= \
 	do_cprofile.o \
 	do_profbuf.o \
 	do_vmctl.o \
-	do_mcontext.o
+	do_mcontext.o \
+	do_schedule.o \
+	do_schedctl.o
 
 build $(SYSTEM):	$(SYSTEM)($(OBJECTS))
 	aal cr $@ *.o

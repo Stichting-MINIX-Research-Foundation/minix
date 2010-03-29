@@ -150,3 +150,14 @@ miscflagstr(const int flags)
 	return str;
 }
 
+PUBLIC char *
+schedulerstr(struct proc *scheduler)
+{
+	if (scheduler != NULL)
+	{
+		return scheduler->p_name;
+	}
+
+	return "KERNEL";
+}
+

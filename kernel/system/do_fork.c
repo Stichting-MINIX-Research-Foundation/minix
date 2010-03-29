@@ -82,10 +82,23 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 
   /* Parent and child have to share the quantum that the forked process had,
    * so that queued processes do not have to wait longer because of the fork.
-   * If the time left is odd, the child gets an extra tick.
    */
-  rpc->p_ticks_left = (rpc->p_ticks_left + 1) / 2;
+
+  /*
+   * we want to avoid having processes that loose their quantum without going
+   * through the standard path where the "out of quantum" is handled. We add
+   * some more time to such processes.
+   *
+   * This is a temporary solution until we are able to handle this in the
+   * userspace
+   */
+  if (rpp->p_ticks_left < 2)
+	  rpp->p_ticks_left = 2;
+
+  rpc->p_ticks_left =  rpp->p_ticks_left / 2;
   rpp->p_ticks_left =  rpp->p_ticks_left / 2;	
+
+  assert(rpc->p_ticks_left > 0 && rpp->p_ticks_left > 0);
 
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.

@@ -12,7 +12,6 @@ struct proc;
 struct timer;
 
 /* clock.c */
-_PROTOTYPE( void clock_init, (void) );
 _PROTOTYPE( clock_t get_uptime, (void)					);
 _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);
@@ -41,7 +40,6 @@ _PROTOTYPE( int do_ipc, (int call_nr, int src_dst,
 _PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (const struct proc *rp)			);
-_PROTOTYPE( void balance_queues, (struct timer *tp)			);
 _PROTOTYPE( struct proc * schedcheck, (void)				);
 _PROTOTYPE( struct proc * arch_finish_schedcheck, (void)		);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
@@ -52,6 +50,7 @@ _PROTOTYPE( int isokendpt_f, (const char *file, int line, endpoint_t e, int *p, 
 _PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
 #define isokendpt_d(e, p, f) isokendpt_f((e), (p), (f))
 #endif
+_PROTOTYPE( void check_ticks_left, (struct proc *p));
 
 /* start.c */
 _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
@@ -91,6 +90,7 @@ _PROTOTYPE( int disable_irq, (const irq_hook_t *hook)			);
 _PROTOTYPE( int runqueues_ok, (void) );
 _PROTOTYPE( char *rtsflagstr, (int flags) );
 _PROTOTYPE( char *miscflagstr, (int flags) );
+_PROTOTYPE( char *schedulerstr, (struct proc *scheduler) );
 
 /* system/do_safemap.c */
 _PROTOTYPE( int map_invoke_vm, (struct proc * caller, int req_type,

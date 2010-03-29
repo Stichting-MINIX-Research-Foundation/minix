@@ -64,11 +64,6 @@ _PROTOTYPE( int do_trace, (struct proc * caller, message *m_ptr) );
 #define do_trace do_unused
 #endif
 
-_PROTOTYPE( int do_nice, (struct proc * caller, message *m_ptr) );
-#if ! USE_NICE
-#define do_nice do_unused
-#endif
-
 _PROTOTYPE( int do_runctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_RUNCTL
 #define do_runctl do_unused
@@ -209,6 +204,9 @@ _PROTOTYPE( int do_setmcontext, (struct proc * caller, message *m_ptr) );
 #define do_getmcontext do_unused
 #define do_setmcontext do_unused
 #endif
+
+_PROTOTYPE( int do_schedule,    (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_schedctl, (struct proc * caller, message *m_ptr) );
 
 #endif	/* SYSTEM_H */
 

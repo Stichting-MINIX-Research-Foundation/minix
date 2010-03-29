@@ -66,6 +66,7 @@ PUBLIC int main()
 
   /* SEF local startup. */
   sef_local_startup();
+  overtake_scheduling();	/* overtake all running processes */
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
@@ -113,6 +114,10 @@ PUBLIC int main()
 		else
 			result= ENOSYS;
 		break;
+	case SCHEDULING_NO_QUANTUM:
+		/* This message was sent from the kernel, don't reply */
+		do_noquantum();
+		continue;
 	default:
 		/* Else, if the system call number is valid, perform the
 		 * call.
@@ -253,6 +258,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 		/* Get kernel endpoint identifier. */
 		rmp->mp_endpoint = ip->endpoint;
+
+		/* Get scheduling info */
+		rmp->mp_max_priority = ip->priority;
+		rmp->mp_priority = ip->priority;
+		rmp->mp_time_slice = ip->quantum;
 
 		/* Tell FS about this system process. */
 		mess.m_type = PM_INIT;

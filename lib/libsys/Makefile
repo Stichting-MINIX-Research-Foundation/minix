@@ -50,7 +50,6 @@ SRCS=  \
 	sys_kill.c \
 	sys_memset.c \
 	sys_newmap.c \
-	sys_nice.c \
 	sys_out.c \
 	sys_physcopy.c \
 	sys_readbios.c \
@@ -70,6 +69,8 @@ SRCS=  \
 	sys_setgrant.c \
 	sys_sprof.c \
 	sys_stime.c \
+        sys_schedule.c \
+        sys_schedctl.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \

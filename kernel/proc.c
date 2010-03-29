@@ -43,8 +43,11 @@
 
 /* Scheduling and message passing functions */
 FORWARD _PROTOTYPE( void idle, (void));
+/**
+ * Made public for use in clock.c (for user-space scheduling)
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst_e,
 		message *m_ptr, int flags));
+*/
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
 		message *m_ptr, int flags));
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
@@ -54,7 +57,6 @@ FORWARD _PROTOTYPE( int deadlock, (int function,
 FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
 FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
 		int *postponed));
-FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
 FORWARD _PROTOTYPE( struct proc * pick_proc, (void));
 FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
 
@@ -164,9 +166,16 @@ not_runnable_pick_new:
 		if (proc_is_runnable(proc_ptr))
 			enqueue_head(proc_ptr);
 	}
-	/* this enqueues the process again */
-	if (proc_no_quantum(proc_ptr))
+
+	/*
+	 * If this process is scheduled by the kernel, we renew it's quantum
+	 * and remove it's RTS_NO_QUANTUM flag.
+	 */
+	if (proc_no_quantum(proc_ptr) && (proc_ptr->p_scheduler == NULL)) {
+		/* give new quantum */
+		proc_ptr->p_ticks_left = proc_ptr->p_quantum_size;
 		RTS_UNSET(proc_ptr, RTS_NO_QUANTUM);
+	}
 
 	/*
 	 * if we have no process to run, set IDLE as the current process for
@@ -187,6 +196,7 @@ check_misc_flags:
 
 	assert(proc_ptr);
 	assert(proc_is_runnable(proc_ptr));
+	assert(proc_ptr->p_ticks_left > 0);
 	while (proc_ptr->p_misc_flags &
 		(MF_KCALL_RESUME | MF_DELIVERMSG |
 		 MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
@@ -247,20 +257,26 @@ check_misc_flags:
 			break;
 		}
 
-		/*
-		 * the selected process might not be runnable anymore. We have
-		 * to checkit and schedule another one
-		 */
 		if (!proc_is_runnable(proc_ptr))
-			goto not_runnable_pick_new;
+			break;
 	}
+	/*
+	 * After handling the misc flags the selected process might not be
+	 * runnable anymore. We have to checkit and schedule another one
+	 */
+	if (!proc_is_runnable(proc_ptr))
+		goto not_runnable_pick_new;
+
 	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
 		proc_ptr->p_name, proc_ptr->p_endpoint););
 #if DEBUG_TRACE
 	proc_ptr->p_schedules++;
 #endif
 
+
 	proc_ptr = arch_finish_schedcheck();
+	assert(proc_ptr->p_ticks_left > 0);
+
 	cycles_accounting_stop(proc_addr(KERNEL));
 
 	NOREC_RETURN(schedch, proc_ptr);
@@ -533,7 +549,7 @@ proc_nr_t src_dst;				/* src or dst process */
 /*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
-PRIVATE int mini_send(caller_ptr, dst_e, m_ptr, flags)
+PUBLIC int mini_send(caller_ptr, dst_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* who is trying to send a message? */
 int dst_e;				/* to whom is message being sent? */
 message *m_ptr;				/* pointer to message buffer */
@@ -545,12 +561,23 @@ const int flags;
  */
   register struct proc *dst_ptr;
   register struct proc **xpp;
+  struct proc *msg_proc_ptr; /* Proc in which the message can be found */
   int dst_p;
   phys_bytes linaddr;
   vir_bytes addr;
   int r;
 
-  if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) m_ptr,
+  /* The kernel can send messages on behalf of other processes. In that case
+     we need to pass a pointer to the kernel, not the caller_ptr, to
+     umap_local as the kernel contains the message to be sent. */
+  if (flags & FROM_KERNEL) {
+	msg_proc_ptr = proc_addr(KERNEL);
+  }
+  else {
+	msg_proc_ptr = caller_ptr;
+  }
+
+  if(!(linaddr = umap_local(msg_proc_ptr, D, (vir_bytes) m_ptr,
 	sizeof(message)))) {
 	return EFAULT;
   }
@@ -1143,15 +1170,11 @@ PUBLIC void enqueue(
  * The mechanism is implemented here.   The actual scheduling policy is
  * defined in sched() and pick_proc().
  */
-  int q;	 				/* scheduling queue to use */
-  int front;					/* add to front or back */
+  int q = rp->p_priority;	 		/* scheduling queue to use */
 
   NOREC_ENTER(enqueuefunc);
 
   assert(proc_is_runnable(rp));
-
-  /* Determine where to insert to process. */
-  sched(rp, &q, &front);
 
   assert(q >= 0);
 
@@ -1159,10 +1182,6 @@ PUBLIC void enqueue(
   if (!rdy_head[q]) {		/* add to empty queue */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
       rp->p_nextready = NULL;		/* mark new end */
-  } 
-  else if (front) {				/* add to head of queue */
-      rp->p_nextready = rdy_head[q];		/* chain head of queue */
-      rdy_head[q] = rp;				/* set new queue head */
   } 
   else {					/* add to tail of queue */
       rdy_tail[q]->p_nextready = rp;		/* chain tail of queue */	
@@ -1207,9 +1226,7 @@ PRIVATE void enqueue_head(struct proc *rp)
    * the process was runnable without its quantum expired when dequeued. A
    * process with no time left should vahe been handled else and differently
    */
-#if 0
-  assert(rp->p_ticks_left);
-#endif
+  assert(rp->p_ticks_left > 0);
 
   assert(q >= 0);
 
@@ -1275,39 +1292,6 @@ PUBLIC void dequeue(const struct proc *rp)
 }
 
 /*===========================================================================*
- *				sched					     * 
- *===========================================================================*/
-PRIVATE void sched(rp, queue, front)
-register struct proc *rp;			/* process to be scheduled */
-int *queue;					/* return: queue to use */
-int *front;					/* return: front or back */
-{
-/* This function determines the scheduling policy.  It is called whenever a
- * process must be added to one of the scheduling queues to decide where to
- * insert it.  As a side-effect the process' priority may be updated.  
- */
-  const int time_left = (rp->p_ticks_left > 0);	/* quantum fully consumed? */
-
-  /* Check whether the process has time left. Otherwise give a new quantum 
-   * and lower the process' priority, unless the process already is in the 
-   * lowest queue.  
-   */
-  if (! time_left) {				/* quantum consumed ? */
-      rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
-      if (rp->p_priority < (NR_SCHED_QUEUES-1)) {
-          rp->p_priority += 1;			/* lower priority */
-      }
-  }
-
-  /* If there is time left, the process is added to the front of its queue, 
-   * so that it can immediately run. The queue to use simply is always the
-   * process' current priority. 
-   */
-  *queue = rp->p_priority;
-  *front = time_left;
-}
-
-/*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
 PRIVATE struct proc * pick_proc(void)
@@ -1336,52 +1320,6 @@ PRIVATE struct proc * pick_proc(void)
 	return rp;
   }
   return NULL;
-}
-
-/*===========================================================================*
- *				balance_queues				     *
- *===========================================================================*/
-#define Q_BALANCE_TICKS	 100
-PUBLIC void balance_queues(
-  timer_t *tp				/* watchdog timer pointer */
-)
-{
-/* Check entire process table and give all process a higher priority. This
- * effectively means giving a new quantum. If a process already is at its 
- * maximum priority, its quantum will be renewed.
- */
-  static timer_t queue_timer;			/* timer structure to use */
-  register struct proc* rp;			/* process table pointer  */
-  clock_t next_period;				/* time of next period  */
-  int ticks_added = 0;				/* total time added */
-
-  for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
-      if (! isemptyp(rp)) {				/* check slot use */
-	  if (rp->p_priority > rp->p_max_priority) {	/* update priority? */
-	      int paused = 0;
-	      if (proc_is_runnable(rp)) {
-		RTS_SET(rp, RTS_PROC_STOP);		/* take off queue */
-		paused = 1;
-	      }
-	      ticks_added += rp->p_quantum_size;	/* do accounting */
-	      rp->p_priority -= 1;			/* raise priority */
-	      if(paused) {
-	      	RTS_UNSET(rp, RTS_PROC_STOP);
-	        assert(proc_is_runnable(rp));
-	      }
-	  }
-	  else {
-	      ticks_added += rp->p_quantum_size - rp->p_ticks_left;
-              rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
-	  }
-      }
-  }
-
-  /* Now schedule a new watchdog timer to balance the queues again.  The 
-   * period depends on the total amount of quantum ticks added.
-   */
-  next_period = MAX(Q_BALANCE_TICKS, ticks_added);	/* calculate next */
-  set_timer(&queue_timer, get_uptime() + next_period, balance_queues);
 }
 
 /*===========================================================================*
@@ -1445,5 +1383,53 @@ const int fatalflag;
 		panic("invalid endpoint: %d",  e);
 	}
 	return ok;
+}
+
+PRIVATE void notify_scheduler(struct proc *p)
+{
+	/* dequeue the process */
+	RTS_SET(p, RTS_NO_QUANTUM);
+	/*
+	 * Notify the process's scheduler that it has run out of
+	 * quantum. This is done by sending a message to the scheduler
+	 * on the process's behalf
+	 */
+	if (p->p_scheduler == p) {
+		/*
+		 * If a scheduler is scheduling itself, and runs out of
+		 * quantum, we don't send a message. The RTS_NO_QUANTUM
+		 * flag will be removed by schedcheck in proc.c.
+		 */
+	}
+	else if (p->p_scheduler != NULL) {
+		message m_no_quantum;
+		int err;
+
+		m_no_quantum.m_source = p->p_endpoint;
+		m_no_quantum.m_type   = SCHEDULING_NO_QUANTUM;
+
+		if ((err = mini_send(p, p->p_scheduler->p_endpoint,
+						&m_no_quantum, FROM_KERNEL))) {
+			panic("WARNING: Scheduling: mini_send returned %d\n", err);
+		}
+	}
+}
+
+PUBLIC void check_ticks_left(struct proc * p)
+{
+	if (p->p_ticks_left <= 0) {
+		p->p_ticks_left = 0;
+		if (priv(p)->s_flags & PREEMPTIBLE) {
+			/* this dequeues the process */
+			notify_scheduler(p);
+		}
+		else {
+			/*
+			 * non-preemptible processes only need their quantum to
+			 * be renewed. In fact, they by pass scheduling
+			 */
+			p->p_ticks_left = p->p_quantum_size;
+		}
+	}
 }
 

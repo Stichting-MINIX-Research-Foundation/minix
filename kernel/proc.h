@@ -25,10 +25,10 @@ struct proc {
   short p_rts_flags;		/* process is runnable only if zero */
   short p_misc_flags;		/* flags that do not suspend the process */
 
-  char p_priority;		/* current scheduling priority */
-  char p_max_priority;		/* maximum scheduling priority */
+  char p_priority;		/* current process priority */
   char p_ticks_left;		/* number of scheduling ticks left */
   char p_quantum_size;		/* quantum size in ticks */
+  struct proc *p_scheduler;	/* who should get out of quantum msg */
 
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
   struct pagefault p_pagefault;	/* valid if PAGEFAULT in p_rts_flags set */
@@ -224,8 +224,7 @@ struct proc {
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 
- * can be set in table.c. IDLE must have a queue for itself, to prevent low 
- * priority user processes to run round-robin with IDLE. 
+ * can be set in table.c.
  */
 #define NR_SCHED_QUEUES   16	/* MUST equal minimum priority + 1 */
 #define TASK_Q		   0	/* highest, used for kernel tasks */
@@ -258,6 +257,9 @@ struct proc {
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
 EXTERN struct proc *rdy_head[NR_SCHED_QUEUES]; /* ptrs to ready list headers */
 EXTERN struct proc *rdy_tail[NR_SCHED_QUEUES]; /* ptrs to ready list tails */
+
+_PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst_e,
+		message *m_ptr, int flags));
 
 #endif /* __ASSEMBLY__ */
 

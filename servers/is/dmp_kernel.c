@@ -398,9 +398,9 @@ PUBLIC void proctab_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu ",
+	printf("%-8.8s %02u %02d/%02u %6lu %6lu ",
 	       rp->p_name,
-	       rp->p_priority, rp->p_max_priority,
+	       rp->p_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 
 	       rp->p_user_time, rp->p_sys_time);
 	PRINTRTS(rp);

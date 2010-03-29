@@ -8,6 +8,7 @@
 
 /* Masks and flags for system calls. */
 #define NON_BLOCKING    0x0080  /* do not block if target not ready */
+#define FROM_KERNEL     0x0100  /* message from kernel on behalf of a process */
 
 #define WILLRECEIVE(target, source_ep) \
   ((RTS_ISSET(target, RTS_RECEIVING) && !RTS_ISSET(target, RTS_SENDING)) &&	\

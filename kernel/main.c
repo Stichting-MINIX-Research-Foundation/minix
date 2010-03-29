@@ -79,7 +79,7 @@ PUBLIC void main()
 	DEBUGMAX(("initializing %s... ", ip->proc_name));
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
-	rp->p_max_priority = ip->priority;	/* max scheduling priority */
+	rp->p_scheduler = NULL;			/* no user space scheduler */
 	rp->p_priority = ip->priority;		/* current priority */
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
 	rp->p_ticks_left = ip->quantum;		/* current credit */
@@ -217,10 +217,6 @@ PUBLIC void main()
   /* System and processes initialization */
   DEBUGMAX(("system_init()... "));
   system_init();
-  DEBUGMAX(("done\n"));
-  /* Initialize timers handling */
-  DEBUGMAX(("clock_init()... "));
-  clock_init();
   DEBUGMAX(("done\n"));
 
 #if SPROFILE
