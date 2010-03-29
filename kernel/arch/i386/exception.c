@@ -66,9 +66,6 @@ void pagefault( struct proc *pr,
 			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
 			pagefaultcr2, frame->errcode, is_nested);
 		proc_stacktrace(pr);
-		if(pr->p_endpoint != SYSTEM) {
-			proc_stacktrace(proc_addr(SYSTEM));
-		}
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
   		panic("page fault in system process: %d",  pr->p_endpoint);
 
