@@ -221,6 +221,7 @@ struct proc {
 #define MF_USED_FPU	0x800   /* process used fpu during last execution run */
 #define MF_FPU_INITIALIZED	0x1000  /* process already used math, so fpu
 					 * regs are significant (initialized)*/
+#define MF_SENDING_FROM_KERNEL	0x2000 /* message of this process is from kernel */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 

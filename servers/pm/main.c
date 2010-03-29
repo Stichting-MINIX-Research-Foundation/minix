@@ -40,7 +40,6 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 FORWARD _PROTOTYPE( void sendreply, (void)				);
-FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
 FORWARD _PROTOTYPE( void handle_fs_reply, (void)			);
 
@@ -70,14 +69,32 @@ PUBLIC int main()
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
-	get_work();		/* wait for an PM system call */
+	  int ipc_status;
+
+	  /* Wait for the next message and extract useful information from it. */
+	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
+		  panic("PM sef_receive error");
+	  who_e = m_in.m_source;	/* who sent the message */
+	  if(pm_isokendpt(who_e, &who_p) != OK)
+		  panic("PM got message from invalid endpoint: %d", who_e);
+	  call_nr = m_in.m_type;	/* system call number */
+
+	  /* Process slot of caller. Misuse PM's own process slot if the kernel is
+	   * calling. This can happen in case of synchronous alarms (CLOCK) or or
+	   * event like pending kernel signals (SYSTEM).
+	   */
+	  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
+	  if(who_p >= 0 && mp->mp_endpoint != who_e) {
+		  panic("PM endpoint number out of sync with source: %d",
+				  			mp->mp_endpoint);
+	  }
 
 	/* Drop delayed calls from exiting processes. */
 	if (mp->mp_flags & EXITING)
 		continue;
 
 	/* Check for system notifications first. Special cases. */
-	if (is_notify(call_nr)) {
+	if (is_ipc_notify(ipc_status)) {
 		switch(who_p) {
 			case CLOCK:
 				pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
@@ -116,7 +133,13 @@ PUBLIC int main()
 		break;
 	case SCHEDULING_NO_QUANTUM:
 		/* This message was sent from the kernel, don't reply */
-		do_noquantum();
+		if (IPC_STATUS_FLAGS_TEST(ipc_status, IPC_FLG_MSG_FROM_KERNEL)) {
+			do_noquantum();
+		} else {
+			printf("PM: process %s/%d faked SCHEDULING_NO_QUANTUM "
+					"message!\n",
+					mp->mp_name, mp->mp_endpoint);
+		}
 		continue;
 	default:
 		/* Else, if the system call number is valid, perform the
@@ -312,29 +335,6 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
   sendreply();
 
   return r;
-}
-
-/*===========================================================================*
- *				get_work				     *
- *===========================================================================*/
-PRIVATE void get_work()
-{
-/* Wait for the next message and extract useful information from it. */
-  if (sef_receive(ANY, &m_in) != OK)
-	panic("PM sef_receive error");
-  who_e = m_in.m_source;	/* who sent the message */
-  if(pm_isokendpt(who_e, &who_p) != OK)
-	panic("PM got message from invalid endpoint: %d", who_e);
-  call_nr = m_in.m_type;	/* system call number */
-
-  /* Process slot of caller. Misuse PM's own process slot if the kernel is
-   * calling. This can happen in case of synchronous alarms (CLOCK) or or 
-   * event like pending kernel signals (SYSTEM).
-   */
-  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
-  if(who_p >= 0 && mp->mp_endpoint != who_e) {
-	panic("PM endpoint number out of sync with source: %d", mp->mp_endpoint);
-  }
 }
 
 /*===========================================================================*

@@ -540,8 +540,12 @@ const int flags;
 	if (!(flags & FROM_KERNEL)) {
 		if(copy_msg_from_user(caller_ptr, m_ptr, &dst_ptr->p_delivermsg))
 			return EFAULT;
-	} else
+	} else {
 		dst_ptr->p_delivermsg = *m_ptr;
+		IPC_STATUS_ADD(dst_ptr,
+				IPC_STATUS_FLAGS(IPC_FLG_MSG_FROM_KERNEL));
+	}
+
 	dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
 	dst_ptr->p_misc_flags |= MF_DELIVERMSG;
 
@@ -563,8 +567,15 @@ const int flags;
 	if (!(flags & FROM_KERNEL)) {
 		if(copy_msg_from_user(caller_ptr, m_ptr, &caller_ptr->p_sendmsg))
 			return EFAULT;
-	} else
+	} else {
 		caller_ptr->p_sendmsg = *m_ptr;
+		/*
+		 * we need to remember that this message is from kernel so we
+		 * can set the delivery status flags when the message is
+		 * actually delivered
+		 */
+		caller_ptr->p_misc_flags |= MF_SENDING_FROM_KERNEL;
+	}
 
 	RTS_SET(caller_ptr, RTS_SENDING);
 	caller_ptr->p_sendto_e = dst_e;
@@ -693,6 +704,17 @@ const int flags;
 
 	    call = ((*xpp)->p_misc_flags & MF_REPLY_PEND ? SENDREC : SEND);
 	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(call));
+
+	    /*
+	     * if the message is originaly from the kernel on behalf of this
+	     * process, we must send the status flags accordingly
+	     */
+	    if ((*xpp)->p_misc_flags & MF_SENDING_FROM_KERNEL) {
+		IPC_STATUS_ADD(caller_ptr,
+				IPC_STATUS_FLAGS(IPC_FLG_MSG_FROM_KERNEL));
+		/* we can clean the flag now, not need anymore */
+		(*xpp)->p_misc_flags &= ~MF_SENDING_FROM_KERNEL;
+	    }
 	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
 		sig_delay_done(*xpp);
 

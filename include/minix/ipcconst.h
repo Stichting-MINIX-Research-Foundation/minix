@@ -17,4 +17,12 @@
 #define IPC_STATUS_CALL_TO(call) \
 	(((call) & IPC_STATUS_CALL_MASK) << IPC_STATUS_CALL_SHIFT)
 
+#define IPC_FLG_MSG_FROM_KERNEL	1 /* this message originated in the kernel on
+				     behalf of a process, this is a trusted
+				     message, never reply to the sender
+				 */
+#define IPC_STATUS_FLAGS_SHIFT	16
+#define IPC_STATUS_FLAGS(flgs)	((flgs) << IPC_STATUS_FLAGS_SHIFT)
+#define IPC_STATUS_FLAGS_TEST(status, flgs)	\
+		(((status) >> IPC_STATUS_FLAGS_SHIFT) & (flgs))
 #endif /* IPC_CONST_H */
