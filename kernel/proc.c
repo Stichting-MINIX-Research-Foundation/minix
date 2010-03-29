@@ -78,47 +78,6 @@ FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
 	}
 
 /*===========================================================================*
- *				QueueMess				     * 
- *===========================================================================*/
-PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
-{
-	int k;
-	phys_bytes addr;
-	NOREC_ENTER(queuemess);
-	/* Queue a message from the src process (in memory) to the dst
-	 * process (using dst process table entry). Do actual copy to
-	 * kernel here; it's an error if the copy fails into kernel.
-	 */
-	assert(!(dst->p_misc_flags & MF_DELIVERMSG));	
-	assert(dst->p_delivermsg_lin);
-	assert(isokendpt(ep, &k));
-
-#if 0
-	if(INMEMORY(dst)) {
-		PHYS_COPY_CATCH(msg_lin, dst->p_delivermsg_lin,
-			sizeof(message), addr);
-		if(!addr) {
-			PHYS_COPY_CATCH(vir2phys(&ep), dst->p_delivermsg_lin,
-				sizeof(ep), addr);
-			if(!addr) {
-				NOREC_RETURN(queuemess, OK);
-			}
-		}
-	}
-#endif
-
-	PHYS_COPY_CATCH(msg_lin, vir2phys(&dst->p_delivermsg), sizeof(message), addr);
-	if(addr) {
-		NOREC_RETURN(queuemess, EFAULT);
-	}
-
-	dst->p_delivermsg.m_source = ep;
-	dst->p_misc_flags |= MF_DELIVERMSG;
-
-	NOREC_RETURN(queuemess, OK);
-}
-
-/*===========================================================================*
  *				idle					     * 
  *===========================================================================*/
 PRIVATE void idle(void)
@@ -561,26 +520,7 @@ const int flags;
  */
   register struct proc *dst_ptr;
   register struct proc **xpp;
-  struct proc *msg_proc_ptr; /* Proc in which the message can be found */
   int dst_p;
-  phys_bytes linaddr;
-  vir_bytes addr;
-  int r;
-
-  /* The kernel can send messages on behalf of other processes. In that case
-     we need to pass a pointer to the kernel, not the caller_ptr, to
-     umap_local as the kernel contains the message to be sent. */
-  if (flags & FROM_KERNEL) {
-	msg_proc_ptr = proc_addr(KERNEL);
-  }
-  else {
-	msg_proc_ptr = caller_ptr;
-  }
-
-  if(!(linaddr = umap_local(msg_proc_ptr, D, (vir_bytes) m_ptr,
-	sizeof(message)))) {
-	return EFAULT;
-  }
   dst_p = _ENDPOINT_P(dst_e);
   dst_ptr = proc_addr(dst_p);
 
@@ -596,8 +536,15 @@ const int flags;
 	int call;
 	/* Destination is indeed waiting for this message. */
 	assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
-	if((r=QueueMess(caller_ptr->p_endpoint, linaddr, dst_ptr)) != OK)
-		return r;
+
+	if (!(flags & FROM_KERNEL)) {
+		if(copy_msg_from_user(caller_ptr, m_ptr, &dst_ptr->p_delivermsg))
+			return EFAULT;
+	} else
+		dst_ptr->p_delivermsg = *m_ptr;
+	dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
+	dst_ptr->p_misc_flags |= MF_DELIVERMSG;
+
 	call = (caller_ptr->p_misc_flags & MF_REPLY_PEND ? SENDREC
 		: (flags & NON_BLOCKING ? SENDNB : SEND));
 	IPC_STATUS_ADD(dst_ptr, IPC_STATUS_CALL_TO(call));
@@ -613,10 +560,12 @@ const int flags;
 	}
 
 	/* Destination is not waiting.  Block and dequeue caller. */
-	PHYS_COPY_CATCH(linaddr, vir2phys(&caller_ptr->p_sendmsg),
-		sizeof(message), addr);
+	if (!(flags & FROM_KERNEL)) {
+		if(copy_msg_from_user(caller_ptr, m_ptr, &caller_ptr->p_sendmsg))
+			return EFAULT;
+	} else
+		caller_ptr->p_sendmsg = *m_ptr;
 
-	if(addr) { return EFAULT; }
 	RTS_SET(caller_ptr, RTS_SENDING);
 	caller_ptr->p_sendto_e = dst_e;
 
@@ -643,7 +592,6 @@ const int flags;
  * is available block the caller.
  */
   register struct proc **xpp;
-  message m;
   sys_map_t *map;
   bitchunk_t *chunk;
   int i, r, src_id, src_proc_nr, src_p;
@@ -699,15 +647,18 @@ const int flags;
             *chunk &= ~(1 << i);			/* no longer pending */
 
             /* Found a suitable source, deliver the notification message. */
-	    BuildNotifyMessage(&m, src_proc_nr, caller_ptr);	/* assemble message */
 	    hisep = proc_addr(src_proc_nr)->p_endpoint;
 	    assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));	
 	    assert(src_e == ANY || hisep == src_e);
-	    if((r=QueueMess(hisep, vir2phys(&m), caller_ptr)) != OK)  {
-		panic("mini_receive: local QueueMess failed");
-	    }
+
+	    /* assemble message */
+	    BuildNotifyMessage(&caller_ptr->p_delivermsg, src_proc_nr, caller_ptr);
+	    caller_ptr->p_delivermsg.m_source = hisep;
+	    caller_ptr->p_misc_flags |= MF_DELIVERMSG;
+
 	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(NOTIFY));
-            return(OK);					/* report success */
+
+	    return(OK);
         }
     }
 
@@ -735,13 +686,16 @@ const int flags;
 
 	    /* Found acceptable message. Copy it and update status. */
   	    assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
-	    QueueMess((*xpp)->p_endpoint,
-		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
+	    caller_ptr->p_delivermsg = (*xpp)->p_sendmsg;
+	    caller_ptr->p_delivermsg.m_source = (*xpp)->p_endpoint;
+	    caller_ptr->p_misc_flags |= MF_DELIVERMSG;
+	    RTS_UNSET(*xpp, RTS_SENDING);
+
 	    call = ((*xpp)->p_misc_flags & MF_REPLY_PEND ? SENDREC : SEND);
 	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(call));
 	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
 		sig_delay_done(*xpp);
-	    RTS_UNSET(*xpp, RTS_SENDING);
+
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
 	}
@@ -776,8 +730,6 @@ PUBLIC int mini_notify(
 {
   register struct proc *dst_ptr;
   int src_id;				/* source id for late delivery */
-  message m;				/* the notification message */
-  int r;
   int dst_p;
 
   if (!isokendpt(dst_e, &dst_p)) {
@@ -797,13 +749,15 @@ PUBLIC int mini_notify(
        * message and deliver it. Copy from pseudo-source HARDWARE, since the
        * message is in the kernel's address space.
        */ 
-      BuildNotifyMessage(&m, proc_nr(caller_ptr), dst_ptr);
       assert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));
-      if((r=QueueMess(caller_ptr->p_endpoint, vir2phys(&m), dst_ptr)) != OK) {
-	panic("mini_notify: local QueueMess failed");
-      }
+
+      BuildNotifyMessage(&dst_ptr->p_delivermsg, proc_nr(caller_ptr), dst_ptr);
+      dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
+      dst_ptr->p_misc_flags |= MF_DELIVERMSG;
+
       IPC_STATUS_ADD(dst_ptr, IPC_STATUS_CALL_TO(NOTIFY));
       RTS_UNSET(dst_ptr, RTS_RECEIVING);
+
       return(OK);
   } 
 
@@ -850,7 +804,6 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	struct priv *privp;
 	asynmsg_t tabent;
 	const vir_bytes table_v = (vir_bytes) table;
-	vir_bytes linaddr;
 
 	privp= priv(caller_ptr);
 	if (!(privp->s_flags & SYS_PROC))
@@ -868,13 +821,6 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	{
 		/* Nothing to do, just return */
 		return OK;
-	}
-
-	if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) table,
-		size * sizeof(*table)))) {
-		printf("mini_senda: umap_local failed; 0x%lx len 0x%lx\n",
-			table, size * sizeof(*table));
-		return EFAULT;
 	}
 
 	/* Limit size to something reasonable. An arbitrary choice is 16
@@ -985,13 +931,16 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		{
 			/* Destination is indeed waiting for this message. */
 			/* Copy message from sender. */
-			tabent.result= QueueMess(caller_ptr->p_endpoint,
-				linaddr + (vir_bytes) &table[i].msg -
-					(vir_bytes) table, dst_ptr);
-			if(tabent.result == OK) {
+			if(copy_msg_from_user(caller_ptr, &table[i].msg,
+						&dst_ptr->p_delivermsg))
+				tabent.result = EFAULT;
+			else {
+				dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
+				dst_ptr->p_misc_flags |= MF_DELIVERMSG;
 				IPC_STATUS_ADD(dst_ptr,
 					IPC_STATUS_CALL_TO(SENDA));
 				RTS_UNSET(dst_ptr, RTS_RECEIVING);
+				tabent.result = OK;
 			}
 
 			A_INSERT(i, result);
@@ -1067,7 +1016,6 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 	asynmsg_t tabent;
 	vir_bytes table_v;
 	struct proc *caller_ptr;
-	int r;
 
 	privp= priv(src_ptr);
 
@@ -1139,10 +1087,11 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 
 		/* Deliver message */
 		A_RETRIEVE(i, msg);
-		r = QueueMess(src_ptr->p_endpoint, vir2phys(&tabent.msg),
-			dst_ptr);
+		dst_ptr->p_delivermsg = tabent.msg;
+		dst_ptr->p_delivermsg.m_source = src_ptr->p_endpoint;
+		dst_ptr->p_misc_flags |= MF_DELIVERMSG;
 
-		tabent.result= r;
+		tabent.result = OK;
 		A_INSERT(i, result);
 		tabent.flags= flags | AMF_DONE;
 		A_INSERT(i, flags);
