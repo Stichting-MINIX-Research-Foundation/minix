@@ -11,6 +11,7 @@
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <unistd.h>
+#include <assert.h>
 #include <minix/vfsif.h>
 #include "fproc.h"
 #include "vmnt.h"
@@ -42,6 +43,8 @@ int flags;
   struct vnode *new_vp, *vp;
   struct vmnt *vmp;
   struct node_details res;
+
+  assert(dirp);
 
   /* Get a free vnode */
   if((new_vp = get_free_vnode()) == NIL_VNODE) return(NIL_VNODE);
@@ -238,7 +241,7 @@ node_details_t *node;
 		dir_vp = 0;
 		/* Start node is now the mounted partition's root node */
 		for (vmp = &vmnt[0]; vmp != &vmnt[NR_MNTS]; ++vmp) {
-			if (vmp->m_dev != NO_DEV) {
+			if (vmp->m_dev != NO_DEV && vmp->m_mounted_on) {
 			   if (vmp->m_mounted_on->v_inode_nr == res.inode_nr &&
 			       vmp->m_mounted_on->v_fs_e == res.fs_e) {
 				dir_vp = vmp->m_root_node;
@@ -246,10 +249,7 @@ node_details_t *node;
 			   }
 			}
 		}
-
-		if (!dir_vp) {
-			panic("VFS lookup: can't find mounted partition");
-		}
+		assert(dir_vp);
 	} else {
 		/* Climbing up mount */
 		/* Find the vmnt that represents the partition on
