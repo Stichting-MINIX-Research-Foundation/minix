@@ -38,6 +38,10 @@
 #include <alloca.h>
 #include <lib.h>
 
+#ifndef __UNCONST
+#define __UNCONST(x) ((void *) (x))
+#endif
+
 extern char * const **_penviron;	/* The default environment. */
 
 int

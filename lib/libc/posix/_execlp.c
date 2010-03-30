@@ -38,6 +38,10 @@
 #include <alloca.h>
 #include <lib.h>
 
+#ifndef __UNCONST
+#define __UNCONST(x) ((void *) (x))
+#endif
+
 int execlp(const char *file, const char *arg1, ...)
 /* execlp("sh", "sh", "-c", "example", (char *) 0); */
 {
