@@ -5,7 +5,6 @@
 
 #define _MINIX_SOURCE
 
-#define nil 0
 #define execve _execve
 #define execvp _execvp
 #define sbrk _sbrk
@@ -15,6 +14,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <lib.h>
 
 extern char * const **_penviron;	/* The default environment. */
 
@@ -33,7 +33,7 @@ int execvp(const char *file, char * const *argv)
 	size_t full_size;
 	int err= ENOENT;		/* Error return on failure. */
 
-	if (strchr(file, '/') != nil || (path= getenv("PATH")) == nil)
+	if (strchr(file, '/') != NULL || (path= getenv("PATH")) == NULL)
 		path= "";
 
 	/* Compute the maximum length the full name may have, and align. */

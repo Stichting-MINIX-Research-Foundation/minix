@@ -4,7 +4,6 @@
 
 #define _MINIX_SOURCE
 
-#define nil 0
 #define execve _execve
 #define sbrk _sbrk
 #include <lib.h>
@@ -37,7 +36,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	string_off= 0;		/* Offset to start of the strings. */
 	argc= 0;		/* Argument count. */
 
-	for (ap= argv; *ap != nil; ap++) {
+	for (ap= argv; *ap != NULL; ap++) {
 		n = sizeof(*ap) + strlen(*ap) + 1;
 		frame_size+= n;
 		if (frame_size < n) ov= 1;
@@ -45,7 +44,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 		argc++;
 	}
 
-	for (ep= envp; *ep != nil; ep++) {
+	for (ep= envp; *ep != NULL; ep++) {
 		n = sizeof(*ep) + strlen(*ep) + 1;
 		frame_size+= n;
 		if (frame_size < n) ov= 1;
@@ -77,22 +76,22 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	sp = frame + string_off;
 
 	/* Load the argument vector and strings. */
-	for (ap= argv; *ap != nil; ap++) {
+	for (ap= argv; *ap != NULL; ap++) {
 		*vp++= (char *) (sp - frame);
 		n= strlen(*ap) + 1;
 		memcpy(sp, *ap, n);
 		sp+= n;
 	}
-	*vp++= nil;
+	*vp++= NULL;
 
 	/* Load the environment vector and strings. */
-	for (ep= envp; *ep != nil; ep++) {
+	for (ep= envp; *ep != NULL; ep++) {
 		*vp++= (char *) (sp - frame);
 		n= strlen(*ep) + 1;
 		memcpy(sp, *ep, n);
 		sp+= n;
 	}
-	*vp++= nil;
+	*vp++= NULL;
 
 	/* Padding. */
 	while (sp < frame + frame_size) *sp++= 0;
