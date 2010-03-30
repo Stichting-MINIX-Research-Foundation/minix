@@ -640,7 +640,7 @@ struct filp *fp;
   /* If a write has been done, the inode is already marked as DIRTY. */
   if (--fp->filp_count == 0) {
 	if (vp->v_pipe == I_PIPE) {
-		/* Last reader or writer is going. Tell MFS about latest
+		/* Last reader or writer is going. Tell PFS about latest
 		 * pipe size.
 		 */
 		truncate_vnode(vp, vp->v_size);

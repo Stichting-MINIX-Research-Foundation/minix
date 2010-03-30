@@ -775,15 +775,14 @@ int flags;			/* mode bits and flags */
                 struct node_details res;
 
 		/* A new minor device number has been returned.
-                 * Request the root FS to create a temporary device file to
-		 * hold it. 
+                 * Request PFS to create a temporary device file to hold it. 
                  */
 		
                 /* Device number of the new device. */
 		dev = (dev & ~(BYTE << MINOR)) | (dev_mess.REP_STATUS << MINOR);
 
                 /* Issue request */
-                r = req_newnode(ROOT_FS_E, fp->fp_effuid, fp->fp_effgid,
+		r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid,
 			ALL_MODES | I_CHAR_SPECIAL, dev, &res);
                 if (r != OK) {
                     (void) clone_opcl(DEV_CLOSE, dev, proc_e, 0);
@@ -798,11 +797,8 @@ int flags;			/* mode bits and flags */
 			vp = fp->fp_filp[m_in.fd]->filp_vno;
 		
                 vp->v_fs_e = res.fs_e;
-                if ((vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT) 
-			printf("VFS clone_opcl: no vmnt found\n");
-
-                vp->v_vmnt = vmp;
-                vp->v_dev = vmp->m_dev;
+                vp->v_vmnt = NIL_VMNT;
+                vp->v_dev = NO_DEV; 
 		vp->v_fs_e = res.fs_e;
                 vp->v_inode_nr = res.inode_nr;
                 vp->v_mode = res.fmode; 

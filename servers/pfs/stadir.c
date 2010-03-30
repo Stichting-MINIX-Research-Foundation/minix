@@ -13,9 +13,12 @@ PRIVATE int stat_inode(
 )
 {
 /* Common code for stat and fstat system calls. */
-
+  mode_t type;
   struct stat statbuf;
   int r, s;
+
+  type = rip->i_mode & I_TYPE;
+  s = (type == I_CHAR_SPECIAL || type == I_BLOCK_SPECIAL);
 
   /* Update the atime, ctime, and mtime fields in the inode, if need be. */
   if (rip->i_update) update_times(rip);
@@ -26,9 +29,9 @@ PRIVATE int stat_inode(
   statbuf.st_nlink = rip->i_nlinks;
   statbuf.st_uid = rip->i_uid;
   statbuf.st_gid = rip->i_gid;
-  statbuf.st_rdev = (dev_t) 0;
+  statbuf.st_rdev = (dev_t) (s ? rip->i_rdev : NO_DEV);
   statbuf.st_size = rip->i_size;
-  statbuf.st_mode &= ~I_REGULAR;	/* wipe out I_REGULAR bit for pipes */
+  if (!s)  statbuf.st_mode &= ~I_REGULAR;/* wipe out I_REGULAR bit for pipes */
   statbuf.st_atime = rip->i_atime;
   statbuf.st_mtime = rip->i_mtime;
   statbuf.st_ctime = rip->i_ctime;

@@ -226,6 +226,8 @@ register struct inode *rip;	/* pointer to inode to be released */
 		/* free, put at the front of the LRU list */
 		unhash_inode(rip);
 		rip->i_num = 0;
+		rip->i_dev = NO_DEV;
+		rip->i_rdev = NO_DEV;
 		TAILQ_INSERT_HEAD(&unused_inodes, rip, i_unused);
 	} else {
 		/* unused, put at the back of the LRU (cache it) */

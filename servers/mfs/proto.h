@@ -68,7 +68,6 @@ _PROTOTYPE( int fs_create, (void)					);
 _PROTOTYPE( int fs_inhibread, (void)					);
 _PROTOTYPE( int fs_mkdir, (void)					);
 _PROTOTYPE( int fs_mknod, (void)					);
-_PROTOTYPE( int fs_newnode, (void)					);
 _PROTOTYPE( int fs_slink, (void)					);
 
 /* path.c */

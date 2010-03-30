@@ -15,6 +15,7 @@ EXTERN struct inode {
   
   /* The following items are not present on the disk. */
   dev_t i_dev;			/* which device is the inode on */
+  dev_t i_rdev;			/* which special device is the inode on */
   ino_t i_num;			/* inode number on its (minor) device */
   int i_count;			/* # times inode used; 0 means slot is free */
   char i_update;		/* the ATIME, CTIME, and MTIME bits are here */
