@@ -110,7 +110,7 @@ PRIVATE phys_bytes dma_buf_phys;
 
 PRIVATE struct prdte
 {
-	u32_t prdte_base;
+	phys_bytes prdte_base;
 	u16_t prdte_count;
 	u8_t prdte_reserved;
 	u8_t prdte_flags;
@@ -145,11 +145,11 @@ FORWARD _PROTOTYPE( int w_identify, (void)				);
 FORWARD _PROTOTYPE( char *w_name, (void) 				);
 FORWARD _PROTOTYPE( int w_specify, (void) 				);
 FORWARD _PROTOTYPE( int w_io_test, (void) 				);
-FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, u64_t position,
-				iovec_t *iov, unsigned nr_req));
+FORWARD _PROTOTYPE( int w_transfer, (endpoint_t proc_nr, int opcode,
+              u64_t position, iovec_t *iov, unsigned nr_req)            );
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
 FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
-FORWARD _PROTOTYPE( void setup_dma, (unsigned *sizep, int proc_nr,
+FORWARD _PROTOTYPE( void setup_dma, (unsigned *sizep, endpoint_t proc_nr,
 			iovec_t *iov, size_t addr_offset, int do_write,
 			int *do_copyoutp)				);
 FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
@@ -1151,7 +1151,7 @@ PRIVATE int error_dma(struct wini *wn)
  *				w_transfer				     *
  *===========================================================================*/
 PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req)
-int proc_nr;			/* process doing the request */
+endpoint_t proc_nr;		/* process doing the request */
 int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
@@ -1268,7 +1268,8 @@ unsigned nr_req;		/* length of request vector */
 				if(proc_nr != SELF) {
 				   s= sys_safecopyto(proc_nr, iov->iov_addr,
 					addr_offset,
-					(vir_bytes)dma_buf+dma_buf_offset, n, D);
+					(vir_bytes)(dma_buf+dma_buf_offset),
+					n, D);
 				   if (s != OK) {
 						panic("w_transfer: sys_vircopy failed: %d", 						s);
 				   }
@@ -1485,7 +1486,7 @@ struct command *cmd;		/* Command block */
 PRIVATE void setup_dma(sizep, proc_nr, iov, addr_offset, do_write,
 	do_copyoutp)
 unsigned *sizep;
-int proc_nr;
+endpoint_t proc_nr;
 iovec_t *iov;
 size_t addr_offset;
 int do_write;
@@ -2137,8 +2138,8 @@ unsigned nr_req;		/* length of request vector */
 		} else {
 			dmabytes += nbytes;
 			while (nbytes > 0) {
-				size_t chunk;
-				chunk = nbytes;
+				vir_bytes chunk = nbytes;
+
 				if (chunk > iov->iov_size)
 					chunk = iov->iov_size;
 				position= add64ul(position, chunk);

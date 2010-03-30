@@ -120,7 +120,7 @@ typedef struct dpeth {
   iovec_dat_s_t de_write_iovec;
   vir_bytes de_read_s;
   vir_bytes de_send_s;
-  int de_client;
+  endpoint_t de_client;
 
 } dpeth_t;
 

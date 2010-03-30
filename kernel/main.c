@@ -55,7 +55,7 @@ PUBLIC void main()
   }
   for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 	sp->s_proc_nr = NONE;			/* initialize as free */
-	sp->s_id = (proc_nr_t) i;		/* priv structure index */
+	sp->s_id = (sys_id_t) i;		/* priv structure index */
 	ppriv_addr[i] = sp;			/* priv ptr from number */
   }
 

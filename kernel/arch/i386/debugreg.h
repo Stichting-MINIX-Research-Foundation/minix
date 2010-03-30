@@ -27,12 +27,12 @@
 #define	DR7_LN_4(bp)	(3 << (18+4*(bp)))	/* 4 bytes */
 
 /* debugreg.S */
-void ld_dr0(u32_t value);
-void ld_dr1(u32_t value);
-void ld_dr2(u32_t value);
-void ld_dr3(u32_t value);
-void ld_dr6(u32_t value);
-void ld_dr7(u32_t value);
+void ld_dr0(phys_bytes value);
+void ld_dr1(phys_bytes value);
+void ld_dr2(phys_bytes value);
+void ld_dr3(phys_bytes value);
+void ld_dr6(phys_bytes value);
+void ld_dr7(phys_bytes value);
 u32_t st_dr0(void); 
 u32_t st_dr1(void); 
 u32_t st_dr2(void); 

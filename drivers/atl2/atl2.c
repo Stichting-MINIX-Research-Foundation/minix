@@ -865,7 +865,8 @@ PRIVATE void atl2_writev(message *m, int from_int)
 	/* Write packet data.
 	 */
 	iovec_s_t *iovp;
-	size_t off, count, left, pos, size, skip;
+	size_t off, count, left, pos, skip;
+	vir_bytes size;
 	u8_t *sizep;
 	int i, j, r, batch, maxnum;
 

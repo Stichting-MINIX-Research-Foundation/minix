@@ -74,7 +74,7 @@ THIS_FILE
 
 #define RANDOM_DEV_NAME	"/dev/random"
 
-int this_proc;		/* Process number of this server. */
+endpoint_t this_proc;		/* Process number of this server. */
 
 /* Killing Solaris */
 int killer_inet= 0;
@@ -100,7 +100,8 @@ PUBLIC void main()
 {
 	mq_t *mq;
 	int r;
-	int source, m_type;
+	endpoint_t source;
+	int m_type;
 
 	/* SEF local startup. */
 	sef_local_startup();

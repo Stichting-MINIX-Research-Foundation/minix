@@ -56,8 +56,8 @@ static void write_reg(int function, int index, u32_t value);
 static void init_domain(int index);
 static void init_map(unsigned int ix);
 static int do_add4pci(message *m);
-static void add_range(u32_t busaddr, u32_t size);
-static void del_range(u32_t busaddr, u32_t size);
+static void add_range(phys_bytes busaddr, phys_bytes size);
+static void del_range(phys_bytes busaddr, phys_bytes size);
 static void report_exceptions(void);
 
 /* SEF functions and variables. */
@@ -428,9 +428,9 @@ static int do_add4pci(message *m)
 }
 
 
-static void add_range(u32_t busaddr, u32_t size)
+static void add_range(phys_bytes busaddr, phys_bytes size)
 {
-	u32_t o;
+	phys_bytes o;
 
 #if 0
 	printf("add_range: mapping 0x%x@0x%x\n", size, busaddr);
@@ -443,9 +443,9 @@ static void add_range(u32_t busaddr, u32_t size)
 	}
 }
 
-static void del_range(u32_t busaddr, u32_t size)
+static void del_range(phys_bytes busaddr, phys_bytes size)
 {
-	u32_t o, bit;
+	phys_bytes o;
 
 #if 0
 	printf("del_range: mapping 0x%x@0x%x\n", size, busaddr);
@@ -453,7 +453,7 @@ static void del_range(u32_t busaddr, u32_t size)
 
 	for (o= 0; o<size; o += I386_PAGE_SIZE)
 	{
-		bit= (busaddr+o)/I386_PAGE_SIZE;
+		u32_t bit= (busaddr+o)/I386_PAGE_SIZE;
 		table[bit/8] |= (1 << (bit % 8));
 	}
 }

@@ -326,7 +326,7 @@ PUBLIC void unset_sendto_bit(const struct proc *rp, int id)
 /*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
-PUBLIC void send_sig(int proc_nr, int sig_nr)
+PUBLIC void send_sig(endpoint_t proc_nr, int sig_nr)
 {
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
@@ -392,8 +392,7 @@ int sig_nr;			/* signal to be sent */
 /*===========================================================================*
  *				sig_delay_done				     *
  *===========================================================================*/
-PUBLIC void sig_delay_done(rp)
-struct proc *rp;
+PUBLIC void sig_delay_done(struct proc *rp)
 {
 /* A process is now known not to send any direct messages.
  * Tell PM that the stop delay has ended, by sending a signal to the process.

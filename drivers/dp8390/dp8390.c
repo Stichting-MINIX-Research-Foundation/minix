@@ -141,9 +141,9 @@ _PROTOTYPE( static void dp_pio8_getblock, (dpeth_t *dep, int page,
 _PROTOTYPE( static void dp_pio16_getblock, (dpeth_t *dep, int page,
 				size_t offset, size_t size, void *dst)	);
 _PROTOTYPE( static int dp_pkt2user, (dpeth_t *dep, int page,
-							int length)	);
+						vir_bytes length)	);
 _PROTOTYPE( static int dp_pkt2user_s, (dpeth_t *dep, int page,
-							int length)	);
+						vir_bytes length)	);
 _PROTOTYPE( static void dp_user2nic, (dpeth_t *dep, iovec_dat_t *iovp, 
 		vir_bytes offset, int nic_addr, vir_bytes count)	);
 _PROTOTYPE( static void dp_user2nic_s, (dpeth_t *dep, iovec_dat_s_t *iovp, 
@@ -792,8 +792,7 @@ message *mp;
 /*===========================================================================*
  *				do_init					     *
  *===========================================================================*/
-static void do_init(mp)
-message *mp;
+static void do_init(message *mp)
 {
 	int port;
 	dpeth_t *dep;
@@ -1541,9 +1540,7 @@ void *dst;
 /*===========================================================================*
  *				dp_pkt2user				     *
  *===========================================================================*/
-static int dp_pkt2user(dep, page, length)
-dpeth_t *dep;
-int page, length;
+static int dp_pkt2user(dpeth_t *dep, int page, vir_bytes length)
 {
 	int last, count;
 
@@ -1579,9 +1576,7 @@ int page, length;
 /*===========================================================================*
  *				dp_pkt2user_s				     *
  *===========================================================================*/
-static int dp_pkt2user_s(dep, page, length)
-dpeth_t *dep;
-int page, length;
+static int dp_pkt2user_s(dpeth_t *dep, int page, vir_bytes length)
 {
 	int last, count;
 
@@ -1625,7 +1620,8 @@ int nic_addr;
 vir_bytes count;
 {
 	vir_bytes vir_hw;
-	int bytes, i, r;
+	int i, r;
+	vir_bytes bytes;
 
 	vir_hw = (vir_bytes)dep->de_locmem + nic_addr;
 

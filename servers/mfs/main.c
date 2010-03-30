@@ -167,9 +167,10 @@ message *m_in;				/* pointer to message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(who, m_out)
-int who;	
-message *m_out;                       	/* report result */
+PUBLIC void reply(
+  endpoint_t who,
+  message *m_out                       	/* report result */
+)
 {
   if (OK != send(who, m_out))    /* send the message */
 	printf("MFS(%d) was unable to send reply\n", SELF_E);

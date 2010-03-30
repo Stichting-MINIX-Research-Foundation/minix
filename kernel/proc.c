@@ -53,7 +53,7 @@ FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 	asynmsg_t *table, size_t size));
 FORWARD _PROTOTYPE( int deadlock, (int function,
-		register struct proc *caller, int src_dst));
+		register struct proc *caller, proc_nr_t src_dst));
 FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
 FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
 		int *postponed));
@@ -245,7 +245,7 @@ check_misc_flags:
  *===========================================================================*/
 PUBLIC int do_ipc(call_nr, src_dst_e, m_ptr, bit_map)
 int call_nr;			/* system call number and flags */
-int src_dst_e;			/* src to receive from or dst to send to */
+endpoint_t src_dst_e;		/* src to receive from or dst to send to */
 message *m_ptr;			/* pointer to message in the caller's space */
 long bit_map;			/* notification event set or flags */
 {

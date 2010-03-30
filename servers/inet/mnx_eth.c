@@ -31,13 +31,13 @@ FORWARD _PROTOTYPE( void write_int, (eth_port_t *eth_port) );
 FORWARD _PROTOTYPE( void eth_recvev, (event_t *ev, ev_arg_t ev_arg) );
 FORWARD _PROTOTYPE( void eth_sendev, (event_t *ev, ev_arg_t ev_arg) );
 FORWARD _PROTOTYPE( eth_port_t *find_port, (message *m) );
-FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port, int tasknr) );
+FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port, endpoint_t tasknr) );
 FORWARD _PROTOTYPE( void send_getstat, (eth_port_t *eth_port) );
 
 PUBLIC void osdep_eth_init()
 {
 	int i, j, r, rport;
-	u32_t tasknr;
+	endpoint_t tasknr;
 	struct eth_conf *ecp;
 	eth_port_t *eth_port, *rep;
 	message mess;
@@ -475,9 +475,8 @@ PUBLIC void eth_rec(message *m)
 
 PUBLIC void eth_check_drivers(message *m)
 {
-	int r, tasknr;
-
-	tasknr= m->m_source;
+	int r;
+	endpoint_t tasknr= m->m_source;
 #if 0
 	if (notification_count < 100)
 	{
@@ -674,8 +673,7 @@ eth_port_t *eth_port;
 	eth_port->etp_osdep.etp_state= OEPS_SEND_SENT;
 }
 
-PRIVATE void write_int(eth_port)
-eth_port_t *eth_port;
+PRIVATE void write_int(eth_port_t *eth_port)
 {
 	acc_t *pack;
 	int multicast;
@@ -886,9 +884,7 @@ message *m;
 	return loc_port;
 }
 
-static void eth_restart(eth_port, tasknr)
-eth_port_t *eth_port;
-int tasknr;
+static void eth_restart(eth_port_t *eth_port, endpoint_t tasknr)
 {
 	int r;
 	unsigned flags, dl_flags;

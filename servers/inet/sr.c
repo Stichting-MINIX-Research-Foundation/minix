@@ -97,10 +97,10 @@ FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t **q_head_ptr,
 FORWARD _PROTOTYPE ( void process_req_q, (mq_t *mq, mq_t *tail, 
 							mq_t **tail_ptr) );
 FORWARD _PROTOTYPE ( void sr_event, (event_t *evp, ev_arg_t arg) );
-FORWARD _PROTOTYPE ( int cp_u2b, (int proc, int gid, vir_bytes offset,
-	acc_t **var_acc_ptr, int size) );
-FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, int proc, int gid,
-	vir_bytes offset) );
+FORWARD _PROTOTYPE ( int cp_u2b, (endpoint_t proc, cp_grant_id_t gid,
+    vir_bytes offset, acc_t **var_acc_ptr, int size) );
+FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, endpoint_t proc,
+    cp_grant_id_t gid, vir_bytes offset) );
 
 PUBLIC void sr_init()
 {
@@ -809,9 +809,7 @@ int for_ioctl;
 		(int)(*head_ptr)->mq_mess.IO_GRANT, offset);
 }
 
-PRIVATE void sr_select_res(fd, ops)
-int fd;
-unsigned ops;
+PRIVATE void sr_select_res(int fd, unsigned ops)
 {
 	sr_fd_t *sr_fd;
 
@@ -891,8 +889,8 @@ ev_arg_t arg;
 }
 
 PRIVATE int cp_u2b(proc, gid, offset, var_acc_ptr, size)
-int proc;
-int gid;
+endpoint_t proc;
+cp_grant_id_t gid;
 vir_bytes offset;
 acc_t **var_acc_ptr;
 int size;
@@ -955,8 +953,8 @@ int size;
 
 PRIVATE int cp_b2u(acc_ptr, proc, gid, offset)
 acc_t *acc_ptr;
-int proc;
-int gid;
+endpoint_t proc;
+cp_grant_id_t gid;
 vir_bytes offset;
 {
 	acc_t *acc;

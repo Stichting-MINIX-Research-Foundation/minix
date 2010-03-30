@@ -228,11 +228,11 @@ void dp_next_iovec(iovec_dat_s_t * iovp);
 #else
 unsigned int inb(unsigned short int);
 unsigned int inw(unsigned short int);
-void insb(unsigned short int, int, void *, int);
+void insb(unsigned short int, endpoint_t, void *, int);
 void insw(unsigned short int, int, void *, int);
 void outb(unsigned short int, unsigned long);
 void outw(unsigned short int, unsigned long);
-void outsb(unsigned short int, int, void *, int);
+void outsb(unsigned short int, endpoint_t, void *, int);
 void outsw(unsigned short int, int, void *, int);
 #endif
 

@@ -188,7 +188,8 @@ unsigned nr_req;		/* length of request vector */
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
   int r, errors;
-  unsigned nbytes, count, chunk;
+  unsigned count;
+  vir_bytes chunk, nbytes;
   unsigned long block;
   vir_bytes i13e_rw_off, rem_buf_size;
   unsigned secspcyl = wn->heads * wn->sectors;

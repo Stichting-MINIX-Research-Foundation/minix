@@ -11,10 +11,10 @@
 #include <minix/endpoint.h>
 
 /* Allocate space for the global variables. */
-message m_in;		/* the input message itself */
-message m_out;		/* the output message used for reply */
-int who_e;		/* caller's proc number */
-int callnr;		/* system call number */
+PRIVATE message m_in;		/* the input message itself */
+PRIVATE message m_out;		/* the output message used for reply */
+PRIVATE endpoint_t who_e;	/* caller's proc number */
+PRIVATE int callnr;		/* system call number */
 
 extern int errno;	/* error number set by system library */
 

@@ -273,8 +273,7 @@ PRIVATE void do_conf(message * mp)
 }
 
 
-PRIVATE void do_get_name(mp)
-message *mp;
+PRIVATE void do_get_name(message *mp)
 {
   int r;
   strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
@@ -460,7 +459,8 @@ PRIVATE void do_vread_s(message * mp, int from_int)
 {
   char *buffer;
   u32_t size;
-  int r, bytes, ix = 0;
+  int r, ix = 0;
+  vir_bytes bytes;
   dpeth_t *dep = NULL;
   de_loc_descr_t *descr = NULL;
   iovec_dat_s_t *iovp = NULL;

@@ -50,7 +50,7 @@ PUBLIC int ioapic_enabled;
 PUBLIC u32_t ioapic_id_mask[8], lapic_id_mask[8];
 PUBLIC u32_t lapic_addr_vaddr;
 PUBLIC vir_bytes lapic_addr;
-PUBLIC u32_t lapic_eoi_addr;
+PUBLIC vir_bytes lapic_eoi_addr;
 PUBLIC u32_t lapic_taskpri_addr;
 PUBLIC int bsp_lapic_id;
 

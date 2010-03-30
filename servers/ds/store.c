@@ -113,14 +113,14 @@ PRIVATE char *ds_getprocname(endpoint_t e)
 /*===========================================================================*
  *				ds_getprocep				     *
  *===========================================================================*/
-PRIVATE endpoint_t ds_getprocep(char *s)
+PRIVATE endpoint_t ds_getprocep(const char *s)
 {
 /* Get a process endpoint given its name. */
 	struct data_store *dsp;
 
 	if((dsp = lookup_entry(s, DSF_TYPE_LABEL)) != NULL)
 		return dsp->u.u32;
-	return -1;
+	return (endpoint_t) -1;
 }
 
 /*===========================================================================*

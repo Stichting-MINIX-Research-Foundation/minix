@@ -24,7 +24,7 @@ FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
 	int));
 FORWARD _PROTOTYPE( int gen_opcl, (endpoint_t driver_e, int op,
 				Dev_t dev, int proc_e, int flags)	);
-FORWARD _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)	);
+FORWARD _PROTOTYPE( int gen_io, (endpoint_t task_nr, message *mess_ptr)	);
 
 
 /*===========================================================================*
@@ -314,9 +314,10 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				gen_io					     *
  *===========================================================================*/
-PRIVATE int gen_io(task_nr, mess_ptr)
-int task_nr;			/* which task to call */
-message *mess_ptr;		/* pointer to message for task */
+PRIVATE int gen_io(
+  endpoint_t task_nr,		/* which task to call */
+  message *mess_ptr		/* pointer to message for task */
+)
 {
 /* All file system I/O ultimately comes down to I/O on major/minor device
  * pairs.  These lead to calls on the following routines via the dmap table.

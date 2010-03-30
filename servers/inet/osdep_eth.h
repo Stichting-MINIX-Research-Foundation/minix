@@ -18,7 +18,7 @@ typedef struct osdep_eth_port
 {
 	int etp_state;
 	int etp_flags;
-	int etp_task;
+	endpoint_t etp_task;
 	int etp_port;
 	int etp_recvconf;
 	int etp_send_ev;

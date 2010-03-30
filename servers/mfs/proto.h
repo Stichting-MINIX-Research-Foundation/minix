@@ -52,7 +52,7 @@ _PROTOTYPE( int fs_unlink, (void)					);
 _PROTOTYPE( int truncate_inode, (struct inode *rip, off_t len)		);
 
 /* main.c */
-_PROTOTYPE( void reply, (int who, message *m_out)			);
+_PROTOTYPE( void reply, (endpoint_t who, message *m_out)		);
 
 /* misc.c */
 _PROTOTYPE( int fs_flush, (void)					);

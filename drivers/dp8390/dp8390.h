@@ -285,7 +285,7 @@ typedef struct dpeth
 	iovec_dat_t de_tmp_iovec;
 	iovec_dat_s_t de_tmp_iovec_s;
 	vir_bytes de_read_s;
-	int de_client;
+	endpoint_t de_client;
 	message de_sendmsg;
 	dp_user2nicf_t de_user2nicf; 
 	dp_user2nicf_s_t de_user2nicf_s; 

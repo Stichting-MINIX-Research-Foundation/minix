@@ -53,7 +53,8 @@ PUBLIC unsigned int inw(unsigned short port)
 **  Name:	unsigned int insb(unsigned short int port, int proc_nr, void *buffer, int count);
 **  Function:	Reads a sequence of bytes from specified i/o port to user space buffer.
 */
-PUBLIC void insb(unsigned short int port, int proc_nr, void *buffer, int count)
+PUBLIC void insb(unsigned short int port, endpoint_t proc_nr,
+   void *buffer, int count)
 {
   int rc;
 
@@ -91,7 +92,7 @@ PUBLIC void outw(unsigned short port, unsigned long value)
 **  Name:	void outsb(unsigned short int port, int proc_nr, void *buffer, int count);
 **  Function:	Writes a sequence of bytes from user space to specified i/o port.
 */
-PUBLIC void outsb(unsigned short port, int proc_nr, void *buffer, int count)
+PUBLIC void outsb(unsigned short port, endpoint_t proc_nr, void *buffer, int count)
 {
   int rc;
 

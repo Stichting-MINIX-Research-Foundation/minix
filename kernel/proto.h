@@ -35,7 +35,7 @@ _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
 
 /* proc.c */
-_PROTOTYPE( int do_ipc, (int call_nr, int src_dst, 
+_PROTOTYPE( int do_ipc, (int call_nr, endpoint_t src_dst, 
 					message *m_ptr, long bit_map)	);
 _PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
@@ -60,7 +60,7 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( void set_sendto_bit, (const struct proc *rc, int id)	);
 _PROTOTYPE( void unset_sendto_bit, (const struct proc *rc, int id)	);
-_PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
+_PROTOTYPE( void send_sig, (endpoint_t proc_nr, int sig_nr)		);
 _PROTOTYPE( void cause_sig, (proc_nr_t proc_nr, int sig_nr)			);
 _PROTOTYPE( void sig_delay_done, (struct proc *rp)			);
 _PROTOTYPE( void kernel_call, (message *m_user, struct proc * caller)	);
@@ -165,7 +165,7 @@ _PROTOTYPE( void arch_pre_exec, (struct proc *pr, u32_t, u32_t));
 _PROTOTYPE( int arch_umap, (struct proc *pr, vir_bytes, vir_bytes,
 	int, phys_bytes *));
 _PROTOTYPE( int arch_do_vmctl, (message *m_ptr, struct proc *p)); 
-_PROTOTYPE( int vm_contiguous, (struct proc *targetproc, u32_t vir_buf, size_t count));
+_PROTOTYPE( int vm_contiguous, (struct proc *targetproc, vir_bytes vir_buf, size_t count));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (const struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
 _PROTOTYPE( int delivermsg, (struct proc *target));

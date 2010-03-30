@@ -8,18 +8,15 @@
 #include <minix/vfsif.h>
 
 
-FORWARD _PROTOTYPE(int stat_dir_record, (struct dir_record *dir, int pipe_pos,
-					 int who_e, cp_grant_id_t gid)	);
-
-
 /*===========================================================================*
  *				stat_dir_record				     *
  *===========================================================================*/
-PRIVATE int stat_dir_record(dir, pipe_pos, who_e, gid)
-register struct dir_record *dir;	/* pointer to dir record to stat */
-int pipe_pos;   		/* position in a pipe, supplied by fstat() */
-int who_e;			/* Caller endpoint */
-cp_grant_id_t gid;		/* grant for the stat buf */
+PRIVATE int stat_dir_record(
+  register struct dir_record *dir,	/* pointer to dir record to stat */
+  int pipe_pos,   		/* position in a pipe, supplied by fstat() */
+  endpoint_t who_e,		/* Caller endpoint */
+  cp_grant_id_t gid		/* grant for the stat buf */
+)
 {
 /* This function returns all the info about a particular inode. It's missing
  * the recording date because of a bug in the standard functions stdtime.

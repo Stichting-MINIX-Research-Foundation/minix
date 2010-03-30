@@ -17,7 +17,7 @@ PRIVATE int callnr;		/* system call number */
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr)			);
-FORWARD _PROTOTYPE(void reply, (int whom, message *m_ptr)		);
+FORWARD _PROTOTYPE(void reply, (endpoint_t whom, message *m_ptr)	);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -108,11 +108,11 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *				get_work                                     *
  *===========================================================================*/
-PRIVATE void get_work(m_ptr)
-message *m_ptr;				/* message buffer */
+PRIVATE void get_work(
+  message *m_ptr			/* message buffer */
+)
 {
-    int status = 0;
-    status = sef_receive(ANY, m_ptr);   /* this blocks until message arrives */
+    int status = sef_receive(ANY, m_ptr);   /* blocks until message arrives */
     if (OK != status)
         panic("failed to receive message!: %d", status);
     who_e = m_ptr->m_source;        /* message arrived! set sender */
@@ -122,12 +122,12 @@ message *m_ptr;				/* message buffer */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(who_e, m_ptr)
-int who_e;                           	/* destination */
-message *m_ptr;				/* message buffer */
+PRIVATE void reply(
+  endpoint_t who_e,			/* destination */
+  message *m_ptr			/* message buffer */
+)
 {
-    int s;
-    s = send(who_e, m_ptr);    /* send the message */
+    int s = send(who_e, m_ptr);    /* send the message */
     if (OK != s)
         printf("DS: unable to send reply to %d: %d\n", who_e, s);
 }

@@ -286,7 +286,7 @@ int flags;			/* mode bits and flags */
  *				gen_io					     *
  *===========================================================================*/
 PRIVATE int gen_io(task_nr, mess_ptr)
-int task_nr;			/* which task to call */
+endpoint_t task_nr;		/* which task to call */
 message *mess_ptr;		/* pointer to message for task */
 {
 /* All file system I/O ultimately comes down to I/O on major/minor device
@@ -330,9 +330,7 @@ message *mess_ptr;		/* pointer to message for task */
 /*===========================================================================*
  *				dev_close				     *
  *===========================================================================*/
-PUBLIC void dev_close(driver_e, dev)
-endpoint_t driver_e;
-dev_t dev;			/* device to close */
+PUBLIC void dev_close(endpoint_t driver_e, dev_t dev)
 {
   (void) gen_opcl(driver_e, DEV_CLOSE, dev, 0, 0);
 }
