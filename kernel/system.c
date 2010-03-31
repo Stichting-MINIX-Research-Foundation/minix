@@ -401,7 +401,7 @@ PUBLIC void sig_delay_done(struct proc *rp)
 
   rp->p_misc_flags &= ~MF_SIG_DELAY;
 
-  cause_sig(proc_nr(rp), SIGKNDELAY);
+  cause_sig(proc_nr(rp), SIGSNDELAY);
 }
 
 #if _MINIX_CHIP == _CHIP_INTEL

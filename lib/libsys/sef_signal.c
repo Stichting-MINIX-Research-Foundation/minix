@@ -42,7 +42,7 @@ PRIVATE void process_sigmgr_signals(void)
       } else {
           /* Process every signal in the signal set. */
           r = OK;
-          for(signo = 1; signo < _NSIG; signo++) {
+          for (signo = SIGS_FIRST; signo <= SIGS_LAST; signo++) {
               if(sigismember(&sigset, signo)) {
                   /* Let the callback code process the signal. */
                   r = sef_cbs.sef_cb_signal_manager(target, signo);
@@ -70,7 +70,7 @@ PRIVATE void process_sigmgr_self_signals(sigset_t sigset)
 /* A signal manager has pending signals for itself. Process them. */
   int signo;
 
-  for(signo = 1; signo < _NSIG; signo++) {
+  for (signo = SIGS_FIRST; signo <= SIGS_LAST; signo++) {
       if(sigismember(&sigset, signo)) {
           /* Let the callback code process the signal. */
           sef_cbs.sef_cb_signal_handler(signo);

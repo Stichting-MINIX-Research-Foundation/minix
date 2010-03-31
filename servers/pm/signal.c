@@ -256,14 +256,14 @@ int signo;
   }
   check_sig(id, signo, TRUE /* ksig */);
 
-  /* If SIGKNDELAY is set, an earlier sys_stop() failed because the process was
+  /* If SIGSNDELAY is set, an earlier sys_stop() failed because the process was
    * still sending, and the kernel hereby tells us that the process is now done
    * with that. We can now try to resume what we planned to do in the first
    * place: set up a signal handler. However, the process's message may have
    * been a call to PM, in which case the process may have changed any of its
    * signal settings. The process may also have forked, exited etcetera.
    */
-  if (signo == SIGKNDELAY && (rmp->mp_flags & DELAY_CALL)) {
+  if (signo == SIGSNDELAY && (rmp->mp_flags & DELAY_CALL)) {
 	rmp->mp_flags &= ~DELAY_CALL;
 
 	if (rmp->mp_flags & (FS_CALL | PM_SIG_PENDING))
@@ -639,7 +639,7 @@ struct mproc *rmp;		/* which process */
 	r = sys_delay_stop(rmp->mp_endpoint);
 
 	/* If the process is still busy sending a message, the kernel will give
-	 * us EBUSY now and send a SIGKNDELAY to the process as soon as sending
+	 * us EBUSY now and send a SIGSNDELAY to the process as soon as sending
 	 * is done.
 	 */
 	if (r == EBUSY) {
