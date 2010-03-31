@@ -804,9 +804,14 @@ printf("probe_bus(%d)\n", busind);
 
 			if (sts & (PSR_SSE|PSR_RMAS|PSR_RTAS))
 			{
+			    static int warned = 0;
+
+			    if(!warned) {
 				printf(
 					"PCI: ignoring bad value 0x%x in sts for QEMU\n",
 					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
+				warned = 1;
+			    }
 			}
 
 			dstr= pci_dev_name(vid, did);
