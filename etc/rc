@@ -51,6 +51,12 @@ start)
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
 
+    # options for fsck. default is -r, which prompts the user for repairs.
+    fsckopts="`sysenv fsckopts`"
+    if [ ! "$fsckopts" ]
+    then	fsckopts=-r
+    fi
+
     if [ "`sysenv debug_fkeys`" != 0 ]
     then
         up is -period 5HZ
@@ -133,12 +139,12 @@ Mount $usr /usr failed -- Single user."
     then
 	umount $usr
 	echo "fsck / - $root"
-	intr fsck -r $root
+	intr fsck $fsckopts $root
 	echo "fsck /usr - $usr"
-	intr fsck -r $usr
+	intr fsck $fsckopts $usr
 	if [ ! -z "$home" ]
 	then	echo "fsck /home - $home"
-		intr fsck -r $home
+		intr fsck $fsckopts $home
 	fi
 	mount $bin_img $usr /usr
     fi
