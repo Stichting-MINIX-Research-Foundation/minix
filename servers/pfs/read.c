@@ -12,7 +12,6 @@
 PUBLIC int fs_readwrite(void)
 {
   int r, rw_flag;
-  block_t b;
   struct buf *bp;
   cp_grant_id_t gid;
   off_t position, f_size;

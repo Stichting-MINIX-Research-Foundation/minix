@@ -67,7 +67,6 @@ PUBLIC int fs_lookup()
   if(user_path[len - 1] != '\0') return(EINVAL);
 
   if(flags & PATH_GET_UCRED) { /* Do we have to copy uid/gid credentials? */
-  	int i;
   	grant2	= fs_m_in.REQ_GRANT2;
   	cred_size = fs_m_in.REQ_UCRED_SIZE;
 

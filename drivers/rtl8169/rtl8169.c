@@ -263,7 +263,7 @@ _PROTOTYPE( static void check_int_events, (void)			);
 _PROTOTYPE( static void do_hard_int, (void)				);
 _PROTOTYPE( static void rtl8169_dump, (void)				);
 _PROTOTYPE( static void dump_phy, (re_t *rep)				);
-_PROTOTYPE( static int rl_handler, (re_t *rep)				);
+_PROTOTYPE( static void rl_handler, (re_t *rep)				);
 _PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
 
 /*
@@ -1989,8 +1989,7 @@ static void do_hard_int(void)
 /*===========================================================================*
  *				rl_handler				     *
  *===========================================================================*/
-static int rl_handler(rep)
-re_t *rep;
+static void rl_handler(re_t *rep)
 {
 	int i, port, tx_head, tx_tail, link_up;
 	u16_t isr;
@@ -2093,8 +2092,6 @@ re_t *rep;
 
 	if (isr)
 		printf("rl_handler: unhandled interrupt isr = 0x%04x\n", isr);
-
-	return 1;
 }
 
 /*===========================================================================*

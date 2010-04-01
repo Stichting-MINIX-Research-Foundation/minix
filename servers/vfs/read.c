@@ -43,14 +43,11 @@ int rw_flag;			/* READING or WRITING */
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   register struct filp *f;
   register struct vnode *vp;
-  off_t bytes_left;
   u64_t position, res_pos, new_pos;
-  unsigned int off, cum_io, cum_io_incr, res_cum_io;
-  int op, oflags, r, chunk, block_spec, char_spec;
+  unsigned int cum_io, cum_io_incr, res_cum_io;
+  int op, oflags, r, block_spec, char_spec;
   int regular;
   mode_t mode_word;
-  phys_bytes p;
-  struct dmap *dp;
 
   /* If the file descriptor is valid, get the vnode, size and mode. */
   if (m_in.nbytes < 0) return(EINVAL);
@@ -154,7 +151,6 @@ PUBLIC int do_getdents()
 /* Perform the getdents(fd, buf, size) system call. */
   int r;
   u64_t new_pos;
-  cp_grant_id_t gid;
   register struct filp *rfilp;
 
   /* Is the file descriptor valid? */
@@ -191,10 +187,10 @@ struct filp *f;
 char *buf;
 size_t req_size;
 {
-  int r, oflags, partial_pipe = 0, r2;
-  size_t size, cum_io, cum_io_incr, cum_io_incr2;
+  int r, oflags, partial_pipe = 0;
+  size_t size, cum_io, cum_io_incr;
   struct vnode *vp;
-  u64_t position, new_pos, new_pos2;
+  u64_t position, new_pos;
 
   oflags = f->filp_flags;
   vp = f->filp_vno;

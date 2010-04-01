@@ -213,9 +213,7 @@ PUBLIC int do_srv_kill()
 /*===========================================================================*
  *				process_ksig				     *
  *===========================================================================*/
-PUBLIC int process_ksig(proc_nr_e, signo)
-int proc_nr_e;
-int signo;
+PUBLIC int process_ksig(int proc_nr_e, int signo)
 {
   register struct mproc *rmp;
   int proc_nr;
@@ -223,14 +221,14 @@ int signo;
 
   if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0) {
 	printf("PM: process_ksig: %d?? not ok\n", proc_nr_e);
-	return;
+	return EDEADSRCDST; /* process is gone. */
   }
   rmp = &mproc[proc_nr];
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
 #if 0
 	printf("PM: process_ksig: %d?? exiting / not in use\n", proc_nr_e);
 #endif
-	return;
+	return EDEADSRCDST; /* process is gone. */
   }
   proc_id = rmp->mp_pid;
   mp = &mproc[0];			/* pretend signals are from PM */
@@ -615,7 +613,7 @@ struct mproc *rmp;		/* which process */
  * so it can check for READs and WRITEs from pipes, ttys and the like.
  */
   message m;
-  int r, slot;
+  int r;
 
   /* If we're already waiting for a delayed call, don't do anything now. */
   if (rmp->mp_flags & DELAY_CALL)

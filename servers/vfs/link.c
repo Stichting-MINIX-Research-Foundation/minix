@@ -30,7 +30,6 @@ PUBLIC int do_link()
 {
 /* Perform the link(name1, name2) system call. */
   int r = OK;
-  endpoint_t linked_fs_e, link_lastdir_fs_e;
   struct vnode *vp, *vp_d;
 
   /* See if 'name1' (file to be linked to) exists. */ 
@@ -72,7 +71,6 @@ PUBLIC int do_unlink()
  * is almost the same.  They differ only in some condition testing.  Unlink()
  * may be used by the superuser to do dangerous things; rmdir() may not.
  */
-  register struct fproc *rfp;
   struct vnode *vldirp, *vp;
   int r;
   
@@ -126,7 +124,6 @@ PUBLIC int do_rename()
 {
 /* Perform the rename(name1, name2) system call. */
   int r = OK, r1;
-  size_t len;
   struct vnode *old_dirp, *new_dirp, *vp;
   char old_name[PATH_MAX+1];
   
@@ -218,7 +215,6 @@ PUBLIC int do_truncate()
 PUBLIC int do_ftruncate()
 {
 /* As with do_truncate(), truncate_vnode() does the actual work. */
-  int r;
   struct filp *rfilp;
   
   if ((off_t) m_in.flength < 0) return(EINVAL);
@@ -255,9 +251,8 @@ off_t newsize;
 PUBLIC int do_slink()
 {
 /* Perform the symlink(name1, name2) system call. */
-  int r, linklen;
+  int r;
   struct vnode *vp;
-  char string[NAME_MAX];       /* last component of the new dir's path name */
 
   if(m_in.name1_length <= 1) return(ENOENT);
   if(m_in.name1_length >= SYMLINK_MAX) return(ENAMETOOLONG);

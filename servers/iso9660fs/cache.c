@@ -28,7 +28,6 @@ PUBLIC struct buf *bp_to_pickup = buf; /* This is a pointer to the next node in 
 PUBLIC struct buf *get_block(block)
 register block_t block;		/* which block is wanted? */
 {
-  int b;
   register struct buf *bp, *free_bp;
 
   free_bp = NIL_BUF;

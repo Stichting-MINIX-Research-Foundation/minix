@@ -35,14 +35,12 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
  */
   endpoint_t src_e, dst_e;
   int src_p, dst_p;
-  struct proc *src_rp, *dst_rp, *rp;
+  struct proc *src_rp, *dst_rp;
   struct priv *src_privp, *dst_privp;
   struct proc orig_src_proc;
   struct proc orig_dst_proc;
   struct priv orig_src_priv;
   struct priv orig_dst_priv;
-  int r;
-  reg_t src_vbp, dst_vbp;
 
   /* Lookup slots for source and destination process. */
   src_e = m_ptr->SYS_UPD_SRC_ENDPT;

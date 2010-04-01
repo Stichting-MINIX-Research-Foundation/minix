@@ -21,7 +21,6 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
   int proc_nr;
   endpoint_t ep = m_ptr->SVMCTL_WHO;
   struct proc *p, *rp, *target;
-  int err;
 
   if(ep == SELF) { ep = m_ptr->m_source; }
 

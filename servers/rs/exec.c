@@ -34,7 +34,6 @@ int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	size_t string_off;
 	size_t n;
 	int ov;
-	message m;
 	int r;
 
 	/* Assumptions: size_t and char *, it's all the same thing. */
@@ -161,7 +160,7 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 		proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
 	if (r != OK) {
 		printf("RS: stack_top is 0x%lx; tried to copy to 0x%lx in %d\n",
-			stack_top, vsp);
+			stack_top, vsp, proc_e);
 		printf("do_exec: copying out new stack failed: %d\n", r);
 		error= r;
 		goto fail;
@@ -298,7 +297,6 @@ vir_bytes *pc;			/* program entry point (initial PC) */
 int *hdrlenp;
 {
 /* Read the header and extract the text, data, bss and total sizes from it. */
-  block_t b;
   struct exec hdr;		/* a.out header is read in here */
 
   /* Read the header and check the magic number.  The standard MINIX header 
@@ -327,8 +325,6 @@ int *hdrlenp;
    * used here only. The symbol table is for the benefit of a debugger and 
    * is ignored here.
    */
-  int r;
-
   if (exec_len < sizeof(hdr)) return(ENOEXEC);
 
   memcpy(&hdr, exec, sizeof(hdr));
@@ -413,7 +409,6 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
  */
 
   int r;
-  off_t n, o, b_off, seg_off;
 
   if (off+seg_bytes > exec_len) return ENOEXEC;
   r= sys_vircopy(SELF, D, (vir_bytes)exec+off, proc_e, seg, 0, seg_bytes);

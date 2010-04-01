@@ -37,7 +37,6 @@ PUBLIC int main(int argc, char **argv)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
   int result;                 
-  sigset_t sigset;
 
   /* SEF local startup. */
   env_setargs(argc, argv);
@@ -97,7 +96,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the information server. */
 

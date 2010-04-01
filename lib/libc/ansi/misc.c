@@ -206,7 +206,7 @@ date_of(const register struct dsttype *dst, const struct tm *timep)
 
 	if (dst->ds_type != 'M') {
 		return dst->ds_date[0] -
-			    (dst->ds_type == 'J'
+			    ((dst->ds_type == 'J')
 				&& leap
 				&& dst->ds_date[0] < 58);
 	}

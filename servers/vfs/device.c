@@ -827,7 +827,6 @@ PUBLIC void dev_up(int maj)
   struct vmnt *vmp;
   struct fproc *rfp;
   struct vnode *vp;
-  message m;
 
   /* Open a device once for every filp that's opened on it,
    * and once for every filesystem mounted from it.

@@ -40,7 +40,6 @@
 PUBLIC int do_exec()
 {
 	message m;
-	int r;
 
 	/* Forward call to FS */
 	m.m_type = PM_EXEC;

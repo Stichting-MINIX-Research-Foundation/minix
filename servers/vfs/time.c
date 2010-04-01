@@ -22,7 +22,6 @@ PUBLIC int do_utime()
 /* Perform the utime(name, timep) system call. */
   register int len;
   int r;
-  uid_t uid;
   time_t actime, modtime;
   struct vnode *vp;
   

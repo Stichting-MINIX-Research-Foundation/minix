@@ -80,8 +80,7 @@ PUBLIC int fs_bread(void)
   int nrbytes;
   u64_t position;
   unsigned int off, cum_io;
-  mode_t mode_word;
-  int completed, r2 = OK;
+  int completed;
   struct dir_record *dir;
   
   r = OK;
@@ -292,9 +291,7 @@ int *completed;			/* number of bytes copied */
 
   register struct buf *bp;
   register int r = OK;
-  int n;
   block_t b;
-  dev_t dev;
   int file_unit, rel_block, offset;
 
   *completed = 0;

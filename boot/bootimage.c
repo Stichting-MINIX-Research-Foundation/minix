@@ -424,7 +424,7 @@ static void restore_screen(void)
                 sizeof(boot_tty_info));
 
         if(boot_tty_info.magic == TTYMAGIC) {
-                if(boot_tty_info.flags & (BTIF_CONSORIGIN|BTIF_CONSCURSOR) ==
+                if((boot_tty_info.flags & (BTIF_CONSORIGIN|BTIF_CONSCURSOR)) ==
 			(BTIF_CONSORIGIN|BTIF_CONSCURSOR)) {
 			int line;
 			raw_copy(mon2abs(consolescreen), 

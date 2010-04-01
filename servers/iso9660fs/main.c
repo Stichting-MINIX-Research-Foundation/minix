@@ -20,7 +20,6 @@ FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
  *===========================================================================*/
 PUBLIC int main(void) {
   endpoint_t who_e, ind, error;
-  message m;
 
   /* SEF local startup. */
   sef_local_startup();

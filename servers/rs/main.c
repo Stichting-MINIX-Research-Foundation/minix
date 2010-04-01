@@ -479,8 +479,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
  *===========================================================================*/
 PRIVATE void sef_cb_signal_handler(int signo)
 {
-  int exit_status;
-
   /* Check for known signals, ignore anything else. */
   switch(signo) {
       case SIGCHLD:
@@ -508,13 +506,15 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
       if(rs_verbose)
           printf("RS: ignoring spurious signal %d for process %d\n",
               signo, target);
-      return;
+      return OK;	/* Since we're ignoring it, we have handled
+			 * the signal without problem. All is OK.
+			 */
   }
   rp = rproc_ptr[target_p];
   rpub = rp->r_pub;
 
   /* Don't bother if a termination signal has already been processed. */
-  if( rp->r_flags & (RS_TERMINATED|RS_EXITING) == RS_TERMINATED ) {
+  if(rp->r_flags & RS_TERMINATED) {
       return EDEADSRCDST; /* process is gone */
   }
 

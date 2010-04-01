@@ -16,7 +16,7 @@ FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino, int flags,
  *===========================================================================*/
 PUBLIC int fs_lookup() {
   cp_grant_id_t grant;
-  int r, r1, len, flags;
+  int r, len, flags;
   size_t offset;
   ino_t dir_ino, root_ino;
   struct dir_record *dir;
@@ -87,8 +87,8 @@ PUBLIC int search_dir(ldir_ptr,string,numb)
      ino_t *numb;		      /* pointer to new dir record */
 {
   struct dir_record *dir_tmp;
-  register struct buf *bp,*bp2;
-  int pos,len;
+  register struct buf *bp;
+  int pos;
   char* comma_pos = NULL;
   char tmp_string[NAME_MAX];
 
@@ -293,8 +293,7 @@ struct dir_record **resp;		/* resulting inode */
  */
 
   register struct dir_record *rip = NULL;
-  int r, inumb;
-  dev_t mnt_dev;
+  int r;
   ino_t numb;
 
   /* If 'string' is empty, yield same inode straight away. */

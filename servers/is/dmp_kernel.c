@@ -61,8 +61,7 @@ PUBLIC struct boot_image image[NR_BOOT_PROCS];
 PUBLIC void timing_dmp()
 {
   static struct util_timingdata timingdata[TIMING_CATEGORIES];
-  int r, c, f, skipped = 0, printed = 0, maxlines = 23, x = 0;
-  static int offsetlines = 0;
+  int r, c, x = 0;
 
   if ((r = sys_getlocktimings(&timingdata[0])) != OK) {
       printf("IS: warning: couldn't get copy of lock timings: %d\n", r);
@@ -213,7 +212,7 @@ PRIVATE char *boot_flags_str(int flags)
  *===========================================================================*/
 PUBLIC void image_dmp()
 {
-  int m, i,j,r;
+  int m, r;
   struct boot_image *ip;
 	
   if ((r = sys_getimage(image)) != OK) {
@@ -315,7 +314,7 @@ PUBLIC void privileges_dmp()
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
   register struct priv *sp;
-  int r, i, n = 0;
+  int r, i;
 
   /* First obtain a fresh copy of the current process and system table. */
   if ((r = sys_getprivtab(priv)) != OK) {
@@ -381,7 +380,7 @@ PUBLIC void proctab_dmp()
 
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
-  int r, n = 0;
+  int r;
   phys_clicks text, data, size;
 
   /* First obtain a fresh copy of the current process table. */
@@ -418,7 +417,7 @@ PUBLIC void procstack_dmp()
 
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
-  int r, n = 0;
+  int r;
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
@@ -441,7 +440,7 @@ PUBLIC void memmap_dmp()
 {
   register struct proc *rp;
   static struct proc *oldrp = proc;
-  int r, n = 0;
+  int r;
   phys_clicks size;
 
   /* First obtain a fresh copy of the current process table. */

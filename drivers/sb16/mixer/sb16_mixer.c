@@ -328,10 +328,10 @@ PRIVATE int get_set_input(const message *m_ptr, int flag, int channel)
 		mixer_set(input_cmd, mask);
 	} else {	/* Get input */
 		if (shift > 0) {
-			input.left = (((mask >> (shift+1)) & 1) == 1 ? ON : OFF);
-			input.right = (((mask >> shift) & 1) == 1 ? ON : OFF);
+			input.left = ((((mask >> (shift+1)) & 1) == 1) ? ON : OFF);
+			input.right = ((((mask >> shift) & 1) == 1) ? ON : OFF);
 		} else {
-			input.left = ((mask & 1) == 1 ? ON : OFF);
+			input.left = (((mask & 1) == 1) ? ON : OFF);
 		}
 
 		/* Copy back to user */
@@ -384,10 +384,10 @@ PRIVATE int get_set_output(const message *m_ptr, int flag)
 		mixer_set(MIXER_OUTPUT_CTRL, mask);
 	} else {    /* Get input */
 		if (shift > 0) {
-			output.left = (((mask >> (shift+1)) & 1) == 1 ? ON : OFF);
-			output.right = (((mask >> shift) & 1) == 1 ? ON : OFF);
+			output.left = ((((mask >> (shift+1)) & 1) == 1) ? ON : OFF);
+			output.right = ((((mask >> shift) & 1) == 1) ? ON : OFF);
 		} else {
-			output.left = ((mask & 1) == 1 ? ON : OFF);
+			output.left = (((mask & 1) == 1) ? ON : OFF);
 		}
 
 		/* Copy back to user */

@@ -23,7 +23,6 @@ PUBLIC int fs_readsuper()
  * so that the VFS knows that it has to find the vnode on which this FS 
  * process' partition is mounted on.
  */
-  struct super_block *xp;
   struct inode *root_ip;
   cp_grant_id_t label_gid;
   size_t label_len;
@@ -152,7 +151,6 @@ PUBLIC int fs_mountpoint()
 PUBLIC int fs_unmount()
 {
 /* Unmount a file system by device number. */
-  struct super_block *sp1;
   int count;
   struct inode *rip, *root_ip;
 

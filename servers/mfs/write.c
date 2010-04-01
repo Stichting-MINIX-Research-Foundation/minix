@@ -291,7 +291,6 @@ off_t position;			/* file pointer */
   zone_t z;
   zone_t zone_size;
   int scale, r;
-  struct super_block *sp;
 
   /* Is another block available in the current zone? */
   if ( (b = read_map(rip, position)) == NO_BLOCK) {

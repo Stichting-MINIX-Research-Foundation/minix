@@ -624,8 +624,8 @@ int hermes_read_ltv (hermes_t * hw, int bap, u16_t rid, unsigned bufsize,
 
 	if (rtype != rid) {
 		printf("hermes @ %lx: hermes_read_ltv(): rid  (0x%04x)",
-			hw->iobase);
-		printf("does not match type (0x%04x)\n", rid, rtype);
+			hw->iobase, rid);
+		printf("does not match type (0x%04x)\n", rtype);
 	}
 
 	if (HERMES_RECLEN_TO_BYTES (rlength) > bufsize) {

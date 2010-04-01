@@ -12,9 +12,7 @@
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <minix/vfsif.h>
-#include <minix/callnr.h>
 #include <minix/com.h>
-#include <minix/keymap.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <minix/u64.h>
@@ -1027,7 +1025,6 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
  */
   int r, old_driver_e, new_driver_e;
   message origm, m;
-  struct vmnt *vmp;
 
   if(fs_e <= 0 || fs_e == NONE)
 	panic("talking to bogus endpoint: %d", fs_e);

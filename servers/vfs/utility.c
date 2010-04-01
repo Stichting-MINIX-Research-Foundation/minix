@@ -92,7 +92,7 @@ PUBLIC int isokendpt_f(char *file, int line, int endpoint, int *proc, int fatal)
   endpoint_t ke;
   *proc = _ENDPOINT_P(endpoint);
   if(endpoint == NONE) {
-	printf("vfs:%s: endpoint is NONE\n", file, line, endpoint);
+	printf("vfs:%s:%d: endpoint is NONE\n", file, line);
 	failed = 1;
   } else if(*proc < 0 || *proc >= NR_PROCS) {
 	printf("vfs:%s:%d: proc (%d) from endpoint (%d) out of range\n",

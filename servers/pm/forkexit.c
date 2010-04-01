@@ -47,7 +47,7 @@ PUBLIC int do_fork()
   register struct mproc *rmc;	/* pointer to child */
   pid_t new_pid;
   static int next_child;
-  int i, n = 0, r, s;
+  int i, n = 0, s;
   endpoint_t child_ep;
   message m;
 
@@ -133,7 +133,7 @@ PUBLIC int do_srv_fork()
   int s;
   pid_t new_pid;
   static int next_child;
-  int i, n = 0, r;
+  int i, n = 0;
   endpoint_t child_ep;
   message m;
 
@@ -243,7 +243,7 @@ int dump_core;			/* flag indicating whether to dump core */
  * become a zombie.
  */
   register int proc_nr, proc_nr_e;
-  int parent_waiting, r;
+  int r;
   pid_t procgrp;
   struct mproc *p_mp;
   clock_t user_time, sys_time;

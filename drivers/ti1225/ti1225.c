@@ -440,7 +440,7 @@ struct port *pp;
 	v8= pci_attr_r8(devind, TI_CARD_CTRL);
 	if (v8 & TI_CCR_IFG)
 	{
-		printf("ti1225: got functional interrupt\n", v8);
+		printf("ti1225: got functional interrupt\n");
 		pci_attr_w8(devind, TI_CARD_CTRL, v8);
 	}
 

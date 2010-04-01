@@ -75,8 +75,6 @@ PUBLIC int do_chmod()
 PUBLIC int do_chown()
 {
 /* Perform the chmod(name, mode) and fchmod(fd, mode) system calls. */
-  int inode_nr;
-  int fs_e;
   struct filp *flp;
   struct vnode *vp;
   int r;
@@ -173,11 +171,10 @@ PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
  * if it is forbidden, EACCES is returned.
  */
 
-  register struct super_block *sp;
   register mode_t bits, perm_bits;
   uid_t uid;
   gid_t gid;
-  int r, shift, type;
+  int r, shift;
 
   if (vp->v_uid == (uid_t) -1 || vp->v_gid == (gid_t) -1) return(EACCES);
 

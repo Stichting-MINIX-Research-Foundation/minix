@@ -49,7 +49,7 @@ printf("ld_dr7(0x%x)\n",dr7);
 		case 3: ld_dr3(linaddr); break;
 		default: panic(__FILE__, "invalid breakpoint index", __LINE__);
 	}
-printf("ld_dr%d(0x%x, 0x%x)\n",bp,linaddr);
+printf("ld_dr%d(0x%x)\n",bp,linaddr);
 	
 	/* set new flags */
 	dr7 |= dr7flags;

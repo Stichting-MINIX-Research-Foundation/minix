@@ -92,9 +92,6 @@ sef_init_info_t *info;
  *===========================================================================*/
 PRIVATE void sef_cb_signal_handler(int signo)
 {
-  sigset_t set;
-  int r;
-
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;
 

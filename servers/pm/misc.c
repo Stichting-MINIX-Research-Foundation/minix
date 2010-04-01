@@ -366,7 +366,6 @@ PUBLIC int do_getepinfo()
 PUBLIC int do_reboot()
 {
   message m;
-  int r;
 
   /* Check permission to abort the system. */
   if (mp->mp_effuid != SUPER_USER) return(EPERM);

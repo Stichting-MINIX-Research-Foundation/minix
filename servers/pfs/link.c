@@ -1,8 +1,5 @@
 #include "fs.h"
-#include <sys/stat.h>
 #include <string.h>
-#include <minix/com.h>
-#include <minix/callnr.h>
 #include "buf.h"
 #include "inode.h"
 #include <minix/vfsif.h>
@@ -14,7 +11,6 @@ PUBLIC int fs_ftrunc(void)
 {
   struct inode *rip;
   off_t start, end;
-  int r;
   ino_t inumb;
   
   inumb = fs_m_in.REQ_INODE_NR;
@@ -43,7 +39,6 @@ off_t newsize;			/* inode must become this size */
  * O_APPEND mode, as this is different per fd and is checked when 
  * writing is done.
  */
-  int scale;
 
   /* Pipes can shrink, so adjust size to make sure all zones are removed. */
   if(newsize != 0) return(EINVAL);	/* Only truncate pipes to 0. */

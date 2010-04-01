@@ -1168,7 +1168,7 @@ int devind;
 /*===========================================================================*
  *				record_bars				     *
  *===========================================================================*/
-PRIVATE void record_bars(devind, last_reg)
+PRIVATE void record_bars(int devind, int last_reg)
 {
 	int i, reg, width;
 
@@ -2397,7 +2397,7 @@ int port;
 		port);
 #if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
-		printf("PCI: warning, sys_outl failed: %d\n");
+		printf("PCI: warning, sys_outl failed: %d\n", s);
 #else
 	outl(PCII_CONFADD, PCII_UNSEL);
 #endif
@@ -2514,7 +2514,7 @@ u32_t value;
 		port, value);
 #if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
-		printf("PCI: warning, sys_outl failed: %d\n");
+		printf("PCI: warning, sys_outl failed: %d\n",s);
 #else
 	outl(PCII_CONFADD, PCII_UNSEL);
 #endif
@@ -2523,8 +2523,7 @@ u32_t value;
 /*===========================================================================*
  *				pcii_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcii_rsts(busind)
-int busind;
+PRIVATE u16_t pcii_rsts(int busind)
 {
 	u16_t v;
 	int s;

@@ -46,7 +46,6 @@ PUBLIC int do_pipe()
   struct filp *fil_ptr0, *fil_ptr1;
   int fil_des[2];		/* reply goes here */
   struct vnode *vp;
-  struct vmnt *vmp;
   struct node_details res;
 
   /* See if a free vnode is available */
@@ -581,7 +580,7 @@ int proc_nr_e;
  *===========================================================================*/
 PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 {
-	int orig_ops, r = 0, err, canwrite;
+	int orig_ops, r = 0, err;
 	orig_ops = *ops;
 	if ((*ops & (SEL_RD|SEL_ERR))) {
 		if ((err = pipe_check(f->filp_vno, READING, 0,

@@ -22,7 +22,7 @@ PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
 PUBLIC int fs_readwrite(void)
 {
   int r, rw_flag, chunk, block_size, block_spec;
-  int partial_cnt, regular, nrbytes;
+  int regular, nrbytes;
   cp_grant_id_t gid;
   off_t position, f_size, bytes_left;
   unsigned int off, cum_io;
@@ -140,8 +140,7 @@ PUBLIC int fs_breadwrite(void)
   int nrbytes;
   u64_t position;
   unsigned int off, cum_io;
-  mode_t mode_word;
-  int completed, r2 = OK;
+  int completed;
 
   /* Pseudo inode for rw_chunk */
   struct inode rip;

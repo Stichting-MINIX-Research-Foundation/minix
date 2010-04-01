@@ -247,7 +247,6 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
   struct vnode *dirp, *vp;
   int r, flags;
   struct node_details res;
-  struct vnode *rest;
 
   /* When O_CREAT and O_EXCL flags are set, the path may not be named by a
    * symbolic link. */

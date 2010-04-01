@@ -128,7 +128,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   struct fproc *tfp;
   struct dmap *dp;
   dev_t dev;
-  message m;
   struct vnode *root_node, *vp = NULL, *bspec;
   struct vmnt *vmp;
   char *label;
@@ -405,11 +404,10 @@ PUBLIC int unmount(dev, label)
 Dev_t dev;				/* block-special device */
 char *label;				/* buffer to retrieve label, or NULL */
 {
-  struct vnode *vp, *vi;
+  struct vnode *vp;
   struct vmnt *vmp_i = NULL, *vmp = NULL;
   struct dmap *dp;
   int count, r;
-  int fs_e;
   
   /* Find vmnt that is to be unmounted */
   for(vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
@@ -496,7 +494,6 @@ int allow_mountpt;
  * and the path is the root node of a mounted file system, return that device
  * number. In all other cases, return NO_DEV and an error code in 'err_code'.
  */
-  int r;
   dev_t dev;
   struct vnode *vp;
   
@@ -522,7 +519,7 @@ int allow_mountpt;
 /*===========================================================================*
  *                              is_nonedev				     *
  *===========================================================================*/
-PRIVATE int is_nonedev(dev)
+PRIVATE int is_nonedev(int dev)
 {
 /* Return whether the given device is a "none" pseudo device.
  */

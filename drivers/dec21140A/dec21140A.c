@@ -260,15 +260,15 @@ PRIVATE void do_conf(const message * mp)
     }
   } else {			/* Port number is out of range */ 
     port = ENXIO;
+    dep = NULL;
   }
 
   reply_mess.m_type = DL_CONF_REPLY;
   reply_mess.m3_i1 = port;
   reply_mess.m3_i2 = DE_PORT_NR;
-  /* FIXME: if port number is out of range, this uses
-   * uninitialized variable 'dep'.
-   */
-  *(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
+  if(dep != NULL){
+    *(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
+  }
   
   if (send(mp->m_source, &reply_mess) != OK)
     panic(str_SendErrMsg, mp->m_source);
@@ -291,7 +291,7 @@ PRIVATE void do_get_name(message *mp)
 PRIVATE void do_reply(dpeth_t * dep, int err, int may_block)
 {
   message reply;
-  int status = FALSE;
+  int status = 0;
 
   if (dep->de_flags & DEF_ACK_SEND) status |= DL_PACK_SEND;
   if (dep->de_flags & DEF_ACK_RECV) status |= DL_PACK_RECV;
@@ -620,7 +620,6 @@ PRIVATE void de_first_init(dpeth_t *dep)
   int i,j,r;
   vir_bytes descr_vir = dep->sendrecv_descr_buf;
   vir_bytes buffer_vir = dep->sendrecv_buf;
-  de_descr_t *phys_descr;
   de_loc_descr_t *loc_descr;
   u32_t temp;
 

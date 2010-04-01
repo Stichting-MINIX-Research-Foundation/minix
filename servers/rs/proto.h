@@ -75,7 +75,6 @@ _PROTOTYPE( struct rproc* lookup_slot_by_label, (char *label) );
 _PROTOTYPE( struct rproc* lookup_slot_by_pid, (pid_t pid) );
 _PROTOTYPE( int alloc_slot, (struct rproc **rpp) );
 _PROTOTYPE( void free_slot, (struct rproc *rp) );
-_PROTOTYPE( int run_script, (struct rproc *rp) );
 _PROTOTYPE( char *get_next_label, (char *ptr, char *label, char *caller_label));
 _PROTOTYPE( void add_forward_ipc, (struct rproc *rp, struct priv *privp) );
 _PROTOTYPE( void add_backward_ipc, (struct rproc *rp, struct priv *privp) );

@@ -32,7 +32,7 @@ PUBLIC int do_clear(struct proc * caller, message * m_ptr)
   rc = proc_addr(exit_p);	/* clean up */
 
   /* Don't clear if already cleared. */
-  if(isemptyp(rc)) return;
+  if(isemptyp(rc)) return OK;
 
   /* Check the table with IRQ hooks to see if hooks should be released. */
   for (i=0; i < NR_IRQ_HOOKS; i++) {

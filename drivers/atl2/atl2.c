@@ -1307,7 +1307,6 @@ int main(int argc, char **argv)
 	/* Driver task.
 	 */
 	message m;
-	sigset_t set;
 	int r;
 
 	/* Initialize SEF. */

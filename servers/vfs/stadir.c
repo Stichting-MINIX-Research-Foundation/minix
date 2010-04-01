@@ -75,7 +75,6 @@ int len;			/* length of the directory name string */
 {
 /* Do the actual work for chdir() and chroot(). */
   struct vnode *vp;
-  int r;
 
   /* Try to open the directory */
   if (fetch_name(name_ptr, len, M3) != OK) return(err_code);

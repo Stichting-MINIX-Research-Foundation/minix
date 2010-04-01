@@ -268,7 +268,6 @@ PUBLIC void end_update(int result)
  *    service has a period, a status request will be forced in the next period.
  */
   struct rproc *old_rp, *new_rp, *exiting_rp, *surviving_rp;
-  message m;
 
   old_rp = rupdate.rp;
   new_rp = old_rp->r_new_rp;
@@ -316,8 +315,6 @@ char *errstr;
 int err;
 {
 /* Crash a system service and don't let it restart. */
-  struct rprocpub *rpub;
-
   if(errstr && !shutting_down) {
       printf("RS: %s (error %d)\n", errstr, err);
   }
@@ -383,12 +380,8 @@ struct rproc *rp;
 /* Create the given system service. */
   int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
   pid_t child_pid;				/* child's process id */
-  char *file_only;
-  int s, use_copy, slot_nr;
-  bitchunk_t *vm_mask;
-  message m;
+  int s, use_copy;
   extern char **environ;
-  char * null_env = NULL;
   struct rprocpub *rpub;
 
   rpub = rp->r_pub;
@@ -880,10 +873,62 @@ PUBLIC void terminate_service(struct rproc *rp)
 }
 
 /*===========================================================================*
+ *				run_script				     *
+ *===========================================================================*/
+PRIVATE int run_script(struct rproc *rp)
+{
+	int r, endpoint;
+	pid_t pid;
+	char *reason;
+	char incarnation_str[20];	/* Enough for a counter? */
+	char *envp[1] = { NULL };
+	struct rprocpub *rpub;
+
+	rpub = rp->r_pub;
+	if (rp->r_flags & RS_REFRESHING)
+		reason= "restart";
+	else if (rp->r_flags & RS_NOPINGREPLY)
+		reason= "no-heartbeat";
+	else reason= "crashed";
+	sprintf(incarnation_str, "%d", rp->r_restarts);
+
+ 	if(rs_verbose) {
+		printf("RS: %s:\n", srv_to_string(rp));
+		printf("RS:     calling script '%s'\n", rp->r_script);
+		printf("RS:     reason: '%s'\n", reason);
+		printf("RS:     incarnation: '%s'\n", incarnation_str);
+	}
+
+	pid= fork();
+	switch(pid)
+	{
+	case -1:
+		return kill_service(rp, "unable to fork script", errno);
+	case 0:
+		execle(rp->r_script, rp->r_script, rpub->label, reason,
+			incarnation_str, NULL, envp);
+		printf("RS: run_script: execl '%s' failed: %s\n",
+			rp->r_script, strerror(errno));
+		exit(1);
+	default:
+		/* Set the privilege structure for the child process. */
+		endpoint = getnprocnr(pid);
+		if ((r = sys_privctl(endpoint, SYS_PRIV_SET_USER, NULL))
+			!= OK) {
+			return kill_service(rp,"can't set script privileges",r);
+		}
+		/* Allow the script to run. */
+		if ((r = sys_privctl(endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
+			return kill_service(rp,"can't let the script run",r);
+		}
+	}
+	return OK;
+}
+
+/*===========================================================================*
  *			      restart_service				     *
  *===========================================================================*/
-PUBLIC void restart_service(rp)
-struct rproc *rp;
+PUBLIC void restart_service(struct rproc *rp)
 {
 /* Restart service via a recovery script or directly. */
   struct rproc *replica_rp;
@@ -1092,13 +1137,7 @@ endpoint_t source;
 {
 /* Initialize a slot as requested by the client. */
   struct rprocpub *rpub;
-  int slot_nr;					/* local table entry */
-  int arg_count;				/* number of arguments */
-  char *cmd_ptr;				/* parse command string */
   char *label;					/* unique name of command */
-  enum dev_style dev_style;			/* device style */
-  struct rproc *tmp_rp;
-  struct rprocpub *tmp_rpub;
   int len;					/* length of string */
   int i;
   int s;
@@ -1534,59 +1573,6 @@ struct rproc *rp;
   rproc_ptr[_ENDPOINT_P(rpub->endpoint)] = NULL;
 }
 
-/*===========================================================================*
- *				run_script				     *
- *===========================================================================*/
-PUBLIC int run_script(rp)
-struct rproc *rp;
-{
-	int r, endpoint;
-	pid_t pid;
-	char *reason;
-	char incarnation_str[20];	/* Enough for a counter? */
-	char *envp[1] = { NULL };
-	struct rprocpub *rpub;
-
-	rpub = rp->r_pub;
-	if (rp->r_flags & RS_REFRESHING)
-		reason= "restart";
-	else if (rp->r_flags & RS_NOPINGREPLY)
-		reason= "no-heartbeat";
-	else reason= "crashed";
-	sprintf(incarnation_str, "%d", rp->r_restarts);
-
- 	if(rs_verbose) {
-		printf("RS: %s:\n", srv_to_string(rp));
-		printf("RS:     calling script '%s'\n", rp->r_script);
-		printf("RS:     reason: '%s'\n", reason);
-		printf("RS:     incarnation: '%s'\n", incarnation_str);
-	}
-
-	pid= fork();
-	switch(pid)
-	{
-	case -1:
-		return kill_service(rp, "unable to fork script", errno);
-	case 0:
-		execle(rp->r_script, rp->r_script, rpub->label, reason,
-			incarnation_str, NULL, envp);
-		printf("RS: run_script: execl '%s' failed: %s\n",
-			rp->r_script, strerror(errno));
-		exit(1);
-	default:
-		/* Set the privilege structure for the child process. */
-		endpoint = getnprocnr(pid);
-		if ((r = sys_privctl(endpoint, SYS_PRIV_SET_USER, NULL))
-			!= OK) {
-			return kill_service(rp,"can't set script privileges",r);
-		}
-		/* Allow the script to run. */
-		if ((r = sys_privctl(endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
-			return kill_service(rp,"can't let the script run",r);
-		}
-	}
-}
-
 
 /*===========================================================================*
  *				get_next_label				     *
@@ -1617,7 +1603,7 @@ char *caller_label;
 		if (len > RS_MAX_LABEL_LEN)
 		{
 			printf(
-	"rs:get_next_label: bad ipc list entry '.*s' for %s: too long\n",
+	"rs:get_next_label: bad ipc list entry '%.*s' for %s: too long\n",
 				len, p, caller_label);
 			continue;
 		}

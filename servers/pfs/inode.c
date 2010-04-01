@@ -127,7 +127,7 @@ int numb;			/* inode number (ANSI: may not be unshort) */
 /* Find the inode in the hash table. If it is not there, get a free inode
  * load it from the disk if it's necessary and put on the hash list 
  */
-  register struct inode *rip, *xp;
+  register struct inode *rip;
   int hashi;
 
   hashi = numb & INODE_HASH_MASK;
@@ -245,7 +245,6 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 
   register struct inode *rip;
-  int major, minor;
   bit_t b;
   ino_t i_num;
 
@@ -292,8 +291,6 @@ register struct inode *rip;	/* the inode to be erased */
  * when a new inode is to be allocated, and from truncate(), when an existing
  * inode is to be truncated.
  */
-
-  register int i;
 
   rip->i_size = 0;
   rip->i_update = ATIME | CTIME | MTIME;	/* update all times later */

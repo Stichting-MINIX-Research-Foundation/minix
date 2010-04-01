@@ -17,7 +17,6 @@ PUBLIC int fs_chmod()
 /* Perform the chmod(name, mode) system call. */
 
   register struct inode *rip;
-  register int r;
   
   /* Temporarily open the file. */
   if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
@@ -78,7 +77,6 @@ PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
  */
 
   register struct inode *old_rip = rip;
-  register struct super_block *sp;
   register mode_t bits, perm_bits;
   int r, shift;
 

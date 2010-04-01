@@ -111,7 +111,6 @@ PUBLIC struct vnode *last_dir(void)
  * and parse the path up to the penultimate component.
  */  
 
-  int r;
   size_t len;
   char *cp;
   char dir_entry[PATH_MAX+1];

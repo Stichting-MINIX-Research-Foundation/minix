@@ -21,7 +21,7 @@ FORWARD _PROTOTYPE( struct inode *new_node, (struct inode *ldirp,
 PUBLIC int fs_create()
 {
   phys_bytes len;
-  int r, b;
+  int r;
   struct inode *ldirp;
   struct inode *rip;
   mode_t omode;

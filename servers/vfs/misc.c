@@ -151,8 +151,6 @@ PUBLIC int do_fcntl()
 
   register struct filp *f;
   int new_fd, r, fl;
-  long cloexec_mask;		/* bit map for the FD_CLOEXEC flag */
-  long clo_value;		/* FD_CLOEXEC flag in proper position */
   struct filp *dummy;
 
   /* Is the file descriptor valid? */
@@ -533,7 +531,7 @@ int ngroups;
 gid_t *groups;
 {
   struct fproc *rfp;
-  int slot, i;
+  int slot;
 
   okendpt(proc_e, &slot);
   rfp = &fproc[slot];
@@ -623,7 +621,7 @@ PUBLIC int pm_dumpcore(proc_e, seg_ptr)
 int proc_e;
 struct mem_map *seg_ptr;
 {
-	int r, proc_s;
+	int proc_s;
 	
 	/* Terminate the process */
 	okendpt(proc_e, &proc_s);

@@ -28,7 +28,6 @@ PUBLIC int main(int argc, char *argv[])
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
   int error, ind;
-  message m;
 
   /* SEF local startup. */
   env_setargs(argc, argv);

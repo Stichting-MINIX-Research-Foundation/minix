@@ -41,7 +41,6 @@ void **buf;
 int *vec_grants;
 vir_bytes bytes;
 {
-	int size;
 	int j;
 	iovec_t *v;
 	static iovec_t new_iovec[NR_IOREQS];
@@ -170,10 +169,8 @@ int bytes;			/* how many bytes to transfer */
 int flags;			/* special flags, like O_NONBLOCK */
 {
 /* Read or write from a device.  The parameter 'dev' tells which one. */
-  struct dmap *dp;
   int r, safe;
   message m;
-  iovec_t *v;
   cp_grant_id_t gid = GRANT_INVALID;
   int vec_grants;
   int op_used;

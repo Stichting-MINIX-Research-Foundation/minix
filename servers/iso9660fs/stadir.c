@@ -25,8 +25,7 @@ PRIVATE int stat_dir_record(
 
 /* Common code for stat and fstat system calls. */
   struct stat statbuf;
-  mode_t mo;
-  int r, s;
+  int r;
   struct tm ltime;
   time_t time1;
 

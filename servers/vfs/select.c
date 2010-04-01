@@ -714,7 +714,7 @@ PUBLIC void select_unsuspend_by_endpt(endpoint_t proc_e)
  *===========================================================================*/
 PUBLIC void select_reply1()
 {
-	int i, s, minor, status;
+	int i, minor, status;
 	endpoint_t driver_e;
 	dev_t dev;
 	struct filp *fp;
