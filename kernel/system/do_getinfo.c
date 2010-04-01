@@ -12,7 +12,7 @@
 #include <string.h>
 #include <minix/endpoint.h>
 
-#include "../system.h"
+#include "kernel/system.h"
 
 
 #if USE_GETINFO

@@ -5,7 +5,7 @@
  *    m1_i1:	PR_ENDPT		(install new map for this process)
  *    m1_p1:	PR_MEM_PTR		(pointer to the new memory map)
  */
-#include "../system.h"
+#include "kernel/system.h"
 #include <minix/endpoint.h>
 
 #if USE_NEWMAP

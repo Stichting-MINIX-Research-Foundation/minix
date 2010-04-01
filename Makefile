@@ -53,7 +53,6 @@ commands:
 	cd commands && $(MAKE) all
 
 depend::
-	mkdep kernel
 	cd kernel && $(MAKE) $@
 	cd servers && $(MAKE) $@
 	cd drivers && $(MAKE) $@

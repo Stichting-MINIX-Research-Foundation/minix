@@ -3,13 +3,13 @@
  * a panic.
  */
 
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 #include "proto.h"
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
-#include "../../proc.h"
-#include "../../proto.h"
+#include "kernel/proc.h"
+#include "kernel/proto.h"
 
 extern int catch_pagefaults;
 

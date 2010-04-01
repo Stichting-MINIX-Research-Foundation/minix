@@ -6,12 +6,12 @@
 #include <minix/endpoint.h>
 #include <minix/sysutil.h>
 #include <minix/sys_config.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/debug.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
-#include "../../kernel/ipc.h"
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/debug.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
+#include "kernel/ipc.h"
 
 #define LINES 22
 

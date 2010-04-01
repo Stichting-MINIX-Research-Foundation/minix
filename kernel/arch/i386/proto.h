@@ -174,6 +174,6 @@ _PROTOTYPE(void __user_copy_msg_pointer_failure, (void));
 _PROTOTYPE(int breakpoint_set, (phys_bytes linaddr, int index, int flags));
 
 /* functions defined in architecture-independent kernel source. */
-#include "../../proto.h"
+#include "kernel/proto.h"
 
 #endif

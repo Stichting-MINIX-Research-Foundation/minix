@@ -1,7 +1,7 @@
 #ifndef __SCONST_H__
 #define __SCONST_H__
 
-#include "../../const.h"
+#include "kernel/const.h"
 
 /* Miscellaneous constants used in assembler code. */
 	W = _WORD_SIZE	/* Machine word size. */

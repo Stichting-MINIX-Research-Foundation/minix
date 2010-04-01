@@ -6,7 +6,7 @@
  *    m1_i2:	PR_PRIORITY	the new priority
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <sys/resource.h>
 
 #if USE_NICE

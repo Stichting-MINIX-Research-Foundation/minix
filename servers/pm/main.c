@@ -31,9 +31,9 @@
 #include "mproc.h"
 #include "param.h"
 
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/proc.h"
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/proc.h"
 
 #if ENABLE_SYSCALL_STATS
 EXTERN unsigned long calls_stats[NCALLS];

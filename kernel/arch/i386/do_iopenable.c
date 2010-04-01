@@ -8,8 +8,8 @@
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
-#include "../../system.h"
-#include "../../kernel.h"
+#include "kernel/system.h"
+#include "kernel/kernel.h"
 #include <minix/endpoint.h>
 
 #include "proto.h"

@@ -18,8 +18,7 @@
 #include "kernel.h"
 #include "proc.h"
 #include "archconst.h"
-
-#include "arch/i386/hw_intr.h"
+#include "hw_intr.h"
 
 /* number of lists of IRQ hooks, one list per supported line. */
 PUBLIC irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};

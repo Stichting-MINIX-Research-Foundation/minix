@@ -6,7 +6,7 @@
  *     m2_l1:	SIG_MAP		# bit map with pending signals
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <signal.h>
 #include <minix/endpoint.h>
 

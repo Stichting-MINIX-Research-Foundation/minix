@@ -1,52 +1,28 @@
 # Makefile for kernel
+.include <minix.own.mk>
 
-include /etc/make.conf
-
-# Directories
-u = /usr
-i = $u/include
-l = $u/lib
-s = system
-a = arch/$(ARCH)
-
-# Programs, flags, etc.
-CC =	exec cc
-CPP =	$l/cpp
-LD =	$(CC) -.o
-CPPFLAGS=-I$i -I$a/include -I$a
-CFLAGS=$(CPROFILE) $(CPPFLAGS) $(EXTRA_OPTS)
-LDFLAGS=-i 
+PROG=	kernel
 
 # first-stage, arch-dependent startup code
-HEAD =	$a/mpx386.o
+SRCS=	mpx.S
+SRCS+=	start.c table.c main.c proc.c \
+	system.c clock.c utility.c debug.c profile.c interrupt.c \
+	watchdog.c
 
-OBJS =	start.o table.o main.o proc.o \
-	system.o clock.o utility.o debug.o profile.o interrupt.o \
-	watchdog.o
-SYSTEM = system.a
-ARCHLIB = $a/$(ARCH).a
-LIBS = -ltimers -lsys
+DPADD+=	${LIBTIMERS} ${LIBSYS}
+LDADD+=	-ltimers -lsys
 
-# What to make.
-all: build 
-kernel build install: $(OBJS) 
-	cd system && $(MAKE) $@
-	cd $a && $(MAKE) $@
-	$(LD) $(CFLAGS) $(LDFLAGS) -o kernel $(HEAD) $(OBJS) \
-		$(SYSTEM) $(ARCHLIB) $(LIBS)
-	install -S 0 kernel
+LDFLAGS+=	-.o
+CPPFLAGS+=	-I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
+AFLAGS+=	-I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
 
-clean:
-	cd system && $(MAKE) -$(MAKEFLAGS) $@
-	cd $a && $(MAKE) -$(MAKEFLAGS) $@
-	rm -f *.a *.o *~ *.bak kernel
+#Tell ASMCONV to prepend underscores to symbols
+ASMCONVFLAGS+=	-u
 
-depend: 
-	cd system && $(MAKE) -$(MAKEFLAGS) $@
-	cd $a && $(MAKE) $@
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+INSTALLFLAGS+=	-S 0
+BINDIR=	/usr/sbin
+MAN=
 
-# How to build it
-.c.o:
-	$(CC) $(CFLAGS) -c -o $@ $<
-
+.include "system/Makefile.inc"
+.include "arch/${ARCH}/Makefile.inc"
+.include <minix.prog.mk>

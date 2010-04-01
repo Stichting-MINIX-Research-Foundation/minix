@@ -11,7 +11,7 @@
  *    m5_l3:	CP_NR_BYTES		number of bytes to copy
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <minix/type.h>
 
 #if (USE_VIRCOPY || USE_PHYSCOPY)

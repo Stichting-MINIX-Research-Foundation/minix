@@ -5,7 +5,7 @@
  *    m4_l3:	T_BOOTTIME
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 

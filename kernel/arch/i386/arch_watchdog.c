@@ -1,5 +1,5 @@
-#include "../../kernel.h"
-#include "../../watchdog.h"
+#include "kernel/kernel.h"
+#include "kernel/watchdog.h"
 #include "proto.h"
 #include <minix/minlib.h>
 

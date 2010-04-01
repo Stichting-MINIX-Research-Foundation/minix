@@ -1,8 +1,8 @@
 
 
-#include "../../kernel.h"
-#include "../../proc.h"
-#include "../../vm.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
+#include "kernel/vm.h"
 
 #include <machine/vm.h>
 
@@ -16,14 +16,13 @@
 #include <machine/vm.h>
 
 #include "proto.h"
-#include "../../proto.h"
-#include "../../proto.h"
-#include "../../debug.h"
+#include "kernel/proto.h"
+#include "kernel/debug.h"
 
 #ifdef CONFIG_APIC
 #include "apic.h"
 #ifdef CONFIG_WATCHDOG
-#include "../../watchdog.h"
+#include "kernel/watchdog.h"
 #endif
 #endif
 

@@ -8,7 +8,7 @@
  *    m2_l2:	VT_ENDPT		(process to which the timer belongs)
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <signal.h>
 #include <minix/endpoint.h>

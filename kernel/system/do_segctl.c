@@ -8,7 +8,7 @@
  *    m4_l2:	SEG_OFFSET	(return offset within segment here)
  *    m4_l5:	SEG_INDEX	(return index into remote memory map here)
  */
-#include "../system.h"
+#include "kernel/system.h"
 
 #if USE_SEGCTL
 

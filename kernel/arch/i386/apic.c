@@ -1,26 +1,26 @@
 /*
  * APIC handling routines. APIC is a requirement for SMP
  */
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 
 #include <unistd.h>
 #include <minix/portio.h>
 
 #include <minix/syslib.h>
 
-#include "../../proc.h"
-#include "../..//glo.h"
+#include "kernel/proc.h"
+#include "kernel/glo.h"
 #include "proto.h"
 
 #include <minix/u64.h>
 
 #include "apic.h"
 #include "apic_asm.h"
-#include "../../clock.h"
+#include "kernel/clock.h"
 #include "glo.h"
 
 #ifdef CONFIG_WATCHDOG
-#include "../../watchdog.h"
+#include "kernel/watchdog.h"
 #endif
 
 #define IA32_APIC_BASE	0x1b

@@ -11,7 +11,8 @@ MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS.imgrd.c += -I${.CURDIR}/../ramdisk -T /usr/tmp
+CPPFLAGS.memory.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.imgrd.c+=	-I${.CURDIR}/../ramdisk -T /usr/tmp
 
 .include <minix.prog.mk>
 .include <minix.subdir.mk>

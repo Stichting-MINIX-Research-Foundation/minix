@@ -10,7 +10,7 @@
  *    m2_i1:	DIO_OFFSET	(offset into the grant)
  */
 
-#include "../../system.h"
+#include "kernel/system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
 

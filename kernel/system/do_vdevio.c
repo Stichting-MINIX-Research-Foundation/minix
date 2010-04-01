@@ -7,7 +7,7 @@
  *    m2_i2:	DIO_VEC_SIZE	(number of ports to read or write) 
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
 #include <minix/portio.h>

@@ -73,6 +73,41 @@ PRINTOBJDIR=	${MAKE} -V .OBJDIR
 PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
 
+
+
+#
+# Determine if running in the MINIX source tree by checking for the
+# existence of boot/ and tools/ in the current or a parent directory,
+# and setting _MSRC_TOP_ to the result.
+#
+.if !defined(_MSRC_TOP_)		# {
+_MSRC_TOP_!= cd ${.CURDIR}; while :; do \
+		here=`pwd`; \
+		[ -d boot  ] && [ -d tools ] && { echo $$here; break; }; \
+		case $$here in /) echo ""; break;; esac; \
+		cd ..; done
+
+.MAKEOVERRIDES+=	_MSRC_TOP_
+
+.endif					# }
+
+#
+# If _MSRC_TOP_ != "", we're within the MINIX source tree, so set
+# defaults for MINIXSRCDIR and _MSRC_TOP_OBJ_.
+#
+.if (${_MSRC_TOP_} != "")		# {
+
+MINIXSRCDIR?=	${_MSRC_TOP_}
+
+.if !defined(_MSRC_TOP_OBJ_)
+_MSRC_TOP_OBJ_!=	cd ${_MSRC_TOP_} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=	_MSRC_TOP_OBJ_
+.endif
+
+.endif	# _MSRC_TOP_ != ""		# }
+
+
+
 #
 # Determine if running in the NetBSD source tree by checking for the
 # existence of build.sh and tools/ in the current or a parent directory,

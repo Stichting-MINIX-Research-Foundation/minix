@@ -3,8 +3,8 @@
  * for local descriptors in the process table.
  */
 
-#include "../../kernel.h"
-#include "../../proc.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
 #include "archconst.h"
 
 #include "proto.h"

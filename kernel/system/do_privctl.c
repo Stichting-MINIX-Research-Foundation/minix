@@ -7,8 +7,8 @@
  *    m2_p1:	CTL_ARG_PTR	(pointer to request data)
  */
 
-#include "../system.h"
-#include "../ipc.h"
+#include "kernel/system.h"
+#include "kernel/ipc.h"
 #include <signal.h>
 #include <string.h>
 #include <minix/endpoint.h>

@@ -5,9 +5,9 @@
  */
 
 #include "inc.h"
-#include "../../kernel/const.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
+#include "kernel/const.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
 
 EXTERN char *_brksize;
 

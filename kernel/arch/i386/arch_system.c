@@ -1,6 +1,6 @@
 /* system dependent functions for use inside the whole kernel. */
 
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 
 #include <unistd.h>
 #include <ctype.h>
@@ -13,8 +13,8 @@
 
 #include "archconst.h"
 #include "proto.h"
-#include "../../proc.h"
-#include "../../debug.h"
+#include "kernel/proc.h"
+#include "kernel/debug.h"
 
 #ifdef CONFIG_APIC
 #include "apic.h"

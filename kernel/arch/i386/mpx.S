@@ -1,7 +1,4 @@
 /*
- * This file, mpx386.s, is included by mpx.s when Minix is compiled for  
- * 32-bit Intel CPUs. The alternative mpx88.s is compiled for 16-bit CPUs. 
- *
  * This file is part of the lowest layer of the MINIX kernel.  (The other part 
  * is "proc.c".)  The lowest layer does process switching and message handling. 
  * Furthermore it contains the assembler startup code for Minix and the 32-bit 
@@ -42,7 +39,7 @@
  * and modified by the boot monitor before the kernel starts.
  */
 
-#include "../../kernel.h" /* configures the kernel */
+#include "kernel/kernel.h" /* configures the kernel */
 
 /* sections */
 
@@ -69,8 +66,8 @@ begbss:
 #include <minix/com.h>
 #include <machine/interrupt.h>
 #include "archconst.h"
-#include "../../const.h"
-#include "../../proc.h"
+#include "kernel/const.h"
+#include "kernel/proc.h"
 #include "sconst.h"
 
 /* Selected 386 tss offsets. */

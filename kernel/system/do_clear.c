@@ -5,7 +5,7 @@
  *    m1_i1:	PR_ENDPT		(endpoint of process to clean up)
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 

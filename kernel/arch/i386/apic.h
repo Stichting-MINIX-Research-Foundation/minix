@@ -90,7 +90,7 @@
 
 #ifndef __ASSEMBLY__
 
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 
 EXTERN int ioapic_enabled;
 EXTERN vir_bytes lapic_addr;

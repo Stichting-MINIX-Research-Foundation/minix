@@ -6,8 +6,8 @@
  *    m2_i2:	SYS_UPD_DST_ENDPT	(destination process endpoint)
  */
 
-#include "../system.h"
-#include "../ipc.h"
+#include "kernel/system.h"
+#include "kernel/ipc.h"
 #include <string.h>
 
 #if USE_UPDATE

@@ -2,7 +2,7 @@
  * call may be unused when it is not defined or when it is disabled in the
  * kernel's configuration.
  */
-#include "../system.h"
+#include "kernel/system.h"
 
 /*===========================================================================*
  *			          do_unused				     *

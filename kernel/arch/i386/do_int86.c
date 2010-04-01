@@ -5,7 +5,7 @@
  *    m1_p1:	INT86_REG86     
  */
 
-#include "../../system.h"
+#include "kernel/system.h"
 #include <minix/type.h>
 #include <minix/endpoint.h>
 #include <machine/int86.h>

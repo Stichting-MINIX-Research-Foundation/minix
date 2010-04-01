@@ -8,8 +8,8 @@
  *    m1_i3:	PR_FORK_FLAGS	(fork flags)
  */
 
-#include "../system.h"
-#include "../vm.h"
+#include "kernel/system.h"
+#include "kernel/vm.h"
 #include <signal.h>
 #include <string.h>
 #include <assert.h>

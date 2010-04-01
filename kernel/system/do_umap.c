@@ -9,7 +9,7 @@
  *    m5_l3:	CP_NR_BYTES	(size of datastructure) 	
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 

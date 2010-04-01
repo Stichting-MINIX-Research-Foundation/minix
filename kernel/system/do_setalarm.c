@@ -7,7 +7,7 @@
  *    m2_l1:	ALRM_TIME_LEFT		(return seconds left of previous)
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 

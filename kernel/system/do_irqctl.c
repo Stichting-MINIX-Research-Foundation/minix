@@ -9,7 +9,7 @@
  *      ,,          ,,          (returns index of irq hook assigned at kernel)
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 

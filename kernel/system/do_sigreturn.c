@@ -7,7 +7,7 @@
  *
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <string.h>
 #include <machine/cpu.h>
 #include <sys/sigcontext.h>

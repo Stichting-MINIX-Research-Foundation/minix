@@ -6,7 +6,7 @@
  *     m2_i2:	SIG_NUMBER	# signal number to send to process
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <signal.h>
 
 #if USE_KILL

@@ -21,9 +21,9 @@
 #include <minix/ds.h>
 #include <minix/vm.h>
 #include <sys/mman.h>
-#include "../../../kernel/const.h"
-#include "../../../kernel/config.h"
-#include "../../../kernel/type.h"
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/type.h"
 
 #include <machine/vm.h>
 

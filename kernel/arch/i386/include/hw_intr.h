@@ -1,7 +1,7 @@
 #ifndef __HW_INTR_X86_H__
 #define __HW_INTR_X86_H__
 
-#include "../..//kernel.h"
+#include "kernel/kernel.h"
 
 /* legacy PIC */
 

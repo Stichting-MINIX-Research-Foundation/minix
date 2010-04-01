@@ -7,7 +7,7 @@
  *    	SVMCTL_VALUE	to this value
  */
 
-#include "../../system.h"
+#include "kernel/system.h"
 #include <minix/type.h>
 
 #include "proto.h"

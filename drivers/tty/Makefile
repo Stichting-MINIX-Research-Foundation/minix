@@ -15,7 +15,7 @@ BINDIR?= /sbin
 SUBDIR= keymaps
 
 # Needs kernel/const.h, etc
-CPPFLAGS+=      -I ../..
+CPPFLAGS+=	-I${MINIXSRCDIR}
 
 .include <minix.prog.mk>
 .include <minix.subdir.mk>

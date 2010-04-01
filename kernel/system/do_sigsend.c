@@ -8,7 +8,7 @@
  *
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <signal.h>
 #include <string.h>
 #include <sys/sigcontext.h>

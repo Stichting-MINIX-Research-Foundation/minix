@@ -6,7 +6,7 @@
  * and then request-specific arguments in SYSCTL_ARG1 and SYSCTL_ARG2.
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 
 /*===========================================================================*

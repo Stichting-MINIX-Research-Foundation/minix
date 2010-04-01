@@ -13,7 +13,7 @@
  *   14 Aug, 2006   Created (Rogier Meurs)
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #if SPROFILE
 

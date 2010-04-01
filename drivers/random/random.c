@@ -8,7 +8,7 @@ that data into a seed for a psuedo random number generator.
 */
 
 #include <minix/drivers.h>
-#include "../../kernel/const.h"
+#include "kernel/const.h"
 #include "assert.h"
 
 #include "random.h"

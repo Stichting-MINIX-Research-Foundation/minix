@@ -7,7 +7,7 @@
  *    m1_p2:	PR_NAME_PTR		(pointer to program name)
  *    m1_p3:	PR_IP_PTR		(new instruction pointer)
  */
-#include "../system.h"
+#include "kernel/system.h"
 #include <string.h>
 #include <minix/endpoint.h>
 

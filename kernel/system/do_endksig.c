@@ -5,7 +5,7 @@
  *     m2_i1:	SIG_ENDPT  	# process for which PM is done
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #if USE_ENDKSIG 
 

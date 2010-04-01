@@ -30,10 +30,10 @@
 #include "util.h"
 
 #include <machine/archtypes.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
 
 /*===========================================================================*
  *                              get_mem_map                                  *

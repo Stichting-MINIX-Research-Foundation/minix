@@ -8,7 +8,7 @@
  *
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <string.h>
 #include <machine/mcontext.h>
 

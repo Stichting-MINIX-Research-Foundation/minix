@@ -2,7 +2,7 @@
  *   m_type:	SYS_EXIT
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 #include <signal.h>

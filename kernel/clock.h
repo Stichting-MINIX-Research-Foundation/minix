@@ -2,7 +2,7 @@
 #define __CLOCK_H__
 
 #include "kernel.h"
-#include "arch/i386/clock.h"
+#include "arch_clock.h"
 
 _PROTOTYPE(int boot_cpu_init_timer, (unsigned freq));
 

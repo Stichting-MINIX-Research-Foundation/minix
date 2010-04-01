@@ -7,7 +7,7 @@
  *    m1_i3:	RC_FLAGS	request flags
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #if USE_RUNCTL
 

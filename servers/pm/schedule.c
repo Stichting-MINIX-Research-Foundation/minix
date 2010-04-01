@@ -7,7 +7,7 @@
 #include <machine/archtypes.h>
 #include <lib.h>
 #include "mproc.h"
-#include "../../kernel/proc.h" /* for MIN_USER_Q */
+#include "kernel/proc.h" /* for MIN_USER_Q */
 
 PRIVATE timer_t sched_timer;
 

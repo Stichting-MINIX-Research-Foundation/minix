@@ -12,6 +12,8 @@ MAN=
 BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 850k
 
+CPPFLAGS=	-I${MINIXSRCDIR}
+
 SUBDIR= service
 
 .include <minix.prog.mk>

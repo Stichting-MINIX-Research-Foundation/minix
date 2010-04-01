@@ -9,4 +9,6 @@ MAN=
 
 BINDIR?= /usr/sbin
 
+CPPFLAGS+=	-I${MINIXSRCDIR}
+
 .include <minix.prog.mk>

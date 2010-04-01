@@ -5,8 +5,8 @@
  *	intr_init:	initialize the interrupt controller(s)
  */
 
-#include "../../kernel.h"
-#include "../../proc.h"
+#include "kernel/kernel.h"
+#include "kernel/proc.h"
 #include "proto.h"
 #include <minix/portio.h>
 #include <machine/cpu.h>

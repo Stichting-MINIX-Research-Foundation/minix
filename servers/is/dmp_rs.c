@@ -10,7 +10,7 @@
 #include "inc.h"
 #include <timers.h>
 #include <minix/rs.h>
-#include "../../kernel/priv.h"
+#include "kernel/priv.h"
 #include "../rs/const.h"
 #include "../rs/type.h"
 

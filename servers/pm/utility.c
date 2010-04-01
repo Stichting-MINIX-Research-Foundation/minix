@@ -23,10 +23,10 @@
 #include <timers.h>
 #include <string.h>
 #include <machine/archtypes.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
 
 #define munmap _munmap
 #define munmap_text _munmap_text

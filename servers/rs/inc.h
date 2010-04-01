@@ -38,8 +38,8 @@
 
 #include <machine/archtypes.h>
 #include <timers.h>				/* For priv.h */
-#include "../../kernel/priv.h"
-#include "../../kernel/ipc.h"
+#include "kernel/priv.h"
+#include "kernel/ipc.h"
 
 #include <stdlib.h>
 #include <stdio.h>

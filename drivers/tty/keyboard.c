@@ -19,10 +19,10 @@
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include "tty.h"
-#include <kernel/const.h>
-#include <kernel/config.h>
-#include <kernel/type.h>
-#include <kernel/proc.h>
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
 
 PRIVATE u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std.src"

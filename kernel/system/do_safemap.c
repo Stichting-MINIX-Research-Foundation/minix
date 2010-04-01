@@ -17,7 +17,7 @@
 #include <minix/type.h>
 #include <minix/safecopies.h>
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <signal.h>
 

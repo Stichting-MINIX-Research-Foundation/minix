@@ -6,7 +6,7 @@
  *	SG_SIZE	number of entries
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <minix/safecopies.h>
 
 /*===========================================================================*

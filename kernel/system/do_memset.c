@@ -7,7 +7,7 @@
  *    m2_l2:	MEM_PATTERN	(pattern byte to be written) 	
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #if USE_MEMSET
 

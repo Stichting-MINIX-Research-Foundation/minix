@@ -9,7 +9,7 @@
  *    m4_l5:	T_BOOT_TICKS	
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 
 #include <minix/endpoint.h>
 

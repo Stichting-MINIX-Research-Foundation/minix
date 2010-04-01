@@ -6,10 +6,6 @@ SRCS=	main.c alloc.c utility.c exec.c exit.c fork.c break.c \
 	signal.c mmap.c slaballoc.c region.c pagefaults.c addravl.c \
 	physravl.c rs.c queryexit.c map_mem.c
 
-#Arch-specific sources
-.PATH: ${.CURDIR}/arch/${ARCH}
-SRCS+=	vm.c pagetable.c arch_pagefaults.c util.S
-
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys
 
@@ -18,5 +14,7 @@ MAN=
 BINDIR?= /usr/sbin
 
 CPPFLAGS+= -I${.CURDIR} -Iarch/${ARCH}
+CPPFLAGS+=	-I${MINIXSRCDIR}
 
+.include "arch/${ARCH}/Makefile.inc"
 .include <minix.prog.mk>

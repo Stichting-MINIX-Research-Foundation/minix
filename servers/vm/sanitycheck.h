@@ -33,7 +33,7 @@
 	incheck = 0;		\
 	} 
 
-#include "../../kernel/proc.h"
+#include "kernel/proc.h"
 
 #define USE(obj, code) do {		\
 	slabunlock(obj, sizeof(*obj));	\

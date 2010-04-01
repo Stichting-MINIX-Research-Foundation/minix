@@ -12,9 +12,9 @@
 #include <fcntl.h>
 #include <a.out.h>
 #include <minix/crtso.h>
-#include "../../kernel/const.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
+#include "kernel/const.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
 #include "../pm/mproc.h"
 
 /* Declare some local functions. */

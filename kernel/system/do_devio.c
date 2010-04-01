@@ -7,7 +7,7 @@
  *   m2_l2:	DIO_VALUE	(value to write/ return value read)	
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
 #include <minix/portio.h>

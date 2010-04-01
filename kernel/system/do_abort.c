@@ -8,7 +8,7 @@
  *    m1_p1:	ABRT_MON_ADDR 	(virtual address of params)	
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <unistd.h>
 
 #if USE_ABORT

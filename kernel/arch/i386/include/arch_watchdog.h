@@ -1,7 +1,7 @@
 #ifndef __I386_WATCHDOG_H__
 #define __I386_WATCHDOG_H__
 
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 
 struct nmi_frame {
 	reg_t	eax;

@@ -29,7 +29,7 @@
 #include <assert.h>
 #include "mproc.h"
 #include "param.h"
-#include "../../kernel/proc.h"
+#include "kernel/proc.h"
 
 PUBLIC struct utsname uts_val = {
   "Minix",		/* system name */

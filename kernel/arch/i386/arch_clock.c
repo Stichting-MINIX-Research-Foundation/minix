@@ -4,10 +4,10 @@
 #include <machine/ports.h>
 #include <minix/portio.h>
 
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 
-#include "../../clock.h"
-#include "../../proc.h"
+#include "kernel/clock.h"
+#include "kernel/proc.h"
 #include <minix/u64.h>
 
 

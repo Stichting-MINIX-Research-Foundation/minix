@@ -26,9 +26,9 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <unistd.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
+#include "kernel/const.h"
+#include "kernel/config.h"
+#include "kernel/type.h"
 
 #define debug			1
 #define printW()		((void)0)

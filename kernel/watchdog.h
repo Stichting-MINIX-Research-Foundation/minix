@@ -2,7 +2,7 @@
 #define __WATCHDOG_H__
 
 #include "kernel.h"
-#include "arch/i386/watchdog.h"
+#include "arch_watchdog.h"
 
 extern int watchdog_enabled; /* if set to non-zero the watch dog is enabled */
 extern unsigned watchdog_local_timer_ticks; /* is timer still ticking? */

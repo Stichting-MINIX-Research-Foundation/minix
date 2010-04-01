@@ -3,7 +3,7 @@
 
 
 #ifndef __ASSEMBLY__
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 
 _PROTOTYPE( void apic_hwint00, (void) );
 _PROTOTYPE( void apic_hwint01, (void) );

@@ -1,4 +1,4 @@
-#include "../../kernel.h"
+#include "kernel/kernel.h"
 #include "proto.h"
 
 #include "debugreg.h"

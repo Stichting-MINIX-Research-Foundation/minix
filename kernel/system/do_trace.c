@@ -8,7 +8,7 @@
  *    m2_l2:    CTL_DATA        data to be written or returned here
  */
 
-#include "../system.h"
+#include "kernel/system.h"
 #include <sys/ptrace.h>
 
 #if USE_TRACE

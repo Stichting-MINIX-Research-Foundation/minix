@@ -4,7 +4,7 @@
 #include <sys/mman.h>
 #include <minix/vm.h>
 #include <timers.h>
-#include "../../kernel/proc.h"
+#include "kernel/proc.h"
 
 #define LINES 24
 
