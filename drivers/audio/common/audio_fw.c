@@ -245,7 +245,7 @@ PRIVATE int init_driver(void) {
 
 	/* ...and register interrupt vector */
 	if ((i=sys_irqsetpolicy(irq, 0, &irq_hook_id )) != OK){
-		error("%s: init driver couldn't set IRQ policy", drv.DriverName, i);
+		error("%s: init driver couldn't set IRQ policy: %d", drv.DriverName, i);
 		return EIO;
 	}
 	irq_hook_set = TRUE; /* now signal handler knows it must unregister policy*/
@@ -297,19 +297,19 @@ PRIVATE int msg_open (int minor_dev_nr) {
 	io_ctl = special_file_ptr->io_ctl;
 
 	if (read_chan==NO_CHANNEL && write_chan==NO_CHANNEL && io_ctl==NO_CHANNEL) {
-		error("%s: No channel specified for minor device!\n", 
+		error("%s: No channel specified for minor device %d!\n", 
 				drv.DriverName, minor_dev_nr);
 		return EIO;
 	}
 	if (read_chan == write_chan && read_chan != NO_CHANNEL) {
-		error("%s: Read and write channels are equal!\n", 
+		error("%s: Read and write channels are equal: %d!\n", 
 				drv.DriverName, minor_dev_nr);
 		return EIO;
 	}
 	/* init driver */
 	if (!device_available) {  
 		if (init_driver() != OK) {
-			error("%s: Couldn't init driver!\n", drv.DriverName, minor_dev_nr);
+			error("%s: Couldn't init driver!\n", drv.DriverName);
 			return EIO;
 		} else {
 			device_available = TRUE;
@@ -515,7 +515,7 @@ PRIVATE void msg_write(const message *m_ptr)
 
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first write */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
-			error("%s; Failed to get fragment size!\n", drv.DriverName, 0);
+			error("%s; Failed to get fragment size!\n", drv.DriverName);
 			return;	
 		}
 	}

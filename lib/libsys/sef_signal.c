@@ -34,7 +34,7 @@ PRIVATE void process_sigmgr_signals(void)
   while (TRUE) {
       /* Get an arbitrary pending signal. */
       if((r=sys_getksig(&target, &sigset)) != OK)
-          panic("SEF", "sys_getksig failed", r);
+          panic("SEF: sys_getksig failed: %d", r);
 
       if (target == NONE) {
           /* Stop if there are no more pending signals. */
@@ -56,7 +56,7 @@ PRIVATE void process_sigmgr_signals(void)
           /* Tell the kernel we are done if the target is still alive. */
           if(r == OK) {
               if((r=sys_endksig(target)) != OK)
-                  panic("SEF","sys_endksig failed", r);
+                  panic("SEF: sys_endksig failed :%d", r);
           }
       }
   }

@@ -2556,7 +2556,7 @@ PRIVATE int at_in(int line, u32_t port, u32_t *value,
 	if(s == OK)
 		return OK;
 	printf("at_wini%d: line %d: %s failed: %d; port %x\n", 
-		w_instance, line, typename, s, value, port);
+		w_instance, line, typename, s, port);
         panic("sys_in failed");
 }
 

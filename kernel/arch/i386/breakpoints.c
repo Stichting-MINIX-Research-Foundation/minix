@@ -47,7 +47,7 @@ printf("ld_dr7(0x%x)\n",dr7);
 		case 1: ld_dr1(linaddr); break;
 		case 2: ld_dr2(linaddr); break;
 		case 3: ld_dr3(linaddr); break;
-		default: panic(__FILE__, "invalid breakpoint index", __LINE__);
+		default: panic("%s:%d: invalid breakpoint index", __FILE__,  __LINE__);
 	}
 printf("ld_dr%d(0x%x)\n",bp,linaddr);
 	
