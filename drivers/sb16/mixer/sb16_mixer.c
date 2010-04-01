@@ -26,13 +26,13 @@
 
 _PROTOTYPE(void main, (void));
 FORWARD _PROTOTYPE( int mixer_init, (void)); 
-FORWARD _PROTOTYPE( int mixer_open, (message *m_ptr));
-FORWARD _PROTOTYPE( int mixer_close, (message *m_ptr));
-FORWARD _PROTOTYPE( int mixer_ioctl, (message *m_ptr));
+FORWARD _PROTOTYPE( int mixer_open, (const message *m_ptr));
+FORWARD _PROTOTYPE( int mixer_close, (const message *m_ptr));
+FORWARD _PROTOTYPE( int mixer_ioctl, (const message *m_ptr));
 FORWARD _PROTOTYPE( int mixer_get, (int reg));
-FORWARD _PROTOTYPE( int get_set_volume, (message *m_ptr, int flag));
-FORWARD _PROTOTYPE( int get_set_input, (message *m_ptr, int flag, int channel));
-FORWARD _PROTOTYPE( int get_set_output, (message *m_ptr, int flag));
+FORWARD _PROTOTYPE( int get_set_volume, (const message *m_ptr, int flag));
+FORWARD _PROTOTYPE( int get_set_input, (const message *m_ptr, int flag, int channel));
+FORWARD _PROTOTYPE( int get_set_output, (const message *m_ptr, int flag));
 
 
 PRIVATE int mixer_avail = 0;	/* Mixer exists? */
@@ -109,7 +109,7 @@ PRIVATE void sef_local_startup()
 /*=========================================================================*
  *				mixer_open				   	
  *=========================================================================*/
-PRIVATE int mixer_open(message *m_ptr)
+PRIVATE int mixer_open(const message *m_ptr)
 {
 	dprint("mixer_open\n");
 
@@ -123,7 +123,7 @@ PRIVATE int mixer_open(message *m_ptr)
 /*=========================================================================*
  *				mixer_close				   	
  *=========================================================================*/
-PRIVATE int mixer_close(message *m_ptr)
+PRIVATE int mixer_close(const message *m_ptr)
 {
 	dprint("mixer_close\n");
 
@@ -134,7 +134,7 @@ PRIVATE int mixer_close(message *m_ptr)
 /*=========================================================================*
  *				mixer_ioctl				   	
  *=========================================================================*/
-PRIVATE int mixer_ioctl(message *m_ptr)
+PRIVATE int mixer_ioctl(const message *m_ptr)
 {
 	int status;
 
@@ -198,10 +198,9 @@ PRIVATE int mixer_get(int reg)
 /*=========================================================================*
  *				get_set_volume				   *
  *=========================================================================*/
-PRIVATE int get_set_volume(message *m_ptr, int flag)
+PRIVATE int get_set_volume(const message *m_ptr, int flag)
 /* flag	0 = get, 1 = set */
 {
-	phys_bytes user_phys;
 	struct volume_level level;
 	int cmd_left, cmd_right, shift, max_level;
 
@@ -281,13 +280,12 @@ PRIVATE int get_set_volume(message *m_ptr, int flag)
 /*=========================================================================*
  *				get_set_input				   *
  *=========================================================================*/
-PRIVATE int get_set_input(message *m_ptr, int flag, int channel)
+PRIVATE int get_set_input(const message *m_ptr, int flag, int channel)
 /*
  * flag		0 = get, 1 = set
  * channel      0 = left, 1 = right
  */
 {
-	phys_bytes user_phys;
 	struct inout_ctrl input;
 	int input_cmd, input_mask, mask, del_mask, shift;
 
@@ -347,10 +345,9 @@ PRIVATE int get_set_input(message *m_ptr, int flag, int channel)
 /*=========================================================================*
  *				get_set_output				   *
  *=========================================================================*/
-PRIVATE int get_set_output(message *m_ptr, int flag)
+PRIVATE int get_set_output(const message *m_ptr, int flag)
 /* flag	 0 = get, 1 = set */
 {
-	phys_bytes user_phys;
 	struct inout_ctrl output;
 	int output_mask, mask, del_mask, shift;
 

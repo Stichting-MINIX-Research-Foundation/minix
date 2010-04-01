@@ -24,7 +24,7 @@
 
 
 /* reg(n) will be the device specific addresses */
-#define reg(n) dev.base + n
+#define reg(n) (dev.base + (n))
 
 
 /* prototypes of private functions */

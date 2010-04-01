@@ -105,7 +105,7 @@ static void el3_rx_mode(dpeth_t * dep)
 **  Name:	void el3_reset(dpeth_t *dep)
 **  Function:	Reset function specific for Etherlink hardware.
 */
-static void el3_reset(dpeth_t * dep)
+static void el3_reset(dpeth_t * UNUSED(dep))
 {
 
   return;			/* Done */

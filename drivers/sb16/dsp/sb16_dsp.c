@@ -31,8 +31,8 @@
 _PROTOTYPE(void main, (void));
 FORWARD _PROTOTYPE( int dsp_open, (void) );
 FORWARD _PROTOTYPE( int dsp_close, (void) );
-FORWARD _PROTOTYPE( int dsp_ioctl, (message *m_ptr) );
-FORWARD _PROTOTYPE( void dsp_write, (message *m_ptr) );
+FORWARD _PROTOTYPE( int dsp_ioctl, (const message *m_ptr) );
+FORWARD _PROTOTYPE( void dsp_write, (const message *m_ptr) );
 FORWARD _PROTOTYPE( void dsp_hardware_msg, (void) );
 FORWARD _PROTOTYPE( void dsp_status, (message *m_ptr) );
 
@@ -90,7 +90,9 @@ PUBLIC int is_status_msg_expected = FALSE;
  *===========================================================================*/
 PUBLIC void main() 
 {	
-	int r, caller, proc_nr;
+	int r;
+	endpoint_t caller;
+	int proc_nr;
 	message mess;
 
 	/* SEF local startup. */
@@ -143,7 +145,7 @@ send_reply:
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+PRIVATE void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -162,7 +164,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the rtl8169 driver. */
 	unsigned left;
@@ -172,7 +174,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	 */
 #if (CHIP == INTEL)
 	DmaPtr = DmaBuffer;
-	sys_umap(SELF, D, (vir_bytes)DmaBuffer, (phys_bytes)sizeof(DmaBuffer), &DmaPhys);
+	sys_umap(SELF, D, (vir_bytes)DmaBuffer, sizeof(DmaBuffer), &DmaPhys);
 
 	if((left = dma_bytes_left(DmaPhys)) < DMA_SIZE) {
 		/* First half of buffer crosses a 64K boundary, can't DMA into that */
@@ -189,7 +191,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *				dsp_open
  *===========================================================================*/
-PRIVATE int dsp_open()
+PRIVATE int dsp_open(void)
 {
 	dprint("sb16_dsp.c: dsp_open()\n");
 	
@@ -218,7 +220,7 @@ PRIVATE int dsp_open()
 /*===========================================================================*
  *				dsp_close
  *===========================================================================*/
-PRIVATE int dsp_close()
+PRIVATE int dsp_close(void)
 {
 	dprint("sb16_dsp.c: dsp_close()\n");
 
@@ -231,10 +233,9 @@ PRIVATE int dsp_close()
 /*===========================================================================*
  *				dsp_ioctl
  *===========================================================================*/
-PRIVATE int dsp_ioctl(message *m_ptr)
+PRIVATE int dsp_ioctl(const message *m_ptr)
 {
 	int status;
-	phys_bytes user_phys;
 	unsigned int val;
 
 	dprint("sb16_dsp.c: dsp_ioctl()\n");
@@ -271,9 +272,8 @@ PRIVATE int dsp_ioctl(message *m_ptr)
 /*===========================================================================*
  *				dsp_write
  *===========================================================================*/
-PRIVATE void dsp_write(message *m_ptr)
+PRIVATE void dsp_write(const message *m_ptr)
 {
-	int s;
 	message mess;
 	
 	dprint("sb16_dsp.c: dsp_write()\n");
@@ -485,7 +485,7 @@ PRIVATE int dsp_reset()
  *===========================================================================*/
 PRIVATE int dsp_command(int value)
 {
-	int i, status;
+	int i;
 
 	for (i = 0; i < SB_TIMEOUT; i++) {
 		if((sb16_inb(DSP_STATUS) & 0x80) == 0) {

@@ -429,12 +429,13 @@ PUBLIC int dsp_command(int value) {
 
 
 PUBLIC int sb16_inb(int port) {	
-	int s, value = -1;
+	int s;
+	unsigned long value;
 
 	if ((s=sys_inb(port, &value)) != OK)
 		panic("sys_inb() failed: %d", s);
 	
-	return value;
+	return (int) value;
 }
 
 

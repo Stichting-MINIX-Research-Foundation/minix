@@ -37,7 +37,7 @@ FORWARD _PROTOTYPE( void send_getstat, (eth_port_t *eth_port) );
 PUBLIC void osdep_eth_init()
 {
 	int i, j, r, rport;
-	endpoint_t tasknr;
+	u32_t tasknr;
 	struct eth_conf *ecp;
 	eth_port_t *eth_port, *rep;
 	message mess;

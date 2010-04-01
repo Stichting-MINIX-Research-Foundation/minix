@@ -9,15 +9,15 @@
 FORWARD _PROTOTYPE( int  AC97_read, 
 		(DEV_STRUCT * pCC, u16_t wAddr, u16_t *data) );
 FORWARD _PROTOTYPE( int  AC97_write, 
-		(DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
+		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
 FORWARD _PROTOTYPE( void set_src_sync_state, (int state) );
 FORWARD _PROTOTYPE( int  AC97_write_unsynced, 
-		(DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
+		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
 FORWARD _PROTOTYPE( int  AC97_read_unsynced, 
-		(DEV_STRUCT * pCC, u16_t wAddr, u16_t *data) );
+		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t *data) );
 FORWARD _PROTOTYPE( void set_nice_volume, (void) );
 FORWARD _PROTOTYPE( int AC97_get_volume, (struct volume_level *level) );
-FORWARD _PROTOTYPE( int AC97_set_volume, (struct volume_level *level) );
+FORWARD _PROTOTYPE( int AC97_set_volume, (const struct volume_level *level) );
 
 
 
@@ -69,7 +69,7 @@ PRIVATE void set_src_sync_state (int state)
 }
 
 
-PRIVATE int AC97_write (DEV_STRUCT * pCC, u16_t wAddr, u16_t wData)
+PRIVATE int AC97_write (const DEV_STRUCT * pCC, u16_t wAddr, u16_t wData)
 {
 u32_t dtemp, i;
 u16_t  wBaseAddr = pCC->base;
@@ -206,7 +206,8 @@ u16_t  base = pCC->base;
 }
 
 
-PRIVATE int AC97_write_unsynced (DEV_STRUCT * pCC, u16_t wAddr, u16_t wData)
+PRIVATE int AC97_write_unsynced (const DEV_STRUCT * pCC, u16_t wAddr,
+    u16_t wData)
 {
     /* wait for WIP to go away */
     if (WaitBitd (pCC->base + CODEC_READ, 30, 0, WIP_TIMEOUT))
@@ -218,7 +219,8 @@ PRIVATE int AC97_write_unsynced (DEV_STRUCT * pCC, u16_t wAddr, u16_t wData)
 }
 
 
-PRIVATE int AC97_read_unsynced (DEV_STRUCT * pCC, u16_t wAddr, u16_t *data)
+PRIVATE int AC97_read_unsynced (const DEV_STRUCT * pCC, u16_t wAddr,
+    u16_t *data)
 {
 u32_t dtemp;
 
@@ -450,7 +452,7 @@ PRIVATE int AC97_get_volume(struct volume_level *level) {
 }
 
 
-PRIVATE int AC97_set_volume(struct volume_level *level) {
+PRIVATE int AC97_set_volume(const struct volume_level *level) {
 	int cmd;
 	int left;
 	int right;

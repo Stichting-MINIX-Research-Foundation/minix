@@ -55,7 +55,7 @@ static u32_t read_reg(int function, int index);
 static void write_reg(int function, int index, u32_t value);
 static void init_domain(int index);
 static void init_map(unsigned int ix);
-static int do_add4pci(message *m);
+static int do_add4pci(const message *m);
 static void add_range(phys_bytes busaddr, phys_bytes size);
 static void del_range(phys_bytes busaddr, phys_bytes size);
 static void report_exceptions(void);
@@ -114,7 +114,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the amddev driver. */
 	int r, n_maps, n_domains, revision;
@@ -369,7 +369,7 @@ static int do_add(message *m)
 
 
 
-static int do_add4pci(message *m)
+static int do_add4pci(const message *m)
 {
 	int r, pci_bus, pci_dev, pci_func;
 	endpoint_t proc;

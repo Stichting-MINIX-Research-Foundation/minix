@@ -42,7 +42,7 @@ static char RdmaErrMsg[] = "remote dma failed to complete";
 **  Name:	void ns_rw_setup(dpeth_t *dep, int mode, int size, u16_t offset);
 **  Function:	Sets the board for reading/writing.
 */
-static void ns_rw_setup(dpeth_t *dep, int mode, int size, u16_t offset)
+static void ns_rw_setup(const dpeth_t *dep, int mode, int size, u16_t offset)
 {
 
   if (mode == CR_DM_RW) outb_reg0(dep, DP_ISR, ISR_RDC);
@@ -59,7 +59,7 @@ static void ns_rw_setup(dpeth_t *dep, int mode, int size, u16_t offset)
 **  Name:	void ns_start_xmit(dpeth_t *dep, int size, int pageno);
 **  Function:	Sets the board for for transmitting and fires it.
 */
-static void ns_start_xmit(dpeth_t * dep, int size, int pageno)
+static void ns_start_xmit(const dpeth_t * dep, int size, int pageno)
 {
 
   outb_reg0(dep, DP_TPSR, pageno);

@@ -754,7 +754,7 @@ PRIVATE void atl2_reply(void)
 /*===========================================================================*
  *				atl2_readv				     *
  *===========================================================================*/
-PRIVATE void atl2_readv(message *m, int from_int)
+PRIVATE void atl2_readv(const message *m, int from_int)
 {
 	/* Read packet data.
 	 */
@@ -860,7 +860,7 @@ suspend:
 /*===========================================================================*
  *				atl2_writev				     *
  *===========================================================================*/
-PRIVATE void atl2_writev(message *m, int from_int)
+PRIVATE void atl2_writev(const message *m, int from_int)
 {
 	/* Write packet data.
 	 */
@@ -988,7 +988,7 @@ suspend:
 /*===========================================================================*
  *				atl2_intr				     *
  *===========================================================================*/
-PRIVATE void atl2_intr(message *m)
+PRIVATE void atl2_intr(const message *m)
 {
 	/* Interrupt received.
 	 */
@@ -1206,7 +1206,7 @@ PRIVATE void atl2_dump(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the atl2 driver.
 	 */

@@ -27,26 +27,26 @@
 
 _PROTOTYPE( PRIVATE u32_t io_inl,            (u16_t);                        );
 _PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t);                 );
-_PROTOTYPE( PRIVATE void  do_conf,           (message *);                    );
+_PROTOTYPE( PRIVATE void  do_conf,           (const message *);              );
 _PROTOTYPE( PRIVATE void  do_get_name,       (message *);                    );
 _PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *);                    );
 _PROTOTYPE( PRIVATE void  do_interrupt,      (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *, int, int);          );
-_PROTOTYPE( PRIVATE void  do_vread_s,        (message *, int);               );
+_PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int);         );
 _PROTOTYPE( PRIVATE void  do_watchdog,       (void *);                       );
 
 _PROTOTYPE( PRIVATE void  de_update_conf,    (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE int   de_probe,          (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  de_conf_addr,      (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  de_first_init,     (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE void  de_reset,          (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE void  de_hw_conf,        (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE void  de_start,          (dpeth_t *);                    );
+_PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *);              );
+_PROTOTYPE( PRIVATE void  de_hw_conf,        (const dpeth_t *);              );
+_PROTOTYPE( PRIVATE void  de_start,          (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  de_setup_frame,    (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE u16_t de_read_rom,       (dpeth_t *, u8_t, u8_t);        );
 _PROTOTYPE( PRIVATE int   de_calc_iov_size,  (iovec_dat_s_t *);              );
 _PROTOTYPE( PRIVATE void  de_next_iov,       (iovec_dat_s_t *);              );
-_PROTOTYPE( PRIVATE void  do_vwrite_s,       (message *, int);               );
+_PROTOTYPE( PRIVATE void  do_vwrite_s,       (const message *, int);         );
 _PROTOTYPE( PRIVATE void  de_get_userdata_s, (int, cp_grant_id_t,
 					     vir_bytes, int, void *);        );
 
@@ -151,7 +151,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the DEC 21140A driver. */
   int r;
@@ -161,7 +161,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
 
   /* Request function key for debug dumps */
-  fkeys = sfkeys = 0; bit_set(sfkeys, DE_FKEY);
+  fkeys = sfkeys = 0;
+  bit_set(sfkeys, DE_FKEY);
   if ((fkey_map(&fkeys, &sfkeys)) != OK) 
     printf("%s: error using Shift+F%d key(%d)\n", str_DevName, DE_FKEY, errno);
 
@@ -187,9 +188,9 @@ PRIVATE void do_get_stat_s(message * mp)
   dep = &de_table[port];
   dep->de_client = mp->DL_PROC;
 
-  if ((rc = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
+  if ((rc = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0UL,
 			(vir_bytes)&dep->de_stat,
-			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
+			sizeof(dep->de_stat), 0)) != OK)
         panic(str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;
@@ -201,13 +202,12 @@ PRIVATE void do_get_stat_s(message * mp)
   return;
 }
 
-PRIVATE void do_conf(message * mp)
+PRIVATE void do_conf(const message * mp)
 {
-  int port;
+  int port = mp->DL_PORT;
   dpeth_t *dep;
   message reply_mess;
 
-  port = mp->DL_PORT;
   if (port >= 0 && port < DE_PORT_NR) {
 
     dep = &de_table[port];
@@ -258,13 +258,17 @@ PRIVATE void do_conf(message * mp)
 
     default:	break;
     }
-  } else			/* Port number is out of range */
+  } else {			/* Port number is out of range */ 
     port = ENXIO;
+  }
 
   reply_mess.m_type = DL_CONF_REPLY;
   reply_mess.m3_i1 = port;
   reply_mess.m3_i2 = DE_PORT_NR;
-   *(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
+  /* FIXME: if port number is out of range, this uses
+   * uninitialized variable 'dep'.
+   */
+  *(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
   
   if (send(mp->m_source, &reply_mess) != OK)
     panic(str_SendErrMsg, mp->m_source);
@@ -314,7 +318,7 @@ PRIVATE void do_reply(dpeth_t * dep, int err, int may_block)
   return;
 }
 
-PRIVATE void do_watchdog(void *message)
+PRIVATE void do_watchdog(void *UNUSED(message))
 {
   /* nothing here yet */
   return;
@@ -383,7 +387,7 @@ PRIVATE int de_probe(dpeth_t *dep){
   return TRUE;
 }
 
-PRIVATE u16_t de_read_rom(dpeth_t *dep, u8_t addr, u8_t nbAddrBits){
+PRIVATE u16_t de_read_rom(const dpeth_t *dep, u8_t addr, u8_t nbAddrBits){
   u16_t retVal = 0;
   int i;
   u32_t csr = 0;
@@ -455,7 +459,7 @@ static void de_update_conf(dpeth_t * dep)
   return;
 }
 
-PRIVATE void do_vread_s(message * mp, int from_int)
+PRIVATE void do_vread_s(const message * mp, int from_int)
 {
   char *buffer;
   u32_t size;
@@ -725,11 +729,11 @@ PRIVATE void do_interrupt(dpeth_t *dep){
   return;
 }
 
-PRIVATE void de_reset(dpeth_t *dep){
+PRIVATE void de_reset(const dpeth_t *dep){
   io_outl(CSR_ADDR(dep, CSR0), CSR0_SWR);
 }
 
-PRIVATE void de_hw_conf(dpeth_t *dep){
+PRIVATE void de_hw_conf(const dpeth_t *dep){
   u32_t val;
 
   /* CSR0 - global host bus prop */
@@ -754,7 +758,7 @@ PRIVATE void de_hw_conf(dpeth_t *dep){
   io_outl(CSR_ADDR(dep, CSR6), val);
 }
 
-PRIVATE void de_start(dpeth_t *dep){  
+PRIVATE void de_start(const dpeth_t *dep){  
   u32_t val;
   val = io_inl(CSR_ADDR(dep, CSR6)) | CSR6_ST | CSR6_SR;
   io_outl(CSR_ADDR(dep, CSR6), val);
@@ -829,10 +833,10 @@ PRIVATE void de_next_iov(iovec_dat_s_t * iovp){
   return;
 }
 
-PRIVATE void do_vwrite_s(message * mp, int from_int){
+PRIVATE void do_vwrite_s(const message * mp, int from_int){
   static u8_t setupDone = 0;
   int size, r, bytes, ix, totalsize;
-  dpeth_t *dep = NULL;
+  dpeth_t *dep;
   iovec_dat_s_t *iovp = NULL;
   de_loc_descr_t *descr = NULL;
   char *buffer = NULL;

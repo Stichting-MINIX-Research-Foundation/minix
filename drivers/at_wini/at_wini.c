@@ -253,7 +253,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the at_wini driver. */
   system_hz = sys_hz();
@@ -1017,7 +1017,7 @@ PRIVATE int w_specify()
 /*===========================================================================*
  *				do_transfer				     *
  *===========================================================================*/
-PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
+PRIVATE int do_transfer(const struct wini *wn, unsigned int precomp,
 	unsigned int count, unsigned int sector,
 	unsigned int opcode, int do_dma)
 {
@@ -1090,7 +1090,7 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 	return com_out(&cmd);
 }
 
-PRIVATE void stop_dma(struct wini *wn)
+PRIVATE void stop_dma(const struct wini *wn)
 {
 	int r;
 
@@ -1099,7 +1099,7 @@ PRIVATE void stop_dma(struct wini *wn)
 	if (r != 0) panic("stop_dma: sys_outb failed: %d", r);
 }
 
-PRIVATE void start_dma(struct wini *wn, int do_write)
+PRIVATE void start_dma(const struct wini *wn, int do_write)
 {
 	u32_t v;
 	int r;
@@ -1115,7 +1115,7 @@ PRIVATE void start_dma(struct wini *wn, int do_write)
 	if (r != 0) panic("start_dma: sys_outb failed: %d", r);
 }
 
-PRIVATE int error_dma(struct wini *wn)
+PRIVATE int error_dma(const struct wini *wn)
 {
 	int r;
 	u32_t v;

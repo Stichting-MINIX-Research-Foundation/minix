@@ -49,8 +49,8 @@
 
 FORWARD _PROTOTYPE( int msg_open, (int minor_dev_nr) );
 FORWARD _PROTOTYPE( int msg_close, (int minor_dev_nr) );
-FORWARD _PROTOTYPE( int msg_ioctl, (message *m_ptr) );
-FORWARD _PROTOTYPE( void msg_write, (message *m_ptr) );
+FORWARD _PROTOTYPE( int msg_ioctl, (const message *m_ptr) );
+FORWARD _PROTOTYPE( void msg_write, (const message *m_ptr) );
 FORWARD _PROTOTYPE( void msg_read, (message *m_ptr) );
 FORWARD _PROTOTYPE( void msg_hardware, (void) );
 FORWARD _PROTOTYPE( void msg_status, (message *m_ptr) );
@@ -229,16 +229,16 @@ PRIVATE int init_driver(void) {
 
 	/* initialize hardware*/
 	if (drv_init_hw() != OK) {
-		error("%s: Could not initialize hardware\n", drv.DriverName, 0);
+		error("%s: Could not initialize hardware\n", drv.DriverName);
 		return EIO;
 	}
 
 	/* get irq from device driver...*/
 	if (drv_get_irq(&irq) != OK) {
-		error("%s: init driver couldn't get IRQ", drv.DriverName, i);
+		error("%s: init driver couldn't get IRQ", drv.DriverName);
 		return EIO;
 	}
-	/* todo: execute the rest of this function only once 
+	/* TODO: execute the rest of this function only once 
 	   we don't want to set irq policy twice */
 	if (executed) return OK;
 	executed = TRUE;
@@ -432,7 +432,7 @@ PRIVATE int close_sub_dev(int sub_dev_nr) {
 }
 
 
-PRIVATE int msg_ioctl(message *m_ptr)
+PRIVATE int msg_ioctl(const message *m_ptr)
 {
 	int status, len, chan;
 	sub_dev_t *sub_dev_ptr;
@@ -495,7 +495,7 @@ PRIVATE int msg_ioctl(message *m_ptr)
 }
 
 
-PRIVATE void msg_write(message *m_ptr) 
+PRIVATE void msg_write(const message *m_ptr) 
 {
 	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;

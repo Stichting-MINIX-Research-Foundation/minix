@@ -70,7 +70,7 @@ static void el1_reset(dpeth_t * dep)
 **  Name:	void el1_dumpstats(dpeth_t *dep, int port, vir_bytes size)
 **  Function:	Dumps counter on screen (support for console display).
 */
-static void el1_dumpstats(dpeth_t * dep)
+static void el1_dumpstats(dpeth_t * UNUSED(dep))
 {
 
   return;
