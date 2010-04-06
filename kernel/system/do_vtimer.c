@@ -59,13 +59,6 @@ PUBLIC int do_vtimer(struct proc * caller, message * m_ptr)
       old_value = 0;
   }
 
-  /* Set the new value, if requested. This is called from the system task, so
-   * we can be interrupted by the clock interrupt, but not by the clock task.
-   * Therefore we only have to protect against interference from clock.c's
-   * clock_handler(). We can do this without disabling interrupts, by removing
-   * the timer's flag before changing the ticks-left field; in that case the
-   * clock interrupt will not touch the latter anymore.
-   */
   if (m_ptr->VT_SET) {
       rp->p_misc_flags &= ~pt_flag;	/* disable virtual timer */
 
