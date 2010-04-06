@@ -10,6 +10,7 @@
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
 #include <a.out.h>
+#include <assert.h>
 
 #include "archconst.h"
 #include "proto.h"
@@ -455,20 +456,11 @@ PUBLIC int arch_set_params(char *params, int size)
 
 PUBLIC void arch_do_syscall(struct proc *proc)
 {
-/* Perform a previously postponed system call.
- */
-  int call_nr, src_dst_e;
-  message *m_ptr;
-  long bit_map;
-
-  /* Get the system call parameters from their respective registers. */
-  call_nr = proc->p_reg.cx;
-  src_dst_e = proc->p_reg.retreg;
-  m_ptr = (message *) proc->p_reg.bx;
-  bit_map = proc->p_reg.dx;
-
+  /* do_ipc assumes that it's running because of the current process */
+  assert(proc == proc_ptr);
   /* Make the system call, for real this time. */
-  proc->p_reg.retreg = do_ipc(call_nr, src_dst_e, m_ptr, bit_map);
+  proc->p_reg.retreg =
+	  do_ipc(proc->p_reg.cx, proc->p_reg.retreg, proc->p_reg.bx);
 }
 
 PUBLIC struct proc * arch_finish_schedcheck(void)

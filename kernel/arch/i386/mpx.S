@@ -396,7 +396,6 @@ ipc_entry:
 	 * SAVE_PROCESS_CTX() does not clobber these registers, they are still
 	 * set as the userspace have set them
 	 */
-	push	%edx
 	push	%ebx
 	push	%eax
 	push	%ecx
@@ -412,7 +411,7 @@ ipc_entry:
 	call	do_ipc
 
 	/* restore the current process pointer and save the return value */
-	add	$4 * 4, %esp
+	add	$3 * 4, %esp
 	pop	%esi
 	mov     %eax, AXREG(%esi)
 
