@@ -22,7 +22,7 @@ PUBLIC int do_runctl(struct proc * caller, message * m_ptr)
  * of RTS_PROC_STOP, and send a SIGSNDELAY signal later when the process is done
  * sending (ending the delay). Used by PM for safe signal delivery.
  */
-  int proc_nr, action, flags, delayed;
+  int proc_nr, action, flags;
   register struct proc *rp;
 
   /* Extract the message parameters and do sanity checking. */
@@ -39,17 +39,13 @@ PUBLIC int do_runctl(struct proc * caller, message * m_ptr)
    * Note that asynchronous messages are not covered: a process using SENDA
    * should not also install signal handlers *and* expect POSIX compliance.
    */
-  if (action == RC_STOP && (flags & RC_DELAY)) {
-	RTS_SET(rp, RTS_SYS_LOCK);
 
+  if (action == RC_STOP && (flags & RC_DELAY)) {
 	if (RTS_ISSET(rp, RTS_SENDING) || (rp->p_misc_flags & MF_SC_DEFER))
 		rp->p_misc_flags |= MF_SIG_DELAY;
 
-	delayed = (rp->p_misc_flags & MF_SIG_DELAY);
-
-	RTS_UNSET(rp, RTS_SYS_LOCK);
-
-	if (delayed) return(EBUSY);
+	if (rp->p_misc_flags & MF_SIG_DELAY)
+		return (EBUSY);
   }
 
   /* Either set or clear the stop flag. */

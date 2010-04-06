@@ -128,7 +128,6 @@ struct proc {
 #define RTS_PAGEFAULT	0x400	/* process has unhandled pagefault */
 #define RTS_VMREQUEST	0x800	/* originator of vm memory request */
 #define RTS_VMREQTARGET	0x1000	/* target of vm memory request */
-#define RTS_SYS_LOCK	0x2000	/* temporary process lock flag for systask */
 #define RTS_PREEMPTED	0x4000	/* this process was preempted by a higher
 				   priority process and we should pick a new one
 				   to run. Processes with this flag should be
