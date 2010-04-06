@@ -241,9 +241,9 @@ check_misc_flags:
 }
 
 /*
- * handler for all synchronous IPC callsi
+ * handler for all synchronous IPC calls
  */
-PUBLIC int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
+PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 			int call_nr,	/* system call number and flags */
 			endpoint_t src_dst_e,	/* src or dst of the call */
 			message *m_ptr)	/* users pointer to a message */
