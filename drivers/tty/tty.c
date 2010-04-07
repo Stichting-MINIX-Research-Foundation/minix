@@ -161,8 +161,6 @@ PUBLIC int main(void)
   sef_local_startup();
 
   while (TRUE) {
-	int adflag = 0;
-
 	/* Check for and handle any events on any of the ttys. */
 	for (tp = FIRST_TTY; tp < END_TTY; tp++) {
 		if (tp->tty_events) handle_events(tp);

@@ -514,7 +514,7 @@ struct partition *entry;
 /*============================================================================*
  *				w_other				      *
  *============================================================================*/
-PRIVATE int w_other(struct driver *dr, message *m)
+PRIVATE int w_other(struct driver *UNUSED(dr), message *m)
 {
         int r;
 

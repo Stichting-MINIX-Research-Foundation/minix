@@ -183,7 +183,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 PRIVATE void hw_init(pp)
 struct port *pp;
 {
-	int i, r, devind, irq, socket;
+	int r, devind, irq;
 	u8_t v8;
 	u16_t v16;
 	u32_t v32;
@@ -311,7 +311,7 @@ PRIVATE void map_regs(struct port *pp, u32_t base)
 PRIVATE void do_int(pp)
 struct port *pp;
 {
-	int i, r, devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
+	int r, devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
 		socket_5v, socket_3v, socket_Xv, socket_Yv;
 	clock_t t0, t1;
 	u32_t csr_event, csr_present, csr_control;

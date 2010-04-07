@@ -78,7 +78,7 @@ PRIVATE u32_t pci_config_intr_data;
 PRIVATE u32_t ioapic_extint_assigned = 0;
 PRIVATE int lapic_extint_assigned = 0;
 
-PRIVATE int calib_clk_handler(irq_hook_t * hook)
+PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 {
 	u32_t tcrt;
 	u64_t tsc;

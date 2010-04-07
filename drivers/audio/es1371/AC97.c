@@ -7,7 +7,7 @@
 /* AC97 Mixer and Mode control function prototypes */
 
 FORWARD _PROTOTYPE( int  AC97_read, 
-		(DEV_STRUCT * pCC, u16_t wAddr, u16_t *data) );
+		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t *data) );
 FORWARD _PROTOTYPE( int  AC97_write, 
 		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
 FORWARD _PROTOTYPE( void set_src_sync_state, (int state) );
@@ -133,7 +133,7 @@ u16_t  wBaseAddr = pCC->base;
 }
 
 
-PRIVATE int AC97_read (DEV_STRUCT * pCC, u16_t wAddr, u16_t *data)
+PRIVATE int AC97_read (const DEV_STRUCT * pCC, u16_t wAddr, u16_t *data)
 {
 u32_t dtemp, i;
 u16_t  base = pCC->base;

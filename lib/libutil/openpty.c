@@ -29,9 +29,8 @@
 int openpty(int *amaster, int *aslave, char *name,
 	struct termios *termp, struct winsize *winp)
 {
-  char buff[128], temp[128];
+  char buff[128];
   register int i, j;
-  int pty_fd = -1, gr;
   static char tty_name[128];
   struct group *ttygroup;
   gid_t tty_gid = 0;

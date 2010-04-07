@@ -89,11 +89,11 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int ct, n, m, fd;
+  int n, m;
   char *dir1, *dir2, *cp, c;
   struct stat s;
   struct dirent *e;
-  DIR *DIR1, *DIR2;
+  DIR *DIR1;
 
   (void) sync();
 

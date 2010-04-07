@@ -169,8 +169,6 @@ static int _tcp_setsockopt(int socket, int level, int option_name,
 static int _udp_setsockopt(int socket, int level, int option_name,
 	const void *option_value, socklen_t option_len)
 {
-	int i;
-
 #if DEBUG
 	fprintf(stderr, "_udp_setsocketopt: level %d, name %d\n",
 		level, option_name);

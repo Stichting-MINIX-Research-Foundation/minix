@@ -72,7 +72,6 @@ char *strerror(int err)
 
 int main(int argc, char **argv)
 {
-	int i;
 	static char buf[512];
 	unsigned long size, mul;
 	off_t offset;

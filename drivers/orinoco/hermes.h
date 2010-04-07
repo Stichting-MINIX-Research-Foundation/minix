@@ -301,8 +301,9 @@ struct hermes_idstring
 #define HERMES_RECLEN_TO_BYTES(n) ( ((n)-1) * 2 )
 
 /* Function prototypes */
-_PROTOTYPE (u16_t hermes_read_reg, (hermes_t * hw, u16_t off));
-_PROTOTYPE (void  hermes_write_reg, (hermes_t * hw, u16_t off, u16_t val));
+_PROTOTYPE (u16_t hermes_read_reg, (const hermes_t * hw, u16_t off));
+_PROTOTYPE (void  hermes_write_reg, (const hermes_t * hw, u16_t off,
+    u16_t val));
 _PROTOTYPE (void  hermes_struct_init, (hermes_t * hw, u32_t address,
 					int io_space, int reg_spacing));
 _PROTOTYPE (int  hermes_init, (hermes_t * hw));

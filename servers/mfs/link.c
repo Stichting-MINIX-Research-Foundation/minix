@@ -286,7 +286,6 @@ PUBLIC int fs_rename()
   char old_name[NAME_MAX], new_name[NAME_MAX];
   ino_t numb;
   phys_bytes len;
-  int r1;
   
   /* Copy the last component of the old name */
   len = MFS_MIN(fs_m_in.REQ_REN_LEN_OLD, sizeof(old_name));

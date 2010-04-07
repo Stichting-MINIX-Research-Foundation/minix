@@ -18,7 +18,7 @@ getifaddrs(struct ifaddrs **ifap)
 {
 	static int fd = -1;
 	nwio_ipconf_t ipconf;
-	int flags, err, r;
+	int flags;
 	static struct ifaddrs ifa;
 	static struct sockaddr_in addr, netmask;
 

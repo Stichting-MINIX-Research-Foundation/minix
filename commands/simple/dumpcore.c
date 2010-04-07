@@ -70,8 +70,6 @@ int adjust_stack(pid_t pid, struct mem_map *seg)
 
 int write_seg(int fd, pid_t pid, int seg, off_t seg_off, phys_bytes seg_bytes)
 {
-  int r;
-  off_t off;
   ssize_t w;
   static char buf[CLICK_SIZE];
   struct ptrace_range pr;

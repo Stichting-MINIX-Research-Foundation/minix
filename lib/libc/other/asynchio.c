@@ -5,7 +5,6 @@
  * Thise are just stub routines that are call compatible with
  * the asynchio(3) library of Minix-vmd.  See asynchio.h.
  */
-#define nil 0
 #define alarm	_alarm
 #define ioctl	_ioctl
 #define read	_read
@@ -98,8 +97,8 @@ int asyn_wait(asynchio_t *asyn, int flags, struct timeval *to)
 		return 0;
 	}
 
-	if (to != nil) {
-		now= time(nil);
+	if (to != NULL) {
+		now= time(NULL);
 		if (to->tv_sec <= now) { errno= EINTR; return -1; }
 		old_timer= alarm(0);
 		new_sa.sa_handler= time_out;
@@ -129,7 +128,7 @@ int asyn_wait(asynchio_t *asyn, int flags, struct timeval *to)
 		asyn->errno= errno;
 		break;
 	}
-	if (to != nil) {
+	if (to != NULL) {
 		alarm(0);
 		sigaction(SIGALRM, &old_sa, (struct sigaction *)0);
 		alarm(old_timer);

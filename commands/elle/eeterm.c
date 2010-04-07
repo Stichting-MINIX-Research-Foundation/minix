@@ -988,8 +988,7 @@ static int tstrlen(), tstrlp();
 static int
 getcap(stype)
 char *stype;
-{	register char *t;
-	register int i;
+{       register int i;
 	int buflen;
 	char *tcbuf, *tcbptr;		/* Pointers into termcap buffer */
 	char tmpstr[4];

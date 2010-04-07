@@ -41,7 +41,7 @@ int getloadavg(double *loadavg, int nelem)
   unfilled_ticks = TICKSPERSLOT - (loadinfo.last_clock % TICKSPERSLOT);
 
   for(p = 0; p < nelem; p++) {
-    int h, offset, slots;
+    int h, slots;
     double l = 0.0;
     int latest = loadinfo.proc_last_slot;
     slots = minutes[p] * 60 / _LOAD_UNIT_SECS;

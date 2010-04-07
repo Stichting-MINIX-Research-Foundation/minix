@@ -153,12 +153,12 @@ _PROTOTYPE( static void rl_init_hw, (re_t *rep)				);
 _PROTOTYPE( static void rl_reset_hw, (re_t *rep)			);
 _PROTOTYPE( static void rl_confaddr, (re_t *rep)			);
 _PROTOTYPE( static void rl_rec_mode, (re_t *rep)			);
-_PROTOTYPE( static void rl_readv, (message *mp, int from_int, 
+_PROTOTYPE( static void rl_readv, (const message *mp, int from_int, 
 							int vectored)	);
-_PROTOTYPE( static void rl_readv_s, (message *mp, int from_int)	);
-_PROTOTYPE( static void rl_writev, (message *mp, int from_int,
+_PROTOTYPE( static void rl_readv_s, (const message *mp, int from_int)	);
+_PROTOTYPE( static void rl_writev, (const message *mp, int from_int,
 							int vectored)	);
-_PROTOTYPE( static void rl_writev_s, (message *mp, int from_int)	);
+_PROTOTYPE( static void rl_writev_s, (const message *mp, int from_int)	);
 _PROTOTYPE( static void rl_check_ints, (re_t *rep)			);
 _PROTOTYPE( static void rl_report_link, (re_t *rep)			);
 _PROTOTYPE( static void mii_print_techab, (U16_t techab)		);
@@ -298,7 +298,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the rtl8139 driver. */
 #if RTL8139_FKEY
@@ -696,7 +696,7 @@ re_t *rep;
 	size_t rx_bufsize, tx_bufsize, tot_bufsize;
 	phys_bytes buf;
 	char *mallocbuf;
-	int fd, s, i, off;
+	int i, off;
 
 	/* Allocate receive and transmit buffers */
 	tx_bufsize= ETH_MAX_PACK_SIZE_TAGGED;
@@ -971,12 +971,11 @@ re_t *rep;
 /*===========================================================================*
  *				rl_readv				     *
  *===========================================================================*/
-static void rl_readv(message *mp, int from_int, int vectored)
+static void rl_readv(const message *mp, int from_int, int vectored)
 {
 	int i, j, n, o, s, s1, dl_port, re_client, count, size;
 	port_t port;
 	unsigned amount, totlen, packlen;
-	phys_bytes dst_phys;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
@@ -1218,7 +1217,7 @@ suspend:
 /*===========================================================================*
  *				rl_readv_s				     *
  *===========================================================================*/
-static void rl_readv_s(message *mp, int from_int)
+static void rl_readv_s(const message *mp, int from_int)
 {
 	int i, j, n, o, s, s1, dl_port, re_client, count, size;
 	port_t port;
@@ -1444,7 +1443,7 @@ suspend:
 /*===========================================================================*
  *				rl_writev				     *
  *===========================================================================*/
-static void rl_writev(message *mp, int from_int, int vectored)
+static void rl_writev(const message *mp, int from_int, int vectored)
 {
 	phys_bytes phys_user;
 	int i, j, n, s, port, count, size;
@@ -1585,7 +1584,7 @@ suspend:
 /*===========================================================================*
  *				rl_writev_s				     *
  *===========================================================================*/
-static void rl_writev_s(message *mp, int from_int)
+static void rl_writev_s(const message *mp, int from_int)
 {
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
@@ -2110,7 +2109,6 @@ re_t *rep;
 {
 	port_t port;
 	u8_t cr;
-	int i;
 	clock_t t0,t1;
 
 	rep->re_clear_rx= FALSE;

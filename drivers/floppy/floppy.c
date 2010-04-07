@@ -257,7 +257,7 @@ FORWARD _PROTOTYPE( void start_motor, (void) 				);
 FORWARD _PROTOTYPE( int seek, (void) 					);
 FORWARD _PROTOTYPE( int fdc_transfer, (int opcode) 			);
 FORWARD _PROTOTYPE( int fdc_results, (void) 				);
-FORWARD _PROTOTYPE( int fdc_command, (u8_t *cmd, int len) 		);
+FORWARD _PROTOTYPE( int fdc_command, (const u8_t *cmd, int len) 	);
 FORWARD _PROTOTYPE( void fdc_out, (int val) 				);
 FORWARD _PROTOTYPE( int recalibrate, (void) 				);
 FORWARD _PROTOTYPE( void f_reset, (void) 				);
@@ -1041,7 +1041,7 @@ PRIVATE int fdc_results(void)
  *				fdc_command				     *
  *===========================================================================*/
 PRIVATE int fdc_command(
-  u8_t *cmd,		/* command bytes */
+  const u8_t *cmd,	/* command bytes */
   int len		/* command length */
 )
 {

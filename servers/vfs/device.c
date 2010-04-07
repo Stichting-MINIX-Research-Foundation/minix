@@ -771,7 +771,6 @@ int flags;			/* mode bits and flags */
   if (op == DEV_OPEN && dev_mess.REP_STATUS >= 0) {
 	if (dev_mess.REP_STATUS != minor) {
                 struct vnode *vp;
-                struct vmnt *vmp;
                 struct node_details res;
 
 		/* A new minor device number has been returned.
@@ -873,7 +872,6 @@ PUBLIC void dev_up(int maj)
   needs_reopen= FALSE;
   for (fp = filp; fp < &filp[NR_FILPS]; fp++) {
 	struct vnode *vp;
-	int minor;
 
 	if(fp->filp_count < 1 || !(vp = fp->filp_vno)) continue;
 	if(((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;

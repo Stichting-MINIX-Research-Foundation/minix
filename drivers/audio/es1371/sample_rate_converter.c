@@ -147,7 +147,7 @@ PRIVATE int src_reg_write(const DEV_STRUCT * DSP, u16_t reg, u16_t val) {
 }
 
 
-void src_set_rate(DEV_STRUCT * DSP, char base, u16_t rate) {
+void src_set_rate(const DEV_STRUCT * DSP, char base, u16_t rate) {
 	u32_t    freq, dtemp, i;
 	u16_t     N, truncM, truncStart, wtemp;
 

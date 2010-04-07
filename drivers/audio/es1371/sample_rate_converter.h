@@ -6,7 +6,7 @@
 #include "pci_helper.h"
 
 _PROTOTYPE( int src_init, (DEV_STRUCT * DSP) );
-_PROTOTYPE( void src_set_rate, (DEV_STRUCT * DSP, char src_base, u16_t rate) );
+_PROTOTYPE( void src_set_rate, (const DEV_STRUCT * DSP, char src_base, u16_t rate) );
 
 #define SRC_SYNTH_BASE      0x70
 #define SRC_DAC_BASE        0x74

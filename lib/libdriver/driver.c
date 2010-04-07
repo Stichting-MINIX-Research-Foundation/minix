@@ -126,7 +126,6 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 
   int r, proc_nr;
   message mess;
-  sigset_t set;
 
   /* Init MQ library. */
   mq_init();

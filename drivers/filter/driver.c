@@ -752,7 +752,7 @@ static int do_sendrec_both(message *m1, message *m2)
 /*===========================================================================*
  *				do_sendrec_one				     *
  *===========================================================================*/
-static int do_sendrec_one(message *m1, message *m2)
+static int do_sendrec_one(message *m1, const message *m2)
 {
 	/* Only talk to the main driver. If something goes wrong, it will
 	 * be fixed elsewhere.
@@ -796,7 +796,7 @@ static int paired_sendrec(message *m1, message *m2, int both)
  *				single_grant				     *
  *===========================================================================*/
 static int single_grant(endpoint_t endpt, vir_bytes buf, int access,
-	cp_grant_id_t *gid, iovec_s_t vector[NR_IOREQS], size_t *sizep)
+	cp_grant_id_t *gid, iovec_s_t vector[NR_IOREQS], const size_t *sizep)
 {
 	/* Create grants for a vectored request to a single driver.
 	 */
@@ -873,7 +873,7 @@ static int paired_grant(char *buf1, char *buf2, int request,
 /*===========================================================================*
  *				single_revoke				     *
  *===========================================================================*/
-PRIVATE void single_revoke(cp_grant_id_t gid, iovec_s_t vector[NR_IOREQS],
+PRIVATE void single_revoke(cp_grant_id_t gid, const iovec_s_t vector[NR_IOREQS],
 	size_t *sizep, int count)
 {
 	/* Revoke all grants associated with a request to a single driver.
@@ -894,7 +894,8 @@ PRIVATE void single_revoke(cp_grant_id_t gid, iovec_s_t vector[NR_IOREQS],
 /*===========================================================================*
  *				paired_revoke				     *
  *===========================================================================*/
-static void paired_revoke(cp_grant_id_t *gids, iovec_s_t vectors[2][NR_IOREQS],
+static void paired_revoke(const cp_grant_id_t *gids,
+        iovec_s_t vectors[2][NR_IOREQS],
 	size_t *sizes, int count, int both)
 {
 	/* Revoke grants to drivers for a single request.

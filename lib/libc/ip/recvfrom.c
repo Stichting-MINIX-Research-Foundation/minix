@@ -105,7 +105,6 @@ static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	int r, t_errno;
 	size_t buflen, len;
 	void *buf;
-	struct sockaddr_in *sinp;
 	udp_io_hdr_t *io_hdrp;
 	struct sockaddr_in sin;
 

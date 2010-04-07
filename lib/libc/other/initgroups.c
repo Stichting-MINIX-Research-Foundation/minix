@@ -11,7 +11,7 @@ initgroups.c
 int initgroups(const char *name, gid_t basegid)
 {
   struct group *gr;
-  int r, found = 0, n = 0;
+  int r, n = 0;
   gid_t groups[NGROUPS];
 
   if((r = setgid(basegid)) < 0)

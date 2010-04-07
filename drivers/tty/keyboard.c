@@ -1182,7 +1182,6 @@ int scode;			/* scan code for a function key */
  * in kb_init, where NONE is set to indicate there is no interest in the key.
  * Returns FALSE on a key release or if the key is not observable.
  */
-  message m;
   int key;
   int proc_nr;
 

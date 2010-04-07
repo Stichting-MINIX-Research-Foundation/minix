@@ -249,8 +249,8 @@ _PROTOTYPE( static void rl_init_hw, (re_t *rep)				);
 _PROTOTYPE( static void rl_reset_hw, (re_t *rep)			);
 _PROTOTYPE( static void rl_confaddr, (re_t *rep)			);
 _PROTOTYPE( static void rl_rec_mode, (re_t *rep)			);
-_PROTOTYPE( static void rl_readv_s, (message *mp, int from_int)	);
-_PROTOTYPE( static void rl_writev_s, (message *mp, int from_int)	);
+_PROTOTYPE( static void rl_readv_s, (const message *mp, int from_int)	);
+_PROTOTYPE( static void rl_writev_s, (const message *mp, int from_int)	);
 _PROTOTYPE( static void rl_check_ints, (re_t *rep)			);
 _PROTOTYPE( static void rl_report_link, (re_t *rep)			);
 _PROTOTYPE( static void rl_do_reset, (re_t *rep)			);
@@ -262,7 +262,7 @@ _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
 _PROTOTYPE( static void check_int_events, (void)			);
 _PROTOTYPE( static void do_hard_int, (void)				);
 _PROTOTYPE( static void rtl8169_dump, (void)				);
-_PROTOTYPE( static void dump_phy, (re_t *rep)				);
+_PROTOTYPE( static void dump_phy, (const re_t *rep)			);
 _PROTOTYPE( static void rl_handler, (re_t *rep)				);
 _PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
 
@@ -363,7 +363,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the rtl8169 driver. */
 	u32_t inet_proc_nr;
@@ -1283,7 +1283,7 @@ void transmittest(re_t *rep)
 /*===========================================================================*
  *				rl_readv_s				     *
  *===========================================================================*/
-static void rl_readv_s(message *mp, int from_int)
+static void rl_readv_s(const message *mp, int from_int)
 {
 	int i, j, n, s, dl_port, re_client, count, size, index;
 	port_t port;
@@ -1425,7 +1425,7 @@ suspend:
 /*===========================================================================*
  *				rl_writev_s				     *
  *===========================================================================*/
-static void rl_writev_s(message *mp, int from_int)
+static void rl_writev_s(const message *mp, int from_int)
 {
 	int i, j, n, s, port, count, size;
 	int tx_head, re_client;
@@ -1790,7 +1790,7 @@ message *reply_mess;
 		panic("unable to mess_reply");
 }
 
-static void dump_phy(re_t *rep)
+static void dump_phy(const re_t *rep)
 {
 #if VERBOSE
 	port_t port;

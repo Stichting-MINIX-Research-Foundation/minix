@@ -23,8 +23,6 @@ unsigned long sizeup(char *);
 
 int main(int argc, char *argv[])
 {
-  int sec;
-
   if(argc != 2) {
 	fprintf(stderr, "Usage: %s <device>\n", argv[0]);
 	return 1;
@@ -41,7 +39,6 @@ char *device;
   int fd;
   struct partition entry;
   unsigned long d;
-  struct stat st;
 
   if ((fd = open(device, O_RDONLY)) == -1) {
   	perror("sizeup open");

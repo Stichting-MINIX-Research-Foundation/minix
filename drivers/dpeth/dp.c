@@ -155,7 +155,7 @@ static void dp_confaddr(dpeth_t * dep)
 **  Function:	Gets the default settings from 'dp_conf' table and
 **  		modifies them from the environment.
 */
-static void update_conf(dpeth_t * dep, dp_conf_t * dcp)
+static void update_conf(dpeth_t * dep, const dp_conf_t * dcp)
 {
   static char dpc_fmt[] = "x:d:x";
   long val;
@@ -184,7 +184,7 @@ static void update_conf(dpeth_t * dep, dp_conf_t * dcp)
 **  Name:	void do_dump(message *mp)
 **  Function:	Displays statistics on screen (SFx key from console)
 */
-static void do_dump(message *mp)
+static void do_dump(const message *mp)
 {
   dpeth_t *dep;
   int port;
@@ -244,7 +244,7 @@ static void get_userdata_s(int user_proc, cp_grant_id_t grant,
 **  Name:	void do_first_init(dpeth_t *dep, dp_conf_t *dcp);
 **  Function:	Init action to setup task
 */
-static void do_first_init(dpeth_t *dep, dp_conf_t *dcp)
+static void do_first_init(dpeth_t *dep, const dp_conf_t *dcp)
 {
 
   if (dep->de_linmem != 0) {
@@ -275,7 +275,7 @@ static void do_first_init(dpeth_t *dep, dp_conf_t *dcp)
 **  Function:	Checks for hardware presence.
 **  		Provides initialization of hardware and data structures
 */
-static void do_init(message * mp)
+static void do_init(const message * mp)
 {
   int port;
   dpeth_t *dep;
@@ -395,7 +395,7 @@ static int calc_iovec_size(iovec_dat_s_t * iovp)
 **  Name:	void do_vwrite_s(message *mp)
 **  Function:
 */
-static void do_vwrite_s(message * mp)
+static void do_vwrite_s(const message * mp)
 {
   int port, size;
   dpeth_t *dep;
@@ -436,7 +436,7 @@ static void do_vwrite_s(message * mp)
 **  Name:	void do_vread_s(message *mp, int vectored)
 **  Function:
 */
-static void do_vread_s(message * mp)
+static void do_vread_s(const message * mp)
 {
   int port, size;
   dpeth_t *dep;
@@ -479,7 +479,7 @@ static void do_vread_s(message * mp)
 **  Name:	void do_getstat_s(message *mp)
 **  Function:	Reports device statistics.
 */
-static void do_getstat_s(message * mp)
+static void do_getstat_s(const message * mp)
 {
   int port, rc;
   dpeth_t *dep;
@@ -517,7 +517,7 @@ message *mp;
 **  Name:	void do_stop(message *mp)
 **  Function:	Stops network interface.
 */
-static void do_stop(message * mp)
+static void do_stop(const message * mp)
 {
   int port;
   dpeth_t *dep;
@@ -537,7 +537,7 @@ static void do_stop(message * mp)
   return;
 }
 
-static void do_watchdog(void *message)
+static void do_watchdog(const void *UNUSED(message))
 {
 
   DEBUG(printf("\t no reply"));
@@ -574,7 +574,6 @@ EXTERN char **env_argv;
 PUBLIC int main(int argc, char **argv)
 {
   message m;
-  dpeth_t *dep;
   int rc;
 
   /* SEF local startup. */
@@ -659,7 +658,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the dpeth driver. */
   int rc, fkeys, sfkeys, tasknr;

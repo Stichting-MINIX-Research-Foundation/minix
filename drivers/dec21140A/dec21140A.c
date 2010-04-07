@@ -30,7 +30,7 @@ _PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t);                 );
 _PROTOTYPE( PRIVATE void  do_conf,           (const message *);              );
 _PROTOTYPE( PRIVATE void  do_get_name,       (message *);                    );
 _PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *);                    );
-_PROTOTYPE( PRIVATE void  do_interrupt,      (dpeth_t *);                    );
+_PROTOTYPE( PRIVATE void  do_interrupt,      (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *, int, int);          );
 _PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int);         );
 _PROTOTYPE( PRIVATE void  do_watchdog,       (void *);                       );
@@ -42,7 +42,7 @@ _PROTOTYPE( PRIVATE void  de_first_init,     (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  de_hw_conf,        (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  de_start,          (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE void  de_setup_frame,    (dpeth_t *);                    );
+_PROTOTYPE( PRIVATE void  de_setup_frame,    (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE u16_t de_read_rom,       (const dpeth_t *, u8_t, u8_t);  );
 _PROTOTYPE( PRIVATE int   de_calc_iov_size,  (iovec_dat_s_t *);              );
 _PROTOTYPE( PRIVATE void  de_next_iov,       (iovec_dat_s_t *);              );
@@ -707,7 +707,7 @@ PRIVATE void de_first_init(dpeth_t *dep)
   sys_irqenable(&dep->de_hook);
 }
 
-PRIVATE void do_interrupt(dpeth_t *dep){  
+PRIVATE void do_interrupt(const dpeth_t *dep){  
   u32_t val;
   val = io_inl(CSR_ADDR(dep, CSR5));
 
@@ -763,7 +763,7 @@ PRIVATE void de_start(const dpeth_t *dep){
   io_outl(CSR_ADDR(dep, CSR6), val);
 }
 
-PRIVATE void de_setup_frame(dpeth_t *dep){
+PRIVATE void de_setup_frame(const dpeth_t *dep){
   int i;
   u32_t val;
 

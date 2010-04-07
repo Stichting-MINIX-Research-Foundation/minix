@@ -152,8 +152,8 @@ static void make_group_sum(char *bufp, char *sump, sector_t sector, int index,
 /*===========================================================================*
  *				check_group_sum				     *
  *===========================================================================*/
-static int check_group_sum(char *bufp, char *sump, sector_t sector, int index,
- int count)
+static int check_group_sum(char *bufp, const char *sump, sector_t sector,
+  int index, int count)
 {
 	/* Check checksums in a group. Parameters are the same as in
 	 * make_group_sum(). Return OK if all checksums check out, or RET_REDO

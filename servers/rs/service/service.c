@@ -536,7 +536,6 @@ PRIVATE void do_irq(config_t *cpe)
 
 PRIVATE void do_io(config_t *cpe)
 {
-	int irq;
 	unsigned base, len;
 	char *check;
 
@@ -665,9 +664,6 @@ PRIVATE void do_pci_class(config_t *cpe)
 
 PRIVATE void do_pci(config_t *cpe)
 {
-	int i, call_nr, word, bits_per_word;
-	unsigned long mask;
-
 	if (cpe == NULL)
 		return;	/* Empty PCI statement */
 
@@ -811,7 +807,7 @@ PRIVATE void do_vm(config_t *cpe)
 
 PRIVATE void do_system(config_t *cpe)
 {
-	int i, call_nr;
+	int i;
 
 	/* Process a list of 'system' calls that are allowed */
 	for (; cpe; cpe= cpe->next)
@@ -1017,7 +1013,6 @@ PUBLIC int main(int argc, char **argv)
   message m;
   int result = EXIT_SUCCESS;
   int request;
-  int i;
   char *progname = NULL;
   struct passwd *pw;
 

@@ -137,8 +137,8 @@ PRIVATE phys_bytes createpde(
 /*===========================================================================*
  *				lin_lin_copy				     *
  *===========================================================================*/
-PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
-	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
+PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr, 
+	const struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
 {
 	u32_t addr;
 	proc_nr_t procslot;
@@ -476,7 +476,7 @@ PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 /*===========================================================================*
  *                              vm_contiguous                                *
  *===========================================================================*/
-PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
+PUBLIC int vm_contiguous(const struct proc *targetproc, u32_t vir_buf, size_t bytes)
 {
 	int first = 1, r;
 	u32_t prev_phys = 0;    /* Keep lints happy. */
@@ -900,7 +900,7 @@ PUBLIC void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
 /*===========================================================================*
  *				arch_umap				     *
  *===========================================================================*/
-PUBLIC int arch_umap(struct proc *pr, vir_bytes offset, vir_bytes count,
+PUBLIC int arch_umap(const struct proc *pr, vir_bytes offset, vir_bytes count,
 	int seg, phys_bytes *addr)
 {
 	switch(seg) {

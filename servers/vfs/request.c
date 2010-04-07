@@ -526,7 +526,6 @@ PUBLIC int req_mountpoint(fs_e, inode_nr)
 endpoint_t fs_e;
 ino_t inode_nr;
 {
-  int r;
   message m;
 
   /* Fill in request message */
@@ -1023,7 +1022,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
  * It also handles driver recovery mechanism and reissuing the
  * request which failed due to a dead driver.
  */
-  int r, old_driver_e, new_driver_e;
+  int r, old_driver_e;
   message origm, m;
 
   if(fs_e <= 0 || fs_e == NONE)

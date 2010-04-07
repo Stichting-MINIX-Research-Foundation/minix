@@ -181,7 +181,7 @@ unsigned ihash(const char *name)
 	return h & (arraysize(ignore_list) - 1);
 }
 
-void do_ignore(int add, char *name)
+void do_ignore(int add, const char *name)
 /* Add or remove a file to/from the list of files to ignore. */
 {
 	struct file **ipp, *ip;
@@ -208,7 +208,7 @@ void do_ignore(int add, char *name)
 	}
 }
 
-int is_ignored(char *name)
+int is_ignored(const char *name)
 /* Is a file in the list of ignored files? */
 {
 	struct file *ip;

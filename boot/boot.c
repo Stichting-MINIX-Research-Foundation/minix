@@ -773,7 +773,7 @@ static environment **searchenv(const char *name)
 #define b_getenv(name)	(*searchenv(name))
 /* Return the environment *structure* belonging to name, or nil if not found. */
 
-char *b_value(char *name)
+char *b_value(const char *name)
 /* The value of a variable. */
 {
 	environment *e= b_getenv(name);
@@ -781,7 +781,7 @@ char *b_value(char *name)
 	return e == nil || !(e->flags & E_VAR) ? nil : e->value;
 }
 
-static char *b_body(char *name)
+static char *b_body(const char *name)
 /* The value of a function. */
 {
 	environment *e= b_getenv(name);
@@ -789,7 +789,8 @@ static char *b_body(char *name)
 	return e == nil || !(e->flags & E_FUNCTION) ? nil : e->value;
 }
 
-static int b_setenv(int flags, char *name, char *arg, char *value)
+static int b_setenv(int flags, const char *name, const char *arg,
+  const char *value)
 /* Change the value of an environment variable.  Returns the flags of the
  * variable if you are not allowed to change it, 0 otherwise.
  */
@@ -838,7 +839,7 @@ int b_setvar(int flags, char *name, char *value)
 	return r;
 }
 
-void b_unset(char *name)
+void b_unset(const char *name)
 /* Remove a variable from the environment.  A special variable is reset to
  * its default value.
  */
@@ -919,7 +920,7 @@ static void get_parameters(void)
 {
 	char params[SECTOR_SIZE + 1];
 	token **acmds;
-	int r, bus, processor;
+	int r, processor;
 	memory *mp;
 	static char bus_type[][4] = {
 		"xt", "at", "mca"
@@ -1116,7 +1117,6 @@ dev_t name2dev(char *name)
 {
 	dev_t dev;
 	ino_t ino;
-	int drive;
 	struct stat st;
 	char *n, *s;
 

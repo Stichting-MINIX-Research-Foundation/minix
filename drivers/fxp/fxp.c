@@ -232,7 +232,7 @@ _PROTOTYPE( static void fxp_confaddr, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_rec_mode, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_writev, (message *mp, int from_int,
 							int vectored)	);
-_PROTOTYPE( static void fxp_writev_s, (message *mp, int from_int)	);
+_PROTOTYPE( static void fxp_writev_s, (const message *mp, int from_int)	);
 _PROTOTYPE( static void fxp_readv, (message *mp, int from_int, 
 							int vectored)	);
 _PROTOTYPE( static void fxp_readv_s, (message *mp, int from_int)	);
@@ -367,7 +367,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the fxp driver. */
 	int r;
@@ -1295,7 +1295,7 @@ suspend:
 /*===========================================================================*
  *				fxp_writev_s				     *
  *===========================================================================*/
-static void fxp_writev_s(message *mp, int from_int)
+static void fxp_writev_s(const message *mp, int from_int)
 {
 	cp_grant_id_t iov_grant;
 	vir_bytes iov_offset;

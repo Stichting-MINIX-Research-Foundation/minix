@@ -103,7 +103,7 @@ void hermes_struct_init (hermes_t * hw, u32_t address,
  * write HERMES_PCI_COR_MASK to the Configuration Option Register            *
  *****************************************************************************/
 int hermes_cor_reset (hermes_t *hw) {
-	int k, i;
+	int k;
 	u16_t reg;
 
 	/* Assert the reset until the card notice */
@@ -399,7 +399,6 @@ static int hermes_bap_seek (hermes_t * hw, int bap, u16_t id, u16_t offset) {
 	 * buffer */
 	int sreg = bap ? HERMES_SELECT1 : HERMES_SELECT0;
 	int oreg = bap ? HERMES_OFFSET1 : HERMES_OFFSET0;
-	int resp0;
 	int k;
 	u16_t reg;
 
@@ -743,7 +742,7 @@ void hermes_read_words (hermes_t * hw, int off, void *buf, unsigned count) {
  * registers are supported, but accessing I/O spaced registers should be     *
  * quite trivial                                                             *
  *****************************************************************************/
-u16_t hermes_read_reg (hermes_t * hw, u16_t off) {
+u16_t hermes_read_reg (const hermes_t * hw, u16_t off) {
 	int v = 0;
 	v = *((int *)(hw->locmem + (off << hw->reg_spacing)));
 	return (u16_t) v;
@@ -756,7 +755,7 @@ u16_t hermes_read_reg (hermes_t * hw, u16_t off) {
  * registers are supported, but accessing I/O spaced registers should be     *
  * quite trivial                                                             *
  *****************************************************************************/
-void hermes_write_reg (hermes_t * hw, u16_t off, u16_t val) {
+void hermes_write_reg (const hermes_t * hw, u16_t off, u16_t val) {
 	int v = (int) val;	
 	*(int *)(hw->locmem + (off << hw->reg_spacing)) = v;
 }

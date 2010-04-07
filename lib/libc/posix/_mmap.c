@@ -85,7 +85,6 @@ PUBLIC int vm_unmap(int endpt, void *addr)
 PUBLIC unsigned long vm_getphys(int endpt, void *addr)
 {
 	message m;
-	unsigned long ret;
 	int r;
 
 	m.VMPHYS_ENDPT = endpt;
@@ -100,7 +99,6 @@ PUBLIC unsigned long vm_getphys(int endpt, void *addr)
 PUBLIC u8_t vm_getrefcount(int endpt, void *addr)
 {
 	message m;
-	u8_t ret;
 	int r;
 
 	m.VMREFCNT_ENDPT = endpt;

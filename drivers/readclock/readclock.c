@@ -94,7 +94,6 @@ int main(int argc, char **argv)
   time_t now, rtc;
   int i, s;
   unsigned char mach_id, cmos_state;
-  struct sysgetenv sysgetenv;
 
   /* SEF local startup. */
   env_setargs(argc, argv);
@@ -231,7 +230,6 @@ void errmsg(char *s)
 void get_time(struct tm *t)
 {
   int osec, n;
-  unsigned long i;
 
   do {
 	osec = -1;

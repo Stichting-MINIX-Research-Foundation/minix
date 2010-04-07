@@ -1209,7 +1209,6 @@ static int
 fts_ufslinks(FTS *sp, const FTSENT *ent)
 {
 	struct _fts_private *priv;
-	const char **cpp;
 
 	priv = (struct _fts_private *)sp;
 	priv->ftsp_linksreliable = 0;

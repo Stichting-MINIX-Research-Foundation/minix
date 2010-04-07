@@ -217,7 +217,6 @@ register int c;
 set_profile(filename)
 char *filename;
 {	char pfile[200];
-	char psfile[200];
 	register int pfd, len;
 	chroff sbx_fdlen();
 	register char *profptr;

@@ -349,7 +349,6 @@ sbe_sdtab(pt, p, phys)
 register struct ptab *pt;
 int p, phys;
 {	register struct sdblk *sd;
-	register int res;
 
 	pt->pt_pflag = (p ? PTF_PRF : 0) | (phys ? PTF_SDPHYS : 0)
 			| PTF_OVFERR;
@@ -397,7 +396,7 @@ struct ptab *pt;
 	register struct smblk *sm;
 	struct sbfile *savfile;
 	chroff lastaddr;
-	int p, res, savidx, phys;
+	int p, savidx, phys;
 
 	phys = pt->pt_pflag&PTF_SDPHYS;	/* Set up physflag */
 	if(phys && (sd->sdfile == 0))	/* Ignore non-phys stuff if phys */

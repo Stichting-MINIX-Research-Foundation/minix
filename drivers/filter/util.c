@@ -29,7 +29,7 @@ char *flt_malloc(size_t size, char *sbuf, size_t ssize)
 /*===========================================================================*
  *				flt_free				     *
  *===========================================================================*/
-void flt_free(char *buf, size_t size, char *sbuf)
+void flt_free(char *buf, size_t size, const char *sbuf)
 {	
 	/* Free a buffer previously allocated with flt_malloc().
 	 */

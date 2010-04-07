@@ -63,7 +63,7 @@ static unsigned long crctab[] = {
   0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-unsigned long compute_crc( unsigned char *b, size_t n)
+unsigned long compute_crc(const unsigned char *b, size_t n)
 {
   int i;
   unsigned long s = 0;       

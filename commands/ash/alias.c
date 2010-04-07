@@ -55,13 +55,13 @@ __FBSDID("$FreeBSD: src/bin/sh/alias.c,v 1.18 2004/04/06 20:06:51 markm Exp $");
 
 STATIC struct alias *atab[ATABSIZE];
 
-STATIC void setalias(char *, char *);
-STATIC int unalias(char *);
+STATIC void setalias(const char *, const char *);
+STATIC int unalias(const char *);
 STATIC struct alias **hashalias(const char *);
 
 STATIC
 void
-setalias(char *name, char *val)
+setalias(const char *name, const char *val)
 {
 	struct alias *ap, **app;
 
@@ -114,7 +114,7 @@ setalias(char *name, char *val)
 }
 
 STATIC int
-unalias(char *name)
+unalias(const char *name)
 {
 	struct alias *ap, **app;
 
@@ -175,7 +175,7 @@ rmaliases(void)
 }
 
 struct alias *
-lookupalias(char *name, int check)
+lookupalias(const char *name, int check)
 {
 	struct alias *ap = *hashalias(name);
 

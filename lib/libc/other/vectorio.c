@@ -75,7 +75,6 @@ static ssize_t vectorio(int fildes, const struct iovec *iov,
 	int iovcnt, int readwrite)
 {
 	int i;
-	struct stat statbuf;
 	ssize_t totallen;
 
 	/* parameter sanity checks */

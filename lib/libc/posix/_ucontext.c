@@ -70,7 +70,7 @@ PUBLIC int getuctx(ucontext_t *ucp)
 PUBLIC void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
   va_list ap;
-  unsigned int *stack_top, *stack_guard;
+  unsigned int *stack_top;
 
   /* There are a number of situations that are erroneous, but we can't actually
      tell the caller something is wrong, because this is a void function.
@@ -158,7 +158,6 @@ PUBLIC void makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 PUBLIC int swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 {
   int r;
-  unsigned int *stack_guard;
 
   if ((oucp == NULL) || (ucp == NULL)) {
 	errno = EFAULT;

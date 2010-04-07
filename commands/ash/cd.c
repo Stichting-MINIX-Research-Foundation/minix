@@ -67,9 +67,9 @@ __FBSDID("$FreeBSD: src/bin/sh/cd.c,v 1.34 2004/04/06 20:06:51 markm Exp $");
 #include "show.h"
 #include "cd.h"
 
-STATIC int cdlogical(char *);
+STATIC int cdlogical(const char *);
 STATIC int cdphysical(const char *);
-STATIC int docd(char *, int, int);
+STATIC int docd(const char *, int, int);
 STATIC char *getcomponent(void);
 STATIC int updatepwd(const char *);
 
@@ -145,7 +145,7 @@ cdcmd(int argc, char **argv)
  * directory name if "print" is nonzero.
  */
 STATIC int
-docd(char *dest, int print, int phys)
+docd(const char *dest, int print, int phys)
 {
 
 	TRACE(("docd(\"%s\", %d, %d) called\n", dest, print, phys));
@@ -161,7 +161,7 @@ docd(char *dest, int print, int phys)
 }
 
 STATIC int
-cdlogical(char *dest)
+cdlogical(const char *dest)
 {
 	char *p;
 	char *q;

@@ -384,7 +384,6 @@ PRIVATE void sef_cb_signal_handler(int signo)
  * card                                                                      *
  *****************************************************************************/
 static void check_int_events(void) {
-	int i;
 	t_or *orp;
 
 	/* the interrupt message doesn't contain information about the port, try
@@ -427,10 +426,7 @@ static void or_getname(message *mp) {
  *****************************************************************************/
 static void do_hard_int(void)
 {
-	u16_t evstat;
-	hermes_t *hw;
 	int i,s;
-	t_or *orp;
 
 	for (i=0; i < OR_PORT_NR; i ++) {
 		/* Run interrupt handler at driver level. */
@@ -454,7 +450,6 @@ static void or_reset() {
 	static clock_t last_reset, now;	
 	t_or *orp;
 	int i, j, r;
-	u16_t irqmask;
 
 	if (OK != (r = getuptime(&now)))
 		panic("orinoco: getuptime() failed: %d", r);
@@ -499,8 +494,6 @@ static void or_reset() {
 static void or_dump (message *m)
  {
 	t_or *orp;
-	int err;
-	u16_t evstat =0, d;
 
 	for (orp = or_table; orp < or_table + OR_PORT_NR; orp++) {
 		if(orp->or_mode == OR_M_DISABLED) {
@@ -527,11 +520,10 @@ static void or_dump (message *m)
  * The main initialization function, called when a DL_INIT message comes in. *
  *****************************************************************************/
 static void or_init (message * mp) {
-	int port, err, i;
+	int port;
 	t_or *orp;
 	message reply;
 	static int first_time = 1;
-	clock_t t0,t1;
 
 	if (first_time) {
 		first_time = 0;
@@ -657,9 +649,10 @@ static void or_pci_conf () {
  * Try to find the card based on information provided by pci and get irq and *
  * bar                                                                       *
  *****************************************************************************/
-static int or_probe (t_or * orp) {
+static int or_probe (t_or * orp)
+{
 	u8_t ilr;
-	u32_t bar, reg, cpuspace_bar;
+	u32_t bar;
 	char *dname;
 	u16_t vid, did;
 	int i, r, devind, just_one;
@@ -748,9 +741,10 @@ static int or_probe (t_or * orp) {
  *                                                                           *
  * Map the memory mapped registers into user space memory                    *
  *****************************************************************************/
-static void map_hw_buffer(t_or *orp) {
+static void map_hw_buffer(t_or *orp)
+{
 	int r;
-	size_t o, size, reg_size;
+	size_t o, size;
 	char *buf, *abuf;	
 	hermes_t *hw = &(orp->hw);	
 
@@ -789,11 +783,10 @@ static void map_hw_buffer(t_or *orp) {
  * whether the card is memory mapped or in I/O space. Currently, only        *
  * memmory mapped is supported.                                              *
  *****************************************************************************/
-static u32_t or_get_bar (int devind, t_or * orp) {
-
-	u32_t bar, desired_bar;
-	int is_iospace, i;
-	u16_t check, check2;
+static u32_t or_get_bar (int devind, t_or * orp)
+{
+	u32_t bar;
+	int is_iospace;
 	hermes_t *hw = &(orp->hw);
 
 	/* bit 1 off the PCI_BAR register indicates whether the cards registers
@@ -850,7 +843,8 @@ static u32_t or_get_bar (int devind, t_or * orp) {
  *                                                                           *
  * Set the orinoco structure to default values                               *
  *****************************************************************************/
-static void or_init_struct (t_or * orp) {
+static void or_init_struct (t_or * orp)
+{
 	int i = 0;
 	static eth_stat_t empty_stat = { 0, 0, 0, 0, 0, 0 };
 
@@ -902,7 +896,8 @@ static void or_init_struct (t_or * orp) {
  * Initialize hardware and prepare for intercepting the interrupts. At the   *
  * end, the card is up and running                                           *
  *****************************************************************************/
-static void or_init_hw (t_or * orp) {
+static void or_init_hw (t_or * orp)
+{
 	int i, err, s;
 	hermes_t *hw = &(orp->hw);
 	static int first_time = TRUE;
@@ -971,13 +966,10 @@ static void or_init_hw (t_or * orp) {
  * In our case, we are mostly interested in the MAC address for now          *
  *****************************************************************************/
 
-static void or_readrids (hermes_t * hw, t_or * orp) {
-	int err, len, i;
-	struct hermes_idstring nickbuf;
-	u16_t reclen, d;
-
+static void or_readrids (hermes_t * hw, t_or * orp)
+{
 	/* Read the MAC address */
-	err = hermes_read_ltv (hw, USER_BAP, HERMES_RID_CNFOWNMACADDR,
+	int err = hermes_read_ltv (hw, USER_BAP, HERMES_RID_CNFOWNMACADDR,
 			       ETH_ALEN, NULL, &orp->or_address);
 	if (err) {
 		printf ("%s: failed to read MAC address!\n", orp->or_name);
@@ -992,10 +984,11 @@ static void or_readrids (hermes_t * hw, t_or * orp) {
  * Write some default rids to the card. A rid (resource identifier)          *
  * is a data item in the firmware, some configuration variable, e.g. WEP key *
  *****************************************************************************/
-static void or_writerids (hermes_t * hw, t_or * orp) {
+static void or_writerids (hermes_t * hw, t_or * orp)
+{
 	int err;
 	struct hermes_idstring idbuf;
-	u16_t port_type, max_data_len, reclen;
+	u16_t port_type;
 	static char essid[IW_ESSID_MAX_SIZE + 1];
 	static char wepkey0[LARGE_KEY_LENGTH + 1];
 
@@ -1111,12 +1104,9 @@ static void or_rec_mode (t_or * orp) {
  *****************************************************************************/
 static void or_handler (t_or *orp)
 {
-	int i, err, length, nr = 0;
+	int length;
 	u16_t evstat, events, fid;
-	hermes_t *hw;
-	struct hermes_tx_descriptor desc;
-	
-	hw = &(orp->hw);
+	hermes_t *hw = &(orp->hw);
 	
 beginning:
 	/* Retrieve which kind of event happened */
@@ -1296,7 +1286,8 @@ next:
  * Will be called regularly to see whether the driver has crashed. If that   *
  * condition is detected, reset the driver and card                          *
  *****************************************************************************/
-static void or_watchdog_f(timer_t *tp) {
+static void or_watchdog_f(timer_t *tp)
+{
 	int i;
 	t_or *orp;
 	
@@ -1334,7 +1325,8 @@ static void or_watchdog_f(timer_t *tp) {
  *                mess_reply                                                 *
  *****************************************************************************/
 
-static void mess_reply (message * req, message * reply_mess) {
+static void mess_reply (message * req, message * reply_mess)
+{
 	if (send (req->m_source, reply_mess) != 0)
 		panic("orinoco: unable to mess_reply");
 
@@ -1348,19 +1340,17 @@ static void mess_reply (message * req, message * reply_mess) {
  * of or_writev_s. We left out the comments. For an explanation, see         *
  * or_writev_s                                                               *
 ******************************************************************************/
-static void or_writev (message * mp, int from_int, int vectored) {
-	int port, or_client, count, size, err, data_len, data_off, tx_head;
-	int o, j, n, i, s, p, cps ;
+static void or_writev (message * mp, int from_int, int vectored)
+{
+	int port, or_client, count, size, err, data_len, data_off;
+	int o, j, n, i, s, p, cps;
 	struct ethhdr *eh;
 	t_or *orp;
-	clock_t timebefore, t0;	
-	phys_bytes phys_user;
 	hermes_t *hw;
 	struct hermes_tx_descriptor desc;
 	struct header_struct hdr;
 
 	iovec_t *iovp;
-	phys_bytes phys_databuf;
 	u16_t txfid;
 	static u8_t databuf[IEEE802_11_DATA_LEN + ETH_HLEN + 2 + 1];
 	memset (databuf, 0, IEEE802_11_DATA_LEN + ETH_HLEN + 3);
@@ -1757,9 +1747,10 @@ static void reply (t_or * orp, int err, int may_block) {
  *                                                                           *
  * Process information which comes in from the card                          *
  *****************************************************************************/
-static void or_ev_info (t_or * orp) {
+static void or_ev_info (t_or * orp)
+{
 	u16_t infofid;
-	int err, len, type, i;
+	int err, len, type;
 	hermes_t *hw = &orp->hw;
 
 	struct {
@@ -1903,10 +1894,8 @@ static void print_linkstatus (t_or * orp, u16_t status) {
  *                                                                           *
  * Process events which have been postponed in the interrupt handler         *
  *****************************************************************************/
-static void or_check_ints (t_or * orp) {
-	int or_flags;
-	hermes_t *hw = &orp->hw;
-
+static void or_check_ints (t_or * orp)
+{
 	if (orp->or_need_reset)
 		or_reset();
 	if ((orp->rx_first!=orp->rx_last) && (orp->or_flags & OR_F_READING)) {
@@ -1965,18 +1954,10 @@ static int is_ethersnap(struct header_struct *hdr)  {
  * or_readv_s                                                                *
  *****************************************************************************/
 static void or_readv (message * mp, int from_int, int vectored) {
-	int i, j, n, o, s, s1, dl_port, or_client, count, size, err, yep, cps;
-	port_t port;
-	clock_t timebefore;
-	unsigned amount, totlen, packlen;
-	struct hermes_rx_descriptor desc;
-	phys_bytes dst_phys;
-	u16_t d_start, d_end, status;
-	struct header_struct hdr;
-	int length, offset;
-	u32_t l, rxstat;
-	struct ethhdr *eh;
-	struct header_struct *h;
+	int i, j, n, o, s, dl_port;
+	int or_client, count;
+	int size, cps;
+	int length;
 	t_or *orp;
 	iovec_t *iovp;
 	u8_t *databuf;
@@ -2082,24 +2063,12 @@ suspend_readv :
  * Copy the data which is stored in orp->rx_buf[orp->rx_first] in the vector *
  * which was given with the message *mp                                      *
  *****************************************************************************/
-static void or_readv_s (message * mp, int from_int) {
-	int i, j, n, o, s, s1, dl_port, or_client, count, size, err, cps;
-	int iov_offset = 0, length, offset;
-	port_t port;
-	clock_t timebefore;
-	unsigned amount, totlen, packlen;
-	struct hermes_rx_descriptor desc;
-	phys_bytes dst_phys;
-	u16_t d_start, d_end, status;
-	struct header_struct hdr;
-	u32_t l, rxstat;
-	struct ethhdr *eh;
-	struct header_struct *h;
+static void or_readv_s (message * mp, int from_int)
+{
+	int i, j, n, o, s, dl_port, or_client, count, size, cps;
+	int iov_offset = 0, length;
 	t_or *orp;
-
 	iovec_s_t *iovp;
-	phys_bytes databuf_phys;
-
 	u8_t *databuf;
 
 	dl_port = mp->DL_PORT;
@@ -2315,7 +2284,8 @@ static int or_get_recvd_packet(t_or *orp, u16_t rxfid, u8_t *databuf) {
  * Return the statistics structure. The statistics aren't updated until now, *
  * so this won't return much interesting yet.                                *
  *****************************************************************************/
-static void or_getstat (message * mp) {
+static void or_getstat (message * mp)
+{
 	int r, port;
 	eth_stat_t stats;
 	t_or *orp;

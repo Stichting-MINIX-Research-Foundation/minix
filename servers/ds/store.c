@@ -126,7 +126,7 @@ PRIVATE endpoint_t ds_getprocep(const char *s)
 /*===========================================================================*
  *				 check_auth				     *
  *===========================================================================*/
-PRIVATE int check_auth(struct data_store *p, endpoint_t ep, int perm)
+PRIVATE int check_auth(const struct data_store *p, endpoint_t ep, int perm)
 {
 /* Check authorization for a given type of permission. */
 	char *source;
@@ -141,7 +141,7 @@ PRIVATE int check_auth(struct data_store *p, endpoint_t ep, int perm)
 /*===========================================================================*
  *				get_key_name				     *
  *===========================================================================*/
-PRIVATE int get_key_name(message *m_ptr, char *key_name)
+PRIVATE int get_key_name(const message *m_ptr, char *key_name)
 {
 /* Get key name given an input message. */
   int r;
@@ -169,7 +169,7 @@ PRIVATE int get_key_name(message *m_ptr, char *key_name)
 /*===========================================================================*
  *			     check_snapshot_index			     *
  *===========================================================================*/
-PRIVATE int check_snapshot_index(struct data_store *dsp, int index)
+PRIVATE int check_snapshot_index(const struct data_store *dsp, int index)
 {
 /* See if the given snapshot index is valid. */
   int min;
@@ -184,7 +184,7 @@ PRIVATE int check_snapshot_index(struct data_store *dsp, int index)
 /*===========================================================================*
  *				check_sub_match				     *
  *===========================================================================*/
-PRIVATE int check_sub_match(struct subscription *subp,
+PRIVATE int check_sub_match(const struct subscription *subp,
 		struct data_store *dsp, endpoint_t ep)
 {
 /* Check if an entry matches a subscription. Return 1 in case of match. */
@@ -227,7 +227,7 @@ PRIVATE void update_subscribers(struct data_store *dsp, int set)
 /*===========================================================================*
  *		               map_service                                   *
  *===========================================================================*/
-PRIVATE int map_service(struct rprocpub *rpub)
+PRIVATE int map_service(const struct rprocpub *rpub)
 {
 /* Map a new service by registering its label. */
   struct data_store *dsp;
@@ -489,7 +489,7 @@ PUBLIC int do_retrieve(message *m_ptr)
 /*===========================================================================*
  *				do_retrieve_label			     *
  *===========================================================================*/
-PUBLIC int do_retrieve_label(message *m_ptr)
+PUBLIC int do_retrieve_label(const message *m_ptr)
 {
   struct data_store *dsp;
   int r;
@@ -743,7 +743,7 @@ PUBLIC int do_snapshot(message *m_ptr)
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
-PUBLIC int do_getsysinfo(message *m_ptr)
+PUBLIC int do_getsysinfo(const message *m_ptr)
 {
   vir_bytes src_addr;
   size_t length;

@@ -152,7 +152,6 @@ main(argc, argv)
 	int argc;
 	register char **argv;
 {
-	FILE *fp;
 	register char *s;
 
 	prog_name= argv[0];
@@ -620,8 +619,6 @@ decode(pers)
 {
 	char buffer[256];
 	register char *bp, *gp, *lp;
-	int alldigits;
-	int hasspace;
 	int len;
 
 	pers->realname = 0;
@@ -888,9 +885,7 @@ netfinger(name)
 	char *name;
 {
 	char *host;
-	char fname[100];
 	struct hostent *hp;
-	struct servent *sp;
 	int s, result;
 #if !_MINIX
 	char *rindex();

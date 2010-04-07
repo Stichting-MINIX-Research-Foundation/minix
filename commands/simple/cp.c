@@ -346,7 +346,7 @@ static char *link_islink(const struct stat *stp, const char *file)
     return nil;
 }
 
-int trylink(const char *src, const char *dst, struct stat *srcst,
+int trylink(const char *src, const char *dst, const struct stat *srcst,
 			const struct stat *dstst)
 /* Keep the link structure intact if src has been seen before. */
 {

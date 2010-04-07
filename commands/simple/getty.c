@@ -77,7 +77,7 @@ int readch(void)
 
 /* Handle the process of a GETTY.
  */
-void do_getty(char *name, size_t len, char **args, char *ttyname)
+void do_getty(char *name, size_t len, char **args, const char *ttyname)
 {
   register char *np, *s, *s0;
   int ch;

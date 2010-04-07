@@ -798,7 +798,7 @@ struct window *win;
 {	register int i, n;
 	register struct scr_line *s;
 	struct window *w;
-	int top, bot, dspf, num, isave, noicost, nodcost, iline, dline;
+	int top, bot, dspf, num, noicost, nodcost, iline, dline;
 #if FX_SOWIND
 	int oldso;
 #endif
@@ -1354,7 +1354,6 @@ struct scr_line *olds;
 {	register struct scr_line *s;
 	register int col, scrw;
 	char *cp;
-	int ch;
 
 	col = 0;
 	scrw = scr_wid;

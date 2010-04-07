@@ -1631,7 +1631,7 @@ struct priv *privp;
 	struct rprocpub *tmp_rpub;
 	endpoint_t endpoint;
 	int r;
-	int slot_nr, priv_id;
+	int priv_id;
 	struct priv priv;
 	struct rprocpub *rpub;
 

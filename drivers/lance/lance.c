@@ -105,7 +105,7 @@ _PROTOTYPE( static void ec_send, (ether_card_t *ec)                     );
 _PROTOTYPE( static void ec_recv, (ether_card_t *ec)                     );
 _PROTOTYPE( static void do_vwrite_s, 
             (message *mp, int from_int)                              );
-_PROTOTYPE( static void do_vread_s, (message *mp)                  );
+_PROTOTYPE( static void do_vread_s, (const message *mp)                  );
 _PROTOTYPE( static void ec_user2nic,
             (ether_card_t *dep, iovec_dat_t *iovp,
              vir_bytes offset, int nic_addr,
@@ -372,7 +372,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the lance driver. */
    int r;
@@ -1067,7 +1067,7 @@ ether_card_t *ec;
 /*===========================================================================*
  *                              do_vread_s                                   *
  *===========================================================================*/
-static void do_vread_s(message *mp)
+static void do_vread_s(const message *mp)
 {
    int port, count, r;
    ether_card_t *ec;

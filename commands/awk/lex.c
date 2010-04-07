@@ -434,7 +434,7 @@ int string(void)
 }
 
 
-int binsearch(char *w, Keyword *kp, int n)
+int binsearch(const char *w, const Keyword *kp, int n)
 {
 	int cond, low, mid, high;
 

@@ -18,7 +18,6 @@
 PRIVATE int rs_down(char *label)
 {
 	char cmd[200];
-	message m;
 	if(strlen(_PATH_SERVICE)+strlen(label)+50 >= sizeof(cmd))
 		return -1;
 	sprintf(cmd, _PATH_SERVICE " down '%s'", label);

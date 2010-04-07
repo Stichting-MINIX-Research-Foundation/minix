@@ -1,7 +1,6 @@
 /*	seekdir()					Author: Kees J. Bot
  *								24 Apr 1989
  */
-#define nil 0
 #include <lib.h>
 #define lseek	_lseek
 #define readdir	_readdir
@@ -14,9 +13,7 @@
 int seekdir(DIR *dp, off_t pos)
 /* Seek to position pos in a directory. */
 {
-	int off;
-
-	if (dp == nil) { errno= EBADF; return -1; }
+	if (dp == NULL) { errno= EBADF; return -1; }
 
 	dp->_count= 0;
 

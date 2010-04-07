@@ -55,7 +55,7 @@ _PROTOTYPE( PRIVATE void e1000_reg_unset, (e1000_t *e, uint32_t reg,
 _PROTOTYPE( PRIVATE u16_t eeprom_eerd, (void *e, int reg)		);
 _PROTOTYPE( PRIVATE u16_t eeprom_ich,  (void *e, int reg)		);
 _PROTOTYPE( PRIVATE int eeprom_ich_init, (e1000_t *e)		        );
-_PROTOTYPE( PRIVATE int eeprom_ich_cycle, (e1000_t *e, u32_t timeout)   );
+_PROTOTYPE( PRIVATE int eeprom_ich_cycle, (const e1000_t *e, u32_t timeout) );
 _PROTOTYPE( PRIVATE void reply, (e1000_t *e, int err, int may_block)	);
 _PROTOTYPE( PRIVATE void mess_reply, (message *req, message *reply)	);
 
@@ -135,7 +135,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the e1000 driver. */
     int r;
@@ -1083,7 +1083,7 @@ out:
 /*===========================================================================* 
  *                              eeprom_ich_cycle                             * 
  *===========================================================================*/
-PRIVATE int eeprom_ich_cycle(e1000_t *e, u32_t timeout)
+PRIVATE int eeprom_ich_cycle(const e1000_t *e, u32_t timeout)
 {
     union ich8_hws_flash_ctrl hsflctl;
     union ich8_hws_flash_status hsfsts;

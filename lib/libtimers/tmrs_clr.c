@@ -11,7 +11,6 @@ clock_t *next_time;
 /* Deactivate a timer and remove it from the timers queue. 
  */
   timer_t **atp;
-  struct proc *p;
   clock_t prev_time;
 
   if(*tmrs)

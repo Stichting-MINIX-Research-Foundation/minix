@@ -162,10 +162,10 @@ _PROTOTYPE( void do_ser_debug, (void)					);
 _PROTOTYPE( int arch_get_params, (char *parm, int max));
 _PROTOTYPE( int arch_set_params, (char *parm, int max));
 _PROTOTYPE( void arch_pre_exec, (struct proc *pr, u32_t, u32_t));
-_PROTOTYPE( int arch_umap, (struct proc *pr, vir_bytes, vir_bytes,
+_PROTOTYPE( int arch_umap, (const struct proc *pr, vir_bytes, vir_bytes,
 	int, phys_bytes *));
 _PROTOTYPE( int arch_do_vmctl, (message *m_ptr, struct proc *p)); 
-_PROTOTYPE( int vm_contiguous, (struct proc *targetproc, vir_bytes vir_buf, size_t count));
+_PROTOTYPE( int vm_contiguous, (const struct proc *targetproc, vir_bytes vir_buf, size_t count));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (const struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
 _PROTOTYPE( int delivermsg, (struct proc *target));

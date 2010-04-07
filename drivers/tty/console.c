@@ -821,7 +821,6 @@ PUBLIC void do_video(message *m)
 		  case TIOCUNMAPMEM: {
 			int r, do_map;
 			struct mapreqvm mapreqvm;
-			void *result;
 
 			do_map= (m->REQUEST == TIOCMAPMEM);	/* else unmap */
 
