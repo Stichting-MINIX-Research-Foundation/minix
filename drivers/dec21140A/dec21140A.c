@@ -43,7 +43,7 @@ _PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  de_hw_conf,        (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  de_start,          (const dpeth_t *);              );
 _PROTOTYPE( PRIVATE void  de_setup_frame,    (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE u16_t de_read_rom,       (dpeth_t *, u8_t, u8_t);        );
+_PROTOTYPE( PRIVATE u16_t de_read_rom,       (const dpeth_t *, u8_t, u8_t);  );
 _PROTOTYPE( PRIVATE int   de_calc_iov_size,  (iovec_dat_s_t *);              );
 _PROTOTYPE( PRIVATE void  de_next_iov,       (iovec_dat_s_t *);              );
 _PROTOTYPE( PRIVATE void  do_vwrite_s,       (const message *, int);         );
