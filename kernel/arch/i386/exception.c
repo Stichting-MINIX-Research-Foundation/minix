@@ -229,7 +229,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 			  (unsigned) saved_proc->p_reg.pc);
 	  proc_stacktrace(saved_proc);
 
-	  panic("exception in a kernel task: %d",  saved_proc->p_endpoint);
+	  panic("Unhandled kernel exception");
   }
   else {
 	  /* in an early stage of boot process we don't have processes yet */
