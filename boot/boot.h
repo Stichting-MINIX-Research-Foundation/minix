@@ -101,12 +101,12 @@ int dev_open(void), dev_close(void);
 			/* Open device and determine params / close device. */
 int dev_boundary(u32_t sector);
 			/* True if sector is on a track boundary. */
-int readsectors(u32_t bufaddr, u32_t sector, U8_t count);
+int readsectors(u32_t bufaddr, u32_t sector, u8_t count);
 			/* Read 1 or more sectors from "device". */
-int writesectors(u32_t bufaddr, u32_t sector, U8_t count);
+int writesectors(u32_t bufaddr, u32_t sector, u8_t count);
 			/* Write 1 or more sectors to "device". */
 
-int biosreadsectors(u32_t bufaddr, u32_t sector, U8_t count);
+int biosreadsectors(u32_t bufaddr, u32_t sector, u8_t count);
 
 int getch(void);
 			/* Read a keypress. */

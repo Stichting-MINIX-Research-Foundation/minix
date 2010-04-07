@@ -125,7 +125,7 @@ static const char *bios_err(int err)
  * sector addressing, we check if the device is a CD in readsectors() and if so,
  * read it into our own buffer first 
  */
-int readsectors(u32_t bufaddr, u32_t sector, U8_t count)
+int readsectors(u32_t bufaddr, u32_t sector, u8_t count)
 {
 #define CDSECTOR_SIZE 2048
 	static char cdbuf[CDSECTOR_SIZE];

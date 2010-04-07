@@ -114,9 +114,7 @@ typedef int            Dev_t;
 typedef int 	  _mnx_Gid_t;
 typedef int 	     Nlink_t;
 typedef int 	  _mnx_Uid_t;
-typedef int             U8_t;
 typedef unsigned long  U32_t;
-typedef int             I8_t;
 typedef int            I16_t;
 typedef long           I32_t;
 

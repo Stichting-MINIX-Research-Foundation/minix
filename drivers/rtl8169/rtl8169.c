@@ -212,10 +212,7 @@ static unsigned my_inl(U16_t port)
 #define rl_inw(port, offset)	(my_inw((port) + (offset)))
 #define rl_inl(port, offset)	(my_inl((port) + (offset)))
 
-FORWARD _PROTOTYPE(void my_outb, (U16_t port, U8_t value));
-FORWARD _PROTOTYPE(void my_outw, (U16_t port, U16_t value));
-FORWARD _PROTOTYPE(void my_outl, (U16_t port, U32_t value));
-static void my_outb(U16_t port, U8_t value)
+static void my_outb(U16_t port, u8_t value)
 {
 	int s;
 

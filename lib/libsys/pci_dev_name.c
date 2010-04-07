@@ -9,9 +9,7 @@ pci_dev_name.c
 /*===========================================================================*
  *				pci_dev_name				     *
  *===========================================================================*/
-PUBLIC char *pci_dev_name(vid, did)
-u16_t vid;
-u16_t did;
+PUBLIC char *pci_dev_name(u16_t vid, u16_t did)
 {
 	static char name[PCIINFO_ENTRY_SIZE];	/* We need a better interface for this */
 

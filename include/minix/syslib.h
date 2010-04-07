@@ -231,19 +231,19 @@ _PROTOTYPE( void pci_init, (void)					);
 _PROTOTYPE( void pci_init1, (char *name)				);
 _PROTOTYPE( int pci_first_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_next_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( int pci_find_dev, (U8_t bus, U8_t dev, U8_t func,
+_PROTOTYPE( int pci_find_dev, (u8_t bus, u8_t dev, u8_t func,
 							int *devindp)	);
 _PROTOTYPE( void pci_reserve, (int devind)				);
 _PROTOTYPE( int pci_reserve_ok, (int devind)				);
 _PROTOTYPE( void pci_ids, (int devind, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( void pci_rescan_bus, (U8_t busnr)				);
+_PROTOTYPE( void pci_rescan_bus, (u8_t busnr)				);
 _PROTOTYPE( u8_t pci_attr_r8, (int devind, int port)			);
 _PROTOTYPE( u16_t pci_attr_r16, (int devind, int port)			);
 _PROTOTYPE( u32_t pci_attr_r32, (int devind, int port)			);
-_PROTOTYPE( void pci_attr_w8, (int devind, int port, U8_t value)	);
-_PROTOTYPE( void pci_attr_w16, (int devind, int port, U16_t value)	);
+_PROTOTYPE( void pci_attr_w8, (int devind, int port, u8_t value)	);
+_PROTOTYPE( void pci_attr_w16, (int devind, int port, u16_t value)	);
 _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
-_PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
+_PROTOTYPE( char *pci_dev_name, (u16_t vid, u16_t did)			);
 _PROTOTYPE( char *pci_slot_name, (int devind)				);
 _PROTOTYPE( int pci_set_acl, (struct rs_pci *rs_pci)			);
 _PROTOTYPE( int pci_del_acl, (endpoint_t proc_ep)			);

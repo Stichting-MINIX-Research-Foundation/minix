@@ -14,7 +14,7 @@ Created:	Jan 15, 1992 by Philip Homburg
 unsigned inb(U16_t _port);
 unsigned inw(U16_t _port);
 unsigned inl(U32_t _port);
-void outb(U16_t _port, U8_t _value);
+void outb(U16_t _port, u8_t _value);
 void outw(U16_t _port, U16_t _value);
 void outl(U16_t _port, U32_t _value);
 void insb(U16_t _port, void *_buf, size_t _count);

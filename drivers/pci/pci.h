@@ -7,13 +7,13 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <minix/rs.h>
 
 /* tempory functions: to be replaced later (see pci_intel.h) */
-_PROTOTYPE( unsigned pci_inb, (U16_t port) );
-_PROTOTYPE( unsigned pci_inw, (U16_t port) );
-_PROTOTYPE( unsigned pci_inl, (U16_t port) );
+_PROTOTYPE( unsigned pci_inb, (u16_t port) );
+_PROTOTYPE( unsigned pci_inw, (u16_t port) );
+_PROTOTYPE( unsigned pci_inl, (u16_t port) );
 
-_PROTOTYPE( void pci_outb, (U16_t port, U8_t value) );
-_PROTOTYPE( void pci_outw, (U16_t port, U16_t value) );
-_PROTOTYPE( void pci_outl, (U16_t port, U32_t value) );
+_PROTOTYPE( void pci_outb, (u16_t port, u8_t value) );
+_PROTOTYPE( void pci_outw, (u16_t port, u16_t value) );
+_PROTOTYPE( void pci_outl, (u16_t port, u32_t value) );
 
 struct pci_vendor
 {
