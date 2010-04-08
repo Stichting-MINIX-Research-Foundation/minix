@@ -135,6 +135,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
   env_parse("bios_remap_first", "d", 0, &v, 0, 1);
   remap_first = v;
 
+  /* Announce we are up! */
+  driver_announce();
+
   return(OK);
 }
 

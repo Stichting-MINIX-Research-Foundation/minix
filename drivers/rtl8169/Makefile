@@ -2,8 +2,8 @@
 PROG=	rtl8169
 SRCS=	rtl8169.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lnetdriver -lsys -ltimers
 
 MAN=
 

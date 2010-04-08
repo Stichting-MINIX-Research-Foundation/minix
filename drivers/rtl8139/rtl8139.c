@@ -204,6 +204,7 @@ EXTERN char **env_argv;
 int main(int argc, char *argv[])
 {
 	int r;
+	int ipc_status;
 
 	/* SEF local startup. */
 	env_setargs(argc, argv);
@@ -211,10 +212,10 @@ int main(int argc, char *argv[])
 
 	while (TRUE)
 	{
-		if ((r= sef_receive(ANY, &m)) != OK)
-			panic("sef_receive failed: %d", r);
+		if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("netdriver_receive failed: %d", r);
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case CLOCK:
 					/* 
@@ -301,7 +302,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 #if RTL8139_FKEY
 	int fkeys, sfkeys;
 #endif
-	u32_t inet_proc_nr;
 	int r;
 	re_t *rep;
 	long v;
@@ -326,16 +326,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
 		rl_init_buf(rep);
 
-	/* Try to notify INET that we are present (again). If INET cannot
-	 * be found, assume this is the first time we started and INET is
-	 * not yet alive.
-	 */
-	r= ds_retrieve_label_num("inet", &inet_proc_nr);
-	if (r == OK)
-		notify(inet_proc_nr);
-	else if (r != ESRCH)
-		printf("rtl8139: ds_retrieve_label_num failed for 'inet': %d\n",
-			r);
+	/* Announce we are up! */
+	netdriver_announce();
 
 	return(OK);
 }
@@ -2970,21 +2962,18 @@ int pci_func;
 {
 	int r;
 	endpoint_t dev_e;
-	u32_t u32;
 	message m;
 
-	r= ds_retrieve_label_num("amddev", &u32);
+	r= ds_retrieve_label_endpt("amddev", &dev_e);
 	if (r != OK)
 	{
 #if 0
 		printf(
-		"rtl8139`tell_dev: ds_retrieve_label_num failed for 'amddev': %d\n",
+		"rtl8139`tell_dev: ds_retrieve_label_endpt failed for 'amddev': %d\n",
 			r);
 #endif
 		return;
 	}
-
-	dev_e= u32;
 
 	m.m_type= IOMMU_MAP;
 	m.m2_i1= pci_bus;

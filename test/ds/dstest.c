@@ -124,23 +124,20 @@ void test_mem(void)
 void test_label(void)
 {
 	int r;
-	char get_label[DS_MAX_KEYLEN];
-	unsigned long num;
+	char label[DS_MAX_KEYLEN];
+	endpoint_t endpoint;
 
-	/* Publish and retrieve. */
-	r = ds_publish_label(key_label, 1234, 0);
+	/* Retrieve own label and endpoint. */
+	r = ds_retrieve_label_name(label, getprocnr());
 	assert(r == OK);
-	r = ds_retrieve_label_num(key_label, &num);
-	assert(r == OK && num == 1234);
+	r = ds_retrieve_label_endpt(label, &endpoint);
+	assert(r == OK && endpoint == getprocnr());
 
-	/* Here are the differences w.r.t. U32. */
-	r = ds_publish_label("hello", 1234, 0);
-	assert(r == EEXIST);
-	r = ds_retrieve_label_name(get_label, 1234);
-	assert(r == OK && strcmp(key_label, get_label) == 0);
-
-	r = ds_delete_label(key_label);
-	assert(r == OK);
+	/* Publish and delete. */
+	r = ds_publish_label(label, endpoint, 0);
+	assert(r == EPERM);
+	r = ds_delete_label(label);
+	assert(r == EPERM);
 
 	printf("DSTEST: LABEL test successful!\n");
 }

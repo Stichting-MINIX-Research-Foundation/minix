@@ -594,17 +594,9 @@ PUBLIC int do_svrctl()
 		/* If a driver has completed its exec(), it can be announced
 		 * to be up.
 		*/
-		if(fproc[proc_nr_n].fp_execced) {
-			/* Reply before calling dev_up */
-#if 0
-			printf("do_svrctl: replying before dev_up\n");
-#endif
-			reply(who_e, r);
-			dev_up(major);
-			r= SUSPEND;
-		} else {
-			dmap[major].dmap_flags |= DMAP_BABY;
-		}
+		reply(who_e, r);
+		dev_up(major);
+		r= SUSPEND;
 	}
 
 	return(r);
@@ -630,6 +622,38 @@ struct mem_map *seg_ptr;
 	return OK;
 }
 
+/*===========================================================================*
+ *				 ds_event				     *
+ *===========================================================================*/
+PUBLIC void ds_event()
+{
+	char key[DS_MAX_KEYLEN];
+	char *driver_prefix = "drv.vfs.";
+	u32_t value;
+	int type;
+	endpoint_t owner_endpoint;
+	int r;
 
+	/* Get the event and the owner from DS. */
+	r = ds_check(key, &type, &owner_endpoint);
+	if(r != OK) {
+		if(r != ENOENT)
+			printf("vfs: ds_event: ds_check failed: %d\n", r);
+		return;
+	}
+	r = ds_retrieve_u32(key, &value);
+	if(r != OK) {
+		printf("vfs: ds_event: ds_retrieve_u32 failed\n");
+		return;
+	}
 
+	/* Only check for VFS driver up events. */
+	if(strncmp(key, driver_prefix, sizeof(driver_prefix))
+	   || value != DS_DRIVER_UP) {
+		return;
+	}
+
+	/* Perform up. */
+	dmap_endpt_up(owner_endpoint);
+}
 

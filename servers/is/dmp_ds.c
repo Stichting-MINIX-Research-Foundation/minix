@@ -17,13 +17,13 @@ PUBLIC void data_store_dmp()
   }
 
   printf("Data store contents:\n");
-  printf("-slot- ------key------ -----owner----- ---type--- ----value---\n");
+  printf("-slot- -----------key----------- -----owner----- ---type--- ----value---\n");
   for(i = prev_i; i < NR_DS_KEYS && n < LINES; i++) {
 	p = &ds_store[i];
 	if(!(p->flags & DSF_IN_USE))
 		continue;
 
-	printf("%6d %-15s %-15s ", i, p->key, p->owner);
+	printf("%6d %-25s %-15s ", i, p->key, p->owner);
 	switch(p->flags & DSF_MASK_TYPE) {
 	case DSF_TYPE_U32:
 		printf("%-10s %12u\n", "U32", p->u.u32);

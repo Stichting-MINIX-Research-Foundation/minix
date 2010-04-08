@@ -22,6 +22,7 @@
 #include <sys/ioc_disk.h>
 #include <machine/pci.h>
 #include <sys/mman.h>
+#include <sys/svrctl.h>
 
 /* Variables. */
 
@@ -258,13 +259,16 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /* Initialize the at_wini driver. */
   system_hz = sys_hz();
 
-  init_buffer();
+  driver_init_buffer();
 
   w_identify_wakeup_ticks = WAKEUP_TICKS;
   wakeup_ticks = WAKEUP_TICKS;
 
   /* Set special disk parameters. */
   init_params();
+
+  /* Announce we are up! */
+  driver_announce();
 
   return(OK);
 }
@@ -1836,6 +1840,7 @@ PRIVATE void w_intr_wait()
   int r;
   unsigned long w_status;
   message m;
+  int ipc_status;
 
   if (w_wn->irq != NO_IRQ) {
 	/* Wait for an interrupt that sets w_status to "not busy".
@@ -1843,9 +1848,9 @@ PRIVATE void w_intr_wait()
 	 */
 	while (w_wn->w_status & (STATUS_ADMBSY|STATUS_BSY)) {
 		int rr;
-		if((rr=sef_receive(ANY, &m)) != OK)
-			panic("sef_receive(ANY) failed: %d", rr);
-		if (is_notify(m.m_type)) {
+		if((rr=driver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("driver_receive failed: %d", rr);
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case CLOCK:
 					/* Timeout. */
@@ -1865,7 +1870,7 @@ PRIVATE void w_intr_wait()
 					 * unhandled message.  queue it and
 					 * handle it in the libdriver loop.
 					 */
-					mq_queue(&m);
+					driver_mq_queue(&m, ipc_status);
 			}
 		}
 		else {
@@ -1873,7 +1878,7 @@ PRIVATE void w_intr_wait()
 			 * unhandled message.  queue it and handle it in the
 			 * libdriver loop.
 			 */
-			mq_queue(&m);
+			driver_mq_queue(&m, ipc_status);
 		}
 	}
   } else {

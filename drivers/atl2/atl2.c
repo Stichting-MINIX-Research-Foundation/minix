@@ -5,6 +5,7 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <sys/mman.h>
 #include <minix/ds.h>
@@ -1210,7 +1211,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the atl2 driver.
 	 */
-	u32_t inet_endpt;
 	int r, devind;
 #if ATL2_FKEY
 	int fkeys, sfkeys;
@@ -1229,13 +1229,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	/* Initialize the device. */
 	atl2_init(devind);
 
-	/* Notify Inet of our presence, if it has already been started. */
-	r = ds_retrieve_label_num("inet", &inet_endpt);
-	if (r == OK)
-		notify(inet_endpt);
-	else if (r != ESRCH)
-		printf("ATL2: ds_retrieve_label_num failed for 'inet': %d\n",
-			r);
+	/* Announce we are up! */
+	netdriver_announce();
 
 #if ATL2_FKEY
 	/* Register debug dump function key. */
@@ -1283,14 +1278,14 @@ PRIVATE void sef_cb_signal_handler(int signo)
  *===========================================================================*/
 PRIVATE void sef_local_startup(void)
 {
-	/* Initialize SEF.
-	 */
-
 	/* Register init callbacks. */
 	sef_setcb_init_fresh(sef_cb_init_fresh);
+	sef_setcb_init_lu(sef_cb_init_fresh);
 	sef_setcb_init_restart(sef_cb_init_fresh);
 
-	/* No support for live update yet. */
+	/* Register live update callbacks. */
+	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
 	/* Register signal callbacks. */
 	sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -1307,6 +1302,7 @@ int main(int argc, char **argv)
 	/* Driver task.
 	 */
 	message m;
+	int ipc_status;
 	int r;
 
 	/* Initialize SEF. */
@@ -1314,10 +1310,10 @@ int main(int argc, char **argv)
 	sef_local_startup();
 
 	while (TRUE) {
-		if ((r = sef_receive(ANY, &m)) != OK)
-			panic("sef_receive failed: %d", r);
+		if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("netdriver_receive failed: %d", r);
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (m.m_source) {
 			case HARDWARE:		/* interrupt */
 				atl2_intr(&m);

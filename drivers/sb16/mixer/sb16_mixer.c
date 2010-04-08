@@ -42,12 +42,14 @@ PRIVATE int mixer_avail = 0;	/* Mixer exists? */
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
 /*===========================================================================*
  *				main
  *===========================================================================*/
 PUBLIC void main() {
 	message mess;
+	int ipc_status;
 	int err, caller, proc_nr;
 
 	/* SEF local startup. */
@@ -57,7 +59,7 @@ PUBLIC void main() {
 	* it out, and sends a reply.
 	*/
 	while (TRUE) {
-		sef_receive(ANY, &mess);
+		driver_receive(ANY, &mess, &ipc_status);
 
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
@@ -98,12 +100,29 @@ PUBLIC void main() {
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
+
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
   sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the sb16 mixer driver. */
+	/* Announce we are up! */
+	driver_announce();
+
+	return(OK);
 }
 
 /*=========================================================================*

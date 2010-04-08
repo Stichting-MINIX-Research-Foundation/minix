@@ -26,6 +26,7 @@
 #include <minix/sysinfo.h>
 #include <minix/bitmap.h>
 #include <minix/paths.h>
+#include <minix/sef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <configfile.h>
@@ -49,7 +50,7 @@ PRIVATE char *known_requests[] = {
 #define RUN_CMD		"run"
 #define RUN_SCRIPT	"/etc/rs.single"	/* Default script for 'run' */
 #define PATH_CONFIG	_PATH_SYSTEM_CONF	/* Default config file */
-#define DEFAULT_LU_STATE   3                    /* Default live update state */
+#define DEFAULT_LU_STATE   SEF_LU_STATE_WORK_FREE /* Default lu state */
 #define DEFAULT_LU_MAXTIME 0                    /* Default lu max time */
 
 /* Define names for arguments provided to this utility. The first few 

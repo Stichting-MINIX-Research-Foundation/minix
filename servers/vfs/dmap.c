@@ -63,7 +63,7 @@ PRIVATE struct dmap init_dmap[] = {
 PUBLIC int do_mapdriver()
 {
 	int r, force, major, proc_nr_n;
-	unsigned long tasknr;
+	endpoint_t endpoint;
 	vir_bytes label_vir;
 	size_t label_len;
 	char label[LABEL_MAX];
@@ -97,34 +97,23 @@ PUBLIC int do_mapdriver()
 
 	label[label_len]= '\0';
 
-	r= ds_retrieve_label_num(label, &tasknr);
+	r= ds_retrieve_label_endpt(label, &endpoint);
 	if (r != OK)
 	{
 		printf("vfs:do_mapdriver: ds doesn't know '%s'\n", label);
 		return EINVAL;
 	}
 
-	if (isokendpt(tasknr, &proc_nr_n) != OK)
+	if (isokendpt(endpoint, &proc_nr_n) != OK)
 	{
-		printf("vfs:do_mapdriver: bad endpoint %d\n", tasknr);
+		printf("vfs:do_mapdriver: bad endpoint %d\n", endpoint);
 		return(EINVAL);
 	}
 
 	/* Try to update device mapping. */
 	major= m_in.md_major;
 	force= m_in.md_force;
-	r= map_driver(label, major, tasknr, m_in.md_style, force);
-	if (r == OK)
-	{
-		/* If a driver has completed its exec(), it can be announced
-		 * to be up.
-		*/
-		if(force || fproc[proc_nr_n].fp_execced) {
-			dev_up(major);
-		} else {
-			dmap[major].dmap_flags |= DMAP_BABY;
-		}
-	}
+	r= map_driver(label, major, endpoint, m_in.md_style, force);
 
 	return(r);
 }
@@ -169,7 +158,6 @@ int force;
 	
   /* See if updating the entry is allowed. */
   if (! (dp->dmap_flags & DMAP_MUTABLE))  return(EPERM);
-  if (dp->dmap_flags & DMAP_BUSY)  return(EBUSY);
 
   if (!force)
   {
@@ -274,9 +262,7 @@ PUBLIC void dmap_endpt_up(int proc_e)
 	int i;
 	for (i=0; i<NR_DEVICES; i++) {
 		if(dmap[i].dmap_driver != NONE
-			&& dmap[i].dmap_driver == proc_e
-			&& (dmap[i].dmap_flags & DMAP_BABY)) {
-			dmap[i].dmap_flags &= ~DMAP_BABY;
+			&& dmap[i].dmap_driver == proc_e) {
 			dev_up(i);
 		}
 	}

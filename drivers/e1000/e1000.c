@@ -6,6 +6,7 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 #include <stdlib.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
@@ -72,6 +73,7 @@ EXTERN char **env_argv;
 int main(int argc, char *argv[])
 {
     message m;
+    int ipc_status;
     int r;
 
     /* SEF local startup. */
@@ -83,11 +85,12 @@ int main(int argc, char *argv[])
      */
     while (TRUE)
     {
-	if ((r= sef_receive(ANY, &m)) != OK)
+	if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
 	{
-	    panic("sef_receive failed: %d", r);
+	    panic("netdriver_receive failed: %d", r);
 	}
-	if (is_notify(m.m_type))
+
+	if (is_ipc_notify(ipc_status))
 	{
 	    switch (_ENDPOINT_P(m.m_source))
 	    {
@@ -121,9 +124,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -139,7 +145,6 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the e1000 driver. */
     int r;
-    u32_t tasknr;
 
     /* Verify command-line arguments. */
     if (env_argc < 1)
@@ -158,15 +163,9 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
     {
         panic("tsc_calibrate failed: %d", r);
     }
-    /* Try to notify inet that we are present (again) */
-    if ((r = ds_retrieve_label_num("inet", &tasknr)) == OK)
-    {
-        notify(tasknr);
-    }
-    else if (r != ESRCH)
-    {
-        printf("e1000: ds_retrieve_label_num failed for 'inet': %d\n", r);
-    }
+
+    /* Announce we are up! */
+    netdriver_announce();
 
     return(OK);
 }

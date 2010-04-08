@@ -71,6 +71,7 @@ SRCS=  \
 	sys_stime.c \
         sys_schedule.c \
         sys_schedctl.c \
+        sys_statectl.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \

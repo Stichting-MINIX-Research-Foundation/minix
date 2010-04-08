@@ -71,7 +71,7 @@ PUBLIC int do_down(message *m_ptr)
 {
   register struct rproc *rp;
   register struct rprocpub *rpub;
-  int s, proc;
+  int s;
   char label[RS_MAX_LABEL_LEN];
 
   /* Copy label. */
@@ -122,7 +122,7 @@ PUBLIC int do_down(message *m_ptr)
 PUBLIC int do_restart(message *m_ptr)
 {
   struct rproc *rp;
-  int s, proc, r;
+  int s, r;
   char label[RS_MAX_LABEL_LEN];
   char script[MAX_SCRIPT_LEN];
 
@@ -242,7 +242,6 @@ PUBLIC int do_init_ready(message *m_ptr)
   int who_p;
   struct rproc *rp;
   struct rprocpub *rpub;
-  message m;
   int result;
 
   who_p = _ENDPOINT_P(m_ptr->m_source);
@@ -267,19 +266,6 @@ PUBLIC int do_init_ready(message *m_ptr)
               init_strerror(result));
       crash_service(rp); /* simulate crash */
       return(EDONTREPLY);
-  }
-
-  /* XXX If the service is a driver, map it. This should be part
-   * of publish_service() but the synchronous nature of mapdriver would
-   * cause a deadlock. The temporary hack is to map the driver here
-   * after initialization is complete.
-   */
-  m.m_type = OK;
-  reply(rpub->endpoint, &m);
-  if (rpub->dev_nr > 0) {
-      if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style, 1) != OK) {
-          return kill_service(rp, "couldn't map driver", errno);
-      }
   }
 
   /* Mark the slot as no longer initializing. */
@@ -313,7 +299,7 @@ PUBLIC int do_init_ready(message *m_ptr)
           printf("RS: %s completed restart\n", srv_to_string(rp));
   }
 
-  return(EDONTREPLY);
+  return(OK);
 }
 
 /*===========================================================================*
@@ -324,7 +310,6 @@ PUBLIC int do_update(message *m_ptr)
   struct rproc *rp;
   struct rproc *new_rp;
   struct rprocpub *rpub;
-  struct rprocpub *new_rpub;
   struct rs_start rs_start;
   int s;
   char label[RS_MAX_LABEL_LEN];

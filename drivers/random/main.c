@@ -118,6 +118,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   for(i = 0; i < RANDOM_SOURCES; i++)
 	r_updatebin(i, &krandom.bin[i]);
 
+  /* Announce we are up! */
+  driver_announce();
+
   return(OK);
 }
 

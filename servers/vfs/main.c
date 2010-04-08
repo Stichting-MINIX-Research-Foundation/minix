@@ -106,12 +106,17 @@ PUBLIC int main(void)
 
  	/* Check for special control messages first. */
         if (is_notify(call_nr)) {
-		if (who_p == CLOCK)
+		if (who_e == CLOCK)
 		{
 			/* Alarm timer expired. Used only for select().
 			 * Check it.
 			 */
 			fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
+		}
+		else if(who_e == DS_PROC_NR)
+		{
+			/* DS notifies us of an event. */
+			ds_event();
 		}
 		else
 		{
@@ -282,6 +287,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   system_hz = sys_hz();
+
+  /* Subscribe to driver events for VFS drivers. */
+  s = ds_subscribe("drv\.vfs\..*", DSF_INITIAL | DSF_OVERWRITE);
+  if(s != OK) {
+  	panic("vfs: can't subscribe to driver events");
+  }
 
   SANITYCHECK;
 

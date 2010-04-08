@@ -4,8 +4,8 @@
 PROG=	e1000
 SRCS=	e1000.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lnetdriver -lsys -ltimers
 
 MAN=
 

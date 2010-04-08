@@ -501,6 +501,13 @@ struct rproc *rp;				/* pointer to service slot */
       return kill_service(rp, "ds_publish_label call failed", r);
   }
 
+  /* If the service is a driver, map it. */
+  if (rpub->dev_nr > 0) {
+      if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style, 1) != OK) {
+          return kill_service(rp, "couldn't map driver", errno);
+      }
+  }
+
   if(rs_verbose)
       printf("RS: %s service-wide properties published\n",
           srv_to_string(rp));
@@ -889,7 +896,7 @@ PRIVATE int run_script(struct rproc *rp)
 		reason= "restart";
 	else if (rp->r_flags & RS_NOPINGREPLY)
 		reason= "no-heartbeat";
-	else reason= "crashed";
+	else reason= "terminated";
 	sprintf(incarnation_str, "%d", rp->r_restarts);
 
  	if(rs_verbose) {
@@ -906,7 +913,7 @@ PRIVATE int run_script(struct rproc *rp)
 		return kill_service(rp, "unable to fork script", errno);
 	case 0:
 		execle(rp->r_script, rp->r_script, rpub->label, reason,
-			incarnation_str, NULL, envp);
+			incarnation_str, NULL, envp, (char*)NULL);
 		printf("RS: run_script: execl '%s' failed: %s\n",
 			rp->r_script, strerror(errno));
 		exit(1);
@@ -1332,8 +1339,8 @@ endpoint_t source;
 	rpub->pci_acl.rsp_class[i].mask= rs_start->rss_pci_class[i].mask;
 	if(rs_verbose)
 	    printf("RS: init_slot: PCI class %06x mask %06x\n",
-		rpub->pci_acl.rsp_class[i].class,
-		rpub->pci_acl.rsp_class[i].mask);
+		(unsigned int) rpub->pci_acl.rsp_class[i].class,
+		(unsigned int) rpub->pci_acl.rsp_class[i].mask);
   }
 
   /* Copy kernel call mask. Inherit basic kernel calls. */

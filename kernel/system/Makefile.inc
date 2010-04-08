@@ -41,4 +41,6 @@ SRCS+= 	\
 	do_vmctl.c \
 	do_mcontext.c \
 	do_schedule.c \
-	do_schedctl.c
+	do_schedctl.c \
+	do_statectl.c
+

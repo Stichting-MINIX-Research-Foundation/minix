@@ -12,8 +12,6 @@ dmap.h
  * entry's current status and determines what control options are possible. 
  */
 #define DMAP_MUTABLE		0x01	/* mapping can be overtaken */
-#define DMAP_BUSY		0x02	/* driver busy with request */
-#define DMAP_BABY		0x04	/* driver exec() not done yet */
 
 extern struct dmap {
   int _PROTOTYPE ((*dmap_opcl), (int, Dev_t, int, int) );

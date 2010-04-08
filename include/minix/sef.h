@@ -138,6 +138,7 @@ _PROTOTYPE(  int sef_cb_lu_prepare_always_ready, (int state) );
 _PROTOTYPE(  int sef_cb_lu_prepare_never_ready, (int state) );
 _PROTOTYPE(  int sef_cb_lu_prepare_crash, (int state) );
 _PROTOTYPE(  int sef_cb_lu_state_isvalid_standard, (int state) );
+_PROTOTYPE(  int sef_cb_lu_state_isvalid_workfree, (int state) );
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_LU_PREPARE_NULL          sef_cb_lu_prepare_null

@@ -53,6 +53,7 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <stdlib.h>
 #include <net/hton.h>
@@ -301,6 +302,7 @@ EXTERN char **env_argv;
 int main(int argc, char *argv[])
 {
 	message m;
+	int ipc_status;
 	int r;
 
 	/* SEF local startup. */
@@ -309,10 +311,10 @@ int main(int argc, char *argv[])
 
 	while (TRUE)
 	{
-		if ((r= sef_receive(ANY, &m)) != OK)
-			panic("sef_receive failed: %d", r);
+		if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("netdriver_receive failed: %d", r);
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case HARDWARE:
 					handle_hw_intr();
@@ -353,9 +355,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -371,7 +376,6 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the fxp driver. */
 	int r;
-	u32_t tasknr;
 	long v;
 	vir_bytes ft;
 
@@ -397,12 +401,8 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	if((r=tsc_calibrate()) != OK)
 		panic("tsc_calibrate failed: %d", r);
 
-	/* Try to notify inet that we are present (again) */
-	r= ds_retrieve_label_num("inet", &tasknr);
-	if (r == OK)
-		notify(tasknr);
-	else if (r != ESRCH)
-		printf("fxp: ds_retrieve_label_num failed for 'inet': %d\n", r);
+	/* Announce we are up! */
+	netdriver_announce();
 
 	return(OK);
 }
@@ -2952,21 +2952,18 @@ int pci_func;
 {
 	int r;
 	endpoint_t dev_e;
-	u32_t u32;
 	message m;
 
-	r= ds_retrieve_label_num("amddev", &u32);
+	r= ds_retrieve_label_endpt("amddev", &dev_e);
 	if (r != OK)
 	{
 #if 0
 		printf(
-		"fxp`tell_dev: ds_retrieve_label_num failed for 'amddev': %d\n",
+		"fxp`tell_dev: ds_retrieve_label_endpt failed for 'amddev': %d\n",
 			r);
 #endif
 		return;
 	}
-
-	dev_e= u32;
 
 	m.m_type= IOMMU_MAP;
 	m.m2_i1= pci_bus;

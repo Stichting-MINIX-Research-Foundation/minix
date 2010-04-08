@@ -208,5 +208,10 @@ _PROTOTYPE( int do_setmcontext, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_schedule,    (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_schedctl, (struct proc * caller, message *m_ptr) );
 
+_PROTOTYPE( int do_statectl, (struct proc * caller, message *m_ptr) );
+#if ! USE_STATECTL
+#define do_statectl do_unused
+#endif
+
 #endif	/* SYSTEM_H */
 

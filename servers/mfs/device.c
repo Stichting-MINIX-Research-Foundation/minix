@@ -205,6 +205,7 @@ int flags;			/* special flags, like O_NONBLOCK */
 
   /* Call the task. */
   r = sendrec(driver_e, &m);
+  if(r == OK && m.REP_STATUS == ERESTART) r = EDEADSRCDST;
 
   /* As block I/O never SUSPENDs, safe cleanup must be done whether
    * the I/O succeeded or not. */
@@ -325,6 +326,7 @@ PRIVATE int gen_io(
   proc_e = mess_ptr->IO_ENDPT;
 
   r = sendrec(task_nr, mess_ptr);
+  if(r == OK && mess_ptr->REP_STATUS == ERESTART) r = EDEADSRCDST;
 	if (r != OK) {
 		if (r == EDEADSRCDST) {
 			printf("fs: dead driver %d\n", task_nr);

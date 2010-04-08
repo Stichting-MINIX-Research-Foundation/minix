@@ -2,8 +2,8 @@
 PROG=	printer
 SRCS=	printer.c liveupdate.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+DPADD+= ${LIBDRIVER} ${LIBSYS}
+LDADD+=	-ldriver -lsys
 
 MAN=
 

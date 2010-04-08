@@ -2,11 +2,6 @@
 main.c
 */
 
-#include <minix/drivers.h>
-
-#include <minix/rs.h>
-#include <minix/endpoint.h>
-
 #include "pci.h"
 
 PUBLIC struct pci_acl pci_acl[NR_DRIVERS];
@@ -41,20 +36,21 @@ int main(void)
 {
 	int i, r;
 	message m;
+	int ipc_status;
 
 	/* SEF local startup. */
 	sef_local_startup();
 
 	for(;;)
 	{
-		r= sef_receive(ANY, &m);
+		r= driver_receive(ANY, &m, &ipc_status);
 		if (r < 0)
 		{
-			printf("PCI: sef_receive from ANY failed: %d\n", r);
+			printf("PCI: driver_receive failed: %d\n", r);
 			break;
 		}
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			printf("PCI: got notify from %d\n", m.m_source);
 
 			/* done, get a new message */

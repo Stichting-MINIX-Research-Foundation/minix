@@ -3,16 +3,7 @@
 #include "inc.h"
 
 /* Drivers. */
-static struct {
-  char *label;
-  int minor;
-  endpoint_t endpt;
-
-  int problem;		/* one of BD_* */
-  int error;		/* one of E*, only relevant if problem>0 */
-  int retries;
-  int kills;
-} driver[2];
+static struct driverinfo driver[2];
 
 /* State variables. */
 static endpoint_t self_ep;
@@ -156,8 +147,12 @@ void driver_init(void)
 	driver[DRIVER_MAIN].label = MAIN_LABEL;
 	driver[DRIVER_MAIN].minor = MAIN_MINOR;
 
-	r = ds_retrieve_label_num(driver[DRIVER_MAIN].label,
-		(u32_t *) &driver[DRIVER_MAIN].endpt);
+	/* No up received yet but expected when the driver starts. */
+	driver[DRIVER_MAIN].up_event = UP_EXPECTED;
+	driver[DRIVER_BACKUP].up_event = UP_EXPECTED;
+
+	r = ds_retrieve_label_endpt(driver[DRIVER_MAIN].label,
+		&driver[DRIVER_MAIN].endpt);
 	if (r != OK) {
 		printf("Filter: failed to get main disk driver's endpoint: "
 			"%d\n", r);
@@ -177,8 +172,8 @@ void driver_init(void)
 			panic("same driver: not tested");
 		}
 
-		r = ds_retrieve_label_num(driver[DRIVER_BACKUP].label,
-			(u32_t *) &driver[DRIVER_BACKUP].endpt);
+		r = ds_retrieve_label_endpt(driver[DRIVER_BACKUP].label,
+			&driver[DRIVER_BACKUP].endpt);
 		if (r != OK) {
 			printf("Filter: failed to get backup disk driver's "
 				"endpoint: %d\n", r);
@@ -262,7 +257,7 @@ static int new_driver_ep(int which)
 	int r;
 	endpoint_t endpt;
 
-	r = ds_retrieve_label_num(driver[which].label, (u32_t *) &endpt);
+	r = ds_retrieve_label_endpt(driver[which].label, &endpt);
 
 	if (r != OK) {
 		printf("Filter: DS query for %s failed\n",
@@ -367,7 +362,7 @@ static int check_problem(int which, int problem, int retries, int *tell_rs)
 			"threshold, restarting driver\n", which);
 #endif
 
-		*tell_rs = 1;
+		*tell_rs = (driver[which].up_event != UP_PENDING);
 		break;
 
 	case BD_DEAD:
@@ -423,6 +418,7 @@ static void restart_driver(int which, int tell_rs)
 	/* Restart the given driver. Block until the new instance is up.
 	 */
 	message msg;
+	int ipc_status;
 	endpoint_t endpt;
 	int r, w = 0;
 
@@ -453,24 +449,16 @@ static void restart_driver(int which, int tell_rs)
 		which, driver[which].endpt);
 #endif
 
-	do {
-		if(w) flt_sleep(1);
-		w = 1;
+	if(driver[which].up_event == UP_EXPECTED) {
+		driver[which].up_event = UP_NONE;
+	}
+	while(driver[which].up_event != UP_PENDING) {
+		r = driver_receive(DS_PROC_NR, &msg, &ipc_status);
+		if(r != OK)
+			panic("driver_receive returned error: %d", r);
 
-		r = ds_retrieve_label_num(driver[which].label,
-			(u32_t *) &endpt);
-
-#if DEBUG2
-		if (r != OK)
-			printf("Filter: DS request failed (%d)\n", r);
-		else if (endpt == driver[which].endpt)
-			printf("Filter: DS returned same endpoint\n");
-		else
-			printf("Filter: DS request OK, new endpoint\n");
-#endif
-	} while (r != OK || endpt == driver[which].endpt);
-
-	driver[which].endpt = endpt;
+		ds_event();
+	}
 }
 
 /*===========================================================================*
@@ -580,13 +568,19 @@ static int flt_receive(message *mess, int which)
 	 * occurs. Can only return OK or RET_REDO.
 	 */
 	int r;
+	int ipc_status;
 
 	for (;;) {
-		r = sef_receive(ANY, mess);
+		r = driver_receive(ANY, mess, &ipc_status);
 		if(r != OK)
-			panic("sef_receive returned error: %d", r);
+			panic("driver_receive returned error: %d", r);
 
-		if(mess->m_source == CLOCK && is_notify(mess->m_type)) {
+		if(mess->m_source == DS_PROC_NR && is_ipc_notify(ipc_status)) {
+			ds_event();
+			continue;
+		}
+
+		if(mess->m_source == CLOCK && is_ipc_notify(ipc_status)) {
 			if (mess->NOTIFY_TIMESTAMP < flt_alarm(-1)) {
 #if DEBUG
 				printf("Filter: SKIPPING old alarm "
@@ -1000,3 +994,52 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 
 	return OK;
 }
+
+/*===========================================================================*
+ *				 ds_event				     *
+ *===========================================================================*/
+void ds_event()
+{
+	char key[DS_MAX_KEYLEN];
+	char *driver_prefix = "drv.vfs.";
+	u32_t value;
+	int type;
+	endpoint_t owner_endpoint;
+	int r;
+	int which;
+
+	/* Get the event and the owner from DS. */
+	r = ds_check(key, &type, &owner_endpoint);
+	if(r != OK) {
+		if(r != ENOENT)
+			printf("Filter: ds_event: ds_check failed: %d\n", r);
+		return;
+	}
+	r = ds_retrieve_u32(key, &value);
+	if(r != OK) {
+		printf("Filter: ds_event: ds_retrieve_u32 failed\n");
+		return;
+	}
+
+	/* Only check for VFS driver up events. */
+	if(strncmp(key, driver_prefix, sizeof(driver_prefix))
+	   || value != DS_DRIVER_UP) {
+		return;
+	}
+
+	/* See if this is a driver we are responsible for. */
+	if(driver[DRIVER_MAIN].endpt == owner_endpoint) {
+		which = DRIVER_MAIN;
+	}
+	else if(driver[DRIVER_BACKUP].endpt == owner_endpoint) {
+		which = DRIVER_BACKUP;
+	}
+	else {
+		return;
+	}
+
+	/* Mark the driver as (re)started. */
+	driver[which].up_event = driver[which].up_event == UP_EXPECTED ?
+		UP_NONE : UP_PENDING;
+}
+

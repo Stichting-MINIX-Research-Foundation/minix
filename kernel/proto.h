@@ -69,6 +69,8 @@ _PROTOTYPE( void system_init, (void)					);
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 _PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t, vir_bytes));
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
+_PROTOTYPE( void clear_ipc, (struct proc *rc)				);
+_PROTOTYPE( void clear_ipc_refs, (struct proc *rc, int caller_ret)	);
 _PROTOTYPE( phys_bytes umap_bios, (vir_bytes vir_addr, vir_bytes bytes));
 _PROTOTYPE( void kernel_call_resume, (struct proc *p));
 

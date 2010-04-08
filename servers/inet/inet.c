@@ -91,6 +91,7 @@ _PROTOTYPE( void main, (void) );
 
 FORWARD _PROTOTYPE( void nw_conf, (void) );
 FORWARD _PROTOTYPE( void nw_init, (void) );
+FORWARD _PROTOTYPE( void ds_event, (void) );
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -99,6 +100,7 @@ FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 PUBLIC void main()
 {
 	mq_t *mq;
+	int ipc_status;
 	int r;
 	endpoint_t source;
 	int m_type;
@@ -135,7 +137,7 @@ PUBLIC void main()
 		if (!mq)
 			ip_panic(("out of messages"));
 
-		r= sef_receive(ANY, &mq->mq_mess);
+		r= sef_receive_status(ANY, &mq->mq_mess, &ipc_status);
 		if (r<0)
 		{
 			ip_panic(("unable to receive: %d", r));
@@ -147,23 +149,29 @@ PUBLIC void main()
 		{
 			sr_rec(mq);
 		}
-		else if (is_notify(m_type))
+		else if (is_ipc_notify(ipc_status))
 		{
-			if (_ENDPOINT_P(source) == CLOCK)
+			if (source == CLOCK)
 			{
 				clck_tick(&mq->mq_mess);
 				mq_free(mq);
 			} 
-			else if (_ENDPOINT_P(source) == PM_PROC_NR)
+			else if (source == PM_PROC_NR)
 			{
 				/* signaled */ 
 				/* probably SIGTERM */
 				mq_free(mq);
 			} 
+			else if (source == DS_PROC_NR)
+			{
+				/* DS notifies us of an event. */
+				ds_event();
+				mq_free(mq);
+			}
 			else
 			{
-				/* A driver is (re)started. */
-				eth_check_drivers(&mq->mq_mess);
+				printf("inet: got unexpected notify from %d\n",
+					mq->mq_mess.m_source);
 				mq_free(mq);
 			}
 		}
@@ -291,6 +299,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	nw_init();
 
+	/* Subscribe to driver events for network drivers. */
+	r = ds_subscribe("drv\.net\..*", DSF_INITIAL | DSF_OVERWRITE);
+	if(r != OK) {
+		ip_panic(("inet: can't subscribe to driver events"));
+	}
+
 	return(OK);
 }
 
@@ -318,6 +332,41 @@ PRIVATE void nw_init()
 	ip_init();
 	tcp_init();
 	udp_init();
+}
+
+/*===========================================================================*
+ *				 ds_event				     *
+ *===========================================================================*/
+PRIVATE void ds_event()
+{
+	char key[DS_MAX_KEYLEN];
+	char *driver_prefix = "drv.net.";
+	u32_t value;
+	int type;
+	endpoint_t owner_endpoint;
+	int r;
+
+	/* Get the event and the owner from DS. */
+	r = ds_check(key, &type, &owner_endpoint);
+	if(r != OK) {
+		if(r != ENOENT)
+			printf("inet: ds_event: ds_check failed: %d\n", r);
+		return;
+	}
+	r = ds_retrieve_u32(key, &value);
+	if(r != OK) {
+		printf("inet: ds_event: ds_retrieve_u32 failed\n");
+		return;
+	}
+
+	/* Only check for network driver up events. */
+	if(strncmp(key, driver_prefix, sizeof(driver_prefix))
+	   || value != DS_DRIVER_UP) {
+		return;
+	}
+
+	/* A driver is (re)started. */
+	eth_check_driver(owner_endpoint);
 }
 
 PUBLIC void panic0(file, line)

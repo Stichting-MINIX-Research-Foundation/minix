@@ -54,6 +54,7 @@
  */
 
 #include 	<minix/drivers.h>
+#include 	<minix/netdriver.h>
 #include	<string.h>
 #include	<minix/syslib.h>
 #include	<minix/type.h>
@@ -241,16 +242,17 @@ EXTERN char **env_argv;
  *****************************************************************************/
 int main(int argc, char *argv[]) {
 	int r;
+	int ipc_status;
 
 	/* SEF local startup. */
 	env_setargs(argc, argv);
 	sef_local_startup();
 
 	while (TRUE) {
-		if ((r = sef_receive (ANY, &m)) != OK)
-			panic("orinoco: sef_receive failed");
+		if ((r = netdriver_receive (ANY, &m, &ipc_status)) != OK)
+			panic("orinoco: netdriver_receive failed");
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case CLOCK:
 					or_watchdog_f(NULL);     
@@ -316,9 +318,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -334,7 +339,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the orinoco driver. */
 	int fkeys, sfkeys, r;
-	u32_t inet_proc_nr;
 
 	system_hz = sys_hz();
 
@@ -346,14 +350,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
 	    printf("Warning: orinoco couldn't observe F-key(s): %d\n",r);
 
-	/* Try to notify INET that we are present (again). If INET cannot
-	 * be found, assume this is the first time we started and INET is
-	 * not yet alive. */
-	r = ds_retrieve_label_num("inet", &inet_proc_nr);
-	if (r == OK) 
-		notify(inet_proc_nr);
-	else if (r != ESRCH)
-		printf("orinoco: ds_retrieve_label_num failed for 'inet': %d\n", r);
+	/* Announce we are up! */
+	netdriver_announce();
 
 	return(OK);
 }

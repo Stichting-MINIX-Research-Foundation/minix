@@ -299,6 +299,10 @@ PUBLIC int do_publish(message *m_ptr)
   if(source == NULL)
 	  return EPERM;
 
+  /* Only RS can publish labels. */
+  if((flags & DSF_TYPE_LABEL) && m_ptr->m_source != RS_PROC_NR)
+	  return EPERM;
+
   /* MAP should not be overwritten. */
   if((flags & DSF_TYPE_MAP) && (flags & DSF_OVERWRITE))
 	return EINVAL;
@@ -594,9 +598,10 @@ PUBLIC int do_check(message *m_ptr)
 {
   struct subscription *subp;
   char *owner;
+  endpoint_t entry_owner_e;
   int r, i;
 
-  /* Find the owner. */
+  /* Find the subscription owner. */
   owner = ds_getprocname(m_ptr->m_source);
   if(owner == NULL)
 	  return ESRCH;
@@ -616,14 +621,19 @@ PUBLIC int do_check(message *m_ptr)
   /* Copy the key name. */
   r = sys_safecopyto(m_ptr->m_source,
 	(cp_grant_id_t) m_ptr->DS_KEY_GRANT, (vir_bytes) 0, 
-	(vir_bytes) ds_store[i].key, strlen(ds_store[i].key), D);
+	(vir_bytes) ds_store[i].key, strlen(ds_store[i].key) + 1, D);
   if(r != OK) {
 	printf("DS: check: copy failed from %d: %d\n", m_ptr->m_source, r);
 	return r;
   }
 
-  /* Copy the type. */
+  /* Copy the type and the owner of the original entry. */
+  entry_owner_e = ds_getprocep(ds_store[i].owner);
+  if(entry_owner_e == -1) {
+      panic("ds_getprocep failed");
+  }
   m_ptr->DS_FLAGS = ds_store[i].flags & DSF_MASK_TYPE;
+  m_ptr->DS_OWNER = entry_owner_e;
 
   /* Mark the entry as no longer updated for the subscriber. */
   UNSET_BIT(subp->old_subs, i);
@@ -639,6 +649,7 @@ PUBLIC int do_delete(message *m_ptr)
   struct data_store *dsp;
   char key_name[DS_MAX_KEYLEN];
   char *source;
+  char *label;
   int type = m_ptr->DS_FLAGS & DSF_MASK_TYPE;
   int top, i, r;
 
@@ -661,7 +672,25 @@ PUBLIC int do_delete(message *m_ptr)
 
   switch(type) {
   case DSF_TYPE_U32:
+	break;
   case DSF_TYPE_LABEL:
+	label = dsp->key;
+
+	/* Clean up subscriptions. */
+	for (i = 0; i < NR_DS_SUBS; i++) {
+		if ((ds_subs[i].flags & DSF_IN_USE)
+			&& !strcmp(ds_subs[i].owner, label)) {
+			ds_subs[i].flags = 0;
+		}
+	}
+
+	/* Clean up data entries. */
+	for (i = 0; i < NR_DS_KEYS; i++) {
+		if ((ds_store[i].flags & DSF_IN_USE)
+			&& !strcmp(ds_store[i].owner, label)) {
+			ds_store[i].flags = 0;
+		}
+	}
 	break;
   case DSF_TYPE_STR:
   case DSF_TYPE_MEM:

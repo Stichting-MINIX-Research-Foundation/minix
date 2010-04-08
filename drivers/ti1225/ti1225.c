@@ -5,6 +5,7 @@ Created:	Dec 2005 by Philip Homburg
 */
 
 #include <minix/drivers.h>
+#include <minix/driver.h>
 #include <machine/pci.h>
 #include <machine/vm.h>
 
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
 {
 	int r;
 	message m;
+	int ipc_status;
 
 	/* SEF local startup. */
 	env_setargs(argc, argv);
@@ -76,9 +78,9 @@ int main(int argc, char *argv[])
 
 	for (;;)
 	{
-		r= sef_receive(ANY, &m);
+		r= driver_receive(ANY, &m, &ipc_status);
 		if (r != OK)
-			panic("sef_receive failed: %d", r);
+			panic("driver_receive failed: %d", r);
 		printf("ti1225: got message %u from %d\n",
 			m.m_type, m.m_source);
 	}
@@ -176,6 +178,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			continue;
 		hw_init(&ports[i]);
 	}
+
+	/* Announce we are up! */
+	driver_announce();
 
 	return(OK);
 }

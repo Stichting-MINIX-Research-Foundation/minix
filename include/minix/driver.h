@@ -17,6 +17,7 @@
 #include <minix/const.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <minix/endpoint.h>
 
 #include <string.h>
 #include <limits.h>
@@ -55,8 +56,18 @@ struct device {
 #define DRIVER_STD	0	/* Use the standard reply protocol */
 #define DRIVER_ASYN	1	/* Use the new asynchronous protocol */
 
+#define MAX_NR_OPEN_DEVICES 16
+
+#define IS_DEV_MINOR_RQ(type) (IS_DEV_RQ(type) && (type) != DEV_STATUS)
+
 /* Functions defined by driver.c: */
+_PROTOTYPE( void driver_announce, (void) );
+_PROTOTYPE( int driver_receive, (endpoint_t src, message *m_ptr,
+	int *status_ptr) );
+_PROTOTYPE( int driver_receive_mq, (message *m_ptr, int *status_ptr) );
 _PROTOTYPE( void driver_task, (struct driver *dr, int type) );
+_PROTOTYPE( int driver_mq_queue, (message *m_ptr, int status) );
+_PROTOTYPE( void driver_init_buffer, (void) );
 _PROTOTYPE( char *no_name, (void) );
 _PROTOTYPE( int do_nop, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( struct device *nop_prepare, (int device) );
@@ -67,8 +78,6 @@ _PROTOTYPE( int nop_cancel, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_ioctl, (struct driver *dp, message *m_ptr) );
-_PROTOTYPE( int mq_queue, (message *m_ptr) );
-_PROTOTYPE( void init_buffer, (void) );
 
 /* Parameters for the disk drive. */
 #define SECTOR_SIZE      512	/* physical sector size in bytes */

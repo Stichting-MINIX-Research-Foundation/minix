@@ -1,9 +1,9 @@
 #ifndef ES1371_H
 #define ES1371_H
 /* best viewed with tabsize=4 */
-	
+
+#include "audio_fw.h"
 #include <sys/types.h>
-#include <minix/drivers.h>
 #include <sys/ioc_sound.h>
 #include <minix/sound.h>
 

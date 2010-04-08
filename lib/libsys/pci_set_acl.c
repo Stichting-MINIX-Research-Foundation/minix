@@ -18,16 +18,16 @@ struct rs_pci *rs_pci;
 	int r;
 	cp_grant_id_t gid;
 	message m;
-	u32_t u32;
+	endpoint_t endpoint;
 
 	if (pci_procnr == ANY)
 	{
-		r= ds_retrieve_label_num("pci", &u32);
+		r= ds_retrieve_label_endpt("pci", &endpoint);
 		if (r != 0)
 		{
-			panic("pci_set_acl: ds_retrieve_label_num failed for 'pci': %d", r);
+			panic("pci_set_acl: ds_retrieve_label_endpt failed for 'pci': %d", r);
 		}
-		pci_procnr = u32;
+		pci_procnr = endpoint;
 	}
 
 

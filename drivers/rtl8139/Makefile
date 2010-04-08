@@ -2,8 +2,8 @@
 PROG=	rtl8139
 SRCS=	rtl8139.c liveupdate.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lnetdriver -lsys -ltimers
 
 MAN=
 

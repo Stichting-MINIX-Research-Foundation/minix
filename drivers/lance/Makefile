@@ -2,8 +2,8 @@
 PROG=	lance
 SRCS=	lance.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+DPADD+=	${LIBNETDRIVER} ${LIBSYS}
+LDADD+=	-lnetdriver -lsys
 
 MAN=
 

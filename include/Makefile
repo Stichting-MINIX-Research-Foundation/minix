@@ -16,8 +16,9 @@ INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/dir.h minix/dl_eth.h minix/dmap.h minix/driver.h \
 	minix/drivers.h minix/drvlib.h minix/ds.h minix/endpoint.h \
 	minix/fslib.h minix/ioctl.h minix/ipc.h minix/ipcconst.h \
-	minix/keymap.h minix/minlib.h minix/mq.h minix/partition.h \
-	minix/paths.h minix/portio.h minix/profile.h minix/queryparam.h \
+	minix/keymap.h minix/minlib.h minix/mq.h \
+	minix/netdriver.h minix/partition.h minix/paths.h \
+	minix/portio.h minix/profile.h minix/queryparam.h \
 	minix/rs.h minix/safecopies.h minix/sef.h minix/sound.h \
 	minix/sys_config.h minix/sysinfo.h minix/syslib.h \
 	minix/sysutil.h minix/tty.h minix/type.h minix/types.h \

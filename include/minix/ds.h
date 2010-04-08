@@ -4,6 +4,7 @@
 #define _MINIX_DS_H
 
 #include <minix/types.h>
+#include <minix/endpoint.h>
 
 /* Flags. */
 #define DSF_IN_USE		0x001	/* entry is in use */
@@ -29,6 +30,9 @@
 
 /* DS constants. */
 #define DS_MAX_KEYLEN 80        /* Max length of a key, including '\0'. */
+
+/* DS events. */
+#define DS_DRIVER_UP		1
 
 /* ds.c */
 
@@ -58,14 +62,16 @@ _PROTOTYPE( int ds_retrieve_map, (const char *ds_name, char *vaddr,
 _PROTOTYPE( int ds_delete_map, (const char *ds_name));
 
 /* LABEL */
-_PROTOTYPE( int ds_publish_label, (const char *ds_name, u32_t value,int flags));
-_PROTOTYPE( int ds_retrieve_label_name, (char *ds_name, u32_t num));
-_PROTOTYPE( int ds_retrieve_label_num, (const char *ds_name, u32_t *value));
+_PROTOTYPE( int ds_publish_label, (const char *ds_name, endpoint_t endpoint,
+		int flags));
+_PROTOTYPE( int ds_retrieve_label_name, (char *ds_name, endpoint_t endpoint));
+_PROTOTYPE( int ds_retrieve_label_endpt, (const char *ds_name,
+		endpoint_t *endpoint));
 _PROTOTYPE( int ds_delete_label, (const char *ds_name));
 
 /* Subscribe and check. */
 _PROTOTYPE( int ds_subscribe, (const char *regex, int flags));
-_PROTOTYPE( int ds_check, (char *ds_name, int *type));
+_PROTOTYPE( int ds_check, (char *ds_name, int *type, endpoint_t *owner_e));
 
 #endif /* _MINIX_DS_H */
 

@@ -91,15 +91,3 @@ static void got_alarm(int sig)
 	/* Do nothing. */
 }
 
-/*===========================================================================*
- *				flt_sleep				     *
- *===========================================================================*/
-void flt_sleep(int secs)
-{
-	u32_t system_hz;
-
-	/* Sleep for the given number of seconds. */
-	system_hz = sys_hz();
-	tickdelay(system_hz * secs);
-}
-

@@ -87,6 +87,7 @@ PUBLIC void main(void)
 {	
 	int r, caller;
 	message mess, repl_mess;
+	int ipc_status;
 
 	/* SEF local startup. */
 	sef_local_startup();
@@ -95,11 +96,13 @@ PUBLIC void main(void)
 	   carries it out, and sends a reply. */
 
 	while(1) {
-		sef_receive(ANY, &mess);
+		if(driver_receive(ANY, &mess, &ipc_status) != OK) {
+			panic("driver_receive failed");
+		}
 		caller = mess.m_source;
 
 		/* Now carry out the work. First check for notifications. */
-		if (is_notify(mess.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case HARDWARE:
 					msg_hardware();
@@ -249,6 +252,10 @@ PRIVATE int init_driver(void) {
 		return EIO;
 	}
 	irq_hook_set = TRUE; /* now signal handler knows it must unregister policy*/
+
+	/* Announce we are up! */
+	driver_announce();
+
 	return OK;
 }
 
@@ -977,7 +984,7 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	return OK;
 
 #else /* CHIP != INTEL */
-	error("%s: init_buffer() failed, CHIP != INTEL", drv.DriverName);
+	error("%s: init_buffers() failed, CHIP != INTEL", drv.DriverName);
 	return EIO;
 #endif /* CHIP == INTEL */
 }
@@ -1023,20 +1030,17 @@ int pci_func;
 {
 	int r;
 	endpoint_t dev_e;
-	u32_t u32;
 	message m;
 
-	r= ds_retrieve_label_num("amddev", &u32);
+	r= ds_retrieve_label_endpt("amddev", &dev_e);
 	if (r != OK)
 	{
 #if 0
-		printf("tell_dev: ds_retrieve_label_num failed for 'amddev': %d\n",
+		printf("tell_dev: ds_retrieve_label_endpt failed for 'amddev': %d\n",
 			r);
 #endif
 		return;
 	}
-
-	dev_e= u32;
 
 	m.m_type= IOMMU_MAP;
 	m.m2_i1= pci_bus;

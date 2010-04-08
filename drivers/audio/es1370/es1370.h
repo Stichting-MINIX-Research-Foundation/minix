@@ -3,7 +3,6 @@
 /* best viewed with tabsize=4 */
 
 #include <sys/types.h>
-#include <minix/drivers.h>
 #include <sys/ioc_sound.h>
 
 

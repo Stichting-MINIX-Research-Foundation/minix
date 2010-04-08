@@ -2,8 +2,8 @@
 PROG=	fxp
 SRCS=	fxp.c mii.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lnetdriver -lsys -ltimers
 
 MAN=
 

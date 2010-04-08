@@ -4,9 +4,7 @@ amddev.c
 Driver for the AMD Device Exclusion Vector (DEV)
 */
 
-#define _SYSTEM
-#define _MINIX
-
+#include <minix/driver.h>
 #include <minix/config.h>
 #include <minix/type.h>
 
@@ -69,6 +67,7 @@ int main(void)
 {
 	int r;
 	message m;
+	int ipc_status;
 
 	/* SEF local startup. */
 	sef_local_startup();
@@ -77,9 +76,9 @@ int main(void)
 	{
 		report_exceptions();
 
-		r= sef_receive(ANY, &m);
+		r= driver_receive(ANY, &m, &ipc_status);
 		if (r != OK)
-			panic("sef_receive failed: %d", r);
+			panic("driver_receive failed: %d", r);
 		if (m.m_type == IOMMU_MAP) {
 			r= do_add4pci(&m);
 			m.m_type= r;
@@ -150,6 +149,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	write_reg(DEVF_CR, 0, 0x10 | 0x8 | 0x4 | 1);
 
 	printf("after write: DEVF_CR: 0x%x\n", read_reg(DEVF_CR, 0));
+
+	/* Announce we are up! */
+	driver_announce();
 
 	return(OK);
 }

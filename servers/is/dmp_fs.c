@@ -61,8 +61,6 @@ PRIVATE char * dmap_flags(int flags)
 	static char fl[10];
 	strcpy(fl, "---");
 	if(flags & DMAP_MUTABLE) fl[0] = 'M';
-	if(flags & DMAP_BUSY)    fl[1] = 'S';
-	if(flags & DMAP_BABY)    fl[2] = 'B';
 	return fl;
 }
 

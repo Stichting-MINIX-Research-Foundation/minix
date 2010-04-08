@@ -41,6 +41,7 @@
 #define LANCE_FKEY 0 /* Use function key to dump Lance stats */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <net/hton.h>
 #include <net/gen/ether.h>
@@ -272,6 +273,7 @@ EXTERN char **env_argv;
 void main( int argc, char **argv )
 {
    message m;
+   int ipc_status;
    int i,r;
    ether_card_t *ec;
 
@@ -288,8 +290,8 @@ void main( int argc, char **argv )
             sys_irqenable(&ec->ec_hook);
       }
 
-      if ((r= sef_receive(ANY, &m)) != OK)
-        panic("sef_receive failed: %d", r);
+      if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
+        panic("netdriver_receive failed: %d", r);
         
       for (i=0;i<EC_PORT_NR_MAX;++i)
       {
@@ -298,7 +300,7 @@ void main( int argc, char **argv )
             sys_irqdisable(&ec->ec_hook);
       }
 
-      if (is_notify(m.m_type)) {
+      if (is_ipc_notify(ipc_status)) {
 	      switch(_ENDPOINT_P(m.m_source)) {
 		      case TTY_PROC_NR:
 			      lance_dump();
@@ -358,9 +360,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -376,7 +381,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the lance driver. */
    int r;
-   u32_t tasknr;
    long v;
 #if LANCE_FKEY
    int fkeys, sfkeys;
@@ -395,12 +399,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
    (void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
    eth_ign_proto= htons((u16_t) v);
 
-   /* Try to notify inet that we are present (again) */
-   r= ds_retrieve_label_num("inet", &tasknr);
-   if (r == OK)
-      notify(tasknr);
-   else if (r != ESRCH)
-      printf("lance: ds_retrieve_label_num failed for 'inet': %d\n", r);
+  /* Announce we are up! */
+  netdriver_announce();
 
    return OK;
 }

@@ -86,6 +86,7 @@ _PROTOTYPE( void pm_reboot, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
 _PROTOTYPE( int pm_dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
+_PROTOTYPE( void ds_event, (void)					);
 
 /* mount.c */
 _PROTOTYPE( int do_fslogin, (void)                                      );

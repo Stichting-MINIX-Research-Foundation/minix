@@ -58,6 +58,7 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/driver.h>
 #include <termios.h>
 #include <sys/ioc_tty.h>
 #include <signal.h>
@@ -153,6 +154,7 @@ PUBLIC int main(void)
 /* Main routine of the terminal task. */
 
   message tty_mess;		/* buffer for all incoming messages */
+  int ipc_status;
   unsigned line;
   int r;
   register tty_t *tp;
@@ -167,9 +169,9 @@ PUBLIC int main(void)
 	}
 
 	/* Get a request message. */
-	r= sef_receive(ANY, &tty_mess);
+	r= driver_receive(ANY, &tty_mess, &ipc_status);
 	if (r != 0)
-		panic("sef_receive failed with: %d", r);
+		panic("driver_receive failed with: %d", r);
 
 	/* First handle all kernel notification types that the TTY supports. 
 	 *  - An alarm went off, expire all timers and handle the events. 
@@ -181,7 +183,7 @@ PUBLIC int main(void)
 	 * do not operate on a device, in constrast to the driver requests. 
 	 */
 
-	if (is_notify(tty_mess.m_type)) {
+	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(tty_mess.m_source)) {
 			case CLOCK:
 				/* run watchdogs of expired timers */

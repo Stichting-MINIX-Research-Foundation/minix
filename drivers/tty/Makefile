@@ -5,8 +5,8 @@
 PROG=	tty
 SRCS=	tty.c console.c keyboard.c pty.c rs232.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-ldriver -lsys -ltimers
 
 MAN=
 

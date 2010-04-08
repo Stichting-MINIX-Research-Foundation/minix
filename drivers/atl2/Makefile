@@ -2,8 +2,8 @@
 PROG=	atl2
 SRCS=	atl2.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+DPADD+=	${LIBNETDRIVER} ${LIBSYS}
+LDADD+=	-lnetdriver -lsys
 
 MAN=
 

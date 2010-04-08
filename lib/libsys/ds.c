@@ -35,9 +35,9 @@ PRIVATE int do_invoke_ds(int type, const char *ds_name)
 	return r;
 }
 
-int ds_publish_label(const char *ds_name, u32_t value, int flags)
+int ds_publish_label(const char *ds_name, endpoint_t endpoint, int flags)
 {
-	m.DS_VAL = value;
+	m.DS_VAL = (u32_t) endpoint;
 	m.DS_FLAGS = DSF_TYPE_LABEL | flags;
 	return do_invoke_ds(DS_PUBLISH, ds_name);
 }
@@ -114,20 +114,20 @@ int ds_snapshot_map(const char *ds_name, int *nr_snapshot)
 	return r;
 }
 
-int ds_retrieve_label_name(char *ds_name, u32_t num)
+int ds_retrieve_label_name(char *ds_name, endpoint_t endpoint)
 {
 	int r;
-	m.DS_VAL = num;
+	m.DS_VAL = (u32_t) endpoint;
 	r = do_invoke_ds(DS_RETRIEVE_LABEL, ds_name);
 	return r;
 }
 
-int ds_retrieve_label_num(const char *ds_name, u32_t *value)
+int ds_retrieve_label_endpt(const char *ds_name, endpoint_t *endpoint)
 {
 	int r;
 	m.DS_FLAGS = DSF_TYPE_LABEL;
 	r = do_invoke_ds(DS_RETRIEVE, ds_name);
-	*value = m.DS_VAL;
+	*endpoint = (endpoint_t) m.DS_VAL;
 	return r;
 }
 
@@ -260,10 +260,11 @@ int ds_subscribe(const char *regexp, int flags)
 	return do_invoke_ds(DS_SUBSCRIBE, regexp);
 }
 
-int ds_check(char *ds_key, int *type)
+int ds_check(char *ds_key, int *type, endpoint_t *owner_e)
 {
 	int r;
 	r = do_invoke_ds(DS_CHECK, ds_key);
-	*type = m.DS_FLAGS;
+	if(type) *type = m.DS_FLAGS;
+	if(owner_e) *owner_e = m.DS_OWNER;
 	return r;
 }

@@ -31,16 +31,15 @@ FORWARD _PROTOTYPE( void write_int, (eth_port_t *eth_port) );
 FORWARD _PROTOTYPE( void eth_recvev, (event_t *ev, ev_arg_t ev_arg) );
 FORWARD _PROTOTYPE( void eth_sendev, (event_t *ev, ev_arg_t ev_arg) );
 FORWARD _PROTOTYPE( eth_port_t *find_port, (message *m) );
-FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port, endpoint_t tasknr) );
+FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port,
+	endpoint_t endpoint) );
 FORWARD _PROTOTYPE( void send_getstat, (eth_port_t *eth_port) );
 
 PUBLIC void osdep_eth_init()
 {
 	int i, j, r, rport;
-	u32_t tasknr;
 	struct eth_conf *ecp;
 	eth_port_t *eth_port, *rep;
-	message mess;
 	cp_grant_id_t gid;
 
 	/* First initialize normal ethernet interfaces */
@@ -99,51 +98,11 @@ PUBLIC void osdep_eth_init()
 		}
 		eth_port->etp_osdep.etp_rd_vec_grant= gid;
 
-		r= ds_retrieve_label_num(ecp->ec_task, &tasknr);
-		if (r != OK && r != ESRCH)
-		{
-			printf("inet: ds_retrieve_label_num failed for '%s': %d\n",
-				ecp->ec_task, r);
-		}
-		if (r != OK)
-		{
-			/* Eventually, we expect ethernet drivers to be
-			 * started after INET. So we always end up here. And
-			 * the findproc can be removed.
-			 */
-#if 0
-			printf("eth%d: unable to find task %s: %d\n",
-				i, ecp->ec_task, r);
-#endif
-			tasknr= ANY;
-		}
-
  		eth_port->etp_osdep.etp_port= ecp->ec_port;
-		eth_port->etp_osdep.etp_task= tasknr;
+		eth_port->etp_osdep.etp_task= ANY;
 		eth_port->etp_osdep.etp_recvconf= 0;
 		eth_port->etp_osdep.etp_send_ev= 0;
 		ev_init(&eth_port->etp_osdep.etp_recvev);
-
-		mess.m_type= DL_CONF;
-		mess.DL_PORT= eth_port->etp_osdep.etp_port;
-		mess.DL_PROC= this_proc;
-		mess.DL_MODE= DL_NOMODE;
-
-		if (tasknr == ANY)
-			r= ENXIO;
-		else
-		{
-			assert(eth_port->etp_osdep.etp_state == OEPS_INIT);
-			r= asynsend(eth_port->etp_osdep.etp_task, &mess);
-			if (r == OK)
-				eth_port->etp_osdep.etp_state= OEPS_CONF_SENT;
-			else
-			{
-				printf(
-		"osdep_eth_init: unable to send to ethernet task, error= %d\n",
-					r);
-			}
-		}
 
 		sr_add_minor(if2minor(ecp->ec_ifno, ETH_DEV_OFF),
 			i, eth_open, eth_close, eth_read, 
@@ -473,25 +432,17 @@ PUBLIC void eth_rec(message *m)
 	}
 }
 
-PUBLIC void eth_check_drivers(message *m)
+PUBLIC void eth_check_driver(endpoint_t endpoint)
 {
 	int r;
-	endpoint_t tasknr= m->m_source;
-#if 0
-	if (notification_count < 100)
-	{
-		notification_count++;
-		printf("eth_check_drivers: got a notification #%d from %d\n",
-			notification_count, tasknr);
-	}
-#endif
-		
-	m->m_type= DL_GETNAME;
-	r= asynsend(tasknr, m);
+	message m;
+
+	m.m_type = DL_GETNAME;
+	r= asynsend(endpoint, &m);
 	if (r != OK)
 	{
-		printf("eth_check_drivers: asynsend to %d failed: %d\n",
-			tasknr, r);
+		printf("eth_check_driver: asynsend to %d failed: %d\n",
+			endpoint, r);
 		return;
 	}
 }
@@ -884,20 +835,14 @@ message *m;
 	return loc_port;
 }
 
-static void eth_restart(eth_port_t *eth_port, endpoint_t tasknr)
+static void eth_restart(eth_port_t *eth_port, endpoint_t endpoint)
 {
 	int r;
 	unsigned flags, dl_flags;
 	cp_grant_id_t gid;
 	message mess;
 
-	if (eth_port->etp_osdep.etp_state != OEPS_INIT) {
-		printf("eth_restart: restarting eth%d, task %d, port %d\n",
-			eth_port-eth_port_table, tasknr,
-			eth_port->etp_osdep.etp_port);
-	}
-
-	eth_port->etp_osdep.etp_task= tasknr;
+	eth_port->etp_osdep.etp_task= endpoint;
 
 	switch(eth_port->etp_osdep.etp_state)
 	{

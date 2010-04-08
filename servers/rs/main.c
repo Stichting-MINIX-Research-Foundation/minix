@@ -50,7 +50,7 @@ PUBLIC int main(void)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
   message m;					/* request message */
-  int status;					/* status code */
+  int ipc_status;				/* status code */
   int call_nr, who_e,who_p;			/* call number and caller */
   int result;                 			/* result to return */
 
@@ -61,7 +61,7 @@ PUBLIC int main(void)
   while (TRUE) {              
 
       /* Wait for request message. */
-      get_work(&m, &status);
+      get_work(&m, &ipc_status);
       who_e = m.m_source;
       if(rs_isokendpt(who_e, &who_p) != OK) {
           panic("message from bogus source: %d", who_e);
@@ -79,7 +79,7 @@ PUBLIC int main(void)
       /* Notification messages are control messages and do not need a reply.
        * These include heartbeat messages and system notifications.
        */
-      if (is_ipc_notify(status)) {
+      if (is_ipc_notify(ipc_status)) {
           switch (who_p) {
           case CLOCK:
 	      do_period(&m);			/* check services status */
@@ -672,13 +672,13 @@ endpoint_t endpoint;
 {
 /* Block and catch an init ready message from the given source. */
   int r;
-  int status;
+  int ipc_status;
   message m;
   struct rproc *rp;
   int result;
 
   /* Receive init ready message. */
-  if ((r = sef_receive_status(endpoint, &m, &status)) != OK) {
+  if ((r = sef_receive_status(endpoint, &m, &ipc_status)) != OK) {
       panic("unable to receive init reply: %d", r);
   }
   if(m.m_type != RS_INIT) {

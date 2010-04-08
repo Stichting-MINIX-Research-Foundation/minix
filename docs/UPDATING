@@ -1,3 +1,5 @@
+20100408:
+        /usr/src/etc/usr/rc updated: copy it (or merge it) to /usr/etc/rc.
 20100318:
         Gas2ack updates: Run 'make install' in commands/i386/gas2ack
 20100317:

@@ -2,8 +2,8 @@
 PROG=	orinoco
 SRCS=	orinoco.c hermes.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBNETDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lnetdriver -lsys -ltimers
 
 MAN=
 

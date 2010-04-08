@@ -4,8 +4,8 @@
 PROG=	dec21140A
 SRCS=	dec21140A.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+DPADD+=	${LIBNETDRIVER} ${LIBSYS}
+LDADD+=	-lnetdriver -lsys
 
 MAN=
 

@@ -55,7 +55,9 @@
 */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 #include <minix/endpoint.h>
+#include <minix/ds.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 
@@ -84,7 +86,7 @@ static dp_conf_t dp_conf[DE_PORT_NR] = {
 
 static char CopyErrMsg[] = "unable to read/write user data";
 static char PortErrMsg[] = "illegal port";
-static char RecvErrMsg[] = "sef_receive failed";
+static char RecvErrMsg[] = "netdriver_receive failed";
 static char SendErrMsg[] = "send failed";
 static char SizeErrMsg[] = "illegal packet size";
 static char TypeErrMsg[] = "illegal message type";
@@ -574,6 +576,7 @@ EXTERN char **env_argv;
 PUBLIC int main(int argc, char **argv)
 {
   message m;
+  int ipc_status;
   int rc;
 
   /* SEF local startup. */
@@ -581,13 +584,13 @@ PUBLIC int main(int argc, char **argv)
   sef_local_startup();
 
   while (TRUE) {
-	if ((rc = sef_receive(ANY, &m)) != OK){
+	if ((rc = netdriver_receive(ANY, &m, &ipc_status)) != OK){
 		panic(RecvErrMsg, rc);
 	}
 
 	DEBUG(printf("eth: got message %d, ", m.m_type));
 
-	if (is_notify(m.m_type)) {
+	if (is_ipc_notify(ipc_status)) {
 		switch(_ENDPOINT_P(m.m_source)) {
 			case CLOCK:
 				/* to be defined */
@@ -644,9 +647,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -661,7 +667,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the dpeth driver. */
-  int rc, fkeys, sfkeys, tasknr;
+  int r, rc, fkeys, sfkeys;
 
   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
 
@@ -680,10 +686,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
   }
 #endif
 
-  /* Try to notify inet that we are present (again) */
-  rc = _pm_findproc("inet", &tasknr);
-  if (rc == OK)
-	notify(tasknr);
+  /* Announce we are up! */
+  netdriver_announce();
 
   return(OK);
 }

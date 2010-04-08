@@ -10,6 +10,7 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <assert.h>
 #include <machine/pci.h>
@@ -76,6 +77,7 @@ int main(int argc, char *argv[])
 {
   dpeth_t *dep;
   message m;
+  int ipc_status;
   int r;
 
   /* SEF local startup. */
@@ -84,14 +86,11 @@ int main(int argc, char *argv[])
   
   while (TRUE)
     {
-      if ((r= sef_receive(ANY, &m)) != OK)
-	panic("minix msg sef_receive failed: %d", r);
+      if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
+	panic("netdriver_receive failed: %d", r);
 
-		if(is_notify(m.m_type)) {
+		if(is_ipc_notify(ipc_status)) {
 			switch(_ENDPOINT_P(m.m_source)) {
-				case RS_PROC_NR:
-					notify(m.m_source);
-					break;
 				case CLOCK:
 					do_watchdog(&m);
 					break;
@@ -137,9 +136,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_setcb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No support for live update yet. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler_term);
@@ -156,7 +158,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /* Initialize the DEC 21140A driver. */
   int r;
   int fkeys, sfkeys;
-  endpoint_t tasknr;
 
   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
 
@@ -166,12 +167,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
   if ((fkey_map(&fkeys, &sfkeys)) != OK) 
     printf("%s: error using Shift+F%d key(%d)\n", str_DevName, DE_FKEY, errno);
 
-  /* Try to notify inet that we are present (again) */
-  r = ds_retrieve_label_num("inet", &tasknr);
-  if (r == OK)
-    notify(tasknr);
-  else if(r != ESRCH)
-    printf("%s unable to notify inet: %d\n", str_DevName, r);
+  /* Announce we are up! */
+  netdriver_announce();
 
   return OK;
 }

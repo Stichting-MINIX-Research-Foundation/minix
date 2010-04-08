@@ -73,7 +73,7 @@ PUBLIC int main()
 
 	  /* Wait for the next message and extract useful information from it. */
 	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
-		  panic("PM sef_receive error");
+		  panic("PM sef_receive_status error");
 	  who_e = m_in.m_source;	/* who sent the message */
 	  if(pm_isokendpt(who_e, &who_p) != OK)
 		  panic("PM got message from invalid endpoint: %d", who_e);

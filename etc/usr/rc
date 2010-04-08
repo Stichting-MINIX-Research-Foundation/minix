@@ -136,7 +136,7 @@ start)
     	    echo -n "Starting networking:"
 	    if grep -s 'psip0.*default' /etc/inet.conf 
 	    then	ifconfig -h 10.0.0.1
-	    else	sleep 5
+	    else
 	    		daemonize dhcpd
 	    fi
 	    daemonize nonamed -L

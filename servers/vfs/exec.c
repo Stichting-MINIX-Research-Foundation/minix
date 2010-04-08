@@ -193,9 +193,6 @@ vir_bytes frame_len;
   /* This child has now exec()ced. */
   rfp->fp_execced = 1;
 
-  /* Check if this is a driver that can now be useful. */
-  dmap_endpt_up(rfp->fp_endpoint);
-
   return(OK);
 }
 

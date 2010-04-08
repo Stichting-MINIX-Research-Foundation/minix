@@ -98,8 +98,10 @@
  */
 #define NOTIFY_MESSAGE		  0x1000
 /* FIXME the old is_notify(a) should be replaced by is_ipc_notify(status). */
-#define is_ipc_notify(status)	 (IPC_STATUS_CALL(status) == NOTIFY)
-#define is_notify(a)		 ((unsigned) ((a) - NOTIFY_MESSAGE) < 0x100)
+#define is_ipc_notify(ipc_status) (IPC_STATUS_CALL(ipc_status) == NOTIFY)
+#define is_notify(a)		  ((unsigned) ((a) - NOTIFY_MESSAGE) < 0x100)
+#define is_ipc_asynch(ipc_status) \
+    (is_ipc_notify(ipc_status) || IPC_STATUS_CALL(ipc_status) == SENDA)
 #define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
 
 /* Shorthands for message parameters passed with notifications. */
@@ -199,6 +201,8 @@
 #define DEV_IOCTL_S    	(DEV_RQ_BASE + 24) /* (safecopy) I/O control code */
 #define DEV_MMAP_S     	(DEV_RQ_BASE + 25) /* (safecopy) mmap interface */
 
+#define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
+
 #define DEV_REPLY       (DEV_RS_BASE + 0) /* general task reply */
 #define DEV_CLONED      (DEV_RS_BASE + 1) /* return cloned minor */
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
@@ -208,6 +212,8 @@
 #define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
 #define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
 #define DEV_SEL_REPL2	(DEV_RS_BASE + 8) /* (opt) second reply to DEV_SELECT */
+
+#define IS_DEV_RS(type) (((type) & ~0xff) == DEV_RS_BASE)
 
 /* Field names for messages to block and character device drivers. */
 #define DEVICE    	m2_i1	/* major-minor device */
@@ -365,9 +371,10 @@
 #  define SYS_EXIT	 (KERNEL_CALL + 53)	/* sys_exit() */
 
 #  define SYS_SCHEDCTL (KERNEL_CALL + 54)	/* sys_schedctl() */
+#  define SYS_STATECTL (KERNEL_CALL + 55)	/* sys_statectl() */
 
 /* Total */
-#define NR_SYS_CALLS	55	/* number of system calls */
+#define NR_SYS_CALLS	56	/* number of kernel calls */
 
 #define SYS_CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
 
@@ -375,7 +382,7 @@
 #define SYS_BASIC_CALLS \
     SYS_EXIT, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, SYS_VSAFECOPY, SYS_GETINFO, \
     SYS_TIMES, SYS_SETALARM, SYS_SETGRANT, SYS_SAFEMAP, SYS_SAFEREVMAP, \
-    SYS_SAFEUNMAP, SYS_PROFBUF, SYS_SYSCTL
+    SYS_SAFEUNMAP, SYS_PROFBUF, SYS_SYSCTL, SYS_STATECTL
 
 /* Field names for SYS_MEMSET. */
 #define MEM_PTR		m2_p1	/* base */
@@ -495,7 +502,7 @@
 #define T_BOOTTIME	m4_l3	/* Boottime in seconds (also for SYS_STIME) */
 #define T_BOOT_TICKS	m4_l5	/* number of clock ticks since boot time */
 
-/* Field names for SYS_TRACE, SYS_PRIVCTL. */
+/* Field names for SYS_TRACE, SYS_PRIVCTL, SYS_STATECTL. */
 #define CTL_ENDPT      m2_i1	/* process number of the caller */
 #define CTL_REQUEST    m2_i2	/* server control request */
 #define CTL_ARG_PTR    m2_p1	/* pointer to argument */
@@ -651,6 +658,9 @@
 #define SYS_UPD_SRC_ENDPT	m1_i1	/* source endpoint */
 #define SYS_UPD_DST_ENDPT	m1_i2	/* destination endpoint */
 
+/* Subfunctions for SYS_STATECTL */
+#define SYS_STATE_CLEAR_IPC_REFS    1	/* clear IPC references */
+
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
  *===========================================================================*/
@@ -709,6 +719,7 @@
 #  define DS_VAL		m2_l1		/* data (u32, char *, etc.) */
 #  define DS_VAL_LEN		m2_l2		/* data length */
 #  define DS_NR_SNAPSHOT	m2_i3		/* number of snapshot */
+#  define DS_OWNER		m2_i3		/* owner */
 
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *

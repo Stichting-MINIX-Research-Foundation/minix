@@ -13,7 +13,6 @@ PUBLIC int fs_readsuper() {
   cp_grant_id_t label_gid;
   size_t label_len;
   int r = OK;
-  unsigned long tasknr;
   endpoint_t driver_e;
   int readonly;
 
@@ -32,14 +31,12 @@ PUBLIC int fs_readsuper() {
 	return(EINVAL);
   }
 
-  r = ds_retrieve_label_num(fs_dev_label, &tasknr);
+  r = ds_retrieve_label_endpt(fs_dev_label, &driver_e);
   if (r != OK) {
-	printf("ISOFS %s:%d ds_retrieve_label_num failed for '%s': %d\n",
+	printf("ISOFS %s:%d ds_retrieve_label_endpt failed for '%s': %d\n",
 		__FILE__, __LINE__, fs_dev_label, r);
 	return(EINVAL);
   }
-
-  driver_e = tasknr;
 
   /* Map the driver endpoint for this major */
   driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e =  driver_e;

@@ -289,3 +289,11 @@ PUBLIC int sef_cb_lu_state_isvalid_standard(int state)
   return SEF_LU_STATE_IS_STANDARD(state);
 }
 
+/*===========================================================================*
+ *      	      sef_cb_lu_state_isvalid_workfree                       *
+ *===========================================================================*/
+PUBLIC int sef_cb_lu_state_isvalid_workfree(int state)
+{
+  return (state == SEF_LU_STATE_WORK_FREE);
+}
+

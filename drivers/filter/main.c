@@ -375,6 +375,7 @@ static int parse_arguments(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	message m_out;
+	int ipc_status;
 	int r;
 
 	/* SEF local startup. */
@@ -383,14 +384,19 @@ int main(int argc, char *argv[])
 
 	for (;;) {
 		/* Wait for request. */
-		if(sef_receive(ANY, &m_in) != OK) {
-			panic("sef_receive failed");
+		if(driver_receive(ANY, &m_in, &ipc_status) != OK) {
+			panic("driver_receive failed");
 		}
 
 #if DEBUG2
 		printf("Filter: got request %d from %d\n",
 			m_in.m_type, m_in.m_source);
 #endif
+
+		if(m_in.m_source == DS_PROC_NR && is_ipc_notify(ipc_status)) {
+			ds_event();
+			continue;
+		}
 
 		who_e = m_in.m_source;
 		proc_e = m_in.IO_ENDPT;
@@ -464,6 +470,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	sum_init();
 
 	driver_init();
+
+	/* Subscribe to driver events for VFS drivers. */
+	r = ds_subscribe("drv\.vfs\..*", DSF_INITIAL | DSF_OVERWRITE);
+	if(r != OK) {
+		panic("Filter: can't subscribe to driver events");
+	}
+
+	/* Announce we are up! */
+	driver_announce();
 
 	return(OK);
 }

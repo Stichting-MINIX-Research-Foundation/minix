@@ -94,18 +94,19 @@ PUBLIC void main()
 	endpoint_t caller;
 	int proc_nr;
 	message mess;
+	int ipc_status;
 
 	/* SEF local startup. */
 	sef_local_startup();
 
 	while(TRUE) {
 		/* Wait for an incoming message */
-		sef_receive(ANY, &mess);
+		driver_receive(ANY, &mess, &ipc_status);
 
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
 
-		if (is_notify(mess.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case HARDWARE:
 					dsp_hardware_msg();
@@ -184,6 +185,9 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 #else /* CHIP != INTEL */
 	panic("initialization failed: CHIP != INTEL: %d", 0);
 #endif /* CHIP == INTEL */
+
+	/* Announce we are up! */
+	driver_announce();
 
 	return(OK);
 }
@@ -275,6 +279,7 @@ PRIVATE int dsp_ioctl(const message *m_ptr)
 PRIVATE void dsp_write(const message *m_ptr)
 {
 	message mess;
+	int ipc_status;
 	
 	dprint("sb16_dsp.c: dsp_write()\n");
 
@@ -316,7 +321,7 @@ PRIVATE void dsp_write(const message *m_ptr)
 	} else { /* Dma buffer is full, filling second buffer */ 
 
 		while(BufReadNext == BufFillNext) { /* Second buffer also full, wait for space to become available */ 
-			sef_receive(HARDWARE, &mess);
+			driver_receive(HARDWARE, &mess, &ipc_status);
 			dsp_hardware_msg();
 		}
 		sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)Buffer + BufFillNext * DspFragmentSize, (phys_bytes)DspFragmentSize);

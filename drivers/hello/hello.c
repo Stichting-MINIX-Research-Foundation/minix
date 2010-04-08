@@ -165,7 +165,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info)
 {
 /* Initialize the hello driver. */
-    int do_mapdriver = TRUE;
+    int do_announce_driver = TRUE;
 
     open_counter = 0;
     switch(type) {
@@ -176,7 +176,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info)
         case SEF_INIT_LU:
             /* Restore the state. */
             lu_state_restore();
-            do_mapdriver = FALSE;
+            do_announce_driver = FALSE;
 
             printf("%sHey, I'm a new version!\n", HELLO_MESSAGE);
         break;
@@ -186,12 +186,9 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info)
         break;
     }
 
-    /* Map major number to our process. */
-    if (do_mapdriver && mapdriver("hello", HELLO_MAJOR, STYLE_DEV, TRUE) != OK)
-    {
-        printf("hello: mapdriver() failed: %s\n",
-                strerror(errno));
-        return EINVAL;
+    /* Announce we are up when necessary. */
+    if (do_announce_driver) {
+        driver_announce();
     }
 
     /* Initialization completed successfully. */

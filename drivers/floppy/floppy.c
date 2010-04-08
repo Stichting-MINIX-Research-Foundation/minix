@@ -367,6 +367,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
   	panic("Couldn't enable IRQs: %d", s);
 
+  /* Announce we are up! */
+  driver_announce();
+
   return(OK);
 }
 
@@ -799,6 +802,7 @@ PRIVATE void start_motor(void)
 
   int s, motor_bit, running;
   message mess;
+  int ipc_status;
 
   motor_bit = 1 << f_drive;		/* bit mask for this drive */
   running = motor_status & motor_bit;	/* nonzero if this motor is running */
@@ -817,9 +821,9 @@ PRIVATE void start_motor(void)
   f_set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout);
   f_busy = BSY_IO;
   do {
-  	sef_receive(ANY, &mess); 
+  	driver_receive(ANY, &mess, &ipc_status); 
 
-	if (is_notify(mess.m_type)) {
+	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
 				f_expire_tmrs(NULL, NULL);
@@ -861,6 +865,7 @@ PRIVATE int seek(void)
   struct floppy *fp = f_fp;
   int r;
   message mess;
+  int ipc_status;
   u8_t cmd[3];
 
   /* Are we already on the correct cylinder? */
@@ -891,9 +896,9 @@ PRIVATE int seek(void)
  	f_set_timer(&f_tmr_timeout, system_hz/30, f_timeout);
 	f_busy = BSY_IO;
   	do {
-  		sef_receive(ANY, &mess); 
+  		driver_receive(ANY, &mess, &ipc_status); 
 	
-		if (is_notify(mess.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case CLOCK:
 					f_expire_tmrs(NULL, NULL);
@@ -1149,6 +1154,7 @@ PRIVATE void f_reset(void)
   pvb_pair_t byte_out[2];
   int s,i;
   message mess;
+  int ipc_status;
 
   /* Disable interrupts and strobe reset bit low. */
   need_reset = FALSE;
@@ -1173,8 +1179,8 @@ PRIVATE void f_reset(void)
    * but be prepared to handle a timeout.
    */
   do {
-  	sef_receive(ANY, &mess); 
-	if (is_notify(mess.m_type)) {
+  	driver_receive(ANY, &mess, &ipc_status); 
+	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
 				f_expire_tmrs(NULL, NULL);
@@ -1219,11 +1225,12 @@ PRIVATE int f_intr_wait(void)
  * the world, but we humans do not.
  */
   message mess;
+  int ipc_status;
 
   /* We expect an interrupt, but if a timeout, occurs, report an error. */
   do {
-  	sef_receive(ANY, &mess); 
-	if (is_notify(mess.m_type)) {
+  	driver_receive(ANY, &mess, &ipc_status); 
+	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
 				f_expire_tmrs(NULL, NULL);

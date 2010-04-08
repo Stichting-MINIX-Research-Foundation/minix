@@ -53,10 +53,12 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <stdlib.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
+#include <minix/ds.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
@@ -201,6 +203,13 @@ _PROTOTYPE( static void do_vir_outsb, (port_t port, int proc,
 _PROTOTYPE( static void do_vir_outsw, (port_t port, int proc,
 					vir_bytes buf, size_t size)	);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+EXTERN int env_argc;
+EXTERN char **env_argv;
+
 PRIVATE int handle_hw_intr(void)
 {
 	int i, r, irq;
@@ -228,19 +237,13 @@ PRIVATE int handle_hw_intr(void)
 	return r;
 }
 
-/* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-EXTERN int env_argc;
-EXTERN char **env_argv;
-
 /*===========================================================================*
  *				dpeth_task				     *
  *===========================================================================*/
 int main(int argc, char *argv[])
 {
 	message m;
+	int ipc_status;
 	int r;
 
 	/* SEF local startup. */
@@ -249,10 +252,10 @@ int main(int argc, char *argv[])
 
 	while (TRUE)
 	{
-		if ((r= sef_receive(ANY, &m)) != OK)
-			panic("dp8390: sef_receive failed: %d", r);
+		if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("dp8390: netdriver_receive failed: %d", r);
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case HARDWARE:
 					r = handle_hw_intr();
@@ -295,9 +298,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -312,7 +318,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the dp8390 driver. */
-	int i, r, tasknr;
+	int i, r;
 	dpeth_t *dep;
 	long v;
 
@@ -334,10 +340,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
 	eth_ign_proto= htons((u16_t) v);
 
-	/* Try to notify inet that we are present (again) */
-	r = _pm_findproc("inet", &tasknr);
-	if (r == OK)
-		notify(tasknr);
+	/* Announce we are up! */
+	netdriver_announce();
 
 	return(OK);
 }

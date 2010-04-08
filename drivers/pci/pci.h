@@ -4,6 +4,8 @@ pci.h
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
+#include <minix/drivers.h>
+#include <minix/driver.h>
 #include <minix/rs.h>
 
 /* tempory functions: to be replaced later (see pci_intel.h) */

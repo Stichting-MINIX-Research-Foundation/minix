@@ -1,6 +1,6 @@
 .include <minix.own.mk>
 
-SUBDIR= csu libc libcurses libdriver libend libedit libm libsys \
+SUBDIR= csu libc libcurses libdriver libnetdriver libend libedit libm libsys \
 	libtimers libutil
 
 .if ${COMPILER_TYPE} == "ack"

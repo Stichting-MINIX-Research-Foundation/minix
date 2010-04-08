@@ -34,6 +34,7 @@
 
 #include <minix/endpoint.h>
 #include <minix/drivers.h>
+#include <minix/driver.h>
 
 /* Control bits (in port_base + 2).  "+" means positive logic and "-" means
  * negative logic.  Most of the signals are negative logic on the pins but
@@ -114,6 +115,7 @@ FORWARD _PROTOTYPE( void do_printer_output, (void) );
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
@@ -126,14 +128,17 @@ PUBLIC void main(void)
 {
 /* Main routine of the printer task. */
   message pr_mess;		/* buffer for all incoming messages */
+  int ipc_status;
 
   /* SEF local startup. */
   sef_local_startup();
 
   while (TRUE) {
-	sef_receive(ANY, &pr_mess);
+	if(driver_receive(ANY, &pr_mess, &ipc_status) != OK) {
+		panic("driver_receive failed");
+	}
 
-	if (is_notify(pr_mess.m_type)) {
+	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(pr_mess.m_source)) {
 			case HARDWARE:
 				do_printer_output();
@@ -166,7 +171,10 @@ PUBLIC void main(void)
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
-  /* Nothing to on initialization. */
+  /* Register init callbacks. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fresh);
 
   /* Register live update callbacks. */
   sef_setcb_lu_prepare(sef_cb_lu_prepare);
@@ -178,6 +186,18 @@ PRIVATE void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *		            sef_cb_init_fresh                                *
+ *===========================================================================*/
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+{
+/* Initialize the printer driver. */
+  /* Announce we are up! */
+  driver_announce();
+
+  return OK;
 }
 
 /*===========================================================================*

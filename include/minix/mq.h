@@ -12,6 +12,7 @@ Copyright 1995 Philip Homburg
 typedef struct mq
 {
 	message mq_mess;
+	int mq_mess_status;
 	struct mq *mq_next;
 	int mq_allocated;
 } mq_t;

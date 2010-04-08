@@ -41,7 +41,7 @@ int main(void)
 			continue;
 
 		/* Check which one was changed. */
-		r = ds_check(key, &type);
+		r = ds_check(key, &type, NULL);
 		if(r == ENOENT) {
 			printf("SUBSCRIBER: the key %s was deleted.\n",
 				key);

@@ -30,28 +30,79 @@
  *
  * The file contains the following entry points:
  *
+ *   driver_announce:	called by a device driver to announce it is up
+ *   driver_receive:	receive() interface for drivers
+ *   driver_receive_mq:	receive() interface for drivers with message queueing
  *   driver_task:	called by the device dependent task entry
- *   init_buffer:	initialize a DMA buffer
- *   mq_queue:		queue an incoming message for later processing
+ *   driver_init_buffer: initialize a DMA buffer
+ *   driver_mq_queue:	queue an incoming message for later processing
  */
-
 
 #include <minix/drivers.h>
 #include <sys/ioc_disk.h>
 #include <minix/mq.h>
 #include <minix/endpoint.h>
 #include <minix/driver.h>
+#include <minix/ds.h>
 
 /* Claim space for variables. */
 u8_t *tmp_buf = NULL;		/* the DMA buffer eventually */
 phys_bytes tmp_phys;		/* phys address of DMA buffer */
 
+FORWARD _PROTOTYPE( void clear_open_devs, (void) );
+FORWARD _PROTOTYPE( int is_open_dev, (int device) );
+FORWARD _PROTOTYPE( void set_open_dev, (int device) );
+
 FORWARD _PROTOTYPE( void asyn_reply, (message *mess, int proc_nr, int r) );
+FORWARD _PROTOTYPE( int driver_reply, (endpoint_t caller_e, int caller_status,
+	message *m_ptr) );
+FORWARD _PROTOTYPE( int driver_spurious_reply, (endpoint_t caller_e,
+	int caller_status, message *m_ptr) );
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp) );
 
 int device_caller;
 PRIVATE mq_t *queue_head = NULL;
+PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
+PRIVATE int next_open_devs_slot = 0;
+
+/*===========================================================================*
+ *			     clear_open_devs				     *
+ *===========================================================================*/
+PRIVATE void clear_open_devs()
+{
+  next_open_devs_slot = 0;
+}
+
+/*===========================================================================*
+ *			       is_open_dev				     *
+ *===========================================================================*/
+PRIVATE int is_open_dev(int device)
+{
+  int i, open_dev_found;
+
+  open_dev_found = FALSE;
+  for(i=0;i<next_open_devs_slot;i++) {
+	if(open_devs[i] == device) {
+		open_dev_found = TRUE;
+		break;
+	}
+  }
+
+  return open_dev_found;
+}
+
+/*===========================================================================*
+ *			       set_open_dev				     *
+ *===========================================================================*/
+PRIVATE void set_open_dev(int device)
+{
+  if(next_open_devs_slot >= MAX_NR_OPEN_DEVICES) {
+      panic("out of slots for open devices");
+  }
+  open_devs[next_open_devs_slot] = device;
+  next_open_devs_slot++;
+}
 
 /*===========================================================================*
  *				asyn_reply				     *
@@ -116,6 +167,164 @@ int r;
 }
 
 /*===========================================================================*
+ *			       driver_reply				     *
+ *===========================================================================*/
+PRIVATE int driver_reply(caller_e, caller_status, m_ptr)
+endpoint_t caller_e;
+int caller_status;
+message *m_ptr;
+{
+/* Reply to a message sent to the driver. */
+  int r;
+
+  /* Use sendnb if caller is guaranteed to be blocked, asynsend otherwise. */
+  if(IPC_STATUS_CALL(caller_status) == SENDREC) {
+      r = sendnb(caller_e, m_ptr);
+  }
+  else {
+      r = asynsend(caller_e, m_ptr);
+  }
+
+  return r;
+}
+
+/*===========================================================================*
+ *			    driver_spurious_reply			     *
+ *===========================================================================*/
+PRIVATE int driver_spurious_reply(caller_e, caller_status, m_ptr)
+endpoint_t caller_e;
+int caller_status;
+message *m_ptr;
+{
+/* Reply to a spurious message pretending to be dead. */
+  int r;
+
+  m_ptr->m_type = TASK_REPLY;
+  m_ptr->REP_ENDPT = m_ptr->IO_ENDPT;
+  m_ptr->REP_STATUS = ERESTART;
+
+  r = driver_reply(caller_e, caller_status, m_ptr);
+  if(r != OK) {
+	printf("unable to reply to spurious message from %d\n",
+		caller_e);
+  }
+
+  return r;
+}
+
+/*===========================================================================*
+ *			      driver_announce				     *
+ *===========================================================================*/
+PUBLIC void driver_announce()
+{
+/* Announce we are up after a fresh start or restart. */
+  int r;
+  char key[DS_MAX_KEYLEN];
+  char label[DS_MAX_KEYLEN];
+  char *driver_prefix = "drv.vfs.";
+
+  /* Callers are allowed to use sendrec to communicate with drivers.
+   * For this reason, there may blocked callers when a driver restarts.
+   * Ask the kernel to unblock them (if any).
+   */
+  r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS);
+  if (r != OK) {
+	panic("driver_announce: sys_statectl failed: %d\n", r);
+  }
+
+  /* Publish a driver up event. */
+  r = ds_retrieve_label_name(label, getprocnr());
+  if (r != OK) {
+	panic("driver_announce: unable to get own label: %d\n", r);
+  }
+  snprintf(key, DS_MAX_KEYLEN, "%s%s", driver_prefix, label);
+  r = ds_publish_u32(key, DS_DRIVER_UP, DSF_OVERWRITE);
+  if (r != OK) {
+	panic("driver_announce: unable to publish driver up event: %d\n", r);
+  }
+
+  /* Expect a DEV_OPEN for any device before serving regular driver requests. */
+  clear_open_devs();
+}
+
+/*===========================================================================*
+ *				driver_receive				     *
+ *===========================================================================*/
+PUBLIC int driver_receive(src, m_ptr, status_ptr)
+endpoint_t src;
+message *m_ptr;
+int *status_ptr;
+{
+/* receive() interface for drivers. */
+  int r;
+  int ipc_status;
+
+  while (TRUE) {
+	/* Wait for a request. */
+	r = sef_receive_status(src, m_ptr, &ipc_status);
+	*status_ptr = ipc_status;
+	if (r != OK) {
+		return r;
+	}
+
+	/* See if only DEV_OPEN is to be expected for this device. */
+	if(IS_DEV_MINOR_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
+		if(m_ptr->m_type != DEV_OPEN) {
+			if(!is_ipc_asynch(ipc_status)) {
+				driver_spurious_reply(m_ptr->m_source,
+					ipc_status, m_ptr);
+			}
+			continue;
+		}
+		set_open_dev(m_ptr->DEVICE);
+	}
+
+	break;
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
+ *			       driver_receive_mq			     *
+ *===========================================================================*/
+PUBLIC int driver_receive_mq(m_ptr, status_ptr)
+message *m_ptr;
+int *status_ptr;
+{
+/* receive() interface for drivers with message queueing. */
+  int ipc_status;
+
+  /* Any queued messages? Oldest are at the head. */
+  while(queue_head) {
+  	mq_t *mq;
+  	mq = queue_head;
+  	memcpy(m_ptr, &mq->mq_mess, sizeof(mq->mq_mess));
+  	ipc_status = mq->mq_mess_status;
+  	*status_ptr = ipc_status;
+  	queue_head = queue_head->mq_next;
+  	mq_free(mq);
+
+  	/* See if only DEV_OPEN is to be expected for this device. */
+  	if(IS_DEV_MINOR_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
+  		if(m_ptr->m_type != DEV_OPEN) {
+  			if(!is_ipc_asynch(ipc_status)) {
+				driver_spurious_reply(m_ptr->m_source,
+					ipc_status, m_ptr);
+  			}
+  			continue;
+  		}
+  		set_open_dev(m_ptr->DEVICE);
+  	}
+
+  	return OK;
+  }
+
+	/* Fall back to standard receive() interface for drivers. */
+	return driver_receive(ANY, m_ptr, status_ptr);
+}
+
+/*===========================================================================*
  *				driver_task				     *
  *===========================================================================*/
 PUBLIC void driver_task(dp, type)
@@ -124,35 +333,21 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 {
 /* Main program of any device driver task. */
 
-  int r, proc_nr;
+  int r, proc_nr, ipc_status;
   message mess;
-
-  /* Init MQ library. */
-  mq_init();
 
   /* Here is the main loop of the disk task.  It waits for a message, carries
    * it out, and sends a reply.
    */
   while (TRUE) {
-	/* Any queued messages? Oldest are at the head. */
-	if(queue_head) {
-		mq_t *mq;
-		mq = queue_head;
-		memcpy(&mess, &mq->mq_mess, sizeof(mess));
-		queue_head = queue_head->mq_next;
-		mq_free(mq);
-	} else {
-		int s;
-		/* Wait for a request to read or write a disk block. */
-		if ((s=sef_receive(ANY, &mess)) != OK)
-        		panic("sef_receive() failed: %d", s);
-	}
+	if ((r=driver_receive_mq(&mess, &ipc_status)) != OK)
+		panic("driver_receive_mq failed: %d", r);
 
 	device_caller = mess.m_source;
 	proc_nr = mess.IO_ENDPT;
 
 	/* Now carry out the work. */
-	if (is_notify(mess.m_type)) {
+	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case HARDWARE:
 				/* leftover interrupt or expired timer. */
@@ -174,6 +369,7 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 		/* done, get a new message */
 		continue;
 	}
+
 	switch(mess.m_type) {
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
@@ -208,14 +404,7 @@ send_reply:
 		/* Status is # of bytes transferred or error code. */
 		mess.REP_STATUS = r;
 
-		/* Changed from sendnb() to asynsend() by dcvmoole on 20091129.
-		 * This introduces a potential overflow if a single process is
-		 * flooding us with requests, but we need reliable delivery of
-		 * reply messages for the 'filter' driver. A possible solution
-		 * would be to allow only one pending asynchronous reply to a
-		 * single process at any time. FIXME.
-		 */
-		r= asynsend(device_caller, &mess);
+		r= driver_reply(device_caller, ipc_status, &mess);
 		if (r != OK)
 		{
 			printf("driver_task: unable to send reply to %d: %d\n",
@@ -237,9 +426,9 @@ send_reply:
 
 
 /*===========================================================================*
- *				init_buffer				     *
+ *			     driver_init_buffer				     *
  *===========================================================================*/
-PUBLIC void init_buffer(void)
+PUBLIC void driver_init_buffer(void)
 {
 /* Select a buffer that can safely be used for DMA transfers.  It may also
  * be used to read partition tables and such.  Its absolute address is
@@ -459,15 +648,23 @@ message *mp;			/* pointer to ioctl request */
 }
 
 /*===========================================================================*
- *				mq_queue				     *
+ *			      driver_mq_queue				     *
  *===========================================================================*/
-PUBLIC int mq_queue(message *m)
+PUBLIC int driver_mq_queue(message *m, int status)
 {
 	mq_t *mq, *mi;
+	static int mq_initialized = FALSE;
+
+	if(!mq_initialized) {
+        	/* Init MQ library. */
+        	mq_init();
+        	mq_initialized = TRUE;
+        }
 
 	if(!(mq = mq_get()))
-        	panic("mq_queue: mq_get failed");
+        	panic("driver_mq_queue: mq_get failed");
 	memcpy(&mq->mq_mess, m, sizeof(mq->mq_mess));
+	mq->mq_mess_status = status;
 	mq->mq_next = NULL;
 	if(!queue_head) {
 		queue_head = mq;

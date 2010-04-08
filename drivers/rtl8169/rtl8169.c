@@ -7,6 +7,7 @@
  */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -286,16 +287,17 @@ EXTERN char **env_argv;
 int main(int argc, char *argv[])
 {
 	int r;
+	int ipc_status;
 
 	/* SEF local startup. */
 	env_setargs(argc, argv);
 	sef_local_startup();
 
 	while (TRUE) {
-		if ((r = sef_receive(ANY, &m)) != OK)
-			panic("sef_receive failed: %d", r);
+		if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
+			panic("netdriver_receive failed: %d", r);
 
-		if (is_notify(m.m_type)) {
+		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 			case CLOCK:
 				/*
@@ -346,9 +348,12 @@ PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_lu(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* No live update support for now. */
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_workfree);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -363,7 +368,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the rtl8169 driver. */
-	u32_t inet_proc_nr;
 	int r;
 	re_t *rep;
 	long v;
@@ -381,19 +385,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	for (rep = &re_table[0]; rep < re_table + RE_PORT_NR; rep++)
 		rl_init_buf(rep);
 
-	/*
-	 * Try to notify INET that we are present (again). If INET cannot
-	 * be found, assume this is the first time we started and INET is
-	 * not yet alive.
-	 */
-#if 0
-	r = ds_retrieve_label_num("inet", &inet_proc_nr);
-	if (r == OK)
-		notify(inet_proc_nr);
-	else if (r != ESRCH)
-		printf("rtl8169: ds_retrieve_label_num failed for 'inet': %d\n",
-			r);
-#endif
+	/* Announce we are up! */
+	netdriver_announce();
 
 	return(OK);
 }
@@ -1260,6 +1253,7 @@ re_t *rep;
 void transmittest(re_t *rep)
 {
 	int tx_head;
+	int ipc_status;
 
 	tx_head = rep->re_tx_head;
 
@@ -1267,8 +1261,8 @@ void transmittest(re_t *rep)
 		do {
 			message m;
 			int r;
-			if ((r = sef_receive(ANY, &m)) != OK)
-				panic("sef_receive failed: %d", r);
+			if ((r = netdriver_receive(ANY, &m, &ipc_status)) != OK)
+				panic("netdriver_receive failed: %d", r);
 		} while(m.m_source != HARDWARE);
 		assert(!(rep->re_flags & REF_SEND_AVAIL));
 		rep->re_flags |= REF_SEND_AVAIL;

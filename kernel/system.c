@@ -184,6 +184,7 @@ PUBLIC void system_init(void)
   map(SYS_SETGRANT, do_setgrant);	/* get/set own parameters */
   map(SYS_RUNCTL, do_runctl);		/* set/clear stop flag of a process */
   map(SYS_UPDATE, do_update);		/* update a process into another */
+  map(SYS_STATECTL, do_statectl);	/* let a process control its state */
 
   /* Signal handling. */
   map(SYS_KILL, do_kill); 		/* cause a process to be signaled */
@@ -476,39 +477,37 @@ vir_bytes bytes;                /* size */
 PUBLIC void clear_endpoint(rc)
 register struct proc *rc;		/* slot of process to clean up */
 {
-  register struct proc *rp;		/* iterate over process table */
-  register struct proc **xpp;		/* iterate over caller queue */
-
   if(isemptyp(rc)) panic("clear_proc: empty process: %d",  rc->p_endpoint);
-
-  if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR ||
-	rc->p_endpoint == VM_PROC_NR)
-  {
-	/* This test is great for debugging system processes dying,
-	 * but as this happens normally on reboot, not good permanent code.
-	 */
-	printf("died: ");
-	proc_stacktrace(rc);
-	panic("system process died: %d",  rc->p_endpoint);
-  }
 
   /* Make sure that the exiting process is no longer scheduled. */
   RTS_SET(rc, RTS_NO_ENDPOINT);
   if (priv(rc)->s_flags & SYS_PROC)
   {
-	if (priv(rc)->s_asynsize) {
-#if 0
-		printf("clear_endpoint: clearing s_asynsize of %s / %d\n",
-			rc->p_name, rc->p_endpoint);
-		proc_stacktrace(rc);
-#endif
-	}
 	priv(rc)->s_asynsize= 0;
   }
 
   /* If the process happens to be queued trying to send a
    * message, then it must be removed from the message queues.
    */
+  clear_ipc(rc);
+
+  /* Likewise, if another process was sending or receive a message to or from 
+   * the exiting process, it must be alerted that process no longer is alive.
+   * Check all processes. 
+   */
+  clear_ipc_refs(rc, EDEADSRCDST);
+
+}
+
+/*===========================================================================*
+ *			         clear_ipc				     *
+ *===========================================================================*/
+PUBLIC void clear_ipc(rc)
+register struct proc *rc;		/* slot of process to clean up */
+{
+/* Clear IPC data for a given process slot. */
+  struct proc **xpp;			/* iterate over caller queue */
+
   if (RTS_ISSET(rc, RTS_SENDING)) {
       int target_proc;
 
@@ -528,11 +527,18 @@ register struct proc *rc;		/* slot of process to clean up */
       rc->p_rts_flags &= ~RTS_SENDING;
   }
   rc->p_rts_flags &= ~RTS_RECEIVING;
+}
 
-  /* Likewise, if another process was sending or receive a message to or from 
-   * the exiting process, it must be alerted that process no longer is alive.
-   * Check all processes. 
-   */
+/*===========================================================================*
+ *			       clear_ipc_refs				     *
+ *===========================================================================*/
+PUBLIC void clear_ipc_refs(rc, caller_ret)
+register struct proc *rc;		/* slot of process to clean up */
+int caller_ret;				/* code to return on callers */
+{
+/* Clear IPC references for a given process slot. */
+  struct proc *rp;			/* iterate over process table */
+
   for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
       if(isemptyp(rp))
 	continue;
@@ -540,13 +546,18 @@ register struct proc *rc;		/* slot of process to clean up */
       /* Unset pending notification bits. */
       unset_sys_bit(priv(rp)->s_notify_pending, priv(rc)->s_id);
 
-      /* Check if process is depends on exiting process. */
+      /* XXX FIXME: Cleanup should be done for senda() as well. For this to be
+       * done in a realistic way, we need a better implementation of senda
+       * with a bitmap similar to s_notify_pending for notify() rather than
+       * a single global MF_ASYNMSG flag. The current arrangement exposes
+       * several performance issues.
+       */
+
+      /* Check if process depends on given process. */
       if (P_BLOCKEDON(rp) == rc->p_endpoint) {
-          rp->p_reg.retreg = EDEADSRCDST;		/* report source died */
+          rp->p_reg.retreg = caller_ret;	/* return requested code */
 	  RTS_UNSET(rp, (RTS_RECEIVING|RTS_SENDING)); /* no longer blocking */
-	  printf("endpoint %d / %s blocked on dead src ep %d / %s\n",
-		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
-      } 
+      }
   }
 }
 

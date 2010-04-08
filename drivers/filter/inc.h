@@ -12,6 +12,7 @@
 #include <minix/partition.h>
 #include <minix/ds.h>
 #include <minix/callnr.h>
+#include <minix/driver.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,23 @@ typedef enum {
   FLT_READ,		/* read from one disk */
   FLT_READ2		/* read from both disks */
 } disk_operation;
+
+struct driverinfo {
+  char *label;
+  int minor;
+  endpoint_t endpt;
+  int up_event;
+
+  int problem;		/* one of BD_* */
+  int error;		/* one of E*, only relevant if problem>0 */
+  int retries;
+  int kills;
+};
+
+/* UP event characterization. */
+#define UP_EXPECTED	0
+#define UP_NONE		1
+#define UP_PENDING	2
 
 /* Something was wrong and the disk driver has been restarted/refreshed,
  * so the request needs to be redone.
@@ -94,10 +112,11 @@ extern int check_driver(int which);
 extern int bad_driver(int which, int type, int error);
 extern int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep,
 	int flag_rw);
+extern void ds_event(void);
 
 /* util.c */
 extern char *flt_malloc(size_t size, char *sbuf, size_t ssize);
 extern void flt_free(char *buf, size_t size, const char *sbuf);
 extern char *print64(u64_t p);
 extern clock_t flt_alarm(clock_t dt);
-extern void flt_sleep(int secs);
+

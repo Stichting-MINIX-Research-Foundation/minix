@@ -5,6 +5,7 @@ Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 */
 
 #include <minix/drivers.h>
+#include <minix/netdriver.h>
 
 #include <stdlib.h>
 #include <stdio.h>

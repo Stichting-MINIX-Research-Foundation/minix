@@ -18,14 +18,14 @@ PUBLIC void pci_init1(name)
 char *name;
 {
 	int r;
-	u32_t u32;
+	endpoint_t endpoint;
 	size_t len;
 	message m;
 
-	r= ds_retrieve_label_num("pci", &u32);
+	r= ds_retrieve_label_endpt("pci", &endpoint);
 	if (r != 0)
-		panic("pci_init1: ds_retrieve_label_num failed for 'pci': %d", r);
-	pci_procnr= u32;
+		panic("pci_init1: ds_retrieve_label_endpt failed for 'pci': %d", r);
+	pci_procnr= endpoint;
 
 	m.m_type= BUSC_PCI_INIT;
 	len= strlen(name);

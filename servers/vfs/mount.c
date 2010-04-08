@@ -81,7 +81,7 @@ PUBLIC int do_fslogin()
  *===========================================================================*/
 PUBLIC int do_mount()
 {
-  u32_t fs_e;
+  endpoint_t fs_e;
   int r, proc_nr;
 
   /* Only the super-user may do MOUNT. */
@@ -96,13 +96,13 @@ PUBLIC int do_mount()
 
 	mount_label[sizeof(mount_label)-1] = 0;
 
-	r = ds_retrieve_label_num(mount_label, &fs_e);
+	r = ds_retrieve_label_endpt(mount_label, &fs_e);
 	if (r != OK) return(r);
 
 	if (isokendpt(fs_e, &proc_nr) != OK) return(EINVAL);
   } else {
 	/* Legacy support: get the endpoint from the request itself. */
-	fs_e = (unsigned long) m_in.fs_label;
+	fs_e = (endpoint_t) m_in.fs_label;
 	mount_label[0] = 0;
   }
 
