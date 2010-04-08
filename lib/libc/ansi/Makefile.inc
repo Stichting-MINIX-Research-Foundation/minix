@@ -22,6 +22,7 @@ SRCS+=  \
 	isalnum.c \
 	isalpha.c \
 	isascii.c \
+	isblank.c \
 	iscntrl.c \
 	isdigit.c \
 	isgraph.c \

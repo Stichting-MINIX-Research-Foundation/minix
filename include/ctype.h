@@ -24,6 +24,7 @@ extern char	__ctype[];	/* property array defined in chartab.c */
 /* Function Prototypes (have to go before the macros). */
 _PROTOTYPE( int isalnum, (int  _c)  );	/* alphanumeric [a-z], [A-Z], [0-9] */
 _PROTOTYPE( int isalpha, (int  _c)  );	/* alphabetic */
+_PROTOTYPE( int isblank, (int  _c)  );	/* blank space */
 _PROTOTYPE( int iscntrl, (int  _c)  );	/* control characters */
 _PROTOTYPE( int isdigit, (int  _c)  );	/* digit [0-9] */
 _PROTOTYPE( int isgraph, (int  _c)  );	/* graphic character */
@@ -51,6 +52,7 @@ _PROTOTYPE( int toascii, (int  _c)  );	/* convert to 7-bit ASCII */
 #define isupper(c)	((unsigned) ((c)-'A') < 26)
 #define isprint(c)	((unsigned) ((c)-' ') < 95)
 #define isascii(c)	((unsigned) (c) < 128)
+#define isblank(c)	((c) == ' ' || (c) == '\t')
 
 #define toascii(c)	((c) & 0x7f)
 
