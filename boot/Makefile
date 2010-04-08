@@ -38,7 +38,7 @@ rawfs86.o:	rawfs.c rawfs.o
 boot:	boothead.s boot.o bootimage.o rawfs86.o
 	$(LD86) -o bootexec \
 		boothead.s boot.o bootimage.o rawfs86.o $(LIBS)
-	install -S 12kb bootexec
+	install -S 22kb bootexec
 	# This is code that is executed when used on a bootable
 	# CD, as its entry point is the start of the file then.
 	# It jumps over the a.out header into the part of the
