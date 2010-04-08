@@ -242,7 +242,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
           SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
           system_hz = DEFAULT_HZ;
           fprintf(stderr, "WARNING: reverting to default HZ %d\n",
-              system_hz);
+              (int) system_hz);
       }
 
       /* Check optional arguments that come in pairs like "-args arglist". */
@@ -858,7 +858,7 @@ PRIVATE void do_control(config_t *cpe)
 				nr_control+1);
 		}
 
-		rs_start.rss_control[nr_control].l_addr = cpe->word;
+		rs_start.rss_control[nr_control].l_addr = (char*) cpe->word;
 		rs_start.rss_control[nr_control].l_len = strlen(cpe->word);
 		rs_start.rss_nr_control = ++nr_control;
 	}

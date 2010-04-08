@@ -561,6 +561,7 @@ struct rproc *rp;
   }
 
   /* Get a.out header. */
+  s = ENOMEM;
   if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < sizeof(header)
       || (s = sys_getaoutheader(&header, boot_proc_idx)) != OK) {
       panic("unable to get copy of a.out header: %d", s);
@@ -569,6 +570,7 @@ struct rproc *rp;
   boot_image_ptr += header.a_hdrlen;
 
   /* Get text segment. */
+  s = ENOMEM;
   if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < header.a_text
       || (s = rs_startup_segcopy(ip->endpoint, T, D, (vir_bytes) boot_image_ptr,
       header.a_text)) != OK) {
@@ -577,6 +579,7 @@ struct rproc *rp;
   boot_image_ptr += header.a_text;
 
   /* Get data segment. */
+  s = ENOMEM;
   if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < header.a_data
       || (s = rs_startup_segcopy(ip->endpoint, D, D, (vir_bytes) boot_image_ptr,
       header.a_data)) != OK) {
