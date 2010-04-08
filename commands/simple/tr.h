@@ -45,4 +45,4 @@ typedef struct {
 #define	NCHARS	(UCHAR_MAX + 1)		/* Number of possible characters. */
 #define	OOBCH	(UCHAR_MAX + 1)		/* Out of band character value. */
 
-int	 next __P((STR *));
+int	 next (STR *);

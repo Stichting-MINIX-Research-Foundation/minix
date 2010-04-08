@@ -813,6 +813,9 @@ touch:	touch.c
 top:	top.c
 	$(CCLD) -o $@ $< -lcurses
 
+tr:	tr.c str.c
+	$(CCLD) -o $@ tr.c str.c
+
 tsort:	tsort.c
 	$(CCLD) -o $@ $<
 	@install -S 4kw $@
@@ -1076,6 +1079,7 @@ install:	\
 	/usr/bin/time \
 	/usr/bin/top \
 	/usr/bin/touch \
+	/usr/bin/tr \
 	/usr/bin/truncate \
 	/usr/bin/tsort \
 	/usr/bin/ttt \
@@ -1620,6 +1624,9 @@ install:	\
 	install -cs -o root -m 4755 $> $@
 
 /usr/bin/touch:	touch
+	install -cs -o bin $> $@
+
+/usr/bin/tr:	tr
 	install -cs -o bin $> $@
 
 /usr/bin/truncate:	truncate

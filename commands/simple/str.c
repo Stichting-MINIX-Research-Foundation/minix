@@ -29,14 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
-#endif
-__RCSID("$NetBSD: str.c,v 1.12 2009/04/13 23:50:49 lukem Exp $");
-#endif /* not lint */
-
 #include <sys/types.h>
 
 #include <err.h>
@@ -47,15 +39,15 @@ __RCSID("$NetBSD: str.c,v 1.12 2009/04/13 23:50:49 lukem Exp $");
 #include <string.h>
 #include <ctype.h>
 
-#include "extern.h"
+#include "tr.h"
 
-static int	backslash __P((STR *));
-static int	bracket __P((STR *));
-static int	c_class __P((const void *, const void *));
-static void	genclass __P((STR *));
-static void	genequiv __P((STR *));
-static int	genrange __P((STR *));
-static void	genseq __P((STR *));
+static int	backslash (STR *);
+static int	bracket (STR *);
+static int	c_class (const void *, const void *);
+static void	genclass (STR *);
+static void	genequiv (STR *);
+static int	genrange (STR *);
+static void	genseq (STR *);
 
 int
 next(s)
@@ -122,21 +114,21 @@ bracket(s)
 
 	switch (s->str[1]) {
 	case ':':				/* "[:class:]" */
-		if ((p = strstr(s->str + 2, ":]")) == NULL)
+		if ((p = strstr((char *) s->str + 2, ":]")) == NULL)
 			return (0);
 		*p = '\0';
 		s->str += 2;
 		genclass(s);
-		s->str = p + 2;
+		s->str = (unsigned char *) p + 2;
 		return (1);
 	case '=':				/* "[=equiv=]" */
-		if ((p = strstr(s->str + 2, "=]")) == NULL)
+		if ((p = strstr((char *) s->str + 2, "=]")) == NULL)
 			return (0);
 		s->str += 2;
 		genequiv(s);
 		return (1);
 	default:				/* "[\###*n]" or "[#*n]" */
-		if ((p = strpbrk(s->str + 2, "*]")) == NULL)
+		if ((p = strpbrk((char *) s->str + 2, "*]")) == NULL)
 			return (0);
 		if (p[0] != '*' || strchr(p, ']') == NULL)
 			return (0);
@@ -149,7 +141,7 @@ bracket(s)
 
 typedef struct {
 	const char *name;
-	int (*func) __P((int));
+	int (*func) (int);
 	int *set;
 } CLASS;
 
@@ -172,17 +164,21 @@ static void
 genclass(s)
 	STR *s;
 {
-	int cnt, (*func) __P((int));
+	int cnt, (*func) (int);
 	CLASS *cp, tmp;
 	int *p;
 
-	tmp.name = s->str;
+	tmp.name = (char *) s->str;
 	if ((cp = (CLASS *)bsearch(&tmp, classes, sizeof(classes) /
-	    sizeof(CLASS), sizeof(CLASS), c_class)) == NULL)
-		errx(1, "unknown class %s", s->str);
+	    sizeof(CLASS), sizeof(CLASS), c_class)) == NULL) {
+		fprintf(stderr, "tr: unknown class %s\n", s->str);
+		exit(1);
+	}
 
-	if ((cp->set = p = malloc((NCHARS + 1) * sizeof(int))) == NULL)
-		err(1, "malloc");
+	if ((cp->set = p = malloc((NCHARS + 1) * sizeof(int))) == NULL) {
+		perror("malloc");
+		exit(1);
+	}
 	memset(p, 0, (NCHARS + 1) * sizeof(int));
 	for (cnt = 0, func = cp->func; cnt < NCHARS; ++cnt)
 		if ((func)(cnt))
@@ -211,12 +207,16 @@ genequiv(s)
 {
 	if (*s->str == '\\') {
 		s->equiv[0] = backslash(s);
-		if (*s->str != '=')
-			errx(1, "misplaced equivalence equals sign");
+		if (*s->str != '=') {
+			fprintf(stderr, "tr: misplaced equivalence equals sign\n");
+			exit(1);
+		}
 	} else {
 		s->equiv[0] = s->str[0];
-		if (s->str[1] != '=')
-			errx(1, "misplaced equivalence equals sign");
+		if (s->str[1] != '=') {
+			fprintf(stderr, "tr: misplaced equivalence equals sign\n");
+			exit(1);
+		}
 	}
 	s->str += 2;
 	s->cnt = 0;
@@ -229,7 +229,7 @@ genrange(s)
 	STR *s;
 {
 	int stopval;
-	char *savestart;
+	unsigned char *savestart;
 
 	savestart = s->str;
 	stopval = *++s->str == '\\' ? backslash(s) : *s->str++;
@@ -249,15 +249,19 @@ genseq(s)
 {
 	char *ep;
 
-	if (s->which == STRING1)
-		errx(1, "sequences only valid in string2");
+	if (s->which == STRING1) {
+		fprintf(stderr, "tr: sequences only valid in string2\n");
+		exit(1);
+	}
 
 	if (*s->str == '\\')
 		s->lastch = backslash(s);
 	else
 		s->lastch = *s->str++;
-	if (*s->str != '*')
-		errx(1, "misplaced sequence asterisk");
+	if (*s->str != '*') {
+		fprintf(stderr, "tr: misplaced sequence asterisk\n");
+		exit(1);
+	}
 
 	switch (*++s->str) {
 	case '\\':
@@ -269,13 +273,14 @@ genseq(s)
 		break;
 	default:
 		if (isdigit(*s->str)) {
-			s->cnt = strtol(s->str, &ep, 0);
+			s->cnt = strtol((char *) s->str, &ep, 0);
 			if (*ep == ']') {
-				s->str = ep + 1;
+				s->str = (unsigned char *) ep + 1;
 				break;
 			}
 		}
-		errx(1, "illegal sequence count");
+		fprintf(stderr, "tr: illegal sequence count\n");
+		exit(1);
 		/* NOTREACHED */
 	}
 
