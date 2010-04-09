@@ -8,7 +8,6 @@
 
 /* Miscellaneous constants */
 #define SU_UID 	 ((uid_t) 0)	/* super_user's uid_t */
-#define SERVERS_UID ((uid_t) 11) /* who may do FSSIGNON */
 #define SYS_UID  ((uid_t) 0)	/* uid_t for system processes and INIT */
 #define SYS_GID  ((gid_t) 0)	/* gid_t for system processes and INIT */
 

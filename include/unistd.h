@@ -191,7 +191,7 @@ _PROTOTYPE( int getnprocnr, (pid_t pid)					);
 _PROTOTYPE( int getpprocnr, (void)					);
 _PROTOTYPE( int _pm_findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int mapdriver, (char *label, int major, int style,
-							int force)	);
+							int flags)	);
 _PROTOTYPE(int adddma, (endpoint_t proc_e,
 				phys_bytes start, phys_bytes size)	);
 _PROTOTYPE(int deldma, (endpoint_t proc_e,

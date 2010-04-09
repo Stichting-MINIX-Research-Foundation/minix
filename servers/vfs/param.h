@@ -27,10 +27,6 @@
 #define offset_lo     m2_l1
 #define offset_high   m2_l2
 #define ctl_req       m4_l1
-#define driver_nr     m4_l2
-#define dev_nr	      m4_l3
-#define dev_style     m4_l4
-#define m_force	      m4_l5
 #define mount_flags   m1_i3
 #define request       m1_i2
 #define sig	      m1_i2
@@ -52,7 +48,7 @@
 #define md_label_len	m2_l1
 #define md_major	m2_i1
 #define md_style	m2_i2
-#define md_force	m2_i3
+#define md_flags	m2_i3
 
 /* The following names are synonyms for the variables in the output message. */
 #define reply_type    m_type

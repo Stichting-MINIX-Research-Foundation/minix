@@ -146,7 +146,7 @@ PUBLIC void dev_status(message *m)
 		break;
 
 	if (d >= NR_DEVICES) return;
-	if (dmap[d].dmap_async_driver) {
+	if (dmap[d].dmap_style == STYLE_DEVA) {
 		printf("dev_status: not doing dev_status for async driver %d\n",
 			m->m_source);
 		return;
@@ -416,7 +416,7 @@ int suspend_reopen;		/* Just suspend the process */
 	/* fp is uninitialized at init time. */
 	if(!fp) panic("SUSPEND on NULL fp");
 
-	if ((flags & O_NONBLOCK) && !dp->dmap_async_driver) {
+	if ((flags & O_NONBLOCK) && !(dp->dmap_style == STYLE_DEVA)) {
 		/* Not supposed to block. */
 		dev_mess.m_type = CANCEL;
 		dev_mess.IO_ENDPT = ioproc;

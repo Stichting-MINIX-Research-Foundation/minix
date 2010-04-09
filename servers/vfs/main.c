@@ -213,11 +213,12 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the virtual file server. */
-  int s;
+  int s, i;
   register struct fproc *rfp;
   struct vmnt *vmp;
   struct vnode *root_vp;
   message mess;
+  struct rprocpub rprocpub[NR_BOOT_PROCS];
 
   /* Clear endpoint field */
   last_login_fs_e = NONE;
@@ -263,7 +264,22 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   fp = (struct fproc *) NULL;
   who_e = who_p = FS_PROC_NR;
 
-  build_dmap();			/* build device table and map boot driver */
+  /* Initialize device table. */
+  build_dmap();
+
+  /* Map all the services in the boot image. */
+  if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
+	(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
+	panic("sys_safecopyfrom failed: %d", s);
+  }
+  for(i=0;i < NR_BOOT_PROCS;i++) {
+	if(rprocpub[i].in_use) {
+		if((s = map_service(&rprocpub[i])) != OK) {
+			panic("unable to map service: %d", s);
+		}
+	}
+  }
+
   init_root();			/* init root device and load super block */
   init_select();		/* init select() structures */
 

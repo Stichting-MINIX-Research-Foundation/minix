@@ -175,6 +175,9 @@
 #define CHECK_IRQ       0x40    /* check if IRQ can be used */
 #define CHECK_MEM       0x80    /* check if (VM) mem map request is allowed */
 
+/* Bits for device driver flags managed by RS and VFS. */
+#define DRV_FORCED      0x01    /* driver is mapped even if not alive yet */
+
 /* Values for the "verbose" boot monitor variable */
 #define VERBOSEBOOT_QUIET 0
 #define VERBOSEBOOT_BASIC 1

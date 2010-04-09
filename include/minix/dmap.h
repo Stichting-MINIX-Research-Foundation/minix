@@ -4,21 +4,39 @@
 #include <minix/sys_config.h>
 #include <minix/ipc.h>
 
-enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
+enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
+	STYLE_CLONE };
+#define IS_DEV_STYLE(s) (s>=STYLE_NDEV && s<=STYLE_CLONE)
 
 /*===========================================================================*
  *               	 Major and minor device numbers  		     *
  *===========================================================================*/
 
 /* Total number of different devices. */
-#define NR_DEVICES   		  32		/* number of (major) devices */
+#define NR_DEVICES   	NR_SYS_PROCS	/* number of (major) devices */
 
-#define NONE_MAJOR		   0	/* pseudo device for mounting file
-					 * systems without a real block device
-					 */
+/* Major device numbers. */
+#define NONE_MAJOR		   0	/*  0 = not used                      */
+#define MEMORY_MAJOR  		   1	/*  1 = /dev/mem    (memory devices)  */
+#define FLOPPY_MAJOR	           2	/*  2 = /dev/fd0    (floppy disks)    */
+                                        /*  3 = /dev/c0                       */
+#define TTY_MAJOR		   4	/*  4 = /dev/tty00  (ttys)            */
+#define CTTY_MAJOR		   5	/*  5 = /dev/tty                      */
+#define PRINTER_MAJOR		   6	/*  6 = /dev/lp     (printer driver)  */
+#define INET_MAJOR		   7	/*  7 = /dev/ip     (inet)            */
+					/*  8 = /dev/c1                       */
+					/*  9 = not used                      */
+					/* 10 = /dev/c2                       */
+#define FILTER_MAJOR		  11	/* 11 = /dev/filter (filter driver)   */
+					/* 12 = /dev/c3                       */
+#define AUDIO_MAJOR		  13	/* 13 = /dev/audio  (audio driver)    */
+					/* 14 = not used                      */
+#define LOG_MAJOR		  15	/* 15 = /dev/klog   (log driver)      */
+#define RANDOM_MAJOR		  16	/* 16 = /dev/random (random driver)   */
+#define HELLO_MAJOR		  17	/* 17 = /dev/hello  (hello driver)    */
 
-/* Major and minor device numbers for MEMORY driver. */
-#define MEMORY_MAJOR  		   1	/* major device for memory devices */
+
+/* Minor device numbers for memory driver. */
 #  define RAM_DEV_OLD  		   0	/* minor device for /dev/ram */
 #  define MEM_DEV     		   1	/* minor device for /dev/mem */
 #  define KMEM_DEV    		   2	/* minor device for /dev/kmem */
@@ -30,21 +48,12 @@ enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
 
 #define CTRLR(n) ((n)==0 ? 3 : (8 + 2*((n)-1)))	/* magic formula */
 
+/* Minor device numbers for log driver. */
+#  define IS_KLOG_DEV		   0	/* minor device for /dev/klog */
+
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	      0x0100	/* device number of /dev/ram */
 #  define DEV_IMGRD	      0x0106	/* device number of /dev/imgrd */
 
-#define FLOPPY_MAJOR	           2	/* major device for floppy disks */
-#define TTY_MAJOR		   4	/* major device for ttys */
-#define CTTY_MAJOR		   5	/* major device for /dev/tty */
-
-#define INET_MAJOR		   7	/* major device for inet */
-
-#define FILTER_MAJOR		  11	/* major device for filter driver */
-
-#define LOG_MAJOR		  15	/* major device for log driver */
-#  define IS_KLOG_DEV		   0	/* minor device for /dev/klog */
-
-#define HELLO_MAJOR		  17	/* major device for hello driver */
-
 #endif /* _DMAP_H */
+

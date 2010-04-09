@@ -287,6 +287,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Get label. */
       strcpy(rpub->label, boot_image_priv->label);
 
+      /* Get heartbeat period. */
+      rpub->period = boot_image_priv->period;
+
       if(boot_image_priv->endpoint != RS_PROC_NR) {
           /* Force a static priv id for system services in the boot image. */
           rp->r_priv.s_id = static_priv_id(
@@ -323,9 +326,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /*
        * Set dev properties.
        */
+      rpub->dev_flags = boot_image_dev->flags;        /* device flags */
       rpub->dev_nr = boot_image_dev->dev_nr;          /* major device number */
       rpub->dev_style = boot_image_dev->dev_style;    /* device style */
-      rpub->period = boot_image_dev->period;          /* heartbeat period */
+      rpub->dev_style2 = boot_image_dev->dev_style2;  /* device style 2 */
 
       /* Get process name. */
       strcpy(rpub->proc_name, ip->proc_name);

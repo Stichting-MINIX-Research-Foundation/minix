@@ -54,6 +54,13 @@ daemonize()
 
 up()
 {
+    upopt " " "$@"
+}
+
+upopt()
+{
+    opt=$1
+    shift
     service=$1
     shift
 
@@ -64,7 +71,7 @@ up()
 
     # Service is not disabled. Try to bring it up.
     echo -n " $service"
-    service up /usr/sbin/$service "$@" 
+    service $opt up /usr/sbin/$service "$@" 
 }
 
 
@@ -80,7 +87,7 @@ start)
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"
-    up random -dev /dev/random -period 3HZ
+    upopt -n random -dev /dev/random -devstyle STYLE_DEVA -period 3HZ
 
     # load random number generator
     if [ -f $RANDOM_FILE ]
@@ -100,9 +107,9 @@ start)
             eval up $driver $arg -period 5HZ
         fi
     done
-    up inet -script /etc/rs.inet
-    up printer -dev /dev/lp -period 10HZ
-    up ipc
+    upopt -n inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+    upopt -n printer -dev /dev/lp -period 10HZ
+    upopt -n ipc
     echo .
 
     # Network initialization.

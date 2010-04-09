@@ -27,6 +27,7 @@
 #include <minix/bitmap.h>
 #include <minix/paths.h>
 #include <minix/sef.h>
+#include <minix/dmap.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <configfile.h>
@@ -53,6 +54,11 @@ PRIVATE char *known_requests[] = {
 #define DEFAULT_LU_STATE   SEF_LU_STATE_WORK_FREE /* Default lu state */
 #define DEFAULT_LU_MAXTIME 0                    /* Default lu max time */
 
+/* Define names for options provided to this utility. */
+#define OPT_COPY	"-c"		/* copy executable image */
+#define OPT_REUSE	"-r"		/* reuse executable image */
+#define OPT_NOBLOCK	"-n"		/* unblock caller immediately */
+
 /* Define names for arguments provided to this utility. The first few 
  * arguments are required and have a known index. Thereafter, some optional
  * argument pairs like "-args arglist" follow.
@@ -68,6 +74,7 @@ PRIVATE char *known_requests[] = {
 
 #define ARG_ARGS	"-args"		/* list of arguments to be passed */
 #define ARG_DEV		"-dev"		/* major device number for drivers */
+#define ARG_DEVSTYLE	"-devstyle"	/* device style */
 #define ARG_PERIOD	"-period"	/* heartbeat period in ticks */
 #define ARG_SCRIPT	"-script"	/* name of the script to restart a
 					 * system service
@@ -90,13 +97,14 @@ PRIVATE char *known_requests[] = {
  */
 PRIVATE int req_type;
 PRIVATE int do_run= 0;		/* 'run' command instead of 'up' */
-PRIVATE char *req_label;
-PRIVATE char *req_path;
+PRIVATE char *req_label = NULL;
+PRIVATE char *req_path = NULL;
 PRIVATE char *req_args = "";
-PRIVATE int req_major;
-PRIVATE long req_period;
-PRIVATE char *req_script;
-PRIVATE char *req_ipc;
+PRIVATE int req_major = 0;
+PRIVATE int req_dev_style = STYLE_NDEV;
+PRIVATE long req_period = 0;
+PRIVATE char *req_script = NULL;
+PRIVATE char *req_ipc = NULL;
 PRIVATE char *req_config = PATH_CONFIG;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
 PRIVATE int req_lu_state = DEFAULT_LU_STATE;
@@ -115,9 +123,10 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [-c -r] (up|run|update) <binary> [%s <args>] [%s <special>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
-	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD, ARG_SCRIPT, ARG_LABELNAME,
-	ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
+  "    %s [%s %s %s] (up|run|update) <binary> [%s <args>] [%s <special>] [%s <style>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
+	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK,
+	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_PERIOD, ARG_SCRIPT,
+	ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
   fprintf(stderr, "    %s down label\n", app_name);
   fprintf(stderr, "    %s refresh label\n", app_name);
   fprintf(stderr, "    %s restart label\n", app_name);
@@ -142,12 +151,13 @@ PRIVATE int parse_arguments(int argc, char **argv)
   struct stat stat_buf;
   char *hz, *buff;
   int req_nr;
-  int c, i;
-  int c_flag, r_flag;
+  int c, i, j;
+  int c_flag, r_flag, n_flag;
 
   c_flag = 0;
   r_flag = 0;
-  while (c= getopt(argc, argv, "rci?"), c != -1)
+  n_flag = 0;
+  while (c= getopt(argc, argv, "rcn?"), c != -1)
   {
 	switch(c)
 	{
@@ -161,10 +171,8 @@ PRIVATE int parse_arguments(int argc, char **argv)
 	        c_flag = 1; /* -r implies -c */
 		r_flag = 1;
 		break;
-	case 'i':
-		/* Legacy - remove later */
-		fputs("WARNING: obsolete -i flag passed to service(8)\n",
-			stderr);
+	case 'n':
+		n_flag = 1;
 		break;
 	default:
 		fprintf(stderr, "%s: getopt failed: %c\n",
@@ -198,6 +206,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
 	req_nr = RS_RQ_BASE + req_type;
   }
 
+  rs_start.rss_flags = 0;
   if (req_nr == RS_UP || req_nr == RS_UPDATE) {
       u32_t system_hz;
 
@@ -207,7 +216,10 @@ PRIVATE int parse_arguments(int argc, char **argv)
 
       if(r_flag)
         rs_start.rss_flags |= RSS_REUSE;
-        
+
+      if(n_flag)
+        rs_start.rss_flags |= RSS_NOBLOCK;
+
       if (do_run)
       {
 	/* Set default recovery script for RUN */
@@ -274,6 +286,25 @@ PRIVATE int parse_arguments(int argc, char **argv)
                   exit(EINVAL);
        	      } 
               req_major = (stat_buf.st_rdev >> MAJOR) & BYTE;
+              if(req_dev_style == STYLE_NDEV) {
+                  req_dev_style = STYLE_DEV;
+              }
+          }
+          else if (strcmp(argv[i], ARG_DEVSTYLE)==0) {
+              char* dev_style_keys[] = { "STYLE_DEV", "STYLE_DEVA", "STYLE_TTY",
+                  "STYLE_CTTY", "STYLE_CLONE", NULL };
+              int dev_style_values[] = { STYLE_DEV, STYLE_DEVA, STYLE_TTY,
+                  STYLE_CTTY, STYLE_CLONE };
+              for(j=0;dev_style_keys[j]!=NULL;j++) {
+                  if(!strcmp(dev_style_keys[j], argv[i+1])) {
+                      break;
+                  }
+              }
+              if(dev_style_keys[j] == NULL) {
+                  print_usage(argv[ARG_NAME], "bad device style");
+                  exit(EINVAL);
+              }
+              req_dev_style = dev_style_values[j];
           }
           else if (strcmp(argv[i], ARG_SCRIPT)==0) {
               req_script = argv[i+1];
@@ -288,13 +319,11 @@ PRIVATE int parse_arguments(int argc, char **argv)
               errno=0;
               req_lu_state = strtol(argv[i+1], &buff, 10);
               if(errno || strcmp(buff, "")) {
-                  print_usage(argv[ARG_NAME],
-                    "bad live update state");
+                  print_usage(argv[ARG_NAME], "bad live update state");
                   exit(EINVAL);
               }
               if(req_lu_state == SEF_LU_STATE_NULL) {
-                  print_usage(argv[ARG_NAME],
-                      "null live update state.");
+                  print_usage(argv[ARG_NAME], "null live update state");
                   exit(EINVAL);
               }
           }
@@ -1045,6 +1074,7 @@ PUBLIC int main(int argc, char **argv)
       rs_start.rss_cmd= command;
       rs_start.rss_cmdlen= strlen(command);
       rs_start.rss_major= req_major;
+      rs_start.rss_dev_style= req_dev_style;
       rs_start.rss_period= req_period;
       rs_start.rss_script= req_script;
       if(req_label) {

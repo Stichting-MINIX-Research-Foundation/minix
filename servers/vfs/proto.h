@@ -2,6 +2,7 @@
 
 #include "timers.h"
 #include "request.h"
+#include <minix/rs.h>
 
 /* Structs used in prototypes must be declared as such first. */
 struct filp;		
@@ -34,9 +35,10 @@ _PROTOTYPE( void reopen_reply, (void)					);
 
 /* dmap.c */
 _PROTOTYPE( int do_mapdriver, (void)					);
+_PROTOTYPE( int map_service, (struct rprocpub *rpub)			);
 _PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (char *label, int major, int proc_nr,
-	int dev_style, int force)					);
+	int dev_style, int flags)					);
 _PROTOTYPE( int dmap_driver_match, (endpoint_t proc, int major)		);
 _PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
 _PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);

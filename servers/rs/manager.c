@@ -503,7 +503,8 @@ struct rproc *rp;				/* pointer to service slot */
 
   /* If the service is a driver, map it. */
   if (rpub->dev_nr > 0) {
-      if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style, 1) != OK) {
+      if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style,
+          rpub->dev_flags) != OK) {
           return kill_service(rp, "couldn't map driver", errno);
       }
   }
@@ -996,8 +997,10 @@ struct rproc *rp;
   rpub = rp->r_pub;
 
   /* Device settings. These properties cannot change. */
+  rpub->dev_flags = def_rpub->dev_flags;
   rpub->dev_nr = def_rpub->dev_nr;
   rpub->dev_style = def_rpub->dev_style;
+  rpub->dev_style2 = def_rpub->dev_style2;
 
   /* Period. */
   if(!rpub->period && def_rpub->period) {
@@ -1349,10 +1352,18 @@ endpoint_t source;
   fill_call_mask(basic_kc, NR_SYS_CALLS,
     	rp->r_priv.s_k_call_mask, KERNEL_CALL, FALSE);
 
+  /* Device driver properties. */
+  rpub->dev_flags = DSRV_DF;
+  rpub->dev_nr = rs_start->rss_major;
+  rpub->dev_style = rs_start->rss_dev_style;
+  if(rpub->dev_nr && !IS_DEV_STYLE(rs_start->rss_dev_style)) {
+      printf("RS: init_slot: bad device style\n");
+      return EINVAL;
+  }
+  rpub->dev_style2 = STYLE_NDEV;
+
   /* Initialize some fields. */
   rpub->period = rs_start->rss_period;
-  rpub->dev_nr = rs_start->rss_major;
-  rpub->dev_style = STYLE_DEV; 
   rp->r_restarts = -1; 				/* will be incremented */
   rp->r_set_resources= 1;			/* set resources */
 
@@ -1526,6 +1537,34 @@ PUBLIC struct rproc* lookup_slot_by_pid(pid_t pid)
           continue;
       }
       if (rp->r_pid == pid) {
+          return rp;
+      }
+  }
+
+  return NULL;
+}
+
+/*===========================================================================*
+ *			   lookup_slot_by_dev_nr			     *
+ *===========================================================================*/
+PUBLIC struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr)
+{
+/* Lookup a service slot matching the given device number. */
+  int slot_nr;
+  struct rproc *rp;
+  struct rprocpub *rpub;
+
+  if(dev_nr <= 0) {
+      return NULL;
+  }
+
+  for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
+      rp = &rproc[slot_nr];
+      rpub = rp->r_pub;
+      if (!(rp->r_flags & RS_IN_USE)) {
+          continue;
+      }
+      if (rpub->dev_nr == dev_nr) {
           return rp;
       }
   }

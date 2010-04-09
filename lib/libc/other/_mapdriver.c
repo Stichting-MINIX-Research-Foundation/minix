@@ -4,18 +4,18 @@
 #include <unistd.h>
 
 
-PUBLIC int mapdriver(label, major, dev_style, force)
+PUBLIC int mapdriver(label, major, dev_style, flags)
 char *label;
 int major;
 int dev_style;
-int force;
+int flags;
 {
   message m;
   m.m2_p1 = label;
   m.m2_l1 = strlen(label);
   m.m2_i1 = major;
   m.m2_i2 = dev_style;
-  m.m2_i3 = force;
+  m.m2_i3 = flags;
   if (_syscall(FS, MAPDRIVER, &m) < 0) return(-1);
   return(0);
 }

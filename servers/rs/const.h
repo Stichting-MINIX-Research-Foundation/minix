@@ -88,5 +88,9 @@
 #define DSRV_SF  (0)                           /* dynamic system services */
 #define VM_SF    (SRV_SF | SF_SYNCH_BOOT)      /* vm */
 
+/* Define device flags for the various process types. */
+#define SRV_DF   (DRV_FORCED)            /* system services */
+#define DSRV_DF  (SRV_DF)                /* dynamic system services */
+
 #endif /* RS_CONST_H */
 

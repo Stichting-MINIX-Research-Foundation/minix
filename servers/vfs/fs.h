@@ -27,6 +27,7 @@
 #include <minix/type.h>
 #include <minix/dmap.h>
 #include <minix/ds.h>
+#include <minix/rs.h>
 
 #include <limits.h>
 #include <errno.h>

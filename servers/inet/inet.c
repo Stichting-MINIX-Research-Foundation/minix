@@ -51,6 +51,8 @@ from DL_ETH:
 #include <sys/svrctl.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
+#include <minix/drivers.h>
+#include <minix/driver.h>
 
 #include "mq.h"
 #include "qp.h"
@@ -215,7 +217,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	int r;
 	int timerand, fd;
 	endpoint_t tasknr;
-	struct fssignon device;
 	u8_t randbits[32];
 	struct timeval tv;
 	char my_name[32];
@@ -272,15 +273,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		ip_panic(("inet: sys_whoami failed for 'inet': %d", r));
 	this_proc= tasknr;
 
-	/* Register the device group. */
-	device.dev= ip_dev;
-	device.style= STYLE_CLONE;
-	if (svrctl(FSSIGNON, (void *) &device) == -1) {
-		printf("inet: error %d on registering ethernet devices\n",
-			errno);
-		pause();
-	}
-
 #ifdef BUF_CONSISTENCY_CHECK
 	inet_buf_debug= (getenv("inetbufdebug") && 
 		(strcmp(getenv("inetbufdebug"), "on") == 0));
@@ -304,6 +296,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	if(r != OK) {
 		ip_panic(("inet: can't subscribe to driver events"));
 	}
+
+	/* Announce we are up. INET announces its presence to VFS just like
+	 * any other driver.
+	 */
+	driver_announce();
 
 	return(OK);
 }

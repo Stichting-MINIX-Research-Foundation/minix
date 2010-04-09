@@ -16,14 +16,16 @@ usage()
     exec intr sh
 }
 
-up()
+upopt()
 {
+    opt=$1
+    shift
     service=$1
     shift
 
     # Function to dynamically start a system service
     echo -n " $service"
-    service up /sbin/$service "$@"
+    service $opt up /sbin/$service "$@"
 }
 
 while getopts 'saf' opt
@@ -59,7 +61,7 @@ start)
 
     if [ "`sysenv debug_fkeys`" != 0 ]
     then
-        up is -period 5HZ
+        upopt -n is -period 5HZ
     fi
     echo .
 

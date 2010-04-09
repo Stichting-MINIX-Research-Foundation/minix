@@ -58,19 +58,19 @@ PRIVATE int
  * at boot time.
  */
 PUBLIC struct boot_image_priv boot_image_priv_table[] = {
-/*endpoint,     label,     flags,  traps,  ipcto,  sigmgr,  kcalls,  vmcalls */
-{RS_PROC_NR,   "rs",       RSYS_F, RSYS_T, RSYS_M, RSYS_SM, rs_kc,   rs_vmc   },
-{VM_PROC_NR,   "vm",       VM_F,   SRV_T,  SRV_M,  SRV_SM,  vm_kc,   vm_vmc   },
-{PM_PROC_NR,   "pm",       SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pm_kc,   pm_vmc   },
-{VFS_PROC_NR,  "vfs",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  vfs_kc,  vfs_vmc  },
-{DS_PROC_NR,   "ds",       SRV_F,  SRV_T,  SRV_M,  SRV_SM,  ds_kc,   ds_vmc   },
-{TTY_PROC_NR,  "tty",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  tty_kc,  tty_vmc  },
-{MEM_PROC_NR,  "memory",   SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mem_kc,  mem_vmc  },
-{LOG_PROC_NR,  "log",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  log_kc,  log_vmc  },
-{MFS_PROC_NR,  "fs_imgrd", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mfs_kc,  mfs_vmc  },
-{PFS_PROC_NR,  "pfs",      SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pfs_kc,  pfs_vmc  },
-{INIT_PROC_NR, "init",     RUSR_F, RUSR_T, RUSR_M, RUSR_SM, rusr_kc, rusr_vmc },
-{NULL_BOOT_NR, "",         0,      0,      0,      0,       no_kc,   no_vmc   }
+/*endpoint,     label,   flags,  traps,  ipcto,  sigmgr,  kcalls,  vmcalls, T */
+{RS_PROC_NR,   "rs",     RSYS_F, RSYS_T, RSYS_M, RSYS_SM, rs_kc,   rs_vmc,  0 },
+{VM_PROC_NR,   "vm",     VM_F,   SRV_T,  SRV_M,  SRV_SM,  vm_kc,   vm_vmc,  0 },
+{PM_PROC_NR,   "pm",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pm_kc,   pm_vmc,  0 },
+{VFS_PROC_NR,  "vfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  vfs_kc,  vfs_vmc, 0 },
+{DS_PROC_NR,   "ds",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  ds_kc,   ds_vmc,  0 },
+{TTY_PROC_NR,  "tty",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  tty_kc,  tty_vmc, 0 },
+{MEM_PROC_NR,  "memory", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mem_kc,  mem_vmc, 0 },
+{LOG_PROC_NR,  "log",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  log_kc,  log_vmc, 0 },
+{MFS_PROC_NR,"fs_imgrd", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mfs_kc,  mfs_vmc, 0 },
+{PFS_PROC_NR,  "pfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pfs_kc,  pfs_vmc, 0 },
+{INIT_PROC_NR, "init",   RUSR_F, RUSR_T, RUSR_M, RUSR_SM, rusr_kc, rusr_vmc,0 },
+{NULL_BOOT_NR, "",       0,      0,      0,      0,       no_kc,   no_vmc,  0 }
 };
 
 /* Definition of the boot image sys table. */
@@ -86,10 +86,12 @@ PUBLIC struct boot_image_sys boot_image_sys_table[] = {
 
 /* Definition of the boot image dev table. */
 PUBLIC struct boot_image_dev boot_image_dev_table[] = {
-  /*endpoint,         dev_nr,       dev_style,  period  */
-  { TTY_PROC_NR,      TTY_MAJOR,    STYLE_TTY,       0  },
-  { MEM_PROC_NR,      MEMORY_MAJOR, STYLE_DEV,       0  },
-  { LOG_PROC_NR,      LOG_MAJOR,    STYLE_DEV,       0  },
-  { DEFAULT_BOOT_NR,  0,            STYLE_NDEV,      0  } /* default entry */
+  /*endpoint,        flags,   dev_nr,       dev_style,  dev_style2 */
+  { TTY_PROC_NR,     SRV_DF,  TTY_MAJOR,    STYLE_TTY,  STYLE_CTTY },
+  { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },
+  { LOG_PROC_NR,     SRV_DF,  LOG_MAJOR,    STYLE_DEVA, STYLE_NDEV },
+  { DEFAULT_BOOT_NR, SRV_DF,  0,            STYLE_NDEV, STYLE_NDEV } /* default
+                                                                      * entry
+                                                                      */
 };
 

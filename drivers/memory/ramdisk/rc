@@ -5,15 +5,15 @@ exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
 
-/bin/service -c up /bin/pci -config /etc/system.conf
-/bin/service -c up /bin/floppy -config /etc/system.conf -dev /dev/fd0
+/bin/service -cn up /bin/pci -config /etc/system.conf
+/bin/service -cn up /bin/floppy -config /etc/system.conf -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
 then
 	echo Using bios_wini.
-	/bin/service -c up /bin/bios_wini -dev /dev/c0d0
+	/bin/service -cn up /bin/bios_wini -dev /dev/c0d0
 else
-	/bin/service -c up /bin/at_wini -dev /dev/c0d0 -config /etc/system.conf -label at_wini_0
-	/bin/service -c -r up /bin/at_wini -dev /dev/c1d0 -config /etc/system.conf -label at_wini_1 -args ata_instance=1
+	/bin/service -cn up /bin/at_wini -dev /dev/c0d0 -config /etc/system.conf -label at_wini_0
+	/bin/service -cnr up /bin/at_wini -dev /dev/c1d0 -config /etc/system.conf -label at_wini_1 -args ata_instance=1
 fi
 
 rootdev=`sysenv rootdev` || echo 'No rootdev?'

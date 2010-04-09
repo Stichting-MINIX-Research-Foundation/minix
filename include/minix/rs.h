@@ -20,6 +20,7 @@ Interface to the reincarnation server
 				 */
 #define RSS_IPC_VALID	0x02	/* rss_ipc and rss_ipclen are valid */
 #define RSS_REUSE	0x04	/* Try to reuse previously copied binary */
+#define RSS_NOBLOCK	0x08	/* unblock caller immediately */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8
@@ -43,6 +44,7 @@ struct rs_start
 	uid_t rss_uid;
 	int rss_nice;
 	int rss_major;
+	int rss_dev_style;
 	long rss_period;
 	char *rss_script;
 	size_t rss_scriptlen;
@@ -79,10 +81,12 @@ struct rprocpub {
   short in_use; 		  /* set when the entry is in use */
   unsigned sys_flags; 		  /* sys flags */
   endpoint_t endpoint;		  /* process endpoint number */
+  long period;			  /* heartbeat period (or zero) */
 
+  int dev_flags;		  /* device flags */
   dev_t dev_nr;			  /* major device number */
   int dev_style;		  /* device style */
-  long period;			  /* heartbeat period (or zero) */
+  int dev_style2;		  /* device style for next major dev number */
 
   char label[RS_MAX_LABEL_LEN];	  /* label of this service */
   char proc_name[RS_MAX_LABEL_LEN]; /* process name of this service */

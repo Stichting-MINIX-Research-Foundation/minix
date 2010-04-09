@@ -73,6 +73,7 @@ _PROTOTYPE( int clone_slot, (struct rproc *rp, struct rproc **clone_rpp) );
 _PROTOTYPE( void swap_slot, (struct rproc **src_rpp, struct rproc **dst_rpp) );
 _PROTOTYPE( struct rproc* lookup_slot_by_label, (char *label) );
 _PROTOTYPE( struct rproc* lookup_slot_by_pid, (pid_t pid) );
+_PROTOTYPE( struct rproc* lookup_slot_by_dev_nr, (dev_t dev_nr) );
 _PROTOTYPE( int alloc_slot, (struct rproc **rpp) );
 _PROTOTYPE( void free_slot, (struct rproc *rp) );
 _PROTOTYPE( char *get_next_label, (char *ptr, char *label, char *caller_label));

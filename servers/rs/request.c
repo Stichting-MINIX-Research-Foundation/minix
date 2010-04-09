@@ -16,6 +16,7 @@ message *m_ptr;					/* request message pointer */
   struct rprocpub *rpub;
   int r;
   struct rs_start rs_start;
+  int noblock;
 
   /* Check if the call can be allowed. */
   if((r = check_call_permission(m_ptr->m_source, RS_UP, NULL)) != OK)
@@ -34,6 +35,7 @@ message *m_ptr;					/* request message pointer */
   if (r != OK) {
       return r;
   }
+  noblock = (rs_start.rss_flags & RSS_NOBLOCK);
 
   /* Initialize the slot as requested. */
   r = init_slot(rp, &rs_start, m_ptr->m_source);
@@ -44,8 +46,13 @@ message *m_ptr;					/* request message pointer */
 
   /* Check for duplicates */
   if(lookup_slot_by_label(rpub->label)) {
-      printf("RS: service '%s' (%d) has duplicate label\n", rpub->label,
-          rpub->endpoint);
+      printf("RS: service with the same label '%s' already exists\n",
+          rpub->label);
+      return EBUSY;
+  }
+  if(rpub->dev_nr>0 && lookup_slot_by_dev_nr(rpub->dev_nr)) {
+      printf("RS: service with the same device number %d already exists\n",
+          rpub->dev_nr);
       return EBUSY;
   }
 
@@ -54,6 +61,11 @@ message *m_ptr;					/* request message pointer */
   activate_service(rp, NULL);
   if(r != OK) {
       return r;
+  }
+
+  /* Unblock the caller immediately if requested. */
+  if(noblock) {
+      return OK;
   }
 
   /* Late reply - send a reply when service completes initialization. */
@@ -311,6 +323,7 @@ PUBLIC int do_update(message *m_ptr)
   struct rproc *new_rp;
   struct rprocpub *rpub;
   struct rs_start rs_start;
+  int noblock;
   int s;
   char label[RS_MAX_LABEL_LEN];
   int lu_state;
@@ -321,6 +334,7 @@ PUBLIC int do_update(message *m_ptr)
   if (s != OK) {
       return s;
   }
+  noblock = (rs_start.rss_flags & RSS_NOBLOCK);
 
   /* Copy label. */
   s = copy_label(m_ptr->m_source, rs_start.rss_label.l_addr,
@@ -413,6 +427,11 @@ PUBLIC int do_update(message *m_ptr)
   /* Request to update. */
   m_ptr->m_type = RS_LU_PREPARE;
   asynsend3(rpub->endpoint, m_ptr, AMF_NOREPLY);
+
+  /* Unblock the caller immediately if requested. */
+  if(noblock) {
+      return OK;
+  }
 
   /* Late reply - send a reply when the new version completes initialization. */
   rp->r_flags |= RS_LATEREPLY;

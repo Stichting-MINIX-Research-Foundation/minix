@@ -14,6 +14,7 @@ struct boot_image_priv {
   endpoint_t sig_mgr;          /* signal manager */
   int *k_calls;                /* allowed kernel calls */
   int *vm_calls;               /* allowed vm calls */
+  long period;                 /* heartbeat period (or zero) */
 };
 
 /* Definition of an entry of the boot image sys table. */
@@ -27,9 +28,10 @@ struct boot_image_sys {
 struct boot_image_dev {
   endpoint_t endpoint;         /* process endpoint number */
 
+  int flags;                   /* device flags */
   dev_t dev_nr;                /* major device number */
   int dev_style;               /* device style */
-  long period;                 /* heartbeat period (or zero) */
+  int dev_style2;              /* device style for next major device number */
 };
 
 /* Definition of an entry of the system process table. */

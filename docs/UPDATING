@@ -1,3 +1,6 @@
+20100610:
+        /usr/src/etc/usr/rc updated: copy it (or merge it) to /usr/etc/rc.
+        /usr/src/etc/rc updated: copy it (or merge it) to /etc/rc.
 20100408:
         /usr/src/etc/usr/rc updated: copy it (or merge it) to /usr/etc/rc.
 20100318:

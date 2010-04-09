@@ -569,38 +569,7 @@ int ruid;
 PUBLIC int do_svrctl()
 {
   switch (m_in.svrctl_req) {
-  case FSSIGNON: {
-	/* A server in user space calls in to manage a device. */
-	struct fssignon device;
-	int r, major, proc_nr_n;
-
-	if (fp->fp_effuid != SU_UID && fp->fp_effuid != SERVERS_UID)
-		return(EPERM);
-
-	/* Try to copy request structure to FS. */
-	if ((r = sys_datacopy(who_e, (vir_bytes) m_in.svrctl_argp,
-		FS_PROC_NR, (vir_bytes) &device,
-		(phys_bytes) sizeof(device))) != OK) 
-	    return(r);
-
-	if (isokendpt(who_e, &proc_nr_n) != OK)
-		return(EINVAL);
-
-	/* Try to update device mapping. */
-	major = (device.dev >> MAJOR) & BYTE;
-	r=map_driver(NULL, major, who_e, device.style, 0 /* !force */);
-	if (r == OK)
-	{
-		/* If a driver has completed its exec(), it can be announced
-		 * to be up.
-		*/
-		reply(who_e, r);
-		dev_up(major);
-		r= SUSPEND;
-	}
-
-	return(r);
-  }
+  /* No control request implemented yet. */
   default:
 	return(EINVAL);
   }

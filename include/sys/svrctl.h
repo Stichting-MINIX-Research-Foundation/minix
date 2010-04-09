@@ -18,16 +18,6 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 #define MMGETPARAM	_IOW('M',  5, struct sysgetenv)
 #define MMSETPARAM	_IOR('M',  7, struct sysgetenv)
 
-/* FS controls. */
-#define FSSIGNON	_IOW('F',  2, struct fssignon)
-
-/* A proper system call must be created later. */
-#include <minix/dmap.h>
-struct fssignon {
-	dev_t		dev;		/* Device to manage. */
-	enum dev_style	style;		/* Management style. */
-};
-
 struct sysgetenv {
 	char		*key;		/* Name requested. */
 	size_t		keylen;		/* Length of name including \0. */

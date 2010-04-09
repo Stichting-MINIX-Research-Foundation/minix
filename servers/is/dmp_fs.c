@@ -59,9 +59,27 @@ PUBLIC void fproc_dmp()
 PRIVATE char * dmap_flags(int flags)
 {
 	static char fl[10];
-	strcpy(fl, "---");
-	if(flags & DMAP_MUTABLE) fl[0] = 'M';
+	strcpy(fl, "-----");
+	if(flags & DRV_FORCED)  fl[0] = 'F';
 	return fl;
+}
+
+/*===========================================================================*
+ *				dmap_style				     *
+ *===========================================================================*/
+PRIVATE char * dmap_style(int dev_style)
+{
+	static char str[16];
+	switch(dev_style) {
+	case STYLE_DEV:	   strcpy(str, "STYLE_DEV"); break;
+	case STYLE_DEVA:   strcpy(str, "STYLE_DEVA"); break;
+	case STYLE_TTY:    strcpy(str, "STYLE_TTY"); break;
+	case STYLE_CTTY:   strcpy(str, "STYLE_CTTY"); break;
+	case STYLE_CLONE:  strcpy(str, "STYLE_CLONE"); break;
+	default:           strcpy(str, "UNKNOWN"); break;
+	}
+
+	return str;
 }
 
 /*===========================================================================*
@@ -74,12 +92,13 @@ PUBLIC void dtab_dmp()
     getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap);
     
     printf("File System (FS) device <-> driver mappings\n");
-    printf("Major  Driver ept  Flags\n");
-    printf("-----  ----------  -----\n");
+    printf("    Label     Major Driver ept Flags     Style   \n");
+    printf("------------- ----- ---------- ----- -------------\n");
     for (i=0; i<NR_DEVICES; i++) {
         if (dmap[i].dmap_driver == NONE) continue;
-        printf("%5d  %10d  %s\n",
-		i, dmap[i].dmap_driver, dmap_flags(dmap[i].dmap_flags));
+        printf("%13s %5d %10d %s %-13s\n",
+		dmap[i].dmap_label, i, dmap[i].dmap_driver,
+		dmap_flags(dmap[i].dmap_flags), dmap_style(dmap[i].dmap_style));
     }
 }
 
