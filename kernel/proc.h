@@ -148,6 +148,10 @@ struct proc {
 #define proc_no_quantum(p)	((p)->p_rts_flags & RTS_NO_QUANTUM)
 #define proc_ptr_ok(p)		((p)->p_magic == PMAGIC)
 
+/* test whether the process is scheduled by the kernel's default policy  */
+#define proc_kernel_scheduler(p)	((p)->p_scheduler == NULL || \
+					(p)->p_scheduler == (p))
+
 /* Macro to return: on which process is a certain process blocked?
  * return endpoint number (can be ANY) or NONE. It's important to
  * check RTS_SENDING first, and then RTS_RECEIVING, as they could

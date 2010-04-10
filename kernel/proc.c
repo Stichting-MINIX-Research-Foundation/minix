@@ -129,7 +129,7 @@ not_runnable_pick_new:
 	 * If this process is scheduled by the kernel, we renew it's quantum
 	 * and remove it's RTS_NO_QUANTUM flag.
 	 */
-	if (proc_no_quantum(proc_ptr) && (proc_ptr->p_scheduler == NULL)) {
+	if (proc_no_quantum(proc_ptr) && proc_kernel_scheduler(proc_ptr)) {
 		/* give new quantum */
 		proc_ptr->p_ticks_left = proc_ptr->p_quantum_size;
 		RTS_UNSET(proc_ptr, RTS_NO_QUANTUM);
@@ -1355,14 +1355,14 @@ PRIVATE void notify_scheduler(struct proc *p)
 	 * quantum. This is done by sending a message to the scheduler
 	 * on the process's behalf
 	 */
-	if (p->p_scheduler == p) {
+	if (proc_kernel_scheduler(p)) {
 		/*
-		 * If a scheduler is scheduling itself, and runs out of
-		 * quantum, we don't send a message. The RTS_NO_QUANTUM
-		 * flag will be removed by schedcheck in proc.c.
+		 * If a scheduler is scheduling itself or has no scheduler, and
+		 * runs out of quantum, we don't send a message. The
+		 * RTS_NO_QUANTUM flag will be removed by schedcheck in proc.c.
 		 */
 	}
-	else if (p->p_scheduler != NULL) {
+	else {
 		message m_no_quantum;
 		int err;
 
