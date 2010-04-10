@@ -34,7 +34,7 @@ PRIVATE int psok = 0;
 
 PUBLIC u8_t *vm_pagedirs = NULL;
 
-#define MAX_FREEPDES 3
+#define MAX_FREEPDES (3 * CONFIG_MAX_CPUS)
 PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
@@ -80,15 +80,16 @@ PRIVATE phys_bytes createpde(
 	const struct proc *pr,	/* Requested process, NULL for physical. */
 	const phys_bytes linaddr,/* Address after segment translation. */
 	phys_bytes *bytes,	/* Size of chunk, function may truncate it. */
-	int pde,		/* freepde number to use for the mapping. */
+	int free_pde_idx,	/* index of the free slot to use */
 	int *changed		/* If mapping is made, this is set to 1. */
 	)
 {
 	u32_t pdeval;
 	phys_bytes offset;
+	int pde;
 
-	assert(pde >= 0 && pde < nfreepdes);
-	pde = freepdes[pde];
+	assert(free_pde_idx >= 0 && free_pde_idx < nfreepdes);
+	pde = freepdes[free_pde_idx];
 
 	if(pr && ((pr == ptproc) || !HASPT(pr))) {
 		/* Process memory is requested, and
