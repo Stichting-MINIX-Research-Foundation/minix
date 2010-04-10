@@ -504,7 +504,9 @@ PRIVATE void handle_fs_reply()
 	break;
 
   case PM_FORK_REPLY:
-	/* Wake up the newly created process */
+	/* Schedule the newly created process ... */
+	schedule_process(rmp);
+	/* ... and wake it up */
 	setreply(proc_n, OK);
 
 	/* Wake up the parent */

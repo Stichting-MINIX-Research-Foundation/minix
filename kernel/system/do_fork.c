@@ -80,25 +80,14 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
   rpc->p_prof_left = 0;
 
-  /* Parent and child have to share the quantum that the forked process had,
-   * so that queued processes do not have to wait longer because of the fork.
-   */
-
   /*
-   * we want to avoid having processes that loose their quantum without going
-   * through the standard path where the "out of quantum" is handled. We add
-   * some more time to such processes.
-   *
-   * This is a temporary solution until we are able to handle this in the
-   * userspace
+   * if the child process inherited a scheduler, the child process is not
+   * runnable until it's scheduled. Otherwise the default kernel policy applies.
+   * This is only the case of system servers, drivers and similar sensitive
+   * processes
    */
-  if (rpp->p_ticks_left < 2)
-	  rpp->p_ticks_left = 2;
-
-  rpc->p_ticks_left =  rpp->p_ticks_left / 2;
-  rpp->p_ticks_left =  rpp->p_ticks_left / 2;	
-
-  assert(rpc->p_ticks_left > 0 && rpp->p_ticks_left > 0);
+  if (rpc->p_scheduler)
+	  RTS_SET(rpc, RTS_NO_QUANTUM);
 
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.
