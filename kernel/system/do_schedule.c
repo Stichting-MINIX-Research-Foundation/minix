@@ -12,18 +12,14 @@ PUBLIC int do_schedule(struct proc * caller, message * m_ptr)
 
 	p = proc_addr(_ENDPOINT_P(m_ptr->SCHEDULING_ENDPOINT));
 
+	/* Only this process' scheduler can schedule it */
+	if (caller != p->p_scheduler)
+		return(EPERM);
+
 	/* Make sure the priority number given is within the allowed range.*/
 	if (m_ptr->SCHEDULING_PRIORITY < TASK_Q ||
 		m_ptr->SCHEDULING_PRIORITY > NR_SCHED_QUEUES)
 		return(EINVAL);
-
-	/* Only system processes can schedule processes */
-	if (! (priv(caller)->s_flags & SYS_PROC))
-		return(EPERM);
-
-	/* Only this process' scheduler can schedule it */
-	if (caller != p->p_scheduler)
-		return(EPERM);
 
 	/* In some cases, we might be rescheduling a runnable process. In such
 	 * a case (i.e. if we are updating the priority) we set the NO_QUANTUM
