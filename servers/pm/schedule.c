@@ -11,6 +11,23 @@
 
 PRIVATE timer_t sched_timer;
 
+/*
+ * makes a kernel call that schedules the process using the actuall scheduling
+ * parameters set for this process
+ */
+PUBLIC int schedule_process(struct mproc * rmp)
+{
+	int err;
+
+	if ((err = sys_schedule(rmp->mp_endpoint, rmp->mp_priority,
+		rmp->mp_time_slice)) != OK) {
+		printf("PM: An error occurred when trying to schedule %s: %d\n",
+		rmp->mp_name, err);
+	}
+
+	return err;
+}
+
 /*===========================================================================*
  *				do_noquantum				     *
  *===========================================================================*/
@@ -31,11 +48,7 @@ PUBLIC void do_noquantum(void)
 		rmp->mp_priority += 1; /* lower priority */
 	}
 
-	if ((rv = sys_schedule(rmp->mp_endpoint, rmp->mp_priority,
-		rmp->mp_time_slice))) {
-		printf("PM: An error occurred when trying to schedule %s: %d\n",
-		rmp->mp_name, rv);
-	}
+	schedule_process(rmp);
 }
 
 /*===========================================================================*
@@ -77,12 +90,7 @@ struct timer *tp;
 		if (rmp->mp_flags & IN_USE) {
 			if (rmp->mp_priority > rmp->mp_max_priority) {
 				rmp->mp_priority -= 1; /* increase priority */
-				if ((rv = sys_schedule(rmp->mp_endpoint,
-					rmp->mp_priority,
-					rmp->mp_time_slice))) {
-					printf("PM: An error occurred when balancing %s: %d\n",
-					rmp->mp_name, rv);
-				}
+				schedule_process(rmp);
 			}
 		}
 	}

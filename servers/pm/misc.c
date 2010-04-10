@@ -455,8 +455,7 @@ PUBLIC int do_getsetpriority()
 	if (new_q > MIN_USER_Q) new_q = MIN_USER_Q;	/* shouldn't happen */
 
 	rmp->mp_max_priority = rmp->mp_priority = new_q;
-	if ((r = sys_schedule(rmp->mp_priority, rmp->mp_priority,
-		rmp->mp_time_slice)) != OK)
+	if ((r = schedule_process(rmp)))
 		return(r);
 
 	rmp->mp_nice = arg_pri;
