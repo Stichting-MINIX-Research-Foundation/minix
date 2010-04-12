@@ -104,9 +104,7 @@ PRIVATE void send_message_to_process(endpoint_t who, int ret, int ignore)
 	int r;
 
 	m.m_type = ret;
-	r = sendnb(who, &m);
-	if (r != OK && !ignore)
-		printf("IPC send error!\n");
+	sendnb(who, &m);
 }
 
 PRIVATE void remove_semaphore(struct sem_struct *sem)
@@ -298,7 +296,6 @@ PUBLIC int do_semctl(message *m)
 		opt = m->SEMCTL_OPT;
 
 	if (!(sem = sem_find_id(id))) {
-		printf("IPC: not found %d\n", id);
 		return EINVAL;
 	}
 
@@ -579,9 +576,7 @@ out:
 	if (r != OK || !no_reply) {
 		m->m_type = r;
 
-		r = sendnb(who_e, m);
-		if (r != OK)
-			printf("IPC send error!\n");
+		sendnb(who_e, m);
 	}
 
 	/* awaken process if possible */
