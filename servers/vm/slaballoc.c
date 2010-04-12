@@ -16,6 +16,7 @@
 #include <minix/bitmap.h>
 #include <minix/debug.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <env.h>
@@ -316,8 +317,10 @@ PUBLIC void *slaballoc(int bytes)
 	vm_assert(s);
 	firstused = LH(s, LIST_USED);
 	vm_assert(firstused);
+#if SANITYCHECKS
 	vm_assert(firstused->sdh.magic1 == MAGIC1);
 	vm_assert(firstused->sdh.magic2 == MAGIC2);
+#endif
 	vm_assert(firstused->sdh.nused < ITEMSPERPAGE(bytes));
 
 	for(i = firstused->sdh.freeguess;
@@ -501,8 +504,6 @@ PUBLIC void slablock(void *mem, int bytes)
 		panic("slablock objstats failed");
 
 	SLABDATAUNWRITABLE(f);
-
-	FIXME("verify new contents");
 
 	return;
 }

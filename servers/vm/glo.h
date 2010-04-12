@@ -31,3 +31,4 @@ EXTERN int total_pages;
 EXTERN long vm_paged;
 
 EXTERN int meminit_done;
+

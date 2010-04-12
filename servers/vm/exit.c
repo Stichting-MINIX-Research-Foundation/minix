@@ -16,6 +16,7 @@
 #include <minix/bitmap.h>
 
 #include <errno.h>
+#include <assert.h>
 #include <env.h>
 
 #include "glo.h"
@@ -25,11 +26,11 @@
 
 PUBLIC void free_proc(struct vmproc *vmp)
 {
+	map_free_proc(vmp);
 	if(vmp->vm_flags & VMF_HASPT) {
 		vmp->vm_flags &= ~VMF_HASPT;
 		pt_free(&vmp->vm_pt);
 	}
-	map_free_proc(vmp);
 	vmp->vm_regions = NULL;
 #if VMSTATS
 	vmp->vm_bytecopies = 0;
@@ -77,7 +78,7 @@ SANITYCHECK(SCL_DETAIL);
 SANITYCHECK(SCL_DETAIL);
 	} else {
 		/* Free the data and stack segments. */
-		FREE_MEM(vmp->vm_arch.vm_seg[D].mem_phys,
+		free_mem(vmp->vm_arch.vm_seg[D].mem_phys,
 			vmp->vm_arch.vm_seg[S].mem_vir +
 			vmp->vm_arch.vm_seg[S].mem_len -
 			vmp->vm_arch.vm_seg[D].mem_vir);
@@ -86,7 +87,7 @@ SANITYCHECK(SCL_DETAIL);
 			/* No other process shares the text segment,
 			 * so free it.
 			 */
-			FREE_MEM(vmp->vm_arch.vm_seg[T].mem_phys,
+			free_mem(vmp->vm_arch.vm_seg[T].mem_phys,
 			vmp->vm_arch.vm_seg[T].mem_len);
 		}
 	}

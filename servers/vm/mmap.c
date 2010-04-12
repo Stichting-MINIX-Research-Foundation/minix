@@ -15,10 +15,12 @@
 #include <minix/syslib.h>
 #include <minix/safecopies.h>
 #include <minix/bitmap.h>
+#include <minix/debug.h>
 
 #include <sys/mman.h>
 
 #include <errno.h>
+#include <assert.h>
 #include <string.h>
 #include <env.h>
 #include <stdio.h>
@@ -59,12 +61,12 @@ PUBLIC int do_mmap(message *m)
 			return EINVAL;
 		}
 
-		if(m->VMM_FLAGS & MAP_CONTIG) mfflags |= MF_CONTIG;
 		if(m->VMM_FLAGS & MAP_PREALLOC) mfflags |= MF_PREALLOC;
 		if(m->VMM_FLAGS & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
 		if(m->VMM_FLAGS & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;
 		if(m->VMM_FLAGS & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
 		if(m->VMM_FLAGS & MAP_SHARED) vrflags |= VR_SHARED;
+		if(m->VMM_FLAGS & MAP_CONTIG) vrflags |= VR_CONTIG;
 
 		if(len % VM_PAGE_SIZE)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
@@ -237,6 +239,24 @@ PUBLIC int do_remap(message *m)
 
 	if (!(region = map_lookup(svmp, sa)))
 		return EINVAL;
+
+	if(region->vaddr != sa) {
+		printf("VM: do_remap: not start of region.\n");
+		return EFAULT;
+	}
+
+	if(!(region->flags & VR_SHARED)) {
+		printf("VM: do_remap: not shared.\n");
+		return EFAULT;
+	}
+
+	if (size % VM_PAGE_SIZE)  
+		size += VM_PAGE_SIZE - size % VM_PAGE_SIZE;
+
+	if(size != region->length) {
+		printf("VM: do_remap: not size of region.\n");
+		return EFAULT;
+	}
 
 	if ((r = map_remap(dvmp, da, size, region, &startv)) != OK)
 		return r;

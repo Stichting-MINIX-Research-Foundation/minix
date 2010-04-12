@@ -7,6 +7,9 @@
 #define PAF_ALIGN64K	0x04	/* Aligned to 64k boundary. */
 #define PAF_LOWER16MB	0x08
 #define PAF_LOWER1MB	0x10
+#define PAF_FIRSTBLOCK	0x20	/* alloc_mem: return first block */
+
+#define MARK do { if(mark) { printf("%d\n", __LINE__); } } while(0)
 
 /* special value for v in pt_allocmap */
 #define AM_AUTO         ((u32_t) -1)

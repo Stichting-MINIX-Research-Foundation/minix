@@ -5,6 +5,7 @@
 #include <pagetable.h>
 #include <arch_vmproc.h>
 #include <minix/bitmap.h>
+#include <machine/archtypes.h>
 
 #include "vm.h"
 

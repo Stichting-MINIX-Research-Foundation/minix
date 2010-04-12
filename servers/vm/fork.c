@@ -58,8 +58,6 @@ PUBLIC int do_fork(message *msg)
   vmc = &vmproc[childproc];	/* child */
   vm_assert(vmc->vm_slot == childproc);
 
-  NOTRUNNABLE(vmp->vm_endpoint);
-
   if(vmp->vm_flags & VMF_HAS_DMA) {
 	printf("VM: %d has DMA memory and may not fork\n", msg->VMF_ENDPOINT);
 	return EINVAL;
@@ -74,7 +72,7 @@ PUBLIC int do_fork(message *msg)
   vmc->vm_regions = NULL;
   vmc->vm_endpoint = NONE;	/* In case someone tries to use it. */
   vmc->vm_pt = origpt;
-  vmc->vm_flags |= VMF_HASPT;
+  vmc->vm_flags &= ~VMF_HASPT;
 
 #if VMSTATS
   vmc->vm_bytecopies = 0;
@@ -84,6 +82,8 @@ PUBLIC int do_fork(message *msg)
 	printf("VM: fork: pt_new failed\n");
 	return ENOMEM;
   }
+
+  vmc->vm_flags |= VMF_HASPT;
 
   if(fullvm) {
 	SANITYCHECK(SCL_DETAIL);
@@ -102,7 +102,7 @@ PUBLIC int do_fork(message *msg)
 	SANITYCHECK(SCL_DETAIL);
   } else {
 	vir_bytes sp;
-	phys_bytes d_abs, s_abs;
+	struct vir_region *heap, *stack;
 	vir_bytes text_bytes, data_bytes, stack_bytes, parent_gap_bytes,
 		child_gap_bytes;
 
@@ -147,30 +147,32 @@ PUBLIC int do_fork(message *msg)
 			return r;
 	}
 
-	if((d_abs = map_lookup_phys(vmc, VRT_HEAP)) == MAP_NONE)
-		panic("couldn't lookup data");
-	if((s_abs = map_lookup_phys(vmc, VRT_STACK)) == MAP_NONE)
+	if(!(heap = map_region_lookup_tag(vmc, VRT_HEAP)))
+		panic("couldn't lookup heap");
+	vm_assert(heap->phys);
+	if(!(stack = map_region_lookup_tag(vmc, VRT_STACK)))
 		panic("couldn't lookup stack");
+	vm_assert(stack->phys);
 
 	/* Now copy the memory regions. */
 
 	if(vmc->vm_arch.vm_seg[T].mem_len > 0) {
-		phys_bytes t_abs;
-		if((t_abs = map_lookup_phys(vmc, VRT_TEXT)) == MAP_NONE)
+		struct vir_region *text;
+		if(!(text = map_region_lookup_tag(vmc, VRT_TEXT)))
 			panic("couldn't lookup text");
-		if(sys_abscopy(CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
-			t_abs, text_bytes) != OK)
+		vm_assert(text->phys);
+		if(copy_abs2region(CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
+			text, 0, text_bytes) != OK)
 				panic("couldn't copy text");
 	}
 
-	if(sys_abscopy(CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
-		d_abs, data_bytes) != OK)
-			panic("couldn't copy data");
+	if(copy_abs2region(CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
+		heap, 0, data_bytes) != OK)
+			panic("couldn't copy heap");
 
-	if(sys_abscopy(
-		CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys +
+	if(copy_abs2region(CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys +
 			vmc->vm_arch.vm_seg[D].mem_len) + parent_gap_bytes,
-			s_abs + child_gap_bytes, stack_bytes) != OK)
+			stack, child_gap_bytes, stack_bytes) != OK)
 			panic("couldn't copy stack");
   }
 
@@ -186,9 +188,6 @@ PUBLIC int do_fork(message *msg)
 	PFF_VMINHIBIT, &msgaddr)) != OK) {
         panic("do_fork can't sys_fork: %d", r);
   }
-
-  NOTRUNNABLE(vmp->vm_endpoint);
-  NOTRUNNABLE(vmc->vm_endpoint);
 
   if(fullvm) {
 	vir_bytes vir;

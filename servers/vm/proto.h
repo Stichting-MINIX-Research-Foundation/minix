@@ -18,7 +18,8 @@ struct phys_region;
 #include "vm.h"
 
 /* alloc.c */
-_PROTOTYPE( phys_clicks alloc_mem_f, (phys_clicks clicks, u32_t flags)	);
+_PROTOTYPE( phys_clicks alloc_mem, (phys_clicks clicks, u32_t flags)	);
+_PROTOTYPE( struct memlist *alloc_mem_in_list, (phys_bytes bytes, u32_t flags));
 _PROTOTYPE( int do_adddma, (message *msg)                              );
 _PROTOTYPE( int do_deldma, (message *msg)                              );
 _PROTOTYPE( int do_getdma, (message *msg)                              );
@@ -28,11 +29,10 @@ _PROTOTYPE( void printmemstats, (void)			       		);
 _PROTOTYPE( void usedpages_reset, (void)		       		);
 _PROTOTYPE( int usedpages_add_f, (phys_bytes phys, phys_bytes len,
 	char *file, int line) 	);
-_PROTOTYPE( void free_mem_f, (phys_clicks base, phys_clicks clicks)	);
+_PROTOTYPE( void free_mem, (phys_clicks base, phys_clicks clicks)	);
+_PROTOTYPE( void free_mem_list, (struct memlist *list, int all));
+_PROTOTYPE( void print_mem_list, (struct memlist *ml));
 #define usedpages_add(a, l) usedpages_add_f(a, l, __FILE__, __LINE__)
-
-#define ALLOC_MEM(clicks, flags) alloc_mem_f(clicks, flags)
-#define FREE_MEM(base, clicks) free_mem_f(base, clicks)
 
 _PROTOTYPE( void mem_init, (struct memory *chunks)			);
 
@@ -109,6 +109,7 @@ _PROTOTYPE( void *vm_allocpage, (phys_bytes *p, int cat));
 _PROTOTYPE( void pt_cycle, (void));
 _PROTOTYPE( int pt_mapkernel, (pt_t *pt));
 _PROTOTYPE( void vm_pagelock, (void *vir, int lockflag) 		);
+_PROTOTYPE( int vm_addrok, (void *vir, int write) 			);
 
 #if SANITYCHECKS
 _PROTOTYPE( void pt_sanitycheck, (pt_t *pt, char *file, int line)	);
@@ -123,7 +124,7 @@ _PROTOTYPE(void slabfree,(void *mem, int bytes));
 _PROTOTYPE(void slabstats,(void));
 _PROTOTYPE(void slab_sanitycheck, (char *file, int line));
 #define SLABALLOC(var) (var = slaballoc(sizeof(*var)))
-#define SLABFREE(ptr) slabfree(ptr, sizeof(*(ptr)))
+#define SLABFREE(ptr) do { slabfree(ptr, sizeof(*(ptr))); (ptr) = NULL; } while(0)
 #if SANITYCHECKS
 
 _PROTOTYPE(void slabunlock,(void *mem, int bytes));
@@ -159,14 +160,14 @@ _PROTOTYPE(int map_remap, (struct vmproc *dvmp, vir_bytes da, size_t size,
 _PROTOTYPE(int map_get_phys, (struct vmproc *vmp, vir_bytes addr, phys_bytes *r));
 _PROTOTYPE(int map_get_ref, (struct vmproc *vmp, vir_bytes addr, u8_t *cnt));
 
-_PROTOTYPE(int map_copy_ph_block, (struct vmproc *vmp,
-	struct vir_region *region, struct phys_region *ph));
 _PROTOTYPE(void pb_unreferenced, (struct vir_region *region,
 	struct phys_region *pr));
 _PROTOTYPE(void get_usage_info, (struct vmproc *vmp,
 	struct vm_usage_info *vui));
 _PROTOTYPE(int get_region_info, (struct vmproc *vmp,
 	struct vm_region_info *vri, int count, vir_bytes *nextp));
+_PROTOTYPE(int copy_abs2region, (phys_bytes abs,
+	struct vir_region *destregion, phys_bytes offset, phys_bytes len));
 #if SANITYCHECKS
 _PROTOTYPE(void map_sanitycheck,(char *file, int line));
 #endif

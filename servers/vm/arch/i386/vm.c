@@ -18,6 +18,7 @@
 #include <sys/mman.h>
 
 #include <errno.h>
+#include <assert.h>
 #include <env.h>
 
 #include "proto.h"

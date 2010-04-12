@@ -24,6 +24,7 @@
 #include <string.h>
 #include <env.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <memory.h>
 
@@ -78,6 +79,8 @@ PUBLIC int main(void)
 
   /* SEF local startup. */
   sef_local_startup();
+
+  SANITYCHECK(SCL_TOP);
 
   /* This is VM's main loop. */
   while (TRUE) {
@@ -166,7 +169,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 #if SANITYCHECKS
 	incheck = nocheck = 0;
-	FIXME("VM SANITYCHECKS are on");
 #endif
 
 	vm_paged = 1;
@@ -278,7 +280,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			panic("VM: vmctl for new stack failed");
 		}
 
-		FREE_MEM(vmp->vm_arch.vm_seg[D].mem_phys +
+		free_mem(vmp->vm_arch.vm_seg[D].mem_phys +
 			vmp->vm_arch.vm_seg[D].mem_len,
 			old_stack);
 

@@ -88,8 +88,6 @@ PUBLIC int do_exec_newmem(message *msg)
 	vmp= &vmproc[proc_n];
 	ptr= msg->VMEN_ARGSPTR;
 
-	NOTRUNNABLE(vmp->vm_endpoint);
-
 	if(msg->VMEN_ARGSSIZE != sizeof(args)) {
 		printf("VM: exec_newmem: args size %d != %ld\n",
 			msg->VMEN_ARGSSIZE, sizeof(args));
@@ -160,8 +158,6 @@ SANITYCHECK(SCL_DETAIL);
 	if (!sh_mp)			 /* Load text if sh_mp = NULL */
 		msg->VMEN_FLAGS |= EXC_NM_RF_LOAD_TEXT;
 
-	NOTRUNNABLE(vmp->vm_endpoint);
-
 	return OK;
 }
 
@@ -225,8 +221,8 @@ vir_bytes *stack_top;		/* top of process stack */
    */
 SANITYCHECK(SCL_DETAIL);
   if(hadpt) {
-	  pt_free(&rmp->vm_pt);
 	  rmp->vm_flags &= ~VMF_HASPT;
+	  pt_free(&rmp->vm_pt);
   }
   vm_assert(!(vmpold->vm_flags & VMF_INUSE));
   *vmpold = *rmp;	/* copy current state. */
@@ -236,11 +232,11 @@ SANITYCHECK(SCL_DETAIL);
   if(!hadpt) {
   	if (find_share(rmp, rmp->vm_ino, rmp->vm_dev, rmp->vm_ctime) == NULL) {
 		/* No other process shares the text segment, so free it. */
-		FREE_MEM(rmp->vm_arch.vm_seg[T].mem_phys, rmp->vm_arch.vm_seg[T].mem_len);
+		free_mem(rmp->vm_arch.vm_seg[T].mem_phys, rmp->vm_arch.vm_seg[T].mem_len);
   	}
 
   	/* Free the data and stack segments. */
-  	FREE_MEM(rmp->vm_arch.vm_seg[D].mem_phys,
+  	free_mem(rmp->vm_arch.vm_seg[D].mem_phys,
 		rmp->vm_arch.vm_seg[S].mem_vir
 		+ rmp->vm_arch.vm_seg[S].mem_len
 		- rmp->vm_arch.vm_seg[D].mem_vir);
@@ -271,6 +267,7 @@ SANITYCHECK(SCL_DETAIL);
 		SANITYCHECK(SCL_DETAIL);
 		printf("VM: new_mem: failed\n");
 		if(ptok) {
+	  		rmp->vm_flags &= ~VMF_HASPT;
 			pt_free(&rmp->vm_pt);
 		}
 		*rmp = *vmpold;	/* undo. */
@@ -304,9 +301,9 @@ SANITYCHECK(SCL_DETAIL);
   } else {
   	phys_clicks new_base;
 
-	new_base = ALLOC_MEM(text_clicks + tot_clicks, 0);
+	new_base = alloc_mem(text_clicks + tot_clicks, 0);
 	if (new_base == NO_MEM) {
-		printf("VM: new_mem: ALLOC_MEM failed\n");
+		printf("VM: new_mem: alloc_mem failed\n");
 		return(ENOMEM);
 	}
 

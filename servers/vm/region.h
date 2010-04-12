@@ -65,6 +65,7 @@ struct vir_region {
 #define VR_PHYS64K	0x004	/* Physical memory must be 64k aligned. */
 #define VR_LOWER16MB	0x008
 #define VR_LOWER1MB	0x010
+#define VR_CONTIG	0x020	/* Must be physically contiguous. */
 
 /* Mapping type: */
 #define VR_ANON		0x100	/* Memory to be cleared and allocated */
@@ -79,7 +80,6 @@ struct vir_region {
 
 /* map_page_region flags */
 #define MF_PREALLOC	0x01
-#define MF_CONTIG	0x02
 
 #endif
 

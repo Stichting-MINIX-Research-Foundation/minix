@@ -20,6 +20,7 @@
 #include <string.h>
 #include <env.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "glo.h"
 #include "proto.h"

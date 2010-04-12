@@ -41,13 +41,14 @@
 #include "pagerange.h"
 #include "addravl.h"
 #include "sanitycheck.h"
+#include "memlist.h"
 
 /* AVL tree of free pages. */
 addr_avl addravl;
 
 /* Used for sanity check. */
 PRIVATE phys_bytes mem_low, mem_high;
-#define vm_assert_range(addr, len)  			\
+#define assert_range(addr, len)  			\
 	vm_assert((addr) >= mem_low);			\
 	vm_assert((addr) + (len) - 1 <= mem_high);
 
@@ -73,45 +74,21 @@ PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
 FORWARD _PROTOTYPE( void del_slot, (struct hole *prev_ptr, struct hole *hp) );
 FORWARD _PROTOTYPE( void merge, (struct hole *hp)			    );
 FORWARD _PROTOTYPE( void free_pages, (phys_bytes addr, int pages)	    );
-FORWARD _PROTOTYPE( phys_bytes alloc_pages, (int pages, int flags)	    );
+FORWARD _PROTOTYPE( phys_bytes alloc_pages, (int pages, int flags,
+	phys_bytes *ret));
 
 #if SANITYCHECKS
 FORWARD _PROTOTYPE( void holes_sanity_f, (char *fn, int line)		    );
 #define CHECKHOLES holes_sanity_f(__FILE__, __LINE__)
 
-#define MAXPAGES (1024*1024*1024/VM_PAGE_SIZE) /* 1GB of memory */
+#define PAGESPERGB (1024*1024*1024/VM_PAGE_SIZE) /* 1GB of memory */
+#define MAXPAGES (2*PAGESPERGB)
 #define CHUNKS BITMAP_CHUNKS(MAXPAGES)
 PRIVATE bitchunk_t pagemap[CHUNKS];
 
 #else
 #define CHECKHOLES 
 #endif
-
-/* Sanity check for parameters of node p. */
-#define vm_assert_params(p, bytes, next) { \
-	vm_assert((p) != NO_MEM);	\
-	vm_assert(!((bytes) % VM_PAGE_SIZE)); \
-	vm_assert(!((next) % VM_PAGE_SIZE)); \
-	vm_assert((bytes) > 0); \
-	vm_assert((p) + (bytes) > (p)); \
-	vm_assert((next) == NO_MEM || ((p) + (bytes) <= (next))); \
-	vm_assert_range((p), (bytes)); \
-	vm_assert_range((next), 1); \
-}
-
-/* Retrieve size of free block and pointer to next block from physical
- * address (page) p.
- */
-#define GET_PARAMS(p, bytes, next) { \
-	phys_readaddr((p), &(bytes), &(next));	\
-	vm_assert_params((p), (bytes), (next)); \
-}
-
-/* Write parameters to physical page p. */
-#define SET_PARAMS(p, bytes, next) { \
-	vm_assert_params((p), (bytes), (next)); \
-	phys_writeaddr((p), (bytes), (next));	\
-}
 
 
 #if SANITYCHECKS
@@ -127,7 +104,7 @@ int line;
   if(!(c)) { \
 	printf("holes_sanity_f:%s:%d: %s failed\n", file, line, #c); \
 	util_stacktrace();	\
-	panic("assert failed"); } \
+	panic("vm_assert failed"); } \
   }	
 
 	int h, c = 0, n = 0;
@@ -187,9 +164,9 @@ int line;
 #endif
 
 /*===========================================================================*
- *				alloc_mem_f				     *
+ *				alloc_mem				     *
  *===========================================================================*/
-PUBLIC phys_clicks alloc_mem_f(phys_clicks clicks, u32_t memflags)
+PUBLIC phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
 {
 /* Allocate a block of memory from the free list using first fit. The block
  * consists of a sequence of contiguous bytes, whose length in clicks is
@@ -208,7 +185,7 @@ PUBLIC phys_clicks alloc_mem_f(phys_clicks clicks, u32_t memflags)
 
   if(vm_paged) {
 	vm_assert(CLICK_SIZE == VM_PAGE_SIZE);
-	mem = alloc_pages(clicks, memflags);
+	mem = alloc_pages(clicks, memflags, NULL);
   } else {
 CHECKHOLES;
         prev_ptr = NIL_HOLE;
@@ -253,7 +230,7 @@ CHECKHOLES;
   	if(o > 0) {
   		phys_clicks e;
   		e = align_clicks - o;
-	  	FREE_MEM(mem, e);
+	  	free_mem(mem, e);
 	  	mem += e;
 	}
   }
@@ -263,9 +240,9 @@ CHECKHOLES;
 }
 
 /*===========================================================================*
- *				free_mem_f				     *
+ *				free_mem				     *
  *===========================================================================*/
-PUBLIC void free_mem_f(phys_clicks base, phys_clicks clicks)
+PUBLIC void free_mem(phys_clicks base, phys_clicks clicks)
 {
 /* Return a block of free memory to the hole list.  The parameters tell where
  * the block starts in physical memory and how big it is.  The block is added
@@ -414,7 +391,7 @@ struct memory *chunks;		/* list of free memory chunks */
 			to = CLICK2ABS(chunks[i].base+chunks[i].size)-1;
 		if(first || from < mem_low) mem_low = from;
 		if(first || to > mem_high) mem_high = to;
-		FREE_MEM(chunks[i].base, chunks[i].size);
+		free_mem(chunks[i].base, chunks[i].size);
 		total_pages += chunks[i].size;
 		first = 0;
 	}
@@ -465,7 +442,7 @@ PUBLIC void memstats(int *nodes, int *pages, int *largest)
 /*===========================================================================*
  *				alloc_pages				     *
  *===========================================================================*/
-PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
+PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 {
 	addr_iter iter;
 	pagerange_t *pr;
@@ -494,7 +471,8 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 
 	while((pr = addr_get_iter(&iter))) {
 		SLABSANE(pr);
-		if(pr->size >= pages) {
+		vm_assert(pr->size > 0);
+		if(pr->size >= pages || (memflags & PAF_FIRSTBLOCK)) {
 			if(memflags & PAF_LOWER16MB) {
 				if(pr->addr + pages > boundary16)
 					return NO_MEM;
@@ -518,6 +496,8 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 		printf("VM: alloc_pages: alloc failed of %d pages\n", pages);
 		util_stacktrace();
 		printmemstats();
+		if(len)
+			*len = 0;
 #if SANITYCHECKS
 		if(largest >= pages) {
 			panic("no memory but largest was enough");
@@ -527,6 +507,22 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 	}
 
 	SLABSANE(pr);
+
+	if(memflags & PAF_FIRSTBLOCK) {
+		vm_assert(len);
+		/* block doesn't have to as big as requested;
+		 * return its size though.
+		 */
+		if(pr->size < pages) {
+			pages = pr->size;
+#if SANITYCHECKS
+			wantpages = firstpages - pages;
+#endif
+		}
+	}
+
+	if(len)
+		*len = pages;
 
 	/* Allocated chunk is off the end. */
 	mem = pr->addr + pr->size - pages;
@@ -556,6 +552,10 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 	memstats(&finalnodes, &finalpages, &largest);
 	sanitycheck();
 
+	if(finalpages != wantpages) {
+		printf("pages start: %d req: %d final: %d\n",
+			firstpages, pages, finalpages);
+	}
 	vm_assert(finalnodes == wantnodes);
 	vm_assert(finalpages == wantpages);
 #endif
@@ -754,7 +754,7 @@ PUBLIC int do_deldma(message *msg)
 		if (j >= NR_DMA)
 		{
 			/* Last segment */
-			FREE_MEM(dmatab[i].dt_seg_base,
+			free_mem(dmatab[i].dt_seg_base,
 				dmatab[i].dt_seg_size);
 		}
 	}
@@ -822,7 +822,7 @@ PUBLIC void release_dma(struct vmproc *vmp)
 	}
 
 	if (!found_one)
-		FREE_MEM(base, size);
+		free_mem(base, size);
 
 	msg->VMRD_FOUND = found_one;
 #endif
@@ -867,7 +867,7 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 	vm_assert(!(addr % VM_PAGE_SIZE));
 	vm_assert(!(len % VM_PAGE_SIZE));
 	vm_assert(len > 0);
-	vm_assert_range(addr, len);
+	assert_range(addr, len);
 
 	pagestart = addr / VM_PAGE_SIZE;
 	pages = len / VM_PAGE_SIZE;
@@ -892,3 +892,91 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 }
 
 #endif
+
+/*===========================================================================*
+ *				alloc_mem_in_list			     *
+ *===========================================================================*/
+struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
+{
+	phys_bytes rempages;
+	struct memlist *head = NULL, *ml;
+
+	vm_assert(bytes > 0);
+	vm_assert(!(bytes % VM_PAGE_SIZE));
+
+	rempages = bytes / VM_PAGE_SIZE;
+
+	/* unless we are told to allocate all memory
+	 * contiguously, tell alloc function to grab whatever
+	 * block it can find.
+	 */
+	if(!(flags & PAF_CONTIG))
+		flags |= PAF_FIRSTBLOCK;
+
+	do {
+		struct memlist *ml;
+		phys_bytes mem, gotpages;
+		mem = alloc_pages(rempages, flags, &gotpages);
+
+		if(mem == NO_MEM) {
+			free_mem_list(head, 1);
+			return NULL;
+		}
+
+		vm_assert(gotpages <= rempages);
+		vm_assert(gotpages > 0);
+
+		if(!(SLABALLOC(ml))) {
+			free_mem_list(head, 1);
+			free_pages(mem, gotpages);
+			return NULL;
+		}
+
+		USE(ml,
+			ml->phys = CLICK2ABS(mem);
+			ml->length = CLICK2ABS(gotpages);
+			ml->next = head;);
+		head = ml;
+		rempages -= gotpages;
+	} while(rempages > 0);
+
+	for(ml = head; ml; ml = ml->next) {
+		vm_assert(ml->phys);
+		vm_assert(ml->length);
+	}
+
+	return head;
+}
+
+/*===========================================================================*
+ *				free_mem_list			     	     *
+ *===========================================================================*/
+void free_mem_list(struct memlist *list, int all)
+{
+	while(list) {
+		struct memlist *next;
+		next = list->next;
+		vm_assert(!(list->phys % VM_PAGE_SIZE));
+		vm_assert(!(list->length % VM_PAGE_SIZE));
+		if(all)
+			free_pages(list->phys / VM_PAGE_SIZE,
+			list->length / VM_PAGE_SIZE);
+		SLABFREE(list);
+		list = next;
+	}
+}
+
+/*===========================================================================*
+ *				print_mem_list			     	     *
+ *===========================================================================*/
+void print_mem_list(struct memlist *list)
+{
+	while(list) {
+		vm_assert(list->length > 0);
+		printf("0x%lx-0x%lx", list->phys, list->phys+list->length-1);
+		printf(" ");
+		list = list->next;
+	}
+	printf("\n");
+}
+

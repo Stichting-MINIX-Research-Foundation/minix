@@ -1,6 +1,8 @@
 #ifndef _SANITYCHECK_H
 #define _SANITYCHECK_H 1
 
+#include <assert.h>
+
 #include "vm.h"
 #include "glo.h"
 
@@ -17,15 +19,15 @@
 	slab_sanitycheck(__FILE__, __LINE__); }
 
 #define SANITYCHECK(l) if(!nocheck && ((l) <= vm_sanitychecklevel)) {  \
-		struct vmproc *vmp;	\
+		struct vmproc *vmpr;	\
 		vm_assert(incheck == 0);	\
 		incheck = 1;		\
 		usedpages_reset();	\
 	slab_sanitycheck(__FILE__, __LINE__);	\
-	for(vmp = vmproc; vmp < &vmproc[VMP_NR]; vmp++) { \
-		if((vmp->vm_flags & (VMF_INUSE | VMF_HASPT)) == \
+	for(vmpr = vmproc; vmpr < &vmproc[VMP_NR]; vmpr++) { \
+		if((vmpr->vm_flags & (VMF_INUSE | VMF_HASPT)) == \
 			(VMF_INUSE | VMF_HASPT)) { \
-			PT_SANE(&vmp->vm_pt); \
+			PT_SANE(&vmpr->vm_pt); \
 		} \
 	} \
 	map_sanitycheck(__FILE__, __LINE__); \
@@ -50,22 +52,11 @@
 	} \
 }
 
-#define NOTRUNNABLE(ep) {			\
-	struct proc pr;				\
-	if(sys_getproc(&pr, ep) != OK) {	\
-		panic("VM: sys_getproc failed: %d", ep);	\
-	}					\
-	if(!pr.p_rts_flags) {			\
-		panic("VM: runnable: %d", ep);	\
-	}					\
-}
-
 #else
 #define SANITYCHECK 
 #define SLABSANITYCHECK(l)
 #define USE(obj, code) do { code } while(0)
 #define SLABSANE(ptr)
-#define NOTRUNNABLE(ep)
 #endif
 
 #endif
