@@ -292,7 +292,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	nw_init();
 
 	/* Subscribe to driver events for network drivers. */
-	r = ds_subscribe("drv\.net\..*", DSF_INITIAL | DSF_OVERWRITE);
+	r = ds_subscribe("drv\\.net\\..*", DSF_INITIAL | DSF_OVERWRITE);
 	if(r != OK) {
 		ip_panic(("inet: can't subscribe to driver events"));
 	}

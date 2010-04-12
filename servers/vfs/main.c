@@ -305,7 +305,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   system_hz = sys_hz();
 
   /* Subscribe to driver events for VFS drivers. */
-  s = ds_subscribe("drv\.vfs\..*", DSF_INITIAL | DSF_OVERWRITE);
+  s = ds_subscribe("drv\\.vfs\\..*", DSF_INITIAL | DSF_OVERWRITE);
   if(s != OK) {
   	panic("vfs: can't subscribe to driver events");
   }
