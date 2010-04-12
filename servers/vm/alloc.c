@@ -49,8 +49,8 @@ addr_avl addravl;
 /* Used for sanity check. */
 PRIVATE phys_bytes mem_low, mem_high;
 #define assert_range(addr, len)  			\
-	vm_assert((addr) >= mem_low);			\
-	vm_assert((addr) + (len) - 1 <= mem_high);
+	assert((addr) >= mem_low);			\
+	assert((addr) + (len) - 1 <= mem_high);
 
 struct hole {
 	struct hole *h_next;          /* pointer to next entry on the list */
@@ -104,7 +104,7 @@ int line;
   if(!(c)) { \
 	printf("holes_sanity_f:%s:%d: %s failed\n", file, line, #c); \
 	util_stacktrace();	\
-	panic("vm_assert failed"); } \
+	panic("assert failed"); } \
   }	
 
 	int h, c = 0, n = 0;
@@ -184,7 +184,7 @@ PUBLIC phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
   }
 
   if(vm_paged) {
-	vm_assert(CLICK_SIZE == VM_PAGE_SIZE);
+	assert(CLICK_SIZE == VM_PAGE_SIZE);
 	mem = alloc_pages(clicks, memflags, NULL);
   } else {
 CHECKHOLES;
@@ -255,7 +255,7 @@ CHECKHOLES;
   if (clicks == 0) return;
 
   if(vm_paged) {
-	vm_assert(CLICK_SIZE == VM_PAGE_SIZE);
+	assert(CLICK_SIZE == VM_PAGE_SIZE);
 	free_pages(base, clicks);
 	return;
   }
@@ -408,10 +408,10 @@ PRIVATE void sanitycheck(void)
 	addr_start_iter_least(&addravl, &iter);
 	while((p=addr_get_iter(&iter))) {
 		SLABSANE(p);
-		vm_assert(p->size > 0);
+		assert(p->size > 0);
 		if(prevp) {
-			vm_assert(prevp->addr < p->addr);
-			vm_assert(prevp->addr + p->addr < p->addr);
+			assert(prevp->addr < p->addr);
+			assert(prevp->addr + p->addr < p->addr);
 		}
 		addr_incr_iter(&iter);
 	}
@@ -471,7 +471,7 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 
 	while((pr = addr_get_iter(&iter))) {
 		SLABSANE(pr);
-		vm_assert(pr->size > 0);
+		assert(pr->size > 0);
 		if(pr->size >= pages || (memflags & PAF_FIRSTBLOCK)) {
 			if(memflags & PAF_LOWER16MB) {
 				if(pr->addr + pages > boundary16)
@@ -509,7 +509,7 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	SLABSANE(pr);
 
 	if(memflags & PAF_FIRSTBLOCK) {
-		vm_assert(len);
+		assert(len);
 		/* block doesn't have to as big as requested;
 		 * return its size though.
 		 */
@@ -527,12 +527,12 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	/* Allocated chunk is off the end. */
 	mem = pr->addr + pr->size - pages;
 
-	vm_assert(pr->size >= pages);
+	assert(pr->size >= pages);
 	if(pr->size == pages) {
 		pagerange_t *prr;
 		prr = addr_remove(&addravl, pr->addr);
-		vm_assert(prr);
-		vm_assert(prr == pr);
+		assert(prr);
+		assert(prr == pr);
 		SLABFREE(pr);
 #if SANITYCHECKS
 		wantnodes--;
@@ -556,8 +556,8 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 		printf("pages start: %d req: %d final: %d\n",
 			firstpages, pages, finalpages);
 	}
-	vm_assert(finalnodes == wantnodes);
-	vm_assert(finalpages == wantpages);
+	assert(finalnodes == wantnodes);
+	assert(finalpages == wantpages);
 #endif
 
 	return mem;
@@ -581,7 +581,7 @@ PRIVATE void free_pages(phys_bytes pageno, int npages)
 	wantpages = firstpages + npages;
 #endif
 
-	vm_assert(!addr_search(&addravl, pageno, AVL_EQUAL));
+	assert(!addr_search(&addravl, pageno, AVL_EQUAL));
 
 	/* try to merge with higher neighbour */
 	if((pr=addr_search(&addravl, pageno+npages, AVL_EQUAL))) {
@@ -598,7 +598,7 @@ PRIVATE void free_pages(phys_bytes pageno, int npages)
 
 		sanitycheck();
 #endif
-		vm_assert(npages > 0);
+		assert(npages > 0);
 		USE(pr, pr->addr = pageno;
 			 pr->size = npages;);
 		addr_insert(&addravl, pr);
@@ -609,8 +609,8 @@ PRIVATE void free_pages(phys_bytes pageno, int npages)
 
 	addr_start_iter(&addravl, &iter, pr->addr, AVL_EQUAL);
 	p = addr_get_iter(&iter);
-	vm_assert(p);
-	vm_assert(p == pr);
+	assert(p);
+	assert(p == pr);
 
 	addr_decr_iter(&iter);
 	if((p = addr_get_iter(&iter))) {
@@ -630,8 +630,8 @@ PRIVATE void free_pages(phys_bytes pageno, int npages)
 	memstats(&finalnodes, &finalpages,  &largest);
 	sanitycheck();
 
-	vm_assert(finalnodes == wantnodes);
-	vm_assert(finalpages == wantpages);
+	assert(finalnodes == wantnodes);
+	assert(finalpages == wantpages);
 #endif
 }
 
@@ -864,9 +864,9 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 	if(!incheck)
 		return OK;
 
-	vm_assert(!(addr % VM_PAGE_SIZE));
-	vm_assert(!(len % VM_PAGE_SIZE));
-	vm_assert(len > 0);
+	assert(!(addr % VM_PAGE_SIZE));
+	assert(!(len % VM_PAGE_SIZE));
+	assert(len > 0);
 	assert_range(addr, len);
 
 	pagestart = addr / VM_PAGE_SIZE;
@@ -874,8 +874,8 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 
 	while(pages > 0) {
 		phys_bytes thisaddr;
-		vm_assert(pagestart > 0);
-		vm_assert(pagestart < MAXPAGES);
+		assert(pagestart > 0);
+		assert(pagestart < MAXPAGES);
 		thisaddr = pagestart * VM_PAGE_SIZE;
 		if(GET_BIT(pagemap, pagestart)) {
 			int i;
@@ -901,8 +901,8 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 	phys_bytes rempages;
 	struct memlist *head = NULL, *ml;
 
-	vm_assert(bytes > 0);
-	vm_assert(!(bytes % VM_PAGE_SIZE));
+	assert(bytes > 0);
+	assert(!(bytes % VM_PAGE_SIZE));
 
 	rempages = bytes / VM_PAGE_SIZE;
 
@@ -923,8 +923,8 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 			return NULL;
 		}
 
-		vm_assert(gotpages <= rempages);
-		vm_assert(gotpages > 0);
+		assert(gotpages <= rempages);
+		assert(gotpages > 0);
 
 		if(!(SLABALLOC(ml))) {
 			free_mem_list(head, 1);
@@ -941,8 +941,8 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 	} while(rempages > 0);
 
 	for(ml = head; ml; ml = ml->next) {
-		vm_assert(ml->phys);
-		vm_assert(ml->length);
+		assert(ml->phys);
+		assert(ml->length);
 	}
 
 	return head;
@@ -956,8 +956,8 @@ void free_mem_list(struct memlist *list, int all)
 	while(list) {
 		struct memlist *next;
 		next = list->next;
-		vm_assert(!(list->phys % VM_PAGE_SIZE));
-		vm_assert(!(list->length % VM_PAGE_SIZE));
+		assert(!(list->phys % VM_PAGE_SIZE));
+		assert(!(list->length % VM_PAGE_SIZE));
 		if(all)
 			free_pages(list->phys / VM_PAGE_SIZE,
 			list->length / VM_PAGE_SIZE);
@@ -972,7 +972,7 @@ void free_mem_list(struct memlist *list, int all)
 void print_mem_list(struct memlist *list)
 {
 	while(list) {
-		vm_assert(list->length > 0);
+		assert(list->length > 0);
 		printf("0x%lx-0x%lx", list->phys, list->phys+list->length-1);
 		printf(" ");
 		list = list->next;

@@ -28,7 +28,7 @@
 #define MINSTACKREGION	(64*1024*1024)
 
 /* If so, this level: */
-#define SCL_NONE	0	/* No sanity checks - vm_assert()s only. */
+#define SCL_NONE	0	/* No sanity checks - assert()s only. */
 #define SCL_TOP		1	/* Main loop and other high-level places. */
 #define SCL_FUNCTIONS	2	/* Function entry/exit. */
 #define SCL_DETAIL	3	/* Detailled steps. */

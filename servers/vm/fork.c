@@ -56,7 +56,7 @@ PUBLIC int do_fork(message *msg)
 
   vmp = &vmproc[proc];		/* parent */
   vmc = &vmproc[childproc];	/* child */
-  vm_assert(vmc->vm_slot == childproc);
+  assert(vmc->vm_slot == childproc);
 
   if(vmp->vm_flags & VMF_HAS_DMA) {
 	printf("VM: %d has DMA memory and may not fork\n", msg->VMF_ENDPOINT);
@@ -96,7 +96,7 @@ PUBLIC int do_fork(message *msg)
 
 	if(vmp->vm_heap) {
 		vmc->vm_heap = map_region_lookup_tag(vmc, VRT_HEAP);
-		vm_assert(vmc->vm_heap);
+		assert(vmc->vm_heap);
 	}
 
 	SANITYCHECK(SCL_DETAIL);
@@ -149,10 +149,10 @@ PUBLIC int do_fork(message *msg)
 
 	if(!(heap = map_region_lookup_tag(vmc, VRT_HEAP)))
 		panic("couldn't lookup heap");
-	vm_assert(heap->phys);
+	assert(heap->phys);
 	if(!(stack = map_region_lookup_tag(vmc, VRT_STACK)))
 		panic("couldn't lookup stack");
-	vm_assert(stack->phys);
+	assert(stack->phys);
 
 	/* Now copy the memory regions. */
 
@@ -160,7 +160,7 @@ PUBLIC int do_fork(message *msg)
 		struct vir_region *text;
 		if(!(text = map_region_lookup_tag(vmc, VRT_TEXT)))
 			panic("couldn't lookup text");
-		vm_assert(text->phys);
+		assert(text->phys);
 		if(copy_abs2region(CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
 			text, 0, text_bytes) != OK)
 				panic("couldn't copy text");

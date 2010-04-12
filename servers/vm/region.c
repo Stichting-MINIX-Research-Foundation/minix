@@ -242,10 +242,10 @@ PRIVATE int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	int rw;
 	struct phys_block *pb = pr->ph;
 
-	vm_assert(!(vr->vaddr % VM_PAGE_SIZE));
-	vm_assert(!(pb->length % VM_PAGE_SIZE));
-	vm_assert(!(pr->offset % VM_PAGE_SIZE));
-	vm_assert(pb->refcount > 0);
+	assert(!(vr->vaddr % VM_PAGE_SIZE));
+	assert(!(pb->length % VM_PAGE_SIZE));
+	assert(!(pr->offset % VM_PAGE_SIZE));
+	assert(pb->refcount > 0);
 
 	if(WRITABLE(vr, pb))
 		rw = PTF_WRITE;
@@ -283,10 +283,10 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	/* We must be in paged mode to be able to do this. */
-	vm_assert(vm_paged);
+	assert(vm_paged);
 
 	/* Length must be reasonable. */
-	vm_assert(length > 0);
+	assert(length > 0);
 
 	/* Special case: allow caller to set maxv to 0 meaning 'I want
 	 * it to be mapped in right here.'
@@ -304,13 +304,13 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
         }
 
 	/* Basic input sanity checks. */
-	vm_assert(!(length % VM_PAGE_SIZE));
+	assert(!(length % VM_PAGE_SIZE));
 	if(minv >= maxv) {
 		printf("VM: 1 minv: 0x%lx maxv: 0x%lx length: 0x%lx\n",
 			minv, maxv, length);
 	}
-	vm_assert(minv < maxv);
-	vm_assert(minv + length <= maxv);
+	assert(minv < maxv);
+	assert(minv + length <= maxv);
 
 #define FREEVRANGE(rangestart, rangeend, foundcode) {		\
 	vir_bytes frstart = (rangestart), frend = (rangeend);	\
@@ -342,13 +342,13 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 	}
 
 #if SANITYCHECKS
-	if(prevregion) vm_assert(prevregion->vaddr < startv);
+	if(prevregion) assert(prevregion->vaddr < startv);
 #endif
 
 	/* However we got it, startv must be in the requested range. */
-	vm_assert(startv >= minv);
-	vm_assert(startv < maxv);
-	vm_assert(startv + length <= maxv);
+	assert(startv >= minv);
+	assert(startv < maxv);
+	assert(startv + length <= maxv);
 
 	if (prev)
 		*prev = prevregion;
@@ -373,7 +373,7 @@ int mapflags;
 	struct phys_region *ph;
 	physr_avl *phavl;
 
-	vm_assert(!(length % VM_PAGE_SIZE));
+	assert(!(length % VM_PAGE_SIZE));
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
@@ -407,10 +407,10 @@ USE(newregion,
 
 	/* If we know what we're going to map to, map it right away. */
 	if(what != MAP_NONE) {
-		vm_assert(what);	/* mapping in 0 is unlikely to be right */
-		vm_assert(!(what % VM_PAGE_SIZE));
-		vm_assert(!(startv % VM_PAGE_SIZE));
-		vm_assert(!(mapflags & MF_PREALLOC));
+		assert(what);	/* mapping in 0 is unlikely to be right */
+		assert(!(what % VM_PAGE_SIZE));
+		assert(!(startv % VM_PAGE_SIZE));
+		assert(!(mapflags & MF_PREALLOC));
 		if(map_new_physblock(vmp, newregion, 0, length,
 			what, PAF_CLEAR, 0) != OK) {
 			printf("VM: map_new_physblock failed\n");
@@ -433,7 +433,7 @@ USE(newregion,
 
 	/* Link it. */
 	if(prevregion) {
-		vm_assert(prevregion->vaddr < newregion->vaddr);
+		assert(prevregion->vaddr < newregion->vaddr);
 		USE(newregion, newregion->next = prevregion->next;);
 		USE(prevregion, prevregion->next = newregion;);
 	} else {
@@ -442,9 +442,9 @@ USE(newregion,
 	}
 
 #if SANITYCHECKS
-	vm_assert(startv == newregion->vaddr);
+	assert(startv == newregion->vaddr);
 	if(newregion->next) {
-		vm_assert(newregion->vaddr < newregion->next->vaddr);
+		assert(newregion->vaddr < newregion->next->vaddr);
 	}
 #endif
 
@@ -462,9 +462,9 @@ PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 	int remap = 0;
 
 	pb = pr->ph;
-	vm_assert(pb->refcount > 0);
+	assert(pb->refcount > 0);
 	USE(pb, pb->refcount--;);
-	vm_assert(pb->refcount >= 0);
+	assert(pb->refcount >= 0);
 
 	if(pb->firstregion == pr) {
 		USE(pb, pb->firstregion = pr->next_ph_list;);
@@ -473,18 +473,18 @@ PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 
 		for(others = pb->firstregion; others;
 			others = others->next_ph_list) {
-			vm_assert(others->ph == pb);
+			assert(others->ph == pb);
 			if(others->next_ph_list == pr) {
 				USE(others, others->next_ph_list = pr->next_ph_list;);
 				break;
 			}
 		}
 
-		vm_assert(others); /* Otherwise, wasn't on the list. */
+		assert(others); /* Otherwise, wasn't on the list. */
 	}
 
 	if(pb->refcount == 0) {
-		vm_assert(!pb->firstregion);
+		assert(!pb->firstregion);
 		if(region->flags & VR_ANON) {
 			free_mem(ABS2CLICK(pb->phys),
 				ABS2CLICK(pb->length));
@@ -508,7 +508,7 @@ PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 			} 
 			n++;
 		}
-		vm_assert(n == pb->refcount);
+		assert(n == pb->refcount);
 	}
 }
 
@@ -519,8 +519,8 @@ PRIVATE struct phys_region *reset_physr_iter(struct vir_region *region,
 
 	physr_start_iter(region->phys, iter, offset, AVL_EQUAL);
 	ph = physr_get_iter(iter);
-	vm_assert(ph);
-	vm_assert(ph->offset == offset);
+	assert(ph);
+	assert(ph->offset == offset);
 
 	return ph;
 }
@@ -546,7 +546,7 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 
 		for(others = pb->firstregion; others;
 			others = others->next_ph_list) {
-			vm_assert(others->ph == pb);
+			assert(others->ph == pb);
 		}
 		physr_incr_iter(&iter);
 	}
@@ -565,19 +565,19 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 			SLABFREE(pr);
 		} else {
 			vir_bytes sublen;
-			vm_assert(len > pr->offset);
-			vm_assert(len < pr->offset + pr->ph->length);
-			vm_assert(pr->ph->refcount > 0);
+			assert(len > pr->offset);
+			assert(len < pr->offset + pr->ph->length);
+			assert(pr->ph->refcount > 0);
 			sublen = len - pr->offset;
-			vm_assert(!(sublen % VM_PAGE_SIZE));
-			vm_assert(sublen < pr->ph->length);
+			assert(!(sublen % VM_PAGE_SIZE));
+			assert(sublen < pr->ph->length);
 			if(pr->ph->refcount > 1) {
 				int r;
 				if(!(pr = map_clone_ph_block(vmp, region,
 					pr, &iter)))
 					return ENOMEM;
 			}
-			vm_assert(pr->ph->refcount == 1);
+			assert(pr->ph->refcount == 1);
 			if(!(region->flags & VR_DIRECT)) {
 				free_mem(ABS2CLICK(pr->ph->phys), ABS2CLICK(sublen));
 			}
@@ -585,9 +585,9 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 			USE(pr->ph,
 				pr->ph->phys += sublen;
 				pr->ph->length -= sublen;);
-			vm_assert(!(pr->offset % VM_PAGE_SIZE));
-			vm_assert(!(pr->ph->phys % VM_PAGE_SIZE));
-			vm_assert(!(pr->ph->length % VM_PAGE_SIZE));
+			assert(!(pr->offset % VM_PAGE_SIZE));
+			assert(!(pr->ph->phys % VM_PAGE_SIZE));
+			assert(!(pr->ph->length % VM_PAGE_SIZE));
 		}
 	}
 
@@ -704,7 +704,7 @@ int written;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	vm_assert(!(length % VM_PAGE_SIZE));
+	assert(!(length % VM_PAGE_SIZE));
 
 	if((region->flags & VR_CONTIG) &&
 		(start_offset > 0 || length < region->length)) {
@@ -727,15 +727,15 @@ int written;
 		given.next = NULL;
 		memlist = &given;
 		used_memlist = 0;
-		vm_assert(given.phys);
-		vm_assert(given.length);
+		assert(given.phys);
+		assert(given.length);
 	}
 
 	r = OK;
 
 	for(ml = memlist; ml; ml = ml->next) {
-		vm_assert(ml->phys);
-		vm_assert(ml->length);
+		assert(ml->phys);
+		assert(ml->length);
 	}
 
 	for(ml = memlist; ml; ml = ml->next) {
@@ -751,11 +751,11 @@ int written;
 			break;
 		}
 
-		vm_assert(ml->phys);
-		vm_assert(ml->length);
+		assert(ml->phys);
+		assert(ml->length);
 
 		/* New physical block. */
-		vm_assert(!(ml->phys % VM_PAGE_SIZE));
+		assert(!(ml->phys % VM_PAGE_SIZE));
 
 		USE(newpb,
 		newpb->phys = ml->phys;
@@ -796,13 +796,13 @@ int written;
 				offset += ml->length;
 				if((physr = physr_search(region->phys, offset,
 					AVL_EQUAL))) {
-					vm_assert(physr->ph->refcount == 1);
+					assert(physr->ph->refcount == 1);
 					pb_unreferenced(region, physr);
 					physr_remove(region->phys, physr->offset);
 					SLABFREE(physr);
 				}
 			}
-		} else vm_assert(mapped == length);
+		} else assert(mapped == length);
 
 		/* Always clean up the memlist itself, even if everything
 		 * worked we're not using the memlist nodes any more. And
@@ -863,9 +863,9 @@ physr_iter *iter;
 	SANITYCHECK(SCL_DETAIL);
 	SLABSANE(ph);
 	SLABSANE(ph->ph);
-	vm_assert(ph->ph->refcount > 1);
+	assert(ph->ph->refcount > 1);
 	pb_unreferenced(region, ph);
-	vm_assert(ph->ph->refcount >= 1);
+	assert(ph->ph->refcount >= 1);
 	physr_remove(region->phys, offset);
 	SLABFREE(ph);
 
@@ -873,8 +873,8 @@ physr_iter *iter;
 
 	/* Put new free memory in. */
 	allocflags = vrallocflags(region->flags);
-	vm_assert(!(allocflags & PAF_CONTIG));
-	vm_assert(!(allocflags & PAF_CLEAR));
+	assert(!(allocflags & PAF_CONTIG));
+	assert(!(allocflags & PAF_CLEAR));
 
 	if(map_new_physblock(vmp, region, offset, length,
 		MAP_NONE, allocflags, written) != OK) {
@@ -891,12 +891,12 @@ physr_iter *iter;
 		panic("copy_abs2region failed, no good reason for that");
 
 	newpr = physr_search(region->phys, offset, AVL_EQUAL);
-	vm_assert(newpr);
-	vm_assert(newpr->offset == offset);
+	assert(newpr);
+	assert(newpr->offset == offset);
 
 	if(iter) {
 		physr_start_iter(region->phys, iter, offset, AVL_EQUAL);
-		vm_assert(physr_get_iter(iter) == newpr);
+		assert(physr_get_iter(iter) == newpr);
 	}
 
 	SANITYCHECK(SCL_FUNCTIONS);
@@ -918,11 +918,11 @@ int write;
 	struct phys_region *ph;
 	int r = OK;
 
-	vm_assert(offset >= 0);
-	vm_assert(offset < region->length);
+	assert(offset >= 0);
+	assert(offset < region->length);
 
-	vm_assert(region->flags & VR_ANON);
-	vm_assert(!(region->vaddr % VM_PAGE_SIZE));
+	assert(region->flags & VR_ANON);
+	assert(!(region->vaddr % VM_PAGE_SIZE));
 
 	virpage = offset - offset % VM_PAGE_SIZE;
 
@@ -932,9 +932,9 @@ int write;
 	   (ph->offset <= offset && offset < ph->offset + ph->ph->length)) {
 		phys_bytes blockoffset = ph->offset;
 		/* Pagefault in existing block. Do copy-on-write. */
-		vm_assert(write);
-		vm_assert(region->flags & VR_WRITABLE);
-		vm_assert(ph->ph->refcount > 0);
+		assert(write);
+		assert(region->flags & VR_WRITABLE);
+		assert(ph->ph->refcount > 0);
 
 		if(WRITABLE(region, ph->ph)) {
 			r = map_ph_writept(vmp, region, ph);
@@ -1010,11 +1010,11 @@ int write;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	vm_assert(region->flags & VR_ANON);
-	vm_assert(!(region->vaddr % VM_PAGE_SIZE));
-	vm_assert(!(offset % VM_PAGE_SIZE));
-	vm_assert(!(length % VM_PAGE_SIZE));
-	vm_assert(!write || (region->flags & VR_WRITABLE));
+	assert(region->flags & VR_ANON);
+	assert(!(region->vaddr % VM_PAGE_SIZE));
+	assert(!(offset % VM_PAGE_SIZE));
+	assert(!(length % VM_PAGE_SIZE));
+	assert(!write || (region->flags & VR_WRITABLE));
 
 	physr_start_iter(region->phys, &iter, offset, AVL_LESS_EQUAL);
 	physr = physr_get_iter(&iter);
@@ -1046,7 +1046,7 @@ int write;
 		SANITYCHECK(SCL_DETAIL);
 
 		if(write) {
-		  vm_assert(physr->ph->refcount > 0);
+		  assert(physr->ph->refcount > 0);
 		  if(!WRITABLE(region, physr->ph)) {
 			if(!(physr = map_clone_ph_block(vmp, region,
 				physr, &iter))) {
@@ -1170,13 +1170,13 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 #endif
 		physr_insert(newvr->phys, newph);
 #if SANITYCHECKS
-		vm_assert(countregions(vr) == cr);
+		assert(countregions(vr) == cr);
 #endif
 		physr_incr_iter(&iter);
 	}
 
 #if SANITYCHECKS
-	vm_assert(countregions(vr) == countregions(newvr));
+	assert(countregions(vr) == countregions(newvr));
 #endif
 
 	return newvr;
@@ -1189,28 +1189,28 @@ PUBLIC int copy_abs2region(phys_bytes abs, struct vir_region *destregion,
 	phys_bytes offset, phys_bytes len)
 
 {
-	vm_assert(destregion);
-	vm_assert(destregion->phys);
+	assert(destregion);
+	assert(destregion->phys);
 	while(len > 0) {
 		phys_bytes sublen, suboffset;
 		struct phys_region *ph;
-		vm_assert(destregion);
-		vm_assert(destregion->phys);
+		assert(destregion);
+		assert(destregion->phys);
 		if(!(ph = physr_search(destregion->phys, offset, AVL_LESS_EQUAL))) {
 			printf("VM: copy_abs2region: no phys region found (1).\n");
 			return EFAULT;
 		}
-		vm_assert(ph->offset <= offset);
+		assert(ph->offset <= offset);
 		if(ph->offset+ph->ph->length <= offset) {
 			printf("VM: copy_abs2region: no phys region found (2).\n");
 			return EFAULT;
 		}
 		suboffset = offset - ph->offset;
-		vm_assert(suboffset < ph->ph->length);
+		assert(suboffset < ph->ph->length);
 		sublen = len;
 		if(sublen > ph->ph->length - suboffset)
 			sublen = ph->ph->length - suboffset;
-		vm_assert(suboffset + sublen <= ph->ph->length);
+		assert(suboffset + sublen <= ph->ph->length);
 		if(ph->ph->refcount != 1) {
 			printf("VM: copy_abs2region: no phys region found (3).\n");
 			return EFAULT;
@@ -1292,21 +1292,21 @@ struct vmproc *src;
 			/* Check two physregions both are nonnull,
 			 * are different, and match physblocks.
 			 */
-			vm_assert(new_ph);
-			vm_assert(orig_ph);
-			vm_assert(orig_ph != new_ph);
+			assert(new_ph);
+			assert(orig_ph);
+			assert(orig_ph != new_ph);
 			pb = orig_ph->ph;
-			vm_assert(pb == new_ph->ph);
+			assert(pb == new_ph->ph);
 
 			/* Link in new physregion. */
-			vm_assert(!new_ph->next_ph_list);
+			assert(!new_ph->next_ph_list);
 			USE(new_ph, new_ph->next_ph_list = pb->firstregion;);
 			USE(pb, pb->firstregion = new_ph;);
 
 			/* Increase phys block refcount */
-			vm_assert(pb->refcount > 0);
+			assert(pb->refcount > 0);
 			USE(pb, pb->refcount++;);
-			vm_assert(pb->refcount > 1);
+			assert(pb->refcount > 1);
 
 			/* If the phys block has been shared as SMAP,
 			 * do the regular copy. */
@@ -1321,7 +1321,7 @@ struct vmproc *src;
 			physr_incr_iter(&iter_orig);
 			physr_incr_iter(&iter_new);
 		}
-		vm_assert(!physr_get_iter(&iter_new));
+		assert(!physr_get_iter(&iter_new));
 		prevvr = newvr;
 	}
 
@@ -1342,12 +1342,12 @@ PUBLIC struct vir_region *map_proc_kernel(struct vmproc *vmp)
 	/* We assume these are the first regions to be mapped to
 	 * make the function a bit simpler (free all regions on error).
 	 */
-	vm_assert(!vmp->vm_regions);
-	vm_assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
-	vm_assert(!(KERNEL_TEXT % VM_PAGE_SIZE));
-	vm_assert(!(KERNEL_TEXT_LEN % VM_PAGE_SIZE));
-	vm_assert(!(KERNEL_DATA % VM_PAGE_SIZE));
-	vm_assert(!(KERNEL_DATA_LEN % VM_PAGE_SIZE));
+	assert(!vmp->vm_regions);
+	assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
+	assert(!(KERNEL_TEXT % VM_PAGE_SIZE));
+	assert(!(KERNEL_TEXT_LEN % VM_PAGE_SIZE));
+	assert(!(KERNEL_DATA % VM_PAGE_SIZE));
+	assert(!(KERNEL_DATA_LEN % VM_PAGE_SIZE));
 
 	if(!(vr = map_page_region(vmp, KERNEL_TEXT, 0, KERNEL_TEXT_LEN, 
 		KERNEL_TEXT, VR_DIRECT | VR_WRITABLE | VR_NOPF, 0)) ||
@@ -1368,13 +1368,13 @@ PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 {
 	vir_bytes end;
 
-	vm_assert(vr);
-	vm_assert(vr->flags & VR_ANON);
-	vm_assert(!(delta % VM_PAGE_SIZE));
+	assert(vr);
+	assert(vr->flags & VR_ANON);
+	assert(!(delta % VM_PAGE_SIZE));
 
 	if(!delta) return OK;
 	end = vr->vaddr + vr->length;
-	vm_assert(end >= vr->vaddr);
+	assert(end >= vr->vaddr);
 
 	if(end + delta <= end) {
 		printf("VM: strange delta 0x%lx\n", delta);
@@ -1396,9 +1396,9 @@ PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
  *========================================================================*/
 PUBLIC int map_region_shrink(struct vir_region *vr, vir_bytes delta)
 {
-	vm_assert(vr);
-	vm_assert(vr->flags & VR_ANON);
-	vm_assert(!(delta % VM_PAGE_SIZE));
+	assert(vr);
+	assert(vr->flags & VR_ANON);
+	assert(!(delta % VM_PAGE_SIZE));
 
 #if 0
 	printf("VM: ignoring region shrink\n");
@@ -1493,7 +1493,7 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *region,
 		 * same amount.
 		 */
 		while((pr = physr_get_iter(&iter))) {
-			vm_assert(pr->offset >= len);
+			assert(pr->offset >= len);
 			USE(pr, pr->offset -= len;);
 			physr_incr_iter(&iter);
 		}
@@ -1525,7 +1525,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	vm_assert(region->flags & VR_SHARED);
+	assert(region->flags & VR_SHARED);
 
 	/* da is handled differently */
 	if (!da)
@@ -1536,7 +1536,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 
 	prev = NULL;
 	/* round up to page size */
-	vm_assert(!(size % VM_PAGE_SIZE));
+	assert(!(size % VM_PAGE_SIZE));
 	startv = region_find_slot(dvmp, dst_addr, VM_DATATOP, size, &prev);
 	if (startv == (vir_bytes) -1) {
 		printf("map_remap: search 0x%x...\n", dst_addr);
@@ -1557,7 +1557,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 	vr->flags = region->flags;
 	vr->tag = VRT_NONE;
 	vr->parent = dvmp;);
-	vm_assert(vr->flags & VR_SHARED);
+	assert(vr->flags & VR_SHARED);
 
 	if (prev) {
 		USE(vr,
@@ -1572,7 +1572,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 	physr_start_iter_least(vr->phys, &iter);
 	while((ph = physr_get_iter(&iter))) {
 		struct phys_block *pb = ph->ph;
-		vm_assert(!ph->next_ph_list);
+		assert(!ph->next_ph_list);
 		USE(ph, ph->next_ph_list = pb->firstregion;);
 		USE(pb, pb->firstregion = ph;);
 		USE(pb, pb->refcount++;);
@@ -1608,8 +1608,8 @@ PUBLIC int map_get_phys(struct vmproc *vmp, vir_bytes addr, phys_bytes *r)
 	physr_start_iter_least(vr->phys, &iter);
 	ph = physr_get_iter(&iter);
 
-	vm_assert(ph);
-	vm_assert(ph->ph);
+	assert(ph);
+	assert(ph->ph);
 	if (r)
 		*r = ph->ph->phys;
 
@@ -1635,8 +1635,8 @@ PUBLIC int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 	physr_start_iter_least(vr->phys, &iter);
 	ph = physr_get_iter(&iter);
 
-	vm_assert(ph);
-	vm_assert(ph->ph);
+	assert(ph);
+	assert(ph->ph);
 	if (cnt)
 		*cnt = ph->ph->refcount;
 
@@ -1856,7 +1856,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 	vmd = &vmproc[p];
 
 	vrd = map_lookup(vmd, virt_d);
-	vm_assert(vrd);
+	assert(vrd);
 
 	/* Search for the first phys region in the destination process. */
 	off = virt_d - vrd->vaddr;
@@ -1869,8 +1869,8 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
 	end = off + length;
 	while((pr = physr_get_iter(&iter)) && off < end) {
 		pb = pr->ph;
-		vm_assert(pb->refcount > 1);
-		vm_assert(pb->share_flag == PBSH_SMAP);
+		assert(pb->refcount > 1);
+		assert(pb->share_flag == PBSH_SMAP);
 
 		if(!(pr = map_clone_ph_block(vmd, vrd, pr, &iter)))
 			return ENOMEM;
@@ -2012,9 +2012,9 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
 	vmd = &vmproc[p];
 
 	vrs = map_lookup(vms, virt_s);
-	vm_assert(vrs);
+	assert(vrs);
 	vrd = map_lookup(vmd, virt_d);
-	vm_assert(vrd);
+	assert(vrd);
 
 	/* Linear address -> offset from start of vir region. */
 	offset_s = virt_s - vrs->vaddr;

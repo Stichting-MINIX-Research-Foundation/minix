@@ -82,7 +82,7 @@ PUBLIC int do_mmap(message *m)
 	}
 
 	/* Return mapping, as seen from process. */
-	vm_assert(vr);
+	assert(vr);
 	m->VMM_RETADDR = arch_map2vir(vmp, vr->vaddr);
 
 

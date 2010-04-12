@@ -20,7 +20,7 @@
 
 #define SANITYCHECK(l) if(!nocheck && ((l) <= vm_sanitychecklevel)) {  \
 		struct vmproc *vmpr;	\
-		vm_assert(incheck == 0);	\
+		assert(incheck == 0);	\
 		incheck = 1;		\
 		usedpages_reset();	\
 	slab_sanitycheck(__FILE__, __LINE__);	\
@@ -31,7 +31,7 @@
 		} \
 	} \
 	map_sanitycheck(__FILE__, __LINE__); \
-	vm_assert(incheck == 1);	\
+	assert(incheck == 1);	\
 	incheck = 0;		\
 	} 
 

@@ -193,7 +193,7 @@ vir_bytes *stack_top;		/* top of process stack */
   /* No need to allocate text if it can be shared. */
   if (sh_mp != NULL) {
 	text_bytes = 0;
-	vm_assert(!vm_paged);
+	assert(!vm_paged);
   }
 
   /* Acquire the new memory.  Each of the 4 parts: text, (data+bss), gap,
@@ -224,7 +224,7 @@ SANITYCHECK(SCL_DETAIL);
 	  rmp->vm_flags &= ~VMF_HASPT;
 	  pt_free(&rmp->vm_pt);
   }
-  vm_assert(!(vmpold->vm_flags & VMF_INUSE));
+  assert(!(vmpold->vm_flags & VMF_INUSE));
   *vmpold = *rmp;	/* copy current state. */
   rmp->vm_regions = NULL; /* exec()ing process regions thrown out. */
 SANITYCHECK(SCL_DETAIL);
@@ -385,11 +385,11 @@ PUBLIC phys_bytes find_kernel_top(void)
 	u32_t kernel_top = 0;
 #define MEMTOP(v, i) \
   (vmproc[v].vm_arch.vm_seg[i].mem_phys + vmproc[v].vm_arch.vm_seg[i].mem_len)
-	vm_assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
+	assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
 	kernel_top = MEMTOP(VMP_SYSTEM, T);
 	kernel_top = MAX(kernel_top, MEMTOP(VMP_SYSTEM, D));
 	kernel_top = MAX(kernel_top, MEMTOP(VMP_SYSTEM, S));
-	vm_assert(kernel_top);
+	assert(kernel_top);
 
 	return CLICK2ABS(kernel_top);
 }
@@ -414,14 +414,14 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	int prealloc;
 	struct vir_region *reg;
 
-	vm_assert(!(vstart % VM_PAGE_SIZE));
-	vm_assert(!(text_bytes % VM_PAGE_SIZE));
-	vm_assert(!(data_bytes % VM_PAGE_SIZE));
-	vm_assert(!(stack_bytes % VM_PAGE_SIZE));
-	vm_assert(!(gap_bytes % VM_PAGE_SIZE));
-	vm_assert(!(text_start % VM_PAGE_SIZE));
-	vm_assert(!(data_start % VM_PAGE_SIZE));
-	vm_assert((!text_start && !data_start) || (text_start && data_start));
+	assert(!(vstart % VM_PAGE_SIZE));
+	assert(!(text_bytes % VM_PAGE_SIZE));
+	assert(!(data_bytes % VM_PAGE_SIZE));
+	assert(!(stack_bytes % VM_PAGE_SIZE));
+	assert(!(gap_bytes % VM_PAGE_SIZE));
+	assert(!(text_start % VM_PAGE_SIZE));
+	assert(!(data_start % VM_PAGE_SIZE));
+	assert((!text_start && !data_start) || (text_start && data_start));
 
 	/* Place text at start of process. */
 	vmp->vm_arch.vm_seg[T].mem_phys = ABS2CLICK(vstart);

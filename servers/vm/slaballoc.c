@@ -37,19 +37,19 @@
 #define BITEL(f, b)	(f)->sdh.usebits[(b)/ELBITS]
 
 
-#define OFF(f, b) vm_assert(!GETBIT(f, b))
-#define ON(f, b)  vm_assert(GETBIT(f, b))
+#define OFF(f, b) assert(!GETBIT(f, b))
+#define ON(f, b)  assert(GETBIT(f, b))
 
 #if SANITYCHECKS
 #define SLABDATAWRITABLE(data, wr) do {			\
-	vm_assert(data->sdh.writable == WRITABLE_NONE);	\
-	vm_assert(wr != WRITABLE_NONE);			\
+	assert(data->sdh.writable == WRITABLE_NONE);	\
+	assert(wr != WRITABLE_NONE);			\
 	vm_pagelock(data, 0);				\
 	data->sdh.writable = wr;			\
 } while(0)
 
 #define SLABDATAUNWRITABLE(data) do {			\
-	vm_assert(data->sdh.writable != WRITABLE_NONE);	\
+	assert(data->sdh.writable != WRITABLE_NONE);	\
 	data->sdh.writable = WRITABLE_NONE;		\
 	vm_pagelock(data, 1);				\
 } while(0)
@@ -133,10 +133,10 @@ FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct sla
 
 #define GETSLAB(b, s) {			\
 	int i;				\
-	vm_assert((b) >= MINSIZE);	\
+	assert((b) >= MINSIZE);	\
 	i = (b) - MINSIZE;		\
-	vm_assert((i) < SLABSIZES);	\
-	vm_assert((i) >= 0);		\
+	assert((i) < SLABSIZES);	\
+	assert((i) >= 0);		\
 	s = &slabs[i];			\
 }
 
@@ -145,7 +145,7 @@ FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct sla
 /* move head of list l1 to list of l2 in slabheader sl. */
 #define MOVEHEAD(sl, l1, l2) {		\
 	struct slabdata *t;		\
-	vm_assert(LH(sl,l1));		\
+	assert(LH(sl,l1));		\
 	REMOVEHEAD(sl, l1, t);		\
 	ADDHEAD(t, sl, l2);		\
 }
@@ -154,7 +154,7 @@ FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct sla
 #define REMOVEHEAD(sl, list, to) {	\
 	struct slabdata *dat;		\
 	dat = (to) = LH(sl, list);	\
-	vm_assert(dat);			\
+	assert(dat);			\
 	LH(sl, list) = dat->sdh.next;	\
 	UNLINKNODE(dat);		\
 }
@@ -185,7 +185,7 @@ struct slabdata *newslabdata(int list)
 	struct slabdata *n;
 	phys_bytes p;
 
-	vm_assert(sizeof(*n) == VM_PAGE_SIZE);
+	assert(sizeof(*n) == VM_PAGE_SIZE);
 
 	if(!(n = vm_allocpage(&p, VMP_SLAB))) {
 		printf("newslabdata: vm_allocpage failed\n");
@@ -290,7 +290,7 @@ PUBLIC void *slaballoc(int bytes)
 
 	/* Retrieve entry in slabs[]. */
 	GETSLAB(bytes, s);
-	vm_assert(s);
+	assert(s);
 
 	/* To make the common case more common, make space in the 'used'
 	 * queue first.
@@ -314,14 +314,14 @@ PUBLIC void *slaballoc(int bytes)
 	}
 	SLABSANITYCHECK(SCL_DETAIL);
 
-	vm_assert(s);
+	assert(s);
 	firstused = LH(s, LIST_USED);
-	vm_assert(firstused);
+	assert(firstused);
 #if SANITYCHECKS
-	vm_assert(firstused->sdh.magic1 == MAGIC1);
-	vm_assert(firstused->sdh.magic2 == MAGIC2);
+	assert(firstused->sdh.magic1 == MAGIC1);
+	assert(firstused->sdh.magic2 == MAGIC2);
 #endif
-	vm_assert(firstused->sdh.nused < ITEMSPERPAGE(bytes));
+	assert(firstused->sdh.nused < ITEMSPERPAGE(bytes));
 
 	for(i = firstused->sdh.freeguess;
 		count < ITEMSPERPAGE(bytes); count++, i++) {
@@ -345,7 +345,7 @@ PUBLIC void *slaballoc(int bytes)
 			nojunkwarning++;
 			slabunlock(ret, bytes);
 			nojunkwarning--;
-			vm_assert(!nojunkwarning);
+			assert(!nojunkwarning);
 			*(u32_t *) ret = NOJUNK;
 			slablock(ret, bytes);
 #endif
@@ -458,7 +458,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 	nojunkwarning++;
 	slablock(mem, bytes);
 	nojunkwarning--;
-	vm_assert(!nojunkwarning);
+	assert(!nojunkwarning);
 #endif
 
 	/* Free this data. */
@@ -467,7 +467,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 	/* Check if this slab changes lists. */
 	if(f->sdh.nused == 0) {
 		/* Now become FREE; must've been USED */
-		vm_assert(f->sdh.list == LIST_USED);
+		assert(f->sdh.list == LIST_USED);
 		UNLINKNODE(f);
 		if(f == LH(s, LIST_USED))
 			LH(s, LIST_USED) = f->sdh.next;
@@ -475,7 +475,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 		SLABSANITYCHECK(SCL_DETAIL);
 	} else if(f->sdh.nused == ITEMSPERPAGE(bytes)-1) {
 		/* Now become USED; must've been FULL */
-		vm_assert(f->sdh.list == LIST_FULL);
+		assert(f->sdh.list == LIST_FULL);
 		UNLINKNODE(f);
 		if(f == LH(s, LIST_FULL))
 			LH(s, LIST_FULL) = f->sdh.next;
@@ -483,7 +483,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 		SLABSANITYCHECK(SCL_DETAIL);
 	} else {
 		/* Stay USED */
-		vm_assert(f->sdh.list == LIST_USED);
+		assert(f->sdh.list == LIST_USED);
 	}
 
 	SLABSANITYCHECK(SCL_FUNCTIONS);

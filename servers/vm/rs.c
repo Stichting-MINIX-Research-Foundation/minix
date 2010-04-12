@@ -123,8 +123,8 @@ PUBLIC int do_rs_update(message *m_ptr)
 	}
 
 	/* Adjust page tables. */
-	vm_assert(src_vmp->vm_flags & VMF_HASPT);
-	vm_assert(dst_vmp->vm_flags & VMF_HASPT);
+	assert(src_vmp->vm_flags & VMF_HASPT);
+	assert(dst_vmp->vm_flags & VMF_HASPT);
 	pt_bind(&src_vmp->vm_pt, src_vmp);
 	pt_bind(&dst_vmp->vm_pt, dst_vmp);
 	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {

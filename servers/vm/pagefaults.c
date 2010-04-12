@@ -67,11 +67,11 @@ PUBLIC void do_pagefaults(void)
 			panic("do_pagefaults: endpoint wrong: %d", ep);
 
 		vmp = &vmproc[p];
-		vm_assert(vmp->vm_flags & VMF_INUSE);
+		assert(vmp->vm_flags & VMF_INUSE);
 
 		/* See if address is valid at all. */
 		if(!(region = map_lookup(vmp, addr))) {
-			vm_assert(PFERR_NOPAGE(err));
+			assert(PFERR_NOPAGE(err));
 			printf("VM: pagefault: SIGSEGV %d bad addr 0x%lx %s\n", 
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
@@ -84,12 +84,12 @@ PUBLIC void do_pagefaults(void)
 		/* Make sure this isn't a region that isn't supposed
 		 * to cause pagefaults.
 		 */
-		vm_assert(!(region->flags & VR_NOPF));
+		assert(!(region->flags & VR_NOPF));
 
 		/* We do not allow shared memory to cause pagefaults.
 		 * These pages have to be pre-allocated.
 		 */
-		vm_assert(!(region->flags & VR_SHARED));
+		assert(!(region->flags & VR_SHARED));
 
 		/* If process was writing, see if it's writable. */
 		if(!(region->flags & VR_WRITABLE) && wr) {
@@ -102,7 +102,7 @@ PUBLIC void do_pagefaults(void)
 			continue;
 		}
 
-		vm_assert(addr >= region->vaddr);
+		assert(addr >= region->vaddr);
 		offset = addr - region->vaddr;
 
 		/* Access is allowed; handle it. */
@@ -195,9 +195,9 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 			r = EFAULT;
 		} else {
 			vir_bytes offset, sublen;
-			vm_assert(region->vaddr <= mem);
-			vm_assert(!(region->flags & VR_NOPF));
-			vm_assert(!(region->vaddr % VM_PAGE_SIZE));
+			assert(region->vaddr <= mem);
+			assert(!(region->flags & VR_NOPF));
+			assert(!(region->vaddr % VM_PAGE_SIZE));
 			offset = mem - region->vaddr;
 			sublen = len;
 			if(offset + sublen > region->length)
