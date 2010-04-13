@@ -407,7 +407,6 @@ USE(newregion,
 
 	/* If we know what we're going to map to, map it right away. */
 	if(what != MAP_NONE) {
-		assert(what);	/* mapping in 0 is unlikely to be right */
 		assert(!(what % VM_PAGE_SIZE));
 		assert(!(startv % VM_PAGE_SIZE));
 		assert(!(mapflags & MF_PREALLOC));
