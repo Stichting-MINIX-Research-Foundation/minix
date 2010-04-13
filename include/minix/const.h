@@ -21,10 +21,10 @@
  */
 
 #ifndef UNUSED
-#if defined(__GNUC__)
+#if defined _lint
+# define UNUSED(v) /*lint -e(715,818)*/ v
+#elif defined(__GNUC__)
 # define UNUSED(v) UNUSED_ ## v __attribute((unused))
-#elif defined _lint
-# define UNUSED(v) /*lint -e(715)*/ v
 #elif defined __LCLINT__
 # define UNUSED(v) /*@unused@*/ v
 #else

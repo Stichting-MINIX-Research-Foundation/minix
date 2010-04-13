@@ -32,7 +32,7 @@ _PROTOTYPE( struct smblk *sbm_lmak, (SBMA addr, SBMO elsize, int num) );
 _PROTOTYPE( int sbm_nmov, (struct smblk *smp1, struct smblk *smp2, struct smblk **begp, int elsize) );
 _PROTOTYPE( struct smblk *sbm_mget, (SBMO cmin, SBMO cmax) );
 _PROTOTYPE( char *sbm_brk, (unsigned size) );
-_PROTOTYPE( int sbm_mfree, (struct smblk *sm) );
+_PROTOTYPE( void sbm_mfree, (struct smblk *sm) );
 _PROTOTYPE( struct smblk *sbm_exp, (struct smblk *sm, SBMO size) );
 _PROTOTYPE( int sbm_mmrg, (struct smblk *smp) );
 _PROTOTYPE( struct smblk *sbm_split, (struct smblk *smp, SBMO coff) );

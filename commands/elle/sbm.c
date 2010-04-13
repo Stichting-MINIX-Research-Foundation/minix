@@ -499,6 +499,7 @@ unsigned size;
 
 /* SBM_MFREE(sm) - Free up an allocated memory area.
  */
+void
 sbm_mfree(sm)
 register struct smblk *sm;
 {       register struct smblk *smx;

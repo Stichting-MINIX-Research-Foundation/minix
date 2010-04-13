@@ -114,9 +114,6 @@ EXTERN u32_t ioapic_id_mask[8];
 EXTERN u32_t lapic_id_mask[8];
 EXTERN u32_t lapic_addr_vaddr; /* we remember the virtual address here until we
 				  switch to paging */
-EXTERN u32_t lapic_addr;
-EXTERN u32_t lapic_eoi_addr;
-EXTERN u32_t lapic_taskpri_addr;
 
 _PROTOTYPE (void calc_bus_clock, (void));
 _PROTOTYPE (u32_t lapic_errstatus, (void));

@@ -99,7 +99,6 @@ STATIC CHAR	*editinput();
 extern int	read();
 extern int	write();
 #if	defined(USE_TERMCAP)
-extern char	*getenv();
 extern char	*tgetstr();
 extern int	tgetent();
 #endif	/* defined(USE_TERMCAP) */

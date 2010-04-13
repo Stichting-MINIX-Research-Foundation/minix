@@ -72,7 +72,6 @@ _PROTOTYPE( void int86, (void)                     			);
 _PROTOTYPE( reg_t read_cr0, (void)					);
 _PROTOTYPE( reg_t read_cr2, (void)					);
 _PROTOTYPE( void write_cr0, (unsigned long value)                       );
-_PROTOTYPE( unsigned long read_cr3, (void)                              );
 _PROTOTYPE( unsigned long read_cr4, (void)                              );
 _PROTOTYPE( void write_cr4, (unsigned long value)                       );
 _PROTOTYPE( unsigned long read_cpu_flags, (void)                        );
