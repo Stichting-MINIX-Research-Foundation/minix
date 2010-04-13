@@ -505,7 +505,8 @@ PRIVATE void handle_fs_reply()
 
   case PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
-	schedule_process(rmp);
+	if (rmp->mp_flags & PM_SCHEDULED)
+		schedule_process(rmp);
 	/* ... and wake it up */
 	setreply(proc_n, OK);
 

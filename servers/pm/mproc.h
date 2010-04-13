@@ -82,6 +82,7 @@ EXTERN struct mproc {
 #define TRACE_EXIT	0x08000	/* tracer is forcing this process to exit */
 #define TRACE_ZOMBIE	0x10000	/* waiting for tracer to issue WAIT call */
 #define DELAY_CALL	0x20000	/* waiting for call before sending signal */
+#define PM_SCHEDULED	0x40000 /* this process is scheduled by PM */
 
 #define NIL_MPROC ((struct mproc *) 0)
 

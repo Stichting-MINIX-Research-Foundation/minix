@@ -92,7 +92,7 @@ PUBLIC int do_fork()
 	sigemptyset(&rmc->mp_sigtrace);
   }
   /* Inherit only these flags. In normal fork(), PRIV_PROC is not inherited. */
-  rmc->mp_flags &= (IN_USE|DELAY_CALL);
+  rmc->mp_flags &= (IN_USE|DELAY_CALL|PM_SCHEDULED);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
   rmc->mp_exitstatus = 0;

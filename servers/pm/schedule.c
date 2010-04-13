@@ -69,6 +69,7 @@ PUBLIC void overtake_scheduling(void)
 			if (sys_schedctl(trmp->mp_endpoint))
 				printf("PM: Error while overtaking scheduling for %s\n",
 					trmp->mp_name);
+			trmp->mp_flags |= PM_SCHEDULED;
 		}
 	}
 
