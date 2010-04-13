@@ -67,8 +67,8 @@ typedef struct already {
 
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(int makedname, (char *d, char *f, char *out, int outlen));
-_PROTOTYPE(int done, (Dev_t dev, Ino_t inum, Nlink_t nlink));
-_PROTOTYPE(long dodir, (char *d, int thislev, Dev_t dev));
+_PROTOTYPE(int done, (dev_t dev, ino_t inum, nlink_t nlink));
+_PROTOTYPE(long dodir, (char *d, int thislev, dev_t dev));
 
 char *prog;			/* program name */
 char *optstr = "asxdl:";	/* options */
@@ -108,10 +108,7 @@ int outlen;
  *	done - have we encountered (dev, inum) before? Returns 1 for yes,
  *	0 for no, and remembers (dev, inum, nlink).
  */
-int done(dev, inum, nlink)
-dev_t dev;
-ino_t inum;
-nlink_t nlink;
+int done(dev_t dev, ino_t inum, nlink_t nlink)
 {
   register ALREADY **pap, *ap;
 
@@ -168,10 +165,7 @@ int get_block_size(const char *dir, const struct stat *st)
  *	dodir - process the directory d. Return the long size (in blocks)
  *	of d and its descendants.
  */
-long dodir(d, thislev, dev)
-char *d;
-int thislev;
-dev_t dev;
+long dodir(char *d, int thislev, dev_t dev)
 {
   int maybe_print;
   struct stat s;

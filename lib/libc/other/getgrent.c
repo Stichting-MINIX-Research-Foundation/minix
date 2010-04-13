@@ -127,7 +127,7 @@ struct group *getgrent(void)
 	}
 }
 
-struct group *getgrgid(_mnx_Gid_t gid)
+struct group *getgrgid(gid_t gid)
 /* Return the group file entry belonging to the user-id. */
 {
 	struct group *gr;

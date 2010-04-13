@@ -23,13 +23,10 @@ PUBLIC void buf_pool(void)
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-PUBLIC struct buf *get_block(dev, inum)
-Dev_t dev;
-ino_t inum;
+PUBLIC struct buf *get_block(dev_t dev, ino_t inum)
 {
-  struct buf *bp;
+  struct buf *bp = front;
 
-  bp = front;
   while(bp != NIL_BUF) {
   	if (bp->b_dev == dev && bp->b_num == inum) {
   		bp->b_count++;
@@ -46,9 +43,7 @@ ino_t inum;
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-PUBLIC struct buf *new_block(dev, inum)
-Dev_t dev;
-ino_t inum;
+PUBLIC struct buf *new_block(dev_t dev, ino_t inum)
 {
 /* Allocate a new buffer and add it to the double linked buffer list */
   struct buf *bp;
@@ -82,9 +77,7 @@ ino_t inum;
 /*===========================================================================*
  *				put_block				     *
  *===========================================================================*/
-PUBLIC void put_block(dev, inum)
-dev_t dev;
-ino_t inum;
+PUBLIC void put_block(dev_t dev, ino_t inum)
 {
   struct buf *bp;
 

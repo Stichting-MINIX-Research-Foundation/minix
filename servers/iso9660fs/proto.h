@@ -14,9 +14,9 @@ _PROTOTYPE(struct buf *get_block,(block_t block));
 _PROTOTYPE(void put_block,(struct buf *bp));
 
 /* device.c */
-_PROTOTYPE( int block_dev_io, (int op, Dev_t dev, int proc, void *buf,
+_PROTOTYPE( int block_dev_io, (int op, dev_t dev, int proc, void *buf,
 			       u64_t pos, int bytes, int flags)		);
-_PROTOTYPE( int dev_open, (endpoint_t driver_e, Dev_t dev, int proc,
+_PROTOTYPE( int dev_open, (endpoint_t driver_e, dev_t dev, int proc,
 			   int flags)					);
 _PROTOTYPE( void dev_close, (endpoint_t driver_e, dev_t dev)		);
 _PROTOTYPE( int fs_new_driver, (void)					);
@@ -66,7 +66,7 @@ _PROTOTYPE( int fs_fstatfs, (void)					);
 
 /* super.c */
 _PROTOTYPE(int release_v_pri, (struct iso9660_vd_pri *v_pri)		);
-_PROTOTYPE(int read_vds, (struct iso9660_vd_pri *v_pri, Dev_t dev)	);
+_PROTOTYPE(int read_vds, (struct iso9660_vd_pri *v_pri, dev_t dev)	);
 _PROTOTYPE(int create_v_pri, (struct iso9660_vd_pri *v_pri, char *buffer,
 			      unsigned long address)			);
 

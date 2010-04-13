@@ -3,10 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-PUBLIC int chown(name, owner, grp)
-_CONST char *name;
-_mnx_Uid_t owner;
-_mnx_Gid_t grp;
+PUBLIC int chown(const char *name, uid_t owner, gid_t grp)
 {
   message m;
 

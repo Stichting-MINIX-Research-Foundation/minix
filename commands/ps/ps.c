@@ -178,7 +178,7 @@ struct pstat {			/* structure filled by pstat() */
 #define	R_STATE		'R'	/* Runnable */
 #define	T_STATE		'T'	/* stopped (Trace) */
 
-_PROTOTYPE(char *tname, (Dev_t dev_nr ));
+_PROTOTYPE(char *tname, (dev_t dev_nr ));
 _PROTOTYPE(char *taskname, (int p_nr ));
 _PROTOTYPE(char *prrecv, (struct pstat *bufp ));
 _PROTOTYPE(void disaster, (int sig ));
@@ -198,8 +198,7 @@ _PROTOTYPE(int gettynames, (void));
  * Tname assumes that the first three letters of the tty's name can be omitted
  * and returns the rest (except for the console, which yields "co").
  */
-char *tname(dev_nr)
-Dev_t dev_nr;
+char *tname(dev_t dev_nr)
 {
   int i;
 
@@ -408,13 +407,13 @@ char *argv[];
 			       (buf.ps_flags & RTS_RECEIVING ?
 				prrecv(&buf) :
 				""),
-			       tname((Dev_t) buf.ps_dev),
+			       tname((dev_t) buf.ps_dev),
 			       cpu,
 			       i <= init_proc_nr || buf.ps_args == NULL
 				       ? taskname(i) : buf.ps_args);
 		else
 			printf(S_FORMAT,
-			       pid, tname((Dev_t) buf.ps_dev),
+			       pid, tname((dev_t) buf.ps_dev),
 			       cpu,
 			       i <= init_proc_nr || buf.ps_args == NULL
 				       ? taskname(i) : buf.ps_args);

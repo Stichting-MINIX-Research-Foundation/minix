@@ -40,7 +40,7 @@ PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 
 FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt)		);
 FORWARD _PROTOTYPE( int mount_fs, (endpoint_t fs_e)			);
-FORWARD _PROTOTYPE( int is_nonedev, (Dev_t dev)				);
+FORWARD _PROTOTYPE( int is_nonedev, (dev_t dev)				);
 FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)				);
 
 /*===========================================================================*
@@ -400,9 +400,10 @@ PUBLIC int do_umount()
 /*===========================================================================*
  *                              unmount                                      *
  *===========================================================================*/
-PUBLIC int unmount(dev, label)
-Dev_t dev;				/* block-special device */
-char *label;				/* buffer to retrieve label, or NULL */
+PUBLIC int unmount(
+  dev_t dev,			/* block-special device */
+  char *label			/* buffer to retrieve label, or NULL */
+)
 {
   struct vnode *vp;
   struct vmnt *vmp_i = NULL, *vmp = NULL;
@@ -519,7 +520,7 @@ int allow_mountpt;
 /*===========================================================================*
  *                              is_nonedev				     *
  *===========================================================================*/
-PRIVATE int is_nonedev(int dev)
+PRIVATE int is_nonedev(dev_t dev)
 {
 /* Return whether the given device is a "none" pseudo device.
  */

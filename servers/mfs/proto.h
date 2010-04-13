@@ -8,35 +8,35 @@ struct super_block;
 
 
 /* cache.c */
-_PROTOTYPE( zone_t alloc_zone, (Dev_t dev, zone_t z)			);
+_PROTOTYPE( zone_t alloc_zone, (dev_t dev, zone_t z)			);
 _PROTOTYPE( void buf_pool, (void)					);
-_PROTOTYPE( void flushall, (Dev_t dev)					);
-_PROTOTYPE( void free_zone, (Dev_t dev, zone_t numb)			);
-_PROTOTYPE( struct buf *get_block, (Dev_t dev, block_t block,int only_search));
-_PROTOTYPE( void invalidate, (Dev_t device)				);
+_PROTOTYPE( void flushall, (dev_t dev)					);
+_PROTOTYPE( void free_zone, (dev_t dev, zone_t numb)			);
+_PROTOTYPE( struct buf *get_block, (dev_t dev, block_t block,int only_search));
+_PROTOTYPE( void invalidate, (dev_t device)				);
 _PROTOTYPE( void put_block, (struct buf *bp, int block_type)		);
 _PROTOTYPE( void set_blocksize, (int blocksize)				);
-_PROTOTYPE( void rw_scattered, (Dev_t dev,
+_PROTOTYPE( void rw_scattered, (dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
 
 /* device.c */
-_PROTOTYPE( int block_dev_io, (int op, Dev_t dev, int proc, void *buf,
+_PROTOTYPE( int block_dev_io, (int op, dev_t dev, int proc, void *buf,
 			u64_t pos, int bytes, int flags)		);
-_PROTOTYPE( int dev_open, (endpoint_t driver_e, Dev_t dev, int proc,
+_PROTOTYPE( int dev_open, (endpoint_t driver_e, dev_t dev, int proc,
 							int flags)	);
-_PROTOTYPE( void dev_close, (endpoint_t driver_e, Dev_t dev)		);
+_PROTOTYPE( void dev_close, (endpoint_t driver_e, dev_t dev)		);
 _PROTOTYPE( int fs_clone_opcl, (void)					);
 _PROTOTYPE( int fs_new_driver, (void)					);
 
 /* inode.c */
 _PROTOTYPE( struct inode *alloc_inode, (dev_t dev, mode_t bits)		);
 _PROTOTYPE( void dup_inode, (struct inode *ip)				);
-_PROTOTYPE( struct inode *find_inode, (Dev_t dev, int numb)		);
-_PROTOTYPE( void free_inode, (Dev_t dev, Ino_t numb)			);
+_PROTOTYPE( struct inode *find_inode, (dev_t dev, int numb)		);
+_PROTOTYPE( void free_inode, (dev_t dev, Ino_t numb)			);
 _PROTOTYPE( int fs_getnode, (void)					);
 _PROTOTYPE( int fs_putnode, (void)					);
 _PROTOTYPE( void init_inode_cache, (void)				);
-_PROTOTYPE( struct inode *get_inode, (Dev_t dev, int numb)		);
+_PROTOTYPE( struct inode *get_inode, (dev_t dev, int numb)		);
 _PROTOTYPE( void put_inode, (struct inode *rip)				);
 _PROTOTYPE( void update_times, (struct inode *rip)			);
 _PROTOTYPE( void rw_inode, (struct inode *rip, int rw_flag)		);
@@ -104,7 +104,7 @@ _PROTOTYPE( bit_t alloc_bit, (struct super_block *sp, int map, bit_t origin));
 _PROTOTYPE( void free_bit, (struct super_block *sp, int map,
 						bit_t bit_returned)	);
 _PROTOTYPE( int get_block_size, (dev_t dev)				);
-_PROTOTYPE( struct super_block *get_super, (Dev_t dev)			);
+_PROTOTYPE( struct super_block *get_super, (dev_t dev)			);
 _PROTOTYPE( int mounted, (struct inode *rip)				);
 _PROTOTYPE( int read_super, (struct super_block *sp)			);
 

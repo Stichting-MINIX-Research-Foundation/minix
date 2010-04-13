@@ -186,31 +186,31 @@ _PROTOTYPE(void chkword, (unsigned w1, unsigned w2, bit_nr bit, char *type, int 
 _PROTOTYPE(void chkmap, (bitchunk_t *cmap, bitchunk_t *dmap, bit_nr bit, block_nr blkno, int nblk, char *type));
 _PROTOTYPE(void chkilist, (void));
 _PROTOTYPE(void getcount, (void));
-_PROTOTYPE(void counterror, (Ino_t ino));
+_PROTOTYPE(void counterror, (ino_t ino));
 _PROTOTYPE(void chkcount, (void));
 _PROTOTYPE(void freecount, (void));
 _PROTOTYPE(void printperm, (mode_t mode, int shift, int special, int overlay));
-_PROTOTYPE(void list, (Ino_t ino, d_inode *ip));
+_PROTOTYPE(void list, (ino_t ino, d_inode *ip));
 _PROTOTYPE(int Remove, (dir_struct *dp));
 _PROTOTYPE(void make_printable_name, (char *dst, char *src, int n));
-_PROTOTYPE(int chkdots, (Ino_t ino, off_t pos, dir_struct *dp, Ino_t exp));
-_PROTOTYPE(int chkname, (Ino_t ino, dir_struct *dp));
-_PROTOTYPE(int chkentry, (Ino_t ino, off_t pos, dir_struct *dp));
-_PROTOTYPE(int chkdirzone, (Ino_t ino, d_inode *ip, off_t pos, zone_nr zno));
-_PROTOTYPE(int chksymlinkzone, (Ino_t ino, d_inode *ip, off_t pos,
+_PROTOTYPE(int chkdots, (ino_t ino, off_t pos, dir_struct *dp, ino_t exp));
+_PROTOTYPE(int chkname, (ino_t ino, dir_struct *dp));
+_PROTOTYPE(int chkentry, (ino_t ino, off_t pos, dir_struct *dp));
+_PROTOTYPE(int chkdirzone, (ino_t ino, d_inode *ip, off_t pos, zone_nr zno));
+_PROTOTYPE(int chksymlinkzone, (ino_t ino, d_inode *ip, off_t pos,
 								zone_nr zno));
 _PROTOTYPE(void errzone, (char *mess, zone_nr zno, int level, off_t pos));
 _PROTOTYPE(int markzone, (zone_nr zno, int level, off_t pos));
-_PROTOTYPE(int chkindzone, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
+_PROTOTYPE(int chkindzone, (ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
 _PROTOTYPE(off_t jump, (int level));
-_PROTOTYPE(int zonechk, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
-_PROTOTYPE(int chkzones, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist, int len, int level));
-_PROTOTYPE(int chkfile, (Ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkdirectory, (Ino_t ino, d_inode *ip));
-_PROTOTYPE(int chklink, (Ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkspecial, (Ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkmode, (Ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkinode, (Ino_t ino, d_inode *ip));
+_PROTOTYPE(int zonechk, (ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
+_PROTOTYPE(int chkzones, (ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist, int len, int level));
+_PROTOTYPE(int chkfile, (ino_t ino, d_inode *ip));
+_PROTOTYPE(int chkdirectory, (ino_t ino, d_inode *ip));
+_PROTOTYPE(int chklink, (ino_t ino, d_inode *ip));
+_PROTOTYPE(int chkspecial, (ino_t ino, d_inode *ip));
+_PROTOTYPE(int chkmode, (ino_t ino, d_inode *ip));
+_PROTOTYPE(int chkinode, (ino_t ino, d_inode *ip));
 _PROTOTYPE(int descendtree, (dir_struct *dp));
 _PROTOTYPE(void chktree, (void));
 _PROTOTYPE(void printtotal, (void));
@@ -340,8 +340,7 @@ char *s;
 /* Print the pathname given by a linked list pointed to by `sp'.  The
  * names are in reverse order.
  */
-void printrec(sp)
-struct stack *sp;
+void printrec(struct stack *sp)
 {
   if (sp->st_next != 0) {
 	printrec(sp->st_next);
@@ -839,8 +838,7 @@ void getcount()
 }
 
 /* The reference count for inode `ino' is wrong.  Ask if it should be adjusted. */
-void counterror(ino)
-ino_t ino;
+void counterror(ino_t ino)
 {
   d_inode inode;
 
@@ -904,9 +902,7 @@ void printperm(mode_t mode, int shift, int special, int overlay)
 }
 
 /* List the given inode. */
-void list(ino, ip)
-ino_t ino;
-d_inode *ip;
+void list(ino_t ino, d_inode *ip)
 {
   if (firstlist) {
 	firstlist = 0;
@@ -943,8 +939,7 @@ d_inode *ip;
  * Don't name the function remove() - that is owned by ANSI, and chaos results
  * when it is a macro.
  */
-int Remove(dp)
-dir_struct *dp;
+int Remove(dir_struct *dp)
 {
   setbit(spec_imap, (bit_nr) dp->d_inum);
   if (yes(". remove entry")) {
@@ -992,10 +987,7 @@ register int n;
 }
 
 /* See if the `.' or `..' entry is as expected. */
-int chkdots(ino, pos, dp, exp)
-ino_t ino, exp;
-off_t pos;
-dir_struct *dp;
+int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 {
   char printable_name[4 * NAME_MAX + 1];
 
@@ -1027,9 +1019,7 @@ dir_struct *dp;
 }
 
 /* Check the name in a directory entry. */
-int chkname(ino, dp)
-ino_t ino;
-dir_struct *dp;
+int chkname(ino_t ino, dir_struct *dp)
 {
   register n = NAME_MAX + 1;
   register char *p = dp->d_name;
@@ -1057,10 +1047,7 @@ dir_struct *dp;
 /* Check a directory entry.  Here the routine `descendtree' is called
  * recursively to check the file or directory pointed to by the entry.
  */
-int chkentry(ino, pos, dp)
-ino_t ino;
-off_t pos;
-dir_struct *dp;
+int chkentry(ino_t ino, off_t pos, dir_struct *dp)
 {
   if (dp->d_inum < ROOT_INODE || dp->d_inum > sb.s_ninodes) {
 	printf("bad inode found in directory ");
@@ -1108,11 +1095,7 @@ dir_struct *dp;
 /* Check a zone of a directory by checking all the entries in the zone.
  * The zone is split up into chunks to not allocate too much stack.
  */
-int chkdirzone(ino, ip, pos, zno)
-ino_t ino;
-d_inode *ip;
-off_t pos;
-zone_nr zno;
+int chkdirzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno)
 {
   dir_struct dirblk[CDIRECT];
   register dir_struct *dp;
@@ -1149,11 +1132,7 @@ zone_nr zno;
 }
 
 
-int chksymlinkzone(ino, ip, pos, zno)
-ino_t ino;
-d_inode *ip;
-off_t pos;
-zone_nr zno;
+int chksymlinkzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno)
 {
 	long block;
 	size_t len;
@@ -1228,12 +1207,7 @@ off_t pos;
 /* Check an indirect zone by checking all of its entries.
  * The zone is split up into chunks to not allocate too much stack.
  */
-int chkindzone(ino, ip, pos, zno, level)
-ino_t ino;
-d_inode *ip;
-off_t *pos;
-zone_nr zno;
-int level;
+int chkindzone(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 {
   zone_nr indirect[CINDIR];
   register n = NR_INDIRECTS / CINDIR;
@@ -1265,12 +1239,7 @@ int level;
 /* Check a zone, which may be either a normal data zone, a directory zone,
  * or an indirect zone.
  */
-int zonechk(ino, ip, pos, zno, level)
-ino_t ino;
-d_inode *ip;
-off_t *pos;
-zone_nr zno;
-int level;
+int zonechk(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 {
   if (level == 0) {
 	if ((ip->i_mode & I_TYPE) == I_DIRECTORY &&
@@ -1286,13 +1255,8 @@ int level;
 }
 
 /* Check a list of zones given by `zlist'. */
-int chkzones(ino, ip, pos, zlist, len, level)
-ino_t ino;
-d_inode *ip;
-off_t *pos;
-zone_nr *zlist;
-int len;
-int level;
+int chkzones(ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist,
+ int len, int level)
 {
   register ok = 1, i;
 
@@ -1312,9 +1276,7 @@ int level;
 }
 
 /* Check a file or a directory. */
-int chkfile(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkfile(ino_t ino, d_inode *ip)
 {
   register ok, i, level;
   off_t pos = 0;
@@ -1326,9 +1288,7 @@ d_inode *ip;
 }
 
 /* Check a directory by checking the contents.  Check if . and .. are present. */
-int chkdirectory(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkdirectory(ino_t ino, d_inode *ip)
 {
   register ok;
 
@@ -1350,9 +1310,7 @@ d_inode *ip;
 #ifdef I_SYMBOLIC_LINK
 
 /* Check the validity of a symbolic link. */
-int chklink(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chklink(ino_t ino, d_inode *ip)
 {
   int ok;
 
@@ -1371,9 +1329,7 @@ d_inode *ip;
 #endif
 
 /* Check the validity of a special file. */
-int chkspecial(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkspecial(ino_t ino, d_inode *ip)
 {
   int i, ok;
 
@@ -1398,9 +1354,7 @@ d_inode *ip;
 }
 
 /* Check the mode and contents of an inode. */
-int chkmode(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkmode(ino_t ino, d_inode *ip)
 {
   switch (ip->i_mode & I_TYPE) {
       case I_REGULAR:
@@ -1433,9 +1387,7 @@ d_inode *ip;
 }
 
 /* Check an inode. */
-int chkinode(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkinode(ino_t ino, d_inode *ip)
 {
   if (ino == ROOT_INODE && (ip->i_mode & I_TYPE) != I_DIRECTORY) {
 	printf("root inode is not a directory ");

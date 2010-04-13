@@ -6,9 +6,9 @@ struct filp;
 struct inode;
 
 /* buffer.c */
-_PROTOTYPE( struct buf *get_block, (Dev_t dev, ino_t inum)		);
-_PROTOTYPE( struct buf *new_block, (Dev_t dev, ino_t inum)			);
-_PROTOTYPE( void put_block, (Dev_t dev, ino_t inum)				);
+_PROTOTYPE( struct buf *get_block, (dev_t dev, ino_t inum)		);
+_PROTOTYPE( struct buf *new_block, (dev_t dev, ino_t inum)			);
+_PROTOTYPE( void put_block, (dev_t dev, ino_t inum)				);
 
 /* cache.c */
 _PROTOTYPE( void buf_pool, (void)					);
@@ -20,7 +20,7 @@ _PROTOTYPE( struct inode *find_inode, (int numb)			);
 _PROTOTYPE( void free_inode, (struct inode *rip)			);
 _PROTOTYPE( int fs_putnode, (void)					);
 _PROTOTYPE( void init_inode_cache, (void)				);
-_PROTOTYPE( struct inode *get_inode, (Dev_t dev, int numb)		);
+_PROTOTYPE( struct inode *get_inode, (dev_t dev, int numb)		);
 _PROTOTYPE( void put_inode, (struct inode *rip)				);
 _PROTOTYPE( void update_times, (struct inode *rip)			);
 _PROTOTYPE( void wipe_inode, (struct inode *rip)			);

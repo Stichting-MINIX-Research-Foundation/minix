@@ -10,7 +10,7 @@ FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t, cp_grant_id_t *,
 FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
 					   int));
 FORWARD _PROTOTYPE( int gen_opcl, (endpoint_t driver_e, int op,
-				   Dev_t dev, int proc_e, int flags));
+				   dev_t dev, int proc_e, int flags));
 FORWARD _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr));
 
 
@@ -136,11 +136,12 @@ int gids_size;
 /*===========================================================================*
  *				dev_open				     *
  *===========================================================================*/
-PUBLIC int dev_open(driver_e, dev, proc, flags)
-endpoint_t driver_e;
-dev_t dev;			/* device to open */
-int proc;			/* process to open for */
-int flags;			/* mode bits and flags */
+PUBLIC int dev_open(
+  endpoint_t driver_e,
+  dev_t dev,			/* device to open */
+  int proc,			/* process to open for */
+  int flags			/* mode bits and flags */
+)
 {
   int major, r;
 
@@ -159,14 +160,15 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *			block_dev_io					     *
  *===========================================================================*/
-PUBLIC int block_dev_io(op, dev, proc_e, buf, pos, bytes, flags)
-int op;				/* MFS_DEV_READ, MFS_DEV_WRITE, etc. */
-dev_t dev;			/* major-minor device number */
-int proc_e;			/* in whose address space is buf? */
-void *buf;			/* virtual address of the buffer */
-u64_t pos;			/* byte position */
-int bytes;			/* how many bytes to transfer */
-int flags;			/* special flags, like O_NONBLOCK */
+PUBLIC int block_dev_io(
+  int op,			/* MFS_DEV_READ, MFS_DEV_WRITE, etc. */
+  dev_t dev,			/* major-minor device number */
+  int proc_e,			/* in whose address space is buf? */
+  void *buf,			/* virtual address of the buffer */
+  u64_t pos,			/* byte position */
+  int bytes,			/* how many bytes to transfer */
+  int flags			/* special flags, like O_NONBLOCK */
+)
 {
 /* Read or write from a device.  The parameter 'dev' tells which one. */
   int r, safe;
@@ -258,12 +260,13 @@ int flags;			/* special flags, like O_NONBLOCK */
 /*===========================================================================*
  *				gen_opcl				     *
  *===========================================================================*/
-PRIVATE int gen_opcl(driver_e, op, dev, proc_e, flags)
-endpoint_t driver_e;
-int op;				/* operation, DEV_OPEN or DEV_CLOSE */
-dev_t dev;			/* device to open or close */
-int proc_e;			/* process to open/close for */
-int flags;			/* mode bits and flags */
+PRIVATE int gen_opcl(
+  endpoint_t driver_e,
+  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  dev_t dev,			/* device to open or close */
+  int proc_e,			/* process to open/close for */
+  int flags			/* mode bits and flags */
+)
 {
 /* Called from the dmap struct in table.c on opens & closes of special files.*/
   message dev_mess;

@@ -4,9 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-PUBLIC int mkfifo(name, mode)
-_CONST char *name;
-_mnx_Mode_t mode;
+PUBLIC int mkfifo(const char *name, mode_t mode)
 {
-  return mknod(name, mode | S_IFIFO, (Dev_t) 0);
+  return mknod(name, mode | S_IFIFO, (dev_t) 0);
 }

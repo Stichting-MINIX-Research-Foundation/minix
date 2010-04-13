@@ -4,10 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-PUBLIC int mknod(name, mode, dev)
-_CONST char *name;
-_mnx_Mode_t mode;
-Dev_t dev;
+PUBLIC int mknod(const char *name, mode_t mode, dev_t dev)
 {
   message m;
 

@@ -49,10 +49,11 @@ PRIVATE int dummyproc;
 /*===========================================================================*
  *				dev_open				     *
  *===========================================================================*/
-PUBLIC int dev_open(dev, proc, flags)
-dev_t dev;			/* device to open */
-int proc;			/* process to open for */
-int flags;			/* mode bits and flags */
+PUBLIC int dev_open(
+  dev_t dev,			/* device to open */
+  int proc,			/* process to open for */
+  int flags			/* mode bits and flags */
+)
 {
   int major, r;
   struct dmap *dp;
@@ -73,10 +74,11 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				dev_reopen				     *
  *===========================================================================*/
-PUBLIC int dev_reopen(dev, filp_no, flags)
-dev_t dev;			/* device to open */
-int filp_no;			/* filp to reopen for */
-int flags;			/* mode bits and flags */
+PUBLIC int dev_reopen(
+  dev_t dev,			/* device to open */
+  int filp_no,			/* filp to reopen for */
+  int flags			/* mode bits and flags */
+)
 {
   int major, r;
   struct dmap *dp;
@@ -99,9 +101,10 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				dev_close				     *
  *===========================================================================*/
-PUBLIC int dev_close(dev, filp_no)
-dev_t dev;			/* device to close */
-int filp_no;
+PUBLIC int dev_close(
+  dev_t dev,			/* device to close */
+  int filp_no
+)
 {
   int r;
 
@@ -325,15 +328,16 @@ int gids_size;
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
-PUBLIC int dev_io(op, dev, proc_e, buf, pos, bytes, flags, suspend_reopen)
-int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
-dev_t dev;			/* major-minor device number */
-int proc_e;			/* in whose address space is buf? */
-void *buf;			/* virtual address of the buffer */
-u64_t pos;			/* byte position */
-int bytes;			/* how many bytes to transfer */
-int flags;			/* special flags, like O_NONBLOCK */
-int suspend_reopen;		/* Just suspend the process */
+PUBLIC int dev_io(
+  int op,			/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
+  dev_t dev,			/* major-minor device number */
+  int proc_e,			/* in whose address space is buf? */
+  void *buf,			/* virtual address of the buffer */
+  u64_t pos,			/* byte position */
+  int bytes,			/* how many bytes to transfer */
+  int flags,			/* special flags, like O_NONBLOCK */
+  int suspend_reopen		/* Just suspend the process */
+)
 {
 /* Read or write from a device.  The parameter 'dev' tells which one. */
   struct dmap *dp;
@@ -471,11 +475,12 @@ int suspend_reopen;		/* Just suspend the process */
 /*===========================================================================*
  *				gen_opcl				     *
  *===========================================================================*/
-PUBLIC int gen_opcl(op, dev, proc_e, flags)
-int op;				/* operation, DEV_OPEN or DEV_CLOSE */
-dev_t dev;			/* device to open or close */
-int proc_e;			/* process to open/close for */
-int flags;			/* mode bits and flags */
+PUBLIC int gen_opcl(
+  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  dev_t dev,			/* device to open or close */
+  int proc_e,			/* process to open/close for */
+  int flags			/* mode bits and flags */
+)
 {
 /* Called from the dmap struct in table.c on opens & closes of special files.*/
   int r;
@@ -505,11 +510,12 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				tty_opcl				     *
  *===========================================================================*/
-PUBLIC int tty_opcl(op, dev, proc_e, flags)
-int op;				/* operation, DEV_OPEN or DEV_CLOSE */
-dev_t dev;			/* device to open or close */
-int proc_e;			/* process to open/close for */
-int flags;			/* mode bits and flags */
+PUBLIC int tty_opcl(
+  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  dev_t dev,			/* device to open or close */
+  int proc_e,			/* process to open/close for */
+  int flags			/* mode bits and flags */
+)
 {
 /* This procedure is called from the dmap struct on tty open/close. */
  
@@ -543,11 +549,12 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				ctty_opcl				     *
  *===========================================================================*/
-PUBLIC int ctty_opcl(op, dev, proc_e, flags)
-int op;				/* operation, DEV_OPEN or DEV_CLOSE */
-dev_t dev;			/* device to open or close */
-int proc_e;			/* process to open/close for */
-int flags;			/* mode bits and flags */
+PUBLIC int ctty_opcl(
+  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  dev_t dev,			/* device to open or close */
+  int proc_e,			/* process to open/close for */
+  int flags			/* mode bits and flags */
+)
 {
 /* This procedure is called from the dmap struct in table.c on opening/closing
  * /dev/tty, the magic device that translates to the controlling tty.
@@ -707,11 +714,12 @@ message *mess_ptr;		/* pointer to message for task */
 /*===========================================================================*
  *				no_dev					     *
  *===========================================================================*/
-PUBLIC int no_dev(op, dev, proc, flags)
-int op;				/* operation, DEV_OPEN or DEV_CLOSE */
-dev_t dev;			/* device to open or close */
-int proc;			/* process to open/close for */
-int flags;			/* mode bits and flags */
+PUBLIC int no_dev(
+  int UNUSED(op),		/* operation, DEV_OPEN or DEV_CLOSE */
+  dev_t UNUSED(dev),		/* device to open or close */
+  int UNUSED(proc),		/* process to open/close for */
+  int UNUSED(flags)		/* mode bits and flags */
+)
 {
 /* Called when opening a nonexistent device. */
   return(ENODEV);
@@ -731,11 +739,12 @@ PUBLIC int no_dev_io(int proc, message *m)
 /*===========================================================================*
  *				clone_opcl				     *
  *===========================================================================*/
-PUBLIC int clone_opcl(op, dev, proc_e, flags)
-int op;				/* operation, DEV_OPEN or DEV_CLOSE */
-dev_t dev;			/* device to open or close */
-int proc_e;			/* process to open/close for */
-int flags;			/* mode bits and flags */
+PUBLIC int clone_opcl(
+  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  dev_t dev,			/* device to open or close */
+  int proc_e,			/* process to open/close for */
+  int flags			/* mode bits and flags */
+)
 {
 /* Some devices need special processing upon open.  Such a device is "cloned",
  * i.e. on a succesful open it is replaced by a new device with a new unique

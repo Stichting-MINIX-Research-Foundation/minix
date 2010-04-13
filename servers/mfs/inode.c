@@ -33,7 +33,7 @@ FORWARD _PROTOTYPE( int unhash_inode, (struct inode *node) 		);
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-PUBLIC int fs_putnode()
+PUBLIC int fs_putnode(void)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
 
@@ -121,9 +121,10 @@ PRIVATE int unhash_inode(struct inode *node)
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_inode(dev, numb)
-dev_t dev;			/* device on which inode resides */
-int numb;			/* inode number (ANSI: may not be unshort) */
+PUBLIC struct inode *get_inode(
+  dev_t dev,			/* device on which inode resides */
+  int numb			/* inode number (ANSI: may not be unshort) */
+)
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
  * load it from the disk if it's necessary and put on the hash list 
@@ -181,9 +182,10 @@ int numb;			/* inode number (ANSI: may not be unshort) */
 /*===========================================================================*
  *				find_inode        			     *
  *===========================================================================*/
-PUBLIC struct inode *find_inode(dev, numb)
-dev_t dev;			/* device on which inode resides */
-int numb;			/* inode number (ANSI: may not be unshort) */
+PUBLIC struct inode *find_inode(
+  dev_t dev,			/* device on which inode resides */
+  int numb			/* inode number (ANSI: may not be unshort) */
+)
 {
 /* Find the inode specified by the inode and device number.
  */
@@ -323,9 +325,10 @@ register struct inode *rip;	/* the inode to be erased */
 /*===========================================================================*
  *				free_inode				     *
  *===========================================================================*/
-PUBLIC void free_inode(dev, inumb)
-dev_t dev;			/* on which device is the inode */
-ino_t inumb;			/* number of inode to be freed */
+PUBLIC void free_inode(
+  dev_t dev,			/* on which device is the inode? */
+  ino_t inumb			/* number of the inode to be freed */
+)
 {
 /* Return an inode to the pool of unallocated inodes. */
 

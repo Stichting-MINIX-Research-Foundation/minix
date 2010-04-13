@@ -2,8 +2,7 @@
 #define umask	_umask
 #include <sys/stat.h>
 
-PUBLIC mode_t umask(complmode)
-_mnx_Mode_t complmode;
+PUBLIC mode_t umask(mode_t complmode)
 {
   message m;
 

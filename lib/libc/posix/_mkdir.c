@@ -3,9 +3,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-PUBLIC int mkdir(name, mode)
-_CONST char *name;
-_mnx_Mode_t mode;
+PUBLIC int mkdir(const char *name, mode_t mode)
 {
   message m;
 

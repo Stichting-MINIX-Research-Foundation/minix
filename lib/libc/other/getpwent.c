@@ -120,7 +120,7 @@ struct passwd *getpwent(void)
 	}
 }
 
-struct passwd *getpwuid(_mnx_Uid_t uid)
+struct passwd *getpwuid(uid_t uid)
 /* Return the password file entry belonging to the user-id. */
 {
 	struct passwd *pw;

@@ -2,9 +2,7 @@
 #define creat	_creat
 #include <fcntl.h>
 
-PUBLIC int creat(name, mode)
-_CONST char *name;
-_mnx_Mode_t mode;
+PUBLIC int creat(const char *name, mode_t mode)
 {
   message m;
 

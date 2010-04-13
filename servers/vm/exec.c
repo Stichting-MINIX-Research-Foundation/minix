@@ -39,11 +39,12 @@ static int failcount;
 /*===========================================================================*
  *                              find_share                                   *
  *===========================================================================*/
-PUBLIC struct vmproc *find_share(vmp_ign, ino, dev, ctime)
-struct vmproc *vmp_ign;         /* process that should not be looked at */
-ino_t ino;                      /* parameters that uniquely identify a file */
-dev_t dev;
-time_t ctime;
+PUBLIC struct vmproc *find_share( 
+  struct vmproc *vmp_ign,       /* process that should not be looked at */
+  ino_t ino,                    /* parameters that uniquely identify a file */
+  dev_t dev,
+  time_t ctime
+)
 {
 /* Look for a process that is the file <ino, dev, ctime> in execution.  Don't
  * accidentally "find" vmp_ign, because it is the process on whose behalf this

@@ -25,7 +25,7 @@
 #define	O_APPEND	0x040
 
 int _open(const char *path, int flags);
-int _creat(const char *path, _mnx_Mode_t mode);
+int _creat(const char *path, mode_t mode);
 int _close(int d);
 
 FILE *

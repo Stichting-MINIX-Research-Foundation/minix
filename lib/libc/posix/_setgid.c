@@ -3,8 +3,7 @@
 #define setegid	_setegid
 #include <unistd.h>
 
-PUBLIC int setgid(grp)
-gid_t grp;
+PUBLIC int setgid(gid_t grp)
 {
   message m;
 
@@ -12,8 +11,7 @@ gid_t grp;
   return(_syscall(MM, SETGID, &m));
 }
 
-PUBLIC int setegid(grp)
-gid_t grp;
+PUBLIC int setegid(gid_t grp)
 {
   message m;
 

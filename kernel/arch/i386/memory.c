@@ -477,7 +477,7 @@ PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 /*===========================================================================*
  *                              vm_contiguous                                *
  *===========================================================================*/
-PUBLIC int vm_contiguous(const struct proc *targetproc, u32_t vir_buf, size_t bytes)
+PUBLIC int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf, size_t bytes)
 {
 	int first = 1, r;
 	u32_t prev_phys = 0;    /* Keep lints happy. */

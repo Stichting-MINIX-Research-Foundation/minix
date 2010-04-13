@@ -64,7 +64,7 @@ struct flock {
 };
 
 /* Function Prototypes. */
-_PROTOTYPE( int creat, (const char *_path, _mnx_Mode_t _mode)		);
+_PROTOTYPE( int creat, (const char *_path, mode_t _mode)		);
 _PROTOTYPE( int fcntl, (int _filedes, int _cmd, ...)	  		);
 _PROTOTYPE( int open,  (const char *_path, int _oflag, ...) 		);
 

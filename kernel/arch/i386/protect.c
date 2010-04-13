@@ -246,10 +246,7 @@ vir_bytes size;
 /*===========================================================================*
  *				int_gate				     *
  *===========================================================================*/
-PUBLIC void int_gate(vec_nr, offset, dpl_type)
-const unsigned vec_nr;
-const vir_bytes offset;
-const unsigned dpl_type;
+PUBLIC void int_gate(unsigned vec_nr, vir_bytes offset, unsigned dpl_type)
 {
 /* Build descriptor for an interrupt gate. */
   register struct gatedesc_s *idp;

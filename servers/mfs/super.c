@@ -145,8 +145,9 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 /*===========================================================================*
  *				get_super				     *
  *===========================================================================*/
-PUBLIC struct super_block *get_super(dev)
-dev_t dev;			/* device number whose super_block is sought */
+PUBLIC struct super_block *get_super(
+  dev_t dev			/* device number whose super_block is sought */
+)
 {
   if (dev == NO_DEV)
   	panic("request for super_block of NO_DEV");

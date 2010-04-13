@@ -33,7 +33,7 @@
 FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_bytes,
 	vir_bytes data_bytes, vir_bytes bss_bytes, vir_bytes tot_bytes,
 	vir_bytes frame_len, int sep_id,
-	Dev_t st_dev, ino_t st_ino, time_t st_ctime, char *progname,
+	dev_t st_dev, ino_t st_ino, time_t st_ctime, char *progname,
 	int new_uid, int new_gid,
 	vir_bytes *stack_topp, int *load_textp, int *allow_setuidp)	);
 FORWARD _PROTOTYPE( int read_header, (struct vnode *vp, int *sep_id,
@@ -200,25 +200,24 @@ vir_bytes frame_len;
 /*===========================================================================*
  *				exec_newmem				     *
  *===========================================================================*/
-PRIVATE int exec_newmem(proc_e, text_bytes, data_bytes, bss_bytes, tot_bytes,
-	frame_len, sep_id, st_dev, st_ino, st_ctime, progname,
-	new_uid, new_gid, stack_topp, load_textp, allow_setuidp)
-int proc_e;
-vir_bytes text_bytes;
-vir_bytes data_bytes;
-vir_bytes bss_bytes;
-vir_bytes tot_bytes;
-vir_bytes frame_len;
-int sep_id;
-dev_t st_dev;
-ino_t st_ino;
-time_t st_ctime;
-int new_uid;
-int new_gid;
-char *progname;
-vir_bytes *stack_topp;
-int *load_textp;
-int *allow_setuidp;
+PRIVATE int exec_newmem(
+  int proc_e,
+  vir_bytes text_bytes,
+  vir_bytes data_bytes,
+  vir_bytes bss_bytes,
+  vir_bytes tot_bytes,
+  vir_bytes frame_len,
+  int sep_id,
+  dev_t st_dev,
+  ino_t st_ino,
+  time_t st_ctime,
+  char *progname,
+  int new_uid,
+  int new_gid,
+  vir_bytes *stack_topp,
+  int *load_textp,
+  int *allow_setuidp
+)
 {
   int r;
   struct exec_newmem e;

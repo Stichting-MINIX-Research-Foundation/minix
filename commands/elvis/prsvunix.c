@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #endif
-extern struct passwd *getpwuid();
 
 /* This variable is used to add extra error messages for mail sent to root */
 char *ps;

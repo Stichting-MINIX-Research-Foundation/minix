@@ -56,7 +56,7 @@ _PROTOTYPE( int do_fork, (message *msg)					);
 
 /* exec.c */
 _PROTOTYPE( struct vmproc *find_share, (struct vmproc *vmp_ign, Ino_t ino,
-                        Dev_t dev, time_t ctime)                        );
+                        dev_t dev, time_t ctime)                        );
 _PROTOTYPE( int do_exec_newmem, (message *msg)				);
 _PROTOTYPE( int proc_new, (struct vmproc *vmp, phys_bytes start,
 	phys_bytes text, phys_bytes data, phys_bytes stack, phys_bytes gap,

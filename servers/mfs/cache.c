@@ -28,10 +28,11 @@ FORWARD _PROTOTYPE( int rw_block, (struct buf *, int) );
 /*===========================================================================*
  *				get_block				     *
  *===========================================================================*/
-PUBLIC struct buf *get_block(dev, block, only_search)
-register dev_t dev;		/* on which device is the block? */
-register block_t block;		/* which block is wanted? */
-int only_search;		/* if NO_READ, don't read, else act normal */
+PUBLIC struct buf *get_block(
+  register dev_t dev,		/* on which device is the block? */
+  register block_t block,	/* which block is wanted? */
+  int only_search		/* if NO_READ, don't read, else act normal */
+)
 {
 /* Check to see if the requested block is in the block cache.  If so, return
  * a pointer to it.  If not, evict some other block and fetch it (unless
@@ -214,9 +215,10 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 /*===========================================================================*
  *				alloc_zone				     *
  *===========================================================================*/
-PUBLIC zone_t alloc_zone(dev, z)
-dev_t dev;			/* device where zone wanted */
-zone_t z;			/* try to allocate new zone near this one */
+PUBLIC zone_t alloc_zone(
+  dev_t dev,			/* device where zone wanted */
+  zone_t z			/* try to allocate new zone near this one */
+)
 {
 /* Allocate a new zone on the indicated device and return its number. */
 
@@ -254,9 +256,10 @@ zone_t z;			/* try to allocate new zone near this one */
 /*===========================================================================*
  *				free_zone				     *
  *===========================================================================*/
-PUBLIC void free_zone(dev, numb)
-dev_t dev;				/* device where zone located */
-zone_t numb;				/* zone to be returned */
+PUBLIC void free_zone(
+  dev_t dev,				/* device where zone located */
+  zone_t numb				/* zone to be returned */
+)
 {
 /* Return a zone. */
 
@@ -313,8 +316,9 @@ int rw_flag;			/* READING or WRITING */
 /*===========================================================================*
  *				invalidate				     *
  *===========================================================================*/
-PUBLIC void invalidate(device)
-dev_t device;			/* device whose blocks are to be purged */
+PUBLIC void invalidate(
+  dev_t device			/* device whose blocks are to be purged */
+)
 {
 /* Remove all the blocks belonging to some device from the cache. */
 
@@ -327,8 +331,9 @@ dev_t device;			/* device whose blocks are to be purged */
 /*===========================================================================*
  *				flushall				     *
  *===========================================================================*/
-PUBLIC void flushall(dev)
-dev_t dev;			/* device to flush */
+PUBLIC void flushall(
+  dev_t dev			/* device to flush */
+)
 {
 /* Flush all dirty blocks for one device. */
 
@@ -346,11 +351,12 @@ dev_t dev;			/* device to flush */
 /*===========================================================================*
  *				rw_scattered				     *
  *===========================================================================*/
-PUBLIC void rw_scattered(dev, bufq, bufqsize, rw_flag)
-dev_t dev;			/* major-minor device number */
-struct buf **bufq;		/* pointer to array of buffers */
-int bufqsize;			/* number of buffers */
-int rw_flag;			/* READING or WRITING */
+PUBLIC void rw_scattered(
+  dev_t dev,			/* major-minor device number */
+  struct buf **bufq,		/* pointer to array of buffers */
+  int bufqsize,			/* number of buffers */
+  int rw_flag			/* READING or WRITING */
+)
 {
 /* Read or write scattered data from a device. */
 

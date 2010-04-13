@@ -120,9 +120,10 @@ PRIVATE int unhash_inode(struct inode *node)
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *get_inode(dev, numb)
-dev_t dev;			/* device on which inode resides */
-int numb;			/* inode number (ANSI: may not be unshort) */
+PUBLIC struct inode *get_inode(
+  dev_t dev,		/* device on which inode resides */
+  int numb		/* inode number (ANSI: may not be unshort) */
+)
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
  * load it from the disk if it's necessary and put on the hash list 

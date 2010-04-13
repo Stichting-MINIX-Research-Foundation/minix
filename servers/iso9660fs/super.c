@@ -79,9 +79,10 @@ PUBLIC int create_v_pri(v_pri,buf,address)
 
 /* This function reads from a ISO9660 filesystem (in the device dev) the
  * super block and saves it in v_pri. */
-PUBLIC int read_vds(v_pri,dev)
-     register struct iso9660_vd_pri *v_pri;
-     register dev_t dev;
+PUBLIC int read_vds(
+  register struct iso9660_vd_pri *v_pri,
+  register dev_t dev
+)
 {
   u64_t offset;
   int vol_ok = FALSE;

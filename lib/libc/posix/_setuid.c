@@ -3,8 +3,7 @@
 #define seteuid	_seteuid
 #include <unistd.h>
 
-PUBLIC int setuid(usr)
-_mnx_Uid_t usr;
+PUBLIC int setuid(uid_t usr)
 {
   message m;
 
@@ -12,8 +11,7 @@ _mnx_Uid_t usr;
   return(_syscall(MM, SETUID, &m));
 }
 
-PUBLIC int seteuid(usr)
-_mnx_Uid_t usr;
+PUBLIC int seteuid(uid_t usr)
 {
   message m;
 

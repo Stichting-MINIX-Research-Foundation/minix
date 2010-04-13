@@ -32,17 +32,17 @@ FORWARD _PROTOTYPE(int fs_sendrec_f, (char *file, int line, endpoint_t fs_e,
 /*===========================================================================*
  *			req_breadwrite					     *
  *===========================================================================*/
-PUBLIC int req_breadwrite(fs_e, user_e, dev, pos, num_of_bytes, user_addr,
-	rw_flag, new_posp, cum_iop)
-endpoint_t fs_e;
-endpoint_t user_e;
-dev_t dev;
-u64_t pos;
-unsigned int num_of_bytes;
-char *user_addr;
-int rw_flag;
-u64_t *new_posp;
-unsigned int *cum_iop;
+PUBLIC int req_breadwrite(
+  endpoint_t fs_e,
+  endpoint_t user_e,
+  dev_t dev,
+  u64_t pos,
+  unsigned int num_of_bytes,
+  char *user_addr,
+  int rw_flag,
+  u64_t *new_posp,
+  unsigned int *cum_iop
+)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -77,11 +77,12 @@ unsigned int *cum_iop;
 /*===========================================================================*
  *				req_chmod	      			     *
  *===========================================================================*/
-PUBLIC int req_chmod(fs_e, inode_nr, rmode, new_modep)
-int fs_e;
-ino_t inode_nr;
-mode_t rmode;
-mode_t *new_modep;
+PUBLIC int req_chmod(
+  int fs_e,
+  ino_t inode_nr,
+  mode_t rmode,
+  mode_t *new_modep
+)
 {
   message m;
   int r;
@@ -104,12 +105,13 @@ mode_t *new_modep;
 /*===========================================================================*
  *				req_chown          			     *
  *===========================================================================*/
-PUBLIC int req_chown(fs_e, inode_nr, newuid, newgid, new_modep)
-endpoint_t fs_e;
-ino_t inode_nr;
-uid_t newuid;
-gid_t newgid;
-mode_t *new_modep;
+PUBLIC int req_chown(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  uid_t newuid,
+  gid_t newgid,
+  mode_t *new_modep
+)
 {
   message m;
   int r;
@@ -133,14 +135,15 @@ mode_t *new_modep;
 /*===========================================================================*
  *				req_create				     *
  *===========================================================================*/
-int req_create(fs_e, inode_nr, omode, uid, gid, path, res)
-int fs_e;
-ino_t inode_nr;
-int omode;
-uid_t uid;
-gid_t gid;
-char *path;
-node_details_t *res; 
+int req_create(
+  int fs_e,
+  ino_t inode_nr,
+  int omode,
+  uid_t uid,
+  gid_t gid,
+  char *path,
+  node_details_t *res
+)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -185,9 +188,7 @@ node_details_t *res;
 /*===========================================================================*
  *				req_flush	      			     *
  *===========================================================================*/
-PUBLIC int req_flush(fs_e, dev)
-endpoint_t fs_e; 
-dev_t dev;
+PUBLIC int req_flush(endpoint_t fs_e, dev_t dev)
 {
   message m;
 
@@ -346,14 +347,15 @@ ino_t linked_file;
 /*===========================================================================*
  *				req_lookup	                   	     *
  *===========================================================================*/
-PUBLIC int req_lookup(fs_e, dir_ino, root_ino, uid, gid, flags, res)
-endpoint_t fs_e;
-ino_t dir_ino;
-ino_t root_ino;
-uid_t uid;
-gid_t gid;
-int flags;
-lookup_res_t *res;
+PUBLIC int req_lookup(
+  endpoint_t fs_e,
+  ino_t dir_ino,
+  ino_t root_ino,
+  uid_t uid,
+  gid_t gid,
+  int flags,
+  lookup_res_t *res
+)
 {
   int r;
   size_t len;
@@ -444,13 +446,14 @@ lookup_res_t *res;
 /*===========================================================================*
  *				req_mkdir	      			     *
  *===========================================================================*/
-PUBLIC int req_mkdir(fs_e, inode_nr, lastc, uid, gid, dmode)
-endpoint_t fs_e;
-ino_t inode_nr;
-char *lastc;
-uid_t uid;
-gid_t gid;
-mode_t dmode;
+PUBLIC int req_mkdir(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  char *lastc,
+  uid_t uid,
+  gid_t gid,
+  mode_t dmode
+)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -482,14 +485,15 @@ mode_t dmode;
 /*===========================================================================*
  *				req_mknod	      			     *
  *===========================================================================*/
-PUBLIC int req_mknod(fs_e, inode_nr, lastc, uid, gid, dmode, dev)
-endpoint_t fs_e;
-ino_t inode_nr;
-char *lastc;
-uid_t uid;
-gid_t gid;
-mode_t dmode;
-dev_t dev;
+PUBLIC int req_mknod(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  char *lastc,
+  uid_t uid,
+  gid_t gid,
+  mode_t dmode,
+  dev_t dev
+)
 {
   int r;
   size_t len;
@@ -540,13 +544,14 @@ ino_t inode_nr;
 /*===========================================================================*
  *				req_newnode	      			     *
  *===========================================================================*/
-PUBLIC int req_newnode(fs_e, uid, gid, dmode, dev, res)
-endpoint_t fs_e;
-uid_t uid;
-gid_t gid;
-mode_t dmode;
-dev_t dev;
-struct node_details *res;
+PUBLIC int req_newnode(
+  endpoint_t fs_e,
+  uid_t uid,
+  gid_t gid,
+  mode_t dmode,
+  dev_t dev,
+  struct node_details *res
+)
 {
   int r;
   message m;
@@ -576,10 +581,11 @@ struct node_details *res;
 /*===========================================================================*
  *				req_newdriver          			     *
  *===========================================================================*/
-PUBLIC int req_newdriver(fs_e, dev, driver_e)
-endpoint_t fs_e;
-Dev_t dev;
-endpoint_t driver_e;
+PUBLIC int req_newdriver(
+  endpoint_t fs_e,
+  dev_t dev,
+  endpoint_t driver_e
+)
 {
 /* Note: this is the only request function that doesn't use the 
  * fs_sendrec internal routine, since we want to avoid the dead
@@ -664,13 +670,14 @@ size_t len;
 /*===========================================================================*
  *				req_readsuper	                  	     *
  *===========================================================================*/
-PUBLIC int req_readsuper(fs_e, label, dev, readonly, isroot, res_nodep)
-endpoint_t fs_e;
-char *label;
-dev_t dev;
-int readonly;
-int isroot;
-struct node_details *res_nodep;
+PUBLIC int req_readsuper(
+  endpoint_t fs_e,
+  char *label,
+  dev_t dev,
+  int readonly,
+  int isroot,
+  struct node_details *res_nodep
+)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -836,16 +843,16 @@ char *lastc;
 /*===========================================================================*
  *				req_slink	      			     *
  *===========================================================================*/
-PUBLIC int req_slink(fs_e, inode_nr, lastc, who_e, path_addr, path_length,
-		     uid, gid)
-endpoint_t fs_e;
-ino_t inode_nr;
-char *lastc;
-endpoint_t who_e;
-char *path_addr;
-unsigned short path_length;
-uid_t uid;
-gid_t gid;
+PUBLIC int req_slink(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  char *lastc,
+  endpoint_t who_e,
+  char *path_addr,
+  unsigned short path_length,
+  uid_t uid,
+  gid_t gid
+)
 {
   int r;
   size_t len;

@@ -84,7 +84,7 @@ PUBLIC int do_mapdriver()
  *				map_driver		 		     *
  *===========================================================================*/
 PUBLIC int map_driver(label, major, proc_nr_e, style, flags)
-char *label;			/* name of the driver */
+const char *label;		/* name of the driver */
 int major;			/* major number of the device */
 endpoint_t proc_nr_e;		/* process number of the driver */
 int style;			/* style of the device */

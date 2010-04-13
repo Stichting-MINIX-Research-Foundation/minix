@@ -110,10 +110,6 @@ typedef short          uid_t;	   /* user id */
  * sufficient to just use int instead of dev_t in the prototypes, but Dev_t
  * is clearer.
  */
-typedef int            Dev_t;
-typedef int 	  _mnx_Gid_t;
-typedef int 	     Nlink_t;
-typedef int 	  _mnx_Uid_t;
 typedef unsigned long  U32_t;
 typedef int            I16_t;
 typedef long           I32_t;
@@ -123,14 +119,12 @@ typedef long           I32_t;
 typedef unsigned int    Zone1_t;
 typedef unsigned int Bitchunk_t;
 typedef unsigned int      U16_t;
-typedef unsigned int  _mnx_Mode_t;
 
 #else /* _EM_WSIZE == 4, or _EM_WSIZE undefined */
 /*typedef int	          Ino_t; Ino_t is now 32 bits */
 typedef int 	        Zone1_t;
 typedef int	     Bitchunk_t;
 typedef int	          U16_t;
-typedef int         _mnx_Mode_t;
 
 #endif /* _EM_WSIZE == 2, etc */
 
