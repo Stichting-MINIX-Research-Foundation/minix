@@ -726,16 +726,10 @@ int written;
 		given.next = NULL;
 		memlist = &given;
 		used_memlist = 0;
-		assert(given.phys);
 		assert(given.length);
 	}
 
 	r = OK;
-
-	for(ml = memlist; ml; ml = ml->next) {
-		assert(ml->phys);
-		assert(ml->length);
-	}
 
 	for(ml = memlist; ml; ml = ml->next) {
 		struct phys_region *newphysr = NULL;
@@ -749,9 +743,6 @@ int written;
 			r = ENOMEM;
 			break;
 		}
-
-		assert(ml->phys);
-		assert(ml->length);
 
 		/* New physical block. */
 		assert(!(ml->phys % VM_PAGE_SIZE));
