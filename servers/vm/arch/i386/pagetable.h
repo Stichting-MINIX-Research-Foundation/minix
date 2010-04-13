@@ -30,11 +30,12 @@ typedef struct {
 #define PTF_USER	I386_VM_USER
 #define PTF_GLOBAL	I386_VM_GLOBAL
 #define PTF_MAPALLOC	I386_VM_PTAVAIL1 /* Page allocated by pt code. */
+#define PTF_NOCACHE	(I386_VM_PWT | I386_VM_PCD)
 
 /* For arch-specific PT routines to check if no bits outside
  * the regular flags are set.
  */
-#define PTF_ALLFLAGS	(PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL)
+#define PTF_ALLFLAGS	(PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL|PTF_NOCACHE)
 
 #if SANITYCHECKS
 #define PT_SANE(p) { pt_sanitycheck((p), __FILE__, __LINE__); }

@@ -855,8 +855,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 				I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE |
 				global_bit;
 			if(flags & VMMF_UNCACHED)
-				kern_mappings[index].flags |=
-					I386_VM_PWT | I386_VM_PCD;
+				kern_mappings[index].flags |= PTF_NOCACHE;
 			if(addr % I386_PAGE_SIZE)
                 		panic("VM: addr unaligned: %d", addr);
 			if(len % I386_PAGE_SIZE)
