@@ -19,6 +19,10 @@ struct timezone {
 	int     tz_dsttime;     /* type of dst correction */
 };
 
+/* Operations on timevals. */
+#define timerclear(tp) (tp)->tv_sec = (tp)->tv_usec = 0L
+#define timerisset(tp) ((tp)->tv_sec || (tp)->tv_usec)
+
 int gettimeofday(struct timeval *_RESTRICT tp, void *_RESTRICT tzp);
 
 /* Compatibility with other Unix systems */
