@@ -373,7 +373,9 @@ int sig_nr;			/* signal to be sent */
   /* If the target is the signal manager of itself, send the signal directly. */
   if(rp->p_endpoint == sig_mgr) {
        if(SIGS_IS_LETHAL(sig_nr)) {
-           panic("cause_sig: signal manager gets lethal signal for itself");
+           proc_stacktrace(rp);
+           panic("cause_sig: signal manager gets lethal signal %d for itself",
+	   	sig_nr);
        }
        sigaddset(&priv(rp)->s_sig_pending, sig_nr);
        send_sig(rp->p_endpoint, SIGKSIGSM);
