@@ -318,7 +318,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the dp8390 driver. */
-	int i, r;
+	int i;
 	dpeth_t *dep;
 	long v;
 
@@ -879,8 +879,7 @@ dpeth_t *dep;
 /*===========================================================================*
  *				do_getstat				     *
  *===========================================================================*/
-static void do_getstat(mp)
-message *mp;
+static void do_getstat(message *mp)
 {
 	int port, r;
 	dpeth_t *dep;

@@ -150,8 +150,7 @@ message *mp;
 	}
 }
 
-PRIVATE void do_next_dev(mp)
-message *mp;
+PRIVATE void do_next_dev(message *mp)
 {
 	int r, devind;
 	u16_t vid, did;

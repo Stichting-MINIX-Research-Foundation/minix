@@ -295,7 +295,7 @@ PUBLIC int pci_first_dev_a(
   u16_t *didp
 )
 {
-	int i, devind;
+	int devind;
 
 	for (devind= 0; devind < nr_pcidev; devind++)
 	{
@@ -2279,12 +2279,8 @@ PRIVATE void pcibr_cb_wsts(int busind, u16_t value)
 /*===========================================================================*
  *				pcibr_via_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcibr_via_rsts(busind)
-int busind;
+PRIVATE u16_t pcibr_via_rsts(int busind)
 {
-	int devind;
-	devind= pcibus[busind].pb_devind;
-
 	return 0;
 }
 

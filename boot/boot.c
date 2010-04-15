@@ -1494,7 +1494,7 @@ static void ls(char *dir)
 	}
 	(void) r_readdir(name);	/* Skip ".." too. */
 
-	while ((ino= r_readdir(name)) != 0) printf("%s/%s\n", dir, name);
+	while (r_readdir(name) != 0) printf("%s/%s\n", dir, name);
 }
 
 static u32_t milli_time(void)

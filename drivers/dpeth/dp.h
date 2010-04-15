@@ -279,7 +279,7 @@ int wdeth_probe(dpeth_t * dep);
 #endif
 
 #define lock()	 (++dep->de_int_pending,sys_irqdisable(&dep->de_hook))
-#define unlock() do{int i=(--dep->de_int_pending)?0:sys_irqenable(&dep->de_hook);}while(0)
+#define unlock() do{int i=(--dep->de_int_pending)?0:sys_irqenable(&dep->de_hook);(void) i;}while(0)
 #define milli_delay(t) tickdelay(1)
 
 /** dp.h **/

@@ -47,7 +47,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	static cp_grant_t g;
 	static int proc_nr;
 	static const struct proc *granter_proc;
-	int r, depth = 0;
+	int depth = 0;
 
 	do {
 		/* Get granter process slot (if valid), and check range of
@@ -86,9 +86,9 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		 * (presumably) set an invalid grant table entry by returning
 		 * EPERM, just like with an invalid grant id.
 		 */
-		if((r=data_copy(granter,
+		if(data_copy(granter,
 			priv(granter_proc)->s_grant_table + sizeof(g)*grant,
-			KERNEL, (vir_bytes) &g, sizeof(g))) != OK) {
+			KERNEL, (vir_bytes) &g, sizeof(g)) != OK) {
 			printf(
 			"verify_grant: grant verify: data_copy failed\n");
 			return EPERM;

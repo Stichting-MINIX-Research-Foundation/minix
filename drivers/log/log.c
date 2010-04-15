@@ -299,7 +299,6 @@ unsigned nr_req;		/* length of request vector */
 /* Read or write one the driver's minor devices. */
   unsigned count;
   vir_bytes user_vir;
-  struct device *dv;
   int accumulated_read = 0;
   struct logdevice *log;
   size_t vir_offset = 0;
@@ -308,7 +307,6 @@ unsigned nr_req;		/* length of request vector */
   	return EIO;
 
   /* Get minor device number and check for /dev/null. */
-  dv = &log_geom[log_device];
   log = &logdevices[log_device];
 
   while (nr_req > 0) {

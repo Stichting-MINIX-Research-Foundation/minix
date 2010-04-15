@@ -283,7 +283,6 @@ static void do_init(const message * mp)
   dpeth_t *dep;
   dp_conf_t *dcp;
   message reply_mess;
-  const char *portname;
 
   port = mp->DL_PORT;
   if (port >= 0 && port < DE_PORT_NR) {
@@ -292,7 +291,6 @@ static void do_init(const message * mp)
 	dcp = &dp_conf[port];
 	strcpy(dep->de_name, DevName);
 	dep->de_name[4] = '0' + port;
-	portname = dep->de_name;
 
 	if (dep->de_mode == DEM_DISABLED) {
 
@@ -345,7 +343,6 @@ static void do_init(const message * mp)
 
   } else {			/* Port number is out of range */
 	port = ENXIO;
-	portname = "(illegal dpeth port)";
   }
 
   reply_mess.m_type = DL_CONF_REPLY;
@@ -667,7 +664,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the dpeth driver. */
-  int r, rc, fkeys, sfkeys;
+  int fkeys, sfkeys;
 
   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
 

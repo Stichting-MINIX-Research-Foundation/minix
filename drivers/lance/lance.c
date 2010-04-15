@@ -1472,7 +1472,6 @@ ether_card_t *ec;
    int devind, just_one, i, r;
 
    u16_t vid, did;
-   char *dname;
 
    if ((ec->ec_pcibus | ec->ec_pcidev | ec->ec_pcifunc) != 0)
    {
@@ -1527,10 +1526,6 @@ ether_card_t *ec;
       if (!r)
          return 0;
    }
-
-   dname= pci_dev_name(vid, did);
-   if (!dname)
-      dname= "unknown device";
 
    pci_reserve(devind);
 

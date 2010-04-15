@@ -1507,18 +1507,15 @@ suspend_write:
  * Write data which is denoted by the message to the card and send it.       *
  *****************************************************************************/
 static void or_writev_s (message * mp, int from_int) {
-	int port, or_client, count, size, err, data_len, data_off, tx_head;
+	int port, or_client, count, size, err, data_len, data_off;
 	int o, j, n, i, s, p, cps ;
 	struct ethhdr *eh;
 	t_or *orp;
-	clock_t timebefore, t0;	
-	phys_bytes phys_user;
 	hermes_t *hw;
 	struct hermes_tx_descriptor desc;
 	int iov_offset = 0;
 	struct header_struct hdr;
 	iovec_s_t *iovp;
-	phys_bytes phys_databuf;
 	u16_t txfid;
 
 	/* We need space for the max packet size itself, plus an ethernet

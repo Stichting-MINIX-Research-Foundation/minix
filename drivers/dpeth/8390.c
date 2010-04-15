@@ -89,12 +89,12 @@ static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 */
 static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 {
+  panic("mem_nic2user: not converted to safecopies");
+#if 0
   phys_bytes offset;
   iovec_dat_s_t *iovp = &dep->de_read_iovec;
   int bytes, ix = 0;
 
-  panic("mem_nic2user: not converted to safecopies");
-#if 0
 
   /* Computes shared memory address (skipping receive header) */
   offset = pageno * DP_PAGESIZE + sizeof(dp_rcvhdr_t);

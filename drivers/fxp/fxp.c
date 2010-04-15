@@ -722,8 +722,7 @@ static int fxp_probe(fxp_t *fp)
 /*===========================================================================*
  *				fxp_conf_hw				     *
  *===========================================================================*/
-static void fxp_conf_hw(fp)
-fxp_t *fp;
+static void fxp_conf_hw(fxp_t *fp)
 {
 	int i;
 	int mwi, ext_stat1, ext_stat2, lim_fifo, i82503, fc;

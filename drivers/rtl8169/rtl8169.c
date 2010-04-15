@@ -368,7 +368,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the rtl8169 driver. */
-	int r;
 	re_t *rep;
 	long v;
 

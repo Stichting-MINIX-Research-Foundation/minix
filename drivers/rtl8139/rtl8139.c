@@ -2407,8 +2407,7 @@ static void do_hard_int(void)
 /*===========================================================================*
  *				rl_handler				     *
  *===========================================================================*/
-static int rl_handler(rep)
-re_t *rep;
+static int rl_handler(re_t *rep)
 {
 	int i, port, tx_head, tx_tail, link_up;
 	u16_t isr, tsad;

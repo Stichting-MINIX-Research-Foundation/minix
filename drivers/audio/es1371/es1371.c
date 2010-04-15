@@ -622,7 +622,8 @@ PRIVATE int get_samples_in_buf (u32_t *samples_in_buf, int *len, int chan) {
 		default: return EINVAL;
 	}
 
-	samp_ct = pci_inw(reg(samp_ct_reg));
+	/* TODO: is this statement useful? */
+	(void) pci_inw(reg(samp_ct_reg));
 	curr_samp_ct = pci_inw(reg(curr_samp_ct_reg));
 
 	*samples_in_buf = (u32_t) (sub_dev[chan].BufLength * 8192) + 

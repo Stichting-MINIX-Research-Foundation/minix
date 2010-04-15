@@ -965,7 +965,7 @@ tty_t *tp;
   /* Get the BIOS parameters that describe the VDU. */
   if (! vdu_initialized++) {
 
-	/* How about error checking? What to do on failure??? */
+	/* FIXME: How about error checking? What to do on failure??? */
   	s=sys_readbios(VDU_SCREEN_COLS_ADDR, &bios_columns,
 		VDU_SCREEN_COLS_SIZE);
   	s=sys_readbios(VDU_CRT_BASE_ADDR, &bios_crtbase,

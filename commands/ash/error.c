@@ -49,13 +49,10 @@ __FBSDID("$FreeBSD: src/bin/sh/error.c,v 1.25 2004/04/06 20:06:51 markm Exp $");
 #include "options.h"
 #include "output.h"
 #include "error.h"
-#include "nodes.h" /* show.h needs nodes.h */
-#include "show.h"
 #include "trap.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 #include <sys/types.h>
 
 

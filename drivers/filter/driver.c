@@ -419,8 +419,7 @@ static void restart_driver(int which, int tell_rs)
 	 */
 	message msg;
 	int ipc_status;
-	endpoint_t endpt;
-	int r, w = 0;
+	int r;
 
 	if (tell_rs) {
 		/* Tell RS to refresh or restart the driver */

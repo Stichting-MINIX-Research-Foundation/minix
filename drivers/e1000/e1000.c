@@ -248,7 +248,7 @@ PRIVATE int e1000_probe(e1000_t *e)
     int i, r, devind;
     u16_t vid, did;
     u32_t status[2];
-    u32_t gfpreg, sector_base_addr, sector_end_addr;
+    u32_t gfpreg, sector_base_addr;
     char *dname;
 
     E1000_DEBUG(3, ("%s: probe()\n", e->name));
@@ -338,12 +338,9 @@ PRIVATE int e1000_probe(e1000_t *e)
 
 	gfpreg = E1000_READ_FLASH_REG(e, ICH_FLASH_GFPREG);
         /*
-         * sector_X_addr is a "sector"-aligned address (4096 bytes)
-         * Add 1 to sector_end_addr since this sector is included in
-         * the overall size.
+         * sector_base_addr is a "sector"-aligned address (4096 bytes)
          */
         sector_base_addr = gfpreg & FLASH_GFPREG_BASE_MASK;
-        sector_end_addr = ((gfpreg >> 16) & FLASH_GFPREG_BASE_MASK) + 1;
 
         /* flash_base_addr is byte-aligned */
         e->flash_base_addr = sector_base_addr << FLASH_SECTOR_ADDR_SHIFT;

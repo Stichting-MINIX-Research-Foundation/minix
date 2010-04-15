@@ -156,7 +156,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the DEC 21140A driver. */
-  int r;
   int fkeys, sfkeys;
 
   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
