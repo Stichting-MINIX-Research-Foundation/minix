@@ -14,6 +14,7 @@ FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 
 /*===========================================================================*
  *				main                                         *
@@ -71,6 +72,9 @@ PRIVATE void sef_local_startup()
 
   /* No live update support for now. */
 
+  /* Register signal callbacks. */
+  sef_setcb_signal_handler(sef_cb_signal_handler);
+
   /* Let SEF perform startup. */
   sef_startup();
 }
@@ -98,6 +102,22 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    }
 
    return(OK);
+}
+
+/*===========================================================================*
+ *				sef_cb_signal_handler			     *
+ *===========================================================================*/
+PRIVATE void sef_cb_signal_handler(int signo)
+{
+  /* Only check for termination signal, ignore anything else. */
+  if (signo != SIGTERM) return;
+
+  /* No need to do a sync, as this is a read-only file system. */
+
+  /* If the file system has already been unmounted, exit immediately.
+   * We might not get another message.
+   */
+  if (unmountdone) exit(0);
 }
 
 /*===========================================================================*

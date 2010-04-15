@@ -133,6 +133,11 @@ PRIVATE void sef_cb_signal_handler(int signo)
 
   exitsignaled = 1;
   fs_sync();
+
+  /* If unmounting has already been performed, exit immediately.
+   * We might not get another message.
+   */
+  if (unmountdone) exit(0);
 }
 
 /*===========================================================================*

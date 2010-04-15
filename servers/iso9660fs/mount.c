@@ -101,6 +101,7 @@ PUBLIC int fs_mountpoint()
 PUBLIC int fs_unmount(void) {
   release_v_pri(&v_pri);	/* Release the super block */
   dev_close(driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e, fs_dev);
+  unmountdone = TRUE;
   return(OK);
 }
 
