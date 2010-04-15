@@ -400,6 +400,10 @@ static int testscancodes(int fd)
 
 int main(void)
 {
+	printf("try out some keys to find out whether SCANCODES works\n");
+	printf("press CTRL+C to end this test\n");
+	printf("please note that this test only works from a console tty\n");
+
 	/* perform test using stdin */
 	if (testscancodes(STDIN_FILENO) < 0)
 		return -1;
