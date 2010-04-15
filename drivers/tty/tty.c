@@ -1036,10 +1036,26 @@ register tty_t *tp;		/* pointer to terminal to read from */
 /*===========================================================================*
  *				in_process				     *
  *===========================================================================*/
-PUBLIC int in_process(tp, buf, count)
+PRIVATE void in_process_send_byte(tp, ch)
+tty_t *tp;	/* terminal on which character has arrived */
+int ch;		/* input character */
+{
+	/* Save the character in the input queue. */
+	*tp->tty_inhead++ = ch;
+	if (tp->tty_inhead == bufend(tp->tty_inbuf))
+		tp->tty_inhead = tp->tty_inbuf;
+	tp->tty_incount++;
+	if (ch & IN_EOT) tp->tty_eotct++;
+
+	/* Try to finish input if the queue threatens to overflow. */
+	if (tp->tty_incount == buflen(tp->tty_inbuf)) in_transfer(tp);
+}
+ 
+PUBLIC int in_process(tp, buf, count, scode)
 register tty_t *tp;		/* terminal on which character has arrived */
 char *buf;			/* buffer with input characters */
 int count;			/* number of input characters */
+int scode;			/* scan code */
 {
 /* Characters have just been typed in.  Process, save, and echo them.  Return
  * the number of characters processed.
@@ -1047,6 +1063,11 @@ int count;			/* number of input characters */
 
   int ch, sig, ct;
   int timeset = FALSE;
+
+  /* Send scancode if requested */
+  if (tp->tty_termios.c_iflag & SCANCODES) {
+	in_process_send_byte(tp, (scode & BYTE) | IN_EOT);
+  }
 
   for (ct = 0; ct < count; ct++) {
 	/* Take one character. */
@@ -1180,15 +1201,10 @@ int count;			/* number of input characters */
 	/* Perform the intricate function of echoing. */
 	if (tp->tty_termios.c_lflag & (ECHO|ECHONL)) ch = tty_echo(tp, ch);
 
-	/* Save the character in the input queue. */
-	*tp->tty_inhead++ = ch;
-	if (tp->tty_inhead == bufend(tp->tty_inbuf))
-		tp->tty_inhead = tp->tty_inbuf;
-	tp->tty_incount++;
-	if (ch & IN_EOT) tp->tty_eotct++;
-
-	/* Try to finish input if the queue threatens to overflow. */
-	if (tp->tty_incount == buflen(tp->tty_inbuf)) in_transfer(tp);
+	/* Send processed byte of input unless scancodes sent instead */
+	if (!(tp->tty_termios.c_iflag & SCANCODES)) {
+		in_process_send_byte(tp, ch);
+	}
   }
   return ct;
 }
@@ -1501,6 +1517,9 @@ tty_t *tp;
 
   /* Setting the output speed to zero hangs up the phone. */
   if (tp->tty_termios.c_ospeed == B0) sigchar(tp, SIGHUP, 1);
+
+  /* SCANCODES is supported only for the console */
+  if (!isconsole(tp)) tp->tty_termios.c_iflag &= ~SCANCODES;
 
   /* Set new line speed, character size, etc at the device level. */
   (*tp->tty_ioctl)(tp, 0);

@@ -146,6 +146,7 @@ _PROTOTYPE( int tcsetattr, \
 
 /* Extensions to the termios c_iflag bit map.  */
 #define IXANY		0x0800	/* allow any key to continue ouptut */
+#define SCANCODES	0x1000	/* send scancodes */
 
 /* Extensions to the termios c_oflag bit map. They are only active iff
  * OPOST is enabled. */

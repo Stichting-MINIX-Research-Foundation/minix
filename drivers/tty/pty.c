@@ -417,7 +417,7 @@ PRIVATE int pty_read(tty_t *tp, int try)
 	}
 
 	/* Input processing. */
-	if (in_process(tp, &c, 1) == 0) break;
+	if (in_process(tp, &c, 1, -1) == 0) break;
 
 	/* PTY writer bookkeeping. */
 	pp->wrcum++;

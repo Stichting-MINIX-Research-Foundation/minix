@@ -147,7 +147,8 @@ extern struct kmessages kmess;
 _PROTOTYPE( void handle_events, (struct tty *tp)			);
 _PROTOTYPE( void sigchar, (struct tty *tp, int sig, int mayflush)	);
 _PROTOTYPE( void tty_task, (void)					);
-_PROTOTYPE( int in_process, (struct tty *tp, char *buf, int count)	);
+_PROTOTYPE( int in_process, (struct tty *tp, char *buf, int count,
+							int scode)	);
 _PROTOTYPE( void out_process, (struct tty *tp, char *bstart, char *bpos,
 				char *bend, int *icount, int *ocount)	);
 _PROTOTYPE( void tty_wakeup, (clock_t now)				);
