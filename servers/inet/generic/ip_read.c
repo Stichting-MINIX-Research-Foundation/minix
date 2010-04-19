@@ -19,8 +19,8 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, U16_t id,
-	int proto, ipaddr_t src, ipaddr_t dst ));
+FORWARD ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
+	ipproto_t proto, ipaddr_t src, ipaddr_t dst ));
 FORWARD acc_t *merge_frags ARGS(( acc_t *first, acc_t *second ));
 FORWARD int ip_frag_chk ARGS(( acc_t *pack ));
 FORWARD acc_t *reassemble ARGS(( ip_port_t *ip_port, acc_t *pack, 
@@ -238,12 +238,8 @@ assert (first_hdr_size + first_datasize == bf_bufsize(first));
 	return first;
 }
 
-PRIVATE ip_ass_t *find_ass_ent (ip_port, id, proto, src, dst)
-ip_port_t *ip_port;
-u16_t id;
-ipproto_t proto;
-ipaddr_t src;
-ipaddr_t dst;
+PRIVATE ip_ass_t *find_ass_ent ARGS(( ip_port_t *ip_port, u16_t id,
+	ipproto_t proto, ipaddr_t src, ipaddr_t dst ))
 {
 	ip_ass_t *new_ass_ent, *tmp_ass_ent;
 	int i;

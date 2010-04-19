@@ -7,6 +7,7 @@ LIB=		c
 CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
 
 .include "${.CURDIR}/ansi/Makefile.inc"
+.include "${.CURDIR}/wchar/Makefile.inc"
 .include "${.CURDIR}/ip/Makefile.inc"
 .include "${.CURDIR}/math/Makefile.inc"
 .include "${.CURDIR}/other/Makefile.inc"

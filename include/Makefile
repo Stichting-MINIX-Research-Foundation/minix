@@ -8,7 +8,7 @@ INCS=	alloca.h ansi.h a.out.h ar.h assert.h configfile.h ctype.h \
 	regexp.h setjmp.h sgtty.h signal.h stdarg.h stddef.h \
 	stdint.h stdio.h stdlib.h string.h strings.h sysexits.h \
 	syslog.h tar.h termcap.h termios.h time.h timers.h tools.h \
-	ttyent.h ucontext.h unistd.h utime.h utmp.h
+	ttyent.h ucontext.h unistd.h utime.h utmp.h wchar.h wctype.h
 INCS+=	arpa/inet.h
 INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/com.h minix/config.h minix/const.h minix/cpufeature.h \
