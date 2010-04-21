@@ -60,7 +60,7 @@ awk:	ytab.o $(OFILES)
 
 $(OFILES):	awk.h ytab.h proto.h
 
-ytab.o:	awk.h proto.h awkgram.y
+ytab.o ytab.c ytab.h:	awk.h proto.h awkgram.y
 	$(YACC) $(YFLAGS) awkgram.y
 	mv y.tab.c ytab.c
 	mv y.tab.h ytab.h
