@@ -53,8 +53,8 @@ _PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
 _PROTOTYPE( void check_ticks_left, (struct proc *p));
 
 /* start.c */
-_PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
-				U16_t parmoff, U16_t parmsize)		);
+_PROTOTYPE( void cstart, (u16_t cs, u16_t ds, u16_t mds,
+				u16_t parmoff, u16_t parmsize)		);
 
 /* system.c */
 _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
@@ -142,7 +142,7 @@ _PROTOTYPE( phys_bytes umap_remote, (const struct proc* rp, int seg,
         vir_bytes vir_addr, vir_bytes bytes)				);
 _PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp,
 			int seg, vir_bytes vir_addr, vir_bytes bytes)	);
-_PROTOTYPE( phys_bytes seg2phys, (U16_t)                                );
+_PROTOTYPE( phys_bytes seg2phys, (u16_t)                                );
 _PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
                 phys_bytes count)                                       );
 _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,

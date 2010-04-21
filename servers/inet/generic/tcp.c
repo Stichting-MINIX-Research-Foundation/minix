@@ -39,19 +39,19 @@ FORWARD int tcp_connect ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD int tcp_listen ARGS(( tcp_fd_t *tcp_fd, int do_listenq ));
 FORWARD int tcp_acceptto ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD tcpport_t find_unused_port ARGS(( int fd ));
-FORWARD int is_unused_port ARGS(( Tcpport_t port ));
+FORWARD int is_unused_port ARGS(( tcpport_t port ));
 FORWARD int reply_thr_put ARGS(( tcp_fd_t *tcp_fd, int reply,
 	int for_ioctl ));
 FORWARD void reply_thr_get ARGS(( tcp_fd_t *tcp_fd, int reply,
 	int for_ioctl ));
-FORWARD tcp_conn_t *find_conn_entry ARGS(( Tcpport_t locport,
-	ipaddr_t locaddr, Tcpport_t remport, ipaddr_t readaddr ));
+FORWARD tcp_conn_t *find_conn_entry ARGS(( tcpport_t locport,
+	ipaddr_t locaddr, tcpport_t remport, ipaddr_t readaddr ));
 FORWARD tcp_conn_t *find_empty_conn ARGS(( void ));
 FORWARD tcp_conn_t *find_best_conn ARGS(( ip_hdr_t *ip_hdr, 
 	tcp_hdr_t *tcp_hdr ));
 FORWARD tcp_conn_t *new_conn_for_queue ARGS(( tcp_fd_t *tcp_fd ));
-FORWARD int maybe_listen ARGS(( ipaddr_t locaddr, Tcpport_t locport,
-				ipaddr_t remaddr, Tcpport_t remport ));
+FORWARD int maybe_listen ARGS(( ipaddr_t locaddr, tcpport_t locport,
+				ipaddr_t remaddr, tcpport_t remport ));
 FORWARD int tcp_su4connect ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD void tcp_buffree ARGS(( int priority ));
 #ifdef BUF_CONSISTENCY_CHECK
@@ -1276,8 +1276,7 @@ assert (data->acc_length == sizeof(nwio_tcpopt_t));
 }
 
 
-PRIVATE tcpport_t find_unused_port(fd)
-int fd;
+PRIVATE tcpport_t find_unused_port(int fd)
 {
 	tcpport_t port, nw_port;
 
@@ -1297,8 +1296,7 @@ int fd;
 	return 0;
 }
 
-PRIVATE int is_unused_port(port)
-tcpport_t port;
+PRIVATE int is_unused_port(tcpport_t port)
 {
 	int i;
 	tcp_fd_t *tcp_fd;
@@ -1426,11 +1424,12 @@ If no such connection exists NULL is returned.
 If a connection exists without mainuser it is closed.
 */
 
-PRIVATE tcp_conn_t *find_conn_entry(locport, locaddr, remport, remaddr)
-tcpport_t locport;
-ipaddr_t locaddr;
-tcpport_t remport;
-ipaddr_t remaddr;
+PRIVATE tcp_conn_t *find_conn_entry(
+  tcpport_t locport,
+  ipaddr_t locaddr,
+  tcpport_t remport,
+  ipaddr_t remaddr
+)
 {
 	tcp_conn_t *tcp_conn;
 	int i, state;
@@ -1682,11 +1681,12 @@ tcp_fd_t *tcp_fd;
 /*
 maybe_listen
 */
-PRIVATE int maybe_listen(locaddr, locport, remaddr, remport)
-ipaddr_t locaddr;
-tcpport_t locport;
-ipaddr_t remaddr;
-tcpport_t remport;
+PRIVATE int maybe_listen(
+  ipaddr_t locaddr,
+  tcpport_t locport,
+  ipaddr_t remaddr,
+  tcpport_t remport
+)
 {
 	int i;
 	tcp_conn_t *tcp_conn;

@@ -371,7 +371,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 /*===========================================================================*
  *                              do_umount                                    *
  *===========================================================================*/
-PUBLIC int do_umount()
+PUBLIC int do_umount(void)
 {
 /* Perform the umount(name) system call. */
   char label[LABEL_MAX];
@@ -487,8 +487,7 @@ PUBLIC int unmount(
 /*===========================================================================*
  *                              name_to_dev                                  *
  *===========================================================================*/
-PRIVATE dev_t name_to_dev(allow_mountpt)
-int allow_mountpt;
+PRIVATE dev_t name_to_dev(int allow_mountpt)
 {
 /* Convert the block special file in 'user_fullpath' to a device number.
  * If the given path is not a block special file, but 'allow_mountpt' is set
@@ -533,7 +532,7 @@ PRIVATE int is_nonedev(dev_t dev)
 /*===========================================================================*
  *                              find_free_nonedev			     *
  *===========================================================================*/
-PRIVATE dev_t find_free_nonedev()
+PRIVATE dev_t find_free_nonedev(void)
 {
 /* Find a free "none" pseudo device. Do not allocate it yet.
  */

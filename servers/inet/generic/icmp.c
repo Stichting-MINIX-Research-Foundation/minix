@@ -371,10 +371,11 @@ int code;
 	enqueue_pack(icmp_port, pack);
 }
 
-PUBLIC void icmp_snd_mtu(port_nr, pack, mtu)
-int port_nr;
-acc_t *pack;
-u16_t mtu;
+PUBLIC void icmp_snd_mtu(
+  int port_nr,
+  acc_t *pack,
+  u16_t mtu
+)
 {
 	icmp_hdr_t *icmp_hdr;
 	icmp_port_t *icmp_port;

@@ -66,7 +66,7 @@ typedef struct already {
 } ALREADY;
 
 _PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int makedname, (char *d, char *f, char *out, int outlen));
+PRIVATE _PROTOTYPE(int makedname, (char *d, char *f, char *out, int outlen));
 _PROTOTYPE(int done, (dev_t dev, ino_t inum, nlink_t nlink));
 _PROTOTYPE(long dodir, (char *d, int thislev, dev_t dev));
 
@@ -86,16 +86,11 @@ int alc;
  *	directory entry, placing it in out. If this would overflow,
  *	return 0, otherwise 1.
  */
-int makedname(d, f, out, outlen)
-char *d;
-char *f;
-char *out;
-int outlen;
+PRIVATE int makedname(char *d, char *f, char *out, int outlen)
 {
   char *cp;
-  int length;
+  int length = strlen(f);
 
-  length = strlen(f);
   if (strlen(d) + length + 2 > outlen) return(0);
   for (cp = out; *d; *cp++ = *d++);
   if (*(cp - 1) != '/') *cp++ = '/';

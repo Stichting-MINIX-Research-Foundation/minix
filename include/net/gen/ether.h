@@ -17,7 +17,6 @@ typedef struct ether_addr
 } ether_addr_t;
 
 typedef u16_t ether_type_t;
-typedef U16_t Ether_type_t;
 
 #define ETH_ARP_PROTO	 0x806
 #define ETH_IP_PROTO	 0x800

@@ -16,7 +16,7 @@ void icmp_snd_time_exceeded ARGS(( int port_nr, acc_t *pack, int code ));
 void icmp_snd_unreachable ARGS(( int port_nr, acc_t *pack, int code ));
 void icmp_snd_redirect ARGS(( int port_nr, acc_t *pack, int code,
 							ipaddr_t gw ));
-void icmp_snd_mtu ARGS(( int port_nr, acc_t *pack, U16_t mtu ));
+void icmp_snd_mtu ARGS(( int port_nr, acc_t *pack, u16_t mtu ));
 
 #endif /* ICMP_LIB_H */
 

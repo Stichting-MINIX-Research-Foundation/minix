@@ -101,33 +101,6 @@ typedef long	       off_t;	   /* offset within a file */
 typedef int            pid_t;	   /* process id (must be signed) */
 typedef short          uid_t;	   /* user id */
 
-/* The following types are needed because MINIX uses K&R style function
- * definitions (for maximum portability).  When a short, such as dev_t, is
- * passed to a function with a K&R definition, the compiler automatically
- * promotes it to an int.  The prototype must contain an int as the parameter,
- * not a short, because an int is what an old-style function definition
- * expects.  Thus using dev_t in a prototype would be incorrect.  It would be
- * sufficient to just use int instead of dev_t in the prototypes, but Dev_t
- * is clearer.
- */
-typedef unsigned long  U32_t;
-typedef int            I16_t;
-typedef long           I32_t;
-
-#if _EM_WSIZE == 2
-/*typedef unsigned int      Ino_t; Ino_t is now 32 bits */
-typedef unsigned int    Zone1_t;
-typedef unsigned int Bitchunk_t;
-typedef unsigned int      U16_t;
-
-#else /* _EM_WSIZE == 4, or _EM_WSIZE undefined */
-/*typedef int	          Ino_t; Ino_t is now 32 bits */
-typedef int 	        Zone1_t;
-typedef int	     Bitchunk_t;
-typedef int	          U16_t;
-
-#endif /* _EM_WSIZE == 2, etc */
-
 /* Signal handler type, e.g. SIG_IGN */
 typedef void _PROTOTYPE( (*sighandler_t), (int) );
 

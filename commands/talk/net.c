@@ -195,17 +195,15 @@ udp_io_hdr_t *udp_io_hdr;
    return(0);
 }
 
-void TimeOut(sig)
-int sig;
+void TimeOut(int sig)
 {
 }
 
-int NetConnect(port)
-u16_t port;
+int NetConnect(u16_t port)
 {
-int s;
-nwio_tcpconf_t tcpconf;
-nwio_tcpcl_t tcpcopt;
+   int s;
+   nwio_tcpconf_t tcpconf;
+   nwio_tcpcl_t tcpcopt;
 
    tcpconf.nwtc_flags = NWTC_NOFLAGS;
    tcpconf.nwtc_flags |= NWTC_LP_SET | NWTC_SET_RA | NWTC_SET_RP;

@@ -42,7 +42,7 @@ int dn_skipname _ARGS(( const u_char *comp_dn, const u_char *eom ));
 #include <stdio.h>
 #include <arpa/nameser.h>
 
-static dn_find();
+static int dn_find();
 #endif
 
 #ifdef __STDC__
@@ -325,9 +325,7 @@ getlong(msgp)
 
 
 void
-putshort(s, msgp)
-	register U16_t s;
-	register u8_t *msgp;
+putshort(u16_t s, u8_t *msgp)
 {
 
 	msgp[1] = s;
@@ -335,9 +333,7 @@ putshort(s, msgp)
 }
 
 void
-putlong(l, msgp)
-	register u32_t l;
-	register u8_t *msgp;
+putlong(u32_t l, u8_t *msgp)
 {
 
 	msgp[3] = l;

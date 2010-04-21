@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <net/gen/oneCsum.h>
 
-u16_t oneC_sum(U16_t prev, void *data, size_t size)
+u16_t oneC_sum(u16_t prev, void *data, size_t size)
 {
 	u8_t *dptr;
 	size_t n;

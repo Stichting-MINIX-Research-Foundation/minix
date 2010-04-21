@@ -33,7 +33,7 @@ PUBLIC unsigned pci_inw(u16_t port) {
 
 
 PUBLIC unsigned pci_inl(u16_t port) {
-	U32_t value;
+	u32_t value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
 		printf("%s: warning, sys_inl failed: %d\n", DRIVER_NAME, s);

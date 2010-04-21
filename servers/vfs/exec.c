@@ -253,16 +253,16 @@ PRIVATE int exec_newmem(
 /*===========================================================================*
  *				read_header				     *
  *===========================================================================*/
-PRIVATE int read_header(vp, sep_id, text_bytes, data_bytes, bss_bytes, 
-						tot_bytes, pc, hdrlenp)
-struct vnode *vp;		/* inode for reading exec file */
-int *sep_id;			/* true iff sep I&D */
-vir_bytes *text_bytes;		/* place to return text size */
-vir_bytes *data_bytes;		/* place to return initialized data size */
-vir_bytes *bss_bytes;		/* place to return bss size */
-phys_bytes *tot_bytes;		/* place to return total size */
-vir_bytes *pc;			/* program entry point (initial PC) */
-int *hdrlenp;
+PRIVATE int read_header(
+  struct vnode *vp,		/* inode for reading exec file */
+  int *sep_id,			/* true iff sep I&D */
+  vir_bytes *text_bytes,	/* place to return text size */
+  vir_bytes *data_bytes,	/* place to return initialized data size */
+  vir_bytes *bss_bytes,		/* place to return bss size */
+  phys_bytes *tot_bytes,	/* place to return total size */
+  vir_bytes *pc,		/* program entry point (initial PC) */
+  int *hdrlenp
+)
 {
 /* Read the header and extract the text, data, bss and total sizes from it. */
   off_t pos;

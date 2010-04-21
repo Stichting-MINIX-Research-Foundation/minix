@@ -2,7 +2,6 @@
  *							Author: Kees J. Bot
  *								30 Apr 1989
  */
-#define nil 0
 #define chdir _chdir
 #define closedir _closedir
 #define getcwd _getcwd
@@ -65,22 +64,22 @@ char *getcwd(char *path, size_t size)
 	char *p, *up, *dotdot;
 	int cycle;
 
-	if (path == nil || size <= 1) { errno= EINVAL; return nil; }
+	if (path == NULL || size <= 1) { errno= EINVAL; return NULL; }
 
 	p= path + size;
 	*--p = 0;
 
-	if (stat(".", &current) < 0) return nil;
+	if (stat(".", &current) < 0) return NULL;
 
 	while (1) {
 		dotdot= "..";
-		if (stat(dotdot, &above) < 0) { recover(p); return nil; }
+		if (stat(dotdot, &above) < 0) { recover(p); return NULL; }
 
 		if (above.st_dev == current.st_dev
 					&& above.st_ino == current.st_ino)
 			break;	/* Root dir found */
 
-		if ((d= opendir(dotdot)) == nil) { recover(p); return nil; }
+		if ((d= opendir(dotdot)) == NULL) { recover(p); return NULL; }
 
 		/* Cycle is 0 for a simple inode nr search, or 1 for a search
 		 * for inode *and* device nr.
@@ -91,7 +90,7 @@ char *getcwd(char *path, size_t size)
 			char name[3 + NAME_MAX + 1];
 
 			tmp.st_ino= 0;
-			if ((entry= readdir(d)) == nil) {
+			if ((entry= readdir(d)) == NULL) {
 				switch (++cycle) {
 				case 1:
 					rewinddir(d);
@@ -100,7 +99,7 @@ char *getcwd(char *path, size_t size)
 					closedir(d);
 					errno= ENOENT;
 					recover(p);
-					return nil;
+					return NULL;
 				}
 			}
 			if (strcmp(entry->d_name, ".") == 0) continue;
@@ -127,16 +126,16 @@ char *getcwd(char *path, size_t size)
 			closedir(d);
 			errno = ERANGE;
 			recover(p);
-			return nil;
+			return NULL;
 		}
 		closedir(d);
 
-		if (chdir(dotdot) < 0) { recover(p); return nil; }
+		if (chdir(dotdot) < 0) { recover(p); return NULL; }
 		p= up;
 
 		current= above;
 	}
-	if (recover(p) < 0) return nil;	/* Undo all those chdir("..")'s. */
+	if (recover(p) < 0) return NULL;	/* Undo all those chdir("..")'s. */
 	if (*p == 0) *--p = '/';	/* Cwd is "/" if nothing added */
 	if (p > path) strcpy(path, p);	/* Move string to start of path. */
 	return path;

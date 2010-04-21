@@ -81,11 +81,9 @@ static char sccsid[] = "@(#)res_send.c	6.27 (Berkeley) 2/24/91";
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
 
-static int tcp_connect _ARGS(( ipaddr_t host, Tcpport_t port, int *terrno ));
-static int tcpip_writeall _ARGS(( int fd, const char *buf, size_t siz ));
 static int udp_connect _ARGS(( void ));
 static int udp_sendto _ARGS(( int fd, const char *buf, unsigned buflen,
-				ipaddr_t addr, Udpport_t port ));
+				ipaddr_t addr, udpport_t port ));
 static int udp_receive _ARGS(( int fd, char *buf, unsigned buflen,
 				time_t timeout ));
 
@@ -718,10 +716,7 @@ _res_close()
 }
 
 #if _MINIX
-static int tcp_connect(host, port, terrno)
-ipaddr_t host;
-tcpport_t port;
-int *terrno;
+static int tcp_connect(ipaddr_t host, tcpport_t port, int *terrno)
 {
 	char *dev_name;
 	int fd;
@@ -810,12 +805,13 @@ static int udp_connect()
 	return fd;
 }
 
-static int udp_sendto(fd, buf, buflen, addr, port)
-int fd;
-const char *buf;
-unsigned buflen;
-ipaddr_t addr;
-udpport_t port;
+static int udp_sendto(
+  int fd,
+  const char *buf,
+  unsigned buflen,
+  ipaddr_t addr,
+  udpport_t port
+)
 {
 	char *newbuf;
 	udp_io_hdr_t *udp_io_hdr;
@@ -843,11 +839,7 @@ udpport_t port;
 	return r;
 }
 
-static int udp_receive(fd, buf, buflen, timeout)
-int fd;
-char *buf;
-unsigned buflen;
-time_t timeout;
+static int udp_receive(int fd, char *buf, unsigned buflen, time_t timeout)
 {
 	char *newbuf;
 	udp_io_hdr_t *udp_io_hdr;

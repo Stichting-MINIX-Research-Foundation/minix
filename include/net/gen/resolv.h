@@ -99,7 +99,7 @@ char *__hostalias _ARGS(( const char *name ));
 
 u16_t _getshort _ARGS(( const u8_t *msgp ));
 u32_t _getlong _ARGS(( const u8_t *msgp ));
-void __putshort _ARGS(( U16_t s, u8_t *msgp ));
+void __putshort _ARGS(( u16_t s, u8_t *msgp ));
 void __putlong _ARGS(( u32_t l, u8_t *msgp ));
 
 void p_query _ARGS(( char *msg ));

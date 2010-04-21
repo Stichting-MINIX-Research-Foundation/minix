@@ -94,25 +94,22 @@ PUBLIC re_t re_table[RE_PORT_NR];
 static u16_t eth_ign_proto;
 static tmra_ut rl_watchdog;
 
-FORWARD _PROTOTYPE( unsigned my_inb, (U16_t port) );
-FORWARD _PROTOTYPE( unsigned my_inw, (U16_t port) );
-FORWARD _PROTOTYPE( unsigned my_inl, (U16_t port) );
-static unsigned my_inb(U16_t port) {
+static unsigned my_inb(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("RTL8139: warning, sys_inb failed: %d\n", s);
 	return value;
 }
-static unsigned my_inw(U16_t port) {
+static unsigned my_inw(u16_t port) {
 	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("RTL8139: warning, sys_inw failed: %d\n", s);
 	return value;
 }
-static unsigned my_inl(U16_t port) {
-	U32_t value;
+static unsigned my_inl(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
 		printf("RTL8139: warning, sys_inl failed: %d\n", s);
@@ -122,17 +119,17 @@ static unsigned my_inl(U16_t port) {
 #define rl_inw(port, offset)	(my_inw((port) + (offset)))
 #define rl_inl(port, offset)	(my_inl((port) + (offset)))
 
-static void my_outb(U16_t port, u8_t value) {
+static void my_outb(u16_t port, u8_t value) {
 	int s;
 	if ((s=sys_outb(port, value)) !=OK)
 		printf("RTL8139: warning, sys_outb failed: %d\n", s);
 }
-static void my_outw(U16_t port, U16_t value) {
+static void my_outw(u16_t port, u16_t value) {
 	int s;
 	if ((s=sys_outw(port, value)) !=OK)
 		printf("RTL8139: warning, sys_outw failed: %d\n", s);
 }
-static void my_outl(U16_t port, U32_t value) {
+static void my_outl(u16_t port, u32_t value) {
 	int s;
 	if ((s=sys_outl(port, value)) !=OK)
 		printf("RTL8139: warning, sys_outl failed: %d\n", s);
@@ -158,9 +155,9 @@ _PROTOTYPE( static void rl_writev, (const message *mp, int from_int,
 _PROTOTYPE( static void rl_writev_s, (const message *mp, int from_int)	);
 _PROTOTYPE( static void rl_check_ints, (re_t *rep)			);
 _PROTOTYPE( static void rl_report_link, (re_t *rep)			);
-_PROTOTYPE( static void mii_print_techab, (U16_t techab)		);
-_PROTOTYPE( static void mii_print_stat_speed, (U16_t stat,
-							U16_t extstat)	);
+_PROTOTYPE( static void mii_print_techab, (u16_t techab)		);
+_PROTOTYPE( static void mii_print_stat_speed, (u16_t stat,
+							u16_t extstat)	);
 _PROTOTYPE( static void rl_clear_rx, (re_t *rep)			);
 _PROTOTYPE( static void rl_do_reset, (re_t *rep)			);
 _PROTOTYPE( static void rl_getstat, (message *mp)			);
@@ -1918,8 +1915,7 @@ resspeed:
 
 }
 
-static void mii_print_techab(techab)
-u16_t techab;
+static void mii_print_techab(u16_t techab)
 {
 	int fs, ft;
 	if ((techab & MII_ANA_SEL_M) != MII_ANA_SEL_802_3)
@@ -1991,9 +1987,7 @@ u16_t techab;
 	}
 }
 
-static void mii_print_stat_speed(stat, extstat)
-u16_t stat;
-u16_t extstat;
+static void mii_print_stat_speed(u16_t stat, u16_t extstat)
 {
 	int fs, ft;
 	fs= 1;
@@ -2093,8 +2087,7 @@ u16_t extstat;
 /*===========================================================================*
  *				rl_clear_rx				     *
  *===========================================================================*/
-static void rl_clear_rx(rep)
-re_t *rep;
+static void rl_clear_rx(re_t *rep)
 {
 	port_t port;
 	u8_t cr;
@@ -2726,7 +2719,7 @@ timer_t *tp;
 _PROTOTYPE( static void rtl_init, (struct dpeth *dep)			);
 _PROTOTYPE( static u16_t get_ee_word, (dpeth_t *dep, int a)		);
 _PROTOTYPE( static void ee_wen, (dpeth_t *dep)				);
-_PROTOTYPE( static void set_ee_word, (dpeth_t *dep, int a, U16_t w)	);
+_PROTOTYPE( static void set_ee_word, (dpeth_t *dep, int a, u16_t w)	);
 _PROTOTYPE( static void ee_wds, (dpeth_t *dep)				);
 
 static void rtl_init(dep)
@@ -2882,7 +2875,7 @@ dpeth_t *dep;
 	/* micro_delay(1); */			/* Is this required? */
 }
 
-static void set_ee_word(dep, a, w)
+static void set_ee_word(dpeth_t *dep, int a, u16_t w)
 dpeth_t *dep;
 int a;
 u16_t w;

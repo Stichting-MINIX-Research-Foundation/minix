@@ -40,7 +40,7 @@ FORWARD void reply_thr_get ARGS(( udp_fd_t *udp_fd, int reply,
 	int for_ioctl ));
 FORWARD int udp_setopt ARGS(( udp_fd_t *udp_fd ));
 FORWARD udpport_t find_unused_port ARGS(( int fd ));
-FORWARD int is_unused_port ARGS(( Udpport_t port ));
+FORWARD int is_unused_port ARGS(( udpport_t port ));
 FORWARD int udp_packet2user ARGS(( udp_fd_t *udp_fd ));
 FORWARD void restart_write_fd ARGS(( udp_fd_t *udp_fd ));
 FORWARD u16_t pack_oneCsum ARGS(( acc_t *pack ));
@@ -676,8 +676,7 @@ assert (data->acc_length == sizeof(nwio_udpopt_t));
 	return NW_OK;
 }
 
-PRIVATE udpport_t find_unused_port(fd)
-int fd;
+PRIVATE udpport_t find_unused_port(int fd)
 {
 	udpport_t port, nw_port;
 
@@ -728,8 +727,7 @@ int for_ioctl;
 	assert (!result);
 }
 
-PRIVATE int is_unused_port(port)
-udpport_t port;
+PRIVATE int is_unused_port(udpport_t port)
 {
 	int i;
 	udp_fd_t *udp_fd;

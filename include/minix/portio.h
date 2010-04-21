@@ -11,18 +11,18 @@ Created:	Jan 15, 1992 by Philip Homburg
 #include <minix/types.h>
 #endif
 
-unsigned inb(U16_t _port);
-unsigned inw(U16_t _port);
-unsigned inl(U32_t _port);
-void outb(U16_t _port, u8_t _value);
-void outw(U16_t _port, U16_t _value);
-void outl(U16_t _port, U32_t _value);
-void insb(U16_t _port, void *_buf, size_t _count);
-void insw(U16_t _port, void *_buf, size_t _count);
-void insl(U16_t _port, void *_buf, size_t _count);
-void outsb(U16_t _port, void *_buf, size_t _count);
-void outsw(U16_t _port, void *_buf, size_t _count);
-void outsl(U16_t _port, void *_buf, size_t _count);
+unsigned inb(u16_t _port);
+unsigned inw(u16_t _port);
+unsigned inl(u32_t _port);
+void outb(u16_t _port, u8_t _value);
+void outw(u16_t _port, u16_t _value);
+void outl(u16_t _port, u32_t _value);
+void insb(u16_t _port, void *_buf, size_t _count);
+void insw(u16_t _port, void *_buf, size_t _count);
+void insl(u16_t _port, void *_buf, size_t _count);
+void outsb(u16_t _port, void *_buf, size_t _count);
+void outsw(u16_t _port, void *_buf, size_t _count);
+void outsl(u16_t _port, void *_buf, size_t _count);
 void intr_disable(void);
 void intr_enable(void);
 

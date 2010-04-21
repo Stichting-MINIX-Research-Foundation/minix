@@ -81,7 +81,7 @@ void ipr_destunrch ARGS(( int port_nr, ipaddr_t dest, ipaddr_t subnetmask,
 	time_t timeout ));
 void ipr_ttl_exc ARGS(( int port_nr, ipaddr_t dest, ipaddr_t subnetmask,
 	time_t timeout ));
-void ipr_mtu ARGS(( int port_nr, ipaddr_t dest, U16_t mtu, time_t timeout ));
+void ipr_mtu ARGS(( int port_nr, ipaddr_t dest, u16_t mtu, time_t timeout ));
 
 #endif /* IPR_H */
 

@@ -178,17 +178,14 @@ struct pstat {			/* structure filled by pstat() */
 #define	R_STATE		'R'	/* Runnable */
 #define	T_STATE		'T'	/* stopped (Trace) */
 
-_PROTOTYPE(char *tname, (dev_t dev_nr ));
-_PROTOTYPE(char *taskname, (int p_nr ));
-_PROTOTYPE(char *prrecv, (struct pstat *bufp ));
 _PROTOTYPE(void disaster, (int sig ));
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(char *get_args, (struct pstat *bufp ));
 _PROTOTYPE(int pstat, (int p_nr, struct pstat *bufp, int Eflag ));
 _PROTOTYPE(int addrread, (int fd, phys_clicks base, vir_bytes addr, 
 						    char *buf, int nbytes ));
-_PROTOTYPE(void usage, (char *pname ));
-_PROTOTYPE(void err, (char *s ));
+_PROTOTYPE(void usage, (const char *pname ));
+_PROTOTYPE(void err, (const char *s ));
 _PROTOTYPE(int gettynames, (void));
 
 
@@ -198,7 +195,7 @@ _PROTOTYPE(int gettynames, (void));
  * Tname assumes that the first three letters of the tty's name can be omitted
  * and returns the rest (except for the console, which yields "co").
  */
-char *tname(dev_t dev_nr)
+PRIVATE char *tname(dev_t dev_nr)
 {
   int i;
 
@@ -212,8 +209,7 @@ char *tname(dev_t dev_nr)
 }
 
 /* Return canonical task name of task p_nr; overwritten on each call (yucch) */
-char *taskname(p_nr)
-int p_nr;
+PRIVATE char *taskname(int p_nr)
 {
   int n;
   n = _ENDPOINT_P(p_nr) + nr_tasks;
@@ -226,8 +222,7 @@ int p_nr;
 /* Prrecv prints the RECV field for process with pstat buffer pointer bufp.
  * This is either "ANY", "taskname", or "(blockreason) taskname".
  */
-char *prrecv(bufp)
-struct pstat *bufp;
+PRIVATE char *prrecv(struct pstat *bufp)
 {
   char *blkstr, *task;		/* reason for blocking and task */
   static char recvstr[20];
@@ -483,10 +478,7 @@ struct pstat *bufp;
 /* Pstat collects info on process number p_nr and returns it in buf.
  * It is assumed that tasks do not have entries in fproc/mproc.
  */
-int pstat(p_nr, bufp, endpoints)
-int p_nr;
-struct pstat *bufp;
-int endpoints;
+int pstat(int p_nr, struct pstat *bufp, int endpoints)
 {
   int p_ki = p_nr + nr_tasks;	/* kernel proc index */
 
@@ -581,12 +573,7 @@ int endpoints;
 }
 
 /* Addrread reads nbytes from offset addr to click base of fd into buf. */
-int addrread(fd, base, addr, buf, nbytes)
-int fd;
-phys_clicks base;
-vir_bytes addr;
-char *buf;
-int nbytes;
+int addrread(int fd, phys_clicks base, vir_bytes addr, char *buf, int nbytes)
 {
   if (lseek(fd, ((off_t) base << CLICK_SHIFT) + addr, 0) < 0)
 	return -1;
@@ -594,15 +581,13 @@ int nbytes;
   return read(fd, buf, nbytes);
 }
 
-void usage(pname)
-char *pname;
+void usage(const char *pname)
 {
   fprintf(stderr, "Usage: %s [-][aeflx]\n", pname);
   exit(1);
 }
 
-void err(s)
-char *s;
+void err(const char *s)
 {
   extern int errno;
 
@@ -615,7 +600,7 @@ char *s;
 }
 
 /* Fill ttyinfo by fstatting character specials in /dev. */
-int gettynames()
+int gettynames(void)
 {
   static char dev_path[] = "/dev/";
   struct stat statbuf;

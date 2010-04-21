@@ -28,9 +28,7 @@ FORWARD acc_t *reassemble ARGS(( ip_port_t *ip_port, acc_t *pack,
 FORWARD void route_packets ARGS(( event_t *ev, ev_arg_t ev_arg ));
 FORWARD int broadcast_dst ARGS(( ip_port_t *ip_port, ipaddr_t dest ));
 
-PUBLIC int ip_read (fd, count)
-int fd;
-size_t count;
+PUBLIC int ip_read(int fd, size_t count)
 {
 	ip_fd_t *ip_fd;
 	acc_t *pack;

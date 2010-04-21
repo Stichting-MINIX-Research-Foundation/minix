@@ -3,7 +3,6 @@
  *							Author: Kees J. Bot
  *								31 Jan 1994
  */
-#define nil 0
 #define open _open
 #define fcntl _fcntl
 #define read _read
@@ -44,7 +43,7 @@ int setpwent(void)
 {
 	if (pwfd >= 0) endpwent();
 
-	if (pwfile == nil) pwfile= PASSWD;
+	if (pwfile == NULL) pwfile= PASSWD;
 
 	if ((pwfd= open(pwfile, O_RDONLY)) < 0) return -1;
 	(void) fcntl(pwfd, F_SETFD, fcntl(pwfd, F_GETFD) | FD_CLOEXEC);
@@ -86,7 +85,7 @@ static char *scan_colon(void)
 
 	for (;;) {
 		last= lineptr;
-		if (*lineptr == 0) return nil;
+		if (*lineptr == 0) return NULL;
 		if (*lineptr == '\n') break;
 		if (*lineptr++ == ':') break;
 	}
@@ -100,21 +99,21 @@ struct passwd *getpwent(void)
 	char *p;
 
 	/* Open the file if not yet open. */
-	if (pwfd < 0 && setpwent() < 0) return nil;
+	if (pwfd < 0 && setpwent() < 0) return NULL;
 
 	/* Until a good line is read. */
 	for (;;) {
-		if (!getline()) return nil;	/* EOF or corrupt. */
+		if (!getline()) return NULL;	/* EOF or corrupt. */
 
-		if ((entry.pw_name= scan_colon()) == nil) continue;
-		if ((entry.pw_passwd= scan_colon()) == nil) continue;
-		if ((p= scan_colon()) == nil) continue;
-		entry.pw_uid= strtol(p, nil, 0);
-		if ((p= scan_colon()) == nil) continue;
-		entry.pw_gid= strtol(p, nil, 0);
-		if ((entry.pw_gecos= scan_colon()) == nil) continue;
-		if ((entry.pw_dir= scan_colon()) == nil) continue;
-		if ((entry.pw_shell= scan_colon()) == nil) continue;
+		if ((entry.pw_name= scan_colon()) == NULL) continue;
+		if ((entry.pw_passwd= scan_colon()) == NULL) continue;
+		if ((p= scan_colon()) == NULL) continue;
+		entry.pw_uid= strtol(p, NULL, 0);
+		if ((p= scan_colon()) == NULL) continue;
+		entry.pw_gid= strtol(p, NULL, 0);
+		if ((entry.pw_gecos= scan_colon()) == NULL) continue;
+		if ((entry.pw_dir= scan_colon()) == NULL) continue;
+		if ((entry.pw_shell= scan_colon()) == NULL) continue;
 
 		if (*lineptr == 0) return &entry;
 	}
@@ -126,7 +125,7 @@ struct passwd *getpwuid(uid_t uid)
 	struct passwd *pw;
 
 	endpwent();
-	while ((pw= getpwent()) != nil && pw->pw_uid != uid) {}
+	while ((pw= getpwent()) != NULL && pw->pw_uid != uid) {}
 	endpwent();
 	return pw;
 }
@@ -137,7 +136,7 @@ struct passwd *getpwnam(const char *name)
 	struct passwd *pw;
 
 	endpwent();
-	while ((pw= getpwent()) != nil && strcmp(pw->pw_name, name) != 0) {}
+	while ((pw= getpwent()) != NULL && strcmp(pw->pw_name, name) != 0) {}
 	endpwent();
 	return pw;
 }

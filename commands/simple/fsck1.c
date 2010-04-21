@@ -9,7 +9,6 @@
 #define NR_ZONE_NUMS V1_NR_TZONES
 #define ZONE_NUM_SIZE V1_ZONE_NUM_SIZE
 #define bit_nr u16_t	/* perhaps bit_t should be used, although slower */
-#define Bit_nr U16_t
 #define block_nr block_t
 #define d_inode d1_inode
 #define d_inum d_ino
@@ -19,7 +18,6 @@
 #define i_size d1_size
 #define i_zone d1_zone
 #define zone_nr zone1_t
-#define Zone_nr Zone1_t
 
 /* fsck - file system checker		Author: Robbert van Renesse */
 
@@ -138,22 +136,22 @@ char answer[] = "Answer questions with y or n.  Then hit RETURN";
 
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void initvars, (void));
-_PROTOTYPE(void fatal, (char *s));
+_PROTOTYPE(void fatal, (const char *s));
 _PROTOTYPE(int eoln, (int c));
-_PROTOTYPE(int yes, (char *question));
-_PROTOTYPE(int atoo, (char *s));
+PRIVATE _PROTOTYPE(int yes, (const char *question));
+PRIVATE _PROTOTYPE(int atoo, (const char *s));
 _PROTOTYPE(int input, (char *buf, int size));
-_PROTOTYPE(char *alloc, (unsigned nelem, unsigned elsize));
-_PROTOTYPE(void printname, (char *s));
+PRIVATE _PROTOTYPE(char *alloc, (unsigned nelem, unsigned elsize));
+PRIVATE _PROTOTYPE(void printname, (const char *s));
 _PROTOTYPE(void printrec, (struct stack *sp));
 _PROTOTYPE(void printpath, (int mode, int nlcr));
 _PROTOTYPE(void devopen, (void));
 _PROTOTYPE(void devclose, (void));
 _PROTOTYPE(void devio, (block_nr bno, int dir));
 _PROTOTYPE(void devread, (long offset, char *buf, int size));
-_PROTOTYPE(void devwrite, (long offset, char *buf, int size));
-_PROTOTYPE(void pr, (char *fmt, int cnt, char *s, char *p));
-_PROTOTYPE(bit_nr getnumber, (char *s));
+PRIVATE _PROTOTYPE(void devwrite, (long offset, const char *buf, int size));
+_PROTOTYPE(void pr, (const char *fmt, int cnt, const char *s, const char *p));
+_PROTOTYPE(bit_nr getnumber, (const char *s));
 _PROTOTYPE(char **getlist, (char ***argv, char *type));
 _PROTOTYPE(void lsuper, (void));
 _PROTOTYPE(void getsuper, (void));
@@ -162,12 +160,12 @@ _PROTOTYPE(void lsi, (char **clist));
 _PROTOTYPE(bitchunk_t *allocbitmap, (int nblk));
 _PROTOTYPE(void loadbitmap, (bitchunk_t *bitmap, block_nr bno, int nblk));
 _PROTOTYPE(void dumpbitmap, (bitchunk_t *bitmap, block_nr bno, int nblk));
-_PROTOTYPE(void fillbitmap, (bitchunk_t *bitmap, Bit_nr lwb, Bit_nr upb, char **list));
+_PROTOTYPE(void fillbitmap, (bitchunk_t *bitmap, bit_nr lwb, bit_nr upb, char **list));
 _PROTOTYPE(void freebitmap, (bitchunk_t *p));
 _PROTOTYPE(void getbitmaps, (void));
 _PROTOTYPE(void putbitmaps, (void));
-_PROTOTYPE(void chkword, (unsigned w1, unsigned w2, Bit_nr bit, char *type, int *n, int *report));
-_PROTOTYPE(void chkmap, (bitchunk_t *cmap, bitchunk_t *dmap, Bit_nr bit, block_nr blkno, int nblk, char *type));
+_PROTOTYPE(void chkword, (unsigned w1, unsigned w2, bit_nr bit, char *type, int *n, int *report));
+_PROTOTYPE(void chkmap, (bitchunk_t *cmap, bitchunk_t *dmap, bit_nr bit, block_nr blkno, int nblk, char *type));
 _PROTOTYPE(void chkilist, (void));
 _PROTOTYPE(void getcount, (void));
 _PROTOTYPE(void counterror, (Ino_t ino));
@@ -180,12 +178,12 @@ _PROTOTYPE(void make_printable_name, (char *dst, char *src, int n));
 _PROTOTYPE(int chkdots, (Ino_t ino, off_t pos, dir_struct *dp, Ino_t exp));
 _PROTOTYPE(int chkname, (Ino_t ino, dir_struct *dp));
 _PROTOTYPE(int chkentry, (Ino_t ino, off_t pos, dir_struct *dp));
-_PROTOTYPE(int chkdirzone, (Ino_t ino, d_inode *ip, off_t pos, Zone_nr zno));
-_PROTOTYPE(void errzone, (char *mess, Zone_nr zno, int level, off_t pos));
-_PROTOTYPE(int markzone, (Ino_t ino, Zone_nr zno, int level, off_t pos));
-_PROTOTYPE(int chkindzone, (Ino_t ino, d_inode *ip, off_t *pos, Zone_nr zno, int level));
+_PROTOTYPE(int chkdirzone, (Ino_t ino, d_inode *ip, off_t pos, zone_nr zno));
+_PROTOTYPE(void errzone, (const char *mess, zone_nr zno, int level, off_t pos));
+_PROTOTYPE(int markzone, (Ino_t ino, zone_nr zno, int level, off_t pos));
+_PROTOTYPE(int chkindzone, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
 _PROTOTYPE(off_t jump, (int level));
-_PROTOTYPE(int zonechk, (Ino_t ino, d_inode *ip, off_t *pos, Zone_nr zno, int level));
+_PROTOTYPE(int zonechk, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
 _PROTOTYPE(int chkzones, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist, int len, int level));
 _PROTOTYPE(int chkfile, (Ino_t ino, d_inode *ip));
 _PROTOTYPE(int chkdirectory, (Ino_t ino, d_inode *ip));
@@ -212,25 +210,22 @@ void initvars()
 }
 
 /* Print the string `s' and exit. */
-void fatal(s)
-char *s;
+void fatal(const char *s)
 {
   printf("%s\nfatal\n", s);
   exit(-1);
 }
 
 /* Test for end of line. */
-int eoln(c)
-int c;
+int eoln(int c)
 {
   return(c == EOF || c == '\n' || c == '\r');
 }
 
 /* Ask a question and get the answer unless automatic is set. */
-int yes(question)
-char *question;
+PRIVATE int yes(const char *question)
 {
-  register c, answer;
+  int c, answer;
 
   if (!repair) {
 	printf("\n");
@@ -248,8 +243,7 @@ char *question;
 }
 
 /* Convert string to integer.  Representation is octal. */
-int atoo(s)
-register char *s;
+PRIVATE int atoo(const char *s)
 {
   register int n = 0;
 
@@ -261,9 +255,7 @@ register char *s;
 }
 
 /* If repairing the file system, print a prompt and get a string from user. */
-int input(buf, size)
-char *buf;
-int size;
+int input(char *buf, int size)
 {
   register char *p = buf;
 
@@ -287,8 +279,7 @@ int size;
 }
 
 /* Allocate some memory and zero it. */
-char *alloc(nelem, elsize)
-unsigned nelem, elsize;
+PRIVATE char *alloc(unsigned nelem, unsigned elsize)
 {
   char *p;
 
@@ -298,8 +289,7 @@ unsigned nelem, elsize;
 }
 
 /* Print the name in a directory entry. */
-void printname(s)
-char *s;
+PRIVATE void printname(const char *s)
 {
   register n = NAME_MAX;
   int c;
@@ -315,8 +305,7 @@ char *s;
 /* Print the pathname given by a linked list pointed to by `sp'.  The
  * names are in reverse order.
  */
-void printrec(sp)
-struct stack *sp;
+void printrec(struct stack *sp)
 {
   if (sp->st_next != 0) {
 	printrec(sp->st_next);
@@ -326,9 +315,7 @@ struct stack *sp;
 }
 
 /* Print the current pathname.  */
-void printpath(mode, nlcr)
-int mode;
-int nlcr;
+void printpath(int mode, int nlcr)
 {
   if (ftop->st_next == 0)
 	putchar('/');
@@ -346,7 +333,7 @@ int nlcr;
 }
 
 /* Open the device.  */
-void devopen()
+void devopen(void)
 {
   if ((dev = open(device, repair ? O_RDWR : O_RDONLY)) < 0) {
 	perror(device);
@@ -364,9 +351,7 @@ void devclose()
 }
 
 /* Read or write a block. */
-void devio(bno, dir)
-block_nr bno;
-int dir;
+void devio(block_nr bno, int dir)
 {
   if (dir == READING && bno == thisblk) return;
   thisblk = bno;
@@ -391,20 +376,14 @@ int dir;
 }
 
 /* Read `size' bytes from the disk starting at byte `offset'. */
-void devread(offset, buf, size)
-long offset;
-char *buf;
-int size;
+void devread(long offset, char *buf, int size)
 {
   devio((block_nr) (offset / BLOCK_SIZE), READING);
   memmove(buf, &rwbuf[(int) (offset % BLOCK_SIZE)], (size_t)size);
 }
 
 /* Write `size' bytes to the disk starting at byte `offset'. */
-void devwrite(offset, buf, size)
-long offset;
-char *buf;
-int size;
+static void devwrite(long offset, const char *buf, int size)
 {
   if (!repair) fatal("internal error (devwrite)");
   if (size != BLOCK_SIZE) devio((block_nr) (offset / BLOCK_SIZE), READING);
@@ -414,16 +393,13 @@ int size;
 }
 
 /* Print a string with either a singular or a plural pronoun. */
-void pr(fmt, cnt, s, p)
-char *fmt, *s, *p;
-int cnt;
+void pr(const char *fmt, int cnt, const char *s, const char *p)
 {
   printf(fmt, cnt, cnt == 1 ? s : p);
 }
 
 /* Convert string to number. */
-bit_nr getnumber(s)
-register char *s;
+bit_nr getnumber(const char *s)
 {
   register bit_nr n = 0;
 
@@ -435,8 +411,7 @@ register char *s;
 }
 
 /* See if the list pointed to by `argv' contains numbers. */
-char **getlist(argv, type)
-char ***argv, *type;
+char **getlist(char ***argv, char *type)
 {
   register char **list = *argv;
   register empty = 1;
@@ -455,7 +430,7 @@ char ***argv, *type;
 /* Make a listing of the super block.  If `repair' is set, ask the user
  * for changes.
  */
-void lsuper()
+void lsuper(void)
 {
   char buf[80];
 
@@ -483,7 +458,7 @@ void lsuper()
 }
 
 /* Get the super block from either disk or user.  Do some initial checks. */
-void getsuper()
+void getsuper(void)
 {
   devread(btoa(BLK_SUPER), (char *) &sb, sizeof(sb));
   if (listsuper) lsuper();
@@ -499,7 +474,7 @@ void getsuper()
 }
 
 /* Check the super block for reasonable contents. */
-void chksuper()
+void chksuper(void)
 {
   register n;
   register off_t maxsize;
@@ -541,8 +516,7 @@ void chksuper()
 /* Make a listing of the inodes given by `clist'.  If `repair' is set, ask
  * the user for changes.
  */
-void lsi(clist)
-char **clist;
+void lsi(char **clist)
 {
   register bit_nr bit;
   register ino_t ino;
@@ -571,8 +545,7 @@ char **clist;
 }
 
 /* Allocate `nblk' blocks worth of bitmap. */
-bitchunk_t *allocbitmap(nblk)
-int nblk;
+bitchunk_t *allocbitmap(int nblk)
 {
   register bitchunk_t *bitmap;
 
@@ -582,10 +555,7 @@ int nblk;
 }
 
 /* Load the bitmap starting at block `bno' from disk. */
-void loadbitmap(bitmap, bno, nblk)
-bitchunk_t *bitmap;
-block_nr bno;
-int nblk;
+void loadbitmap(bitchunk_t *bitmap, block_nr bno, int nblk)
 {
   register i;
   register bitchunk_t *p;
@@ -597,10 +567,7 @@ int nblk;
 }
 
 /* Write the bitmap starting at block `bno' to disk. */
-void dumpbitmap(bitmap, bno, nblk)
-bitchunk_t *bitmap;
-block_nr bno;
-int nblk;
+void dumpbitmap(bitchunk_t *bitmap, block_nr bno, int nblk)
 {
   register i;
   register bitchunk_t *p = bitmap;
@@ -610,10 +577,7 @@ int nblk;
 }
 
 /* Set the bits given by `list' in the bitmap. */
-void fillbitmap(bitmap, lwb, upb, list)
-bitchunk_t *bitmap;
-bit_nr lwb, upb;
-char **list;
+void fillbitmap(bitchunk_t *bitmap, bit_nr lwb, bit_nr upb, char **list)
 {
   register bit_nr bit;
 
@@ -659,11 +623,8 @@ void putbitmaps()
 /* `w1' and `w2' are differing words from two bitmaps that should be
  * identical.  Print what's the matter with them.
  */
-void chkword(w1, w2, bit, type, n, report)
-unsigned w1, w2;
-char *type;
-bit_nr bit;
-int *n, *report;
+void chkword(unsigned w1, unsigned w2, bit_nr bit, char *type,
+    int *n, int *report)
 {
   for (; (w1 | w2); w1 >>= 1, w2 >>= 1, bit++)
 	if ((w1 ^ w2) & 1 && ++(*n) % MAXPRINT == 0 && *report &&
@@ -679,12 +640,8 @@ int *n, *report;
 /* Check if the given (correct) bitmap is identical with the one that is
  * on the disk.  If not, ask if the disk should be repaired.
  */
-void chkmap(cmap, dmap, bit, blkno, nblk, type)
-bitchunk_t *cmap, *dmap;
-bit_nr bit;
-block_nr blkno;
-int nblk;
-char *type;
+void chkmap(bitchunk_t *cmap, bitchunk_t *dmap, bit_nr bit,
+    block_nr blkno, int nblk, char *type)
 {
   register bitchunk_t *p = dmap, *q = cmap;
   int report = 1, nerr = 0;
@@ -706,7 +663,7 @@ char *type;
 }
 
 /* See if the inodes that aren't allocated are cleared. */
-void chkilist()
+void chkilist(void)
 {
   register ino_t ino = 1;
   mode_t mode;
@@ -732,8 +689,7 @@ void getcount()
 }
 
 /* The reference count for inode `ino' is wrong.  Ask if it should be adjusted. */
-void counterror(ino)
-ino_t ino;
+void counterror(ino_t ino)
 {
   d_inode inode;
 
@@ -799,9 +755,7 @@ void printperm(mode_t mode, int shift, int special, int overlay)
 }
 
 /* List the given inode. */
-void list(ino, ip)
-ino_t ino;
-d_inode *ip;
+void list(ino_t ino, d_inode *ip)
 {
   if (firstlist) {
 	firstlist = 0;
@@ -838,8 +792,7 @@ d_inode *ip;
  * Don't name the function remove() - that is owned by ANSI, and chaos results
  * when it is a macro.
  */
-int Remove(dp)
-dir_struct *dp;
+int Remove(dir_struct *dp)
 {
   setbit(spec_imap, (bit_nr) dp->d_inum);
   if (yes(". remove entry")) {
@@ -887,10 +840,7 @@ register int n;
 }
 
 /* See if the `.' or `..' entry is as expected. */
-int chkdots(ino, pos, dp, exp)
-ino_t ino, exp;
-off_t pos;
-dir_struct *dp;
+int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 {
   char printable_name[4 * NAME_MAX + 1];
 
@@ -922,9 +872,7 @@ dir_struct *dp;
 }
 
 /* Check the name in a directory entry. */
-int chkname(ino, dp)
-ino_t ino;
-dir_struct *dp;
+int chkname(ino_t ino, dir_struct *dp)
 {
   register n = NAME_MAX + 1;
   register char *p = dp->d_name;
@@ -952,10 +900,7 @@ dir_struct *dp;
 /* Check a directory entry.  Here the routine `descendtree' is called
  * recursively to check the file or directory pointed to by the entry.
  */
-int chkentry(ino, pos, dp)
-ino_t ino;
-off_t pos;
-dir_struct *dp;
+int chkentry(ino_t ino, off_t pos, dir_struct *dp)
 {
   if (dp->d_inum < ROOT_INODE || dp->d_inum > sb.s_ninodes) {
 	printf("bad inode found in directory ");
@@ -1003,11 +948,7 @@ dir_struct *dp;
 /* Check a zone of a directory by checking all the entries in the zone.
  * The zone is split up into chunks to not allocate too much stack.
  */
-int chkdirzone(ino, ip, pos, zno)
-ino_t ino;
-d_inode *ip;
-off_t pos;
-zone_nr zno;
+int chkdirzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno)
 {
   dir_struct dirblk[CDIRECT];
   register dir_struct *dp;
@@ -1041,11 +982,7 @@ zone_nr zno;
 }
 
 /* There is something wrong with the given zone.  Print some details. */
-void errzone(mess, zno, level, pos)
-char *mess;
-zone_nr zno;
-int level;
-off_t pos;
+void errzone(const char *mess, zone_nr zno, int level, off_t pos)
 {
   printf("%s zone in ", mess);
   printpath(1, 0);
@@ -1062,11 +999,7 @@ off_t pos;
 /* Found the given zone in the given inode.  Check it, and if ok, mark it
  * in the zone bitmap.
  */
-int markzone(ino, zno, level, pos)
-ino_t ino;
-zone_nr zno;
-int level;
-off_t pos;
+int markzone(ino_t ino, zone_nr zno, int level, off_t pos)
 {
   register bit_nr bit = (bit_nr) zno - FIRST + 1;
 
@@ -1089,12 +1022,7 @@ off_t pos;
 /* Check an indirect zone by checking all of its entries.
  * The zone is split up into chunks to not allocate too much stack.
  */
-int chkindzone(ino, ip, pos, zno, level)
-ino_t ino;
-d_inode *ip;
-off_t *pos;
-zone_nr zno;
-int level;
+int chkindzone(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 {
   zone_nr indirect[CINDIR];
   register n = NR_INDIRECTS / CINDIR;
@@ -1111,8 +1039,7 @@ int level;
 /* Return the size of a gap in the file, represented by a null zone number
  * at some level of indirection.
  */
-off_t jump(level)
-int level;
+off_t jump(int level)
 {
   off_t power = ZONE_SIZE;
 
@@ -1125,12 +1052,7 @@ int level;
 /* Check a zone, which may be either a normal data zone, a directory zone,
  * or an indirect zone.
  */
-int zonechk(ino, ip, pos, zno, level)
-ino_t ino;
-d_inode *ip;
-off_t *pos;
-zone_nr zno;
-int level;
+int zonechk(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level)
 {
   if (level == 0) {
 	if ((ip->i_mode & I_TYPE) == I_DIRECTORY &&
@@ -1143,13 +1065,8 @@ int level;
 }
 
 /* Check a list of zones given by `zlist'. */
-int chkzones(ino, ip, pos, zlist, len, level)
-ino_t ino;
-d_inode *ip;
-off_t *pos;
-zone_nr *zlist;
-int len;
-int level;
+int chkzones(ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist,
+ int len, int level)
 {
   register ok = 1, i;
 
@@ -1183,9 +1100,7 @@ d_inode *ip;
 }
 
 /* Check a directory by checking the contents.  Check if . and .. are present. */
-int chkdirectory(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkdirectory(ino_t ino, d_inode *ip)
 {
   register ok;
 
@@ -1207,9 +1122,7 @@ d_inode *ip;
 #ifdef I_SYMBOLIC_LINK
 
 /* Check the validity of a symbolic link. */
-int chklink(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chklink(ino_t ino, d_inode *ip)
 {
   int ok;
 
@@ -1255,9 +1168,7 @@ d_inode *ip;
 }
 
 /* Check the mode and contents of an inode. */
-int chkmode(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkmode(ino_t ino, d_inode *ip)
 {
   switch (ip->i_mode & I_TYPE) {
       case I_REGULAR:
@@ -1290,9 +1201,7 @@ d_inode *ip;
 }
 
 /* Check an inode. */
-int chkinode(ino, ip)
-ino_t ino;
-d_inode *ip;
+int chkinode(ino_t ino, d_inode *ip)
 {
   if (ino == ROOT_INODE && (ip->i_mode & I_TYPE) != I_DIRECTORY) {
 	printf("root inode is not a directory ");

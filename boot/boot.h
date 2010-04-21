@@ -93,7 +93,7 @@ void raw_copy(u32_t dstaddr, u32_t srcaddr, u32_t count);
 			/* Copy bytes from anywhere to anywhere. */
 u16_t get_word(u32_t addr);
 			/* Get a word from anywhere. */
-void put_word(u32_t addr, U16_t word);
+void put_word(u32_t addr, u16_t word);
 			/* Put a word anywhere. */
 void relocate(void);
 			/* Switch to a copy of this program. */

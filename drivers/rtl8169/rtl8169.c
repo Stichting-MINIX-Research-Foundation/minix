@@ -182,10 +182,7 @@ static re_t re_table[RE_PORT_NR];
 static u16_t eth_ign_proto;
 static timer_t rl_watchdog;
 
-FORWARD _PROTOTYPE(unsigned my_inb, (U16_t port));
-FORWARD _PROTOTYPE(unsigned my_inw, (U16_t port));
-FORWARD _PROTOTYPE(unsigned my_inl, (U16_t port));
-static unsigned my_inb(U16_t port)
+static unsigned my_inb(u16_t port)
 {
 	u32_t value;
 	int s;
@@ -193,7 +190,7 @@ static unsigned my_inb(U16_t port)
 		printf("RTL8169: warning, sys_inb failed: %d\n", s);
 	return value;
 }
-static unsigned my_inw(U16_t port)
+static unsigned my_inw(u16_t port)
 {
 	u32_t value;
 	int s;
@@ -201,9 +198,9 @@ static unsigned my_inw(U16_t port)
 		printf("RTL8169: warning, sys_inw failed: %d\n", s);
 	return value;
 }
-static unsigned my_inl(U16_t port)
+static unsigned my_inl(u16_t port)
 {
-	U32_t value;
+	u32_t value;
 	int s;
 	if ((s = sys_inl(port, &value)) != OK)
 		printf("RTL8169: warning, sys_inl failed: %d\n", s);
@@ -213,21 +210,21 @@ static unsigned my_inl(U16_t port)
 #define rl_inw(port, offset)	(my_inw((port) + (offset)))
 #define rl_inl(port, offset)	(my_inl((port) + (offset)))
 
-static void my_outb(U16_t port, u8_t value)
+static void my_outb(u16_t port, u8_t value)
 {
 	int s;
 
 	if ((s = sys_outb(port, value)) != OK)
 		printf("RTL8169: warning, sys_outb failed: %d\n", s);
 }
-static void my_outw(U16_t port, U16_t value)
+static void my_outw(u16_t port, u16_t value)
 {
 	int s;
 
 	if ((s = sys_outw(port, value)) != OK)
 		printf("RTL8169: warning, sys_outw failed: %d\n", s);
 }
-static void my_outl(U16_t port, U32_t value)
+static void my_outl(u16_t port, u32_t value)
 {
 	int s;
 
@@ -410,7 +407,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 	exit(0);
 }
 
-static void mdio_write(U16_t port, int regaddr, int value)
+static void mdio_write(u16_t port, int regaddr, int value)
 {
 	int i;
 
@@ -428,7 +425,7 @@ static void mdio_write(U16_t port, int regaddr, int value)
 	}
 }
 
-static int mdio_read(U16_t port, int regaddr)
+static int mdio_read(u16_t port, int regaddr)
 {
 	int i, value = -1;
 

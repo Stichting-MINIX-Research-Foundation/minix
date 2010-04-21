@@ -11,5 +11,5 @@ extern int tcp_fd;
 _PROTOTYPE(int NetInit, (void));
 _PROTOTYPE(int getreply, (struct talk_reply *reply, int timeout));
 _PROTOTYPE(int sendrequest, (struct talk_request *request, int here));
-_PROTOTYPE(int NetConnect, (U16_t port));
+_PROTOTYPE(int NetConnect, (u16_t port));
 _PROTOTYPE(int NetListen, (int timeout));

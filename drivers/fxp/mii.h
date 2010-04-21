@@ -111,8 +111,8 @@ Definitions for the Media Independent (Ethernet) Interface
 #define		MII_ESTAT_RES		0x0FFF	/* Reserved */
 /* 0x10 ... 0x1F */		/* Vendor Specific */
 
-_PROTOTYPE( void mii_print_stat_speed, (U16_t stat, U16_t extstat)	);
-_PROTOTYPE( void mii_print_techab, (U16_t techab)			);
+_PROTOTYPE( void mii_print_stat_speed, (u16_t stat, u16_t extstat)	);
+_PROTOTYPE( void mii_print_techab, (u16_t techab)			);
 
 #endif
 /*

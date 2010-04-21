@@ -651,11 +651,12 @@ time_t timeout;
 	assert(result == NW_OK);
 }
 
-PUBLIC void ipr_mtu(port_nr, dest, mtu, timeout)
-int port_nr;
-ipaddr_t dest;
-u16_t mtu;
-time_t timeout;
+PUBLIC void ipr_mtu(
+  int port_nr,
+  ipaddr_t dest,
+  u16_t mtu,
+  time_t timeout
+)
 {
 	oroute_t *oroute;
 	int result;

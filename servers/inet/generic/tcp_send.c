@@ -530,10 +530,11 @@ after_data:
 tcp_release_retrans
 */
 
-PUBLIC void tcp_release_retrans(tcp_conn, seg_ack, new_win)
-tcp_conn_t *tcp_conn;
-u32_t seg_ack;
-u16_t new_win;
+PUBLIC void tcp_release_retrans(
+  tcp_conn_t *tcp_conn,
+  u32_t seg_ack,
+  u16_t new_win
+)
 {
 	tcp_fd_t *tcp_fd;
 	size_t size, offset;

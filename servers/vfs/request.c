@@ -135,7 +135,7 @@ PUBLIC int req_chown(
 /*===========================================================================*
  *				req_create				     *
  *===========================================================================*/
-int req_create(
+PUBLIC int req_create(
   int fs_e,
   ino_t inode_nr,
   int omode,
@@ -204,10 +204,7 @@ PUBLIC int req_flush(endpoint_t fs_e, dev_t dev)
 /*===========================================================================*
  *				req_fstatfs	    			     *
  *===========================================================================*/
-PUBLIC int req_fstatfs(fs_e, who_e, buf)
-int fs_e;
-int who_e;
-char *buf;
+PUBLIC int req_fstatfs(int fs_e, int who_e, char *buf)
 {
   int r;
   cp_grant_id_t grant_id;
@@ -233,11 +230,7 @@ char *buf;
 /*===========================================================================*
  *				req_ftrunc	     			     *
  *===========================================================================*/
-PUBLIC int req_ftrunc(fs_e, inode_nr, start, end)
-endpoint_t fs_e;
-ino_t inode_nr;
-off_t start;
-off_t end;
+PUBLIC int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
 {
   message m;
 
@@ -257,13 +250,14 @@ off_t end;
 /*===========================================================================*
  *				req_getdents	     			     *
  *===========================================================================*/
-PUBLIC int req_getdents(fs_e, inode_nr, pos, buf, size, new_pos)
-endpoint_t fs_e;
-ino_t inode_nr;
-u64_t pos;
-char *buf;
-size_t size;
-u64_t *new_pos;
+PUBLIC int req_getdents(
+  endpoint_t fs_e,
+  ino_t inode_nr,
+  u64_t pos,
+  char *buf,
+  size_t size,
+  u64_t *new_pos
+)
 {
   int r;
   message m;
@@ -295,9 +289,7 @@ u64_t *new_pos;
 /*===========================================================================*
  *				req_inhibread	  			     *
  *===========================================================================*/
-PUBLIC int req_inhibread(fs_e, inode_nr)
-endpoint_t fs_e;
-ino_t inode_nr;
+PUBLIC int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
 {
   message m;
 
@@ -313,18 +305,18 @@ ino_t inode_nr;
 /*===========================================================================*
  *				req_link	       			     *
  *===========================================================================*/
-PUBLIC int req_link(fs_e, link_parent, lastc, linked_file)
-endpoint_t fs_e;
-ino_t link_parent;
-char *lastc;
-ino_t linked_file;
+PUBLIC int req_link(
+  endpoint_t fs_e,
+  ino_t link_parent,
+  char *lastc,
+  ino_t linked_file
+)
 {
   int r;
   cp_grant_id_t grant_id;
-  size_t len;
+  const size_t len = strlen(lastc) + 1;
   message m;
 
-  len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
 	  panic("req_link: cpf_grant_direct failed");
@@ -526,9 +518,7 @@ PUBLIC int req_mknod(
 /*===========================================================================*
  *				req_mountpoint	                 	     *
  *===========================================================================*/
-PUBLIC int req_mountpoint(fs_e, inode_nr)
-endpoint_t fs_e;
-ino_t inode_nr;
+PUBLIC int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 {
   message m;
 

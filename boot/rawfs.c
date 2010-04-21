@@ -2,7 +2,6 @@
  *								23 Dec 1991
  *					     Based on readfs by Paul Polderman
  */
-#define nil 0
 #define _POSIX_SOURCE	1
 #define _MINIX		1
 #include <sys/types.h>
