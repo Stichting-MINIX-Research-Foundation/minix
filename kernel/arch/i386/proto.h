@@ -170,8 +170,6 @@ _PROTOTYPE(void __user_copy_msg_pointer_failure, (void));
 #define BREAKPOINT_FLAG_MODE_LOCAL	(1 << 4)
 #define BREAKPOINT_FLAG_MODE_GLOBAL	(2 << 4)
 
-_PROTOTYPE(int breakpoint_set, (phys_bytes linaddr, int index, int flags));
-
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"
 

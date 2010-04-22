@@ -45,25 +45,27 @@
 
 #define VERBOSE_APIC(x) x
 
-PUBLIC int reboot_type;
-PUBLIC int ioapic_enabled;
-PUBLIC u32_t ioapic_id_mask[8], lapic_id_mask[8];
+PRIVATE int reboot_type;
+PRIVATE int ioapic_enabled;
+PRIVATE u32_t ioapic_id_mask[8];
+PRIVATE u32_t lapic_id_mask[8];
 PUBLIC u32_t lapic_addr_vaddr;
 PUBLIC vir_bytes lapic_addr;
 PUBLIC vir_bytes lapic_eoi_addr;
-PUBLIC u32_t lapic_taskpri_addr;
-PUBLIC int bsp_lapic_id;
+PRIVATE u32_t lapic_taskpri_addr;
 
 PRIVATE volatile int probe_ticks;
 PRIVATE	u64_t tsc0, tsc1;
 PRIVATE	u32_t lapic_tctr0, lapic_tctr1;
 
-u8_t apicid2cpuid[MAX_NR_APICIDS+1];
-unsigned apic_imcrp;
-unsigned nioapics;
-unsigned nbuses;
-unsigned nintrs;
-unsigned nlints;
+/* FIXME: this is only accessed from assembly, never from C. Move to asm? */
+PUBLIC u8_t apicid2cpuid[MAX_NR_APICIDS+1];  /* Accessed from asm */
+
+PRIVATE unsigned apic_imcrp;
+PRIVATE unsigned nioapics;
+PRIVATE unsigned nbuses;
+PRIVATE unsigned nintrs;
+PRIVATE const unsigned nlints = 0;
 
 /*
  * FIXME this should be a cpulocal variable but there are some problems with
@@ -100,7 +102,7 @@ PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 	return 1;
 }
 
-PUBLIC void apic_calibrate_clocks(void)
+PRIVATE void apic_calibrate_clocks(void)
 {
 	u32_t lvtt, val, lapic_delta;
 	u64_t tsc_delta;
@@ -213,19 +215,19 @@ PUBLIC void lapic_stop_timer(void)
 	lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
 }
 
-PUBLIC void lapic_microsec_sleep(unsigned count)
+PRIVATE void lapic_microsec_sleep(unsigned count)
 {
 	lapic_set_timer_one_shot(count);
 	while (lapic_read (LAPIC_TIMER_CCR));
 }
 
-PUBLIC  u32_t lapic_errstatus (void)
+PRIVATE  u32_t lapic_errstatus(void)
 {
 	lapic_write(LAPIC_ESR, 0);
 	return lapic_read(LAPIC_ESR);
 }
 
-PUBLIC void lapic_disable(void)
+PRIVATE void lapic_disable(void)
 {
 	/* Disable current APIC and close interrupts from PIC */
 	u32_t val;
@@ -432,7 +434,7 @@ PRIVATE void lapic_set_dummy_handlers(void)
 #endif
 
 /* Build descriptors for interrupt gates in IDT. */
-PUBLIC void apic_idt_init(const int reset)
+PRIVATE void apic_idt_init(const int reset)
 {
 	/* Set up idt tables for smp mode.
 	 */

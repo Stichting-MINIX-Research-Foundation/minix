@@ -3,7 +3,7 @@
 
 #include "debugreg.h"
 
-int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
+PRIVATE int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 {
 	u32_t dr7, dr7flags;
 	

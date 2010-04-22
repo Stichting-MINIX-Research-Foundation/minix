@@ -24,6 +24,16 @@
 #define ICW4_PC_AEOI_MASTER  0x0F /* not SFNM, buffered, auto EOI, 8086 */
 
 /*===========================================================================*
+ *				intr_disabled			     	     *
+ *===========================================================================*/
+PRIVATE int intr_disabled(void)
+{
+	if(!(read_cpu_flags() & X86_FLAG_I))
+		return 1;
+	return 0;
+}
+
+/*===========================================================================*
  *				intr_init				     *
  *===========================================================================*/
 PUBLIC int intr_init(const int mine, const int auto_eoi)
@@ -71,16 +81,6 @@ PUBLIC int intr_init(const int mine, const int auto_eoi)
 #endif
 
   return OK;
-}
-
-/*===========================================================================*
- *				intr_disabled			     	     *
- *===========================================================================*/
-PUBLIC int intr_disabled(void)
-{
-	if(!(read_cpu_flags() & X86_FLAG_I))
-		return 1;
-	return 0;
 }
 
 PUBLIC void irq_8259_unmask(const int irq)

@@ -49,8 +49,8 @@
  * because the dummy is declared extern. If an illegal call is given, the 
  * array size will be negative and this won't compile. 
  */
-PUBLIC int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
-char *callnames[NR_SYS_CALLS];
+PRIVATE int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
+PRIVATE char *callnames[NR_SYS_CALLS];
 
 #define map(call_nr, handler) \
     {extern int dummy[NR_SYS_CALLS>(unsigned)(call_nr-KERNEL_CALL) ? 1:-1];} \
@@ -474,6 +474,37 @@ vir_bytes bytes;                /* size */
 }
 
 /*===========================================================================*
+ *			         clear_ipc				     *
+ *===========================================================================*/
+PRIVATE void clear_ipc(
+  register struct proc *rc	/* slot of process to clean up */
+)
+{
+/* Clear IPC data for a given process slot. */
+  struct proc **xpp;			/* iterate over caller queue */
+
+  if (RTS_ISSET(rc, RTS_SENDING)) {
+      int target_proc;
+
+      okendpt(rc->p_sendto_e, &target_proc);
+      xpp = &proc_addr(target_proc)->p_caller_q; /* destination's queue */
+      while (*xpp) {		/* check entire queue */
+          if (*xpp == rc) {			/* process is on the queue */
+              *xpp = (*xpp)->p_q_link;		/* replace by next process */
+#if DEBUG_ENABLE_IPC_WARNINGS
+	      printf("endpoint %d / %s removed from queue at %d\n",
+	          rc->p_endpoint, rc->p_name, rc->p_sendto_e);
+#endif
+              break;				/* can only be queued once */
+          }
+          xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
+      }
+      rc->p_rts_flags &= ~RTS_SENDING;
+  }
+  rc->p_rts_flags &= ~RTS_RECEIVING;
+}
+
+/*===========================================================================*
  *			         clear_endpoint				     *
  *===========================================================================*/
 PUBLIC void clear_endpoint(rc)
@@ -499,36 +530,6 @@ register struct proc *rc;		/* slot of process to clean up */
    */
   clear_ipc_refs(rc, EDEADSRCDST);
 
-}
-
-/*===========================================================================*
- *			         clear_ipc				     *
- *===========================================================================*/
-PUBLIC void clear_ipc(rc)
-register struct proc *rc;		/* slot of process to clean up */
-{
-/* Clear IPC data for a given process slot. */
-  struct proc **xpp;			/* iterate over caller queue */
-
-  if (RTS_ISSET(rc, RTS_SENDING)) {
-      int target_proc;
-
-      okendpt(rc->p_sendto_e, &target_proc);
-      xpp = &proc_addr(target_proc)->p_caller_q; /* destination's queue */
-      while (*xpp) {		/* check entire queue */
-          if (*xpp == rc) {			/* process is on the queue */
-              *xpp = (*xpp)->p_q_link;		/* replace by next process */
-#if DEBUG_ENABLE_IPC_WARNINGS
-	      printf("endpoint %d / %s removed from queue at %d\n",
-	          rc->p_endpoint, rc->p_name, rc->p_sendto_e);
-#endif
-              break;				/* can only be queued once */
-          }
-          xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
-      }
-      rc->p_rts_flags &= ~RTS_SENDING;
-  }
-  rc->p_rts_flags &= ~RTS_RECEIVING;
 }
 
 /*===========================================================================*

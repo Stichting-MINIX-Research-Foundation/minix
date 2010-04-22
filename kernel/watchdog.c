@@ -6,7 +6,7 @@
 
 #include "watchdog.h"
 
-unsigned watchdog_local_timer_ticks;
+unsigned watchdog_local_timer_ticks = 0U;
 struct arch_watchdog *watchdog;
 int watchdog_enabled;
 

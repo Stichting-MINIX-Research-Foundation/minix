@@ -92,11 +92,8 @@
 
 #include "kernel/kernel.h"
 
-EXTERN int ioapic_enabled;
 EXTERN vir_bytes lapic_addr;
 EXTERN u32_t lapic_eoi_addr;
-EXTERN u32_t lapic_taskpri_addr;
-EXTERN int bsp_lapic_id;
 
 #define MAX_NR_IOAPICS			32
 #define MAX_NR_BUSES			32
@@ -104,39 +101,17 @@ EXTERN int bsp_lapic_id;
 #define MAX_NR_LCLINTS			2
 
 EXTERN u8_t apicid2cpuid[MAX_NR_APICIDS+1];
-EXTERN unsigned apic_imcrp;
-EXTERN unsigned nioapics;
-EXTERN unsigned nbuses;
-EXTERN unsigned nintrs;
-EXTERN unsigned nlints;
 
-EXTERN u32_t ioapic_id_mask[8];
-EXTERN u32_t lapic_id_mask[8];
 EXTERN u32_t lapic_addr_vaddr; /* we remember the virtual address here until we
 				  switch to paging */
 
-_PROTOTYPE (void calc_bus_clock, (void));
-_PROTOTYPE (u32_t lapic_errstatus, (void));
 /*
 _PROTOTYPE (u32_t ioapic_read, (u32_t addr, u32_t offset));
 _PROTOTYPE (void ioapic_write, (u32_t addr, u32_t offset, u32_t data));
 _PROTOTYPE (void lapic_eoi, (void));
 */
-_PROTOTYPE (void lapic_microsec_sleep, (unsigned count));
-_PROTOTYPE (void smp_ioapic_unmask, (void));
-_PROTOTYPE (void ioapic_disable_irqs, (u32_t irq));
-_PROTOTYPE (void ioapic_enable_irqs, (u32_t irq));
-_PROTOTYPE (u32_t ioapic_irqs_inuse, (void));
-_PROTOTYPE (void smp_recv_ipi, (int arg));
-_PROTOTYPE (void ioapic_config_pci_irq, (u32_t data));
 
 _PROTOTYPE (int lapic_enable, (void));
-_PROTOTYPE (void lapic_disable, (void));
-
-_PROTOTYPE (void ioapic_disable_all, (void));
-_PROTOTYPE (int ioapic_enable_all, (void));
-
-_PROTOTYPE(void apic_idt_init, (int reset));
 
 _PROTOTYPE(int apic_single_cpu_init, (void));
 

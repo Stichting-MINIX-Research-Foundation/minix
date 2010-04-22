@@ -21,7 +21,8 @@
 #include "hw_intr.h"
 
 /* number of lists of IRQ hooks, one list per supported line. */
-PUBLIC irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};
+PRIVATE irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};
+
 /*===========================================================================*
  *				put_irq_handler				     *
  *===========================================================================*/

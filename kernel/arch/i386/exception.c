@@ -11,7 +11,7 @@
 #include "kernel/proc.h"
 #include "kernel/proto.h"
 
-extern int catch_pagefaults;
+extern int catch_pagefaults = 0;
 
 void pagefault( struct proc *pr,
 		struct exception_frame * frame,

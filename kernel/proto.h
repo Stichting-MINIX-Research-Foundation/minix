@@ -69,7 +69,6 @@ _PROTOTYPE( void system_init, (void)					);
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 _PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t, vir_bytes));
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
-_PROTOTYPE( void clear_ipc, (struct proc *rc)				);
 _PROTOTYPE( void clear_ipc_refs, (struct proc *rc, int caller_ret)	);
 _PROTOTYPE( phys_bytes umap_bios, (vir_bytes vir_addr, vir_bytes bytes));
 _PROTOTYPE( void kernel_call_resume, (struct proc *p));
@@ -136,8 +135,6 @@ _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
 _PROTOTYPE( void vm_init, (struct proc *first)        			);
 _PROTOTYPE( phys_bytes umap_local, (register struct proc *rp, int seg,
 	vir_bytes vir_addr, vir_bytes bytes));
-_PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,
-        vir_bytes src_offset, phys_clicks dst_clicks, vir_bytes dst_offset));
 _PROTOTYPE( phys_bytes umap_remote, (const struct proc* rp, int seg,
         vir_bytes vir_addr, vir_bytes bytes)				);
 _PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp,
@@ -148,7 +145,6 @@ _PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
 _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
         int, phys_bytes, vir_bytes, int));
 _PROTOTYPE( int intr_init, (int, int)					);
-_PROTOTYPE( int intr_disabled, (void)					);
 _PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );
 _PROTOTYPE( void ser_putc, (char)						);

@@ -25,7 +25,7 @@ FORWARD _PROTOTYPE( void announce, (void));
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC void main()
+PUBLIC void main(void)
 {
 /* Start the ball rolling. */
   struct boot_image *ip;	/* boot image pointer */
