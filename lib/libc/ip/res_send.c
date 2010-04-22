@@ -86,6 +86,8 @@ static int udp_sendto _ARGS(( int fd, const char *buf, unsigned buflen,
 				ipaddr_t addr, udpport_t port ));
 static int udp_receive _ARGS(( int fd, char *buf, unsigned buflen,
 				time_t timeout ));
+static int tcpip_writeall _ARGS((int fd, const char *buf, size_t siz));
+static int tcp_connect _ARGS((ipaddr_t host, tcpport_t port, int *terrno));
 
 #endif /* !_MINIX */
 
@@ -755,10 +757,7 @@ static int tcp_connect(ipaddr_t host, tcpport_t port, int *terrno)
 	return fd;
 }
 
-static int tcpip_writeall(fd, buf, siz)
-int fd;
-const char *buf;
-size_t siz;
+static int tcpip_writeall(int fd, const char *buf, size_t siz)
 {
 	size_t siz_org;
 	int nbytes;

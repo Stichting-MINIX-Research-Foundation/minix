@@ -1036,9 +1036,10 @@ register tty_t *tp;		/* pointer to terminal to read from */
 /*===========================================================================*
  *				in_process				     *
  *===========================================================================*/
-PRIVATE void in_process_send_byte(tp, ch)
-tty_t *tp;	/* terminal on which character has arrived */
-int ch;		/* input character */
+PRIVATE void in_process_send_byte(
+  tty_t *tp,	/* terminal on which character has arrived */
+  int ch	/* input character */
+)
 {
 	/* Save the character in the input queue. */
 	*tp->tty_inhead++ = ch;
