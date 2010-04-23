@@ -98,6 +98,7 @@ SRCS=  \
 	asynsend.c \
 	kprintf.c \
 	kputc.c \
+	kputs.c \
 	tickdelay.c \
 	get_randomness.c \
 	getidle.c \
