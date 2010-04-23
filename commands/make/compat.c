@@ -411,7 +411,7 @@ again:
 		        }
 			fprintf(debug_file, "\n");
 		    }
-		    fprintf(debug_file, "*** Error code %d", status);
+		    printf("*** Error code %d", status);
 		}
 	    } else {
 		status = WTERMSIG(reason);		/* signaled */
