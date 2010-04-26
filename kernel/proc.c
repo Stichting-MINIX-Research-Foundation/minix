@@ -339,8 +339,10 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 		break;				/* done, or SEND failed */
 	/* fall through for SENDREC */
   case RECEIVE:			
-	if (call_nr == RECEIVE)
+	if (call_nr == RECEIVE) {
 		caller_ptr->p_misc_flags &= ~MF_REPLY_PEND;
+		IPC_STATUS_CLEAR(caller_ptr);  /* clear IPC status code */
+	}
 	result = mini_receive(caller_ptr, src_dst_e, m_ptr, 0);
 	break;
   case NOTIFY:
@@ -396,9 +398,6 @@ PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 	panic("sys_call: MF_DELIVERMSG on for %s / %d\n",
 		caller_ptr->p_name, caller_ptr->p_endpoint);
   }
-
-  /* Clear IPC status code. */
-  IPC_STATUS_CLEAR(caller_ptr);
 
   /* Now check if the call is known and try to perform the request. The only
    * system calls that exist in MINIX are sending and receiving messages.
@@ -540,8 +539,7 @@ const int flags;
 			return EFAULT;
 	} else {
 		dst_ptr->p_delivermsg = *m_ptr;
-		IPC_STATUS_ADD(dst_ptr,
-				IPC_STATUS_FLAGS(IPC_FLG_MSG_FROM_KERNEL));
+		IPC_STATUS_ADD_FLAGS(dst_ptr, IPC_FLG_MSG_FROM_KERNEL);
 	}
 
 	dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
@@ -549,7 +547,7 @@ const int flags;
 
 	call = (caller_ptr->p_misc_flags & MF_REPLY_PEND ? SENDREC
 		: (flags & NON_BLOCKING ? SENDNB : SEND));
-	IPC_STATUS_ADD(dst_ptr, IPC_STATUS_CALL_TO(call));
+	IPC_STATUS_ADD_CALL(dst_ptr, call);
 	RTS_UNSET(dst_ptr, RTS_RECEIVING);
   } else {
 	if(flags & NON_BLOCKING) {
@@ -665,7 +663,7 @@ const int flags;
 	    caller_ptr->p_delivermsg.m_source = hisep;
 	    caller_ptr->p_misc_flags |= MF_DELIVERMSG;
 
-	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(NOTIFY));
+	    IPC_STATUS_ADD_CALL(caller_ptr, NOTIFY);
 
 	    return(OK);
         }
@@ -680,7 +678,7 @@ const int flags;
 		r= try_async(caller_ptr);
 
 	if (r == OK) {
-		IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(SENDA));
+		IPC_STATUS_ADD_CALL(caller_ptr, SENDA);
 		return OK;	/* Got a message */
 	}
     }
@@ -701,15 +699,14 @@ const int flags;
 	    RTS_UNSET(*xpp, RTS_SENDING);
 
 	    call = ((*xpp)->p_misc_flags & MF_REPLY_PEND ? SENDREC : SEND);
-	    IPC_STATUS_ADD(caller_ptr, IPC_STATUS_CALL_TO(call));
+	    IPC_STATUS_ADD_CALL(caller_ptr, call);
 
 	    /*
 	     * if the message is originaly from the kernel on behalf of this
 	     * process, we must send the status flags accordingly
 	     */
 	    if ((*xpp)->p_misc_flags & MF_SENDING_FROM_KERNEL) {
-		IPC_STATUS_ADD(caller_ptr,
-				IPC_STATUS_FLAGS(IPC_FLG_MSG_FROM_KERNEL));
+		IPC_STATUS_ADD_FLAGS(caller_ptr, IPC_FLG_MSG_FROM_KERNEL);
 		/* we can clean the flag now, not need anymore */
 		(*xpp)->p_misc_flags &= ~MF_SENDING_FROM_KERNEL;
 	    }
@@ -775,7 +772,7 @@ PUBLIC int mini_notify(
       dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
       dst_ptr->p_misc_flags |= MF_DELIVERMSG;
 
-      IPC_STATUS_ADD(dst_ptr, IPC_STATUS_CALL_TO(NOTIFY));
+      IPC_STATUS_ADD_CALL(dst_ptr, NOTIFY);
       RTS_UNSET(dst_ptr, RTS_RECEIVING);
 
       return(OK);
@@ -957,8 +954,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 			else {
 				dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
 				dst_ptr->p_misc_flags |= MF_DELIVERMSG;
-				IPC_STATUS_ADD(dst_ptr,
-					IPC_STATUS_CALL_TO(SENDA));
+				IPC_STATUS_ADD_CALL(dst_ptr, SENDA);
 				RTS_UNSET(dst_ptr, RTS_RECEIVING);
 				tabent.result = OK;
 			}
