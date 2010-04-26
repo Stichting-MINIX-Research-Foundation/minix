@@ -9,7 +9,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <assert.h>
 #include <ctype.h>
+#include <a.out.h>
 #include <machine/partition.h>
 
 #include <sys/stat.h>
@@ -38,6 +40,7 @@ typedef unsigned long int u_int32_t;
 
 #define ISO_SECTOR 2048
 #define VIRTUAL_SECTOR	512
+#define ROUNDUP(v, n) (((v)+(n)-1)/(n))
 
 #define CURRENTDIR	"."
 #define PARENTDIR	".."
@@ -755,7 +758,7 @@ writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
 
 	/* fill out the rest of the sector with 0's */
 
-	if((rest = ISO_SECTOR - (written % 2048))) {
+	if((rest = ISO_SECTOR - (written % ISO_SECTOR))) {
 		memset(buf, 0, sizeof(buf));
 		written += Write(fd, buf, rest);
 	}
@@ -766,23 +769,80 @@ writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
 }
 
 int
-writebootimage(char *bootimage, int bootfd, int fd, int *currentsector)
+writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
+	char *appendsectorinfo, struct node *root)
 {
-	static char buf[1024*64];
-	ssize_t chunk, written = 0, rest;
-	int virtuals;
+	static unsigned char buf[1024*64], *addr;
+	ssize_t written = 0, rest;
+	int virtuals, rem;
+	struct exec hdr;
+	struct bap {
+		off_t sector;
+		int length;
+	} bap[2];
 
-	while((chunk=read(bootfd, buf, sizeof(buf))) > 0)
-		written += Write(fd, buf, chunk);
+	bap[1].length = bap[1].sector = 0;
 
-	if(chunk < 0) {
-		perror("read boot image");
+	Read(bootfd, &hdr, A_MINHDR);
+
+	if(hdr.a_magic[0] != A_MAGIC0) {
+		fprintf(stderr, "bad magic in a.out of boot image.\n");
 		exit(1);
 	}
 
-	virtuals = written / VIRTUAL_SECTOR;
+	if(hdr.a_hdrlen > sizeof(hdr)) {
+		fprintf(stderr, "surprisingly large header in boot image.\n");
+		exit(1);
+	}
 
-	if((rest = ISO_SECTOR - (written % 2048))) {
+	/* read rest of a.out header. */
+	Read(bootfd, (char *) &hdr + A_MINHDR, hdr.a_hdrlen - A_MINHDR);
+
+	/* copy text+data */
+	rem = hdr.a_text + hdr.a_data;
+
+	while(rem > 0) {
+		int want;
+		want = rem < sizeof(buf) ? rem : sizeof(buf);
+		Read(bootfd, buf, want);
+		written += Write(fd, buf, want);
+		rem -= want;
+	}
+
+	if(appendsectorinfo) {
+		struct node *n;
+		for(n = root->firstchild; n; n = n ->nextchild) {
+			if(!strcasecmp(appendsectorinfo, n->name)) {
+				bap[0].sector = n->startsector;
+				bap[0].length = ROUNDUP(n->bytesize, ISO_SECTOR);
+				break;
+			}
+		}
+		if(!n) {
+			fprintf(stderr, "%s not found in root.\n",
+				appendsectorinfo);
+			exit(1);
+		}
+
+		fprintf(stderr, " * appended sector info: 0x%lx len 0x%lx\n",
+			bap[0].sector, bap[0].length);
+	}
+
+	addr = buf;
+	addr[0] = bap[0].length;	assert(addr[0] > 0);
+	addr[1] = (bap[0].sector >>  0) & 0xFF;
+	addr[2] = (bap[0].sector >>  8) & 0xFF;
+	addr[3] = (bap[0].sector >> 16) & 0xFF;
+	addr[4] = 0;
+	addr[5] = 0;
+
+	/* Always save space for sector info after the boot image. */
+	written += Write(fd, addr, 6);
+
+        virtuals = ROUNDUP(written, VIRTUAL_SECTOR);
+        assert(virtuals * VIRTUAL_SECTOR >= written);                           
+
+	if((rest = ISO_SECTOR - (written % ISO_SECTOR))) {
 		memset(buf, 0, sizeof(buf));
 		written += Write(fd, buf, rest);
 	}
@@ -847,6 +907,7 @@ main(int argc, char *argv[])
 	int pvdsector;
 	int bigpath, littlepath, pathbytes = 0, dirsector, filesector, enddir;
 	int bootvolumesector, bootcatalogsector;
+	char *appendsectorinfo = NULL;
 
 	prog = argv[0];
 
@@ -861,7 +922,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	while ((ch = getopt(argc, argv, "b:s:Rb:hl:nf")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:s:Rb:hl:nf")) != -1) {
 		switch(ch) {
 			case 's':
 				if(optarg[0] != '0' || optarg[1] != 'x') {
@@ -879,6 +940,10 @@ main(int argc, char *argv[])
 				break;
 			case 'f':
 				bootmedia= BOOTMEDIA_144M;
+				break;
+			case 'a':
+				if(!(appendsectorinfo = strdup(optarg)))
+					exit(1);
 				break;
 			case 'l':
 				label = optarg;
@@ -902,7 +967,7 @@ main(int argc, char *argv[])
 	/* Args check */
 
 	if(argc != 2) {
-		fprintf(stderr, "usage: %s [-l <label>] [-b <bootimage> [-n] [-f] [-h] [-s <bootsegment>] ] <dir> <isofile>\n",
+		fprintf(stderr, "usage: %s [-l <label>] [-b <bootimage> [-n] [-f] [-h] [-s <bootsegment>] [ -a <appendfile> ] <dir> <isofile>\n",
 			prog);
 		return 1;
 	}
@@ -918,6 +983,14 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: boot seg provided but no boot image\n",
 			prog);
 		return 1;
+	}
+
+	if(appendsectorinfo) {
+		if(!bootimage || bootmedia != BOOTMEDIA_NONE) {
+			fprintf(stderr, "%s: append sector info where?\n",
+				prog);
+			return 1;
+		}
 	}
 
 	/* create .iso file */
@@ -1012,11 +1085,9 @@ main(int argc, char *argv[])
 		fprintf(stderr, " * writing the boot image\n");
 		imagesector = currentsector;
 		imagesectors = writebootimage(bootimage, bootfd,
-			fd, &currentsector);
-		fprintf(stderr, " * image: %d virtual sectors @ sector 0x%x\n",
-			imagesectors, imagesector);
-
-		close(bootfd);
+			fd, &currentsector, NULL, &root);
+		fprintf(stderr, " * image: %d %d-byte sectors @ cd sector 0x%x\n",
+			imagesectors, VIRTUAL_SECTOR, imagesector);
 	}
 
 	/* write out all the file data */
@@ -1088,6 +1159,16 @@ main(int argc, char *argv[])
 		fprintf(stderr, " * rewriting the boot rvd\n");
 		seeksector(fd, bootvolumesector, &currentsector);
 		writebootrecord(fd, &currentsector, bootcatalogsector);
+
+		if(appendsectorinfo) {
+			Lseek(bootfd, 0, SEEK_SET);
+			fprintf(stderr, " * rewriting boot image\n");
+			seeksector(fd, imagesector, &currentsector);
+			writebootimage(bootimage, bootfd,
+				fd, &currentsector, appendsectorinfo, &root);
+
+			close(bootfd);
+		}
 	}
 
 	fprintf(stderr, " * all ok\n");

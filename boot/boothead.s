@@ -46,25 +46,29 @@
 
 .text
 
-! We assume boot is always linked with a short (32 byte) a.out header and has
-! 16 bytes of its own prefix, so 48 bytes to skip. bootblock jumps into us
-! at offset 0x30, cd boot code at 0x40
 
-	! Set cs right
-	! (skip short a.out header plus 16 byte preefix)
-	jmpf	boot, LOADSEG+3		
-	.space	11
+! Set segment registers and stack pointer using the programs own header!
+! The header is either 32 bytes (short form) or 48 bytes (long form).  The
+! bootblock will jump to address 0x10030 in both cases, calling one of the
+! two jmpf instructions below.
+!
+! CD bootblock jumps to address 0x10050 in both cases.
 
-	! entry point when booting from CD
+	jmpf	boot, LOADSEG+3	! Set cs right (skipping long a.out header)
+	.space	11		! jmpf + 11 = 16 bytes
+	jmpf	boot, LOADSEG+2	! Set cs right (skipping short a.out header)
+	.space	11		! jmpf + 11 = 16 bytes
 	jmpf	cdboot, LOADSEG+3
-	.space	11
+	.space	11		
+	jmpf	cdboot, LOADSEG+2
+	.space	11		
 cdboot:
 	mov	bx, #1
 	jmp	commonboot
 boot:
 	mov	bx, #0
 commonboot:
-	mov	ax, #LOADSEG+1
+	mov	ax, #LOADSEG
 	mov	ds, ax		! ds = header
 
 	movb	al, a_flags
@@ -129,7 +133,7 @@ sepID:
 	mov	_daddr+0, ax
 	mov	_daddr+2, dx
 	push	ds
-	mov	ax, #LOADSEG+1
+	mov	ax, #LOADSEG
 	mov	ds, ax		! Back to the header once more
 	mov	ax, a_total+0
 	mov	dx, a_total+2	! dx:ax = data + bss + heap + stack

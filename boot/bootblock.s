@@ -1,3 +1,4 @@
+#
 !	Bootblock 1.5 - Minix boot block.		Author: Kees J. Bot
 !					   			21 Dec 1991
 !
@@ -18,15 +19,21 @@
 
 	LOADOFF	   =	0x7C00	! 0x0000:LOADOFF is where this code is loaded
 	BOOTSEG    =	0x1000	! Secondary boot code segment.
+#ifdef CDBOOT
+	BOOTOFF	   =	0x0050	! Offset into /boot above header
+#else
 	BOOTOFF	   =	0x0030	! Offset into /boot above header
+#endif
 	BUFFER	   =	0x0600	! First free memory
+#ifndef CDBOOT			/* just constants, but make no sense for CDs */
 	LOWSEC     =	     8	! Offset of logical first sector in partition
 				! table
 
 	! Variables addressed using bp register
-	device	   =	     0	! The boot device
 	lowsec	   =	     2	! Offset of boot partition within drive
 	secpcyl	   =	     6	! Sectors per cylinder = heads * sectors
+#endif
+	device	   =	     0	! The boot device
 
 .text
 
@@ -51,18 +58,21 @@ boot:
 
 	mov	di, #LOADOFF+sectors	! char *di = sectors;
 
+#ifndef CDBOOT
 	testb	dl, dl		! Winchester disks if dl >= 0x80
 	jge	floppy
+#endif
 
 winchester:
 
+#ifndef CDBOOT
 ! Get the offset of the first sector of the boot partition from the partition
 ! table.  The table is found at es:si, the lowsec parameter at offset LOWSEC.
 
 	eseg
 	les	ax, LOWSEC(si)	  ! es:ax = LOWSEC+2(si):LOWSEC(si)
-	mov	lowsec+0(bp), ax  ! Low 16 bits of partition's first sector
-	mov	lowsec+2(bp), es  ! High 16 bits of partition's first sector
+	mov	lowsec+0(bp), ax  ! Low 16 bits of partitions first sector
+	mov	lowsec+2(bp), es  ! High 16 bits of partitions first sector
 
 ! Get the drive parameters, the number of sectors is bluntly written into the
 ! floppy disk sectors/track array.
@@ -72,8 +82,10 @@ winchester:
 	andb	cl, #0x3F	! cl = max sector number (1-origin)
 	movb	(di), cl	! Number of sectors per track
 	incb	dh		! dh = 1 + max head number (0-origin)
+#endif
 	jmp	loadboot
 
+#ifndef CDBOOT
 ! Floppy:
 ! Execute three read tests to determine the drive type.  Test for each floppy
 ! type by reading the last sector on the first track.  If it fails, try a type
@@ -101,13 +113,16 @@ floppy:	xorb	ah, ah		! Reset drive
 	jc	next		! Error, try the next floppy type
 
 success:movb	dh, #2		! Load number of heads for multiply
+#endif
 
 loadboot:
 ! Load /boot from the boot device
 
+#ifndef CDBOOT
 	movb	al, (di)	! al = (di) = sectors per track
 	mulb	dh		! dh = heads, ax = heads * sectors
 	mov	secpcyl(bp), ax	! Sectors per cylinder = heads * sectors
+#endif
 
 	mov	ax, #BOOTSEG	! Segment to load /boot into
 	mov	es, ax
@@ -117,6 +132,7 @@ load:
 	mov	ax, 1(si)	! Get next sector number: low 16 bits
 	movb	dl, 3(si)	! Bits 16-23 for your up to 8GB partition
 	xorb	dh, dh		! dx:ax = sector within partition
+#ifndef CDBOOT
 	add	ax, lowsec+0(bp)
 	adc	dx, lowsec+2(bp)! dx:ax = sector within drive
 	cmp	dx, #[1024*255*63-255]>>16  ! Near 8G limit?
@@ -136,13 +152,14 @@ load:
 	movb	al, (di)	! Sectors per track - Sector number (0-origin)
 	subb	al, ah		! = Sectors left on this track
 	cmpb	al, (si)	! Compare with # sectors to read
-	jbe	read		! Can't read past the end of a cylinder?
+	jbe	read		! Cant read past the end of a cylinder?
 	movb	al, (si)	! (si) < sectors left on this track
 read:	push	ax		! Save al = sectors to read
 	movb	ah, #0x02	! Code for disk read (all registers in use now!)
 	int	0x13		! Call the BIOS for a read
 	pop	cx		! Restore al in cl
 	jmp	rdeval
+#endif
 bigdisk:
 	movb	cl, (si)	! Number of sectors to read
 	push	si		! Save si
@@ -161,6 +178,14 @@ rdeval:
 	movb	al, cl		! Restore al = sectors read
 	addb	bh, al		! bx += 2 * al * 256 (add bytes read)
 	addb	bh, al		! es:bx = where next sector must be read
+#ifdef CDBOOT
+	addb	bh, al		! For CDs, a sector is 2048 bytes, so
+	addb	bh, al		! do this 6 more times to get byte count.
+	addb	bh, al		
+	addb	bh, al		
+	addb	bh, al		
+	addb	bh, al		
+#endif
 	add	1(si), ax	! Update address by sectors read
 	adcb	3(si), ah	! Don't forget bits 16-23 (add ah = 0)
 	subb	(si), al	! Decrement sector count by sectors read

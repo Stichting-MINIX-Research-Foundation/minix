@@ -19,6 +19,14 @@ PACKAGESOURCELIST=package_sources.install
 secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
 
+RELEASERC=$HOME/.releaserc
+
+if [ -f $RELEASERC ]
+then	. $RELEASERC
+fi
+
+set -- $* $RELOPTS
+
 # SVN trunk repo
 TRUNK=https://gforge.cs.vu.nl/svn/minix/trunk
 
@@ -107,7 +115,7 @@ usr=/dev/c0d7p0s2
 RELEASEDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
-IMAGE=../boot/boot
+IMAGE=../boot/cdbootblock
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
@@ -394,7 +402,8 @@ fi
 if [ "$USB" -ne 0 ]; then
 	mv $bootimage $IMG
 else
-	writeisofs -s0x1000 -l MINIX -b $bootimage $boottype $CDFILES $IMG || exit 1
+	cp ../boot/boot $CDFILES
+	writeisofs -s0x0 -l MINIX -a boot -b $bootimage $boottype $CDFILES $IMG || exit 1
 
 	if [ "$HDEMU" -eq 0 ]
 	then
@@ -414,6 +423,8 @@ else
 		# Make sure there is no hole..! Otherwise the ISO format is
 		# unreadable.
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
+		echo "gzipping $IMG"
+		gzip $IMG
 	fi
 fi
 
