@@ -66,7 +66,6 @@ _PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,
 _PROTOTYPE( int sys_vm_map, (endpoint_t proc_ep, int do_map,
 	phys_bytes base, phys_bytes size, phys_bytes offset));
 _PROTOTYPE( int sys_vmctl, (endpoint_t who, int param, u32_t value));
-_PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_t *err));
 _PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
 _PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
         vir_bytes *len, int *wrflag, endpoint_t *who_s, vir_bytes *mem_s,
