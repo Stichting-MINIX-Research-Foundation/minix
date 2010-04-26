@@ -8,7 +8,6 @@ SRCS+=  \
 	connect.c \
 	dhcp_gettag.c \
 	dhcp_settag.c \
-	domainname.c \
 	ether_line.c \
 	ethera2n.c \
 	ethere2a.c \
