@@ -264,7 +264,7 @@ PUBLIC int do_fcntl()
 PUBLIC int do_sync()
 {
   struct vmnt *vmp;
-  for (vmp = &vmnt[1]; vmp < &vmnt[NR_MNTS]; ++vmp) 
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) 
 	  if (vmp->m_dev != NO_DEV) 
                   req_sync(vmp->m_fs_e);
 
