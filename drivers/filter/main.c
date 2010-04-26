@@ -472,7 +472,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	driver_init();
 
 	/* Subscribe to driver events for VFS drivers. */
-	r = ds_subscribe("drv\.vfs\..*", DSF_INITIAL | DSF_OVERWRITE);
+	r = ds_subscribe("drv\\.vfs\\..*", DSF_INITIAL | DSF_OVERWRITE);
 	if(r != OK) {
 		panic("Filter: can't subscribe to driver events");
 	}
