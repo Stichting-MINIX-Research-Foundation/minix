@@ -24,16 +24,6 @@
 #define ICW4_PC_AEOI_MASTER  0x0F /* not SFNM, buffered, auto EOI, 8086 */
 
 /*===========================================================================*
- *				intr_disabled			     	     *
- *===========================================================================*/
-PRIVATE int intr_disabled(void)
-{
-	if(!(read_cpu_flags() & X86_FLAG_I))
-		return 1;
-	return 0;
-}
-
-/*===========================================================================*
  *				intr_init				     *
  *===========================================================================*/
 PUBLIC int intr_init(const int mine, const int auto_eoi)
@@ -43,8 +33,6 @@ PUBLIC int intr_init(const int mine, const int auto_eoi)
  * use the BIOS locations instead.  The flag "mine" is set if the 8259s are
  * to be programmed for MINIX, or to be reset to what the BIOS expects.
  */
-  if (!intr_disabled())
-	  intr_disable();
 
       /* The AT and newer PS/2 have two interrupt controllers, one master,
        * one slaved at IRQ 2.  (We don't have to deal with the PC that

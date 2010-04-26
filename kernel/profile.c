@@ -40,16 +40,12 @@ PUBLIC void init_profile_clock(u32_t freq)
 {
   int irq;
 
-  intr_disable();
-
   if((irq = arch_init_profile_clock(freq)) >= 0) {
 	/* Register interrupt handler for statistical system profiling.  */
 	profile_clock_hook.proc_nr_e = CLOCK;
 	put_irq_handler(&profile_clock_hook, irq, profile_clock_handler);
 	enable_irq(&profile_clock_hook);
   }
-
-  intr_enable();
 }
 
 /*===========================================================================*
@@ -57,9 +53,7 @@ PUBLIC void init_profile_clock(u32_t freq)
  *===========================================================================*/
 PUBLIC void stop_profile_clock()
 {
-  intr_disable();
   arch_stop_profile_clock();
-  intr_enable();
 
   /* Unregister interrupt handler. */
   disable_irq(&profile_clock_hook);
