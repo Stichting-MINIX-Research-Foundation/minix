@@ -28,16 +28,6 @@ typedef struct segframe {
 	struct segdesc_s p_ldt[LDT_SIZE]; /* CS, DS and remote */
 } segframe_t;
 
-/* Page fault event. Stored in process table. Only valid if PAGEFAULT
- * set in p_rts_flags.
- */
-struct pagefault
-{
-	u32_t   pf_virtual;     /* Address causing fault (CR2). */
-	u32_t   pf_flags;       /* Pagefault flags on stack. */
-};
-
-
 /* fpu_state_s is used in kernel proc table.
  * Any changes in this structure requires changes in sconst.h,
  * since this structure is used in proc structure. */

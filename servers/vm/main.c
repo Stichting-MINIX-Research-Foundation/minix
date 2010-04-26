@@ -74,7 +74,7 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 PUBLIC int main(void)
 {
   message msg;
-  int result, who_e;
+  int result, who_e, rcv_sts;
   sigset_t sigset;
 
   /* SEF local startup. */
@@ -92,12 +92,12 @@ PUBLIC int main(void)
 	}
 	SANITYCHECK(SCL_DETAIL);
 
-  	if ((r=sef_receive(ANY, &msg)) != OK)
-		panic("sef_receive() error: %d", r);
+  	if ((r=sef_receive_status(ANY, &msg, &rcv_sts)) != OK)
+		panic("sef_receive_status() error: %d", r);
 
 	SANITYCHECK(SCL_DETAIL);
 
-	if(msg.m_type & NOTIFY_MESSAGE) {
+	if (is_ipc_notify(rcv_sts)) {
 		/* Unexpected notify(). */
 		printf("VM: ignoring notify() from %d\n", msg.m_source);
 		continue;
@@ -105,16 +105,30 @@ PUBLIC int main(void)
 	who_e = msg.m_source;
 	c = CALLNUMBER(msg.m_type);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
-	if(c < 0 || !vm_calls[c].vmc_func) {
+	if (msg.m_type == VM_PAGEFAULT) {
+		if (!IPC_STATUS_FLAGS_TEST(rcv_sts, IPC_FLG_MSG_FROM_KERNEL)) {
+			printf("VM: process %d faked VM_PAGEFAULT "
+					"message!\n", msg.m_source);
+		}
+		do_pagefaults(&msg);
+		/*
+		 * do not reply to this call, the caller is unblocked by
+		 * a sys_vmctl() call in do_pagefaults if success. VM panics
+		 * otherwise
+		 */
+		continue;
+	} else if(c < 0 || !vm_calls[c].vmc_func) {
 		printf("VM: out of range or missing callnr %d from %d\n",
 			msg.m_type, who_e);
-	} else if (vm_acl_ok(who_e, c) != OK) {
-		printf("VM: unauthorized %s by %d\n",
-			vm_calls[c].vmc_name, who_e);
 	} else {
-	SANITYCHECK(SCL_FUNCTIONS);
-		result = vm_calls[c].vmc_func(&msg);
-	SANITYCHECK(SCL_FUNCTIONS);
+		if (vm_acl_ok(who_e, c) != OK) {
+			printf("VM: unauthorized %s by %d\n",
+					vm_calls[c].vmc_name, who_e);
+		} else {
+			SANITYCHECK(SCL_FUNCTIONS);
+			result = vm_calls[c].vmc_func(&msg);
+			SANITYCHECK(SCL_FUNCTIONS);
+		}
 	}
 
 	/* Send reply message, unless the return code is SUSPEND,
@@ -380,10 +394,6 @@ PRIVATE void sef_cb_signal_handler(int signo)
 		/* There is a pending memory request from the kernel. */
 		case SIGKMEM:
 			do_memory();
-		break;
-		/* There is a pending page fault request from the kernel. */
-		case SIGKPF:
-			do_pagefaults();
 		break;
 	}
 }

@@ -75,13 +75,12 @@ typedef unsigned long sigset_t;
 #define IS_SIGS(signo)    (signo>=SIGS_FIRST && signo<=SIGS_LAST)
 
 /* Signals delivered by the kernel. */
-#define SIGKPF		  27	/* kernel page fault request pending */
-#define SIGKMEM		  28	/* kernel memory request pending */
-#define SIGKMESS   	  29	/* new kernel message */
-#define SIGKSIGSM    	  30	/* kernel signal pending for signal manager */
-#define SIGKSIG    	  31	/* kernel signal pending */
+#define SIGKMEM		  27	/* kernel memory request pending */
+#define SIGKMESS   	  28	/* new kernel message */
+#define SIGKSIGSM    	  29	/* kernel signal pending for signal manager */
+#define SIGKSIG    	  30	/* kernel signal pending */
 
-#define SIGK_FIRST	  SIGKPF      /* first kernel signal */
+#define SIGK_FIRST	  SIGKMEM      /* first kernel signal */
 #define SIGK_LAST	  SIGKSIG     /* last kernel signal */
 #define IS_SIGK(signo)    (signo>=SIGK_FIRST && signo<=SIGK_LAST)
 

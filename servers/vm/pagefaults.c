@@ -51,77 +51,73 @@ char *pf_errstr(u32_t err)
 /*===========================================================================*
  *				do_pagefaults	     		     *
  *===========================================================================*/
-PUBLIC void do_pagefaults(void)
+PUBLIC void do_pagefaults(message *m)
 {
-	endpoint_t ep;
-	u32_t addr, err;
+	endpoint_t ep = m->m_source;
+	u32_t addr = m->VPF_ADDR;
+	u32_t err = m->VPF_FLAGS;
 	struct vmproc *vmp;
 	int r, s;
 
-	while((r=arch_get_pagefault(&ep, &addr, &err)) == OK) {
-		struct vir_region *region;
-		vir_bytes offset;
-		int p, wr = PFERR_WRITE(err);
+	struct vir_region *region;
+	vir_bytes offset;
+	int p, wr = PFERR_WRITE(err);
 
-		if(vm_isokendpt(ep, &p) != OK)
-			panic("do_pagefaults: endpoint wrong: %d", ep);
+	if(vm_isokendpt(ep, &p) != OK)
+		panic("do_pagefaults: endpoint wrong: %d", ep);
 
-		vmp = &vmproc[p];
-		assert(vmp->vm_flags & VMF_INUSE);
+	vmp = &vmproc[p];
+	assert(vmp->vm_flags & VMF_INUSE);
 
-		/* See if address is valid at all. */
-		if(!(region = map_lookup(vmp, addr))) {
-			assert(PFERR_NOPAGE(err));
-			printf("VM: pagefault: SIGSEGV %d bad addr 0x%lx %s\n", 
+	/* See if address is valid at all. */
+	if(!(region = map_lookup(vmp, addr))) {
+		assert(PFERR_NOPAGE(err));
+		printf("VM: pagefault: SIGSEGV %d bad addr 0x%lx %s\n",
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
-			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				panic("sys_kill failed: %d", s);
-			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-				panic("do_pagefaults: sys_vmctl failed: %d", ep);
-			continue;
-		}
-
-		/* Make sure this isn't a region that isn't supposed
-		 * to cause pagefaults.
-		 */
-		assert(!(region->flags & VR_NOPF));
-
-		/* We do not allow shared memory to cause pagefaults.
-		 * These pages have to be pre-allocated.
-		 */
-		assert(!(region->flags & VR_SHARED));
-
-		/* If process was writing, see if it's writable. */
-		if(!(region->flags & VR_WRITABLE) && wr) {
-			printf("VM: pagefault: SIGSEGV %d ro map 0x%lx %s\n", 
-				ep, arch_map2vir(vmp, addr), pf_errstr(err));
-			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				panic("sys_kill failed: %d", s);
-			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-				panic("do_pagefaults: sys_vmctl failed: %d", ep);
-			continue;
-		}
-
-		assert(addr >= region->vaddr);
-		offset = addr - region->vaddr;
-
-		/* Access is allowed; handle it. */
-		if((r=map_pf(vmp, region, offset, wr)) != OK) {
-			printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
-			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				panic("sys_kill failed: %d", s);
-			if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-				panic("do_pagefaults: sys_vmctl failed: %d", ep);
-			continue;
-		}
-
-		/* Pagefault is handled, so now reactivate the process. */
+		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
+			panic("sys_kill failed: %d", s);
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
 			panic("do_pagefaults: sys_vmctl failed: %d", ep);
-
+		return;
 	}
 
-	return;
+	/* Make sure this isn't a region that isn't supposed
+	 * to cause pagefaults.
+	 */
+	assert(!(region->flags & VR_NOPF));
+
+	/* We do not allow shared memory to cause pagefaults.
+	 * These pages have to be pre-allocated.
+	 */
+	assert(!(region->flags & VR_SHARED));
+
+	/* If process was writing, see if it's writable. */
+	if(!(region->flags & VR_WRITABLE) && wr) {
+		printf("VM: pagefault: SIGSEGV %d ro map 0x%lx %s\n",
+				ep, arch_map2vir(vmp, addr), pf_errstr(err));
+		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
+			panic("sys_kill failed: %d", s);
+		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+			panic("do_pagefaults: sys_vmctl failed: %d", ep);
+		return;
+	}
+
+	assert(addr >= region->vaddr);
+	offset = addr - region->vaddr;
+
+	/* Access is allowed; handle it. */
+	if((r=map_pf(vmp, region, offset, wr)) != OK) {
+		printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
+		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
+			panic("sys_kill failed: %d", s);
+		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+			panic("do_pagefaults: sys_vmctl failed: %d", ep);
+		return;
+	}
+
+	/* Pagefault is handled, so now reactivate the process. */
+	if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+		panic("do_pagefaults: sys_vmctl failed: %d", ep);
 }
 
 /*===========================================================================*

@@ -90,7 +90,7 @@ _PROTOTYPE(int do_shared_unmap, (message *m)                            );
 _PROTOTYPE(int do_get_refcount, (message *m)                            );
 
 /* pagefaults.c */
-_PROTOTYPE( void do_pagefaults, (void)				);
+_PROTOTYPE( void do_pagefaults, (message *m)				);
 _PROTOTYPE( void do_memory, (void)				);
 _PROTOTYPE( char *pf_errstr, (u32_t err));
 _PROTOTYPE( int handle_memory, (struct vmproc *vmp, vir_bytes mem,
@@ -114,9 +114,6 @@ _PROTOTYPE( int vm_addrok, (void *vir, int write) 			);
 #if SANITYCHECKS
 _PROTOTYPE( void pt_sanitycheck, (pt_t *pt, char *file, int line)	);
 #endif
-
-/* $(ARCH)/pagefaults.c */
-_PROTOTYPE( int arch_get_pagefault, (endpoint_t *who, vir_bytes *addr, u32_t *err));
 
 /* slaballoc.c */
 _PROTOTYPE(void *slaballoc,(int bytes));

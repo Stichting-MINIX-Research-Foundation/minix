@@ -31,8 +31,6 @@ struct proc {
   struct proc *p_scheduler;	/* who should get out of quantum msg */
 
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
-  struct pagefault p_pagefault;	/* valid if PAGEFAULT in p_rts_flags set */
-  struct proc *p_nextpagefault;	/* next on PAGEFAULT chain */
 
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */

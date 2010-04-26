@@ -28,7 +28,6 @@ EXTERN struct loadinfo kloadinfo;	/* status of load average */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
-EXTERN struct proc *pagefaults; /* first process on pagefault queue */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
 

@@ -20,6 +20,8 @@ void pagefault( struct proc *pr,
 	int in_physcopy = 0;
 
 	reg_t pagefaultcr2;
+	message m_pagefault;
+	int err;
 
 	assert(frame);
 
@@ -77,17 +79,16 @@ void pagefault( struct proc *pr,
 	assert(!RTS_ISSET(pr, RTS_PAGEFAULT));
 	RTS_SET(pr, RTS_PAGEFAULT);
 
-	/* Save pagefault details, suspend process,
-	 * add process to pagefault chain,
-	 * and tell VM there is a pagefault to be
-	 * handled.
-	 */
-	pr->p_pagefault.pf_virtual = pagefaultcr2;
-	pr->p_pagefault.pf_flags = frame->errcode;
-	pr->p_nextpagefault = pagefaults;
-	pagefaults = pr;
-		
-	send_sig(VM_PROC_NR, SIGKPF);
+	/* tell Vm about the pagefault */
+	m_pagefault.m_source = pr->p_endpoint;
+	m_pagefault.m_type   = VM_PAGEFAULT;
+	m_pagefault.VPF_ADDR = pagefaultcr2;
+	m_pagefault.VPF_FLAGS = frame->errcode;
+
+	if ((err = mini_send(pr, VM_PROC_NR,
+					&m_pagefault, FROM_KERNEL))) {
+		panic("WARNING: pagefault: mini_send returned %d\n", err);
+	}
 
 	return;
 }

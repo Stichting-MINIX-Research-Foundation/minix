@@ -41,19 +41,6 @@ struct proc *p;
 		/* Increase process SP. */
 		p->p_reg.sp += m_ptr->SVMCTL_VALUE;
 		return OK;
-        case VMCTL_GET_PAGEFAULT:
-	{
-  		struct proc *rp;
-		if(!(rp=pagefaults))
-			return ESRCH;
-		pagefaults = rp->p_nextpagefault;
-		if(!RTS_ISSET(rp, RTS_PAGEFAULT))
-			panic( "non-PAGEFAULT process on pagefault chain: %d", 				rp->p_endpoint);
-                m_ptr->SVMCTL_PF_WHO = rp->p_endpoint;
-                m_ptr->SVMCTL_PF_I386_CR2 = rp->p_pagefault.pf_virtual;
-		m_ptr->SVMCTL_PF_I386_ERR = rp->p_pagefault.pf_flags;
-		return OK;
-	}
 	case VMCTL_I386_KERNELLIMIT:
 	{
 		int r;

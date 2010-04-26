@@ -614,7 +614,6 @@
 
 /* Values for SVMCTL_PARAM. */
 #define VMCTL_I386_SETCR3	10
-#define VMCTL_GET_PAGEFAULT	11
 #define VMCTL_CLEAR_PAGEFAULT	12
 #define VMCTL_I386_GETCR3	13
 #define VMCTL_MEMREQ_GET	14
@@ -1017,6 +1016,11 @@
 /* Total. */
 #define NR_VM_CALLS				42
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
+
+/* not handled as a normal VM call, thus at the end of the reserved rage */
+#define VM_PAGEFAULT		(VM_RQ_BASE+0xff)
+#	define VPF_ADDR		m1_i1
+#	define VPF_FLAGS	m1_i2
 
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
