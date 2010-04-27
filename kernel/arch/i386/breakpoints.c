@@ -34,7 +34,6 @@ PRIVATE int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 	/* disable breakpoint before setting address */
 	dr7 = st_dr7();
 	dr7 &= ~(DR7_L(bp) | DR7_G(bp) | DR7_RW_MASK(bp) | DR7_LN_MASK(bp));
-printf("ld_dr7(0x%x)\n",dr7);
 	ld_dr7(dr7);
 
 	/* need to set new breakpoint? */	
@@ -49,12 +48,10 @@ printf("ld_dr7(0x%x)\n",dr7);
 		case 3: ld_dr3(linaddr); break;
 		default: panic("%s:%d: invalid breakpoint index", __FILE__,  __LINE__);
 	}
-printf("ld_dr%d(0x%x)\n",bp,linaddr);
 	
 	/* set new flags */
 	dr7 |= dr7flags;
 	ld_dr7(dr7);
-printf("ld_dr7(0x%x)\n",dr7);
 	return 0;
 }
 
