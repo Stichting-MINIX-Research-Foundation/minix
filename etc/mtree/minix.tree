@@ -5,8 +5,6 @@
 /dev/mouse -> /dev/kbdaux
 755 root    operator /etc
 755 root    bin      /etc/mk
-755 root    operator /lib
-755 root    operator /lib/i386
 755 root    operator /boot
 755 root    operator /boot/image
 555 root    operator /mnt
