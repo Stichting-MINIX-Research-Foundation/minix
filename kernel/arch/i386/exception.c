@@ -13,9 +13,9 @@
 
 extern int catch_pagefaults = 0;
 
-void pagefault( struct proc *pr,
-		struct exception_frame * frame,
-		int is_nested)
+PRIVATE void pagefault( struct proc *pr,
+			struct exception_frame * frame,
+			int is_nested)
 {
 	int in_physcopy = 0;
 
