@@ -32,8 +32,10 @@
 /* Sys flag values. */
 #define SF_CORE_SRV     0x001    /* set for core system services */
 #define SF_SYNCH_BOOT   0X002    /* set when process needs synch boot init */
-#define SF_NEED_COPY    0x004    /* set when process needs copy to restart */
+#define SF_NEED_COPY    0x004    /* set when process needs copy to start */
 #define SF_USE_COPY     0x008    /* set when process has a copy in memory */
+#define SF_NEED_REPL    0x010    /* set when process needs replica to start */
+#define SF_USE_REPL     0x020    /* set when process has a replica */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_INIT_T       600                     /* allow T ticks for init */
@@ -84,9 +86,9 @@
 
 /* Define sys flags for the various process types. */
 #define SRV_SF   (SF_CORE_SRV | SF_NEED_COPY)  /* system services */
-#define SRVC_SF  (SRV_SF | SF_USE_COPY)        /* system services with a copy */
+#define SRVR_SF  (SRV_SF | SF_NEED_REPL)       /* services needing a replica */
 #define DSRV_SF  (0)                           /* dynamic system services */
-#define VM_SF    (SRV_SF | SF_SYNCH_BOOT)      /* vm */
+#define VM_SF    (SRVR_SF | SF_SYNCH_BOOT)     /* vm */
 
 /* Define device flags for the various process types. */
 #define SRV_DF   (DRV_FORCED)            /* system services */

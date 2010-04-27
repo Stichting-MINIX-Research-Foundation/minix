@@ -29,6 +29,7 @@ _PROTOTYPE( void sef_exit, (int status) );
 /* Type definitions. */
 typedef struct {
     cp_grant_id_t rproctab_gid;
+    endpoint_t old_endpoint;
 } sef_init_info_t;
 
 /* Callback type definitions. */

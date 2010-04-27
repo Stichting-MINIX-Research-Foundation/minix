@@ -16,15 +16,27 @@ int type;					/* type of initialization */
   int r;
   message m;
   struct rprocpub *rpub;
+  endpoint_t old_endpoint;
 
   rpub = rp->r_pub;
 
   rp->r_flags |= RS_INITIALIZING;              /* now initializing */
   rp->r_check_tm = rp->r_alive_tm + 1;         /* expect reply within period */
 
+  /* Determine the old endpoint if this is a new instance. */
+  old_endpoint = NONE;
+  if(rp->r_old_rp) {
+      old_endpoint = rp->r_old_rp->r_pub->endpoint;
+  }
+  else if(rp->r_prev_rp) {
+      old_endpoint = rp->r_prev_rp->r_pub->endpoint;
+  }
+
+  /* Send initialization message. */
   m.m_type = RS_INIT;
   m.RS_INIT_TYPE = type;
   m.RS_INIT_RPROCTAB_GID = rinit.rproctab_gid;
+  m.RS_INIT_OLD_ENDPOINT = old_endpoint;
   r = asynsend(rpub->endpoint, &m);
 
   return r;

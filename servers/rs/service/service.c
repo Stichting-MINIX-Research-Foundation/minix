@@ -152,12 +152,13 @@ PRIVATE int parse_arguments(int argc, char **argv)
   char *hz, *buff;
   int req_nr;
   int c, i, j;
-  int c_flag, r_flag, n_flag;
+  int c_flag, r_flag, n_flag, p_flag;
 
   c_flag = 0;
   r_flag = 0;
   n_flag = 0;
-  while (c= getopt(argc, argv, "rcn?"), c != -1)
+  p_flag = 0;
+  while (c= getopt(argc, argv, "rcnp?"), c != -1)
   {
 	switch(c)
 	{
@@ -173,6 +174,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 		break;
 	case 'n':
 		n_flag = 1;
+		break;
+	case 'p':
+		p_flag = 1;
 		break;
 	default:
 		fprintf(stderr, "%s: getopt failed: %c\n",
@@ -219,6 +223,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 
       if(n_flag)
         rs_start.rss_flags |= RSS_NOBLOCK;
+
+      if(p_flag)
+        rs_start.rss_flags |= RSS_REPLICA;
 
       if (do_run)
       {

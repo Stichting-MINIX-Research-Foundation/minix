@@ -15,12 +15,11 @@ Interface to the reincarnation server
 #define RSS_NR_IO		16
 
 /* RSS flags. */
-#define RSS_COPY	0x01	/* Copy the brinary into RS to make it possible
-				 * to restart the driver without accessing FS
-				 */
+#define RSS_COPY	0x01	/* keep an in-memory copy of the binary */
 #define RSS_IPC_VALID	0x02	/* rss_ipc and rss_ipclen are valid */
 #define RSS_REUSE	0x04	/* Try to reuse previously copied binary */
 #define RSS_NOBLOCK	0x08	/* unblock caller immediately */
+#define RSS_REPLICA	0x10	/* keep a replica of the service */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8

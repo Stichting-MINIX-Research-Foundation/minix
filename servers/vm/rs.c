@@ -27,8 +27,6 @@
 #include "util.h"
 #include "region.h"
 
-#define LU_DEBUG 0
-
 /*===========================================================================*
  *				do_rs_set_priv				     *
  *===========================================================================*/
@@ -63,10 +61,7 @@ PUBLIC int do_rs_set_priv(message *m)
 PUBLIC int do_rs_update(message *m_ptr)
 {
 	endpoint_t src_e, dst_e;
-	struct vmproc *src_vmp, *dst_vmp;
-	struct vmproc orig_src_vmproc, orig_dst_vmproc;
-	int src_p, dst_p, r;
-	struct vir_region *vr;
+	int r;
 
 	src_e = m_ptr->VM_RS_SRC_ENDPT;
 	dst_e = m_ptr->VM_RS_DST_ENDPT;
@@ -77,71 +72,9 @@ PUBLIC int do_rs_update(message *m_ptr)
 		return r;
 	}
 
-	/* Lookup slots for source and destination process. */
-	if(vm_isokendpt(src_e, &src_p) != OK) {
-		printf("do_rs_update: bad src endpoint %d\n", src_e);
-		return EINVAL;
-	}
-	src_vmp = &vmproc[src_p];
-	if(vm_isokendpt(dst_e, &dst_p) != OK) {
-		printf("do_rs_update: bad dst endpoint %d\n", dst_e);
-		return EINVAL;
-	}
-	dst_vmp = &vmproc[dst_p];
+	/* Do the update in VM now. */
+	r = swap_proc(src_e, dst_e);
 
-#if LU_DEBUG
-	printf("do_rs_update: updating %d (%d, %d) into %d (%d, %d)\n",
-	    src_vmp->vm_endpoint, src_p, src_vmp->vm_slot,
-	    dst_vmp->vm_endpoint, dst_p, dst_vmp->vm_slot);
-
-	printf("do_rs_update: map_printmap for source before updating:\n");
-	map_printmap(src_vmp);
-	printf("do_rs_update: map_printmap for destination before updating:\n");
-	map_printmap(dst_vmp);
-#endif
-
-	/* Save existing data. */
-	orig_src_vmproc = *src_vmp;
-	orig_dst_vmproc = *dst_vmp;
-
-	/* Swap slots. */
-	*src_vmp = orig_dst_vmproc;
-	*dst_vmp = orig_src_vmproc;
-
-	/* Preserve endpoints and slot numbers. */
-	src_vmp->vm_endpoint = orig_src_vmproc.vm_endpoint;
-	src_vmp->vm_slot = orig_src_vmproc.vm_slot;
-	dst_vmp->vm_endpoint = orig_dst_vmproc.vm_endpoint;
-	dst_vmp->vm_slot = orig_dst_vmproc.vm_slot;
-
-	/* Preserve vir_region's parents. */
-	for(vr = src_vmp->vm_regions; vr; vr = vr->next) {
-		vr->parent = src_vmp;
-	}
-	for(vr = dst_vmp->vm_regions; vr; vr = vr->next) {
-		vr->parent = dst_vmp;
-	}
-
-	/* Adjust page tables. */
-	assert(src_vmp->vm_flags & VMF_HASPT);
-	assert(dst_vmp->vm_flags & VMF_HASPT);
-	pt_bind(&src_vmp->vm_pt, src_vmp);
-	pt_bind(&dst_vmp->vm_pt, dst_vmp);
-	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-		panic("do_rs_update: VMCTL_FLUSHTLB failed: %d", r);
-	}
-
-#if LU_DEBUG
-	printf("do_rs_update: updated %d (%d, %d) into %d (%d, %d)\n",
-	    src_vmp->vm_endpoint, src_p, src_vmp->vm_slot,
-	    dst_vmp->vm_endpoint, dst_p, dst_vmp->vm_slot);
-
-	printf("do_rs_update: map_printmap for source after updating:\n");
-	map_printmap(src_vmp);
-	printf("do_rs_update: map_printmap for destination after updating:\n");
-	map_printmap(dst_vmp);
-#endif
-
-	return OK;
+	return r;
 }
 

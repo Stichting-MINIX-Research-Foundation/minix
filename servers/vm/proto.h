@@ -44,6 +44,7 @@ _PROTOTYPE( void reserve_proc_mem, (struct memory *mem_chunks,
 _PROTOTYPE( int vm_isokendpt, (endpoint_t ep, int *proc)	     );
 _PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)             );
 _PROTOTYPE( int do_info, (message *)					);
+_PROTOTYPE( int swap_proc, (endpoint_t src_e, endpoint_t dst_e)		);
 
 /* exit.c */
 _PROTOTYPE( void clear_proc, (struct vmproc *vmp)			);

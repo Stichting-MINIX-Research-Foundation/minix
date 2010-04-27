@@ -58,7 +58,6 @@ message *m_ptr;					/* request message pointer */
 
   /* All information was gathered. Now try to start the system service. */
   r = start_service(rp);
-  activate_service(rp, NULL);
   if(r != OK) {
       return r;
   }
@@ -114,7 +113,6 @@ PUBLIC int do_down(message *m_ptr)
         if(rs_verbose)
             printf("RS: recovery script performs service down...\n");
   	unpublish_service(rp);
-        unpublish_process(rp);
   	cleanup_service(rp);
     	return(OK);
   }
@@ -255,6 +253,7 @@ PUBLIC int do_init_ready(message *m_ptr)
   struct rproc *rp;
   struct rprocpub *rpub;
   int result;
+  int r;
 
   who_p = _ENDPOINT_P(m_ptr->m_source);
   rp = rproc_ptr[who_p];
@@ -303,12 +302,18 @@ PUBLIC int do_init_ready(message *m_ptr)
    * make the new instance active and cleanup the old replica.
    */
   if(rp->r_prev_rp) {
-      activate_service(rp, rp->r_prev_rp);
       cleanup_service(rp->r_prev_rp);
       rp->r_prev_rp = NULL;
 
       if(rs_verbose)
           printf("RS: %s completed restart\n", srv_to_string(rp));
+  }
+
+  /* If we must keep a replica of this system service, create it now. */
+  if(rpub->sys_flags & SF_USE_REPL) {
+      if ((r = clone_service(rp)) != OK) {
+          printf("RS: warning: unable to clone %s\n", srv_to_string(rp));
+      }
   }
 
   return(OK);
@@ -401,13 +406,6 @@ PUBLIC int do_update(message *m_ptr)
   s = create_service(new_rp);
   if(s != OK) {
       printf("RS: do_update: unable to create a new service: %d\n", s);
-      return s;
-  }
-
-  /* Publish process-wide properties. */
-  s = publish_process(new_rp);
-  if (s != OK) {
-      printf("RS: do_update: publish_process failed: %d\n", s);
       return s;
   }
 

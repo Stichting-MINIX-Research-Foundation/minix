@@ -76,11 +76,13 @@ PUBLIC struct boot_image_priv boot_image_priv_table[] = {
 /* Definition of the boot image sys table. */
 PUBLIC struct boot_image_sys boot_image_sys_table[] = {
   /*endpoint,         flags                             */
-  { RS_PROC_NR,       SRV_SF                            },
+  { RS_PROC_NR,       SRVR_SF                           },
   { VM_PROC_NR,       VM_SF                             },
-  { LOG_PROC_NR,      SRVC_SF                           },
-  { MFS_PROC_NR,      SF_USE_COPY | SF_NEED_COPY        },
-  { PFS_PROC_NR,      SRVC_SF                           },
+  { PM_PROC_NR,       SRVR_SF                           },
+  { VFS_PROC_NR,      SRVR_SF                           },
+  { LOG_PROC_NR,      SRV_SF       | SF_USE_REPL        },
+  { MFS_PROC_NR,      SF_NEED_COPY | SF_USE_COPY        },
+  { PFS_PROC_NR,      SRV_SF       | SF_USE_COPY        },
   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
 };
 

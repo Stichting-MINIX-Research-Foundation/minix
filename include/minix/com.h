@@ -688,9 +688,10 @@
 #  define RS_NAME		m1_p1		/* name */
 #  define RS_NAME_LEN		m1_i1		/* namelen */
 
-#  define RS_INIT_RESULT        m1_i1           /* init result */
-#  define RS_INIT_TYPE          m1_i2           /* init type */
-#  define RS_INIT_RPROCTAB_GID  m1_i3           /* init rproc table gid */
+#  define RS_INIT_RESULT        m7_i1           /* init result */
+#  define RS_INIT_TYPE          m7_i2           /* init type */
+#  define RS_INIT_RPROCTAB_GID  m7_i3           /* init rproc table gid */
+#  define RS_INIT_OLD_ENDPOINT  m7_i4           /* init old endpoint */
 
 #  define RS_LU_RESULT          m1_i1           /* live update result */
 #  define RS_LU_STATE           m1_i2           /* state required to update */

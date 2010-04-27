@@ -36,6 +36,7 @@ _PROTOTYPE( int copy_label, (endpoint_t src_e, char *src_label, size_t src_len,
 _PROTOTYPE( void build_cmd_dep, (struct rproc *rp) );
 _PROTOTYPE( int srv_fork, (void) );
 _PROTOTYPE( int srv_kill, (pid_t pid, int sig) );
+_PROTOTYPE( int srv_update, (endpoint_t src_e, endpoint_t dst_e) );
 #define kill_service(rp, errstr, err) \
 	kill_service_debug(__FILE__, __LINE__, rp, errstr, err)
 _PROTOTYPE( int kill_service_debug, (char *file, int line, struct rproc *rp,
@@ -48,10 +49,9 @@ _PROTOTYPE( int crash_service_debug, (char *file, int line, struct rproc *rp) );
 _PROTOTYPE( void cleanup_service_debug, (char *file, int line,
 	struct rproc *rp) );
 _PROTOTYPE( int create_service, (struct rproc *rp) );
+_PROTOTYPE( int clone_service, (struct rproc *rp) );
 _PROTOTYPE( int publish_service, (struct rproc *rp) );
-_PROTOTYPE( int publish_process, (struct rproc *rp) );
 _PROTOTYPE( int unpublish_service, (struct rproc *rp) );
-_PROTOTYPE( int unpublish_process, (struct rproc *rp) );
 _PROTOTYPE( int run_service, (struct rproc *rp, int init_type) );
 _PROTOTYPE( int start_service, (struct rproc *rp) );
 _PROTOTYPE( void stop_service, (struct rproc *rp,int how) );

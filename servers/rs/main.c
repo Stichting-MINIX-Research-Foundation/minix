@@ -27,10 +27,6 @@ FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
 FORWARD _PROTOTYPE(void catch_boot_init_ready, (endpoint_t endpoint)	);
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr, int *status_ptr)	);
 
-/* The buffer where the boot image is copied during initialization. */
-PRIVATE int boot_image_buffer_size;
-PRIVATE char *boot_image_buffer;
-
 /* Flag set when memory unmapping can be done. */
 EXTERN int unmap_ok;
 
@@ -210,6 +206,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* If we must keep a copy of this system service, read the header
        * and increase the size of the boot image buffer.
        */
+      if(boot_image_sys->flags & SF_USE_REPL) {
+          boot_image_sys->flags |= SF_USE_COPY;
+      }
       if(boot_image_sys->flags & SF_USE_COPY) {
           if((s = sys_getaoutheader(&header, i)) != OK) {
               panic("unable to get copy of a.out header: %d", s);
@@ -335,7 +334,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       strcpy(rpub->proc_name, ip->proc_name);
 
       /* Get command settings. */
-      rp->r_cmd[0]= '\0';
+      strcpy(rp->r_cmd, ip->proc_name);
       rp->r_script[0]= '\0';
       build_cmd_dep(rp);
 
@@ -446,6 +445,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       if(j == NR_PROCS) {
           panic("unable to get pid");
       }
+
+      /* If we must keep a replica of this system service, create it now. */
+      if(rpub->sys_flags & SF_USE_REPL) {
+          if ((s = clone_service(rp)) != OK) {
+              panic("unable to clone service: %d", s);
+          }
+      }
   }
 
   /*
@@ -510,16 +516,22 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
       if(rs_verbose)
           printf("RS: ignoring spurious signal %d for process %d\n",
               signo, target);
-      return OK;	/* Since we're ignoring it, we have handled
-			 * the signal without problem. All is OK.
-			 */
+      return OK; /* clear the signal */
   }
   rp = rproc_ptr[target_p];
   rpub = rp->r_pub;
 
   /* Don't bother if a termination signal has already been processed. */
-  if(rp->r_flags & RS_TERMINATED) {
+  if((rp->r_flags & RS_TERMINATED) && !(rp->r_flags & RS_EXITING)) {
       return EDEADSRCDST; /* process is gone */
+  }
+
+  /* Ignore external signals for inactive service instances. */
+  if( !(rp->r_flags & RS_ACTIVE) && !(rp->r_flags & RS_EXITING)) {
+      if(rs_verbose)
+          printf("RS: ignoring signal %d for inactive %s\n",
+              signo, srv_to_string(rp));
+      return OK; /* clear the signal */
   }
 
   if(rs_verbose)

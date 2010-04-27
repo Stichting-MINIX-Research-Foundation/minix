@@ -224,6 +224,28 @@ PUBLIC int srv_kill(pid_t pid, int sig)
 }
 
 /*===========================================================================*
+ *				 srv_update				     *
+ *===========================================================================*/
+PUBLIC int srv_update(endpoint_t src_e, endpoint_t dst_e)
+{
+  int r;
+
+  /* Ask VM to swap the slots of the two processes and tell the kernel to
+   * do the same. If VM is the service being updated, only perform the kernel
+   * part of the call. The new instance of VM will do the rest at
+   * initialization time.
+   */
+  if(src_e != VM_PROC_NR) {
+      r = vm_update(src_e, dst_e);
+  }
+  else {
+      r = sys_update(src_e, dst_e);
+  }
+
+  return r;
+}
+
+/*===========================================================================*
  *				update_period				     *
  *===========================================================================*/
 PUBLIC void update_period(message *m_ptr)
@@ -287,9 +309,6 @@ PUBLIC void end_update(int result)
   new_rp->r_old_rp = NULL;
   old_rp->r_check_tm = 0;
 
-  /* Make the version that has to survive as active. */
-  activate_service(surviving_rp, exiting_rp);
-
   /* Send a late reply if necessary. */
   late_reply(old_rp, result);
 
@@ -297,7 +316,6 @@ PUBLIC void end_update(int result)
    * version as no longer updating.
    */
   surviving_rp->r_flags &= ~RS_UPDATING;
-  unpublish_process(exiting_rp);
   cleanup_service(exiting_rp);
 
   if(rs_verbose)
@@ -380,19 +398,28 @@ struct rproc *rp;
 /* Create the given system service. */
   int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
   pid_t child_pid;				/* child's process id */
-  int s, use_copy;
+  int s, use_copy, has_replica;
   extern char **environ;
   struct rprocpub *rpub;
 
   rpub = rp->r_pub;
   use_copy= (rpub->sys_flags & SF_USE_COPY);
+  has_replica= (rp->r_prev_rp && !(rp->r_prev_rp->r_flags & RS_TERMINATED));
 
-  /* See if we are not using a copy but we do need one to start the service. */
+  /* Do we need an existing replica to create the service? */
+  if(!has_replica && (rpub->sys_flags & SF_NEED_REPL)) {
+      printf("RS: unable to create service '%s' without a replica\n",
+          rpub->label);
+      free_slot(rp);
+      return(EPERM);
+  }
+
+  /* Do we need an in-memory copy to create the service? */
   if(!use_copy && (rpub->sys_flags & SF_NEED_COPY)) {
-	printf("RS: unable to start service '%s' without an in-memory copy\n",
-	    rpub->label);
-	free_slot(rp);
-	return(EPERM);
+      printf("RS: unable to create service '%s' without an in-memory copy\n",
+          rpub->label);
+      free_slot(rp);
+      return(EPERM);
   }
 
   /* Now fork and branch for parent and child process (and check for error). */
@@ -411,11 +438,6 @@ struct rproc *rp;
   /* There is now a child process. Update the system process table. */
   child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
   rp->r_flags = RS_IN_USE;			/* mark slot in use */
-  rp->r_restarts += 1;				/* raise nr of restarts */
-  rp->r_old_rp = NULL;			        /* no old version yet */
-  rp->r_new_rp = NULL;			        /* no new version yet */
-  rp->r_prev_rp = NULL;			        /* no prev replica yet */
-  rp->r_next_rp = NULL;			        /* no next replica yet */
   rpub->endpoint = child_proc_nr_e;		/* set child endpoint */
   rp->r_pid = child_pid;			/* set child pid */
   rp->r_check_tm = 0;				/* not checked yet */
@@ -424,7 +446,6 @@ struct rproc *rp;
   rp->r_backoff = 0;				/* not to be restarted */
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
   rpub->in_use = TRUE;				/* public entry is now in use */
-
 
   /* Set resources when asked to. */
   if (rp->r_set_resources) {
@@ -484,14 +505,47 @@ struct rproc *rp;
 }
 
 /*===========================================================================*
+ *				clone_service				     *
+ *===========================================================================*/
+PUBLIC int clone_service(rp)
+struct rproc *rp;
+{
+/* Clone the given system service instance. */
+  struct rproc *replica_rp;
+  int r;
+
+  if(rs_verbose)
+      printf("RS: creating a replica for %s\n", srv_to_string(rp));
+
+  /* Clone slot. */
+  if((r = clone_slot(rp, &replica_rp)) != OK) {
+      return r;
+  }
+
+  /* Link the two slots. */
+  rp->r_next_rp = replica_rp;
+  replica_rp->r_prev_rp = rp;
+
+  /* Create a new replica of the service. */
+  r = create_service(replica_rp);
+  if(r != OK) {
+      rp->r_next_rp = NULL;
+      return r;
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
  *				publish_service				     *
  *===========================================================================*/
 PUBLIC int publish_service(rp)
 struct rproc *rp;				/* pointer to service slot */
 {
-/* Publish service-wide properties of a service. */
+/* Publish a service. */
   int r;
   struct rprocpub *rpub;
+  struct rs_pci pci_acl;
 
   rpub = rp->r_pub;
 
@@ -509,25 +563,13 @@ struct rproc *rp;				/* pointer to service slot */
       }
   }
 
-  if(rs_verbose)
-      printf("RS: %s service-wide properties published\n",
-          srv_to_string(rp));
-
-  return OK;
-}
-
-/*===========================================================================*
- *				publish_process				     *
- *===========================================================================*/
-PUBLIC int publish_process(rp)
-struct rproc *rp;				/* pointer to service slot */
-{
-/* Publish process-wide properties of a service. */
-  int r;
-  struct rprocpub *rpub;
-  struct rs_pci pci_acl;
-
-  rpub = rp->r_pub;
+  /* Tell VM about allowed calls, if any. */
+  if(rpub->vm_call_mask[0]) {
+      r = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0]);
+      if (r != OK) {
+          return kill_service(rp, "vm_set_priv call failed", r);
+      }
+  }
 
   /* If PCI properties are set, inform the PCI driver about the new service. */
   if(rpub->pci_acl.rsp_nr_device || rpub->pci_acl.rsp_nr_class) {
@@ -541,17 +583,8 @@ struct rproc *rp;				/* pointer to service slot */
       }
   }
 
-  /* Tell VM about allowed calls, if any. */
-  if(rpub->vm_call_mask[0]) {
-      r = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0]);
-      if (r != OK) {
-          return kill_service(rp, "vm_set_priv call failed", r);
-      }
-  }
-
   if(rs_verbose)
-      printf("RS: %s process-wide properties published\n",
-          srv_to_string(rp));
+      printf("RS: %s published\n", srv_to_string(rp));
 
   return OK;
 }
@@ -562,7 +595,7 @@ struct rproc *rp;				/* pointer to service slot */
 PUBLIC int unpublish_service(rp)
 struct rproc *rp;				/* pointer to service slot */
 {
-/* Unpublish service-wide properties of a service. */
+/* Unpublish a service. */
   struct rprocpub *rpub;
   int r, result;
 
@@ -576,27 +609,7 @@ struct rproc *rp;				/* pointer to service slot */
      result = r;
   }
 
-  /* No need to inform VFS, cleanup is performed on exit automatically. */
-
-  if(rs_verbose)
-      printf("RS: %s service-wide properties unpublished\n",
-          srv_to_string(rp));
-
-  return result;
-}
-
-/*===========================================================================*
- *			    unpublish_process				     *
- *===========================================================================*/
-PUBLIC int unpublish_process(rp)
-struct rproc *rp;				/* pointer to service slot */
-{
-/* Unpublish process-wide properties of a service. */
-  struct rprocpub *rpub;
-  int r, result;
-
-  rpub = rp->r_pub;
-  result = OK;
+  /* No need to inform VFS and VM, cleanup is done on exit automatically. */
 
   /* If PCI properties are set, inform the PCI driver. */
   if(rpub->pci_acl.rsp_nr_device || rpub->pci_acl.rsp_nr_class) {
@@ -607,11 +620,8 @@ struct rproc *rp;				/* pointer to service slot */
       }
   }
 
-  /* No need to inform VM, cleanup is performed on exit automatically. */
-
   if(rs_verbose)
-      printf("RS: %s process-wide properties unpublished\n",
-          srv_to_string(rp));
+      printf("RS: %s unpublished\n", srv_to_string(rp));
 
   return result;
 }
@@ -658,33 +668,26 @@ struct rproc *rp;
 
   rpub = rp->r_pub;
 
-  /* Create. */
+  /* Create and make active. */
   r = create_service(rp);
+  activate_service(rp, NULL);
   if(r != OK) {
       return r;
   }
 
   /* Publish service properties. */
-  r = publish_process(rp);
-  if (r != OK) {
-      return r;
-  }
   r = publish_service(rp);
   if (r != OK) {
       return r;
   }
 
   /* Run. */
-  init_type = rp->r_restarts > 0 ? SEF_INIT_RESTART : SEF_INIT_FRESH;
+  init_type = SEF_INIT_FRESH;
   r = run_service(rp, init_type);
   if(r != OK) {
       return r;
   }
 
-  /* The system service now has been successfully started. The only thing
-   * that can go wrong now, is that execution fails at the child. If that's
-   * the case, the child will exit. 
-   */
   if(rs_verbose)
       printf("RS: %s started with major %d\n", srv_to_string(rp),
           rpub->dev_nr);
@@ -739,10 +742,8 @@ struct rproc **dst_rpp;
       printf("RS: %s updating into %s\n",
           srv_to_string(src_rp), srv_to_string(dst_rp));
 
-  /* Ask VM to swap the slots of the two processes and tell the kernel to
-   * do the same.
-   */
-  r = vm_update(src_rpub->endpoint, dst_rpub->endpoint);
+  /* Swap the slots of the two processes. */
+  r = srv_update(src_rpub->endpoint, dst_rpub->endpoint);
   if(r != OK) {
       return r;
   }
@@ -763,6 +764,9 @@ struct rproc **dst_rpp;
   /* Adjust input pointers. */
   *src_rpp = src_rp;
   *dst_rpp = dst_rp;
+
+  /* Make the new version active. */
+  activate_service(dst_rp, src_rp);
 
   if(rs_verbose)
       printf("RS: %s updated into %s\n",
@@ -840,7 +844,6 @@ PUBLIC void terminate_service(struct rproc *rp)
 
       /* Unpublish the service. */
       unpublish_service(rp);
-      unpublish_process(rp);
 
       /* Cleanup all the instances of the service. */
       get_service_instances(rp, &rps, &nr_rps);
@@ -857,9 +860,6 @@ PUBLIC void terminate_service(struct rproc *rp)
        * that just exited will continue executing.
        */
       if(rp->r_flags & RS_UPDATING) {
-          if(! (rp->r_flags & RS_ACTIVE) ) {
-              return; /* ignore unexpected signals */
-          }
           end_update(ERESTART);
       }
 
@@ -945,42 +945,43 @@ PUBLIC void restart_service(struct rproc *rp)
   /* See if a late reply has to be sent. */
   late_reply(rp, OK);
 
+  /* Run a recovery script if available. */
   if (rp->r_script[0] != '\0') {
-      /* Run a recovery script. */
       run_script(rp);
+      return;
   }
-  else {
-      /* Unpublish the service. */
-      unpublish_service(rp);
-      unpublish_process(rp);
 
-      /* Clone slots. */
-      if((r = clone_slot(rp, &replica_rp)) != OK) {
+  /* Restart directly. We need a replica if not already available. */
+  if(rp->r_next_rp == NULL) {
+      /* Create the replica. */
+      r = clone_service(rp);
+      if(r != OK) {
           kill_service(rp, "unable to clone service", r);
           return;
       }
-
-      if(rs_verbose)
-          printf("RS: %s restarting into %s\n",
-              srv_to_string(rp), srv_to_string(replica_rp));
-
-      /* Swap slots. */
-      swap_slot(&rp, &replica_rp);
-
-      /* Direct restart. */
-      if((r = start_service(replica_rp)) != OK) {
-          kill_service(rp, "unable to restart service", r);
-          return;
-      }
-
-      /* Link the two slots. */
-      rp->r_next_rp = replica_rp;
-      replica_rp->r_prev_rp = rp;
-
-      if(rs_verbose)
-          printf("RS: %s restarted into %s\n",
-              srv_to_string(rp), srv_to_string(replica_rp));
   }
+  replica_rp = rp->r_next_rp;
+
+  /* Update the service into the replica. */
+  r = update_service(&rp, &replica_rp);
+  if(r != OK) {
+      kill_service(rp, "unable to update into new replica", r);
+      return;
+  }
+
+  /* Let the new replica run. */
+  r = run_service(replica_rp, SEF_INIT_RESTART);
+  if(r != OK) {
+      kill_service(rp, "unable to let the replica run", r);
+      return;
+  }
+
+  /* Increase the number of restarts. */
+  replica_rp->r_restarts += 1;
+
+  if(rs_verbose)
+      printf("RS: %s restarted into %s\n",
+          srv_to_string(rp), srv_to_string(replica_rp));
 }
 
 /*===========================================================================*
@@ -1108,7 +1109,7 @@ PUBLIC void free_exec(rp)
 struct rproc *rp;
 {
 /* Free an exec image. */
-  int slot_nr, has_shared_exec;
+  int slot_nr, has_shared_exec, is_boot_image_mem;
   struct rproc *other_rp;
 
   /* Search for some other slot sharing the same exec image. */
@@ -1122,11 +1123,22 @@ struct rproc *rp;
       }
   }
 
-  /* If nobody uses our copy of the exec image, we can get rid of it. */
+  /* If nobody uses our copy of the exec image, we can try to get rid of it. */
   if(!has_shared_exec) {
-      if(rs_verbose)
-          printf("RS: %s frees exec image\n", srv_to_string(rp));
-      free(rp->r_exec);
+      is_boot_image_mem = (rp->r_exec >= boot_image_buffer
+          && rp->r_exec < boot_image_buffer + boot_image_buffer_size);
+
+      /* Free memory only if not part of the boot image buffer. */
+      if(is_boot_image_mem) {
+          if(rs_verbose)
+              printf("RS: %s has exec image in the boot image buffer\n",
+                  srv_to_string(rp));
+      }
+      else {
+          if(rs_verbose)
+              printf("RS: %s frees exec image\n", srv_to_string(rp));
+          free(rp->r_exec);
+      }
   }
   else {
       if(rs_verbose)
@@ -1239,6 +1251,7 @@ endpoint_t source;
   else
 	rp->r_ipc_list[0]= '\0';
 
+  /* Set system flags. */
   rpub->sys_flags = DSRV_SF;
   rp->r_exec= NULL;
   if (rs_start->rss_flags & RSS_COPY) {
@@ -1273,6 +1286,9 @@ endpoint_t source;
 		return s;
 
 	rpub->sys_flags |= SF_USE_COPY;
+  }
+  if (rs_start->rss_flags & RSS_REPLICA) {
+      	rpub->sys_flags |= SF_USE_REPL;
   }
 
   /* All dynamically created services get the same privilege flags, and
@@ -1364,8 +1380,12 @@ endpoint_t source;
 
   /* Initialize some fields. */
   rpub->period = rs_start->rss_period;
-  rp->r_restarts = -1; 				/* will be incremented */
+  rp->r_restarts = 0; 				/* no restarts yet */
   rp->r_set_resources= 1;			/* set resources */
+  rp->r_old_rp = NULL;			        /* no old version yet */
+  rp->r_new_rp = NULL;			        /* no new version yet */
+  rp->r_prev_rp = NULL;			        /* no prev replica yet */
+  rp->r_next_rp = NULL;			        /* no next replica yet */
 
   /* Copy VM call mask. Inherit basic VM calls. */
   memcpy(rpub->vm_call_mask, rs_start->rss_vm,
@@ -1404,7 +1424,7 @@ struct rproc **clone_rpp;
   /* Deep copy. */
   clone_rp->r_flags &= ~RS_ACTIVE; /* the clone is not active yet */
   clone_rp->r_pid = -1;            /* no pid yet */
-  clone_rpub->endpoint = -1;        /* no endpoint yet */
+  clone_rpub->endpoint = -1;       /* no endpoint yet */
   clone_rp->r_pub = clone_rpub;    /* restore pointer to public entry */
   build_cmd_dep(clone_rp);         /* rebuild cmd dependencies */
   if(clone_rpub->sys_flags & SF_USE_COPY) {

@@ -24,16 +24,20 @@
 #include <env.h>
 #include <unistd.h>
 #include <memory.h>
+#include <assert.h>
 
 #include "proto.h"
 #include "glo.h"
 #include "util.h"
+#include "region.h"
 
 #include <machine/archtypes.h>
 #include "kernel/const.h"
 #include "kernel/config.h"
 #include "kernel/type.h"
 #include "kernel/proc.h"
+
+#define SWAP_PROC_DEBUG 0
 
 /*===========================================================================*
  *                              get_mem_map                                  *
@@ -242,5 +246,83 @@ PUBLIC int do_info(message *m)
 	 */
 	return sys_datacopy(SELF, addr,
 		(vir_bytes) vmp->vm_endpoint, ptr, size);
+}
+
+/*===========================================================================*
+ *				swap_proc	     			     *
+ *===========================================================================*/
+PUBLIC int swap_proc(endpoint_t src_e, endpoint_t dst_e)
+{
+	struct vmproc *src_vmp, *dst_vmp;
+	struct vmproc orig_src_vmproc, orig_dst_vmproc;
+	int src_p, dst_p, r;
+	struct vir_region *vr;
+
+	/* Lookup slots for source and destination process. */
+	if(vm_isokendpt(src_e, &src_p) != OK) {
+		printf("swap_proc: bad src endpoint %d\n", src_e);
+		return EINVAL;
+	}
+	src_vmp = &vmproc[src_p];
+	if(vm_isokendpt(dst_e, &dst_p) != OK) {
+		printf("swap_proc: bad dst endpoint %d\n", dst_e);
+		return EINVAL;
+	}
+	dst_vmp = &vmproc[dst_p];
+
+#if SWAP_PROC_DEBUG
+	printf("swap_proc: swapping %d (%d, %d) and %d (%d, %d)\n",
+	    src_vmp->vm_endpoint, src_p, src_vmp->vm_slot,
+	    dst_vmp->vm_endpoint, dst_p, dst_vmp->vm_slot);
+
+	printf("swap_proc: map_printmap for source before swapping:\n");
+	map_printmap(src_vmp);
+	printf("swap_proc: map_printmap for destination before swapping:\n");
+	map_printmap(dst_vmp);
+#endif
+
+	/* Save existing data. */
+	orig_src_vmproc = *src_vmp;
+	orig_dst_vmproc = *dst_vmp;
+
+	/* Swap slots. */
+	*src_vmp = orig_dst_vmproc;
+	*dst_vmp = orig_src_vmproc;
+
+	/* Preserve endpoints and slot numbers. */
+	src_vmp->vm_endpoint = orig_src_vmproc.vm_endpoint;
+	src_vmp->vm_slot = orig_src_vmproc.vm_slot;
+	dst_vmp->vm_endpoint = orig_dst_vmproc.vm_endpoint;
+	dst_vmp->vm_slot = orig_dst_vmproc.vm_slot;
+
+	/* Preserve vir_region's parents. */
+	for(vr = src_vmp->vm_regions; vr; vr = vr->next) {
+		vr->parent = src_vmp;
+	}
+	for(vr = dst_vmp->vm_regions; vr; vr = vr->next) {
+		vr->parent = dst_vmp;
+	}
+
+	/* Adjust page tables. */
+	assert(src_vmp->vm_flags & VMF_HASPT);
+	assert(dst_vmp->vm_flags & VMF_HASPT);
+	pt_bind(&src_vmp->vm_pt, src_vmp);
+	pt_bind(&dst_vmp->vm_pt, dst_vmp);
+	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
+		panic("swap_proc: VMCTL_FLUSHTLB failed: %d", r);
+	}
+
+#if SWAP_PROC_DEBUG
+	printf("swap_proc: swapped %d (%d, %d) and %d (%d, %d)\n",
+	    src_vmp->vm_endpoint, src_p, src_vmp->vm_slot,
+	    dst_vmp->vm_endpoint, dst_p, dst_vmp->vm_slot);
+
+	printf("swap_proc: map_printmap for source after swapping:\n");
+	map_printmap(src_vmp);
+	printf("swap_proc: map_printmap for destination after swapping:\n");
+	map_printmap(dst_vmp);
+#endif
+
+	return OK;
 }
 

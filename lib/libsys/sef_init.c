@@ -50,6 +50,7 @@ PUBLIC int do_sef_init_request(message *m_ptr)
   /* Let the callback code handle the request. */
   type = m_ptr->RS_INIT_TYPE;
   info.rproctab_gid = m_ptr->RS_INIT_RPROCTAB_GID;
+  info.old_endpoint = m_ptr->RS_INIT_OLD_ENDPOINT;
   switch(type) {
       case SEF_INIT_FRESH:
           r = sef_cbs.sef_cb_init_fresh(type, &info);
