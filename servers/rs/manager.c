@@ -453,10 +453,17 @@ struct rproc *rp;
 	init_privs(rp, &rp->r_priv);
   }
 
-  /* Set and synch the privilege structure for the new service. */
+  /* Set and synch the privilege structure for the new service.
+   * In case the following fails, we can't kill the process as no signal
+   * manager has been assigned yet. The solution is to directly call
+   * terminate_service() without sending any signal to the process.
+   */
   if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_SET_SYS, &rp->r_priv)) != OK
 	|| (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
-	panic("unable to set privilege structure: %d", s);
+	printf("unable to set privilege structure: %d\n", s);
+	rp->r_flags |= RS_EXITING;
+	terminate_service(rp);
+	return ENOMEM;
   }
 
   /* Copy the executable image into the child process. If this call
