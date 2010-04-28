@@ -154,9 +154,15 @@ PRIVATE void fpu_init(void)
 		if(_cpufeature(_CPUF_I386_FXSR)) {
 			register struct proc *rp;
 			phys_bytes aligned_fp_area;
+			u32_t cr4 = read_cr4() | CR4_OSFXSR; /* Enable FXSR. */
 
-			/* Enable FXSR feature usage. */
-			write_cr4(read_cr4() | CR4_OSFXSR | CR4_OSXMMEXCPT);
+			/* OSXMMEXCPT if supported
+			 * FXSR feature can be available without SSE
+			 */
+			if(_cpufeature(_CPUF_I386_SSE))
+				cr4 |= CR4_OSXMMEXCPT; 
+
+			write_cr4(cr4);
 			osfxsr_feature = 1;
 
 			for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
