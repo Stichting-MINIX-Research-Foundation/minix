@@ -1,7 +1,7 @@
 /* $Header$ */
 
 /* replace undef by define */
-#undef	 DEBUG		/* check assertions */
+#define	 DEBUG		/* check assertions */
 #undef	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
 
 #ifndef DEBUG
@@ -179,7 +179,7 @@ free(void *ptr)
   if (p == 0)
 	return;
 
-  assert(NextSlot(p) > p);
+  assert((char *) NextSlot(p) > p);
   for (prev = 0, next = _empty; next != 0; prev = next, next = NextFree(next))
 	if (p < next)
 		break;
@@ -189,14 +189,14 @@ free(void *ptr)
   else
 	_empty = p;
   if (next) {
-	assert(NextSlot(p) <= next);
+	assert((char *) NextSlot(p) <= next);
 	if (NextSlot(p) == next) {		/* merge p and next */
 		NextSlot(p) = NextSlot(next);
 		NextFree(p) = NextFree(next);
 	}
   }
   if (prev) {
-	assert(NextSlot(prev) <= p);
+	assert((char *) NextSlot(prev) <= p);
 	if (NextSlot(prev) == p) {		/* merge prev and p */
 		NextSlot(prev) = NextSlot(p);
 		NextFree(prev) = NextFree(p);
