@@ -897,7 +897,7 @@ PRIVATE int kbc_read()
 	/* Wait at most 1 second for a byte from the keyboard or
 	* the kbd controller, return -1 on a timeout.
 	*/
-	for (i= 0; i<1000; i++)
+	for (i= 0; i<1000000; i++)
  #if 0
 	micro_start(&ms);
 	do
