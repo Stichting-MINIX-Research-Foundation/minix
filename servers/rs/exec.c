@@ -69,7 +69,8 @@ int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	}
 
 	/* Allocate space for the stack frame. */
-	if ((frame = (char *) sbrk(frame_size)) == (char *) -1) {
+	frame = (char *) malloc(frame_size);
+	if (!frame) {
 		errno = E2BIG;
 		return -1;
 	}
@@ -106,7 +107,7 @@ int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	r = do_exec(proc_e, exec, exec_len, progname, frame, frame_size);
 
 	/* Return the memory used for the frame and exit. */
-	(void) sbrk(-frame_size);
+	free(frame);
 	return r;
 }
 
