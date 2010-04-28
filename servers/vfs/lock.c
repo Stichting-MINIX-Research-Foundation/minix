@@ -58,6 +58,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 	case SEEK_END:	first = f->filp_vno->v_size; break;
 	default:	return(EINVAL);
   }
+
   /* Check for overflow. */
   if (((long)flock.l_start > 0) && ((first + flock.l_start) < first))
 	return(EINVAL);
@@ -70,7 +71,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 
   /* Check if this region conflicts with any existing lock. */
   empty = NIL_LOCK;
-  for (flp = &file_lock[0]; flp < & file_lock[NR_LOCKS]; flp++) {
+  for (flp = &file_lock[0]; flp < &file_lock[NR_LOCKS]; flp++) {
 	if (flp->lock_type == 0) {
 		if (empty == NIL_LOCK) empty = flp;
 		continue;	/* 0 means unused slot */
@@ -154,7 +155,7 @@ int req;			/* either F_SETLK or F_SETLKW */
   if (ltype == F_UNLCK) return(OK);	/* unlocked a region with no locks */
 
   /* There is no conflict.  If space exists, store new lock in the table. */
-  if (empty == (struct file_lock *) 0) return(ENOLCK);	/* table full */
+  if (empty == NIL_LOCK) return(ENOLCK);	/* table full */
   empty->lock_type = ltype;
   empty->lock_pid = fp->fp_pid;
   empty->lock_vnode = f->filp_vno;
@@ -181,7 +182,7 @@ PUBLIC void lock_revive()
 
   struct fproc *fptr;
 
-  for (fptr = &fproc[INIT_PROC_NR + 1]; fptr < &fproc[NR_PROCS]; fptr++){
+  for (fptr = &fproc[0]; fptr < &fproc[NR_PROCS]; fptr++){
 	if(fptr->fp_pid == PID_FREE) continue;
 	if (fptr->fp_blocked_on == FP_BLOCKED_ON_LOCK) {
 		revive(fptr->fp_endpoint, 0);
