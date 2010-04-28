@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 #define ITERATIONS        4
 #define MAX_ERROR 4
@@ -31,7 +32,11 @@ int subtest, errct, xfd;
 int whence = SEEK_SET, func_code = F_SETLK;
 extern char **environ;
 
+#define timed_test(func) (timed_test_func(#func, func));
+
 _PROTOTYPE(int main, (int argc, char *argv []));
+_PROTOTYPE(void timed_test_func, (const char *s, void (* func)(void)));
+_PROTOTYPE(void timed_test_timeout, (int signum));
 _PROTOTYPE(void test7a, (void));
 _PROTOTYPE(void test7b, (void));
 _PROTOTYPE(void test7c, (void));
@@ -67,19 +72,47 @@ char *argv[];
   chdir("DIR_07");
 
   for (i = 0; i < ITERATIONS; i++) {
-	if (m & 00001) test7a();
-	if (m & 00002) test7b();
-	if (m & 00004) test7c();
-	if (m & 00010) test7d();
-	if (m & 00020) test7e();
-	if (m & 00040) test7f();
-	if (m & 00100) test7g();
-	if (m & 00200) test7h();
-	if (m & 00400) test7i();
-	if (m & 01000) test7j();
+	if (m & 00001) timed_test(test7a);
+	if (m & 00002) timed_test(test7b);
+	if (m & 00004) timed_test(test7c);
+	if (m & 00010) timed_test(test7d);
+	if (m & 00020) timed_test(test7e);
+	if (m & 00040) timed_test(test7f);
+	if (m & 00100) timed_test(test7g);
+	if (m & 00200) timed_test(test7h);
+	if (m & 00400) timed_test(test7i);
+	if (m & 01000) timed_test(test7j);
   }
   quit();
   return(-1);			/* impossible */
+}
+
+static jmp_buf timed_test_context;
+
+void timed_test_timeout(int signum)
+{
+  longjmp(timed_test_context, -1);
+  e(700);
+  quit();
+  exit(-1);
+}
+
+void timed_test_func(const char *s, void (* func)(void))
+{
+  if (setjmp(timed_test_context) == 0)
+  {
+    /* the function gets 60 seconds to complete */
+    if (signal(SIGALRM, timed_test_timeout) == SIG_ERR) { e(701); return; }
+    alarm(60);
+    func();
+    alarm(0);
+  }
+  else
+  {
+    /* report timeout as error */
+    printf("timeout in %s\n", s);
+    e(702);
+  }
 }
 
 void test7a()
