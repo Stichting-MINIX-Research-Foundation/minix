@@ -136,7 +136,7 @@ PRIVATE void tss_init(struct tss_s * tss, void * kernel_stack,
 	*((reg_t *)(tss->sp0 + 1 * sizeof(reg_t))) = cpu;
 }
 
-PUBLIC void arch_init(void)
+PRIVATE void fpu_init(void)
 {
 	unsigned short cw, sw;
 
@@ -184,7 +184,10 @@ PUBLIC void arch_init(void)
                 osfxsr_feature = 0;
                 return;
         }
+}
 
+PUBLIC void arch_init(void)
+{
 #ifdef CONFIG_APIC
 	/*
 	 * this is setting kernel segments to cover most of the phys memory. The
@@ -208,6 +211,7 @@ PUBLIC void arch_init(void)
 	}
 #endif
 
+	fpu_init();
 }
 
 #define COM1_BASE       0x3F8
