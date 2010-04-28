@@ -401,22 +401,17 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
 PRIVATE int quirkmatch(struct quirk *table, u8_t bcr, u8_t scr, u8_t interface, u16_t vid, u16_t did) {
 	int i = 0;
 
-	printf("matching 0x%x 0x%x 0x%x , vid 0x%x did 0x%x for quirks\n",
-		bcr, scr, interface, vid, did);
-
 	while(table->vendor) {
 		if(table->vendor == vid && table->device == did &&
 			table->pci_class == bcr &&
 			table->pci_subclass == scr &&
 			(table->pci_interface == -1 ||
 				table->pci_interface == interface)) {
-			printf("found\n");
 			return 1;
 		}
 		table++;
 	}
 
-	printf("not found\n");
 	return 0;
 }
 
