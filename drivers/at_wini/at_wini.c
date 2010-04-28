@@ -123,16 +123,18 @@ PRIVATE phys_bytes prdt_phys;
 
 #define PRDTE_FL_EOT	0x80	/* End of table */
 
-/* Some IDE devices announce themselves as RAID controllers */
-PRIVATE struct
+/* IDE devices we trust are IDE devices. */
+PRIVATE struct quirk
 {
+	int pci_class, pci_subclass, pci_interface;
 	u16_t vendor;
 	u16_t device;
-} raid_table[]=
+} quirk_table[]=
 {
-	{ 0x1106,	0x3149	},	/* VIA VT6420 */
-	{ 0x1095,	0x3512	},
-	{ 0,		0	}	/* end of list */
+	{ 0x01,	0x04,	0x00,	0x1106,	0x3149	},	/* VIA VT6420 */
+	{ 0x01,	0x04,	0x00,	0x1095,	0x3512	},
+	{ 0x01,	0x80,	-1,	0x1095,	0x3114	},	/* Silicon Image SATA */
+	{ 0,	0,	0,	0	}	/* end of list */
 };
 
 FORWARD _PROTOTYPE( void init_params, (void) 				);
@@ -396,13 +398,35 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
 	w->dma = 0;
 }
 
+PRIVATE int quirkmatch(struct quirk *table, u8_t bcr, u8_t scr, u8_t interface, u16_t vid, u16_t did) {
+	int i = 0;
+
+	printf("matching 0x%x 0x%x 0x%x , vid 0x%x did 0x%x for quirks\n",
+		bcr, scr, interface, vid, did);
+
+	while(table->vendor) {
+		if(table->vendor == vid && table->device == did &&
+			table->pci_class == bcr &&
+			table->pci_subclass == scr &&
+			(table->pci_interface == -1 ||
+				table->pci_interface == interface)) {
+			printf("found\n");
+			return 1;
+		}
+		table++;
+	}
+
+	printf("not found\n");
+	return 0;
+}
+
 /*===========================================================================*
  *				init_params_pci				     *
  *===========================================================================*/
 PRIVATE void init_params_pci(int skip)
 {
   int i, r, devind, drive, pci_compat = 0;
-  int irq, irq_hook, raid;
+  int irq, irq_hook;
   u8_t bcr, scr, interface;
   u16_t vid, did;
   u32_t base_dma, t3;
@@ -412,8 +436,7 @@ PRIVATE void init_params_pci(int skip)
   	wini[drive].state = IGNORING;
   for(r = pci_first_dev(&devind, &vid, &did); r != 0;
 	r = pci_next_dev(&devind, &vid, &did)) {
-
-	raid= 0;
+	int quirk = 0;
 
   	/* Except class 01h (mass storage), subclass be 01h (ATA).
 	 * Also check listed RAID controllers.
@@ -424,27 +447,9 @@ PRIVATE void init_params_pci(int skip)
 	t3= ((bcr << 16) | (scr << 8) | interface);
   	if (bcr == PCI_BCR_MASS_STORAGE && scr == PCI_MS_IDE)
 		;	/* Okay */
-	else if (t3 == PCI_T3_RAID)
-	{
-		for (i= 0; raid_table[i].vendor != 0; i++)
-		{
-			if (raid_table[i].vendor == vid &&
-				raid_table[i].device == did)
-			{
-				break;
-			}
-		}
-		if (raid_table[i].vendor == 0)
-		{
-		  	printf(
-	"atapci skipping unsupported RAID controller 0x%04x / 0x%04x\n",
-				vid, did);
-			continue;
-		}
-		printf("found supported RAID controller\n");
-		raid= 1;
-	}
-	else
+	else if(quirkmatch(quirk_table, bcr, scr, interface, vid, did)) {
+		quirk = 1;
+	} else
 		continue;	/* Unsupported device class */
 
   	/* Found a controller.
@@ -453,7 +458,7 @@ PRIVATE void init_params_pci(int skip)
   	irq = pci_attr_r8(devind, PCI_ILR);
 
   	/* Any non-compat drives? */
-  	if (raid || (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2))) {
+  	if (quirk || (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2))) {
 		if (w_next_drive >= MAX_DRIVES)
 		{
 			/* We can't accept more drives, but have to search for
@@ -487,12 +492,12 @@ PRIVATE void init_params_pci(int skip)
 			printf("atapci: couldn't enable IRQ line %d\n", irq);
 		  	continue;
 		}
-  	} else if(w_pci_debug) printf("at_wini%d: dev %d: only compat drives\n", w_instance, devind); 
+  	} 
 
   	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
 
   	/* Primary channel not in compatability mode? */
-  	if (raid || (interface & ATA_IF_NOTCOMPAT1)) {
+  	if (quirk || (interface & ATA_IF_NOTCOMPAT1)) {
   		u32_t base_cmd, base_ctl;
 
   		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xfffffffc;
@@ -525,7 +530,7 @@ PRIVATE void init_params_pci(int skip)
 	}
 
   	/* Secondary channel not in compatability mode? */
-  	if (raid || (interface & ATA_IF_NOTCOMPAT2)) {
+  	if (quirk || (interface & ATA_IF_NOTCOMPAT2)) {
   		u32_t base_cmd, base_ctl;
 
   		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xfffffffc;
