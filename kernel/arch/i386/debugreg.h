@@ -31,14 +31,14 @@ void ld_dr0(phys_bytes value);
 void ld_dr1(phys_bytes value);
 void ld_dr2(phys_bytes value);
 void ld_dr3(phys_bytes value);
-void ld_dr6(phys_bytes value);
-void ld_dr7(phys_bytes value);
-u32_t st_dr0(void); 
-u32_t st_dr1(void); 
-u32_t st_dr2(void); 
-u32_t st_dr3(void); 
-u32_t st_dr6(void); 
-u32_t st_dr7(void); 
+void ld_dr6(unsigned long value);
+void ld_dr7(unsigned long value);
+phys_bytes st_dr0(void); 
+phys_bytes st_dr1(void); 
+phys_bytes st_dr2(void); 
+phys_bytes st_dr3(void); 
+unsigned long st_dr6(void); 
+unsigned long st_dr7(void); 
 
 #endif /* __DEBUGREG_H__ */
 

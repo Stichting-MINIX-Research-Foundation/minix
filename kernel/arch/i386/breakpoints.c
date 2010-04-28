@@ -5,7 +5,7 @@
 
 PRIVATE int breakpoint_set(phys_bytes linaddr, int bp, const int flags)
 {
-	u32_t dr7, dr7flags;
+	unsigned long dr7, dr7flags;
 	
 	if (bp >= BREAKPOINT_COUNT)
 		return EINVAL;

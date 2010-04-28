@@ -14,13 +14,17 @@ st_##reg:								;\
 	ret
 
 /*
- * void ld_dr0(u32_t value)
- * u32_t st_dr0(void)
+ * void ld_dr0(phys_bytes value)
+ * phys_bytes st_dr0(void)
  */
 LD_ST_REG(dr0)
 LD_ST_REG(dr1)
 LD_ST_REG(dr2)
 LD_ST_REG(dr3)
+
+/*
+ * void ld_dr0(unsigned long value)
+ * unsigned long st_dr0(void)
+ */
 LD_ST_REG(dr6)
 LD_ST_REG(dr7)
-
