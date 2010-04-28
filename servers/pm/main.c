@@ -65,7 +65,7 @@ PUBLIC int main()
 
   /* SEF local startup. */
   sef_local_startup();
-  overtake_scheduling();	/* overtake all running processes */
+  takeover_scheduling();	/* takeover all running processes */
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {

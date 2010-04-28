@@ -63,7 +63,7 @@ _PROTOTYPE( int do_getsetpriority, (void)				);
 /* schedule.c */
 _PROTOTYPE( int schedule_process, (struct mproc * rmp)			);
 _PROTOTYPE( void do_noquantum, (void)					);
-_PROTOTYPE( void overtake_scheduling, (void)				);
+_PROTOTYPE( void takeover_scheduling, (void)				);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
 
 /* profile.c */

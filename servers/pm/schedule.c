@@ -52,9 +52,9 @@ PUBLIC void do_noquantum(void)
 }
 
 /*===========================================================================*
- *				overtake_scheduling			     *
+ *				takeover_scheduling			     *
  *===========================================================================*/
-PUBLIC void overtake_scheduling(void)
+PUBLIC void takeover_scheduling(void)
 {
 	struct mproc *trmp;
 	int proc_nr;
@@ -62,12 +62,12 @@ PUBLIC void overtake_scheduling(void)
 	tmr_inittimer(&sched_timer);
 
 	for (proc_nr=0, trmp=mproc; proc_nr < NR_PROCS; proc_nr++, trmp++) {
-		/* Don't overtake system processes. When the system starts,
-		 * this will typically only overtake init, from which other
+		/* Don't takeover system processes. When the system starts,
+		 * this will typically only takeover init, from which other
 		 * user space processes will inherit. */
 		if (trmp->mp_flags & IN_USE && !(trmp->mp_flags & PRIV_PROC)) {
 			if (sys_schedctl(trmp->mp_endpoint))
-				printf("PM: Error while overtaking scheduling for %s\n",
+				printf("PM: Error while taking over scheduling for %s\n",
 					trmp->mp_name);
 			trmp->mp_flags |= PM_SCHEDULED;
 		}
