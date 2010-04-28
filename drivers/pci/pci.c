@@ -650,10 +650,10 @@ PRIVATE void pci_intel_init()
 	outl(PCII_CONFADD, PCII_UNSEL);
 #endif
 
+#if 0
 	if (vid == 0xffff && did == 0xffff)
 		return;	/* Nothing here */
 
-#if 0
 	for (i= 0; pci_intel_ctrl[i].vid; i++)
 	{
 		if (pci_intel_ctrl[i].vid == vid &&
