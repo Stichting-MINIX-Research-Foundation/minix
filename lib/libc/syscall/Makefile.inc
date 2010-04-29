@@ -69,6 +69,7 @@ SRCS+=  \
 	mkfifo.S \
 	mknod.S \
 	mmap.S \
+	munmap.S \
 	vm_getphys.S \
 	vm_getrefcount.S \
 	vm_remap.S \
