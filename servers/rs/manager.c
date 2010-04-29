@@ -822,6 +822,7 @@ PUBLIC void terminate_service(struct rproc *rp)
   if(rp->r_flags & RS_INITIALIZING) {
       printf("RS: service '%s' exited during initialization\n", rpub->label);
       rp->r_flags |= RS_EXITING; /* don't restart. */
+      sys_sysctl_stacktrace(rp->r_pub->endpoint);
 
       /* If updating, rollback. */
       if(rp->r_flags & RS_UPDATING) {
