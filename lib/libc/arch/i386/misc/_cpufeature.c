@@ -35,14 +35,12 @@ int _cpufeature(int cpufeature)
 			return edx & CPUID1_EDX_TSC;
 		case _CPUF_I386_FPU:
 			return edx & CPUID1_EDX_FPU;
-		case _CPUF_I386_SSEx:
-			return (edx & (CPUID1_EDX_FXSR |
-					CPUID1_EDX_SSE |
-					CPUID1_EDX_SSE2)) &&
-					(ecx & (CPUID1_ECX_SSE3 |
-					CPUID1_ECX_SSSE3 |
-					CPUID1_ECX_SSE4_1 |
-					CPUID1_ECX_SSE4_2));
+#define SSE_FULL_EDX (CPUID1_EDX_FXSR | CPUID1_EDX_SSE | CPUID1_EDX_SSE2)
+#define SSE_FULL_ECX (CPUID1_ECX_SSE3 | CPUID1_ECX_SSSE3 | \
+	CPUID1_ECX_SSE4_1 | CPUID1_ECX_SSE4_2)
+		case _CPUF_I386_SSE1234_12:
+			return	(edx & SSE_FULL_EDX) == SSE_FULL_EDX &&
+				(ecx & SSE_FULL_ECX) == SSE_FULL_ECX;
 		case _CPUF_I386_FXSR:
 			return edx & CPUID1_EDX_FXSR;
 		case _CPUF_I386_SSE:

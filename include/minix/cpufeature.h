@@ -7,7 +7,7 @@
 #define _CPUF_I386_PGE 		2	/* Page Global Enable */
 #define _CPUF_I386_APIC_ON_CHIP	3	/* APIC is present on the chip */
 #define _CPUF_I386_TSC		4	/* Timestamp counter present */
-#define _CPUF_I386_SSEx		5	/* Support for SSE/SSE2/SSE3/SSSE3/SSE4
+#define _CPUF_I386_SSE1234_12	5	/* Support for SSE/SSE2/SSE3/SSSE3/SSE4
 					 * Extensions and FXSR
 					 */
 #define _CPUF_I386_FXSR		6
