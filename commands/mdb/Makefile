@@ -19,7 +19,7 @@ STACK		=200000
 #
 # (2) If kernel and mm are not in "/usr/src" change this
 #
-SYSTEM	=$(USR)/src
+SYSTEM	=../..
 #
 # (3) Select Options
 # 
