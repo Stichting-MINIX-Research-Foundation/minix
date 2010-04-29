@@ -301,10 +301,12 @@ smallcopy:
 ext_copy:
 	mov	x_dst_desc+2, ax
 	movb	x_dst_desc+4, dl ! Set base of destination segment
+	movb	x_dst_desc+7, dh
 	mov	ax, 8(bp)
 	mov	dx, 10(bp)
 	mov	x_src_desc+2, ax
 	movb	x_src_desc+4, dl ! Set base of source segment
+	movb	x_src_desc+7, dh
 	mov	si, #x_gdt	! es:si = global descriptor table
 	shr	cx, #1		! Words to move
 	movb	ah, #0x87	! Code for extended memory move
