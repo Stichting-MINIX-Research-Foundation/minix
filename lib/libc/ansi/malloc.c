@@ -2,7 +2,7 @@
 
 /* replace undef by define */
 #define	 DEBUG		/* check assertions */
-#undef	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
+#define	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
 
 #ifndef DEBUG
 #define NDEBUG
@@ -178,6 +178,34 @@ free(void *ptr)
 
   if (p == 0)
 	return;
+
+#ifdef SLOWDEBUG
+  {
+  	int found;
+	char *curr;
+
+	/* block must be in block list */
+	assert(_bottom);
+	found = 0;
+	for (curr = _bottom; (next = NextSlot(curr)) != 0; curr = next) {
+		assert(next > curr);
+		if (curr == p) found = 1;
+	}
+	if (curr == p) found = 1;
+	assert(found);
+
+	/* block must not be in free list */
+	if (_empty) {
+		found = 0;
+		for (curr = _empty; (next = NextFree(curr)) != 0; curr = next) {
+			assert(next > curr);
+			if (curr == p) found = 1;
+		}
+		if (curr == p) found = 1;
+		assert(!found);
+	}
+  }
+#endif
 
   assert((char *) NextSlot(p) > p);
   for (prev = 0, next = _empty; next != 0; prev = next, next = NextFree(next))
