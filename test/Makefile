@@ -3,7 +3,8 @@
 CC =	exec cc
 GCC =   /usr/gnu/bin/gcc
 CFLAGS= -O -D_MINIX -D_POSIX_SOURCE
-CFLAGS-GCC= $(CFLAGS) -Wall
+CFLAGS-GCC= $(CFLAGS) -Wall 
+CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float
 CFLAGS-GCCFPU= $(CFLAGS-GCC) -W -mhard-float
 
 OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
@@ -11,12 +12,12 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	       test21 test22 test23        test25 test26 test27 test28 test29 \
 	test30 test31 test32        test34 test35 test36 test37 test38 \
 	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
-	test42 test44 test45 test47 test48 test49 test50 test51 
+	test42 test44 test45 test47 test48 test49 test50 test51 test52
 
 BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43 test46
 GCCOBJ=  test45-gcc test49-gcc 
-GCCFPUOBJ= test51-gcc 
+GCCFPUOBJ= test51-gcc test52-gcc
 
 all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ)
 	chmod 755 *.sh run
@@ -106,4 +107,6 @@ test49-gcc: test49.c
 test50: test50.c
 test51: test51.c
 test51-gcc: test51.c
+test52: test52.c
+test52-gcc: test52.c
 
