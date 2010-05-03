@@ -2,7 +2,7 @@
 
 /* replace undef by define */
 #define	 DEBUG		/* check assertions */
-#define	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
+#undef	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
 
 #ifndef DEBUG
 #define NDEBUG
