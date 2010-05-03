@@ -57,6 +57,7 @@ _PROTOTYPE( void util_stacktrace_strcat, (char *));
 _PROTOTYPE( int micro_delay, (u32_t micros));
 _PROTOTYPE( u32_t tsc_64_to_micros, (u64_t tsc));
 _PROTOTYPE( u32_t tsc_to_micros, (u32_t low, u32_t high));
+_PROTOTYPE( u32_t tsc_get_khz, (void));
 _PROTOTYPE( u32_t micros_to_ticks, (u32_t micros));
 _PROTOTYPE( void ser_putc, (char c));
 _PROTOTYPE( void get_randomness, (struct k_randomness *, int));

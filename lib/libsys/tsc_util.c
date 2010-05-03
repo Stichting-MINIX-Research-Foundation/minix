@@ -111,3 +111,9 @@ u32_t tsc_to_micros(u32_t low, u32_t high)
 	return micros;
 }
 
+u32_t tsc_get_khz(void)
+{
+	CALIBRATE;
+
+	return calib_tsc / (CALIBRATE_TICKS(Hz) * MICROSPERTICK(Hz)) * 1000;
+}
