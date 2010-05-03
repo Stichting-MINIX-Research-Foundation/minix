@@ -492,6 +492,10 @@ proc_nr_t src_dst;				/* src or dst process */
 		printf("deadlock between these processes:\n");
 		for(i = 0; i < group_size; i++) {
 			printf(" %10s ", processes[i]->p_name);
+		}
+		printf("\n\n");
+		for(i = 0; i < group_size; i++) {
+			print_proc(processes[i]);
 			proc_stacktrace(processes[i]);
 		}
 	  }
