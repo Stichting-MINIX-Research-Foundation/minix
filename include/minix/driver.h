@@ -56,7 +56,7 @@ struct device {
 #define DRIVER_STD	0	/* Use the standard reply protocol */
 #define DRIVER_ASYN	1	/* Use the new asynchronous protocol */
 
-#define MAX_NR_OPEN_DEVICES 16
+#define MAX_NR_OPEN_DEVICES 256
 
 #define IS_DEV_MINOR_RQ(type) (IS_DEV_RQ(type) && (type) != DEV_STATUS)
 
