@@ -324,56 +324,6 @@ PRIVATE void ser_debug(const int c)
 	serial_debug_active = 0;
 }
 
-PRIVATE void printslot(struct proc *pp, const int level)
-{
-	struct proc *depproc = NULL;
-	endpoint_t dep;
-#define COL { int i; for(i = 0; i < level; i++) printf("> "); }
-
-	if(level >= NR_PROCS) {
-		printf("loop??\n");
-		return;
-	}
-
-	COL
-
-	printf("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cr3 0x%lx rts %s misc %s sched %s",
-		proc_nr(pp), pp->p_name, pp->p_endpoint, 
-		pp->p_priority, pp->p_user_time,
-		pp->p_sys_time, pp->p_cycles.hi, pp->p_cycles.lo, pp->p_seg.p_cr3,
-		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags),
-		schedulerstr(pp->p_scheduler));
-
-	if((dep = P_BLOCKEDON(pp)) != NONE) {
-		printf(" blocked on: ");
-		if(dep == ANY) {
-			printf(" ANY\n");
-		} else {
-			int procno;
-			if(!isokendpt(dep, &procno)) {
-				printf(" ??? %d\n", dep);
-			} else {
-				depproc = proc_addr(procno);
-				if(isemptyp(depproc)) {
-					printf(" empty slot %d???\n", procno);
-					depproc = NULL;
-				} else {
-					printf(" %s\n", depproc->p_name);
-				}
-			}
-		}
-	} else {
-		printf("\n");
-	}
-
-	COL
-	proc_stacktrace(pp);
-
-
-	if(depproc)
-		printslot(depproc, level+1);
-}
-
 
 PUBLIC void ser_dump_proc()
 {
@@ -383,7 +333,7 @@ PUBLIC void ser_dump_proc()
 	{
 		if (isemptyp(pp))
 			continue;
-		printslot(pp, 0);
+		print_proc_recursive(pp);
 	}
 }
 

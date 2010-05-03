@@ -92,6 +92,10 @@ _PROTOTYPE( int runqueues_ok, (void) );
 _PROTOTYPE( char *rtsflagstr, (int flags) );
 _PROTOTYPE( char *miscflagstr, (int flags) );
 _PROTOTYPE( char *schedulerstr, (struct proc *scheduler) );
+/* prints process information */
+_PROTOTYPE( void print_proc, (struct proc *pp));
+/* prints the given process and recursively all processes it depends on */
+_PROTOTYPE( void print_proc_recursive, (struct proc *pp));
 
 /* system/do_safemap.c */
 _PROTOTYPE( int map_invoke_vm, (struct proc * caller, int req_type,
