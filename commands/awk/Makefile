@@ -61,7 +61,7 @@ awk:	ytab.o $(OFILES)
 $(OFILES):	awk.h ytab.h proto.h
 
 ytab.o ytab.c ytab.h:	awk.h proto.h awkgram.y
-	$(YACC) $(YFLAGS) awkgram.y
+	$(YACC) $(YFLAGS) awkgram.y 2>/dev/null
 	mv y.tab.c ytab.c
 	mv y.tab.h ytab.h
 	$(CC) $(CFLAGS) -c ytab.c
