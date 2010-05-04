@@ -1037,29 +1037,6 @@ tty_t *tp;
 }
 
 /*===========================================================================*
- *				kputc					     *
- *===========================================================================*/
-PUBLIC void kputc(int c)
-{
-/* Accumulate a single character for a kernel message. Send a notification
- * the to output driver if an END_OF_KMESS is encountered. 
- */
-#if 0
-  ser_putc(c);
-  return;
-#endif
-
-  if (c != 0) {
-      kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
-      if (kmess.km_size < _KMESS_BUF_SIZE)
-          kmess.km_size += 1;		
-      kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
-  } else {
-      notify(LOG_PROC_NR);
-  }
-}
-
-/*===========================================================================*
  *				do_new_kmess				     *
  *===========================================================================*/
 PUBLIC void do_new_kmess()
