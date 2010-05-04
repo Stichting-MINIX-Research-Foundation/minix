@@ -10,7 +10,7 @@ _alloca:
 	pop	%ecx	/* Return address */
 	pop	%eax	/* Bytes to allocate */
 	addl	$2*4+3, %eax	/* Add space for two saved register variables */
-	andb	$0xFC, %al	/* Align */
+	andb	$0xF8, %al	/* Align */
 	movl	%esp, %ebx	/* Keep current esp */
 	subl	%eax, %esp	/* Lower stack */
 	movl	%esp, %eax	/* Return value */
@@ -24,7 +24,7 @@ _alloca:
 	pop	%ecx	/* Return address */
 	pop	%eax	/* Bytes to allocate */
 	addl	$3, %eax
-	andb	$0xFC, %al	/* Align */
+	andb	$0xF8, %al	/* Align */
 	subl	%eax, %esp	/* Lower stack */
 	movl	%esp, %eax	/* Return value */
 	push	%eax	/* Dummy argument */

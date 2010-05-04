@@ -1,7 +1,16 @@
 /* $Header$ */
 #include	<stdlib.h>
 
-#define ALIGN(x)	(((x) + (sizeof(size_t) - 1)) & ~(sizeof(size_t) - 1))
+/* replace undef by define */
+#define  ALIGN_EIGHT_BYTES /* Use 8-byte alignment. */
+
+#ifdef  ALIGN_EIGHT_BYTES
+#define ALIGN_SIZE 8
+#else
+#define ALIGN_SIZE sizeof(size_t)
+#endif
+
+#define ALIGN(x)	(((x) + (ALIGN_SIZE - 1)) & ~(ALIGN_SIZE - 1))
 
 void *
 calloc(size_t nelem, size_t elsize)

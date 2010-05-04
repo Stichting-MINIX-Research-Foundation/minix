@@ -1,8 +1,9 @@
 /* $Header$ */
 
 /* replace undef by define */
-#define	 DEBUG		/* check assertions */
-#undef	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
+#define  ALIGN_EIGHT_BYTES /* Use 8-byte alignment. */
+#define	 DEBUG		   /* check assertions */
+#undef	 SLOWDEBUG	   /* some extra test loops (requires DEBUG) */
 
 #ifndef DEBUG
 #define NDEBUG
@@ -24,7 +25,11 @@
 #else
 #define BRKSIZE		4096
 #endif
+#ifdef ALIGN_EIGHT_BYTES
+#define PTRSIZE		8
+#else
 #define	PTRSIZE		((int) sizeof(void *))
+#endif
 #define Align(x,a)	(((x) + (a - 1)) & ~(a - 1))
 #define NextSlot(p)	(* (void **) ((p) - PTRSIZE))
 #define NextFree(p)	(* (void **) (p))
@@ -41,6 +46,9 @@
  * linked together by a pointer at the start of the
  * user visable part, so just after the next-slot pointer.
  * Free slots are merged together by free().
+ *
+ * Since modern processors prefer 8-byte alignment, we now pretend
+ * our pointers are 8 bytes wide.
  */
 
 extern void *_sbrk(int);
@@ -67,16 +75,17 @@ static int grow(size_t len)
 }
 
 void *
-malloc(size_t size)
+malloc(const size_t size)
 {
   register char *prev, *p, *next, *new;
-  register unsigned len, ntries;
+  unsigned ntries;
 
   if (size == 0)
 	return NULL;
 
   for (ntries = 0; ntries < 2; ntries++) {
-	if ((len = Align(size, PTRSIZE) + PTRSIZE) < 2 * PTRSIZE) {
+	unsigned len = Align(size, PTRSIZE) + PTRSIZE;
+	if (len < 2 * PTRSIZE) {
 		errno = ENOMEM;
 		return NULL;
 	}
