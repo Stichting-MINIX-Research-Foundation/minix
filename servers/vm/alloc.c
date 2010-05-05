@@ -915,7 +915,6 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 			mem = alloc_pages(rempages, flags, &gotpages);
 
 			if(mem == NO_MEM) {
-				printf("*");
 				freed = free_yielded(rempages * VM_PAGE_SIZE);
 			}
 		} while(mem == NO_MEM && freed > 0);
