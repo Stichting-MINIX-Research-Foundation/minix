@@ -2,7 +2,6 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <minix/vfsif.h>
-#include <minix/fsctl.h>
 #include "buf.h"
 #include "inode.h"
 
