@@ -95,6 +95,7 @@ SRCS=  \
 	vm_map_phys.c \
 	vm_umap.c \
 	vm_push_sig.c \
+	vm_yield_get_block.c \
 	asynsend.c \
 	kprintf.c \
 	kputc.c \

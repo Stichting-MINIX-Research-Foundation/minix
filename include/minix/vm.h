@@ -27,6 +27,15 @@ _PROTOTYPE( int vm_ctl, (int what, int param));
 _PROTOTYPE( int vm_set_priv, (int procnr, void *buf));
 _PROTOTYPE( int vm_update, (endpoint_t src_e, endpoint_t dst_e));
 _PROTOTYPE( int vm_query_exit, (int *endpt));
+_PROTOTYPE( int vm_forgetblock, (u64_t id));
+_PROTOTYPE( void vm_forgetblocks, (void));
+_PROTOTYPE( int vm_yield_block_get_block, (u64_t yieldid, u64_t getid,
+        void *mem, vir_bytes len));
+
+/* Invalid ID with special meaning for the vm_yield_block_get_block
+ * interface.
+ */
+#define VM_BLOCKID_NONE make64(ULONG_MAX, ULONG_MAX)
 
 /* VM kernel request types. */
 #define VMPTYPE_NONE		0

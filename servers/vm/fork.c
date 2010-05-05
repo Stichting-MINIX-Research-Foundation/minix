@@ -70,6 +70,7 @@ PUBLIC int do_fork(message *msg)
   *vmc = *vmp;
   vmc->vm_slot = childproc;
   vmc->vm_regions = NULL;
+  yielded_init(&vmc->vm_yielded_blocks);
   vmc->vm_endpoint = NONE;	/* In case someone tries to use it. */
   vmc->vm_pt = origpt;
   vmc->vm_flags &= ~VMF_HASPT;

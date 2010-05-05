@@ -98,6 +98,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /* Initialize the Minix file server. */
   int i, r;
 
+  may_use_vmcache = 1;
+
   /* Init inode table */
   for (i = 0; i < NR_INODES; ++i) {
 	inode[i].i_count = 0;
@@ -111,7 +113,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	driver_endpoints[i].driver_e = NONE;
 	
   SELF_E = getprocnr();
-  buf_pool();
+  buf_pool(DEFAULT_NR_BUFS);
   fs_block_size = _MIN_BLOCK_SIZE;
 
   fs_m_in.m_type = FS_READY;

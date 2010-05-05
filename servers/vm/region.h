@@ -16,6 +16,9 @@
 #include <minix/syslib.h>
 #include <minix/const.h>
 
+#include "phys_region.h"
+#include "physravl.h"
+
 struct phys_block {
 #if SANITYCHECKS
 	u32_t			seencount;
@@ -30,24 +33,6 @@ struct phys_block {
 	/* first in list of phys_regions that reference this block */
 	struct phys_region	*firstregion;	
 };
-
-typedef struct phys_region {
-	struct phys_block	*ph;
-	struct vir_region	*parent; /* parent vir_region. */
-	vir_bytes		offset;	/* offset from start of vir region */
-#if SANITYCHECKS
-	int			written;	/* written to pagetable */
-#endif
-
-	/* list of phys_regions that reference the same phys_block */
-	struct phys_region	*next_ph_list;	
-
-	/* AVL fields */
-	struct phys_region	*less, *greater;
-	int			factor;
-} phys_region_t;
-
-#include "physravl.h"
 
 struct vir_region {
 	struct vir_region *next; /* next virtual region in this process */
@@ -66,11 +51,11 @@ struct vir_region {
 #define VR_LOWER16MB	0x008
 #define VR_LOWER1MB	0x010
 #define VR_CONTIG	0x020	/* Must be physically contiguous. */
+#define VR_SHARED	0x040
 
 /* Mapping type: */
 #define VR_ANON		0x100	/* Memory to be cleared and allocated */
 #define VR_DIRECT	0x200	/* Mapped, but not managed by VM */
-#define VR_SHARED	0x40
 
 /* Tag values: */
 #define VRT_NONE	0xBEEF0000

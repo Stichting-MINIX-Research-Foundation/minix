@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include "buf.h"
@@ -425,16 +426,23 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
  */
   int block_size;
 /* Minimum number of blocks to prefetch. */
-# define BLOCKS_MINIMUM		(NR_BUFS < 50 ? 18 : 32)
+# define BLOCKS_MINIMUM		(nr_bufs < 50 ? 18 : 32)
   int block_spec, scale, read_q_size;
   unsigned int blocks_ahead, fragment;
   block_t block, blocks_left;
   off_t ind1_pos;
   dev_t dev;
   struct buf *bp;
+  static int readqsize = 0;
   static struct buf **read_q;
 
-  STATICINIT(read_q, NR_BUFS);
+  if(readqsize != nr_bufs) {
+	if(readqsize > 0)
+		free(read_q);
+	if(!(read_q = malloc(sizeof(read_q[0])*nr_bufs)))
+		panic("couldn't allocate read_q");
+	readqsize = nr_bufs;
+  }
 
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
   if (block_spec) 
@@ -510,7 +518,7 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 	if (--blocks_ahead == 0) break;
 
 	/* Don't trash the cache, leave 4 free. */
-	if (bufs_in_use >= NR_BUFS - 4) break;
+	if (bufs_in_use >= nr_bufs - 4) break;
 
 	block++;
 

@@ -43,7 +43,7 @@ union fsdata_u {
 #define b_v2_ino bp->b__v2_ino
 #define b_bitmap bp->b__bitmap
 
-#define BUFHASH(b) ((b) % NR_BUFS)
+#define BUFHASH(b) ((b) % nr_bufs)
 
 EXTERN struct buf *front;	/* points to least recently used free block */
 EXTERN struct buf *rear;	/* points to most recently used free block */

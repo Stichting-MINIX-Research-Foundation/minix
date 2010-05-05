@@ -18,12 +18,16 @@
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 #include "buf.h"
 #include "super.h"
 #include "inode.h"
 
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
 FORWARD _PROTOTYPE( int rw_block, (struct buf *, int) );
+
+PRIVATE int vmcache_avail = -1; /* 0 if not available, >0 if available. */
 
 /*===========================================================================*
  *				get_block				     *
@@ -51,6 +55,28 @@ PUBLIC struct buf *get_block(
 
   int b;
   static struct buf *bp, *prev_ptr;
+  int vmfound = 0;
+  u64_t yieldid = VM_BLOCKID_NONE, getid = make64(dev, block);
+  int vmcache = 0;
+
+  assert(buf_hash);
+  assert(buf);
+  assert(nr_bufs > 0);
+
+  if(vmcache_avail < 0) {
+	/* Test once for the availability of the vm yield block feature. */
+	if(vm_forgetblock(VM_BLOCKID_NONE) == ENOSYS) {
+		vmcache_avail = 0;
+	} else {
+		vmcache_avail = 1;
+	}
+  }
+
+  /* use vmcache if it's available, and allowed, and we're not doing
+   * i/o on a ram disk device.
+   */
+  if(vmcache_avail && may_use_vmcache && major(dev) != MEMORY_MAJOR)
+	vmcache = 1;
 
   ASSERT(fs_block_size > 0);
 
@@ -80,7 +106,7 @@ PUBLIC struct buf *get_block(
   }
 
   /* Desired block is not on available chain.  Take oldest block ('front'). */
-  if ((bp = front) == NIL_BUF) panic("all buffers in use: %d", NR_BUFS);
+  if ((bp = front) == NIL_BUF) panic("all buffers in use: %d", nr_bufs);
 
   if(bp->b_bytes < fs_block_size) {
 	ASSERT(!bp->bp);
@@ -126,6 +152,13 @@ PUBLIC struct buf *get_block(
    */
   if (bp->b_dev != NO_DEV) {
 	if (bp->b_dirt == DIRTY) flushall(bp->b_dev);
+
+	/* Are we throwing out a block that contained something?
+	 * Give it to VM for the second-layer cache.
+	 */
+	yieldid = make64(bp->b_dev, bp->b_blocknr);
+	assert(bp->b_bytes == fs_block_size);
+	bp->b_dev = NO_DEV;
   }
 
   /* Fill in block's parameters and add it to the hash chain where it goes. */
@@ -137,16 +170,47 @@ PUBLIC struct buf *get_block(
 
   buf_hash[b] = bp;		/* add to hash list */
 
+  if(dev == NO_DEV) {
+	if(vmcache && cmp64(yieldid, VM_BLOCKID_NONE) != 0) {
+		vm_yield_block_get_block(yieldid, VM_BLOCKID_NONE,
+			bp->bp, fs_block_size);
+	}
+	return(bp);	/* If the caller wanted a NO_DEV block, work is done. */
+  }
+
   /* Go get the requested block unless searching or prefetching. */
-  if (dev != NO_DEV) {
-	if (only_search == PREFETCH) bp->b_dev = NO_DEV;
-	else
-	if (only_search == NORMAL) {
-		rw_block(bp, READING);
+  if(only_search == PREFETCH || only_search == NORMAL) {
+	/* Block is not found in our cache, but we do want it
+	 * if it's in the vm cache.
+	 */
+	if(vmcache) {
+		/* If we can satisfy the PREFETCH or NORMAL request 
+		 * from the vm cache, work is done.
+		 */
+		if(vm_yield_block_get_block(yieldid, getid,
+			bp->bp, fs_block_size) == OK) {
+			return bp;
+		}
 	}
   }
 
-  ASSERT(bp->bp);
+  if(only_search == PREFETCH) {
+	/* PREFETCH: don't do i/o. */
+	bp->b_dev = NO_DEV;
+  } else if (only_search == NORMAL) {
+	rw_block(bp, READING);
+  } else if(only_search == NO_READ) {
+	/* we want this block, but its contents
+	 * will be overwritten. VM has to forget
+	 * about it.
+	 */
+	if(vmcache) {
+		vm_forgetblock(getid);
+	}
+  } else
+	panic("unexpected only_search value: %d", only_search);
+
+  assert(bp->bp);
 
   return(bp);			/* return the newly acquired block */
 }
@@ -324,8 +388,10 @@ PUBLIC void invalidate(
 
   register struct buf *bp;
 
-  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
+  for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 	if (bp->b_dev == device) bp->b_dev = NO_DEV;
+
+  vm_forgetblocks();
 }
 
 /*===========================================================================*
@@ -339,11 +405,18 @@ PUBLIC void flushall(
 
   register struct buf *bp;
   static struct buf **dirty;	/* static so it isn't on stack */
+  static int dirtylistsize = 0;
   int ndirty;
 
-  STATICINIT(dirty, NR_BUFS);
+  if(dirtylistsize != nr_bufs) {
+	if(dirtylistsize > 0)
+		free(dirty);
+	if(!(dirty = malloc(sizeof(dirty[0])*nr_bufs)))
+		panic("couldn't allocate dirty buf list");
+	dirtylistsize = nr_bufs;
+  }
 
-  for (bp = &buf[0], ndirty = 0; bp < &buf[NR_BUFS]; bp++)
+  for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++)
 	if (bp->b_dirt == DIRTY && bp->b_dev == dev) dirty[ndirty++] = bp;
   rw_scattered(dev, dirty, ndirty, WRITING);
 }
@@ -414,6 +487,7 @@ PUBLIC void rw_scattered(
 					(dev>>MAJOR)&BYTE, (dev>>MINOR)&BYTE,
 					bp->b_blocknr);
 				bp->b_dev = NO_DEV;	/* invalidate block */
+  				vm_forgetblocks();
 			}
 			break;
 		}
@@ -479,7 +553,7 @@ PUBLIC void set_blocksize(int blocksize)
 
 	ASSERT(blocksize > 0);
 
-        for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
+        for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 		if(bp->b_count != 0)
 			panic("change blocksize with buffer in use");
 
@@ -487,25 +561,49 @@ PUBLIC void set_blocksize(int blocksize)
 		if (rip->i_count > 0)
 			panic("change blocksize with inode in use");
 
-	fs_sync();
-
-	buf_pool();
+	buf_pool(nr_bufs);
 	fs_block_size = blocksize;
 }
 
 /*===========================================================================*
  *                              buf_pool                                     *
  *===========================================================================*/
-PUBLIC void buf_pool(void)
+PUBLIC void buf_pool(int new_nr_bufs)
 {
 /* Initialize the buffer pool. */
   register struct buf *bp;
 
+  assert(new_nr_bufs > 0);
+
+  if(nr_bufs > 0) {
+	assert(buf);
+	fs_sync();
+  	for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
+		if(bp->bp) {
+			assert(bp->b_bytes > 0);
+			free_contig(bp->bp, bp->b_bytes);
+		}
+	}
+  }
+
+  if(buf)
+	free(buf);
+
+  if(!(buf = calloc(sizeof(buf[0]), new_nr_bufs)))
+	panic("couldn't allocate buf list (%d)", new_nr_bufs);
+
+  if(buf_hash)
+	free(buf_hash);
+  if(!(buf_hash = calloc(sizeof(buf_hash[0]), new_nr_bufs)))
+	panic("couldn't allocate buf hash list (%d)", new_nr_bufs);
+
+  nr_bufs = new_nr_bufs;
+
   bufs_in_use = 0;
   front = &buf[0];
-  rear = &buf[NR_BUFS - 1];
+  rear = &buf[nr_bufs - 1];
 
-  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++) {
+  for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
         bp->b_blocknr = NO_BLOCK;
         bp->b_dev = NO_DEV;
         bp->b_next = bp + 1;
@@ -514,10 +612,11 @@ PUBLIC void buf_pool(void)
         bp->b_bytes = 0;
   }
   buf[0].b_prev = NIL_BUF;
-  buf[NR_BUFS - 1].b_next = NIL_BUF;
+  buf[nr_bufs - 1].b_next = NIL_BUF;
 
-  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++) bp->b_hash = bp->b_next;
+  for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) bp->b_hash = bp->b_next;
   buf_hash[0] = front;
 
+  vm_forgetblocks();
 }
 

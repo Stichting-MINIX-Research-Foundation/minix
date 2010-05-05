@@ -9,7 +9,7 @@ struct super_block;
 
 /* cache.c */
 _PROTOTYPE( zone_t alloc_zone, (dev_t dev, zone_t z)			);
-_PROTOTYPE( void buf_pool, (void)					);
+_PROTOTYPE( void buf_pool, (int bufs)					);
 _PROTOTYPE( void flushall, (dev_t dev)					);
 _PROTOTYPE( void free_zone, (dev_t dev, zone_t numb)			);
 _PROTOTYPE( struct buf *get_block, (dev_t dev, block_t block,int only_search));

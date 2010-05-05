@@ -1,6 +1,8 @@
 #include "fs.h"
 #include <fcntl.h>
+#include <assert.h>
 #include <minix/vfsif.h>
+#include <minix/fsctl.h>
 #include "buf.h"
 #include "inode.h"
 
@@ -18,12 +20,15 @@ PUBLIC int fs_sync()
   struct inode *rip;
   struct buf *bp;
 
+  assert(nr_bufs > 0);
+  assert(buf);
+
   /* Write all the dirty inodes to the disk. */
   for(rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 	  if(rip->i_count > 0 && rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
 
   /* Write all the dirty blocks to the disk, one drive at a time. */
-  for(bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
+  for(bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 	  if(bp->b_dev != NO_DEV && bp->b_dirt == DIRTY) 
 		  flushall(bp->b_dev);
 

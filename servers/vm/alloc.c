@@ -90,7 +90,6 @@ PRIVATE bitchunk_t pagemap[CHUNKS];
 #define CHECKHOLES 
 #endif
 
-
 #if SANITYCHECKS
 
 /*===========================================================================*
@@ -184,8 +183,11 @@ PUBLIC phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
   }
 
   if(vm_paged) {
-	assert(CLICK_SIZE == VM_PAGE_SIZE);
 	mem = alloc_pages(clicks, memflags, NULL);
+	if(mem == NO_MEM) {
+		free_yielded(clicks * CLICK_SIZE);
+		mem = alloc_pages(clicks, memflags, NULL);
+	}
   } else {
 CHECKHOLES;
         prev_ptr = NIL_HOLE;
@@ -493,17 +495,12 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	}
 
 	if(!pr) {
-		printf("VM: alloc_pages: alloc failed of %d pages\n", pages);
-		util_stacktrace();
-		printmemstats();
 		if(len)
 			*len = 0;
 #if SANITYCHECKS
-		if(largest >= pages) {
-			panic("no memory but largest was enough");
-		}
+		assert(largest < pages);
 #endif
-		return NO_MEM;
+	   return NO_MEM;
 	}
 
 	SLABSANE(pr);
@@ -552,10 +549,6 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	memstats(&finalnodes, &finalpages, &largest);
 	sanitycheck();
 
-	if(finalpages != wantpages) {
-		printf("pages start: %d req: %d final: %d\n",
-			firstpages, pages, finalpages);
-	}
 	assert(finalnodes == wantnodes);
 	assert(finalpages == wantpages);
 #endif
@@ -916,9 +909,21 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 	do {
 		struct memlist *ml;
 		phys_bytes mem, gotpages;
-		mem = alloc_pages(rempages, flags, &gotpages);
+		vir_bytes freed = 0;
+
+		do {
+			mem = alloc_pages(rempages, flags, &gotpages);
+
+			if(mem == NO_MEM) {
+				printf("*");
+				freed = free_yielded(rempages * VM_PAGE_SIZE);
+			}
+		} while(mem == NO_MEM && freed > 0);
 
 		if(mem == NO_MEM) {
+			printf("alloc_mem_in_list: giving up, %dkB missing\n",
+				rempages * VM_PAGE_SIZE/1024);
+			printmemstats();
 			free_mem_list(head, 1);
 			return NULL;
 		}

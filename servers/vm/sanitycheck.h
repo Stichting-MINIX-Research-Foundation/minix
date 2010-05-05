@@ -4,7 +4,6 @@
 #include <assert.h>
 
 #include "vm.h"
-#include "glo.h"
 
 #if SANITYCHECKS
 
@@ -35,16 +34,6 @@
 	incheck = 0;		\
 	} 
 
-#include "kernel/proc.h"
-
-#define USE(obj, code) do {		\
-	slabunlock(obj, sizeof(*obj));	\
-	do {				\
-		code			\
-	} while(0);			\
-	slablock(obj, sizeof(*obj));	\
-} while(0)
-
 #define SLABSANE(ptr) { \
 	if(!slabsane_f(__FILE__, __LINE__, ptr, sizeof(*(ptr)))) { \
 		printf("VM:%s:%d: SLABSANE(%s)\n", __FILE__, __LINE__, #ptr); \
@@ -55,8 +44,19 @@
 #else
 #define SANITYCHECK 
 #define SLABSANITYCHECK(l)
-#define USE(obj, code) do { code } while(0)
 #define SLABSANE(ptr)
+#endif
+
+#if MEMPROTECT
+#define USE(obj, code) do {		\
+	slabunlock(obj, sizeof(*obj));	\
+	do {				\
+		code			\
+	} while(0);			\
+	slablock(obj, sizeof(*obj));	\
+} while(0)
+#else
+#define USE(obj, code) do { code } while(0)
 #endif
 
 #endif

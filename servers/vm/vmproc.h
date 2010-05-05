@@ -8,6 +8,8 @@
 #include <machine/archtypes.h>
 
 #include "vm.h"
+#include "physravl.h"
+#include "yieldedavl.h"
 
 struct vmproc;
 
@@ -28,7 +30,7 @@ struct vmproc {
 
 	/* Regions in virtual address space. */
 	struct vir_region *vm_regions;
-	int vm_count;
+	yielded_avl	vm_yielded_blocks;	 /* avl of yielded physblocks */
 
 	/* Heap for brk() to extend. */
 	struct vir_region *vm_heap;

@@ -517,5 +517,8 @@ PUBLIC int proc_new(struct vmproc *vmp,
 			panic("exec_newmem: pt_bind failed: %d", s);
 	}
 
+	/* No yielded memory blocks. */
+	yielded_init(&vmp->vm_yielded_blocks);
+
 	return OK;
 }

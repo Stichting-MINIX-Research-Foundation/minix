@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <assert.h>
 #include <string.h>
 #include <env.h>
 
@@ -40,7 +41,7 @@
 #define OFF(f, b) assert(!GETBIT(f, b))
 #define ON(f, b)  assert(GETBIT(f, b))
 
-#if SANITYCHECKS
+#if MEMPROTECT
 #define SLABDATAWRITABLE(data, wr) do {			\
 	assert(data->sdh.writable == WRITABLE_NONE);	\
 	assert(wr != WRITABLE_NONE);			\
@@ -224,8 +225,10 @@ PRIVATE int checklist(char *file, int line,
 
 	while(n) {
 		int count = 0, i;
+#if SANITYCHECKS
 		MYASSERT(n->sdh.magic1 == MAGIC1);
 		MYASSERT(n->sdh.magic2 == MAGIC2);
+#endif
 		MYASSERT(n->sdh.list == l);
 		MYASSERT(usedpages_add(n->sdh.phys, VM_PAGE_SIZE) == OK);
 		if(n->sdh.prev)
@@ -342,13 +345,18 @@ PUBLIC void *slaballoc(int bytes)
 			ret = ((char *) firstused->data) + i*bytes;
 
 #if SANITYCHECKS
+#if MEMPROTECT
 			nojunkwarning++;
 			slabunlock(ret, bytes);
 			nojunkwarning--;
 			assert(!nojunkwarning);
+#endif
 			*(u32_t *) ret = NOJUNK;
+#if MEMPROTECT
 			slablock(ret, bytes);
 #endif
+#endif
+
 			SLABSANITYCHECK(SCL_FUNCTIONS);
 			SLABDATAUSE(firstused, firstused->sdh.freeguess = i+1;);
 
@@ -400,7 +408,7 @@ PRIVATE int objstats(void *mem, int bytes,
 #if SANITYCHECKS
 	if(*(u32_t *) mem == JUNK && !nojunkwarning) {
 		util_stacktrace();
-		printf("VM: WARNING: JUNK seen in slab object\n");
+		printf("VM: WARNING: JUNK seen in slab object, likely freed\n");
 	}
 #endif
 	/* Retrieve entry in slabs[]. */
@@ -409,8 +417,10 @@ PRIVATE int objstats(void *mem, int bytes,
 	/* Round address down to VM_PAGE_SIZE boundary to get header. */
 	f = (struct slabdata *) ((char *) mem - (vir_bytes) mem % VM_PAGE_SIZE);
 
+#if SANITYCHECKS
 	OBJSTATSCHECK(f->sdh.magic1 == MAGIC1);
 	OBJSTATSCHECK(f->sdh.magic2 == MAGIC2);
+#endif
 	OBJSTATSCHECK(f->sdh.list == LIST_USED || f->sdh.list == LIST_FULL);
 
 	/* Make sure it's in range. */
@@ -452,11 +462,17 @@ PUBLIC void slabfree(void *mem, int bytes)
 	if(*(u32_t *) mem == JUNK) {
 		printf("VM: WARNING: likely double free, JUNK seen\n");
 	}
+#endif
 
+#if SANITYCHECKS
+#if MEMPROTECT
 	slabunlock(mem, bytes);
+#endif
 	*(u32_t *) mem = JUNK;
 	nojunkwarning++;
+#if MEMPROTECT
 	slablock(mem, bytes);
+#endif
 	nojunkwarning--;
 	assert(!nojunkwarning);
 #endif
@@ -518,7 +534,7 @@ PUBLIC void slabunlock(void *mem, int bytes)
 	struct slabdata *f;
 
 	if(objstats(mem, bytes, &s, &f, &i) != OK)
-		panic("slablock objstats failed");
+		panic("slabunlock objstats failed");
 
 	SLABDATAWRITABLE(f, i);
 

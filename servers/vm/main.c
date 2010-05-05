@@ -76,6 +76,8 @@ PUBLIC int main(void)
   message msg;
   int result, who_e, rcv_sts;
   sigset_t sigset;
+  int caller_slot;
+  struct vmproc *vmp_caller;
 
   /* SEF local startup. */
   sef_local_startup();
@@ -90,12 +92,9 @@ PUBLIC int main(void)
 	if(missing_spares > 0) {
 		pt_cycle();	/* pagetable code wants to be called */
 	}
-	SANITYCHECK(SCL_DETAIL);
 
   	if ((r=sef_receive_status(ANY, &msg, &rcv_sts)) != OK)
 		panic("sef_receive_status() error: %d", r);
-
-	SANITYCHECK(SCL_DETAIL);
 
 	if (is_ipc_notify(rcv_sts)) {
 		/* Unexpected notify(). */
@@ -103,6 +102,9 @@ PUBLIC int main(void)
 		continue;
 	}
 	who_e = msg.m_source;
+	if(vm_isokendpt(who_e, &caller_slot) != OK)
+		panic("invalid caller", who_e);
+	vmp_caller = &vmproc[caller_slot];
 	c = CALLNUMBER(msg.m_type);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
 	if (msg.m_type == VM_PAGEFAULT) {
@@ -118,8 +120,7 @@ PUBLIC int main(void)
 		 */
 		continue;
 	} else if(c < 0 || !vm_calls[c].vmc_func) {
-		printf("VM: out of range or missing callnr %d from %d\n",
-			msg.m_type, who_e);
+		/* out of range or missing callnr */
 	} else {
 		if (vm_acl_ok(who_e, c) != OK) {
 			printf("VM: unauthorized %s by %d\n",
@@ -135,16 +136,13 @@ PUBLIC int main(void)
 	 * which is a pseudo-result suppressing the reply message.
 	 */
 	if(result != SUSPEND) {
-	SANITYCHECK(SCL_DETAIL);
 		msg.m_type = result;
 		if((r=send(who_e, &msg)) != OK) {
 			printf("VM: couldn't send %d to %d (err %d)\n",
 				msg.m_type, who_e, r);
 			panic("send() error");
 		}
-	SANITYCHECK(SCL_DETAIL);
 	}
-	SANITYCHECK(SCL_DETAIL);
   }
   return(OK);
 }
@@ -356,6 +354,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_GETREF, do_get_refcount);
 	CALLMAP(VM_INFO, do_info);
 	CALLMAP(VM_QUERY_EXIT, do_query_exit);
+	CALLMAP(VM_FORGETBLOCKS, do_forgetblocks);
+	CALLMAP(VM_FORGETBLOCK, do_forgetblock);
+	CALLMAP(VM_YIELDBLOCKGETBLOCK, do_yieldblockgetblock);
 
 	/* Sanity checks */
 	if(find_kernel_top() >= VM_PROCSTART)
@@ -395,6 +396,14 @@ PRIVATE void sef_cb_signal_handler(int signo)
 		case SIGKMEM:
 			do_memory();
 		break;
+	}
+
+	/* It can happen that we get stuck receiving signals
+	 * without sef_receive() returning. We could need more memory
+	 * though.
+	 */
+	if(missing_spares > 0) {
+		pt_cycle();	/* pagetable code wants to be called */
 	}
 }
 

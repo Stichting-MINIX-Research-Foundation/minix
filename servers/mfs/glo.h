@@ -54,6 +54,7 @@ EXTERN int exitsignaled;
 EXTERN int fs_block_size;
 
 /* Buffer cache. */
-EXTERN struct buf buf[NR_BUFS];
-EXTERN struct buf *buf_hash[NR_BUFS];   /* the buffer hash table */
-
+EXTERN struct buf *buf;
+EXTERN struct buf **buf_hash;   /* the buffer hash table */
+EXTERN int nr_bufs;
+EXTERN int may_use_vmcache;

@@ -14,7 +14,7 @@ struct phys_region;
 #include <timers.h>
 #include <stdio.h>
 #include <pagetable.h>
-#include "vmproc.h"
+
 #include "vm.h"
 
 /* alloc.c */
@@ -168,7 +168,12 @@ _PROTOTYPE(int copy_abs2region, (phys_bytes abs,
 	struct vir_region *destregion, phys_bytes offset, phys_bytes len));
 #if SANITYCHECKS
 _PROTOTYPE(void map_sanitycheck,(char *file, int line));
+_PROTOTYPE(void blockstats,(void));
 #endif
+_PROTOTYPE(int do_forgetblocks, (message *m));
+_PROTOTYPE(int do_forgetblock, (message *m));
+_PROTOTYPE(int do_yieldblockgetblock, (message *m));
+_PROTOTYPE(vir_bytes free_yielded, (vir_bytes bytes));
 
 /* $(ARCH)/vm.c */
 _PROTOTYPE( vir_bytes arch_map2vir, (struct vmproc *vmp, vir_bytes addr));

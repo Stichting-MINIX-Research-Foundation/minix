@@ -1,8 +1,8 @@
 
-#include "sanitycheck.h"
-#include "region.h"
-#include "physravl.h"
-#include "util.h"
 #include "proto.h"
+#include "sanitycheck.h"
+#include "phys_region.h"
+#include "physravl_defs.h"
+#include "cavl_if.h"
 #include "cavl_impl.h"
 
