@@ -107,7 +107,7 @@ start)
             eval up $driver $arg -period 5HZ
         fi
     done
-    upopt -n inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+    up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
     upopt -n printer -dev /dev/lp -period 10HZ
     upopt -n ipc
     echo .
