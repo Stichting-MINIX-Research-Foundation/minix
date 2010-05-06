@@ -217,7 +217,7 @@ PRIVATE void print_proc_depends(struct proc *pp, const int level)
 
 
 	dep = P_BLOCKEDON(pp);
-	if(dep != NONE) {
+	if(dep != NONE && dep != ANY) {
 		int procno;
 		if(isokendpt(dep, &procno)) {
 			depproc = proc_addr(procno);
