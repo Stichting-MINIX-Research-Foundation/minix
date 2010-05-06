@@ -18,13 +18,13 @@
 #include "type.h"
 
 /* Max. number of I/O ranges that can be assigned to a process */
-#define NR_IO_RANGE	32
+#define NR_IO_RANGE	64
 
 /* Max. number of device memory ranges that can be assigned to a process */
-#define NR_MEM_RANGE	10
+#define NR_MEM_RANGE	20
 
 /* Max. number of IRQs that can be assigned to a process */
-#define NR_IRQ	4
+#define NR_IRQ	8
  
 struct priv {
   proc_nr_t s_proc_nr;		/* number of associated process */
