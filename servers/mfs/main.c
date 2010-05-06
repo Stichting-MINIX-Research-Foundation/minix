@@ -43,11 +43,8 @@ PUBLIC int main(int argc, char *argv[])
 	error = OK;
 	caller_uid = -1;	/* To trap errors */
 	caller_gid = -1;
-
-	/* This must be a regular VFS request. */
-	assert(src == VFS_PROC_NR && !unmountdone);
-
 	req_nr = fs_m_in.m_type;
+
 	if (req_nr < VFS_BASE) {
 		fs_m_in.m_type += VFS_BASE;
 		req_nr = fs_m_in.m_type;
@@ -154,9 +151,9 @@ message *m_in;				/* pointer to message */
   do {
 	if ((r = sef_receive(ANY, m_in)) != OK) 	/* wait for message */
 		panic("sef_receive failed: %d", r);
-	src = fs_m_in.m_source;
+	src = m_in->m_source;
 
-	if(src == FS_PROC_NR) {
+	if(src == VFS_PROC_NR) {
 		if(unmountdone) 
 			printf("MFS: unmounted: unexpected message from FS\n");
 		else 
@@ -166,7 +163,7 @@ message *m_in;				/* pointer to message */
 		printf("MFS: unexpected source %d\n", src);
   } while(!srcok);
 
-   assert((src == FS_PROC_NR && !unmountdone));
+   assert((src == VFS_PROC_NR && !unmountdone));
 }
 
 

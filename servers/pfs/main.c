@@ -40,9 +40,8 @@ PUBLIC int main(int argc, char *argv[])
 	error = OK;
 	caller_uid = -1;	/* To trap errors */
 	caller_gid = -1;
-
-	assert(src == VFS_PROC_NR); /* Otherwise this must be VFS talking */
 	req_nr = fs_m_in.m_type;
+
 	if (req_nr < VFS_BASE) {
 		fs_m_in.m_type += VFS_BASE;
 		req_nr = fs_m_in.m_type;
@@ -135,15 +134,13 @@ message *m_in;				/* pointer to message */
   do {
 	if ((r = sef_receive(ANY, m_in)) != OK) 	/* wait for message */
 		panic("sef_receive failed: %d", r);
-	src = fs_m_in.m_source;
+	src = m_in->m_source;
 
 	if(src == VFS_PROC_NR) {
 		srcok = 1;		/* Normal FS request. */
 	} else
 		printf("PFS: unexpected source %d\n", src);
   } while(!srcok);
-
-   assert( src == VFS_PROC_NR );
 }
 
 

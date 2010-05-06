@@ -69,7 +69,7 @@ PUBLIC int do_pipe()
 
   /* Create a named pipe inode on PipeFS */
   r = req_newnode(PFS_PROC_NR, fp->fp_effuid, fp->fp_effgid, I_NAMED_PIPE,
-		  (dev_t) 0, &res);
+		  NO_DEV, &res);
 
   if (r != OK) {
 	rfp->fp_filp[fil_des[0]] = NIL_FILP;

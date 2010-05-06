@@ -10,7 +10,6 @@
  *   wipe_inode:   erase some fields of a newly allocated inode
  *   free_inode:   mark an inode as available for a new file
  *   update_times: update atime, ctime, and mtime
- *   dup_inode:	   indicate that someone else is using an inode table entry
  *   find_inode:   retrieve pointer to inode in inode cache
  *
  */
@@ -311,20 +310,6 @@ struct inode *rip;
   if (rip->i_num <= 0 || rip->i_num >= NR_INODES) return;
   b = rip->i_num;
   free_bit(b);
-}
-
-
-/*===========================================================================*
- *				dup_inode				     *
- *===========================================================================*/
-PUBLIC void dup_inode(ip)
-struct inode *ip;		/* The inode to be duplicated. */
-{
-/* This routine is a simplified form of get_inode() for the case where
- * the inode pointer is already known.
- */
-
-  ip->i_count++;
 }
 
 
