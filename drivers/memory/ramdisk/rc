@@ -5,7 +5,7 @@ exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
 
-/bin/service -cn up /bin/pci -config /etc/system.conf
+/bin/service -c up /bin/pci -config /etc/system.conf
 /bin/service -cn up /bin/floppy -config /etc/system.conf -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
 then
