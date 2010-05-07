@@ -52,5 +52,7 @@ EXTERN long rs_verbose;
 /* Set when we are shutting down. */
 EXTERN int shutting_down;
 
+EXTERN unsigned system_hz;
+
 #endif /* RS_GLO_H */
 

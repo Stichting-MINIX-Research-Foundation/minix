@@ -169,6 +169,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   /* See if we run in verbose mode. */
   env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1);
 
+  if ((s = sys_getinfo(GET_HZ, &system_hz, sizeof(system_hz), 0, 0)) != OK)
+	  panic("Cannot get system timer frequency\n");
+
   /* Initialize the global init descriptor. */
   rinit.rproctab_gid = cpf_grant_direct(ANY, (vir_bytes) rprocpub,
       sizeof(rprocpub), CPF_READ);

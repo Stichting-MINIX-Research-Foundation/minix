@@ -38,8 +38,8 @@
 #define SF_USE_REPL     0x020    /* set when process has a replica */
 
 /* Constants determining RS period and binary exponential backoff. */
-#define RS_INIT_T       600                     /* allow T ticks for init */
-#define RS_DELTA_T       60                     /* check every T ticks */
+#define RS_INIT_T	(system_hz * 10)	/* allow T ticks for init */
+#define RS_DELTA_T	(system_hz)		/* check every T ticks */
 #define BACKOFF_BITS    (sizeof(long)*8)        /* bits in backoff field */
 #define MAX_BACKOFF      30                     /* max backoff in RS_DELTA_T */
 
