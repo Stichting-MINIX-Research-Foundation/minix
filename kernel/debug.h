@@ -30,6 +30,13 @@
 /* Verbose messages. */
 #define DEBUG_TRACE			0
 
+/* DEBUG_RACE makes every process preemptible, schedules
+ * every process on the same priority queue, and randomizes
+ * the next process to run, in order to help catch race
+ * conditions that could otherwise be masked.
+ */
+#define DEBUG_RACE			0
+
 #if DEBUG_TRACE
 
 #define VF_SCHEDULING		(1L << 1)

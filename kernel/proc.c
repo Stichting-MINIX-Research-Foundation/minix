@@ -1144,6 +1144,11 @@ PUBLIC void enqueue(
  */
   int q = rp->p_priority;	 		/* scheduling queue to use */
 
+#if DEBUG_RACE
+  /* With DEBUG_RACE, schedule everyone at the same priority level. */
+  rp->p_priority = q = MIN_USER_Q;
+#endif
+
   assert(proc_is_runnable(rp));
 
   assert(q >= 0);
@@ -1255,6 +1260,32 @@ PUBLIC void dequeue(const struct proc *rp)
 #endif
 }
 
+#if DEBUG_RACE
+/*===========================================================================*
+ *				random_process				     * 
+ *===========================================================================*/
+PRIVATE struct proc *random_process(struct proc *head)
+{
+	int i, n = 0;
+	struct proc *rp;
+	u64_t r;
+	read_tsc_64(&r);
+
+	for(rp = head; rp; rp = rp->p_nextready)
+		n++;
+
+	/* Use low-order word of TSC as pseudorandom value. */
+	i = r.lo % n;
+
+	for(rp = head; i--; rp = rp->p_nextready)
+		;
+
+	assert(rp);
+
+	return rp;
+}
+#endif
+
 /*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
@@ -1276,6 +1307,11 @@ PRIVATE struct proc * pick_proc(void)
 		TRACE(VF_PICKPROC, printf("queue %d empty\n", q););
 		continue;
 	}
+
+#if DEBUG_RACE
+	rp = random_process(rdy_head[q]);
+#endif
+
 	TRACE(VF_PICKPROC, printf("found %s / %d on queue %d\n", 
 		rp->p_name, rp->p_endpoint, q););
 	assert(proc_is_runnable(rp));
@@ -1393,6 +1429,10 @@ PUBLIC void check_ticks_left(struct proc * p)
 			 * be renewed. In fact, they by pass scheduling
 			 */
 			p->p_ticks_left = p->p_quantum_size;
+#if DEBUG_RACE
+     			RTS_SET(proc_ptr, RTS_PREEMPTED);
+     			RTS_UNSET(proc_ptr, RTS_PREEMPTED);
+#endif
 		}
 	}
 }

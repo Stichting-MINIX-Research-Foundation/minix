@@ -35,6 +35,7 @@
 #include <assert.h>
 
 #include "clock.h"
+#include "debug.h"
 
 #ifdef CONFIG_WATCHDOG
 #include "watchdog.h"
@@ -199,9 +200,15 @@ PUBLIC int ap_timer_int_handler(void)
 	billp = bill_ptr;
 
 	p->p_user_time += ticks;
+
+#if DEBUG_RACE
+	/* With DEBUG_RACE, every process gets interrupted. */
+	p->p_ticks_left = 0;
+#else
 	if (priv(p)->s_flags & PREEMPTIBLE) {
 		p->p_ticks_left -= ticks;
 	}
+#endif
 	if (! (priv(p)->s_flags & BILLABLE)) {
 		billp->p_sys_time += ticks;
 	}
