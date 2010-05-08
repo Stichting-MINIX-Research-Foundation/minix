@@ -126,11 +126,13 @@ PUBLIC void irq_handle(int irq)
 
   /* Check for spurious interrupts. */
   if(hook == NULL) {
-      static int nspurious[NR_IRQ_VECTORS];
+      static int nspurious[NR_IRQ_VECTORS], report_interval = 100;
       nspurious[irq]++;
-      if(nspurious[irq] == 1 || !(nspurious[irq] % 1000)) {
+      if(nspurious[irq] == 1 || !(nspurious[irq] % report_interval)) {
       	printf("irq_handle: spurious irq %d (count: %d); keeping masked\n",
 		irq, nspurious[irq]);
+	if(report_interval < INT_MAX/2)
+		report_interval *= 2;
       }
       return;
   }
