@@ -41,7 +41,7 @@ PUBLIC void main(void)
    /* Global value to test segment sanity. */
    magictest = MAGICTEST;
  
-   DEBUGMAX(("main()\n"));
+   DEBUGEXTRA(("main()\n"));
 
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
@@ -76,7 +76,7 @@ PUBLIC void main(void)
 	int ipc_to_m, kcalls;
 
 	ip = &image[i];				/* process' attributes */
-	DEBUGMAX(("initializing %s... ", ip->proc_name));
+	DEBUGEXTRA(("initializing %s... ", ip->proc_name));
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	rp->p_scheduler = NULL;			/* no user space scheduler */
@@ -206,18 +206,18 @@ PUBLIC void main(void)
 	if (rp->p_nr < 0) RTS_SET(rp, RTS_PROC_STOP);
 	RTS_UNSET(rp, RTS_SLOT_FREE); /* remove RTS_SLOT_FREE and schedule */
 	alloc_segments(rp);
-	DEBUGMAX(("done\n"));
+	DEBUGEXTRA(("done\n"));
   }
 
   /* Architecture-dependent initialization. */
-  DEBUGMAX(("arch_init()... "));
+  DEBUGEXTRA(("arch_init()... "));
   arch_init();
-  DEBUGMAX(("done\n"));
+  DEBUGEXTRA(("done\n"));
 
   /* System and processes initialization */
-  DEBUGMAX(("system_init()... "));
+  DEBUGEXTRA(("system_init()... "));
   system_init();
-  DEBUGMAX(("done\n"));
+  DEBUGEXTRA(("done\n"));
 
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
@@ -251,9 +251,9 @@ PUBLIC void main(void)
   FIXME("PROC check enabled");
 #endif
 
-  DEBUGMAX(("cycles_accounting_init()... "));
+  DEBUGEXTRA(("cycles_accounting_init()... "));
   cycles_accounting_init();
-  DEBUGMAX(("done\n"));
+  DEBUGEXTRA(("done\n"));
 
   assert(runqueues_ok());
 

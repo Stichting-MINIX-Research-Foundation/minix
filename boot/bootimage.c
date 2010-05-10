@@ -30,10 +30,11 @@
 static int block_size = 0;
 static int verboseboot = VERBOSEBOOT_QUIET;
 
-#define DEBUGBASIC(params) do { \
-	if (verboseboot >= VERBOSEBOOT_BASIC) printf params; } while (0)
-#define DEBUGMAX(params) do { \
-	if (verboseboot >= VERBOSEBOOT_MAX) printf params; } while (0)
+#define DEBUG_PRINT(params, level) do { \
+	if (verboseboot >= (level)) printf params; } while (0)
+#define DEBUGBASIC(params) DEBUG_PRINT(params, VERBOSEBOOT_BASIC)
+#define DEBUGEXTRA(params) DEBUG_PRINT(params, VERBOSEBOOT_EXTRA)
+#define DEBUGMAX(params)   DEBUG_PRINT(params, VERBOSEBOOT_MAX)
 
 extern int serial_line;
 extern u16_t vid_port;         /* Video i/o port. */
@@ -379,7 +380,7 @@ int get_segment(u32_t *vsec, long *size, u32_t *addr, u32_t limit)
 		}
 		if (*addr + click_size > limit) 
 		{ 
-			DEBUGMAX(("get_segment: out of memory; "
+			DEBUGEXTRA(("get_segment: out of memory; "
 				"addr=0x%lx; limit=0x%lx; size=%lx\n", 
 				*addr, limit, size));
 			errno= ENOMEM; 
@@ -494,7 +495,7 @@ void exec_image(char *image)
 		procp= &process[i];
 
 		/* Read header. */
-		DEBUGMAX(("Reading header... "));
+		DEBUGEXTRA(("Reading header... "));
 		for (;;) {
 			if ((buf= get_sector(vsec++)) == nil) return;
 
@@ -508,7 +509,7 @@ void exec_image(char *image)
 			/* Bad label, skip this process. */
 			vsec+= proc_size(&hdr);
 		}
-		DEBUGMAX(("done\n"));
+		DEBUGEXTRA(("done\n"));
 
 		/* Sanity check: an 8086 can't run a 386 kernel. */
 		if (hdr.process.a_cpu == A_I80386 && processor < 386) {
@@ -533,11 +534,11 @@ void exec_image(char *image)
 		/* Save a copy of the header for the kernel, with a_syms
 		 * misused as the address where the process is loaded at.
 		 */
-		DEBUGMAX(("raw_copy(0x%x, 0x%lx, 0x%x)... ", 
+		DEBUGEXTRA(("raw_copy(0x%x, 0x%lx, 0x%x)... ", 
 			aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR));
 		hdr.process.a_syms= addr;
 		raw_copy(aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR);
-		DEBUGMAX(("done\n"));
+		DEBUGEXTRA(("done\n"));
 
 		if (!banner) {
 			DEBUGBASIC(("     cs       ds     text     data      bss"));
@@ -547,7 +548,7 @@ void exec_image(char *image)
 		}
 
 		/* Segment sizes. */
-		DEBUGMAX(("a_text=0x%lx; a_data=0x%lx; a_bss=0x%lx; a_flags=0x%x)\n",
+		DEBUGEXTRA(("a_text=0x%lx; a_data=0x%lx; a_bss=0x%lx; a_flags=0x%x)\n",
 			hdr.process.a_text, hdr.process.a_data, 
 			hdr.process.a_bss, hdr.process.a_flags));
 
@@ -574,10 +575,10 @@ void exec_image(char *image)
 		/* Separate I&D: two segments.  Common I&D: only one. */
 		if (hdr.process.a_flags & A_SEP) {
 			/* Read the text segment. */
-			DEBUGMAX(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
+			DEBUGEXTRA(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
 				vsec, a_text, addr, limit));
 			if (!get_segment(&vsec, &a_text, &addr, limit)) return;
-			DEBUGMAX(("get_segment done vsec=0x%lx a_text=0x%lx "
+			DEBUGEXTRA(("get_segment done vsec=0x%lx a_text=0x%lx "
 				"addr=0x%lx\n", 
 				vsec, a_text, addr));
 
@@ -593,10 +594,10 @@ void exec_image(char *image)
 		}
 
 		/* Read the data segment. */
-		DEBUGMAX(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n", 
+		DEBUGEXTRA(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n", 
 			vsec, a_data, addr, limit));
 		if (!get_segment(&vsec, &a_data, &addr, limit)) return;
-		DEBUGMAX(("get_segment done vsec=0x%lx a_data=0x%lx "
+		DEBUGEXTRA(("get_segment done vsec=0x%lx a_data=0x%lx "
 			"addr=0x%lx\n", 
 			vsec, a_data, addr));
 
@@ -618,10 +619,10 @@ void exec_image(char *image)
 		a_bss-= n;
 
 		/* Zero out bss. */
-		DEBUGMAX(("\nraw_clear(0x%lx, 0x%lx); limit=0x%lx... ", addr, n, limit));
+		DEBUGEXTRA(("\nraw_clear(0x%lx, 0x%lx); limit=0x%lx... ", addr, n, limit));
 		if (addr + n > limit) { errno= ENOMEM; return; }
 		raw_clear(addr, n);
-		DEBUGMAX(("done\n"));
+		DEBUGEXTRA(("done\n"));
 		addr+= n;
 
 		/* And the number of stack clicks. */
@@ -671,9 +672,9 @@ void exec_image(char *image)
 	}
 
 	/* Patch sizes, etc. into kernel data. */
-	DEBUGMAX(("patch_sizes()... "));
+	DEBUGEXTRA(("patch_sizes()... "));
 	patch_sizes();
-	DEBUGMAX(("done\n"));
+	DEBUGEXTRA(("done\n"));
 
 #if !DOS
 	if (!(k_flags & K_MEML)) {
@@ -683,31 +684,31 @@ void exec_image(char *image)
 #endif
 
 	/* Run the trailer function just before starting Minix. */
-	DEBUGMAX(("run_trailer()... "));
+	DEBUGEXTRA(("run_trailer()... "));
 	if (!run_trailer()) { errno= 0; return; }
-	DEBUGMAX(("done\n"));
+	DEBUGEXTRA(("done\n"));
 
 	/* Translate the boot parameters to what Minix likes best. */
-	DEBUGMAX(("params2params(0x%x, 0x%x)... ", params, sizeof(params)));
+	DEBUGEXTRA(("params2params(0x%x, 0x%x)... ", params, sizeof(params)));
 	if (!params2params(params, sizeof(params))) { errno= 0; return; }
-	DEBUGMAX(("done\n"));
+	DEBUGEXTRA(("done\n"));
 
 	/* Set the video to the required mode. */
 	if ((console= b_value("console")) == nil || (mode= a2x(console)) == 0) {
 		mode= strcmp(b_value("chrome"), "color") == 0 ? COLOR_MODE :
 								MONO_MODE;
 	}
-	DEBUGMAX(("set_mode(%d)... ", mode));
+	DEBUGEXTRA(("set_mode(%d)... ", mode));
 	set_mode(mode);
-	DEBUGMAX(("done\n"));
+	DEBUGEXTRA(("done\n"));
 
 	/* Close the disk. */
-	DEBUGMAX(("dev_close()... "));
+	DEBUGEXTRA(("dev_close()... "));
 	(void) dev_close();
-	DEBUGMAX(("done\n"));
+	DEBUGEXTRA(("done\n"));
 
 	/* Minix. */
-	DEBUGMAX(("minix(0x%lx, 0x%lx, 0x%lx, 0x%x, 0x%x, 0x%lx)\n", 
+	DEBUGEXTRA(("minix(0x%lx, 0x%lx, 0x%lx, 0x%x, 0x%x, 0x%lx)\n", 
 		process[KERNEL_IDX].entry, process[KERNEL_IDX].cs,
 		process[KERNEL_IDX].ds, params, sizeof(params), aout));
 	minix(process[KERNEL_IDX].entry, process[KERNEL_IDX].cs,

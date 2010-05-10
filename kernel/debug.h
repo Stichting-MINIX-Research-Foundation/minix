@@ -67,6 +67,7 @@
 #define DEBUG_PRINT(params, level) do { \
 	if (verboseboot >= (level)) printf params; } while (0)
 #define DEBUGBASIC(params) DEBUG_PRINT(params, VERBOSEBOOT_BASIC)
+#define DEBUGEXTRA(params) DEBUG_PRINT(params, VERBOSEBOOT_EXTRA)
 #define DEBUGMAX(params)   DEBUG_PRINT(params, VERBOSEBOOT_MAX)
 #endif
 

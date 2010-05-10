@@ -179,7 +179,8 @@
 /* Values for the "verbose" boot monitor variable */
 #define VERBOSEBOOT_QUIET 0
 #define VERBOSEBOOT_BASIC 1
-#define VERBOSEBOOT_MAX   2
+#define VERBOSEBOOT_EXTRA 2
+#define VERBOSEBOOT_MAX   3
 #define VERBOSEBOOTVARNAME "verbose"
 
 #endif /* _MINIX_CONST_H */
