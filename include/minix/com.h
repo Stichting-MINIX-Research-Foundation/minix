@@ -593,9 +593,6 @@
 #define SVMCTL_WHO	m1_i1
 #define SVMCTL_PARAM	m1_i2	/* All SYS_VMCTL requests. */
 #define SVMCTL_VALUE	m1_i3
-#define SVMCTL_PF_WHO		m1_i1	/* GET_PAGEFAULT reply: process ep */
-#define SVMCTL_PF_I386_CR2	m1_i2	/* GET_PAGEFAULT reply: CR2 */
-#define SVMCTL_PF_I386_ERR	m1_i3	/* GET_PAGEFAULT reply: error code */
 #define	SVMCTL_MRG_TARGET	m2_i1	/* MEMREQ_GET reply: target process */
 #define	SVMCTL_MRG_ADDR		m2_i2	/* MEMREQ_GET reply: address */
 #define	SVMCTL_MRG_LENGTH	m2_i3	/* MEMREQ_GET reply: length */
