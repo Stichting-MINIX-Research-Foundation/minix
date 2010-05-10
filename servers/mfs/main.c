@@ -63,7 +63,7 @@ PUBLIC int main(int argc, char *argv[])
 	fs_m_out.m_type = error; 
 	reply(src, &fs_m_out);
 
-	if (error == OK && rdahed_inode != NIL_INODE) 
+	if (error == OK && rdahed_inode != NULL) 
 		read_ahead(); /* do block read ahead */
       
   }

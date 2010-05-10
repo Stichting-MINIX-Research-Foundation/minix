@@ -111,7 +111,7 @@
  * 
  *      A special structure is allocated and its address is assigned to the
  *      variable header as well as the variable tail. The text field of this
- *      structure is set to NIL_PTR. The tail->prev of this structure points
+ *      structure is set to NULL. The tail->prev of this structure points
  *      to the last LINE of the file and the header->next to the first LINE.
  *      Other LINE *variables are top_line and bot_line which point to the
  *      first line resp. the last line on the screen.
@@ -238,7 +238,7 @@
  *    startposition on the current line, and a flag indicating FORWARD or
  *    REVERSE search.  Match () checks out the whole file until a match is
  *    found. If match is found it returns a pointer to the line in which the
- *    match was found else it returns a NIL_LINE. Line_check () takes the
+ *    match was found else it returns a NULL. Line_check () takes the
  *    same arguments, but return either MATCH or NO_MATCH.
  *    During checking, the start_ptr and end_ptr fields of the REGEX
  *    structure are assigned to the start and end of the match. 
@@ -259,7 +259,7 @@
  *    backwards search (SR)) call search () with an apropiate message and a
  *    flag indicating FORWARD or REVERSE search. Search () will get an
  *    expression from the user by calling get_expression(). Get_expression()
- *    returns a pointer to a REGEX structure or NIL_REG upon errors and
+ *    returns a pointer to a REGEX structure or NULL upon errors and
  *    prompts for the expression. If no expression if given, the previous is
  *    used instead. After that search will call match (), and if a match is
  *    found, we can move to that place in the file by the functions find_x()
@@ -452,7 +452,7 @@ void VI()
 #else
   string_print (enter_string);
 #endif /* UNIX */
-  load_file(new_file[0] == '\0' ? NIL_PTR : new_file);
+  load_file(new_file[0] == '\0' ? NULL : new_file);
 }
 
 /*
@@ -466,7 +466,7 @@ int WT()
   int fd;				/* Filedescriptor of file */
 
   if (modified == FALSE) {
-	error ("Write not necessary.", NIL_PTR);
+	error ("Write not necessary.", NULL);
 	return FINE;
   }
 
@@ -532,11 +532,11 @@ void SH()
   int pid, status;
   char *shell;
 
-  if ((shell = getenv("SHELL")) == NIL_PTR) shell = "/bin/sh";
+  if ((shell = getenv("SHELL")) == NULL) shell = "/bin/sh";
 
   switch (pid = fork()) {
   	case -1:			/* Error */
-  		error("Cannot fork.", NIL_PTR);
+  		error("Cannot fork.", NULL);
   		return;
   	case 0:				/* This is the child */
   		set_cursor(0, ymax);
@@ -564,7 +564,7 @@ void SH()
   if ((status >> 8) == 127)		/* Child died with 127 */
   	error("Cannot exec ", shell);
   else if ((status >> 8) == 126)
-  	error("Cannot open /dev/tty as fd #0", NIL_PTR);
+  	error("Cannot open /dev/tty as fd #0", NULL);
 }
 
 /*
@@ -601,10 +601,10 @@ FLAG statfl;
   register char *p = buf;
 
   *p++ = ' ';
-  if (s1 != NIL_PTR)
+  if (s1 != NULL)
 	while (*p = *s1++)
 		p++;
-  if (s2 != NIL_PTR)
+  if (s2 != NULL)
 	while (*p = *s2++)
 		p++;
   *p++ = ' ';
@@ -626,7 +626,7 @@ FLAG statfl;
 
   string_print(buf);
   
-  if (inbuf != NIL_PTR)
+  if (inbuf != NULL)
   	ret = input(inbuf, statfl);
 
   /* Print normal video */
@@ -637,7 +637,7 @@ FLAG statfl;
   string_print(normal_video);
   string_print(blank_line);	/* Clear the rest of the line */
 #endif /* UNIX */
-  if (inbuf != NIL_PTR)
+  if (inbuf != NULL)
   	set_cursor(0, ymax);
   else
   	set_cursor(x, y);	/* Set cursor back to old position */
@@ -713,7 +713,7 @@ char *new_address;
   	}
 
 /* Set or unset relative x-coordinate */
-  if (new_address == NIL_PTR) {
+  if (new_address == NULL) {
   	new_address = find_address(line, (new_x == x) ? rel_x : new_x , &tx);
 	if (new_x != x)
 		rel_x = tx;
@@ -805,7 +805,7 @@ register char *string;
 {
   register int count = 0;
 
-  if (string != NIL_PTR) {
+  if (string != NULL) {
   	while (*string++ != '\0')
   		count++;
   }
@@ -1061,7 +1061,7 @@ int fd;
   build_string(text_buffer, "Command aborted: %s (File incomplete)",
   		            (errno == ENOSPC || errno == -ENOSPC) ?
   			    "No space on device" : "Write error");
-  error(text_buffer, NIL_PTR);
+  error(text_buffer, NULL);
 }
 
 /*
@@ -1083,7 +1083,7 @@ void abort_mined()
   quit = FALSE;
 
 /* Ask for confirmation */
-  status_line("Really abort? ", NIL_PTR);
+  status_line("Really abort? ", NULL);
   if (getchar() != 'y') {
   	clear_status();
   	return;
@@ -1172,7 +1172,7 @@ int bytes;
   char *p;
 
   p = malloc((unsigned) bytes);
-  if (p == NIL_PTR) {
+  if (p == NULL) {
 	if (loading == TRUE)
 		panic("File too big.");
 	panic("Out of memory.");
@@ -1281,14 +1281,14 @@ char *basename(path)
 char *path;
 {
   register char *ptr = path;
-  register char *last = NIL_PTR;
+  register char *last = NULL;
 
   while (*ptr != '\0') {
   	if (*ptr == '/')
   		last = ptr;
   	ptr++;
   }
-  if (last == NIL_PTR)
+  if (last == NULL)
   	return path;
   if (*(last + 1) == '\0') {	/* E.g. /usr/tmp/pipo/ */
   	*last = '\0';
@@ -1298,7 +1298,7 @@ char *path;
 }
 
 /*
- * Load_file loads the file `file' into core. If file is a NIL_PTR or the file
+ * Load_file loads the file `file' into core. If file is a NULL or the file
  * couldn't be opened, just some initializations are done, and a line consisting
  * of a `\n' is installed.
  */
@@ -1314,9 +1314,9 @@ char *file;
 
 /* Open file */
   writable = TRUE;		/* Benefit of the doubt */
-  if (file == NIL_PTR) {
+  if (file == NULL) {
 	if (rpipe == FALSE)
-  		status_line("No file.", NIL_PTR);
+  		status_line("No file.", NULL);
 	else {
 		fd = 0;
 		file = "standard input";
@@ -1370,8 +1370,8 @@ int get_line(fd, buffer)
 int fd;
 register char *buffer;
 {
-  static char *last = NIL_PTR;
-  static char *current = NIL_PTR;
+  static char *last = NULL;
+  static char *current = NULL;
   static int read_chars;
   register char *cur_pos = current;
   char *begin = buffer;
@@ -1455,14 +1455,14 @@ char *argv[];
   raw_mode(ON);			/* Set tty to appropriate mode */
 
   header = tail = (LINE *) alloc(sizeof(LINE));	/* Make header of list*/
-  header->text = NIL_PTR;
+  header->text = NULL;
   header->next = tail->prev = header;
 
 /* Load the file (if any) */
   if (argc < 2)
-  	load_file(NIL_PTR);
+  	load_file(NULL);
   else {
-  	(void) get_file(NIL_PTR, argv[1]);	/* Truncate filename */
+  	(void) get_file(NULL, argv[1]);	/* Truncate filename */
   	load_file(argv[1]);
   }
 
@@ -1652,7 +1652,7 @@ void ESC()
   }
 
   if (quit == TRUE)		/* Abort has been given */
-  	error("Aborted", NIL_PTR);
+  	error("Aborted", NULL);
 }
 
 /*
@@ -1735,7 +1735,7 @@ FLAG writefl, changed;
   	msg[LINE_LEN - 4] = SHIFT_MARK;	/* Overflow on status line */
   	msg[LINE_LEN - 3] = '\0';
   }
-  status_line(msg, NIL_PTR);		/* Print the information */
+  status_line(msg, NULL);		/* Print the information */
 }
 
 /*
@@ -1828,11 +1828,11 @@ int *result;
   register int index;
   register int count = 0;
 
-  status_line(message, NIL_PTR);
+  status_line(message, NULL);
 
   index = getchar();
   if (quit == FALSE && (index < '0' || index > '9')) {
-  	error("Bad count", NIL_PTR);
+  	error("Bad count", NULL);
   	return ERRORS;
   }
 
@@ -1923,7 +1923,7 @@ char *message, *file;
   char *ptr;
   int ret;
 
-  if (message == NIL_PTR || (ret = get_string(message, file, TRUE)) == FINE) {
+  if (message == NULL || (ret = get_string(message, file, TRUE)) == FINE) {
   	if (length_of((ptr = basename(file))) > NAME_MAX)
   		ptr[NAME_MAX] = '\0';
   }

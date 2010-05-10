@@ -79,7 +79,7 @@ PUBLIC int do_unmount()
   dprintf(("HGFS: do_unmount\n"));
 
   /* Decrease the reference count of the root inode. */
-  if ((ino = find_inode(ROOT_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(ROOT_INODE_NR)) == NULL)
 	return EINVAL;
 
   put_inode(ino);

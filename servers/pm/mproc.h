@@ -84,5 +84,4 @@ EXTERN struct mproc {
 #define DELAY_CALL	0x20000	/* waiting for call before sending signal */
 #define PM_SCHEDULED	0x40000 /* this process is scheduled by PM */
 
-#define NIL_MPROC ((struct mproc *) 0)
 

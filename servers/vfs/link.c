@@ -34,12 +34,12 @@ PUBLIC int do_link()
 
   /* See if 'name1' (file to be linked to) exists. */ 
   if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
 
   /* Does the final directory of 'name2' exist? */
   if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) 
 	r = err_code;
-  else if ((vp_d = last_dir()) == NIL_VNODE)
+  else if ((vp_d = last_dir()) == NULL)
 	r = err_code; 
   if (r != OK) {
 	  put_vnode(vp);
@@ -76,7 +76,7 @@ PUBLIC int do_unlink()
   
   /* Get the last directory in the path. */
   if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if ((vldirp = last_dir()) == NIL_VNODE) return(err_code);
+  if ((vldirp = last_dir()) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
   if((vldirp->v_mode & I_TYPE) != I_DIRECTORY) {
@@ -95,7 +95,7 @@ PUBLIC int do_unlink()
   if ((vldirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
 	vp = advance(vldirp, PATH_RET_SYMLINK);
-	if (vp != NIL_VNODE) {
+	if (vp != NULL) {
 		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) 
 			r = EPERM;
 		put_vnode(vp);
@@ -129,14 +129,14 @@ PUBLIC int do_rename()
   
   /* See if 'name1' (existing file) exists.  Get dir and file inodes. */
   if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((old_dirp = last_dir()) == NIL_VNODE) return(err_code);
+  if ((old_dirp = last_dir()) == NULL) return(err_code);
 
   /* If the sticky bit is set, only the owner of the file or a privileged
      user is allowed to rename */
   if((old_dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
 	vp = advance(old_dirp, PATH_RET_SYMLINK);
-	if (vp != NIL_VNODE) {
+	if (vp != NULL) {
 		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) 
 			r = EPERM;
 		put_vnode(vp);
@@ -158,7 +158,7 @@ PUBLIC int do_rename()
   /* See if 'name2' (new name) exists.  Get dir inode */
   if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) 
 	r = err_code;
-  else if ((new_dirp = last_dir()) == NIL_VNODE)
+  else if ((new_dirp = last_dir()) == NULL)
 	r = err_code; 
   if (r != OK) {
   	put_vnode(old_dirp);
@@ -198,7 +198,7 @@ PUBLIC int do_truncate()
 
   /* Temporarily open file */
   if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
   
   /* Ask FS to truncate the file */
   if ((r = forbidden(vp, W_BIT)) == OK)
@@ -220,7 +220,7 @@ PUBLIC int do_ftruncate()
   if ((off_t) m_in.flength < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
-  if ((rfilp = get_filp(m_in.m2_i1)) == NIL_FILP) return(err_code);
+  if ((rfilp = get_filp(m_in.m2_i1)) == NULL) return(err_code);
   if (!(rfilp->filp_mode & W_BIT)) return(EBADF);
   return truncate_vnode(rfilp->filp_vno, m_in.flength);
 }
@@ -259,7 +259,7 @@ PUBLIC int do_slink()
   
   /* Get dir inode of 'name2' */
   if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) return(err_code);
-  if ((vp = last_dir()) == NIL_VNODE) return(err_code);
+  if ((vp = last_dir()) == NULL) return(err_code);
 
   if ((r = forbidden(vp, W_BIT|X_BIT)) == OK) {
 	r = req_slink(vp->v_fs_e, vp->v_inode_nr, user_fullpath, who_e,
@@ -286,7 +286,7 @@ PUBLIC int do_rdlink()
 
   /* Temporarily open the file containing the symbolic link */
   if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_RET_SYMLINK)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_RET_SYMLINK)) == NULL) return(err_code);
 
   /* Make sure this is a symbolic link */
   if((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK) 

@@ -121,7 +121,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */
 	{ "General protection", SIGSEGV, 286 },
 	{ "Page fault", SIGSEGV, 386 },		/* not close */
-	{ NIL_PTR, SIGILL, 0 },			/* probably software trap */
+	{ NULL, SIGILL, 0 },			/* probably software trap */
 	{ "Coprocessor error", SIGFPE, 386 },
 	{ "Alignment check", SIGBUS, 386 },
 	{ "Machine check", SIGBUS, 386 },
@@ -198,7 +198,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
   }
 
   /* Exception in system code. This is not supposed to happen. */
-  if (ep->msg == NIL_PTR || machine.processor < ep->minprocessor)
+  if (ep->msg == NULL || machine.processor < ep->minprocessor)
 	printf("\nIntel-reserved exception %d\n", frame->vector);
   else
 	printf("\n%s\n", ep->msg);

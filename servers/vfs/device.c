@@ -596,7 +596,7 @@ PUBLIC int do_ioctl()
   register struct vnode *vp;
   dev_t dev;
 
-  if ((f = get_filp(m_in.ls_fd)) == NIL_FILP) return(err_code);
+  if ((f = get_filp(m_in.ls_fd)) == NULL) return(err_code);
   vp = f->filp_vno;		/* get vnode pointer */
   if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL &&
       (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(ENOTTY);
@@ -804,11 +804,11 @@ PUBLIC int clone_opcl(
                 vp = fp->fp_filp[m_in.fd]->filp_vno;
 		
                 put_vnode(vp);
-		if ((vp = get_free_vnode()) == NIL_VNODE) 
+		if ((vp = get_free_vnode()) == NULL) 
 			vp = fp->fp_filp[m_in.fd]->filp_vno;
 		
                 vp->v_fs_e = res.fs_e;
-                vp->v_vmnt = NIL_VMNT;
+                vp->v_vmnt = NULL;
                 vp->v_dev = NO_DEV; 
 		vp->v_fs_e = res.fs_e;
                 vp->v_inode_nr = res.inode_nr;

@@ -19,7 +19,7 @@ PUBLIC int fs_chmod()
   register struct inode *rip;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* Now make the change. Clear setgid bit if file is not in caller's grp */
@@ -44,7 +44,7 @@ PUBLIC int fs_chown()
   register int r;
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* Not permitted to change the owner of a file on a read-only file sys. */

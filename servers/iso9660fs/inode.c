@@ -236,7 +236,7 @@ u32_t address;
   offset = address % block_size; /* Offset starting from the block */
 
   bp = get_block(block_nr);	/* Read the block from the device */
-  if (bp == NIL_BUF)
+  if (bp == NULL)
 	return(NULL);
 
   dir = get_free_dir_record();	/* Get a free record */

@@ -51,7 +51,7 @@ int rw_flag;			/* READING or WRITING */
 
   /* If the file descriptor is valid, get the vnode, size and mode. */
   if (m_in.nbytes < 0) return(EINVAL);
-  if ((f = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  if ((f = get_filp(m_in.fd)) == NULL) return(err_code);
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
 	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
@@ -154,7 +154,7 @@ PUBLIC int do_getdents()
   register struct filp *rfilp;
 
   /* Is the file descriptor valid? */
-  if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) {
+  if ( (rfilp = get_filp(m_in.fd)) == NULL) {
 	  return(err_code);
   }
   

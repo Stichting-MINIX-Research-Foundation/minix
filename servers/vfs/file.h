@@ -39,4 +39,3 @@ EXTERN struct filp {
 				 * keep state.
 				 */
 
-#define NIL_FILP (struct filp *) 0	/* indicates absence of a filp slot */

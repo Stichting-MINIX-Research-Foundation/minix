@@ -58,7 +58,7 @@ PUBLIC int do_trace()
 	return(OK);
 
   case T_ATTACH:	/* attach to an existing process */
-	if ((child = find_proc(m_in.pid)) == NIL_MPROC) return(ESRCH);
+	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
 	if (child->mp_flags & EXITING) return(ESRCH);
 
 	/* For non-root processes, user and group ID must match. */
@@ -98,7 +98,7 @@ PUBLIC int do_trace()
 
   case T_READB_INS:	/* special hack for reading text segments */
 	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-	if ((child = find_proc(m_in.pid)) == NIL_MPROC) return(ESRCH);
+	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
 	if (child->mp_flags & EXITING) return(ESRCH);
 
 	r = sys_trace(req, child->mp_endpoint, m_in.PMTRACE_ADDR, &m_in.data);
@@ -109,7 +109,7 @@ PUBLIC int do_trace()
 
   case T_WRITEB_INS:	/* special hack for patching text segments */
 	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-	if ((child = find_proc(m_in.pid)) == NIL_MPROC) return(ESRCH);
+	if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
 	if (child->mp_flags & EXITING) return(ESRCH);
 
 #if 0
@@ -133,7 +133,7 @@ PUBLIC int do_trace()
   /* All the other calls are made by the tracing process to control execution
    * of the child. For all these calls, the child must be stopped.
    */
-  if ((child = find_proc(m_in.pid)) == NIL_MPROC) return(ESRCH);
+  if ((child = find_proc(m_in.pid)) == NULL) return(ESRCH);
   if (child->mp_flags & EXITING) return(ESRCH);
   if (child->mp_tracer != who_p) return(ESRCH);
   if (!(child->mp_flags & STOPPED)) return(EBUSY);

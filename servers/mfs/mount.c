@@ -82,14 +82,14 @@ PUBLIC int fs_readsuper()
   set_blocksize(superblock.s_block_size);
   
   /* Get the root inode of the mounted file system. */
-  if( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NIL_INODE)  {
+  if( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {
 	  printf("MFS: couldn't get root inode\n");
 	  superblock.s_dev = NO_DEV;
 	  dev_close(driver_e, fs_dev);
 	  return(EINVAL);
   }
   
-  if(root_ip != NIL_INODE && root_ip->i_mode == 0) {
+  if(root_ip != NULL && root_ip->i_mode == 0) {
 	  printf("%s:%d zero mode for root inode?\n", __FILE__, __LINE__);
 	  put_inode(root_ip);
 	  superblock.s_dev = NO_DEV;
@@ -124,7 +124,7 @@ PUBLIC int fs_mountpoint()
   mode_t bits;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   
@@ -159,7 +159,7 @@ PUBLIC int fs_unmount()
   for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++) 
 	  if (rip->i_count > 0 && rip->i_dev == fs_dev) count += rip->i_count;
 
-  if ((root_ip = find_inode(fs_dev, ROOT_INODE)) == NIL_INODE) {
+  if ((root_ip = find_inode(fs_dev, ROOT_INODE)) == NULL) {
   	printf("MFS: couldn't find root inode. Unmount failed.\n");
   	panic("MFS: couldn't find root inode: %d", EINVAL);
   	return(EINVAL);

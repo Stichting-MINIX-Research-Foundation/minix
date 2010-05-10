@@ -149,7 +149,7 @@ int device;
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
 
-  if (device < 0 || device >= NR_DEVS) return(NIL_DEV);
+  if (device < 0 || device >= NR_DEVS) return(NULL);
   log_device = device;
 
   return(&log_geom[device]);
@@ -373,7 +373,7 @@ PRIVATE int log_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
 {
-  if (log_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (log_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
   return(OK);
 }
 

@@ -33,7 +33,7 @@ struct inode *ino;
   plen = strlen(prefix);
 
   /* Construct the path right-to-left in a temporary buffer first. */
-  for (total = plen; ino != NIL_INODE && !IS_ROOT(ino); ino = ino->i_parent) {
+  for (total = plen; ino != NULL && !IS_ROOT(ino); ino = ino->i_parent) {
 	len = strlen(ino->i_name);
 
 	total += len + 1;
@@ -49,7 +49,7 @@ struct inode *ino;
   /* If any of the intermediate inodes has no parent, the final inode is no
    * longer addressable by name.
    */
-  if (ino == NIL_INODE)
+  if (ino == NULL)
 	return ENOENT;
 
   /* Put the result in the actual buffer. We need the leading slash in the

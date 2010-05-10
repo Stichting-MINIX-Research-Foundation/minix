@@ -152,7 +152,7 @@ PUBLIC struct inode *get_inode(
   /* Inode is not on the hash, get a free one */
   if (TAILQ_EMPTY(&unused_inodes)) {
       err_code = ENFILE;
-      return(NIL_INODE);
+      return(NULL);
   }
   rip = TAILQ_FIRST(&unused_inodes);
 
@@ -201,7 +201,7 @@ PUBLIC struct inode *find_inode(
       }
   }
   
-  return(NIL_INODE);
+  return(NULL);
 }
 
 
@@ -216,7 +216,7 @@ register struct inode *rip;	/* pointer to inode to be released */
  * return it to the pool of available inodes.
  */
 
-  if (rip == NIL_INODE) return;	/* checking here is easier than in caller */
+  if (rip == NULL) return;	/* checking here is easier than in caller */
 
   if (rip->i_count < 1)
 	panic("put_inode: i_count already below 1: %d", rip->i_count);
@@ -261,7 +261,7 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
   sp = get_super(dev);	/* get pointer to super_block */
   if (sp->s_rd_only) {	/* can't allocate an inode on a read only device. */
 	err_code = EROFS;
-	return(NIL_INODE);
+	return(NULL);
   }
 
   /* Acquire an inode from the bit map. */
@@ -271,13 +271,13 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 	major = (int) (sp->s_dev >> MAJOR) & BYTE;
 	minor = (int) (sp->s_dev >> MINOR) & BYTE;
 	printf("Out of i-nodes on device %d/%d\n", major, minor);
-	return(NIL_INODE);
+	return(NULL);
   }
   sp->s_isearch = b;		/* next time start here */
   inumb = (int) b;		/* be careful not to pass unshort as param */
 
   /* Try to acquire a slot in the inode table. */
-  if ((rip = get_inode(NO_DEV, inumb)) == NIL_INODE) {
+  if ((rip = get_inode(NO_DEV, inumb)) == NULL) {
 	/* No inode table slots available.  Free the inode just allocated. */
 	free_bit(sp, IMAP, b);
   } else {

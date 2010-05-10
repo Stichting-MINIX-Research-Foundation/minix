@@ -36,7 +36,7 @@ PUBLIC int do_fchdir()
   struct filp *rfilp;
 
   /* Is the file descriptor valid? */
-  if ((rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  if ((rfilp = get_filp(m_in.fd)) == NULL) return(err_code);
   dup_vnode(rfilp->filp_vno);	/* Change into expects a reference. */
   return change_into(&fp->fp_wd, rfilp->filp_vno);
 }
@@ -78,7 +78,7 @@ int len;			/* length of the directory name string */
 
   /* Try to open the directory */
   if (fetch_name(name_ptr, len, M3) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
   return change_into(iip, vp);
 }
 
@@ -121,7 +121,7 @@ PUBLIC int do_stat()
   struct vnode *vp;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
   r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0);
 
   put_vnode(vp);
@@ -139,7 +139,7 @@ PUBLIC int do_fstat()
   int pipe_pos = 0;
 
   /* Is the file descriptor valid? */
-  if ((rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  if ((rfilp = get_filp(m_in.fd)) == NULL) return(err_code);
   
   /* If we read from a pipe, send position too */
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
@@ -164,7 +164,7 @@ PUBLIC int do_fstatfs()
   struct filp *rfilp;
 
   /* Is the file descriptor valid? */
-  if( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  if( (rfilp = get_filp(m_in.fd)) == NULL) return(err_code);
 
   return req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, m_in.buffer);
 }
@@ -180,7 +180,7 @@ PUBLIC int do_lstat()
   int r;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_RET_SYMLINK)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_RET_SYMLINK)) == NULL) return(err_code);
   r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0);
 
   put_vnode(vp);

@@ -35,7 +35,7 @@ PUBLIC int do_chmod()
   if (call_nr == CHMOD) {
   	/* Temporarily open the file */
 	if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
   } else {	/* call_nr == FCHMOD */
 	/* File is already opened; get a pointer to vnode from filp. */
 	if (!(flp = get_filp(m_in.fd))) return(err_code);
@@ -85,7 +85,7 @@ PUBLIC int do_chown()
   if (call_nr == CHOWN) {
 	/* Temporarily open the file. */
       if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-      if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+      if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
   } else {	/* call_nr == FCHOWN */
   	/* File is already opened; get a pointer to the vnode from filp. */
       if (!(flp = get_filp(m_in.fd))) return(err_code);
@@ -152,7 +152,7 @@ PUBLIC int do_access()
 
   /* Temporarily open the file. */
   if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
 
   r = forbidden(vp, m_in.mode);
   put_vnode(vp);

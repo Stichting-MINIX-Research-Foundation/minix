@@ -15,7 +15,7 @@ PUBLIC int fs_ftrunc(void)
   
   inumb = fs_m_in.REQ_INODE_NR;
 
-  if( (rip = find_inode(inumb)) == NIL_INODE) return(EINVAL);
+  if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
 
   start = fs_m_in.REQ_TRC_START_LO;
   end = fs_m_in.REQ_TRC_END_LO;

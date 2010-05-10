@@ -146,7 +146,7 @@ PUBLIC int do_select(void)
 
 	/* Get filp belonging to this fd */
 	filp = se->filps[fd] = get_filp(fd);
-	if (filp == NIL_FILP) {
+	if (filp == NULL) {
 		if (err_code == EBADF) {
 			select_cancel_all(se);
 			return(EBADF);
@@ -695,8 +695,8 @@ PUBLIC void select_unsuspend_by_endpt(endpoint_t proc_e)
 	if (selecttab[s].requestor == NULL) continue;
 	  
 	for(fd = 0; fd < selecttab[s].nfds; fd++) {
-		if (selecttab[s].filps[fd] == NIL_FILP ||
-		    selecttab[s].filps[fd]->filp_vno == NIL_VNODE) {
+		if (selecttab[s].filps[fd] == NULL ||
+		    selecttab[s].filps[fd]->filp_vno == NULL) {
 			continue;
 		}
 		

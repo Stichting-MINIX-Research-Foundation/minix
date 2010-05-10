@@ -62,7 +62,6 @@ struct hole {
 
 static int startpages;
 
-#define NIL_HOLE (struct hole *) 0
 
 #define _NR_HOLES (_NR_PROCS*2)  /* No. of memory holes maintained by VM */
 
@@ -190,9 +189,9 @@ PUBLIC phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
 	}
   } else {
 CHECKHOLES;
-        prev_ptr = NIL_HOLE;
+        prev_ptr = NULL;
 	hp = hole_head;
-	while (hp != NIL_HOLE) {
+	while (hp != NULL) {
 		if (hp->h_len >= clicks) {
 			/* We found a hole that is big enough.  Use it. */
 			old_base = hp->h_base;	/* remember where it started */
@@ -262,7 +261,7 @@ CHECKHOLES;
 	return;
   }
 
-  if ( (new_ptr = free_slots) == NIL_HOLE) 
+  if ( (new_ptr = free_slots) == NULL) 
   	panic("hole table full");
   new_ptr->h_base = base;
   new_ptr->h_len = clicks;
@@ -273,7 +272,7 @@ CHECKHOLES;
    * available, or if no holes are currently available, put this hole on the
    * front of the hole list.
    */
-  if (hp == NIL_HOLE || base <= hp->h_base) {
+  if (hp == NULL || base <= hp->h_base) {
 	/* Block to be freed goes on front of the hole list. */
 	new_ptr->h_next = hp;
 	hole_head = new_ptr;
@@ -283,8 +282,8 @@ CHECKHOLES;
   }
 
   /* Block to be returned does not go on front of hole list. */
-  prev_ptr = NIL_HOLE;
-  while (hp != NIL_HOLE && base > hp->h_base) {
+  prev_ptr = NULL;
+  while (hp != NULL && base > hp->h_base) {
 	prev_ptr = hp;
 	hp = hp->h_next;
   }
@@ -336,7 +335,7 @@ register struct hole *hp;	/* ptr to hole to merge with its successors */
   /* If 'hp' points to the last hole, no merging is possible.  If it does not,
    * try to absorb its successor into it and free the successor's table entry.
    */
-  if ( (next_ptr = hp->h_next) == NIL_HOLE) return;
+  if ( (next_ptr = hp->h_next) == NULL) return;
   if (hp->h_base + hp->h_len == next_ptr->h_base) {
 	hp->h_len += next_ptr->h_len;	/* first one gets second one's mem */
 	del_slot(hp, next_ptr);
@@ -347,7 +346,7 @@ register struct hole *hp;	/* ptr to hole to merge with its successors */
   /* If 'hp' now points to the last hole, return; otherwise, try to absorb its
    * successor into it.
    */
-  if ( (next_ptr = hp->h_next) == NIL_HOLE) return;
+  if ( (next_ptr = hp->h_next) == NULL) return;
   if (hp->h_base + hp->h_len == next_ptr->h_base) {
 	hp->h_len += next_ptr->h_len;
 	del_slot(hp, next_ptr);
@@ -378,8 +377,8 @@ struct memory *chunks;		/* list of free memory chunks */
 	hp->h_next = hp + 1;
 	hp->h_base = hp->h_len = 0;
   }
-  hole[_NR_HOLES-1].h_next = NIL_HOLE;
-  hole_head = NIL_HOLE;
+  hole[_NR_HOLES-1].h_next = NULL;
+  hole_head = NULL;
   free_slots = &hole[0];
 
   addr_init(&addravl);

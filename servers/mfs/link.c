@@ -46,7 +46,7 @@ PUBLIC int fs_link()
   MFS_NUL(string, len, sizeof(string));
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* Check to see if the file has maximum number of links already. */
@@ -66,12 +66,12 @@ PUBLIC int fs_link()
   }
 
   /* Temporarily open the last dir */
-  if( (ip = get_inode(fs_dev, fs_m_in.REQ_DIR_INO)) == NIL_INODE)
+  if( (ip = get_inode(fs_dev, fs_m_in.REQ_DIR_INO)) == NULL)
 	  return(EINVAL);
 
   /* If 'name2' exists in full (even if no space) set 'r' to error. */
   if (r == OK) {
-	  if((new_ip = advance(ip, string, IGN_PERM)) == NIL_INODE) {
+	  if((new_ip = advance(ip, string, IGN_PERM)) == NULL) {
 		  r = err_code;
 		  if(r == ENOENT)
 			  r = OK;
@@ -122,7 +122,7 @@ PUBLIC int fs_unlink()
   MFS_NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (rldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* The last directory exists.  Does the file also exist? */
@@ -175,7 +175,7 @@ PUBLIC int fs_rdlink()
   if (copylen <= 0) return(EINVAL);
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   if(!S_ISLNK(rip->i_mode))
@@ -229,8 +229,8 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
   /* Unlink . and .. from the dir. The super user can link and unlink any dir,
    * so don't make too many assumptions about them.
    */
-  (void) unlink_file(rip, NIL_INODE, dot1);
-  (void) unlink_file(rip, NIL_INODE, dot2);
+  (void) unlink_file(rip, NULL, dot1);
+  (void) unlink_file(rip, NULL, dot2);
   return(OK);
 }
 
@@ -240,20 +240,20 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
  *===========================================================================*/
 PRIVATE int unlink_file(dirp, rip, file_name)
 struct inode *dirp;		/* parent directory of file */
-struct inode *rip;		/* inode of file, may be NIL_INODE too. */
+struct inode *rip;		/* inode of file, may be NULL too. */
 char file_name[NAME_MAX];	/* name of file to be removed */
 {
-/* Unlink 'file_name'; rip must be the inode of 'file_name' or NIL_INODE. */
+/* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
   ino_t numb;			/* inode number */
   int	r;
 
-  /* If rip is not NIL_INODE, it is used to get faster access to the inode. */
-  if (rip == NIL_INODE) {
+  /* If rip is not NULL, it is used to get faster access to the inode. */
+  if (rip == NULL) {
   	/* Search for file in directory and try to get its inode. */
 	err_code = search_dir(dirp, file_name, &numb, LOOK_UP, IGN_PERM);
 	if (err_code == OK) rip = get_inode(dirp->i_dev, (int) numb);
-	if (err_code != OK || rip == NIL_INODE) return(err_code);
+	if (err_code != OK || rip == NULL) return(err_code);
   } else {
 	dup_inode(rip);		/* inode will be returned with put_inode */
   }
@@ -302,7 +302,7 @@ PUBLIC int fs_rename()
   MFS_NUL(new_name, len, sizeof(new_name));
 
   /* Get old dir inode */ 
-  if( (old_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_OLD_DIR)) == NIL_INODE) 
+  if( (old_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_OLD_DIR)) == NULL) 
 	return(err_code);
 
   old_ip = advance(old_dirp, old_name, IGN_PERM);
@@ -315,7 +315,7 @@ PUBLIC int fs_rename()
   }
 
   /* Get new dir inode */ 
-  if( (new_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_NEW_DIR)) == NIL_INODE) 
+  if( (new_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_NEW_DIR)) == NULL) 
 	r = err_code;
   new_ip = advance(new_dirp, new_name, IGN_PERM); /* not required to exist */
 
@@ -326,7 +326,7 @@ PUBLIC int fs_rename()
 	r = EBUSY;
   }
   
-  if(old_ip != NIL_INODE)
+  if(old_ip != NULL)
 	  odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY); /* TRUE iff dir */
   else
 	  odir = FALSE; /* FIXME: is this a safe default? */
@@ -360,7 +360,7 @@ PUBLIC int fs_rename()
 				break;
 			}
 			new_superdirp = next_new_superdirp;
-			if(new_superdirp == NIL_INODE) {
+			if(new_superdirp == NULL) {
 				/* Missing ".." entry.  Assume the worst. */
 				r = EINVAL;
 				break;
@@ -377,7 +377,7 @@ PUBLIC int fs_rename()
 	if(old_dirp->i_dev != new_dirp->i_dev) r = EXDEV; */
 
 	/* Some tests apply only if the new path exists. */
-	if(new_ip == NIL_INODE) {
+	if(new_ip == NULL) {
 		/* don't rename a file with a file system mounted on it. 
 		if (old_ip->i_dev != old_dirp->i_dev) r = EXDEV;*/
 		if(odir && new_dirp->i_nlinks >=
@@ -407,7 +407,7 @@ PUBLIC int fs_rename()
    *      is completely full].
    */
   if(r == OK) {
-	if(new_ip != NIL_INODE) {
+	if(new_ip != NULL) {
 		/* There is already an entry for 'new'. Try to remove it. */
 		if(odir) 
 			r = remove_dir(new_dirp, new_ip, new_name);
@@ -444,7 +444,7 @@ PUBLIC int fs_rename()
   if(r == OK && odir && !same_pdir) {
 	/* Update the .. entry in the directory (still points to old_dirp).*/
 	numb = new_dirp->i_num;
-	(void) unlink_file(old_ip, NIL_INODE, dot2);
+	(void) unlink_file(old_ip, NULL, dot2);
 	if(search_dir(old_ip, dot2, &numb, ENTER, IGN_PERM) == OK) {
 		/* New link created. */
 		new_dirp->i_nlinks++;
@@ -470,7 +470,7 @@ PUBLIC int fs_ftrunc(void)
   off_t start, end;
   int r;
   
-  if( (rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   start = fs_m_in.REQ_TRC_START_LO;
@@ -655,7 +655,7 @@ off_t len;
   if(!len) return; /* no zeroing to be done. */
   if( (b = read_map(rip, pos)) == NO_BLOCK) return;
   while (len > 0) {
-	if( (bp = get_block(rip->i_dev, b, NORMAL)) == NIL_BUF)
+	if( (bp = get_block(rip->i_dev, b, NORMAL)) == NULL)
 		panic("zerozone_range: no block");
 	offset = pos % block_size;
 	bytes = block_size - offset;

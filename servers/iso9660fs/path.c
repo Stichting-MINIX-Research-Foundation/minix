@@ -117,7 +117,7 @@ PUBLIC int search_dir(ldir_ptr,string,numb)
   pos = ldir_ptr->ext_attr_rec_length;
   bp = get_block(ldir_ptr->loc_extent_l);
 
-  if (bp == NIL_BUF)
+  if (bp == NULL)
     return EINVAL;
 
   while (pos < v_pri.logical_block_size_l) {

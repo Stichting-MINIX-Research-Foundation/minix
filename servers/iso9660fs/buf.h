@@ -13,7 +13,6 @@ PUBLIC struct buf {
 
 /* A block is free if b_dev == NO_DEV. */
 
-#define NIL_BUF ((struct buf *) 0)	/* indicates absence of a buffer */
 
 /* These defs make it possible to use to bp->b_data instead of bp->b.b__data */
 #define b_data   b.b__data

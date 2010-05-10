@@ -42,7 +42,7 @@ PUBLIC int fs_create()
   MFS_NUL(lastc, len, sizeof(lastc));
 
   /* Get last directory inode (i.e., directory that will hold the new inode) */
-  if ((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
 
   /* Create a new inode by calling new_node(). */
@@ -93,7 +93,7 @@ PUBLIC int fs_mknod()
   caller_gid = fs_m_in.REQ_GID;
   
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
   
   /* Try to create the new node */
@@ -127,13 +127,13 @@ PUBLIC int fs_mkdir()
   caller_gid = fs_m_in.REQ_GID;
   
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
       return(ENOENT);
   
   /* Next make the inode. If that fails, return error code. */
   rip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) 0);
   
-  if(rip == NIL_INODE || err_code == EEXIST) {
+  if(rip == NULL || err_code == EEXIST) {
 	  put_inode(rip);		/* can't make dir: it already exists */
 	  put_inode(ldirp);
 	  return(err_code);
@@ -194,7 +194,7 @@ PUBLIC int fs_slink()
   MFS_NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* Create the inode for the symlink. */
@@ -204,7 +204,7 @@ PUBLIC int fs_slink()
   /* Allocate a disk block for the contents of the symlink.
    * Copy contents of symlink (the name pointed to) into first disk block. */
   if( (r = err_code) == OK) {
-	  r = (bp = new_block(sip, (off_t) 0)) == NIL_BUF ? err_code : 
+	  r = (bp = new_block(sip, (off_t) 0)) == NULL ? err_code : 
 		  sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT3, 0,
 				   (vir_bytes) bp->b_data,
 				   (vir_bytes) fs_m_in.REQ_MEM_SIZE, D);
@@ -225,7 +225,7 @@ PUBLIC int fs_slink()
 		  }
 	  }
 	  
-	  put_block(bp, DIRECTORY_BLOCK); /* put_block() accepts NIL_BUF. */
+	  put_block(bp, DIRECTORY_BLOCK); /* put_block() accepts NULL. */
   
 	  if(r != OK) {
 		  sip->i_nlinks = 0;
@@ -236,7 +236,7 @@ PUBLIC int fs_slink()
 	  } 
   }
 
-  /* put_inode() accepts NIL_INODE as a noop, so the below are safe. */
+  /* put_inode() accepts NULL as a noop, so the below are safe. */
   put_inode(sip);
   put_inode(ldirp);
   
@@ -253,7 +253,7 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
  * In all cases it allocates a new inode, makes a directory entry for it in
  * the ldirp directory with string name, and initializes it.  
  * It returns a pointer to the inode if it can do this; 
- * otherwise it returns NIL_INODE.  It always sets 'err_code'
+ * otherwise it returns NULL.  It always sets 'err_code'
  * to an appropriate value (OK or an error code).
  * 
  * The parsed path rest is returned in 'parsed' if parsed is nonzero. It
@@ -272,14 +272,14 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
         /* New entry is a directory, alas we can't give it a ".." */
         put_inode(rip);
         err_code = EMLINK;
-        return(NIL_INODE);
+        return(NULL);
   }
 
-  if ( rip == NIL_INODE && err_code == ENOENT) {
+  if ( rip == NULL && err_code == ENOENT) {
 	/* Last path component does not exist.  Make new directory entry. */
-	if ( (rip = alloc_inode((ldirp)->i_dev, bits)) == NIL_INODE) {
+	if ( (rip = alloc_inode((ldirp)->i_dev, bits)) == NULL) {
 		/* Can't creat new inode: out of inodes. */
-		return(NIL_INODE);
+		return(NULL);
 	}
 
 	/* Force inode to the disk before making directory entry to make
@@ -296,14 +296,14 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
 		rip->i_dirt = DIRTY;	/* dirty inodes are written out */
 		put_inode(rip);	/* this call frees the inode */
 		err_code = r;
-		return(NIL_INODE);
+		return(NULL);
 	}
 
   } else if (err_code == EENTERMOUNT || err_code == ELEAVEMOUNT) {
   	r = EEXIST;
   } else { 
 	/* Either last component exists, or there is some problem. */
-	if (rip != NIL_INODE)
+	if (rip != NULL)
 		r = EEXIST;
 	else
 		r = err_code;
@@ -322,7 +322,7 @@ PUBLIC int fs_inhibread()
 {
   struct inode *rip;
   
-  if((rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if((rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* inhibit read ahead */

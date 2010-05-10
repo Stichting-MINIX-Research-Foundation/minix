@@ -88,7 +88,7 @@ PUBLIC struct buf *get_block(
   if (dev != NO_DEV) {
 	b = BUFHASH(block);
 	bp = buf_hash[b];
-	while (bp != NIL_BUF) {
+	while (bp != NULL) {
 		if (bp->b_blocknr == block && bp->b_dev == dev) {
 			/* Block needed has been found. */
 			if (bp->b_count == 0) rm_lru(bp);
@@ -106,7 +106,7 @@ PUBLIC struct buf *get_block(
   }
 
   /* Desired block is not on available chain.  Take oldest block ('front'). */
-  if ((bp = front) == NIL_BUF) panic("all buffers in use: %d", nr_bufs);
+  if ((bp = front) == NULL) panic("all buffers in use: %d", nr_bufs);
 
   if(bp->b_bytes < fs_block_size) {
 	ASSERT(!bp->bp);
@@ -138,7 +138,7 @@ PUBLIC struct buf *get_block(
 	buf_hash[b] = bp->b_hash;
   } else {
 	/* The block just taken is not on the front of its hash chain. */
-	while (prev_ptr->b_hash != NIL_BUF)
+	while (prev_ptr->b_hash != NULL)
 		if (prev_ptr->b_hash == bp) {
 			prev_ptr->b_hash = bp->b_hash;	/* found it */
 			break;
@@ -230,7 +230,7 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
  * the integrity of the file system (e.g., inode blocks) are written to
  * disk immediately if they are dirty.
  */
-  if (bp == NIL_BUF) return;	/* it is easier to check here than in caller */
+  if (bp == NULL) return;	/* it is easier to check here than in caller */
 
   bp->b_count--;		/* there is one use fewer now */
   if (bp->b_count != 0) return;	/* block is still in use */
@@ -246,9 +246,9 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 	/* Block probably won't be needed quickly. Put it on front of chain.
   	 * It will be the next block to be evicted from the cache.
   	 */
-	bp->b_prev = NIL_BUF;
+	bp->b_prev = NULL;
 	bp->b_next = front;
-	if (front == NIL_BUF)
+	if (front == NULL)
 		rear = bp;	/* LRU chain was empty */
 	else
 		front->b_prev = bp;
@@ -259,8 +259,8 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
   	 * It will not be evicted from the cache for a long time.
   	 */
 	bp->b_prev = rear;
-	bp->b_next = NIL_BUF;
-	if (rear == NIL_BUF)
+	bp->b_next = NULL;
+	if (rear == NULL)
 		front = bp;
 	else
 		rear->b_next = bp;
@@ -532,12 +532,12 @@ struct buf *bp;
   bufs_in_use++;
   next_ptr = bp->b_next;	/* successor on LRU chain */
   prev_ptr = bp->b_prev;	/* predecessor on LRU chain */
-  if (prev_ptr != NIL_BUF)
+  if (prev_ptr != NULL)
 	prev_ptr->b_next = next_ptr;
   else
 	front = next_ptr;	/* this block was at front of chain */
 
-  if (next_ptr != NIL_BUF)
+  if (next_ptr != NULL)
 	next_ptr->b_prev = prev_ptr;
   else
 	rear = prev_ptr;	/* this block was at rear of chain */
@@ -611,8 +611,8 @@ PUBLIC void buf_pool(int new_nr_bufs)
         bp->bp = NULL;
         bp->b_bytes = 0;
   }
-  buf[0].b_prev = NIL_BUF;
-  buf[nr_bufs - 1].b_next = NIL_BUF;
+  buf[0].b_prev = NULL;
+  buf[nr_bufs - 1].b_next = NULL;
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) bp->b_hash = bp->b_next;
   buf_hash[0] = front;

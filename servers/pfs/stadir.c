@@ -52,7 +52,7 @@ PUBLIC int fs_stat()
   register int r;              /* return value */
   register struct inode *rip;  /* target inode */
 
-  if( (rip = find_inode(fs_m_in.REQ_INODE_NR)) == NIL_INODE) return(EINVAL);
+  if( (rip = find_inode(fs_m_in.REQ_INODE_NR)) == NULL) return(EINVAL);
   get_inode(rip->i_dev, rip->i_num);	/* mark inode in use */  
   r = stat_inode(rip, fs_m_in.m_source, fs_m_in.REQ_GRANT);
   put_inode(rip);			/* release the inode */

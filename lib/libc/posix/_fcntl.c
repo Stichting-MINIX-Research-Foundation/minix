@@ -20,7 +20,7 @@ int cmd;
    * covers F_GETFD, F_GETFL and invalid commands.
    */
   m.m1_i3 = 0;
-  m.m1_p1 = NIL_PTR;
+  m.m1_p1 = NULL;
 
   /* Adjust for the stupid cases. */
   switch(cmd) {

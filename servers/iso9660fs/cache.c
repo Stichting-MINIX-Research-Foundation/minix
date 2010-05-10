@@ -30,7 +30,7 @@ register block_t block;		/* which block is wanted? */
 {
   register struct buf *bp, *free_bp;
 
-  free_bp = NIL_BUF;
+  free_bp = NULL;
 
   /* Find if the block is already loaded */
   for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
@@ -49,15 +49,15 @@ register block_t block;		/* which block is wanted? */
 	    bp_to_pickup = buf;
       }
 
-  if (free_bp == NIL_BUF &&
+  if (free_bp == NULL &&
       bp_to_pickup == buf &&
       bp_to_pickup->b_count == 0)
     free_bp = bp_to_pickup;
 
-  if (free_bp != NIL_BUF) {
+  if (free_bp != NULL) {
     /* Set fields of data structure */
     free_bp->b_blocknr = block;
-    if (read_block(free_bp) != OK) return NIL_BUF;
+    if (read_block(free_bp) != OK) return NULL;
     free_bp->b_count = 1;
 
     if (bp_to_pickup < &buf[NR_BUFS] - 1)
@@ -67,8 +67,8 @@ register block_t block;		/* which block is wanted? */
 
     return free_bp;
   } else {
-    /* No free blocks. Return NIL_BUF */
-    return NIL_BUF;
+    /* No free blocks. Return NULL */
+    return NULL;
   }
 }
 
@@ -78,7 +78,7 @@ register block_t block;		/* which block is wanted? */
 PUBLIC void put_block(bp)
 register struct buf *bp;	/* pointer to the buffer to be released */
 {
-  if (bp == NIL_BUF) return;	/* it is easier to check here than in caller */
+  if (bp == NULL) return;	/* it is easier to check here than in caller */
 
   bp->b_count--;		/* there is one use fewer now */
 }

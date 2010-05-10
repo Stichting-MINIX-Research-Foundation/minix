@@ -148,7 +148,7 @@ PUBLIC struct inode *get_inode(
   /* Inode is not on the hash, get a free one */
   if (TAILQ_EMPTY(&unused_inodes)) {
       err_code = ENFILE;
-      return(NIL_INODE);
+      return(NULL);
   }
   rip = TAILQ_FIRST(&unused_inodes);
 
@@ -192,7 +192,7 @@ int numb;			/* inode number (ANSI: may not be unshort) */
       }
   }
   
-  return(NIL_INODE);
+  return(NULL);
 }
 
 
@@ -207,7 +207,7 @@ register struct inode *rip;	/* pointer to inode to be released */
  * return it to the pool of available inodes.
  */
 
-  if (rip == NIL_INODE) return;	/* checking here is easier than in caller */
+  if (rip == NULL) return;	/* checking here is easier than in caller */
 
   if (rip->i_count < 1)
 	panic("put_inode: i_count already below 1: %d", rip->i_count);
@@ -252,13 +252,13 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
   if (b == NO_BIT) {
   	err_code = ENOSPC;
   	printf("PipeFS is out of inodes\n");
-  	return(NIL_INODE);
+  	return(NULL);
   }
   i_num = (ino_t) b;
   
 
   /* Try to acquire a slot in the inode table. */
-  if ((rip = get_inode(dev, i_num)) == NIL_INODE) {
+  if ((rip = get_inode(dev, i_num)) == NULL) {
 	/* No inode table slots available.  Free the inode if just allocated.*/
 	if (dev == NO_DEV) free_bit(b);
   } else {

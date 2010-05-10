@@ -43,7 +43,7 @@ int atapi;		/* atapi device */
   unsigned long base, limit, part_limit;
 
   /* Get the geometry of the device to partition */
-  if ((dv = (*dp->dr_prepare)(device)) == NIL_DEV
+  if ((dv = (*dp->dr_prepare)(device)) == NULL
 				|| cmp64u(dv->dv_size, 0) == 0) return;
   base = div64u(dv->dv_base, SECTOR_SIZE);
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
@@ -69,7 +69,7 @@ int atapi;		/* atapi device */
   }
 
   /* Find an array of devices. */
-  if ((dv = (*dp->dr_prepare)(device)) == NIL_DEV) return;
+  if ((dv = (*dp->dr_prepare)(device)) == NULL) return;
 
   /* Set the geometry of the partitions from the partition table. */
   for (par = 0; par < NR_PARTITIONS; par++, dv++) {
@@ -131,7 +131,7 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 			nextoffset = pe->lowsec;
 		} else
 		if (pe->sysind != NO_PART) {
-			if ((dv = (*dp->dr_prepare)(subdev)) == NIL_DEV) return;
+			if ((dv = (*dp->dr_prepare)(subdev)) == NULL) return;
 
 			dv->dv_base = mul64u(extbase + offset + pe->lowsec,
 								SECTOR_SIZE);
@@ -163,7 +163,7 @@ struct part_entry *table;	/* four entries */
   position = mul64u(offset, SECTOR_SIZE);
   iovec1.iov_addr = (vir_bytes) partbuf;
   iovec1.iov_size = CD_SECTOR_SIZE;
-  if ((*dp->dr_prepare)(device) != NIL_DEV) {
+  if ((*dp->dr_prepare)(device) != NULL) {
 	(void) (*dp->dr_transfer)(SELF, DEV_GATHER_S, position, &iovec1, 1);
   }
   if (iovec1.iov_size != 0) {

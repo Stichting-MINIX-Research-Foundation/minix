@@ -70,10 +70,10 @@ int req;			/* either F_SETLK or F_SETLKW */
   if (last < first) return(EINVAL);
 
   /* Check if this region conflicts with any existing lock. */
-  empty = NIL_LOCK;
+  empty = NULL;
   for (flp = &file_lock[0]; flp < &file_lock[NR_LOCKS]; flp++) {
 	if (flp->lock_type == 0) {
-		if (empty == NIL_LOCK) empty = flp;
+		if (empty == NULL) empty = flp;
 		continue;	/* 0 means unused slot */
 	}
 	if (flp->lock_vnode != f->filp_vno) continue;	/* different file */
@@ -155,7 +155,7 @@ int req;			/* either F_SETLK or F_SETLKW */
   if (ltype == F_UNLCK) return(OK);	/* unlocked a region with no locks */
 
   /* There is no conflict.  If space exists, store new lock in the table. */
-  if (empty == NIL_LOCK) return(ENOLCK);	/* table full */
+  if (empty == NULL) return(ENOLCK);	/* table full */
   empty->lock_type = ltype;
   empty->lock_pid = fp->fp_pid;
   empty->lock_vnode = f->filp_vno;

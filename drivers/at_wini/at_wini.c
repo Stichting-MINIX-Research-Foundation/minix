@@ -579,7 +579,7 @@ PRIVATE int w_do_open(struct driver *dp, message *m_ptr)
 
   struct wini *wn;
 
-  if (w_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (w_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   wn = w_wn;
 
@@ -657,7 +657,7 @@ PRIVATE struct device *w_prepare(int device)
 	w_dv = &w_wn->subpart[device % SUB_PER_DRIVE];
   } else {
   	w_device = -1;
-	return(NIL_DEV);
+	return(NULL);
   }
   return(w_dv);
 }
@@ -954,13 +954,13 @@ PRIVATE int w_io_test(void)
 	w_testing = 1;
 
 	/* Try I/O on the actual drive (not any (sub)partition). */
- 	if (w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
+ 	if (w_prepare(w_drive * DEV_PER_DRIVE) == NULL)
  		panic("Couldn't switch devices");
 
 	r = w_transfer(SELF, DEV_GATHER_S, cvu64(0), &iov, 1);
 
 	/* Switch back. */
- 	if (w_prepare(save_dev) == NIL_DEV)
+ 	if (w_prepare(save_dev) == NULL)
  		panic("Couldn't switch back devices");
 
  	/* Restore parameters. */
@@ -1726,7 +1726,7 @@ PRIVATE void w_need_reset()
 PRIVATE int w_do_close(struct driver *dp, message *m_ptr)
 {
 /* Device close: Release a device. */
-  if (w_prepare(m_ptr->DEVICE) == NIL_DEV)
+  if (w_prepare(m_ptr->DEVICE) == NULL)
   	return(ENXIO);
   w_wn->open_ct--;
 #if ENABLE_ATAPI
@@ -2352,7 +2352,7 @@ message *m;
 		return OK;
 	} else  if (m->REQUEST == DIOCOPENCT) {
 		int count;
-		if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
+		if (w_prepare(m->DEVICE) == NULL) return ENXIO;
 		count = w_wn->open_ct;
 		r= sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes)&count, sizeof(count), D);

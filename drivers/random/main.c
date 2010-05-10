@@ -142,7 +142,7 @@ int device;
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
 
-  if (device < 0 || device >= NR_DEVS) return(NIL_DEV);
+  if (device < 0 || device >= NR_DEVS) return(NULL);
   m_device = device;
 
   return(&m_geom[device]);
@@ -233,7 +233,7 @@ message *m_ptr;
 {
 /* Check device number on open.  
  */
-  if (r_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (r_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   return(OK);
 }
@@ -245,7 +245,7 @@ PRIVATE int r_ioctl(dp, m_ptr)
 struct driver *dp;			/* pointer to driver structure */
 message *m_ptr;				/* pointer to control message */
 {
-  if (r_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (r_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   switch (m_ptr->REQUEST) {
 

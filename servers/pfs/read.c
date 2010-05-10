@@ -26,7 +26,7 @@ PUBLIC int fs_readwrite(void)
   rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
 
   /* Find the inode referred */
-  if ((rip = find_inode(inumb)) == NIL_INODE) return(EINVAL);
+  if ((rip = find_inode(inumb)) == NULL) return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
   if (mode_word != I_NAMED_PIPE) return(EIO);
@@ -44,8 +44,8 @@ PUBLIC int fs_readwrite(void)
   }
 
   /* Mark inode in use */
-  if ((get_inode(rip->i_dev, rip->i_num)) == NIL_INODE) return(err_code);
-  if ((bp = get_block(rip->i_dev, rip->i_num)) == NIL_BUF) return(err_code);
+  if ((get_inode(rip->i_dev, rip->i_num)) == NULL) return(err_code);
+  if ((bp = get_block(rip->i_dev, rip->i_num)) == NULL) return(err_code);
 
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */

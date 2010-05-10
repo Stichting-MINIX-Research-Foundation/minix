@@ -296,7 +296,7 @@ PUBLIC int do_getprocnr()
 #endif
 
   if (m_in.pid >= 0) {			/* lookup process by pid */
-	if ((rmp = find_proc(m_in.pid)) != NIL_MPROC) {
+	if ((rmp = find_proc(m_in.pid)) != NULL) {
 		mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
 #if 0
 		printf("PM: pid result: %d\n", rmp->mp_endpoint);
@@ -422,7 +422,7 @@ PUBLIC int do_getsetpriority()
 	if (arg_who == 0)
 		rmp = mp;
 	else
-		if ((rmp = find_proc(arg_who)) == NIL_MPROC)
+		if ((rmp = find_proc(arg_who)) == NULL)
 			return(ESRCH);
 
 	if (mp->mp_effuid != SUPER_USER &&

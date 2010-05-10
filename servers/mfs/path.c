@@ -163,7 +163,7 @@ int *symlinkp;
   *symlinkp = 0;
 
   /* Find starting inode inode according to the request message */
-  if((rip = find_inode(fs_dev, dir_ino)) == NIL_INODE) 
+  if((rip = find_inode(fs_dev, dir_ino)) == NULL) 
 	return(ENOENT);
 
   /* If dir has been removed return ENOENT. */
@@ -310,7 +310,7 @@ char *suffix;			/* current remaining path. Has to point in the
   struct buf *bp;	/* buffer containing link text */
   char *sp;		/* start of link text */
 
-  bp  = NIL_BUF;
+  bp  = NULL;
 
   if ((blink = read_map(rip, (off_t) 0)) == NO_BLOCK)
 	return(EIO);
@@ -379,20 +379,20 @@ int chk_perm;			/* check permissions when string is looked up*/
   /* If 'string' is empty, return an error. */
   if (string[0] == '\0') {
   	err_code = ENOENT;
-	return(NIL_INODE);
+	return(NULL);
   }
 
-  /* Check for NIL_INODE. */
-  if (dirp == NIL_INODE) return(NIL_INODE);
+  /* Check for NULL. */
+  if (dirp == NULL) return(NULL);
 
   /* If 'string' is not present in the directory, signal error. */
   if ( (err_code = search_dir(dirp, string, &numb, LOOK_UP, chk_perm)) != OK) {
-	return(NIL_INODE);
+	return(NULL);
   }
 
   /* The component has been found in the directory.  Get inode. */
-  if ( (rip = get_inode(dirp->i_dev, (int) numb)) == NIL_INODE)  {
-	return(NIL_INODE);
+  if ( (rip = get_inode(dirp->i_dev, (int) numb)) == NULL)  {
+	return(NULL);
   }
 
   /* The following test is for "mountpoint/.." where mountpoint is a
@@ -420,7 +420,7 @@ int chk_perm;			/* check permissions when string is looked up*/
    * mounted file system.  The super_block provides the linkage between the
    * inode mounted on and the root directory of the mounted file system.
    */
-  if (rip != NIL_INODE && rip->i_mountpoint) {
+  if (rip != NULL && rip->i_mountpoint) {
 	  /* Mountpoint encountered, report it */
 	  err_code = EENTERMOUNT;
   }
@@ -604,7 +604,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   if (e_hit == FALSE) { /* directory is full and no room left in last block */
 	new_slots++;		/* increase directory size by 1 entry */
 	if (new_slots == 0) return(EFBIG); /* dir size limited by slot count */
-	if ( (bp = new_block(ldir_ptr, ldir_ptr->i_size)) == NIL_BUF)
+	if ( (bp = new_block(ldir_ptr, ldir_ptr->i_size)) == NULL)
 		return(err_code);
 	dp = &bp->b_dir[0];
 	extended = 1;

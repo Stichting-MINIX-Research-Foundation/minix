@@ -24,7 +24,7 @@ PUBLIC int fs_newnode()
   dev = fs_m_in.REQ_DEV;
 
   /* Try to allocate the inode */
-  if( (rip = alloc_inode(dev, bits) ) == NIL_INODE) return(err_code);
+  if( (rip = alloc_inode(dev, bits) ) == NULL) return(err_code);
 
   switch (bits & S_IFMT) {
   	case S_IFBLK:
@@ -32,7 +32,7 @@ PUBLIC int fs_newnode()
 		rip->i_rdev = dev;		/* Major/minor dev numbers */
 		break;
 	case S_IFIFO:
-		if ((get_block(dev, rip->i_num)) == NIL_BUF)
+		if ((get_block(dev, rip->i_num)) == NULL)
 			r = EIO;
 		break;
 	default:

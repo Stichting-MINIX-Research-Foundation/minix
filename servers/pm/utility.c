@@ -99,7 +99,7 @@ pid_t lpid;
 	if ((rmp->mp_flags & IN_USE) && rmp->mp_pid == lpid)
 		return(rmp);
 
-  return(NIL_MPROC);
+  return(NULL);
 }
 
 /*===========================================================================*

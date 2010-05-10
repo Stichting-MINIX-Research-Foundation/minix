@@ -159,10 +159,10 @@ int device;
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->subpart[device % SUB_PER_DRIVE];
   } else {
-	return(NIL_DEV);
+	return(NULL);
   }
   if (w_drive >= MAX_DRIVES || !w_wn->present)
-  	return NIL_DEV;
+  	return NULL;
   return(w_dv);
 }
 
@@ -369,7 +369,7 @@ message *m_ptr;
 
   if (!init_done) { w_init(); init_done = TRUE; }
 
-  if (w_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (w_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   if (w_wn->open_ct++ == 0) {
 	/* Partition the disk. */
@@ -387,7 +387,7 @@ message *m_ptr;
 {
 /* Device close: Release a device. */
 
-  if (w_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (w_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
   w_wn->open_ct--;
   return(OK);
 }
@@ -526,7 +526,7 @@ PRIVATE int w_other(struct driver *UNUSED(dr), message *m)
 
 	if (m->REQUEST == DIOCOPENCT) {
                 int count;
-                if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
+                if (w_prepare(m->DEVICE) == NULL) return ENXIO;
                 count = w_wn->open_ct;
 	        r=sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t)m->IO_GRANT,
 		       0, (vir_bytes)&count, sizeof(count), D);

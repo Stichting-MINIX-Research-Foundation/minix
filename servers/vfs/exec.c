@@ -114,7 +114,7 @@ vir_bytes frame_len;
 	progname[PROC_NAME_LEN-1] = '\0';
 
 	/* Open executable */
-	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
 
 	if ((vp->v_mode & I_TYPE) != I_REGULAR) 
 		r = ENOEXEC;

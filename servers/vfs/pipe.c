@@ -49,7 +49,7 @@ PUBLIC int do_pipe()
   struct node_details res;
 
   /* See if a free vnode is available */
-  if ( (vp = get_free_vnode()) == NIL_VNODE) return(err_code);
+  if ( (vp = get_free_vnode()) == NULL) return(err_code);
 
   /* Acquire two file descriptors. */
   rfp = fp;
@@ -58,7 +58,7 @@ PUBLIC int do_pipe()
   FD_SET(fil_des[0], &rfp->fp_filp_inuse);
   fil_ptr0->filp_count = 1;
   if ((r = get_fd(0, W_BIT, &fil_des[1], &fil_ptr1)) != OK) {
-	rfp->fp_filp[fil_des[0]] = NIL_FILP;
+	rfp->fp_filp[fil_des[0]] = NULL;
 	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;
 	return(r);
@@ -72,10 +72,10 @@ PUBLIC int do_pipe()
 		  NO_DEV, &res);
 
   if (r != OK) {
-	rfp->fp_filp[fil_des[0]] = NIL_FILP;
+	rfp->fp_filp[fil_des[0]] = NULL;
 	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;
-	rfp->fp_filp[fil_des[1]] = NIL_FILP;
+	rfp->fp_filp[fil_des[1]] = NULL;
 	FD_CLR(fil_des[1], &rfp->fp_filp_inuse);
 	fil_ptr1->filp_count = 0;
 	return(r);
@@ -94,7 +94,7 @@ PUBLIC int do_pipe()
   vp->v_mapfs_count = 1;
   vp->v_ref_count = 1;
   vp->v_size = 0;
-  vp->v_vmnt = NIL_VMNT; 
+  vp->v_vmnt = NULL; 
   vp->v_dev = NO_DEV;
 
   /* Fill in filp objects */
@@ -163,7 +163,7 @@ int notouch;			/* check only */
   if (rw_flag == READING) {
 	if (pos >= vp->v_size) {
 		/* Process is reading from an empty pipe. */
-		if (find_filp(vp, W_BIT) != NIL_FILP) {
+		if (find_filp(vp, W_BIT) != NULL) {
 			/* Writer exists */
 			if (oflags & O_NONBLOCK) 
 				r = EAGAIN;
@@ -180,7 +180,7 @@ int notouch;			/* check only */
   }
 
   /* Process is writing to a pipe. */
-  if (find_filp(vp, R_BIT) == NIL_FILP) {
+  if (find_filp(vp, R_BIT) == NULL) {
 	/* Process is writing, but there is no reader. Tell kernel to generate
 	 * a SIGPIPE signal. */
 	if (!notouch) sys_kill(fp->fp_endpoint, SIGPIPE);
@@ -430,7 +430,7 @@ int returned;			/* if hanging on task, how many bytes read */
 	fd_nr = rfp->fp_fd>>8;
 	if (returned < 0) {
 		fil_ptr = rfp->fp_filp[fd_nr];
-		rfp->fp_filp[fd_nr] = NIL_FILP;
+		rfp->fp_filp[fd_nr] = NULL;
 		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 		if (fil_ptr->filp_count != 1) {
 			panic("revive: bad count in filp: %d",
@@ -438,7 +438,7 @@ int returned;			/* if hanging on task, how many bytes read */
 		}
 		fil_ptr->filp_count = 0;
 		put_vnode(fil_ptr->filp_vno);     
-		fil_ptr->filp_vno = NIL_VNODE;
+		fil_ptr->filp_vno = NULL;
 		reply(proc_nr_e, returned);
 	} else
 		reply(proc_nr_e, fd_nr);

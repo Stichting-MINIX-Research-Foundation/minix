@@ -51,7 +51,6 @@ struct device {
   u64_t dv_size;
 };
 
-#define NIL_DEV		((struct device *) 0)
 
 #define DRIVER_STD	0	/* Use the standard reply protocol */
 #define DRIVER_ASYN	1	/* Use the new asynchronous protocol */

@@ -104,7 +104,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 					     flag is set this is an error */
   } else {
 	/* Scan path name */
-	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
   }
 
   /* Claim the file descriptor and filp slot and fill them in. */
@@ -194,7 +194,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 				 */
 				b = (bits & R_BIT ? R_BIT : W_BIT);
 				fil_ptr->filp_count = 0; /* don't find self */
-				if ((filp2 = find_filp(vp, b)) != NIL_FILP) {
+				if ((filp2 = find_filp(vp, b)) != NULL) {
 					/* Co-reader or writer found. Use it.*/
 					fp->fp_filp[m_in.fd] = filp2;
 					filp2->filp_count++;
@@ -222,11 +222,11 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   /* If error, release inode. */
   if (r != OK) {
 	if (r == SUSPEND) return(r);		/* Oops, just suspended */
-	fp->fp_filp[m_in.fd] = NIL_FILP;
+	fp->fp_filp[m_in.fd] = NULL;
   	FD_CLR(m_in.fd, &fp->fp_filp_inuse);
 	fil_ptr->filp_count= 0;
 	put_vnode(vp);     
-	fil_ptr->filp_vno = NIL_VNODE;
+	fil_ptr->filp_vno = NULL;
 	return(r);
   }
   
@@ -241,7 +241,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 {
 /* Try to create a new inode and return a pointer to it. If the inode already
    exists, return a pointer to it as well, but set err_code accordingly.
-   NIL_VNODE is returned if the path cannot be resolved up to the last
+   NULL is returned if the path cannot be resolved up to the last
    directory, or when the inode cannot be created due to permissions or
    otherwise. */ 
   struct vnode *dirp, *vp;
@@ -254,7 +254,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
   if (oflags & O_EXCL) flags |= PATH_RET_SYMLINK;
 
   /* See if the path can be opened down to the last directory. */
-  if ((dirp = last_dir()) == NIL_VNODE) return(NIL_VNODE);
+  if ((dirp = last_dir()) == NULL) return(NULL);
 
   /* The final directory is accessible. Get final component of the path. */
   vp = advance(dirp, flags);
@@ -263,12 +263,12 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
    * symlink results in a new path that needs to be re-resolved entirely. */
   if (user_fullpath[0] == '/') return new_node(oflags, bits);
 
-  if (vp == NIL_VNODE && err_code == ENOENT) {
+  if (vp == NULL && err_code == ENOENT) {
 	/* Last path component does not exist. Make a new directory entry. */
-	if ((vp = get_free_vnode()) == NIL_VNODE) {
+	if ((vp = get_free_vnode()) == NULL) {
 		/* Can't create new vnode: out of vnodes. */
 		put_vnode(dirp);	
-		return(NIL_VNODE);
+		return(NULL);
 	}
 	if ((r = forbidden(dirp, W_BIT|X_BIT)) != OK ||
 	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
@@ -281,7 +281,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 
 			/* Resolve path up to symlink */
 			slp = advance(dirp, PATH_RET_SYMLINK);
-			if (slp != NIL_VNODE) {
+			if (slp != NULL) {
 				if (S_ISLNK(slp->v_mode)) {
 					/* Get contents of link */
 
@@ -297,7 +297,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 						put_vnode(slp);
 						put_vnode(dirp);
 						err_code = r;
-						return(NIL_VNODE);
+						return(NULL);
 					}
 					user_fullpath[r] = '\0';/* Term. path*/
 				} 
@@ -313,7 +313,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 			vp = new_node(oflags, bits);
 			fp->fp_wd = old_wd; /* Restore */
 
-			if (vp != NIL_VNODE) {
+			if (vp != NULL) {
 				put_vnode(dirp);
 				return(vp);
 			}
@@ -328,7 +328,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 			err_code = r;
 
 		put_vnode(dirp);
-		return(NIL_VNODE);
+		return(NULL);
 	}
 	
 	/* Store results and mark vnode in use */
@@ -345,7 +345,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 	vp->v_ref_count = 1;
   } else {
   	/* Either last component exists, or there is some other problem. */
-  	if (vp != NIL_VNODE)
+  	if (vp != NULL)
   		r = EEXIST;	/* File exists or a symlink names a file while
   				 * O_EXCL is set. */ 
   	else
@@ -374,7 +374,7 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
 
   if((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) return(ENXIO);
 
-  if (find_filp(vp, bits & W_BIT ? R_BIT : W_BIT) == NIL_FILP) { 
+  if (find_filp(vp, bits & W_BIT ? R_BIT : W_BIT) == NULL) { 
 	if (oflags & O_NONBLOCK) {
 		if (bits & W_BIT) return(ENXIO);
 	} else {
@@ -406,7 +406,7 @@ PUBLIC int do_mknod()
 
   /* Open directory that's going to hold the new node. */
   if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if((vp = last_dir()) == NIL_VNODE) return(err_code);
+  if((vp = last_dir()) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
   if((vp->v_mode & I_TYPE) != I_DIRECTORY) {
@@ -439,7 +439,7 @@ PUBLIC int do_mkdir()
   bits = I_DIRECTORY | (m_in.mode & RWX_MODES & fp->fp_umask);
 
   /* Request lookup */
-  if((vp = last_dir()) == NIL_VNODE) return(err_code);
+  if((vp = last_dir()) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
   if ((vp->v_mode & I_TYPE) != I_DIRECTORY) {
@@ -469,7 +469,7 @@ PUBLIC int do_lseek()
   u64_t pos, newpos;
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(m_in.ls_fd)) == NIL_FILP) return(err_code);
+  if ( (rfilp = get_filp(m_in.ls_fd)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
   if (rfilp->filp_vno->v_pipe == I_PIPE) return(ESPIPE);
@@ -517,7 +517,7 @@ PUBLIC int do_llseek()
   int r;
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(m_in.ls_fd)) == NIL_FILP) return(err_code);
+  if ( (rfilp = get_filp(m_in.ls_fd)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
   if (rfilp->filp_vno->v_pipe == I_PIPE) return(ESPIPE);
@@ -574,12 +574,12 @@ int fd_nr;
   int lock_count;
 
   /* First locate the vnode that belongs to the file descriptor. */
-  if ( (rfilp = get_filp2(rfp, fd_nr)) == NIL_FILP) return(err_code);
+  if ( (rfilp = get_filp2(rfp, fd_nr)) == NULL) return(err_code);
   vp = rfilp->filp_vno;
   close_filp(rfilp);
 
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
-  rfp->fp_filp[fd_nr] = NIL_FILP;
+  rfp->fp_filp[fd_nr] = NULL;
   FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */

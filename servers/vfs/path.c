@@ -47,16 +47,16 @@ int flags;
   assert(dirp);
 
   /* Get a free vnode */
-  if((new_vp = get_free_vnode()) == NIL_VNODE) return(NIL_VNODE);
+  if((new_vp = get_free_vnode()) == NULL) return(NULL);
   
   /* Lookup vnode belonging to the file. */
   if ((r = lookup(dirp, flags, &res)) != OK) {
 	err_code = r;
-	return(NIL_VNODE);
+	return(NULL);
   }
   
   /* Check whether vnode is already in use or not */
-  if ((vp = find_vnode(res.fs_e, res.inode_nr)) != NIL_VNODE) {
+  if ((vp = find_vnode(res.fs_e, res.inode_nr)) != NULL) {
 	  dup_vnode(vp);
 	  vp->v_fs_count++;	/* We got a reference from the FS */
 	  return(vp);
@@ -71,7 +71,7 @@ int flags;
   new_vp->v_gid = res.gid;
   new_vp->v_sdev = res.dev;
   
-  if( (vmp = find_vmnt(new_vp->v_fs_e)) == NIL_VMNT)
+  if( (vmp = find_vmnt(new_vp->v_fs_e)) == NULL)
 	  panic("VFS advance: vmnt not found");
 
   new_vp->v_vmnt = vmp; 
@@ -105,7 +105,7 @@ PUBLIC struct vnode *last_dir(void)
 /* Parse a path, 'user_fullpath', as far as the last directory, fetch the vnode
  * for the last directory into the vnode table, and return a pointer to the
  * vnode. In addition, return the final component of the path in 'string'. If
- * the last directory can't be opened, return NIL_VNODE and the reason for
+ * the last directory can't be opened, return NULL and the reason for
  * failure in 'err_code'. We can't parse component by component as that would
  * be too expensive. Alternatively, we cut off the last component of the path,
  * and parse the path up to the penultimate component.
@@ -124,7 +124,7 @@ PUBLIC struct vnode *last_dir(void)
   /* If path is empty, return ENOENT. */
   if (len == 0)	{
 	err_code = ENOENT;
-	return(NIL_VNODE); 
+	return(NULL); 
   }
 
 #if !DO_POSIX_PATHNAME_RES
@@ -156,7 +156,7 @@ PUBLIC struct vnode *last_dir(void)
   }
 
   res = advance(vp, PATH_NOFLAGS);
-  if (res == NIL_VNODE) return(NIL_VNODE);
+  if (res == NULL) return(NULL);
 
   /* Copy the directory entry back to user_fullpath */
   strcpy(user_fullpath, dir_entry);
@@ -253,7 +253,7 @@ node_details_t *node;
 		/* Climbing up mount */
 		/* Find the vmnt that represents the partition on
 		 * which we "climb up". */
-		if ((vmp = find_vmnt(res.fs_e)) == NIL_VMNT) {
+		if ((vmp = find_vmnt(res.fs_e)) == NULL) {
 			panic("VFS lookup: can't find parent vmnt");
 		}	  
 

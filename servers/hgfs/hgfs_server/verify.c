@@ -97,7 +97,7 @@ struct inode **res_ino;		/* pointer for addressed inode (or NULL) */
  * directory entry, check whether the path to the parent is still valid, and
  * check whether there is an inode pointed to by the full path. Upon success,
  * res_ino will contain either the inode for the full path, with increased
- * refcount, or NIL_INODE if no such inode exists.
+ * refcount, or NULL if no such inode exists.
  */
   int r;
 

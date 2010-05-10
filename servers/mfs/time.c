@@ -14,7 +14,7 @@ PUBLIC int fs_utime()
   register int r;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
         return(EINVAL);
 
   /* Only the owner of a file or the super_user can change its time. */

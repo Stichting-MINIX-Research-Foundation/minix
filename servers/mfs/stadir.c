@@ -62,7 +62,7 @@ PUBLIC int fs_fstatfs()
   struct inode *rip;
   int r;
 
-  if((rip = find_inode(fs_dev, ROOT_INODE)) == NIL_INODE)
+  if((rip = find_inode(fs_dev, ROOT_INODE)) == NULL)
 	  return(EINVAL);
    
   st.f_bsize = rip->i_sp->s_block_size;
@@ -83,7 +83,7 @@ PUBLIC int fs_stat()
   register int r;              /* return value */
   register struct inode *rip;  /* target inode */
 
-  if ((rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	return(EINVAL);
   
   r = stat_inode(rip, fs_m_in.m_source, fs_m_in.REQ_GRANT);

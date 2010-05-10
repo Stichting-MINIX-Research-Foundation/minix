@@ -456,7 +456,7 @@ PRIVATE struct device *f_prepare(int device)
 
   f_device = device;
   f_drive = device & ~(DEV_TYPE_BITS | FORMAT_DEV_BIT);
-  if (f_drive < 0 || f_drive >= NR_DRIVES) return(NIL_DEV);
+  if (f_drive < 0 || f_drive >= NR_DRIVES) return(NULL);
 
   f_fp = &floppy[f_drive];
   f_dv = &f_fp->fl_geom;
@@ -1316,7 +1316,7 @@ message *m_ptr;			/* pointer to open message */
   struct test_order *top;
 
   /* Decode the message parameters. */
-  if (f_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (f_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   dtype = f_device & DEV_TYPE_BITS;	/* get density from minor dev */
   if (dtype >= MINOR_fd0p0) dtype = 0;

@@ -190,7 +190,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   
   /* Scan vmnt table to see if dev already mounted. If not, find a free slot.*/
   found = FALSE; 
-  vmp = NIL_VMNT;
+  vmp = NULL;
   for (i = 0; i < NR_MNTS; ++i) {
 	  if (vmnt[i].m_dev == dev) {
 		  vmp = &vmnt[i];
@@ -213,7 +213,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   
 	/* Now get the inode of the file to be mounted on. */
 	if (fetch_name(m_in.name2, m_in.name2_length, M1)!=OK) return(err_code);
-	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
 	if (vp->v_ref_count != 1) {
 		put_vnode(vp);
 		return(EBUSY);
@@ -251,7 +251,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   if(!replace_root) {
   	/* Get vnode of mountpoint */
-	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
 
 	/* Tell FS on which vnode it is mounted (glue into mount tree) */
 	if ((r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr)) != OK) {
@@ -261,8 +261,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   }
 
   /* We'll need a vnode for the root inode, check whether there is one */
-  if ((root_node = get_free_vnode()) == NIL_VNODE) {
-	if (vp != NIL_VNODE) put_vnode(vp);
+  if ((root_node = get_free_vnode()) == NULL) {
+	if (vp != NULL) put_vnode(vp);
 	return(ENFILE);
   }
 
@@ -272,7 +272,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	dp = &dmap[(dev >> MAJOR) & BYTE];
 	if (dp->dmap_driver == NONE) {
 		printf("VFS: no driver for dev %x\n", dev);
-		if (vp != NIL_VNODE) put_vnode(vp);
+		if (vp != NULL) put_vnode(vp);
 		return(EINVAL);
 	}
 
@@ -283,7 +283,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   /* Tell FS which device to mount */
   if ((r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res)) != OK) {
-	if (vp != NIL_VNODE) put_vnode(vp);
+	if (vp != NULL) put_vnode(vp);
 	return(r);
   }
 
@@ -434,7 +434,7 @@ PUBLIC int unmount(
 
   if (vmp->m_mounted_on) {
 	put_vnode(vmp->m_mounted_on);
-	vmp->m_mounted_on = NIL_VNODE;
+	vmp->m_mounted_on = NULL;
   }
 
   /* Tell FS to unmount */
@@ -453,7 +453,7 @@ PUBLIC int unmount(
   vmp->m_root_node->v_ref_count = 0;
   vmp->m_root_node->v_fs_count = 0;
   vmp->m_root_node->v_sdev = NO_DEV;
-  vmp->m_root_node = NIL_VNODE;
+  vmp->m_root_node = NULL;
   vmp->m_dev = NO_DEV;
   vmp->m_fs_e = NONE;
 	
@@ -498,7 +498,7 @@ PRIVATE dev_t name_to_dev(int allow_mountpt)
   struct vnode *vp;
   
   /* Request lookup */
-  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) {
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) {
 	return(NO_DEV);
   }
 

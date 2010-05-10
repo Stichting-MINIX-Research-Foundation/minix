@@ -34,7 +34,7 @@ PUBLIC int fs_readwrite(void)
   r = OK;
   
   /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
@@ -240,7 +240,7 @@ int *completed;			/* number of bytes copied */
 		zero_block(bp);
 	} else {
 		/* Writing to a nonexistent block. Create and enter in inode.*/
-		if ((bp= new_block(rip, ex64lo(position))) == NIL_BUF)
+		if ((bp= new_block(rip, ex64lo(position))) == NULL)
 			return(err_code);
 	}
   } else if (rw_flag == READING) {
@@ -258,7 +258,7 @@ int *completed;			/* number of bytes copied */
   }
 
   /* In all cases, bp now points to a valid buffer. */
-  if (bp == NIL_BUF) 
+  if (bp == NULL) 
   	panic("bp not valid in rw_chunk; this can't happen");
   
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
@@ -366,8 +366,8 @@ int index;			/* index into *bp */
   struct super_block *sp;
   zone_t zone;			/* V2 zones are longs (shorts in V1) */
 
-  if(bp == NIL_BUF)
-	panic("rd_indir() on NIL_BUF");
+  if(bp == NULL)
+	panic("rd_indir() on NULL");
 
   sp = get_super(bp->b_dev);	/* need super block to find file sys type */
 
@@ -401,7 +401,7 @@ PUBLIC void read_ahead()
 
   rip = rdahed_inode;		/* pointer to inode to read ahead from */
   block_size = get_block_size(rip->i_dev);
-  rdahed_inode = NIL_INODE;	/* turn off read ahead */
+  rdahed_inode = NULL;	/* turn off read ahead */
   if ( (b = read_map(rip, rdahedpos)) == NO_BLOCK) return;	/* at EOF */
   bp = rahead(rip, b, cvul64(rdahedpos), block_size);
   put_block(bp, PARTIAL_DATA_BLOCK);
@@ -560,7 +560,7 @@ PUBLIC int fs_getdents(void)
   if(pos % DIR_ENTRY_SIZE)
 	  return(ENOENT);
   
-  if( (rip = get_inode(fs_dev, ino)) == NIL_INODE) 
+  if( (rip = get_inode(fs_dev, ino)) == NULL) 
 	  return(EINVAL);
 
   block_size = rip->i_sp->s_block_size;

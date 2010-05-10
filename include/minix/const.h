@@ -51,7 +51,6 @@
 
 /* Message passing constants. */
 #define MESS_SIZE (sizeof(message))	/* might need usizeof from FS here */
-#define NIL_MESS ((message *) 0)	/* null pointer */
 
 /* Memory related constants. */
 #define SEGMENT_TYPE  0xFF00	/* bit mask to get segment type */
@@ -89,7 +88,6 @@
 #define BYTE            0377	/* mask for 8 bits */
 #define READING            0	/* copy data to user */
 #define WRITING            1	/* copy data from user */
-#define NIL_PTR   (char *) 0	/* generally useful expression */
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 
 /* Macros. */

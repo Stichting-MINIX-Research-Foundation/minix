@@ -53,7 +53,7 @@ PUBLIC int do_stat()
   ino_nr = m_in.REQ_INODE_NR;
 
   /* Don't increase the inode refcount: it's already open anyway */
-  if ((ino = find_inode(ino_nr)) == NIL_INODE)
+  if ((ino = find_inode(ino_nr)) == NULL)
 	return EINVAL;
 
   attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE | HGFS_ATTR_ATIME |
@@ -78,7 +78,7 @@ PUBLIC int do_stat()
    * It's just not worth it.
    */
   stat.st_nlink = 0;
-  if (ino->i_parent != NIL_INODE) stat.st_nlink++;
+  if (ino->i_parent != NULL) stat.st_nlink++;
   if (IS_DIR(ino)) {
 	stat.st_nlink++;
 	if (HAS_CHILDREN(ino)) stat.st_nlink++;
@@ -103,7 +103,7 @@ PUBLIC int do_chmod()
   if (state.read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_inode(ino, path, NULL)) != OK)
@@ -140,7 +140,7 @@ PUBLIC int do_utime()
   if (state.read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_inode(ino, path, NULL)) != OK)

@@ -16,7 +16,6 @@ struct buf {
 
 /* A block is free if b_dev == NO_DEV. */
 
-#define NIL_BUF ((struct buf *) 0)	/* indicates absence of a buffer */
 
 #define BUFHASH(b) ((b) % NR_BUFS)
 

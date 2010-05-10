@@ -55,7 +55,6 @@
 /* Return status of functions */
 #define OK		 0
 #define ERROR		-1
-#define NIL_PTR		((char *) 0)
 
 /* Compare return values */
 #define LOWER		-1
@@ -82,7 +81,6 @@ typedef struct {
   char *line;			/* Contains line currently used */
 } MERGE;
 
-#define NIL_MERGE	((MERGE *) 0)
 MERGE merge_f[OPEN_FILES];	/* Merge structs */
 int buf_size;			/* Size of core available for each struct */
 
@@ -256,7 +254,7 @@ register FIELD *field;
 	field->reverse = TRUE;
 	break;
       default:			/* Illegal options */
-	error(TRUE, USAGE, NIL_PTR);
+	error(TRUE, USAGE, NULL);
   }
 }
 
@@ -302,7 +300,7 @@ BOOL beg_fl;			/* Assign beg or end of field */
 	if (ptr && *ptr == '-' && ((table[*(ptr + 1)] & DIGIT) || *(ptr + 1) == '.')) {
 		new_field(field, offset, FALSE);
 		if (field->beg_field > field->end_field)
-			error(TRUE, "End field is before start field!", NIL_PTR);
+			error(TRUE, "End field is before start field!", NULL);
 	} else			/* No end pos. */
 		field->end_field = ERROR;
   }
@@ -326,7 +324,7 @@ char *argv[];
 		break;
 	if (*ptr == '+') {	/* Assign field. */
 		if (++field_cnt == FIELDS_LIMIT)
-			error(TRUE, "Too many fields", NIL_PTR);
+			error(TRUE, "Too many fields", NULL);
 		new_field(&fields[field_cnt], &arg_count, TRUE);
 	} else {		/* Get output options */
 		while (*++ptr) {
@@ -372,14 +370,14 @@ char *argv[];
 /* Only merge files. Set up */
   if (only_merge) {
 	args_limit = args_offset = arg_count;
-	while (argv[args_limit] != NIL_PTR)
+	while (argv[args_limit] != NULL)
 		args_limit++;	/* Find nr of args */
 	files_merge(args_limit - arg_count);
 	exit(0);
   }
   if (arg_count == argc) {	/* No args left. Use stdin */
 	if (check)
-		check_file(0, NIL_PTR);
+		check_file(0, NULL);
 	else
 		get_file(0, (off_t) 0);
   } else
@@ -436,7 +434,7 @@ register BOOL quit;
 register char *message, *arg;
 {
   write(2, message, strlen(message));
-  if (arg != NIL_PTR) write(2, arg, strlen(arg));
+  if (arg != NULL) write(2, arg, strlen(arg));
   perror(" ");
   if (quit) exit(1);
 }
@@ -446,7 +444,7 @@ register char *message, *arg;
  */
 void open_outfile()
 {
-  if (output_file == NIL_PTR)
+  if (output_file == NULL)
 	out_fd = STD_OUT;
   else if ((out_fd = creat(output_file, 0644)) < 0)
 	error(TRUE, "Cannot creat ", output_file);
@@ -534,10 +532,10 @@ int fd;
 	if ((fd = creat(file_name(nr_of_files), 0644)) < 0)
 		error(TRUE, "Cannot creat ", file_name(nr_of_files));
   }
-  for (line_ptr = line_table; *line_ptr != NIL_PTR; line_ptr++) {
+  for (line_ptr = line_table; *line_ptr != NULL; line_ptr++) {
 	ptr = *line_ptr;
 	/* Skip all same lines if uniq is set */
-	if (uniq && *(line_ptr + 1) != NIL_PTR) {
+	if (uniq && *(line_ptr + 1) != NULL) {
 		if (compare(ptr, *(line_ptr + 1)) == SAME) continue;
 	}
 	do {			/* Print line in a buffered way */
@@ -575,7 +573,7 @@ char *address;
 register int bytes;
 {
   if (read(fd, address, bytes) < 0 && bytes != 0)
-	error(TRUE, "Read error", NIL_PTR);
+	error(TRUE, "Read error", NULL);
 }
 
 /* Mwrite () performs a normal write (), but checks the return value. */
@@ -585,7 +583,7 @@ char *address;
 register int bytes;
 {
   if (write(fd, address, bytes) != bytes && bytes != 0)
-	error(TRUE, "Write error", NIL_PTR);
+	error(TRUE, "Write error", NULL);
 }
 
 /* Sort () sorts the input in memory starting at mem_top. */
@@ -608,7 +606,7 @@ void sort()
 	if (*ptr++ == '\n') line_table[count++] = ptr;
   }
 
-  line_table[count - 1] = NIL_PTR;
+  line_table[count - 1] = NULL;
 
 /* Sort the line table */
   sort_table(count - 1);
@@ -972,20 +970,20 @@ int start_file, limit_file;
   if (only_merge && uniq)
 	uniq_lines(smallest);	/* Print only uniq lines */
   else				/* Print rest of file */
-	while (print(smallest, file_cnt) != NIL_MERGE);
+	while (print(smallest, file_cnt) != NULL);
 
-  put_line(NIL_PTR);		/* Flush output buffer */
+  put_line(NULL);		/* Flush output buffer */
 }
 
 /* Put_line () prints the line into the out_fd filedescriptor. If line equals
- * NIL_PTR, the out_fd is flushed and closed.
+ * NULL, the out_fd is flushed and closed.
  */
 void put_line(line)
 register char *line;
 {
   static int index = 0;		/* Index in out_buffer */
 
-  if (line == NIL_PTR) {	/* Flush and close */
+  if (line == NULL) {	/* Flush and close */
 	mwrite(out_fd, out_buffer, index);
 	index = 0;
 	(void) close(out_fd);
@@ -1021,7 +1019,7 @@ int file_cnt;			/* Nr of files that are being merged */
 		}
 	}
 	if (i == file_cnt)	/* No more files left */
-		return NIL_MERGE;
+		return NULL;
   }
   return merg;
 }
@@ -1170,7 +1168,7 @@ register int size;
   register char *address;
 
   if ((address = sbrk(size)) == (char *) -1)
-	error(TRUE, "Not enough memory. Use chmem to allocate more", NIL_PTR);
+	error(TRUE, "Not enough memory. Use chmem to allocate more", NULL);
   return address;
 }
 
@@ -1178,7 +1176,7 @@ register int size;
 void mbrk(address)
 char *address;
 {
-  if (brk(address) == -1) error(TRUE, "Cannot reset memory", NIL_PTR);
+  if (brk(address) == -1) error(TRUE, "Cannot reset memory", NULL);
 }
 
 void catch(dummy)

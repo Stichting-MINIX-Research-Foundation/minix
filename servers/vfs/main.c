@@ -472,7 +472,7 @@ PRIVATE void init_root()
   vmp = &vmnt[0];
  
   /* We'll need a vnode for the root inode, check whether there is one */
-  if ((root_node = get_free_vnode()) == NIL_VNODE) 
+  if ((root_node = get_free_vnode()) == NULL) 
 	panic("Cannot get free vnode: %d", r);
 
   

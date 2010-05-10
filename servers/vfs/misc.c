@@ -120,7 +120,7 @@ PUBLIC int do_dup()
 
   /* Is the file descriptor valid? */
   rfd = m_in.fd & ~DUP_MASK;		/* kill off dup2 bit, if on */
-  if ((f = get_filp(rfd)) == NIL_FILP) return(err_code);
+  if ((f = get_filp(rfd)) == NULL) return(err_code);
 
   /* Distinguish between dup and dup2. */
   if (m_in.fd == rfd) {			/* bit not on */
@@ -154,7 +154,7 @@ PUBLIC int do_fcntl()
   struct filp *dummy;
 
   /* Is the file descriptor valid? */
-  if ((f = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  if ((f = get_filp(m_in.fd)) == NULL) return(err_code);
   
   switch (m_in.request) {
      case F_DUPFD:
@@ -374,7 +374,7 @@ int cpid;	/* Child process id */
   fp = &fproc[parentno];
 
   for (i = 0; i < OPEN_MAX; i++)
-	if (cp->fp_filp[i] != NIL_FILP) cp->fp_filp[i]->filp_count++;
+	if (cp->fp_filp[i] != NULL) cp->fp_filp[i]->filp_count++;
 
   /* Fill in new process and endpoint id. */
   cp->fp_pid = cpid;
@@ -443,8 +443,8 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   unsuspend_by_endpt(fp->fp_endpoint);
 
   /* Release root and working directories. */
-  if(fp->fp_rd) { put_vnode(fp->fp_rd); fp->fp_rd = NIL_VNODE; }
-  if(fp->fp_wd) { put_vnode(fp->fp_wd); fp->fp_wd = NIL_VNODE; }
+  if(fp->fp_rd) { put_vnode(fp->fp_rd); fp->fp_rd = NULL; }
+  if(fp->fp_wd) { put_vnode(fp->fp_wd); fp->fp_wd = NULL; }
 
   /* The rest of these actions is only done when processes actually
    * exit.
@@ -469,7 +469,7 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
           if (rfp->fp_tty == dev) rfp->fp_tty = 0;
 
           for (i = 0; i < OPEN_MAX; i++) {
-		if ((rfilp = rfp->fp_filp[i]) == NIL_FILP) continue;
+		if ((rfilp = rfp->fp_filp[i]) == NULL) continue;
 		if (rfilp->filp_mode == FILP_CLOSED) continue;
 		vp = rfilp->filp_vno;
 		if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;

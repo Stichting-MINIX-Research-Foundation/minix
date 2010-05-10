@@ -118,7 +118,7 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
   pop_path(path);
 
   parent = ino->i_parent;
-  assert(parent != NIL_INODE);
+  assert(parent != NULL);
 
   if ((r = verify_path(path, parent, attr, NULL)) != OK)
 	return r;
@@ -154,7 +154,7 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
 
   dprintf(("HGFS: lookup_dentry('%s') returned %p\n", name, ino));
 
-  if (ino != NIL_INODE)
+  if (ino != NULL)
 	r = verify_path(path, ino, attr, &stale);
   else
 	r = hgfs_getattr(path, attr);
@@ -162,10 +162,10 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
   dprintf(("HGFS: path query returned %d\n", r));
 
   if (r != OK) {
-	if (ino != NIL_INODE) {
+	if (ino != NULL) {
 		put_inode(ino);
 
-		ino = NIL_INODE;
+		ino = NULL;
 	}
 
 	if (!stale)
@@ -174,8 +174,8 @@ struct hgfs_attr *attr;		/* place to store inode attributes */
 
   dprintf(("HGFS: name '%s'\n", name));
 
-  if (ino == NIL_INODE) {
-	if ((ino = get_free_inode()) == NIL_INODE)
+  if (ino == NULL) {
+	if ((ino = get_free_inode()) == NULL)
 		return ENFILE;
 
 	dprintf(("HGFS: inode %p ref %d\n", ino, ino->i_ref));
@@ -198,7 +198,7 @@ PUBLIC int do_lookup()
  */
   ino_t dir_ino_nr, root_ino_nr;
   struct inode *cur_ino, *root_ino;
-  struct inode *next_ino = NIL_INODE;
+  struct inode *next_ino = NULL;
   struct hgfs_attr attr;
   char buf[PATH_MAX], path[PATH_MAX];
   char name[NAME_MAX+1];
@@ -255,7 +255,7 @@ PUBLIC int do_lookup()
   /* Start the actual lookup. */
   dprintf(("HGFS: lookup: got query '%s'\n", buf));
 
-  if ((cur_ino = find_inode(dir_ino_nr)) == NIL_INODE)
+  if ((cur_ino = find_inode(dir_ino_nr)) == NULL)
 	return EINVAL;
 
   attr.a_mask = HGFS_ATTR_MODE | HGFS_ATTR_SIZE;
@@ -268,7 +268,7 @@ PUBLIC int do_lookup()
   if (root_ino_nr > 0)
 	root_ino = find_inode(root_ino_nr);
   else
-	root_ino = NIL_INODE;
+	root_ino = NULL;
 
   /* One possible optimization would be to check a path only right before the
    * first ".." in a row, and at the very end (if still necessary). This would
@@ -299,7 +299,7 @@ PUBLIC int do_lookup()
 	if (r != OK)
 		break;
 
-	assert(next_ino != NIL_INODE);
+	assert(next_ino != NULL);
 
 	put_inode(cur_ino);
 

@@ -40,7 +40,7 @@ PUBLIC int do_create()
 
   if (!strcmp(name, ".") || !strcmp(name, "..")) return EEXIST;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -49,9 +49,9 @@ PUBLIC int do_create()
   /* Are we going to need a new inode upon success?
    * Then make sure there is one available before trying anything.
    */
-  if (ino == NIL_INODE || ino->i_ref > 1 || HAS_CHILDREN(ino)) {
+  if (ino == NULL || ino->i_ref > 1 || HAS_CHILDREN(ino)) {
 	if (!have_free_inode()) {
-		if (ino != NIL_INODE)
+		if (ino != NULL)
 			put_inode(ino);
 
 		return ENFILE;
@@ -66,7 +66,7 @@ PUBLIC int do_create()
 	 * is wrong with the directory, we'll find out later anyway.
 	 */
 
-	if (ino != NIL_INODE)
+	if (ino != NULL)
 		put_inode(ino);
 
 	return r;
@@ -85,7 +85,7 @@ PUBLIC int do_create()
 
 	hgfs_close(handle);
 
-	if (ino != NIL_INODE) {
+	if (ino != NULL) {
 		del_dentry(ino);
 
 		put_inode(ino);
@@ -97,7 +97,7 @@ PUBLIC int do_create()
   /* We do assume that the HGFS open(O_CREAT|O_EXCL) did its job.
    * If we previousy found an inode, get rid of it now. It's old.
    */
-  if (ino != NIL_INODE) {
+  if (ino != NULL) {
 	del_dentry(ino);
 
 	put_inode(ino);
@@ -107,7 +107,7 @@ PUBLIC int do_create()
    */
   ino = get_free_inode();
 
-  assert(ino != NIL_INODE); /* we checked before whether we had a free one */
+  assert(ino != NULL); /* we checked before whether we had a free one */
 
   ino->i_file = handle;
   ino->i_flags = I_HANDLE;
@@ -146,7 +146,7 @@ PUBLIC int do_mkdir()
 
   if (!strcmp(name, ".") || !strcmp(name, "..")) return EEXIST;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -156,7 +156,7 @@ PUBLIC int do_mkdir()
   r = hgfs_mkdir(path, m_in.REQ_MODE);
 
   if (r != OK) {
-	if (ino != NIL_INODE)
+	if (ino != NULL)
 		put_inode(ino);
 
 	return r;
@@ -165,7 +165,7 @@ PUBLIC int do_mkdir()
   /* If we thought the new dentry already existed, it was apparently gone
    * already. Delete it.
    */
-  if (ino != NIL_INODE) {
+  if (ino != NULL) {
 	del_dentry(ino);
 
 	put_inode(ino);
@@ -250,7 +250,7 @@ PUBLIC int do_unlink()
 
   if (!strcmp(name, ".") || !strcmp(name, "..")) return EPERM;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -260,14 +260,14 @@ PUBLIC int do_unlink()
   r = force_remove(path, FALSE /*dir*/);
 
   if (r != OK) {
-	if (ino != NIL_INODE)
+	if (ino != NULL)
 		put_inode(ino);
 
 	return r;
   }
 
   /* If a dentry existed for this name, it is gone now. */
-  if (ino != NIL_INODE) {
+  if (ino != NULL) {
 	del_dentry(ino);
 
 	put_inode(ino);
@@ -298,7 +298,7 @@ PUBLIC int do_rmdir()
   if (!strcmp(name, ".")) return EINVAL;
   if (!strcmp(name, "..")) return ENOTEMPTY;
 
-  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((parent = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(parent, name, path, &ino)) != OK)
@@ -308,14 +308,14 @@ PUBLIC int do_rmdir()
   r = force_remove(path, TRUE /*dir*/);
 
   if (r != OK) {
-	if (ino != NIL_INODE)
+	if (ino != NULL)
 		put_inode(ino);
 
 	return r;
   }
 
   /* If a dentry existed for this name, it is gone now. */
-  if (ino != NIL_INODE) {
+  if (ino != NULL) {
 	del_dentry(ino);
 
 	put_inode(ino);
@@ -353,15 +353,15 @@ PUBLIC int do_rename()
   if (!strcmp(old_name, ".") || !strcmp(old_name, "..") ||
 	!strcmp(new_name, ".") || !strcmp(new_name, "..")) return EINVAL;
 
-  if ((old_parent = find_inode(m_in.REQ_REN_OLD_DIR)) == NIL_INODE ||
-	(new_parent = find_inode(m_in.REQ_REN_NEW_DIR)) == NIL_INODE)
+  if ((old_parent = find_inode(m_in.REQ_REN_OLD_DIR)) == NULL ||
+	(new_parent = find_inode(m_in.REQ_REN_NEW_DIR)) == NULL)
 	return EINVAL;
 
   if ((r = verify_dentry(old_parent, old_name, old_path, &old_ino)) != OK)
 	return r;
 
   if ((r = verify_dentry(new_parent, new_name, new_path, &new_ino)) != OK) {
-	if (old_ino != NIL_INODE)
+	if (old_ino != NULL)
 		put_inode(old_ino);
 
 	return r;
@@ -374,9 +374,9 @@ PUBLIC int do_rename()
    * NULL, or they both refer to the same file.
    */
   if (r != OK || old_ino == new_ino) {
-	if (old_ino != NIL_INODE) put_inode(old_ino);
+	if (old_ino != NULL) put_inode(old_ino);
 
-	if (new_ino != NIL_INODE) put_inode(new_ino);
+	if (new_ino != NULL) put_inode(new_ino);
 
 	return r;
   }
@@ -384,14 +384,14 @@ PUBLIC int do_rename()
   /* If the new dentry already existed, it has now been overwritten.
    * Delete the associated inode if we had found one.
    */
-  if (new_ino != NIL_INODE) {
+  if (new_ino != NULL) {
 	del_dentry(new_ino);
 
 	put_inode(new_ino);
   }
 
   /* If the old dentry existed, rename it accordingly. */
-  if (old_ino != NIL_INODE) {
+  if (old_ino != NULL) {
 	del_dentry(old_ino);
 
 	add_dentry(new_parent, new_name, old_ino);

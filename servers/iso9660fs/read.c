@@ -169,7 +169,7 @@ PUBLIC int fs_getdents(void) {
   while (cur_pos<dir->d_file_size) {
 	bp = get_block(block);	/* Get physical block */
 
-	if (bp == NIL_BUF) {
+	if (bp == NULL) {
 		release_dir_record(dir);
 		return(EINVAL);
 	}
@@ -318,7 +318,7 @@ int *completed;			/* number of bytes copied */
   bp = get_block(b);
 
   /* In all cases, bp now points to a valid buffer. */
-  if (bp == NIL_BUF) {
+  if (bp == NULL) {
     panic("bp not valid in rw_chunk; this can't happen");
   }
   

@@ -52,7 +52,6 @@ typedef struct dir_entry DIRECTORY;
 #define DIR		0x2E
 #define DIR_SIZE	(sizeof (struct dir_entry))
 #define SUB_DIR		0x10
-#define NIL_DIR		((DIRECTORY *) 0)
 
 #define LAST_CLUSTER12	0xFFF
 #define LAST_CLUSTER	0xFFFF
@@ -64,7 +63,6 @@ typedef int BOOL;
 
 #define TRUE	1
 #define FALSE	0
-#define NIL_PTR	((char *) 0)
 
 #define DOS_TIME	315532800L	/* 1970 - 1980 */
 
@@ -75,9 +73,9 @@ typedef int BOOL;
 #define LABEL	4
 #define ENTRY	5
 #define find_entry(d, e, p)	directory(d, e, FIND, p)
-#define list_dir(d, e, f)	(void) directory(d, e, f, NIL_PTR)
-#define label()			directory(root, root_entries, LABEL, NIL_PTR)
-#define new_entry(d, e)		directory(d, e, ENTRY, NIL_PTR)
+#define list_dir(d, e, f)	(void) directory(d, e, f, NULL)
+#define label()			directory(root, root_entries, LABEL, NULL)
+#define new_entry(d, e)		directory(d, e, ENTRY, NULL)
 
 #define is_dir(d)		((d)->d_attribute & SUB_DIR)
 
@@ -362,12 +360,12 @@ register char *argv[];
   if (dos_dir && Lflag) {
 	entry = label();
 	printf ("Volume in drive %c ", dev_nr);
-	if (entry == NIL_DIR)
+	if (entry == NULL)
 		printf("has no label.\n\n");
 	else
 		printf ("is %.11s\n\n", entry->d_name);
   }
-  if (argv[idx] == NIL_PTR) {
+  if (argv[idx] == NULL) {
 	if (!dos_dir) usage(argv[0]);
 	if (Lflag) printf ("Root directory:\n");
 	list_dir(root, root_entries, FALSE);
@@ -393,7 +391,7 @@ register char *argv[];
   } else if (dos_read)
 	extract(entry);
   else {
-	if (entry != NIL_DIR) {
+	if (entry != NULL) {
 		fflush (stdout);
 		if (is_dir(entry))
 			fprintf (stderr, "%s: %s is a directory.\n", cmnd, path);
@@ -401,7 +399,7 @@ register char *argv[];
 			fprintf (stderr, "%s: %s already exists.\n", cmnd, argv[idx]);
 		exit(1);
 	}
-	add_path(NIL_PTR, TRUE);
+	add_path(NULL, TRUE);
 
 	if (*path) make_file(find_entry(root, root_entries, path),
 			  sub_entries, slash(argv[idx]));
@@ -445,7 +443,7 @@ int function;
 register char *pathname;
 {
   register DIRECTORY *dir_ptr = dir;
-  DIRECTORY *mem = NIL_DIR;
+  DIRECTORY *mem = NULL;
   unsigned short cl_no = dir->d_cluster;
   unsigned short type, last = 0;
   char file_name[14];
@@ -528,7 +526,7 @@ register char *pathname;
 				printf ( "Directory %s%s:\n", path, name);
 				add_path(name, FALSE);
 				list_dir(dir_ptr, sub_entries, FALSE);
-				add_path(NIL_PTR, FALSE);
+				add_path(NULL, FALSE);
 			}
 		}
 	}
@@ -537,12 +535,12 @@ register char *pathname;
 
   switch (function) {
       case FIND:
-	if (dos_write && *pathname == '\0') return NIL_DIR;
+	if (dos_write && *pathname == '\0') return NULL;
 	fflush (stdout);
 	fprintf (stderr, "%s: Cannot find `%s'.\n", cmnd, file_name);
 	exit(1);
       case LABEL:
-	return NIL_DIR;
+	return NULL;
       case ENTRY:
 	if (!mem) {
 		fflush (stdout);
@@ -1079,7 +1077,7 @@ BOOL slash_fl;
 
   while (*ptr) ptr++;
 
-  if (file == NIL_PTR) {
+  if (file == NULL) {
 	if (ptr != path) ptr--;
 	if (ptr != path) do {
 			ptr--;

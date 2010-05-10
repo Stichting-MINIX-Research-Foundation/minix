@@ -92,7 +92,7 @@ PUBLIC int do_write()
   if (state.read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;
@@ -130,7 +130,7 @@ PUBLIC int do_ftrunc()
   if (state.read_only)
 	return EROFS;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;

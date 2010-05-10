@@ -177,7 +177,7 @@ PRIVATE struct device *m_prepare(device)
 int device;
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
-  if (device < 0 || device >= NR_DEVS) return(NIL_DEV);
+  if (device < 0 || device >= NR_DEVS) return(NULL);
   m_device = device;
 
   return(&m_geom[device]);
@@ -352,7 +352,7 @@ message *m_ptr;
   int r;
 
 /* Check device number on open. */
-  if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (m_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
   if (m_device == MEM_DEV)
   {
 	r = sys_enable_iop(m_ptr->IO_ENDPT);
@@ -382,7 +382,7 @@ message *m_ptr;
 {
   int r;
 
-  if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (m_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   if(m_device < 0 || m_device >= NR_DEVS) {
       panic("wrong m_device: %d", m_device);
@@ -423,7 +423,7 @@ message *m_ptr;				/* pointer to control message */
 	if((dev < RAM_DEV_FIRST || dev > RAM_DEV_LAST) && dev != RAM_DEV_OLD) {
 		printf("MEM: MIOCRAMSIZE: %d not a ramdisk\n", dev);
 	}
-        if ((dv = m_prepare(dev)) == NIL_DEV) return(ENXIO);
+        if ((dv = m_prepare(dev)) == NULL) return(ENXIO);
 
 	/* Get request structure */
 	   s= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,

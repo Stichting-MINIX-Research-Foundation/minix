@@ -25,6 +25,7 @@ static char RcsId[] = "$Header$";
 #endif
  */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef	S_IREAD
@@ -47,7 +48,6 @@ struct ranlib *tab;
 unsigned int	tnum = 0;
 char	*tstrtab;
 unsigned int	tssiz = 0;
-char	*malloc(), *realloc(), *strcpy(), *strncpy();
 long	time();
 unsigned int tabsz, strtabsz;
 #else
@@ -67,10 +67,6 @@ typedef char BOOL;
 #define CREATE		1
 
 #define MEMBER		struct ar_hdr
-
-#define NIL_PTR		((char *) 0)
-#define NIL_MEM		((MEMBER *) 0)
-#define NIL_LONG	((long *) 0)
 
 #define IO_SIZE		(10 * 1024)
 
@@ -136,14 +132,14 @@ char *basename(path)
 char *path;
 {
   register char *ptr = path;
-  register char *last = NIL_PTR;
+  register char *last = NULL;
 
   while (*ptr != '\0') {
 	if (*ptr == '/')
 		last = ptr;
 	ptr++;
   }
-  if (last == NIL_PTR)
+  if (last == NULL)
 	return path;
   if (*(last + 1) == '\0') {
 	*last = '\0';
@@ -302,7 +298,7 @@ get_member()
 
 again:
   if (rd_arhdr(ar_fd, &member) == 0)
-	return NIL_MEM;
+	return NULL;
   if (member.ar_size < 0) {
 	error(TRUE, "archive has member with negative size\n");
   }
@@ -332,7 +328,7 @@ register char *argv[];
 #endif
   )
 	temp_fd = open_archive(temp_arch, CREATE);
-  while ((member = get_member()) != NIL_MEM) {
+  while ((member = get_member()) != NULL) {
 	if (argc > 3) {
 		for (i = 3; i < argc; i++) {
 			if (equal(basename(argv[i]), member->ar_name))

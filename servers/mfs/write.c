@@ -42,7 +42,7 @@ int op;				/* special actions */
   zone_t z, z1, z2 = NO_ZONE, old_zone;
   register block_t b;
   long excess, zone;
-  struct buf *bp_dindir = NIL_BUF, *bp = NIL_BUF;
+  struct buf *bp_dindir = NULL, *bp = NULL;
 
   rip->i_dirt = DIRTY;		/* inode will be changed */
   scale = rip->i_sp->s_log_zone_size;		/* for zone-block conversion */
@@ -119,7 +119,7 @@ int op;				/* special actions */
 
 	new_ind = TRUE;
 	/* If double ind, it is dirty. */
-	if (bp_dindir != NIL_BUF) bp_dindir->b_dirt = DIRTY;
+	if (bp_dindir != NULL) bp_dindir->b_dirt = DIRTY;
 	if (z1 == NO_ZONE) {
 		/* Release dbl indirect blk. */
 		put_block(bp_dindir, INDIRECT_BLOCK);
@@ -195,8 +195,8 @@ zone_t zone;			/* zone to write */
 
   struct super_block *sp;
 
-  if(bp == NIL_BUF)
-	panic("wr_indir() on NIL_BUF");
+  if(bp == NULL)
+	panic("wr_indir() on NULL");
 
   sp = get_super(bp->b_dev);	/* need super block to find file sys type */
 
@@ -306,12 +306,12 @@ off_t position;			/* file pointer */
 		/* searched before, start from last find */
 		z = rip->i_zsearch;
 	}
-	if ( (z = alloc_zone(rip->i_dev, z)) == NO_ZONE) return(NIL_BUF);
+	if ( (z = alloc_zone(rip->i_dev, z)) == NO_ZONE) return(NULL);
 	rip->i_zsearch = z;	/* store for next lookup */
 	if ( (r = write_map(rip, position, z, 0)) != OK) {
 		free_zone(rip->i_dev, z);
 		err_code = r;
-		return(NIL_BUF);
+		return(NULL);
 	}
 
 	/* If we are not writing at EOF, clear the zone, just to be safe. */

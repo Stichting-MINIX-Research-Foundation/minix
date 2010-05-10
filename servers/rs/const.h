@@ -46,7 +46,6 @@
 /* Magic process table addresses. */
 #define BEG_RPROC_ADDR  (&rproc[0])
 #define END_RPROC_ADDR  (&rproc[NR_SYS_PROCS])
-#define NIL_RPROC ((struct mproc *) 0)
 
 /* Constants for live update. */
 #define RS_DEFAULT_PREPARE_MAXTIME 2*RS_DELTA_T   /* default prepare max time */

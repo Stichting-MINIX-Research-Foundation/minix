@@ -40,7 +40,7 @@ PUBLIC struct inode *init_inode()
   /* Mark all inodes except the root inode as free. */
   for (index = 1; index < NUM_INODES; index++) {
 	ino = &inodes[index];
-	ino->i_parent = NIL_INODE;
+	ino->i_parent = NULL;
 	LIST_INIT(&ino->i_child);
 	ino->i_num = index + 1;
 	ino->i_gen = (unsigned short)-1; /* aesthetics */
@@ -78,7 +78,7 @@ ino_t ino_nr;
   if (index < 0) {
 	printf("HGFS: VFS passed invalid inode number!\n");
 
-	return NIL_INODE;
+	return NULL;
   }
 
   assert(index < NUM_INODES);
@@ -89,7 +89,7 @@ ino_t ino_nr;
   if (INODE_GEN(ino_nr) != ino->i_gen) {
 	printf("HGFS: VFS passed outdated inode number!\n");
 
-	return NIL_INODE;
+	return NULL;
   }
 
   /* The VFS/FS protocol only uses referenced inodes. */
@@ -136,7 +136,7 @@ struct inode *ino;
 
   dprintf(("HGFS: put_inode(%p) ['%s']\n", ino, ino->i_name));
 
-  assert(ino != NIL_INODE);
+  assert(ino != NULL);
   assert(ino->i_ref > 0);
 
   ino->i_ref--;
@@ -157,7 +157,7 @@ struct inode *ino;
   /* Add the inode to the head or tail of the free list, depending on whether
    * it is also deleted (and therefore can never be reused as is).
    */
-  if (ino->i_parent == NIL_INODE)
+  if (ino->i_parent == NULL)
 	TAILQ_INSERT_HEAD(&free_list, ino, i_free);
   else
 	TAILQ_INSERT_TAIL(&free_list, ino, i_free);
@@ -201,13 +201,13 @@ struct inode *ino;
   LIST_REMOVE(ino, i_next);
   
   if (parent->i_ref == 0 && !HAS_CHILDREN(parent)) {
-	if (parent->i_parent == NIL_INODE)
+	if (parent->i_parent == NULL)
 		TAILQ_INSERT_HEAD(&free_list, parent, i_free);
 	else
 		TAILQ_INSERT_TAIL(&free_list, parent, i_free);
   }
 
-  ino->i_parent = NIL_INODE;
+  ino->i_parent = NULL;
 }
 
 /*===========================================================================*
@@ -225,7 +225,7 @@ PUBLIC struct inode *get_free_inode()
   if (TAILQ_EMPTY(&free_list)) {
 	printf("HGFS: out of inodes!\n");
 
-	return NIL_INODE;
+	return NULL;
   }
 
   ino = TAILQ_FIRST(&free_list);
@@ -235,10 +235,10 @@ PUBLIC struct inode *get_free_inode()
   assert(!HAS_CHILDREN(ino));
 
   /* If this was a cached inode, free it first. */
-  if (ino->i_parent != NIL_INODE)
+  if (ino->i_parent != NULL)
 	del_dentry(ino);
 
-  assert(ino->i_parent == NIL_INODE);
+  assert(ino->i_parent == NULL);
 
   /* Initialize a subset of its fields */
   ino->i_gen++;
@@ -286,7 +286,7 @@ PUBLIC int do_putnode()
   struct inode *ino;
   int count;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   count = m_in.REQ_COUNT;

@@ -51,7 +51,7 @@ PUBLIC struct vnode *get_free_vnode()
   } 
 
   err_code = ENFILE;
-  return(NIL_VNODE);
+  return(NULL);
 }
 
 
@@ -68,7 +68,7 @@ PUBLIC struct vnode *find_vnode(int fs_e, int numb)
 	if (vp->v_ref_count > 0 && vp->v_inode_nr == numb && vp->v_fs_e == fs_e)
 		return(vp);
   
-  return(NIL_VNODE);
+  return(NULL);
 }
 
 
@@ -147,7 +147,7 @@ PUBLIC void vnode_clean_refs(struct vnode *vp)
 {
 /* Tell the underlying FS to drop all reference but one. */
 
-  if (vp == NIL_VNODE) return;
+  if (vp == NULL) return;
   if (vp->v_fs_count <= 1) return;	/* Nothing to do */
 
   /* Drop all references except one */

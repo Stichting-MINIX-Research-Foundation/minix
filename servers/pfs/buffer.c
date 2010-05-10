@@ -14,8 +14,8 @@ PUBLIC void buf_pool(void)
 {
 /* Initialize the buffer pool. */
 
-  front = NIL_BUF;
-  rear = NIL_BUF;
+  front = NULL;
+  rear = NULL;
 }
 
 
@@ -27,7 +27,7 @@ PUBLIC struct buf *get_block(dev_t dev, ino_t inum)
 {
   struct buf *bp = front;
 
-  while(bp != NIL_BUF) {
+  while(bp != NULL) {
   	if (bp->b_dev == dev && bp->b_num == inum) {
   		bp->b_count++;
   		return(bp);
@@ -51,7 +51,7 @@ PUBLIC struct buf *new_block(dev_t dev, ino_t inum)
   bp = malloc(sizeof(struct buf)); 
   if (bp == NULL) {
 	err_code = ENOSPC;
-	return(NIL_BUF); 
+	return(NULL); 
   }
   bp->b_num = inum;
   bp->b_dev = dev;
@@ -60,14 +60,14 @@ PUBLIC struct buf *new_block(dev_t dev, ino_t inum)
   memset(bp->b_data, 0 , PIPE_BUF);
   
   /* Add at the end of the buffer */
-  if (front == NIL_BUF) {	/* Empty list? */
+  if (front == NULL) {	/* Empty list? */
   	front = bp;
-  	bp->b_prev = NIL_BUF;
+  	bp->b_prev = NULL;
   } else {
   	rear->b_next = bp;
   	bp->b_prev = rear;
   }
-  bp->b_next = NIL_BUF;
+  bp->b_next = NULL;
   rear = bp;
 
   return(bp);
@@ -82,18 +82,18 @@ PUBLIC void put_block(dev_t dev, ino_t inum)
   struct buf *bp;
 
   bp = get_block(dev, inum);
-  if (bp == NIL_BUF) return; /* We didn't find the block. Nothing to put. */
+  if (bp == NULL) return; /* We didn't find the block. Nothing to put. */
 
   bp->b_count--;	/* Compensate for above 'get_block'. */ 
   if (--bp->b_count > 0) return;
 
   /* Cut bp out of the loop */
-  if (bp->b_prev == NIL_BUF)
+  if (bp->b_prev == NULL)
   	front = bp->b_next;
   else
   	bp->b_prev->b_next = bp->b_next;
 
-  if (bp->b_next == NIL_BUF)
+  if (bp->b_next == NULL)
   	rear = bp->b_prev;
   else
   	bp->b_next->b_prev = bp->b_prev;

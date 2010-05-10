@@ -28,7 +28,7 @@ PUBLIC int do_read()
   char *ptr;
   int r, chunk;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if (IS_DIR(ino)) return EISDIR;
@@ -93,7 +93,7 @@ PUBLIC int do_getdents()
 
   attr.a_mask = HGFS_ATTR_MODE;
 
-  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NIL_INODE)
+  if ((ino = find_inode(m_in.REQ_INODE_NR)) == NULL)
 	return EINVAL;
 
   if (m_in.REQ_SEEK_POS_HI != 0) return EINVAL;
@@ -130,7 +130,7 @@ PUBLIC int do_getdents()
 	}
 	else if (pos == 1) {
 		/* Entry for "..", but only when there is a parent. */
-		if (ino->i_parent == NIL_INODE)
+		if (ino->i_parent == NULL)
 			continue;
 
 		child = ino->i_parent;
@@ -164,11 +164,11 @@ PUBLIC int do_getdents()
 		if (!strcmp(name, ".") || !strcmp(name, ".."))
 			continue;
 
-		if ((child = lookup_dentry(ino, name)) == NIL_INODE) {
+		if ((child = lookup_dentry(ino, name)) == NULL) {
 			child = get_free_inode();
 
 			/* We were promised a free inode! */
-			assert(child != NIL_INODE);
+			assert(child != NULL);
 
 			child->i_flags = MODE_TO_DIRFLAG(attr.a_mode);
 

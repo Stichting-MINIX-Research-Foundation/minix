@@ -67,7 +67,7 @@ PUBLIC void cstart(
 
   /* XT, AT or MCA bus? */
   value = get_value(params_buffer, "bus");
-  if (value == NIL_PTR || strcmp(value, "at") == 0) {
+  if (value == NULL || strcmp(value, "at") == 0) {
       machine.pc_at = TRUE;			/* PC-AT compatible hardware */
   } else if (strcmp(value, "mca") == 0) {
       machine.pc_at = machine.ps_mca = TRUE;	/* PS/2 with micro channel */
@@ -132,5 +132,5 @@ PRIVATE char *get_value(
 	while (*envp++ != 0)
 		;
   }
-  return(NIL_PTR);
+  return(NULL);
 }

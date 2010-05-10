@@ -26,7 +26,6 @@ EXTERN struct vnode {
   struct vmnt *v_vmnt;          /* vmnt object of the partition */
 } vnode[NR_VNODES];
 
-#define NIL_VNODE (struct vnode *) 0	/* indicates absence of vnode slot */
 
 /* Field values. */
 #define NO_PIPE            0	/* i_pipe is NO_PIPE if inode is not a pipe */

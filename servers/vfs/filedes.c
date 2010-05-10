@@ -31,7 +31,7 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 
   /* Search the fproc fp_filp table for a free file descriptor. */
   for (i = start; i < OPEN_MAX; i++) {
-	if (fp->fp_filp[i] == NIL_FILP && !FD_ISSET(i, &fp->fp_filp_inuse)) {
+	if (fp->fp_filp[i] == NULL && !FD_ISSET(i, &fp->fp_filp_inuse)) {
 		/* A file descriptor has been located. */
 		*k = i;
 		break;
@@ -85,12 +85,12 @@ int fild;			/* file descriptor */
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
 
   err_code = EBADF;
-  if (fild < 0 || fild >= OPEN_MAX ) return(NIL_FILP);
-  if (rfp->fp_filp[fild] == NIL_FILP && FD_ISSET(fild, &rfp->fp_filp_inuse)) 
+  if (fild < 0 || fild >= OPEN_MAX ) return(NULL);
+  if (rfp->fp_filp[fild] == NULL && FD_ISSET(fild, &rfp->fp_filp_inuse)) 
 	err_code = EIO;	/* The filedes is not there, but is not closed either.
 			 */
   
-  return(rfp->fp_filp[fild]);	/* may also be NIL_FILP */
+  return(rfp->fp_filp[fild]);	/* may also be NULL */
 }
 
 
@@ -115,7 +115,7 @@ PUBLIC struct filp *find_filp(register struct vnode *vp, mode_t bits)
   }
 
   /* If control passes here, the filp wasn't there.  Report that back. */
-  return(NIL_FILP);
+  return(NULL);
 }
 
 /*===========================================================================*
@@ -131,7 +131,7 @@ PUBLIC int invalidate(struct filp *fp)
 	if(fproc[f].fp_pid == PID_FREE) continue;
 	for(fd = 0; fd < OPEN_MAX; fd++) {
 		if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == fp) {
-			fproc[f].fp_filp[fd] = NIL_FILP;
+			fproc[f].fp_filp[fd] = NULL;
 			n++;
 		}
 	}

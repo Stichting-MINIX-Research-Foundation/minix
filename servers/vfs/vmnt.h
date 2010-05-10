@@ -9,4 +9,3 @@ EXTERN struct vmnt {
   char m_label[LABEL_MAX];	/* label of the file system process */
 } vmnt[NR_MNTS];
 
-#define NIL_VMNT (struct vmnt *) 0

@@ -455,7 +455,7 @@ message *mp;			/* pointer to read or write message */
   if (mp->COUNT < 0) return(EINVAL);
 
   /* Prepare for I/O. */
-  if ((*dp->dr_prepare)(mp->DEVICE) == NIL_DEV) return(ENXIO);
+  if ((*dp->dr_prepare)(mp->DEVICE) == NULL) return(ENXIO);
 
   /* Create a one element scatter/gather vector for the buffer. */
   if(mp->m_type == DEV_READ_S) opcode = DEV_GATHER_S;
@@ -501,7 +501,7 @@ message *mp;		/* pointer to read or write message */
   }
 
   /* Prepare for I/O. */
-  if ((*dp->dr_prepare)(mp->DEVICE) == NIL_DEV) return(ENXIO);
+  if ((*dp->dr_prepare)(mp->DEVICE) == NULL) return(ENXIO);
 
   /* Transfer bytes from/to the device. */
   opcode = mp->m_type;
@@ -576,7 +576,7 @@ message *mp;
 PUBLIC struct device *nop_prepare(int device)
 {
 /* Nothing to prepare for. */
-  return(NIL_DEV);
+  return(NULL);
 }
 
 /*===========================================================================*
@@ -624,7 +624,7 @@ message *mp;			/* pointer to ioctl request */
   }
 
   /* Decode the message parameters. */
-  if ((dv = (*dp->dr_prepare)(mp->DEVICE)) == NIL_DEV) return(ENXIO);
+  if ((dv = (*dp->dr_prepare)(mp->DEVICE)) == NULL) return(ENXIO);
 
   if (mp->REQUEST == DIOCSETP) {
 	/* Copy just this one partition table entry. */

@@ -40,7 +40,7 @@ char *name;
 {
 /* Given a directory inode and a component name, look up the inode associated
  * with that directory entry. Return the inode (with increased reference
- * count) if found, or NIL_INODE otherwise.
+ * count) if found, or NULL otherwise.
  */
   struct inode *ino;
   unsigned int slot;
@@ -54,8 +54,8 @@ char *name;
 		break;
   }
 
-  if (ino == NIL_INODE)
-	return NIL_INODE;
+  if (ino == NULL)
+	return NULL;
 
   get_inode(ino);
 
@@ -111,7 +111,7 @@ struct inode *ino;
    * Do not touch open handles. Do not add to the free list.
    */
 
-  assert(ino->i_parent != NIL_INODE);
+  assert(ino->i_parent != NULL);
 
   /* hash_del(ino); */
   LIST_REMOVE(ino, i_hash);

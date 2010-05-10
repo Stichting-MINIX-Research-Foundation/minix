@@ -32,5 +32,4 @@ EXTERN TAILQ_HEAD(unused_inodes_t, inode)  unused_inodes;
 /* inode hashtable */
 EXTERN LIST_HEAD(inodelist, inode)         hash_inodes[INODE_HASH_SIZE];
 
-#define NIL_INODE (struct inode *) 0	/* indicates absence of inode slot */
 
