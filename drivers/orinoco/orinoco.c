@@ -190,7 +190,7 @@ _PROTOTYPE (static void or_readv, (message * mp, int from_int, int vectored));
 _PROTOTYPE (static void or_writev_s, (message * mp, int from_int));
 _PROTOTYPE (static void or_readv_s, (message * mp, int from_int));
 _PROTOTYPE (static void reply, (t_or * orp, int err, int may_block));
-_PROTOTYPE (static int  or_probe, (t_or *));
+_PROTOTYPE (static int  or_probe, (t_or *, int skip));
 _PROTOTYPE (static void or_ev_info, (t_or *));
 _PROTOTYPE (static void or_init, (message *));
 _PROTOTYPE (static void or_pci_conf, (void));
@@ -636,7 +636,7 @@ static void or_pci_conf () {
 			      orp->or_pci_func) != 0) != h)	{
 				continue;
 			}
-			if (or_probe (orp))
+			if (or_probe (orp, i))
 				orp->or_seen = TRUE;
 		}
 }
@@ -647,7 +647,7 @@ static void or_pci_conf () {
  * Try to find the card based on information provided by pci and get irq and *
  * bar                                                                       *
  *****************************************************************************/
-static int or_probe (t_or * orp)
+static int or_probe (t_or * orp, int skip)
 {
 	u8_t ilr;
 	u32_t bar;
@@ -694,8 +694,15 @@ static int or_probe (t_or * orp)
 			/* we have found the card in the pci bus */
 			break;
 		}
-		if (pcitab[i].vid != 0)
-			break;
+
+		/* unless we are looking for a specific device, we may have to
+		 * skip a number of cards because they are already reserved for
+		 * other (lower) ports of this driver */
+		if (pcitab[i].vid != 0) {
+			if (just_one || !skip)
+				break;
+			skip--;
+		}
 
 		if (just_one) {
 			printf ("%s: wrong PCI device", orp->or_name);

@@ -237,7 +237,7 @@ static void my_outl(u16_t port, u32_t value)
 
 _PROTOTYPE( static void rl_init, (message *mp)				);
 _PROTOTYPE( static void rl_pci_conf, (void)				);
-_PROTOTYPE( static int rl_probe, (re_t *rep)				);
+_PROTOTYPE( static int rl_probe, (re_t *rep, int skip)			);
 _PROTOTYPE( static void rl_conf_hw, (re_t *rep)				);
 _PROTOTYPE( static void rl_init_buf, (re_t *rep)			);
 _PROTOTYPE( static void rl_init_hw, (re_t *rep)				);
@@ -686,7 +686,7 @@ static void rl_pci_conf()
 				rep->re_pcifunc) != 0) != h) {
 				continue;
 			}
-			if (rl_probe(rep))
+			if (rl_probe(rep, i))
 				rep->re_seen = TRUE;
 		}
 	}
@@ -695,8 +695,9 @@ static void rl_pci_conf()
 /*===========================================================================*
  *				rl_probe				     *
  *===========================================================================*/
-static int rl_probe(rep)
+static int rl_probe(rep, skip)
 re_t *rep;
+int skip;
 {
 	int i, r, devind, just_one;
 	u16_t vid, did;
@@ -734,8 +735,11 @@ re_t *rep;
 			}
 			break;
 		}
-		if (pcitab[i].vid != 0)
-			break;
+		if (pcitab[i].vid != 0) {
+			if (just_one || !skip)
+				break;
+			skip--;
+		}
 
 		if (just_one) {
 			printf("%s: wrong PCI device (%04x/%04x) found at %d.%d.%d\n",

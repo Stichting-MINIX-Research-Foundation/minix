@@ -42,8 +42,9 @@ _PROTOTYPE( static void set_ee_word, (dpeth_t *dep, int a, u16_t w)	);
 _PROTOTYPE( static void ee_wds, (dpeth_t *dep)				);
 #endif
 
-PUBLIC int rtl_probe(dep)
+PUBLIC int rtl_probe(dep, skip)
 struct dpeth *dep;
+int skip;
 {
 	int i, r, devind, just_one;
 	u16_t vid, did;
@@ -89,8 +90,11 @@ struct dpeth *dep;
 			}
 			break;
 		}
-		if (pcitab[i].vid != 0 || pcitab[i].did != 0)
-			break;
+		if (pcitab[i].vid != 0 || pcitab[i].did != 0) {
+			if (just_one || !skip)
+				break;
+			skip--;
+		}
 
 		if (just_one)
 		{

@@ -224,7 +224,7 @@ PRIVATE u32_t system_hz;
 
 _PROTOTYPE( static void fxp_init, (message *mp)				);
 _PROTOTYPE( static void fxp_pci_conf, (void)				);
-_PROTOTYPE( static int fxp_probe, (fxp_t *fp)				);
+_PROTOTYPE( static int fxp_probe, (fxp_t *fp, int skip)			);
 _PROTOTYPE( static void fxp_conf_hw, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_init_hw, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_init_buf, (fxp_t *fp)			);
@@ -567,7 +567,7 @@ static void fxp_pci_conf()
 			{
 				continue;
 			}
-			if (fxp_probe(fp))
+			if (fxp_probe(fp, i))
 				fp->fxp_seen= TRUE;
 		}
 	}
@@ -576,7 +576,7 @@ static void fxp_pci_conf()
 /*===========================================================================*
  *				fxp_probe				     *
  *===========================================================================*/
-static int fxp_probe(fxp_t *fp)
+static int fxp_probe(fxp_t *fp, int skip)
 {
 	int i, r, devind, just_one;
 	u16_t vid, did;
@@ -621,7 +621,11 @@ static int fxp_probe(fxp_t *fp)
 			break;
 		}
 		if (pcitab_fxp[i].vid != 0)
-			break;
+		{
+			if (just_one || !skip)
+				break;
+			skip--;
+		}
 
 		if (just_one)
 		{

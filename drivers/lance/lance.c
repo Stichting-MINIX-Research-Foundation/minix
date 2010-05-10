@@ -125,7 +125,7 @@ _PROTOTYPE( static void lance_dump, (void)            );
 _PROTOTYPE( static void getAddressing, (int devind, ether_card_t *ec)   );
 
 /* probe+init LANCE cards */
-_PROTOTYPE( static int lance_probe, (ether_card_t *ec)                  );
+_PROTOTYPE( static int lance_probe, (ether_card_t *ec, int skip)        );
 _PROTOTYPE( static void lance_init_card, (ether_card_t *ec)             );
 
 /* Accesses Lance Control and Status Registers */
@@ -622,7 +622,7 @@ ether_card_t *ec;
    if (ec->mode != EC_ENABLED)
       return;
 
-   if (!lance_probe(ec))
+   if (!lance_probe(ec, ifnr))
    {
       printf("%s: No ethernet card found on PCI-BIOS info.\n", 
              ec->port_name);
@@ -1463,8 +1463,9 @@ ether_card_t *ec;
 /*===========================================================================*
  *                              lance_probe                                  *
  *===========================================================================*/
-static int lance_probe(ec)
+static int lance_probe(ec, skip)
 ether_card_t *ec;
+int skip;
 {
    unsigned short    pci_cmd;
    unsigned short    ioaddr;
@@ -1510,7 +1511,11 @@ ether_card_t *ec;
          break;
       }
       if (pcitab[i].vid != 0)
-         break;
+      {
+	 if (just_one || !skip)
+            break;
+	 skip--;
+      }
 
       if (just_one)
       {

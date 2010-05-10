@@ -37,7 +37,7 @@ _PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int);         );
 _PROTOTYPE( PRIVATE void  do_watchdog,       (void *);                       );
 
 _PROTOTYPE( PRIVATE void  de_update_conf,    (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE int   de_probe,          (dpeth_t *);                    );
+_PROTOTYPE( PRIVATE int   de_probe,          (dpeth_t *, int skip);          );
 _PROTOTYPE( PRIVATE void  de_conf_addr,      (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  de_first_init,     (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *);              );
@@ -213,7 +213,7 @@ PRIVATE void do_conf(const message * mp)
     if (dep->de_mode == DEM_DISABLED) {
       de_update_conf(dep); 
       pci_init();
-      if (dep->de_mode == DEM_ENABLED && !de_probe(dep)) {
+      if (dep->de_mode == DEM_ENABLED && !de_probe(dep, port)) {
 	printf("%s: warning no ethernet card found at 0x%04X\n",
 	       dep->de_name, dep->de_base_port);
 	dep->de_mode = DEM_DISABLED;
@@ -320,7 +320,7 @@ PRIVATE void do_watchdog(void *UNUSED(message))
   return;
 }
 
-PRIVATE int de_probe(dpeth_t *dep){
+PRIVATE int de_probe(dpeth_t *dep, int skip){
   int i, r, devind;
   u16_t vid, did, temp16;
 
@@ -334,7 +334,11 @@ PRIVATE int de_probe(dpeth_t *dep){
     {
       if ( DEC21140A_VID == vid && 
 	   DEC21140A_DID == did)
-	break;
+	{
+	  if (!skip)
+	    break;
+	  skip--;
+	}
 
       r= pci_next_dev(&devind, &vid, &did);
       if (!r)

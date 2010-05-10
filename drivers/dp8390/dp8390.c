@@ -466,7 +466,7 @@ static void pci_conf()
 			{
 				continue;
 			}
-			if (!rtl_probe(dep))
+			if (!rtl_probe(dep, i))
 				dep->de_pci= -1;
 		}
 	}

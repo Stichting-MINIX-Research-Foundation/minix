@@ -33,7 +33,7 @@ PRIVATE e1000_t e1000_table[E1000_PORT_NR];
 
 _PROTOTYPE( PRIVATE void e1000_init, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_init_pci, (void)				);
-_PROTOTYPE( PRIVATE int  e1000_probe, (e1000_t *e)			);
+_PROTOTYPE( PRIVATE int  e1000_probe, (e1000_t *e, int skip)		);
 _PROTOTYPE( PRIVATE int  e1000_init_hw, (e1000_t *e)			);
 _PROTOTYPE( PRIVATE void e1000_init_addr, (e1000_t *e)		        );
 _PROTOTYPE( PRIVATE void e1000_init_buf,  (e1000_t *e)			);
@@ -236,14 +236,14 @@ PRIVATE void e1000_init_pci()
     {
 	strcpy(e->name, "e1000#0");
 	e->name[6] += i;	
-	e1000_probe(e);
+	e1000_probe(e, i);
     }
 }
 
 /*===========================================================================*
  *				e1000_probe				     *
  *===========================================================================*/
-PRIVATE int e1000_probe(e1000_t *e)
+PRIVATE int e1000_probe(e1000_t *e, int skip)
 {
     int i, r, devind;
     u16_t vid, did;
@@ -274,7 +274,11 @@ PRIVATE int e1000_probe(e1000_t *e)
 		break;
 	}
 	if (pcitab_e1000[i] != 0)
-	    break;
+	{
+	    if (!skip)
+		break;
+	    skip--;
+	}
 
 	if (!(r = pci_next_dev(&devind, &vid, &did)))
 	{
