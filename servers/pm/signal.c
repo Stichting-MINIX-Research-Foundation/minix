@@ -264,7 +264,14 @@ PUBLIC int process_ksig(int proc_nr_e, int signo)
   if (signo == SIGSNDELAY && (rmp->mp_flags & DELAY_CALL)) {
 	rmp->mp_flags &= ~DELAY_CALL;
 
-	if (rmp->mp_flags & (FS_CALL | PM_SIG_PENDING))
+	/*
+	 * If the FS_CALL flag is still set we have a process which is stopped
+	 * and we only need to wait for a reply from VFS. We are going to check
+	 * the pending signal then
+	 */
+	if (rmp->mp_flags & FS_CALL)
+		return OK;
+	if (rmp->mp_flags & PM_SIG_PENDING)
 		panic("process_ksig: bad process state");
 
 	/* Process as many normal signals as possible. */
