@@ -113,6 +113,7 @@ usr=/dev/c0d7p0s2
 }
 
 RELEASEDIR=/usr/r
+RELEASEMNTDIR=$RELEASEDIR
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
 IMAGE=../boot/cdbootblock
@@ -129,14 +130,16 @@ COPY=0
 SVNREV=""
 REVTAG=""
 PACKAGES=1
+MINIMAL=0
+ROOTKB=8192
 
 FILENAMEOUT=""
 
-while getopts "s:pchu?r:f:" c
+while getopts "s:pmchu?r:f:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-p] [-c] [-h] [-r <tag>] [-u] [-f <filename>] [-s <username>]" >&2
+		echo "Usage: $0 [-p] [-c] [-h] [-m] [-r <tag>] [-u] [-f <filename>] [-s <username>]" >&2
 		exit 1
 	;;
 	h)
@@ -165,11 +168,23 @@ do
 		;;
 	s)	USERNAME="--username=$OPTARG"
 		;;
+	m)	MINIMAL=1
+		PACKAGES=0
+		RELEASEDIR=/usr/r-staging
+		RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
+		RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
+		ROOTKB=4096
+		[ ! "$USRMB" ] && USRMB=22
+		;;
 	esac
 done
 
 if [ ! "$USRMB" ]
 then	USRMB=600
+fi
+
+if [ ! "$ZIP" ]
+then	ZIP=gzip
 fi
 
 if [ $PACKAGES -ne 0 ]
@@ -185,7 +200,6 @@ echo $USRMB MB
 USRKB=$(($USRMB*1024))
 USRBLOCKS=$(($USRMB * 1024 * 1024 / $BS))
 USRSECTS=$(($USRMB * 1024 * 2))
-ROOTKB=8192
 ROOTSECTS=$(($ROOTKB * 2))
 ROOTBLOCKS=$(($ROOTKB * 1024 / $BS))
 
@@ -218,20 +232,22 @@ then
 fi
 
 echo " * Cleanup old files"
-rm -rf $RELEASEDIR $IMG $ROOTIMAGE $CDFILES image*
+rm -rf $RELEASEDIR $RELEASEMNTDIR $IMG $ROOTIMAGE $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
+[ "$RELEASEDIR" = "$RELEASEMNTDIR" ] || mkdir -p $RELEASEMNTDIR 
 mkfs -i 2000 -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
 mkfs -B 1024 -b $TMPKB  $TMPDISK2 || exit
-echo " * mounting $TMPDISK3 as $RELEASEDIR"
-mount $TMPDISK3 $RELEASEDIR || exit
+echo " * mounting $TMPDISK3 as $RELEASEMNTDIR"
+mount $TMPDISK3 $RELEASEMNTDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
+[ "$RELEASEDIR" = "$RELEASEMNTDIR" ] || mkdir -m 755 $RELEASEMNTDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
 mkfs -B $BS -i 30000 -b $USRBLOCKS $TMPDISK1 || exit
-echo " * Mounting $TMPDISK1 as $RELEASEDIR/usr"
-mount $TMPDISK1 $RELEASEDIR/usr || exit
+echo " * Mounting $TMPDISK1 as $RELEASEMNTDIR/usr"
+mount $TMPDISK1 $RELEASEMNTDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 mkdir -p $RELEASEDIR/$XBIN
@@ -355,18 +371,33 @@ then
 fi
 
 echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
+if [ $MINIMAL -ne 0 ]
+then
+	echo " * Removing files to create minimal image"
+	rm -rf $RELEASEDIR/boot/image/* $RELEASEDIR/usr/man/man*/* 	\
+		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src	\
+		$RELEASEDIR/tmp/*
+	mkdir -p $RELEASEDIR/usr/src/tools
+	ln $RELEASEDIR/boot/image_big $RELEASEDIR/boot/image/$version
+fi
 echo " * Counting files"
 extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
 expr `df $TMPDISK1 | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
-echo " * Zeroing remainder of temporary areas"
-df $TMPDISK1
-df $TMPDISK3
-cp /dev/zero $RELEASEDIR/usr/.x 2>/dev/null || true
-rm $RELEASEDIR/usr/.x
-cp /dev/zero $RELEASEDIR/.x 2>/dev/null || true
-rm $RELEASEDIR/.x
+if [ $MINIMAL -ne 0 ]
+then
+	echo " * Copying files from staging to image"
+	synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
+else
+	echo " * Zeroing remainder of temporary areas"
+	df $TMPDISK1
+	df $TMPDISK3
+	cp /dev/zero $RELEASEDIR/usr/.x 2>/dev/null || true
+	rm $RELEASEDIR/usr/.x
+	cp /dev/zero $RELEASEDIR/.x 2>/dev/null || true
+	rm $RELEASEDIR/.x
+fi
 
 umount $TMPDISK1 || exit
 umount $TMPDISK2 || exit
@@ -423,8 +454,8 @@ else
 		# Make sure there is no hole..! Otherwise the ISO format is
 		# unreadable.
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
-		echo "gzipping $IMG"
-		gzip $IMG
+		echo "${ZIP}ping $IMG"
+		$ZIP -f $IMG
 	fi
 fi
 
