@@ -461,8 +461,7 @@ struct rproc *rp;
   if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_SET_SYS, &rp->r_priv)) != OK
 	|| (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
 	printf("unable to set privilege structure: %d\n", s);
-	rp->r_flags |= RS_EXITING;
-	terminate_service(rp);
+	cleanup_service(rp);
 	return ENOMEM;
   }
 
@@ -478,19 +477,23 @@ struct rproc *rp;
   }
   else {
       if ((s = read_exec(rp)) != OK) {
-    	return kill_service(rp, "read_exec failed", s);
+          printf("read_exec failed: %d\n", s);
+          cleanup_service(rp);
+          return s;
       }
   }
   if(rs_verbose)
-      printf("RS: execing child with srv_execve()...\n");
+        printf("RS: execing child with srv_execve()...\n");
   s = srv_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
-  	environ);
+        environ);
 
   if (s != OK) {
-  	return kill_service(rp, "srv_execve failed", s);
+        printf("srv_execve failed: %d\n", s);
+        cleanup_service(rp);
+        return s;
   }
   if(!use_copy) {
-	free_exec(rp);
+        free_exec(rp);
   }
 
   /* The purpose of non-blocking forks is to avoid involving VFS in the forking
@@ -519,6 +522,7 @@ struct rproc *rp;
 {
 /* Clone the given system service instance. */
   struct rproc *replica_rp;
+  struct rprocpub *replica_rpub;
   int r;
 
   if(rs_verbose)
@@ -538,6 +542,16 @@ struct rproc *rp;
   if(r != OK) {
       rp->r_next_rp = NULL;
       return r;
+  }
+
+  /* Tell VM about allowed calls, if any. */
+  replica_rpub = replica_rp->r_pub;
+  if(replica_rpub->vm_call_mask[0]) {
+      r = vm_set_priv(replica_rpub->endpoint, &replica_rpub->vm_call_mask[0]);
+      if (r != OK) {
+          rp->r_next_rp = NULL;
+          return kill_service(replica_rp, "vm_set_priv call failed", r);
+      }
   }
 
   return OK;
@@ -677,10 +691,10 @@ struct rproc *rp;
 
   /* Create and make active. */
   r = create_service(rp);
-  activate_service(rp, NULL);
   if(r != OK) {
       return r;
   }
+  activate_service(rp, NULL);
 
   /* Publish service properties. */
   r = publish_service(rp);
