@@ -51,15 +51,19 @@ PRIVATE void pagefault( struct proc *pr,
 			pr->p_reg.pc = (reg_t) phys_copy_fault;
 			pr->p_reg.retreg = pagefaultcr2;
 		}
-
+	
 		return;
+	}
+
+	if(is_nested) {
+		panic("pagefault in kernel at address 0x%lx", pagefaultcr2);
 	}
 
 	/* System processes that don't have their own page table can't
 	 * have page faults. VM does have its own page table but also
 	 * can't have page faults (because VM has to handle them).
 	 */
-	if(is_nested || (pr->p_endpoint <= INIT_PROC_NR &&
+	if((pr->p_endpoint <= INIT_PROC_NR &&
 	 !(pr->p_misc_flags & MF_FULLVM)) || pr->p_endpoint == VM_PROC_NR) {
 		/* Page fault we can't / don't want to
 		 * handle.
@@ -70,7 +74,7 @@ PRIVATE void pagefault( struct proc *pr,
 		proc_stacktrace(pr);
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
   		panic("page fault in system process: %d",  pr->p_endpoint);
-
+		
 		return;
 	}
 
