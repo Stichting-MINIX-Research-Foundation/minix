@@ -717,7 +717,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
  */
         pt_t *newpt;
         int s, r;
-        vir_bytes v, kpagedir;
+        vir_bytes v;
         phys_bytes lo, hi; 
         vir_bytes extra_clicks;
         u32_t moveup = 0;
@@ -886,14 +886,6 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	/* first pde in use by process. */
 	proc_pde = free_pde;
 
-	kpagedir = arch_map2vir(&vmproc[VMP_SYSTEM],
-		pagedir_pde*I386_BIG_PAGE_SIZE);
-
-	/* Tell kernel how to get at the page directories. */
-	if((r=sys_vmctl(SELF, VMCTL_I386_PAGEDIRS, kpagedir)) != OK) {
-                panic("VMCTL_I386_PAGEDIRS failed: %d", r);
-	}
-       
         /* Give our process the new, copied, private page table. */
 	pt_mapkernel(newpt);	/* didn't know about vm_dir pages earlier */
         pt_bind(newpt, vmprocess);
@@ -922,11 +914,14 @@ PUBLIC int pt_bind(pt_t *pt, struct vmproc *who)
 {
 	int slot, ispt;
 	u32_t phys;
+	void *pdes;
 
 	/* Basic sanity checks. */
 	assert(who);
 	assert(who->vm_flags & VMF_INUSE);
 	assert(pt);
+
+	assert(pagedir_pde >= 0);
 
 	slot = who->vm_slot;
 	assert(slot >= 0);
@@ -939,12 +934,21 @@ PUBLIC int pt_bind(pt_t *pt, struct vmproc *who)
 	/* Update "page directory pagetable." */
 	page_directories[slot] = phys | I386_VM_PRESENT|I386_VM_WRITE;
 
+	/* This is where the PDE's will be visible to the kernel
+	 * in its address space.
+	 */
+	pdes = (void *) arch_map2vir(&vmproc[VMP_SYSTEM],
+		pagedir_pde*I386_BIG_PAGE_SIZE + 
+			slot * I386_PAGE_SIZE);
+
 #if 0
-	printf("VM: slot %d has pde val 0x%lx\n", slot, page_directories[slot]);
+	printf("VM: slot %d endpoint %d has pde val 0x%lx at kernel address 0x%lx\n",
+		slot, who->vm_endpoint, page_directories[slot], pdes);
 #endif
 	/* Tell kernel about new page table root. */
-	return sys_vmctl(who->vm_endpoint, VMCTL_I386_SETCR3,
-		pt ? pt->pt_dir_phys : 0);
+	return sys_vmctl_set_addrspace(who->vm_endpoint,
+		pt ? pt->pt_dir_phys : 0,
+		pt ? pdes : 0);
 }
 
 /*===========================================================================*

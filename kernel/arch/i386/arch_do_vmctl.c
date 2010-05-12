@@ -12,8 +12,6 @@
 
 #include "proto.h"
 
-extern u8_t *vm_pagedirs;
-
 /*===========================================================================*
  *				arch_do_vmctl				     *
  *===========================================================================*/
@@ -26,13 +24,15 @@ struct proc *p;
 		/* Get process CR3. */
 		m_ptr->SVMCTL_VALUE = p->p_seg.p_cr3;
 		return OK;
-	case VMCTL_I386_SETCR3:
+	case VMCTL_SETADDRSPACE:
 		/* Set process CR3. */
-		if(m_ptr->SVMCTL_VALUE) {
-			p->p_seg.p_cr3 = m_ptr->SVMCTL_VALUE;
+		if(m_ptr->SVMCTL_PTROOT) {
+			p->p_seg.p_cr3 = m_ptr->SVMCTL_PTROOT;
+			p->p_seg.p_cr3_v = (u32_t *) m_ptr->SVMCTL_PTROOT_V;
 			p->p_misc_flags |= MF_FULLVM;
 		} else {
 			p->p_seg.p_cr3 = 0;
+			p->p_seg.p_cr3_v = NULL;
 			p->p_misc_flags &= ~MF_FULLVM;
 		}
 		RTS_UNSET(p, RTS_VMINHIBIT);
@@ -47,11 +47,6 @@ struct proc *p;
 		/* VM wants kernel to increase its segment. */
 		r = prot_set_kern_seg_limit(m_ptr->SVMCTL_VALUE);
 		return r;
-	}
-	case VMCTL_I386_PAGEDIRS:
-	{
-		vm_pagedirs = (u8_t *) m_ptr->SVMCTL_VALUE;
-		return OK;
 	}
 	case VMCTL_I386_FREEPDE:
 	{

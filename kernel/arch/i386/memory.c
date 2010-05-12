@@ -28,12 +28,6 @@
 
 PRIVATE int psok = 0;
 
-#define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
-				I386_PAGE_SIZE * pr->p_nr +	\
-				I386_VM_PT_ENT_SIZE * pi))
-
-PUBLIC u8_t *vm_pagedirs = NULL;
-
 #define MAX_FREEPDES (3 * CONFIG_MAX_CPUS)
 PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
@@ -90,6 +84,7 @@ PRIVATE phys_bytes createpde(
 
 	assert(free_pde_idx >= 0 && free_pde_idx < nfreepdes);
 	pde = freepdes[free_pde_idx];
+	assert(pde >= 0 && pde < 1024);
 
 	if(pr && ((pr == ptproc) || !HASPT(pr))) {
 		/* Process memory is requested, and
@@ -106,7 +101,8 @@ PRIVATE phys_bytes createpde(
 		 * accessible directly. Grab the PDE entry of that process'
 		 * page table that corresponds to the requested address.
 		 */
-		pdeval = *PROCPDEPTR(pr, I386_VM_PDE(linaddr));
+		assert(pr->p_seg.p_cr3_v);
+		pdeval = pr->p_seg.p_cr3_v[I386_VM_PDE(linaddr)];
 	} else {
 		/* Requested address is physical. Make up the PDE entry. */
 		pdeval = (linaddr & I386_VM_ADDR_MASK_4MB) | 
@@ -118,8 +114,9 @@ PRIVATE phys_bytes createpde(
 	 * can access, into the currently loaded page table so it becomes
 	 * visible.
 	 */
-	if(*PROCPDEPTR(ptproc, pde) != pdeval) {
-		*PROCPDEPTR(ptproc, pde) = pdeval;
+	assert(ptproc->p_seg.p_cr3_v);
+	if(ptproc->p_seg.p_cr3_v[pde] != pdeval) {
+		ptproc->p_seg.p_cr3_v[pde] = pdeval;
 		*changed = 1;
 	}
 
@@ -154,6 +151,11 @@ PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr,
 	procslot = ptproc->p_nr;
 
 	assert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
+
+	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_SLOT_FREE));
+	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
+	assert(!RTS_ISSET(ptproc, RTS_SLOT_FREE));
+	assert(ptproc->p_seg.p_cr3_v);
 
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;
@@ -190,6 +192,11 @@ PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr,
 		srclinaddr += chunk;
 		dstlinaddr += chunk;
 	}
+
+	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_SLOT_FREE));
+	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
+	assert(!RTS_ISSET(ptproc, RTS_SLOT_FREE));
+	assert(ptproc->p_seg.p_cr3_v);
 
 	return OK;
 }
@@ -677,6 +684,8 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 
 	assert(nfreepdes >= 3);
 
+	assert(ptproc->p_seg.p_cr3_v);
+
 	/* With VM, we have to map in the physical memory. 
 	 * We can do this 4MB at a time.
 	 */
@@ -695,6 +704,7 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 		ph += chunk;
 	}
 
+	assert(ptproc->p_seg.p_cr3_v);
 
 	return OK;
 }
@@ -1003,4 +1013,9 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 #endif
 
 	return OK;
+}
+
+PUBLIC void release_address_space(struct proc *pr)
+{
+	pr->p_seg.p_cr3_v = NULL;
 }

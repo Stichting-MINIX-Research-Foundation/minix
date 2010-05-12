@@ -79,6 +79,9 @@ _PROTOTYPE( int sys_sysctl_stacktrace, (endpoint_t who));
 _PROTOTYPE( int sys_vmctl_get_mapping, (int index, phys_bytes *addr,
 	phys_bytes *len, int *flags));
 _PROTOTYPE( int sys_vmctl_reply_mapping, (int index, vir_bytes addr));
+_PROTOTYPE( int sys_vmctl_set_addrspace, (endpoint_t who,
+        phys_bytes ptroot, void *ptroot_v));
+
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_ep, buffer, count) \

@@ -25,6 +25,7 @@ struct segdesc_s {		/* segment descriptor for protected mode */
 typedef struct segframe {
 	reg_t p_ldt_sel;    /* selector in gdt with ldt base and limit */
 	reg_t	p_cr3;		/* page table root */
+	u32_t	*p_cr3_v;
 	struct segdesc_s p_ldt[LDT_SIZE]; /* CS, DS and remote */
 } segframe_t;
 

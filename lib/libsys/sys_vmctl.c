@@ -26,6 +26,21 @@ PUBLIC int sys_vmctl_get_cr3_i386(endpoint_t who, u32_t *cr3)
   return(r);
 }
 
+PUBLIC int sys_vmctl_set_addrspace(endpoint_t who,
+        phys_bytes ptroot, void *ptroot_v)
+{
+  message m;
+  int r;
+
+  m.SVMCTL_WHO = who;
+  m.SVMCTL_PARAM = VMCTL_SETADDRSPACE;
+  m.SVMCTL_PTROOT = ptroot;
+  m.SVMCTL_PTROOT_V = ptroot_v;
+  r = _kernel_call(SYS_VMCTL, &m);
+
+  return(r);
+}
+
 PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
         vir_bytes *len, int *wrflag, endpoint_t *who_s, vir_bytes *mem_s,
         endpoint_t *requestor)

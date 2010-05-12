@@ -31,6 +31,8 @@ PUBLIC int do_clear(struct proc * caller, message * m_ptr)
   }
   rc = proc_addr(exit_p);	/* clean up */
 
+  release_address_space(rc);
+
   /* Don't clear if already cleared. */
   if(isemptyp(rc)) return OK;
 

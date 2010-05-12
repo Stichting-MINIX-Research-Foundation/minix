@@ -182,4 +182,5 @@ _PROTOTYPE( int copy_msg_from_user, (struct proc * p, message * user_mbuf,
 _PROTOTYPE( int copy_msg_to_user, (struct proc * p, message * src,
 							message * user_mbuf));
 _PROTOTYPE(void switch_address_space, (struct proc * p));
+_PROTOTYPE(void release_address_space, (struct proc *pr));
 #endif /* PROTO_H */

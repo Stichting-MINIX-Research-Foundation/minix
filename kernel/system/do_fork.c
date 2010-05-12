@@ -117,6 +117,9 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   RTS_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
   sigemptyset(&rpc->p_pending);
 
+  rpc->p_seg.p_cr3 = 0;
+  rpc->p_seg.p_cr3_v = NULL;
+
   return r;
 }
 

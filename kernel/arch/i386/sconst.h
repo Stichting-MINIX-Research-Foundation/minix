@@ -30,7 +30,8 @@
 	FP_SAVE_AREA_P = P_STACKTOP
 	P_LDT_SEL = FP_SAVE_AREA_P + 532
 	P_CR3 = P_LDT_SEL+W
-	P_LDT = P_CR3+W
+	P_CR3_V = P_CR3+4
+	P_LDT = P_CR3_V+W
 	P_MISC_FLAGS = P_LDT + 50
 	Msize = 9	/* size of a message in 32-bit words*/
 

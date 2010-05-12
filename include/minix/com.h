@@ -601,6 +601,8 @@
 #define	SVMCTL_MRG_ADDR2	m2_l2	/* MEMREQ_GET reply: source address */
 #define SVMCTL_MRG_REQUESTOR	m2_p1	/* MEMREQ_GET reply: requestor */
 #define SVMCTL_MAP_VIR_ADDR	m1_p1
+#define SVMCTL_PTROOT		m1_i3
+#define SVMCTL_PTROOT_V		m1_p1
 
 /* Reply message for VMCTL_KERN_PHYSMAP */
 #define SVMCTL_MAP_FLAGS	m2_i1	/* VMMF_* */
@@ -610,7 +612,6 @@
 #define VMMF_UNCACHED		(1L << 0)
 
 /* Values for SVMCTL_PARAM. */
-#define VMCTL_I386_SETCR3	10
 #define VMCTL_CLEAR_PAGEFAULT	12
 #define VMCTL_I386_GETCR3	13
 #define VMCTL_MEMREQ_GET	14
@@ -618,13 +619,13 @@
 #define VMCTL_INCSP		16
 #define VMCTL_NOPAGEZERO	18
 #define VMCTL_I386_KERNELLIMIT	19
-#define VMCTL_I386_PAGEDIRS	20
 #define VMCTL_I386_FREEPDE	23
 #define VMCTL_ENABLE_PAGING	24
 #define VMCTL_I386_INVLPG	25
 #define VMCTL_FLUSHTLB		26
 #define VMCTL_KERN_PHYSMAP	27
 #define VMCTL_KERN_MAP_REPLY	28
+#define VMCTL_SETADDRSPACE	29
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
