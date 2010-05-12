@@ -3,13 +3,13 @@
 
 /* Type definitions for the Data Store Server. */
 #include <sys/types.h>
-#include <minix/sys_config.h>
+#include <minix/config.h>
 #include <minix/ds.h>
 #include <minix/bitmap.h>
 #include <regex.h>
 
-#define NR_DS_KEYS	64	/* number of entries */
-#define NR_DS_SUBS	(4*_NR_SYS_PROCS)	/* number of subscriptions */
+#define NR_DS_KEYS	(2*NR_SYS_PROCS)	/* number of entries */
+#define NR_DS_SUBS	(4*NR_SYS_PROCS)	/* number of subscriptions */
 #define NR_DS_SNAPSHOT	5	/* number of snapshots */
 
 /* Base 'class' for the following 3 structs. */
