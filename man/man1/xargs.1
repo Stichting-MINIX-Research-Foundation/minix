@@ -76,21 +76,6 @@ Any single character, including newlines, may be escaped by a backslash.
 .PP
 The options are as follows:
 .TP
-.B \-f
-Force
-.B xargs
-to ignore the exit status returned by
-.IR utility .
-By default,
-.B xargs
-will exit immediately if
-.I utility
-exits with a non-zero exit status.
-This does not include ignoring
-.I utility
-exiting due to a signal or without calling
-.BR exit (2).
-.TP
 .BI \-n " number"
 Set the maximum number of arguments taken from standard input for each
 invocation of the utility.
