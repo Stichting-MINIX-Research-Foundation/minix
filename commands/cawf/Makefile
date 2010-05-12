@@ -33,75 +33,20 @@
 #	malloc() and its relatives (most do).
 #
 #DEFS = -DUNIX -DMALLOCH
+DEFS= -DUNIX -DUSG -DSTDLIB
+CPPFLAGS+= -i -f -wo ${DEFS}
 
-CC = exec cc
-
-DEFS = -DUNIX -DUSG -DSTDLIB
-
-CFLAGS = -i -f -wo -O ${DEFS}
-
-HDR = ansi.h cawf.h cawflib.h proto.h regexp.h regmagic.h
-
-SRC = cawf.c device.c error.c expand.c expr.c getopt.c macsup.c nreq.c \
+PROGS=	bsfilt cawf
+SRCS.cawf= cawf.c device.c error.c expand.c expr.c getopt.c macsup.c nreq.c \
       output.c pass2.c pass3.c  regerror.c regexp.c store.c string.c
+SRCS.bsfilt= bsfilt.c
 
-OBJ = cawf.o device.o error.o expand.o expr.o getopt.o macsup.o nreq.o \
-      output.o pass2.o pass3.o  regerror.o regexp.o store.o string.o
+LINKS+=	${BINDIR}/cawf ${BINDIR}/nroff
+LINKS+=	${BINDIR}/bsfilt ${BINDIR}/colcrt
+MAN.cawf=
+MAN.bsfilt=
 
-all:	bsfilt cawf
+FILESDIR=	/usr/lib/cawf
+FILES=	common device.cf dumb.dev man.mac me.mac ms.mac mnx.mac
 
-bsfilt: bsfilt.c
-	${CC} ${CFLAGS} bsfilt.c -o $@
-	install -S 4kw $@
-
-cawf:	${OBJ}
-	${CC} ${CFLAGS} ${OBJ} -o $@
-	install -S 56k $@
-
-clean:
-	rm -f *.o a.out core *errs bsfilt cawf
-
-${OBJ}:	${HDR}
-
-install:	\
-	/usr/bin/bsfilt /usr/bin/colcrt /usr/bin/cawf \
-	/usr/bin/nroff /usr/lib/cawf /usr/lib/cawf/common \
-	/usr/lib/cawf/device.cf /usr/lib/cawf/dumb.dev \
-	/usr/lib/cawf/man.mac /usr/lib/cawf/me.mac \
-	/usr/lib/cawf/ms.mac /usr/lib/cawf/mnx.mac
-
-/usr/bin/bsfilt:	bsfilt
-	install -cs -o bin bsfilt $@
-
-/usr/bin/colcrt:	/usr/bin/bsfilt
-	install -l h /usr/bin/bsfilt $@
-
-/usr/bin/cawf:	cawf
-	install -cs -o bin cawf $@
-
-/usr/bin/nroff:	/usr/bin/cawf
-	install -l h /usr/bin/cawf $@
-
-/usr/lib/cawf:	
-	install -d -o bin /usr/lib/cawf
-
-/usr/lib/cawf/common:	common
-	install -c -o bin common $@
-
-/usr/lib/cawf/device.cf:	device.cf
-	install -c -o bin device.cf $@
-
-/usr/lib/cawf/dumb.dev:	dumb.dev
-	install -c -o bin dumb.dev $@
-
-/usr/lib/cawf/man.mac:	man.mac
-	install -c -o bin man.mac $@
-
-/usr/lib/cawf/me.mac:	me.mac
-	install -c -o bin me.mac $@
-
-/usr/lib/cawf/ms.mac:	ms.mac
-	install -c -o bin ms.mac $@
-
-/usr/lib/cawf/mnx.mac:	mnx.mac
-	install -c -o bin mnx.mac $@
+.include <minix.prog.mk>

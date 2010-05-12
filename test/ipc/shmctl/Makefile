@@ -29,7 +29,7 @@ libipc.o: ../lib/libipc.c
 	$(CC) $(CFLAGS) -c -o libipc.o ../lib/libipc.c
 
 clean:
-	/usr/bin/rm -f *.o $(PROG)
+	rm -f *.o $(PROG)
 
 test:
 	sh ./test.sh

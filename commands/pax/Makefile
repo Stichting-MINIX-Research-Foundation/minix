@@ -32,10 +32,9 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c \
 
 MAN=	pax.1 tar.1 cpio.1
 
-BINDIR?=/usr/bin
 LINKS+= ${BINDIR}/pax ${BINDIR}/tar
 LINKS+= ${BINDIR}/pax ${BINDIR}/cpio
 
-CFLAGS+= -O -D_POSIX_SOURCE -DNET2_STAT=1 -D_MINIX=1
+CPPFLAGS+= -DNET2_STAT=1
 
 .include <minix.prog.mk>

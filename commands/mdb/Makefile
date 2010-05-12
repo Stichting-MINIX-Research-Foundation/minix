@@ -2,118 +2,28 @@
 # Makefile for mdb
 #
 #
-# Edit as indicated below.
-#
-USR		=/usr
-#
-# (1) For Compiler and target system:
-#
-#
-# For ANSI C and Minix 1.7.x 32-bit 
-#
-CC		=exec cc 
-LD		=exec cc
-LDFLAGS		=-i
-TARGET		=mdb
-STACK		=200000
-#
-# (2) If kernel and mm are not in "/usr/src" change this
-#
-SYSTEM	=../..
-#
-# (3) Select Options
 # 
 # i)   For GNU_EXEC Support, uncomment:
 #
-FOR_GNU		=gnu_sym.o
-DEF_GNU		=-DGNU_SUPPORT
+FOR_GNU=	gnu_sym.c
+DEF_GNU=	-DGNU_SUPPORT
 # 
 # ii)  For tracing of syscalls, uncomment:
 #
-#FOR_SYSCALLS 	=syscalls.o decode.o ioctl.o
-#DEF_SYSCALLS	=-DSYSCALLS_SUPPORT
+#FOR_SYSCALLS=	syscalls.c decode.c ioctl.c
+#DEF_SYSCALLS=	-DSYSCALLS_SUPPORT
 #
 # iii) For no debugging of mdb, uncomment:
 #
-#DEF_DEBUG	=-DNDEBUG
+#DEF_DEBUG=	-DNDEBUG
 
-EXTRA_OBJS	=$(FOR_GNU) $(FOR_SYSCALLS)
-EXTRA_DEFS	=$(DEF_GNU) $(DEF_SYSCALLS) $(DEF_DEBUG)
+EXTRA_SRCS=	${FOR_GNU} ${FOR_SYSCALLS}
+EXTRA_DEFS=	${DEF_GNU} ${DEF_SYSCALLS} ${DEF_DEBUG}
+CPPFLAGS+=	-I${MINIXSRCDIR} -I${MINIXSRCDIR}/servers \
+		 ${EXTRA_DEFS}
 
-all:	$(TARGET)
+SRCS=	mdb.c mdbexp.c kernel.o sym.c trace.c core.c misc.c io.c
+SRCS+=	mdbdis86.c
+SRCS+=	${EXTRA_SRCS}
 
-CFLAGS	=-I$(SYSTEM) -I$(SYSTEM)/servers -I$(INCLUDE) -D_MINIX -D_POSIX_SOURCE $(EXTRA_DEFS)
-
-# For various included files or system files
-# 
-INCLUDE		=$(USR)/include
-KERNEL		=$(SYSTEM)/kernel
-PTRACE		=$(INCLUDE)/sys/ptrace.h
-
-
-# Header files from system and kernel in "mdb.h" 
-#
-SYSFILES=	$(INCLUDE)/minix/config.h \
-		$(INCLUDE)/minix/const.h \
-		$(INCLUDE)/ansi.h \
-		$(INCLUDE)/minix/type.h \
-		$(INCLUDE)/limits.h \
-		$(INCLUDE)/errno.h \
-		$(INCLUDE)/sys/types.h \
-		$(KERNEL)/const.h \
-		$(KERNEL)/type.h \
-		$(KERNEL)/proc.h
-
-# Common objects 
-#
-OBJCOMMON	=mdb.o mdbexp.o kernel.o sym.o trace.o core.o misc.o io.o
-
-# Common source
-#
-SRCCOMMON	=mdb.c mdbexp.c kernel.o sym.c trace.c core.c misc.c io.c
-
-# Object files for PC
-#
-OBJPC		=$(OBJCOMMON) mdbdis86.o 
-
-# Source file
-#
-SRCPC		=$(SRCCOMMON) mdbdis86.c
-
-
-mdb:	$(OBJPC) $(EXTRA_OBJS)
-	$(LD) $(LDFLAGS) -o mdb $(OBJPC) $(EXTRA_OBJS)
-	install -S $(STACK) mdb
-
-#
-# Dependencies for objects
-#
-mdb.o:		mdb.c mdb.h $(SYSFILES) proto.h
-mdbdis86.o:	mdbdis86.c mdb.h $(SYSFILES) proto.h
-mdbexp.o:	mdbexp.c mdb.h $(SYSFILES) proto.h
-sym.o:		sym.c mdb.h $(SYSFILES) proto.h
-trace.o:	trace.c mdb.h $(PTRACE) $(SYSFILES) proto.h
-core.o:		core.c mdb.h $(MMFILES) $(SYSFILES) proto.h
-misc.o:		misc.c mdb.h  $(SYSFILES) proto.h
-io.o:		io.c mdb.h $(SYSFILES) proto.h
-
-syscalls.o:	syscalls.c mdb.h $(SYSFILES) proto.h
-decode.o:	decode.c mdb.h $(INCLUDE)/minix/callnr.h $(SYSFILES) proto.h
-ioctl.o:	ioctl.c mdb.h  $(SYSFILES) proto.h
-
-gnu_sym.o:	gnu_sym.c mdb.h $(SYSFILES) proto.h
-
-
-#
-# install
-#
-
-install:	mdb 
-		install -cs -o bin mdb /usr/bin
-
-install_man:	mdb.1
-		install -c -o bin mdb.1 /usr/man/man1
-
-clean:
-		rm -f *.o mdb
-
+.include <minix.prog.mk>

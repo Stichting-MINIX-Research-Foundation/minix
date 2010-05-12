@@ -1,56 +1,12 @@
 # Makefile for aal
 
-CC=exec cc
-CFLAGS=-I. -wo -DAAL -DSTB -DNDEBUG -DDISTRIBUTION -D_POSIX_SOURCE -D_MINIX
-LDFLAGS=-i
+PROG=	aal
+SRCS=	archiver.c print.c rd.c rd_arhdr.c rd_unsig2.c sprint.c \
+	wr_arhdr.c wr_bytes.c wr_int2.c wr_long.c wr_ranlib.c \
+	format.c rd_bytes.c system.c write.c long2str.c
+CPPFLAGS+= -I${.CURDIR} -wo -DAAL -DSTB -DNDEBUG -DDISTRIBUTION
 
-all:	aal
+LINKS+=	${BINDIR}/aal ${BINDIR}/ar
+MAN=
 
-OFILES=	archiver.o \
-	print.o \
-	rd.o \
-	rd_arhdr.o \
-	rd_unsig2.o \
-	sprint.o \
-	wr_arhdr.o \
-	wr_bytes.o \
-	wr_int2.o \
-	wr_long.o \
-	wr_ranlib.o \
-	format.o \
-	rd_bytes.o \
-	system.o \
-	write.o \
-	long2str.o
-
-aal: $(OFILES)
-	$(CC) $(LDFLAGS) -o aal $(OFILES)
-	install -S 512k $@
-
-install:	/usr/bin/aal /usr/bin/ar
-
-/usr/bin/aal:	aal
-	install -cs -o bin aal $@
-
-/usr/bin/ar:	/usr/bin/aal
-	install -l h $? $@
-
-archiver.o:
-print.o:
-rd.o:
-rd_arhdr.o:
-rd_unsig2.o:
-sprint.o:
-wr_arhdr.o:
-wr_bytes.o:
-wr_int2.o:
-wr_long.o:
-wr_ranlib.o:
-format.o:
-rd_bytes.o:
-system.o:
-write.o:
-long2str.o:
-
-clean:	
-	rm -f *.o core *.bak aal
+.include <minix.prog.mk>

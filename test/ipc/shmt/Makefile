@@ -18,7 +18,7 @@ test:
 	sh testshm.sh
 
 clean:
-	/usr/bin/rm -f *.o $(PROG)
+	rm -f *.o $(PROG)
 
 shmt01: shmt01.c
 shmt02: shmt02.c

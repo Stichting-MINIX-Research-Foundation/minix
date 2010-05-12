@@ -49,7 +49,7 @@ ${SUBFILES}:
 clean:
 	rm -f *.out *.fail *.core
 
-.include <bsd.obj.mk>
+.include <minix.obj.mk>
 
 TEST_MAKE?= ${.MAKE}
 

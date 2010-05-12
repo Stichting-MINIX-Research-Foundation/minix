@@ -455,8 +455,8 @@ NETBSDSRCDIR?=	${BSDSRCDIR}
 #BINGRP?=	wheel
 BINGRP?=	operator
 BINOWN?=	root
-BINMODE?=	555
-NONBINMODE?=	444
+BINMODE?=	755
+NONBINMODE?=	644
 
 #MANDIR?=	/usr/share/man
 MANDIR?=	/usr/man

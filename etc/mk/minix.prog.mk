@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.243 2009/11/27 11:44:36 tsutsui Exp $
+#	$NetBSD: bsd.prog.mk,v 1.244 2009/12/08 15:18:42 uebayasi Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -174,18 +174,7 @@ _PROGDEBUG.${_P}:=	${PROGNAME.${_P}}.debug
 .endif
 
 ##### PROG specific flags.
-COPTS+=     ${COPTS.${_P}}
-CPPFLAGS+=  ${CPPFLAGS.${_P}}
-CXXFLAGS+=  ${CXXFLAGS.${_P}}
-OBJCOPTS+=  ${OBJCOPTS.${_P}}
-LDADD+=     ${LDADD.${_P}}
-LDFLAGS+=   ${LDFLAGS.${_P}}
-LDSTATIC+=  ${LDSTATIC.${_P}}
 
-_COPTS.${_P}=		${COPTS}    ${COPTS.${_P}}
-_CPPFLAGS.${_P}=	${CPPFLAGS} ${CPPFLAGS.${_P}}
-_CXXFLAGS.${_P}=	${CXXFLAGS} ${CXXFLAGS.${_P}}
-_OBJCOPTS.${_P}=	${OBJCOPTS} ${OBJCOPTS.${_P}}
 _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}

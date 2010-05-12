@@ -53,6 +53,8 @@ commands:
 	cd commands && $(MAKE) all
 
 depend::
+	cd boot && $(MAKE) $@
+	cd commands && $(MAKE) $@
 	cd kernel && $(MAKE) $@
 	cd servers && $(MAKE) $@
 	cd drivers && $(MAKE) $@
@@ -71,6 +73,7 @@ install::
 	cd boot && $(MAKE) all install
 	cd man && $(MAKE) all install makedb
 	cd commands && $(MAKE) all install
+	cd share && $(MAKE) all install
 	cd tools && $(MAKE) all install
 	cd servers && $(MAKE) all install
 	cd drivers && $(MAKE) all install

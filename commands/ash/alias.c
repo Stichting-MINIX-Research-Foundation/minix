@@ -49,7 +49,6 @@ __FBSDID("$FreeBSD: src/bin/sh/alias.c,v 1.18 2004/04/06 20:06:51 markm Exp $");
 #include "mystring.h"
 #include "alias.h"
 #include "options.h"	/* XXX for argptr (should remove?) */
-#include "builtins.h"
 
 #define ATABSIZE 39
 

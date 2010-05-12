@@ -3,7 +3,7 @@ set -e
 export SHELL=/bin/sh
 cd /usr/src 
 make etcfiles
-su bin -c 'make world'
+make world
 cd tools 
 rm revision
 rm /boot/image/*
@@ -13,6 +13,6 @@ cp ../boot/boot /boot/boot
 cd /usr/src 
 make clean
 # Let man find the manpages
-su bin -c 'makewhatis /usr/man'
-su bin -c 'makewhatis /usr/local/man'
+makewhatis /usr/man
+makewhatis /usr/local/man
 binsizes normal

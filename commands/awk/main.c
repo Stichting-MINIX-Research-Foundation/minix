@@ -32,7 +32,7 @@ const char	*version = "version 20100208";
 #include <string.h>
 #include <signal.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.h"
 
 extern	char	**environ;
 extern	int	nfields;

@@ -6,22 +6,9 @@
 #	-DDUFFCP	#if you do not have fast memcpy in your library.
 #
 
-CFLAGS = -DEXTENDED -O -D_POSIX_SOURCE -D_MINIX
-CC = exec cc
+PROG=	m4
+SRCS= 	main.c eval.c serv.c look.c misc.c expr.c
+CPPFLAGS+= -DEXTENDED
+MAN=
 
-OBJ =  main.o eval.o serv.o look.o misc.o expr.o
-INCL =  mdef.h extr.h patchlevel.h
-
-all:	m4
-
-m4: $(OBJ) $(INCL)
-	cc -i -o m4 $(OBJ)
-	install -S 4kw m4
-
-install:	/usr/bin/m4
-
-/usr/bin/m4:	m4
-	install -cs -o bin m4 $@
-
-clean:	
-	rm -f *.o m4 core *bak
+.include <minix.prog.mk>

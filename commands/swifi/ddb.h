@@ -40,8 +40,6 @@
 #define __P(protos) protos
 typedef int boolean_t;
 typedef unsigned long vm_offset_t;
-unsigned long	 random __P((void));
-void	 srandom __P((unsigned long));
 
 #include "db_machdep.h"		/* type definitions */
 

@@ -45,16 +45,16 @@ cp passwd q
 if cmp -s p q; then : ; else echo Error on ar test 1; fi
 date >r
 ar r x.a p q r 2>/dev/null
-ar r x.a /usr/bin/cp
-ar r x.a /usr/bin/cat
+ar r x.a /bin/cp
+ar r x.a /bin/cat
 rm p q
 mv r R
 ar x x.a
 if cmp -s p /etc/passwd; then : ; else Error on ar test 2; fi
 if cmp -s q /etc/passwd; then : ; else Error on ar test 3; fi
 if cmp -s r R; then : ; else Error on ar test 4; fi
-if cmp -s cp /usr/bin/cp; then : ; else Error on ar test 5; fi
-if cmp -s cat /usr/bin/cat; then : ; else Error on ar test 6; fi
+if cmp -s cp /bin/cp; then : ; else Error on ar test 5; fi
+if cmp -s cat /bin/cat; then : ; else Error on ar test 6; fi
 rm cp cat p q r
 ar d x.a r >/dev/null
 ar x x.a

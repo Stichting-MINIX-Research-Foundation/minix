@@ -259,8 +259,8 @@ mkdir -p $RELEASEPACKAGESOURCES
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
-cp -rp /bin/bigsh /bin/sh /bin/echo $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/flex /usr/bin/asmconv $RELEASEDIR/usr/bin
+cp -rp /bin/sh /bin/echo $RELEASEDIR/bin
+cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv $RELEASEDIR/usr/bin
 
 if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a -f $PACKAGELIST -a -f $PACKAGESOURCELIST -a $PACKAGES -ne 0 ]
 then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
@@ -287,8 +287,8 @@ then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
         done
 fi
 
-# Make sure compilers and libraries are bin-owned
-chown -R bin $RELEASEDIR/usr/lib
+# Make sure compilers and libraries are root-owned
+chown -R root $RELEASEDIR/usr/lib
 chmod -R u+w $RELEASEDIR/usr/lib
 
 if [ "$COPY" -ne 1 ]
@@ -329,7 +329,7 @@ else
 fi
 
 echo " * Fixups for owners and modes of dirs and files"
-chown -R bin $RELEASEDIR/usr/$SRC 
+chown -R root $RELEASEDIR/usr/$SRC
 chmod -R u+w $RELEASEDIR/usr/$SRC 
 find $RELEASEDIR/usr/$SRC -type d | xargs chmod 755
 find $RELEASEDIR/usr/$SRC -type f | xargs chmod 644
@@ -345,11 +345,10 @@ fi
 echo " * Bootstrap /etc/mk files"
 # Need /etc/mk in the new system to invoke make. Real ownerships
 # and permissions will be set by its own src/etc/Makefile.
-# They have to be owned by bin so that the new make can do its work.
 mkdir -p $RELEASEDIR/etc/mk
 chmod 755 $RELEASEDIR/etc/mk
 cp $RELEASEDIR/usr/src/etc/mk/* $RELEASEDIR/etc/mk/
-chown -R bin $RELEASEDIR/etc/mk
+chown -R root $RELEASEDIR/etc/mk
 echo " * Chroot build"
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
 chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
@@ -358,8 +357,8 @@ cp $RELEASEDIR/boot/image_big image
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN
-# The build process leaves some file in $SRC as root.
-chown -R bin $RELEASEDIR/usr/src*
+# The build process leaves some file in $SRC as bin.
+chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
 
 if [ "$USB" -ne 0 ]

@@ -46,35 +46,35 @@ pci: ../../pci/pci
 ../../pci/pci:
 	cd ../../pci && make
 
-cdprobe:  ../../../commands/simple/cdprobe
-	install -s ../../../commands/simple/$@ $@
+cdprobe:  ../../../commands/cdprobe/cdprobe
+	install -s ../../../commands/$@/$@ $@
 
-../../../commands/simple/cdprobe: 
-	cd ../../../commands/simple && make cdprobe
+../../../commands/cdprobe:
+	cd ../../../commands/cdprobe && make
 
-dev2name:  ../../../commands/simple/dev2name
-	install -s ../../../commands/simple/$@ $@
+dev2name:  ../../../commands/dev2name/dev2name
+	install -s ../../../commands/$@/$@ $@
 
-../../../commands/simple/dev2name: 
-	cd ../../../commands/simple && make dev2name
+../../../commands/dev2name/dev2name:
+	cd ../../../commands/dev2name && make
 
-loadramdisk:  ../../../commands/simple/loadramdisk
-	install -s ../../../commands/simple/$@ $@
+loadramdisk:  ../../../commands/loadramdisk/loadramdisk
+	install -s ../../../commands/$@/$@ $@
 
-../../../commands/simple/loadramdisk: 
-	cd ../../../commands/simple && make loadramdisk
+../../../commands/loadramdisk/loadramdisk:
+	cd ../../../commands/loadramdisk && make
 
-newroot:  ../../../commands/simple/newroot
-	install -s ../../../commands/simple/$@ $@
+newroot:  ../../../commands/newroot/newroot
+	install -s ../../../commands/$@/$@ $@
 
-../../../commands/simple/newroot: 
-	cd ../../../commands/simple && make newroot
+../../../commands/newroot/newroot:
+	cd ../../../commands/newroot && make
 
-sysenv:  ../../../commands/simple/sysenv
-	install -s ../../../commands/simple/$@ $@
+sysenv:  ../../../commands/sysenv/sysenv
+	install -s ../../../commands/$@/$@ $@
 
-../../../commands/simple/sysenv: 
-	cd ../../../commands/simple && make sysenv
+../../../commands/sysenv:
+	cd ../../../commands/sysenv && make
 
 sh:	../../../commands/ash/sh
 	install -s ../../../commands/ash/$@ $@

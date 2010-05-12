@@ -139,7 +139,7 @@ void syslog(int lprty, const char *msg,...)
 	len += sprintf(buff + len, "[%d]: ", LogPid);
   }
   va_start(ap, msg);
-  len += vsprintf(buff + len, msg, ap);
+  len += vsnprintf(buff + len, sizeof(buff) - len, msg, ap);
   va_end(ap);
   rc = write(nfd, buff, len);
   if ((rc != len && LogFlags & LOG_CONS) || LogFlags & LOG_PERROR) {

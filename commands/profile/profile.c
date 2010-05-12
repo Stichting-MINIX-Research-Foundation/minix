@@ -7,9 +7,6 @@
  *   14 Aug, 2006   Created (Rogier Meurs)
  */
 
-#define SPROFILE		1
-#define CPROFILE		1
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>

@@ -1,23 +1,9 @@
-OBJ=systest.o fault_model.o extra.o db_sym.o db_disasm.o db_access.o read_nlist.o
-OBJ_RND=rnd.o
-OBJ_SOCKET=socket.o
+# swifi Makefile
 
-DEFINES=-DCONFIG_SWIFI
-CFLAGS=$(DEFINES)
+PROG=	swifi
+SRCS=	systest.c fault_model.c extra.c db_sym.c db_disasm.c \
+	db_access.c read_nlist.c
+CPPFLAGS+= -DCONFIG_SWIFI
+MAN=
 
-all:	swifi rnd socket
-
-install: swifi
-	install swifi /usr/bin/swifi
-
-swifi:	$(OBJ)
-	$(CC) -o swifi $(OBJ)
-
-rnd:	$(OBJ_RND)
-	$(CC) -o $@ $(OBJ_RND)
-
-socket:	$(OBJ_SOCKET)
-	$(CC) -o $@ $(OBJ_SOCKET)
-
-clean:
-	rm -f swifi $(OBJ)
+.include <minix.prog.mk>

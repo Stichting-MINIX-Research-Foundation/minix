@@ -1,3 +1,10 @@
+20100512:
+        yacc and lex updated
+	# make includes
+	# cd commands/yacc
+	# make depend all install
+	# cd commands/lex
+	# LEX=flex make depend all install
 20100506:
         /usr/src/etc/usr/rc updated: copy it (or merge it) to /usr/etc/rc.
 20100410:

@@ -1,31 +1,44 @@
 # Makefile for commands.
 
-MAKE	= exec make -$(MAKEFLAGS)
-BZIP2=bzip2-1.0.3
-FLEX=flex-2.5.4
+.include <minix.own.mk>
 
-SMALLPROGRAMS=`arch` aal advent ash autil awk byacc cawf cron de dhcpd dis88 elle elvis ftp101 ftpd200 ibm indent m4 make mdb mined patch pax profile ps reboot rlogind scripts sh simple syslogd swifi talk talkd telnet telnetd urlget yap zoneinfo
+SUBDIR=	aal add_route adduser advent arp ash at autil awk \
+	backup badblocks banner basename bigmake binpackage \
+	binpackages binsizes bzip2 bzip2recover cal calendar \
+	cat cawf cd cdiff cdprobe cgrep checkhier chmem \
+	chmod chown chroot ci cksum cleantmp clear cmp co \
+	comm compress cp crc cron crontab cut datasizes date \
+	dd de decomp16 DESCRIBE dev2name devsize df dhcpd \
+	dhrystone diff dirname dis88 du dumpcore easypack \
+	ed eject elle elvis env expand factor fgrep file \
+	find finger fingerd fix fold format fortune fsck \
+	fsck1 ftp101 ftpd200 getty gomoku grep head host \
+	hostaddr id ifconfig ifdef indent install \
+	intr ipcrm ipcs irdpd isoread join kill last leave \
+	lex life loadkeys loadramdisk logger login look lp \
+	lpd ls lspci M m4 mail make MAKEDEV makewhatis man \
+	mdb mesg mined mkdep mkdir mkdist mkfifo mkfs mknod \
+	mkproto modem mount mt netconf newroot nice nm nohup \
+	nonamed od packit packman passwd paste patch pax \
+	ping postinstall poweroff pr prep printf printroot \
+	profile progressbar proto pr_routes ps pwd pwdauth \
+	ramdisk rarpd rawspeed rcp rdate readall readclock \
+	readfs reboot remsync rev rget rlogin rlogind rmdir \
+	rotate rsh rshd sed setup shar size \
+	sleep slip sort spell split srccrc stat strings strip \
+	stty su sum svclog swapfs swifi sync synctree sysenv \
+	syslogd tail talk talkd tcpd tcpdp tcpstat tee telnet \
+	telnetd term termcap tget time tinyhalt top touch tr \
+	truncate tsort ttt tty udpstat umount uname unexpand \
+	uniq unstack update urlget uud uue version vol wc \
+	whatis whereis which who whoami write writeisofs \
+	xargs yacc yap yes zdump zic zmodem
 
-usage:
-	@echo "Usage: make all          # Compile all commands" >&2
-	@echo "       make install      # Install the result (run as bin!)" >&2
-	@echo "       make clean        # Delete .o files and other junk" >&2
+.if ${ARCH} == "i386"
+SUBDIR+=	atnormalize dosread fdisk loadfont \
+	mixer autopart part partition playwave postmort \
+	recwave repartition screendump
+SUBDIR+=	acd asmconv gas2ack
+.endif
 
-all:
-	cd zmodem && make
-	cd $(BZIP2) && /bin/sh build build
-	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
-
-install:
-	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
-	cd zmodem && make install
-	cd $(BZIP2) && make install
-	cd $(FLEX) && sh build
-
-clean::
-	cd $(BZIP2) && make clean
-	cd zmodem && make clean
-	if [ -f $(FLEX)/Makefile ]; then cd $(FLEX) && make distclean ; fi
-	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
-
-
+.include <minix.subdir.mk>

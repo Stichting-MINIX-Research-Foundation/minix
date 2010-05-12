@@ -1,4 +1,4 @@
-FILESDIR= ${DESTDIR}/usr/lib/keymaps
+FILESDIR= /usr/lib/keymaps
 
 .SUFFIXES:      .src .map
 
@@ -10,5 +10,4 @@ FILESDIR= ${DESTDIR}/usr/lib/keymaps
 
 realall: ${FILES}
 
-clean:
-	rm -f ${FILES}
+CLEANFILES+= ${FILES}

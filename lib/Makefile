@@ -1,7 +1,7 @@
 .include <minix.own.mk>
 
 SUBDIR= csu libc libcurses libdriver libnetdriver libend libedit libm libsys \
-	libtimers libutil
+	libtimers libutil libbz2 libl
 
 .if ${COMPILER_TYPE} == "ack"
 SUBDIR+= ack/libd ack/libe ack/libfp ack/liby

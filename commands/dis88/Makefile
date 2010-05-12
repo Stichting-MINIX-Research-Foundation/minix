@@ -24,27 +24,9 @@
 # the initialization  data in the lookup tables.  It should not
 # be necessary to alter the formats of the tables.
 
-CFLAGS =-O -wo
-OBJ = disrel.o dismain.o distabs.o dishand.o disfp.o
-CC=exec cc
+PROG=	dis88
+SRCS=	disrel.c dismain.c distabs.c dishand.c disfp.c
+CPPFLAGS+= -wo
+MAN=
 
-all:	dis88
-
-dis88:	$(OBJ)
-	cc -i -o dis88 $(OBJ)
-	install -S 5kw dis88
-
-install:	/usr/bin/dis88
-
-/usr/bin/dis88:	dis88
-	install -cs -o bin dis88 $@
-
-disrel.o:	disrel.c
-dismain.o:	dismain.c dis.h
-distabs.o:	distabs.c dis.h
-dishand.o:	dishand.c dis.h
-disfp.o:	disfp.c dis.h
-
-
-clean:	
-	rm -f *.bak *.o core dis88
+.include <minix.prog.mk>

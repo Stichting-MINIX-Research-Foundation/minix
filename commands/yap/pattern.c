@@ -2,7 +2,7 @@
 
 # ifndef lint
 static char rcsid[] = "$Header$";
-# endif not lint
+# endif /* not lint */
 
 # define _PATTERN_
 
@@ -12,7 +12,7 @@ static char rcsid[] = "$Header$";
 
 # if V8_REGEX
 # include <regexp.h>
-# endif V8_REGEX
+# endif /* V8_REGEX */
 
 /*
  * Interface to regular expression routines.
@@ -22,12 +22,12 @@ static char rcsid[] = "$Header$";
 # if USG_REGEX
 static char *pattern;		/* Pointer to compiled pattern */
 char *regcmp(), *regex();
-# endif USG_REGEX
+# endif /* USG_REGEX */
 # if V8_REGEX
 static struct regexp *pattern;
 static char *rc_error;
 struct regexp *regcomp();
-# endif V8_REGEX
+# endif /* V8_REGEX */
 
 # if USG_REGEX || V8_REGEX
 /*
@@ -54,13 +54,13 @@ re_comp(s) char *s; {
 	return (pattern = regcmp(s, (char *) 0)) ?
 		(char *) 0 :
 		"Error in pattern";
-# endif USG_REGEX
+# endif /* USG_REGEX */
 # if V8_REGEX
 	pattern = regcomp(s);
 	if (pattern) return (char *) 0;
 	if (rc_error) return rc_error;
 	return "Error in pattern";
-# endif V8_REGEX
+# endif /* V8_REGEX */
 }
 
 # if V8_REGEX
@@ -68,7 +68,7 @@ VOID
 regerror(str) char *str; {
 	rc_error = str;
 }
-# endif V8_REGEX
+# endif /* V8_REGEX */
 
 /*
  * Search for compiled pattern in string "s". Return 0 if not found.
@@ -78,14 +78,14 @@ re_exec(s) char *s; {
 
 # if USG_REGEX
 	return !(regex(pattern,s) == 0);
-# endif USG_REGEX
+# endif /* USG_REGEX */
 # if V8_REGEX
 #  if _MINIX
 	return regexec(pattern,s,1);
 #  else
 	return regexec(pattern,s);
 #  endif
-# endif V8_REGEX
+# endif /* V8_REGEX */
 }
 # else
 # ifndef BSD_REGEX
@@ -156,5 +156,5 @@ re_exec(s) register char *s; {
 	}
 	return 0;		/* Failure */
 }
-# endif not BSD_REGEX
+# endif /* not BSD_REGEX */
 # endif

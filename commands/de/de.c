@@ -27,9 +27,9 @@
 
 #include <minix/const.h>
 #include <minix/type.h>
-#include "../../servers/mfs/const.h"
-#include "../../servers/mfs/type.h"
-#include "../../servers/mfs/inode.h"
+#include "mfs/const.h"
+#include "mfs/type.h"
+#include "mfs/inode.h"
 
 #include "de.h"
 

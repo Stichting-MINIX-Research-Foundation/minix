@@ -79,15 +79,15 @@
 #include <ttyent.h>
 
 #include <machine/archtypes.h>
-#include "../../kernel/const.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
+#include "kernel/const.h"
+#include "kernel/type.h"
+#include "kernel/proc.h"
 
-#include "../../servers/pm/mproc.h"
-#include "../../servers/pm/const.h"
-#include "../../servers/vfs/fproc.h"
-#include "../../servers/vfs/const.h"
-#include "../../servers/mfs/const.h"
+#include "pm/mproc.h"
+#include "pm/const.h"
+#include "vfs/fproc.h"
+#include "vfs/const.h"
+#include "mfs/const.h"
 
 
 /*----- ps's local stuff below this line ------*/

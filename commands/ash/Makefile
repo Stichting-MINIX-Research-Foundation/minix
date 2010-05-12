@@ -1,33 +1,34 @@
 # Makefile for ash.
 
-SRCS=	alias.c builtins.c cd.c error.c eval.c exec.c expand.c histedit.c \
-	input.c \
-	jobs.c mail.c main.c memalloc.c miscbltin.c mystring.c nodes.c \
-	options.c parser.c redir.c setmode.c show.c signames.c syntax.c \
-	trap.c \
-	output.c var.c
+.include <minix.own.mk>
 
-OBJS=	alias.o builtins.o cd.o error.o eval.o exec.o expand.o histedit.o \
-	input.o \
-	jobs.o mail.o main.o memalloc.o miscbltin.o mystring.o nodes.o \
-	options.o parser.o redir.o setmode.o show.o signames.o syntax.o \
-	trap.o \
-	output.o var.o init.o \
-	bltin/echo.o bltin/expr.o bltin/operators.o bltin/regexp.o \
-	arith.o arith_lex.o
+YHEADER=1
+PROG=	sh
 
-LEX=flex
-YACC=/usr/bin/yacc
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+SHSRCS=	alias.c arith.y arith_lex.l cd.c echo.c error.c eval.c exec.c expand.c \
+	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
+	mystring.c options.c output.c parser.c redir.c show.c \
+	trap.c var.c setmode.c expr.c regexp.c
+GENSRCS= builtins.c init.c nodes.c syntax.c operators.c signames.c
+GENHDRS= builtins.h nodes.h syntax.h token.h operators.h signames.h
+SRCS= ${SHSRCS} ${GENSRCS}
+DPSRCS+=${GENHDRS}
+BINDIR=	/bin
+MAN=
+
+DPADD+= ${LIBL} ${LIBEDIT}
+LDADD+= -ll -ledit
+
+LFLAGS=	-8	# 8-bit lex scanner for arithmetic
+YFLAGS=	-d
+
+# The .depend file can get references to these temporary files
+.OPTIONAL: lex.yy.c y.tab.c
 
 # Enable this line to disable command line editing
 #EDIT=-DNO_HISTORY
 # Enable this line to use the editline library instead of libedit
 EDIT=-DEDITLINE
-EDITLIB=-ledit
-
-FLEXLIB=-lfl
 
 # Enable this line if your system does not have a <paths.h>
 NO_PATHS_H=-DNO_PATHS_H 
@@ -36,91 +37,50 @@ NO_PATHS_H=-DNO_PATHS_H
 NO_JOBS=-DJOBS=0
 MKB_NO_JOBS=-j
 
-CPPFLAGS= -DSHELL -I. -D_MINIX $(EDIT) $(NO_PATHS_H) $(NO_JOBS)
-CFLAGS=	$(OPT) $(CPPFLAGS)
-LIBS=	$(EDITLIB) $(FLEXLIB)
+CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+CPPFLAGS+=${EDIT} ${NO_PATHS_H} ${NO_JOBS}
 
-CLEANFILES= $(OBJS) \
-	arith.c arith_y.h arith_lex.c builtins.c builtins.h init.c \
-	mkinit mknodes mksignames mksyntax \
-	nodes.c nodes.h signames.c signames.h syntax.c syntax.h token.h \
-	bltin/operators.h bltin/operators.c
+.PATH:	${.CURDIR}/bltin
 
-all:	sh
+CLEANFILES+= mkinit mkinit.o mknodes mknodes.o \
+	mksyntax mksyntax.o mksignames mksignames.o
+CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 
-sh:	$(OBJS)
-	$(CC) $(CFLAGS) -fnone -o sh $(OBJS) $(LIBS)
-	install -S 136k sh
+build-tools: mkinit mknodes mksyntax mksignames
 
-install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
+.ORDER: builtins.c builtins.h
+builtins.c builtins.h: mkbuiltins builtins.def shell.h
+	cd ${.CURDIR}; sh mkbuiltins ${MKB_NO_JOBS} ${.OBJDIR} shell.h builtins.def
 
-/usr/bin/ash:	sh
-	install -cs -o bin $> $@
+init.c: mkinit alias.c eval.c exec.c input.c jobs.c options.c parser.c \
+	redir.c trap.c var.c
+	./mkinit ${.ALLSRC:S/^mkinit$//}
 
-/usr/bin/sh:	/usr/bin/ash
-	install -l h $> $@
+mkinit: mkinit.o
+mknodes: mknodes.o
+mksyntax: mksyntax.o
+mksignames: mksignames.o
 
-/bin/sh:	/usr/bin/ash
-	install -l h -cs $> $@
-
-/bin/bigsh:	/usr/bin/ash
-	install -S 6600k -l h -cs $> $@
-
-clean:
-	rm -f $(CLEANFILES) sh core
-
-parser.o: token.def
-
-token.def: mktokens
-	sh mktokens
-
-arith.c:	arith.y
-	$(YACC) -d $<
-	mv y.tab.c $@
-	mv y.tab.h arith_y.h
-
-arith_lex.c:	arith_lex.l
-
-builtins.c builtins.h: builtins.def shell.h
-	sh mkbuiltins $(MKB_NO_JOBS) . shell.h builtins.def
-
-init.c: mkinit $(SRCS)
-	./mkinit $(SRCS)
-
-mkinit: mkinit.c
-	$(CC) $(CFLAGS) mkinit.c -o $@
-
+.ORDER: nodes.c nodes.h
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	./mknodes nodetypes nodes.c.pat
+	./mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
 
-mknodes: mknodes.c
-	$(CC) $(CFLAGS) mknodes.c -o $@
-
-signames.c signames.h: mksignames
-	./mksignames
-
-mksignames: mksignames.c
-	$(CC) $(CFLAGS) mksignames.c -o $@
-
+.ORDER: syntax.c syntax.h
 syntax.c syntax.h: mksyntax
 	./mksyntax
 
-mksyntax: mksyntax.c parser.h
-	$(CC) $(CFLAGS) mksyntax.c -o $@
+token.h: mktokens
+	sh ${.CURDIR}/mktokens
 
-bltin/operators.h:	bltin/mkexpr bltin/unary_op bltin/binary_op
-	cd bltin && sh mkexpr unary_op binary_op
+.ORDER: signames.c signames.h
+signames.c signames.h: mksignames
+	./mksignames
 
-bltin/operators.c:	bltin/mkexpr bltin/unary_op bltin/binary_op
-	cd bltin && sh mkexpr unary_op binary_op
+.ORDER: operators.c operators.h
+operators.c operators.h: mkexpr unary_op binary_op
+	sh bltin/mkexpr bltin/unary_op bltin/binary_op
 
-# Dependencies you say?  This will have to do.
-$(OBJS): error.h eval.h exec.h expand.h init.h input.h \
-	jobs.h machdep.h mail.h main.h memalloc.h mystring.h options.h \
-	output.h parser.h redir.h shell.h trap.h var.h \
-	builtins.h nodes.h signames.h syntax.h
+arith.h: arith.c
+arith.c: arith.y
 
-bltin/expr.o bltin/operators.o:	bltin/operators.h
-
-#
-# $PchId: Makefile,v 1.4 2006/05/22 12:40:46 philip Exp $
+.include <minix.prog.mk>

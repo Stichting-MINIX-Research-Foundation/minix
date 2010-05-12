@@ -25,15 +25,15 @@ install::
 	rm $(ETC)/$(DIR1)/*
 	cp $(DIR1)/*.mk $(ETC)/$(DIR1)
 	chmod 644 $(ETC)/$(DIR1)/*
-	chown bin $(ETC)/$(DIR1)/*
+	chown root $(ETC)/$(DIR1)/*
 	@echo "Making devices.."
-	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh null 
-	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh std  2>/dev/null
-	install -o bin -g operator -m 755 crontab /usr/lib
+	p=`pwd` && cd /dev && sh $$p/../commands/MAKEDEV/MAKEDEV.sh null
+	p=`pwd` && cd /dev && sh $$p/../commands/MAKEDEV/MAKEDEV.sh std  2>/dev/null
+	install -o root -g operator -m 755 crontab /usr/lib
 	@echo "Making user homedirs.."
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 	@echo "Installing fonts.."
-	install -m 644 -o bin -g operator fonts/*.fnt /usr/lib/fonts/
+	install -m 644 -o root -g operator fonts/*.fnt /usr/lib/fonts/
 
 postinstall:
 	binsizes normal

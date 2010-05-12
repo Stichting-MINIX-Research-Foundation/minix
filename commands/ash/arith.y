@@ -42,12 +42,11 @@ __FBSDID("$FreeBSD: src/bin/sh/arith.y,v 1.19 2004/05/24 10:11:31 stefanf Exp $"
 */
 
 #include <limits.h>
-#include <stdlib.h>
 #include <stdio.h>
 
+
 #include "shell.h"
-#include "arith.h"
-#include "arith_lex.h"
+#include "expand.h"
 #include "var.h"
 %}
 %union {
@@ -261,7 +260,6 @@ expr:
 #include "error.h"
 #include "output.h"
 #include "memalloc.h"
-#include "builtins.h"
 
 #define lstrlen(var) (3 + (2 + CHAR_BIT * sizeof((var))) / 3)
 
@@ -360,7 +358,3 @@ error(char *s)
 	exit(1);
 }
 #endif
-
-/*
- * $PchId: arith.y,v 1.6 2006/05/22 12:41:47 philip Exp $
- */

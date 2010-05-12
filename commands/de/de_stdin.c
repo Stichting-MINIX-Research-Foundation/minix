@@ -17,8 +17,8 @@
 
 #include <minix/config.h>
 #include <minix/const.h>
-#include "../../servers/mfs/const.h"
-#include "../../servers/mfs/inode.h"
+#include "mfs/const.h"
+#include "mfs/inode.h"
 
 #include "de.h"
 

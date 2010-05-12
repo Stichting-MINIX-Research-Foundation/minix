@@ -97,7 +97,6 @@ _PROTOTYPE(int Findnum,(unsigned char *n, int v, int e));
 _PROTOTYPE(int Findparms,(unsigned char *n));
 _PROTOTYPE(int Findscale,(int n, double v, int e));
 _PROTOTYPE(unsigned char *Findstr,(unsigned char *nm, unsigned char *s, int e));
-_PROTOTYPE(int getopt,(int argc, char **argv, char *opts));
 _PROTOTYPE(int LenprtHF,(unsigned char *s, int p, int t));
 _PROTOTYPE(int main,(int argc, char *argv[]));
 _PROTOTYPE(void Macro,(unsigned char *inp));

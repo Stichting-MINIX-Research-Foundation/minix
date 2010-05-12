@@ -62,6 +62,13 @@ void rmescapes(char *);
 int casematch(union node *, char *);
 int wordexpcmd(int, char **);
 
+/* From arith.y */
+int arith(char *);
+int arith_assign(char *, arith_t);
+int expcmd(int , char **);
+void arith_lex_reset(void);
+
+
 /*
  * $PchId: expand.h,v 1.4 2006/03/30 14:50:52 philip Exp $
  */

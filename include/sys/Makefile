@@ -9,6 +9,6 @@ INCS=	asynchio.h dir.h file.h ioc_cmos.h ioc_disk.h \
 	select.h sem.h shm.h sigcontext.h signal.h socket.h \
 	soundcard.h statfs.h stat.h svrctl.h timeb.h \
 	time.h times.h types.h ucontext.h uio.h un.h utsname.h video.h vm.h \
-	wait.h
+	wait.h cdefs.h
 
 .include <minix.kinc.mk>

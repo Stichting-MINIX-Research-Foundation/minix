@@ -153,7 +153,7 @@ int getline(buf, limit, fp)
  * To display the tag, it attempts to output any introductory comment, the
  * tag line itself, and any arguments.  Arguments are assumed to immediately
  * follow the tag line, and start with whitespace.  Comments are assumed to
- * start with lines that begin with "/*", "//", "(*", or "--", and end at the
+ * start with lines that begin with "/ *", "//", "(*", or "--", and end at the
  * tag line or at a blank line.
  */
 int lookup(dir, entry)

@@ -341,7 +341,7 @@ cpp_ungetc(ch)
 /* -------------------------------------------------------------------------- */
 /* This is the lexical analyser.  It gets characters from the preprocessor,
  * and gives tokens to the parser.  Some special codes are...
- *   (deleted)  /*...* /	(comments)
+ *   (deleted)  / *...* /	(comments)
  *   (deleted)	//...\n	(comments)
  *   (deleted)	(*	(parens used in complex declaration)
  *   (deleted)	[...]	(array subscript, when ... contains no ])
