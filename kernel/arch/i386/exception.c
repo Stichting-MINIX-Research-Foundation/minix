@@ -56,7 +56,7 @@ PRIVATE void pagefault( struct proc *pr,
 	}
 
 	if(is_nested) {
-		panic("pagefault in kernel at address 0x%lx", pagefaultcr2);
+		panic("pagefault in kernel at pc 0x%lx address 0x%lx", frame->eip, pagefaultcr2);
 	}
 
 	/* System processes that don't have their own page table can't
