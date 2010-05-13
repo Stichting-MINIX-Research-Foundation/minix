@@ -200,9 +200,15 @@ LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
 YFLAGS+=	${YPREFIX.${.IMPSRC:T}:D-p${YPREFIX.${.IMPSRC:T}}} ${YHEADER.${.IMPSRC:T}:D-d}
 YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
+.ifdef QUIET_YACC
+.y.c:
+	${_MKTARGET_YACC}
+	${YACC.y} -o ${.TARGET} ${.IMPSRC} 2> /dev/null
+.else
 .y.c:
 	${_MKTARGET_YACC}
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
+.endif
 
 .ifdef YHEADER
 .y.h: ${.TARGET:.h=.c}

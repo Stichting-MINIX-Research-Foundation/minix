@@ -25,7 +25,7 @@ THIS SOFTWARE.
 /*
  * this program makes the table to link function names
  * and type indices that is used by execute() in run.c.
- * it finds the indices in ytab.h, produced by yacc.
+ * it finds the indices in awkgram.h, produced by yacc.
  */
 
 #include <stdio.h>
@@ -120,12 +120,12 @@ int main(int argc, char *argv[])
 
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
-	printf("#include \"ytab.h\"\n\n");
+	printf("#include \"awkgram.h\"\n\n");
 	for (i = SIZE; --i >= 0; )
 		names[i] = "";
 
-	if ((fp = fopen("ytab.h", "r")) == NULL) {
-		fprintf(stderr, "maketab can't open ytab.h!\n");
+	if ((fp = fopen("awkgram.h", "r")) == NULL) {
+		fprintf(stderr, "maketab can't open awkgram.h!\n");
 		exit(1);
 	}
 	printf("static char *printname[%d] = {\n", SIZE);
