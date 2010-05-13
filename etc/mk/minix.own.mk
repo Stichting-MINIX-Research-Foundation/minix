@@ -906,7 +906,7 @@ MAKEDIRTARGET=\
 #	3	Ignore the effect of the "@" prefix in make commands
 #	4	Trace shell commands using the shell's -x flag
 #		
-MAKEVERBOSE?=		2
+MAKEVERBOSE?=		1
 
 .if ${MAKEVERBOSE} == 0
 _MKMSG?=	@\#

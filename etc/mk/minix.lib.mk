@@ -8,6 +8,11 @@
 
 LIBISPRIVATE?=	no
 
+##### Minix rule to make the "install" target depend on
+##### "all" and "depend" targets
+realinstall: realall
+realall: depend
+
 ##### Basic targets
 .PHONY:		libinstall
 realinstall:	libinstall
