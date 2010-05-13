@@ -5,6 +5,7 @@
 PROG=	halt
 SRCS=	tinyhalt.c
 BINDIR=	/bin
+BINMODE= 744
 LINKS+=	${BINDIR}/halt ${BINDIR}/reboot
 MAN=
 
