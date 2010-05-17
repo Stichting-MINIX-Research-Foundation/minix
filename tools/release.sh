@@ -131,15 +131,16 @@ SVNREV=""
 REVTAG=""
 PACKAGES=1
 MINIMAL=0
+MAKEMAP=0
 ROOTKB=8192
 
 FILENAMEOUT=""
 
-while getopts "s:pmchu?r:f:" c
+while getopts "s:pmMchu?r:f:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-p] [-c] [-h] [-m] [-r <tag>] [-u] [-f <filename>] [-s <username>]" >&2
+		echo "Usage: $0 [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>]" >&2
 		exit 1
 	;;
 	h)
@@ -175,6 +176,8 @@ do
 		RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
 		ROOTKB=4096
 		[ ! "$USRMB" ] && USRMB=22
+		;;
+	M)	MAKEMAP=1
 		;;
 	esac
 done
@@ -351,7 +354,7 @@ cp $RELEASEDIR/usr/src/etc/mk/* $RELEASEDIR/etc/mk/
 chown -R root $RELEASEDIR/etc/mk
 echo " * Chroot build"
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
-chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
+chroot $RELEASEDIR "PATH=/$XBIN MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 # Copy built images for cd booting
 cp $RELEASEDIR/boot/image_big image
 echo " * Chroot build done"
@@ -372,6 +375,13 @@ fi
 echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
 if [ $MINIMAL -ne 0 ]
 then
+	if [ "$MAKEMAP" -ne 0 ]
+	then
+		echo " * Copying symbol map to ${IMG}-symbols.txt"
+		cp $RELEASEDIR/usr/src/symbols.txt ${IMG}-symbols.txt
+		$ZIP -f ${IMG}-symbols.txt
+	fi
+
 	echo " * Removing files to create minimal image"
 	rm -rf $RELEASEDIR/boot/image/* $RELEASEDIR/usr/man/man*/* 	\
 		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src	\
