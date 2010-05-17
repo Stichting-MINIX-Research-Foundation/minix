@@ -32,9 +32,6 @@
  * @{
  */
 
-/** Maximum number of cards supported. */
-#define E1000_PORT_NR 1
-
 /** Number of receive descriptors per card. */
 #define E1000_RXDESC_NR 256
 

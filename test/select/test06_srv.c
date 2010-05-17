@@ -29,7 +29,7 @@
 
 #define PORT 6060L
 
-int listen(long port) {
+int my_listen(long port) {
 
   char *tcp_device;
   int netfd;
@@ -87,7 +87,7 @@ int main(int argc,char *argv[]) {
   int ret;
   fd_set fds_read;
 
-  if ((fd = listen(PORT)) < 0) {
+  if ((fd = my_listen(PORT)) < 0) {
     	exit(-1);	
   }
   printf("Waiting for messages on port: %ld\n", PORT);

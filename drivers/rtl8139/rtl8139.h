@@ -460,13 +460,9 @@ d9-ff				reserved
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
 
-#define VERBOSE		1	/* display message during init */
-
 #define RX_BUFSIZE	RL_RCR_RBLEN_64K_SIZE
 #define RX_BUFBITS	RL_RCR_RBLEN_64K
 #define N_TX_BUF	RL_N_TX
-
-#define RE_PORT_NR	1		/* Minix */
 
 /* I/O vectors are handled IOVEC_NR entries at a time. */
 #define IOVEC_NR	16

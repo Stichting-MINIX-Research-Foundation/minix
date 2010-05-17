@@ -112,6 +112,7 @@ typedef struct ip_fd
 	get_userdata_t if_get_userdata;
 	put_userdata_t if_put_userdata;
 	put_pkt_t if_put_pkt;
+	select_res_t if_select_res;
 	time_t if_exp_time;
 	size_t if_rd_count;
 	ioreq_t if_ioctl;
@@ -120,9 +121,10 @@ typedef struct ip_fd
 #define IFF_EMPTY	0x00
 #define IFF_INUSE	0x01
 #define IFF_OPTSET	0x02
-#define IFF_BUSY	0x1C
+#define IFF_BUSY	0x0C
 #	define IFF_READ_IP	0x04
 #	define IFF_IOCTL_IP	0x08
+#define IFF_SEL_READ	0x10
 
 typedef enum nettype
 {
@@ -166,6 +168,7 @@ void ip_port_arrive ARGS(( ip_port_t *port, acc_t *pack, ip_hdr_t *ip_hdr ));
 void ip_arrived ARGS(( ip_port_t *port, acc_t *pack ));
 void ip_arrived_broadcast ARGS(( ip_port_t *port, acc_t *pack ));
 void ip_process_loopb ARGS(( event_t *ev, ev_arg_t arg ));
+int ip_sel_read ARGS(( ip_fd_t *ip_fd ));
 void ip_packet2user ARGS(( ip_fd_t *ip_fd, acc_t *pack, time_t exp_time,
 	size_t data_len ));
 

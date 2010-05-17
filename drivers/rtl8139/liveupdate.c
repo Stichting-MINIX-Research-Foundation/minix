@@ -1,7 +1,7 @@
 #include "rtl8139.h"
 
 /* State management variables. */
-EXTERN re_t re_table[RE_PORT_NR];
+EXTERN re_t re_state;
 
 /* Custom states definition. */
 #define RL_STATE_READ_PROTOCOL_FREE     (SEF_LU_STATE_CUSTOM_BASE + 0)
@@ -12,28 +12,16 @@ EXTERN re_t re_table[RE_PORT_NR];
 /* State management helpers. */
 PRIVATE int is_reading;
 PRIVATE int is_writing;
+
 PRIVATE void load_state_info(void)
 {
-  int i, found_processing;
   re_t *rep;
 
   /* Check if we are reading or writing. */
-  is_reading = FALSE;
-  is_writing = FALSE;
-  found_processing = FALSE;
-  for (i= 0; i<RE_PORT_NR && !found_processing; i++) {
-      rep = &re_table[i];
+  rep = &re_state;
 
-      if (rep->re_flags & REF_READING) {
-          is_reading = TRUE;
-      }
-
-      if (rep->re_flags & REF_SEND_AVAIL) {
-          is_writing = TRUE;
-      }
-
-      found_processing = (is_reading && is_writing);
-  }
+  is_reading = !!(rep->re_flags & REF_READING);
+  is_writing = !!(rep->re_flags & REF_SEND_AVAIL);
 }
 
 /*===========================================================================*

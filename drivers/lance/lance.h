@@ -20,9 +20,6 @@
 #define PCI_DEVICE_ID_AMD_LANCE	0x2000
 
 
-/* supported max number of ether cards */
-#define EC_PORT_NR_MAX 2
-
 /* macros for 'mode' */
 #define EC_DISABLED    0x0
 #define EC_SINK        0x1
@@ -59,14 +56,11 @@ typedef struct iovec_dat
   vir_bytes iod_iovec_offset;
 } iovec_dat_t;
 
-#define ETH0_SELECTOR  0x61
-#define ETH1_SELECTOR  0x69
-
 /* ====== ethernet card info. ====== */
 typedef struct ether_card
 {
   /* ####### MINIX style ####### */
-  char port_name[sizeof("eth_card#n")];
+  char port_name[sizeof("lance#n")];
   int flags;
   int mode;
   int transfer_mode;

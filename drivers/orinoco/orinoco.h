@@ -15,7 +15,6 @@
 
 #define			LARGE_KEY_LENGTH 13
 #define                 IW_ESSID_MAX_SIZE 32
-#define			OR_PORT_NR 1
 #define			IOVEC_NR 16	
 #define			OR_ENVVAR "ORETH"
 #define			OR_NAME "orinoco#n"

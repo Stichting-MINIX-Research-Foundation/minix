@@ -61,11 +61,7 @@ void give_buf(buf_t **dbp, buf_t **sbp)
     *sbp= nil;
 }
 
-#if __minix_vmd
-#define N_FDS		16	/* Minix-vmd can go async on many fds. */
-#else
-#define N_FDS		 1	/* Minix doesn't have async I/O. */
-#endif
+#define N_FDS		16		/* Minix can go async on many fds. */
 
 static fd_t fds[N_FDS];			/* List of open descriptors. */
 static struct network *fdwaitq;		/* Queue of nets waiting for fds. */

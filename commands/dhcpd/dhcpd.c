@@ -156,10 +156,6 @@ static int readpool(int fd, pool_t *entry)
     return 1;
 }
 
-#if !__minix_vmd	/* No fsync() for Minix. */
-#define fsync(fd)	sync()
-#endif
-
 static void writepool(int fd, pool_t *entry)
 {
     /* (Over)write a pool table entry. */

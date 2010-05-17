@@ -7,50 +7,6 @@
  * Created by Stevens Le Blond <slblond@few.vu.nl> 
  *        and Michael Valkering <mjvalker@cs.vu.nl>
  *
- * * The valid messages and their parameters are:
- *
- *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR   DL_GRANT
- * |------------+----------+---------+----------+---------+---------+---------|
- * | HARDINT	|          |         |          |         |         |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITE	| port nr  | proc nr | count    | mode    | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITEV	| port nr  | proc nr | count    | mode    | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITEV_S| port nr  | proc nr | count    | mode    |         |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READ	| port nr  | proc nr | count    |         | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READV	| port nr  | proc nr | count    |         | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READV_S	| port nr  | proc nr | count    |         |         |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_CONF	| port nr  | proc nr |          | mode    | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_GETSTAT	| port nr  | proc nr |          |         | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * |DL_GETSTAT_S| port nr  | proc nr |          |         |         |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_STOP	| port_nr  |         |          |         |         |         |
- * |------------|----------|---------|----------|---------|---------|---------|
- *
- * The messages sent are:
- *
- *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_STAT   DL_CLCK
- * |------------|----------|---------|----------|---------|---------|
- * |DL_TASK_REPL| port nr  | proc nr | rd-count | err|stat| clock   |
- * |------------|----------|---------|----------|---------|---------|
- *
- *   m_type	  m3_i1     m3_i2       m3_ca1
- * |------------|---------|-----------|---------------|
- * |DL_CONF_REPL| port nr | last port | ethernet addr |
- * |------------|---------|-----------|---------------|
- *
- *   m_type	  DL_PORT    DL_STAT       
- * |------------|---------|-----------|
- * |DL_STAT_REPL| port nr |   err     |
- * |------------|---------|-----------|
- *
  */
 
 #include 	<minix/drivers.h>
@@ -126,7 +82,8 @@ static timer_t or_watchdog;
 #define 	IRQ_BAP 1
 #define		ETH_HLEN		14
 
-PRIVATE t_or or_table[OR_PORT_NR];
+PRIVATE t_or or_state;
+PRIVATE int or_instance;
 
 struct ethhdr {
 	u8_t h_dest[ETH_ALEN];
@@ -185,11 +142,9 @@ struct {
 #define BITRATE_TABLE_SIZE (sizeof(bitrate_table) / sizeof(bitrate_table[0]))
 
 
-_PROTOTYPE (static void or_writev, (message * mp, int from_int, int vectored));
-_PROTOTYPE (static void or_readv, (message * mp, int from_int, int vectored));
 _PROTOTYPE (static void or_writev_s, (message * mp, int from_int));
 _PROTOTYPE (static void or_readv_s, (message * mp, int from_int));
-_PROTOTYPE (static void reply, (t_or * orp, int err, int may_block));
+_PROTOTYPE (static void reply, (t_or * orp));
 _PROTOTYPE (static int  or_probe, (t_or *, int skip));
 _PROTOTYPE (static void or_ev_info, (t_or *));
 _PROTOTYPE (static void or_init, (message *));
@@ -203,7 +158,6 @@ _PROTOTYPE (static void or_readrids, (hermes_t *, t_or *));
 _PROTOTYPE (static void or_rec_mode, (t_or *));
 _PROTOTYPE (static void mess_reply, (message *, message *));
 _PROTOTYPE (static u32_t or_get_bar, (int devind, t_or * orp));
-_PROTOTYPE (static void or_getstat, (message * mp));
 _PROTOTYPE (static void or_getstat_s, (message * mp));
 _PROTOTYPE (static void print_linkstatus, (t_or * orp, u16_t status));
 _PROTOTYPE (static int  or_get_recvd_packet, (t_or *orp, u16_t rxfid, 
@@ -211,10 +165,8 @@ _PROTOTYPE (static int  or_get_recvd_packet, (t_or *orp, u16_t rxfid,
 _PROTOTYPE (static void or_reset, (void));
 _PROTOTYPE (static void or_watchdog_f, (timer_t *tp) );
 _PROTOTYPE (static void setup_wepkey, (t_or *orp, char *wepkey0) );
-_PROTOTYPE (static void or_getstat, (message *m));
 _PROTOTYPE (static void do_hard_int, (void));
 _PROTOTYPE (static void check_int_events, (void));
-_PROTOTYPE (static void or_getname, (message *m));
 _PROTOTYPE (static void or_handler, (t_or *orp));
 _PROTOTYPE (static void or_dump, (message *m));
 
@@ -225,8 +177,6 @@ PRIVATE message m;
 PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 
 PRIVATE u32_t system_hz;
-
-PRIVATE const char *progname;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -275,20 +225,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		switch (m.m_type) {
-		case DL_WRITEV:
-			or_writev (&m, FALSE, TRUE);
-			break;
 		case DL_WRITEV_S:
 			or_writev_s (&m, FALSE);
-			break;
-		case DL_WRITE:
-			or_writev (&m, FALSE, FALSE);
-			break;
-		case DL_READ:
-			or_readv (&m, FALSE, FALSE);
-			break;
-		case DL_READV:
-			or_readv (&m, FALSE, TRUE);
 			break;
 		case DL_READV_S:
 			or_readv_s (&m, FALSE);
@@ -296,14 +234,8 @@ int main(int argc, char *argv[]) {
 		case DL_CONF:
 			or_init (&m);
 			break;
-		case DL_GETSTAT:
-			or_getstat (&m);
-			break;
 		case DL_GETSTAT_S:
 			or_getstat_s (&m);
-			break;
-		case DL_GETNAME: 
-			or_getname(&m);
 			break;
 		default:
 			panic("orinoco: illegal message: %d", m.m_type);
@@ -338,12 +270,14 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the orinoco driver. */
+	long v;
 	int fkeys, sfkeys, r;
 
 	system_hz = sys_hz();
 
-	(progname=strrchr(env_argv[0],'/')) ? progname++
-		: (progname=env_argv[0]);
+	v = 0;
+	(void) env_parse("instance", "d", 0, &v, 0, 255);
+	or_instance = (int) v;
 
 	/* Observe some function key for debug dumps. */
 	fkeys = sfkeys = 0; bit_set(sfkeys, 11);
@@ -361,15 +295,14 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
  *===========================================================================*/
 PRIVATE void sef_cb_signal_handler(int signo)
 {
-	int i;
 	t_or *orp;
 
 	/* Only check for termination signal, ignore anything else. */
 	if (signo != SIGTERM) return;
 
-	for (i= 0, orp= &or_table[0]; i<OR_PORT_NR; i++, orp++) {
-		if (orp->or_mode != OR_M_ENABLED)
-			continue;
+	orp = &or_state;
+
+	if (orp->or_mode == OR_M_ENABLED) {
 		/* TODO: send a signal to the card to shut it down */
 	}
 	exit(0);
@@ -386,35 +319,16 @@ static void check_int_events(void) {
 
 	/* the interrupt message doesn't contain information about the port, try
 	 * to find it */
-	for (orp = or_table;
-		 orp < or_table + OR_PORT_NR; orp++) {
-		if (orp->or_mode != OR_M_ENABLED)
-			continue;
-		if (!orp->or_got_int)
-			continue;
-		orp->or_got_int = 0;
-		assert (orp->or_flags & OR_F_ENABLED);
-		or_check_ints (orp);
-	}
+	orp = &or_state;
 
-}
+	if (orp->or_mode != OR_M_ENABLED)
+		return;
+	if (!orp->or_got_int)
+		return;
+	orp->or_got_int = 0;
+	assert (orp->or_flags & OR_F_ENABLED);
+	or_check_ints (orp);
 
-/****************************************************************************
- *                    or_getname                                            *
- *                                                                          *
- * Gets the drivers name, orinoco                                           *
- ****************************************************************************/
-static void or_getname(message *mp) {
-	int r;
-	
-	strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
-	mp->DL_NAME[sizeof(mp->DL_NAME) - 1] = '\0';
-	mp->m_type = DL_NAME_REPLY;
-
-	r = send(mp->m_source, mp);
-	if(r != OK) {
-		panic("or_getname: send failed: %d", r);
-	}
 }
 
 /*****************************************************************************
@@ -424,17 +338,15 @@ static void or_getname(message *mp) {
  *****************************************************************************/
 static void do_hard_int(void)
 {
-	int i,s;
+	int s;
 
-	for (i=0; i < OR_PORT_NR; i ++) {
-		/* Run interrupt handler at driver level. */
-		or_handler( &or_table[i]);
+	/* Run interrupt handler at driver level. */
+	or_handler(&or_state);
 
-		/* Reenable interrupts for this hook. */
-		if ((s=sys_irqenable(&or_table[i].or_hook_id)) != OK) {
-			printf("orinoco: error, couldn't enable");
-			printf(" interrupts: %d\n", s);
-		}
+	/* Reenable interrupts for this hook. */
+	if ((s=sys_irqenable(&or_state.or_hook_id)) != OK) {
+		printf("orinoco: error, couldn't enable");
+		printf(" interrupts: %d\n", s);
 	}
 }
 
@@ -447,7 +359,7 @@ static void do_hard_int(void)
 static void or_reset() {
 	static clock_t last_reset, now;	
 	t_or *orp;
-	int i, j, r;
+	int i, r;
 
 	if (OK != (r = getuptime(&now)))
 		panic("orinoco: getuptime() failed: %d", r);
@@ -456,31 +368,30 @@ static void or_reset() {
 		printf("Resetting card too often. Going to reset driver\n");
 		exit(1);
 	}
-	
-	for (i = 0, orp = or_table; orp < or_table + OR_PORT_NR; i++, orp++) {
-		if(orp->or_mode == OR_M_DISABLED) 
-			printf("orinoco port %d is disabled\n", i);
-		
-		if(orp->or_mode != OR_M_ENABLED) {
-			continue;
-		}
-
-		orp->or_need_reset = 0;
-		or_init_hw(orp);
-
-		orp->rx_last = orp->rx_first = 0;
-		for(j = 0; j < NR_RX_BUFS; j++) {
-			orp->rx_length[0] = 0;
-		}
-
-		if(orp->or_flags & OR_F_SEND_AVAIL) {
-			orp->or_tx.ret_busy = FALSE;
-		 	orp->or_send_int = TRUE;
-		}
-	}
 
 	last_reset = now;
+	
+	orp = &or_state;
 
+	if(orp->or_mode == OR_M_DISABLED) 
+		printf("orinoco instance %d is disabled\n", or_instance);
+		
+	if(orp->or_mode != OR_M_ENABLED) {
+		return;
+	}
+
+	orp->or_need_reset = 0;
+	or_init_hw(orp);
+
+	orp->rx_last = orp->rx_first = 0;
+	for(i = 0; i < NR_RX_BUFS; i++) {
+		orp->rx_length[0] = 0;
+	}
+
+	if(orp->or_flags & OR_F_SEND_AVAIL) {
+		orp->or_tx.ret_busy = FALSE;
+		orp->or_send_int = TRUE;
+	}
 }
 
 /*****************************************************************************
@@ -492,23 +403,23 @@ static void or_reset() {
 static void or_dump (message *m)
  {
 	t_or *orp;
+	
+	orp = &or_state;
 
-	for (orp = or_table; orp < or_table + OR_PORT_NR; orp++) {
-		if(orp->or_mode == OR_M_DISABLED) {
-			printf("%s is disabled\n", orp->or_name);
-		}
+	if(orp->or_mode == OR_M_DISABLED) {
+		printf("%s is disabled\n", orp->or_name);
+	}
 		
-		if(orp->or_mode != OR_M_ENABLED)
-			continue;
+	if(orp->or_mode != OR_M_ENABLED)
+		return;
 
-		m->m_type = FKEY_CONTROL;
-		m->FKEY_REQUEST = FKEY_EVENTS;
-		if(OK!=(sendrec(TTY_PROC_NR,m)) )
-			printf("Contacting the TTY failed\n");
+	m->m_type = FKEY_CONTROL;
+	m->FKEY_REQUEST = FKEY_EVENTS;
+	if(OK!=(sendrec(TTY_PROC_NR,m)) )
+		printf("Contacting the TTY failed\n");
 		
-		if(bit_isset(m->FKEY_SFKEYS, 11)) {
-			print_linkstatus(orp, orp->last_linkstatus);
-		}
+	if(bit_isset(m->FKEY_SFKEYS, 11)) {
+		print_linkstatus(orp, orp->last_linkstatus);
 	}
 }
 
@@ -518,7 +429,6 @@ static void or_dump (message *m)
  * The main initialization function, called when a DL_INIT message comes in. *
  *****************************************************************************/
 static void or_init (message * mp) {
-	int port;
 	t_or *orp;
 	message reply;
 	static int first_time = 1;
@@ -532,25 +442,14 @@ static void or_init (message * mp) {
 		sys_setalarm(system_hz, 0);
 	}	
 
-	port = mp->DL_PORT;
-	if (port < 0 || port >= OR_PORT_NR)	{
-		/* illegal port in message */
-		reply.m_type = DL_CONF_REPLY;
-		reply.m3_i1 = ENXIO;
-		mess_reply (mp, &reply);
-		return;
-	}
-
-	/* the port resolves to the main orinoco structure */
-	orp = &or_table[port];
-	/* resolving to the main hardware structure */
+	orp = &or_state;
 
 	if (orp->or_mode == OR_M_DISABLED) {
 		/* Initialize the orp structure */
 		or_init_struct (orp);
 		if (orp->or_mode == OR_M_DISABLED) {
 			reply.m_type = DL_CONF_REPLY;
-			reply.m3_i1 = ENXIO;
+			reply.DL_STAT = ENXIO;
 			mess_reply (mp, &reply);
 			return;
 		}
@@ -575,14 +474,12 @@ static void or_init (message * mp) {
 	if (mp->DL_MODE & DL_BROAD_REQ)
 		orp->or_flags |= OR_F_BROAD;
 
-	orp->or_client = mp->m_source;
 	or_rec_mode (orp);
 
 	/* reply the caller that the configuration succeeded */
 	reply.m_type = DL_CONF_REPLY;
-	reply.m3_i1 = mp->DL_PORT;
-	reply.m3_i2 = OR_PORT_NR;
-	*(ether_addr_t *) reply.m3_ca1 = orp->or_address;
+	reply.DL_STAT = OK;
+	*(ether_addr_t *) reply.DL_HWADDR = orp->or_address;
 	mess_reply (mp, &reply);
 }
 
@@ -597,48 +494,40 @@ static void or_init (message * mp) {
 static void or_pci_conf () {
 	long v;
 	t_or *orp;
-	int i, h;
 	static char envfmt[] = "*:d.d.d";
 	static char envvar[] = OR_ENVVAR "#";
 	static char val[128];
 
 	/* extract information from the boot monitor about the pci 
 	 * configuration if provided */
-	for (i = 0, orp = or_table; i < OR_PORT_NR; i++, orp++)	{
-		strncpy (orp->or_name, OR_NAME, sizeof(OR_NAME));
-		orp->or_name[sizeof(OR_NAME) - 2] = i + '0';
-		orp->or_seen = FALSE;
-		/* whats this envvar; whats the definition;*/
-		/* i guess this whole loop could be removed*/
-		envvar[sizeof (OR_ENVVAR) - 1] = '0' + i;
-		if (0 == env_get_param(envvar, val, sizeof(val)) && 
-			! env_prefix(envvar, "pci")) {
-			env_panic(envvar);
-		}
-		v = 0;
-		(void) env_parse (envvar, envfmt, 1, &v, 0, 255);
-		orp->or_pci_bus = v;
-		v = 0;
-		(void) env_parse (envvar, envfmt, 2, &v, 0, 255);
-		orp->or_pci_dev = v;
-		v = 0;
-		(void) env_parse (envvar, envfmt, 3, &v, 0, 255);
-		orp->or_pci_func = v;
+	orp = &or_state;
+
+	strncpy (orp->or_name, OR_NAME, sizeof(OR_NAME));
+	orp->or_name[sizeof(OR_NAME) - 2] = or_instance + '0';
+	orp->or_seen = FALSE;
+	/* whats this envvar; whats the definition;*/
+	/* i guess this whole loop could be removed*/
+	envvar[sizeof (OR_ENVVAR) - 1] = '0' + or_instance;
+	if (0 == env_get_param(envvar, val, sizeof(val)) && 
+		! env_prefix(envvar, "pci")) {
+		env_panic(envvar);
 	}
+	v = 0;
+	(void) env_parse (envvar, envfmt, 1, &v, 0, 255);
+	orp->or_pci_bus = v;
+	v = 0;
+	(void) env_parse (envvar, envfmt, 2, &v, 0, 255);
+	orp->or_pci_dev = v;
+	v = 0;
+	(void) env_parse (envvar, envfmt, 3, &v, 0, 255);
+	orp->or_pci_func = v;
 
 	/* Initialize the pci bus, bridges and cards, if not yet done */
 	pci_init ();
 	
-	/* Try to find out where the card(s) are in the pci bus */
-	for (h = 1; h >= 0; h--)
-		for (i = 0, orp = or_table; i < OR_PORT_NR; i++, orp++)	{
-			if (((orp->or_pci_bus | orp->or_pci_dev |
-			      orp->or_pci_func) != 0) != h)	{
-				continue;
-			}
-			if (or_probe (orp, i))
-				orp->or_seen = TRUE;
-		}
+	/* Try to find out where the card is in the pci bus */
+	if (or_probe (orp, or_instance))
+		orp->or_seen = TRUE;
 }
 
 /*****************************************************************************
@@ -815,7 +704,7 @@ static u32_t or_get_bar (int devind, t_or * orp)
 				orp->or_name, bar, orp->or_irq);
 		}
 
-		panic("Not implemente yet");
+		panic("Not implemented yet");
 		/* Although we are able to find the desired bar and irq for an 
 		 * I/O spaced card, we haven't implemented the right register 
  		 * accessing functions. This wouldn't be difficult, but we were
@@ -913,7 +802,7 @@ static void or_init_hw (t_or * orp)
 	}
 
 	/* here begins the real things, yeah! ;) */
-	if (err = hermes_init (hw))	{
+	if ((err = hermes_init (hw)) != 0) {
 		printf ("error value of hermes_init(): %d\n", err);
 	}
 
@@ -1293,43 +1182,41 @@ next:
  *****************************************************************************/
 static void or_watchdog_f(timer_t *tp)
 {
-	int i;
 	t_or *orp;
 	
 	/* Use a synchronous alarm instead of a watchdog timer. */
 	sys_setalarm(system_hz, 0);
 
-	for (i= 0, orp = &or_table[0]; i<OR_PORT_NR; i++, orp++) {
-		if (orp->or_mode != OR_M_ENABLED)
-			continue;
+	orp = &or_state;
 
-		if (!(orp->or_flags & OR_F_SEND_AVAIL))	{
-			/* Assume that an idle system is alive */
-			orp->or_tx_alive= TRUE;
-			continue;
-		}
+	if (orp->or_mode != OR_M_ENABLED)
+		return;
 
-		if (orp->connected == 0) {
-			orp->or_tx_alive= TRUE;
-			continue;
-		}
-		if (orp->or_tx_alive) {
-			orp->or_tx_alive= FALSE;
-			continue;
-		}
-		
-		printf("or_watchdog_f: resetting port %d\n", i);
-		
-		orp->or_need_reset= TRUE;
-		orp->or_got_int= TRUE;
-		check_int_events();
+	if (!(orp->or_flags & OR_F_SEND_AVAIL))	{
+		/* Assume that an idle system is alive */
+		orp->or_tx_alive= TRUE;
+		return;
 	}
+
+	if (orp->connected == 0) {
+		orp->or_tx_alive= TRUE;
+		return;
+	}
+	if (orp->or_tx_alive) {
+		orp->or_tx_alive= FALSE;
+		return;
+	}
+	
+	printf("or_watchdog_f: resetting instance %d\n", or_instance);
+	
+	orp->or_need_reset= TRUE;
+	orp->or_got_int= TRUE;
+	check_int_events();
 }
 
 /*****************************************************************************
  *                mess_reply                                                 *
  *****************************************************************************/
-
 static void mess_reply (message * req, message * reply_mess)
 {
 	if (send (req->m_source, reply_mess) != 0)
@@ -1338,183 +1225,12 @@ static void mess_reply (message * req, message * reply_mess)
 }
 
 /*****************************************************************************
- *                or_writev                                                  *
- *                                                                           *
- * As far as we can see, this function is never called from 3.1.3. However,  *
- * it is still in rtl8139, so we'll keep it here as well. It's almost a copy *
- * of or_writev_s. We left out the comments. For an explanation, see         *
- * or_writev_s                                                               *
-******************************************************************************/
-static void or_writev (message * mp, int from_int, int vectored)
-{
-	int port, or_client, count, size, err, data_len, data_off;
-	int o, j, n, i, s, p, cps;
-	struct ethhdr *eh;
-	t_or *orp;
-	hermes_t *hw;
-	struct hermes_tx_descriptor desc;
-	struct header_struct hdr;
-
-	iovec_t *iovp;
-	u16_t txfid;
-	static u8_t databuf[IEEE802_11_DATA_LEN + ETH_HLEN + 2 + 1];
-	memset (databuf, 0, IEEE802_11_DATA_LEN + ETH_HLEN + 3);
-
-	port = mp->DL_PORT;
-	count = mp->DL_COUNT;
-	if (port < 0 || port >= OR_PORT_NR)
-		panic("orinoco: illegal port");
-	
-	or_client = mp->DL_PROC;
-	orp = &or_table[port];
-	orp->or_client = or_client;
-	hw = &(orp->hw);
-
-	if (from_int) {
-		assert (orp->or_flags & OR_F_SEND_AVAIL);
-		orp->or_flags &= ~OR_F_SEND_AVAIL;
-		orp->or_send_int = FALSE;
-		orp->or_tx_alive = TRUE;
-	}
-
-	if (orp->or_tx.ret_busy) {
-		assert(!(orp->or_flags & OR_F_SEND_AVAIL));
-		orp->or_flags |= OR_F_SEND_AVAIL;
-		goto suspend_write;
-	}
-
-	assert (orp->or_mode == OR_M_ENABLED);
-	assert (orp->or_flags & OR_F_ENABLED);
-
-	/* CvR: copied from or_writev_s(), since txfid was not initialized. */
-	txfid = orp->or_tx.or_txfid;
-
-	if (vectored) {
-
-		int iov_offset = 0;
-		size = 0;
-		o = 0;
-
-		for (i = 0; i < count; i += IOVEC_NR,
-			 iov_offset += IOVEC_NR * sizeof (orp->or_iovec[0])) {
-
-			n = IOVEC_NR;
-			if (i + n > count)
-				n = count - i;
-			cps = sys_vircopy(or_client, D, 
-				((vir_bytes) mp->DL_ADDR) + iov_offset,
-				SELF, D, (vir_bytes) orp->or_iovec,
-				n * sizeof(orp->or_iovec[0]));
-			if (cps != OK) printf("sys_vircopy failed: %d\n", cps);
-
-			for (j = 0, iovp = orp->or_iovec; j < n; j++, iovp++) {
-				s = iovp->iov_size;
-				if (size + s > ETH_MAX_PACK_SIZE_TAGGED) {
-					printf("invalid packet size\n");
-				}
-				cps = sys_vircopy(or_client, D, iovp->iov_addr,
-					SELF, D, (vir_bytes) databuf + o, s);
-				if (cps != OK) 
-					printf("sys_vircopy failed: %d\n",cps);
-
-				size += s;
-				o += s;
-			}
-		}
-		if (size < ETH_MIN_PACK_SIZE)
-			printf("invalid packet size %d\n", size);
-	} else {
-		size = mp->DL_COUNT;
-		if (size < ETH_MIN_PACK_SIZE
-		    || size > ETH_MAX_PACK_SIZE_TAGGED)
-			printf("invalid packet size %d\n", size);
-
-		cps = sys_vircopy(or_client, D, (vir_bytes)mp->DL_ADDR, 
-			SELF, D, (vir_bytes) databuf, size);
-		if (cps != OK) printf("sys_abscopy failed: %d\n", cps);
-	}
-
-	memset (&desc, 0, sizeof (desc));
-	desc.tx_control = HERMES_TXCTRL_TX_OK | HERMES_TXCTRL_TX_EX;
-
-	err = hermes_bap_pwrite (hw, USER_BAP, &desc, sizeof (desc), txfid,
-				 0);
-	if (err) {
-		or_reset();
-		goto fail;
-	}
-
-	eh = (struct ethhdr *) databuf;
-	if (ntohs (eh->h_proto) > 1500) {
-
-		data_len = size - ETH_HLEN;
-		data_off = HERMES_802_3_OFFSET + sizeof (hdr);
-
-		memcpy (hdr.dest, eh->h_dest, ETH_ALEN);
-		memcpy (hdr.src, eh->h_src, ETH_ALEN);
-		hdr.len = htons (data_len + ENCAPS_OVERHEAD);
-
-		memcpy (&hdr.dsap, &encaps_hdr, sizeof (encaps_hdr));
-		hdr.ethertype = eh->h_proto;
-
-		err = hermes_bap_pwrite (hw, USER_BAP, &hdr, sizeof (hdr),
-					 txfid, HERMES_802_3_OFFSET);
-		if (err) {
-			printf ("%s: Error %d writing packet header to BAP\n",
-				orp->or_name, err);
-			goto fail;
-		}
-
-		p = ETH_HLEN;
-	} else {
-		data_len = size + ETH_HLEN;
-		data_off = HERMES_802_3_OFFSET;
-		p = 0;
-	}
-
-	err = hermes_bap_pwrite (hw, USER_BAP,
-				 (void *) &(databuf[p]), RUP_EVEN (data_len),
-				 txfid, data_off);
-	if (err) {
-		printf ("hermes_bap_pwrite(data): error %d\n", err);
-		goto fail;
-	}
-
-	orp->or_tx.ret_busy = TRUE;
-	
-	err = hermes_docmd_wait (hw, HERMES_CMD_TX | HERMES_CMD_RECL,
-				 txfid, NULL);
-	if (err) {
-		orp->or_tx.ret_busy = FALSE;
-		printf ("hermes_docmd_wait(TX|RECL): error %d\n", err);
-		goto fail;
-	}
-
-fail:
-	orp->or_flags |= OR_F_PACK_SENT;
-
-	if (from_int) {
-		return;
-	}
-
-	reply (orp, OK, FALSE);
-	return;
-
-suspend_write:
-	orp->or_tx_mess = *mp;
-	reply (orp, OK, FALSE);
-	return;
-}
-
-
-
-/*****************************************************************************
  *                or_writev_s                                                *
  *                                                                           *
  * Write data which is denoted by the message to the card and send it.       *
  *****************************************************************************/
 static void or_writev_s (message * mp, int from_int) {
-	int port, or_client, count, size, err, data_len, data_off;
+	int count, size, err, data_len, data_off;
 	int o, j, n, i, s, p, cps ;
 	struct ethhdr *eh;
 	t_or *orp;
@@ -1533,14 +1249,11 @@ static void or_writev_s (message * mp, int from_int) {
 	static u8_t databuf[IEEE802_11_DATA_LEN + ETH_HLEN + 2 + 1];
 	memset (databuf, 0, IEEE802_11_DATA_LEN + ETH_HLEN + 3);
 
-	port = mp->DL_PORT;
-	count = mp->DL_COUNT;
-	if (port < 0 || port >= OR_PORT_NR)
-		panic("orinoco: illegal port");
+	orp = &or_state;
 
-	or_client = mp->DL_PROC;
-	orp = &or_table[port];
-	orp->or_client = or_client;
+	count = mp->DL_COUNT;
+
+	orp->or_client = mp->m_source;
 	hw = &(orp->hw);
 
 	/* Switch off interrupts. The card is accessable via 2 BAPs, one for
@@ -1583,7 +1296,7 @@ static void or_writev_s (message * mp, int from_int) {
 		if (i + n > count)
 			n = count - i;
 
-		cps = sys_safecopyfrom(or_client, mp->DL_GRANT, iov_offset,
+		cps = sys_safecopyfrom(mp->DL_ENDPT, mp->DL_GRANT, iov_offset,
 			(vir_bytes) orp->or_iovec_s, 
 			n * sizeof(orp->or_iovec_s[0]), D);
 		if (cps != OK) 
@@ -1595,8 +1308,8 @@ static void or_writev_s (message * mp, int from_int) {
 				printf("Orinoco: invalid pkt size\n");
 			}
 
-			cps = sys_safecopyfrom(or_client, iovp->iov_grant, 0,
-						(vir_bytes) databuf + o, s, D);
+			cps = sys_safecopyfrom(mp->DL_ENDPT, iovp->iov_grant,
+					0, (vir_bytes) databuf + o, s, D);
 			if (cps != OK) 
 				printf("orinoco: sys_safecopyfrom failed:%d\n",
 						cps);
@@ -1691,13 +1404,13 @@ fail:
 		return;
 	}
 
-	reply (orp, OK, FALSE);
+	reply (orp);
 	return;
 
 suspend_write_s:
 	orp->or_tx_mess = *mp;
 
-	reply (orp, OK, FALSE);
+	reply (orp);
 	return;
 }
 
@@ -1708,32 +1421,20 @@ suspend_write_s:
  * Send a message back to the caller, informing it about the data received   *
  * or sent                                                                   *
  *****************************************************************************/
-static void reply (t_or * orp, int err, int may_block) {
+static void reply (t_or * orp) {
 	message reply;
-	int status = 0, r;
-	clock_t now;
+	int flags = DL_NOFLAGS, r;
 
 	if (orp->or_flags & OR_F_PACK_SENT)
-		status |= DL_PACK_SEND;
+		flags |= DL_PACK_SEND;
 	if (orp->or_flags & OR_F_PACK_RECV)
-		status |= DL_PACK_RECV;
+		flags |= DL_PACK_RECV;
 
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_PORT = orp - or_table;
-	assert(reply.DL_PORT == 0);
-	reply.DL_PROC = orp->or_client;
-	reply.DL_STAT = status | ((u32_t) err << 16);
+	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = orp->or_read_s;
 
-	if (OK != (r = getuptime(&now)))
-		panic("orinoco: getuptime() failed: %d", r);
-
-	reply.DL_CLCK = now;
 	r = send (orp->or_client, &reply);
-
-	if (r == ELOCKED && may_block) {
-		return;
-	}
 
 	if (r < 0)
 		panic("orinoco: send failed: %d", r);
@@ -1741,7 +1442,6 @@ static void reply (t_or * orp, int err, int may_block) {
 	orp->or_read_s = 0;
 	orp->or_flags &= ~(OR_F_PACK_SENT | OR_F_PACK_RECV);
 }
-
 
 
 /*****************************************************************************
@@ -1885,7 +1585,7 @@ static void print_linkstatus (t_or * orp, u16_t status) {
 		printf ("%s: Error %d \n", orp->or_name, err);
 		return;
 	}
-	printf("channel: %d, freq: %d MHz ", 
+	printf("channel: %d, freq: %ld MHz ", 
 		d, (channel_frequency[d-1]));
 
 }
@@ -1902,30 +1602,15 @@ static void or_check_ints (t_or * orp)
 		or_reset();
 	if ((orp->rx_first!=orp->rx_last) && (orp->or_flags & OR_F_READING)) {
 		orp->or_ev_rx = 0;
-		if (orp->or_rx_mess.m_type == DL_READV) {
-			or_readv (&orp->or_rx_mess, TRUE, TRUE);
-		} else if(orp->or_rx_mess.m_type == DL_READV_S) {
-			or_readv_s (&orp->or_rx_mess, TRUE);
-		} else {
-			assert(orp->or_rx_mess.m_type == DL_READ);
-			or_readv (&orp->or_rx_mess, TRUE, FALSE);
-		}
+		or_readv_s (&orp->or_rx_mess, TRUE);
 	}
 
 	if (orp->or_send_int) {
-		if (orp->or_tx_mess.m_type == DL_WRITEV) {
-			or_writev (&orp->or_tx_mess, TRUE, TRUE);
-		}
-		else if(orp->or_tx_mess.m_type == DL_WRITEV_S) {
-			or_writev_s (&orp->or_tx_mess, TRUE);
-		} else {
-			assert(orp->or_tx_mess.m_type == DL_WRITE);
-			or_writev (&orp->or_tx_mess, TRUE, FALSE);
-		}
+		or_writev_s (&orp->or_tx_mess, TRUE);
 	}
 
 	if (orp->or_flags & (OR_F_PACK_SENT | OR_F_PACK_RECV)) {
-		reply (orp, OK, TRUE);
+		reply (orp);
 	}
 }
 
@@ -1948,118 +1633,6 @@ static int is_ethersnap(struct header_struct *hdr)  {
 }
 	
 /*****************************************************************************
- *                or_readv                                                   *
- *                                                                           *
- * As far as we can see, this function is never called from 3.1.3. However,  *
- * it is still in rtl8139, so we'll keep it here as well. It's almost a copy *
- * of or_readv_s. We left out the comments. For an explanation, see          *
- * or_readv_s                                                                *
- *****************************************************************************/
-static void or_readv (message * mp, int from_int, int vectored) {
-	int i, j, n, o, s, dl_port;
-	int or_client, count;
-	int size, cps;
-	int length;
-	t_or *orp;
-	iovec_t *iovp;
-	u8_t *databuf;
-
-	dl_port = mp->DL_PORT;
-	count = mp->DL_COUNT;
-	if (dl_port < 0 || dl_port >= OR_PORT_NR)
-		panic("orinoco: illegal port: %d", dl_port);
-
-	orp = &or_table[dl_port];
-	or_client = mp->DL_PROC;
-	orp->or_client = or_client;
-
-	assert (orp->or_mode == OR_M_ENABLED);
-	assert (orp->or_flags & OR_F_ENABLED);
-
-	if (!from_int && (orp->rx_first==orp->rx_last)) {
-		goto suspend_readv;
-	}
-
-	databuf = &(orp->rx_buf[orp->rx_first][0]);
-	length = orp->rx_length[orp->rx_first];
-
-	orp->rxfid[orp->rx_first] = NO_FID;
-	orp->rx_length[orp->rx_first] = 0;
-
-	orp->rx_first++;
-	orp->rx_first %= NR_RX_BUFS;
-
-	o = 0;
-	
-	if (vectored) {
-		int iov_offset = 0;
-		size = 0;
-
-		for (i = 0; i < count; i += IOVEC_NR,
-			iov_offset += IOVEC_NR * sizeof(orp->or_iovec[0])) {
-
-			n = IOVEC_NR;
-			if (i + n > count)
-				n = count - i;
-			
-			cps = sys_vircopy(or_client, D, 
-					(vir_bytes) mp->DL_ADDR + iov_offset,
-					SELF, D, (vir_bytes) orp->or_iovec, 
-					n * sizeof(orp->or_iovec[0]));
-			if (cps != OK) printf("sys_vircopy failed: %d (%d)\n", 
-							cps, __LINE__);
-
-			for (j = 0, iovp = orp->or_iovec; j < n; j++, iovp++) {
-				s = iovp->iov_size;
-				if (size + s > length) {
-					assert (length > size);
-					s = length - size;
-				}
-
-				cps = sys_vircopy(SELF, D, 
-						(vir_bytes) databuf + o,
-						or_client, D, 
-						iovp->iov_addr, s);
-				if (cps != OK) 
-					printf("sys_vircopy failed:%d (%d)\n", 
-						cps, __LINE__);
-
-				size += s;
-				if (size == length)
-					break;
-				o += s;
-			}
-			if (size == length)
-				break;
-		}
-		assert (size >= length);
-	} 
-
-	orp->or_stat.ets_packetR++;
-	orp->or_read_s = length;
-	orp->or_flags &= ~OR_F_READING;
-	orp->or_flags |= OR_F_PACK_RECV;
-
-	if (!from_int)
-		reply (orp, OK, FALSE);
-
-	return;
-
-suspend_readv :
-	if (from_int) {
-		assert (orp->or_flags & OR_F_READING);
-		return;
-	}
-
-	orp->or_rx_mess = *mp;
-	assert (!(orp->or_flags & OR_F_READING));
-	orp->or_flags |= OR_F_READING;
-
-	reply (orp, OK, FALSE);
-}
-
-
-/*****************************************************************************
  *                or_readv_s                                                 *
  *                                                                           *
  * Copy the data which is stored in orp->rx_buf[orp->rx_first] in the vector *
@@ -2067,20 +1640,16 @@ suspend_readv :
  *****************************************************************************/
 static void or_readv_s (message * mp, int from_int)
 {
-	int i, j, n, o, s, dl_port, or_client, count, size, cps;
+	int i, j, n, o, s, count, size, cps;
 	int iov_offset = 0, length;
 	t_or *orp;
 	iovec_s_t *iovp;
 	u8_t *databuf;
 
-	dl_port = mp->DL_PORT;
-	count = mp->DL_COUNT;
-	if (dl_port < 0 || dl_port >= OR_PORT_NR)
-		panic("orinoco: illegal port: %d", dl_port);
+	orp = &or_state;
 
-	orp = &or_table[dl_port];
-	or_client = mp->DL_PROC;
-	orp->or_client = or_client;
+	orp->or_client = mp->m_source;
+	count = mp->DL_COUNT;
 
 	assert (orp->or_mode == OR_M_ENABLED);
 	assert (orp->or_flags & OR_F_ENABLED);
@@ -2118,7 +1687,7 @@ static void or_readv_s (message * mp, int from_int)
 		if (i + n > count)
 			n = count - i;
 
-		cps = sys_safecopyfrom(or_client, mp->DL_GRANT, iov_offset, 
+		cps = sys_safecopyfrom(mp->DL_ENDPT, mp->DL_GRANT, iov_offset, 
 				(vir_bytes)orp->or_iovec_s,
 				n * sizeof(orp->or_iovec_s[0]), D);
 		if (cps != OK) 
@@ -2130,7 +1699,7 @@ static void or_readv_s (message * mp, int from_int)
 				assert (length > size);
 				s = length - size;
 			}
-			cps = sys_safecopyto(or_client, iovp->iov_grant, 0, 
+			cps = sys_safecopyto(mp->DL_ENDPT, iovp->iov_grant, 0, 
 					(vir_bytes) databuf + o, s, D);
 			if (cps != OK) 
 				panic("orinoco: warning: sys_safecopy failed: %d", cps);
@@ -2147,7 +1716,6 @@ static void or_readv_s (message * mp, int from_int)
 	assert(size >= length);
 
 	orp->or_stat.ets_packetR++;
-drop:
 	orp->or_read_s = length;
 	orp->or_flags &= ~OR_F_READING;
 	orp->or_flags |= OR_F_PACK_RECV;
@@ -2155,7 +1723,7 @@ drop:
 	if (!from_int) {
 		/* There was data in the orp->rx_buf[x] which is now copied to 
 		 * the inet sever. Tell the inet server */
-		reply (orp, OK, FALSE);
+		reply (orp);
 	}
 
 	return;
@@ -2172,7 +1740,7 @@ suspend_readv_s:
 	assert (!(orp->or_flags & OR_F_READING));
 	orp->or_flags |= OR_F_READING;
 
-	reply (orp, OK, FALSE);
+	reply (orp);
 
 }
 
@@ -2281,78 +1849,30 @@ static int or_get_recvd_packet(t_or *orp, u16_t rxfid, u8_t *databuf) {
 }
 
 /*****************************************************************************
- *            or_getstat                                                     *
- *                                                                           *
- * Return the statistics structure. The statistics aren't updated until now, *
- * so this won't return much interesting yet.                                *
- *****************************************************************************/
-static void or_getstat (message * mp)
-{
-	int r, port;
-	eth_stat_t stats;
-	t_or *orp;
-
-	port = mp->DL_PORT;
-	if (port < 0 || port >= OR_PORT_NR)
-		panic("orinoco: illegal port: %d", port);
-	orp = &or_table[port];
-	orp->or_client = mp->DL_PROC;
-
-	assert (orp->or_mode == OR_M_ENABLED);
-	assert (orp->or_flags & OR_F_ENABLED);
-
-	stats = orp->or_stat;
-
-	r = sys_datacopy(SELF, (vir_bytes)&stats, mp->DL_PROC,
-			(vir_bytes) mp->DL_ADDR, sizeof(stats));
-	if(r != OK) {
-		panic("or_getstat: send failed: %d", r);	
-	}
-
-	mp->m_type = DL_STAT_REPLY;
-	mp->DL_PORT = port;
-	mp->DL_STAT = OK;
-
-	r = send(mp->m_source, mp);
-	if(r != OK)
-		panic("orinoco: getstat failed: %d", r);
-
-	/*reply (orp, OK, FALSE);*/
-
-}
-
-/*****************************************************************************
  *            or_getstat_s                                                   *
  *                                                                           *
  * Return the statistics structure. The statistics aren't updated until now, *
  * so this won't return much interesting yet.                                *
  *****************************************************************************/
 static void or_getstat_s (message * mp) {
-	int r, port;
+	int r;
 	eth_stat_t stats;
 	t_or *orp;
 
-	port = mp->DL_PORT;
-	if (port < 0 || port >= OR_PORT_NR)
-		panic("orinoco: illegal port: %d", port);
-	assert(port==0);
-	orp = &or_table[port];
-	orp->or_client = mp->DL_PROC;
+	orp = &or_state;
 
 	assert (orp->or_mode == OR_M_ENABLED);
 	assert (orp->or_flags & OR_F_ENABLED);
 
 	stats = orp->or_stat;
 
-	r = sys_safecopyto(mp->DL_PROC,	mp->DL_GRANT, 0, 
+	r = sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0, 
 				(vir_bytes) &stats, sizeof(stats), D);
 	if(r != OK) {
 		panic("or_getstat_s: sys_safecopyto failed: %d", r);
 	}
 
 	mp->m_type = DL_STAT_REPLY;
-	mp->DL_PORT = port;
-	mp->DL_STAT = OK;
 
 	r = send(mp->m_source, mp);
 	if(r != OK)

@@ -26,12 +26,12 @@ extern dev_t ip_dev;		/* Device number of /dev/ip */
 
 struct eth_conf
 {
-	char *ec_task;		/* Kernel ethernet task name if nonnull */
-	u8_t ec_port;		/* Task port (!vlan) or Ethernet port (vlan) */
+	char *ec_label;		/* Process label name if nonnull */
+	u8_t ec_port;		/* Ethernet port for VLAN if label == NULL */
 	u8_t ec_ifno;		/* Interface number of /dev/eth* */
-	u16_t ec_vlan;		/* VLAN number of this net if task == NULL */
+	u16_t ec_vlan;		/* VLAN number of this net if label == NULL */
 };
-#define eth_is_vlan(ecp)	((ecp)->ec_task == NULL)
+#define eth_is_vlan(ecp)	((ecp)->ec_label == NULL)
 
 struct psip_conf
 {

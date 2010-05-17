@@ -4,45 +4,6 @@
  * This file contains a ethernet device driver for NS dp8390 based ethernet
  * cards.
  *
- * The valid messages and their parameters are:
- *
- *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR   DL_GRANT
- * |------------+----------+---------+----------+---------+---------+---------|
- * | HARDINT	|          |         |          |         |         |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITE	| port nr  | proc nr | count    | mode    | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITEV	| port nr  | proc nr | count    | mode    | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITEV_S| port nr  | proc nr | count    | mode    |	    |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READ	| port nr  | proc nr | count    |         | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READV	| port nr  | proc nr | count    |         | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READV_S	| port nr  | proc nr | count    |         |	    |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_CONF	| port nr  | proc nr |		| mode    | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_GETSTAT	| port nr  | proc nr |          |         | address |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- * |DL_GETSTAT_S| port nr  | proc nr |          |         |	    |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_STOP	| port_nr  |         |          |         |	    |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
- *
- * The messages sent are:
- *
- *   m-type	   DL_PORT    DL_PROC   DL_COUNT   DL_STAT   DL_CLCK
- * |-------------+----------+---------+----------+---------+---------|
- * |DL_TASK_REPLY| port nr  | proc nr | rd-count | err|stat| clock   |
- * |-------------+----------+---------+----------+---------+---------|
- *
- *   m_type	   m3_i1     m3_i2       m3_ca1
- * |-------------+---------+-----------+---------------|
- * |DL_CONF_REPLY| port nr | last port | ethernet addr |
- * |-------------+---------+-----------+---------------|
- *
  * Created:	before Dec 28, 1992 by Philip Homburg <philip@f-mnx.phicoh.com>
  *
  * Modified Mar 10 1994 by Philip Homburg
@@ -68,11 +29,8 @@
 #include "local.h"
 #include "dp8390.h"
 
-#define DE_PORT_NR	3
-
-static dpeth_t de_table[DE_PORT_NR];
-static u16_t eth_ign_proto;
-static const char *progname;
+static dpeth_t de_state;
+static int de_instance;
 
 u32_t system_hz;
 
@@ -82,21 +40,17 @@ typedef struct dp_conf
 	port_t dpc_port;
 	int dpc_irq;
 	phys_bytes dpc_mem;
-	char *dpc_envvar;
 } dp_conf_t;
 
-PRIVATE dp_conf_t dp_conf[]=	/* Card addresses */
+#define DP_CONF_NR 4
+PRIVATE dp_conf_t dp_conf[DP_CONF_NR]=	/* Card addresses */
 {
-	/* I/O port, IRQ,  Buffer address,  Env. var. */
-	{  0x280,     3,    0xD0000,        "DPETH0"	},
-	{  0x300,     5,    0xC8000,        "DPETH1"	},
-	{  0x380,    10,    0xD8000,        "DPETH2"	},
+	/* I/O port, IRQ,  Buffer address. */
+	{  0x280,     3,    0xD0000,       },
+	{  0x300,     5,    0xC8000,       },
+	{  0x380,    10,    0xD8000,       },
+	{  0x000,     0,    0x00000,       },
 };
-
-/* Test if dp_conf has exactly DE_PORT_NR entries.  If not then you will see
- * the error: "array size is negative".
- */
-extern int ___dummy[DE_PORT_NR == sizeof(dp_conf)/sizeof(dp_conf[0]) ? 1 : -1];
 
 /* Card inits configured out? */
 #if !ENABLE_WDETH
@@ -118,17 +72,12 @@ extern int ___dummy[DE_PORT_NR == sizeof(dp_conf)/sizeof(dp_conf[0]) ? 1 : -1];
 #if ENABLE_PCI
 _PROTOTYPE( static void pci_conf, (void)				);
 #endif
-_PROTOTYPE( static void do_vwrite, (message *mp, int from_int,
-							int vectored)	);
 _PROTOTYPE( static void do_vwrite_s, (message *mp, int from_int)	);
-_PROTOTYPE( static void do_vread, (message *mp, int vectored)		);
 _PROTOTYPE( static void do_vread_s, (message *mp)			);
 _PROTOTYPE( static void do_init, (message *mp)				);
 _PROTOTYPE( static void do_int, (dpeth_t *dep)				);
-_PROTOTYPE( static void do_getstat, (message *mp)			);
 _PROTOTYPE( static void do_getstat_s, (message *mp)			);
-_PROTOTYPE( static void do_getname, (message *mp)			);
-_PROTOTYPE( static void do_stop, (message *mp)				);
+_PROTOTYPE( static void dp_stop, (dpeth_t *dep)				);
 _PROTOTYPE( static void dp_init, (dpeth_t *dep)				);
 _PROTOTYPE( static void dp_confaddr, (dpeth_t *dep)			);
 _PROTOTYPE( static void dp_reinit, (dpeth_t *dep)			);
@@ -142,54 +91,32 @@ _PROTOTYPE( static void dp_pio8_getblock, (dpeth_t *dep, int page,
 				size_t offset, size_t size, void *dst)	);
 _PROTOTYPE( static void dp_pio16_getblock, (dpeth_t *dep, int page,
 				size_t offset, size_t size, void *dst)	);
-_PROTOTYPE( static int dp_pkt2user, (dpeth_t *dep, int page,
-						vir_bytes length)	);
 _PROTOTYPE( static int dp_pkt2user_s, (dpeth_t *dep, int page,
 						vir_bytes length)	);
-_PROTOTYPE( static void dp_user2nic, (dpeth_t *dep, iovec_dat_t *iovp, 
-		vir_bytes offset, int nic_addr, vir_bytes count)	);
 _PROTOTYPE( static void dp_user2nic_s, (dpeth_t *dep, iovec_dat_s_t *iovp, 
 		vir_bytes offset, int nic_addr, vir_bytes count)	);
-_PROTOTYPE( static void dp_pio8_user2nic, (dpeth_t *dep,
-				iovec_dat_t *iovp, vir_bytes offset,
-				int nic_addr, vir_bytes count)		);
 _PROTOTYPE( static void dp_pio8_user2nic_s, (dpeth_t *dep,
 				iovec_dat_s_t *iovp, vir_bytes offset,
-				int nic_addr, vir_bytes count)		);
-_PROTOTYPE( static void dp_pio16_user2nic, (dpeth_t *dep,
-				iovec_dat_t *iovp, vir_bytes offset,
 				int nic_addr, vir_bytes count)		);
 _PROTOTYPE( static void dp_pio16_user2nic_s, (dpeth_t *dep,
 				iovec_dat_s_t *iovp, vir_bytes offset,
 				int nic_addr, vir_bytes count)		);
-_PROTOTYPE( static void dp_nic2user, (dpeth_t *dep, int nic_addr, 
-		iovec_dat_t *iovp, vir_bytes offset, vir_bytes count)	);
 _PROTOTYPE( static void dp_nic2user_s, (dpeth_t *dep, int nic_addr, 
 		iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count)	);
-_PROTOTYPE( static void dp_pio8_nic2user, (dpeth_t *dep, int nic_addr, 
-		iovec_dat_t *iovp, vir_bytes offset, vir_bytes count)	);
 _PROTOTYPE( static void dp_pio8_nic2user_s, (dpeth_t *dep, int nic_addr, 
 		iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count)	);
-_PROTOTYPE( static void dp_pio16_nic2user, (dpeth_t *dep, int nic_addr, 
-		iovec_dat_t *iovp, vir_bytes offset, vir_bytes count)	);
 _PROTOTYPE( static void dp_pio16_nic2user_s, (dpeth_t *dep, int nic_addr, 
 		iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count)	);
-_PROTOTYPE( static void dp_next_iovec, (iovec_dat_t *iovp)		);
 _PROTOTYPE( static void dp_next_iovec_s, (iovec_dat_s_t *iovp)		);
 _PROTOTYPE( static void conf_hw, (dpeth_t *dep)				);
 _PROTOTYPE( static void update_conf, (dpeth_t *dep, dp_conf_t *dcp)	);
 _PROTOTYPE( static void map_hw_buffer, (dpeth_t *dep)			);
-_PROTOTYPE( static int calc_iovec_size, (iovec_dat_t *iovp)		);
 _PROTOTYPE( static int calc_iovec_size_s, (iovec_dat_s_t *iovp)		);
-_PROTOTYPE( static void reply, (dpeth_t *dep, int err, int may_block)	);
+_PROTOTYPE( static void reply, (dpeth_t *dep)				);
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
-_PROTOTYPE( static void get_userdata, (int user_proc,
-		vir_bytes user_addr, vir_bytes count, void *loc_addr)	);
 _PROTOTYPE( static void get_userdata_s, (int user_proc,
 		cp_grant_id_t grant, vir_bytes offset, vir_bytes count,
 		void *loc_addr)	);
-_PROTOTYPE( static void put_userdata, (int user_proc,
-		vir_bytes user_addr, vir_bytes count, void *loc_addr)	);
 _PROTOTYPE( static void put_userdata_s, (int user_proc,
 		cp_grant_id_t grant, size_t count, void *loc_addr)	);
 _PROTOTYPE( static void insb, (port_t port, void *buf, size_t size)				);
@@ -210,31 +137,28 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN int env_argc;
 EXTERN char **env_argv;
 
-PRIVATE int handle_hw_intr(void)
+PRIVATE void handle_hw_intr(void)
 {
-	int i, r, irq;
+	int r, irq;
 	dpeth_t *dep;
 
-	for (i= 0, dep= &de_table[0]; i<DE_PORT_NR; i++, dep++)
+	dep = &de_state;
+
+	if (dep->de_mode != DEM_ENABLED)
+		return;
+	assert(dep->de_flags & DEF_ENABLED);
+	irq= dep->de_irq;
+	assert(irq >= 0 && irq < NR_IRQ_VECTORS);
+	if (dep->de_int_pending || 1)
 	{
-		if (dep->de_mode != DEM_ENABLED)
-			continue;
-		assert(dep->de_flags & DEF_ENABLED);
-		irq= dep->de_irq;
-		assert(irq >= 0 && irq < NR_IRQ_VECTORS);
-		if (dep->de_int_pending || 1)
-		{
-			dep->de_int_pending= 0;
-			dp_check_ints(dep);
-			do_int(dep);
-			r= sys_irqenable(&dep->de_hook);
-			if (r != OK) {
-				panic("unable enable interrupts: %d", r);
-			}
+		dep->de_int_pending= 0;
+		dp_check_ints(dep);
+		do_int(dep);
+		r= sys_irqenable(&dep->de_hook);
+		if (r != OK) {
+			panic("unable enable interrupts: %d", r);
 		}
 	}
-
-	return r;
 }
 
 /*===========================================================================*
@@ -258,7 +182,7 @@ int main(int argc, char *argv[])
 		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(m.m_source)) {
 				case HARDWARE:
-					r = handle_hw_intr();
+					handle_hw_intr();
 					break;
 				case CLOCK:
 					printf("dp8390: notify from CLOCK\n");
@@ -274,17 +198,10 @@ int main(int argc, char *argv[])
 
 		switch (m.m_type)
 		{
-		case DL_WRITE:	do_vwrite(&m, FALSE, FALSE);	break;
-		case DL_WRITEV:	do_vwrite(&m, FALSE, TRUE);	break;
 		case DL_WRITEV_S: do_vwrite_s(&m, FALSE);	break;
-		case DL_READ:	do_vread(&m, FALSE);		break;
-		case DL_READV:	do_vread(&m, TRUE);		break;
 		case DL_READV_S: do_vread_s(&m);		break;
 		case DL_CONF:	do_init(&m);			break;
-		case DL_GETSTAT: do_getstat(&m);		break;
 		case DL_GETSTAT_S: do_getstat_s(&m);		break;
-		case DL_GETNAME: do_getname(&m); 		break;
-		case DL_STOP:	do_stop(&m);			break;
 		default:
 			panic("dp8390: illegal message: %d", m.m_type);
 		}
@@ -318,7 +235,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the dp8390 driver. */
-	int i;
 	dpeth_t *dep;
 	long v;
 
@@ -327,18 +243,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	if (env_argc < 1) {
 		panic("A head which at this time has no name");
 	}
-	(progname=strrchr(env_argv[0],'/')) ? progname++
-		: (progname=env_argv[0]);
 
-	for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
-	{
-		strcpy(dep->de_name, "dp8390#0");
-		dep->de_name[7] += i;
-	}
+	v = 0;
+	(void) env_parse("instance", "d", 0, &v, 0, 255);
+	de_instance = (int) v;
 
-	v= 0;
-	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-	eth_ign_proto= htons((u16_t) v);
+	dep = &de_state;
+
+	strcpy(dep->de_name, "dp8390#0");
+	dep->de_name[7] += de_instance;
 
 	/* Announce we are up! */
 	netdriver_announce();
@@ -351,20 +264,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
  *===========================================================================*/
 PRIVATE void sef_cb_signal_handler(int signo)
 {
-	message mess;
-	int i;
-
 	/* Only check for termination signal, ignore anything else. */
 	if (signo != SIGTERM) return;
 
-	for (i= 0; i<DE_PORT_NR; i++)
-	{
-		if (de_table[i].de_mode != DEM_ENABLED)
-			continue;
-		mess.m_type= DL_STOP;
-		mess.DL_PORT= i;
-		do_stop(&mess);
-	}
+	if (de_state.de_mode == DEM_ENABLED)
+		dp_stop(&de_state);
 }
 
 #if 0
@@ -374,49 +278,48 @@ PRIVATE void sef_cb_signal_handler(int signo)
 void dp8390_dump()
 {
 	dpeth_t *dep;
-	int i, isr;
+	int isr;
+
+	dep = &de_state;
 
 	printf("\n");
-	for (i= 0, dep = &de_table[0]; i<DE_PORT_NR; i++, dep++)
-	{
 #if XXX
-		if (dep->de_mode == DEM_DISABLED)
-			printf("dp8390 port %d is disabled\n", i);
-		else if (dep->de_mode == DEM_SINK)
-			printf("dp8390 port %d is in sink mode\n", i);
+	if (dep->de_mode == DEM_DISABLED)
+		printf("dp8390 instance %d is disabled\n", de_instance);
+	else if (dep->de_mode == DEM_SINK)
+		printf("dp8390 instance %d is in sink mode\n", de_instance);
 #endif
 
-		if (dep->de_mode != DEM_ENABLED)
-			continue;
+	if (dep->de_mode != DEM_ENABLED)
+		return;
 
-		printf("dp8390 statistics of port %d:\n", i);
+	printf("dp8390 statistics of instance %d:\n", de_instance);
 
-		printf("recvErr    :%8ld\t", dep->de_stat.ets_recvErr);
-		printf("sendErr    :%8ld\t", dep->de_stat.ets_sendErr);
-		printf("OVW        :%8ld\n", dep->de_stat.ets_OVW);
+	printf("recvErr    :%8ld\t", dep->de_stat.ets_recvErr);
+	printf("sendErr    :%8ld\t", dep->de_stat.ets_sendErr);
+	printf("OVW        :%8ld\n", dep->de_stat.ets_OVW);
 
-		printf("CRCerr     :%8ld\t", dep->de_stat.ets_CRCerr);
-		printf("frameAll   :%8ld\t", dep->de_stat.ets_frameAll);
-		printf("missedP    :%8ld\n", dep->de_stat.ets_missedP);
+	printf("CRCerr     :%8ld\t", dep->de_stat.ets_CRCerr);
+	printf("frameAll   :%8ld\t", dep->de_stat.ets_frameAll);
+	printf("missedP    :%8ld\n", dep->de_stat.ets_missedP);
 
-		printf("packetR    :%8ld\t", dep->de_stat.ets_packetR);
-		printf("packetT    :%8ld\t", dep->de_stat.ets_packetT);
-		printf("transDef   :%8ld\n", dep->de_stat.ets_transDef);
+	printf("packetR    :%8ld\t", dep->de_stat.ets_packetR);
+	printf("packetT    :%8ld\t", dep->de_stat.ets_packetT);
+	printf("transDef   :%8ld\n", dep->de_stat.ets_transDef);
 
-		printf("collision  :%8ld\t", dep->de_stat.ets_collision);
-		printf("transAb    :%8ld\t", dep->de_stat.ets_transAb);
-		printf("carrSense  :%8ld\n", dep->de_stat.ets_carrSense);
+	printf("collision  :%8ld\t", dep->de_stat.ets_collision);
+	printf("transAb    :%8ld\t", dep->de_stat.ets_transAb);
+	printf("carrSense  :%8ld\n", dep->de_stat.ets_carrSense);
 
-		printf("fifoUnder  :%8ld\t", dep->de_stat.ets_fifoUnder);
-		printf("fifoOver   :%8ld\t", dep->de_stat.ets_fifoOver);
-		printf("CDheartbeat:%8ld\n", dep->de_stat.ets_CDheartbeat);
+	printf("fifoUnder  :%8ld\t", dep->de_stat.ets_fifoUnder);
+	printf("fifoOver   :%8ld\t", dep->de_stat.ets_fifoOver);
+	printf("CDheartbeat:%8ld\n", dep->de_stat.ets_CDheartbeat);
 
-		printf("OWC        :%8ld\t", dep->de_stat.ets_OWC);
+	printf("OWC        :%8ld\t", dep->de_stat.ets_OWC);
 
-		isr= inb_reg0(dep, DP_ISR);
-		printf("dp_isr = 0x%x + 0x%x, de_flags = 0x%x\n", isr,
-					inb_reg0(dep, DP_ISR), dep->de_flags);
-	}
+	isr= inb_reg0(dep, DP_ISR);
+	printf("dp_isr = 0x%x + 0x%x, de_flags = 0x%x\n", isr,
+				inb_reg0(dep, DP_ISR), dep->de_flags);
 }
 #endif
 
@@ -426,8 +329,8 @@ void dp8390_dump()
  *===========================================================================*/
 static void pci_conf()
 {
-	int i, h;
-	char *envvar;
+	int confnr;
+	char envvar[16];
 	struct dpeth *dep;
 	static char envfmt[] = "*:d.d.d";
 	long v;
@@ -437,143 +340,35 @@ static void pci_conf()
 		return;
 	first_time= 0;
 
-	for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
-	{
-		envvar= dp_conf[i].dpc_envvar;
-		if (!(dep->de_pci= env_prefix(envvar, "pci")))
-			continue;	/* no PCI config */
-		v= 0;
-		(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
-		dep->de_pcibus= v;
-		v= 0;
-		(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
-		dep->de_pcidev= v;
-		v= 0;
-		(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
-		dep->de_pcifunc= v;
+	dep= &de_state;
+
+	/* Pick a default configuration for this instance. */
+	confnr= MIN(de_instance, DP_CONF_NR-1);
+
+	strcpy(envvar, "DPETH0");
+	envvar[5] += de_instance;
+	if (!(dep->de_pci= env_prefix(envvar, "pci")))
+		return;	/* no PCI config */
+	v= 0;
+	(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
+	dep->de_pcibus= v;
+	v= 0;
+	(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
+	dep->de_pcidev= v;
+	v= 0;
+	(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
+	dep->de_pcifunc= v;
+
+	if (!dep->de_pci) {
+		printf("%s: no pci for instance %d\n", dep->de_name,
+			de_instance);
+		return;
 	}
 
-	for (h= 1; h >= 0; h--) {
-		for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
-		{
-			if (!dep->de_pci)
-			{
-				printf("pci: no pci for port %d\n", i);
-				continue;
-			}
-			if (((dep->de_pcibus | dep->de_pcidev |
-				dep->de_pcifunc) != 0) != h)
-			{
-				continue;
-			}
-			if (!rtl_probe(dep, i))
-				dep->de_pci= -1;
-		}
-	}
+	if (!rtl_probe(dep, de_instance))
+		dep->de_pci= -1;
 }
 #endif /* ENABLE_PCI */
-
-/*===========================================================================*
- *				do_vwrite				     *
- *===========================================================================*/
-static void do_vwrite(mp, from_int, vectored)
-message *mp;
-int from_int;
-int vectored;
-{
-	int port, count, size;
-	int sendq_head;
-	dpeth_t *dep;
-
-	port = mp->DL_PORT;
-	count = mp->DL_COUNT;
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
-	dep->de_client= mp->DL_PROC;
-
-	if (dep->de_mode == DEM_SINK)
-	{
-		assert(!from_int);
-		dep->de_flags |= DEF_PACK_SEND;
-		reply(dep, OK, FALSE);
-		return;
-	}
-	assert(dep->de_mode == DEM_ENABLED);
-	assert(dep->de_flags & DEF_ENABLED);
-	if (dep->de_flags & DEF_SEND_AVAIL)
-		panic("dp8390: send already in progress");
-
-	sendq_head= dep->de_sendq_head;
-	if (dep->de_sendq[sendq_head].sq_filled)
-	{
-		if (from_int)
-			panic("dp8390: should not be sending");
-		dep->de_sendmsg= *mp;
-		dep->de_flags |= DEF_SEND_AVAIL;
-		reply(dep, OK, FALSE);
-		return;
-	}
-	assert(!(dep->de_flags & DEF_PACK_SEND));
-
-	if (vectored)
-	{
-		get_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-			(count > IOVEC_NR ? IOVEC_NR : count) *
-			sizeof(iovec_t), dep->de_write_iovec.iod_iovec);
-		dep->de_write_iovec.iod_iovec_s = count;
-		dep->de_write_iovec.iod_proc_nr = mp->DL_PROC;
-		dep->de_write_iovec.iod_iovec_addr = (vir_bytes) mp->DL_ADDR;
-
-		dep->de_tmp_iovec = dep->de_write_iovec;
-		size = calc_iovec_size(&dep->de_tmp_iovec);
-	}
-	else
-	{  
-		dep->de_write_iovec.iod_iovec[0].iov_addr =
-			(vir_bytes) mp->DL_ADDR;
-		dep->de_write_iovec.iod_iovec[0].iov_size =
-			mp->DL_COUNT;
-		dep->de_write_iovec.iod_iovec_s = 1;
-		dep->de_write_iovec.iod_proc_nr = mp->DL_PROC;
-		dep->de_write_iovec.iod_iovec_addr = 0;
-		size= mp->DL_COUNT;
-	}
-	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
-	{
-		panic("dp8390: invalid packet size: %d", size);
-	}
-	(dep->de_user2nicf)(dep, &dep->de_write_iovec, 0,
-		dep->de_sendq[sendq_head].sq_sendpage * DP_PAGESIZE,
-		size);
-	dep->de_sendq[sendq_head].sq_filled= TRUE;
-	if (dep->de_sendq_tail == sendq_head)
-	{
-		outb_reg0(dep, DP_TPSR, dep->de_sendq[sendq_head].sq_sendpage);
-		outb_reg0(dep, DP_TBCR1, size >> 8);
-		outb_reg0(dep, DP_TBCR0, size & 0xff);
-		outb_reg0(dep, DP_CR, CR_TXP | CR_EXTRA);/* there it goes.. */
-	}
-	else
-		dep->de_sendq[sendq_head].sq_size= size;
-	
-	if (++sendq_head == dep->de_sendq_nr)
-		sendq_head= 0;
-	assert(sendq_head < SENDQ_NR);
-	dep->de_sendq_head= sendq_head;
-
-	dep->de_flags |= DEF_PACK_SEND;
-
-	/* If the interrupt handler called, don't send a reply. The reply
-	 * will be sent after all interrupts are handled. 
-	 */
-	if (from_int)
-		return;
-	reply(dep, OK, FALSE);
-
-	assert(dep->de_mode == DEM_ENABLED);
-	assert(dep->de_flags & DEF_ENABLED);
-}
 
 /*===========================================================================*
  *				do_vwrite_s				     *
@@ -582,22 +377,20 @@ static void do_vwrite_s(mp, from_int)
 message *mp;
 int from_int;
 {
-	int port, count, size;
+	int count, size;
 	int sendq_head;
 	dpeth_t *dep;
 
-	port = mp->DL_PORT;
+	dep= &de_state;
+
 	count = mp->DL_COUNT;
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
-	dep->de_client= mp->DL_PROC;
+	dep->de_client= mp->m_source;
 
 	if (dep->de_mode == DEM_SINK)
 	{
 		assert(!from_int);
 		dep->de_flags |= DEF_PACK_SEND;
-		reply(dep, OK, FALSE);
+		reply(dep);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
@@ -612,17 +405,17 @@ int from_int;
 			panic("dp8390: should not be sending");
 		dep->de_sendmsg= *mp;
 		dep->de_flags |= DEF_SEND_AVAIL;
-		reply(dep, OK, FALSE);
+		reply(dep);
 		return;
 	}
 	assert(!(dep->de_flags & DEF_PACK_SEND));
 
-	get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
+	get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
 		sizeof(dep->de_write_iovec_s.iod_iovec[0]),
 		dep->de_write_iovec_s.iod_iovec);
 	dep->de_write_iovec_s.iod_iovec_s = count;
-	dep->de_write_iovec_s.iod_proc_nr = mp->DL_PROC;
+	dep->de_write_iovec_s.iod_proc_nr = mp->DL_ENDPT;
 	dep->de_write_iovec_s.iod_grant = mp->DL_GRANT;
 	dep->de_write_iovec_s.iod_iovec_offset = 0;
 
@@ -659,80 +452,10 @@ int from_int;
 	 */
 	if (from_int)
 		return;
-	reply(dep, OK, FALSE);
+	reply(dep);
 
 	assert(dep->de_mode == DEM_ENABLED);
 	assert(dep->de_flags & DEF_ENABLED);
-}
-
-/*===========================================================================*
- *				do_vread				     *
- *===========================================================================*/
-static void do_vread(mp, vectored)
-message *mp;
-int vectored;
-{
-	int port, count;
-	int size;
-	dpeth_t *dep;
-
-	port = mp->DL_PORT;
-	count = mp->DL_COUNT;
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
-	dep->de_client= mp->DL_PROC;
-	if (dep->de_mode == DEM_SINK)
-	{
-		reply(dep, OK, FALSE);
-		return;
-	}
-	assert(dep->de_mode == DEM_ENABLED);
-	assert(dep->de_flags & DEF_ENABLED);
-
-	if(dep->de_flags & DEF_READING)
-		panic("dp8390: read already in progress");
-
-	dep->de_safecopy_read= 0;
-
-	if (vectored)
-	{
-		get_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-			(count > IOVEC_NR ? IOVEC_NR : count) *
-			sizeof(iovec_t), dep->de_read_iovec.iod_iovec);
-		dep->de_read_iovec.iod_iovec_s = count;
-		dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
-		dep->de_read_iovec.iod_iovec_addr = (vir_bytes) mp->DL_ADDR;
-
-		dep->de_tmp_iovec = dep->de_read_iovec;
-		size= calc_iovec_size(&dep->de_tmp_iovec);
-	}
-	else
-	{
-		dep->de_read_iovec.iod_iovec[0].iov_addr =
-			(vir_bytes) mp->DL_ADDR;
-		dep->de_read_iovec.iod_iovec[0].iov_size =
-			mp->DL_COUNT;
-		dep->de_read_iovec.iod_iovec_s = 1;
-		dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
-		dep->de_read_iovec.iod_iovec_addr = 0;
-		size= count;
-	}
-	if (size < ETH_MAX_PACK_SIZE_TAGGED)
-		panic("dp8390: wrong packet size: %d", size);
-	dep->de_flags |= DEF_READING;
-
-	dp_recv(dep);
-
-	if ((dep->de_flags & (DEF_READING|DEF_STOPPED)) ==
-		(DEF_READING|DEF_STOPPED))
-	{
-		/* The chip is stopped, and all arrived packets are 
-		 * delivered.
-		 */
-		dp_reset(dep);
-	}
-	reply(dep, OK, FALSE);
 }
 
 /*===========================================================================*
@@ -741,35 +464,31 @@ int vectored;
 static void do_vread_s(mp)
 message *mp;
 {
-	int port, count;
+	int count;
 	int size;
 	dpeth_t *dep;
 
-	port = mp->DL_PORT;
+	dep= &de_state;
+
 	count = mp->DL_COUNT;
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
-	dep->de_client= mp->DL_PROC;
+	dep->de_client= mp->m_source;
 	if (dep->de_mode == DEM_SINK)
 	{
-		reply(dep, OK, FALSE);
+		reply(dep);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
 	assert(dep->de_flags & DEF_ENABLED);
 
-	dep->de_safecopy_read= 1;
-
 	if(dep->de_flags & DEF_READING)
 		panic("dp8390: read already in progress");
 
-	get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
+	get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
 		sizeof(dep->de_read_iovec_s.iod_iovec[0]),
 		dep->de_read_iovec_s.iod_iovec);
 	dep->de_read_iovec_s.iod_iovec_s = count;
-	dep->de_read_iovec_s.iod_proc_nr = mp->DL_PROC;
+	dep->de_read_iovec_s.iod_proc_nr = mp->DL_ENDPT;
 	dep->de_read_iovec_s.iod_grant = mp->DL_GRANT;
 	dep->de_read_iovec_s.iod_iovec_offset = 0;
 
@@ -790,7 +509,7 @@ message *mp;
 		 */
 		dp_reset(dep);
 	}
-	reply(dep, OK, FALSE);
+	reply(dep);
 }
 
 /*===========================================================================*
@@ -798,7 +517,6 @@ message *mp;
  *===========================================================================*/
 static void do_init(message *mp)
 {
-	int port;
 	dpeth_t *dep;
 	message reply_mess;
 
@@ -806,15 +524,8 @@ static void do_init(message *mp)
 	pci_conf(); /* Configure PCI devices. */
 #endif
 
-	port = mp->DL_PORT;
-	if (port < 0 || port >= DE_PORT_NR)
-	{
-		reply_mess.m_type= DL_CONF_REPLY;
-		reply_mess.m3_i1= ENXIO;
-		mess_reply(mp, &reply_mess);
-		return;
-	}
-	dep= &de_table[port];
+	dep= &de_state;
+
 	if (dep->de_mode == DEM_DISABLED)
 	{
 		/* This is the default, try to (re)locate the device. */
@@ -823,7 +534,7 @@ static void do_init(message *mp)
 		{
 			/* Probe failed, or the device is configured off. */
 			reply_mess.m_type= DL_CONF_REPLY;
-			reply_mess.m3_i1= ENXIO;
+			reply_mess.DL_STAT= ENXIO;
 			mess_reply(mp, &reply_mess);
 			return;
 		}
@@ -834,12 +545,11 @@ static void do_init(message *mp)
 	if (dep->de_mode == DEM_SINK)
 	{
 		strncpy((char *) dep->de_address.ea_addr, "ZDP", 6);
-		dep->de_address.ea_addr[5] = port;
+		dep->de_address.ea_addr[5] = de_instance;
 		dp_confaddr(dep);
 		reply_mess.m_type = DL_CONF_REPLY;
-		reply_mess.m3_i1 = mp->DL_PORT;
-		reply_mess.m3_i2 = DE_PORT_NR;
-		*(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
+		reply_mess.DL_STAT = OK;
+		*(ether_addr_t *) reply_mess.DL_HWADDR = dep->de_address;
 		mess_reply(mp, &reply_mess);
 		return;
 	}
@@ -855,13 +565,11 @@ static void do_init(message *mp)
 	if (mp->DL_MODE & DL_BROAD_REQ)
 		dep->de_flags |= DEF_BROAD;
 
-	dep->de_client = mp->m_source;
 	dp_reinit(dep);
 
 	reply_mess.m_type = DL_CONF_REPLY;
-	reply_mess.m3_i1 = mp->DL_PORT;
-	reply_mess.m3_i2 = DE_PORT_NR;
-	*(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
+	reply_mess.DL_STAT = OK;
+	*(ether_addr_t *) reply_mess.DL_HWADDR = dep->de_address;
 
 	mess_reply(mp, &reply_mess);
 }
@@ -873,51 +581,7 @@ static void do_int(dep)
 dpeth_t *dep;
 {
 	if (dep->de_flags & (DEF_PACK_SEND | DEF_PACK_RECV))
-		reply(dep, OK, TRUE);
-}
-
-/*===========================================================================*
- *				do_getstat				     *
- *===========================================================================*/
-static void do_getstat(message *mp)
-{
-	int port, r;
-	dpeth_t *dep;
-
-	port = mp->DL_PORT;
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
-	dep->de_client= mp->DL_PROC;
-	if (dep->de_mode == DEM_SINK)
-	{
-		put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
-		
-		mp->m_type= DL_STAT_REPLY;
-		mp->DL_PORT= port;
-		mp->DL_STAT= OK;
-		r= send(mp->m_source, mp);
-		if (r != OK)
-			panic("do_getstat: send failed: %d", r);
-		return;
-	}
-	assert(dep->de_mode == DEM_ENABLED);
-	assert(dep->de_flags & DEF_ENABLED);
-
-	dep->de_stat.ets_CRCerr += inb_reg0(dep, DP_CNTR0);
-	dep->de_stat.ets_frameAll += inb_reg0(dep, DP_CNTR1);
-	dep->de_stat.ets_missedP += inb_reg0(dep, DP_CNTR2);
-
-	put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-		(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
-
-	mp->m_type= DL_STAT_REPLY;
-	mp->DL_PORT= port;
-	mp->DL_STAT= OK;
-	r= send(mp->m_source, mp);
-	if (r != OK)
-		panic("do_getstat: send failed: %d", r);
+		reply(dep);
 }
 
 /*===========================================================================*
@@ -926,22 +590,17 @@ static void do_getstat(message *mp)
 static void do_getstat_s(mp)
 message *mp;
 {
-	int port, r;
+	int r;
 	dpeth_t *dep;
 
-	port = mp->DL_PORT;
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
-	dep->de_client= mp->DL_PROC;
+	dep= &de_state;
+
 	if (dep->de_mode == DEM_SINK)
 	{
-		put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
+		put_userdata_s(mp->DL_ENDPT, (vir_bytes) mp->DL_GRANT,
 			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
 
 		mp->m_type= DL_STAT_REPLY;
-		mp->DL_PORT= port;
-		mp->DL_STAT= OK;
 		r= send(mp->m_source, mp);
 		if (r != OK)
 			panic("do_getstat: send failed: %d", r);
@@ -954,47 +613,22 @@ message *mp;
 	dep->de_stat.ets_frameAll += inb_reg0(dep, DP_CNTR1);
 	dep->de_stat.ets_missedP += inb_reg0(dep, DP_CNTR2);
 
-	put_userdata_s(mp->DL_PROC, mp->DL_GRANT,
+	put_userdata_s(mp->DL_ENDPT, mp->DL_GRANT,
 		sizeof(dep->de_stat), &dep->de_stat);
 
 	mp->m_type= DL_STAT_REPLY;
-	mp->DL_PORT= port;
-	mp->DL_STAT= OK;
 	r= send(mp->m_source, mp);
 	if (r != OK)
 		panic("do_getstat: send failed: %d", r);
 }
 
 /*===========================================================================*
- *				do_getname				     *
+ *				dp_stop					     *
  *===========================================================================*/
-static void do_getname(mp)
-message *mp;
+static void dp_stop(dep)
+dpeth_t *dep;
 {
-	int r;
 
-	strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
-	mp->DL_NAME[sizeof(mp->DL_NAME)-1]= '\0';
-	mp->m_type= DL_NAME_REPLY;
-	r= send(mp->m_source, mp);
-	if (r != OK)
-		panic("do_getname: send failed: %d", r);
-}
-
-/*===========================================================================*
- *				do_stop					     *
- *===========================================================================*/
-static void do_stop(mp)
-message *mp;
-{
-	int port;
-	dpeth_t *dep;
-
-	port = mp->DL_PORT;
-
-	if (port < 0 || port >= DE_PORT_NR)
-		panic("dp8390: illegal port: %d", port);
-	dep= &de_table[port];
 	if (dep->de_mode == DEM_SINK)
 		return;
 	assert(dep->de_mode == DEM_ENABLED);
@@ -1105,25 +739,19 @@ dpeth_t *dep;
 	dep->de_sendq_tail= 0;
 	if (!dep->de_prog_IO)
 	{
-		dep->de_user2nicf= dp_user2nic;
 		dep->de_user2nicf_s= dp_user2nic_s;
-		dep->de_nic2userf= dp_nic2user;
 		dep->de_nic2userf_s= dp_nic2user_s;
 		dep->de_getblockf= dp_getblock;
 	}
 	else if (dep->de_16bit)
 	{
-		dep->de_user2nicf= dp_pio16_user2nic;
 		dep->de_user2nicf_s= dp_pio16_user2nic_s;
-		dep->de_nic2userf= dp_pio16_nic2user;
 		dep->de_nic2userf_s= dp_pio16_nic2user_s;
 		dep->de_getblockf= dp_pio16_getblock;
 	}
 	else
 	{
-		dep->de_user2nicf= dp_pio8_user2nic;
 		dep->de_user2nicf_s= dp_pio8_user2nic_s;
-		dep->de_nic2userf= dp_pio8_nic2user;
 		dep->de_nic2userf_s= dp_pio8_nic2user_s;
 		dep->de_getblockf= dp_pio8_getblock;
 	}
@@ -1155,8 +783,8 @@ dpeth_t *dep;
 	long v;
 
 	/* User defined ethernet address? */
-	strcpy(eakey, dp_conf[dep-de_table].dpc_envvar);
-	strcat(eakey, "_EA");
+	strcpy(eakey, "DPETH0_EA");
+	eakey[5] += de_instance;
 
 	for (i= 0; i < 6; i++)
 	{
@@ -1415,22 +1043,6 @@ dpeth_t *dep;
 			printf("%s: strange next page\n", dep->de_name);
 			next= curr;
 		}
-		else if (eth_type == eth_ign_proto)
-		{
-			/* Hack: ignore packets of a given protocol, useful
-			 * if you share a net with 80 computers sending
-			 * Amoeba FLIP broadcasts.  (Protocol 0x8146.)
-			 */
-			static int first= 1;
-			if (first)
-			{
-				first= 0;
-				printf("%s: dropping proto 0x%04x packets\n",
-					dep->de_name,
-					ntohs(eth_ign_proto));
-			}
-			dep->de_stat.ets_packetR++;
-		}
 		else if (header.dr_status & RSR_FO)
 		{
 			/* This is very serious, so we issue a warning and
@@ -1443,10 +1055,7 @@ dpeth_t *dep;
 		else if ((header.dr_status & RSR_PRX) &&
 					   (dep->de_flags & DEF_ENABLED))
 		{
-			if (dep->de_safecopy_read)
-				r = dp_pkt2user_s(dep, pageno, length);
-			else
-				r = dp_pkt2user(dep, pageno, length);
+			r = dp_pkt2user_s(dep, pageno, length);
 			if (r != OK)
 				return;
 
@@ -1473,15 +1082,7 @@ dpeth_t *dep;
 		return;
 
 	dep->de_flags &= ~DEF_SEND_AVAIL;
-	switch(dep->de_sendmsg.m_type)
-	{
-	case DL_WRITE:	do_vwrite(&dep->de_sendmsg, TRUE, FALSE);	break;
-	case DL_WRITEV:	do_vwrite(&dep->de_sendmsg, TRUE, TRUE);	break;
-	case DL_WRITEV_S: do_vwrite_s(&dep->de_sendmsg, TRUE);	break;
-	default:
-		panic("dp8390: wrong type: %d", dep->de_sendmsg.m_type);
-		break;
-	}
+	do_vwrite_s(&dep->de_sendmsg, TRUE);
 }
 
 /*===========================================================================*
@@ -1541,42 +1142,6 @@ void *dst;
 }
 
 /*===========================================================================*
- *				dp_pkt2user				     *
- *===========================================================================*/
-static int dp_pkt2user(dpeth_t *dep, int page, vir_bytes length)
-{
-	int last, count;
-
-	if (!(dep->de_flags & DEF_READING))
-		return EGENERIC;
-
-	last = page + (length - 1) / DP_PAGESIZE;
-	if (last >= dep->de_stoppage)
-	{
-		count = (dep->de_stoppage - page) * DP_PAGESIZE -
-			sizeof(dp_rcvhdr_t);
-
-		/* Save read_iovec since we need it twice. */
-		dep->de_tmp_iovec = dep->de_read_iovec;
-		(dep->de_nic2userf)(dep, page * DP_PAGESIZE +
-			sizeof(dp_rcvhdr_t), &dep->de_tmp_iovec, 0, count);
-		(dep->de_nic2userf)(dep, dep->de_startpage * DP_PAGESIZE, 
-				&dep->de_read_iovec, count, length - count);
-	}
-	else
-	{
-		(dep->de_nic2userf)(dep, page * DP_PAGESIZE +
-			sizeof(dp_rcvhdr_t), &dep->de_read_iovec, 0, length);
-	}
-
-	dep->de_read_s = length;
-	dep->de_flags |= DEF_PACK_RECV;
-	dep->de_flags &= ~DEF_READING;
-
-	return OK;
-}
-
-/*===========================================================================*
  *				dp_pkt2user_s				     *
  *===========================================================================*/
 static int dp_pkt2user_s(dpeth_t *dep, int page, vir_bytes length)
@@ -1610,55 +1175,6 @@ static int dp_pkt2user_s(dpeth_t *dep, int page, vir_bytes length)
 	dep->de_flags &= ~DEF_READING;
 
 	return OK;
-}
-
-/*===========================================================================*
- *				dp_user2nic				     *
- *===========================================================================*/
-static void dp_user2nic(dep, iovp, offset, nic_addr, count)
-dpeth_t *dep;
-iovec_dat_t *iovp;
-vir_bytes offset;
-int nic_addr;
-vir_bytes count;
-{
-	vir_bytes vir_hw;
-	int i, r;
-	vir_bytes bytes;
-
-	vir_hw = (vir_bytes)dep->de_locmem + nic_addr;
-
-	i= 0;
-	while (count > 0)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		assert(i < iovp->iod_iovec_s);
-		if (offset >= iovp->iod_iovec[i].iov_size)
-		{
-			offset -= iovp->iod_iovec[i].iov_size;
-			i++;
-			continue;
-		}
-		bytes = iovp->iod_iovec[i].iov_size - offset;
-		if (bytes > count)
-			bytes = count;
-
-		r= sys_vircopy(iovp->iod_proc_nr, D,
-			iovp->iod_iovec[i].iov_addr + offset,
-			SELF, D, vir_hw, bytes);
-		if (r != OK)
-			panic("dp_user2nic: sys_vircopy failed: %d", r);
-
-		count -= bytes;
-		vir_hw += bytes;
-		offset += bytes;
-	}
-	assert(count == 0);
 }
 
 /*===========================================================================*
@@ -1711,64 +1227,6 @@ vir_bytes count;
 }
 
 /*===========================================================================*
- *				dp_pio8_user2nic			     *
- *===========================================================================*/
-static void dp_pio8_user2nic(dep, iovp, offset, nic_addr, count)
-dpeth_t *dep;
-iovec_dat_t *iovp;
-vir_bytes offset;
-int nic_addr;
-vir_bytes count;
-{
-	int bytes, i;
-
-	outb_reg0(dep, DP_ISR, ISR_RDC);
-
-	outb_reg0(dep, DP_RBCR0, count & 0xFF);
-	outb_reg0(dep, DP_RBCR1, count >> 8);
-	outb_reg0(dep, DP_RSAR0, nic_addr & 0xFF);
-	outb_reg0(dep, DP_RSAR1, nic_addr >> 8);
-	outb_reg0(dep, DP_CR, CR_DM_RW | CR_PS_P0 | CR_STA);
-
-	i= 0;
-	while (count > 0)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		assert(i < iovp->iod_iovec_s);
-		if (offset >= iovp->iod_iovec[i].iov_size)
-		{
-			offset -= iovp->iod_iovec[i].iov_size;
-			i++;
-			continue;
-		}
-		bytes = iovp->iod_iovec[i].iov_size - offset;
-		if (bytes > count)
-			bytes = count;
-
-		do_vir_outsb(dep->de_data_port, iovp->iod_proc_nr,
-			iovp->iod_iovec[i].iov_addr + offset, bytes);
-		count -= bytes;
-		offset += bytes;
-	}
-	assert(count == 0);
-
-	for (i= 0; i<100; i++)
-	{
-		if (inb_reg0(dep, DP_ISR) & ISR_RDC)
-			break;
-	}
-	if (i == 100)
-	{
-		panic("dp8390: remote dma failed to complete");
-	}
-}
-
-/*===========================================================================*
  *				dp_pio8_user2nic_s			     *
  *===========================================================================*/
 static void dp_pio8_user2nic_s(dep, iovp, offset, nic_addr, count)
@@ -1818,113 +1276,6 @@ vir_bytes count;
 		offset += bytes;
 	}
 	assert(count == 0);
-
-	for (i= 0; i<100; i++)
-	{
-		if (inb_reg0(dep, DP_ISR) & ISR_RDC)
-			break;
-	}
-	if (i == 100)
-	{
-		panic("dp8390: remote dma failed to complete");
-	}
-}
-
-/*===========================================================================*
- *				dp_pio16_user2nic			     *
- *===========================================================================*/
-static void dp_pio16_user2nic(dep, iovp, offset, nic_addr, count)
-dpeth_t *dep;
-iovec_dat_t *iovp;
-vir_bytes offset;
-int nic_addr;
-vir_bytes count;
-{
-	vir_bytes vir_user;
-	vir_bytes ecount;
-	int i, r, bytes, user_proc;
-	u8_t two_bytes[2];
-	int odd_byte;
-
-	ecount= (count+1) & ~1;
-	odd_byte= 0;
-
-	outb_reg0(dep, DP_ISR, ISR_RDC);
-	outb_reg0(dep, DP_RBCR0, ecount & 0xFF);
-	outb_reg0(dep, DP_RBCR1, ecount >> 8);
-	outb_reg0(dep, DP_RSAR0, nic_addr & 0xFF);
-	outb_reg0(dep, DP_RSAR1, nic_addr >> 8);
-	outb_reg0(dep, DP_CR, CR_DM_RW | CR_PS_P0 | CR_STA);
-
-	i= 0;
-	while (count > 0)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		assert(i < iovp->iod_iovec_s);
-		if (offset >= iovp->iod_iovec[i].iov_size)
-		{
-			offset -= iovp->iod_iovec[i].iov_size;
-			i++;
-			continue;
-		}
-		bytes = iovp->iod_iovec[i].iov_size - offset;
-		if (bytes > count)
-			bytes = count;
-
-		user_proc= iovp->iod_proc_nr;
-		vir_user= iovp->iod_iovec[i].iov_addr + offset;
-		if (odd_byte)
-		{
-			r= sys_vircopy(user_proc, D, vir_user, 
-				SELF, D, (vir_bytes)&two_bytes[1], 1);
-			if (r != OK) {
-				panic("dp_pio16_user2nic: sys_vircopy failed: %d",
-					r);
-			}
-			outw(dep->de_data_port, *(u16_t *)two_bytes);
-			count--;
-			offset++;
-			bytes--;
-			vir_user++;
-			odd_byte= 0;
-			if (!bytes)
-				continue;
-		}
-		ecount= bytes & ~1;
-		if (ecount != 0)
-		{
-			do_vir_outsw(dep->de_data_port, user_proc, vir_user,
-				ecount);
-			count -= ecount;
-			offset += ecount;
-			bytes -= ecount;
-			vir_user += ecount;
-		}
-		if (bytes)
-		{
-			assert(bytes == 1);
-			r= sys_vircopy(user_proc, D, vir_user, 
-				SELF, D, (vir_bytes)&two_bytes[0], 1);
-			if (r != OK) { 
-				panic("dp_pio16_user2nic: sys_vircopy failed: %d",
-					r);
-			}
-			count--;
-			offset++;
-			bytes--;
-			vir_user++;
-			odd_byte= 1;
-		}
-	}
-	assert(count == 0);
-
-	if (odd_byte)
-		outw(dep->de_data_port, *(u16_t *)two_bytes);
 
 	for (i= 0; i<100; i++)
 	{
@@ -2043,53 +1394,6 @@ vir_bytes count;
 }
 
 /*===========================================================================*
- *				dp_nic2user				     *
- *===========================================================================*/
-static void dp_nic2user(dep, nic_addr, iovp, offset, count)
-dpeth_t *dep;
-int nic_addr;
-iovec_dat_t *iovp;
-vir_bytes offset;
-vir_bytes count;
-{
-	int bytes, i, r;
-
-	vir_bytes vir_hw = (vir_bytes) (dep->de_locmem + nic_addr);
-
-	i= 0;
-	while (count > 0)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		assert(i < iovp->iod_iovec_s);
-		if (offset >= iovp->iod_iovec[i].iov_size)
-		{
-			offset -= iovp->iod_iovec[i].iov_size;
-			i++;
-			continue;
-		}
-		bytes = iovp->iod_iovec[i].iov_size - offset;
-		if (bytes > count)
-			bytes = count;
-
-		r= sys_vircopy(SELF, D, vir_hw,
-			iovp->iod_proc_nr, D,
-			iovp->iod_iovec[i].iov_addr + offset, bytes);
-		if (r != OK)
-			panic("dp_nic2user: sys_vircopy failed: %d", r);
-
-		count -= bytes;
-		vir_hw += bytes;
-		offset += bytes;
-	}
-	assert(count == 0);
-}
-
-/*===========================================================================*
  *				dp_nic2user_s				     *
  *===========================================================================*/
 static void dp_nic2user_s(dep, nic_addr, iovp, offset, count)
@@ -2132,52 +1436,6 @@ vir_bytes count;
 
 		count -= bytes;
 		vir_hw += bytes;
-		offset += bytes;
-	}
-	assert(count == 0);
-}
-
-/*===========================================================================*
- *				dp_pio8_nic2user			     *
- *===========================================================================*/
-static void dp_pio8_nic2user(dep, nic_addr, iovp, offset, count)
-dpeth_t *dep;
-int nic_addr;
-iovec_dat_t *iovp;
-vir_bytes offset;
-vir_bytes count;
-{
-	int bytes, i;
-
-	outb_reg0(dep, DP_RBCR0, count & 0xFF);
-	outb_reg0(dep, DP_RBCR1, count >> 8);
-	outb_reg0(dep, DP_RSAR0, nic_addr & 0xFF);
-	outb_reg0(dep, DP_RSAR1, nic_addr >> 8);
-	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
-
-	i= 0;
-	while (count > 0)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		assert(i < iovp->iod_iovec_s);
-		if (offset >= iovp->iod_iovec[i].iov_size)
-		{
-			offset -= iovp->iod_iovec[i].iov_size;
-			i++;
-			continue;
-		}
-		bytes = iovp->iod_iovec[i].iov_size - offset;
-		if (bytes > count)
-			bytes = count;
-
-		do_vir_insb(dep->de_data_port, iovp->iod_proc_nr,
-			iovp->iod_iovec[i].iov_addr + offset, bytes);
-		count -= bytes;
 		offset += bytes;
 	}
 	assert(count == 0);
@@ -2228,98 +1486,6 @@ vir_bytes count;
 		}
 		count -= bytes;
 		offset += bytes;
-	}
-	assert(count == 0);
-}
-
-/*===========================================================================*
- *				dp_pio16_nic2user			     *
- *===========================================================================*/
-static void dp_pio16_nic2user(dep, nic_addr, iovp, offset, count)
-dpeth_t *dep;
-int nic_addr;
-iovec_dat_t *iovp;
-vir_bytes offset;
-vir_bytes count;
-{
-	vir_bytes vir_user;
-	vir_bytes ecount;
-	int i, r, bytes, user_proc;
-	u8_t two_bytes[2];
-	int odd_byte;
-
-	ecount= (count+1) & ~1;
-	odd_byte= 0;
-
-	outb_reg0(dep, DP_RBCR0, ecount & 0xFF);
-	outb_reg0(dep, DP_RBCR1, ecount >> 8);
-	outb_reg0(dep, DP_RSAR0, nic_addr & 0xFF);
-	outb_reg0(dep, DP_RSAR1, nic_addr >> 8);
-	outb_reg0(dep, DP_CR, CR_DM_RR | CR_PS_P0 | CR_STA);
-
-	i= 0;
-	while (count > 0)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		assert(i < iovp->iod_iovec_s);
-		if (offset >= iovp->iod_iovec[i].iov_size)
-		{
-			offset -= iovp->iod_iovec[i].iov_size;
-			i++;
-			continue;
-		}
-		bytes = iovp->iod_iovec[i].iov_size - offset;
-		if (bytes > count)
-			bytes = count;
-
-		user_proc= iovp->iod_proc_nr;
-		vir_user= iovp->iod_iovec[i].iov_addr + offset;
-		if (odd_byte)
-		{
-			r= sys_vircopy(SELF, D, (vir_bytes)&two_bytes[1],
-				user_proc, D, vir_user,  1);
-			if (r != OK) {
-				panic("dp_pio16_nic2user: sys_vircopy failed: %d",
-					r);
-			}
-			count--;
-			offset++;
-			bytes--;
-			vir_user++;
-			odd_byte= 0;
-			if (!bytes)
-				continue;
-		}
-		ecount= bytes & ~1;
-		if (ecount != 0)
-		{
-			do_vir_insw(dep->de_data_port, user_proc, vir_user,
-				ecount);
-			count -= ecount;
-			offset += ecount;
-			bytes -= ecount;
-			vir_user += ecount;
-		}
-		if (bytes)
-		{
-			assert(bytes == 1);
-			*(u16_t *)two_bytes= inw(dep->de_data_port);
-			r= sys_vircopy(SELF, D, (vir_bytes)&two_bytes[0],
-				user_proc, D, vir_user,  1);
-			if (r != OK) {
-				panic("dp_pio16_nic2user: sys_vircopy failed: %d", r);
-			}
-			count--;
-			offset++;
-			bytes--;
-			vir_user++;
-			odd_byte= 1;
-		}
 	}
 	assert(count == 0);
 }
@@ -2419,23 +1585,6 @@ vir_bytes count;
 }
 
 /*===========================================================================*
- *				dp_next_iovec				     *
- *===========================================================================*/
-static void dp_next_iovec(iovp)
-iovec_dat_t *iovp;
-{
-	assert(iovp->iod_iovec_s > IOVEC_NR);
-
-	iovp->iod_iovec_s -= IOVEC_NR;
-
-	iovp->iod_iovec_addr += IOVEC_NR * sizeof(iovec_t);
-
-	get_userdata(iovp->iod_proc_nr, iovp->iod_iovec_addr, 
-		(iovp->iod_iovec_s > IOVEC_NR ? IOVEC_NR : iovp->iod_iovec_s) *
-		sizeof(iovec_t), iovp->iod_iovec); 
-}
-
-/*===========================================================================*
  *				dp_next_iovec_s				     *
  *===========================================================================*/
 static void dp_next_iovec_s(iovp)
@@ -2461,13 +1610,15 @@ dpeth_t *dep;
 {
 	static eth_stat_t empty_stat = {0, 0, 0, 0, 0, 0 	/* ,... */ };
 
-	int ifnr;
+	int confnr;
 	dp_conf_t *dcp;
 
 	dep->de_mode= DEM_DISABLED;	/* Superfluous */
-	ifnr= dep-de_table;
 
-	dcp= &dp_conf[ifnr];
+	/* Pick a default configuration for this instance. */
+	confnr= MIN(de_instance, DP_CONF_NR-1);
+
+	dcp= &dp_conf[confnr];
 	update_conf(dep, dcp);
 	if (dep->de_mode != DEM_ENABLED)
 		return;
@@ -2494,6 +1645,7 @@ dp_conf_t *dcp;
 {
 	long v;
 	static char dpc_fmt[] = "x:d:x:x";
+	char eckey[16];
 
 #if ENABLE_PCI
 	if (dep->de_pci)
@@ -2507,10 +1659,13 @@ dp_conf_t *dcp;
 	}
 #endif
 
+	strcpy(eckey, "DPETH0");
+	eckey[5] += de_instance;
+
 	/* Get the default settings and modify them from the environment. */
 	dep->de_mode= DEM_SINK;
 	v= dcp->dpc_port;
-	switch (env_parse(dcp->dpc_envvar, dpc_fmt, 0, &v, 0x0000L, 0xFFFFL)) {
+	switch (env_parse(eckey, dpc_fmt, 0, &v, 0x0000L, 0xFFFFL)) {
 	case EP_OFF:
 		dep->de_mode= DEM_DISABLED;
 		break;
@@ -2523,16 +1678,15 @@ dp_conf_t *dcp;
 	dep->de_base_port= v;
 
 	v= dcp->dpc_irq | DEI_DEFAULT;
-	(void) env_parse(dcp->dpc_envvar, dpc_fmt, 1, &v, 0L,
-						(long) NR_IRQ_VECTORS - 1);
+	(void) env_parse(eckey, dpc_fmt, 1, &v, 0L, (long) NR_IRQ_VECTORS - 1);
 	dep->de_irq= v;
 
 	v= dcp->dpc_mem;
-	(void) env_parse(dcp->dpc_envvar, dpc_fmt, 2, &v, 0L, 0xFFFFFL);
+	(void) env_parse(eckey, dpc_fmt, 2, &v, 0L, 0xFFFFFL);
 	dep->de_linmem= v;
 
 	v= 0;
-	(void) env_parse(dcp->dpc_envvar, dpc_fmt, 3, &v, 0x2000L, 0x8000L);
+	(void) env_parse(eckey, dpc_fmt, 3, &v, 0x2000L, 0x8000L);
 	dep->de_ramsize= v;
 }
 
@@ -2564,7 +1718,7 @@ dpeth_t *dep;
 		panic("map_hw_buffer: cannot malloc size: %d", size);
 	o= I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
 	abuf= buf + o;
-	printf("buf at 0x%x, abuf at 0x%x\n", buf, abuf);
+	printf("buf at %p, abuf at %p\n", buf, abuf);
 
 #if 0
 	r= sys_vm_map(SELF, 1 /* map */, (vir_bytes)abuf,
@@ -2575,34 +1729,6 @@ dpeth_t *dep;
 	if (r != OK)
 		panic("map_hw_buffer: sys_vm_map failed: %d", r);
 	dep->de_locmem = abuf;
-}
-
-/*===========================================================================*
- *				calc_iovec_size				     *
- *===========================================================================*/
-static int calc_iovec_size(iovp)
-iovec_dat_t *iovp;
-{
-	/* Calculate the size of a request. Note that the iovec_dat
-	 * structure will be unusable after calc_iovec_size.
-	 */
-	int size;
-	int i;
-
-	size= 0;
-	i= 0;
-	while (i < iovp->iod_iovec_s)
-	{
-		if (i >= IOVEC_NR)
-		{
-			dp_next_iovec(iovp);
-			i= 0;
-			continue;
-		}
-		size += iovp->iod_iovec[i].iov_size;
-		i++;
-	}
-	return size;
 }
 
 /*===========================================================================*
@@ -2636,36 +1762,23 @@ iovec_dat_s_t *iovp;
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-static void reply(dep, err, may_block)
+static void reply(dep)
 dpeth_t *dep;
-int err;
-int may_block;
 {
 	message reply;
-	int status;
+	int flags;
 	int r;
 
-	status = 0;
+	flags = DL_NOFLAGS;
 	if (dep->de_flags & DEF_PACK_SEND)
-		status |= DL_PACK_SEND;
+		flags |= DL_PACK_SEND;
 	if (dep->de_flags & DEF_PACK_RECV)
-		status |= DL_PACK_RECV;
+		flags |= DL_PACK_RECV;
 
 	reply.m_type = DL_TASK_REPLY;
-	reply.DL_PORT = dep - de_table;
-	reply.DL_PROC = dep->de_client;
-	reply.DL_STAT = status | ((u32_t) err << 16);
+	reply.DL_FLAGS = flags;
 	reply.DL_COUNT = dep->de_read_s;
-	reply.DL_CLCK = 0;	/* Don't know */
 	r= send(dep->de_client, &reply);
-
-	if (r == ELOCKED && may_block)
-	{
-#if 0
-		printf("send locked\n");
-#endif
-		return;
-	}
 
 	if (r < 0)
 		panic("dp8390: send failed: %d", r);
@@ -2686,23 +1799,6 @@ message *reply_mess;
 }
 
 /*===========================================================================*
- *				get_userdata				     *
- *===========================================================================*/
-static void get_userdata(user_proc, user_addr, count, loc_addr)
-int user_proc;
-vir_bytes user_addr;
-vir_bytes count;
-void *loc_addr;
-{
-	int r;
-
-	r= sys_vircopy(user_proc, D, user_addr,
-		SELF, D, (vir_bytes)loc_addr, count);
-	if (r != OK)
-		panic("get_userdata: sys_vircopy failed: %d", r);
-}
-
-/*===========================================================================*
  *				get_userdata_s				     *
  *===========================================================================*/
 static void get_userdata_s(user_proc, grant, offset, count, loc_addr)
@@ -2718,23 +1814,6 @@ void *loc_addr;
 		(vir_bytes)loc_addr, count, D);
 	if (r != OK)
 		panic("get_userdata: sys_safecopyfrom failed: %d", r);
-}
-
-/*===========================================================================*
- *				put_userdata				     *
- *===========================================================================*/
-static void put_userdata(user_proc, user_addr, count, loc_addr)
-int user_proc;
-vir_bytes user_addr;
-vir_bytes count;
-void *loc_addr;
-{
-	int r;
-
-	r= sys_vircopy(SELF, D, (vir_bytes)loc_addr, 
-		user_proc, D, user_addr, count);
-	if (r != OK)
-		panic("put_userdata: sys_vircopy failed: %d", r);
 }
 
 /*===========================================================================*

@@ -64,7 +64,7 @@ int *status_ptr;
 		if(m_ptr->m_type == DL_CONF) {
 			conf_expected = FALSE;
 		}
-		else if(m_ptr->m_type != DL_GETNAME) {
+		else {
 			continue;
 		}
 	}

@@ -16,6 +16,7 @@ Copyright 1995 Philip Homburg
 #include "ip.h"
 #include "ip_int.h"
 #include "ipr.h"
+#include "sr.h"
 
 THIS_FILE
 
@@ -361,6 +362,28 @@ acc_t *pack;
 	return TRUE;
 }
 
+PUBLIC int ip_sel_read (ip_fd_t *ip_fd)
+{
+	acc_t *pack;
+
+	if (!(ip_fd->if_flags & IFF_OPTSET))
+		return 1;	/* Read will not block */
+
+	if (ip_fd->if_rdbuf_head)
+	{
+		if (get_time() <= ip_fd->if_exp_time)
+			return 1;
+
+		while (ip_fd->if_rdbuf_head)
+		{
+			pack= ip_fd->if_rdbuf_head;
+			ip_fd->if_rdbuf_head= pack->acc_ext_link;
+			bf_afree(pack);
+		}
+	}
+	return 0;
+}
+
 PUBLIC void ip_packet2user (ip_fd, pack, exp_time, data_len)
 ip_fd_t *ip_fd;
 acc_t *pack;
@@ -391,6 +414,16 @@ size_t data_len;
 		else
 			ip_fd->if_rdbuf_tail->acc_ext_link= pack;
 		ip_fd->if_rdbuf_tail= pack;
+
+		if (ip_fd->if_flags & IFF_SEL_READ)
+		{
+			ip_fd->if_flags & ~IFF_SEL_READ;
+			if (ip_fd->if_select_res)
+				ip_fd->if_select_res(ip_fd->if_srfd,
+					SR_SELECT_READ);
+			else
+				printf("ip_packet2user: no select_res\n");
+		}
 		return;
 	}
 

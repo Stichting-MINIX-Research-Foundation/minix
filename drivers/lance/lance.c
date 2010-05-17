@@ -6,32 +6,35 @@
  *
  * The valid messages and their parameters are:
  *
- *   m_type   DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR   DL_GRANT
- * |------------+----------+---------+----------+---------+---------+---------|
- * | HARDINT   |          |         |          |         |         |       |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_WRITEV_S| port nr  | proc nr | count    | mode    |     |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_READV_S   | port nr  | proc nr | count    |         |      |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_CONF   | port nr  | proc nr |     | mode    | address |         |
- * |------------|----------|---------|----------|---------|---------|---------|
- * |DL_GETSTAT_S| port nr  | proc nr |          |         |     |  grant  |
- * |------------|----------|---------|----------|---------|---------|---------|
- * | DL_STOP   | port_nr  |         |          |         |      |       |
- * |------------|----------|---------|----------|---------|---------|---------|
+ *   m_type        DL_ENDPT  DL_COUNT   DL_MODE   DL_GRANT
+ * |--------------+---------+----------+---------+---------|
+ * | DL_WRITEV_S  | endpt   | count    |         | grant   |
+ * |--------------|---------|----------|---------|---------|
+ * | DL_READV_S   | endpt   | count    |         | grant   |
+ * |--------------|---------|----------|---------|---------|
+ * | DL_CONF      |         |          | mode    |         |
+ * |--------------|---------|----------|---------|---------|
+ * | DL_GETSTAT_S | endpt   |          |         | grant   |
+ * |--------------|---------|----------|---------|---------|
+ * | hardware int |         |          |         |         |
+ * |--------------|---------|----------|---------|---------|
  *
  * The messages sent are:
  *
- *   m-type       DL_POR T   DL_PROC   DL_COUNT   DL_STAT   DL_CLCK
- * |------------|----------|---------|----------|---------|---------|
- * |DL_TASK_REPL| port nr  | proc nr | rd-count | err|stat| clock   |
- * |------------|----------|---------|----------|---------|---------|
+ *   m_type         DL_COUNT   DL_FLAGS
+ * |---------------+----------+---------|
+ * | DL_TASK_REPLY | rd-count | flags   |
+ * |---------------|----------|---------|
  *
- *   m_type       m3_i1     m3_i2       m3_ca1
- * |------------+---------+-----------+---------------|
- * |DL_CONF_REPL| port nr | last port | ethernet addr |
- * |------------|---------|-----------|---------------|
+ *   m_type
+ * |---------------|
+ * | DL_STAT_REPLY |
+ * |---------------|
+ *
+ *   m_type         DL_STAT   DL_ADDR
+ * |---------------+---------+---------------|
+ * | DL_CONF_REPLY | code    | ethernet addr |
+ * |---------------|---------|---------------|
  *
  * Created: Jul 27, 2002 by Kazuya Kodama <kazuya@nii.ac.jp>
  * Adapted for Minix 3: Sep 05, 2005 by Joren l'Ami <jwlami@cs.vu.nl>
@@ -55,9 +58,8 @@
 
 #include "lance.h"
 
-static ether_card_t ec_table[EC_PORT_NR_MAX];
-static int eth_tasknr= ANY;
-static u16_t eth_ign_proto;
+static ether_card_t ec_state;
+static int ec_instance;
 
 /* Configuration */
 typedef struct ec_conf
@@ -65,15 +67,16 @@ typedef struct ec_conf
    port_t ec_port;
    int ec_irq;
    phys_bytes ec_mem;
-   char *ec_envvar;
 } ec_conf_t;
 
 /* We hardly use these. Just "LANCE0=on/off" "LANCE1=on/off" mean. */
-ec_conf_t ec_conf[]=    /* Card addresses */
+#define EC_CONF_NR 3
+ec_conf_t ec_conf[EC_CONF_NR]=    /* Card addresses */
 {
-   /* I/O port, IRQ,  Buffer address,  Env. var,   Buf selector. */
-   {  0x1000,     9,    0x00000,        "LANCE0" },
-   {  0xD000,    15,    0x00000,        "LANCE1" },
+   /* I/O port, IRQ,  Buffer address. */
+   {  0x1000,     9,    0x00000,     },
+   {  0xD000,    15,    0x00000,     },
+   {  0x0000,     0,    0x00000,     },
 };
 
 /* Actually, we use PCI-BIOS info. */
@@ -99,14 +102,12 @@ _PROTOTYPE( static void conf_hw, (ether_card_t *ec)                     );
 _PROTOTYPE( static void update_conf, (ether_card_t *ec, ec_conf_t *ecp) );
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)      );
 _PROTOTYPE( static void do_int, (ether_card_t *ec)                      );
-_PROTOTYPE( static void reply, 
-            (ether_card_t *ec, int err, int may_block)                  );
+_PROTOTYPE( static void reply, (ether_card_t *ec)                       );
 _PROTOTYPE( static void ec_reset, (ether_card_t *ec)                    );
 _PROTOTYPE( static void ec_send, (ether_card_t *ec)                     );
 _PROTOTYPE( static void ec_recv, (ether_card_t *ec)                     );
-_PROTOTYPE( static void do_vwrite_s, 
-            (message *mp, int from_int)                              );
-_PROTOTYPE( static void do_vread_s, (const message *mp)                  );
+_PROTOTYPE( static void do_vwrite_s, (message *mp, int from_int)        );
+_PROTOTYPE( static void do_vread_s, (const message *mp)                 );
 _PROTOTYPE( static void ec_user2nic,
             (ether_card_t *dep, iovec_dat_t *iovp,
              vir_bytes offset, int nic_addr,
@@ -118,10 +119,9 @@ _PROTOTYPE( static void ec_nic2user,
 _PROTOTYPE( static int calc_iovec_size, (iovec_dat_t *iovp)             );
 _PROTOTYPE( static void ec_next_iovec, (iovec_dat_t *iovp)              );
 _PROTOTYPE( static void do_getstat_s, (message *mp)                     );
-_PROTOTYPE( static void do_stop, (message *mp)                          );
-_PROTOTYPE( static void do_getname, (message *mp)                       );
+_PROTOTYPE( static void lance_stop, (ether_card_t *ec)                  );
 
-_PROTOTYPE( static void lance_dump, (void)            );
+_PROTOTYPE( static void lance_dump, (void)                              );
 _PROTOTYPE( static void getAddressing, (int devind, ether_card_t *ec)   );
 
 /* probe+init LANCE cards */
@@ -137,7 +137,7 @@ _PROTOTYPE( static void  write_csr, (port_t ioaddr, u16_t csrno, u16_t value));
 
 /* --- LANCE --- */
 /* General */
-#define Address                 unsigned long
+typedef unsigned long Address;
 
 #define virt_to_bus(x)          (vir2phys((unsigned long)x))
 unsigned long vir2phys( unsigned long x )
@@ -250,6 +250,7 @@ struct lance_interface
 };
 
 /* =============== global variables =============== */
+/* AKA the stuff that really should have been in ether_card_t */
 static struct lance_interface  *lp;
 #define LANCE_BUF_SIZE (sizeof(struct lance_interface))
 static char *lance_buf = NULL;
@@ -257,7 +258,6 @@ static int rx_slot_nr = 0;          /* Rx-slot number */
 static int tx_slot_nr = 0;          /* Tx-slot number */
 static int cur_tx_slot_nr = 0;      /* Tx-slot number */
 static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
-static const char *progname;
 
 phys_bytes lance_buf_phys;
 
@@ -270,35 +270,29 @@ EXTERN char **env_argv;
 /*===========================================================================*
  *                              main                                         *
  *===========================================================================*/
-void main( int argc, char **argv )
+int main( int argc, char **argv )
 {
    message m;
    int ipc_status;
-   int i,r;
+   int r;
    ether_card_t *ec;
 
    /* SEF local startup. */
    env_setargs(argc, argv);
    sef_local_startup();
 
+   ec= &ec_state;
+
    while (TRUE)
    {
-      for (i=0;i<EC_PORT_NR_MAX;++i)
-      {
-         ec= &ec_table[i];
-         if (ec->ec_irq != 0)
-            sys_irqenable(&ec->ec_hook);
-      }
+      if (ec->ec_irq != 0)
+         sys_irqenable(&ec->ec_hook);
 
       if ((r= netdriver_receive(ANY, &m, &ipc_status)) != OK)
         panic("netdriver_receive failed: %d", r);
         
-      for (i=0;i<EC_PORT_NR_MAX;++i)
-      {
-         ec= &ec_table[i];
-         if (ec->ec_irq != 0)
-            sys_irqdisable(&ec->ec_hook);
-      }
+      if (ec->ec_irq != 0)
+         sys_irqdisable(&ec->ec_hook);
 
       if (is_ipc_notify(ipc_status)) {
 	      switch(_ENDPOINT_P(m.m_source)) {
@@ -306,17 +300,11 @@ void main( int argc, char **argv )
 			      lance_dump();
 			      break;
 		      case HARDWARE:
-			      for (i=0;i<EC_PORT_NR_MAX;++i)
+			      if (ec->mode == EC_ENABLED)
 			      {
-				      ec= &ec_table[i];
-				      if (ec->mode != EC_ENABLED)
-					      continue;
-
-				      {
-					      ec->ec_int_pending = 0;
-					      ec_check_ints(ec);
-					      do_int(ec);
-				      }
+				 ec->ec_int_pending = 0;
+				 ec_check_ints(ec);
+				 do_int(ec);
 			      }
 			      break;
 		      default:
@@ -341,16 +329,12 @@ void main( int argc, char **argv )
       case DL_GETSTAT_S:
          do_getstat_s(&m);
          break;
-      case DL_STOP:
-         do_stop(&m);
-         break;
-      case DL_GETNAME:
-         do_getname(&m);
-         break;
       default:
          panic("illegal message: %d", m.m_type);
       }
    }
+
+   return 0;
 }
 
 /*===========================================================================*
@@ -380,13 +364,10 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the lance driver. */
-   int r;
    long v;
 #if LANCE_FKEY
-   int fkeys, sfkeys;
+   int r, fkeys, sfkeys;
 #endif
-
-   (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
 
 #if LANCE_FKEY
    fkeys = sfkeys = 0;
@@ -395,12 +376,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
       printf("Warning: lance couldn't observe Shift+F7 key: %d\n",r);
 #endif
 
-   v= 0;
-   (void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-   eth_ign_proto= htons((u16_t) v);
+   v = 0;
+   (void) env_parse("instance", "d", 0, &v, 0, 255);
+   ec_instance = (int) v;
 
-  /* Announce we are up! */
-  netdriver_announce();
+   /* Announce we are up! */
+   netdriver_announce();
 
    return OK;
 }
@@ -410,20 +391,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
  *===========================================================================*/
 PRIVATE void sef_cb_signal_handler(int signo)
 {
-   message mess;
-   int i;
 
    /* Only check for termination signal, ignore anything else. */
    if (signo != SIGTERM) return;
 
-   for (i= 0; i<EC_PORT_NR_MAX; i++)
-   {
-      if (ec_table[i].mode != EC_ENABLED)
-         continue;
-      mess.m_type= DL_STOP;
-      mess.DL_PORT= i;
-      do_stop(&mess);
-   }
+   if (ec_state.mode == EC_ENABLED)
+      lance_stop(&ec_state);
 
 #if VERBOSE
    printf("LANCE driver stopped.\n");
@@ -438,63 +411,60 @@ PRIVATE void sef_cb_signal_handler(int signo)
 static void lance_dump()
 {
    ether_card_t *ec;
-   int i, isr, csr;
+   int isr, csr;
    unsigned short ioaddr;
   
    printf("\n");
-   for (i= 0, ec = &ec_table[0]; i<EC_PORT_NR_MAX; i++, ec++)
-   {
-      if (ec->mode == EC_DISABLED)
-         printf("lance port %d is disabled\n", i);
-      else if (ec->mode == EC_SINK)
-         printf("lance port %d is in sink mode\n", i);
+   ec = &ec_state;
+   if (ec->mode == EC_DISABLED)
+      printf("lance instance %d is disabled\n", ec_instance);
+   else if (ec->mode == EC_SINK)
+      printf("lance instance %d is in sink mode\n", ec_instance);
+
+   if (ec->mode != EC_ENABLED)
+      return;
       
-      if (ec->mode != EC_ENABLED)
-         continue;
+   printf("lance statistics of instance %d:\n", ec_instance);
       
-      printf("lance statistics of port %d:\n", i);
+   printf("recvErr    :%8ld\t", ec->eth_stat.ets_recvErr);
+   printf("sendErr    :%8ld\t", ec->eth_stat.ets_sendErr);
+   printf("OVW        :%8ld\n", ec->eth_stat.ets_OVW);
       
-      printf("recvErr    :%8ld\t", ec->eth_stat.ets_recvErr);
-      printf("sendErr    :%8ld\t", ec->eth_stat.ets_sendErr);
-      printf("OVW        :%8ld\n", ec->eth_stat.ets_OVW);
+   printf("CRCerr     :%8ld\t", ec->eth_stat.ets_CRCerr);
+   printf("frameAll   :%8ld\t", ec->eth_stat.ets_frameAll);
+   printf("missedP    :%8ld\n", ec->eth_stat.ets_missedP);
       
-      printf("CRCerr     :%8ld\t", ec->eth_stat.ets_CRCerr);
-      printf("frameAll   :%8ld\t", ec->eth_stat.ets_frameAll);
-      printf("missedP    :%8ld\n", ec->eth_stat.ets_missedP);
+   printf("packetR    :%8ld\t", ec->eth_stat.ets_packetR);
+   printf("packetT    :%8ld\t", ec->eth_stat.ets_packetT);
+   printf("transDef   :%8ld\n", ec->eth_stat.ets_transDef);
       
-      printf("packetR    :%8ld\t", ec->eth_stat.ets_packetR);
-      printf("packetT    :%8ld\t", ec->eth_stat.ets_packetT);
-      printf("transDef   :%8ld\n", ec->eth_stat.ets_transDef);
+   printf("collision  :%8ld\t", ec->eth_stat.ets_collision);
+   printf("transAb    :%8ld\t", ec->eth_stat.ets_transAb);
+   printf("carrSense  :%8ld\n", ec->eth_stat.ets_carrSense);
       
-      printf("collision  :%8ld\t", ec->eth_stat.ets_collision);
-      printf("transAb    :%8ld\t", ec->eth_stat.ets_transAb);
-      printf("carrSense  :%8ld\n", ec->eth_stat.ets_carrSense);
+   printf("fifoUnder  :%8ld\t", ec->eth_stat.ets_fifoUnder);
+   printf("fifoOver   :%8ld\t", ec->eth_stat.ets_fifoOver);
+   printf("CDheartbeat:%8ld\n", ec->eth_stat.ets_CDheartbeat);
       
-      printf("fifoUnder  :%8ld\t", ec->eth_stat.ets_fifoUnder);
-      printf("fifoOver   :%8ld\t", ec->eth_stat.ets_fifoOver);
-      printf("CDheartbeat:%8ld\n", ec->eth_stat.ets_CDheartbeat);
+   printf("OWC        :%8ld\t", ec->eth_stat.ets_OWC);
       
-      printf("OWC        :%8ld\t", ec->eth_stat.ets_OWC);
-      
-      ioaddr = ec->ec_port;
-      isr = read_csr(ioaddr, LANCE_CSR0);
-      printf("isr = 0x%x, flags = 0x%x\n", isr,
+   ioaddr = ec->ec_port;
+   isr = read_csr(ioaddr, LANCE_CSR0);
+   printf("isr = 0x%x, flags = 0x%x\n", isr,
              ec->flags);
 
-      printf("irq = %d\tioadr = 0x%x\n", ec->ec_irq, ec->ec_port);
+   printf("irq = %d\tioadr = 0x%x\n", ec->ec_irq, ec->ec_port);
 
-      csr = read_csr(ioaddr, LANCE_CSR0);
-      printf("CSR0: 0x%x\n", csr);
-      csr = read_csr(ioaddr, LANCE_CSR3);
-      printf("CSR3: 0x%x\n", csr);
-      csr = read_csr(ioaddr, LANCE_CSR4);
-      printf("CSR4: 0x%x\n", csr);
-      csr = read_csr(ioaddr, LANCE_CSR5);
-      printf("CSR5: 0x%x\n", csr);
-      csr = read_csr(ioaddr, LANCE_CSR15);
-      printf("CSR15: 0x%x\n", csr);
-      
-   }
+   csr = read_csr(ioaddr, LANCE_CSR0);
+   printf("CSR0: 0x%x\n", csr);
+   csr = read_csr(ioaddr, LANCE_CSR3);
+   printf("CSR3: 0x%x\n", csr);
+   csr = read_csr(ioaddr, LANCE_CSR4);
+   printf("CSR4: 0x%x\n", csr);
+   csr = read_csr(ioaddr, LANCE_CSR5);
+   printf("CSR5: 0x%x\n", csr);
+   csr = read_csr(ioaddr, LANCE_CSR15);
+   printf("CSR15: 0x%x\n", csr);
 }
 
 /*===========================================================================*
@@ -503,7 +473,6 @@ static void lance_dump()
 static void do_init(mp)
 message *mp;
 {
-   int port;
    ether_card_t *ec;
    message reply_mess;
 
@@ -513,18 +482,9 @@ message *mp;
       panic("alloc_contig failed: %d", LANCE_BUF_SIZE);
    }
 
-   port = mp->DL_PORT;
-   if (port < 0 || port >= EC_PORT_NR_MAX)
-   {
-      reply_mess.m_type= DL_CONF_REPLY;
-      reply_mess.m3_i1= ENXIO;
-      mess_reply(mp, &reply_mess);
-      return;
-   }
-
-   ec= &ec_table[port];
-   strcpy(ec->port_name, "eth_card#0");
-   ec->port_name[9] += port;
+   ec= &ec_state;
+   strcpy(ec->port_name, "lance#0");
+   ec->port_name[6] += ec_instance;
 
    if (ec->mode == EC_DISABLED)
    {
@@ -543,7 +503,7 @@ message *mp;
       {
          /* Probe failed, or the device is configured off. */
          reply_mess.m_type= DL_CONF_REPLY;
-         reply_mess.m3_i1= ENXIO;
+         reply_mess.DL_STAT = ENXIO;
          mess_reply(mp, &reply_mess);
          return;
       }
@@ -561,9 +521,8 @@ message *mp;
          ec->mac_address.ea_addr[5] = 0;
       ec_confaddr(ec);
       reply_mess.m_type = DL_CONF_REPLY;
-      reply_mess.m3_i1 = mp->DL_PORT;
-      reply_mess.m3_i2 = EC_PORT_NR_MAX;
-      *(ether_addr_t *) reply_mess.m3_ca1 = ec->mac_address;
+      reply_mess.DL_STAT = OK;
+      *(ether_addr_t *) reply_mess.DL_HWADDR = ec->mac_address;
       mess_reply(mp, &reply_mess);
       return;
    }
@@ -579,14 +538,11 @@ message *mp;
    if (mp->DL_MODE & DL_BROAD_REQ)
       ec->flags |= ECF_BROAD;
 
-   ec->client = mp->m_source;
-
    ec_reinit(ec);
 
    reply_mess.m_type = DL_CONF_REPLY;
-   reply_mess.m3_i1 = mp->DL_PORT;
-   reply_mess.m3_i2 = EC_PORT_NR_MAX;
-   *(ether_addr_t *) reply_mess.m3_ca1 = ec->mac_address;
+   reply_mess.DL_STAT = OK;
+   *(ether_addr_t *) reply_mess.DL_HWADDR = ec->mac_address;
 
    mess_reply(mp, &reply_mess);
 }
@@ -599,7 +555,7 @@ static void do_int(ec)
 ether_card_t *ec;
 {
    if (ec->flags & (ECF_PACK_SEND | ECF_PACK_RECV))
-      reply(ec, OK, TRUE);
+      reply(ec);
 }
 
 
@@ -611,18 +567,20 @@ ether_card_t *ec;
 {
    static eth_stat_t empty_stat = {0, 0, 0, 0, 0, 0        /* ,... */ };
 
-   int ifnr;
+   int confnr;
    ec_conf_t *ecp;
 
    ec->mode= EC_DISABLED;     /* Superfluous */
-   ifnr= ec-ec_table;
 
-   ecp= &ec_conf[ifnr];
+   /* Pick a default configuration. This hardly matters anymore. */
+   confnr= MIN(ec_instance, EC_CONF_NR-1);
+
+   ecp= &ec_conf[confnr];
    update_conf(ec, ecp);
    if (ec->mode != EC_ENABLED)
       return;
 
-   if (!lance_probe(ec, ifnr))
+   if (!lance_probe(ec, ec_instance))
    {
       printf("%s: No ethernet card found on PCI-BIOS info.\n", 
              ec->port_name);
@@ -645,12 +603,15 @@ ether_card_t *ec;
 ec_conf_t *ecp;
 {
    long v;
+   char eckey[16];
    static char ec_fmt[] = "x:d:x:x";
 
    /* Get the default settings and modify them from the environment. */
+   strcpy(eckey, "LANCE0");
+   eckey[5] += ec_instance;
    ec->mode= EC_SINK;
    v= ecp->ec_port;
-   switch (env_parse(ecp->ec_envvar, ec_fmt, 0, &v, 0x0000L, 0xFFFFL))
+   switch (env_parse(eckey, ec_fmt, 0, &v, 0x0000L, 0xFFFFL))
    {
    case EP_OFF:
       ec->mode= EC_DISABLED;
@@ -666,16 +627,15 @@ ec_conf_t *ecp;
    ec->ec_port= v;
 
    v= ecp->ec_irq | DEI_DEFAULT;
-   (void) env_parse(ecp->ec_envvar, ec_fmt, 1, &v, 0L,
-                    (long) NR_IRQ_VECTORS - 1);
+   (void) env_parse(eckey, ec_fmt, 1, &v, 0L, (long) NR_IRQ_VECTORS - 1);
    ec->ec_irq= v;
   
    v= ecp->ec_mem;
-   (void) env_parse(ecp->ec_envvar, ec_fmt, 2, &v, 0L, 0xFFFFFL);
+   (void) env_parse(eckey, ec_fmt, 2, &v, 0L, 0xFFFFFL);
    ec->ec_linmem= v;
   
    v= 0;
-   (void) env_parse(ecp->ec_envvar, ec_fmt, 3, &v, 0x2000L, 0x8000L);
+   (void) env_parse(eckey, ec_fmt, 3, &v, 0x2000L, 0x8000L);
    ec->ec_ramsize= v;
 }
 
@@ -716,36 +676,23 @@ ether_card_t *ec;
 /*===========================================================================*
  *                              reply                                        *
  *===========================================================================*/
-static void reply(ec, err, may_block)
+static void reply(ec)
 ether_card_t *ec;
-int err;
-int may_block;
 {
    message reply;
-   int status,r;
-   clock_t now;
+   int flags,r;
 
-   status = 0;
+   flags = DL_NOFLAGS;
    if (ec->flags & ECF_PACK_SEND)
-      status |= DL_PACK_SEND;
+      flags |= DL_PACK_SEND;
    if (ec->flags & ECF_PACK_RECV)
-      status |= DL_PACK_RECV;
+      flags |= DL_PACK_RECV;
 
    reply.m_type   = DL_TASK_REPLY;
-   reply.DL_PORT  = ec - ec_table;
-   reply.DL_PROC  = ec->client;
-   reply.DL_STAT  = status | ((u32_t) err << 16);
+   reply.DL_FLAGS = flags;
    reply.DL_COUNT = ec->read_s;
 
-   if ((r=getuptime(&now)) != OK)
-      panic("getuptime() failed: %d", r);
-   reply.DL_CLCK = now;
-
    r = send(ec->client, &reply);
-   if (r == ELOCKED && may_block)
-   {
-      return;
-   }
    if (r < 0)
       panic("send failed: %d", r);
 
@@ -778,8 +725,8 @@ ether_card_t *ec;
    long v;
 
    /* User defined ethernet address? */
-   strcpy(eakey, ec_conf[ec-ec_table].ec_envvar);
-   strcat(eakey, "_EA");
+   strcpy(eakey, "LANCE0_EA");
+   eakey[5] += ec_instance;
 
    for (i = 0; i < 6; i++)
    {
@@ -1069,22 +1016,22 @@ ether_card_t *ec;
  *===========================================================================*/
 static void do_vread_s(const message *mp)
 {
-   int port, count, r;
+   int count, r;
    ether_card_t *ec;
 
-   port = mp->DL_PORT;
-   count = mp->DL_COUNT;
-   ec= &ec_table[port];
-   ec->client= mp->DL_PROC;
+   ec= &ec_state;
 
-   r = sys_safecopyfrom(mp->DL_PROC, mp->DL_GRANT, 0,
+   ec->client= mp->m_source;
+   count = mp->DL_COUNT;
+
+   r = sys_safecopyfrom(mp->DL_ENDPT, mp->DL_GRANT, 0,
                         (vir_bytes)ec->read_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
 	panic("do_vread_s: sys_safecopyfrom failed: %d", r);
    ec->read_iovec.iod_iovec_s    = count;
-   ec->read_iovec.iod_proc_nr    = mp->DL_PROC;
+   ec->read_iovec.iod_proc_nr    = mp->DL_ENDPT;
    ec->read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
    ec->read_iovec.iod_iovec_offset = 0;
 
@@ -1096,7 +1043,7 @@ static void do_vread_s(const message *mp)
 
    if ((ec->flags & (ECF_READING|ECF_STOPPED)) == (ECF_READING|ECF_STOPPED))
       ec_reset(ec);
-   reply(ec, OK, FALSE);
+   reply(ec);
 }
 
 /*===========================================================================*
@@ -1176,33 +1123,33 @@ static void do_vwrite_s(mp, from_int)
 message *mp;
 int from_int;
 {
-   int port, count, check, r;
+   int count, check, r;
    ether_card_t *ec;
    unsigned short ioaddr;
 
-   port = mp->DL_PORT;
+   ec = &ec_state;
+
+   ec->client= mp->m_source;
    count = mp->DL_COUNT;
-   ec = &ec_table[port];
-   ec->client= mp->DL_PROC;
 
    if (isstored[tx_slot_nr]==1)
    {
       /* all slots are used, so this message is buffered */
       ec->sendmsg= *mp;
       ec->flags |= ECF_SEND_AVAIL;
-      reply(ec, OK, FALSE);
+      reply(ec);
       return;
    }
 
    /* convert the message to write_iovec */
-   r = sys_safecopyfrom(mp->DL_PROC, mp->DL_GRANT, 0,
+   r = sys_safecopyfrom(mp->DL_ENDPT, mp->DL_GRANT, 0,
                         (vir_bytes)ec->write_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
 	panic("do_vwrite_s: sys_safecopyfrom failed: %d", r);
    ec->write_iovec.iod_iovec_s    = count;
-   ec->write_iovec.iod_proc_nr    = mp->DL_PROC;
+   ec->write_iovec.iod_proc_nr    = mp->DL_ENDPT;
    ec->write_iovec.iod_grant      = mp->DL_GRANT;
    ec->write_iovec.iod_iovec_offset = 0;
 
@@ -1236,7 +1183,7 @@ int from_int;
    /* reply by calling do_int() if this function is called from interrupt. */
    if (from_int)
       return;
-   reply(ec, OK, FALSE);
+   reply(ec);
 }
 
 
@@ -1375,44 +1322,30 @@ iovec_dat_t *iovp;
 static void do_getstat_s(mp)
 message *mp;
 {
-   int r, port;
+   int r;
    ether_card_t *ec;
 
-   port = mp->DL_PORT;
-   if (port < 0 || port >= EC_PORT_NR_MAX)
-      panic("illegal port: %d", port);
+   ec= &ec_state;
 
-   ec= &ec_table[port];
-   ec->client= mp->DL_PROC;
-
-   r = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
+   r = sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0,
                       (vir_bytes)&ec->eth_stat, sizeof(ec->eth_stat), D);
 
    if (r != OK)
 	panic("do_getstat_s: sys_safecopyto failed: %d", r);
 
    mp->m_type= DL_STAT_REPLY;
-   mp->DL_PORT= port;
-   mp->DL_STAT= OK;
    r= send(mp->m_source, mp);
    if (r != OK)
       panic("do_getstat_s: send failed: %d", r);
 }
 
 /*===========================================================================*
- *                              do_stop                                      *
+ *                              lance_stop                                   *
  *===========================================================================*/
-static void do_stop(mp)
-message *mp;
+static void lance_stop(ec)
+ether_card_t *ec;
 {
-   int port;
-   ether_card_t *ec;
    unsigned short ioaddr;
-
-   port = mp->DL_PORT;
-   if (port < 0 || port >= EC_PORT_NR_MAX)
-      panic("illegal port: %d", port);
-   ec = &ec_table[port];
 
    if (!(ec->flags & ECF_ENABLED))
       return;
@@ -1582,22 +1515,6 @@ int skip;
 #endif
 
    return lance_version;
-}
-
-/*===========================================================================*
- *                              do_getname                                   *
- *===========================================================================*/
-static void do_getname(mp)
-message *mp;
-{
-   int r;
-
-   strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
-   mp->DL_NAME[sizeof(mp->DL_NAME)-1]= '\0';
-   mp->m_type= DL_NAME_REPLY;
-   r= send(mp->m_source, mp);
-   if (r != OK)
-      panic("do_getname: send failed: %d", r);
 }
 
 /*===========================================================================*

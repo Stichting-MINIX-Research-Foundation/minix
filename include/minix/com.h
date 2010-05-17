@@ -262,45 +262,35 @@
 #define DL_RS_BASE	0x280		
 
 /* Message types for data link layer requests. */
-#define DL_WRITE	(DL_RQ_BASE + 3)
-#define DL_WRITEV	(DL_RQ_BASE + 4)
-#define DL_READ		(DL_RQ_BASE + 5)
-#define DL_READV	(DL_RQ_BASE + 6)
-#define DL_CONF		(DL_RQ_BASE + 7)
-#define DL_STOP		(DL_RQ_BASE + 8)
-#define DL_GETSTAT	(DL_RQ_BASE + 9)
-#define DL_GETNAME	(DL_RQ_BASE +10)
-#define DL_WRITEV_S	(DL_RQ_BASE +11)
-#define DL_READV_S	(DL_RQ_BASE +12)
-#define DL_GETSTAT_S	(DL_RQ_BASE +13)
+#define DL_CONF		(DL_RQ_BASE + 0)
+#define DL_GETSTAT_S	(DL_RQ_BASE + 1)
+#define DL_WRITEV_S	(DL_RQ_BASE + 2)
+#define DL_READV_S	(DL_RQ_BASE + 3)
 
 /* Message type for data link layer replies. */
-#define DL_CONF_REPLY	(DL_RS_BASE + 20)
-#define DL_TASK_REPLY	(DL_RS_BASE + 21)
-#define DL_NAME_REPLY	(DL_RS_BASE + 22)
-#define DL_STAT_REPLY	(DL_RS_BASE + 23)
+#define DL_CONF_REPLY	(DL_RS_BASE + 0)
+#define DL_STAT_REPLY	(DL_RS_BASE + 1)
+#define DL_TASK_REPLY	(DL_RS_BASE + 2)
 
 /* Field names for data link layer messages. */
-#define DL_PORT		m2_i1
-#define DL_PROC		m2_i2	/* endpoint */
+#define DL_ENDPT	m2_i2
 #define DL_COUNT	m2_i3
 #define DL_MODE		m2_l1
-#define DL_CLCK		m2_l2
-#define DL_ADDR		m2_p1
-#define DL_STAT		m2_l1
+#define DL_FLAGS	m2_l1
 #define DL_GRANT	m2_l2
-#define DL_NAME		m3_ca1
+#define DL_STAT		m3_i1
+#define DL_HWADDR	m3_ca1
 
-/* Bits in 'DL_STAT' field of DL replies. */
+/* Bits in 'DL_FLAGS' field of DL replies. */
+#  define DL_NOFLAGS		0x00
 #  define DL_PACK_SEND		0x01
 #  define DL_PACK_RECV		0x02
-#  define DL_READ_IP		0x04
 
 /* Bits in 'DL_MODE' field of DL requests. */
 #  define DL_NOMODE		0x0
-#  define DL_PROMISC_REQ	0x2
-#  define DL_MULTI_REQ		0x4
-#  define DL_BROAD_REQ		0x8
+#  define DL_PROMISC_REQ	0x1
+#  define DL_MULTI_REQ		0x2
+#  define DL_BROAD_REQ		0x4
 
 /*===========================================================================*
  *                  SYSTASK request types and field names                    *

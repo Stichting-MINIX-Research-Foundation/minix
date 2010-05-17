@@ -28,8 +28,8 @@ PRIVATE u16_t pcitab_e1000[] =
     0,
 };
 
-PRIVATE const char *progname;
-PRIVATE e1000_t e1000_table[E1000_PORT_NR];
+PRIVATE int e1000_instance;
+PRIVATE e1000_t e1000_state;
 
 _PROTOTYPE( PRIVATE void e1000_init, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_init_pci, (void)				);
@@ -41,11 +41,9 @@ _PROTOTYPE( PRIVATE void e1000_reset_hw, (e1000_t *e)			);
 _PROTOTYPE( PRIVATE void e1000_writev_s, (message *mp, int from_int)	);
 _PROTOTYPE( PRIVATE void e1000_readv_s, (message *mp, int from_int)	);
 _PROTOTYPE( PRIVATE void e1000_getstat_s, (message *mp)			);
-_PROTOTYPE( PRIVATE void e1000_getname, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_interrupt, (message *mp)			);
 _PROTOTYPE( PRIVATE int  e1000_link_changed, (e1000_t *e)		);
 _PROTOTYPE( PRIVATE void e1000_stop, (void)                             );
-_PROTOTYPE( PRIVATE e1000_t * e1000_port, (int port)                    );
 _PROTOTYPE( PRIVATE uint32_t e1000_reg_read, (e1000_t *e, uint32_t reg) );
 _PROTOTYPE( PRIVATE void e1000_reg_write, (e1000_t *e, uint32_t reg,
 					  uint32_t value)               );					  
@@ -57,7 +55,7 @@ _PROTOTYPE( PRIVATE u16_t eeprom_eerd, (void *e, int reg)		);
 _PROTOTYPE( PRIVATE u16_t eeprom_ich,  (void *e, int reg)		);
 _PROTOTYPE( PRIVATE int eeprom_ich_init, (e1000_t *e)		        );
 _PROTOTYPE( PRIVATE int eeprom_ich_cycle, (const e1000_t *e, u32_t timeout) );
-_PROTOTYPE( PRIVATE void reply, (e1000_t *e, int err, int may_block)	);
+_PROTOTYPE( PRIVATE void reply, (e1000_t *e)				);
 _PROTOTYPE( PRIVATE void mess_reply, (message *req, message *reply)	);
 
 /* SEF functions and variables. */
@@ -108,9 +106,7 @@ int main(int argc, char *argv[])
 	    case DL_WRITEV_S:   e1000_writev_s(&m, FALSE);	break;
 	    case DL_READV_S:    e1000_readv_s(&m, FALSE);	break;
 	    case DL_CONF:	e1000_init(&m);			break;
-	    case DL_STOP:       e1000_stop();                   break;
 	    case DL_GETSTAT_S:  e1000_getstat_s(&m);		break;
-	    case DL_GETNAME:    e1000_getname(&m);		break;
 	    default:
 		panic("illegal message: %d", m.m_type);
 	}
@@ -144,19 +140,15 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the e1000 driver. */
+    long v;
     int r;
 
-    /* Verify command-line arguments. */
-    if (env_argc < 1)
-    {
-	panic("no program name given in argc/argv");
-    }
-    else
-	(progname = strrchr(env_argv[0],'/')) ? progname++
-		: (progname = env_argv[0]);
+    v = 0;
+    (void) env_parse("instance", "d", 0, &v, 0, 255);
+    e1000_instance = (int) v;
 
     /* Clear state. */
-    memset(e1000_table, 0, sizeof(e1000_table));
+    memset(&e1000_state, 0, sizeof(e1000_state));
 
     /* Perform calibration. */
     if((r = tsc_calibrate()) != OK)
@@ -200,23 +192,20 @@ PRIVATE void e1000_init(message *mp)
 	first_time = 0;
 	e1000_init_pci(); 
     }
-    /* Retrieve e1000 pointer. */
-    e = e1000_port(mp->DL_PORT);
-    e->client = mp->DL_PROC;
+    e = &e1000_state;
 
     /* Initialize hardware, if needed. */
     if (!(e->status & E1000_ENABLED) && !(e1000_init_hw(e)))
     {
-        reply_mess.m_type = DL_CONF_REPLY;
-        reply_mess.m3_i1  = ENXIO;
+        reply_mess.m_type  = DL_CONF_REPLY;
+        reply_mess.DL_STAT = ENXIO;
         mess_reply(mp, &reply_mess);
         return;
     }
     /* Reply back to INET. */
-    reply_mess.m_type = DL_CONF_REPLY;
-    reply_mess.m3_i1  = mp->DL_PORT;
-    reply_mess.m3_i2  = E1000_PORT_NR;
-    *(ether_addr_t *) reply_mess.m3_ca1 = e->address;
+    reply_mess.m_type  = DL_CONF_REPLY;
+    reply_mess.DL_STAT = OK;
+    *(ether_addr_t *) reply_mess.DL_HWADDR = e->address;
     mess_reply(mp, &reply_mess);
 }
 
@@ -226,18 +215,15 @@ PRIVATE void e1000_init(message *mp)
 PRIVATE void e1000_init_pci()
 {
     e1000_t *e;
-    int i;
 
     /* Initialize the PCI bus. */
     pci_init();
 
     /* Try to detect e1000's. */
-    for (i = 0, e = &e1000_table[i]; i < E1000_PORT_NR; i++, e++)
-    {
-	strcpy(e->name, "e1000#0");
-	e->name[6] += i;	
-	e1000_probe(e, i);
-    }
+    e = &e1000_state;
+    strcpy(e->name, "e1000#0");
+    e->name[6] += e1000_instance;	
+    e1000_probe(e, e1000_instance);
 }
 
 /*===========================================================================*
@@ -353,7 +339,7 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
      * Output debug information.
      */
     status[0] = e1000_reg_read(e, E1000_REG_STATUS);    
-    E1000_DEBUG(3, ("%s: MEM at 0x%lx, IRQ %d\n",
+    E1000_DEBUG(3, ("%s: MEM at %p, IRQ %d\n",
 		    e->name, e->regs, e->irq));
     E1000_DEBUG(3, ("%s: link %s, %s duplex\n",
 		    e->name, status[0] & 3 ? "up"   : "down",
@@ -441,7 +427,7 @@ e1000_t *e;
     /*
      * Do we have a user defined ethernet address?
      */
-    eakey[sizeof(E1000_ENVVAR)-1] = '0' + (e-e1000_table);
+    eakey[sizeof(E1000_ENVVAR)-1] = '0' + e1000_instance;
 
     for (i= 0; i < 6; i++)
     {
@@ -453,7 +439,7 @@ e1000_t *e;
     /*
      * If that fails, read Ethernet Address from EEPROM.
      */
-    if ((i != 0 && i != 6) || i == 0)
+    if (i != 6)
     {
 	for (i = 0; i < 3; i++)
 	{
@@ -592,12 +578,12 @@ PRIVATE void e1000_writev_s(mp, from_int)
 message *mp;
 int from_int;
 {
-    e1000_t *e = e1000_port(mp->DL_PORT);
+    e1000_t *e = &e1000_state;
     e1000_tx_desc_t *desc;
     iovec_s_t iovec[E1000_IOVEC_NR];
     int r, head, tail, i, bytes = 0, size;
 
-    E1000_DEBUG(3, ("e1000: writev_s(%x,%d)\n", mp, from_int));
+    E1000_DEBUG(3, ("e1000: writev_s(%p,%d)\n", mp, from_int));
 
     /* Are we called from the interrupt handler? */
     if (!from_int)
@@ -607,6 +593,7 @@ int from_int;
     
 	/* Copy write message. */
 	e->tx_message = *mp;
+	e->client = mp->m_source;
 	e->status |= E1000_WRITING;
 
 	/* Must be a sane vector count. */
@@ -616,7 +603,8 @@ int from_int;
 	/*
 	 * Copy the I/O vector table.
 	 */
-	if ((r = sys_safecopyfrom(e->client, e->tx_message.DL_GRANT, 0,
+	if ((r = sys_safecopyfrom(e->tx_message.DL_ENDPT,
+				  e->tx_message.DL_GRANT, 0,
 				  (vir_bytes) iovec, e->tx_message.DL_COUNT *
 				  sizeof(iovec_s_t), D)) != OK)
 	{
@@ -639,7 +627,8 @@ int from_int;
 	    E1000_DEBUG(4, ("iovec[%d] = %d\n", i, size));
 
 	    /* Copy bytes to TX queue buffers. */
-	    if ((r = sys_safecopyfrom(e->client, iovec[i].iov_grant, 0,
+	    if ((r = sys_safecopyfrom(e->tx_message.DL_ENDPT,
+				     iovec[i].iov_grant, 0,
 				     (vir_bytes) e->tx_buffer +
 				     (tail * E1000_IOBUF_SIZE),
 				      size, D)) != OK)
@@ -672,7 +661,7 @@ int from_int;
     {
 	e->status |= E1000_TRANSMIT;
     }
-    reply(e, OK, FALSE);
+    reply(e);
 }
 
 /*===========================================================================*
@@ -682,17 +671,18 @@ PRIVATE void e1000_readv_s(mp, from_int)
 message *mp;
 int from_int;
 {
-    e1000_t *e = e1000_port(mp->DL_PORT);
+    e1000_t *e = &e1000_state;
     e1000_rx_desc_t *desc;
     iovec_s_t iovec[E1000_IOVEC_NR];
     int i, r, head, tail, cur, bytes = 0, size;
 
-    E1000_DEBUG(3, ("e1000: readv_s(%x,%d)\n", mp, from_int));
+    E1000_DEBUG(3, ("e1000: readv_s(%p,%d)\n", mp, from_int));
 
     /* Are we called from the interrupt handler? */
     if (!from_int)
     {
 	e->rx_message = *mp;
+	e->client     = mp->m_source;
 	e->status    |= E1000_READING;
 	e->rx_size    = 0;
 	
@@ -704,7 +694,8 @@ int from_int;
 	/*
 	 * Copy the I/O vector table first.
 	 */
-	if ((r = sys_safecopyfrom(e->client, e->rx_message.DL_GRANT, 0,
+	if ((r = sys_safecopyfrom(e->rx_message.DL_ENDPT,
+				  e->rx_message.DL_GRANT, 0,
 				  (vir_bytes) iovec, e->rx_message.DL_COUNT *
 				  sizeof(iovec_s_t), D)) != OK)
 	{
@@ -721,7 +712,7 @@ int from_int;
 	 */
 	if (!(desc->status & E1000_RX_STATUS_EOP))
 	{
-    	    reply(e, OK, FALSE);
+    	    reply(e);
 	    return;
 	}
 	E1000_DEBUG(4, ("%s: head=%x, tail=%d\n",
@@ -735,11 +726,11 @@ int from_int;
 	    size = iovec[i].iov_size < (desc->length - bytes) ?
 		   iovec[i].iov_size : (desc->length - bytes);
 	
-	    E1000_DEBUG(4, ("iovec[%d] = %d[%d]\n",
+	    E1000_DEBUG(4, ("iovec[%d] = %lu[%d]\n",
 			  i, iovec[i].iov_size, size));
 
-	    if ((r = sys_safecopyto(e->client, iovec[i].iov_grant, 0,
-				   (vir_bytes) e->rx_buffer + bytes + 
+	    if ((r = sys_safecopyto(e->rx_message.DL_ENDPT, iovec[i].iov_grant,
+				   0, (vir_bytes) e->rx_buffer + bytes + 
 				   (cur * E1000_IOBUF_SIZE),
 				    size, D)) != OK)
 	    {
@@ -759,7 +750,7 @@ int from_int;
 	/* Increment tail. */
 	e1000_reg_write(e, E1000_REG_RDT, (tail + 1) % e->rx_desc_count);
     }
-    reply(e, OK, FALSE);
+    reply(e);
 }
 
 /*===========================================================================*
@@ -770,7 +761,7 @@ message *mp;
 {
     int r;
     eth_stat_t stats;
-    e1000_t *e = e1000_port(mp->DL_PORT);
+    e1000_t *e = &e1000_state;
 
     E1000_DEBUG(3, ("e1000: getstat_s()\n"));
 
@@ -790,35 +781,11 @@ message *mp;
     stats.ets_CDheartbeat = 0;
     stats.ets_OWC = 0;
 
-    sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0, (vir_bytes)&stats,
+    sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0, (vir_bytes)&stats,
                    sizeof(stats), D);
     mp->m_type  = DL_STAT_REPLY;
-    mp->DL_PORT = mp->DL_PORT;
-    mp->DL_STAT = OK;
     if((r=send(mp->m_source, mp)) != OK)
 	panic("e1000_getstat: send() failed: %d", r);
-}
-
-/*===========================================================================*
- *				e1000_getname				     *
- *===========================================================================*/
-PRIVATE void e1000_getname(mp)
-message *mp;
-{
-    int r;
-
-    E1000_DEBUG(3, ("e1000: getname()\n"));
-
-    /* Copy our program name. */
-    strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
-    mp->DL_NAME[ sizeof(mp->DL_NAME) - 1 ] = 0;
-
-    /* Acknowledge the name request. */
-    mp->m_type = DL_NAME_REPLY;
-    if ((r = send(mp->m_source, mp)) != OK)
-    {
-	panic("e1000_getname: send() failed: %d", r);
-    }
 }
 
 /*===========================================================================*
@@ -829,37 +796,32 @@ message *mp;
 {
     e1000_t *e;
     u32_t cause;
-    unsigned int i;
 
     E1000_DEBUG(3, ("e1000: interrupt\n"));
 
     /*
-     * Loop all cards. Check for interrupt reason(s).
+     * Check the card for interrupt reason(s).
      */
-    for (i = 0; i < E1000_PORT_NR; i++)
+    e = &e1000_state;
+	
+    /* Re-enable interrupts. */
+    if (sys_irqenable(&e->irq_hook) != OK)
     {
-	e = e1000_port(i);
+	panic("failed to re-enable IRQ");
+    }
+
+    /* Read the Interrupt Cause Read register. */
+    if ((cause = e1000_reg_read(e, E1000_REG_ICR)))
+    {
+	if (cause & E1000_REG_ICR_LSC)
+	    e1000_link_changed(e);
+
+	if (cause & (E1000_REG_ICR_RXO | E1000_REG_ICR_RXT))
+	    e1000_readv_s(&e->rx_message, TRUE);
 	
-        /* Re-enable interrupts. */
-        if (sys_irqenable(&e->irq_hook) != OK)
-        {
-	    panic("failed to re-enable IRQ");
-        }
-
-	/* Read the Interrupt Cause Read register. */
-        if ((cause = e1000_reg_read(e, E1000_REG_ICR)))
-        {
-    	    if (cause & E1000_REG_ICR_LSC)
-		e1000_link_changed(e);
-
- 	    if (cause & (E1000_REG_ICR_RXO | E1000_REG_ICR_RXT))
-		e1000_readv_s(&e->rx_message, TRUE);
-	
-	    if ((cause & E1000_REG_ICR_TXQE) ||
-	        (cause & E1000_REG_ICR_TXDW))
-		e1000_writev_s(&e->tx_message, TRUE);
-
-	}
+	if ((cause & E1000_REG_ICR_TXQE) ||
+	    (cause & E1000_REG_ICR_TXDW))
+	    e1000_writev_s(&e->tx_message, TRUE);
     }
 }
 
@@ -881,31 +843,6 @@ PRIVATE void e1000_stop()
     E1000_DEBUG(3, ("e1000: stop()\n"));
     exit(EXIT_SUCCESS);
 }
-
-/*===========================================================================*
- *				e1000_port				     *
- *===========================================================================*/
-PRIVATE e1000_t * e1000_port(num)
-int num;
-{
-    /*
-     * Is the given port number within the allowed range?
-     */
-    if (num < 0 || num >= E1000_PORT_NR)
-    {
-	panic("invalid port number given: %d", num);
-    }
-
-    /*
-     * The card must be active.
-     */
-    if (!(e1000_table[num].status & E1000_DETECTED))
-    {
-	panic("inactive port number given: %d", num);
-    }
-    return &e1000_table[num];
-}
-
 
 /*===========================================================================*
  *				e1000_reg_read				     *
@@ -1127,7 +1064,7 @@ int reg;
     int ret_val = -1;
     u8_t count = 0;
     e1000_t *e = (e1000_t *) v;
-    u16_t data;
+    u16_t data = 0;
                         
     E1000_DEBUG(3, ("e1000_read_flash_data_ich8lan"));
                                          
@@ -1198,10 +1135,8 @@ out:
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(e, err, may_block)
+PRIVATE void reply(e)
 e1000_t *e;
-int err;
-int may_block;
 {
     message msg;
     int r;
@@ -1214,17 +1149,14 @@ int may_block;
     }
     /* Construct reply message. */
     msg.m_type   = DL_TASK_REPLY;
-    msg.DL_PORT  = e - e1000_table;
-    msg.DL_PROC  = e->client;
+    msg.DL_FLAGS = DL_NOFLAGS;
     msg.DL_COUNT = 0;
-    msg.DL_STAT  = 0;
-    msg.DL_CLCK  = 0;
 
     /* Did we successfully receive packet(s)? */
     if (e->status & E1000_READING &&
 	e->status & E1000_RECEIVED)
     {
-	msg.DL_STAT  = DL_PACK_RECV;
+	msg.DL_FLAGS |= DL_PACK_RECV;
 	msg.DL_COUNT = e->rx_size >= ETH_MIN_PACK_SIZE ?
 		       e->rx_size  : ETH_MIN_PACK_SIZE;
 
@@ -1235,8 +1167,7 @@ int may_block;
     if (e->status & E1000_TRANSMIT &&
         e->status & E1000_WRITING)
     {
-	msg.DL_STAT  = DL_PACK_SEND;
-	msg.DL_COUNT = 0;
+	msg.DL_FLAGS |= DL_PACK_SEND;
 	
 	/* Clear flags. */
 	e->status &= ~(E1000_WRITING | E1000_TRANSMIT);

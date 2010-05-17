@@ -184,8 +184,31 @@ PRIVATE int ip_select(fd, operations)
 int fd;
 unsigned operations;
 {
-	printf("ip_select: not implemented\n");
-	return 0;
+	unsigned resops;
+	ip_fd_t *ip_fd;
+
+	ip_fd= &ip_fd_table[fd];
+	assert (ip_fd->if_flags & IFF_INUSE);
+
+	resops= 0;
+
+	if (operations & SR_SELECT_READ)
+	{
+		if (ip_sel_read(ip_fd))
+			resops |= SR_SELECT_READ;
+		else if (!(operations & SR_SELECT_POLL))
+			ip_fd->if_flags |= IFF_SEL_READ;
+	}
+	if (operations & SR_SELECT_WRITE)
+	{
+		/* Should handle special case when the interface is down */
+		resops |= SR_SELECT_WRITE;
+	}
+	if (operations & SR_SELECT_EXCEPTION)
+	{
+		printf("ip_select: not implemented for exceptions\n");
+	}
+	return resops;
 }
 
 PUBLIC int ip_open (port, srfd, get_userdata, put_userdata, put_pkt,
@@ -230,6 +253,7 @@ select_res_t select_res;
 	ip_fd->if_get_userdata= get_userdata;
 	ip_fd->if_put_userdata= put_userdata;
 	ip_fd->if_put_pkt= put_pkt;
+	ip_fd->if_select_res= select_res;
 
 	return i;
 }

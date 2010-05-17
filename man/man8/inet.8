@@ -39,7 +39,7 @@ It tells that network 0 (the one containing devices
 and
 .BR udp0 )
 uses the ethernet device driver handled
-by task "DP8390" at port 0.  This network is marked as the default
+by driver "DP8390" instance 0.  This network is marked as the default
 network, so most programs use it through the unnumbered devices like
 .B /dev/tcp
 or
@@ -47,21 +47,20 @@ or
 Network 1 is a Pseudo IP network that can be used for
 a serial IP over a modem for instance.
 .PP
-The configuration file may look like a common configuration file as
-described by
-.BR configfile (5),
-but it is currently just a simple subset allowing only what you see here.
+The configuration file uses a simple line-based format.
+Each network definition has to be fully on its own line.
+Empty lines and lines that start with a `#' symbol are ignored.
 The following network definitions are possible:
 .PP
 .BI eth N
-.I task port
+.I driver instance
 .RI { options };
 .RS
 This sets up an ethernet with device name
 .BI /dev/eth N\fR,
-built on the given ethernet device driver at the given port at that driver.
-(If a network driver manages two network
-cards then they are at port 0 and 1.)
+built on the given ethernet device driver with the given instance number.
+(If there are two network cards of the same type
+then they will be managed by instance 0 and 1 of the corresponding driver.)
 .br
 .RE
 .PP

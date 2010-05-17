@@ -30,16 +30,7 @@ from FS:
 |_______________|___________|_________|_______|__________|_________|
 
 from DL_ETH:
- _______________________________________________________________________
-|		|           |         |          |            |         |
-| m_type	|  DL_PORT  | DL_PROC |	DL_COUNT |  DL_STAT   | DL_TIME |
-|_______________|___________|_________|__________|____________|_________|
-|		|           |         |          |            |         |
-| DL_CONF_REPLY	| minor dev | proc nr | rd_count |  0  | stat |  time   |
-|_______________|___________|_________|__________|____________|_________|
-|		|           |         |          |            |         |
-| DL_TASK_REPLY	| minor dev | proc nr | rd_count | err | stat |  time   |
-|_______________|___________|_________|__________|____________|_________|
+  (not documented here)
 */
 
 #include "inet.h"
@@ -178,7 +169,7 @@ PUBLIC void main()
 			}
 		}
 		else if (m_type == DL_CONF_REPLY || m_type == DL_TASK_REPLY ||
-			m_type == DL_NAME_REPLY || m_type == DL_STAT_REPLY)
+			m_type == DL_STAT_REPLY)
 		{
 			eth_rec(&mq->mq_mess);
 			mq_free(mq);
@@ -338,32 +329,37 @@ PRIVATE void ds_event()
 {
 	char key[DS_MAX_KEYLEN];
 	char *driver_prefix = "drv.net.";
+	char *label;
 	u32_t value;
 	int type;
 	endpoint_t owner_endpoint;
 	int r;
 
-	/* Get the event and the owner from DS. */
-	r = ds_check(key, &type, &owner_endpoint);
-	if(r != OK) {
-		if(r != ENOENT)
-			printf("inet: ds_event: ds_check failed: %d\n", r);
-		return;
-	}
-	r = ds_retrieve_u32(key, &value);
-	if(r != OK) {
-		printf("inet: ds_event: ds_retrieve_u32 failed\n");
-		return;
+	/* We may get one notification for multiple updates from DS. Get events
+	 * and owners from DS, until DS tells us that there are no more.
+	 */
+	while ((r = ds_check(key, &type, &owner_endpoint)) == OK) {
+		r = ds_retrieve_u32(key, &value);
+		if(r != OK) {
+			printf("inet: ds_event: ds_retrieve_u32 failed\n");
+			return;
+		}
+
+		/* Only check for network driver up events. */
+		if(strncmp(key, driver_prefix, sizeof(driver_prefix))
+		   || value != DS_DRIVER_UP) {
+			return;
+		}
+
+		/* The driver label comes after the prefix. */
+		label = key + strlen(driver_prefix);
+
+		/* A driver is (re)started. */
+		eth_check_driver(label, owner_endpoint);
 	}
 
-	/* Only check for network driver up events. */
-	if(strncmp(key, driver_prefix, sizeof(driver_prefix))
-	   || value != DS_DRIVER_UP) {
-		return;
-	}
-
-	/* A driver is (re)started. */
-	eth_check_driver(owner_endpoint);
+	if(r != ENOENT)
+		printf("inet: ds_event: ds_check failed: %d\n", r);
 }
 
 PUBLIC void panic0(file, line)

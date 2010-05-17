@@ -35,7 +35,6 @@ SRCS+=  \
 	_vm_set_priv.c \
 	_vm_update.c \
 	_vm_query_exit.c \
-	asynchio.c \
 	basename.c \
 	bcmp.c \
 	bcopy.c \

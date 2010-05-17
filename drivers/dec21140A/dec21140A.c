@@ -29,10 +29,9 @@
 _PROTOTYPE( PRIVATE u32_t io_inl,            (u16_t);                        );
 _PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t);                 );
 _PROTOTYPE( PRIVATE void  do_conf,           (const message *);              );
-_PROTOTYPE( PRIVATE void  do_get_name,       (message *);                    );
 _PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *);                    );
 _PROTOTYPE( PRIVATE void  do_interrupt,      (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *, int, int);          );
+_PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *);                    );
 _PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int);         );
 _PROTOTYPE( PRIVATE void  do_watchdog,       (void *);                       );
 
@@ -53,7 +52,6 @@ _PROTOTYPE( PRIVATE void  de_get_userdata_s, (int, cp_grant_id_t,
 
 /* Error messages */
 static char str_CopyErrMsg[]  = "unable to read/write user data";
-static char str_PortErrMsg[]  = "illegal port";
 static char str_SendErrMsg[]  = "send failed";
 static char str_SizeErrMsg[]  = "illegal packet size";
 static char str_UmapErrMsg[]  = "Unable to sys_umap";
@@ -62,8 +60,8 @@ static char str_StatErrMsg[]  = "Unable to send stats";
 static char str_AlignErrMsg[] = "Bad align of buffer/descriptor";
 static char str_DevName[]     = "dec21140A:eth#?";
 
-PRIVATE dpeth_t de_table[DE_PORT_NR];
-PRIVATE const char *progname;
+PRIVATE dpeth_t de_state;
+PRIVATE int de_instance;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -96,13 +94,12 @@ int main(int argc, char *argv[])
 					break;
 
 	case HARDWARE:
-	  for (dep = de_table; dep < &de_table[DE_PORT_NR]; dep += 1) {
-	    if (dep->de_mode == DEM_ENABLED) {
-	      do_interrupt(dep);
-	      if (dep->de_flags & (DEF_ACK_SEND | DEF_ACK_RECV))
-		do_reply(dep, OK, TRUE);
-	      sys_irqenable(&dep->de_hook);
-	    }
+	  dep = &de_state;
+	  if (dep->de_mode == DEM_ENABLED) {
+	    do_interrupt(dep);
+	    if (dep->de_flags & (DEF_ACK_SEND | DEF_ACK_RECV))
+	    do_reply(dep);
+	    sys_irqenable(&dep->de_hook);
 	  }
 	  break;
 	 default:
@@ -118,8 +115,6 @@ int main(int argc, char *argv[])
 	case DL_READV_S:   do_vread_s(&m, FALSE);  break;	  
 	case DL_CONF:      do_conf(&m);            break;  
 	case DL_GETSTAT_S: do_get_stat_s(&m);      break;
-	case DL_GETNAME:   do_get_name(&m);        break;
-	case DL_STOP:      /* nothing */           break;
 
 	default:  
 		printf("message 0x%lx; %d from %d\n",
@@ -157,8 +152,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the DEC 21140A driver. */
   int fkeys, sfkeys;
+  long v;
 
-  (progname=strrchr(env_argv[0],'/')) ? progname++ : (progname=env_argv[0]);
+  v = 0;
+  (void) env_parse("instance", "d", 0, &v, 0, 255);
+  de_instance = (int) v;
 
   /* Request function key for debug dumps */
   fkeys = sfkeys = 0;
@@ -174,24 +172,17 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 
 PRIVATE void do_get_stat_s(message * mp)
 {
-  int port, rc;
+  int rc;
   dpeth_t *dep;
 
-  port = mp->DL_PORT;
-  if (port < 0 || port >= DE_PORT_NR)
-	panic(str_PortErrMsg, port);
+  dep = &de_state;
 
-  dep = &de_table[port];
-  dep->de_client = mp->DL_PROC;
-
-  if ((rc = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0UL,
+  if ((rc = sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0UL,
 			(vir_bytes)&dep->de_stat,
 			sizeof(dep->de_stat), 0)) != OK)
         panic(str_CopyErrMsg, rc);
 
   mp->m_type = DL_STAT_REPLY;
-  mp->DL_PORT = port;
-  mp->DL_STAT = OK;
   rc = send(mp->m_source, mp);
   if( rc != OK )
     panic(str_StatErrMsg, rc);
@@ -200,70 +191,65 @@ PRIVATE void do_get_stat_s(message * mp)
 
 PRIVATE void do_conf(const message * mp)
 {
-  int port = mp->DL_PORT;
+  int r;
   dpeth_t *dep;
   message reply_mess;
 
-  if (port >= 0 && port < DE_PORT_NR) {
+  dep = &de_state;
 
-    dep = &de_table[port];
-    strncpy(dep->de_name, str_DevName, strlen(str_DevName));
-    dep->de_name[strlen(dep->de_name)-1] = '0' + port;
+  strncpy(dep->de_name, str_DevName, strlen(str_DevName));
+  dep->de_name[strlen(dep->de_name)-1] = '0' + de_instance;
 
-    if (dep->de_mode == DEM_DISABLED) {
-      de_update_conf(dep); 
-      pci_init();
-      if (dep->de_mode == DEM_ENABLED && !de_probe(dep, port)) {
+  if (dep->de_mode == DEM_DISABLED) {
+    de_update_conf(dep); 
+    pci_init();
+    if (dep->de_mode == DEM_ENABLED && !de_probe(dep, de_instance)) {
 	printf("%s: warning no ethernet card found at 0x%04X\n",
 	       dep->de_name, dep->de_base_port);
 	dep->de_mode = DEM_DISABLED;
-      }
     }
+  }
 
-    /* 'de_mode' may change if probe routines fail, test again */
-    switch (dep->de_mode) {
+  r = OK;
 
-    case DEM_DISABLED:
-      port = ENXIO;       /* Device is OFF or hardware probe failed */
-      break;
+  /* 'de_mode' may change if probe routines fail, test again */
+  switch (dep->de_mode) {
 
-    case DEM_ENABLED:
-      if (dep->de_flags == DEF_EMPTY) {
+  case DEM_DISABLED:
+    r = ENXIO;       /* Device is OFF or hardware probe failed */
+    break;
+
+  case DEM_ENABLED:
+    if (dep->de_flags == DEF_EMPTY) {
 	de_first_init(dep);
 	dep->de_flags |= DEF_ENABLED;
 	de_reset(dep);
 	de_hw_conf(dep);
 	de_setup_frame(dep);
 	de_start(dep);
-      }
-
-      /* TODO CHECK PROMISC AND MULTI */
-      dep->de_flags &= NOT(DEF_PROMISC | DEF_MULTI | DEF_BROAD);
-      if (mp->DL_MODE & DL_PROMISC_REQ)
-	dep->de_flags |= DEF_PROMISC | DEF_MULTI | DEF_BROAD;
-      if (mp->DL_MODE & DL_MULTI_REQ) dep->de_flags |= DEF_MULTI;
-      if (mp->DL_MODE & DL_BROAD_REQ) dep->de_flags |= DEF_BROAD;
-      dep->de_client = mp->m_source;
-      break;
-
-    case DEM_SINK:
-      DEBUG(printf("%s running in sink mode\n", str_DevName));
-      memset(dep->de_address.ea_addr, 0, sizeof(ether_addr_t));
-      de_conf_addr(dep);
-      break;
-
-    default:	break;
     }
-  } else {			/* Port number is out of range */ 
-    port = ENXIO;
-    dep = NULL;
+
+    /* TODO CHECK PROMISC AND MULTI */
+    dep->de_flags &= NOT(DEF_PROMISC | DEF_MULTI | DEF_BROAD);
+    if (mp->DL_MODE & DL_PROMISC_REQ)
+	dep->de_flags |= DEF_PROMISC | DEF_MULTI | DEF_BROAD;
+    if (mp->DL_MODE & DL_MULTI_REQ) dep->de_flags |= DEF_MULTI;
+    if (mp->DL_MODE & DL_BROAD_REQ) dep->de_flags |= DEF_BROAD;
+    break;
+
+  case DEM_SINK:
+    DEBUG(printf("%s running in sink mode\n", str_DevName));
+    memset(dep->de_address.ea_addr, 0, sizeof(ether_addr_t));
+    de_conf_addr(dep);
+    break;
+
+  default:	break;
   }
 
   reply_mess.m_type = DL_CONF_REPLY;
-  reply_mess.m3_i1 = port;
-  reply_mess.m3_i2 = DE_PORT_NR;
-  if(dep != NULL){
-    *(ether_addr_t *) reply_mess.m3_ca1 = dep->de_address;
+  reply_mess.DL_STAT = r;
+  if(r == OK){
+    *(ether_addr_t *) reply_mess.DL_HWADDR = dep->de_address;
   }
   
   if (send(mp->m_source, &reply_mess) != OK)
@@ -272,42 +258,22 @@ PRIVATE void do_conf(const message * mp)
   return;
 }
 
-
-PRIVATE void do_get_name(message *mp)
-{
-  int r;
-  strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
-  mp->DL_NAME[sizeof(mp->DL_NAME)-1]= '\0';
-  mp->m_type= DL_NAME_REPLY;
-  r = send(mp->m_source, mp);
-  if (r!= OK)
-    panic("do_getname: send failed: %d", r);
-}
-
-PRIVATE void do_reply(dpeth_t * dep, int err, int may_block)
+PRIVATE void do_reply(dpeth_t * dep)
 {
   message reply;
-  int status = 0;
+  int r, flags = DL_NOFLAGS;
 
-  if (dep->de_flags & DEF_ACK_SEND) status |= DL_PACK_SEND;
-  if (dep->de_flags & DEF_ACK_RECV) status |= DL_PACK_RECV;
+  if (dep->de_flags & DEF_ACK_SEND) flags |= DL_PACK_SEND;
+  if (dep->de_flags & DEF_ACK_RECV) flags |= DL_PACK_RECV;
 
   reply.m_type = DL_TASK_REPLY;
-  reply.DL_PORT = dep - de_table;
-  reply.DL_PROC = dep->de_client;
-  reply.DL_STAT = status | ((u32_t) err << 16);
+  reply.DL_STAT = flags;
   reply.DL_COUNT = dep->de_read_s;
-  reply.DL_CLCK = 0;
 
-  status = send(dep->de_client, &reply);
+  r = send(dep->de_client, &reply);
 
-  if(status == ELOCKED && may_block){
-    /*printf("Warning: Dec21041 send lock prevented\n\n");*/
-    return;
-  }
-
-  if(status < 0)
-    panic(str_SendErrMsg, status);
+  if(r < 0)
+    panic(str_SendErrMsg, r);
 
   dep->de_read_s = 0;
   dep->de_flags &= NOT(DEF_ACK_SEND | DEF_ACK_RECV);
@@ -447,10 +413,14 @@ PRIVATE u16_t de_read_rom(const dpeth_t *dep, u8_t addr, u8_t nbAddrBits){
 static void de_update_conf(dpeth_t * dep)
 {
   static char dpc_fmt[] = "x:d:x";
+  char ec_key[16];
   long val;
 
+  strcpy(ec_key, "DEETH0");
+  ec_key[5] += de_instance;
+
   dep->de_mode = DEM_ENABLED;
-  switch (env_parse("DEETH0", dpc_fmt, 0, &val, 0x000L, 0x3FFL)) {
+  switch (env_parse(ec_key, dpc_fmt, 0, &val, 0x000L, 0x3FFL)) {
   case EP_OFF:	dep->de_mode = DEM_DISABLED;	break;
   case EP_ON:  dep->de_mode = DEM_SINK; break;
   }
@@ -469,11 +439,9 @@ PRIVATE void do_vread_s(const message * mp, int from_int)
   de_loc_descr_t *descr = NULL;
   iovec_dat_s_t *iovp = NULL;
 
-  if (mp->DL_PORT < 0 || mp->DL_PORT >= DE_PORT_NR)
-    panic(str_PortErrMsg, mp->DL_PORT);
+  dep = &de_state;
 
-  dep = &de_table[mp->DL_PORT];
-  dep->de_client = mp->DL_PROC;
+  dep->de_client = mp->m_source;
 
   if (dep->de_mode == DEM_ENABLED) {    
 
@@ -507,8 +475,8 @@ PRIVATE void do_vread_s(const message * mp, int from_int)
     /* Setup the iovec entry to allow copying into
        client layer
     */
-    dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
-    de_get_userdata_s(mp->DL_PROC, (cp_grant_id_t) mp->DL_GRANT, 0,
+    dep->de_read_iovec.iod_proc_nr = mp->DL_ENDPT;
+    de_get_userdata_s(mp->DL_ENDPT, (cp_grant_id_t) mp->DL_GRANT, 0,
 		      mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
     dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
     dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
@@ -575,7 +543,7 @@ PRIVATE void do_vread_s(const message * mp, int from_int)
   }
 
   if(!from_int){
-    do_reply(dep, OK, FALSE);
+    do_reply(dep);
   }
   return;
 
@@ -588,7 +556,7 @@ PRIVATE void do_vread_s(const message * mp, int from_int)
   assert(!(dep->de_flags & DEF_READING));
   dep->rx_return_msg = *mp;
   dep->de_flags |= DEF_READING;
-  do_reply(dep, OK, FALSE);
+  do_reply(dep);
   return;
 }
 
@@ -599,9 +567,8 @@ PRIVATE void de_conf_addr(dpeth_t * dep)
   int ix;
   long val;
 
-  /* TODO: should be configurable... */
-  strcpy(ea_key, "DEETH0");
-  strcat(ea_key, "_EA");
+  strcpy(ea_key, "DEETH0_EA");
+  ea_key[5] += de_instance;
 
   for (ix = 0; ix < SA_ADDR_LEN; ix++) {
 	val = dep->de_address.ea_addr[ix];
@@ -840,11 +807,9 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
   de_loc_descr_t *descr = NULL;
   char *buffer = NULL;
 
-  if( mp->DL_PORT < 0 || mp->DL_PORT >= DE_PORT_NR)	
-    panic(str_PortErrMsg, mp->DL_PORT);
+  dep = &de_state;
 
-  dep = &de_table[mp->DL_PORT];
-  dep->de_client = mp->DL_PROC;
+  dep->de_client = mp->m_source;
 
   if (dep->de_mode == DEM_ENABLED) {
     
@@ -863,8 +828,8 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
 
     buffer = descr->buf1;
     iovp = &dep->de_write_iovec;
-    iovp->iod_proc_nr = mp->DL_PROC;
-    de_get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
+    iovp->iod_proc_nr = mp->DL_ENDPT;
+    de_get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
 		      mp->DL_COUNT, iovp->iod_iovec);
     iovp->iod_iovec_s = mp->DL_COUNT;
     iovp->iod_grant = (cp_grant_id_t) mp->DL_GRANT;
@@ -910,7 +875,7 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
     dep->de_flags &= NOT(DEF_SENDING);
     return;
   }
-  do_reply(dep, OK, FALSE);
+  do_reply(dep);
   return;
 
  suspend:
@@ -921,7 +886,7 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
   dep->de_flags |= DEF_SENDING;
   dep->de_stat.ets_transDef++;
   dep->tx_return_msg = *mp;
-  do_reply(dep, OK, FALSE);
+  do_reply(dep);
 }
 
 PRIVATE void warning(const char *type, int err){

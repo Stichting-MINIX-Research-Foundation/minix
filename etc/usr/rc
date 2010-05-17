@@ -74,6 +74,14 @@ upopt()
     service $opt up /usr/sbin/$service "$@" 
 }
 
+get_eth_labels() {
+  # Filter out the non-vlan ethernet entries from inet.conf.
+  # Produce as output a list of "drivername_instancenr"-formatted labels.
+  # The first sed is taken from /bin as older GNU sed versions don't know '\t'.
+  /bin/sed 's/\t/ /g' /etc/inet.conf | \
+    sed -n 's/^ *eth[0-9][0-9]* *\([^ ][^ ]*\) *\([0-9][0-9]*\).*$/\1_\2/p' | \
+    grep -v '^vlan_'
+}
 
 DAEMONS=/etc/rc.daemons
 
@@ -97,15 +105,14 @@ start)
     	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1 2> /dev/null
     fi
 
-    # start only network drivers that are in use
-    for driver in lance rtl8139 rtl8169 fxp e1000 dpeth dp8390 orinoco atl2 dec21140A
-    do
-        if grep " $driver " /etc/inet.conf > /dev/null  2>&1
-        then 
-            eval arg=\$${driver}_arg
-	    if [ ! -z "$arg" ]; then arg="-args \"$arg\""; fi
-            eval up $driver $arg -period 5HZ
-        fi
+    # start network driver instances for all configured ethernet devices
+    for label in $(get_eth_labels); do
+        driver=$(echo $label | sed 's/\(.*\)_.*/\1/')
+        instance=$(echo $label | sed 's/.*_//')
+        eval arg=\$${label}_arg
+        if [ ! -z "$arg" ]; then arg=" $arg"; fi
+        arg="-args \"instance=$instance$arg\""
+        eval up $driver -label $label $arg -period 5HZ
     done
     up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
     upopt -n printer -dev /dev/lp -period 10HZ

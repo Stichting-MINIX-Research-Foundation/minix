@@ -94,8 +94,6 @@ FORWARD _PROTOTYPE (void sr_select_res, (int fd, unsigned ops) );
 FORWARD _PROTOTYPE ( int sr_repl_queue, (int proc, int ref, int operation) );
 FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t **q_head_ptr, 
 	mq_t **q_tail_ptr, int type, int proc_nr, int ref, int first_flag) );
-FORWARD _PROTOTYPE ( void process_req_q, (mq_t *mq, mq_t *tail, 
-							mq_t **tail_ptr) );
 FORWARD _PROTOTYPE ( void sr_event, (event_t *evp, ev_arg_t arg) );
 FORWARD _PROTOTYPE ( int cp_u2b, (endpoint_t proc, cp_grant_id_t gid,
     vir_bytes offset, acc_t **var_acc_ptr, int size) );
@@ -820,31 +818,6 @@ PRIVATE void sr_select_res(int fd, unsigned ops)
 	if (ops & SR_SELECT_EXCEPTION) sr_fd->srf_flags |= SFF_SELECT_X;
 
 	notify(sr_fd->srf_select_proc);
-}
-
-PRIVATE void process_req_q(mq, tail, tail_ptr)
-mq_t *mq, *tail, **tail_ptr;
-{
-	mq_t *m;
-	int result;
-
-	for(;mq;)
-	{
-		m= mq;
-		mq= mq->mq_next;
-
-		result= sr_rwio(m);
-		if (result == SUSPEND)
-		{
-			if (mq)
-			{
-				(*tail_ptr)->mq_next= mq;
-				*tail_ptr= tail;
-			}
-			return;
-		}
-	}
-	return;
 }
 
 PRIVATE void sr_event(evp, arg)

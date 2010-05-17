@@ -147,18 +147,55 @@ static void check_dev(int type, int ifno)
 
 static int cfg_fd;
 static char word[16];
-static unsigned line;
+static unsigned char line[256], *lineptr;
+static unsigned linenr;
 
 static void error(void)
 {
-	printf("inet: error on line %u\n", line);
+	printf("inet: error on line %u\n", linenr);
 	exit(1);
+}
+
+static int nextline(void)
+{
+	/* Read a line from the configuration file, to be used by subsequent
+	 * token() calls. Skip empty lines, and lines where the first character
+	 * after leading "whitespace" is '#'. The last line of the file need
+	 * not be terminated by a newline. Return 1 if a line was read in
+	 * successfully, and 0 on EOF or error.
+	 */
+	unsigned char *lp, c;
+	int r, skip;
+
+	lineptr = lp = line;
+	linenr++;
+	skip = -1;
+
+	while ((r = read(cfg_fd, &c, 1)) == 1) {
+		if (c == '\n') {
+			if (skip == 0)
+				break;
+
+			linenr++;
+			skip = -1;
+			continue;
+		}
+
+		if (skip == -1 && c > ' ')
+			skip = (c == '#');
+
+		if (skip == 0 && lp < (unsigned char *) line + sizeof(line)-1)
+			*lp++ = c;
+	}
+
+	*lp = 0;
+	return (r == 1 || lp != line);
 }
 
 static void token(int need)
 {
-	/* Read a word from the configuration file.  Return a null string on
-	 * EOF.  Return a punctiation as a one character word.  If 'need' is
+	/* Read a word from the configuration line.  Return a null string on
+	 * EOL.  Return a punctuation as a one character word.  If 'need' is
 	 * true then an actual word is expected at this point, so err out if
 	 * not.
 	 */
@@ -169,16 +206,16 @@ static void token(int need)
 	*wp = 0;
 
 	while (c <= ' ') {
-		if (c == '\n') line++;
-		if (read(cfg_fd, &c, 1) != 1) {
+		if (*lineptr == 0) {
 			if (need) error();
 			return;
 		}
+		c = *lineptr++;
 	}
 
 	do {
 		if (wp < (unsigned char *) word + sizeof(word)-1) *wp++ = c;
-		if (read(cfg_fd, &c, 1) != 1) c= ' ';
+		c = (*lineptr != 0) ? *lineptr++ : ' ';
 		if (word[0] == ';' || word[0] == '{' || word[0] == '}') {
 			if (need) error();
 			break;
@@ -215,6 +252,7 @@ void read_conf(void)
 	struct psip_conf *pcp;
 	struct ip_conf *icp;
 	struct stat st;
+	char buf[sizeof(word)];
 
 	{ static int first= 1; 
 		if (!first) ip_panic(( "read_conf: called a second time" ));
@@ -233,7 +271,8 @@ void read_conf(void)
 	pcp= psip_conf;
 	icp= ip_conf;
 
-	while (token(0), word[0] != 0) {
+	while (nextline()) {
+		token(1);
 		if (strncmp(word, "eth", 3) == 0) {
 			ecp->ec_ifno= ifno= number(word+3, IP_PORT_MAX-1);
 			type= NETTYPE_ETH;
@@ -251,10 +290,17 @@ void read_conf(void)
 				}
 				ecp->ec_port= number(word+3, IP_PORT_MAX-1);
 			} else {
-				ecp->ec_task= alloc(strlen(word)+1);
-				strcpy(ecp->ec_task, word);
+				/* The process label consists of the driver
+				 * name, an underscore, and the instance
+				 * number.
+				 */
+				strncpy(buf, word, sizeof(buf)-1);
+				buf[sizeof(buf)-1]= 0;
 				token(1);
-				ecp->ec_port= number(word, IP_PORT_MAX-1);
+				ecp->ec_label=
+					alloc(strlen(buf)+1+strlen(word)+1);
+				sprintf(ecp->ec_label, "%s_%s", buf, word);
+				ecp->ec_port= 0;
 			}
 			ecp++;
 			eth_conf_nr++;

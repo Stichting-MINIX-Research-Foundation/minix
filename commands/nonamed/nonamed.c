@@ -1318,7 +1318,8 @@ static void refresh_cache(void)
 static int job_read_udp(void *data, int expired)
 /* Read UDP queries and replies. */
 {
-    size_t ulen, dlen;
+    ssize_t ulen;
+    size_t dlen;
     static udp_dns_t udp;
     u16_t id, port;
     ipaddr_t ip;

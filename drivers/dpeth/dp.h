@@ -82,7 +82,6 @@ typedef void (*dp_nic2userf_t) (struct dpeth *, int, int);
 typedef void (*dp_getblock_t) (struct dpeth *, u16_t, int, void *);
 #endif
 
-#define DE_PORT_NR	2	/* Number of devices supported	 */
 #define SENDQ_NR	2	/* Size of the send queue	 */
 #define IOVEC_NR	16	/* Number of IOVEC entries at a time */
 

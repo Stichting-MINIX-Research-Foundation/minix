@@ -7,7 +7,7 @@ LIB=		c
 CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
 
 .include "${.CURDIR}/ansi/Makefile.inc"
-.include "${.CURDIR}/wchar/Makefile.inc"
+.include "${.CURDIR}/asyn/Makefile.inc"
 .include "${.CURDIR}/ip/Makefile.inc"
 .include "${.CURDIR}/math/Makefile.inc"
 .include "${.CURDIR}/other/Makefile.inc"
@@ -17,6 +17,7 @@ CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
 .include "${.CURDIR}/stdtime/Makefile.inc"
 .include "${.CURDIR}/syscall/Makefile.inc"
 .include "${.CURDIR}/sysvipc/Makefile.inc"
+.include "${.CURDIR}/wchar/Makefile.inc"
 
 .include "${.CURDIR}/arch/${ARCH}/int64/Makefile.inc"
 .include "${.CURDIR}/arch/${ARCH}/misc/Makefile.inc"

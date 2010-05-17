@@ -91,7 +91,7 @@ PRIVATE struct {
 	{ 0x0000, 0x0000 }
 };
 
-PRIVATE long instance;
+PRIVATE int instance;
 
 /*===========================================================================*
  *				atl2_read_vpd				     *
@@ -728,21 +728,19 @@ PRIVATE void atl2_reply(void)
 	/* Send a task reply to Inet.
 	 */
 	message m;
-	int r, stat;
+	int r, flags;
 
-	stat = 0;
+	flags = DL_NOFLAGS;
 	if (state.flags & ATL2_FLAG_PACK_SENT)
-		stat |= DL_PACK_SEND;
+		flags |= DL_PACK_SEND;
 	if (state.flags & ATL2_FLAG_PACK_RCVD)
-		stat |= DL_PACK_RECV;
+		flags |= DL_PACK_RECV;
 
 	m.m_type = DL_TASK_REPLY;
-	m.DL_PORT = 0;
-	m.DL_PROC = state.task_endpt;
-	m.DL_STAT = stat;
+	m.DL_FLAGS = flags;
 	m.DL_COUNT = state.recv_count;
 
-	ATL2_DEBUG(("ATL2: sending reply stat %x count %d\n", stat,
+	ATL2_DEBUG(("ATL2: sending reply, flags %x count %d\n", flags,
 		m.DL_COUNT));
 
 	if ((r = send(state.task_endpt, &m)) != OK)
@@ -765,20 +763,9 @@ PRIVATE void atl2_readv(const message *m, int from_int)
 	u8_t *pos;
 	int i, j, r, batch;
 
-	if (m->DL_PORT != 0) {
-		printf("ATL2: read from invalid port\n");
-
-		return;
-	}
-
 	/* We can deal with only one read request from Inet at a time. */
 	assert(from_int || !(state.flags & ATL2_FLAG_READ_PEND));
 
-	/* The exact semantics of DL_PROC are not clear. This driver takes it
-	 * to be only the grant owner; other drivers treat it as the reply
-	 * destination as well.
-	 */
-	assert(m->m_source == m->DL_PROC);
 	state.task_endpt = m->m_source;
 
 	/* Are there any packets available at all? */
@@ -802,7 +789,7 @@ PRIVATE void atl2_readv(const message *m, int from_int)
 		/* Copy in the next batch. */
 		batch = MIN(m->DL_COUNT - i, NR_IOREQS);
 
-		r = sys_safecopyfrom(m->DL_PROC, m->DL_GRANT, off, 
+		r = sys_safecopyfrom(m->DL_ENDPT, m->DL_GRANT, off, 
 			(vir_bytes) iovec, batch * sizeof(iovec[0]), D);
 		if (r != OK)
 			panic("vector copy failed: %d", r);
@@ -811,7 +798,7 @@ PRIVATE void atl2_readv(const message *m, int from_int)
 		for (j = 0, iovp = iovec; j < batch && left > 0; j++, iovp++) {
 			size = MIN(iovp->iov_size, left);
 
-			r = sys_safecopyto(m->DL_PROC, iovp->iov_grant, 0,
+			r = sys_safecopyto(m->DL_ENDPT, iovp->iov_grant, 0,
 				(vir_bytes) pos, size, D);
 			if (r != OK)
 				panic("safe copy failed: %d", r);
@@ -871,16 +858,9 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 	u8_t *sizep;
 	int i, j, r, batch, maxnum;
 
-	if (m->DL_PORT != 0) {
-		printf("ATL2: write to invalid port\n");
-
-		return;
-	}
-
 	/* We can deal with only one write request from Inet at a time. */
 	assert(from_int || !(state.flags & ATL2_FLAG_WRITE_PEND));
 
-	assert(m->m_source == m->DL_PROC);
 	state.task_endpt = m->m_source;
 
 	/* If we are already certain that the packet won't fit, bail out.
@@ -906,7 +886,7 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 		/* Copy in the next batch. */
 		batch = MIN(m->DL_COUNT - i, NR_IOREQS);
 
-		r = sys_safecopyfrom(m->DL_PROC, m->DL_GRANT, off, 
+		r = sys_safecopyfrom(m->DL_ENDPT, m->DL_GRANT, off, 
 			(vir_bytes) iovec, batch * sizeof(iovec[0]), D);
 		if (r != OK)
 			panic("vector copy failed: %d", r);
@@ -920,7 +900,7 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 			skip = 0;
 			if (size > ATL2_TXD_BUFSIZE - pos) {
 				skip = ATL2_TXD_BUFSIZE - pos;
-				r = sys_safecopyfrom(m->DL_PROC,
+				r = sys_safecopyfrom(m->DL_ENDPT,
 					iovp->iov_grant, 0,
 					(vir_bytes) (state.txd_base + pos),
 					skip, D);
@@ -929,8 +909,8 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 				pos = 0;
 			}
 
-			r = sys_safecopyfrom(m->DL_PROC, iovp->iov_grant, skip,
-				(vir_bytes) (state.txd_base + pos),
+			r = sys_safecopyfrom(m->DL_ENDPT, iovp->iov_grant,
+				skip, (vir_bytes) (state.txd_base + pos),
 				size - skip, D);
 			if (r != OK)
 				panic("safe copy failed: %d", r);
@@ -1051,27 +1031,21 @@ PRIVATE void atl2_conf(message *m)
 	ether_addr_t *addr;
 	int r;
 
-	if (m->DL_PORT != 0) {
-		m->m3_i1 = ENXIO;
-	}
-	else {
-		state.mode = m->DL_MODE;
+	state.mode = m->DL_MODE;
 
-		atl2_set_mode();
+	atl2_set_mode();
 
-		addr = (ether_addr_t *) m->m3_ca1;
+	addr = (ether_addr_t *) m->DL_HWADDR;
 
-		addr->ea_addr[0] = state.hwaddr[1] >> 8;
-		addr->ea_addr[1] = state.hwaddr[1] & 0xff;
-		addr->ea_addr[2] = state.hwaddr[0] >> 24;
-		addr->ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
-		addr->ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
-		addr->ea_addr[5] = state.hwaddr[0] & 0xff;
-
-		m->m3_i1 = OK;
-	}
+	addr->ea_addr[0] = state.hwaddr[1] >> 8;
+	addr->ea_addr[1] = state.hwaddr[1] & 0xff;
+	addr->ea_addr[2] = state.hwaddr[0] >> 24;
+	addr->ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
+	addr->ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
+	addr->ea_addr[5] = state.hwaddr[0] & 0xff;
 
 	m->m_type = DL_CONF_REPLY;
+	m->DL_STAT = OK;
 
 	if ((r = send(m->m_source, m)) != OK)
 		printf("ATL2: unable to send reply (%d)\n", r);
@@ -1086,38 +1060,10 @@ PRIVATE void atl2_getstat(message *m)
 	 */
 	int r;
 
-	if (m->DL_PORT != 0) {
-		r = ENXIO;
-	}
-	else {
-		r = sys_safecopyto(m->DL_PROC, m->DL_GRANT, 0,
-			(vir_bytes) &state.stat, sizeof(state.stat), D);
-	}
+	sys_safecopyto(m->DL_ENDPT, m->DL_GRANT, 0,
+		(vir_bytes) &state.stat, sizeof(state.stat), D);
 
 	m->m_type = DL_STAT_REPLY;
-	/* keep m->DL_PORT */
-	m->DL_STAT = r;
-
-	if ((r = send(m->m_source, m)) != OK)
-		printf("ATL2: unable to send reply (%d)\n", r);
-}
-
-/*===========================================================================*
- *				atl2_getname				     *
- *===========================================================================*/
-PRIVATE void atl2_getname(message *m, int instance)
-{
-	/* Tell Inet the name of this driver.
-	 */
-	int r;
-
-	/* Each instance must have a unique name. */
-	m->m_type = DL_NAME_REPLY;
-	if (instance > 0)
-		snprintf(m->DL_NAME, sizeof(m->DL_NAME), "atl2:%u",
-			instance - 1);
-	else
-		strcpy(m->DL_NAME, "atl2");
 
 	if ((r = send(m->m_source, m)) != OK)
 		printf("ATL2: unable to send reply (%d)\n", r);
@@ -1212,13 +1158,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	/* Initialize the atl2 driver.
 	 */
 	int r, devind;
+	long v;
 #if ATL2_FKEY
 	int fkeys, sfkeys;
 #endif
 
 	/* How many matching devices should we skip? */
-	instance = 0;
-	env_parse("atl2_instance", "d", 0, &instance, 0, 32);
+	v = 0;
+	(void) env_parse("instance", "d", 0, &v, 0, 255);
+	instance = (int) v;
 
 	/* Try to find a recognized device. */
 	devind = atl2_probe(instance);
@@ -1335,7 +1283,6 @@ int main(int argc, char **argv)
 
 		/* Process requests from Inet. */
 		switch (m.m_type) {
-		case DL_GETNAME:	atl2_getname(&m, instance);	break;
 		case DL_CONF:		atl2_conf(&m);			break;
 		case DL_GETSTAT_S:	atl2_getstat(&m);		break;
 		case DL_WRITEV_S:	atl2_writev(&m, FALSE);		break;
