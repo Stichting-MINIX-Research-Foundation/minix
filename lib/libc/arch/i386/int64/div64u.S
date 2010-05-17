@@ -1,8 +1,10 @@
 /*	div64u() - 64 bit divided by unsigned giving unsigned long */
 /*							Author: Kees J. Bot */
 /*								7 Dec 1995 */
+#include <minix/compiler.h>
+
 .text
-.globl	_div64u, _rem64u
+.globl	_div64u, _div64u64, _rem64u
 
 _div64u:
 /* unsigned long div64u(u64_t i, unsigned j); */
@@ -12,6 +14,19 @@ _div64u:
 	movl	4(%esp), %eax
 	divl	12(%esp)	/* i / j = (q<<32) + ((r<<32) + il) / j */
 	ret
+
+_div64u64:
+/* u64_t div64u64(u64_t i, unsigned j); */
+	xorl	%edx, %edx
+	movl	12(%esp), %eax	/* i = (ih<<32) + il */
+	divl	16(%esp)	/* ih = q * j + r */
+	movl	4(%esp), %ecx	/* get pointer to result */
+	movl	%eax, 4(%ecx)	/* store high-order result */
+	movl	8(%esp), %eax
+	divl	16(%esp)	/* i / j = (q<<32) + ((r<<32) + il) / j */
+	movl	%eax, 0(%ecx)	/* store low result */
+	movl	%ecx, %eax	/* return pointer to result struct */
+	ret	BYTES_TO_POP_ON_STRUCT_RETURN
 
 _rem64u:
 /* unsigned rem64u(u64_t i, unsigned j); */

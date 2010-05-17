@@ -1,6 +1,6 @@
 .TH INT64 3
 .SH NAME
-int64, add64, add64u, add64ul, sub64, sub64u, sub64ul, diff64, cvu64, cvul64, cv64u, cv64ul, div64u, rem64u, mul64u, cmp64, cmp64u, cmp64ul, ex64lo, ex64hi, make64 \- 64 bit disk offset computations
+int64, add64, add64u, add64ul, sub64, sub64u, sub64ul, diff64, bsr64, cvu64, cvul64, cv64u, cv64ul, div64, div64u, div64u64, rem64, rem64u, mul64, mul64u, cmp64, cmp64u, cmp64ul, ex64lo, ex64hi, make64 \- 64 bit disk offset computations
 .SH SYNOPSIS
 .ft B
 .nf
@@ -13,12 +13,17 @@ u64_t sub64(u64_t \fIi\fP, u64_t \fIj\fP)
 u64_t sub64u(u64_t \fIi\fP, unsigned \fIj\fP)
 u64_t sub64ul(u64_t \fIi\fP, unsigned long \fIj\fP)
 unsigned diff64(u64_t \fIi\fP, u64_t \fIj\fP)
+int bsr64(u64_t \fIi\fP)
 u64_t cvu64(unsigned \fIi\fP)
 u64_t cvul64(unsigned long \fIi\fP)
 unsigned cv64u(u64_t \fIi\fP)
 unsigned long cv64ul(u64_t \fIi\fP)
+u64_t div64(u64_t \fIi\fP, u64_t \fIj\fP)
 unsigned long div64u(u64_t \fIi\fP, unsigned \fIj\fP)
+u64_t div64u64(u64_t \fIi\fP, unsigned \fIj\fP)
+u64_t rem64(u64_t \fIi\fP, u64_t \fIj\fP)
 unsigned rem64u(u64_t \fIi\fP, unsigned \fIj\fP)
+u64_t mul64(u64_t \fIi\fP, u64_t \fIj\fP)
 u64_t mul64u(unsigned long \fIi\fP, unsigned \fIj\fP)
 int cmp64(u64_t \fIi\fP, u64_t \fIj\fP)
 int cmp64u(u64_t \fIi\fP, unsigned \fIj\fP)
@@ -95,6 +100,9 @@ from the 64 bit number
 .I i
 forming an unsigned.  Overflow is not checked.
 .TP
+.B "int bsr64(u64_t \fIi\fP)"
+Return the index of the highest-order bit set.  If the value is zero, -1 is returned.
+.TP
 .B "u64_t cvu64(unsigned \fIi\fP)"
 Convert an unsigned to a 64 bit number.
 .TP
@@ -109,6 +117,12 @@ Convert a 64 bit number to an unsigned if it fits, otherwise return
 Convert a 64 bit number to an unsigned long if it fits, otherwise return
 .BR ULONG_MAX .
 .TP
+.B "u64_t div64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Divide the 64 bit number
+.I i
+by the 64 bit number
+.I j
+giving a 64 bit number.
 .B "unsigned long div64u(u64_t \fIi\fP, unsigned \fIj\fP)"
 Divide the 64 bit number
 .I i
@@ -116,6 +130,19 @@ by the unsigned
 .I j
 giving an unsigned long.  Overflow is not checked.  (Typical "byte offset to
 block number" conversion.)
+.B "u64_t div64u64(u64_t \fIi\fP, unsigned \fIj\fP)"
+Divide the 64 bit number
+.I i
+by the unsigned
+.I j
+giving a 64 bit number.
+.TP
+.B "u64_t rem64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Compute the remainder of the division of the 64 bit number
+.I i
+by the 64 bit number
+.I j
+as a 64 bit number. 
 .TP
 .B "unsigned rem64u(u64_t \fIi\fP, unsigned \fIj\fP)"
 Compute the remainder of the division of the 64 bit number
@@ -123,6 +150,13 @@ Compute the remainder of the division of the 64 bit number
 by the unsigned
 .I j
 as an unsigned.  (Typical "byte offset within a block" computation.)
+.TP
+.B "u64_t mul64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Multiply the 64 bit number
+.I i
+by the 64 bit number
+.I j
+giving a 64 bit number.
 .TP
 .B "u64_t mul64u(unsigned long \fIi\fP, unsigned \fIj\fP)"
 Multiply the unsigned long
