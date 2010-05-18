@@ -257,7 +257,7 @@ PUBLIC void main(void)
 
   assert(runqueues_ok());
 
-  restart();
+  switch_to_user();
   NOT_REACHABLE;
 }
 

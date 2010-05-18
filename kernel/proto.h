@@ -25,9 +25,9 @@ _PROTOTYPE( void cycles_accounting_init, (void)				);
  * possible before returning to userspace. These function is architecture
  * dependent
  */
-_PROTOTYPE( void cycles_accounting_stop, (struct proc * p)		);
+_PROTOTYPE( void context_stop, (struct proc * p)			);
 /* this is a wrapper to make calling it from assembly easier */
-_PROTOTYPE( void cycles_accounting_stop_idle, (void)			);
+_PROTOTYPE( void context_stop_idle, (void)				);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
@@ -40,8 +40,8 @@ _PROTOTYPE( int do_ipc, (reg_t r1, reg_t r2, reg_t r3)			);
 _PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (const struct proc *rp)			);
-_PROTOTYPE( struct proc * schedcheck, (void)				);
-_PROTOTYPE( struct proc * arch_finish_schedcheck, (void)		);
+_PROTOTYPE( void switch_to_user, (void)					);
+_PROTOTYPE( struct proc * arch_finish_switch_to_user, (void)		);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
 #if DEBUG_ENABLE_IPC_WARNINGS
 _PROTOTYPE( int isokendpt_f, (const char *file, int line, endpoint_t e, int *p, int f));
@@ -155,7 +155,7 @@ _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( void arch_shutdown, (int)					);
 _PROTOTYPE( void arch_monitor, (void)					);
 _PROTOTYPE( void arch_get_aout_headers, (int i, struct exec *h)		);
-_PROTOTYPE( void restart, (void)                                        );
+_PROTOTYPE( void restore_user_context, (struct proc * p)                );
 _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)    );
 _PROTOTYPE( int arch_init_profile_clock, (u32_t freq)			);
 _PROTOTYPE( void arch_stop_profile_clock, (void)			);

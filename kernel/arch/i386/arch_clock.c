@@ -131,7 +131,7 @@ PUBLIC void cycles_accounting_init(void)
 	read_tsc_64(&tsc_ctr_switch);
 }
 
-PUBLIC void cycles_accounting_stop(struct proc * p)
+PUBLIC void context_stop(struct proc * p)
 {
 	u64_t tsc;
 
@@ -140,7 +140,7 @@ PUBLIC void cycles_accounting_stop(struct proc * p)
 	tsc_ctr_switch = tsc;
 }
 
-PUBLIC void cycles_accounting_stop_idle(void)
+PUBLIC void context_stop_idle(void)
 {
-	cycles_accounting_stop(proc_addr(IDLE));
+	context_stop(proc_addr(IDLE));
 }

@@ -5,29 +5,12 @@
  * interrupt handlers.  It cooperates with the code in "start.c" to set up a  
  * good environment for main(). 
  *
- * Every transition to the kernel goes through this file.  Transitions to the  
- * kernel may be nested.  The initial entry may be with a system call (i.e.,  
- * send or receive a message), an exception or a hardware interrupt;  kernel  
- * reentries may only be made by hardware interrupts.  The count of reentries  
- * is kept in "k_reenter". It is important for deciding whether to switch to  
- * the kernel stack and for protecting the message passing code in "proc.c". 
- *
- * For the message passing trap, most of the machine state is saved in the 
- * proc table.  (Some of the registers need not be saved.)  Then the stack is 
- * switched to "k_stack", and interrupts are reenabled.  Finally, the system 
- * call handler (in C) is called.  When it returns, interrupts are disabled 
- * again and the code falls into the restart routine, to finish off held-up 
- * interrupts and run the process or task whose pointer is in "proc_ptr". 
- *
- * Hardware interrupt handlers do the same, except  (1) The entire state must 
- * be saved.  (2) There are too many handlers to do this inline, so the save 
- * routine is called.  A few cycles are saved by pushing the address of the 
- * appropiate restart routine for a return later.  (3) A stack switch is 
- * avoided when the stack is already switched.  (4) The (master) 8259 interrupt 
- * controller is reenabled centrally in save().  (5) Each interrupt handler 
- * masks its interrupt line using the 8259 before enabling (other unmasked) 
- * interrupts, and unmasks it after servicing the interrupt.  This limits the 
- * nest level to the number of lines and protects the handler from itself. 
+ * Kernel is entered either because of kernel-calls, ipc-calls, interrupts or
+ * exceptions. TSS is set so that the kernel stack is loaded. The user cotext is
+ * saved to the proc table and the handler of the event is called. Once the
+ * handler is done, switch_to_user() function is called to pick a new process,
+ * finish what needs to be done for the next process to run, sets its context
+ * and switch to userspace.
  *
  * For communication with the boot monitor at startup time some constant 
  * data are compiled into the beginning of the text segment. This facilitates  
@@ -81,7 +64,7 @@ begbss:
  * the entity. 
  */
 
-.globl	restart
+.globl	restore_user_context
 .globl reload_cr3
 
 .globl	divide_error
@@ -106,7 +89,7 @@ begbss:
 .globl	params_size
 .globl	params_offset
 .globl	mon_ds
-.globl  schedcheck
+.globl  switch_to_user
 .globl  lazy_fpu
 
 .globl	hwint00	/* handlers for hardware interrupts */
@@ -250,17 +233,17 @@ csinit:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	cycles_accounting_stop					;\
+	call	context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
-	jmp	restart							;\
+	jmp	switch_to_user						;\
 									\
 0:									\
 	pusha								;\
-	call	cycles_accounting_stop_idle				;\
+	call	context_stop_idle					;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -318,18 +301,18 @@ hwint07:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	cycles_accounting_stop					;\
+	call	context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
 	outb	$INT2_CTL	/* reenable slave 8259		  */	;\
-	jmp	restart							;\
+	jmp	switch_to_user						;\
 									\
 0:									\
 	pusha								;\
-	call	cycles_accounting_stop_idle				;\
+	call	context_stop_idle					;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -402,7 +385,7 @@ ipc_entry:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	cycles_accounting_stop
+	call	context_stop
 	add	$4, %esp
 
 	/* for stack trace */
@@ -415,7 +398,7 @@ ipc_entry:
 	pop	%esi
 	mov     %eax, AXREG(%esi)
 
-	jmp	restart
+	jmp	switch_to_user
 
 
 /*
@@ -439,7 +422,7 @@ kernel_call_entry:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	cycles_accounting_stop
+	call	context_stop
 	add	$4, %esp
 
 	/* for stack trace */
@@ -450,7 +433,7 @@ kernel_call_entry:
 	/* restore the current process pointer and save the return value */
 	add	$8, %esp
 
-	jmp	restart
+	jmp	switch_to_user
 
 
 .balign 16
@@ -472,7 +455,7 @@ exception_entry_from_user:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	cycles_accounting_stop
+	call	context_stop
 	add	$4, %esp
 
 	/* for stack trace clear %ebp */
@@ -487,7 +470,7 @@ exception_entry_from_user:
 	push	$0	/* it's not a nested exception */
 	call 	exception_handler
 
-	jmp	restart
+	jmp	switch_to_user
 
 exception_entry_nested:
 
@@ -508,11 +491,8 @@ exception_entry_nested:
 /*===========================================================================*/
 /*				restart					     */
 /*===========================================================================*/
-restart:
-	call	schedcheck
-
-	/* %eax is set by schedcheck() to the process to run */
-	mov	%eax, %ebp	/* will assume P_STACKBASE == 0 */
+restore_user_context:
+	mov	4(%esp), %ebp	/* will assume P_STACKBASE == 0 */
 
 	/* reconstruct the stack for iret */
 	movl	SSREG(%ebp), %eax
@@ -617,7 +597,7 @@ copr_not_available:
 	SAVE_PROCESS_CTX_NON_LAZY(0)
 	/* stop user process cycles */
 	push	%ebp
-	call	cycles_accounting_stop
+	call	context_stop
 	pop	%ebp
 	lea	P_MISC_FLAGS(%ebp), %ebx
 	movw	(%ebx), %cx
@@ -639,7 +619,7 @@ fp_l_no_fxsr:
 	frstor	(%eax)
 copr_return:
 	orw	$MF_USED_FPU, (%ebx)	/* fpu was used during last execution */
-	jmp	restart
+	jmp	switch_to_user
 
 copr_not_available_in_kernel:
 	movl	$0, (%esp)

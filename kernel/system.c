@@ -130,7 +130,7 @@ PUBLIC void kernel_call(message *m_user, struct proc * caller)
   caller->p_delivermsg_vir = (vir_bytes) m_user;
   /*
    * the ldt and cr3 of the caller process is loaded because it just've trapped
-   * into the kernel or was already set in schedcheck() before we resume
+   * into the kernel or was already set in switch_to_user() before we resume
    * execution of an interrupted kernel call
    */
   if (copy_msg_from_user(caller, m_user, &msg) == 0) {

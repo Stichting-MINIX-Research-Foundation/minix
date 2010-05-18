@@ -38,15 +38,15 @@
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	cycles_accounting_stop					;\
+	call	context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	APIC_IRQ_HANDLER(irq)						;\
-	jmp	restart							;\
+	jmp	switch_to_user						;\
 									\
 0:									\
 	pusha								;\
-	call	cycles_accounting_stop_idle				;\
+	call	context_stop_idle					;\
 	APIC_IRQ_HANDLER(irq)						;\
 	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
@@ -149,15 +149,15 @@ apic_hwint15:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	cycles_accounting_stop					;\
+	call	context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp		/* for stack trace */		;\
 	LAPIC_INTR_HANDLER(func)					;\
-	jmp	restart							;\
+	jmp	switch_to_user						;\
 	\
 0:	\
 	pusha								;\
-	call	cycles_accounting_stop_idle				;\
+	call	context_stop_idle					;\
 	LAPIC_INTR_HANDLER(func)					;\
 	CLEAR_IF(10*4(%esp))						;\
 	popa								;\

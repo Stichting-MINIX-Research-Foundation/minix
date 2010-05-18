@@ -89,7 +89,7 @@ PRIVATE void idle(void)
 	 */
 
 	/* start accounting for the idle time */
-	cycles_accounting_stop(proc_addr(KERNEL));
+	context_stop(proc_addr(KERNEL));
 	halt_cpu();
 	/*
 	 * end of accounting for the idle task does not happen here, the kernel
@@ -98,9 +98,9 @@ PRIVATE void idle(void)
 }
 
 /*===========================================================================*
- *				schedcheck				     * 
+ *				switch_to_user				     * 
  *===========================================================================*/
-PUBLIC struct proc * schedcheck(void)
+PUBLIC void switch_to_user(void)
 {
 	/* This function is called an instant before proc_ptr is
 	 * to be scheduled again.
@@ -232,12 +232,17 @@ check_misc_flags:
 #endif
 
 
-	proc_ptr = arch_finish_schedcheck();
+	proc_ptr = arch_finish_switch_to_user();
 	assert(proc_ptr->p_ticks_left > 0);
 
-	cycles_accounting_stop(proc_addr(KERNEL));
+	context_stop(proc_addr(KERNEL));
 
-	return proc_ptr;
+	/*
+	 * restore_user_context() carries out the actual mode switch from kernel
+	 * to userspace. This function does not return
+	 */
+	restore_user_context(proc_ptr);
+	NOT_REACHABLE;
 }
 
 /*
@@ -1398,7 +1403,7 @@ PRIVATE void notify_scheduler(struct proc *p)
 		/*
 		 * If a scheduler is scheduling itself or has no scheduler, and
 		 * runs out of quantum, we don't send a message. The
-		 * RTS_NO_QUANTUM flag will be removed by schedcheck in proc.c.
+		 * RTS_NO_QUANTUM flag will be removed in switch_to_user.
 		 */
 	}
 	else {

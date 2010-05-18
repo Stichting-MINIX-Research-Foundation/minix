@@ -423,7 +423,7 @@ PUBLIC void arch_do_syscall(struct proc *proc)
 	  do_ipc(proc->p_reg.cx, proc->p_reg.retreg, proc->p_reg.bx);
 }
 
-PUBLIC struct proc * arch_finish_schedcheck(void)
+PUBLIC struct proc * arch_finish_switch_to_user(void)
 {
 	char * stk;
 	stk = (char *)tss.sp0;
