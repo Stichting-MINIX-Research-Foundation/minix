@@ -4,8 +4,6 @@
 #include <minix/com.h>
 #include <machine/interrupt.h>
 
-typedef _PROTOTYPE( void task_t, (void) );
-
 /* Process table and system property related types. */ 
 typedef int proc_nr_t;			/* process table entry number */
 typedef short sys_id_t;			/* system process index */
@@ -15,7 +13,6 @@ typedef struct {			/* bitmap for system indexes */
 
 struct boot_image {
   proc_nr_t proc_nr;			/* process number to use */
-  task_t *initial_pc;			/* start function for tasks */
   int flags;				/* process flags */
   unsigned char quantum;		/* quantum (tick count) */
   int priority;				/* scheduling priority */

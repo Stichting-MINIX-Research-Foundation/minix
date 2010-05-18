@@ -65,25 +65,25 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  */
 
 PUBLIC struct boot_image image[] = {
-/* process nr, pc, flags, qs,  queue, stack,   name */ 
-{IDLE,       NULL,     0,  0,      0, IDL_S, "idle"  },
-{CLOCK,      NULL,     0,  0,      0, IDL_S, "clock" },
-{SYSTEM,     NULL,     0,  0,      0, IDL_S, "system"},
-{HARDWARE,      0,     0,  8, TASK_Q, HRD_S, "kernel"},
+/* process nr, flags, qs,  queue, stack,   name */
+{IDLE,             0,  0,      0, IDL_S, "idle"  },
+{CLOCK,            0,  0,      0, IDL_S, "clock" },
+{SYSTEM,           0,  0,      0, IDL_S, "system"},
+{HARDWARE,         0,  0,      0, IDL_S, "kernel"},
 
-{DS_PROC_NR,    0, BVM_F,  4,      4, 0,     "ds"    },
-{RS_PROC_NR,    0,     0,  4,      4, 0,     "rs"    },
+{DS_PROC_NR,   BVM_F,  4,      4, 0,     "ds"    },
+{RS_PROC_NR,       0,  4,      4, 0,     "rs"    },
 
-{PM_PROC_NR,    0,     0, 32,      4, 0,     "pm"    },
-{SCHED_PROC_NR, 0,     0, 32,      4, 0,     "sched" },
-{FS_PROC_NR,    0,     0, 32,      5, 0,     "vfs"   },
-{MEM_PROC_NR,   0, BVM_F,  4,      3, 0,     "memory"},
-{LOG_PROC_NR,   0, BVM_F,  4,      2, 0,     "log"   },
-{TTY_PROC_NR,   0, BVM_F,  4,      1, 0,     "tty"   },
-{MFS_PROC_NR,   0, BVM_F, 32,      5, 0,     "mfs"   },
-{VM_PROC_NR,    0,     0, 32,      2, 0,     "vm"    },
-{PFS_PROC_NR,   0, BVM_F, 32,      5, 0,     "pfs"   },
-{INIT_PROC_NR,  0, BVM_F,  8, USER_Q, 0,     "init"  },
+{PM_PROC_NR,       0, 32,      4, 0,     "pm"    },
+{SCHED_PROC_NR,    0, 32,      4, 0,     "sched" },
+{FS_PROC_NR,       0, 32,      5, 0,     "vfs"   },
+{MEM_PROC_NR,  BVM_F,  4,      3, 0,     "memory"},
+{LOG_PROC_NR,  BVM_F,  4,      2, 0,     "log"   },
+{TTY_PROC_NR,  BVM_F,  4,      1, 0,     "tty"   },
+{MFS_PROC_NR,  BVM_F, 32,      5, 0,     "mfs"   },
+{VM_PROC_NR,       0, 32,      2, 0,     "vm"    },
+{PFS_PROC_NR,  BVM_F, 32,      5, 0,     "pfs"   },
+{INIT_PROC_NR, BVM_F,  8, USER_Q, 0,     "init"  },
 };
 
 /* Verify the size of the system image table at compile time. Also verify that 

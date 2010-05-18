@@ -180,7 +180,7 @@ PUBLIC void main(void)
 	 * is different from that of other processes because tasks can
 	 * access I/O; this is not allowed to less-privileged processes 
 	 */
-	rp->p_reg.pc = (reg_t) ip->initial_pc;
+	rp->p_reg.pc = 0; /* we cannot start anything else */
 	rp->p_reg.psw = (iskerneln(proc_nr)) ? INIT_TASK_PSW : INIT_PSW;
 
 	/* Initialize the server stack pointer. Take it down one word
