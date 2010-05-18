@@ -231,8 +231,8 @@ struct proc {
 #define NR_SCHED_QUEUES   16	/* MUST equal minimum priority + 1 */
 #define TASK_Q		   0	/* highest, used for kernel tasks */
 #define MAX_USER_Q  	   0    /* highest priority for user processes */   
-#define USER_Q  	  (NR_SCHED_QUEUES / 2) /* default (should correspond to
-						   nice 0) */
+#define USER_Q  	  ((MIN_USER_Q - MAX_USER_Q) / 2 + MAX_USER_Q) /* default
+						(should correspond to nice 0) */
 #define MIN_USER_Q	  (NR_SCHED_QUEUES - 1)	/* minimum priority for user
 						   processes */
 

@@ -7,94 +7,101 @@
 #include <machine/archtypes.h>
 #include <lib.h>
 #include "mproc.h"
-#include "kernel/proc.h" /* for MIN_USER_Q */
-
-PRIVATE timer_t sched_timer;
-
-/*
- * makes a kernel call that schedules the process using the actuall scheduling
- * parameters set for this process
- */
-PUBLIC int schedule_process(struct mproc * rmp)
-{
-	int err;
-
-	if ((err = sys_schedule(rmp->mp_endpoint, rmp->mp_priority,
-		rmp->mp_time_slice)) != OK) {
-		printf("PM: An error occurred when trying to schedule %s: %d\n",
-		rmp->mp_name, err);
-	}
-
-	return err;
-}
 
 /*===========================================================================*
- *				do_noquantum				     *
+ *				init_scheduling				     *
  *===========================================================================*/
-
-PUBLIC void do_noquantum(void)
-{
-	int rv, proc_nr_n;
-	register struct mproc *rmp;
-
-	if (pm_isokendpt(m_in.m_source, &proc_nr_n) != OK) {
-		printf("PM: WARNING: got an invalid endpoint in OOQ msg %u.\n",
-		m_in.m_source);
-		return;
-	}
-
-	rmp = &mproc[proc_nr_n];
-	if (rmp->mp_priority < MIN_USER_Q) {
-		rmp->mp_priority += 1; /* lower priority */
-	}
-
-	schedule_process(rmp);
-}
-
-/*===========================================================================*
- *				takeover_scheduling			     *
- *===========================================================================*/
-PUBLIC void takeover_scheduling(void)
+PUBLIC void sched_init(void)
 {
 	struct mproc *trmp;
 	int proc_nr;
 
-	tmr_inittimer(&sched_timer);
-
 	for (proc_nr=0, trmp=mproc; proc_nr < NR_PROCS; proc_nr++, trmp++) {
-		/* Don't takeover system processes. When the system starts,
-		 * this will typically only takeover init, from which other
+		/* Don't take over system processes. When the system starts,
+		 * this will typically only take over init, from which other
 		 * user space processes will inherit. */
 		if (trmp->mp_flags & IN_USE && !(trmp->mp_flags & PRIV_PROC)) {
-			if (sys_schedctl(trmp->mp_endpoint))
-				printf("PM: Error while taking over scheduling for %s\n",
+			if (sched_start(SCHED_PROC_NR, trmp,
+					(SEND_PRIORITY | SEND_TIME_SLICE))) {
+				printf("PM: SCHED denied taking over scheduling of %s\n",
 					trmp->mp_name);
-			trmp->mp_flags |= PM_SCHEDULED;
-		}
-	}
-
-	pm_set_timer(&sched_timer, 100, balance_queues, 0);
-}
-
-/*===========================================================================*
- *				balance_queues				     *
- *===========================================================================*/
-
-PUBLIC void balance_queues(tp)
-struct timer *tp;
-{
-	struct mproc *rmp;
-	int proc_nr;
-	int rv;
-
-	for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if (rmp->mp_flags & IN_USE) {
-			if (rmp->mp_priority > rmp->mp_max_priority) {
-				rmp->mp_priority -= 1; /* increase priority */
-				schedule_process(rmp);
 			}
 		}
 	}
+}
 
-	pm_set_timer(&sched_timer, 100, balance_queues, 0);
+/*===========================================================================*
+ *				sched_start				     *
+ *===========================================================================*/
+PUBLIC int sched_start(endpoint_t ep, struct mproc *rmp, int flags)
+{
+	int rv;
+	message m;
+
+	m.SCHEDULING_ENDPOINT	= rmp->mp_endpoint;
+	m.SCHEDULING_PARENT	= mproc[rmp->mp_parent].mp_endpoint;
+	m.SCHEDULING_NICE	= rmp->mp_nice;
+
+	/* Send the request to the scheduler */
+	if ((rv = _taskcall(ep, SCHEDULING_START, &m))) {
+		return rv;
+	}
+
+	/* Store the process' scheduler. Note that this might not be the
+	 * scheduler we sent the SCHEDULING_START message to. That scheduler
+	 * might have forwarded the scheduling message on to another scheduler
+	 * before returning the message.
+	 */
+	rmp->mp_scheduler = m.SCHEDULING_SCHEDULER;
+	return (OK);
+}
+
+/*===========================================================================*
+ *				sched_stop				     *
+ *===========================================================================*/
+PUBLIC int sched_stop(struct mproc *rmp)
+{
+	int rv;
+	message m;
+
+	/* If the kernel is the scheduler, it will implicitly stop scheduling
+	 * once another process takes over or the process terminates */
+	if (rmp->mp_scheduler == KERNEL || rmp->mp_scheduler == NONE)
+		return(OK);
+
+	m.SCHEDULING_ENDPOINT	= rmp->mp_endpoint;
+	if ((rv = _taskcall(rmp->mp_scheduler, SCHEDULING_STOP, &m))) {
+		return rv;
+	}
+
+	/* sched_stop is either called when the process is exiting or it is
+	 * being moved between schedulers. If it is being moved between
+	 * schedulers, we need to set the mp_scheduler to NONE so that PM
+	 * doesn't forward messages to the process' scheduler while being moved
+	 * (such as sched_nice). */
+	rmp->mp_scheduler = NONE;
+	return (OK);
+}
+
+/*===========================================================================*
+ *				sched_nice				     *
+ *===========================================================================*/
+PUBLIC int sched_nice(struct mproc *rmp, int nice)
+{
+	int rv;
+	message m;
+
+	/* If the kernel is the scheduler, we don't allow messing with the
+	 * priority. If you want to control process priority, assign the process
+	 * to a user-space scheduler */
+	if (rmp->mp_scheduler == KERNEL || rmp->mp_scheduler == NONE)
+		return (EINVAL);
+
+	m.SCHEDULING_ENDPOINT	= rmp->mp_endpoint;
+	m.SCHEDULING_NICE	= nice;
+	if ((rv = _taskcall(rmp->mp_scheduler, SCHEDULING_SET_NICE, &m))) {
+		return rv;
+	}
+
+	return (OK);
 }

@@ -15,3 +15,6 @@
 #define MAX_SECS (((1<<(sizeof(clock_t)*8-1))-1)/system_hz)
 				/* max.secs for setitimer() ((2^31-1)/HZ) */
 #define NR_ITIMERS	   3	/* number of supported interval timers */
+
+#define SEND_PRIORITY      1	/* send current priority queue to scheduler */
+#define SEND_TIME_SLICE    2    /* send current time slice to scheduler */

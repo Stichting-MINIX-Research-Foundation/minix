@@ -73,8 +73,9 @@
 #define DS_PROC_NR   ((endpoint_t) 6)   /* data store server */
 #define MFS_PROC_NR  ((endpoint_t) 7)   /* minix root filesystem */
 #define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
-#define PFS_PROC_NR  ((endpoint_t) 9)   /* pipe filesystem */
-#define LAST_SPECIAL_PROC_NR	10	/* An untyped version for
+#define PFS_PROC_NR  ((endpoint_t) 9)  /* pipe filesystem */
+#define SCHED_PROC_NR ((endpoint_t) 10)	/* scheduler */
+#define LAST_SPECIAL_PROC_NR	11	/* An untyped version for
                                            computation in macros.*/
 #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
                                                         -- goes multiuser */
@@ -1079,9 +1080,21 @@
 #define SCHEDULING_BASE	0xF00
 
 #define SCHEDULING_NO_QUANTUM	(SCHEDULING_BASE+1)
-#	define SCHEDULING_ENDPOINT	m1_i1
-#	define SCHEDULING_PRIORITY	m1_i2
-#	define SCHEDULING_QUANTUM	m1_i3
+#	define SCHEDULING_ENDPOINT	m9_l1
+#	define SCHEDULING_QUANTUM	m9_l2
+#	define SCHEDULING_PRIORITY	m9_s1
+
+/* SCHEDULING_START uses _ENDPOINT, _PRIORITY and _QUANTUM from
+ * SCHEDULING_NO_QUANTUM */
+#define SCHEDULING_START	(SCHEDULING_BASE+2)
+#	define SCHEDULING_SCHEDULER	m9_l1 /* Overrides _ENDPOINT on return*/
+#	define SCHEDULING_PARENT	m9_l3
+#	define SCHEDULING_NICE		m9_l4
+
+#define SCHEDULING_STOP		(SCHEDULING_BASE+3)
+
+#define SCHEDULING_SET_NICE	(SCHEDULING_BASE+4)
+
 #endif
 
 /* _MINIX_COM_H */

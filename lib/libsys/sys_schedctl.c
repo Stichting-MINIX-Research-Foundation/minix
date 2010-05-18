@@ -7,4 +7,3 @@ PUBLIC int sys_schedctl(endpoint_t proc_ep)
 	m.SCHEDULING_ENDPOINT = proc_ep;
 	return(_kernel_call(SYS_SCHEDCTL, &m));
 }
-

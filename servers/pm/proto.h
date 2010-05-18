@@ -61,10 +61,10 @@ _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsetpriority, (void)				);
 
 /* schedule.c */
-_PROTOTYPE( int schedule_process, (struct mproc * rmp)			);
-_PROTOTYPE( void do_noquantum, (void)					);
-_PROTOTYPE( void takeover_scheduling, (void)				);
-_PROTOTYPE( void balance_queues, (struct timer *tp)			);
+_PROTOTYPE( void sched_init, (void)					);
+_PROTOTYPE( int sched_start, (endpoint_t ep, struct mproc *rmp, int flags) );
+_PROTOTYPE( int sched_stop, (struct mproc *rmp)				);
+_PROTOTYPE( int sched_nice, (struct mproc *rmp, int nice)		);
 
 /* profile.c */
 _PROTOTYPE( int do_sprofile, (void)					);

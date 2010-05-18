@@ -29,8 +29,9 @@ PUBLIC int do_schedule(struct proc * caller, message * m_ptr)
 		RTS_SET(p, RTS_NO_QUANTUM);
 
 	/* Clear the scheduling bit and enqueue the process */
-	p->p_priority = m_ptr->SCHEDULING_PRIORITY;
-	p->p_ticks_left = m_ptr->SCHEDULING_QUANTUM;
+	p->p_priority     = m_ptr->SCHEDULING_PRIORITY;
+	p->p_quantum_size = m_ptr->SCHEDULING_QUANTUM;
+	p->p_ticks_left   = m_ptr->SCHEDULING_QUANTUM;
 
 	RTS_UNSET(p, RTS_NO_QUANTUM);
 

@@ -10,6 +10,7 @@ PROGRAMS=	../kernel/kernel \
 	../servers/ds/ds \
 	../servers/rs/rs \
 	../servers/pm/pm \
+	../servers/sched/sched \
 	../servers/vfs/vfs \
 	../drivers/memory/memory_driver/memory \
 	../drivers/log/log \

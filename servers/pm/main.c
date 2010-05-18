@@ -65,7 +65,7 @@ PUBLIC int main()
 
   /* SEF local startup. */
   sef_local_startup();
-  takeover_scheduling();	/* takeover all running processes */
+  sched_init();	/* initialize user-space scheduling */
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
@@ -131,16 +131,6 @@ PUBLIC int main()
 		else
 			result= ENOSYS;
 		break;
-	case SCHEDULING_NO_QUANTUM:
-		/* This message was sent from the kernel, don't reply */
-		if (IPC_STATUS_FLAGS_TEST(ipc_status, IPC_FLG_MSG_FROM_KERNEL)) {
-			do_noquantum();
-		} else {
-			printf("PM: process %s/%d faked SCHEDULING_NO_QUANTUM "
-					"message!\n",
-					mp->mp_name, mp->mp_endpoint);
-		}
-		continue;
 	default:
 		/* Else, if the system call number is valid, perform the
 		 * call.
@@ -282,10 +272,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		/* Get kernel endpoint identifier. */
 		rmp->mp_endpoint = ip->endpoint;
 
-		/* Get scheduling info */
-		rmp->mp_max_priority = ip->priority;
-		rmp->mp_priority = ip->priority;
-		rmp->mp_time_slice = ip->quantum;
+		/* Set scheduling info */
+		rmp->mp_scheduler = KERNEL;
 
 		/* Tell FS about this system process. */
 		mess.m_type = PM_INIT;
@@ -491,6 +479,17 @@ PRIVATE void handle_fs_reply()
 	break;
 
   case PM_EXIT_REPLY:
+	if((r = sched_stop(rmp)) != OK) {
+		/* If the scheduler refuses to give up scheduling, there is
+		 * little we can do, except report it. This may cause problems
+		 * later on, if this scheduler is asked to schedule another proc
+		 * that has an endpoint->schedproc mapping identical to the proc
+		 * we just tried to stop scheduling.
+		 */
+		printf("PM: The scheduler did not want to give up "
+			"scheduling %s, ret=%d.\n", rmp->mp_name, r);
+	}
+
 	exit_restart(rmp, FALSE /*dump_core*/);
 
 	break;
@@ -505,13 +504,29 @@ PRIVATE void handle_fs_reply()
 
   case PM_FORK_REPLY:
 	/* Schedule the newly created process ... */
-	if (rmp->mp_flags & PM_SCHEDULED)
-		schedule_process(rmp);
-	/* ... and wake it up */
-	setreply(proc_n, OK);
+	r = (OK);
+	if (rmp->mp_scheduler != KERNEL && rmp->mp_scheduler != NONE) {
+		r = sched_start(rmp->mp_scheduler, rmp, 0);
+	}
 
-	/* Wake up the parent */
-	setreply(rmp->mp_parent, rmp->mp_pid);
+	/* If scheduling the process failed, we want to tear down the process
+	 * and fail the fork */
+	if (r != (OK)) {
+		/* Tear down the newly created process */
+		rmp->mp_scheduler = NONE; /* don't try to stop scheduling */
+		exit_proc(rmp, -1, FALSE /*dump_core*/);
+
+		/* Wake up the parent with a failed fork */
+		setreply(rmp->mp_parent, -1);
+
+	}
+	else {
+		/* Wake up the child */
+		setreply(proc_n, OK);
+
+		/* Wake up the parent */
+		setreply(rmp->mp_parent, rmp->mp_pid);
+	}
 
 	break;
 

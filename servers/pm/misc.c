@@ -443,20 +443,11 @@ PUBLIC int do_getsetpriority()
 	 * The value passed in is currently between PRIO_MIN and PRIO_MAX.
 	 * We have to scale this between MIN_USER_Q and MAX_USER_Q to match
 	 * the kernel's scheduling queues.
-	 *
-	 * TODO: This assumes that we are the scheduler, this will be changed
-	 *       once the scheduler gets factored out of PM to its own server
 	 */
-	if (arg_pri < PRIO_MIN || arg_pri > PRIO_MAX) return(EINVAL);
 
-	new_q = MAX_USER_Q + (arg_pri-PRIO_MIN) * (MIN_USER_Q-MAX_USER_Q+1) /
-	    (PRIO_MAX-PRIO_MIN+1);
-	if (new_q < MAX_USER_Q) new_q = MAX_USER_Q;	/* shouldn't happen */
-	if (new_q > MIN_USER_Q) new_q = MIN_USER_Q;	/* shouldn't happen */
-
-	rmp->mp_max_priority = rmp->mp_priority = new_q;
-	if ((r = schedule_process(rmp)))
-		return(r);
+	if ((r = sched_nice(rmp, arg_pri)) != OK) {
+		return r;
+	}
 
 	rmp->mp_nice = arg_pri;
 	return(OK);

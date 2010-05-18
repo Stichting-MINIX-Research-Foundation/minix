@@ -19,6 +19,7 @@
 
 PRIVATE int
   pm_kc[] =   { SYS_ALL_C, SYS_NULL_C },
+  sched_kc[] ={ SYS_ALL_C, SYS_NULL_C },
   vfs_kc[] =  { FS_KC, SYS_NULL_C },
   rs_kc[] =   { SYS_ALL_C, SYS_NULL_C },
   ds_kc[] =   { SYS_ALL_C, SYS_NULL_C },
@@ -41,6 +42,7 @@ PRIVATE int
   pm_vmc[] =   { VM_BASIC_CALLS, VM_EXIT, VM_FORK, VM_BRK, VM_EXEC_NEWMEM,
       VM_PUSH_SIG, VM_WILLEXIT, VM_ADDDMA, VM_DELDMA, VM_GETDMA,
       VM_NOTIFY_SIG, SYS_NULL_C },
+  sched_vmc[] ={ VM_BASIC_CALLS, SYS_NULL_C },
   vfs_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
   rs_vmc[] =   { VM_BASIC_CALLS, VM_RS_SET_PRIV, VM_RS_UPDATE, SYS_NULL_C },
   ds_vmc[] =   { VM_BASIC_CALLS, SYS_NULL_C },
@@ -62,6 +64,7 @@ PUBLIC struct boot_image_priv boot_image_priv_table[] = {
 {RS_PROC_NR,   "rs",     RSYS_F, RSYS_T, RSYS_M, RSYS_SM, rs_kc,   rs_vmc,  0 },
 {VM_PROC_NR,   "vm",     VM_F,   SRV_T,  SRV_M,  SRV_SM,  vm_kc,   vm_vmc,  0 },
 {PM_PROC_NR,   "pm",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pm_kc,   pm_vmc,  0 },
+{SCHED_PROC_NR,"sched",  SRV_F,  SRV_T,  SRV_M,  SRV_SM,  sched_kc, sched_vmc, 0 },
 {VFS_PROC_NR,  "vfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  vfs_kc,  vfs_vmc, 0 },
 {DS_PROC_NR,   "ds",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  ds_kc,   ds_vmc,  0 },
 {TTY_PROC_NR,  "tty",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  tty_kc,  tty_vmc, 0 },
