@@ -11,7 +11,6 @@
 #include "watchdog.h"
 #endif
 
-FORWARD _PROTOTYPE( char *get_value, (const char *params, const char *key));
 /*===========================================================================*
  *				cstart					     *
  *===========================================================================*/
@@ -43,7 +42,7 @@ PUBLIC void cstart(
   arch_get_params(params_buffer, sizeof(params_buffer));
 
   /* determine verbosity */
-  if ((value = get_value(params_buffer, VERBOSEBOOTVARNAME)))
+  if ((value = env_get(VERBOSEBOOTVARNAME)))
 	  verboseboot = atoi(value);
 
   DEBUGEXTRA(("cstart\n"));
@@ -63,10 +62,10 @@ PUBLIC void cstart(
 	kloadinfo.proc_load_history[h] = 0;
 
   /* Processor? Decide if mode is protected for older machines. */
-  machine.processor=atoi(get_value(params_buffer, "processor")); 
+  machine.processor=atoi(env_get("processor")); 
 
   /* XT, AT or MCA bus? */
-  value = get_value(params_buffer, "bus");
+  value = env_get("bus");
   if (value == NULL || strcmp(value, "at") == 0) {
       machine.pc_at = TRUE;			/* PC-AT compatible hardware */
   } else if (strcmp(value, "mca") == 0) {
@@ -74,22 +73,22 @@ PUBLIC void cstart(
   }
 
   /* Type of VDU: */
-  value = get_value(params_buffer, "video");	/* EGA or VGA video unit */
+  value = env_get("video");	/* EGA or VGA video unit */
   if (strcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
   if (strcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 
   /* Get clock tick frequency. */
-  value = get_value(params_buffer, "hz");
+  value = env_get("hz");
   if(value)
 	system_hz = atoi(value);
   if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
 	system_hz = DEFAULT_HZ;
-  value = get_value(params_buffer, SERVARNAME);
+  value = env_get(SERVARNAME);
   if(value && atoi(value) == 0)
 	do_serial_debug=1;
 
 #ifdef CONFIG_APIC
-  value = get_value(params_buffer, "no_apic");
+  value = env_get("no_apic");
   if(value)
 	config_no_apic = atoi(value);
   else
@@ -97,7 +96,7 @@ PUBLIC void cstart(
 #endif
 
 #ifdef CONFIG_WATCHDOG
-  value = get_value(params_buffer, "watchdog");
+  value = env_get("watchdog");
   if (value)
 	  watchdog_enabled = atoi(value);
 #endif
@@ -134,3 +133,12 @@ PRIVATE char *get_value(
   }
   return(NULL);
 }
+
+/*===========================================================================*
+ *				env_get				     	*
+ *===========================================================================*/
+PUBLIC char *env_get(const char *name)
+{
+	return get_value(params_buffer, name);
+}
+

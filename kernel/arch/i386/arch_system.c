@@ -14,6 +14,8 @@
 
 #include "archconst.h"
 #include "proto.h"
+#include "serial.h"
+#include "oxpcie.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
 
@@ -220,17 +222,14 @@ PUBLIC void arch_init(void)
 	fpu_init();
 }
 
-#define COM1_BASE       0x3F8
-#define COM1_THR        (COM1_BASE + 0)
-#define COM1_RBR (COM1_BASE + 0)
-#define COM1_LSR        (COM1_BASE + 5)
-#define		LSR_DR		0x01
-#define		LSR_THRE	0x20
-
 PUBLIC void ser_putc(char c)
 {
         int i;
         int lsr, thr;
+
+#if CONFIG_OXPCIE
+	oxpcie_putc(c);
+#endif
 
         lsr= COM1_LSR;
         thr= COM1_THR;
@@ -248,6 +247,14 @@ PUBLIC void ser_putc(char c)
 PUBLIC void do_ser_debug()
 {
 	u8_t c, lsr;
+
+#if CONFIG_OXPCIE
+	{
+		int oxin;
+		if((oxin = oxpcie_in()) >= 0)
+		ser_debug(oxin);
+	}
+#endif
 
 	lsr= inb(COM1_LSR);
 	if (!(lsr & LSR_DR))

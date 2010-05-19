@@ -12,9 +12,11 @@
 #include <string.h>
 #include <assert.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #include <machine/vm.h>
 
+#include "oxpcie.h"
 #include "proto.h"
 #include "kernel/proto.h"
 #include "kernel/debug.h"
@@ -935,32 +937,70 @@ void i386_freepde(const int pde)
 	freepdes[nfreepdes++] = pde;
 }
 
+PRIVATE int lapic_mapping_index = -1, oxpcie_mapping_index = -1;
+
 PUBLIC int arch_phys_map(const int index, phys_bytes *addr,
   phys_bytes *len, int *flags)
 {
+	static int first = 1;
+	int freeidx = 0;
+	static char *ser_var = NULL;
+
+	if(first) {
+#ifdef CONFIG_APIC
+		if(lapic_addr)
+			lapic_mapping_index = freeidx++;
+#endif
+
+#ifdef CONFIG_OXPCIE
+		if((ser_var = env_get("oxpcie"))) {
+			if(ser_var[0] != '0' || ser_var[1] != 'x') {
+				printf("oxpcie address in hex please\n");
+			} else {
+				oxpcie_mapping_index = freeidx++;
+			}
+		}
+#endif
+		first = 0;
+	}
+
 #ifdef CONFIG_APIC
 	/* map the local APIC if enabled */
-	if (index == 0 && lapic_addr) {
+	if (index == lapic_mapping_index) {
 		*addr = vir2phys(lapic_addr);
 		*len = 4 << 10 /* 4kB */;
 		*flags = VMMF_UNCACHED;
 		return OK;
 	}
-	return EINVAL;
-#else
-	/* we don't want anything */
-	return EINVAL;
 #endif
+
+#if CONFIG_OXPCIE
+	if(index == oxpcie_mapping_index) {
+		*addr = strtoul(ser_var+2, NULL, 16);
+		*len = 0x4000;
+		*flags = VMMF_UNCACHED;
+		return OK;
+	}
+#endif
+
+	return EINVAL;
 }
 
 PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */
-	if (index == 0 && lapic_addr) {
+	if (index == lapic_mapping_index && lapic_addr) {
 		lapic_addr_vaddr = addr;
 	}
 #endif
+
+#if CONFIG_OXPCIE
+	if (index == oxpcie_mapping_index) {
+		oxpcie_set_vaddr((unsigned char *) addr);
+	}
+#endif
+
 	return OK;
 }
 

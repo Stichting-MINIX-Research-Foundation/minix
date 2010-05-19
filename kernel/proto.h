@@ -55,6 +55,7 @@ _PROTOTYPE( void check_ticks_left, (struct proc *p));
 /* start.c */
 _PROTOTYPE( void cstart, (u16_t cs, u16_t ds, u16_t mds,
 				u16_t parmoff, u16_t parmsize)		);
+_PROTOTYPE( char *env_get, (const char *key));
 
 /* system.c */
 _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);

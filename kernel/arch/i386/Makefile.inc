@@ -14,6 +14,7 @@ SRCS+=	arch_do_vmctl.c \
 	i8259.c \
 	klib.S \
 	memory.c \
+	oxpcie.c \
 	protect.c \
 	arch_system.c \
 	apic.c \

@@ -14,6 +14,9 @@
 #define CONFIG_MAX_CPUS	1
 #define cpuid		0
 
+/* OXPCIe952 PCIe with 2 UARTs in-kernel support */
+#define CONFIG_OXPCIE	0
+
 /* This is the master header for the kernel.  It includes some other files
  * and defines the principal constants.
  */
