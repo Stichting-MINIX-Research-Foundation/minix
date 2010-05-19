@@ -47,7 +47,7 @@ case $# in
 				s/.*"\(.*\)".*/\1/
 				s:^\./::' \
 			    -e '/^<built-in>$/d' \
-			    -e '/^<command line>$/d' \
+			    -e '/^<command.line>$/d' \
 			    -e "s:^:$o\:	:" | \
 			sort -u
 	done

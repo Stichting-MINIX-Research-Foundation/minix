@@ -15,7 +15,8 @@ AS?=		as
 AFLAGS?=
 COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
-COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c -traditional-cpp
+#COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c -traditional-cpp
+COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
@@ -223,3 +224,11 @@ YACC.y?=	${YACC} ${YFLAGS}
 # 	rm -f ${.TARGET}
 # 	cp ${.IMPSRC} ${.TARGET}
 # 	chmod a+x ${.TARGET}
+
+# MINIX
+.if !empty(CC:Mcc)
+COMPILER_TYPE=ack
+.elif !empty(CC:Mgcc)
+COMPILER_TYPE=gnu
+AR=gar
+.endif

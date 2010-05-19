@@ -64,50 +64,50 @@ begbss:
  * the entity. 
  */
 
-.globl	restore_user_context
-.globl reload_cr3
+.globl	_restore_user_context
+.globl	_reload_cr3
 
-.globl	divide_error
-.globl	single_step_exception
-.globl	nmi
-.globl	breakpoint_exception
-.globl	overflow
-.globl	bounds_check
-.globl	inval_opcode
-.globl	copr_not_available
-.globl	double_fault
-.globl	copr_seg_overrun
-.globl	inval_tss
-.globl	segment_not_present
-.globl	stack_exception
-.globl	general_protection
-.globl	page_fault
-.globl	copr_error
-.globl  alignment_check
-.globl  machine_check
-.globl  simd_exception
-.globl	params_size
-.globl	params_offset
-.globl	mon_ds
-.globl  switch_to_user
-.globl  lazy_fpu
+.globl	_divide_error
+.globl	_single_step_exception
+.globl	_nmi
+.globl	_breakpoint_exception
+.globl	_overflow
+.globl	_bounds_check
+.globl	_inval_opcode
+.globl	_copr_not_available
+.globl	_double_fault
+.globl	_copr_seg_overrun
+.globl	_inval_tss
+.globl	_segment_not_present
+.globl	_stack_exception
+.globl	_general_protection
+.globl	_page_fault
+.globl	_copr_error
+.globl	_alignment_check
+.globl	_machine_check
+.globl	_simd_exception
+.globl	_params_size
+.globl	_params_offset
+.globl	_mon_ds
+.globl	_switch_to_user
+.globl	_lazy_fpu
 
-.globl	hwint00	/* handlers for hardware interrupts */
-.globl	hwint01
-.globl	hwint02
-.globl	hwint03
-.globl	hwint04
-.globl	hwint05
-.globl	hwint06
-.globl	hwint07
-.globl	hwint08
-.globl	hwint09
-.globl	hwint10
-.globl	hwint11
-.globl	hwint12
-.globl	hwint13
-.globl	hwint14
-.globl	hwint15
+.globl	_hwint00	/* handlers for hardware interrupts */
+.globl	_hwint01
+.globl	_hwint02
+.globl	_hwint03
+.globl	_hwint04
+.globl	_hwint05
+.globl	_hwint06
+.globl	_hwint07
+.globl	_hwint08
+.globl	_hwint09
+.globl	_hwint10
+.globl	_hwint11
+.globl	_hwint12
+.globl	_hwint13
+.globl	_hwint14
+.globl	_hwint15
 
 /* Exported variables. */
 .globl	begbss
@@ -143,16 +143,16 @@ over_flags:
 	push	%edi
 	cmp	$0, 4(%ebp)	/* monitor return vector is */
 	je	noret	/* nonzero if return possible */
-	incl	mon_return
+	incl	_mon_return
 noret:
-	movl	%esp, mon_sp	/* save stack pointer for later return */
+	movl	%esp, _mon_sp	/* save stack pointer for later return */
 
 /* Copy the monitor global descriptor table to the address space of kernel and */
 /* switch over to it.  Prot_init() can then update it with immediate effect. */
 
-	sgdt	gdt+GDT_SELECTOR	/* get the monitor gdtr */
-	movl	gdt+GDT_SELECTOR+2, %esi	/* absolute address of GDT */
-	mov	$gdt, %ebx	/* address of kernel GDT */
+	sgdt	_gdt+GDT_SELECTOR	/* get the monitor gdtr */
+	movl	_gdt+GDT_SELECTOR+2, %esi	/* absolute address of GDT */
+	mov	$_gdt, %ebx	/* address of kernel GDT */
 	mov	$8*8, %ecx	/* copying eight descriptors */
 copygdt:
 	movb    %es:(%esi), %al
@@ -160,28 +160,28 @@ copygdt:
 	inc	%esi
 	inc	%ebx
 	loop	copygdt
-	movl	gdt+DS_SELECTOR+2, %eax	/* base of kernel data */
+	movl	_gdt+DS_SELECTOR+2, %eax	/* base of kernel data */
 	and	$0x00FFFFFF, %eax	/* only 24 bits */
-	add	$gdt, %eax	/* eax = vir2phys(gdt) */
-	movl	%eax, gdt+GDT_SELECTOR+2	/* set base of GDT */
-	lgdt	gdt+GDT_SELECTOR	/* switch over to kernel GDT */
+	add	$_gdt, %eax	/* eax = vir2phys(gdt) */
+	movl	%eax, _gdt+GDT_SELECTOR+2	/* set base of GDT */
+	lgdt	_gdt+GDT_SELECTOR	/* switch over to kernel GDT */
 
 /* Locate boot parameters, set up kernel segment registers and stack. */
 	mov	8(%ebp), %ebx	/* boot parameters offset */
 	mov	12(%ebp), %edx	/* boot parameters length */
 	mov	16(%ebp), %eax	/* address of a.out headers */
-	movl	%eax, aout
+	movl	%eax, _aout
 	mov	%ds, %ax	/* kernel data */
 	mov	%ax, %es
 	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
-	mov	$k_boot_stktop, %esp	/* set sp to point to the top of kernel stack */
+	mov	$_k_boot_stktop, %esp	/* set sp to point to the top of kernel stack */
 
 /* Save boot parameters into these global variables for i386 code */
-	movl	%edx, params_size
-	movl	%ebx, params_offset
-	movl	$SS_SELECTOR, mon_ds
+	movl	%edx, _params_size
+	movl	%ebx, _params_offset
+	movl	$SS_SELECTOR, _mon_ds
 
 /* Call C startup code to set up a proper environment to run main(). */
 	push	%edx
@@ -189,14 +189,14 @@ copygdt:
 	push	$SS_SELECTOR
 	push	$DS_SELECTOR
 	push	$CS_SELECTOR
-	call	cstart	/* cstart(cs, ds, mds, parmoff, parmlen) */
+	call	_cstart	/* cstart(cs, ds, mds, parmoff, parmlen) */
 	add	$5*4, %esp
 
 /* Reload gdtr, idtr and the segment registers to global descriptor table set */
 /* up by prot_init(). */
 
-	lgdt	gdt+GDT_SELECTOR
-	lidt	gdt+IDT_SELECTOR
+	lgdt	_gdt+GDT_SELECTOR
+	lidt	_gdt+IDT_SELECTOR
 
 	ljmp    $CS_SELECTOR, $csinit
 csinit:
@@ -210,7 +210,7 @@ csinit:
 	ltr	%ax
 	push	$0	/* set flags to known good state */
 	popf	/* esp, clear nested task and int enable */
-	jmp	main	/* main() */
+	jmp	_main	/* main() */
 
 
 /*===========================================================================*/
@@ -220,7 +220,7 @@ csinit:
 
 #define PIC_IRQ_HANDLER(irq)	\
 	push	$irq							    	;\
-	call	irq_handle		/* intr_handle(irq_handlers[irq]) */	;\
+	call	_irq_handle		/* intr_handle(irq_handlers[irq]) */	;\
 	add	$4, %esp						    	;
 
 /*===========================================================================*/
@@ -233,17 +233,17 @@ csinit:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	context_stop						;\
+	call	_context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
-	jmp	switch_to_user						;\
+	jmp	_switch_to_user						;\
 									\
 0:									\
 	pusha								;\
-	call	context_stop_idle					;\
+	call	_context_stop_idle					;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -253,42 +253,42 @@ csinit:
 
 /* Each of these entry points is an expansion of the hwint_master macro */
 .balign	16
-hwint00:
+_hwint00:
 /* Interrupt routine for irq 0 (the clock). */
 	hwint_master(0)
 
 .balign	16
-hwint01:
+_hwint01:
 /* Interrupt routine for irq 1 (keyboard) */
 	hwint_master(1)
 
 .balign	16
-hwint02:
+_hwint02:
 /* Interrupt routine for irq 2 (cascade!) */
 	hwint_master(2)
 
 .balign	16
-hwint03:
+_hwint03:
 /* Interrupt routine for irq 3 (second serial) */
 	hwint_master(3)
 
 .balign	16
-hwint04:
+_hwint04:
 /* Interrupt routine for irq 4 (first serial) */
 	hwint_master(4)
 
 .balign	16
-hwint05:
+_hwint05:
 /* Interrupt routine for irq 5 (XT winchester) */
 	hwint_master(5)
 
 .balign	16
-hwint06:
+_hwint06:
 /* Interrupt routine for irq 6 (floppy) */
 	hwint_master(6)
 
 .balign	16
-hwint07:
+_hwint07:
 /* Interrupt routine for irq 7 (printer) */
 	hwint_master(7)
 
@@ -301,18 +301,18 @@ hwint07:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	context_stop						;\
+	call	_context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
 	outb	$INT2_CTL	/* reenable slave 8259		  */	;\
-	jmp	switch_to_user						;\
+	jmp	_switch_to_user						;\
 									\
 0:									\
 	pusha								;\
-	call	context_stop_idle					;\
+	call	_context_stop_idle					;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -323,42 +323,42 @@ hwint07:
 
 /* Each of these entry points is an expansion of the hwint_slave macro */
 .balign	16
-hwint08:
+_hwint08:
 /* Interrupt routine for irq 8 (realtime clock) */
 	hwint_slave(8)
 
 .balign	16
-hwint09:
+_hwint09:
 /* Interrupt routine for irq 9 (irq 2 redirected) */
 	hwint_slave(9)
 
 .balign	16
-hwint10:
+_hwint10:
 /* Interrupt routine for irq 10 */
 	hwint_slave(10)
 
 .balign	16
-hwint11:
+_hwint11:
 /* Interrupt routine for irq 11 */
 	hwint_slave(11)
 
 .balign	16
-hwint12:
+_hwint12:
 /* Interrupt routine for irq 12 */
 	hwint_slave(12)
 
 .balign	16
-hwint13:
+_hwint13:
 /* Interrupt routine for irq 13 (FPU exception) */
 	hwint_slave(13)
 
 .balign	16
-hwint14:
+_hwint14:
 /* Interrupt routine for irq 14 (AT winchester) */
 	hwint_slave(14)
 
 .balign	16
-hwint15:
+_hwint15:
 /* Interrupt routine for irq 15 */
 	hwint_slave(15)
 
@@ -366,8 +366,8 @@ hwint15:
  * IPC is only from a process to kernel
  */
 .balign 16
-.globl ipc_entry
-ipc_entry:
+.globl _ipc_entry
+_ipc_entry:
 
 	SAVE_PROCESS_CTX(0)
 
@@ -385,28 +385,28 @@ ipc_entry:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	context_stop
+	call	_context_stop
 	add	$4, %esp
 
 	/* for stack trace */
 	movl	$0, %ebp
 
-	call	do_ipc
+	call	_do_ipc
 
 	/* restore the current process pointer and save the return value */
 	add	$3 * 4, %esp
 	pop	%esi
 	mov     %eax, AXREG(%esi)
 
-	jmp	switch_to_user
+	jmp	_switch_to_user
 
 
 /*
  * kernel call is only from a process to kernel
  */
 .balign 16
-.globl kernel_call_entry
-kernel_call_entry:
+.globl _kernel_call_entry
+_kernel_call_entry:
 
 	SAVE_PROCESS_CTX(0)
 
@@ -422,18 +422,18 @@ kernel_call_entry:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	context_stop
+	call	_context_stop
 	add	$4, %esp
 
 	/* for stack trace */
 	movl	$0, %ebp
 
-	call	kernel_call
+	call	_kernel_call
 
 	/* restore the current process pointer and save the return value */
 	add	$8, %esp
 
-	jmp	switch_to_user
+	jmp	_switch_to_user
 
 
 .balign 16
@@ -455,7 +455,7 @@ exception_entry_from_user:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	context_stop
+	call	_context_stop
 	add	$4, %esp
 
 	/* for stack trace clear %ebp */
@@ -468,9 +468,9 @@ exception_entry_from_user:
 	 */
 	push	%esp
 	push	$0	/* it's not a nested exception */
-	call 	exception_handler
+	call 	_exception_handler
 
-	jmp	switch_to_user
+	jmp	_switch_to_user
 
 exception_entry_nested:
 
@@ -479,7 +479,7 @@ exception_entry_nested:
 	add	$(8 * 4), %eax
 	push	%eax
 	pushl	$1			/* it's a nested exception */
-	call	exception_handler
+	call	_exception_handler
 	add	$8, %esp
 	popa
 
@@ -491,7 +491,7 @@ exception_entry_nested:
 /*===========================================================================*/
 /*				restart					     */
 /*===========================================================================*/
-restore_user_context:
+_restore_user_context:
 	mov	4(%esp), %ebp	/* will assume P_STACKBASE == 0 */
 
 	/* reconstruct the stack for iret */
@@ -526,13 +526,13 @@ restore_user_context:
 	pushl	$0		;\
 	EXCEPTION_ERR_CODE(vector)
 
-divide_error:
+_divide_error:
 	EXCEPTION_NO_ERR_CODE(DIVIDE_VECTOR)
 
-single_step_exception:
+_single_step_exception:
 	EXCEPTION_NO_ERR_CODE(DEBUG_VECTOR)
 
-nmi:
+_nmi:
 #ifndef CONFIG_WATCHDOG
 	EXCEPTION_NO_ERR_CODE(NMI_VECTOR)
 #else
@@ -565,7 +565,7 @@ nmi:
 	mov	%si, %es
 
 	push	%esp
-	call	nmi_watchdog_handler
+	call	_nmi_watchdog_handler
 	add	$4, %esp
 
 	/* restore all the important registers as they were before the trap */
@@ -578,26 +578,26 @@ nmi:
 	iret
 #endif
 
-breakpoint_exception:
+_breakpoint_exception:
 	EXCEPTION_NO_ERR_CODE(BREAKPOINT_VECTOR)
 
-overflow:
+_overflow:
 	EXCEPTION_NO_ERR_CODE(OVERFLOW_VECTOR)
 
-bounds_check:
+_bounds_check:
 	EXCEPTION_NO_ERR_CODE(BOUNDS_VECTOR)
 
-inval_opcode:
+_inval_opcode:
 	EXCEPTION_NO_ERR_CODE(INVAL_OP_VECTOR)
 
-copr_not_available:
+_copr_not_available:
 	TEST_INT_IN_KERNEL(4, copr_not_available_in_kernel)
 	clts
 	cld				/* set direction flag to a known value */
 	SAVE_PROCESS_CTX_NON_LAZY(0)
 	/* stop user process cycles */
 	push	%ebp
-	call	context_stop
+	call	_context_stop
 	pop	%ebp
 	lea	P_MISC_FLAGS(%ebp), %ebx
 	movw	(%ebx), %cx
@@ -608,7 +608,7 @@ copr_not_available:
 	jmp	copr_return
 0:					/* load FPU context for current process */
 	mov	%ss:FP_SAVE_AREA_P(%ebp), %eax
-	cmp	$0, osfxsr_feature
+	cmp	$0, _osfxsr_feature
 	jz	fp_l_no_fxsr		/* FXSR is not avaible. */
 
 	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
@@ -619,43 +619,43 @@ fp_l_no_fxsr:
 	frstor	(%eax)
 copr_return:
 	orw	$MF_USED_FPU, (%ebx)	/* fpu was used during last execution */
-	jmp	switch_to_user
+	jmp	_switch_to_user
 
 copr_not_available_in_kernel:
 	movl	$0, (%esp)
-	call	panic
+	call	_panic
 
-double_fault:
+_double_fault:
 	EXCEPTION_ERR_CODE(DOUBLE_FAULT_VECTOR)
 
-copr_seg_overrun:
+_copr_seg_overrun:
 	EXCEPTION_NO_ERR_CODE(COPROC_SEG_VECTOR)
 
-inval_tss:
+_inval_tss:
 	EXCEPTION_ERR_CODE(INVAL_TSS_VECTOR)
 
-segment_not_present:
+_segment_not_present:
 	EXCEPTION_ERR_CODE(SEG_NOT_VECTOR)
 
-stack_exception:
+_stack_exception:
 	EXCEPTION_ERR_CODE(STACK_FAULT_VECTOR)
 
-general_protection:
+_general_protection:
 	EXCEPTION_ERR_CODE(PROTECTION_VECTOR)
 
-page_fault:
+_page_fault:
 	EXCEPTION_ERR_CODE(PAGE_FAULT_VECTOR)
 
-copr_error:
+_copr_error:
 	EXCEPTION_NO_ERR_CODE(COPROC_ERR_VECTOR)
 
-alignment_check:
+_alignment_check:
 	EXCEPTION_NO_ERR_CODE(ALIGNMENT_CHECK_VECTOR)
 
-machine_check:
+_machine_check:
 	EXCEPTION_NO_ERR_CODE(MACHINE_CHECK_VECTOR)
 
-simd_exception:
+_simd_exception:
 	EXCEPTION_NO_ERR_CODE(SIMD_EXCEPTION_VECTOR)
 
 /*===========================================================================*/
@@ -666,13 +666,13 @@ simd_exception:
  * Actualy lazy code is just few lines, which check MF_USED_FPU,
  * another part is save_init_fpu().
  */
-lazy_fpu:
+_lazy_fpu:
 	push	%ebp
 	mov	%esp, %ebp
 	push	%eax
 	push	%ebx
 	push	%ecx
-	cmp	$0, fpu_presence		/* Do we have FPU? */
+	cmp	$0, _fpu_presence		/* Do we have FPU? */
 	jz	no_fpu_available
 	mov	8(%ebp), %eax			/* Get pptr */
 	lea	P_MISC_FLAGS(%eax), %ebx
@@ -680,7 +680,7 @@ lazy_fpu:
 	and	$MF_USED_FPU, %cx
 	jz	0f				/* Don't save FPU */
 	mov	%ss:FP_SAVE_AREA_P(%eax), %eax
-	cmp	$0, osfxsr_feature
+	cmp	$0, _osfxsr_feature
 	jz	fp_s_no_fxsr			/* FXSR is not avaible. */
 	
 	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
@@ -707,7 +707,7 @@ no_fpu_available:
 /*				reload_cr3				     */
 /*===========================================================================*/
 /* PUBLIC void reload_cr3(void); */
-reload_cr3:
+_reload_cr3:
 	push    %ebp
 	mov     %esp, %ebp
 	mov	%cr3, %eax
@@ -730,7 +730,7 @@ reload_cr3:
 /*
  * the kernel stack
  */
-.globl k_boot_stktop
-k_boot_stack:
+.globl _k_boot_stktop
+_k_boot_stack:
 .space	4096		/* kernel stack */ /* FIXME use macro here */
-k_boot_stktop:		/* top of kernel stack */
+_k_boot_stktop:		/* top of kernel stack */

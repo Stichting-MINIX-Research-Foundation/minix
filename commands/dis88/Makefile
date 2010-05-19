@@ -26,7 +26,6 @@
 
 PROG=	dis88
 SRCS=	disrel.c dismain.c distabs.c dishand.c disfp.c
-CPPFLAGS+= -wo
 MAN=
 
 .include <minix.prog.mk>

@@ -1,3 +1,5 @@
+CPPFLAGS+= -wo
+
 .SUFFIXES:	.o .e .S
 
 # Treated like a C file

@@ -30,7 +30,7 @@ size_t strncpy_from_user(char *addr, const char *user_name, size_t size)
 
 /* void lock_kernel(void) { assert(0); } */
 /* void unlock_kernel(void) { assert(0); } */
-void __asm__(char *str) { assert(0); }
+/* void __asm__(char *str) { assert(0); } */
 
 extern void *__vmalloc(unsigned long size, int gfp_mask, pgprot_t prot)
 { assert(0); }

@@ -44,4 +44,4 @@ extern File _sys_ftab[];
 
 /* system's idea of block */
 #define BUFSIZ	1024
-#endif __SYSTEM_INCLUDED__
+#endif /* __SYSTEM_INCLUDED__ */

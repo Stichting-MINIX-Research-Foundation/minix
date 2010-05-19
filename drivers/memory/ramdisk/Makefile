@@ -4,6 +4,7 @@ PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
 	pci sh service sysenv mfs
 EXTRA=system.conf passwd
 
+CPPFLAGS+= -I${MINIXSRCDIR}/servers
 MAKEDEV=/usr/bin/MAKEDEV
 
 all:	image.c

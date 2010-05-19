@@ -6,9 +6,6 @@ _MINIX_OWN_MK_=1
 MAKECONF?=	/etc/make.conf
 .-include "${MAKECONF}"
 
-#Set to ack by default
-COMPILER_TYPE?=ack
-
 #
 # CPU model, derived from MACHINE_ARCH
 #

@@ -6,6 +6,6 @@
 
 PROG=	ftp
 SRCS=	ftp.c local.c file.c xfer.c other.c net.c crc.c
-CPPFLAGS+= -DCRC_ONLY -m
+CPPFLAGS+= -DCRC_ONLY
 
 .include <minix.prog.mk>

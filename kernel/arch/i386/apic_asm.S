@@ -3,29 +3,29 @@
 #include "sconst.h"
 #include "apic_asm.h"
 
-.globl	apic_hwint00	/*  handlers for hardware interrupts */
-.globl	apic_hwint01
-.globl	apic_hwint02
-.globl	apic_hwint03
-.globl	apic_hwint04
-.globl	apic_hwint05
-.globl	apic_hwint06
-.globl	apic_hwint07
-.globl	apic_hwint08
-.globl	apic_hwint09
-.globl	apic_hwint10
-.globl	apic_hwint11
-.globl	apic_hwint12
-.globl	apic_hwint13
-.globl	apic_hwint14
-.globl	apic_hwint15
+.globl	_apic_hwint00	/*  handlers for hardware interrupts */
+.globl	_apic_hwint01
+.globl	_apic_hwint02
+.globl	_apic_hwint03
+.globl	_apic_hwint04
+.globl	_apic_hwint05
+.globl	_apic_hwint06
+.globl	_apic_hwint07
+.globl	_apic_hwint08
+.globl	_apic_hwint09
+.globl	_apic_hwint10
+.globl	_apic_hwint11
+.globl	_apic_hwint12
+.globl	_apic_hwint13
+.globl	_apic_hwint14
+.globl	_apic_hwint15
 
 .text
 #define APIC_IRQ_HANDLER(irq)	\
 	push	$irq							    	;\
-	call	irq_handle		/* intr_handle(irq_handlers[irq]) */	;\
+	call	_irq_handle		/* intr_handle(irq_handlers[irq]) */	;\
 	add	$4, %esp						    	;\
-	mov	lapic_eoi_addr, %eax					    	;\
+	mov	_lapic_eoi_addr, %eax					    	;\
 	movl	$0, (%eax)						    	;\
 
 /*===========================================================================*/
@@ -38,15 +38,15 @@
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	context_stop						;\
+	call	_context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp	/* for stack trace */			;\
 	APIC_IRQ_HANDLER(irq)						;\
-	jmp	switch_to_user						;\
+	jmp	_switch_to_user						;\
 									\
 0:									\
 	pusha								;\
-	call	context_stop_idle					;\
+	call	_context_stop_idle					;\
 	APIC_IRQ_HANDLER(irq)						;\
 	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
@@ -54,82 +54,82 @@
 
 /*  Each of these entry points is an expansion of the hwint_master macro */
 .balign	16
-apic_hwint00:
+_apic_hwint00:
 /*  Interrupt routine for irq 0 (the clock). */
 	apic_hwint(0)
 
 .balign	16
-apic_hwint01:
+_apic_hwint01:
 /*  Interrupt routine for irq 1 (keyboard) */
 	apic_hwint(1)
 
 .balign	16
-apic_hwint02:
+_apic_hwint02:
 /*  Interrupt routine for irq 2 (cascade!) */
 	apic_hwint(2)
 
 .balign	16
-apic_hwint03:
+_apic_hwint03:
 /*  Interrupt routine for irq 3 (second serial) */
 	apic_hwint(3)
 
 .balign	16
-apic_hwint04:
+_apic_hwint04:
 /*  Interrupt routine for irq 4 (first serial) */
 	apic_hwint(4)
 
 .balign	16
-apic_hwint05:
+_apic_hwint05:
 /*  Interrupt routine for irq 5 (XT winchester) */
 	apic_hwint(5)
 
 .balign	16
-apic_hwint06:
+_apic_hwint06:
 /*  Interrupt routine for irq 6 (floppy) */
 	apic_hwint(6)
 
 .balign	16
-apic_hwint07:
+_apic_hwint07:
 /*  Interrupt routine for irq 7 (printer) */
 	apic_hwint(7)
 
 .balign	16
-apic_hwint08:
+_apic_hwint08:
 /*  Interrupt routine for irq 8 (realtime clock) */
 	apic_hwint(8)
 
 .balign	16
-apic_hwint09:
+_apic_hwint09:
 /*  Interrupt routine for irq 9 (irq 2 redirected) */
 	apic_hwint(9)
 
 .balign	16
-apic_hwint10:
+_apic_hwint10:
 /*  Interrupt routine for irq 10 */
 	apic_hwint(10)
 
 .balign	16
-apic_hwint11:
+_apic_hwint11:
 /*  Interrupt routine for irq 11 */
 	apic_hwint(11)
 
 .balign	16
-apic_hwint12:
+_apic_hwint12:
 /*  Interrupt routine for irq 12 */
 	apic_hwint(12)
 
 .balign	16
-apic_hwint13:
+_apic_hwint13:
 /*  Interrupt routine for irq 13 (FPU exception) */
 	apic_hwint(13)
 
 .balign	16
-apic_hwint14:
+_apic_hwint14:
 /*  Interrupt routine for irq 14 (AT winchester) */
 	apic_hwint(14)
 
 .balign	16
-apic_hwint15:
+_apic_hwint15:
 /*  Interrupt routine for irq 15 */
 	apic_hwint(15)
 
@@ -137,7 +137,7 @@ apic_hwint15:
 #define LAPIC_INTR_HANDLER(func)	\
 	movl	$func, %eax						;\
 	call	*%eax           /* call the actual handler */		;\
-	mov	lapic_eoi_addr, %eax	/* the end of handler*/		;\
+	mov	_lapic_eoi_addr, %eax	/* the end of handler*/		;\
 	movl	$0, (%eax)						;
 
 /*===========================================================================*/
@@ -149,28 +149,28 @@ apic_hwint15:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
-	call	context_stop						;\
+	call	_context_stop						;\
 	add	$4, %esp						;\
 	movl	$0, %ebp		/* for stack trace */		;\
 	LAPIC_INTR_HANDLER(func)					;\
-	jmp	switch_to_user						;\
+	jmp	_switch_to_user						;\
 	\
 0:	\
 	pusha								;\
-	call	context_stop_idle					;\
+	call	_context_stop_idle					;\
 	LAPIC_INTR_HANDLER(func)					;\
 	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
 	iret								;
 
 /* apic timer tick handlers */
-.globl lapic_bsp_timer_int_handler
-lapic_bsp_timer_int_handler:
-	lapic_intr(bsp_timer_int_handler)
+.globl _lapic_bsp_timer_int_handler
+_lapic_bsp_timer_int_handler:
+	lapic_intr(_bsp_timer_int_handler)
 
-.globl lapic_ap_timer_int_handler
-lapic_ap_timer_int_handler:
-	lapic_intr(ap_timer_int_handler)
+.globl _lapic_ap_timer_int_handler
+_lapic_ap_timer_int_handler:
+	lapic_intr(_ap_timer_int_handler)
 
 #ifdef CONFIG_APIC_DEBUG
 
@@ -183,15 +183,15 @@ lapic_intr_dummy_handler_msg:
 #define lapic_intr_dummy_handler(vect)			\
 	pushl	$vect;					\
 	push	$lapic_intr_dummy_handler_msg;		\
-	call	printf;					\
+	call	_printf;				\
 1:	jmp	1b; /* never return */
 
 #define LAPIC_INTR_DUMMY_HANDLER(vect)			\
 	.balign	LAPIC_INTR_DUMMY_HANDLER_SIZE;		\
 	lapic_intr_dummy_handler_##vect: lapic_intr_dummy_handler(vect)
 
-.globl lapic_intr_dummy_handles_start
-lapic_intr_dummy_handles_start:
+.globl _lapic_intr_dummy_handles_start
+_lapic_intr_dummy_handles_start:
 
 LAPIC_INTR_DUMMY_HANDLER(0)
 LAPIC_INTR_DUMMY_HANDLER(1)
@@ -450,8 +450,8 @@ LAPIC_INTR_DUMMY_HANDLER(253)
 LAPIC_INTR_DUMMY_HANDLER(254)
 LAPIC_INTR_DUMMY_HANDLER(255)
 
-.globl lapic_intr_dummy_handles_end
-lapic_intr_dummy_handles_end:
+.globl _lapic_intr_dummy_handles_end
+_lapic_intr_dummy_handles_end:
 
 
 #endif /* CONFIG_APIC_DEBUG */

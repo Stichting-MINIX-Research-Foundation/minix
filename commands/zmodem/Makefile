@@ -1,7 +1,7 @@
 # Makefile for zmodem
 
 PROGS=	rz sz
-CPPFLAGS+= -DPOSIX -wo
+CPPFLAGS+= -DPOSIX
 MAN.rz=
 MAN.sz=
 

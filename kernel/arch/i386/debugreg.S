@@ -1,15 +1,15 @@
 .text
 
 #define LD_ST_REG(reg)							;\
-.globl	ld_##reg							;\
-.globl	st_##reg							;\
+.globl	_ld_##reg							;\
+.globl	_st_##reg							;\
 									;\
-ld_##reg:								;\
+_ld_##reg:								;\
 	mov	4(%esp), %eax						;\
 	mov	%eax,	%reg						;\
 	ret								;\
 									;\
-st_##reg:								;\
+_st_##reg:								;\
 	mov	%reg,	%eax						;\
 	ret
 

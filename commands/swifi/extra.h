@@ -39,7 +39,7 @@ size_t strncpy_from_user(char *addr, const char *user_name, size_t size);
 void lock_kernel(void);
 void unlock_kernel(void);
 
-void __asm__(char *str);
+/* void __asm__(char *str); */
 
 #define for_each_task(t) for(t= task_list; t; t=t->next)
 extern struct task_struct *task_list;

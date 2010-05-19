@@ -13,41 +13,43 @@
  * kernel.  They are:
  */
 
-.globl	monitor	/* exit Minix and return to the monitor */
-.globl	int86	/* let the monitor make an 8086 interrupt call */
-.globl	exit	/* dummy for library routines */
+.globl	_monitor/* exit Minix and return to the monitor */
+.globl	_int86	/* let the monitor make an 8086 interrupt call */
+#ifdef __ACK__
 .globl	_exit	/* dummy for library routines */
 .globl	__exit	/* dummy for library routines */
-.globl	__main	/* dummy for GCC */
-.globl	phys_insw	/* transfer data from (disk controller) port to memory */
-.globl	phys_insb	/* likewise byte by byte */
-.globl	phys_outsw	/* transfer data from memory to (disk controller) port */
-.globl	phys_outsb	/* likewise byte by byte */
-.globl	phys_copy	/* copy data from anywhere to anywhere in memory */
-.globl	phys_copy_fault	/* phys_copy pagefault */
-.globl	phys_copy_fault_in_kernel /* phys_copy pagefault in kernel */
-.globl	phys_memset	/* write pattern anywhere in memory */
+.globl	___exit	/* dummy for library routines */
+#endif
+.globl	___main	/* dummy for GCC */
+.globl	_phys_insw	/* transfer data from (disk controller) port to memory */
+.globl	_phys_insb	/* likewise byte by byte */
+.globl	_phys_outsw	/* transfer data from memory to (disk controller) port */
+.globl	_phys_outsb	/* likewise byte by byte */
+.globl	_phys_copy	/* copy data from anywhere to anywhere in memory */
+.globl	_phys_copy_fault	/* phys_copy pagefault */
+.globl	_phys_copy_fault_in_kernel /* phys_copy pagefault in kernel */
+.globl	_phys_memset	/* write pattern anywhere in memory */
 .globl	mem_rdw	/* copy one word from [segment:offset] */
-.globl	reset	/* reset the system */
-.globl	halt_cpu/* halts the current cpu when idle */
-.globl	read_cpu_flags	/* read the cpu flags */
-.globl	read_cr0	/* read cr0 */
-.globl	read_cr2	/* read cr2 */
-.globl	getcr3val
-.globl	write_cr0	/* write a value in cr0 */
-.globl	read_cr3
-.globl	read_cr4
-.globl	write_cr4
+.globl	_reset	/* reset the system */
+.globl	_halt_cpu/* halts the current cpu when idle */
+.globl	_read_cpu_flags	/* read the cpu flags */
+.globl	_read_cr0	/* read cr0 */
+.globl	_read_cr2	/* read cr2 */
+.globl	_getcr3val
+.globl	_write_cr0	/* write a value in cr0 */
+.globl	_read_cr3
+.globl	_read_cr4
+.globl	_write_cr4
 
-.globl	catch_pagefaults
-.globl	read_ds
-.globl  read_cs
-.globl	read_ss
-.globl	idt_reload	/* reload idt when returning to monitor. */
+.globl	_catch_pagefaults
+.globl	_read_ds
+.globl  _read_cs
+.globl	_read_ss
+.globl	_idt_reload	/* reload idt when returning to monitor. */
 
-.globl	fninit			/* non-waiting FPU initialization */
-.globl	fnstsw			/* store status word (non-waiting) */
-.globl	fnstcw			/* store control word (non-waiting) */
+.globl	_fninit			/* non-waiting FPU initialization */
+.globl	_fnstsw			/* store status word (non-waiting) */
+.globl	_fnstcw			/* store control word (non-waiting) */
 
 /*
  * The routines only guarantee to preserve the registers the C compiler 
@@ -62,8 +64,8 @@
 /* PUBLIC void monitor(); */
 /* Return to the monitor. */
 
-monitor:
-	movl	mon_sp, %esp	/* restore monitor stack pointer */
+_monitor:
+	movl	_mon_sp, %esp	/* restore monitor stack pointer */
 	movw	$SS_SELECTOR, %dx	/* monitor data segment */
 	mov	%dx, %ds
 	mov	%dx, %es
@@ -80,12 +82,12 @@ monitor:
 /*				int86					     */
 /*===========================================================================*/
 /* PUBLIC void int86(); */
-int86:
-	cmpb	$0, mon_return	/* is the monitor there? */
+_int86:
+	cmpb	$0, _mon_return	/* is the monitor there? */
 	jne	0f
 	movb	$0x01, %ah	/* an int 13 error seems appropriate */
-	movb	%ah, reg86+0	/* reg86.w.f = 1 (set carry flag) */
-	movb	%ah, reg86+13	/* reg86.b.ah = 0x01 = "invalid command" */
+	movb	%ah, _reg86+0	/* reg86.w.f = 1 (set carry flag) */
+	movb	%ah, _reg86+13	/* reg86.b.ah = 0x01 = "invalid command" */
 	ret
 0:
 	push	%ebp	/* save C registers */
@@ -99,7 +101,7 @@ int86:
 	movb	%al, %ah
 	inb	$INT_CTLMASK
 	push	%eax	/* save interrupt masks */
-	movl	irq_use, %eax	/* map of in-use IRQ's */
+	movl	_irq_use, %eax	/* map of in-use IRQ's */
 	and	$~(1<<CLOCK_IRQ), %eax	/* keep the clock ticking */
 	outb	$INT_CTLMASK	/* enable all unused IRQ's and vv. */
 	movb	%ah, %al
@@ -107,17 +109,17 @@ int86:
 
 	mov	$SS_SELECTOR, %eax	/* monitor data segment */
 	mov	%ax, %ss
-	xchgl	mon_sp, %esp	/* switch stacks */
-	push	reg86+36	/* parameters used in INT call */
-	push	reg86+32
-	push	reg86+28
-	push	reg86+24
-	push	reg86+20
-	push	reg86+16
-	push	reg86+12
-	push	reg86+8
-	push	reg86+4
-	push	reg86+0
+	xchgl	_mon_sp, %esp	/* switch stacks */
+	push	_reg86+36	/* parameters used in INT call */
+	push	_reg86+32
+	push	_reg86+28
+	push	_reg86+24
+	push	_reg86+20
+	push	_reg86+16
+	push	_reg86+12
+	push	_reg86+8
+	push	_reg86+4
+	push	_reg86+0
 	mov	%ax, %ds	/* remaining data selectors */
 	mov	%ax, %es
 	mov	%ax, %fs
@@ -126,17 +128,17 @@ int86:
 	push	$return	/* kernel return address and selector */
         ljmpw    *20+2*4+10*4+2*4(%esp)
 return:
-	pop	reg86+0
-	pop	reg86+4
-	pop	reg86+8
-	pop	reg86+12
-	pop	reg86+16
-	pop	reg86+20
-	pop	reg86+24
-	pop	reg86+28
-	pop	reg86+32
-	pop	reg86+36
-	lgdt	gdt+GDT_SELECTOR	/* reload global descriptor table */
+	pop	_reg86+0
+	pop	_reg86+4
+	pop	_reg86+8
+	pop	_reg86+12
+	pop	_reg86+16
+	pop	_reg86+20
+	pop	_reg86+24
+	pop	_reg86+28
+	pop	_reg86+32
+	pop	_reg86+36
+	lgdt	_gdt+GDT_SELECTOR	/* reload global descriptor table */
         ljmp    $CS_SELECTOR, $csinit
 csinit:
 	mov	$DS_SELECTOR, %eax
@@ -145,8 +147,8 @@ csinit:
 	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
-	xchgl	mon_sp, %esp	/* unswitch stacks */
-	lidt	gdt+IDT_SELECTOR	/* reload interrupt descriptor table */
+	xchgl	_mon_sp, %esp	/* unswitch stacks */
+	lidt	_gdt+IDT_SELECTOR	/* reload interrupt descriptor table */
 
 #ifdef CONFIG_APIC
 	cmpl	$0x0, lapic_addr
@@ -170,7 +172,7 @@ csinit:
 	shl	$3, %eax
 	mov	%eax, %ebx
 	add	$TSS_SELECTOR, %eax
-	addl	gdt+DESC_ACCESS, %eax
+	addl	_gdt+DESC_ACCESS, %eax
 	and	$~0x02, %eax
 	ltr	%bx	/* set TSS register */
 
@@ -185,7 +187,7 @@ csinit:
 	outb	$INT2_CTLMASK
 
 6:
-	addl	%ecx, lost_ticks	/* record lost clock ticks */
+	addl	%ecx, _lost_ticks	/* record lost clock ticks */
 
 	popf	/* restore flags */
 	pop	%ebx	/* restore C registers */
@@ -203,14 +205,15 @@ csinit:
  * Actual calls to exit cannot occur in the kernel. 
  * GNU CC likes to call ___main from main() for nonobvious reasons. 
  */
-
-exit:
+#ifdef __ACK__
 _exit:
 __exit:
+___exit:
 	sti
-	jmp	__exit
+	jmp	___exit
+#endif
 
-__main:
+___main:
 	ret
 
 
@@ -222,7 +225,7 @@ __main:
  * Input an array from an I/O port.  Absolute address version of insw(). 
  */
 
-phys_insw:
+_phys_insw:
 	push	%ebp
 	mov	%esp, %ebp
 	cld
@@ -250,7 +253,7 @@ phys_insw:
  * Input an array from an I/O port.  Absolute address version of insb(). 
  */
 
-phys_insb:
+_phys_insb:
 	push	%ebp
 	mov	%esp, %ebp
 	cld
@@ -278,7 +281,7 @@ phys_insb:
  */
 
 .balign	16
-phys_outsw:
+_phys_outsw:
 	push	%ebp
 	mov	%esp, %ebp
 	cld
@@ -307,7 +310,7 @@ phys_outsw:
  */
 
 .balign	16
-phys_outsb:
+_phys_outsb:
 	push	%ebp
 	mov	%esp, %ebp
 	cld
@@ -339,7 +342,7 @@ phys_outsb:
 /*		es edi esi eip	 src dst len */
 
 .balign	16
-phys_copy:
+_phys_copy:
 	cld
 	push	%esi
 	push	%edi
@@ -371,13 +374,13 @@ pc_small:
 	rep 	movsb %es:(%esi), %es:(%edi)
 
 	mov	$0, %eax		/* 0 means: no fault */
-phys_copy_fault:			/* kernel can send us here */
+_phys_copy_fault:			/* kernel can send us here */
 	pop	%es
 	pop	%edi
 	pop	%esi
 	ret
 
-phys_copy_fault_in_kernel:			/* kernel can send us here */
+_phys_copy_fault_in_kernel:			/* kernel can send us here */
 	pop	%es
 	pop	%edi
 	pop	%esi
@@ -408,8 +411,8 @@ phys_copy_fault_in_kernel:			/* kernel can send us here */
  */
 
 .balign 16
-.globl copy_msg_from_user
-copy_msg_from_user:
+.globl _copy_msg_from_user
+_copy_msg_from_user:
 	push	%gs
 
 	mov	8(%esp), %eax
@@ -439,8 +442,8 @@ copy_msg_from_user:
 	mov	%gs:8*4(%ecx), %eax
 	mov	%eax, 8*4(%edx)
 
-.globl __copy_msg_from_user_end
-__copy_msg_from_user_end:
+.globl ___copy_msg_from_user_end
+___copy_msg_from_user_end:
 
 	pop	%gs
 
@@ -461,8 +464,8 @@ __copy_msg_from_user_end:
  */
 
 .balign 16
-.globl copy_msg_to_user
-copy_msg_to_user:
+.globl _copy_msg_to_user
+_copy_msg_to_user:
 	push	%gs
 
 	mov	8(%esp), %eax
@@ -492,8 +495,8 @@ copy_msg_to_user:
 	mov	8*4(%ecx), %eax
 	mov	%eax, %gs:8*4(%edx)
 
-.globl __copy_msg_to_user_end
-__copy_msg_to_user_end:
+.globl ___copy_msg_to_user_end
+___copy_msg_to_user_end:
 
 	pop	%gs
 
@@ -508,8 +511,8 @@ __copy_msg_to_user_end:
  * here to continue, clean up and report the error
  */
 .balign 16
-.globl __user_copy_msg_pointer_failure
-__user_copy_msg_pointer_failure:
+.globl ___user_copy_msg_pointer_failure
+___user_copy_msg_pointer_failure:
 	pop	%gs
 
 	movl	$-1, %eax
@@ -525,7 +528,7 @@ __user_copy_msg_pointer_failure:
  */
 
 .balign	16
-phys_memset:
+_phys_memset:
 	push	%ebp
 	mov	%esp, %ebp
 	push	%esi
@@ -589,7 +592,7 @@ mem_rdw:
  * Reset the system by loading IDT with offset 0 and interrupting. 
  */
 
-reset:
+_reset:
 	lidt	idt_zero
 	int	$3	/* anything goes, the 386 will not like it */
 .data
@@ -606,7 +609,7 @@ idt_zero:
  * reanables interrupts and puts the cpu in the halts state. Once an interrupt
  * is handled the execution resumes by disabling interrupts and continues
  */
-halt_cpu:
+_halt_cpu:
 	sti
 	hlt /* interrupts enabled only after this instruction is executed! */
 	/*
@@ -623,23 +626,23 @@ halt_cpu:
  * Read CPU status flags from C.
  */
 .balign	16
-read_cpu_flags:
+_read_cpu_flags:
 	pushf
 	mov	(%esp), %eax
 	add	$4, %esp
 	ret
 
-read_ds:
+_read_ds:
 	mov	$0, %eax
 	mov	%ds, %ax
 	ret
 
-read_cs:
+_read_cs:
 	mov	$0, %eax
 	mov	%cs, %ax
 	ret
 
-read_ss:
+_read_ss:
 	mov	$0, %eax
 	mov	%ss, %ax
 	ret
@@ -648,18 +651,18 @@ read_ss:
 /*===========================================================================*/
 /*                            fpu_routines                                   */
 /*===========================================================================*/
-fninit:
+_fninit:
 	fninit
 	ret
 
-fnstsw:
+_fnstsw:
 	xor     %eax, %eax
 
 	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	fnstsw	%ax
 	ret
 
-fnstcw:
+_fnstcw:
 	push    %eax
 	mov     8(%esp), %eax
 
@@ -672,7 +675,7 @@ fnstcw:
 /*			      read_cr0					     */
 /*===========================================================================*/
 /* PUBLIC unsigned long read_cr0(void); */
-read_cr0:
+_read_cr0:
 	push	%ebp
 	mov	%esp, %ebp
 	mov	%cr0, %eax
@@ -683,7 +686,7 @@ read_cr0:
 /*			      write_cr0					     */
 /*===========================================================================*/
 /* PUBLIC void write_cr0(unsigned long value); */
-write_cr0:
+_write_cr0:
 	push	%ebp
 	mov	%esp, %ebp
 	mov	8(%ebp), %eax
@@ -697,7 +700,7 @@ write_cr0:
 /*			      read_cr2					     */
 /*===========================================================================*/
 /* PUBLIC reg_t read_cr2(void); */
-read_cr2:
+_read_cr2:
 	mov	%cr2, %eax
 	ret
 
@@ -705,7 +708,7 @@ read_cr2:
 /*			      read_cr3					     */
 /*===========================================================================*/
 /* PUBLIC unsigned long read_cr3(void); */
-read_cr3:
+_read_cr3:
 	push	%ebp
 	mov	%esp, %ebp
 
@@ -718,7 +721,7 @@ read_cr3:
 /*			      read_cr4					     */
 /*===========================================================================*/
 /* PUBLIC unsigned long read_cr4(void); */
-read_cr4:
+_read_cr4:
 	push	%ebp
 	mov	%esp, %ebp
 
@@ -731,7 +734,7 @@ read_cr4:
 /*			      write_cr4					     */
 /*===========================================================================*/
 /* PUBLIC void write_cr4(unsigned long value); */
-write_cr4:
+_write_cr4:
 	push	%ebp
 	mov	%esp, %ebp
 	mov	8(%ebp), %eax
@@ -746,7 +749,7 @@ write_cr4:
 /*				getcr3val				     */
 /*===========================================================================*/
 /* PUBLIC unsigned long getcr3val(void); */
-getcr3val:
+_getcr3val:
 	mov	%cr3, %eax
 	ret
 
@@ -755,8 +758,8 @@ getcr3val:
  *
  * void ia32_msr_read(u32_t reg, u32_t * hi, u32_t * lo)
  */
-.globl ia32_msr_read
-ia32_msr_read:
+.globl _ia32_msr_read
+_ia32_msr_read:
 	push	%ebp
 	mov	%esp, %ebp
 
@@ -775,8 +778,8 @@ ia32_msr_read:
  *
  * void ia32_msr_write(u32_t reg, u32_t hi, u32_t lo)
  */
-.globl ia32_msr_write
-ia32_msr_write:
+.globl _ia32_msr_write
+_ia32_msr_write:
 	push	%ebp
 	mov	%esp, %ebp
 
@@ -793,8 +796,8 @@ ia32_msr_write:
 /*===========================================================================*/
 /*  PUBLIC void idt_reload (void); */
 .balign	16
-idt_reload:
-	lidt	gdt+IDT_SELECTOR	/*  reload interrupt descriptor table */
+_idt_reload:
+	lidt	_gdt+IDT_SELECTOR	/*  reload interrupt descriptor table */
 	ret
 
 /*
@@ -805,8 +808,8 @@ idt_reload:
 	mov	reg, %ax	;\
 	mov	%ax, reg	;
 
-.globl reload_ds
-reload_ds:
+.globl _reload_ds
+_reload_ds:
 	RELOAD_SEG_REG(%ds)
 	ret
 
@@ -820,8 +823,8 @@ reload_ds:
  * not desirable
  */
  .balign 16
-.globl switch_address_space
-switch_address_space:
+.globl _switch_address_space
+_switch_address_space:
 
 	/* read the process pointer */
 	mov	4(%esp), %edx
@@ -841,6 +844,6 @@ switch_address_space:
 	cmp	%ecx, %eax
 	je	0f
 	mov	%eax, %cr3
-	mov	%edx, ptproc
+	mov	%edx, _ptproc
 0:
 	ret

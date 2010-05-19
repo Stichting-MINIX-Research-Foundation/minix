@@ -61,7 +61,7 @@
 #include "swifi.h"
 
 #include "extra.h"
-
+#include <assert.h>
 
 #define CRASH_INTERVAL	8192
 #define FI_MASK			0xfff
@@ -310,9 +310,13 @@ sys_inject_fault(char * module_name,
 	addr1 = (unsigned long *) 0xf0212000;
 	addr2 = (unsigned long *) 0xf0212010;
 	PDEBUG(("%p=%lx, %p=%lx\n", addr1, *addr1, addr2, *addr2));
+	/*
 	__asm__ ("movl $0xf0212000, %eax\n\t" \
 		 "movl $6, 0(%eax)\n\t" \
 		 "movl $6, 4(%eax)\n\t");
+	*/
+	/* Not implemented on MINIX */
+	assert(0);
 	addr1 = (unsigned long *) 0xf0212000;
 	addr2 = (unsigned long *) 0xf0212010;
 	PDEBUG(("after injecting fault\n"));
@@ -323,9 +327,13 @@ sys_inject_fault(char * module_name,
     
     case DEBUGGER_FAULT: 
       PDEBUG(("Debugger fault"));
+      /*
       __asm__ ("movl %cr4, %ecx\n\t" \
 	       "movl $42, %ecx; .byte 0x0f, 0x32\n\t" \
 	       "movl $377, %ecx; .byte 0x0f, 0x32\n\t");
+      */
+      /* Not implemented on MINIX */
+      assert(0);
       result = 0;
       break;
     default: PDEBUG(("unknown fault type %ld\n", faultType)); break;

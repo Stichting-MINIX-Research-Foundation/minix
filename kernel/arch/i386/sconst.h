@@ -142,7 +142,7 @@
 #define SAVE_PROCESS_CTX(displ)				\
 	SAVE_PROCESS_CTX_NON_LAZY(displ)			;\
 	push	%ebp					;\
-	call	lazy_fpu					;\
+	call	_lazy_fpu				;\
 	add	$4, %esp					;
 
 /*

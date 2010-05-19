@@ -34,7 +34,7 @@
 #
 #DEFS = -DUNIX -DMALLOCH
 DEFS= -DUNIX -DUSG -DSTDLIB
-CPPFLAGS+= -i -f -wo ${DEFS}
+CPPFLAGS+= ${DEFS}
 
 PROGS=	bsfilt cawf
 SRCS.cawf= cawf.c device.c error.c expand.c expr.c getopt.c macsup.c nreq.c \

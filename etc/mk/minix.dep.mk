@@ -15,7 +15,7 @@ MKDEP_SUFFIXES?=	.o
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)							# {
-_TRADITIONAL_CPP?=-traditional-cpp
+#_TRADITIONAL_CPP?=-traditional-cpp
 __acpp_flags=	${_TRADITIONAL_CPP}
 
 __DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \

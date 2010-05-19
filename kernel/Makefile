@@ -12,12 +12,18 @@ SRCS+=	start.c table.c main.c proc.c \
 DPADD+=	${LIBTIMERS} ${LIBSYS}
 LDADD+=	-ltimers -lsys
 
-LDFLAGS+=	-.o
+.if ${COMPILER_TYPE} == "ack"
+LDFLAGS+= -.o
+.elif ${COMPILER_TYPE} == "gnu"
+CPPFLAGS+= -fno-builtin -ffreestanding -fno-stack-protector
+LDFLAGS+= -T arch/${ARCH}/kernel.lds
+LDFLAGS+= -nostdlib
+DPADD+=	${LIBC}
+LDADD+=	-lgcc -lc -lgcc
+.endif
+
 CPPFLAGS+=	-I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
 AFLAGS+=	-I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
-
-#Tell ASMCONV to prepend underscores to symbols
-ASMCONVFLAGS+=	-u
 
 INSTALLFLAGS+=	-S 0
 BINDIR=	/usr/sbin

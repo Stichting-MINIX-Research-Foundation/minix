@@ -12,7 +12,7 @@
 #	define	ACKM		"minix"
 
 /* size of local machine, either 0 (for 16 bit address space), or 1 */
-#	undef BIGMACHINE	1
+#	undef BIGMACHINE
 
 /* operating system, SYS_5, V7, BSD4_1 or BSD4_2; Do NOT delete the comment
    in the next line! */

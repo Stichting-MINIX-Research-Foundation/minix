@@ -5,7 +5,6 @@
 
 PROG=	in.ftpd
 SRCS=	ftpd.c access.c file.c net.c
-CPPFLAGS+= -m
 MAN=		ftpd.8
 SCRIPTS=	ftpdsh
 FILES=		setup.anonftp

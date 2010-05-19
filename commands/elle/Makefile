@@ -1,5 +1,9 @@
 # Makefile for elle
 
+# XXX: Can only be built with ACK currently
+CC:=${CC:C/^gcc/cc/}
+COMPILER_TYPE:=ack
+
 PROGS=	ellec elle
 SRCS.elle= eemain.c eecmds.c eesite.c eevini.c eedisp.c eeterm.c eeerr.c  \
       eeques.c eebuff.c eefile.c eefed.c eeedit.c eebit.c eef1.c \

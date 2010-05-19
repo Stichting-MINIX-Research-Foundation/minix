@@ -1,5 +1,9 @@
 # Makefile for the boot monitor package.
 
+# XXX: Can only be built with ACK currently
+CC:=${CC:C/^gcc/cc/}
+COMPILER_TYPE:=ack
+
 PROGS=	bootblock cdbootblock bootexec boot masterboot \
 	jumpboot installboot edparams
 
