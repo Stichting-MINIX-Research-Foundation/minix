@@ -8,7 +8,7 @@ static const char unknown[] = "Unknown error";
 
 const char *_sys_errlist[] = {
         "Error 0",			/* EGENERIC */
-        "Not owner",			/* EPERM */
+        "Operation not permitted",	/* EPERM */
         "No such file or directory",	/* ENOENT */
         "No such process",		/* ESRCH */
         "Interrupted system call",	/* EINTR */
