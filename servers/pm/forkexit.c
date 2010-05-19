@@ -364,6 +364,17 @@ int dump_core;			/* flag indicating whether to dump core */
  */
   int r;
 
+  if((r = sched_stop(rmp)) != OK) {
+ 	/* If the scheduler refuses to give up scheduling, there is
+	 * little we can do, except report it. This may cause problems
+	 * later on, if this scheduler is asked to schedule another proc
+	 * that has an endpoint->schedproc mapping identical to the proc
+	 * we just tried to stop scheduling.
+	*/
+	printf("PM: The scheduler did not want to give up "
+		"scheduling %s, ret=%d.\n", rmp->mp_name, r);
+  } 
+
   /* For core dumps, now is the right time to try to contact the parent. */
   if (dump_core)
 	zombify(rmp);
