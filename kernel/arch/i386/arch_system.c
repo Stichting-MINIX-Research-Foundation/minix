@@ -229,8 +229,7 @@ PUBLIC void ser_putc(char c)
 
 #if CONFIG_OXPCIE
 	oxpcie_putc(c);
-#endif
-
+#else
         lsr= COM1_LSR;
         thr= COM1_THR;
         for (i= 0; i<100000; i++)
@@ -239,6 +238,7 @@ PUBLIC void ser_putc(char c)
                         break;
         }
         outb( thr, c);
+#endif
 }
 
 /*===========================================================================*
