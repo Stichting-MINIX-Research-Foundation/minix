@@ -174,7 +174,7 @@ do
 		RELEASEDIR=/usr/r-staging
 		RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 		RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
-		ROOTKB=4096
+		ROOTKB=4608
 		[ ! "$USRMB" ] && USRMB=22
 		;;
 	M)	MAKEMAP=1
