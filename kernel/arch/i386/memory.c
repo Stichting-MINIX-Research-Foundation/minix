@@ -43,11 +43,16 @@ FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 
 PUBLIC void vm_init(struct proc *newptproc)
 {
+vmmcall(0x12345602, vm_running, 5);
 	if(vm_running)
 		panic("vm_init: vm_running");
+vmmcall(0x12345602, (unsigned) newptproc, 6);
 	switch_address_space(newptproc);
+vmmcall(0x12345602, (unsigned) ptproc, 7);
 	assert(ptproc == newptproc);
+vmmcall(0x12345602, 0, 8);
 	vm_enable_paging();
+vmmcall(0x12345602, 0, 9);
 	vm_running = 1;
 
 }
@@ -259,36 +264,49 @@ PRIVATE void vm_enable_paging(void)
 	u32_t cr0, cr4;
 	int pgeok;
 
+vmmcall(0x12345602, 0, 10);
 	psok = _cpufeature(_CPUF_I386_PSE);
+vmmcall(0x12345602, psok, 11);
 	pgeok = _cpufeature(_CPUF_I386_PGE);
 
+vmmcall(0x12345602, pgeok, 12);
 	cr0= read_cr0();
+vmmcall(0x12345602, cr0, 13);
 	cr4= read_cr4();
 
 	/* First clear PG and PGE flag, as PGE must be enabled after PG. */
+vmmcall(0x12345602, cr4, 14);
 	write_cr0(cr0 & ~I386_CR0_PG);
+vmmcall(0x12345602, 0, 15);
 	write_cr4(cr4 & ~(I386_CR4_PGE | I386_CR4_PSE));
 
+vmmcall(0x12345602, 0, 16);
 	cr0= read_cr0();
+vmmcall(0x12345602, cr0, 17);
 	cr4= read_cr4();
 
 	/* Our first page table contains 4MB entries. */
 	if(psok)
 		cr4 |= I386_CR4_PSE;
 
+vmmcall(0x12345602, cr4, 18);
 	write_cr4(cr4);
 
 	/* First enable paging, then enable global page flag. */
+vmmcall(0x12345602, 0, 19);
 	cr0 |= I386_CR0_PG;
 	write_cr0(cr0 );
+vmmcall(0x12345602, 0, 20);
 	cr0 |= I386_CR0_WP;
 	write_cr0(cr0);
 
 	/* May we enable these features? */
+vmmcall(0x12345602, 0, 21);
 	if(pgeok)
 		cr4 |= I386_CR4_PGE;
 
 	write_cr4(cr4);
+vmmcall(0x12345602, 0, 22);
 }
 
 PUBLIC vir_bytes alloc_remote_segment(u32_t *selector,
@@ -1012,6 +1030,7 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	/*
 	 * copy the extra data associated with the call from userspace
 	 */
+vmmcall(0x12345602, 0, 23);
 	if((r=data_copy(caller->p_endpoint, (vir_bytes)m_ptr->SVMCTL_VALUE,
 		KERNEL, (vir_bytes) &ep_data, sizeof(ep_data))) != OK) {
 		printf("vmctl_enable_paging: data_copy failed! (%d)\n", r);
@@ -1022,21 +1041,26 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	 * when turning paging on i386 we also change the segment limits to make
 	 * the special mappings requested by the kernel reachable
 	 */
+vmmcall(0x12345602, 0, 24);
 	if ((r = prot_set_kern_seg_limit(ep_data.data_seg_limit)) != OK)
 		return r;
 
 	/*
 	 * install the new map provided by the call
 	 */
+vmmcall(0x12345602, 0, 25);
 	if (newmap(caller, caller, ep_data.mem_map) != OK)
 		panic("arch_enable_paging: newmap failed");
 
+vmmcall(0x12345602, 0, 26);
 	FIXLINMSG(caller);
+vmmcall(0x12345602, 0, 27);
 	assert(caller->p_delivermsg_lin == umap_local(caller, D,
 				caller->p_delivermsg_vir, sizeof(message)));
 
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */
+vmmcall(0x12345602, 0, 28);
 	if (lapic_addr) {
 		lapic_addr = lapic_addr_vaddr;
 		lapic_eoi_addr = LAPIC_EOI;
@@ -1049,9 +1073,11 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	 * lapic address. Bad things would happen. It is unfortunate but such is
 	 * life
 	 */
+vmmcall(0x12345602, 0, 29);
 	i386_watchdog_start();
 #endif
 
+vmmcall(0x12345602, 0, 30);
 	return OK;
 }
 

@@ -41,7 +41,9 @@ PUBLIC void sef_startup()
   int r, status;
 
   /* Get information about self. */
+/*XXX*/vmmcall(0x12345606, 0, 1);
   r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN);
+/*XXX*/vmmcall(0x12345606, r, 2);
   if ( r != OK) {
       sef_self_endpoint = SELF;
       sprintf(sef_self_name, "%s", "Unknown");
@@ -49,6 +51,7 @@ PUBLIC void sef_startup()
 
 #if INTERCEPT_SEF_INIT_REQUESTS
   /* Intercept SEF Init requests. */
+/*XXX*/vmmcall(0x12345606, sef_self_endpoint, 3);
   if(sef_self_endpoint == RS_PROC_NR) {
       if((r = do_sef_rs_init()) != OK) {
           panic("unable to complete init: %d", r);
@@ -57,20 +60,30 @@ PUBLIC void sef_startup()
   else {
       message m;
 
+/*XXX*/vmmcall(0x12345606, 0, 4);
       r = receive(RS_PROC_NR, &m, &status);
+/*XXX*/vmmcall(0x12345606, r, 5);
+/*XXX*/vmmcall(0x12345606, status, 6);
+/*XXX*/vmmcall(0x12345606, m.m_type, 7);
       if(r != OK) {
           panic("unable to receive from RS: %d", r);
       }
+/*XXX*/vmmcall(0x12345606, 0, 8);
       if(IS_SEF_INIT_REQUEST(&m)) {
+/*XXX*/vmmcall(0x12345606, 0, 9);
           if((r = do_sef_init_request(&m)) != OK) {
               panic("unable to process init request: %d", r);
           }
+/*XXX*/vmmcall(0x12345606, 0, 10);
       }
       else {
+/*XXX*/vmmcall(0x12345606, 0, 11);
           panic("got an unexpected message type %d", m.m_type);
       }
+/*XXX*/vmmcall(0x12345606, 0, 12);
   }
 #endif
+/*XXX*/vmmcall(0x12345606, 0, 13);
 }
 
 /*===========================================================================*

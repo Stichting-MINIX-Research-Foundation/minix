@@ -39,7 +39,9 @@ struct proc *p;
 		return OK;
 	case VMCTL_INCSP:
 		/* Increase process SP. */
+vmmcall(0x12345601, 0, 40);
 		p->p_reg.sp += m_ptr->SVMCTL_VALUE;
+vmmcall(0x12345601, 0, 41);
 		return OK;
 	case VMCTL_I386_KERNELLIMIT:
 	{
@@ -55,7 +57,9 @@ struct proc *p;
 	}
 	case VMCTL_FLUSHTLB:
 	{
+vmmcall(0x12345601, 0, 42);
 		reload_cr3();
+vmmcall(0x12345601, 0, 43);
 		return OK;
 	}
   }

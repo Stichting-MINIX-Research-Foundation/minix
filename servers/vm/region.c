@@ -439,21 +439,25 @@ int mapflags;
 	struct phys_region *ph;
 	physr_avl *phavl;
 
+/*XXX*/vmmcall(0x1234560d, 0, 31);
 	assert(!(length % VM_PAGE_SIZE));
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
+/*XXX*/vmmcall(0x1234560d, 0, 32);
 	startv = region_find_slot(vmp, minv, maxv, length, &prevregion);
 	if (startv == (vir_bytes) -1)
 		return NULL;
 
 	/* Now we want a new region. */
+/*XXX*/vmmcall(0x1234560d, 0, 33);
 	if(!SLABALLOC(newregion)) {
 		printf("VM: map_page_region: allocating region failed\n");
 		return NULL;
 	}
 
 	/* Fill in node details. */
+/*XXX*/vmmcall(0x1234560d, 0, 34);
 USE(newregion,
 	newregion->vaddr = startv;
 	newregion->length = length;
@@ -461,23 +465,29 @@ USE(newregion,
 	newregion->tag = VRT_NONE;
 	newregion->parent = vmp;);
 
+/*XXX*/vmmcall(0x1234560d, 0, 35);
 	SLABALLOC(phavl);
 	if(!phavl) {
+/*XXX*/vmmcall(0x1234560d, 0, 36);
 		printf("VM: map_page_region: allocating phys avl failed\n");
 		SLABFREE(newregion);
 		return NULL;
 	}
 	USE(newregion, newregion->phys = phavl;);
 
+/*XXX*/vmmcall(0x1234560d, 0, 37);
 	physr_init(newregion->phys);
 
 	/* If we know what we're going to map to, map it right away. */
+/*XXX*/vmmcall(0x1234560d, 0, 38);
 	if(what != MAP_NONE) {
 		assert(!(what % VM_PAGE_SIZE));
 		assert(!(startv % VM_PAGE_SIZE));
 		assert(!(mapflags & MF_PREALLOC));
+/*XXX*/vmmcall(0x1234560d, 0, 39);
 		if(map_new_physblock(vmp, newregion, 0, length,
 			what, PAF_CLEAR, 0) != OK) {
+/*XXX*/vmmcall(0x1234560d, 0, 40);
 			printf("VM: map_new_physblock failed\n");
 			USE(newregion,
 				SLABFREE(newregion->phys););
@@ -486,8 +496,11 @@ USE(newregion,
 		}
 	}
 
+/*XXX*/vmmcall(0x1234560d, 0, 41);
 	if((flags & VR_ANON) && (mapflags & MF_PREALLOC)) {
+/*XXX*/vmmcall(0x1234560d, 0, 42);
 		if(map_handle_memory(vmp, newregion, 0, length, 1) != OK) {
+/*XXX*/vmmcall(0x1234560d, 0, 43);
 			printf("VM: map_page_region: prealloc failed\n");
 			USE(newregion,
 				SLABFREE(newregion->phys););
@@ -497,14 +510,18 @@ USE(newregion,
 	}
 
 	/* Link it. */
+/*XXX*/vmmcall(0x1234560d, 0, 44);
 	if(prevregion) {
+/*XXX*/vmmcall(0x1234560d, 0, 45);
 		assert(prevregion->vaddr < newregion->vaddr);
 		USE(newregion, newregion->next = prevregion->next;);
 		USE(prevregion, prevregion->next = newregion;);
 	} else {
+/*XXX*/vmmcall(0x1234560d, 0, 46);
 		USE(newregion, newregion->next = vmp->vm_regions;);
 		vmp->vm_regions = newregion;
 	}
+/*XXX*/vmmcall(0x1234560d, 0, 47);
 
 #if SANITYCHECKS
 	assert(startv == newregion->vaddr);
@@ -513,8 +530,10 @@ USE(newregion,
 	}
 #endif
 
+/*XXX*/vmmcall(0x1234560d, 0, 48);
 	SANITYCHECK(SCL_FUNCTIONS);
 
+/*XXX*/vmmcall(0x1234560d, 0, 49);
 	return newregion;
 }
 

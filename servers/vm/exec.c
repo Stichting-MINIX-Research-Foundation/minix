@@ -415,6 +415,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	int prealloc;
 	struct vir_region *reg;
 
+/*XXX*/vmmcall(0x1234560b, 0, 1);
 	assert(!(vstart % VM_PAGE_SIZE));
 	assert(!(text_bytes % VM_PAGE_SIZE));
 	assert(!(data_bytes % VM_PAGE_SIZE));
@@ -425,6 +426,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	assert((!text_start && !data_start) || (text_start && data_start));
 
 	/* Place text at start of process. */
+/*XXX*/vmmcall(0x1234560b, 0, 2);
 	vmp->vm_arch.vm_seg[T].mem_phys = ABS2CLICK(vstart);
 	vmp->vm_arch.vm_seg[T].mem_vir = 0;
 	vmp->vm_arch.vm_seg[T].mem_len = ABS2CLICK(text_bytes);
@@ -434,35 +436,50 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	/* page mapping flags for code */
 #define TEXTFLAGS (PTF_PRESENT | PTF_USER)
 	SANITYCHECK(SCL_DETAIL);
+/*XXX*/vmmcall(0x1234560b, 0, 3);
 	if(text_bytes > 0) {
+/*XXX*/vmmcall(0x1234560b, 0, 4);
 		if(!(reg=map_page_region(vmp, vstart, 0, text_bytes,
 		  text_start ? text_start : MAP_NONE,
 		  VR_ANON | VR_WRITABLE, text_start ? 0 : MF_PREALLOC))) {
+/*XXX*/vmmcall(0x1234560b, 0, 5);
 			SANITYCHECK(SCL_DETAIL);
 			printf("VM: proc_new: map_page_region failed (text)\n");
 			map_free_proc(vmp);
 			SANITYCHECK(SCL_DETAIL);
+/*XXX*/vmmcall(0x1234560b, 0, 6);
 			return(ENOMEM);
 		}
+/*XXX*/vmmcall(0x1234560b, 0, 7);
 		map_region_set_tag(reg, VRT_TEXT);
+/*XXX*/vmmcall(0x1234560b, 0, 8);
 		SANITYCHECK(SCL_DETAIL);
+/*XXX*/vmmcall(0x1234560b, 0, 9);
 	}
+/*XXX*/vmmcall(0x1234560b, 0, 10);
 	SANITYCHECK(SCL_DETAIL);
+/*XXX*/vmmcall(0x1234560b, 0, 11);
 
 	/* Allocate memory for data (including bss, but not including gap
 	 * or stack), make sure it's cleared, and map it in after text
 	 * (if any).
 	 */
+/*XXX*/vmmcall(0x1234560b, 0, 12);
 	if(!(vmp->vm_heap = map_page_region(vmp, vstart + text_bytes, 0,
 	  data_bytes, data_start ? data_start : MAP_NONE, VR_ANON | VR_WRITABLE,
 		data_start ? 0 : MF_PREALLOC))) {
+/*XXX*/vmmcall(0x1234560b, 0, 13);
 		printf("VM: exec: map_page_region for data failed\n");
+/*XXX*/vmmcall(0x1234560b, 0, 14);
 		map_free_proc(vmp);
+/*XXX*/vmmcall(0x1234560b, 0, 15);
 		SANITYCHECK(SCL_DETAIL);
+/*XXX*/vmmcall(0x1234560b, 0, 16);
 		return ENOMEM;
 	}
 
 	/* Tag the heap so brk() call knows which region to extend. */
+/*XXX*/vmmcall(0x1234560b, 0, 17);
 	map_region_set_tag(vmp->vm_heap, VRT_HEAP);
 
 	/* How many address space clicks between end of data
@@ -470,17 +487,22 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	 * stacktop is the first address after the stack, as addressed
 	 * from within the user process.
 	 */
+/*XXX*/vmmcall(0x1234560b, 0, 18);
 	hole_bytes = stacktop - data_bytes - stack_bytes - gap_bytes;
 
+/*XXX*/vmmcall(0x1234560b, 0, 19);
 	if(!(reg=map_page_region(vmp,
 		vstart + text_bytes + data_bytes + hole_bytes,
 	  0, stack_bytes + gap_bytes, MAP_NONE,
 	  VR_ANON | VR_WRITABLE, prealloc_stack ? MF_PREALLOC : 0)) != OK) {
+/*XXX*/vmmcall(0x1234560b, 0, 20);
 	  	panic("map_page_region failed for stack");
 	}
 
+/*XXX*/vmmcall(0x1234560b, 0, 21);
 	map_region_set_tag(reg, VRT_STACK);
 
+/*XXX*/vmmcall(0x1234560b, 0, 22);
 	vmp->vm_arch.vm_seg[D].mem_phys = ABS2CLICK(vstart + text_bytes);
 	vmp->vm_arch.vm_seg[D].mem_vir = 0;
 	vmp->vm_arch.vm_seg[D].mem_len = ABS2CLICK(data_bytes);
@@ -496,6 +518,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 
 	vmp->vm_flags |= VMF_HASPT;
 
+/*XXX*/vmmcall(0x1234560b, 0, 23);
 	if(vmp->vm_endpoint != NONE) {
 
 	/* Pretend the stack is the full size of the data segment, so 
@@ -503,22 +526,29 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	 * After sys_newmap(), change the stack to what we know the
 	 * stack to be (up to stacktop).
 	 */
+/*XXX*/vmmcall(0x1234560b, 0, 24);
 	vmp->vm_arch.vm_seg[S].mem_len = (VM_DATATOP >> CLICK_SHIFT) -
 		vmp->vm_arch.vm_seg[S].mem_vir - ABS2CLICK(vstart) - ABS2CLICK(text_bytes);
 
 	/* What is the final size of the data segment in bytes? */
+/*XXX*/vmmcall(0x1234560b, 0, 25);
 	vmp->vm_arch.vm_data_top = 
 		(vmp->vm_arch.vm_seg[S].mem_vir + 
 		vmp->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
 
+/*XXX*/vmmcall(0x1234560b, 0, 26);
 		if((s=sys_newmap(vmp->vm_endpoint, vmp->vm_arch.vm_seg)) != OK)
 			panic("sys_newmap (vm) failed: %d", s);
+/*XXX*/vmmcall(0x1234560b, 0, 27);
 		if((s=pt_bind(&vmp->vm_pt, vmp)) != OK)
 			panic("exec_newmem: pt_bind failed: %d", s);
+/*XXX*/vmmcall(0x1234560b, 0, 28);
 	}
 
 	/* No yielded memory blocks. */
+/*XXX*/vmmcall(0x1234560b, 0, 29);
 	yielded_init(&vmp->vm_yielded_blocks);
+/*XXX*/vmmcall(0x1234560b, 0, 30);
 
 	return OK;
 }

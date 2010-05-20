@@ -15,7 +15,7 @@
 #endif
 
 #define _NR_PROCS	256
-#define _NR_SYS_PROCS	32
+#define _NR_SYS_PROCS	64
 
 /* Set the CHIP type based on the machine selected. The symbol CHIP is actually
  * indicative of more than just the CPU.  For example, machines for which

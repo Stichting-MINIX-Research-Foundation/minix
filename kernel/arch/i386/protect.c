@@ -270,25 +270,32 @@ PUBLIC void alloc_segments(register struct proc *rp)
   phys_bytes data_bytes;
   int privilege;
 
+/*XXX*/vmmcall(0x12345603, 0, 110);
       data_bytes = (phys_bytes) (rp->p_memmap[S].mem_vir + 
           rp->p_memmap[S].mem_len) << CLICK_SHIFT;
+/*XXX*/vmmcall(0x12345603, 0, 111);
       if (rp->p_memmap[T].mem_len == 0)
           code_bytes = data_bytes;	/* common I&D, poor protect */
       else
           code_bytes = (phys_bytes) rp->p_memmap[T].mem_len << CLICK_SHIFT;
+/*XXX*/vmmcall(0x12345603, 0, 112);
       privilege = USER_PRIVILEGE;
+/*XXX*/vmmcall(0x12345603, 0, 113);
       init_codeseg(&rp->p_seg.p_ldt[CS_LDT_INDEX],
           (phys_bytes) rp->p_memmap[T].mem_phys << CLICK_SHIFT,
           code_bytes, privilege);
+/*XXX*/vmmcall(0x12345603, 0, 114);
       init_dataseg(&rp->p_seg.p_ldt[DS_LDT_INDEX],
           (phys_bytes) rp->p_memmap[D].mem_phys << CLICK_SHIFT,
           data_bytes, privilege);
+/*XXX*/vmmcall(0x12345603, 0, 115);
       rp->p_reg.cs = (CS_LDT_INDEX * DESC_SIZE) | TI | privilege;
       rp->p_reg.gs =
       rp->p_reg.fs =
       rp->p_reg.ss =
       rp->p_reg.es =
       rp->p_reg.ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
+/*XXX*/vmmcall(0x12345603, 0, 116);
 }
 
 /*===========================================================================*
@@ -428,26 +435,34 @@ PUBLIC int prot_set_kern_seg_limit(const vir_bytes limit)
 	int orig_click;
 	int incr_clicks;
 
+vmmcall(0x12345603, limit, 31);
 	if(limit <= kinfo.data_base) {
+vmmcall(0x12345603, kinfo.data_base, 38);
 		printf("prot_set_kern_seg_limit: limit bogus\n");
 		return EINVAL;
 	}
 
 	/* Do actual increase. */
+vmmcall(0x12345603, 0, 32);
 	orig_click = kinfo.data_size / CLICK_SIZE;
 	kinfo.data_size = limit - kinfo.data_base;
 	incr_clicks = kinfo.data_size / CLICK_SIZE - orig_click;
 
+vmmcall(0x12345603, 0, 33);
 	prot_init();
 
 	/* Increase kernel processes too. */
+vmmcall(0x12345603, 0, 34);
 	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
+vmmcall(0x12345603, 0, 35);
 		if (isemptyp(rp) || !iskernelp(rp))
 			continue;
 		rp->p_memmap[S].mem_len += incr_clicks;
+vmmcall(0x12345603, 0, 36);
 		alloc_segments(rp);
 		rp->p_memmap[S].mem_len -= incr_clicks;
 	}
+vmmcall(0x12345603, 0, 37);
 
 	return OK;
 }

@@ -64,17 +64,22 @@ PUBLIC int main()
   sigset_t sigset;
 
   /* SEF local startup. */
+/*XXX*/vmmcall(0x12345609, 0, 1);
   sef_local_startup();
+/*XXX*/vmmcall(0x12345609, 0, 2);
   sched_init();	/* initialize user-space scheduling */
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
+/*XXX*/vmmcall(0x12345609, 0, 3);
   while (TRUE) {
 	  int ipc_status;
 
 	  /* Wait for the next message and extract useful information from it. */
+/*XXX*/vmmcall(0x12345609, 0, 4);
 	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
 		  panic("PM sef_receive_status error");
 	  who_e = m_in.m_source;	/* who sent the message */
+/*XXX*/vmmcall(0x12345609, m_in.m_type, 5);
 	  if(pm_isokendpt(who_e, &who_p) != OK)
 		  panic("PM got message from invalid endpoint: %d", who_e);
 	  call_nr = m_in.m_type;	/* system call number */
@@ -83,6 +88,7 @@ PUBLIC int main()
 	   * calling. This can happen in case of synchronous alarms (CLOCK) or or
 	   * event like pending kernel signals (SYSTEM).
 	   */
+/*XXX*/vmmcall(0x12345609, call_nr, 6);
 	  mp = &mproc[who_p < 0 ? PM_PROC_NR : who_p];
 	  if(who_p >= 0 && mp->mp_endpoint != who_e) {
 		  panic("PM endpoint number out of sync with source: %d",
@@ -90,6 +96,7 @@ PUBLIC int main()
 	  }
 
 	/* Drop delayed calls from exiting processes. */
+/*XXX*/vmmcall(0x12345609, 0, 7);
 	if (mp->mp_flags & EXITING)
 		continue;
 
@@ -110,6 +117,7 @@ PUBLIC int main()
 		continue;
 	}
 
+/*XXX*/vmmcall(0x12345609, 0, 8);
 	switch(call_nr)
 	{
 	case PM_SETUID_REPLY:
@@ -149,8 +157,10 @@ PUBLIC int main()
 	}
 
 	/* Send reply. */
+/*XXX*/vmmcall(0x12345609, result, 9);
 	if (result != SUSPEND) setreply(who_p, result);
 	sendreply();
+/*XXX*/vmmcall(0x12345609, 0, 10);
   }
   return(OK);
 }

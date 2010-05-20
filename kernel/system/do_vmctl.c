@@ -18,7 +18,7 @@
  *===========================================================================*/
 PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 {
-  int proc_nr;
+  int proc_nr, r;
   endpoint_t ep = m_ptr->SVMCTL_WHO;
   struct proc *p, *rp, *target;
 
@@ -121,12 +121,18 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 		return OK;
 
 	case VMCTL_ENABLE_PAGING:
+vmmcall(0x12345605, vm_running, 1);
 		if(vm_running) 
 			panic("do_vmctl: paging already enabled");
+vmmcall(0x12345605, (unsigned) p, 2);
 		vm_init(p);
+vmmcall(0x12345605, vm_running, 3);
 		if(!vm_running)
 			panic("do_vmctl: paging enabling failed");
-		return arch_enable_paging(caller, m_ptr);
+vmmcall(0x12345605, (unsigned) caller, 4);
+		r = arch_enable_paging(caller, m_ptr);
+vmmcall(0x12345605, r, 39);
+		return r;
 	case VMCTL_KERN_PHYSMAP:
 	{
 		int i = m_ptr->SVMCTL_VALUE;
