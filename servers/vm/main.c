@@ -79,30 +79,23 @@ PUBLIC int main(void)
   int caller_slot;
   struct vmproc *vmp_caller;
 
-/*XXX*/vmmcall(0x1234560c, 0, 0);
-	
   /* SEF local startup. */
   sef_local_startup();
 
-/*XXX*/vmmcall(0x1234560c, 0, 1);
   SANITYCHECK(SCL_TOP);
 
   /* This is VM's main loop. */
-/*XXX*/vmmcall(0x1234560c, 0, 2);
   while (TRUE) {
 	int r, c;
 
-/*XXX*/vmmcall(0x1234560c, 0, 3);
 	SANITYCHECK(SCL_TOP);
 	if(missing_spares > 0) {
 		pt_cycle();	/* pagetable code wants to be called */
 	}
 
-/*XXX*/vmmcall(0x1234560c, 0, 4);
   	if ((r=sef_receive_status(ANY, &msg, &rcv_sts)) != OK)
 		panic("sef_receive_status() error: %d", r);
 
-/*XXX*/vmmcall(0x1234560c, msg.m_type, 5);
 	if (is_ipc_notify(rcv_sts)) {
 		/* Unexpected notify(). */
 		printf("VM: ignoring notify() from %d\n", msg.m_source);
@@ -113,7 +106,6 @@ PUBLIC int main(void)
 		panic("invalid caller", who_e);
 	vmp_caller = &vmproc[caller_slot];
 	c = CALLNUMBER(msg.m_type);
-/*XXX*/vmmcall(0x1234560c, c, 6);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
 	if (msg.m_type == VM_PAGEFAULT) {
 		if (!IPC_STATUS_FLAGS_TEST(rcv_sts, IPC_FLG_MSG_FROM_KERNEL)) {
@@ -139,7 +131,6 @@ PUBLIC int main(void)
 			SANITYCHECK(SCL_FUNCTIONS);
 		}
 	}
-/*XXX*/vmmcall(0x1234560c, result, 7);
 
 	/* Send reply message, unless the return code is SUSPEND,
 	 * which is a pseudo-result suppressing the reply message.
@@ -152,9 +143,7 @@ PUBLIC int main(void)
 			panic("send() error");
 		}
 	}
-/*XXX*/vmmcall(0x1234560c, 0, 8);
   }
-/*XXX*/vmmcall(0x1234560c, 0, 9);
   return(OK);
 }
 
@@ -164,21 +153,16 @@ PUBLIC int main(void)
 PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
-/*XXX*/vmmcall(0x1234560c, 10, 10);
   sef_setcb_init_fresh(sef_cb_init_fresh);
-/*XXX*/vmmcall(0x1234560c, 11, 11);
   sef_setcb_init_restart(sef_cb_init_fail);
 
   /* No live update support for now. */
 
   /* Register signal callbacks. */
-/*XXX*/vmmcall(0x1234560c, 12, 12);
   sef_setcb_signal_handler(sef_cb_signal_handler);
 
   /* Let SEF perform startup. */
-/*XXX*/vmmcall(0x1234560c, 13, 13);
   sef_startup();
-/*XXX*/vmmcall(0x1234560c, 14, 14);
 }
 
 /*===========================================================================*
@@ -198,8 +182,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 #if SANITYCHECKS
 	incheck = nocheck = 0;
 #endif
-	
-/*XXX*/vmmcall(0x1234560c, 0, 27);
+
 	vm_paged = 1;
 	env_parse("vm_paged", "d", 0, &vm_paged, 0, 1);
 #if SANITYCHECKS
@@ -207,22 +190,18 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 #endif
 
 	/* Get chunks of available memory. */
-/*XXX*/vmmcall(0x1234560c, 0, 28);
 	get_mem_chunks(mem_chunks);
 
 	/* Initialize VM's process table. Request a copy of the system
 	 * image table that is defined at the kernel level to see which
 	 * slots to fill in.
 	 */
-/*XXX*/vmmcall(0x1234560c, 0, 28);
 	if (OK != (s=sys_getimage(image)))
 		panic("couldn't get image table: %d", s);
 
 	/* Set table to 0. This invalidates all slots (clear VMF_INUSE). */
-/*XXX*/vmmcall(0x1234560c, 0, 29);
 	memset(vmproc, 0, sizeof(vmproc));
 
-/*XXX*/vmmcall(0x1234560c, 0, 30);
 	for(i = 0; i < ELEMENTS(vmproc); i++) {
 		vmproc[i].vm_slot = i;
 	}
@@ -230,12 +209,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Walk through boot-time system processes that are alive
 	 * now and make valid slot entries for them.
 	 */
-/*XXX*/vmmcall(0x1234560c, 0, 31);
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
 		phys_bytes proclimit;
 		struct vmproc *vmp;
 
-/*XXX*/vmmcall(0x1234560c, 0, 32);
 		if(ip->proc_nr >= _NR_PROCS) { panic("proc: %d", ip->proc_nr); }
 		if(ip->proc_nr < 0 && ip->proc_nr != SYSTEM) continue;
 
@@ -251,28 +228,22 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		/* Initialize normal process table slot or special SYSTEM
 		 * table slot. Kernel memory is already reserved.
 		 */
-/*XXX*/vmmcall(0x1234560c, 0, 33);
 		GETVMP(vmp, ip->proc_nr);
 
 		/* reset fields as if exited */
-/*XXX*/vmmcall(0x1234560c, 0, 34);
 		clear_proc(vmp);
 
 		/* Get memory map for this process from the kernel. */
-/*XXX*/vmmcall(0x1234560c, 0, 35);
 		if ((s=get_mem_map(ip->proc_nr, vmp->vm_arch.vm_seg)) != OK)
 			panic("couldn't get process mem_map: %d", s);
 
 		/* Remove this memory from the free list. */
-/*XXX*/vmmcall(0x1234560c, 0, 36);
 		reserve_proc_mem(mem_chunks, vmp->vm_arch.vm_seg);
 
 		/* Set memory limit. */
-/*XXX*/vmmcall(0x1234560c, 0, 37);
 		proclimit = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_phys +
 			vmp->vm_arch.vm_seg[S].mem_len) - 1;
 
-/*XXX*/vmmcall(0x1234560c, 0, 38);
 		if(proclimit > limit)
 			limit = proclimit;
 
@@ -284,26 +255,21 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 		if (vmp->vm_arch.vm_seg[T].mem_len != 0)
 			vmp->vm_flags |= VMF_SEPARATE;
-/*XXX*/vmmcall(0x1234560c, 0, 39);
 	}
 
 	/* Architecture-dependent initialization. */
-/*XXX*/vmmcall(0x1234560c, 0, 40);
 	pt_init(limit);
 
 	/* Initialize tables to all physical memory. */
-/*XXX*/vmmcall(0x1234560c, 0, 41);
 	mem_init(mem_chunks);
 	meminit_done = 1;
 
 	/* Give these processes their own page table. */
-/*XXX*/vmmcall(0x1234560c, 0, 42);
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
 		int s;
 		struct vmproc *vmp;
 		vir_bytes old_stacktop, old_stack;
 
-/*XXX*/vmmcall(0x1234560c, 0, 43);
 		if(ip->proc_nr < 0) continue;
 
 		GETVMP(vmp, ip->proc_nr);
@@ -316,26 +282,20 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			vmp->vm_arch.vm_seg[S].mem_len - 
 			vmp->vm_arch.vm_seg[D].mem_len;
 
-/*XXX*/vmmcall(0x1234560c, 0, 44);
         	if(pt_new(&vmp->vm_pt) != OK)
 			panic("VM: no new pagetable");
 #define BASICSTACK VM_PAGE_SIZE
-/*XXX*/vmmcall(0x1234560c, 0, 77);
 		old_stacktop = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
 				vmp->vm_arch.vm_seg[S].mem_len);
-/*XXX*/vmmcall(0x1234560c, old_stacktop, 78);
 		if(sys_vmctl(vmp->vm_endpoint, VMCTL_INCSP,
 			VM_STACKTOP - old_stacktop) != OK) {
-/*XXX*/vmmcall(0x1234560c, 0, 79);
 			panic("VM: vmctl for new stack failed");
 		}
 
-/*XXX*/vmmcall(0x1234560c, 0, 45);
 		free_mem(vmp->vm_arch.vm_seg[D].mem_phys +
 			vmp->vm_arch.vm_seg[D].mem_len,
 			old_stack);
 
-/*XXX*/vmmcall(0x1234560c, 0, 46);
 		if(proc_new(vmp,
 			VM_PROCSTART,
 			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len),
@@ -349,7 +309,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 				VM_STACKTOP, 0) != OK) {
 			panic("failed proc_new for boot process");
 		}
-/*XXX*/vmmcall(0x1234560c, 0, 47);
 	}
 
 	/* Set up table of calls. */
@@ -363,7 +322,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Set call table to 0. This invalidates all calls (clear
 	 * vmc_func).
 	 */
-/*XXX*/vmmcall(0x1234560c, 0, 48);
 	memset(vm_calls, 0, sizeof(vm_calls));
 
 	/* Basic VM calls. */
@@ -401,21 +359,17 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_YIELDBLOCKGETBLOCK, do_yieldblockgetblock);
 
 	/* Sanity checks */
-/*XXX*/vmmcall(0x1234560c, 0, 49);
 	if(find_kernel_top() >= VM_PROCSTART)
 		panic("kernel loaded too high");
 
 	/* Initialize the structures for queryexit */
-/*XXX*/vmmcall(0x1234560c, 0, 50);
 	init_query_exit();
 
 	/* Unmap our own low pages. */
-/*XXX*/vmmcall(0x1234560c, 0, 51);
 	unmap_ok = 1;
 	_minix_unmapzero();
 
 	/* Map all the services in the boot image. */
-/*XXX*/vmmcall(0x1234560c, 0, 52);
 	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,
 		(vir_bytes) rprocpub, sizeof(rprocpub), S)) != OK) {
 		panic("sys_safecopyfrom failed: %d", s);
@@ -427,7 +381,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			}
 		}
 	}
-/*XXX*/vmmcall(0x1234560c, 0, 53);
 
 	return(OK);
 }

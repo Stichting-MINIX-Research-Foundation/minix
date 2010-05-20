@@ -19,7 +19,6 @@ void kputc(int c)
 /* Accumulate another character.  If 0 or buffer full, print it. */
   static int buf_count;		/* # characters in the buffer */
 
-/*XXX*/vmmcall(0x12345613, c, 1);
   if ((c == 0 && buf_count > 0) || buf_count == sizeof(print_buf)) {
 	sys_sysctl(SYSCTL_CODE_DIAG, print_buf, buf_count);
 	buf_count = 0;

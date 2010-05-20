@@ -22,7 +22,6 @@ PUBLIC void panic(const char *fmt, ...)
 {
   va_list arg;
   /* The system has run aground of a fatal kernel error. Terminate execution. */
-/*XXX*/vmmcall(0x12345610, ((unsigned *) &fmt)[-1], 1);
   if (minix_panicing == ARE_PANICING) {
 	arch_monitor();
   }
@@ -50,7 +49,6 @@ int c;					/* character to append */
 /* Accumulate a single character for a kernel message. Send a notification
  * to the output driver if an END_OF_KMESS is encountered. 
  */
-/*XXX*/vmmcall(0x12345612, c, 1);
   if (c != END_OF_KMESS) {
       if (do_serial_debug) {
 	if(c == '\n')

@@ -21,7 +21,6 @@ PUBLIC void panic(const char *fmt, ...)
   static int panicing= 0;
   va_list args;
 
-/*XXX*/vmmcall(0x12345611, ((unsigned *) &fmt)[-1], 1);
   if(panicing) return;
   panicing= 1;
 

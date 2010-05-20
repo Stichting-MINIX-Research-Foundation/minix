@@ -130,6 +130,4 @@ typedef char		*caddr_t;
 
 #endif /* _MINIX || __minix */
 
-/*XXX*/ void vmmcall(u32_t eax, u32_t ebx, u32_t ecx);
-
 #endif /* _TYPES_H */

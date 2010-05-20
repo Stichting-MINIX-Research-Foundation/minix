@@ -53,23 +53,3 @@ flip:
 	xorl	%edx, %eax	/* See if the bit changed */
 	testl	%ecx, %eax
 	ret
-
-.globl	_vmmcall
-_vmmcall:
-	push	%ebp
-	mov	%esp,		%ebp
-	push	%eax
-	push	%ebx
-	push	%ecx
-	push	%edx
-	movl	8(%ebp),	%eax
-	movl	12(%ebp),	%ebx
-	movl	16(%ebp),	%ecx
-	movl	4(%ebp),	%edx
-.byte	0x0F, 0x01, 0xD9
-	pop	%edx
-	pop	%ecx
-	pop	%ebx
-	pop	%eax
-	pop	%ebp
-	ret

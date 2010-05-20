@@ -40,7 +40,6 @@ PUBLIC int do_sef_init_request(message *m_ptr)
   sef_init_info_t info;
 
   /* Debug. */
-/*XXX*/vmmcall(0x12345607, 0, 14);
 #if SEF_INIT_DEBUG
   sef_init_debug_begin();
   sef_init_dprint("%s. Got a SEF Init request of type: %d. About to init.\n",
@@ -49,40 +48,29 @@ PUBLIC int do_sef_init_request(message *m_ptr)
 #endif
 
   /* Let the callback code handle the request. */
-/*XXX*/vmmcall(0x12345607, 0, 15);
   type = m_ptr->RS_INIT_TYPE;
-/*XXX*/vmmcall(0x12345607, type, 16);
   info.rproctab_gid = m_ptr->RS_INIT_RPROCTAB_GID;
   info.old_endpoint = m_ptr->RS_INIT_OLD_ENDPOINT;
   switch(type) {
       case SEF_INIT_FRESH:
-/*XXX*/vmmcall(0x12345607, 0, 17);
           r = sef_cbs.sef_cb_init_fresh(type, &info);
-/*XXX*/vmmcall(0x12345607, r, 18);
       break;
       case SEF_INIT_LU:
-/*XXX*/vmmcall(0x12345607, 0, 19);
           r = sef_cbs.sef_cb_init_lu(type, &info);
-/*XXX*/vmmcall(0x12345607, r, 20);
       break;
       case SEF_INIT_RESTART:
-/*XXX*/vmmcall(0x12345607, 0, 21);
           r = sef_cbs.sef_cb_init_restart(type, &info);
-/*XXX*/vmmcall(0x12345607, r, 22);
       break;
 
       default:
           /* Not a valid SEF init type. */
-/*XXX*/vmmcall(0x12345607, 0, 23);
           r = EINVAL;
       break;
   }
 
   /* Report back to RS. */
   m_ptr->RS_INIT_RESULT = r;
-/*XXX*/vmmcall(0x12345607, 0, 24);
   r = sendrec(RS_PROC_NR, m_ptr);
-/*XXX*/vmmcall(0x12345607, 0, 25);
 
   return r;
 }
@@ -93,9 +81,7 @@ PUBLIC int do_sef_init_request(message *m_ptr)
 PUBLIC void sef_setcb_init_fresh(sef_cb_init_t cb)
 {
   assert(cb != NULL);
-/*XXX*/vmmcall(0x12345607, (unsigned) cb, 26);
   sef_cbs.sef_cb_init_fresh = cb;
-/*XXX*/vmmcall(0x12345607, 0, 27);
 }
 
 /*===========================================================================*

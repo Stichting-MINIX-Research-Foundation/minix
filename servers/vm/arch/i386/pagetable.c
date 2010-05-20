@@ -293,42 +293,32 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 	static int level = 0;
 	void *ret;
 
-/*XXX*/vmmcall(0x1234560e, 0, 86);
 	pt = &vmprocess->vm_pt;
 	assert(reason >= 0 && reason < VMP_CATEGORIES);
 
 	level++;
-/*XXX*/vmmcall(0x1234560e, level, 87);
 
 	assert(level >= 1);
 	assert(level <= 2);
 
-/*XXX*/vmmcall(0x1234560e, level, 88);
 	if(level > 1 || !(vmprocess->vm_flags & VMF_HASPT) || !meminit_done) {
 		int r;
 		void *s;
-/*XXX*/vmmcall(0x1234560e, level, 89);
 		s=vm_getsparepage(phys);
-/*XXX*/vmmcall(0x1234560e, level, 90);
 		level--;
 		if(!s) {
-/*XXX*/vmmcall(0x1234560e, level, 91);
 			util_stacktrace();
 			printf("VM: warning: out of spare pages\n");
 		}
-/*XXX*/vmmcall(0x1234560e, level, 92);
 		return s;
 	}
 
 	/* VM does have a pagetable, so get a page and map it in there.
 	 * Where in our virtual address space can we put it?
 	 */
-/*XXX*/vmmcall(0x1234560e, level, 93);
 	loc = findhole(pt,  arch_vir2map(vmprocess, vmprocess->vm_stacktop),
 		vmprocess->vm_arch.vm_data_top);
-/*XXX*/vmmcall(0x1234560e, loc, 94);
 	if(loc == NO_MEM) {
-/*XXX*/vmmcall(0x1234560e, level, 95);
 		level--;
 		printf("VM: vm_allocpage: findhole failed\n");
 		return NULL;
@@ -337,7 +327,6 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 	/* Allocate page of memory for use by VM. As VM
 	 * is trusted, we don't have to pre-clear it.
 	 */
-/*XXX*/vmmcall(0x1234560e, level, 96);
 	if((newpage = alloc_mem(CLICKSPERPAGE, 0)) == NO_MEM) {
 		level--;
 		printf("VM: vm_allocpage: alloc_mem failed\n");
@@ -347,29 +336,22 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 	*phys = CLICK2ABS(newpage);
 
 	/* Map this page into our address space. */
-/*XXX*/vmmcall(0x1234560e, 0, 97);
 	if((r=pt_writemap(pt, loc, *phys, I386_PAGE_SIZE,
 		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, 0)) != OK) {
-/*XXX*/vmmcall(0x1234560e, 0, 98);
 		free_mem(newpage, CLICKSPERPAGE);
 		printf("vm_allocpage writemap failed\n");
 		level--;
 		return NULL;
 	}
 
-/*XXX*/vmmcall(0x1234560e, 0, 99);
 	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-/*XXX*/vmmcall(0x1234560e, 0, 100);
 		panic("VMCTL_FLUSHTLB failed: %d", r);
 	}
 
-/*XXX*/vmmcall(0x1234560e, 0, 101);
 	level--;
 
 	/* Return user-space-ready pointer to it. */
-/*XXX*/vmmcall(0x1234560e, 0, 102);
 	ret = (void *) arch_map2vir(vmprocess, loc);
-/*XXX*/vmmcall(0x1234560e, ret, 103);
 
 	return ret;
 }
@@ -702,16 +684,12 @@ PUBLIC int pt_new(pt_t *pt)
 	 * mappings from in-kernel page tables pointing to
 	 * the page directories (the page_directories data).
 	 */
-/*XXX*/vmmcall(0x1234560e, 0, 80);
         if(!pt->pt_dir &&
           !(pt->pt_dir = vm_allocpage(&pt->pt_dir_phys, VMP_PAGEDIR))) {
-/*XXX*/vmmcall(0x1234560e, 0, 81);
 		return ENOMEM;
 	}
 
-/*XXX*/vmmcall(0x1234560e, 0, 82);
 	for(i = 0; i < I386_VM_DIR_ENTRIES; i++) {
-/*XXX*/vmmcall(0x1234560e, 0, 83);
 		pt->pt_dir[i] = 0; /* invalid entry (I386_VM_PRESENT bit = 0) */
 		pt->pt_pt[i] = NULL;
 	}
@@ -720,11 +698,9 @@ PUBLIC int pt_new(pt_t *pt)
 	pt->pt_virtop = 0;
 
         /* Map in kernel. */
-/*XXX*/vmmcall(0x1234560e, 0, 84);
         if(pt_mapkernel(pt) != OK)
                 panic("pt_new: pt_mapkernel failed");
 
-/*XXX*/vmmcall(0x1234560e, 0, 85);
 	return OK;
 }
 
@@ -756,15 +732,12 @@ PUBLIC void pt_init(phys_bytes usedlimit)
         newpt = &vmprocess->vm_pt;
 
         /* Get ourselves spare pages. */
-/*XXX*/vmmcall(0x1234560e, 0, 54);
         if(!(sparepages_mem = (vir_bytes) aalloc(I386_PAGE_SIZE*SPAREPAGES)))
 		panic("pt_init: aalloc for spare failed");
-/*XXX*/vmmcall(0x1234560e, 0, 55);
         if((r=sys_umap(SELF, VM_D, (vir_bytes) sparepages_mem,
                 I386_PAGE_SIZE*SPAREPAGES, &sparepages_ph)) != OK)
                 panic("pt_init: sys_umap failed: %d", r);
 
-/*XXX*/vmmcall(0x1234560e, 0, 56);
         for(s = 0; s < SPAREPAGES; s++) {
         	sparepages[s].page = (void *) (sparepages_mem + s*I386_PAGE_SIZE);
         	sparepages[s].phys = sparepages_ph + s*I386_PAGE_SIZE;
@@ -775,7 +748,6 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	/* global bit and 4MB pages available? */
 	global_bit_ok = _cpufeature(_CPUF_I386_PGE);
 	bigpage_ok = _cpufeature(_CPUF_I386_PSE);
-/*XXX*/vmmcall(0x1234560e, 0, 57);
 
 	/* Set bit for PTE's and PDE's if available. */
 	if(global_bit_ok)
@@ -808,12 +780,10 @@ PUBLIC void pt_init(phys_bytes usedlimit)
         /* Make new page table for ourselves, partly copied
          * from the current one.
          */     
-/*XXX*/vmmcall(0x1234560e, 0, 58);
         if(pt_new(newpt) != OK)
                 panic("pt_init: pt_new failed"); 
 
         /* Set up mappings for VM process. */
-/*XXX*/vmmcall(0x1234560e, 0, 59);
         for(v = lo; v < hi; v += I386_PAGE_SIZE)  {
                 phys_bytes addr;
                 u32_t flags; 
@@ -821,14 +791,12 @@ PUBLIC void pt_init(phys_bytes usedlimit)
                 /* We have to write the new position in the PT,
                  * so we can move our segments.
                  */ 
-/*XXX*/vmmcall(0x1234560e, 0, 60);
                 if(pt_writemap(newpt, v+moveup, v, I386_PAGE_SIZE,
                         I386_VM_PRESENT|I386_VM_WRITE|I386_VM_USER, 0) != OK)
                         panic("pt_init: pt_writemap failed");
         }
        
         /* Move segments up too. */
-/*XXX*/vmmcall(0x1234560e, 0, 61);
         vmprocess->vm_arch.vm_seg[T].mem_phys += ABS2CLICK(moveup);
         vmprocess->vm_arch.vm_seg[D].mem_phys += ABS2CLICK(moveup);
         vmprocess->vm_arch.vm_seg[S].mem_phys += ABS2CLICK(moveup);
@@ -836,12 +804,10 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	/* Allocate us a page table in which to remember page directory
 	 * pointers.
 	 */
-/*XXX*/vmmcall(0x1234560e, 0, 62);
 	if(!(page_directories = vm_allocpage(&page_directories_phys,
 		VMP_PAGETABLE)))
                 panic("no virt addr for vm mappings");
 
-/*XXX*/vmmcall(0x1234560e, 0, 63);
 	memset(page_directories, 0, I386_PAGE_SIZE);
        
         /* Increase our hardware data segment to create virtual address
@@ -876,11 +842,9 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 		kernmap_pde = free_pde++;
 		offset = kernmap_pde * I386_BIG_PAGE_SIZE;
 
-/*XXX*/vmmcall(0x1234560e, 0, 64);
 		while(sys_vmctl_get_mapping(index, &addr, &len,
 			&flags) == OK)  {
 			vir_bytes vir;
-/*XXX*/vmmcall(0x1234560e, 0, 65);
 			if(index >= MAX_KERNMAPPINGS)
                 		panic("VM: too many kernel mappings: %d", index);
 			kern_mappings[index].phys_addr = addr;
@@ -890,36 +854,30 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 			kern_mappings[index].flags =
 				I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE |
 				global_bit;
-/*XXX*/vmmcall(0x1234560e, 0, 66);
 			if(flags & VMMF_UNCACHED)
 				kern_mappings[index].flags |= PTF_NOCACHE;
 			if(addr % I386_PAGE_SIZE)
                 		panic("VM: addr unaligned: %d", addr);
 			if(len % I386_PAGE_SIZE)
                 		panic("VM: len unaligned: %d", len);
-/*XXX*/vmmcall(0x1234560e, 0, 67);
 			vir = arch_map2vir(&vmproc[VMP_SYSTEM], offset);
 			if(sys_vmctl_reply_mapping(index, vir) != OK)
                 		panic("VM: reply failed");
 			offset += len;
 			index++;
 			kernmappings++;
-/*XXX*/vmmcall(0x1234560e, 0, 68);
 		}
 	}
 
 	/* Find a PDE below processes available for mapping in the
 	 * page directories (readonly).
 	 */
-/*XXX*/vmmcall(0x1234560e, 0, 69);
 	pagedir_pde = free_pde++;
 	pagedir_pde_val = (page_directories_phys & I386_VM_ADDR_MASK) |
 			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
 
 	/* Tell kernel about free pde's. */
-/*XXX*/vmmcall(0x1234560e, 0, 70);
 	while(free_pde*I386_BIG_PAGE_SIZE < VM_PROCSTART) {
-/*XXX*/vmmcall(0x1234560e, 0, 71);
 		if((r=sys_vmctl(SELF, VMCTL_I386_FREEPDE, free_pde++)) != OK) {
 			panic("VMCTL_I386_FREEPDE failed: %d", r);
 		}
@@ -929,25 +887,20 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	proc_pde = free_pde;
 
         /* Give our process the new, copied, private page table. */
-/*XXX*/vmmcall(0x1234560e, 0, 72);
 	pt_mapkernel(newpt);	/* didn't know about vm_dir pages earlier */
-/*XXX*/vmmcall(0x1234560e, 0, 73);
         pt_bind(newpt, vmprocess);
        
 	/* new segment limit for the kernel after paging is enabled */
-/*XXX*/vmmcall(0x1234560e, 0, 74);
 	ep_data.data_seg_limit = free_pde*I386_BIG_PAGE_SIZE;
 	/* the memory map which must be installed after paging is enabled */
 	ep_data.mem_map = vmprocess->vm_arch.vm_seg;
 
 	/* Now actually enable paging. */
-/*XXX*/vmmcall(0x1234560e, 0, 75);
 	if(sys_vmctl_enable_paging(&ep_data) != OK)
         	panic("pt_init: enable paging failed");
 
         /* Back to reality - this is where the stack actually is. */
         vmprocess->vm_arch.vm_seg[S].mem_len -= extra_clicks;
-/*XXX*/vmmcall(0x1234560e, 0, 76);
        
         /* All OK. */
         return;

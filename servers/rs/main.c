@@ -51,14 +51,11 @@ PUBLIC int main(void)
   int result;                 			/* result to return */
 
   /* SEF local startup. */
-/*XXX*/vmmcall(0x1234560a, 0, 1);
   sef_local_startup();
 
   /* Main loop - get work and do it, forever. */         
-/*XXX*/vmmcall(0x1234560a, 0, 2);
   while (TRUE) {              
 
-/*XXX*/vmmcall(0x1234560a, 0, 3);
       /* Wait for request message. */
       get_work(&m, &ipc_status);
       who_e = m.m_source;
@@ -66,7 +63,6 @@ PUBLIC int main(void)
           panic("message from bogus source: %d", who_e);
       }
 
-/*XXX*/vmmcall(0x1234560a, m.m_type, 4);
       call_nr = m.m_type;
 
       /* Now determine what to do.  Four types of requests are expected:
@@ -79,7 +75,6 @@ PUBLIC int main(void)
       /* Notification messages are control messages and do not need a reply.
        * These include heartbeat messages and system notifications.
        */
-/*XXX*/vmmcall(0x1234560a, call_nr, 5);
       if (is_ipc_notify(ipc_status)) {
           switch (who_p) {
           case CLOCK:
@@ -109,7 +104,6 @@ PUBLIC int main(void)
 	  }
 
           /* Handler functions are responsible for permission checking. */
-/*XXX*/vmmcall(0x1234560a, 0, 6);
           switch(call_nr) {
           /* User requests. */
 	  case RS_UP:		result = do_up(&m);		break;
@@ -129,13 +123,11 @@ PUBLIC int main(void)
               result = EINVAL;
           }
 
-/*XXX*/vmmcall(0x1234560a, result, 7);
           /* Finally send reply message, unless disabled. */
           if (result != EDONTREPLY) {
 	      m.m_type = result;
               reply(who_e, &m);
           }
-/*XXX*/vmmcall(0x1234560a, 0, 8);
       }
   }
 }
@@ -146,19 +138,14 @@ PUBLIC int main(void)
 PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
-/*XXX*/vmmcall(0x1234560a, 9, 9);
   sef_setcb_init_fresh(sef_cb_init_fresh);     /* RS can only start fresh. */
 
   /* Register signal callbacks. */
-/*XXX*/vmmcall(0x1234560a, 10, 10);
   sef_setcb_signal_handler(sef_cb_signal_handler);
-/*XXX*/vmmcall(0x1234560a, 11, 11);
   sef_setcb_signal_manager(sef_cb_signal_manager);
-/*XXX*/vmmcall(0x1234560a, 12, 12);
 
   /* Let SEF perform startup. */
   sef_startup();
-/*XXX*/vmmcall(0x1234560a, 13, 13);
 }
 
 /*===========================================================================*
@@ -180,24 +167,19 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct boot_image_dev *boot_image_dev;
 
   /* See if we run in verbose mode. */
-/*XXX*/vmmcall(0x1234560a, 14, 14);
   env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1);
 
-/*XXX*/vmmcall(0x1234560a, 15, 15);
   if ((s = sys_getinfo(GET_HZ, &system_hz, sizeof(system_hz), 0, 0)) != OK)
 	  panic("Cannot get system timer frequency\n");
 
   /* Initialize the global init descriptor. */
-/*XXX*/vmmcall(0x1234560a, 16, 16);
   rinit.rproctab_gid = cpf_grant_direct(ANY, (vir_bytes) rprocpub,
       sizeof(rprocpub), CPF_READ);
-/*XXX*/vmmcall(0x1234560a, 17, 17);
   if(!GRANT_VALID(rinit.rproctab_gid)) {
       panic("unable to create rprocpub table grant: %d", rinit.rproctab_gid);
   }
 
   /* Initialize some global variables. */
-/*XXX*/vmmcall(0x1234560a, 18, 18);
   rupdate.flags = 0;
   shutting_down = FALSE;
 
@@ -205,7 +187,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if ((s = sys_getimage(image)) != OK) {
       panic("unable to get copy of boot image table: %d", s);
   }
-/*XXX*/vmmcall(0x1234560a, 19, 19);
 
   /* Determine the number of system services in the boot image table and
    * compute the size required for the boot image buffer.
@@ -216,21 +197,18 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       ip = &image[i];
 
       /* System services only. */
-/*XXX*/vmmcall(0x1234560a, 20, 20);
       if(iskerneln(_ENDPOINT_P(ip->endpoint))) {
           continue;
       }
       nr_image_srvs++;
 
       /* Lookup the corresponding entry in the boot image sys table. */
-/*XXX*/vmmcall(0x1234560a, 21, 21);
       boot_image_info_lookup(ip->endpoint, image,
           NULL, NULL, &boot_image_sys, NULL);
 
       /* If we must keep a copy of this system service, read the header
        * and increase the size of the boot image buffer.
        */
-/*XXX*/vmmcall(0x1234560a, 22, 22);
       if(boot_image_sys->flags & SF_USE_REPL) {
           boot_image_sys->flags |= SF_USE_COPY;
       }
@@ -241,13 +219,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           boot_image_buffer_size += header.a_hdrlen
               + header.a_text + header.a_data;
       }
-/*XXX*/vmmcall(0x1234560a, 23, 23);
   }
 
   /* Determine the number of entries in the boot image priv table and make sure
    * it matches the number of system services in the boot image table.
    */
-/*XXX*/vmmcall(0x1234560a, 24, 24);
   nr_image_priv_srvs = 0;
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
@@ -263,7 +239,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   /* Allocate boot image buffer. */
-/*XXX*/vmmcall(0x1234560a, 25, 25);
   if(boot_image_buffer_size > 0) {
       boot_image_buffer = rs_startup_sbrk(boot_image_buffer_size);
       if(boot_image_buffer == (char *) -1) {
@@ -272,7 +247,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   /* Reset the system process table. */
-/*XXX*/vmmcall(0x1234560a, 26, 26);
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
       rp->r_flags = 0;
       rp->r_pub = &rprocpub[rp - rproc];
@@ -286,12 +260,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    * In addition, set priviliges, sys properties, and dev properties (if any)
    * for every system service.
    */
-/*XXX*/vmmcall(0x1234560a, 27, 27);
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
 
       /* System services only. */
-/*XXX*/vmmcall(0x1234560a, 28, 28);
       if(iskerneln(_ENDPOINT_P(boot_image_priv->endpoint))) {
           continue;
       }
@@ -305,7 +277,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /*
        * Get a copy of the executable image if required.
        */
-/*XXX*/vmmcall(0x1234560a, 29, 29);
       rp->r_exec_len = 0;
       rp->r_exec = NULL;
       if(boot_image_sys->flags & SF_USE_COPY) {
@@ -322,7 +293,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rpub->period = boot_image_priv->period;
 
       if(boot_image_priv->endpoint != RS_PROC_NR) {
-/*XXX*/vmmcall(0x1234560a, 30, 30);
           /* Force a static priv id for system services in the boot image. */
           rp->r_priv.s_id = static_priv_id(
               _ENDPOINT_P(boot_image_priv->endpoint));
@@ -339,16 +309,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
               rp->r_priv.s_k_call_mask, KERNEL_CALL, TRUE);
 
           /* Set the privilege structure. */
-/*XXX*/vmmcall(0x1234560a, 31, 31);
           if ((s = sys_privctl(ip->endpoint, SYS_PRIV_SET_SYS, &(rp->r_priv)))
               != OK) {
               panic("unable to set privilege structure: %d", s);
           }
-/*XXX*/vmmcall(0x1234560a, 32, 32);
       }
 
       /* Synch the privilege structure with the kernel. */
-/*XXX*/vmmcall(0x1234560a, 33, 33);
       if ((s = sys_getpriv(&(rp->r_priv), ip->endpoint)) != OK) {
           panic("unable to synch privilege structure: %d", s);
       }
@@ -356,7 +323,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /*
        * Set sys properties.
        */
-/*XXX*/vmmcall(0x1234560a, 34, 34);
       rpub->sys_flags = boot_image_sys->flags;        /* sys flags */
 
       /*
@@ -376,7 +342,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       build_cmd_dep(rp);
 
       /* Initialize vm call mask bitmap from unordered set. */
-/*XXX*/vmmcall(0x1234560a, 35, 35);
       fill_call_mask(boot_image_priv->vm_calls, NR_VM_CALLS,
           rpub->vm_call_mask, VM_RQ_BASE, TRUE);
 
@@ -400,15 +365,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp->r_flags = RS_IN_USE | RS_ACTIVE;
       rproc_ptr[_ENDPOINT_P(rpub->endpoint)]= rp;
       rpub->in_use = TRUE;
-/*XXX*/vmmcall(0x1234560a, 36, 36);
   }
 
   /* - Step 2: allow every system service in the boot image to run.
    */
   nr_uncaught_init_srvs = 0;
-/*XXX*/vmmcall(0x1234560a, 37, 37);
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
-/*XXX*/vmmcall(0x1234560a, 38, 38);
       boot_image_priv = &boot_image_priv_table[i];
 
       /* System services only. */
@@ -426,7 +388,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rpub = rp->r_pub;
 
       /* Allow the service to run. */
-/*XXX*/vmmcall(0x1234560a, 39, 39);
       if ((s = sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
           panic("unable to initialize privileges: %d", s);
       }
@@ -434,13 +395,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Initialize service. We assume every service will always get
        * back to us here at boot time.
        */
-/*XXX*/vmmcall(0x1234560a, 40, 40);
       if(boot_image_priv->flags & SYS_PROC) {
-/*XXX*/vmmcall(0x1234560a, 41, 41);
           if ((s = init_service(rp, SEF_INIT_FRESH)) != OK) {
               panic("unable to initialize service: %d", s);
           }
-/*XXX*/vmmcall(0x1234560a, 42, 42);
           if(rpub->sys_flags & SF_SYNCH_BOOT) {
               /* Catch init ready message now to synchronize. */
               catch_boot_init_ready(rpub->endpoint);
@@ -449,17 +407,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
               /* Catch init ready message later. */
               nr_uncaught_init_srvs++;
           }
-/*XXX*/vmmcall(0x1234560a, 43, 43);
       }
-/*XXX*/vmmcall(0x1234560a, 44, 44);
   }
 
   /* - Step 3: let every system service complete initialization by
    * catching all the init ready messages left.
    */
-/*XXX*/vmmcall(0x1234560a, 45, 45);
   while(nr_uncaught_init_srvs) {
-/*XXX*/vmmcall(0x1234560a, 46, 46);
       catch_boot_init_ready(ANY);
       nr_uncaught_init_srvs--;
   }
@@ -468,14 +422,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    * Complete the initialization of the system process table in collaboration
    * with other system services.
    */
-/*XXX*/vmmcall(0x1234560a, 47, 47);
   if ((s = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) {
       panic("unable to get copy of PM process table: %d", s);
   }
-/*XXX*/vmmcall(0x1234560a, 48, 48);
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
-/*XXX*/vmmcall(0x1234560a, 49, 49);
 
       /* System services only. */
       if(iskerneln(_ENDPOINT_P(boot_image_priv->endpoint))) {
@@ -505,7 +456,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           }
       }
   }
-/*XXX*/vmmcall(0x1234560a, 50, 50);
 
   /*
    * Now complete RS initialization process in collaboration with other
@@ -513,18 +463,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    */
   /* Let the rest of the system know about our dynamically allocated buffer. */
   if(boot_image_buffer_size > 0) {
-/*XXX*/vmmcall(0x1234560a, 51, 51);
       boot_image_buffer = rs_startup_sbrk_synch(boot_image_buffer_size);
       if(boot_image_buffer == (char *) -1) {
           panic("unable to synch boot image buffer");
       }
   }
-/*XXX*/vmmcall(0x1234560a, 52, 52);
 
   /* Set alarm to periodically check service status. */
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("couldn't set alarm: %d", s);
-/*XXX*/vmmcall(0x1234560a, 53, 53);
 
  /* Map out our own text and data. This is normally done in crtso.o
   * but RS is an exception - we don't get to talk to VM so early on.
@@ -536,7 +483,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   */
   unmap_ok = 1;
   _minix_unmapzero();
-/*XXX*/vmmcall(0x1234560a, 54, 54);
 
   return(OK);
 }

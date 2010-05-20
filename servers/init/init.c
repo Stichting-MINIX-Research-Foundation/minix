@@ -75,7 +75,6 @@ int main(void)
   struct sigaction sa;
   struct stat stb;
 
-/*XXX*/vmmcall(0x12345608, 0, 1);
 #define OPENFDS						\
   if (fstat(0, &stb) < 0) {				\
 	/* Open standard input, output & error. */	\
@@ -84,7 +83,6 @@ int main(void)
 	dup(1);						\
   }
 
-/*XXX*/vmmcall(0x12345608, 0, 2);
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
 
@@ -107,15 +105,11 @@ int main(void)
   sigaction(SIGABRT, &sa, NULL);
 
   /* Execute the /etc/rc file. */
-/*XXX*/vmmcall(0x12345608, 0, 3);
   if ((pid = fork()) != 0) {
-/*XXX*/vmmcall(0x12345608, 0, 4);
 	/* Parent just waits. */
 	while (wait(NULL) != pid) {
-/*XXX*/vmmcall(0x12345608, 0, 5);
 		if (gotabrt) reboot(RBT_HALT);
 	}
-/*XXX*/vmmcall(0x12345608, 0, 6);
   } else {
 #if ! SYS_GETKENV
 	struct sysgetenv sysgetenv;
@@ -124,7 +118,6 @@ int main(void)
 	static char *rc_command[] = { "sh", "/etc/rc", NULL, NULL, NULL };
 	char **rcp = rc_command + 2;
 
-/*XXX*/vmmcall(0x12345608, 0, 7);
 	/* Get the boot options from the boot environment. */
 	sysgetenv.key = "bootopts";
 	sysgetenv.keylen = 8+1;
@@ -133,14 +126,11 @@ int main(void)
 	if (svrctl(MMGETPARAM, &sysgetenv) == 0) *rcp++ = bootopts;
 	*rcp = "start";
 
-/*XXX*/vmmcall(0x12345608, 0, 8);
 	execute(rc_command);
-/*XXX*/vmmcall(0x12345608, 0, 9);
 	report(2, "sh /etc/rc");
 	_exit(1);	/* impossible, we hope */
   }
 
-/*XXX*/vmmcall(0x12345608, 0, 10);
   OPENFDS;
 
   /* Clear /etc/utmp if it exists. */
@@ -158,9 +148,7 @@ int main(void)
 
   check = 1;
   while (1) {
-/*XXX*/vmmcall(0x12345608, 0, 11);
 	while ((pid = waitpid(-1, NULL, check ? WNOHANG : 0)) > 0) {
-/*XXX*/vmmcall(0x12345608, 0, 12);
 		/* Search to see which line terminated. */
 		for (linenr = 0; linenr < PIDSLOTS; linenr++) {
 			slotp = &slots[linenr];
@@ -172,7 +160,6 @@ int main(void)
 			}
 		}
 	}
-/*XXX*/vmmcall(0x12345608, 0, 13);
 
 	/* If a signal 1 (SIGHUP) is received, simply reset error counts. */
 	if (gothup) {
@@ -206,7 +193,6 @@ int main(void)
 		endttyent();
 	}
 	check = 0;
-/*XXX*/vmmcall(0x12345608, 0, 14);
   }
 }
 
