@@ -71,3 +71,11 @@ int c;					/* character to append */
   }
   return;
 }
+
+PUBLIC void cpu_print_freq(unsigned cpu)
+{
+	u64_t freq;
+
+	freq = cpu_get_freq(cpu);
+	printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
+}

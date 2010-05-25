@@ -30,6 +30,12 @@ PRIVATE u64_t tsc_ctr_switch; /* when did we switched time accounting */
 
 PRIVATE irq_hook_t pic_timer_hook;		/* interrupt handler hook */
 
+PRIVATE unsigned probe_ticks;
+PRIVATE u64_t tsc0, tsc1;
+#define PROBE_TICKS	(system_hz / 10)
+
+PRIVATE unsigned tsc_per_ms[CONFIG_MAX_CPUS];
+
 /*===========================================================================*
  *				init_8235A_timer			     *
  *===========================================================================*/
@@ -77,12 +83,64 @@ PRIVATE clock_t read_8253A_timer(void)
 	return count;
 }
 
+PRIVATE int calib_cpu_handler(irq_hook_t * UNUSED(hook))
+{
+	u64_t tsc;
+
+	probe_ticks++;
+	read_tsc_64(&tsc);
+
+
+	if (probe_ticks == 1) {
+		tsc0 = tsc;
+	}
+	else if (probe_ticks == PROBE_TICKS) {
+		tsc1 = tsc;
+	}
+
+	return 1;
+}
+
+PRIVATE void estimate_cpu_freq(void)
+{
+	u64_t tsc_delta;
+	u64_t cpu_freq;
+
+	irq_hook_t calib_cpu;
+
+	/* set the probe, we use the legacy timer, IRQ 0 */
+	put_irq_handler(&calib_cpu, CLOCK_IRQ, calib_cpu_handler);
+
+	/* set the PIC timer to get some time */
+	intr_enable();
+	init_8253A_timer(system_hz);
+
+	/* loop for some time to get a sample */
+	while(probe_ticks < PROBE_TICKS) {
+		intr_enable();
+	}
+
+	intr_disable();
+	stop_8253A_timer();
+
+	/* remove the probe */
+	rm_irq_handler(&calib_cpu);
+
+	tsc_delta = sub64(tsc1, tsc0);
+
+	cpu_freq = mul64(div64u64(tsc_delta, PROBE_TICKS - 1), make64(system_hz, 0));
+	cpu_set_freq(cpuid, cpu_freq);
+	BOOT_VERBOSE(cpu_print_freq(cpuid));
+}
+
 PUBLIC int arch_init_local_timer(unsigned freq)
 {
 #ifdef CONFIG_APIC
 	/* if we know the address, lapic is enabled and we should use it */
 	if (lapic_addr) {
+		unsigned cpu = cpuid;
 		lapic_set_timer_periodic(freq);
+		tsc_per_ms[cpu] = div64u(cpu_get_freq(cpu), 1000);
 	} else
 	{
 		BOOT_VERBOSE(printf("Initiating legacy i8253 timer\n"));
@@ -90,6 +148,9 @@ PUBLIC int arch_init_local_timer(unsigned freq)
 	{
 #endif
 		init_8253A_timer(freq);
+		estimate_cpu_freq();
+		/* always only 1 cpu in the system */
+		tsc_per_ms[0] = div64u(cpu_get_freq(0), 1000);
 	}
 
 	return 0;
@@ -133,14 +194,40 @@ PUBLIC void cycles_accounting_init(void)
 
 PUBLIC void context_stop(struct proc * p)
 {
-	u64_t tsc;
+	u64_t tsc, tsc_delta;
 
 	read_tsc_64(&tsc);
-	p->p_cycles = add64(p->p_cycles, sub64(tsc, tsc_ctr_switch));
+	tsc_delta = sub64(tsc, tsc_ctr_switch);
+	p->p_cycles = add64(p->p_cycles, tsc_delta);
 	tsc_ctr_switch = tsc;
+
+	/*
+	 * deduct the just consumed cpu cycles from the cpu time left for this
+	 * process during its current quantum. Skip IDLE and other pseudo kernel
+	 * tasks
+	 */
+	if (p->p_endpoint >= 0) {
+#if DEBUG_RACE
+		make_zero64(p->p_cpu_time_left);
+#else
+		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
+		if (tsc_delta.hi < p->p_cpu_time_left.hi ||
+				(tsc_delta.hi == p->p_cpu_time_left.hi &&
+				 tsc_delta.lo < p->p_cpu_time_left.lo))
+			p->p_cpu_time_left = sub64(p->p_cpu_time_left, tsc_delta);
+		else {
+			make_zero64(p->p_cpu_time_left);
+		}
+#endif
+	}
 }
 
 PUBLIC void context_stop_idle(void)
 {
 	context_stop(proc_addr(IDLE));
+}
+
+PUBLIC u64_t ms_2_cpu_time(unsigned ms)
+{
+	return mul64u(tsc_per_ms[cpuid], ms);
 }

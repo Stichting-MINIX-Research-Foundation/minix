@@ -58,7 +58,7 @@ EXTERN int verboseflags;
 EXTERN int config_no_apic; /* optionaly turn off apic */
 #endif
 
-EXTERN unsigned cpu_hz[CONFIG_MAX_CPUS];
+EXTERN u64_t cpu_hz[CONFIG_MAX_CPUS];
 
 #define cpu_set_freq(cpu, freq)	do {cpu_hz[cpu] = freq;} while (0)
 #define cpu_get_freq(cpu)	cpu_hz[cpu]

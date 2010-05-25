@@ -40,6 +40,7 @@
 #include "kernel.h"
 #include "proc.h"
 #include "vm.h"
+#include "clock.h"
 
 /* Scheduling and message passing functions */
 FORWARD _PROTOTYPE( void idle, (void));
@@ -112,7 +113,6 @@ PUBLIC void switch_to_user(void)
 	 */
 	if (proc_is_runnable(proc_ptr))
 		goto check_misc_flags;
-
 	/*
 	 * if a process becomes not runnable while handling the misc flags, we
 	 * need to pick a new one here and start from scratch. Also if the
@@ -121,18 +121,12 @@ PUBLIC void switch_to_user(void)
 not_runnable_pick_new:
 	if (proc_is_preempted(proc_ptr)) {
 		proc_ptr->p_rts_flags &= ~RTS_PREEMPTED;
-		if (proc_is_runnable(proc_ptr))
-			enqueue_head(proc_ptr);
-	}
-
-	/*
-	 * If this process is scheduled by the kernel, we renew it's quantum
-	 * and remove it's RTS_NO_QUANTUM flag.
-	 */
-	if (proc_no_quantum(proc_ptr) && proc_kernel_scheduler(proc_ptr)) {
-		/* give new quantum */
-		proc_ptr->p_ticks_left = proc_ptr->p_quantum_size;
-		RTS_UNSET(proc_ptr, RTS_NO_QUANTUM);
+		if (proc_is_runnable(proc_ptr)) {
+			if (!is_zero64(proc_ptr->p_cpu_time_left))
+				enqueue_head(proc_ptr);
+			else
+				enqueue(proc_ptr);
+		}
 	}
 
 	/*
@@ -154,7 +148,6 @@ check_misc_flags:
 
 	assert(proc_ptr);
 	assert(proc_is_runnable(proc_ptr));
-	assert(proc_ptr->p_ticks_left > 0);
 	while (proc_ptr->p_misc_flags &
 		(MF_KCALL_RESUME | MF_DELIVERMSG |
 		 MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
@@ -219,6 +212,13 @@ check_misc_flags:
 			break;
 	}
 	/*
+	 * check the quantum left before it runs again. We must do it only here
+	 * as we are sure that a possible out-of-quantum message to the
+	 * scheduler will not collide with the regular ipc
+	 */
+	if (is_zero64(proc_ptr->p_cpu_time_left))
+		proc_no_time(proc_ptr);
+	/*
 	 * After handling the misc flags the selected process might not be
 	 * runnable anymore. We have to checkit and schedule another one
 	 */
@@ -233,7 +233,7 @@ check_misc_flags:
 
 
 	proc_ptr = arch_finish_switch_to_user();
-	assert(proc_ptr->p_ticks_left > 0);
+	assert(!is_zero64(proc_ptr->p_cpu_time_left));
 
 	context_stop(proc_addr(KERNEL));
 
@@ -1206,7 +1206,7 @@ PRIVATE void enqueue_head(struct proc *rp)
    * the process was runnable without its quantum expired when dequeued. A
    * process with no time left should vahe been handled else and differently
    */
-  assert(rp->p_ticks_left > 0);
+  assert(!is_zero64(rp->p_cpu_time_left));
 
   assert(q >= 0);
 
@@ -1394,6 +1394,11 @@ const int fatalflag;
 
 PRIVATE void notify_scheduler(struct proc *p)
 {
+	message m_no_quantum;
+	int err;
+
+	assert(!proc_kernel_scheduler(p));
+
 	/* dequeue the process */
 	RTS_SET(p, RTS_NO_QUANTUM);
 	/*
@@ -1401,46 +1406,30 @@ PRIVATE void notify_scheduler(struct proc *p)
 	 * quantum. This is done by sending a message to the scheduler
 	 * on the process's behalf
 	 */
-	if (proc_kernel_scheduler(p)) {
-		/*
-		 * If a scheduler is scheduling itself or has no scheduler, and
-		 * runs out of quantum, we don't send a message. The
-		 * RTS_NO_QUANTUM flag will be removed in switch_to_user.
-		 */
+	m_no_quantum.m_source = p->p_endpoint;
+	m_no_quantum.m_type   = SCHEDULING_NO_QUANTUM;
+
+	if ((err = mini_send(p, p->p_scheduler->p_endpoint,
+					&m_no_quantum, FROM_KERNEL))) {
+		panic("WARNING: Scheduling: mini_send returned %d\n", err);
+	}
+}
+
+PUBLIC void proc_no_time(struct proc * p)
+{
+	if (!proc_kernel_scheduler(p) && priv(p)->s_flags & PREEMPTIBLE) {
+		/* this dequeues the process */
+		notify_scheduler(p);
 	}
 	else {
-		message m_no_quantum;
-		int err;
-
-		m_no_quantum.m_source = p->p_endpoint;
-		m_no_quantum.m_type   = SCHEDULING_NO_QUANTUM;
-
-		if ((err = mini_send(p, p->p_scheduler->p_endpoint,
-						&m_no_quantum, FROM_KERNEL))) {
-			panic("WARNING: Scheduling: mini_send returned %d\n", err);
-		}
-	}
-}
-
-PUBLIC void check_ticks_left(struct proc * p)
-{
-	if (p->p_ticks_left <= 0) {
-		p->p_ticks_left = 0;
-		if (priv(p)->s_flags & PREEMPTIBLE) {
-			/* this dequeues the process */
-			notify_scheduler(p);
-		}
-		else {
-			/*
-			 * non-preemptible processes only need their quantum to
-			 * be renewed. In fact, they by pass scheduling
-			 */
-			p->p_ticks_left = p->p_quantum_size;
+		/*
+		 * non-preemptible processes only need their quantum to
+		 * be renewed. In fact, they by pass scheduling
+		 */
+		p->p_cpu_time_left = ms_2_cpu_time(p->p_quantum_size_ms);
 #if DEBUG_RACE
-     			RTS_SET(proc_ptr, RTS_PREEMPTED);
-     			RTS_UNSET(proc_ptr, RTS_PREEMPTED);
+		RTS_SET(proc_ptr, RTS_PREEMPTED);
+		RTS_UNSET(proc_ptr, RTS_PREEMPTED);
 #endif
-		}
 	}
 }
-

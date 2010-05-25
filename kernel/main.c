@@ -15,6 +15,7 @@
 #include <a.out.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
+#include <minix/u64.h>
 #include "proc.h"
 #include "debug.h"
 #include "clock.h"
@@ -81,8 +82,8 @@ PUBLIC void main(void)
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	rp->p_scheduler = NULL;			/* no user space scheduler */
 	rp->p_priority = ip->priority;		/* current priority */
-	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
-	rp->p_ticks_left = ip->quantum;		/* current credit */
+	rp->p_quantum_size_ms = ip->quantum;	/* quantum size */
+	make_zero64(rp->p_cpu_time_left);
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
 
 	/* See if this process is immediately schedulable.

@@ -106,7 +106,7 @@ PRIVATE void apic_calibrate_clocks(void)
 {
 	u32_t lvtt, val, lapic_delta;
 	u64_t tsc_delta;
-	u32_t cpu_freq;
+	u64_t cpu_freq;
 
 	irq_hook_t calib_clk;
 
@@ -162,11 +162,9 @@ PRIVATE void apic_calibrate_clocks(void)
 	lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
 	BOOT_VERBOSE(printf("APIC bus freq %lu MHz\n",
 				lapic_bus_freq[cpuid] / 1000000));
-	cpu_freq = div64u(tsc_delta, PROBE_TICKS - 1) * system_hz;
-	BOOT_VERBOSE(printf("CPU %d freq %lu MHz\n", cpuid,
-				cpu_freq / 1000000));
-
+	cpu_freq = mul64(div64u64(tsc_delta, PROBE_TICKS - 1), make64(system_hz, 0));
 	cpu_set_freq(cpuid, cpu_freq);
+	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
 PRIVATE void lapic_set_timer_one_shot(const u32_t value)

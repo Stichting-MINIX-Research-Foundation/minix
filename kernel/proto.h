@@ -50,7 +50,7 @@ _PROTOTYPE( int isokendpt_f, (const char *file, int line, endpoint_t e, int *p, 
 _PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
 #define isokendpt_d(e, p, f) isokendpt_f((e), (p), (f))
 #endif
-_PROTOTYPE( void check_ticks_left, (struct proc *p));
+_PROTOTYPE( void proc_no_time, (struct proc *p));
 
 /* start.c */
 _PROTOTYPE( void cstart, (u16_t cs, u16_t ds, u16_t mds,
@@ -184,4 +184,7 @@ _PROTOTYPE( int copy_msg_to_user, (struct proc * p, message * src,
 							message * user_mbuf));
 _PROTOTYPE(void switch_address_space, (struct proc * p));
 _PROTOTYPE(void release_address_space, (struct proc *pr));
+
+/* utility.c */
+_PROTOTYPE( void cpu_print_freq, (unsigned cpu));
 #endif /* PROTO_H */

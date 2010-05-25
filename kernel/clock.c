@@ -63,6 +63,7 @@ PRIVATE clock_t realtime = 0;		      /* real time clock */
  * The boot processor timer interrupt handler. In addition to non-boot cpus it
  * keeps real time and notifies the clock task if need be
  */
+extern unsigned ooq_msg;
 PUBLIC int bsp_timer_int_handler(void)
 {
 	unsigned ticks;
@@ -76,7 +77,6 @@ PUBLIC int bsp_timer_int_handler(void)
 	realtime += ticks;
 
 	ap_timer_int_handler();
-	assert(!proc_is_runnable(proc_ptr) || proc_ptr->p_ticks_left > 0);
 
 	/* if a timer expired, notify the clock task */
 	if ((next_timeout <= realtime)) {
@@ -201,14 +201,7 @@ PUBLIC int ap_timer_int_handler(void)
 
 	p->p_user_time += ticks;
 
-#if DEBUG_RACE
-	/* With DEBUG_RACE, every process gets interrupted. */
-	p->p_ticks_left = 0;
-#else
-	if (priv(p)->s_flags & PREEMPTIBLE) {
-		p->p_ticks_left -= ticks;
-	}
-#endif
+	/* FIXME make this ms too */
 	if (! (priv(p)->s_flags & BILLABLE)) {
 		billp->p_sys_time += ticks;
 	}
@@ -242,9 +235,6 @@ PUBLIC int ap_timer_int_handler(void)
 
 	/* Update load average. */
 	load_update();
-
-	/* check if the processes still have some ticks left */
-	check_ticks_left(p);
 
 	return 1;
 }

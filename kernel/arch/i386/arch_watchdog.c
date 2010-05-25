@@ -2,6 +2,7 @@
 #include "kernel/watchdog.h"
 #include "proto.h"
 #include <minix/minlib.h>
+#include <minix/u64.h>
 
 #include "apic.h"
 
@@ -18,7 +19,7 @@
 
 PRIVATE void intel_arch_watchdog_init(int cpu)
 {
-	u32_t cpuf;
+	u64_t cpuf;
 	u32_t val;
 
 	ia32_msr_write(MSR_PERFMON_CRT0, 0, 0);
@@ -32,11 +33,11 @@ PRIVATE void intel_arch_watchdog_init(int cpu)
 	 * lowest 31 bits writable :(
 	 */
 	cpuf = cpu_get_freq(cpu);
-	if (cpuf > 0x7fffffffU)
-		cpuf >>= 2;
-	watchdog->resetval = cpuf;
+	while (cpuf.hi || cpuf.lo > 0x7fffffffU)
+		cpuf = div64u64(cpuf, 2);
+	watchdog->resetval = cpuf.lo;
 
-	ia32_msr_write(MSR_PERFMON_CRT0, 0, -cpuf);
+	ia32_msr_write(MSR_PERFMON_CRT0, 0, -cpuf.lo);
 
 	ia32_msr_write(MSR_PERFMON_SEL0, 0, val | MSR_PERFMON_SEL0_ENABLE);
 

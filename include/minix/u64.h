@@ -35,4 +35,7 @@ unsigned long ex64lo(u64_t i);
 unsigned long ex64hi(u64_t i);
 u64_t make64(unsigned long lo, unsigned long hi);
 
+#define is_zero64(i)	((i).lo == 0 && (i).hi == 0)
+#define make_zero64(i)	do { (i).lo = (i).hi = 0; } while(0)
+
 #endif /* _MINIX__U64_H */
