@@ -461,6 +461,7 @@ proc_nr_t src_dst;				/* src or dst process */
   processes[0] = cp;
 #endif
 
+  /* FIXME: this compares a proc_nr_t with a endpoint_t */
   while (src_dst != ANY) { 			/* check while process nr */
       endpoint_t dep;
       xp = proc_addr(src_dst);			/* follow chain of processes */
@@ -476,6 +477,7 @@ proc_nr_t src_dst;				/* src or dst process */
 	return 0;
 
       if(dep == ANY)
+       /* FIXME: this assigns a proc_nr_t to a endpoint_t */
 	src_dst = ANY;
       else
 	okendpt(dep, &src_dst);

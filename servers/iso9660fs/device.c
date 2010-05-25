@@ -11,7 +11,7 @@ FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
 					   int));
 FORWARD _PROTOTYPE( int gen_opcl, (endpoint_t driver_e, int op,
 				   dev_t dev, int proc_e, int flags));
-FORWARD _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr));
+FORWARD _PROTOTYPE( int gen_io, (endpoint_t task_nr, message *mess_ptr));
 
 
 /*===========================================================================*

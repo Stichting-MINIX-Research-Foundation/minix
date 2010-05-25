@@ -24,8 +24,8 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
  * yet a system process, make sure it gets its own privilege structure.
  */
   struct proc *rp;
-  int proc_nr;
-  int priv_id;
+  proc_nr_t proc_nr;
+  sys_id_t priv_id;
   int ipc_to_m, kcalls;
   int i, r;
   struct io_range io_range;

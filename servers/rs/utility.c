@@ -163,7 +163,7 @@ int code;					/* status code */
 /*===========================================================================*
  *				rs_isokendpt			 	     *
  *===========================================================================*/
-PUBLIC int rs_isokendpt(int endpoint, int *proc)
+PUBLIC int rs_isokendpt(endpoint_t endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if(*proc < -NR_TASKS || *proc >= NR_PROCS)

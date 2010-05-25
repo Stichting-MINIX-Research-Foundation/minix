@@ -93,7 +93,7 @@
 #include "kernel/kernel.h"
 
 EXTERN vir_bytes lapic_addr;
-EXTERN u32_t lapic_eoi_addr;
+EXTERN vir_bytes lapic_eoi_addr;
 
 #define MAX_NR_IOAPICS			32
 #define MAX_NR_BUSES			32

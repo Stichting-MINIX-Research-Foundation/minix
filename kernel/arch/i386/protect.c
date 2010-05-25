@@ -320,7 +320,7 @@ for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
 	CHECK(rp->p_reg.gs, ds);
 	CHECK(rp->p_reg.fs, ds);
 	CHECK(rp->p_reg.ss, ds);
-	if(rp->p_endpoint != -2) {
+	if(rp->p_endpoint != SYSTEM) {
 		CHECK(rp->p_reg.es, ds);
 	}
 	CHECK(rp->p_reg.ds, ds);

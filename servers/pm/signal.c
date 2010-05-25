@@ -213,7 +213,7 @@ PUBLIC int do_srv_kill()
 /*===========================================================================*
  *				process_ksig				     *
  *===========================================================================*/
-PUBLIC int process_ksig(int proc_nr_e, int signo)
+PUBLIC int process_ksig(endpoint_t proc_nr_e, int signo)
 {
   register struct mproc *rmp;
   int proc_nr;
