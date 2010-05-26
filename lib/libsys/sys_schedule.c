@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-PUBLIC int sys_schedule(endpoint_t proc_ep, char priority, char quantum)
+PUBLIC int sys_schedule(endpoint_t proc_ep, unsigned priority, unsigned quantum)
 {
 	message m;
 

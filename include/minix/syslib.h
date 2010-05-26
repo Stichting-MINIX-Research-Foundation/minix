@@ -44,7 +44,7 @@ _PROTOTYPE( int sys_clear, (endpoint_t proc_ep));
 _PROTOTYPE( int sys_exit, (void));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
-_PROTOTYPE( int sys_schedule, (endpoint_t proc_ep, char priority, char quantum));
+_PROTOTYPE( int sys_schedule, (endpoint_t proc_ep, unsigned priority, unsigned quantum));
 _PROTOTYPE( int sys_schedctl, (endpoint_t proc_ep));
 
 /* Shorthands for sys_runctl() system call. */
