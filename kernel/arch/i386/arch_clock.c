@@ -113,7 +113,6 @@ PRIVATE void estimate_cpu_freq(void)
 
 	/* set the PIC timer to get some time */
 	intr_enable();
-	init_8253A_timer(system_hz);
 
 	/* loop for some time to get a sample */
 	while(probe_ticks < PROBE_TICKS) {
@@ -121,7 +120,6 @@ PRIVATE void estimate_cpu_freq(void)
 	}
 
 	intr_disable();
-	stop_8253A_timer();
 
 	/* remove the probe */
 	rm_irq_handler(&calib_cpu);
