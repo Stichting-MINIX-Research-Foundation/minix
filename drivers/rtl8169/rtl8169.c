@@ -388,7 +388,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 
 	rep = &re_state;
 	if (rep->re_mode == REM_ENABLED)
-		rl_outb(rep->re_base_port, RL_CR, 0);
+		rl_outb(rep->re_base_port, RL_CR, RL_CR_RST);
 
 	exit(0);
 }
