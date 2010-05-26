@@ -117,7 +117,7 @@ begbss:
 /*===========================================================================*/
 /*				MINIX					     */
 /*===========================================================================*/
-.global MINIX
+.globl MINIX
 MINIX:
 /* this is the entry point for the MINIX kernel */
 	jmp	over_flags	/* skip over the next few bytes */
@@ -731,6 +731,6 @@ _reload_cr3:
  * the kernel stack
  */
 .globl _k_boot_stktop
-_k_boot_stack:
+k_boot_stack:
 .space	4096		/* kernel stack */ /* FIXME use macro here */
 _k_boot_stktop:		/* top of kernel stack */

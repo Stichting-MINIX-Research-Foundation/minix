@@ -29,7 +29,7 @@
 .globl	_phys_copy_fault	/* phys_copy pagefault */
 .globl	_phys_copy_fault_in_kernel /* phys_copy pagefault in kernel */
 .globl	_phys_memset	/* write pattern anywhere in memory */
-.globl	mem_rdw	/* copy one word from [segment:offset] */
+.globl	_mem_rdw	/* copy one word from [segment:offset] */
 .globl	_reset	/* reset the system */
 .globl	_halt_cpu/* halts the current cpu when idle */
 .globl	_read_cpu_flags	/* read the cpu flags */
@@ -575,7 +575,7 @@ fill_done:
  */
 
 .balign	16
-mem_rdw:
+_mem_rdw:
 	mov	%ds, %cx
 	mov	4(%esp), %ds
 	mov	4+4(%esp), %eax	/* offset */

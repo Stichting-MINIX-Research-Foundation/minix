@@ -9,6 +9,7 @@ LDADD+=	-lsys
 MAN=
 
 BINDIR?= /usr/sbin
+INSTALLFLAGS+=	-S 128k
 
 NR_BUFS= 256
 CPPFLAGS+= -DNR_BUFS=${NR_BUFS}

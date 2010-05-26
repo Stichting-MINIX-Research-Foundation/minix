@@ -11,6 +11,7 @@ LDADD+=	-ldriver -lsys -ltimers
 MAN=
 
 BINDIR?= /sbin
+INSTALLFLAGS+=	-S 16k
 
 SUBDIR= keymaps
 

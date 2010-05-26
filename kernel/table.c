@@ -69,7 +69,7 @@ PUBLIC struct boot_image image[] = {
 {IDLE,             0,  0,      0, IDL_S, "idle"  },
 {CLOCK,            0,  0,      0, IDL_S, "clock" },
 {SYSTEM,           0,  0,      0, IDL_S, "system"},
-{HARDWARE,         0,  0,      0, IDL_S, "kernel"},
+{HARDWARE,         0,  0,      0, HRD_S, "kernel"},
 
 {DS_PROC_NR,   BVM_F, 50,      4, 0,     "ds"    },
 {RS_PROC_NR,       0, 50,      4, 0,     "rs"    },
