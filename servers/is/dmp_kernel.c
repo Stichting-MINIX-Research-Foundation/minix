@@ -176,7 +176,7 @@ PUBLIC void irqtab_dmp()
 #endif
 
   printf("IRQ policies dump shows use of kernel's IRQ hooks.\n");
-  printf("-h.id- -proc.nr- -irq nr- -policy- -notify id-\n");
+  printf("-h.id- -proc.nr- -irq nr- -policy- -notify id- -masked-\n");
   for (i=0; i<NR_IRQ_HOOKS; i++) {
   	e = &irq_hooks[i];
   	printf("%3d", i);
@@ -187,9 +187,9 @@ PUBLIC void irqtab_dmp()
   	printf("%10d  ", e->proc_nr_e); 
   	printf("    (%02d) ", e->irq); 
   	printf("  %s", (e->policy & IRQ_REENABLE) ? "reenable" : "    -   ");
-  	printf("   %d", e->notify_id);
-	if (irq_actids[e->irq] & (1 << i))
-		printf("masked");
+  	printf("   %4d", e->notify_id);
+	if (irq_actids[e->irq] & e->id)
+		printf("       masked");
 	printf("\n");
   }
   printf("\n");
