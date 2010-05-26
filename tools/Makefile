@@ -12,7 +12,7 @@ PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/sched/sched \
 	../servers/vfs/vfs \
-	../drivers/memory/memory_driver/memory \
+	../drivers/memory/memory \
 	../drivers/log/log \
 	../drivers/tty/tty \
 	../servers/mfs/mfs \

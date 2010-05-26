@@ -14,7 +14,4 @@ INSTALLFLAGS+=	-S 1225k
 
 CPPFLAGS+=	-I${MINIXSRCDIR}
 
-SUBDIR= service
-
 .include <minix.prog.mk>
-.include <minix.subdir.mk>

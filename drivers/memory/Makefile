@@ -1,7 +1,18 @@
-# Makefile for memory driver and ramdisk
-
+# Makefile for memory driver (MEMORY)
 .include <minix.own.mk>
 
-SUBDIR=	ramdisk .WAIT memory_driver
+PROG=	memory
+SRCS=	memory.c imgrd.c
 
-.include <minix.subdir.mk>
+DPADD+=	${LIBDRIVER} ${LIBSYS}
+LDADD+=	-ldriver -lsys
+
+MAN=
+
+BINDIR?= /usr/sbin
+INSTALLFLAGS+=	-S 8k
+
+CPPFLAGS.memory.c+=	-I${MINIXSRCDIR}
+CPPFLAGS.imgrd.c+=	-I${.CURDIR}/../ramdisk -T /usr/tmp
+
+.include <minix.prog.mk>

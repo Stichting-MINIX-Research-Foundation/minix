@@ -1,11 +1,7 @@
 # Makefile for service
-.include <minix.own.mk>
-
 PROG=	service
-SRCS=	service.c
 
+BINDIR= /bin
 MAN=
-
-BINDIR?= /bin
 
 .include <minix.prog.mk>
