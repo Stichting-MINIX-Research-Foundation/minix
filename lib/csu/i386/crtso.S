@@ -23,7 +23,7 @@ begdata:
 .bss
 begbss:
 
-.globl	crtso, __penviron, __penvp, __fpu_present
+.globl	crtso, __penviron, __penvp
 .globl __minix_datastart, __minix_mainjump, __minix_unmapzero
 .extern	_main, _exit
 
@@ -61,11 +61,6 @@ crtso:
 	push	%edx	/* push argv */
 	push	%eax	/* push argc */
 
-/* Test the EM bit of the MSW to determine if an FPU is present and */
-/* set __fpu_present if one is found. */
-	smsw	%ax
-	testb	$0x4, %al	/* EM bit in MSW */
-	sete	__fpu_present	/* True if not set */
 	jmp	__minix_mainjump
 
 .balign I386_PAGE_SIZE
@@ -116,6 +111,5 @@ __penviron:
 
 .bss
 .lcomm	__penvp, 4	/* Hidden environment vector */
-.lcomm	__fpu_present, 4	/* FPU present flag */
 
 .extern	endtext	/* Force loading of end labels. */

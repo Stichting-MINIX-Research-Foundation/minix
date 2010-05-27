@@ -692,7 +692,7 @@ PRIVATE void do_pci_class(config_t *cpe)
 			fatal("do_pci_class: too many class IDs (max %d)",
 				RS_NR_PCI_CLASS);
 		}
-		rs_start.rss_pci_class[rs_start.rss_nr_pci_class].class=
+		rs_start.rss_pci_class[rs_start.rss_nr_pci_class].pciclass=
 			class_id;
 		rs_start.rss_pci_class[rs_start.rss_nr_pci_class].mask= mask;
 		rs_start.rss_nr_pci_class++;
