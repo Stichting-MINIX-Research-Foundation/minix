@@ -77,14 +77,14 @@ extern struct state _res;
 struct rrec;
 
 int res_init _ARGS(( void ));
-int res_mkquery _ARGS(( int op, const char *dname, int class, int type,
+int res_mkquery _ARGS(( int op, const char *dname, int cls, int type,
 	const char *data, int datalen, const struct rrec *newrr,
 	char *buf, int buflen ));
-int res_query _ARGS(( char *name, int class, int type, u8_t *answer, 
+int res_query _ARGS(( char *name, int cls, int type, u8_t *answer, 
 	int anslen ));
-int res_querydomain _ARGS(( char *name, char *domain, int class, int type, 
+int res_querydomain _ARGS(( char *name, char *domain, int cls, int type, 
 	u8_t *answer, int anslen ));
-int res_search _ARGS(( char *name, int class, int type, u8_t *answer, 
+int res_search _ARGS(( char *name, int cls, int type, u8_t *answer, 
 	int anslen ));
 int res_send _ARGS(( const char *buf, int buflen, char *answer, int anslen ));
 void _res_close _ARGS(( void ));

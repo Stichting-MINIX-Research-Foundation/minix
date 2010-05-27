@@ -54,7 +54,7 @@ struct rs_start
 	int rss_nr_pci_id;
 	struct { u16_t vid; u16_t did; } rss_pci_id[RS_NR_PCI_DEVICE];
 	int rss_nr_pci_class;
-	struct { u32_t class; u32_t mask; } rss_pci_class[RS_NR_PCI_CLASS];
+	struct { u32_t pciclass; u32_t mask; } rss_pci_class[RS_NR_PCI_CLASS];
 	bitchunk_t rss_system[SYS_CALL_MASK_SIZE];
 	struct rss_label rss_label;
 	char *rss_ipc;
@@ -72,7 +72,7 @@ struct rs_pci
 	int rsp_nr_device;
 	struct { u16_t vid; u16_t did; } rsp_device[RS_NR_PCI_DEVICE];
 	int rsp_nr_class;
-	struct { u32_t class; u32_t mask; } rsp_class[RS_NR_PCI_CLASS];
+	struct { u32_t pciclass; u32_t mask; } rsp_class[RS_NR_PCI_CLASS];
 };
 
 /* Definition of a public entry of the system process table. */

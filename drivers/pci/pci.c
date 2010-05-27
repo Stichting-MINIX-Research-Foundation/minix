@@ -2593,7 +2593,7 @@ int devind;
 		pcidev[devind].pd_infclass;
 	for (i= 0; i<aclp->rsp_nr_class; i++)
 	{
-		if (aclp->rsp_class[i].class ==
+		if (aclp->rsp_class[i].pciclass ==
 			(class_id & aclp->rsp_class[i].mask))
 		{
 			return TRUE;

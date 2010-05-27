@@ -1376,11 +1376,11 @@ endpoint_t source;
   rpub->pci_acl.rsp_nr_class= rs_start->rss_nr_pci_class;
   for (i= 0; i<rpub->pci_acl.rsp_nr_class; i++)
   {
-	rpub->pci_acl.rsp_class[i].class= rs_start->rss_pci_class[i].class;
+	rpub->pci_acl.rsp_class[i].pciclass=rs_start->rss_pci_class[i].pciclass;
 	rpub->pci_acl.rsp_class[i].mask= rs_start->rss_pci_class[i].mask;
 	if(rs_verbose)
 	    printf("RS: init_slot: PCI class %06x mask %06x\n",
-		(unsigned int) rpub->pci_acl.rsp_class[i].class,
+		(unsigned int) rpub->pci_acl.rsp_class[i].pciclass,
 		(unsigned int) rpub->pci_acl.rsp_class[i].mask);
   }
 
