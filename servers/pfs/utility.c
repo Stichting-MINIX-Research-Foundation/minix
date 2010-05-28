@@ -23,9 +23,10 @@ PUBLIC time_t clock_time()
  */
 
   int r;
-  clock_t uptime, boottime;
+  clock_t uptime;	/* Uptime in ticks */
+  time_t boottime;
 
-  if ((r = getuptime2(&uptime,&boottime)) != OK)
+  if ((r = getuptime2(&uptime, &boottime)) != OK)
 		panic("clock_time: getuptme2 failed: %d", r);
   
   return( (time_t) (boottime + (uptime/sys_hz())));

@@ -1,3 +1,6 @@
+#ifndef __PFS_INODE_H__
+#define __PFS_INODE_H__
+
 /* Inode table.  This table holds inodes that are currently in use. 
  */
 
@@ -33,3 +36,4 @@ EXTERN TAILQ_HEAD(unused_inodes_t, inode)  unused_inodes;
 EXTERN LIST_HEAD(inodelist, inode)         hash_inodes[INODE_HASH_SIZE];
 
 
+#endif

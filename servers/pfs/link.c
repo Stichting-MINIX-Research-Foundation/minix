@@ -1,5 +1,4 @@
 #include "fs.h"
-#include <string.h>
 #include "buf.h"
 #include "inode.h"
 #include <minix/vfsif.h>
@@ -13,7 +12,7 @@ PUBLIC int fs_ftrunc(void)
   off_t start, end;
   ino_t inumb;
   
-  inumb = fs_m_in.REQ_INODE_NR;
+  inumb = (ino_t) fs_m_in.REQ_INODE_NR;
 
   if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
 

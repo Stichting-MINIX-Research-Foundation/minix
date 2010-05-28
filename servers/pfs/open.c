@@ -1,8 +1,5 @@
 #include "fs.h"
 #include <sys/stat.h>
-#include <unistd.h>
-#include <minix/callnr.h>
-#include <minix/com.h>
 #include "buf.h"
 #include "inode.h"
 #include <minix/vfsif.h>
@@ -18,10 +15,10 @@ PUBLIC int fs_newnode()
   struct inode *rip;
   dev_t dev;
 
-  caller_uid = fs_m_in.REQ_UID;
-  caller_gid = fs_m_in.REQ_GID;
-  bits = fs_m_in.REQ_MODE;
-  dev = fs_m_in.REQ_DEV;
+  caller_uid = (uid_t) fs_m_in.REQ_UID;
+  caller_gid = (gid_t) fs_m_in.REQ_GID;
+  bits = (mode_t) fs_m_in.REQ_MODE;
+  dev = (dev_t) fs_m_in.REQ_DEV;
 
   /* Try to allocate the inode */
   if( (rip = alloc_inode(dev, bits) ) == NULL) return(err_code);

@@ -19,8 +19,8 @@
 #include "inode.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( int addhash_inode, (struct inode *node)		); 
-FORWARD _PROTOTYPE( int unhash_inode, (struct inode *node) 		);
+FORWARD _PROTOTYPE( void addhash_inode, (struct inode * const node)		); 
+FORWARD _PROTOTYPE( void unhash_inode, (struct inode * const node) 		);
 
 
 /*===========================================================================*
@@ -35,11 +35,11 @@ PUBLIC int fs_putnode()
   dev_t dev;
   ino_t inum;
   
-  rip = find_inode(fs_m_in.REQ_INODE_NR);
+  rip = find_inode( (ino_t) fs_m_in.REQ_INODE_NR);
 
   if(!rip) {
-	  printf("%s:%d put_inode: inode #%d dev: %d not found\n", __FILE__,
-		 __LINE__, fs_m_in.REQ_INODE_NR, fs_m_in.REQ_DEV);
+	  printf("%s:%d put_inode: inode #%ld dev: %d not found\n", __FILE__,
+		 __LINE__, fs_m_in.REQ_INODE_NR, (dev_t) fs_m_in.REQ_DEV);
 	  panic("fs_putnode failed");
   }
 
@@ -82,7 +82,7 @@ PUBLIC void init_inode_cache()
 
   /* add free inodes to unused/free list */
   for (rip = &inode[0]; rip < &inode[NR_INODES]; ++rip) {
-      rip->i_num = 0;
+      rip->i_num = NO_ENTRY;
       TAILQ_INSERT_HEAD(&unused_inodes, rip, i_unused);
   }
 
@@ -95,24 +95,22 @@ PUBLIC void init_inode_cache()
 /*===========================================================================*
  *				addhash_inode   			     *
  *===========================================================================*/
-PRIVATE int addhash_inode(struct inode *node) 
+PRIVATE void addhash_inode(struct inode * const node) 
 {
-  int hashi = node->i_num & INODE_HASH_MASK;
+  int hashi = (int) (node->i_num & INODE_HASH_MASK);
   
   /* insert into hash table */
   LIST_INSERT_HEAD(&hash_inodes[hashi], node, i_hash);
-  return(OK);
 }
 
 
 /*===========================================================================*
  *				unhash_inode      			     *
  *===========================================================================*/
-PRIVATE int unhash_inode(struct inode *node) 
+PRIVATE void unhash_inode(struct inode * const node) 
 {
   /* remove from hash table */
   LIST_REMOVE(node, i_hash);
-  return(OK);
 }
 
 
@@ -121,7 +119,7 @@ PRIVATE int unhash_inode(struct inode *node)
  *===========================================================================*/
 PUBLIC struct inode *get_inode(
   dev_t dev,		/* device on which inode resides */
-  int numb		/* inode number (ANSI: may not be unshort) */
+  ino_t numb		/* inode number */
 )
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
@@ -130,7 +128,7 @@ PUBLIC struct inode *get_inode(
   register struct inode *rip;
   int hashi;
 
-  hashi = numb & INODE_HASH_MASK;
+  hashi = (int) (numb & INODE_HASH_MASK);
 
   /* Search inode in the hash table */
   LIST_FOREACH(rip, &hash_inodes[hashi], i_hash) {
@@ -153,7 +151,7 @@ PUBLIC struct inode *get_inode(
   rip = TAILQ_FIRST(&unused_inodes);
 
   /* If not free unhash it */
-  if (rip->i_num != 0) unhash_inode(rip);
+  if (rip->i_num != NO_ENTRY) unhash_inode(rip);
   
   /* Inode is not unused any more */
   TAILQ_REMOVE(&unused_inodes, rip, i_unused);
@@ -176,14 +174,14 @@ PUBLIC struct inode *get_inode(
  *				find_inode        			     *
  *===========================================================================*/
 PUBLIC struct inode *find_inode(numb)
-int numb;			/* inode number (ANSI: may not be unshort) */
+ino_t numb;		/* inode number */
 {
 /* Find the inode specified by the inode and device number.
  */
   struct inode *rip;
   int hashi;
 
-  hashi = numb & INODE_HASH_MASK;
+  hashi = (int) (numb & INODE_HASH_MASK);
 
   /* Search inode in the hash table */
   LIST_FOREACH(rip, &hash_inodes[hashi], i_hash) {
@@ -200,7 +198,7 @@ int numb;			/* inode number (ANSI: may not be unshort) */
  *				put_inode				     *
  *===========================================================================*/
 PUBLIC void put_inode(rip)
-register struct inode *rip;	/* pointer to inode to be released */
+struct inode *rip;	/* pointer to inode to be released */
 {
 /* The caller is no longer using this inode.  If no one else is using it either
  * write it back to the disk immediately.  If it has no links, truncate it and
@@ -213,19 +211,19 @@ register struct inode *rip;	/* pointer to inode to be released */
 	panic("put_inode: i_count already below 1: %d", rip->i_count);
 
   if (--rip->i_count == 0) {	/* i_count == 0 means no one is using it now */
-	if (rip->i_nlinks == 0) {
-		/* i_nlinks == 0 means free the inode. */
+	if (rip->i_nlinks == NO_LINK) { /* Are there links to this file? */
+		/* no links, free the inode. */
 		truncate_inode(rip, 0);	/* return all the disk blocks */
 		rip->i_mode = I_NOT_ALLOC;	/* clear I_TYPE field */
 		free_inode(rip);
 	} else {
-		truncate_inode(rip, 0);
+		truncate_inode(rip, (off_t) 0);
 	}
 
-	if (rip->i_nlinks == 0) {
+	if (rip->i_nlinks == NO_LINK) {
 		/* free, put at the front of the LRU list */
 		unhash_inode(rip);
-		rip->i_num = 0;
+		rip->i_num = NO_ENTRY;
 		rip->i_dev = NO_DEV;
 		rip->i_rdev = NO_DEV;
 		TAILQ_INSERT_HEAD(&unused_inodes, rip, i_unused);
@@ -265,7 +263,7 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 	/* An inode slot is available. */
 
 	rip->i_mode = bits;		/* set up RWX bits */
-	rip->i_nlinks = 0;		/* initial no links */
+	rip->i_nlinks = NO_LINK;	/* initial no links */
 	rip->i_uid = caller_uid;	/* file's uid is owner's */
 	rip->i_gid = caller_gid;	/* ditto group id */
 
@@ -285,7 +283,7 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
  *				wipe_inode				     *
  *===========================================================================*/
 PUBLIC void wipe_inode(rip)
-register struct inode *rip;	/* the inode to be erased */
+struct inode *rip;	/* the inode to be erased */
 {
 /* Erase some fields in the inode.  This function is called from alloc_inode()
  * when a new inode is to be allocated, and from truncate(), when an existing
@@ -307,8 +305,8 @@ struct inode *rip;
 
   bit_t b;
 
-  if (rip->i_num <= 0 || rip->i_num >= NR_INODES) return;
-  b = rip->i_num;
+  if (rip->i_num <= (ino_t) 0 || rip->i_num >= (ino_t) NR_INODES) return;
+  b = (bit_t) rip->i_num;
   free_bit(b);
 }
 
@@ -317,7 +315,7 @@ struct inode *rip;
  *				update_times				     *
  *===========================================================================*/
 PUBLIC void update_times(rip)
-register struct inode *rip;	/* pointer to inode to be read/written */
+struct inode *rip;	/* pointer to inode to be read/written */
 {
 /* Various system calls are required by the standard to update atime, ctime,
  * or mtime.  Since updating a time requires sending a message to the clock

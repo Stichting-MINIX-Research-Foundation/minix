@@ -3,9 +3,9 @@
 #include "inode.h"
 #include <sys/types.h>
 #include <stdlib.h>
-#include <alloca.h>
 #include <string.h>
 
+FORWARD _PROTOTYPE( struct buf *new_block, (dev_t dev, ino_t inum)			);
 
 /*===========================================================================*
  *                              buf_pool                                     *
@@ -43,7 +43,7 @@ PUBLIC struct buf *get_block(dev_t dev, ino_t inum)
 /*===========================================================================*
  *				new_block				     *
  *===========================================================================*/
-PUBLIC struct buf *new_block(dev_t dev, ino_t inum)
+PRIVATE struct buf *new_block(dev_t dev, ino_t inum)
 {
 /* Allocate a new buffer and add it to the double linked buffer list */
   struct buf *bp;

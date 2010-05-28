@@ -1,3 +1,6 @@
+#ifndef __PFS_BUF_H__
+#define __PFS_BUF_H__
+
 /* Buffer (block) cache.  
  */
 
@@ -17,9 +20,7 @@ struct buf {
 /* A block is free if b_dev == NO_DEV. */
 
 
-#define BUFHASH(b) ((b) % NR_BUFS)
-
 EXTERN struct buf *front;	/* points to least recently used free block */
 EXTERN struct buf *rear;	/* points to most recently used free block */
-EXTERN int bufs_in_use;		/* # bufs currently in use (not on free list)*/
 
+#endif

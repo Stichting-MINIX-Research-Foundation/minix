@@ -9,9 +9,6 @@
  */
 
 #include "fs.h"
-#include <string.h>
-#include <minix/com.h>
-#include <minix/u64.h>
 #include "buf.h"
 #include "inode.h"
 #include "const.h"
@@ -25,7 +22,7 @@ PUBLIC bit_t alloc_bit(void)
 /* Allocate a bit from a bit map and return its bit number. */
   bitchunk_t *wptr, *wlim; 
   bit_t b;
-  int i, bcount;
+  unsigned int i, bcount;
 
   bcount = FS_BITMAP_CHUNKS(NR_INODES); /* Inode map has this many chunks. */
   wlim = &inodemap[bcount]; /* Point to last chunk in inodemap. */
@@ -38,7 +35,7 @@ PUBLIC bit_t alloc_bit(void)
   	for (i = 0; (*wptr & (1 << i)) != 0; ++i) {}
 
 	/* Get inode number */
-  	b = (wptr - &inodemap[0]) * FS_BITCHUNK_BITS + i;
+  	b = (bit_t) ((wptr - &inodemap[0]) * FS_BITCHUNK_BITS + i);
   	
   	/* Don't allocate bits beyond end of map. */ 
   	if (b >= NR_INODES) break;
@@ -66,12 +63,12 @@ bit_t bit_returned;		/* number of bit to insert into the inode map*/
   unsigned word;
 
   /* Get word offset and bit within offset */
-  word = bit_returned / FS_BITCHUNK_BITS;
-  bit = bit_returned % FS_BITCHUNK_BITS;
+  word = (unsigned) (bit_returned / (bit_t) FS_BITCHUNK_BITS);
+  bit = bit_returned % (bit_t) FS_BITCHUNK_BITS;
 
   /* Unset bit */
   k = &inodemap[word];
-  mask = 1 << bit;
+  mask = (unsigned) 1 << bit;
   *k &= ~mask;
 
   busy--; /* One inode less in use. */

@@ -157,6 +157,7 @@
 #define NO_ENTRY                ((ino_t) 0)	/* absence of a dir entry */
 #define NO_ZONE                ((zone_t) 0)	/* absence of a zone number */
 #define NO_DEV                  ((dev_t) 0)	/* absence of a device numb */
+#define NO_LINK		      ((nlink_t) 0)	/* absence of incoming links */
 
 #define SERVARNAME		"cttyline"
 

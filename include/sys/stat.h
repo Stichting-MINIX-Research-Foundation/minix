@@ -14,7 +14,7 @@ struct stat {
   dev_t st_dev;			/* major/minor device number */
   ino_t st_ino;			/* i-node number */
   mode_t st_mode;		/* file mode, protection bits, etc. */
-  short int st_nlink;		/* # links; TEMPORARY HACK: should be nlink_t*/
+  nlink_t st_nlink;		/* # links; */
   uid_t st_uid;			/* uid of the file's owner */
   short int st_gid;		/* gid; TEMPORARY HACK: should be gid_t */
   dev_t st_rdev;

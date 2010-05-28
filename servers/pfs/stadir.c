@@ -28,7 +28,7 @@ PRIVATE int stat_inode(
   statbuf.st_mode = rip->i_mode;
   statbuf.st_nlink = rip->i_nlinks;
   statbuf.st_uid = rip->i_uid;
-  statbuf.st_gid = rip->i_gid;
+  statbuf.st_gid = (short int) rip->i_gid;
   statbuf.st_rdev = (dev_t) (s ? rip->i_rdev : NO_DEV);
   statbuf.st_size = rip->i_size;
   if (!s)  statbuf.st_mode &= ~I_REGULAR;/* wipe out I_REGULAR bit for pipes */
@@ -37,8 +37,8 @@ PRIVATE int stat_inode(
   statbuf.st_ctime = rip->i_ctime;
 
   /* Copy the struct to user space. */
-  r = sys_safecopyto(who_e, gid, 0, (vir_bytes) &statbuf,
-  		(phys_bytes) sizeof(statbuf), D);
+  r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
+  		(size_t) sizeof(statbuf), D);
   
   return(r);
 }
@@ -54,7 +54,7 @@ PUBLIC int fs_stat()
 
   if( (rip = find_inode(fs_m_in.REQ_INODE_NR)) == NULL) return(EINVAL);
   get_inode(rip->i_dev, rip->i_num);	/* mark inode in use */  
-  r = stat_inode(rip, fs_m_in.m_source, fs_m_in.REQ_GRANT);
+  r = stat_inode(rip, fs_m_in.m_source, (cp_grant_id_t) fs_m_in.REQ_GRANT);
   put_inode(rip);			/* release the inode */
   return(r);
 }

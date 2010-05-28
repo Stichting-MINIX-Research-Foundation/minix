@@ -6,7 +6,6 @@
 #include <minix/vfsif.h>
 #include "buf.h"
 #include "inode.h"
-#include "drivers.h"
 
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 
@@ -38,19 +37,19 @@ PUBLIC int main(int argc, char *argv[])
 	
 	src = fs_m_in.m_source;
 	error = OK;
-	caller_uid = -1;	/* To trap errors */
-	caller_gid = -1;
+	caller_uid = INVAL_UID;	/* To trap errors */
+	caller_gid = INVAL_GID;
 	req_nr = fs_m_in.m_type;
 
 	if (req_nr < VFS_BASE) {
 		fs_m_in.m_type += VFS_BASE;
 		req_nr = fs_m_in.m_type;
+		printf("PFS: bad request (no VFS_BASE) %d\n", req_nr);
 	}
 	ind = req_nr - VFS_BASE;
 
 	if (ind < 0 || ind >= NREQS) {
 		printf("pfs: bad request %d\n", req_nr); 
-		printf("ind = %d\n", ind);
 		error = EINVAL; 
 	} else {
 		error = (*fs_call_vec[ind])();
@@ -96,15 +95,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   /* Init inode table */
   for (i = 0; i < NR_INODES; ++i) {
 	inode[i].i_count = 0;
-	cch[i] = 0;
   }
 	
   init_inode_cache();
 
-  /* Init driver mapping */
-  for (i = 0; i < NR_DEVICES; ++i) 
-	driver_endpoints[i].driver_e = NONE;
-	
   SELF_E = getprocnr();
   buf_pool();
 
@@ -148,7 +142,7 @@ message *m_in;				/* pointer to message */
  *				reply					     *
  *===========================================================================*/
 PUBLIC void reply(who, m_out)
-int who;	
+endpoint_t who;	
 message *m_out;                       	/* report result */
 {
   if (OK != send(who, m_out))    /* send the message */

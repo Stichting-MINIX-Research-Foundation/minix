@@ -1,8 +1,4 @@
 #include "fs.h"
-#include <fcntl.h>
-#include <minix/vfsif.h>
-#include "buf.h"
-#include "inode.h"
 
 
 /*===========================================================================*

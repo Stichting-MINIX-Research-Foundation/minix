@@ -34,7 +34,7 @@ typedef struct {
 /* some Minix specific types that do not conflict with posix */
 typedef u32_t zone_t;	   /* zone number */
 typedef u32_t block_t;	   /* block number */
-typedef u32_t  bit_t;	   /* bit number in a bit map */
+typedef u32_t bit_t;	   /* bit number in a bit map */
 typedef u16_t zone1_t;	   /* zone number for V1 file systems */
 typedef u16_t bitchunk_t; /* collection of bits in a bitmap */
 
