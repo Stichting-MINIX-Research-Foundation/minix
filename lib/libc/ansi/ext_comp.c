@@ -3,8 +3,6 @@
   See the copyright notice in the ACK home directory, in the file "Copyright".
 */
 
-/* $Id$ */
-
 /* extended precision arithmetic for the strtod() and cvt() routines */
 
 /* This may require some more work when long doubles get bigger than 8

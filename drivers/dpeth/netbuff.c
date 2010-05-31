@@ -5,8 +5,6 @@
 **
 **  This file contains specific implementation of buffering
 **  for network packets.
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

@@ -30,8 +30,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: test.h,v 1.10 2006/05/26 06:17:53 vapier Exp $ */
-
 #ifndef __TEST_H__
 #define __TEST_H__
 

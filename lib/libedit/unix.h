@@ -1,5 +1,4 @@
-/*  $Revision$
-**
+/*
 **  Editline system header file for Unix.
 */
 

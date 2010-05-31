@@ -1,7 +1,6 @@
 /*
  * setbuf.c - control buffering of a stream
  */
-/* $Id$ */
 
 #include	<stdio.h>
 #include	<stdlib.h>

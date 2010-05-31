@@ -7,8 +7,6 @@
 **  device driver for 3Com Etherlink III (3c509) boards.
 **  NOTE: The board has to be setup to disable PnP and to assign
 **	  I/O base and IRQ.  The driver is for ISA bus only
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

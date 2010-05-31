@@ -22,8 +22,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- *	$Id: db_disasm.c,v 1.1 2003/01/15 21:50:58 mikesw Exp $
  */
 
 /*

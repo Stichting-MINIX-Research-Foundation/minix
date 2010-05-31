@@ -7,8 +7,6 @@
 **  device driver for 3Com Etherlink (3c501) boards.  This is a
 **  very old board and its performances are very poor for today
 **  network environments.
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

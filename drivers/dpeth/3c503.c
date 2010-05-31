@@ -7,8 +7,6 @@
 **  Programmed I/O could be used as well but would result in poor
 **  performances. This file contains only the board specific code,
 **  the rest is in 8390.c        Code specific for ISA bus only
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

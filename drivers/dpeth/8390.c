@@ -9,8 +9,6 @@
 **  It has to be associated with the board specific driver.
 **  Rewritten from Minix 2.0.0 ethernet driver dp8390.c
 **  to extract the NS 8390 common functions.
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

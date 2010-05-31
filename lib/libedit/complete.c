@@ -1,5 +1,4 @@
-/*  $Revision$
-**
+/*
 **  History and file completion functions for editline library.
 */
 #include "editline.h"

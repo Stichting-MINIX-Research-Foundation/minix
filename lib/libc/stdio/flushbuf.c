@@ -1,7 +1,6 @@
 /*
  * flushbuf.c - flush a buffer
  */
-/* $Id$ */
 
 #include	<stdio.h>
 #include	<stdlib.h>

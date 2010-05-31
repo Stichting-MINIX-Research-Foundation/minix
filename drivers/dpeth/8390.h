@@ -15,8 +15,6 @@
 **
 **  Revision 2.0  2005/06/26 16:16:46  lsodgf0
 **  Initial revision for Minix 3.0.6
-**
-**  $Id$
 */
 
 #define DP_PAGESIZE	256	/* NS 8390 page size */

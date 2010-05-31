@@ -30,8 +30,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: usctest.h,v 1.10 2006/05/26 06:06:06 vapier Exp $ */
-
 /**********************************************************
  * 
  *    IRIX/Linux Feature Test and Evaluation - Silicon Graphics, Inc.

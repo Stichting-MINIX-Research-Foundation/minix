@@ -30,8 +30,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: tst_sig.c,v 1.10 2005/01/04 21:00:35 mridge Exp $ */
-
 /*****************************************************************************
 	OS Testing  - Silicon Graphics, Inc.
 

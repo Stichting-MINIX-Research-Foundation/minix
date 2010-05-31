@@ -1,4 +1,3 @@
-/* $Id$ */
 /* This file was part of the etherlib package. */
 
 #include <stdio.h>

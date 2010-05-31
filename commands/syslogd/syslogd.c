@@ -79,8 +79,6 @@
 **
 **  Revision 1.3  2005/09/16 10:10:12  lsodgf0
 **  Rework for Minix 3.  Adds kernel logs from /dev/klogd
-**
-**  $Id$
 */
 
 #include <sys/types.h>

@@ -1,8 +1,6 @@
 /* swapfs - swap a Minix file system	    Author: Niels C. Willems */
 
 
-/* $Id$ */
-
 /* Swapfs, a program to convert V1 or V2 Minix file systems from big endian
    byte order to little endian and vv.
 
@@ -143,8 +141,6 @@ typedef struct {		/* summary of inode */
   blockn_t ind3;		/* triple indirect block number */
   int ztype;			/* type of zones that belong to this inode */
 } inode_t;
-
-static char rcsid[] = "$Id$";
 
 static int super_format[] = {2, 2, 2, 2, 2, 2, 4, 2, 2, 4, 0};
 static int inode1_format[] = {2, 2, 4, 4, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0};

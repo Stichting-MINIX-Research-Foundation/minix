@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)random.c	8.1 (Berkeley) 6/10/93
- * $Id: random.c,v 1.1 2003/01/15 21:50:59 mikesw Exp $
  */
 
 #include "ddb.h"

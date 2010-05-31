@@ -30,8 +30,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: parse_opts.c,v 1.10 2006/04/19 18:23:40 mreed10 Exp $ */
-
 /**********************************************************
  * 
  *    OS Testing - Silicon Graphics, Inc.

@@ -30,8 +30,6 @@
  * http://oss.sgi.com/projects/GenInfo/NoticeExplan/
  */
 
-/* $Id: rmobj.c,v 1.4 2003/07/28 16:03:02 robbiew Exp $ */
-
 /**********************************************************
  *
  *    OS Testing - Silicon Graphics, Inc.

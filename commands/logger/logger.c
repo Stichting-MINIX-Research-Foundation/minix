@@ -40,7 +40,6 @@
  * #endif
  *
  * Porting to Minix by G. Falzoni <gfalzoni@inwind.it>
- * $Id$
  */
 
 #include <sys/types.h>

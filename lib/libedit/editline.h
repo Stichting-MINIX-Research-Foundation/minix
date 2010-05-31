@@ -1,5 +1,4 @@
-/*  $Revision$
-**
+/*
 **  Internal header file for editline library.
 */
 #include <stdio.h>

@@ -22,8 +22,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- *	$Id: db_sym.c,v 1.2 2003/01/16 01:06:09 mikesw Exp $
  */
 
 /*

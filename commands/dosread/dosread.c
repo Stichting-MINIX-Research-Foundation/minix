@@ -1113,6 +1113,3 @@ register unsigned bytes;
   	exit (1);
   }
 }
-
-char dosread_c_rcs_id [] = 
-	"$Id$";

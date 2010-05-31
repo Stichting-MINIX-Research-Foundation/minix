@@ -10,8 +10,6 @@
 **
 **  Modified:	Jun. 08, 2000 by Giovanni Falzoni <gfalzoni@inwind.it>
 **  		Adapted to interface new main network task.
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

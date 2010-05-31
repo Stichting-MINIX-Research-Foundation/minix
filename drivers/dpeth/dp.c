@@ -9,8 +9,6 @@
 **  It is a rewriting of Minix 2.0.0 ethernet driver (dp8390.c)
 **  to remove bord specific code. It should operate (I hope)
 **  with any board driver.
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

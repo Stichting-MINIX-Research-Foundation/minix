@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /* Interface definitions for ethernet access library */
 
 typedef union etheraddr

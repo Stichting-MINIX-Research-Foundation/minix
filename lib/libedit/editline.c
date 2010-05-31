@@ -1,5 +1,4 @@
-/*  $Revision$
-**
+/*
 **  Main editing routines for editline library.
 */
 #include "editline.h"

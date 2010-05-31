@@ -38,8 +38,6 @@
  * Patched March 12, 1996 by A. Ian Vogelesang <vogelesang@hdshq.com>
  * Rewritten by Martin Mares <mj@atrey.karlin.mff.cuni.cz> on May 14, 1997
  * Rewritten by G. Falzoni <gfalzoni@inwind.it> for porting to Minix
- *
- * $Id$
  */
 #include <sys/types.h>
 #include <stdlib.h>

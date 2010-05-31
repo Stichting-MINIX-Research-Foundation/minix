@@ -5,8 +5,6 @@
 **
 **  This file contains the routines for readind/writing
 **  from/to the device registers.
-**
-**  $Id$
 */
 
 #include <minix/drivers.h>

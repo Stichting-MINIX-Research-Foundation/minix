@@ -22,8 +22,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: db_machdep.h,v 1.1 2003/01/15 21:51:24 mikesw Exp $
  */
 
 #ifndef _MACHINE_DB_MACHDEP_H_

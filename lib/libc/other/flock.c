@@ -3,8 +3,6 @@
  *
  * Porting to Minix 2.0.0
  * Author:	Giovanni Falzoni <gfalzoni@pointest.com>
- *
- * $Id$
  */
 #include <sys/types.h>
 #include <fcntl.h>

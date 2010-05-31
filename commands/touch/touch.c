@@ -10,7 +10,6 @@
  * Authors: Original author unknown. Rewritten for POSIX by 
  *	Peter Holzer (hp@vmars.tuwien.ac.at).
  *
- * $Id$
  * $Log$
  * Revision 1.1  2005/04/21 14:55:35  beng
  * Initial revision
