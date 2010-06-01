@@ -7,6 +7,8 @@ EXTRA=system.conf passwd
 CPPFLAGS+= -I${MINIXSRCDIR}/servers
 MAKEDEV=/usr/bin/MAKEDEV
 
+install: all
+
 all:	image.c
 
 clean:
