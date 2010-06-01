@@ -335,27 +335,25 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 }
 
 /*===========================================================================*
- *				do_safecopy				     *
+ *				do_safecopy_to				     *
  *===========================================================================*/
-PUBLIC int do_safecopy(struct proc * caller, message * m_ptr)
+PUBLIC int do_safecopy_to(struct proc * caller, message * m_ptr)
 {
-	static int access, src_seg, dst_seg;
-
-	/* Set src and dst parameters. */
-	if(m_ptr->m_type == SYS_SAFECOPYFROM) {
-		src_seg = D;
-		dst_seg = m_ptr->SCP_SEG;
-		access = CPF_READ;
-	} else if(m_ptr->m_type == SYS_SAFECOPYTO) {
-		src_seg = m_ptr->SCP_SEG;
-		dst_seg = D;
-		access = CPF_WRITE;
-	} else panic("Impossible system call nr.: %d", m_ptr->m_type);
-
 	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
-		(cp_grant_id_t) m_ptr->SCP_GID, src_seg, dst_seg,
+		(cp_grant_id_t) m_ptr->SCP_GID, m_ptr->SCP_SEG, D,
 		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
-		(vir_bytes) m_ptr->SCP_ADDRESS, access);
+		(vir_bytes) m_ptr->SCP_ADDRESS, CPF_WRITE);
+}
+
+/*===========================================================================*
+ *				do_safecopy_from			     *
+ *===========================================================================*/
+PUBLIC int do_safecopy_from(struct proc * caller, message * m_ptr)
+{
+	return safecopy(caller, m_ptr->SCP_FROM_TO, caller->p_endpoint,
+		(cp_grant_id_t) m_ptr->SCP_GID, D, m_ptr->SCP_SEG,
+		m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
+		(vir_bytes) m_ptr->SCP_ADDRESS, CPF_READ);
 }
 
 /*===========================================================================*

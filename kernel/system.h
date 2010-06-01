@@ -179,7 +179,8 @@ _PROTOTYPE( int do_vtimer, (struct proc * caller, message *m_ptr) );
 #define do_vtimer do_unused
 #endif
 
-_PROTOTYPE( int do_safecopy, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_safecopy_to, (struct proc * caller, message *m_ptr) );
+_PROTOTYPE( int do_safecopy_from, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_vsafecopy, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_iopenable, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_vmctl, (struct proc * caller, message *m_ptr) );

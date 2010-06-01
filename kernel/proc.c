@@ -588,10 +588,10 @@ const int flags;
 	caller_ptr->p_sendto_e = dst_e;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
-	assert(caller_ptr->p_q_link == NULL);
 	xpp = &dst_ptr->p_caller_q;		/* find end of list */
 	while (*xpp) xpp = &(*xpp)->p_q_link;	
 	*xpp = caller_ptr;			/* add caller to end */
+	caller_ptr->p_q_link = NULL;	/* mark new end of list */
   }
   return(OK);
 }
@@ -697,40 +697,37 @@ const int flags;
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;
     while (*xpp) {
-	struct proc * sender = *xpp;
-
-        if (src_e == ANY || src_p == proc_nr(sender)) {
+        if (src_e == ANY || src_p == proc_nr(*xpp)) {
             int call;
-	    assert(!RTS_ISSET(sender, RTS_SLOT_FREE));
-	    assert(!RTS_ISSET(sender, RTS_NO_ENDPOINT));
+	    assert(!RTS_ISSET(*xpp, RTS_SLOT_FREE));
+	    assert(!RTS_ISSET(*xpp, RTS_NO_ENDPOINT));
 
 	    /* Found acceptable message. Copy it and update status. */
   	    assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
-	    caller_ptr->p_delivermsg = sender->p_sendmsg;
-	    caller_ptr->p_delivermsg.m_source = sender->p_endpoint;
+	    caller_ptr->p_delivermsg = (*xpp)->p_sendmsg;
+	    caller_ptr->p_delivermsg.m_source = (*xpp)->p_endpoint;
 	    caller_ptr->p_misc_flags |= MF_DELIVERMSG;
-	    RTS_UNSET(sender, RTS_SENDING);
+	    RTS_UNSET(*xpp, RTS_SENDING);
 
-	    call = (sender->p_misc_flags & MF_REPLY_PEND ? SENDREC : SEND);
+	    call = ((*xpp)->p_misc_flags & MF_REPLY_PEND ? SENDREC : SEND);
 	    IPC_STATUS_ADD_CALL(caller_ptr, call);
 
 	    /*
 	     * if the message is originaly from the kernel on behalf of this
 	     * process, we must send the status flags accordingly
 	     */
-	    if (sender->p_misc_flags & MF_SENDING_FROM_KERNEL) {
+	    if ((*xpp)->p_misc_flags & MF_SENDING_FROM_KERNEL) {
 		IPC_STATUS_ADD_FLAGS(caller_ptr, IPC_FLG_MSG_FROM_KERNEL);
 		/* we can clean the flag now, not need anymore */
-		sender->p_misc_flags &= ~MF_SENDING_FROM_KERNEL;
+		(*xpp)->p_misc_flags &= ~MF_SENDING_FROM_KERNEL;
 	    }
-	    if (sender->p_misc_flags & MF_SIG_DELAY)
-		sig_delay_done(sender);
+	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
+		sig_delay_done(*xpp);
 
-            *xpp = sender->p_q_link;		/* remove from queue */
-	    sender->p_q_link = NULL;
+            *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
 	}
-	xpp = &sender->p_q_link;		/* proceed to next */
+	xpp = &(*xpp)->p_q_link;		/* proceed to next */
     }
   }
 
