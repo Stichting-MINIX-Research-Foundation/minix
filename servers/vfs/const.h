@@ -32,8 +32,6 @@
 
 #define SYMLOOP		16
 
-#define ROOT_INODE         1		/* inode number for root directory */
-
 #define LABEL_MAX	16	/* maximum label size (including '\0'). Should
 				 * not be smaller than 16 or bigger than
 				 * M3_LONG_STRING.

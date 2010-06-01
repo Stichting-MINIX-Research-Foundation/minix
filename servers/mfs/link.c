@@ -2,7 +2,6 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <minix/com.h>
-#include <minix/callnr.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -10,6 +9,9 @@
 
 #define SAME 1000
 
+
+FORWARD _PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st,
+					off_t end)			);
 FORWARD _PROTOTYPE( int remove_dir, (struct inode *rldirp,
 			struct inode *rip, char dir_name[NAME_MAX])	);
 FORWARD _PROTOTYPE( int unlink_file, (struct inode *dirp,
@@ -38,20 +40,20 @@ PUBLIC int fs_link()
   struct inode *new_ip;
   phys_bytes len;
 
-  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
+  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
   /* Copy the link name's last component */
-  r = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0, 
-		       (vir_bytes) string, (phys_bytes) len, D);
+  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  		       (vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
   if (r != OK) return r;
-  MFS_NUL(string, len, sizeof(string));
+  NUL(string, len, sizeof(string));
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* Check to see if the file has maximum number of links already. */
   r = OK;
-  if(rip->i_nlinks >= (rip->i_sp->s_version == V1 ? CHAR_MAX : SHRT_MAX))
+  if(rip->i_nlinks >= LINK_MAX)
 	  r = EMLINK;
 
   /* Only super_user may link to directories. */
@@ -66,19 +68,17 @@ PUBLIC int fs_link()
   }
 
   /* Temporarily open the last dir */
-  if( (ip = get_inode(fs_dev, fs_m_in.REQ_DIR_INO)) == NULL)
+  if( (ip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_DIR_INO)) == NULL)
 	  return(EINVAL);
 
   /* If 'name2' exists in full (even if no space) set 'r' to error. */
-  if (r == OK) {
-	  if((new_ip = advance(ip, string, IGN_PERM)) == NULL) {
-		  r = err_code;
-		  if(r == ENOENT)
-			  r = OK;
-	  } else {
-		  put_inode(new_ip);
-		  r = EEXIST;
-	  }
+  if((new_ip = advance(ip, string, IGN_PERM)) == NULL) {
+	  r = err_code;
+	  if(r == ENOENT)
+		  r = OK;
+  } else {
+	  put_inode(new_ip);
+	  r = EEXIST;
   }
   
   /* Try to link. */
@@ -115,18 +115,17 @@ PUBLIC int fs_unlink()
   phys_bytes len;
   
   /* Copy the last component */
-  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
-  r = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0, 
-		       (vir_bytes) string, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
+  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  		       (vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
   if (r != OK) return r;
-  MFS_NUL(string, len, sizeof(string));
+  NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (rldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* The last directory exists.  Does the file also exist? */
-  r = OK;
   rip = advance(rldirp, string, IGN_PERM);
   r = err_code;
 
@@ -169,13 +168,12 @@ PUBLIC int fs_rdlink()
   struct buf *bp;              /* buffer containing link text */
   register struct inode *rip;  /* target inode */
   register int r;              /* return value */
-  int copylen;
+  size_t copylen;
   
-  copylen = fs_m_in.REQ_MEM_SIZE;
-  if (copylen <= 0) return(EINVAL);
+  copylen = min( (size_t) fs_m_in.REQ_MEM_SIZE, UMAX_FILE_POS);
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   if(!S_ISLNK(rip->i_mode))
@@ -184,14 +182,16 @@ PUBLIC int fs_rdlink()
 	r = EIO;
   else {
 	/* Passed all checks */
-	  if (copylen > rip->i_size)
-		  copylen = rip->i_size;
-	  bp = get_block(rip->i_dev, b, NORMAL);
-	  r = sys_safecopyto(FS_PROC_NR, fs_m_in.REQ_GRANT, 0, 
-			     (vir_bytes) bp->b_data, (vir_bytes) copylen, D);
-	  put_block(bp, DIRECTORY_BLOCK);
-	  if (r == OK)
-		  fs_m_out.RES_NBYTES = copylen;
+	/* We can safely cast to unsigned, because copylen is guaranteed to be
+	   below max file size */
+	copylen = min( copylen, (unsigned) rip->i_size);
+	bp = get_block(rip->i_dev, b, NORMAL);
+	r = sys_safecopyto(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+			   (vir_bytes) 0, (vir_bytes) bp->b_data,
+	  		   (size_t) copylen, D);
+	put_block(bp, DIRECTORY_BLOCK);
+	if (r == OK)
+		fs_m_out.RES_NBYTES = copylen;
   }
   
   put_inode(rip);
@@ -218,7 +218,7 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
 
   /* search_dir checks that rip is a directory too. */
   if ((r = search_dir(rip, "", (ino_t *) 0, IS_EMPTY, IGN_PERM)) != OK)
-  	return r;
+  	return(r);
 
   if (strcmp(dir_name, ".") == 0 || strcmp(dir_name, "..") == 0)return(EINVAL);
   if (rip->i_num == ROOT_INODE) return(EBUSY); /* can't remove 'root' */
@@ -288,21 +288,21 @@ PUBLIC int fs_rename()
   phys_bytes len;
   
   /* Copy the last component of the old name */
-  len = MFS_MIN(fs_m_in.REQ_REN_LEN_OLD, sizeof(old_name));
-  r = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_REN_GRANT_OLD, 0, 
-		       (vir_bytes) old_name, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_REN_LEN_OLD, sizeof(old_name));
+  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_OLD,
+  		       (vir_bytes) 0, (vir_bytes) old_name, (size_t) len, D);
   if (r != OK) return r;
-  MFS_NUL(old_name, len, sizeof(old_name));
+  NUL(old_name, len, sizeof(old_name));
   
   /* Copy the last component of the new name */
-  len = MFS_MIN(fs_m_in.REQ_REN_LEN_NEW, sizeof(new_name));
-  r = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_REN_GRANT_NEW, 0, 
-		       (vir_bytes) new_name, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_REN_LEN_NEW, sizeof(new_name));
+  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_NEW,
+  		       (vir_bytes) 0, (vir_bytes) new_name, (size_t) len, D);
   if (r != OK) return r;
-  MFS_NUL(new_name, len, sizeof(new_name));
+  NUL(new_name, len, sizeof(new_name));
 
   /* Get old dir inode */ 
-  if( (old_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_OLD_DIR)) == NULL) 
+  if( (old_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_OLD_DIR)) == NULL) 
 	return(err_code);
 
   old_ip = advance(old_dirp, old_name, IGN_PERM);
@@ -315,7 +315,7 @@ PUBLIC int fs_rename()
   }
 
   /* Get new dir inode */ 
-  if( (new_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_NEW_DIR)) == NULL) 
+  if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) 
 	r = err_code;
   new_ip = advance(new_dirp, new_name, IGN_PERM); /* not required to exist */
 
@@ -325,11 +325,11 @@ PUBLIC int fs_rename()
 	put_inode(new_ip);
 	r = EBUSY;
   }
-  
+
   if(old_ip != NULL)
 	  odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY); /* TRUE iff dir */
   else
-	  odir = FALSE; /* FIXME: is this a safe default? */
+	  odir = FALSE; 
 
   /* If it is ok, check for a variety of possible errors. */
   if(r == OK) {
@@ -380,9 +380,8 @@ PUBLIC int fs_rename()
 	if(new_ip == NULL) {
 		/* don't rename a file with a file system mounted on it. 
 		if (old_ip->i_dev != old_dirp->i_dev) r = EXDEV;*/
-		if(odir && new_dirp->i_nlinks >=
-		   (new_dirp->i_sp->s_version == V1 ? CHAR_MAX : SHRT_MAX) &&
-		   !same_pdir && r == OK) { 
+		if (odir && new_dirp->i_nlinks >= LINK_MAX &&
+		    !same_pdir && r == OK) { 
 			r = EMLINK;
 		}
 	} else {
@@ -427,15 +426,16 @@ PUBLIC int fs_rename()
 	numb = old_ip->i_num;		/* inode number of old file */
 	  
 	if(same_pdir) {
-		r = search_dir(old_dirp,old_name,(ino_t *) 0,DELETE,IGN_PERM);
+		r = search_dir(old_dirp, old_name, NULL, DELETE, IGN_PERM);
 						/* shouldn't go wrong. */
 		if(r == OK)
-			search_dir(old_dirp, new_name, &numb, ENTER, IGN_PERM);
+			(void) search_dir(old_dirp, new_name, &numb, ENTER,
+					  IGN_PERM);
 	} else {
 		r = search_dir(new_dirp, new_name, &numb, ENTER, IGN_PERM);
 		if(r == OK)
-			search_dir(old_dirp, old_name, (ino_t *) 0, DELETE,
-				   IGN_PERM);
+			(void) search_dir(old_dirp, old_name, NULL, DELETE,
+					  IGN_PERM);
 	}
   }
   /* If r is OK, the ctime and mtime of old_dirp and new_dirp have been marked
@@ -470,7 +470,7 @@ PUBLIC int fs_ftrunc(void)
   off_t start, end;
   int r;
   
-  if( (rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   start = fs_m_in.REQ_TRC_START_LO;
@@ -500,7 +500,8 @@ off_t newsize;			/* inode must become this size */
  * O_APPEND mode, as this is different per fd and is checked when 
  * writing is done.
  */
-  int scale, file_type;
+  int r;
+  mode_t file_type;
 
   file_type = rip->i_mode & I_TYPE;	/* check to see if file is special */
   if (file_type == I_CHAR_SPECIAL || file_type == I_BLOCK_SPECIAL)
@@ -508,10 +509,11 @@ off_t newsize;			/* inode must become this size */
   if(newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
 	return(EFBIG);
 
-  scale = rip->i_sp->s_log_zone_size;
-
   /* Free the actual space if truncating. */
-  if(newsize < rip->i_size) freesp_inode(rip, newsize, rip->i_size);
+  if(newsize < rip->i_size) {
+  	if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
+  		return(r);
+  }
 
   /* Clear the rest of the last zone if expanding. */
   if(newsize > rip->i_size) clear_zone(rip, rip->i_size, 0);
@@ -528,7 +530,7 @@ off_t newsize;			/* inode must become this size */
 /*===========================================================================*
  *				freesp_inode				     *
  *===========================================================================*/
-PUBLIC int freesp_inode(rip, start, end)
+PRIVATE int freesp_inode(rip, start, end)
 register struct inode *rip;	/* pointer to inode to be partly freed */
 off_t start, end;		/* range of bytes to free (end uninclusive) */
 {
@@ -544,7 +546,7 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
  * fcntl().
  */
   off_t p, e;
-  int zone_size;
+  int zone_size, r;
   int zero_last, zero_first;
 
   if(end > rip->i_size)		/* freeing beyond end makes no sense */
@@ -575,8 +577,11 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
 	 */
 	e = end/zone_size;
 	if(end == rip->i_size && (end % zone_size)) e++;
-	for(p = nextblock(start, zone_size)/zone_size; p < e; p ++)
-		write_map(rip, p*zone_size, NO_ZONE, WMAP_FREE);
+	for(p = nextblock(start, zone_size)/zone_size; p < e; p ++) {
+		if((r = write_map(rip, p*zone_size, NO_ZONE, WMAP_FREE)) != OK)
+			return(r);
+	}
+
   }
 
   rip->i_update |= CTIME | MTIME;
@@ -619,7 +624,7 @@ int zone_size;
  * FIRST_HALF: 0..pos-1 will be zeroed
  * LAST_HALF:  pos..zone_size-1 will be zeroed
  */
-  int offset, len;
+  off_t offset, len;
 
   /* Offset of zeroing boundary. */
   offset = pos % zone_size;
@@ -648,7 +653,8 @@ off_t len;
   block_t b;
   struct buf *bp;
   off_t offset;
-  int bytes, block_size;
+  unsigned short block_size;
+  size_t bytes;
 
   block_size = rip->i_sp->s_block_size;
 
@@ -659,7 +665,7 @@ off_t len;
 		panic("zerozone_range: no block");
 	offset = pos % block_size;
 	bytes = block_size - offset;
-	if (bytes > len)
+	if (bytes > (size_t) len)
 		bytes = len;
 	memset(bp->b_data + offset, 0, bytes);
 	bp->b_dirt = DIRTY;

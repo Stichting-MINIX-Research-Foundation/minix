@@ -1,3 +1,6 @@
+#ifndef __MFS_CONST_H__
+#define __MFS_CONST_H__
+
 /* Tables sizes */
 #define V1_NR_DZONES       7	/* # direct zone numbers in a V1 inode */
 #define V1_NR_TZONES       9	/* total # zone numbers in a V1 inode */
@@ -31,8 +34,6 @@
 
 /* Miscellaneous constants */
 #define SU_UID 	 ((uid_t) 0)	/* super_user's uid_t */
-#define SYS_UID  ((uid_t) 0)	/* uid_t for processes MM and INIT */
-#define SYS_GID  ((gid_t) 0)	/* gid_t for processes MM and INIT */
 #define NORMAL	           0	/* forces get_block to do disk read */
 #define NO_READ            1	/* prevents get_block from doing disk read */
 #define PREFETCH           2	/* tells get_block not to read or mark dev */
@@ -50,17 +51,6 @@
 #define IGN_PERM	0
 #define CHK_PERM	1
 
-#define PATH_TRANSPARENT 000   /* parse_path stops at final object */
-#define PATH_PENULTIMATE 001   /* parse_path stops at last but one name */
-#define PATH_OPAQUE      002   /* parse_path stops at final name */
-#define PATH_NONSYMBOLIC 004   /* parse_path scans final name if symbolic */
-#define PATH_STRIPDOT    010   /* parse_path strips /. from path */
-#define EAT_PATH         PATH_TRANSPARENT
-#define EAT_PATH_OPAQUE  PATH_OPAQUE 
-#define LAST_DIR         PATH_PENULTIMATE
-#define LAST_DIR_NOTDOT  PATH_PENULTIMATE | PATH_STRIPDOT
-#define LAST_DIR_EATSYM  PATH_NONSYMBOLIC
-
 #define CLEAN              0	/* disk and memory copies identical */
 #define DIRTY              1	/* disk and memory copies differ */
 #define ATIME            002	/* set if atime field needs updating */
@@ -71,10 +61,10 @@
 
 #define END_OF_FILE   (-104)	/* eof detected */
 
-#define ROOT_INODE         1		/* inode number for root directory */
+#define ROOT_INODE    ((ino_t) 1)	/* inode number for root directory */
 #define BOOT_BLOCK  ((block_t) 0)	/* block number of boot block */
-#define SUPER_BLOCK_BYTES (1024)	/* bytes offset */
-#define START_BLOCK 	2		/* first block of FS (not counting SB) */
+#define SUPER_BLOCK_BYTES  (1024)	/* bytes offset */
+#define START_BLOCK ((block_t) 2)	/* first block of FS (not counting SB) */
 
 #define DIR_ENTRY_SIZE       usizeof (struct direct)  /* # bytes/dir entry   */
 #define NR_DIR_ENTRIES(b)   ((b)/DIR_ENTRY_SIZE)  /* # dir entries/blk   */
@@ -100,12 +90,13 @@
 #define V2_INDIRECTS(b)   ((b)/V2_ZONE_NUM_SIZE)  /* # zones/indir block */
 #define V2_INODES_PER_BLOCK(b) ((b)/V2_INODE_SIZE)/* # V2 dsk inodes/blk */
 
-#define MFS_MIN(a,b) mfs_min_f(__FILE__,__LINE__,(a), (b))
-#define MFS_NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
+#define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
 
 /* Args to dev_bio/dev_io */ 
 #define MFS_DEV_READ    10001
 #define MFS_DEV_WRITE   10002 
 #define MFS_DEV_SCATTER 10003
 #define MFS_DEV_GATHER  10004
+
+#endif
 

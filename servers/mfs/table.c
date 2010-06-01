@@ -6,8 +6,6 @@
 #define _TABLE
 
 #include "fs.h"
-#include <minix/callnr.h>
-#include <minix/com.h>
 #include "inode.h"
 #include "buf.h"
 #include "super.h"

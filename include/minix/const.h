@@ -150,6 +150,7 @@
 /* Some limits. */
 #define MAX_INODE_NR ((ino_t) 037777777777)	/* largest inode number */
 #define MAX_FILE_POS ((off_t) 0x7FFFFFFF)	/* largest legal file offset */
+#define UMAX_FILE_POS ((unsigned) 0x7FFFFFF)	/* largest legal file offset */
 
 #define MAX_SYM_LOOPS	8	/* how many symbolic links are recursed */
 
@@ -158,6 +159,8 @@
 #define NO_ZONE                ((zone_t) 0)	/* absence of a zone number */
 #define NO_DEV                  ((dev_t) 0)	/* absence of a device numb */
 #define NO_LINK		      ((nlink_t) 0)	/* absence of incoming links */
+#define INVAL_UID	       ((uid_t) -1)	/* invalid uid value */
+#define INVAL_GID	       ((gid_t) -1)	/* invalid gid value */
 
 #define SERVARNAME		"cttyline"
 

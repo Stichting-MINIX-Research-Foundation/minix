@@ -1,3 +1,6 @@
+#ifndef __MFS_TYPE_H__
+#define __MFS_TYPE_H__
+
 /* Declaration of the V1 inode as it is on the disk (not in core). */
 typedef struct {		/* V1.x disk inode */
   u16_t d1_mode;		/* file type, protection, etc. */
@@ -34,6 +37,8 @@ struct buf {
   dev_t b_dev;                  /* major | minor device where block resides */
   char b_dirt;                  /* CLEAN or DIRTY */
   char b_count;                 /* number of users of this buffer */
-  int b_bytes;                  /* Number of bytes allocated in bp */
+  unsigned int b_bytes;         /* Number of bytes allocated in bp */
 };
+
+#endif
 

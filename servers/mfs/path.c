@@ -10,12 +10,11 @@
  */
  
 #include "fs.h"
+#include "assert.h"
 #include <string.h>
-#include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -38,52 +37,46 @@ FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino,
 PUBLIC int fs_lookup()
 {
   cp_grant_id_t grant, grant2;
-  int r, r1, len, flags, symlinks;
+  int r, r1, flags, symlinks;
+  unsigned int len;
   size_t offset = 0, path_size, cred_size;
   ino_t dir_ino, root_ino;
   struct inode *rip;
 
-  grant		= fs_m_in.REQ_GRANT;
-  path_size	= fs_m_in.REQ_PATH_SIZE;	/* Size of the buffer */
-  len		= fs_m_in.REQ_PATH_LEN;	/* including terminating nul */
-  dir_ino	= fs_m_in.REQ_DIR_INO;
-  root_ino	= fs_m_in.REQ_ROOT_INO;
-  flags		= fs_m_in.REQ_FLAGS;
+  grant		= (cp_grant_id_t) fs_m_in.REQ_GRANT;
+  path_size	= (size_t) fs_m_in.REQ_PATH_SIZE; /* Size of the buffer */
+  len		= (int) fs_m_in.REQ_PATH_LEN; /* including terminating nul */
+  dir_ino	= (ino_t) fs_m_in.REQ_DIR_INO;
+  root_ino	= (ino_t) fs_m_in.REQ_ROOT_INO;
+  flags		= (int) fs_m_in.REQ_FLAGS;
 
   /* Check length. */
   if(len > sizeof(user_path)) return(E2BIG);	/* too big for buffer */
-  if(len < 1) return(EINVAL);			/* too small */
+  if(len == 0) return(EINVAL);			/* too small */
 
   /* Copy the pathname and set up caller's user and group id */
-  r = sys_safecopyfrom(FS_PROC_NR, grant, /*offset*/ 0, 
-            (vir_bytes) user_path, (phys_bytes) len, D);
-  if(r != OK) {
-	printf("MFS %s:%d sys_safecopyfrom failed: %d\n", 
-	       __FILE__, __LINE__, r);
-	return(r);
-  }
+  r = sys_safecopyfrom(FS_PROC_NR, grant, /*offset*/ (vir_bytes) 0, 
+            (vir_bytes) user_path, (size_t) len, D);
+  if(r != OK) return(r);
 
   /* Verify this is a null-terminated path. */
   if(user_path[len - 1] != '\0') return(EINVAL);
 
   if(flags & PATH_GET_UCRED) { /* Do we have to copy uid/gid credentials? */
-  	grant2	= fs_m_in.REQ_GRANT2;
-  	cred_size = fs_m_in.REQ_UCRED_SIZE;
+  	grant2 = (cp_grant_id_t) fs_m_in.REQ_GRANT2;
+  	cred_size = (size_t) fs_m_in.REQ_UCRED_SIZE;
 
   	if (cred_size > sizeof(credentials)) return(EINVAL); /* Too big. */
-  	r = sys_safecopyfrom(FS_PROC_NR, grant2, 0, (vir_bytes) &credentials,
-  			     (phys_bytes) cred_size, D);
-  	if (r != OK) {
-  		printf("MFS %s:%d sys_safecopyfrom failed: %d\n",
-  		       __FILE__, __LINE__, r);
-  		return(r);
-  	}
+  	r = sys_safecopyfrom(FS_PROC_NR, grant2, (vir_bytes) 0,
+  			     (vir_bytes) &credentials, cred_size, D);
+  	if (r != OK) return(r);
+
   	caller_uid = credentials.vu_uid;
   	caller_gid = credentials.vu_gid;
   } else {
   	memset(&credentials, 0, sizeof(credentials));
-	caller_uid	= fs_m_in.REQ_UID;
-	caller_gid	= fs_m_in.REQ_GID;
+	caller_uid	= (uid_t) fs_m_in.REQ_UID;
+	caller_gid	= (gid_t) fs_m_in.REQ_GID;
   }
 
   /* Lookup inode */
@@ -94,13 +87,9 @@ PUBLIC int fs_lookup()
 	len = strlen(user_path)+1;
 	if(len > path_size) return(ENAMETOOLONG);
 
-	r1 = sys_safecopyto(FS_PROC_NR, grant, 0, (vir_bytes) user_path,
-			    (phys_bytes) len, D);
-	if(r1 != OK) {
-		printf("%s:%d fs_lookup: sys_safecopyto failed: %d\n",
-		       __FILE__, __LINE__, r1);
-		return(r1);
-	}
+	r1 = sys_safecopyto(FS_PROC_NR, grant, (vir_bytes) 0,
+			    (vir_bytes) user_path, (size_t) len, D);
+	if(r1 != OK) return(r1);
   }
 
   if(r == ELEAVEMOUNT || r == ESYMLINK) {
@@ -167,8 +156,7 @@ int *symlinkp;
 	return(ENOENT);
 
   /* If dir has been removed return ENOENT. */
-  if (rip->i_nlinks == 0) 
-	return(ENOENT);
+  if (rip->i_nlinks == NO_LINK) return(ENOENT);
  
   dup_inode(rip);
 
@@ -310,13 +298,11 @@ char *suffix;			/* current remaining path. Has to point in the
   struct buf *bp;	/* buffer containing link text */
   char *sp;		/* start of link text */
 
-  bp  = NULL;
-
   if ((blink = read_map(rip, (off_t) 0)) == NO_BLOCK)
 	return(EIO);
 
   bp = get_block(rip->i_dev, blink, NORMAL);
-  llen = rip->i_size;
+  llen = (size_t) rip->i_size;
   sp = bp->b_data;
   slen = strlen(suffix);
 
@@ -331,7 +317,8 @@ char *suffix;			/* current remaining path. Has to point in the
    * right place first, before we expand <link>. When strlen(<expandedlink>) is
    * smaller than strlen(/already/processes/path), we move the suffix to the
    * left. Is strlen(<expandedlink>) greater then we move it to the right. Else
-   * we do nothing. */ 
+   * we do nothing.
+   */ 
 
   if (slen > 0) { /* Do we have path after the link? */
 	/* For simplicity we require that suffix starts with a slash */
@@ -340,11 +327,14 @@ char *suffix;			/* current remaining path. Has to point in the
 	}
 
 	/* To be able to expand the <link>, we have to move the 'suffix'
-	 * to the right place. */
+	 * to the right place.
+	 */
 	if (slen + llen + 1 > sizeof(user_path))
 		return(ENAMETOOLONG);/* <expandedlink>+suffix+\0 does not fit*/
-	if (suffix-user_path != llen) /* Move suffix left or right if needed */
+	if ((unsigned) (suffix-user_path) != llen) { 
+		/* Move suffix left or right */
 		memmove(&user_path[llen], suffix, slen+1);
+	}
   } else {
   	if (llen + 1 > sizeof(user_path))
   		return(ENAMETOOLONG); /* <expandedlink> + \0 does not fix */
@@ -420,7 +410,7 @@ int chk_perm;			/* check permissions when string is looked up*/
    * mounted file system.  The super_block provides the linkage between the
    * inode mounted on and the root directory of the mounted file system.
    */
-  if (rip != NULL && rip->i_mountpoint) {
+  if (rip->i_mountpoint) {
 	  /* Mountpoint encountered, report it */
 	  err_code = EENTERMOUNT;
   }
@@ -458,11 +448,10 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
   while(ep[0] != '\0' && ep[0] != '/')
 	ep++;
 
-  len = ep - cp;
+  len = (size_t) (ep - cp);
 
   /* Truncate the amount to be copied if it exceeds NAME_MAX */
-  if (len > NAME_MAX)
-	len = NAME_MAX;
+  if (len > NAME_MAX) len = NAME_MAX;
 
   /* Special case of the string at cp is empty */
   if (len == 0) 
@@ -536,8 +525,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
 	bp = get_block(ldir_ptr->i_dev, b, NORMAL);	/* get a dir block */
 
-	if (bp == NO_BLOCK)
-		panic("get_block returned NO_BLOCK");
+	assert(bp != NULL);
 
 	/* Search a directory block. */
 	for (dp = &bp->b_dir[0];
@@ -549,7 +537,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 		}
 
 		/* Match occurs if string found. */
-		if (flag != ENTER && dp->d_ino != 0) {
+		if (flag != ENTER && dp->d_ino != NO_ENTRY) {
 			if (flag == IS_EMPTY) {
 				/* If this test succeeds, dir is not empty. */
 				if (strcmp(dp->d_name, "." ) != 0 &&
@@ -569,13 +557,14 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 				/* Save d_ino for recovery. */
 				t = NAME_MAX - sizeof(ino_t);
 				*((ino_t *) &dp->d_name[t]) = dp->d_ino;
-				dp->d_ino = 0;	/* erase entry */
+				dp->d_ino = NO_ENTRY;	/* erase entry */
 				bp->b_dirt = DIRTY;
 				ldir_ptr->i_update |= CTIME | MTIME;
 				ldir_ptr->i_dirt = DIRTY;
 			} else {
 				sp = ldir_ptr->i_sp;	/* 'flag' is LOOK_UP */
-				*numb = conv4(sp->s_native, (int) dp->d_ino);
+				*numb = (ino_t) conv4(sp->s_native,
+						      (int) dp->d_ino);
 			}
 			put_block(bp, DIRECTORY_BLOCK);
 			return(r);

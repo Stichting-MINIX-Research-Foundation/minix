@@ -1,9 +1,4 @@
 #include "fs.h"
-#include <fcntl.h>
-#include <string.h>
-#include <minix/com.h>
-#include <sys/stat.h>
-#include "buf.h"
 #include "inode.h"
 #include "super.h"
 #include "drivers.h"
@@ -26,45 +21,39 @@ PUBLIC int fs_readsuper()
   struct inode *root_ip;
   cp_grant_id_t label_gid;
   size_t label_len;
-  int r = OK;
+  int r;
   endpoint_t driver_e;
   int readonly, isroot;
 
-  fs_dev    = fs_m_in.REQ_DEV;
-  label_gid = fs_m_in.REQ_GRANT;
-  label_len = fs_m_in.REQ_PATH_LEN;
+  fs_dev    = (dev_t) fs_m_in.REQ_DEV;
+  label_gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
+  label_len = (size_t) fs_m_in.REQ_PATH_LEN;
   readonly  = (fs_m_in.REQ_FLAGS & REQ_RDONLY) ? 1 : 0;
   isroot    = (fs_m_in.REQ_FLAGS & REQ_ISROOT) ? 1 : 0;
 
   if (label_len > sizeof(fs_dev_label))
 	return(EINVAL);
 
-  r = sys_safecopyfrom(fs_m_in.m_source, label_gid, 0,
-		       (vir_bytes)fs_dev_label, label_len, D);
+  r = sys_safecopyfrom(fs_m_in.m_source, label_gid, (vir_bytes) 0,
+		       (vir_bytes) fs_dev_label, label_len, D);
   if (r != OK) {
-	printf("%s:%d fs_readsuper: safecopyfrom failed: %d\n",
-	       __FILE__, __LINE__, r);
+	printf("MFS %s:%d safecopyfrom failed: %d\n", __FILE__, __LINE__, r);
 	return(EINVAL);
   }
 
-  r= ds_retrieve_label_endpt(fs_dev_label, &driver_e);
-  if (r != OK)
-  {
-	printf("mfs:fs_readsuper: ds_retrieve_label_endpt failed for '%s': %d\n",
-		fs_dev_label, r);
-	return EINVAL;
+  r = ds_retrieve_label_endpt(fs_dev_label, &driver_e);
+  if (r != OK) {
+	printf("MFS %s:%d ds_retrieve_label_endpt failed for '%s': %d\n",
+		__FILE__, __LINE__, fs_dev_label, r);
+	return(EINVAL);
   }
 
   /* Map the driver endpoint for this major */
-  driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e =  driver_e;
-  use_getuptime2 = TRUE; /* Should be removed with old getuptime call. */
-  vfs_slink_storage = (char *)0xdeadbeef;	/* Should be removed together
-						 * with old lookup code.
-						 */;
+  driver_endpoints[major(fs_dev)].driver_e = driver_e;
 
   /* Open the device the file system lives on. */
-  if (dev_open(driver_e, fs_dev, driver_e, 
-	readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
+  if (dev_open(driver_e, fs_dev, driver_e,
+  	       readonly ? R_BIT : (R_BIT|W_BIT) ) != OK) {
         return(EINVAL);
   }
   
@@ -89,7 +78,7 @@ PUBLIC int fs_readsuper()
 	  return(EINVAL);
   }
   
-  if(root_ip != NULL && root_ip->i_mode == 0) {
+  if(root_ip->i_mode == 0) {
 	  printf("%s:%d zero mode for root inode?\n", __FILE__, __LINE__);
 	  put_inode(root_ip);
 	  superblock.s_dev = NO_DEV;
@@ -124,7 +113,7 @@ PUBLIC int fs_mountpoint()
   mode_t bits;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   
@@ -160,8 +149,7 @@ PUBLIC int fs_unmount()
 	  if (rip->i_count > 0 && rip->i_dev == fs_dev) count += rip->i_count;
 
   if ((root_ip = find_inode(fs_dev, ROOT_INODE)) == NULL) {
-  	printf("MFS: couldn't find root inode. Unmount failed.\n");
-  	panic("MFS: couldn't find root inode: %d", EINVAL);
+  	panic("MFS: couldn't find root inode\n");
   	return(EINVAL);
   }
    
@@ -172,7 +160,7 @@ PUBLIC int fs_unmount()
   (void) fs_sync();
 
   /* Close the device the file system lives on. */
-  dev_close(driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e, fs_dev);
+  dev_close(driver_endpoints[major(fs_dev)].driver_e, fs_dev);
 
   /* Finish off the unmount. */
   superblock.s_dev = NO_DEV;

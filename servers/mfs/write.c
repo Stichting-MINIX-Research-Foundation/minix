@@ -218,16 +218,10 @@ struct super_block *sb;		/* superblock of device block resides on */
 /* Return nonzero if the indirect block pointed to by bp contains
  * only NO_ZONE entries.
  */
-  int i;
-  if(sb->s_version == V1) {
-	for(i = 0; i < V1_INDIRECTS; i++)
-		if(bp->b_v1_ind[i] != NO_ZONE)
-			return(0);
-  } else {
-	for(i = 0; i < V2_INDIRECTS(sb->s_block_size); i++)
-		if(bp->b_v2_ind[i] != NO_ZONE)
-			return(0);
-  }
+  unsigned int i;
+  for(i = 0; i < V2_INDIRECTS(sb->s_block_size); i++)
+	if( bp->b_v2_ind[i] != NO_ZONE)
+		return(0);
 
   return(1);
 }
@@ -246,24 +240,23 @@ int flag;			/* 1 if called by new_block, 0 otherwise */
  * fs_readwrite(), truncate_inode(), and new_block().
  */
 
-  register struct buf *bp;
-  register block_t b, blo, bhi;
-  register off_t next;
-  register int scale;
-  register zone_t zone_size;
+  struct buf *bp;
+  block_t b, blo, bhi;
+  off_t next;
+  int scale, zone_size;
 
   /* If the block size and zone size are the same, clear_zone() not needed. */
   scale = rip->i_sp->s_log_zone_size;
   if (scale == 0) return;
 
-  zone_size = (zone_t) rip->i_sp->s_block_size << scale;
-  if (flag == 1) pos = (pos/zone_size) * zone_size;
+  zone_size = rip->i_sp->s_block_size << scale;
+  if (flag == 1) pos = (off_t) ((pos/zone_size) * zone_size);
   next = pos + rip->i_sp->s_block_size - 1;
 
   /* If 'pos' is in the last block of a zone, do not clear the zone. */
   if (next/zone_size != pos/zone_size) return;
   if ( (blo = read_map(rip, next)) == NO_BLOCK) return;
-  bhi = (  ((blo>>scale)+1) << scale)   - 1;
+  bhi = (block_t) (  ((blo>>scale)+1) << scale)   - 1;
 
   /* Clear all the blocks between 'blo' and 'bhi'. */
   for (b = blo; b <= bhi; b++) {
@@ -298,9 +291,10 @@ off_t position;			/* file pointer */
 		/* First search for this file. Start looking from
 		 * the file's first data zone to prevent fragmentation
 		 */
-		 if ( (z = rip->i_zone[0]) == NO_ZONE) {
-		 	/* no first zone for file either */
-			z = rip->i_sp->s_firstdatazone; /* let alloc_zone decide */
+		if ( (z = rip->i_zone[0]) == NO_ZONE) {
+		 	/* No first zone for file either, let alloc_zone
+		 	 * decide. */
+			z = (zone_t) rip->i_sp->s_firstdatazone;
 		}
 	} else {
 		/* searched before, start from last find */
@@ -337,7 +331,7 @@ register struct buf *bp;	/* pointer to buffer to zero */
 /* Zero a block. */
   ASSERT(bp->b_bytes > 0);
   ASSERT(bp->bp);
-  memset(bp->b_data, 0, bp->b_bytes);
+  memset(bp->b_data, 0, (size_t) bp->b_bytes);
   bp->b_dirt = DIRTY;
 }
 

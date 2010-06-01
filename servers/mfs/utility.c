@@ -1,13 +1,7 @@
 #include "fs.h"
-#include <sys/stat.h>
-#include <string.h>
-#include <minix/com.h>
-#include <minix/callnr.h>
-#include <stdlib.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
-#include <minix/vfsif.h>
 
 
 /*===========================================================================*
@@ -65,14 +59,10 @@ PUBLIC time_t clock_time()
 
   register int k;
   clock_t uptime;
+  time_t boottime;
 
-  if (use_getuptime2) {
-	if ( (k=getuptime2(&uptime,&boottime)) != OK)
+  if ( (k=getuptime2(&uptime, &boottime)) != OK)
 		panic("clock_time: getuptme2 failed: %d", k);
-  } else {
-	if ( (k=getuptime(&uptime)) != OK)
-		panic("clock_time err: %d", k);
-  }
   
   return( (time_t) (boottime + (uptime/sys_hz())));
 }
@@ -81,33 +71,24 @@ PUBLIC time_t clock_time()
 /*===========================================================================*
  *				mfs_min					     *
  *===========================================================================*/
-PUBLIC int mfs_min_f(char *file, int line, int v1, int v2)
+PUBLIC int min(unsigned int l, unsigned int r)
 {
-	if(v1 < 0 || v2 < 0) {
-		printf("mfs:%s:%d: strange string lengths: %d, %d\n",
-			file, line, v1, v2);
-		panic("strange string lengths");
-	}
-	if(v2 >= v1) return v1;
+	if(r >= l) return(l);
 
-	return v2;
+	return(r);
 }
 
 
 /*===========================================================================*
  *				mfs_nul					     *
  *===========================================================================*/
-PUBLIC void mfs_nul_f(char *file, int line, char *str, int len, int maxlen)
+PUBLIC void mfs_nul_f(char *file, int line, char *str, unsigned int len,
+unsigned int maxlen)
 {
-	if(len < 1) {
-		printf("mfs:%s:%d: %d-length string?!\n", file, line, len);
-		panic("strange string length");
-	}
-	if(len < maxlen && str[len-1] != '\0') {
-		printf("mfs:%s:%d: string (length %d, maxlen %d) "
-			"not null-terminated\n",
-			file, line, len, maxlen);
-	}
+  if(len < maxlen && str[len-1] != '\0') {
+	printf("MFS %s:%d string (length %d, maxlen %d) not null-terminated\n",
+		file, line, len, maxlen);
+  }
 }
 
 #define MYASSERT(c) if(!(c)) { printf("MFS:%s:%d: sanity check: %s failed\n", \

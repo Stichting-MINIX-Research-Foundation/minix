@@ -1,12 +1,9 @@
 #include "fs.h"
-#include <unistd.h>
-#include <minix/callnr.h>
-#include "buf.h"
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( in_group, (gid_t grp)				);
+FORWARD _PROTOTYPE( int in_group, (gid_t grp)				);
 
 
 /*===========================================================================*
@@ -17,13 +14,16 @@ PUBLIC int fs_chmod()
 /* Perform the chmod(name, mode) system call. */
 
   register struct inode *rip;
+  mode_t mode;
+
+  mode = (mode_t) fs_m_in.REQ_MODE;
   
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* Now make the change. Clear setgid bit if file is not in caller's grp */
-  rip->i_mode = (rip->i_mode & ~ALL_MODES) | (fs_m_in.REQ_MODE & ALL_MODES);
+  rip->i_mode = (rip->i_mode & ~ALL_MODES) | (mode & ALL_MODES);
   rip->i_update |= CTIME;
   rip->i_dirt = DIRTY;
 
@@ -44,14 +44,14 @@ PUBLIC int fs_chown()
   register int r;
 
   /* Temporarily open the file. */
-  if( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* Not permitted to change the owner of a file on a read-only file sys. */
   r = read_only(rip);
   if (r == OK) {
-	  rip->i_uid = fs_m_in.REQ_UID;
-	  rip->i_gid = fs_m_in.REQ_GID;
+	  rip->i_uid = (uid_t) fs_m_in.REQ_UID;
+	  rip->i_gid = (gid_t) fs_m_in.REQ_GID;
 	  rip->i_mode &= ~(I_SET_UID_BIT | I_SET_GID_BIT);
 	  rip->i_update |= CTIME;
 	  rip->i_dirt = DIRTY;

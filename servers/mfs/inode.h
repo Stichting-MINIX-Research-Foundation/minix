@@ -1,3 +1,6 @@
+#ifndef __MFS_INODE_H__
+#define __MFS_INODE_H__
+
 /* Inode table.  This table holds inodes that are currently in use.  In some
  * cases they have been opened by an open() or creat() system call, in other
  * cases the file system itself needs the inode for one reason or another,
@@ -28,11 +31,11 @@ EXTERN struct inode {
   dev_t i_dev;			/* which device is the inode on */
   ino_t i_num;			/* inode number on its (minor) device */
   int i_count;			/* # times inode used; 0 means slot is free */
-  int i_ndzones;		/* # direct zones (Vx_NR_DZONES) */
-  int i_nindirs;		/* # indirect zones per indirect block */
+  unsigned int i_ndzones;	/* # direct zones (Vx_NR_DZONES) */
+  unsigned int i_nindirs;	/* # indirect zones per indirect block */
   struct super_block *i_sp;	/* pointer to super block for inode's device */
   char i_dirt;			/* CLEAN or DIRTY */
-  bit_t i_zsearch;		/* where to start search for new zones */
+  zone_t i_zsearch;		/* where to start search for new zones */
   
   char i_mountpoint;		/* true if mounted on */
 
@@ -57,3 +60,5 @@ EXTERN unsigned int inode_cache_miss;
 /* Field values.  Note that CLEAN and DIRTY are defined in "const.h" */
 #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
 #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
+
+#endif

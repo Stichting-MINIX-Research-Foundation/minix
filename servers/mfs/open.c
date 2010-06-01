@@ -1,16 +1,12 @@
 #include "fs.h"
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
-#include <minix/callnr.h>
 #include <minix/com.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
 
-PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 FORWARD _PROTOTYPE( struct inode *new_node, (struct inode *ldirp, 
 	char *string, mode_t bits, zone_t z0));
 
@@ -28,21 +24,21 @@ PUBLIC int fs_create()
   char lastc[NAME_MAX];
   
   /* Read request message */
-  omode = fs_m_in.REQ_MODE;
-  caller_uid = fs_m_in.REQ_UID;
-  caller_gid = fs_m_in.REQ_GID;
+  omode = (mode_t) fs_m_in.REQ_MODE;
+  caller_uid = (uid_t) fs_m_in.REQ_UID;
+  caller_gid = (gid_t) fs_m_in.REQ_GID;
   
   /* Try to make the file. */ 
 
   /* Copy the last component (i.e., file name) */
-  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
-  err_code = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0,
-			      (vir_bytes) lastc, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
+  err_code = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  			    (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
   if (err_code != OK) return err_code;
-  MFS_NUL(lastc, len, sizeof(lastc));
+  NUL(lastc, len, sizeof(lastc));
 
   /* Get last directory inode (i.e., directory that will hold the new inode) */
-  if ((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if ((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
 
   /* Create a new inode by calling new_node(). */
@@ -57,7 +53,6 @@ PUBLIC int fs_create()
   }
   
   /* Reply message */
-  fs_m_out.m_source = rip->i_dev;  /* filled with FS endpoint by the system */
   fs_m_out.RES_INODE_NR = rip->i_num;
   fs_m_out.RES_MODE = rip->i_mode;
   fs_m_out.RES_FILE_SIZE_LO = rip->i_size;
@@ -83,21 +78,22 @@ PUBLIC int fs_mknod()
   phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
-  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
-  err_code = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0,
-			      (vir_bytes) lastc, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
+  err_code = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  			    (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
   if (err_code != OK) return err_code;
-  MFS_NUL(lastc, len, sizeof(lastc));
+  NUL(lastc, len, sizeof(lastc));
   
-  caller_uid = fs_m_in.REQ_UID;
-  caller_gid = fs_m_in.REQ_GID;
+  caller_uid = (uid_t) fs_m_in.REQ_UID;
+  caller_gid = (gid_t) fs_m_in.REQ_GID;
   
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
   
   /* Try to create the new node */
-  ip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) fs_m_in.REQ_DEV);
+  ip = new_node(ldirp, lastc, (mode_t) fs_m_in.REQ_MODE,
+  		(zone_t) fs_m_in.REQ_DEV);
 
   put_inode(ip);
   put_inode(ldirp);
@@ -117,21 +113,21 @@ PUBLIC int fs_mkdir()
   phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
-  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
-  err_code = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0,
-			      (vir_bytes) lastc, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
+  err_code = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  			   (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
   if(err_code != OK) return(err_code);
-  MFS_NUL(lastc, len, sizeof(lastc));
+  NUL(lastc, len, sizeof(lastc));
 
-  caller_uid = fs_m_in.REQ_UID;
-  caller_gid = fs_m_in.REQ_GID;
+  caller_uid = (uid_t) fs_m_in.REQ_UID;
+  caller_gid = (gid_t) fs_m_in.REQ_GID;
   
   /* Get last directory inode */
-  if((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
       return(ENOENT);
   
   /* Next make the inode. If that fails, return error code. */
-  rip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) 0);
+  rip = new_node(ldirp, lastc, (mode_t) fs_m_in.REQ_MODE, (zone_t) 0);
   
   if(rip == NULL || err_code == EEXIST) {
 	  put_inode(rip);		/* can't make dir: it already exists */
@@ -145,7 +141,7 @@ PUBLIC int fs_mkdir()
 
   /* Now make dir entries for . and .. unless the disk is completely full. */
   /* Use dot1 and dot2, so the mode of the directory isn't important. */
-  rip->i_mode = fs_m_in.REQ_MODE;	/* set mode */
+  rip->i_mode = (mode_t) fs_m_in.REQ_MODE;	/* set mode */
   r1 = search_dir(rip, dot1, &dot, ENTER, IGN_PERM);/* enter . in the new dir*/
   r2 = search_dir(rip, dot2, &dotdot, ENTER, IGN_PERM); /* enter .. in the new
 							 dir */
@@ -160,7 +156,7 @@ PUBLIC int fs_mkdir()
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
 	  if(search_dir(ldirp, lastc, (ino_t *) 0, DELETE, IGN_PERM) != OK)
-		  panic("Dir disappeared: %d", rip->i_num);
+		  panic("Dir disappeared: %ul", rip->i_num);
 	  rip->i_nlinks--;	/* undo the increment done in new_node() */
   }
   rip->i_dirt = DIRTY;		/* either way, i_nlinks has changed */
@@ -183,18 +179,18 @@ PUBLIC int fs_slink()
   char string[NAME_MAX];       /* last component of the new dir's path name */
   struct buf *bp;              /* disk buffer for link */
     
-  caller_uid = fs_m_in.REQ_UID;
-  caller_gid = fs_m_in.REQ_GID;
+  caller_uid = (uid_t) fs_m_in.REQ_UID;
+  caller_gid = (gid_t) fs_m_in.REQ_GID;
   
   /* Copy the link name's last component */
-  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
-  r = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0,
-		       (vir_bytes) string, (phys_bytes) len, D);
+  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
+  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  			(vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
   if (r != OK) return(r);
-  MFS_NUL(string, len, sizeof(string));
+  NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
-  if( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if( (ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
   
   /* Create the inode for the symlink. */
@@ -204,36 +200,38 @@ PUBLIC int fs_slink()
   /* Allocate a disk block for the contents of the symlink.
    * Copy contents of symlink (the name pointed to) into first disk block. */
   if( (r = err_code) == OK) {
-	  r = (bp = new_block(sip, (off_t) 0)) == NULL ? err_code : 
-		  sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT3, 0,
-				   (vir_bytes) bp->b_data,
-				   (vir_bytes) fs_m_in.REQ_MEM_SIZE, D);
+  	bp = new_block(sip, (off_t) 0);
+  	if (bp == NULL)
+  		r = err_code;
+  	else
+  		r = sys_safecopyfrom(FS_PROC_NR,
+  				     (cp_grant_id_t) fs_m_in.REQ_GRANT3,
+				     (vir_bytes) 0, (vir_bytes) bp->b_data,
+				     (size_t) fs_m_in.REQ_MEM_SIZE, D);
 
-	  if(r == OK) {
-		  bp->b_data[_MIN_BLOCK_SIZE-1] = '\0';
-		  sip->i_size = strlen(bp->b_data);
-		  if(sip->i_size != fs_m_in.REQ_MEM_SIZE) {
-			  /* This can happen if the user provides a buffer
-			   * with a \0 in it. This can cause a lot of trouble
-			   * when the symlink is used later. We could just use
-			   * the strlen() value, but we want to let the user
-			   * know he did something wrong. ENAMETOOLONG doesn't
-			   * exactly describe the error, but there is no
-			   * ENAMETOOWRONG.
-			   */
-			  r = ENAMETOOLONG;
-		  }
-	  }
+	if(bp != NULL && r == OK) {
+		bp->b_data[_MIN_BLOCK_SIZE-1] = '\0';
+		sip->i_size = (off_t) strlen(bp->b_data);
+		if(sip->i_size != fs_m_in.REQ_MEM_SIZE) {
+			/* This can happen if the user provides a buffer
+			 * with a \0 in it. This can cause a lot of trouble
+			 * when the symlink is used later. We could just use
+			 * the strlen() value, but we want to let the user
+			 * know he did something wrong. ENAMETOOLONG doesn't
+			 * exactly describe the error, but there is no
+			 * ENAMETOOWRONG.
+			 */
+			r = ENAMETOOLONG;
+		}
+	}
 	  
-	  put_block(bp, DIRECTORY_BLOCK); /* put_block() accepts NULL. */
+	put_block(bp, DIRECTORY_BLOCK); /* put_block() accepts NULL. */
   
-	  if(r != OK) {
-		  sip->i_nlinks = 0;
-		  if(search_dir(ldirp, string, (ino_t *) 0, DELETE, 
-							IGN_PERM) != OK)
-					
+	if(r != OK) {
+		sip->i_nlinks = NO_LINK;
+		if(search_dir(ldirp, string, NULL, DELETE, IGN_PERM) != OK)
 			  panic("Symbolic link vanished");
-	  } 
+	} 
   }
 
   /* put_inode() accepts NULL as a noop, so the below are safe. */
@@ -266,9 +264,7 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
   /* Get final component of the path. */
   rip = advance(ldirp, string, IGN_PERM);
 
-  if (S_ISDIR(bits) && 
-      (ldirp)->i_nlinks >= ((ldirp)->i_sp->s_version == V1 ?
-      CHAR_MAX : SHRT_MAX)) {
+  if (S_ISDIR(bits) && (ldirp->i_nlinks >= LINK_MAX)) {
         /* New entry is a directory, alas we can't give it a ".." */
         put_inode(rip);
         err_code = EMLINK;
@@ -322,7 +318,7 @@ PUBLIC int fs_inhibread()
 {
   struct inode *rip;
   
-  if((rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NULL)
+  if((rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
   /* inhibit read ahead */

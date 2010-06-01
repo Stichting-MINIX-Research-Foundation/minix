@@ -1,9 +1,12 @@
-#include "inc.h"
+#include "fs.h"
 #include <assert.h>
+#include <minix/callnr.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
 #include <minix/vfsif.h>
-#include "fs.h"
 #include "buf.h"
 #include "inode.h"
 #include "drivers.h"
@@ -12,6 +15,7 @@
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 FORWARD _PROTOTYPE(void cch_check, (void)				);
+FORWARD _PROTOTYPE( void reply, (endpoint_t who, message *m_out)		);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -41,8 +45,8 @@ PUBLIC int main(int argc, char *argv[])
 	
 	src = fs_m_in.m_source;
 	error = OK;
-	caller_uid = -1;	/* To trap errors */
-	caller_gid = -1;
+	caller_uid = INVAL_UID;	/* To trap errors */
+	caller_gid = INVAL_GID;
 	req_nr = fs_m_in.m_type;
 
 	if (req_nr < VFS_BASE) {
@@ -131,7 +135,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
   if (signo != SIGTERM) return;
 
   exitsignaled = 1;
-  fs_sync();
+  (void) fs_sync();
 
   /* If unmounting has already been performed, exit immediately.
    * We might not get another message.
@@ -170,7 +174,7 @@ message *m_in;				/* pointer to message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(
+PRIVATE void reply(
   endpoint_t who,
   message *m_out                       	/* report result */
 )
@@ -188,16 +192,15 @@ PRIVATE void cch_check(void)
   int i;
 
   for (i = 0; i < NR_INODES; ++i) {
-	  if (inode[i].i_count != cch[i] &&
-		req_nr != REQ_GETNODE &&
-		req_nr != REQ_PUTNODE &&
-		req_nr != REQ_READSUPER &&
-		req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
-		req_nr != REQ_SYNC && req_nr != REQ_LOOKUP)
-printf("MFS(%d) inode(%d) cc: %d req_nr: %d\n",
-	SELF_E, inode[i].i_num, inode[i].i_count - cch[i], req_nr);
+	if (inode[i].i_count != cch[i] && req_nr != REQ_GETNODE &&
+	    req_nr != REQ_PUTNODE && req_nr != REQ_READSUPER &&
+	    req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
+	    req_nr != REQ_SYNC && req_nr != REQ_LOOKUP) {
+		printf("MFS(%d) inode(%ul) cc: %d req_nr: %d\n", SELF_E,
+			inode[i].i_num, inode[i].i_count - cch[i], req_nr);
+	}
 	  
-	  cch[i] = inode[i].i_count;
+	cch[i] = inode[i].i_count;
   }
 }
 

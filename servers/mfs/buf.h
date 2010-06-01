@@ -1,3 +1,6 @@
+#ifndef __MFS_BUF_H__
+#define __MFS_BUF_H__
+
 /* Buffer (block) cache.  To acquire a block, a routine calls get_block(),
  * telling which block it wants.  The block is then regarded as "in use"
  * and has its 'b_count' field incremented.  All the blocks that are not
@@ -46,7 +49,7 @@ union fsdata_u {
 
 EXTERN struct buf *front;	/* points to least recently used free block */
 EXTERN struct buf *rear;	/* points to most recently used free block */
-EXTERN int bufs_in_use;		/* # bufs currently in use (not on free list)*/
+EXTERN unsigned int bufs_in_use;/* # bufs currently in use (not on free list)*/
 
 /* When a block is released, the type of usage is passed to put_block(). */
 #define WRITE_IMMED   0100 /* block should be written to disk now */
@@ -58,4 +61,6 @@ EXTERN int bufs_in_use;		/* # bufs currently in use (not on free list)*/
 #define MAP_BLOCK          3				 /* bit map */
 #define FULL_DATA_BLOCK    5		 	 	 /* data, fully used */
 #define PARTIAL_DATA_BLOCK 6 				 /* data, partly used*/
+
+#endif
 

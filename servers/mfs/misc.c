@@ -1,8 +1,6 @@
 #include "fs.h"
-#include <fcntl.h>
 #include <assert.h>
 #include <minix/vfsif.h>
-#include "buf.h"
 #include "inode.h"
 
 
@@ -43,9 +41,7 @@ PUBLIC int fs_flush()
 /* Flush the blocks of a device from the cache after writing any dirty blocks
  * to disk.
  */
-  dev_t dev;
-
-  dev = fs_m_in.REQ_DEV;
+  dev_t dev = (dev_t) fs_m_in.REQ_DEV;
   if(dev == fs_dev) return(EBUSY);
  
   flushall(dev);

@@ -137,7 +137,7 @@ cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
  
 	/* Get new slot to put new grant in. */
 	if((g = cpf_new_grantslot()) < 0)
-		return -1;
+		return(GRANT_INVALID);
 
 	assert(GRANT_VALID(g));
 	assert(g >= 0);
@@ -146,7 +146,7 @@ cpf_grant_direct(endpoint_t who_to, vir_bytes addr, size_t bytes, int access)
 
 	if((r=cpf_setgrant_direct(g, who_to, addr, bytes, access)) < 0) {
 		cpf_revoke(g);
-		return GRANT_INVALID;
+		return(GRANT_INVALID);
 	}
 
 	return g;

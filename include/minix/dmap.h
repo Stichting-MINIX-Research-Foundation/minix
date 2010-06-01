@@ -52,8 +52,8 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #  define IS_KLOG_DEV		   0	/* minor device for /dev/klog */
 
 /* Full device numbers that are special to the boot monitor and FS. */
-#  define DEV_RAM	      0x0100	/* device number of /dev/ram */
-#  define DEV_IMGRD	      0x0106	/* device number of /dev/imgrd */
+#  define DEV_RAM     ((dev_t) 0x0100)	/* device number of /dev/ram */
+#  define DEV_IMGRD   ((dev_t) 0x0106)	/* device number of /dev/imgrd */
 
 #endif /* _DMAP_H */
 

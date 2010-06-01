@@ -15,9 +15,7 @@
  */
 
 #include "fs.h"
-#include <minix/com.h>
 #include <minix/u64.h>
-#include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "buf.h"
@@ -25,7 +23,7 @@
 #include "inode.h"
 
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
-FORWARD _PROTOTYPE( int rw_block, (struct buf *, int) );
+FORWARD _PROTOTYPE( void rw_block, (struct buf *, int) );
 
 PRIVATE int vmcache_avail = -1; /* 0 if not available, >0 if available. */
 
@@ -111,7 +109,7 @@ PUBLIC struct buf *get_block(
   if(bp->b_bytes < fs_block_size) {
 	ASSERT(!bp->bp);
 	ASSERT(bp->b_bytes == 0);
-	if(!(bp->bp = alloc_contig(fs_block_size, 0, NULL))) {
+	if(!(bp->bp = alloc_contig( (size_t) fs_block_size, 0, NULL))) {
 		printf("MFS: couldn't allocate a new block.\n");
 		for(bp = front;
 			bp && bp->b_bytes < fs_block_size; bp = bp->b_next)
@@ -303,7 +301,7 @@ PUBLIC zone_t alloc_zone(
   if (z == sp->s_firstdatazone) {
 	bit = sp->s_zsearch;
   } else {
-	bit = (bit_t) z - (sp->s_firstdatazone - 1);
+	bit = (bit_t) (z - (sp->s_firstdatazone - 1));
   }
   b = alloc_bit(sp, ZMAP, bit);
   if (b == NO_BIT) {
@@ -314,7 +312,7 @@ PUBLIC zone_t alloc_zone(
 	return(NO_ZONE);
   }
   if (z == sp->s_firstdatazone) sp->s_zsearch = b;	/* for next time */
-  return(sp->s_firstdatazone - 1 + (zone_t) b);
+  return( (zone_t) (sp->s_firstdatazone - 1) + (zone_t) b);
 }
 
 /*===========================================================================*
@@ -333,7 +331,7 @@ PUBLIC void free_zone(
   /* Locate the appropriate super_block and return bit. */
   sp = get_super(dev);
   if (numb < sp->s_firstdatazone || numb >= sp->s_zones) return;
-  bit = (bit_t) (numb - (sp->s_firstdatazone - 1));
+  bit = (bit_t) (numb - (zone_t) (sp->s_firstdatazone - 1));
   free_bit(sp, ZMAP, bit);
   if (bit < sp->s_zsearch) sp->s_zsearch = bit;
 }
@@ -341,7 +339,7 @@ PUBLIC void free_zone(
 /*===========================================================================*
  *				rw_block				     *
  *===========================================================================*/
-PRIVATE int rw_block(bp, rw_flag)
+PRIVATE void rw_block(bp, rw_flag)
 register struct buf *bp;	/* buffer pointer */
 int rw_flag;			/* READING or WRITING */
 {
@@ -350,31 +348,35 @@ int rw_flag;			/* READING or WRITING */
  * is not reported to the caller.  If the error occurred while purging a block
  * from the cache, it is not clear what the caller could do about it anyway.
  */
-  int r, op;
+  int r, op, op_failed;
   u64_t pos;
   dev_t dev;
 
-  if ( (dev = bp->b_dev) != NO_DEV) {
-	  pos = mul64u(bp->b_blocknr, fs_block_size);
-	  op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
-	  r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, fs_block_size, 0);
-	  if (r != fs_block_size) {
-		  if (r >= 0) r = END_OF_FILE;
-		  if (r != END_OF_FILE)
-			printf("MFS(%d) I/O error on device %d/%d, block %ld\n",
-			SELF_E, (dev>>MAJOR)&BYTE, (dev>>MINOR)&BYTE, 
-			bp->b_blocknr);
-		  
-		  bp->b_dev = NO_DEV;	/* invalidate block */
+  op_failed = 0;
 
-		  /* Report read errors to interested parties. */
-		  if (rw_flag == READING) rdwt_err = r;
-	  }
+  if ( (dev = bp->b_dev) != NO_DEV) {
+	pos = mul64u(bp->b_blocknr, fs_block_size);
+	op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
+	r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, fs_block_size);
+	if (r < 0) {
+		printf("MFS(%d) I/O error on device %d/%d, block %lu\n",
+		SELF_E, major(dev), minor(dev), bp->b_blocknr);
+		op_failed = 1;
+	} else if( (unsigned) r != fs_block_size) {
+		r = END_OF_FILE;
+		op_failed = 1;
+	}
+
+	if (op_failed) {
+		bp->b_dev = NO_DEV;	/* invalidate block */
+
+		/* Report read errors to interested parties. */
+		if (rw_flag == READING) rdwt_err = r;
+	}
   }
 
   bp->b_dirt = CLEAN;
 
-  return OK;
 }
 
 /*===========================================================================*
@@ -405,12 +407,14 @@ PUBLIC void flushall(
 
   register struct buf *bp;
   static struct buf **dirty;	/* static so it isn't on stack */
-  static int dirtylistsize = 0;
+  static unsigned int dirtylistsize = 0;
   int ndirty;
 
   if(dirtylistsize != nr_bufs) {
-	if(dirtylistsize > 0)
+	if(dirtylistsize > 0) {
+		assert(dirty != NULL);
 		free(dirty);
+	}
 	if(!(dirty = malloc(sizeof(dirty[0])*nr_bufs)))
 		panic("couldn't allocate dirty buf list");
 	dirtylistsize = nr_bufs;
@@ -466,13 +470,13 @@ PUBLIC void rw_scattered(
   while (bufqsize > 0) {
 	for (j = 0, iop = iovec; j < NR_IOREQS && j < bufqsize; j++, iop++) {
 		bp = bufq[j];
-		if (bp->b_blocknr != bufq[0]->b_blocknr + j) break;
+		if (bp->b_blocknr != (block_t) bufq[0]->b_blocknr + j) break;
 		iop->iov_addr = (vir_bytes) bp->b_data;
-		iop->iov_size = fs_block_size;
+		iop->iov_size = (vir_bytes) fs_block_size;
 	}
 	r = block_dev_io(rw_flag == WRITING ? MFS_DEV_SCATTER : MFS_DEV_GATHER,
 		dev, SELF_E, iovec,
-		mul64u(bufq[0]->b_blocknr, fs_block_size), j, 0);
+		mul64u(bufq[0]->b_blocknr, fs_block_size), j);
 
 	/* Harvest the results.  Dev_io reports the first error it may have
 	 * encountered, but we only care if it's the first block that failed.
@@ -484,8 +488,7 @@ PUBLIC void rw_scattered(
 			if (r != OK && i == 0) {
 				printf(
 				"fs: I/O error on device %d/%d, block %lu\n",
-					(dev>>MAJOR)&BYTE, (dev>>MINOR)&BYTE,
-					bp->b_blocknr);
+					major(dev), minor(dev), bp->b_blocknr);
 				bp->b_dev = NO_DEV;	/* invalidate block */
   				vm_forgetblocks();
 			}
@@ -546,23 +549,21 @@ struct buf *bp;
 /*===========================================================================*
  *				set_blocksize				     *
  *===========================================================================*/
-PUBLIC void set_blocksize(int blocksize)
+PUBLIC void set_blocksize(unsigned int blocksize)
 {
-	struct buf *bp;
-	struct inode *rip;
+  struct buf *bp;
+  struct inode *rip;
 
-	ASSERT(blocksize > 0);
+  ASSERT(blocksize > 0);
 
-        for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
-		if(bp->b_count != 0)
-			panic("change blocksize with buffer in use");
+  for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
+	if(bp->b_count != 0) panic("change blocksize with buffer in use");
 
-	for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
-		if (rip->i_count > 0)
-			panic("change blocksize with inode in use");
+  for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
+	if (rip->i_count > 0) panic("change blocksize with inode in use");
 
-	buf_pool(nr_bufs);
-	fs_block_size = blocksize;
+  buf_pool(nr_bufs);
+  fs_block_size = blocksize;
 }
 
 /*===========================================================================*
@@ -577,7 +578,7 @@ PUBLIC void buf_pool(int new_nr_bufs)
 
   if(nr_bufs > 0) {
 	assert(buf);
-	fs_sync();
+	(void) fs_sync();
   	for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) {
 		if(bp->bp) {
 			assert(bp->b_bytes > 0);
@@ -611,8 +612,8 @@ PUBLIC void buf_pool(int new_nr_bufs)
         bp->bp = NULL;
         bp->b_bytes = 0;
   }
-  buf[0].b_prev = NULL;
-  buf[nr_bufs - 1].b_next = NULL;
+  front->b_prev = NULL;
+  rear->b_next = NULL;
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++) bp->b_hash = bp->b_next;
   buf_hash[0] = front;

@@ -1,3 +1,6 @@
+#ifndef __MFS_SUPER_H__
+#define __MFS_SUPER_H__
+
 /* Super block table.  The root file system and every mounted file system
  * has an entry here.  The entry holds information about the sizes of the bit
  * maps and inodes.  The s_ninodes field gives the number of inodes available
@@ -59,3 +62,6 @@ EXTERN struct super_block {
 
 #define IMAP		0	/* operating on the inode bit map */
 #define ZMAP		1	/* operating on the zone bit map */
+
+#endif
+
