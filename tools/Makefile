@@ -1,7 +1,6 @@
 # Makefile for the kernel image.
 
 u=/usr
-CC=	exec cc
 CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MDEC=	/usr/mdec
 
@@ -45,7 +44,7 @@ usage:
 all: services image
 
 image:  includes
-	cd ../kernel && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS)
+	cd ../kernel && $(MAKE)
 	cd ../servers && $(MAKE) all
 	cd ../drivers && $(MAKE) all
 	installboot -image $@ $(PROGRAMS)
@@ -59,8 +58,8 @@ depend: includes
 
 services: includes 
 	cd ../kernel && $(MAKE) 
-	cd ../servers && $(MAKE) all install
-	cd ../drivers && $(MAKE) all install
+	cd ../servers && $(MAKE) install
+	cd ../drivers && $(MAKE) install
 
 libraries: includes
 	cd ../lib && sh ack_build.sh clean obj depend all install
@@ -86,3 +85,7 @@ clean:
 	cd ../drivers && $(MAKE) $@
 	rm -rf *.bak image *.iso *.iso.gz cdfdimage rootimage src
 
+cleandepend::
+	cd ../kernel && $(MAKE) $@
+	cd ../servers && $(MAKE)  $@
+	cd ../drivers && $(MAKE)  $@

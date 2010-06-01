@@ -3,6 +3,11 @@
 
 .include <minix.init.mk>
 
+# MINIX: cleandepend works for SUBDIRs
+TARGETS+= cleandepend
+.PHONY: cleandepend
+.NOTMAIN: cleandepend
+
 .if !defined(NOSUBDIR)					# {
 
 .for dir in ${SUBDIR}

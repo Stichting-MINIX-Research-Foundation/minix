@@ -57,11 +57,11 @@ commands:
 	cd commands && $(MAKE) all
 
 depend::
-	cd boot && $(MAKE) $@
-	cd commands && $(MAKE) $@
-	cd kernel && $(MAKE) $@
-	cd servers && $(MAKE) $@
-	cd drivers && $(MAKE) $@
+	cd boot && $(MAKE) depend
+	cd commands && $(MAKE) depend
+	cd kernel && $(MAKE) depend
+	cd servers && $(MAKE) depend
+	cd drivers && $(MAKE) depend
 
 etcfiles::
 	cd etc && $(MAKE) install
@@ -70,24 +70,23 @@ all::
 	cd boot && $(MAKE) all
 	cd commands && $(MAKE) all
 	cd tools && $(MAKE) all
-	cd servers && $(MAKE) all
-	cd drivers && $(MAKE) all
 
 install::
-	cd boot && $(MAKE) all install
-	cd man && $(MAKE) all install makedb
-	cd commands && $(MAKE) all install
-	cd share && $(MAKE) all install
-	cd tools && $(MAKE) all install
-	cd servers && $(MAKE) all install
-	cd drivers && $(MAKE) all install
+	cd boot && $(MAKE) install
+	cd man && $(MAKE) install makedb
+	cd commands && $(MAKE) install
+	cd share && $(MAKE) install
+	cd tools && $(MAKE) install
 
 clean::
 	cd boot && $(MAKE) clean
 	cd commands && $(MAKE) clean
 	cd tools && $(MAKE) clean
-	cd servers && $(MAKE) clean
 	cd lib && sh ack_build.sh clean
 	cd lib && sh gnu_build.sh clean
-	cd commands && $(MAKE) clean
 	cd test && $(MAKE) clean
+
+cleandepend::
+	cd boot && $(MAKE) cleandepend
+	cd commands && $(MAKE) cleandepend
+	cd tools && $(MAKE) cleandepend

@@ -15,6 +15,8 @@ if [ $MAKEMAP -ne 0 ]; then
 	find . -type f -perm 755 | xargs nm -n 2> /dev/null > symbols.txt
 fi
 make clean
+make cleandepend
+find . -name obj-ack -type d|xargs rm -rf
 # Let man find the manpages
 makewhatis /usr/man
 makewhatis /usr/local/man
