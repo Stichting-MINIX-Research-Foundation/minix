@@ -1,7 +1,6 @@
 # Makefile for the tests.
 
-CC =	exec cc
-GCC =   /usr/gnu/bin/gcc
+GCC=   /usr/gnu/bin/gcc
 CFLAGS= -O -D_MINIX -D_POSIX_SOURCE
 CFLAGS-GCC= $(CFLAGS) -Wall 
 CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float
@@ -109,4 +108,3 @@ test51: test51.c
 test51-gcc: test51.c
 test52: test52.c
 test52-gcc: test52.c
-

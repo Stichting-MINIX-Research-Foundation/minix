@@ -19,7 +19,7 @@ CPPFLAGS+= -fno-builtin -ffreestanding -fno-stack-protector
 LDFLAGS+= -T arch/${ARCH}/kernel.lds
 LDFLAGS+= -nostdlib
 DPADD+=	${LIBC}
-LDADD+=	-lgcc -lc -lgcc
+LDADD+=	-lc
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}

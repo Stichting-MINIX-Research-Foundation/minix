@@ -29,7 +29,11 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: mkfiles includes depend libraries install postinstall
+.if ${COMPILER_TYPE} == "ack"
+world: mkfiles includes depend libraries install
+.elif ${COMPILER_TYPE} == "gnu"
+world: mkfiles includes depend gnu-libraries install
+.endif
 
 mkfiles:
 	cp etc/mk/*.mk /etc/mk/
@@ -87,6 +91,3 @@ clean::
 	cd lib && sh gnu_build.sh clean
 	cd commands && $(MAKE) clean
 	cd test && $(MAKE) clean
-
-postinstall:
-	cd etc && $(MAKE) $@

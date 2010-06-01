@@ -1,4 +1,3 @@
-
 ETC=/etc/
 USRETC=/usr/etc/
 FILES1=fstab group hostname.file inet.conf motd.install mtab passwd profile \
@@ -34,7 +33,3 @@ install::
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 	@echo "Installing fonts.."
 	install -m 644 -o root -g operator fonts/*.fnt /usr/lib/fonts/
-
-postinstall:
-	binsizes normal
-
