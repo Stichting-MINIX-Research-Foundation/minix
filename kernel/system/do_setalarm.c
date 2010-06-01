@@ -34,7 +34,7 @@ PUBLIC int do_setalarm(struct proc * caller, message * m_ptr)
 
   /* Get the timer structure and set the parameters for this alarm. */
   tp = &(priv(caller)->s_alarm_timer);
-  tmr_arg(tp)->ta_int = m_ptr->m_source;
+  tmr_arg(tp)->ta_int = caller->p_endpoint;
   tp->tmr_func = cause_alarm; 
 
   /* Return the ticks left on the previous alarm. */

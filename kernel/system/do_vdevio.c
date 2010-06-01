@@ -94,7 +94,7 @@ PUBLIC int do_vdevio(struct proc * caller, message * m_ptr)
 		{
 			printf(
 		"do_vdevio: I/O port check failed for proc %d, port 0x%x\n",
-				m_ptr->m_source, port);
+				caller->p_endpoint, port);
 			return EPERM;
 		}
 	}

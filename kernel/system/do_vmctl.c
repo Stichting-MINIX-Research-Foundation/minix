@@ -22,7 +22,7 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
   endpoint_t ep = m_ptr->SVMCTL_WHO;
   struct proc *p, *rp, *target;
 
-  if(ep == SELF) { ep = m_ptr->m_source; }
+  if(ep == SELF) { ep = caller->p_endpoint; }
 
   if(!isokendpt(ep, &proc_nr)) {
 	printf("do_vmctl: unexpected endpoint %d from VM\n", ep);

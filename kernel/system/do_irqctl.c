@@ -43,7 +43,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
   case IRQ_DISABLE: 
       if (irq_hook_id >= NR_IRQ_HOOKS || irq_hook_id < 0 ||
           irq_hooks[irq_hook_id].proc_nr_e == NONE) return(EINVAL);
-      if (irq_hooks[irq_hook_id].proc_nr_e != m_ptr->m_source) return(EPERM);
+      if (irq_hooks[irq_hook_id].proc_nr_e != caller->p_endpoint) return(EPERM);
       if (m_ptr->IRQ_REQUEST == IRQ_ENABLE) {
           enable_irq(&irq_hooks[irq_hook_id]);	
       }
@@ -76,7 +76,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
 	{
 		printf(
 		"do_irqctl: IRQ check failed for proc %d, IRQ %d\n",
-			m_ptr->m_source, irq_vec);
+			caller->p_endpoint, irq_vec);
 		return EPERM;
 	}
     }
@@ -90,7 +90,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
       /* Try to find an existing mapping to override. */
       hook_ptr = NULL;
       for (i=0; !hook_ptr && i<NR_IRQ_HOOKS; i++) {
-          if (irq_hooks[i].proc_nr_e == m_ptr->m_source
+          if (irq_hooks[i].proc_nr_e == caller->p_endpoint
               && irq_hooks[i].notify_id == notify_id) {
               irq_hook_id = i;
               hook_ptr = &irq_hooks[irq_hook_id];	/* existing hook */
@@ -108,7 +108,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
       if (hook_ptr == NULL) return(ENOSPC);
 
       /* Install the handler. */
-      hook_ptr->proc_nr_e = m_ptr->m_source;	/* process to notify */   	
+      hook_ptr->proc_nr_e = caller->p_endpoint;	/* process to notify */
       hook_ptr->notify_id = notify_id;		/* identifier to pass */   	
       hook_ptr->policy = m_ptr->IRQ_POLICY;	/* policy for interrupts */
       put_irq_handler(hook_ptr, irq_vec, generic_handler);
@@ -121,7 +121,7 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
       if (irq_hook_id < 0 || irq_hook_id >= NR_IRQ_HOOKS ||
                irq_hooks[irq_hook_id].proc_nr_e == NONE) {
            return(EINVAL);
-      } else if (m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr_e) {
+      } else if (caller->p_endpoint != irq_hooks[irq_hook_id].proc_nr_e) {
            return(EPERM);
       }
       /* Remove the handler and return. */

@@ -3,7 +3,6 @@
 
 .PATH:	${.CURDIR}/system
 SRCS+= 	\
-	do_unused.c \
 	do_fork.c \
 	do_exec.c \
 	do_newmap.c \

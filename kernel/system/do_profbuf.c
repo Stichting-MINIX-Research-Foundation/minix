@@ -26,7 +26,7 @@ PUBLIC int do_profbuf(struct proc * caller, message * m_ptr)
   struct proc *rp;                          
 
   /* Store process name, control struct, table locations. */
-  if(!isokendpt(m_ptr->m_source, &proc_nr))
+  if(!isokendpt(caller->p_endpoint, &proc_nr))
 	return EDEADSRCDST;
 
   if(cprof_procs_no >= NR_SYS_PROCS)

@@ -109,7 +109,13 @@ PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
 	  result = ECALLDENIED;			/* illegal message type */
   } else {
 	  /* handle the system call */
-	  result = (*call_vec[call_nr])(caller, msg);
+	  if (call_vec[call_nr])
+		  result = (*call_vec[call_nr])(caller, msg);
+	  else {
+		  printf("Unused kernel call %d from %d\n",
+				  call_nr, caller->p_endpoint);
+		  result = EBADREQUEST;
+	  }
   }
 
   return result;
@@ -170,7 +176,7 @@ PUBLIC void system_init(void)
    * if an illegal call number is used. The ordering is not important here.
    */
   for (i=0; i<NR_SYS_CALLS; i++) {
-      call_vec[i] = do_unused;
+      call_vec[i] = NULL;
       callnames[i] = "unused";
   }
 

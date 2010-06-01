@@ -30,9 +30,9 @@ PUBLIC int do_copy(struct proc * caller, message * m_ptr)
   int i;
 
 #if 0
-  if (m_ptr->m_source != PM_PROC_NR && m_ptr->m_source != VFS_PROC_NR &&
-	m_ptr->m_source != RS_PROC_NR && m_ptr->m_source != MEM_PROC_NR &&
-	m_ptr->m_source != VM_PROC_NR)
+  if (caller->p_endpoint != PM_PROC_NR && caller->p_endpoint != VFS_PROC_NR &&
+	caller->p_endpoint != RS_PROC_NR && caller->p_endpoint != MEM_PROC_NR &&
+	caller->p_endpoint != VM_PROC_NR)
   {
 	static int first=1;
 	if (first)
@@ -40,7 +40,7 @@ PUBLIC int do_copy(struct proc * caller, message * m_ptr)
 		first= 0;
 		printf(
 "do_copy: got request from %d (source %d, seg %d, destination %d, seg %d)\n",
-			m_ptr->m_source,
+			caller->p_endpoint,
 			m_ptr->CP_SRC_ENDPT,
 			m_ptr->CP_SRC_SPACE,
 			m_ptr->CP_DST_ENDPT,
@@ -65,7 +65,7 @@ PUBLIC int do_copy(struct proc * caller, message * m_ptr)
 	int p;
       /* Check if process number was given implictly with SELF and is valid. */
       if (vir_addr[i].proc_nr_e == SELF)
-	vir_addr[i].proc_nr_e = m_ptr->m_source;
+	vir_addr[i].proc_nr_e = caller->p_endpoint;
       if (vir_addr[i].segment != PHYS_SEG) {
 	if(! isokendpt(vir_addr[i].proc_nr_e, &p)) {
 	  printf("do_copy: %d: seg 0x%x, %d not ok endpoint\n",
@@ -73,10 +73,6 @@ PUBLIC int do_copy(struct proc * caller, message * m_ptr)
           return(EINVAL); 
         }
       }
-
-      /* Check if physical addressing is used without SYS_PHYSCOPY. */
-      if ((vir_addr[i].segment & PHYS_SEG) &&
-          m_ptr->m_type != SYS_PHYSCOPY) return(EPERM);
   }
 
   /* Check for overflow. This would happen for 64K segments and 16-bit 

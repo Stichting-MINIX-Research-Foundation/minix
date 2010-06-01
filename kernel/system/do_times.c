@@ -28,7 +28,7 @@ PUBLIC int do_times(struct proc * caller, message * m_ptr)
    * The clock's interrupt handler may run to update the user or system time
    * while in this code, but that cannot do any harm.
    */
-  e_proc_nr = (m_ptr->T_ENDPT == SELF) ? m_ptr->m_source : m_ptr->T_ENDPT;
+  e_proc_nr = (m_ptr->T_ENDPT == SELF) ? caller->p_endpoint : m_ptr->T_ENDPT;
   if(e_proc_nr != NONE && isokendpt(e_proc_nr, &proc_nr)) {
       rp = proc_addr(proc_nr);
       m_ptr->T_USER_TIME   = rp->p_user_time;
