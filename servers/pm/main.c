@@ -59,9 +59,7 @@ FORWARD _PROTOTYPE( int sef_cb_signal_manager, (endpoint_t target, int signo) );
 PUBLIC int main()
 {
 /* Main routine of the process manager. */
-  int result, s, proc_nr;
-  struct mproc *rmp;
-  sigset_t sigset;
+  int result;
 
   /* SEF local startup. */
   sef_local_startup();
@@ -196,12 +194,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 				SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
   static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
-  static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
   static char noign_sigs[] = { SIGILL, SIGTRAP, SIGEMT, SIGFPE, 
 				SIGBUS, SIGSEGV };
   register struct mproc *rmp;
   register char *sig_ptr;
-  register int signo;
   message mess;
 
   /* Initialize process table, including timers. */

@@ -34,7 +34,7 @@ FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 
 int main(void)
 {
-	int i, r;
+	int r;
 	message m;
 	int ipc_status;
 
@@ -121,10 +121,9 @@ message *mp;
 			mp->m_source, r);
 }
 
-PRIVATE void do_first_dev(mp)
-message *mp;
+PRIVATE void do_first_dev(message *mp)
 {
-	int i, r, devind;
+	int r, devind;
 	u16_t vid, did;
 	struct rs_pci *aclp;
 
@@ -376,10 +375,9 @@ message *mp;
 	reply(mp, OK);
 }
 
-PRIVATE void do_del_acl(mp)
-message *mp;
+PRIVATE void do_del_acl(message *mp)
 {
-	int i, r, proc_nr;
+	int i, proc_nr;
 
 	if (mp->m_source != RS_PROC_NR)
 	{
@@ -417,10 +415,9 @@ message *mp;
 	reply(mp, OK);
 }
 
-PRIVATE void do_reserve(mp)
-message *mp;
+PRIVATE void do_reserve(message *mp)
 {
-	int i, r, devind;
+	int r, devind;
 
 	devind= mp->m1_i1;
 	

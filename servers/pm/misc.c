@@ -406,7 +406,7 @@ PUBLIC int do_reboot()
  *===========================================================================*/
 PUBLIC int do_getsetpriority()
 {
-	int r, arg_which, arg_who, arg_pri, new_q;
+	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
 
 	arg_which = m_in.m1_i1;

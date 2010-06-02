@@ -63,26 +63,6 @@ PUBLIC void stop_8253A_timer(void)
 	outb(TIMER0, 0);
 }
 
-/*===========================================================================*
- *				read_8235A_timer			     *
- *===========================================================================*/
-PRIVATE clock_t read_8253A_timer(void)
-{
-	/* Read the counter of channel 0 of the 8253A timer.  This counter
-	 * counts down at a rate of TIMER_FREQ and restarts at
-	 * TIMER_COUNT-1 when it reaches zero. A hardware interrupt
-	 * (clock tick) occurs when the counter gets to zero and restarts
-	 * its cycle.
-	 */     
-	u32_t count;
-
-	outb(TIMER_MODE, LATCH_COUNT);
-	count = inb(TIMER0);
-	count |= (inb(TIMER0) << 8);
- 
-	return count;
-}
-
 PRIVATE int calib_cpu_handler(irq_hook_t * UNUSED(hook))
 {
 	u64_t tsc;

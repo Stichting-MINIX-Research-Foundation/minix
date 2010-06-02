@@ -45,14 +45,11 @@
 
 #define VERBOSE_APIC(x) x
 
-PRIVATE int reboot_type;
 PRIVATE int ioapic_enabled;
 PRIVATE u32_t ioapic_id_mask[8];
-PRIVATE u32_t lapic_id_mask[8];
 PUBLIC u32_t lapic_addr_vaddr;
 PUBLIC vir_bytes lapic_addr;
 PUBLIC vir_bytes lapic_eoi_addr;
-PRIVATE u32_t lapic_taskpri_addr;
 
 PRIVATE volatile int probe_ticks;
 PRIVATE	u64_t tsc0, tsc1;
@@ -62,8 +59,6 @@ PRIVATE	u32_t lapic_tctr0, lapic_tctr1;
 PUBLIC u8_t apicid2cpuid[MAX_NR_APICIDS+1];  /* Accessed from asm */
 
 PRIVATE unsigned apic_imcrp;
-PRIVATE unsigned nioapics;
-PRIVATE unsigned nbuses;
 PRIVATE unsigned nintrs;
 PRIVATE const unsigned nlints = 0;
 
@@ -77,7 +72,6 @@ PRIVATE u32_t lapic_bus_freq[CONFIG_MAX_CPUS];
 #define PROBE_TICKS	(system_hz / 10)
 
 PRIVATE u32_t pci_config_intr_data;
-PRIVATE u32_t ioapic_extint_assigned = 0;
 PRIVATE int lapic_extint_assigned = 0;
 
 PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
@@ -223,35 +217,6 @@ PRIVATE  u32_t lapic_errstatus(void)
 {
 	lapic_write(LAPIC_ESR, 0);
 	return lapic_read(LAPIC_ESR);
-}
-
-PRIVATE void lapic_disable(void)
-{
-	/* Disable current APIC and close interrupts from PIC */
-	u32_t val;
-
-	if (!lapic_addr)
-		return;
-	{
-		/* leave it enabled if imcr is not set */
-		val = lapic_read(LAPIC_LINT0);
-		val &= ~(APIC_ICR_DM_MASK|APIC_ICR_INT_MASK);
-		val |= APIC_ICR_DM_EXTINT; /* ExtINT at LINT0 */
-		lapic_write (LAPIC_LINT0, val);
-		return;
-	}
-
-	val = lapic_read(LAPIC_LINT0) & 0xFFFE58FF;
-	val |= APIC_ICR_INT_MASK;
-	lapic_write (LAPIC_LINT0, val);
-
-	val = lapic_read(LAPIC_LINT1) & 0xFFFE58FF;
-	val |= APIC_ICR_INT_MASK;
-	lapic_write (LAPIC_LINT1, val);
-
-	val = lapic_read(LAPIC_SIVR) & 0xFFFFFF00;
-	val &= ~APIC_ENABLE;
-	lapic_write(LAPIC_SIVR, val);
 }
 
 PRIVATE void lapic_enable_no_lints(void)

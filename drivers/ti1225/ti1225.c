@@ -185,8 +185,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	return(OK);
 }
 
-PRIVATE void hw_init(pp)
-struct port *pp;
+PRIVATE void hw_init(struct port *pp)
 {
 	int r, devind, irq;
 	u8_t v8;
@@ -313,8 +312,7 @@ PRIVATE void map_regs(struct port *pp, u32_t base)
 		panic("map_regs: sys_vm_map failed: %d", r);
 }
 
-PRIVATE void do_int(pp)
-struct port *pp;
+PRIVATE void do_int(struct port *pp)
 {
 	int r, devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
 		socket_5v, socket_3v, socket_Xv, socket_Yv;

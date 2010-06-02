@@ -101,7 +101,6 @@ PUBLIC int do_semget(message *m)
 PRIVATE void send_message_to_process(endpoint_t who, int ret, int ignore)
 {
 	message m;
-	int r;
 
 	m.m_type = ret;
 	sendnb(who, &m);

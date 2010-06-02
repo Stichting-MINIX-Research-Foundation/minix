@@ -602,7 +602,6 @@ PRIVATE int disable_int(int chan) {
 PRIVATE int get_samples_in_buf (u32_t *samples_in_buf, int *len, int chan) {
 	u16_t samp_ct_reg; 
 	u16_t curr_samp_ct_reg;
-	u16_t samp_ct;  /* nr of samples - 1 that will be played back */
 	u16_t curr_samp_ct; /* counts back from SAMP_CT till 0 */
 
 	*len = sizeof(*samples_in_buf);

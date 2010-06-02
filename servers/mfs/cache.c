@@ -53,7 +53,6 @@ PUBLIC struct buf *get_block(
 
   int b;
   static struct buf *bp, *prev_ptr;
-  int vmfound = 0;
   u64_t yieldid = VM_BLOCKID_NONE, getid = make64(dev, block);
   int vmcache = 0;
 
