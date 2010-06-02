@@ -40,7 +40,7 @@
 /* #include <sys/time.h> */
 /* #include <sys/systm.h> */
 /* #include <machine/endian.h> */
-#include "sha2.h"
+#include <minix/sha2.h>
 
 /*
  * ASSERT NOTE:

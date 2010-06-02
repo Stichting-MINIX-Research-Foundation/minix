@@ -12,7 +12,7 @@ that data into a seed for a psuedo random number generator.
 #include "assert.h"
 
 #include "random.h"
-#include "sha2.h"
+#include <minix/sha2.h>
 #include "aes/rijndael.h"
 
 #define N_DERIV	16
