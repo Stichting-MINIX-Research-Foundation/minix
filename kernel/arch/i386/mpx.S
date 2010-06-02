@@ -233,9 +233,9 @@ csinit:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
+	movl	$0, %ebp	/* for stack trace */			;\
 	call	_context_stop						;\
 	add	$4, %esp						;\
-	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -301,9 +301,9 @@ _hwint07:
 									\
 	SAVE_PROCESS_CTX(0)						;\
 	push	%ebp							;\
+	movl	$0, %ebp	/* for stack trace */			;\
 	call	_context_stop						;\
 	add	$4, %esp						;\
-	movl	$0, %ebp	/* for stack trace */			;\
 	PIC_IRQ_HANDLER(irq)						;\
 	movb	$END_OF_INT, %al					;\
 	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
@@ -385,11 +385,10 @@ _ipc_entry:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	_context_stop
-	add	$4, %esp
-
 	/* for stack trace */
 	movl	$0, %ebp
+	call	_context_stop
+	add	$4, %esp
 
 	call	_do_ipc
 
@@ -422,11 +421,10 @@ _kernel_call_entry:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	_context_stop
-	add	$4, %esp
-
 	/* for stack trace */
 	movl	$0, %ebp
+	call	_context_stop
+	add	$4, %esp
 
 	call	_kernel_call
 
@@ -455,11 +453,10 @@ exception_entry_from_user:
 
 	/* stop user process cycles */
 	push	%ebp
-	call	_context_stop
-	add	$4, %esp
-
 	/* for stack trace clear %ebp */
 	movl	$0, %ebp
+	call	_context_stop
+	add	$4, %esp
 
 	/*
 	 * push a pointer to the interrupt state pushed by the cpu and the
