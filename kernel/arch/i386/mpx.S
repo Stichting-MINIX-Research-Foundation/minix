@@ -619,8 +619,9 @@ copr_return:
 	jmp	_switch_to_user
 
 copr_not_available_in_kernel:
-	movl	$0, (%esp)
-	call	_panic
+	pushl	$0
+	pushl	$COPROC_NOT_VECTOR
+	jmp	exception_entry_nested
 
 _double_fault:
 	EXCEPTION_ERR_CODE(DOUBLE_FAULT_VECTOR)
