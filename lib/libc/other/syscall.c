@@ -1,9 +1,6 @@
 #include <lib.h>
 
-PUBLIC int _syscall(who, syscallnr, msgptr)
-int who;
-int syscallnr;
-register message *msgptr;
+PUBLIC int _syscall(endpoint_t who, int syscallnr, message *msgptr)
 {
   int status;
 

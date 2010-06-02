@@ -18,7 +18,7 @@ static int b64_add(struct mantissa *e1, struct mantissa *e2);
 static void b64_sft(struct mantissa *e1, int n);
 
 static void
-mul_ext(struct EXTEND *e1, struct EXTEND *e2, struct EXTEND *e3)
+mul_ext(const struct EXTEND *e1, const struct EXTEND *e2, struct EXTEND *e3)
 {
 	/*	Multiply the extended numbers e1 and e2, and put the
 		result in e3.

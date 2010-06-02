@@ -46,10 +46,10 @@
 FORWARD _PROTOTYPE( void idle, (void));
 /**
  * Made public for use in clock.c (for user-space scheduling)
-FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst_e,
+FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, endpoint_t dst_e,
 		message *m_ptr, int flags));
 */
-FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
+FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, endpoint_t src,
 		message *m_ptr, int flags));
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 	asynmsg_t *table, size_t size));
@@ -516,11 +516,12 @@ proc_nr_t src_dst;				/* src or dst process */
 /*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
-PUBLIC int mini_send(caller_ptr, dst_e, m_ptr, flags)
-register struct proc *caller_ptr;	/* who is trying to send a message? */
-int dst_e;				/* to whom is message being sent? */
-message *m_ptr;				/* pointer to message buffer */
-const int flags;
+PUBLIC int mini_send(
+  register struct proc *caller_ptr,	/* who is trying to send a message? */
+  endpoint_t dst_e,			/* to whom is message being sent? */
+  message *m_ptr,			/* pointer to message buffer */
+  const int flags
+)
 {
 /* Send a message from 'caller_ptr' to 'dst'. If 'dst' is blocked waiting
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
@@ -599,11 +600,12 @@ const int flags;
 /*===========================================================================*
  *				mini_receive				     * 
  *===========================================================================*/
-PRIVATE int mini_receive(caller_ptr, src_e, m_ptr, flags)
-register struct proc *caller_ptr;	/* process trying to get message */
-int src_e;				/* which message source is wanted */
-message *m_ptr;				/* pointer to message buffer */
-const int flags;
+PRIVATE int mini_receive(
+  register struct proc *caller_ptr,	/* process trying to get message */
+  endpoint_t src_e,			/* which message source is wanted */
+  message *m_ptr,			/* pointer to message buffer */
+  const int flags
+)
 {
 /* A process or task wants to get a message.  If a message is already queued,
  * acquire it and deblock the sender.  If no message from the desired source

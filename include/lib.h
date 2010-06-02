@@ -28,7 +28,7 @@
 
 _PROTOTYPE( int __execve, (const char *_path, char *const _argv[], 
 			char *const _envp[], int _nargs, int _nenvps)	);
-_PROTOTYPE( int _syscall, (int _who, int _syscallnr, message *_msgptr)	);
+_PROTOTYPE( int _syscall, (endpoint_t _who, int _syscallnr, message *_msgptr)	);
 _PROTOTYPE( void _loadname, (const char *_name, message *_msgptr)	);
 _PROTOTYPE( int _len, (const char *_s)					);
 _PROTOTYPE( void _begsig, (int _dummy)					);

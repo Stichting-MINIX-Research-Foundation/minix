@@ -10,7 +10,7 @@ char *
 strtok(register char *string, const char *separators)
 {
 	register char *s1, *s2;
-	static char *savestring;
+	static char *savestring = NULL;
 
 	if (string == NULL) {
 		string = savestring;

@@ -7,7 +7,6 @@ int asyn_synch(asynchio_t *asyn, int fd)
 /* No more asynchronous operations on this file descriptor. */
 {
 	asynfd_t *afd;
-	int flags;
 	int op;
 
 	if ((unsigned) fd >= FD_SETSIZE) { errno= EBADF; return -1; }
