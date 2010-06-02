@@ -10,7 +10,7 @@
 
 LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
-ROOTMB=16
+ROOTMB=64
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 USRKBFILE=/.usrkb
 if [ ! -f "$USRKBFILE" ]
@@ -381,6 +381,21 @@ echo " --- Step 5: Select the size of /home ----------------------------------"
 	homemb="$homesize MB"
 	homesize="`expr $homesize '*' 1024 '*' 2`"
 else
+	# Root size same as our default? If not, warn and keep old root size
+	ROOTSECTSDEFAULT=$ROOTSECTS
+	ROOTSECTS="`devsize /dev/$root`"
+	ROOTMB="`expr $ROOTSECTS / 2048`"
+	if [ $ROOTSECTS -ne $ROOTSECTSDEFAULT ]
+	then
+		echo "Root partition size `expr $ROOTSECTS / 2`kb differs from default `expr $ROOTSECTSDEFAULT / 2`kb."
+		echo "This is not a problem, but you may want to do a fresh install at some point to"
+		echo "be able to benefit from the new default."
+	fi
+
+	# Recompute totals based on root size
+	TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
+	maxhome="`expr $devsizemb - $TOTALMB - 1`"
+
 	homepart="`devsize /dev/$home`"
 	homesize="`expr $homepart / 2 / 1024`"
 	if [ "$homesize" -gt "$maxhome" ]
