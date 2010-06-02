@@ -1454,6 +1454,11 @@ _scan_keyboard:
 	outb	0x61
 	ret
 
+.define	_reset
+_reset:
+	lidt	idt_zero
+	int	0x3
+
 .data
 	.ascii	"(null)\0"	! Just in case someone follows a null pointer
 	.align	2
@@ -1461,6 +1466,8 @@ c60:	.data2	60		! Constants for MUL and DIV
 c1024:	.data2	1024
 c1080:	.data2	1080
 c19663:	.data2	19663
+idt_zero:
+.data4	0,0
 
 ! Global descriptor tables.
 	UNSET	= 0		! Must be computed

@@ -715,12 +715,12 @@ static void initialize(void)
 /* Reserved names: */
 enum resnames {
  	R_NULL, R_BOOT, R_CTTY, R_DELAY, R_ECHO, R_EXIT, R_HELP,
-	R_LS, R_MENU, R_OFF, R_SAVE, R_SET, R_TRAP, R_UNSET
+	R_LS, R_MENU, R_OFF, R_SAVE, R_SET, R_TRAP, R_UNSET, R_RESET
 };
 
 static char resnames[][6] = {
 	"", "boot", "ctty", "delay", "echo", "exit", "help",
-	"ls", "menu", "off", "save", "set", "trap", "unset",
+	"ls", "menu", "off", "save", "set", "trap", "unset", "reset",
 };
 
 /* Using this for all null strings saves a lot of memory. */
@@ -731,7 +731,7 @@ static enum resnames reserved(const char *s)
 {
 	enum resnames r;
 
-	for (r= R_BOOT; r <= R_UNSET; r++) {
+	for (r= R_BOOT; r <= R_RESET; r++) {
 		if (strcmp(s, resnames[r]) == 0) return r;
 	}
 	return R_NULL;
@@ -1877,6 +1877,7 @@ static void execute(void)
 		case R_EXIT:	exit(0);
 		case R_OFF:	off();		ok= 1;	break;
 		case R_CTTY:	ctty(nil);	ok= 1;	break;
+		case R_RESET:	reset();	ok= 1;  break;
 		}
 
 		/* Command to check bootparams: */
@@ -2029,6 +2030,9 @@ void main(int argc, char **argv)
 	}
 	exit(0);
 }
+
+reset() { }
+
 #endif /* UNIX */
 
 /*
