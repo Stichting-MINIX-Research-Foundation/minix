@@ -5,6 +5,7 @@
 
 #include <minix/safecopies.h>
 #include <machine/archtypes.h>
+#include <sys/sigcontext.h>
 #include <a.out.h>
 
 /* Struct declarations. */
@@ -28,6 +29,9 @@ _PROTOTYPE( void cycles_accounting_init, (void)				);
 _PROTOTYPE( void context_stop, (struct proc * p)			);
 /* this is a wrapper to make calling it from assembly easier */
 _PROTOTYPE( void context_stop_idle, (void)				);
+_PROTOTYPE( void restore_fpu, (struct proc *)				);
+_PROTOTYPE( void save_fpu, (struct proc *)				);
+_PROTOTYPE( void fpu_sigcontext, (struct proc *, struct sigframe *fr, struct sigcontext *sc)	);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);

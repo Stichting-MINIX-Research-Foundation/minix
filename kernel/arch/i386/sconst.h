@@ -140,10 +140,18 @@
 	SAVE_TRAP_CTX(displ, %ebp, %esi)		;
 
 #define SAVE_PROCESS_CTX(displ)				\
-	SAVE_PROCESS_CTX_NON_LAZY(displ)			;\
+	SAVE_PROCESS_CTX_NON_LAZY(displ)		;\
+	push	%eax					;\
+	push	%ebx					;\
+	push	%ecx					;\
+	push	%edx					;\
 	push	%ebp					;\
-	call	_lazy_fpu				;\
-	add	$4, %esp					;
+	call	_save_fpu				;\
+	pop	%ebp					;\
+	pop	%edx					;\
+	pop	%ecx					;\
+	pop	%ebx					;\
+	pop	%eax					;
 
 /*
  * clear the IF flag in eflags which are stored somewhere in memory, e.g. on

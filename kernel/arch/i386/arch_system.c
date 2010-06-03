@@ -11,6 +11,10 @@
 #include <minix/cpufeature.h>
 #include <a.out.h>
 #include <assert.h>
+#include <signal.h>
+#include <machine/vm.h>
+
+#include <sys/sigcontext.h>
 
 #include "archconst.h"
 #include "proto.h"
@@ -22,6 +26,9 @@
 #ifdef CONFIG_APIC
 #include "apic.h"
 #endif
+
+PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
+
 
 /* set MP and NE flags to handle FPU exceptions in native mode. */
 #define CR0_MP_NE	0x0022
@@ -192,6 +199,59 @@ PRIVATE void fpu_init(void)
                 osfxsr_feature = 0;
                 return;
         }
+}
+
+PUBLIC void save_fpu(struct proc *pr)
+{
+	if(!fpu_presence)
+		return;
+
+	/* If the process hasn't touched the FPU, there is nothing to do. */
+
+	if(!(pr->p_misc_flags & MF_USED_FPU))
+		return;
+
+	/* Save changed FPU context. */
+
+	if(osfxsr_feature) {
+		fxsave(pr->p_fpu_state.fpu_save_area_p);
+		fninit();
+	} else {
+		fnsave(pr->p_fpu_state.fpu_save_area_p);
+	}
+
+	/* Clear MF_USED_FPU to signal there is no unsaved FPU state. */
+
+	pr->p_misc_flags &= ~MF_USED_FPU;
+}
+
+PUBLIC void restore_fpu(struct proc *pr)
+{
+	/* If the process hasn't touched the FPU, enable the FPU exception
+	 * and don't restore anything.
+	 */
+	if(!(pr->p_misc_flags & MF_USED_FPU)) {
+		write_cr0(read_cr0() | I386_CR0_TS);
+		return;
+	}
+
+	/* If the process has touched the FPU, disable the FPU
+	 * exception (both for the kernel and for the process once
+	 * it's scheduled), and initialize or restore the FPU state.
+	 */
+
+	clts();
+
+	if(!(pr->p_misc_flags & MF_FPU_INITIALIZED)) {
+		fninit();
+		pr->p_misc_flags |= MF_FPU_INITIALIZED;
+	} else {
+		if(osfxsr_feature) {
+			fxrstor(pr->p_fpu_state.fpu_save_area_p);
+		} else {
+			frstor(pr->p_fpu_state.fpu_save_area_p);
+		}
+	}
 }
 
 PUBLIC void arch_init(void)
@@ -437,4 +497,37 @@ PUBLIC struct proc * arch_finish_switch_to_user(void)
 	/* set pointer to the process to run on the stack */
 	*((reg_t *)stk) = (reg_t) proc_ptr;
 	return proc_ptr;
+}
+
+PUBLIC void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)
+{
+	int fp_error;
+
+	if (osfxsr_feature) {
+		fp_error = sc->sc_fpu_state.xfp_regs.fp_status &
+			~sc->sc_fpu_state.xfp_regs.fp_control;
+	} else {
+		fp_error = sc->sc_fpu_state.fpu_regs.fp_status &
+			~sc->sc_fpu_state.fpu_regs.fp_control;
+	}
+
+	if (fp_error & 0x001) {      /* Invalid op */
+		/*
+		 * swd & 0x240 == 0x040: Stack Underflow
+		 * swd & 0x240 == 0x240: Stack Overflow
+		 * User must clear the SF bit (0x40) if set
+		 */
+		fr->sf_code = FPE_FLTINV;
+	} else if (fp_error & 0x004) {
+		fr->sf_code = FPE_FLTDIV; /* Divide by Zero */
+	} else if (fp_error & 0x008) {
+		fr->sf_code = FPE_FLTOVF; /* Overflow */
+	} else if (fp_error & 0x012) {
+		fr->sf_code = FPE_FLTUND; /* Denormal, Underflow */
+	} else if (fp_error & 0x020) {
+		fr->sf_code = FPE_FLTRES; /* Precision */
+	} else {
+		fr->sf_code = 0;  /* XXX - probably should be used for FPE_INTOVF or
+				  * FPE_INTDIV */
+	}
 }

@@ -86,6 +86,11 @@ _PROTOTYPE( void reload_ds, (void)					);
 _PROTOTYPE( void ia32_msr_read, (u32_t reg, u32_t * hi, u32_t * lo)	);
 _PROTOTYPE( void ia32_msr_write, (u32_t reg, u32_t hi, u32_t lo)	);
 _PROTOTYPE( void fninit, (void));
+_PROTOTYPE( void clts, (void));
+_PROTOTYPE( void fxsave, (void *));
+_PROTOTYPE( void fnsave, (void *));
+_PROTOTYPE( void fxrstor, (void *));
+_PROTOTYPE( void frstor, (void *));
 _PROTOTYPE( unsigned short fnstsw, (void));
 _PROTOTYPE( void fnstcw, (unsigned short* cw));
 

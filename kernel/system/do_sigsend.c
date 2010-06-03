@@ -27,9 +27,6 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
   int proc_nr, r;
-  #if (_MINIX_CHIP == _CHIP_INTEL)
-    unsigned short int fp_error;
-  #endif
 
   if (!isokendpt(m_ptr->SIG_ENDPT, &proc_nr)) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
@@ -69,38 +66,7 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   rp->p_reg.fp = (reg_t) &frp->sf_fp;
   fr.sf_scp = scp;
 
-  #if (_MINIX_CHIP == _CHIP_INTEL)
-    if (osfxsr_feature == 1) {
-	fp_error = sc.sc_fpu_state.xfp_regs.fp_status &
-			~sc.sc_fpu_state.xfp_regs.fp_control;
-    } else {
-        fp_error = sc.sc_fpu_state.fpu_regs.fp_status &
-			~sc.sc_fpu_state.fpu_regs.fp_control;
-    }
-
-    if (fp_error & 0x001) {      /* Invalid op */
-      /*
-       * swd & 0x240 == 0x040: Stack Underflow
-       * swd & 0x240 == 0x240: Stack Overflow
-       * User must clear the SF bit (0x40) if set
-       */
-	fr.sf_code = FPE_FLTINV;
-    } else if (fp_error & 0x004) {
-	fr.sf_code = FPE_FLTDIV; /* Divide by Zero */
-    } else if (fp_error & 0x008) {
-        fr.sf_code = FPE_FLTOVF; /* Overflow */
-    } else if (fp_error & 0x012) {
-        fr.sf_code = FPE_FLTUND; /* Denormal, Underflow */
-    } else if (fp_error & 0x020) {
-        fr.sf_code = FPE_FLTRES; /* Precision */
-    } else {
-        fr.sf_code = 0;  /* XXX - probably should be used for FPE_INTOVF or
-			  * FPE_INTDIV */
-    }
-
-#else
-  fr.sf_code = 0;
-#endif
+  fpu_sigcontext(rp, &fr, &sc);
 
   fr.sf_signo = smsg.sm_signo;
   fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;

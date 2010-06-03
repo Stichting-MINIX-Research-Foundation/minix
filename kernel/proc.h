@@ -146,6 +146,7 @@ struct proc {
 #define proc_is_preempted(p)	((p)->p_rts_flags & RTS_PREEMPTED)
 #define proc_no_quantum(p)	((p)->p_rts_flags & RTS_NO_QUANTUM)
 #define proc_ptr_ok(p)		((p)->p_magic == PMAGIC)
+#define proc_used_fpu(p)	((p)->p_misc_flags & (MF_FPU_INITIALIZED|MF_USED_FPU))
 
 /* test whether the process is scheduled by the kernel's default policy  */
 #define proc_kernel_scheduler(p)	((p)->p_scheduler == NULL || \
