@@ -370,6 +370,11 @@ int ksig;			/* non-zero means signal comes from kernel  */
  		return;
    	}
 
+   	/* Always skip signals for PM (only necessary when broadcasting). */
+   	if(rmp->mp_endpoint == PM_PROC_NR) {
+ 		return;
+   	}
+
   	/* Print stacktrace if necessary. */
   	if(SIGS_IS_STACKTRACE(signo)) {
  		sys_sysctl_stacktrace(rmp->mp_endpoint);
