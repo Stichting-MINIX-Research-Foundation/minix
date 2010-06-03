@@ -50,6 +50,11 @@
 .globl	_fninit			/* non-waiting FPU initialization */
 .globl	_fnstsw			/* store status word (non-waiting) */
 .globl	_fnstcw			/* store control word (non-waiting) */
+.globl	_fxsave	
+.globl	_fnsave	
+.globl	_fxrstor	
+.globl	_frstor	
+.globl	_clts	
 
 /*
  * The routines only guarantee to preserve the registers the C compiler 
@@ -655,6 +660,10 @@ _fninit:
 	fninit
 	ret
 
+_clts:
+	clts
+	ret
+
 _fnstsw:
 	xor     %eax, %eax
 
@@ -670,6 +679,40 @@ _fnstcw:
 	fnstcw	(%eax)
 	pop     %eax
 	ret
+
+/*===========================================================================*/
+/*			      fxsave			     		*/
+/*===========================================================================*/
+_fxsave:
+	mov	4(%esp), %eax
+	fxsave	(%eax)		/* Do not change the operand! (gas2ack) */
+	ret
+
+/*===========================================================================*/
+/*			      fnsave			     		*/
+/*===========================================================================*/
+_fnsave:
+	mov	4(%esp), %eax
+	fnsave	(%eax)		/* Do not change the operand! (gas2ack) */
+	fwait	/* required for compatibility with processors prior pentium */
+	ret
+
+/*===========================================================================*/
+/*			      fxrstor			     		*/
+/*===========================================================================*/
+_fxrstor:
+	mov	4(%esp), %eax
+	fxrstor	(%eax)		/* Do not change the operand! (gas2ack) */
+	ret
+
+/*===========================================================================*/
+/*			      frstor			     		*/
+/*===========================================================================*/
+_frstor:
+	mov	4(%esp), %eax
+	frstor	(%eax)		/* Do not change the operand! (gas2ack) */
+	ret
+
 
 /*===========================================================================*/
 /*			      read_cr0					     */
@@ -847,3 +890,4 @@ _switch_address_space:
 	mov	%edx, _ptproc
 0:
 	ret
+

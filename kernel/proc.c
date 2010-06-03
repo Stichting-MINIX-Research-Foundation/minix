@@ -241,6 +241,7 @@ check_misc_flags:
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return
 	 */
+	restore_fpu(proc_ptr);
 	restore_user_context(proc_ptr);
 	NOT_REACHABLE;
 }

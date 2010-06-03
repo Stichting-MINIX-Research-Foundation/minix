@@ -90,7 +90,7 @@ begbss:
 .globl	_params_offset
 .globl	_mon_ds
 .globl	_switch_to_user
-.globl	_lazy_fpu
+.globl	_save_fpu
 
 .globl	_hwint00	/* handlers for hardware interrupts */
 .globl	_hwint01
@@ -589,33 +589,16 @@ _inval_opcode:
 
 _copr_not_available:
 	TEST_INT_IN_KERNEL(4, copr_not_available_in_kernel)
-	clts
-	cld				/* set direction flag to a known value */
+	cld			/* set direction flag to a known value */
 	SAVE_PROCESS_CTX_NON_LAZY(0)
 	/* stop user process cycles */
 	push	%ebp
+	mov	$0, %ebp
 	call	_context_stop
 	pop	%ebp
 	lea	P_MISC_FLAGS(%ebp), %ebx
-	movw	(%ebx), %cx
-	and	$MF_FPU_INITIALIZED, %cx
-	jnz	0f			/* jump if FPU is already initialized */
-	orw	$MF_FPU_INITIALIZED, (%ebx)
-	fninit
-	jmp	copr_return
-0:					/* load FPU context for current process */
-	mov	%ss:FP_SAVE_AREA_P(%ebp), %eax
-	cmp	$0, _osfxsr_feature
-	jz	fp_l_no_fxsr		/* FXSR is not avaible. */
-
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	fxrstor	(%eax)
-	jmp	copr_return
-fp_l_no_fxsr:
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	frstor	(%eax)
-copr_return:
-	orw	$MF_USED_FPU, (%ebx)	/* fpu was used during last execution */
+	orw	$MF_USED_FPU, (%ebx)
+	mov	$0, %ebp
 	jmp	_switch_to_user
 
 copr_not_available_in_kernel:
@@ -655,51 +638,6 @@ _machine_check:
 
 _simd_exception:
 	EXCEPTION_NO_ERR_CODE(SIMD_EXCEPTION_VECTOR)
-
-/*===========================================================================*/
-/*                              lazy_fpu                                     */
-/*===========================================================================*/
-/* void lazy_fpu(struct proc *pptr)
- * It's called, when we are on kernel stack.
- * Actualy lazy code is just few lines, which check MF_USED_FPU,
- * another part is save_init_fpu().
- */
-_lazy_fpu:
-	push	%ebp
-	mov	%esp, %ebp
-	push	%eax
-	push	%ebx
-	push	%ecx
-	cmp	$0, _fpu_presence		/* Do we have FPU? */
-	jz	no_fpu_available
-	mov	8(%ebp), %eax			/* Get pptr */
-	lea	P_MISC_FLAGS(%eax), %ebx
-	movw	(%ebx), %cx
-	and	$MF_USED_FPU, %cx
-	jz	0f				/* Don't save FPU */
-	mov	%ss:FP_SAVE_AREA_P(%eax), %eax
-	cmp	$0, _osfxsr_feature
-	jz	fp_s_no_fxsr			/* FXSR is not avaible. */
-	
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	fxsave	(%eax)
-	fninit
-	jmp	fp_saved
-fp_s_no_fxsr:
-	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
-	fnsave	(%eax)
-	fwait	/* required for compatibility with processors prior pentium */
-fp_saved:
-	andw	$~MF_USED_FPU, (%ebx)
-0:	mov	%cr0, %eax
-	or	$0x00000008, %eax		/* Set TS flag */
-	mov	%eax, %cr0
-no_fpu_available:
-	pop	%ecx
-	pop	%ebx
-	pop	%eax
-	pop	%ebp
-	ret
 
 /*===========================================================================*/
 /*				reload_cr3				     */
