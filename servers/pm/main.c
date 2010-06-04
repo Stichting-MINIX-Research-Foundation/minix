@@ -63,7 +63,6 @@ PUBLIC int main()
 
   /* SEF local startup. */
   sef_local_startup();
-  sched_init();	/* initialize user-space scheduling */
 
   /* This is PM's main loop-  get work and do it, forever and forever. */
   while (TRUE) {
@@ -303,6 +302,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   */
   unmap_ok = 1;
   _minix_unmapzero();
+
+  /* Initialize user-space scheduling. */
+  sched_init();
 
   return(OK);
 }
