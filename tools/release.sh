@@ -8,8 +8,6 @@ XBIN=usr/xbin
 SRC=src
 
 # size of /tmp during build
-TMPKB=32000
-
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
 # List of packages included on installation media
@@ -32,7 +30,7 @@ TRUNK=https://gforge.cs.vu.nl/svn/minix/trunk
 
 make_hdimage()
 {
-	dd if=$TMPDISK1 of=usrimage bs=$BS count=$USRBLOCKS
+	dd if=$TMPDISKUSR of=usrimage bs=$BS count=$USRBLOCKS
 
 	rootsize=`stat -size rootimage`
 	usrsize=`stat -size usrimage`
@@ -78,7 +76,7 @@ BIGPORTS=bigports
 
 hdemu_root_changes()
 {
-	$RELEASEDIR/usr/bin/installboot -d $TMPDISK3 \
+	$RELEASEDIR/usr/bin/installboot -d $TMPDISKROOT \
 		$RELEASEDIR/usr/mdec/bootblock boot/boot
 	echo \
 'bootcd=2
@@ -88,7 +86,7 @@ bios_remap_first=1
 ramimagedev=c0d7p0s0
 bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
 main() { trap 10000 boot ; menu; }
-save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
+save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
 
 	echo \
 'root=/dev/c0d7p0s0
@@ -98,13 +96,13 @@ usr_roflag="-r"' > $RELEASEDIR/etc/fstab
 
 usb_root_changes()
 {
-	$RELEASEDIR/usr/bin/installboot -d $TMPDISK3 \
+	$RELEASEDIR/usr/bin/installboot -d $TMPDISKROOT \
 		$RELEASEDIR/usr/mdec/bootblock boot/boot
 	echo \
 'bios_wini=yes
 bios_remap_first=1
 rootdev=c0d7p0s0
-save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
+save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
 
 	echo \
 'root=/dev/c0d7p0s0
@@ -112,10 +110,59 @@ usr=/dev/c0d7p0s2
 ' > $RELEASEDIR/etc/fstab
 }
 
-RELEASEDIR=/usr/r
-RELEASEMNTDIR=$RELEASEDIR
+fitfs()
+{
+	path="$1"
+	ramdisk="$2"
+	extra_inodes="$3"
+	extra_zones="$4"
+	mbsdefault="$5"
+
+	# Determine number of inodes
+	inodes=`find $path | egrep -v ^$path/usr | wc -l`
+	inodes="`expr $inodes + $extra_inodes`"
+
+	# Determine number of data zones using bc formula to transform file size in zone count
+	#  s - file size
+	#  d - number of direct blocks
+	#  i - number of indirect blocks
+	#  j - number of double indirect blocks
+	dir=7
+	indir="`expr $BS / 4`"
+	indir2="`expr $indir \* $indir`"
+	formula="s=\\0;d=(s+$BS-1)/$BS;i=(d-$dir+$indir-1)/$indir;j=(i-1+$indir2-1)/$indir2;d+i+j"
+	zones=`( find $path | egrep -v ^$path/usr | xargs lstat -size | egrep -x "[0-9]+" | sed -r "s|.+|$formula|" | bc | tr '
+' +; echo 0 ) | bc`
+	zones="`expr $zones + $extra_zones`"
+
+	# Determine file system size
+	BSBITS="`expr $BS \* 8`"
+	imap_blocks="`expr \( $inodes + $BSBITS - 1 \) / $BSBITS`"
+	inode_blocks="`expr \( $inodes \* 64 + $BS - 1 \) / $BS`"
+	zmap_blocks="`expr \( $zones + $BSBITS - 1 \) / $BSBITS`"
+	blocks="`expr 1 + 1 + $imap_blocks + $zmap_blocks + $inode_blocks + $zones`"
+	kbs="`expr $blocks \* \( $BS / 1024 \)`"
+
+	# Apply default if higher
+	if [ -n "$mbsdefault" ]
+	then
+		kbsdefault="`expr $mbsdefault \* 1024`"
+		if [ "$kbs" -lt "$kbsdefault" ]
+		then kbs=$kbsdefault
+		else echo "warning: ${mbsdefault}mb is too small, using ${kbs}kb"
+		fi
+	fi
+
+	# Create a filesystem on the target ramdisk
+	ramdisk $kbs $ramdisk
+	mkfs -B $BS -i $inodes $ramdisk
+}
+
+RELEASEDIR=/usr/r-staging
+RELEASEMNTDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
+
 IMAGE=../boot/cdbootblock
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
@@ -132,7 +179,6 @@ REVTAG=""
 PACKAGES=1
 MINIMAL=0
 MAKEMAP=0
-ROOTKB=8192
 
 FILENAMEOUT=""
 
@@ -171,20 +217,11 @@ do
 		;;
 	m)	MINIMAL=1
 		PACKAGES=0
-		RELEASEDIR=/usr/r-staging
-		RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
-		RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
-		ROOTKB=4608
-		[ ! "$USRMB" ] && USRMB=22
 		;;
 	M)	MAKEMAP=1
 		;;
 	esac
 done
-
-if [ ! "$USRMB" ]
-then	USRMB=600
-fi
 
 if [ ! "$ZIP" ]
 then	ZIP=gzip
@@ -198,59 +235,37 @@ then	mkdir -p $PACKAGEDIR || true
 	retrieve $PACKAGESOURCEDIR $PACKAGESOURCELIST software
 fi
 
-echo $USRMB MB
-
-USRKB=$(($USRMB*1024))
-USRBLOCKS=$(($USRMB * 1024 * 1024 / $BS))
-USRSECTS=$(($USRMB * 1024 * 2))
-ROOTSECTS=$(($ROOTKB * 2))
-ROOTBLOCKS=$(($ROOTKB * 1024 / $BS))
-
 if [ "$COPY" -ne 1 ]
 then
 	echo "Note: this script wants to do svn operations."
 fi
 
-TMPDISK1=/dev/ram0
-TMPDISK2=/dev/ram1
-TMPDISK3=/dev/ram2
+TMPDISKUSR=/dev/ram0
+TMPDISKROOT=/dev/ram1
 
-if [ ! -b $TMPDISK1 -o ! -b $TMPDISK2 -o ! $TMPDISK3 ]
-then	echo "$TMPDISK1, $TMPDISK2 or $TMPDISK3 is not a block device.."
+if [ ! -b $TMPDISKUSR -o ! $TMPDISKROOT ]
+then	echo "$TMPDISKUSR or $TMPDISKROOT is not a block device.."
 	exit 1
 fi
 
-umount $TMPDISK1 || true
-umount $TMPDISK2 || true
-umount $TMPDISK3 || true
-
-ramdisk $USRKB $TMPDISK1
-ramdisk $TMPKB $TMPDISK2
-ramdisk $ROOTKB $TMPDISK3
-
-if [ $TMPDISK1 = $TMPDISK2  -o $TMPDISK1 = $TMPDISK3 -o $TMPDISK2 = $TMPDISK3 ]
+if [ $TMPDISKUSR = $TMPDISKROOT ]
 then
 	echo "Temporary devices can't be equal."
 	exit
 fi
 
 echo " * Cleanup old files"
+umount $TMPDISKUSR || true
+umount $TMPDISKROOT || true
+umount $RELEASEMNTDIR/usr || true
+umount $RELEASEMNTDIR || true
+
 rm -rf $RELEASEDIR $RELEASEMNTDIR $IMG $ROOTIMAGE $CDFILES image*
 mkdir -p $CDFILES || exit
-mkdir -p $RELEASEDIR
-[ "$RELEASEDIR" = "$RELEASEMNTDIR" ] || mkdir -p $RELEASEMNTDIR 
-mkfs -i 2000 -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
-mkfs -B 1024 -b $TMPKB  $TMPDISK2 || exit
-echo " * mounting $TMPDISK3 as $RELEASEMNTDIR"
-mount $TMPDISK3 $RELEASEMNTDIR || exit
+mkdir -p $RELEASEDIR $RELEASEMNTDIR 
 mkdir -m 755 $RELEASEDIR/usr
-[ "$RELEASEDIR" = "$RELEASEMNTDIR" ] || mkdir -m 755 $RELEASEMNTDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
-mount $TMPDISK2 $RELEASEDIR/tmp
 
-mkfs -B $BS -i 30000 -b $USRBLOCKS $TMPDISK1 || exit
-echo " * Mounting $TMPDISK1 as $RELEASEMNTDIR/usr"
-mount $TMPDISK1 $RELEASEMNTDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 mkdir -p $RELEASEDIR/$XBIN
@@ -364,15 +379,8 @@ rm -rf $RELEASEDIR/$XBIN
 chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
 
-if [ "$USB" -ne 0 ]
-then
-	usb_root_changes
-elif [ "$HDEMU" -ne 0 ]
-then
-	hdemu_root_changes
-fi
-
 echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
+rm -rf $RELEASEDIR/tmp/*
 if [ $MINIMAL -ne 0 ]
 then
 	if [ "$MAKEMAP" -ne 0 ]
@@ -384,36 +392,47 @@ then
 
 	echo " * Removing files to create minimal image"
 	rm -rf $RELEASEDIR/boot/image/* $RELEASEDIR/usr/man/man*/* 	\
-		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src	\
-		$RELEASEDIR/tmp/*
+		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src
 	mkdir -p $RELEASEDIR/usr/src/tools
 	ln $RELEASEDIR/boot/image_big $RELEASEDIR/boot/image/$version
 fi
+
 echo " * Counting files"
 extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
-expr `df $TMPDISK1 | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
-if [ $MINIMAL -ne 0 ]
+
+echo " * mounting $TMPDISKROOT as $RELEASEMNTDIR"
+fitfs $RELEASEDIR $TMPDISKROOT 64 256 "$ROOTMB"
+ROOTBLOCKS=$blocks
+ROOTSECTS="`expr $blocks \* \( $BS / 512 \)`"
+mount $TMPDISKROOT $RELEASEMNTDIR || exit
+
+echo " * Mounting $TMPDISKUSR as $RELEASEMNTDIR/usr"
+fitfs $RELEASEDIR/usr $TMPDISKUSR 0 0 "$USRMB"
+USRBLOCKS=$blocks
+USRSECTS="`expr $blocks \* \( $BS / 512 \)`"
+mkdir -m 755 $RELEASEMNTDIR/usr
+mount $TMPDISKUSR $RELEASEMNTDIR/usr || exit
+
+echo " * Copying files from staging to image"
+synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
+expr `df $TMPDISKUSR | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEMNTDIR/.usrkb
+
+echo " * Making image bootable"
+if [ "$USB" -ne 0 ]
 then
-	echo " * Copying files from staging to image"
-	synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
-else
-	echo " * Zeroing remainder of temporary areas"
-	df $TMPDISK1
-	df $TMPDISK3
-	cp /dev/zero $RELEASEDIR/usr/.x 2>/dev/null || true
-	rm $RELEASEDIR/usr/.x
-	cp /dev/zero $RELEASEDIR/.x 2>/dev/null || true
-	rm $RELEASEDIR/.x
+	usb_root_changes
+elif [ "$HDEMU" -ne 0 ]
+then
+	hdemu_root_changes
 fi
 
-umount $TMPDISK1 || exit
-umount $TMPDISK2 || exit
-umount $TMPDISK3 || exit
+umount $TMPDISKUSR || exit
+umount $TMPDISKROOT || exit
 
 # Boot monitor variables for boot CD
-edparams $TMPDISK3 'unset bootopts;
+edparams $TMPDISKROOT 'unset bootopts;
 unset servers;
 unset rootdev;
 unset leader;
@@ -427,7 +446,7 @@ leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoos
 save' 
 
 (cd ../boot && make)
-dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
+dd if=$TMPDISKROOT of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 cp release/cd/* $CDFILES || true
 echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
 
@@ -456,7 +475,7 @@ else
 		# number of sectors
 		isosects=`expr $isosects + $isopad`
 		( cat $IMG $ROOTIMAGE ;
-			dd if=$TMPDISK1 bs=$BS count=$USRBLOCKS ) >m
+			dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
 		mv m $IMG
 		# Make CD partition table
 		installboot -m $IMG /usr/mdec/masterboot
@@ -471,3 +490,7 @@ fi
 if [ "$FILENAMEOUT" ]
 then	echo "$IMG" >$FILENAMEOUT
 fi
+
+echo " * Freeing up memory used by ramdisks"
+ramdisk 1 $TMPDISKROOT
+ramdisk 1 $TMPDISKUSR
