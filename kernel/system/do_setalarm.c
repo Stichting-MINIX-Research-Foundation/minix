@@ -50,7 +50,6 @@ PUBLIC int do_setalarm(struct proc * caller, message * m_ptr)
       reset_timer(tp);
   } else {
       tp->tmr_exp_time = (use_abs_time) ? exp_time : exp_time + get_uptime();
-      assert(tp->tmr_exp_time > get_uptime());
       set_timer(tp, tp->tmr_exp_time, tp->tmr_func);
   }
   return(OK);
