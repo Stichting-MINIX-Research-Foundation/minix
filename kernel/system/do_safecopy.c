@@ -147,8 +147,8 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Don't fiddle around with grants that wrap, arithmetic
 		 * below may be confused.
 		 */
-		if(MEM_TOP - g.cp_u.cp_direct.cp_len <
-			g.cp_u.cp_direct.cp_start - 1) {
+		if(MEM_TOP - g.cp_u.cp_direct.cp_len + 1 <
+			g.cp_u.cp_direct.cp_start) {
 			printf(
 		"verify_grant: direct grant verify failed: len too long\n");
 			return EPERM;
