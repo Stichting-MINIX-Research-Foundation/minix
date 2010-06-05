@@ -153,7 +153,7 @@ do	cd $TMPDIR
 	) >$TMPF
 	highest="`wc -l $TMPF | awk '{ print $1 - 1 }'`"
 	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | $PAGER
-	echo "Format examples: '3', '3,6', '3-9', '3-9,11-15', 'all'"
+	echo "Format examples: '3', '3,6', '3-9', '3-9,11-15', 'all', 'gzip-1.2.4'"
 	echo -n "Package(s) to install (RETURN or q to exit)? "
 	packnolist=`myread`
 	if [ "$packnolist" = "" -o "$packnolist" = "q" ]
@@ -169,22 +169,35 @@ do	cd $TMPDIR
    for packrange in $packnolist
    do
 	# Get a-b range.
-	IFS='-'
-	set $packrange
-	start=$1
-	if [ $# = 2 ]
-	then	end=$2
-	else	end=$1
+	if [ "$packrange" : '^ *[0-9]' ]
+	then
+		# If it starts with a digit, it is a range of package numbers
+		IFS='-'
+		set $packrange
+		start=$1
+		if [ $# = 2 ]
+		then	end=$2
+		else	end=$1
+		fi
+		IFS=' '
+		packlist="`awk </dev/null "BEGIN { for(i=$start; i<=$end; i++) { printf \\\"%d \\\", i } }"`"
+		packlistno=1
+	else
+		# Otherwise it is a package name
+		packlist=$packrange
+		packlistno=0
 	fi
-	IFS=' '
       # use awk to make the range list
-      for packno in `awk </dev/null "BEGIN { for(i=$start; i<=$end; i++) { printf \"%d \", i } }"`
+      for packno in $packlist
       do
 	ok=y
-	pat="^$packno|"
+	if [ $packlistno -eq 0 ]
+	then pat="^[0-9]\+|$packno|"
+	else pat="^$packno|"
+	fi
 	if [ "`grep -c $pat $TMPF`" -ne 1 ]
 	then	if [ "$packno" ]
-		then	echo "$packno: Wrong package number."
+		then	echo "$packno: Wrong package."
 		fi
 		ok=n
 	fi
