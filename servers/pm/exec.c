@@ -15,7 +15,6 @@
  *   do_exec_newmem: allocate new memory map for a process that tries to exec
  *   do_execrestart: finish the special exec call for RS
  *   exec_restart: finish a regular exec call
- *   find_share: find a process whose text segment can be shared
  */
 
 #include "pm.h"

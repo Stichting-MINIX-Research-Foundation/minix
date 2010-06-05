@@ -348,9 +348,6 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	/* We must be in paged mode to be able to do this. */
-	assert(vm_paged);
-
 	/* Length must be reasonable. */
 	assert(length > 0);
 

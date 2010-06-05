@@ -30,40 +30,11 @@
 
 #include "memory.h"
 
-FORWARD _PROTOTYPE( int new_mem, (struct vmproc *vmp, struct vmproc *sh_vmp,
+FORWARD _PROTOTYPE( int new_mem, (struct vmproc *vmp,
 	vir_bytes text_bytes, vir_bytes data_bytes, vir_bytes bss_bytes,
 	vir_bytes stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top));
 
 static int failcount;
-
-/*===========================================================================*
- *                              find_share                                   *
- *===========================================================================*/
-PUBLIC struct vmproc *find_share( 
-  struct vmproc *vmp_ign,       /* process that should not be looked at */
-  ino_t ino,                    /* parameters that uniquely identify a file */
-  dev_t dev,
-  time_t ctime
-)
-{
-/* Look for a process that is the file <ino, dev, ctime> in execution.  Don't
- * accidentally "find" vmp_ign, because it is the process on whose behalf this
- * call is made.
- */
-  struct vmproc *vmp;
-  for (vmp = &vmproc[0]; vmp < &vmproc[NR_PROCS]; vmp++) {
-        if (!(vmp->vm_flags & VMF_INUSE)) continue;
-        if (!(vmp->vm_flags & VMF_SEPARATE)) continue;
-        if (vmp->vm_flags & VMF_HASPT) continue;
-        if (vmp == vmp_ign) continue;
-        if (vmp->vm_ino != ino) continue;
-        if (vmp->vm_dev != dev) continue;
-        if (vmp->vm_ctime != ctime) continue;
-        return vmp;
-  }
-  return(NULL);
-}
-
 
 /*===========================================================================*
  *				exec_newmem				     *
@@ -73,7 +44,7 @@ PUBLIC int do_exec_newmem(message *msg)
 	int r, proc_e, proc_n;
 	vir_bytes stack_top;
 	vir_clicks tc, dc, sc, totc, dvir, s_vir;
-	struct vmproc *vmp, *sh_mp;
+	struct vmproc *vmp;
 	char *ptr;
 	struct exec_newmem args;
 
@@ -126,17 +97,10 @@ SANITYCHECK(SCL_DETAIL);
 		return r;
 	}
 
-	/* Can the process' text be shared with that of one already running? */
-	if(!vm_paged) {
-		sh_mp = find_share(vmp, args.st_ino, args.st_dev, args.st_ctime);
-	} else {
-		sh_mp = NULL;
-	}
-
 	/* Allocate new memory and release old memory.  Fix map and tell
 	 * kernel.
 	 */
-	r = new_mem(vmp, sh_mp, args.text_bytes, args.data_bytes,
+	r = new_mem(vmp, args.text_bytes, args.data_bytes,
 		args.bss_bytes, args.args_bytes, args.tot_bytes, &stack_top);
 	if (r != OK) {
 		printf("VM: newmem: new_mem failed\n");
@@ -156,8 +120,7 @@ SANITYCHECK(SCL_DETAIL);
 
 	msg->VMEN_STACK_TOP = (void *) stack_top;
 	msg->VMEN_FLAGS = 0;
-	if (!sh_mp)			 /* Load text if sh_mp = NULL */
-		msg->VMEN_FLAGS |= EXC_NM_RF_LOAD_TEXT;
+	msg->VMEN_FLAGS |= EXC_NM_RF_LOAD_TEXT;
 
 	return OK;
 }
@@ -165,10 +128,9 @@ SANITYCHECK(SCL_DETAIL);
 /*===========================================================================*
  *				new_mem					     *
  *===========================================================================*/
-PRIVATE int new_mem(rmp, sh_mp, text_bytes, data_bytes,
+PRIVATE int new_mem(rmp, text_bytes, data_bytes,
 	bss_bytes,stk_bytes,tot_bytes,stack_top)
 struct vmproc *rmp;		/* process to get a new memory map */
-struct vmproc *sh_mp;		/* text can be shared with this process */
 vir_bytes text_bytes;		/* text segment size in bytes */
 vir_bytes data_bytes;		/* size of initialized data in bytes */
 vir_bytes bss_bytes;		/* size of bss in bytes */
@@ -184,18 +146,11 @@ vir_bytes *stack_top;		/* top of process stack */
   phys_bytes bytes, base, bss_offset;
   int s, r2, r, hadpt = 0;
   struct vmproc *vmpold = &vmproc[VMP_EXECTMP];
+  int ptok = 1;
 
   SANITYCHECK(SCL_FUNCTIONS);
 
-  if(rmp->vm_flags & VMF_HASPT) {
-	hadpt = 1;
-  }
-
-  /* No need to allocate text if it can be shared. */
-  if (sh_mp != NULL) {
-	text_bytes = 0;
-	assert(!vm_paged);
-  }
+  assert(rmp->vm_flags & VMF_HASPT);
 
   /* Acquire the new memory.  Each of the 4 parts: text, (data+bss), gap,
    * and stack occupies an integral number of clicks, starting at click
@@ -221,42 +176,26 @@ vir_bytes *stack_top;		/* top of process stack */
    * Just recreate it in the case that we have to revert.
    */
 SANITYCHECK(SCL_DETAIL);
-  if(hadpt) {
-	  rmp->vm_flags &= ~VMF_HASPT;
-	  pt_free(&rmp->vm_pt);
-  }
+  rmp->vm_flags &= ~VMF_HASPT;
+  pt_free(&rmp->vm_pt);
+
   assert(!(vmpold->vm_flags & VMF_INUSE));
   *vmpold = *rmp;	/* copy current state. */
   rmp->vm_regions = NULL; /* exec()ing process regions thrown out. */
 SANITYCHECK(SCL_DETAIL);
 
-  if(!hadpt) {
-  	if (find_share(rmp, rmp->vm_ino, rmp->vm_dev, rmp->vm_ctime) == NULL) {
-		/* No other process shares the text segment, so free it. */
-		free_mem(rmp->vm_arch.vm_seg[T].mem_phys, rmp->vm_arch.vm_seg[T].mem_len);
-  	}
-
-  	/* Free the data and stack segments. */
-  	free_mem(rmp->vm_arch.vm_seg[D].mem_phys,
-		rmp->vm_arch.vm_seg[S].mem_vir
-		+ rmp->vm_arch.vm_seg[S].mem_len
-		- rmp->vm_arch.vm_seg[D].mem_vir);
-  }
 
   /* Build new process in current slot, without freeing old
    * one. If it fails, revert.
    */
+  SANITYCHECK(SCL_DETAIL);
+  if((r=pt_new(&rmp->vm_pt)) != OK) {
+    ptok = 0;
+    printf("exec_newmem: no new pagetable\n");
+  }
 
-  if(vm_paged) {
-	int ptok = 1;
-	SANITYCHECK(SCL_DETAIL);
-	if((r=pt_new(&rmp->vm_pt)) != OK) {
-		ptok = 0;
-		printf("exec_newmem: no new pagetable\n");
-	}
-
-	SANITYCHECK(SCL_DETAIL);
-	if(r != OK || (r=proc_new(rmp,
+  SANITYCHECK(SCL_DETAIL);
+  if(r != OK || (r=proc_new(rmp,
 	 VM_PROCSTART,	/* where to start the process in the page table */
 	 CLICK2ABS(text_clicks),/* how big is the text in bytes, page-aligned */
 	 CLICK2ABS(data_clicks),/* how big is data+bss, page-aligned */
@@ -265,112 +204,42 @@ SANITYCHECK(SCL_DETAIL);
 	 0,0,			/* not preallocated */
 	 VM_STACKTOP,		/* regular stack top */
 	 0)) != OK) {
-		SANITYCHECK(SCL_DETAIL);
-		printf("VM: new_mem: failed\n");
-		if(ptok) {
-	  		rmp->vm_flags &= ~VMF_HASPT;
-			pt_free(&rmp->vm_pt);
-		}
-		*rmp = *vmpold;	/* undo. */
-		clear_proc(vmpold);	/* disappear. */
-		SANITYCHECK(SCL_DETAIL);
-		if(hadpt) {
-			if(pt_new(&rmp->vm_pt) != OK) {
-			/* We secretly know that making a new pagetable
-			 * in the same slot if one was there will never fail.
-			 */
-				panic("new_mem: pt_new failed: %d", ENOMEM);
-			}
-			rmp->vm_flags |= VMF_HASPT;
-			SANITYCHECK(SCL_DETAIL);
-			if(map_writept(rmp) != OK) {
-				printf("VM: warning: exec undo failed\n");
-			}
-			SANITYCHECK(SCL_DETAIL);
-		}
-		return r;
-	}
-	SANITYCHECK(SCL_DETAIL);
-	/* new process is made; free and unreference
-	 * page table and memory still held by exec()ing process.
+    SANITYCHECK(SCL_DETAIL);
+    printf("VM: new_mem: failed\n");
+    if(ptok) {
+      rmp->vm_flags &= ~VMF_HASPT;
+      pt_free(&rmp->vm_pt);
+    }
+    *rmp = *vmpold;	/* undo. */
+    clear_proc(vmpold);	/* disappear. */
+    SANITYCHECK(SCL_DETAIL);
+    if(hadpt) {
+      if(pt_new(&rmp->vm_pt) != OK) {
+	/* We secretly know that making a new pagetable
+	 * in the same slot if one was there will never fail.
 	 */
-	SANITYCHECK(SCL_DETAIL);
-	free_proc(vmpold);
-	clear_proc(vmpold);	/* disappear. */
-	SANITYCHECK(SCL_DETAIL);
-	*stack_top = VM_STACKTOP;
-  } else {
-  	phys_clicks new_base;
-
-	new_base = alloc_mem(text_clicks + tot_clicks, 0);
-	if (new_base == NO_MEM) {
-		printf("VM: new_mem: alloc_mem failed\n");
-		return(ENOMEM);
-	}
-
-	if (sh_mp != NULL) {
-		/* Share the text segment. */
-		rmp->vm_arch.vm_seg[T] = sh_mp->vm_arch.vm_seg[T];
-	} else {
-		rmp->vm_arch.vm_seg[T].mem_phys = new_base;
-		rmp->vm_arch.vm_seg[T].mem_vir = 0;
-		rmp->vm_arch.vm_seg[T].mem_len = text_clicks;
-	
-		if (text_clicks > 0)
-		{
-			/* Zero the last click of the text segment. Otherwise the
-			 * part of that click may remain unchanged.
-			 */
-			base = (phys_bytes)(new_base+text_clicks-1) << CLICK_SHIFT;
-			if ((s= sys_memset(0, base, CLICK_SIZE)) != OK)
-				panic("new_mem: sys_memset failed: %d", s);
-		}
-  	}
-
-	/* No paging stuff. */
-	rmp->vm_flags &= ~VMF_HASPT;
-	rmp->vm_regions = NULL;
-
-	  rmp->vm_arch.vm_seg[D].mem_phys = new_base + text_clicks;
-	  rmp->vm_arch.vm_seg[D].mem_vir = 0;
-	  rmp->vm_arch.vm_seg[D].mem_len = data_clicks;
-	  rmp->vm_arch.vm_seg[S].mem_phys = rmp->vm_arch.vm_seg[D].mem_phys +
-		data_clicks + gap_clicks;
-	  rmp->vm_arch.vm_seg[S].mem_vir = rmp->vm_arch.vm_seg[D].mem_vir +
-		data_clicks + gap_clicks;
-	  rmp->vm_arch.vm_seg[S].mem_len = stack_clicks;
-	rmp->vm_stacktop =
-		CLICK2ABS(rmp->vm_arch.vm_seg[S].mem_vir +
-			rmp->vm_arch.vm_seg[S].mem_len);
-
-	rmp->vm_arch.vm_data_top = 
-		(rmp->vm_arch.vm_seg[S].mem_vir + 
-		rmp->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
-
-	  if((r2=sys_newmap(rmp->vm_endpoint, rmp->vm_arch.vm_seg)) != OK) {
-		/* report new map to the kernel */
-		panic("sys_newmap failed: %d", r2);
-	  }
-
-	  /* Zero the bss, gap, and stack segment. */
-	  bytes = (phys_bytes)(data_clicks + gap_clicks + stack_clicks) << CLICK_SHIFT;
-	  base = (phys_bytes) rmp->vm_arch.vm_seg[D].mem_phys << CLICK_SHIFT;
-	  bss_offset = (data_bytes >> CLICK_SHIFT) << CLICK_SHIFT;
-	  base += bss_offset;
-	  bytes -= bss_offset;
-
-	  if ((s=sys_memset(0, base, bytes)) != OK) {
-		panic("new_mem can't zero: %d", s);
-	  }
-
-	  /* Tell kernel this thing has no page table. */
-	  if((s=pt_bind(NULL, rmp)) != OK)
-		panic("exec_newmem: pt_bind failed: %d", s);
-	*stack_top= ((vir_bytes)rmp->vm_arch.vm_seg[S].mem_vir << CLICK_SHIFT) +
-               ((vir_bytes)rmp->vm_arch.vm_seg[S].mem_len << CLICK_SHIFT);
+	panic("new_mem: pt_new failed: %d", ENOMEM);
+      }
+      rmp->vm_flags |= VMF_HASPT;
+      SANITYCHECK(SCL_DETAIL);
+      if(map_writept(rmp) != OK) {
+	printf("VM: warning: exec undo failed\n");
+      }
+      SANITYCHECK(SCL_DETAIL);
+    }
+    return r;
   }
+  SANITYCHECK(SCL_DETAIL);
+  /* new process is made; free and unreference
+   * page table and memory still held by exec()ing process.
+   */
+  SANITYCHECK(SCL_DETAIL);
+  free_proc(vmpold);
+  clear_proc(vmpold);	/* disappear. */
+  SANITYCHECK(SCL_DETAIL);
+  *stack_top = VM_STACKTOP;
 
-SANITYCHECK(SCL_FUNCTIONS);
+  SANITYCHECK(SCL_FUNCTIONS);
 
   return(OK);
 }

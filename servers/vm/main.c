@@ -183,8 +183,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	incheck = nocheck = 0;
 #endif
 
-	vm_paged = 1;
-	env_parse("vm_paged", "d", 0, &vm_paged, 0, 1);
 #if SANITYCHECKS
 	env_parse("vm_sanitychecklevel", "d", 0, &vm_sanitychecklevel, 0, SCL_MAX);
 #endif

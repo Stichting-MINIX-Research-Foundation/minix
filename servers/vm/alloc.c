@@ -181,43 +181,10 @@ PUBLIC phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
 	clicks += align_clicks;
   }
 
-  if(vm_paged) {
-	mem = alloc_pages(clicks, memflags, NULL);
-	if(mem == NO_MEM) {
-		free_yielded(clicks * CLICK_SIZE);
-		mem = alloc_pages(clicks, memflags, NULL);
-	}
-  } else {
-CHECKHOLES;
-        prev_ptr = NULL;
-	hp = hole_head;
-	while (hp != NULL) {
-		if (hp->h_len >= clicks) {
-			/* We found a hole that is big enough.  Use it. */
-			old_base = hp->h_base;	/* remember where it started */
-			hp->h_base += clicks;	/* bite a piece off */
-			hp->h_len -= clicks;	/* ditto */
-
-			/* Delete the hole if used up completely. */
-			if (hp->h_len == 0) del_slot(prev_ptr, hp);
-
-			/* Anything special needs to happen? */
-			if(memflags & PAF_CLEAR) {
-			  if ((s= sys_memset(0, CLICK_SIZE*old_base,
-				CLICK_SIZE*clicks)) != OK)   {
-				panic("alloc_mem: sys_memset failed: %d", s);
-			  }
-			}
-
-			/* Return the start address of the acquired block. */
-CHECKHOLES;
-			mem = old_base;
-			break;
-		}
-
-		prev_ptr = hp;
-		hp = hp->h_next;
-	}
+  mem = alloc_pages(clicks, memflags, NULL);
+  if(mem == NO_MEM) {
+    free_yielded(clicks * CLICK_SIZE);
+    mem = alloc_pages(clicks, memflags, NULL);
   }
 
   if(mem == NO_MEM)
@@ -255,11 +222,9 @@ CHECKHOLES;
 
   if (clicks == 0) return;
 
-  if(vm_paged) {
-	assert(CLICK_SIZE == VM_PAGE_SIZE);
-	free_pages(base, clicks);
-	return;
-  }
+  assert(CLICK_SIZE == VM_PAGE_SIZE);
+  free_pages(base, clicks);
+  return;
 
   if ( (new_ptr = free_slots) == NULL) 
   	panic("hole table full");
