@@ -35,7 +35,7 @@ char *argv[];
 	if (errno == EINVAL)
 		std_err("umount: Device not mounted\n");
 	else if (errno == ENOTBLK)
-		std_err("unount: Not a mountpoint\n");
+		std_err("umount: Not a mountpoint\n");
 	else
 		perror("umount");
 	exit(1);
