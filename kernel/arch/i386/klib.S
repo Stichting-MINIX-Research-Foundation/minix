@@ -38,6 +38,7 @@
 .globl	_getcr3val
 .globl	_write_cr0	/* write a value in cr0 */
 .globl	_read_cr3
+.globl	_write_cr3
 .globl	_read_cr4
 .globl	_write_cr4
 
@@ -788,6 +789,22 @@ _write_cr4:
 0:
 	pop	%ebp
 	ret
+
+/*===========================================================================*/
+/*			      write_cr3					     */
+/*===========================================================================*/
+/* PUBLIC void write_cr3(unsigned long value); */
+_write_cr3:
+	push	%ebp
+	mov	%esp, %ebp
+	mov	8(%ebp), %eax
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
+	mov	%eax, %cr3
+
+	pop	%ebp
+	ret
+
 /*===========================================================================*/
 /*				getcr3val				     */
 /*===========================================================================*/
