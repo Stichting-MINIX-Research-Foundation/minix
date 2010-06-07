@@ -44,9 +44,15 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   /* Copy the registers to the sigcontext structure. */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(sigregs));
   #if (_MINIX_CHIP == _CHIP_INTEL)
-    if(rp->p_misc_flags & MF_FPU_INITIALIZED)
+    if(rp->p_misc_flags & MF_FPU_INITIALIZED) {
+	    /* save the FPU context before saving it to the sig context */
+	    if (fpu_owner == rp) {
+		    disable_fpu_exception();
+		    save_fpu(rp);
+	    }
 	    memcpy(&sc.sc_fpu_state, rp->p_fpu_state.fpu_save_area_p,
 	   	 FPU_XFP_SIZE);
+    }
   #endif
 
   /* Finish the sigcontext initialization. */

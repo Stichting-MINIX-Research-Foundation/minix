@@ -221,7 +221,6 @@ struct proc {
 #define MF_SC_ACTIVE	0x100	/* Syscall tracing: in a system call now */
 #define MF_SC_DEFER	0x200	/* Syscall tracing: deferred system call */
 #define MF_SC_TRACE	0x400	/* Syscall tracing: trigger syscall events */
-#define MF_USED_FPU	0x800   /* process used fpu during last execution run */
 #define MF_FPU_INITIALIZED	0x1000  /* process already used math, so fpu
 					 * regs are significant (initialized)*/
 #define MF_SENDING_FROM_KERNEL	0x2000 /* message of this process is from kernel */

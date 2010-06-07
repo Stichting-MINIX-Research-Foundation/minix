@@ -121,7 +121,7 @@
  * displ is the stack displacement. In case of an exception, there are two extra
  * value on the stack - error code and the exception number
  */
-#define SAVE_PROCESS_CTX_NON_LAZY(displ) \
+#define SAVE_PROCESS_CTX(displ) \
 								\
 	cld /* set the direction flag to a known state */	;\
 								\
@@ -138,20 +138,6 @@
 							\
 	RESTORE_KERNEL_SEGS				;\
 	SAVE_TRAP_CTX(displ, %ebp, %esi)		;
-
-#define SAVE_PROCESS_CTX(displ)				\
-	SAVE_PROCESS_CTX_NON_LAZY(displ)		;\
-	push	%eax					;\
-	push	%ebx					;\
-	push	%ecx					;\
-	push	%edx					;\
-	push	%ebp					;\
-	call	_save_fpu				;\
-	pop	%ebp					;\
-	pop	%edx					;\
-	pop	%ecx					;\
-	pop	%ebx					;\
-	pop	%eax					;
 
 /*
  * clear the IF flag in eflags which are stored somewhere in memory, e.g. on

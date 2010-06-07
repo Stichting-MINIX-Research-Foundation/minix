@@ -237,11 +237,15 @@ check_misc_flags:
 
 	context_stop(proc_addr(KERNEL));
 
+	/* If the process isn't the owner of FPU, enable the FPU exception */
+	if(fpu_owner != proc_ptr)
+		enable_fpu_exception();
+	else
+		disable_fpu_exception();
 	/*
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return
 	 */
-	restore_fpu(proc_ptr);
 	restore_user_context(proc_ptr);
 	NOT_REACHABLE;
 }
@@ -1432,4 +1436,34 @@ PUBLIC void proc_no_time(struct proc * p)
 		RTS_UNSET(proc_ptr, RTS_PREEMPTED);
 #endif
 	}
+}
+	
+PUBLIC void copr_not_available_handler(void)
+{
+	/*
+	 * Disable the FPU exception (both for the kernel and for the process
+	 * once it's scheduled), and initialize or restore the FPU state.
+	 */
+
+	disable_fpu_exception();
+
+	/* if FPU is not owned by anyone, do not store anything */
+	if (fpu_owner != NULL) {
+		assert(fpu_owner != proc_ptr);
+		save_fpu(fpu_owner);
+	}
+
+	/*
+	 * restore the current process' state and let it run again, do not
+	 * schedule!
+	 */
+	restore_fpu(proc_ptr);
+	fpu_owner = proc_ptr;
+	context_stop(proc_addr(KERNEL));
+	restore_user_context(proc_ptr);
+	NOT_REACHABLE;
+}
+
+PUBLIC void release_fpu(void) {
+	fpu_owner = NULL;
 }

@@ -70,6 +70,10 @@ PUBLIC int do_clear(struct proc * caller, message * m_ptr)
   }
 #endif
 
+  /* release FPU */
+  if (fpu_owner == rc)
+	  release_fpu();
+
   return OK;
 }
 

@@ -206,42 +206,17 @@ PUBLIC void save_fpu(struct proc *pr)
 	if(!fpu_presence)
 		return;
 
-	/* If the process hasn't touched the FPU, there is nothing to do. */
-
-	if(!(pr->p_misc_flags & MF_USED_FPU))
-		return;
-
 	/* Save changed FPU context. */
-
 	if(osfxsr_feature) {
 		fxsave(pr->p_fpu_state.fpu_save_area_p);
 		fninit();
 	} else {
 		fnsave(pr->p_fpu_state.fpu_save_area_p);
 	}
-
-	/* Clear MF_USED_FPU to signal there is no unsaved FPU state. */
-
-	pr->p_misc_flags &= ~MF_USED_FPU;
 }
 
 PUBLIC void restore_fpu(struct proc *pr)
 {
-	/* If the process hasn't touched the FPU, enable the FPU exception
-	 * and don't restore anything.
-	 */
-	if(!(pr->p_misc_flags & MF_USED_FPU)) {
-		write_cr0(read_cr0() | I386_CR0_TS);
-		return;
-	}
-
-	/* If the process has touched the FPU, disable the FPU
-	 * exception (both for the kernel and for the process once
-	 * it's scheduled), and initialize or restore the FPU state.
-	 */
-
-	clts();
-
 	if(!(pr->p_misc_flags & MF_FPU_INITIALIZED)) {
 		fninit();
 		pr->p_misc_flags |= MF_FPU_INITIALIZED;
@@ -496,6 +471,7 @@ PUBLIC struct proc * arch_finish_switch_to_user(void)
 	stk = (char *)tss.sp0;
 	/* set pointer to the process to run on the stack */
 	*((reg_t *)stk) = (reg_t) proc_ptr;
+	
 	return proc_ptr;
 }
 

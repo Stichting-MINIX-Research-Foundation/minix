@@ -10,6 +10,7 @@
 #include <assert.h>
 #include "kernel/proc.h"
 #include "kernel/proto.h"
+#include <machine/vm.h>
 
 extern int catch_pagefaults = 0;
 
@@ -280,3 +281,14 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
 	}
 	printf("\n");
 }
+
+PUBLIC void enable_fpu_exception(void)
+{
+	write_cr0(read_cr0() | I386_CR0_TS);
+}
+
+PUBLIC void disable_fpu_exception(void)
+{
+	clts();
+}
+

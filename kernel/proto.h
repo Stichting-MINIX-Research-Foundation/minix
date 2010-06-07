@@ -189,6 +189,10 @@ _PROTOTYPE( int copy_msg_to_user, (struct proc * p, message * src,
 _PROTOTYPE(void switch_address_space, (struct proc * p));
 _PROTOTYPE(void release_address_space, (struct proc *pr));
 
+_PROTOTYPE(void enable_fpu_exception, (void));
+_PROTOTYPE(void disable_fpu_exception, (void));
+_PROTOTYPE(void release_fpu, (void));
+
 /* utility.c */
 _PROTOTYPE( void cpu_print_freq, (unsigned cpu));
 #endif /* PROTO_H */

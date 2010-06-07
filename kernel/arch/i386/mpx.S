@@ -65,6 +65,7 @@ begbss:
  */
 
 .globl	_restore_user_context
+.globl  _copr_not_available_handler
 .globl	_reload_cr3
 
 .globl	_divide_error
@@ -590,16 +591,12 @@ _inval_opcode:
 _copr_not_available:
 	TEST_INT_IN_KERNEL(4, copr_not_available_in_kernel)
 	cld			/* set direction flag to a known value */
-	SAVE_PROCESS_CTX_NON_LAZY(0)
+	SAVE_PROCESS_CTX(0)
 	/* stop user process cycles */
 	push	%ebp
 	mov	$0, %ebp
 	call	_context_stop
-	pop	%ebp
-	lea	P_MISC_FLAGS(%ebp), %ebx
-	orw	$MF_USED_FPU, (%ebx)
-	mov	$0, %ebp
-	jmp	_switch_to_user
+	jmp	_copr_not_available_handler
 
 copr_not_available_in_kernel:
 	pushl	$0
