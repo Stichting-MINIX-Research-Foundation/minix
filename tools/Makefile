@@ -51,7 +51,7 @@ image:  includes
 
 # rebuild the program or system libraries
 includes:
-	cd ../include && $(MAKE) install
+	cd .. && $(MAKE) includes
 
 depend: includes
 	cd ../ && $(MAKE) depend
