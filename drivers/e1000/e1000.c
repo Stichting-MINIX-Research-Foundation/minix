@@ -14,6 +14,7 @@
 #include <minix/ds.h>
 #include <minix/vm.h>
 #include <timers.h>
+#include <sys/mman.h>
 #include "assert.h"
 #include "e1000.h"
 #include "e1000_hw.h"
@@ -323,8 +324,14 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
     /* Optionally map flash memory. */
     if (pci_attr_r32(devind, PCI_BAR_3))
     {
-	e->flash = vm_map_phys(SELF, (void *) pci_attr_r32(devind, PCI_BAR_2),
-			       0x10000);
+       if((e->flash = vm_map_phys(SELF,
+         (void *) pci_attr_r32(devind, PCI_BAR_2), 0x10000)) == MAP_FAILED) {
+               if((e->flash = vm_map_phys(SELF,
+                       (void *) pci_attr_r32(devind, PCI_BAR_2), 0x1000))
+                               == MAP_FAILED) {
+                               panic("e1000: couldn't map in flash.");
+               }
+       }
 
 	gfpreg = E1000_READ_FLASH_REG(e, ICH_FLASH_GFPREG);
         /*
