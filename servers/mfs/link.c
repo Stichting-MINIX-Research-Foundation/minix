@@ -245,14 +245,14 @@ char file_name[NAME_MAX];	/* name of file to be removed */
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
-  ino_t numb;			/* inode number */
+  ino_t inumb;			/* inode number */
   int	r;
 
   /* If rip is not NULL, it is used to get faster access to the inode. */
   if (rip == NULL) {
   	/* Search for file in directory and try to get its inode. */
-	err_code = search_dir(dirp, file_name, &numb, LOOK_UP, IGN_PERM);
-	if (err_code == OK) rip = get_inode(dirp->i_dev, (int) numb);
+	err_code = search_dir(dirp, file_name, &inumb, LOOK_UP, IGN_PERM);
+	if (err_code == OK) rip = get_inode(dirp->i_dev, inumb);
 	if (err_code != OK || rip == NULL) return(err_code);
   } else {
 	dup_inode(rip);		/* inode will be returned with put_inode */
@@ -284,7 +284,7 @@ PUBLIC int fs_rename()
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
   int same_pdir;			/* TRUE iff parent dirs are the same */
   char old_name[NAME_MAX], new_name[NAME_MAX];
-  ino_t numb;
+  ino_t inumb;
   phys_bytes len;
   
   /* Copy the last component of the old name */
@@ -423,16 +423,16 @@ PUBLIC int fs_rename()
 	   * otherwise first try to create the new name entry to make sure
 	   * the rename will succeed.
 	   */
-	numb = old_ip->i_num;		/* inode number of old file */
+	inumb = old_ip->i_num;		/* inode number of old file */
 	  
 	if(same_pdir) {
 		r = search_dir(old_dirp, old_name, NULL, DELETE, IGN_PERM);
 						/* shouldn't go wrong. */
 		if(r == OK)
-			(void) search_dir(old_dirp, new_name, &numb, ENTER,
+			(void) search_dir(old_dirp, new_name, &inumb, ENTER,
 					  IGN_PERM);
 	} else {
-		r = search_dir(new_dirp, new_name, &numb, ENTER, IGN_PERM);
+		r = search_dir(new_dirp, new_name, &inumb, ENTER, IGN_PERM);
 		if(r == OK)
 			(void) search_dir(old_dirp, old_name, NULL, DELETE,
 					  IGN_PERM);
@@ -443,9 +443,9 @@ PUBLIC int fs_rename()
 
   if(r == OK && odir && !same_pdir) {
 	/* Update the .. entry in the directory (still points to old_dirp).*/
-	numb = new_dirp->i_num;
+	inumb = new_dirp->i_num;
 	(void) unlink_file(old_ip, NULL, dot2);
-	if(search_dir(old_ip, dot2, &numb, ENTER, IGN_PERM) == OK) {
+	if(search_dir(old_ip, dot2, &inumb, ENTER, IGN_PERM) == OK) {
 		/* New link created. */
 		new_dirp->i_nlinks++;
 		new_dirp->i_dirt = DIRTY;

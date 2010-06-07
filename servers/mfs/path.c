@@ -363,7 +363,7 @@ int chk_perm;			/* check permissions when string is looked up*/
  * the directory, find the inode, open it, and return a pointer to its inode
  * slot.
  */
-  ino_t numb;
+  ino_t inumb;
   struct inode *rip;
 
   /* If 'string' is empty, return an error. */
@@ -376,12 +376,12 @@ int chk_perm;			/* check permissions when string is looked up*/
   if (dirp == NULL) return(NULL);
 
   /* If 'string' is not present in the directory, signal error. */
-  if ( (err_code = search_dir(dirp, string, &numb, LOOK_UP, chk_perm)) != OK) {
+  if ( (err_code = search_dir(dirp, string, &inumb, LOOK_UP, chk_perm)) != OK) {
 	return(NULL);
   }
 
   /* The component has been found in the directory.  Get inode. */
-  if ( (rip = get_inode(dirp->i_dev, (int) numb)) == NULL)  {
+  if ( (rip = get_inode(dirp->i_dev, inumb)) == NULL)  {
 	return(NULL);
   }
 
@@ -468,17 +468,17 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 /*===========================================================================*
  *				search_dir				     *
  *===========================================================================*/
-PUBLIC int search_dir(ldir_ptr, string, numb, flag, check_permissions)
+PUBLIC int search_dir(ldir_ptr, string, inumb, flag, check_permissions)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
 char string[NAME_MAX];		 /* component to search for */
-ino_t *numb;			 /* pointer to inode number */
+ino_t *inumb;			 /* pointer to inode number */
 int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 {
 /* This function searches the directory whose inode is pointed to by 'ldip':
- * if (flag == ENTER)  enter 'string' in the directory with inode # '*numb';
+ * if (flag == ENTER)  enter 'string' in the directory with inode # '*inumb';
  * if (flag == DELETE) delete 'string' from the directory;
- * if (flag == LOOK_UP) search for 'string' and return inode # in 'numb';
+ * if (flag == LOOK_UP) search for 'string' and return inode # in 'inumb';
  * if (flag == IS_EMPTY) return OK if only . and .. in dir else ENOTEMPTY;
  *
  *    if 'string' is dot1 or dot2, no access permissions are checked.
@@ -563,7 +563,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 				ldir_ptr->i_dirt = DIRTY;
 			} else {
 				sp = ldir_ptr->i_sp;	/* 'flag' is LOOK_UP */
-				*numb = (ino_t) conv4(sp->s_native,
+				*inumb = (ino_t) conv4(sp->s_native,
 						      (int) dp->d_ino);
 			}
 			put_block(bp, DIRECTORY_BLOCK);
@@ -603,7 +603,7 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   (void) memset(dp->d_name, 0, (size_t) NAME_MAX); /* clear entry */
   for (i = 0; i < NAME_MAX && string[i]; i++) dp->d_name[i] = string[i];
   sp = ldir_ptr->i_sp; 
-  dp->d_ino = conv4(sp->s_native, (int) *numb);
+  dp->d_ino = conv4(sp->s_native, (int) *inumb);
   bp->b_dirt = DIRTY;
   put_block(bp, DIRECTORY_BLOCK);
   ldir_ptr->i_update |= CTIME | MTIME;	/* mark mtime for update later */

@@ -226,7 +226,11 @@ register struct inode *rip;	/* pointer to inode to be released */
 	if (rip->i_nlinks == NO_LINK) {
 		/* i_nlinks == NO_LINK means free the inode. */
 		/* return all the disk blocks */
-		if (truncate_inode(rip, (off_t) 0) != OK) return;
+
+		/* Ignore errors by truncate_inode in case inode is a block
+		 * special or character special file.
+		 */
+		(void) truncate_inode(rip, (off_t) 0);  
 		rip->i_mode = I_NOT_ALLOC;     /* clear I_TYPE field */
 		rip->i_dirt = DIRTY;
 		free_inode(rip->i_dev, rip->i_num);
@@ -257,8 +261,9 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 
   register struct inode *rip;
   register struct super_block *sp;
-  int major, minor, inumb;
+  int major, minor;
   bit_t b;
+  ino_t inumb;
 
   sp = get_super(dev);	/* get pointer to super_block */
   if (sp->s_rd_only) {	/* can't allocate an inode on a read only device. */
@@ -276,7 +281,7 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 	return(NULL);
   }
   sp->s_isearch = b;		/* next time start here */
-  inumb = (int) b;		/* be careful not to pass unshort as param */
+  inumb = (ino_t) b;		/* be careful not to pass unshort as param */
 
   /* Try to acquire a slot in the inode table. */
   if ((rip = get_inode(NO_DEV, inumb)) == NULL) {
@@ -339,7 +344,7 @@ PRIVATE void free_inode(
 
   /* Locate the appropriate super_block. */
   sp = get_super(dev);
-  if (inumb > sp->s_ninodes) return;
+  if (inumb == 0 || inumb > sp->s_ninodes) return;
   b = (bit_t) inumb;
   free_bit(sp, IMAP, b);
   if (b < sp->s_isearch) sp->s_isearch = b;

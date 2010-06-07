@@ -150,7 +150,7 @@
 /* Some limits. */
 #define MAX_INODE_NR ((ino_t) 037777777777)	/* largest inode number */
 #define MAX_FILE_POS ((off_t) 0x7FFFFFFF)	/* largest legal file offset */
-#define UMAX_FILE_POS ((unsigned) 0x7FFFFFF)	/* largest legal file offset */
+#define UMAX_FILE_POS ((unsigned) 0x7FFFFFFF)	/* largest legal file offset */
 
 #define MAX_SYM_LOOPS	8	/* how many symbolic links are recursed */
 
