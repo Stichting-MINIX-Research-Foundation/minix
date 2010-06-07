@@ -48,6 +48,8 @@ PUBLIC int cpu_has_tsc;
 
 PUBLIC void arch_shutdown(const int how)
 {
+	vm_stop();
+
 	/* Mask all interrupts, including the clock. */
 	outb( INT_CTLMASK, ~0);
 

@@ -142,6 +142,7 @@ _PROTOTYPE( int data_copy_vmcheck, (struct proc *,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
 _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
 _PROTOTYPE( void vm_init, (struct proc *first)        			);
+_PROTOTYPE( void vm_stop, (void)        				);
 _PROTOTYPE( phys_bytes umap_local, (register struct proc *rp, int seg,
 	vir_bytes vir_addr, vir_bytes bytes));
 _PROTOTYPE( phys_bytes umap_remote, (const struct proc* rp, int seg,

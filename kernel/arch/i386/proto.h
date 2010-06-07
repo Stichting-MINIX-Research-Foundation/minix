@@ -74,6 +74,7 @@ _PROTOTYPE( reg_t read_cr2, (void)					);
 _PROTOTYPE( void write_cr0, (unsigned long value)                       );
 _PROTOTYPE( unsigned long read_cr4, (void)                              );
 _PROTOTYPE( void write_cr4, (unsigned long value)                       );
+_PROTOTYPE( void write_cr3, (unsigned long value)                       );
 _PROTOTYPE( unsigned long read_cpu_flags, (void)                        );
 _PROTOTYPE( void phys_insb, (u16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_insw, (u16_t port, phys_bytes buf, size_t count)  );
