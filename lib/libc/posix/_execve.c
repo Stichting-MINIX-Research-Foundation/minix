@@ -106,7 +106,7 @@ int execve(const char *path, char * const *argv, char * const *envp)
 	m.m1_i3 = 0;
 	m.m1_p3 = NULL;
 
-	(void) _syscall(MM, EXEC, &m);
+	(void) _syscall(PM_PROC_NR, EXEC, &m);
 
 	/* Failure, return the memory used for the frame and exit. */
 	(void) sbrk(-frame_size);

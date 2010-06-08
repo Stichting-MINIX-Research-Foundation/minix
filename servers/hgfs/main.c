@@ -78,7 +78,7 @@ sef_init_info_t *info;
   /* Announce our presence to VFS. */
   m.m_type = FS_READY;
 
-  if ((r = send(FS_PROC_NR, &m)) != OK) {
+  if ((r = send(VFS_PROC_NR, &m)) != OK) {
 	printf("HGFS: unable to login to VFS (%d)\n", r);
 
 	return r;
@@ -144,7 +144,7 @@ char *argv[];
   for (;;) {
 	call_nr = get_work(&who_e);
 
-	if (who_e != FS_PROC_NR) {
+	if (who_e != VFS_PROC_NR) {
 		continue;
 	}
 

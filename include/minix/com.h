@@ -64,8 +64,7 @@
 
 /* User-space processes, that is, device drivers, servers, and INIT. */
 #define PM_PROC_NR   ((endpoint_t) 0)	/* process manager */
-#define FS_PROC_NR   ((endpoint_t) 1)	/* file system */
-#define VFS_PROC_NR 	  FS_PROC_NR /* FS has been renamed to VFS. */
+#define VFS_PROC_NR  ((endpoint_t) 1)	/* file system */
 #define RS_PROC_NR   ((endpoint_t) 2)  	/* reincarnation server */
 #define MEM_PROC_NR  ((endpoint_t) 3)  	/* memory driver (RAM disk, null, etc.) */
 #define LOG_PROC_NR  ((endpoint_t) 4)	/* log device driver */

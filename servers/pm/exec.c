@@ -67,7 +67,7 @@ PUBLIC int do_exec_newmem()
 	int r, flags;
 	char *stack_top;
 
-	if (who_e != FS_PROC_NR && who_e != RS_PROC_NR)
+	if (who_e != VFS_PROC_NR && who_e != RS_PROC_NR)
 		return EPERM;
 
 	proc_e= m_in.EXC_NM_PROC;

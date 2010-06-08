@@ -8,5 +8,5 @@ PUBLIC int chmod(const char *name, mode_t mode)
 
   m.m3_i2 = mode;
   _loadname(name, &m);
-  return(_syscall(FS, CHMOD, &m));
+  return(_syscall(VFS_PROC_NR, CHMOD, &m));
 }

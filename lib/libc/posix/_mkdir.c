@@ -10,5 +10,5 @@ PUBLIC int mkdir(const char *name, mode_t mode)
   m.m1_i1 = strlen(name) + 1;
   m.m1_i2 = mode;
   m.m1_p1 = (char *) name;
-  return(_syscall(FS, MKDIR, &m));
+  return(_syscall(VFS_PROC_NR, MKDIR, &m));
 }

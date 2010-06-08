@@ -138,7 +138,7 @@ PUBLIC void main()
 		reset_time();
 		source= mq->mq_mess.m_source;
 		m_type= mq->mq_mess.m_type;
-		if (source == FS_PROC_NR)
+		if (source == VFS_PROC_NR)
 		{
 			sr_rec(mq);
 		}

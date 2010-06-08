@@ -119,7 +119,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   fs_m_in.m_type = FS_READY;
 
-  if ((r = send(FS_PROC_NR, &fs_m_in)) != OK) {
+  if ((r = send(VFS_PROC_NR, &fs_m_in)) != OK) {
 	panic("Error sending login to VFS: %d", r);
   }
 

@@ -8,5 +8,5 @@ unsigned int sec;
   message m;
 
   m.m1_i1 = (int) sec;
-  return( (unsigned) _syscall(MM, ALARM, &m));
+  return( (unsigned) _syscall(PM_PROC_NR, ALARM, &m));
 }

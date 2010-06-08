@@ -8,7 +8,7 @@ PUBLIC int setgid(gid_t grp)
   message m;
 
   m.m1_i1 = (int) grp;
-  return(_syscall(MM, SETGID, &m));
+  return(_syscall(PM_PROC_NR, SETGID, &m));
 }
 
 PUBLIC int setegid(gid_t grp)
@@ -16,5 +16,5 @@ PUBLIC int setegid(gid_t grp)
   message m;
 
   m.m1_i1 = (int) grp;
-  return(_syscall(MM, SETEGID, &m));
+  return(_syscall(PM_PROC_NR, SETEGID, &m));
 }

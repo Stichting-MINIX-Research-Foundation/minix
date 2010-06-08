@@ -6,5 +6,5 @@ PUBLIC pid_t setsid()
 {
   message m;
 
-  return(_syscall(MM, SETSID, &m));
+  return(_syscall(PM_PROC_NR, SETSID, &m));
 }

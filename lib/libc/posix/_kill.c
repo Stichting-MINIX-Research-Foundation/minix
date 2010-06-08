@@ -10,5 +10,5 @@ int sig;			/* signal number */
 
   m.m1_i1 = proc;
   m.m1_i2 = sig;
-  return(_syscall(MM, KILL, &m));
+  return(_syscall(PM_PROC_NR, KILL, &m));
 }

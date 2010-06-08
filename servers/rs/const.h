@@ -75,7 +75,7 @@
 /* Send masks determine to whom processes can send messages or notifications. */
 #define SRV_M   (~0)                               /* system services */
 #define RUSR_M \
-    ( spi_to(PM_PROC_NR) | spi_to(FS_PROC_NR) | spi_to(RS_PROC_NR) \
+    ( spi_to(PM_PROC_NR) | spi_to(VFS_PROC_NR) | spi_to(RS_PROC_NR) \
     | spi_to(VM_PROC_NR) )                         /* root user proc */
 
 /* Define the signal manager for the various process types. */

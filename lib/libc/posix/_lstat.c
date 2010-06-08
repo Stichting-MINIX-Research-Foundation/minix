@@ -14,7 +14,7 @@ struct stat *buffer;
   m.m1_i1 = strlen(name) + 1;
   m.m1_p1 = (char *) name;
   m.m1_p2 = (char *) buffer;
-  if((r = _syscall(FS, LSTAT, &m)) >= 0 || errno != ENOSYS)
+  if((r = _syscall(VFS_PROC_NR, LSTAT, &m)) >= 0 || errno != ENOSYS)
      return r;
   return _stat(name, buffer);
 }

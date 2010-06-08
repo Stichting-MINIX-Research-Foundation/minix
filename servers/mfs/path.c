@@ -55,7 +55,7 @@ PUBLIC int fs_lookup()
   if(len == 0) return(EINVAL);			/* too small */
 
   /* Copy the pathname and set up caller's user and group id */
-  r = sys_safecopyfrom(FS_PROC_NR, grant, /*offset*/ (vir_bytes) 0, 
+  r = sys_safecopyfrom(VFS_PROC_NR, grant, /*offset*/ (vir_bytes) 0, 
             (vir_bytes) user_path, (size_t) len, D);
   if(r != OK) return(r);
 
@@ -67,7 +67,7 @@ PUBLIC int fs_lookup()
   	cred_size = (size_t) fs_m_in.REQ_UCRED_SIZE;
 
   	if (cred_size > sizeof(credentials)) return(EINVAL); /* Too big. */
-  	r = sys_safecopyfrom(FS_PROC_NR, grant2, (vir_bytes) 0,
+  	r = sys_safecopyfrom(VFS_PROC_NR, grant2, (vir_bytes) 0,
   			     (vir_bytes) &credentials, cred_size, D);
   	if (r != OK) return(r);
 
@@ -87,7 +87,7 @@ PUBLIC int fs_lookup()
 	len = strlen(user_path)+1;
 	if(len > path_size) return(ENAMETOOLONG);
 
-	r1 = sys_safecopyto(FS_PROC_NR, grant, (vir_bytes) 0,
+	r1 = sys_safecopyto(VFS_PROC_NR, grant, (vir_bytes) 0,
 			    (vir_bytes) user_path, (size_t) len, D);
 	if(r1 != OK) return(r1);
   }

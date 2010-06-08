@@ -181,10 +181,10 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Currently, it is hardcoded that only FS may do
 		 * magic grants.
 		 */
-		if(granter != FS_PROC_NR) {
+		if(granter != VFS_PROC_NR) {
 			printf(
 		"verify_grant: magic grant verify failed: granter (%d) "
-		"is not FS (%d)\n", granter, FS_PROC_NR);
+		"is not FS (%d)\n", granter, VFS_PROC_NR);
 			return EPERM;
 		}
 

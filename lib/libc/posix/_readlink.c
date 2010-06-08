@@ -15,5 +15,5 @@ size_t bufsiz;
   m.m1_p1 = (char *) name;
   m.m1_p2 = (char *) buffer;
 
-  return(_syscall(FS, RDLNK, &m));
+  return(_syscall(VFS_PROC_NR, RDLNK, &m));
 }

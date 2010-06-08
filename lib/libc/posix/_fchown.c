@@ -10,5 +10,5 @@ PUBLIC int fchown(int fd, uid_t owner, gid_t grp)
   m.m1_i1 = fd;
   m.m1_i2 = owner;
   m.m1_i3 = grp;
-  return(_syscall(FS, FCHOWN, &m));
+  return(_syscall(VFS_PROC_NR, FCHOWN, &m));
 }

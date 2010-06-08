@@ -76,7 +76,7 @@ PUBLIC struct boot_image image[] = {
 
 {PM_PROC_NR,       0,500,      4, 0,     "pm"    },
 {SCHED_PROC_NR,    0,500,      4, 0,     "sched" },
-{FS_PROC_NR,       0,500,      5, 0,     "vfs"   },
+{VFS_PROC_NR,      0,500,      5, 0,     "vfs"   },
 {MEM_PROC_NR,  BVM_F, 50,      3, 0,     "memory"},
 {LOG_PROC_NR,  BVM_F, 50,      2, 0,     "log"   },
 {TTY_PROC_NR,  BVM_F, 50,      1, 0,     "tty"   },

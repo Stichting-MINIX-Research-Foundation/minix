@@ -34,7 +34,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 
   /* Fetch the flock structure from user space. */
   user_flock = (vir_bytes) m_in.name1;
-  r = sys_datacopy(who_e, (vir_bytes) user_flock, FS_PROC_NR,
+  r = sys_datacopy(who_e, (vir_bytes) user_flock, VFS_PROC_NR,
 		   (vir_bytes) &flock, (phys_bytes) sizeof(flock));
   if (r != OK) return(EINVAL);
 
@@ -147,7 +147,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 	}
 
 	/* Copy the flock structure back to the caller. */
-	r = sys_datacopy(FS_PROC_NR, (vir_bytes) &flock,
+	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock,
 		who_e, (vir_bytes) user_flock, (phys_bytes) sizeof(flock));
 	return(r);
   }

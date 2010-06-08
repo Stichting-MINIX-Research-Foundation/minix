@@ -11,7 +11,7 @@ PUBLIC int setmcontext(const mcontext_t *mcp)
 
   m.m1_p1 = (char *) mcp;
 
-  return(_syscall(MM, SETMCONTEXT, &m));
+  return(_syscall(PM_PROC_NR, SETMCONTEXT, &m));
 }
 
 
@@ -21,6 +21,6 @@ PUBLIC int getmcontext(mcontext_t *mcp)
 
   m.m1_p1 = (char *) mcp;
 
-  return(_syscall(MM, GETMCONTEXT, &m));
+  return(_syscall(PM_PROC_NR, GETMCONTEXT, &m));
 }
 

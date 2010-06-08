@@ -60,7 +60,7 @@ int flag;			/* M3 means path may be in message */
   } else {
 	/* String is not contained in the message.  Get it from user space. */
 	r = sys_datacopy(who_e, (vir_bytes) path,
-		FS_PROC_NR, (vir_bytes) user_fullpath, (phys_bytes) len);
+		VFS_PROC_NR, (vir_bytes) user_fullpath, (phys_bytes) len);
   }
 
   if (user_fullpath[len - 1] != '\0') {

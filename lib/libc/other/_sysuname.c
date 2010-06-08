@@ -18,7 +18,7 @@ int sysuname(int req, int field, char *value, size_t len)
 	m.m1_p2 = NULL;
 	m.m1_p3 = NULL;
 
-	return _syscall(MM, SYSUNAME, &m);
+	return _syscall(PM_PROC_NR, SYSUNAME, &m);
 }
 
 /*

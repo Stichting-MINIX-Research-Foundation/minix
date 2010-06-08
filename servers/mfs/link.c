@@ -42,7 +42,7 @@ PUBLIC int fs_link()
 
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
   /* Copy the link name's last component */
-  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
   		       (vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
   if (r != OK) return r;
   NUL(string, len, sizeof(string));
@@ -116,7 +116,7 @@ PUBLIC int fs_unlink()
   
   /* Copy the last component */
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
-  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
   		       (vir_bytes) 0, (vir_bytes) string, (size_t) len, D);
   if (r != OK) return r;
   NUL(string, len, sizeof(string));
@@ -186,7 +186,7 @@ PUBLIC int fs_rdlink()
 	   below max file size */
 	copylen = min( copylen, (unsigned) rip->i_size);
 	bp = get_block(rip->i_dev, b, NORMAL);
-	r = sys_safecopyto(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
+	r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
 			   (vir_bytes) 0, (vir_bytes) bp->b_data,
 	  		   (size_t) copylen, D);
 	put_block(bp, DIRECTORY_BLOCK);
@@ -289,14 +289,14 @@ PUBLIC int fs_rename()
   
   /* Copy the last component of the old name */
   len = min( (unsigned) fs_m_in.REQ_REN_LEN_OLD, sizeof(old_name));
-  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_OLD,
+  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_OLD,
   		       (vir_bytes) 0, (vir_bytes) old_name, (size_t) len, D);
   if (r != OK) return r;
   NUL(old_name, len, sizeof(old_name));
   
   /* Copy the last component of the new name */
   len = min( (unsigned) fs_m_in.REQ_REN_LEN_NEW, sizeof(new_name));
-  r = sys_safecopyfrom(FS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_NEW,
+  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_NEW,
   		       (vir_bytes) 0, (vir_bytes) new_name, (size_t) len, D);
   if (r != OK) return r;
   NUL(new_name, len, sizeof(new_name));

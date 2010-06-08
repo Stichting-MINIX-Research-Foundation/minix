@@ -240,7 +240,7 @@ PRIVATE char *prrecv(struct pstat *bufp)
 		blkstr = "wait";
 	else if (bufp->ps_mflags & SIGSUSPENDED)
 		blkstr = "sigsusp";
-  } else if (bufp->ps_recv == FS_PROC_NR) {
+  } else if (bufp->ps_recv == VFS_PROC_NR) {
 	  switch(bufp->ps_blocked_on) {
 		  case FP_BLOCKED_ON_PIPE:
 			  blkstr = "pipe";
@@ -360,7 +360,7 @@ char *argv[];
 	}
 
   /* We need to know where INIT hangs out. */
-  for (i = FS_PROC_NR; i < nr_procs; i++) {
+  for (i = VFS_PROC_NR; i < nr_procs; i++) {
 	if (strcmp(ps_proc[nr_tasks + i].p_name, "init") == 0) break;
   }
   init_proc_nr = i;

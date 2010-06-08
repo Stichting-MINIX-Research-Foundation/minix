@@ -8,5 +8,5 @@ PUBLIC int fchmod(int fd, mode_t mode)
 
   m.m1_i1 = fd;
   m.m1_i2 = mode;
-  return(_syscall(FS, FCHMOD, &m));
+  return(_syscall(VFS_PROC_NR, FCHMOD, &m));
 }

@@ -11,7 +11,7 @@ PUBLIC int truncate(const char *_path, off_t _length)
   m.m2_i1 = strlen(_path)+1;
   m.m2_l1 = _length;
 
-  return(_syscall(FS, TRUNCATE, &m));
+  return(_syscall(VFS_PROC_NR, TRUNCATE, &m));
 }
 
 PUBLIC int ftruncate(int _fd, off_t _length)
@@ -20,5 +20,5 @@ PUBLIC int ftruncate(int _fd, off_t _length)
   m.m2_l1 = _length;
   m.m2_i1 = _fd;
 
-  return(_syscall(FS, FTRUNCATE, &m));
+  return(_syscall(VFS_PROC_NR, FTRUNCATE, &m));
 }

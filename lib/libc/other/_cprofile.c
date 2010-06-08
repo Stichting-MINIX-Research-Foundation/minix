@@ -11,6 +11,6 @@ PUBLIC int cprofile(int action, int size, char *ctl_ptr, int *mem_ptr)
   m.PROF_CTL_PTR        = (void *) ctl_ptr;
   m.PROF_MEM_PTR        = (void *) mem_ptr;
 
-  return _syscall(MM, CPROF, &m);
+  return _syscall(PM_PROC_NR, CPROF, &m);
 }
 

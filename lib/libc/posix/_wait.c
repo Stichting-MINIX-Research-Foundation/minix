@@ -7,7 +7,7 @@ int *status;
 {
   message m;
 
-  if (_syscall(MM, WAIT, &m) < 0) return(-1);
+  if (_syscall(PM_PROC_NR, WAIT, &m) < 0) return(-1);
   if (status != 0) *status = m.m2_i1;
   return(m.m_type);
 }

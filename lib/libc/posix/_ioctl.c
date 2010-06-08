@@ -13,5 +13,5 @@ void *data;
   m.TTY_LINE = fd;
   m.TTY_REQUEST = request;
   m.ADDRESS = (char *) data;
-  return(_syscall(FS, IOCTL, &m));
+  return(_syscall(VFS_PROC_NR, IOCTL, &m));
 }

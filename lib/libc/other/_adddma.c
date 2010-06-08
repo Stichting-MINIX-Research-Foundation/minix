@@ -17,5 +17,5 @@ phys_bytes size;
   m.m2_l1= start;
   m.m2_l2= size;
 
-  return _syscall(MM, ADDDMA, &m);
+  return _syscall(PM_PROC_NR, ADDDMA, &m);
 }

@@ -17,6 +17,6 @@ PUBLIC int select(int nfds,
   m.SEL_ERRORFDS = (char *) errorfds;
   m.SEL_TIMEOUT = (char *) timeout;
 
-  return (_syscall(FS, SELECT, &m));
+  return (_syscall(VFS_PROC_NR, SELECT, &m));
 }
 

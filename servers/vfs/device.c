@@ -169,7 +169,7 @@ PUBLIC void dev_status(message *m)
 		switch(st.m_type) {
 			case DEV_REVIVE:
 				endpt = st.REP_ENDPT;
-				if(endpt == FS_PROC_NR) {
+				if(endpt == VFS_PROC_NR) {
 					endpt = suspended_ep(m->m_source,
 						st.REP_IO_GRANT);
 					if(endpt == NONE) {
@@ -298,7 +298,7 @@ u32_t *pos_lo;
    * endpoint becomes FS if it wasn't already.
    */
   if(GRANT_VALID(*gid)) {
-	*io_ept = FS_PROC_NR;
+	*io_ept = VFS_PROC_NR;
 	return 1;
    }
 
@@ -850,7 +850,7 @@ PUBLIC void dev_up(int maj)
 	if ( ((vmp->m_dev >> MAJOR) & BYTE) != maj) continue;
 	minor = ((vmp->m_dev >> MINOR) & BYTE);
 
-	if ((r = dev_open(vmp->m_dev, FS_PROC_NR,
+	if ((r = dev_open(vmp->m_dev, VFS_PROC_NR,
 		vmp->m_flags ? R_BIT : (R_BIT|W_BIT))) != OK) {
 		printf("VFS: mounted dev %d/%d re-open failed: %d.\n",
 			maj, minor, r);

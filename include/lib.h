@@ -23,8 +23,6 @@
 
 #include <minix/ipc.h>
 
-#define MM                 PM_PROC_NR
-#define FS                 FS_PROC_NR
 
 _PROTOTYPE( int __execve, (const char *_path, char *const _argv[], 
 			char *const _envp[], int _nargs, int _nenvps)	);

@@ -24,5 +24,5 @@ register struct sigcontext *scp;
   m.m2_l1 = scp->sc_mask;
   m.m2_i2 = scp->sc_flags;
   m.m2_p1 = (char *) scp;
-  return(_syscall(MM, SIGRETURN, &m));	/* normally this doesn't return */
+  return(_syscall(PM_PROC_NR, SIGRETURN, &m));	/* normally this doesn't return */
 }

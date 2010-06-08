@@ -121,7 +121,7 @@ vir_bytes frame_len;
 	else if ((r1 = forbidden(vp, X_BIT)) != OK)
 		r = r1;
 	else
-		r = req_stat(vp->v_fs_e, vp->v_inode_nr, FS_PROC_NR,
+		r = req_stat(vp->v_fs_e, vp->v_inode_nr, VFS_PROC_NR,
 			     (char *) &sb, 0);
 	if (r != OK) {
 	    put_vnode(vp);
@@ -302,7 +302,7 @@ PRIVATE int read_header(
 
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
-  		    FS_PROC_NR, (char*)&hdr, sizeof(hdr), &new_pos, &cum_io);
+  		    VFS_PROC_NR, (char*)&hdr, sizeof(hdr), &new_pos, &cum_io);
   if (r != OK) return r;
 
   /* Interpreted script? */
@@ -369,7 +369,7 @@ vir_bytes *stk_bytes;		/* size of initial stack */
 
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
-  		    FS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
+  		    VFS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
   if (r != OK) return(r);
   
   n = vp->v_size;
@@ -531,7 +531,7 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
 		if (n > sizeof(buf))
 			n = sizeof(buf);
 
-		if ((r = req_readwrite(vp->v_fs_e,vp->v_inode_nr,cvul64(off+o), READING, FS_PROC_NR, buf,
+		if ((r = req_readwrite(vp->v_fs_e,vp->v_inode_nr,cvul64(off+o), READING, VFS_PROC_NR, buf,
 				       n, &new_pos, &cum_io)) != OK) {
 			printf("VFS: read_seg: req_readwrite failed (text)\n");
 			return(r);
@@ -543,7 +543,7 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
 			return(EIO);
 		}
 
-		if ((r = sys_vircopy(FS_PROC_NR, D, (vir_bytes)buf, proc_e,
+		if ((r = sys_vircopy(VFS_PROC_NR, D, (vir_bytes)buf, proc_e,
 				     seg, o, n)) != OK) {
 			printf("VFS: read_seg: copy failed (text)\n");
 			return(r);

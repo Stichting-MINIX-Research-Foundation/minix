@@ -7,7 +7,7 @@ sigset_t *set;
 {
   message m;
 
-  if (_syscall(MM, SIGPENDING, &m) < 0) return(-1);
+  if (_syscall(PM_PROC_NR, SIGPENDING, &m) < 0) return(-1);
   *set = (sigset_t) m.m2_l1;
   return(m.m_type);
 }

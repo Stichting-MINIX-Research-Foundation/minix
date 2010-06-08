@@ -13,7 +13,7 @@ int setgroups(int ngroups, const gid_t *gidset)
   m.m1_p1 = (char *) gidset;
   m.m1_i1 = ngroups;
 
-  return(_syscall(MM, SETGROUPS, &m));
+  return(_syscall(PM_PROC_NR, SETGROUPS, &m));
 }
 
 

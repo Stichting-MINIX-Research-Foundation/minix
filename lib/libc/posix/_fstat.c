@@ -10,5 +10,5 @@ struct stat *buffer;
 
   m.m1_i1 = fd;
   m.m1_p1 = (char *) buffer;
-  return(_syscall(FS, FSTAT, &m));
+  return(_syscall(VFS_PROC_NR, FSTAT, &m));
 }

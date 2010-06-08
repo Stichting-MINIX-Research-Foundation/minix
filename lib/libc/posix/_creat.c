@@ -8,5 +8,5 @@ PUBLIC int creat(const char *name, mode_t mode)
 
   m.m3_i2 = mode;
   _loadname(name, &m);
-  return(_syscall(FS, CREAT, &m));
+  return(_syscall(VFS_PROC_NR, CREAT, &m));
 }

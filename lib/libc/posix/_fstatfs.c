@@ -9,5 +9,5 @@ PUBLIC int fstatfs(int fd, struct statfs *buffer)
 
   m.m1_i1 = fd;
   m.m1_p1 = (char *) buffer;
-  return(_syscall(FS, FSTATFS, &m));
+  return(_syscall(VFS_PROC_NR, FSTATFS, &m));
 }

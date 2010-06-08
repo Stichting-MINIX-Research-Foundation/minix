@@ -26,7 +26,7 @@ int getpriority(int which, int who)
 	 * to see if something really went wrong.)
 	 */
 
-	if((v = _syscall(MM, GETPRIORITY, &m)) < 0) {
+	if((v = _syscall(PM_PROC_NR, GETPRIORITY, &m)) < 0) {
 		return v;
 	}
 
@@ -41,6 +41,6 @@ int setpriority(int which, int who, int prio)
 	m.m1_i2 = who;
 	m.m1_i3 = prio;
 
-	return _syscall(MM, SETPRIORITY, &m);
+	return _syscall(PM_PROC_NR, SETPRIORITY, &m);
 }
 

@@ -6,5 +6,5 @@ PUBLIC pid_t getpgrp()
 {
   message m;
 
-  return(_syscall(MM, GETPGRP, &m));
+  return(_syscall(PM_PROC_NR, GETPGRP, &m));
 }

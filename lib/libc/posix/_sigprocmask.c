@@ -16,7 +16,7 @@ sigset_t *oset;
 	m.m2_i1 = how;
 	m.m2_l1 = (long) *set;
   }
-  if (_syscall(MM, SIGPROCMASK, &m) < 0) return(-1);
+  if (_syscall(PM_PROC_NR, SIGPROCMASK, &m) < 0) return(-1);
   if (oset != (sigset_t *) NULL) *oset = (sigset_t) (m.m2_l1);
   return(m.m_type);
 }

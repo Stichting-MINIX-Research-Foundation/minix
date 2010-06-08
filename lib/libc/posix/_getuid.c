@@ -6,5 +6,5 @@ PUBLIC uid_t getuid()
 {
   message m;
 
-  return( (uid_t) _syscall(MM, GETUID, &m));
+  return( (uid_t) _syscall(PM_PROC_NR, GETUID, &m));
 }

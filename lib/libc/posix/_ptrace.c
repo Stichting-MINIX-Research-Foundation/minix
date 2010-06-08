@@ -10,7 +10,7 @@ PUBLIC long ptrace(int req, pid_t pid, long addr, long data)
   m.m2_i2 = req;
   m.PMTRACE_ADDR = addr;
   m.m2_l2 = data;
-  if (_syscall(MM, PTRACE, &m) < 0) return(-1);
+  if (_syscall(PM_PROC_NR, PTRACE, &m) < 0) return(-1);
 
   /* There was no error, but -1 is a legal return value.  Clear errno if
    * necessary to distinguish this case.  _syscall has set errno to nonzero

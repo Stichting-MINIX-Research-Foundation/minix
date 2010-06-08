@@ -11,5 +11,5 @@ PUBLIC int chown(const char *name, uid_t owner, gid_t grp)
   m.m1_i2 = owner;
   m.m1_i3 = grp;
   m.m1_p1 = (char *) name;
-  return(_syscall(FS, CHOWN, &m));
+  return(_syscall(VFS_PROC_NR, CHOWN, &m));
 }

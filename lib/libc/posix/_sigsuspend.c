@@ -8,5 +8,5 @@ _CONST sigset_t *set;
   message m;
 
   m.m2_l1 = (long) *set;
-  return(_syscall(MM, SIGSUSPEND, &m));
+  return(_syscall(PM_PROC_NR, SIGSUSPEND, &m));
 }

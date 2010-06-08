@@ -14,7 +14,7 @@ phys_bytes *sizep;
   int r;
   message m;
 
-  r= _syscall(MM, GETDMA, &m);
+  r= _syscall(PM_PROC_NR, GETDMA, &m);
   if (r == 0)
   {
 	*procp= m.m2_i1;

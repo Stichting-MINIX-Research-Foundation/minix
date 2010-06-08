@@ -10,5 +10,5 @@ int mode;
 
   m.m3_i2 = mode;
   _loadname(name, &m);
-  return(_syscall(FS, ACCESS, &m));
+  return(_syscall(VFS_PROC_NR, ACCESS, &m));
 }

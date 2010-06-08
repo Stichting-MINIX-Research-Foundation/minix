@@ -9,7 +9,7 @@ int status;
   message m;
 
   m.m1_i1 = status;
-  _syscall(MM, EXIT, &m);
+  _syscall(PM_PROC_NR, EXIT, &m);
 
   /* If exiting nicely through PM fails for some reason, try to
    * commit suicide. E.g., message to PM might fail due to deadlock.

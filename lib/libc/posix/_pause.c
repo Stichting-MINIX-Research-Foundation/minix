@@ -6,5 +6,5 @@ PUBLIC int pause()
 {
   message m;
 
-  return(_syscall(MM, PAUSE, &m));
+  return(_syscall(PM_PROC_NR, PAUSE, &m));
 }

@@ -294,7 +294,7 @@ int dump_core;			/* flag indicating whether to dump core */
 	printf("PM: INIT died\n");
 	return;
   }
-  if (proc_nr_e == FS_PROC_NR)
+  if (proc_nr_e == VFS_PROC_NR)
   {
 	panic("exit_proc: FS died: %d", r);
   }

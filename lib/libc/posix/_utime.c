@@ -20,5 +20,5 @@ _CONST struct utimbuf *timp;
 	m.m2_i1 = strlen(name) + 1;
   }
   m.m2_p1 = (char *) name;
-  return(_syscall(FS, UTIME, &m));
+  return(_syscall(VFS_PROC_NR, UTIME, &m));
 }

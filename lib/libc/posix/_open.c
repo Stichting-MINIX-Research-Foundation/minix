@@ -27,5 +27,5 @@ PUBLIC int open(const char *name, int flags)
 	m.m3_i2 = flags;
   }
   va_end(argp);
-  return (_syscall(FS, OPEN, &m));
+  return (_syscall(VFS_PROC_NR, OPEN, &m));
 }

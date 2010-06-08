@@ -6,5 +6,5 @@ PUBLIC gid_t getgid()
 {
   message m;
 
-  return( (gid_t) _syscall(MM, GETGID, &m));
+  return( (gid_t) _syscall(PM_PROC_NR, GETGID, &m));
 }

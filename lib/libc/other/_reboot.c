@@ -20,5 +20,5 @@ int reboot(int how, ...)
   }
   va_end(ap);
 
-  return _syscall(MM, REBOOT, &m);
+  return _syscall(PM_PROC_NR, REBOOT, &m);
 }

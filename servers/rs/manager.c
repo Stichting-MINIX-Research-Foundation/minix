@@ -1735,7 +1735,7 @@ struct priv *privp;
 		else if (strcmp(label, "PM") == 0)
 			endpoint= PM_PROC_NR;
 		else if (strcmp(label, "VFS") == 0)
-			endpoint= FS_PROC_NR;
+			endpoint= VFS_PROC_NR;
 		else if (strcmp(label, "RS") == 0)
 			endpoint= RS_PROC_NR;
 		else if (strcmp(label, "LOG") == 0)

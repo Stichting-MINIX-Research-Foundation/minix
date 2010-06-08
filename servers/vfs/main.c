@@ -71,7 +71,7 @@ PUBLIC int main(void)
 		endpoint_t endpt;
 
 		endpt = m_in.REP_ENDPT;
-		if(endpt == FS_PROC_NR) {
+		if(endpt == VFS_PROC_NR) {
 			endpt = suspended_ep(m_in.m_source, m_in.REP_IO_GRANT);
 			if(endpt == NONE) {
 				printf("FS: proc with "
@@ -262,7 +262,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
-  who_e = who_p = FS_PROC_NR;
+  who_e = who_p = VFS_PROC_NR;
 
   /* Initialize device table. */
   build_dmap();

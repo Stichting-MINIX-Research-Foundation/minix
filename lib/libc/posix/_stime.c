@@ -8,5 +8,5 @@ long *top;
   message m;
 
   m.m2_l1 = *top;
-  return(_syscall(MM, STIME, &m));
+  return(_syscall(PM_PROC_NR, STIME, &m));
 }

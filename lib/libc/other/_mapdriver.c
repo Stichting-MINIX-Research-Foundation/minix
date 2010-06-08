@@ -16,7 +16,7 @@ int flags;
   m.m2_i1 = major;
   m.m2_i2 = dev_style;
   m.m2_i3 = flags;
-  if (_syscall(FS, MAPDRIVER, &m) < 0) return(-1);
+  if (_syscall(VFS_PROC_NR, MAPDRIVER, &m) < 0) return(-1);
   return(0);
 }
 

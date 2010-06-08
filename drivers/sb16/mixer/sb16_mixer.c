@@ -67,7 +67,7 @@ PUBLIC void main() {
 		switch (caller) {
 			case HARDWARE: /* Leftover interrupt. */
 				continue;
-			case FS_PROC_NR: /* The only legitimate caller. */
+			case VFS_PROC_NR: /* The only legitimate caller. */
 				break;
 			default:
 				dprint("sb16: got message from %d\n", caller);

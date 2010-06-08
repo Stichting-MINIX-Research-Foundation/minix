@@ -396,7 +396,7 @@ PUBLIC int do_reboot()
   /* Tell FS to reboot */
   m.m_type = PM_REBOOT;
 
-  tell_fs(&mproc[FS_PROC_NR], &m);
+  tell_fs(&mproc[VFS_PROC_NR], &m);
 
   return(SUSPEND);			/* don't reply to caller */
 }

@@ -6,5 +6,5 @@ PUBLIC int sync()
 {
   message m;
 
-  return(_syscall(FS, SYNC, &m));
+  return(_syscall(VFS_PROC_NR, SYNC, &m));
 }

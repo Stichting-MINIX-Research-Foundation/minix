@@ -51,11 +51,11 @@ PUBLIC int fs_readwrite(void)
 
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
-	r = sys_safecopyto(FS_PROC_NR, gid, (vir_bytes) 0,
+	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) 0,
 		(vir_bytes) (bp->b_data+position), (size_t) nrbytes, D);
   } else {
 	/* Copy a chunk from user space to the block buffer. */
-	r = sys_safecopyfrom(FS_PROC_NR, gid, (vir_bytes) 0,
+	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) 0,
 		(vir_bytes) (bp->b_data+position), (size_t) nrbytes, D);
   }
 

@@ -120,7 +120,7 @@ PUBLIC int main()
 	case PM_UNPAUSE_REPLY:
 	case PM_REBOOT_REPLY:
 	case PM_SETGROUPS_REPLY:
-		if (who_e == FS_PROC_NR)
+		if (who_e == VFS_PROC_NR)
 		{
 			handle_fs_reply();
 			result= SUSPEND;		/* don't reply */
@@ -275,14 +275,14 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		mess.PM_SLOT = ip->proc_nr;
 		mess.PM_PID = rmp->mp_pid;
 		mess.PM_PROC = rmp->mp_endpoint;
-  		if (OK != (s=send(FS_PROC_NR, &mess)))
+  		if (OK != (s=send(VFS_PROC_NR, &mess)))
 			panic("can't sync up with FS: %d", s);
   	}
   }
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_ENDPT = NONE;
-  if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
+  if (sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic("can't sync up with FS");
 
 #if (CHIP == INTEL)

@@ -8,5 +8,5 @@ PUBLIC int fsync(int fd)
 
   m.m1_i1 = fd;
 
-  return(_syscall(FS, FSYNC, &m));
+  return(_syscall(VFS_PROC_NR, FSYNC, &m));
 }

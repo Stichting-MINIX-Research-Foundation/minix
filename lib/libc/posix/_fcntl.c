@@ -41,5 +41,5 @@ int cmd;
   va_end(argp);
   m.m1_i1 = fd;
   m.m1_i2 = cmd;
-  return(_syscall(FS, FCNTL, &m));
+  return(_syscall(VFS_PROC_NR, FCNTL, &m));
 }

@@ -113,7 +113,7 @@ int mountflags;
   m.m1_p1 = special;
   m.m1_p2 = name;
   m.m1_p3 = label;
-  r = _syscall(FS, MOUNT, &m);
+  r = _syscall(VFS_PROC_NR, MOUNT, &m);
 
   if(r != OK) {
 	/* If mount() failed, tell RS to shutdown MFS process.
@@ -132,7 +132,7 @@ _CONST char *name;
   int r;
 
   _loadname(name, &m);
-  r = _syscall(FS, UMOUNT, &m);
+  r = _syscall(VFS_PROC_NR, UMOUNT, &m);
 
   if(r == OK) {
 	/* VFS returns the label of the unmounted file system in the reply.

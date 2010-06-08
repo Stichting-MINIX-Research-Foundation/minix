@@ -12,6 +12,6 @@ int whence;
   m.m2_i1 = fd;
   m.m2_l1 = offset;
   m.m2_i2 = whence;
-  if (_syscall(FS, LSEEK, &m) < 0) return( (off_t) -1);
+  if (_syscall(VFS_PROC_NR, LSEEK, &m) < 0) return( (off_t) -1);
   return( (off_t) m.m2_l1);
 }

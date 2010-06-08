@@ -6,5 +6,5 @@ PUBLIC pid_t fork()
 {
   message m;
 
-  return(_syscall(MM, FORK, &m));
+  return(_syscall(PM_PROC_NR, FORK, &m));
 }
