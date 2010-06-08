@@ -10,6 +10,10 @@
 PUBLIC int do_schedule(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
+	int proc_nr;
+
+	if (!isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr))
+		return EINVAL;
 
 	p = proc_addr(_ENDPOINT_P(m_ptr->SCHEDULING_ENDPOINT));
 
