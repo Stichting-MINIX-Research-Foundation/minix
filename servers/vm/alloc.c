@@ -540,6 +540,12 @@ PRIVATE void free_pages(phys_bytes pageno, int npages)
 
 	assert(!addr_search(&addravl, pageno, AVL_EQUAL));
 
+#if JUNKFREE
+       if(sys_memset(0xa5a5a5a5, VM_PAGE_SIZE * pageno,
+               VM_PAGE_SIZE * npages) != OK)
+                       panic("free_pages: sys_memset failed");
+#endif
+
 	/* try to merge with higher neighbour */
 	if((pr=addr_search(&addravl, pageno+npages, AVL_EQUAL))) {
 		USE(pr, pr->addr -= npages;

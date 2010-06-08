@@ -20,6 +20,7 @@
 /* Compile in asserts and custom sanity checks at all? */
 #define SANITYCHECKS	0
 #define VMSTATS		0
+#define JUNKFREE	0	/* Fill freed pages with junk */
 
 /* How noisy are we supposed to be? */
 #define VERBOSE		0
