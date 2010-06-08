@@ -111,8 +111,6 @@ _PROTOTYPE (void ioapic_write, (u32_t addr, u32_t offset, u32_t data));
 _PROTOTYPE (void lapic_eoi, (void));
 */
 
-_PROTOTYPE (int lapic_enable, (void));
-
 _PROTOTYPE(int apic_single_cpu_init, (void));
 
 _PROTOTYPE(void lapic_set_timer_periodic, (unsigned freq));

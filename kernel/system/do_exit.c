@@ -4,7 +4,6 @@
 
 #include "kernel/system.h"
 
-#include <minix/endpoint.h>
 #include <signal.h>
 
 #if USE_EXIT

@@ -270,7 +270,7 @@ PRIVATE int lapic_enable_in_msr(void)
 	return 1;
 }
 
-PUBLIC int lapic_enable(void)
+PRIVATE int lapic_enable(void)
 {
 	u32_t val, nlvt;
 	unsigned cpu = cpuid;

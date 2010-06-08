@@ -60,7 +60,8 @@ int c;					/* character to append */
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
   } else {
-      int p, outprocs[] = OUTPUT_PROCS_ARRAY;
+      int p;
+      endpoint_t outprocs[] = OUTPUT_PROCS_ARRAY;
       if(!(minix_panicing || do_serial_debug)) {
 	      for(p = 0; outprocs[p] != NONE; p++) {
 		 if(isokprocn(outprocs[p]) && !isemptyn(outprocs[p])) {

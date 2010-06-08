@@ -16,9 +16,9 @@
 
 /* Buffer for SYS_VDEVIO to copy (port,value)-pairs from/ to user. */
 PRIVATE char vdevio_buf[VDEVIO_BUF_SIZE];      
-PRIVATE pvb_pair_t *pvb = (pvb_pair_t *) vdevio_buf;           
-PRIVATE pvw_pair_t *pvw = (pvw_pair_t *) vdevio_buf;      
-PRIVATE pvl_pair_t *pvl = (pvl_pair_t *) vdevio_buf;     
+PRIVATE pvb_pair_t * const pvb = (pvb_pair_t *) vdevio_buf;           
+PRIVATE pvw_pair_t * const pvw = (pvw_pair_t *) vdevio_buf;      
+PRIVATE pvl_pair_t * const pvl = (pvl_pair_t *) vdevio_buf;     
 
 /*===========================================================================*
  *			        do_vdevio                                    *

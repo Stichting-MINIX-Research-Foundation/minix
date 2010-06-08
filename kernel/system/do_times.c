@@ -21,8 +21,9 @@
 PUBLIC int do_times(struct proc * caller, message * m_ptr)
 {
 /* Handle sys_times().  Retrieve the accounting information. */
-  register struct proc *rp;
-  int proc_nr, e_proc_nr;
+  register const struct proc *rp;
+  int proc_nr;
+  endpoint_t e_proc_nr;
 
   /* Insert the times needed by the SYS_TIMES kernel call in the message. 
    * The clock's interrupt handler may run to update the user or system time

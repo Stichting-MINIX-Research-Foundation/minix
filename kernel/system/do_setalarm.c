@@ -58,14 +58,13 @@ PUBLIC int do_setalarm(struct proc * caller, message * m_ptr)
 /*===========================================================================*
  *				cause_alarm				     *
  *===========================================================================*/
-PRIVATE void cause_alarm(tp)
-timer_t *tp;
+PRIVATE void cause_alarm(timer_t *tp)
 {
 /* Routine called if a timer goes off and the process requested a synchronous
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that
  * process with a notification message from CLOCK.
  */
-  int proc_nr_e = tmr_arg(tp)->ta_int;		/* get process number */
+  endpoint_t proc_nr_e = tmr_arg(tp)->ta_int;	/* get process number */
   mini_notify(proc_addr(CLOCK), proc_nr_e);	/* notify process */
 }
 

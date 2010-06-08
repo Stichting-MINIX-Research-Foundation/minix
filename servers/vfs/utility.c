@@ -86,7 +86,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *				isokendpt_f				     *
  *===========================================================================*/
-PUBLIC int isokendpt_f(char *file, int line, int endpoint, int *proc, int fatal)
+PUBLIC int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int fatal)
 {
   int failed = 0;
   endpoint_t ke;

@@ -50,11 +50,9 @@
  * array size will be negative and this won't compile. 
  */
 PRIVATE int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
-PRIVATE char *callnames[NR_SYS_CALLS];
 
 #define map(call_nr, handler) \
     {extern int dummy[NR_SYS_CALLS>(unsigned)(call_nr-KERNEL_CALL) ? 1:-1];} \
-    callnames[(call_nr-KERNEL_CALL)] = #call_nr;	\
     call_vec[(call_nr-KERNEL_CALL)] = (handler)  
 
 PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
@@ -177,7 +175,6 @@ PUBLIC void system_init(void)
    */
   for (i=0; i<NR_SYS_CALLS; i++) {
       call_vec[i] = NULL;
-      callnames[i] = "unused";
   }
 
   /* Process management. */
