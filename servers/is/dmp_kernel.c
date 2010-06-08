@@ -475,7 +475,7 @@ int proc_nr;
   if (proc_nr == ANY) return "ANY";
   if (proc_nr == NONE) return "NONE";	/* bogus */
   if (proc_nr < -NR_TASKS || proc_nr >= NR_PROCS) return "BOGUS";
-  p = cproc_addr(proc_nr);
+  p = proc_addr(proc_nr);
   if (isemptyp(p)) return "EMPTY";	/* bogus */
   return p->p_name;
 }

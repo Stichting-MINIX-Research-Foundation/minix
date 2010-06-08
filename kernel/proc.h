@@ -242,7 +242,6 @@ struct proc {
 #define BEG_USER_ADDR (&proc[NR_TASKS])
 #define END_PROC_ADDR (&proc[NR_TASKS + NR_PROCS])
 
-#define cproc_addr(n)     (&(proc + NR_TASKS)[(n)])
 #define proc_addr(n)      (&(proc[NR_TASKS + (n)]))
 #define proc_nr(p) 	  ((p)->p_nr)
 
