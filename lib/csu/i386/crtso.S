@@ -23,7 +23,7 @@ begdata:
 .bss
 begbss:
 
-.globl	crtso, __penviron, __penvp
+.globl	crtso, __penviron, __penvp, ___prognamep, ___argc
 .globl __minix_datastart, __minix_mainjump, __minix_unmapzero
 .extern	_main, _exit
 
@@ -56,6 +56,13 @@ crtso:
 0:
 	movl	__penviron, %ebx
 	movl	%ecx, (%ebx)	/* *_penviron = envp; */
+
+	/* Save argv[] and argc. This is so that we can return
+	 * argv[0] in the future, without having to check whether
+	 * argv can be dereferenced safely now.
+	 */
+	mov	%edx, (___prognamep)
+	mov	%eax, (___argc)
 
 	push	%ecx	/* push envp */
 	push	%edx	/* push argv */
@@ -108,8 +115,11 @@ __minix_datastart:
 .data
 __penviron:
 .long	__penvp	/* Pointer to environ, or hidden pointer */
-
 .bss
+___prognamep:
+.space	4
+___argc:
+.space	4
 .lcomm	__penvp, 4	/* Hidden environment vector */
 
 .extern	endtext	/* Force loading of end labels. */
