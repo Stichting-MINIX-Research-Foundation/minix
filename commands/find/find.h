@@ -40,13 +40,20 @@
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
 	N_AMIN, N_ANEWER, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME,
-	N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXIT, N_EXPR, N_FALSE, N_FLAGS,
-	N_FOLLOW, N_FPRINT, N_FSTYPE, N_GROUP,
+	N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXIT, N_EXPR, N_FALSE,
+	N_FOLLOW, N_FPRINT,
+#ifndef _MINIX
+	N_FSTYPE,
+	N_FLAGS,
+#endif
+	N_GROUP,
 	N_INAME, N_INUM, N_IREGEX, N_LINKS, N_LS, N_MINDEPTH, N_MAXDEPTH,
 	N_MMIN, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
 	N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRINTX,
 	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV, N_DELETE
 };
+
+typedef unsigned int u_int32_t;
 
 /* node definition */
 typedef struct _plandata {
@@ -61,6 +68,7 @@ typedef struct _plandata {
 #define	F_MTFLAG	1			/* fstype */
 #define	F_MTTYPE	2
 #define	F_ATLEAST	1			/* perm */
+#define	F_ANY		2			/* perm */
 	int flags;				/* private flags */
 	enum ntype type;			/* plan node type */
 	union {

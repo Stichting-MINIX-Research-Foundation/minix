@@ -33,15 +33,6 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
-#else
-__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
- The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.28 2008/07/21 14:19:22 lukem Exp $");
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -86,7 +77,9 @@ main(int argc, char *argv[])
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = show_path;
+#ifdef SIGINFO
 	sigaction(SIGINFO, &sa, NULL);
+#endif
 
 	/* array to hold dir list.  at most (argc - 1) elements. */
 	p = start = malloc(argc * sizeof (char *));

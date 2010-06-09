@@ -33,13 +33,6 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
-#else
-__RCSID("$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $");
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -55,7 +48,6 @@ __RCSID("$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $");
 #include <inttypes.h>
 #include <limits.h>
 #include <pwd.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,6 +56,10 @@ __RCSID("$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $");
 #include <util.h>
 
 #include "find.h"
+
+typedef int bool;
+#define false 0
+#define true 1
 
 #define	COMPARE(a, b) {							\
 	switch (plan->flags) {						\
@@ -78,7 +74,7 @@ __RCSID("$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $");
 	}								\
 }
 
-static	int64_t	find_parsenum(PLAN *, const char *, const char *, char *);
+static	int32_t	find_parsenum(PLAN *, const char *, const char *, char *);
 static	void	run_f_exec(PLAN *);
 	int	f_always_true(PLAN *, FTSENT *);
 	int	f_amin(PLAN *, FTSENT *);
@@ -131,10 +127,10 @@ extern time_t now;
  * find_parsenum --
  *	Parse a string of the form [+-]# and return the value.
  */
-static int64_t
+static int32_t
 find_parsenum(PLAN *plan, const char *option, const char *vp, char *endch)
 {
-	int64_t value;
+	int32_t value;
 	const char *str;
 	char *endchar; /* Pointer to character ending conversion. */
 
@@ -159,7 +155,7 @@ find_parsenum(PLAN *plan, const char *option, const char *vp, char *endch)
 	 * and endchar points to the beginning of the string we know we have
 	 * a syntax error.
 	 */
-	value = strtoq(str, &endchar, 10);
+	value = strtol(str, &endchar, 10);
 	if (value == 0 && endchar == str)
 		errx(1, "%s: %s: illegal numeric value", option, vp);
 	if (endchar[0] && (endch == NULL || endchar[0] != *endch))
@@ -379,12 +375,14 @@ f_delete(PLAN *plan __unused, FTSENT *entry)
 		errx(1, "-delete: %s: relative path potentially not safe",
 			entry->fts_accpath);
 
+#ifndef _MINIX
 	/* Turn off user immutable bits if running as root */
 	if ((entry->fts_statp->st_flags & (UF_APPEND|UF_IMMUTABLE)) &&
 	    !(entry->fts_statp->st_flags & (SF_APPEND|SF_IMMUTABLE)) &&
 	    geteuid() == 0)
 		chflags(entry->fts_accpath,
 		       entry->fts_statp->st_flags &= ~(UF_APPEND|UF_IMMUTABLE));
+#endif
 
 	/* rmdir directories, unlink everything else */
 	if (S_ISDIR(entry->fts_statp->st_mode)) {
@@ -545,9 +543,9 @@ f_exec(PLAN *plan, FTSENT *entry)
 		fflush(stdout);
 		fflush(stderr);
 
-		switch (pid = vfork()) {
+		switch (pid = fork()) {
 		case -1:
-			err(1, "vfork");
+			err(1, "fork");
 			/* NOTREACHED */
 		case 0:
 			if (fchdir(dotfd)) {
@@ -577,9 +575,9 @@ run_f_exec(PLAN *plan)
 	fflush(stdout);
 	fflush(stderr);
 
-	switch (pid = vfork()) {
+	switch (pid = fork()) {
 	case -1:
-		err(1, "vfork");
+		err(1, "fork");
 		/* NOTREACHED */
 	case 0:
 		if (fchdir(dotfd)) {
@@ -755,7 +753,7 @@ f_execdir(PLAN *plan, FTSENT *entry)
 	fflush(stdout);
 	fflush(stderr);
 
-	switch (pid = vfork()) {
+	switch (pid = fork()) {
 	case -1:
 		err(1, "fork");
 		/* NOTREACHED */
@@ -857,6 +855,7 @@ c_false(char ***argvp, int isok)
 }
 
 
+#ifndef _MINIX
 /*
  * -flags [-]flags functions --
  */
@@ -870,6 +869,8 @@ f_flags(PLAN *plan, FTSENT *entry)
 		return ((plan->f_data | flags) == flags);
 	else
 		return (flags == plan->f_data);
+	/* MINIX has no file flags. */
+	return 0;
 	/* NOTREACHED */
 }
 
@@ -897,6 +898,7 @@ c_flags(char ***argvp, int isok)
 	new->f_data = flagset;
 	return (new);
 }
+#endif
 
 /*
  * -follow functions --
@@ -951,6 +953,7 @@ c_fprint(char ***argvp, int isok)
  *
  *	True if the file is of a certain type.
  */
+#ifndef _MINIX
 int
 f_fstype(PLAN *plan, FTSENT *entry)
 {
@@ -1044,6 +1047,7 @@ c_fstype(char ***argvp, int isok)
 	new->c_data = arg;
 	return (new);
 }
+#endif
 
 /*
  * -group gname functions --
@@ -1424,9 +1428,15 @@ f_perm(PLAN *plan, FTSENT *entry)
 	mode_t mode;
 
 	mode = entry->fts_statp->st_mode &
-	    (S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO);
+	    (S_ISUID|S_ISGID
+#ifdef S_ISTXT
+	    |S_ISTXT
+#endif
+	    |S_IRWXU|S_IRWXG|S_IRWXO);
 	if (plan->flags == F_ATLEAST)
 		return ((plan->m_data | mode) == mode);
+	else if (plan->flags == F_ANY)
+		return ((plan->m_data & mode) != 0);
 	else
 		return (mode == plan->m_data);
 	/* NOTREACHED */
@@ -1446,6 +1456,9 @@ c_perm(char ***argvp, int isok)
 
 	if (*perm == '-') {
 		new->flags = F_ATLEAST;
+		++perm;
+	} else if (*perm == '+') {
+		new->flags = F_ANY;
 		++perm;
 	}
 
@@ -1562,7 +1575,7 @@ f_regex(PLAN *plan, FTSENT *entry)
 static PLAN *
 c_regex_common(char ***argvp, int isok, enum ntype type, bool icase)
 {
-	char errbuf[LINE_MAX];
+	char errbuf[100];
 	regex_t reg;
 	char *regexp = **argvp;
 	char *lineregexp;
@@ -1687,9 +1700,11 @@ c_type(char ***argvp, int isok)
 	case 'p':
 		mask = S_IFIFO;
 		break;
+#ifdef S_IFSOCK
 	case 's':
 		mask = S_IFSOCK;
 		break;
+#endif
 #ifdef S_IFWHT
 	case 'W':
 	case 'w':

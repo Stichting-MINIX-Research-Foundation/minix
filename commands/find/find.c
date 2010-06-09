@@ -33,13 +33,6 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
-#else
-__RCSID("$NetBSD: find.c,v 1.25 2007/09/25 04:10:12 lukem Exp $");
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,7 +47,7 @@ __RCSID("$NetBSD: find.c,v 1.25 2007/09/25 04:10:12 lukem Exp $");
 
 #include "find.h"
 
-static int ftscompare(const FTSENT **, const FTSENT **);
+static int ftscompare(const FTSENT * const *, const FTSENT * const *);
 
 static void sig_lock(sigset_t *);
 static void sig_unlock(const sigset_t *);
@@ -148,7 +141,7 @@ find_formplan(char **argv)
 }
 
 static int
-ftscompare(const FTSENT **e1, const FTSENT **e2)
+ftscompare(const FTSENT * const *e1, const FTSENT * const *e2)
 {
 
 	return (strcoll((*e1)->fts_name, (*e2)->fts_name));
@@ -160,7 +153,9 @@ sig_lock(sigset_t *s)
 	sigset_t new;
 
 	sigemptyset(&new);
+#ifdef SIGINFO
 	sigaddset(&new, SIGINFO); /* block SIGINFO */
+#endif
 	sigprocmask(SIG_BLOCK, &new, s);
 }
 
