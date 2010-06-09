@@ -155,7 +155,7 @@ PUBLIC int fs_mkdir()
   } else {
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
-	  if(search_dir(ldirp, lastc, (ino_t *) 0, DELETE, IGN_PERM) != OK)
+	  if(search_dir(ldirp, lastc, NULL, DELETE, IGN_PERM) != OK)
 		  panic("Dir disappeared: %ul", rip->i_num);
 	  rip->i_nlinks--;	/* undo the increment done in new_node() */
   }

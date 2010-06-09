@@ -217,7 +217,7 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
   int r;
 
   /* search_dir checks that rip is a directory too. */
-  if ((r = search_dir(rip, "", (ino_t *) 0, IS_EMPTY, IGN_PERM)) != OK)
+  if ((r = search_dir(rip, "", NULL, IS_EMPTY, IGN_PERM)) != OK)
   	return(r);
 
   if (strcmp(dir_name, ".") == 0 || strcmp(dir_name, "..") == 0)return(EINVAL);
@@ -258,7 +258,7 @@ char file_name[NAME_MAX];	/* name of file to be removed */
 	dup_inode(rip);		/* inode will be returned with put_inode */
   }
 
-  r = search_dir(dirp, file_name, (ino_t *) 0, DELETE, IGN_PERM);
+  r = search_dir(dirp, file_name, NULL, DELETE, IGN_PERM);
 
   if (r == OK) {
 	rip->i_nlinks--;	/* entry deleted from parent's dir */
