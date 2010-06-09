@@ -131,7 +131,7 @@ fitfs()
 	indir="`expr $BS / 4`"
 	indir2="`expr $indir \* $indir`"
 	formula="s=\\0;d=(s+$BS-1)/$BS;i=(d-$dir+$indir-1)/$indir;j=(i-1+$indir2-1)/$indir2;d+i+j"
-	zones=`( find $path | egrep -v ^$path/usr | xargs lstat -size | egrep -x "[0-9]+" | sed -r "s|.+|$formula|" | bc | tr '
+	zones=`( find $path | egrep -v ^$path/usr | xargs lstat -size | egrep '^[0-9]+$' | sed -r "s|.+|$formula|" | bc | tr '
 ' +; echo 0 ) | bc`
 	zones="`expr $zones + $extra_zones`"
 
