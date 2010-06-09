@@ -23,6 +23,7 @@ _PROTOTYPE( void endgrent, (void)					);
 _PROTOTYPE( struct group *getgrent, (void)				);
 _PROTOTYPE( int setgrent, (void)					);
 _PROTOTYPE( void setgrfile, (const char *_file)				);
+_PROTOTYPE( const char *group_from_gid, (gid_t, int)                    );
 #endif
 
 #endif /* _GRP_H */
