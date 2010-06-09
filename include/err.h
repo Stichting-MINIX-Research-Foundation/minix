@@ -54,7 +54,6 @@
 #endif
 
 __BEGIN_DECLS
-#ifndef __minix
 __dead void	err(int, const char *, ...)
 		    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
 __dead void	verr(int, const char *, _BSD_VA_LIST_)
@@ -67,7 +66,6 @@ void		warn(const char *, ...)
 		    __attribute__((__format__(__printf__, 1, 2)));
 void		vwarn(const char *, _BSD_VA_LIST_)
 		    __attribute__((__format__(__printf__, 1, 0)));
-#endif
 void		warnx(const char *, ...)
 		    __attribute__((__format__(__printf__, 1, 2)));
 void		vwarnx(const char *, _BSD_VA_LIST_)
