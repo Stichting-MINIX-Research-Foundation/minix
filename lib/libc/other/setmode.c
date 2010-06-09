@@ -92,9 +92,7 @@ static void	 dumpmode (BITCMD *);
  * bits) followed by a '+' (set bits).
  */
 mode_t
-getmode(bbox, omode)
-	const void *bbox;
-	mode_t omode;
+getmode(const void *bbox, mode_t omode)
 {
 	const BITCMD *set;
 	mode_t clrval, newmode, value;
