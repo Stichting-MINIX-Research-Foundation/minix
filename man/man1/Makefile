@@ -5,7 +5,7 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	cp.1 crc.1 crontab.1 ctags.1 cut.1 dd.1 dev2name.1 \
 	df.1 dhrystone.1 diff.1 dosdir.1 dosread.1 doswrite.1 du.1 \
 	dumpcore.1 easypack.1 echo.1 ed.1 eject.1 elvis.1 elvrec.1 \
-	env.1 expand.1 expr.1 factor.1 fgrep.1 file.1 find.1 \
+	env.1 expand.1 expr.1 factor.1 fgrep.1 file.1 \
 	finger.1 flexdoc.1 fmt.1 fold.1 format.1 fortune.1 \
 	fsck.1 grep.1 head.1 host.1 hostaddr.1 id.1 ifdef.1 \
 	install.1 isodir.1 isoinfo.1 isoread.1 join.1 kill.1 \
