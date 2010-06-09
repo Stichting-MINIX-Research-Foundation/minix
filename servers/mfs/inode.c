@@ -226,10 +226,11 @@ register struct inode *rip;	/* pointer to inode to be released */
 	if (rip->i_nlinks == NO_LINK) {
 		/* i_nlinks == NO_LINK means free the inode. */
 		/* return all the disk blocks */
-		if (truncate_inode(rip, (off_t) 0) != OK) {
-			printf("MFS: truncate of inode %u on dev %d failed\n",
-				rip->i_num, rip->i_dev);
-		}
+
+		/* Ignore errors by truncate_inode in case inode is a block
+		 * special or character special file.
+		 */
+		(void) truncate_inode(rip, (off_t) 0); 
 		rip->i_mode = I_NOT_ALLOC;     /* clear I_TYPE field */
 		rip->i_dirt = DIRTY;
 		free_inode(rip->i_dev, rip->i_num);
