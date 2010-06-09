@@ -45,6 +45,8 @@ SRCS+=  \
 	cuserid.c \
 	dirname.c \
 	environ.c \
+	err.c \
+	errx.c \
 	errno.c \
 	fdopen.c \
 	ffs.c \
@@ -57,6 +59,7 @@ SRCS+=  \
 	getopt_long.c \
 	getpagesize.c \
 	getpass.c \
+	getprogname.c \
 	getpwent.c \
 	getttyent.c \
 	getw.c \
@@ -78,16 +81,19 @@ SRCS+=  \
 	popen.c \
 	putenv.c \
 	putw.c \
+	pwcache.c \
 	random.c \
 	realpath.c \
 	rindex.c \
 	rlimit.c \
 	setenv.c \
+	setmode.c \
 	settimeofday.c \
 	stderr.c \
 	strdup.c \
 	strlcat.c \
 	strlcpy.c \
+	strmode.c \
 	strtok_r.c \
 	strtoll.c \
 	swab.c \
@@ -102,5 +108,9 @@ SRCS+=  \
 	v8regexp.c \
 	v8regsub.c \
 	vectorio.c \
+	verr.c \
+	verrx.c \
+	vwarn.c \
 	vwarnx.c \
+	warn.c \
 	warnx.c

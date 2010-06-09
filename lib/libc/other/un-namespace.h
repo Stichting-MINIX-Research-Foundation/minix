@@ -53,7 +53,6 @@
 #undef		getdirentries
 #undef		getlogin
 #undef		getpeername
-#undef		getprogname
 #undef		getsockname
 #undef		getsockopt
 #undef		ioctl
@@ -146,8 +145,6 @@ int		_kevent(int, const struct kevent *, int, struct kevent *,
 int		_flock(int, int);
 #endif
 
-#undef		err
-#undef		warn
 #undef		nsdispatch
 
 #endif	/* _UN_NAMESPACE_H_ */

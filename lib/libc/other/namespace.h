@@ -40,8 +40,6 @@
  * ISO C (C90) section.  Most names in libc aren't in ISO C, so they
  * should be here.  Most aren't here...
  */
-#define		err				_err
-#define		warn				_warn
 #define		nsdispatch			_nsdispatch
 
 /*
@@ -72,7 +70,6 @@
 #define		getdirentries			_getdirentries
 #define		getlogin			_getlogin
 #define		getpeername			_getpeername
-#define		getprogname			_getprogname
 #define		getsockname			_getsockname
 #define		getsockopt			_getsockopt
 #define		ioctl				_ioctl

@@ -43,15 +43,13 @@ __RCSID("$NetBSD: getprogname.c,v 1.3 2003/07/26 19:24:42 salo Exp $");
 
 #include <stdlib.h>
 
-#ifdef __weak_alias
-__weak_alias(getprogname,_getprogname)
-#endif
-
-extern const char *__progname;
+extern const char **__prognamep;	/* Copy of argv[]. */
+extern int __argc;			/* Copy of argc. */
 
 const char *
 getprogname(void)
 {
-
-	return (__progname);
+	if(__argc > 0 && __prognamep)
+		return __prognamep[0];
+	return NULL;
 }

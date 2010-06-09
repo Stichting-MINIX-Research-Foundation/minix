@@ -49,6 +49,8 @@ __RCSID("$NetBSD: strmode.c,v 1.18 2006/10/07 22:04:18 apb Exp $");
 #include <assert.h>
 #include <unistd.h>
 
+#define _DIAGASSERT assert
+
 #if !HAVE_STRMODE
 void
 strmode(mode, p)

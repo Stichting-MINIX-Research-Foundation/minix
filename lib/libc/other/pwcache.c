@@ -118,11 +118,16 @@ __weak_alias(pwcache_groupdb,_pwcache_groupdb)
  * function pointers to various name lookup routines.
  * these may be changed as necessary.
  */
+#ifndef __minix
 static	int		(*_pwcache_setgroupent)(int)		= setgroupent;
+static	int		(*_pwcache_setpassent)(int)		= setpassent;
+#else
+static	int		(*_pwcache_setgroupent)(int)		= NULL;
+static	int		(*_pwcache_setpassent)(int)		= NULL;
+#endif
 static	void		(*_pwcache_endgrent)(void)		= endgrent;
 static	struct group *	(*_pwcache_getgrnam)(const char *)	= getgrnam;
 static	struct group *	(*_pwcache_getgrgid)(gid_t)		= getgrgid;
-static	int		(*_pwcache_setpassent)(int)		= setpassent;
 static	void		(*_pwcache_endpwent)(void)		= endpwent;
 static	struct passwd *	(*_pwcache_getpwnam)(const char *)	= getpwnam;
 static	struct passwd *	(*_pwcache_getpwuid)(uid_t)		= getpwuid;
@@ -149,6 +154,7 @@ static	int	gidtb_start(void);
 static	int	usrtb_start(void);
 static	int	grptb_start(void);
 
+#define _DIAGASSERT assert
 
 static u_int
 st_hash(const char *name, size_t len, int tabsz)
@@ -287,6 +293,8 @@ user_from_uid(uid_t uid, int noname)
 	if (!pwopn) {
 		if (_pwcache_setpassent != NULL)
 			(*_pwcache_setpassent)(1);
+		else
+			setpwent();
 		++pwopn;
 	}
 
@@ -356,6 +364,8 @@ group_from_gid(gid_t gid, int noname)
 	if (!gropn) {
 		if (_pwcache_setgroupent != NULL)
 			(*_pwcache_setgroupent)(1);
+		else
+			setgrent();
 		++gropn;
 	}
 
@@ -425,6 +435,8 @@ uid_from_user(const char *name, uid_t *uid)
 	if (!pwopn) {
 		if (_pwcache_setpassent != NULL)
 			(*_pwcache_setpassent)(1);
+		else
+			setpwent();
 		++pwopn;
 	}
 
@@ -489,6 +501,8 @@ gid_from_group(const char *name, gid_t *gid)
 	if (!gropn) {
 		if (_pwcache_setgroupent != NULL)
 			(*_pwcache_setgroupent)(1);
+		else
+			setgrent();
 		++gropn;
 	}
 

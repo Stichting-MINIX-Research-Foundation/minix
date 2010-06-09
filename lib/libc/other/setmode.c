@@ -77,10 +77,12 @@ typedef struct bitcmd {
 #define	CMD2_OBITS	0x08
 #define	CMD2_UBITS	0x10
 
-static BITCMD	*addcmd __P((BITCMD *, mode_t, mode_t, mode_t, mode_t));
-static void	 compress_mode __P((BITCMD *));
+#define _DIAGASSERT assert
+
+static BITCMD	*addcmd (BITCMD *, mode_t, mode_t, mode_t, mode_t);
+static void	 compress_mode (BITCMD *);
 #ifdef SETMODE_DEBUG
-static void	 dumpmode __P((BITCMD *));
+static void	 dumpmode (BITCMD *);
 #endif
 
 /*
@@ -227,12 +229,20 @@ setmode(p)
 		}
 		if (errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN))
 			goto out;
-		if (lval & ~(STANDARD_BITS|S_ISTXT)) {
+		if (lval & ~(STANDARD_BITS
+#ifdef S_ISTXT
+		|S_ISTXT
+#endif
+		)) {
 			errno = EINVAL;
 			goto out;
 		}
 		perm = (mode_t)lval;
-		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
+		ADDCMD('=', (STANDARD_BITS
+#ifdef S_ISTXT
+		|S_ISTXT
+#endif
+		), perm, mask);
 		set->cmd = 0;
 		return (saveset);
 	}
@@ -242,6 +252,7 @@ setmode(p)
 	 * each clause of the symbolic mode.
 	 */
 	for (;;) {
+
 		/* First, find out which bits might be modified. */
 		for (who = 0;; ++p) {
 			switch (*p) {
@@ -261,15 +272,19 @@ setmode(p)
 				goto getop;
 			}
 		}
-
-getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
+getop:
+		op = *p;
+		p++;
+		if (op != '+' && op != '-' && op != '=') {
 			errno = EINVAL;
 			goto out;
 		}
 		if (op == '=')
 			equalopdone = 0;
 
+#ifdef S_ISTXT
 		who &= ~S_ISTXT;
+#endif
 		for (perm = 0, permXbits = 0;; ++p) {
 			switch (*p) {
 			case 'r':
@@ -283,6 +298,7 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 				if (who == 0 || (who & ~S_IRWXO))
 					perm |= S_ISUID|S_ISGID;
 				break;
+#ifdef S_ISTXT
 			case 't':
 				/*
 				 * If specific bits where requested and 
@@ -292,6 +308,7 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 					who |= S_ISTXT;
 					perm |= S_ISTXT;
 				}
+#endif
 				break;
 			case 'w':
 				perm |= S_IWUSR|S_IWGRP|S_IWOTH;
@@ -367,9 +384,7 @@ out:
 }
 
 static BITCMD *
-addcmd(set, op, who, oparg, mask)
-	BITCMD *set;
-	mode_t oparg, who, op, mask;
+addcmd(BITCMD *set, mode_t op, mode_t who, mode_t oparg, mode_t mask)
 {
 
 	_DIAGASSERT(set != NULL);
