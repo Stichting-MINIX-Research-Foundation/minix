@@ -832,15 +832,13 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 
 	if((r=lin_lin_copy(procs[_SRC_], phys_addr[_SRC_],
 		procs[_DST_], phys_addr[_DST_], bytes)) != OK) {
-		struct proc *target;
+		struct proc *target = NULL;
 		phys_bytes lin;
 		if(r != EFAULT_SRC && r != EFAULT_DST)
 			panic("lin_lin_copy failed: %d",  r);
 		if(!vmcheck || !caller) {
 	  		return r;
 		}
-
-		assert(procs[_SRC_] && procs[_DST_]);
 
 		if(r == EFAULT_SRC) {
 			lin = phys_addr[_SRC_];
@@ -851,6 +849,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 		} else {
 			panic("r strange: %d",  r);
 		}
+
+		assert(caller);
+		assert(target);
 
 		vm_suspend(caller, target, lin, bytes, VMSTYPE_KERNELCALL);
 		return VMSUSPEND;
