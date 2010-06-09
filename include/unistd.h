@@ -207,6 +207,7 @@ _PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);
 _PROTOTYPE( int getpagesize, (void)					);
 _PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
 _PROTOTYPE( int initgroups, (const char *name, gid_t basegid)		);
+_PROTOTYPE( void *setmode, (const char *));
 
 #endif
 
