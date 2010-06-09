@@ -48,12 +48,14 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <pwd.h>
+#include <grp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
+#include <pwd.h>
 
 #include "find.h"
 

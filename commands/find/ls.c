@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <sys/statfs.h>
 
 #include "find.h"
