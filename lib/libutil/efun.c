@@ -44,6 +44,7 @@ __RCSID("$NetBSD: efun.c,v 1.6 2008/04/28 20:23:02 martin Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <err.h>
 #include <util.h>
 
 static void (*efunc)(int, const char *, ...) = err;
@@ -91,6 +92,7 @@ estrdup(const char *s)
 	return d;
 }
 
+#ifndef __minix
 char *
 estrndup(const char *s, size_t len)
 {
@@ -99,6 +101,7 @@ estrndup(const char *s, size_t len)
 		(*efunc)(1, "Cannot copy string");
 	return d;
 }
+#endif
 
 void *
 emalloc(size_t n)
@@ -136,6 +139,7 @@ efopen(const char *p, const char *m)
 	return fp;
 }
 
+#ifndef _MINIX
 int
 easprintf(char ** __restrict ret, const char * __restrict format, ...)
 {
@@ -156,3 +160,4 @@ evasprintf(char ** __restrict ret, const char * __restrict format, va_list ap)
 		(*efunc)(1, "Cannot format string");
 	return rv;
 }
+#endif
