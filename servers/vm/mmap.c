@@ -208,22 +208,20 @@ PUBLIC int do_unmap_phys(message *m)
  *===========================================================================*/
 PUBLIC int do_remap(message *m)
 {
-	int d, dn, s, sn;
+	int dn, sn;
 	vir_bytes da, sa, startv;
 	size_t size;
 	struct vir_region *vr, *region;
 	struct vmproc *dvmp, *svmp;
 	int r;
 
-	d = m->VMRE_D;
-	s = m->VMRE_S;
 	da = (vir_bytes) m->VMRE_DA;
 	sa = (vir_bytes) m->VMRE_SA;
 	size = m->VMRE_SIZE;
 
-	if ((r = vm_isokendpt(d, &dn)) != OK)
+	if ((r = vm_isokendpt((endpoint_t) m->VMRE_D, &dn)) != OK)
 		return EINVAL;
-	if ((r = vm_isokendpt(s, &sn)) != OK)
+	if ((r = vm_isokendpt((endpoint_t) m->VMRE_S, &sn)) != OK)
 		return EINVAL;
 
 	dvmp = &vmproc[dn];

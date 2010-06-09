@@ -55,7 +55,11 @@ PUBLIC int munmap_text(void *addr, size_t len)
 	return _syscall(VM_PROC_NR, VM_MUNMAP_TEXT, &m);
 }
 
-PUBLIC void *vm_remap(int d, int s, void *da, void *sa, size_t size)
+PUBLIC void *vm_remap(endpoint_t d,
+			endpoint_t s,
+			void *da,
+			void *sa,
+			size_t size)
 {
 	message m;
 	int r;
@@ -72,7 +76,7 @@ PUBLIC void *vm_remap(int d, int s, void *da, void *sa, size_t size)
 	return (void *) m.VMRE_RETA;
 }
 
-PUBLIC int vm_unmap(int endpt, void *addr)
+PUBLIC int vm_unmap(endpoint_t endpt, void *addr)
 {
 	message m;
 
@@ -96,7 +100,7 @@ PUBLIC unsigned long vm_getphys(int endpt, void *addr)
 	return m.VMPHYS_RETA;
 }
 
-PUBLIC u8_t vm_getrefcount(int endpt, void *addr)
+PUBLIC u8_t vm_getrefcount(endpoint_t endpt, void *addr)
 {
 	message m;
 	int r;
