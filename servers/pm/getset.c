@@ -159,9 +159,9 @@ PUBLIC int do_set()
 		return(EINVAL);
   }
 
-  /* Send the request to FS */
-  tell_fs(rmp, &m);
+  /* Send the request to VFS */
+  tell_vfs(rmp, &m);
 
-  /* Do not reply until FS has processed the request */
+  /* Do not reply until VFS has processed the request */
   return(SUSPEND);
 }

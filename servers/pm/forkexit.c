@@ -110,7 +110,7 @@ PUBLIC int do_fork()
   m.PM_PPROC = rmp->mp_endpoint;
   m.PM_CPID = rmc->mp_pid;
 
-  tell_fs(rmc, &m);
+  tell_vfs(rmc, &m);
 
   /* Tell the tracer, if any, about the new child */
   if (rmc->mp_tracer != NO_TRACER)
@@ -197,7 +197,7 @@ PUBLIC int do_srv_fork()
   m.PM_PPROC = rmp->mp_endpoint;
   m.PM_CPID = rmc->mp_pid;
 
-  tell_fs(rmc, &m);
+  tell_vfs(rmc, &m);
 
   /* Tell the tracer, if any, about the new child */
   if (rmc->mp_tracer != NO_TRACER)
@@ -303,7 +303,7 @@ int dump_core;			/* flag indicating whether to dump core */
   m.m_type = dump_core ? PM_DUMPCORE : PM_EXIT;
   m.PM_PROC = rmp->mp_endpoint;
 
-  tell_fs(rmp, &m);
+  tell_vfs(rmp, &m);
 
   if (rmp->mp_flags & PRIV_PROC)
   {

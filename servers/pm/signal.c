@@ -665,7 +665,7 @@ struct mproc *rmp;		/* which process */
   m.m_type = PM_UNPAUSE;
   m.PM_PROC = rmp->mp_endpoint;
 
-  tell_fs(rmp, &m);
+  tell_vfs(rmp, &m);
 
   /* Also tell VM. */
   vm_notify_sig_wrapper(rmp->mp_endpoint);

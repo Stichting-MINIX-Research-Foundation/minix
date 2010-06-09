@@ -108,4 +108,4 @@ _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( char *find_param, (const char *key)				);
 _PROTOTYPE( struct mproc *find_proc, (pid_t lpid)			);
 _PROTOTYPE( int pm_isokendpt, (int ep, int *proc)			);
-_PROTOTYPE( void tell_fs, (struct mproc *rmp, message *m_ptr)		);
+_PROTOTYPE( void tell_vfs, (struct mproc *rmp, message *m_ptr)		);

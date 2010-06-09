@@ -6,7 +6,7 @@
  *   find_param:	look up a boot monitor parameter
  *   find_proc:		return process pointer from pid number
  *   pm_isokendpt:	check the validity of an endpoint
- *   tell_fs:		send a request to FS on behalf of a process
+ *   tell_vfs:		send a request to VFS on behalf of a process
  */
 
 #include "pm.h"
@@ -118,9 +118,9 @@ PUBLIC int pm_isokendpt(int endpoint, int *proc)
 }
 
 /*===========================================================================*
- *				tell_fs				 	     *
+ *				tell_vfs			 	     *
  *===========================================================================*/
-PUBLIC void tell_fs(rmp, m_ptr)
+PUBLIC void tell_vfs(rmp, m_ptr)
 struct mproc *rmp;
 message *m_ptr;
 {
@@ -129,7 +129,7 @@ message *m_ptr;
   int r;
 
   if (rmp->mp_flags & FS_CALL)
-	panic("tell_fs: not idle: %d", m_ptr->m_type);
+	panic("tell_vfs: not idle: %d", m_ptr->m_type);
 
   r = asynsend3(VFS_PROC_NR, m_ptr, AMF_NOREPLY);
   if (r != OK)

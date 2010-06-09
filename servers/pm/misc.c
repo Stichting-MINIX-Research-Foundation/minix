@@ -393,10 +393,10 @@ PUBLIC int do_reboot()
   check_sig(-1, SIGKILL, FALSE /* ksig*/); /* kill all users except init */
   sys_stop(INIT_PROC_NR);		   /* stop init, but keep it around */
 
-  /* Tell FS to reboot */
+  /* Tell VFS to reboot */
   m.m_type = PM_REBOOT;
 
-  tell_fs(&mproc[VFS_PROC_NR], &m);
+  tell_vfs(&mproc[VFS_PROC_NR], &m);
 
   return(SUSPEND);			/* don't reply to caller */
 }

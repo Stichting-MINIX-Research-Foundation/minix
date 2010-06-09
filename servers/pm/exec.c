@@ -48,7 +48,7 @@ PUBLIC int do_exec()
 	m.PM_FRAME = m_in.stack_ptr;
 	m.PM_FRAME_LEN = m_in.stack_bytes;
 
-	tell_fs(mp, &m);
+	tell_vfs(mp, &m);
 
 	/* Do not reply */
 	return SUSPEND;
