@@ -88,8 +88,6 @@ typedef long quad_t;		/* XXX */
 typedef unsigned long u_quad_t;	/* XXX */
 #endif
 
-mode_t getmode(void *, int /* mode_t */);
-
 /*
  * $PchId: shell.h,v 1.7 2006/05/22 12:47:00 philip Exp $
  */
