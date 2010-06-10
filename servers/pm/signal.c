@@ -16,7 +16,7 @@
  *   sig_proc:		interrupt or terminate a signaled process
  *   check_sig:		check which processes to signal with sig_proc()
  *   check_pending:	check if a pending signal can now be delivered
- *   restart_sigs: 	restart signal work after finishing a FS call
+ *   restart_sigs: 	restart signal work after finishing a VFS call
  */
 
 #include "pm.h"
@@ -265,11 +265,11 @@ PUBLIC int process_ksig(endpoint_t proc_nr_e, int signo)
 	rmp->mp_flags &= ~DELAY_CALL;
 
 	/*
-	 * If the FS_CALL flag is still set we have a process which is stopped
+	 * If the VFS_CALL flag is still set we have a process which is stopped
 	 * and we only need to wait for a reply from VFS. We are going to check
 	 * the pending signal then
 	 */
-	if (rmp->mp_flags & FS_CALL)
+	if (rmp->mp_flags & VFS_CALL)
 		return OK;
 	if (rmp->mp_flags & PM_SIG_PENDING)
 		panic("process_ksig: bad process state");
@@ -345,11 +345,11 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	return;
   }
 
-  if (rmp->mp_flags & FS_CALL) {
+  if (rmp->mp_flags & VFS_CALL) {
 	sigaddset(&rmp->mp_sigpending, signo);
 
 	if (!(rmp->mp_flags & PM_SIG_PENDING)) {
-		/* No delay calls: FS_CALL implies the process called us. */
+		/* No delay calls: VFS_CALL implies the process called us. */
 		if ((r = sys_stop(rmp->mp_endpoint)) != OK)
 			panic("sys_stop failed: %d", r);
 
@@ -419,7 +419,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
   }
   if (!badignore && sigismember(&rmp->mp_catch, signo)) {
 	/* Signal is caught. First interrupt the process's current call, if
-	 * applicable. This may involve a roundtrip to FS, in which case we'll
+	 * applicable. This may involve a roundtrip to VFS, in which case we'll
 	 * have to check back later.
 	 */
 	if (!(rmp->mp_flags & UNPAUSED)) {
@@ -571,7 +571,7 @@ register struct mproc *rmp;
 		sigdelset(&rmp->mp_sigpending, i);
 		sig_proc(rmp, i, FALSE /*trace*/, FALSE /* ksig */);
 
-		if (rmp->mp_flags & FS_CALL)
+		if (rmp->mp_flags & VFS_CALL)
 			break;
 	}
   }
@@ -583,27 +583,27 @@ register struct mproc *rmp;
 PUBLIC void restart_sigs(rmp)
 struct mproc *rmp;
 {
-/* FS has replied to a request from us; do signal-related work.
+/* VFS has replied to a request from us; do signal-related work.
  */
   int r;
 
-  if (rmp->mp_flags & (FS_CALL | EXITING)) return;
+  if (rmp->mp_flags & (VFS_CALL | EXITING)) return;
 
   if (rmp->mp_flags & TRACE_EXIT) {
 	/* Tracer requested exit with specific exit value */
 	exit_proc(rmp, rmp->mp_exitstatus, FALSE /*dump_core*/);
   }
   else if (rmp->mp_flags & PM_SIG_PENDING) {
-	/* We saved signal(s) for after finishing a FS call. Deal with this.
+	/* We saved signal(s) for after finishing a VFS call. Deal with this.
 	 * PM_SIG_PENDING remains set to indicate the process is still stopped.
 	 */
 	check_pending(rmp);
 
-	/* The process may now be FS-blocked again, because a signal exited the
+	/* The process may now be VFS-blocked again, because a signal exited the
 	 * process or was caught. Restart the process only when this is NOT the
 	 * case.
 	 */
-	if (!(rmp->mp_flags & FS_CALL)) {
+	if (!(rmp->mp_flags & VFS_CALL)) {
 		rmp->mp_flags &= ~(PM_SIG_PENDING | UNPAUSED);
 
 		if ((r = sys_resume(rmp->mp_endpoint)) != OK)
@@ -621,7 +621,7 @@ struct mproc *rmp;		/* which process */
 /* A signal is to be sent to a process.  If that process is hanging on a
  * system call, the system call must be terminated with EINTR.  Possible
  * calls are PAUSE, WAIT, READ and WRITE, the latter two for pipes and ttys.
- * First check if the process is hanging on an PM call.  If not, tell FS,
+ * First check if the process is hanging on an PM call.  If not, tell VFS,
  * so it can check for READs and WRITEs from pipes, ttys and the like.
  */
   message m;
@@ -643,7 +643,7 @@ struct mproc *rmp;		/* which process */
 	return;
   }
 
-  /* Not paused in PM. Let FS try to unpause the process. */
+  /* Not paused in PM. Let VFS try to unpause the process. */
   if (!(rmp->mp_flags & PM_SIG_PENDING)) {
 	/* Stop process from running. */
 	r = sys_delay_stop(rmp->mp_endpoint);

@@ -72,8 +72,8 @@ EXTERN struct mproc {
 #define STOPPED		0x00080	/* set if process stopped for tracing */
 #define SIGSUSPENDED	0x00100	/* set by SIGSUSPEND system call */
 #define REPLY		0x00200	/* set if a reply message is pending */
-#define FS_CALL		0x00400	/* set if waiting for FS (normal calls) */
-#define PM_SIG_PENDING	0x00800	/* process got a signal while waiting for FS */
+#define VFS_CALL       	0x00400	/* set if waiting for VFS (normal calls) */
+#define PM_SIG_PENDING	0x00800	/* process got a signal while waiting for VFS */
 #define UNPAUSED	0x01000	/* process is not in a blocking call */
 #define PRIV_PROC	0x02000	/* system process, special privileges */
 #define PARTIAL_EXEC	0x04000	/* process got a new map but no content */

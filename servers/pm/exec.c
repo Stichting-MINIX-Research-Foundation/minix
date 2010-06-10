@@ -40,7 +40,7 @@ PUBLIC int do_exec()
 {
 	message m;
 
-	/* Forward call to FS */
+	/* Forward call to VFS */
 	m.m_type = PM_EXEC;
 	m.PM_PROC = mp->mp_endpoint;
 	m.PM_PATH = m_in.exec_name;

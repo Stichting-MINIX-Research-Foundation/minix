@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 	sysgetenv.val= val;
 	sysgetenv.vallen= sizeof(val);
 
-	if (svrctl(MMGETPARAM, &sysgetenv) == -1) {
+	if (svrctl(PMGETPARAM, &sysgetenv) == -1) {
 	    if (errno == ESRCH) {
 		ex |= 2;
 	    } else {

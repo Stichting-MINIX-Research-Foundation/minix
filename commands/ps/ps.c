@@ -115,7 +115,7 @@ size_t n_ttyinfo;		/* Number of tty info slots */
 int nr_tasks, nr_procs;		
 extern int errno;
 
-/* Process tables of the kernel, MM, and FS. */
+/* Process tables of the kernel, PM, and VFS. */
 struct proc *ps_proc;
 struct mproc *ps_mproc;
 struct fproc *ps_fproc;
@@ -168,7 +168,7 @@ struct pstat {			/* structure filled by pstat() */
   time_t ps_utime;		/* accumulated user time */
   time_t ps_stime;		/* accumulated system time */
   char *ps_args;		/* concatenated argument string */
-  vir_bytes ps_procargs;	/* initial stack frame from MM */
+  vir_bytes ps_procargs;	/* initial stack frame from PM */
 };
 
 /* Ps_state field values in pstat struct above */

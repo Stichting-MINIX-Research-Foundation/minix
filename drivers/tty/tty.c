@@ -1569,7 +1569,7 @@ int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
 int mayflush;
 {
 /* Process a SIGINT, SIGQUIT or SIGKILL char from the keyboard or SIGHUP from
- * a tty close, "stty 0", or a real RS-232 hangup.  MM will send the signal to
+ * a tty close, "stty 0", or a real RS-232 hangup.  PM will send the signal to
  * the process group (INT, QUIT), all processes (KILL), or the session leader
  * (HUP).
  */

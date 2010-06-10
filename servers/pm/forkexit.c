@@ -10,8 +10,8 @@
  *   do_fork:		perform the FORK system call
  *   do_srv_fork:	special FORK, used by RS to create sys services
  *   do_exit:		perform the EXIT system call (by calling exit_proc())
- *   exit_proc:		actually do the exiting, and tell FS about it
- *   exit_restart:	continue exiting a process after FS has replied
+ *   exit_proc:		actually do the exiting, and tell VFS about it
+ *   exit_restart:	continue exiting a process after VFS has replied
  *   do_waitpid:	perform the WAITPID or WAIT system call
  *   wait_test:		check whether a parent is waiting for a child
  */
@@ -116,7 +116,7 @@ PUBLIC int do_fork()
   if (rmc->mp_tracer != NO_TRACER)
 	sig_proc(rmc, SIGSTOP, TRUE /*trace*/, FALSE /* ksig */);
 
-  /* Do not reply until FS is ready to process the fork
+  /* Do not reply until VFS is ready to process the fork
   * request
   */
   return SUSPEND;
@@ -253,7 +253,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if (dump_core && rmp->mp_realuid != rmp->mp_effuid)
 	dump_core = FALSE;
 
-  /* System processes are destroyed before informing FS, meaning that FS can
+  /* System processes are destroyed before informing VFS, meaning that VFS can
    * not get their CPU state, so we can't generate a coredump for them either.
    */
   if (dump_core && (rmp->mp_flags & PRIV_PROC))
@@ -277,9 +277,9 @@ int dump_core;			/* flag indicating whether to dump core */
   p_mp->mp_child_stime += sys_time + rmp->mp_child_stime; /* add system time */
 
   /* Tell the kernel the process is no longer runnable to prevent it from 
-   * being scheduled in between the following steps. Then tell FS that it 
+   * being scheduled in between the following steps. Then tell VFS that it 
    * the process has exited and finally, clean up the process at the kernel.
-   * This order is important so that FS can tell drivers to cancel requests
+   * This order is important so that VFS can tell drivers to cancel requests
    * such as copying to/ from the exiting process, before it is gone.
    */
   if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
@@ -296,10 +296,10 @@ int dump_core;			/* flag indicating whether to dump core */
   }
   if (proc_nr_e == VFS_PROC_NR)
   {
-	panic("exit_proc: FS died: %d", r);
+	panic("exit_proc: VFS died: %d", r);
   }
 
-  /* Tell FS about the exiting process. */
+  /* Tell VFS about the exiting process. */
   m.m_type = dump_core ? PM_DUMPCORE : PM_EXIT;
   m.PM_PROC = rmp->mp_endpoint;
 
@@ -307,9 +307,9 @@ int dump_core;			/* flag indicating whether to dump core */
 
   if (rmp->mp_flags & PRIV_PROC)
   {
-	/* Destroy system processes without waiting for FS. This is
+	/* Destroy system processes without waiting for VFS. This is
 	 * needed because the system process might be a block device
-	 * driver that FS is blocked waiting on.
+	 * driver that VFS is blocked waiting on.
 	 */
 	if((r= sys_clear(rmp->mp_endpoint)) != OK)
 		panic("exit_proc: sys_clear failed: %d", r);
@@ -318,10 +318,10 @@ int dump_core;			/* flag indicating whether to dump core */
   /* Clean up most of the flags describing the process's state before the exit,
    * and mark it as exiting.
    */
-  rmp->mp_flags &= (IN_USE|FS_CALL|PRIV_PROC|TRACE_EXIT);
+  rmp->mp_flags &= (IN_USE|VFS_CALL|PRIV_PROC|TRACE_EXIT);
   rmp->mp_flags |= EXITING;
 
-  /* Keep the process around until FS is finished with it. */
+  /* Keep the process around until VFS is finished with it. */
   
   rmp->mp_exitstatus = (char) exit_status;
 
@@ -359,7 +359,7 @@ PUBLIC void exit_restart(rmp, dump_core)
 struct mproc *rmp;		/* pointer to the process being terminated */
 int dump_core;			/* flag indicating whether to dump core */
 {
-/* FS replied to our exit or coredump request. Perform the second half of the
+/* VFS replied to our exit or coredump request. Perform the second half of the
  * exit code.
  */
   int r;
@@ -469,7 +469,7 @@ PUBLIC int do_waitpid()
 		if (rp->mp_flags & ZOMBIE) {
 			/* This child meets the pid test and has exited. */
 			tell_parent(rp); /* this child has already exited */
-			if (!(rp->mp_flags & FS_CALL))
+			if (!(rp->mp_flags & VFS_CALL))
 				cleanup(rp);
 			return(SUSPEND);
 		}
@@ -578,7 +578,7 @@ int try_cleanup;			/* clean up the child when done? */
 	/* The 'try_cleanup' flag merely saves us from having to be really
 	 * careful with statement ordering in exit_proc() and exit_restart().
 	 */
-	if (try_cleanup && !(child->mp_flags & FS_CALL))
+	if (try_cleanup && !(child->mp_flags & VFS_CALL))
 		cleanup(child);
   }
   else {

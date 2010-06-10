@@ -244,7 +244,7 @@ struct proc *pt;
   printf("Memory map:				0x%04.4x\n", pt->p_map[NR_LOCAL_SEGS]);	/* struct mem_map */
 #endif
 #if DEAD_CODE
-  printf("Process id passed in from MM:		0x%04.4x\n", pt->p_pid);	/* int */
+  printf("Process id passed in from PM:		0x%04.4x\n", pt->p_pid);	/* int */
 #endif
 #if 0
   printf("User time in ticks:			%ld\n", pt->user_time);	/* time_t */

@@ -1,7 +1,7 @@
 /* This file contains the main program of the process manager and some related
  * procedures.  When MINIX starts up, the kernel runs for a little while,
- * initializing itself and its tasks, and then it runs PM and FS.  Both PM
- * and FS initialize themselves as far as they can. PM asks the kernel for
+ * initializing itself and its tasks, and then it runs PM and VFS.  Both PM
+ * and VFS initialize themselves as far as they can. PM asks the kernel for
  * all free memory and starts serving requests.
  *
  * The entry points into this file are:
@@ -41,7 +41,7 @@ EXTERN unsigned long calls_stats[NCALLS];
 
 FORWARD _PROTOTYPE( void sendreply, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
-FORWARD _PROTOTYPE( void handle_fs_reply, (void)			);
+FORWARD _PROTOTYPE( void handle_vfs_reply, (void)			);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -122,7 +122,7 @@ PUBLIC int main()
 	case PM_SETGROUPS_REPLY:
 		if (who_e == VFS_PROC_NR)
 		{
-			handle_fs_reply();
+			handle_vfs_reply();
 			result= SUSPEND;		/* don't reply */
 		}
 		else
@@ -270,20 +270,20 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		/* Set scheduling info */
 		rmp->mp_scheduler = KERNEL;
 
-		/* Tell FS about this system process. */
+		/* Tell VFS about this system process. */
 		mess.m_type = PM_INIT;
 		mess.PM_SLOT = ip->proc_nr;
 		mess.PM_PID = rmp->mp_pid;
 		mess.PM_PROC = rmp->mp_endpoint;
   		if (OK != (s=send(VFS_PROC_NR, &mess)))
-			panic("can't sync up with FS: %d", s);
+			panic("can't sync up with VFS: %d", s);
   	}
   }
 
-  /* Tell FS that no more system processes follow and synchronize. */
+  /* Tell VFS that no more system processes follow and synchronize. */
   mess.PR_ENDPT = NONE;
   if (sendrec(VFS_PROC_NR, &mess) != OK || mess.m_type != OK)
-	panic("can't sync up with FS");
+	panic("can't sync up with VFS");
 
 #if (CHIP == INTEL)
         uts_val.machine[0] = 'i';
@@ -411,9 +411,9 @@ void checkme(char *str, int line)
 }
 
 /*===========================================================================*
- *				handle_fs_reply				     *
+ *				handle_vfs_reply       			     *
  *===========================================================================*/
-PRIVATE void handle_fs_reply()
+PRIVATE void handle_vfs_reply()
 {
   struct mproc *rmp;
   endpoint_t proc_e;
@@ -441,19 +441,19 @@ PRIVATE void handle_fs_reply()
   proc_e = m_in.PM_PROC;
 
   if (pm_isokendpt(proc_e, &proc_n) != OK) {
-	panic("handle_fs_reply: got bad endpoint from FS: %d", proc_e);
+	panic("handle_vfs_reply: got bad endpoint from VFS: %d", proc_e);
   }
 
   rmp = &mproc[proc_n];
 
-  /* Now that FS replied, mark the process as FS-idle again */
-  if (!(rmp->mp_flags & FS_CALL))
-	panic("handle_fs_reply: reply without request: %d", call_nr);
+  /* Now that VFS replied, mark the process as VFS-idle again */
+  if (!(rmp->mp_flags & VFS_CALL))
+	panic("handle_vfs_reply: reply without request: %d", call_nr);
 
-  rmp->mp_flags &= ~FS_CALL;
+  rmp->mp_flags &= ~VFS_CALL;
 
   if (rmp->mp_flags & UNPAUSED)
-  	panic("handle_fs_reply: UNPAUSED set on entry: %d", call_nr);
+  	panic("handle_vfs_reply: UNPAUSED set on entry: %d", call_nr);
 
   /* Call-specific handler code */
   switch (call_nr) {
@@ -529,7 +529,7 @@ PRIVATE void handle_fs_reply()
 	break;
 
   default:
-	panic("handle_fs_reply: unknown reply code: %d", call_nr);
+	panic("handle_vfs_reply: unknown reply code: %d", call_nr);
   }
 
   /* Now that the process is idle again, look at pending signals */

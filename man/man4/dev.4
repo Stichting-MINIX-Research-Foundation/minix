@@ -178,8 +178,8 @@ The
 .B lp
 device sends any bytes written to it to the printer.
 .SS "TCP/IP (major 7)"
-The TCP/IP task is not a kernel task, but a server like MM and FS.  It sits
-between FS and the DP8390 task that manages the ethernet boards.  Together
+The TCP/IP task is not a kernel task, but a server like PM and VFS.  It sits
+between VFS and the DP8390 task that manages the ethernet boards.  Together
 they implement the TCP/IP protocol.  See also
 .BR ip (4).
 .SS "Controller 1 (major 8)"

@@ -65,7 +65,7 @@ vir_bytes frame_len;
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
- * is copied to a buffer inside FS, and then to the new core image.
+ * is copied to a buffer inside VFS, and then to the new core image.
  */
   int r, r1, sep_id, round, proc_s, hdrlen, load_text, allow_setuid;
   vir_bytes text_bytes, data_bytes, bss_bytes, pc;
@@ -165,7 +165,7 @@ vir_bytes frame_len;
         return(r);
   }
 
-  /* Patch up stack and copy it from FS to new core image. */
+  /* Patch up stack and copy it from VFS to new core image. */
   vsp = stack_top;
   vsp -= frame_len;
   patch_ptr(mbuf, vsp);
@@ -347,7 +347,7 @@ PRIVATE int read_header(
  *===========================================================================*/
 PRIVATE int patch_stack(vp, stack, stk_bytes)
 struct vnode *vp;		/* pointer for open script file */
-char stack[ARG_MAX];		/* pointer to stack image within FS */
+char stack[ARG_MAX];		/* pointer to stack image within VFS */
 vir_bytes *stk_bytes;		/* size of initial stack */
 {
 /* Patch the argument vector to include the path name of the script to be

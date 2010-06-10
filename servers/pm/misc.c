@@ -70,7 +70,7 @@ PUBLIC int do_procstat()
   /* For the moment, this is only used to return pending signals to 
    * system processes that request the PM for their own status. 
    *
-   * Future use might include the FS requesting for process status of
+   * Future use might include the VFS requesting for process status of
    * any user process. 
    */
   
@@ -385,7 +385,7 @@ PUBLIC int do_reboot()
   else
 	monitor_code[0] = '\0';
 
-  /* Order matters here. When FS is told to reboot, it exits all its
+  /* Order matters here. When VFS is told to reboot, it exits all its
    * processes, and then would be confused if they're exited again by
    * SIGKILL. So first kill, then reboot. 
    */
@@ -470,13 +470,13 @@ PUBLIC int do_svrctl()
   req = m_in.svrctl_req;
   ptr = (vir_bytes) m_in.svrctl_argp;
 
-  /* Is the request indeed for the MM? */
+  /* Is the request indeed for the PM? */
   if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
 
   /* Control operations local to the PM. */
   switch(req) {
-  case MMSETPARAM:
-  case MMGETPARAM: {
+  case PMSETPARAM:
+  case PMGETPARAM: {
       struct sysgetenv sysgetenv;
       char search_key[64];
       char *val_start;
@@ -488,7 +488,7 @@ PUBLIC int do_svrctl()
               sizeof(sysgetenv)) != OK) return(EFAULT);  
 
       /* Set a param override? */
-      if (req == MMSETPARAM) {
+      if (req == PMSETPARAM) {
   	if (local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
   	if (sysgetenv.keylen <= 0
   	 || sysgetenv.keylen >=

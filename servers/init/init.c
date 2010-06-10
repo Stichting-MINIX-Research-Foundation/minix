@@ -123,7 +123,7 @@ int main(void)
 	sysgetenv.keylen = 8+1;
 	sysgetenv.val = bootopts;
 	sysgetenv.vallen = sizeof(bootopts);
-	if (svrctl(MMGETPARAM, &sysgetenv) == 0) *rcp++ = bootopts;
+	if (svrctl(PMGETPARAM, &sysgetenv) == 0) *rcp++ = bootopts;
 	*rcp = "start";
 
 	execute(rc_command);

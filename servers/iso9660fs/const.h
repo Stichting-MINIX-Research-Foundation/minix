@@ -65,5 +65,5 @@
 #define	offsetof(type, field)	((size_t)(&((type *)0)->field))
 
 /* Miscellaneous constants */
-#define SYS_UID  ((uid_t) 0)	/* uid_t for processes MM and INIT */
-#define SYS_GID  ((gid_t) 0)	/* gid_t for processes MM and INIT */
+#define SYS_UID  ((uid_t) 0)	/* uid_t for processes PM and INIT */
+#define SYS_GID  ((gid_t) 0)	/* gid_t for processes PM and INIT */

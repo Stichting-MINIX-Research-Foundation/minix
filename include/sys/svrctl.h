@@ -15,8 +15,8 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 #include <minix/ioctl.h>
 
 /* PM controls. */
-#define MMGETPARAM	_IOW('M',  5, struct sysgetenv)
-#define MMSETPARAM	_IOR('M',  7, struct sysgetenv)
+#define PMGETPARAM	_IOW('M',  5, struct sysgetenv)
+#define PMSETPARAM	_IOR('M',  7, struct sysgetenv)
 
 struct sysgetenv {
 	char		*key;		/* Name requested. */

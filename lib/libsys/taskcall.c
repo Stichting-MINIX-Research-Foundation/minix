@@ -1,6 +1,6 @@
 /* _taskcall() is the same as _syscall() except it returns negative error
- * codes directly and not in errno.  This is a better interface for MM and
- * FS.
+ * codes directly and not in errno.  This is a better interface for PM and
+ * VFS.
  */
 
 #include <lib.h>
