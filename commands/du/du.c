@@ -46,6 +46,8 @@
 #include <minix/config.h>
 #include <minix/const.h>
 
+#include "mfs/const.h"
+
 extern char *optarg;
 extern int optind;
 
@@ -71,10 +73,11 @@ _PROTOTYPE(int done, (dev_t dev, ino_t inum, nlink_t nlink));
 _PROTOTYPE(long dodir, (char *d, int thislev, dev_t dev));
 
 char *prog;			/* program name */
-char *optstr = "asxdl:";	/* options */
+char *optstr = "aFsxdl:";	/* options */
 int silent = 0;			/* silent mode */
 int all = 0;			/* all directory entries mode */
 int crosschk = 0;		/* do not cross device boundaries mode */
+int fsoverhead = 0;		/* include FS overhead */
 char *startdir = ".";		/* starting from here */
 int levels = 20000;		/* # of directory levels to print */
 ALREADY *already[NR_ALREADY];
@@ -106,6 +109,8 @@ PRIVATE int makedname(char *d, char *f, char *out, int outlen)
 int done(dev_t dev, ino_t inum, nlink_t nlink)
 {
   register ALREADY **pap, *ap;
+
+  if (fsoverhead) return 0;
 
   pap = &already[(unsigned) inum % NR_ALREADY];
   while ((ap = *pap) != NULL) {
@@ -164,7 +169,8 @@ long dodir(char *d, int thislev, dev_t dev)
 {
   int maybe_print;
   struct stat s;
-  long total_kb;
+  long indir_blocks, indir2_blocks, indir_per_block;
+  long total_blocks, total_kb;
   char dent[LINELEN];
   DIR *dp;
   struct dirent *entry;
@@ -183,7 +189,16 @@ long dodir(char *d, int thislev, dev_t dev)
 			prog, d, block_size);
     	return 0L;
   }
-  total_kb = ((s.st_size + (block_size - 1)) / block_size) * block_size / 1024;
+  total_blocks = (s.st_size + (block_size - 1)) / block_size;
+  if (fsoverhead) {
+	/* file system overhead: indirect blocks */
+	indir_per_block = block_size / sizeof(zone_t);
+	indir_blocks = (total_blocks - V2_NR_DZONES) / indir_per_block;
+	total_blocks += indir_blocks;
+	indir2_blocks = (indir_blocks - 1) / (indir_per_block * indir_per_block);
+	total_blocks += indir2_blocks;
+  }
+  total_kb = total_blocks * block_size / 1024;
   switch (s.st_mode & S_IFMT) {
     case S_IFDIR:
 	/* Directories should not be linked except to "." and "..", so this
@@ -228,10 +243,11 @@ char **argv;
 	    case 's':	silent = 1;	break;
 	    case 'x':
 	    case 'd':	crosschk = 1;	break;
+	    case 'F':	fsoverhead = 1;	break;
 	    case 'l':	levels = atoi(optarg);	break;
 	    default:
 		fprintf(stderr,
-			"Usage: %s [-asx] [-l levels] [startdir]\n", prog);
+			"Usage: %s [-asxF] [-l levels] [startdir]\n", prog);
 		exit(1);
 	}
   do {

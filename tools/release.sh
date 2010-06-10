@@ -122,18 +122,11 @@ fitfs()
 	inodes=`find $path | egrep -v ^$path/usr | wc -l`
 	inodes="`expr $inodes + $extra_inodes`"
 
-	# Determine number of data zones using bc formula to transform file size in zone count
-	#  s - file size
-	#  d - number of direct blocks
-	#  i - number of indirect blocks
-	#  j - number of double indirect blocks
-	dir=7
-	indir="`expr $BS / 4`"
-	indir2="`expr $indir \* $indir`"
-	formula="s=\\0;d=(s+$BS-1)/$BS;i=(d-$dir+$indir-1)/$indir;j=(i-1+$indir2-1)/$indir2;d+i+j"
-	zones=`( find $path | egrep -v ^$path/usr | xargs lstat -size | egrep '^[0-9]+$' | sed -r "s|.+|$formula|" | bc | tr '
-' +; echo 0 ) | bc`
-	zones="`expr $zones + $extra_zones`"
+	# Determine number of data zones
+	zonekbs=`du -Fs $path | cut -d'	' -f1`
+	zonekbsignore=0
+	[ ! -d $path/usr ] || zonekbsignore=`du -Fs $path/usr | cut -d"	" -f1`
+	zones="`expr \( $zonekbs - $zonekbsignore \) / \( $BS / 1024 \) + $extra_zones`"
 
 	# Determine file system size
 	BSBITS="`expr $BS \* 8`"
