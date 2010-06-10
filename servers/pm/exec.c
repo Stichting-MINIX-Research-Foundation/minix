@@ -118,6 +118,7 @@ PUBLIC int do_execrestart()
 {
 	int proc_e, proc_n, result;
 	struct mproc *rmp;
+	vir_bytes pc;
 
 	if (who_e != RS_PROC_NR)
 		return EPERM;
@@ -128,8 +129,9 @@ PUBLIC int do_execrestart()
 	}
 	rmp= &mproc[proc_n];
 	result= m_in.EXC_RS_RESULT;
+	pc= (vir_bytes)m_in.EXC_RS_PC;
 
-	exec_restart(rmp, result);
+	exec_restart(rmp, result, pc);
 
 	return OK;
 }
@@ -138,12 +140,12 @@ PUBLIC int do_execrestart()
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-PUBLIC void exec_restart(rmp, result)
+PUBLIC void exec_restart(rmp, result, pc)
 struct mproc *rmp;
 int result;
+vir_bytes pc;
 {
 	int r, sn;
-	vir_bytes pc;
 	char *new_sp;
 
 	if (result != OK)
@@ -182,7 +184,6 @@ int result;
 	}
 
 	new_sp= (char *)rmp->mp_procargs;
-	pc= 0;	/* for now */
 	r= sys_exec(rmp->mp_endpoint, new_sp, rmp->mp_name, pc);
 	if (r != OK) panic("sys_exec failed: %d", r);
 }

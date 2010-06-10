@@ -25,7 +25,8 @@ _PROTOTYPE( int do_getdma, (void)					);
 _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( int do_exec_newmem, (void)					);
 _PROTOTYPE( int do_execrestart, (void)					);
-_PROTOTYPE( void exec_restart, (struct mproc *rmp, int result)		);
+_PROTOTYPE( void exec_restart, (struct mproc *rmp, int result,
+				vir_bytes pc)                          );
 
 /* forkexit.c */
 _PROTOTYPE( int do_fork, (void)						);

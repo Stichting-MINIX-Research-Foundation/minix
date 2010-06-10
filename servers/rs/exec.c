@@ -15,7 +15,8 @@ FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_bytes,
 	dev_t st_dev, ino_t st_ino, time_t st_ctime, char *progname,
 	int new_uid, int new_gid,
 	vir_bytes *stack_topp, int *load_textp, int *allow_setuidp)	);
-FORWARD _PROTOTYPE( int exec_restart, (int proc_e, int result)		);
+FORWARD _PROTOTYPE( int exec_restart, (int proc_e, int result,
+				       vir_bytes pc)    		);
 FORWARD _PROTOTYPE( void patch_ptr, (char stack[ARG_MAX],
 							vir_bytes base)	);
 FORWARD _PROTOTYPE( int read_seg, (char *exec, size_t exec_len, off_t off,
@@ -191,12 +192,12 @@ static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 		goto fail;
 	}
 
-	return exec_restart(proc_e, OK);
+	return exec_restart(proc_e, OK, pc);
 
 fail:
 	printf("do_exec(fail): error = %d\n", error);
 	if (need_restart)
-		exec_restart(proc_e, error);
+               exec_restart(proc_e, error, pc);
 
 	return error;
 }
@@ -264,9 +265,10 @@ PRIVATE int exec_newmem(
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-PRIVATE int exec_restart(proc_e, result)
+PRIVATE int exec_restart(proc_e, result, pc)
 int proc_e;
 int result;
+vir_bytes pc;
 {
 	int r;
 	message m;
@@ -274,6 +276,7 @@ int result;
 	m.m_type= EXEC_RESTART;
 	m.EXC_RS_PROC= proc_e;
 	m.EXC_RS_RESULT= result;
+	m.EXC_RS_PC= (void*)pc;
 	r= sendrec(PM_PROC_NR, &m);
 	if (r != OK)
 		return r;

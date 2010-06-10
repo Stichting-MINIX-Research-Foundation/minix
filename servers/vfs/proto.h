@@ -45,7 +45,7 @@ _PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
 
 /* exec.c */
 _PROTOTYPE( int pm_exec, (int proc_e, char *path, vir_bytes path_len,
-				char *frame, vir_bytes frame_len)	);
+			  char *frame, vir_bytes frame_len, vir_bytes *pc));
 
 /* filedes.c */
 _PROTOTYPE( struct filp *find_filp, (struct vnode *vp, mode_t bits)	);

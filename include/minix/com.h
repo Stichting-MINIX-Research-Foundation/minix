@@ -793,6 +793,7 @@
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
 #  define PM_STATUS		m1_i2	/* OK or failure */
+#  define PM_PC	        m1_p1	/* program counter */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
 #  define PM_PPROC		m1_i2	/* parent process endpoint */
@@ -818,6 +819,7 @@
 /* Parameters for the EXEC_RESTART call */
 #define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
 #define EXC_RS_RESULT	m1_i2		/* result of the exec */
+#define EXC_RS_PC	m1_p1		/* program counter */
 
 /*===========================================================================*
  *                Messages used from VFS to file servers		     *

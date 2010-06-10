@@ -56,19 +56,20 @@ FORWARD _PROTOTYPE( void clo_exec, (struct fproc *rfp)			);
 /*===========================================================================*
  *				pm_exec					     *
  *===========================================================================*/
-PUBLIC int pm_exec(proc_e, path, path_len, frame, frame_len)
+PUBLIC int pm_exec(proc_e, path, path_len, frame, frame_len, pc)
 int proc_e;
 char *path;
 vir_bytes path_len;
 char *frame;
 vir_bytes frame_len;
+vir_bytes *pc;
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
  */
   int r, r1, sep_id, round, proc_s, hdrlen, load_text, allow_setuid;
-  vir_bytes text_bytes, data_bytes, bss_bytes, pc;
+  vir_bytes text_bytes, data_bytes, bss_bytes;
   phys_bytes tot_bytes;		/* total space for program, including gap */
   vir_bytes stack_top, vsp;
   off_t off;
@@ -137,7 +138,7 @@ vir_bytes frame_len;
 
         /* Read the file header and extract the segment sizes. */
 	r = read_header(vp, &sep_id, &text_bytes, &data_bytes, &bss_bytes, 
-			&tot_bytes, &pc, &hdrlen);
+			&tot_bytes, pc, &hdrlen);
 	if (r != ESCRIPT || round != 0)
 		break;
 

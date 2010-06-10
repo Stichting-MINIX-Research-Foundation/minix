@@ -525,6 +525,7 @@ PRIVATE void init_root()
 PRIVATE void service_pm()
 {
   int r;
+  vir_bytes pc;
 
   switch (call_nr) {
   case PM_SETUID:
@@ -553,11 +554,12 @@ PRIVATE void service_pm()
 
   case PM_EXEC:
 	r = pm_exec(m_in.PM_PROC, m_in.PM_PATH, m_in.PM_PATH_LEN,
-		m_in.PM_FRAME, m_in.PM_FRAME_LEN);
+		    m_in.PM_FRAME, m_in.PM_FRAME_LEN, &pc);
 
 	/* Reply status to PM */
 	m_out.m_type = PM_EXEC_REPLY;
 	m_out.PM_PROC = m_in.PM_PROC;
+	m_out.PM_PC = (void*)pc;
 	m_out.PM_STATUS = r;
 
 	break;
