@@ -175,7 +175,17 @@ res_search(name, class, type, answer, anslen)
 		return (res_query(cp, class, type, answer, anslen));
 
 	/*
-	 * We do at least one level of search if
+	 * First try the name as fully-qualified, but only if it contained
+	 * at least one dot (even trailing). This is purely a heuristic; we
+	 * assume that any reasonable query about a top-level domain (for
+	 * servers, SOA, etc) will not use res_search.
+	 */
+	if (n && (ret = res_querydomain(name, (char *)NULL, class, type,
+	    answer, anslen)) > 0)
+		return (ret);
+
+	/*
+	 * If the FQDN lookup failed, we do at least one level of search if
 	 *	- there is no dot and RES_DEFNAME is set, or
 	 *	- there is at least one dot, there is no trailing dot,
 	 *	  and RES_DNSRCH is set.
@@ -209,16 +219,6 @@ res_search(name, class, type, answer, anslen)
 		    (_res.options & RES_DNSRCH) == 0)
 			break;
 	}
-	/*
-	 * If the search/default failed, try the name as fully-qualified,
-	 * but only if it contained at least one dot (even trailing).
-	 * This is purely a heuristic; we assume that any reasonable query
-	 * about a top-level domain (for servers, SOA, etc) will not use
-	 * res_search.
-	 */
-	if (n && (ret = res_querydomain(name, (char *)NULL, class, type,
-	    answer, anslen)) > 0)
-		return (ret);
 	if (got_nodata)
 		h_errno = NO_DATA;
 	return (-1);
