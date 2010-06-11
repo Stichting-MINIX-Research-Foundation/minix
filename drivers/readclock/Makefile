@@ -9,6 +9,6 @@ MAN=
 
 BINDIR?= /sbin
 
-CPPFLAGS+= -D_MINIX=1 -D_POSIX_SOURCE=1 -D_SYSTEM=1
+CPPFLAGS+= -D_SYSTEM=1
 
 .include <minix.prog.mk>

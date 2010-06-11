@@ -10,6 +10,4 @@ MAN=
 BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 64k
 
-CPPFLAGS+= -O -D_MINIX -D_POSIX_SOURCE
-
 .include <minix.prog.mk>

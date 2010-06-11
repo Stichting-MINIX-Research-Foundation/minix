@@ -1,7 +1,6 @@
 # Makefile for the kernel image.
 
 u=/usr
-CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MDEC=	/usr/mdec
 
 # Specify the programs that are part of the system image.

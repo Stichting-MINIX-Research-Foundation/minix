@@ -2,8 +2,6 @@
 
 LIB=		sys
 
-CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
-
 SRCS=  \
 	alloc_util.c \
 	assert.c \

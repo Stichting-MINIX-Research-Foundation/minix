@@ -8,7 +8,7 @@
 # routines are found in libc.a.  (The printf and scanf need floating point
 # for the %f formats, whether you use them or not.)
 
-CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE -I${.CURDIR}/../../libc/stdio
+CPPFLAGS+=-I${.CURDIR}/../../libc/stdio
 
 LIB=	d
 

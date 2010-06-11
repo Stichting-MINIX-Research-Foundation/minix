@@ -1,7 +1,6 @@
 # Makefile for libcurses
 
 LIB=		curses
-CPPFLAGS+=	-O -D_MINIX -D_POSIX_SOURCE
 
 SRCS=  \
 	beep.c \

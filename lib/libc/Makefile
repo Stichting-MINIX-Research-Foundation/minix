@@ -4,8 +4,6 @@
 
 LIB=		c
 
-CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE
-
 .include "${.CURDIR}/ansi/Makefile.inc"
 .include "${.CURDIR}/asyn/Makefile.inc"
 .include "${.CURDIR}/ip/Makefile.inc"

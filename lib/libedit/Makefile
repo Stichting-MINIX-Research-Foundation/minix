@@ -19,10 +19,8 @@ LIB=		edit
 ##	-DUSE_TERMCAP		Use the termcap library for terminal size
 ##				see LDFLAGS, below, if you set this.
 ##	-DNEED_PERROR		Don't have  (used in testit)
-DEFS=-DANSI_ARROWS -DHAVE_STDLIB -DHAVE_TCGETATTR -DHIDE -DUSE_DIRENT \
+CPPFLAGS+=-DANSI_ARROWS -DHAVE_STDLIB -DHAVE_TCGETATTR -DHIDE -DUSE_DIRENT \
 	-DHIST_SIZE=100 -DUSE_TERMCAP -DSYS_UNIX
-
-CPPFLAGS+=-O -D_MINIX -D_POSIX_SOURCE ${DEFS}
 
 SRCS=	editline.c complete.c sysunix.c
 

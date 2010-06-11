@@ -6,7 +6,7 @@
 .fc.o:
 	${_MKTARGET_COMPILE}
 	cp ${.IMPSRC} tmp.c
-	cc -O -I${.CURDIR} -D_MINIX -D_POSIX_SOURCE -S tmp.c
+	cc -I${.CURDIR} ${CFLAGS} -S tmp.c
 	sed -f ${.CURDIR}/FP.script tmp.s > ${.PREFIX}.s
 	cc -I${.CURDIR} -c -o ${.TARGET} ${.PREFIX}.s
 	rm  -f tmp.c tmp.s ${PREFIX}.s
