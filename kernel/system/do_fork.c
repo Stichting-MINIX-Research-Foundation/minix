@@ -109,7 +109,6 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 
   /* Install new map */
   r = newmap(caller, rpc, map_ptr);
-  FIXLINMSG(rpc);
 
   /* Don't schedule process in VM mode until it has a new pagetable. */
   if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {

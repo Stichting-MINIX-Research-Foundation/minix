@@ -159,13 +159,7 @@ check_misc_flags:
 		else if (proc_ptr->p_misc_flags & MF_DELIVERMSG) {
 			TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
 				proc_ptr->p_name, proc_ptr->p_endpoint););
-			if(delivermsg(proc_ptr) == VMSUSPEND) {
-				TRACE(VF_SCHEDULING,
-					printf("suspending %s / %d\n",
-					proc_ptr->p_name,
-					proc_ptr->p_endpoint););
-				assert(!proc_is_runnable(proc_ptr));
-			}
+			delivermsg(proc_ptr);
 		}
 		else if (proc_ptr->p_misc_flags & MF_SC_DEFER) {
 			/* Perform the system call that we deferred earlier. */
@@ -605,12 +599,10 @@ PUBLIC int mini_send(
 /*===========================================================================*
  *				mini_receive				     * 
  *===========================================================================*/
-PRIVATE int mini_receive(
-  register struct proc *caller_ptr,	/* process trying to get message */
-  endpoint_t src_e,			/* which message source is wanted */
-  message *m_ptr,			/* pointer to message buffer */
-  const int flags
-)
+PRIVATE int mini_receive(struct proc * caller_ptr,
+			int src_e, /* which message source is wanted */
+			message * m_buff_usr, /* pointer to message buffer */
+			const int flags)
 {
 /* A process or task wants to get a message.  If a message is already queued,
  * acquire it and deblock the sender.  If no message from the desired source
@@ -620,18 +612,11 @@ PRIVATE int mini_receive(
   sys_map_t *map;
   bitchunk_t *chunk;
   int i, r, src_id, src_proc_nr, src_p;
-  phys_bytes linaddr;
 
   assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 
-  if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) m_ptr,
-	sizeof(message)))) {
-	return EFAULT;
-  }
-
   /* This is where we want our message. */
-  caller_ptr->p_delivermsg_lin = linaddr;
-  caller_ptr->p_delivermsg_vir = (vir_bytes) m_ptr;
+  caller_ptr->p_delivermsg_vir = (vir_bytes) m_buff_usr;
 
   if(src_e == ANY) src_p = ANY;
   else

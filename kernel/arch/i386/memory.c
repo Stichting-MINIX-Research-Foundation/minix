@@ -588,7 +588,7 @@ PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
 /*===========================================================================*
  *                              delivermsg                                *
  *===========================================================================*/
-int delivermsg(struct proc *rp)
+PUBLIC void delivermsg(struct proc *rp)
 {
 	phys_bytes addr;  
 	int r;
@@ -596,26 +596,22 @@ int delivermsg(struct proc *rp)
 	assert(rp->p_misc_flags & MF_DELIVERMSG);
 	assert(rp->p_delivermsg.m_source != NONE);
 
-	assert(rp->p_delivermsg_lin);
-	assert(rp->p_delivermsg_lin == umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message)));
-
-	PHYS_COPY_CATCH(vir2phys(&rp->p_delivermsg),
-		rp->p_delivermsg_lin, sizeof(message), addr);
-
-	if(addr) {
-		vm_suspend(rp, rp, rp->p_delivermsg_lin, sizeof(message),
-			VMSTYPE_DELIVERMSG);
-		r = VMSUSPEND;
+	if (copy_msg_to_user(rp, &rp->p_delivermsg,
+				(message *) rp->p_delivermsg_vir)) {
+		printf("WARNING wrong user pointer 0x%08x from "
+				"process %s / %d\n",
+				rp->p_delivermsg_vir,
+				rp->p_name,
+				rp->p_endpoint);
+		r = EFAULT;
 	} else {
 		/* Indicate message has been delivered; address is 'used'. */
 		rp->p_delivermsg.m_source = NONE;
-		rp->p_delivermsg_lin = 0;
-
 		rp->p_misc_flags &= ~MF_DELIVERMSG;
 		r = OK;
 	}
 
-	return r;
+	rp->p_reg.retreg = r;
 }
 
 PRIVATE char *flagstr(u32_t e, const int dir)
@@ -1050,10 +1046,6 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	 */
 	if (newmap(caller, caller, ep_data.mem_map) != OK)
 		panic("arch_enable_paging: newmap failed");
-
-	FIXLINMSG(caller);
-	assert(caller->p_delivermsg_lin == umap_local(caller, D,
-				caller->p_delivermsg_vir, sizeof(message)));
 
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */

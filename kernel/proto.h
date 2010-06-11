@@ -176,7 +176,7 @@ _PROTOTYPE( int arch_do_vmctl, (message *m_ptr, struct proc *p));
 _PROTOTYPE( int vm_contiguous, (const struct proc *targetproc, vir_bytes vir_buf, size_t count));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (const struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
-_PROTOTYPE( int delivermsg, (struct proc *target));
+_PROTOTYPE( void delivermsg, (struct proc *target));
 _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,
 	phys_bytes *len, int *flags));

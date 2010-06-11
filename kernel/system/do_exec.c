@@ -29,7 +29,6 @@ PUBLIC int do_exec(struct proc * caller, message * m_ptr)
 
   if(rp->p_misc_flags & MF_DELIVERMSG) {
 	rp->p_misc_flags &= ~MF_DELIVERMSG;
-	rp->p_delivermsg_lin = 0;
   }
 
   /* Save command name for debugging, ps(1) output, etc. */

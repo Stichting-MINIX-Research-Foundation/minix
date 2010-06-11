@@ -7,8 +7,6 @@
 #define EFAULT_SRC	(-995)
 #define EFAULT_DST	(-994)
 
-#define FIXLINMSG(prp) { prp->p_delivermsg_lin = umap_local(prp, D, prp->p_delivermsg_vir, sizeof(message)); }
-
 #define PHYS_COPY_CATCH(src, dst, size, a) {	\
 	catch_pagefaults++;			\
 	a = phys_copy(src, dst, size);		\

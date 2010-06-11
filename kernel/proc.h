@@ -56,7 +56,6 @@ struct proc {
   message p_sendmsg;		/* Message from this process if SENDING */
   message p_delivermsg;		/* Message for this process if MF_DELIVERMSG */
   vir_bytes p_delivermsg_vir;	/* Virtual addr this proc wants message at */
-  vir_bytes p_delivermsg_lin;	/* Linear addr this proc wants message at */
 
   /* If handler functions detect a process wants to do something with
    * memory that isn't present, VM has to fix it. Until it has asked
