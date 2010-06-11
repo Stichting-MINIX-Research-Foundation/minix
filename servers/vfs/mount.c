@@ -253,6 +253,12 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   	/* Get vnode of mountpoint */
 	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
 
+	       if (vp->v_ref_count != 1) {
+	               put_vnode(vp);
+	               return(EBUSY);
+	       }
+
+
 	/* Tell FS on which vnode it is mounted (glue into mount tree) */
 	if ((r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr)) != OK) {
 		put_vnode(vp);
