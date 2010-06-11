@@ -35,7 +35,7 @@ must match the number of integer arguments passed to
 .I ucp
 must have been initialized by a call to 
 .BR getcontext (3)
-and have a stack allocated for it. The address of the stack must be assigned to  \fIucp\->uc_stack.ss_size\fP and the size of the stack to \fIucp\->uc_stack.ss_size\fP. The \fIucp\->uc_link\fP member is used to determine which successor context is run after the context modified by 
+and have a stack allocated for it. The address of the stack must be assigned to  \fIucp\->uc_stack.ss_sp\fP and the size of the stack to \fIucp\->uc_stack.ss_size\fP. The \fIucp\->uc_link\fP member is used to determine which successor context is run after the context modified by 
 .BR makecontext ()
 returns. If left NULL, the process exits. 
 .PP
@@ -50,7 +50,7 @@ When successful,
 .BR swapcontext ()
 returns 0. Otherwise, -1 is returned and
 .I errno
-is set to indicate the error. Note that a succesful call to
+is set to indicate the error. Note that a successful call to
 .BR swapcontext ()
 actually does not return. Only after returning to the context that called
 .BR swapcontext ()
