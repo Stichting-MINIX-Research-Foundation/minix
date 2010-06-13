@@ -33,7 +33,7 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 	if(flags & AC_ALIGN64K)
 		mmapflags |= MAP_ALIGN64K;
 
-	/* First try to get memory with mmap. This is gauranteed
+	/* First try to get memory with mmap. This is guaranteed
 	 * to be page-aligned, and we can tell VM it has to be
 	 * pre-allocated and contiguous.
 	 */

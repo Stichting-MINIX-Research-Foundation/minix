@@ -83,6 +83,8 @@ _PROTOTYPE( int nop_ioctl, (struct driver *dp, message *m_ptr) );
 #define SECTOR_SHIFT       9	/* for division */
 #define SECTOR_MASK      511	/* and remainder */
 
+#define CD_SECTOR_SIZE  2048	/* sector size of a CD-ROM in bytes */
+
 /* Size of the DMA buffer buffer in bytes. */
 #define USE_EXTRA_DMA_BUF  0	/* usually not needed */
 #define DMA_BUF_SIZE	(DMA_SECTORS * SECTOR_SIZE)

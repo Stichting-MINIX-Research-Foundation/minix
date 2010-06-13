@@ -434,9 +434,14 @@ PUBLIC void driver_init_buffer(void)
  * be used to read partition tables and such.  Its absolute address is
  * 'tmp_phys', the normal address is 'tmp_buf'.
  */
+  vir_bytes size;
 
-  if(!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, AC_ALIGN4K, &tmp_phys)))
-	panic("can't allocate tmp_buf: %d", DMA_BUF_SIZE);
+  if (tmp_buf == NULL) {
+  	size = MAX(2*DMA_BUF_SIZE, CD_SECTOR_SIZE);
+
+	if(!(tmp_buf = alloc_contig(size, AC_ALIGN4K, &tmp_phys)))
+		panic("can't allocate tmp_buf: %lu", size);
+  }
 }
 
 /*===========================================================================*

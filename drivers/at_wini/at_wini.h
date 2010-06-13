@@ -170,8 +170,6 @@
 #define   ATAPI_IDENTIFY        0xA1    /* identify drive */
 #define   SCSI_READ10           0x28    /* read from disk */
 #define   SCSI_SENSE            0x03    /* sense request */
-
-#define CD_SECTOR_SIZE		2048	/* sector size of a CD-ROM */
 #endif /* ATAPI */
 
 /* Interrupt request lines. */

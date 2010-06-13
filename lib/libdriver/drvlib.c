@@ -17,10 +17,6 @@ FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
 			unsigned long offset, struct part_entry *table));
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
 
-#ifndef CD_SECTOR_SIZE
-#define CD_SECTOR_SIZE 2048
-#endif 
-
 /*============================================================================*
  *				partition				      *
  *============================================================================*/
@@ -158,10 +154,11 @@ struct part_entry *table;	/* four entries */
  */
   iovec_t iovec1;
   u64_t position;
-  static unsigned char partbuf[CD_SECTOR_SIZE];
+
+  driver_init_buffer();
 
   position = mul64u(offset, SECTOR_SIZE);
-  iovec1.iov_addr = (vir_bytes) partbuf;
+  iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = CD_SECTOR_SIZE;
   if ((*dp->dr_prepare)(device) != NULL) {
 	(void) (*dp->dr_transfer)(SELF, DEV_GATHER_S, position, &iovec1, 1);
@@ -169,11 +166,11 @@ struct part_entry *table;	/* four entries */
   if (iovec1.iov_size != 0) {
 	return 0;
   }
-  if (partbuf[510] != 0x55 || partbuf[511] != 0xAA) {
+  if (tmp_buf[510] != 0x55 || tmp_buf[511] != 0xAA) {
 	/* Invalid partition table. */
 	return 0;
   }
-  memcpy(table, (partbuf + PART_TABLE_OFF), NR_PARTITIONS * sizeof(table[0]));
+  memcpy(table, (tmp_buf + PART_TABLE_OFF), NR_PARTITIONS * sizeof(table[0]));
   return 1;
 }
 
