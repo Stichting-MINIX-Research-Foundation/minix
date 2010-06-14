@@ -44,6 +44,14 @@ if [ -f $rc ]
 then	 . $rc
 fi
 binsizes $binsizes
+
+prunedirs="$srcdir dev tmp usr/bigports usr/src usr/tmp usr/log usr/adm usr/run home etc/utmp var/run var/log /var/spool"
+
+for d in $prunedirs
+do	pruneexpr="$pruneexpr $n -path /$d -prune"
+	n="-o "
+done
+
 touch $packagestart
 sleep 1
 cd $dir
@@ -60,7 +68,13 @@ fi
 
 echo " * Building package"
 echo "Minix package $dir built `date`." >$INFO
-( echo $INFO ; if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(src|tmp|log|adm|run)|/home|/etc/utmp|/var/(run|log|spool))" | fgrep -v /.svn ) | pax -w -d | bzip2 >$tarbz
+(
+	echo $INFO
+	if [ -f $PI ]
+	then	echo $PI
+	fi
+	find / \( $pruneexpr \) -o -cnewer $packagestart -print | fgrep -v /.svn
+) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
 mv $tarbz $pdir
