@@ -2,8 +2,8 @@
 #ifndef _MMAN_H
 #define _MMAN_H
 
-#ifndef _TYPES_H
-#include <minix/types.h>
+#ifndef _TYPE_H
+#include <minix/type.h>
 #endif
 
 /* prot argument for mmap() */
