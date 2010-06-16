@@ -5,6 +5,7 @@
 # by the Ash General Public License.  See the file named LICENSE.
 
 NOT	 !	3
+EXISTS	 -e	12   OP_FILE
 ISREAD	 -r	12   OP_FILE
 ISWRITE  -w	12   OP_FILE
 ISEXEC	 -x	12   OP_FILE

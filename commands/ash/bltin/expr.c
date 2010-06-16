@@ -279,6 +279,9 @@ expr_operator(op, sp, fs)
 	    sp->u.num = expr_is_false(sp);
 	    sp->type = BOOLEAN;
 	    break;
+      case EXISTS:
+	    if (fs->rcode >= 0) goto true;
+	    goto false;
       case ISREAD:
 	    i = 04;
 	    goto permission;
