@@ -217,7 +217,7 @@ do
 done
 
 if [ ! "$ZIP" ]
-then	ZIP=gzip
+then	ZIP=bzip2
 fi
 
 if [ $PACKAGES -ne 0 ]
