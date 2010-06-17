@@ -40,6 +40,7 @@ mkfiles:
 
 includes:
 	cd include && $(MAKE) includes
+	cd lib && $(MAKE) includes
 
 libraries:
 	cd lib && sh ack_build.sh obj depend all install
