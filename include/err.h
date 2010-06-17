@@ -35,10 +35,6 @@
 #define	_ERR_H_
 
 #ifdef __minix
-#define __BEGIN_DECLS
-#define __dead
-#define __END_DECLS
-#define __attribute__(x) 
 #define _BSD_VA_LIST_ va_list
 #include <stdarg.h>
 #else
@@ -50,8 +46,8 @@
  * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
  */
 #include <machine/ansi.h>
-#include <sys/cdefs.h>
 #endif
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 __dead void	err(int, const char *, ...)

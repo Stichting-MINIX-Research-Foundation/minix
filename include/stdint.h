@@ -10,6 +10,7 @@
 #ifndef _STDINT_H
 #define _STDINT_H
 
+#include <sys/cdefs.h>
 #ifndef _MINIX__TYPES_H
 #include <minix/types.h>
 #endif
@@ -196,10 +197,6 @@ typedef unsigned long	uintmax_t;
 #endif
 
 #endif /* !__cplusplus || __STDC_LIMIT_MACROS */
-
-#ifndef __CONCAT
-#define __CONCAT(x,y)	x ## y
-#endif
 
 /* Constants of the proper type. */
 #define INT8_C(c)	c

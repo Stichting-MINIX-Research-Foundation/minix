@@ -30,9 +30,7 @@
  */
 
 #ifdef __minix
-#define __P(x) x
 #define _DIAGASSERT assert
-#define __UNCONST(x) ((void *) (x))
 #else
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"

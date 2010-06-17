@@ -344,6 +344,25 @@
 #endif
 
 /*
+ * We define this here since <stddef.h>, <sys/queue.h>, and <sys/types.h>
+ * require it.
+ */
+#if __GNUC_PREREQ__(4, 1)
+#define __offsetof(type, field)  __builtin_offsetof(type, field)
+#else
+#ifndef __cplusplus
+#define __offsetof(type, field) ((size_t)(&((type *)0)->field))
+#else
+#define __offsetof(type, field)                                 \
+  (__offsetof__ (reinterpret_cast <size_t>                      \
+                 (&reinterpret_cast <const volatile char &>     \
+                  (static_cast<type *> (0)->field))))
+#endif
+#endif
+#define __rangeof(type, start, end) \
+        (__offsetof(type, end) - __offsetof(type, start))
+
+/*
  * Compiler-dependent macros to declare that functions take printf-like
  * or scanf-like arguments.  They are null except for versions of gcc
  * that are known to support the features properly (old versions of gcc-2

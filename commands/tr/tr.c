@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#if 0
 #include <sys/cdefs.h>
+#if 0
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
  The Regents of the University of California.  All rights reserved.");

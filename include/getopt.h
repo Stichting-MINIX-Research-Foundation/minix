@@ -32,12 +32,7 @@
 #ifndef _GETOPT_H_
 #define _GETOPT_H_
 
-#ifdef __minix
-#define __BEGIN_DECLS
-#define __END_DECLS
-#else
 #include <sys/cdefs.h>
-#endif
 #include <unistd.h>
 
 /*

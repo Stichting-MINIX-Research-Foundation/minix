@@ -41,6 +41,7 @@ static char const copyright[] =
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #endif /* not lint */
 #endif
+#include <sys/cdefs.h>
 /*
 __FBSDID("$FreeBSD: src/bin/sh/mksyntax.c,v 1.23 2004/04/06 20:06:51 markm Exp $");
 */
@@ -53,10 +54,6 @@ __FBSDID("$FreeBSD: src/bin/sh/mksyntax.c,v 1.23 2004/04/06 20:06:51 markm Exp $
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
-
-#ifdef __minix
-#define __unused
-#endif
 
 struct synclass {
 	char *name;
