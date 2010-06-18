@@ -53,6 +53,7 @@ SRCS+=  \
 	flock.c \
 	fslib.c \
 	fts.c \
+	fgetln.c \
 	fsversion.c \
 	getgrent.c \
 	getlogin.c \
