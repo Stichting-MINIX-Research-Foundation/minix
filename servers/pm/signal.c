@@ -363,17 +363,17 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
   /* Handle system signals for system processes first. */
   if(rmp->mp_flags & PRIV_PROC) {
+   	/* Always skip signals for PM (only necessary when broadcasting). */
+   	if(rmp->mp_endpoint == PM_PROC_NR) {
+ 		return;
+   	}
+
    	/* System signals have always to go through the kernel first to let it
    	 * pick the right signal manager. If PM is the assigned signal manager,
    	 * the signal will come back and will actually be processed.
    	 */
    	if(!ksig) {
  		sys_kill(rmp->mp_endpoint, signo);
- 		return;
-   	}
-
-   	/* Always skip signals for PM (only necessary when broadcasting). */
-   	if(rmp->mp_endpoint == PM_PROC_NR) {
  		return;
    	}
 
