@@ -62,6 +62,8 @@ _PROTOTYPE( void qsort, (void *_base, size_t _nmemb, size_t _size,
 	int (*compar) (const void *, const void *))			);
 _PROTOTYPE( unsigned long int strtoul,
 			(const char *_nptr, char **_endptr, int _base)	);
+_PROTOTYPE( const char *getprogname, (void)				);
+_PROTOTYPE( void    setprogname, (const char *)				);
 
 #ifdef _POSIX_SOURCE
 /* Open Group Base Specifications Issue 6 */
