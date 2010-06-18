@@ -559,21 +559,6 @@ PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 			panic("strange phys flags");
 		}
 		SLABFREE(pb);
-	} else {
-		struct phys_region *others;
-		int n = 0;
-
-		for(others = pb->firstregion; others;
-			others = others->next_ph_list) {
-			if(WRITABLE(region, others->ph)) {
-				if(map_ph_writept(others->parent->parent,
-					others->parent, others) != OK) {
-					printf("VM: map_ph_writept failed unexpectedly\n");
-				}
-			} 
-			n++;
-		}
-		assert(n == pb->refcount);
 	}
 }
 

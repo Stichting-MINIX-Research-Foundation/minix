@@ -79,6 +79,7 @@ PUBLIC int do_procstat()
   if (m_in.stat_nr == SELF) {
       mp->mp_reply.sig_set = mp->mp_sigpending;
       sigemptyset(&mp->mp_sigpending);
+      sigemptyset(&mp->mp_ksigpending);
   } 
   else {
       return(ENOSYS);

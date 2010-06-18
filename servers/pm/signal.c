@@ -67,6 +67,7 @@ PUBLIC int do_sigaction()
   if (svec.sa_handler == SIG_IGN) {
 	sigaddset(&mp->mp_ignore, m_in.sig_nr);
 	sigdelset(&mp->mp_sigpending, m_in.sig_nr);
+	sigdelset(&mp->mp_ksigpending, m_in.sig_nr);
 	sigdelset(&mp->mp_catch, m_in.sig_nr);
   } else if (svec.sa_handler == SIG_DFL) {
 	sigdelset(&mp->mp_ignore, m_in.sig_nr);
@@ -347,6 +348,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
   if (rmp->mp_flags & FS_CALL) {
 	sigaddset(&rmp->mp_sigpending, signo);
+	if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
 
 	if (!(rmp->mp_flags & PM_SIG_PENDING)) {
 		/* No delay calls: FS_CALL implies the process called us. */
@@ -361,17 +363,17 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
   /* Handle system signals for system processes first. */
   if(rmp->mp_flags & PRIV_PROC) {
+   	/* Always skip signals for PM (only necessary when broadcasting). */
+   	if(rmp->mp_endpoint == PM_PROC_NR) {
+ 		return;
+   	}
+
    	/* System signals have always to go through the kernel first to let it
    	 * pick the right signal manager. If PM is the assigned signal manager,
    	 * the signal will come back and will actually be processed.
    	 */
    	if(!ksig) {
  		sys_kill(rmp->mp_endpoint, signo);
- 		return;
-   	}
-
-   	/* Always skip signals for PM (only necessary when broadcasting). */
-   	if(rmp->mp_endpoint == PM_PROC_NR) {
  		return;
    	}
 
@@ -406,6 +408,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
   if (!badignore && sigismember(&rmp->mp_sigmask, signo)) {
 	/* Signal should be blocked. */
 	sigaddset(&rmp->mp_sigpending, signo);
+	if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
 	return;
   }
 
@@ -415,6 +418,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	 * will be delivered using the check_pending() calls in do_trace().
 	 */
 	sigaddset(&rmp->mp_sigpending, signo);
+	if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
 	return;
   }
   if (!badignore && sigismember(&rmp->mp_catch, signo)) {
@@ -428,6 +432,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 		if (!(rmp->mp_flags & UNPAUSED)) {
 			/* not yet unpaused; continue later */
 			sigaddset(&rmp->mp_sigpending, signo);
+			if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
 
 			return;
 		}
@@ -564,12 +569,15 @@ register struct mproc *rmp;
    */
 
   int i;
+  int ksig;
 
   for (i = 1; i < _NSIG; i++) {
 	if (sigismember(&rmp->mp_sigpending, i) &&
 		!sigismember(&rmp->mp_sigmask, i)) {
+		ksig = sigismember(&rmp->mp_ksigpending, i);
 		sigdelset(&rmp->mp_sigpending, i);
-		sig_proc(rmp, i, FALSE /*trace*/, FALSE /* ksig */);
+		sigdelset(&rmp->mp_ksigpending, i);
+		sig_proc(rmp, i, FALSE /*trace*/, ksig);
 
 		if (rmp->mp_flags & FS_CALL)
 			break;
@@ -711,6 +719,7 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
 	rmp->mp_sigact[signo].sa_handler = SIG_DFL;
   }
   sigdelset(&rmp->mp_sigpending, signo);
+  sigdelset(&rmp->mp_ksigpending, signo);
 
   if(vm_push_sig(rmp->mp_endpoint, &cur_sp) != OK)
 	return(FALSE);
