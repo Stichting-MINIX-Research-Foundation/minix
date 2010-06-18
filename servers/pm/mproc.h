@@ -41,6 +41,7 @@ EXTERN struct mproc {
   sigset_t mp_sigmask;		/* signals to be blocked */
   sigset_t mp_sigmask2;		/* saved copy of mp_sigmask */
   sigset_t mp_sigpending;	/* pending signals to be handled */
+  sigset_t mp_ksigpending;	/* bitmap for pending signals from the kernel */
   sigset_t mp_sigtrace;		/* signals to hand to tracer first */
   struct sigaction mp_sigact[_NSIG]; /* as in sigaction(2) */
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
