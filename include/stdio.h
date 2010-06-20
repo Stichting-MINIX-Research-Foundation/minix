@@ -149,6 +149,7 @@ _PROTOTYPE(int pclose, (FILE *_stream));
 _PROTOTYPE(int snprintf, (char *_s, size_t _n, const char *_format, ...));
 _PROTOTYPE(int vsnprintf, (char *_s, size_t _n, const char *_format,
 							char *_arg)	);
+_PROTOTYPE(char *fgetln, (FILE *stream, size_t *len));
 #endif
 
 #endif /* _STDIO_H */
