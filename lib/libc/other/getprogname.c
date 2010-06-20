@@ -42,6 +42,7 @@ __RCSID("$NetBSD: getprogname.c,v 1.3 2003/07/26 19:24:42 salo Exp $");
 #include "namespace.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 extern const char **__prognamep;	/* Copy of argv[]. */
 extern int __argc;			/* Copy of argc. */
@@ -49,7 +50,13 @@ extern int __argc;			/* Copy of argc. */
 const char *
 getprogname(void)
 {
+	const char *pn = NULL, *component;
 	if(__argc > 0 && __prognamep)
-		return __prognamep[0];
-	return NULL;
+		pn = __prognamep[0];
+	else
+		return NULL;
+
+	if((component=strrchr(pn, '/')))
+		return component+1;
+	return pn;
 }
