@@ -15,13 +15,15 @@ MLINKS= grep.1 egrep.1 \
 	grep.1 zegrep.1 \
 	grep.1 zfgrep.1
 
-CFLAGS+= -Wall
-
 LDADD=  -lz
 DPADD=  ${LIBZ}
 
+.if ${COMPILER_TYPE} == "gnu"
+CFLAGS+= -Wall
+CPPFLAGS+= -isystem ../../../include
+.endif
+
 .if ${OPSYS} == "Minix"
-CPPFLAGS+= -D_POSIX_SOURCE -D_MINIX
 .include <minix.prog.mk>
 .else
 .include <bsd.prog.mk>
