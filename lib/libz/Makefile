@@ -8,4 +8,6 @@ SRCS= adler32.c compress.c crc32.c deflate.c gzclose.c gzlib.c gzread.c \
 INCSDIR= /usr/include
 INCS=           zconf.h zlib.h
 
+CPPFLAGS += -DNO_VIZ=1
+
 .include <minix.lib.mk>
