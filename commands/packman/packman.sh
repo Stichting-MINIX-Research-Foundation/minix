@@ -192,7 +192,7 @@ do	cd $TMPDIR
       do
 	ok=y
 	if [ $packlistno -eq 0 ]
-	then pat="^[0-9]\+|$packno|"
+	then pat="^[0-9]\+|$packno[-|.]"
 	else pat="^$packno|"
 	fi
 	if [ "`grep -c $pat $TMPF`" -ne 1 ]
