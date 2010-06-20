@@ -42,7 +42,9 @@ static size_t	 lnbuflen;
 #endif
 
 #define FILE_STDIO	0
+#ifndef __minix
 #define FILE_MMAP	1
+#endif
 #define FILE_GZIP	2
 
 struct file {
@@ -142,11 +144,13 @@ grep_open(char *path, char *mode)
 	} else
 #endif
 	{
+#ifdef FILE_MMAP
 		/* try mmap first; if it fails, try stdio */
 		if ((f->mmf = mmopen(fname, mode)) != NULL) {
 			f->type = FILE_MMAP;
 			return f;
 		}
+#endif
 		f->type = FILE_STDIO;
 		if ((f->f = fopen(path, mode)) != NULL)
 			return f;
@@ -165,8 +169,10 @@ grep_bin_file(file_t *f)
 	switch (f->type) {
 	case FILE_STDIO:
 		return bin_file(f->f);
+#ifdef FILE_MMAP
 	case FILE_MMAP:
 		return mmbin_file(f->mmf);
+#endif
 #ifndef NOZ
 	case FILE_GZIP:
 		return gzbin_file(f->gzf);
@@ -183,8 +189,10 @@ grep_fgetln(file_t *f, size_t *l)
 	switch (f->type) {
 	case FILE_STDIO:
 		return fgetln(f->f, l);
+#ifdef FILE_MMAP
 	case FILE_MMAP:
 		return mmfgetln(f->mmf, l);
+#endif
 #ifndef NOZ
 	case FILE_GZIP:
 		return gzfgetln(f->gzf, l);
@@ -202,9 +210,11 @@ grep_close(file_t *f)
 	case FILE_STDIO:
 		fclose(f->f);
 		break;
+#ifdef FILE_MMAP
 	case FILE_MMAP:
 		mmclose(f->mmf);
 		break;
+#endif
 #ifndef NOZ
 	case FILE_GZIP:
 		gzclose(f->gzf);

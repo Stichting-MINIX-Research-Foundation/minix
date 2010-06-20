@@ -17,11 +17,12 @@ MLINKS= grep.1 egrep.1 \
 
 CFLAGS+= -Wall
 
-.if ${OPSYS} == "Minix"
-CPPFLAGS+= -DNOZ -D_POSIX_SOURCE -D_MINIX
-.include <minix.prog.mk>
-.else
 LDADD=  -lz
 DPADD=  ${LIBZ}
+
+.if ${OPSYS} == "Minix"
+CPPFLAGS+= -D_POSIX_SOURCE -D_MINIX
+.include <minix.prog.mk>
+.else
 .include <bsd.prog.mk>
 .endif

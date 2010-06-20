@@ -102,8 +102,6 @@ struct patfile {
 };
 SLIST_HEAD(, patfile)		 patfilelh;
 
-extern char *__progname;
-
 static void
 usage(void)
 {
@@ -114,7 +112,7 @@ usage(void)
 	    "usage: %s [-abcEFGHhIiLlnoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
 #endif
 	    "\t[-e pattern] [-f file] [--binary-files=value] [--context[=num]]\n"
-	    "\t[--line-buffered] [pattern] [file ...]\n", __progname);
+	    "\t[--line-buffered] [pattern] [file ...]\n", getprogname());
 	exit(2);
 }
 
@@ -240,11 +238,7 @@ main(int argc, char *argv[])
 
 	SLIST_INIT(&patfilelh);
 
-#ifdef __minix
-	setprogname(argv[0]);
-#endif
-
-	switch (__progname[0]) {
+	switch (getprogname()[0]) {
 	case 'e':
 		Eflag++;
 		break;
@@ -257,7 +251,7 @@ main(int argc, char *argv[])
 #ifndef NOZ
 	case 'z':
 		Zflag++;
-		switch(__progname[1]) {
+		switch(getprogname()[1]) {
 		case 'e':
 			Eflag++;
 			break;

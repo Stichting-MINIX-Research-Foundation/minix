@@ -1,3 +1,4 @@
+#ifndef __minix
 /*	$OpenBSD: mmfile.c,v 1.11 2006/09/19 05:52:23 otto Exp $	*/
 
 /*-
@@ -100,3 +101,4 @@ mmfgetln(mmf_t *mmf, size_t *l)
 	++mmf->ptr;
 	return p;
 }
+#endif
