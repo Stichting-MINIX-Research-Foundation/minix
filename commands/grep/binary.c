@@ -37,7 +37,7 @@
 int
 bin_file(FILE *f)
 {
-	char		buf[BUFSIZ];
+	unsigned char	buf[BUFSIZ];
 	size_t		i, m;
 	int		ret = 0;
 
@@ -61,7 +61,7 @@ bin_file(FILE *f)
 int
 gzbin_file(gzFile *f)
 {
-	char		buf[BUFSIZ];
+	unsigned char	buf[BUFSIZ];
 	int		i, m;
 	int		ret = 0;
 

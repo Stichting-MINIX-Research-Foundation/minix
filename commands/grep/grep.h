@@ -101,7 +101,7 @@ void		 clearqueue(void);
 typedef struct mmfile {
 	int	 fd;
 	size_t	 len;
-	char	*base, *end, *ptr;
+	unsigned char	*base, *end, *ptr;
 } mmf_t;
 
 mmf_t		*mmopen(char *fn, char *mode);
