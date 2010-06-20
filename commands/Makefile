@@ -5,14 +5,14 @@
 SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	backup badblocks banner basename bigmake binpackage \
 	binpackages binsizes bzip2 bzip2recover cal calendar \
-	cat cawf cd cdiff cdprobe cgrep checkhier chmem \
+	cat cawf cd cdiff cdprobe checkhier chmem \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut datasizes date \
 	dd de decomp16 DESCRIBE dev2name devsize df dhcpd \
 	dhrystone diff dirname dis88 du dumpcore easypack \
-	ed eject elle elvis env expand factor fgrep file \
+	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck \
-	fsck1 ftp101 ftpd200 getty gomoku grep head host \
+	fsck1 ftp101 ftpd200 getty gomoku head host \
 	hostaddr id ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	lex life loadkeys loadramdisk logger login look lp \
