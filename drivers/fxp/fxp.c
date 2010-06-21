@@ -586,7 +586,9 @@ static int fxp_probe(fxp_t *fp, int skip)
 	case FXP_REV_82558A:	str= "82558A"; 			/* 0x04 */
 				fp->fxp_type= FT_82558A;
 				break;
-	case FXP_REV_82558B:	str= "82558B"; break;		/* 0x05 */
+	case FXP_REV_82558B:	str= "82558B"; 			/* 0x05 */
+				fp->fxp_type= FT_82559;
+				break;
 	case FXP_REV_82559A:	str= "82559A"; break;		/* 0x06 */
 	case FXP_REV_82559B:	str= "82559B"; break;		/* 0x07 */
 	case FXP_REV_82559C:	str= "82559C";			/* 0x08 */
