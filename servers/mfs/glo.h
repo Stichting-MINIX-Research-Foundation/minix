@@ -9,9 +9,6 @@
 
 #include <minix/vfsif.h>
 
-EXTERN off_t rdahedpos;		/* position to read ahead */
-EXTERN struct inode *rdahed_inode;	/* pointer to inode to read ahead */
-
 /* The following variables are used for returning results to the caller. */
 EXTERN int err_code;		/* temporary storage for error number */
 EXTERN int rdwt_err;		/* status of last disk i/o request */

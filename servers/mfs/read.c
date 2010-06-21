@@ -20,6 +20,9 @@ FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, u64_t position,
 
 PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
 
+PRIVATE off_t rdahedpos;         /* position to read ahead */
+PRIVATE struct inode *rdahed_inode;      /* pointer to inode to read ahead */
+
 /*===========================================================================*
  *				fs_readwrite				     *
  *===========================================================================*/
@@ -61,7 +64,7 @@ PUBLIC int fs_readwrite(void)
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
   
   rdwt_err = OK;		/* set to EIO if disk error occurs */
-  
+
   if (rw_flag == WRITING && !block_spec) {
 	  /* Check in advance to see if file will grow too big. */
 	  if (position > (off_t) (rip->i_sp->s_max_size - nrbytes))
@@ -115,7 +118,7 @@ PUBLIC int fs_readwrite(void)
      (regular || mode_word == I_DIRECTORY)) {
 	  rdahed_inode = rip;
 	  rdahedpos = position;
-  }
+  } 
 
   rip->i_seek = NO_SEEK;
 
@@ -400,6 +403,9 @@ PUBLIC void read_ahead()
   register struct inode *rip;
   struct buf *bp;
   block_t b;
+
+  if(!rdahed_inode)
+	return;
 
   rip = rdahed_inode;		/* pointer to inode to read ahead from */
   block_size = get_block_size(rip->i_dev);
