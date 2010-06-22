@@ -6,9 +6,10 @@ sys/param.h
 #define __SYS_PARAM_H__
 
 #include <limits.h>
+#include <minix/limits.h>
 
 #define MAXHOSTNAMELEN  256	/* max hostname size */
 #define NGROUPS		8	/* max number of supplementary groups */
-#define MAXPATHLEN	PATH_MAX
+#define MAXPATHLEN	__MINIX_PATH_MAX
 
 #endif /* __SYS_PARAM_H__ */

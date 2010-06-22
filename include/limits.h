@@ -6,6 +6,8 @@
 #ifndef _LIMITS_H
 #define _LIMITS_H
 
+#include <minix/limits.h>
+
 /* Definitions about chars (8 bits in MINIX, and signed). */
 #define CHAR_BIT           8	/* # bits in a char */
 #define CHAR_MIN        -128	/* minimum value of a char */
@@ -62,8 +64,13 @@
 #define _POSIX_MAX_INPUT   255	/* you can type 255 chars ahead */
 #define _POSIX_NAME_MAX DIRSIZ	/* max. file name length */
 #define _POSIX_NGROUPS_MAX   8	/* max. number of supplemental groups */
-#define _POSIX_OPEN_MAX     16	/* a process may have 16 files open */
-#define _POSIX_PATH_MAX    255	/* a pathname may contain 255 chars */
+
+/* a process may have this many files open */
+#define _POSIX_OPEN_MAX  __MINIX_OPEN_MAX
+
+/* a pathname may contain at most this many chars */
+#define _POSIX_PATH_MAX    __MINIX_PATH_MAX
+
 #define _POSIX_PIPE_BUF    512	/* pipes writes of 512 bytes must be atomic */
 #define _POSIX_STREAM_MAX    8	/* at least 8 FILEs can be open at once */
 #define _POSIX_TZNAME_MAX    3	/* time zone names can be at least 3 chars */
@@ -85,7 +92,7 @@
 #define ARG_MAX           4096	/* args + environ on small machines */
 #endif
 #define CHILD_MAX    _NO_LIMIT	/* MINIX does not limit children */
-#define OPEN_MAX            30	/* # open files a process may have */
+#define OPEN_MAX  __MINIX_OPEN_MAX	/* # open files a process may have */
 #if 0			/* V1 file system */
 #define LINK_MAX      CHAR_MAX	/* # links a file may have */
 #else			/* V2 or better file system */
@@ -94,7 +101,7 @@
 #define MAX_CANON          255	/* size of the canonical input queue */
 #define MAX_INPUT          255	/* size of the type-ahead buffer */
 #define NAME_MAX        DIRSIZ	/* # chars in a file name */
-#define PATH_MAX           255	/* # chars in a path name */
+#define PATH_MAX  __MINIX_PATH_MAX	/* # chars in a path name */
 #define PIPE_BUF          7168	/* # bytes in atomic write to a pipe */
 #define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
 #define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */

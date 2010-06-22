@@ -1,12 +1,9 @@
 #ifndef _SYS_SELECT_H
 #define _SYS_SELECT_H 1
 
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE 1
-#endif
-
 #include <sys/time.h>
 #include <minix/types.h>
+#include <minix/limits.h>
 #include <limits.h>
 #include <string.h>
 
@@ -22,7 +19,7 @@ typedef u32_t fd_mask;
 
 /* Default FD_SETSIZE is OPEN_MAX. */
 #ifndef FD_SETSIZE
-#define FD_SETSIZE		OPEN_MAX
+#define FD_SETSIZE		__MINIX_OPEN_MAX
 #endif
 
 /* We want to store FD_SETSIZE bits. */
