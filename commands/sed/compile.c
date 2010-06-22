@@ -72,13 +72,6 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
-#else
-__RCSID("$NetBSD: compile.c,v 1.35 2007/04/17 20:30:29 christos Exp $");
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

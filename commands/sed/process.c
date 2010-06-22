@@ -72,13 +72,6 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
-#else
-__RCSID("$NetBSD: process.c,v 1.37 2006/06/18 05:16:41 gdamore Exp $");
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -94,6 +87,7 @@ __RCSID("$NetBSD: process.c,v 1.37 2006/06/18 05:16:41 gdamore Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <termios.h>
 
 #include "defs.h"
 #include "extern.h"
@@ -105,10 +99,10 @@ static SPACE HS, PS, SS;
 #define	hs		HS.space
 #define	hsl		HS.len
 
-static inline int	 applies(struct s_command *);
+static __inline int	 applies(struct s_command *);
 static void		 flush_appends(void);
 static void		 lputs(char *);
-static inline int	 regexec_e(regex_t *, const char *, int, int, size_t);
+static __inline int	 regexec_e(regex_t *, const char *, int, int, size_t);
 static void		 regsub(SPACE *, char *, char *);
 static int		 substitute(struct s_command *);
 
@@ -316,7 +310,7 @@ new:		if (!nflag && !pd)
  * Return TRUE if the command applies to the current line.  Sets the inrange
  * flag to process ranges.  Interprets the non-select (``!'') flag.
  */
-static inline int
+static __inline int
 applies(struct s_command *cp)
 {
 	int r;
@@ -549,7 +543,7 @@ lputs(char *s)
 		err(FATAL, "stdout: %s", strerror(errno ? errno : EIO));
 }
 
-static inline int
+static __inline int
 regexec_e(regex_t *preg, const char *string, int eflags, int nomatch, size_t slen)
 {
 	int eval;

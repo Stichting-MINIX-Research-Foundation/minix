@@ -72,18 +72,6 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993\
- The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
-#else
-__RCSID("$NetBSD: main.c,v 1.19 2008/09/16 13:32:04 perry Exp $");
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 
@@ -148,7 +136,6 @@ main(int argc, char *argv[])
 {
 	int c, fflag;
 
-	setprogname(*argv);
 	fflag = 0;
 	while ((c = getopt(argc, argv, "ae:f:nrE")) != -1)
 		switch (c) {
