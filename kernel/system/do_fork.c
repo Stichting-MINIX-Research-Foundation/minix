@@ -15,6 +15,7 @@
 #include <assert.h>
 
 #include <minix/endpoint.h>
+#include <minix/u64.h>
 
 #if USE_FORK
 
@@ -88,6 +89,9 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
    */
   if (rpc->p_scheduler)
 	  RTS_SET(rpc, RTS_NO_QUANTUM);
+
+  make_zero64(rpc->p_cpu_time_left);
+  make_zero64(rpc->p_cycles);
 
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.
