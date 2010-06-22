@@ -107,4 +107,5 @@ SRCS+= 	 \
 	nice.c \
 	priority.c \
 	pread.c \
+	pwrite.c \
 	usleep.c

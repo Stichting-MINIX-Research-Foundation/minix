@@ -147,6 +147,7 @@ _PROTOTYPE( int tcsetpgrp, (int _fd, pid_t _pgrp_id)			);
 _PROTOTYPE( char *ttyname, (int _fd)					);
 _PROTOTYPE( int unlink, (const char *_path)				);
 _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
+_PROTOTYPE( ssize_t pwrite, (int _fd, const void *_buf, size_t _n, off_t _offset));
 _PROTOTYPE( int truncate, (const char *_path, off_t _length)		);
 _PROTOTYPE( int ftruncate, (int _fd, off_t _length)			);
 _PROTOTYPE( int nice, (int _incr)					);
