@@ -38,12 +38,10 @@ tar=$srcdir/"`basename ${dir}`".tar
 tarbz=$tar.bz2
 
 mkdir $pdir 2>/dev/null || true
-binsizes=big
 rc=$dir/.binpackage
 if [ -f $rc ]
 then	 . $rc
 fi
-binsizes $binsizes
 
 prunedirs="$srcdir dev tmp usr/bigports usr/src usr/tmp usr/log usr/adm usr/run home etc/utmp var/run var/log /var/spool"
 
@@ -76,6 +74,5 @@ echo "Minix package $dir built `date`." >$INFO
 	find / \( $pruneexpr \) -o -cnewer $packagestart -print | fgrep -v /.svn
 ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
-binsizes normal
 mv $tarbz $pdir
 exit 0
