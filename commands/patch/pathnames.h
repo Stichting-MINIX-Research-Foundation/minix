@@ -9,6 +9,6 @@
  * on July 29, 2003.
  */
 
-#include <paths.h>
+#include <minix/paths.h>
 
 #define	_PATH_ED		"/bin/ed"

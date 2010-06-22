@@ -31,7 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.27 2008/09/19 18:33:34 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -156,10 +155,12 @@ main(int argc, char *argv[])
 	LINENUM	where = 0, newwhere, fuzz, mymaxfuzz;
 	const	char *tmpdir;
 	char	*v;
+	int	alloclen;
 
 	setbuf(stderr, serrbuf);
 	for (i = 0; i < MAXFILEC; i++)
 		filearg[i] = NULL;
+
 
 	/* Cons up the names of the temporary files.  */
 	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
@@ -167,25 +168,33 @@ main(int argc, char *argv[])
 	for (i = strlen(tmpdir) - 1; i > 0 && tmpdir[i] == '/'; i--)
 		;
 	i++;
-	if (asprintf(&TMPOUTNAME, "%.*s/patchoXXXXXXXXXX", i, tmpdir) == -1)
+
+	alloclen = i + 100;
+#define TMPALLOC(var) if(!(var = malloc(alloclen))) { fatal(#var); exit(1); } 
+	TMPALLOC(TMPOUTNAME);
+	TMPALLOC(TMPINNAME);
+	TMPALLOC(TMPREJNAME);
+	TMPALLOC(TMPPATNAME);
+
+	if (snprintf(TMPOUTNAME, alloclen, "%.*s/patchoXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPOUTNAME)) < 0)
 		pfatal("can't create %s", TMPOUTNAME);
 	close(fd);
 
-	if (asprintf(&TMPINNAME, "%.*s/patchiXXXXXXXXXX", i, tmpdir) == -1)
+	if (snprintf(TMPINNAME, alloclen, "%.*s/patchiXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPINNAME)) < 0)
 		pfatal("can't create %s", TMPINNAME);
 	close(fd);
 
-	if (asprintf(&TMPREJNAME, "%.*s/patchrXXXXXXXXXX", i, tmpdir) == -1)
+	if (snprintf(TMPREJNAME, alloclen, "%.*s/patchrXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPREJNAME)) < 0)
 		pfatal("can't create %s", TMPREJNAME);
 	close(fd);
 
-	if (asprintf(&TMPPATNAME, "%.*s/patchpXXXXXXXXXX", i, tmpdir) == -1)
+	if (snprintf(TMPPATNAME, alloclen, "%.*s/patchpXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
 	if ((fd = mkstemp(TMPPATNAME)) < 0)
 		pfatal("can't create %s", TMPPATNAME);

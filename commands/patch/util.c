@@ -31,7 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.24 2008/09/19 18:33:34 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -40,7 +39,7 @@ __RCSID("$NetBSD: util.c,v 1.24 2008/09/19 18:33:34 joerg Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <paths.h>
+#include <minix/paths.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>

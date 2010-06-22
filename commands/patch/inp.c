@@ -31,7 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.19 2008/09/19 18:33:34 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -46,6 +45,7 @@ __RCSID("$NetBSD: inp.c,v 1.19 2008/09/19 18:33:34 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "common.h"
 #include "util.h"
@@ -58,7 +58,9 @@ __RCSID("$NetBSD: inp.c,v 1.19 2008/09/19 18:33:34 joerg Exp $");
 static off_t	i_size;		/* size of the input file */
 static char	*i_womp;	/* plan a buffer for entire file */
 static char	**i_ptr;	/* pointers to lines in i_womp */
+#if 0
 static char	empty_line[] = { '\0' };
+#endif
 
 static int	tifd = -1;	/* plan b virtual string array */
 static char	*tibuf[2];	/* plan b buffers */
@@ -67,7 +69,9 @@ static LINENUM	lines_per_buf;	/* how many lines per buffer */
 static int	tireclen;	/* length of records in tmp file */
 
 static bool	rev_in_string(const char *);
+#if 0
 static bool	reallocate_lines(size_t *);
+#endif
 
 /* returns false if insufficient memory */
 static bool	plan_a(const char *);
@@ -112,6 +116,7 @@ scan_input(const char *filename)
 	}
 }
 
+#if 0
 static bool
 reallocate_lines(size_t *lines_allocated)
 {
@@ -132,12 +137,16 @@ reallocate_lines(size_t *lines_allocated)
 	i_ptr = p;
 	return true;
 }
+#endif
 
 /* Try keeping everything in memory. */
 
 static bool
 plan_a(const char *filename)
 {
+#ifdef __minix
+	return false;
+#else
 	int		ifd, statfailed;
 	char		*p, *s, lbuf[MAXLINELEN];
 	struct stat	filestat;
@@ -343,6 +352,7 @@ plan_a(const char *filename)
 			    revision);
 	}
 	return true;		/* plan a will work */
+#endif
 }
 
 /* Keep (virtually) nothing in memory. */

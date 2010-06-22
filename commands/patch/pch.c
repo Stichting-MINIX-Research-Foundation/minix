@@ -31,7 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.23 2008/09/19 18:33:34 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
