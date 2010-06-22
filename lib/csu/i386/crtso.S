@@ -23,8 +23,12 @@ begdata:
 .bss
 begbss:
 
+#ifdef __ACK__
+.globl __minix_datastart
+#endif
+
 .globl	crtso, __penviron, __penvp, ___prognamep, ___argc
-.globl __minix_datastart, __minix_mainjump, __minix_unmapzero
+.globl __minix_mainjump, __minix_unmapzero
 .extern	_main, _exit
 
 #if defined(__ELF__)
