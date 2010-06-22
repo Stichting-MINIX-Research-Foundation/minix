@@ -14,7 +14,9 @@
 
 #define    _PATH_DEFTAPE   "/dev/sa0"
 #define    _PATH_RAMDISK   "/dev/ram"
+#define    _PATH_TTY       "/dev/tty"
 #define    _PATH_TMP       "/tmp"
+#define    _PATH_DEVNULL   "/dev/null"
 
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_SERVICE	"/bin/service"

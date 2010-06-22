@@ -103,6 +103,7 @@ typedef short          uid_t;	   /* user id */
 
 /* Signal handler type, e.g. SIG_IGN */
 typedef void _PROTOTYPE( (*sighandler_t), (int) );
+typedef sighandler_t sig_t;
 
 /* Compatibility with other systems */
 typedef unsigned char	u_char;
