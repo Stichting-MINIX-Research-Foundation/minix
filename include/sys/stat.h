@@ -25,16 +25,17 @@ struct stat {
 };
 
 /* Traditional mask definitions for st_mode. */
-#define S_IFMT  0170000	/* type of file */
-#define S_IFLNK 0120000	/* symbolic link */
-#define S_IFREG 0100000	/* regular */
-#define S_IFBLK 0060000	/* block special */
-#define S_IFDIR 0040000	/* directory */
-#define S_IFCHR 0020000	/* character special */
-#define S_IFIFO 0010000	/* this is a FIFO */
-#define S_ISUID 0004000	/* set user id on execution */
-#define S_ISGID 0002000	/* set group id on execution */
-#define S_ISVTX 0001000	/* save swapped text even after use */
+#define S_IFMT   0170000	/* type of file */
+#define S_IFSOCK 0140000        /* socket */
+#define S_IFLNK  0120000	/* symbolic link */
+#define S_IFREG  0100000	/* regular */
+#define S_IFBLK  0060000	/* block special */
+#define S_IFDIR  0040000	/* directory */
+#define S_IFCHR  0020000	/* character special */
+#define S_IFIFO  0010000	/* this is a FIFO */
+#define S_ISUID  0004000	/* set user id on execution */
+#define S_ISGID  0002000	/* set group id on execution */
+#define S_ISVTX  0001000	/* save swapped text even after use */
 
 /* POSIX masks for st_mode. */
 #define S_IRWXU   00700		/* owner:  rwx------ */
@@ -64,6 +65,7 @@ struct stat {
 #define S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)	/* is a block spec */
 #define S_ISLNK(m)	(((m) & S_IFMT) == S_IFLNK)	/* is a symlink */
 #define S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)	/* is a pipe/FIFO */
+#define S_ISSOCK(m)     (((m) & S_IFMT) == S_ISOCK)	/* is a socket */
 
 #define DEFFILEMODE     (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 
