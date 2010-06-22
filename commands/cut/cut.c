@@ -57,7 +57,9 @@ static int	fflag;
 static int	sflag;
 
 static void	b_cut(FILE *, const char *);
+#if 0
 static void	c_cut(FILE *, const char *);
+#endif
 static void	f_cut(FILE *, const char *);
 static void	get_list(char *);
 static void	usage(void) __dead;
