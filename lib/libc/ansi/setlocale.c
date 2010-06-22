@@ -21,6 +21,7 @@ setlocale(int category, const char *locale)
 	case LC_TIME:
 	case LC_NUMERIC:
 	case LC_MONETARY:
+	case LC_MESSAGES:
 		return *locale ? (char *)locale : "C";
 	default:
 		return (char *)NULL;
