@@ -404,6 +404,10 @@ compile_delimited(char *p, char *d)
 			*d++ = '\n';
 			p += 2;
 			continue;
+		} else if (*p == '\\' && p[1] == 't') {
+			*d++ = '\t';
+			p += 2;
+			continue;
 		} else if (*p == '\\' && p[1] == '\\')
 			*d++ = *p++;
 		else if (*p == c) {
