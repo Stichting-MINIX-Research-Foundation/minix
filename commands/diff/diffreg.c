@@ -77,6 +77,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <string.h>
+#include <time.h>
 
 #include "diff.h"
 #include "pathnames.h"
@@ -369,9 +371,13 @@ diffreg(char *file1, char *file2, int flags)
 		/* redirect stdout to pr */
 		int pfd[2];
 		char *header;
+		int len;
 		char *prargv[] = { "pr", "-h", NULL, "-f", NULL };
 
-		xasprintf(&header, "%s %s %s", diffargs, file1, file2);
+		len = strlen(diffargs) + strlen(file1) + strlen(file2) + 10;
+		if(!(header = malloc(len)))
+			errx(1, "diffreg can't alloc");
+		snprintf(header, len, "%s %s %s", diffargs, file1, file2);
 		prargv[2] = header;
 		fflush(stdout);
 		rewind(stdout);
@@ -535,12 +541,16 @@ char *
 splice(char *dir, char *file)
 {
 	char *tail, *buf;
+	int len;
 
 	if ((tail = strrchr(file, '/')) == NULL)
 		tail = file;
 	else
 		tail++;
-	xasprintf(&buf, "%s/%s", dir, tail);
+	len = strlen(dir) + strlen(tail) + 1;
+	if(!(buf = malloc(len)))
+		errx(1, "splice can't alloc");
+	snprintf(buf, len, "%s/%s", dir, tail);
 	return (buf);
 }
 
@@ -1308,22 +1318,22 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = f[pos] - f[pos - 1];
 		if (nc >= sizeof(buf))
 			nc = sizeof(buf) - 1;
-		nc = fread(buf, 1, nc, fp);
+		nc = fread((char *) buf, 1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
-			buf[strcspn(buf, "\n")] = '\0';
+			buf[strcspn((char *) buf, "\n")] = '\0';
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
-				if (begins_with(buf, "private:")) {
+				if (begins_with((char *)buf, "private:")) {
 					if (!state)
 						state = " (private)";
-				} else if (begins_with(buf, "protected:")) {
+				} else if (begins_with((char *)buf, "protected:")) {
 					if (!state)
 						state = " (protected)";
-				} else if (begins_with(buf, "public:")) {
+				} else if (begins_with((char *)buf, "public:")) {
 					if (!state)
 						state = " (public)";
 				} else {
-					strlcpy(lastbuf, buf, sizeof lastbuf);
+					strlcpy(lastbuf, (char *) buf, sizeof lastbuf);
 					if (state)
 						strlcat(lastbuf, state,
 						    sizeof lastbuf);

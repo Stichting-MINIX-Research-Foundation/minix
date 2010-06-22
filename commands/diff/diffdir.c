@@ -28,21 +28,30 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
-#include <paths.h>
+#include <minix/paths.h>
+#include <sys/statfs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "diff.h"
 #include "xmalloc.h"
 
+struct diffdirent {
+	int d_status;
+	int d_fileno;
+	unsigned short d_reclen;
+	char d_name[1];
+};
+
+#define roundup(x, y)      ((((x)+((y)-1))/(y))*(y))
+
 static int dircompare(const void *, const void *);
 static int excluded(const char *);
-static struct dirent **slurpdir(char *, char **, int);
-static void diffit(struct dirent *, char *, size_t, char *, size_t, int);
-
-#define d_status	d_type		/* we need to store status for -l */
+static struct diffdirent **slurpdir(char *, char **, int);
+static void diffit(struct diffdirent *, char *, size_t, char *, size_t, int);
 
 /*
  * Diff directory traversal. Will be called recursively if -r was specified.
@@ -50,8 +59,8 @@ static void diffit(struct dirent *, char *, size_t, char *, size_t, int);
 void
 diffdir(char *p1, char *p2, int flags)
 {
-	struct dirent **dirp1, **dirp2, **dp1, **dp2;
-	struct dirent *dent1, *dent2;
+	struct diffdirent **dirp1, **dirp2, **dp1, **dp2;
+	struct diffdirent *dent1, *dent2;
 	size_t dirlen1, dirlen2;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	char *dirbuf1, *dirbuf2;
@@ -154,25 +163,71 @@ diffdir(char *p1, char *p2, int flags)
 	}
 }
 
+static int
+getdiffdirentries(int fd, char *buf, int nbytes)
+{
+	char *read_de;
+	int dentsbytes_actual;
+	int i, readlen = nbytes * 11 / 16; /* worst growth */
+	int written = 0;
+
+        lseek(fd, (off_t)0, SEEK_CUR);
+
+	if(!(read_de = malloc(readlen)))
+		errx(1, "getdiffdirentries: can't malloc");
+
+	dentsbytes_actual = getdents(fd, (struct dirent *) read_de, readlen);
+
+	if(dentsbytes_actual <= 0)
+		return dentsbytes_actual;
+
+	while(dentsbytes_actual > 0) {
+		int namelen;
+		struct diffdirent *dde = (struct diffdirent *) buf;
+		struct dirent *de = (struct dirent *) read_de;
+		dde->d_status = 0;
+		dde->d_fileno = de->d_ino;
+		namelen = strlen(de->d_name);
+		dde->d_reclen = namelen + 1 + sizeof(*dde) - sizeof(dde->d_name);
+		strcpy(dde->d_name, de->d_name);
+		dde->d_status = 0;
+		assert(dentsbytes_actual >= de->d_reclen);
+		dentsbytes_actual -= de->d_reclen;
+		buf += dde->d_reclen;
+		read_de += de->d_reclen;
+		written += dde->d_reclen;
+		assert(written <= nbytes);
+#if 0
+		fprintf(stderr, "orig: inode %d len %d; made: inode %d len %d\n",
+			de->d_ino, de->d_reclen, dde->d_fileno, dde->d_reclen);
+#endif
+	}
+
+	return written;
+}
+
 /*
  * Read in a whole directory's worth of struct dirents, culling
  * out the "excluded" ones.
- * Returns an array of struct dirent *'s that point into the buffer
+ * Returns an array of struct diffdirent *'s that point into the buffer
  * returned via bufp.  Caller is responsible for free()ing both of these.
  */
-static struct dirent **
+static struct diffdirent **
 slurpdir(char *path, char **bufp, int enoentok)
 {
 	char *buf, *ebuf, *cp;
 	size_t bufsize, have, need;
-	long base;
 	int fd, nbytes, entries;
+#ifdef __minix
+	struct statfs statfs;
+#endif
 	struct stat sb;
-	struct dirent **dirlist, *dp;
+	int blocksize;
+	struct diffdirent **dirlist, *dp;
 
 	*bufp = NULL;
 	if ((fd = open(path, O_RDONLY, 0644)) == -1) {
-		static struct dirent *dummy;
+		static struct diffdirent *dummy;
 
 		if (!enoentok || errno != ENOENT) {
 			warn("%s", path);
@@ -180,14 +235,23 @@ slurpdir(char *path, char **bufp, int enoentok)
 		}
 		return (&dummy);
 	}
-	if (fstat(fd, &sb) == -1) {
+	if (
+#ifdef __minix
+		fstatfs(fd, &statfs) < 0 ||
+#endif
+		fstat(fd, &sb)  < 0) {
 		warn("%s", path);
 		close(fd);
 		return (NULL);
 	}
+#ifdef __minix
+	blocksize = statfs.f_bsize;
+#else
+	blocksize = sb.st_blksize;
+#endif
 
-	need = roundup(sb.st_blksize, sizeof(struct dirent));
-	have = bufsize = roundup(MAX(sb.st_size, sb.st_blksize),
+	need = roundup(blocksize, sizeof(struct dirent));
+	have = bufsize = roundup(MAX(sb.st_size, blocksize),
 	    sizeof(struct dirent)) + need;
 	ebuf = buf = xmalloc(bufsize);
 
@@ -199,7 +263,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 		    ebuf = cp + (ebuf - buf);
 		    buf = cp;
 		}
-		nbytes = getdirentries(fd, ebuf, have, &base);
+		nbytes = getdiffdirentries(fd, ebuf, have);
 		if (nbytes == -1) {
 			warn("%s", path);
 			xfree(buf);
@@ -217,7 +281,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 	 * the buffer into an array.
 	 */
 	for (entries = 0, cp = buf; cp < ebuf; ) {
-		dp = (struct dirent *)cp;
+		dp = (struct diffdirent *)cp;
 		if (dp->d_fileno != 0)
 			entries++;
 		if (dp->d_reclen <= 0)
@@ -226,7 +290,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 	}
 	dirlist = xcalloc(sizeof(*dirlist), entries + 1);
 	for (entries = 0, cp = buf; cp < ebuf; ) {
-		dp = (struct dirent *)cp;
+		dp = (struct diffdirent *)cp;
 		if (dp->d_fileno != 0 && !excluded(dp->d_name)) {
 			dp->d_status = 0;
 			dirlist[entries++] = dp;
@@ -237,7 +301,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 	}
 	dirlist[entries] = NULL;
 
-	qsort(dirlist, entries, sizeof(struct dirent *), dircompare);
+	qsort(dirlist, entries, sizeof(struct diffdirent *), dircompare);
 
 	*bufp = buf;
 	return (dirlist);
@@ -249,8 +313,8 @@ slurpdir(char *path, char **bufp, int enoentok)
 static int
 dircompare(const void *vp1, const void *vp2)
 {
-	struct dirent *dp1 = *((struct dirent **) vp1);
-	struct dirent *dp2 = *((struct dirent **) vp2);
+	struct diffdirent *dp1 = *((struct diffdirent **) vp1);
+	struct diffdirent *dp2 = *((struct diffdirent **) vp2);
 
 	return (strcmp(dp1->d_name, dp2->d_name));
 }
@@ -259,7 +323,7 @@ dircompare(const void *vp1, const void *vp2)
  * Do the actual diff by calling either diffreg() or diffdir().
  */
 static void
-diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
+diffit(struct diffdirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
     int flags)
 {
 	flags |= D_HEADER;
