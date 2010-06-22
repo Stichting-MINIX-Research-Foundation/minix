@@ -90,7 +90,7 @@ _PROTOTYPE( int socket, (int _domain, int _type, int _protocol)		);
 /* based on http://tools.ietf.org/html/rfc2553 */
 struct sockaddr_storage
 {
-	sa_family_t	__ss_family;
+	sa_family_t	ss_family;
 	char		__ss_pad1[6];
 #ifdef __LONG_LONG_SUPPORTED
 	int64_t		__ss_align;
