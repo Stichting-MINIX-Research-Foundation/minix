@@ -6,7 +6,7 @@ INCS=	alloca.h ansi.h a.out.h ar.h assert.h configfile.h ctype.h \
 	inttypes.h libgen.h lib.h libutil.h limits.h locale.h \
 	mathconst.h math.h midiparser.h netdb.h pwd.h regex.h \
 	regexp.h setjmp.h sgtty.h signal.h stdarg.h stddef.h \
-	stdint.h stdio.h stdlib.h string.h strings.h sysexits.h \
+	stdint.h stdbool.h stdio.h stdlib.h string.h strings.h sysexits.h \
 	syslog.h tar.h termcap.h termios.h time.h timers.h tools.h \
 	ttyent.h ucontext.h unistd.h utime.h utmp.h wchar.h wctype.h \
 	hgfs.h tzfile.h util.h
