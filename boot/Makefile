@@ -4,8 +4,8 @@
 CC:=${CC:C/^gcc/cc/}
 COMPILER_TYPE:=ack
 
-PROGS=	bootblock cdbootblock bootexec boot masterboot \
-	jumpboot installboot edparams
+PROGS=	bootblock cdbootblock boot masterboot \
+	jumpboot installboot edparams dosboot mkfile
 
 SRCS.bootblock=		bootblock.s
 CPPFLAGS.bootblock.s=	${I86CPPFLAGS}
@@ -19,18 +19,15 @@ LDFLAGS.cdbootblock=	${I86LDFLAGS}
 BINDIR.cdbootblock=	/usr/mdec
 MAN.cdbootblock=
 
-SRCS.bootexec=		boothead.s boot.c bootimage.c rawfs86.c
+SRCS.boot=		boothead.s boot.c bootimage.c rawfs86.c
 CPPFLAGS.boothead.s=	${I86CPPFLAGS}
 CPPFLAGS.boot.c=	${I86CPPFLAGS}
 CPPFLAGS.bootimage.c=	${I86CPPFLAGS}
 CPPFLAGS.rawfs86.c=	${I86CPPFLAGS}
-LDFLAGS.bootexec=	${I86LDFLAGS}
-DPADD.bootexec=		${LIBSYS}
-LDADD.bootexec=		-lsys
-BINDIR.bootexec=	/usr/mdec
-MAN.bootexec=
-
-BINDIR.boot=		/usr/mdec
+LDFLAGS.boot=	${I86LDFLAGS}
+DPADD.boot=		${LIBSYS}
+LDADD.boot=		-lsys
+BINDIR.boot=	/usr/mdec
 MAN.boot=
 
 SRCS.masterboot=	masterboot.s
@@ -54,18 +51,35 @@ CPPFLAGS.edparams.c=	-DUNIX
 BINDIR.edparams=	/usr/bin
 MAN.edparams=
 
+SRCS.dosboot=		doshead.s dosboot.o bootimage.o rawfs86.o
+CPPFLAGS.dosboot.c=	-DDOS $(I86CPPFLAGS)
+LDADD.dosboot=	${I86LDFLAGS} -lsys
+BINDIR.dosboot=	/usr/mdec
+CPPFLAGS.doshead.s= -mi386
+MAN.dosboot=
+
+SRCS.mkfile=		mkfhead.s mkfile.c
+CPPFLAGS.mkfile.s=	${I86CPPFLAGS}
+LDADD.mkfile=	${I86LDFLAGS} -lsys
+BINDIR.mkfile=	/usr/mdec
+MAN.mkfile=
+
 rawfs86.c:	rawfs.c
 	ln -f rawfs.c rawfs86.c
 
 edparams.c:	boot.c
 	ln -f boot.c edparams.c
 
+dosboot.c: boot.c
+	ln -f boot.c dosboot.c
+
 cdbootblock.s:	bootblock.s
 	ln -f bootblock.s cdbootblock.s
 
-boot: bootexec
-	install -S 22kb bootexec
-	cp bootexec boot
+mkfile.com: mkfile
+
+boot.com: dosboot
+	./a.out2com dosboot boot.com
 
 CPPFLAGS=	-I${MINIXSRCDIR}
 AFLAGS=		-I${MINIXSRCDIR}
@@ -74,6 +88,6 @@ I86LDFLAGS=	-mi86 -Was-ncc -.o -com
 
 STRIPFLAG=	-s
 
-CLEANFILES+=	rawfs86.c edparams.c cdbootblock.s
+CLEANFILES+=	rawfs86.c edparams.c cdbootblock.s dosboot.c
 
 .include <minix.prog.mk>

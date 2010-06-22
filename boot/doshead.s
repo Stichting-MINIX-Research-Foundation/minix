@@ -634,19 +634,19 @@ _dev_boundary:
 	xor	ax, ax
 	ret
 
-! int readsectors(u32_t bufaddr, u32_t sector, u8_t count)
+! int biosreadsectors(u32_t bufaddr, u32_t sector, u8_t count)
 ! int writesectors(u32_t bufaddr, u32_t sector, u8_t count)
 !	Read/write several sectors from/to the Minix virtual disk.  Count
 !	must fit in a byte.  The external variable vfd is the file handle.
 !	Returns 0 for success, otherwise the DOS error code.
 !
-.define _readsectors, _writesectors
+.define _biosreadsectors, _writesectors
 _writesectors:
 	push	bp
 	mov	bp, sp
 	movb	13(bp), 0x40	! Code for a file write
 	jmp	rwsec
-_readsectors:
+_biosreadsectors:
 	push	bp
 	mov	bp, sp
 	movb	13(bp), 0x3F	! Code for a file read

@@ -767,8 +767,10 @@ char *select_image(char *image)
 	ino_t image_ino;
 	struct stat st;
 
+#ifndef DOS
 	image= strcpy(malloc((strlen(image) + 1 + NAME_MAX + 1)
 						 * sizeof(char)), image);
+#endif
 
 	fsok= r_super(&block_size) != 0;
 	if (!fsok || (image_ino= r_lookup(ROOT_INO, image)) == 0) {
