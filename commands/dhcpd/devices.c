@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
+#include <signal.h>
 #include <time.h>
 #include <sys/ioctl.h>
 #include <sys/asynchio.h>
@@ -92,6 +93,11 @@ void closefd(fd_t *fdp)
     }
 }
 
+static void timeout(int signum)
+{
+    /* nothing to do, ioctl will be aborted automatically */
+}
+
 int opendev(network_t *np, fdtype_t fdtype, int compete)
 {
     /* Make sure that a network has the proper device open and configured.
@@ -169,14 +175,19 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
 
     switch (fdtype) {
     case FT_ETHERNET:
-	/* Set NONBLOCK to avoid waiting for a device driver to become ready */
-	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) | O_NONBLOCK);
+	/* Cannot use NWIOGETHSTAT in non-blocking mode due to a race between 
+         * the reply from the ethernet driver and the cancel message from VFS
+	 * for reaching inet. Hence, a signal is used to interrupt NWIOGETHSTAT
+	 * in case the driver isn't ready yet.
+	 */
+	if (signal(SIGALRM, timeout) == SIG_ERR) fatal("signal(SIGALRM)");
+	if (alarm(1) < 0) fatal("alarm(1)");
 	if (ioctl(np->fdp->fd, NWIOGETHSTAT, &ethstat) < 0) {
 	    /* Not an Ethernet. */
 	    close(fdp->fd);
 	    return 0;
 	}
-	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) & ~O_NONBLOCK);
+	if (alarm(0) < 0) fatal("alarm(0)");
 	np->eth= ethstat.nwes_addr;
 	ethopt.nweo_flags= NWEO_COPY | NWEO_EN_LOC | NWEO_EN_BROAD
 			| NWEO_REMANY | NWEO_TYPEANY | NWEO_RWDATALL;
