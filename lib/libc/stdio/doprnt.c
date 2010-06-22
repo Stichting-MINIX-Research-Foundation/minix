@@ -187,6 +187,12 @@ _doprnt(register const char *fmt, va_list ap, FILE *stream)
 			case 'h':
 				flags |= FL_SHORT;
 				break;
+			case 'j':	
+				flags |= FL_LONG;
+#if defined(__LONG_LONG_SUPPORTED)
+				flags |= FL_LONGLONG;
+#endif
+				break;
 			case 'l':	
 				if(flags & FL_LONG)
 					flags |= FL_LONGLONG;
