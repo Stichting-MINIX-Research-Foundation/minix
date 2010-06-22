@@ -39,7 +39,7 @@ $(ROOTOBJ):
 	@rm a.out
 
 clean:	
-	cd select && make clean
+	$(MAKE) -C select clean
 	-rm -rf *.o *.s *.bak test? test?? test??-gcc t10a t11a t11b \
 		t40a t40b t40c t40d t40e t40f t43 DIR*
 

@@ -17,15 +17,15 @@
 #
 
 all test clean:
-#	cd ./msgctl && $(MAKE) $@
-#	cd ./msgget && $(MAKE) $@
-#	cd ./msgrcv && $(MAKE) $@
-#	cd ./msgsnd && $(MAKE) $@
-	cd ./semctl && $(MAKE) $@
-	cd ./semget && $(MAKE) $@
-	cd ./semop && $(MAKE) $@
-	cd ./shmat && $(MAKE) $@
-	cd ./shmctl && $(MAKE) $@
-	cd ./shmdt && $(MAKE) $@
-	cd ./shmget && $(MAKE) $@
-	cd ./shmt && $(MAKE) $@
+#	$(MAKE) -C ./msgctl $@
+#	$(MAKE) -C ./msgget $@
+#	$(MAKE) -C ./msgrcv $@
+#	$(MAKE) -C ./msgsnd $@
+	$(MAKE) -C ./semctl $@
+	$(MAKE) -C ./semget $@
+	$(MAKE) -C ./semop $@
+	$(MAKE) -C ./shmat $@
+	$(MAKE) -C ./shmctl $@
+	$(MAKE) -C ./shmdt $@
+	$(MAKE) -C ./shmget $@
+	$(MAKE) -C ./shmt $@

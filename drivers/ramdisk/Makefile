@@ -29,73 +29,73 @@ at_wini: ../at_wini/at_wini
 	install -s ../$@/$@ $@
 
 ../at_wini/at_wini:
-	cd ../at_wini && make
+	$(MAKE) -C ../at_wini
 
 bios_wini: ../bios_wini/bios_wini
 	install -s ../$@/$@ $@
 
 ../bios_wini/bios_wini:
-	cd ../bios_wini && make
+	$(MAKE) -C ../bios_wini
 
 floppy: ../floppy/floppy
 	install -s ../$@/$@ $@
 
 ../floppy/floppy:
-	cd ../floppy && make
+	$(MAKE) -C ../floppy
 
 pci: ../pci/pci
 	install -s ../$@/$@ $@
 
 ../pci/pci:
-	cd ../pci && make
+	$(MAKE) -C ../pci
 
 cdprobe:  ../../commands/cdprobe/cdprobe
 	install -s ../../commands/$@/$@ $@
 
 ../../commands/cdprobe:
-	cd ../../commands/cdprobe && make
+	$(MAKE) -C ../../commands/cdprobe
 
 dev2name:  ../../commands/dev2name/dev2name
 	install -s ../../commands/$@/$@ $@
 
 ../../commands/dev2name/dev2name:
-	cd ../../commands/dev2name && make
+	$(MAKE) -C ../../commands/dev2name
 
 loadramdisk:  ../../commands/loadramdisk/loadramdisk
 	install -s ../../commands/$@/$@ $@
 
 ../../commands/loadramdisk/loadramdisk:
-	cd ../../commands/loadramdisk && make
+	$(MAKE) -C ../../commands/loadramdisk
 
 newroot:  ../../commands/newroot/newroot
 	install -s ../../commands/$@/$@ $@
 
 ../../commands/newroot/newroot:
-	cd ../../commands/newroot && make
+	$(MAKE) -C ../../commands/newroot
 
 sysenv:  ../../commands/sysenv/sysenv
 	install -s ../../commands/$@/$@ $@
 
 ../../commands/sysenv:
-	cd ../../commands/sysenv && make
+	$(MAKE) -C ../../commands/sysenv
 
 sh:	../../commands/ash/sh
 	install -s ../../commands/ash/$@ $@
 
 ../../commands/ash/sh:
-	cd ../../commands/ash && make sh
+	$(MAKE) -C ../../commands/ash sh
 
 service: ../../commands/service/service
 	install -s ../../commands/service/$@ $@
 
 ../../commands/service:
-	cd ../../commands/service && make
+	$(MAKE) -C ../../commands/service
 
 mfs: ../../servers/mfs/mfs
 	install -s ../../servers/mfs/$@ $@
 
 ../../servers/mfs/mfs:
-	cd ../../servers/mfs && make
+	$(MAKE) -C ../../servers/mfs
 
 system.conf: ../../etc/system.conf
 	install -s ../../etc/$@ $@

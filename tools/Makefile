@@ -43,22 +43,22 @@ usage:
 all: services image
 
 image:  includes
-	cd ../kernel && $(MAKE)
-	cd ../servers && $(MAKE) all
-	cd ../drivers && $(MAKE) all
+	$(MAKE) -C ../kernel
+	$(MAKE) -C ../servers all
+	$(MAKE) -C ../drivers all
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
 includes:
-	cd .. && $(MAKE) includes
+	$(MAKE) -C .. includes
 
 depend: includes
-	cd ../ && $(MAKE) depend
+	$(MAKE) -C ../ depend
 
 services: includes 
-	cd ../kernel && $(MAKE) 
-	cd ../servers && $(MAKE) install
-	cd ../drivers && $(MAKE) install
+	$(MAKE) -C ../kernel 
+	$(MAKE) -C ../servers install
+	$(MAKE) -C ../drivers install
 
 libraries: includes
 	cd ../lib && sh ack_build.sh clean obj depend all install
@@ -79,12 +79,12 @@ install: includes services hdboot
 
 # clean up compile results
 clean:
-	cd ../kernel && $(MAKE) $@
-	cd ../servers && $(MAKE) $@
-	cd ../drivers && $(MAKE) $@
+	$(MAKE) -C ../kernel $@
+	$(MAKE) -C ../servers $@
+	$(MAKE) -C ../drivers $@
 	rm -rf *.bak image *.iso *.iso.gz cdfdimage rootimage src
 
 cleandepend::
-	cd ../kernel && $(MAKE) $@
-	cd ../servers && $(MAKE)  $@
-	cd ../drivers && $(MAKE)  $@
+	$(MAKE) -C ../kernel $@
+	$(MAKE) -C ../servers  $@
+	$(MAKE) -C ../drivers  $@

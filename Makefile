@@ -39,11 +39,11 @@ mkfiles:
 	cp etc/mk/*.mk /etc/mk/
 
 includes:
-	cd include && $(MAKE) includes
-	cd lib && $(MAKE) includes
+	$(MAKE) -C include includes
+	$(MAKE) -C lib includes
 
-libraries:
-	cd lib && sh ack_build.sh obj depend all install
+libraries: includes
+	$(MAKE) -C lib build_ack
 
 MKHEADERS411=/usr/gnu/libexec/gcc/i386-pc-minix/4.1.1/install-tools/mkheaders
 MKHEADERS443=/usr/gnu/libexec/gcc/i686-pc-minix/4.4.3/install-tools/mkheaders
@@ -51,43 +51,43 @@ gnu-includes: includes
 	SHELL=/bin/sh; if [ -f $(MKHEADERS411) ] ; then sh -e $(MKHEADERS411) ; fi
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443) ] ; then sh -e $(MKHEADERS443) ; fi
 
-gnu-libraries:
-	cd lib && sh gnu_build.sh obj depend all install
+gnu-libraries: includes
+	$(MAKE) -C lib build_gnu
 
-commands:
-	cd commands && $(MAKE) all
+commands: includes libraries
+	$(MAKE) -C commands all
 
 depend::
-	cd boot && $(MAKE) depend
-	cd commands && $(MAKE) depend
-	cd kernel && $(MAKE) depend
-	cd servers && $(MAKE) depend
-	cd drivers && $(MAKE) depend
+	$(MAKE) -C boot depend
+	$(MAKE) -C commands depend
+	$(MAKE) -C kernel depend
+	$(MAKE) -C servers depend
+	$(MAKE) -C drivers depend
 
 etcfiles::
-	cd etc && $(MAKE) install
+	$(MAKE) -C etc install
 
 all::
-	cd boot && $(MAKE) all
-	cd commands && $(MAKE) all
-	cd tools && $(MAKE) all
+	$(MAKE) -C boot all
+	$(MAKE) -C commands all
+	$(MAKE) -C tools all
 
 install::
-	cd boot && $(MAKE) install
-	cd man && $(MAKE) install makedb
-	cd commands && $(MAKE) install
-	cd share && $(MAKE) install
-	cd tools && $(MAKE) install
+	$(MAKE) -C boot install
+	$(MAKE) -C man install makedb
+	$(MAKE) -C commands install
+	$(MAKE) -C share install
+	$(MAKE) -C tools install
 
 clean::
-	cd boot && $(MAKE) clean
-	cd commands && $(MAKE) clean
-	cd tools && $(MAKE) clean
-	cd lib && sh ack_build.sh clean
-	cd lib && sh gnu_build.sh clean
-	cd test && $(MAKE) clean
+	$(MAKE) -C boot clean
+	$(MAKE) -C commands clean
+	$(MAKE) -C tools clean
+	$(MAKE) -C lib clean_gnu
+	$(MAKE) -C lib clean_ack
+	$(MAKE) -C test clean
 
 cleandepend::
-	cd boot && $(MAKE) cleandepend
-	cd commands && $(MAKE) cleandepend
-	cd tools && $(MAKE) cleandepend
+	$(MAKE) -C boot cleandepend
+	$(MAKE) -C commands cleandepend
+	$(MAKE) -C tools cleandepend
