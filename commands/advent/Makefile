@@ -15,11 +15,11 @@ MAN=
 database.o: advtext.h
 
 setup: setup.c advent.h
-	${CC} ${CPPFLAGS} ${LDFLAGS} -o setup setup.c
+	${CC} ${CPPFLAGS} ${LDFLAGS} -o $@ ${.CURDIR}/setup.c
 
 advtext.h advent1.dat advent2.dat advent3.dat advent4.dat: \
 		setup advent1.txt advent2.txt advent3.txt advent4.txt
-	./setup
+	./setup ${.CURDIR}
 
 CPPFLAGS.advent.c= -DTEXTDIR='"${TEXTDIR}"'
 
