@@ -20,7 +20,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	mdb mesg mined mkdep mkdir mkdist mkfifo mkfs mknod \
 	mkproto modem mount mt netconf newroot nice nm nohup \
 	nonamed od packit packman passwd paste patch pax \
-	ping postinstall poweroff pr prep printf printroot \
+	ping postinstall poweroff pr prep printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
 	readfs reboot remsync rev rget rlogin rlogind rmdir \

@@ -2,7 +2,7 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	bsfilt.1 cal.1 \
 	calendar.1 cat.1 cawf.1 cc.1 cdiff.1 chgrp.1 \
 	chmem.1 chmod.1 cksum.1 clear.1 cmp.1 comm.1 compress.1 \
-	cp.1 crc.1 crontab.1 ctags.1 cut.1 dd.1 dev2name.1 \
+	cp.1 crc.1 crontab.1 ctags.1 dd.1 dev2name.1 \
 	df.1 dhrystone.1 diff.1 dosdir.1 dosread.1 doswrite.1 du.1 \
 	dumpcore.1 easypack.1 echo.1 ed.1 eject.1 elvis.1 elvrec.1 \
 	env.1 expand.1 expr.1 factor.1 file.1 \
