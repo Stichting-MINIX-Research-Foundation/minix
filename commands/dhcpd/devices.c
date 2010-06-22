@@ -96,6 +96,7 @@ void closefd(fd_t *fdp)
 static void timeout(int signum)
 {
     /* nothing to do, ioctl will be aborted automatically */
+    if (alarm(1) < 0) fatal("alarm(1)");
 }
 
 int opendev(network_t *np, fdtype_t fdtype, int compete)
