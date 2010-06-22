@@ -5,4 +5,5 @@ SRCS+=  \
 	ftime.c \
 	asctime.c \
 	localtime.c \
-	strftime.c
+	strftime.c \
+	strptime.c

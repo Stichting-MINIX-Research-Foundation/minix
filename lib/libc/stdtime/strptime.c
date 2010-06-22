@@ -34,10 +34,18 @@
 #include <config.h>
 #endif
 #include <ctype.h>
+#ifdef __minix
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+#endif
+
+#ifndef __minix
 #include "roken.h"
 
 __RCSID("$Heimdal: strptime.c,v 1.2 1999/11/12 15:29:55 assar Exp $"
         "$NetBSD: strptime.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+#endif
 
 static const char *abb_weekdays[] = {
     "Sun",
