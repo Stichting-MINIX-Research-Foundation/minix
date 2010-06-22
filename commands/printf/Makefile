@@ -4,4 +4,4 @@
 PROG=	printf
 WARNS=	3
 
-.include <bsd.prog.mk>
+.include <minix.prog.mk>

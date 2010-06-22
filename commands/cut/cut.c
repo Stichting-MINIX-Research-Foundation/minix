@@ -33,17 +33,6 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
- The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
-#endif
-__RCSID("$NetBSD: cut.c,v 1.25 2008/07/21 14:19:22 lukem Exp $");
-#endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>
@@ -57,6 +46,8 @@ __RCSID("$NetBSD: cut.c,v 1.25 2008/07/21 14:19:22 lukem Exp $");
 #include <util.h>
 #include <wchar.h>
 #include <sys/param.h>
+
+#define roundup(x, y)      ((((x)+((y)-1))/(y))*(y))
 
 static int bflag;
 static int	cflag;
@@ -88,15 +79,18 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != -1)
 		switch(ch) {
 		case 'b':
+		case 'c':
 			fcn = b_cut;
 			get_list(optarg);
 			bflag = 1;
 			break;
+#if 0
 		case 'c':
 			fcn = c_cut;
 			get_list(optarg);
 			cflag = 1;
 			break;
+#endif
 		case 'd':
 			dchar = *optarg;
 			dflag = 1;
@@ -146,7 +140,7 @@ static size_t autostart, autostop, maxval;
 
 static char *positions = NULL;
 static size_t numpositions = 0;
-#define ALLOC_CHUNK	_POSIX2_LINE_MAX	/* malloc granularity */
+#define ALLOC_CHUNK	4096	/* malloc granularity */
 
 static void
 get_list(char *list)
@@ -296,7 +290,9 @@ usage(void)
 #include "x_cut.c"
 #undef CUT_BYTE
 
+#if 0
 /* make c_put(): */
 #define CUT_BYTE 0
 #include "x_cut.c"
 #undef CUT_BYTE
+#endif
