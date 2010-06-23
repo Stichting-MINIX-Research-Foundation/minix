@@ -74,7 +74,6 @@ SRCS+=  \
 	lsearch.c \
 	memccpy.c \
 	minix_rs.c \
-	mstats.c \
 	mtab.c \
 	nlist.c \
 	paramvalue.c \
