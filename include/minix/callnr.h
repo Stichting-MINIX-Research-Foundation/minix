@@ -73,6 +73,8 @@
 #define GETDENTS	  80	/* to FS */
 #define LLSEEK		  81	/* to VFS */
 #define FSTATFS	 	  82	/* to VFS */
+#define STATVFS 	  83	/* to VFS */
+#define FSTATVFS 	  84	/* to VFS */
 #define SELECT            85	/* to VFS */
 #define FCHDIR            86	/* to VFS */
 #define FSYNC             87	/* to VFS */

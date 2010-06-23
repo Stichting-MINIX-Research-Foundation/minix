@@ -113,8 +113,9 @@ typedef struct {
 #define REQ_NEWNODE	(VFS_BASE + 29)
 #define REQ_RDLINK	(VFS_BASE + 30)
 #define REQ_GETDENTS	(VFS_BASE + 31)
+#define REQ_STATVFS		(VFS_BASE + 32)
 
-#define NREQS                   32 
+#define NREQS                   33
 
 #endif
 

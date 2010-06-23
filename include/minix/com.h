@@ -245,6 +245,14 @@
 #define TAPE_STAT0	m2_l1
 #define TAPE_STAT1	m2_l2
 
+/* Field names for the fstatvfs call */
+#define FSTATVFS_FD m1_i1
+#define FSTATVFS_BUF m1_p1
+
+/* Field names for the statvfs call */
+#define STATVFS_LEN m1_i1
+#define STATVFS_NAME m1_p1
+#define STATVFS_BUF m1_p2
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
  *===========================================================================*/

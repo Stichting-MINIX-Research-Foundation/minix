@@ -8,6 +8,8 @@
  *   do_stat:	perform the STAT system call
  *   do_fstat:	perform the FSTAT system call
  *   do_fstatfs: perform the FSTATFS system call
+ *   do_statvfs: perform the STATVFS system call
+ *   do_fstatvfs: perform the FSTATVFS system call
  */
 
 #include "fs.h"
@@ -167,6 +169,38 @@ PUBLIC int do_fstatfs()
   if( (rfilp = get_filp(m_in.fd)) == NULL) return(err_code);
 
   return req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, m_in.buffer);
+}
+
+/*===========================================================================*
+ *				do_statvfs					     *
+ *===========================================================================*/
+PUBLIC int do_statvfs()
+{
+/* Perform the stat(name, buf) system call. */
+  int r;
+  struct vnode *vp;
+
+  if (fetch_name(m_in.STATVFS_NAME, m_in.STATVFS_LEN, M1) != OK) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
+  r = req_statvfs(vp->v_fs_e, who_e, m_in.STATVFS_BUF);
+
+  put_vnode(vp);
+  return r;
+}
+
+
+/*===========================================================================*
+ *				do_fstatvfs				     *
+ *===========================================================================*/
+PUBLIC int do_fstatvfs()
+{
+/* Perform the fstat(fd, buf) system call. */
+  register struct filp *rfilp;
+
+  /* Is the file descriptor valid? */
+  if ((rfilp = get_filp(m_in.FSTATVFS_FD)) == NULL) return(err_code);
+  
+  return req_statvfs(rfilp->filp_vno->v_fs_e, who_e, m_in.FSTATVFS_BUF);
 }
 
 

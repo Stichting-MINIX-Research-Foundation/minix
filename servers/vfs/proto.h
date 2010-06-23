@@ -165,6 +165,7 @@ _PROTOTYPE( int req_create, (int fs_e, ino_t inode_nr, int omode,
 		uid_t uid, gid_t gid, char *path, node_details_t *res)	); 
 _PROTOTYPE( int req_flush, (endpoint_t fs_e, dev_t dev)			);
 _PROTOTYPE( int req_fstatfs, (int fs_e, int who_e, char *buf)		);
+_PROTOTYPE( int req_statvfs, (int fs_e, int who_e, char *buf)		);
 _PROTOTYPE( int req_ftrunc, (endpoint_t fs_e, ino_t inode_nr,
 						off_t start, off_t end)	);
 _PROTOTYPE( int req_getdents, (endpoint_t fs_e, ino_t inode_nr, u64_t pos,
@@ -220,6 +221,8 @@ _PROTOTYPE( int do_chroot, (void)					);
 _PROTOTYPE( int do_fstat, (void)					);
 _PROTOTYPE( int do_stat, (void)						);
 _PROTOTYPE( int do_fstatfs, (void)					);
+_PROTOTYPE( int do_statvfs, (void)					);
+_PROTOTYPE( int do_fstatvfs, (void)					);
 _PROTOTYPE( int do_rdlink, (void)                                      );
 _PROTOTYPE( int do_lstat, (void)                                       );
 

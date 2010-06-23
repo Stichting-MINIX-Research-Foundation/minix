@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
+#include <sys/statvfs.h>
 #include <minix/vfsif.h>
 #include <minix/com.h>
 #include <minix/const.h>
@@ -217,6 +218,32 @@ PUBLIC int req_fstatfs(int fs_e, int who_e, char *buf)
 
   /* Fill in request message */
   m.m_type = REQ_FSTATFS;
+  m.REQ_GRANT = grant_id;
+
+  /* Send/rec request */
+  r = fs_sendrec(fs_e, &m);
+  cpf_revoke(grant_id);
+
+  return(r);
+}
+
+
+/*===========================================================================*
+ *				req_statvfs	    			     *
+ *===========================================================================*/
+PUBLIC int req_statvfs(int fs_e, int who_e, char *buf)
+{
+  int r;
+  cp_grant_id_t grant_id;
+  message m;
+
+  grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, sizeof(struct statvfs),
+			CPF_WRITE);
+  if(grant_id == -1) 
+	  panic("req_statvfs: cpf_grant_magic failed");
+
+  /* Fill in request message */
+  m.m_type = REQ_STATVFS;
   m.REQ_GRANT = grant_id;
 
   /* Send/rec request */
