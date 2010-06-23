@@ -1,6 +1,7 @@
 #include "inc.h"
 #include <sys/stat.h>
 #include <sys/statfs.h>
+#include <sys/statvfs.h>
 #include <minix/com.h>
 #include <string.h>
 #include <time.h>
@@ -98,3 +99,31 @@ PUBLIC int fs_fstatfs()
   return(r);
 }
 
+
+/*===========================================================================*
+ *				fs_statvfs				     *
+ *===========================================================================*/
+PUBLIC int fs_statvfs()
+{
+  struct statvfs st;
+  int r;
+
+
+  st.f_bsize =  v_pri.logical_block_size_l;
+  st.f_frsize = st.f_bsize;
+  st.f_blocks = v_pri.volume_space_size_l;
+  st.f_bfree = 0;
+  st.f_bavail = 0;
+  st.f_files = 0;
+  st.f_ffree = 0;
+  st.f_favail = 0;
+  st.f_fsid = fs_dev;
+  st.f_flag = ST_RDONLY;
+  st.f_namemax = NAME_MAX;
+
+  /* Copy the struct to user space. */
+  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0, (vir_bytes) &st,
+		     (phys_bytes) sizeof(st), D);
+  
+  return(r);
+}

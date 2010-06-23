@@ -63,6 +63,7 @@ _PROTOTYPE( int read_chunk, (struct dir_record *rip, u64_t position,
 /* stadir.c */
 _PROTOTYPE( int fs_stat, (void)						);
 _PROTOTYPE( int fs_fstatfs, (void)					);
+_PROTOTYPE( int fs_statvfs, (void)					);
 
 /* super.c */
 _PROTOTYPE(int release_v_pri, (struct iso9660_vd_pri *v_pri)		);

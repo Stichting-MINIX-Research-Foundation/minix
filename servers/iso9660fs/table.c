@@ -40,5 +40,5 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
   no_sys,			/* 52: not used */
   no_sys,			/* 53: not used */
   fs_getdents,			/* 54 */
-  no_sys,     /* 32 */
+  fs_statvfs,     /* 32 */
 };
