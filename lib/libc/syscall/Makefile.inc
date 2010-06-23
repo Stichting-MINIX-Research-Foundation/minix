@@ -36,6 +36,7 @@ SRCS+=  \
 	fpathconf.S \
 	fstat.S \
 	fstatfs.S \
+	fstatvfs.S \
 	getcwd.S \
 	getdents.S \
 	getdma.S \
@@ -113,6 +114,7 @@ SRCS+=  \
 	sleep.S \
 	sprofile.S \
 	stat.S \
+	statvfs.S \
 	stime.S \
 	svrctl.S \
 	symlink.S \

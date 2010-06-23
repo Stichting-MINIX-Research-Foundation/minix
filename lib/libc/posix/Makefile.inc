@@ -31,6 +31,7 @@ SRCS+= 	 \
 	_fpathconf.c \
 	_fstat.c \
 	_fstatfs.c \
+	_fstatvfs.c \
 	_fsync.c \
 	_getcwd.c \
 	_getegid.c \
@@ -79,6 +80,7 @@ SRCS+= 	 \
 	_sigsuspend.c \
 	_sleep.c \
 	_stat.c \
+	_statvfs.c \
 	_stime.c \
 	_symlink.c \
 	_sync.c \
