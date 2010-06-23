@@ -7,8 +7,8 @@ INCS=	asynchio.h dir.h file.h ioc_cmos.h ioc_disk.h \
 	ioctl.h ioc_tty.h ipc.h jmp_buf.h kbdio.h mman.h \
 	mount.h mtio.h param.h ptrace.h queue.h resource.h \
 	select.h sem.h shm.h sigcontext.h signal.h socket.h \
-	soundcard.h statfs.h stat.h svrctl.h timeb.h \
+	soundcard.h statfs.h statvfs.h stat.h svrctl.h timeb.h \
 	time.h times.h types.h ucontext.h uio.h un.h utsname.h video.h vm.h \
-	wait.h cdefs.h
+	wait.h cdefs.h 
 
 .include <minix.kinc.mk>

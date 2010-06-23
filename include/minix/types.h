@@ -100,6 +100,8 @@ typedef short        nlink_t;	   /* number of links to a file */
 typedef long	       off_t;	   /* offset within a file */
 typedef int            pid_t;	   /* process id (must be signed) */
 typedef short          uid_t;	   /* user id */
+typedef unsigned long  fsblkcnt_t; /* File system block count */
+typedef unsigned long  fsfilcnt_t; /* File system file count */
 
 /* Signal handler type, e.g. SIG_IGN */
 typedef void _PROTOTYPE( (*sighandler_t), (int) );
