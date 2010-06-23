@@ -2,7 +2,7 @@
 PROG=	mfs
 SRCS=	cache.c device.c link.c \
 	mount.c misc.c open.c protect.c read.c \
-	stadir.c table.c time.c utility.c \
+	stadir.c stats.c table.c time.c utility.c \
 	write.c inode.c main.c path.c super.c
 
 DPADD+=	${LIBSYS}
@@ -13,7 +13,7 @@ MAN=
 BINDIR?= /sbin
 INSTALLFLAGS+=	-S 128k
 
-DEFAULT_NR_BUFS= 1024
+DEFAULT_NR_BUFS= 102400
 CPPFLAGS+= -DDEFAULT_NR_BUFS=${DEFAULT_NR_BUFS}
 
 .include <minix.prog.mk>

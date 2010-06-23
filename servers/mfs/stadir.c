@@ -1,6 +1,7 @@
 #include "fs.h"
 #include <sys/stat.h>
 #include <sys/statfs.h>
+#include <sys/statvfs.h>
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
@@ -71,6 +72,38 @@ PUBLIC int fs_fstatfs()
   return(r);
 }
 
+
+/*===========================================================================*
+ *				fs_statvfs				     *
+ *===========================================================================*/
+PUBLIC int fs_statvfs()
+{
+  struct statvfs st;
+  struct super_block *sp;
+  int r, scale;
+
+  sp = get_super(fs_dev);
+
+  scale = sp->s_log_zone_size;
+
+  st.f_bsize =  sp->s_block_size << scale;
+  st.f_frsize = sp->s_block_size;
+  st.f_blocks = sp->s_zones << scale;
+  st.f_bfree = count_free_bits(sp, ZMAP) << scale;
+  st.f_bavail = st.f_bfree;
+  st.f_files = sp->s_ninodes;
+  st.f_ffree = count_free_bits(sp, IMAP);
+  st.f_favail = st.f_ffree;
+  st.f_fsid = fs_dev;
+  st.f_flag = (sp->s_rd_only == 1 ? ST_RDONLY : 0);
+  st.f_namemax = NAME_MAX;
+
+  /* Copy the struct to user space. */
+  r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0, (vir_bytes) &st,
+		     (phys_bytes) sizeof(st), D);
+  
+  return(r);
+}
 
 /*===========================================================================*
  *                             fs_stat					     *
