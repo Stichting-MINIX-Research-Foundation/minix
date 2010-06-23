@@ -30,6 +30,10 @@ LDADD.boot=		-lsys
 BINDIR.boot=	/usr/mdec
 MAN.boot=
 
+all: .PHONY bootsize
+bootsize: boot
+	${INSTALL} -S 22kb boot
+
 SRCS.masterboot=	masterboot.s
 CPPFLAGS.masterboot.s=	${I86CPPFLAGS}
 LDFLAGS.masterboot=	${I86LDFLAGS}
