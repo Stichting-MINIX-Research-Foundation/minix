@@ -62,6 +62,7 @@ PUBLIC void vm_init(struct proc *newptproc)
 	write_cr3(0);
 	switch_address_space(newptproc);
 	assert(ptproc == newptproc);
+	catch_pagefaults = 0;
 	vm_enable_paging();
 	vm_running = 1;
 }

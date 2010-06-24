@@ -12,7 +12,7 @@
 #include "kernel/proto.h"
 #include <machine/vm.h>
 
-extern int catch_pagefaults = 0;
+extern int catch_pagefaults;
 
 PRIVATE void pagefault( struct proc *pr,
 			struct exception_frame * frame,
