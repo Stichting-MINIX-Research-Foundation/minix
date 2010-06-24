@@ -7,6 +7,7 @@
 #include "proc.h"
 #include "debug.h"
 
+#include <minix/callnr.h>
 #include <minix/sysutil.h>
 #include <limits.h>
 #include <string.h>
@@ -234,3 +235,89 @@ PUBLIC void print_proc_recursive(struct proc *pp)
 	print_proc_depends(pp, 0);
 }
 
+#if DEBUG_DUMPIPC
+PRIVATE const char *mtypename(int mtype, int iscall)
+{
+	/* use generated file to recognize message types */
+	if (iscall) {
+		switch(mtype) {
+#define IDENT(x) case x: return #x;
+#include "extracted-mtype.h"
+#undef IDENT(
+		}
+	} else {
+		switch(mtype) {
+#define IDENT(x) case x: return #x;
+#include "extracted-errno.h"
+#undef IDENT(
+		}
+	}
+
+	/* no match */
+	return NULL;
+}
+
+PRIVATE void printparam(const char *name, const void *data, size_t size)
+{
+	printf(" %s=", name);
+	switch (size) {
+		case sizeof(char):	printf("%d", *(char *) data);	break;
+		case sizeof(short):	printf("%d", *(short *) data);	break;
+		case sizeof(int):	printf("%d", *(int *) data);	break;
+		default:		printf("(%u bytes)", size);	break;
+	}
+}
+
+PRIVATE void printproc(struct proc *rp)
+{
+	if (rp)
+		printf(" %s(%d)", rp->p_name, rp - proc);
+	else
+		printf(" kernel");
+}
+
+PRIVATE void printmsg(message *msg, struct proc *src, struct proc *dst, 
+	char operation, int iscall, int printparams)
+{
+	const char *name;
+	int mtype = msg->m_type;
+
+	/* source, destination and message type */
+	printf("%c", operation);
+	printproc(src);
+	printproc(dst);
+	name = mtypename(mtype, iscall);
+	if (name) {
+		printf(" %s(%d)", name, mtype);
+	} else {
+		printf(" %d", mtype);
+	}
+
+	if (iscall && printparams) {
+#define IDENT(x, y) if (mtype == x) printparam(#y, &msg->y, sizeof(msg->y));
+#include "extracted-mfield.h"
+#undef IDENT
+	}
+	printf("\n");
+}
+
+PUBLIC void printmsgkcall(message *msg, struct proc *proc)
+{
+	printmsg(msg, proc, NULL, 'k', 1, 1);
+}
+
+PUBLIC void printmsgkresult(message *msg, struct proc *proc)
+{
+	printmsg(msg, NULL, proc, 'k', 0, 0);
+}
+
+PUBLIC void printmsgrecv(message *msg, struct proc *src, struct proc *dst)
+{
+	printmsg(msg, src, dst, 'r', src->p_misc_flags & MF_REPLY_PEND, 0);
+}
+
+PUBLIC void printmsgsend(message *msg, struct proc *src, struct proc *dst)
+{
+	printmsg(msg, src, dst, 's', src->p_misc_flags & MF_REPLY_PEND, 1);
+}
+#endif

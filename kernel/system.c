@@ -76,6 +76,9 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 		  /* copy the result as a message to the original user buffer */
 		  msg->m_source = SYSTEM;
 		  msg->m_type = result;		/* report status of call */
+#if DEBUG_DUMPIPC
+	printmsgkresult(msg, caller);
+#endif
 		  if (copy_msg_to_user(caller, msg,
 				  (message *)caller->p_delivermsg_vir)) {
 			  printf("WARNING wrong user pointer 0x%08x from "
@@ -92,7 +95,10 @@ PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
 {
   int result = OK;
   int call_nr;
-
+  
+#if DEBUG_DUMPIPC
+	printmsgkcall(msg, caller);
+#endif
   call_nr = msg->m_type - KERNEL_CALL;
 
   /* See if the caller made a valid request and try to handle it. */

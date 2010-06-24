@@ -101,6 +101,14 @@ _PROTOTYPE( char *schedulerstr, (struct proc *scheduler) );
 _PROTOTYPE( void print_proc, (struct proc *pp));
 /* prints the given process and recursively all processes it depends on */
 _PROTOTYPE( void print_proc_recursive, (struct proc *pp));
+#if DEBUG_DUMPIPC
+_PROTOTYPE( void printmsgrecv, (message *msg, struct proc *src, 
+						struct proc *dst)	);
+_PROTOTYPE( void printmsgsend, (message *msg, struct proc *src, 
+						struct proc *dst)	);
+_PROTOTYPE( void printmsgkcall, (message *msg, struct proc *proc)	);
+_PROTOTYPE( void printmsgkresult, (message *msg, struct proc *proc)	);
+#endif
 
 /* system/do_safemap.c */
 _PROTOTYPE( int map_invoke_vm, (struct proc * caller, int req_type,

@@ -560,6 +560,11 @@ PUBLIC int mini_send(
 		: (flags & NON_BLOCKING ? SENDNB : SEND));
 	IPC_STATUS_ADD_CALL(dst_ptr, call);
 	RTS_UNSET(dst_ptr, RTS_RECEIVING);
+
+#if DEBUG_DUMPIPC
+	printmsgsend(&dst_ptr->p_delivermsg, caller_ptr, dst_ptr);
+	printmsgrecv(&dst_ptr->p_delivermsg, caller_ptr, dst_ptr);
+#endif
   } else {
 	if(flags & NON_BLOCKING) {
 		return(ENOTREADY);
@@ -592,6 +597,10 @@ PUBLIC int mini_send(
 	xpp = &dst_ptr->p_caller_q;		/* find end of list */
 	while (*xpp) xpp = &(*xpp)->p_q_link;	
 	*xpp = caller_ptr;			/* add caller to end */
+
+#if DEBUG_DUMPIPC
+	printmsgsend(&caller_ptr->p_sendmsg, caller_ptr, dst_ptr);
+#endif
   }
   return(OK);
 }
@@ -718,6 +727,10 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 	    if (sender->p_misc_flags & MF_SIG_DELAY)
 		sig_delay_done(sender);
 
+#if DEBUG_DUMPIPC
+            printmsgrecv(&caller_ptr->p_delivermsg, *xpp, caller_ptr);
+#endif
+		
             *xpp = sender->p_q_link;		/* remove from queue */
 	    sender->p_q_link = NULL;
             return(OK);				/* report success */
