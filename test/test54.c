@@ -55,7 +55,7 @@ int main(void)
 		err(1, "Test failed.\n");
 	}
 
-	printf(" ok\n");
+	printf("ok\n");
 
 	close(fd);
 	free(wbuf);

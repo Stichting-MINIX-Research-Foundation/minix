@@ -12,7 +12,7 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test30 test31 test32        test34 test35 test36 test37 test38 \
 	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
 	test42 test44 test45 test47 test48 test49 test50 test51 test52 test53 \
-	test54
+	test54 test55
 
 BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43 test46
@@ -110,3 +110,4 @@ test51-gcc: test51.c
 test52: test52.c
 test52-gcc: test52.c
 test54: test54.c
+test55: test55.c
