@@ -1472,11 +1472,6 @@ static void ctty(char *line)
 	printf("No serial line support under DOS\n");
 }
 
-reset()
-{
-	printf("No reset support under DOS\n");
-}
-
 #endif /* DOS */
 #endif /* BIOS */
 
