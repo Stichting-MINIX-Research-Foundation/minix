@@ -194,6 +194,7 @@ _PROTOTYPE( int tcsetattr, \
  * The ioctls TIOCGWINSZ and TIOCSWINSZ can be used to get and set this 
  * information.
  */
+#endif /* _MINIX */
 
 struct winsize
 {
@@ -202,6 +203,5 @@ struct winsize
 	unsigned short	ws_xpixel;	/* horizontal size, pixels */
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
-#endif /* _MINIX */
 
 #endif /* _TERMIOS_H */

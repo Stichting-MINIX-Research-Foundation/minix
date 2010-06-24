@@ -157,15 +157,9 @@ _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
 _PROTOTYPE( int readlink, (const char *, char *, size_t)		);
 _PROTOTYPE( int getopt, (int _argc, char * const _argv[], char const *_opts)		);
 extern char *optarg;
+extern int optreset;	/* Reset getopt state */
 extern int optind, opterr, optopt;
 _PROTOTYPE( int usleep, (useconds_t _useconds)				);
-
-#ifdef _MINIX
-#ifndef _TYPE_H
-#include <minix/type.h>
-#endif
-
-extern int optreset;	/* Reset getopt state */
 
 _PROTOTYPE( int brk, (char *_addr)					);
 _PROTOTYPE( int chroot, (const char *_name)				);
@@ -182,9 +176,25 @@ _PROTOTYPE( int fsync, (int fd)						);
 _PROTOTYPE( int reboot, (int _how, ...)					);
 _PROTOTYPE( int gethostname, (char *_hostname, size_t _len)		);
 _PROTOTYPE( int getdomainname, (char *_domain, size_t _len)		);
+
+
+/* For compatibility with other Unix systems */
+_PROTOTYPE( int getpagesize, (void)					);
+_PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
+_PROTOTYPE( int initgroups, (const char *name, gid_t basegid)		);
+_PROTOTYPE( void *setmode, (const char *)				);
+_PROTOTYPE( mode_t  getmode, (const void *, mode_t)			);
+_PROTOTYPE( void    strmode, (mode_t, char *)				);
 _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
+
+#ifdef _MINIX
+#ifndef _TYPE_H
+#include <minix/type.h>
+#endif
+
+
 _PROTOTYPE( int getsysinfo, (endpoint_t who, int what, void *where)	);
 _PROTOTYPE( int getsigset, (sigset_t *sigset)				);
 _PROTOTYPE( int getprocnr, (void)					);
@@ -203,14 +213,6 @@ _PROTOTYPE(int getdma, (endpoint_t *procp, phys_bytes *basep,
 _PROTOTYPE( pid_t getnpid, (endpoint_t proc_ep)				);
 _PROTOTYPE( uid_t getnuid, (endpoint_t proc_ep)				);
 _PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);
-
-/* For compatibility with other Unix systems */
-_PROTOTYPE( int getpagesize, (void)					);
-_PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
-_PROTOTYPE( int initgroups, (const char *name, gid_t basegid)		);
-_PROTOTYPE( void *setmode, (const char *)				);
-_PROTOTYPE( mode_t  getmode, (const void *, mode_t)			);
-_PROTOTYPE( void    strmode, (mode_t, char *)				);
 
 #endif
 
