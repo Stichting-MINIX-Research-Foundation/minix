@@ -30,7 +30,7 @@ LDADD.boot=		-lsys
 BINDIR.boot=	/usr/mdec
 MAN.boot=
 
-all: .PHONY bootsize
+realall: .PHONY bootsize
 bootsize: boot
 	${INSTALL} -S 22kb boot
 
