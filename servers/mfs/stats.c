@@ -1,6 +1,7 @@
 #include "fs.h"
 #include <string.h>
 #include <minix/com.h>
+#include <assert.h>
 #include <minix/u64.h>
 #include "buf.h"
 #include "inode.h"
@@ -50,6 +51,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
   bcount = bit_blocks;
   do {
     bp = get_block(sp->s_dev, start_block + block, NORMAL);
+    assert(bp);
     wlim = &bp->b_bitmap[FS_BITMAP_CHUNKS(sp->s_block_size)];
 
     /* Iterate over the words in block. */
@@ -78,6 +80,7 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
 
       if (b >= map_bits) break;
     }
+    put_block(bp, MAP_BLOCK);
     ++block;
     word = 0;
   } while (--bcount > 0);
