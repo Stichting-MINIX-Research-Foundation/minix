@@ -118,6 +118,9 @@ char **argv;
   /* Tell init to stop spawning getty's. */
   kill(1, SIGTERM);
 
+  /* Extra sync for the case where SIGTERM causes deadlock */
+  sync();
+
   /* Give everybody a chance to die peacefully. */
   printf("Sending SIGTERM to all processes ...\n");
   kill(-1, SIGTERM);
