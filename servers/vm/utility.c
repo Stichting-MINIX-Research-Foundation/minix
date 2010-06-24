@@ -127,9 +127,9 @@ PUBLIC int vm_isokendpt(endpoint_t endpoint, int *proc)
         if(*proc < 0 || *proc >= NR_PROCS)
 		return EINVAL;
         if(*proc >= 0 && endpoint != vmproc[*proc].vm_endpoint)
-                return EDEADSRCDST;
+                return EDEADEPT;
         if(*proc >= 0 && !(vmproc[*proc].vm_flags & VMF_INUSE))
-                return EDEADSRCDST;
+                return EDEADEPT;
         return OK;
 }
 

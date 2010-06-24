@@ -111,9 +111,9 @@ PUBLIC int pm_isokendpt(int endpoint, int *proc)
 	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
 		return EINVAL;
 	if(*proc >= 0 && endpoint != mproc[*proc].mp_endpoint)
-		return EDEADSRCDST;
+		return EDEADEPT;
 	if(*proc >= 0 && !(mproc[*proc].mp_flags & IN_USE))
-		return EDEADSRCDST;
+		return EDEADEPT;
 	return OK;
 }
 

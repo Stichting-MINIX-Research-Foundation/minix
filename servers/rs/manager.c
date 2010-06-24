@@ -857,7 +857,7 @@ PUBLIC void terminate_service(struct rproc *rp)
       }
 
       /* See if a late reply has to be sent. */
-      r = (rp->r_caller_request == RS_DOWN ? OK : EDEADSRCDST);
+      r = (rp->r_caller_request == RS_DOWN ? OK : EDEADEPT);
       late_reply(rp, r);
 
       /* Unpublish the service. */

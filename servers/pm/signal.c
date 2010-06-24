@@ -222,14 +222,14 @@ PUBLIC int process_ksig(endpoint_t proc_nr_e, int signo)
 
   if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0) {
 	printf("PM: process_ksig: %d?? not ok\n", proc_nr_e);
-	return EDEADSRCDST; /* process is gone. */
+	return EDEADEPT; /* process is gone. */
   }
   rmp = &mproc[proc_nr];
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
 #if 0
 	printf("PM: process_ksig: %d?? exiting / not in use\n", proc_nr_e);
 #endif
-	return EDEADSRCDST; /* process is gone. */
+	return EDEADEPT; /* process is gone. */
   }
   proc_id = rmp->mp_pid;
   mp = &mproc[0];			/* pretend signals are from PM */
@@ -287,7 +287,7 @@ PUBLIC int process_ksig(endpoint_t proc_nr_e, int signo)
       return OK; /* signal has been delivered */
   }
   else {
-      return EDEADSRCDST; /* process is gone */
+      return EDEADEPT; /* process is gone */
   }
 }
 

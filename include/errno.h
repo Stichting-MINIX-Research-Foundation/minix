@@ -114,12 +114,15 @@ extern int errno;		  /* place where the error numbers go */
  */
 #define ELOCKED      (_SIGN 101)  /* can't send message due to deadlock */
 #define EBADCALL     (_SIGN 102)  /* illegal system call number */
-#define EBADSRCDST   (_SIGN 103)  /* bad source or destination process */
 #define ECALLDENIED  (_SIGN 104)  /* no permission for system call */
 #define EDEADSRCDST  (_SIGN 105)  /* source or destination is not alive */
 #define ENOTREADY    (_SIGN 106)  /* source or destination is not ready */
 #define EBADREQUEST  (_SIGN 107)  /* destination cannot handle request */
 #define ETRAPDENIED  (_SIGN 110)  /* IPC trap not allowed */
 #define EDONTREPLY   (_SIGN 201)  /* pseudo-code: don't send a reply */
+
+/* The following are non-POSIX server responses */
+#define EBADEPT      (_SIGN 301)  /* specified endpoint is bad */
+#define EDEADEPT     (_SIGN 302)  /* specified endpoint is not alive */
 
 #endif /* _ERRNO_H */

@@ -175,7 +175,7 @@ PUBLIC int block_dev_io(
   /* See if driver is roughly valid. */
   if (driver_e == NONE) {
 	printf("MFS(%d) block_dev_io: no driver for dev %x\n", SELF_E, dev);
-	return(EDEADSRCDST);
+	return(EDEADEPT);
   }
   
   /* The io vector copying relies on this I/O being for FS itself. */
@@ -205,7 +205,7 @@ PUBLIC int block_dev_io(
 
   /* Call the task. */
   r = sendrec(driver_e, &m);
-  if(r == OK && m.REP_STATUS == ERESTART) r = EDEADSRCDST;
+  if(r == OK && m.REP_STATUS == ERESTART) r = EDEADEPT;
 
   /* As block I/O never SUSPENDs, safe cleanup must be done whether
    * the I/O succeeded or not. */
@@ -217,7 +217,7 @@ PUBLIC int block_dev_io(
    * - VFS sends the new driver endp for the FS proc and the request again 
    */
   if (r != OK) {
-	if (r == EDEADSRCDST) {
+	if (r == EDEADSRCDST || r == EDEADEPT) {
 		printf("MFS(%d) dead driver %d\n", SELF_E, driver_e);
 		driver_endpoints[major(dev)].driver_e = NONE;
 		return(r);
@@ -331,10 +331,10 @@ PRIVATE int gen_io(
 
   r = sendrec(task_nr, mess_ptr);
   if(r == OK && mess_ptr->REP_STATUS == ERESTART)
-  	r = EDEADSRCDST;
+  	r = EDEADEPT;
 
   if (r != OK) {
-	if (r == EDEADSRCDST) {
+	if (r == EDEADSRCDST || r == EDEADEPT) {
 		printf("fs: dead driver %d\n", task_nr);
 		panic("should handle crashed drivers");
 		return(r);

@@ -115,7 +115,7 @@ PUBLIC int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int
   if(failed && fatal)
 	panic("isokendpt_f failed");
 
-  return(failed ? EDEADSRCDST : OK);
+  return(failed ? EDEADEPT : OK);
 }
 
 

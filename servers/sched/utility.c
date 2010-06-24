@@ -32,13 +32,13 @@ PUBLIC int sched_isokendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if (*proc < 0)
-		return (EBADSRCDST); /* Don't schedule tasks */
+		return (EBADEPT); /* Don't schedule tasks */
 	if(*proc >= NR_PROCS)
 		return (EINVAL);
 	if(endpoint != schedproc[*proc].endpoint)
-		return (EDEADSRCDST);
+		return (EDEADEPT);
 	if(!(schedproc[*proc].flags & IN_USE))
-		return (EDEADSRCDST);
+		return (EDEADEPT);
 	return (OK);
 }
 
@@ -49,11 +49,11 @@ PUBLIC int sched_isemtyendpt(int endpoint, int *proc)
 {
 	*proc = _ENDPOINT_P(endpoint);
 	if (*proc < 0)
-		return (EBADSRCDST); /* Don't schedule tasks */
+		return (EBADEPT); /* Don't schedule tasks */
 	if(*proc >= NR_PROCS)
 		return (EINVAL);
 	if(schedproc[*proc].flags & IN_USE)
-		return (EDEADSRCDST);
+		return (EDEADEPT);
 	return (OK);
 }
 

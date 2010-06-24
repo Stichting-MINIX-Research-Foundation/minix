@@ -526,7 +526,7 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
 
   /* Don't bother if a termination signal has already been processed. */
   if((rp->r_flags & RS_TERMINATED) && !(rp->r_flags & RS_EXITING)) {
-      return EDEADSRCDST; /* process is gone */
+      return EDEADEPT; /* process is gone */
   }
 
   /* Ignore external signals for inactive service instances. */
@@ -551,7 +551,7 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
       rp->r_flags |= RS_TERMINATED;
       terminate_service(rp);
 
-      return EDEADSRCDST; /* process is now gone */
+      return EDEADEPT; /* process is now gone */
   }
 
   /* Translate every non-termination signal into a message. */

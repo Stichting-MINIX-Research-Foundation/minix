@@ -184,7 +184,7 @@ PUBLIC int block_dev_io(
   driver_e = driver_endpoints[(dev >> MAJOR) & BYTE].driver_e;
   
   /* See if driver is roughly valid. */
-  if (driver_e == NONE) return(EDEADSRCDST);
+  if (driver_e == NONE) return(EDEADEPT);
   
   /* The io vector copying relies on this I/O being for FS itself. */
   if(proc_e != SELF_E) {
@@ -214,7 +214,7 @@ PUBLIC int block_dev_io(
 
   /* Call the task. */
   r = sendrec(driver_e, &m);
-  if(r == OK && m.REP_STATUS == ERESTART) r = EDEADSRCDST;
+  if(r == OK && m.REP_STATUS == ERESTART) r = EDEADEPT;
 
   /* As block I/O never SUSPENDs, safe cleanup must be done whether
    * the I/O succeeded or not. */
@@ -226,7 +226,7 @@ PUBLIC int block_dev_io(
    * - VFS sends the new driver endp for the FS proc and the request again 
    */
   if (r != OK) {
-      if (r == EDEADSRCDST) {
+      if (r == EDEADSRCDST || r == EDEADEPT) {
           printf("ISOFS(%d) dead driver %d\n", SELF_E, driver_e);
           driver_endpoints[(dev >> MAJOR) & BYTE].driver_e = NONE;
           return(r);
@@ -299,9 +299,9 @@ message *mess_ptr;		/* pointer to message for task */
   proc_e = mess_ptr->IO_ENDPT;
 
   r = sendrec(task_nr, mess_ptr);
-  if(r == OK && mess_ptr->REP_STATUS == ERESTART) r = EDEADSRCDST;
+  if(r == OK && mess_ptr->REP_STATUS == ERESTART) r = EDEADEPT;
 	if (r != OK) {
-		if (r == EDEADSRCDST) {
+		if (r == EDEADSRCDST || r == EDEADEPT) {
 			printf("fs: dead driver %d\n", task_nr);
 			panic("should handle crashed drivers");
 			/* dmap_unmap_by_endpt(task_nr); */
