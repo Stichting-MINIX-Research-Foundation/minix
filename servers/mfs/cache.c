@@ -63,10 +63,8 @@ PUBLIC struct buf *get_block(
   if(vmcache_avail < 0) {
 	/* Test once for the availability of the vm yield block feature. */
 	if(vm_forgetblock(VM_BLOCKID_NONE) == ENOSYS) {
-		printf("mfs: no cache\n");
 		vmcache_avail = 0;
 	} else {
-		printf("mfs: cache\n");
 		vmcache_avail = 1;
 	}
   }
