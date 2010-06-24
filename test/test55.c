@@ -8,15 +8,17 @@
 #define TRIALS 10
 #define SIZE   65536
 
-void create_file(void)
+#define TMPPATH "/usr/tmp/"
+
+char *create_file(void)
 {
 	char buf[SIZE]={0};
 	char *p;
+	ssize_t ntowrite, nwritten;
 	int fd;
 	char *filename;
-	ssize_t ntowrite, nwritten;
 
-	if((filename = mktemp("/tmp/statvfs_test_XXXXXXX")) == NULL) {
+	if((filename = mktemp(TMPPATH "statvfs_test_XXXXXXX")) == NULL) {
 		err(1, "mktemp failed");
 	}
 
@@ -33,6 +35,10 @@ void create_file(void)
 		p += nwritten;
 		ntowrite -= nwritten;
 	}
+
+	close(fd);
+
+	return filename;
 }
 
 int main(int argc, char *argv[])
@@ -54,7 +60,10 @@ int main(int argc, char *argv[])
 	printf("Test 55 ");
 	
 	for(i = 0; i < TRIALS; i++) {
-		if(statvfs("/tmp", &stats) < 0) {
+		int r;
+		char *filename;
+
+		if(statvfs(TMPPATH, &stats) < 0) {
 			perror("statvfs failed");
 			return 1;
 		}
@@ -71,9 +80,13 @@ int main(int argc, char *argv[])
 		f_flag    = stats.f_flag   ;
 		f_namemax = stats.f_namemax;
 		
-		create_file();
+		filename = create_file();
 
-		if(statvfs("/tmp", &stats) < 0) {
+		r = statvfs(TMPPATH, &stats);
+
+		unlink(filename);
+
+		if(r < 0) {
 			perror("statvfs failed");
 			return 1;
 		}
