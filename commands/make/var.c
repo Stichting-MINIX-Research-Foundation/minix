@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.159 2010/06/06 01:13:12 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.159 2010/06/06 01:13:12 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.159 2010/06/06 01:13:12 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -123,6 +123,7 @@ __RCSID("$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $");
  * XXX: There's a lot of duplication in these functions.
  */
 
+#include    <sys/stat.h>
 #ifndef NO_REGEX
 #include    <sys/types.h>
 #include    <regex.h>
@@ -590,6 +591,13 @@ Var_Export1(const char *name, int parent)
 	    v->flags |= (VAR_EXPORTED|VAR_REEXPORT);
 	    return 1;
 	}
+	if (v->flags & VAR_IN_USE) {
+	    /*
+	     * We recursed while exporting in a child.
+	     * This isn't going to end well, just skip it.
+	     */
+	    return 0;
+	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
 	if (n < (int)sizeof(tmp)) {
 	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
@@ -674,6 +682,7 @@ Var_Export(char *str, int isExport)
     char *val;
     char **av;
     char *as;
+    int track;
     int ac;
     int i;
 
@@ -682,6 +691,12 @@ Var_Export(char *str, int isExport)
 	return;
     }
 
+    if (strncmp(str, "-env", 4) == 0) {
+	track = 0;
+	str += 4;
+    } else {
+	track = VAR_EXPORT_PARENT;
+    }
     val = Var_Subst(NULL, str, VAR_GLOBAL, 0);
     av = brk_string(val, &ac, FALSE, &as);
     for (i = 0; i < ac; i++) {
@@ -701,10 +716,10 @@ Var_Export(char *str, int isExport)
 		continue;
 	    }
 	}
-	if (Var_Export1(name, VAR_EXPORT_PARENT)) {
+	if (Var_Export1(name, track)) {
 	    if (VAR_EXPORTED_ALL != var_exportedVars)
 		var_exportedVars = VAR_EXPORTED_YES;
-	    if (isExport) {
+	    if (isExport && track) {
 		Var_Append(MAKE_EXPORTED, name, VAR_GLOBAL);
 	    }
 	}
@@ -1859,6 +1874,33 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
     return Buf_Destroy(&buf, FALSE);
 }
 
+
+/*-
+ * VarRealpath --
+ *	Replace each word with the result of realpath()
+ *	if successful.
+ */
+static Boolean
+VarRealpath(GNode *ctx __unused, Var_Parse_State *vpstate,
+	    char *word, Boolean addSpace, Buffer *buf,
+	    void *patternp __unused)
+{
+	struct stat st;
+	char rbuf[MAXPATHLEN];
+	char *rp;
+			    
+	if (addSpace && vpstate->varSpace) {
+	    Buf_AddByte(buf, vpstate->varSpace);
+	}
+	addSpace = TRUE;
+	rp = realpath(word, rbuf);
+	if (rp && *rp == '/' && stat(rp, &st) == 0)
+		word = rp;
+	
+	Buf_AddBytes(buf, strlen(word), word);
+	return(addSpace);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * VarModify --
@@ -2849,7 +2891,12 @@ ApplyModifiers(char *nstr, const char *tstr,
 			 * Check for two-character options:
 			 * ":tu", ":tl"
 			 */
-			if (tstr[1] == 'u' || tstr[1] == 'l') {
+			if (tstr[1] == 'A') { /* absolute path */
+			    newStr = VarModify(ctxt, &parsestate, nstr,
+					       VarRealpath, NULL);
+			    cp = tstr + 2;
+			    termc = *cp;
+			} else if (tstr[1] == 'u' || tstr[1] == 'l') {
 			    newStr = VarChangeCase(nstr, (tstr[1] == 'u'));
 			    cp = tstr + 2;
 			    termc = *cp;

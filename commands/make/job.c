@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.146 2009/06/26 01:26:32 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.151 2010/06/17 03:36:05 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.146 2009/06/26 01:26:32 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.151 2010/06/17 03:36:05 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.146 2009/06/26 01:26:32 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.151 2010/06/17 03:36:05 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -341,8 +341,6 @@ static sigset_t caught_signals;	/* Set of signals we handle */
 #else
 #define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
-
-static char *tmpdir;		/* directory name, always ending with "/" */
 
 static void JobChildSig(int);
 static void JobContinueSig(int);
@@ -1022,8 +1020,11 @@ JobFinish(Job *job, int status)
 				job->node->name,
 			       WEXITSTATUS(status),
 			       (job->flags & JOB_IGNERR) ? "(ignored)" : "");
-		if (job->flags & JOB_IGNERR)
+		if (job->flags & JOB_IGNERR) {
 		    status = 0;
+		} else {
+		    PrintOnError(job->node, NULL);
+		}
 	    } else if (DEBUG(JOB)) {
 		if (job->node != lastNode) {
 		    MESSAGE(stdout, job->node);
@@ -1225,8 +1226,8 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    static const char msg[] = ": don't know how to make";
 
 	    if (gn->flags & FROM_DEPEND) {
-		fprintf(stdout, "%s: ignoring stale .depend for %s\n",
-			progname, gn->name);
+		fprintf(stdout, "%s: ignoring stale %s for %s\n",
+			progname, makeDependfile, gn->name);
 		return TRUE;
 	    }
 
@@ -1301,11 +1302,7 @@ JobExec(Job *job, char **argv)
     /* Pre-emptively mark job running, pid still zero though */
     job->job_state = JOB_ST_RUNNING;
 
-#if defined(__minix)
-    cpid = fork();
-#else
-    cpid = vfork();
-#endif
+    cpid = vFork();
     if (cpid == -1)
 	Punt("Cannot vfork: %s", strerror(errno));
 
@@ -1559,11 +1556,7 @@ JobStart(GNode *gn, int flags)
 	}
 
 	JobSigLock(&mask);
-	tfile = bmake_malloc(strlen(tmpdir) + sizeof(TMPPAT));
-	strcpy(tfile, tmpdir);
-	strcat(tfile, TMPPAT);
-	if ((tfd = mkstemp(tfile)) == -1)
-	    Punt("Could not create temporary file %s", strerror(errno));
+	tfd = mkTempFile(TMPPAT, &tfile);
 	if (!DEBUG(SCRIPT))
 		(void)eunlink(tfile);
 	JobSigUnlock(&mask);
@@ -1901,7 +1894,7 @@ JobRun(GNode *targ)
 #else
     Compat_Make(targ, targ);
     if (targ->made == ERROR) {
-	PrintOnError("\n\nStop.");
+	PrintOnError(targ, "\n\nStop.");
 	exit(1);
     }
 #endif
@@ -2126,8 +2119,6 @@ void
 Job_Init(void)
 {
     GNode         *begin;     /* node for commands to do at the very start */
-    const char    *p;
-    size_t        len;
 
     /* Allocate space for all the job info */
     job_table = bmake_malloc(maxJobs * sizeof *job_table);
@@ -2139,18 +2130,6 @@ Job_Init(void)
     errors = 	  0;
 
     lastNode =	  NULL;
-
-    /* set tmpdir, and ensure that it ends with "/" */
-    p = getenv("TMPDIR");
-    if (p == NULL || *p == '\0') {
-	p = _PATH_TMP;
-    }
-    len = strlen(p);
-    tmpdir = bmake_malloc(len + 2);
-    strcpy(tmpdir, p);
-    if (tmpdir[len - 1] != '/') {
-	strcat(tmpdir, "/");
-    }
 
     if (maxJobs == 1) {
 	/*
@@ -2195,13 +2174,13 @@ Job_Init(void)
     /*
      * Install a SIGCHLD handler.
      */
-    (void)signal(SIGCHLD, JobChildSig);
+    (void)bmake_signal(SIGCHLD, JobChildSig);
     sigaddset(&caught_signals, SIGCHLD);
 
 #define ADDSIG(s,h)				\
-    if (signal(s, SIG_IGN) != SIG_IGN) {	\
+    if (bmake_signal(s, SIG_IGN) != SIG_IGN) {	\
 	sigaddset(&caught_signals, s);		\
-	(void)signal(s, h);			\
+	(void)bmake_signal(s, h);			\
     }
 
     /*
@@ -2231,7 +2210,7 @@ Job_Init(void)
     if (begin != NULL) {
 	JobRun(begin);
 	if (begin->made == ERROR) {
-	    PrintOnError("\n\nStop.");
+	    PrintOnError(begin, "\n\nStop.");
 	    exit(1);
 	}
     }
@@ -2242,7 +2221,7 @@ static void JobSigReset(void)
 {
 #define DELSIG(s)					\
     if (sigismember(&caught_signals, s)) {		\
-	(void)signal(s, SIG_DFL);			\
+	(void)bmake_signal(s, SIG_DFL);			\
     }
 
     DELSIG(SIGINT)
@@ -2255,7 +2234,7 @@ static void JobSigReset(void)
     DELSIG(SIGWINCH)
     DELSIG(SIGCONT)
 #undef DELSIG
-    (void)signal(SIGCHLD, SIG_DFL);
+    (void)bmake_signal(SIGCHLD, SIG_DFL);
 }
 
 /*-

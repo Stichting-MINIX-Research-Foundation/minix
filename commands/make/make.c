@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.78 2009/01/23 21:26:30 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.79 2010/04/07 00:11:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.78 2009/01/23 21:26:30 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.79 2010/04/07 00:11:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.78 2009/01/23 21:26:30 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.79 2010/04/07 00:11:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -958,6 +958,9 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
 void
 Make_DoAllVar(GNode *gn)
 {
+    if (gn->flags & DONE_ALLSRC)
+	return;
+    
     Lst_ForEach(gn->children, MakeUnmark, gn);
     Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
@@ -974,6 +977,7 @@ Make_DoAllVar(GNode *gn)
 	if (p1)
 	    free(p1);
     }
+    gn->flags |= DONE_ALLSRC;
 }
 
 /*-

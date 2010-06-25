@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.46 2009/01/17 13:29:37 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.47 2010/02/06 20:37:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.46 2009/01/17 13:29:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.47 2010/02/06 20:37:13 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.46 2009/01/17 13:29:37 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.47 2010/02/06 20:37:13 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -237,7 +237,8 @@ For_Eval(char *line)
 
     if (strlist_num(&new_for->items) % strlist_num(&new_for->vars)) {
 	Parse_Error(PARSE_FATAL,
-		"Wrong number of words in .for substitution list %d %d",
+		"Wrong number of words (%d) in .for substitution list"
+		" with %d vars",
 		strlist_num(&new_for->items), strlist_num(&new_for->vars));
 	/*
 	 * Return 'success' so that the body of the .for loop is accumulated.

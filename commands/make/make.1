@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.166 2009/11/19 06:48:37 wiz Exp $
+.\"	$NetBSD: make.1,v 1.176 2010/06/10 18:35:22 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 15, 2009
+.Dd June 9, 2010
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -536,11 +536,48 @@ If the result of expanding a variable contains a dollar sign
 .Pq Ql \&$
 the string is expanded again.
 .Pp
-Variable substitution occurs at two distinct times, depending on where
+Variable substitution occurs at three distinct times, depending on where
 the variable is being used.
+.Bl -enum
+.It
 Variables in dependency lines are expanded as the line is read.
+.It
 Variables in shell commands are expanded when the shell command is
 executed.
+.It
+.Dq .for
+loop index variables are expanded on each loop iteration.
+Note that other variables are not expanded inside loops so
+the following example code:
+.Bd -literal -offset indent
+
+.Dv .for i in 1 2 3
+a+=     ${i}
+j=      ${i}
+b+=     ${j}
+.Dv .endfor
+
+all:
+	@echo ${a}
+	@echo ${b}
+
+.Ed
+will print:
+.Bd -literal -offset indent
+1 2 3
+3 3 3
+
+.Ed
+Because while ${a} contains
+.Dq 1 2 3
+after the loop is executed, ${b}
+contains
+.Dq ${j} ${j} ${j}
+which expands to
+.Dq 3 3 3
+since after the loop completes ${j} contains
+.Dq 3 .
+.El
 .Ss Variable classes
 The four different classes of variables (in order of increasing precedence)
 are:
@@ -652,31 +689,17 @@ The preferred variable to use is the environment variable
 because it is more compatible with other versions of
 .Nm
 and cannot be confused with the special target with the same name.
+.It Va .MAKE.DEPENDFILE
+Names the makefile (default
+.Ql Pa .depend )
+from which generated dependencies are read.
 .It Va .MAKE.EXPORTED
 The list of variables exported by
 .Nm .
-.It Va .MAKE.MAKEFILES
-The list of makefiles read by
-.Nm ,
-which is useful for tracking dependencies.
-Each makefile is recorded only once, regardless of the number of times read.
-.It Va .MAKE.LEVEL
-The recursion depth of
-.Nm .
-The initial instance of
-.Nm
-will be 0, and an incremented value is put into the environment
-to be seen by the next generation.
-This allows tests like:
-.Li .if ${.MAKE.LEVEL} == 0
-to protect things which should only be evaluated in the initial instance of
-.Nm .
-.It Va .MAKE.PID
-The process-id of
-.Nm .
-.It Va .MAKE.PPID
-The parent process-id of
-.Nm .
+.It Va .MAKE.JOBS
+The argument to the
+.Fl j
+option.
 .It Va .MAKE.JOB.PREFIX
 If
 .Nm
@@ -707,6 +730,38 @@ variable which is then
 entered into the environment for all programs which
 .Nm
 executes.
+.It Va .MAKE.LEVEL
+The recursion depth of
+.Nm .
+The initial instance of
+.Nm
+will be 0, and an incremented value is put into the environment
+to be seen by the next generation.
+This allows tests like:
+.Li .if ${.MAKE.LEVEL} == 0
+to protect things which should only be evaluated in the initial instance of
+.Nm .
+.It Va .MAKE.MAKEFILE_PREFERENCE
+The ordered list of makefile names
+(default
+.Ql Pa makefile ,
+.Ql Pa Makefile )
+that
+.Nm
+will look for.
+.It Va .MAKE.MAKEFILES
+The list of makefiles read by
+.Nm ,
+which is useful for tracking dependencies.
+Each makefile is recorded only once, regardless of the number of times read.
+.It Va .MAKE.MODE
+Processed after reading all makefiles.
+Can affect the mode that
+.Nm
+runs in.
+Currently just
+.Ql Pa compat
+mode.
 .It Va .MAKEOVERRIDES
 This variable is used to record the names of variables assigned to
 on the command line, so that they may be exported as part of
@@ -721,6 +776,12 @@ by appending their names to
 is re-exported whenever
 .Ql Va .MAKEOVERRIDES
 is modified.
+.It Va .MAKE.PID
+The process-id of
+.Nm .
+.It Va .MAKE.PPID
+The parent process-id of
+.Nm .
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
 .Nm
@@ -767,8 +828,10 @@ is set in the environment or on the command line.)
 .Pp
 Variable expansion is performed on the value before it's used,
 so expressions such as
-.Dl ${.CURDIR:C,^/usr/src,/var/obj,}
+.Dl ${.CURDIR:S,^/usr/src,/var/obj,}
 may be used.
+This is especially useful with
+.Ql Ev MAKEOBJDIR .
 .Pp
 .Ql Va .OBJDIR
 may be modified in the makefile as a global variable.
@@ -878,7 +941,7 @@ The standard shell wildcard characters
 .Pf ( Ql * ,
 .Ql \&? ,
 and
-.Ql Op )
+.Ql Oo Oc )
 may
 be used.
 The wildcard characters may be escaped with a backslash
@@ -925,6 +988,10 @@ safely through recursive invocations of
 .Nm .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
+.It Cm \&:tA
+Attempt to convert variable to an absolute path using
+.Xr realpath 3 ,
+if that fails, the value is unchanged.
 .It Cm \&:tl
 Converts variable to lower-case letters.
 .It Cm \&:ts Ns Ar c
@@ -934,6 +1001,7 @@ This modifier sets the separator to the character
 If
 .Ar c
 is omitted, then no separator is used.
+The common escapes (including octal numeric codes), work as expected.
 .It Cm \&:tu
 Converts variable to upper-case letters.
 .It Cm \&:tW
@@ -1274,6 +1342,11 @@ Conditional expressions are also preceded by a single dot as the first
 character of a line.
 The possible conditionals are as follows:
 .Bl -tag -width Ds
+.It Ic .error Ar message
+The message is printed along with the name of the makefile and line number,
+then
+.Nm
+will exit.
 .It Ic .export Ar variable ...
 Export the specified global variable.
 If no variable list is provided, all globals are exported
@@ -1286,6 +1359,20 @@ flag, so should be used with caution.
 Appending a variable name to
 .Va .MAKE.EXPORTED
 is equivalent to exporting a variable.
+.It Ic .export-env Ar variable ...
+The same as
+.Ql .export ,
+except that the variable is not appended to
+.Va .MAKE.EXPORTED .
+This allows exporting a value to the environment which is different from that
+used by
+.Nm
+internally.
+.It Ic .info Ar message
+The message is printed along with the name of the makefile and line number.
+.It Ic .undef Ar variable
+Un-define the specified global variable.
+Only global variables may be un-defined.
 .It Ic .unexport Ar variable ...
 The opposite of
 .Ql .export .
@@ -1322,9 +1409,10 @@ which is the minimal useful environment.
 Actually
 .Ql Ev .MAKE.LEVEL
 will also be pushed into the new environment.
-.It Ic .undef Ar variable
-Un-define the specified global variable.
-Only global variables may be un-defined.
+.It Ic .warning Ar message
+The message prefixed by
+.Ql Pa warning:
+is printed along with the name of the makefile and line number.
 .It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression ...
 Test the value of an expression.
 .It Ic .ifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
@@ -1627,6 +1715,13 @@ to the target's own name.
 .It Ic .END
 Any command lines attached to this target are executed after everything
 else is done.
+.It Ic .ERROR
+Any command lines attached to this target are executed when another target fails.
+The
+.Ic .ERROR_TARGET
+variable is set to the target that failed.
+See also
+.Ic MAKE_PRINT_VAR_ON_ERROR .
 .It Ic .IGNORE
 Mark each of the sources with the
 .Ic .IGNORE
@@ -1750,10 +1845,10 @@ character when used outside of any quoting characters.
 .El
 Example:
 .Bd -literal
-\&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \\
-	check="set -e" ignore="set +e" \\
-	echo="set -v" quiet="set +v" filter="set +v" \\
-	echoFlag=v errFlag=e newline="'\\n'"
+\&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \e
+	check="set -e" ignore="set +e" \e
+	echo="set -v" quiet="set +v" filter="set +v" \e
+	echoFlag=v errFlag=e newline="'\en'"
 .Ed
 .It Ic .SILENT
 Apply the

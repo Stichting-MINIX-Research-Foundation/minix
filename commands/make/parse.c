@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -191,6 +191,7 @@ typedef enum {
     Begin,  	    /* .BEGIN */
     Default,	    /* .DEFAULT */
     End,    	    /* .END */
+    dotError,	    /* .ERROR */
     Ignore,	    /* .IGNORE */
     Includes,	    /* .INCLUDES */
     Interrupt,	    /* .INTERRUPT */
@@ -245,6 +246,7 @@ static struct {
 { ".BEGIN", 	  Begin,    	0 },
 { ".DEFAULT",	  Default,  	0 },
 { ".END",   	  End,	    	0 },
+{ ".ERROR",   	  dotError,    	0 },
 { ".EXEC",	  Attribute,   	OP_EXEC },
 { ".IGNORE",	  Ignore,   	OP_IGNORE },
 { ".INCLUDES",	  Includes, 	0 },
@@ -449,6 +451,7 @@ ParseErrorInternal(const char *cfname, size_t clineno, int type,
 	va_list ap;
 
 	va_start(ap, fmt);
+	(void)fflush(stdout);
 	ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
 	va_end(ap);
 
@@ -487,6 +490,7 @@ Parse_Error(int type, const char *fmt, ...)
 	}
 
 	va_start(ap, fmt);
+	(void)fflush(stdout);
 	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
@@ -495,6 +499,53 @@ Parse_Error(int type, const char *fmt, ...)
 		ParseVErrorInternal(debug_file, fname, lineno, type, fmt, ap);
 		va_end(ap);
 	}
+}
+
+
+/*
+ * ParseMessage
+ *	Parse a .info .warning or .error directive
+ *
+ *	The input is the line minus the ".".  We substitute
+ *	variables, print the message and exit(1) (for .error) or just print
+ *	a warning if the directive is malformed.
+ */
+static Boolean
+ParseMessage(char *line)
+{
+    int mtype;
+
+    switch(*line) {
+    case 'i':
+	mtype = 0;
+	break;
+    case 'w':
+	mtype = PARSE_WARNING;
+	break;
+    case 'e':
+	mtype = PARSE_FATAL;
+	break;
+    default:
+	Parse_Error(PARSE_WARNING, "invalid syntax: \".%s\"", line);
+	return FALSE;
+    }
+
+    while (isalpha((u_char)*line))
+	line++;
+    if (!isspace((u_char)*line))
+	return FALSE;			/* not for us */
+    while (isspace((u_char)*line))
+	line++;
+
+    line = Var_Subst(NULL, line, VAR_CMD, 0);
+    Parse_Error(mtype, "%s", line);
+    free(line);
+
+    if (mtype == PARSE_FATAL) {
+	/* Terminate immediately. */
+	exit(1);
+    }
+    return TRUE;
 }
 
 /*-
@@ -973,6 +1024,7 @@ ParseDoDependency(char *line)
 		 *	.NOPATH		Don't search for file in the path
 		 *	.BEGIN
 		 *	.END
+		 *	.ERROR
 		 *	.INTERRUPT  	Are not to be considered the
 		 *			main target.
 		 *  	.NOTPARALLEL	Make only one target at a time.
@@ -993,6 +1045,7 @@ ParseDoDependency(char *line)
 			break;
 		    case Begin:
 		    case End:
+		    case dotError:
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
 			gn->type |= OP_NOTMAIN|OP_SPECIAL;
@@ -1122,6 +1175,7 @@ ParseDoDependency(char *line)
 	    case Default:
 	    case Begin:
 	    case End:
+	    case dotError:
 	    case Interrupt:
 		/*
 		 * These four create nodes on which to hang commands, so
@@ -2513,7 +2567,12 @@ Parse_File(const char *name, int fd)
 		} else if (strncmp(cp, "unexport", 8) == 0) {
 		    Var_UnExport(cp);
 		    continue;
-		}
+		} else if (strncmp(cp, "info", 4) == 0 ||
+			   strncmp(cp, "error", 5) == 0 ||
+			   strncmp(cp, "warning", 7) == 0) {
+		    if (ParseMessage(cp))
+			continue;
+		}		    
 	    }
 
 	    if (*line == '\t') {
@@ -2658,10 +2717,11 @@ Parse_File(const char *name, int fd)
     } while (ParseEOF() == CONTINUE);
 
     if (fatals) {
+	(void)fflush(stdout);
 	(void)fprintf(stderr,
 	    "%s: Fatal errors encountered -- cannot continue\n",
 	    progname);
-	PrintOnError(NULL);
+	PrintOnError(NULL, NULL);
 	exit(1);
     }
 }

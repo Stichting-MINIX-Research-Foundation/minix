@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.76 2009/02/22 07:33:00 dholland Exp $	*/
+/*	$NetBSD: compat.c,v 1.79 2010/06/03 15:40:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.76 2009/02/22 07:33:00 dholland Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.79 2010/06/03 15:40:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.76 2009/02/22 07:33:00 dholland Exp $");
+__RCSID("$NetBSD: compat.c,v 1.79 2010/06/03 15:40:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -355,11 +355,7 @@ again:
     /*
      * Fork and execute the single command. If the fork fails, we abort.
      */
-#if defined(__minix)
-    cpid = fork();
-#else
-    cpid = vfork();
-#endif
+    cpid = vFork();
     if (cpid < 0) {
 	Fatal("Could not fork");
     }
@@ -578,7 +574,7 @@ Compat_Make(void *gnp, void *pgnp)
 	} else if (keepgoing) {
 	    pgn->flags &= ~REMAKE;
 	} else {
-	    PrintOnError("\n\nStop.");
+	    PrintOnError(gn, "\n\nStop.");
 	    exit(1);
 	}
     } else if (gn->made == ERROR) {
@@ -645,17 +641,17 @@ Compat_Run(Lst targs)
 
     Compat_Init();
 
-    if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
-	signal(SIGINT, CompatInterrupt);
+    if (bmake_signal(SIGINT, SIG_IGN) != SIG_IGN) {
+	bmake_signal(SIGINT, CompatInterrupt);
     }
-    if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
-	signal(SIGTERM, CompatInterrupt);
+    if (bmake_signal(SIGTERM, SIG_IGN) != SIG_IGN) {
+	bmake_signal(SIGTERM, CompatInterrupt);
     }
-    if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
-	signal(SIGHUP, CompatInterrupt);
+    if (bmake_signal(SIGHUP, SIG_IGN) != SIG_IGN) {
+	bmake_signal(SIGHUP, CompatInterrupt);
     }
-    if (signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
-	signal(SIGQUIT, CompatInterrupt);
+    if (bmake_signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
+	bmake_signal(SIGQUIT, CompatInterrupt);
     }
 
     ENDNode = Targ_FindNode(".END", TARG_CREATE);
@@ -669,7 +665,7 @@ Compat_Run(Lst targs)
 	if (gn != NULL) {
 	    Compat_Make(gn, gn);
             if (gn->made == ERROR) {
-                PrintOnError("\n\nStop.");
+                PrintOnError(gn, "\n\nStop.");
                 exit(1);
             }
 	}
@@ -710,7 +706,7 @@ Compat_Run(Lst targs)
     if (errors == 0) {
 	Compat_Make(ENDNode, ENDNode);
 	if (gn->made == ERROR) {
-	    PrintOnError("\n\nStop.");
+	    PrintOnError(gn, "\n\nStop.");
 	    exit(1);
 	}
     }
