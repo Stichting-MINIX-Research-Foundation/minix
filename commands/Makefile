@@ -13,7 +13,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck \
 	fsck1 ftp101 ftpd200 getty grep gomoku head host \
-	hostaddr id ifconfig ifdef indent install \
+	hostaddr ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	lex life loadkeys loadramdisk logger login look lp \
 	lpd ls lspci M m4 mail make MAKEDEV makewhatis man \
@@ -28,7 +28,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	sleep slip sort spell split srccrc stat strings strip \
 	stty su sum svclog swapfs swifi sync synctree sysenv \
 	syslogd tail talk talkd tcpd tcpdp tcpstat tee telnet \
-	telnetd term termcap tget time tinyhalt top touch tr \
+	telnetd term termcap tget time tinyhalt top tr \
 	truncate tsort ttt tty udpstat umount uname unexpand \
 	uniq unstack update urlget uud uue version vol wc \
 	whatis whereis which who whoami write writeisofs \
