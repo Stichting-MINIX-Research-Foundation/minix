@@ -88,6 +88,8 @@ int kernmappings = 0;
 /* Page table that contains pointers to all page directories. */
 u32_t page_directories_phys, *page_directories = NULL;
 
+PRIVATE char static_sparepages[I386_PAGE_SIZE*SPAREPAGES + I386_PAGE_SIZE];
+
 #if SANITYCHECKS
 /*===========================================================================*
  *				pt_sanitycheck		     		     *
@@ -130,21 +132,6 @@ PUBLIC void pt_sanitycheck(pt_t *pt, char *file, int line)
 	}
 }
 #endif
-
-/*===========================================================================*
- *				aalloc			     		     *
- *===========================================================================*/
-PRIVATE void *aalloc(size_t bytes)
-{
-/* Page-aligned malloc(). only used if vm_allocpage can't be used.  */
-	u32_t b;
-
-	b = (u32_t) malloc(I386_PAGE_SIZE + bytes);
-	if(!b) panic("aalloc: out of memory: %d", bytes);
-	b += I386_PAGE_SIZE - (b % I386_PAGE_SIZE);
-
-	return (void *) b;
-}
 
 /*===========================================================================*
  *				findhole		     		     *
@@ -727,12 +714,15 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	struct vm_ep_data ep_data;
 	vir_bytes sparepages_mem;
 	phys_bytes sparepages_ph;
+	vir_bytes ptr;
 
         /* Shorthand. */
         newpt = &vmprocess->vm_pt;
 
         /* Get ourselves spare pages. */
-        if(!(sparepages_mem = (vir_bytes) aalloc(I386_PAGE_SIZE*SPAREPAGES)))
+        ptr = (vir_bytes) static_sparepages;
+        ptr += I386_PAGE_SIZE - (ptr % I386_PAGE_SIZE);
+        if(!(sparepages_mem = ptr))
 		panic("pt_init: aalloc for spare failed");
         if((r=sys_umap(SELF, VM_D, (vir_bytes) sparepages_mem,
                 I386_PAGE_SIZE*SPAREPAGES, &sparepages_ph)) != OK)

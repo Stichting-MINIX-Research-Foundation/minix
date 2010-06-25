@@ -4,7 +4,6 @@
 #define _SYSTEM 1
 
 #define _MINIX 1	/* To get the brk() prototype (as _brk()). */
-#define brk _brk	/* Our brk() must redefine _brk(). */
 
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -150,23 +149,6 @@ vir_bytes *sp;                                  /* put stack pointer here */
   *sp = mytmpproc.p_reg.sp;
   return(OK);
 }       
-
-/*===========================================================================*
- *                              _brk                                         *
- *===========================================================================*/
-extern char *_brksize;
-PUBLIC int brk(brk_addr)
-char *brk_addr;
-{
-        int r;
-	struct vmproc *vmm = &vmproc[VM_PROC_NR];
-
-/* VM wants to call brk() itself. */
-        if((r=real_brk(vmm, (vir_bytes) brk_addr)) != OK)
-		panic("VM: brk() on myself failed");
-        _brksize = brk_addr;
-        return 0;
-}
 
 /*===========================================================================*
  *                              do_info                                      *
