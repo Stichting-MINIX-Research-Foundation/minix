@@ -46,11 +46,7 @@
 #endif
 #define	_PATH_DEFSYSMK		"sys.mk"
 #ifndef _PATH_DEFSYSPATH
-#if defined(__minix)
-#define	_PATH_DEFSYSPATH	"/etc/mk"
-#else
 #define	_PATH_DEFSYSPATH	"/usr/share/mk"
-#endif
 #endif
 #ifndef _PATH_TMP
 #define	_PATH_TMP		"/tmp/"		/* with trailing slash */

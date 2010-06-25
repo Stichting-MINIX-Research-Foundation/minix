@@ -36,7 +36,7 @@ world: mkfiles includes depend gnu-libraries install
 .endif
 
 mkfiles:
-	cp etc/mk/*.mk /etc/mk/
+	make -C share/mk install
 
 includes:
 	$(MAKE) -C include includes

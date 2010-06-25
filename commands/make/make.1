@@ -288,7 +288,7 @@ include statement.
 The
 .Fl m
 option can be used multiple times to form a search path.
-This path will override the default system include path: /etc/mk.
+This path will override the default system include path: /usr/share/mk.
 Furthermore the system include path will be appended to the search path used
 for
 .Qo Ar file Qc Ns -style
@@ -1800,7 +1800,7 @@ see the description of
 .Ql Va .OBJDIR
 for more details.
 .Sh FILES
-.Bl -tag -width /etc/mk -compact
+.Bl -tag -width /usr/share/mk -compact
 .It .depend
 list of dependencies
 .It Makefile
@@ -1809,7 +1809,7 @@ list of dependencies
 list of dependencies
 .It sys.mk
 system makefile
-.It /etc/mk
+.It /usr/share/mk
 system makefile directory
 .El
 .Sh COMPATIBILITY

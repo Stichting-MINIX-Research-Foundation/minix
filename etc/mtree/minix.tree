@@ -4,7 +4,6 @@
 755 root    operator /dev
 /dev/mouse -> /dev/kbdaux
 755 root    operator /etc
-755 root    operator /etc/mk
 755 root    operator /boot
 755 root    operator /boot/image
 555 root    operator /mnt
@@ -76,6 +75,7 @@
 700  root    operator  /usr/preserve
 755  root    operator  /usr/run
 755  root    operator  /usr/share
+755  root    operator  /usr/share/mk
 755  root    operator  /usr/share/zoneinfo
 755  root    operator  /usr/spool
 711  root    operator  /usr/spool/at

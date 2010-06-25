@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
 
-SUBDIR= zoneinfo
+SUBDIR= mk zoneinfo
 
 .include <bsd.subdir.mk>

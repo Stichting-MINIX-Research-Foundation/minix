@@ -1,3 +1,7 @@
+20100625:
+	/etc/mk has been moved to /usr/share/mk. You will need to
+	create /usr/share/mk manually.
+	# mkdir /usr/share/mk
 20100515:
         /usr/src/etc/usr/rc updated: copy it (or merge it) to /usr/etc/rc.
 	/etc/inet.conf is now line-based; if you have hand-edited this file
