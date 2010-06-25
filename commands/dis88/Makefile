@@ -28,4 +28,4 @@ PROG=	dis88
 SRCS=	disrel.c dismain.c distabs.c dishand.c disfp.c
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

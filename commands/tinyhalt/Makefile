@@ -1,6 +1,6 @@
 # Makefile for tinyhalt
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	halt
 SRCS=	tinyhalt.c
@@ -9,4 +9,4 @@ BINMODE= 744
 LINKS+=	${BINDIR}/halt ${BINDIR}/reboot
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

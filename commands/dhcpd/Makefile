@@ -4,4 +4,4 @@ PROG=	dhcpd
 SRCS=	dhcpd.c tags.c devices.c ether.c
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -1,6 +1,6 @@
 # Makefile for ash.
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 YHEADER=1
 PROG=	sh
@@ -83,4 +83,4 @@ operators.c operators.h: mkexpr unary_op binary_op
 arith.h: arith.c
 arith.c: arith.y
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

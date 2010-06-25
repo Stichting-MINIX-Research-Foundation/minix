@@ -14,4 +14,4 @@ SRCS=	\
 .include "${.CURDIR}/gnu/Makefile.inc"
 .endif
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

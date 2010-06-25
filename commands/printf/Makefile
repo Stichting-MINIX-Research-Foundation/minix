@@ -3,4 +3,4 @@
 
 PROG=	printf
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

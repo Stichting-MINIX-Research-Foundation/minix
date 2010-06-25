@@ -119,4 +119,4 @@ SRCS=  \
 	profile.c \
 	vprintf.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

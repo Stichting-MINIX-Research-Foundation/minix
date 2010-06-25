@@ -15,4 +15,4 @@ LINKS+=	${BINDIR}/cd ${BINDIR}/umask
 LINKS+=	${BINDIR}/cd ${BINDIR}/wait
 
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

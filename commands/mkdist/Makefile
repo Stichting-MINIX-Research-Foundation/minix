@@ -1,4 +1,4 @@
 SCRIPTS= mkdist.sh
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

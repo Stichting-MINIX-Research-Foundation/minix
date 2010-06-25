@@ -1,10 +1,10 @@
 #	$NetBSD: bsd.lib.mk,v 1.299 2009/11/27 11:44:36 tsutsui Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
-.include <minix.init.mk>
+.include <bsd.init.mk>
 
-# Pull in <minix.sys.mk> here so we can override its .c.o rule
-.include <minix.sys.mk>
+# Pull in <bsd.sys.mk> here so we can override its .c.o rule
+.include <bsd.sys.mk>
 
 LIBISPRIVATE?=	no
 
@@ -150,13 +150,13 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 LINKSOWN?= ${LIBOWN}
 LINKSGRP?= ${LIBGRP}
 LINKSMODE?= ${LIBMODE}
-.include <minix.files.mk>
-.include <minix.inc.mk>
-.include <minix.links.mk>
-.include <minix.dep.mk>
+.include <bsd.files.mk>
+.include <bsd.inc.mk>
+.include <bsd.links.mk>
+.include <bsd.dep.mk>
 
 .if ${COMPILER_TYPE} == "ack"
-.include <minix.ack.mk>
+.include <bsd.ack.mk>
 .elif ${COMPILER_TYPE} == "gnu"
-.include <minix.gcc.mk>
+.include <bsd.gcc.mk>
 .endif

@@ -9,4 +9,4 @@ CPPFLAGS+= -I${.CURDIR} -DAAL -DSTB -DNDEBUG -DDISTRIBUTION
 LINKS+=	${BINDIR}/aal ${BINDIR}/ar
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

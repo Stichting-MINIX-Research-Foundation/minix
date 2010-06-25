@@ -3,4 +3,4 @@ MAN=
 
 LINKS+=      ${BINDIR}/rget ${BINDIR}/rput
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

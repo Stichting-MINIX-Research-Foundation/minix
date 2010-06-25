@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	tcpdp
 SRCS=	tcpd.c
@@ -7,4 +7,4 @@ MAN=
 
 .PATH: ${MINIXSRCDIR}/commands/tcpd
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

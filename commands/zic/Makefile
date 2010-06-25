@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	zic
 SRCS=	zic.c scheck.c ialloc.c
@@ -8,4 +8,4 @@ MAN=	zic.8
 
 .PATH: ${MINIXSRCDIR}/lib/libc/stdtime
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

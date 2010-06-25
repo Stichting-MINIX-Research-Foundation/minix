@@ -24,7 +24,7 @@ CPPFLAGS+= -isystem ../../../include
 .endif
 
 .if ${OPSYS} == "Minix"
-.include <minix.prog.mk>
+.include <bsd.prog.mk>
 .else
 .include <bsd.prog.mk>
 .endif

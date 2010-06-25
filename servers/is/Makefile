@@ -13,4 +13,4 @@ CPPFLAGS.dmp_kernel.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.dmp_rs.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.dmp_vm.c+=	-I${MINIXSRCDIR}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

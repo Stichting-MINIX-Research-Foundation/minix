@@ -2,4 +2,4 @@ PROG=	sysenv
 BINDIR=	/bin
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

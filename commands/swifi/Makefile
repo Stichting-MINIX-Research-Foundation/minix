@@ -6,4 +6,4 @@ SRCS=	systest.c fault_model.c extra.c db_sym.c db_disasm.c \
 CPPFLAGS+= -DCONFIG_SWIFI
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

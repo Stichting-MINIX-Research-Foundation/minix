@@ -11,5 +11,5 @@ MAN=	add_route.8 adduser.8 backup.8 badblocks.8 boot.8 \
 	setup.8 shutdown.8 slip.8 srccrc.8 sync.8 syslogd.8 tcpd.8 \
 	update.8 usage.8 vmixctl.8
 
-.include <minix.man.mk>
-.include <minix.subdir.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>

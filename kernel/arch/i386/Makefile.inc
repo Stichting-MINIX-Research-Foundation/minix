@@ -1,5 +1,5 @@
 # Makefile for arch-dependent kernel code
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 .PATH:	${.CURDIR}/arch/${ARCH}
 SRCS+=	arch_do_vmctl.c \

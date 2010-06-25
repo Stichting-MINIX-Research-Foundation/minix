@@ -14,4 +14,4 @@ LIB=	d
 
 SRCS=	fphook.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

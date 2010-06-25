@@ -24,4 +24,4 @@ CPPFLAGS+=-DANSI_ARROWS -DHAVE_STDLIB -DHAVE_TCGETATTR -DHIDE -DUSE_DIRENT \
 
 SRCS=	editline.c complete.c sysunix.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

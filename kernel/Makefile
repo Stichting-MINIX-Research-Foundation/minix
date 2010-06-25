@@ -1,5 +1,5 @@
 # Makefile for kernel
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	kernel
 
@@ -31,7 +31,7 @@ MAN=
 
 .include "system/Makefile.inc"
 .include "arch/${ARCH}/Makefile.inc"
-.include <minix.prog.mk>
+.include <bsd.prog.mk>
 
 debug.d: extracted-errno.h extracted-mfield.h extracted-mtype.h
 

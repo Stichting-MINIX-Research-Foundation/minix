@@ -1,5 +1,5 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 SUBDIR= zoneinfo
 
-.include <minix.subdir.mk>
+.include <bsd.subdir.mk>

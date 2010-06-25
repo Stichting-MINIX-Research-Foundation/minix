@@ -5,4 +5,4 @@ LINKS+=      ${BINDIR}/stat ${BINDIR}/readlink
 LINKS+=      ${BINDIR}/stat ${BINDIR}/fstat
 LINKS+=      ${BINDIR}/stat ${BINDIR}/lstat
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -1,7 +1,7 @@
 #	$NetBSD: bsd.subdir.mk,v 1.50 2009/11/29 16:00:00 uebayasi Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
-.include <minix.init.mk>
+.include <bsd.init.mk>
 
 # MINIX: cleandepend works for SUBDIRs
 TARGETS+= cleandepend

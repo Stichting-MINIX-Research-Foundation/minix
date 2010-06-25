@@ -8,4 +8,4 @@ LINKS+=	${BINDIR}/halt ${BINDIR}/reboot
 MAN.shutdown=
 MAN.halt=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

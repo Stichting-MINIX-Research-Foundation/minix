@@ -32,4 +32,4 @@ LIB=		c
 .include "${.CURDIR}/gnu/arch/${ARCH}/rts/Makefile.inc"
 .endif
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

@@ -11,4 +11,4 @@ BINDIR?= /usr/sbin
 
 CPPFLAGS+= -DDEBUG=1 -DDEBUG2=0
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

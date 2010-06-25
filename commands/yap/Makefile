@@ -12,4 +12,4 @@ CPPFLAGS+= -wa
 LINKS+=	${BINDIR}/yap ${BINDIR}/more
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -4,4 +4,4 @@ MAN=
 
 LINKS+=	${BINDIR}/M ${BINDIR}/U
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

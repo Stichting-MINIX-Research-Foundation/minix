@@ -1,5 +1,5 @@
 # Makefile for system library implementation
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 .PATH:	${.CURDIR}/system
 SRCS+= 	\

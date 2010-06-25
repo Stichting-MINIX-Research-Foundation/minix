@@ -94,4 +94,4 @@ STRIPFLAG=	-s
 
 CLEANFILES+=	rawfs86.c edparams.c cdbootblock.s dosboot.c
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

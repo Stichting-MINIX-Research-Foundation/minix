@@ -1,7 +1,7 @@
 #	$NetBSD: bsd.man.mk,v 1.102 2009/10/23 23:12:10 joerg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
-.include <minix.init.mk>
+.include <bsd.init.mk>
 
 ##### Basic targets
 .PHONY:		maninstall manpages manlinks
@@ -281,8 +281,8 @@ cleanman: .PHONY
 # .endif
 
 ##### Pull in related .mk logic
-.include <minix.obj.mk>
-.include <minix.files.mk>
-.include <minix.sys.mk>
+.include <bsd.obj.mk>
+.include <bsd.files.mk>
+.include <bsd.sys.mk>
 
 ${TARGETS} catinstall maninstall htmlinstall: # ensure existence

@@ -1,4 +1,4 @@
 PROG=	sleep
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

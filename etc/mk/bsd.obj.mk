@@ -3,7 +3,7 @@
 .if !defined(_MINIX_OBJ_MK_)
 _MINIX_OBJ_MK_=1
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 __curdir:=	${.CURDIR}
 
@@ -104,6 +104,6 @@ obj:
 print-objdir:
 	@echo ${.OBJDIR}
 
-.include <minix.sys.mk>
+.include <bsd.sys.mk>
 
 .endif	# !defined(_MINIX_OBJ_MK_)

@@ -30,8 +30,8 @@ CPPFLAGS+= -DTARGET_MACHINE=\"${MACHINE}\" \
 # SUBDIR+= unit-tests
 # .endif
 
-.include <minix.prog.mk>
-.include <minix.subdir.mk>
+.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
 
 # A simple unit-test driver to help catch regressions
 accept test:

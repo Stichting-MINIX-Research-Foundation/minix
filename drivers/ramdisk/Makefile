@@ -106,4 +106,4 @@ passwd: ../../etc/passwd
 proto.gen: $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

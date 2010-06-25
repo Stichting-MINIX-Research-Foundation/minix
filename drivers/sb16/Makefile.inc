@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 LIBCOMMON != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common

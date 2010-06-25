@@ -37,4 +37,4 @@ LINKS+= ${BINDIR}/pax ${BINDIR}/cpio
 
 CPPFLAGS+= -DNET2_STAT=1
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

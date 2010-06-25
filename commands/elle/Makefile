@@ -26,4 +26,4 @@ eefidx.h:	deffun.e
 # Don't flush these files if interrupted, dammit!
 .PRECIOUS: ellec deffun.e defprf.e
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

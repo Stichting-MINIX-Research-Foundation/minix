@@ -10,4 +10,4 @@ INCS=           zconf.h zlib.h
 
 CPPFLAGS += -DNO_VIZ=1
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

@@ -3,4 +3,4 @@ MAN=
 FILESDIR=       /usr/lib
 FILES=          fortune.dat
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

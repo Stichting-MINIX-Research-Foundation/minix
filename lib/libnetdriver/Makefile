@@ -4,4 +4,4 @@ LIB=	netdriver
 
 SRCS=	netdriver.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

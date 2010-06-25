@@ -1,6 +1,6 @@
 # Makefile for acd
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	acd
 CPPFLAGS+= -DARCH=\"`arch`\" -DDESCR=\"/usr/lib/descr\"
@@ -10,4 +10,4 @@ FILES=		acd.descr
 FILESNAME=	descr
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -1,7 +1,7 @@
 #	$NetBSD: bsd.klinks.mk,v 1.6 2009/11/27 13:50:29 pooka Exp $
 #
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 ##### Default values
 .if !defined(S)

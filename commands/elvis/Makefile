@@ -36,4 +36,4 @@ MAN.elvrec=
 MAN.fmt=
 MAN.elvprsv=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
 PROG=	synctree
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

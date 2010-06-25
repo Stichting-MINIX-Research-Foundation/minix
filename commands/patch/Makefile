@@ -5,4 +5,4 @@
 PROG=	patch
 SRCS=	patch.c pch.c inp.c util.c backupfile.c mkpath.c
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

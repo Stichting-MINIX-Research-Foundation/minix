@@ -49,4 +49,4 @@ MAN.bsfilt=
 FILESDIR=	/usr/lib/cawf
 FILES=	common device.cf dumb.dev man.mac me.mac ms.mac mnx.mac
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

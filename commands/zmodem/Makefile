@@ -5,4 +5,4 @@ CPPFLAGS+= -DPOSIX
 MAN.rz=
 MAN.sz=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

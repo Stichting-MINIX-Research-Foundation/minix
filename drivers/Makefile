@@ -1,7 +1,7 @@
 # Makefile for all device drivers.
 #
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 # memory driver must be last for ramdisk image
 SUBDIR=	amddev atl2 at_wini audio bios_wini dec21140A dp8390 dpeth \
@@ -12,4 +12,4 @@ SUBDIR=	amddev atl2 at_wini audio bios_wini dec21140A dp8390 dpeth \
 # memory driver must be last for ramdisk image
 IMAGE_SUBDIR=	at_wini bios_wini floppy log tty pci .WAIT ramdisk .WAIT memory
 
-.include <minix.subdir.mk>
+.include <bsd.subdir.mk>

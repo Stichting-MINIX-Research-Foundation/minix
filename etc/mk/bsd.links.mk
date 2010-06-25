@@ -1,6 +1,6 @@
 #	$NetBSD: bsd.links.mk,v 1.34 2009/04/10 16:16:12 apb Exp $
 
-.include <minix.init.mk>
+.include <bsd.init.mk>
 
 ##### Basic targets
 install:	linksinstall
@@ -93,4 +93,4 @@ configlinksinstall::	${_t}
 .PRECIOUS:	${_t}
 .endfor
 
-.include <minix.sys.mk>
+.include <bsd.sys.mk>

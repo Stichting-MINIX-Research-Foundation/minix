@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 #Arch-specific sources
 .PATH: ${.CURDIR}/arch/${ARCH}

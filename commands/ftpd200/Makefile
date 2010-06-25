@@ -9,4 +9,4 @@ MAN=		ftpd.8
 SCRIPTS=	ftpdsh
 FILES=		setup.anonftp
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

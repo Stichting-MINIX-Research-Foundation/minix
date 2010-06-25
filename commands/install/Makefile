@@ -6,4 +6,4 @@ MAN=
 
 PROGNAME=install
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

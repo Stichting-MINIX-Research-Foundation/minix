@@ -10,4 +10,4 @@ MAN=
 DPADD+= ${LIBCURSES}
 LDADD+= -lcurses
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

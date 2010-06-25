@@ -3,7 +3,7 @@
 
 .ifndef HOSTPROG
 
-.include <minix.init.mk>
+.include <bsd.init.mk>
 
 #
 # Definitions and targets shared among all programs built by a single
@@ -352,17 +352,17 @@ scriptsinstall::
 LINKSOWN?= ${BINOWN}
 LINKSGRP?= ${BINGRP}
 LINKSMODE?= ${BINMODE}
-.include <minix.man.mk>
-.include <minix.files.mk>
-.include <minix.inc.mk>
-.include <minix.links.mk>
-.include <minix.sys.mk>
-.include <minix.dep.mk>
+.include <bsd.man.mk>
+.include <bsd.files.mk>
+.include <bsd.inc.mk>
+.include <bsd.links.mk>
+.include <bsd.sys.mk>
+.include <bsd.dep.mk>
 
 .if ${COMPILER_TYPE} == "ack"
-.include <minix.ack.mk>
+.include <bsd.ack.mk>
 .elif ${COMPILER_TYPE} == "gnu"
-.include <minix.gcc.mk>
+.include <bsd.gcc.mk>
 .endif
 
 

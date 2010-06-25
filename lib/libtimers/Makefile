@@ -7,4 +7,4 @@ SRCS=	\
 	tmrs_clr.c \
 	tmrs_exp.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

@@ -1,4 +1,4 @@
 PROG=	fix
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

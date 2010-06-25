@@ -5,4 +5,4 @@ SRCS=	asm86.c asmconv.c parse_ack.c parse_gnu.c parse_bas.c \
 	tokenize.c emit_ack.c emit_gnu.c
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

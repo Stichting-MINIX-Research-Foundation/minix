@@ -6,4 +6,4 @@ PROG=	cut
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

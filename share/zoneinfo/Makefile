@@ -1,6 +1,6 @@
 # @(#)Makefile	7.109
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -109,4 +109,4 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 			${.CURDIR}/$$f ${DESTDIR}${TZDIR}; \
 	done
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

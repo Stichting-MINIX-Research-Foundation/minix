@@ -39,11 +39,11 @@ INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
 	net/gen/vjhc.h
 INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 INCSDIR=        /usr/include
 
 SUBDIR=		sys arch
 
-.include <minix.prog.mk>
-.include <minix.subdir.mk>
+.include <bsd.prog.mk>
+.include <bsd.subdir.mk>

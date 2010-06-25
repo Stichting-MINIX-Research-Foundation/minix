@@ -7,4 +7,4 @@ CPPFLAGS+= -I${.CURDIR}
 MAN.anm=
 MAN.asize=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

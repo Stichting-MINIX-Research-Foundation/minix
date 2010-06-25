@@ -1,1 +1,1 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>

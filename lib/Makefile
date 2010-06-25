@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 SUBDIR= csu libc libcurses libdriver libnetdriver libend libedit libm libsys \
 	libtimers libutil libbz2 libl libhgfs libz
@@ -7,7 +7,7 @@ SUBDIR= csu libc libcurses libdriver libnetdriver libend libedit libm libsys \
 SUBDIR+= ack/libd ack/libe ack/libfp ack/liby
 .endif
 
-.include <minix.subdir.mk>
+.include <bsd.subdir.mk>
 
 build_ack:
 	sh ack_build.sh obj depend all install

@@ -21,4 +21,4 @@ BINDIR?= /usr/sbin
 
 CPPFLAGS+=  -I${.CURDIR} -D_MINIX
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

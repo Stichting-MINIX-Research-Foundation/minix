@@ -6,4 +6,4 @@ CPPFLAGS+= -I${MINIXSRCDIR}/servers
 CPPFLAGS+= -D_POSIX_1_SOURCE=2
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

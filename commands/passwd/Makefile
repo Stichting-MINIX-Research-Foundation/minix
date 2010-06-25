@@ -5,4 +5,4 @@ MAN=
 LINKS+=      ${BINDIR}/passwd ${BINDIR}/chsh
 LINKS+=      ${BINDIR}/passwd ${BINDIR}/chfn
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

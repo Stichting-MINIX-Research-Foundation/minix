@@ -11,4 +11,4 @@ BINDIR?= /usr/sbin
 
 CPPFLAGS.orinoco.c+=	-I${MINIXSRCDIR}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

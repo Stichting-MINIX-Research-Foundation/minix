@@ -1,4 +1,4 @@
-.include <minix.sys.mk>
+.include <bsd.sys.mk>
 
 INCSDIR=        /usr/include/sys
 
@@ -11,4 +11,4 @@ INCS=	asynchio.h dir.h file.h ioc_cmos.h ioc_disk.h \
 	time.h times.h types.h ucontext.h uio.h un.h utsname.h video.h vm.h \
 	wait.h cdefs.h 
 
-.include <minix.kinc.mk>
+.include <bsd.kinc.mk>

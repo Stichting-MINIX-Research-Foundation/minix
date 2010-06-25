@@ -6,4 +6,4 @@ LIB=	m
 
 SRCS=	dummy.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

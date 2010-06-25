@@ -3,4 +3,4 @@ MAN=
 
 LINKS+=	${BINDIR}/whatis ${BINDIR}/apropos
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -3,4 +3,4 @@
 
 PROG=	touch
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

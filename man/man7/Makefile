@@ -6,5 +6,5 @@ MAN=	ACK.7 ascii.7 environ.7 hier.7 man.7 oss_atiaudio.7 \
 	oss_sbpci.7 oss_sbxfi.7 oss_solo.7 oss_trident.7 \
 	oss_via823x.7 oss_via97.7 oss_ymf7xx.7 re_format.7
 
-.include <minix.man.mk>
-.include <minix.subdir.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>

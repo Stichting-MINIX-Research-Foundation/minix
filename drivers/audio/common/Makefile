@@ -5,4 +5,4 @@ LIBISPRIVATE=   yes
 LIB=    common
 SRCS=   audio_fw.c liveupdate.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

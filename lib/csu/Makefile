@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 .PATH:	${.CURDIR}/${ARCH}
 
@@ -11,4 +11,4 @@ FILES=${OBJS}
 FILESDIR=${LIBDIR}
 CLEANFILES=${OBJS}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

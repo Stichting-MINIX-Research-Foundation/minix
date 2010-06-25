@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	awk
 SRCS=	awkgram.y b.c lex.c lib.c main.c parse.c proctab.c run.c tran.c
@@ -14,4 +14,4 @@ maketab: awkgram.h maketab.c
 
 CLEANFILES= maketab proctab.c
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -1,6 +1,6 @@
 # Makefile for commands.
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	backup badblocks banner basename bigmake binpackage \
@@ -41,4 +41,4 @@ SUBDIR+=	atnormalize dosread fdisk loadfont \
 SUBDIR+=	acd asmconv gas2ack
 .endif
 
-.include <minix.subdir.mk>
+.include <bsd.subdir.mk>

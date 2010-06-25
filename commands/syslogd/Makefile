@@ -10,4 +10,4 @@ CPPFLAGS+= -Ddebug=0 ${PIDFILE}
 BINMODE= 700
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

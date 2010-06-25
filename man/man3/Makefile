@@ -14,5 +14,5 @@ MAN=	abort.3 abs.3 assert.3 atof.3 bstring.3 configfile.3 \
 	stdio.3 string.3 strtol.3 syslog.3 system.3 termcap.3 \
 	termios.3 time2posix.3 ttyname.3 ttyslot.3 ungetc.3
 
-.include <minix.man.mk>
-.include <minix.subdir.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>

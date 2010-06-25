@@ -9,5 +9,5 @@ MAN=	access.2 alarm.2 brk.2 chdir.2 chmod.2 chown.2 chroot.2 \
 	times.2 truncate.2 umask.2 uname.2 unlink.2 utime.2 \
 	wait.2 write.2
 
-.include <minix.man.mk>
-.include <minix.subdir.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>

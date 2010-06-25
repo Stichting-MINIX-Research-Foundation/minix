@@ -4,4 +4,4 @@ PROG=		profile
 SCRIPTS=	sprofalyze.pl cprofalyze.pl
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

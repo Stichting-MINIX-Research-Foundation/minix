@@ -1,7 +1,7 @@
 # Makefile for the Sound Blaster 16 (SB16) driver
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 SUBDIR=	common .WAIT dsp mixer
 
-.include <minix.subdir.mk>
+.include <bsd.subdir.mk>

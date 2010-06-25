@@ -6,4 +6,4 @@ SRCS=	\
 	main.c \
 	yyerror.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

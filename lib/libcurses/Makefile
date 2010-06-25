@@ -42,4 +42,4 @@ SRCS=  \
 	winsertln.c \
 	wintouch.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

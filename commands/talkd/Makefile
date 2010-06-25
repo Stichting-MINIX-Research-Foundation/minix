@@ -7,4 +7,4 @@ PROG=	talkd
 SRCS=	talkd.c net.c process.c finduser.c
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

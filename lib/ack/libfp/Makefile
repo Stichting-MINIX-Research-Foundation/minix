@@ -53,4 +53,4 @@ SRCS=	 \
 	zrf8.fc \
 	zrf_ext.fc
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

@@ -3,4 +3,4 @@ BINOWN= daemon
 BINMODE= 4755
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

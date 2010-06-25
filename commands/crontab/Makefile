@@ -1,6 +1,6 @@
 # Makefile for crontab.
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	crontab
 SRCS=	crontab.c tab.c misc.c
@@ -10,4 +10,4 @@ MAN=
 
 .PATH: ${MINIXSRCDIR}/commands/cron
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

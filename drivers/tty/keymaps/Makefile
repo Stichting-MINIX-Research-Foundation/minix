@@ -1,6 +1,6 @@
 # Generate binary keymaps.
 
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 FILES=	dvorak.map french.map german.map italian.map japanese.map \
 	latin-america.map olivetti.map polish.map russian-cp866.map \
@@ -10,4 +10,4 @@ FILES=	dvorak.map french.map german.map italian.map japanese.map \
 
 .include "Makefile.inc"
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

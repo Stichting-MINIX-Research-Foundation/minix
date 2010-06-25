@@ -1,5 +1,5 @@
 # Makefile for Reincarnation Server (RS)
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	rs
 SRCS=	exec.c main.c request.c manager.c table.c utility.c memory.c error.c
@@ -14,4 +14,4 @@ INSTALLFLAGS+=	-S 1225k
 
 CPPFLAGS+=	-I${MINIXSRCDIR}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

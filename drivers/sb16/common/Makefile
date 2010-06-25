@@ -5,4 +5,4 @@ LIBISPRIVATE=   yes
 LIB=    common
 SRCS=   sb16.c
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

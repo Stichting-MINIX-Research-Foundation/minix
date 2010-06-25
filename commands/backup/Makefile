@@ -3,4 +3,4 @@ MAN=
 
 LINKS+=	${BINDIR}/backup ${BINDIR}/restore
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

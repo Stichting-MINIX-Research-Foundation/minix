@@ -8,4 +8,4 @@ LINKS+=      ${BINDIR}/cp ${BINDIR}/ln
 LINKS+=      ${BINDIR}/cp ${BINDIR}/clone
 LINKS+=      ${BINDIR}/cp ${BINDIR}/cpdir
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

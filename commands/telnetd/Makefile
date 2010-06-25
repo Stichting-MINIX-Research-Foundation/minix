@@ -7,4 +7,4 @@ PROG=	in.telnetd
 SRCS=	main.c telnet.c term.c pty.c wtmp.c
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

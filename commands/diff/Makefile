@@ -3,5 +3,5 @@
 PROG=	diff
 SRCS=	diff.c diffdir.c diffreg.c xmalloc.c
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>
 

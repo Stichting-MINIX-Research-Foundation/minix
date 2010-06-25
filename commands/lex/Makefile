@@ -41,4 +41,4 @@ scan.c: scan.l
 
 scan.o yylex.o: parse.h
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

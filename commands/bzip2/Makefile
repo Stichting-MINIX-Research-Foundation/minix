@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	   bzip2
 DPADD+=	   ${LIBBZ2}
@@ -11,4 +11,4 @@ MLINKS+=   bzip2.1 bunzip2.1\
 LINKS+=    ${BINDIR}/bzip2 ${BINDIR}/bunzip2
 LINKS+=    ${BINDIR}/bzip2 ${BINDIR}/bzcat
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

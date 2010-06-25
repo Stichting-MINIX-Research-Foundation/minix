@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	date
 SRCS=	date.c logwtmp.c
@@ -8,4 +8,4 @@ BINDIR= /bin
 
 .PATH: ${MINIXSRCDIR}/lib/libc/stdtime
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

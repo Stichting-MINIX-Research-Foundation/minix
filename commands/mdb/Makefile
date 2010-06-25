@@ -26,4 +26,4 @@ SRCS=	mdb.c mdbexp.c kernel.o sym.c trace.c core.c misc.c io.c
 SRCS+=	mdbdis86.c
 SRCS+=	${EXTRA_SRCS}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

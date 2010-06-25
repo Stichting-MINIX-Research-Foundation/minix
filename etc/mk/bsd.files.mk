@@ -3,7 +3,7 @@
 .if !defined(_MINIX_FILES_MK_)
 _MINIX_FILES_MK_=1
 
-.include <minix.init.mk>
+.include <bsd.init.mk>
 
 .if !target(__fileinstall)
 ##### Basic targets
@@ -155,7 +155,7 @@ cleanuudecodefiles: .PHONY
 .endif								# }
 
 ##### Pull in related .mk logic
-.include <minix.obj.mk>
-#.include <minix.sys.mk>
+.include <bsd.obj.mk>
+#.include <bsd.sys.mk>
 
 .endif	# !defined(_MINIX_FILES_MK_)

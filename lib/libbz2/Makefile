@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 LIB=		bz2
 BZ2DIR=		${MINIXSRCDIR}/commands/bzip2
@@ -10,4 +10,4 @@ CPPFLAGS+=	-I ${BZ2DIR}
 INCS=		bzlib.h
 INCSDIR=	/usr/include
 
-.include <minix.lib.mk>
+.include <bsd.lib.mk>

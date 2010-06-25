@@ -1,4 +1,4 @@
 PROG=	rawspeed
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

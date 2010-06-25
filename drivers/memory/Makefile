@@ -1,5 +1,5 @@
 # Makefile for memory driver (MEMORY)
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	memory
 SRCS=	memory.c imgrd.c
@@ -15,4 +15,4 @@ INSTALLFLAGS+=	-S 8k
 CPPFLAGS.memory.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.imgrd.c+=	-I${.CURDIR}/../ramdisk -T /usr/tmp
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

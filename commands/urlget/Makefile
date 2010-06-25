@@ -9,4 +9,4 @@ LINKS+=	${BINDIR}/urlget ${BINDIR}/httpget
 LINKS+=	${BINDIR}/urlget ${BINDIR}/ftpget
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

@@ -11,4 +11,4 @@ SRCS= 	main.c eval.c serv.c look.c misc.c expr.c
 CPPFLAGS+= -DEXTENDED
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

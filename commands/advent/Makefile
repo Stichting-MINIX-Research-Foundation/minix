@@ -25,4 +25,4 @@ CPPFLAGS.advent.c= -DTEXTDIR='"${TEXTDIR}"'
 
 CLEANFILES+=	${DATFILES} advtext.h setup
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

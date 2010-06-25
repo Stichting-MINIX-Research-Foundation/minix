@@ -6,4 +6,4 @@ MAN=	id.1 groups.1 whoami.1
 LINKS=   ${BINDIR}/id ${BINDIR}/groups
 LINKS+=  ${BINDIR}/id ${BINDIR}/whoami
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

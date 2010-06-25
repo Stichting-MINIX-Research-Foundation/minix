@@ -1,5 +1,5 @@
 # Makefile for VM server
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 PROG=	vm
 SRCS=	main.c alloc.c utility.c exec.c exit.c fork.c break.c \
@@ -19,4 +19,4 @@ CPPFLAGS+= -I${.CURDIR} -Iarch/${ARCH}
 CPPFLAGS+=	-I${MINIXSRCDIR}
 
 .include "arch/${ARCH}/Makefile.inc"
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

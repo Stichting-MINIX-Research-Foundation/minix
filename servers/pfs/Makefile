@@ -11,4 +11,4 @@ MAN=
 BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 128k
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

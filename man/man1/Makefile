@@ -25,5 +25,5 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	urlget.1 uud.1 uue.1 vol.1 wc.1 whatis.1 whereis.1 which.1 \
 	who.1 whoami.1 write.1 xargs.1 yap.1 yes.1
 
-.include <minix.man.mk>
-.include <minix.subdir.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>

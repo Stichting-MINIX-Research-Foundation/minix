@@ -13,4 +13,4 @@ BINDIR?= /sbin
 NR_BUFS= 100
 CPPFLAGS+= -DNR_BUFS=${NR_BUFS}
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

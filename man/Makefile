@@ -1,4 +1,4 @@
-.include <minix.own.mk>
+.include <bsd.own.mk>
 
 SUBDIR=	man1 man1x man2 man3 man4 man5 man6 man7 man8 man9
 
@@ -15,5 +15,5 @@ makedb:
 # makedb:
 # .endif
 
-.include <minix.subdir.mk>
-.include <minix.sys.mk>
+.include <bsd.subdir.mk>
+.include <bsd.sys.mk>

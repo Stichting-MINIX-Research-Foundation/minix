@@ -2,4 +2,4 @@ PROG=	badblocks
 CPPFLAGS+= -I${MINIXSRCDIR}/servers
 MAN=
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>

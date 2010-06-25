@@ -3,4 +3,4 @@ MAN=
 
 LINKS+=      ${BINDIR}/uud ${BINDIR}/uudecode
 
-.include <minix.prog.mk>
+.include <bsd.prog.mk>
