@@ -609,7 +609,7 @@ PUBLIC int mini_send(
  *				mini_receive				     * 
  *===========================================================================*/
 PRIVATE int mini_receive(struct proc * caller_ptr,
-			int src_e, /* which message source is wanted */
+			endpoint_t src_e, /* which message source is wanted */
 			message * m_buff_usr, /* pointer to message buffer */
 			const int flags)
 {
