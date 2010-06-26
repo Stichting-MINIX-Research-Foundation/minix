@@ -54,7 +54,7 @@ then    BUNZIP2=bunzip2
 else    BUNZIP2=smallbunzip2
 fi
 
-if id | fgrep "uid=0(" >/dev/null
+if id | fgrep "root" >/dev/null
 then	:
 else	echo "Please run $0 as root."
 	myexit 1
