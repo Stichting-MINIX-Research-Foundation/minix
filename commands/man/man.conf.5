@@ -1,0 +1,271 @@
+.\"	$NetBSD: man.conf.5,v 1.20 2007/02/10 19:27:39 reed Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)man.conf.5	8.5 (Berkeley) 1/2/94
+.\"
+.Dd April 10, 2006
+.Dt MAN.CONF 5
+.Os
+.Sh NAME
+.Nm man.conf
+.Nd configuration file for manual pages
+.Sh DESCRIPTION
+The
+.Nm
+file contains the default configuration used by
+.Xr man 1 ,
+.Xr apropos 1 ,
+.Xr whatis 1 ,
+.Xr catman 8 ,
+and
+.Xr makewhatis 8
+to find manual pages and information about manual pages (e.g. the
+whatis database).
+.Pp
+Manual pages are located by searching an ordered set of directories
+called the
+.Dq man path
+for a file that matches the name of the requested page.
+Each directory in the search path usually has a set of subdirectories
+in it (though this is not required).
+When subdirectories are used, there are normally two subdirectories
+for each section of the manual.
+One subdirectory contains formatted copies of that section's manual
+pages that can be directly displayed to a terminal, while the other
+section subdirectory contains unformatted copies of the pages (see
+.Xr nroff 1
+and
+.Xr mdoc 7 ) .
+Formatted manual pages are normally named with a trailing
+.Dq \.0
+suffix.
+.Pp
+The
+.Nm
+file contains comment and configuration lines.
+Comment lines start with the
+.Dq #
+character.
+Blank lines are also treated as comment lines.
+Configuration lines consist of a configuration keyword followed by a
+configuration string.
+There are two types of configuration keywords: control keywords and
+section keywords.
+Control keywords must start with the
+.Dq _
+character.
+The following control keywords are currently defined:
+.Bl -tag -width "_version"
+.It _build
+identifies the set of suffixes used for manual pages that must be
+formatted for display and the command that should be used to format
+them.
+Manual file names, regardless of their format, are expected to end in a
+.Dq \.*
+pattern, i.e. a
+.Dq \&\.
+followed by some suffix.
+The first field of a _build line contains a man page suffix specification.
+The suffix specification may contain the normal shell globbing characters
+(NOT including curly braces
+.Pq Dq {} ) .
+The rest of the _build line is a shell command line whose standard
+output is a formatted manual page that can be directly displayed to
+the user.
+Any occurrences of the string
+.Dq %s
+in the shell command line will
+be replaced by the name of the file which is being formatted.
+.It _crunch
+used by
+.Xr catman 8
+to determine how to crunch formatted pages
+which originally were compressed man pages: The first field lists a suffix
+which indicates what kind of compression were used to compress the man page.
+The rest of the line must be a shell command line, used to compress the
+formatted pages.
+.It _default
+contains the system-wide default man path used to search for man pages.
+.It _subdir
+contains the list (in search order) of section subdirectories which will
+be searched in any man path directory named with a trailing slash
+.Pq Dq /
+character.
+This list is also used, even if there is no trailing slash character,
+when a path is specified to the
+.Xr man 1
+utility by the user, by the
+.Ev MANPATH
+environment variable, or by the
+.Fl M
+and
+.Fl m
+options.
+.It _suffix
+identifies the set of suffixes used for formatted man pages
+(the
+.Dq \.0
+suffix is normally used here).
+Formatted man pages can be directly displayed to the user.
+Each suffix may contain the normal shell globbing characters (NOT
+including curly braces
+.Pq Dq {} ) .
+.It _version
+contains the version of the configuration file.
+.It _whatdb
+defines the full pathname (not just a directory path) for a database to
+be used
+by the
+.Xr apropos 1
+and
+.Xr whatis 1
+commands.
+The pathname may contain the normal shell globbing characters,
+including curly braces
+.Pq Dq {} ;
+to escape a shell globbing character,
+precede it with a backslash
+.Pq Dq \e .
+.El
+.Pp
+Section configuration lines in
+.Nm
+consist of a section keyword naming the section and a configuration
+string that defines the directory or subdirectory path that the section's
+manual pages are located in.
+The path may contain the normal shell globbing characters,
+including curly braces
+.Pq Dq {} ;
+to escape a shell globbing character,
+precede it with a backslash
+.Pq Dq \e .
+Section keywords must not start with the
+.Dq _
+character.
+.Pp
+A section path may contain either a list of absolute directories or
+a list of or relative directories (but not both).
+Relative directory paths are treated as a list of subdirectories that
+are appended to the current man path directory being searched.
+Section configuration lines with absolute directory paths (starting with
+.Dq / )
+completely replace the current man search path directory with their
+content.
+.Pp
+Section configuration lines with absolute directory paths ending
+with a trailing slash character are expected to contain subdirectories
+of manual pages, (see the keyword
+.Dq _subdir
+above).
+The
+.Dq _subdir
+subdirectory list is not applied to absolute section directories
+if there is no trailing slash.
+.Pp
+In addition to the above rules, the
+.Xr man 1
+command also always checks in each directory that it searches for
+a subdirectory with the same name as the current machine type.
+If the machine-specific directory is found, it is also searched.
+This allows the manual to contain machine-specific man pages.
+Note that the machine subdirectory does not need to be specified
+in the
+.Nm
+file.
+.Pp
+Multiple specifications for all types of
+.Nm
+configuration lines are
+cumulative and the entries are used in the order listed in the file;
+multiple entries may be listed per line, as well.
+.Sh FILES
+.Bl -tag -width /etc/man.conf -compact
+.It Pa /etc/man.conf
+Standard manual configuration file.
+.El
+.Sh EXAMPLES
+Given the following
+.Nm
+file:
+.Bd -literal -offset indent
+_version	BSD.2
+_subdir		cat[123]
+_suffix		.0
+_build		.[1-9]	nroff -man %s
+_build		.tbl	tbl %s | nroff -man
+_default	/usr/share/man/
+sect3		/usr/share/man/{old/,}cat3
+.Ed
+.Pp
+By default, the command
+.Dq Li man mktemp
+will search for
+.Dq mktemp.\*[Lt]any_digit\*[Gt]
+and
+.Dq mktemp.tbl
+in the directories
+.Dq Pa /usr/share/man/cat1 ,
+.Dq Pa /usr/share/man/cat2 ,
+and
+.Dq Pa /usr/share/man/cat3 .
+If on a machine of type
+.Dq vax ,
+the subdirectory
+.Dq vax
+in each
+directory would be searched as well, before the directory was
+searched.
+.Pp
+If
+.Dq mktemp.tbl
+was found first, the command
+.Dq Li tbl \*[Lt]manual page\*[Gt] | nroff -man
+would be run to build a man page for display to the user.
+.Pp
+The command
+.Dq Li man sect3 mktemp
+would search the directories
+.Dq Pa /usr/share/man/old/cat3
+and
+.Dq Pa /usr/share/man/cat3 ,
+in that order, for
+the mktemp manual page.
+If a subdirectory with the same name as the current machine type
+existed in any of them, it would be searched as well, before each
+of them were searched.
+.Sh SEE ALSO
+.Xr apropos 1 ,
+.Xr machine 1 ,
+.Xr man 1 ,
+.Xr whatis 1 ,
+.Xr whereis 1 ,
+.Xr fnmatch 3 ,
+.Xr glob 3 ,
+.Xr catman 8 ,
+.Xr makewhatis 8
