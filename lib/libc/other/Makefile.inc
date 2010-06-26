@@ -62,6 +62,7 @@ SRCS+=  \
 	getpass.c \
 	getprogname.c \
 	getpwent.c \
+	getsubopt.c \
 	getttyent.c \
 	getw.c \
 	hypot.c \

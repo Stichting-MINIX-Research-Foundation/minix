@@ -79,6 +79,7 @@ _PROTOTYPE( int putenv, (char *string)					);
 _PROTOTYPE( int setenv, (const char *envname, const char *envval,
 							int overwrite)	);
 _PROTOTYPE( int unsetenv, (const char *name)				);
+_PROTOTYPE( int getsubopt, (char **optionp, char * const *keylistp, char **valuep));
 
 #ifdef __LONG_LONG_SUPPORTED
 _PROTOTYPE( long long strtoll, (const char *_nptr, char **_endptr,
