@@ -16,7 +16,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	hostaddr id ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	lex life loadkeys loadramdisk logger login look lp \
-	lpd ls lspci M m4 mail make MAKEDEV makewhatis man \
+	lpd ls lspci M m4 mail make MAKEDEV man \
 	mdb mesg mined mkdep mkdir mkdist mkfifo mkfs mknod \
 	mkproto modem mount mt netconf newroot nice nm nohup \
 	nonamed od packit packman passwd paste patch pax \
@@ -31,8 +31,8 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	telnetd term termcap tget time tinyhalt top touch tr \
 	truncate tsort ttt tty udpstat umount uname unexpand \
 	uniq unstack update urlget uud uue version vol wc \
-	whatis whereis which who whoami write writeisofs \
-	xargs yacc yap yes zdump zic zmodem
+	whereis which who whoami write writeisofs \
+	xargs yacc yes zdump zic zmodem
 
 .if ${ARCH} == "i386"
 SUBDIR+=	atnormalize dosread fdisk loadfont \
