@@ -45,8 +45,3 @@ then
 	rm -f $PI
 fi
 
-for d in /usr/man /usr/local/man /usr/gnu/man /usr/X11R6/man
-do	if [ -d "$d" ]
-	then makewhatis $d
-	fi
-done
