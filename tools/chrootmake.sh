@@ -17,6 +17,3 @@ fi
 make clean
 make cleandepend
 find . -name obj-ack -type d|xargs rm -rf
-# Let man find the manpages
-makewhatis /usr/man
-makewhatis /usr/local/man
