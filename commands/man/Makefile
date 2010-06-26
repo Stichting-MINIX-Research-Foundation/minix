@@ -8,4 +8,7 @@ MAN=	man.1 man.conf.5
 DPADD+=	${LIBUTIL}
 LDADD+=	-lutil
 
+FILES=man.conf
+FILESDIR=/etc
+
 .include <bsd.prog.mk>
