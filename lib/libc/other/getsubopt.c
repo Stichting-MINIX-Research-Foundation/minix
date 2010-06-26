@@ -54,8 +54,8 @@ getsubopt(optionp, tokens, valuep)
 	int cnt;
 	char *p;
 
-	_DIAGASSERT(tokens != NULL);
-	_DIAGASSERT(valuep != NULL);
+	assert(tokens != NULL);
+	assert(valuep != NULL);
 	/* optionp is tested below */
 
 	suboptarg = *valuep = NULL;
