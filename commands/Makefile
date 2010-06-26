@@ -15,7 +15,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	fsck1 ftp101 ftpd200 getty grep gomoku head host \
 	hostaddr id ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
-	lex life loadkeys loadramdisk logger login look lp \
+	less lex life loadkeys loadramdisk logger login look lp \
 	lpd ls lspci M m4 mail make MAKEDEV man \
 	mdb mesg mined mkdep mkdir mkdist mkfifo mkfs mknod \
 	mkproto modem mount mt netconf newroot nice nm nohup \
