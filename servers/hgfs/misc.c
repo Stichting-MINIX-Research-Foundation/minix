@@ -1,4 +1,4 @@
-* This file contains miscellaneous file system call handlers.
+/* This file contains miscellaneous file system call handlers.
  *
  * The entry points into this file are:
  *   do_fstatfs		perform the FSTATFS file system call
