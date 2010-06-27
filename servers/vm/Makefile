@@ -15,7 +15,7 @@ MAN=
 BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 128k
 
-CPPFLAGS+= -I${.CURDIR} -Iarch/${ARCH}
+CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${ARCH}
 CPPFLAGS+=	-I${MINIXSRCDIR}
 
 .include "arch/${ARCH}/Makefile.inc"
