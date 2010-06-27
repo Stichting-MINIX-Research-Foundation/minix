@@ -72,7 +72,6 @@ struct inode {
 #define i_file		i_u.u_file
 #define i_dir		i_u.u_dir
 
-
 #define I_DIR		0x01		/* this inode represents a directory */
 #define I_HANDLE	0x02		/* this inode has an open handle */
 

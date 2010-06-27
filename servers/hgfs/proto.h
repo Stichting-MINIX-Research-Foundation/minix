@@ -38,6 +38,7 @@ _PROTOTYPE( int main, (int argc, char *argv[])				);
 
 /* misc.c */
 _PROTOTYPE( int do_fstatfs, (void)					);
+_PROTOTYPE( int do_statvfs, (void)					);
 
 /* mount.c */
 _PROTOTYPE( int do_readsuper, (void)					);
