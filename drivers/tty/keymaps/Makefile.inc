@@ -4,7 +4,7 @@ FILESDIR= /usr/lib/keymaps
 
 .src.map:
 	${_MKTARGET_CREATE}
-	$(CC) -DKEYSRC=\"$<\" genmap.c
+	$(CC) -DKEYSRC=\"$<\" ${.CURDIR}/genmap.c
 	./a.out > $@
 	@rm -f a.out
 
