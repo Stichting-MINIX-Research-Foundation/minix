@@ -78,7 +78,7 @@ signames.c signames.h: mksignames
 
 .ORDER: operators.c operators.h
 operators.c operators.h: mkexpr unary_op binary_op
-	sh bltin/mkexpr bltin/unary_op bltin/binary_op
+	sh ${.CURDIR}/bltin/mkexpr ${.CURDIR}/bltin/unary_op ${.CURDIR}/bltin/binary_op
 
 arith.h: arith.c
 arith.c: arith.y
