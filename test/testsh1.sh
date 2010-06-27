@@ -151,8 +151,8 @@ grep "a" ALPHA >x
 if test -s x; then echo Error on grep test 2; fi
 grep -v "0" alpha >x
 if cmp -s x alpha; then : ; else echo Error on grep test 3; fi
-grep -s "a" alpha >x
-if test -s x; then echo Error on grep test 4; fi
+grep -s "a" XXX_nonexistent_file_XXX >x
+if test -s x; then echo "Error on grep test 4"; fi
 if grep -s "a" alpha >x; then : else echo Error on grep test 5; fi
 if grep -s "a" ALPHA >x; then echo Error on grep test 6; fi
 
