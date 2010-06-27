@@ -50,6 +50,7 @@ PUBLIC void sef_startup()
 #if INTERCEPT_SEF_INIT_REQUESTS
   /* Intercept SEF Init requests. */
   if(sef_self_endpoint == RS_PROC_NR) {
+      /* RS initialization is special. */
       if((r = do_sef_rs_init()) != OK) {
           panic("unable to complete init: %d", r);
       }
@@ -57,17 +58,22 @@ PUBLIC void sef_startup()
   else {
       message m;
 
-      r = receive(RS_PROC_NR, &m, &status);
-      if(r != OK) {
-          panic("unable to receive from RS: %d", r);
-      }
-      if(IS_SEF_INIT_REQUEST(&m)) {
-          if((r = do_sef_init_request(&m)) != OK) {
-              panic("unable to process init request: %d", r);
+      /* Wait for an initialization message from RS. We need this to learn the
+       * initialization type and parameters. When restarting after a crash, we
+       * may get some spurious IPC messages from RS (e.g. update request) that
+       * were originally meant to be delivered to the old instance. We discard
+       * these messages and block till a proper initialization request arrives.
+       */
+      do {
+          r = receive(RS_PROC_NR, &m, &status);
+          if(r != OK) {
+              panic("unable to receive from RS: %d", r);
           }
-      }
-      else {
-          panic("got an unexpected message type %d", m.m_type);
+      } while(!IS_SEF_INIT_REQUEST(&m));
+
+      /* Process initialization request for this system service. */
+      if((r = do_sef_init_request(&m)) != OK) {
+          panic("unable to process init request: %d", r);
       }
   }
 #endif
