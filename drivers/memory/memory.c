@@ -445,7 +445,7 @@ message *m_ptr;				/* pointer to control message */
 			panic("huge old ramdisk");
 		}
 		size = ex64lo(dv->dv_size);
-		free((void *) m_vaddrs[dev]);
+		munmap((void *) m_vaddrs[dev], size);
 		m_vaddrs[dev] = (vir_bytes) NULL;
 	}
 
@@ -454,11 +454,11 @@ message *m_ptr;				/* pointer to control message */
 #endif
 
 	/* Try to allocate a piece of memory for the RAM disk. */
-	if(!(mem = malloc(ramdev_size))) {
+	if((mem = mmap(NULL, ramdev_size, PROT_READ|PROT_WRITE,
+	  MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	    printf("MEM: failed to get memory for ramdisk\n");
             return(ENOMEM);
-        } 
-	memset(mem, 0, ramdev_size);
+        }
 
 	m_vaddrs[dev] = (vir_bytes) mem;
 
