@@ -159,6 +159,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   int s,i,j;
   int nr_image_srvs, nr_image_priv_srvs, nr_uncaught_init_srvs;
   struct rproc *rp;
+  struct rproc *replica_rp;
   struct rprocpub *rpub;
   struct boot_image image[NR_BOOT_PROCS];
   struct mproc mproc[NR_PROCS];
@@ -166,6 +167,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct boot_image_priv *boot_image_priv;
   struct boot_image_sys *boot_image_sys;
   struct boot_image_dev *boot_image_dev;
+  message m;
+  int pid, replica_pid;
+  endpoint_t replica_endpoint;
 
   /* See if we run in verbose mode. */
   env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1);
@@ -293,23 +297,23 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Get heartbeat period. */
       rpub->period = boot_image_priv->period;
 
-      if(boot_image_priv->endpoint != RS_PROC_NR) {
-          /* Force a static priv id for system services in the boot image. */
-          rp->r_priv.s_id = static_priv_id(
-              _ENDPOINT_P(boot_image_priv->endpoint));
-
-          /* Initialize privilege bitmaps and signal manager. */
-          rp->r_priv.s_flags = boot_image_priv->flags;         /* priv flags */
-          rp->r_priv.s_trap_mask = boot_image_priv->trap_mask; /* traps */
-          memcpy(&rp->r_priv.s_ipc_to, &boot_image_priv->ipc_to,
-                            sizeof(rp->r_priv.s_ipc_to));      /* targets */
-          rp->r_priv.s_sig_mgr = boot_image_priv->sig_mgr;     /* sig mgr */
-
-          /* Initialize kernel call mask bitmap from unordered set. */
-          fill_call_mask(boot_image_priv->k_calls, NR_SYS_CALLS,
-              rp->r_priv.s_k_call_mask, KERNEL_CALL, TRUE);
+      /* Force a static priv id for system services in the boot image. */
+      rp->r_priv.s_id = static_priv_id(
+          _ENDPOINT_P(boot_image_priv->endpoint));
+      
+      /* Initialize privilege bitmaps and signal manager. */
+      rp->r_priv.s_flags = boot_image_priv->flags;         /* priv flags */
+      rp->r_priv.s_trap_mask = boot_image_priv->trap_mask; /* traps */
+      memcpy(&rp->r_priv.s_ipc_to, &boot_image_priv->ipc_to,
+                        sizeof(rp->r_priv.s_ipc_to));      /* targets */
+      rp->r_priv.s_sig_mgr = boot_image_priv->sig_mgr;     /* sig mgr */
+      
+      /* Initialize kernel call mask bitmap from unordered set. */
+      fill_call_mask(boot_image_priv->k_calls, NR_SYS_CALLS,
+          rp->r_priv.s_k_call_mask, KERNEL_CALL, TRUE);
 
           /* Set the privilege structure. */
+      if(boot_image_priv->endpoint != RS_PROC_NR) {
           if ((s = sys_privctl(ip->endpoint, SYS_PRIV_SET_SYS, &(rp->r_priv)))
               != OK) {
               panic("unable to set privilege structure: %d", s);
@@ -474,16 +478,75 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("couldn't set alarm: %d", s);
 
- /* Map out our own text and data. This is normally done in crtso.o
-  * but RS is an exception - we don't get to talk to VM so early on.
-  * That's why we override munmap() and munmap_text() in utility.c.
-  *
-  * _minix_unmapzero() is the same code in crtso.o that normally does
-  * it on startup. It's best that it's there as crtso.o knows exactly
-  * what the ranges are of the filler data.
-  */
-  unmap_ok = 1;
-  _minix_unmapzero();
+  /* Now create a new RS instance with a private page table and let the current
+   * instance live update into the replica. Clone RS' own slot first.
+   */
+  rp = rproc_ptr[_ENDPOINT_P(RS_PROC_NR)];
+  if((s = clone_slot(rp, &replica_rp)) != OK) {
+      panic("unable to clone current RS instance: %d", s);
+  }
+
+  /* Fork a new RS instance. */
+  pid = srv_fork();
+  if(pid == -1) {
+      panic("unable to fork a new RS instance");
+  }
+  replica_pid = pid ? pid : getpid();
+  replica_endpoint = getnprocnr(replica_pid);
+  replica_rp->r_pid = replica_pid;
+  replica_rp->r_pub->endpoint = replica_endpoint;
+
+  if(pid == 0) {
+      /* New RS instance running. */
+
+      /* Synchronize with the old instance. */
+      s = sef_receive(RS_PROC_NR, &m);
+      if(s != OK) {
+          panic("sef_receive failed: %d", s);
+      }
+
+      /* Live update the old instance into the new one. */
+      s = update_service(&rp, &replica_rp);
+      if(s != OK) {
+          panic("unable to live update RS: %d", s);
+      }
+      cpf_reload();
+
+      /* Clean up the old RS instance, the new instance will take over. */
+      cleanup_service(rp);
+
+      /* Map out our own text and data. */
+      unmap_ok = 1;
+      _minix_unmapzero();
+  }
+  else {
+      /* Old RS instance running. */
+
+      /* Ask VM to pin memory for the new RS instance. */
+      s = vm_memctl(replica_endpoint, VM_RS_MEM_PIN);
+      if(s != OK) {
+          panic("unable to pin memory for the new RS instance: %d", s);
+      }
+
+      /* Set up privileges for the new instance and let it run. */
+      set_sys_bit(replica_rp->r_priv.s_ipc_to, static_priv_id(RS_PROC_NR));
+      s = sys_privctl(replica_endpoint, SYS_PRIV_SET_SYS, &(replica_rp->r_priv));
+      if(s != OK) {
+          panic("unable to set privileges for the new RS instance: %d", s);
+      }
+      s = sys_privctl(replica_endpoint, SYS_PRIV_ALLOW, NULL);
+      if(s != OK) {
+          panic("unable to let the new RS instance run: %d", s);
+      }
+
+      /* Synchronize with the new instance and go to sleep. */
+      m.m_type = RS_INIT;
+      s = sendrec(replica_endpoint, &m);
+      if(s != OK) {
+          panic("sendrec failed: %d", s);
+      }
+      /* Not reachable */
+  }
 
   return(OK);
 }

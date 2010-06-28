@@ -46,7 +46,11 @@
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 
 /* Define boot process flags. */
-#define BVM_F    (PROC_FULLVM)                    /* boot processes with VM */
+#define BVM_F   (PROC_FULLVM)                    /* boot processes with VM */
+#define OVM_F   (PERF_SYS_CORE_FULLVM ? PROC_FULLVM : 0) /* critical boot
+                                                           * processes with
+                                                           * optional VM.
+                                                           */
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -74,9 +78,9 @@ PUBLIC struct boot_image image[] = {
 {DS_PROC_NR,   BVM_F, 50,      4, 0,     "ds"    },
 {RS_PROC_NR,       0, 50,      4, 0,     "rs"    },
 
-{PM_PROC_NR,       0,500,      4, 0,     "pm"    },
-{SCHED_PROC_NR,    0,500,      4, 0,     "sched" },
-{VFS_PROC_NR,      0,500,      5, 0,     "vfs"   },
+{PM_PROC_NR,   OVM_F,500,      4, 0,     "pm"    },
+{SCHED_PROC_NR,OVM_F,500,      4, 0,     "sched" },
+{VFS_PROC_NR,  OVM_F,500,      5, 0,     "vfs"   },
 {MEM_PROC_NR,  BVM_F, 50,      3, 0,     "memory"},
 {LOG_PROC_NR,  BVM_F, 50,      2, 0,     "log"   },
 {TTY_PROC_NR,  BVM_F, 50,      1, 0,     "tty"   },

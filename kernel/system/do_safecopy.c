@@ -23,8 +23,6 @@
 
 #define MEM_TOP 0xFFFFFFFFUL
 
-#define USE_COW_SAFECOPY 0
-
 FORWARD _PROTOTYPE(int safecopy, (struct proc *, endpoint_t, endpoint_t,
 		cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
 
@@ -240,7 +238,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	endpoint_t new_granter, *src, *dst;
 	struct proc *granter_p;
 	int r;
-#if USE_COW_SAFECOPY
+#if PERF_USE_COW_SAFECOPY
 	vir_bytes size;
 #endif
 
@@ -290,7 +288,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	}
 
 	/* Do the regular copy. */
-#if USE_COW_SAFECOPY
+#if PERF_USE_COW_SAFECOPY
 	if(v_offset % CLICK_SIZE != addr % CLICK_SIZE || bytes < CLICK_SIZE) {
 		/* Give up on COW immediately when offsets are not aligned
 		 * or we are copying less than a page.

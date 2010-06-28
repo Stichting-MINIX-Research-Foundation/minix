@@ -32,6 +32,7 @@ SRCS+=  \
 	_svrctl.c \
 	_sysuname.c \
 	_vm_dmacalls.c \
+	_vm_memctl.c \
 	_vm_set_priv.c \
 	_vm_update.c \
 	_vm_query_exit.c \

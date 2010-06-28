@@ -141,6 +141,7 @@ _PROTOTYPE(int map_proc_copy,(struct vmproc *dst, struct vmproc *src));
 _PROTOTYPE(struct vir_region *map_lookup,(struct vmproc *vmp, vir_bytes addr));
 _PROTOTYPE(int map_pf,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, int write));
+_PROTOTYPE(int map_pin_memory,(struct vmproc *vmp));
 _PROTOTYPE(int map_handle_memory,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, vir_bytes len, int write));
 _PROTOTYPE(void map_printmap, (struct vmproc *vmp));
@@ -185,6 +186,7 @@ _PROTOTYPE( vir_bytes arch_addrok, (struct vmproc *vmp, vir_bytes addr));
 /* rs.c */
 _PROTOTYPE(int do_rs_set_priv, (message *m));
 _PROTOTYPE(int do_rs_update, (message *m));
+_PROTOTYPE(int do_rs_memctl, (message *m));
 
 /* queryexit.c */
 _PROTOTYPE(int do_query_exit, (message *m));

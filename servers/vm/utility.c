@@ -286,10 +286,10 @@ PUBLIC int swap_proc(endpoint_t src_e, endpoint_t dst_e)
 	}
 
 	/* Adjust page tables. */
-	assert(src_vmp->vm_flags & VMF_HASPT);
-	assert(dst_vmp->vm_flags & VMF_HASPT);
-	pt_bind(&src_vmp->vm_pt, src_vmp);
-	pt_bind(&dst_vmp->vm_pt, dst_vmp);
+	if(src_vmp->vm_flags & VMF_HASPT)
+		pt_bind(&src_vmp->vm_pt, src_vmp);
+	if(dst_vmp->vm_flags & VMF_HASPT)
+		pt_bind(&dst_vmp->vm_pt, dst_vmp);
 	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
 		panic("swap_proc: VMCTL_FLUSHTLB failed: %d", r);
 	}

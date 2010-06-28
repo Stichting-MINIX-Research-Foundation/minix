@@ -73,6 +73,7 @@ SRCS+=  \
 	munmap.S \
 	vm_getphys.S \
 	vm_getrefcount.S \
+	vm_memctl.S \
 	vm_remap.S \
 	vm_unmap.S \
 	vm_set_priv.S \

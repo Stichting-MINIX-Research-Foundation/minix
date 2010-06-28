@@ -1435,6 +1435,11 @@ struct rproc **clone_rpp;
   rpub = rp->r_pub;
   clone_rpub = clone_rp->r_pub;
 
+  /* Synch the privilege structure of the source with the kernel. */
+  if ((r = sys_getpriv(&(rp->r_priv), rpub->endpoint)) != OK) {
+      panic("unable to synch privilege structure: %d", r);
+  }
+
   /* Shallow copy. */
   *clone_rp = *rp;
   *clone_rpub = *rpub;

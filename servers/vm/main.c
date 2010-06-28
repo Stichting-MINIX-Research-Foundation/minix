@@ -344,6 +344,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	/* Calls from RS */
 	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv);
 	CALLMAP(VM_RS_UPDATE, do_rs_update);
+	CALLMAP(VM_RS_MEMCTL, do_rs_memctl);
 
 	/* Generic calls. */
 	CALLMAP(VM_REMAP, do_remap);

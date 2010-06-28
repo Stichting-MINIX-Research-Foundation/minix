@@ -1117,6 +1117,34 @@ int write;
 }
 
 /*===========================================================================*
+ *				map_pin_memory      			     *
+ *===========================================================================*/
+PUBLIC int map_pin_memory(struct vmproc *vmp)
+{
+	struct vir_region *vr;
+	int offset, r;
+
+	/* Scan all memory regions. */
+	for(vr = vmp->vm_regions; vr; vr = vr->next) {
+		vir_bytes offset;
+		/* Skip regions that can't pagefault. */
+		if((vr->flags & VR_NOPF) || (vr->flags & VR_SHARED)) {
+		    continue;
+		}
+		/* Map other regions. */
+		for(offset=0;offset<vr->length;offset += VM_PAGE_SIZE) {
+			if((r=map_pf(vmp, vr, offset, 1 /* write */))
+				!= OK) {
+				printf("VM: map_pf failed\n");
+				return r;
+			}
+		}
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
  *				map_handle_memory			     *
  *===========================================================================*/
 PUBLIC int map_handle_memory(vmp, region, offset, length, write)

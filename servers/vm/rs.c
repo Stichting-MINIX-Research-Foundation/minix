@@ -38,7 +38,7 @@ PUBLIC int do_rs_set_priv(message *m)
 	nr = m->VM_RS_NR;
 
 	if ((r = vm_isokendpt(nr, &n)) != OK) {
-		printf("do_rs_set_priv: message from strange source %d\n", nr);
+		printf("do_rs_set_priv: bad endpoint %d\n", nr);
 		return EINVAL;
 	}
 
@@ -60,7 +60,7 @@ PUBLIC int do_rs_set_priv(message *m)
  *===========================================================================*/
 PUBLIC int do_rs_update(message *m_ptr)
 {
-	endpoint_t src_e, dst_e;
+	endpoint_t src_e, dst_e, reply_e;
 	int r;
 
 	src_e = m_ptr->VM_RS_SRC_ENDPT;
@@ -74,7 +74,52 @@ PUBLIC int do_rs_update(message *m_ptr)
 
 	/* Do the update in VM now. */
 	r = swap_proc(src_e, dst_e);
+	if(r != OK) {
+		return r;
+	}
 
-	return r;
+	/* Reply, update-aware. */
+	reply_e = m_ptr->m_source;
+	if(reply_e == src_e) reply_e = dst_e;
+	if(reply_e == dst_e) reply_e = src_e;
+	m_ptr->m_type = OK;
+	r = send(reply_e, m_ptr);
+	if(r != OK) {
+		panic("send() error");
+	}
+
+	return SUSPEND;
+}
+
+/*===========================================================================*
+ *				do_rs_memctl	     			     *
+ *===========================================================================*/
+PUBLIC int do_rs_memctl(message *m_ptr)
+{
+	endpoint_t ep;
+	int req, r, proc_nr;
+	struct vmproc *vmp;
+
+	ep = m_ptr->VM_RS_CTL_ENDPT;
+	req = m_ptr->VM_RS_CTL_REQ;
+
+	/* Lookup endpoint. */
+	if ((r = vm_isokendpt(ep, &proc_nr)) != OK) {
+		printf("do_rs_memctl: bad endpoint %d\n", ep);
+		return EINVAL;
+	}
+	vmp = &vmproc[proc_nr];
+
+	/* Process request. */
+	switch(req)
+	{
+	case VM_RS_MEM_PIN:
+		r = map_pin_memory(vmp);
+		return r;
+
+	default:
+		printf("do_rs_memctl: bad request %d\n", req);
+		return EINVAL;
+	}
 }
 

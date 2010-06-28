@@ -23,9 +23,9 @@ _PROTOTYPE( void *vm_map_phys, (endpoint_t who, void *physaddr, size_t len));
 _PROTOTYPE( int vm_unmap_phys, (endpoint_t who, void *vaddr, size_t len));
 
 _PROTOTYPE( int vm_notify_sig, (endpoint_t ep, endpoint_t ipc_ep));
-_PROTOTYPE( int vm_ctl, (int what, int param));
 _PROTOTYPE( int vm_set_priv, (int procnr, void *buf));
 _PROTOTYPE( int vm_update, (endpoint_t src_e, endpoint_t dst_e));
+_PROTOTYPE( int vm_memctl, (endpoint_t ep, int req));
 _PROTOTYPE( int vm_query_exit, (int *endpt));
 _PROTOTYPE( int vm_forgetblock, (u64_t id));
 _PROTOTYPE( void vm_forgetblocks, (void));

@@ -70,12 +70,17 @@ SANITYCHECK(SCL_FUNCTIONS);
 
 	if(vmp->vm_flags & VMF_HAS_DMA) {
 		release_dma(vmp);
-	} else {
-		assert(vmp->vm_flags & VMF_HASPT);
+	} else if(vmp->vm_flags & VMF_HASPT) {
 		/* Free pagetable and pages allocated by pt code. */
 SANITYCHECK(SCL_DETAIL);
 		free_proc(vmp);
 SANITYCHECK(SCL_DETAIL);
+	} else {
+                 /* Free the data and stack segments. */ 	 
+	         free_mem(vmp->vm_arch.vm_seg[D].mem_phys, 	 
+	                 vmp->vm_arch.vm_seg[S].mem_vir + 	 
+	                 vmp->vm_arch.vm_seg[S].mem_len - 	 
+	                 vmp->vm_arch.vm_seg[D].mem_vir); 	 
 	}
 SANITYCHECK(SCL_DETAIL);
 

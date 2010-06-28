@@ -1030,8 +1030,13 @@
 #	define VM_RS_SRC_ENDPT		m1_i1
 #	define VM_RS_DST_ENDPT		m1_i2
 
+#define VM_RS_MEMCTL		(VM_RQ_BASE+42)
+#	define VM_RS_CTL_ENDPT		m1_i1
+#	define VM_RS_CTL_REQ		m1_i2
+#		define VM_RS_MEM_PIN	0	/* pin memory */
+
 /* Total. */
-#define NR_VM_CALLS				42
+#define NR_VM_CALLS				43
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */
