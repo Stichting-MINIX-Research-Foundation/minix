@@ -6,6 +6,7 @@
 #include <minix/type.h>
 
 _PROTOTYPE( int getsysinfo, (endpoint_t who, int what, void *where)       );
+_PROTOTYPE( int minix_getkproctab, (void *pr, int nprocs, int assert));
 _PROTOTYPE( ssize_t getsysinfo_up, (endpoint_t who, int what, size_t size,
 	void *where));
 

@@ -187,4 +187,7 @@
 #define VERBOSEBOOT_MAX   3
 #define VERBOSEBOOTVARNAME "verbose"
 
+/* magic value to put in struct proc entries for sanity checks. */
+#define PMAGIC 0xC0FFEE1
+
 #endif /* _MINIX_CONST_H */

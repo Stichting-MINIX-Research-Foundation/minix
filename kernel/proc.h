@@ -1,6 +1,8 @@
 #ifndef PROC_H
 #define PROC_H
 
+#include <minix/const.h>
+
 #ifndef __ASSEMBLY__
 
 /* Here is the declaration of the process table.  It contains all process
@@ -102,7 +104,6 @@ struct proc {
   } p_vmrequest;
 
   int p_found;	/* consistency checking variables */
-#define PMAGIC 0xC0FFEE1
   int p_magic;		/* check validity of proc pointers */
 
 #if DEBUG_TRACE
