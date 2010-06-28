@@ -559,6 +559,10 @@ PUBLIC int mini_send(
 	call = (caller_ptr->p_misc_flags & MF_REPLY_PEND ? SENDREC
 		: (flags & NON_BLOCKING ? SENDNB : SEND));
 	IPC_STATUS_ADD_CALL(dst_ptr, call);
+
+	if (dst_ptr->p_misc_flags & MF_REPLY_PEND)
+		dst_ptr->p_misc_flags &= ~MF_REPLY_PEND;
+
 	RTS_UNSET(dst_ptr, RTS_RECEIVING);
 
 #if DEBUG_DUMPIPC
@@ -677,7 +681,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 
 	    IPC_STATUS_ADD_CALL(caller_ptr, NOTIFY);
 
-	    return(OK);
+	    goto receive_done;
         }
     }
 
@@ -691,7 +695,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 
 	if (r == OK) {
 		IPC_STATUS_ADD_CALL(caller_ptr, SENDA);
-		return OK;	/* Got a message */
+		goto receive_done;
 	}
     }
 
@@ -733,7 +737,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 		
             *xpp = sender->p_q_link;		/* remove from queue */
 	    sender->p_q_link = NULL;
-            return(OK);				/* report success */
+	    goto receive_done;
 	}
 	xpp = &sender->p_q_link;		/* proceed to next */
     }
@@ -754,6 +758,11 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
   } else {
 	return(ENOTREADY);
   }
+
+receive_done:
+  if (caller_ptr->p_misc_flags & MF_REPLY_PEND)
+	  caller_ptr->p_misc_flags &= ~MF_REPLY_PEND;
+  return OK;
 }
 
 /*===========================================================================*
