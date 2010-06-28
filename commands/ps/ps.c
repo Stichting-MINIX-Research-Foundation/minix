@@ -344,8 +344,8 @@ char *argv[];
   if (ps_proc == NULL || ps_mproc == NULL || ps_fproc == NULL)
 	err("Out of memory");
 
-	if(getsysinfo(PM_PROC_NR, SI_KPROC_TAB, ps_proc) < 0) {
-		fprintf(stderr, "getsysinfo() for SI_KPROC_TAB failed.\n");
+	if(minix_getkproctab(ps_proc, nr_tasks + nr_procs, 1) < 0) {
+		fprintf(stderr, "minix_getkproctab failed.\n");
 		exit(1);
 	}
 

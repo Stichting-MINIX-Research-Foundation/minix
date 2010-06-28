@@ -358,10 +358,11 @@ void showtop(int r)
 #endif
 
 retry:
-	if(getsysinfo(PM_PROC_NR, SI_KPROC_TAB, proc) < 0) {
-		fprintf(stderr, "getsysinfo() for SI_KPROC_TAB failed.\n");
+	if(minix_getkproctab(proc, PROCS, 1) < 0) {
+		fprintf(stderr, "minix_getkproctab failed.\n");
 		exit(1);
 	}
+
 	if (!preheated) {
 		preheated = 1;
 		memcpy(prev_proc, proc, sizeof(prev_proc));
