@@ -112,6 +112,7 @@ PUBLIC int main(void)
           case RS_RESTART: 	result = do_restart(&m); 	break;
           case RS_SHUTDOWN: 	result = do_shutdown(&m); 	break;
           case RS_UPDATE: 	result = do_update(&m); 	break;
+          case RS_CLONE: 	result = do_clone(&m); 		break;
           case GETSYSINFO: 	result = do_getsysinfo(&m); 	break;
 	  case RS_LOOKUP:	result = do_lookup(&m);		break;
 	  /* Ready messages. */

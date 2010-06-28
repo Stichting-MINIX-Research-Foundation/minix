@@ -15,6 +15,7 @@ _PROTOTYPE( int do_up, (message *m));
 _PROTOTYPE( int do_down, (message *m));
 _PROTOTYPE( int do_refresh, (message *m));
 _PROTOTYPE( int do_restart, (message *m));
+_PROTOTYPE( int do_clone, (message *m));
 _PROTOTYPE( int do_shutdown, (message *m));
 _PROTOTYPE( void do_period, (message *m));
 _PROTOTYPE( int do_init_ready, (message *m));

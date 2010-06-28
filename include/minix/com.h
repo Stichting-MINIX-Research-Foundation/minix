@@ -668,6 +668,7 @@
 #define RS_RESTART	(RS_RQ_BASE + 3)	/* restart system service */
 #define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
 #define RS_UPDATE	(RS_RQ_BASE + 5)	/* update system service */
+#define RS_CLONE	(RS_RQ_BASE + 6)	/* clone system service */
 
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 

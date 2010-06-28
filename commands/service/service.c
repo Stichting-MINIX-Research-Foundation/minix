@@ -41,6 +41,7 @@ PRIVATE char *known_requests[] = {
   "restart",
   "shutdown", 
   "update",
+  "clone",
   "catch for illegal requests"
 };
 #define ILLEGAL_REQUEST  sizeof(known_requests)/sizeof(char *)
@@ -130,6 +131,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "    %s down label\n", app_name);
   fprintf(stderr, "    %s refresh label\n", app_name);
   fprintf(stderr, "    %s restart label\n", app_name);
+  fprintf(stderr, "    %s clone label\n", app_name);
   fprintf(stderr, "    %s shutdown\n", app_name);
   fprintf(stderr, "\n");
 }
@@ -351,11 +353,12 @@ PRIVATE int parse_arguments(int argc, char **argv)
           }
       }
   }
-  else if (req_nr == RS_DOWN || req_nr == RS_REFRESH || req_nr == RS_RESTART) {
+  else if (req_nr == RS_DOWN || req_nr == RS_REFRESH || req_nr == RS_RESTART
+      || req_nr == RS_CLONE) {
 
       /* Verify argument count. */ 
       if (argc - 1 < optind+ARG_LABEL) {
-          print_usage(argv[ARG_NAME], "action requires a label to stop");
+          print_usage(argv[ARG_NAME], "action requires a target label");
           exit(EINVAL);
       }
       req_label= argv[optind+ARG_LABEL];
@@ -1122,6 +1125,7 @@ PUBLIC int main(int argc, char **argv)
   case RS_DOWN:
   case RS_REFRESH:
   case RS_RESTART:
+  case RS_CLONE:
       m.RS_CMD_ADDR = req_label;
       m.RS_CMD_LEN = strlen(req_label);
       break;

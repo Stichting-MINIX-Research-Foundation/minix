@@ -174,6 +174,51 @@ PUBLIC int do_restart(message *m_ptr)
   return OK;
 }
 
+/*===========================================================================*
+ *				do_clone				     *
+ *===========================================================================*/
+PUBLIC int do_clone(message *m_ptr)
+{
+  struct rproc *rp;
+  struct rprocpub *rpub;
+  int s, r;
+  char label[RS_MAX_LABEL_LEN];
+  char script[MAX_SCRIPT_LEN];
+
+  /* Copy label. */
+  s = copy_label(m_ptr->m_source, m_ptr->RS_CMD_ADDR,
+      m_ptr->RS_CMD_LEN, label, sizeof(label));
+  if(s != OK) {
+      return s;
+  }
+
+  /* Lookup slot by label. */
+  rp = lookup_slot_by_label(label);
+  if(!rp) {
+      if(rs_verbose)
+          printf("RS: do_clone: service '%s' not found\n", label);
+      return(ESRCH);
+  }
+  rpub = rp->r_pub;
+
+  /* Check if the call can be allowed. */
+  if((r = check_call_permission(m_ptr->m_source, RS_CLONE, rp)) != OK)
+      return r;
+
+  /* Don't clone if a replica is already available. */
+  if(rp->r_next_rp) {
+      return EEXIST;
+  }
+
+  /* Clone the service as requested. */
+  rpub->sys_flags |= SF_USE_REPL;
+  if ((r = clone_service(rp)) != OK) {
+      rpub->sys_flags &= ~SF_USE_REPL;
+      return r;
+  }
+
+  return OK;
+}
 
 /*===========================================================================*
  *				do_refresh				     *
@@ -516,7 +561,7 @@ message *m_ptr;
    */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
       rpub = rp->r_pub;
-      if ((rp->r_flags & RS_IN_USE) && !(rp->r_flags & RS_UPDATING)) {
+      if ((rp->r_flags & RS_ACTIVE) && !(rp->r_flags & RS_UPDATING)) {
 
           /* Compute period. */
           period = rpub->period;
