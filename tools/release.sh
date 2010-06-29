@@ -194,7 +194,7 @@ if [ $PACKAGES -ne 0 ]
 then	mkdir -p $PACKAGEDIR || true
 	mkdir -p $PACKAGESOURCEDIR || true
 	rm -f $PACKAGEDIR/List
-	retrieve $PACKAGEDIR $PACKAGELIST packages/`uname -p`/`uname -r`.`uname -v`
+	retrieve $PACKAGEDIR $PACKAGELIST packages/`uname -p`/3.1.7
 	retrieve $PACKAGESOURCEDIR $PACKAGESOURCELIST software
 fi
 
