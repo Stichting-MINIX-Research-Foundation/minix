@@ -267,7 +267,7 @@ PRIVATE void do_reply(dpeth_t * dep)
   if (dep->de_flags & DEF_ACK_RECV) flags |= DL_PACK_RECV;
 
   reply.m_type = DL_TASK_REPLY;
-  reply.DL_STAT = flags;
+  reply.DL_FLAGS = flags;
   reply.DL_COUNT = dep->de_read_s;
 
   r = send(dep->de_client, &reply);
