@@ -350,7 +350,10 @@ echo " * Bootstrap /etc/mk files"
 # and permissions will be set by its own src/etc/Makefile.
 mkdir -p $RELEASEDIR/etc/mk
 chmod 755 $RELEASEDIR/etc/mk
+mkdir -p $RELEASEDIR/usr/share/mk
+chmod 755 $RELEASEDIR/usr/share/mk
 cp $RELEASEDIR/usr/src/etc/mk/* $RELEASEDIR/etc/mk/
+cp $RELEASEDIR/usr/src/etc/mk/* $RELEASEDIR/usr/share/mk
 chown -R root $RELEASEDIR/etc/mk
 echo " * Chroot build"
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
