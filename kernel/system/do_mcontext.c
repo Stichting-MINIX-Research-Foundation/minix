@@ -29,7 +29,7 @@ PUBLIC int do_getmcontext(struct proc * caller, message * m_ptr)
   rp = proc_addr(proc_nr);
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
-  if (!(rp->p_misc_flags & MF_FPU_INITIALIZED)) 
+  if (!proc_used_fpu(rp)) {
 	return(OK);	/* No state to copy */
 #endif
 
@@ -41,7 +41,7 @@ PUBLIC int do_getmcontext(struct proc * caller, message * m_ptr)
 #if (_MINIX_CHIP == _CHIP_INTEL)
   /* Copy FPU state */
   mc.mc_fpu_flags = 0;
-  if (rp->p_misc_flags & MF_FPU_INITIALIZED) {
+  if (proc_used_fpu(rp)) {
 	/* make sure that the FPU context is saved into proc structure first */
 	if (fpu_owner == rp) {
 		disable_fpu_exception();

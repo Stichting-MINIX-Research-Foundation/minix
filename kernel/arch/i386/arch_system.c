@@ -219,7 +219,7 @@ PUBLIC void save_fpu(struct proc *pr)
 
 PUBLIC void restore_fpu(struct proc *pr)
 {
-	if(!(pr->p_misc_flags & MF_FPU_INITIALIZED)) {
+	if(!proc_used_fpu(pr)) {
 		fninit();
 		pr->p_misc_flags |= MF_FPU_INITIALIZED;
 	} else {

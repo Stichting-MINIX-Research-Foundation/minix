@@ -67,7 +67,7 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 #if (_MINIX_CHIP == _CHIP_INTEL)
   rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
   rpc->p_fpu_state.fpu_save_area_p = old_fpu_save_area_p;
-  if(rpp->p_misc_flags & MF_FPU_INITIALIZED)
+  if(proc_used_fpu(rpp)) {
 	memcpy(rpc->p_fpu_state.fpu_save_area_p,
 	       rpp->p_fpu_state.fpu_save_area_p,
 	       FPU_XFP_SIZE);
