@@ -431,7 +431,10 @@ struct rproc *rp;
       return(EPERM);
   }
 
-  /* Now fork and branch for parent and child process (and check for error). */
+  /* Now fork and branch for parent and child process (and check for error).
+   * After fork()ing, we need to pin RS memory again or pagefaults will occur
+   * on future writes.
+   */
   if(rs_verbose)
       printf("RS: forking child with srv_fork()...\n");
   child_pid= srv_fork();
@@ -467,6 +470,7 @@ struct rproc *rp;
 	|| (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
 	printf("unable to set privilege structure: %d\n", s);
 	cleanup_service(rp);
+	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
 	return ENOMEM;
   }
 
@@ -474,13 +478,12 @@ struct rproc *rp;
   if ((s = sched_init_proc(rp)) != OK) {
 	printf("unable to start scheduling: %d\n", s);
 	cleanup_service(rp);
+	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
 	return s;
   }
 
-  /* Copy the executable image into the child process. If this call
-   * fails, the child process may or may not be killed already. If it is
-   * not killed, it's blocked because of NO_PRIV. Kill it now either way.
-   * If no copy exists, allocate one and free it right after exec completes.
+  /* Copy the executable image into the child process. If no copy exists,
+   * allocate one and free it right after exec completes.
    */
   if(use_copy) {
       if(rs_verbose)
@@ -491,6 +494,7 @@ struct rproc *rp;
       if ((s = read_exec(rp)) != OK) {
           printf("read_exec failed: %d\n", s);
           cleanup_service(rp);
+          vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
           return s;
       }
   }
@@ -498,6 +502,7 @@ struct rproc *rp;
         printf("RS: execing child with srv_execve()...\n");
   s = srv_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
         environ);
+  vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
 
   if (s != OK) {
         printf("srv_execve failed: %d\n", s);
@@ -963,6 +968,8 @@ PRIVATE int run_script(struct rproc *rp)
 		if ((r = sys_privctl(endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
 			return kill_service(rp,"can't let the script run",r);
 		}
+		/* Pin RS memory again after fork()ing. */
+		vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
 	}
 	return OK;
 }

@@ -1122,22 +1122,14 @@ int write;
 PUBLIC int map_pin_memory(struct vmproc *vmp)
 {
 	struct vir_region *vr;
-	int offset, r;
+	int r;
 
 	/* Scan all memory regions. */
 	for(vr = vmp->vm_regions; vr; vr = vr->next) {
-		vir_bytes offset;
-		/* Skip regions that can't pagefault. */
-		if((vr->flags & VR_NOPF) || (vr->flags & VR_SHARED)) {
-		    continue;
-		}
-		/* Map other regions. */
-		for(offset=0;offset<vr->length;offset += VM_PAGE_SIZE) {
-			if((r=map_pf(vmp, vr, offset, 1 /* write */))
-				!= OK) {
-				printf("VM: map_pf failed\n");
-				return r;
-			}
+		/* Make sure region is mapped to physical memory and writable.*/
+		r = map_handle_memory(vmp, vr, 0, vr->length, 1);
+		if(r != OK) {
+		    panic("map_pin_memory: map_handle_memory failed: %d", r);
 		}
 	}
 
