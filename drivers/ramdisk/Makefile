@@ -2,7 +2,7 @@
 
 PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
 	pci sh service sysenv mfs
-EXTRA=system.conf passwd
+EXTRA=system.conf passwd rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers
 MAKEDEV=/usr/bin/MAKEDEV
@@ -101,6 +101,9 @@ system.conf: ../../etc/system.conf
 	install -s ../../etc/$@ $@
 
 passwd: ../../etc/passwd
+	install -s ../../etc/$@ $@
+
+rs.single: ../../etc/rs.single
 	install -s ../../etc/$@ $@
 
 proto.gen: $(MAKEDEV) proto.sh proto
