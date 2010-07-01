@@ -292,6 +292,8 @@ PUBLIC void end_update(int result)
  *    service has a period, a status request will be forced in the next period.
  */
   struct rproc *old_rp, *new_rp, *exiting_rp, *surviving_rp;
+  struct rproc **rps;
+  int nr_rps, i;
 
   old_rp = rupdate.rp;
   new_rp = old_rp->r_new_rp;
@@ -314,14 +316,17 @@ PUBLIC void end_update(int result)
   /* Send a late reply if necessary. */
   late_reply(old_rp, result);
 
-  /* Unpublish and cleanup the version that has to die out and mark the other
+  /* Cleanup the version that has to die out and mark the other
    * version as no longer updating.
    */
   surviving_rp->r_flags &= ~RS_UPDATING;
-  cleanup_service(exiting_rp);
+  get_service_instances(exiting_rp, &rps, &nr_rps);
+  for(i=0;i<nr_rps;i++) {
+      cleanup_service(rps[i]);
+  }
 
   if(rs_verbose)
-      printf("RS: service %s ended the update\n", srv_to_string(surviving_rp));
+      printf("RS: %s ended the update\n", srv_to_string(surviving_rp));
 }
 
 /*===========================================================================*

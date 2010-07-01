@@ -20,6 +20,7 @@ Interface to the reincarnation server
 #define RSS_REUSE	0x04	/* Try to reuse previously copied binary */
 #define RSS_NOBLOCK	0x08	/* unblock caller immediately */
 #define RSS_REPLICA	0x10	/* keep a replica of the service */
+#define RSS_SELF_LU	0x20	/* perform self update */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8

@@ -55,6 +55,8 @@ PRIVATE char *known_requests[] = {
 
 #define RUN_CMD		"run"
 #define RUN_SCRIPT	"/etc/rs.single"	/* Default script for 'run' */
+#define SELF_BINARY     "self"
+#define SELF_REQ_PATH   "/dev/null"
 #define PATH_CONFIG	_PATH_SYSTEM_CONF	/* Default config file */
 #define DEFAULT_LU_STATE   SEF_LU_STATE_WORK_FREE /* Default lu state */
 #define DEFAULT_LU_MAXTIME 0                    /* Default lu max time */
@@ -63,6 +65,7 @@ PRIVATE char *known_requests[] = {
 #define OPT_COPY	"-c"		/* copy executable image */
 #define OPT_REUSE	"-r"		/* reuse executable image */
 #define OPT_NOBLOCK	"-n"		/* unblock caller immediately */
+#define OPT_REPLICA	"-p"		/* create replica for the service */
 
 /* Define names for arguments provided to this utility. The first few 
  * arguments are required and have a known index. Thereafter, some optional
@@ -104,6 +107,7 @@ PRIVATE int req_type;
 PRIVATE int do_run= 0;		/* 'run' command instead of 'up' */
 PRIVATE char *req_label = NULL;
 PRIVATE char *req_path = NULL;
+PRIVATE char *req_path_self = SELF_REQ_PATH;
 PRIVATE char *req_args = "";
 PRIVATE int req_major = 0;
 PRIVATE int req_dev_style = STYLE_NDEV;
@@ -128,8 +132,8 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [%s %s %s] (up|run|update) <binary> [%s <args>] [%s <special>] [%s <style>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
-	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK,
+  "    %s [%s %s %s %s] (up|run|update) <binary|%s> [%s <args>] [%s <special>] [%s <style>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
+	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, SELF_BINARY,
 	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_PERIOD, ARG_SCRIPT,
 	ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
   fprintf(stderr, "    %s down label\n", app_name);
@@ -233,6 +237,13 @@ PRIVATE int parse_arguments(int argc, char **argv)
       if(p_flag)
         rs_start.rss_flags |= RSS_REPLICA;
 
+      req_path = argv[optind+ARG_PATH];
+      if(req_nr == RS_UPDATE && !strcmp(req_path, SELF_BINARY)) {
+          req_config = NULL;
+          req_path = req_path_self;
+          rs_start.rss_flags |= RSS_SELF_LU;
+      }
+
       if (do_run)
       {
 	/* Set default recovery script for RUN */
@@ -246,20 +257,20 @@ PRIVATE int parse_arguments(int argc, char **argv)
       }
 
       /* Verify the name of the binary of the system service. */
-      req_path = argv[optind+ARG_PATH];
-      if (req_path[0] != '/') {
-          print_usage(argv[ARG_NAME], "binary should be absolute path");
-          exit(EINVAL);
-      }
-
-      if (stat(req_path, &stat_buf) == -1) {
-	  perror(req_path);
-          fprintf(stderr, "couldn't get stat binary\n");
-          exit(errno);
-      }
-      if (! (stat_buf.st_mode & S_IFREG)) {
-          print_usage(argv[ARG_NAME], "binary is not a regular file");
-          exit(EINVAL);
+      if(!(rs_start.rss_flags & RSS_SELF_LU)) {
+          if (req_path[0] != '/') {
+              print_usage(argv[ARG_NAME], "binary should be absolute path");
+              exit(EINVAL);
+          }
+          if (stat(req_path, &stat_buf) == -1) {
+	      perror(req_path);
+              fprintf(stderr, "couldn't get stat binary\n");
+              exit(errno);
+          }
+          if (! (stat_buf.st_mode & S_IFREG)) {
+              print_usage(argv[ARG_NAME], "binary is not a regular file");
+              exit(EINVAL);
+          }
       }
 
       /* Get HZ. */
@@ -369,6 +380,11 @@ PRIVATE int parse_arguments(int argc, char **argv)
   } 
   else if (req_nr == RS_SHUTDOWN) {
         /* no extra arguments required */
+  }
+
+  if((rs_start.rss_flags & RSS_SELF_LU) && !req_label) {
+      print_usage(argv[ARG_NAME], "label option mandatory for target action");
+      exit(EINVAL);
   }
 
   /* Return the request number if no error were found. */

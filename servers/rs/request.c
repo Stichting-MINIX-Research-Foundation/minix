@@ -381,7 +381,7 @@ PUBLIC int do_update(message *m_ptr)
   struct rproc *new_rp;
   struct rprocpub *rpub;
   struct rs_start rs_start;
-  int noblock;
+  int noblock, do_self_update;
   int s;
   char label[RS_MAX_LABEL_LEN];
   int lu_state;
@@ -393,6 +393,7 @@ PUBLIC int do_update(message *m_ptr)
       return s;
   }
   noblock = (rs_start.rss_flags & RSS_NOBLOCK);
+  do_self_update = (rs_start.rss_flags & RSS_SELF_LU);
   s = check_request(&rs_start);
   if (s != OK) {
       return s;
@@ -442,28 +443,58 @@ PUBLIC int do_update(message *m_ptr)
       return EBUSY;
   }
 
-  /* Allocate a system service slot for the new version. */
-  s = alloc_slot(&new_rp);
-  if(s != OK) {
-      printf("RS: do_update: unable to allocate a new slot: %d\n", s);
-      return s;
+  /* A self update live updates a service instance into a replica, a regular
+   * update live updates a service instance into a new version, as specified
+   * by the given binary.
+   */
+  if(do_self_update) {
+      struct rproc *r_next_rp;
+      if(rs_verbose)
+          printf("RS: %s performs self update\n", srv_to_string(rp));
+
+      /* Save information about existing replica (if any). */
+      r_next_rp = rp->r_next_rp;
+      rp->r_next_rp = NULL;
+
+      /* Clone the system service and use the replica as the new version. */
+      s = clone_service(rp);
+      if(s != OK) {
+          printf("RS: do_update: unable to clone service: %d\n", s);
+          return s;
+      }
+      new_rp = rp->r_next_rp;
+      new_rp->r_prev_rp = NULL;
+
+      /* Restore information about existing replica (if any). */
+      rp->r_next_rp = r_next_rp;
   }
+  else {
+      if(rs_verbose)
+          printf("RS: %s performs regular update\n", srv_to_string(rp));
 
-  /* Initialize the slot as requested. */
-  s = init_slot(new_rp, &rs_start, m_ptr->m_source);
-  if(s != OK) {
-      printf("RS: do_update: unable to init the new slot: %d\n", s);
-      return s;
-  }
+      /* Allocate a system service slot for the new version. */
+      s = alloc_slot(&new_rp);
+      if(s != OK) {
+          printf("RS: do_update: unable to allocate a new slot: %d\n", s);
+          return s;
+      }
 
-  /* Let the new version inherit defaults from the old one. */
-  inherit_service_defaults(rp, new_rp);
+      /* Initialize the slot as requested. */
+      s = init_slot(new_rp, &rs_start, m_ptr->m_source);
+      if(s != OK) {
+          printf("RS: do_update: unable to init the new slot: %d\n", s);
+          return s;
+      }
 
-  /* Create new version of the service but don't let it run. */
-  s = create_service(new_rp);
-  if(s != OK) {
-      printf("RS: do_update: unable to create a new service: %d\n", s);
-      return s;
+      /* Let the new version inherit defaults from the old one. */
+      inherit_service_defaults(rp, new_rp);
+
+      /* Create new version of the service but don't let it run. */
+      s = create_service(new_rp);
+      if(s != OK) {
+          printf("RS: do_update: unable to create a new service: %d\n", s);
+          return s;
+      }
   }
 
   /* Link old version to new version and mark both as updating. */
