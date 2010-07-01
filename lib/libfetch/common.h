@@ -32,6 +32,8 @@
 #ifndef _COMMON_H_INCLUDED
 #define _COMMON_H_INCLUDED
 
+#include <fetch.h>
+
 #define FTP_DEFAULT_PORT	21
 #define HTTP_DEFAULT_PORT	80
 #define FTP_DEFAULT_PROXY_PORT	21

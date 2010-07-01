@@ -3,9 +3,6 @@
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
 #DPSRCS= 	ftperr.h httperr.h
-INCSDIR=	/usr/include
-INCS=		fetch.h
-MAN=		fetch.3
 # CLEANFILES=	ftperr.h httperr.h
 MKLINT=		no
 MKPIC=		no

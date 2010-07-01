@@ -47,7 +47,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "fetch.h"
 #include "common.h"
 
 static int	fetch_stat_file(int, struct url_stat *);

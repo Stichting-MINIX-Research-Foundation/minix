@@ -106,7 +106,6 @@
 
 #include <arpa/inet.h>
 
-#include "fetch.h"
 #include "common.h"
 #include "httperr.h"
 

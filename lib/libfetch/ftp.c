@@ -94,7 +94,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "fetch.h"
 #include "common.h"
 #include "ftperr.h"
 

@@ -66,7 +66,6 @@
 #include <signal.h>
 #endif
 
-#include "fetch.h"
 #include "common.h"
 
 /*** Local data **************************************************************/

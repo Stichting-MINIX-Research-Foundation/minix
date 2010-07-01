@@ -43,7 +43,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fetch.h"
 #include "common.h"
 
 auth_t	 fetchAuthMethod;
