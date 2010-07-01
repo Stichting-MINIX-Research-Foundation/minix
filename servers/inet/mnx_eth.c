@@ -439,9 +439,11 @@ u32_t flags;
 
 	if (eth_port->etp_osdep.etp_state != OEPS_IDLE)
 	{
+#if 0
 		printf(
 		"eth_set_rec_conf: setting OEPF_NEED_CONF, state = %d\n",
 			eth_port->etp_osdep.etp_state);
+#endif
 		eth_port->etp_osdep.etp_flags |= OEPF_NEED_CONF;
 		return;
 	}
