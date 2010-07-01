@@ -32,6 +32,10 @@
 #include <sys/stat.h>
 #include <configfile.h>
 
+#include <machine/archtypes.h>
+#include <timers.h>
+#include "kernel/proc.h"
+
 
 /* This array defines all known requests. */
 PRIVATE char *known_requests[] = {
@@ -386,7 +390,9 @@ PRIVATE void fatal(char *fmt, ...)
 
 #define KW_SERVICE	"service"
 #define KW_UID		"uid"
-#define KW_NICE		"nice"
+#define KW_SCHEDULER	"scheduler"
+#define KW_PRIORITY	"priority"
+#define KW_QUANTUM	"quantum"
 #define KW_IRQ		"irq"
 #define KW_IO		"io"
 #define KW_PCI		"pci"
@@ -509,38 +515,119 @@ PRIVATE void do_uid(config_t *cpe)
 	rs_start.rss_uid= uid;
 }
 
-PRIVATE void do_nice(config_t *cpe)
+PRIVATE void do_scheduler(config_t *cpe)
 {
-	int nice_val;
+	int scheduler_val;
 	char *check;
 
-	/* Process a nice value */
+	/* Process a scheduler value */
 	if (cpe->next != NULL)
 	{
-		fatal("do_nice: just one nice value expected at %s:%d",
+		fatal("do_scheduler: just one scheduler value expected at %s:%d",
 			cpe->file, cpe->line);
 	}	
 	
 
 	if (cpe->flags & CFG_SUBLIST)
 	{
-		fatal("do_nice: unexpected sublist at %s:%d",
+		fatal("do_scheduler: unexpected sublist at %s:%d",
 			cpe->file, cpe->line);
 	}
 	if (cpe->flags & CFG_STRING)
 	{
-		fatal("do_nice: unexpected string at %s:%d",
+		fatal("do_scheduler: unexpected string at %s:%d",
 			cpe->file, cpe->line);
 	}
-	nice_val= strtol(cpe->word, &check, 0);
+	scheduler_val= strtol(cpe->word, &check, 0);
 	if (check[0] != '\0')
 	{
-		fatal("do_nice: bad nice value '%s' at %s:%d",
+		fatal("do_scheduler: bad scheduler value '%s' at %s:%d",
 			cpe->word, cpe->file, cpe->line);
 	}
-	/* Check range? */
 
-	rs_start.rss_nice= nice_val;
+	if (scheduler_val != KERNEL && 
+		(scheduler_val < 0 || scheduler_val > LAST_SPECIAL_PROC_NR))
+	{
+		fatal("do_scheduler: scheduler %d out of range at %s:%d",
+			scheduler_val, cpe->file, cpe->line);
+	}
+	rs_start.rss_scheduler= (endpoint_t) scheduler_val;
+}
+
+PRIVATE void do_priority(config_t *cpe)
+{
+	int priority_val;
+	char *check;
+
+	/* Process a priority value */
+	if (cpe->next != NULL)
+	{
+		fatal("do_priority: just one priority value expected at %s:%d",
+			cpe->file, cpe->line);
+	}	
+	
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_priority: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_priority: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+	priority_val= strtol(cpe->word, &check, 0);
+	if (check[0] != '\0')
+	{
+		fatal("do_priority: bad priority value '%s' at %s:%d",
+			cpe->word, cpe->file, cpe->line);
+	}
+
+	if (priority_val < 0 || priority_val >= NR_SCHED_QUEUES)
+	{
+		fatal("do_priority: priority %d out of range at %s:%d",
+			priority_val, cpe->file, cpe->line);
+	}
+	rs_start.rss_priority= (unsigned) priority_val;
+}
+
+PRIVATE void do_quantum(config_t *cpe)
+{
+	int quantum_val;
+	char *check;
+
+	/* Process a quantum value */
+	if (cpe->next != NULL)
+	{
+		fatal("do_quantum: just one quantum value expected at %s:%d",
+			cpe->file, cpe->line);
+	}	
+	
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_quantum: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_quantum: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+	quantum_val= strtol(cpe->word, &check, 0);
+	if (check[0] != '\0')
+	{
+		fatal("do_quantum: bad quantum value '%s' at %s:%d",
+			cpe->word, cpe->file, cpe->line);
+	}
+
+	if (quantum_val <= 0)
+	{
+		fatal("do_quantum: quantum %d out of range at %s:%d",
+			quantum_val, cpe->file, cpe->line);
+	}
+	rs_start.rss_quantum= (unsigned) quantum_val;
 }
 
 PRIVATE void do_irq(config_t *cpe)
@@ -948,9 +1035,19 @@ PRIVATE void do_service(config_t *cpe, config_t *config)
 			do_uid(cpe->next);
 			continue;
 		}
-		if (strcmp(cpe->word, KW_NICE) == 0)
+		if (strcmp(cpe->word, KW_SCHEDULER) == 0)
 		{
-			do_nice(cpe->next);
+			do_scheduler(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_PRIORITY) == 0)
+		{
+			do_priority(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_QUANTUM) == 0)
+		{
+			do_quantum(cpe->next);
 			continue;
 		}
 		if (strcmp(cpe->word, KW_IRQ) == 0)
@@ -1104,6 +1201,10 @@ PUBLIC int main(int argc, char **argv)
 	fatal("no passwd file entry for '%s'", SERVICE_LOGIN);
       rs_start.rss_uid= pw->pw_uid;
 
+      rs_start.rss_scheduler= SCHED_PROC_NR;
+      rs_start.rss_priority= USER_Q;
+      rs_start.rss_quantum= 200;
+
       if (req_config) {
 	assert(progname);
 	do_config(progname, req_config);
@@ -1120,6 +1221,8 @@ PUBLIC int main(int argc, char **argv)
 	      rs_start.rss_ipclen= 0;
       }
 
+      assert(rs_start.rss_priority < NR_SCHED_QUEUES);
+      assert(rs_start.rss_quantum > 0);
       m.RS_CMD_ADDR = (char *) &rs_start;
       break;
   case RS_DOWN:

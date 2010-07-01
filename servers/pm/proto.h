@@ -63,8 +63,7 @@ _PROTOTYPE( int do_getsetpriority, (void)				);
 
 /* schedule.c */
 _PROTOTYPE( void sched_init, (void)					);
-_PROTOTYPE( int sched_start, (endpoint_t ep, struct mproc *rmp, int flags) );
-_PROTOTYPE( int sched_stop, (struct mproc *rmp)				);
+_PROTOTYPE( int sched_start_user, (endpoint_t ep, struct mproc *rmp)	);
 _PROTOTYPE( int sched_nice, (struct mproc *rmp, int nice)		);
 
 /* profile.c */
@@ -108,5 +107,6 @@ _PROTOTYPE( pid_t get_free_pid, (void)					);
 _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( char *find_param, (const char *key)				);
 _PROTOTYPE( struct mproc *find_proc, (pid_t lpid)			);
+_PROTOTYPE( int nice_to_priority, (int nice, unsigned *new_q)		);
 _PROTOTYPE( int pm_isokendpt, (int ep, int *proc)			);
 _PROTOTYPE( void tell_vfs, (struct mproc *rmp, message *m_ptr)		);

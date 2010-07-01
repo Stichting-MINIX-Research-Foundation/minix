@@ -18,8 +18,10 @@
 
 #include "pm.h"
 #include <sys/wait.h>
+#include <assert.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/sched.h>
 #include <minix/vm.h>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
@@ -91,6 +93,15 @@ PUBLIC int do_fork()
 	rmc->mp_trace_flags = 0;
 	sigemptyset(&rmc->mp_sigtrace);
   }
+
+  /* Some system servers like to call regular fork, such as RS spawning
+   * recovery scripts; in this case PM will take care of their scheduling
+   * because RS cannot do so for non-system processes */
+  if (rmc->mp_flags & PRIV_PROC) {
+	assert(rmc->mp_scheduler == NONE);
+	rmc->mp_scheduler = SCHED_PROC_NR;
+  }
+
   /* Inherit only these flags. In normal fork(), PRIV_PROC is not inherited. */
   rmc->mp_flags &= (IN_USE|DELAY_CALL);
   rmc->mp_child_utime = 0;		/* reset administration */
@@ -364,7 +375,7 @@ int dump_core;			/* flag indicating whether to dump core */
  */
   int r;
 
-  if((r = sched_stop(rmp)) != OK) {
+  if((r = sched_stop(rmp->mp_scheduler, rmp->mp_endpoint)) != OK) {
  	/* If the scheduler refuses to give up scheduling, there is
 	 * little we can do, except report it. This may cause problems
 	 * later on, if this scheduler is asked to schedule another proc
@@ -374,6 +385,13 @@ int dump_core;			/* flag indicating whether to dump core */
 	printf("PM: The scheduler did not want to give up "
 		"scheduling %s, ret=%d.\n", rmp->mp_name, r);
   } 
+
+  /* sched_stop is either called when the process is exiting or it is
+   * being moved between schedulers. If it is being moved between
+   * schedulers, we need to set the mp_scheduler to NONE so that PM
+   * doesn't forward messages to the process' scheduler while being moved
+   * (such as sched_nice). */
+  rmp->mp_scheduler = NONE;
 
   /* For core dumps, now is the right time to try to contact the parent. */
   if (dump_core)

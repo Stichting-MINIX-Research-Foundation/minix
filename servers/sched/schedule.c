@@ -9,6 +9,7 @@
  */
 #include "sched.h"
 #include "schedproc.h"
+#include <assert.h>
 #include <minix/com.h>
 #include <machine/archtypes.h>
 #include "kernel/proc.h" /* for queue constants */
@@ -58,7 +59,7 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 	int rv, proc_nr_n;
 
 	/* Only accept stop messages from PM */
-	if (!is_from_pm(m_ptr))
+	if (!accept_message(m_ptr))
 		return EPERM;
 
 	if (sched_isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr_n) != OK) {
@@ -79,10 +80,14 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 PUBLIC int do_start_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
-	int rv, proc_nr_n, parent_nr_n;
+	int rv, proc_nr_n, parent_nr_n, nice;
+	
+	/* we can handle two kinds of messages here */
+	assert(m_ptr->m_type == SCHEDULING_START || 
+		m_ptr->m_type == SCHEDULING_INHERIT);
 
 	/* Only accept start messages from PM */
-	if (!is_from_pm(m_ptr))
+	if (!accept_message(m_ptr))
 		return EPERM;
 
 	/* Resolve endpoint to proc slot. */
@@ -95,36 +100,42 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 	/* Populate process slot */
 	rmp->endpoint     = m_ptr->SCHEDULING_ENDPOINT;
 	rmp->parent       = m_ptr->SCHEDULING_PARENT;
-	rmp->nice         = m_ptr->SCHEDULING_NICE;
-
-	/* Find maximum priority from nice value */
-	rv = nice_to_priority(rmp->nice, &rmp->max_priority);
-	if (rv != OK)
-		return rv;
-
-	/* Inherit current priority and time slice from parent. Since there
-	 * is currently only one scheduler scheduling the whole system, this
-	 * value is local and we assert that the parent endpoint is valid */
-	if (rmp->endpoint == rmp->parent) {
-		/* We have a special case here for init, which is the first
-		   process scheduled, and the parent of itself. */
-		rmp->priority   = USER_Q;
-		rmp->time_slice = DEFAULT_USER_TIME_SLICE;
-
+	rmp->max_priority = (unsigned) m_ptr->SCHEDULING_MAXPRIO;
+	if (rmp->max_priority >= NR_SCHED_QUEUES) {
+		return EINVAL;
 	}
-	else {
+	
+	switch (m_ptr->m_type) {
+
+	case SCHEDULING_START:
+		/* We have a special case here for system processes, for which
+		 * quanum and priority are set explicitly rather than inherited 
+		 * from the parent */
+		rmp->priority   = rmp->max_priority;
+		rmp->time_slice = (unsigned) m_ptr->SCHEDULING_QUANTUM;
+		break;
+		
+	case SCHEDULING_INHERIT:
+		/* Inherit current priority and time slice from parent. Since there
+		 * is currently only one scheduler scheduling the whole system, this
+		 * value is local and we assert that the parent endpoint is valid */
 		if ((rv = sched_isokendpt(m_ptr->SCHEDULING_PARENT,
 				&parent_nr_n)) != OK)
 			return rv;
 
 		rmp->priority = schedproc[parent_nr_n].priority;
 		rmp->time_slice = schedproc[parent_nr_n].time_slice;
+		break;
+		
+	default: 
+		/* not reachable */
+		assert(0);
 	}
 
 	/* Take over scheduling the process. The kernel reply message populates
 	 * the processes current priority and its time slice */
-	if ((rv = sys_schedctl(rmp->endpoint)) != OK) {
-		printf("Sched: Error overtaking scheduling for %d, kernel said %d\n",
+	if ((rv = sys_schedctl(0, rmp->endpoint)) != OK) {
+		printf("Sched: Error taking over scheduling for %d, kernel said %d\n",
 			rmp->endpoint, rv);
 		return rv;
 	}
@@ -157,12 +168,10 @@ PUBLIC int do_nice(message *m_ptr)
 	struct schedproc *rmp;
 	int rv;
 	int proc_nr_n;
-	int nice;
 	unsigned new_q, old_q, old_max_q;
-	int old_nice;
 
 	/* Only accept nice messages from PM */
-	if (!is_from_pm(m_ptr))
+	if (!accept_message(m_ptr))
 		return EPERM;
 
 	if (sched_isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr_n) != OK) {
@@ -172,26 +181,23 @@ PUBLIC int do_nice(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	nice = m_ptr->SCHEDULING_NICE;
-
-	if ((rv = nice_to_priority(nice, &new_q)) != OK)
-		return rv;
+	new_q = (unsigned) m_ptr->SCHEDULING_MAXPRIO;
+	if (new_q >= NR_SCHED_QUEUES) {
+		return EINVAL;
+	}
 
 	/* Store old values, in case we need to roll back the changes */
 	old_q     = rmp->priority;
 	old_max_q = rmp->max_priority;
-	old_nice  = rmp->nice;
 
 	/* Update the proc entry and reschedule the process */
 	rmp->max_priority = rmp->priority = new_q;
-	rmp->nice = nice;
 
 	if ((rv = schedule_process(rmp)) != OK) {
 		/* Something went wrong when rescheduling the process, roll
 		 * back the changes to proc struct */
 		rmp->priority     = old_q;
 		rmp->max_priority = old_max_q;
-		rmp->nice         = old_nice;
 	}
 
 	return rv;

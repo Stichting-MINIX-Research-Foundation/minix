@@ -4,8 +4,7 @@
  *   no_sys:		called for invalid system call numbers
  *   sched_isokendpt:	check the validity of an endpoint
  *   sched_isemtyendpt  check for validity and availability of endpoint slot
- *   is_from_pm		check whether message is originated from PM
- *   nice_to_priority	convert nice level to priority queue
+ *   accept_message	check whether message is allowed
  */
 
 #include "sched.h"
@@ -58,27 +57,19 @@ PUBLIC int sched_isemtyendpt(int endpoint, int *proc)
 }
 
 /*===========================================================================*
- *				is_from_pm				     *
+ *				accept_message				     *
  *===========================================================================*/
-PUBLIC int is_from_pm(message *m_ptr)
+PUBLIC int accept_message(message *m_ptr)
 {
-	if (m_ptr->m_source == PM_PROC_NR) {
-		return 1;
+	/* accept all messages from PM and RS */
+	switch (m_ptr->m_source) {
+
+		case PM_PROC_NR:
+		case RS_PROC_NR:
+			return 1;
+			
 	}
+	
+	/* no other messages are allowable */
 	return 0;
-}
-
-/*===========================================================================*
- *				nice_to_priority			     *
- *===========================================================================*/
-PUBLIC int nice_to_priority(int nice, unsigned* new_q)
-{
-	if (nice < PRIO_MIN || nice > PRIO_MAX) return(EINVAL);
-
-	*new_q = MAX_USER_Q + (nice-PRIO_MIN) * (MIN_USER_Q-MAX_USER_Q+1) /
-	    (PRIO_MAX-PRIO_MIN+1);
-	if (*new_q < MAX_USER_Q) *new_q = MAX_USER_Q;	/* shouldn't happen */
-	if (*new_q > MIN_USER_Q) *new_q = MIN_USER_Q;	/* shouldn't happen */
-
-	return (OK);
 }

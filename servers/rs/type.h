@@ -12,6 +12,7 @@ struct boot_image_priv {
   short trap_mask;             /* allowed system call traps */
   int ipc_to;                  /* send mask protection */
   endpoint_t sig_mgr;          /* signal manager */
+  endpoint_t sched;            /* scheduler */
   int *k_calls;                /* allowed kernel calls */
   int *vm_calls;               /* allowed vm calls */
   long period;                 /* heartbeat period (or zero) */
@@ -67,7 +68,9 @@ struct rproc {
 				 * kernel.
 				 */
   uid_t r_uid;
-  int r_nice;
+  endpoint_t r_scheduler;	/* scheduler */
+  unsigned r_priority;
+  unsigned r_quantum;
 
   char r_ipc_list[MAX_IPC_LIST];
   int r_nr_control;

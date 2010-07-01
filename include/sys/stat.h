@@ -68,7 +68,6 @@ struct stat {
 #define S_ISSOCK(m)     (((m) & S_IFMT) == S_IFSOCK)	/* is a socket */
 
 #define DEFFILEMODE     (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
-#define ALLPERMS        (S_ISUID|S_ISGID|S_ISVTX|S_IRWXU|S_IRWXG|S_IRWXO)
 
 /* Function Prototypes. */
 _PROTOTYPE( int chmod, (const char *_path, mode_t _mode)		);

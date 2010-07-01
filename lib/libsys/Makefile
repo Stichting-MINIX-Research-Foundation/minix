@@ -26,6 +26,8 @@ SRCS=  \
 	pci_set_acl.c \
 	pci_slot_name.c \
 	safecopies.c \
+	sched_start.c \
+	sched_stop.c \
 	sef.c \
 	sef_init.c \
 	sef_liveupdate.c \
@@ -118,5 +120,7 @@ SRCS=  \
 	profile_extern.c \
 	profile.c \
 	vprintf.c
+
+CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 
 .include <bsd.lib.mk>

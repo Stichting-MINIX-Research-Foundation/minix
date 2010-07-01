@@ -236,6 +236,10 @@ struct proc {
 						(should correspond to nice 0) */
 #define MIN_USER_Q	  (NR_SCHED_QUEUES - 1)	/* minimum priority for user
 						   processes */
+/* default scheduling quanta */
+#define USER_QUANTUM 200
+#define DRIV_QUANTUM 50
+#define SERV_QUANTUM 500
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

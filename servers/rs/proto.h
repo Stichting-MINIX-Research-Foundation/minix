@@ -92,6 +92,7 @@ _PROTOTYPE( char* srv_to_string, (struct rproc *rp));
 _PROTOTYPE( void reply, (endpoint_t who, message *m_ptr));
 _PROTOTYPE( void late_reply, (struct rproc *rp, int code));
 _PROTOTYPE( int rs_isokendpt, (endpoint_t endpoint, int *proc));
+_PROTOTYPE( int sched_init_proc, (struct rproc *rp));
 
 /* memory.c */
 _PROTOTYPE( void* rs_startup_sbrk, (size_t size));

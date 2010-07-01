@@ -41,7 +41,9 @@ struct rs_start
 	char *rss_cmd;
 	size_t rss_cmdlen;
 	uid_t rss_uid;
-	int rss_nice;
+	endpoint_t rss_scheduler;
+	unsigned rss_priority;
+	unsigned rss_quantum;
 	int rss_major;
 	int rss_dev_style;
 	long rss_period;

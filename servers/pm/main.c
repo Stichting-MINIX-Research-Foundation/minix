@@ -252,6 +252,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   			rmp->mp_parent = INIT_PROC_NR;
   			rmp->mp_procgrp = rmp->mp_pid = INIT_PID;
 			rmp->mp_flags |= IN_USE; 
+
+			/* Set scheduling info */
+			rmp->mp_scheduler = KERNEL;
 		}
 		else {					/* system process */
   			if(ip->proc_nr == RS_PROC_NR) {
@@ -262,13 +265,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   			}
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_flags |= IN_USE | PRIV_PROC;
+
+			/* RS schedules this process */
+			rmp->mp_scheduler = NONE;
 		}
 
 		/* Get kernel endpoint identifier. */
 		rmp->mp_endpoint = ip->endpoint;
-
-		/* Set scheduling info */
-		rmp->mp_scheduler = KERNEL;
 
 		/* Tell VFS about this system process. */
 		mess.m_type = PM_INIT;
@@ -493,7 +496,7 @@ PRIVATE void handle_vfs_reply()
 	/* Schedule the newly created process ... */
 	r = (OK);
 	if (rmp->mp_scheduler != KERNEL && rmp->mp_scheduler != NONE) {
-		r = sched_start(rmp->mp_scheduler, rmp, 0);
+		r = sched_start_user(rmp->mp_scheduler, rmp);
 	}
 
 	/* If scheduling the process failed, we want to tear down the process

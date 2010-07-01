@@ -86,14 +86,8 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
   rpc->p_prof_left = 0;
 
-  /*
-   * if the child process inherited a scheduler, the child process is not
-   * runnable until it's scheduled. Otherwise the default kernel policy applies.
-   * This is only the case of system servers, drivers and similar sensitive
-   * processes
-   */
-  if (rpc->p_scheduler)
-	  RTS_SET(rpc, RTS_NO_QUANTUM);
+  /* the child process is not runnable until it's scheduled. */
+  RTS_SET(rpc, RTS_NO_QUANTUM);
 
   make_zero64(rpc->p_cpu_time_left);
   make_zero64(rpc->p_cycles);

@@ -69,25 +69,25 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  */
 
 PUBLIC struct boot_image image[] = {
-/* process nr, flags, ms,  queue, stack,   name */
-{IDLE,             0,  0,      0, IDL_S, "idle"  },
-{CLOCK,            0,  0,      0, IDL_S, "clock" },
-{SYSTEM,           0,  0,      0, IDL_S, "system"},
-{HARDWARE,         0,  0,      0, HRD_S, "kernel"},
+/* process nr, flags,           ms,  queue, stack,   name */
+{IDLE,             0,            0,      0, IDL_S, "idle"  },
+{CLOCK,            0,            0,      0, IDL_S, "clock" },
+{SYSTEM,           0,            0,      0, IDL_S, "system"},
+{HARDWARE,         0,            0,      0, HRD_S, "kernel"},
 
-{DS_PROC_NR,   BVM_F, 50,      4, 0,     "ds"    },
-{RS_PROC_NR,       0, 50,      4, 0,     "rs"    },
+{DS_PROC_NR,   BVM_F, DRIV_QUANTUM,      4, 0,     "ds"    },
+{RS_PROC_NR,       0, DRIV_QUANTUM,      4, 0,     "rs"    },
 
-{PM_PROC_NR,   OVM_F,500,      4, 0,     "pm"    },
-{SCHED_PROC_NR,OVM_F,500,      4, 0,     "sched" },
-{VFS_PROC_NR,  OVM_F,500,      5, 0,     "vfs"   },
-{MEM_PROC_NR,  BVM_F, 50,      3, 0,     "memory"},
-{LOG_PROC_NR,  BVM_F, 50,      2, 0,     "log"   },
-{TTY_PROC_NR,  BVM_F, 50,      1, 0,     "tty"   },
-{MFS_PROC_NR,  BVM_F,500,      5, 0,     "mfs"   },
-{VM_PROC_NR,       0,500,      2, 0,     "vm"    },
-{PFS_PROC_NR,  BVM_F,500,      5, 0,     "pfs"   },
-{INIT_PROC_NR, BVM_F,200, USER_Q, 0,     "init"  },
+{PM_PROC_NR,   OVM_F, SERV_QUANTUM,      4, 0,     "pm"    },
+{SCHED_PROC_NR,OVM_F, SERV_QUANTUM,      4, 0,     "sched" },
+{VFS_PROC_NR,  OVM_F, SERV_QUANTUM,      5, 0,     "vfs"   },
+{MEM_PROC_NR,  BVM_F, DRIV_QUANTUM,      3, 0,     "memory"},
+{LOG_PROC_NR,  BVM_F, DRIV_QUANTUM,      2, 0,     "log"   },
+{TTY_PROC_NR,  BVM_F, DRIV_QUANTUM,      1, 0,     "tty"   },
+{MFS_PROC_NR,  BVM_F, SERV_QUANTUM,      5, 0,     "mfs"   },
+{VM_PROC_NR,       0, SERV_QUANTUM,      2, 0,     "vm"    },
+{PFS_PROC_NR,  BVM_F, SERV_QUANTUM,      5, 0,     "pfs"   },
+{INIT_PROC_NR, BVM_F, USER_QUANTUM, USER_Q, 0,     "init"  },
 };
 
 /* Verify the size of the system image table at compile time. Also verify that 

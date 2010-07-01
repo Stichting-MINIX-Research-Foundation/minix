@@ -16,9 +16,6 @@ static char	elsieid[] = "@(#)localtime.c	7.99";
 
 /*LINTLIBRARY*/
 
-/* Gives us offtime, timegm and a few other functions */
-#define STD_INSPIRED
-
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"

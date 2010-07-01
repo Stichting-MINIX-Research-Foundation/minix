@@ -656,6 +656,14 @@
 /* Subfunctions for SYS_STATECTL */
 #define SYS_STATE_CLEAR_IPC_REFS    1	/* clear IPC references */
 
+/* Subfunctions for SYS_SCHEDCTL */
+#define SCHEDCTL_FLAGS		m1_i1	/* flags for setting the scheduler */
+#  define SCHEDCTL_FLAG_KERNEL	1	/* mark kernel scheduler and remove 
+					 * RTS_NO_QUANTUM; otherwise caller is 
+					 * marked scheduler 
+					 */
+#define SCHEDCTL_ENDPOINT	m1_i2	/* endpt of process to be scheduled */
+
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
  *===========================================================================*/
@@ -1104,11 +1112,14 @@
 #define SCHEDULING_START	(SCHEDULING_BASE+2)
 #	define SCHEDULING_SCHEDULER	m9_l1 /* Overrides _ENDPOINT on return*/
 #	define SCHEDULING_PARENT	m9_l3
-#	define SCHEDULING_NICE		m9_l4
+#	define SCHEDULING_MAXPRIO	m9_l4
 
 #define SCHEDULING_STOP		(SCHEDULING_BASE+3)
 
 #define SCHEDULING_SET_NICE	(SCHEDULING_BASE+4)
+
+/* SCHEDULING_INHERIT is like SCHEDULING_START, but without _QUANTUM field */
+#define SCHEDULING_INHERIT	(SCHEDULING_BASE+5)
 
 #endif
 

@@ -9,7 +9,7 @@ INCS=	alloca.h ansi.h a.out.h ar.h assert.h configfile.h ctype.h \
 	stdint.h stdbool.h stdio.h stdlib.h string.h strings.h sysexits.h \
 	syslog.h tar.h termcap.h termios.h time.h timers.h tools.h \
 	ttyent.h ucontext.h unistd.h utime.h utmp.h wchar.h wctype.h \
-	hgfs.h tzfile.h util.h fetch.h
+	hgfs.h tzfile.h util.h
 INCS+=	arpa/inet.h
 INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/com.h minix/config.h minix/const.h minix/cpufeature.h \
@@ -21,7 +21,7 @@ INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/keymap.h minix/minlib.h minix/mq.h \
 	minix/netdriver.h minix/partition.h minix/paths.h \
 	minix/portio.h minix/profile.h minix/queryparam.h \
-	minix/rs.h minix/safecopies.h minix/sef.h minix/sound.h \
+	minix/rs.h minix/safecopies.h minix/sched.h minix/sef.h minix/sound.h \
 	minix/sys_config.h minix/sysinfo.h minix/syslib.h \
 	minix/sysutil.h minix/tty.h minix/type.h minix/types.h \
 	minix/u64.h minix/vfsif.h minix/vm.h \

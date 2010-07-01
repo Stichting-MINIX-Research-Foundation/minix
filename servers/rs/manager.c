@@ -7,6 +7,8 @@
 
 #include "inc.h"
 
+#include "kernel/proc.h"
+
 /*===========================================================================*
  *				caller_is_root				     *
  *===========================================================================*/
@@ -370,8 +372,8 @@ char *file;
 int line;
 struct rproc *rp;
 {
-/* Ask PM to exit the service and free slot. */
   struct rprocpub *rpub;
+  int s;
 
   rpub = rp->r_pub;
 
@@ -379,6 +381,12 @@ struct rproc *rp;
       printf("RS: %s cleaned up at %s:%d\n", srv_to_string(rp),
           file, line);
 
+  /* Tell scheduler this process is finished */
+  if ((s = sched_stop(rp->r_scheduler, rpub->endpoint)) != OK) {
+	printf("RS: warning: scheduler won't give up process: %d\n", s);
+  }
+
+  /* Ask PM to exit the service */
   if(rp->r_pid == -1) {
       printf("RS: warning: attempt to kill pid -1!\n");
   }
@@ -386,6 +394,7 @@ struct rproc *rp;
       srv_kill(rp->r_pid, SIGKILL);
   }
 
+  /* Free slot */
   free_slot(rp);
 }
 
@@ -459,6 +468,13 @@ struct rproc *rp;
 	printf("unable to set privilege structure: %d\n", s);
 	cleanup_service(rp);
 	return ENOMEM;
+  }
+
+  /* Set the scheduler for this process */
+  if ((s = sched_init_proc(rp)) != OK) {
+	printf("unable to start scheduling: %d\n", s);
+	cleanup_service(rp);
+	return s;
   }
 
   /* Copy the executable image into the child process. If this call
@@ -1252,7 +1268,10 @@ endpoint_t source;
 	  rp->r_script[rs_start->rss_scriptlen] = '\0';
   }
   rp->r_uid= rs_start->rss_uid;
-  rp->r_nice= rs_start->rss_nice;
+
+  rp->r_scheduler= rs_start->rss_scheduler;
+  rp->r_priority= rs_start->rss_priority;
+  rp->r_quantum= rs_start->rss_quantum;
 
   if (rs_start->rss_flags & RSS_IPC_VALID)
   {

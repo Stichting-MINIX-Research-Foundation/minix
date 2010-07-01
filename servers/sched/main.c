@@ -55,6 +55,7 @@ PUBLIC int main(void)
 		}
 
 		switch(call_nr) {
+		case SCHEDULING_INHERIT:
 		case SCHEDULING_START:
 			result = do_start_scheduling(&m_in);
 			break;

@@ -137,7 +137,7 @@ PUBLIC void main(void)
 	}
 	else {
 	    /* Don't let the process run for now. */
-            RTS_SET(rp, RTS_NO_PRIV);
+            RTS_SET(rp, RTS_NO_PRIV | RTS_NO_QUANTUM);
 	}
 
 	if (iskerneln(proc_nr)) {		/* part of the kernel? */ 

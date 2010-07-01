@@ -5,6 +5,10 @@
 
 #include "inc.h"
 
+#include "kernel/proc.h"
+
+FORWARD int check_request(struct rs_start *rs_start);
+
 /*===========================================================================*
  *				   do_up				     *
  *===========================================================================*/
@@ -32,6 +36,10 @@ message *m_ptr;					/* request message pointer */
 
   /* Copy the request structure. */
   r = copy_rs_start(m_ptr->m_source, m_ptr->RS_CMD_ADDR, &rs_start);
+  if (r != OK) {
+      return r;
+  }
+  r = check_request(&rs_start);
   if (r != OK) {
       return r;
   }
@@ -385,6 +393,10 @@ PUBLIC int do_update(message *m_ptr)
       return s;
   }
   noblock = (rs_start.rss_flags & RSS_NOBLOCK);
+  s = check_request(&rs_start);
+  if (s != OK) {
+      return s;
+  }
 
   /* Copy label. */
   s = copy_label(m_ptr->m_source, rs_start.rss_label.l_addr,
@@ -614,7 +626,7 @@ message *m_ptr;
 	       * check and, if so request the system service's status.
 	       */
 	      else if (now - rp->r_check_tm > rpub->period) {
-		  notify(rpub->endpoint);		/* request status */
+  		  notify(rpub->endpoint);		/* request status */
 		  rp->r_check_tm = now;			/* mark time */
               }
           }
@@ -737,5 +749,32 @@ message *m_ptr;
 	m_ptr->RS_ENDPOINT = rrpub->endpoint;
 
 	return OK;
+}
+
+/*===========================================================================*
+ *				   check_request			     *
+ *===========================================================================*/
+PRIVATE int check_request(struct rs_start *rs_start)
+{
+  /* Verify scheduling parameters */
+  if (rs_start->rss_scheduler != KERNEL && 
+	(rs_start->rss_scheduler < 0 || 
+	rs_start->rss_scheduler > LAST_SPECIAL_PROC_NR)) {
+	printf("RS: check_request: invalid scheduler %d\n", 
+		rs_start->rss_scheduler);
+	return EINVAL;
+  }
+  if (rs_start->rss_priority >= NR_SCHED_QUEUES) {
+	printf("RS: check_request: priority %u out of range\n", 
+		rs_start->rss_priority);
+	return EINVAL;
+  }
+  if (rs_start->rss_quantum <= 0) {
+	printf("RS: check_request: quantum %u out of range\n", 
+		rs_start->rss_quantum);
+	return EINVAL;
+  }
+
+  return OK;
 }
 

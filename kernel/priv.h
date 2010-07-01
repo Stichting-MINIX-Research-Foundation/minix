@@ -155,4 +155,8 @@ EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 #define RSYS_SM    ROOT_SYS_PROC_NR                     /* root system proc */
 #define DEF_SYS_SM ROOT_SYS_PROC_NR                     /* default sys proc */
 
+/* scheduler */
+#define KERN_SCH KERNEL                            /* scheduled by kernel   */
+#define USER_SCH SCHED_PROC_NR                     /* scheduled in userland */
+
 #endif /* PRIV_H */

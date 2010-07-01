@@ -156,7 +156,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the reincarnation server. */
   struct boot_image *ip;
-  int s,i,j;
+  int s,i,j, usersched;
   int nr_image_srvs, nr_image_priv_srvs, nr_uncaught_init_srvs;
   struct rproc *rp;
   struct rproc *replica_rp;
@@ -351,7 +351,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           rpub->vm_call_mask, VM_RQ_BASE, TRUE);
 
       /* Get some settings from the boot image table. */
-      rp->r_nice = ip->priority;
+      rp->r_scheduler = boot_image_priv->sched;
+      rp->r_priority = ip->priority;
+      rp->r_quantum = ip->quantum;
       rpub->endpoint = ip->endpoint;
 
       /* Set some defaults. */
@@ -373,8 +375,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   /* - Step 2: allow every system service in the boot image to run.
+   *           first start kernel-scheduled servers, including the PM and the
+   *           scheduler which are needed to be able to start the 
+   *           user-space-scheduled processes
    */
   nr_uncaught_init_srvs = 0;
+  for (usersched=0; usersched <= 1; usersched++) {
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
 
@@ -388,6 +394,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           continue;
       }
 
+      /* Kernel-scheduled processes first */
+      if ((boot_image_priv->sched == KERNEL) ? usersched : !usersched) {
+          continue;
+      }
+
       /* Lookup the corresponding slot in the system process table. */
       rp = &rproc[boot_image_priv - boot_image_priv_table];
       rpub = rp->r_pub;
@@ -395,6 +406,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Allow the service to run. */
       if ((s = sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
           panic("unable to initialize privileges: %d", s);
+      }
+
+      if ((s = sched_init_proc(rp)) != OK) {
+          panic("unable to initialize scheduling: %d", s);
       }
 
       /* Initialize service. We assume every service will always get
@@ -421,6 +436,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   while(nr_uncaught_init_srvs) {
       catch_boot_init_ready(ANY);
       nr_uncaught_init_srvs--;
+  }
   }
 
   /* - Step 4: all the system services in the boot image are now running.
@@ -537,6 +553,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       s = sys_privctl(replica_endpoint, SYS_PRIV_ALLOW, NULL);
       if(s != OK) {
           panic("unable to let the new RS instance run: %d", s);
+      }
+      if ((s = sched_init_proc(replica_rp)) != OK) {
+          panic("unable to initialize RS replica scheduling: %d", s);
       }
 
       /* Synchronize with the new instance and go to sleep. */

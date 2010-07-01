@@ -5,11 +5,13 @@
  *   no_sys:		called for invalid system call numbers
  *   find_param:	look up a boot monitor parameter
  *   find_proc:		return process pointer from pid number
+ *   nice_to_priority	convert nice level to priority queue
  *   pm_isokendpt:	check the validity of an endpoint
  *   tell_vfs:		send a request to VFS on behalf of a process
  */
 
 #include "pm.h"
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -100,6 +102,21 @@ pid_t lpid;
 		return(rmp);
 
   return(NULL);
+}
+
+/*===========================================================================*
+ *				nice_to_priority			     *
+ *===========================================================================*/
+PUBLIC int nice_to_priority(int nice, unsigned* new_q)
+{
+	if (nice < PRIO_MIN || nice > PRIO_MAX) return(EINVAL);
+
+	*new_q = MAX_USER_Q + (nice-PRIO_MIN) * (MIN_USER_Q-MAX_USER_Q+1) /
+	    (PRIO_MAX-PRIO_MIN+1);
+	if (*new_q < MAX_USER_Q) *new_q = MAX_USER_Q;	/* shouldn't happen */
+	if (*new_q > MIN_USER_Q) *new_q = MIN_USER_Q;	/* shouldn't happen */
+
+	return (OK);
 }
 
 /*===========================================================================*

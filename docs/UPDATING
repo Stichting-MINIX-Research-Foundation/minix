@@ -1,3 +1,9 @@
+20100630:
+	protocol change between service and rs: be sure to compile commands
+	together with the system image and don't use the new userspace with
+	an old image (or vice versa); it is recommended to replace
+	/boot/image_big with the newly compiled image to keep option 1 in the
+	boot menu working.
 20100625:
 	/etc/mk has been moved to /usr/share/mk. You will need to
 	create /usr/share/mk manually.

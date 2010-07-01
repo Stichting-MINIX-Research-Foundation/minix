@@ -6,6 +6,10 @@
 
 #include "inc.h"
 
+#include <assert.h>
+#include <minix/sched.h>
+#include "kernel/proc.h"
+
 /*===========================================================================*
  *				 init_service				     *
  *===========================================================================*/
@@ -172,3 +176,39 @@ PUBLIC int rs_isokendpt(endpoint_t endpoint, int *proc)
 	return OK;
 }
 
+/*===========================================================================*
+ *				sched_init_proc			 	     *
+ *===========================================================================*/
+PUBLIC int sched_init_proc(struct rproc *rp)
+{
+	int s;
+
+	switch (rp->r_scheduler) {
+	
+	case NONE:
+		/* don't touch user processes, PM deals with them */
+		assert(!(rp->r_priv.s_flags & SYS_PROC));
+		break;
+	
+	case KERNEL:
+		/* Confirm kernel scheduler to remove RTS_NO_QUANTUM */
+		assert(rp->r_priv.s_flags & SYS_PROC);
+		if ((s = sys_schedctl(SCHEDCTL_FLAG_KERNEL, 
+			rp->r_pub->endpoint)) != OK) {
+			panic("unable to kernel-schedule service: %d", s);
+		}
+		break;
+		
+	default:
+		/* tell scheduler to schedule this one */
+		assert(rp->r_priv.s_flags & SYS_PROC);
+		if ((s = sched_start(rp->r_scheduler, rp->r_pub->endpoint, 
+			RS_PROC_NR, rp->r_priority, rp->r_quantum, 
+			&rp->r_scheduler)) != OK) {
+			return s;
+		}
+		break;
+	}
+	
+	return OK;
+}
