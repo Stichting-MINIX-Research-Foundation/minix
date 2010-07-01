@@ -102,7 +102,7 @@ then	echo -n "Update package list from network? (Y/n) "
 	y=`myread`
 	if [ "$y" != n -a "$y" != N ]
 	then	echo "Fetching package list from $LISTURL."
-		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
+		fetch -o $TMPF $LISTURL  && mv $TMPF $LISTFILE || echo "Update not successful."
 	fi
 	netpackages=$LISTFILE
 	if [ ! -f "$netpackages" -o ! `cat "$netpackages" 2>/dev/null | wc -l | awk '{ print $1 }'` -gt 1 ]
@@ -215,7 +215,7 @@ do	cd $TMPDIR
 		case $source in
 		net*)   echo "Retrieving $packno ($packagename) from primary location into $TMPDIR .."
 			srcurl=""
-			if urlget $URL1/$file >$file
+			if fetch -o $file $URL1/$file 
 			then	echo "Retrieved ok. Installing .."
 				packit $file && echo Installed ok.
 				srcurl=$SRCURL1/$file
@@ -225,7 +225,7 @@ do	cd $TMPDIR
 			then	(	cd $SRC || myexit 2
 					srcfile=${packagename}-src.tar.bz2
 					echo "Retrieving source from $srcurl .."
-					urlget $srcurl >$srcfile || myexit 3
+					fetch  -o $srcfile $srcurl || myexit 3
 					echo "Source retrieved in $SRC/$srcfile."
 					$BUNZIP2 -dc $srcfile | tar xf - >/dev/null || myexit 3
 					echo "Source unpacked in $SRC."

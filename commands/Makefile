@@ -31,7 +31,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	telnetd term termcap tget time tinyhalt top touch tr \
 	truncate tsort ttt tty udpstat umount uname unexpand \
 	uniq unstack update urlget uud uue version vol wc \
-	whereis which who write writeisofs \
+	whereis which who write writeisofs fetch \
 	xargs yacc yes zdump zic zmodem
 
 .if ${ARCH} == "i386"

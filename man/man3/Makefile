@@ -12,7 +12,7 @@ MAN=	abort.3 abs.3 assert.3 atof.3 bstring.3 configfile.3 \
 	readv.3 realpath.3 regex.3 remainder.3 resolver.3 scanf.3 \
 	servxcheck.3 setbuf.3 setjmp.3 sigset.3 sleep.3 stdarg.3 \
 	stdio.3 string.3 strtol.3 syslog.3 system.3 termcap.3 \
-	termios.3 time2posix.3 ttyname.3 ttyslot.3 ungetc.3
+	termios.3 time2posix.3 ttyname.3 ttyslot.3 ungetc.3 fetch.3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
