@@ -1,6 +1,6 @@
 /* Attansic/Atheros L2 FastEthernet driver, by D.C. van Moolenbroek */
 
-#define ATL2_MMAP_SIZE			0x40000	/* memory-mapped registers */
+#define ATL2_MIN_MMAP_SIZE		0x1608	/* min. register memory size */
 
 /* The first three are configurable to a certain extent; the last is not. */
 #define ATL2_TXD_BUFSIZE		8192	/* TxD ring buffer size */

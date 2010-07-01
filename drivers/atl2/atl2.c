@@ -38,6 +38,7 @@ PRIVATE struct {
 	int hook_id;		/* IRQ hook ID */
 	int mode;		/* datalink mode */
 	char *base;		/* base address of memory-mapped registers */
+	u32_t size;		/* size of memory-mapped area */
 	u32_t hwaddr[2];	/* MAC address, in register representation */
 
 	u8_t *txd_base;		/* local address of TxD ring buffer base */
@@ -514,7 +515,7 @@ PRIVATE void atl2_init(int devind)
 	/* Initialize the device.
 	 */
 	u32_t bar;
-	int r;
+	int r, flag;
 
 	/* Initialize global state. */
 	state.devind = devind;
@@ -524,12 +525,13 @@ PRIVATE void atl2_init(int devind)
 
 	memset(&state.stat, 0, sizeof(state.stat));
 
-	bar = pci_attr_r32(devind, PCI_BAR) & 0xfffffff0;
+	if ((r = pci_get_bar(devind, PCI_BAR, &bar, &state.size, &flag)) != OK)
+		panic("unable to retrieve bar: %d", r);
 
-	/* FIXME: hardcoded length, as PCI doesn't expose the size, and it is
-	 * not our job to compute the size from the BAR ourselves.
-	 */
-	state.base = vm_map_phys(SELF, (void *) bar, ATL2_MMAP_SIZE);
+	if (state.size < ATL2_MIN_MMAP_SIZE || flag)
+		panic("invalid register bar");
+
+	state.base = vm_map_phys(SELF, (void *) bar, state.size);
 	if (state.base == MAP_FAILED)
 		panic("unable to map in registers");
 
@@ -1214,7 +1216,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 	free_contig(state.rxd_base_u,
 		state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
 
-	vm_unmap_phys(SELF, state.base, ATL2_MMAP_SIZE);
+	vm_unmap_phys(SELF, state.base, state.size);
 
 	/* We cannot free the PCI device at this time. */
 

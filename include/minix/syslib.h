@@ -250,6 +250,8 @@ _PROTOTYPE( char *pci_dev_name, (u16_t vid, u16_t did)			);
 _PROTOTYPE( char *pci_slot_name, (int devind)				);
 _PROTOTYPE( int pci_set_acl, (struct rs_pci *rs_pci)			);
 _PROTOTYPE( int pci_del_acl, (endpoint_t proc_ep)			);
+_PROTOTYPE( int pci_get_bar, (int devind, int port, u32_t *base,
+					u32_t *size, int *ioflag)	);
 
 /* Profiling. */
 _PROTOTYPE( int sys_sprof, (int action, int size, int freq,

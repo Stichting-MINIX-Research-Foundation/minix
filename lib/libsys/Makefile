@@ -17,6 +17,7 @@ SRCS=  \
 	pci_dev_name.c \
 	pci_find_dev.c \
 	pci_first_dev.c \
+	pci_get_bar.c \
 	pci_ids.c \
 	pci_init.c \
 	pci_init1.c \

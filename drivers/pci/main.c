@@ -23,6 +23,7 @@ FORWARD _PROTOTYPE( void do_attr_r32, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_w8, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_w16, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_w32, (message *mp)			);
+FORWARD _PROTOTYPE( void do_get_bar, (message *mp)			);
 FORWARD _PROTOTYPE( void do_rescan_bus, (message *mp)			);
 FORWARD _PROTOTYPE( void reply, (message *mp, int result)		);
 FORWARD _PROTOTYPE( struct rs_pci *find_acl, (int endpoint)		);
@@ -77,6 +78,7 @@ int main(void)
 		case BUSC_PCI_SLOT_NAME_S: do_slot_name_s(&m); break;
 		case BUSC_PCI_SET_ACL: do_set_acl(&m); break;
 		case BUSC_PCI_DEL_ACL: do_del_acl(&m); break;
+		case BUSC_PCI_GET_BAR: do_get_bar(&m); break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
 				m.m_source, m.m_type);
@@ -558,6 +560,32 @@ message *mp;
 	if (r != 0)
 	{
 		printf("do_attr_w32: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
+PRIVATE void do_get_bar(mp)
+message *mp;
+{
+	int r, devind, port, ioflag;
+	u32_t base, size;
+
+	devind= mp->BUSC_PGB_DEVIND;
+	port= mp->BUSC_PGB_PORT;
+
+	mp->m_type= pci_get_bar_s(devind, port, &base, &size, &ioflag);
+
+	if (mp->m_type == OK)
+	{
+		mp->BUSC_PGB_BASE= base;
+		mp->BUSC_PGB_SIZE= size;
+		mp->BUSC_PGB_IOFLAG= ioflag;
+	}
+
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_get_bar: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }

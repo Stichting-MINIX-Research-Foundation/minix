@@ -517,6 +517,36 @@ PUBLIC char *pci_dev_name(u16_t vid, u16_t did)
 }
 
 /*===========================================================================*
+ *				pci_get_bar_s				     *
+ *===========================================================================*/
+PUBLIC int pci_get_bar_s(int devind, int port, u32_t *base, u32_t *size,
+	int *ioflag)
+{
+	int i, reg;
+
+	if (devind < 0 || devind >= nr_pcidev)
+		return EINVAL;
+
+	for (i= 0; i < pcidev[devind].pd_bar_nr; i++)
+	{
+		reg= PCI_BAR+4*pcidev[devind].pd_bar[i].pb_nr;
+
+		if (reg == port)
+		{
+			if (pcidev[devind].pd_bar[i].pb_flags & PBF_INCOMPLETE)
+				return EINVAL;
+
+			*base= pcidev[devind].pd_bar[i].pb_base;
+			*size= pcidev[devind].pd_bar[i].pb_size;
+			*ioflag=
+				!!(pcidev[devind].pd_bar[i].pb_flags & PBF_IO);
+			return OK;
+		}
+	}
+	return EINVAL;
+}
+
+/*===========================================================================*
  *				pci_attr_r8_s				     *
  *===========================================================================*/
 PUBLIC int pci_attr_r8_s(int devind, int port, u8_t *vp)
