@@ -29,7 +29,7 @@ PUBLIC int do_getmcontext(struct proc * caller, message * m_ptr)
   rp = proc_addr(proc_nr);
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
-  if (!proc_used_fpu(rp)) {
+  if (!proc_used_fpu(rp))
 	return(OK);	/* No state to copy */
 #endif
 
