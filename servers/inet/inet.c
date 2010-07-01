@@ -80,8 +80,6 @@ extern int inet_buf_debug;
 u32_t system_hz;
 #endif
 
-_PROTOTYPE( void main, (void) );
-
 FORWARD _PROTOTYPE( void nw_conf, (void) );
 FORWARD _PROTOTYPE( void nw_init, (void) );
 FORWARD _PROTOTYPE( void ds_event, (void) );
@@ -90,7 +88,7 @@ FORWARD _PROTOTYPE( void ds_event, (void) );
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 
-PUBLIC void main()
+PUBLIC int main(int argc, char *argv[])
 {
 	mq_t *mq;
 	int ipc_status;
@@ -182,6 +180,7 @@ PUBLIC void main()
 		}
 	}
 	ip_panic(("task is not allowed to terminate"));
+	return 1;
 }
 
 /*===========================================================================*

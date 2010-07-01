@@ -18,9 +18,6 @@
 #define error printf
 
 
-
-_PROTOTYPE( void main, (void) );
-
 _PROTOTYPE( int drv_init, (void) );
 _PROTOTYPE( int drv_init_hw, (void) );
 _PROTOTYPE( int drv_reset, (void) );

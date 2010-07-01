@@ -83,8 +83,8 @@ EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 PUBLIC int is_status_msg_expected = FALSE;
 
-PUBLIC void main(void) 
-{	
+PUBLIC int main(int argc, char *argv[]) 
+{
 	int r, caller;
 	message mess, repl_mess;
 	int ipc_status;
@@ -174,6 +174,7 @@ PUBLIC void main(void)
 
 		/* Should not be here. Just continue. */
 	}
+	return 1;
 }
 
 /*===========================================================================*
