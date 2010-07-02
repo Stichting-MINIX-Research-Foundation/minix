@@ -172,7 +172,7 @@ vir_bytes *pc;
   patch_ptr(mbuf, vsp);
   if ((r = sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
 		   (phys_bytes)frame_len)) != OK) {
-	printf("VFS: datacopy failed (%d) trying to copy to %p\n", r, vsp);
+	printf("VFS: datacopy failed (%d) trying to copy to %lu\n", r, vsp);
 	return(r);
   }
 

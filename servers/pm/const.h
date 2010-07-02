@@ -12,7 +12,8 @@
 
 #define DUMPED          0200	/* bit set in status when core dumped */
 
-#define MAX_SECS (((1<<(sizeof(clock_t)*8-1))-1)/system_hz)
+#define MAX_CLOCK_T	((unsigned long) 1 << ((sizeof(clock_t) * 8) - 1))
+#define MAX_SECS	( (clock_t) (MAX_CLOCK_T/system_hz) )
 				/* max.secs for setitimer() ((2^31-1)/HZ) */
 #define NR_ITIMERS	   3	/* number of supported interval timers */
 

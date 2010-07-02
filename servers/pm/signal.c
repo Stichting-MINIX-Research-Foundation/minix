@@ -65,20 +65,20 @@ PUBLIC int do_sigaction()
   if (r != OK) return(r);
 
   if (svec.sa_handler == SIG_IGN) {
-	sigaddset(&mp->mp_ignore, m_in.sig_nr);
-	sigdelset(&mp->mp_sigpending, m_in.sig_nr);
-	sigdelset(&mp->mp_ksigpending, m_in.sig_nr);
-	sigdelset(&mp->mp_catch, m_in.sig_nr);
+	(void) sigaddset(&mp->mp_ignore, m_in.sig_nr);
+	(void) sigdelset(&mp->mp_sigpending, m_in.sig_nr);
+	(void) sigdelset(&mp->mp_ksigpending, m_in.sig_nr);
+	(void) sigdelset(&mp->mp_catch, m_in.sig_nr);
   } else if (svec.sa_handler == SIG_DFL) {
-	sigdelset(&mp->mp_ignore, m_in.sig_nr);
-	sigdelset(&mp->mp_catch, m_in.sig_nr);
+	(void) sigdelset(&mp->mp_ignore, m_in.sig_nr);
+	(void) sigdelset(&mp->mp_catch, m_in.sig_nr);
   } else {
-	sigdelset(&mp->mp_ignore, m_in.sig_nr);
-	sigaddset(&mp->mp_catch, m_in.sig_nr);
+	(void) sigdelset(&mp->mp_ignore, m_in.sig_nr);
+	(void) sigaddset(&mp->mp_catch, m_in.sig_nr);
   }
   mp->mp_sigact[m_in.sig_nr].sa_handler = svec.sa_handler;
-  sigdelset(&svec.sa_mask, SIGKILL);
-  sigdelset(&svec.sa_mask, SIGSTOP);
+  (void) sigdelset(&svec.sa_mask, SIGKILL);
+  (void) sigdelset(&svec.sa_mask, SIGSTOP);
   mp->mp_sigact[m_in.sig_nr].sa_mask = svec.sa_mask;
   mp->mp_sigact[m_in.sig_nr].sa_flags = svec.sa_flags;
   mp->mp_sigreturn = (vir_bytes) m_in.sig_ret;
@@ -116,25 +116,25 @@ PUBLIC int do_sigprocmask()
 
   switch (m_in.sig_how) {
       case SIG_BLOCK:
-	sigdelset((sigset_t *)&m_in.sig_set, SIGKILL);
-	sigdelset((sigset_t *)&m_in.sig_set, SIGSTOP);
+	(void) sigdelset((sigset_t *)&m_in.sig_set, SIGKILL);
+	(void) sigdelset((sigset_t *)&m_in.sig_set, SIGSTOP);
 	for (i = 1; i < _NSIG; i++) {
 		if (sigismember((sigset_t *)&m_in.sig_set, i))
-			sigaddset(&mp->mp_sigmask, i);
+			(void) sigaddset(&mp->mp_sigmask, i);
 	}
 	break;
 
       case SIG_UNBLOCK:
 	for (i = 1; i < _NSIG; i++) {
 		if (sigismember((sigset_t *)&m_in.sig_set, i))
-			sigdelset(&mp->mp_sigmask, i);
+			(void) sigdelset(&mp->mp_sigmask, i);
 	}
 	check_pending(mp);
 	break;
 
       case SIG_SETMASK:
-	sigdelset((sigset_t *) &m_in.sig_set, SIGKILL);
-	sigdelset((sigset_t *) &m_in.sig_set, SIGSTOP);
+	(void) sigdelset((sigset_t *) &m_in.sig_set, SIGKILL);
+	(void) sigdelset((sigset_t *) &m_in.sig_set, SIGSTOP);
 	mp->mp_sigmask = (sigset_t) m_in.sig_set;
 	check_pending(mp);
 	break;
@@ -156,8 +156,8 @@ PUBLIC int do_sigsuspend()
 {
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
-  sigdelset(&mp->mp_sigmask, SIGKILL);
-  sigdelset(&mp->mp_sigmask, SIGSTOP);
+  (void) sigdelset(&mp->mp_sigmask, SIGKILL);
+  (void) sigdelset(&mp->mp_sigmask, SIGSTOP);
   mp->mp_flags |= SIGSUSPENDED;
   check_pending(mp);
   return(SUSPEND);
@@ -175,8 +175,8 @@ PUBLIC int do_sigreturn()
   int r;
 
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
-  sigdelset(&mp->mp_sigmask, SIGKILL);
-  sigdelset(&mp->mp_sigmask, SIGSTOP);
+  (void) sigdelset(&mp->mp_sigmask, SIGKILL);
+  (void) sigdelset(&mp->mp_sigmask, SIGSTOP);
 
   r = sys_sigreturn(who_e, (struct sigmsg *) m_in.sig_context);
   check_pending(mp);
@@ -338,7 +338,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	 * the process itself could block/ignore debugger signals.
 	 */
 
-	sigaddset(&rmp->mp_sigtrace, signo);
+	(void) sigaddset(&rmp->mp_sigtrace, signo);
 
 	if (!(rmp->mp_flags & STOPPED))
 		stop_proc(rmp, signo);	/* a signal causes it to stop */
@@ -347,8 +347,9 @@ int ksig;			/* non-zero means signal comes from kernel  */
   }
 
   if (rmp->mp_flags & VFS_CALL) {
-	sigaddset(&rmp->mp_sigpending, signo);
-	if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
+	(void) sigaddset(&rmp->mp_sigpending, signo);
+	if(ksig)
+		(void) sigaddset(&rmp->mp_ksigpending, signo);
 
 	if (!(rmp->mp_flags & PM_SIG_PENDING)) {
 		/* No delay calls: VFS_CALL implies the process called us. */
@@ -407,8 +408,9 @@ int ksig;			/* non-zero means signal comes from kernel  */
   }
   if (!badignore && sigismember(&rmp->mp_sigmask, signo)) {
 	/* Signal should be blocked. */
-	sigaddset(&rmp->mp_sigpending, signo);
-	if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
+	(void) sigaddset(&rmp->mp_sigpending, signo);
+	if(ksig)
+		(void) sigaddset(&rmp->mp_ksigpending, signo);
 	return;
   }
 
@@ -417,8 +419,9 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	 * (except SIGKILL) in order not to confuse the debugger. The signals
 	 * will be delivered using the check_pending() calls in do_trace().
 	 */
-	sigaddset(&rmp->mp_sigpending, signo);
-	if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
+	(void) sigaddset(&rmp->mp_sigpending, signo);
+	if(ksig)
+		(void) sigaddset(&rmp->mp_ksigpending, signo);
 	return;
   }
   if (!badignore && sigismember(&rmp->mp_catch, signo)) {
@@ -431,8 +434,9 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
 		if (!(rmp->mp_flags & UNPAUSED)) {
 			/* not yet unpaused; continue later */
-			sigaddset(&rmp->mp_sigpending, signo);
-			if(ksig) sigaddset(&rmp->mp_ksigpending, signo);
+			(void) sigaddset(&rmp->mp_sigpending, signo);
+			if(ksig)
+				(void) sigaddset(&rmp->mp_ksigpending, signo);
 
 			return;
 		}
@@ -575,8 +579,8 @@ register struct mproc *rmp;
 	if (sigismember(&rmp->mp_sigpending, i) &&
 		!sigismember(&rmp->mp_sigmask, i)) {
 		ksig = sigismember(&rmp->mp_ksigpending, i);
-		sigdelset(&rmp->mp_sigpending, i);
-		sigdelset(&rmp->mp_ksigpending, i);
+		(void) sigdelset(&rmp->mp_sigpending, i);
+		(void) sigdelset(&rmp->mp_ksigpending, i);
 		sig_proc(rmp, i, FALSE /*trace*/, ksig);
 
 		if (rmp->mp_flags & VFS_CALL)
@@ -710,16 +714,16 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   rmp->mp_sigmask |= rmp->mp_sigact[signo].sa_mask;
 
   if (sigflags & SA_NODEFER)
-	sigdelset(&rmp->mp_sigmask, signo);
+	(void) sigdelset(&rmp->mp_sigmask, signo);
   else
-	sigaddset(&rmp->mp_sigmask, signo);
+	(void) sigaddset(&rmp->mp_sigmask, signo);
 
   if (sigflags & SA_RESETHAND) {
-	sigdelset(&rmp->mp_catch, signo);
+	(void) sigdelset(&rmp->mp_catch, signo);
 	rmp->mp_sigact[signo].sa_handler = SIG_DFL;
   }
-  sigdelset(&rmp->mp_sigpending, signo);
-  sigdelset(&rmp->mp_ksigpending, signo);
+  (void) sigdelset(&rmp->mp_sigpending, signo);
+  (void) sigdelset(&rmp->mp_ksigpending, signo);
 
   if(vm_push_sig(rmp->mp_endpoint, &cur_sp) != OK)
 	return(FALSE);

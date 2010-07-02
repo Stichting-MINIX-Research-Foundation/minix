@@ -18,7 +18,7 @@
 /* Is vnode pointer reasonable? */
 #define SANEVP(v) ((((v) >= &vnode[0] && (v) < &vnode[NR_VNODES])))
 
-#define BADVP(v, f, l) printf("%s:%d: bad vp 0x%x\n", f, l, v)
+#define BADVP(v, f, l) printf("%s:%d: bad vp %p\n", f, l, v)
 
 /* vp check that returns 0 for use in check_vrefs() */
 #define CHECKVN(v) if(!SANEVP(v)) {				\

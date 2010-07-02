@@ -417,7 +417,7 @@ size_t data_len;
 
 		if (ip_fd->if_flags & IFF_SEL_READ)
 		{
-			ip_fd->if_flags & ~IFF_SEL_READ;
+			ip_fd->if_flags &= ~IFF_SEL_READ;
 			if (ip_fd->if_select_res)
 				ip_fd->if_select_res(ip_fd->if_srfd,
 					SR_SELECT_READ);

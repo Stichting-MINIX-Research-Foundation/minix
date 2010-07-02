@@ -18,7 +18,7 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-FORWARD _PROTOTYPE( in_group, (gid_t grp)				);
+FORWARD _PROTOTYPE( int in_group, (gid_t grp)				);
 
 /*===========================================================================*
  *				do_chmod				     *

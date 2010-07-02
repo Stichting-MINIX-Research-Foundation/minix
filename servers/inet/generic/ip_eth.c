@@ -251,6 +251,7 @@ int for_ioctl;
 	printf("ip_port->ip_dl.dl_eth.de_state= 0x%x",
 		ip_port->ip_dl.dl_eth.de_state);
 	ip_panic (( "strange status" ));
+	return -1;
 }
 
 PRIVATE void ipeth_set_ipaddr(ip_port)

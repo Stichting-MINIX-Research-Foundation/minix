@@ -332,7 +332,7 @@ PRIVATE void list_shm_ds(void)
 	int i;
 	printf("key\tid\tpage\n");
 	for (i = 0; i < shm_list_nr; i++)
-		printf("%d\t%d\t%x\n",
+		printf("%ld\t%d\t%lx\n",
 			shm_list[i].key,
 			shm_list[i].id,
 			shm_list[i].page);

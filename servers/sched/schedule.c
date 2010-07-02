@@ -63,8 +63,8 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 		return EPERM;
 
 	if (sched_isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr_n) != OK) {
-		printf("SCHED: WARNING: got an invalid endpoint in OOQ msg %u.\n",
-		m_ptr->SCHEDULING_ENDPOINT);
+		printf("SCHED: WARNING: got an invalid endpoint in OOQ msg "
+		"%ld\n", m_ptr->SCHEDULING_ENDPOINT);
 		return EBADEPT;
 	}
 
@@ -175,8 +175,8 @@ PUBLIC int do_nice(message *m_ptr)
 		return EPERM;
 
 	if (sched_isokendpt(m_ptr->SCHEDULING_ENDPOINT, &proc_nr_n) != OK) {
-		printf("SCHED: WARNING: got an invalid endpoint in OOQ msg %u.\n",
-		m_ptr->SCHEDULING_ENDPOINT);
+		printf("SCHED: WARNING: got an invalid endpoint in OOQ msg "
+		"%ld\n", m_ptr->SCHEDULING_ENDPOINT);
 		return EBADEPT;
 	}
 

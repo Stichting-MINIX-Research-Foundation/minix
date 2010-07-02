@@ -227,6 +227,7 @@ int fd;
 int which_operation;
 {
 	ip_panic(( "qp_cancel: should not be here, no blocking calls" ));
+	return OK;
 }
 
 PRIVATE int qp_select(fd, operations)

@@ -207,15 +207,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   /* Build the set of signals which cause core dumps, and the set of signals
    * that are by default ignored.
    */
-  sigemptyset(&core_sset);
+  (void) sigemptyset(&core_sset);
   for (sig_ptr = core_sigs; sig_ptr < core_sigs+sizeof(core_sigs); sig_ptr++)
-	sigaddset(&core_sset, *sig_ptr);
-  sigemptyset(&ign_sset);
+	(void) sigaddset(&core_sset, *sig_ptr);
+  (void) sigemptyset(&ign_sset);
   for (sig_ptr = ign_sigs; sig_ptr < ign_sigs+sizeof(ign_sigs); sig_ptr++)
-	sigaddset(&ign_sset, *sig_ptr);
-  sigemptyset(&noign_sset);
+	(void) sigaddset(&ign_sset, *sig_ptr);
+  (void) sigemptyset(&noign_sset);
   for (sig_ptr = noign_sigs; sig_ptr < noign_sigs+sizeof(noign_sigs); sig_ptr++)
-	sigaddset(&noign_sset, *sig_ptr);
+	(void) sigaddset(&noign_sset, *sig_ptr);
 
   /* Obtain a copy of the boot monitor parameters and the kernel info struct.  
    * Parse the list of free memory chunks. This list is what the boot monitor 
@@ -240,9 +240,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
 		rmp->mp_nice = get_nice_value(ip->priority);
-  		sigemptyset(&rmp->mp_ignore);	
-  		sigemptyset(&rmp->mp_sigmask);
-  		sigemptyset(&rmp->mp_catch);
+  		(void) sigemptyset(&rmp->mp_ignore);	
+  		(void) sigemptyset(&rmp->mp_sigmask);
+  		(void) sigemptyset(&rmp->mp_catch);
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
   			/* INIT is root, we make it father of itself. This is
   			 * not really OK, INIT should have no father, i.e.

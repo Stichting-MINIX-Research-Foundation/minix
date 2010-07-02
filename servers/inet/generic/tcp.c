@@ -2335,7 +2335,7 @@ tcp_fd_t *tcp_fd;
 		dst_fd->tf_conn != NULL ||
 		!(dst_fd->tf_flags & TFF_COOKIE))
 	{
-		printf("tcp_acceptto: bad flags 0x%x or conn %p for fd %d\n",
+		printf("tcp_acceptto: bad flags 0x%lx or conn %p for fd %d\n",
 			dst_fd->tf_flags, dst_fd->tf_conn, dst_nr);
 		tcp_reply_ioctl(tcp_fd, EINVAL);
 		return NW_OK;

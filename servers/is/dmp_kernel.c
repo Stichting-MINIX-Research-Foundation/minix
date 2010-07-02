@@ -81,7 +81,7 @@ PUBLIC void timing_dmp()
 		int w;
 		if (!timingdata[c].lock_timings[b])
 			continue;
-		x += (w = printf(" %5d: %5d", timingdata[c].lock_timings_range[0] +
+		x += (w = printf(" %5lu: %5lu", timingdata[c].lock_timings_range[0] +
 			b*timingdata[c].binsize,
 			timingdata[c].lock_timings[b]));
 	 	if (x + w >= 80) { printf("\n"); x = 0; }
@@ -187,7 +187,7 @@ PUBLIC void irqtab_dmp()
   	printf("%10d  ", e->proc_nr_e); 
   	printf("    (%02d) ", e->irq); 
   	printf("  %s", (e->policy & IRQ_REENABLE) ? "reenable" : "    -   ");
-  	printf("   %4d", e->notify_id);
+  	printf("   %4lu", e->notify_id);
 	if (irq_actids[e->irq] & e->id)
 		printf("       masked");
 	printf("\n");
@@ -223,7 +223,7 @@ PUBLIC void image_dmp()
   printf("---name- -nr- flags -qs- -queue- -stack-\n");
   for (m=0; m<NR_BOOT_PROCS; m++) { 
       ip = &image[m];
-      printf("%8s %4d %5s %4d %7d %7lu\n",
+      printf("%8s %4d %5s %4d %7d %7d\n",
           ip->proc_name, ip->proc_nr,
           boot_flags_str(ip->flags), ip->quantum, ip->priority, ip->stksize); 
   }
@@ -256,15 +256,15 @@ PUBLIC void kenv_dmp()
     printf("- vdu_ega:    %3d\n", machine.vdu_ega); 
     printf("- vdu_vga:    %3d\n\n", machine.vdu_vga); 
     printf("Kernel info structure:\n");
-    printf("- code_base:  %5u\n", kinfo.code_base); 
-    printf("- code_size:  %5u\n", kinfo.code_size); 
-    printf("- data_base:  %5u\n", kinfo.data_base); 
-    printf("- data_size:  %5u\n", kinfo.data_size); 
-    printf("- proc_addr:  %5u\n", kinfo.proc_addr); 
-    printf("- bootdev_base:  %5u\n", kinfo.bootdev_base); 
-    printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
-    printf("- ramdev_base:   %5u\n", kinfo.ramdev_base); 
-    printf("- ramdev_size:   %5u\n", kinfo.ramdev_size); 
+    printf("- code_base:  %5lu\n", kinfo.code_base); 
+    printf("- code_size:  %5lu\n", kinfo.code_size); 
+    printf("- data_base:  %5lu\n", kinfo.data_base); 
+    printf("- data_size:  %5lu\n", kinfo.data_size); 
+    printf("- proc_addr:  %5lu\n", kinfo.proc_addr); 
+    printf("- bootdev_base:  %5lu\n", kinfo.bootdev_base); 
+    printf("- bootdev_size:  %5lu\n", kinfo.bootdev_size); 
+    printf("- ramdev_base:   %5lu\n", kinfo.ramdev_base); 
+    printf("- ramdev_size:   %5lu\n", kinfo.ramdev_size); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- release:      %.6s\n", kinfo.release); 
@@ -397,7 +397,7 @@ PUBLIC void proctab_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %5u %5lu %6lu %6lu ",
+	printf("%-8.8s %5u %5u %6lu %6lu ",
 	       rp->p_name,
 	       rp->p_priority,
 	       rp->p_quantum_size_ms,
@@ -454,7 +454,7 @@ PUBLIC void memmap_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
 						- rp->p_memmap[D].mem_phys);
-	printf("%-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8lx\n",
+	printf("%-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8lu\n",
 	       rp->p_name,
 	       (unsigned long) rp->p_reg.pc,
 	       (unsigned long) rp->p_reg.sp,

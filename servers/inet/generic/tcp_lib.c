@@ -580,7 +580,7 @@ tcp_conn_t *tcp_conn;
 		printf("tc_fd NULL");
 	else
 	{
-		printf("tc_fd #%d: flags 0x%x, r %u@%u, w %u@%u",
+		printf("tc_fd #%d: flags 0x%lx, r %u@%u, w %u@%u",
 			tcp_fd-tcp_fd_table, tcp_fd->tf_flags,
 			tcp_fd->tf_read_count, tcp_fd->tf_read_offset,
 			tcp_fd->tf_write_count, tcp_fd->tf_write_offset);

@@ -487,7 +487,9 @@ message *m;
 	ip_panic((
 "request not found: from %d, type %d, MINOR= %d, PROC= %d, REF= %d",
 		m->m_source, m->m_type, m->DEVICE,
-		m->IO_ENDPT, m->IO_GRANT));
+		m->IO_ENDPT, (int) m->IO_GRANT));
+
+	return result;
 }
 
 PRIVATE int sr_select(m)

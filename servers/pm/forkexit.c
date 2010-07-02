@@ -91,7 +91,7 @@ PUBLIC int do_fork()
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
 	rmc->mp_trace_flags = 0;
-	sigemptyset(&rmc->mp_sigtrace);
+	(void) sigemptyset(&rmc->mp_sigtrace);
   }
 
   /* Some system servers like to call regular fork, such as RS spawning
@@ -187,7 +187,7 @@ PUBLIC int do_srv_fork()
   if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
 	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
 	rmc->mp_trace_flags = 0;
-	sigemptyset(&rmc->mp_sigtrace);
+	(void) sigemptyset(&rmc->mp_sigtrace);
   }
   /* inherit only these flags */
   rmc->mp_flags &= (IN_USE|PRIV_PROC|DELAY_CALL);
@@ -473,7 +473,7 @@ PUBLIC int do_waitpid()
 			 */
 			for (i = 1; i < _NSIG; i++) {
 				if (sigismember(&rp->mp_sigtrace, i)) {
-					sigdelset(&rp->mp_sigtrace, i);
+					(void) sigdelset(&rp->mp_sigtrace, i);
 
 					mp->mp_reply.reply_res2 =
 						0177 | (i << 8);
