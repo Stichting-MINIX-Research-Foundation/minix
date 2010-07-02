@@ -319,7 +319,11 @@ test "$cd" != "yes" && test -f $INETCONF && mv $INETCONF "$INETCONF~" &&
 test "$cd" != "yes" && test -f $LOCALRC && mv $LOCALRC "$LOCALRC~" &&
                      test "$v" = 1 && echo "Backed up $LOCALRC to $LOCALRC~"
 
-echo "eth0 $driver 0 { default; } ;" > $INETCONF
+if [ "$driver" = "psip0" ]; then
+    echo "psip0 { default; } ;" > $INETCONF
+else
+    echo "eth0 $driver 0 { default; } ;" > $INETCONF
+fi
 echo "$driverargs" > $LOCALRC
 
 if [ -n "$manual" ]

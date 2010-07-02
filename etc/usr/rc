@@ -148,7 +148,7 @@ start)
 	else
 	    # Standard network daemons.
     	    echo -n "Starting networking:"
-	    if grep -s 'psip0.*default' /etc/inet.conf 
+	    if grep -s 'psip0.*default' /etc/inet.conf >/dev/null
 	    then	ifconfig -h 10.0.0.1
 	    else
 	    		daemonize dhcpd
