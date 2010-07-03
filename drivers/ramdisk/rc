@@ -13,7 +13,7 @@ then
 	/bin/service -c up /bin/bios_wini -dev /dev/c0d0
 else
 	/bin/service -c up /bin/at_wini -dev /dev/c0d0 -config /etc/system.conf -label at_wini_0
-	/bin/service -cr up /bin/at_wini -dev /dev/c1d0 -config /etc/system.conf -label at_wini_1 -args ata_instance=1
+	/bin/service -cr up /bin/at_wini -dev /dev/c1d0 -config /etc/system.conf -label at_wini_1 -args instance=1
 fi
 
 rootdev=`sysenv rootdev` || echo 'No rootdev?'

@@ -291,9 +291,9 @@ PRIVATE void init_params()
   long wakeup_secs = WAKEUP_SECS;
 
   /* Boot variables. */
+  env_parse("instance", "d", 0, &w_instance, 0, 8);
   env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
   env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
-  env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
   env_parse(NO_DMA_VAR, "d", 0, &disable_dma, 0, 1);
   env_parse("ata_id_timeout", "d", 0, &wakeup_secs, 1, 60);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
