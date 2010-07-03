@@ -787,22 +787,30 @@ message *m_ptr;
  *===========================================================================*/
 PRIVATE int check_request(struct rs_start *rs_start)
 {
+  int s;
+  endpoint_t rss_scheduler;
+  unsigned rss_priority, rss_quantum;
+  
+  s = rss_nice_decode(rs_start->rss_nice, &rss_scheduler, 
+	&rss_priority, &rss_quantum);
+  if (s != OK) return s;
+
   /* Verify scheduling parameters */
-  if (rs_start->rss_scheduler != KERNEL && 
-	(rs_start->rss_scheduler < 0 || 
-	rs_start->rss_scheduler > LAST_SPECIAL_PROC_NR)) {
+  if (rss_scheduler != KERNEL && 
+	(rss_scheduler < 0 || 
+	rss_scheduler > LAST_SPECIAL_PROC_NR)) {
 	printf("RS: check_request: invalid scheduler %d\n", 
-		rs_start->rss_scheduler);
+		rss_scheduler);
 	return EINVAL;
   }
-  if (rs_start->rss_priority >= NR_SCHED_QUEUES) {
+  if (rss_priority >= NR_SCHED_QUEUES) {
 	printf("RS: check_request: priority %u out of range\n", 
-		rs_start->rss_priority);
+		rss_priority);
 	return EINVAL;
   }
-  if (rs_start->rss_quantum <= 0) {
+  if (rss_quantum <= 0) {
 	printf("RS: check_request: quantum %u out of range\n", 
-		rs_start->rss_quantum);
+		rss_quantum);
 	return EINVAL;
   }
 

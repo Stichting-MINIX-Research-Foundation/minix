@@ -123,6 +123,9 @@ PRIVATE int req_lu_maxtime = DEFAULT_LU_MAXTIME;
 PRIVATE char command[4096];	
 
 /* Arguments for RS to start a new service */
+PRIVATE endpoint_t rss_scheduler;
+PRIVATE unsigned rss_priority;
+PRIVATE unsigned rss_quantum;
 PRIVATE struct rs_start rs_start;
 
 /* An error occurred. Report the problem, print the usage, and exit. 
@@ -567,7 +570,7 @@ PRIVATE void do_scheduler(config_t *cpe)
 		fatal("do_scheduler: scheduler %d out of range at %s:%d",
 			scheduler_val, cpe->file, cpe->line);
 	}
-	rs_start.rss_scheduler= (endpoint_t) scheduler_val;
+	rss_scheduler= (endpoint_t) scheduler_val;
 }
 
 PRIVATE void do_priority(config_t *cpe)
@@ -605,7 +608,7 @@ PRIVATE void do_priority(config_t *cpe)
 		fatal("do_priority: priority %d out of range at %s:%d",
 			priority_val, cpe->file, cpe->line);
 	}
-	rs_start.rss_priority= (unsigned) priority_val;
+	rss_priority= (unsigned) priority_val;
 }
 
 PRIVATE void do_quantum(config_t *cpe)
@@ -643,7 +646,7 @@ PRIVATE void do_quantum(config_t *cpe)
 		fatal("do_quantum: quantum %d out of range at %s:%d",
 			quantum_val, cpe->file, cpe->line);
 	}
-	rs_start.rss_quantum= (unsigned) quantum_val;
+	rss_quantum= (unsigned) quantum_val;
 }
 
 PRIVATE void do_irq(config_t *cpe)
@@ -1217,13 +1220,20 @@ PUBLIC int main(int argc, char **argv)
 	fatal("no passwd file entry for '%s'", SERVICE_LOGIN);
       rs_start.rss_uid= pw->pw_uid;
 
-      rs_start.rss_scheduler= SCHED_PROC_NR;
-      rs_start.rss_priority= USER_Q;
-      rs_start.rss_quantum= 200;
+      rss_scheduler= SCHED_PROC_NR;
+      rss_priority= USER_Q;
+      rss_quantum= 200;
 
       if (req_config) {
 	assert(progname);
 	do_config(progname, req_config);
+      }
+      assert(rss_priority < NR_SCHED_QUEUES);
+      assert(rss_quantum > 0);
+      if (rss_nice_encode(&rs_start.rss_nice, rss_scheduler, 
+	rss_priority, rss_quantum) != OK) {
+	fatal("cannot encode scheduling parameters %d, %u, %u",
+		rss_scheduler, rss_priority, rss_quantum);
       }
 
       if (req_ipc)
@@ -1237,8 +1247,6 @@ PUBLIC int main(int argc, char **argv)
 	      rs_start.rss_ipclen= 0;
       }
 
-      assert(rs_start.rss_priority < NR_SCHED_QUEUES);
-      assert(rs_start.rss_quantum > 0);
       m.RS_CMD_ADDR = (char *) &rs_start;
       break;
   case RS_DOWN:

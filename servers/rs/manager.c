@@ -1281,9 +1281,9 @@ endpoint_t source;
   }
   rp->r_uid= rs_start->rss_uid;
 
-  rp->r_scheduler= rs_start->rss_scheduler;
-  rp->r_priority= rs_start->rss_priority;
-  rp->r_quantum= rs_start->rss_quantum;
+  s = rss_nice_decode(rs_start->rss_nice, &rp->r_scheduler, 
+	&rp->r_priority, &rp->r_quantum);
+  if (s != OK) return(s);
 
   if (rs_start->rss_flags & RSS_IPC_VALID)
   {

@@ -88,6 +88,7 @@ SRCS+=  \
 	realpath.c \
 	rindex.c \
 	rlimit.c \
+	rss_nice.c \
 	setenv.c \
 	setmode.c \
 	settimeofday.c \

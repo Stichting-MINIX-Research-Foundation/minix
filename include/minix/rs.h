@@ -42,9 +42,7 @@ struct rs_start
 	char *rss_cmd;
 	size_t rss_cmdlen;
 	uid_t rss_uid;
-	endpoint_t rss_scheduler;
-	unsigned rss_priority;
-	unsigned rss_quantum;
+	int rss_nice; /* use rss_nice_encode and _decode */
 	int rss_major;
 	int rss_dev_style;
 	long rss_period;
@@ -99,5 +97,9 @@ struct rprocpub {
 };
 
 _PROTOTYPE( int minix_rs_lookup, (const char *name, endpoint_t *value));
+_PROTOTYPE(int rss_nice_encode, (int *nice, endpoint_t scheduler, 
+	unsigned priority, unsigned quantum));
+_PROTOTYPE(int rss_nice_decode, (int nice, endpoint_t *scheduler, 
+	unsigned *priority, unsigned *quantum));
 
 #endif
