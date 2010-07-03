@@ -22,6 +22,7 @@ EXTRA_DEFS=	${DEF_GNU} ${DEF_SYSCALLS} ${DEF_DEBUG}
 CPPFLAGS+=	-I${MINIXSRCDIR} -I${MINIXSRCDIR}/servers \
 		 ${EXTRA_DEFS}
 
+PROG=	mdb
 SRCS=	mdb.c mdbexp.c kernel.o sym.c trace.c core.c misc.c io.c
 SRCS+=	mdbdis86.c
 SRCS+=	${EXTRA_SRCS}
