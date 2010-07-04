@@ -591,11 +591,14 @@ PUBLIC void kernel_call_resume(struct proc *caller)
 			caller->p_rts_flags, caller->p_misc_flags);
 	 */
 
+	/* re-execute the kernel call, with MF_KCALL_RESUME still set so
+	 * the call knows this is a retry.
+	 */
+	result = kernel_call_dispatch(caller, &caller->p_vmrequest.saved.reqmsg);
 	/*
 	 * we are resuming the kernel call so we have to remove this flag so it
 	 * can be set again
 	 */
 	caller->p_misc_flags &= ~MF_KCALL_RESUME;
-	result = kernel_call_dispatch(caller, &caller->p_vmrequest.saved.reqmsg);
 	kernel_call_finish(caller, &caller->p_vmrequest.saved.reqmsg, result);
 }
