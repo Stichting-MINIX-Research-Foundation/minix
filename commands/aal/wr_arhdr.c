@@ -5,9 +5,11 @@
  */
 #include <arch.h>
 #include "object.h"
+#include "arch.h"
+#include "write.h"
+#include "wr_bytes.h"
 
-wr_arhdr(fd, arhdr)
-	register struct ar_hdr	*arhdr;
+void wr_arhdr(int fd, struct ar_hdr *arhdr)
 {
 	char buf[AR_TOTAL];
 	register char *c = buf;

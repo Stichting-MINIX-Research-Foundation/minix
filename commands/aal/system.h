@@ -43,5 +43,7 @@ extern File _sys_ftab[];
 #define ILL_BREAK	((char *)0)
 
 /* system's idea of block */
+#ifndef BUFSIZ
 #define BUFSIZ	1024
+#endif
 #endif /* __SYSTEM_INCLUDED__ */

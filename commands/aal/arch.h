@@ -22,4 +22,7 @@ struct	ar_hdr {
 #define AR_TOTAL	26
 #define AR_SIZE		22
 
+extern int rd_arhdr(int fd, register struct ar_hdr arhdr[]);
+extern void wr_arhdr(int fd, struct ar_hdr arhdr[]);
+
 #endif /* __ARCH_H_INCLUDED */

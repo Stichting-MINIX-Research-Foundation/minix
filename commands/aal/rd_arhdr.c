@@ -3,12 +3,16 @@
  * (c) copyright 1987 by the Vrije Universiteit, Amsterdam, The Netherlands.
  * See the copyright notice in the ACK home directory, in the file "Copyright".
  */
+#include <sys/types.h>
+#include <unistd.h>
 #include <arch.h>
 #include "object.h"
 
+#include "arch.h"
+#include "archiver.h"
+
 int
-rd_arhdr(fd, arhdr)
-	register struct ar_hdr	*arhdr;
+rd_arhdr(int fd, register struct ar_hdr	*arhdr)
 {
 	char buf[AR_TOTAL];
 	register char *c = buf;

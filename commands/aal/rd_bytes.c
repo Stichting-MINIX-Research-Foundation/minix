@@ -9,16 +9,19 @@
    an int!
 */
 
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "archiver.h"
+#include "rd_bytes.h"
+
 static int maxchunk = MAXCHUNK;
 
 /*
  * We don't have to worry about byte order here.
  * Just read "cnt" bytes from file-descriptor "fd".
  */
-int 
-rd_bytes(fd, string, cnt)
-	register char	*string;
-	register long	cnt;
+void rd_bytes(int fd, char *string, long cnt)
 {
 
 	while (cnt) {

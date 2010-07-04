@@ -9,11 +9,12 @@
 #else
 #include <varargs.h>
 #endif
+#include <string.h>
 
 extern char *long2str();
 
 static int
-integral(c)
+integral(int c)
 {
 	switch (c) {
 	case 'b':
@@ -39,16 +40,14 @@ integral(c)
 	%d = int
 $ */
 int
-_format(buf, fmt, argp)
-	char *buf, *fmt;
-	register va_list argp;
+_format(char *buf, char *fmt, va_list argp)
 {
 	register char *pf = fmt;
 	register char *pb = buf;
 
 	while (*pf) {
 		if (*pf == '%') {
-			register width, base, pad, npad;
+			register int width, base, pad, npad;
 			char *arg;
 			char cbuf[2];
 			char *badformat = "<bad format>";
@@ -78,7 +77,8 @@ _format(buf, fmt, argp)
 			else
 			if (*pf == 'l') {
 				/* alignment ??? */
-				if (base = integral(*++pf)) {
+				base = integral(*++pf);
+				if (base) {
 					arg = long2str(va_arg(argp,long), base);
 				}
 				else {
@@ -87,7 +87,7 @@ _format(buf, fmt, argp)
 				}
 			}
 			else
-			if (base = integral(*pf)) {
+			if ((base = integral(*pf))) {
 				arg = long2str((long)va_arg(argp,int), base);
 			}
 			else

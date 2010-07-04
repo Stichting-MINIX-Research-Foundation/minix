@@ -9,14 +9,17 @@
    You have to put it in an int!
 */
 
+#include <sys/types.h>
+#include <unistd.h>
+#include "wr_bytes.h"
+#include "archiver.h"
+
 static int maxchunk = MAXCHUNK;
 
 /*
  * Just write "cnt" bytes to file-descriptor "fd".
  */
-wr_bytes(fd, string, cnt)
-	register char	*string;
-	register long	cnt;
+void wr_bytes(int fd, register char *string, long cnt)
 {
 
 	while (cnt) {

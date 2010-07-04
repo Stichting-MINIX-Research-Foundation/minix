@@ -5,10 +5,10 @@
  */
 #include <ranlib.h>
 #include "object.h"
+#include "wr_bytes.h"
+#include "ranlib.h"
 
-wr_ranlib(fd, ran, cnt)
-	register struct ranlib	*ran;
-	register long	cnt;
+void wr_ranlib(int fd, struct ranlib *ran, long cnt)
 {
 #if ! (BYTES_REVERSED || WORDS_REVERSED)
 	if (sizeof (struct ranlib) != SZ_RAN)

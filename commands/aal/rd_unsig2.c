@@ -4,9 +4,10 @@
  * See the copyright notice in the ACK home directory, in the file "Copyright".
  */
 #include "object.h"
+#include "rd_bytes.h"
 
 unsigned int
-rd_unsigned2(fd)
+rd_unsigned2(int fd)
 {
 	char buf[2];
 

@@ -11,6 +11,8 @@
 #endif
 #include <system.h>
 #include "param.h"
+#include "format.h"
+#include "write.h"
 
 /*VARARGS*/
 /*FORMAT0v $
@@ -20,7 +22,7 @@
 	%[uxbo] = unsigned int
 	%d = int
 $ */
-int
+void
 #if __STDC__
 print(char *fmt, ...)
 #else
