@@ -44,8 +44,8 @@ all: services image
 
 image:  includes
 	$(MAKE) -C ../kernel
-	$(MAKE) -C ../servers all
-	$(MAKE) -C ../drivers all
+	$(MAKE) -C ../servers all install
+	$(MAKE) -C ../drivers all install
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries

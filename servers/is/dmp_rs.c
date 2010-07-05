@@ -42,7 +42,7 @@ PUBLIC void rproc_dmp()
   	printf("%13s %9d %5d %6s %3d/%1d %3ld %8ld %5dx %s",
   		rpub->label, rpub->endpoint, rp->r_pid,
 		s_flags_str(rp->r_flags, rpub->sys_flags), rpub->dev_nr,
-		rpub->dev_style, rpub->period, rp->r_alive_tm, rp->r_restarts,
+		rpub->dev_style, rp->r_period, rp->r_alive_tm, rp->r_restarts,
 		rp->r_args
   	);
 	printf("\n");

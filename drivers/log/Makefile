@@ -7,7 +7,7 @@ LDADD+=	-ldriver -lsys
 
 MAN=
 
-BINDIR?= /sbin
+BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 32k
 
 .include <bsd.prog.mk>

@@ -2,19 +2,19 @@ boot
 235 400
 d--755 0 0
 	bin d--755 0 0
-		at_wini ---755 0 0 at_wini
-		bios_wini ---755 0 0 bios_wini
 		cdprobe ---755 0 0 cdprobe
 		dev2name ---755 0 0 dev2name
-		floppy ---755 0 0 floppy
 		loadramdisk ---755 0 0 loadramdisk
 		newroot ---755 0 0 newroot
-		pci ---755 0 0 pci
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 		sysenv ---755 0 0 sysenv
 	$
 	sbin d--755 0 0
+		at_wini ---755 0 0 at_wini
+		bios_wini ---755 0 0 bios_wini
+		floppy ---755 0 0 floppy
+		pci ---755 0 0 pci
 		mfs ---755 0 0 mfs
 	$
 	dev d--755 0 0

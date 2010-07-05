@@ -23,10 +23,6 @@ extern struct boot_image_sys boot_image_sys_table[];
  */
 extern struct boot_image_dev boot_image_dev_table[];
 
-/* The buffer where the boot image is copied during initialization. */
-EXTERN int boot_image_buffer_size;
-EXTERN char *boot_image_buffer;
-
 /* The system process table. This table only has entries for system
  * services (servers and drivers), and thus is not directly indexed by
  * slot number. The size of the table must match the size of the privilege

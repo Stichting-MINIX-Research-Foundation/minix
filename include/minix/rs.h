@@ -81,7 +81,6 @@ struct rprocpub {
   short in_use; 		  /* set when the entry is in use */
   unsigned sys_flags; 		  /* sys flags */
   endpoint_t endpoint;		  /* process endpoint number */
-  long period;			  /* heartbeat period (or zero) */
 
   int dev_flags;		  /* device flags */
   dev_t dev_nr;			  /* major device number */

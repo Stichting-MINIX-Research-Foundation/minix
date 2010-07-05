@@ -16,16 +16,37 @@ usage()
     exec intr sh
 }
 
-upopt()
+up()
 {
-    opt=$1
-    shift
+    # Function to dynamically start a system service
+    opt=""
+    prefix=$(expr "$1 " : '\(-\)')
+    if [ "$prefix" = "-" ];
+    then
+         opt=$1
+         shift
+    fi
     service=$1
     shift
 
-    # Function to dynamically start a system service
-    echo -n " $service"
     service $opt up /sbin/$service "$@"
+}
+
+edit()
+{
+    # Function to dynamically edit system service settings
+    opt=""
+    prefix=$(expr "$1 " : '\(-\)')
+    if [ "$prefix" = "-" ];
+    then
+         opt=$1
+         shift
+    fi
+    service=$1
+    shift
+
+    # Assume binaries are always in /usr/sbin
+    service $opt edit /usr/sbin/$service -label $service "$@"
 }
 
 while getopts 'saf' opt
@@ -48,7 +69,7 @@ esac
 
 case $action in
 start)
-    echo -n "Multiuser startup in progress ...:"
+    echo -n "Multiuser startup in progress ..."
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
@@ -61,9 +82,9 @@ start)
 
     if [ "`sysenv debug_fkeys`" != 0 ]
     then
-        upopt -n is -period 5HZ
+        up -n is -period 5HZ
     fi
-    echo .
+    echo
 
     # Set timezone.
     export TZ=GMT0
@@ -150,6 +171,18 @@ Mount $usr /usr failed -- Single user."
 	fi
 	mount $bin_img $usr /usr
     fi
+
+    # Edit settings for boot system services
+    edit rs
+    edit vm
+    edit pm
+    edit sched
+    edit vfs
+    edit ds
+    edit tty
+    edit memory
+    edit -p log
+    edit -c pfs
 
     if [ ! -z "$home" ]
     then mount $bin_img $home /home || echo "WARNING: couldn't mount $home on /home"

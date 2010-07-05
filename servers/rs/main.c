@@ -18,8 +18,6 @@
 #include "../pm/mproc.h"
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void exec_image_copy, ( int boot_proc_idx,
-    struct boot_image *ip, struct rproc *rp)                            );
 FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
     struct boot_image *image,
     struct boot_image **ip, struct boot_image_priv **pp,
@@ -113,6 +111,7 @@ PUBLIC int main(void)
           case RS_SHUTDOWN: 	result = do_shutdown(&m); 	break;
           case RS_UPDATE: 	result = do_update(&m); 	break;
           case RS_CLONE: 	result = do_clone(&m); 		break;
+          case RS_EDIT: 	result = do_edit(&m); 		break;
           case GETSYSINFO: 	result = do_getsysinfo(&m); 	break;
 	  case RS_LOOKUP:	result = do_lookup(&m);		break;
 	  /* Ready messages. */
@@ -163,7 +162,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct rprocpub *rpub;
   struct boot_image image[NR_BOOT_PROCS];
   struct mproc mproc[NR_PROCS];
-  struct exec header;
   struct boot_image_priv *boot_image_priv;
   struct boot_image_sys *boot_image_sys;
   struct boot_image_dev *boot_image_dev;
@@ -193,11 +191,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       panic("unable to get copy of boot image table: %d", s);
   }
 
-  /* Determine the number of system services in the boot image table and
-   * compute the size required for the boot image buffer.
-   */
+  /* Determine the number of system services in the boot image table. */
   nr_image_srvs = 0;
-  boot_image_buffer_size = 0;
   for(i=0;i<NR_BOOT_PROCS;i++) {
       ip = &image[i];
 
@@ -206,24 +201,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           continue;
       }
       nr_image_srvs++;
-
-      /* Lookup the corresponding entry in the boot image sys table. */
-      boot_image_info_lookup(ip->endpoint, image,
-          NULL, NULL, &boot_image_sys, NULL);
-
-      /* If we must keep a copy of this system service, read the header
-       * and increase the size of the boot image buffer.
-       */
-      if(boot_image_sys->flags & SF_USE_REPL) {
-          boot_image_sys->flags |= SF_USE_COPY;
-      }
-      if(boot_image_sys->flags & SF_USE_COPY) {
-          if((s = sys_getaoutheader(&header, i)) != OK) {
-              panic("unable to get copy of a.out header: %d", s);
-          }
-          boot_image_buffer_size += header.a_hdrlen
-              + header.a_text + header.a_data;
-      }
   }
 
   /* Determine the number of entries in the boot image priv table and make sure
@@ -243,14 +220,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	panic("boot image table and boot image priv table mismatch");
   }
 
-  /* Allocate boot image buffer. */
-  if(boot_image_buffer_size > 0) {
-      boot_image_buffer = rs_startup_sbrk(boot_image_buffer_size);
-      if(boot_image_buffer == (char *) -1) {
-          panic("unable to allocate boot image buffer");
-      }
-  }
-
   /* Reset the system process table. */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
       rp->r_flags = 0;
@@ -260,9 +229,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   /* Initialize the system process table in 4 steps, each of them following
    * the appearance of system services in the boot image priv table.
-   * - Step 1: get a copy of the executable image of every system service that
-   * requires it while it is not yet running.
-   * In addition, set priviliges, sys properties, and dev properties (if any)
+   * - Step 1: set priviliges, sys properties, and dev properties (if any)
    * for every system service.
    */
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
@@ -280,22 +247,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rpub = rp->r_pub;
 
       /*
-       * Get a copy of the executable image if required.
-       */
-      rp->r_exec_len = 0;
-      rp->r_exec = NULL;
-      if(boot_image_sys->flags & SF_USE_COPY) {
-          exec_image_copy(ip - image, ip, rp);
-      }
-
-      /*
        * Set privileges.
        */
       /* Get label. */
       strcpy(rpub->label, boot_image_priv->label);
-
-      /* Get heartbeat period. */
-      rpub->period = boot_image_priv->period;
 
       /* Force a static priv id for system services in the boot image. */
       rp->r_priv.s_id = static_priv_id(
@@ -312,7 +267,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       fill_call_mask(boot_image_priv->k_calls, NR_SYS_CALLS,
           rp->r_priv.s_k_call_mask, KERNEL_CALL, TRUE);
 
-          /* Set the privilege structure. */
+      /* Set the privilege structure. */
       if(boot_image_priv->endpoint != RS_PROC_NR) {
           if ((s = sys_privctl(ip->endpoint, SYS_PRIV_SET_SYS, &(rp->r_priv)))
               != OK) {
@@ -341,8 +296,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Get process name. */
       strcpy(rpub->proc_name, ip->proc_name);
 
-      /* Get command settings. */
-      strcpy(rp->r_cmd, ip->proc_name);
+      /* Build command settings. */
+      rp->r_cmd[0]= '\0';
       rp->r_script[0]= '\0';
       build_cmd_dep(rp);
 
@@ -367,6 +322,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp->r_stop_tm = 0;                       /* not exiting yet */
       rp->r_restarts = 0;                      /* no restarts so far */
       rp->r_set_resources = 0;                 /* don't set resources */
+      rp->r_period = 0;                        /* no period yet */
+      rp->r_exec = NULL;                       /* no in-memory copy yet */
+      rp->r_exec_len = 0;
 
       /* Mark as in use and active. */
       rp->r_flags = RS_IN_USE | RS_ACTIVE;
@@ -469,25 +427,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       if(j == NR_PROCS) {
           panic("unable to get pid");
       }
-
-      /* If we must keep a replica of this system service, create it now. */
-      if(rpub->sys_flags & SF_USE_REPL) {
-          if ((s = clone_service(rp)) != OK) {
-              panic("unable to clone service: %d", s);
-          }
-      }
-  }
-
-  /*
-   * Now complete RS initialization process in collaboration with other
-   * system services.
-   */
-  /* Let the rest of the system know about our dynamically allocated buffer. */
-  if(boot_image_buffer_size > 0) {
-      boot_image_buffer = rs_startup_sbrk_synch(boot_image_buffer_size);
-      if(boot_image_buffer == (char *) -1) {
-          panic("unable to synch boot image buffer");
-      }
   }
 
   /* Set alarm to periodically check service status. */
@@ -534,15 +473,14 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Map out our own text and data. */
       unmap_ok = 1;
       _minix_unmapzero();
+
+      /* Ask VM to pin memory for the new RS instance. */
+      if((s = vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN)) != OK) {
+          panic("unable to pin memory for the new RS instance: %d", s);
+      }
   }
   else {
       /* Old RS instance running. */
-
-      /* Ask VM to pin memory for the new RS instance. */
-      s = vm_memctl(replica_endpoint, VM_RS_MEM_PIN);
-      if(s != OK) {
-          panic("unable to pin memory for the new RS instance: %d", s);
-      }
 
       /* Set up privileges for the new instance and let it run. */
       set_sys_bit(replica_rp->r_priv.s_ipc_to, static_priv_id(RS_PROC_NR));
@@ -643,55 +581,6 @@ PRIVATE int sef_cb_signal_manager(endpoint_t target, int signo)
   asynsend3(rpub->endpoint, &m, AMF_NOREPLY);
 
   return OK; /* signal has been delivered */
-}
-
-/*===========================================================================*
- *	                    exec_image_copy                                  *
- *===========================================================================*/
-PRIVATE void exec_image_copy(boot_proc_idx, ip, rp)
-int boot_proc_idx;
-struct boot_image *ip;
-struct rproc *rp;
-{
-/* Copy the executable image of the given boot process. */
-  int s;
-  struct exec header;
-  static char *boot_image_ptr = NULL;
-
-  if(boot_image_ptr == NULL) {
-      boot_image_ptr = boot_image_buffer;
-  }
-
-  /* Get a.out header. */
-  s = ENOMEM;
-  if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < sizeof(header)
-      || (s = sys_getaoutheader(&header, boot_proc_idx)) != OK) {
-      panic("unable to get copy of a.out header: %d", s);
-  }
-  memcpy(boot_image_ptr, &header, header.a_hdrlen);
-  boot_image_ptr += header.a_hdrlen;
-
-  /* Get text segment. */
-  s = ENOMEM;
-  if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < header.a_text
-      || (s = rs_startup_segcopy(ip->endpoint, T, D, (vir_bytes) boot_image_ptr,
-      header.a_text)) != OK) {
-      panic("unable to get copy of text segment: %d", s);
-  }
-  boot_image_ptr += header.a_text;
-
-  /* Get data segment. */
-  s = ENOMEM;
-  if(boot_image_buffer+boot_image_buffer_size - boot_image_ptr < header.a_data
-      || (s = rs_startup_segcopy(ip->endpoint, D, D, (vir_bytes) boot_image_ptr,
-      header.a_data)) != OK) {
-      panic("unable to get copy of data segment: %d", s);
-  }
-  boot_image_ptr += header.a_data;
-
-  /* Set the executable image for the given boot process. */
-  rp->r_exec_len = header.a_hdrlen + header.a_text + header.a_data;
-  rp->r_exec = boot_image_ptr - rp->r_exec_len;
 }
 
 /*===========================================================================*

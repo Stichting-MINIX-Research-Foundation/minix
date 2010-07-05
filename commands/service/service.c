@@ -46,6 +46,7 @@ PRIVATE char *known_requests[] = {
   "shutdown", 
   "update",
   "clone",
+  "edit",
   "catch for illegal requests"
 };
 #define ILLEGAL_REQUEST  sizeof(known_requests)/sizeof(char *)
@@ -135,7 +136,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [%s %s %s %s] (up|run|update) <binary|%s> [%s <args>] [%s <special>] [%s <style>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
+  "    %s [%s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <style>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, SELF_BINARY,
 	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_PERIOD, ARG_SCRIPT,
 	ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
@@ -166,6 +167,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
   int req_nr;
   int c, i, j;
   int c_flag, r_flag, n_flag, p_flag;
+  int label_required;
 
   c_flag = 0;
   r_flag = 0;
@@ -224,7 +226,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
   }
 
   rs_start.rss_flags = 0;
-  if (req_nr == RS_UP || req_nr == RS_UPDATE) {
+  if (req_nr == RS_UP || req_nr == RS_UPDATE || req_nr == RS_EDIT) {
       u32_t system_hz;
 
       rs_start.rss_flags= RSS_IPC_VALID;
@@ -242,9 +244,15 @@ PRIVATE int parse_arguments(int argc, char **argv)
 
       req_path = argv[optind+ARG_PATH];
       if(req_nr == RS_UPDATE && !strcmp(req_path, SELF_BINARY)) {
+          /* Self update needs no real path or configuration file. */
           req_config = NULL;
           req_path = req_path_self;
           rs_start.rss_flags |= RSS_SELF_LU;
+      }
+
+      if(req_nr == RS_EDIT) {
+          /* Edit action needs no configuration file. */
+          req_config = NULL;
       }
 
       if (do_run)
@@ -296,9 +304,8 @@ PRIVATE int parse_arguments(int argc, char **argv)
           else if (strcmp(argv[i], ARG_PERIOD)==0) {
 	      req_period = strtol(argv[i+1], &hz, 10);
 	      if (strcmp(hz,"HZ")==0) req_period *= system_hz;
-	      if (req_period < 1) {
-                  print_usage(argv[ARG_NAME],
-			"period is at least be one tick");
+	      if (req_period < 0) {
+                  print_usage(argv[ARG_NAME], "bad period argument");
                   exit(EINVAL);
 	      }
           }
@@ -385,7 +392,8 @@ PRIVATE int parse_arguments(int argc, char **argv)
         /* no extra arguments required */
   }
 
-  if((rs_start.rss_flags & RSS_SELF_LU) && !req_label) {
+  label_required = (rs_start.rss_flags & RSS_SELF_LU) || (req_nr == RS_EDIT);
+  if(label_required && !req_label) {
       print_usage(argv[ARG_NAME], "label option mandatory for target action");
       exit(EINVAL);
   }
@@ -1189,6 +1197,7 @@ PUBLIC int main(int argc, char **argv)
       m.RS_LU_PREPARE_MAXTIME = req_lu_maxtime;
       /* fall through */
   case RS_UP:
+  case RS_EDIT:
       /* Build space-separated command string to be passed to RS server. */
       progname = strrchr(req_path, '/');
       assert(progname);	/* an absolute path was required */
@@ -1265,7 +1274,7 @@ PUBLIC int main(int argc, char **argv)
 
   /* Build request message and send the request. */
   if(result == OK) {
-    if (_syscall(RS_PROC_NR, request, &m) == -1) 
+    if (_syscall(RS_PROC_NR, request, &m) == -1)
         failure();
     result = m.m_type;
   }

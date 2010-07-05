@@ -84,7 +84,7 @@
 #define RUSR_SM PM_PROC_NR                         /* root user proc */
 
 /* Define sys flags for the various process types. */
-#define SRV_SF   (SF_CORE_SRV | SF_NEED_COPY)  /* system services */
+#define SRV_SF   (SF_CORE_SRV)                 /* system services */
 #define SRVR_SF  (SRV_SF | SF_NEED_REPL)       /* services needing a replica */
 #define DSRV_SF  (0)                           /* dynamic system services */
 #define VM_SF    (SRVR_SF | SF_SYNCH_BOOT)     /* vm */

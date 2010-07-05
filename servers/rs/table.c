@@ -62,20 +62,20 @@ PRIVATE int
  * handled before user-scheduled ones.
  */
 PUBLIC struct boot_image_priv boot_image_priv_table[] = {
-/*endpoint,     label,   flags,  traps,  ipcto,  sigmgr,  sched,    kcalls,  vmcalls, T */
-{RS_PROC_NR,   "rs",     RSYS_F, RSYS_T, RSYS_M, RSYS_SM, KERN_SCH, rs_kc,   rs_vmc,  0 },
-{VM_PROC_NR,   "vm",     VM_F,   SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, vm_kc,   vm_vmc,  0 },
-{PM_PROC_NR,   "pm",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, pm_kc,   pm_vmc,  0 },
-{SCHED_PROC_NR,"sched",  SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, sched_kc, sched_vmc, 0 },
-{VFS_PROC_NR,  "vfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, vfs_kc,  vfs_vmc, 0 },
-{DS_PROC_NR,   "ds",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, ds_kc,   ds_vmc,  0 },
-{TTY_PROC_NR,  "tty",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  USER_SCH, tty_kc,  tty_vmc, 0 },
-{MEM_PROC_NR,  "memory", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, mem_kc,  mem_vmc, 0 },
-{LOG_PROC_NR,  "log",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  USER_SCH, log_kc,  log_vmc, 0 },
-{MFS_PROC_NR,"fs_imgrd", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, mfs_kc,  mfs_vmc, 0 },
-{PFS_PROC_NR,  "pfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  USER_SCH, pfs_kc,  pfs_vmc, 0 },
-{INIT_PROC_NR, "init",   RUSR_F, RUSR_T, RUSR_M, RUSR_SM, NONE,     rusr_kc, rusr_vmc,0 },
-{NULL_BOOT_NR, "",       0,      0,      0,      0,       0,        no_kc,   no_vmc,  0 }
+/*endpoint,     label,   flags,  traps,  ipcto,  sigmgr,  sched,    kcalls,  vmcalls */
+{RS_PROC_NR,   "rs",     RSYS_F, RSYS_T, RSYS_M, RSYS_SM, KERN_SCH, rs_kc,   rs_vmc     },
+{VM_PROC_NR,   "vm",     VM_F,   SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, vm_kc,   vm_vmc     },
+{PM_PROC_NR,   "pm",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, pm_kc,   pm_vmc     },
+{SCHED_PROC_NR,"sched",  SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, sched_kc, sched_vmc },
+{VFS_PROC_NR,  "vfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, vfs_kc,  vfs_vmc    },
+{DS_PROC_NR,   "ds",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, ds_kc,   ds_vmc     },
+{TTY_PROC_NR,  "tty",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  USER_SCH, tty_kc,  tty_vmc    },
+{MEM_PROC_NR,  "memory", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, mem_kc,  mem_vmc    },
+{LOG_PROC_NR,  "log",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  USER_SCH, log_kc,  log_vmc    },
+{MFS_PROC_NR,"fs_imgrd", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  KERN_SCH, mfs_kc,  mfs_vmc    },
+{PFS_PROC_NR,  "pfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  USER_SCH, pfs_kc,  pfs_vmc    },
+{INIT_PROC_NR, "init",   RUSR_F, RUSR_T, RUSR_M, RUSR_SM, NONE,     rusr_kc, rusr_vmc   },
+{NULL_BOOT_NR, "",       0,      0,      0,      0,       0,        no_kc,   no_vmc     }
 };
 
 /* Definition of the boot image sys table. */
@@ -85,9 +85,9 @@ PUBLIC struct boot_image_sys boot_image_sys_table[] = {
   { VM_PROC_NR,       VM_SF                             },
   { PM_PROC_NR,       SRVR_SF                           },
   { VFS_PROC_NR,      SRVR_SF                           },
-  { LOG_PROC_NR,      SRV_SF       | SF_USE_REPL        },
-  { MFS_PROC_NR,      SF_NEED_COPY | SF_USE_COPY        },
-  { PFS_PROC_NR,      SRV_SF       | SF_USE_COPY        },
+  { LOG_PROC_NR,      SRV_SF                            },
+  { MFS_PROC_NR,      0                                 },
+  { PFS_PROC_NR,      SRV_SF                            },
   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
 };
 

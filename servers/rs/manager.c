@@ -95,9 +95,14 @@ struct rproc *rp;
   if(rp) {
       rpub = rp->r_pub;
 
-      /* Disallow the call if the target is RS or a user process. */
-      if(!(rp->r_priv.s_flags & SYS_PROC) || rpub->endpoint == RS_PROC_NR) {
+      /* Disallow the call if the target is a user process. */
+      if(!(rp->r_priv.s_flags & SYS_PROC)) {
           return EPERM;
+      }
+
+      /* Only allow RS_EDIT for RS. */
+      if(rpub->endpoint == RS_PROC_NR) {
+          if(call != RS_EDIT) return EPERM;
       }
 
       /* Disallow the call if another call is in progress for the service. */
@@ -436,6 +441,14 @@ struct rproc *rp;
       return(EPERM);
   }
 
+  /* Do we have a copy or a command to create the service? */
+  if(!use_copy && !strcmp(rp->r_cmd, "")) {
+      printf("RS: unable to create service '%s' without a copy or command\n",
+          rpub->label);
+      free_slot(rp);
+      return(EPERM);
+  }
+
   /* Now fork and branch for parent and child process (and check for error).
    * After fork()ing, we need to pin RS memory again or pagefaults will occur
    * on future writes.
@@ -677,11 +690,10 @@ struct rproc *rp;
 int init_type;
 {
 /* Let a newly created service run. */
-  int s, use_copy;
   struct rprocpub *rpub;
+  int s;
 
   rpub = rp->r_pub;
-  use_copy= (rpub->sys_flags & SF_USE_COPY);
 
   /* Allow the service to run. */
   if ((s = sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
@@ -1050,8 +1062,8 @@ struct rproc *rp;
   rpub->dev_style2 = def_rpub->dev_style2;
 
   /* Period. */
-  if(!rpub->period && def_rpub->period) {
-      rpub->period = def_rpub->period;
+  if(!rp->r_period && def_rp->r_period) {
+      rp->r_period = def_rp->r_period;
   }
 }
 
@@ -1155,7 +1167,7 @@ PUBLIC void free_exec(rp)
 struct rproc *rp;
 {
 /* Free an exec image. */
-  int slot_nr, has_shared_exec, is_boot_image_mem;
+  int slot_nr, has_shared_exec;
   struct rproc *other_rp;
 
   /* Search for some other slot sharing the same exec image. */
@@ -1171,20 +1183,9 @@ struct rproc *rp;
 
   /* If nobody uses our copy of the exec image, we can try to get rid of it. */
   if(!has_shared_exec) {
-      is_boot_image_mem = (rp->r_exec >= boot_image_buffer
-          && rp->r_exec < boot_image_buffer + boot_image_buffer_size);
-
-      /* Free memory only if not part of the boot image buffer. */
-      if(is_boot_image_mem) {
-          if(rs_verbose)
-              printf("RS: %s has exec image in the boot image buffer\n",
-                  srv_to_string(rp));
-      }
-      else {
-          if(rs_verbose)
-              printf("RS: %s frees exec image\n", srv_to_string(rp));
-          free(rp->r_exec);
-      }
+      if(rs_verbose)
+          printf("RS: %s frees exec image\n", srv_to_string(rp));
+      free(rp->r_exec);
   }
   else {
       if(rs_verbose)
@@ -1196,27 +1197,22 @@ struct rproc *rp;
 }
 
 /*===========================================================================*
- *				 init_slot				     *
+ *				 edit_slot				     *
  *===========================================================================*/
-PUBLIC int init_slot(rp, rs_start, source)
+PUBLIC int edit_slot(rp, rs_start, source)
 struct rproc *rp;
 struct rs_start *rs_start;
 endpoint_t source;
 {
-/* Initialize a slot as requested by the client. */
+/* Edit a given slot to override existing settings. */
   struct rprocpub *rpub;
-  char *label;					/* unique name of command */
-  int len;					/* length of string */
-  int i;
+  char *label;
+  int len;
   int s;
-  int basic_kc[] =  { SYS_BASIC_CALLS, SYS_NULL_C };
-  int basic_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C };
 
   rpub = rp->r_pub;
 
-/* Obtain command name and parameters. This is a space-separated string
-   * that looks like "/sbin/service arg1 arg2 ...". Arguments are optional.
-   */
+  /* Update command and arguments */
   if (rs_start->rss_cmdlen > MAX_COMMAND_LEN-1) return(E2BIG);
   s=sys_datacopy(source, (vir_bytes) rs_start->rss_cmd, 
   	SELF, (vir_bytes) rp->r_cmd, rs_start->rss_cmdlen);
@@ -1227,83 +1223,40 @@ endpoint_t source;
   /* Build cmd dependencies: argv and program name. */
   build_cmd_dep(rp);
 
-  if(rs_start->rss_label.l_len > 0) {
-	/* RS_UP caller has supplied a custom label for this service. */
-	int s = copy_label(source, rs_start->rss_label.l_addr,
-		rs_start->rss_label.l_len, rpub->label, sizeof(rpub->label));
-	if(s != OK)
-		return s;
-        if(rs_verbose)
-	  printf("RS: init_slot: using label (custom) '%s'\n", rpub->label);
-  } else {
-	/* Default label for the service. */
-	label = rpub->proc_name;
-  	len= strlen(label);
-  	memcpy(rpub->label, label, len);
-  	rpub->label[len]= '\0';
-        if(rs_verbose)
-          printf("RS: init_slot: using label (from proc_name) '%s'\n",
-		rpub->label);
+  /* Update label if not already set. */
+  if(!strcmp(rpub->label, "")) {
+      if(rs_start->rss_label.l_len > 0) {
+          /* RS_UP caller has supplied a custom label for this service. */
+          int s = copy_label(source, rs_start->rss_label.l_addr,
+              rs_start->rss_label.l_len, rpub->label, sizeof(rpub->label));
+          if(s != OK)
+              return s;
+          if(rs_verbose)
+              printf("RS: edit_slot: using label (custom) '%s'\n", rpub->label);
+      } else {
+          /* Default label for the service. */
+          label = rpub->proc_name;
+          len= strlen(label);
+          memcpy(rpub->label, label, len);
+          rpub->label[len]= '\0';
+          if(rs_verbose)
+              printf("RS: edit_slot: using label (from proc_name) '%s'\n",
+                  rpub->label);
+      }
   }
 
-  if(rs_start->rss_nr_control > 0) {
-	int i, s;
-	if (rs_start->rss_nr_control > RS_NR_CONTROL)
-	{
-		printf("RS: init_slot: too many control labels\n");
-		return EINVAL;
-	}
-	for (i=0; i<rs_start->rss_nr_control; i++) {
-		s = copy_label(source, rs_start->rss_control[i].l_addr,
-			rs_start->rss_control[i].l_len, rp->r_control[i],
-			sizeof(rp->r_control[i]));
-		if(s != OK)
-			return s;
-	}
-	rp->r_nr_control = rs_start->rss_nr_control;
-
-	if (rs_verbose) {
-		printf("RS: init_slot: control labels:");
-		for (i=0; i<rp->r_nr_control; i++)
-			printf(" %s", rp->r_control[i]);
-		printf("\n");
-	}
-  }
-
-  rp->r_script[0]= '\0';
+  /* Update recovery script. */
   if (rs_start->rss_scriptlen > MAX_SCRIPT_LEN-1) return(E2BIG);
-  if (rs_start->rss_script != NULL)
+  if (rs_start->rss_script != NULL && !(rpub->sys_flags & SF_CORE_SRV))
   {
 	  s=sys_datacopy(source, (vir_bytes) rs_start->rss_script, 
 		SELF, (vir_bytes) rp->r_script, rs_start->rss_scriptlen);
 	  if (s != OK) return(s);
 	  rp->r_script[rs_start->rss_scriptlen] = '\0';
   }
-  rp->r_uid= rs_start->rss_uid;
 
-  s = rss_nice_decode(rs_start->rss_nice, &rp->r_scheduler, 
-	&rp->r_priority, &rp->r_quantum);
-  if (s != OK) return(s);
-
-  if (rs_start->rss_flags & RSS_IPC_VALID)
-  {
-	if (rs_start->rss_ipclen+1 > sizeof(rp->r_ipc_list))
-	{
-		printf("RS: ipc list too long for '%s'\n", rpub->label);
-		return EINVAL;
-	}
-	s=sys_datacopy(source, (vir_bytes) rs_start->rss_ipc, 
-		SELF, (vir_bytes) rp->r_ipc_list, rs_start->rss_ipclen);
-	if (s != OK) return(s);
-	rp->r_ipc_list[rs_start->rss_ipclen]= '\0';
-  }
-  else
-	rp->r_ipc_list[0]= '\0';
-
-  /* Set system flags. */
-  rpub->sys_flags = DSRV_SF;
-  rp->r_exec= NULL;
-  if (rs_start->rss_flags & RSS_COPY) {
+  /* Update system flags and in-memory copy. */
+  if ((rs_start->rss_flags & RSS_COPY) && !(rpub->sys_flags & SF_USE_COPY)) {
 	int exst_cpy;
 	struct rproc *rp2;
 	struct rprocpub *rpub2;
@@ -1340,16 +1293,83 @@ endpoint_t source;
       	rpub->sys_flags |= SF_USE_REPL;
   }
 
-  /* All dynamically created services get the same privilege flags, and
+  /* Update period. */
+  if(rpub->endpoint != RS_PROC_NR) {
+      rp->r_period = rs_start->rss_period;
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
+ *				 init_slot				     *
+ *===========================================================================*/
+PUBLIC int init_slot(rp, rs_start, source)
+struct rproc *rp;
+struct rs_start *rs_start;
+endpoint_t source;
+{
+/* Initialize a slot as requested by the client. */
+  struct rprocpub *rpub;
+  int i;
+  int s;
+  int basic_kc[] =  { SYS_BASIC_CALLS, SYS_NULL_C };
+  int basic_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C };
+
+  rpub = rp->r_pub;
+
+  /* All dynamically created services get the same sys and privilege flags,
    * allowed traps, and signal manager. Other privilege settings can be
    * specified at runtime. The privilege id is dynamically allocated by
    * the kernel.
    */
+  rpub->sys_flags = DSRV_SF;             /* system flags */
   rp->r_priv.s_flags = DSRV_F;           /* privilege flags */
   rp->r_priv.s_trap_mask = DSRV_T;       /* allowed traps */
   rp->r_priv.s_sig_mgr = DSRV_SM;        /* signal manager */
 
-  /* Copy granted resources */
+  /* Initialize control labels. */
+  if(rs_start->rss_nr_control > 0) {
+	int i, s;
+	if (rs_start->rss_nr_control > RS_NR_CONTROL)
+	{
+		printf("RS: init_slot: too many control labels\n");
+		return EINVAL;
+	}
+	for (i=0; i<rs_start->rss_nr_control; i++) {
+		s = copy_label(source, rs_start->rss_control[i].l_addr,
+			rs_start->rss_control[i].l_len, rp->r_control[i],
+			sizeof(rp->r_control[i]));
+		if(s != OK)
+			return s;
+	}
+	rp->r_nr_control = rs_start->rss_nr_control;
+
+	if (rs_verbose) {
+		printf("RS: init_slot: control labels:");
+		for (i=0; i<rp->r_nr_control; i++)
+			printf(" %s", rp->r_control[i]);
+		printf("\n");
+	}
+  }
+
+  /* Initialize IPC list. */
+  if (rs_start->rss_flags & RSS_IPC_VALID)
+  {
+	if (rs_start->rss_ipclen+1 > sizeof(rp->r_ipc_list))
+	{
+		printf("RS: ipc list too long for '%s'\n", rpub->label);
+		return EINVAL;
+	}
+	s=sys_datacopy(source, (vir_bytes) rs_start->rss_ipc, 
+		SELF, (vir_bytes) rp->r_ipc_list, rs_start->rss_ipclen);
+	if (s != OK) return(s);
+	rp->r_ipc_list[rs_start->rss_ipclen]= '\0';
+  }
+  else
+	rp->r_ipc_list[0]= '\0';
+
+  /* Initialize granted resources */
   if (rs_start->rss_nr_irq > NR_IRQ)
   {
 	printf("RS: init_slot: too many IRQs requested\n");
@@ -1410,14 +1430,19 @@ endpoint_t source;
 		(unsigned int) rpub->pci_acl.rsp_class[i].pciclass,
 		(unsigned int) rpub->pci_acl.rsp_class[i].mask);
   }
+  rp->r_uid= rs_start->rss_uid;
 
-  /* Copy kernel call mask. Inherit basic kernel calls. */
+  s = rss_nice_decode(rs_start->rss_nice, &rp->r_scheduler, 
+	&rp->r_priority, &rp->r_quantum);
+  if (s != OK) return(s);
+
+  /* Initialize kernel call mask. Inherit basic kernel calls. */
   memcpy(rp->r_priv.s_k_call_mask, rs_start->rss_system,
   	sizeof(rp->r_priv.s_k_call_mask));
   fill_call_mask(basic_kc, NR_SYS_CALLS,
     	rp->r_priv.s_k_call_mask, KERNEL_CALL, FALSE);
 
-  /* Device driver properties. */
+  /* Initialize device driver properties. */
   rpub->dev_flags = DSRV_DF;
   rpub->dev_nr = rs_start->rss_major;
   rpub->dev_style = rs_start->rss_dev_style;
@@ -1428,19 +1453,28 @@ endpoint_t source;
   rpub->dev_style2 = STYLE_NDEV;
 
   /* Initialize some fields. */
-  rpub->period = rs_start->rss_period;
   rp->r_restarts = 0; 				/* no restarts yet */
   rp->r_set_resources= 1;			/* set resources */
   rp->r_old_rp = NULL;			        /* no old version yet */
   rp->r_new_rp = NULL;			        /* no new version yet */
   rp->r_prev_rp = NULL;			        /* no prev replica yet */
   rp->r_next_rp = NULL;			        /* no next replica yet */
+  rp->r_exec = NULL;                            /* no in-memory copy yet */
+  rp->r_exec_len = 0;
+  rp->r_script[0]= '\0';                        /* no recovery script yet */
+  rpub->label[0]= '\0';                         /* no label yet */
 
-  /* Copy VM call mask. Inherit basic VM calls. */
+  /* Initialize VM call mask. Inherit basic VM calls. */
   memcpy(rpub->vm_call_mask, rs_start->rss_vm,
   	sizeof(rpub->vm_call_mask));
   fill_call_mask(basic_vmc, NR_VM_CALLS,
   	rpub->vm_call_mask, VM_RQ_BASE, FALSE);
+
+  /* Initialize editable slot settings. */
+  s = edit_slot(rp, rs_start, source);
+  if(s != OK) {
+  	return s;
+  }
 
   return OK;
 }

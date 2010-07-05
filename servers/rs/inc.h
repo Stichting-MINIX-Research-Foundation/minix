@@ -35,6 +35,7 @@
 #include <minix/vm.h>
 #include <minix/ds.h>
 #include <minix/minlib.h>
+#include <minix/sched.h>
 
 #include <machine/archtypes.h>
 #include <timers.h>				/* For priv.h */
@@ -46,6 +47,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <assert.h>
 
 #include "proto.h"
 #include "const.h"

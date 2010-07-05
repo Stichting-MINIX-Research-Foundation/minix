@@ -16,6 +16,7 @@ _PROTOTYPE( int do_down, (message *m));
 _PROTOTYPE( int do_refresh, (message *m));
 _PROTOTYPE( int do_restart, (message *m));
 _PROTOTYPE( int do_clone, (message *m));
+_PROTOTYPE( int do_edit, (message *m));
 _PROTOTYPE( int do_shutdown, (message *m));
 _PROTOTYPE( void do_period, (message *m));
 _PROTOTYPE( int do_init_ready, (message *m));
@@ -70,6 +71,8 @@ _PROTOTYPE( void share_exec, (struct rproc *rp_src, struct rproc *rp_dst) );
 _PROTOTYPE( void free_exec, (struct rproc *rp) );
 _PROTOTYPE( int init_slot, (struct rproc *rp, struct rs_start *rs_start,
 	endpoint_t source) );
+_PROTOTYPE( int edit_slot, (struct rproc *rp, struct rs_start *rs_start,
+	endpoint_t source) );
 _PROTOTYPE( int clone_slot, (struct rproc *rp, struct rproc **clone_rpp) );
 _PROTOTYPE( void swap_slot, (struct rproc **src_rpp, struct rproc **dst_rpp) );
 _PROTOTYPE( struct rproc* lookup_slot_by_label, (char *label) );
@@ -93,12 +96,6 @@ _PROTOTYPE( void reply, (endpoint_t who, message *m_ptr));
 _PROTOTYPE( void late_reply, (struct rproc *rp, int code));
 _PROTOTYPE( int rs_isokendpt, (endpoint_t endpoint, int *proc));
 _PROTOTYPE( int sched_init_proc, (struct rproc *rp));
-
-/* memory.c */
-_PROTOTYPE( void* rs_startup_sbrk, (size_t size));
-_PROTOTYPE( void* rs_startup_sbrk_synch, (size_t size));
-_PROTOTYPE( int rs_startup_segcopy, (endpoint_t src_proc, int src_s,
-	int dst_s, vir_bytes dst_vir, phys_bytes bytes));
 
 /* error.c */
 _PROTOTYPE( char * init_strerror, (int errnum) );

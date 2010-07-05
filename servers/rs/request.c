@@ -191,7 +191,6 @@ PUBLIC int do_clone(message *m_ptr)
   struct rprocpub *rpub;
   int s, r;
   char label[RS_MAX_LABEL_LEN];
-  char script[MAX_SCRIPT_LEN];
 
   /* Copy label. */
   s = copy_label(m_ptr->m_source, m_ptr->RS_CMD_ADDR,
@@ -223,6 +222,67 @@ PUBLIC int do_clone(message *m_ptr)
   if ((r = clone_service(rp)) != OK) {
       rpub->sys_flags &= ~SF_USE_REPL;
       return r;
+  }
+
+  return OK;
+}
+
+/*===========================================================================*
+ *				    do_edit				     *
+ *===========================================================================*/
+PUBLIC int do_edit(message *m_ptr)
+{
+  struct rproc *rp;
+  struct rprocpub *rpub;
+  struct rs_start rs_start;
+  int r;
+  char label[RS_MAX_LABEL_LEN];
+
+  /* Copy the request structure. */
+  r = copy_rs_start(m_ptr->m_source, m_ptr->RS_CMD_ADDR, &rs_start);
+  if (r != OK) {
+      return r;
+  }
+
+  /* Copy label. */
+  r = copy_label(m_ptr->m_source, rs_start.rss_label.l_addr,
+      rs_start.rss_label.l_len, label, sizeof(label));
+  if(r != OK) {
+      return r;
+  }
+
+  /* Lookup slot by label. */
+  rp = lookup_slot_by_label(label);
+  if(!rp) {
+      if(rs_verbose)
+          printf("RS: do_edit: service '%s' not found\n", label);
+      return ESRCH;
+  }
+  rpub = rp->r_pub;
+
+  /* Check if the call can be allowed. */
+  if((r = check_call_permission(m_ptr->m_source, RS_EDIT, rp)) != OK)
+      return r;
+
+  if(rs_verbose)
+      printf("RS: %s edits settings\n", srv_to_string(rp));
+
+  /* Edit the slot as requested. */
+  r = edit_slot(rp, &rs_start, m_ptr->m_source);
+  if(r != OK) {
+      printf("RS: do_edit: unable to edit the existing slot: %d\n", r);
+      return r;
+  }
+
+  /* Cleanup old replicas and create a new one, if necessary. */
+  if(rpub->sys_flags & SF_USE_REPL) {
+      if(rp->r_next_rp) {
+          cleanup_service(rp->r_next_rp);
+          rp->r_next_rp = NULL;
+      }
+      if ((r = clone_service(rp)) != OK) {
+          printf("RS: warning: unable to clone %s\n", srv_to_string(rp));
+      }
   }
 
   return OK;
@@ -607,7 +667,7 @@ message *m_ptr;
       if ((rp->r_flags & RS_ACTIVE) && !(rp->r_flags & RS_UPDATING)) {
 
           /* Compute period. */
-          period = rpub->period;
+          period = rp->r_period;
           if(rp->r_flags & RS_INITIALIZING) {
               period = RS_INIT_T;
           }
@@ -656,7 +716,7 @@ message *m_ptr;
 	      /* No answer pending. Check if a period expired since the last
 	       * check and, if so request the system service's status.
 	       */
-	      else if (now - rp->r_check_tm > rpub->period) {
+	      else if (now - rp->r_check_tm > rp->r_period) {
   		  notify(rpub->endpoint);		/* request status */
 		  rp->r_check_tm = now;			/* mark time */
               }

@@ -15,7 +15,6 @@ struct boot_image_priv {
   endpoint_t sched;            /* scheduler */
   int *k_calls;                /* allowed kernel calls */
   int *vm_calls;               /* allowed vm calls */
-  long period;                 /* heartbeat period (or zero) */
 };
 
 /* Definition of an entry of the boot image sys table. */
@@ -48,6 +47,7 @@ struct rproc {
   long r_backoff;		/* number of periods to wait before revive */
   unsigned r_flags; 		/* status and policy flags */
 
+  long r_period;		/* heartbeat period (or zero) */
   clock_t r_check_tm;		/* timestamp of last check */
   clock_t r_alive_tm;		/* timestamp of last heartbeat */
   clock_t r_stop_tm;		/* timestamp of SIGTERM signal */
