@@ -120,7 +120,7 @@ PUBLIC void pt_sanitycheck(pt_t *pt, char *file, int line)
 			int pte;
 			MYASSERT(vm_addrok(pt->pt_pt[i], 1));
 			if(!(pt->pt_dir[i] & I386_VM_PRESENT)) {
-				printf("slot %d: pt->pt_pt[%d] = 0x%lx, but pt_dir entry 0x%lx\n",
+				printf("slot %d: pt->pt_pt[%d] = %p, but pt_dir entry 0x%lx\n",
 					slot, i, pt->pt_pt[i], pt->pt_dir[i]);
 			}
 			MYASSERT(pt->pt_dir[i] & I386_VM_PRESENT);
@@ -534,7 +534,7 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 				 * and pt_ptalloc leaves the directory
 				 * and other data in a consistent state.
 				 */
-				printf("pt_writemap: pt_ptalloc failed\n", pdecheck);
+				printf("pt_writemap: pt_ptalloc failed\n");
 				return r;
 			}
 		}

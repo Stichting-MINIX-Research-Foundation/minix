@@ -42,7 +42,7 @@
 }
 
 #else
-#define SANITYCHECK 
+#define SANITYCHECK  (void)
 #define SLABSANITYCHECK(l)
 #define SLABSANE(ptr)
 #endif

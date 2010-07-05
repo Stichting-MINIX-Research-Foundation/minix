@@ -99,7 +99,7 @@ PUBLIC void map_printregion(struct vmproc *vmp, struct vir_region *vr)
 	physr_iter iter;
 	struct phys_region *ph;
 	printf("map_printmap: map_name: %s\n", map_name(vr));
-	printf("\t%s (len 0x%lx, %dkB), %s\n",
+	printf("\t%s (len 0x%lx, %lukB), %s\n",
 		arch_map2str(vmp, vr->vaddr), vr->length,
 			vr->length/1024, map_name(vr));
 	printf("\t\tphysblocks:\n");
@@ -209,7 +209,7 @@ PUBLIC void map_sanitycheck(char *file, int line)
 		MYASSERT(!(vr->vaddr % VM_PAGE_SIZE));,	
 		if(pr->ph->refcount != pr->ph->seencount) {
 			map_printmap(vmp);
-			printf("ph in vr 0x%lx: 0x%lx-0x%lx  refcount %d "
+			printf("ph in vr %p: 0x%lx-0x%lx  refcount %d "
 				"but seencount %lu\n", 
 				vr, pr->offset,
 				pr->offset + pr->ph->length,
@@ -290,7 +290,7 @@ void blockstats(void)
 	}
 
 	if(blocks > 0)
-		printf("%d blocks, %dkB; ", blocks, mem/1024);
+		printf("%d blocks, %lukB; ", blocks, mem/1024);
 
 	printmemstats();
 }
@@ -1699,7 +1699,7 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 	assert(!(size % VM_PAGE_SIZE));
 	startv = region_find_slot(dvmp, dst_addr, VM_DATATOP, size, &prev);
 	if (startv == (vir_bytes) -1) {
-		printf("map_remap: search 0x%x...\n", dst_addr);
+		printf("map_remap: search 0x%lx...\n", dst_addr);
 		map_printmap(dvmp);
 		return ENOMEM;
 	}
@@ -1895,7 +1895,7 @@ PUBLIC void printregionstats(struct vmproc *vmp)
 		}
 	}
 
-	printf("%6dkB  %6dkB\n", used/1024, weighted/1024);
+	printf("%6lukB  %6lukB\n", used/1024, weighted/1024);
 
 	return;
 }
@@ -2264,7 +2264,7 @@ get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, vir_bytes length,
 	assert(ph->offset == regionoffset);
 
 	if(ph->ph->length != length) {
-		printf("VM: get_clean_phys_region: len mismatch (%d, %d)\n",
+		printf("VM: get_clean_phys_region: len mismatch (%lu, %lu)\n",
 			ph->ph->length, length);
 		return NULL;
 	}
@@ -2301,7 +2301,7 @@ PRIVATE int getblock(struct vmproc *vmp, u64_t id,
 
 	/* Check the size as a sanity check. */
 	if(yb->len != len) {
-		printf("VM: id 0x%lx%08lx mismatched size (%d, %d) for %d\n",
+		printf("VM: id 0x%lx%08lx mismatched size (%lu, %lu) for %d\n",
 			ex64hi(id), ex64lo(id), yb->len, len, vmp->vm_endpoint);
 		return ESRCH;
 	}

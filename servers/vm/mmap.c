@@ -384,7 +384,7 @@ PUBLIC int do_munmap(message *m)
 	}
 
         if(!(vr = map_lookup(vmp, addr))) {
-                printf("VM: unmap: virtual address 0x%lx not found in %d\n",
+                printf("VM: unmap: virtual address %p not found in %d\n",
                         m->VMUM_ADDR, vmp->vm_endpoint);
                 return EFAULT;
         }

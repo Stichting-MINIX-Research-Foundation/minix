@@ -61,7 +61,7 @@ PUBLIC int do_exec_newmem(message *msg)
 	ptr= msg->VMEN_ARGSPTR;
 
 	if(msg->VMEN_ARGSSIZE != sizeof(args)) {
-		printf("VM: exec_newmem: args size %d != %ld\n",
+		printf("VM: exec_newmem: args size %d != %u\n",
 			msg->VMEN_ARGSSIZE, sizeof(args));
 		return EINVAL;
 	}

@@ -391,7 +391,7 @@ PRIVATE int objstats(void *mem, int bytes,
 #if SANITYCHECKS
 #define OBJSTATSCHECK(cond) \
 	if(!(cond)) { \
-		printf("VM: objstats: %s failed for ptr 0x%p, %d bytes\n", \
+		printf("VM: objstats: %s failed for ptr %p, %d bytes\n", \
 			#cond, mem, bytes); \
 		return EINVAL; \
 	}

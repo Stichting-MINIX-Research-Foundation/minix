@@ -640,7 +640,7 @@ PUBLIC int do_adddma(message *msg)
 		printf("vm:do_adddma: dma table full\n");
 		for (i= 0; i<NR_DMA; i++)
 		{
-			printf("%d: flags 0x%x proc %d base 0x%x size 0x%x\n",
+			printf("%d: flags 0x%x proc %d base 0x%lx size 0x%lx\n",
 				i, dmatab[i].dt_flags,
 				dmatab[i].dt_proc,
 				dmatab[i].dt_base,
@@ -745,7 +745,7 @@ PUBLIC int do_getdma(message *msg)
 		if (!(dmatab[i].dt_flags & DTF_RELEASE_DMA))
 			continue;
 
-		printf("do_getdma: setting reply to 0x%x@0x%x proc %d\n",
+		printf("do_getdma: setting reply to 0x%lx@0x%lx proc %d\n",
 			dmatab[i].dt_size, dmatab[i].dt_base,
 			dmatab[i].dt_proc);
 		msg->VMGD_PROCP= dmatab[i].dt_proc;
@@ -800,7 +800,7 @@ void printmemstats(void)
 {
 	int nodes, pages, largest;
         memstats(&nodes, &pages, &largest);
-        printf("%d blocks, %d pages (%ukB) free, largest %d pages (%ukB)\n",
+        printf("%d blocks, %d pages (%lukB) free, largest %d pages (%lukB)\n",
                 nodes, pages, (u32_t) pages * (VM_PAGE_SIZE/1024),
 		largest, (u32_t) largest * (VM_PAGE_SIZE/1024));
 }
@@ -890,7 +890,7 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 		} while(mem == NO_MEM && freed > 0);
 
 		if(mem == NO_MEM) {
-			printf("alloc_mem_in_list: giving up, %dkB missing\n",
+			printf("alloc_mem_in_list: giving up, %lukB missing\n",
 				rempages * VM_PAGE_SIZE/1024);
 			printmemstats();
 			free_mem_list(head, 1);
