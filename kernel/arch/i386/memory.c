@@ -570,8 +570,6 @@ PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
 	 */								
 	assert(!RTS_ISSET(caller, RTS_VMREQUEST));
 	assert(!RTS_ISSET(target, RTS_VMREQUEST));
-	assert(!(caller->p_misc_flags & MF_KCALL_RESUME));
-	assert(!(target->p_misc_flags & MF_KCALL_RESUME));
 
 	RTS_SET(caller, RTS_VMREQUEST);
 
