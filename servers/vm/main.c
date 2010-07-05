@@ -353,11 +353,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_GETREF, do_get_refcount);
 	CALLMAP(VM_INFO, do_info);
 	CALLMAP(VM_QUERY_EXIT, do_query_exit);
-#if 0
 	CALLMAP(VM_FORGETBLOCKS, do_forgetblocks);
 	CALLMAP(VM_FORGETBLOCK, do_forgetblock);
 	CALLMAP(VM_YIELDBLOCKGETBLOCK, do_yieldblockgetblock);
-#endif
 
 	/* Sanity checks */
 	if(find_kernel_top() >= VM_PROCSTART)
