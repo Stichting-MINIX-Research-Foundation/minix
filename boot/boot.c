@@ -194,7 +194,7 @@ void readblock(off_t blk, char *buf, int block_size)
 }
 
 #define istty		(1)
-#define alarm(n)	(0)
+#define alarm(n)	do { } while(0)
 
 #endif /* BIOS */
 
@@ -572,7 +572,7 @@ static void initialize(void)
 	 * and also keep the BIOS data area safe (1.5K), plus a bit extra for
 	 * where we may have to put a.out headers for older kernels.
 	 */
-	if (mon_return = (mem[1].size > 512*1024L)) mem[0].size = newaddr;
+	if ((mon_return = (mem[1].size > 512*1024L))) mem[0].size = newaddr;
 	mem[0].base += 2048;
 	mem[0].size -= 2048;
 
@@ -1251,10 +1251,10 @@ static void apm_perror(char *label, u16_t ax)
 	printf("%s: %s\n", label, str);
 }
 
-#define apm_printf printf
+#define apm_printf(args) printf args
 #else
 #define apm_perror(label, ax) ((void)0)
-#define apm_printf
+#define apm_printf(args)
 #endif
 
 static void off(void)
@@ -1276,7 +1276,7 @@ static void off(void)
 	}
 	if (be.bx != (('P' << 8) | 'M'))
 	{
-		apm_printf("APM signature not found (got 0x%04x)\n", be.bx);
+		apm_printf(("APM signature not found (got 0x%04x)\n", be.bx));
 		return;
 	}
 
@@ -1286,13 +1286,13 @@ static void off(void)
 	al= be.ax & 0xff;
 	if (al > 9)
 		al= (al >> 4)*10 + (al & 0xf);
-	apm_printf("APM version %u.%u%s%s%s%s%s\n",
+	apm_printf(("APM version %u.%u%s%s%s%s%s\n",
 		ah, al,
 		(be.cx & 0x1) ? ", 16-bit PM" : "",
 		(be.cx & 0x2) ? ", 32-bit PM" : "",
 		(be.cx & 0x4) ? ", CPU-Idle" : "",
 		(be.cx & 0x8) ? ", APM-disabled" : "",
-		(be.cx & 0x10) ? ", APM-disengaged" : "");
+		(be.cx & 0x10) ? ", APM-disengaged" : ""));
 
 	/* Connect */
 	be.ax= 0x5301;	/* APM, Real mode interface connect */
@@ -1324,7 +1324,7 @@ static void off(void)
 	al= be.ax & 0xff;
 	if (al > 9)
 		al= (al >> 4)*10 + (al & 0xf);
-	apm_printf("Got APM connection version %u.%u\n", ah, al);
+	apm_printf(("Got APM connection version %u.%u\n", ah, al));
 
 	/* Enable */
 	be.ax= 0x5308;	/* APM, Enable/disable power management */
@@ -1354,8 +1354,8 @@ static void off(void)
 		goto disco;
 	}
 
-	apm_printf("Power off sequence successfully completed.\n\n");
-	apm_printf("Ha, ha, just kidding!\n");
+	apm_printf(("Power off sequence successfully completed.\n\n"));
+	apm_printf(("Ha, ha, just kidding!\n"));
 
 disco:
 	/* Disconnect */
@@ -1612,6 +1612,8 @@ void menu(void)
 			case USERFUN:
 			case SELECT:
 				if (c == e->arg[0]) choice= e->value;
+			case NOFUN:
+				break;
 			}
 		}
 	} while (choice == nil);
@@ -1810,7 +1812,7 @@ static void execute(void)
 						putch('\n');
 						break;
 					case 'v':
-						printf(version);
+						printf("%s", version);
 						break;
 					case 'c':
 						clear_screen();
@@ -1883,6 +1885,13 @@ static void execute(void)
 		case R_OFF:	off();		ok= 1;	break;
 		case R_CTTY:	ctty(nil);	ok= 1;	break;
 		case R_RESET:	reset();	ok= 1;  break;
+
+		case R_NULL:
+		case R_ECHO:
+		case R_TRAP:
+		case R_UNSET:
+			/* Handled after the switch. */
+			break;
 		}
 
 		/* Command to check bootparams: */
