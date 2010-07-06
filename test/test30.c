@@ -34,7 +34,6 @@ char MaxPath[PATH_MAX];		/* Same for path */
 char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
-_PROTOTYPE(void main, (int argc, char *argv[]));
 _PROTOTYPE(void test30a, (void));
 _PROTOTYPE(void test30b, (void));
 _PROTOTYPE(void test30c, (void));
@@ -42,9 +41,7 @@ _PROTOTYPE(void makelongnames, (void));
 _PROTOTYPE(void e, (int number));
 _PROTOTYPE(void quit, (void));
 
-void main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
@@ -118,7 +115,7 @@ void test30a()
   if (st.st_gid != getegid()) e(10);
 #endif /* defined(NGROUPS_MAX) && NGROUPS_MAX == 0 */
   if (!S_ISREG(st.st_mode)) e(11);
-  if (st.st_mode & 0777 != 0644) e(12);
+  if ((st.st_mode & 0777) != 0644) e(12);
   if (st.st_nlink != 1) e(13);
   if (st.st_ctime != time1) e(14);	/* All time fields should be updated */
   if (st.st_atime != time1) e(15);

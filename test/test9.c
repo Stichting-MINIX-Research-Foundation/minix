@@ -64,7 +64,7 @@ to the value they had at the time of the Setjmp\n");
 
 void test9a()
 {
-  register p;
+  register int p;
 
   subtest = 1;
   p = 200;
@@ -74,7 +74,7 @@ void test9a()
 
 void test9b()
 {
-  register p, q;
+  register int p, q;
 
   subtest = 2;
   p = 200;
@@ -86,7 +86,7 @@ void test9b()
 
 void test9c()
 {
-  register p, q, r;
+  register int p, q, r;
 
   subtest = 3;
   p = 200;
@@ -151,7 +151,7 @@ char *
 
 void garbage()
 {
-  register i, j, k;
+  register int i, j, k;
   register char *p, *q, *r;
   char *a;
 
@@ -226,7 +226,7 @@ void garbage()
 void level1()
 {
   register char *p;
-  register i;
+  register int i;
 
   i = 1000;
   p = &buf[10];
@@ -238,7 +238,7 @@ void level1()
 void level2()
 {
   register char *p;
-  register i;
+  register int i;
 
   i = 0200;
   p = &buf[2];
@@ -249,7 +249,7 @@ void level2()
 void dolev()
 {
   register char *p;
-  register i;
+  register int i;
 
   i = 010;
   p = &buf[3];

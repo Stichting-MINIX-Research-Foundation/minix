@@ -26,7 +26,7 @@ FORWARD _PROTOTYPE( void announce, (void));
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(int argc, char *argv[])
 {
 /* Start the ball rolling. */
   struct boot_image *ip;	/* boot image pointer */
@@ -260,6 +260,7 @@ PUBLIC void main(void)
 
   switch_to_user();
   NOT_REACHABLE;
+  return 1;
 }
 
 /*===========================================================================*

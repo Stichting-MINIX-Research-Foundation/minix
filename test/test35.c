@@ -39,7 +39,6 @@ char MaxPath[PATH_MAX];		/* Same for path */
 char NameTooLong[NAME_MAX + 2];	/* Name of maximum +1 length */
 char PathTooLong[PATH_MAX + 1];	/* Same for path, both too long */
 
-_PROTOTYPE(void main, (int argc, char *argv[]));
 _PROTOTYPE(void test35a, (void));
 _PROTOTYPE(void test35b, (void));
 _PROTOTYPE(void test35c, (void));
@@ -48,9 +47,7 @@ _PROTOTYPE(void e, (int number));
 _PROTOTYPE(void quit, (void));
 _PROTOTYPE(void getids, (uid_t * uid, gid_t * gid));
 
-void main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
@@ -79,6 +76,7 @@ char *argv[];
 	if (m & 0004) test35c();
   }
   quit();
+  return 1;
 }
 
 void test35a()

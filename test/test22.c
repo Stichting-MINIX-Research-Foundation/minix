@@ -19,16 +19,13 @@
 int errct = 0;			/* Total error counter. */
 int subtest = 1;
 
-_PROTOTYPE(void main, (int argc, char *argv[]));
 _PROTOTYPE(void test22a, (void));
 _PROTOTYPE(int mode, (char *filename));
 _PROTOTYPE(int umode, (char *filename));
 _PROTOTYPE(void e, (int number));
 _PROTOTYPE(void quit, (void));
 
-void main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 

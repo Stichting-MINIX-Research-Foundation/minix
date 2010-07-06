@@ -35,7 +35,6 @@ char MaxPath[PATH_MAX];		/* Same for path */
 char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
-_PROTOTYPE(void main, (int argc, char *argv[]));
 _PROTOTYPE(void test20a, (void));
 _PROTOTYPE(void test20b, (void));
 _PROTOTYPE(void test20c, (void));
@@ -47,9 +46,7 @@ _PROTOTYPE(void quit, (void));
 
 char executable[1024];
 
-void main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 

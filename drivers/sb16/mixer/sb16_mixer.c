@@ -24,7 +24,6 @@
 #include "sb16.h"
 
 
-_PROTOTYPE(void main, (void));
 FORWARD _PROTOTYPE( int mixer_init, (void)); 
 FORWARD _PROTOTYPE( int mixer_open, (const message *m_ptr));
 FORWARD _PROTOTYPE( int mixer_close, (const message *m_ptr));
@@ -47,7 +46,8 @@ FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 /*===========================================================================*
  *				main
  *===========================================================================*/
-PUBLIC void main() {
+PUBLIC int main(int argc, char *argv[])
+{
 	message mess;
 	int ipc_status;
 	int err, caller, proc_nr;

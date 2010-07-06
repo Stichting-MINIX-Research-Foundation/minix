@@ -999,13 +999,12 @@ char *string;
 
 void nlcr()
 {
-  printf("\n");
+  fputs("\n",stdout);
 }
 
-void str(s)
-char *s;
+void str(char *s)
 {
-  printf(s);
+  fputs(s,stdout);
 }
 
 /*****************************************************************************

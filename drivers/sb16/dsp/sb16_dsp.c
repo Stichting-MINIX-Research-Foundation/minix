@@ -28,7 +28,6 @@
 #include "sb16.h"
 
 
-_PROTOTYPE(void main, (void));
 FORWARD _PROTOTYPE( int dsp_open, (void) );
 FORWARD _PROTOTYPE( int dsp_close, (void) );
 FORWARD _PROTOTYPE( int dsp_ioctl, (const message *m_ptr) );
@@ -88,7 +87,7 @@ PUBLIC int is_status_msg_expected = FALSE;
 /*===========================================================================*
  *				main
  *===========================================================================*/
-PUBLIC void main() 
+PUBLIC int main(int argc, char *argv[]) 
 {	
 	int r;
 	endpoint_t caller;

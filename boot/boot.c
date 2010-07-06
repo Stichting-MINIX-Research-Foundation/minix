@@ -1962,7 +1962,7 @@ void boot(void)
 
 #if UNIX
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 /* Do not load or start anything, just edit parameters. */
 {
 	int i;
@@ -2034,6 +2034,7 @@ void main(int argc, char **argv)
 		monitor();
 	}
 	exit(0);
+	return 0;
 }
 
 reset() { }

@@ -124,7 +124,7 @@ PUBLIC int is_status_msg_expected = FALSE;
 /*===========================================================================*
  *				printer_task				     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(int argc, char *argv[])
 {
 /* Main routine of the printer task. */
   message pr_mess;		/* buffer for all incoming messages */

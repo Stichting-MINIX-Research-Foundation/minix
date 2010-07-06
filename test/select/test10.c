@@ -22,7 +22,8 @@
 #include <limits.h>
 #include <string.h>
 
-void main(void) {
+int main(int argc, char *argv[])
+{
 	fd_set fds_read, fds_write;
 	int retval;
 	char data[1024];
@@ -66,4 +67,5 @@ void main(void) {
 		}
 		printf("Data: %s\n", data);
 	}
+	return 1;
 }

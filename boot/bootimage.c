@@ -534,7 +534,7 @@ void exec_image(char *image)
 		/* Save a copy of the header for the kernel, with a_syms
 		 * misused as the address where the process is loaded at.
 		 */
-		DEBUGEXTRA(("raw_copy(0x%x, 0x%lx, 0x%x)... ", 
+		DEBUGEXTRA(("raw_copy(0x%lx, 0x%lx, 0x%x)... ", 
 			aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR));
 		hdr.process.a_syms= addr;
 		raw_copy(aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR);
@@ -653,7 +653,7 @@ void exec_image(char *image)
 	}
 
 	if (verboseboot < VERBOSEBOOT_BASIC)
-		printf("(%dk)\n", totalmem/1024);
+		printf("(%luk)\n", totalmem/1024);
 
 	if ((n_procs= i) == 0) {
 		printf("There are no programs in %s\n", image);
@@ -842,7 +842,7 @@ void bootminix(void)
 		printf("Not enough memory to load %s\n", image);
 		break;
 	case EIO:
-		printf("Unsuspected EOF on %s\n", image);
+		printf("Unexpected EOF on %s\n", image);
 	case 0:
 		/* No error or error already reported. */;
 	}

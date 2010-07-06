@@ -29,7 +29,8 @@ void dump_fdset(fd_set *set) {
 	printf("\n");
 }
 
-void main(void) {
+int main(int argc, char *argv[])
+{
 	int fd1, fd2, fd3, fd4, fd5, fd6;	/* file descriptors of files */
 	fd_set fds_read, fds_write;
 	int retval;
@@ -109,4 +110,5 @@ void main(void) {
 	unlink("dummy4.txt");
 	unlink("dummy5.txt");
 	unlink("dummy6.txt");
+	return 0;
 }

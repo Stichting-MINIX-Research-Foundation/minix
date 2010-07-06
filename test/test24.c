@@ -13,7 +13,6 @@
 #include <time.h>
 #include <stdio.h>
 
-_PROTOTYPE(void main, (int argc, char *argv[]));
 _PROTOTYPE(void chk_dir, (DIR * dirpntr));
 _PROTOTYPE(void test24a, (void));
 _PROTOTYPE(void test24b, (void));
@@ -39,9 +38,7 @@ char MaxPath[PATH_MAX];		/* Same for path */
 char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
-void main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 

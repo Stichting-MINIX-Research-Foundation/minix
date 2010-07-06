@@ -12,7 +12,7 @@
 #define TIMED 0
 
 static volatile int errct;
-static volatile expect_SIGFPE;
+static volatile int expect_SIGFPE;
 static u64_t i, j, k;
 static jmp_buf jmpbuf_SIGFPE, jmpbuf_main;
 
