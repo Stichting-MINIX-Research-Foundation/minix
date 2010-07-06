@@ -1196,7 +1196,7 @@ void usage(void)
     exit(1);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int i;
     char *flags;
@@ -1377,4 +1377,5 @@ void main(int argc, char **argv)
     }
 #endif
     exit(ex_code);
+    return ex_code;
 }

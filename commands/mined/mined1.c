@@ -1421,7 +1421,7 @@ int length;
   return new_line;
 }
 
-void main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {

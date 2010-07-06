@@ -432,7 +432,7 @@ Usage:\n\
 	exit(1);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i= 1;
 	int mode= -1;		/* Mode of target. */

@@ -73,7 +73,7 @@ struct b_pnt {
   char cmd[1];
 } *b_head, *curpnt;
 
-_PROTOTYPE( void main , (int argc, char *argv[]));
+_PROTOTYPE( int main , (int argc, char *argv[]));
 
 FORWARD _PROTOTYPE( void cleanup , (void));
 FORWARD _PROTOTYPE( void freepnt , (struct b_pnt *pnt ));
@@ -863,7 +863,7 @@ char *s;
   longjmp(mainlp, 0);
 }
 
-PUBLIC void main(argc, argv)
+PUBLIC int main(argc, argv)
 int argc;
 char *argv[];
 {

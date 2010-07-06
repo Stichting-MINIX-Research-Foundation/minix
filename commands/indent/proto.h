@@ -7,7 +7,7 @@ _PROTOTYPE(   int eqin, (char *s1,char *s2)    );
 _PROTOTYPE(   void set_defaults, (void )    );
 _PROTOTYPE(   void set_option, (char *arg)    );
 _PROTOTYPE(   void pr_comment, (void )    );
-_PROTOTYPE(   void main, (int argc,char * *argv)    );
+_PROTOTYPE(   int main, (int argc,char * *argv)    );
 _PROTOTYPE(   void bakcopy, (void )    );
 _PROTOTYPE(   void dump_line, (void )    );
 _PROTOTYPE(   int code_target, (void )    );

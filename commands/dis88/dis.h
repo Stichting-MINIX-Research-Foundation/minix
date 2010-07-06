@@ -157,7 +157,7 @@ _PROTOTYPE(void mahand, (int j ));
 _PROTOTYPE(void mjhand, (int j ));
 
 /* dismain.c */
-_PROTOTYPE(void main, (int argc, char **argv ));
+_PROTOTYPE(int main, (int argc, char **argv ));
 
 /* distabs.c */
 _PROTOTYPE(char *getnam, (int k ));

@@ -55,7 +55,7 @@ _PROTOTYPE(void Sigint , (int));
 /****************************************************************/
 
 
-void main( argc, argv )
+int main( argc, argv )
   int   argc;
   char *argv[];
 

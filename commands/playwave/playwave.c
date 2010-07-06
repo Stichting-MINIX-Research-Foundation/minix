@@ -17,7 +17,7 @@
 #include <sys/ioctl.h>
 #include <minix/sound.h>
 
-_PROTOTYPE( void main, (int argc, char **argv));
+_PROTOTYPE( int main, (int argc, char **argv));
 _PROTOTYPE( void usage, (void));
 
 /******* Wave format definitions *********/
@@ -67,7 +67,7 @@ void usage()
 }
 
 
-void main ( int argc, char *argv[] )
+int main ( int argc, char *argv[] )
 {
   int i, r, audio, file;
   char *buffer, *file_name;

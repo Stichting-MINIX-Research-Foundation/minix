@@ -63,7 +63,7 @@ long video_base(void)
 	return bios_crtbase == CRTBASE_MONO ? MONO_BASE : COLOR_BASE;
 }
 
-void main(void)
+int main(void)
 {
 	static unsigned char screen[MAX_COLS * MAX_ROWS * 2];
 	unsigned char *ps;

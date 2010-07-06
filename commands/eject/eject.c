@@ -16,7 +16,7 @@ void fatal(char *label)
 	exit(1);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	char *device;
 	int fd;

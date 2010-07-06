@@ -11,7 +11,7 @@
 
 #define MAXFLD	200		/* maximum # of fields to accept */
 
-_PROTOTYPE(void main, (int argc, char **argv));
+_PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void error, (char *s, char *t));
 _PROTOTYPE(void usage, (void));
 _PROTOTYPE(void match, (void));
@@ -58,7 +58,7 @@ char *es;			/* s for '-e s' */
 char sep;			/* c for -tc: filed separator */
 char *cmd;			/* name of this program */
 
-void main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

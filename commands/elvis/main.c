@@ -38,7 +38,7 @@ main (argc, argv)
 #  include "vmswild.c"
 main (argc, argv)
 # else
-void main(argc, argv)
+int main(argc, argv)
 # endif
 #endif
 	int	argc;

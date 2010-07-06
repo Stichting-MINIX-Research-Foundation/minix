@@ -442,6 +442,7 @@ static void pair(T, U, sT, sU)
 }
 
 
+void getsize(int signo);
 
 /* Read everything from termcap */
 static void starttcap(term)

@@ -280,7 +280,7 @@ _PROTOTYPE(char *basename, (char *path ));
 _PROTOTYPE(void load_file, (char *file ));
 _PROTOTYPE(int get_line, (int fd, char *buffer ));
 _PROTOTYPE(LINE *install_line, (char *buffer, int length ));
-_PROTOTYPE(void main, (int argc, char *argv []));
+_PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void RD, (void));
 _PROTOTYPE(void I, (void));
 _PROTOTYPE(void XT, (void));

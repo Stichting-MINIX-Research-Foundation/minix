@@ -59,7 +59,7 @@ static char sccsid[] = "@(#)rsh.c	5.24 (Berkeley) 7/1/91";
 
 #include <net/netlib.h>
 #include <net/gen/netdb.h>
-void main _ARGS(( int argc, char *argv[] ));
+int main _ARGS(( int argc, char *argv[] ));
 void usage _ARGS(( void ));
 char *copyargs _ARGS(( char **argv ));
 void sendsig _ARGS(( int signo ));
@@ -103,7 +103,7 @@ extern char *krb_realmofhost();
 extern int errno;
 int rfd2;
 
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;

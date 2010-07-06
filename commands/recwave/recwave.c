@@ -19,7 +19,7 @@
 #include <sys/ioctl.h>
 #include <minix/sound.h>
 
-_PROTOTYPE (void main, (int argc, char **argv));
+_PROTOTYPE (int main, (int argc, char **argv));
 _PROTOTYPE (void usage, (void));
 _PROTOTYPE ( void write_wave_header, (void));
 _PROTOTYPE ( void terminate, (int s));
@@ -124,7 +124,7 @@ void write_wave_header()
 }
 
 
-void main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

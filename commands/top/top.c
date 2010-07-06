@@ -200,7 +200,7 @@ void print_proc(struct tp *tp, struct mproc *mpr, u32_t tcyc)
 		pr->p_memmap[D].mem_len) << CLICK_SHIFT)/1024);
 	printf("%6s", pr->p_rts_flags ? "" : "RUN");
 	ticks = pr->p_user_time;
-	printf(" %3d:%02d ", (ticks/system_hz/60), (ticks/system_hz)%60);
+	printf(" %3ld:%02ld ", (ticks/system_hz/60), (ticks/system_hz)%60);
 
 	pcyc = div64u(tp->ticks, SCALE);
 

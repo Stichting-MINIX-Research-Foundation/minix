@@ -38,11 +38,10 @@ vfy_data(flag)		/* Flag = 0 for quiet check */
 int flag;
 {
 	register char *res, *mess;
-	char *sbe_mvfy(), *sbe_sbvfy(), *sbe_svfy();
 
-	if(res = sbe_mvfy(0)) mess = "Mem mgt";
-	else if(res = sbe_sbvfy(cur_buf,0)) mess = "SBBUF";
-	else if(res = sbe_svfy(0)) mess = "SD list";
+	if(res = sbe_mvfy()) mess = "Mem mgt";
+	else if(res = sbe_sbvfy(cur_buf)) mess = "SBBUF";
+	else if(res = sbe_svfy()) mess = "SD list";
 	else return(0);		/* Success */
 
 	if(flag)

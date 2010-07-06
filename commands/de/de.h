@@ -276,7 +276,7 @@ typedef  struct  de_state		/*  State of disk ed.	*/
 
 /*  de.c  */
 
-_PROTOTYPE(void main , (int argc , char *argv []));
+_PROTOTYPE(int main , (int argc , char *argv []));
 _PROTOTYPE(int Process , (de_state *s , int c ));
 
 #if __STDC__

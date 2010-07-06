@@ -42,7 +42,7 @@ char           *out_name = "Standard Output";	/* will always point to
 						   name of output file */
 char            bakfile[60];
 
-void main(argc, argv)
+int main(argc, argv)
    int             argc;
    char          **argv;
 {

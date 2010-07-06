@@ -36,10 +36,10 @@ char *prog_name;
 
 char DHCPCACHE[]=_PATH_DHCPCACHE;
 
-void main _ARGS(( int argc, char *argv[] ));
+int main _ARGS(( int argc, char *argv[] ));
 void usage _ARGS(( void ));
 
-void main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {
