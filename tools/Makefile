@@ -42,10 +42,7 @@ usage:
 
 all: services image
 
-image:  includes
-	$(MAKE) -C ../kernel
-	$(MAKE) -C ../servers all install
-	$(MAKE) -C ../drivers all install
+image:  includes services
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
@@ -57,8 +54,8 @@ depend: includes
 
 services: includes 
 	$(MAKE) -C ../kernel 
-	$(MAKE) -C ../servers install
-	$(MAKE) -C ../drivers install
+	$(MAKE) -C ../servers all install
+	$(MAKE) -C ../drivers all install
 
 libraries: includes
 	cd ../lib && sh ack_build.sh clean obj depend all install
