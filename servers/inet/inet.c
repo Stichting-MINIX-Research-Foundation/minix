@@ -206,10 +206,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /* Initialize the inet server. */
 	int r;
 	int timerand, fd;
-	endpoint_t tasknr;
 	u8_t randbits[32];
 	struct timeval tv;
-	char my_name[32];
 
 #if DEBUG
 	printf("Starting inet...\n");
@@ -258,10 +256,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	init_rand256(randbits);
 
 	/* Our new identity as a server. */
-	r = sys_whoami(&tasknr, my_name, sizeof(my_name));
-	if (r != OK)
-		ip_panic(("inet: sys_whoami failed for 'inet': %d", r));
-	this_proc= tasknr;
+	this_proc= info->endpoint;
 
 #ifdef BUF_CONSISTENCY_CHECK
 	inet_buf_debug= (getenv("inetbufdebug") && 

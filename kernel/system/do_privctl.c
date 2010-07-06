@@ -15,6 +15,10 @@
 
 #if USE_PRIVCTL
 
+#define PRIV_DEBUG 0
+
+FORWARD _PROTOTYPE(int update_priv, (struct proc *rp, struct priv *priv));
+
 /*===========================================================================*
  *				do_privctl				     *
  *===========================================================================*/
@@ -107,13 +111,15 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_flags= DEF_SYS_F;           /* privilege flags */
 	priv(rp)->s_trap_mask= DEF_SYS_T;       /* allowed traps */
 	ipc_to_m = DEF_SYS_M;                   /* allowed targets */
+	fill_sendto_mask(rp, ipc_to_m);
 	kcalls = DEF_SYS_KC;                    /* allowed kernel calls */
 	for(i = 0; i < SYS_CALL_MASK_SIZE; i++) {
 		priv(rp)->s_k_call_mask[i] = (kcalls == NO_C ? 0 : (~0));
 	}
 
-	/* Set the default signal manager. */
+	/* Set the default signal managers. */
 	priv(rp)->s_sig_mgr = DEF_SYS_SM;
+	priv(rp)->s_bak_sig_mgr = NONE;
 
 	/* Set defaults for resources: no I/O resources, no memory resources,
 	 * no IRQs, no grant table
@@ -127,76 +133,9 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	/* Override defaults if the caller has supplied a privilege structure. */
 	if (m_ptr->CTL_ARG_PTR)
 	{
-		/* Copy s_flags and signal manager. */
-		priv(rp)->s_flags = priv.s_flags;
-		priv(rp)->s_sig_mgr = priv.s_sig_mgr;
-
-		/* Copy IRQs */
-		if(priv.s_flags & CHECK_IRQ) {
-			if (priv.s_nr_irq < 0 || priv.s_nr_irq > NR_IRQ)
-				return EINVAL;
-			priv(rp)->s_nr_irq= priv.s_nr_irq;
-			for (i= 0; i<priv.s_nr_irq; i++)
-			{
-				priv(rp)->s_irq_tab[i]= priv.s_irq_tab[i];
-#if 0
-				printf("do_privctl: adding IRQ %d for %d\n",
-					priv(rp)->s_irq_tab[i], rp->p_endpoint);
-#endif
-			}
-		}
-
-		/* Copy I/O ranges */
-		if(priv.s_flags & CHECK_IO_PORT) {
-			if (priv.s_nr_io_range < 0 || priv.s_nr_io_range > NR_IO_RANGE)
-				return EINVAL;
-			priv(rp)->s_nr_io_range= priv.s_nr_io_range;
-			for (i= 0; i<priv.s_nr_io_range; i++)
-			{
-				priv(rp)->s_io_tab[i]= priv.s_io_tab[i];
-#if 0
-				printf("do_privctl: adding I/O range [%x..%x] for %d\n",
-					priv(rp)->s_io_tab[i].ior_base,
-					priv(rp)->s_io_tab[i].ior_limit,
-					rp->p_endpoint);
-#endif
-			}
-		}
-
-		/* Copy memory ranges */
-		if(priv.s_flags & CHECK_MEM) {
-			if (priv.s_nr_mem_range < 0 || priv.s_nr_mem_range > NR_MEM_RANGE)
-				return EINVAL;
-			priv(rp)->s_nr_mem_range= priv.s_nr_mem_range;
-			for (i= 0; i<priv.s_nr_mem_range; i++)
-			{
-				priv(rp)->s_mem_tab[i]= priv.s_mem_tab[i];
-#if 0
-				printf("do_privctl: adding mem range [%x..%x] for %d\n",
-					priv(rp)->s_mem_tab[i].mr_base,
-					priv(rp)->s_mem_tab[i].mr_limit,
-					rp->p_endpoint);
-#endif
-			}
-		}
-
-		/* Copy trap mask. */
-		priv(rp)->s_trap_mask = priv.s_trap_mask;
-
-		/* Copy target mask. */
-		memcpy(&ipc_to_m, &priv.s_ipc_to, sizeof(ipc_to_m));
-
-		/* Copy kernel call mask. */
-		memcpy(priv(rp)->s_k_call_mask, priv.s_k_call_mask,
-			sizeof(priv(rp)->s_k_call_mask));
-	}
-
-	/* Fill in target mask. */
-	for (i=0; i < NR_SYS_PROCS; i++) {
-		if (ipc_to_m & (1 << i))
-			set_sendto_bit(rp, i);
-		else
-			unset_sendto_bit(rp, i);
+		if((r = update_priv(rp, &priv)) != OK) {
+			return r;
+		} 
 	}
 
 	return(OK);
@@ -316,10 +255,104 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	}
 	return EPERM;
   }
+
+  case SYS_PRIV_UPDATE_SYS:
+	/* Update the privilege structure of a system process. */
+	if(!m_ptr->CTL_ARG_PTR) return EINVAL;
+
+	/* Copy privilege structure from caller */
+	if((r=data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
+		KERNEL, (vir_bytes) &priv, sizeof(priv))) != OK)
+		return r;
+
+	/* Override settings in existing privilege structure. */
+	if((r = update_priv(rp, &priv)) != OK) {
+		return r;
+	}
+
+	return(OK);
+
   default:
 	printf("do_privctl: bad request %d\n", m_ptr->CTL_REQUEST);
 	return EINVAL;
   }
+}
+
+/*===========================================================================*
+ *				update_priv				     *
+ *===========================================================================*/
+PRIVATE int update_priv(struct proc *rp, struct priv *priv)
+{
+/* Update the privilege structure of a given process. */
+
+  int ipc_to_m, i;
+
+  /* Copy s_flags and signal managers. */
+  priv(rp)->s_flags = priv->s_flags;
+  priv(rp)->s_sig_mgr = priv->s_sig_mgr;
+  priv(rp)->s_bak_sig_mgr = priv->s_bak_sig_mgr;
+
+  /* Copy IRQs. */
+  if(priv->s_flags & CHECK_IRQ) {
+  	if (priv->s_nr_irq < 0 || priv->s_nr_irq > NR_IRQ)
+  		return EINVAL;
+  	priv(rp)->s_nr_irq= priv->s_nr_irq;
+  	for (i= 0; i<priv->s_nr_irq; i++)
+  	{
+  		priv(rp)->s_irq_tab[i]= priv->s_irq_tab[i];
+#if PRIV_DEBUG
+  		printf("do_privctl: adding IRQ %d for %d\n",
+  			priv(rp)->s_irq_tab[i], rp->p_endpoint);
+#endif
+  	}
+  }
+
+  /* Copy I/O ranges. */
+  if(priv->s_flags & CHECK_IO_PORT) {
+  	if (priv->s_nr_io_range < 0 || priv->s_nr_io_range > NR_IO_RANGE)
+  		return EINVAL;
+  	priv(rp)->s_nr_io_range= priv->s_nr_io_range;
+  	for (i= 0; i<priv->s_nr_io_range; i++)
+  	{
+  		priv(rp)->s_io_tab[i]= priv->s_io_tab[i];
+#if PRIV_DEBUG
+  		printf("do_privctl: adding I/O range [%x..%x] for %d\n",
+  			priv(rp)->s_io_tab[i].ior_base,
+  			priv(rp)->s_io_tab[i].ior_limit,
+  			rp->p_endpoint);
+#endif
+  	}
+  }
+
+  /* Copy memory ranges. */
+  if(priv->s_flags & CHECK_MEM) {
+  	if (priv->s_nr_mem_range < 0 || priv->s_nr_mem_range > NR_MEM_RANGE)
+  		return EINVAL;
+  	priv(rp)->s_nr_mem_range= priv->s_nr_mem_range;
+  	for (i= 0; i<priv->s_nr_mem_range; i++)
+  	{
+  		priv(rp)->s_mem_tab[i]= priv->s_mem_tab[i];
+#if PRIV_DEBUG
+  		printf("do_privctl: adding mem range [%x..%x] for %d\n",
+  			priv(rp)->s_mem_tab[i].mr_base,
+  			priv(rp)->s_mem_tab[i].mr_limit,
+  			rp->p_endpoint);
+#endif
+  	}
+  }
+
+  /* Copy trap mask. */
+  priv(rp)->s_trap_mask = priv->s_trap_mask;
+
+  /* Copy target mask. */
+  memcpy(&ipc_to_m, &priv->s_ipc_to, sizeof(ipc_to_m));
+  fill_sendto_mask(rp, ipc_to_m);
+
+  /* Copy kernel call mask. */
+  memcpy(priv(rp)->s_k_call_mask, priv->s_k_call_mask,
+  	sizeof(priv(rp)->s_k_call_mask));
+
+  return OK;
 }
 
 #endif /* USE_PRIVCTL */

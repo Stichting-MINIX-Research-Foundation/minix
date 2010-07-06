@@ -58,6 +58,8 @@ PUBLIC int main(void)
 	sp->s_proc_nr = NONE;			/* initialize as free */
 	sp->s_id = (sys_id_t) i;		/* priv structure index */
 	ppriv_addr[i] = sp;			/* priv ptr from number */
+	sp->s_sig_mgr = NONE;			/* clear signal managers */
+	sp->s_bak_sig_mgr = NONE;
   }
 
   /* Set up proc table entries for processes in boot image.  The stacks of the
@@ -116,6 +118,7 @@ PUBLIC int main(void)
                 ipc_to_m = RSYS_M;                 /* allowed targets */
                 kcalls = RSYS_KC;                  /* allowed kernel calls */
                 priv(rp)->s_sig_mgr = RSYS_SM;     /* signal manager */
+                priv(rp)->s_bak_sig_mgr = NONE;    /* backup signal manager */
             }
             /* Priviliges for ordinary process. */
             else {
@@ -123,12 +126,7 @@ PUBLIC int main(void)
             }
 
             /* Fill in target mask. */
-            for (j=0; j < NR_SYS_PROCS; j++) {
-                if (ipc_to_m & (1 << j))
-                    set_sendto_bit(rp, j);
-                else
-                    unset_sendto_bit(rp, j);
-	    }
+            fill_sendto_mask(rp, ipc_to_m);
 
             /* Fill in kernel call mask. */
             for(j = 0; j < SYS_CALL_MASK_SIZE; j++) {

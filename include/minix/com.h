@@ -487,7 +487,7 @@
 #   define GET_IRQACTIDS  16	/* get the IRQ masks */
 #   define GET_PRIV	  17	/* get privilege structure */
 #   define GET_HZ	  18	/* get HZ value */
-#   define GET_WHOAMI	  19	/* get own name and endpoint */
+#   define GET_WHOAMI	  19	/* get own name, endpoint, and privileges */
 #   define GET_RANDOMNESS_BIN 20 /* get one randomness bin */
 #   define GET_IDLETSC	  21	/* get cumulative idle time stamp counter */
 #   define GET_AOUTHEADER 22    /* get a.out headers from the boot image */
@@ -500,6 +500,7 @@
 /* GET_WHOAMI fields. */
 #define GIWHO_EP	m3_i1
 #define GIWHO_NAME 	m3_ca1
+#define GIWHO_PRIVFLAGS	m3_i2
 
 /* Field names for SYS_TIMES. */
 #define T_ENDPT		m4_l1	/* process to request time info for */
@@ -529,6 +530,7 @@
 					 */
 #define SYS_PRIV_ADD_IRQ	7	/* Add IRQ */
 #define SYS_PRIV_QUERY_MEM	8	/* Verify memory privilege. */
+#define SYS_PRIV_UPDATE_SYS	9	/* Update a sys privilege structure. */
 
 /* Field names for SYS_SETGRANT */
 #define SG_ADDR		m2_p1	/* address */

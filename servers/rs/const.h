@@ -93,5 +93,9 @@
 #define SRV_DF   (DRV_FORCED)            /* system services */
 #define DSRV_DF  (SRV_DF)                /* dynamic system services */
 
+/* Reply flags. */
+#define RS_DONTREPLY    0
+#define RS_REPLY        1
+
 #endif /* RS_CONST_H */
 

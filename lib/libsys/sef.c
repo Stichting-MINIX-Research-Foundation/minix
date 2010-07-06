@@ -7,6 +7,7 @@
 #define SEF_SELF_NAME_MAXLEN 20
 PUBLIC char sef_self_name[SEF_SELF_NAME_MAXLEN];
 PUBLIC endpoint_t sef_self_endpoint;
+PUBLIC int sef_self_priv_flags;
 
 /* Debug. */
 #define SEF_DEBUG_HEADER_MAXLEN 32
@@ -19,7 +20,7 @@ FORWARD _PROTOTYPE( void sef_debug_refresh_params, (void) );
 PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
 
 /* SEF Init prototypes. */
-EXTERN _PROTOTYPE( int do_sef_rs_init, (void) );
+EXTERN _PROTOTYPE( int do_sef_rs_init, (endpoint_t old_endpoint) );
 EXTERN _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
 
 /* SEF Ping prototypes. */
@@ -39,20 +40,34 @@ PUBLIC void sef_startup()
 {
 /* SEF startup interface for system services. */
   int r, status;
+  endpoint_t old_endpoint;
 
   /* Get information about self. */
-  r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN);
+  r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN,
+      &sef_self_priv_flags);
   if ( r != OK) {
       sef_self_endpoint = SELF;
       sprintf(sef_self_name, "%s", "Unknown");
   }
+  old_endpoint = NONE;
+
+  /* RS may wake up with the wrong endpoint, perfom the update in that case. */
+  if((sef_self_priv_flags & ROOT_SYS_PROC) && sef_self_endpoint != RS_PROC_NR) {
+      r = vm_update(RS_PROC_NR, sef_self_endpoint);
+      if(r != OK) {
+          panic("unable to update RS from instance %d to %d",
+              RS_PROC_NR, sef_self_endpoint);
+      }
+      old_endpoint = sef_self_endpoint;
+      sef_self_endpoint = RS_PROC_NR;
+  }
 
 #if INTERCEPT_SEF_INIT_REQUESTS
   /* Intercept SEF Init requests. */
-  if(sef_self_endpoint == RS_PROC_NR) {
+  if(sef_self_priv_flags & ROOT_SYS_PROC) {
       /* RS initialization is special. */
-      if((r = do_sef_rs_init()) != OK) {
-          panic("unable to complete init: %d", r);
+      if((r = do_sef_rs_init(old_endpoint)) != OK) {
+          panic("RS unable to complete init: %d (%s)", r, strerror(-r));
       }
   }
   else {

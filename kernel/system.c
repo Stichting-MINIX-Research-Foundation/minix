@@ -14,6 +14,7 @@
  *   get_priv:		assign privilege structure to user or system process
  *   set_sendto_bit:	allow a process to send messages to a new target
  *   unset_sendto_bit:	disallow a process from sending messages to a target
+ *   fill_sendto_mask:	fill the target mask of a given process
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via a signal mgr
  *   sig_delay_done:	tell PM that a process is not sending
@@ -334,18 +335,34 @@ PUBLIC void unset_sendto_bit(const struct proc *rp, int id)
 }
 
 /*===========================================================================*
+ *			      fill_sendto_mask				     *
+ *===========================================================================*/
+PUBLIC void fill_sendto_mask(const struct proc *rp, int mask)
+{
+  int i;
+
+  for (i=0; i < NR_SYS_PROCS; i++) {
+  	if (mask & (1 << i))
+  		set_sendto_bit(rp, i);
+  	else
+  		unset_sendto_bit(rp, i);
+  }
+}
+
+/*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
-PUBLIC void send_sig(endpoint_t proc_nr, int sig_nr)
+PUBLIC void send_sig(endpoint_t ep, int sig_nr)
 {
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
  * send a notification with source SYSTEM.
  */ 
   register struct proc *rp;
+  int proc_nr;
 
-  if(!isokprocn(proc_nr) || isemptyn(proc_nr))
-	panic("send_sig to empty process: %d",  proc_nr);
+  if(!isokendpt(ep, &proc_nr) || isemptyn(proc_nr))
+	panic("send_sig to empty process: %d",  ep);
 
   rp = proc_addr(proc_nr);
   (void) sigaddset(&priv(rp)->s_sig_pending, sig_nr);
@@ -372,19 +389,32 @@ int sig_nr;			/* signal to be sent */
  * only called when a user process causes a CPU exception and from the kernel 
  * process level, which runs to completion.
  */
-  register struct proc *rp;
+  register struct proc *rp, *sig_mgr_rp;
   endpoint_t sig_mgr;
+  int sig_mgr_proc_nr;
 
   /* Lookup signal manager. */
   rp = proc_addr(proc_nr);
   sig_mgr = priv(rp)->s_sig_mgr;
+  if(sig_mgr == SELF) sig_mgr = rp->p_endpoint;
 
   /* If the target is the signal manager of itself, send the signal directly. */
   if(rp->p_endpoint == sig_mgr) {
        if(SIGS_IS_LETHAL(sig_nr)) {
+           /* If the signal is lethal, see if a backup signal manager exists. */
+           sig_mgr = priv(rp)->s_bak_sig_mgr;
+           if(sig_mgr != NONE && isokendpt(sig_mgr, &sig_mgr_proc_nr)) {
+               priv(rp)->s_sig_mgr = sig_mgr;
+               priv(rp)->s_bak_sig_mgr = NONE;
+               sig_mgr_rp = proc_addr(sig_mgr_proc_nr);
+               RTS_UNSET(sig_mgr_rp, RTS_NO_PRIV);
+               cause_sig(proc_nr, sig_nr); /* try again with the new sig mgr. */
+               return;
+           }
+           /* We are out of luck. Time to panic. */
            proc_stacktrace(rp);
-           panic("cause_sig: signal manager gets lethal signal %d for itself",
-	   	sig_nr);
+           panic("cause_sig: sig manager %d gets lethal signal %d for itself",
+	   	rp->p_endpoint, sig_nr);
        }
        (void) sigaddset(&priv(rp)->s_sig_pending, sig_nr);
        send_sig(rp->p_endpoint, SIGKSIGSM);

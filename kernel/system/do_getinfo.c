@@ -96,6 +96,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
 	len = MIN(sizeof(m_ptr->GIWHO_NAME), sizeof(caller->p_name))-1;
 	strncpy(m_ptr->GIWHO_NAME, caller->p_name, len);
 	m_ptr->GIWHO_NAME[len] = '\0';
+	m_ptr->GIWHO_PRIVFLAGS = priv(caller)->s_flags;
 	return OK;
     }
     case GET_MONPARAMS: {

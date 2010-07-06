@@ -138,7 +138,8 @@ PUBLIC int main(void)
 PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);     /* RS can only start fresh. */
+  sef_setcb_init_fresh(sef_cb_init_fresh);
+  sef_setcb_init_restart(sef_cb_init_fail);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -262,6 +263,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       memcpy(&rp->r_priv.s_ipc_to, &boot_image_priv->ipc_to,
                         sizeof(rp->r_priv.s_ipc_to));      /* targets */
       rp->r_priv.s_sig_mgr = boot_image_priv->sig_mgr;     /* sig mgr */
+      rp->r_priv.s_bak_sig_mgr = NONE;                     /* backup sig mgr */
       
       /* Initialize kernel call mask bitmap from unordered set. */
       fill_call_mask(boot_image_priv->k_calls, NR_SYS_CALLS,

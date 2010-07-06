@@ -1,5 +1,6 @@
 #include "syslib.h"
 #include <assert.h>
+#include <unistd.h>
 #include <minix/sysutil.h>
 
 /* SEF Init callbacks. */
@@ -14,19 +15,79 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Init prototypes for sef_startup(). */
-PUBLIC _PROTOTYPE( int do_sef_rs_init, (void) );
+PUBLIC _PROTOTYPE( int do_sef_rs_init, (endpoint_t old_endpoint) );
 PUBLIC _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
 
 /* Debug. */
 EXTERN _PROTOTYPE( char* sef_debug_header, (void) );
 
+/* Information about SELF. */
+EXTERN endpoint_t sef_self_endpoint;
+EXTERN endpoint_t sef_self_priv_flags;
+
+/*===========================================================================*
+ *                              process_init             		     *
+ *===========================================================================*/
+PRIVATE int process_init(int type, sef_init_info_t *info)
+{
+/* Process initialization. */
+  int r;
+
+  /* Debug. */
+#if SEF_INIT_DEBUG
+  sef_init_debug_begin();
+  sef_init_dprint("%s. Got a SEF Init request of type: %d. About to init.\n",
+      sef_debug_header(), type);
+  sef_init_debug_end();
+#endif
+
+  /* Let the callback code handle the specific initialization type. */
+  switch(type) {
+      case SEF_INIT_FRESH:
+          r = sef_cbs.sef_cb_init_fresh(type, info);
+      break;
+      case SEF_INIT_LU:
+          r = sef_cbs.sef_cb_init_lu(type, info);
+      break;
+      case SEF_INIT_RESTART:
+          r = sef_cbs.sef_cb_init_restart(type, info);
+      break;
+
+      default:
+          /* Not a valid SEF init type. */
+          r = EINVAL;
+      break;
+  }
+
+  return r;
+}
+
 /*===========================================================================*
  *                              do_sef_rs_init             		     *
  *===========================================================================*/
-PUBLIC int do_sef_rs_init()
+PUBLIC int do_sef_rs_init(endpoint_t old_endpoint)
 {
 /* Special SEF Init for RS. */
-  return sef_cbs.sef_cb_init_fresh(SEF_INIT_FRESH, NULL);
+  int r;
+  int type;
+  sef_init_info_t info;
+
+  /* Get init parameters from SEF. */
+  type = SEF_INIT_FRESH;
+  if(sef_self_priv_flags & LU_SYS_PROC) {
+      type = SEF_INIT_LU;
+  }
+  else if(sef_self_priv_flags & RST_SYS_PROC) {
+      type = SEF_INIT_RESTART;
+  }
+  info.rproctab_gid = -1;
+  info.endpoint = sef_self_endpoint;
+  info.old_endpoint = old_endpoint;
+
+  /* Peform initialization. */
+  r = process_init(type, &info);
+
+  return r;
 }
 
 /*===========================================================================*
@@ -39,34 +100,14 @@ PUBLIC int do_sef_init_request(message *m_ptr)
   int type;
   sef_init_info_t info;
 
-  /* Debug. */
-#if SEF_INIT_DEBUG
-  sef_init_debug_begin();
-  sef_init_dprint("%s. Got a SEF Init request of type: %d. About to init.\n",
-      sef_debug_header(), m_ptr->RS_INIT_TYPE);
-  sef_init_debug_end();
-#endif
-
-  /* Let the callback code handle the request. */
+  /* Get init parameters from message. */
   type = m_ptr->RS_INIT_TYPE;
   info.rproctab_gid = m_ptr->RS_INIT_RPROCTAB_GID;
+  info.endpoint = sef_self_endpoint;
   info.old_endpoint = m_ptr->RS_INIT_OLD_ENDPOINT;
-  switch(type) {
-      case SEF_INIT_FRESH:
-          r = sef_cbs.sef_cb_init_fresh(type, &info);
-      break;
-      case SEF_INIT_LU:
-          r = sef_cbs.sef_cb_init_lu(type, &info);
-      break;
-      case SEF_INIT_RESTART:
-          r = sef_cbs.sef_cb_init_restart(type, &info);
-      break;
 
-      default:
-          /* Not a valid SEF init type. */
-          r = EINVAL;
-      break;
-  }
+  /* Peform initialization. */
+  r = process_init(type, &info);
 
   /* Report back to RS. */
   m_ptr->RS_INIT_RESULT = r;

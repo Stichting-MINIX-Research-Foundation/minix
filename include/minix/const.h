@@ -168,14 +168,17 @@
 #define PROC_FULLVM    0x100    /* VM sets and manages full pagetable */
 
 /* Bits for s_flags in the privilege structure. */
-#define PREEMPTIBLE     0x02    /* kernel tasks are not preemptible */
-#define BILLABLE        0x04    /* some processes are not billable */
-#define DYN_PRIV_ID     0x08    /* privilege id assigned dynamically */
+#define PREEMPTIBLE     0x002   /* kernel tasks are not preemptible */
+#define BILLABLE        0x004   /* some processes are not billable */
+#define DYN_PRIV_ID     0x008   /* privilege id assigned dynamically */
  
-#define SYS_PROC        0x10    /* system processes have own priv structure */
-#define CHECK_IO_PORT   0x20    /* check if I/O request is allowed */
-#define CHECK_IRQ       0x40    /* check if IRQ can be used */
-#define CHECK_MEM       0x80    /* check if (VM) mem map request is allowed */
+#define SYS_PROC        0x010   /* system processes have own priv structure */
+#define CHECK_IO_PORT   0x020   /* check if I/O request is allowed */
+#define CHECK_IRQ       0x040   /* check if IRQ can be used */
+#define CHECK_MEM       0x080   /* check if (VM) mem map request is allowed */
+#define ROOT_SYS_PROC   0x100   /* this is a root system process instance */
+#define LU_SYS_PROC     0x200   /* this is a live updated sys proc instance */
+#define RST_SYS_PROC    0x400   /* this is a restarted sys proc instance */
 
 /* Bits for device driver flags managed by RS and VFS. */
 #define DRV_FORCED      0x01    /* driver is mapped even if not alive yet */

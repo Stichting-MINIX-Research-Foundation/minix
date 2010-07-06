@@ -100,9 +100,9 @@ struct rproc *rp;
           return EPERM;
       }
 
-      /* Only allow RS_EDIT for RS. */
+      /* Disallow RS_UPDATE for RS. */
       if(rpub->endpoint == RS_PROC_NR) {
-          if(call != RS_EDIT) return EPERM;
+          if(call == RS_UPDATE) return EPERM;
       }
 
       /* Disallow the call if another call is in progress for the service. */
@@ -273,7 +273,7 @@ PUBLIC void update_period(message *m_ptr)
    */
   if(has_update_timed_out) {
       printf("RS: update failed: maximum prepare time reached\n");
-      end_update(EINTR);
+      end_update(EINTR, RS_DONTREPLY);
 
       /* Prepare cancel request. */
       m.m_type = RS_LU_PREPARE;
@@ -285,7 +285,7 @@ PUBLIC void update_period(message *m_ptr)
 /*===========================================================================*
  *				end_update				     *
  *===========================================================================*/
-PUBLIC void end_update(int result)
+PUBLIC void end_update(int result, int reply_flag)
 {
 /* End the update process. There are two possibilities:
  * 1) the update succeeded. In that case, cleanup the old version and mark the
@@ -321,10 +321,19 @@ PUBLIC void end_update(int result)
   /* Send a late reply if necessary. */
   late_reply(old_rp, result);
 
-  /* Cleanup the version that has to die out and mark the other
-   * version as no longer updating.
+  /* Mark the version that has to survive as no longer updating and
+   * reply when asked to.
    */
   surviving_rp->r_flags &= ~RS_UPDATING;
+  if(reply_flag == RS_REPLY) {
+      message m;
+      if(rs_verbose)
+          printf("RS: %s being replied to\n", srv_to_string(surviving_rp));
+      m.m_type = result;
+      reply(surviving_rp->r_pub->endpoint, &m);
+  }
+
+  /* Cleanup the version that has to die out. */
   get_service_instances(exiting_rp, &rps, &nr_rps);
   for(i=0;i<nr_rps;i++) {
       cleanup_service(rps[i]);
@@ -370,6 +379,11 @@ struct rproc *rp;
   if(rs_verbose)
       printf("RS: %s %skilled at %s:%d\n", srv_to_string(rp),
           rp->r_flags & RS_EXITING ? "lethally " : "", file, line);
+
+  /* RS should simply exit() directly. */
+  if(rpub->endpoint == RS_PROC_NR) {
+      exit(0);
+  }
 
   return sys_kill(rpub->endpoint, SIGKILL);
 }
@@ -552,12 +566,17 @@ struct rproc *rp;
 /*===========================================================================*
  *				clone_service				     *
  *===========================================================================*/
-PUBLIC int clone_service(rp)
+PUBLIC int clone_service(rp, instance_flag)
 struct rproc *rp;
+int instance_flag;
 {
 /* Clone the given system service instance. */
   struct rproc *replica_rp;
   struct rprocpub *replica_rpub;
+  struct rproc **rp_link;
+  struct rproc **replica_link;
+  struct rproc *rs_rp;
+  int rs_flags;
   int r;
 
   if(rs_verbose)
@@ -568,14 +587,25 @@ struct rproc *rp;
       return r;
   }
 
+  /* Clone is a live updated or restarted service instance? */
+  if(instance_flag == LU_SYS_PROC) {
+      rp_link = &rp->r_new_rp;
+      replica_link = &replica_rp->r_old_rp;
+  }
+  else {
+      rp_link = &rp->r_next_rp;
+      replica_link = &replica_rp->r_prev_rp;
+  }
+  replica_rp->r_priv.s_flags |= instance_flag;
+
   /* Link the two slots. */
-  rp->r_next_rp = replica_rp;
-  replica_rp->r_prev_rp = rp;
+  *rp_link = replica_rp;
+  *replica_link = rp;
 
   /* Create a new replica of the service. */
   r = create_service(replica_rp);
   if(r != OK) {
-      rp->r_next_rp = NULL;
+      *rp_link = NULL;
       return r;
   }
 
@@ -584,8 +614,29 @@ struct rproc *rp;
   if(replica_rpub->vm_call_mask[0]) {
       r = vm_set_priv(replica_rpub->endpoint, &replica_rpub->vm_call_mask[0]);
       if (r != OK) {
-          rp->r_next_rp = NULL;
+          *rp_link = NULL;
           return kill_service(replica_rp, "vm_set_priv call failed", r);
+      }
+  }
+
+  /* If this instance is for restarting RS, set up a backup signal manager. */
+  rs_flags = (ROOT_SYS_PROC | RST_SYS_PROC);
+  if((replica_rp->r_priv.s_flags & rs_flags) == rs_flags) {
+      rs_rp = rproc_ptr[_ENDPOINT_P(RS_PROC_NR)];
+      if(rs_verbose)
+          printf("RS: %s gets a backup signal manager\n", srv_to_string(rs_rp));
+
+      /* Update privilege structures. */
+      rs_rp->r_priv.s_bak_sig_mgr = replica_rpub->endpoint;
+      replica_rp->r_priv.s_sig_mgr = SELF;
+      r = sys_privctl(RS_PROC_NR, SYS_PRIV_UPDATE_SYS, &rs_rp->r_priv);
+      if(r == OK) {
+          r = sys_privctl(replica_rpub->endpoint, SYS_PRIV_UPDATE_SYS,
+              &replica_rp->r_priv);
+      }
+      if(r != OK) {
+          *rp_link = NULL;
+          return kill_service(replica_rp, "sys_privctl call failed", r);
       }
   }
 
@@ -756,6 +807,7 @@ struct rproc *rp;
 PUBLIC void stop_service(struct rproc *rp,int how)
 {
   struct rprocpub *rpub;
+  int signo;
 
   rpub = rp->r_pub;
 
@@ -767,8 +819,10 @@ PUBLIC void stop_service(struct rproc *rp,int how)
   if(rs_verbose)
       printf("RS: %s signaled with SIGTERM\n", srv_to_string(rp));
 
+  signo = rpub->endpoint != RS_PROC_NR ? SIGTERM : SIGHUP; /* SIGHUP for RS. */
+
   rp->r_flags |= how;				/* what to on exit? */
-  sys_kill(rpub->endpoint, SIGTERM);		/* first try friendly */
+  sys_kill(rpub->endpoint, signo);		/* first try friendly */
   getuptime(&rp->r_stop_tm); 			/* record current time */
 }
 
@@ -874,16 +928,13 @@ PUBLIC void terminate_service(struct rproc *rp)
 
       /* If updating, rollback. */
       if(rp->r_flags & RS_UPDATING) {
-          message m;
           struct rproc *old_rp, *new_rp;
           printf("RS: update failed: state transfer failed. Rolling back...\n");
           new_rp = rp;
           old_rp = new_rp->r_old_rp;
           new_rp->r_flags &= ~RS_INITIALIZING;
           update_service(&new_rp, &old_rp); /* can't fail */
-          m.m_type = ERESTART;
-          reply(old_rp->r_pub->endpoint, &m);
-          end_update(ERESTART);
+          end_update(ERESTART, RS_REPLY);
           return;
       }
   }
@@ -916,7 +967,7 @@ PUBLIC void terminate_service(struct rproc *rp)
        * that just exited will continue executing.
        */
       if(rp->r_flags & RS_UPDATING) {
-          end_update(ERESTART);
+          end_update(ERESTART, RS_DONTREPLY);
       }
 
       /* Determine what to do. If this is the first unexpected 
@@ -1012,7 +1063,7 @@ PUBLIC void restart_service(struct rproc *rp)
   /* Restart directly. We need a replica if not already available. */
   if(rp->r_next_rp == NULL) {
       /* Create the replica. */
-      r = clone_service(rp);
+      r = clone_service(rp, RST_SYS_PROC);
       if(r != OK) {
           kill_service(rp, "unable to clone service", r);
           return;
@@ -1060,6 +1111,9 @@ struct rproc *rp;
   rpub->dev_nr = def_rpub->dev_nr;
   rpub->dev_style = def_rpub->dev_style;
   rpub->dev_style2 = def_rpub->dev_style2;
+
+  /* Service type flags. */
+  rp->r_priv.s_flags |= rp->r_priv.s_flags & ROOT_SYS_PROC;
 
   /* Period. */
   if(!rp->r_period && def_rp->r_period) {
@@ -1327,6 +1381,7 @@ endpoint_t source;
   rp->r_priv.s_flags = DSRV_F;           /* privilege flags */
   rp->r_priv.s_trap_mask = DSRV_T;       /* allowed traps */
   rp->r_priv.s_sig_mgr = DSRV_SM;        /* signal manager */
+  rp->r_priv.s_bak_sig_mgr = NONE;       /* backup signal manager */
 
   /* Initialize control labels. */
   if(rs_start->rss_nr_control > 0) {
@@ -1521,6 +1576,9 @@ struct rproc **clone_rpp;
 
   /* Force dynamic privilege id. */
   clone_rp->r_priv.s_flags |= DYN_PRIV_ID;
+
+  /* Clear instance flags. */
+  clone_rp->r_priv.s_flags &= ~(LU_SYS_PROC | RST_SYS_PROC);
 
   *clone_rpp = clone_rp;
   return OK;

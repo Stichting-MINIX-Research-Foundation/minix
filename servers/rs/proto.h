@@ -51,7 +51,7 @@ _PROTOTYPE( int crash_service_debug, (char *file, int line, struct rproc *rp) );
 _PROTOTYPE( void cleanup_service_debug, (char *file, int line,
 	struct rproc *rp) );
 _PROTOTYPE( int create_service, (struct rproc *rp) );
-_PROTOTYPE( int clone_service, (struct rproc *rp) );
+_PROTOTYPE( int clone_service, (struct rproc *rp, int instance_flag) );
 _PROTOTYPE( int publish_service, (struct rproc *rp) );
 _PROTOTYPE( int unpublish_service, (struct rproc *rp) );
 _PROTOTYPE( int run_service, (struct rproc *rp, int init_type) );
@@ -85,7 +85,7 @@ _PROTOTYPE( void add_forward_ipc, (struct rproc *rp, struct priv *privp) );
 _PROTOTYPE( void add_backward_ipc, (struct rproc *rp, struct priv *privp) );
 _PROTOTYPE( void init_privs, (struct rproc *rp, struct priv *privp) );
 _PROTOTYPE( void update_period, (message *m_ptr) );
-_PROTOTYPE( void end_update, (int result) );
+_PROTOTYPE( void end_update, (int result, int reply_flag) );
 
 /* utility.c */
 _PROTOTYPE( int init_service, (struct rproc *rp, int type));

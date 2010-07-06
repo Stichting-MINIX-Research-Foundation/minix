@@ -28,7 +28,8 @@ int len2;				/* length or process nr */
 /*===========================================================================*
  *                                sys_whoami				     *
  *===========================================================================*/
-PUBLIC int sys_whoami(endpoint_t *who_ep, char *who_name, int len)
+PUBLIC int sys_whoami(endpoint_t *who_ep, char *who_name, int len,
+	int *priv_flags)
 {
 	message m;
 	int r;
@@ -47,6 +48,7 @@ PUBLIC int sys_whoami(endpoint_t *who_ep, char *who_name, int len)
 	strncpy(who_name, m.GIWHO_NAME, lenmin);
 	who_name[lenmin] = '\0';
 	*who_ep = m.GIWHO_EP;
+	*priv_flags = m.GIWHO_PRIVFLAGS;
 
 	return OK;
 }

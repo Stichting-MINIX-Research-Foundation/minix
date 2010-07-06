@@ -17,10 +17,11 @@ PUBLIC void panic(const char *fmt, ...)
  */
   endpoint_t me = NONE;
   char name[20];
+  int priv_flags;
   void (*suicide)(void);
   va_list args;
 
-  if(sys_whoami(&me, name, sizeof(name)) == OK && me != NONE)
+  if(sys_whoami(&me, name, sizeof(name), &priv_flags) == OK && me != NONE)
 	printf("%s(%d): panic: ", name, me);
   else
 	printf("(sys_whoami failed): panic: ");

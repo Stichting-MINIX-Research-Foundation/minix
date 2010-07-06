@@ -219,7 +219,7 @@ PUBLIC int do_clone(message *m_ptr)
 
   /* Clone the service as requested. */
   rpub->sys_flags |= SF_USE_REPL;
-  if ((r = clone_service(rp)) != OK) {
+  if ((r = clone_service(rp, RST_SYS_PROC)) != OK) {
       rpub->sys_flags &= ~SF_USE_REPL;
       return r;
   }
@@ -280,7 +280,7 @@ PUBLIC int do_edit(message *m_ptr)
           cleanup_service(rp->r_next_rp);
           rp->r_next_rp = NULL;
       }
-      if ((r = clone_service(rp)) != OK) {
+      if ((r = clone_service(rp, RST_SYS_PROC)) != OK) {
           printf("RS: warning: unable to clone %s\n", srv_to_string(rp));
       }
   }
@@ -408,7 +408,7 @@ PUBLIC int do_init_ready(message *m_ptr)
    */
   if(rp->r_flags & RS_UPDATING) {
       printf("RS: update succeeded\n");
-      end_update(OK);
+      end_update(OK, RS_DONTREPLY);
   }
 
   /* If the service has completed initialization after a crash
@@ -424,7 +424,7 @@ PUBLIC int do_init_ready(message *m_ptr)
 
   /* If we must keep a replica of this system service, create it now. */
   if(rpub->sys_flags & SF_USE_REPL) {
-      if ((r = clone_service(rp)) != OK) {
+      if ((r = clone_service(rp, RST_SYS_PROC)) != OK) {
           printf("RS: warning: unable to clone %s\n", srv_to_string(rp));
       }
   }
@@ -508,25 +508,15 @@ PUBLIC int do_update(message *m_ptr)
    * by the given binary.
    */
   if(do_self_update) {
-      struct rproc *r_next_rp;
       if(rs_verbose)
           printf("RS: %s performs self update\n", srv_to_string(rp));
 
-      /* Save information about existing replica (if any). */
-      r_next_rp = rp->r_next_rp;
-      rp->r_next_rp = NULL;
-
       /* Clone the system service and use the replica as the new version. */
-      s = clone_service(rp);
+      s = clone_service(rp, LU_SYS_PROC);
       if(s != OK) {
           printf("RS: do_update: unable to clone service: %d\n", s);
           return s;
       }
-      new_rp = rp->r_next_rp;
-      new_rp->r_prev_rp = NULL;
-
-      /* Restore information about existing replica (if any). */
-      rp->r_next_rp = r_next_rp;
   }
   else {
       if(rs_verbose)
@@ -549,7 +539,12 @@ PUBLIC int do_update(message *m_ptr)
       /* Let the new version inherit defaults from the old one. */
       inherit_service_defaults(rp, new_rp);
 
+      /* Link the two versions. */
+      rp->r_new_rp = new_rp;
+      new_rp->r_old_rp = rp;
+
       /* Create new version of the service but don't let it run. */
+      new_rp->r_priv.s_flags |= LU_SYS_PROC;
       s = create_service(new_rp);
       if(s != OK) {
           printf("RS: do_update: unable to create a new service: %d\n", s);
@@ -557,9 +552,7 @@ PUBLIC int do_update(message *m_ptr)
       }
   }
 
-  /* Link old version to new version and mark both as updating. */
-  rp->r_new_rp = new_rp;
-  new_rp->r_old_rp = rp;
+  /* Mark both versions as updating. */
   rp->r_flags |= RS_UPDATING;
   rp->r_new_rp->r_flags |= RS_UPDATING;
   rupdate.flags |= RS_UPDATING;
@@ -614,10 +607,10 @@ PUBLIC int do_upd_ready(message *m_ptr)
    * be replied to and continue executing.
    */
   if(result != OK) {
-      end_update(result);
+      end_update(result, RS_REPLY);
 
       printf("RS: update failed: %s\n", lu_strerror(result));
-      return OK;
+      return EDONTREPLY;
   }
 
   /* Perform the update. */
@@ -625,21 +618,21 @@ PUBLIC int do_upd_ready(message *m_ptr)
   new_rp = rp->r_new_rp;
   r = update_service(&old_rp, &new_rp);
   if(r != OK) {
-      end_update(r);
+      end_update(r, RS_REPLY);
       printf("RS: update failed: error %d\n", r);
-      return r;
+      return EDONTREPLY;
   }
 
   /* Let the new version run. */
   r = run_service(new_rp, SEF_INIT_LU);
   if(r != OK) {
       update_service(&new_rp, &old_rp); /* rollback, can't fail. */
-      end_update(r);
+      end_update(r, RS_REPLY);
       printf("RS: update failed: error %d\n", r);
-      return r;
+      return EDONTREPLY;
   }
 
-  return(EDONTREPLY);
+  return EDONTREPLY;
 }
 
 /*===========================================================================*
@@ -688,8 +681,8 @@ message *m_ptr;
 	   */
 	  else if (rp->r_stop_tm > 0 && now - rp->r_stop_tm > 2*RS_DELTA_T
 	   && rp->r_pid > 0) {
-              crash_service(rp); /* simulate crash */
               rp->r_stop_tm = 0;
+              crash_service(rp); /* simulate crash */
 	  }
 
 	  /* There seems to be no special conditions. If the service has a 

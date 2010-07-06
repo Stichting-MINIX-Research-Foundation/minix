@@ -162,40 +162,87 @@ schedulerstr(struct proc *scheduler)
 	return "KERNEL";
 }
 
+PRIVATE void
+print_proc_name(struct proc *pp)
+{
+	char *name = pp->p_name;
+	endpoint_t ep = pp->p_endpoint;
+
+	if(name) {
+		printf("%s(%d)", name, ep);
+	}
+	else {
+		printf("%d", ep);
+	}
+}
+
+PRIVATE void
+print_endpoint(endpoint_t ep)
+{
+	int proc_nr;
+	struct proc *pp = NULL;
+
+	switch(ep) {
+	case ANY:
+		printf("ANY");
+	break;
+	case SELF:
+		printf("SELF");
+	break;
+	case NONE:
+		printf("NONE");
+	break;
+	default:
+		if(!isokendpt(ep, &proc_nr)) {
+			printf("??? %d\n", ep);
+		}
+		else {
+			pp = proc_addr(proc_nr);
+			if(isemptyp(pp)) {
+				printf("??? empty slot %d\n", proc_nr);
+			}
+			else {
+				print_proc_name(pp);
+			}
+		}
+	break;
+	}
+}
+
+PRIVATE void
+print_sigmgr(struct proc *pp)
+{
+	endpoint_t sig_mgr, bak_sig_mgr;
+	sig_mgr = priv(pp)->s_sig_mgr;
+	bak_sig_mgr = priv(pp)->s_bak_sig_mgr;
+	printf("sigmgr ");
+	print_endpoint(sig_mgr);
+	if(bak_sig_mgr != NONE) {
+		printf(" / ");
+		print_endpoint(bak_sig_mgr);
+	}
+}
+
 PUBLIC void print_proc(struct proc *pp)
 {
 	struct proc *depproc = NULL;
 	endpoint_t dep;
 
-	printf("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cr3 0x%lx rts %s misc %s sched %s",
+	printf("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cr3 0x%lx rts %s misc %s sched %s ",
 		proc_nr(pp), pp->p_name, pp->p_endpoint,
 		pp->p_priority, pp->p_user_time,
 		pp->p_sys_time, pp->p_cycles.hi, pp->p_cycles.lo, pp->p_seg.p_cr3,
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags),
 		schedulerstr(pp->p_scheduler));
 
+	print_sigmgr(pp);
+
 	dep = P_BLOCKEDON(pp);
 	if(dep != NONE) {
 		printf(" blocked on: ");
-		if(dep == ANY) {
-			printf(" ANY\n");
-		} else {
-			int procno;
-			if(!isokendpt(dep, &procno)) {
-				printf(" ??? %d\n", dep);
-			} else {
-				depproc = proc_addr(procno);
-				if(isemptyp(depproc)) {
-					printf(" empty slot %d???\n", procno);
-					depproc = NULL;
-				} else {
-					printf(" %s\n", depproc->p_name);
-				}
-			}
-		}
-	} else {
-		printf("\n");
+		print_endpoint(dep);
 	}
+	printf("\n");
 }
 
 PRIVATE void print_proc_depends(struct proc *pp, const int level)
