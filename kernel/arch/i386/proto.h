@@ -66,8 +66,8 @@ struct exception_frame {
 _PROTOTYPE( void exception, (struct exception_frame * frame));
 
 /* klib386.s */
-_PROTOTYPE( void monitor, (void)                                        );
-_PROTOTYPE( void reset, (void)                                          );
+_PROTOTYPE( __dead void monitor, (void)                                 );
+_PROTOTYPE( __dead void reset, (void)                                   );
 _PROTOTYPE( void int86, (void)                     			);
 _PROTOTYPE( reg_t read_cr0, (void)					);
 _PROTOTYPE( reg_t read_cr2, (void)					);

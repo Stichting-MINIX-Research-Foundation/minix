@@ -77,7 +77,7 @@ int arch_watchdog_init(void)
 
 	/* Setup PC tas NMI for watchdog, is is masked for now */
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_INT_MASK | APIC_ICR_DM_NMI);
-	lapic_read(LAPIC_LVTPCR);
+	(void) lapic_read(LAPIC_LVTPCR);
 
 	/* double check if LAPIC is enabled */
 	if (lapic_addr && watchdog_enabled && watchdog->init) {

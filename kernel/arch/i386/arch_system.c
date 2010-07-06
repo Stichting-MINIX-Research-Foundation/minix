@@ -39,14 +39,14 @@ PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 
 FORWARD _PROTOTYPE( void ser_debug, (int c));
 
-PUBLIC void arch_monitor(void)
+PUBLIC __dead void arch_monitor(void)
 {
 	monitor();
 }
 
 PUBLIC int cpu_has_tsc;
 
-PUBLIC void arch_shutdown(const int how)
+PUBLIC __dead void arch_shutdown(const int how)
 {
 	vm_stop();
 

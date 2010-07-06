@@ -66,8 +66,10 @@ _PROTOTYPE( struct tm *localtime_r, (const time_t *const timep,
 					struct tm *tmp)			);
 _PROTOTYPE( size_t strftime, (char *_s, size_t _max, const char *_fmt,
 				const struct tm *_timep)		);
-_PROTOTYPE(char *strptime, (const char *buf, const char *format,
+_PROTOTYPE( char *strptime, (const char *buf, const char *format,
 				struct tm *timeptr)			);
+_PROTOTYPE( time_t timegm, (struct tm * const tmp)			);
+
 
 #ifdef _POSIX_SOURCE
 _PROTOTYPE( void tzset, (void)						);

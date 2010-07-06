@@ -44,7 +44,7 @@ _PROTOTYPE( int fkey_ctl, (int req, int *fkeys, int *sfkeys)		);
 
 _PROTOTYPE( int printf, (const char *fmt, ...));
 _PROTOTYPE( void kputc, (int c));
-_PROTOTYPE( void panic, (const char *fmt, ...));
+_PROTOTYPE( __dead void panic, (const char *fmt, ...));
 _PROTOTYPE( int getuptime, (clock_t *ticks));
 _PROTOTYPE( int getuptime2, (clock_t *ticks, time_t *boottime));
 _PROTOTYPE( int tickdelay, (clock_t ticks));

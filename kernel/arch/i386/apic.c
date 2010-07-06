@@ -298,7 +298,7 @@ PRIVATE int lapic_enable(void)
 	val |= APIC_ENABLE | APIC_SPURIOUS_INT_VECTOR;
 	val &= ~APIC_FOCUS_DISABLED;
 	lapic_write(LAPIC_SIVR, val);
-	lapic_read(LAPIC_SIVR);
+	(void) lapic_read(LAPIC_SIVR);
 
 	*((u32_t *)lapic_eoi_addr) = 0;
 
@@ -337,7 +337,7 @@ PRIVATE int lapic_enable(void)
 	/* accept all interrupts */
 	lapic_write (LAPIC_TPR, val & ~0xFF);
 
-	lapic_read (LAPIC_SIVR);
+	(void) lapic_read (LAPIC_SIVR);
 	*((u32_t *)lapic_eoi_addr) = 0;
 
 	apic_calibrate_clocks();

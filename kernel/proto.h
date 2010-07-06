@@ -36,7 +36,7 @@ _PROTOTYPE( void fpu_sigcontext, (struct proc *, struct sigframe *fr, struct sig
 /* main.c */
 _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
-_PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
+_PROTOTYPE( __dead void minix_shutdown, (struct timer *tp)		);
 
 /* proc.c */
 
@@ -166,8 +166,8 @@ _PROTOTYPE( int intr_init, (int, int)					);
 _PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );
 _PROTOTYPE( void ser_putc, (char)						);
-_PROTOTYPE( void arch_shutdown, (int)					);
-_PROTOTYPE( void arch_monitor, (void)					);
+_PROTOTYPE( __dead void arch_shutdown, (int)				);
+_PROTOTYPE( __dead void arch_monitor, (void)				);
 _PROTOTYPE( void arch_get_aout_headers, (int i, struct exec *h)		);
 _PROTOTYPE( void restore_user_context, (struct proc * p)                );
 _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)    );
