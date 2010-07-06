@@ -34,7 +34,7 @@ _PROTOTYPE( void save_fpu, (struct proc *)				);
 _PROTOTYPE( void fpu_sigcontext, (struct proc *, struct sigframe *fr, struct sigcontext *sc)	);
 
 /* main.c */
-_PROTOTYPE( void main, (void)						);
+_PROTOTYPE( int main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( __dead void minix_shutdown, (struct timer *tp)		);
 
