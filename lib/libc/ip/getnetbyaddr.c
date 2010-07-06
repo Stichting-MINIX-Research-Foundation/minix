@@ -47,7 +47,7 @@ getnetbyaddr(net, type)
 	register struct netent *p;
 
 	setnetent(_net_stayopen);
-	while (p = getnetent())
+	while ((p = getnetent()))
 		if (p->n_addrtype == type && p->n_net == net)
 			break;
 	if (!_net_stayopen)

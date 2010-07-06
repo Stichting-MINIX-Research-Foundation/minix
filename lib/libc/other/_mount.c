@@ -65,7 +65,7 @@ int mountflags;
 	sprintf(label, "fs_%.12s", p);
   } else {
 	if (stat(name, &statbuf) < 0) return -1;
-	sprintf(label, "fs_%04x%x", statbuf.st_dev, statbuf.st_ino);
+	sprintf(label, "fs_%04x%lx", statbuf.st_dev, statbuf.st_ino);
   }
 
   /* Tell VFS that we are passing in a 16-byte label. */

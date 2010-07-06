@@ -15,7 +15,7 @@ sighandler_t disp;		/* signal handler, or SIG_DFL, or SIG_IGN */
 	errno = EINVAL;
 	return(SIG_ERR);
   }
-  sigemptyset(&sa.sa_mask);
+  (void) sigemptyset(&sa.sa_mask);
 
 #ifdef WANT_UNRELIABLE_SIGNALS
   /* Allow the signal being handled to interrupt the signal handler. */

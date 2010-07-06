@@ -181,7 +181,7 @@ parseRule(register char *buf, register const char *p)
 	if (*p == '/') {
 		q = ++p;
 		if (!(p = parseTime(&time, p, &dstend))) return NULL;
-		while(*buf++ = *q++);
+		while((*buf++ = *q++));
 	}
 	if (*p) return NULL;
 	return p;

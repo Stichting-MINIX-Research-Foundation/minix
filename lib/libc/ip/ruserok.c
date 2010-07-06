@@ -61,18 +61,18 @@ static int match(const char *word, const char *pattern)
 #define lc(c, d) ((((c)= (d)) - 'A') <= ('Z' - 'A') ? (c)+= ('a' - 'A') : 0)
 
     for (;;) {
-	lc(cw, *word);
-	lc(cp, *pattern);
+	(void) lc(cw, *word);
+	(void) lc(cp, *pattern);
 
 	if (cp == '*') {
 	    do pattern++; while (*pattern == '*');
-	    lc(cp, *pattern);
+	    (void) lc(cp, *pattern);
 	    if (cp == 0) return 1;
 
 	    while (cw != 0) {
 		if (cw == cp && match(word+1, pattern+1)) return 1;
 		word++;
-		lc(cw, *word);
+		(void) lc(cw, *word);
 	    }
 	    return 0;
 	} else

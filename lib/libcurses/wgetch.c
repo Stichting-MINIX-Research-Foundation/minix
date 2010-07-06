@@ -17,7 +17,7 @@ WINDOW *win;
   }
   inp = getchar();
   if (_cursvar.echoit) {
-	mvwaddch(curscr, win->_cury + win->_begy,
+	(void) mvwaddch(curscr, win->_cury + win->_begy,
 		 win->_curx + win->_begx, inp);
 	waddch(win, inp);
   }

@@ -26,7 +26,7 @@ char *name;
 
 	if (!name) return 0;
 	if (*_penviron == NULL) return 1;
-	if (r = strchr(name, '=')) {
+	if ((r = strchr(name, '='))) {
 		register _CONST char *p, *q;
 
 		*r = '\0';
@@ -65,7 +65,7 @@ char *name;
 		size = i;
 		p = *_penviron;
 		*_penviron = v;
-		while (*v++ = *p++);		/* copy the environment */
+		while ((*v++ = *p++));		/* copy the environment */
 		v = *_penviron;
 	} else if (!(size % ENTRY_INC)) {
 		if (!(v = realloc(*_penviron, rounded(size) * sizeof(char **))))

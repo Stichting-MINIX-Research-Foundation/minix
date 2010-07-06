@@ -55,6 +55,7 @@ static char sccsid[] = "@(#)res_mkquery.c	6.12 (Berkeley) 6/1/90";
  * Form all types of queries.
  * Returns the size of the result or -1.
  */
+int
 res_mkquery(op, dname, class, type, data, datalen, newrr, buf, buflen)
 	int op;			/* opcode of query */
 	_CONST char *dname;	/* domain name */

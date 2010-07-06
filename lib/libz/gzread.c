@@ -3,6 +3,8 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
+#include <unistd.h>
+
 #include "gzguts.h"
 
 /* Local functions */
@@ -167,12 +169,12 @@ local int gz_head(state)
                 gz_error(state, Z_DATA_ERROR, "unknown header flags set");
                 return -1;
             }
-            NEXT();                 /* modification time */
-            NEXT();
-            NEXT();
-            NEXT();
-            NEXT();                 /* extra flags */
-            NEXT();                 /* operating system */
+            (void) NEXT();                 /* modification time */
+            (void) NEXT();
+            (void) NEXT();
+            (void) NEXT();
+            (void) NEXT();                 /* extra flags */
+            (void) NEXT();                 /* operating system */
             if (flags & 4) {        /* extra field */
                 len = (unsigned)NEXT();
                 len += (unsigned)NEXT() << 8;
@@ -187,8 +189,8 @@ local int gz_head(state)
                 while (NEXT() > 0)
                     ;
             if (flags & 2) {        /* header crc */
-                NEXT();
-                NEXT();
+                (void) NEXT();
+                (void) NEXT();
             }
             /* an unexpected end of file is not checked for here -- it will be
                noticed on the first request for uncompressed data */

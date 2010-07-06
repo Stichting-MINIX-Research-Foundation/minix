@@ -58,7 +58,7 @@ int ch;
 {
   if ((_cursvar.cursrow < LINES) || (_cursvar.curscol < COLS)) {
 	newattr(ch);
-	putchar(ch);
+	(void) putchar(ch);
   }
 }
 

@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <unistd.h>
 #ifdef __minix_vmd
 #include <bsd/asciictype.h>
 #else

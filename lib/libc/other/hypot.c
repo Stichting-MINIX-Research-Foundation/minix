@@ -12,7 +12,6 @@ struct complex {
 };
 
 _PROTOTYPE(double hypot, (double x, double y ));
-_PROTOTYPE(double cabs, (struct complex p_compl ));
 
 /* $Header$ */
 
@@ -34,9 +33,14 @@ hypot(double x, double y)
 	return y*sqrt(x*x+1.0);
 }
 
+#if 0
+
+_PROTOTYPE(double cabs, (struct complex p_compl ));
+
 double
 cabs(p_compl)
 struct complex p_compl;
 {
 	return hypot(p_compl.r, p_compl.i);
 }
+#endif

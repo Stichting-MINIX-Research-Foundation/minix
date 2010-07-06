@@ -48,7 +48,7 @@ getnetbyname(name)
 	register char **cp;
 
 	setnetent(_net_stayopen);
-	while (p = getnetent()) {
+	while ((p = getnetent())) {
 		if (strcmp(p->n_name, name) == 0)
 			break;
 		for (cp = p->n_aliases; *cp != 0; cp++)

@@ -16,7 +16,7 @@ register FILE *stream;
 	register char *p = (char *) &w;
 
 	while (cnt--) {
-		putc(*p++, stream);
+		(void) putc(*p++, stream);
 	}
 	if (ferror(stream)) return EOF;
 	return w;

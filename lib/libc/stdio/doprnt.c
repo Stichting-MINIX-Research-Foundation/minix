@@ -131,7 +131,7 @@ _doprnt(register const char *fmt, va_list ap, FILE *stream)
 	const char	*oldfmt;
 	char		*s1, buf[1025];
 
-	while (c = *fmt++) {
+	while ((c = *fmt++)) {
 		if (c != '%') {
 #ifdef	CPM
 			if (c == '\n') {

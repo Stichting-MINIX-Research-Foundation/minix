@@ -115,7 +115,7 @@ any(cp, match)
 {
 	register char *mp, c;
 
-	while (c = *cp) {
+	while ((c = *cp)) {
 		for (mp = match; *mp; mp++)
 			if (*mp == c)
 				return (cp);

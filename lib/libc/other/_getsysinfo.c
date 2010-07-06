@@ -15,6 +15,7 @@
 #include <minix/type.h>
 #include <minix/const.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <machine/archtypes.h>
 #include "../../../kernel/proc.h"

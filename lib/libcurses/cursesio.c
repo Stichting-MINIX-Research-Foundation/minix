@@ -48,7 +48,7 @@ char *s;
 void outc(c)
 int c;
 {
-  putchar(c);
+  (void) putchar(c);
 }
 
 /* Move cursor to r,c */

@@ -686,6 +686,7 @@ sopno lev;			/* PLUS nesting level */
 	/* "can't happen" */
 	assert(nope);
 	/* NOTREACHED */
+	_exit(1);
 }
 
 /*

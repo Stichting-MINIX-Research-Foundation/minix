@@ -166,6 +166,7 @@ PUBLIC void _exit(int status)
 {
 /* Make exit() an alias for sef_exit() for system services. */
   sef_exit(status);
+  panic("sef_exit failed");
 }
 
 /*===========================================================================*
@@ -175,6 +176,7 @@ PUBLIC void __exit(int status)
 {
 /* Make exit() an alias for sef_exit() for system services. */
   sef_exit(status);
+  panic("sef_exit failed");
 }
 
 /*===========================================================================*

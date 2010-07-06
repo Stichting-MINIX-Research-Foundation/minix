@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
+#include <termcap.h>
+#include <unistd.h>
 
 /*
 **  Manifest constants.

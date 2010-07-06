@@ -22,7 +22,7 @@ vsnprintf(char *s, size_t n, const char *format, va_list arg)
 
 	retval = _doprnt(format, arg, &tmp_stream);
 	tmp_stream._count  = 1;
-	putc('\0',&tmp_stream);
+	(void) putc('\0',&tmp_stream);
 
 	return retval;
 }

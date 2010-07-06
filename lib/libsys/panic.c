@@ -18,11 +18,7 @@ PUBLIC void panic(const char *fmt, ...)
   endpoint_t me = NONE;
   char name[20];
   void (*suicide)(void);
-  static int panicing= 0;
   va_list args;
-
-  if(panicing) return;
-  panicing= 1;
 
   if(sys_whoami(&me, name, sizeof(name)) == OK && me != NONE)
 	printf("%s(%d): panic: ", name, me);
