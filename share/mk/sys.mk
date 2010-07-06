@@ -230,7 +230,7 @@ COMPILER_TYPE=ack
 .elif !empty(CC:Mgcc)
 COMPILER_TYPE=gnu
 AR=gar
-.elif !empty(CC:Mclang)                                                                                         
-COMPILER_TYPE=gnu                                                                                               
-AR=gar                                                                                                          
+.elif !empty(CC:Mclang)
+COMPILER_TYPE=gnu
+AR=gar
 .endif
