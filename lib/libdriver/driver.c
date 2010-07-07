@@ -502,7 +502,8 @@ message *mp;		/* pointer to read or write message */
 
   if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) iovec, iovec_size, D)) {
-	panic("bad I/O vector by: %d", mp->m_source);
+	printf("bad I/O vector by: %d\n", mp->m_source);
+	return(EINVAL);
   }
 
   /* Prepare for I/O. */
@@ -516,7 +517,8 @@ message *mp;		/* pointer to read or write message */
   /* Copy the I/O vector back to the caller. */
   if (OK != sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) iovec, iovec_size, D)) {
-	panic("couldn't return I/O vector: %d", mp->m_source);
+	printf("couldn't return I/O vector: %d\n", mp->m_source);
+	return(EINVAL);
   }
 
   return(r);
