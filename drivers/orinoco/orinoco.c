@@ -37,8 +37,6 @@ PRIVATE struct pcitab {
 };
 
 
-static timer_t or_watchdog;
-
 #include 	<stdio.h>
 #include	<stdlib.h>
 #include	<minix/com.h>
@@ -437,7 +435,6 @@ static void or_init (message * mp) {
 		first_time = 0;
 		or_pci_conf ();	/* Configure PCI devices. */
 	
-		tmr_inittimer(&or_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
 		sys_setalarm(system_hz, 0);
 	}	

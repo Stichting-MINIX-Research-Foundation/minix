@@ -179,8 +179,6 @@ static re_t re_state;
 
 static int re_instance;
 
-static timer_t rl_watchdog;
-
 static unsigned my_inb(u16_t port)
 {
 	u32_t value;
@@ -579,7 +577,6 @@ message *mp;
 		first_time = 0;
 		rl_pci_conf();	/* Configure PCI devices. */
 
-		tmr_inittimer(&rl_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
 		sys_setalarm(system_hz, 0);
 	}

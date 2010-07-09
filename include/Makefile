@@ -23,7 +23,7 @@ INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/portio.h minix/profile.h minix/queryparam.h \
 	minix/rs.h minix/safecopies.h minix/sched.h minix/sef.h minix/sound.h \
 	minix/sys_config.h minix/sysinfo.h minix/syslib.h \
-	minix/sysutil.h minix/tty.h minix/type.h minix/types.h \
+	minix/sysutil.h minix/timers.h minix/tty.h minix/type.h minix/types.h \
 	minix/u64.h minix/vfsif.h minix/vm.h \
 	minix/compiler.h minix/compiler-ack.h minix/sha2.h
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h

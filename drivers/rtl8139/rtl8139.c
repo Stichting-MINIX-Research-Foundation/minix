@@ -50,8 +50,6 @@ PUBLIC re_t re_state;
 
 static int re_instance;
 
-static tmra_ut rl_watchdog;
-
 static unsigned my_inb(u16_t port) {
 	u32_t value;
 	int s;
@@ -372,7 +370,6 @@ message *mp;
 		first_time= 0;
 		rl_pci_conf(); /* Configure PCI devices. */
 
-		tmra_inittimer(&rl_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
 		sys_setalarm(system_hz, 0);
 	}

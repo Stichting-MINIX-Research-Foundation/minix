@@ -235,7 +235,7 @@ PUBLIC int do_select(void)
 	ticks = timeout.tv_sec * system_hz +
 		(timeout.tv_usec * system_hz + USECPERSEC-1) / USECPERSEC;
 	se->expiry = ticks;
-	fs_set_timer(&se->timer, ticks, select_timeout_check, s);
+	set_timer(&se->timer, ticks, select_timeout_check, s);
   }
 
   /* if we're blocking, the table entry is now valid. */
@@ -456,7 +456,7 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 #if DEBUG_SELECT
 		printf("cancelling timer %d\n", e - selecttab);
 #endif
-		fs_cancel_timer(&e->timer); 
+		cancel_timer(&e->timer); 
 		e->expiry = 0;
 	}
 
@@ -612,7 +612,7 @@ PUBLIC void init_select(void)
 	int s;
 
 	for(s = 0; s < MAXSELECTS; s++)
-		fs_init_timer(&selecttab[s].timer);
+		init_timer(&selecttab[s].timer);
 }
 
 

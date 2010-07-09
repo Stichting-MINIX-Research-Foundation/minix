@@ -42,7 +42,6 @@ from DL_ETH:
 #include <sys/svrctl.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
-#include <minix/drivers.h>
 #include <minix/driver.h>
 
 #include "mq.h"

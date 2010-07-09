@@ -102,7 +102,6 @@ unsigned long rs_irq_set = 0;
 struct kmessages kmess;
 
 FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
-FORWARD _PROTOTYPE( void expire_timers, (void)				);
 FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
 FORWARD _PROTOTYPE( void do_cancel, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_ioctl, (tty_t *tp, message *m_ptr, int s)	);
@@ -136,8 +135,6 @@ PRIVATE struct winsize winsize_defaults;	/* = all zeroes */
 /* Global variables for the TTY task (declared extern in tty.h). */
 PUBLIC tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
 PUBLIC int ccurrent;			/* currently active console */
-PUBLIC timer_t *tty_timers;		/* queue of TTY timers */
-PUBLIC clock_t tty_next_timeout;	/* time that the next alarm is due */
 PUBLIC struct machine machine;		/* kernel environment variables */
 PUBLIC u32_t system_hz;
 
@@ -187,7 +184,7 @@ PUBLIC int main(void)
 		switch (_ENDPOINT_P(tty_mess.m_source)) {
 			case CLOCK:
 				/* run watchdogs of expired timers */
-				expire_timers();
+				expire_timers(tty_mess.NOTIFY_TIMESTAMP);
 				break;
 			case HARDWARE: 
 				/* hardware interrupt notification */
@@ -201,7 +198,7 @@ PUBLIC int main(void)
 					rs_interrupt(&tty_mess);
 #endif
 				/* run watchdogs of expired timers */
-				expire_timers();
+				expire_timers(tty_mess.NOTIFY_TIMESTAMP);
 				break;
 			default:
 				/* do nothing */
@@ -1629,7 +1626,7 @@ PRIVATE void tty_init()
 
   	tp->tty_index = s;
 
-  	tmr_inittimer(&tp->tty_tmr);
+  	init_timer(&tp->tty_tmr);
 
   	tp->tty_intail = tp->tty_inhead = tp->tty_inbuf;
   	tp->tty_min = 1;
@@ -1668,65 +1665,22 @@ PRIVATE void tty_timed_out(timer_t *tp)
 }
 
 /*===========================================================================*
- *				expire_timers			    	     *
- *===========================================================================*/
-PRIVATE void expire_timers(void)
-{
-/* A synchronous alarm message was received. Check if there are any expired 
- * timers. Possibly set the event flag and reschedule another alarm.  
- */
-  clock_t now;				/* current time */
-  int s;
-
-  /* Get the current time to compare the timers against. */
-  if ((s=getuptime(&now)) != OK)
- 	panic("Couldn't get uptime from clock: %d", s);
-
-  /* Scan the queue of timers for expired timers. This dispatch the watchdog
-   * functions of expired timers. Possibly a new alarm call must be scheduled.
-   */
-  tmrs_exptimers(&tty_timers, now, NULL);
-  if (tty_timers == NULL) tty_next_timeout = TMR_NEVER;
-  else {  					  /* set new sync alarm */
-  	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
- 		panic("Couldn't set synchronous alarm: %d", s);
-  }
-}
-
-/*===========================================================================*
  *				settimer				     *
  *===========================================================================*/
 PRIVATE void settimer(tty_ptr, enable)
 tty_t *tty_ptr;			/* line to set or unset a timer on */
 int enable;			/* set timer if true, otherwise unset */
 {
-  clock_t now;				/* current time */
-  clock_t exp_time;
-  int s;
+  clock_t ticks;
 
-  /* Get the current time to calculate the timeout time. */
-  if ((s=getuptime(&now)) != OK)
- 	panic("Couldn't get uptime from clock: %d", s);
   if (enable) {
-  	exp_time = now + tty_ptr->tty_termios.c_cc[VTIME] * (system_hz/10);
+  	ticks = tty_ptr->tty_termios.c_cc[VTIME] * (system_hz/10);
+
  	/* Set a new timer for enabling the TTY events flags. */
- 	tmrs_settimer(&tty_timers, &tty_ptr->tty_tmr, 
- 		exp_time, tty_timed_out, NULL);  
+	set_timer(&tty_ptr->tty_tmr, ticks, tty_timed_out, 0);
   } else {
   	/* Remove the timer from the active and expired lists. */
-  	tmrs_clrtimer(&tty_timers, &tty_ptr->tty_tmr, NULL);
-  }
-  
-  /* Now check if a new alarm must be scheduled. This happens when the front
-   * of the timers queue was disabled or reinserted at another position, or
-   * when a new timer was added to the front.
-   */
-  if (tty_timers == NULL) tty_next_timeout = TMR_NEVER;
-  else if (tty_timers->tmr_exp_time != tty_next_timeout) { 
-  	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
- 		panic("Couldn't set synchronous alarm: %d", s);
+  	cancel_timer(&tty_ptr->tty_tmr);
   }
 }
 

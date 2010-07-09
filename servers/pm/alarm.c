@@ -337,10 +337,10 @@ struct mproc *rmp;		/* process that wants the alarm */
 clock_t ticks;			/* how many ticks delay before the signal */
 {
   if (ticks > 0) {
-  	pm_set_timer(&rmp->mp_timer, ticks, cause_sigalrm, rmp->mp_endpoint);
+  	set_timer(&rmp->mp_timer, ticks, cause_sigalrm, rmp->mp_endpoint);
 	rmp->mp_flags |=  ALARM_ON;
   } else if (rmp->mp_flags & ALARM_ON) {
-  	pm_cancel_timer(&rmp->mp_timer);
+  	cancel_timer(&rmp->mp_timer);
   	rmp->mp_flags &= ~ALARM_ON;
   }
 }
@@ -367,9 +367,10 @@ struct timer *tp;
   if ((rmp->mp_flags & ALARM_ON) == 0) return;
 
   /* If an interval is set, set a new timer; otherwise clear the ALARM_ON flag.
-   * The set_alarm call will be calling pm_set_timer from within this callback
-   * from the pm_expire_timers function. This is safe, but we must not use the
-   * "tp" structure below this point anymore. */
+   * The set_alarm call will be calling set_timer from within this callback
+   * from the expire_timers function. This is safe, but we must not use the
+   * "tp" structure below this point anymore.
+   */
   if (rmp->mp_interval[ITIMER_REAL] > 0)
 	set_alarm(rmp, rmp->mp_interval[ITIMER_REAL]);
   else rmp->mp_flags &= ~ALARM_ON;

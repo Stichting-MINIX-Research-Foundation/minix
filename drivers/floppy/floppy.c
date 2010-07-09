@@ -238,12 +238,8 @@ PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
  * floppy disk drive contains a 'fl_tmr_stop' timer. 
  */
 PRIVATE timer_t f_tmr_timeout;		/* timer for various timeouts */
-PRIVATE timer_t *f_timers;		/* queue of floppy timers */
-PRIVATE clock_t f_next_timeout; 	/* the next timeout time */
 PRIVATE u32_t system_hz;		/* system clock frequency */
 FORWARD _PROTOTYPE( void f_expire_tmrs, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void f_set_timer, (timer_t *tp, clock_t delta,
-						 tmr_func_t watchdog) 	);
 FORWARD _PROTOTYPE( void stop_motor, (timer_t *tp) 			);
 FORWARD _PROTOTYPE( void f_timeout, (timer_t *tp) 			);
 
@@ -348,14 +344,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	AC_LOWER16M | AC_ALIGN4K, &floppy_buf_phys)))
   	panic("couldn't allocate dma buffer");
 
-  f_next_timeout = TMR_NEVER;
-  tmr_inittimer(&f_tmr_timeout);
+  init_timer(&f_tmr_timeout);
 
   for (fp = &floppy[0]; fp < &floppy[NR_DRIVES]; fp++) {
 	fp->fl_curcyl = NO_CYL;
 	fp->fl_density = NO_DENS;
 	fp->fl_class = ~0;
-	tmr_inittimer(&fp->fl_tmr_stop);
+	init_timer(&fp->fl_tmr_stop);
   }
 
   /* Set IRQ policy, only request notifications, do not automatically 
@@ -394,57 +389,11 @@ PRIVATE void sef_cb_signal_handler(int signo)
  *===========================================================================*/
 PRIVATE void f_expire_tmrs(struct driver *dp, message *m_ptr)
 {
-/* A synchronous alarm message was received. Check if there are any expired 
- * timers. Possibly reschedule the next alarm.  
+/* A synchronous alarm message was received. Call the watchdog function for
+ * each expired timer, if any.
  */
-  clock_t now;				/* current time */
-  int s;
 
-  /* Get the current time to compare the timers against. */
-  if ((s=getuptime(&now)) != OK)
- 	panic("Couldn't get uptime from clock: %d", s);
-
-  /* Scan the timers queue for expired timers. Dispatch the watchdog function
-   * for each expired timers. FLOPPY watchdog functions are f_tmr_timeout() 
-   * and stop_motor(). Possibly a new alarm call must be scheduled.
-   */
-  tmrs_exptimers(&f_timers, now, NULL);
-  if (f_timers == NULL) {
-  	f_next_timeout = TMR_NEVER;
-  } else {  					  /* set new sync alarm */
-  	f_next_timeout = f_timers->tmr_exp_time;
-  	if ((s=sys_setalarm(f_next_timeout, 1)) != OK)
- 		panic("Couldn't set synchronous alarm: %d", s);
-  }
-}
-
-/*===========================================================================*
- *				f_set_timer				     *
- *===========================================================================*/
-PRIVATE void f_set_timer(tp, delta, watchdog)
-timer_t *tp;				/* timer to be set */
-clock_t delta;				/* in how many ticks */
-tmr_func_t watchdog;			/* watchdog function to be called */
-{
-  clock_t now;				/* current time */
-  int s;
-
-  /* Get the current time. */
-  if ((s=getuptime(&now)) != OK)
- 	panic("Couldn't get uptime from clock: %d", s);
-
-  /* Add the timer to the local timer queue. */
-  tmrs_settimer(&f_timers, tp, now + delta, watchdog, NULL);
-
-  /* Possibly reschedule an alarm call. This happens when the front of the 
-   * timers queue was reinserted at another position, i.e., when a timer was 
-   * reset, or when a new timer was added in front. 
-   */
-  if (f_timers->tmr_exp_time != f_next_timeout) {
-  	f_next_timeout = f_timers->tmr_exp_time; 
-  	if ((s=sys_setalarm(f_next_timeout, 1)) != OK)
- 		panic("Couldn't set synchronous alarm: %d", s);
-  }
+  expire_timers(m_ptr->NOTIFY_TIMESTAMP);
 }
 
 /*===========================================================================*
@@ -492,8 +441,7 @@ PRIVATE char *f_name(void)
 PRIVATE void f_cleanup(void)
 {
   /* Start a timer to turn the motor off in a few seconds. */
-  tmr_arg(&f_fp->fl_tmr_stop)->ta_int = f_drive;
-  f_set_timer(&f_fp->fl_tmr_stop, MOTOR_OFF, stop_motor);
+  set_timer(&f_fp->fl_tmr_stop, MOTOR_OFF, stop_motor, f_drive);
 
   /* Exiting the floppy driver, so forget where we are. */
   f_fp->fl_sector = NO_SECTOR;
@@ -818,7 +766,7 @@ PRIVATE void start_motor(void)
   /* Set an alarm timer to force a timeout if the hardware does not interrupt
    * in time. Expect an interrupt, but check for a timeout.
    */ 
-  f_set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout);
+  set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout, 0);
   f_busy = BSY_IO;
   do {
   	driver_receive(ANY, &mess, &ipc_status); 
@@ -826,7 +774,7 @@ PRIVATE void start_motor(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(NULL, NULL);
+				f_expire_tmrs(NULL, &mess);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -893,7 +841,7 @@ PRIVATE int seek(void)
 	/* Set a synchronous alarm to force a timeout if the hardware does
 	 * not interrupt.
  	 */ 
- 	f_set_timer(&f_tmr_timeout, system_hz/30, f_timeout);
+ 	set_timer(&f_tmr_timeout, system_hz/30, f_timeout, 0);
 	f_busy = BSY_IO;
   	do {
   		driver_receive(ANY, &mess, &ipc_status); 
@@ -901,7 +849,7 @@ PRIVATE int seek(void)
 		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case CLOCK:
-					f_expire_tmrs(NULL, NULL);
+					f_expire_tmrs(NULL, &mess);
 					break;
 				default :
 					f_busy = BSY_IDLE;
@@ -1057,7 +1005,7 @@ PRIVATE int fdc_command(
    * Note that the actual check is done by the code that issued the
    * fdc_command() call.
    */ 
-  f_set_timer(&f_tmr_timeout, WAKEUP, f_timeout);
+  set_timer(&f_tmr_timeout, WAKEUP, f_timeout, 0);
 
   f_busy = BSY_IO;
   while (len > 0) {
@@ -1183,7 +1131,7 @@ PRIVATE void f_reset(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(NULL, NULL);
+				f_expire_tmrs(NULL, &mess);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -1233,7 +1181,7 @@ PRIVATE int f_intr_wait(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(NULL, NULL);
+				f_expire_tmrs(NULL, &mess);
 				break;
 			default :
 				f_busy = BSY_IDLE;

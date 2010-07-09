@@ -34,6 +34,7 @@
 
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <minix/timers.h>
 
 #include "const.h"
 #include "dmap.h"

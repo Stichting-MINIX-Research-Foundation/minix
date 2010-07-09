@@ -771,9 +771,9 @@ PRIVATE void beep()
   unsigned long port_b_val;
   int s;
   
-  /* Fetch current time in advance to prevent beeping delay. */
-  if ((s=getuptime(&now)) != OK)
-  	panic("Console couldn't get clock's uptime: %d", s);
+  /* Set timer in advance to prevent beeping delay. */
+  set_timer(&tmr_stop_beep, B_TIME, stop_beep, 0);
+
   if (!beeping) {
 	/* Set timer channel 2, square wave, with given frequency. */
         pv_set(char_out[0], TIMER_MODE, 0xB6);	
@@ -784,13 +784,6 @@ PRIVATE void beep()
         	    sys_outb(PORT_B, (port_b_val|3))==OK)
         	    	beeping = TRUE;
         }
-  }
-  /* Add a timer to the timers list. Possibly reschedule the alarm. */
-  tmrs_settimer(&tty_timers, &tmr_stop_beep, now+B_TIME, stop_beep, NULL);
-  if (tty_timers->tmr_exp_time != tty_next_timeout) {
-  	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
-  		panic("Console couldn't set alarm: %d", s);
   }
 }
 
@@ -898,9 +891,9 @@ clock_t dur;
   if (ival == 0 || ival > 0xffff)
 	return;	/* Frequency out of range */
 
-  /* Fetch current time in advance to prevent beeping delay. */
-  if ((s=getuptime(&now)) != OK)
-  	panic("Console couldn't get clock's uptime: %d", s);
+  /* Set timer in advance to prevent beeping delay. */
+  set_timer(&tmr_stop_beep, dur, stop_beep, 0);
+
   if (!beeping) {
 	/* Set timer channel 2, square wave, with given frequency. */
         pv_set(char_out[0], TIMER_MODE, 0xB6);	
@@ -911,13 +904,6 @@ clock_t dur;
         	    sys_outb(PORT_B, (port_b_val|3))==OK)
         	    	beeping = TRUE;
         }
-  }
-  /* Add a timer to the timers list. Possibly reschedule the alarm. */
-  tmrs_settimer(&tty_timers, &tmr_stop_beep, now+dur, stop_beep, NULL);
-  if (tty_timers->tmr_exp_time != tty_next_timeout) {
-  	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
-  		panic("Console couldn't set alarm: %d", s);
   }
 }
 

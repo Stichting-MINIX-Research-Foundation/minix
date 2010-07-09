@@ -227,8 +227,8 @@ PRIVATE int schedule_process(struct schedproc * rmp)
 PUBLIC void init_scheduling(void)
 {
 	balance_timeout = BALANCE_TIMEOUT * sys_hz();
-	tmr_inittimer(&sched_timer);
-	sched_set_timer(&sched_timer, balance_timeout, balance_queues, 0);
+	init_timer(&sched_timer);
+	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
 }
 
 /*===========================================================================*
@@ -255,5 +255,5 @@ PRIVATE void balance_queues(struct timer *tp)
 		}
 	}
 
-	sched_set_timer(&sched_timer, balance_timeout, balance_queues, 0);
+	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
 }

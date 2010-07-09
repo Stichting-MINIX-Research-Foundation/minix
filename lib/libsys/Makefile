@@ -120,7 +120,8 @@ SRCS=  \
 	timing.c \
 	profile_extern.c \
 	profile.c \
-	vprintf.c
+	vprintf.c \
+	timers.c
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 

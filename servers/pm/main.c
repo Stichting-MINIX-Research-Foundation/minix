@@ -94,7 +94,7 @@ PUBLIC int main()
 	if (is_ipc_notify(ipc_status)) {
 		switch(who_p) {
 			case CLOCK:
-				pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
+				expire_timers(m_in.NOTIFY_TIMESTAMP);
 				result = SUSPEND;	/* don't reply */
 				break;
 			default :
@@ -201,7 +201,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   /* Initialize process table, including timers. */
   for (rmp=&mproc[0]; rmp<&mproc[NR_PROCS]; rmp++) {
-	tmr_inittimer(&rmp->mp_timer);
+	init_timer(&rmp->mp_timer);
   }
 
   /* Build the set of signals which cause core dumps, and the set of signals

@@ -19,9 +19,4 @@ _PROTOTYPE( void init_scheduling, (void)				);
 _PROTOTYPE( int no_sys, (int who_e, int call_nr)			);
 _PROTOTYPE( int sched_isokendpt, (int ep, int *proc)			);
 _PROTOTYPE( int sched_isemtyendpt, (int ep, int *proc)			);
-_PROTOTYPE( int accept_message, (message *m_ptr)				);
-
-/* timers.c */
-_PROTOTYPE( void sched_set_timer, (timer_t *tp, int delta,
-	tmr_func_t watchdog, int arg)					);
-_PROTOTYPE( void sched_expire_timers, (clock_t now)			);
+_PROTOTYPE( int accept_message, (message *m_ptr)			);

@@ -45,7 +45,7 @@ PUBLIC int main(void)
 		if (is_ipc_notify(ipc_status)) {
 			switch(who_e) {
 				case CLOCK:
-					sched_expire_timers(m_in.NOTIFY_TIMESTAMP);
+					expire_timers(m_in.NOTIFY_TIMESTAMP);
 					continue;	/* don't reply */
 				default :
 					result = ENOSYS;

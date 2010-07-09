@@ -265,12 +265,3 @@ _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
 _PROTOTYPE( void select_unsuspend_by_endpt, (endpoint_t proc)		);
 _PROTOTYPE( int select_notified, (int major, int minor, int ops)	);
-
-/* timers.c */
-_PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, 
-            tmr_func_t watchdog, int arg)                               );
-_PROTOTYPE( void fs_expire_timers, (clock_t now)			);
-_PROTOTYPE( void fs_cancel_timer, (timer_t *tp)				);
-_PROTOTYPE( void fs_init_timer, (timer_t *tp)				);
-
-

@@ -128,10 +128,6 @@ extern unsigned long rs_irq_set;
 /* Times and timeouts. */
 #define force_timeout()	((void) (0))
 
-/* Memory allocated in tty.c, so extern here. */
-extern timer_t *tty_timers;		/* queue of TTY timers */
-extern clock_t tty_next_timeout;	/* next TTY timeout */
-
 /* Number of elements and limit of a buffer. */
 #define buflen(buf)	(sizeof(buf) / sizeof((buf)[0]))
 #define bufend(buf)	((buf) + buflen(buf))

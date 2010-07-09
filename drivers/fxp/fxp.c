@@ -20,8 +20,6 @@
 
 #include <timers.h>
 
-#define tmra_ut			timer_t
-#define tmra_inittimer(tp)	tmr_inittimer(tp)
 #define debug			0
 #define RAND_UPDATE		/**/
 #define printW()		((void)0)
@@ -60,9 +58,6 @@ PRIVATE struct pcitab pcitab_fxp[]=
 };
 
 typedef int irq_hook_t;
-
-static timer_t *fxp_timers= NULL;
-static clock_t fxp_next_timeout= 0;
 
 /* ignore interrupt for the moment */
 #define interrupt(x)	0
@@ -165,7 +160,7 @@ PRIVATE int fxp_instance;
 
 PRIVATE fxp_t *fxp_state;
 
-PRIVATE tmra_ut fxp_watchdog;
+PRIVATE timer_t fxp_watchdog;
 
 PRIVATE u32_t system_hz;
 
@@ -202,9 +197,6 @@ _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
 _PROTOTYPE( static u16_t eeprom_read, (fxp_t *fp, int reg)		);
 _PROTOTYPE( static void eeprom_addrsize, (fxp_t *fp)			);
 _PROTOTYPE( static u16_t mii_read, (fxp_t *fp, int reg)			);
-_PROTOTYPE( static void fxp_set_timer,(timer_t *tp, clock_t delta,
-						tmr_func_t watchdog)	);
-_PROTOTYPE( static void fxp_expire_timers,(void)			);
 _PROTOTYPE( static u8_t do_inb, (port_t port)				);
 _PROTOTYPE( static u32_t do_inl, (port_t port)				);
 _PROTOTYPE( static void do_outb, (port_t port, u8_t v)			);
@@ -266,7 +258,7 @@ int main(int argc, char *argv[])
 					handle_hw_intr();
 					break;
 				case CLOCK:
-					fxp_expire_timers();
+					expire_timers(m.NOTIFY_TIMESTAMP);
 					break;
 				default:
 					panic(" illegal notify from: %d", m.m_source);
@@ -382,9 +374,8 @@ message *mp;
 		first_time= 0;
 		fxp_pci_conf(); /* Configure PCI devices. */
 
-		tmra_inittimer(&fxp_watchdog);
-		tmr_arg(&fxp_watchdog)->ta_int= 0;
-		fxp_set_timer(&fxp_watchdog, system_hz, fxp_watchdog_f);
+		init_timer(&fxp_watchdog);
+		set_timer(&fxp_watchdog, system_hz, fxp_watchdog_f, 0);
 	}
 
 	fp= fxp_state;
@@ -1771,8 +1762,7 @@ timer_t *tp;
 {
 	fxp_t *fp;
 
-	tmr_arg(&fxp_watchdog)->ta_int= 0;
-	fxp_set_timer(&fxp_watchdog, system_hz, fxp_watchdog_f);
+	set_timer(&fxp_watchdog, system_hz, fxp_watchdog_f, 0);
 
 	fp= fxp_state;
 	if (fp->fxp_mode != FM_ENABLED)
@@ -2258,73 +2248,6 @@ int reg;
 	assert(!fp->fxp_mii_busy);
 
 	return v & CM_DATA_MASK;
-}
-
-/*===========================================================================*
- *				fxp_set_timer				     *
- *===========================================================================*/
-PRIVATE void fxp_set_timer(tp, delta, watchdog)
-timer_t *tp;				/* timer to be set */
-clock_t delta;				/* in how many ticks */
-tmr_func_t watchdog;			/* watchdog function to be called */
-{
-	clock_t now;				/* current time */
-	int r;
-
-	/* Get the current time. */
-	r= getuptime(&now);
-	if (r != OK)
-		panic("unable to get uptime from clock: %d", r);
-
-	/* Add the timer to the local timer queue. */
-	tmrs_settimer(&fxp_timers, tp, now + delta, watchdog, NULL);
-
-	/* Possibly reschedule an alarm call. This happens when a new timer
-	 * is added in front. 
-	 */
-	if (fxp_next_timeout == 0 || 
-		fxp_timers->tmr_exp_time < fxp_next_timeout)
-	{
-		fxp_next_timeout= fxp_timers->tmr_exp_time; 
-#if VERBOSE
-		printf("fxp_set_timer: calling sys_setalarm for %d (now+%d)\n",
-			fxp_next_timeout, fxp_next_timeout-now);
-#endif
-		r= sys_setalarm(fxp_next_timeout, 1);
-		if (r != OK)
-			panic("unable to set synchronous alarm: %d", r);
-	}
-}
-
-/*===========================================================================*
- *				fxp_expire_tmrs				     *
- *===========================================================================*/
-PRIVATE void fxp_expire_timers()
-{
-/* A synchronous alarm message was received. Check if there are any expired 
- * timers. Possibly reschedule the next alarm.  
- */
-  clock_t now;				/* current time */
-  int r;
-
-  /* Get the current time to compare the timers against. */
-  r= getuptime(&now);
-  if (r != OK)
- 	panic("Unable to get uptime from clock: %d", r);
-
-  /* Scan the timers queue for expired timers. Dispatch the watchdog function
-   * for each expired timers. Possibly a new alarm call must be scheduled.
-   */
-  tmrs_exptimers(&fxp_timers, now, NULL);
-  if (fxp_timers == NULL)
-  	fxp_next_timeout= TMR_NEVER;
-  else
-  {  					  /* set new alarm */
-  	fxp_next_timeout = fxp_timers->tmr_exp_time;
-  	r= sys_setalarm(fxp_next_timeout, 1);
-  	if (r != OK)
- 		panic("Unable to set synchronous alarm: %d", r);
-  }
 }
 
 static u8_t do_inb(port_t port)

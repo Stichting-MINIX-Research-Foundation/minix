@@ -92,12 +92,6 @@ _PROTOTYPE( int do_stime, (void)					);
 _PROTOTYPE( int do_time, (void)						);
 _PROTOTYPE( int do_times, (void)					);
 
-/* timers.c */
-_PROTOTYPE( void pm_set_timer, (timer_t *tp, int delta, 
-	tmr_func_t watchdog, int arg)					);
-_PROTOTYPE( void pm_expire_timers, (clock_t now)			);
-_PROTOTYPE( void pm_cancel_timer, (timer_t *tp)				);
-
 /* trace.c */
 _PROTOTYPE( int do_trace, (void)					);
 _PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);

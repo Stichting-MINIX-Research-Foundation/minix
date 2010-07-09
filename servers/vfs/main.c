@@ -111,7 +111,7 @@ PUBLIC int main(void)
 			/* Alarm timer expired. Used only for select().
 			 * Check it.
 			 */
-			fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
+			expire_timers(m_in.NOTIFY_TIMESTAMP);
 		}
 		else if(who_e == DS_PROC_NR)
 		{

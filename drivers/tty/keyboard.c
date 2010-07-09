@@ -706,18 +706,9 @@ PRIVATE void kbd_send()
 	kbd_alive= 1;
 	if (kbd_watchdog_set)
 	{
-		/* Add a timer to the timers list. Possibly reschedule the
-		 * alarm.
-		 */
-		if ((r= getuptime(&now)) != OK)
-			panic("Keyboard couldn't get clock's uptime: %d", r);
-		tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+system_hz, kbd_watchdog,
-			NULL);
-		if (tty_timers->tmr_exp_time != tty_next_timeout) {
-			tty_next_timeout = tty_timers->tmr_exp_time;
-			if ((r= sys_setalarm(tty_next_timeout, 1)) != OK)
-				panic("Keyboard couldn't set alarm: %d", r);
-		}
+		/* Set a watchdog timer for one second. */
+		set_timer(&tmr_kbd_wd, system_hz, kbd_watchdog, 0);
+
 		kbd_watchdog_set= 1;
 	 }
 }
@@ -1320,14 +1311,7 @@ timer_t *tmrp;
 	}
 	kbd_alive= 0;
 
-	if ((r= getuptime(&now)) != OK)
-		panic("Keyboard couldn't get clock's uptime: %d", r);
-	tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+system_hz, kbd_watchdog,
-		NULL);
-	if (tty_timers->tmr_exp_time != tty_next_timeout) {
-		tty_next_timeout = tty_timers->tmr_exp_time;
-		if ((r= sys_setalarm(tty_next_timeout, 1)) != OK)
-			panic("Keyboard couldn't set alarm: %d", r);
-	}
+	set_timer(&tmr_kbd_wd, system_hz, kbd_watchdog, 0);
+
 	kbd_watchdog_set= 1;
 }

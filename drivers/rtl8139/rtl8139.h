@@ -453,8 +453,6 @@ d8	R/W	Config5		Configuration register 5
 d9-ff				reserved
 #endif
 
-#define tmra_ut			timer_t
-#define tmra_inittimer(tp)	tmr_inittimer(tp)
 #define Proc_number(p)		proc_number(p)
 #define debug			0
 #define printW()		((void)0)

@@ -1,6 +1,6 @@
 # Makefile for Scheduler (SCHED)
 PROG=	sched
-SRCS=	main.c schedule.c utility.c timers.c
+SRCS=	main.c schedule.c utility.c
 
 DPADD+=	${LIBSYS} ${LIBTIMERS}
 LDADD+=	-lsys -ltimers
