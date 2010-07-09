@@ -20,7 +20,10 @@
 /* Compile in asserts and custom sanity checks at all? */
 #define SANITYCHECKS	0
 #define VMSTATS		0
+
+/* VM behaviour */
 #define JUNKFREE	0	/* Fill freed pages with junk */
+#define NONCONTIGUOUS	0	/* Make phys pages max. noncontiguous */
 
 /* How noisy are we supposed to be? */
 #define VERBOSE		0

@@ -435,6 +435,17 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 		incr = 0;
 	}
 
+#if NONCONTIGUOUS
+	/* If NONCONTIGUOUS is on, allocate physical pages single
+	 * pages at a time, accomplished by returning single pages
+	 * if the caller can handle that (indicated by PAF_FIRSTBLOCK).
+	 */
+	if(memflags & PAF_FIRSTBLOCK) {
+		assert(!(memflags & PAF_CONTIG));
+		pages = 1;
+	}
+#endif
+
 	while((pr = addr_get_iter(&iter))) {
 		SLABSANE(pr);
 		assert(pr->size > 0);
@@ -862,7 +873,7 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 {
 	phys_bytes rempages;
-	struct memlist *head = NULL, *ml;
+	struct memlist *head = NULL, *tail = NULL;
 
 	assert(bytes > 0);
 	assert(!(bytes % VM_PAGE_SIZE));
@@ -909,15 +920,29 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 		USE(ml,
 			ml->phys = CLICK2ABS(mem);
 			ml->length = CLICK2ABS(gotpages);
-			ml->next = head;);
-		head = ml;
+			ml->next = NULL;);
+		if(tail)
+			tail->next = ml;
+		tail = ml;
+		if(!head)
+			head = ml;
 		rempages -= gotpages;
 	} while(rempages > 0);
 
+    {
+	struct memlist *ml;
 	for(ml = head; ml; ml = ml->next) {
 		assert(ml->phys);
 		assert(ml->length);
+#if NONCONTIGUOUS
+		if(!(flags & PAF_CONTIG)) {
+			assert(ml->length == VM_PAGE_SIZE);
+			if(ml->next)
+				assert(ml->phys + ml->length != ml->next->phys);
+		}
+#endif
 	}
+    }
 
 	return head;
 }
