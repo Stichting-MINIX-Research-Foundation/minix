@@ -5,6 +5,12 @@
 #ifndef _STRING_H
 #define _STRING_H
 
+/* Not strictly necessary, but some sources, in particular
+ * llvm, assume the defines in stdint.h are available when
+ * string.h is include.
+ */
+#include <stdint.h>
+
 #define NULL    ((void *)0)
 
 #ifndef _SIZE_T
