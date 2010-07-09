@@ -3,7 +3,7 @@
 #include <minix/sysutil.h>
 
 /* SEF Live update variables. */
-PRIVATE int sef_lu_state = SEF_LU_STATE_NULL;
+PRIVATE int sef_lu_state;
 
 /* SEF Live update callbacks. */
 PRIVATE struct sef_cbs {
@@ -12,12 +12,14 @@ PRIVATE struct sef_cbs {
     sef_cb_lu_state_changed_t           sef_cb_lu_state_changed;
     sef_cb_lu_state_dump_t              sef_cb_lu_state_dump;
     sef_cb_lu_state_save_t              sef_cb_lu_state_save;
+    sef_cb_lu_response_t                sef_cb_lu_response;
 } sef_cbs = {
     SEF_CB_LU_PREPARE_DEFAULT,
     SEF_CB_LU_STATE_ISVALID_DEFAULT,
     SEF_CB_LU_STATE_CHANGED_DEFAULT,
     SEF_CB_LU_STATE_DUMP_DEFAULT,
     SEF_CB_LU_STATE_SAVE_DEFAULT,
+    SEF_CB_LU_RESPONSE_DEFAULT
 };
 
 /* SEF Live update prototypes for sef_receive(). */
@@ -31,6 +33,10 @@ PRIVATE _PROTOTYPE( void sef_lu_ready, (int result) );
 EXTERN _PROTOTYPE( char* sef_debug_header, (void) );
 PRIVATE int sef_lu_debug_cycle = 0;
 
+/* Information about SELF. */
+EXTERN endpoint_t sef_self_endpoint;
+EXTERN int sef_self_first_receive_done;
+
 /*===========================================================================*
  *                         do_sef_lu_before_receive             	     *
  *===========================================================================*/
@@ -38,6 +44,11 @@ PUBLIC void do_sef_lu_before_receive()
 {
 /* Handle SEF Live update before receive events. */
   int r;
+
+  /* Initialize on first receive. */
+  if(!sef_self_first_receive_done) {
+      sef_lu_state = SEF_LU_STATE_NULL;
+  }
 
   /* Nothing to do if we are not preparing for a live update. */
   if(sef_lu_state == SEF_LU_STATE_NULL) {
@@ -113,7 +124,7 @@ PUBLIC int do_sef_lu_request(message *m_ptr)
 PRIVATE void sef_lu_ready(int result)
 {
   message m;
-  int old_state, rs_result, r;
+  int old_state, r;
 
 #if SEF_LU_DEBUG
   sef_lu_debug_begin();
@@ -134,22 +145,22 @@ PRIVATE void sef_lu_ready(int result)
       }
   }
 
-  /* Inform RS that we're ready with the given result. */
+  /* Let the callback code produce a live update response and block.
+   * We should get beyond this point only if either result is an error or
+   * something else goes wrong in the callback code.
+   */
+  m.m_source = sef_self_endpoint;
   m.m_type = RS_LU_PREPARE;
   m.RS_LU_STATE = sef_lu_state;
   m.RS_LU_RESULT = result;
-  r = sendrec(RS_PROC_NR, &m);
-  if ( r != OK) {
-      panic("sendrec failed: %d", r);
-  }
+  r = sef_cbs.sef_cb_lu_response(&m);
 
 #if SEF_LU_DEBUG
-  rs_result = m.m_type == RS_LU_PREPARE ? EINTR : m.m_type;
   sef_lu_debug_begin();
   sef_lu_dprint("%s, cycle=%d. The %s aborted the update with result %d!\n",
       sef_debug_header(), sef_lu_debug_cycle,
       (result == OK ? "server" : "client"),
-      (result == OK ? rs_result : result)); /* EINTR if update was canceled. */
+      (result == OK ? r : result)); /* EINTR if update was canceled. */
   sef_lu_debug_end();
 #endif
 
@@ -209,6 +220,15 @@ PUBLIC void sef_setcb_lu_state_save(sef_cb_lu_state_save_t cb)
 }
 
 /*===========================================================================*
+ *                          sef_setcb_lu_response                            *
+ *===========================================================================*/
+PUBLIC void sef_setcb_lu_response(sef_cb_lu_response_t cb)
+{
+  assert(cb != NULL);
+  sef_cbs.sef_cb_lu_response = cb;
+}
+
+/*===========================================================================*
  *      	            sef_cb_lu_prepare_null 	 	             *
  *===========================================================================*/
 PUBLIC int sef_cb_lu_prepare_null(int UNUSED(state))
@@ -246,6 +266,14 @@ PUBLIC void sef_cb_lu_state_dump_null(int UNUSED(state))
 PUBLIC int sef_cb_lu_state_save_null(int UNUSED(result))
 {
   return OK;
+}
+
+/*===========================================================================*
+ *                       sef_cb_lu_response_null        		     *
+ *===========================================================================*/
+PUBLIC int sef_cb_lu_response_null(message * UNUSED(m_ptr))
+{
+  return ENOSYS;
 }
 
 /*===========================================================================*
@@ -295,5 +323,21 @@ PUBLIC int sef_cb_lu_state_isvalid_standard(int state)
 PUBLIC int sef_cb_lu_state_isvalid_workfree(int state)
 {
   return (state == SEF_LU_STATE_WORK_FREE);
+}
+
+/*===========================================================================*
+ *                       sef_cb_lu_response_rs_reply        		     *
+ *===========================================================================*/
+PUBLIC int sef_cb_lu_response_rs_reply(message *m_ptr)
+{
+  int r;
+
+  /* Inform RS that we're ready with the given result. */
+  r = sendrec(RS_PROC_NR, m_ptr);
+  if ( r != OK) {
+      return r;
+  }
+
+  return m_ptr->m_type == RS_LU_PREPARE ? EINTR : m_ptr->m_type;
 }
 

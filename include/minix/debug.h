@@ -9,5 +9,14 @@
 	} \
 }
 
+#define NOT_REACHABLE	do {						\
+	panic("NOT_REACHABLE at %s:%d", __FILE__, __LINE__);	\
+	for(;;);							\
+} while(0)
+
+#define NOT_IMPLEMENTED do {	\
+		panic("NOT_IMPLEMENTED at %s:%d", __FILE__, __LINE__); \
+} while(0)
+
 #endif /* _MINIX_DEBUG_H */
 

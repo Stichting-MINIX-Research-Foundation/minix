@@ -531,6 +531,7 @@
 #define SYS_PRIV_ADD_IRQ	7	/* Add IRQ */
 #define SYS_PRIV_QUERY_MEM	8	/* Verify memory privilege. */
 #define SYS_PRIV_UPDATE_SYS	9	/* Update a sys privilege structure. */
+#define SYS_PRIV_YIELD	       10	/* Allow process to run and suspend */
 
 /* Field names for SYS_SETGRANT */
 #define SG_ADDR		m2_p1	/* address */

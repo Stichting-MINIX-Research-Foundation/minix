@@ -8,6 +8,7 @@
 PUBLIC char sef_self_name[SEF_SELF_NAME_MAXLEN];
 PUBLIC endpoint_t sef_self_endpoint;
 PUBLIC int sef_self_priv_flags;
+PUBLIC int sef_self_first_receive_done;
 
 /* Debug. */
 #define SEF_DEBUG_HEADER_MAXLEN 32
@@ -41,14 +42,16 @@ PUBLIC void sef_startup()
 /* SEF startup interface for system services. */
   int r, status;
   endpoint_t old_endpoint;
+  int priv_flags;
 
   /* Get information about self. */
   r = sys_whoami(&sef_self_endpoint, sef_self_name, SEF_SELF_NAME_MAXLEN,
-      &sef_self_priv_flags);
+      &priv_flags);
   if ( r != OK) {
       sef_self_endpoint = SELF;
       sprintf(sef_self_name, "%s", "Unknown");
   }
+  sef_self_priv_flags = priv_flags;
   old_endpoint = NONE;
 
   /* RS may wake up with the wrong endpoint, perfom the update in that case. */
@@ -92,6 +95,10 @@ PUBLIC void sef_startup()
       }
   }
 #endif
+
+  /* (Re)initialize SEF variables. */
+  sef_self_first_receive_done = FALSE;
+  sef_self_priv_flags = priv_flags;
 }
 
 /*===========================================================================*
@@ -112,6 +119,7 @@ PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
       /* Receive and return in case of error. */
       r = receive(src, m_ptr, &status);
       if(status_ptr) *status_ptr = status;
+      if(!sef_self_first_receive_done) sef_self_first_receive_done = TRUE;
       if(r != OK) {
           return r;
       }

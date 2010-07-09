@@ -8,10 +8,12 @@ PRIVATE struct sef_cbs {
     sef_cb_init_t                       sef_cb_init_fresh;
     sef_cb_init_t                       sef_cb_init_lu;
     sef_cb_init_t                       sef_cb_init_restart;
+    sef_cb_init_response_t              sef_cb_init_response;
 } sef_cbs = {
     SEF_CB_INIT_FRESH_DEFAULT,
     SEF_CB_INIT_LU_DEFAULT,
-    SEF_CB_INIT_RESTART_DEFAULT
+    SEF_CB_INIT_RESTART_DEFAULT,
+    SEF_CB_INIT_RESPONSE_DEFAULT
 };
 
 /* SEF Init prototypes for sef_startup(). */
@@ -31,7 +33,8 @@ EXTERN endpoint_t sef_self_priv_flags;
 PRIVATE int process_init(int type, sef_init_info_t *info)
 {
 /* Process initialization. */
-  int r;
+  int r, result;
+  message m;
 
   /* Debug. */
 #if SEF_INIT_DEBUG
@@ -44,20 +47,25 @@ PRIVATE int process_init(int type, sef_init_info_t *info)
   /* Let the callback code handle the specific initialization type. */
   switch(type) {
       case SEF_INIT_FRESH:
-          r = sef_cbs.sef_cb_init_fresh(type, info);
+          result = sef_cbs.sef_cb_init_fresh(type, info);
       break;
       case SEF_INIT_LU:
-          r = sef_cbs.sef_cb_init_lu(type, info);
+          result = sef_cbs.sef_cb_init_lu(type, info);
       break;
       case SEF_INIT_RESTART:
-          r = sef_cbs.sef_cb_init_restart(type, info);
+          result = sef_cbs.sef_cb_init_restart(type, info);
       break;
 
       default:
           /* Not a valid SEF init type. */
-          r = EINVAL;
+          result = EINVAL;
       break;
   }
+
+  m.m_source = sef_self_endpoint;
+  m.m_type = RS_INIT;
+  m.RS_INIT_RESULT = result;
+  r = sef_cbs.sef_cb_init_response(&m);
 
   return r;
 }
@@ -109,10 +117,6 @@ PUBLIC int do_sef_init_request(message *m_ptr)
   /* Peform initialization. */
   r = process_init(type, &info);
 
-  /* Report back to RS. */
-  m_ptr->RS_INIT_RESULT = r;
-  r = sendrec(RS_PROC_NR, m_ptr);
-
   return r;
 }
 
@@ -144,12 +148,29 @@ PUBLIC void sef_setcb_init_restart(sef_cb_init_t cb)
 }
 
 /*===========================================================================*
+ *                         sef_setcb_init_response                           *
+ *===========================================================================*/
+PUBLIC void sef_setcb_init_response(sef_cb_init_response_t cb)
+{
+  assert(cb != NULL);
+  sef_cbs.sef_cb_init_response = cb;
+}
+
+/*===========================================================================*
  *      	              sef_cb_init_null                               *
  *===========================================================================*/
 PUBLIC int sef_cb_init_null(int UNUSED(type),
    sef_init_info_t *UNUSED(info))
 {
   return OK;
+}
+
+/*===========================================================================*
+ *                        sef_cb_init_response_null        		     *
+ *===========================================================================*/
+PUBLIC int sef_cb_init_response_null(message * UNUSED(m_ptr))
+{
+  return ENOSYS;
 }
 
 /*===========================================================================*
@@ -168,5 +189,18 @@ PUBLIC int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))
   panic("Simulating a crash at initialization time...");
 
   return OK;
+}
+
+/*===========================================================================*
+ *                       sef_cb_init_response_rs_reply        		     *
+ *===========================================================================*/
+PUBLIC int sef_cb_init_response_rs_reply(message *m_ptr)
+{
+  int r;
+
+  /* Inform RS that we completed initialization with the given result. */
+  r = sendrec(RS_PROC_NR, m_ptr);
+
+  return r;
 }
 

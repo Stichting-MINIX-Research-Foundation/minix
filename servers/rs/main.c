@@ -126,7 +126,7 @@ PUBLIC int main(void)
           /* Finally send reply message, unless disabled. */
           if (result != EDONTREPLY) {
 	      m.m_type = result;
-              reply(who_e, &m);
+              reply(who_e, NULL, &m);
           }
       }
   }
@@ -138,8 +138,12 @@ PUBLIC int main(void)
 PRIVATE void sef_local_startup()
 {
   /* Register init callbacks. */
+  sef_setcb_init_response(do_init_ready);
   sef_setcb_init_fresh(sef_cb_init_fresh);
   sef_setcb_init_restart(sef_cb_init_fail);
+
+  /* Register live update callbacks. */
+  sef_setcb_lu_response(do_upd_ready);
 
   /* Register signal callbacks. */
   sef_setcb_signal_handler(sef_cb_signal_handler);
@@ -349,11 +353,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           continue;
       }
 
-      /* Ignore RS. */
-      if(boot_image_priv->endpoint == RS_PROC_NR) {
-          continue;
-      }
-
       /* Kernel-scheduled processes first */
       if ((boot_image_priv->sched == KERNEL) ? usersched : !usersched) {
           continue;
@@ -363,13 +362,20 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp = &rproc[boot_image_priv - boot_image_priv_table];
       rpub = rp->r_pub;
 
-      /* Allow the service to run. */
-      if ((s = sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
-          panic("unable to initialize privileges: %d", s);
+      /* RS is already running as we speak. */
+      if(boot_image_priv->endpoint == RS_PROC_NR) {
+          if ((s = init_service(rp, SEF_INIT_FRESH)) != OK) {
+              panic("unable to initialize RS: %d", s);
+          }
+          continue;
       }
 
+      /* Allow the service to run. */
       if ((s = sched_init_proc(rp)) != OK) {
           panic("unable to initialize scheduling: %d", s);
+      }
+      if ((s = sys_privctl(rpub->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
+          panic("unable to initialize privileges: %d", s);
       }
 
       /* Initialize service. We assume every service will always get
@@ -456,14 +462,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if(pid == 0) {
       /* New RS instance running. */
 
-      /* Synchronize with the old instance. */
-      s = sef_receive(RS_PROC_NR, &m);
-      if(s != OK) {
-          panic("sef_receive failed: %d", s);
-      }
-
       /* Live update the old instance into the new one. */
-      s = update_service(&rp, &replica_rp);
+      s = update_service(&rp, &replica_rp, RS_SWAP);
       if(s != OK) {
           panic("unable to live update RS: %d", s);
       }
@@ -485,26 +485,18 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       /* Old RS instance running. */
 
       /* Set up privileges for the new instance and let it run. */
-      set_sys_bit(replica_rp->r_priv.s_ipc_to, static_priv_id(RS_PROC_NR));
       s = sys_privctl(replica_endpoint, SYS_PRIV_SET_SYS, &(replica_rp->r_priv));
       if(s != OK) {
           panic("unable to set privileges for the new RS instance: %d", s);
       }
-      s = sys_privctl(replica_endpoint, SYS_PRIV_ALLOW, NULL);
-      if(s != OK) {
-          panic("unable to let the new RS instance run: %d", s);
-      }
       if ((s = sched_init_proc(replica_rp)) != OK) {
           panic("unable to initialize RS replica scheduling: %d", s);
       }
-
-      /* Synchronize with the new instance and go to sleep. */
-      m.m_type = RS_INIT;
-      s = sendrec(replica_endpoint, &m);
+      s = sys_privctl(replica_endpoint, SYS_PRIV_YIELD, NULL);
       if(s != OK) {
-          panic("sendrec failed: %d", s);
+          panic("unable to yield control to the new RS instance: %d", s);
       }
-      /* Not reachable */
+      NOT_REACHABLE;
   }
 
   return(OK);
@@ -690,7 +682,7 @@ endpoint_t endpoint;
 
   /* Send a reply to unblock the service. */
   m.m_type = OK;
-  reply(m.m_source, &m);
+  reply(m.m_source, rp, &m);
 
   /* Mark the slot as no longer initializing. */
   rp->r_flags &= ~RS_INITIALIZING;

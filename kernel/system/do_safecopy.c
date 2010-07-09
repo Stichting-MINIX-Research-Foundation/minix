@@ -27,7 +27,7 @@ FORWARD _PROTOTYPE(int safecopy, (struct proc *, endpoint_t, endpoint_t,
 		cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
 
 #define HASGRANTTABLE(gr) \
-	(!RTS_ISSET(gr, RTS_NO_PRIV) && priv(gr) && priv(gr)->s_grant_table > 0)
+	(priv(gr) && priv(gr)->s_grant_table)
 
 /*===========================================================================*
  *				verify_grant				     *
@@ -67,7 +67,12 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		 * priv. structure, or the grant table in the priv. structure
 		 * is too small for the grant, return EPERM.
 		 */
-		if(!HASGRANTTABLE(granter_proc)) return EPERM;
+		if(!HASGRANTTABLE(granter_proc)) {
+			printf(
+			"grant verify failed: granter %d has no grant table\n",
+			granter);
+			return(EPERM);
+		}
 
 		if(priv(granter_proc)->s_grant_entries <= grant) {
 				printf(
@@ -244,7 +249,11 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 
 	/* See if there is a reasonable grant table. */
 	if(!(granter_p = endpoint_lookup(granter))) return EINVAL;
-	if(!HASGRANTTABLE(granter_p)) return EPERM;
+	if(!HASGRANTTABLE(granter_p)) {
+		printf(
+		"safecopy failed: granter %d has no grant table\n", granter);
+		return(EPERM);
+	}
 
 	/* Decide who is src and who is dst. */
 	if(access & CPF_READ) {

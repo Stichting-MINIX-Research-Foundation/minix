@@ -55,15 +55,6 @@
 #define TRACE(code, statement)
 #endif
 
-#define NOT_REACHABLE	do {						\
-	panic("NOT_REACHABLE at %s:%d", __FILE__, __LINE__);	\
-	for(;;);							\
-} while(0)
-
-#define NOT_IMPLEMENTED do {	\
-		panic("NOT_IMPLEMENTED at %s:%d", __FILE__, __LINE__); \
-} while(0)
-
 #ifdef CONFIG_BOOT_VERBOSE
 #define BOOT_VERBOSE(x)	x
 #else

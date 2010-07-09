@@ -58,7 +58,7 @@ _PROTOTYPE( int run_service, (struct rproc *rp, int init_type) );
 _PROTOTYPE( int start_service, (struct rproc *rp) );
 _PROTOTYPE( void stop_service, (struct rproc *rp,int how) );
 _PROTOTYPE( int update_service, (struct rproc **src_rpp,
-	struct rproc **dst_rpp) );
+	struct rproc **dst_rpp, int swap_flag) );
 _PROTOTYPE( void activate_service, (struct rproc *rp, struct rproc *ex_rp) );
 _PROTOTYPE( void terminate_service, (struct rproc *rp));
 _PROTOTYPE( void restart_service, (struct rproc *rp) );
@@ -92,10 +92,12 @@ _PROTOTYPE( int init_service, (struct rproc *rp, int type));
 _PROTOTYPE(void fill_call_mask, ( int *calls, int tot_nr_calls,
 	bitchunk_t *call_mask, int call_base, int is_init));
 _PROTOTYPE( char* srv_to_string, (struct rproc *rp));
-_PROTOTYPE( void reply, (endpoint_t who, message *m_ptr));
+_PROTOTYPE( void reply, (endpoint_t who, struct rproc *rp, message *m_ptr));
 _PROTOTYPE( void late_reply, (struct rproc *rp, int code));
 _PROTOTYPE( int rs_isokendpt, (endpoint_t endpoint, int *proc));
 _PROTOTYPE( int sched_init_proc, (struct rproc *rp));
+_PROTOTYPE( int update_sig_mgrs, (struct rproc *rp, endpoint_t sig_mgr,
+	endpoint_t bak_sig_mgr));
 
 /* error.c */
 _PROTOTYPE( char * init_strerror, (int errnum) );

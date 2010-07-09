@@ -59,6 +59,15 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	RTS_UNSET(rp, RTS_NO_PRIV);
 	return(OK);
 
+  case SYS_PRIV_YIELD:
+	/* Allow process to run and suspend the caller. */
+	if (!RTS_ISSET(rp, RTS_NO_PRIV) || priv(rp)->s_proc_nr == NONE) {
+		return(EPERM);
+	}
+	RTS_SET(caller, RTS_NO_PRIV);
+	RTS_UNSET(rp, RTS_NO_PRIV);
+	return(OK);
+
   case SYS_PRIV_DISALLOW:
 	/* Disallow process from running. */
 	if (RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);

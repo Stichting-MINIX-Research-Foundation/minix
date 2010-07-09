@@ -35,26 +35,32 @@ typedef struct {
 
 /* Callback type definitions. */
 typedef int(*sef_cb_init_t)(int type, sef_init_info_t *info);
+typedef int(*sef_cb_init_response_t)(message *m_ptr);
 
 /* Callback registration helpers. */
 _PROTOTYPE( void sef_setcb_init_fresh, (sef_cb_init_t cb));
 _PROTOTYPE( void sef_setcb_init_lu, (sef_cb_init_t cb));
 _PROTOTYPE( void sef_setcb_init_restart, (sef_cb_init_t cb));
+_PROTOTYPE( void sef_setcb_init_response, (sef_cb_init_response_t cb) );
 
 /* Predefined callback implementations. */
 _PROTOTYPE( int sef_cb_init_null, (int type, sef_init_info_t *info) );
+_PROTOTYPE( int sef_cb_init_response_null, (message *m_ptr) );
 
 _PROTOTYPE( int sef_cb_init_fail, (int type, sef_init_info_t *info) );
 _PROTOTYPE( int sef_cb_init_crash, (int type, sef_init_info_t *info) );
+_PROTOTYPE( int sef_cb_init_response_rs_reply, (message *m_ptr) );
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_INIT_FRESH_NULL          sef_cb_init_null
 #define SEF_CB_INIT_LU_NULL             sef_cb_init_null
 #define SEF_CB_INIT_RESTART_NULL        sef_cb_init_null
+#define SEF_CB_INIT_RESPONSE_NULL       sef_cb_init_response_null
 
 #define SEF_CB_INIT_FRESH_DEFAULT       sef_cb_init_null
 #define SEF_CB_INIT_LU_DEFAULT          sef_cb_init_null
 #define SEF_CB_INIT_RESTART_DEFAULT     sef_cb_init_null
+#define SEF_CB_INIT_RESPONSE_DEFAULT    sef_cb_init_response_rs_reply
 
 /* Init types. */
 #define SEF_INIT_FRESH                  0    /* init fresh */
@@ -121,6 +127,7 @@ typedef  int(*sef_cb_lu_state_isvalid_t)(int);
 typedef void(*sef_cb_lu_state_changed_t)(int, int);
 typedef void(*sef_cb_lu_state_dump_t)(int);
 typedef  int(*sef_cb_lu_state_save_t)(int);
+typedef  int(*sef_cb_lu_response_t)(message *m_ptr);
 
 /* Callback registration helpers. */
 _PROTOTYPE( void sef_setcb_lu_prepare, (sef_cb_lu_prepare_t cb) );
@@ -128,6 +135,7 @@ _PROTOTYPE( void sef_setcb_lu_state_isvalid, (sef_cb_lu_state_isvalid_t cb) );
 _PROTOTYPE( void sef_setcb_lu_state_changed, (sef_cb_lu_state_changed_t cb) );
 _PROTOTYPE( void sef_setcb_lu_state_dump, (sef_cb_lu_state_dump_t cb) );
 _PROTOTYPE( void sef_setcb_lu_state_save, (sef_cb_lu_state_save_t cb) );
+_PROTOTYPE( void sef_setcb_lu_response, (sef_cb_lu_response_t cb) );
 
 /* Predefined callback implementations. */
 _PROTOTYPE(  int sef_cb_lu_prepare_null, (int state) );
@@ -135,12 +143,14 @@ _PROTOTYPE(  int sef_cb_lu_state_isvalid_null, (int state) );
 _PROTOTYPE( void sef_cb_lu_state_changed_null, (int old_state, int state) );
 _PROTOTYPE( void sef_cb_lu_state_dump_null, (int state) );
 _PROTOTYPE(  int sef_cb_lu_state_save_null, (int state) );
+_PROTOTYPE(  int sef_cb_lu_response_null, (message *m_ptr) );
 
 _PROTOTYPE(  int sef_cb_lu_prepare_always_ready, (int state) );
 _PROTOTYPE(  int sef_cb_lu_prepare_never_ready, (int state) );
 _PROTOTYPE(  int sef_cb_lu_prepare_crash, (int state) );
 _PROTOTYPE(  int sef_cb_lu_state_isvalid_standard, (int state) );
 _PROTOTYPE(  int sef_cb_lu_state_isvalid_workfree, (int state) );
+_PROTOTYPE(  int sef_cb_lu_response_rs_reply, (message *m_ptr) );
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_LU_PREPARE_NULL          sef_cb_lu_prepare_null
@@ -148,12 +158,14 @@ _PROTOTYPE(  int sef_cb_lu_state_isvalid_workfree, (int state) );
 #define SEF_CB_LU_STATE_CHANGED_NULL    sef_cb_lu_state_changed_null
 #define SEF_CB_LU_STATE_DUMP_NULL       sef_cb_lu_state_dump_null
 #define SEF_CB_LU_STATE_SAVE_NULL       sef_cb_lu_state_save_null
+#define SEF_CB_LU_RESPONSE_NULL         sef_cb_lu_response_null
 
 #define SEF_CB_LU_PREPARE_DEFAULT       sef_cb_lu_prepare_null
 #define SEF_CB_LU_STATE_ISVALID_DEFAULT sef_cb_lu_state_isvalid_null
 #define SEF_CB_LU_STATE_CHANGED_DEFAULT sef_cb_lu_state_changed_null
 #define SEF_CB_LU_STATE_DUMP_DEFAULT    sef_cb_lu_state_dump_null
 #define SEF_CB_LU_STATE_SAVE_DEFAULT    sef_cb_lu_state_save_null
+#define SEF_CB_LU_RESPONSE_DEFAULT      sef_cb_lu_response_rs_reply
 
 /* Standard live update states. */
 #define SEF_LU_STATE_NULL               0    /* null state */

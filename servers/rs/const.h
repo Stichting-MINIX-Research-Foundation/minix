@@ -97,5 +97,9 @@
 #define RS_DONTREPLY    0
 #define RS_REPLY        1
 
+/* Swap flags. */
+#define RS_DONTSWAP     0
+#define RS_SWAP         1
+
 #endif /* RS_CONST_H */
 

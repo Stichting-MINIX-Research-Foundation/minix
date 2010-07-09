@@ -100,11 +100,6 @@ struct rproc *rp;
           return EPERM;
       }
 
-      /* Disallow RS_UPDATE for RS. */
-      if(rpub->endpoint == RS_PROC_NR) {
-          if(call == RS_UPDATE) return EPERM;
-      }
-
       /* Disallow the call if another call is in progress for the service. */
       if(rp->r_flags & RS_LATEREPLY || rp->r_flags & RS_INITIALIZING) {
           return EBUSY;
@@ -278,7 +273,14 @@ PUBLIC void update_period(message *m_ptr)
       /* Prepare cancel request. */
       m.m_type = RS_LU_PREPARE;
       m.RS_LU_STATE = SEF_LU_STATE_NULL;
-      asynsend(rpub->endpoint, &m);
+      if(rpub->endpoint == RS_PROC_NR) {
+          /* RS can process the request directly. */
+          do_sef_lu_request(&m);
+      }
+      else {
+          /* Send request message to the system service. */
+          asynsend(rpub->endpoint, &m);
+      }
   }
 }
 
@@ -327,10 +329,8 @@ PUBLIC void end_update(int result, int reply_flag)
   surviving_rp->r_flags &= ~RS_UPDATING;
   if(reply_flag == RS_REPLY) {
       message m;
-      if(rs_verbose)
-          printf("RS: %s being replied to\n", srv_to_string(surviving_rp));
       m.m_type = result;
-      reply(surviving_rp->r_pub->endpoint, &m);
+      reply(surviving_rp->r_pub->endpoint, surviving_rp, &m);
   }
 
   /* Cleanup the version that has to die out. */
@@ -382,7 +382,7 @@ struct rproc *rp;
 
   /* RS should simply exit() directly. */
   if(rpub->endpoint == RS_PROC_NR) {
-      exit(0);
+      exit(1);
   }
 
   return sys_kill(rpub->endpoint, SIGKILL);
@@ -437,7 +437,8 @@ struct rproc *rp;
 
   rpub = rp->r_pub;
   use_copy= (rpub->sys_flags & SF_USE_COPY);
-  has_replica= (rp->r_prev_rp && !(rp->r_prev_rp->r_flags & RS_TERMINATED));
+  has_replica= (rp->r_old_rp
+      || (rp->r_prev_rp && !(rp->r_prev_rp->r_flags & RS_TERMINATED)));
 
   /* Do we need an existing replica to create the service? */
   if(!has_replica && (rpub->sys_flags & SF_NEED_REPL)) {
@@ -623,20 +624,15 @@ int instance_flag;
   rs_flags = (ROOT_SYS_PROC | RST_SYS_PROC);
   if((replica_rp->r_priv.s_flags & rs_flags) == rs_flags) {
       rs_rp = rproc_ptr[_ENDPOINT_P(RS_PROC_NR)];
-      if(rs_verbose)
-          printf("RS: %s gets a backup signal manager\n", srv_to_string(rs_rp));
 
-      /* Update privilege structures. */
-      rs_rp->r_priv.s_bak_sig_mgr = replica_rpub->endpoint;
-      replica_rp->r_priv.s_sig_mgr = SELF;
-      r = sys_privctl(RS_PROC_NR, SYS_PRIV_UPDATE_SYS, &rs_rp->r_priv);
+      /* Update signal managers. */
+      r = update_sig_mgrs(rs_rp, SELF, replica_rpub->endpoint);
       if(r == OK) {
-          r = sys_privctl(replica_rpub->endpoint, SYS_PRIV_UPDATE_SYS,
-              &replica_rp->r_priv);
+          r = update_sig_mgrs(replica_rp, SELF, NONE);
       }
       if(r != OK) {
           *rp_link = NULL;
-          return kill_service(replica_rp, "sys_privctl call failed", r);
+          return kill_service(replica_rp, "update_sig_mgrs failed", r);
       }
   }
 
@@ -829,9 +825,10 @@ PUBLIC void stop_service(struct rproc *rp,int how)
 /*===========================================================================*
  *				update_service				     *
  *===========================================================================*/
-PUBLIC int update_service(src_rpp, dst_rpp)
+PUBLIC int update_service(src_rpp, dst_rpp, swap_flag)
 struct rproc **src_rpp;
 struct rproc **dst_rpp;
+int swap_flag;
 {
 /* Update an existing service. */
   int r;
@@ -851,10 +848,11 @@ struct rproc **dst_rpp;
       printf("RS: %s updating into %s\n",
           srv_to_string(src_rp), srv_to_string(dst_rp));
 
-  /* Swap the slots of the two processes. */
-  r = srv_update(src_rpub->endpoint, dst_rpub->endpoint);
-  if(r != OK) {
-      return r;
+  /* Swap the slots of the two processes when asked to. */
+  if(swap_flag == RS_SWAP) {
+      if((r = srv_update(src_rpub->endpoint, dst_rpub->endpoint)) != OK) {
+          return r;
+      }
   }
 
   /* Swap slots here as well. */
@@ -933,7 +931,8 @@ PUBLIC void terminate_service(struct rproc *rp)
           new_rp = rp;
           old_rp = new_rp->r_old_rp;
           new_rp->r_flags &= ~RS_INITIALIZING;
-          update_service(&new_rp, &old_rp); /* can't fail */
+          r = update_service(&new_rp, &old_rp, RS_SWAP);
+          assert(r == OK); /* can't fail */
           end_update(ERESTART, RS_REPLY);
           return;
       }
@@ -1072,7 +1071,7 @@ PUBLIC void restart_service(struct rproc *rp)
   replica_rp = rp->r_next_rp;
 
   /* Update the service into the replica. */
-  r = update_service(&rp, &replica_rp);
+  r = update_service(&rp, &replica_rp, RS_SWAP);
   if(r != OK) {
       kill_service(rp, "unable to update into new replica", r);
       return;
@@ -1084,9 +1083,6 @@ PUBLIC void restart_service(struct rproc *rp)
       kill_service(rp, "unable to let the replica run", r);
       return;
   }
-
-  /* Increase the number of restarts. */
-  replica_rp->r_restarts += 1;
 
   if(rs_verbose)
       printf("RS: %s restarted into %s\n",
@@ -1129,7 +1125,7 @@ struct rproc *rp;
 struct rproc ***rps;
 int *length;
 {
-/* Retrieve all the service instances of a give service. */
+/* Retrieve all the service instances of a given service. */
   static struct rproc *instances[5];
   int nr_instances;
 
@@ -1573,6 +1569,10 @@ struct rproc **clone_rpp;
   if(clone_rpub->sys_flags & SF_USE_COPY) {
       share_exec(clone_rp, rp);        /* share exec image */
   }
+  clone_rp->r_old_rp = NULL;	   /* no old version yet */
+  clone_rp->r_new_rp = NULL;	   /* no new version yet */
+  clone_rp->r_prev_rp = NULL;	   /* no prev replica yet */
+  clone_rp->r_next_rp = NULL;	   /* no next replica yet */
 
   /* Force dynamic privilege id. */
   clone_rp->r_priv.s_flags |= DYN_PRIV_ID;

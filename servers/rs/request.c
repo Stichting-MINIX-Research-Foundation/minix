@@ -363,22 +363,30 @@ PUBLIC int do_shutdown(message *m_ptr)
 PUBLIC int do_init_ready(message *m_ptr)
 {
   int who_p;
+  message m;
   struct rproc *rp;
   struct rprocpub *rpub;
-  int result;
+  int result, is_rs;
   int r;
 
+  is_rs = (m_ptr->m_source == RS_PROC_NR);
   who_p = _ENDPOINT_P(m_ptr->m_source);
+  result = m_ptr->RS_INIT_RESULT;
+
+  /* Check for RS failing initialization first. */
+  if(is_rs && result != OK) {
+      return result;
+  }
+
   rp = rproc_ptr[who_p];
   rpub = rp->r_pub;
-  result = m_ptr->RS_INIT_RESULT;
 
   /* Make sure the originating service was requested to initialize. */
   if(! (rp->r_flags & RS_INITIALIZING) ) {
       if(rs_verbose)
           printf("RS: do_init_ready: got unexpected init ready msg from %d\n",
               m_ptr->m_source);
-      return(EDONTREPLY);
+      return EINVAL;
   }
 
   /* Check if something went wrong and the service failed to init.
@@ -389,13 +397,17 @@ PUBLIC int do_init_ready(message *m_ptr)
           printf("RS: %s initialization error: %s\n", srv_to_string(rp),
               init_strerror(result));
       crash_service(rp); /* simulate crash */
-      return(EDONTREPLY);
+      return EDONTREPLY;
   }
 
   /* Mark the slot as no longer initializing. */
   rp->r_flags &= ~RS_INITIALIZING;
   rp->r_check_tm = 0;
   getuptime(&rp->r_alive_tm);
+
+  /* Reply and unblock the service before doing anything else. */
+  m.m_type = OK;
+  reply(rpub->endpoint, rp, &m);
 
   /* See if a late reply has to be sent. */
   late_reply(rp, OK);
@@ -417,6 +429,7 @@ PUBLIC int do_init_ready(message *m_ptr)
   if(rp->r_prev_rp) {
       cleanup_service(rp->r_prev_rp);
       rp->r_prev_rp = NULL;
+      rp->r_restarts += 1;
 
       if(rs_verbose)
           printf("RS: %s completed restart\n", srv_to_string(rp));
@@ -429,7 +442,7 @@ PUBLIC int do_init_ready(message *m_ptr)
       }
   }
 
-  return(OK);
+  return is_rs ? OK : EDONTREPLY; /* return what the caller expects */
 }
 
 /*===========================================================================*
@@ -563,19 +576,42 @@ PUBLIC int do_update(message *m_ptr)
   if(rs_verbose)
     printf("RS: %s updating\n", srv_to_string(rp));
 
-  /* Request to update. */
-  m_ptr->m_type = RS_LU_PREPARE;
-  asynsend3(rpub->endpoint, m_ptr, AMF_NOREPLY);
+  /* If RS is updating, set up signal managers for the new instance.
+   * The current RS instance must be made the backup signal manager to
+   * support rollback in case of a crash during initialization.
+   */
+  if(rp->r_priv.s_flags & ROOT_SYS_PROC) {
+      new_rp = rp->r_new_rp;
 
-  /* Unblock the caller immediately if requested. */
-  if(noblock) {
-      return OK;
+      s = update_sig_mgrs(new_rp, SELF, new_rp->r_pub->endpoint);
+      if(s != OK) {
+          cleanup_service(new_rp);
+          return s;
+      }
   }
 
-  /* Late reply - send a reply when the new version completes initialization. */
-  rp->r_flags |= RS_LATEREPLY;
-  rp->r_caller = m_ptr->m_source;
-  rp->r_caller_request = RS_UPDATE;
+  if(noblock) {
+      /* Unblock the caller immediately if requested. */
+      m_ptr->m_type = OK;
+      reply(m_ptr->m_source, NULL, m_ptr);
+  }
+  else {
+      /* Send a reply when the new version completes initialization. */
+      rp->r_flags |= RS_LATEREPLY;
+      rp->r_caller = m_ptr->m_source;
+      rp->r_caller_request = RS_UPDATE;
+  }
+
+  /* Request to update. */
+  m_ptr->m_type = RS_LU_PREPARE;
+  if(rpub->endpoint == RS_PROC_NR) {
+      /* RS can process the request directly. */
+      do_sef_lu_request(m_ptr);
+  }
+  else {
+      /* Send request message to the system service. */
+      asynsend3(rpub->endpoint, m_ptr, AMF_NOREPLY);
+  }
 
   return EDONTREPLY;
 }
@@ -588,18 +624,20 @@ PUBLIC int do_upd_ready(message *m_ptr)
   struct rproc *rp, *old_rp, *new_rp;
   int who_p;
   int result;
+  int is_rs;
   int r;
 
   who_p = _ENDPOINT_P(m_ptr->m_source);
   rp = rproc_ptr[who_p];
   result = m_ptr->RS_LU_RESULT;
+  is_rs = (m_ptr->m_source == RS_PROC_NR);
 
   /* Make sure the originating service was requested to prepare for update. */
   if(rp != rupdate.rp) {
       if(rs_verbose)
           printf("RS: do_upd_ready: got unexpected update ready msg from %d\n",
               m_ptr->m_source);
-      return(EINVAL);
+      return EINVAL;
   }
 
   /* Check if something went wrong and the service failed to prepare
@@ -610,13 +648,31 @@ PUBLIC int do_upd_ready(message *m_ptr)
       end_update(result, RS_REPLY);
 
       printf("RS: update failed: %s\n", lu_strerror(result));
-      return EDONTREPLY;
+      return is_rs ? result : EDONTREPLY; /* return what the caller expects */
+  }
+
+  old_rp = rp;
+  new_rp = rp->r_new_rp;
+
+  /* If RS itself is updating, yield control to the new version immediately. */
+  if(is_rs) {
+      r = init_service(new_rp, SEF_INIT_LU);
+      if(r != OK) {
+          panic("unable to initialize the new RS instance: %d", r);
+      }
+      r = sys_privctl(new_rp->r_pub->endpoint, SYS_PRIV_YIELD, NULL);
+      if(r != OK) {
+          panic("unable to yield control to the new RS instance: %d", r);
+      }
+      /* If we get this far, the new version failed to initialize. Rollback. */
+      r = srv_update(RS_PROC_NR, new_rp->r_pub->endpoint);
+      assert(r == OK); /* can't fail */
+      end_update(ERESTART, RS_REPLY);
+      return ERESTART;
   }
 
   /* Perform the update. */
-  old_rp = rp;
-  new_rp = rp->r_new_rp;
-  r = update_service(&old_rp, &new_rp);
+  r = update_service(&old_rp, &new_rp, RS_SWAP);
   if(r != OK) {
       end_update(r, RS_REPLY);
       printf("RS: update failed: error %d\n", r);
@@ -626,7 +682,9 @@ PUBLIC int do_upd_ready(message *m_ptr)
   /* Let the new version run. */
   r = run_service(new_rp, SEF_INIT_LU);
   if(r != OK) {
-      update_service(&new_rp, &old_rp); /* rollback, can't fail. */
+      /* Something went wrong. Rollback. */
+      r = update_service(&new_rp, &old_rp, RS_SWAP);
+      assert(r == OK); /* can't fail */
       end_update(r, RS_REPLY);
       printf("RS: update failed: error %d\n", r);
       return EDONTREPLY;
@@ -752,13 +810,13 @@ PUBLIC void do_sigchld()
            * free slots for all the service instances and send a late
            * reply if necessary.
            */
-             get_service_instances(rp, &rps, &nr_rps);
-             for(i=0;i<nr_rps;i++) {
-                 if(rupdate.flags & RS_UPDATING) {
-                     rupdate.flags &= ~RS_UPDATING;
-                 }
-                 free_slot(rps[i]);
-             }
+          get_service_instances(rp, &rps, &nr_rps);
+          for(i=0;i<nr_rps;i++) {
+              if(rupdate.flags & RS_UPDATING) {
+                  rupdate.flags &= ~RS_UPDATING;
+              }
+              free_slot(rps[i]);
+          }
       }
   }
 }

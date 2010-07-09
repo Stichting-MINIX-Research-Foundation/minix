@@ -27,6 +27,11 @@ int type;					/* type of initialization */
   rp->r_flags |= RS_INITIALIZING;              /* now initializing */
   rp->r_check_tm = rp->r_alive_tm + 1;         /* expect reply within period */
 
+  /* In case of RS initialization, we are done. */
+  if(rp->r_priv.s_flags & ROOT_SYS_PROC) {
+      return OK;
+  }
+
   /* Determine the old endpoint if this is a new instance. */
   old_endpoint = NONE;
   if(rp->r_old_rp) {
@@ -129,11 +134,20 @@ struct rproc *rp;			/* pointer to process slot */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(who, m_ptr)
+PUBLIC void reply(who, rp, m_ptr)
 endpoint_t who;                        	/* replyee */
+struct rproc *rp;                       /* replyee slot (if any) */
 message *m_ptr;                         /* reply message */
 {
   int r;				/* send status */
+
+  /* No need to actually reply to RS */
+  if(who == RS_PROC_NR) {
+      return;
+  }
+
+  if(rs_verbose && rp)
+      printf("RS: %s being replied to\n", srv_to_string(rp));
 
   r = sendnb(who, m_ptr);		/* send the message */
   if (r != OK)
@@ -159,7 +173,7 @@ int code;					/* status code */
           printf("RS: %s late reply %d to %d for request %d\n",
               srv_to_string(rp), code, rp->r_caller, rp->r_caller_request);
 
-      reply(rp->r_caller, &m);
+      reply(rp->r_caller, NULL, &m);
       rp->r_flags &= ~RS_LATEREPLY;
   }
 }
@@ -212,3 +226,41 @@ PUBLIC int sched_init_proc(struct rproc *rp)
 	
 	return OK;
 }
+
+/*===========================================================================*
+ *				update_sig_mgrs			 	     *
+ *===========================================================================*/
+PUBLIC int update_sig_mgrs(struct rproc *rp, endpoint_t sig_mgr,
+	endpoint_t bak_sig_mgr)
+{
+  int r;
+  struct rprocpub *rpub;
+
+  rpub = rp->r_pub;
+
+  if(rs_verbose)
+      printf("RS: %s updates signal managers: %d%s / %d\n", srv_to_string(rp),
+          sig_mgr == SELF ? rpub->endpoint : sig_mgr,
+          sig_mgr == SELF ? "(SELF)" : "",
+          bak_sig_mgr == NONE ? -1 : bak_sig_mgr);
+
+  /* Synch privilege structure with the kernel. */
+  if ((r = sys_getpriv(&rp->r_priv, rpub->endpoint)) != OK) {
+      printf("unable to synch privilege structure: %d", r);
+      return r;
+  }
+
+  /* Set signal managers. */
+  rp->r_priv.s_sig_mgr = sig_mgr;
+  rp->r_priv.s_bak_sig_mgr = bak_sig_mgr;
+
+  /* Update privilege structure. */
+  r = sys_privctl(rpub->endpoint, SYS_PRIV_UPDATE_SYS, &rp->r_priv);
+  if(r != OK) {
+      printf("unable to update privilege structure: %d", r);
+      return r;
+  }
+
+  return OK;
+}
+
