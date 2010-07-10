@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+#include <minix/com.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 
 int
 main(int argc, char *argv[])
@@ -17,6 +20,7 @@ main(int argc, char *argv[])
 #define STARTV 0x90000000
 	char *vaddr = (char *) STARTV;
 	ssize_t l;
+	pid_t f;
 
 	printf("Test 44 ");
 	fflush(stdout);
@@ -60,8 +64,45 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* Now start a child to test bogus memory access */
+	if((f = fork()) == -1) {
+		perror("fork");
+		exit(1);
+	}
+
+	if(f > 0) {
+		int st;
+		/* Parent waits. */
+		if(waitpid(f, &st, 0) < 0) {
+			perror("waitpid");
+			exit(1);
+		}
+		if(!WIFEXITED(st)) {
+			fprintf(stderr, "child not signaled\n");
+			exit(1);
+		}
+		if(WEXITSTATUS(st) != 0) {
+			fprintf(stderr, "child exited with nonzero status\n");
+			exit(1);
+		}
+	} else {
+		/* Child performs bogus getsysinfo */
+		int res;
+		char *buf = v[CHUNKS-1];
+		errno = 0;
+      		res = getsysinfo( PM_PROC_NR, SI_PROC_TAB, buf);
+		if(res >= 0)  {
+			fprintf(stderr, "res %d\n", res);
+			exit(1);
+		}
+		if(errno != EFAULT) {
+			fprintf(stderr, "errno %d\n", errno);
+			exit(1);
+		}
+		exit(0);
+	}
+
 	printf("ok\n");
 
 	exit(0);
 }
-
