@@ -58,6 +58,7 @@ PRIVATE struct pcitab
 	{ 0x10ec, 0x8129, 0 },	/* Realtek RTL8129 */
 	{ 0x10ec, 0x8167, 0 },	/* Realtek RTL8169/8110 Family Gigabit NIC */
 	{ 0x10ec, 0x8169, 0 },	/* Realtek RTL8169 */
+	{ 0x10ec, 0x8168, 0 },
 
 	{ 0x1186, 0x4300, 0 },	/* D-Link DGE-528T Gigabit adaptor */
 
