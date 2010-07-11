@@ -2,6 +2,7 @@
 .PATH: ${.CURDIR}/stdio
 
 SRCS+=  \
+	asprintf.c \
 	clearerr.c \
 	data.c \
 	doprnt.c \

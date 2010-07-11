@@ -152,4 +152,9 @@ _PROTOTYPE(int vsnprintf, (char *_s, size_t _n, const char *_format,
 _PROTOTYPE(char *fgetln, (FILE *stream, size_t *len));
 #endif
 
+#ifdef _MINIX
+_PROTOTYPE(int asprintf, (char **ret, const char *fmt, ...));
+_PROTOTYPE(int vasprintf, (char **ret, const char *fmt, char *_arg));
+#endif /* _MINIX */
+
 #endif /* _STDIO_H */
