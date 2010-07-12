@@ -18,7 +18,7 @@ shift
 
 while [ $# -gt 0 ]
 do	dec="`printf %d $1`"
-	$NM -n $executable | grep ' [Tt] ' | awk '
+	$NM -n $executable | grep ' [Tt] [^.]' | awk '
 	  {  if($1 > '$dec') { printf "%s+0x%x\n", name, '$dec'-offset; exit }
 	     name=$3; offset=$1
 	  }'
