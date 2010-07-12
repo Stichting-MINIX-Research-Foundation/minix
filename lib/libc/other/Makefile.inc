@@ -100,6 +100,7 @@ SRCS+=  \
 	strmode.c \
 	strtok_r.c \
 	strtoll.c \
+	strsep.c \
 	swab.c \
 	syscall.c \
 	sysconf.c \
