@@ -18,6 +18,7 @@ LDFLAGS+= -.o
 CPPFLAGS+= -fno-builtin -ffreestanding -fno-stack-protector
 LDFLAGS+= -T arch/${ARCH}/kernel.lds
 LDFLAGS+= -nostdlib -L/usr/gnu/lib
+CFLAGS+=-march=i386
 DPADD+=	${LIBC}
 LDADD+=	-lc
 .endif
