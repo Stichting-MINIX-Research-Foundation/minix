@@ -44,7 +44,7 @@ struct command {
 };
 
 /* Timeouts and max retries. */
-PRIVATE int timeout_ticks = DEF_TIMEOUT_TICKS;
+PRIVATE int timeout_usecs = DEF_TIMEOUT_USECS;
 PRIVATE int max_errors = MAX_ERRORS;
 PRIVATE long w_standard_timeouts = 0;
 PRIVATE long w_pci_debug = 0;
@@ -941,12 +941,12 @@ PRIVATE int w_io_test(void)
 	save_dev = w_device;
 
 	/* Reduce timeout values for this test transaction. */
-	save_timeout = timeout_ticks;
+	save_timeout = timeout_usecs;
 	save_errors = max_errors;
 	save_wakeup = wakeup_ticks;
 
 	if (!w_standard_timeouts) {
-		timeout_ticks = system_hz * 4;
+		timeout_usecs = 4000000;
 		wakeup_ticks = system_hz * 6;
 		max_errors = 3;
 	}
@@ -964,7 +964,7 @@ PRIVATE int w_io_test(void)
  		panic("Couldn't switch back devices");
 
  	/* Restore parameters. */
-	timeout_ticks = save_timeout;
+	timeout_usecs = save_timeout;
 	max_errors = save_errors;
 	wakeup_ticks = save_wakeup;
 	w_testing = 0;
@@ -1920,24 +1920,19 @@ int mask;			/* status mask */
 int value;			/* required status */
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
- * An alarm that set a timeout flag is used. TIMEOUT is in micros, we need
- * ticks. Disabling the alarm is not needed, because a static flag is used
- * and a leftover timeout cannot do any harm.
  */
   unsigned long w_status;
-  clock_t t0, t1;
+  spin_t spin;
   int s;
 
-  getuptime(&t0);
-  do {
+  SPIN_FOR(&spin, timeout_usecs) {
 	if ((s=sys_inb(w_wn->base_cmd + REG_STATUS, &w_status)) != OK)
 		panic("Couldn't read register: %d", s);
 	w_wn->w_status= w_status;
 	if ((w_wn->w_status & mask) == value) {
         	return 1;
 	}
-  } while ((s=getuptime(&t1)) == OK && (t1-t0) < timeout_ticks );
-  if (OK != s) printf("AT_WINI: warning, get_uptime failed: %d\n",s);
+  }
 
   w_need_reset();			/* controller gone deaf */
   return(0);
@@ -1951,23 +1946,18 @@ int mask;			/* status mask */
 int value;			/* required status */
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
- * An alarm that set a timeout flag is used. TIMEOUT is in micros, we need
- * ticks. Disabling the alarm is not needed, because a static flag is used
- * and a leftover timeout cannot do any harm.
  */
   unsigned long w_status;
-  clock_t t0, t1;
+  spin_t spin;
   int s;
 
-  getuptime(&t0);
-  do {
+  SPIN_FOR(&spin, timeout_usecs) {
 	if ((s=sys_inb(w_wn->base_dma + DMA_STATUS, &w_status)) != OK)
 		panic("Couldn't read register: %d", s);
 	if ((w_status & mask) == value) {
         	return 1;
 	}
-  } while ((s=getuptime(&t1)) == OK && (t1-t0) < timeout_ticks );
-  if (OK != s) printf("AT_WINI: warning, get_uptime failed: %d\n",s);
+  }
 
   return(0);
 }
@@ -2320,7 +2310,7 @@ message *m;
 	
 		if (timeout == 0) {
 			/* Restore defaults. */
-			timeout_ticks = DEF_TIMEOUT_TICKS;
+			timeout_usecs = DEF_TIMEOUT_USECS;
 			max_errors = MAX_ERRORS;
 			wakeup_ticks = WAKEUP_TICKS;
 			w_silent = 0;
@@ -2336,9 +2326,11 @@ message *m;
 				wakeup_ticks = timeout;
 				max_errors = 3;
 				w_silent = 1;
+
+				timeout = timeout * 1000000 / sys_hz();
 	
-				if (timeout_ticks > timeout)
-					timeout_ticks = timeout;
+				if (timeout_usecs > timeout)
+					timeout_usecs = timeout;
 			}
 	
 		  	r= sys_safecopyto(m->IO_ENDPT,

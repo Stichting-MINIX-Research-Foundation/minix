@@ -22,6 +22,7 @@
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/timers.h>
+#include <minix/spin.h>
 #include <minix/bitmap.h>
 
 #include <machine/interrupt.h>	/* IRQ vectors and miscellaneous ports */

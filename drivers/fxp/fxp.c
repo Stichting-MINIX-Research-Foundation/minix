@@ -946,7 +946,6 @@ static void fxp_confaddr(fxp_t *fp)
 {
 	static char eakey[]= FXP_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
-	clock_t t0,t1;
 	int i, r;
 	u32_t bus_addr;
 	long v;
@@ -987,12 +986,8 @@ static void fxp_confaddr(fxp_t *fp)
 
 	fxp_cu_ptr_cmd(fp, SC_CU_START, bus_addr, TRUE /* check idle */);
 
-	getuptime(&t0);
-	do {
-		/* Wait for CU command to complete */
-		if (tmpbufp->ias.ias_status & CBL_F_C)
-			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(1000));
+	/* Wait for CU command to complete */
+	SPIN_UNTIL(tmpbufp->ias.ias_status & CBL_F_C, 1000);
 
 	if (!(tmpbufp->ias.ias_status & CBL_F_C))
 		panic("fxp_confaddr: CU command failed to complete");
@@ -1356,7 +1351,6 @@ fxp_t *fp;
 {
 	int r;
 	u32_t bus_addr;
-	clock_t t0,t1;
 
 	/* Configure device */
 	tmpbufp->cc.cc_status= 0;
@@ -1372,12 +1366,8 @@ fxp_t *fp;
 
 	fxp_cu_ptr_cmd(fp, SC_CU_START, bus_addr, TRUE /* check idle */);
 
-	getuptime(&t0);
-	do {
-		/* Wait for CU command to complete */
-		if (tmpbufp->cc.cc_status & CBL_F_C)
-			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(100000));
+	/* Wait for CU command to complete */
+	SPIN_UNTIL(tmpbufp->cc.cc_status & CBL_F_C, 100000);
 
 	if (!(tmpbufp->cc.cc_status & CBL_F_C))
 		panic("fxp_do_conf: CU command failed to complete");
@@ -1395,7 +1385,7 @@ int cmd;
 phys_bytes bus_addr;
 int check_idle;
 {
-	clock_t t0,t1;
+	spin_t spin;
 	port_t port;
 	u8_t scb_cmd;
 
@@ -1412,15 +1402,15 @@ int check_idle;
 	fxp_outb(port, SCB_CMD, cmd);
 
 	/* What is a reasonable time-out? There is nothing in the
-	 * documentation. 1 ms should be enough.
+	 * documentation. 1 ms should be enough. We use 100 ms.
 	 */
-	getuptime(&t0);
+	spin_init(&spin, 100000);
 	do {
 		/* Wait for CU command to be accepted */
 		scb_cmd= fxp_inb(port, SCB_CMD);
 		if ((scb_cmd & SC_CUC_MASK) == SC_CU_NOP)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(100000));
+	} while (spin_check(&spin));
 
 	if ((scb_cmd & SC_CUC_MASK) != SC_CU_NOP)
 		panic("fxp_cu_ptr_cmd: CU does not accept command");
@@ -1435,7 +1425,7 @@ int cmd;
 phys_bytes bus_addr;
 int check_idle;
 {
-	clock_t t0,t1;
+	spin_t spin;
 	port_t port;
 	u8_t scb_cmd;
 
@@ -1451,13 +1441,13 @@ int check_idle;
 	fxp_outl(port, SCB_POINTER, bus_addr);
 	fxp_outb(port, SCB_CMD, cmd);
 
-	getuptime(&t0);
+	spin_init(&spin, 1000);
 	do {
 		/* Wait for RU command to be accepted */
 		scb_cmd= fxp_inb(port, SCB_CMD);
 		if ((scb_cmd & SC_RUC_MASK) == SC_RU_NOP)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(1000));
+	} while (spin_check(&spin));
 
 	if ((scb_cmd & SC_RUC_MASK) != SC_RU_NOP)
 		panic("fxp_ru_ptr_cmd: RU does not accept command");
@@ -1501,7 +1491,6 @@ fxp_t *fp;
  *===========================================================================*/
 static void fxp_getstat_s(message *mp)
 {
-	clock_t t0,t1;
 	int r;
 	fxp_t *fp;
 	u32_t *p;
@@ -1520,12 +1509,8 @@ static void fxp_getstat_s(message *mp)
 	 */
 	fxp_cu_ptr_cmd(fp, SC_CU_DUMP_SC, 0, FALSE /* do not check idle */);
 
-	getuptime(&t0);
-	do {
-		/* Wait for CU command to complete */
-		if (*p != 0)
-			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(1000));
+	/* Wait for CU command to complete */
+	SPIN_UNTIL(*p != 0, 1000);
 
 	if (*p == 0)
 		panic("fxp_getstat: CU command failed to complete");
@@ -2220,7 +2205,7 @@ PRIVATE u16_t mii_read(fp, reg)
 fxp_t *fp;
 int reg;
 {
-	clock_t t0,t1;
+	spin_t spin;
 	port_t port;
 	u32_t v;
 
@@ -2234,12 +2219,12 @@ int reg;
 	fxp_outl(port, CSR_MDI_CTL, CM_READ | (1 << CM_PHYADDR_SHIFT) |
 		(reg << CM_REG_SHIFT));
 
-	getuptime(&t0);
+	spin_init(&spin, 100000);
 	do {
 		v= fxp_inl(port, CSR_MDI_CTL);
 		if (v & CM_READY)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(100000));
+	} while (spin_check(&spin));
 
 	if (!(v & CM_READY))
 		panic("mii_read: MDI not ready after command");

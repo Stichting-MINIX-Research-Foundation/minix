@@ -316,7 +316,7 @@ PRIVATE void do_int(struct port *pp)
 {
 	int r, devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
 		socket_5v, socket_3v, socket_Xv, socket_Yv;
-	clock_t t0, t1;
+	spin_t spin;
 	u32_t csr_event, csr_present, csr_control;
 	u8_t v8;
 	u16_t v16;
@@ -453,12 +453,12 @@ PRIVATE void do_int(struct port *pp)
 		printf("TI_CARD_CTRL: 0x%02x\n", v8);
 	}
 
-	getuptime(&t0);
+	spin_init(&spin, 100000);
 	do {
 		csr_present= pp->csr_ptr->csr_present;
 		if (csr_present & CP_PWRCYCLE)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(100000));
+	} while (spin_check(&spin));
 
 	if (!(csr_present & CP_PWRCYCLE))
 	{

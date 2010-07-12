@@ -200,7 +200,7 @@
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 #define DELAY_USECS     1000	/* controller timeout in microseconds */
 #define DELAY_TICKS 	   1	/* controller timeout in ticks */
-#define DEF_TIMEOUT_TICKS 	300	/* controller timeout in ticks */
+#define DEF_TIMEOUT_USECS 5000000L  /* controller timeout in microseconds */
 #define RECOVERY_USECS 500000	/* controller recovery time in microseconds */
 #define RECOVERY_TICKS    30	/* controller recovery time in ticks */
 #define INITIALIZED	0x01	/* drive is initialized */

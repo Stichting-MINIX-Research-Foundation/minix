@@ -1015,11 +1015,7 @@ re_t *rep;
 	printf("rl_reset_hw: (before reset) port = 0x%x, RL_CR = 0x%x\n",
 		port, rl_inb(port, RL_CR));
 	rl_outb(port, RL_CR, RL_CR_RST);
-	getuptime(&t0);
-	do {
-		if (!(rl_inb(port, RL_CR) & RL_CR_RST))
-			break;
-	} while (getuptime(&t1) == OK && (t1 - t0) < system_hz);
+	SPIN_UNTIL(!(rl_inb(port, RL_CR) & RL_CR_RST), 1000000);
 	printf("rl_reset_hw: (after reset) port = 0x%x, RL_CR = 0x%x\n",
 		port, rl_inb(port, RL_CR));
 	if (rl_inb(port, RL_CR) & RL_CR_RST)

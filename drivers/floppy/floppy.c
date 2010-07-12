@@ -130,8 +130,7 @@
 #define NR_DRIVES          2	/* maximum number of drives */
 #define DIVISOR          128	/* used for sector size encoding */
 #define SECTOR_SIZE_CODE   2	/* code to say "512" to the controller */
-#define TIMEOUT_MICROS   500000L	/* microseconds waiting for FDC */
-#define TIMEOUT_TICKS     30	/* ticks waiting for FDC */
+#define TIMEOUT_MICROS   5000000L	/* microseconds waiting for FDC */
 #define NT                 7	/* number of diskette/drive combinations */
 #define UNCALIBRATED       0	/* drive needs to be calibrated at next use */
 #define CALIBRATED         1	/* no calibration needed */
@@ -950,15 +949,14 @@ PRIVATE int fdc_results(void)
 
   int s, result_nr;
   unsigned long status;
-  clock_t t0,t1;
+  spin_t spin;
 
   /* Extract bytes from FDC until it says it has no more.  The loop is
    * really an outer loop on result_nr and an inner loop on status. 
    * A timeout flag alarm is set.
    */
   result_nr = 0;
-  getuptime(&t0);
-  do {
+  SPIN_FOR(&spin, TIMEOUT_MICROS) {
 	/* Reading one byte is almost a mirror of fdc_out() - the DIRECTION
 	 * bit must be set instead of clear, but the CTL_BUSY bit destroys
 	 * the perfection of the mirror.
@@ -981,8 +979,7 @@ PRIVATE int fdc_results(void)
 
 		return(OK);			/* only good exit */
 	}
-  } while ( (s=getuptime(&t1))==OK && (t1-t0) < TIMEOUT_TICKS );
-  if (OK!=s) printf("FLOPPY: warning, getuptime failed: %d\n", s); 
+  }
   need_reset = TRUE;		/* controller chip must be reset */
 
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
@@ -1026,27 +1023,26 @@ PRIVATE void fdc_out(
  * can only write to it when it is listening, and it decides when to listen.
  * If the controller refuses to listen, the FDC chip is given a hard reset.
  */
-  clock_t t0, t1;
+  spin_t spin;
   int s;
   unsigned long status;
 
   if (need_reset) return;	/* if controller is not listening, return */
 
   /* It may take several tries to get the FDC to accept a command.  */
-  getuptime(&t0);
-  do {
-  	if ( (s=getuptime(&t1))==OK && (t1-t0) > TIMEOUT_TICKS ) {
-  		if (OK!=s) printf("FLOPPY: warning, getuptime failed: %d\n", s); 
-		need_reset = TRUE;	/* hit it over the head */
-		return;
-	}
+  SPIN_FOR(&spin, TIMEOUT_MICROS) {
   	if ((s=sys_inb(FDC_STATUS, &status)) != OK)
   		panic("Sys_inb in fdc_out() failed: %d", s);
+
+  	if ((status & (MASTER | DIRECTION)) == (MASTER | 0)) {
+		if ((s=sys_outb(FDC_DATA, val)) != OK)
+			panic("Sys_outb in fdc_out() failed: %d", s);
+
+		return;
+	}
   }
-  while ((status & (MASTER | DIRECTION)) != (MASTER | 0)); 
-  
-  if ((s=sys_outb(FDC_DATA, val)) != OK)
-	panic("Sys_outb in fdc_out() failed: %d", s);
+
+  need_reset = TRUE;	/* hit it over the head */
 }
 
 /*===========================================================================*

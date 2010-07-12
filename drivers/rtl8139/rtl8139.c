@@ -689,18 +689,13 @@ re_t *rep;
 	u32_t t;
 	phys_bytes bus_buf;
 	int i;
-	clock_t t0,t1;
 
 	port= rep->re_base_port;
 
 #if 0
 	/* Reset the PHY */
 	rl_outb(port, RL_BMCR, MII_CTRL_RST);
-	getuptime(&t0);
-	do {
-		if (!(rl_inb(port, RL_BMCR) & MII_CTRL_RST))
-			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
+	SPIN_UNTIL(!(rl_inb(port, RL_BMCR) & MII_CTRL_RST), 1000000);
 	if (rl_inb(port, RL_BMCR) & MII_CTRL_RST)
 		panic("reset PHY failed to complete");
 #endif
@@ -711,11 +706,7 @@ re_t *rep;
 		port, rl_inb(port, RL_CR));
 #endif
 	rl_outb(port, RL_CR, RL_CR_RST);
-	getuptime(&t0);
-	do {
-		if (!(rl_inb(port, RL_CR) & RL_CR_RST))
-			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
+	SPIN_UNTIL(!(rl_inb(port, RL_CR) & RL_CR_RST), 1000000);
 #if VERBOSE
 	printf("rl_reset_hw: (after reset) port = 0x%x, RL_CR = 0x%x\n",
 		port, rl_inb(port, RL_CR));
@@ -1572,7 +1563,6 @@ static void rl_clear_rx(re_t *rep)
 {
 	port_t port;
 	u8_t cr;
-	clock_t t0,t1;
 
 	rep->re_clear_rx= FALSE;
 	port= rep->re_base_port;
@@ -1581,11 +1571,7 @@ static void rl_clear_rx(re_t *rep)
 	cr= rl_inb(port, RL_CR);
 	cr &= ~RL_CR_RE;
 	rl_outb(port, RL_CR, cr);
-	getuptime(&t0);
-	do {
-		if (!(rl_inb(port, RL_CR) & RL_CR_RE))
-			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
+	SPIN_UNTIL(!(rl_inb(port, RL_CR) & RL_CR_RE), 1000000);
 	if (rl_inb(port, RL_CR) & RL_CR_RE)
 		panic("cannot disable receiver");
 
@@ -1819,7 +1805,6 @@ static int rl_handler(re_t *rep)
 #if 0
 	u8_t cr;
 #endif
-	clock_t t0,t1;
 	int_event_check = FALSE;	/* disable check by default */
 
 	port= rep->re_base_port;
@@ -1912,11 +1897,7 @@ static int rl_handler(re_t *rep)
 			cr= rl_inb(port, RL_CR);
 			cr &= ~RL_CR_TE;
 			rl_outb(port, RL_CR, cr);
-			getuptime(&t0);
-			do {
-				if (!(rl_inb(port, RL_CR) & RL_CR_TE))
-					break;
-			} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
+			SPIN_UNTIL(!(rl_inb(port, RL_CR) & RL_CR_TE), 1000000);
 			if (rl_inb(port, RL_CR) & RL_CR_TE) {
 				panic("cannot disable transmitter");
 			}
@@ -2289,7 +2270,6 @@ int a;
 u16_t w;
 {
 	int b, i, cmd;
-	clock_t t0, t1;
 
 	outb_reg3(dep, 1, 0x80 | 0x8);		/* Set CS */
 
@@ -2316,11 +2296,7 @@ u16_t w;
 	outb_reg3(dep, 1, 0x80);	/* Drop CS */
 	/* micro_delay(1); */			/* Is this required? */
 	outb_reg3(dep, 1, 0x80 | 0x8);		/* Set CS */
-	getuptime(&t0);
-	do {
-		if (inb_reg3(dep, 1) & 1)
-			break;
-	} while (getuptime(&t1) == OK && (t1 == t0));
+	SPIN_UNTIL(inb_reg3(dep, 1) & 1, 10000);
 	if (!(inb_reg3(dep, 1) & 1))
 		panic("device remains busy");
 }
