@@ -465,7 +465,8 @@ MANMODE?=	${NONBINMODE}
 MANINSTALL?=	maninstall
 
 INFODIR?=	/usr/share/info
-INFOGRP?=	wheel
+#INFOGRP?=	wheel
+INFOGRP?=	operator
 INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
@@ -483,7 +484,8 @@ LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=	/usr/share/doc
 HTMLDOCDIR?=	/usr/share/doc/html
-DOCGRP?=	wheel
+#DOCGRP?=	wheel
+DOCGRP?=	operator
 DOCOWN?=	root
 DOCMODE?=	${NONBINMODE}
 
@@ -520,7 +522,8 @@ DEBUGMODE?=	${NONBINMODE}
 #
 # All platforms are ELF.
 #
-OBJECT_FMT=	ELF
+#OBJECT_FMT=	ELF
+OBJECT_FMT=	a.out
 
 #
 # If this platform's toolchain is missing, we obviously cannot build it.
