@@ -1,7 +1,7 @@
 # Makefile for the tests.
 
 GCC=   /usr/gnu/bin/gcc
-CFLAGS= -O -D_MINIX -D_POSIX_SOURCE
+CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE
 CFLAGS-GCC= $(CFLAGS) -Wall 
 CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float
 CFLAGS-GCCFPU= $(CFLAGS-GCC) -W -mhard-float
