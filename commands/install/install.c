@@ -428,7 +428,7 @@ void usage(void)
 Usage:\n\
   install [-lcpsz#] [-o owner] [-g group] [-m mode] [-S stack] [file1] file2\n\
   install [-lcpsz#] [-o owner] [-g group] [-m mode] [-S stack] file ... dir\n\
-  install -d [-o owner] [-g group] [-m mode] directory\n");
+  install [-c] -d [-o owner] [-g group] [-m mode] directory\n");
 	exit(1);
 }
 
@@ -600,7 +600,7 @@ int main(int argc, char **argv)
 		}
 	}
 	/* Some options don't mix. */
-	if (dflag && (cflag || lflag || strip)) usage();
+	if (dflag && (lflag || strip)) usage();
 
 	/* Don't let the user umask interfere. */
 	umask(000);

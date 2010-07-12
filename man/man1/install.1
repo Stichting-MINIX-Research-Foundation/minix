@@ -33,7 +33,9 @@ install \- install files
 .IR file " ... " dir
 .br
 .ti -5
-.B install \-d
+.B install
+.RB [ \-c ]
+.B \-d
 .RB [ \-o
 .IR owner ]
 .RB [ \-g
@@ -89,7 +91,11 @@ Copy the source file to its proper place.  This option is the default if
 .B \-l
 is not given.  With
 .BR \-l ,
-the file is copied if the link fails.
+the file is copied if the link fails. This option is also allowed with
+.BR \-d .
+In this case the
+.BR \-c
+is ignored.
 .TP
 .B \-p
 Preserve timestamp on source file or directory.
