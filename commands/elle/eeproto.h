@@ -341,7 +341,6 @@ _PROTOTYPE( int ring_bell, (void) );
 _PROTOTYPE( int f_retsup, (void) );
 _PROTOTYPE( int f_wfexit, (void) );
 _PROTOTYPE( int f_pshinf, (void) );
-_PROTOTYPE( char *strdup, (char *s) );
 _PROTOTYPE( char *memalloc, (SBMO size) );
 _PROTOTYPE( int chkfree, (SBMA ptr) );
 _PROTOTYPE( int ustrcmp, (char *str1, char *str2) );
