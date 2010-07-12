@@ -92,6 +92,7 @@ SRCS+=  \
 	setenv.c \
 	setmode.c \
 	settimeofday.c \
+	shquote.c \
 	stderr.c \
 	strdup.c \
 	strlcat.c \

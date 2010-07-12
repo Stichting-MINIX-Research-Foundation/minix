@@ -99,6 +99,9 @@ _PROTOTYPE( int getloadavg, (double *, int)				);
 _PROTOTYPE(int getopt, (int _argc, char * const _argv[], const char *_opts));
 extern char *optarg;
 extern int optind, opterr, optopt;
+
+_PROTOTYPE(size_t shquote, (const char *arg, char *buf, size_t bufsize));
+
 #endif /* _MINIX */
 
 #endif /* STDLIB_H */
