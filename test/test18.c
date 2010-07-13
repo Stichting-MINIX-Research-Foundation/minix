@@ -66,18 +66,13 @@
 
 int errct;
 
-char *file[];
-char *fnames[];
-char *dir[];
-
 /* "decl.c", created by Rene Montsma and Menno Wilcke */
 
 /* Used in open_alot, close_alot */
-char *file[20] = {"f0", "f1", "f2", "f3", "f4", "f5", "f6",
-	  "f7", "f8", "f9", "f10", "f11", "f12", "f13",
-	  "f14", "f15", "f16", "f17", "f18", "f19"}, *fnames[8] = {"---", "--x", "-w-", "-wx", "r--",
-								   "r-x", "rw-", "rwx"}, *dir[8] = {"d---", "d--x", "d-w-", "d-wx", "dr--", "dr-x",
-						    "drw-", "drwx"};
+char *file[MAXOPEN];
+char *fnames[8] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"},
+	*dir[8] = {"d---", "d--x", "d-w-", "d-wx", "dr--", "dr-x", "drw-", "drwx"};
+
  /* Needed for easy creating and deleting of directories */
 
 /* "test.c", created by Rene Montsma and Menno Wilcke */
@@ -130,7 +125,15 @@ _PROTOTYPE(void quit, (void));
 int main(int argc, char **argv)
 {
   char buffer[PATH_MAX + 1];
-  int n;
+  int n, i;
+
+  /* Create filenames for MAXOPEN files, the *file[] array. */
+  for(i = 0; i < MAXOPEN; i++) {
+        if(asprintf(&file[i], "file%d", i) == -1) {
+                fprintf(stderr, "asprintf failed\n");
+                return 1;
+        }
+  }
 
   if (geteuid() == 0 || getuid() == 0) {
 	realpath(argv[0], buffer);
@@ -139,8 +142,16 @@ int main(int argc, char **argv)
 	exit(1);
   }
 
-  system("rm -rf DIR_18; mkdir DIR_18");
-  chdir("DIR_18");
+#define DIR "DIR18"
+  system("rm -rf " DIR);
+  if(mkdir(DIR, 0755) != 0) {
+	perror("mkdir");
+	return 1;
+  }
+  if(chdir(DIR) != 0) {
+	perror("chdir");
+	return 1;
+  }
 
   if (fork()) {
 	printf("Test 18 ");
@@ -645,7 +656,7 @@ void test05()
 	check(OPEN, ENOENT);
 
   /* Dir is not searchable */
-  if (n = open("drw-/rwx", R) != FAIL)
+  if ((n = open("drw-/rwx", R)) != FAIL)
 	err(11, OPEN, "open in an non-searchabledir");
   else
 	check(OPEN, EACCES);
