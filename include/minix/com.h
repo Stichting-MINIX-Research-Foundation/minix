@@ -668,12 +668,14 @@
 #define SYS_STATE_CLEAR_IPC_REFS    1	/* clear IPC references */
 
 /* Subfunctions for SYS_SCHEDCTL */
-#define SCHEDCTL_FLAGS		m1_i1	/* flags for setting the scheduler */
+#define SCHEDCTL_FLAGS		m9_l1	/* flags for setting the scheduler */
 #  define SCHEDCTL_FLAG_KERNEL	1	/* mark kernel scheduler and remove 
 					 * RTS_NO_QUANTUM; otherwise caller is 
 					 * marked scheduler 
 					 */
-#define SCHEDCTL_ENDPOINT	m1_i2	/* endpt of process to be scheduled */
+#define SCHEDCTL_ENDPOINT	m9_l2	/* endpt of process to be scheduled */
+#define SCHEDCTL_QUANTUM	m9_l3   /* current scheduling quantum */
+#define SCHEDCTL_PRIORITY	m9_s4   /* current scheduling priority */
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *

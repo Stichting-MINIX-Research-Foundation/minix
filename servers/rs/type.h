@@ -12,7 +12,6 @@ struct boot_image_priv {
   short trap_mask;             /* allowed system call traps */
   int ipc_to;                  /* send mask protection */
   endpoint_t sig_mgr;          /* signal manager */
-  endpoint_t sched;            /* scheduler */
   int *k_calls;                /* allowed kernel calls */
   int *vm_calls;               /* allowed vm calls */
 };

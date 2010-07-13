@@ -14,18 +14,10 @@
  */
 #include <minix/com.h>
 #include <minix/const.h>
+#include <minix/priv.h>
 #include "const.h"
 #include "type.h"
 
-/* Max. number of I/O ranges that can be assigned to a process */
-#define NR_IO_RANGE	64
-
-/* Max. number of device memory ranges that can be assigned to a process */
-#define NR_MEM_RANGE	20
-
-/* Max. number of IRQs that can be assigned to a process */
-#define NR_IRQ	8
- 
 struct priv {
   proc_nr_t s_proc_nr;		/* number of associated process */
   sys_id_t s_id;		/* index of this system structure */
@@ -155,9 +147,5 @@ EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 /* signal manager */
 #define RSYS_SM    SELF                                 /* root system proc */
 #define DEF_SYS_SM ROOT_SYS_PROC_NR                     /* default sys proc */
-
-/* scheduler */
-#define KERN_SCH KERNEL                            /* scheduled by kernel   */
-#define USER_SCH SCHED_PROC_NR                     /* scheduled in userland */
 
 #endif /* PRIV_H */

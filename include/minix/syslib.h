@@ -45,7 +45,8 @@ _PROTOTYPE( int sys_exit, (void));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
 _PROTOTYPE( int sys_schedule, (endpoint_t proc_ep, unsigned priority, unsigned quantum));
-_PROTOTYPE( int sys_schedctl, (unsigned flags, endpoint_t proc_ep));
+_PROTOTYPE( int sys_schedctl, (unsigned flags, endpoint_t proc_ep,
+	unsigned priority, unsigned quantum));
 
 /* Shorthands for sys_runctl() system call. */
 #define sys_stop(proc_ep) sys_runctl(proc_ep, RC_STOP, 0)

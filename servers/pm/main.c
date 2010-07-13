@@ -239,7 +239,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
-		rmp->mp_nice = get_nice_value(ip->priority);
   		(void) sigemptyset(&rmp->mp_ignore);	
   		(void) sigemptyset(&rmp->mp_sigmask);
   		(void) sigemptyset(&rmp->mp_catch);
@@ -255,6 +254,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 			/* Set scheduling info */
 			rmp->mp_scheduler = KERNEL;
+			rmp->mp_nice = get_nice_value(USR_Q);
 		}
 		else {					/* system process */
   			if(ip->proc_nr == RS_PROC_NR) {
@@ -268,6 +268,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 			/* RS schedules this process */
 			rmp->mp_scheduler = NONE;
+			rmp->mp_nice = get_nice_value(SRV_Q);
 		}
 
 		/* Get kernel endpoint identifier. */

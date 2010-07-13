@@ -21,6 +21,7 @@
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
+ *   sched_proc:	schedule a process
  *
  * Changes:
 *    Nov 22, 2009   get_priv supports static priv ids (Cristiano Giuffrida)
@@ -36,6 +37,7 @@
 #include "system.h"
 #include "proc.h"
 #include "vm.h"
+#include "kernel/clock.h"
 #include <stdlib.h>
 #include <assert.h>
 #include <signal.h>
@@ -632,3 +634,34 @@ PUBLIC void kernel_call_resume(struct proc *caller)
 	caller->p_misc_flags &= ~MF_KCALL_RESUME;
 	kernel_call_finish(caller, &caller->p_vmrequest.saved.reqmsg, result);
 }
+
+/*===========================================================================*
+ *                               sched_proc                                  *
+ *===========================================================================*/
+PUBLIC int sched_proc(struct proc *rp, unsigned priority, unsigned quantum)
+{
+	/* Make sure the priority number given is within the allowed range.*/
+	if (priority < TASK_Q || priority > NR_SCHED_QUEUES)
+		return EINVAL;
+
+	/* Make sure the quantum given is within the allowed range.*/
+	if(quantum <= 0)
+		return EINVAL;
+
+	/* In some cases, we might be rescheduling a runnable process. In such
+	 * a case (i.e. if we are updating the priority) we set the NO_QUANTUM
+	 * flag before the generic unset to dequeue/enqueue the process
+	 */
+	if (proc_is_runnable(rp))
+		RTS_SET(rp, RTS_NO_QUANTUM);
+
+	/* Clear the scheduling bit and enqueue the process */
+	rp->p_priority = priority;
+	rp->p_quantum_size_ms = quantum;
+	rp->p_cpu_time_left = ms_2_cpu_time(quantum);
+
+	RTS_UNSET(rp, RTS_NO_QUANTUM);
+
+	return OK;
+}
+

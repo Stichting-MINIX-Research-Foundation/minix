@@ -53,6 +53,9 @@ PUBLIC int main(void)
 	rp->p_magic = PMAGIC;
 	rp->p_nr = i;				/* proc number from ptr */
 	rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
+	rp->p_scheduler = NULL;			/* no user space scheduler */
+	rp->p_priority = 0;		        /* no priority */
+	rp->p_quantum_size_ms = 0;	        /* no quantum size */
   }
   for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 	sp->s_proc_nr = NONE;			/* initialize as free */
@@ -82,9 +85,6 @@ PUBLIC int main(void)
 	DEBUGEXTRA(("initializing %s... ", ip->proc_name));
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
-	rp->p_scheduler = NULL;			/* no user space scheduler */
-	rp->p_priority = ip->priority;		/* current priority */
-	rp->p_quantum_size_ms = ip->quantum;	/* quantum size */
 	make_zero64(rp->p_cpu_time_left);
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
 
@@ -119,6 +119,8 @@ PUBLIC int main(void)
                 kcalls = RSYS_KC;                  /* allowed kernel calls */
                 priv(rp)->s_sig_mgr = RSYS_SM;     /* signal manager */
                 priv(rp)->s_bak_sig_mgr = NONE;    /* backup signal manager */
+                rp->p_priority = SRV_Q;	          /* priority queue */
+                rp->p_quantum_size_ms = SRV_QT;   /* quantum size */
             }
             /* Priviliges for ordinary process. */
             else {

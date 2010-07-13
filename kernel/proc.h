@@ -225,22 +225,6 @@ struct proc {
 					 * regs are significant (initialized)*/
 #define MF_SENDING_FROM_KERNEL	0x2000 /* message of this process is from kernel */
 
-/* Scheduling priorities for p_priority. Values must start at zero (highest
- * priority) and increment.  Priorities of the processes in the boot image 
- * can be set in table.c.
- */
-#define NR_SCHED_QUEUES   16	/* MUST equal minimum priority + 1 */
-#define TASK_Q		   0	/* highest, used for kernel tasks */
-#define MAX_USER_Q  	   0    /* highest priority for user processes */   
-#define USER_Q  	  ((MIN_USER_Q - MAX_USER_Q) / 2 + MAX_USER_Q) /* default
-						(should correspond to nice 0) */
-#define MIN_USER_Q	  (NR_SCHED_QUEUES - 1)	/* minimum priority for user
-						   processes */
-/* default scheduling quanta */
-#define USER_QUANTUM 200
-#define DRIV_QUANTUM 50
-#define SERV_QUANTUM 500
-
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])
 #define BEG_USER_ADDR (&proc[NR_TASKS])

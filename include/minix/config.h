@@ -63,6 +63,28 @@
 /* This feature enable the counting of system calls in PM and FS */
 #define ENABLE_SYSCALL_STATS	0
 
+/* Max. number of I/O ranges that can be assigned to a process */
+#define NR_IO_RANGE	64
+
+/* Max. number of device memory ranges that can be assigned to a process */
+#define NR_MEM_RANGE	20
+
+/* Max. number of IRQs that can be assigned to a process */
+#define NR_IRQ	8
+
+/* Scheduling priorities. Values must start at zero (highest
+ * priority) and increment.
+ */
+#define NR_SCHED_QUEUES   16	/* MUST equal minimum priority + 1 */
+#define TASK_Q		   0	/* highest, used for kernel tasks */
+#define MAX_USER_Q  	   0    /* highest priority for user processes */   
+#define USER_Q  	  ((MIN_USER_Q - MAX_USER_Q) / 2 + MAX_USER_Q) /* default
+						(should correspond to nice 0) */
+#define MIN_USER_Q	  (NR_SCHED_QUEUES - 1)	/* minimum priority for user
+						   processes */
+/* default scheduling quanta */
+#define USER_QUANTUM 200
+
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *
  *===========================================================================*/

@@ -160,7 +160,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the reincarnation server. */
   struct boot_image *ip;
-  int s,i,j, usersched;
+  int s,i,j;
   int nr_image_srvs, nr_image_priv_srvs, nr_uncaught_init_srvs;
   struct rproc *rp;
   struct rproc *replica_rp;
@@ -170,7 +170,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct boot_image_priv *boot_image_priv;
   struct boot_image_sys *boot_image_sys;
   struct boot_image_dev *boot_image_dev;
-  message m;
   int pid, replica_pid;
   endpoint_t replica_endpoint;
 
@@ -311,10 +310,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       fill_call_mask(boot_image_priv->vm_calls, NR_VM_CALLS,
           rpub->vm_call_mask, VM_RQ_BASE, TRUE);
 
+      /* Scheduling parameters. */
+      rp->r_scheduler = SRV_OR_USR(rp, SRV_SCH, USR_SCH);
+      rp->r_priority = SRV_OR_USR(rp, SRV_Q, USR_Q);
+      rp->r_quantum = SRV_OR_USR(rp, SRV_QT, USR_QT);
+
       /* Get some settings from the boot image table. */
-      rp->r_scheduler = boot_image_priv->sched;
-      rp->r_priority = ip->priority;
-      rp->r_quantum = ip->quantum;
       rpub->endpoint = ip->endpoint;
 
       /* Set some defaults. */
@@ -338,23 +339,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rpub->in_use = TRUE;
   }
 
-  /* - Step 2: allow every system service in the boot image to run.
-   *           first start kernel-scheduled servers, including the PM and the
-   *           scheduler which are needed to be able to start the 
-   *           user-space-scheduled processes
-   */
+  /* - Step 2: allow every system service in the boot image to run. */
   nr_uncaught_init_srvs = 0;
-  for (usersched=0; usersched <= 1; usersched++) {
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
 
       /* System services only. */
       if(iskerneln(_ENDPOINT_P(boot_image_priv->endpoint))) {
-          continue;
-      }
-
-      /* Kernel-scheduled processes first */
-      if ((boot_image_priv->sched == KERNEL) ? usersched : !usersched) {
           continue;
       }
 
@@ -402,7 +393,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   while(nr_uncaught_init_srvs) {
       catch_boot_init_ready(ANY);
       nr_uncaught_init_srvs--;
-  }
   }
 
   /* - Step 4: all the system services in the boot image are now running.

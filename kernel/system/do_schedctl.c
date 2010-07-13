@@ -8,11 +8,9 @@ PUBLIC int do_schedctl(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
 	unsigned flags;
+	unsigned priority, quantum;
 	int proc_nr;
-
-	/* Only system processes can change process schedulers */
-	if (! (priv(caller)->s_flags & SYS_PROC))
-		return(EPERM);
+	int r;
 
 	/* check parameter validity */
 	flags = (unsigned) m_ptr->SCHEDCTL_FLAGS;
@@ -29,11 +27,15 @@ PUBLIC int do_schedctl(struct proc * caller, message * m_ptr)
 
 	if ((flags & SCHEDCTL_FLAG_KERNEL) == SCHEDCTL_FLAG_KERNEL) {
 		/* the kernel becomes the scheduler and starts 
-		 * scheduling the process; RTS_NO_QUANTUM which was 
-		 * previously set by sys_fork is removed
+		 * scheduling the process.
 		 */
+		priority = (unsigned) m_ptr->SCHEDCTL_PRIORITY;
+		quantum = (unsigned) m_ptr->SCHEDCTL_QUANTUM;
+
+		/* Try to schedule the process. */
+		if((r = sched_proc(p, priority, quantum) != OK))
+			return r;
 		p->p_scheduler = NULL;
-		RTS_UNSET(p, RTS_NO_QUANTUM);
 	} else {
 		/* the caller becomes the scheduler */
 		p->p_scheduler = caller;

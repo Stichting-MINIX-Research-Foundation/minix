@@ -220,12 +220,12 @@ PUBLIC void image_dmp()
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
-  printf("---name- -nr- flags -qs- -queue- -stack-\n");
+  printf("---name- -nr- flags -stack-\n");
   for (m=0; m<NR_BOOT_PROCS; m++) { 
       ip = &image[m];
-      printf("%8s %4d %5s %4d %7d %7d\n",
+      printf("%8s %4d %5s %7d\n",
           ip->proc_name, ip->proc_nr,
-          boot_flags_str(ip->flags), ip->quantum, ip->priority, ip->stksize); 
+          boot_flags_str(ip->flags), ip->stksize); 
   }
   printf("\n");
 }

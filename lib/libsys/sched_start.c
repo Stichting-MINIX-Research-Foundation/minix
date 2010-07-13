@@ -53,14 +53,29 @@ PUBLIC int sched_start(endpoint_t scheduler_e, endpoint_t schedulee_e,
 	int rv;
 	message m;
 
-	assert(_ENDPOINT_P(scheduler_e) >= 0);
+	/* No scheduler given? We are done. */
+	if(scheduler_e == NONE) {
+		return OK;
+	}
+
 	assert(_ENDPOINT_P(schedulee_e) >= 0);
 	assert(_ENDPOINT_P(parent_e) >= 0);
 	assert(maxprio >= 0);
 	assert(maxprio < NR_SCHED_QUEUES);
 	assert(quantum > 0);
 	assert(newscheduler_e);
-	
+
+	/* The KERNEL must schedule this process. */
+	if(scheduler_e == KERNEL) {
+		if ((rv = sys_schedctl(SCHEDCTL_FLAG_KERNEL, 
+			schedulee_e, maxprio, quantum)) != OK) {
+			return rv;
+		}
+		*newscheduler_e = scheduler_e;
+		return OK;
+	}
+
+	/* A user-space scheduler must schedule this process. */
 	m.SCHEDULING_ENDPOINT	= schedulee_e;
 	m.SCHEDULING_PARENT	= parent_e;
 	m.SCHEDULING_MAXPRIO	= (int) maxprio;

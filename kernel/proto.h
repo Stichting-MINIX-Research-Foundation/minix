@@ -78,6 +78,8 @@ _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
 _PROTOTYPE( void clear_ipc_refs, (struct proc *rc, int caller_ret)	);
 _PROTOTYPE( phys_bytes umap_bios, (vir_bytes vir_addr, vir_bytes bytes));
 _PROTOTYPE( void kernel_call_resume, (struct proc *p));
+_PROTOTYPE( int sched_proc, (struct proc *rp,
+	unsigned priority, unsigned quantum));
 
 /* system/do_newmap.c */
 _PROTOTYPE( int newmap, (struct proc * caller, struct proc *rp,

@@ -14,8 +14,6 @@ typedef struct {			/* bitmap for system indexes */
 struct boot_image {
   proc_nr_t proc_nr;			/* process number to use */
   int flags;				/* process flags */
-  unsigned quantum;			/* time quantum in ms */
-  int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
   char proc_name[P_NAME_LEN];		/* name in process table */
   endpoint_t endpoint;			/* endpoint number when started */

@@ -79,7 +79,7 @@ PUBLIC int rss_nice_decode(int nice, endpoint_t *scheduler,
 		*quantum = DECODE(nice, QUANTUM_SHIFT, QUANTUM_BITS);
 	} else {
 		/* old ABI, not useful so just take defaults */
-		*scheduler = USER_SCH;
+		*scheduler = SCHED_PROC_NR;
 		*priority = USER_Q;
 		*quantum = USER_QUANTUM;
 	}
