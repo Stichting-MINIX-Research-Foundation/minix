@@ -16,6 +16,7 @@ usage:
 	@echo "	make depend        # Generate required .depend files"
 	@echo "	make gnu-includes  # Install include files for GCC"
 	@echo "	make gnu-libraries # Compile and install libraries for GCC"
+	@echo "	make clang-libraries # Compile and install libraries for GCC with clang"
 	@echo "	make clean         # Remove all compiler results"
 	@echo "" 
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." 
