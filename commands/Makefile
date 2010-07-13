@@ -4,7 +4,7 @@
 
 SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	backup badblocks banner basename bigmake binpackage \
-	binpackages binsizes bsdtar bzip2 bzip2recover cal calendar \
+	binpackages binsizes bzip2 bzip2recover cal calendar \
 	cat cawf cd  cdprobe checkhier chmem \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut datasizes date \
@@ -27,7 +27,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	rotate rsh rshd sed service setup shar size \
 	sleep slip sort spell split srccrc stat strings strip \
 	stty su sum svclog swapfs swifi sync synctree sysenv \
-	syslogd tail talk talkd tcpd tcpdp tcpstat tee telnet \
+	syslogd tail talk talkd tar tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time tinyhalt top touch tr \
 	truncate tsort ttt tty udpstat umount uname unexpand \
 	uniq unstack update urlget uud uue version vol wc \

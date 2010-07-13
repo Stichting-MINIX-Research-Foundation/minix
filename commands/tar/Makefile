@@ -16,4 +16,7 @@ LDADD+=	-larchive -lbz2 -lz
 CPPFLAGS+= -DHAVE_CONFIG_H
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/libarchive_fe
 
+LINKS+= ${BINDIR}/bsdtar ${BINDIR}/tar
+MLINKS+= bsdtar.1 tar.1
+
 .include <bsd.prog.mk>
