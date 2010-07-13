@@ -54,6 +54,9 @@ gnu-includes: includes
 gnu-libraries: includes
 	$(MAKE) -C lib build_gnu
 
+clang-libraries: includes
+	$(MAKE) -C lib build_clang
+
 commands: includes libraries
 	$(MAKE) -C commands all
 

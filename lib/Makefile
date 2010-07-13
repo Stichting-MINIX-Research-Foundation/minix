@@ -15,6 +15,9 @@ build_ack:
 build_gnu:
 	sh gnu_build.sh obj depend all install
 
+build_clang:
+	sh clang_build.sh obj depend all install
+
 clean_ack:
 	sh ack_build.sh clean
 
