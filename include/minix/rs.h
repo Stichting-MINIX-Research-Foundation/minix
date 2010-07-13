@@ -13,14 +13,19 @@ Interface to the reincarnation server
 /* RSS definitions. */
 #define RSS_NR_IRQ		16
 #define RSS_NR_IO		16
+#define RSS_IRQ_ALL		(RSS_NR_IRQ+1)
+#define RSS_IO_ALL		(RSS_NR_IO+1)
+#define RSS_IPC_ALL		"IPC_ALL"
+#define RSS_IPC_ALL_SYS		"IPC_ALL_SYS"
 
 /* RSS flags. */
 #define RSS_COPY	0x01	/* keep an in-memory copy of the binary */
-#define RSS_IPC_VALID	0x02	/* rss_ipc and rss_ipclen are valid */
 #define RSS_REUSE	0x04	/* Try to reuse previously copied binary */
 #define RSS_NOBLOCK	0x08	/* unblock caller immediately */
 #define RSS_REPLICA	0x10	/* keep a replica of the service */
 #define RSS_SELF_LU	0x20	/* perform self update */
+#define RSS_SYS_BASIC_CALLS	0x40	/* include basic kernel calls */
+#define RSS_VM_BASIC_CALLS	0x80	/* include basic vm calls */
 
 /* Common definitions. */
 #define RS_NR_CONTROL		 8
@@ -42,7 +47,10 @@ struct rs_start
 	char *rss_cmd;
 	size_t rss_cmdlen;
 	uid_t rss_uid;
-	int rss_nice; /* use rss_nice_encode and _decode */
+	endpoint_t rss_sigmgr;
+	endpoint_t rss_scheduler;
+	unsigned rss_priority;
+	unsigned rss_quantum;
 	int rss_major;
 	int rss_dev_style;
 	long rss_period;
@@ -96,9 +104,5 @@ struct rprocpub {
 };
 
 _PROTOTYPE( int minix_rs_lookup, (const char *name, endpoint_t *value));
-_PROTOTYPE(int rss_nice_encode, (int *nice, endpoint_t scheduler, 
-	unsigned priority, unsigned quantum));
-_PROTOTYPE(int rss_nice_decode, (int nice, endpoint_t *scheduler, 
-	unsigned *priority, unsigned *quantum));
 
 #endif

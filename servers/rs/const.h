@@ -3,10 +3,15 @@
 #ifndef RS_CONST_H
 #define RS_CONST_H
 
-#define DEBUG_DEFAULT 0
+#define DEBUG_DEFAULT      0
+#define PRIV_DEBUG_DEFAULT 0
 
 #ifndef DEBUG
 #define DEBUG DEBUG_DEFAULT
+#endif
+
+#ifndef PRIV_DEBUG
+#define PRIV_DEBUG PRIV_DEBUG_DEFAULT
 #endif
 
 /* Space reserved for program and arguments. */
@@ -36,6 +41,8 @@
 #define SF_USE_COPY     0x008    /* set when process has a copy in memory */
 #define SF_NEED_REPL    0x010    /* set when process needs replica to start */
 #define SF_USE_REPL     0x020    /* set when process has a replica */
+#define IMM_SF          \
+    (SF_CORE_SRV | SF_SYNCH_BOOT | SF_NEED_COPY | SF_NEED_REPL) /* immutable */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_INIT_T	(system_hz * 10)	/* allow T ticks for init */
@@ -55,33 +62,6 @@
 /* Definitions for boot info tables. */
 #define NULL_BOOT_NR    NR_BOOT_PROCS        /* marks a null boot entry */
 #define DEFAULT_BOOT_NR NR_BOOT_PROCS        /* marks the default boot entry */
-#define SYS_ALL_C       (-1)                 /* specifies all calls */
-#define SYS_NULL_C      (-2)                 /* marks a null call entry */
-
-/* Define privilege flags for the various process types. */
-#define SRV_F  (SYS_PROC | PREEMPTIBLE)            /* system services */
-#define DSRV_F (SRV_F | DYN_PRIV_ID | CHECK_IO_PORT | CHECK_IRQ)
-                                                   /* dynamic system services */
-#define VM_F   (SYS_PROC)                          /* vm  */
-#define RUSR_F (BILLABLE | PREEMPTIBLE)            /* root user proc */
-
-/* Define system call traps for the various process types. These call masks
- * determine what system call traps a process is allowed to make.
- */
-#define SRV_T   (~0)                               /* system services */
-#define DSRV_T  SRV_T                              /* dynamic system services */
-#define RUSR_T  (1 << SENDREC)                     /* root user proc */
-
-/* Send masks determine to whom processes can send messages or notifications. */
-#define SRV_M   (~0)                               /* system services */
-#define RUSR_M \
-    ( spi_to(PM_PROC_NR) | spi_to(VFS_PROC_NR) | spi_to(RS_PROC_NR) \
-    | spi_to(VM_PROC_NR) )                         /* root user proc */
-
-/* Define the signal manager for the various process types. */
-#define SRV_SM  RS_PROC_NR                         /* system services */
-#define DSRV_SM RS_PROC_NR                         /* dynamic system services */
-#define RUSR_SM PM_PROC_NR                         /* root user proc */
 
 /* Define sys flags for the various process types. */
 #define SRV_SF   (SF_CORE_SRV)                 /* system services */

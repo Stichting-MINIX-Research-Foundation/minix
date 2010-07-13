@@ -8,73 +8,25 @@
 
 #include "inc.h"
 
-/* Define kernel calls that processes are allowed to make.
- * 
- * Calls are unordered lists, converted by RS to bitmasks
- * once at runtime.
- */
-#define FS_KC   SYS_BASIC_CALLS, SYS_TRACE, SYS_UMAP, SYS_VIRCOPY, SYS_KILL
-#define DRV_KC	SYS_BASIC_CALLS, SYS_TRACE, SYS_UMAP, SYS_VIRCOPY, SYS_SEGCTL, \
-    SYS_IRQCTL, SYS_INT86, SYS_DEVIO, SYS_SDEVIO, SYS_VDEVIO
-
-PRIVATE int
-  pm_kc[] =   { SYS_ALL_C, SYS_NULL_C },
-  sched_kc[] ={ SYS_ALL_C, SYS_NULL_C },
-  vfs_kc[] =  { FS_KC, SYS_NULL_C },
-  rs_kc[] =   { SYS_ALL_C, SYS_NULL_C },
-  ds_kc[] =   { SYS_ALL_C, SYS_NULL_C },
-  vm_kc[] =   { SYS_ALL_C, SYS_NULL_C },
-  tty_kc[] =  { DRV_KC, SYS_KILL, SYS_PHYSCOPY, SYS_ABORT, SYS_IOPENABLE,
-      SYS_READBIOS, SYS_NULL_C },
-  mem_kc[] =  { DRV_KC, SYS_PHYSCOPY, SYS_IOPENABLE, SYS_NULL_C},
-  log_kc[] =  { DRV_KC, SYS_NULL_C },
-  mfs_kc[] =  { FS_KC, SYS_NULL_C },
-  pfs_kc[] =  { FS_KC, SYS_NULL_C },
-  rusr_kc[] = { SYS_NULL_C },
-  no_kc[] =   { SYS_NULL_C }; /* no kernel call */
-
-/* Define VM calls that processes are allowed to make.
- * 
- * Calls are unordered lists, converted by RS to bitmasks
- * once at runtime.
- */
-PRIVATE int
-  pm_vmc[] =   { VM_BASIC_CALLS, VM_EXIT, VM_FORK, VM_BRK, VM_EXEC_NEWMEM,
-      VM_PUSH_SIG, VM_WILLEXIT, VM_ADDDMA, VM_DELDMA, VM_GETDMA,
-      VM_NOTIFY_SIG, SYS_NULL_C },
-  sched_vmc[] ={ VM_BASIC_CALLS, SYS_NULL_C },
-  vfs_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  rs_vmc[] =   { VM_BASIC_CALLS, VM_RS_SET_PRIV, VM_RS_UPDATE, VM_RS_MEMCTL,
-      SYS_NULL_C },
-  ds_vmc[] =   { VM_BASIC_CALLS, SYS_NULL_C },
-  vm_vmc[] =   { SYS_NULL_C },
-  tty_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  mem_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  log_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  mfs_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  pfs_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C },
-  rusr_vmc[] = { VM_BASIC_CALLS, SYS_NULL_C },
-  no_vmc[] =   { SYS_NULL_C }; /* no vm call */
-
 /* Definition of the boot image priv table. The order of entries in this table
  * reflects the order boot system services are made runnable and initialized
  * at boot time.
  */
 PUBLIC struct boot_image_priv boot_image_priv_table[] = {
-/*endpoint,     label,   flags,  traps,  ipcto,  sigmgr,  kcalls,  vmcalls */
-{RS_PROC_NR,   "rs",     RSYS_F, RSYS_T, RSYS_M, RSYS_SM, rs_kc,   rs_vmc     },
-{VM_PROC_NR,   "vm",     VM_F,   SRV_T,  SRV_M,  SRV_SM,  vm_kc,   vm_vmc     },
-{PM_PROC_NR,   "pm",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pm_kc,   pm_vmc     },
-{SCHED_PROC_NR,"sched",  SRV_F,  SRV_T,  SRV_M,  SRV_SM,  sched_kc, sched_vmc },
-{VFS_PROC_NR,  "vfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  vfs_kc,  vfs_vmc    },
-{DS_PROC_NR,   "ds",     SRV_F,  SRV_T,  SRV_M,  SRV_SM,  ds_kc,   ds_vmc     },
-{TTY_PROC_NR,  "tty",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  tty_kc,  tty_vmc    },
-{MEM_PROC_NR,  "memory", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mem_kc,  mem_vmc    },
-{LOG_PROC_NR,  "log",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  log_kc,  log_vmc    },
-{MFS_PROC_NR,"fs_imgrd", SRV_F,  SRV_T,  SRV_M,  SRV_SM,  mfs_kc,  mfs_vmc    },
-{PFS_PROC_NR,  "pfs",    SRV_F,  SRV_T,  SRV_M,  SRV_SM,  pfs_kc,  pfs_vmc    },
-{INIT_PROC_NR, "init",   RUSR_F, RUSR_T, RUSR_M, RUSR_SM, rusr_kc, rusr_vmc   },
-{NULL_BOOT_NR, "",       0,      0,      0,      0,       no_kc,   no_vmc     }
+/*endpoint,     label,   flags, */
+{RS_PROC_NR,   "rs",     RSYS_F },
+{VM_PROC_NR,   "vm",     VM_F   },
+{PM_PROC_NR,   "pm",     SRV_F  },
+{SCHED_PROC_NR,"sched",  SRV_F  },
+{VFS_PROC_NR,  "vfs",    SRV_F  },
+{DS_PROC_NR,   "ds",     SRV_F  },
+{TTY_PROC_NR,  "tty",    SRV_F  },
+{MEM_PROC_NR,  "memory", SRV_F  },
+{LOG_PROC_NR,  "log",    SRV_F  },
+{MFS_PROC_NR,"fs_imgrd", SRV_F  },
+{PFS_PROC_NR,  "pfs",    SRV_F  },
+{INIT_PROC_NR, "init",   USR_F  },
+{NULL_BOOT_NR, "",       0,     } /* null entry */
 };
 
 /* Definition of the boot image sys table. */

@@ -173,16 +173,20 @@ Mount $usr /usr failed -- Single user."
     fi
 
     # Edit settings for boot system services
-    edit rs
-    edit vm
-    edit pm
-    edit sched
-    edit vfs
-    edit ds
-    edit tty
-    edit memory
-    edit -p log
-    edit -c pfs
+    if [ "`sysenv skip_boot_config`" != 1 ]
+    then
+	edit rs
+	edit vm
+	edit pm
+	edit sched
+	edit vfs
+	edit ds
+	edit tty
+	edit memory
+	edit -p log
+	edit -c pfs
+	edit init
+    fi
 
     if [ ! -z "$home" ]
     then mount $bin_img $home /home || echo "WARNING: couldn't mount $home on /home"

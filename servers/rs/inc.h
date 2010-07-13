@@ -36,6 +36,7 @@
 #include <minix/ds.h>
 #include <minix/minlib.h>
 #include <minix/sched.h>
+#include <minix/priv.h>
 
 #include <machine/archtypes.h>
 #include <timers.h>				/* For priv.h */

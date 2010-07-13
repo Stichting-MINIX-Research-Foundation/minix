@@ -69,12 +69,12 @@ int is_init;                    /* set when initializing a call mask */
 
   /* Count the number of calls to fill in. */
   nr_calls = 0;
-  for(i=0; calls[i] != SYS_NULL_C; i++) {
+  for(i=0; calls[i] != NULL_C; i++) {
       nr_calls++;
   }
 
   /* See if all calls are allowed and call mask must be completely filled. */
-  if(nr_calls == 1 && calls[0] == SYS_ALL_C) {
+  if(nr_calls == 1 && calls[0] == ALL_C) {
       for(i=0; i < call_mask_size; i++) {
           call_mask[i] = (~0);
       }

@@ -267,10 +267,40 @@ PUBLIC int do_edit(message *m_ptr)
   if(rs_verbose)
       printf("RS: %s edits settings\n", srv_to_string(rp));
 
+  /* Synch the privilege structure with the kernel. */
+  if ((r = sys_getpriv(&rp->r_priv, rpub->endpoint)) != OK) {
+      printf("RS: do_edit: unable to synch privilege structure: %d\n", r);
+      return r;
+  }
+
+  /* Tell scheduler this process is finished */
+  if ((r = sched_stop(rp->r_scheduler, rpub->endpoint)) != OK) {
+      printf("RS: do_edit: scheduler won't give up process: %d\n", r);
+      return r;
+  }
+
   /* Edit the slot as requested. */
-  r = edit_slot(rp, &rs_start, m_ptr->m_source);
-  if(r != OK) {
+  if((r = edit_slot(rp, &rs_start, m_ptr->m_source)) != OK) {
       printf("RS: do_edit: unable to edit the existing slot: %d\n", r);
+      return r;
+  }
+
+  /* Update privilege structure. */
+  r = sys_privctl(rpub->endpoint, SYS_PRIV_UPDATE_SYS, &rp->r_priv);
+  if(r != OK) {
+      printf("RS: do_edit: unable to update privilege structure: %d\n", r);
+      return r;
+  }
+
+  /* Update VM calls. */
+  if ((r = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0])) != OK) {
+      printf("RS: do_edit: failed: %d\n", r);
+      return r;
+  }
+
+  /* Reinitialize scheduling. */
+  if ((r = sched_init_proc(rp)) != OK) {
+      printf("RS: do_edit: unable to reinitialize scheduling: %d\n", r);
       return r;
   }
 
@@ -898,30 +928,31 @@ message *m_ptr;
  *===========================================================================*/
 PRIVATE int check_request(struct rs_start *rs_start)
 {
-  int s;
-  endpoint_t rss_scheduler;
-  unsigned rss_priority, rss_quantum;
-  
-  s = rss_nice_decode(rs_start->rss_nice, &rss_scheduler, 
-	&rss_priority, &rss_quantum);
-  if (s != OK) return s;
-
   /* Verify scheduling parameters */
-  if (rss_scheduler != KERNEL && 
-	(rss_scheduler < 0 || 
-	rss_scheduler > LAST_SPECIAL_PROC_NR)) {
+  if (rs_start->rss_scheduler != KERNEL && 
+	(rs_start->rss_scheduler < 0 || 
+	rs_start->rss_scheduler > LAST_SPECIAL_PROC_NR)) {
 	printf("RS: check_request: invalid scheduler %d\n", 
-		rss_scheduler);
+		rs_start->rss_scheduler);
 	return EINVAL;
   }
-  if (rss_priority >= NR_SCHED_QUEUES) {
+  if (rs_start->rss_priority >= NR_SCHED_QUEUES) {
 	printf("RS: check_request: priority %u out of range\n", 
-		rss_priority);
+		rs_start->rss_priority);
 	return EINVAL;
   }
-  if (rss_quantum <= 0) {
+  if (rs_start->rss_quantum <= 0) {
 	printf("RS: check_request: quantum %u out of range\n", 
-		rss_quantum);
+		rs_start->rss_quantum);
+	return EINVAL;
+  }
+
+  /* Verify signal manager. */
+  if (rs_start->rss_sigmgr != SELF && 
+	(rs_start->rss_sigmgr < 0 || 
+	rs_start->rss_sigmgr > LAST_SPECIAL_PROC_NR)) {
+	printf("RS: check_request: invalid signal manager %d\n", 
+		rs_start->rss_sigmgr);
 	return EINVAL;
   }
 

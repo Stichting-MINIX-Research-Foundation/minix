@@ -172,6 +172,10 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct boot_image_dev *boot_image_dev;
   int pid, replica_pid;
   endpoint_t replica_endpoint;
+  int ipc_to;
+  int *calls;
+  int all_c[] = { ALL_C, NULL_C };
+  int no_c[] = {  NULL_C };
 
   /* See if we run in verbose mode. */
   env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1);
@@ -261,15 +265,16 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
           _ENDPOINT_P(boot_image_priv->endpoint));
       
       /* Initialize privilege bitmaps and signal manager. */
-      rp->r_priv.s_flags = boot_image_priv->flags;         /* priv flags */
-      rp->r_priv.s_trap_mask = boot_image_priv->trap_mask; /* traps */
-      memcpy(&rp->r_priv.s_ipc_to, &boot_image_priv->ipc_to,
-                        sizeof(rp->r_priv.s_ipc_to));      /* targets */
-      rp->r_priv.s_sig_mgr = boot_image_priv->sig_mgr;     /* sig mgr */
-      rp->r_priv.s_bak_sig_mgr = NONE;                     /* backup sig mgr */
+      rp->r_priv.s_flags = boot_image_priv->flags;          /* priv flags */
+      rp->r_priv.s_trap_mask= SRV_OR_USR(rp, SRV_T, USR_T); /* traps */
+      ipc_to = SRV_OR_USR(rp, SRV_M, USR_M);                /* targets */
+      memcpy(&rp->r_priv.s_ipc_to, &ipc_to, sizeof(rp->r_priv.s_ipc_to));
+      rp->r_priv.s_sig_mgr= SRV_OR_USR(rp, SRV_SM, USR_SM); /* sig mgr */
+      rp->r_priv.s_bak_sig_mgr = NONE;                      /* backup sig mgr */
       
-      /* Initialize kernel call mask bitmap from unordered set. */
-      fill_call_mask(boot_image_priv->k_calls, NR_SYS_CALLS,
+      /* Initialize kernel call mask bitmap. */
+      calls = SRV_OR_USR(rp, SRV_KC, USR_KC) == ALL_C ? all_c : no_c;
+      fill_call_mask(calls, NR_SYS_CALLS,
           rp->r_priv.s_k_call_mask, KERNEL_CALL, TRUE);
 
       /* Set the privilege structure. */
@@ -306,9 +311,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp->r_script[0]= '\0';
       build_cmd_dep(rp);
 
-      /* Initialize vm call mask bitmap from unordered set. */
-      fill_call_mask(boot_image_priv->vm_calls, NR_VM_CALLS,
-          rpub->vm_call_mask, VM_RQ_BASE, TRUE);
+      /* Initialize vm call mask bitmap. */
+      calls = SRV_OR_USR(rp, SRV_VC, USR_VC) == ALL_C ? all_c : no_c;
+      fill_call_mask(calls, NR_VM_CALLS, rpub->vm_call_mask, VM_RQ_BASE, TRUE);
 
       /* Scheduling parameters. */
       rp->r_scheduler = SRV_OR_USR(rp, SRV_SCH, USR_SCH);
@@ -328,7 +333,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       getuptime(&rp->r_alive_tm);              /* currently alive */
       rp->r_stop_tm = 0;                       /* not exiting yet */
       rp->r_restarts = 0;                      /* no restarts so far */
-      rp->r_set_resources = 0;                 /* don't set resources */
       rp->r_period = 0;                        /* no period yet */
       rp->r_exec = NULL;                       /* no in-memory copy yet */
       rp->r_exec_len = 0;

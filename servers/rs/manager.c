@@ -95,13 +95,14 @@ struct rproc *rp;
   if(rp) {
       rpub = rp->r_pub;
 
-      /* Disallow the call if the target is a user process. */
+      /* Only allow RS_EDIT if the target is a user process. */
       if(!(rp->r_priv.s_flags & SYS_PROC)) {
-          return EPERM;
+          if(call != RS_EDIT) return EPERM;
       }
 
       /* Disallow the call if another call is in progress for the service. */
-      if(rp->r_flags & RS_LATEREPLY || rp->r_flags & RS_INITIALIZING) {
+      if((rp->r_flags & RS_LATEREPLY)
+          || (rp->r_flags & RS_INITIALIZING) || (rp->r_flags & RS_UPDATING)) {
           return EBUSY;
       }
 
@@ -492,16 +493,10 @@ struct rproc *rp;
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
   rpub->in_use = TRUE;				/* public entry is now in use */
 
-  /* Set resources when asked to. */
-  if (rp->r_set_resources) {
-	/* Initialize privilege structure. */
-	init_privs(rp, &rp->r_priv);
-  }
-
   /* Set and synch the privilege structure for the new service. */
   if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_SET_SYS, &rp->r_priv)) != OK
 	|| (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
-	printf("unable to set privilege structure: %d\n", s);
+	printf("RS: unable to set privilege structure: %d\n", s);
 	cleanup_service(rp);
 	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
 	return ENOMEM;
@@ -509,7 +504,7 @@ struct rproc *rp;
 
   /* Set the scheduler for this process */
   if ((s = sched_init_proc(rp)) != OK) {
-	printf("unable to start scheduling: %d\n", s);
+	printf("RS: unable to start scheduling: %d\n", s);
 	cleanup_service(rp);
 	vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
 	return s;
@@ -525,7 +520,7 @@ struct rproc *rp;
   }
   else {
       if ((s = read_exec(rp)) != OK) {
-          printf("read_exec failed: %d\n", s);
+          printf("RS: read_exec failed: %d\n", s);
           cleanup_service(rp);
           vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
           return s;
@@ -536,9 +531,8 @@ struct rproc *rp;
   s = srv_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
         environ);
   vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN);
-
   if (s != OK) {
-        printf("srv_execve failed: %d\n", s);
+        printf("RS: srv_execve failed: %d\n", s);
         cleanup_service(rp);
         return s;
   }
@@ -557,6 +551,13 @@ struct rproc *rp;
    * towards MFS instances, this hack and the big part of srv_fork() can go.
    */
   setuid(0);
+
+  /* Tell VM about allowed calls. */
+  if ((s = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0])) != OK) {
+      printf("RS: vm_set_priv failed: %d\n", s);
+      cleanup_service(rp);
+      return s;
+  }
 
   if(rs_verbose)
       printf("RS: %s created\n", srv_to_string(rp));
@@ -587,6 +588,7 @@ int instance_flag;
   if((r = clone_slot(rp, &replica_rp)) != OK) {
       return r;
   }
+  replica_rpub = replica_rp->r_pub;
 
   /* Clone is a live updated or restarted service instance? */
   if(instance_flag == LU_SYS_PROC) {
@@ -608,16 +610,6 @@ int instance_flag;
   if(r != OK) {
       *rp_link = NULL;
       return r;
-  }
-
-  /* Tell VM about allowed calls, if any. */
-  replica_rpub = replica_rp->r_pub;
-  if(replica_rpub->vm_call_mask[0]) {
-      r = vm_set_priv(replica_rpub->endpoint, &replica_rpub->vm_call_mask[0]);
-      if (r != OK) {
-          *rp_link = NULL;
-          return kill_service(replica_rp, "vm_set_priv call failed", r);
-      }
   }
 
   /* If this instance is for restarting RS, set up a backup signal manager. */
@@ -663,14 +655,6 @@ struct rproc *rp;				/* pointer to service slot */
       if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style,
           rpub->dev_flags) != OK) {
           return kill_service(rp, "couldn't map driver", errno);
-      }
-  }
-
-  /* Tell VM about allowed calls, if any. */
-  if(rpub->vm_call_mask[0]) {
-      r = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0]);
-      if (r != OK) {
-          return kill_service(rp, "vm_set_priv call failed", r);
       }
   }
 
@@ -1102,19 +1086,21 @@ struct rproc *rp;
   def_rpub = def_rp->r_pub;
   rpub = rp->r_pub;
 
-  /* Device settings. These properties cannot change. */
+  /* Device and PCI settings. These properties cannot change. */
   rpub->dev_flags = def_rpub->dev_flags;
   rpub->dev_nr = def_rpub->dev_nr;
   rpub->dev_style = def_rpub->dev_style;
   rpub->dev_style2 = def_rpub->dev_style2;
+  rpub->pci_acl = def_rpub->pci_acl;
 
-  /* Service type flags. */
-  rp->r_priv.s_flags |= rp->r_priv.s_flags & ROOT_SYS_PROC;
+  /* Immutable system and privilege flags. */
+  rpub->sys_flags &= ~IMM_SF;
+  rpub->sys_flags |= (def_rpub->sys_flags & IMM_SF);
+  rp->r_priv.s_flags &= ~IMM_F;
+  rp->r_priv.s_flags |= (def_rp->r_priv.s_flags & IMM_F);
 
-  /* Period. */
-  if(!rp->r_period && def_rp->r_period) {
-      rp->r_period = def_rp->r_period;
-  }
+  /* Allowed traps. They cannot change. */
+  rp->r_priv.s_trap_mask = def_rp->r_priv.s_trap_mask;
 }
 
 /*===========================================================================*
@@ -1258,14 +1244,116 @@ endpoint_t source;
   struct rprocpub *rpub;
   char *label;
   int len;
-  int s;
+  int s, i;
+  int basic_kc[] =  { SYS_BASIC_CALLS, NULL_C };
+  int basic_vmc[] =  { VM_BASIC_CALLS, NULL_C };
 
   rpub = rp->r_pub;
 
-  /* Update command and arguments */
+  /* Update IPC target list. */
+  if (rs_start->rss_ipclen==0 || rs_start->rss_ipclen+1>sizeof(rp->r_ipc_list)){
+      printf("RS: edit_slot: ipc list empty or long for '%s'\n", rpub->label);
+      return EINVAL;
+  }
+  s=sys_datacopy(source, (vir_bytes) rs_start->rss_ipc, 
+      SELF, (vir_bytes) rp->r_ipc_list, rs_start->rss_ipclen);
+  if (s != OK) return(s);
+  rp->r_ipc_list[rs_start->rss_ipclen]= '\0';
+
+  /* Update IRQs. */
+  if(rs_start->rss_nr_irq == RSS_IRQ_ALL) {
+      rs_start->rss_nr_irq = 0;
+  }
+  else {
+      rp->r_priv.s_flags |= CHECK_IRQ;
+  }
+  if (rs_start->rss_nr_irq > NR_IRQ) {
+      printf("RS: edit_slot: too many IRQs requested\n");
+      return EINVAL;
+  }
+  rp->r_priv.s_nr_irq= rs_start->rss_nr_irq;
+  for (i= 0; i<rp->r_priv.s_nr_irq; i++) {
+      rp->r_priv.s_irq_tab[i]= rs_start->rss_irq[i];
+      if(rs_verbose)
+          printf("RS: edit_slot: IRQ %d\n", rp->r_priv.s_irq_tab[i]);
+  }
+
+  /* Update I/O ranges. */
+  if(rs_start->rss_nr_io == RSS_IO_ALL) {
+      rs_start->rss_nr_io = 0;
+  }
+  else {
+      rp->r_priv.s_flags |= CHECK_IO_PORT;
+  }
+  if (rs_start->rss_nr_io > NR_IO_RANGE) {
+      printf("RS: edit_slot: too many I/O ranges requested\n");
+      return EINVAL;
+  }
+  rp->r_priv.s_nr_io_range= rs_start->rss_nr_io;
+  for (i= 0; i<rp->r_priv.s_nr_io_range; i++) {
+      rp->r_priv.s_io_tab[i].ior_base= rs_start->rss_io[i].base;
+      rp->r_priv.s_io_tab[i].ior_limit=
+          rs_start->rss_io[i].base+rs_start->rss_io[i].len-1;
+      if(rs_verbose)
+          printf("RS: edit_slot: I/O [%x..%x]\n",
+              rp->r_priv.s_io_tab[i].ior_base,
+              rp->r_priv.s_io_tab[i].ior_limit);
+  }
+
+  /* Update kernel call mask. Inherit basic kernel calls when asked to. */
+  memcpy(rp->r_priv.s_k_call_mask, rs_start->rss_system,
+      sizeof(rp->r_priv.s_k_call_mask));
+  if(rs_start->rss_flags & RSS_SYS_BASIC_CALLS) {
+      fill_call_mask(basic_kc, NR_SYS_CALLS,
+          rp->r_priv.s_k_call_mask, KERNEL_CALL, FALSE);
+  }
+
+  /* Update VM call mask. Inherit basic VM calls. */
+  memcpy(rpub->vm_call_mask, rs_start->rss_vm,
+      sizeof(rpub->vm_call_mask));
+  if(rs_start->rss_flags & RSS_VM_BASIC_CALLS) {
+      fill_call_mask(basic_vmc, NR_VM_CALLS,
+          rpub->vm_call_mask, VM_RQ_BASE, FALSE);
+  }
+
+  /* Update control labels. */
+  if(rs_start->rss_nr_control > 0) {
+      int i, s;
+      if (rs_start->rss_nr_control > RS_NR_CONTROL) {
+          printf("RS: edit_slot: too many control labels\n");
+          return EINVAL;
+      }
+      for (i=0; i<rs_start->rss_nr_control; i++) {
+          s = copy_label(source, rs_start->rss_control[i].l_addr,
+              rs_start->rss_control[i].l_len, rp->r_control[i],
+              sizeof(rp->r_control[i]));
+          if(s != OK)
+              return s;
+      }
+      rp->r_nr_control = rs_start->rss_nr_control;
+
+      if (rs_verbose) {
+          printf("RS: edit_slot: control labels:");
+          for (i=0; i<rp->r_nr_control; i++)
+              printf(" %s", rp->r_control[i]);
+          printf("\n");
+      }
+  }
+
+  /* Update signal manager. */
+  rp->r_priv.s_sig_mgr = rs_start->rss_sigmgr;
+
+  /* Update scheduling properties if possible. */
+  if(rp->r_scheduler != NONE) {
+      rp->r_scheduler = rs_start->rss_scheduler;
+      rp->r_priority = rs_start->rss_priority;
+      rp->r_quantum = rs_start->rss_quantum;
+  }
+
+  /* Update command and arguments. */
   if (rs_start->rss_cmdlen > MAX_COMMAND_LEN-1) return(E2BIG);
   s=sys_datacopy(source, (vir_bytes) rs_start->rss_cmd, 
-  	SELF, (vir_bytes) rp->r_cmd, rs_start->rss_cmdlen);
+      SELF, (vir_bytes) rp->r_cmd, rs_start->rss_cmdlen);
   if (s != OK) return(s);
   rp->r_cmd[rs_start->rss_cmdlen] = '\0';	/* ensure it is terminated */
   if (rp->r_cmd[0] != '/') return(EINVAL);	/* insist on absolute path */
@@ -1297,56 +1385,58 @@ endpoint_t source;
 
   /* Update recovery script. */
   if (rs_start->rss_scriptlen > MAX_SCRIPT_LEN-1) return(E2BIG);
-  if (rs_start->rss_script != NULL && !(rpub->sys_flags & SF_CORE_SRV))
-  {
-	  s=sys_datacopy(source, (vir_bytes) rs_start->rss_script, 
-		SELF, (vir_bytes) rp->r_script, rs_start->rss_scriptlen);
-	  if (s != OK) return(s);
-	  rp->r_script[rs_start->rss_scriptlen] = '\0';
+  if (rs_start->rss_script != NULL && !(rpub->sys_flags & SF_CORE_SRV)) {
+      s=sys_datacopy(source, (vir_bytes) rs_start->rss_script, 
+          SELF, (vir_bytes) rp->r_script, rs_start->rss_scriptlen);
+      if (s != OK) return(s);
+      rp->r_script[rs_start->rss_scriptlen] = '\0';
   }
 
   /* Update system flags and in-memory copy. */
   if ((rs_start->rss_flags & RSS_COPY) && !(rpub->sys_flags & SF_USE_COPY)) {
-	int exst_cpy;
-	struct rproc *rp2;
-	struct rprocpub *rpub2;
-	exst_cpy = 0;
-	
-	if(rs_start->rss_flags & RSS_REUSE) {
-                int i;
+      int exst_cpy;
+      struct rproc *rp2;
+      struct rprocpub *rpub2;
+      exst_cpy = 0;
 
-                for(i = 0; i < NR_SYS_PROCS; i++) {
-                	rp2 = &rproc[i];
-                	rpub2 = rproc[i].r_pub;
-                        if(strcmp(rpub->proc_name, rpub2->proc_name) == 0 &&
-                           (rpub2->sys_flags & SF_USE_COPY)) {
-                                /* We have found the same binary that's
-                                 * already been copied */
-                                 exst_cpy = 1;
-                                 break;
-                        }
-                }
-         }                
+      if(rs_start->rss_flags & RSS_REUSE) {
+          int i;
 
-	s = OK;
-	if(!exst_cpy)
-		s = read_exec(rp);
-	else
-		share_exec(rp, rp2);
+          for(i = 0; i < NR_SYS_PROCS; i++) {
+              rp2 = &rproc[i];
+              rpub2 = rproc[i].r_pub;
+              if(strcmp(rpub->proc_name, rpub2->proc_name) == 0 &&
+                  (rpub2->sys_flags & SF_USE_COPY)) {
+                  /* We have found the same binary that's
+                   * already been copied */
+                  exst_cpy = 1;
+                  break;
+              }
+          }
+      }                
 
-	if (s != OK)
-		return s;
+      s = OK;
+      if(!exst_cpy)
+          s = read_exec(rp);
+      else
+          share_exec(rp, rp2);
 
-	rpub->sys_flags |= SF_USE_COPY;
+      if (s != OK)
+          return s;
+
+      rpub->sys_flags |= SF_USE_COPY;
   }
   if (rs_start->rss_flags & RSS_REPLICA) {
-      	rpub->sys_flags |= SF_USE_REPL;
+      rpub->sys_flags |= SF_USE_REPL;
   }
 
   /* Update period. */
   if(rpub->endpoint != RS_PROC_NR) {
       rp->r_period = rs_start->rss_period;
   }
+
+  /* (Re)initialize privilege settings. */
+  init_privs(rp, &rp->r_priv);
 
   return OK;
 }
@@ -1362,138 +1452,22 @@ endpoint_t source;
 /* Initialize a slot as requested by the client. */
   struct rprocpub *rpub;
   int i;
-  int s;
-  int basic_kc[] =  { SYS_BASIC_CALLS, SYS_NULL_C };
-  int basic_vmc[] =  { VM_BASIC_CALLS, SYS_NULL_C };
 
   rpub = rp->r_pub;
 
-  /* All dynamically created services get the same sys and privilege flags,
-   * allowed traps, and signal manager. Other privilege settings can be
-   * specified at runtime. The privilege id is dynamically allocated by
-   * the kernel.
+  /* All dynamically created services get the same sys and privilege flags, and
+   * allowed traps. Other privilege settings can be specified at runtime. The
+   * privilege id is dynamically allocated by the kernel.
    */
   rpub->sys_flags = DSRV_SF;             /* system flags */
   rp->r_priv.s_flags = DSRV_F;           /* privilege flags */
   rp->r_priv.s_trap_mask = DSRV_T;       /* allowed traps */
-  rp->r_priv.s_sig_mgr = DSRV_SM;        /* signal manager */
   rp->r_priv.s_bak_sig_mgr = NONE;       /* backup signal manager */
 
-  /* Initialize control labels. */
-  if(rs_start->rss_nr_control > 0) {
-	int i, s;
-	if (rs_start->rss_nr_control > RS_NR_CONTROL)
-	{
-		printf("RS: init_slot: too many control labels\n");
-		return EINVAL;
-	}
-	for (i=0; i<rs_start->rss_nr_control; i++) {
-		s = copy_label(source, rs_start->rss_control[i].l_addr,
-			rs_start->rss_control[i].l_len, rp->r_control[i],
-			sizeof(rp->r_control[i]));
-		if(s != OK)
-			return s;
-	}
-	rp->r_nr_control = rs_start->rss_nr_control;
-
-	if (rs_verbose) {
-		printf("RS: init_slot: control labels:");
-		for (i=0; i<rp->r_nr_control; i++)
-			printf(" %s", rp->r_control[i]);
-		printf("\n");
-	}
-  }
-
-  /* Initialize IPC list. */
-  if (rs_start->rss_flags & RSS_IPC_VALID)
-  {
-	if (rs_start->rss_ipclen+1 > sizeof(rp->r_ipc_list))
-	{
-		printf("RS: ipc list too long for '%s'\n", rpub->label);
-		return EINVAL;
-	}
-	s=sys_datacopy(source, (vir_bytes) rs_start->rss_ipc, 
-		SELF, (vir_bytes) rp->r_ipc_list, rs_start->rss_ipclen);
-	if (s != OK) return(s);
-	rp->r_ipc_list[rs_start->rss_ipclen]= '\0';
-  }
-  else
-	rp->r_ipc_list[0]= '\0';
-
-  /* Initialize granted resources */
-  if (rs_start->rss_nr_irq > NR_IRQ)
-  {
-	printf("RS: init_slot: too many IRQs requested\n");
-	return EINVAL;
-  }
-  rp->r_priv.s_nr_irq= rs_start->rss_nr_irq;
-  for (i= 0; i<rp->r_priv.s_nr_irq; i++)
-  {
-	rp->r_priv.s_irq_tab[i]= rs_start->rss_irq[i];
-	if(rs_verbose)
-		printf("RS: init_slot: IRQ %d\n", rp->r_priv.s_irq_tab[i]);
-  }
-
-  if (rs_start->rss_nr_io > NR_IO_RANGE)
-  {
-	printf("RS: init_slot: too many I/O ranges requested\n");
-	return EINVAL;
-  }
-  rp->r_priv.s_nr_io_range= rs_start->rss_nr_io;
-  for (i= 0; i<rp->r_priv.s_nr_io_range; i++)
-  {
-	rp->r_priv.s_io_tab[i].ior_base= rs_start->rss_io[i].base;
-	rp->r_priv.s_io_tab[i].ior_limit=
-		rs_start->rss_io[i].base+rs_start->rss_io[i].len-1;
-	if(rs_verbose)
-	   printf("RS: init_slot: I/O [%x..%x]\n",
-		rp->r_priv.s_io_tab[i].ior_base,
-		rp->r_priv.s_io_tab[i].ior_limit);
-  }
-
-  if (rs_start->rss_nr_pci_id > RS_NR_PCI_DEVICE)
-  {
-	printf("RS: init_slot: too many PCI device IDs\n");
-	return EINVAL;
-  }
-  rpub->pci_acl.rsp_nr_device = rs_start->rss_nr_pci_id;
-  for (i= 0; i<rpub->pci_acl.rsp_nr_device; i++)
-  {
-	rpub->pci_acl.rsp_device[i].vid= rs_start->rss_pci_id[i].vid;
-	rpub->pci_acl.rsp_device[i].did= rs_start->rss_pci_id[i].did;
-	if(rs_verbose)
-	   printf("RS: init_slot: PCI %04x/%04x\n",
-		rpub->pci_acl.rsp_device[i].vid,
-		rpub->pci_acl.rsp_device[i].did);
-  }
-  if (rs_start->rss_nr_pci_class > RS_NR_PCI_CLASS)
-  {
-	printf("RS: init_slot: too many PCI class IDs\n");
-	return EINVAL;
-  }
-  rpub->pci_acl.rsp_nr_class= rs_start->rss_nr_pci_class;
-  for (i= 0; i<rpub->pci_acl.rsp_nr_class; i++)
-  {
-	rpub->pci_acl.rsp_class[i].pciclass=rs_start->rss_pci_class[i].pciclass;
-	rpub->pci_acl.rsp_class[i].mask= rs_start->rss_pci_class[i].mask;
-	if(rs_verbose)
-	    printf("RS: init_slot: PCI class %06x mask %06x\n",
-		(unsigned int) rpub->pci_acl.rsp_class[i].pciclass,
-		(unsigned int) rpub->pci_acl.rsp_class[i].mask);
-  }
+  /* Initialize uid. */
   rp->r_uid= rs_start->rss_uid;
 
-  s = rss_nice_decode(rs_start->rss_nice, &rp->r_scheduler, 
-	&rp->r_priority, &rp->r_quantum);
-  if (s != OK) return(s);
-
-  /* Initialize kernel call mask. Inherit basic kernel calls. */
-  memcpy(rp->r_priv.s_k_call_mask, rs_start->rss_system,
-  	sizeof(rp->r_priv.s_k_call_mask));
-  fill_call_mask(basic_kc, NR_SYS_CALLS,
-    	rp->r_priv.s_k_call_mask, KERNEL_CALL, FALSE);
-
-  /* Initialize device driver properties. */
+  /* Initialize device driver settings. */
   rpub->dev_flags = DSRV_DF;
   rpub->dev_nr = rs_start->rss_major;
   rpub->dev_style = rs_start->rss_dev_style;
@@ -1503,9 +1477,36 @@ endpoint_t source;
   }
   rpub->dev_style2 = STYLE_NDEV;
 
+  /* Initialize pci settings. */
+  if (rs_start->rss_nr_pci_id > RS_NR_PCI_DEVICE) {
+      printf("RS: init_slot: too many PCI device IDs\n");
+      return EINVAL;
+  }
+  rpub->pci_acl.rsp_nr_device = rs_start->rss_nr_pci_id;
+  for (i= 0; i<rpub->pci_acl.rsp_nr_device; i++) {
+      rpub->pci_acl.rsp_device[i].vid= rs_start->rss_pci_id[i].vid;
+      rpub->pci_acl.rsp_device[i].did= rs_start->rss_pci_id[i].did;
+      if(rs_verbose)
+          printf("RS: init_slot: PCI %04x/%04x\n",
+              rpub->pci_acl.rsp_device[i].vid,
+              rpub->pci_acl.rsp_device[i].did);
+  }
+  if (rs_start->rss_nr_pci_class > RS_NR_PCI_CLASS) {
+      printf("RS: init_slot: too many PCI class IDs\n");
+      return EINVAL;
+  }
+  rpub->pci_acl.rsp_nr_class= rs_start->rss_nr_pci_class;
+  for (i= 0; i<rpub->pci_acl.rsp_nr_class; i++) {
+      rpub->pci_acl.rsp_class[i].pciclass=rs_start->rss_pci_class[i].pciclass;
+      rpub->pci_acl.rsp_class[i].mask= rs_start->rss_pci_class[i].mask;
+      if(rs_verbose)
+          printf("RS: init_slot: PCI class %06x mask %06x\n",
+              (unsigned int) rpub->pci_acl.rsp_class[i].pciclass,
+              (unsigned int) rpub->pci_acl.rsp_class[i].mask);
+  }
+
   /* Initialize some fields. */
   rp->r_restarts = 0; 				/* no restarts yet */
-  rp->r_set_resources= 1;			/* set resources */
   rp->r_old_rp = NULL;			        /* no old version yet */
   rp->r_new_rp = NULL;			        /* no new version yet */
   rp->r_prev_rp = NULL;			        /* no prev replica yet */
@@ -1514,20 +1515,11 @@ endpoint_t source;
   rp->r_exec_len = 0;
   rp->r_script[0]= '\0';                        /* no recovery script yet */
   rpub->label[0]= '\0';                         /* no label yet */
-
-  /* Initialize VM call mask. Inherit basic VM calls. */
-  memcpy(rpub->vm_call_mask, rs_start->rss_vm,
-  	sizeof(rpub->vm_call_mask));
-  fill_call_mask(basic_vmc, NR_VM_CALLS,
-  	rpub->vm_call_mask, VM_RQ_BASE, FALSE);
+  rp->r_scheduler = -1;                         /* no scheduler yet */
+  rp->r_priv.s_sig_mgr = -1;                    /* no signal manager yet */
 
   /* Initialize editable slot settings. */
-  s = edit_slot(rp, rs_start, source);
-  if(s != OK) {
-  	return s;
-  }
-
-  return OK;
+  return edit_slot(rp, rs_start, source);
 }
 
 /*===========================================================================*
@@ -1856,20 +1848,6 @@ struct priv *privp;
 			endpoint= SYSTEM;
 		else if (strcmp(label, "USER") == 0)
 			endpoint= INIT_PROC_NR; /* all user procs */
-		else if (strcmp(label, "PM") == 0)
-			endpoint= PM_PROC_NR;
-		else if (strcmp(label, "VFS") == 0)
-			endpoint= VFS_PROC_NR;
-		else if (strcmp(label, "RS") == 0)
-			endpoint= RS_PROC_NR;
-		else if (strcmp(label, "LOG") == 0)
-			endpoint= LOG_PROC_NR;
-		else if (strcmp(label, "TTY") == 0)
-			endpoint= TTY_PROC_NR;
-		else if (strcmp(label, "DS") == 0)
-			endpoint= DS_PROC_NR;
-		else if (strcmp(label, "VM") == 0)
-			endpoint= VM_PROC_NR;
 		else
 		{
 			/* Try to find process */
@@ -1887,6 +1865,10 @@ struct priv *privp;
 				label, r);
 			continue;
 		}
+#if PRIV_DEBUG
+		printf("  RS: add_forward_ipc: setting sendto bit for %d...\n",
+			endpoint);
+#endif
 		priv_id= priv.s_id;
 		set_sys_bit(privp->s_ipc_to, priv_id);
 	}
@@ -1935,11 +1917,13 @@ struct priv *privp;
 
 			if (!found)
 				continue;
+#if PRIV_DEBUG
+		printf("  RS: add_backward_ipc: setting sendto bit for %d...\n",
+			rrpub->endpoint);
+#endif
+			priv_id= rrp->r_priv.s_id;
+			set_sys_bit(privp->s_ipc_to, priv_id);
 		}
-
-		priv_id= rrp->r_priv.s_id;
-
-		set_sys_bit(privp->s_ipc_to, priv_id);
 	}
 }
 
@@ -1952,11 +1936,19 @@ struct rproc *rp;
 struct priv *privp;
 {
 	int i;
+	int is_ipc_all, is_ipc_all_sys;
 
 	/* Clear s_ipc_to */
 	memset(&privp->s_ipc_to, '\0', sizeof(privp->s_ipc_to));
 
-	if (strlen(rp->r_ipc_list) != 0)
+	is_ipc_all = !strcmp(rp->r_ipc_list, RSS_IPC_ALL);
+	is_ipc_all_sys = !strcmp(rp->r_ipc_list, RSS_IPC_ALL_SYS);
+
+#if PRIV_DEBUG
+	printf("  RS: init_privs: ipc list is '%s'...\n", rp->r_ipc_list);
+#endif
+
+	if (!is_ipc_all && !is_ipc_all_sys)
 	{
 		add_forward_ipc(rp, privp);
 		add_backward_ipc(rp, privp);
@@ -1966,7 +1958,7 @@ struct priv *privp;
 	{
 		for (i= 0; i<NR_SYS_PROCS; i++)
 		{
-			if (i != USER_PRIV_ID)
+			if (is_ipc_all || i != USER_PRIV_ID)
 				set_sys_bit(privp->s_ipc_to, i);
 		}
 	}

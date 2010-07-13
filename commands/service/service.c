@@ -124,9 +124,6 @@ PRIVATE int req_lu_maxtime = DEFAULT_LU_MAXTIME;
 PRIVATE char command[4096];	
 
 /* Arguments for RS to start a new service */
-PRIVATE endpoint_t rss_scheduler;
-PRIVATE unsigned rss_priority;
-PRIVATE unsigned rss_quantum;
 PRIVATE struct rs_start rs_start;
 
 /* An error occurred. Report the problem, print the usage, and exit. 
@@ -140,10 +137,10 @@ PRIVATE void print_usage(char *app_name, char *problem)
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, SELF_BINARY,
 	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_PERIOD, ARG_SCRIPT,
 	ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
-  fprintf(stderr, "    %s down label\n", app_name);
-  fprintf(stderr, "    %s refresh label\n", app_name);
-  fprintf(stderr, "    %s restart label\n", app_name);
-  fprintf(stderr, "    %s clone label\n", app_name);
+  fprintf(stderr, "    %s down <label>\n", app_name);
+  fprintf(stderr, "    %s refresh <label>\n", app_name);
+  fprintf(stderr, "    %s restart <label>\n", app_name);
+  fprintf(stderr, "    %s clone <label>\n", app_name);
   fprintf(stderr, "    %s shutdown\n", app_name);
   fprintf(stderr, "\n");
 }
@@ -225,11 +222,10 @@ PRIVATE int parse_arguments(int argc, char **argv)
 	req_nr = RS_RQ_BASE + req_type;
   }
 
-  rs_start.rss_flags = 0;
+  rs_start.rss_flags = RSS_SYS_BASIC_CALLS | RSS_VM_BASIC_CALLS;
   if (req_nr == RS_UP || req_nr == RS_UPDATE || req_nr == RS_EDIT) {
       u32_t system_hz;
 
-      rs_start.rss_flags= RSS_IPC_VALID;
       if (c_flag)
 	rs_start.rss_flags |= RSS_COPY;
 
@@ -248,11 +244,6 @@ PRIVATE int parse_arguments(int argc, char **argv)
           req_config = NULL;
           req_path = req_path_self;
           rs_start.rss_flags |= RSS_SELF_LU;
-      }
-
-      if(req_nr == RS_EDIT) {
-          /* Edit action needs no configuration file. */
-          req_config = NULL;
       }
 
       if (do_run)
@@ -417,6 +408,7 @@ PRIVATE void fatal(char *fmt, ...)
 
 #define KW_SERVICE	"service"
 #define KW_UID		"uid"
+#define KW_SIGMGR	"sigmgr"
 #define KW_SCHEDULER	"scheduler"
 #define KW_PRIORITY	"priority"
 #define KW_QUANTUM	"quantum"
@@ -429,6 +421,10 @@ PRIVATE void fatal(char *fmt, ...)
 #define KW_IPC		"ipc"
 #define KW_VM		"vm"
 #define KW_CONTROL	"control"
+#define KW_ALL		"ALL"
+#define KW_ALL_SYS	"ALL_SYS"
+#define KW_NONE		"NONE"
+#define KW_BASIC	"BASIC"
 
 FORWARD void do_service(config_t *cpe, config_t *config);
 
@@ -542,10 +538,48 @@ PRIVATE void do_uid(config_t *cpe)
 	rs_start.rss_uid= uid;
 }
 
+PRIVATE void do_sigmgr(config_t *cpe)
+{
+	endpoint_t sigmgr_ep;
+	int r;
+
+	/* Process a signal manager value */
+	if (cpe->next != NULL)
+	{
+		fatal("do_sigmgr: just one sigmgr value expected at %s:%d",
+			cpe->file, cpe->line);
+	}	
+	
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_sigmgr: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_sigmgr: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+
+	if(!strcmp(cpe->word, "SELF")) {
+		sigmgr_ep = SELF;
+	}
+	else {
+		r = minix_rs_lookup(cpe->word, &sigmgr_ep);
+		if(r != OK) {
+			fatal("do_sigmgr: unknown sigmgr %s at %s:%d",
+			cpe->word, cpe->file, cpe->line);
+		}
+	}
+
+	rs_start.rss_sigmgr= sigmgr_ep;
+}
+
 PRIVATE void do_scheduler(config_t *cpe)
 {
-	int scheduler_val;
-	char *check;
+	endpoint_t scheduler_ep;
+	int r;
 
 	/* Process a scheduler value */
 	if (cpe->next != NULL)
@@ -565,20 +599,19 @@ PRIVATE void do_scheduler(config_t *cpe)
 		fatal("do_scheduler: unexpected string at %s:%d",
 			cpe->file, cpe->line);
 	}
-	scheduler_val= strtol(cpe->word, &check, 0);
-	if (check[0] != '\0')
-	{
-		fatal("do_scheduler: bad scheduler value '%s' at %s:%d",
+
+	if(!strcmp(cpe->word, "KERNEL")) {
+		scheduler_ep = KERNEL;
+	}
+	else {
+		r = minix_rs_lookup(cpe->word, &scheduler_ep);
+		if(r != OK) {
+			fatal("do_scheduler: unknown scheduler %s at %s:%d",
 			cpe->word, cpe->file, cpe->line);
+		}
 	}
 
-	if (scheduler_val != KERNEL && 
-		(scheduler_val < 0 || scheduler_val > LAST_SPECIAL_PROC_NR))
-	{
-		fatal("do_scheduler: scheduler %d out of range at %s:%d",
-			scheduler_val, cpe->file, cpe->line);
-	}
-	rss_scheduler= (endpoint_t) scheduler_val;
+	rs_start.rss_scheduler= scheduler_ep;
 }
 
 PRIVATE void do_priority(config_t *cpe)
@@ -616,7 +649,7 @@ PRIVATE void do_priority(config_t *cpe)
 		fatal("do_priority: priority %d out of range at %s:%d",
 			priority_val, cpe->file, cpe->line);
 	}
-	rss_priority= (unsigned) priority_val;
+	rs_start.rss_priority= (unsigned) priority_val;
 }
 
 PRIVATE void do_quantum(config_t *cpe)
@@ -654,15 +687,17 @@ PRIVATE void do_quantum(config_t *cpe)
 		fatal("do_quantum: quantum %d out of range at %s:%d",
 			quantum_val, cpe->file, cpe->line);
 	}
-	rss_quantum= (unsigned) quantum_val;
+	rs_start.rss_quantum= (unsigned) quantum_val;
 }
 
 PRIVATE void do_irq(config_t *cpe)
 {
 	int irq;
+	int first;
 	char *check;
 
 	/* Process a list of IRQs */
+	first = TRUE;
 	for (; cpe; cpe= cpe->next)
 	{
 		if (cpe->flags & CFG_SUBLIST)
@@ -675,6 +710,27 @@ PRIVATE void do_irq(config_t *cpe)
 			fatal("do_irq: unexpected string at %s:%d",
 				cpe->file, cpe->line);
 		}
+
+		/* No IRQ allowed? (default) */
+		if(!strcmp(cpe->word, KW_NONE)) {
+			if(!first || cpe->next) {
+				fatal("do_irq: %s keyword not allowed in list",
+				KW_NONE);
+			}
+			break;
+		}
+
+		/* All IRQs are allowed? */
+		if(!strcmp(cpe->word, KW_ALL)) {
+			if(!first || cpe->next) {
+				fatal("do_irq: %s keyword not allowed in list",
+				KW_ALL);
+			}
+			rs_start.rss_nr_irq = RSS_IO_ALL;
+			break;
+		}
+
+		/* Set single IRQs as specified in the configuration. */
 		irq= strtoul(cpe->word, &check, 0);
 		if (check[0] != '\0')
 		{
@@ -685,15 +741,18 @@ PRIVATE void do_irq(config_t *cpe)
 			fatal("do_irq: too many IRQs (max %d)", RSS_NR_IRQ);
 		rs_start.rss_irq[rs_start.rss_nr_irq]= irq;
 		rs_start.rss_nr_irq++;
+		first = FALSE;
 	}
 }
 
 PRIVATE void do_io(config_t *cpe)
 {
 	unsigned base, len;
+	int first;
 	char *check;
 
 	/* Process a list of I/O ranges */
+	first = TRUE;
 	for (; cpe; cpe= cpe->next)
 	{
 		if (cpe->flags & CFG_SUBLIST)
@@ -706,6 +765,27 @@ PRIVATE void do_io(config_t *cpe)
 			fatal("do_io: unexpected string at %s:%d",
 				cpe->file, cpe->line);
 		}
+
+		/* No range allowed? (default) */
+		if(!strcmp(cpe->word, KW_NONE)) {
+			if(!first || cpe->next) {
+				fatal("do_io: %s keyword not allowed in list",
+				KW_NONE);
+			}
+			break;
+		}
+
+		/* All ranges are allowed? */
+		if(!strcmp(cpe->word, KW_ALL)) {
+			if(!first || cpe->next) {
+				fatal("do_io: %s keyword not allowed in list",
+				KW_ALL);
+			}
+			rs_start.rss_nr_io = RSS_IO_ALL;
+			break;
+		}
+
+		/* Set single ranges as specified in the configuration. */
 		base= strtoul(cpe->word, &check, 0x10);
 		len= 1;
 		if (check[0] == ':')
@@ -723,6 +803,7 @@ PRIVATE void do_io(config_t *cpe)
 		rs_start.rss_io[rs_start.rss_nr_io].base= base;
 		rs_start.rss_io[rs_start.rss_nr_io].len= len;
 		rs_start.rss_nr_io++;
+		first = FALSE;
 	}
 }
 
@@ -846,32 +927,13 @@ PRIVATE void do_pci(config_t *cpe)
 		cpe->word, cpe->file, cpe->line);
 }
 
-struct
-{
-	char *label;
-	int call_nr;
-} system_tab[]=
-{
-	{ "PRIVCTL",		SYS_PRIVCTL },
-	{ "TRACE",		SYS_TRACE },
-	{ "KILL",		SYS_KILL },
-	{ "UMAP",		SYS_UMAP },
-	{ "VIRCOPY",		SYS_VIRCOPY },
-	{ "IRQCTL",		SYS_IRQCTL },
-	{ "INT86",		SYS_INT86 },
-	{ "DEVIO",		SYS_DEVIO },
-	{ "SDEVIO",		SYS_SDEVIO },
-	{ "VDEVIO",		SYS_VDEVIO },
-	{ "READBIOS",		SYS_READBIOS },
-	{ "STIME",		SYS_STIME },
-	{ "VMCTL",		SYS_VMCTL },
-	{ NULL,		0 }
-};
-
 PRIVATE void do_ipc(config_t *cpe)
 {
-	char *list;
+	char *list, *word;
+	char *word_all = RSS_IPC_ALL;
+	char *word_all_sys = RSS_IPC_ALL_SYS;
 	size_t listsize, wordlen;
+	int first;
 
 	list= NULL;
 	listsize= 1;
@@ -883,6 +945,7 @@ PRIVATE void do_ipc(config_t *cpe)
 	/* Process a list of process names that are allowed to be
 	 * contacted
 	 */
+	first = TRUE;
 	for (; cpe; cpe= cpe->next)
 	{
 		if (cpe->flags & CFG_SUBLIST)
@@ -895,8 +958,18 @@ PRIVATE void do_ipc(config_t *cpe)
 			fatal("do_ipc: unexpected string at %s:%d",
 				cpe->file, cpe->line);
 		}
+		word = cpe->word;
 
-		wordlen= strlen(cpe->word);
+		/* All (system) ipc targets are allowed? */
+		if(!strcmp(word, KW_ALL) || !strcmp(word, KW_ALL_SYS)) {
+			if(!first || cpe->next) {
+				fatal("do_ipc: %s keyword not allowed in list",
+				word);
+			}
+			word = !strcmp(word, KW_ALL) ? word_all : word_all_sys;
+		}
+
+		wordlen= strlen(word);
 
 		listsize += 1 + wordlen;
 		list= realloc(list, listsize);
@@ -906,7 +979,8 @@ PRIVATE void do_ipc(config_t *cpe)
 				listsize);
 		}
 		strcat(list, " ");
-		strcat(list, cpe->word);
+		strcat(list, word);
+		first = FALSE;
 	}
 #if 0
 	printf("do_ipc: got list '%s'\n", list);
@@ -923,19 +997,33 @@ struct
 	int call_nr;
 } vm_table[] =
 {
+	{ "EXIT",		VM_EXIT },
+	{ "FORK",		VM_FORK },
+	{ "BRK",		VM_BRK },
+	{ "EXEC_NEWMEM",	VM_EXEC_NEWMEM },
+	{ "PUSH_SIG",		VM_PUSH_SIG },
+	{ "WILLEXIT",		VM_WILLEXIT },
+	{ "ADDDMA",		VM_ADDDMA },
+	{ "DELDMA",		VM_DELDMA },
+	{ "GETDMA",		VM_GETDMA },
 	{ "REMAP",		VM_REMAP },
-	{ "UNREMAP",		VM_SHM_UNMAP },
+	{ "SHM_UNMAP",		VM_SHM_UNMAP },
 	{ "GETPHYS",		VM_GETPHYS },
-	{ "GETREFCNT",		VM_GETREF },
-	{ "QUERYEXIT",		VM_QUERY_EXIT },
+	{ "GETREF",		VM_GETREF },
+	{ "RS_SET_PRIV",	VM_RS_SET_PRIV },
+	{ "QUERY_EXIT",		VM_QUERY_EXIT },
+	{ "NOTIFY_SIG",		VM_NOTIFY_SIG },
 	{ "INFO",		VM_INFO },
+	{ "RS_UPDATE",		VM_RS_UPDATE },
+	{ "RS_MEMCTL",		VM_RS_MEMCTL },
 	{ NULL,			0 },
 };
 
 PRIVATE void do_vm(config_t *cpe)
 {
-	int i;
+	int i, first;
 
+	first = TRUE;
 	for (; cpe; cpe = cpe->next)
 	{
 		if (cpe->flags & CFG_SUBLIST)
@@ -949,6 +1037,37 @@ PRIVATE void do_vm(config_t *cpe)
 			      cpe->file, cpe->line);
 		}
 
+		/* Only basic calls allowed? (default). */
+		if(!strcmp(cpe->word, KW_BASIC)) {
+			if(!first || cpe->next) {
+				fatal("do_vm: %s keyword not allowed in list",
+				KW_NONE);
+			}
+			break;
+		}
+
+		/* No calls allowed? */
+		if(!strcmp(cpe->word, KW_NONE)) {
+			if(!first || cpe->next) {
+				fatal("do_vm: %s keyword not allowed in list",
+				KW_NONE);
+			}
+			rs_start.rss_flags &= ~RSS_VM_BASIC_CALLS;
+			break;
+		}
+
+		/* All calls are allowed? */
+		if(!strcmp(cpe->word, KW_ALL)) {
+			if(!first || cpe->next) {
+				fatal("do_vm: %s keyword not allowed in list",
+				KW_ALL);
+			}
+			for (i = 0; i < NR_VM_CALLS; i++)
+				SET_BIT(rs_start.rss_vm, i);
+			break;
+		}
+
+		/* Set single calls as specified in the configuration. */
 		for (i = 0; vm_table[i].label != NULL; i++)
 			if (!strcmp(cpe->word, vm_table[i].label))
 				break;
@@ -956,14 +1075,42 @@ PRIVATE void do_vm(config_t *cpe)
 			fatal("do_vm: unknown call '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
 		SET_BIT(rs_start.rss_vm, vm_table[i].call_nr - VM_RQ_BASE);
+		first = FALSE;
 	}
 }
 
+struct
+{
+	char *label;
+	int call_nr;
+} system_tab[]=
+{
+	{ "PRIVCTL",		SYS_PRIVCTL },
+	{ "TRACE",		SYS_TRACE },
+	{ "KILL",		SYS_KILL },
+	{ "SEGCTL",		SYS_SEGCTL },
+	{ "UMAP",		SYS_UMAP },
+	{ "VIRCOPY",		SYS_VIRCOPY },
+	{ "PHYSCOPY",		SYS_PHYSCOPY },
+	{ "IRQCTL",		SYS_IRQCTL },
+	{ "INT86",		SYS_INT86 },
+	{ "DEVIO",		SYS_DEVIO },
+	{ "SDEVIO",		SYS_SDEVIO },
+	{ "VDEVIO",		SYS_VDEVIO },
+	{ "ABORT",		SYS_ABORT },
+	{ "IOPENABLE",		SYS_IOPENABLE },
+	{ "READBIOS",		SYS_READBIOS },
+	{ "STIME",		SYS_STIME },
+	{ "VMCTL",		SYS_VMCTL },
+	{ NULL,		0 }
+};
+
 PRIVATE void do_system(config_t *cpe)
 {
-	int i;
+	int i, first;
 
 	/* Process a list of 'system' calls that are allowed */
+	first = TRUE;
 	for (; cpe; cpe= cpe->next)
 	{
 		if (cpe->flags & CFG_SUBLIST)
@@ -977,6 +1124,37 @@ PRIVATE void do_system(config_t *cpe)
 				cpe->file, cpe->line);
 		}
 
+		/* Only basic calls allowed? (default). */
+		if(!strcmp(cpe->word, KW_BASIC)) {
+			if(!first || cpe->next) {
+				fatal("do_system: %s keyword not allowed in list",
+				KW_NONE);
+			}
+			break;
+		}
+
+		/* No calls allowed? */
+		if(!strcmp(cpe->word, KW_NONE)) {
+			if(!first || cpe->next) {
+				fatal("do_system: %s keyword not allowed in list",
+				KW_NONE);
+			}
+			rs_start.rss_flags &= ~RSS_SYS_BASIC_CALLS;
+			break;
+		}
+
+		/* All calls are allowed? */
+		if(!strcmp(cpe->word, KW_ALL)) {
+			if(!first || cpe->next) {
+				fatal("do_system: %s keyword not allowed in list",
+				KW_ALL);
+			}
+			for (i = 0; i < NR_SYS_CALLS; i++)
+				SET_BIT(rs_start.rss_system, i);
+			break;
+		}
+
+		/* Set single calls as specified in the configuration. */
 		for (i = 0; system_tab[i].label != NULL; i++)
 			if (!strcmp(cpe->word, system_tab[i].label))
 				break;
@@ -984,6 +1162,7 @@ PRIVATE void do_system(config_t *cpe)
 			fatal("do_system: unknown call '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
 		SET_BIT(rs_start.rss_system, system_tab[i].call_nr - KERNEL_CALL);
+		first = FALSE;
 	}
 }
 
@@ -1060,6 +1239,11 @@ PRIVATE void do_service(config_t *cpe, config_t *config)
 		if (strcmp(cpe->word, KW_UID) == 0)
 		{
 			do_uid(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_SIGMGR) == 0)
+		{
+			do_sigmgr(cpe->next);
 			continue;
 		}
 		if (strcmp(cpe->word, KW_SCHEDULER) == 0)
@@ -1229,21 +1413,18 @@ PUBLIC int main(int argc, char **argv)
 	fatal("no passwd file entry for '%s'", SERVICE_LOGIN);
       rs_start.rss_uid= pw->pw_uid;
 
-      rss_scheduler= SCHED_PROC_NR;
-      rss_priority= USER_Q;
-      rss_quantum= 200;
+      rs_start.rss_sigmgr= DSRV_SM;
+      rs_start.rss_scheduler= DSRV_SCH;
+      rs_start.rss_priority= DSRV_Q;
+      rs_start.rss_quantum= DSRV_QT;
 
       if (req_config) {
 	assert(progname);
 	do_config(progname, req_config);
       }
-      assert(rss_priority < NR_SCHED_QUEUES);
-      assert(rss_quantum > 0);
-      if (rss_nice_encode(&rs_start.rss_nice, rss_scheduler, 
-	rss_priority, rss_quantum) != OK) {
-	fatal("cannot encode scheduling parameters %d, %u, %u",
-		rss_scheduler, rss_priority, rss_quantum);
-      }
+
+      assert(rs_start.rss_priority < NR_SCHED_QUEUES);
+      assert(rs_start.rss_quantum > 0);
 
       if (req_ipc)
       {
@@ -1252,8 +1433,9 @@ PUBLIC int main(int argc, char **argv)
       }
       else
       {
-	      rs_start.rss_ipc= NULL;
-	      rs_start.rss_ipclen= 0;
+	      char *default_ipc = RSS_IPC_ALL_SYS;
+	      rs_start.rss_ipc= default_ipc;
+	      rs_start.rss_ipclen= strlen(default_ipc);
       }
 
       m.RS_CMD_ADDR = (char *) &rs_start;

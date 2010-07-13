@@ -113,12 +113,13 @@ PUBLIC int main(void)
             }
             /* Priviliges for the root system process. */
             else if(isrootsysn(proc_nr)) {
-                priv(rp)->s_flags= RSYS_F;         /* privilege flags */
-                priv(rp)->s_trap_mask= RSYS_T;     /* allowed traps */
-                ipc_to_m = RSYS_M;                 /* allowed targets */
-                kcalls = RSYS_KC;                  /* allowed kernel calls */
-                priv(rp)->s_sig_mgr = RSYS_SM;     /* signal manager */
-                priv(rp)->s_bak_sig_mgr = NONE;    /* backup signal manager */
+                priv(rp)->s_flags= RSYS_F;        /* privilege flags */
+                priv(rp)->s_trap_mask= SRV_T;     /* allowed traps */
+                ipc_to_m = SRV_M;                 /* allowed targets */
+                kcalls = SRV_KC;                  /* allowed kernel calls */
+                priv(rp)->s_sig_mgr = SRV_SM;     /* signal manager */
+                rp->p_priority = SRV_Q;	          /* priority queue */
+                rp->p_quantum_size_ms = SRV_QT;   /* quantum size */
                 rp->p_priority = SRV_Q;	          /* priority queue */
                 rp->p_quantum_size_ms = SRV_QT;   /* quantum size */
             }

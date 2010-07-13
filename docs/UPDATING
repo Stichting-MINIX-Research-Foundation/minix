@@ -1,3 +1,10 @@
+20100713:
+        /usr/src/etc/rc updated: copy it (or merge it) to /etc/rc.
+        /usr/src/etc/system.conf updated to include boot sys services: copy
+        it (or merge it) to /etc/system.conf.
+        *** WARNING ***: this change breaks binary compatibility with
+        old images. Use only newly compiled images (make clean world
+        the first time) or download and install the latest ISO.
 20100705:
         /usr/src/etc/usr/rc updated: copy it (or merge it) to /usr/etc/rc.
         /usr/src/etc/rc updated: copy it (or merge it) to /etc/rc.

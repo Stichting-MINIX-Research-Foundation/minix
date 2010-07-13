@@ -9,11 +9,6 @@ struct boot_image_priv {
   char label[RS_MAX_LABEL_LEN]; /* label to assign to this service */
 
   int flags;                   /* privilege flags */
-  short trap_mask;             /* allowed system call traps */
-  int ipc_to;                  /* send mask protection */
-  endpoint_t sig_mgr;          /* signal manager */
-  int *k_calls;                /* allowed kernel calls */
-  int *vm_calls;               /* allowed vm calls */
 };
 
 /* Definition of an entry of the boot image sys table. */
@@ -62,7 +57,6 @@ struct rproc {
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
 
-  int r_set_resources;		/* set when resources must be set. */
   struct priv r_priv;		/* Privilege structure to be passed to the
 				 * kernel.
 				 */

@@ -117,17 +117,17 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	priv(rp)->s_asynsize= 0;
 
 	/* Set defaults for privilege bitmaps. */
-	priv(rp)->s_flags= DEF_SYS_F;           /* privilege flags */
-	priv(rp)->s_trap_mask= DEF_SYS_T;       /* allowed traps */
-	ipc_to_m = DEF_SYS_M;                   /* allowed targets */
+	priv(rp)->s_flags= DSRV_F;           /* privilege flags */
+	priv(rp)->s_trap_mask= DSRV_T;       /* allowed traps */
+	ipc_to_m = DSRV_M;                   /* allowed targets */
 	fill_sendto_mask(rp, ipc_to_m);
-	kcalls = DEF_SYS_KC;                    /* allowed kernel calls */
+	kcalls = DSRV_KC;                    /* allowed kernel calls */
 	for(i = 0; i < SYS_CALL_MASK_SIZE; i++) {
 		priv(rp)->s_k_call_mask[i] = (kcalls == NO_C ? 0 : (~0));
 	}
 
 	/* Set the default signal managers. */
-	priv(rp)->s_sig_mgr = DEF_SYS_SM;
+	priv(rp)->s_sig_mgr = DSRV_SM;
 	priv(rp)->s_bak_sig_mgr = NONE;
 
 	/* Set defaults for resources: no I/O resources, no memory resources,
@@ -354,8 +354,24 @@ PRIVATE int update_priv(struct proc *rp, struct priv *priv)
   priv(rp)->s_trap_mask = priv->s_trap_mask;
 
   /* Copy target mask. */
+#if PRIV_DEBUG
+  printf("do_privctl: Setting ipc target mask for %d:");
+  for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
+  	printf(" %04x", get_sys_bits(priv->s_ipc_to, i));
+  }
+  printf("\n");
+#endif
+
   memcpy(&ipc_to_m, &priv->s_ipc_to, sizeof(ipc_to_m));
   fill_sendto_mask(rp, ipc_to_m);
+
+#if PRIV_DEBUG
+  printf("do_privctl: Set ipc target mask for %d:");
+  for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
+  	printf(" %04x", get_sys_bits(priv(rp)->s_ipc_to, i));
+  }
+  printf("\n");
+#endif
 
   /* Copy kernel call mask. */
   memcpy(priv(rp)->s_k_call_mask, priv->s_k_call_mask,
