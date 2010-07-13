@@ -4,7 +4,7 @@
 
 SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	backup badblocks banner basename bigmake binpackage \
-	binpackages binsizes bzip2 bzip2recover cal calendar \
+	binpackages binsizes bsdtar bzip2 bzip2recover cal calendar \
 	cat cawf cd  cdprobe checkhier chmem \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut datasizes date \
