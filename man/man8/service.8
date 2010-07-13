@@ -1,14 +1,22 @@
 .TH SERVICE 8
 .SH NAME
-service \- Start or stop an operating system server or device driver.
+service \- Manage an operating system service.
 .SH SYNOPSIS
 .PP
-\fBservice up\fR \fI<service>\fR [\fB-args\fR \fIargs\fR]
-[\fB-dev\fR \fIspecial\fR] [\fB-period\fR \fIticks\fR]
+\fBservice [-c -r -n -p] (up|run|edit|update)\fR \fI<binary|self>\fR
+[\fB-args\fR \fI<args>\fR] [\fB-dev\fR \fI<special>\fR]
+[\fB-devstyle\fR \fI<style>\fR] [\fB-period\fR \fI<ticks>\fR]
+[\fB-script\fR \fI<path>\fR] [\fB-label\fR \fI<name>\fR]
+[\fB-config\fR \fI<path>\fR] [\fB-state\fR \fI<state>\fR]
+[\fB-maxtime\fR \fI<time>\fR]
 .PP
-\fBservice down\fR \fI<pid>\fR
+\fBservice down\fR \fI<label>\fR
 .PP
-\fBservice refresh\fR \fI<pid>\fR
+\fBservice refresh\fR \fI<label>\fR
+.PP
+\fBservice restart\fR \fI<label>\fR
+.PP
+\fBservice clone\fR \fI<label>\fR
 .PP
 \fBservice shutdown\fR
 .br
@@ -24,26 +32,206 @@ service \- Start or stop an operating system server or device driver.
 ..
 .SH DESCRIPTION
 .PP
-Tells the reincarnation server to start or stop a system service, such as a
-server or device driver. The device driver will be automatically restarted when
-it unexpectedly exits, e.g., if it is killed because of a bad pointer. 
-Starting requires an absolute path to the binary to be executed.
+The \fBservice\fR utility instructs the reincarnation server (\fBRS\fR)
+to perform an action for a given system service (an OS server
+or device driver). The action may concern an existing system service
+(SHIFT+F6 to list them all), or a new system service to be started
+(actions \fBup\fR and \fBrun\fR).
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.SH ACTIONS
 .PP
-When an optional period is specified, the reincarnation server sends a status request to the system service after every period. If there the response does not arrive in time, the reincarnation server will kill the misbehaving process and restart a new one. The period must be specified in ticks, but can be appended with HZ to make it seconds.
+.SS
+\fBservice up\fR \fI<binary>\fR
 .PP
-Stopping a system service requires the process id of a running system service. Issuing a kill command from the shell will not work, since the reincarnation server interprets this as an unexpected exit and will automatically restart a fresh copy of the process. The clean way to restart a process is using the refresh option of the service utility.
 .PP
-If the system is to be shutdown, the reincarnation server should know about this event to prevent it from restarting services that are killed during the shutdown
-sequence.
+Starts a new system service identified by the given \fI<binary>\fR,
+which must be specified using an absolute path. When the service
+unexpectedly exits (for example, as a result of a crash or a panic), \fBRS\fR
+will intercept the event and restart the service automatically.
+If the service fails to restart, \fBRS\fR will automatically bring
+it down allowing for graceful degradation of service. If a critical
+system service fails to restart, \fBRS\fR will immediately resort to
+a system-wide panic. The \fBup\fR action takes the following options:
+.TP
+.BI \-c "          "
+\fBRS\fR normally relies on the binary on the disk to restart a
+system service. The
+.B \-c
+option instructs \fBRS\fR to keep an in-memory copy of the binary and
+use the copy to restart the service upon termination. This is necessary
+when the location on the disk may change or if the service itself is
+required to read the binary from the disk (e.g. the disk driver).
+.TP
+.BI \-r "          "
+when saving an in-memory copy, instructs \fBRS\fR to reuse and share the copy
+of an existing service with the same program name, if available.
+.TP
+.BI \-n "          "
+by default, \fBRS\fR performs blocking startup of the system service. As
+a result, the \fBup\fR action does not terminate until the system service
+completes initialization.
+The
+.B \-n
+option changes the default behavior by performing non-blocking startup
+and thus terminating the \fBup\fR action immediately without waiting for
+the service to complete initialization.
+.TP
+.BI \-p "          "
+instructs \fBRS\fR to keep a replica of the system service in background
+and use the replica to restart the service upon termination. This is
+necessary when the service itself is required to create a working
+service instance (e.g. \fBPM\fR).
+.TP
+.BI \-args " <args>"
+specifies the command line arguments to use to run the program
+given by \fI<binary>\fR. The default is to use no arguments.
+.TP
+.BI \-dev " <special>"
+specifies the device file to associate to the system service (used only for
+device drivers). The default is to associate no device file to the service.
+.TP
+.BI \-devstyle " <style>"
+specifies the device style to associate to the system service (used only for
+device drivers). The list of supported device styles is available in
+the header file \fB<minix/dmap.h>\fR.
+The default is to associate no device style (\fBSTYLE_NDEV\fR) to the service.
+.TP
+.BI \-period " <ticks>"
+specifies the period to use for the system service.
+When a period is specified, \fBRS\fR sends a ping request to
+the system service after every period. If the response does not arrive
+in time, \fBRS\fR will kill the misbehaving service and restart a new one.
+The period must be specified in ticks, but can be appended with HZ to
+make it seconds. The default is to use no period for the service.
+.TP
+.BI \-script " <path>"
+specifies the recovery script to associate to the system service. When a
+recovery script is used, \fBRS\fR will not attempt to restart the service
+upon termination. \fBRS\fR will instead invoke the script and
+delegate the recovery process to it. The script may perform several
+operations, including instructing \fBRS\fR to restart the service
+(\fBrestart\fR action) or bring it down (\fBdown\fR  action).
+The default is to associate no recovery script to the service.
+.TP
+.BI \-label " <name>"
+specifies the label to use for the system service. The label is used to
+univoquely identify the system service. The default is to use the program
+name as the label.
+.TP
+.BI \-config " <path>"
+specifies the absolute path of the system configuration file with the settings
+of the system service. See
+.IR system.conf (5)
+for the syntax to use in the system configuration file.
+The default is to use the global system configuration file \fB/etc/system.conf\fR.
+.PP
+.SS
+\fBservice run\fR \fI<binary>\fR
+.PP
+.PP
+Runs a new system service identified by the given \fI<binary>\fR,
+which must be specified using an absolute path. Similar to
+\fBservice up\fR \fI<binary>\fR, but instructs \fBRS\fR not to
+restart the service upon termination. This action is currently a shorthand
+for \fBservice up\fR \fI<binary>\fR \fB-script\fR \fI/etc/rs.single\fR, which
+uses a recovery script that simply brings down the service upon termination.
+This action should be only used for short-lived programs that need system
+service privileges and do not require crash recovery support.
+.PP
+.SS
+\fBservice edit\fR \fI<binary>\fR [\fB-label\fR \fI<name>\fR]
+.PP
+.PP
+Edits settings of an existing system service identified by the given
+label \fI<name>\fR. This action can be used to dynamically update the
+properties of any system service, including those contained in the
+boot image (e.g. \fBVM\fR). There are a few exceptions to the properties
+that can be actually overridden dynamically. For example, the device file
+and the device style associated to the service will no be updated. This
+action takes the same options supported by the \fBup\fR action.
+.PP
+.SS
+\fBservice update\fR \fI<binary|self>\fR
+.PP
+.PP
+Live updates an existing system service with a new version identified by the
+given \fI<binary>\fR, which must be specified using an absolute path.
+The existing service will be identified from the label given (if explicitly
+specified), or from the program name. If \fI<self>\fR is specified as
+an argument instead, \fBRS\fR will perform a self update of the
+system service (i.e. an update of the service with its own replica). This
+is intended for testing purposes. In this case, a label \fI<name>\fR
+must be explicitly specified. Live update support is still in an early
+stage of development and is subject to change in future revisions. This
+action takes all the options supported by the \fBup\fR action and the
+following additional options:
+.TP
+.BI \-state " <state>"
+specifies the state of the service required by the update. The default
+is a state in which the service is blocked not processing any work.
+.TP
+.BI \-maxtime " <time>"
+specifies the maximum amount time for the service to prepare
+for the update. The default is 0 (unlimited).
+.PP
+.SS
+\fBservice down\fR \fI<label>\fR
+.PP
+.PP
+Stops an existing system service identified by the given \fI<label>\fR. \fBRS\fR
+will bring down the service without attempting to restart it. Critical system
+services cannot be shut down.
+.PP
+.SS
+\fBservice refresh\fR \fI<label>\fR
+.PP
+.PP
+Refreshes an existing system service identified by the given \fI<label>\fR.
+\fBRS\fR will kill the service and attempt to restart it.
+.PP
+.SS
+\fBservice restart\fR \fI<label>\fR
+.PP
+.PP
+Restarts an existing terminated system service identified by the
+given \fI<label>\fR. This action can only be used from a recovery script.
+.PP
+.SS
+\fBservice clone\fR \fI<label>\fR
+.PP
+.PP
+Clones an existing system service to create a replica \fBRS\fR will use
+to restart the service upon termination.
+.PP
+.SS
+\fBservice shutdown\fR
+.PP
+.PP
+Tells \fBRS\fR the system is about to shutdown and no system service should
+be restarted upon termination.
+.PP
 .SH EXAMPLES
 .EX "service up /sbin/is -period 5HZ" "Start the IS server and check its status every 5 seconds."
 .br
 .EX "service up /usr/sbin/dp8390 -args DPETH0=pci" "Start the DP8390 ethernet driver, passing one argument."
 .br
-.EX "service down 117" "Stop the system service with process id 117."
+.EX "service down lance" "Stop the system service with label lance."
 .br
 .SH "SEE ALSO"
 .PP
+.BR system.conf (5),
 .BR boot (8),
-.BR monitor (8)
+.BR monitor (8).
+.SH AUTHOR
+Cristiano Giuffrida <giuffrida@cs.vu.nl>
 
