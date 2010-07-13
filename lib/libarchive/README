@@ -1,0 +1,24 @@
+What's supported, what's not
+----------------------------
+This port corresponds to libarchive-2.8.3. The following formats supported
+by libarchive are NOT supported in the port:
+1) iso9660
+2) various variants of cpio
+
+In addition though xz and lzma are included, due to the lack of
+liblzma and xz utilities on Minix they are of not much use. Of the remaining
+formats I know that tar and its variants (tar.gz, tar.bz2 etc) work. 
+
+Notes on the port
+-----------------
+The cause for all changes is the fact that ACK does not have a 64 bit types.
+Most of the changes are 'downsizing' of types from 64 bits to 32 bits.
+Also a signed type is used for the measuring sizes so nothing > 2GB will work.
+
+Most of the changes are repetitive and can be classified into two types:
+
+1) Changing sizes/offsets/timestamps from 64bit types to size_t, ssize_t, off_t
+   time_t
+2) Changing functions that either decode or encode sizes/offsets/timestamps
+   from or to archives to use 32 bit types.
+
