@@ -77,6 +77,7 @@ extern int errno;		  /* place where the error numbers go */
 #define ERESTART      (_SIGN 41)  /* service restarted */
 #define EIDRM         (_SIGN 43)  /* Identifier removed */
 #define EILSEQ        (_SIGN 44)  /* illegal byte sequence */
+#define EFTYPE        (_SIGN 45)  /* wrong file format or type */
 
 /* The following errors relate to networking. */
 #define EPACKSIZE     (_SIGN 50)  /* invalid packet size for some protocol */

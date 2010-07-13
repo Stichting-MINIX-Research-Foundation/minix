@@ -52,7 +52,7 @@ const char *_sys_errlist[] = {
 	unknown,			/* 42 */
 	"Identifier removed",		/* EIDRM */
 	"Illegal byte sequence",	/* EILSEQ */
-	unknown,			/* 45 */
+	"Wrong file format or type",	/* EFTYPE */
 	unknown,			/* 46 */
 	unknown,			/* 47 */
 	unknown,			/* 48 */
