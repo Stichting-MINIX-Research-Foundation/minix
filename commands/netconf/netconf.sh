@@ -106,7 +106,7 @@ cards()
            "1743:8139" "4033:1360"
     card 4 "Realtek 8169 based card"	\
            "10EC:8129" "10EC:8167" "10EC:8169" "1186:4300" "1259:C107" \
-           "1385:8169" "16EC:0116" "1737:1032"
+           "1385:8169" "16EC:0116" "1737:1032" "10EC:8168"
     card 5 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
     card 6 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
     card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
