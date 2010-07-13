@@ -41,6 +41,7 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
   struct proc orig_dst_proc;
   struct priv orig_src_priv;
   struct priv orig_dst_priv;
+  int i;
 
   /* Lookup slots for source and destination process. */
   src_e = m_ptr->SYS_UPD_SRC_ENDPT;
@@ -77,6 +78,13 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
   proc_stacktrace(dst_rp);
   printf("do_update: curr ptproc %d\n", ptproc->p_endpoint);
 #endif
+
+  /* Let destination inherit the target mask from source. */
+  for (i=0; i < NR_SYS_PROCS; i++) {
+      if (get_sys_bit(priv(src_rp)->s_ipc_to, i)) {
+          set_sendto_bit(dst_rp, i);
+      }
+  }
 
   /* Save existing data. */
   orig_src_proc = *src_rp;

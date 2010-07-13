@@ -120,8 +120,6 @@ PUBLIC int main(void)
                 priv(rp)->s_sig_mgr = SRV_SM;     /* signal manager */
                 rp->p_priority = SRV_Q;	          /* priority queue */
                 rp->p_quantum_size_ms = SRV_QT;   /* quantum size */
-                rp->p_priority = SRV_Q;	          /* priority queue */
-                rp->p_quantum_size_ms = SRV_QT;   /* quantum size */
             }
             /* Priviliges for ordinary process. */
             else {
