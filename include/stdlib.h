@@ -101,6 +101,7 @@ extern char *optarg;
 extern int optind, opterr, optopt;
 
 _PROTOTYPE(size_t shquote, (const char *arg, char *buf, size_t bufsize));
+_PROTOTYPE(char *mkdtemp, (char *path));
 
 #endif /* _MINIX */
 

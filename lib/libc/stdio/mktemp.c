@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #include <unistd.h>
 #include <stdlib.h>
 
-static int _gettemp(char*,int*);
+static int _gettemp(char*,int*,int);
 
 int
 mkstemp(path)
@@ -52,20 +52,28 @@ mkstemp(path)
 {
 	int fd;
 
-	return (_gettemp(path, &fd) ? fd : -1);
+	return (_gettemp(path, &fd, 0) ? fd : -1);
 }
 
 char *
 mktemp(path)
 	char *path;
 {
-	return(_gettemp(path, (int *)NULL) ? path : (char *)NULL);
+	return(_gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
+}
+
+char *
+mkdtemp(path)
+	char *path;
+{
+	return(_gettemp(path, (int *)NULL, 1) ? path : (char *)NULL);
 }
 
 static int
-_gettemp(path, doopen)
+_gettemp(path, doopen, domkdir)
 	char *path;
 	register int *doopen;
+	int domkdir;
 {
 	extern int errno;
 	register char *start, *trv;
@@ -132,8 +140,12 @@ _gettemp(path, doopen)
 			if (errno != EEXIST) {
 				return(0);
 			}
-		}
-		else if (stat(path, &sbuf)) {
+		} else if(domkdir) {
+			if (mkdir(path, 0700) >= 0)
+				return (1);
+			if (errno != EEXIST)
+				return (0);
+		} else if (stat(path, &sbuf)) {
 			return(errno == ENOENT ? 1 : 0);
 		}
 
