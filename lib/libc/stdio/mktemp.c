@@ -71,6 +71,8 @@ _gettemp(path, doopen)
 	register char *start, *trv;
 	struct stat sbuf;
 	u_int pid;
+	static int lastnames = 0;
+	int names = 0;
 
 	pid = getpid();
 	for (trv = path; *trv; ++trv);		/* extra X's get set to 0's */
@@ -100,16 +102,6 @@ _gettemp(path, doopen)
 	}
 
 	for (;;) {
-		if (doopen) {
-			if ((*doopen =
-			    open(path, O_CREAT|O_EXCL|O_RDWR, 0600)) >= 0)
-				return(1);
-			if (errno != EEXIST)
-				return(0);
-		}
-		else if (stat(path, &sbuf))
-			return(errno == ENOENT ? 1 : 0);
-
 		/* tricky little algorithm for backward compatibility */
 		for (trv = start;;) {
 			if (!*trv)
@@ -124,6 +116,27 @@ _gettemp(path, doopen)
 				break;
 			}
 		}
+
+		names++;
+
+		if(names <= lastnames)
+			continue;
+
+		lastnames = names;
+
+		if (doopen) {
+			if ((*doopen =
+			    open(path, O_CREAT|O_EXCL|O_RDWR, 0600)) >= 0) {
+				return(1);
+			    }
+			if (errno != EEXIST) {
+				return(0);
+			}
+		}
+		else if (stat(path, &sbuf)) {
+			return(errno == ENOENT ? 1 : 0);
+		}
+
 	}
 	/*NOTREACHED*/
 }
