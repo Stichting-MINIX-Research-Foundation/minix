@@ -6,6 +6,7 @@ LIB=		c
 
 .include "${.CURDIR}/ansi/Makefile.inc"
 .include "${.CURDIR}/asyn/Makefile.inc"
+.include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/ip/Makefile.inc"
 .include "${.CURDIR}/math/Makefile.inc"
 .include "${.CURDIR}/other/Makefile.inc"
