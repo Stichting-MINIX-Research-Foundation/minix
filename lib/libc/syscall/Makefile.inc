@@ -46,6 +46,7 @@ SRCS+=  \
 	getgroups.S \
 	getitimer.S \
 	getnpid.S \
+	getnucred.S \
 	getnuid.S \
 	getngid.S \
 	getnprocnr.S \

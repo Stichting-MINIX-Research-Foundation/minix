@@ -876,6 +876,9 @@
 #define PM_ENDPT				m1_i1
 #define PM_PENDPT				m1_i2
 
+#define PM_NUID					m2_i1
+#define PM_NGID					m2_i2
+
 /* Field names for GETSYSINFO_UP (PM). */
 #define SIU_WHAT	m2_i1
 #define SIU_LEN		m2_i2

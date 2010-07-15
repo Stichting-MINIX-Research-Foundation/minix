@@ -13,6 +13,7 @@ SRCS+=  \
 	_getdents.c \
 	_getdma.c \
 	_getnpid.c \
+	_getnucred.c \
 	_getnuid.c \
 	_getngid.c \
 	_getnprocnr.c \
