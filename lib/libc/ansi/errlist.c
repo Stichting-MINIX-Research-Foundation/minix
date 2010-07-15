@@ -53,7 +53,7 @@ const char *_sys_errlist[] = {
 	"Identifier removed",		/* EIDRM */
 	"Illegal byte sequence",	/* EILSEQ */
 	"Wrong file format or type",	/* EFTYPE */
-	unknown,			/* 46 */
+	"Value too large to be stored in data type",	/* EOVERFLOW */
 	unknown,			/* 47 */
 	unknown,			/* 48 */
 	unknown,			/* 49 */

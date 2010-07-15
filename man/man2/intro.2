@@ -259,6 +259,9 @@ An IPC identifier was removed while the current process was waiting on it.
 A wide character/multibyte character encoding error occurred.
 .It Er 45 EFTYPE Em "Inappropriate file type or format" .
 Attempted a file operation on a file of a type for which it was invalid.
+.It Er 46 EOVERFLOW Em "Value too large to be stored in data type" .
+A numerical result of the function was too large to be stored in the
+caller-provided space.
 .It Er 50 EPACKSIZE Em "Invalid packet size" .
 .It Er 51 ENOBUFS Em "\&No buffer space available" .
 An operation on a socket or pipe was not performed because

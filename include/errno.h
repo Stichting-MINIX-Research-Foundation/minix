@@ -78,6 +78,7 @@ extern int errno;		  /* place where the error numbers go */
 #define EIDRM         (_SIGN 43)  /* Identifier removed */
 #define EILSEQ        (_SIGN 44)  /* illegal byte sequence */
 #define EFTYPE        (_SIGN 45)  /* wrong file format or type */
+#define EOVERFLOW     (_SIGN 46)  /* value too large to store in data type */
 
 /* The following errors relate to networking. */
 #define EPACKSIZE     (_SIGN 50)  /* invalid packet size for some protocol */
