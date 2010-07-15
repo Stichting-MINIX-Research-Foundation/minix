@@ -1,0 +1,28 @@
+.TH GETPEERNAME 2
+.SH NAME
+getpeername \- get the name/address of the connected peer.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int getpeername(int \fIsd\fP, struct sockaddr * \fIaddr\fP, socklen_t * \fIaddr_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+getpeername() takes a connected socket \fIsd\fP and fills in \fIaddr\fP 
+with the name/address of the connected peer.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The operation is not implemented for the given socket.
+.TP 15
+[ENOTCONN]
+The socket is not connected; there is no peer.
+.SH SEE ALSO
+.BR socket(2),
+.BR getsockname(2)

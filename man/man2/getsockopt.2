@@ -1,0 +1,31 @@
+.TH GETSOCKOPT 2
+.SH NAME
+getsockopt \- get the value of a socket option.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int getsockopt(int \fIsd\fP, int \fIlevel\fP, int \fIopt_name\fP, void * \fIopt_val\fP, socklen_t * \fIopt_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+getsockopt() provides an interface to get the value of a specific 
+option, referenced by \fIopt_name\fP, for a given socket descriptor 
+\fIsd\fP.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The option \fIopt_name\fP is not available/supported at the \fIlevel\fP 
+specified for the socket \fIsd\fP.
+.TP 15
+[ENOTSOCK]
+\fIsd\fP is not a socket descriptor.
+.SH SEE ALSO
+.BR socket(2),
+.BR socketpair(2),
+.BR setsockopt(2)

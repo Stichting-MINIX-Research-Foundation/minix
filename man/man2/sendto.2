@@ -1,0 +1,51 @@
+.TH SENDTO 2
+.SH NAME
+sendto \- send a message through a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+ssize_t sendto(int \fIsd\fP, const void * \fImsg\fP, size_t \fImsg_len\fP, int \fIflags\fP, const struct sockaddr * \fIdest_addr\fP, socklet_t \fIdest_addr_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+sendto() sends a message to another socket. It may be used with
+connectionless and connection oriented sockets. At present, minix 
+doesn't support setting \fIflags\fP to any value other than 0.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The operation is not implemented for the given socket.
+.TP 15
+[ENOTCONN]
+The socket is not connected; there is no peer.
+.TP 15
+[EFAULT]
+The message pointed to by \fImsg\fP is not in a
+valid part of the process address space.
+.TP 15
+[EAFNOSUPPORT]
+The address family is not supported by send().
+.TP 15
+[ENAMETOOLONG]
+The length of sun_path is longer than UNIX_PATH_MAX.
+.TP 15
+[ENOENT]
+The sun_path is null.
+.TP 15
+[EPIPE]
+The socket is shutdown for writing.
+.TP 15
+[EMSGSIZE]
+The message is too big.
+.SH SEE ALSO
+.BR send(2)
+.BR socket(2)
+.BR recv(2)
+.BR recvfrom(2)
+

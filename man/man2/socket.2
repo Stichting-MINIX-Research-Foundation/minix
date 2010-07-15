@@ -1,0 +1,54 @@
+.TH SOCKET 2
+.SH NAME
+socket \- creates a socket.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int socket(int \fIdomain\fP, int \fItype\fP, int \fIprotocol\fP);
+.br
+.ft P
+.SH DESCRIPTION
+socket() creates a socket in the specified \fIdomain\fP. A socket
+is a communications endpoint. Currently two values are supported
+for \fIdomain\fP, PF_INET for internet sockets and PF_UNIX for
+local unix domain sockets. The \fItype\fP of socket can be
+SOCK_STREAM for TCP sockets in the PF_INET \fIdomain\fP or
+SOCK_DGRAM for UDP sockets in the PF_INET \fIdomain\fP. For
+sockets in the PF_UNIX \fIdomain\fP, SOCK_STREAM, SOCK_DGRAM, and
+SOCK_SEQPACKET are supported values for \fItype\fP. The value
+of \fIprotocol\fP is always 0 or IPPROTO_TCP for TCP sockets or
+IPPROTO_UDP for UDP sockets.
+.SH RETURN VALUES
+On success, this function returns a numeric socket descriptor.
+On error, -1 is returned and \fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EAFNOSUPPORT]
+The \fIdomain\fP is not supported.
+.TP 15
+[EPROTOTYPE]
+The \fIprotocol\fP is not supported by the \fIdomain\fP.
+.TP 15
+[EMFILE]
+The process descriptor table is full.
+.TP 15
+[ENFILE]
+The system descriptor table is full.
+.TP 15
+[ENOSPC]
+Could not allocate a file descriptor.
+.SH SEE ALSO
+.BR socketpair(2),
+.BR bind(2),
+.BR listen(2),
+.BR accept(2),
+.BR connect(2),
+.BR shutdown(2),
+.BR getsockopt(2),
+.BR setsockopt(2),
+.BR ip(4),
+.BR inet(8),
+.BR unix(8)

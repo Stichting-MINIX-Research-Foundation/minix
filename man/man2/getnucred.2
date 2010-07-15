@@ -1,0 +1,41 @@
+.TH GETNUCRED 2
+.SH NAME
+getnucred \- obtain the credentials that correspond to the given endpoint.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+.in +5
+.ti -5
+#include <unistd.h>
+
+.ti -5
+int getnucred(endpoint_t \fIproc_ep\fP,  struct ucred * \fIucred\fP);
+.br
+.ft P
+.SH DESCRIPTION
+Given an endpoint \fIproc_ep\fP, this function will fill in \fIucred\fP 
+with the \fIpid\fP, \fIuid\fP, and \fIgid\fP that correspond to that 
+endpoint.
+.SH RETURN VALUES
+On success, this function returns 0 and \fIucred\fP will be filled in. 
+On error, -1 is returned and \fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EFAULT]
+The address pointed to by \fIucred\fP is not in a valid part of the 
+process address space.
+[EPERM]
+The user calling this function has insufficient privileges. Only a user 
+with an euid of 0 may call this function.
+[ESRCH]
+The endpoint was not found. This is caused by an invalid endpoint or an 
+endpoint for a process that no longer exists.
+.SH SEE ALSO
+.BR getpid(2),
+.BR getuid(2),
+.BR getgid(2),
+.BR getnpid(2),
+.BR getnuid(2),
+.BR getngid(2)
+.SH HISTORY
+This function first appeared in Minix 3.1.8.

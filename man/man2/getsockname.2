@@ -1,0 +1,28 @@
+.TH GETSOCKNAME 2
+.SH NAME
+getsockname \- get the current name/address of a socket.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int getsockname(int \fIsd\fP, struct sockaddr * \fIaddr\fP, socklen_t * \fIaddr_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+getsockname() takes a connected socket \fIsd\fP and fills in \fIaddr\fP
+with the name/address of the socket.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The operation is not implemented for the given socket.
+.TP 15
+[EINVAL]
+The socket does not have a name/address.
+.SH SEE ALSO
+.BR socket(2),
+.BR getpeername(2)

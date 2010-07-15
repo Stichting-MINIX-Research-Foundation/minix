@@ -1,0 +1,44 @@
+.TH SEND 2
+.SH NAME
+send \- send a message through a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+ssize_t send(int \fIsd\fP, const void * \fImsg\fP, size_t \fImsg_len\fP, int \fIflags\fP);
+.br
+.ft P
+.SH DESCRIPTION
+send() sends a message to another socket. It may only be used with 
+connected sockets. At present, minix doesn't support setting 
+\fIflags\fP to any value other than 0.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The operation is not implemented for the given socket.
+.TP 15
+[ENOTCONN]
+The socket is not connected; there is no peer.
+.TP 15
+[EFAULT]
+The message pointed to by \fImsg\fP is not in a
+valid part of the process address space.
+.TP 15
+[EAFNOSUPPORT]
+The address family is not supported by send().
+.TP 15
+[EPIPE]
+The socket is shutdown for writing.
+.TP 15
+[EMSGSIZE]
+The message is too big.
+.SH SEE ALSO
+.BR socket(2)
+.BR sendto(2)
+.BR recv(2)
+.BR recvfrom(2)

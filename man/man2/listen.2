@@ -1,0 +1,36 @@
+.TH LISTEN 2
+.SH NAME
+listen \- listens for incoming connections on a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int listen(int \fIsd\fP, int \fIbacklog\fP);
+.br
+.ft P
+.SH DESCRIPTION
+listen() puts socket \fIsd\fP into the listening state.
+\fIbacklog\fP number of incoming connections may be
+queued before new incoming connections are refused.
+This function is usually called after bind(2) and before
+accept(2).
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EINVAL]
+The socket is invalid or bind(2) has not been called yet
+for the socket.
+.TP 15
+[EOPNOTSUPP]
+The socket type (example SOCK_DGRAM) does not support listening.
+.TP 15
+[ENOSYS]
+The socket does not support listening.
+.SH SEE ALSO
+.BR accept(2),
+.BR bind(2),
+.BR socket(2)

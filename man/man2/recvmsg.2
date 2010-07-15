@@ -1,0 +1,37 @@
+.TH RECVMSG 2
+.SH NAME
+recvmsg \- receive a message through a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+ssize_t recvmsg(int \fIsd\fP, struct msghdr * \fImsg\fP, int \fIflags\fP);
+.br
+.ft P
+.SH DESCRIPTION
+recvfrom() receives a message from another socket. It may be
+used with connectionless and connection oriented sockets.
+At present, minix doesn't support setting \fIflags\fP to any
+value other than 0.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The operation is not implemented for the given socket.
+.TP 15
+[EPIPE]
+The socket is shutdown for reading.
+.TP 15
+[EFAULT]
+\fImsg\fP is NULL.
+.SH SEE ALSO
+.BR socket(2),
+.BR recvfrom(2),
+.BR readv(2),
+.BR sendmsg(2)
+.SH HISTORY
+This function first appeared in Minix 3.1.8.

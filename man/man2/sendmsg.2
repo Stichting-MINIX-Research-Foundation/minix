@@ -1,0 +1,52 @@
+.TH SENDMSG 2
+.SH NAME
+sendmsg \- send a message through a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+ssize_t sendmsg(int \fIsd\fP, const struct msghdr * \fImsg\fP, int \fIflags\fP);
+.br
+.ft P
+.SH DESCRIPTION
+sendmsg() sends a message to another socket. It may be used with
+connectionless and connection oriented sockets. At present, minix
+doesn't support setting \fIflags\fP to any value other than 0.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The operation is not implemented for the given socket.
+.TP 15
+[ENOTCONN]
+The socket is not connected; there is no peer.
+.TP 15
+[EFAULT]
+\fImsg\fP is NULL.
+.TP 15
+[EAFNOSUPPORT]
+The address family is not supported by send().
+.TP 15
+[ENAMETOOLONG]
+The length of sun_path is longer than UNIX_PATH_MAX.
+.TP 15
+[ENOENT]
+The sun_path is null.
+.TP 15
+[EPIPE]
+The socket is shutdown for writing.
+.TP 15
+[EMSGSIZE]
+The message is too big.
+.SH SEE ALSO
+.BR socket(2),
+.BR recvmsg(2),
+.BR sendto(2),
+.BR writev(2)
+.SH HISTORY
+This function first appeared in Minix 3.1.8.

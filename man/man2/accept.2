@@ -1,0 +1,33 @@
+.TH ACCEPT 2
+.SH NAME
+accept \- accepts incoming connections on a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int accept(int \fIsd\fP, struct sockaddr * \fIaddr\fP, socklen_t * \fIaddr_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+accept() accepts a new incoming connection on a listening
+socket \fIsd\fP. The structure pointed to by \fIaddr\fP is
+filled in with the address of the peer, and \fIaddr_len\fP
+is set to the length of the address of the peer.
+.SH RETURN VALUES
+On success, this function returns a numeric socket descriptor.
+On error, -1 is returned and \fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EOPNOTSUPP]
+The socket does not support accept(2) (example: a UDP socket).
+.TP 15
+[ENOTSOCK]
+The \fIsd\fP argument is not a socket.
+.TP 15
+[EINVAL]
+The socket is not listening or in an invalid state.
+.SH SEE ALSO
+.BR socket(2),
+.BR connect(2)

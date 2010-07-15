@@ -1,0 +1,49 @@
+.TH CONNECT 2
+.SH NAME
+connect \- connects a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int connect(int \fIsd\fP, const struct sockaddr * \fIaddr\fP, socklen_t \fIaddr_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+connect() connects the socket \fIsd\fP to a socket listening at
+address \fIaddr\fP.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EFAULT]
+The address pointed to by \fIaddr\fP is not in a
+valid part of the process address space.
+.TP 15
+[EAFNOSUPPORT]
+The address family of the address pointed to by
+\fIaddr\fP is not supported by this function.
+.TP 15
+[EINVAL]
+The address pointed to by \fIaddr\fP is not valid.
+.TP 15
+[ENAMETOOLONG]
+The sun_path in struct sockaddr_un is too long.
+.TP 15
+[EACCES]
+The calling process doesn't have permission to perform
+the connect() operation.
+.TP 15
+[EISCONN]
+The socket is already connected.
+.TP 15
+[EALREADY]
+The socket is already in the process of connecting.
+.TP 15
+[ECONNREFUSED]
+The connection was refused.
+.SH SEE ALSO
+.BR socket(2),
+.BR accept(2)

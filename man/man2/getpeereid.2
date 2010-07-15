@@ -1,0 +1,42 @@
+.TH GETPEEREID 2
+.SH NAME
+getpeereid \- get the effective user ID and effective group ID of a peer
+connected through a Unix domain socket.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int getpeereid(int \fIsd\fP, uid_t *\fIeuid\fP, gid_t *\fIegid\fP);
+.br
+.ft P
+.SH DESCRIPTION
+getpeereid() is often used to authenticate clients connecting to a 
+server through a Unix domain socket. The server can call this function 
+with a socket descriptor \fIsd\fP and this function will fill\-in 
+\fIeuid\fP and \fIegid\fP with the effective user ID and the effective 
+group ID of the client process.
+.SH RETURN VALUES
+On success, this function returns 0, \fIeuid\fP is set to the effective 
+user ID of the peer connected through Unix domain socket \fIsd\fP, and 
+\fIegid\fP is set to the effective group ID of the peer connected 
+through Unix domain socket \fIsd\fP. On error, -1 is returned and 
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EBADF]
+The argument \fIsd\fP is not a descriptor.
+.TP 15
+[ENOTSOCK]
+The argument \fIsd\fP is a descriptor, but not a socket descriptor.
+.TP 15
+[EFAULT]
+The address pointed to by \fIeuid\fP and/or \fIegid\fP is not in a 
+valid part of the process address space.
+.SH SEE ALSO
+.BR socket(2),
+.BR socketpair(2),
+.BR unix(8)
+.SH HISTORY
+This function first appeared in Minix 3.1.8.

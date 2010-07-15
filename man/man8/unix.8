@@ -1,0 +1,26 @@
+.TH UNIX 8
+.SH NAME
+unix \- Unix Domain Sockets (PF_UNIX) / Local Sockets (PF_LOCAL)
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+.br
+#include <sys/un.h>
+
+.in +5
+.ti -5
+int socket(int \fIdomain\fP, int \fItype\fP, int \fIprotocol\fP);
+.ti -5
+int socketpair(int \fIdomain\fP, int \fItype\fP, int \fIprotocol\fP, int \fIsv[2]\fP);
+.br
+.ft P
+.SH DESCRIPTION
+Local sockets, more commonly known as Unix Domain Sockets, provide a 
+means of interprocess communication using the socket API.
+.SH SEE ALSO
+.BR socket(2),
+.BR socketpair(2),
+.BR getpeereid(2),
+.BR uds(4)
+.SH HISTORY
+This Unix Domain Sockets first appeared in Minix 3.1.8.

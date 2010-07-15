@@ -1,0 +1,47 @@
+.TH BIND 2
+.SH NAME
+bind \- binds an address to a socket
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int bind(int \fIsd\fP, const struct sockaddr * \fIaddr\fP, socklen_t \fIaddr_len\fP);
+.br
+.ft P
+.SH DESCRIPTION
+bind() specifies the \fIaddr\fP (IP address and port for PF_INET or path for PF_UNIX)
+to assign to socket \fIsd\fP.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[ENOSYS]
+The socket type is not supported by bind().
+.TP 15
+[EAFNOSUPPORT]
+The address family is not supported by bind().
+.TP 15
+[EADDRNOTAVAIL]
+The address is not available.
+.TP 15
+[ENAMETOOLONG]
+The sun_path in struct sockaddr_un is too long.
+.TP 15
+[EINVAL]
+The address is already bound to the socket.
+.TP 15
+[EBADF]
+The argument \fIsd\fP is not a descriptor.
+.TP 15
+[ENOTSOCK]
+The argument \fIsd\fP is a descriptor, but not a socket descriptor.
+.TP 15
+[EFAULT]
+The address pointed to by \fIaddr\fP is not in a
+valid part of the process address space.
+.SH SEE ALSO
+.BR accept(2),
+.BR socket(2)

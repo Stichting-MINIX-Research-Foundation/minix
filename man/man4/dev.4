@@ -199,6 +199,10 @@ device can be used to produce or record air vibrations using a Soundblaster
 The
 .B mixer
 device is used to control the audio driver.
+.SS "uds (major 18)"
+The
+.B uds
+device is used to implement unix domain sockets.
 .SH FILES
 .TP 10
 .B /dev/*
@@ -212,6 +216,7 @@ All MINIX 3 devices
 .BR fd (4),
 .BR controller (4),
 .BR ip (4),
+.BR uds (4),
 .BR tty (4),
 .BR MAKEDEV (8).
 .SH DIAGNOSTICS

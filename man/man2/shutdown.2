@@ -1,0 +1,33 @@
+.TH SHUTDOWN 2
+.SH NAME
+shutdown \- shuts down a socket for reading, writing, or both
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int shutdown(int \fIsd\fP, int \fIhow\fP);
+.br
+.ft P
+.SH DESCRIPTION
+shutdown() shuts down the socket \fIsd\fP for reading, writing,
+or both reading and writing by setting \fIhow\fP to SHUT_RD,
+SHUT_WR, or SHUT_RDWR.
+.SH RETURN VALUES
+On success, this function returns 0. On error, -1 is returned and
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EINVAL]
+\fIhow\fP must be SHUT_RD, SHUT_WR, or SHUT_RDWR.
+.TP 15
+[ENOTCONN]
+\fIsd\fP must be a connected socket.
+.TP 15
+[ENOSYS]
+attempted to shutdown the read side of a TCP socket,
+or the type of socket is not supported.
+.SH SEE ALSO
+.BR socket(2),
+.BR socketpair(2)

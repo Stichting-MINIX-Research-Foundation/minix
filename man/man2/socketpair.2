@@ -1,0 +1,45 @@
+.TH SOCKETPAIR 2
+.SH NAME
+socketpair \- creates a pair of connected sockets.
+.SH SYNOPSIS
+.ft B
+#include <sys/socket.h>
+
+.in +5
+.ti -5
+int socketpair(int \fIdomain\fP, int \fItype\fP, int \fIprotocol\fP, int \fIsv[2]\fP);
+.br
+.ft P
+.SH DESCRIPTION
+socketpair() creates two connected sockets of the specified \fItype\fP 
+in the specified \fIdomain\fP using the specified \fIprotocol\fP and 
+stores the two resulting socket descriptors in \fIsv[2]\fP.
+.SH RETURN VALUES
+On success, this function returns 0, and \fIsv[2]\fP is set to the two 
+newly created socket descriptors. On error, -1 is returned and 
+\fIerrno\fP is set.
+.SH ERRORS
+.TP 15
+[EAFNOSUPPORT]
+The \fIdomain\fP is not supported.
+.TP 15
+[EPROTOTYPE]
+The \fIprotocol\fP is not supported by the \fIdomain\fP.
+.TP 15
+[EPROTONOSUPPORT]
+The \fIprotocol\fP is not supported by the \fItype\fP.
+.TP 15
+[EINVAL]
+The pair of sockets aren't in a valid state or are not connection oriented sockets.
+.TP 15
+[EPERM]
+The user ID, group ID, and process ID of the first socket doesn't match that of the second.
+.SH NOTES
+This function is only implemented for unix domain sockets. Therefore, 
+the only valid value for \fIdomain\fP is
+.B AF_UNIX
+.SH SEE ALSO
+.BR socket(2),
+.BR unix(8)
+.SH HISTORY
+This function first appeared in Minix 3.1.8.
