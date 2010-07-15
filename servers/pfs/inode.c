@@ -26,7 +26,7 @@ FORWARD _PROTOTYPE( void unhash_inode, (struct inode * const node) 		);
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
-PUBLIC int fs_putnode()
+PUBLIC int fs_putnode(message *fs_m_in, message *fs_m_out)
 {
 /* Find the inode specified by the request message and decrease its counter.*/
 
@@ -35,15 +35,15 @@ PUBLIC int fs_putnode()
   dev_t dev;
   ino_t inum;
   
-  rip = find_inode( (ino_t) fs_m_in.REQ_INODE_NR);
+  rip = find_inode( (ino_t) fs_m_in->REQ_INODE_NR);
 
   if(!rip) {
 	  printf("%s:%d put_inode: inode #%ld dev: %d not found\n", __FILE__,
-		 __LINE__, fs_m_in.REQ_INODE_NR, (dev_t) fs_m_in.REQ_DEV);
+		 __LINE__, fs_m_in->REQ_INODE_NR, (dev_t) fs_m_in->REQ_DEV);
 	  panic("fs_putnode failed");
   }
 
-  count = fs_m_in.REQ_COUNT;
+  count = fs_m_in->REQ_COUNT;
   if (count <= 0) {
 	printf("%s:%d put_inode: bad value for count: %d\n", __FILE__,
 	       __LINE__, count);

@@ -4,8 +4,13 @@
 
 #define VERBOSE		   0	/* display diagnostics */
 
+#include <net/ioctl.h>
+
 #include <ansi.h>
 #include <sys/types.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>
@@ -13,6 +18,7 @@
 
 #include <minix/callnr.h>
 #include <minix/config.h>
+#include <minix/dmap.h>
 #include <minix/type.h>
 #include <minix/const.h>
 #include <minix/com.h>

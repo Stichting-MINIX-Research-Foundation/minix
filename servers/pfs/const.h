@@ -3,6 +3,11 @@
 
 #define NR_INODES        256 	/* # slots in "in core" inode table */
 
+/* Size of descriptor table for unix domain sockets. This should be 
+ * equal to the maximum number of minor devices (currently 256).
+ */
+#define NR_FDS           256
+
 #define INODE_HASH_LOG2   7     /* 2 based logarithm of the inode hash size */
 #define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)
 #define INODE_HASH_MASK   (((unsigned long)1<<INODE_HASH_LOG2)-1)
@@ -30,6 +35,9 @@
 #define FS_BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
 #define FS_BITCHUNK_BITS		(usizeof(bitchunk_t) * CHAR_BIT)
 #define FS_BITS_PER_BLOCK(b)	(FS_BITMAP_CHUNKS(b) * FS_BITCHUNK_BITS)
+
+#define FS_CALL_VEC_SIZE 31
+#define DEV_CALL_VEC_SIZE 25
 
 #endif
 

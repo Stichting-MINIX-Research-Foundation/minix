@@ -7,7 +7,7 @@
 /*===========================================================================*
  *				fs_readwrite				     *
  *===========================================================================*/
-PUBLIC int fs_readwrite(void)
+PUBLIC int fs_readwrite(message *fs_m_in, message *fs_m_out)
 {
   int r, rw_flag;
   struct buf *bp;
@@ -20,7 +20,7 @@ PUBLIC int fs_readwrite(void)
 
   r = OK;
   cum_io = 0;
-  inumb = (ino_t) fs_m_in.REQ_INODE_NR;
+  inumb = (ino_t) fs_m_in->REQ_INODE_NR;
 
   /* Find the inode referred */
   if ((rip = find_inode(inumb)) == NULL) return(EINVAL);
@@ -30,10 +30,10 @@ PUBLIC int fs_readwrite(void)
   f_size = rip->i_size;
   
   /* Get the values from the request message */ 
-  rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
-  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
-  position = fs_m_in.REQ_SEEK_POS_LO;
-  nrbytes = (unsigned) fs_m_in.REQ_NBYTES;
+  rw_flag = (fs_m_in->m_type == REQ_READ ? READING : WRITING);
+  gid = (cp_grant_id_t) fs_m_in->REQ_GRANT;
+  position = fs_m_in->REQ_SEEK_POS_LO;
+  nrbytes = (unsigned) fs_m_in->REQ_NBYTES;
 
   /* We can't read beyond the max file position */
   if (nrbytes > MAX_FILE_POS) return(EFBIG);
@@ -64,7 +64,7 @@ PUBLIC int fs_readwrite(void)
 	cum_io += nrbytes;
   }
 
-  fs_m_out.RES_SEEK_POS_LO = position; /* It might change later and the VFS
+  fs_m_out->RES_SEEK_POS_LO = position; /* It might change later and the VFS
 					   has to know this value */
   
   /* On write, update file size and access time. */
@@ -81,7 +81,7 @@ PUBLIC int fs_readwrite(void)
   bp->b_bytes = position;
   if (rw_flag == READING) rip->i_update |= ATIME;
   if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
-  fs_m_out.RES_NBYTES = (size_t) cum_io;
+  fs_m_out->RES_NBYTES = (size_t) cum_io;
   put_inode(rip);
   put_block(rip->i_dev, rip->i_num);
 

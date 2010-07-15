@@ -6,18 +6,18 @@
 /*===========================================================================*
  *				fs_ftrunc				     *
  *===========================================================================*/
-PUBLIC int fs_ftrunc(void)
+PUBLIC int fs_ftrunc(message *fs_m_in, message *fs_m_out)
 {
   struct inode *rip;
   off_t start, end;
   ino_t inumb;
   
-  inumb = (ino_t) fs_m_in.REQ_INODE_NR;
+  inumb = (ino_t) fs_m_in->REQ_INODE_NR;
 
   if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
 
-  start = fs_m_in.REQ_TRC_START_LO;
-  end = fs_m_in.REQ_TRC_END_LO;
+  start = fs_m_in->REQ_TRC_START_LO;
+  end = fs_m_in->REQ_TRC_END_LO;
 
   return truncate_inode(rip, start);
 }

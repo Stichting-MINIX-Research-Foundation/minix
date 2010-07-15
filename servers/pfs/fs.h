@@ -15,6 +15,7 @@
 #include <minix/const.h>
 #include <minix/type.h>
 #include <minix/dmap.h>
+#include <minix/vfsif.h>
 #include <limits.h>
 #include <errno.h>
 #include <minix/syslib.h>
