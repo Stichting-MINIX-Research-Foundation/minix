@@ -1,3 +1,6 @@
+20100714:
+	mknod /dev/uds c 18 0
+	chmod 666 /dev/uds
 20100713:
         /usr/src/etc/rc updated: copy it (or merge it) to /etc/rc.
         /usr/src/etc/system.conf updated to include boot sys services: copy

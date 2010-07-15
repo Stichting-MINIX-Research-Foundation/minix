@@ -22,6 +22,7 @@ SRCS+=  \
 	getnetbyaddr.c \
 	getnetbyname.c \
 	getnetent.c \
+	getpeereid.c \
 	getpeername.c \
 	getproto.c \
 	getprotoent.c \
@@ -42,6 +43,7 @@ SRCS+=  \
 	rcmd.c \
 	recv.c \
 	recvfrom.c \
+	recvmsg.c \
 	res_comp.c \
 	res_init.c \
 	res_mkquery.c \
@@ -49,10 +51,12 @@ SRCS+=  \
 	res_send.c \
 	ruserok.c \
 	send.c \
+	sendmsg.c \
 	sendto.c \
 	servxcheck.c \
 	sethostent.c \
 	setsockopt.c \
 	shutdown.c \
 	socket.c \
+	socketpair.c \
 	strcasecmp.c

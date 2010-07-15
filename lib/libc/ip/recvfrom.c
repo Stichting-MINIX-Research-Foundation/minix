@@ -25,6 +25,12 @@ static ssize_t _tcp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	int flags, struct sockaddr *_RESTRICT address,
 	socklen_t *_RESTRICT address_len, nwio_udpopt_t *udpoptp);
+static ssize_t _uds_recvfrom_conn(int socket, void *_RESTRICT buffer,
+	size_t length, int flags, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len, struct sockaddr_un *uds_addr);
+static ssize_t _uds_recvfrom_dgram(int socket, void *_RESTRICT buffer,
+	size_t length, int flags, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len);
 
 ssize_t recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	int flags, struct sockaddr *_RESTRICT address,
@@ -33,6 +39,8 @@ ssize_t recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	int r;
 	nwio_tcpconf_t tcpconf;
 	nwio_udpopt_t udpopt;
+	struct sockaddr_un uds_addr;
+	int uds_sotype = -1;
 
 #if DEBUG
 	fprintf(stderr, "recvfrom: for fd %d\n", socket);
@@ -54,6 +62,24 @@ ssize_t recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 			return r;
 		return _udp_recvfrom(socket, buffer, length, flags,
 			address, address_len, &udpopt);
+	}
+
+	r= ioctl(socket, NWIOGUDSSOTYPE, &uds_sotype);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+
+		if (r == -1) {
+			return r;
+		}
+
+		if (uds_sotype == SOCK_DGRAM) {
+			return _uds_recvfrom_dgram(socket, buffer, 
+				length, flags, address, address_len);
+		} else {
+			return _uds_recvfrom_conn(socket, buffer, 
+				length, flags, address, address_len, 
+				&uds_addr);
+		}
 	}
 
 #if DEBUG
@@ -195,5 +221,72 @@ static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	}	
 	free(buf);
 	return length;
+}
+
+static ssize_t _uds_recvfrom_conn(int socket, void *_RESTRICT buffer, 
+	size_t length, int flags, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len, struct sockaddr_un *uds_addr)
+{
+	int r;
+	size_t len;
+
+	/* for connection oriented unix domain sockets (SOCK_STREAM / 
+	 * SOCK_SEQPACKET)
+	 */
+
+	if (flags != 0)
+	{
+#if DEBUG
+		fprintf(stderr, "recvfrom(uds): flags not implemented\n");
+#endif
+		errno= ENOSYS;
+		return -1;
+	}
+
+	r = read(socket, buffer, length);
+
+	if (r >= 0 && address != NULL)
+	{
+
+		len= *address_len;
+		if (len > sizeof(struct sockaddr_un))
+			len= sizeof(struct sockaddr_un);
+		memcpy(address, uds_addr, len);
+		*address_len= sizeof(struct sockaddr_un);
+	}	
+
+	return r;
+}
+
+static ssize_t _uds_recvfrom_dgram(int socket, void *_RESTRICT buffer, 
+	size_t length, int flags, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len)
+{
+	int r;
+	size_t len;
+
+	/* for connectionless unix domain sockets (SOCK_DGRAM) */
+
+	if (flags != 0)
+	{
+#if DEBUG
+		fprintf(stderr, "recvfrom(uds): flags not implemented\n");
+#endif
+		errno= ENOSYS;
+		return -1;
+	}
+
+	r = read(socket, buffer, length);
+
+	if (r >= 0 && address != NULL)
+	{
+		len= *address_len;
+		if (len > sizeof(struct sockaddr_un))
+			len= sizeof(struct sockaddr_un);
+		ioctl(socket, NWIOGUDSFADDR, address);
+		*address_len= sizeof(struct sockaddr_un);
+	}	
+
+	return r;
 }
 

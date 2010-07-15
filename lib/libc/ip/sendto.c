@@ -24,6 +24,10 @@ static ssize_t _tcp_sendto(int socket, const void *message, size_t length,
 static ssize_t _udp_sendto(int socket, const void *message, size_t length,
 	int flags, const struct sockaddr *dest_addr, socklen_t dest_len,
 	nwio_udpopt_t *udpoptp);
+static ssize_t _uds_sendto_conn(int socket, const void *message, size_t length,
+	int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
+static ssize_t _uds_sendto_dgram(int socket, const void *message, size_t length,
+	int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 
 ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
@@ -31,6 +35,8 @@ ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	int r;
 	nwio_tcpopt_t tcpopt;
 	nwio_udpopt_t udpopt;
+	struct sockaddr_un uds_addr;
+	int uds_sotype = -1;
 
 	r= ioctl(socket, NWIOGTCPOPT, &tcpopt);
 	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
@@ -48,6 +54,24 @@ ssize_t sendto(int socket, const void *message, size_t length, int flags,
 			return r;
 		return _udp_sendto(socket, message, length, flags,
 			dest_addr, dest_len, &udpopt);
+	}
+
+	r= ioctl(socket, NWIOGUDSSOTYPE, &uds_sotype);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+		if (r == -1) {
+			return r;
+		}
+
+		if (uds_sotype == SOCK_DGRAM) {
+
+			return _uds_sendto_dgram(socket, message, 
+				length, flags,dest_addr, dest_len);
+		} else {
+
+			return _uds_sendto_conn(socket, message,
+				length, flags, dest_addr, dest_len);
+		}
 	}
 
 #if DEBUG
@@ -158,3 +182,96 @@ static ssize_t _udp_sendto(int socket, const void *message, size_t length,
 	return length;
 }
 
+static ssize_t _uds_sendto_conn(int socket, const void *message, size_t length,
+	int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
+{
+
+	/* for connection oriented unix domain sockets (SOCK_STREAM / 
+	 * SOCK_SEQPACKET)
+	 */
+
+	if (flags != 0) {
+#if DEBUG
+		fprintf(stderr, "sendto(uds): flags not implemented\n");
+#endif
+		errno= ENOSYS;
+		return -1;
+	}
+
+	/* Silently ignore destination, if given. */
+
+	return write(socket, message, length);
+}
+
+static ssize_t _uds_sendto_dgram(int socket, const void *message, size_t length,
+	int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
+{
+	char real_sun_path[PATH_MAX+1];
+	char *realpath_result;
+	int null_found;
+	int i, r;
+
+	/* for connectionless unix domain sockets (SOCK_DGRAM) */
+
+	if (flags != 0) {
+#if DEBUG
+		fprintf(stderr, "sendto(uds): flags not implemented\n");
+#endif
+		errno= ENOSYS;
+		return -1;
+	}
+
+	if (dest_addr == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	/* sun_family is always supposed to be AF_UNIX */
+	if (((struct sockaddr_un *) dest_addr)->sun_family != AF_UNIX) {
+		errno = EAFNOSUPPORT;
+		return -1;
+	}
+
+	/* an empty path is not supported */
+	if (((struct sockaddr_un *) dest_addr)->sun_path[0] == '\0') {
+		errno = ENOENT;
+		return -1;
+	}
+
+	/* the path must be a null terminated string for realpath to work */
+	for (null_found = i = 0;
+		i < sizeof(((struct sockaddr_un *) dest_addr)->sun_path); i++) {
+		if (((struct sockaddr_un *) dest_addr)->sun_path[i] == '\0') {
+			null_found = 1;
+			break;
+		}
+	}
+
+	if (!null_found) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	realpath_result = realpath(
+		((struct sockaddr_un *) dest_addr)->sun_path, real_sun_path);
+
+	if (realpath_result == NULL) {
+		return -1;
+	}
+
+	if (strlen(real_sun_path) >= UNIX_PATH_MAX) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+
+	strcpy(((struct sockaddr_un *) dest_addr)->sun_path, real_sun_path);
+
+	/* set the target address */
+	r= ioctl(socket, NWIOSUDSTADDR, (void *) dest_addr);
+	if (r == -1) {
+		return r;
+	}
+
+	/* do the send */
+	return write(socket, message, length);
+}

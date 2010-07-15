@@ -6,12 +6,14 @@
 #include <sys/socket.h>
 
 #include <net/netlib.h>
+#include <net/ioctl.h>
 #include <netinet/in.h>
 
 #define DEBUG 0
 
 static int _tcp_socket(int protocol);
 static int _udp_socket(int protocol);
+static int _uds_socket(int type, int protocol);
 
 int socket(int domain, int type, int protocol)
 {
@@ -19,7 +21,7 @@ int socket(int domain, int type, int protocol)
 	fprintf(stderr, "socket: domain %d, type %d, protocol %d\n",
 		domain, type, protocol);
 #endif
-	if (domain != AF_INET)
+	if (domain != AF_INET && domain != AF_UNIX)
 	{
 #if DEBUG
 		fprintf(stderr, "socket: bad domain %d\n", domain);
@@ -27,10 +29,15 @@ int socket(int domain, int type, int protocol)
 		errno= EAFNOSUPPORT;
 		return -1;
 	}
-	if (type == SOCK_STREAM)
+
+	if (domain == AF_UNIX && (type == SOCK_STREAM ||
+				type == SOCK_DGRAM || type == SOCK_SEQPACKET))
+		return _uds_socket(type, protocol);
+
+	if (domain == AF_INET && type == SOCK_STREAM)
 		return _tcp_socket(protocol);
 
-	if (type == SOCK_DGRAM)
+	if (domain == AF_INET && type == SOCK_DGRAM)
 		return _udp_socket(protocol);
 
 #if DEBUG
@@ -88,3 +95,38 @@ static int _udp_socket(int protocol)
 	return fd;
 }
 
+static int _uds_socket(int type, int protocol)
+{
+	int fd, r;
+	if (protocol != 0)
+	{
+#if DEBUG
+		fprintf(stderr, "socket(uds): bad protocol %d\n", protocol);
+#endif
+		errno= EPROTONOSUPPORT;
+		return -1;
+	}
+
+	fd= open(UDS_DEVICE, O_RDWR);
+	if (fd == -1) {
+		return fd;
+	}
+
+	/* set the type for the socket via ioctl (SOCK_DGRAM, 
+	 * SOCK_STREAM, SOCK_SEQPACKET, etc)
+	 */
+	r= ioctl(fd, NWIOSUDSTYPE, &type);
+	if (r == -1) {
+		int ioctl_errno;
+
+		/* if that failed rollback socket creation */
+		ioctl_errno= errno;
+		close(fd);
+
+		/* return the error thrown by the call to ioctl */
+		errno= ioctl_errno;
+		return -1;
+	}
+
+	return fd;
+}

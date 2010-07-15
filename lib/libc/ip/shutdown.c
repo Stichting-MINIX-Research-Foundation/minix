@@ -2,22 +2,25 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <net/gen/in.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 static int _tcp_shutdown(int socket, int how);
+static int _uds_shutdown(int socket, int how);
 
 int shutdown(int socket, int how)
 {
 	int r;
+	struct sockaddr_un uds_addr;
 	nwio_tcpconf_t tcpconf;
 
 	r= ioctl(socket, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || errno != ENOTTY)
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
 	{
 		if (r == -1)
 		{
@@ -26,6 +29,18 @@ int shutdown(int socket, int how)
 		}
 		return _tcp_shutdown(socket, how);
 	}
+
+	r= ioctl(socket, NWIOGUDSADDR, &uds_addr);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+		if (r == -1)
+		{
+			/* Bad file descriptor */
+			return -1;
+		}
+		return _uds_shutdown(socket, how);
+	}
+
 #if DEBUG
 	fprintf(stderr, "shutdown: not implemented for fd %d\n", socket);
 #endif
@@ -51,4 +66,7 @@ static int _tcp_shutdown(int socket, int how)
 	return -1;
 }
 
-
+static int _uds_shutdown(int socket, int how)
+{
+	return ioctl(socket, NWIOSUDSSHUT, &how);
+}

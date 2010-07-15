@@ -1,10 +1,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <net/netlib.h>
 #include <net/gen/in.h>
@@ -18,6 +20,9 @@
 static int _tcp_accept(int socket, struct sockaddr *_RESTRICT address,
 	socklen_t *_RESTRICT address_len);
 
+static int _uds_accept(int socket, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len);
+
 int accept(int socket, struct sockaddr *_RESTRICT address,
 	socklen_t *_RESTRICT address_len)
 {
@@ -25,6 +30,10 @@ int accept(int socket, struct sockaddr *_RESTRICT address,
 	nwio_udpopt_t udpopt;
 
 	r= _tcp_accept(socket, address, address_len);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+		return r;
+
+	r= _uds_accept(socket, address, address_len);
 	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
 		return r;
 
@@ -75,5 +84,47 @@ static int _tcp_accept(int socket, struct sockaddr *_RESTRICT address,
 	}
 	if (address != NULL)
 		getpeername(s1, address, address_len);
+	return s1;
+}
+
+static int _uds_accept(int socket, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len)
+{
+	int s1;
+	int r;
+	struct sockaddr_un uds_addr;
+	socklen_t len;
+
+	memset(&uds_addr, '\0', sizeof(struct sockaddr_un));
+
+	r= ioctl(socket, NWIOGUDSADDR, &uds_addr);
+	if (r == -1) {
+		return r;
+	}
+
+	if (uds_addr.sun_family != AF_UNIX) {
+		errno= EINVAL;
+		return -1;
+	}
+
+	len= *address_len;
+	if (len > sizeof(struct sockaddr_un))
+		len = sizeof(struct sockaddr_un);
+
+	memcpy(address, &uds_addr, len);
+	*address_len= len;
+
+	s1= open(UDS_DEVICE, O_RDWR);
+	if (s1 == -1)
+		return s1;
+
+	r= ioctl(s1, NWIOSUDSACCEPT, address);
+	if (r == -1) {
+		int ioctl_errno = errno;
+		close(s1);
+		errno = ioctl_errno;
+		return r;
+	}
+
 	return s1;
 }

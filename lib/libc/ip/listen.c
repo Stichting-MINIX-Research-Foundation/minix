@@ -21,6 +21,10 @@ int listen(int socket, int backlog)
 	if (r != -1 || errno != EBADIOCTL)
 		return r;
 
+	r= ioctl(socket, NWIOSUDSBLOG, &backlog);
+	if (r != -1 || errno != EBADIOCTL)
+		return r;
+
 #if DEBUG
 	fprintf(stderr, "listen: not implemented for fd %d\n", socket);
 #endif

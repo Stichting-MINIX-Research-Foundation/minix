@@ -20,15 +20,19 @@ static int _tcp_setsockopt(int socket, int level, int option_name,
 static int _udp_setsockopt(int socket, int level, int option_name,
 	const void *option_value, socklen_t option_len);
 
+static int _uds_setsockopt(int socket, int level, int option_name,
+	const void *option_value, socklen_t option_len);
+
 int setsockopt(int socket, int level, int option_name,
         const void *option_value, socklen_t option_len)
 {
 	int r;
 	nwio_tcpopt_t tcpopt;
 	nwio_udpopt_t udpopt;
+	struct sockaddr_un uds_addr;
 
 	r= ioctl(socket, NWIOGTCPOPT, &tcpopt);
-	if (r != -1 || errno != ENOTTY)
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
 	{
 		if (r == -1)
 		{
@@ -40,7 +44,7 @@ int setsockopt(int socket, int level, int option_name,
 	}
 
 	r= ioctl(socket, NWIOGUDPOPT, &udpopt);
-	if (r != -1 || errno != ENOTTY)
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
 	{
 		if (r == -1)
 		{
@@ -50,6 +54,19 @@ int setsockopt(int socket, int level, int option_name,
 		return _udp_setsockopt(socket, level, option_name,
 			option_value, option_len);
 	}
+
+	r= ioctl(socket, NWIOGUDSADDR, &uds_addr);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+		if (r == -1)
+		{
+			/* Bad file descriptor */
+			return -1;
+		}
+		return _uds_setsockopt(socket, level, option_name,
+			option_value, option_len);
+	}
+
 
 #if DEBUG
 	fprintf(stderr, "setsockopt: not implemented for fd %d\n", socket);
@@ -178,3 +195,76 @@ static int _udp_setsockopt(int socket, int level, int option_name,
 	return -1;
 }
 
+
+static int _uds_setsockopt(int socket, int level, int option_name,
+	const void *option_value, socklen_t option_len)
+{
+	int i;
+	size_t size;
+
+	if (level == SOL_SOCKET && option_name == SO_RCVBUF)
+	{
+		if (option_len != sizeof(size))
+		{
+			errno= EINVAL;
+			return -1;
+		}
+		size= *(size_t *)option_value;
+		return ioctl(socket, NWIOSUDSRCVBUF, &size);
+	}
+
+	if (level == SOL_SOCKET && option_name == SO_SNDBUF)
+	{
+		if (option_len != sizeof(size))
+		{
+			errno= EINVAL;
+			return -1;
+		}
+		size= *(size_t *)option_value;
+		return ioctl(socket, NWIOSUDSSNDBUF, &size);
+	}
+
+	if (level == SOL_SOCKET && option_name == SO_REUSEADDR)
+	{
+		if (option_len != sizeof(i))
+		{
+			errno= EINVAL;
+			return -1;
+		}
+		i= *(int *)option_value;
+		if (!i)
+		{
+			/* At the moment there is no way to turn off 
+			 * reusing addresses.
+			 */
+			errno= ENOSYS;
+			return -1;
+		}
+		return 0;
+	}
+
+	if (level == SOL_SOCKET && option_name == SO_PASSCRED)
+	{
+		if (option_len != sizeof(i))
+		{
+			errno= EINVAL;
+			return -1;
+		}
+		i= *(int *)option_value;
+		if (!i)
+		{
+			/* credentials can always be received. */
+			errno= ENOSYS;
+			return -1;
+		}
+		return 0;
+	}
+
+#if DEBUG
+	fprintf(stderr, "_uds_setsocketopt: level %d, name %d\n",
+		level, option_name);
+#endif
+
+	errno= ENOSYS;
+	return -1;
+}
