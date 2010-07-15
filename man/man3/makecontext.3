@@ -1,75 +1,97 @@
-.TH MAKECONTEXT 3  "Mar 2, 2010"
-.SH NAME
-makecontext, swapcontext \- manipulate user contexts
-.SH SYNOPSIS
-.nf
-.ft B
-#include <ucontext.h>
-
-void makecontext(ucontext\_t *\fIucp\fP, void \fI(*func)(void)\fP, int \fIargc\fP, ...)
-int swapcontext(ucontext\_t *\fIoucp\fP, const ucontext\_t *\fIucp\fP)
-.SH DESCRIPTION
+.Dd Mar 2, 2010
+.Dt MAKECONTEXT 3
+.Os
+.Sh NAME
+.Nm makecontext ,
+.Nm swapcontext
+.Nd manipulate user contexts
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In ucontext.h
+.Ft void
+.Fn makecontext "ucontext_t *ucp" "void (*func)(void)" "int argc" ...
+.Ft int
+.Fn swapcontext "ucontext_t *oucp" "const ucontext_t *ucp"
+.Sh DESCRIPTION
 The
-.BR makecontext (3)
-, 
-.BR swapcontext (3)
-, 
-.BR getcontext (3)
-, and 
-.BR setcontext (3)
+.Xr makecontext 3 ,
+.Xr swapcontext 3 ,
+.Xr getcontext 3 ,
+and
+.Xr setcontext 3
 together form a set of functions that allow user-level context switching between multiple threads of control within a process.
-.PP
+.Pp
 The
-.BR makecontext ()
+.Fn makecontext 
 function modifies the user thread pointed to by
-.I ucp
+.Va ucp
 to continue execution by invoking function
-.I func
+.Va func
 and passing that function a number of 
-.I argc
+.Va argc
 integer arguments. The value of
-.I argc
+.Va argc
 must match the number of integer arguments passed to
-.I func
-, otherwise the behavior is undefined. Context
-.I ucp
+.Va func ,
+otherwise the behavior is undefined. Context
+.Va ucp
 must have been initialized by a call to 
-.BR getcontext (3)
-and have a stack allocated for it. The address of the stack must be assigned to  \fIucp\->uc_stack.ss_sp\fP and the size of the stack to \fIucp\->uc_stack.ss_size\fP. The \fIucp\->uc_link\fP member is used to determine which successor context is run after the context modified by 
-.BR makecontext ()
-returns. If left NULL, the process exits. 
-.PP
+.Xr getcontext 3
+and have a stack allocated for it. The address of the stack must be assigned to 
+.Va ucp->uc_stack.ss_sp
+and the size of the stack to
+.Va ucp->uc_stack.ss_size .
 The
-.BR swapcontext ()
+.Va ucp->uc_link
+member is used to determine which successor context is run after the context modified by 
+.Fn makecontext
+returns. If left NULL, the process exits. 
+.Pp
+The
+.Fn swapcontext 
 function saves the current context in the context structure pointed to by
-.I oucp
-and sets the context to the context structure pointed to by \fIucp\fP.
-
-.SH "RETURN VALUE"
+.Va oucp
+and sets the context to the context structure pointed to by 
+.Va ucp .
+.Sh RETURN VALUES
 When successful,
-.BR swapcontext ()
+.Fn swapcontext 
 returns 0. Otherwise, -1 is returned and
-.I errno
+.Va errno
 is set to indicate the error. Note that a successful call to
-.BR swapcontext ()
+.Fn swapcontext
 actually does not return. Only after returning to the context that called
-.BR swapcontext ()
-, it appears as if
-.BR swapcontext ()
+.Fn swapcontext ,
+it appears as if
+.Fn swapcontext 
 returned 0.
-
-.SH "ERRORS"
-.TP 15
-[EFAULT]
-Either the \fIucp\fP or \fIoucp\fP is a NULL pointer.
-.TP 15
-[EINVAL]
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Either the 
+.Va ucp
+or
+.Va oucp
+is a NULL pointer.
+.It Bq Er EINVAL
 The context is not properly initialized.
-.TP 15
-[ENOMEM] 
-The \fIucp\fP argument does not have enough stack left to complete the operation.
-.SH "SEE ALSO"
-.BR getcontext (3).
-
-.SH "AUTHORS"
+.It Bq Er ENOMEM
+The
+.Va ucp
+argument does not have enough stack left to complete the operation.
+.El
+.Sh SEE ALSO
+.Xr getcontext 3 ,
+.Xr setcontext 3 
+.Sh STANDARDS
+The
+.Fn makecontext ,
+and
+.Fn swapcontext
+functions conform to
+.St -xsh5
+and
+.St -p1003.1-2001 .
+.Sh AUTHORS
 Thomas Veerman
