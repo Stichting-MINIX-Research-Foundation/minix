@@ -102,7 +102,7 @@
 #define MAX_INPUT          255	/* size of the type-ahead buffer */
 #define NAME_MAX        DIRSIZ	/* # chars in a file name */
 #define PATH_MAX  __MINIX_PATH_MAX	/* # chars in a path name */
-#define PIPE_BUF          7168	/* # bytes in atomic write to a pipe */
+#define PIPE_BUF         32768	/* # bytes in atomic write to a pipe */
 #define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
 #define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */
 #define SSIZE_MAX        32767	/* max defined byte count for read() */

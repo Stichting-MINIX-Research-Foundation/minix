@@ -7,6 +7,7 @@
 #define _NET__IOCTL_H
 
 #include <minix/ioctl.h>
+#include <sys/un.h>
 
 /* Network ioctls. */
 #define NWIOSETHOPT	_IOW('n', 16, struct nwio_ethopt)
@@ -50,8 +51,28 @@
 #define NWIOGUDPOPT	_IOR('n', 65, struct nwio_udpopt)
 #define NWIOUDPPEEK	_IOR('n', 66, struct udp_io_hdr)
 
+#define NWIOGUDSFADDR   _IOR('n', 67, struct sockaddr_un) /* recvfrom() */
+#define NWIOSUDSTADDR	_IOW('n', 68, struct sockaddr_un) /* sendto() */
+#define NWIOSUDSADDR	_IOW('n', 69, struct sockaddr_un) /* bind() */
+#define NWIOGUDSADDR	_IOR('n', 70, struct sockaddr_un) /* getsockname() */
+#define NWIOGUDSPADDR	_IOR('n', 71, struct sockaddr_un) /* getpeername() */
+#define NWIOSUDSTYPE	_IOW('n', 72, int)		  /* socket() */
+#define NWIOSUDSBLOG	_IOW('n', 73, int)		  /* listen() */
+#define NWIOSUDSCONN	_IOW('n', 74, struct sockaddr_un) /* connect() */
+#define NWIOSUDSSHUT    _IOW('n', 75, int)		  /* shutdown() */
+#define NWIOSUDSPAIR	_IOW('n', 76, dev_t)		  /* socketpair() */
+#define NWIOSUDSACCEPT	_IOW('n', 77, struct sockaddr_un) /* accept() */
+
 #define NWIOSPSIPOPT	_IOW('n', 80, struct nwio_psipopt)
 #define NWIOGPSIPOPT	_IOR('n', 81, struct nwio_psipopt)
+
+/* setsockopt/setsockopt for unix domain sockets */
+#define NWIOGUDSSOTYPE	 _IOR('n', 90, int)		  /* SO_TYPE */
+#define NWIOGUDSPEERCRED _IOR('n', 91, struct ucred)	  /* SO_PEERCRED */
+#define NWIOGUDSSNDBUF	 _IOR('n', 92, size_t)            /* SO_SNDBUF */
+#define NWIOSUDSSNDBUF	 _IOW('n', 93, size_t)            /* SO_SNDBUF */
+#define NWIOGUDSRCVBUF	 _IOR('n', 94, size_t)            /* SO_RCVBUF */
+#define NWIOSUDSRCVBUF	 _IOW('n', 95, size_t)            /* SO_RCVBUF */
 
 #endif /* _NET__IOCTL_H */
 

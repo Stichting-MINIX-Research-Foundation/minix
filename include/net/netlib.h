@@ -19,5 +19,6 @@ _PROTOTYPE (int rcmd, (char **ahost, int rport, const char *locuser,
 #define IP_DEVICE	"/dev/ip"
 #define TCP_DEVICE	"/dev/tcp"
 #define UDP_DEVICE	"/dev/udp"
+#define UDS_DEVICE	"/dev/uds"
 
 #endif /* _NET__NETLIB_H_ */

@@ -117,5 +117,7 @@ typedef struct {
 
 #define NREQS                   33
 
+#define IS_VFS_RQ(type) (((type) & ~0xff) == VFS_BASE)
+
 #endif
 

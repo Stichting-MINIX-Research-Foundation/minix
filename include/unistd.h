@@ -7,6 +7,8 @@
 #include <minix/types.h>
 #endif
 
+#include <sys/ucred.h>
+
 /* Values used by access().  POSIX Table 2-8. */
 #define F_OK               0	/* test if file exists */
 #define X_OK               1	/* test if file is executable */
@@ -213,6 +215,7 @@ _PROTOTYPE(int getdma, (endpoint_t *procp, phys_bytes *basep,
 _PROTOTYPE( pid_t getnpid, (endpoint_t proc_ep)				);
 _PROTOTYPE( uid_t getnuid, (endpoint_t proc_ep)				);
 _PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);
+_PROTOTYPE( int getnucred, (endpoint_t proc_ep, struct ucred *ucred)	);
 
 #endif
 
