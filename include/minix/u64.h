@@ -34,6 +34,11 @@ int cmp64ul(u64_t i, unsigned long j);
 unsigned long ex64lo(u64_t i);
 unsigned long ex64hi(u64_t i);
 u64_t make64(unsigned long lo, unsigned long hi);
+u64_t rrotate64(u64_t x, unsigned short b);
+u64_t rshift64(u64_t x, unsigned short b);
+u64_t xor64(u64_t a, u64_t b);
+u64_t and64(u64_t a, u64_t b);
+u64_t not64(u64_t a);
 
 #define is_zero64(i)	((i).lo == 0 && (i).hi == 0)
 #define make_zero64(i)	do { (i).lo = (i).hi = 0; } while(0)
