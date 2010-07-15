@@ -8,7 +8,7 @@
  *   do_sync:	  perform the SYNC system call
  *   do_fsync:	  perform the FSYNC system call
  *   do_reboot:	  sync disks and prepare for shutdown
- *   do_fork:	  adjust the tables after PM has performed a FORK system call
+ *   pm_fork:	  adjust the tables after PM has performed a FORK system call
  *   do_exec:	  handle files with FD_CLOEXEC on after PM has done an EXEC
  *   do_exit:	  a process has exited; note that in the tables
  *   do_set:	  set uid or gid for some process
