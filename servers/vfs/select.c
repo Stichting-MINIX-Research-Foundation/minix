@@ -71,6 +71,7 @@ PRIVATE struct fdtype {
 	{ select_request_file, select_match_file, 0 },
 	{ select_request_general, NULL, TTY_MAJOR },
 	{ select_request_general, NULL, INET_MAJOR },
+	{ select_request_general, NULL, UDS_MAJOR },
 	{ select_request_pipe, select_match_pipe, 0 },
 	{ select_request_asynch, NULL, LOG_MAJOR },
 };

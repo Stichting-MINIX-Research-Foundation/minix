@@ -401,7 +401,7 @@ PUBLIC int do_mknod()
   
   /* Only the super_user may make nodes other than fifos. */
   mode_bits = (mode_t) m_in.mk_mode;		/* mode of the inode */
-  if(!super_user && ((mode_bits & I_TYPE) != I_NAMED_PIPE)) return(EPERM);
+  if(!super_user && (((mode_bits & I_TYPE) != I_NAMED_PIPE) && ((mode_bits & I_TYPE) != I_UNIX_SOCKET))) return(EPERM);
   bits = (mode_bits & I_TYPE) | (mode_bits & ALL_MODES & fp->fp_umask);
 
   /* Open directory that's going to hold the new node. */
