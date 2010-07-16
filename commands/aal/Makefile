@@ -6,7 +6,6 @@ SRCS=	archiver.c print.c rd.c rd_arhdr.c rd_unsig2.c sprint.c \
 	format.c rd_bytes.c system.c write.c long2str.c
 CPPFLAGS+= -I${.CURDIR} -DAAL -DSTB -DNDEBUG -DDISTRIBUTION
 
-LINKS+=	${BINDIR}/aal ${BINDIR}/ar
 MAN=
 
 .include <bsd.prog.mk>

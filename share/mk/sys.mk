@@ -7,7 +7,7 @@ unix?=		We run MINIX.
 
 .LIBS:		.a
 
-AR?=		ar
+AR?=		aal
 ARFLAGS?=	rl
 RANLIB?=	ranlib
 
