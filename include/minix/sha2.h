@@ -39,6 +39,10 @@
 #ifndef __SHA2_H__
 #define __SHA2_H__
 
+#define SHA2_BYTE_ORDER		0x04030201
+#define SHA2_LITTLE_ENDIAN	0x04030201
+#define SHA2_BIG_ENDIAN		0x01020204
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,6 +58,7 @@ extern "C" {
 #define SHA512_DIGEST_LENGTH		64
 #define SHA512_DIGEST_STRING_LENGTH	(SHA512_DIGEST_LENGTH * 2 + 1)
 
+ 
 #ifdef __minix
 #include <assert.h>
 #include <string.h>
@@ -64,61 +69,14 @@ typedef u8_t u_int8_t;	/* 1-byte  (8-bits)  */
 typedef u32_t u_int32_t;	/* 4-bytes (32-bits) */
 typedef u64_t u_int64_t;	/* 8-bytes (64-bits) */
 
-#ifndef __P
-#define __P(x) x
-#endif
-
-#define NO_64BIT	1
 #define MINIX_64BIT	1
 
 #define SHA2_BYTE_ORDER		0x04030201
 #define SHA2_LITTLE_ENDIAN	0x04030201
 #define SHA2_BIG_ENDIAN		0x01020204
-#define bcopy(s,d,l)	(memmove((d),(s),(l)))
-#define bzero(d,l)	(memset((d),'\0',(l)))
 #endif
 
 /*** SHA-256/384/512 Context Structures *******************************/
-/* NOTE: If your architecture does not define either u_intXX_t types or
- * uintXX_t (from inttypes.h), you may need to define things by hand
- * for your system:
- */
-#if 0
-typedef unsigned char u_int8_t;		/* 1-byte  (8-bits)  */
-typedef unsigned int u_int32_t;		/* 4-bytes (32-bits) */
-typedef unsigned long long u_int64_t;	/* 8-bytes (64-bits) */
-#endif
-/*
- * Most BSD systems already define u_intXX_t types, as does Linux.
- * Some systems, however, like Compaq's Tru64 Unix instead can use
- * uintXX_t types defined by very recent ANSI C standards and included
- * in the file:
- *
- *   #include <inttypes.h>
- *
- * If you choose to use <inttypes.h> then please define: 
- *
- *   #define SHA2_USE_INTTYPES_H
- *
- * Or on the command line during compile:
- *
- *   cc -DSHA2_USE_INTTYPES_H ...
- */
-#if 0 /*def SHA2_USE_INTTYPES_H*/
-
-typedef struct _SHA256_CTX {
-	uint32_t	state[8];
-	uint64_t	bitcount;
-	uint8_t	buffer[SHA256_BLOCK_LENGTH];
-} SHA256_CTX;
-typedef struct _SHA512_CTX {
-	uint64_t	state[8];
-	uint64_t	bitcount[2];
-	uint8_t	buffer[SHA512_BLOCK_LENGTH];
-} SHA512_CTX;
-
-#else /* SHA2_USE_INTTYPES_H */
-
 typedef struct _SHA256_CTX {
 	u_int32_t	state[8];
 	u_int64_t	bitcount;
@@ -130,35 +88,37 @@ typedef struct _SHA512_CTX {
 	u_int8_t	buffer[SHA512_BLOCK_LENGTH];
 } SHA512_CTX;
 
-#endif /* SHA2_USE_INTTYPES_H */
-
 typedef SHA512_CTX SHA384_CTX;
 
 /*** SHA-256/384/512 Function Prototypes ******************************/
+void SHA256_Init(SHA256_CTX *);
+void SHA256_Update(SHA256_CTX*, const u_int8_t*, size_t);
+void SHA256_Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX*);
+char* SHA256_End(SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]);
+char* SHA256_Data(const u_int8_t*, size_t, u_int8_t *);
+char *SHA256_File(char *, char *);
 
-void SHA256_Init __P((SHA256_CTX *));
-void SHA256_Update __P((SHA256_CTX*, const u_int8_t*, size_t));
-void SHA256_Final __P((u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX*));
-char* SHA256_End __P((SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]));
-char* SHA256_Data __P((const u_int8_t*, size_t, char[SHA256_DIGEST_STRING_LENGTH]));
+void SHA384_Init(SHA384_CTX*);
+void SHA384_Update(SHA384_CTX*, const u_int8_t*, size_t);
+void SHA384_Final(u_int8_t[SHA384_DIGEST_LENGTH], SHA384_CTX*);
+char* SHA384_End(SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]);
+char* SHA384_Data(const u_int8_t*, size_t, char[SHA384_DIGEST_STRING_LENGTH]);
+char *SHA384_File(char *, char *);
 
-void SHA384_Init __P((SHA384_CTX*));
-void SHA384_Update __P((SHA384_CTX*, const u_int8_t*, size_t));
-void SHA384_Final __P((u_int8_t[SHA384_DIGEST_LENGTH], SHA384_CTX*));
-char* SHA384_End __P((SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]));
-char* SHA384_Data __P((const u_int8_t*, size_t, char[SHA384_DIGEST_STRING_LENGTH]));
-
-void SHA512_Init __P((SHA512_CTX*));
-void SHA512_Update __P((SHA512_CTX*, const u_int8_t*, size_t));
-void SHA512_Final __P((u_int8_t[SHA512_DIGEST_LENGTH], SHA512_CTX*));
-char* SHA512_End __P((SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]));
-char* SHA512_Data __P((const u_int8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]));
+void SHA512_Init(SHA512_CTX*);
+void SHA512_Update(SHA512_CTX*, const u_int8_t*, size_t);
+void SHA512_Final(u_int8_t[SHA512_DIGEST_LENGTH], SHA512_CTX*);
+char* SHA512_End(SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]);
+char* SHA512_Data(const u_int8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
+char *SHA512_File(char *, char *);
 
 #ifdef	__cplusplus
 }
 #endif /* __cplusplus */
 
 #endif /* __SHA2_H__ */
+
+
 
 /*
  * $PchId: sha2.h,v 1.1 2005/06/28 14:29:33 philip Exp $
