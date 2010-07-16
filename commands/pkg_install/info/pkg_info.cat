@@ -1,0 +1,187 @@
+PKG_INFO(1)             NetBSD General Commands Manual             PKG_INFO(1)
+
+NNAAMMEE
+     ppkkgg__iinnffoo -- a utility for displaying information on software packages
+
+SSYYNNOOPPSSIISS
+     ppkkgg__iinnffoo [--BBbbccDDddFFffhhIIiikkLLmmNNnnppqqrrRRSSssVVvvXX] [--ee _p_a_c_k_a_g_e] [--EE _p_a_c_k_a_g_e]
+              [--KK _p_k_g___d_b_d_i_r] [--ll _p_r_e_f_i_x] _p_k_g_-_n_a_m_e _._._.
+     ppkkgg__iinnffoo [--aa | --uu] [flags]
+     ppkkgg__iinnffoo [--QQ _v_a_r_i_a_b_l_e] _p_k_g_-_n_a_m_e _._._.
+
+DDEESSCCRRIIPPTTIIOONN
+     The ppkkgg__iinnffoo command is used to dump out information for packages, which
+     may be either packed up in files or already installed on the system with
+     the pkg_create(1) command.
+
+     The _p_k_g_-_n_a_m_e may be the name of an installed package (with our without
+     version), a pattern matching several installed packages (see the _P_A_C_K_A_G_E
+     _W_I_L_D_C_A_R_D_S section for a description of possible patterns), the pathname
+     to a binary package, a filename belonging to an installed package (if --FF
+     is also given), or a URL to an ftp-available package.
+
+     The following command-line options are supported:
+
+     --aa      Show information for all currently installed packages.  See also
+             --uu.
+
+     --BB      Show some of the important definitions used when building the
+             binary package (the ``Build information'') for each package.
+             Additionally, any installation information variables (lowercase)
+             can be queried, too.  In particular, _a_u_t_o_m_a_t_i_c tells if a package
+             was installed automatically as a dependency of another package.
+
+     --bb      Show the NetBSD RCS Id strings from the files used in the con-
+             struction of the binary package (the "Build version") for each
+             package.  These files are the package Makefile, any patch files,
+             any checksum files, and the packing list file.
+
+     --cc      Show the one-line comment field for each package.
+
+     --DD      Show the install-message file (if any) for each package.
+
+     --dd      Show the long-description field for each package.
+
+     --EE _p_k_g_-_n_a_m_e
+             This option allows you to test for the existence of a given pack-
+             age.  If a package identified by _p_k_g_-_n_a_m_e is currently installed,
+             return code is 0, otherwise 1.  The name of the best matching
+             package found installed is printed to stdout unless turned off
+             using the --qq option.  _p_k_g_-_n_a_m_e can contain wildcards (see the
+             _P_A_C_K_A_G_E _W_I_L_D_C_A_R_D_S section below).
+
+     --ee _p_k_g_-_n_a_m_e
+             This option allows you to test for the existence of a given pack-
+             age.  If a package identified by _p_k_g_-_n_a_m_e is currently installed,
+             return code is 0, otherwise 1.  The names of any package(s) found
+             installed are printed to stdout unless turned off using the --qq
+             option.  _p_k_g_-_n_a_m_e can contain wildcards (see the _P_A_C_K_A_G_E
+             _W_I_L_D_C_A_R_D_S section below).
+
+     --FF      Interpret any pkg-name given as filename, and translate it to a
+             package name using the Package Database.  This can be used to
+             query information on a per-file basis, e.g. in conjunction with
+             the --ee flag to find out which package a file belongs to.
+
+     --ff      Show the packing list instructions for each package.
+
+     --II      Show the index entry for each package.
+
+     --ii      Show the install script (if any) for each package.
+
+     --KK _p_k_g___d_b_d_i_r
+             Override the value of the PKG_DBDIR configuration option with the
+             value _p_k_g___d_b_d_i_r.
+
+     --kk      Show the de-install script (if any) for each package.
+
+     --LL      Show the files within each package.  This is different from just
+             viewing the packing list, since full pathnames for everything are
+             generated.  Files that were created dynamically during installa-
+             tion of the package are not listed.
+
+     --ll _s_t_r  Prefix each information category header (see --qq) shown with _s_t_r.
+             This is primarily of use to front-end programs that want to
+             request a lot of different information fields at once for a pack-
+             age, but don't necessary want the output intermingled in such a
+             way that they can't organize it.  This lets you add a special
+             token to the start of each field.
+
+     --mm      Show the mtree file (if any) for each package.
+
+     --NN      Show which packages each package was built with (exact dependen-
+             cies), if any.
+
+     --nn      Show which packages each package needs (depends upon), if any.
+
+     --pp      Show the installation prefix for each package.
+
+     --QQ      Show the definition of _v_a_r_i_a_b_l_e from the build information for
+             each package.  An empty string is returned if no such variable
+             definition is found for the package(s).
+
+     --qq      Be ``quiet'' in emitting report headers and such, just dump the
+             raw info (basically, assume a non-human reading).
+
+     --RR      For each package, show the packages that require it.
+
+     --rr      For each package, show the packages that require it.  Continue
+             recursively to show all dependents.
+
+     --SS      Show the size of this package and all the packages it requires,
+             in bytes.
+
+     --ss      Show the size of this package in bytes.  The size is calculated
+             by adding up the size of each file of the package.
+
+     --uu      Show information for all user-installed packages.  Automatically
+             installed packages (as dependencies of other packages) are not
+             displayed.  See also --aa.
+
+     --VV      Print version number and exit.
+
+     --vv      Turn on verbose output.
+
+     --XX      Print summary information for each package.  The summary format
+             is described in pkg_summary(5).  Its primary use is to contain
+             all information about the contents of a (remote) binary package
+             repository needed by package managing software.
+
+TTEECCHHNNIICCAALL DDEETTAAIILLSS
+     Package info is either extracted from package files named on the command
+     line, or from already installed package information in
+     _<_P_K_G___D_B_D_I_R_>_/_<_p_k_g_-_n_a_m_e_>.
+
+     A filename can be given instead of a (installed) package name to query
+     information on the package this file belongs to.  This filename is then
+     resolved to a package name using the Package Database.  For this transla-
+     tion to take place, the --FF flag must be given.  The filename must be
+     absolute, compare the output of pkg_info --aaFF.
+
+PPAACCKKAAGGEE WWIILLDDCCAARRDDSS
+     In the places where a package name/version is expected, e.g. for the --ee
+     switch, several forms can be used.  Either use a package name with or
+     without version, or specify a package wildcard that gets matched against
+     all installed packages.
+
+     Package wildcards use fnmatch(3).  In addition, csh(1) style {,} alter-
+     nates have been implemented.  Package version numbers can also be matched
+     in a relational manner using the _>_=, _<_=, _>, and _< operators.  For exam-
+     ple, _p_k_g___i_n_f_o _-_e _'_n_a_m_e_>_=_1_._3_' will match versions 1.3 and later of the
+     _n_a_m_e package.  Additionally, ranges can be defined by giving a lower
+     bound with > or >= and an upper bound with < or <=.  The lower bound has
+     to come first.  For example, _p_k_g___i_n_f_o _-_e _'_n_a_m_e_>_=_1_._3_<_2_._0_' will match ver-
+     sions 1.3 (inclusive) to 2.0 (exclusive) of package _n_a_m_e.
+
+     The collating sequence of the various package version numbers is unusual,
+     but strives to be consistent.  The magic string ``alpha'' equates to
+     _a_l_p_h_a _v_e_r_s_i_o_n and sorts before a beta version.  The magic string ``beta''
+     equates to _b_e_t_a _v_e_r_s_i_o_n and sorts before a release candidate.  The magic
+     string ``rc'' equates to _r_e_l_e_a_s_e _c_a_n_d_i_d_a_t_e and sorts before a release.
+     The magic string ``pre'', short for ``pre-release'', is a synonym for
+     ``rc''.  For example, _n_a_m_e_-_1_._3_r_c_3 will sort before _n_a_m_e_-_1_._3 and after
+     _n_a_m_e_-_1_._2_._9.  Similarly _n_a_m_e_-_1_._3_a_l_p_h_a_2 will sort before _n_a_m_e_-_1_._3_b_e_t_a_1 and
+     they both sort before _n_a_m_e_-_1_._3_r_c_1.  In addition, alphabetic characters
+     sort in the same place as their numeric counterparts, so that _n_a_m_e_-_1_._2_e
+     has the same sorting value as _n_a_m_e_-_1_._2_._5 The magic string ``pl'' equates
+     to a _p_a_t_c_h _l_e_v_e_l and has the same value as a dot in the dewey-decimal
+     ordering schemes.
+
+EENNVVIIRROONNMMEENNTT
+     See pkg_install.conf(5) for options, that can also be specified using the
+     environment.
+
+SSEEEE AALLSSOO
+     pkg_add(1), pkg_admin(1), pkg_create(1), pkg_delete(1),
+     pkg_install.conf(5) pkgsrc(7)
+
+AAUUTTHHOORRSS
+     Jordan Hubbard
+             most of the work
+     John Kohl
+             refined it for NetBSD
+     Hubert Feyrer
+             NetBSD wildcard dependency processing, pkgdb, depends displaying,
+             pkg size display etc.
+
+NetBSD 5.0                     January 22, 2010                     NetBSD 5.0

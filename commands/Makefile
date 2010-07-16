@@ -32,7 +32,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	truncate tsort ttt tty udpstat umount uname unexpand \
 	uniq unstack update urlget uud uue version vol wc \
 	whereis which who write writeisofs fetch \
-	xargs yacc yes zdump zic zmodem
+	xargs yacc yes zdump zic zmodem pkg_install
 
 .if ${ARCH} == "i386"
 SUBDIR+=	atnormalize dosread fdisk loadfont \

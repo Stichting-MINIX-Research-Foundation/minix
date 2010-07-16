@@ -1,0 +1,117 @@
+.\" $NetBSD: bpm.1,v 1.6 2009/02/08 23:12:10 wiz Exp $ */
+.\"
+.\"
+.\" Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Alistair G. Crooks.
+.\" 4. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 3, 2007
+.Dt BPM 1
+.Os
+.Sh NAME
+.Nm bpm
+.Nd menu-based binary package manager
+.Sh SYNOPSIS
+.Nm
+.Op Fl hnVv
+.Op Fl b Ar baseURL
+.Op Fl m Ar machine
+.Op Fl r Ar release
+.Op Fl w Ar seconds
+.Sh DESCRIPTION
+The
+.Nm
+command is used to locate and install binary packages from any
+reachable URL.
+.Pp
+The following command-line options are supported:
+.Bl -tag -width indent
+.It Fl b Ar baseURL
+Specify a base URL from which to download binary packages.
+The default URL is
+.Pa ftp://ftp.NetBSD.org/pub/pkgsrc/packages .
+.It Fl h
+Print a help message and then exit.
+.It Fl m Ar machine
+Use
+.Ar machine
+as the machine architecture to be used, instead of that returned by
+.Xr uname 1 .
+.It Fl n
+Don't actually execute the commands to add the package.
+.It Fl r Ar release
+Use
+.Ar release
+as the operating system release to be used, instead of that returned by
+.Xr uname 1 .
+.It Fl V
+Print version number and exit.
+.It Fl v
+Turn on verbose output.
+.It Fl w Ar seconds
+The number of
+.Ar seconds
+to wait after displaying an error message and returning to
+normal menu operations.
+.El
+.Pp
+.Nm
+provides a menu-based binary package manager for
+.Nx .
+.Nm
+first connects to the URL using
+.Xr ftp 1 ,
+and displays a list of categories for which binary packages exist.
+If no categories are displayed, it could
+be that the machine architecture or operating system release string
+have been wrongly interpreted, and that it will be necessary to override
+this values by means of the command line options.
+Within a category, a list of packages will be displayed, and by selecting
+one using the number assigned to it, the package will be downloaded
+automatically, and installed, using the
+.Xr pkg_add 1
+utility.
+It is also possible to change the category currently being examined,
+and to quit from the utility, simply by selecting the appropriate choices
+on the menu.
+.Sh ENVIRONMENT
+The environment variables which govern the behavior of
+.Xr ftp 1
+and
+.Xr pkg_add 1
+are valid for
+.Nm .
+.Sh SEE ALSO
+.Xr ftp 1 ,
+.Xr pkg_add 1 ,
+.Xr uname 1
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Alistair Crooks Aq agc@NetBSD.org .

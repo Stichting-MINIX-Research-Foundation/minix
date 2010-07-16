@@ -1,0 +1,35 @@
+# $NetBSD: Makefile.in,v 1.6 2008/03/10 12:14:32 wiz Exp $
+
+prefix=		@prefix@
+exec_prefix=	@exec_prefix@
+sbindir=	@sbindir@
+mandir=		@mandir@
+datarootdir=	@datarootdir@
+
+man1dir=	$(mandir)/man1
+cat1dir=	$(mandir)/cat1
+
+INSTALL=	@INSTALL@
+
+SCRIPTS=	linkfarm pkg_view
+
+all:
+	@true # do nothing
+
+clean:
+	@true # do nothing
+
+install:
+	$(INSTALL) -m 755 -d ${DESTDIR}$(sbindir)
+	$(INSTALL) -m 755 -d ${DESTDIR}$(man1dir)
+	$(INSTALL) -m 755 -d ${DESTDIR}$(cat1dir)
+	@for script in $(SCRIPTS); do \
+		echo "$(INSTALL) $$script.sh ${DESTDIR}$(sbindir)/$$script"; \
+		$(INSTALL) $$script.sh ${DESTDIR}$(sbindir)/$$script; \
+	done
+	@for script in $(SCRIPTS); do \
+		echo "$(INSTALL) -m 444 $$script.1 ${DESTDIR}$(man1dir)/$$script.1"; \
+		$(INSTALL) -m 444 $$script.1 ${DESTDIR}$(man1dir)/$$script.1; \
+		echo "$(INSTALL) -m 444 $$script.cat1 ${DESTDIR}$(cat1dir)/$$script.0"; \
+		$(INSTALL) -m 444 $$script.cat1 ${DESTDIR}$(cat1dir)/$$script.0; \
+	done

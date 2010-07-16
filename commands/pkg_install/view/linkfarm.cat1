@@ -1,0 +1,67 @@
+LINKFARM(1)             NetBSD General Commands Manual             LINKFARM(1)
+
+NNAAMMEE
+     lliinnkkffaarrmm -- manage symbolic links to package files
+
+SSYYNNOOPPSSIISS
+     lliinnkkffaarrmm [--ccDDnnRRVVvv] [--dd _s_t_o_w_d_i_r] [--ss _s_u_b_d_i_r] [--tt _t_a_r_g_e_t] _p_a_c_k_a_g_e
+
+DDEESSCCRRIIPPTTIIOONN
+     The lliinnkkffaarrmm command is used to manage a "linkfarm", a directory tree of
+     symbolic links in _t_a_r_g_e_t to the files in the _p_a_c_k_a_g_e sub-directory of
+     _s_t_o_w_d_i_r.  The default action is to create a linkfarm to a package.
+
+     The following command-line options are supported:
+
+     --cc      Check whether a package contains a linkfarm in _t_a_r_g_e_t.  If
+             _p_a_c_k_a_g_e has no symbolic links in _t_a_r_g_e_t that correspond to its
+             files, then return 0, otherwise return 1.
+
+     --DD      Delete the linkfarm for _p_a_c_k_a_g_e.
+
+     --dd _s_t_o_w_d_i_r
+             Set _s_t_o_w_d_i_r as the directory in which _p_a_c_k_a_g_e can be found.  The
+             default _s_t_o_w_d_i_r is the _p_a_c_k_a_g_e_s sub-directory in the default
+             _t_a_r_g_e_t directory.
+
+     --nn      Don't actually execute the commands for removing and creating the
+             symbolic links and directories.
+
+     --RR      Delete and re-create the linkfarm for _p_a_c_k_a_g_e.
+
+     --ss _s_u_b_d_i_r
+             The root of the package hierarchy for the linkfarm is the _s_u_b_d_i_r
+             sub-directory in the package.  By default, assume the root of the
+             package hierarchy is simply the _p_a_c_k_a_g_e directory.
+
+     --tt _t_a_r_g_e_t
+             Set _t_a_r_g_e_t as the directory in which to create and delete the
+             linkfarm for _p_a_c_k_a_g_e.  The default _t_a_r_g_e_t directory is _/_u_s_r_/_p_k_g
+             but may be overridden by the LOCALBASE environment variable.
+
+     --VV      Print version number and exit.
+
+     --vv      Turn on verbose output.  Specifying --vv multiple times increases
+             the level of verbosity.
+
+EENNVVIIRROONNMMEENNTT
+     LOCALBASE
+             The standard packages directory, _/_u_s_r_/_p_k_g, can be overridden by
+             specifying an alternative directory in the LOCALBASE environment
+             variable.  This affects the default _t_a_r_g_e_t and _s_t_o_w_d_i_r directo-
+             ries.
+
+     PLIST_IGNORE_FILES
+             This can be used to specify files in _p_a_c_k_a_g_e that should ignored
+             when creating and deleting symbolic links in _t_a_r_g_e_t.
+             PLIST_IGNORE_FILES is a space-separated list of shell glob pat-
+             terns that match files relative to the _p_a_c_k_a_g_e directory, and it
+             defaults to "info/dir *[~#] *.OLD *.orig *,v".
+
+SSEEEE AALLSSOO
+     lndir(1), pkg_view(1)
+
+AAUUTTHHOORRSS
+     The lliinnkkffaarrmm utility was written by Alistair G. Crooks <agc@NetBSD.org>.
+
+NetBSD 5.0                     September 2, 2003                    NetBSD 5.0

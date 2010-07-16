@@ -1,0 +1,232 @@
+#! /bin/sh
+
+# $NetBSD: linkfarm.sh.in,v 1.4 2004/08/20 20:09:53 jlam Exp $
+
+#
+# Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by Alistair G. Crooks.
+# 4. The name of the author may not be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# set -x
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+
+# set up program definitions
+findprog="@FIND@"
+grepprog="@GREP@"
+lnprog="@LN@"
+mkdirprog="@MKDIR@"
+pkginfoprog="@sbindir@/pkg_info"
+rmprog="@RM@"
+rmdirprog="@RMDIR@"
+sedprog="@SED@"
+sortprog="@SORT@"
+
+usage() {
+	echo 'Usage: linkfarm [options] package'
+	exit 1
+}
+
+version() {
+	$pkginfoprog -V
+	exit 0
+}
+
+checkdir() {
+	if [ ! -d "$1" ]; then
+		echo "linkfarm: \`$1' doesn't exist"
+		exit 1
+	fi
+}
+
+ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
+linktype=-s
+
+# default action: create a linkfarm in $target from $stowdir/$1
+# i.e. linkfarm --target=${prefix}/${view} --dir=${prefix}/packages $1
+#
+doit=""
+target=${LOCALBASE:-/usr/pkg}
+stowdir=${target}/packages
+subdir=""
+verbose=0
+
+# default action is to create
+check=no
+delete=no
+create=yes
+
+# process args - can't use getopt(1) because of '--' style args
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-D)		delete=yes; create=no ;;
+	-R)		delete=yes; create=yes ;;
+	-V)		version ;;
+	-c)		check=yes; doit=":" ;;
+	-d)		stowdir=$2; shift ;;
+	-d*)		stowdir=`echo $1 | $sedprog -e 's|-d||'` ;;
+	-s)		subdir=$2; shift ;;
+	-s*)		subdir=`echo $1 | $sedprog -e 's|-s||'` ;;
+	-t)		target=$2; shift ;;
+	-t*)		target=`echo $1 | $sedprog -e 's|-t||'` ;;
+	-n)		doit=":" ;;
+	-v)		verbose=`expr $verbose + 1` ;;
+
+	--delete)	delete=yes; create=no ;;
+	--dir=*)	stowdir=`echo $1 | $sedprog -e 's|--dir=||'` ;;
+	--restow)	delete=yes; create=yes ;;
+	--subdir=*)	subdir=`echo $1 | $sedprog -e 's|--subdir=||'` ;;
+	--target=*)	target=`echo $1 | $sedprog -e 's|--target=||'` ;;
+	--version)	version ;;
+
+	--)		shift; break ;;
+	*)		break ;;
+	esac
+	shift
+done
+
+# set the package name
+package=$1
+
+# make sure stowdir has a full pathname
+case $stowdir in
+/*)	;;
+*)	stowdir=`pwd`/$stowdir ;;
+esac
+
+# Set the directory from which we symlink.
+case $subdir in
+"")	fromdir=$stowdir/$package ;;
+*)	fromdir=$stowdir/$package/$subdir ;;
+esac
+
+# Set the directory to which we symlink.
+case $target in
+/*)	todir=$target ;;
+*)	todir=`pwd`/$target ;;
+esac
+
+# if we're checking the entries, check, then exit
+case $check in
+yes)
+	checkdir $fromdir
+	(cd $fromdir
+	ex=0
+	$findprog . ! -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read f; do
+		if [ -e $todir/$f ]; then
+			ignore=no
+			for i in $ignorefiles; do
+				case $f in
+				$i)	ignore=yes; break ;;
+				esac
+			done
+			case $ignore in
+			no)	
+				echo "${f}"; ex=1 ;;
+			esac
+		fi
+	done
+	exit $ex) || exit 1
+	;;
+esac
+
+# if we need to get rid of old linkfarms, do it
+case $delete in
+yes)	
+	checkdir $fromdir
+	(cd $fromdir
+	$findprog . ! -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read f; do
+		ignore=no
+		for i in $ignorefiles; do
+			case $f in
+			$i)	ignore=yes; break ;;
+			esac
+		done
+		case $ignore in
+		no)	
+			if [ $verbose -gt 0 ]; then
+				echo "$rmprog -f $todir/$f"
+			fi
+			$doit $rmprog -f $todir/$f ;;
+		esac
+	done
+	$findprog . -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	$sortprog -r | \
+	while read d; do
+		if [ $verbose -gt 0 ]; then
+			echo "$rmdirprog $todir/$d"
+		fi
+		$doit $rmdirprog $todir/$d > /dev/null 2>&1
+	done)
+	;;
+esac
+
+# if we need to create new linkfarms, do it
+case $create in
+yes)
+	checkdir $fromdir
+	(cd $fromdir
+	$findprog . -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read d; do
+		case "$d" in
+		"")	continue ;;
+		esac
+		if [ $verbose -gt 0 ]; then
+			echo "$mkdirprog -p $todir/$d"
+		fi
+		$doit $mkdirprog -p $todir/$d > /dev/null 2>&1
+	done
+	$findprog . ! -type d -print | \
+	$sedprog -e 's|^\./||' | \
+	while read f; do
+		ignore=no
+		for i in $ignorefiles; do
+			case $f in
+			$i)	ignore=yes; break ;;
+			esac
+		done
+		case $ignore in
+		no)
+			if [ $verbose -gt 0 ]; then
+				echo "$lnprog ${linktype} $fromdir/$f $todir/$f"
+			fi
+			$doit $lnprog ${linktype} $fromdir/$f $todir/$f ;;
+		esac
+	done)
+	;;
+esac
+
+exit 0
