@@ -2,9 +2,9 @@
  *
  * The entry points are:
  *   do_noquantum:        Called on behalf of process' that run out of quantum
- *   do_start_scheduling  Request from PM to start scheduling a proc
- *   do_stop_scheduling   Request from PM to stop scheduling a proc
- *   do_nice		  Request from PM to change the nice level on a proc
+ *   do_start_scheduling  Request to start scheduling a proc
+ *   do_stop_scheduling   Request to stop scheduling a proc
+ *   do_nice		  Request to change the nice level on a proc
  *   init_scheduling      Called from main.c to set up/prepare scheduling
  */
 #include "sched.h"
@@ -58,7 +58,7 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 	register struct schedproc *rmp;
 	int rv, proc_nr_n;
 
-	/* Only accept stop messages from PM */
+	/* check who can send you requests */
 	if (!accept_message(m_ptr))
 		return EPERM;
 
@@ -86,7 +86,7 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 	assert(m_ptr->m_type == SCHEDULING_START || 
 		m_ptr->m_type == SCHEDULING_INHERIT);
 
-	/* Only accept start messages from PM */
+	/* check who can send you requests */
 	if (!accept_message(m_ptr))
 		return EPERM;
 
@@ -170,7 +170,7 @@ PUBLIC int do_nice(message *m_ptr)
 	int proc_nr_n;
 	unsigned new_q, old_q, old_max_q;
 
-	/* Only accept nice messages from PM */
+	/* check who can send you requests */
 	if (!accept_message(m_ptr))
 		return EPERM;
 
