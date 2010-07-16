@@ -54,6 +54,7 @@ PUBLIC void sched_init(void)
 PUBLIC int sched_start_user(endpoint_t ep, struct mproc *rmp)
 {
 	unsigned maxprio;
+	endpoint_t inherit_from;
 	int rv;
 
 	/* convert nice to priority */
@@ -61,10 +62,22 @@ PUBLIC int sched_start_user(endpoint_t ep, struct mproc *rmp)
 		return rv;
 	}
 	
+	/* scheduler must know the parent, which is not the case for a child
+	 * of a system process created by a regular fork; in this case the 
+	 * scheduler should inherit settings from init rather than the real 
+	 * parent
+	 */
+	if (mproc[rmp->mp_parent].mp_flags & PRIV_PROC) {
+		assert(mproc[rmp->mp_parent].mp_scheduler == NONE);
+		inherit_from = INIT_PROC_NR;
+	} else {
+		inherit_from = mproc[rmp->mp_parent].mp_endpoint;
+	}
+	
 	/* inherit quantum */
 	return sched_inherit(ep, 			/* scheduler_e */
 		rmp->mp_endpoint, 			/* schedulee_e */
-		mproc[rmp->mp_parent].mp_endpoint, 	/* parent_e */
+		inherit_from, 				/* parent_e */
 		maxprio, 				/* maxprio */
 		&rmp->mp_scheduler);			/* *newsched_e */
 }
