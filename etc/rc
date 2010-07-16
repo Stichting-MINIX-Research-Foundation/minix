@@ -6,7 +6,7 @@ exec </dev/null
 
 umask 022
 TERM="${TERM-minix}"
-PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/llvm/bin
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/llvm/bin
 RC_TZ=/etc/rc.timezone
 export TERM PATH
 
