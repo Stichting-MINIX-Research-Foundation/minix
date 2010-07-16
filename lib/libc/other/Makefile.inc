@@ -109,6 +109,7 @@ SRCS+=  \
 	termcap.c \
 	ttyname.c \
 	ttyslot.c \
+	u64util.c \
 	v8regerror.c \
 	v8regexp.c \
 	v8regsub.c \
