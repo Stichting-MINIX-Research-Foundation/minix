@@ -31,6 +31,7 @@
 
 #include <minix/com.h>
 #include <minix/endpoint.h>
+#include <minix/ipcconst.h>
 #include <stddef.h>
 #include <signal.h>
 #include <minix/syslib.h>
@@ -254,6 +255,7 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 {
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
+  char *callname;
 
   /* Check destination. RECEIVE is the only call that accepts ANY (in addition
    * to a real endpoint). The other calls (SEND, SENDREC, and NOTIFY) require an
@@ -262,13 +264,24 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
    */
   assert(call_nr != SENDA);
 
+  /* Only allow non-negative call_nr values less than 32 */
+  if (call_nr < 0 || call_nr > IPCNO_HIGHEST || call_nr >= 32
+      || !(callname = ipc_call_names[call_nr])) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
+          call_nr, proc_nr(caller_ptr), src_dst_p);
+#endif
+	return(ETRAPDENIED);		/* trap denied by mask or kernel */
+  }
+
   if (src_dst_e == ANY)
   {
 	if (call_nr != RECEIVE)
 	{
 #if 0
-		printf("sys_call: trap %d by %d with bad endpoint %d\n", 
-			call_nr, proc_nr(caller_ptr), src_dst_e);
+		printf("sys_call: %s by %d with bad endpoint %d\n", 
+			callname,
+			proc_nr(caller_ptr), src_dst_e);
 #endif
 		return EINVAL;
 	}
@@ -279,8 +292,9 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 	/* Require a valid source and/or destination process. */
 	if(!isokendpt(src_dst_e, &src_dst_p)) {
 #if 0
-		printf("sys_call: trap %d by %d with bad endpoint %d\n", 
-			call_nr, proc_nr(caller_ptr), src_dst_e);
+		printf("sys_call: %s by %d with bad endpoint %d\n", 
+			callname,
+			proc_nr(caller_ptr), src_dst_e);
 #endif
 		return EDEADSRCDST;
 	}
@@ -294,22 +308,13 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 		if (!may_send_to(caller_ptr, src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
 			printf(
-			"sys_call: ipc mask denied trap %d from %d to %d\n",
-				call_nr, caller_ptr->p_endpoint, src_dst_e);
+			"sys_call: ipc mask denied %s from %d to %d\n",
+				callname,
+				caller_ptr->p_endpoint, src_dst_e);
 #endif
 			return(ECALLDENIED);	/* call denied by ipc mask */
 		}
 	}
-  }
-
-  /* Only allow non-negative call_nr values less than 32 */
-  if (call_nr < 0 || call_nr >= 32)
-  {
-#if DEBUG_ENABLE_IPC_WARNINGS
-      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
-          call_nr, proc_nr(caller_ptr), src_dst_p);
-#endif
-	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
   /* Check if the process has privileges for the requested call. Calls to the 
@@ -318,8 +323,8 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
    */
   if (!(priv(caller_ptr)->s_trap_mask & (1 << call_nr))) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
-          call_nr, proc_nr(caller_ptr), src_dst_p);
+      printf("sys_call: %s not allowed, caller %d, src_dst %d\n", 
+          callname, proc_nr(caller_ptr), src_dst_p);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
@@ -327,7 +332,7 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
   if (call_nr != SENDREC && call_nr != RECEIVE && iskerneln(src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
-          call_nr, proc_nr(caller_ptr), src_dst_e);
+           callname, proc_nr(caller_ptr), src_dst_e);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }

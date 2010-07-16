@@ -255,6 +255,19 @@ PUBLIC int main(void)
   cycles_accounting_init();
   DEBUGEXTRA(("done\n"));
 
+#define IPCNAME(n) { \
+	assert((n) >= 0 && (n) <= IPCNO_HIGHEST); \
+	assert(!ipc_call_names[n]);	\
+	ipc_call_names[n] = #n; \
+}
+
+  IPCNAME(SEND);
+  IPCNAME(RECEIVE);
+  IPCNAME(SENDREC);
+  IPCNAME(NOTIFY);
+  IPCNAME(SENDNB);
+  IPCNAME(SENDA);
+
   assert(runqueues_ok());
 
   switch_to_user();

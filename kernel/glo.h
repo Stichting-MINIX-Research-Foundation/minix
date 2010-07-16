@@ -12,6 +12,7 @@
 #endif
 
 #include <minix/config.h>
+#include <minix/ipcconst.h>
 #include <machine/archtypes.h>
 #include "archconst.h"
 #include "config.h"
@@ -29,7 +30,7 @@ EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
-
+EXTERN char *ipc_call_names[IPCNO_HIGHEST+1]; /* human-readable call names */
 
 /* Interrupt related variables. */
 EXTERN irq_hook_t irq_hooks[NR_IRQ_HOOKS];	/* hooks for general use */

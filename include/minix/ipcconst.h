@@ -8,6 +8,7 @@
 #define NOTIFY		   4	/* asynchronous notify */
 #define SENDNB             5    /* nonblocking send */
 #define SENDA		   16	/* asynchronous send */
+#define IPCNO_HIGHEST	SENDA
 
 /* Macros for IPC status code manipulation. */
 #define IPC_STATUS_CALL_SHIFT	0
