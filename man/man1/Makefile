@@ -11,7 +11,7 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	install.1 isodir.1 isoinfo.1 isoread.1 join.1 kill.1 \
 	last.1 leave.1 loadfont.1 loadkeys.1 logger.1 login.1 \
 	look.1 lp.1 ls.1 lspci.1 M.1 mail.1  \
-	mdb.1 mesg.1 mixer.1 mkdep.1 mkdir.1 mkfifo.1 mkfs.1 \
+	mesg.1 mixer.1 mkdep.1 mkdir.1 mkfifo.1 mkfs.1 \
 	mkproto.1 modem.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
 	ossinfo.1 ossmix.1 ossplay.1 ossrecord.1 osstest.1 passwd.1 \
 	paste.1 ping.1 playwave.1 postmort.1 pr.1 prep.1 \
@@ -23,7 +23,7 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	term.1 termcap.1 tget.1 time.1 top.1 tr.1 true.1 \
 	truncate.1 tsort.1 tty.1 umount.1 uname.1 unexpand.1 uniq.1 \
 	urlget.1 uud.1 uue.1 vol.1 wc.1 whereis.1 which.1 \
-	who.1 whoami.1 write.1 xargs.1 yap.1 yes.1 linkfarm.1 pkg_view.1
+	who.1 write.1 xargs.1 yap.1 yes.1 linkfarm.1 pkg_view.1
 
 
 .include <bsd.man.mk>
