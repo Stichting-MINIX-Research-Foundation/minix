@@ -15,6 +15,6 @@ mbstowcs(register wchar_t *pwcs, register const char *s, size_t n)
 		if (!(*pwcs++ = *s++))
 			return n - i - 1;
 	}
-	return n - i;
+	return n;
 }
 
