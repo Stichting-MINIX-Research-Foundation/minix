@@ -1,0 +1,276 @@
+.\"	$NetBSD: pkg_view.1,v 1.13 2010/01/22 13:30:42 joerg Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 8, 2003
+.Dt PKG_VIEW 1
+.Os
+.Sh NAME
+.Nm pkg_view
+.Nd add and delete instances of depoted packages in views
+.Sh SYNOPSIS
+.Nm
+.Op Fl nVv
+.Op Fl d Ar stowdir
+.Op Fl i Ar ignore
+.Op Fl k Ar pkg_dbdir
+.Op Fl W Ar viewbase
+.Op Fl w Ar view
+.Ar command
+.Ar package ...
+.Sh DESCRIPTION
+The
+.Nm
+command is used to add and delete instances of depoted packages in
+.Ar stowdir
+in a
+.Ar view
+in the
+.Ar viewbase
+directory.
+.Sh WARNING
+.Bf -emphasis
+Since the
+.Nm
+command may execute scripts or programs provided by a package file,
+your system may be susceptible to
+.Dq Trojan horses
+or other subtle
+attacks from miscreants who create dangerous package files.
+.Pp
+You are advised to verify the competence and identity of those who
+provide installable package files.
+For extra protection, examine all the package control files in the
+package database directory
+.Pa ( /usr/pkg/packages/\*[Lt]pkg-name\*[Gt]/ ) .
+Pay particular attention to any
+.Pa +INSTALL
+or
+.Pa +DEINSTALL
+files, and inspect the
+.Pa +CONTENTS
+file for
+.Cm @cwd ,
+.Cm @mode
+(check for setuid),
+.Cm @dirrm ,
+.Cm @exec ,
+and
+.Cm @unexec
+directives, and/or use the
+.Xr pkg_info 1
+command to examine the installed package control files.
+.Ef
+.Sh OPTIONS
+The following command-line options are supported:
+.Bl -tag -width indent
+.It Fl d Ar stowdir
+Set
+.Ar stowdir
+as the directory in which the depoted packages can be found.
+If this option isn't specified, then the
+.Ar stowdir
+is taken from the value of the environment variable
+.Ev DEPOTBASE
+if it's set, otherwise the default
+.Ar stowdir
+is the path to the
+.Pa packages
+directory under
+.Ar viewbase .
+.It Fl i Ar ignore
+Add
+.Ar ignore
+to the list of files in
+.Ar package
+that should ignored when adding or removing the package instance from
+.Ar view .
+.It Fl k Ar pkg_dbdir
+Override the value of the
+.Dv PKG_DBDIR
+configuration option with the value
+.Ar pkg_dbdir .
+This is used as as the package database directory for the
+default (empty) view.
+.It Fl n
+Don't actually execute the commands for manipulating the package instances.
+.It Fl V
+Print the version number and exit.
+.It Fl v
+Turn on verbose output.
+Specifying
+.Fl v
+multiple times increases the level of verbosity.
+.It Fl W Ar viewbase
+Set
+.Ar viewbase
+as the directory in which all the views are managed.
+The default
+.Ar viewbase
+directory is
+.Pa /usr/pkg
+but may be overridden by the
+.Ev LOCALBASE
+environment variable.
+.It Fl w Ar view
+Set
+.Ar view
+as the directory in
+.Ar viewbase
+in which the package instances should be added or deleted.
+The default
+.Ar view
+is the empty view but may be overridden by the
+.Ev PKG_VIEW
+environment variable.
+.El
+.Pp
+The following commands are supported:
+.Bl -tag -width indent
+.It Cm add
+Add the listed package instances into
+.Ar view .
+.It Cm check
+Check whether the listed package instances are present in
+.Ar view .
+If they are not present, then return 0, otherwise return 1.
+.It Cm delete
+Delete the listed package instances from
+.Ar view .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width indent
+.It Ev DEPOTBASE
+This is the location of the
+.Ar stowdir
+directory inside which all depoted packages are kept.
+The default
+.Ar stowdir
+is the
+.Pa packages
+directory under
+.Ar viewbase .
+.It Ev LOCALBASE
+This is the location of the
+.Ar viewbase
+directory in which all the views are managed.
+The default
+.Ar viewbase
+directory is
+.Pa /usr/pkg .
+.It Ev PKG_DBDIR
+If the
+.Fl k
+flag isn't given, then the value of the environment variable
+.Ev PKG_DBDIR
+is the package database directory for the default view,
+otherwise it defaults to
+.Pa /var/db/pkg .
+.It Ev PLIST_IGNORE_FILES
+This can be used to specify files in
+.Ar package
+that should ignored when adding or removing the package instance from
+.Ar view .
+.Ev PLIST_IGNORE_FILES
+is a space-separated list of shell glob patterns that match files relative
+to the
+.Ar package
+depot directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
+This is overridden by any
+.Ev _PLIST_IGNORE_FILES
+setting in a package's
+.Ar build-info-file
+(see
+.Xr pkg_create 1 )
+if it exists.
+.It Ev PKG_VIEW
+The default view can be specified in the
+.Ev PKG_VIEW
+environment variable.
+.El
+.Sh FILES
+.Bl -tag -width indent
+.It Pa \*[Lt]pkg-dbdir\*[Gt]/\*[Lt]package\*[Gt]/+INSTALL
+If the package contains an
+.Ar install
+script (see
+.Xr pkg_create 1 ) ,
+then after the package instance is added into a view, the script is
+executed with the following arguments:
+.Bl -tag -width package
+.It Ar package
+The name of the package instance being added.
+.It Cm VIEW-INSTALL
+Keyword denoting that the script is to perform any actions needed after
+the package instance is added to a view.
+.El
+.Pp
+If the
+.Ar install
+script exits with a non-zero status code, the installation is terminated.
+.It Pa \*[Lt]pkg-dbdir\*[Gt]/\*[Lt]package\*[Gt]/+DEINSTALL
+If the package contains an
+.Ar deinstall
+script (see
+.Xr pkg_create 1 ) ,
+then before the package instance is deleted from a view, the script is
+executed with the following arguments:
+.Bl -tag -width package
+.It Ar package
+The name of the package instance being deleted.
+.It Cm VIEW-DEINSTALL
+Keyword denoting that the script is to perform any actions needed before
+the package instance is deleted from a view.
+.El
+.Pp
+If the
+.Ar deinstall
+script exits with a non-zero status code, the de-installation is terminated.
+.El
+.Pp
+The
+.Ar install
+and
+.Ar deinstall
+scripts are called with the environment variable
+.Ev PKG_PREFIX
+set to the path to the
+.Ar view
+directory.
+.Sh SEE ALSO
+.Xr linkfarm 1 ,
+.Xr pkg_delete 1
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Alistair G. Crooks Aq agc@NetBSD.org .
