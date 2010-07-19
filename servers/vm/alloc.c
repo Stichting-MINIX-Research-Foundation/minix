@@ -421,6 +421,17 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 	int finalnodes, finalpages;
 	int largest;
 
+#if NONCONTIGUOUS
+	/* If NONCONTIGUOUS is on, allocate physical pages single
+	 * pages at a time, accomplished by returning single pages
+	 * if the caller can handle that (indicated by PAF_FIRSTBLOCK).
+	 */
+	if(memflags & PAF_FIRSTBLOCK) {
+		assert(!(memflags & PAF_CONTIG));
+		pages = 1;
+	}
+#endif
+
 	memstats(&firstnodes, &firstpages, &largest);
 	sanitycheck();
 	wantnodes = firstnodes;
@@ -434,17 +445,6 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags, phys_bytes *len)
 		addr_start_iter_greatest(&addravl, &iter);
 		incr = 0;
 	}
-
-#if NONCONTIGUOUS
-	/* If NONCONTIGUOUS is on, allocate physical pages single
-	 * pages at a time, accomplished by returning single pages
-	 * if the caller can handle that (indicated by PAF_FIRSTBLOCK).
-	 */
-	if(memflags & PAF_FIRSTBLOCK) {
-		assert(!(memflags & PAF_CONTIG));
-		pages = 1;
-	}
-#endif
 
 	while((pr = addr_get_iter(&iter))) {
 		SLABSANE(pr);
@@ -921,8 +921,10 @@ struct memlist *alloc_mem_in_list(phys_bytes bytes, u32_t flags)
 			ml->phys = CLICK2ABS(mem);
 			ml->length = CLICK2ABS(gotpages);
 			ml->next = NULL;);
-		if(tail)
-			tail->next = ml;
+		if(tail) {
+			USE(tail,
+				tail->next = ml;);
+		}
 		tail = ml;
 		if(!head)
 			head = ml;
