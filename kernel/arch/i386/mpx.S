@@ -131,7 +131,7 @@ flags:
  *	uses generic INT, memory vector, 
  *	new boot code return 
  */
-.short	0x01FD	
+.short	0x03FD	
 	nop	/* extra byte to sync up disassembler */
 over_flags:
 
