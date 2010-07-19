@@ -2,7 +2,7 @@
 
 srcdir=		.
 
-pkgdbdir=	/var/db/pkg
+pkgdbdir=	/usr/db/pkg
 mandir=		${datarootdir}/man
 datarootdir=	${prefix}/share
 sysconfdir=	/etc

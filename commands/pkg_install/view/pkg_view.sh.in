@@ -83,7 +83,7 @@ stowdir=""
 viewbase=${LOCALBASE:-/usr/pkg}
 view=${PKG_VIEW:-""}
 dflt_ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
-dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
+dflt_pkg_dbdir=${PKG_DBDIR:-/usr/db/pkg}
 ignorefiles=""
 verbose=0
 
