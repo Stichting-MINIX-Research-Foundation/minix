@@ -581,6 +581,10 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 			maskedentry = pt->pt_pt[pde][pte];
 			maskedentry &= ~(I386_VM_ACC|I386_VM_DIRTY);
 			/* Verify pagetable entry. */
+			if(entry & I386_VM_WRITE) {
+				/* If we expect a writable page, allow a readonly page. */
+				maskedentry |= I386_VM_WRITE;
+			}
 			if(maskedentry != entry) {
 				printf("pt_writemap: mismatch: ");
 				if((entry & I386_VM_ADDR_MASK) !=
