@@ -58,9 +58,7 @@
 static off_t	i_size;		/* size of the input file */
 static char	*i_womp;	/* plan a buffer for entire file */
 static char	**i_ptr;	/* pointers to lines in i_womp */
-#if 0
 static char	empty_line[] = { '\0' };
-#endif
 
 static int	tifd = -1;	/* plan b virtual string array */
 static char	*tibuf[2];	/* plan b buffers */
@@ -69,14 +67,30 @@ static LINENUM	lines_per_buf;	/* how many lines per buffer */
 static int	tireclen;	/* length of records in tmp file */
 
 static bool	rev_in_string(const char *);
-#if 0
 static bool	reallocate_lines(size_t *);
-#endif
 
 /* returns false if insufficient memory */
 static bool	plan_a(const char *);
 
 static void	plan_b(const char *);
+
+static int readfile(int fd, char *buf, size_t s)
+{
+	int ntoread, nread;
+
+	ntoread = s;
+	nread = 0;
+
+	while(ntoread > 0) {
+		if((nread = read(fd, buf, ntoread)) < 0) {
+			return nread;
+		}
+		buf += nread;
+		ntoread -= nread;
+	}
+
+	return 0;
+}
 
 /* New patch--prepare to edit another file. */
 
@@ -116,7 +130,6 @@ scan_input(const char *filename)
 	}
 }
 
-#if 0
 static bool
 reallocate_lines(size_t *lines_allocated)
 {
@@ -137,16 +150,12 @@ reallocate_lines(size_t *lines_allocated)
 	i_ptr = p;
 	return true;
 }
-#endif
 
 /* Try keeping everything in memory. */
 
 static bool
 plan_a(const char *filename)
 {
-#ifdef __minix
-	return false;
-#else
 	int		ifd, statfailed;
 	char		*p, *s, lbuf[MAXLINELEN];
 	struct stat	filestat;
@@ -262,13 +271,16 @@ plan_a(const char *filename)
 		out_of_mem = false;
 		return false;	/* force plan b because plan a bombed */
 	}
+#ifndef __minix
 	if (i_size > SIZE_MAX) {
 		say("block too large to mmap\n");
 		return false;
 	}
+#endif
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
 
+#ifndef __minix
 	i_womp = mmap(NULL, i_size, PROT_READ, MAP_PRIVATE, ifd, 0);
 	if (i_womp == MAP_FAILED) {
 		perror("mmap failed");
@@ -276,10 +288,27 @@ plan_a(const char *filename)
 		close(ifd);
 		return false;
 	}
+#else
+	i_womp = malloc(i_size);
+	if(i_size && i_womp == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
+		i_womp = NULL;
+		close(ifd);
+		return false;
+	}
+	if(readfile(ifd, i_womp, i_size) < 0) {
+		perror("Readfile failed.");
+		i_womp = NULL;
+		close(ifd);
+		return false;
+	}
+#endif
 
 	close(ifd);
+#ifndef __minix
 	if (i_size)
 		madvise(i_womp, i_size, MADV_SEQUENTIAL);
+#endif
 
 	/* estimate the number of lines */
 	lines_allocated = i_size / 25;
@@ -312,7 +341,11 @@ plan_a(const char *filename)
 		if (p == NULL) {
 			free(i_ptr);
 			i_ptr = NULL;
+#ifndef __minix
 			munmap(i_womp, i_size);
+#else
+			free(i_womp);
+#endif
 			i_womp = NULL;
 			return false;
 		}
@@ -352,7 +385,6 @@ plan_a(const char *filename)
 			    revision);
 	}
 	return true;		/* plan a will work */
-#endif
 }
 
 /* Keep (virtually) nothing in memory. */
