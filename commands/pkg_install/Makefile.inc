@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 
-BINDIR=	/usr/bin
+BINDIR=	/usr/sbin
 # These have to be passed as strings to the c files.
 PKG_LOG_DIR=		\"/usr/db/pkg\"
 PKG_SYCONFDIR=		\"/etc\"
