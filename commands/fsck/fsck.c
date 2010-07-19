@@ -143,7 +143,7 @@ int dev;			/* file descriptor of the device */
 
 /* Counters for each type of inode/zone. */
 int nfreeinode, nregular, ndirectory, nblkspec, ncharspec, nbadinode;
-int npipe, nsyml, ztype[NLEVEL];
+int nsock, npipe, nsyml, ztype[NLEVEL];
 long nfreezone;
 
 int repair, automatic, listing, listsuper;	/* flags */
@@ -221,7 +221,8 @@ void initvars()
 {
   register level;
 
-  nregular = ndirectory = nblkspec = ncharspec = nbadinode = npipe = nsyml = 0;
+  nregular = ndirectory = nblkspec = ncharspec =
+  nbadinode = nsock = npipe = nsyml = 0;
   for (level = 0; level < NLEVEL; level++) ztype[level] = 0;
   changed = 0;
   thisblk = NO_BLOCK;
@@ -915,6 +916,7 @@ void list(ino_t ino, d_inode *ip)
       case I_CHAR_SPECIAL:	putchar('c');	break;
       case I_BLOCK_SPECIAL:	putchar('b');	break;
       case I_NAMED_PIPE:	putchar('p');	break;
+      case I_UNIX_SOCKET:	putchar('s');	break;
 #ifdef I_SYMBOLIC_LINK
       case I_SYMBOLIC_LINK:	putchar('l');	break;
 #endif
@@ -1372,6 +1374,9 @@ int chkmode(ino_t ino, d_inode *ip)
       case I_NAMED_PIPE:
 	npipe++;
 	return chkfile(ino, ip);
+      case I_UNIX_SOCKET:
+	nsock++;
+	return chkfile(ino, ip);
 #ifdef I_SYMBOLIC_LINK
       case I_SYMBOLIC_LINK:
 	nsyml++;
@@ -1476,6 +1481,7 @@ void printtotal()
   if (nbadinode != 0) pr("%6u    Bad inode%s\n", nbadinode, "", "s");
   pr("%8u    Free inode%s\n", nfreeinode, "", "s");
   pr("%8u    Named pipe%s\n", npipe, "", "s");
+  pr("%8u    Unix socket%s\n", nsock, "", "s");
   pr("%8u    Symbolic link%s\n", nsyml, "", "s");
 /* Don't print some fields.
   printf("\n");

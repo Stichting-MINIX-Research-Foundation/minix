@@ -193,6 +193,9 @@ do
     17,0)
 	des="hello" dev=hello
 	;;
+    18,0)
+	des="UNIX domain socket" dev=uds
+	;;
     BAD,BAD)
 	des= dev=
 	;;
