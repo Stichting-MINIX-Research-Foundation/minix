@@ -69,6 +69,9 @@ _PROTOTYPE( size_t strnlen, (const char *_s, size_t _n)			);
 _PROTOTYPE( size_t strlcat, (char *_dst, const char *_src, size_t _siz) );
 _PROTOTYPE( size_t strlcpy, (char *_dst, const char *_src, size_t _siz) );
 _PROTOTYPE( char * strsep, (char **stringp, const char *delim) );
+_PROTOTYPE( char *strcasestr, (const char *, const char *));
+_PROTOTYPE( char *strnstr, (const char *, const char *, size_t));
+
 #endif
 
 #endif /* _STRING_H */
