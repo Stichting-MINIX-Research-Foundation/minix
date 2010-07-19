@@ -29,6 +29,7 @@
 #include "glo.h"
 #include "util.h"
 #include "region.h"
+#include "sanitycheck.h"
 
 #include <machine/archtypes.h>
 #include "kernel/const.h"
@@ -279,10 +280,10 @@ PUBLIC int swap_proc(endpoint_t src_e, endpoint_t dst_e)
 
 	/* Preserve vir_region's parents. */
 	for(vr = src_vmp->vm_regions; vr; vr = vr->next) {
-		vr->parent = src_vmp;
+		USE(vr, vr->parent = src_vmp;);
 	}
 	for(vr = dst_vmp->vm_regions; vr; vr = vr->next) {
-		vr->parent = dst_vmp;
+		USE(vr, vr->parent = dst_vmp;);
 	}
 
 	/* Adjust page tables. */
