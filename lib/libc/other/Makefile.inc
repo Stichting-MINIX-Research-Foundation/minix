@@ -94,10 +94,12 @@ SRCS+=  \
 	settimeofday.c \
 	shquote.c \
 	stderr.c \
+	strcasestr.c \
 	strdup.c \
 	strlcat.c \
 	strlcpy.c \
 	strmode.c \
+	strnstr.c \
 	strtok_r.c \
 	strtoll.c \
 	strsep.c \
