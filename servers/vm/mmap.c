@@ -61,6 +61,11 @@ PUBLIC int do_mmap(message *m)
 			return EINVAL;
 		}
 
+		/* Contiguous phys memory has to be preallocated. */
+		if((m->VMM_FLAGS & (MAP_CONTIG|MAP_PREALLOC)) == MAP_CONTIG) {
+			return EINVAL;
+		}
+
 		if(m->VMM_FLAGS & MAP_PREALLOC) mfflags |= MF_PREALLOC;
 		if(m->VMM_FLAGS & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
 		if(m->VMM_FLAGS & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;

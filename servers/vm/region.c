@@ -969,6 +969,7 @@ physr_iter *iter;
 	u32_t allocflags;
 	phys_bytes physaddr;
 	struct phys_region *newpr;
+	int region_has_single_block;
 	int written = 0; 
 #if SANITYCHECKS
 	written = ph->written;
@@ -1014,7 +1015,8 @@ physr_iter *iter;
 
 	/* Put new free memory in. */
 	allocflags = vrallocflags(region->flags);
-	assert(!(allocflags & PAF_CONTIG));
+	region_has_single_block = (offset == 0 && length == region->length);
+	assert(region_has_single_block || !(allocflags & PAF_CONTIG));
 	assert(!(allocflags & PAF_CLEAR));
 
 	if(map_new_physblock(vmp, region, offset, length,
