@@ -332,6 +332,7 @@ show_summary(struct pkg_meta *meta, package_t *plist, const char *binpkgfile)
 		"REQUIRES",
 		"PKG_OPTIONS",
 		"OPSYS",
+		"OS_RELEASE",
 		"OS_VERSION",
 		"MACHINE_ARCH",
 		"LICENSE",

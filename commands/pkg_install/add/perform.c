@@ -503,6 +503,8 @@ read_buildinfo(struct pkg_task *pkg)
 
 		if (strncmp(data, "OPSYS=", 6) == 0)
 			pkg->buildinfo[BI_OPSYS] = dup_value(data, eol);
+		else if (strncmp(data, "OS_RELEASE=", 11) == 0)
+			pkg->buildinfo[BI_OS_RELEASE] = dup_value(data, eol);
 		else if (strncmp(data, "OS_VERSION=", 11) == 0)
 			pkg->buildinfo[BI_OS_VERSION] = dup_value(data, eol);
 		else if (strncmp(data, "MACHINE_ARCH=", 13) == 0)
@@ -856,7 +858,7 @@ check_platform(struct pkg_task *pkg)
 {
 	struct utsname host_uname;
 	const char *effective_arch;
-	int fatal;
+	int fatal = 0;
 
 	if (uname(&host_uname) < 0) {
 		if (Force) {
@@ -879,20 +881,25 @@ check_platform(struct pkg_task *pkg)
 	if (strcmp(OPSYS_NAME, pkg->buildinfo[BI_OPSYS]) ||
 	    strcmp(effective_arch, pkg->buildinfo[BI_MACHINE_ARCH]) != 0)
 		fatal = 1;
-	else
-		fatal = 0;
 
-	if (fatal ||
-	    strcmp(host_uname.release, pkg->buildinfo[BI_OS_VERSION]) != 0) {
+	if (strcmp(host_uname.release, pkg->buildinfo[BI_OS_RELEASE]) != 0)
+		fatal = 1;
+
+	if (strcmp(host_uname.version, pkg->buildinfo[BI_OS_VERSION]) != 0)
+		fatal = 1;
+
+	if (fatal) {
 		warnx("Warning: package `%s' was built for a platform:",
 		    pkg->pkgname);
-		warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
+		warnx("%s/%s %s %s (pkg) vs. %s/%s %s %s (this host)",
 		    pkg->buildinfo[BI_OPSYS],
 		    pkg->buildinfo[BI_MACHINE_ARCH],
+		    pkg->buildinfo[BI_OS_RELEASE],
 		    pkg->buildinfo[BI_OS_VERSION],
 		    OPSYS_NAME,
 		    effective_arch,
-		    host_uname.release);
+		    host_uname.release,
+			host_uname.version);
 		if (!Force && fatal)
 			return -1;
 	}

@@ -187,7 +187,8 @@ typedef enum bi_ent_t {
 	BI_USE_ABI_DEPENDS,	/*  4 */
 	BI_LICENSE,		/*  5 */
 	BI_PKGTOOLS_VERSION,	/*  6 */
-	BI_ENUM_COUNT		/*  7 */
+	BI_OS_RELEASE,		/* 7 */
+	BI_ENUM_COUNT		/*  8 */
 }	bi_ent_t;
 
 /* Types */
