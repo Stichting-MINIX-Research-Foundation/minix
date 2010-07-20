@@ -237,6 +237,12 @@ check_misc_flags:
 		enable_fpu_exception();
 	else
 		disable_fpu_exception();
+
+	/* If MF_CONTEXT_SET is set, don't clobber process state within
+	 * the kernel. The next kernel entry is OK again though.
+	 */
+	proc_ptr->p_misc_flags &= ~MF_CONTEXT_SET;
+
 	/*
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return
