@@ -44,7 +44,8 @@ _PROTOTYPE( void reserve_proc_mem, (struct memory *mem_chunks,
 _PROTOTYPE( int vm_isokendpt, (endpoint_t ep, int *proc)	     );
 _PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)             );
 _PROTOTYPE( int do_info, (message *)					);
-_PROTOTYPE( int swap_proc, (endpoint_t src_e, endpoint_t dst_e)		);
+_PROTOTYPE( int swap_proc_slot, (struct vmproc *src_vmp, struct vmproc *dst_vmp));
+_PROTOTYPE( int swap_proc_dyn_data, (struct vmproc *src_vmp, struct vmproc *dst_vmp));
 
 /* exit.c */
 _PROTOTYPE( void clear_proc, (struct vmproc *vmp)			);
@@ -101,6 +102,9 @@ _PROTOTYPE( void pt_init_mem, (void)					);
 _PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
+_PROTOTYPE( int pt_map_in_range, (struct vmproc *src_vmp, struct vmproc *dst_vmp,
+	vir_bytes start, vir_bytes end) );
+_PROTOTYPE( int pt_ptmap, (struct vmproc *src_vmp, struct vmproc *dst_vmp) );
 _PROTOTYPE( int pt_ptalloc_in_range, (pt_t *pt, vir_bytes start, vir_bytes end,
         u32_t flags, int verify));
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 

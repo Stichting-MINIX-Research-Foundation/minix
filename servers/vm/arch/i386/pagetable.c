@@ -527,6 +527,119 @@ PRIVATE char *ptestr(u32_t pte)
 }
 
 /*===========================================================================*
+ *			     pt_map_in_range		     		     *
+ *===========================================================================*/
+PUBLIC int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
+	vir_bytes start, vir_bytes end)
+{
+/* Transfer all the mappings from the pt of the source process to the pt of
+ * the destination process in the range specified.
+ */
+	int pde, pte;
+	int r;
+	vir_bytes viraddr, mapaddr;
+	pt_t *pt, *dst_pt;
+
+	pt = &src_vmp->vm_pt;
+	dst_pt = &dst_vmp->vm_pt;
+
+	end = end ? end : VM_DATATOP;
+	assert(start % I386_PAGE_SIZE == 0);
+	assert(end % I386_PAGE_SIZE == 0);
+	assert(I386_VM_PDE(start) >= proc_pde && start <= end);
+	assert(I386_VM_PDE(end) < I386_VM_DIR_ENTRIES);
+
+#if LU_DEBUG
+	printf("VM: pt_map_in_range: src = %d, dst = %d\n",
+		src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
+	printf("VM: pt_map_in_range: transferring from 0x%08x (pde %d pte %d) to 0x%08x (pde %d pte %d)\n",
+		start, I386_VM_PDE(start), I386_VM_PTE(start),
+		end, I386_VM_PDE(end), I386_VM_PTE(end));
+#endif
+
+	/* Scan all page-table entries in the range. */
+	for(viraddr = start; viraddr <= end; viraddr += I386_PAGE_SIZE) {
+		pde = I386_VM_PDE(viraddr);
+		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+			if(viraddr == VM_DATATOP) break;
+			continue;
+		}
+		pte = I386_VM_PTE(viraddr);
+		if(!(pt->pt_pt[pde][pte] & I386_VM_PRESENT)) {
+			if(viraddr == VM_DATATOP) break;
+			continue;
+		}
+
+		/* Transfer the mapping. */
+		dst_pt->pt_pt[pde][pte] = pt->pt_pt[pde][pte];
+
+                if(viraddr == VM_DATATOP) break;
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				pt_ptmap		     		     *
+ *===========================================================================*/
+PUBLIC int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
+{
+/* Transfer mappings to page dir and page tables from source process and
+ * destination process. Make sure all the mappings are above the stack, not
+ * to corrupt valid mappings in the data segment of the destination process.
+ */
+	int pde, r;
+	phys_bytes physaddr;
+	vir_bytes viraddr;
+	pt_t *pt;
+
+	assert(src_vmp->vm_stacktop == dst_vmp->vm_stacktop);
+	pt = &src_vmp->vm_pt;
+
+#if LU_DEBUG
+	printf("VM: pt_ptmap: src = %d, dst = %d\n",
+		src_vmp->vm_endpoint, dst_vmp->vm_endpoint);
+#endif
+
+	/* Transfer mapping to the page directory. */
+	assert((vir_bytes) pt->pt_dir >= src_vmp->vm_stacktop);
+	viraddr = arch_vir2map(src_vmp, (vir_bytes) pt->pt_dir);
+	physaddr = pt->pt_dir_phys & I386_VM_ADDR_MASK;
+	if((r=pt_writemap(&dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
+		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
+		WMF_OVERWRITE)) != OK) {
+		return r;
+	}
+#if LU_DEBUG
+	printf("VM: pt_ptmap: transferred mapping to page dir: 0x%08x (0x%08x)\n",
+		viraddr, physaddr);
+#endif
+
+	/* Scan all non-reserved page-directory entries. */
+	for(pde=proc_pde; pde < I386_VM_DIR_ENTRIES; pde++) {
+		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+			continue;
+		}
+
+		/* Transfer mapping to the page table. */
+		assert((vir_bytes) pt->pt_pt[pde] >= src_vmp->vm_stacktop);
+		viraddr = arch_vir2map(src_vmp, (vir_bytes) pt->pt_pt[pde]);
+		physaddr = pt->pt_dir[pde] & I386_VM_ADDR_MASK;
+		if((r=pt_writemap(&dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
+			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
+			WMF_OVERWRITE)) != OK) {
+			return r;
+		}
+	}
+#if LU_DEBUG
+	printf("VM: pt_ptmap: transferred mappings to page tables, pde range %d - %d\n",
+		proc_pde, I386_VM_DIR_ENTRIES - 1);
+#endif
+
+	return OK;
+}
+
+/*===========================================================================*
  *				pt_writemap		     		     *
  *===========================================================================*/
 PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
@@ -920,7 +1033,12 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 
         /* Back to reality - this is where the stack actually is. */
         vmprocess->vm_arch.vm_seg[S].mem_len -= extra_clicks;
-       
+
+        /* Pretend VM stack top is the same as any regular process, not to
+         * have discrepancies with new VM instances later on.
+         */
+        vmprocess->vm_stacktop = VM_STACKTOP;
+
         /* All OK. */
         return;
 }

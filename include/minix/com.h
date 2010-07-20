@@ -1058,7 +1058,8 @@
 #define VM_RS_MEMCTL		(VM_RQ_BASE+42)
 #	define VM_RS_CTL_ENDPT		m1_i1
 #	define VM_RS_CTL_REQ		m1_i2
-#		define VM_RS_MEM_PIN	0	/* pin memory */
+#		define VM_RS_MEM_PIN	    0	/* pin memory */
+#		define VM_RS_MEM_MAKE_VM    1	/* make VM instance */
 
 /* Total. */
 #define NR_VM_CALLS				43

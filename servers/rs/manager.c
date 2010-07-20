@@ -552,6 +552,19 @@ struct rproc *rp;
    */
   setuid(0);
 
+  /* If this is a VM instance, let VM know now. */
+  if(rp->r_priv.s_flags & VM_SYS_PROC) {
+      if(rs_verbose)
+          printf("RS: informing VM of instance %s\n", srv_to_string(rp));
+
+      s = vm_memctl(rpub->endpoint, VM_RS_MEM_MAKE_VM);
+      if(s != OK) {
+          printf("vm_memctl failed: %d\n", s);
+          cleanup_service(rp);
+          return s;
+      }
+  }
+
   /* Tell VM about allowed calls. */
   if ((s = vm_set_priv(rpub->endpoint, &rpub->vm_call_mask[0])) != OK) {
       printf("RS: vm_set_priv failed: %d\n", s);
