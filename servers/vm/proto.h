@@ -97,6 +97,7 @@ _PROTOTYPE( int handle_memory, (struct vmproc *vmp, vir_bytes mem,
 
 /* $(ARCH)/pagetable.c */
 _PROTOTYPE( void pt_init, (phys_bytes limit)				);
+_PROTOTYPE( void pt_init_mem, (void)					);
 _PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);

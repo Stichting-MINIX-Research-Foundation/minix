@@ -88,7 +88,9 @@ int kernmappings = 0;
 /* Page table that contains pointers to all page directories. */
 u32_t page_directories_phys, *page_directories = NULL;
 
-PRIVATE char static_sparepages[I386_PAGE_SIZE*SPAREPAGES + I386_PAGE_SIZE];
+#define STATIC_SPAREPAGES 10
+
+PRIVATE char static_sparepages[I386_PAGE_SIZE*STATIC_SPAREPAGES + I386_PAGE_SIZE];
 
 #if SANITYCHECKS
 /*===========================================================================*
@@ -750,12 +752,17 @@ PUBLIC void pt_init(phys_bytes usedlimit)
                 I386_PAGE_SIZE*SPAREPAGES, &sparepages_ph)) != OK)
                 panic("pt_init: sys_umap failed: %d", r);
 
+        missing_spares = 0;
+        assert(STATIC_SPAREPAGES < SPAREPAGES);
         for(s = 0; s < SPAREPAGES; s++) {
+        	if(s >= STATIC_SPAREPAGES) {
+        		sparepages[s].page = NULL;
+        		missing_spares++;
+        		continue;
+        	}
         	sparepages[s].page = (void *) (sparepages_mem + s*I386_PAGE_SIZE);
         	sparepages[s].phys = sparepages_ph + s*I386_PAGE_SIZE;
         }
-
-	missing_spares = 0;
 
 	/* global bit and 4MB pages available? */
 	global_bit_ok = _cpufeature(_CPUF_I386_PGE);
@@ -918,6 +925,84 @@ PUBLIC void pt_init(phys_bytes usedlimit)
         return;
 }
 
+/*===========================================================================*
+ *                             pt_init_mem                                   *
+ *===========================================================================*/
+PUBLIC void pt_init_mem()
+{
+/* Architecture-specific memory initialization. Make sure all the pages
+ * shared with the kernel and VM's page tables are mapped above the stack,
+ * so that we can easily transfer existing mappings for new VM instances.
+ */
+        u32_t new_page_directories_phys, *new_page_directories;
+        u32_t new_pt_dir_phys, *new_pt_dir;
+        u32_t new_pt_phys, *new_pt; 
+        pt_t *vmpt;
+        int i;
+
+        vmpt = &vmprocess->vm_pt;
+
+        /* We should be running this when VM has been assigned a page
+         * table and memory initialization has already been performed.
+         */
+        assert(vmprocess->vm_flags & VMF_HASPT);
+        assert(meminit_done);
+
+        /* Throw away static spare pages. */
+	vm_checkspares();
+	for(i = 0; i < SPAREPAGES; i++) {
+		if(sparepages[i].page && (vir_bytes) sparepages[i].page
+			< vmprocess->vm_stacktop) {
+			sparepages[i].page = NULL;
+			missing_spares++;
+		}
+	}
+	vm_checkspares();
+
+        /* Rellocate page for page directories pointers. */
+	if(!(new_page_directories = vm_allocpage(&new_page_directories_phys,
+		VMP_PAGETABLE)))
+                panic("unable to reallocated page for page dir ptrs");
+	assert((vir_bytes) new_page_directories >= vmprocess->vm_stacktop);
+	memcpy(new_page_directories, page_directories, I386_PAGE_SIZE);
+	page_directories = new_page_directories;
+	pagedir_pde_val = (new_page_directories_phys & I386_VM_ADDR_MASK) |
+			(pagedir_pde_val & ~I386_VM_ADDR_MASK);
+
+	/* Remap in kernel. */
+	pt_mapkernel(vmpt);
+
+	/* Reallocate VM's page directory. */
+	if((vir_bytes) vmpt->pt_dir < vmprocess->vm_stacktop) {
+		if(!(new_pt_dir= vm_allocpage(&new_pt_dir_phys, VMP_PAGEDIR))) {
+			panic("unable to reallocate VM's page directory");
+		}
+		assert((vir_bytes) new_pt_dir >= vmprocess->vm_stacktop);
+		memcpy(new_pt_dir, vmpt->pt_dir, I386_PAGE_SIZE);
+		vmpt->pt_dir = new_pt_dir;
+		vmpt->pt_dir_phys = new_pt_dir_phys;
+		pt_bind(vmpt, vmprocess);
+	}
+
+	/* Reallocate VM's page tables. */
+	for(i = proc_pde; i < I386_VM_DIR_ENTRIES; i++) {
+		if(!(vmpt->pt_dir[i] & I386_VM_PRESENT)) {
+			continue;
+		}
+		assert(vmpt->pt_pt[i]);
+		if((vir_bytes) vmpt->pt_pt[i] >= vmprocess->vm_stacktop) {
+			continue;
+		}
+		vm_checkspares();
+		if(!(new_pt = vm_allocpage(&new_pt_phys, VMP_PAGETABLE)))
+			panic("unable to reallocate VM's page table");
+		assert((vir_bytes) new_pt >= vmprocess->vm_stacktop);
+		memcpy(new_pt, vmpt->pt_pt[i], I386_PAGE_SIZE);
+		vmpt->pt_pt[i] = new_pt;
+		vmpt->pt_dir[i] = (new_pt_phys & I386_VM_ADDR_MASK) |
+			(vmpt->pt_dir[i] & ~I386_VM_ADDR_MASK);
+	}
+}
 
 /*===========================================================================*
  *				pt_bind			     		     *

@@ -262,6 +262,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	mem_init(mem_chunks);
 	meminit_done = 1;
 
+	/* Architecture-dependent memory initialization. */
+	pt_init_mem();
+
 	/* Give these processes their own page table. */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
 		int s;
