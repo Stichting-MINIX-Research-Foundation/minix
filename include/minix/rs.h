@@ -71,6 +71,14 @@ struct rs_start
 	bitchunk_t rss_vm[VM_CALL_MASK_SIZE];
 	int rss_nr_control;
 	struct rss_label rss_control[RS_NR_CONTROL];
+
+	/*
+	 * SMP specific data
+	 *
+	 * must be at the end of the structure for binary compatibility with
+	 * non-smp sysytems
+	 */
+	int rss_cpu;
 };
 
 /* ACL information for access to PCI devices */

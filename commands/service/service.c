@@ -412,6 +412,7 @@ PRIVATE void fatal(char *fmt, ...)
 #define KW_SCHEDULER	"scheduler"
 #define KW_PRIORITY	"priority"
 #define KW_QUANTUM	"quantum"
+#define KW_CPU		"cpu"
 #define KW_IRQ		"irq"
 #define KW_IO		"io"
 #define KW_PCI		"pci"
@@ -649,7 +650,7 @@ PRIVATE void do_priority(config_t *cpe)
 		fatal("do_priority: priority %d out of range at %s:%d",
 			priority_val, cpe->file, cpe->line);
 	}
-	rs_start.rss_priority= (unsigned) priority_val;
+	rs_start.rss_priority= priority_val;
 }
 
 PRIVATE void do_quantum(config_t *cpe)
@@ -687,7 +688,45 @@ PRIVATE void do_quantum(config_t *cpe)
 		fatal("do_quantum: quantum %d out of range at %s:%d",
 			quantum_val, cpe->file, cpe->line);
 	}
-	rs_start.rss_quantum= (unsigned) quantum_val;
+	rs_start.rss_quantum= quantum_val;
+}
+
+PRIVATE void do_cpu(config_t *cpe)
+{
+	int cpu;
+	char *check;
+
+	/* Process a quantum value */
+	if (cpe->next != NULL)
+	{
+		fatal("do_cpu: just one value expected at %s:%d",
+			cpe->file, cpe->line);
+	}	
+	
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_cpu: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_cpu: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+	cpu= strtol(cpe->word, &check, 0);
+	if (check[0] != '\0')
+	{
+		fatal("do_cpu: bad value '%s' at %s:%d",
+			cpe->word, cpe->file, cpe->line);
+	}
+
+	if (cpu <= 0)
+	{
+		fatal("do_cpu: %d out of range at %s:%d",
+			cpu, cpe->file, cpe->line);
+	}
+	rs_start.rss_cpu= cpu;
 }
 
 PRIVATE void do_irq(config_t *cpe)
@@ -1261,6 +1300,11 @@ PRIVATE void do_service(config_t *cpe, config_t *config)
 			do_quantum(cpe->next);
 			continue;
 		}
+		if (strcmp(cpe->word, KW_CPU) == 0)
+		{
+			do_cpu(cpe->next);
+			continue;
+		}
 		if (strcmp(cpe->word, KW_IRQ) == 0)
 		{
 			do_irq(cpe->next);
@@ -1417,6 +1461,7 @@ PUBLIC int main(int argc, char **argv)
       rs_start.rss_scheduler= DSRV_SCH;
       rs_start.rss_priority= DSRV_Q;
       rs_start.rss_quantum= DSRV_QT;
+      rs_start.rss_cpu = DSRV_CPU;
 
       if (req_config) {
 	assert(progname);

@@ -89,4 +89,7 @@
 #define DSRV_QT   USER_QUANTUM                     /* dynamic system services */
 #define USR_QT    USER_QUANTUM                     /* user processes */
 
+/* default CPU */
+#define DSRV_CPU USER_DEFAULT_CPU
+
 #endif /* _MINIX_PRIV_H */

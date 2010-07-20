@@ -85,6 +85,10 @@
 /* default scheduling quanta */
 #define USER_QUANTUM 200
 
+/* defualt user process cpu */
+#define USER_DEFAULT_CPU	-1 /* use the default cpu or do not change the
+				      current one */
+
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *
  *===========================================================================*/
