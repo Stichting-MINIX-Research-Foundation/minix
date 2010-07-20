@@ -74,8 +74,8 @@ PRIVATE void pagefault( struct proc *pr,
 			pagefaultcr2, frame->errcode, is_nested);
 		proc_stacktrace(pr);
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
-  		panic("page fault in system process: %d",  pr->p_endpoint);
-		
+		cause_sig(proc_nr(pr), SIGSEGV);
+
 		return;
 	}
 
