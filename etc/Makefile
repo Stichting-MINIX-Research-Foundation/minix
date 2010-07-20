@@ -5,7 +5,7 @@ FILES1=fstab group hostname.file inet.conf motd.install mtab passwd profile \
 	binary_sizes.big binary_sizes.xxl syslog.conf rc.daemons.dist \
 	rs.inet rs.single make.conf system.conf 
 FILES2=shadow
-FILES3=daily dhcptags.conf rc
+FILES3=daily dhcptags.conf rc Makefile
 
 clean::
 
