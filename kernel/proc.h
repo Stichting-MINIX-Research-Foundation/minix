@@ -224,6 +224,7 @@ struct proc {
 #define MF_FPU_INITIALIZED	0x1000  /* process already used math, so fpu
 					 * regs are significant (initialized)*/
 #define MF_SENDING_FROM_KERNEL	0x2000 /* message of this process is from kernel */
+#define MF_CONTEXT_SET	0x4000 /* don't touch context */
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

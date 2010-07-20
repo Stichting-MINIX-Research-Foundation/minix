@@ -612,7 +612,9 @@ PUBLIC void delivermsg(struct proc *rp)
 		r = OK;
 	}
 
-	rp->p_reg.retreg = r;
+	if(!(rp->p_misc_flags & MF_CONTEXT_SET)) {
+		rp->p_reg.retreg = r;
+	}
 }
 
 PRIVATE char *flagstr(u32_t e, const int dir)

@@ -65,6 +65,8 @@ PUBLIC int do_sigreturn(struct proc * caller, message * m_ptr)
   }
 #endif
 
+  rp->p_misc_flags |= MF_CONTEXT_SET;
+
   return(OK);
 }
 #endif /* USE_SIGRETURN */
