@@ -100,6 +100,8 @@ _PROTOTYPE( void pt_init, (phys_bytes limit)				);
 _PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
+_PROTOTYPE( int pt_ptalloc_in_range, (pt_t *pt, vir_bytes start, vir_bytes end,
+        u32_t flags, int verify));
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));
 _PROTOTYPE( int pt_checkrange, (pt_t *pt, vir_bytes v,  size_t bytes, int write));
@@ -138,6 +140,8 @@ _PROTOTYPE(int map_region_shrink,(struct vir_region *vr, vir_bytes delta));
 _PROTOTYPE(int map_unmap_region,(struct vmproc *vmp, struct vir_region *vr, vir_bytes len));
 _PROTOTYPE(int map_free_proc,(struct vmproc *vmp));
 _PROTOTYPE(int map_proc_copy,(struct vmproc *dst, struct vmproc *src));
+_PROTOTYPE(int map_proc_copy_from,(struct vmproc *dst, struct vmproc *src,
+	struct vir_region *start_src_vr));
 _PROTOTYPE(struct vir_region *map_lookup,(struct vmproc *vmp, vir_bytes addr));
 _PROTOTYPE(int map_pf,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, int write));

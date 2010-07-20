@@ -456,6 +456,48 @@ PRIVATE int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	return OK;
 }
 
+/*===========================================================================*
+ *			    pt_ptalloc_in_range		     		     *
+ *===========================================================================*/
+PUBLIC int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
+	u32_t flags, int verify)
+{
+/* Allocate all the page tables in the range specified. */
+	int pde, first_pde, last_pde;
+
+	first_pde = start ? I386_VM_PDE(start) : proc_pde;
+	last_pde = end ? I386_VM_PDE(end) : I386_VM_DIR_ENTRIES - 1;
+	assert(first_pde >= proc_pde && first_pde <= last_pde);
+	assert(last_pde < I386_VM_DIR_ENTRIES);
+
+	/* Scan all page-directory entries in the range. */
+	for(pde = first_pde; pde <= last_pde; pde++) {
+		assert(!(pt->pt_dir[pde] & I386_VM_BIGPAGE));
+		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
+			int r;
+			if(verify) {
+				printf("pt_ptalloc_in_range: no pde %d\n", pde);
+				return EFAULT;
+			}
+			assert(!pt->pt_dir[pde]);
+			if((r=pt_ptalloc(pt, pde, flags)) != OK) {
+				/* Couldn't do (complete) mapping.
+				 * Don't bother freeing any previously
+				 * allocated page tables, they're
+				 * still writable, don't point to nonsense,
+				 * and pt_ptalloc leaves the directory
+				 * and other data in a consistent state.
+				 */
+				printf("pt_ptalloc_in_range: pt_ptalloc failed\n");
+				return r;
+			}
+		}
+		assert(pt->pt_dir[pde] & I386_VM_PRESENT);
+	}
+
+	return OK;
+}
+
 PRIVATE char *ptestr(u32_t pte)
 {
 #define FLAG(constant, name) {						\
@@ -490,8 +532,7 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 {
 /* Write mapping into page table. Allocate a new page table if necessary. */
 /* Page directory and table entries for this virtual address. */
-	int p, pages, pdecheck;
-	int finalpde;
+	int p, r, pages;
 	int verify = 0;
 
 	if(writemapflags & WMF_VERIFY)
@@ -509,36 +550,13 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 	assert(physaddr == MAP_NONE || (flags & I386_VM_PRESENT));
 	assert(physaddr != MAP_NONE || !flags);
 
-	finalpde = I386_VM_PDE(v + I386_PAGE_SIZE * pages);
-
 	/* First make sure all the necessary page tables are allocated,
 	 * before we start writing in any of them, because it's a pain
-	 * to undo our work properly. Walk the range in page-directory-entry
-	 * sized leaps.
+	 * to undo our work properly.
 	 */
-	for(pdecheck = I386_VM_PDE(v); pdecheck <= finalpde; pdecheck++) {
-		assert(pdecheck >= 0 && pdecheck < I386_VM_DIR_ENTRIES);
-		assert(!(pt->pt_dir[pdecheck] & I386_VM_BIGPAGE));
-		if(!(pt->pt_dir[pdecheck] & I386_VM_PRESENT)) {
-			int r;
-			if(verify) {
-				printf("pt_writemap verify: no pde %d\n", pdecheck);
-				return EFAULT;
-			}
-			assert(!pt->pt_dir[pdecheck]);
-			if((r=pt_ptalloc(pt, pdecheck, flags)) != OK) {
-				/* Couldn't do (complete) mapping.
-				 * Don't bother freeing any previously
-				 * allocated page tables, they're
-				 * still writable, don't point to nonsense,
-				 * and pt_ptalloc leaves the directory
-				 * and other data in a consistent state.
-				 */
-				printf("pt_writemap: pt_ptalloc failed\n");
-				return r;
-			}
-		}
-		assert(pt->pt_dir[pdecheck] & I386_VM_PRESENT);
+	r = pt_ptalloc_in_range(pt, v, v + I386_PAGE_SIZE*pages, flags, verify);
+	if(r != OK) {
+		return r;
 	}
 
 	/* Now write in them. */

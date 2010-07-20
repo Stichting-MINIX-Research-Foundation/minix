@@ -1421,19 +1421,38 @@ PUBLIC int map_writept(struct vmproc *vmp)
 }
 
 /*========================================================================*
- *				map_proc_copy			     	  *
+ *			       map_proc_copy			     	  *
  *========================================================================*/
 PUBLIC int map_proc_copy(dst, src)
 struct vmproc *dst;
 struct vmproc *src;
 {
-	struct vir_region *vr, *prevvr = NULL;
+/* Copy all the memory regions from the src process to the dst process. */
 	dst->vm_regions = NULL;
+
+	return map_proc_copy_from(dst, src, src->vm_regions);
+}
+
+/*========================================================================*
+ *			     map_proc_copy_from			     	  *
+ *========================================================================*/
+PUBLIC int map_proc_copy_from(dst, src, start_src_vr)
+struct vmproc *dst;
+struct vmproc *src;
+struct vir_region *start_src_vr;
+{
+	struct vir_region *vr, *prevvr = NULL;
+
+	assert(start_src_vr->parent == src);
+
+	/* Copy source regions after the destination's last region (if any). */
+	for(vr = dst->vm_regions; vr; vr = vr->next) {
+		prevvr =  vr;
+	}
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-
-	for(vr = src->vm_regions; vr; vr = vr->next) {
+	for(vr = start_src_vr; vr; vr = vr->next) {
 		physr_iter iter_orig, iter_new;
 		struct vir_region *newvr;
 		struct phys_region *orig_ph, *new_ph;
