@@ -1,6 +1,14 @@
+<<<<<<< .mine
+20100719:
+	If you installed using a 3.1.6 image (or earlier) and haven't updated 
+	the boot monitor since r6246 you need to do so now:
+	cd /usr/src/boot; make install; sh updateboot.sh
+
+=======
 20100714:
 	mknod /dev/uds c 18 0
 	chmod 666 /dev/uds
+>>>>>>> .r7838
 20100713:
         /usr/src/etc/rc updated: copy it (or merge it) to /etc/rc.
         /usr/src/etc/system.conf updated to include boot sys services: copy
