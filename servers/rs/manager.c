@@ -1731,6 +1731,32 @@ PUBLIC struct rproc* lookup_slot_by_dev_nr(dev_t dev_nr)
 }
 
 /*===========================================================================*
+ *			   lookup_slot_by_flags				     *
+ *===========================================================================*/
+PUBLIC struct rproc* lookup_slot_by_flags(int flags)
+{
+/* Lookup a service slot matching the given flags. */
+  int slot_nr;
+  struct rproc *rp;
+
+  if(!flags) {
+      return NULL;
+  }
+
+  for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
+      rp = &rproc[slot_nr];
+      if (!(rp->r_flags & RS_IN_USE)) {
+          continue;
+      }
+      if (rp->r_flags & flags) {
+          return rp;
+      }
+  }
+
+  return NULL;
+}
+
+/*===========================================================================*
  *				alloc_slot				     *
  *===========================================================================*/
 PUBLIC int alloc_slot(rpp)

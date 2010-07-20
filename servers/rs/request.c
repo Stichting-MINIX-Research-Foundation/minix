@@ -781,14 +781,25 @@ message *m_ptr;
 	      /* Check if an answer to a status request is still pending. If 
 	       * the service didn't respond within time, kill it to simulate 
 	       * a crash. The failure will be detected and the service will 
-	       * be restarted automatically.
+	       * be restarted automatically. Give the service a free pass if
+	       * somebody is initializing. There may be some weird dependencies
+	       * if another service is, for example, restarting at the same
+	       * time.
 	       */
               if (rp->r_alive_tm < rp->r_check_tm) { 
 	          if (now - rp->r_alive_tm > 2*period &&
 		      rp->r_pid > 0 && !(rp->r_flags & RS_NOPINGREPLY)) { 
 		      if(rs_verbose)
-                           printf("RS: %s reported late\n",
-				srv_to_string(rp)); 
+                           printf("RS: %s reported late\n", srv_to_string(rp)); 
+		      if(lookup_slot_by_flags(RS_INITIALIZING)) {
+                           /* Skip for now. */
+                           if(rs_verbose)
+                               printf("RS: %s gets a free pass\n",
+                                   srv_to_string(rp)); 
+                           rp->r_alive_tm = now;
+                           rp->r_check_tm = now+1;
+                           continue;
+		      }
 		      rp->r_flags |= RS_NOPINGREPLY;
                       crash_service(rp); /* simulate crash */
 		  }
