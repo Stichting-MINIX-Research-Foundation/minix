@@ -596,10 +596,37 @@ PRIVATE void read_int(eth_port, count)
 eth_port_t *eth_port;
 int count;
 {
-	acc_t *pack, *cut_pack;
+	acc_t *pack, *pack_ptr, *cut_pack;
+	iovec_s_t *iovec;
+	int i, r;
+
+	/* A buggy driver might try to feed us a reply for a request we never
+	 * sent. Don't let this cause a crash further up.
+	 */
+	if (!(eth_port->etp_flags & EPF_READ_IP))
+	{
+		printf("mnx_eth`read_int: read reply with no read going on\n");
+		return;
+	}
 
 	pack= eth_port->etp_rd_pack;
 	eth_port->etp_rd_pack= NULL;
+
+	/* Invalidate the grants first, so that the ethernet driver can no
+	 * longer modify the contents of the packet.
+	 */
+	iovec= eth_port->etp_osdep.etp_rd_iovec;
+	for (i=0, pack_ptr= pack; i<RD_IOVEC && pack_ptr;
+		i++, pack_ptr= pack_ptr->acc_next)
+	{
+		r= cpf_setgrant_disable(iovec[i].iov_grant);
+		if (r != 0)
+		{
+			ip_panic((
+			"mnx_eth`read_int: cpf_setgrant_disable failed: %d\n",
+				errno));
+		}
+	}
 
 	if (count < ETH_MIN_PACK_SIZE)
 	{
