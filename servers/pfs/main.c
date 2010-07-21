@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <minix/dmap.h>
+#include <minix/driver.h>
 #include <minix/endpoint.h>
 #include <minix/vfsif.h>
 #include "buf.h"

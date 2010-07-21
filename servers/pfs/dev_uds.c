@@ -32,6 +32,11 @@
 #include "glo.h"
 #include "uds.h"
 
+FORWARD _PROTOTYPE( int uds_perform_read, (int minor, endpoint_t m_source,
+	size_t size, int pretend));
+FORWARD _PROTOTYPE( int uds_perform_write, (int minor, endpoint_t m_source,
+	size_t size, int pretend));
+
 PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 {
 	message fs_m_in, fs_m_out;
@@ -267,7 +272,6 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 {
 	int i, bytes;
 	int minor;
-	message fs_m_in, fs_m_out;
 
 #if DEBUG == 1
 	static int call_count = 0;
@@ -336,10 +340,10 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 	return uds_fd_table[minor].sel_ops_out;
 }
 
-PRIVATE int uds_perform_read(int minor, endpoint_t m_source, size_t 
-				size, int pretend)
+PRIVATE int uds_perform_read(int minor, endpoint_t m_source,
+	size_t size, int pretend)
 {
-	int rc, bytes;
+	int rc;
 	message fs_m_in;
 	message fs_m_out;
 
@@ -640,9 +644,8 @@ PRIVATE int uds_perform_write(int minor, endpoint_t m_source,
 
 PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 {
-	int rc, bytes;
+	int bytes;
 	int minor;
-	message fs_m_in, fs_m_out;
 
 #if DEBUG == 1
 	static int call_count = 0;
@@ -703,11 +706,8 @@ PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 
 PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 {
-	int rc;
 	int bytes;
 	int minor;
-	int peer;
-	message fs_m_in, fs_m_out;
 
 #if DEBUG == 1
 	static int call_count = 0;
@@ -769,9 +769,7 @@ PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 
 PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 {
-	int rc, i;
 	int minor;
-	struct sockaddr_un addr;
 
 #if DEBUG == 1
 	static int call_count = 0;
