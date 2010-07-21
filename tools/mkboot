@@ -58,7 +58,7 @@ hdboot)
 		    "exec mv $rootdir/boot/image /M"
 		install -d $rootdir/boot/image
 		su root -c \
-		    "exec mv $rootdir/M $rootdir/boot/image/`uname -r`
+		    "exec mv $rootdir/M $rootdir/boot/image/`uname -r`"
 	fi
 
 	sh tell_config OS_RELEASE . OS_VERSION >/tmp/mkb.$$
