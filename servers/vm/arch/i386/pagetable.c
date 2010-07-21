@@ -469,7 +469,7 @@ PUBLIC int pt_ptalloc_in_range(pt_t *pt, vir_bytes start, vir_bytes end,
 
 	first_pde = start ? I386_VM_PDE(start) : proc_pde;
 	last_pde = end ? I386_VM_PDE(end) : I386_VM_DIR_ENTRIES - 1;
-	assert(first_pde >= proc_pde && first_pde <= last_pde);
+	assert(first_pde >= 0);
 	assert(last_pde < I386_VM_DIR_ENTRIES);
 
 	/* Scan all page-directory entries in the range. */
