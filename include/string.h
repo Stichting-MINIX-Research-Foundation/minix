@@ -10,8 +10,7 @@
  * string.h is include.
  */
 #include <stdint.h>
-
-#define NULL    ((void *)0)
+#include <sys/null.h>
 
 #ifndef _SIZE_T
 #define _SIZE_T
