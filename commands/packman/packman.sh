@@ -1,7 +1,7 @@
 #!/bin/sh
 
-TAG=`uname -p`-`uname -r`.`uname -v`
-PACKDIR=`uname -p`/`uname -r`.`uname -v`
+TAG=`uname -p`-`uname -r`
+PACKDIR=`uname -p`/`uname -r`
 RC=/usr/etc/rc.package
 CDDIR=PACKAGES
 CDMP=/mnt
