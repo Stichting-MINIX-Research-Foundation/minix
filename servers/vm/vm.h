@@ -28,7 +28,7 @@
 
 /* How noisy are we supposed to be? */
 #define VERBOSE		0
-#define LU_DEBUG	1
+#define LU_DEBUG	0
 
 /* Minimum stack region size - 64MB. */
 #define MINSTACKREGION	(64*1024*1024)
