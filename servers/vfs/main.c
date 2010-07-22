@@ -254,11 +254,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   mess.m_type = OK;			/* tell PM that we succeeded */
   s = send(PM_PROC_NR, &mess);		/* send synchronization message */
 
-  /* All process table entries have been set. Continue with FS initialization.
-   * Certain relations must hold for the file system to work at all. Some 
-   * extra block_size requirements are checked at super-block-read-in time.
-   */
-  if (OPEN_MAX > 127) panic("OPEN_MAX > 127");
+  /* All process table entries have been set. Continue with initialization. */
   
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
@@ -341,9 +337,9 @@ PRIVATE void get_work()
 			found_one= TRUE;
 			who_p = (int)(rp - fproc);
 			who_e = rp->fp_endpoint;
-			call_nr = rp->fp_fd & BYTE;
+			call_nr = rp->fp_block_callnr;
 
-			m_in.fd = (rp->fp_fd >>8) & BYTE;
+			m_in.fd = rp->fp_block_fd;
 			m_in.buffer = rp->fp_buffer;
 			m_in.nbytes = rp->fp_nbytes;
 			/*no longer hanging*/
@@ -358,7 +354,7 @@ PRIVATE void get_work()
 			if (blocked_on == FP_BLOCKED_ON_PIPE)
 			{
 				fp= rp;
-				fd_nr= (rp->fp_fd >> 8);
+				fd_nr= rp->fp_block_fd;
 				f= get_filp(fd_nr);
 				assert(f != NULL);
 				r= rw_pipe((call_nr == READ) ? READING :

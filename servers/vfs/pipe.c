@@ -266,7 +266,8 @@ PUBLIC void suspend(int why)
 
   fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
-  fp->fp_fd = m_in.fd << 8 | call_nr;
+  fp->fp_block_fd = m_in.fd;
+  fp->fp_block_callnr = call_nr;
   fp->fp_flags &= ~SUSP_REOPEN;			/* Clear this flag. The caller
 						 * can set it when needed.
 						 */
@@ -315,7 +316,8 @@ size_t size;
   susp_count++;					/* #procs susp'ed on pipe*/
   fp->fp_blocked_on = FP_BLOCKED_ON_PIPE;
   assert(!GRANT_VALID(fp->fp_grant));
-  fp->fp_fd = (fd_nr << 8) | ((rw_flag == READING) ? READ : WRITE);
+  fp->fp_block_fd = fd_nr;
+  fp->fp_block_callnr = ((rw_flag == READING) ? READ : WRITE);
   fp->fp_buffer = buf;		
   fp->fp_nbytes = size;
 }
@@ -383,8 +385,8 @@ int count;			/* max number of processes to release */
   /* Search the proc table. */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS] && count > 0; rp++) {
 	if (rp->fp_pid != PID_FREE && fp_is_blocked(rp) &&
-	    rp->fp_revived == NOT_REVIVING && (rp->fp_fd & BYTE) == call_nr &&
-	    rp->fp_filp[rp->fp_fd>>8]->filp_vno == vp) {
+	    rp->fp_revived == NOT_REVIVING && rp->fp_block_callnr == call_nr &&
+	    rp->fp_filp[rp->fp_block_fd]->filp_vno == vp) {
 		revive(rp->fp_endpoint, 0);
 		susp_count--;	/* keep track of who is suspended */
 		if(susp_count < 0)
@@ -427,7 +429,7 @@ int returned;			/* if hanging on task, how many bytes read */
 	reviving++;		/* process was waiting on pipe or lock */
   } else if (blocked_on == FP_BLOCKED_ON_DOPEN) {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	fd_nr = rfp->fp_fd>>8;
+	fd_nr = rfp->fp_block_fd;
 	if (returned < 0) {
 		fil_ptr = rfp->fp_filp[fd_nr];
 		rfp->fp_filp[fd_nr] = NULL;
@@ -446,7 +448,7 @@ int returned;			/* if hanging on task, how many bytes read */
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	if (blocked_on == FP_BLOCKED_ON_POPEN) {
 		/* process blocked in open or create */
-		reply(proc_nr_e, rfp->fp_fd>>8);
+		reply(proc_nr_e, rfp->fp_block_fd);
 	} else if (blocked_on == FP_BLOCKED_ON_SELECT) {
 		reply(proc_nr_e, returned);
 	} else {
@@ -530,7 +532,7 @@ int proc_nr_e;
 			break;
 		}
 		
-		fild = (rfp->fp_fd >> 8) & BYTE;/* extract file descriptor */
+		fild = rfp->fp_block_fd;
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("unpause err 2");
 		f = rfp->fp_filp[fild];
@@ -540,7 +542,7 @@ int proc_nr_e;
 		mess.IO_GRANT = (char *) rfp->fp_grant;
 
 		/* Tell kernel R or W. Mode is from current call, not open. */
-		mess.COUNT = (rfp->fp_fd & BYTE) == READ ? R_BIT : W_BIT;
+		mess.COUNT = rfp->fp_block_callnr == READ ? R_BIT : W_BIT;
 		mess.m_type = CANCEL;
 		fp = rfp;	/* hack - ctty_io uses fp */
 		(*dmap[(dev >> MAJOR) & BYTE].dmap_io)(rfp->fp_task, &mess);

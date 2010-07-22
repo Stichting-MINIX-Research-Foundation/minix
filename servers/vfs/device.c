@@ -870,8 +870,8 @@ PUBLIC void dev_up(int maj)
 	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN) continue;
 
 	printf("dev_up: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
-		rfp->fp_fd >> 8);
-	fd_nr = (rfp->fp_fd >> 8);
+		rfp->fp_block_fd);
+	fd_nr = rfp->fp_block_fd;
 	fp = rfp->fp_filp[fd_nr];
 	vp = fp->filp_vno;
 	if (!vp) panic("restart_reopen: no vp");
@@ -963,8 +963,8 @@ int maj;
 	    !(rfp->fp_flags & SUSP_REOPEN)) continue;
 
 	printf("restart_reopen: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
-		rfp->fp_fd >> 8);
-	fd_nr = (rfp->fp_fd >> 8);
+		rfp->fp_block_fd);
+	fd_nr =	rfp->fp_block_fd;
 	fp = rfp->fp_filp[fd_nr];
 
 	if (!fp) {
