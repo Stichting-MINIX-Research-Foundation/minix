@@ -44,7 +44,8 @@
 
 #define SUPER_USER ((uid_t) 0)	/* uid_t of superuser */
 
-#define NULL     ((void *)0)	/* null pointer */
+#include <sys/null.h>      /* NULL Pointer */
+
 #define SCPVEC_NR	  64	/* max # of entries in a SYS_VSAFECOPY* request */
 #define NR_IOREQS	  64
 				/* maximum number of entries in an iorequest */

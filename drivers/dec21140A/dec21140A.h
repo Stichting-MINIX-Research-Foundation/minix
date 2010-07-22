@@ -9,11 +9,10 @@ by VirtualPC 2007
 Created: 09/01/2009   Nicolas Tittley (first.last @ gmail DOT com)
 */
 
+#include <sys/null.h>
 
 #define DE_FKEY 8  /* Shitf+ this value will dump info on console */
 
-#undef  NULL
-#define NULL ((void *)0)
 #define NOT(x) (~(x))
 
 #if debug == 1

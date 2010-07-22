@@ -3,5 +3,4 @@
  */
 
 #include <timers.h>		/* definitions and function prototypes */
-#define NULL 	(void *) 0	/* null-pointer definition */
-
+#include <sys/null.h>

@@ -31,7 +31,7 @@ struct lconv {
   char n_sign_posn;		/* CHAR_MAX */
 };
 
-#define NULL    ((void *)0)
+#include <sys/null.h>
 
 #define LC_ALL             1
 #define LC_COLLATE         2

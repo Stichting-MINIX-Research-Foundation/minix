@@ -13,6 +13,8 @@
 #include <ansi.h>
 #endif
 
+#include <sys/null.h>   /* For NULL */
+
 /*
  * Focus point of all stdio activity.
  */
@@ -50,7 +52,6 @@ typedef struct __iobuf {
 #define	stderr		(&__stderr)
 
 #define	BUFSIZ		4096
-#define	NULL		((void *)0)
 #define	EOF		(-1)
 
 #define	FOPEN_MAX	20

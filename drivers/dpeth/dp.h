@@ -31,6 +31,8 @@
 **  Initial revision for Minix 3.0.6
 */
 
+#include <sys/null.h>
+
 #undef  ENABLE_3C501
 #undef  ENABLE_3C503
 #undef  ENABLE_3C509
@@ -47,8 +49,6 @@
 #define ENABLE_DP8390	(ENABLE_3C503|ENABLE_WDETH|ENABLE_NE2000)
 #define	HAVE_BUFFERS	(ENABLE_3C501|ENABLE_3C509)
 
-#undef  NULL
-#define NULL ((void *)0)
 #define NOT(x) (~(x))
 
 #if debug == 1

@@ -55,7 +55,7 @@
 #define SI_PROCPUB_TAB	   11	/* copy of public entries of process table */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
-#define NULL    ((void *)0)
+#include <sys/null.h>
 
 /* The following relate to configurable system variables. POSIX Table 4-2. */
 #define _SC_ARG_MAX	   1

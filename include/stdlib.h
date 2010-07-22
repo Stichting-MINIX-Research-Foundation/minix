@@ -7,8 +7,7 @@
 #include <ansi.h>
 #endif
 
-/* The macros are NULL, EXIT_FAILURE, EXIT_SUCCESS, RAND_MAX, and MB_CUR_MAX.*/
-#define NULL    ((void *)0)
+#include <sys/null.h>
 
 #define EXIT_FAILURE       1	/* standard error return using exit() */
 #define EXIT_SUCCESS       0	/* successful return using exit() */

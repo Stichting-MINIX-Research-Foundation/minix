@@ -3,7 +3,7 @@
 #ifndef _STDDEF_H
 #define _STDDEF_H
 
-#define NULL   ((void *)0)
+#include <sys/null.h>
 
 /* The following is not portable, but the compiler accepts it. */
 #define offsetof(type, ident)	((size_t) (unsigned long) &((type *)0)->ident)

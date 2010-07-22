@@ -45,7 +45,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#undef NULL
 #include <string.h>
 #include <unistd.h>
 
