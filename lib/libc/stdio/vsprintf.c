@@ -21,8 +21,10 @@ vsnprintf(char *s, size_t n, const char *format, va_list arg)
 	tmp_stream._count  = n-1;
 
 	retval = _doprnt(format, arg, &tmp_stream);
-	tmp_stream._count  = 1;
-	(void) putc('\0',&tmp_stream);
+	if(n > 0) {
+		tmp_stream._count  = 1;
+		(void) putc('\0',&tmp_stream);
+	}
 
 	return retval;
 }
