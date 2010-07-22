@@ -721,7 +721,7 @@ PRIVATE void do_cpu(config_t *cpe)
 			cpe->word, cpe->file, cpe->line);
 	}
 
-	if (cpu <= 0)
+	if (cpu < 0)
 	{
 		fatal("do_cpu: %d out of range at %s:%d",
 			cpu, cpe->file, cpe->line);

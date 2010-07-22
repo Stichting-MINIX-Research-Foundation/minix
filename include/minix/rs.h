@@ -49,8 +49,8 @@ struct rs_start
 	uid_t rss_uid;
 	endpoint_t rss_sigmgr;
 	endpoint_t rss_scheduler;
-	unsigned rss_priority;
-	unsigned rss_quantum;
+	int rss_priority;
+	int rss_quantum;
 	int rss_major;
 	int rss_dev_style;
 	long rss_period;
