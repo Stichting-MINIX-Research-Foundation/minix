@@ -29,6 +29,8 @@ _PROTOTYPE( uint16_t htons, (uint16_t _hostval)				);
 _PROTOTYPE( char *inet_ntoa, (struct in_addr _in)			);
 _PROTOTYPE( uint32_t ntohl, (uint32_t _netval)				);
 _PROTOTYPE( uint16_t ntohs, (uint16_t _netval)				);
+_PROTOTYPE( char *inet_ntop, (int af, const void *src, char *dst, 
+							uint32_t size)	);
 
 #ifdef _MINIX
 /* Additional functions */
