@@ -37,7 +37,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 .if ${ARCH} == "i386"
 SUBDIR+=	atnormalize dosread fdisk loadfont \
 	mixer autopart part partition playwave postmort \
-	recwave repartition screendump
+	recwave repartition screendump padtext
 SUBDIR+=	acd asmconv gas2ack
 .endif
 
