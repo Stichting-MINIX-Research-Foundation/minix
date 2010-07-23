@@ -504,8 +504,6 @@ read_buildinfo(struct pkg_task *pkg)
 
 		if (strncmp(data, "OPSYS=", 6) == 0)
 			pkg->buildinfo[BI_OPSYS] = dup_value(data, eol);
-		else if (strncmp(data, "OS_RELEASE=", 11) == 0)
-			pkg->buildinfo[BI_OS_RELEASE] = dup_value(data, eol);
 		else if (strncmp(data, "OS_VERSION=", 11) == 0)
 			pkg->buildinfo[BI_OS_VERSION] = dup_value(data, eol);
 		else if (strncmp(data, "MACHINE_ARCH=", 13) == 0)
@@ -906,7 +904,7 @@ check_platform(struct pkg_task *pkg)
 
 	normalise_version(host_uname.release, host_uname.version);
 
-	if (strcmp(host_uname.release, pkg->buildinfo[BI_OS_RELEASE]) != 0)
+	if (strcmp(host_uname.release, pkg->buildinfo[BI_OS_VERSION]) != 0)
 		fatal = 1;
 
 	if (fatal) {
@@ -915,7 +913,7 @@ check_platform(struct pkg_task *pkg)
 		warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
 		    pkg->buildinfo[BI_OPSYS],
 		    pkg->buildinfo[BI_MACHINE_ARCH],
-		    pkg->buildinfo[BI_OS_RELEASE],
+		    pkg->buildinfo[BI_OS_VERSION],
 		    OPSYS_NAME,
 		    effective_arch,
 		    host_uname.release);
