@@ -153,4 +153,7 @@
 /* fpu context should be saved in 16-byte aligned memory */
 #define FPUALIGN		16
 
+/* Poweroff 16-bit code address */
+#define BIOS_POWEROFF_ENTRY 0x1000
+
 #endif /* _I386_ACONST_H */

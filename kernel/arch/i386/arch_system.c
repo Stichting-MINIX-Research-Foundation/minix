@@ -22,6 +22,7 @@
 #include "oxpcie.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
+#include "multiboot.h"
 
 #ifdef CONFIG_APIC
 #include "apic.h"
@@ -29,6 +30,9 @@
 
 PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 
+extern void poweroff_jmp();
+extern void poweroff16();
+extern void poweroff16_end();
 
 /* set MP and NE flags to handle FPU exceptions in native mode. */
 #define CR0_MP_NE	0x0022
@@ -42,6 +46,22 @@ FORWARD _PROTOTYPE( void ser_debug, (int c));
 PUBLIC __dead void arch_monitor(void)
 {
 	monitor();
+}
+
+PUBLIC void arch_bios_poweroff(void)
+{
+	u32_t cr0;
+	
+	/* Disable paging */
+	cr0 = read_cr0();
+	cr0 &= ~I386_CR0_PG;
+	write_cr0(cr0);
+	/* Copy 16-bit poweroff code to below 1M */
+	phys_copy(
+		FUNC2PHY(&poweroff16),
+		BIOS_POWEROFF_ENTRY,
+		(u32_t)&poweroff16_end-(u32_t)&poweroff16);
+	poweroff_jmp();
 }
 
 PUBLIC int cpu_has_tsc;
@@ -107,7 +127,10 @@ PUBLIC __dead void arch_shutdown(const int how)
 
 			arch_set_params(mybuffer, strlen(mybuffer)+1);
 		}
-		arch_monitor();
+		if(mon_return)
+			arch_monitor();
+		else
+			arch_bios_poweroff();
 	} else {
 		/* Reset the system by forcing a processor shutdown. First stop
 		 * the BIOS memory test by setting a soft reset flag.

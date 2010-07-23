@@ -4,7 +4,7 @@ u=/usr
 MDEC=	/usr/mdec
 
 # Specify the programs that are part of the system image.
-PROGRAMS=	../kernel/kernel \
+PROGRAMS=	kernel \
 	../servers/ds/ds \
 	../servers/rs/rs \
 	../servers/pm/pm \
@@ -42,7 +42,17 @@ usage:
 
 all: services image
 
+# for fast complie kernel and generate image, skip servers and drivers
+image_mb: includes
+	cd ../kernel && $(MAKE)
+	padtext ../kernel/kernel kernel
+	installboot -image $@ $(PROGRAMS)
+	
 image:  includes services
+	cd ../kernel && $(MAKE)
+	cd ../servers && $(MAKE) all
+	cd ../drivers && $(MAKE) all
+	padtext ../kernel/kernel kernel
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
@@ -79,7 +89,7 @@ clean:
 	$(MAKE) -C ../kernel $@
 	$(MAKE) -C ../servers $@
 	$(MAKE) -C ../drivers $@
-	rm -rf *.bak image *.iso *.iso.gz cdfdimage rootimage src
+	rm -rf *.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 
 cleandepend::
 	$(MAKE) -C ../kernel $@

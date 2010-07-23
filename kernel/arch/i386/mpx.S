@@ -6,7 +6,7 @@
  * good environment for main(). 
  *
  * Kernel is entered either because of kernel-calls, ipc-calls, interrupts or
- * exceptions. TSS is set so that the kernel stack is loaded. The user cotext is
+ * exceptions. TSS is set so that the kernel stack is loaded. The user context is
  * saved to the proc table and the handler of the event is called. Once the
  * handler is done, switch_to_user() function is called to pick a new process,
  * finish what needs to be done for the next process to run, sets its context
@@ -52,6 +52,7 @@ begbss:
 #include "kernel/const.h"
 #include "kernel/proc.h"
 #include "sconst.h"
+#include "multiboot.h"
 
 /* Selected 386 tss offsets. */
 #define TSS3_S_SP0	4
@@ -133,11 +134,44 @@ flags:
  */
 .short	0x03FD	
 	nop	/* extra byte to sync up disassembler */
-over_flags:
+	
+/* Multiboot header here*/
 
+.balign 8
+
+multiboot_magic:
+	.long MULTIBOOT_HEADER_MAGIC
+multiboot_flags:
+	.long MULTIBOOT_FLAGS
+multiboot_checksum:
+	.long -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_FLAGS)
+multiboot_header_addr:
+	.long (MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_ENTRY_OFFSET + multiboot_magic)
+multiboot_load_addr:
+	.long MULTIBOOT_LOAD_ADDRESS
+multiboot_load_end_addr:
+	.long 0
+multiboot_bss_end_addr:
+	.long 0
+multiboot_entry_addr:
+	.long (MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_ENTRY_OFFSET + multiboot_init)
+/* Video mode */
+multiboot_mode_type:
+	.long MULTIBOOT_VIDEO_MODE_EGA
+multiboot_width:
+	.long MULTIBOOT_CONSOLE_COLS
+multiboot_height:
+	.long MULTIBOOT_CONSOLE_LINES
+multiboot_depth:
+	.long 0
+
+over_flags:
 /* Set up a C stack frame on the monitor stack.  (The monitor sets cs and ds */
 /* right.  The ss descriptor still references the monitor data segment.) */
 	movzwl	%sp, %esp	/* monitor stack is a 16 bit stack */
+
+.globl kernel_init
+kernel_init: /* after pre-init*/
 	push	%ebp
 	mov	%esp, %ebp
 	push	%esi
@@ -658,7 +692,6 @@ _reload_cr3:
 .data
 #endif
 .short	0x526F	/* this must be the first data entry (magic #) */
-
 .bss
 /*
  * the kernel stack

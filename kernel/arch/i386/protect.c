@@ -25,7 +25,16 @@ struct gatedesc_s {
   u16_t offset_high;
 };
 
-PUBLIC struct segdesc_s gdt[GDT_SIZE];		/* used in klib.s and mpx.s */
+PUBLIC struct segdesc_s gdt[GDT_SIZE]=		/* used in klib.s and mpx.s */
+{	{0},
+	{0,0,0,0}, 				/* GDT descriptor */
+	{0,0,0,0}, 				/* IDT descriptor */
+	{0xffff,0,0,0x92,0x4f,0}, 	/* kernel DS */
+	{0xffff,0,0,0x92,0xcf,0},	/* kernel ES (386: flag 4 Gb at startup) */
+	{0xffff,0,0,0x92,0x4f,0},	/* kernel SS (386: monitor SS at startup) */
+	{0xffff,0,0,0x9a,0x4f,0},	/* kernel CS */
+	{0xffff,0,0,0x9a,0x0f,0},	/* temp for BIOS (386: monitor CS at startup) */
+};
 PRIVATE struct gatedesc_s idt[IDT_SIZE];	/* zero-init so none present */
 PUBLIC struct tss_s tss;			/* zero init */
 

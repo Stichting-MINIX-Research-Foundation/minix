@@ -109,6 +109,14 @@ hdboot)
 	echo "install image $root:/boot/image/$target"
 	install -o root -m 600 image $rootdir/boot/image/$target || exit
 
+	# Tell GRUB which image is newest
+	image_latest="`ls -t $rootdir/boot/image | head -n 1`"
+	if [ -f "$rootdir/boot/image/$image_latest" ]
+	then image_latest="/boot/image/$image_latest"
+	else image_latest=/boot/image_big
+	fi
+	ln -f $image_latest $rootdir/boot/image_latest
+
 	# Save the revision number.
 	test "$revision" != "$oldrev" && echo $revision >revision
 

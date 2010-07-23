@@ -4,9 +4,11 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <machine/interrupt.h>
+#include <i386/vm.h>
 #include "archconst.h"
 #include "kernel/const.h"
 #include "sconst.h"
+#include "multiboot.h"
 
 /*
  * This file contains a number of assembly code utility routines needed by the
@@ -908,3 +910,54 @@ _switch_address_space:
 0:
 	ret
 
+/*===========================================================================*/
+/*				poweroff					     */
+/*===========================================================================*/
+/* PUBLIC void poweroff(); */
+/* Jump to 16-bit poweroff code */
+.globl _poweroff_jmp
+_poweroff_jmp:
+	cli
+	/* Make real mode descriptor */
+	mov	$(_gdt + SS_SELECTOR), %edi
+	mov	$0x100, %eax
+	movw %ax, 2(%edi)
+	shr	$16, %eax
+	movb	%al, 4(%edi)
+	and	$0xff00, %ax
+	andw	$0xff, 6(%edi)
+	or	%ax, 6(%edi)
+	mov	$0xffff, %eax
+	movw	%ax, (%edi)
+	shr	$16, %eax
+	and	$0xf, %ax
+	andb	$0xf0, 6(%edi)
+	or	%ax, 6(%edi)
+	
+	/* Flush TLB */
+	xor	%eax, %eax
+	mov	%eax, %cr3
+	
+	xor	%esp, %esp /* clear esp for real mode*/
+	
+	/* Reset IDTR */
+	lidt	idt_ptr
+	
+	mov	$SS_SELECTOR, %ax
+	mov	%ax, %ds
+	mov	%ax, %es
+	mov	%ax, %fs
+	mov	%ax, %gs
+	mov	%ax, %ss
+	
+	/* Save real mode cr0 in eax */
+	mov	%cr0, %eax
+	andl	$~I386_CR0_PE, %eax
+	
+	/* Jump to 16-bit code that is copied to below 1MB */
+	ljmp	$MON_CS_SELECTOR, $0
+	
+.data
+idt_ptr:
+	.short 0x3ff
+	.long 0x0
