@@ -7,13 +7,6 @@ SRCS+=  \
 	alloca.S \
 	get_bp.S \
 	getprocessor.S \
-	io_inb.S \
-	io_inl.S \
-	io_intr.S \
-	io_inw.S \
-	io_outb.S \
-	io_outl.S \
-	io_outw.S \
 	oneC_sum.S \
 	ucontext.S
 

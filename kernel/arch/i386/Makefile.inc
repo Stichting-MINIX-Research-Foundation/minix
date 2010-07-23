@@ -12,6 +12,13 @@ SRCS+=	arch_do_vmctl.c \
 	do_sdevio.c \
 	exception.c \
 	i8259.c \
+	io_inb.S \
+	io_inl.S \
+	io_intr.S \
+	io_inw.S \
+	io_outb.S \
+	io_outl.S \
+	io_outw.S \
 	klib.S \
 	memory.c \
 	oxpcie.c \
