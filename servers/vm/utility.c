@@ -70,7 +70,7 @@ struct memory *mem_chunks;                      /* store mem chunks here */
   /* Obtain and parse memory from system environment. */
   if(env_memory_parse(mem_chunks, NR_MEMS) != OK) 
         panic("couldn't obtain memory chunks"); 
-   
+        
   /* Round physical memory to clicks. Round start up, round end down. */
   for (i = 0; i < NR_MEMS; i++) {
         memp = &mem_chunks[i];          /* next mem chunk is stored here */
@@ -95,22 +95,35 @@ PUBLIC void reserve_proc_mem(mem_chunks, map_ptr)
 struct memory *mem_chunks;                      /* store mem chunks here */
 struct mem_map *map_ptr;                        /* memory to remove */
 {
-/* Remove server memory from the free memory list. The boot monitor
- * promises to put processes at the start of memory chunks. The 
- * tasks all use same base address, so only the first task changes
- * the memory lists. The servers and init have their own memory
- * spaces and their memory will be removed from the list.
+/* Remove server memory from the free memory list.
  */
   struct memory *memp;
   for (memp = mem_chunks; memp < &mem_chunks[NR_MEMS]; memp++) {
-        if (memp->base == map_ptr[T].mem_phys) {
-                memp->base += map_ptr[T].mem_len + map_ptr[S].mem_vir;
-                memp->size -= map_ptr[T].mem_len + map_ptr[S].mem_vir;
-                break;
-        }
+		if(memp->base <= map_ptr[T].mem_phys 
+			&& memp->base+memp->size >= map_ptr[T].mem_phys)
+		{
+			if (memp->base == map_ptr[T].mem_phys) {
+					memp->base += map_ptr[T].mem_len + map_ptr[S].mem_vir;
+					memp->size -= map_ptr[T].mem_len + map_ptr[S].mem_vir;
+			} else {
+				struct memory *mempr;
+				/* have to split mem_chunks */
+				if(mem_chunks[NR_MEMS-1].size>0)
+					panic("reserve_proc_mem: can't find free mem_chunks to map: 0x%lx",
+						map_ptr[T].mem_phys);
+				for(mempr=&mem_chunks[NR_MEMS-1];mempr>memp;mempr--) {
+					*mempr=*(mempr-1);
+				}
+				assert(memp < &mem_chunks[NR_MEMS-1]);
+				(memp+1)->base = map_ptr[T].mem_phys + map_ptr[T].mem_len + map_ptr[S].mem_vir;
+				(memp+1)->size = memp->base + memp->size 
+					- (map_ptr[T].mem_phys + map_ptr[T].mem_len + map_ptr[S].mem_vir);
+				memp->size = map_ptr[T].mem_phys - memp->base;
+			}
+			break;
+		}
   }
-  if (memp >= &mem_chunks[NR_MEMS])
-  {
+  if (memp >= &mem_chunks[NR_MEMS]) {
 		panic("reserve_proc_mem: can't find map in mem_chunks: 0x%lx",
 			map_ptr[T].mem_phys);
   }
