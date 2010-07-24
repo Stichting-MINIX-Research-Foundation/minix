@@ -271,7 +271,8 @@ user_from_uid(uid_t uid, int noname)
 
 	if ((uidtb == NULL) && (uidtb_start() < 0))
 		return (NULL);
-
+	if (uid < 0)
+		return NULL;
 	/*
 	 * see if we have this uid cached
 	 */
@@ -342,6 +343,8 @@ group_from_gid(gid_t gid, int noname)
 
 	if ((gidtb == NULL) && (gidtb_start() < 0))
 		return (NULL);
+	if (gid < 0)
+		return NULL;
 
 	/*
 	 * see if we have this gid cached
