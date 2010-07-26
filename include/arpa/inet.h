@@ -31,6 +31,7 @@ _PROTOTYPE( uint32_t ntohl, (uint32_t _netval)				);
 _PROTOTYPE( uint16_t ntohs, (uint16_t _netval)				);
 _PROTOTYPE( char *inet_ntop, (int af, const void *src, char *dst, 
 							uint32_t size)	);
+_PROTOTYPE( int inet_pton, (int af, const char *src, void *dst)		);
 
 #ifdef _MINIX
 /* Additional functions */

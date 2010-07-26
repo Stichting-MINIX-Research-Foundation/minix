@@ -37,6 +37,7 @@ SRCS+=  \
 	inet_network.c \
 	inet_ntoa.c \
 	inet_ntop.c \
+	inet_pton.c \
 	listen.c \
 	memcspn.c \
 	nameinfo.c \
