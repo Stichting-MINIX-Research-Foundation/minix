@@ -81,13 +81,34 @@ tmpcategories=/tmp/categories.$$
 tmppackages=/tmp/packages.$$
 
 # some base parameters
-base=ftp://ftp.NetBSD.org/pub/pkgsrc/packages
+site=ftp.minix3.org
+base=pub/minix/packages
 release=`${unameprog} -r | ${sedprog} -e 's/_STABLE//'`
-machine=`${unameprog} -m`
+machine=`${unameprog} -p`
 
-sleepsecs=1
+read_ftp_dir()
+{
+	ftp_base=$1
+	ftp_dir=$2
+
+${ftpprog} <<EOF
+open $ftp_base
+user
+anonymous
+cd $ftp_dir
+ls
+EOF
+}
+
+get_dir_entries()
+{
+	start='150 Here comes the directory listing.'
+	end='226 Directory send OK.'
+	sed -n "/$start/,/$end/{ /$start/! {/$end/!p;}; }"		
+}
 
 doit=""
+sleepsecs=0
 
 while [ $# -gt 0 ]; do
 	case $1 in
@@ -111,10 +132,9 @@ while true; do
 	case "$category" in
 	"")	# get possible categories
 		if [ ! -f $tmpcategories ]; then
-			${echoprog} "Downloading package categories from ${base}..."
+			${echoprog} "Downloading package categories from ftp://${site}/${base}..."
 			${echoprog} "** QUIT" > $tmpcategories
-			${echoprog} ls | ${ftpprog} ${base}/${release}/${machine}/ 2>/dev/null | \
-				${awkprog} 'NF == 9 { if ($9 != "All") print $9 }' >> $tmpcategories
+			read_ftp_dir $site $base/${release}/${machine} | get_dir_entries >> $tmpcategories
 		fi
 
 		# check for bad release numbering
@@ -143,11 +163,10 @@ while true; do
 
 		# get possible packages
 		${echoprog} ""
-		${echoprog} "Downloading package names from ${base}/${category}..."
+		${echoprog} "Downloading package names from ftp://${site}/${base}/${category}..."
 		${echoprog} "** QUIT" > $tmppackages
 		${echoprog} "** Change category" >> $tmppackages
-		${echoprog} ls | ${ftpprog} ${base}/${release}/${machine}/${category}/ 2>/dev/null \
-			| ${awkprog} 'NF == 11 { print $9 }' >> $tmppackages
+		read_ftp_dir $site $base/${release}/${machine}/${category} | get_dir_entries >> $tmppackages
 		;;
 	esac
 
@@ -185,9 +204,9 @@ while true; do
 
 	# Tell people what we're doing
 	${echoprog} ""
-	${echoprog} "Adding package ${base}/${release}/${machine}/${category}/${package}"
+	${echoprog} "Adding package ftp://${site}/${base}/${release}/${machine}/${category}/${package}"
 
-	cmd="env PKG_PATH=${base}/${release}/${machine}/All ${pkg_addprog} ${package}"
+	cmd="${pkg_addprog} ftp://${site}/${base}/${release}/${machine}/All/${package}"
 
 	# check if we need to become root for this
 	if [ `${idprog} -u` != 0 ]; then
