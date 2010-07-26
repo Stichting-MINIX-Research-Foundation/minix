@@ -110,4 +110,5 @@ SRCS+= 	 \
 	priority.c \
 	pread.c \
 	pwrite.c \
-	usleep.c
+	usleep.c \
+	poll.c
