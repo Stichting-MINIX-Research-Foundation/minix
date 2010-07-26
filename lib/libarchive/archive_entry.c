@@ -82,6 +82,9 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_entry.c 201096 2009-12-28 02:41:
 #define	makedev(maj,min) ((0xff00 & ((maj)<<8)) | (0xffff00ff & (min)))
 #endif
 
+#include <grp.h>
+#include <pwd.h>
+
 /* Play games to come up with a suitable makedev() definition. */
 #ifdef __QNXNTO__
 /* QNX.  <sigh> */
@@ -804,10 +807,27 @@ archive_entry_copy_fflags_text_w(struct archive_entry *entry,
 }
 
 void
-archive_entry_set_gid(struct archive_entry *entry, gid_t g)
+archive_entry_set_gid(struct archive_entry *entry, int g)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_gid = g;
+	if(entry->ae_stat.aest_gid != g) {
+		static int warned = 0;
+		static struct group *nobodygroup;
+		gid_t truncgroup;
+		if(!nobodygroup)
+			nobodygroup = getgrnam("nobody");
+		if(nobodygroup)
+			truncgroup = nobodygroup->gr_gid;
+		else
+			truncgroup = 99;
+		if(!warned) {
+			fprintf(stderr, "libarchive: gid %d out of range; will be extracted as %d\n", 
+				g, truncgroup);
+			warned = 1;
+		}
+		entry->ae_stat.aest_gid = truncgroup;
+	}
 }
 
 void
@@ -1159,10 +1179,28 @@ archive_entry_update_symlink_utf8(struct archive_entry *entry, const char *linkn
 }
 
 void
-archive_entry_set_uid(struct archive_entry *entry, uid_t u)
+archive_entry_set_uid(struct archive_entry *entry, int u)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_uid = u;
+
+	if(entry->ae_stat.aest_uid != u) {
+		static int warned = 0;
+		static struct passwd *nobodyuser;
+		uid_t truncuser;
+		if(!nobodyuser)
+			nobodyuser = getpwnam("nobody");
+		if(nobodyuser)
+			truncuser = nobodyuser->pw_uid;
+		else
+			truncuser = 99;
+		if(!warned) {
+			fprintf(stderr, "libarchive: uid %d out of range; will be extracted as %d\n", 
+				u, truncuser);
+			warned = 1;
+		}
+		entry->ae_stat.aest_uid = truncuser;
+	}
 }
 
 void

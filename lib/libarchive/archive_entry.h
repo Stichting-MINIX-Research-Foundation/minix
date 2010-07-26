@@ -270,7 +270,7 @@ __LA_DECL const char *archive_entry_copy_fflags_text(struct archive_entry *,
 	    const char *);
 __LA_DECL const wchar_t *archive_entry_copy_fflags_text_w(struct archive_entry *,
 	    const wchar_t *);
-__LA_DECL void	archive_entry_set_gid(struct archive_entry *, __LA_GID_T);
+__LA_DECL void	archive_entry_set_gid(struct archive_entry *, int);
 __LA_DECL void	archive_entry_set_gname(struct archive_entry *, const char *);
 __LA_DECL void	archive_entry_copy_gname(struct archive_entry *, const char *);
 __LA_DECL void	archive_entry_copy_gname_w(struct archive_entry *, const wchar_t *);
@@ -315,7 +315,7 @@ __LA_DECL void	archive_entry_set_symlink(struct archive_entry *, const char *);
 __LA_DECL void	archive_entry_copy_symlink(struct archive_entry *, const char *);
 __LA_DECL void	archive_entry_copy_symlink_w(struct archive_entry *, const wchar_t *);
 __LA_DECL int	archive_entry_update_symlink_utf8(struct archive_entry *, const char *);
-__LA_DECL void	archive_entry_set_uid(struct archive_entry *, __LA_UID_T);
+__LA_DECL void	archive_entry_set_uid(struct archive_entry *, int);
 __LA_DECL void	archive_entry_set_uname(struct archive_entry *, const char *);
 __LA_DECL void	archive_entry_copy_uname(struct archive_entry *, const char *);
 __LA_DECL void	archive_entry_copy_uname_w(struct archive_entry *, const wchar_t *);
