@@ -61,6 +61,7 @@ typedef struct __iobuf {
 
 #define	TMP_MAX		999
 #define	L_tmpnam	(sizeof("/tmp/") + FILENAME_MAX)
+#define P_tmpdir "/tmp"
 #define __STDIO_VA_LIST__	void *
 
 typedef long int	fpos_t;
