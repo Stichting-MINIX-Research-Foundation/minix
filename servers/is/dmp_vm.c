@@ -8,10 +8,43 @@
 
 #define LINES 24
 
-PRIVATE void print_region(struct vm_region_info *vri)
+PRIVATE void print_region(struct vm_region_info *vri, int *n)
 {
+  static int vri_count, vri_prev_set;
+  static struct vm_region_info vri_prev;
   char c;
+  int is_repeat;
 
+  /* part of a contiguous identical run? */
+  is_repeat =
+	vri &&
+  	vri_prev_set && 
+  	vri->vri_seg == vri_prev.vri_seg &&
+	vri->vri_prot == vri_prev.vri_prot &&
+	vri->vri_flags == vri_prev.vri_flags &&
+	vri->vri_length == vri_prev.vri_length &&
+	vri->vri_addr == vri_prev.vri_addr + vri_prev.vri_length;
+  if (vri) {
+  	vri_prev_set = 1;
+	vri_prev = *vri;
+  } else {
+	vri_prev_set = 0;
+  }
+  if (is_repeat) {
+	vri_count++;
+	return;
+  }
+
+  if (vri_count > 0) {
+	printf("  (contiguously repeated %d more times)\n", vri_count);
+	(*n)++;
+	vri_count = 0;
+  }
+
+  /* NULL indicates the end of a list of mappings, nothing else to do */
+  if (!vri) return;
+
+  /* first in a run, print all info */
   switch (vri->vri_seg) {
   case T: c = 'T'; break;
   case D: c = 'D'; break;
@@ -25,6 +58,7 @@ PRIVATE void print_region(struct vm_region_info *vri)
 	(vri->vri_prot & PROT_EXEC) ? 'x' : '-',
 	(vri->vri_flags & MAP_SHARED) ? 's' : 'p',
 	vri->vri_length / 1024L);
+  (*n)++;
 }
 
 PUBLIC void vm_dmp()
@@ -96,10 +130,22 @@ PUBLIC void vm_dmp()
 		n++;
 	}
 
-	for (j = 0; j < r; j++) {
-		print_region(&vri[j]);
-		n++;
+	while (r > 0) {
+		for (j = 0; j < r; j++) {
+			print_region(&vri[j], &n);
+		}
+
+		if (LINES - n - 1 <= 0) break;
+		r = vm_info_region(proc[i].p_endpoint, vri, LINES - n - 1,
+			&prev_base);
+
+		if (r < 0) {
+			printf("Process %d (%s): error %d\n",
+				proc[i].p_endpoint, proc[i].p_name, r);
+			n++;
+		}
 	}
+	print_region(NULL, &n);
 
 	if (n > LINES) printf("IS: internal error\n");
 	if (n == LINES) break;
