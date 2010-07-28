@@ -15,8 +15,6 @@
 755 ast     other    /usr/ast
 755 root    operator /usr/bin
 755 root    operator /usr/etc
-755 root    operator /usr/db
-755 root    operator /usr/db/pkg
 755 root    operator /usr/pkg
 755 root    operator /home
 755 root    operator /usr/include
@@ -90,4 +88,7 @@
 755  root    operator  /var
 /var/log -> /usr/log
 755  root    operator  /usr/log
+755  root    operator  /usr/var
+755  root    operator  /usr/var/db
+755  root    operator  /usr/var/db/pkg
 755  root    operator  /var/run
