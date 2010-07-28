@@ -55,7 +55,7 @@ FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, endpoint_t src,
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 	asynmsg_t *table, size_t size));
 FORWARD _PROTOTYPE( int deadlock, (int function,
-		register struct proc *caller, proc_nr_t src_dst));
+		register struct proc *caller, endpoint_t src_dst_e));
 FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
 FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
 		int *postponed));
@@ -453,10 +453,10 @@ PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 /*===========================================================================*
  *				deadlock				     * 
  *===========================================================================*/
-PRIVATE int deadlock(function, cp, src_dst) 
+PRIVATE int deadlock(function, cp, src_dst_e) 
 int function;					/* trap number */
 register struct proc *cp;			/* pointer to caller */
-proc_nr_t src_dst;				/* src or dst process */
+endpoint_t src_dst_e;				/* src or dst process */
 {
 /* Check for deadlock. This can happen if 'caller_ptr' and 'src_dst' have
  * a cyclic dependency of blocking send and receive calls. The only cyclic 
@@ -471,10 +471,12 @@ proc_nr_t src_dst;				/* src or dst process */
   processes[0] = cp;
 #endif
 
-  /* FIXME: this compares a proc_nr_t with a endpoint_t */
-  while (src_dst != ANY) { 			/* check while process nr */
-      endpoint_t dep;
-      xp = proc_addr(src_dst);			/* follow chain of processes */
+  while (src_dst_e != ANY) { 			/* check while process nr */
+      int src_dst_slot;
+      okendpt(src_dst_e, &src_dst_slot);
+      xp = proc_addr(src_dst_slot);		/* follow chain of processes */
+      assert(proc_ptr_ok(xp));
+      assert(!RTS_ISSET(xp, RTS_SLOT_FREE));
 #if DEBUG_ENABLE_IPC_WARNINGS
       processes[group_size] = xp;
 #endif
@@ -483,20 +485,14 @@ proc_nr_t src_dst;				/* src or dst process */
       /* Check whether the last process in the chain has a dependency. If it 
        * has not, the cycle cannot be closed and we are done.
        */
-      if((dep = P_BLOCKEDON(xp)) == NONE)
+      if((src_dst_e = P_BLOCKEDON(xp)) == NONE)
 	return 0;
-
-      if(dep == ANY)
-       /* FIXME: this assigns a proc_nr_t to a endpoint_t */
-	src_dst = ANY;
-      else
-	okendpt(dep, &src_dst);
 
       /* Now check if there is a cyclic dependency. For group sizes of two,  
        * a combination of SEND(REC) and RECEIVE is not fatal. Larger groups
        * or other combinations indicate a deadlock.  
        */
-      if (src_dst == proc_nr(cp)) {		/* possible deadlock */
+      if (src_dst_e == cp->p_endpoint) {	/* possible deadlock */
 	  if (group_size == 2) {		/* caller and src_dst */
 	      /* The function number is magically converted to flags. */
 	      if ((xp->p_rts_flags ^ (function << 2)) & RTS_SENDING) { 
@@ -586,7 +582,7 @@ PUBLIC int mini_send(
 	}
 
 	/* Check for a possible deadlock before actually blocking. */
-	if (deadlock(SEND, caller_ptr, dst_p)) {
+	if (deadlock(SEND, caller_ptr, dst_e)) {
 		return(ELOCKED);
 	}
 
@@ -759,7 +755,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
    */
   if ( ! (flags & NON_BLOCKING)) {
       /* Check for a possible deadlock before actually blocking. */
-      if (deadlock(RECEIVE, caller_ptr, src_p)) {
+      if (deadlock(RECEIVE, caller_ptr, src_e)) {
           return(ELOCKED);
       }
 
