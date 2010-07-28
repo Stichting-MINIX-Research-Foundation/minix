@@ -85,6 +85,7 @@ const char *_sys_errlist[] = {
 	"Protocol not available",	/* ENOPROTOOPT */
 	"Operation not supported",	/* EOPNOTSUPP */
 	"Network is down",		/* ENETDOWN */
+	"Protocol family not supported", /* EPFNOSUPPORT */
 };
 
 const int _sys_nerr = sizeof(_sys_errlist) / sizeof(_sys_errlist[0]);
