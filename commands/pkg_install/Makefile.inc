@@ -2,7 +2,7 @@
 
 BINDIR=	/usr/sbin
 # These have to be passed as strings to the c files.
-PKG_LOG_DIR=		\"/usr/db/pkg\"
+PKG_LOG_DIR=		\"/usr/var/db/pkg\"
 PKG_SYCONFDIR=		\"/etc\"
 PKG_OPSYS_NAME=		\"Minix\"
 PKG_MACHINE_ARCH=   \"${ARCH}\"
