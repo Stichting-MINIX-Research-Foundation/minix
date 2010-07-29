@@ -41,6 +41,8 @@
 .extern _rem_part				! To pass partition info
 .extern _k_flags				! Special kernel flags
 .extern _mem					! Free memory list
+.extern _emem				! Free memory list for E820
+.extern _mem_entries				! Free memory E820 list entries
 .extern _cdbooted				! Whether we booted from CD
 .extern _cddevice				! Whether we booted from CD
 
@@ -143,6 +145,64 @@ sepID:
 	mov	_runsize+0, ax
 	mov	_runsize+2, dx	! 32 bit size of this process
 
+!Determine memory using the 0xE820 BIOS function if available
+	mov	di, #_emem
+	mov	20(di), #1	! force a valid ACPI 3.X entry
+
+	.data1 o32
+	xor	bx, bx		! zero EBX
+	xor	bp, bp		!zero bp
+	.data1 o32
+	mov 	dx, e820_magic
+	.data1 o32
+	mov	cx, const_24		! request 24 bytes
+	
+	.data1 o32
+	mov	ax, const_0xe820
+	int	0x15
+	jc	e820_failed
+
+	.data1 o32
+	mov 	dx, e820_magic
+	.data1 o32
+	cmp	dx, ax
+	jne	e820_failed
+
+	.data1 o32
+	test	bx, bx
+	je	e820_failed
+	jmp	e820_gotit
+
+e820_next:
+	.data1 o32
+	mov	ax, const_0xe820
+	mov	20(di), #1	! force a valid ACPI 3.X entry
+	
+	.data1 o32
+	mov	cx, const_24	! request 24 bytes
+	int	0x15
+	jc	e820_done
+	.data1 o32
+	mov 	dx, e820_magic
+
+
+e820_gotit:
+	jcxz	e820_skip
+	cmp	bp, #16
+	je	e820_done	! we have only space for 16 entries
+	inc	bp
+	add	di, #24
+e820_skip:
+	.data1 o32
+	test	bx, bx
+	jne	e820_next
+
+e820_done:
+	mov	_mem_entries, bp
+	jmp	memory_detected
+
+e820_failed:
+
 ! Determine available memory as a list of (base,size) pairs as follows:
 ! mem[0] = low memory, mem[1] = memory between 1M and 16M, mem[2] = memory
 ! above 16M.  Last two coalesced into mem[1] if adjacent.
@@ -184,6 +244,8 @@ got_ext:
 adj_ext:
 	add	14(di), bx	! Add ext mem above 16M to mem below 16M
 no_ext:
+
+memory_detected:
 
 
 ! Time to switch to a higher level language (not much higher)
@@ -1533,6 +1595,15 @@ p_mcs_desc:
 	! Monitor code segment descriptor (64 kb flat)
 	.data2	0xFFFF, UNSET
 	.data1	UNSET, 0x9A, 0x00, 0x00
+
+e820_magic:
+!	.data1 0x53, 0x4D, 0x41, 0x50
+	.data1 0x50, 0x41, 0x4D, 0x53
+const_24:
+	.data1 0x18, 0x0, 0x0, 0x0
+const_0xe820:
+	.data2 0xe820
+
 
 .bss
 	.comm	old_vid_mode, 2	! Video mode at startup

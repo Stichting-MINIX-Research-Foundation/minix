@@ -538,11 +538,30 @@ static void initialize(void)
 	 * done to get out of the way of Minix, and to put the data area
 	 * cleanly inside a 64K chunk if using BIOS I/O (no DMA problems).
 	 */
-	u32_t oldaddr= caddr;
-	u32_t memend= mem[0].base + mem[0].size;
-	u32_t newaddr= (memend - runsize) & ~0x0000FL;
+	u32_t oldaddr;
+	u32_t memend;
+	u32_t newaddr;
 #if !DOS
-	u32_t dma64k= (memend - 1) & ~0x0FFFFL;
+	u32_t dma64k;
+#endif
+
+	if (mem_entries) {
+		int i, j;
+		j = 0;
+		for(i = 0; i < mem_entries ; i++) {
+			if (j < 3 && emem[i].type == 1) {
+				mem[j].base = emem[i].base_lo;
+				mem[j].size = emem[i].size_lo;
+				j++;
+			}
+		}
+	}
+
+	oldaddr= caddr;
+	memend= mem[0].base + mem[0].size;
+	newaddr= (memend - runsize) & ~0x0000FL;
+#if !DOS
+	dma64k= (memend - 1) & ~0x0FFFFL;
 
 
 	/* Check if data segment crosses a 64K boundary. */
