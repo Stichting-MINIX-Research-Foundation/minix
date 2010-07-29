@@ -1,3 +1,6 @@
+#ifndef __MINIX_DRIVER_H__
+#define __MINIX_DRIVER_H__
+
 /* Types and constants shared between the generic and device dependent
  * device driver code.
  */
@@ -95,3 +98,5 @@ extern u8_t *tmp_buf;			/* the DMA buffer */
 extern u8_t tmp_buf[];			/* the DMA buffer */
 #endif
 extern phys_bytes tmp_phys;		/* phys address of DMA buffer */
+
+#endif /* __MINIX_DRIVER_H__ */
