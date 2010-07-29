@@ -60,8 +60,6 @@ FORWARD _PROTOTYPE( u8_t do_inb, (port_t port)				);
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN int env_argc;
-EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *

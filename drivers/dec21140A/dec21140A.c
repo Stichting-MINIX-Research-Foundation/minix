@@ -66,7 +66,6 @@ PRIVATE int de_instance;
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *

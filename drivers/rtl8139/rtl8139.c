@@ -141,8 +141,6 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
-EXTERN int env_argc;
-EXTERN char **env_argv;
 
 /*===========================================================================*
  *				main					     *

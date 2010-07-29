@@ -30,6 +30,9 @@
 #define EP_SET		3	/* var = 1:2:3 (nonblank field) */
 #define EP_EGETKENV	4	/* sys_getkenv() failed ... */
 
+extern int env_argc;
+extern char **env_argv;
+
 _PROTOTYPE( void env_setargs, (int argc, char *argv[])		        );
 _PROTOTYPE( int env_get_param, (char *key, char *value, int max_size)	);
 _PROTOTYPE( int env_prefix, (char *env, char *prefix)			);

@@ -77,8 +77,6 @@ static char *buf_array, *buffer;		/* contiguous buffer */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-EXTERN int env_argc;
-EXTERN char **env_argv;
 
 /*===========================================================================*
  *				carry					     *

@@ -180,7 +180,6 @@ PRIVATE u32_t system_hz;
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-EXTERN char **env_argv;
 
 /*****************************************************************************
  *            main                                                           *
