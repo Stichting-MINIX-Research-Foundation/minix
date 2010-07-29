@@ -10,5 +10,6 @@ kmem:*:8:
 www:*:9:
 driver:*:10:
 server:*:11:
+sshd:*:23:
 smtpd:*:26:
 nogroup:*:99:
