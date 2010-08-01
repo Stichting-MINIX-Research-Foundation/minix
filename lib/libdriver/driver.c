@@ -65,6 +65,7 @@ int device_caller;
 PRIVATE mq_t *queue_head = NULL;
 PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
 PRIVATE int next_open_devs_slot = 0;
+PRIVATE int driver_running;
 
 /*===========================================================================*
  *			     clear_open_devs				     *
@@ -325,6 +326,17 @@ int *status_ptr;
 }
 
 /*===========================================================================*
+ *				driver_terminate			     *
+ *===========================================================================*/
+PUBLIC void driver_terminate(void)
+{
+/* Break out of the main driver loop after finishing the current request.
+ */
+
+  driver_running = FALSE;
+}
+
+/*===========================================================================*
  *				driver_task				     *
  *===========================================================================*/
 PUBLIC void driver_task(dp, type)
@@ -336,10 +348,12 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
   int r, proc_nr, ipc_status;
   message mess;
 
+  driver_running = TRUE;
+
   /* Here is the main loop of the disk task.  It waits for a message, carries
    * it out, and sends a reply.
    */
-  while (TRUE) {
+  while (driver_running) {
 	if ((r=driver_receive_mq(&mess, &ipc_status)) != OK)
 		panic("driver_receive_mq failed: %d", r);
 
