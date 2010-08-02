@@ -1,6 +1,6 @@
 # Makefile for ramdisk image
 
-PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
+PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk mount newroot \
 	pci sh service sysenv mfs
 EXTRA=system.conf passwd rs.single
 
@@ -66,6 +66,12 @@ loadramdisk:  ../../commands/loadramdisk/loadramdisk
 
 ../../commands/loadramdisk/loadramdisk:
 	$(MAKE) -C ../../commands/loadramdisk
+
+mount:  ../../commands/mount/mount
+	install -s ../../commands/$@/$@ $@
+
+../../commands/mount/mount:
+	$(MAKE) -C ../../commands/mount
 
 newroot:  ../../commands/newroot/newroot
 	install -s ../../commands/$@/$@ $@
