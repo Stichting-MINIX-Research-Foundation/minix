@@ -14,10 +14,11 @@
 #define MAX_ERROR 4
 #define ITERATIONS 3
 
+#include "common.c"
+
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 
-int errct;
 int subtest;
 int superuser;			/* True if we are root. */
 
@@ -35,8 +36,6 @@ _PROTOTYPE(void test23c, (void));
 _PROTOTYPE(void makelongnames, (void));	/* Fill MaxName etc. */
 _PROTOTYPE(char *last_index, (char *string, int ch));
 _PROTOTYPE(char *my_getcwd, (char *buf, int size));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
@@ -44,10 +43,7 @@ int main(int argc, char *argv[])
 
   sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 23 ");
-  fflush(stdout);
-  System("rm -rf DIR_23; mkdir DIR_23");
-  Chdir("DIR_23");
+  start(23);
   makelongnames();
   superuser = (geteuid() == 0);
 
@@ -129,19 +125,12 @@ void test23a()
   if (chdir(".//.//") != 0) e(39);	/* .//.// == current dir */
   if (getcwd(buf, PATH_MAX) != buf) e(40);
   if (strcmp(buf, cwd) != 0) e(41);	/* we might be at '/' */
-#ifdef _MINIX
-  /* XXX - my_getcwd() is old rubbish.  It reads the directory directly instead
-   * of through the directory library.  It uses a fixed size buffer instead of
-   * a size related to PATH_MAX, NAME_MAX or the size required.
-   */
-  if (my_getcwd(buf, PATH_MAX) != buf) e(42);	/* get cwd my way */
-  if (strcmp(cwd, buf) != 0) e(43);
-#endif
   System("rm -rf foo");
 }
 
 void test23b()
 {				/* Test critical values. */
+  int does_truncate;
   subtest = 2;
 
   System("rm -rf ../DIR_23/*");
@@ -168,16 +157,13 @@ void test23b()
   if (getcwd(buf, PATH_MAX) != buf) e(16);
   if (strcmp(buf, cwd) != 0) e(17);
 
+  does_truncate = does_fs_truncate();
   if (chdir(ToLongName) != -1) e(18);
-#ifdef _POSIX_NO_TRUNC
-# if _POSIX_NO_TRUNC - 0 != -1
-  if (errno != ENAMETOOLONG) e(20);
-# else
-  if (errno != ENOENT) e(20);
-# endif
-#else
-# include "error, this case requires dynamic checks and is not handled"
-#endif
+  if (does_truncate) {
+	if (errno != ENOENT) e(19);
+  } else {
+  	if (errno != ENAMETOOLONG) e(20);
+  }
 
   if (getcwd(buf, PATH_MAX) != buf) e(21);
   if (strcmp(buf, cwd) != 0) e(22);
@@ -381,33 +367,3 @@ int size;
   return buf;
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_23");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

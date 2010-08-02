@@ -19,13 +19,14 @@
 #define MAX_ERROR	4
 #define ITERATIONS	2
 
+#include "common.c"
+
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 #define Creat(f)	if (close(creat(f,0777))!=0) printf("Can't creat %s\n",f)
 #define Report(s,n)	printf("Subtest %d" s,subtest,(n))
 
-int errct = 0;
 int subtest = 1;
 int superuser;
 char MaxName[NAME_MAX + 1];	/* Name of maximum length */
@@ -56,10 +57,7 @@ int main(int argc, char *argv[])
   }
 
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 25 ");
-  fflush(stdout);
-  System("rm -rf DIR_25; mkdir DIR_25");
-  Chdir("DIR_25");
+  start(25);
   makelongnames();
   superuser = (geteuid() == 0);
 
@@ -570,7 +568,7 @@ void test25d()
 
 void test25e()
 {
-  int fd;
+  int fd, does_truncate;
   char *noread = "noread";	/* Name for unreadable file. */
   char *nowrite = "nowrite";	/* Same for unwritable. */
   int stat_loc;
@@ -675,13 +673,21 @@ void test25e()
   
 
   /* Test ToLongName and ToLongPath */
-  if ((fd = open(ToLongName, O_RDWR | O_CREAT, 0777)) != 3) e(47);
-  if (close(fd) != 0) e(48);
+  does_truncate = does_fs_truncate();
+  fd = open(ToLongName, O_RDWR | O_CREAT, 0777);
+  if (does_truncate) {
+  	if (fd == -1) e(47);
+  	if (close(fd) != 0) e(48);
+  } else {
+  	if (fd != -1) e(49);
+  	(void) close(fd);		/* Just in case */
+  }
+
   ToLongPath[PATH_MAX - 2] = '/';
   ToLongPath[PATH_MAX - 1] = 'a';
-  if ((fd = open(ToLongPath, O_RDWR | O_CREAT, 0777)) != -1) e(49);
-  if (errno != ENAMETOOLONG) e(50);
-  if (close(fd) != -1) e(51);
+  if ((fd = open(ToLongPath, O_RDWR | O_CREAT, 0777)) != -1) e(50);
+  if (errno != ENAMETOOLONG) e(51);
+  if (close(fd) != -1) e(52);
   ToLongPath[PATH_MAX - 1] = '/';
 }
 
@@ -706,33 +712,3 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_25");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

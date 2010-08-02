@@ -15,11 +15,12 @@
 #define MAX_ERROR	4
 #define ITERATIONS     10
 
+#include "common.c"
+
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-int errct = 0;
 int subtest = 1;
 int superuser;
 char MaxName[NAME_MAX + 1];	/* Name of maximum length */
@@ -31,8 +32,6 @@ _PROTOTYPE(void test31a, (void));
 _PROTOTYPE(void test31b, (void));
 _PROTOTYPE(void test31c, (void));
 _PROTOTYPE(void makelongnames, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
@@ -40,14 +39,11 @@ int main(int argc, char *argv[])
 
   sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 31 ");
-  fflush(stdout);
-  System("rm -rf DIR_31; mkdir DIR_31");
-  Chdir("DIR_31");
+  umask(0000);
+  start(31);
   makelongnames();
   superuser = (geteuid() == 0);
 
-  umask(0000);
 
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 0001) test31a();
@@ -152,6 +148,7 @@ void test31b()
 
 void test31c()
 {
+  int does_truncate;
   subtest = 3;
 
   System("rm -rf ../DIR_31/*");
@@ -199,16 +196,14 @@ void test31c()
   System("rm -rf bar");
 
   /* Test ToLongName and ToLongPath */
-#ifdef _POSIX_NO_TRUNC
-# if _POSIX_NO_TRUNC - 0 != -1
-  if (mkfifo(ToLongName, 0777) != -1) e(19);
-  if (errno != ENAMETOOLONG) e(20);
-# else
-  if (mkfifo(ToLongName, 0777) != 0) e(21);
-# endif
-#else
-# include "error, this case requires dynamic checks and is not handled"
-#endif
+  does_truncate = does_fs_truncate();
+  if (does_truncate) {
+	if (mkfifo(ToLongName, 0777) != 0) e(19);
+  } else {
+	if (mkfifo(ToLongName, 0777) != -1) e(20);
+	if (errno != ENAMETOOLONG) e(21);
+  }
+
   ToLongPath[PATH_MAX - 2] = '/';
   ToLongPath[PATH_MAX - 1] = 'a';
   if (mkfifo(ToLongPath, 0777) != -1) e(22);
@@ -237,33 +232,3 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_31");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

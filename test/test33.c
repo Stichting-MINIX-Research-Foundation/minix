@@ -15,13 +15,14 @@
 #define MAX_ERROR      1
 #define ITERATIONS     2
 
+#include "common.c"
+
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 #define Chmod(a,b)	if (chmod(a,b) != 0) printf("Can't chmod %s\n", a)
 #define Mkfifo(f)	if (mkfifo(f,0777)!=0) printf("Can't make fifo %s\n", f)
 
-int errct = 0;
 int subtest = 1;
 int superuser;			/* nonzero if uid == euid (euid == 0 always) */
 char MaxName[NAME_MAX + 1];	/* Name of maximum length */
@@ -35,8 +36,6 @@ _PROTOTYPE(void test33c, (void));
 _PROTOTYPE(void test33d, (void));
 _PROTOTYPE(void test_access, (void));
 _PROTOTYPE(void makelongnames, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
@@ -44,21 +43,20 @@ int main(int argc, char *argv[])
 
   sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 33 ");
-  fflush(stdout);
+  umask(0000);
+  start(33);
 
   if (geteuid() != 0) {
 	printf("must be setuid root; test aborted\n");
+	cleanup();
 	exit(1);
   }
   if (getuid() == 0) {
        printf("must be setuid root logged in as someone else; test aborted\n");
+       cleanup();
        exit(1);
   }
 
-  umask(0000);
-  System("rm -rf DIR_33; mkdir DIR_33");
-  Chdir("DIR_33");
   makelongnames();
   superuser = (getuid() == 0);
 
@@ -324,7 +322,7 @@ void test33b()
 
 void test33c()
 {				/* Test errors returned. */
-  int i;
+  int i, fd, does_truncate;
 
   subtest = 3;
   System("rm -rf ../DIR_33/*");
@@ -360,17 +358,19 @@ void test33c()
   if (access("nosearch/file", F_OK) != 0) e(17);
 
   /* Test ToLongName and ToLongPath */
-#ifdef _POSIX_NO_TRUNC
-# if _POSIX_NO_TRUNC - 0 != -1
-  if (access(ToLongName, F_OK) != -1) e(23);
-  if (errno != ENAMETOOLONG) e(24);
-# else
-  if (close(creat(ToLongName, 0777)) != 0) e(25);
-  if (access(ToLongName, F_OK) != 0) e(26);
-# endif
-#else
-# include "error, this case requires dynamic checks and is not handled"
-#endif
+  does_truncate = does_fs_truncate();
+  if (does_truncate) {
+  	if ((fd = creat(ToLongName, 0777)) != 0) e(18);
+  	if (close(fd) != 0) e(19);
+	if (access(ToLongName, F_OK) != 0) e(20);
+  } else {
+  	if ((fd = creat(ToLongName, 0777)) != -1) e(21);
+	if (errno != ENAMETOOLONG) e(22);
+  	(void) close(fd);	/* Just in case */
+	if (access(ToLongName, F_OK) != -1) e(23);
+	if (errno != ENAMETOOLONG) e(24);
+  }
+
   ToLongPath[PATH_MAX - 2] = '/';
   ToLongPath[PATH_MAX - 1] = 'a';
   if (access(ToLongPath, F_OK) != -1) e(27);
@@ -618,33 +618,3 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_33");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

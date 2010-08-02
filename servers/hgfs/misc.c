@@ -72,6 +72,7 @@ PUBLIC int do_statvfs()
   statvfs.f_favail = 0;
   statvfs.f_fsid = state.dev;
   statvfs.f_flag = state.read_only ? ST_RDONLY : 0;
+  statvfs.f_flag |= ST_NOTRUNC;
   statvfs.f_namemax = NAME_MAX;
 
   return sys_safecopyto(m_in.m_source, m_in.REQ_GRANT, 0,

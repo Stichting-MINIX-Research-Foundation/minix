@@ -30,6 +30,10 @@ _PROTOTYPE( int fstatvfs, (int fd, struct statvfs *st)		    );
 _PROTOTYPE( int statvfs,  (const char *path, struct statvfs *st));
 
 /* Possible values for statvfs->f_flag */
-#define ST_RDONLY 0x1
-#define ST_NOSUID 0x2
+#define ST_RDONLY	0x001	/* Read-only file system */
+#define ST_NOSUID	0x002	/* Does not support the semantics of the
+				 * ST_ISUID and ST_ISGID file mode bits. */
+#define ST_NOTRUNC	0x004	/* File system does not truncate file names
+				 * longer than NAME_MAX */
+
 #endif /* _STAVTFS_H */

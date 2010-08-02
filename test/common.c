@@ -8,10 +8,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/statvfs.h>
 
 int common_test_nr = -1, errct = 0, subtest;
 
 _PROTOTYPE(void cleanup, (void));
+_PROTOTYPE(int does_fs_truncate, (void));
 _PROTOTYPE(void e, (int n));
 _PROTOTYPE(void quit, (void));
 _PROTOTYPE(void rm_rf_dir, (int test_nr));
@@ -39,6 +41,24 @@ int test_nr;
 	quit();
   }
 }
+
+int does_fs_truncate(void)
+{
+  struct statvfs stvfs;
+  int does_truncate = 0;
+  char cwd[PATH_MAX];		/* Storage for path to current working dir */
+
+  if (realpath(".", cwd) == NULL) e(7777);	/* Get current working dir */
+  if (statvfs(cwd, &stvfs) != 0) e(7778);	/* Get FS information */
+  /* Depending on how an FS handles too long file names, we have to adjust our
+   * error checking. If an FS does not truncate file names, it should generate
+   * an ENAMETOOLONG error when we provide too long a file name.
+   */
+  if (!(stvfs.f_flag & ST_NOTRUNC)) does_truncate = 1;
+ 
+  return(does_truncate); 
+}
+
 
 void rm_rf_dir(test_nr)
 int test_nr;
@@ -74,6 +94,8 @@ int test_nr;
 void e(n)
 int n;
 {
+  int err_number;
+  err_number = errno;	/* Store before printf can clobber it */
   if (errct == 0) printf("\n");	/* finish header */
   printf("Subtest %d,  error %d,  errno %d: %s\n",
 	 subtest, n, errno, strerror(errno));
@@ -82,7 +104,7 @@ int n;
 	cleanup();
 	exit(1);
   }
-  errno = 0;			/* don't leave it around to confuse next e() */
+  errno = err_number;	
 }
 
 void cleanup()

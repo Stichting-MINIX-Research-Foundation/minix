@@ -77,6 +77,8 @@ The filesystem is mounted read-only;
 Even the super-user may not write on it.
 .It Dv ST_NOSUID
 Setuid and setgid bits on files are not honored when they are executed.
+.It Dv ST_NOTRUNC
+File names longer than NAME_MAX are not truncated.
 .El
 .Sh SEE ALSO
 .Xr statvfs 2
