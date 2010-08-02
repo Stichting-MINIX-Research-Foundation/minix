@@ -1,3 +1,7 @@
+20100802:
+	/usr/src/etc/system.conf updated to include ext2 file server: copy it
+	(or merge it) to /etc/system.conf.
+
 20100719:
 	If you installed using a 3.1.6 image (or earlier) and haven't updated 
 	the boot monitor since r6246 you need to do so now:
