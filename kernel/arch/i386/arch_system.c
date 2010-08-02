@@ -68,6 +68,7 @@ PUBLIC int cpu_has_tsc;
 
 PUBLIC __dead void arch_shutdown(const int how)
 {
+	static char mybuffer[sizeof(params_buffer)];
 	vm_stop();
 
 	/* Mask all interrupts, including the clock. */
@@ -97,7 +98,6 @@ PUBLIC __dead void arch_shutdown(const int how)
 			arch_set_params("", 1);
 		if(minix_panicing) {
 			int source, dest;
-			static char mybuffer[sizeof(params_buffer)];
 			const char *lead = "echo \\n*** kernel messages:\\n";
 			const int leadlen = strlen(lead);
 			strcpy(mybuffer, lead);
@@ -127,10 +127,18 @@ PUBLIC __dead void arch_shutdown(const int how)
 
 			arch_set_params(mybuffer, strlen(mybuffer)+1);
 		}
-		if(mon_return)
+		if (mon_return)
 			arch_monitor();
-		else
-			arch_bios_poweroff();
+		else {
+			mybuffer[0] = '\0';
+			arch_get_params(mybuffer,sizeof(mybuffer));
+			if (strstr(mybuffer, "boot") ||
+				strstr(mybuffer, "menu") ||	
+				strstr(mybuffer, "reset"))
+				reset();
+			else 
+				arch_bios_poweroff();
+		}
 	} else {
 		/* Reset the system by forcing a processor shutdown. First stop
 		 * the BIOS memory test by setting a soft reset flag.
