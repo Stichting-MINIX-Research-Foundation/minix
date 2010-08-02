@@ -73,8 +73,8 @@ mount:  ../../commands/mount/mount
 ../../commands/mount/mount:
 	$(MAKE) -C ../../commands/mount
 
-newroot:  ../../commands/newroot/newroot
-	install -s ../../commands/$@/$@ $@
+newroot:  ../../commands/newroot/newroot.sh
+	install -s ../../commands/$@/$@.sh $@
 
 ../../commands/newroot/newroot:
 	$(MAKE) -C ../../commands/newroot
