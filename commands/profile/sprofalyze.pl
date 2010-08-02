@@ -12,7 +12,7 @@
 # Configuration options:
 
 # Location and parameters of nm program to extract symbol tables
-$nm = "/usr/bin/nm -dn";
+$nm = "/usr/bin/acknm -dn";
 
 # Location of src (including trailing /)
 	$src_root = qw(

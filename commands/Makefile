@@ -18,14 +18,14 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	less lex life loadkeys loadramdisk logger login look lp \
 	lpd ls lspci M m4 mail make  MAKEDEV man \
 	mdb mdocml mesg mined mkdep mkdir mkdist mkfifo mkfs mknod \
-	mkproto modem mount mt netconf newroot nice nm nohup \
+	mkproto modem mount mt netconf newroot nice acknm nohup \
 	nonamed od packit packman passwd paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
 	readfs reboot remsync rev rget rlogin rlogind rmdir \
 	rotate rsh rshd sed service setup shar size \
-	sleep slip sort spell split srccrc stat strings strip \
+	sleep slip sort spell split srccrc stat strings ackstrip \
 	stty su sum svclog swapfs swifi sync synctree sysenv \
 	syslogd tail talk talkd tar tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time tinyhalt top touch tr \

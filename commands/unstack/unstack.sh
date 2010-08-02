@@ -5,12 +5,12 @@ then	echo "Usage: $0 <executable> [0x... [0x... ] ]"
 	exit 1
 fi
 
-PATH=$PATH:/usr/gnu/bin
+PATH=$PATH:/usr/gnu/bin:/usr/pkg/bin
 
 if file $1 | grep NSYM >/dev/null 2>&1; then
   NM="gnm --radix=d"
 else
-  NM="nm -d"
+  NM="acknm -d"
 fi
 
 executable=$1
