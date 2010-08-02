@@ -54,18 +54,41 @@ gate_A20:
 	mov	$0x5301,%ax
 	mov	$0x0,%bx
 	int	0x15
+	jc	apm_err
 	
 	/* Enable power management */
 	mov	$0x5308,%ax
 	mov	$0x1,%bx
 	mov	$0x1,%cx
 	int	0x15
+	jc	apm_err
 	
 	/* Set power state to off */
 	mov	$0x5307,%ax
 	mov	$0x01,%bx
 	mov	$0x3,%cx
 	int	0x15
+	jc	apm_err
+0:	hlt
+	jmp	0b
+	
+poweroff_msg:
+.ascii	"You can poweroff the machine safely now"
+poweroff_msg_end:
+#define POWEROFF_MSG_LEN	(poweroff_msg_end-poweroff_msg)
+apm_err:
+	/* If APM can't perform the shutdown, print something to inform */
+	mov	$0x02, %ax	/* clear screen */
+	int	$0x10
+	
+	mov	$(BIOS_POWEROFF_ENTRY >> 4), %ax
+	mov	%ax, %es
+	mov	$0x1301, %ax
+	mov	$0x07, %bx
+	mov	$POWEROFF_MSG_LEN, %cx
+	mov	$0x0300, %dx
+	mov	$(poweroff_msg - _poweroff16), %bp
+	int	$0x10
 0:	hlt
 	jmp	0b
 	
