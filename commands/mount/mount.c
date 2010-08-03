@@ -26,7 +26,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int i, n, v, mountflags;
+  int i, n, v = 0, mountflags;
   char **ap, *vs, *opt, *err, *type, *args, *device;
   char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
 
@@ -61,13 +61,13 @@ char *argv[];
   device = argv[1];
   if (!strcmp(device, "none")) device = NULL;
 
-  /* auto-detect type */
-  v = fsversion(argv[1], "mount");
-  if (type == NULL) {
+  if ((type == NULL || !strcmp(type, MINIX_FS_TYPE)) && device != NULL) {
+	/* auto-detect type and/or version */
+	v = fsversion(device, "mount");
 	switch (v) {
 		case FSVERSION_MFS1:
 		case FSVERSION_MFS2: 
-		case FSVERSION_MFS3: type = "mfs"; break;		
+		case FSVERSION_MFS3: type = MINIX_FS_TYPE; break;		
 		case FSVERSION_EXT2: type = "ext2"; break;
 	}
   }
@@ -98,7 +98,7 @@ char *argv[];
 	}
   }
   /* For MFS, use a version number. Otherwise, use the FS type name. */
-  if (type == NULL || !strcmp(type, MINIX_FS_TYPE)) {
+  if (!strcmp(type, MINIX_FS_TYPE)) {
 	switch (v) {
 		case FSVERSION_MFS1: vs = "1"; break;
 		case FSVERSION_MFS2: vs = "2"; break;
