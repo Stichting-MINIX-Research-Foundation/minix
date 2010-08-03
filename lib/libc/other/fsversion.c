@@ -16,12 +16,20 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "mfs/const.h"
-#include "mfs/type.h"
-#include "mfs/super.h"
 
-static struct super_block super, *sp;
+static char super[SUPER_BLOCK_BYTES];
+
+#define MAGIC_OFFSET_MFS 0x18
+#define MAGIC_OFFSET_EXT 0x38
+#define MAGIC_VALUE_EXT2	0xef53
+
+static int check_super(off_t offset, unsigned short magic)
+{
+  return (memcmp(super + offset, &magic, sizeof(magic)) == 0) ? 1 : 0;
+}
 
 int fsversion(dev, prog)
 char *dev, *prog;
@@ -36,7 +44,7 @@ char *dev, *prog;
   }
 
   lseek(fd, (off_t) SUPER_BLOCK_BYTES, SEEK_SET);	/* skip boot block */
-  if (read(fd, (char *) &super, (unsigned) SUPER_SIZE) != SUPER_SIZE) {
+  if (read(fd, (char *) &super, sizeof(super)) != sizeof(super)) {
 	std_err(prog);
 	std_err(" cannot read super block on ");
 	perror(dev);
@@ -44,9 +52,12 @@ char *dev, *prog;
 	return(-1);
   }
   close(fd);
-  sp = &super;
-  if (sp->s_magic == SUPER_MAGIC) return(1);
-  if (sp->s_magic == SUPER_V2) return(2);
-  if (sp->s_magic == SUPER_V3) return(3);
+  
+  /* first check MFS, a valid MFS may look like EXT but not vice versa */
+  if (check_super(MAGIC_OFFSET_MFS, SUPER_MAGIC))	return FSVERSION_MFS1;
+  if (check_super(MAGIC_OFFSET_MFS, SUPER_V2))		return FSVERSION_MFS2;
+  if (check_super(MAGIC_OFFSET_MFS, SUPER_V3))		return FSVERSION_MFS3;
+  if (check_super(MAGIC_OFFSET_EXT, MAGIC_VALUE_EXT2))	return FSVERSION_EXT2;
+  
   return(-1);
 }

@@ -73,13 +73,12 @@ int status;
   }
   write(1, MESSAGE, sizeof MESSAGE - 1);
   v = fsversion(name, "printroot");	/* determine file system version */
-  if (v == 1)
-	write(1, "1 rw\n", 5);
-  else if (v == 2)
-	write(1, "2 rw\n", 5);
-  else if (v == 3)
-	write(1, "3 rw\n", 5);
-  else
-	write(1, "0 rw\n", 5);
+  switch (v) {
+	case FSVERSION_MFS1: write(1, "1 rw\n", 5);	break;
+	case FSVERSION_MFS2: write(1, "2 rw\n", 5);	break;
+	case FSVERSION_MFS3: write(1, "3 rw\n", 5);	break;
+	case FSVERSION_EXT2: write(1, "ext2 rw\n", 8);	break;
+	default: write(1, "0 rw\n", 5);			break;
+  }
   exit(status);
 }

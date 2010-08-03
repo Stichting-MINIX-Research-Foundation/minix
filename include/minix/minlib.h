@@ -21,4 +21,10 @@ _PROTOTYPE(int rewrite_mtab, (char *_prog_name));
 _PROTOTYPE(int get_mtab_entry, (char *_s1, char *_s2, char *_s3, char *_s4));
 _PROTOTYPE(int put_mtab_entry, (char *_s1, char *_s2, char *_s3, char *_s4));
 
+/* return values for fsversion */
+#define FSVERSION_MFS1	0x00001
+#define FSVERSION_MFS2	0x00002
+#define FSVERSION_MFS3	0x00003
+#define FSVERSION_EXT2	0x10002
+
 #endif

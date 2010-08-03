@@ -61,6 +61,17 @@ char *argv[];
   device = argv[1];
   if (!strcmp(device, "none")) device = NULL;
 
+  /* auto-detect type */
+  v = fsversion(argv[1], "mount");
+  if (type == NULL) {
+	switch (v) {
+		case FSVERSION_MFS1:
+		case FSVERSION_MFS2: 
+		case FSVERSION_MFS3: type = "mfs"; break;		
+		case FSVERSION_EXT2: type = "ext2"; break;
+	}
+  }
+  
   if (mount(device, argv[2], mountflags, type, args) < 0) {
 	err = strerror(errno);
 	fprintf(stderr, "mount: Can't mount %s on %s: %s\n",
@@ -88,15 +99,12 @@ char *argv[];
   }
   /* For MFS, use a version number. Otherwise, use the FS type name. */
   if (type == NULL || !strcmp(type, MINIX_FS_TYPE)) {
-	v = fsversion(argv[1], "mount");
-	if (v == 1)
-		vs = "1";
-	else if (v == 2)
-		vs = "2";
-	else if (v == 3)
-		vs = "3";
-	else
-		vs = "0";
+	switch (v) {
+		case FSVERSION_MFS1: vs = "1"; break;
+		case FSVERSION_MFS2: vs = "2"; break;
+		case FSVERSION_MFS3: vs = "3"; break;		
+		default: vs = "0"; break;
+	}
   } else {
 	/* Keep the version field sufficiently short. */
 	if (strlen(type) < sizeof(version))
