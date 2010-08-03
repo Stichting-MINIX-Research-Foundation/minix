@@ -28,21 +28,21 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
 	pci_inb(PCII_CONFDATA+((reg)&3)))
 #define PCII_RREG16_(bus, dev, func, reg) \
-	(PCII_RREG8_(bus, dev, func, reg) | \
-	(PCII_RREG8_(bus, dev, func, reg+1) << 8))
+	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
+	pci_inw(PCII_CONFDATA+((reg)&2)))
 #define PCII_RREG32_(bus, dev, func, reg) \
-	(PCII_RREG16_(bus, dev, func, reg) | \
-	(PCII_RREG16_(bus, dev, func, reg+2) << 16))
+	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
+	pci_inl(PCII_CONFDATA))
 
 #define PCII_WREG8_(bus, dev, func, reg, val) \
 	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
 	pci_outb(PCII_CONFDATA+((reg)&3), (val)))
 #define PCII_WREG16_(bus, dev, func, reg, val) \
-	(PCII_WREG8_(bus, dev, func, reg, (val)), \
-	(PCII_WREG8_(bus, dev, func, reg+1, (val) >> 8)))
+	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
+	pci_outw(PCII_CONFDATA+((reg)&2), (val)))
 #define PCII_WREG32_(bus, dev, func, reg, val) \
-	(PCII_WREG16_(bus, dev, func, reg, (val)), \
-	(PCII_WREG16_(bus, dev, func, reg+2, (val) >> 16)))
+	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
+	pci_outl(PCII_CONFDATA, (val)))
 
 /* PIIX configuration registers */
 #define PIIX_PIRQRCA	0x60
