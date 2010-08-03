@@ -189,10 +189,12 @@ stop|down)
 	fi
 esac
 
-d=/usr/local/etc/rc.d
+d=
 # Let packages run their own scripts
+for d in /usr/local/etc/rc.d /usr/pkg/etc/rc.d
+do
 if [ -d "$d" ]
-then	if cd $d
+then	( if cd $d
 	then
 		echo -n "Local packages ($action): "
 		for f in *
@@ -204,5 +206,6 @@ then	if cd $d
 		done
 		echo " done."
 	fi
+	)
 fi
-
+done
