@@ -1,6 +1,6 @@
 # Makefile for the tests.
 
-GCC=   /usr/gnu/bin/gcc
+GCC=gcc
 CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE
 CFLAGS-GCC= $(CFLAGS) -Wall 
 CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float
@@ -29,10 +29,10 @@ $(BIGOBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
 
 $(GCCOBJ):
-	[ ! -x $(GCC) ] || $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c
+	which $(GCC) >/dev/null && $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c
 
 $(GCCFPUOBJ):
-	[ ! -x $(GCC) ] || $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c
+	which $(GCC) >/dev/null && $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c
 
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
