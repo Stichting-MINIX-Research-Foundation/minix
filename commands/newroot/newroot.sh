@@ -1,5 +1,5 @@
 #!/bin/sh
 
 # Actually, newroot is just like mounting on the root
-exec mount "$*" /
+exec mount -n "$*" /
 

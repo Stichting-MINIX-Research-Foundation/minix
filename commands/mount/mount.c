@@ -26,12 +26,13 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int i, n, v = 0, mountflags;
+  int i, n, v = 0, mountflags, write_mtab;
   char **ap, *vs, *opt, *err, *type, *args, *device;
   char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
 
   if (argc == 1) list();	/* just list /etc/mtab */
   mountflags = 0;
+  write_mtab = 1;
   type = NULL;
   args = NULL;
   ap = argv+1;
@@ -43,7 +44,8 @@ char *argv[];
 		case 't':	if (++i == argc) usage();
 				type = argv[i];
 				break;
-		case 'i':	mountflags |= MS_REUSE;		break;                
+		case 'i':	mountflags |= MS_REUSE;		break;
+		case 'n':	write_mtab = 0;			break;
 		case 'o':	if (++i == argc) usage();
 				args = argv[i];
 				break;
@@ -82,8 +84,9 @@ char *argv[];
   /* The mount has completed successfully. Tell the user. */
   printf("%s is read-%s mounted on %s\n",
 	argv[1], mountflags & MS_RDONLY ? "only" : "write", argv[2]);
-
+  
   /* Update /etc/mtab. */
+  if (!write_mtab) return 0;
   n = load_mtab("mount");
   if (n < 0) exit(1);		/* something is wrong. */
 
