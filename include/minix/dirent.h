@@ -58,7 +58,7 @@ struct _v7_direct {
 
 /* Definitions for the directory(3) routines: */
 typedef struct {
-	char		_fd;	/* Filedescriptor of open directory */
+	int		_fd;	/* Filedescriptor of open directory */
 	unsigned	_count;	/* This many bytes in _buf */
 	unsigned	_pos;	/* Position in _buf */
 	char		 _buf[_MAX_BLOCK_SIZE]; /* The size does not really
