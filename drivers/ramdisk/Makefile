@@ -1,7 +1,7 @@
 # Makefile for ramdisk image
 
 PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk mount newroot \
-	pci sh service sysenv mfs
+	pci sh service sysenv mfs ext2
 EXTRA=system.conf passwd rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
@@ -102,6 +102,12 @@ mfs: ../../servers/mfs/mfs
 
 ../../servers/mfs/mfs:
 	$(MAKE) -C ../../servers/mfs
+
+ext2: ../../servers/ext2/ext2
+	install -s ../../servers/ext2/$@ $@
+
+../../servers/ext2/ext2:
+	$(MAKE) -C ../../servers/ext2
 
 system.conf: ../../etc/system.conf
 	install -s ../../etc/$@ $@
