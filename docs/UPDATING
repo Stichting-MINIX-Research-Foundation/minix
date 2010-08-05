@@ -1,3 +1,9 @@
+20100805:
+	mkfs and fsck have been renamed to mkfs.mfs and fsck.mfs, respectively.
+	Moreover, they have been moved to /sbin, which is by default not in
+	PATH. Edit your .ashrc (or equivalent) to also include /sbin in PATH.
+	Also, first issue a 'make commands' before building world.
+
 20100802:
 	/usr/src/etc/system.conf updated to include ext2 file server: copy it
 	(or merge it) to /etc/system.conf.
