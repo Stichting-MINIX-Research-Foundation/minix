@@ -38,6 +38,7 @@ servers/vfs/vfs
 servers/vm/vm
 servers/rs/service
 
+drivers/ahci/ahci
 drivers/amddev/amddev
 drivers/at_wini/at_wini
 drivers/atl2/atl2
