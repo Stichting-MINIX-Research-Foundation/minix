@@ -23,7 +23,7 @@ bintoc:	bintoc.c
 	$(CC) -o $@ bintoc.c
 
 image:	proto.gen mtab rc $(PROGRAMS) $(EXTRA)
-	mkfs image proto.gen || { rm -f image; false; }
+	mkfs.mfs image proto.gen || { rm -f image; false; }
 
 at_wini: ../at_wini/at_wini
 	install -s ../$@/$@ $@

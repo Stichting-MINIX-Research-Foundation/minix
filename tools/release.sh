@@ -148,7 +148,7 @@ fitfs()
 
 	# Create a filesystem on the target ramdisk
 	ramdisk $kbs $ramdisk
-	mkfs -B $BS -i $inodes $ramdisk
+	mkfs.mfs -B $BS -i $inodes $ramdisk
 }
 
 RELEASEDIR=/usr/r-staging
@@ -268,7 +268,7 @@ mkdir -p $RELEASEPACKAGE
 mkdir -p $RELEASEPACKAGESOURCES
 
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
-cp -p /bin/* /usr/bin/* $RELEASEDIR/$XBIN
+cp -p /bin/* /usr/bin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/sh /bin/echo $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv $RELEASEDIR/usr/bin

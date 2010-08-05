@@ -161,13 +161,13 @@ Mount $usr /usr failed -- Single user."
     if [ "$fflag" ]
     then
 	umount $usr
-	echo "fsck / - $root"
-	intr fsck $fsckopts $root
-	echo "fsck /usr - $usr"
-	intr fsck $fsckopts $usr
+	echo "fsck.mfs / - $root"
+	intr fsck.mfs $fsckopts $root
+	echo "fsck.mfs /usr - $usr"
+	intr fsck.mfs $fsckopts $usr
 	if [ ! -z "$home" ]
-	then	echo "fsck /home - $home"
-		intr fsck $fsckopts $home
+	then	echo "fsck.mfs /home - $home"
+		intr fsck.mfs $fsckopts $home
 	fi
 	mount $bin_img $usr /usr
     fi

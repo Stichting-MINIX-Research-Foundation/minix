@@ -1,6 +1,7 @@
-PROG=	fsck
+PROG=	fsck.mfs
+SRCS=	fsck.c
 CPPFLAGS+= -I${MINIXSRCDIR}/servers
-BINDIR=	/bin
+BINDIR=	/sbin
 MAN=
 
 .include <bsd.prog.mk>

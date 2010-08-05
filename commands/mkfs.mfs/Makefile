@@ -1,4 +1,6 @@
-PROG=	mkfs
+PROG=	mkfs.mfs
+SRCS=	mkfs.c
+BINDIR=	/sbin
 CPPFLAGS+= -I${MINIXSRCDIR}/servers
 MAN=
 

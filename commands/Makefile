@@ -11,13 +11,13 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	dd de decomp16 DESCRIBE dev2name devsize df dhcpd \
 	dhrystone diff dirname dis88 du dumpcore easypack \
 	ed eject elle elvis env expand factor file \
-	find finger fingerd fix fold format fortune fsck \
+	find finger fingerd fix fold format fortune fsck.mfs \
 	fsck1 ftp101 ftpd200 getty grep gomoku head host \
 	hostaddr id ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	less lex life loadkeys loadramdisk logger login look lp \
 	lpd ls lspci M m4 mail make  MAKEDEV man \
-	mdb mdocml mesg mined mkdep mkdir mkdist mkfifo mkfs mknod \
+	mdb mdocml mesg mined mkdep mkdir mkdist mkfifo mkfs.mfs mknod \
 	mkproto modem mount mt netconf newroot nice acknm nohup \
 	nonamed od packit packman passwd paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \

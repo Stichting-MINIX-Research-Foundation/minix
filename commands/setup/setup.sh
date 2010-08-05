@@ -44,7 +44,7 @@ then
 	exit 1
 fi
 
-PATH=/bin:/usr/bin
+PATH=/bin:/sbin:/usr/bin
 export PATH
 
 
@@ -453,19 +453,19 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 partition /dev/$primary 1 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
 
 echo "Creating /dev/$root for / .."
-mkfs /dev/$root || exit
+mkfs.mfs /dev/$root || exit
 
 if [ "$nohome" = 0 ]
 then
 	if [ ! "$auto" = r ]
 	then	echo "Creating /dev/$home for /home .."
-		mkfs -B $blocksizebytes /dev/$home || exit
+		mkfs.mfs -B $blocksizebytes /dev/$home || exit
 	fi
 else	echo "Skipping /home"
 fi
 
 echo "Creating /dev/$usr for /usr .."
-mkfs -B $blocksizebytes /dev/$usr || exit
+mkfs.mfs -B $blocksizebytes /dev/$usr || exit
 
 if [ "$nohome" = 0 ]
 then
