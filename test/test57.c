@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if(!err) printf(" ok\n");
+		if(!err) printf("ok\n");
 
 		exit(err);
 	}
