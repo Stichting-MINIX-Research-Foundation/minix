@@ -17,6 +17,10 @@ PACKAGESOURCELIST=package_sources.install
 secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
 
+# Packages we have to pre-install, and url to use
+PREINSTALLED_PACKAGES=pkgin-0.3.3.1nb1
+PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/`uname -r`/`uname -m`/All/
+
 RELEASERC=$HOME/.releaserc
 
 if [ -f $RELEASERC ]
@@ -360,8 +364,19 @@ mkdir -p $RELEASEDIR/usr/share/mk
 chmod 755 $RELEASEDIR/usr/share/mk
 cp $RELEASEDIR/usr/src/share/mk/* $RELEASEDIR/usr/share/mk/
 chown -R root $RELEASEDIR/usr/share/mk
-echo " * Chroot build"
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
+
+echo " * Make hierarchy"
+chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh etcfiles" || exit 1
+
+if [ "$COPY" -ne 1 ]
+then	for p in $PREINSTALLED_PACKAGES
+	do	echo " * Pre-installing: $p from $url"
+		pkg_add -P $RELEASEDIR $PACKAGEURL/$p
+	done
+fi
+
+echo " * Chroot build"
 chroot $RELEASEDIR "PATH=/$XBIN MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 # Copy built images for cd booting
 cp $RELEASEDIR/boot/image_big image

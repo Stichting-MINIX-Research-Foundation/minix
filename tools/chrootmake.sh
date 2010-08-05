@@ -2,7 +2,12 @@
 set -e
 export SHELL=/bin/sh
 cd /usr/src 
-make etcfiles
+
+if [ $# -gt 0 ]
+then	make $@
+	exit $?
+fi
+
 make world
 cd tools 
 rm revision
