@@ -273,7 +273,7 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
   /* Acquire an inode from the bit map. */
   b = alloc_bit(sp, IMAP, sp->s_isearch);
   if (b == NO_BIT) {
-	err_code = ENFILE;
+	err_code = ENOSPC;
 	major = (int) (sp->s_dev >> MAJOR) & BYTE;
 	minor = (int) (sp->s_dev >> MINOR) & BYTE;
 	printf("Out of i-nodes on device %d/%d\n", major, minor);

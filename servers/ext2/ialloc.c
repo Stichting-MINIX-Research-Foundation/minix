@@ -49,7 +49,7 @@ PUBLIC struct inode *alloc_inode(struct inode *parent, mode_t bits)
   /* Acquire an inode from the bit map. */
   b = alloc_inode_bit(sp, parent, (bits & I_TYPE) == I_DIRECTORY);
   if (b == NO_BIT) {
-	err_code = ENFILE;
+	err_code = ENOSPC;
 	major = (int) (sp->s_dev >> MAJOR) & BYTE;
 	minor = (int) (sp->s_dev >> MINOR) & BYTE;
 	ext2_debug("Out of i-nodes on device %d/%d\n", major, minor);
