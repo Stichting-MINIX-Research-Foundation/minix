@@ -520,6 +520,7 @@ delete_package(Boolean ign_err, package_t *pkg, Boolean NoDeleteFiles,
 	int     fail = SUCCESS;
 	Boolean preserve;
 	char    tmp[MaxPathSize];
+	char 	cmd[MaxPathSize];
 	const char *prefix = NULL, *name = NULL;
 
 	if (!pkgdb_open(ReadWrite)) {
@@ -586,10 +587,12 @@ delete_package(Boolean ign_err, package_t *pkg, Boolean NoDeleteFiles,
 		case PLIST_UNEXEC:
 			if (NoDeleteFiles)
 				break;
-			format_cmd(tmp, sizeof(tmp), p->name, prefix, last_file);
-			printf("Executing `%s'\n", tmp);
-			if (!Fake && system(tmp)) {
-				warnx("unexec command for `%s' failed", tmp);
+			(void) snprintf(tmp, sizeof(tmp), "%s%s%s",
+					destdir ? destdir : "", destdir ? "/" : "", prefix);
+			format_cmd(cmd, sizeof(cmd), p->name, tmp, last_file);
+			printf("Executing `%s'\n", cmd);
+			if (!Fake && system(cmd)) {
+				warnx("unexec command for `%s' failed", cmd);
 				fail = FAIL;
 			}
 			break;

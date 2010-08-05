@@ -715,7 +715,7 @@ extract_files(struct pkg_task *pkg)
 			continue;
 
 		case PLIST_CMD:
-			if (format_cmd(cmd, sizeof(cmd), p->name, pkg->prefix, last_file))
+			if (format_cmd(cmd, sizeof(cmd), p->name, pkg->install_prefix, last_file))
 				return -1;
 			printf("Executing '%s'\n", cmd);
 			if (!Fake && system(cmd))
