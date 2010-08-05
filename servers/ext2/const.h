@@ -3,7 +3,10 @@
 
 /* Tables sizes */
 
-#define NR_INODES        256    /* # slots in "in core" inode table */
+#define NR_INODES        512    /* # slots in "in core" inode table;
+				 * should be more or less the same as
+				 * NR_VNODES in vfs
+				 */
 #define GETDENTS_BUFSIZ  257
 
 #define INODE_HASH_LOG2   7     /* 2 based logarithm of the inode hash size */
