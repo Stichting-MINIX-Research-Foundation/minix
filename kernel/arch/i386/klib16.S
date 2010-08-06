@@ -18,6 +18,7 @@
 .globl	_poweroff16_end
 
 .text
+.code16
 
 /*===========================================================================*/
 /*				poweroff16					     */
@@ -27,7 +28,7 @@
 _poweroff16:
 	/* Assume eax is already set to required value of cr0*/
 .byte	0x0F,0x22,0xC0	/* mov %cr0,%eax */
-	jmpf	$0,$(BIOS_POWEROFF_ENTRY + real_mode - _poweroff16)
+	ljmp	$0,$(BIOS_POWEROFF_ENTRY + real_mode - _poweroff16)
 real_mode:
 	mov	$((BIOS_POWEROFF_ENTRY >> 4) + 0x200),%ax
 	mov	%ax, %ds
@@ -40,34 +41,34 @@ real_mode:
 gate_A20:
 	call	kb_wait
 	movb	$0xD1,%al
-	outb	0x64
+	outb	$0x64
 	call	kb_wait
 	movb	$0xDD,%al
 	orb		%ah,%al
-	outb	0x60
+	outb	$0x60
 	call	kb_wait
 	movb	$0xFF,%al
-	outb	0x64
+	outb	$0x64
 	call	kb_wait
 	
 	/* Connect to APM */
 	mov	$0x5301,%ax
 	mov	$0x0,%bx
-	int	0x15
+	int	$0x15
 	jc	apm_err
 	
 	/* Enable power management */
 	mov	$0x5308,%ax
 	mov	$0x1,%bx
 	mov	$0x1,%cx
-	int	0x15
+	int	$0x15
 	jc	apm_err
 	
 	/* Set power state to off */
 	mov	$0x5307,%ax
 	mov	$0x01,%bx
 	mov	$0x3,%cx
-	int	0x15
+	int	$0x15
 	jc	apm_err
 0:	hlt
 	jmp	0b
@@ -93,7 +94,7 @@ apm_err:
 	jmp	0b
 	
 kb_wait:
-	inb	0x64
+	inb	$0x64
 	testb	$0x02,%al
 	jnz	kb_wait
 	ret
