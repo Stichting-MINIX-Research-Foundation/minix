@@ -39,26 +39,26 @@ if cmp -s x1 x2; then : ; else echo Error on cat test 1; fi
 cat <y >z
 if cmp -s y z; then : ; else echo Error on cat test 2; fi
 
-#Test ar
+#Test aal
 cat passwd >p
 cp passwd q
-if cmp -s p q; then : ; else echo Error on ar test 1; fi
+if cmp -s p q; then : ; else echo Error on aal test 1; fi
 date >r
-ar r x.a p q r 2>/dev/null
-ar r x.a /bin/cp
-ar r x.a /bin/cat
+aal r x.a p q r 2>/dev/null
+aal r x.a /bin/cp
+aal r x.a /bin/cat
 rm p q
 mv r R
-ar x x.a
-if cmp -s p /etc/passwd; then : ; else Error on ar test 2; fi
-if cmp -s q /etc/passwd; then : ; else Error on ar test 3; fi
-if cmp -s r R; then : ; else Error on ar test 4; fi
-if cmp -s cp /bin/cp; then : ; else Error on ar test 5; fi
-if cmp -s cat /bin/cat; then : ; else Error on ar test 6; fi
+aal x x.a
+if cmp -s p /etc/passwd; then : ; else Error on aal test 2; fi
+if cmp -s q /etc/passwd; then : ; else Error on aal test 3; fi
+if cmp -s r R; then : ; else Error on aal test 4; fi
+if cmp -s cp /bin/cp; then : ; else Error on aal test 5; fi
+if cmp -s cat /bin/cat; then : ; else Error on aal test 6; fi
 rm cp cat p q r
-ar d x.a r >/dev/null
-ar x x.a
-if test -r r; then echo Error on ar test 7; fi
+aal d x.a r >/dev/null
+aal x x.a
+if test -r r; then echo Error on aal test 7; fi
 rm -rf p q r R
 
 #Test basename
