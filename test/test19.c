@@ -42,13 +42,6 @@ char *argv[];
 
   m = (argc == 2 ? atoi(argv[1]) : 0xFFFF);
 
-  if (geteuid() == 0 || getuid() == 0) {
-	realpath(argv[0], buffer);
-  	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", buffer, NULL);
-	printf("Test 19 cannot run as root; test aborted\n");
-	exit(1);
-  }
-
   system("rm -rf DIR_19; mkdir DIR_19");
   chdir("DIR_19");
 

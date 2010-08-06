@@ -18,6 +18,10 @@ tests="   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 \
 	 sh1.sh sh2.sh"
 tests_no=`expr 0`
 
+# Directory must be owned by bin
+[ "$USER" != root ] || chown bin .
+
+# Count tests
 for i in `echo $tests`; do
    if [ -x ./test$i ]; then
       tests_no=`expr $tests_no + 1`
@@ -36,8 +40,8 @@ do
    then
       total=`expr $total + 1`
       FAIL=0
-      if [ $USER = root -a \( $i = 11 -o $i = 33 \) ]
-         then su - ast -c "cd `pwd`; ./test$i" || FAIL=1
+      if [ "$USER" = root ]
+         then su - bin -c "cd `pwd`; ./test$i" || FAIL=1
          else ./test$i || FAIL=1
       fi
       if [ $FAIL -eq 0 ]

@@ -129,12 +129,6 @@ char *argv[];
   }
 
   sync();
-  if (geteuid() == 0 || getuid() == 0) {
-	realpath(argv[0], buffer);
-  	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", buffer, NULL);
-	printf("Test 17 cannot run as root; test aborted\n");
-	exit(1);
-  }
 
 #define DIR "DIR17"
   system("rm -rf " DIR);

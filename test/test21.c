@@ -48,12 +48,6 @@ char *argv[];
   int i, m = 0xFFFF;
 
   sync();
-  if (geteuid() == 0 || getuid() == 0) {
-	realpath(argv[0], buffer);
-  	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", buffer, NULL);
-	printf("Test 21 cannot run as root; test aborted\n");
-	exit(1);
-  }
 
   if (argc == 2) m = atoi(argv[1]);
   printf("Test 21 ");
