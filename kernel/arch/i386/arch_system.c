@@ -30,7 +30,7 @@
 
 PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 
-extern void poweroff_jmp();
+extern __dead void poweroff_jmp();
 extern void poweroff16();
 extern void poweroff16_end();
 
@@ -48,7 +48,7 @@ PUBLIC __dead void arch_monitor(void)
 	monitor();
 }
 
-PUBLIC void arch_bios_poweroff(void)
+PRIVATE __dead void arch_bios_poweroff(void)
 {
 	u32_t cr0;
 	
@@ -148,6 +148,8 @@ PUBLIC __dead void arch_shutdown(const int how)
        	 	SOFT_RESET_FLAG_SIZE);
 		reset();
 	}
+
+	NOT_REACHABLE;
 }
 
 /* address of a.out headers, set in mpx386.s */
