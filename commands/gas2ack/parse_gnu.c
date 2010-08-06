@@ -33,6 +33,7 @@ static mnemonic_t mnemtab[] = {
 	{ ".base",	DOT_BASE,	PSEUDO },
 	{ ".bss",	DOT_BSS,	PSEUDO },
 	{ ".byte",	DOT_DATA1,	PSEUDO },
+	{ ".code16",	DOT_CODE16,	PSEUDO },
 	{ ".comm",	DOT_COMM,	PSEUDO },
 	{ ".data",	DOT_DATA,	PSEUDO },
 	{ ".end",	DOT_END,	PSEUDO },
@@ -882,6 +883,8 @@ static asm86_t *gnu_get_statement(void)
 		/*FALL THROUGH*/
 	case JMP:
 	case CALL:
+		break;
+	case DOT_CODE16:
 		break;
 	default:;
 	}

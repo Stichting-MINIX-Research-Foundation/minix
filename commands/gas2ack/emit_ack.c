@@ -562,6 +562,8 @@ void ack_emit_instruction(asm86_t *a)
 		assert(a->args->operator == '=');
 		ack_printf("\t%s = ", a->args->name);
 		ack_put_expression(a, a->args->middle, 0);
+	} else if (a->opcode == DOT_CODE16) {
+		/* nothing to be done, makefiles handle this */
 	} else
 	if ((p= opcode2name(a->opcode)) != nil) {
 		char *sep= dialect == ACK ? "" : ";";

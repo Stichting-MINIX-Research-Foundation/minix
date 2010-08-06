@@ -10,6 +10,7 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	DOT_ASSERT,			/* Pseudo's invented */
 	DOT_BASE,
 	DOT_COMM,	DOT_LCOMM,
+	DOT_CODE16,
 	DOT_DATA1,
 	DOT_DATA2,
 	DOT_DATA4,
