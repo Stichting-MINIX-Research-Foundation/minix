@@ -72,7 +72,7 @@ if test `basename a/b/c/d` != 'd'; then Error on basename test 2; fi
 cp $f x.c			# x.c is a copy $f
 echo "/a/s//#####/g" >s		# create sed script
 sed -f s <x.c >y.c		# y.c is new version of x.c
-cdiff x.c y.c >y		# y is cdiff listing
+diff -c x.c y.c >y		# y is cdiff listing
 patch x.c y  2>/dev/null	# z should be y.c
 if cmp -s x.c y.c; then : ; else echo Error in cdiff test; fi
 rm x.c* y.c s y
