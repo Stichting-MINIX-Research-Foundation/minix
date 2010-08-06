@@ -242,6 +242,10 @@
 #define	__packed	_Pragma("packed 1")
 #define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
+#elif defined(__ACK__)
+#define	__packed
+#define	__aligned(x)	error: no __aligned for this compiler
+#define	__section(x)	error: no __section for this compiler
 #else
 #define	__packed	error: no __packed for this compiler
 #define	__aligned(x)	error: no __aligned for this compiler
