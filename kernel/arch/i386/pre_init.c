@@ -35,6 +35,8 @@ extern char a_out_headers[];
 #define mb_save_phymem(buf, phy, len) \
 		phys_copy(PTR2PHY(buf), (phy), (len))
 
+FORWARD _PROTOTYPE(void mb_print, (char *str));
+
 PRIVATE void mb_phys_move(u32_t src, u32_t dest, u32_t len) 
 {
 	char data[GRAN + 1];
