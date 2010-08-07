@@ -41,7 +41,7 @@ int mode;
  *===========================================================================*/
 PUBLIC int do_stat()
 {
-/* Retrieve inode statistics.
+/* Retrieve inode status.
  */
   struct inode *ino;
   struct hgfs_attr attr;
