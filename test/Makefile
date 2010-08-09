@@ -29,10 +29,10 @@ $(BIGOBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
 
 $(GCCOBJ):
-	which $(GCC) >/dev/null && $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c
+	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c; fi
 
 $(GCCFPUOBJ):
-	which $(GCC) >/dev/null && $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c
+	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c; fi
 
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
@@ -113,4 +113,4 @@ test54: test54.c
 test55: test55.c
 test56: test56.c
 test57: test57.c test57loop.S
-	which $(GCC) >/dev/null && $(GCC) $(CFLAGS-GCC) -o $@ test57.c test57loop.S
+	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ test57.c test57loop.S; fi
