@@ -139,6 +139,8 @@ struct ptrace_range {
 	size_t	pr_size;
 	void	*pr_ptr;
 };
+.ft R
+.fi
 .RE
 .PP
 The \fBpr_space\fP field specifies the address space from which to retrieve
@@ -177,23 +179,22 @@ The functions will fail if any of the following errors occur:
 .TP 10
 .B EINVAL
 Invalid request, signal, space, or length given.
-.TP 10
+.TP
 .B ESRCH
 The given process is not found, exiting, or not traced by the caller.
-.TP 10
+.TP
 .B EBUSY
 The given process is not stopped, or already being traced.
-.TP 10
+.TP
 .B EFAULT
 The given address is invalid, inaccessible, or not properly aligned.
-.TP 10
+.TP
 .B EPERM
 Attaching is denied, because the caller equals the given process,
 or the caller is not root and does not match the given process's
 user or group ID, or the caller is not root and the given process
 is a system process, or the caller is a system process,
 or the given process may not be traced at all.
-.TP
 .SH LIMITATIONS
 Signals are not ordered. Attaching to a process guarantees that a \fBSIGSTOP\fP
 will arrive at the tracer, but it is not guaranteed that this will be the first
