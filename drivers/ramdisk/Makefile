@@ -1,7 +1,7 @@
 # Makefile for ramdisk image
 
-PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk mount newroot \
-	pci sh service sysenv mfs ext2
+PROGRAMS=ahci at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
+	newroot pci sh service sysenv mfs ext2
 EXTRA=system.conf passwd rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
@@ -24,6 +24,12 @@ bintoc:	bintoc.c
 
 image:	proto.gen mtab rc $(PROGRAMS) $(EXTRA)
 	mkfs.mfs image proto.gen || { rm -f image; false; }
+
+ahci: ../ahci/ahci
+	install -s ../$@/$@ $@
+
+../ahci/ahci:
+	$(MAKE) -C ../ahci
 
 at_wini: ../at_wini/at_wini
 	install -s ../$@/$@ $@
