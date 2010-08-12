@@ -549,7 +549,7 @@ static void initialize(void)
 		int i, j;
 		j = 0;
 		for(i = 0; i < mem_entries ; i++) {
-			if (j < 3 && emem[i].type == 1) {
+			if (j < 3 && emem[i].type == 1 && !emem[i].base_hi) {
 				mem[j].base = emem[i].base_lo;
 				mem[j].size = emem[i].size_lo;
 				j++;
