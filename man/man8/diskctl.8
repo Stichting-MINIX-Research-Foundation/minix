@@ -1,0 +1,33 @@
+.TH DISKCTL 8
+.SH NAME
+diskctl \- control disk drive
+.SH SYNOPSIS
+\fBdiskctl\fR \fIdevice\fR \fIcommand\fR [\fIarguments\fR]
+.SH DESCRIPTION
+The \fBdiskctl\fR tool allows one to view and manage settings of,
+and perform actions on, disk drives. The following paragraph lists the
+commands that are currently supported by this tool.
+Please note that not all disks and drivers support all commands.
+.SH COMMANDS
+.TP 10
+\fBgetwcache\fR
+Retrieve the status (on or off) of the write cache on the device.
+.TP 10
+\fBsetwcache\fR [\fBon\fR|\fBoff\fR]
+Enable or disable the write cache on the device.
+Disabling the write cache typically also triggers a cache flush.
+.TP 10
+\fBflush\fR
+Tell the device to flush its write cache.
+The call will not return until the cache flush has completed.
+.SH EXAMPLES
+.TP 20
+.B diskctl /dev/c0d0 setwcache on
+# Turn on the write cache on c0d0.
+.TP 20
+.B diskctl /dev/c1d2 flush
+# Trigger a cache flush on c1d2.
+.SH "SEE ALSO"
+.BR controller (4).
+.SH AUTHOR
+David van Moolenbroek <dcvmoole@cs.vu.nl>
