@@ -9,7 +9,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut date \
 	dd de decomp16 DESCRIBE dev2name devsize df dhcpd \
-	dhrystone diff dirname dis88 du dumpcore easypack \
+	dhrystone diff dirname dis88 diskctl du dumpcore easypack \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	fsck1 ftp101 ftpd200 getty grep gomoku head host \
