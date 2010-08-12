@@ -12,6 +12,7 @@
 #define NR_SIG_CHECKS		60	/* maximum number of times to check */
 #define COMMAND_TIMEOUT		5000	/* time to wait for non-I/O cmd (ms) */
 #define TRANSFER_TIMEOUT	30000	/* time to wait for I/O cmd (ms) */
+#define FLUSH_TIMEOUT		60000	/* time to wait for flush cmd (ms) */
 
 /* Time values that are defined by the standards. */
 #define SPINUP_DELAY		1	/* time to assert spin-up flag (ms) */
@@ -31,7 +32,9 @@
 #define 	ATA_CMD_WRITE_DMA_EXT	0x35	/* WRITE DMA EXT */
 #define 	ATA_CMD_PACKET		0xA0	/* PACKET */
 #define 	ATA_CMD_IDENTIFY_PACKET	0xA1	/* IDENTIFY PACKET DEVICE */
+#define 	ATA_CMD_FLUSH_CACHE	0xE7	/* FLUSH CACHE */
 #define 	ATA_CMD_IDENTIFY	0xEC	/* IDENTIFY DEVICE */
+#define 	ATA_CMD_SET_FEATURES	0xEF	/* SET FEATURES */
 #define ATA_H2D_FEAT			3	/* Features */
 #define 	ATA_FEAT_PACKET_DMA	0x01	/* use DMA */
 #define 	ATA_FEAT_PACKET_DMADIR	0x03	/* DMA is inbound */
@@ -69,10 +72,18 @@
 #define ATA_ID_DMADIR		62		/* DMADIR */
 #define ATA_ID_DMADIR_DMADIR	0x8000		/* DMADIR required */
 #define ATA_ID_DMADIR_DMA	0x0400		/* DMA supported (DMADIR) */
+#define ATA_ID_SUP0		82		/* Features supported (1/3) */
+#define ATA_ID_SUP0_WCACHE	0x0020		/* Write cache supported */
 #define ATA_ID_SUP1		83		/* Features supported (2/3) */
 #define ATA_ID_SUP1_VALID_MASK	0xC000		/* Word validity mask */
 #define ATA_ID_SUP1_VALID	0x4000		/* Word contents are valid */
+#define ATA_ID_SUP1_FLUSH	0x1000		/* FLUSH CACHE supported */
 #define ATA_ID_SUP1_LBA48	0x0400		/* 48-bit LBA supported */
+#define ATA_ID_ENA0		85		/* Features enabled (1/3) */
+#define ATA_ID_ENA0_WCACHE	0x0020		/* Write cache enabled */
+#define ATA_ID_ENA2		87		/* Features enabled (3/3) */
+#define ATA_ID_ENA2_VALID_MASK	0xC000		/* Word validity mask */
+#define ATA_ID_ENA2_VALID	0x4000		/* Word contents are valid */
 #define ATA_ID_LBA0		100		/* Max. LBA48 address (LSW) */
 #define ATA_ID_LBA1		101		/* Max. LBA48 address */
 #define ATA_ID_LBA2		102		/* Max. LBA48 address */
@@ -83,6 +94,9 @@
 #define ATA_ID_PLSS_LLS		0x1000		/* Long logical sectors */
 #define ATA_ID_LSS0		118		/* Logical sector size (LSW) */
 #define ATA_ID_LSS1		119		/* Logical sector size (MSW) */
+
+#define ATA_SF_EN_WCACHE	0x02		/* Enable write cache */
+#define ATA_SF_DI_WCACHE	0x82		/* Disable write cache */
 
 /* ATAPI constants. */
 #define ATAPI_PACKET_SIZE	16		/* ATAPI packet size */
@@ -254,6 +268,8 @@ enum {
 #define FLAG_BUSY		0x00000010	/* is an operation ongoing? */
 #define FLAG_FAILURE		0x00000020	/* did the operation fail? */
 #define FLAG_BARRIER		0x00000040	/* no access until unset */
+#define FLAG_HAS_WCACHE		0x00000080	/* is a write cache present? */
+#define FLAG_HAS_FLUSH		0x00000100	/* is FLUSH CACHE supported? */
 
 /* Mapping between devices and ports. */
 #define NO_PORT		-1	/* this device maps to no port */

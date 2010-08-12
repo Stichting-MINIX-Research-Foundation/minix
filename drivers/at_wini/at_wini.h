@@ -68,6 +68,7 @@
 #define   CMD_SPECIFY		0x91	/* specify parameters */
 #define   CMD_READ_DMA		0xC8	/* read data using DMA */
 #define   CMD_WRITE_DMA		0xCA	/* write data using DMA */
+#define   CMD_FLUSH_CACHE	0xE7	/* flush the write cache */
 #define   ATA_IDENTIFY		0xEC	/* identify drive */
 /* #define REG_CTL		0x206	*/ /* control register */
 #define REG_CTL		0	/* control register */

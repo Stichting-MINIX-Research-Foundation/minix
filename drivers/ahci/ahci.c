@@ -178,6 +178,7 @@ PRIVATE long ahci_sig_timeout = SIG_TIMEOUT;
 PRIVATE long ahci_sig_checks = NR_SIG_CHECKS;
 PRIVATE long ahci_command_timeout = COMMAND_TIMEOUT;
 PRIVATE long ahci_transfer_timeout = TRANSFER_TIMEOUT;
+PRIVATE long ahci_flush_timeout = FLUSH_TIMEOUT;
 
 PRIVATE int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
 
@@ -437,6 +438,19 @@ PRIVATE int atapi_id_check(struct port_state *ps, u16_t *buf)
 		ATA_ID_GCAP_TYPE_SHIFT) == ATAPI_TYPE_CDROM)
 		ps->flags |= FLAG_READONLY;
 
+	if ((buf[ATA_ID_SUP1] & ATA_ID_SUP1_VALID_MASK) == ATA_ID_SUP1_VALID &&
+		!(ps->flags & FLAG_READONLY)) {
+		/* Save write cache related capabilities of the device. It is
+		 * possible, although unlikely, that a device has support for
+		 * either of these but not both.
+		 */
+		if (buf[ATA_ID_SUP0] & ATA_ID_SUP0_WCACHE)
+			ps->flags |= FLAG_HAS_WCACHE;
+
+		if (buf[ATA_ID_SUP1] & ATA_ID_SUP1_FLUSH)
+			ps->flags |= FLAG_HAS_FLUSH;
+	}
+
 	return TRUE;
 }
 
@@ -486,15 +500,16 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
 	 */
 
 	/* This must be an ATA device; it must not have removable media;
-	 * it must support LBA and DMA; it must support 48-bit addressing.
+	 * it must support LBA and DMA; it must support the FLUSH CACHE
+	 * command; it must support 48-bit addressing.
 	 */
 	if ((buf[ATA_ID_GCAP] & (ATA_ID_GCAP_ATA_MASK | ATA_ID_GCAP_REMOVABLE |
 		ATA_ID_GCAP_INCOMPLETE)) != ATA_ID_GCAP_ATA ||
 		(buf[ATA_ID_CAP] & (ATA_ID_CAP_LBA | ATA_ID_CAP_DMA)) !=
 		(ATA_ID_CAP_LBA | ATA_ID_CAP_DMA) ||
-		(buf[ATA_ID_SUP1] &
-		(ATA_ID_SUP1_VALID_MASK | ATA_ID_SUP1_LBA48)) !=
-		(ATA_ID_SUP1_VALID | ATA_ID_SUP1_LBA48)) {
+		(buf[ATA_ID_SUP1] & (ATA_ID_SUP1_VALID_MASK |
+		ATA_ID_SUP1_FLUSH | ATA_ID_SUP1_LBA48)) !=
+		(ATA_ID_SUP1_VALID | ATA_ID_SUP1_FLUSH | ATA_ID_SUP1_LBA48)) {
 
 		dprintf(V_ERR, ("%s: unsupported ATA device\n",
 			ahci_portname(ps)));
@@ -527,7 +542,11 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
 		return FALSE;
 	}
 
-	ps->flags |= FLAG_HAS_MEDIUM;
+	ps->flags |= FLAG_HAS_MEDIUM | FLAG_HAS_FLUSH;
+
+	/* FLUSH CACHE is mandatory for ATA devices; write caches are not. */
+	if (buf[ATA_ID_SUP0] & ATA_ID_SUP0_WCACHE)
+		ps->flags |= FLAG_HAS_WCACHE;
 
 	return TRUE;
 }
@@ -566,9 +585,10 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 /*===========================================================================*
  *				gen_identify				     *
  *===========================================================================*/
-PRIVATE void gen_identify(struct port_state *ps, int cmd)
+PRIVATE int gen_identify(struct port_state *ps, int cmd, int blocking)
 {
-	/* Identify an ATA or ATAPI device.
+	/* Identify an ATA or ATAPI device. If the blocking flag is set, block
+	 * until the command has completed; otherwise return immediately.
 	 */
 	cmd_fis_t fis;
 	prd_t prd;
@@ -584,10 +604,102 @@ PRIVATE void gen_identify(struct port_state *ps, int cmd)
 	prd.prd_phys = ps->tmp_phys;
 	prd.prd_size = ATA_ID_SIZE;
 
-	/* Start the command, but do not wait for the result. */
+	/* Start the command, and possibly wait for the result. */
 	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
 
+	if (blocking)
+		return port_exec(ps, cmd, ahci_command_timeout);
+
 	port_issue(ps, cmd, ahci_command_timeout);
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				gen_flush_wcache			     *
+ *===========================================================================*/
+PRIVATE int gen_flush_wcache(struct port_state *ps, int cmd)
+{
+	/* Flush the device's write cache.
+	 */
+	cmd_fis_t fis;
+
+	/* The FLUSH CACHE command may not be supported by all (writable ATAPI)
+	 * devices.
+	 */
+	if (!(ps->flags & FLAG_HAS_FLUSH))
+		return EINVAL;
+
+	/* Use the FLUSH CACHE command for both ATA and ATAPI. We are not
+	 * interested in the disk location of a failure, so there is no reason
+	 * to use the ATA-only FLUSH CACHE EXT command. Either way, the command
+	 * may indeed fail due to a disk error, in which case it should be
+	 * repeated. For now, we shift this responsibility onto the caller.
+	 */
+	memset(&fis, 0, sizeof(fis));
+	fis.cf_cmd = ATA_CMD_FLUSH_CACHE;
+
+	/* Start the command, and wait for it to complete or fail.
+	 * The flush command may take longer than regular I/O commands.
+	 */
+	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, NULL /*prdt*/, 0,
+		FALSE /*write*/);
+
+	return port_exec(ps, cmd, ahci_flush_timeout);
+}
+
+/*===========================================================================*
+ *				gen_get_wcache				     *
+ *===========================================================================*/
+PRIVATE int gen_get_wcache(struct port_state *ps, int cmd, int *val)
+{
+	/* Retrieve the status of the device's write cache.
+	 */
+	int r;
+
+	/* Write caches are not mandatory. */
+	if (!(ps->flags & FLAG_HAS_WCACHE))
+		return EINVAL;
+
+	/* Retrieve information about the device. */
+	if ((r = gen_identify(ps, cmd, TRUE /*blocking*/)) != OK)
+		return r;
+
+	/* Return the current setting. */
+	*val = !!(((u16_t *) ps->tmp_base)[ATA_ID_ENA0] & ATA_ID_ENA0_WCACHE);
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				gen_set_wcache				     *
+ *===========================================================================*/
+PRIVATE int gen_set_wcache(struct port_state *ps, int cmd, int enable)
+{
+	/* Enable or disable the device's write cache.
+	 */
+	cmd_fis_t fis;
+	clock_t timeout;
+
+	/* Write caches are not mandatory. */
+	if (!(ps->flags & FLAG_HAS_WCACHE))
+		return EINVAL;
+
+	/* Disabling the write cache causes a (blocking) cache flush. Cache
+	 * flushes may take much longer than regular commands.
+	 */
+	timeout = enable ? ahci_command_timeout : ahci_flush_timeout;
+
+	/* Set up a command. */
+	memset(&fis, 0, sizeof(fis));
+	fis.cf_cmd = ATA_CMD_SET_FEATURES;
+	fis.cf_feat = enable ? ATA_SF_EN_WCACHE : ATA_SF_DI_WCACHE;
+
+	/* Start the command, and wait for it to complete or fail. */
+	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, NULL /*prdt*/, 0,
+		FALSE /*write*/);
+
+	return port_exec(ps, cmd, timeout);
 }
 
 /*===========================================================================*
@@ -1121,7 +1233,7 @@ PRIVATE void port_sig_check(struct port_state *ps)
 	ps->state = STATE_WAIT_ID;
 	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_MASK;
 
-	gen_identify(ps, 0);
+	(void) gen_identify(ps, 0, FALSE /*blocking*/);
 }
 
 /*===========================================================================*
@@ -1799,6 +1911,9 @@ PRIVATE void ahci_stop(void)
 
 	for (port = 0; port < hba_state.nr_ports; port++) {
 		if (port_state[port].state != STATE_NO_PORT) {
+			if (port_state[port].state == STATE_GOOD_DEV)
+				(void) gen_flush_wcache(&port_state[port], 0);
+
 			port_stop(&port_state[port]);
 
 			port_free(&port_state[port]);
@@ -1896,6 +2011,7 @@ PRIVATE void ahci_get_params(void)
 	ahci_get_var("ahci_sig_checks", &ahci_sig_checks, FALSE);
 	ahci_get_var("ahci_cmd_timeout", &ahci_command_timeout, TRUE);
 	ahci_get_var("ahci_io_timeout", &ahci_transfer_timeout, TRUE);
+	ahci_get_var("ahci_flush_timeout", &ahci_flush_timeout, TRUE);
 }
 
 /*===========================================================================*
@@ -2269,6 +2385,7 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 	/* Process any messages not covered by the other calls.
 	 * This function only implements IOCTLs.
 	 */
+	int r, val;
 
 	if (m->m_type != DEV_IOCTL_S)
 		return EINVAL;
@@ -2290,6 +2407,33 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		return sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes) &current_port->open_count,
 			sizeof(current_port->open_count), D);
+
+	case DIOCFLUSH:
+		if (current_port->state != STATE_GOOD_DEV)
+			return EIO;
+
+		return gen_flush_wcache(current_port, 0);
+
+	case DIOCSETWC:
+		if (current_port->state != STATE_GOOD_DEV)
+			return EIO;
+
+		if ((r = sys_safecopyfrom(m->IO_ENDPT,
+			(cp_grant_id_t) m->IO_GRANT, 0, (vir_bytes) &val,
+			sizeof(val), D)) != OK)
+			return r;
+
+		return gen_set_wcache(current_port, 0, val);
+
+	case DIOCGETWC:
+		if (current_port->state != STATE_GOOD_DEV)
+			return EIO;
+
+		if ((r = gen_get_wcache(current_port, 0, &val)) != OK)
+			return r;
+
+		return sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+			0, (vir_bytes) &val, sizeof(val), D);
 	}
 
 	return EINVAL;
