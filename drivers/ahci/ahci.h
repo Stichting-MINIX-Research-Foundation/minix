@@ -11,104 +11,12 @@
 #define SIG_TIMEOUT		250	/* time between signature checks (ms) */
 #define NR_SIG_CHECKS		60	/* maximum number of times to check */
 #define COMMAND_TIMEOUT		5000	/* time to wait for non-I/O cmd (ms) */
-#define TRANSFER_TIMEOUT	15000	/* time to wait for I/O cmd (ms) */
+#define TRANSFER_TIMEOUT	30000	/* time to wait for I/O cmd (ms) */
 
 /* Time values that are defined by the standards. */
 #define SPINUP_DELAY		1	/* time to assert spin-up flag (ms) */
 #define RESET_DELAY		1000	/* maximum HBA reset time (ms) */
 #define PORTREG_DELAY		500	/* maximum port register update (ms) */
-
-/* Host Bus Adapter (HBA) constants. */
-#define AHCI_HBA_CAP	0		/* Host Capabilities */
-#define 	AHCI_HBA_CAP_SNCQ	(1L << 30)	/* Native Cmd Queuing */
-#define 	AHCI_HBA_CAP_SCLO	(1L << 24)	/* Cmd List Override */
-#define 	AHCI_HBA_CAP_NCS_SHIFT	8		/* Nr of Cmd Slots */
-#define 	AHCI_HBA_CAP_NCS_MASK	0x1FL
-#define 	AHCI_HBA_CAP_NP_SHIFT	0		/* Nr of Ports */
-#define 	AHCI_HBA_CAP_NP_MASK	0x1FL
-#define AHCI_HBA_GHC	1		/* Global Host Control */
-#define 	AHCI_HBA_GHC_AE		(1L << 31)	/* AHCI Enable */
-#define 	AHCI_HBA_GHC_IE		(1L <<  1)	/* Interrupt Enable */
-#define 	AHCI_HBA_GHC_HR		(1L <<  0)	/* HBA Reset */
-#define AHCI_HBA_IS	2		/* Interrupt Status */
-#define AHCI_HBA_PI	3		/* Ports Implemented */
-#define AHCI_HBA_VS	4		/* Version */
-#define AHCI_HBA_CAP2	9		/* Host Capabilities Extended */
-
-/* Port constants. */
-#define AHCI_PORT_CLB	0		/* Command List Base */
-#define AHCI_PORT_CLBU	1		/* Command List Base, Upper 32 bits */
-#define AHCI_PORT_FB	2		/* FIS Base */
-#define AHCI_PORT_FBU	3		/* FIS Base, Upper 32 bits */
-#define AHCI_PORT_IS	4		/* Interrupt Status */
-#define 	AHCI_PORT_IS_TFES	(1L << 30)	/* Task File Error */
-#define 	AHCI_PORT_IS_HBFS	(1L << 29)	/* Host Bus Fatal */
-#define 	AHCI_PORT_IS_HBDS	(1L << 28)	/* Host Bus Data */
-#define 	AHCI_PORT_IS_IFS	(1L << 27)	/* Interface Fatal */
-#define 	AHCI_PORT_IS_PRCS	(1L << 22)	/* PhyRdy Change */
-#define 	AHCI_PORT_IS_PCS	(1L <<  6)	/* Port Conn Change */
-#define 	AHCI_PORT_IS_PSS	(1L <<  1)	/* PIO Setup FIS */
-#define 	AHCI_PORT_IS_DHRS	(1L <<  0)	/* D2H Register FIS */
-#define AHCI_PORT_IS_RESTART \
-	(AHCI_PORT_IS_TFES | AHCI_PORT_IS_HBFS | AHCI_PORT_IS_HBDS | \
-	 AHCI_PORT_IS_IFS)
-#define AHCI_PORT_IS_MASK \
-	(AHCI_PORT_IS_RESTART | AHCI_PORT_IS_PRCS | AHCI_PORT_IS_PCS | \
-	 AHCI_PORT_IS_DHRS | AHCI_PORT_IS_PSS)
-#define AHCI_PORT_IE	5		/* Interrupt Enable */
-#define 	AHCI_PORT_IE_MASK	AHCI_PORT_IS_MASK
-#define 	AHCI_PORT_IE_PRCE	AHCI_PORT_IS_PRCS
-#define 	AHCI_PORT_IE_PCE	AHCI_PORT_IS_PCS
-#define 	AHCI_PORT_IE_NONE	0L
-#define AHCI_PORT_CMD	6		/* Command and Status */
-#define 	AHCI_PORT_CMD_CR	(1L << 15)	/* Cmd List Running */
-#define 	AHCI_PORT_CMD_FR	(1L << 14)	/* FIS Recv Running */
-#define 	AHCI_PORT_CMD_FRE	(1L <<  4)	/* FIS Recv Enabled */
-#define 	AHCI_PORT_CMD_SUD	(1L <<  1)	/* Spin-Up Device */
-#define 	AHCI_PORT_CMD_ST	(1L <<  0)	/* Start */
-#define AHCI_PORT_TFD	8		/* Task File Data */
-#define 	AHCI_PORT_TFD_STS_BSY	(1L << 7)	/* Busy */
-#define 	AHCI_PORT_TFD_STS_DRQ	(1L << 3)	/* Data Xfer Req'd */
-#define 	AHCI_PORT_TFD_STS_ERR	(1L << 0)	/* Error */
-#define 	AHCI_PORT_TFD_STS_INIT	0x7F		/* Initial state */
-#define AHCI_PORT_SIG	9		/* Signature */
-#define 	ATA_SIG_ATA		0x00000101L	/* ATA interface */
-#define 	ATA_SIG_ATAPI		0xEB140101L	/* ATAPI interface */
-#define AHCI_PORT_SSTS	10		/* Serial ATA Status */
-#define 	AHCI_PORT_SSTS_DET_MASK	0x00000007L	/* Detection Mask */
-#define 	AHCI_PORT_SSTS_DET_PHY	0x00000003L	/* PHY Comm Establ */
-#define AHCI_PORT_SCTL	11		/* Serial ATA Control */
-#define 	AHCI_PORT_SCTL_DET_INIT	0x00000001L	/* Perform Init Seq */
-#define 	AHCI_PORT_SCTL_DET_NONE	0x00000000L	/* No Action Req'd */
-#define AHCI_PORT_SERR	12		/* Serial ATA Error */
-#define 	AHCI_PORT_SERR_DIAG_N	(1L << 16)	/* PhyRdy Change */
-#define AHCI_PORT_CI	14		/* Command Issue */
-
-/* Number of Physical Region Descriptors (PRDs). Must be at least NR_IOREQS+2,
- * and at most 1024. There is currently no reason to use more than the minimum.
- */
-#define NR_PRDS		(NR_IOREQS + 2)
-
-/* Various size constants. */
-#define AHCI_MEM_BASE_SIZE	0x100	/* memory-mapped base region size */
-#define AHCI_MEM_PORT_SIZE	0x80	/* memory-mapped port region size */
-
-#define AHCI_ID_SIZE	(256 * sizeof(u16_t))	/* IDENTIFY result size */
-
-#define AHCI_FIS_SIZE	256		/* size of FIS receive buffer */
-#define AHCI_CL_SIZE	1024		/* size of command list buffer */
-#define AHCI_TMP_SIZE	AHCI_ID_SIZE	/* size of temporary storage buffer */
-#define AHCI_TMP_ALIGN	2		/* required alignment for temp buf */
-#define AHCI_CT_SIZE	(128 + NR_PRDS * sizeof(u32_t) * 4)
-					/* size of command table buffer */
-#define AHCI_CT_ALIGN	128		/* required alignment for CT buffer */
-
-#define MAX_PRD_BYTES	(1L << 22)	/* maximum number of bytes per PRD */
-#define MAX_TRANSFER	MAX_PRD_BYTES	/* maximum size of a single transfer */
-
-/* Command Table offsets. */
-#define AHCI_CT_PACKET_OFF		0x40	/* CT offset to ATAPI packet */
-#define AHCI_CT_PRDT_OFF		0x80	/* CT offset to PRD table */
 
 /* Generic FIS layout. */
 #define ATA_FIS_TYPE			0	/* FIS Type */
@@ -123,7 +31,7 @@
 #define 	ATA_CMD_WRITE_DMA_EXT	0x35	/* WRITE DMA EXT */
 #define 	ATA_CMD_PACKET		0xA0	/* PACKET */
 #define 	ATA_CMD_IDENTIFY_PACKET	0xA1	/* IDENTIFY PACKET DEVICE */
-#define		ATA_CMD_IDENTIFY	0xEC	/* IDENTIFY DEVICE */
+#define 	ATA_CMD_IDENTIFY	0xEC	/* IDENTIFY DEVICE */
 #define ATA_H2D_FEAT			3	/* Features */
 #define 	ATA_FEAT_PACKET_DMA	0x01	/* use DMA */
 #define 	ATA_FEAT_PACKET_DMADIR	0x03	/* DMA is inbound */
@@ -143,6 +51,8 @@
 /* ATA constants. */
 #define ATA_SECTOR_SIZE		512		/* default sector size */
 #define ATA_MAX_SECTORS		0x10000		/* max sectors per transfer */
+
+#define ATA_ID_SIZE	(256 * sizeof(u16_t))	/* IDENTIFY result size */
 
 #define ATA_ID_GCAP		0		/* General capabililties */
 #define ATA_ID_GCAP_ATAPI_MASK	0xC000		/* ATAPI device mask */
@@ -200,6 +110,97 @@
 #define AHCI_CL_WRITE		(1L << 6)	/* Write */
 #define AHCI_CL_ATAPI		(1L << 5)	/* ATAPI */
 #define AHCI_CL_CFL_SHIFT	0		/* Command FIS Length */
+
+/* Command Table offsets. */
+#define AHCI_CT_PACKET_OFF		0x40	/* CT offset to ATAPI packet */
+#define AHCI_CT_PRDT_OFF		0x80	/* CT offset to PRD table */
+
+/* Host Bus Adapter (HBA) constants. */
+#define AHCI_HBA_CAP	0		/* Host Capabilities */
+#define 	AHCI_HBA_CAP_SNCQ	(1L << 30)	/* Native Cmd Queuing */
+#define 	AHCI_HBA_CAP_SCLO	(1L << 24)	/* Cmd List Override */
+#define 	AHCI_HBA_CAP_NCS_SHIFT	8		/* Nr of Cmd Slots */
+#define 	AHCI_HBA_CAP_NCS_MASK	0x1FL
+#define 	AHCI_HBA_CAP_NP_SHIFT	0		/* Nr of Ports */
+#define 	AHCI_HBA_CAP_NP_MASK	0x1FL
+#define AHCI_HBA_GHC	1		/* Global Host Control */
+#define 	AHCI_HBA_GHC_AE		(1L << 31)	/* AHCI Enable */
+#define 	AHCI_HBA_GHC_IE		(1L <<  1)	/* Interrupt Enable */
+#define 	AHCI_HBA_GHC_HR		(1L <<  0)	/* HBA Reset */
+#define AHCI_HBA_IS	2		/* Interrupt Status */
+#define AHCI_HBA_PI	3		/* Ports Implemented */
+#define AHCI_HBA_VS	4		/* Version */
+#define AHCI_HBA_CAP2	9		/* Host Capabilities Extended */
+
+/* Port constants. */
+#define AHCI_PORT_CLB	0		/* Command List Base */
+#define AHCI_PORT_CLBU	1		/* Command List Base, Upper 32 bits */
+#define AHCI_PORT_FB	2		/* FIS Base */
+#define AHCI_PORT_FBU	3		/* FIS Base, Upper 32 bits */
+#define AHCI_PORT_IS	4		/* Interrupt Status */
+#define 	AHCI_PORT_IS_TFES	(1L << 30)	/* Task File Error */
+#define 	AHCI_PORT_IS_HBFS	(1L << 29)	/* Host Bus Fatal */
+#define 	AHCI_PORT_IS_HBDS	(1L << 28)	/* Host Bus Data */
+#define 	AHCI_PORT_IS_IFS	(1L << 27)	/* Interface Fatal */
+#define 	AHCI_PORT_IS_PRCS	(1L << 22)	/* PhyRdy Change */
+#define 	AHCI_PORT_IS_PCS	(1L <<  6)	/* Port Conn Change */
+#define 	AHCI_PORT_IS_PSS	(1L <<  1)	/* PIO Setup FIS */
+#define 	AHCI_PORT_IS_DHRS	(1L <<  0)	/* D2H Register FIS */
+#define AHCI_PORT_IS_RESTART \
+	(AHCI_PORT_IS_TFES | AHCI_PORT_IS_HBFS | AHCI_PORT_IS_HBDS | \
+	 AHCI_PORT_IS_IFS)
+#define AHCI_PORT_IS_MASK \
+	(AHCI_PORT_IS_RESTART | AHCI_PORT_IS_PRCS | AHCI_PORT_IS_PCS | \
+	 AHCI_PORT_IS_DHRS | AHCI_PORT_IS_PSS)
+#define AHCI_PORT_IE	5		/* Interrupt Enable */
+#define 	AHCI_PORT_IE_MASK	AHCI_PORT_IS_MASK
+#define 	AHCI_PORT_IE_PRCE	AHCI_PORT_IS_PRCS
+#define 	AHCI_PORT_IE_PCE	AHCI_PORT_IS_PCS
+#define 	AHCI_PORT_IE_NONE	0L
+#define AHCI_PORT_CMD	6		/* Command and Status */
+#define 	AHCI_PORT_CMD_CR	(1L << 15)	/* Cmd List Running */
+#define 	AHCI_PORT_CMD_FR	(1L << 14)	/* FIS Recv Running */
+#define 	AHCI_PORT_CMD_FRE	(1L <<  4)	/* FIS Recv Enabled */
+#define 	AHCI_PORT_CMD_SUD	(1L <<  1)	/* Spin-Up Device */
+#define 	AHCI_PORT_CMD_ST	(1L <<  0)	/* Start */
+#define AHCI_PORT_TFD	8		/* Task File Data */
+#define 	AHCI_PORT_TFD_STS_BSY	(1L << 7)	/* Busy */
+#define 	AHCI_PORT_TFD_STS_DF	(1L << 5)	/* Device Fault */
+#define 	AHCI_PORT_TFD_STS_DRQ	(1L << 3)	/* Data Xfer Req'd */
+#define 	AHCI_PORT_TFD_STS_ERR	(1L << 0)	/* Error */
+#define 	AHCI_PORT_TFD_STS_INIT	0x7F		/* Initial state */
+#define AHCI_PORT_SIG	9		/* Signature */
+#define 	ATA_SIG_ATA		0x00000101L	/* ATA interface */
+#define 	ATA_SIG_ATAPI		0xEB140101L	/* ATAPI interface */
+#define AHCI_PORT_SSTS	10		/* Serial ATA Status */
+#define 	AHCI_PORT_SSTS_DET_MASK	0x00000007L	/* Detection Mask */
+#define 	AHCI_PORT_SSTS_DET_PHY	0x00000003L	/* PHY Comm Establ */
+#define AHCI_PORT_SCTL	11		/* Serial ATA Control */
+#define 	AHCI_PORT_SCTL_DET_INIT	0x00000001L	/* Perform Init Seq */
+#define 	AHCI_PORT_SCTL_DET_NONE	0x00000000L	/* No Action Req'd */
+#define AHCI_PORT_SERR	12		/* Serial ATA Error */
+#define 	AHCI_PORT_SERR_DIAG_N	(1L << 16)	/* PhyRdy Change */
+#define AHCI_PORT_CI	14		/* Command Issue */
+
+/* Number of Physical Region Descriptors (PRDs). Must be at least NR_IOREQS+2,
+ * and at most 1024. There is currently no reason to use more than the minimum.
+ */
+#define NR_PRDS		(NR_IOREQS + 2)
+
+/* Various size constants. */
+#define AHCI_MEM_BASE_SIZE	0x100	/* memory-mapped base region size */
+#define AHCI_MEM_PORT_SIZE	0x80	/* memory-mapped port region size */
+
+#define AHCI_FIS_SIZE	256		/* size of FIS receive buffer */
+#define AHCI_CL_SIZE	1024		/* size of command list buffer */
+#define AHCI_TMP_SIZE	ATA_ID_SIZE	/* size of temporary storage buffer */
+#define AHCI_TMP_ALIGN	2		/* required alignment for temp buf */
+#define AHCI_CT_SIZE	(128 + NR_PRDS * sizeof(u32_t) * 4)
+					/* size of command table buffer */
+#define AHCI_CT_ALIGN	128		/* required alignment for CT buffer */
+
+#define MAX_PRD_BYTES	(1L << 22)	/* maximum number of bytes per PRD */
+#define MAX_TRANSFER	MAX_PRD_BYTES	/* maximum size of a single transfer */
 
 /* Command Frame Information Structure (FIS). For internal use only;
  * the contents of this structure are later converted to an actual FIS.

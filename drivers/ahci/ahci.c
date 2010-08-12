@@ -399,29 +399,6 @@ PRIVATE int atapi_check_medium(struct port_state *ps, int cmd)
 }
 
 /*===========================================================================*
- *				atapi_identify				     *
- *===========================================================================*/
-PRIVATE void atapi_identify(struct port_state *ps)
-{
-	/* Identify an ATAPI device.
-	 */
-	cmd_fis_t fis;
-	prd_t prd;
-
-	/* Set up a command, and a single PRD for the result. */
-	memset(&fis, 0, sizeof(fis));
-	fis.cf_cmd = ATA_CMD_IDENTIFY_PACKET;
-
-	prd.prd_phys = ps->tmp_phys;
-	prd.prd_size = AHCI_ID_SIZE;
-
-	/* Start the command, but do not wait for the result. */
-	port_set_cmd(ps, 0, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
-
-	port_issue(ps, 0, ahci_command_timeout);
-}
-
-/*===========================================================================*
  *				atapi_id_check				     *
  *===========================================================================*/
 PRIVATE int atapi_id_check(struct port_state *ps, u16_t *buf)
@@ -497,29 +474,6 @@ PRIVATE int atapi_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	port_set_cmd(ps, cmd, &fis, packet, prdt, nr_prds, write);
 
 	return port_exec(ps, cmd, ahci_transfer_timeout);
-}
-
-/*===========================================================================*
- *				ata_identify				     *
- *===========================================================================*/
-PRIVATE void ata_identify(struct port_state *ps)
-{
-	/* Identify an ATA device.
-	 */
-	cmd_fis_t fis;
-	prd_t prd;
-
-	/* Set up a command, and a single PRD for the result. */
-	memset(&fis, 0, sizeof(fis));
-	fis.cf_cmd = ATA_CMD_IDENTIFY;
-
-	prd.prd_phys = ps->tmp_phys;
-	prd.prd_size = AHCI_ID_SIZE;
-
-	/* Start the command, but do not wait for the result. */
-	port_set_cmd(ps, 0, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
-
-	port_issue(ps, 0, ahci_command_timeout);
 }
 
 /*===========================================================================*
@@ -607,6 +561,33 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, prdt, nr_prds, write);
 
 	return port_exec(ps, cmd, ahci_transfer_timeout);
+}
+
+/*===========================================================================*
+ *				gen_identify				     *
+ *===========================================================================*/
+PRIVATE void gen_identify(struct port_state *ps, int cmd)
+{
+	/* Identify an ATA or ATAPI device.
+	 */
+	cmd_fis_t fis;
+	prd_t prd;
+
+	/* Set up a command, and a single PRD for the result. */
+	memset(&fis, 0, sizeof(fis));
+
+	if (ps->flags & FLAG_ATAPI)
+		fis.cf_cmd = ATA_CMD_IDENTIFY_PACKET;
+	else
+		fis.cf_cmd = ATA_CMD_IDENTIFY;
+
+	prd.prd_phys = ps->tmp_phys;
+	prd.prd_size = ATA_ID_SIZE;
+
+	/* Start the command, but do not wait for the result. */
+	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
+
+	port_issue(ps, cmd, ahci_command_timeout);
 }
 
 /*===========================================================================*
@@ -1140,10 +1121,7 @@ PRIVATE void port_sig_check(struct port_state *ps)
 	ps->state = STATE_WAIT_ID;
 	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_MASK;
 
-	if (ps->flags & FLAG_ATAPI)
-		atapi_identify(ps);
-	else
-		ata_identify(ps);
+	gen_identify(ps, 0);
 }
 
 /*===========================================================================*
@@ -1348,13 +1326,15 @@ PRIVATE void port_intr(struct port_state *ps)
 	}
 	else if ((ps->flags & FLAG_BUSY) && (smask & AHCI_PORT_IS_MASK) &&
 		(!(ps->reg[AHCI_PORT_TFD] & AHCI_PORT_TFD_STS_BSY) ||
-		(ps->reg[AHCI_PORT_TFD] & AHCI_PORT_TFD_STS_ERR))) {
+		(ps->reg[AHCI_PORT_TFD] & (AHCI_PORT_TFD_STS_ERR |
+		AHCI_PORT_TFD_STS_DF)))) {
 
 		assert(!(ps->flags & FLAG_FAILURE));
 
 		/* Command completed or failed. */
 		ps->flags &= ~FLAG_BUSY;
-		if (ps->reg[AHCI_PORT_TFD] & AHCI_PORT_TFD_STS_ERR)
+		if (ps->reg[AHCI_PORT_TFD] & (AHCI_PORT_TFD_STS_ERR |
+			AHCI_PORT_TFD_STS_DF))
 			ps->flags |= FLAG_FAILURE;
 
 		/* Some error cases require a port restart. */
@@ -2293,21 +2273,20 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 	if (m->m_type != DEV_IOCTL_S)
 		return EINVAL;
 
+	if (ahci_prepare(m->DEVICE) == NULL)
+		return ENXIO;
+
 	switch (m->REQUEST) {
 	case DIOCEJECT:
-		if (ahci_prepare(m->DEVICE) == NULL)
-			return ENXIO;
+		if (current_port->state != STATE_GOOD_DEV)
+			return EIO;
 
-		if (current_port->state != STATE_GOOD_DEV ||
-			!(current_port->flags & FLAG_ATAPI))
+		if (!(current_port->flags & FLAG_ATAPI))
 			return EINVAL;
 
 		return atapi_load_eject(current_port, 0, FALSE /*load*/);
 
 	case DIOCOPENCT:
-		if (ahci_prepare(m->DEVICE) == NULL)
-			return ENXIO;
-
 		return sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes) &current_port->open_count,
 			sizeof(current_port->open_count), D);
