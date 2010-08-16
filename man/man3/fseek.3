@@ -3,7 +3,7 @@
 .TH FSEEK 3  "February 24, 1986"
 .AT 3
 .SH NAME
-fseek, fseeko, ftell, rewind \- reposition a stream
+fseek, fseeko, ftell, ftello, rewind \- reposition a stream
 .SH SYNOPSIS
 .nf
 .ft B
@@ -12,6 +12,7 @@ fseek, fseeko, ftell, rewind \- reposition a stream
 int fseek(FILE *\fIstream\fP, long \fIoffset\fP, int \fIptrname\fP)
 int fseeko(FILE *\fIstream\fP, off_t \fIoffset\fP, int \fIptrname\fP)
 long ftell(FILE *\fIstream\fP)
+off_t ftello(FILE *\fIstream\fP)
 void rewind(FILE *\fIstream\fP)
 .ft R
 .fi
@@ -37,7 +38,9 @@ undo any effects of
 .BR  ungetc (3).
 .PP
 .B Ftell
-returns the current value of the offset relative to the beginning
+and
+.B ftello
+return the current value of the offset relative to the beginning
 of the file associated with the named
 .IR stream .
 It is measured in bytes on UNIX;

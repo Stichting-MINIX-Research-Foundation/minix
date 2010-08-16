@@ -3,6 +3,7 @@
  */
 /* $Header$ */
 
+#include	<assert.h>
 #include	<stdio.h>
 
 #if	(SEEK_CUR != 1) || (SEEK_SET != 0) || (SEEK_END != 2)
@@ -16,6 +17,12 @@
 off_t _lseek(int fildes, off_t offset, int whence);
 
 long ftell(FILE *stream)
+{
+	assert(sizeof(long) == sizeof(off_t));
+	return (long) ftello(stream);
+}
+
+off_t ftello(FILE *stream)
 {
 	long result;
 	int adjust = 0;

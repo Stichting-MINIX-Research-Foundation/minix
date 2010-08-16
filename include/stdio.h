@@ -120,6 +120,7 @@ _PROTOTYPE( int fseek, (FILE *_stream, long _offset, int _whence)	);
 _PROTOTYPE( int fseeko, (FILE *_stream, off_t _offset, int _whence)	);
 _PROTOTYPE( int fsetpos, (FILE *_stream, fpos_t *_pos)			);
 _PROTOTYPE( long ftell, (FILE *_stream)					);
+_PROTOTYPE( off_t ftello, (FILE *_stream)				);
 _PROTOTYPE( void rewind, (FILE *_stream)				);
 _PROTOTYPE( void clearerr, (FILE *_stream)				);
 _PROTOTYPE( int feof, (FILE *_stream)					);
