@@ -3,20 +3,23 @@
 .TH FSEEK 3  "February 24, 1986"
 .AT 3
 .SH NAME
-fseek, ftell, rewind \- reposition a stream
+fseek, fseeko, ftell, rewind \- reposition a stream
 .SH SYNOPSIS
 .nf
 .ft B
 #include <stdio.h>
 
 int fseek(FILE *\fIstream\fP, long \fIoffset\fP, int \fIptrname\fP)
+int fseeko(FILE *\fIstream\fP, off_t \fIoffset\fP, int \fIptrname\fP)
 long ftell(FILE *\fIstream\fP)
 void rewind(FILE *\fIstream\fP)
 .ft R
 .fi
 .SH DESCRIPTION
 .B Fseek
-sets the position of the next input or output
+and
+.B fseeko
+set the position of the next input or output
 operation on the
 .IR stream .
 The new position is at the signed distance
@@ -28,7 +31,9 @@ according as
 has the value 0, 1, or 2.
 .PP
 .B Fseek
-undoes any effects of
+and
+.B fseeko
+undo any effects of
 .BR  ungetc (3).
 .PP
 .B Ftell
@@ -40,7 +45,9 @@ on some other systems it is a magic cookie,
 and the only foolproof way to obtain an 
 .I offset
 for
-.BR fseek .
+.BR fseek 
+and
+.BR fseeko .
 .PP
 .BR Rewind "(\fIstream\fR)"
 is equivalent to
@@ -50,4 +57,6 @@ is equivalent to
 .BR fopen (3).
 .SH DIAGNOSTICS
 .B Fseek
-returns \-1 for improper seeks, otherwise zero.
+and
+.B fseeko
+return \-1 for improper seeks, otherwise zero.

@@ -117,6 +117,7 @@ _PROTOTYPE( size_t fwrite,
 	(const void *_ptr, size_t _size, size_t _nmemb, FILE *_stream)	);
 _PROTOTYPE( int fgetpos, (FILE *_stream, fpos_t *_pos)			);
 _PROTOTYPE( int fseek, (FILE *_stream, long _offset, int _whence)	);
+_PROTOTYPE( int fseeko, (FILE *_stream, off_t _offset, int _whence)	);
 _PROTOTYPE( int fsetpos, (FILE *_stream, fpos_t *_pos)			);
 _PROTOTYPE( long ftell, (FILE *_stream)					);
 _PROTOTYPE( void rewind, (FILE *_stream)				);
