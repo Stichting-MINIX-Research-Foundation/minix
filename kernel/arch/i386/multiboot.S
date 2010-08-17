@@ -2,6 +2,7 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/com.h>
+#include <machine/asm.h>
 #include <machine/interrupt.h>
 #include "archconst.h"
 #include "kernel/const.h"
@@ -11,7 +12,7 @@
 
 #define GDT_SET_ENTRY(selector, base, limit) \
 	mov	%ebp, %edi; \
-	add	$(_gdt + selector), %edi; \
+	add	$(_C_LABEL(gdt) + selector), %edi; \
 	mov	base, %eax; \
 	movw %ax, 2(%edi); \
 	shr	$16, %eax; \
@@ -26,10 +27,10 @@
 	andb	$0xf0, 6(%edi); \
 	or	%ax, 6(%edi); \
 	
-.globl _pre_init
-.globl multiboot_init
-.globl kernel_init
+IMPORT(pre_init)
+.extern kernel_init
 
+.globl multiboot_init
 multiboot_init:
 	/* Get size of kernel text */
 	mov	MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_KERNEL_a_text, %ecx
@@ -44,7 +45,7 @@ multiboot_init:
 	/* Calculate and save kernel data base address */
 	mov	$(MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_ENTRY_OFFSET), %ebp
 	add	%eax, %ebp
-	mov	%ebp, _kernel_data_addr(%ebp)
+	mov	%ebp, _C_LABEL(kernel_data_addr)(%ebp)
 	
 	/* Init text seg */
 	GDT_SET_ENTRY(CS_SELECTOR, \
@@ -68,10 +69,10 @@ multiboot_init:
 	
 	mov	$(GDT_SIZE*DESC_SIZE), %eax
 	mov	%ebp, %edi
-	add	$(_gdt + GDT_SELECTOR), %edi
+	add	$(_C_LABEL(gdt) + GDT_SELECTOR), %edi
 	mov	%ax, (%edi)
 	mov	%ebp, %eax
-	add	$_gdt, %eax
+	add	$_C_LABEL(gdt), %eax
 	mov	%eax, 2(%edi)
 	lgdt	(%edi)
 	
@@ -86,14 +87,14 @@ reload_cs:
 	mov	$(multiboot_stack + MULTIBOOT_STACK_SIZE), %esp
 
 	push	%ebx
-	call	_pre_init
+	call	_C_LABEL(pre_init)
 	
 	add	$4, %esp
 	
 	/* return to old boot code of kernel */
 	push	%eax
 	push	$MULTIBOOT_PARAM_BUF_SIZE
-	push	$_multiboot_param_buf
+	push	$_C_LABEL(multiboot_param_buf)
 	push	$0
 	
 	mov	$ES_SELECTOR, %eax
@@ -102,16 +103,13 @@ reload_cs:
 	jmp	kernel_init
 
 .data
-.globl _kernel_data_addr
-_kernel_data_addr:
-.long	0
-.globl _a_out_headers
-_a_out_headers:
-.space	NR_BOOT_PROCS * 32 /* is A_MINHDR */
+LABEL(kernel_data_addr)
+	.long	0
+LABEL(a_out_headers)
+	.space	NR_BOOT_PROCS * 32 /* is A_MINHDR */
 
-.globl _multiboot_param_buf
-_multiboot_param_buf:
-.space	MULTIBOOT_PARAM_BUF_SIZE
+LABEL(multiboot_param_buf)
+	.space	MULTIBOOT_PARAM_BUF_SIZE
 
 multiboot_stack:
 .space	MULTIBOOT_STACK_SIZE + 4

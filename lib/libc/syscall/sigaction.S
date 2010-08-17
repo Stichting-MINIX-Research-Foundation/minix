@@ -1,7 +1,6 @@
-.text
-.extern	__sigaction
-.globl	_sigaction
-.balign	2
+#include <machine/asm.h>
 
-_sigaction:
-	jmp	__sigaction
+IMPORT(_sigaction)
+ENTRY(sigaction)
+	jmp	_C_LABEL(_sigaction)
+

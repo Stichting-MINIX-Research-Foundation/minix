@@ -1,7 +1,6 @@
-.text
-.extern	__chroot
-.globl	_chroot
-.balign	2
+#include <machine/asm.h>
 
-_chroot:
-	jmp	__chroot
+IMPORT(_chroot)
+ENTRY(chroot)
+	jmp	_C_LABEL(_chroot)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__chown
-.globl	_chown
-.balign	2
+#include <machine/asm.h>
 
-_chown:
-	jmp	__chown
+IMPORT(_chown)
+ENTRY(chown)
+	jmp	_C_LABEL(_chown)
+

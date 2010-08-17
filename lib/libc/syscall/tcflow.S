@@ -1,7 +1,6 @@
-.text
-.extern	__tcflow
-.globl	_tcflow
-.balign	2
+#include <machine/asm.h>
 
-_tcflow:
-	jmp	__tcflow
+IMPORT(_tcflow)
+ENTRY(tcflow)
+	jmp	_C_LABEL(_tcflow)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__waitpid
-.globl	_waitpid
-.balign	2
+#include <machine/asm.h>
 
-_waitpid:
-	jmp	__waitpid
+IMPORT(_waitpid)
+ENTRY(waitpid)
+	jmp	_C_LABEL(_waitpid)
+

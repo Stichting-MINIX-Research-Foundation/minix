@@ -1,13 +1,11 @@
 /*	cvu64() - unsigned converted to 64 bit		Author: Kees J. Bot */
 /*								7 Dec 1995 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_cvu64, _cvul64
-
-_cvu64:
+ENTRY(cvu64)
 /* u64_t cvu64(unsigned i); */
-_cvul64:
+ENTRY(cvul64)
 /* u64_t cvul64(unsigned long i); */
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx

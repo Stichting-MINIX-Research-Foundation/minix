@@ -1,7 +1,6 @@
-.text
-.extern	__reboot
-.globl	_reboot
-.balign	2
+#include <machine/asm.h>
 
-_reboot:
-	jmp	__reboot
+IMPORT(_reboot)
+ENTRY(reboot)
+	jmp	_C_LABEL(_reboot)
+

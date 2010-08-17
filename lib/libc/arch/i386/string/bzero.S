@@ -5,15 +5,14 @@
 /*	Set a chunk of memory to zero. */
 /*	This is a BSD routine that escaped from the kernel.  Don't use. */
 /* */
-.text
-.globl	_bzero
-.balign	16
-_bzero:
+#include <machine/asm.h>
+
+ENTRY(bzero)
 	push	%ebp
 	movl	%esp, %ebp
 	push	12(%ebp)	/* Size */
 	push	$0	/* Zero */
 	push	8(%ebp)	/* String */
-	call	_memset	/* Call the proper routine */
+	call	_C_LABEL(memset) /* Call the proper routine */
 	leave
 	ret

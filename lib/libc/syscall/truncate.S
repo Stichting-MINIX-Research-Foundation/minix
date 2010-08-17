@@ -1,13 +1,10 @@
-.text
-.extern	__truncate
-.extern	__ftruncate
-.globl	_truncate
-.globl	_ftruncate
-.balign	2
+#include <machine/asm.h>
 
-_truncate:
-	jmp	__truncate
+IMPORT(_truncate)
+ENTRY(truncate)
+	jmp	_C_LABEL(_truncate)
 
-.balign	2
-_ftruncate:
-	jmp	__ftruncate
+IMPORT(_ftruncate)
+ENTRY(ftruncate)
+	jmp	_C_LABEL(_ftruncate)
+

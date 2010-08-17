@@ -1,7 +1,6 @@
-.text
-.extern	__tcsendbreak
-.globl	_tcsendbreak
-.balign	2
+#include <machine/asm.h>
 
-_tcsendbreak:
-	jmp	__tcsendbreak
+IMPORT(_tcsendbreak)
+ENTRY(tcsendbreak)
+	jmp	_C_LABEL(_tcsendbreak)
+

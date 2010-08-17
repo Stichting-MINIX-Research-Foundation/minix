@@ -1,7 +1,6 @@
-.text
-.extern	__times
-.globl	_times
-.balign	2
+#include <machine/asm.h>
 
-_times:
-	jmp	__times
+IMPORT(_times)
+ENTRY(times)
+	jmp	_C_LABEL(_times)
+

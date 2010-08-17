@@ -1,7 +1,6 @@
-.text
-.extern	__sigpending
-.globl	_sigpending
-.balign	2
+#include <machine/asm.h>
 
-_sigpending:
-	jmp	__sigpending
+IMPORT(_sigpending)
+ENTRY(sigpending)
+	jmp	_C_LABEL(_sigpending)
+

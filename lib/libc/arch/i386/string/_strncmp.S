@@ -4,10 +4,9 @@
 /* int strncmp(const char *s1, const char *s2, size_t ecx) */
 /*	Compare two strings. */
 /* */
-.text
-.globl	__strncmp
-.balign	16
-__strncmp:
+#include <machine/asm.h>
+
+ENTRY(_strncmp)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%esi

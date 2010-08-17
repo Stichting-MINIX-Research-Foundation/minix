@@ -1,7 +1,6 @@
-.text
-.extern	__getnprocnr
-.globl	_getnprocnr
-.balign	2
+#include <machine/asm.h>
 
-_getnprocnr:
-	jmp	__getnprocnr
+IMPORT(_getnprocnr)
+ENTRY(getnprocnr)
+	jmp	_C_LABEL(_getnprocnr)
+

@@ -1,7 +1,6 @@
-.text
-.extern	___pm_findproc
-.globl	__pm_findproc
-.balign	2
+#include <machine/asm.h>
 
-__pm_findproc:
-	jmp	___pm_findproc
+IMPORT(__pm_findproc)
+ENTRY(_pm_findproc)
+	jmp	_C_LABEL(__pm_findproc)
+

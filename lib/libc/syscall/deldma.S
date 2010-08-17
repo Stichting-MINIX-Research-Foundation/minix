@@ -1,7 +1,6 @@
-.text
-.extern	__deldma
-.globl	_deldma
-.balign	2
+#include <machine/asm.h>
 
-_deldma:
-	jmp	__deldma
+IMPORT(_deldma)
+ENTRY(deldma)
+	jmp	_C_LABEL(_deldma)
+

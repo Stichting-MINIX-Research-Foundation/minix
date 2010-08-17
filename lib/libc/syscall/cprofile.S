@@ -1,7 +1,6 @@
-.text
-.extern	__cprofile
-.globl	_cprofile
-.balign	2
+#include <machine/asm.h>
 
-_cprofile:
-	jmp	__cprofile
+IMPORT(_cprofile)
+ENTRY(cprofile)
+	jmp	_C_LABEL(_cprofile)
+

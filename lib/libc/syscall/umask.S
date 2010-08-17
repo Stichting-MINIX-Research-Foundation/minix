@@ -1,7 +1,6 @@
-.text
-.extern	__umask
-.globl	_umask
-.balign	2
+#include <machine/asm.h>
 
-_umask:
-	jmp	__umask
+IMPORT(_umask)
+ENTRY(umask)
+	jmp	_C_LABEL(_umask)
+

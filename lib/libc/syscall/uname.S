@@ -1,7 +1,6 @@
-.text
-.extern	__uname
-.globl	_uname
-.balign	2
+#include <machine/asm.h>
 
-_uname:
-	jmp	__uname
+IMPORT(_uname)
+ENTRY(uname)
+	jmp	_C_LABEL(_uname)
+

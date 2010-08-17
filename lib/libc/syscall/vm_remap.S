@@ -1,7 +1,6 @@
-.text
-.extern	__vm_remap
-.globl	_vm_remap
-.balign	2
+#include <machine/asm.h>
 
-_vm_remap:
-	jmp	__vm_remap
+IMPORT(_vm_remap)
+ENTRY(vm_remap)
+	jmp	_C_LABEL(_vm_remap)
+

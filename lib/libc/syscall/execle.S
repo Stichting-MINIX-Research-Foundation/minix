@@ -1,7 +1,6 @@
-.text
-.extern	__execle
-.globl	_execle
-.balign	2
+#include <machine/asm.h>
 
-_execle:
-	jmp	__execle
+IMPORT(_execle)
+ENTRY(execle)
+	jmp	_C_LABEL(_execle)
+

@@ -1,16 +1,15 @@
 / longjmp.gnu.s
 /
 / Created:	Oct 15, 1993 by Philip Homburg <philip@cs.vu.nl>
+#include <machine/asm.h>
 
-.text
-.globl _longjmp
-_longjmp:
+ENTRY(longjmp)
 	movl	4(%esp), %eax		/* jmp_buf */
 	cmpl	$0, 0(%eax)			/* save mask? */
 	je		1f
 	leal	4(%eax), %edx		/* pointer to sigset_t */
 	push	%edx
-	call	___oldsigset		/* restore mask */
+	call	_C_LABEL(__oldsigset)	/* restore mask */
 	addl	$4, %esp
 	movl	4(%esp), %eax		/* jmp_buf */
 1:

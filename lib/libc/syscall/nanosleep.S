@@ -1,6 +1,6 @@
-.text
-.extern	__nanosleep
-.globl	_nanosleep
+#include <machine/asm.h>
 
-_nanosleep:
-	jmp	__nanosleep
+IMPORT(_nanosleep)
+ENTRY(nanosleep)
+	jmp	_C_LABEL(_nanosleep)
+

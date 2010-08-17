@@ -1,7 +1,6 @@
-.text
-.extern	__wait
-.globl	_wait
-.balign	2
+#include <machine/asm.h>
 
-_wait:
-	jmp	__wait
+IMPORT(_wait)
+ENTRY(wait)
+	jmp	_C_LABEL(_wait)
+

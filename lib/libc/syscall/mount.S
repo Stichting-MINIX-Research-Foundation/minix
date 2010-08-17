@@ -1,7 +1,6 @@
-.text
-.extern	__mount
-.globl	_mount
-.balign	2
+#include <machine/asm.h>
 
-_mount:
-	jmp	__mount
+IMPORT(_mount)
+ENTRY(mount)
+	jmp	_C_LABEL(_mount)
+

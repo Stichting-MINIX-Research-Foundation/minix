@@ -1,7 +1,6 @@
-.text
-.extern	__getppid
-.globl	_getppid
-.balign	2
+#include <machine/asm.h>
 
-_getppid:
-	jmp	__getppid
+IMPORT(_getppid)
+ENTRY(getppid)
+	jmp	_C_LABEL(_getppid)
+

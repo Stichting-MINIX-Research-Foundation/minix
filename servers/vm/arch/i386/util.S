@@ -1,13 +1,11 @@
-.globl	_i386_invlpg
-
-.text
+#include <machine/asm.h>
 
 /**===========================================================================* */
 /**                              i386_invlpg                                  * */
 /**===========================================================================* */
 /* PUBLIC void i386_invlpg(u32_t addr) */
 /* Tell the processor to invalidate a tlb entry at virtual address addr. */
-_i386_invlpg:
+ENTRY(i386_invlpg)
 	push	%ebp
 	mov	%esp, %ebp
 	push	%eax

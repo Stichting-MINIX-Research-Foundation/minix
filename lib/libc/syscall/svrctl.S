@@ -1,7 +1,6 @@
-.text
-.extern	__svrctl
-.globl	_svrctl
-.balign	2
+#include <machine/asm.h>
 
-_svrctl:
-	jmp	__svrctl
+IMPORT(_svrctl)
+ENTRY(svrctl)
+	jmp	_C_LABEL(_svrctl)
+

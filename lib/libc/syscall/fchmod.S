@@ -1,7 +1,6 @@
-.text
-.extern	__fchmod
-.globl	_fchmod
-.balign	2
+#include <machine/asm.h>
 
-_fchmod:
-	jmp	__fchmod
+IMPORT(_fchmod)
+ENTRY(fchmod)
+	jmp	_C_LABEL(_fchmod)
+

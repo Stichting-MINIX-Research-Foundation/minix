@@ -1,14 +1,10 @@
 /*	getprocessor() - determine processor type	Author: Kees J. Bot */
 /*								26 Jan 1994 */
-
-.text
+#include <machine/asm.h>
 
 /* int getprocessor(void); */
 /*	Return 386, 486, 586, ... */
-
-.globl	_getprocessor
-
-_getprocessor:
+ENTRY(getprocessor)
 	push	%ebp
 	movl	%esp, %ebp
 	andl	$0xFFFFFFFC, %esp	/* Align stack to avoid AC fault */

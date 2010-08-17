@@ -1,7 +1,6 @@
-.text
-.extern	__brk
-.globl	_brk
-.balign	2
+#include <machine/asm.h>
 
-_brk:
-	jmp	__brk
+IMPORT(_brk)
+ENTRY(brk)
+	jmp	_C_LABEL(_brk)
+

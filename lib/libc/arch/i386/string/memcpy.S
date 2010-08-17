@@ -8,10 +8,9 @@
 /*	negligible, but you are dealing with a programmer who believes that if */
 /*	anything can go wrong, it should go wrong. */
 /* */
-.text
-.globl	_memcpy
-.balign	16
-_memcpy:
+#include <machine/asm.h>
+
+ENTRY(memcpy)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%esi
@@ -20,4 +19,4 @@ _memcpy:
 	movl	12(%ebp), %esi	/* String s2 */
 	movl	16(%ebp), %ecx	/* Length */
 /* No overlap check here */
-	jmp	__memcpy	/* Call the part of __memmove that copies up */
+	jmp	_C_LABEL(_memcpy) /* Call the part of __memmove that copies up */

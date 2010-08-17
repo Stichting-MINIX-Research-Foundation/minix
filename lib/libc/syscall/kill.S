@@ -1,7 +1,6 @@
-.text
-.extern	__kill
-.globl	_kill
-.balign	2
+#include <machine/asm.h>
 
-_kill:
-	jmp	__kill
+IMPORT(_kill)
+ENTRY(kill)
+	jmp	_C_LABEL(_kill)
+

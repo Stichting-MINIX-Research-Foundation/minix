@@ -1,7 +1,6 @@
-.text
-.extern	__readdir
-.globl	_readdir
-.balign	2
+#include <machine/asm.h>
 
-_readdir:
-	jmp	__readdir
+IMPORT(_readdir)
+ENTRY(readdir)
+	jmp	_C_LABEL(_readdir)
+

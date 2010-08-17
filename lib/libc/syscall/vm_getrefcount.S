@@ -1,7 +1,6 @@
-.text
-.extern	__vm_getrefcount
-.globl	_vm_getrefcount
-.balign	2
+#include <machine/asm.h>
 
-_vm_getrefcount:
-	jmp	__vm_getrefcount
+IMPORT(_vm_getrefcount)
+ENTRY(vm_getrefcount)
+	jmp	_C_LABEL(_vm_getrefcount)
+

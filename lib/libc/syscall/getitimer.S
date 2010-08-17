@@ -1,7 +1,6 @@
-.text
-.extern	__getitimer
-.globl	_getitimer
-.balign	2
+#include <machine/asm.h>
 
-_getitimer:
-	jmp	__getitimer
+IMPORT(_getitimer)
+ENTRY(getitimer)
+	jmp	_C_LABEL(_getitimer)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__umount
-.globl	_umount
-.balign	2
+#include <machine/asm.h>
 
-_umount:
-	jmp	__umount
+IMPORT(_umount)
+ENTRY(umount)
+	jmp	_C_LABEL(_umount)
+

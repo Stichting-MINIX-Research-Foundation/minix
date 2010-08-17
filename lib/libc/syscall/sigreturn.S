@@ -1,7 +1,6 @@
-.text
-.extern	__sigreturn
-.globl	_sigreturn
-.balign	2
+#include <machine/asm.h>
 
-_sigreturn:
-	jmp	__sigreturn
+IMPORT(_sigreturn)
+ENTRY(sigreturn)
+	jmp	_C_LABEL(_sigreturn)
+

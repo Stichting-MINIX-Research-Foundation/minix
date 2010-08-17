@@ -2,10 +2,9 @@
 /*	alloca() - allocate space on the stack		Author: Kees J. Bot */
 /*								2 Dec 1993 */
 
-.text
-.balign	16
-.globl	_alloca
-_alloca:
+#include <machine/asm.h>
+
+ENTRY(alloca)
 #if __ACK__
 	pop	%ecx	/* Return address */
 	pop	%eax	/* Bytes to allocate */

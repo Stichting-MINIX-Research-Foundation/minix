@@ -1,7 +1,6 @@
-.text
-.extern	__setsid
-.globl	_setsid
-.balign	2
+#include <machine/asm.h>
 
-_setsid:
-	jmp	__setsid
+IMPORT(_setsid)
+ENTRY(setsid)
+	jmp	_C_LABEL(_setsid)
+

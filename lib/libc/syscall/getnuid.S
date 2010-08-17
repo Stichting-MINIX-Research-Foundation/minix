@@ -1,7 +1,6 @@
-.text
-.extern	__getnuid
-.globl	_getnuid
-.balign	2
+#include <machine/asm.h>
 
-_getnuid:
-	jmp	__getnuid
+IMPORT(_getnuid)
+ENTRY(getnuid)
+	jmp	_C_LABEL(_getnuid)
+

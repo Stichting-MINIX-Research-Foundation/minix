@@ -2,11 +2,9 @@
 /*							Author: Kees J. Bot */
 /*								7 Dec 1995 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_div64u, _div64u64, _rem64u
-
-_div64u:
+ENTRY(div64u)
 /* unsigned long div64u(u64_t i, unsigned j); */
 	xorl	%edx, %edx
 	movl	8(%esp), %eax	/* i = (ih<<32) + il */
@@ -15,7 +13,7 @@ _div64u:
 	divl	12(%esp)	/* i / j = (q<<32) + ((r<<32) + il) / j */
 	ret
 
-_div64u64:
+ENTRY(div64u64)
 /* u64_t div64u64(u64_t i, unsigned j); */
 	xorl	%edx, %edx
 	movl	12(%esp), %eax	/* i = (ih<<32) + il */
@@ -28,10 +26,10 @@ _div64u64:
 	movl	%ecx, %eax	/* return pointer to result struct */
 	ret	BYTES_TO_POP_ON_STRUCT_RETURN
 
-_rem64u:
+ENTRY(rem64u)
 /* unsigned rem64u(u64_t i, unsigned j); */
 	pop	%ecx
-	call	_div64u
+	call	_C_LABEL(div64u)
 	movl	%edx, %eax
 	jmp	*%ecx
 

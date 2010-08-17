@@ -1,11 +1,10 @@
 /*	cv64u() - 64 bit converted to unsigned		Author: Kees J. Bot */
 /*								7 Dec 1995 */
-.text
-.globl	_cv64u, _cv64ul
+#include <machine/asm.h>
 
-_cv64u:
+ENTRY(cv64u)
 /* unsigned cv64u(u64_t i); */
-_cv64ul:
+ENTRY(cv64ul)
 /* unsigned long cv64ul(u64_t i); */
 	movl	4(%esp), %eax
 	cmpl	$0, 8(%esp)	/* return ULONG_MAX if really big */

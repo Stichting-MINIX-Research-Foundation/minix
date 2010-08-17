@@ -1,7 +1,6 @@
-.text
-.extern	__unlink
-.globl	_unlink
-.balign	2
+#include <machine/asm.h>
 
-_unlink:
-	jmp	__unlink
+IMPORT(_unlink)
+ENTRY(unlink)
+	jmp	_C_LABEL(_unlink)
+

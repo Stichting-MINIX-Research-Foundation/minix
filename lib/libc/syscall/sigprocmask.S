@@ -1,7 +1,6 @@
-.text
-.extern	__sigprocmask
-.globl	_sigprocmask
-.balign	2
+#include <machine/asm.h>
 
-_sigprocmask:
-	jmp	__sigprocmask
+IMPORT(_sigprocmask)
+ENTRY(sigprocmask)
+	jmp	_C_LABEL(_sigprocmask)
+

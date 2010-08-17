@@ -1,7 +1,6 @@
-.text
-.extern	__open
-.globl	_open
-.balign	2
+#include <machine/asm.h>
 
-_open:
-	jmp	__open
+IMPORT(_open)
+ENTRY(open)
+	jmp	_C_LABEL(_open)
+

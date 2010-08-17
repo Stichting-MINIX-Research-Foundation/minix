@@ -1,11 +1,9 @@
 /*	add64() - 64 bit addition			Author: Kees J. Bot */
 /*								7 Dec 1995 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_add64
-
-_add64:
+ENTRY(add64)
 /* u64_t add64(u64_t i, u64_t j); */
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx

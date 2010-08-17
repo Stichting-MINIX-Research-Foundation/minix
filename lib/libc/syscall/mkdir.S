@@ -1,7 +1,6 @@
-.text
-.extern	__mkdir
-.globl	_mkdir
-.balign	2
+#include <machine/asm.h>
 
-_mkdir:
-	jmp	__mkdir
+IMPORT(_mkdir)
+ENTRY(mkdir)
+	jmp	_C_LABEL(_mkdir)
+

@@ -4,10 +4,9 @@
 /* void *_memmove(void *s1, const void *s2, size_t n) */
 /*	Copy a chunk of memory.  Handle overlap. */
 /* */
-.text
-.globl	__memmove, __memcpy
-.balign	16
-__memmove:
+#include <machine/asm.h>
+
+ENTRY(_memmove)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%esi
@@ -19,7 +18,7 @@ __memmove:
 	subl	%esi, %eax
 	cmpl	%ecx, %eax
 	jb	downwards	/* if (s2 - s1) < n then copy downwards */
-__memcpy:
+LABEL(_memcpy)
 	cld	/* Clear direction bit: upwards */
 	cmpl	$16, %ecx
 	jb	upbyte	/* Don't bother being smart with short arrays */

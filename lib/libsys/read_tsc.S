@@ -1,14 +1,11 @@
 /*  */
 /* sections */
+#include <machine/asm.h>
 
-
-.globl	_read_tsc	/* read the cycle counter (Pentium and up) */
-.text
 /**===========================================================================* */
 /* PUBLIC void read_tsc(unsigned long *high, unsigned long *low); */
 /* Read the cycle counter of the CPU. Pentium and up.  */
-.balign	16
-_read_tsc:
+ENTRY(read_tsc)
 	push	%edx
 	push	%eax
 .byte	0x0f	/* this is the RDTSC instruction  */
@@ -26,8 +23,7 @@ _read_tsc:
 /**===========================================================================* */
 /* PUBLIC void read_host_time_ns(unsigned long *high, unsigned long *low); */
 /* access real time in ns from host in vmware. */
-.balign 16
-_read_host_time_ns:
+ENTRY(read_host_time_ns)
         pushl   %edx
         pushl   %eax
         pushl   %ecx

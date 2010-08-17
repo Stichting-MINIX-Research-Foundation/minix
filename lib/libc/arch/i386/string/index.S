@@ -5,8 +5,7 @@
 /*	Look for a character in a string.  Has suffered from a hostile */
 /*	takeover by strchr(). */
 /* */
-.text
-.globl	_index
-.balign	16
-_index:
-	jmp	_strchr
+#include <machine/asm.h>
+
+ENTRY(index)
+	jmp	_C_LABEL(strchr)

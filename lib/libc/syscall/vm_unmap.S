@@ -1,7 +1,6 @@
-.text
-.extern	__vm_unmap
-.globl	_vm_unmap
-.balign	2
+#include <machine/asm.h>
 
-_vm_unmap:
-	jmp	__vm_unmap
+IMPORT(_vm_unmap)
+ENTRY(vm_unmap)
+	jmp	_C_LABEL(_vm_unmap)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__sync
-.globl	_sync
-.balign	2
+#include <machine/asm.h>
 
-_sync:
-	jmp	__sync
+IMPORT(_sync)
+ENTRY(sync)
+	jmp	_C_LABEL(_sync)
+

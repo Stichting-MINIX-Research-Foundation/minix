@@ -4,10 +4,9 @@
 /* void *memchr(const void *s, int c, size_t n) */
 /*	Look for a character in a chunk of memory. */
 /* */
-.text
-.globl	_memchr
-.balign	16
-_memchr:
+#include <machine/asm.h>
+
+ENTRY(memchr)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%edi

@@ -1,7 +1,6 @@
-.text
-.extern	__closedir
-.globl	_closedir
-.balign	2
+#include <machine/asm.h>
 
-_closedir:
-	jmp	__closedir
+IMPORT(_closedir)
+ENTRY(closedir)
+	jmp	_C_LABEL(_closedir)
+

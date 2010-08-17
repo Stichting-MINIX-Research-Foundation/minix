@@ -1,7 +1,6 @@
-.text
-.extern	__vm_query_exit
-.globl	_vm_query_exit
-.balign	2
+#include <machine/asm.h>
 
-_vm_query_exit:
-	jmp	__vm_query_exit
+IMPORT(_vm_query_exit)
+ENTRY(vm_query_exit)
+	jmp	_C_LABEL(_vm_query_exit)
+

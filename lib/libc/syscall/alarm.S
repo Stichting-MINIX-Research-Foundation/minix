@@ -1,7 +1,6 @@
-.text
-.extern	__alarm
-.globl	_alarm
-.balign	2
+#include <machine/asm.h>
 
-_alarm:
-	jmp	__alarm
+IMPORT(_alarm)
+ENTRY(alarm)
+	jmp	_C_LABEL(_alarm)
+

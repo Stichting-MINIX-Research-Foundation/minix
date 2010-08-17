@@ -4,9 +4,8 @@
 /* int strncmp(const char *s1, const char *s2, size_t n) */
 /*	Compare two strings. */
 /* */
-.text
-.globl	_strncmp
-.balign	16
-_strncmp:
+#include <machine/asm.h>
+
+ENTRY(strncmp)
 	movl	12(%esp), %ecx	/* Maximum length */
-	jmp	__strncmp	/* Common code */
+	jmp	_C_LABEL(_strncmp) /* Common code */

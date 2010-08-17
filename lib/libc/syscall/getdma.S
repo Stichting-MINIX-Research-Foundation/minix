@@ -1,7 +1,6 @@
-.text
-.extern	__getdma
-.globl	_getdma
-.balign	2
+#include <machine/asm.h>
 
-_getdma:
-	jmp	__getdma
+IMPORT(_getdma)
+ENTRY(getdma)
+	jmp	_C_LABEL(_getdma)
+

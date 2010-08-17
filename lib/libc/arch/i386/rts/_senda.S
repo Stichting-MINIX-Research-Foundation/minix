@@ -1,15 +1,12 @@
 #include <minix/ipcconst.h>
-
-.globl	__senda
+#include <machine/asm.h>
 
 	SYSVEC = 33
 
 	MSGTAB = 8	/* message table */
 	TABCOUNT = 12	/* number of entries in message table */
 
-.text
-
-__senda:
+ENTRY(_senda)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx

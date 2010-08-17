@@ -1,12 +1,10 @@
-.text
-.extern	__munmap
-.globl	_munmap
-.extern	__munmap_text
-.globl	_munmap_text
-.balign	2
+#include <machine/asm.h>
 
-_munmap:
-	jmp	__munmap
+IMPORT(_munmap)
+ENTRY(munmap)
+	jmp	_C_LABEL(_munmap)
 
-_munmap_text:
-	jmp	__munmap_text
+IMPORT(_munmap_text)
+ENTRY(munmap_text)
+	jmp	_C_LABEL(_munmap_text)
+

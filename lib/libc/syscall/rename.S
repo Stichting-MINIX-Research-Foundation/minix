@@ -1,7 +1,6 @@
-.text
-.extern	__rename
-.globl	_rename
-.balign	2
+#include <machine/asm.h>
 
-_rename:
-	jmp	__rename
+IMPORT(_rename)
+ENTRY(rename)
+	jmp	_C_LABEL(_rename)
+

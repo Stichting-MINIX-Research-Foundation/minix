@@ -1,8 +1,8 @@
+#include <machine/asm.h>
 
-.globl _check_context_loop
-.globl _remaining_invocations
-.globl _origstate
-.globl _newstate
+IMPORT(remaining_invocations)
+IMPORT(origstate)
+IMPORT(newstate)
 
 #define JUNK 0xCC0FFEE0
 
@@ -16,9 +16,8 @@
 	COPY(dest, 0); COPY(dest, 1); COPY(dest, 2); COPY(dest, 3); \
 	COPY(dest, 4); COPY(dest, 5); COPY(dest, 6); COPY(dest, 7); 
 
-.text
 /* void check_context_loop() */
-_check_context_loop:
+ENTRY(check_context_loop)
 	/* Save original context so we can restore it. */
 	pusha
 
@@ -40,7 +39,7 @@ _check_context_loop:
 	pusha
 cont:
 	/* Check if we're done. */
-	cmpl	$0, (_remaining_invocations)
+	cmpl	$0, (_C_LABEL(remaining_invocations))
 	jz	done
 
 	/* We're not done. */
@@ -53,11 +52,11 @@ done:
 	 * so we can copy it.
 	 */
 	pusha
-	COPYA(_newstate);
+	COPYA(_C_LABEL(newstate));
 	popa
 
 	/* copy and restore junked state */
-	COPYA(_origstate);
+	COPYA(_C_LABEL(origstate));
 	popa
 
 	/* restore original state and return */

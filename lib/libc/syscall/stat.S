@@ -1,7 +1,6 @@
-.text
-.extern	__stat
-.globl	_stat
-.balign	2
+#include <machine/asm.h>
 
-_stat:
-	jmp	__stat
+IMPORT(_stat)
+ENTRY(stat)
+	jmp	_C_LABEL(_stat)
+

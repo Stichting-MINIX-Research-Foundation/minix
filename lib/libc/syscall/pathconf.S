@@ -1,7 +1,6 @@
-.text
-.extern	__pathconf
-.globl	_pathconf
-.balign	2
+#include <machine/asm.h>
 
-_pathconf:
-	jmp	__pathconf
+IMPORT(_pathconf)
+ENTRY(pathconf)
+	jmp	_C_LABEL(_pathconf)
+

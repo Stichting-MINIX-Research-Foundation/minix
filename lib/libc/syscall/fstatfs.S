@@ -1,7 +1,6 @@
-.text
-.extern	__fstatfs
-.globl	_fstatfs
-.balign	2
+#include <machine/asm.h>
 
-_fstatfs:
-	jmp	__fstatfs
+IMPORT(_fstatfs)
+ENTRY(fstatfs)
+	jmp	_C_LABEL(_fstatfs)
+

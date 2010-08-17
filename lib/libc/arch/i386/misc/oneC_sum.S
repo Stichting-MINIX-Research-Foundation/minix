@@ -2,12 +2,9 @@
 /*								9 May 1995 */
 /* See RFC 1071, "Computing the Internet checksum" */
 /* See also the C version of this code. */
+#include <machine/asm.h>
 
-.text
-
-.globl	_oneC_sum
-.balign	16
-_oneC_sum:
+ENTRY(oneC_sum)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%esi
@@ -36,7 +33,7 @@ aligned:
 	adcl	$0, %eax	/* Add carry back in for one`s complement */
 
 	jmp	add6test
-.balign	16
+_ALIGN_TEXT
 add6:
 	addl	(%esi), %eax	/* Six times unrolled loop, see below */
 	adcl	4(%esi), %eax
@@ -52,7 +49,7 @@ add6test:
 	addl	$24, %edi
 
 	jmp	add1test
-.balign	16
+_ALIGN_TEXT
 add1:
 	addl	(%esi), %eax	/* while ((edi -= 4) >= 0) */
 	adcl	$0, %eax	/*	eax += *esi++; */
@@ -83,7 +80,7 @@ done:
 #else
 .data
 #endif
-.balign	4
+.balign 4
 mask:
 .long	0x000000FF, 0x0000FFFF, 0x00FFFFFF
 

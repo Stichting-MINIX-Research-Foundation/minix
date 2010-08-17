@@ -4,9 +4,8 @@
 /* size_t strnlen(const char *s, size_t n) */
 /*	Return the length of a string. */
 /* */
-.text
-.globl	_strnlen
-.balign	16
-_strnlen:
+#include <machine/asm.h>
+
+ENTRY(strnlen)
 	movl	8(%esp), %ecx	/* Maximum length */
-	jmp	__strnlen	/* Common code */
+	jmp	_C_LABEL(_strnlen) /* Common code */

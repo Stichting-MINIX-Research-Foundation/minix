@@ -1,7 +1,6 @@
-.text
-.extern	__chmod
-.globl	_chmod
-.balign	2
+#include <machine/asm.h>
 
-_chmod:
-	jmp	__chmod
+IMPORT(_chmod)
+ENTRY(chmod)
+	jmp	_C_LABEL(_chmod)
+

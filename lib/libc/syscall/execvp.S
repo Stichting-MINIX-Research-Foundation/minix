@@ -1,7 +1,6 @@
-.text
-.extern	__execvp
-.globl	_execvp
-.balign	2
+#include <machine/asm.h>
 
-_execvp:
-	jmp	__execvp
+IMPORT(_execvp)
+ENTRY(execvp)
+	jmp	_C_LABEL(_execvp)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__write
-.globl	_write
-.balign	2
+#include <machine/asm.h>
 
-_write:
-	jmp	__write
+IMPORT(_write)
+ENTRY(write)
+	jmp	_C_LABEL(_write)
+

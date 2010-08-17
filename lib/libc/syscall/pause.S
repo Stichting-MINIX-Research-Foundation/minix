@@ -1,7 +1,6 @@
-.text
-.extern	__pause
-.globl	_pause
-.balign	2
+#include <machine/asm.h>
 
-_pause:
-	jmp	__pause
+IMPORT(_pause)
+ENTRY(pause)
+	jmp	_C_LABEL(_pause)
+

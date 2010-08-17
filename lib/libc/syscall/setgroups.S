@@ -1,7 +1,6 @@
-.text
-.extern	__setgroups
-.globl	_setgroups
-.balign	2
+#include <machine/asm.h>
 
-_setgroups:
-	jmp	__setgroups
+IMPORT(_setgroups)
+ENTRY(setgroups)
+	jmp	_C_LABEL(_setgroups)
+

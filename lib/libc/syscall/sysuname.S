@@ -1,7 +1,6 @@
-.text
-.extern	__sysuname
-.globl	_sysuname
-.balign	2
+#include <machine/asm.h>
 
-_sysuname:
-	jmp	__sysuname
+IMPORT(_sysuname)
+ENTRY(sysuname)
+	jmp	_C_LABEL(_sysuname)
+

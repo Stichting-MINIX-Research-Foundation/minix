@@ -1,7 +1,6 @@
-.text
-.extern	__killpg
-.globl	_killpg
-.balign	2
+#include <machine/asm.h>
 
-_killpg:
-	jmp	__killpg
+IMPORT(_killpg)
+ENTRY(killpg)
+	jmp	_C_LABEL(_killpg)
+

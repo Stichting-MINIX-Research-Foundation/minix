@@ -1,7 +1,6 @@
-.text
-.extern	__adddma
-.globl	_adddma
-.balign	2
+#include <machine/asm.h>
 
-_adddma:
-	jmp	__adddma
+IMPORT(_adddma)
+ENTRY(adddma)
+	jmp	_C_LABEL(_adddma)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__sigemptyset
-.globl	_sigemptyset
-.balign	2
+#include <machine/asm.h>
 
-_sigemptyset:
-	jmp	__sigemptyset
+IMPORT(_sigemptyset)
+ENTRY(sigemptyset)
+	jmp	_C_LABEL(_sigemptyset)
+

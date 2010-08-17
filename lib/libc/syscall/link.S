@@ -1,7 +1,6 @@
-.text
-.extern	__link
-.globl	_link
-.balign	2
+#include <machine/asm.h>
 
-_link:
-	jmp	__link
+IMPORT(_link)
+ENTRY(link)
+	jmp	_C_LABEL(_link)
+

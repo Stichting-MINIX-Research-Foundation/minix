@@ -1,7 +1,6 @@
-.text
-.extern	__tcsetattr
-.globl	_tcsetattr
-.balign	2
+#include <machine/asm.h>
 
-_tcsetattr:
-	jmp	__tcsetattr
+IMPORT(_tcsetattr)
+ENTRY(tcsetattr)
+	jmp	_C_LABEL(_tcsetattr)
+

@@ -1,6 +1,5 @@
 #include <minix/ipcconst.h>
-
-.globl	__notify, __send, __senda, __sendnb, __receive, __sendrec, __do_kernel_call
+#include <machine/asm.h>
 
 	IPCVEC = 33	/* ipc trap to kernel  */
 	KERVEC = 32	/* syscall trap to kernel */
@@ -13,8 +12,7 @@
 /*                           IPC assembly routines			  * */
 /**========================================================================* */
 /* all message passing routines save ebx, but destroy eax and ecx. */
-.text
-__send:
+ENTRY(_send)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx
@@ -26,7 +24,7 @@ __send:
 	pop	%ebp
 	ret
 
-__receive:
+ENTRY(_receive)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx
@@ -40,7 +38,7 @@ __receive:
 	pop	%ebp
 	ret
 
-__sendrec:
+ENTRY(_sendrec)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx
@@ -52,7 +50,7 @@ __sendrec:
 	pop	%ebp
 	ret
 
-__notify:
+ENTRY(_notify)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx
@@ -63,7 +61,7 @@ __notify:
 	pop	%ebp
 	ret
 
-__sendnb:
+ENTRY(_sendnb)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%ebx
@@ -75,7 +73,7 @@ __sendnb:
 	pop	%ebp
 	ret
 
-__do_kernel_call:
+ENTRY(_do_kernel_call)
 	/* pass the message pointer to kernel in the %eax register */
 	movl	4(%esp), %eax
 	int	$KERVEC

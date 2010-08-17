@@ -1,7 +1,6 @@
-.text
-.extern	__isatty
-.globl	_isatty
-.balign	2
+#include <machine/asm.h>
 
-_isatty:
-	jmp	__isatty
+IMPORT(_isatty)
+ENTRY(isatty)
+	jmp	_C_LABEL(_isatty)
+

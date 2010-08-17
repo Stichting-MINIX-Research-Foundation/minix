@@ -1,7 +1,6 @@
-.text
-.extern	__getgid
-.globl	_getgid
-.balign	2
+#include <machine/asm.h>
 
-_getgid:
-	jmp	__getgid
+IMPORT(_getgid)
+ENTRY(getgid)
+	jmp	_C_LABEL(_getgid)
+

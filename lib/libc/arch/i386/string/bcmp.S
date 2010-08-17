@@ -7,16 +7,15 @@
 /*	(Alas it is not without some use, it reports the number of bytes */
 /*	after the bytes that are equal.  So it can't be simply replaced.) */
 /* */
-.text
-.globl	_bcmp
-.balign	16
-_bcmp:
+#include <machine/asm.h>
+
+ENTRY(bcmp)
 	push	%ebp
 	movl	%esp, %ebp
 	push	16(%ebp)
 	push	12(%ebp)
 	push	8(%ebp)
-	call	_memcmp	/* Let memcmp do the work */
+	call	_C_LABEL(memcmp) /* Let memcmp do the work */
 	testl	%eax, %eax
 	je	equal
 	subl	8(%ebp), %edx	/* Memcmp was nice enough to leave "esi" in edx */

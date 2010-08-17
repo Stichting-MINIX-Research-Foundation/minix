@@ -1,7 +1,6 @@
-.text
-.extern	__mapdriver
-.globl	_mapdriver
-.balign	2
+#include <machine/asm.h>
 
-_mapdriver:
-	jmp	__mapdriver
+IMPORT(_mapdriver)
+ENTRY(mapdriver)
+	jmp	_C_LABEL(_mapdriver)
+

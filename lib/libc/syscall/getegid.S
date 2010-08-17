@@ -1,7 +1,6 @@
-.text
-.extern	__getegid
-.globl	_getegid
-.balign	2
+#include <machine/asm.h>
 
-_getegid:
-	jmp	__getegid
+IMPORT(_getegid)
+ENTRY(getegid)
+	jmp	_C_LABEL(_getegid)
+

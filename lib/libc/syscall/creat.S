@@ -1,7 +1,6 @@
-.text
-.extern	__creat
-.globl	_creat
-.balign	2
+#include <machine/asm.h>
 
-_creat:
-	jmp	__creat
+IMPORT(_creat)
+ENTRY(creat)
+	jmp	_C_LABEL(_creat)
+

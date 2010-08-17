@@ -1,7 +1,6 @@
-.text
-.extern	__fpathconf
-.globl	_fpathconf
-.balign	2
+#include <machine/asm.h>
 
-_fpathconf:
-	jmp	__fpathconf
+IMPORT(_fpathconf)
+ENTRY(fpathconf)
+	jmp	_C_LABEL(_fpathconf)
+

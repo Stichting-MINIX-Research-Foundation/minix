@@ -1,7 +1,6 @@
-.text
-.extern	__seekdir
-.globl	_seekdir
-.balign	2
+#include <machine/asm.h>
 
-_seekdir:
-	jmp	__seekdir
+IMPORT(_seekdir)
+ENTRY(seekdir)
+	jmp	_C_LABEL(_seekdir)
+

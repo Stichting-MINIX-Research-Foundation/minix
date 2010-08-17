@@ -1,7 +1,6 @@
-.text
-.extern	___exit
-.globl	__exit
-.balign	2
+#include <machine/asm.h>
 
-__exit:
-	jmp	___exit
+IMPORT(__exit)
+ENTRY(_exit)
+	jmp	_C_LABEL(__exit)
+

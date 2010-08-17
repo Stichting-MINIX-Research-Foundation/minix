@@ -1,7 +1,6 @@
-.text
-.extern	__getngid
-.globl	_getngid
-.balign	2
+#include <machine/asm.h>
 
-_getngid:
-	jmp	__getngid
+IMPORT(_getngid)
+ENTRY(getngid)
+	jmp	_C_LABEL(_getngid)
+

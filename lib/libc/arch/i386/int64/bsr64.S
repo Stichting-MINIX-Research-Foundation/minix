@@ -1,11 +1,9 @@
 /*	bsr64() - 64 bit bit scan reverse	Author: Erik van der Kouwe */
 /*							       15 May 2010 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_bsr64
-
-_bsr64:
+ENTRY(bsr64)
 /* int bsr64(u64_t i); */
 	bsr	8(%esp),	%eax	/* check high-order DWORD */
 	jnz	0f			/* non-zero: return index+32 */

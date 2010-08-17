@@ -4,10 +4,9 @@
 /* */
 /* Created:	Sep 7, 1992 by Philip Homburg */
 
+#include <machine/asm.h>
 
-.text
-.globl	_get_bp
-_get_bp:
+ENTRY(get_bp)
 	movl	%ebp, %eax
 	ret
 

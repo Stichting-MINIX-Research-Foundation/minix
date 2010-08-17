@@ -1,10 +1,9 @@
 /*	inw() - Input one word				Author: Kees J. Bot */
 /*								18 Mar 1996 */
 /*	unsigned inw(U16_t port); */
+#include <machine/asm.h>
 
-.text
-.globl	_inw
-_inw:
+ENTRY(inw)
 	push	%ebp
 	movl	%esp, %ebp
 	movl	8(%ebp), %edx	/* port */

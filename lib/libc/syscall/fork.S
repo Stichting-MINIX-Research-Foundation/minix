@@ -1,7 +1,6 @@
-.text
-.extern	__fork
-.globl	_fork
-.balign	2
+#include <machine/asm.h>
 
-_fork:
-	jmp	__fork
+IMPORT(_fork)
+ENTRY(fork)
+	jmp	_C_LABEL(_fork)
+

@@ -4,10 +4,9 @@
 /* char *_strncat(char *s1, const char *s2, size_t edx) */
 /*	Append string s2 to s1. */
 /* */
-.text
-.globl	__strncat
-.balign	16
-__strncat:
+#include <machine/asm.h>
+
+ENTRY(_strncat)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%esi

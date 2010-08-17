@@ -1,11 +1,10 @@
-.text
-.extern	__setuid
-.globl	_setuid
-.globl	_seteuid
-.balign	2
+#include <machine/asm.h>
 
-_setuid:
-	jmp	__setuid
+IMPORT(_setuid)
+ENTRY(setuid)
+	jmp	_C_LABEL(_setuid)
 
-_seteuid:
-	jmp	__seteuid
+IMPORT(_seteuid)
+ENTRY(seteuid)
+	jmp	_C_LABEL(_seteuid)
+

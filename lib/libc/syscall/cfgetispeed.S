@@ -1,7 +1,6 @@
-.text
-.extern	__cfgetispeed
-.globl	_cfgetispeed
-.balign	2
+#include <machine/asm.h>
 
-_cfgetispeed:
-	jmp	__cfgetispeed
+IMPORT(_cfgetispeed)
+ENTRY(cfgetispeed)
+	jmp	_C_LABEL(_cfgetispeed)
+

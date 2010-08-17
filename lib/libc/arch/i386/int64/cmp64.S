@@ -1,9 +1,8 @@
 /*	cmp64*() - 64 bit compare			Author: Kees J. Bot */
 /*								7 Dec 1995 */
-.text
-.globl	_cmp64, _cmp64u, _cmp64ul
+#include <machine/asm.h>
 
-_cmp64:
+ENTRY(cmp64)
 /* int cmp64(u64_t i, u64_t j); */
 	movl	%esp, %ecx
 0:
@@ -20,9 +19,9 @@ _cmp64:
 	adcl	$0, %eax	/* eax = (i > j) - (i < j) */
 	ret
 
-_cmp64u:
+ENTRY(cmp64u)
 /* int cmp64u(u64_t i, unsigned j); */
-_cmp64ul:
+ENTRY(cmp64ul)
 /* int cmp64ul(u64_t i, unsigned long j); */
 	movl	%esp, %ecx
 	push	16(%ecx)

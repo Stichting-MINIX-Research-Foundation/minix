@@ -1,7 +1,6 @@
-.text
-.extern	__getsigset
-.globl	_getsigset
-.balign	2
+#include <machine/asm.h>
 
-_getsigset:
-	jmp	__getsigset
+IMPORT(_getsigset)
+ENTRY(getsigset)
+	jmp	_C_LABEL(_getsigset)
+

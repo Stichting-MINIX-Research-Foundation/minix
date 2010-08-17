@@ -1,7 +1,6 @@
-.text
-.extern	__opendir
-.globl	_opendir
-.balign	2
+#include <machine/asm.h>
 
-_opendir:
-	jmp	__opendir
+IMPORT(_opendir)
+ENTRY(opendir)
+	jmp	_C_LABEL(_opendir)
+

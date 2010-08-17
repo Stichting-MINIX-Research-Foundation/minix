@@ -1,7 +1,6 @@
-.text
-.extern	__mmap
-.globl	_mmap
-.balign	2
+#include <machine/asm.h>
 
-_mmap:
-	jmp	__mmap
+IMPORT(_mmap)
+ENTRY(mmap)
+	jmp	_C_LABEL(_mmap)
+

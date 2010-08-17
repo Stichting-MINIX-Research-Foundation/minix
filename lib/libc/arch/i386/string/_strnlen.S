@@ -4,10 +4,9 @@
 /* size_t _strnlen(const char *s, size_t ecx) */
 /*	Return the length of a string. */
 /* */
-.text
-.globl	__strnlen
-.balign	16
-__strnlen:
+#include <machine/asm.h>
+
+ENTRY(_strnlen)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%edi

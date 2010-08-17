@@ -1,7 +1,6 @@
-.text
-.extern	__sigaddset
-.globl	_sigaddset
-.balign	2
+#include <machine/asm.h>
 
-_sigaddset:
-	jmp	__sigaddset
+IMPORT(_sigaddset)
+ENTRY(sigaddset)
+	jmp	_C_LABEL(_sigaddset)
+

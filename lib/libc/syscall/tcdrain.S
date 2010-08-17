@@ -1,7 +1,6 @@
-.text
-.extern	__tcdrain
-.globl	_tcdrain
-.balign	2
+#include <machine/asm.h>
 
-_tcdrain:
-	jmp	__tcdrain
+IMPORT(_tcdrain)
+ENTRY(tcdrain)
+	jmp	_C_LABEL(_tcdrain)
+

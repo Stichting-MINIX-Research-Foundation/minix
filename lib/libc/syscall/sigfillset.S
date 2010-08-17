@@ -1,7 +1,6 @@
-.text
-.extern	__sigfillset
-.globl	_sigfillset
-.balign	2
+#include <machine/asm.h>
 
-_sigfillset:
-	jmp	__sigfillset
+IMPORT(_sigfillset)
+ENTRY(sigfillset)
+	jmp	_C_LABEL(_sigfillset)
+

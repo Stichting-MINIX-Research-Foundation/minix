@@ -1,7 +1,6 @@
-.text
-.extern	__vm_set_priv
-.globl	_vm_set_priv
-.balign	2
+#include <machine/asm.h>
 
-_vm_set_priv:
-	jmp	__vm_set_priv
+IMPORT(_vm_set_priv)
+ENTRY(vm_set_priv)
+	jmp	_C_LABEL(_vm_set_priv)
+

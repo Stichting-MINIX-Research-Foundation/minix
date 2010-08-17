@@ -1,7 +1,6 @@
-.text
-.extern	__lseek
-.globl	_lseek
-.balign	2
+#include <machine/asm.h>
 
-_lseek:
-	jmp	__lseek
+IMPORT(_lseek)
+ENTRY(lseek)
+	jmp	_C_LABEL(_lseek)
+

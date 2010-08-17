@@ -1,7 +1,6 @@
-.text
-.extern	__vm_memctl
-.globl	_vm_memctl
-.balign	2
+#include <machine/asm.h>
 
-_vm_memctl:
-	jmp	__vm_memctl
+IMPORT(_vm_memctl)
+ENTRY(vm_memctl)
+	jmp	_C_LABEL(_vm_memctl)
+

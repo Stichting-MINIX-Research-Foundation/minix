@@ -4,10 +4,9 @@
 /* void *memset(void *s, int c, size_t n) */
 /*	Set a chunk of memory to the same byte value. */
 /* */
-.text
-.globl	_memset
-.balign	16
-_memset:
+#include <machine/asm.h>
+
+ENTRY(memset)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%edi

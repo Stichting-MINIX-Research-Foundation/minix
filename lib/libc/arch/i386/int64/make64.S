@@ -2,11 +2,9 @@
 /*							Author: Kees J. Bot */
 /*								7 Dec 1995 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_make64
-
-_make64:
+ENTRY(make64)
 /* u64_t make64(unsigned long lo, unsigned long hi); */
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx

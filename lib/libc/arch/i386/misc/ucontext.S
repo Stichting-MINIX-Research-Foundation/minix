@@ -1,3 +1,4 @@
+#include <machine/asm.h>
 
 #ifdef __ACK__
 .text
@@ -14,9 +15,11 @@ begdata:
 begbss:
 #endif
 
-.extern _getuctx
-.extern _setuctx
-.extern _resumecontext
+
+IMPORT(getuctx)
+IMPORT(setuctx)
+IMPORT(resumecontext)
+
 
 /* Offsets into ucontext_t structure. Keep in sync with <sys/ucontext.h>! */
 #define UC_FLAGS	0 
@@ -55,16 +58,11 @@ begbss:
 #define EFAULT		14
 #define EINVAL 		22
 
+
 /* int getcontext(ucontext_t *ucp) 
  *	Initialise the structure pointed to by ucp to the current user context
  *	of the calling thread. */
-
-
-.text
-
-.globl	_getcontext
-.balign	16
-_getcontext:
+ENTRY(getcontext)
 	/* In case a process does not use the FPU and is neither interested in
 	 * saving its signal mask, then we can skip the context switch to
 	 * PM and kernel altogether and only save general-purpose registers. */
@@ -78,7 +76,7 @@ _getcontext:
 	/* Check null pointer */
 	cmp $0, %edx			/* edx == NULL? */
 	jne 3f				/* Not null, continue */
-	movl $EFAULT, (_errno) 
+	movl $EFAULT, (_C_LABEL(errno))
 	xor %eax, %eax
 	dec %eax			/* return -1 */
 	ret
@@ -98,7 +96,7 @@ _getcontext:
 0:
 	push %ecx			/* Save ecx */
 	push %edx		 
-	call _getuctx			/* getuctx(ucp) */
+	call _C_LABEL(getuctx)		/* getuctx(ucp) */
 	pop %edx			/* clean up stack and restore edx */
 	pop %ecx			/* Restore ecx */
 
@@ -131,12 +129,7 @@ _getcontext:
  *	program execution continues as if the corresponding call of getcontext()
  *	had just returned. If ucp was created with makecontext(), program
  *	execution continues with the function passed to makecontext(). */
- 
-.text
-
-.globl	_setcontext
-.balign	16
-_setcontext:
+ENTRY(setcontext)
 	/* In case a process does not use the FPU and is neither interested in
 	 * restoring its signal mask, then we can skip the context switch to
 	 * PM and kernel altogether and restore state here. */
@@ -146,7 +139,7 @@ _setcontext:
 	/* Check null pointer */
 	cmp $0, %edx			/* edx == NULL? */
 	jnz 3f				/* Not null, continue */
-	movl $EFAULT, (_errno)
+	movl $EFAULT, (_C_LABEL(errno))
 	xor %eax, %eax
 	dec %eax			/* return -1 */
 	ret
@@ -158,7 +151,7 @@ _setcontext:
 	pop %ebx			/* restore ebx */
 	cmp $MCF_MAGIC, %ecx	/* is the magic value set (is context valid)?*/
 	jz 4f				/* is set, proceed */
-	movl $EINVAL, (_errno)		/* not set, return error code */
+	movl $EINVAL, (_C_LABEL(errno)) /* not set, return error code */
 	xor %eax, %eax
 	dec %eax			/* return -1 */
 	ret	
@@ -176,7 +169,7 @@ _setcontext:
 
 0:	push %ecx			/* Save ecx */
 	push %edx		 
-	call _setuctx			/* setuctx(ucp) */
+	call _C_LABEL(setuctx)		/* setuctx(ucp) */
 	pop %edx			/* Clean up stack and restore edx */
 	pop %ecx			/* Restore ecx */
 
@@ -200,12 +193,7 @@ _setcontext:
  *	arguments to `func' from the stack. Finally, a call to resumecontext
  *	will start the next context in the linked list (or exit the program if
  *	there is no context). */
-
-.text
-
-.globl	_ctx_start
-.balign	16
-_ctx_start:
+ENTRY(ctx_start)
 	/* 0(esp) -> func
 	 * 4(esp) -> arg1
 	 * ...
@@ -216,7 +204,7 @@ _ctx_start:
 	call *%eax			/* func(arg1, ..., argn) */
 	mov %esi, %esp			/* Clean up stack */
 	/* ucp is now at the top of the stack again */
-	call _resumecontext	/* resumecontext(ucp) */
+	call _C_LABEL(resumecontext)	/* resumecontext(ucp) */
 	ret			/* never reached */
 
 

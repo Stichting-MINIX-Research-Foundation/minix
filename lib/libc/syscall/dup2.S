@@ -1,7 +1,6 @@
-.text
-.extern	__dup2
-.globl	_dup2
-.balign	2
+#include <machine/asm.h>
 
-_dup2:
-	jmp	__dup2
+IMPORT(_dup2)
+ENTRY(dup2)
+	jmp	_C_LABEL(_dup2)
+

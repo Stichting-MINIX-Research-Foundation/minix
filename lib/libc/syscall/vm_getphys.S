@@ -1,7 +1,6 @@
-.text
-.extern	__vm_getphys
-.globl	_vm_getphys
-.balign	2
+#include <machine/asm.h>
 
-_vm_getphys:
-	jmp	__vm_getphys
+IMPORT(_vm_getphys)
+ENTRY(vm_getphys)
+	jmp	_C_LABEL(_vm_getphys)
+

@@ -3,14 +3,12 @@
 /*								18 Mar 1996 */
 /*	void intr_disable(void); */
 /*	void intr_enable(void); */
+#include <machine/asm.h>
 
-.text
-.globl	_intr_disable
-_intr_disable:
+ENTRY(intr_disable)
 	cli
 	ret
 
-.globl	_intr_enable
-_intr_enable:
+ENTRY(intr_enable)
 	sti
 	ret

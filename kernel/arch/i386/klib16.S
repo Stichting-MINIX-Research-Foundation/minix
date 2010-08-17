@@ -3,6 +3,7 @@
 
 #include <minix/config.h>
 #include <minix/const.h>
+#include <machine/asm.h>
 #include <machine/interrupt.h>
 #include "archconst.h"
 #include "kernel/const.h"
@@ -11,11 +12,8 @@
 
 /*
  * This file contains a number of 16-bit assembly code utility routines needed by the
- * kernel.  They are:
+ * kernel.
  */
-
-.globl	_poweroff16 /* enter real mode */
-.globl	_poweroff16_end
 
 .text
 .code16
@@ -25,10 +23,10 @@
 /*===========================================================================*/
 /* PUBLIC void poweroff16(); */
 /* Power down system */
-_poweroff16:
+ENTRY(poweroff16)
 	/* Assume eax is already set to required value of cr0*/
 .byte	0x0F,0x22,0xC0	/* mov %cr0,%eax */
-	ljmp	$0,$(BIOS_POWEROFF_ENTRY + real_mode - _poweroff16)
+	ljmp	$0,$(BIOS_POWEROFF_ENTRY + real_mode - _C_LABEL(poweroff16))
 real_mode:
 	mov	$((BIOS_POWEROFF_ENTRY >> 4) + 0x200),%ax
 	mov	%ax, %ds
@@ -88,7 +86,7 @@ apm_err:
 	mov	$0x07, %bx
 	mov	$POWEROFF_MSG_LEN, %cx
 	mov	$0x0300, %dx
-	mov	$(poweroff_msg - _poweroff16), %bp
+	mov	$(poweroff_msg - _C_LABEL(poweroff16)), %bp
 	int	$0x10
 0:	hlt
 	jmp	0b
@@ -99,4 +97,4 @@ kb_wait:
 	jnz	kb_wait
 	ret
 /*mark the end for copy*/
-_poweroff16_end:
+LABEL(poweroff16_end)

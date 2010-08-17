@@ -1,7 +1,6 @@
-.text
-.extern	__getpgrp
-.globl	_getpgrp
-.balign	2
+#include <machine/asm.h>
 
-_getpgrp:
-	jmp	__getpgrp
+IMPORT(_getpgrp)
+ENTRY(getpgrp)
+	jmp	_C_LABEL(_getpgrp)
+

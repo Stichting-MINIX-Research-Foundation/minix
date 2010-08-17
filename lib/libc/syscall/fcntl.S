@@ -1,7 +1,6 @@
-.text
-.extern	__fcntl
-.globl	_fcntl
-.balign	2
+#include <machine/asm.h>
 
-_fcntl:
-	jmp	__fcntl
+IMPORT(_fcntl)
+ENTRY(fcntl)
+	jmp	_C_LABEL(_fcntl)
+

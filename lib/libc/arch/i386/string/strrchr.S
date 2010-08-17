@@ -4,10 +4,9 @@
 /* char *strrchr(const char *s, int c) */
 /*	Look for the last occurrence a character in a string. */
 /* */
-.text
-.globl	_strrchr
-.balign	16
-_strrchr:
+#include <machine/asm.h>
+
+ENTRY(strrchr)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%edi

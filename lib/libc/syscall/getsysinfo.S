@@ -1,11 +1,10 @@
-.text
-.extern	__getsysinfo
-.globl	_getsysinfo
-.extern	__getsysinfo_up
-.globl	_getsysinfo_up
-.balign	2
+#include <machine/asm.h>
 
-_getsysinfo:
-	jmp	__getsysinfo
-_getsysinfo_up:
-	jmp	__getsysinfo_up
+IMPORT(_getsysinfo)
+ENTRY(getsysinfo)
+	jmp	_C_LABEL(_getsysinfo)
+
+IMPORT(_getsysinfo_up)
+ENTRY(getsysinfo_up)
+	jmp	_C_LABEL(_getsysinfo_up)
+

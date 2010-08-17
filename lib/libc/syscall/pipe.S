@@ -1,7 +1,6 @@
-.text
-.extern	__pipe
-.globl	_pipe
-.balign	2
+#include <machine/asm.h>
 
-_pipe:
-	jmp	__pipe
+IMPORT(_pipe)
+ENTRY(pipe)
+	jmp	_C_LABEL(_pipe)
+

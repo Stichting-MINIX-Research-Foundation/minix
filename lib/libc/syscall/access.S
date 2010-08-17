@@ -1,7 +1,6 @@
-.text
-.extern	__access
-.globl	_access
-.balign	2
+#include <machine/asm.h>
 
-_access:
-	jmp	__access
+IMPORT(_access)
+ENTRY(access)
+	jmp	_C_LABEL(_access)
+

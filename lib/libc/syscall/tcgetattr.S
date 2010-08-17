@@ -1,7 +1,6 @@
-.text
-.extern	__tcgetattr
-.globl	_tcgetattr
-.balign	2
+#include <machine/asm.h>
 
-_tcgetattr:
-	jmp	__tcgetattr
+IMPORT(_tcgetattr)
+ENTRY(tcgetattr)
+	jmp	_C_LABEL(_tcgetattr)
+

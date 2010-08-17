@@ -1,7 +1,6 @@
-.text
-.extern	__sigdelset
-.globl	_sigdelset
-.balign	2
+#include <machine/asm.h>
 
-_sigdelset:
-	jmp	__sigdelset
+IMPORT(_sigdelset)
+ENTRY(sigdelset)
+	jmp	_C_LABEL(_sigdelset)
+

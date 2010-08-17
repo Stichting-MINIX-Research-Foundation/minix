@@ -1,7 +1,6 @@
-.text
-.extern	__execve
-.globl	_execve
-.balign	2
+#include <machine/asm.h>
 
-_execve:
-	jmp	__execve
+IMPORT(_execve)
+ENTRY(execve)
+	jmp	_C_LABEL(_execve)
+

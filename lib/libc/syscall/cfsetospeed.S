@@ -1,7 +1,6 @@
-.text
-.extern	__cfsetospeed
-.globl	_cfsetospeed
-.balign	2
+#include <machine/asm.h>
 
-_cfsetospeed:
-	jmp	__cfsetospeed
+IMPORT(_cfsetospeed)
+ENTRY(cfsetospeed)
+	jmp	_C_LABEL(_cfsetospeed)
+

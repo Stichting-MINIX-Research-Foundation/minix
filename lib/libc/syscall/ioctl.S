@@ -1,7 +1,6 @@
-.text
-.extern	__ioctl
-.globl	_ioctl
-.balign	2
+#include <machine/asm.h>
 
-_ioctl:
-	jmp	__ioctl
+IMPORT(_ioctl)
+ENTRY(ioctl)
+	jmp	_C_LABEL(_ioctl)
+

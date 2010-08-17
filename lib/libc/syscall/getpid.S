@@ -1,7 +1,6 @@
-.text
-.extern	__getpid
-.globl	_getpid
-.balign	2
+#include <machine/asm.h>
 
-_getpid:
-	jmp	__getpid
+IMPORT(_getpid)
+ENTRY(getpid)
+	jmp	_C_LABEL(_getpid)
+

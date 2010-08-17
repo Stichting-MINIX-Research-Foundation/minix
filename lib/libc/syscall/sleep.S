@@ -1,7 +1,6 @@
-.text
-.extern	__sleep
-.globl	_sleep
-.balign	2
+#include <machine/asm.h>
 
-_sleep:
-	jmp	__sleep
+IMPORT(_sleep)
+ENTRY(sleep)
+	jmp	_C_LABEL(_sleep)
+

@@ -1,8 +1,5 @@
 /* Part of libhgfs - (c) 2009, D.C. van Moolenbroek */
-
-.globl	___libhgfs_backdoor
-.globl	___libhgfs_backdoor_in
-.globl	___libhgfs_backdoor_out
+#include <machine/asm.h>
 
 .text
 
@@ -10,8 +7,7 @@
 	BD_PORT = 0x5658
 	IO_PORT = 0x5659
 
-.balign	16
-___libhgfs_backdoor:
+ENTRY(__libhgfs_backdoor)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -37,8 +33,7 @@ ___libhgfs_backdoor:
 	popl	%ebx
 	ret
 
-.balign	16
-___libhgfs_backdoor_in:
+ENTRY(__libhgfs_backdoor_in)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -71,8 +66,7 @@ ___libhgfs_backdoor_in:
 	popl	%ebx
 	ret
 
-.balign	16
-___libhgfs_backdoor_out:
+ENTRY(__libhgfs_backdoor_out)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi

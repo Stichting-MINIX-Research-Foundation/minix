@@ -1,7 +1,6 @@
-.text
-.extern	__ptrace
-.globl	_ptrace
-.balign	2
+#include <machine/asm.h>
 
-_ptrace:
-	jmp	__ptrace
+IMPORT(_ptrace)
+ENTRY(ptrace)
+	jmp	_C_LABEL(_ptrace)
+

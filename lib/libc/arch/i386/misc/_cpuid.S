@@ -4,10 +4,9 @@
 /* void _cpuid(u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx); */
 /* 0 for OK, nonzero for unsupported */
 
-.globl	__cpuid
+#include <machine/asm.h>
 
-.text
-__cpuid:
+ENTRY(_cpuid)
 /* save work registers */
 	push	%ebp
 	push	%ebx

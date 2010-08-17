@@ -4,10 +4,9 @@
 /* char *_strncpy(char *s1, const char *s2, size_t ecx) */
 /*	Copy string s2 to s1. */
 /* */
-.text
-.globl	__strncpy
-.balign	16
-__strncpy:
+#include <machine/asm.h>
+
+ENTRY(_strncpy)
 	movl	12(%ebp), %edi	/* edi = string s2 */
 	xorb	%al, %al	/* Look for a zero byte */
 	movl	%ecx, %edx	/* Save maximum count */

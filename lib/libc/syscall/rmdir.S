@@ -1,7 +1,6 @@
-.text
-.extern	__rmdir
-.globl	_rmdir
-.balign	2
+#include <machine/asm.h>
 
-_rmdir:
-	jmp	__rmdir
+IMPORT(_rmdir)
+ENTRY(rmdir)
+	jmp	_C_LABEL(_rmdir)
+

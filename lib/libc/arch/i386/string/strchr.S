@@ -4,10 +4,9 @@
 /* char *strchr(const char *s, int c) */
 /*	Look for a character in a string. */
 /* */
-.text
-.globl	_strchr
-.balign	16
-_strchr:
+#include <machine/asm.h>
+
+ENTRY(strchr)
 	push	%ebp
 	movl	%esp, %ebp
 	push	%edi

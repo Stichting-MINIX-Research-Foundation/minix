@@ -1,7 +1,6 @@
-.text
-.extern	__utime
-.globl	_utime
-.balign	2
+#include <machine/asm.h>
 
-_utime:
-	jmp	__utime
+IMPORT(_utime)
+ENTRY(utime)
+	jmp	_C_LABEL(_utime)
+

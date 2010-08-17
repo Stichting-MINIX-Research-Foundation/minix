@@ -1,7 +1,6 @@
-.text
-.extern	__tcflush
-.globl	_tcflush
-.balign	2
+#include <machine/asm.h>
 
-_tcflush:
-	jmp	__tcflush
+IMPORT(_tcflush)
+ENTRY(tcflush)
+	jmp	_C_LABEL(_tcflush)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__select
-.globl	_select
-.balign	2
+#include <machine/asm.h>
 
-_select:
-	jmp	__select
+IMPORT(_select)
+ENTRY(select)
+	jmp	_C_LABEL(_select)
+

@@ -1,15 +1,14 @@
 /*	ex64*() - extract low or high 32 bits of a 64 bit number */
 /*							Author: Kees J. Bot */
 /*								7 Dec 1995 */
-.text
-.globl	_ex64lo, _ex64hi
+#include <machine/asm.h>
 
-_ex64lo:
+ENTRY(ex64lo)
 /* unsigned long ex64lo(u64_t i); */
 	movl	4(%esp), %eax
 	ret
 
-_ex64hi:
+ENTRY(ex64hi)
 /* unsigned long ex64hi(u64_t i); */
 	movl	8(%esp), %eax
 	ret

@@ -1,15 +1,14 @@
-.text
-.extern	__vm_adddma
-.globl	_vm_adddma
-.extern	__vm_deldma
-.globl	_vm_deldma
-.extern	__vm_getdma
-.globl	_vm_getdma
-.balign	2
+#include <machine/asm.h>
 
-_vm_adddma:
-	jmp	__vm_adddma
-_vm_deldma:
-	jmp	__vm_deldma
-_vm_getdma:
-	jmp	__vm_getdma
+IMPORT(_vm_adddma)
+ENTRY(vm_adddma)
+	jmp	_C_LABEL(_vm_adddma)
+
+IMPORT(_vm_deldma)
+ENTRY(vm_deldma)
+	jmp	_C_LABEL(_vm_deldma)
+
+IMPORT(_vm_getdma)
+ENTRY(vm_getdma)
+	jmp	_C_LABEL(_vm_getdma)
+

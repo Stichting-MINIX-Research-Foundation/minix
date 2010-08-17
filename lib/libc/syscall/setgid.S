@@ -1,11 +1,10 @@
-.text
-.extern	__setgid
-.globl	_setgid
-.globl	_setegid
-.balign	2
+#include <machine/asm.h>
 
-_setgid:
-	jmp	__setgid
+IMPORT(_setgid)
+ENTRY(setgid)
+	jmp	_C_LABEL(_setgid)
 
-_setegid:
-	jmp	__setegid
+IMPORT(_setegid)
+ENTRY(setegid)
+	jmp	_C_LABEL(_setegid)
+

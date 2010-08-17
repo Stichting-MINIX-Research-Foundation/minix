@@ -1,7 +1,6 @@
-.text
-.extern	__sbrk
-.globl	_sbrk
-.balign	2
+#include <machine/asm.h>
 
-_sbrk:
-	jmp	__sbrk
+IMPORT(_sbrk)
+ENTRY(sbrk)
+	jmp	_C_LABEL(_sbrk)
+

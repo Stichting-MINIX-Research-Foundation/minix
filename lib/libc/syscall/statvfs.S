@@ -1,7 +1,6 @@
-.text
-.extern	__statvfs
-.globl	_statvfs
-.balign	2
+#include <machine/asm.h>
 
-_statvfs:
-	jmp	__statvfs
+IMPORT(_statvfs)
+ENTRY(statvfs)
+	jmp	_C_LABEL(_statvfs)
+

@@ -4,8 +4,7 @@
 /* void *memmove(void *s1, const void *s2, size_t n) */
 /*	Copy a chunk of memory.  Handle overlap. */
 /* */
-.text
-.globl	_memmove
-.balign	16
-_memmove:
-	jmp	__memmove	/* Call common code */
+#include <machine/asm.h>
+
+ENTRY(memmove)
+	jmp	_C_LABEL(_memmove)	/* Call common code */

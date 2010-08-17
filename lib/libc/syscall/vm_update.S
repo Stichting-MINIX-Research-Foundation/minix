@@ -1,7 +1,6 @@
-.text
-.extern	__vm_update
-.globl	_vm_update
-.balign	2
+#include <machine/asm.h>
 
-_vm_update:
-	jmp	__vm_update
+IMPORT(_vm_update)
+ENTRY(vm_update)
+	jmp	_C_LABEL(_vm_update)
+

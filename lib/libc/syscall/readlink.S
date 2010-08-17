@@ -1,7 +1,6 @@
-.text
-.extern	__readlink
-.globl	_readlink
-.balign	2
+#include <machine/asm.h>
 
-_readlink:
-	jmp	__readlink
+IMPORT(_readlink)
+ENTRY(readlink)
+	jmp	_C_LABEL(_readlink)
+

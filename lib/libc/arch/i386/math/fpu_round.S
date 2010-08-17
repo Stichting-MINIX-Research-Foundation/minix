@@ -1,11 +1,9 @@
 /*	fpu_rndint() - round integer	Author: Erik van der Kouwe */
 /*	                            	17 Dec 2009 */
-.text
-.globl	_fpu_rndint
-.globl	_fpu_remainder
+#include <machine/asm.h>
 
 /* void fpu_rndint(double *value) */
-_fpu_rndint:
+ENTRY(fpu_rndint)
 /* move the value onto the floating point stack */
 	mov	4(%esp), %eax
 	fldl	(%eax)
@@ -18,7 +16,7 @@ _fpu_rndint:
 	ret
 
 /* void fpu_remainder(double *x, double y) */
-_fpu_remainder:
+ENTRY(fpu_remainder)
 /* move the values onto the floating point stack */
 	fldl	8(%esp)
 	mov	4(%esp), %edx

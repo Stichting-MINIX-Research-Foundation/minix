@@ -1,7 +1,6 @@
-.text
-.extern	__getnucred
-.globl	_getnucred
-.balign	2
+#include <machine/asm.h>
 
-_getnucred:
-	jmp	__getnucred
+IMPORT(_getnucred)
+ENTRY(getnucred)
+	jmp	_C_LABEL(_getnucred)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__getcwd
-.globl	_getcwd
-.balign	2
+#include <machine/asm.h>
 
-_getcwd:
-	jmp	__getcwd
+IMPORT(_getcwd)
+ENTRY(getcwd)
+	jmp	_C_LABEL(_getcwd)
+

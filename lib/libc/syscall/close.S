@@ -1,7 +1,6 @@
-.text
-.extern	__close
-.globl	_close
-.balign	2
+#include <machine/asm.h>
 
-_close:
-	jmp	__close
+IMPORT(_close)
+ENTRY(close)
+	jmp	_C_LABEL(_close)
+

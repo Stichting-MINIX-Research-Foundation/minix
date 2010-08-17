@@ -1,7 +1,6 @@
-.text
-.extern	__read
-.globl	_read
-.balign	2
+#include <machine/asm.h>
 
-_read:
-	jmp	__read
+IMPORT(_read)
+ENTRY(read)
+	jmp	_C_LABEL(_read)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__mknod
-.globl	_mknod
-.balign	2
+#include <machine/asm.h>
 
-_mknod:
-	jmp	__mknod
+IMPORT(_mknod)
+ENTRY(mknod)
+	jmp	_C_LABEL(_mknod)
+

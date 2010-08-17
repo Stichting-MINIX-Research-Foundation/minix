@@ -1,7 +1,6 @@
-.text
-.extern	__getdents
-.globl	_getdents
-.balign	2
+#include <machine/asm.h>
 
-_getdents:
-	jmp	__getdents
+IMPORT(_getdents)
+ENTRY(getdents)
+	jmp	_C_LABEL(_getdents)
+

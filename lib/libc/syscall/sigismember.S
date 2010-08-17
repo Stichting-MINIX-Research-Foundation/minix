@@ -1,7 +1,6 @@
-.text
-.extern	__sigismember
-.globl	_sigismember
-.balign	2
+#include <machine/asm.h>
 
-_sigismember:
-	jmp	__sigismember
+IMPORT(_sigismember)
+ENTRY(sigismember)
+	jmp	_C_LABEL(_sigismember)
+

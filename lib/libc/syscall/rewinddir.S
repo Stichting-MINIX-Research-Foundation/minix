@@ -1,7 +1,6 @@
-.text
-.extern	__rewinddir
-.globl	_rewinddir
-.balign	2
+#include <machine/asm.h>
 
-_rewinddir:
-	jmp	__rewinddir
+IMPORT(_rewinddir)
+ENTRY(rewinddir)
+	jmp	_C_LABEL(_rewinddir)
+

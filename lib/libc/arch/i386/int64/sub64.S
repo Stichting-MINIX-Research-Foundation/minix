@@ -1,11 +1,9 @@
 /*	sub64() - 64 bit subtraction			Author: Kees J. Bot */
 /*								7 Dec 1995 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_sub64
-
-_sub64:
+ENTRY(sub64)
 /* u64_t sub64(u64_t i, u64_t j); */
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx

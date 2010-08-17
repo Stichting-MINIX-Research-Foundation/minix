@@ -4,10 +4,9 @@
 /* int memcmp(const void *s1, const void *s2, size_t n) */
 /*	Compare two chunks of memory. */
 /* */
-.text
-.globl	_memcmp
-.balign	16
-_memcmp:
+#include <machine/asm.h>
+
+ENTRY(memcmp)
 	cld
 	push	%ebp
 	movl	%esp, %ebp

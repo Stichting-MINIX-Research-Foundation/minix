@@ -2,11 +2,9 @@
 /*							Author: Kees J. Bot */
 /*								7 Dec 1995 */
 #include <minix/compiler.h>
+#include <machine/asm.h>
 
-.text
-.globl	_mul64u
-
-_mul64u:
+ENTRY(mul64u)
 /* u64_t mul64u(unsigned long i, unsigned j); */
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax

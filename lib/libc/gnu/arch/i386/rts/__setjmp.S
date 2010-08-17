@@ -1,10 +1,9 @@
 / __setjmp.gnu.s
 /
 / Created:	Oct 14, 1993 by Philip Homburg <philip@cs.vu.nl>
+#include <machine/asm.h>
 
-.text
-.globl ___setjmp
-___setjmp:
+ENTRY(__setjmp)
 	movl	4(%esp), %eax		/* jmp_buf */
 	movl	%edx, 28(%eax)		/* save edx */
 	movl	0(%esp), %edx
@@ -22,7 +21,7 @@ ___setjmp:
 	jz		1f
 	leal	4(%eax), %edx		/* pointer to sigset_t */
 	push	%edx
-	call	___newsigset		/* save mask	 */
+	call	_C_LABEL(__newsigset)	/* save mask	 */
 	addl	$4, %esp
 1:
 	movl	$0, %eax

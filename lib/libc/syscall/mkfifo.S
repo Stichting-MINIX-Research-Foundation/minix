@@ -1,7 +1,6 @@
-.text
-.extern	__mkfifo
-.globl	_mkfifo
-.balign	2
+#include <machine/asm.h>
 
-_mkfifo:
-	jmp	__mkfifo
+IMPORT(_mkfifo)
+ENTRY(mkfifo)
+	jmp	_C_LABEL(_mkfifo)
+

@@ -1,7 +1,6 @@
-.text
-.extern	__sigsuspend
-.globl	_sigsuspend
-.balign	2
+#include <machine/asm.h>
 
-_sigsuspend:
-	jmp	__sigsuspend
+IMPORT(_sigsuspend)
+ENTRY(sigsuspend)
+	jmp	_C_LABEL(_sigsuspend)
+
