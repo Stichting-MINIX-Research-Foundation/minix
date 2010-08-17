@@ -242,6 +242,9 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	if (nodev) alloc_nonedev(dev);	/* Make the allocation final */
 
 	return(OK);
+  } else if (vmp == NULL) {
+  	/* No free slot available, bail out */
+  	return(ENOMEM);
   }
 
   /* Fetch the name of the mountpoint */

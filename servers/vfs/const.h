@@ -1,7 +1,7 @@
 /* Tables sizes */
 #define NR_FILPS         512	/* # slots in filp table */
 #define NR_LOCKS           8	/* # slots in the file locking table */
-#define NR_MNTS             8	/* # slots in mount table */
+#define NR_MNTS            16 	/* # slots in mount table */
 #define NR_VNODES         512	/* # slots in vnode table */
 
 #define NR_NONEDEVS	NR_MNTS	/* # slots in nonedev bitmap */
