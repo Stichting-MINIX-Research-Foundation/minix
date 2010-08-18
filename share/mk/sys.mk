@@ -229,8 +229,8 @@ YACC.y?=	${YACC} ${YFLAGS}
 COMPILER_TYPE=ack
 .elif !empty(CC:Mgcc)
 COMPILER_TYPE=gnu
-AR=gar
+AR=ar
 .elif !empty(CC:Mclang)
 COMPILER_TYPE=gnu
-AR=gar
+AR=ar
 .endif
