@@ -87,9 +87,5 @@ struct util_timingdata {
 
 typedef struct util_timingdata util_timingdata_t;
 
-/* read_tsc() and friends. */
-_PROTOTYPE( void read_tsc_64, (u64_t *t)				);
-_PROTOTYPE( void read_tsc, (u32_t *hi, u32_t *lo)			);
-
 #endif /* _MINIX_SYSUTIL_H */
 

@@ -112,8 +112,6 @@ SRCS=  \
 	env_prefix.c \
 	fkey_ctl.c \
 	tsc_util.c \
-	read_tsc.S \
-	read_tsc_64.c \
 	ser_putc.c \
 	stacktrace.c \
 	sys_hz.c \

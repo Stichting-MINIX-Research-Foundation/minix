@@ -21,6 +21,10 @@ _PROTOTYPE(int rewrite_mtab, (char *_prog_name));
 _PROTOTYPE(int get_mtab_entry, (char *_s1, char *_s2, char *_s3, char *_s4));
 _PROTOTYPE(int put_mtab_entry, (char *_s1, char *_s2, char *_s3, char *_s4));
 
+/* read_tsc() and friends */
+_PROTOTYPE(void read_tsc, (u32_t *hi, u32_t *lo));
+_PROTOTYPE(void read_tsc_64, (u64_t *t));
+
 /* return values for fsversion */
 #define FSVERSION_MFS1	0x00001
 #define FSVERSION_MFS2	0x00002

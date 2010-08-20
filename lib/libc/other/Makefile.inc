@@ -86,6 +86,8 @@ SRCS+=  \
 	putw.c \
 	pwcache.c \
 	random.c \
+	read_tsc.S \
+	read_tsc_64.c \
 	realpath.c \
 	rindex.c \
 	rlimit.c \
