@@ -14,6 +14,15 @@
 #include	<errno.h>
 #include	<assert.h>
 
+#include 	"malloc-debug.h"
+
+static int no_debug = -1;
+#define CHECK_DBG(statement)						\
+  if (no_debug <= 0) {							\
+  	if (no_debug < 0) no_debug = getenv("MALLOC_DEBUG") ? 0 : 1;	\
+	if (no_debug == 0) { statement; }				\
+  }
+
 #if _EM_WSIZE == _EM_PSIZE
 #define	ptrint		int
 #else
@@ -83,6 +92,8 @@ malloc(const size_t size)
   if (size == 0)
 	return NULL;
 
+  CHECK_DBG(return _dbg_malloc(size));
+
   for (ntries = 0; ntries < 2; ntries++) {
 	unsigned len = Align(size, PTRSIZE) + PTRSIZE;
 	if (len < 2 * PTRSIZE) {
@@ -140,6 +151,9 @@ realloc(void *oldp, size_t size)
 	free(old);
 	return NULL;
   }
+
+  CHECK_DBG(return _dbg_realloc(oldp, size));
+
   len = Align(size, PTRSIZE) + PTRSIZE;
   next = NextSlot(old);
   n = (int)(next - old);			/* old length */
@@ -187,6 +201,8 @@ free(void *ptr)
 
   if (p == 0)
 	return;
+
+  CHECK_DBG(_dbg_free(ptr); return);
 
 #ifdef SLOWDEBUG
   {

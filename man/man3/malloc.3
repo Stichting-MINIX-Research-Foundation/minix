@@ -86,6 +86,17 @@ return.
 Each of the allocation routines returns a pointer
 to space suitably aligned (after possible pointer coercion)
 for storage of any type of object.
+.PP
+To debug malloc-related errors, specify the
+.I MALLOC_DEBUG
+variable in the environment of the program you want to debug. This causes an
+alternate malloc implementation to be used. This version allocates blocks at
+the end of random pages so that reads and writes past the end of the buffer
+cause SIGSEGV. On realloc or free calls, the area just before the buffer is
+verified to also detect writes before the start of the buffer. Buffer overflows
+in the BSS section are also more likely to be detected because the brk is never
+moved. Please note that this flags comes with a considerable performance 
+penalty and dramatically increases memory usage.
 .SH SEE ALSO
 .BR brk (2).
 .SH DIAGNOSTICS

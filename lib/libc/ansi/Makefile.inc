@@ -36,6 +36,7 @@ SRCS+=  \
 	ldiv.c \
 	localeconv.c \
 	malloc.c \
+	malloc-debug.c \
 	mblen.c \
 	mbstowcs.c \
 	mbtowc.c \
