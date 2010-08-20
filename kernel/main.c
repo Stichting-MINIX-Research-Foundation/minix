@@ -183,13 +183,13 @@ PUBLIC int main(void)
 	rp->p_reg.pc = 0; /* we cannot start anything else */
 	rp->p_reg.psw = (iskerneln(proc_nr)) ? INIT_TASK_PSW : INIT_PSW;
 
-	/* Initialize the server stack pointer. Take it down one word
-	 * to give crtso.s something to use as "argc".
+	/* Initialize the server stack pointer. Take it down three words
+	 * to give crtso.s something to use as "argc", "argv" and "envp".
 	 */
 	if (isusern(proc_nr)) {		/* user-space process? */ 
 		rp->p_reg.sp = (rp->p_memmap[S].mem_vir +
 				rp->p_memmap[S].mem_len) << CLICK_SHIFT;
-		rp->p_reg.sp -= sizeof(reg_t);
+		rp->p_reg.sp -= 3 * sizeof(reg_t);
 	}
 
 	/* scheduling functions depend on proc_ptr pointing somewhere. */
