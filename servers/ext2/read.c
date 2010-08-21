@@ -13,6 +13,7 @@
 #include "super.h"
 #include <minix/vfsif.h>
 #include <assert.h>
+#include <sys/param.h>
 
 
 FORWARD _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,

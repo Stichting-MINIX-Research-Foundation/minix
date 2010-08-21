@@ -1,6 +1,7 @@
 /* Tests for truncate(2) call family - by D.C. van Moolenbroek */
 #define _POSIX_SOURCE 1
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <assert.h>
@@ -11,10 +12,6 @@
 #define TESTFILE "testfile"
 #define TESTSIZE 4096
 #define THRESHOLD 1048576
-
-#ifndef MIN
-#define MIN(x,y) (((x)<(y))?(x):(y))
-#endif
 
 #include "common.c"
 

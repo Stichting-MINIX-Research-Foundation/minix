@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <errno.h>
+#include <sys/param.h>
 
 #include <minix/partition.h>
 #include <minix/u64.h>

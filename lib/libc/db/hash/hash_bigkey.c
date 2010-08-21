@@ -76,9 +76,6 @@ __RCSID("$NetBSD: hash_bigkey.c,v 1.23 2009/02/12 06:33:13 lukem Exp $");
 #define _DIAGASSERT
 #endif
 
-#define MAX(a, b)   ((a) > (b) ? (a) : (b))
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
 static int collect_key(HTAB *, BUFHEAD *, int, DBT *, int);
 static int collect_data(HTAB *, BUFHEAD *, int, int);
 

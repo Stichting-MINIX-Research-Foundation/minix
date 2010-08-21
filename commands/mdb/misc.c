@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #define ptrace mdbtrace
 #include <sys/ptrace.h>
 #include "proto.h"

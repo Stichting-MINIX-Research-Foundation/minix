@@ -36,5 +36,6 @@
 #include <stddef.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/param.h>
 
 #endif

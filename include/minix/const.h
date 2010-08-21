@@ -91,10 +91,6 @@
 #define WRITING            1	/* copy data from user */
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 
-/* Macros. */
-#define MAX(a, b)   ((a) > (b) ? (a) : (b))
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
 /* Memory is allocated in clicks. */
 #if (CHIP == INTEL)
 #define CLICK_SIZE      4096	/* unit in which memory is allocated */

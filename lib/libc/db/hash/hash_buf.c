@@ -97,8 +97,6 @@ static BUFHEAD *newbuf(HTAB *, uint32_t, BUFHEAD *);
 #define _DIAGASSERT assert
 #endif
 
-#define MAX(a, b)   ((a) > (b) ? (a) : (b))
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
 /*
  * We are looking for a buffer with address "addr".  If prev_bp is NULL, then
  * address is a bucket index.  If prev_bp is not NULL, then it points to the

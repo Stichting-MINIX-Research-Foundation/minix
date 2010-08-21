@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <memory.h>
 #include <assert.h>
+#include <sys/param.h>
 
 #include "proto.h"
 #include "glo.h"

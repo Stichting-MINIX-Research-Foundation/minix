@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <env.h>
 #include <pagetable.h>
+#include <sys/param.h>
 
 #include "glo.h"
 #include "proto.h"

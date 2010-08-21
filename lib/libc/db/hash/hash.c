@@ -76,9 +76,6 @@ __RCSID("$NetBSD: hash.c,v 1.31 2009/02/12 06:35:54 lukem Exp $");
 #define _DIAGASSERT
 #endif
 
-#define MAX(a, b)   ((a) > (b) ? (a) : (b))
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
 static int   alloc_segs(HTAB *, int);
 static int   flush_meta(HTAB *);
 static int   hash_access(HTAB *, ACTION, DBT *, DBT *);

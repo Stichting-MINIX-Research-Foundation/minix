@@ -26,6 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/param.h>
 
 #include "proto.h"
 #include "super.h"

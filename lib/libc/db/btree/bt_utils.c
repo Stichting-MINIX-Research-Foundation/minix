@@ -51,9 +51,6 @@ __RCSID("$NetBSD: bt_utils.c,v 1.13 2008/09/10 17:52:35 joerg Exp $");
 #include <db.h>
 #include "btree.h"
 
-#define MAX(a, b)   ((a) > (b) ? (a) : (b))
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
 /*
  * __bt_ret --
  *	Build return key/data pair.

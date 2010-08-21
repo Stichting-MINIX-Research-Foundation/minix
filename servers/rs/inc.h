@@ -49,6 +49,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <assert.h>
+#include <sys/param.h>
 
 #include "proto.h"
 #include "const.h"

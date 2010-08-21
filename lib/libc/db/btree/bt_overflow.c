@@ -54,9 +54,6 @@ __RCSID("$NetBSD: bt_overflow.c,v 1.16 2008/09/11 12:58:00 joerg Exp $");
 #include <db.h>
 #include "btree.h"
 
-#define MAX(a, b)   ((a) > (b) ? (a) : (b))
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
 /*
  * Big key/data code.
  *

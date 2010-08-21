@@ -13,6 +13,7 @@
 #include <minix/vfsif.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <sys/param.h>
 
 #if DEBUG
 #define dprintf(x) printf x

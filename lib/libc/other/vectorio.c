@@ -4,13 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <sys/uio.h>
 #include <unistd.h>
 
 #define VECTORIO_READ	1
 #define VECTORIO_WRITE	2
-
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 static ssize_t vectorio_buffer(int fildes, const struct iovec *iov, 
 	int iovcnt, int readwrite, ssize_t totallen)

@@ -40,6 +40,7 @@
 #include <minix/sysutil.h>	/* MINIX utility library functions */
 #include <timers.h>		/* watchdog timer management */
 #include <errno.h>		/* return codes and error numbers */
+#include <sys/param.h>
 
 /* Important kernel header files. */
 #include "config.h"		/* configuration, MUST be first */

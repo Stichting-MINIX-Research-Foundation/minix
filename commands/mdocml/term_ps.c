@@ -54,9 +54,6 @@
 	} while (/* CONSTCOND */ 0)
 
 
-#ifndef MAX
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
-#endif
 static	void		  ps_letter(struct termp *, char);
 static	void		  ps_begin(struct termp *);
 static	void		  ps_end(struct termp *);
