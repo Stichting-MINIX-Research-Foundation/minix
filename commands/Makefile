@@ -41,4 +41,9 @@ SUBDIR+=	atnormalize dosread fdisk loadfont \
 SUBDIR+=	acd asmconv gas2ack
 .endif
 
+# Build only with clang and GCC
+.if ${COMPILER_TYPE} == "gnu"
+SUBDIR+= hexdump
+.endif
+
 .include <bsd.subdir.mk>
