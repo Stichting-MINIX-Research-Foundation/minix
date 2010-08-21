@@ -129,13 +129,11 @@ void 		*emalloc(size_t);
 void 		*erealloc(void *, size_t);
 FILE		*efopen(const char *, const char *);
 
-#ifndef __minix
 int	 	easprintf(char ** __restrict, const char * __restrict, ...)
     __attribute__((__format__(__printf__, 2, 3)));
 int		evasprintf(char ** __restrict, const char * __restrict,
     _BSD_VA_LIST_)
     __attribute__((__format__(__printf__, 2, 0)));
-#endif
 __END_DECLS
 
 #endif /* !_UTIL_H_ */

@@ -139,7 +139,6 @@ efopen(const char *p, const char *m)
 	return fp;
 }
 
-#ifndef _MINIX
 int
 easprintf(char ** __restrict ret, const char * __restrict format, ...)
 {
@@ -160,4 +159,3 @@ evasprintf(char ** __restrict ret, const char * __restrict format, va_list ap)
 		(*efunc)(1, "Cannot format string");
 	return rv;
 }
-#endif
