@@ -30,28 +30,13 @@
 #define	_WCTYPE_H_
 
 #include <ansi.h>
-
-#ifndef	_WCHAR_T
-#define	_WCHAR_T
-typedef	int wchar_t;
-#endif
+#include <stddef.h>
+#include <wchar.h>
 
 #ifndef	_WCTYPE_T
 #define	_WCTYPE_T
 typedef	void *wctype_t;
 #endif
-
-#ifndef	_WINT_T
-#define	_WINT_T
-typedef	int wint_t;
-#endif
-
-
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned int size_t;	/* type returned by sizeof */
-#endif
-
 
 #ifndef	_WCTRANS_T
 #define	_WCTRANS_T

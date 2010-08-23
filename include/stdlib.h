@@ -7,6 +7,7 @@
 #include <ansi.h>
 #endif
 
+#include <stddef.h>
 #include <sys/null.h>
 
 #define EXIT_FAILURE       1	/* standard error return using exit() */
@@ -17,16 +18,7 @@
 typedef struct { int quot, rem; } div_t;
 typedef struct { long quot, rem; } ldiv_t;
 
-/* The types are size_t, wchar_t, div_t, and ldiv_t. */
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned int size_t;	/* type returned by sizeof */
-#endif
-
-#ifndef _WCHAR_T
-#define _WCHAR_T
-typedef char wchar_t;		/* type expanded character set */
-#endif
+/* The types are div_t, and ldiv_t. */
 
 /* Function Prototypes. */
 _PROTOTYPE( void abort, (void)						);

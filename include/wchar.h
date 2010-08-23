@@ -58,6 +58,7 @@
 
 #include <ansi.h>
 #include <stdarg.h>
+#include <stddef.h>
 
 #include <stdio.h> /* for FILE* */
 
@@ -70,11 +71,6 @@ typedef union {
     char __mbstate8[128];
 } __mbstate_t;
 
-#ifndef	_WCHAR_T
-#define	_WCHAR_T
-typedef	int wchar_t;
-#endif
-
 #ifndef	_MBSTATE_T
 #define	_MBSTATE_T
 typedef	__mbstate_t mbstate_t;
@@ -86,11 +82,6 @@ typedef	__mbstate_t mbstate_t;
 typedef	int wint_t;
 #endif
 
-
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned int size_t;	/* type returned by sizeof */
-#endif
 
 struct tm;
 
