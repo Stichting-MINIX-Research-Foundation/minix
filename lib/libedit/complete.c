@@ -188,7 +188,7 @@ rl_complete(pathname, unique)
     if (ac == 1) {
 	/* Exactly one match -- finish it off. */
 	*unique = 1;
-	j = strlen(av[0]) - len + 2;
+	j = strlen(av[0]) - len + 1;
 	if ((p = NEW(char, j + 1)) != NULL) {
 	    COPYFROMTO(p, av[0] + len, j);
 	    if ((new = NEW(char, strlen(dir) + strlen(av[0]) + 2)) != NULL) {
