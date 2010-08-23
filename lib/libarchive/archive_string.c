@@ -291,8 +291,13 @@ __archive_string_utf8_w(struct archive_string *as)
 	int wc, wc2;/* Must be large enough for a 21-bit Unicode code point. */
 	const char *src;
 	int n;
+	size_t size;
 
-	ws = (wchar_t *)malloc((as->length + 1) * sizeof(wchar_t));
+	/* be pessimistic; UCS4 always takes up four bytes per char while 
+	 * UTF-16 may takes four bytes per char (except the 0 terminator)
+	 */
+	size = as->length * 4 + sizeof(wchar_t);
+	ws = (wchar_t *)malloc(size);
 	if (ws == NULL)
 		__archive_errx(1, "Out of memory");
 	dest = ws;
