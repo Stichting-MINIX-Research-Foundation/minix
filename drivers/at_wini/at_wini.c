@@ -109,7 +109,7 @@ PRIVATE phys_bytes dma_buf_phys;
 
 #define N_PRDTE	1024	/* Should be enough for large requests */
 
-PRIVATE struct prdte
+struct prdte
 {
 	phys_bytes prdte_base;
 	u16_t prdte_count;
