@@ -15,7 +15,6 @@
 #include "kernel/const.h"
 #include "kernel/type.h"
 #include "kernel/proc.h"
-#include "../pm/mproc.h"
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
@@ -166,7 +165,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct rproc *replica_rp;
   struct rprocpub *rpub;
   struct boot_image image[NR_BOOT_PROCS];
-  struct mproc mproc[NR_PROCS];
   struct boot_image_priv *boot_image_priv;
   struct boot_image_sys *boot_image_sys;
   struct boot_image_dev *boot_image_dev;
@@ -403,9 +401,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
    * Complete the initialization of the system process table in collaboration
    * with other system services.
    */
-  if ((s = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) {
-      panic("unable to get copy of PM process table: %d", s);
-  }
   for (i=0; boot_image_priv_table[i].endpoint != NULL_BOOT_NR; i++) {
       boot_image_priv = &boot_image_priv_table[i];
 
@@ -418,15 +413,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp = &rproc[boot_image_priv - boot_image_priv_table];
       rpub = rp->r_pub;
 
-      /* Get pid from PM process table. */
-      rp->r_pid = -1;
-      for (j = 0; j < NR_PROCS; j++) {
-          if (mproc[j].mp_endpoint == rpub->endpoint) {
-              rp->r_pid = mproc[j].mp_pid;
-              break;
-          }
-      }
-      if(j == NR_PROCS) {
+      /* Get pid from PM. */
+      rp->r_pid = getnpid(rpub->endpoint);
+      if(rp->r_pid == -1) {
           panic("unable to get pid");
       }
   }
