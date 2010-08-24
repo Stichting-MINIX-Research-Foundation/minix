@@ -38,6 +38,7 @@ PUBLIC int main(void)
   vir_clicks text_clicks, data_clicks, st_clicks;
   reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
+  size_t argsz;			/* size of arguments passed to crtso on stack */
 
    /* Global value to test segment sanity. */
    magictest = MAGICTEST;
@@ -189,7 +190,12 @@ PUBLIC int main(void)
 	if (isusern(proc_nr)) {		/* user-space process? */ 
 		rp->p_reg.sp = (rp->p_memmap[S].mem_vir +
 				rp->p_memmap[S].mem_len) << CLICK_SHIFT;
-		rp->p_reg.sp -= 3 * sizeof(reg_t);
+		argsz = 3 * sizeof(reg_t);
+		rp->p_reg.sp -= argsz;
+		phys_memset(rp->p_reg.sp - 
+			(rp->p_memmap[S].mem_vir << CLICK_SHIFT) +
+			(rp->p_memmap[S].mem_phys << CLICK_SHIFT), 
+			0, argsz);
 	}
 
 	/* scheduling functions depend on proc_ptr pointing somewhere. */
