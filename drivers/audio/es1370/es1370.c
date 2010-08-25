@@ -17,7 +17,7 @@
 
 #include <machine/pci.h>
 
-#include "audio_fw.h"
+#include <minix/audio_fw.h>
 #include "es1370.h"
 #include "ak4531.h"
 #include "pci_helper.h"

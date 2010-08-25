@@ -2,7 +2,7 @@
 #define SB16_H
 
 #include <minix/sound.h>
-#include "audio_fw.h"
+#include <minix/audio_fw.h>
 
 #define AUDIO 0
 #define MIXER 1

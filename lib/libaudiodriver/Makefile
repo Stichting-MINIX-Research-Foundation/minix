@@ -1,8 +1,6 @@
 # Makefile for the common audio framework
 
-LIBISPRIVATE=   yes
-
-LIB=    common
+LIB=    audiodriver
 SRCS=   audio_fw.c liveupdate.c
 
 .include <bsd.lib.mk>

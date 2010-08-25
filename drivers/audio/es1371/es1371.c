@@ -22,7 +22,7 @@
 
 #include <machine/pci.h>
 
-#include "audio_fw.h"
+#include <minix/audio_fw.h>
 #include "es1371.h"
 #include "AC97.h"
 #include "sample_rate_converter.h"
