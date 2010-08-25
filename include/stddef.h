@@ -6,7 +6,11 @@
 #include <sys/null.h>
 
 /* The following is not portable, but the compiler accepts it. */
+#ifdef __GNUC__
+#define offsetof(type, ident)	__builtin_offsetof (type, ident)
+#else
 #define offsetof(type, ident)	((size_t) (unsigned long) &((type *)0)->ident)
+#endif
 
 #if _EM_PSIZE == _EM_WSIZE
 typedef int ptrdiff_t;		/* result of subtracting two pointers */
