@@ -199,10 +199,12 @@ _PROTOTYPE(  int sef_cb_lu_response_rs_reply, (message *m_ptr) );
 /* Callback type definitions. */
 typedef void(*sef_cb_signal_handler_t)(int signo);
 typedef  int(*sef_cb_signal_manager_t)(endpoint_t target, int signo);
+typedef  int(*sef_cb_gcov_t)(message *msg);
 
 /* Callback registration helpers. */
 _PROTOTYPE( void sef_setcb_signal_handler, (sef_cb_signal_handler_t cb));
 _PROTOTYPE( void sef_setcb_signal_manager, (sef_cb_signal_manager_t cb));
+_PROTOTYPE( void sef_setcb_gcov, (sef_cb_gcov_t cb));
 
 /* Predefined callback implementations. */
 _PROTOTYPE( void sef_cb_signal_handler_null, (int signo) );

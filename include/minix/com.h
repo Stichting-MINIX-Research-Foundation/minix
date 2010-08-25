@@ -864,8 +864,6 @@
  *                Miscellaneous field names				     *
  *===========================================================================*/
 
-#define COMMON_RQ_BASE		0xE00
-
 /* PM field names */
 /* BRK */
 #define PMBRK_ADDR				m1_p1
@@ -891,9 +889,18 @@
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
 
+#define COMMON_RQ_BASE		0xE00
+
 /* Field names for system signals (sent by a signal manager). */
 #define SIGS_SIGNAL_RECEIVED (COMMON_RQ_BASE+0)
 #	define SIGS_SIG_NUM      m2_i1
+
+/* Common request to all processes: gcov data. */
+#define COMMON_REQ_GCOV_DATA (COMMON_RQ_BASE+1)
+#	define GCOV_GRANT   m1_i2
+#	define GCOV_PID     m1_i3
+#	define GCOV_BUFF_P  m1_p1
+#	define GCOV_BUFF_SZ m1_i1
 
 /*===========================================================================*
  *                Messages for VM server				     *

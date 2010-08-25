@@ -30,6 +30,7 @@ SRCS=  \
 	sched_start.c \
 	sched_stop.c \
 	sef.c \
+	sef_gcov.c \
 	sef_init.c \
 	sef_liveupdate.c \
 	sef_ping.c \
@@ -120,7 +121,8 @@ SRCS=  \
 	profile.c \
 	vprintf.c \
 	timers.c \
-	spin.c
+	spin.c \
+	gcov.c
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 

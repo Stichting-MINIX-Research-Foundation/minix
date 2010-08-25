@@ -151,6 +151,14 @@ PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
       }
 #endif
 
+      /* Intercept GCOV data requests (sent by VFS in vfs/gcov.c). */
+      if(m_ptr->m_type == COMMON_REQ_GCOV_DATA &&
+	 m_ptr->m_source == VFS_PROC_NR) {
+          if(do_sef_gcov_request(m_ptr) == OK) {
+              continue;
+          }
+      }
+
       /* If we get this far, this is not a valid SEF request, return and
        * let the caller deal with that.
        */

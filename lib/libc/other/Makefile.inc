@@ -57,6 +57,8 @@ SRCS+=  \
 	fts.c \
 	fgetln.c \
 	fsversion.c \
+	gcov.c \
+	gcov_flush.c \
 	getgrent.c \
 	getlogin.c \
 	getopt_long.c \

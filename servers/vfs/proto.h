@@ -257,6 +257,9 @@ _PROTOTYPE( int check_vrefs, (void)			);
 /* write.c */
 _PROTOTYPE( int do_write, (void)					);
 
+/* gcov.c */
+_PROTOTYPE( int do_gcov_flush, (void)					);
+
 /* select.c */
 _PROTOTYPE( int do_select, (void)					);
 _PROTOTYPE( int select_callback, (struct filp *, int ops)		);

@@ -12,7 +12,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	dhrystone diff dirname dis88 diskctl du dumpcore easypack \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck.mfs \
-	fsck1 ftp101 ftpd200 getty grep gomoku head host \
+	fsck1 ftp101 ftpd200 gcov-pull getty grep gomoku head host \
 	hostaddr id ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	less lex life loadkeys loadramdisk logger login look lp \
