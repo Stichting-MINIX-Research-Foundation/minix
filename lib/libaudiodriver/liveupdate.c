@@ -1,4 +1,4 @@
-#include "audio_fw.h"
+#include <minix/audio_fw.h>
 
 /* State management variables. */
 EXTERN int is_status_msg_expected;

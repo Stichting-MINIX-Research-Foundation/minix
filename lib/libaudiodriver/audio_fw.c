@@ -42,7 +42,7 @@
  */
 
 
-#include "audio_fw.h"
+#include <minix/audio_fw.h>
 #include <minix/endpoint.h>
 #include <minix/ds.h>
 
