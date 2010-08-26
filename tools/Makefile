@@ -49,9 +49,6 @@ image_mb: includes
 	installboot -image $@ $(PROGRAMS)
 	
 image:  includes services
-	cd ../kernel && $(MAKE)
-	cd ../servers && $(MAKE) all
-	cd ../drivers && $(MAKE) all
 	padtext ../kernel/kernel kernel
 	installboot -image $@ $(PROGRAMS)
 
@@ -62,9 +59,15 @@ includes:
 depend: includes
 	$(MAKE) -C ../ depend
 
-services: includes 
+services: includes kernel servers .WAIT drivers
+
+kernel: includes
 	$(MAKE) -C ../kernel 
+
+servers: includes
 	$(MAKE) -C ../servers all install
+
+drivers: includes servers
 	$(MAKE) -C ../drivers all install
 
 libraries: includes

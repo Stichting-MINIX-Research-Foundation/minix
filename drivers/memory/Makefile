@@ -15,4 +15,6 @@ INSTALLFLAGS+=	-S 8k
 CPPFLAGS.memory.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.imgrd.c+=	-I${.CURDIR}/../ramdisk -T /usr/tmp
 
+imgrd.o: ${.CURDIR}/../ramdisk/image.c
+
 .include <bsd.prog.mk>
