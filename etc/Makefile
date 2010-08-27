@@ -28,3 +28,21 @@ install::
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 	@echo "Installing fonts.."
 	install -m 644 -o root -g operator fonts/*.fnt /usr/lib/fonts/
+
+installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(USRETC)/rc
+
+$(ETC)/rc: rc
+	install -m 755 -o root -g operator $> $@
+
+$(ETC)/rs.inet: rs.inet
+	install -m 755 -o root -g operator $> $@
+
+$(ETC)/rs.single: rs.single
+	install -m 755 -o root -g operator $> $@
+
+$(ETC)/system.conf: system.conf
+	install -m 644 -o root -g operator $> $@
+
+$(USRETC)/rc: usr/rc
+	install -m 755 -o root -g operator $> $@
+

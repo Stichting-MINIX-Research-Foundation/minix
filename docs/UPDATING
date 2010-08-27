@@ -1,3 +1,10 @@
+20100827:
+	From now on, the rc scripts, recovery scripts and system.conf in /etc
+	and /usr/etc are updated automatically by make world. If you want to
+	change them, do so in the source tree. If you make changes to your
+	settings in /etc and /usr/etc, merge them into the the source tree
+	before issuing a make world.
+
 20100805:
 	mkfs and fsck have been renamed to mkfs.mfs and fsck.mfs, respectively.
 	Moreover, they have been moved to /sbin, which is by default not in

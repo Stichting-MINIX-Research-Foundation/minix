@@ -31,9 +31,9 @@ usage:
 # 
 # etcfiles has to be done first.
 .if ${COMPILER_TYPE} == "ack"
-world: mkfiles includes depend libraries install
+world: mkfiles includes depend libraries install etcforce
 .elif ${COMPILER_TYPE} == "gnu"
-world: mkfiles includes depend gnu-libraries install
+world: mkfiles includes depend gnu-libraries install etcforce
 .endif
 
 mkfiles:
@@ -72,6 +72,9 @@ depend::
 
 etcfiles::
 	$(MAKE) -C etc install
+
+etcforce::
+	$(MAKE) -C etc installforce
 
 all::
 	$(MAKE) -C boot all
