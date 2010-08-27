@@ -374,7 +374,7 @@ PRIVATE opcode_pt rm;
 
 PRIVATE su8_pt get8s()
 {
-    u8_t got;
+    su8_pt got;
 
     if ((got = get8()) > MAX_SIGNED_CHAR)
 	got -= (MAX_UNSIGNED_CHAR + 1);
