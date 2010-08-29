@@ -78,6 +78,22 @@ BIGPORTS=bigports
 	)
 }
 
+cd_root_changes()
+{
+	edparams $TMPDISKROOT 'unset bootopts;
+unset servers;
+unset rootdev;
+unset leader;
+unset image;
+disable=inet;
+bootcd=1;
+cdproberoot=1;
+ata_id_timeout=2;
+bootbig(1, Regular MINIX 3) { unset image; boot }
+leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
+save' 
+}
+
 hdemu_root_changes()
 {
 	$RELEASEDIR/usr/bin/installboot -d $TMPDISKROOT \
@@ -91,11 +107,6 @@ ramimagedev=c0d7p0s0
 bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
 main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
-
-	echo \
-'root=/dev/c0d7p0s0
-usr=/dev/c0d7p0s2
-usr_roflag="-r"' > $RELEASEDIR/etc/fstab
 }
 
 usb_root_changes()
@@ -106,12 +117,9 @@ usb_root_changes()
 'bios_wini=yes
 bios_remap_first=1
 rootdev=c0d7p0s0
+bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
+leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
-
-	echo \
-'root=/dev/c0d7p0s0
-usr=/dev/c0d7p0s2
-' > $RELEASEDIR/etc/fstab
 }
 
 fitfs()
@@ -410,7 +418,22 @@ extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 
-echo " * mounting $TMPDISKROOT as $RELEASEMNTDIR"
+echo " * Writing fstab"
+if [ "$USB" -ne 0 ]
+then
+	echo \
+'root=/dev/c0d7p0s0
+usr=/dev/c0d7p0s2
+' > $RELEASEDIR/etc/fstab
+elif [ "$HDEMU" -ne 0 ]
+then
+	echo \
+'root=/dev/c0d7p0s0
+usr=/dev/c0d7p0s2
+usr_roflag="-r"' > $RELEASEDIR/etc/fstab
+fi
+
+echo " * Mounting $TMPDISKROOT as $RELEASEMNTDIR"
 fitfs $RELEASEDIR $TMPDISKROOT 64 256 "$ROOTMB"
 ROOTBLOCKS=$blocks
 ROOTSECTS="`expr $blocks \* \( $BS / 512 \)`"
@@ -427,6 +450,12 @@ echo " * Copying files from staging to image"
 synctree -f $RELEASEDIR $RELEASEMNTDIR > /dev/null || true
 expr `df $TMPDISKUSR | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEMNTDIR/.usrkb
 
+echo " * Unmounting $TMPDISKUSR from $RELEASEMNTDIR/usr"
+umount $TMPDISKUSR || exit
+echo " * Unmounting $TMPDISKROOT from $RELEASEMNTDIR"
+umount $TMPDISKROOT || exit
+rm -r $RELEASEMNTDIR
+
 echo " * Making image bootable"
 if [ "$USB" -ne 0 ]
 then
@@ -434,24 +463,12 @@ then
 elif [ "$HDEMU" -ne 0 ]
 then
 	hdemu_root_changes
+else
+	cd_root_changes
 fi
 
-umount $TMPDISKUSR || exit
-umount $TMPDISKROOT || exit
-
-# Boot monitor variables for boot CD
-edparams $TMPDISKROOT 'unset bootopts;
-unset servers;
-unset rootdev;
-unset leader;
-unset image;
-disable=inet;
-bootcd=1;
-cdproberoot=1;
-ata_id_timeout=2;
-bootbig(1, Regular MINIX 3) { unset image; boot }
-leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
-save' 
+# Clean up: RELEASEDIR no longer needed
+rm -r $RELEASEDIR
 
 (cd ../boot && make)
 dd if=$TMPDISKROOT of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
@@ -490,10 +507,10 @@ else
 		# Make sure there is no hole..! Otherwise the ISO format is
 		# unreadable.
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
-		echo "${ZIP}ping $IMG"
-		$ZIP -f $IMG
 	fi
 fi
+echo "${ZIP}ping $IMG"
+$ZIP -f $IMG
 
 if [ "$FILENAMEOUT" ]
 then	echo "$IMG" >$FILENAMEOUT
