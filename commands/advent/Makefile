@@ -21,8 +21,14 @@ advtext.h advent1.dat advent2.dat advent3.dat advent4.dat: \
 		setup advent1.txt advent2.txt advent3.txt advent4.txt
 	./setup ${.CURDIR}
 
+database.d: touch-genfiles
+
+touch-genfiles:
+	[ -e advtext.h ] || touch -t 197001010000.00 advtext.h
+
 CPPFLAGS.advent.c= -DTEXTDIR='"${TEXTDIR}"'
 
 CLEANFILES+=	${DATFILES} advtext.h setup
 
 .include <bsd.prog.mk>
+

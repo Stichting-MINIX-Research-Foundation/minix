@@ -15,6 +15,9 @@ INSTALLFLAGS+=	-S 8k
 CPPFLAGS.memory.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.imgrd.c+=	-I${.CURDIR}/../ramdisk -T /usr/tmp
 
-imgrd.o: ${.CURDIR}/../ramdisk/image.c
+imgrd.d: touch-genfiles
+
+touch-genfiles:
+	[ -e ${.CURDIR}/../ramdisk/image.c ] || touch -t 197001010000.00 ${.CURDIR}/../ramdisk/image.c
 
 .include <bsd.prog.mk>
