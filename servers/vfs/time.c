@@ -32,7 +32,7 @@ PUBLIC int do_utime()
 
   /* Temporarily open the file */
   if (fetch_name(m_in.utime_file, len, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
 
   /* Only the owner of a file or the super user can change its name. */  
   r = OK;

@@ -3,6 +3,8 @@
  *
  * The entry points into this file are
  *   nested_fs_call	perform a nested call from a file system server
+ *   nested_dev_call	perform a nested call from a device driver server
+ *
  */
 
 #include "fs.h"
@@ -11,6 +13,7 @@
 #include <assert.h>
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
+#include <minix/vfsif.h>
 
 /* maximum nested call stack depth */
 #define MAX_DEPTH 1
@@ -139,6 +142,54 @@ message *m;				/* request/reply message pointer */
 #endif
 
 		r = (*call_vec[call_nr])();
+	}
+
+	/* Store the result, and restore original global variables */
+	*m = m_out;
+
+	pop_globals();
+  }
+
+  m->m_type = r;
+}
+
+/*===========================================================================*
+ *				nested_dev_call				     *
+ *===========================================================================*/
+PUBLIC void nested_dev_call(m)
+message *m;				/* request/reply message pointer */
+{
+/* Handle a nested call from a device driver server.
+ */
+  int r;
+
+  /* Save global variables of the current call */
+  if ((r = push_globals()) != OK) {
+	printf("VFS: error saving globals in call %d from driver %d\n",
+		m->m_type, m->m_source);
+  } else {
+	/* Initialize global variables for the nested call */
+	set_globals(m);
+
+	if (call_nr >= PFS_BASE) {
+		call_nr -= PFS_BASE;
+	}
+
+	/* Perform the nested call */
+	if (call_nr < 0 || call_nr >= PFS_NREQS) {
+
+		printf("VFS: invalid nested call %d from driver %d\n",
+			call_nr, who_e);
+
+		r = ENOSYS;
+	} else if (who_e == PFS_PROC_NR) {
+
+		r = (*pfs_call_vec[call_nr])();
+	} else {
+
+		printf("VFS: only the PFS device can make nested VFS calls\n");
+
+		r = ENOSYS;
 	}
 
 	/* Store the result, and restore original global variables */

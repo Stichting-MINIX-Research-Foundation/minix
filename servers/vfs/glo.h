@@ -34,5 +34,6 @@ EXTERN int err_code;		/* temporary storage for error number */
 
 /* Data initialized elsewhere. */
 extern _PROTOTYPE (int (*call_vec[]), (void) ); /* sys call table */
+extern _PROTOTYPE (int (*pfs_call_vec[]), (void) ); /* pfs callback table */
 extern char dot1[2];   /* dot1 (&dot1[0]) and dot2 (&dot2[0]) have a special */
 extern char dot2[3];   /* meaning to search_dir: no access permission check. */

@@ -283,16 +283,25 @@ PUBLIC int req_getdents(
   u64_t pos,
   char *buf,
   size_t size,
-  u64_t *new_pos
+  u64_t *new_pos,
+  int direct
 )
 {
   int r;
   message m;
   cp_grant_id_t grant_id;
-  
-  grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size, CPF_WRITE);
+
+  if (direct) {
+	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, size,
+								CPF_WRITE);
+  } else {
+	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, size,
+								CPF_WRITE);
+  }
+
   if (grant_id < 0)
-  	panic("req_getdents: cpf_grant_magic failed: %d", grant_id);
+  	panic("req_getdents: cpf_grant_direct/cpf_grant_magic failed: %d",
+								grant_id);
 
   m.m_type = REQ_GETDENTS;
   m.REQ_INODE_NR = inode_nr;
@@ -311,7 +320,6 @@ PUBLIC int req_getdents(
 
   return(r);
 }
-
 
 /*===========================================================================*
  *				req_inhibread	  			     *
@@ -373,7 +381,8 @@ PUBLIC int req_lookup(
   uid_t uid,
   gid_t gid,
   int flags,
-  lookup_res_t *res
+  lookup_res_t *res,
+  struct fproc *rfp
 )
 {
   int r;
@@ -396,16 +405,16 @@ PUBLIC int req_lookup(
   m.REQ_DIR_INO 	= dir_ino;
   m.REQ_ROOT_INO 	= root_ino;
 
-  if(fp->fp_ngroups > 0) { /* Is the process member of multiple groups? */
+  if(rfp->fp_ngroups > 0) { /* Is the process member of multiple groups? */
   	/* In that case the FS has to copy the uid/gid credentials */
   	int i;
 
   	/* Set credentials */
-  	credentials.vu_uid = fp->fp_effuid;
-  	credentials.vu_gid = fp->fp_effgid;
-  	credentials.vu_ngroups = fp->fp_ngroups;
-  	for (i = 0; i < fp->fp_ngroups; i++) 
-  		credentials.vu_sgroups[i] = fp->fp_sgroups[i];
+  	credentials.vu_uid = rfp->fp_effuid;
+  	credentials.vu_gid = rfp->fp_effgid;
+  	credentials.vu_ngroups = rfp->fp_ngroups;
+  	for (i = 0; i < rfp->fp_ngroups; i++) 
+  		credentials.vu_sgroups[i] = rfp->fp_sgroups[i];
 
 	grant_id2 = cpf_grant_direct(fs_e, (vir_bytes) &credentials,
 				     sizeof(credentials), CPF_READ);
@@ -427,7 +436,7 @@ PUBLIC int req_lookup(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  if(fp->fp_ngroups > 0) cpf_revoke(grant_id2); 
+  if(rfp->fp_ngroups > 0) cpf_revoke(grant_id2); 
 
   /* Fill in response according to the return value */
   res->fs_e = m.m_source;
@@ -653,18 +662,24 @@ int count;
 /*===========================================================================*
  *				req_rdlink	     			     *
  *===========================================================================*/
-PUBLIC int req_rdlink(fs_e, inode_nr, who_e, buf, len)
+PUBLIC int req_rdlink(fs_e, inode_nr, who_e, buf, len, direct)
 endpoint_t fs_e;
 ino_t inode_nr;
 endpoint_t who_e;
 char *buf;
 size_t len;
+int direct; /* set to 1 to use direct grants instead of magic grants */
 {
   message m;
   int r;
   cp_grant_id_t grant_id;
 
-  grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, len, CPF_WRITE);
+  if (direct) {
+	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, len, CPF_WRITE);
+  } else {
+	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, len,
+								CPF_WRITE);
+  }
   if(grant_id == -1)
 	  panic("req_rdlink: cpf_grant_magic failed");
 

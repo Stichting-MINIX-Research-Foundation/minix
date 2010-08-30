@@ -8,6 +8,7 @@
  *   panic:       something awful has occurred;  MINIX cannot continue
  *   conv2:	  do byte swapping on a 16-bit int
  *   conv4:	  do byte swapping on a 32-bit long
+ *   in_group:    determines if group 'grp' is in rfp->fp_sgroups[]
  */
 
 #include "fs.h"
@@ -138,5 +139,21 @@ PUBLIC time_t clock_time()
 	panic("clock_time err: %d", r);
 
   return( (time_t) (boottime + (uptime/system_hz)));
+}
+
+/*===========================================================================*
+ *                              in_group                                     *
+ *===========================================================================*/
+PUBLIC int in_group(struct fproc *rfp, gid_t grp)
+{
+  int i;
+
+  for (i = 0; i < rfp->fp_ngroups; i++) {
+	if (rfp->fp_sgroups[i] == grp) {
+		return(OK);
+	}
+  }
+
+  return(EINVAL);
 }
 

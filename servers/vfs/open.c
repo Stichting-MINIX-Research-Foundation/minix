@@ -104,7 +104,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 					     flag is set this is an error */
   } else {
 	/* Scan path name */
-	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
   }
 
   /* Claim the file descriptor and filp slot and fill them in. */
@@ -254,10 +254,10 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
   if (oflags & O_EXCL) flags |= PATH_RET_SYMLINK;
 
   /* See if the path can be opened down to the last directory. */
-  if ((dirp = last_dir()) == NULL) return(NULL);
+  if ((dirp = last_dir(fp)) == NULL) return(NULL);
 
   /* The final directory is accessible. Get final component of the path. */
-  vp = advance(dirp, flags);
+  vp = advance(dirp, flags, fp);
 
   /* The combination of a symlink with absolute path followed by a danglink
    * symlink results in a new path that needs to be re-resolved entirely. */
@@ -280,7 +280,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 			struct vnode *slp, *old_wd;
 
 			/* Resolve path up to symlink */
-			slp = advance(dirp, PATH_RET_SYMLINK);
+			slp = advance(dirp, PATH_RET_SYMLINK, fp);
 			if (slp != NULL) {
 				if (S_ISLNK(slp->v_mode)) {
 					/* Get contents of link */
@@ -291,7 +291,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 						       slp->v_inode_nr,
 					   	       VFS_PROC_NR,
 					   	       user_fullpath,
-					   	       max_linklen);
+					   	       max_linklen, 0);
 					if (r < 0) {
 						/* Failed to read link */
 						put_vnode(slp);
@@ -406,7 +406,7 @@ PUBLIC int do_mknod()
 
   /* Open directory that's going to hold the new node. */
   if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if((vp = last_dir()) == NULL) return(err_code);
+  if((vp = last_dir(fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
   if((vp->v_mode & I_TYPE) != I_DIRECTORY) {
@@ -439,7 +439,7 @@ PUBLIC int do_mkdir()
   bits = I_DIRECTORY | (m_in.mode & RWX_MODES & fp->fp_umask);
 
   /* Request lookup */
-  if((vp = last_dir()) == NULL) return(err_code);
+  if((vp = last_dir(fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
   if ((vp->v_mode & I_TYPE) != I_DIRECTORY) {
@@ -595,60 +595,6 @@ int fd_nr;
   if (nr_locks < lock_count) lock_revive();	/* lock released */
   return(OK);
 }
-
-
-/*===========================================================================*
- *				close_filp				     *
- *===========================================================================*/
-PUBLIC void close_filp(fp)
-struct filp *fp;
-{
-  int mode_word, rw;
-  dev_t dev;
-  struct vnode *vp;
-
-  vp = fp->filp_vno;
-  if (fp->filp_count - 1 == 0 && fp->filp_mode != FILP_CLOSED) {
-	/* Check to see if the file is special. */
-	mode_word = vp->v_mode & I_TYPE;
-	if (mode_word == I_CHAR_SPECIAL || mode_word == I_BLOCK_SPECIAL) {
-		dev = (dev_t) vp->v_sdev;
-		if (mode_word == I_BLOCK_SPECIAL)  {
-			if (vp->v_bfs_e == ROOT_FS_E) {
-				/* Invalidate the cache unless the special is
-				 * mounted. Assume that the root filesystem's
-				 * is open only for fsck.
-			 	 */
-          			req_flush(vp->v_bfs_e, dev);
-          		}
-		}
-		/* Do any special processing on device close. */
-		(void) dev_close(dev, fp-filp);
-		/* Ignore any errors, even SUSPEND. */
-
-		fp->filp_mode = FILP_CLOSED;
-	}
-  }
-
-  /* If the inode being closed is a pipe, release everyone hanging on it. */
-  if (vp->v_pipe == I_PIPE) {
-	rw = (fp->filp_mode & R_BIT ? WRITE : READ);
-	release(vp, rw, NR_PROCS);
-  }
-
-  /* If a write has been done, the inode is already marked as DIRTY. */
-  if (--fp->filp_count == 0) {
-	if (vp->v_pipe == I_PIPE) {
-		/* Last reader or writer is going. Tell PFS about latest
-		 * pipe size.
-		 */
-		truncate_vnode(vp, vp->v_size);
-	}
-		
-	put_vnode(fp->filp_vno);
-  }
-}
-
 
 /*===========================================================================*
  *				close_reply				     *

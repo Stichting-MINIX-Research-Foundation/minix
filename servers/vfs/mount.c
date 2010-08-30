@@ -213,7 +213,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   
 	/* Now get the inode of the file to be mounted on. */
 	if (fetch_name(m_in.name2, m_in.name2_length, M1)!=OK) return(err_code);
-	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
 	if (vp->v_ref_count != 1) {
 		put_vnode(vp);
 		return(EBUSY);
@@ -254,7 +254,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   if(!replace_root) {
   	/* Get vnode of mountpoint */
-	if ((vp = eat_path(PATH_NOFLAGS)) == NULL) return(err_code);
+	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
 
 	       if (vp->v_ref_count != 1) {
 	               put_vnode(vp);
@@ -451,7 +451,8 @@ PUBLIC int unmount(
 	panic("unmount: strange fs endpoint: %d", vmp->m_fs_e);
 
   if ((r = req_unmount(vmp->m_fs_e)) != OK)              /* Not recoverable. */
-	printf("VFS: ignoring failed umount attempt (%d)\n", r);
+	printf("VFS: ignoring failed umount attempt (%d) fs pid: %d\n", r,
+						_ENDPOINT_P(vmp->m_fs_e));
 
   if (is_nonedev(vmp->m_dev))
 	free_nonedev(vmp->m_dev);
@@ -507,7 +508,7 @@ PRIVATE dev_t name_to_dev(int allow_mountpt)
   struct vnode *vp;
   
   /* Request lookup */
-  if ((vp = eat_path(PATH_NOFLAGS)) == NULL) {
+  if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) {
 	return(NO_DEV);
   }
 

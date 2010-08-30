@@ -168,7 +168,7 @@ PUBLIC int do_getdents()
 	panic("do_getdents: should handle large offsets");
 	
   r = req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr, 
-		   rfilp->filp_pos, m_in.buffer, m_in.nbytes, &new_pos);
+		   rfilp->filp_pos, m_in.buffer, m_in.nbytes, &new_pos, 0);
 
   if (r > 0)
 	rfilp->filp_pos = new_pos;
