@@ -119,5 +119,19 @@ typedef struct {
 
 #define IS_VFS_RQ(type) (((type) & ~0xff) == VFS_BASE)
 
+#define PFS_BASE		(VFS_BASE + 100)
+
+#define PFS_REQ_CHECK_PERMS	(PFS_BASE + 1)
+#define PFS_REQ_VERIFY_FD	(PFS_BASE + 2)
+#define PFS_REQ_SET_FILP	(PFS_BASE + 3)
+#define PFS_REQ_COPY_FILP	(PFS_BASE + 4)
+#define PFS_REQ_PUT_FILP	(PFS_BASE + 5)
+#define PFS_REQ_CANCEL_FD	(PFS_BASE + 6)
+
+#define PFS_NREQS		7
+
+#define IS_PFS_VFS_RQ(type)	(type >= PFS_BASE && \
+					type < (PFS_BASE + PFS_NREQS))
+
 #endif
 

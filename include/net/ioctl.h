@@ -9,6 +9,19 @@
 #include <minix/ioctl.h>
 #include <sys/un.h>
 
+#ifndef _SOCKLEN_T
+#define _SOCKLEN_T
+typedef int32_t socklen_t;
+#endif /* _SOCKLEN_T */
+
+#define MSG_CONTROL_MAX (1024 - sizeof(socklen_t))
+struct msg_control
+{
+	char		msg_control[MSG_CONTROL_MAX];
+	socklen_t	msg_controllen;
+};
+
+
 /* Network ioctls. */
 #define NWIOSETHOPT	_IOW('n', 16, struct nwio_ethopt)
 #define NWIOGETHOPT	_IOR('n', 17, struct nwio_ethopt)
@@ -51,17 +64,19 @@
 #define NWIOGUDPOPT	_IOR('n', 65, struct nwio_udpopt)
 #define NWIOUDPPEEK	_IOR('n', 66, struct udp_io_hdr)
 
-#define NWIOGUDSFADDR   _IOR('n', 67, struct sockaddr_un) /* recvfrom() */
-#define NWIOSUDSTADDR	_IOW('n', 68, struct sockaddr_un) /* sendto() */
-#define NWIOSUDSADDR	_IOW('n', 69, struct sockaddr_un) /* bind() */
-#define NWIOGUDSADDR	_IOR('n', 70, struct sockaddr_un) /* getsockname() */
-#define NWIOGUDSPADDR	_IOR('n', 71, struct sockaddr_un) /* getpeername() */
-#define NWIOSUDSTYPE	_IOW('n', 72, int)		  /* socket() */
-#define NWIOSUDSBLOG	_IOW('n', 73, int)		  /* listen() */
-#define NWIOSUDSCONN	_IOW('n', 74, struct sockaddr_un) /* connect() */
-#define NWIOSUDSSHUT    _IOW('n', 75, int)		  /* shutdown() */
-#define NWIOSUDSPAIR	_IOW('n', 76, dev_t)		  /* socketpair() */
-#define NWIOSUDSACCEPT	_IOW('n', 77, struct sockaddr_un) /* accept() */
+#define NWIOGUDSFADDR   _IOR ('n', 67, struct sockaddr_un) /* recvfrom() */
+#define NWIOSUDSTADDR	_IOW ('n', 68, struct sockaddr_un) /* sendto() */
+#define NWIOSUDSADDR	_IOW ('n', 69, struct sockaddr_un) /* bind() */
+#define NWIOGUDSADDR	_IOR ('n', 70, struct sockaddr_un) /* getsockname() */
+#define NWIOGUDSPADDR	_IOR ('n', 71, struct sockaddr_un) /* getpeername() */
+#define NWIOSUDSTYPE	_IOW ('n', 72, int)		   /* socket() */
+#define NWIOSUDSBLOG	_IOW ('n', 73, int)		   /* listen() */
+#define NWIOSUDSCONN	_IOW ('n', 74, struct sockaddr_un) /* connect() */
+#define NWIOSUDSSHUT    _IOW ('n', 75, int)		  /* shutdown() */
+#define NWIOSUDSPAIR	_IOW ('n', 76, dev_t)		  /* socketpair() */
+#define NWIOSUDSACCEPT	_IOW ('n', 77, struct sockaddr_un) /* accept() */
+#define NWIOSUDSCTRL	_IOW ('n', 78, struct msg_control) /* sendmsg() */
+#define NWIOGUDSCTRL	_IORW('n', 79, struct msg_control) /* recvmsg() */
 
 #define NWIOSPSIPOPT	_IOW('n', 80, struct nwio_psipopt)
 #define NWIOGPSIPOPT	_IOR('n', 81, struct nwio_psipopt)

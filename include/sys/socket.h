@@ -45,7 +45,10 @@ sys/socket.h
 typedef uint8_t		sa_family_t;
 #endif /* _SA_FAMILY_T */
 
+#ifndef _SOCKLEN_T
+#define _SOCKLEN_T
 typedef int32_t socklen_t;
+#endif /* _SOCKLEN_T */
 
 struct sockaddr
 {
@@ -93,6 +96,12 @@ struct cmsghdr
 
 #define CMSG_DATA(cmsg) \
 	( (unsigned char *)(cmsg) + CMSG_ALIGN(sizeof(struct cmsghdr)) )
+
+#define CMSG_SPACE(len) \
+	( CMSG_ALIGN(len) + CMSG_ALIGN(sizeof(struct cmsghdr)) )
+
+#define CMSG_LEN(len) \
+	( len + CMSG_ALIGN(sizeof(struct cmsghdr)) )
 
 #define SCM_RIGHTS	0x01
 #define SCM_CREDENTIALS	0x02

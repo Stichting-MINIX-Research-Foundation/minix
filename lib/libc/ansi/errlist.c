@@ -86,6 +86,7 @@ const char *_sys_errlist[] = {
 	"Operation not supported",	/* EOPNOTSUPP */
 	"Network is down",		/* ENETDOWN */
 	"Protocol family not supported", /* EPFNOSUPPORT */
+	"Destination address required", /* EDESTADDRREQ */
 };
 
 const int _sys_nerr = sizeof(_sys_errlist) / sizeof(_sys_errlist[0]);
