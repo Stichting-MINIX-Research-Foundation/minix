@@ -72,6 +72,10 @@
 #define TEST_SYM_A "test.a"
 #define TEST_SYM_B "test.b"
 
+/* text file and test phrase for testing file descriptor passing */
+#define TEST_TXT_FILE "test.txt"
+#define MSG "This raccoon loves to eat bugs.\n"
+
 /* buffer for send/recv */
 #define BUFSIZE (128)
 
@@ -79,6 +83,8 @@
 
 /* socket types supported */
 int types[3] = {SOCK_STREAM, SOCK_SEQPACKET, SOCK_DGRAM};
+char sock_fullpath[PATH_MAX + 1];
+
 
 /* timestamps for debug and error logs */
 char *get_timestamp(void)
@@ -127,10 +133,23 @@ fprintf(stderr, "[ERROR][%s] (%s Line %d) %s [pid=%d:errno=%d:%s]\n",   \
 		errct++;						\
 		if (errct++ > MAX_ERROR) {				\
 			printf("Too many errors; test aborted\n");	\
-        		cleanup();					\
+        		quit();						\
 			exit(1);					\
 		}							\
 	} while (0)
+
+/* Convert name to the full path of the socket. Assumes name is in cwd. */
+char *fullpath(char *name)
+{
+	char cwd[PATH_MAX + 1];
+
+	if (realpath(".", cwd) == NULL)
+		test_fail("Couldn't retrieve current working dir");
+
+	snprintf(sock_fullpath, PATH_MAX, "%s/%s", cwd, name);
+
+	return(sock_fullpath);
+}
 
 #if DEBUG == 1
 /* macros to display debugging information */
@@ -438,8 +457,11 @@ void test_getsockname(void)
 	}
 
 	if (!(sock_addr.sun_family == AF_UNIX && strncmp(sock_addr.sun_path,
-		addr.sun_path, sizeof(sock_addr.sun_path) - 1) == 0)) {
+		fullpath(TEST_SUN_PATH),
+		sizeof(sock_addr.sun_path) - 1) == 0)) {
 		test_fail("getsockname() did return the right address");
+		fprintf(stderr, "exp: '%s' | got: '%s'\n", addr.sun_path,
+							sock_addr.sun_path);
 	}
 
 	CLOSE(sd);
@@ -481,10 +503,13 @@ void test_bind(void)
 	}
 
 	if (!(sock_addr.sun_family == AF_UNIX &&
-			strncmp(sock_addr.sun_path, addr.sun_path, 
+			strncmp(sock_addr.sun_path, 
+			fullpath(TEST_SUN_PATH),
 			sizeof(sock_addr.sun_path) - 1) == 0)) {
 
 		test_fail("getsockname() didn't return the right addr");
+		fprintf(stderr, "exp: '%s' | got: '%s'\n", addr.sun_path,
+							sock_addr.sun_path);
 	}
 
 	debug("Test bind() with a address that has already been bind()'d");
@@ -627,7 +652,7 @@ void test_close(void)
 {
 	struct sockaddr_un addr;
 	int sd, sd2;
-	int rc;
+	int rc, i;
 
 	debug("entering test_close()");
 
@@ -675,6 +700,16 @@ void test_close(void)
 	}
 
 	UNLINK(TEST_SUN_PATH);
+
+	/* Create and close a socket a bunch of times.
+	 * If the implementation doesn't properly free the
+	 * socket during close(), eventually socket() will
+	 * fail when the internal descriptor table is full.
+	 */
+	for (i = 0; i < 1024; i++) {
+		SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
+		CLOSE(sd);
+	}
 
 	debug("leaving test_close()");
 }
@@ -1131,7 +1166,7 @@ void test_xfer_server(pid_t pid)
 		rc = waitpid(pid, &status, 0);
 	} while (rc == -1 && errno == EINTR);
 
-	/* we use the exit status to get it's error count */
+	/* we use the exit status to get its error count */
 	errct += WEXITSTATUS(status);
 }
 
@@ -1185,6 +1220,7 @@ void test_xfer_client(void)
 
 	peer_addr_len = sizeof(struct sockaddr_un);
 
+
 	debug("Creating symlink to TEST_SUN_PATH");
 
 	SYMLINK(TEST_SUN_PATH, TEST_SYM_A);
@@ -1215,9 +1251,10 @@ void test_xfer_client(void)
 	/* we need to use the full path "/usr/src/test/DIR_56/test.sock"
 	 * because that is what is returned by getpeername().
 	 */
+
 	if (!(peer_addr.sun_family == AF_UNIX &&
 			strncmp(peer_addr.sun_path,
-			"/usr/src/test/DIR_56/test.sock", 
+			fullpath(TEST_SUN_PATH),
 			sizeof(peer_addr.sun_path) - 1) == 0)) {
 
 		test_fail("getpeername() didn't return the right address");
@@ -1350,8 +1387,6 @@ void test_xfer_client(void)
 	debug("[client] closing socket");
 	CLOSE(sd);
 
-	UNLINK(TEST_SYM_A);
-
 	debug("[client] leaving test_xfer_client()");
 	exit(errct);
 }
@@ -1360,6 +1395,7 @@ void test_xfer(void)
 {
 	pid_t pid;
 
+	UNLINK(TEST_SYM_A);
 	UNLINK(TEST_SUN_PATH);
 
 	/* the signal handler is only used by the client, but we have to 
@@ -1379,18 +1415,18 @@ void test_xfer(void)
 	if (pid == -1) {
 		test_fail("fork() failed");
 		return;
-	}
-
-	if (pid == 0) {
+	} else if (pid == 0) {
 		debug("child");
 		test_xfer_client();
 		test_fail("we should never get here");
+		exit(1);
 	} else {
 		debug("parent");
 		test_xfer_server(pid);
 		debug("parent done");
 	}
 
+	UNLINK(TEST_SYM_A);
 	UNLINK(TEST_SUN_PATH);
 }
 
@@ -1403,7 +1439,7 @@ void test_simple_client(int type)
 	sd = socket(PF_UNIX, type, 0);
 	if (sd == -1) {
 		test_fail("socket");
-		return;
+		exit(errct);
 	}
 
 	while (server_ready == 0) {
@@ -1417,14 +1453,13 @@ void test_simple_client(int type)
 	bzero(buf, BUFSIZE);
 	snprintf(buf, BUFSIZE-1, "Hello, My Name is Client.");
 
-
 	if (type == SOCK_DGRAM) {
 
 		rc = sendto(sd, buf, strlen(buf) + 1, 0,
 			(struct sockaddr *) &addr, sizeof(struct sockaddr_un));
 		if (rc == -1) {
 			test_fail("sendto");
-			return;
+			exit(errct);
 		}
 
 	} else {
@@ -1433,7 +1468,7 @@ void test_simple_client(int type)
 					sizeof(struct sockaddr_un));
 		if (rc == -1) {
 			test_fail("connect");
-			return;
+			exit(errct);
 		}
 
 		rc = write(sd, buf, strlen(buf) + 1);
@@ -1441,11 +1476,15 @@ void test_simple_client(int type)
 			test_fail("write");
 		}
 
+		memset(buf, '\0', BUFSIZE);
 		rc = read(sd, buf, BUFSIZE);
 		if (rc == -1) {
 			test_fail("read");
 		}
 
+		if (strcmp("Hello, My Name is Server.", buf) != 0) {
+			test_fail("didn't read the correct string");
+		}
 	}
 
 	rc = close(sd);
@@ -1462,6 +1501,8 @@ void test_simple_server(int type, pid_t pid)
 	int sd, rc, client_sd, status;
 	struct sockaddr_un addr;
 	socklen_t addr_len;
+
+	addr_len = sizeof(struct sockaddr_un);
 
 	sd = socket(PF_UNIX, type, 0);
 	if (sd == -1) {
@@ -1504,9 +1545,14 @@ void test_simple_server(int type, pid_t pid)
 			test_fail("accept");
 		}
 
+		memset(buf, '\0', BUFSIZE);
 		rc = read(client_sd, buf, BUFSIZE);
 		if (rc == -1) {
 			test_fail("read");
+		}
+
+		if (strcmp("Hello, My Name is Client.", buf) != 0) {
+			test_fail("didn't read the correct string");
 		}
 
 		/* added for extra fun to make the client block on read() */
@@ -1538,13 +1584,15 @@ void test_simple_server(int type, pid_t pid)
 		rc = waitpid(pid, &status, 0);
 	} while (rc == -1 && errno == EINTR);
 
-	/* we use the exit status to get it's error count */
+	/* we use the exit status to get its error count */
 	errct += WEXITSTATUS(status);
 }
 
 void test_simple_client_server(int type)
 {
 	pid_t pid;
+
+	debug("test_simple_client_server()");
 
 	UNLINK(TEST_SUN_PATH);
 
@@ -1565,12 +1613,11 @@ void test_simple_client_server(int type)
 	if (pid == -1) {
 		test_fail("fork() failed");
 		return;
-	}
-
-	if (pid == 0) {
+	} else if (pid == 0) {
 		debug("child");
 		test_simple_client(type);
 		test_fail("we should never get here");
+		exit(1);
 	} else {
 		debug("parent");
 		test_simple_server(type, pid);
@@ -1667,6 +1714,8 @@ void test_vectorio(int type)
 	if (rc == -1) {
 		test_fail("close");
 	}
+
+	debug("done vector io tests");
 }
 
 void test_msg(int type)
@@ -1791,6 +1840,8 @@ void test_msg_dgram(void)
 	char buf3[BUFSIZE];
 	socklen_t addrlen = sizeof(struct sockaddr_un);
 
+	debug("test msg_dgram");
+
 	UNLINK(TEST_SUN_PATH);
 	UNLINK(TEST_SUN_PATHB);
 
@@ -1881,7 +1932,7 @@ void test_msg_dgram(void)
 	 * because that is what is returned by recvmsg().
 	 */
 	if (addr.sun_family != AF_UNIX || strcmp(addr.sun_path,
-					"/usr/src/test/DIR_56/testb.sock")) {
+					fullpath(TEST_SUN_PATHB))) {
 		test_fail("recvmsg");
 	}
 
@@ -1897,6 +1948,592 @@ void test_msg_dgram(void)
 
 	UNLINK(TEST_SUN_PATH);
 	UNLINK(TEST_SUN_PATHB);
+}
+
+void test_scm_credentials(void)
+{
+	int rc;
+	int src;
+	int dst;
+	struct ucred cred;
+	struct cmsghdr *cmsg = NULL;
+	struct sockaddr_un addr;
+	struct iovec iov[3];
+	struct msghdr msg1;
+	struct msghdr msg2;
+	char buf1[BUFSIZE];
+	char buf2[BUFSIZE];
+	char buf3[BUFSIZE];
+	char ctrl[BUFSIZE];
+	socklen_t addrlen = sizeof(struct sockaddr_un);
+
+	debug("test_scm_credentials");
+
+	UNLINK(TEST_SUN_PATH);
+	UNLINK(TEST_SUN_PATHB);
+
+	debug("creating src socket");
+
+	src = socket(PF_UNIX, SOCK_DGRAM, 0);
+	if (src == -1) {
+		test_fail("socket");
+	}
+
+	debug("creating dst socket");
+
+	dst = socket(PF_UNIX, SOCK_DGRAM, 0);
+	if (dst == -1) {
+		test_fail("socket");
+	}
+
+	debug("binding src socket");
+
+	memset(&addr, '\0', sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, TEST_SUN_PATHB, sizeof(addr.sun_path) - 1);
+	rc = bind(src, (struct sockaddr *) &addr, addrlen);
+	if (rc == -1) {
+		test_fail("bind");
+	}
+
+	debug("binding dst socket");
+
+	memset(&addr, '\0', sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, TEST_SUN_PATH, sizeof(addr.sun_path) - 1);
+
+	rc = bind(dst, (struct sockaddr *) &addr, addrlen);
+	if (rc == -1) {
+		test_fail("bind");
+	}
+
+	memset(&buf1, '\0', BUFSIZE);
+	memset(&buf2, '\0', BUFSIZE);
+	memset(&buf3, '\0', BUFSIZE);
+	memset(&ctrl, '\0', BUFSIZE);
+
+	strncpy(buf1, "Minix ", BUFSIZE-1);
+	strncpy(buf2, "is ", BUFSIZE-1);
+	strncpy(buf3, "great!", BUFSIZE-1);
+
+	iov[0].iov_base = buf1;
+	iov[0].iov_len  = 6;
+	iov[1].iov_base = buf2;
+	iov[1].iov_len  = 3;
+	iov[2].iov_base = buf3;
+	iov[2].iov_len  = 32;
+
+	memset(&msg1, '\0', sizeof(struct msghdr));
+	msg1.msg_name = &addr;
+	msg1.msg_namelen = addrlen;
+	msg1.msg_iov = iov;
+	msg1.msg_iovlen = 3;
+	msg1.msg_control = NULL;
+	msg1.msg_controllen = 0;
+	msg1.msg_flags = 0;
+
+	debug("sending msg1");
+
+	rc = sendmsg(src, &msg1, 0);
+	if (rc == -1) {
+		test_fail("sendmsg");
+	}
+
+	memset(&buf1, '\0', BUFSIZE);
+	memset(&buf2, '\0', BUFSIZE);
+	memset(&buf3, '\0', BUFSIZE);
+	memset(&ctrl, '\0', BUFSIZE);
+
+	iov[0].iov_base = buf1;
+	iov[0].iov_len  = 9;
+	iov[1].iov_base = buf2;
+	iov[1].iov_len  = 32;
+
+	memset(&addr, '\0', sizeof(struct sockaddr_un));
+	memset(&msg2, '\0', sizeof(struct msghdr));
+	msg2.msg_name = &addr;
+	msg2.msg_namelen = sizeof(struct sockaddr_un);
+	msg2.msg_iov = iov;
+	msg2.msg_iovlen = 2;
+	msg2.msg_control = ctrl;
+	msg2.msg_controllen = BUFSIZE;
+	msg2.msg_flags = 0;
+
+	debug("recv msg2");
+
+	rc = recvmsg(dst, &msg2, 0);
+	if (rc == -1) {
+		test_fail("recvmsg");
+	}
+
+	debug("checking results");
+
+	if (strncmp(buf1, "Minix is ", 9) || strncmp(buf2, "great!", 6)) {
+		test_fail("recvmsg");
+	}
+
+	/* we need to use the full path "/usr/src/test/DIR_56/testb.sock"
+	 * because that is what is returned by recvmsg().
+	 */
+	if (addr.sun_family != AF_UNIX || strcmp(addr.sun_path,
+					fullpath(TEST_SUN_PATHB))) {
+		test_fail("recvmsg");
+	}
+
+	debug("looking for credentials");
+
+	memset(&cred, '\0', sizeof(struct ucred));
+	for (cmsg = CMSG_FIRSTHDR(&msg2); cmsg != NULL;
+					cmsg = CMSG_NXTHDR(&msg2, cmsg)) {
+
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+				cmsg->cmsg_type == SCM_CREDENTIALS) {
+
+			memcpy(&cred, CMSG_DATA(cmsg), sizeof(struct ucred));
+			break;
+		}
+	}
+
+	if (cred.pid != getpid() || cred.uid != geteuid() ||
+						cred.gid != getegid()) {
+
+		test_fail("did no receive the proper credentials");
+	}
+
+	rc = close(dst);
+	if (rc == -1) {
+		test_fail("close");
+	}
+
+	rc = close(src);
+	if (rc == -1) {
+		test_fail("close");
+	}
+
+	UNLINK(TEST_SUN_PATH);
+	UNLINK(TEST_SUN_PATHB);
+}
+
+void test_connect(void)
+{
+	int i, sd, sds[2], rc;
+
+	/* connect() is already tested throughout test56, but
+	 * in most cases the client and server end up on /dev/uds
+	 * minor 0 and minor 1. This test opens some sockets first and 
+	 * then calls test_simple_client_server(). This forces the 
+	 * client and server minor numbers higher in the descriptor table.
+	 */
+
+	debug("starting test_connect()");
+
+	sd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (sd == -1) {
+		test_fail("couldn't create a socket");
+	}
+
+	rc = socketpair(AF_UNIX, SOCK_STREAM, 0, sds);
+	if (rc == -1) {
+		test_fail("couldn't create a socketpair");
+	}
+
+	for (i = 0; i < 3; i++) {
+		test_simple_client_server(types[i]);
+	}
+
+	rc = close(sds[1]);
+	if (rc == -1) {
+		test_fail("close() failed");
+	}
+
+	rc = close(sds[0]);
+	if (rc == -1) {
+		test_fail("close() failed");
+	}
+
+	rc = close(sd);
+	if (rc == -1) {
+		test_fail("close() failed");
+	}
+
+	debug("exiting test_connect()");
+}
+
+int test_multiproc_read(void)
+{
+/* test that when we fork() a process with an open socket descriptor, 
+ * the descriptor in each process points to the same thing.
+ */
+
+	pid_t pid;
+	int sds[2];
+	int rc, status;
+	char buf[3];
+
+	debug("entering test_multiproc_read()");
+
+	rc = socketpair(PF_UNIX, SOCK_STREAM, 0, sds);
+	if (rc == -1) {
+		test_fail("socketpair");
+		return 1;
+	}
+
+	memset(buf, '\0', 3);
+
+
+	/* the signal handler is only used by the client, but we have to 
+	 * install it now. if we don't the server may signal the client 
+	 * before the handler is installed.
+	 */
+	debug("installing signal handler");
+	if (signal(SIGUSR1, test_xfer_sighdlr) == SIG_ERR) {
+		test_fail("signal(SIGUSR1, test_xfer_sighdlr) failed");
+		return 1;
+	}
+
+	debug("signal handler installed");
+
+	server_ready = 0;
+
+	pid = fork();
+
+	if (pid == -1) {
+
+		test_fail("fork");
+		return 1;
+
+	} else if (pid == 0) {
+
+		while (server_ready == 0) {
+			debug("waiting for SIGUSR1 from parent");
+			sleep(1);
+		}
+
+		rc = read(sds[1], buf, 2);
+		if (rc == -1) {
+			test_fail("read");
+			exit(1);
+		}
+
+		if (!(buf[0] == 'X' && buf[1] == '3')) {
+			test_fail("Didn't read X3");
+			exit(1);
+		}
+
+		exit(0);
+	} else {
+
+		rc = write(sds[0], "MNX3", 4);
+		if (rc == -1) {
+			test_fail("write");
+		}
+
+		rc = read(sds[1], buf, 2);
+		if (rc == -1) {
+			test_fail("read");
+		}
+
+		if (!(buf[0] == 'M' && buf[1] == 'N')) {
+			test_fail("Didn't read MN");
+		}
+
+		/* time to tell the client to start the test */
+		kill(pid, SIGUSR1);
+
+		do {
+			rc = waitpid(pid, &status, 0);
+		} while (rc == -1 && errno == EINTR);
+
+		/* we use the exit status to get its error count */
+		errct += WEXITSTATUS(status);
+	}
+
+	return 0;
+}
+
+int test_multiproc_write(void)
+{
+/* test that when we fork() a process with an open socket descriptor, 
+ * the descriptor in each process points to the same thing.
+ */
+
+	pid_t pid;
+	int sds[2];
+	int rc, status;
+	char buf[7];
+
+	debug("entering test_multiproc_write()");
+
+	rc = socketpair(PF_UNIX, SOCK_STREAM, 0, sds);
+	if (rc == -1) {
+		test_fail("socketpair");
+		return 1;
+	}
+
+	memset(buf, '\0', 7);
+
+
+	/* the signal handler is only used by the client, but we have to 
+	 * install it now. if we don't the server may signal the client 
+	 * before the handler is installed.
+	 */
+	debug("installing signal handler");
+	if (signal(SIGUSR1, test_xfer_sighdlr) == SIG_ERR) {
+		test_fail("signal(SIGUSR1, test_xfer_sighdlr) failed");
+		return 1;
+	}
+
+	debug("signal handler installed");
+
+	server_ready = 0;
+
+	pid = fork();
+
+	if (pid == -1) {
+
+		test_fail("fork");
+		return 1;
+
+	} else if (pid == 0) {
+
+		while (server_ready == 0) {
+			debug("waiting for SIGUSR1 from parent");
+			sleep(1);
+		}
+
+		rc = write(sds[1], "IX3", 3);
+		if (rc == -1) {
+			test_fail("write");
+			exit(1);
+		}
+
+		rc = read(sds[0], buf, 6);
+		if (rc == -1) {
+			test_fail("read");
+			exit(1);
+		}
+
+		if (strcmp(buf, "MINIX3") != 0) {
+			test_fail("didn't read MINIX3");
+			exit(1);
+		}
+
+		exit(0);
+	} else {
+
+		rc = write(sds[1], "MIN", 3);
+		if (rc == -1) {
+			test_fail("write");
+		}
+
+		/* time to tell the client to start the test */
+		kill(pid, SIGUSR1);
+
+		do {
+			rc = waitpid(pid, &status, 0);
+		} while (rc == -1 && errno == EINTR);
+
+		/* we use the exit status to get its error count */
+		errct += WEXITSTATUS(status);
+	}
+
+	return 0;
+}
+
+void test_fd_passing_child(int sd)
+{
+	int fd, rc;
+	char x = 'x';
+	struct msghdr msghdr;
+	struct cmsghdr *cmsg;
+	struct iovec iov;
+	char buf[BUFSIZE];
+
+	memset(buf, '\0', BUFSIZE);
+
+	fd = open(TEST_TXT_FILE, O_CREAT|O_TRUNC|O_RDWR);
+	if (fd == -1) {
+		test_fail("could not open test.txt");
+	}
+
+	msghdr.msg_name = NULL;
+	msghdr.msg_namelen = 0;
+
+	iov.iov_base = &x;
+	iov.iov_len = 1;
+	msghdr.msg_iov = &iov;
+	msghdr.msg_iovlen = 1;
+
+	msghdr.msg_control = buf;
+	msghdr.msg_controllen = CMSG_SPACE(sizeof(int));
+
+	msghdr.msg_flags = 0;
+
+	cmsg = CMSG_FIRSTHDR(&msghdr);
+	cmsg->cmsg_len = CMSG_SPACE(sizeof(int));
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+
+	((int *) CMSG_DATA(cmsg))[0] = fd;
+
+	rc = sendmsg(sd, &msghdr, 0);
+	if (rc == -1) {
+		test_fail("could not send message");
+	}
+
+	memset(buf, '\0', BUFSIZE);
+	rc = read(sd, buf, BUFSIZE);
+	if (rc == -1) {
+		test_fail("could not read from socket");
+	}
+
+	if (strcmp(buf, "done") != 0) {
+		test_fail("we didn't read the right message");
+	}
+
+	memset(buf, '\0', BUFSIZE);
+	rc = lseek(fd, 0, SEEK_SET);
+	if (rc == -1) {
+		test_fail("could not seek to start of test.txt");
+	}
+
+	rc = read(fd, buf, BUFSIZE);
+	if (rc == -1) {
+		test_fail("could not read from test.txt");
+	}
+
+	if (strcmp(buf, MSG) != 0) {
+		test_fail("other process didn't write MSG to test.txt");
+	}
+
+	rc = close(fd);
+	if (rc == -1) {
+		test_fail("could not close test.txt");
+	}
+
+	rc = close(sd);
+	if (rc == -1) {
+		test_fail("could not close socket");
+	}
+
+	rc = unlink(TEST_TXT_FILE);
+	if (rc == -1) {
+		test_fail("could not unlink test.txt");
+	}
+
+	exit(errct);
+}
+
+void test_fd_passing_parent(int sd)
+{
+	int rc, fd;
+	char x;
+	struct msghdr msghdr;
+	struct cmsghdr *cmsg;
+	struct iovec iov;
+	char buf[BUFSIZE];
+
+	memset(buf, '\0', BUFSIZE);
+
+	msghdr.msg_name = NULL;
+	msghdr.msg_namelen = 0;
+
+	iov.iov_base = &x;
+	iov.iov_len = 1;
+	msghdr.msg_iov = &iov;
+	msghdr.msg_iovlen = 1;
+
+	msghdr.msg_iov = &iov;
+	msghdr.msg_iovlen = 1;
+
+	msghdr.msg_control = buf;
+	msghdr.msg_controllen = BUFSIZE;
+
+	msghdr.msg_flags = 0;
+
+	rc = recvmsg(sd, &msghdr, 0);
+	if (rc == -1) {
+		test_fail("could not recv message.");
+	}
+
+	cmsg = CMSG_FIRSTHDR(&msghdr);
+	fd = ((int *) CMSG_DATA(cmsg))[0];
+
+	rc = write(fd, MSG, strlen(MSG));
+	if (rc != strlen(MSG)) {
+		test_fail("could not write the full message to test.txt");
+	}
+
+	rc = close(fd);
+	if (rc == -1) {
+		test_fail("could not close test.txt");
+	}
+
+	memset(buf, '\0', BUFSIZE);
+	strcpy(buf, "done");
+	rc = write(sd, buf, BUFSIZE);
+	if (rc == -1) {
+		test_fail("could not write to socket");
+	}
+
+	rc = close(sd);
+	if (rc == -1) {
+		test_fail("could not close socket");
+	}
+}
+
+void test_fd_passing(void) {
+	int status;
+	int sv[2];
+	pid_t pid;
+	int rc;
+
+	rc = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
+	if (rc == -1) {
+		test_fail("socketpair failed");
+	}
+
+	pid = fork();
+	if (pid == -1) {
+		test_fail("fork() failed");
+
+		rc = close(sv[0]);
+		if (rc == -1) {
+			test_fail("could not close sv[0]");
+		}
+
+		rc = close(sv[1]);
+		if (rc == -1) {
+			test_fail("could not close sv[1]");
+		}
+
+		exit(0);
+	} else if (pid == 0) {
+		rc = close(sv[0]);
+		if (rc == -1) {
+			test_fail("could not close sv[0]");
+		}
+
+		test_fd_passing_child(sv[1]);
+		test_fail("should never get here");
+		exit(1);
+	} else {
+		rc = close(sv[1]);
+		if (rc == -1) {
+			test_fail("could not close sv[1]");
+		}
+
+		test_fd_passing_parent(sv[0]);
+
+		/* wait for client to exit */
+		do {
+			errno = 0;
+			rc = waitpid(pid, &status, 0);
+		} while (rc == -1 && errno == EINTR);
+
+		/* we use the exit status to get its error count */
+		errct += WEXITSTATUS(status);
+	}
 }
 
 int main(int argc, char *argv[])
@@ -1931,9 +2568,14 @@ int main(int argc, char *argv[])
 	}
 
 	test_msg_dgram();
+	test_connect();
+	test_multiproc_read();
+	test_multiproc_write();
+	test_scm_credentials();
+	test_fd_passing();
 
-	cleanup();
 	quit();
 
 	return -1;	/* we should never get here */
 }
+
