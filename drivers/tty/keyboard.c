@@ -735,7 +735,7 @@ int scode;			/* scan code of key just struck or released */
   {
 	if (++CAD_count == 3) {
 		cons_stop();
-		sys_abort(RBT_HALT);
+		sys_abort(RBT_DEFAULT);
 	}
 	sys_kill(INIT_PROC_NR, SIGABRT);
 	rebooting = 1;

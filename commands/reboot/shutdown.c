@@ -20,6 +20,7 @@
    -C: crash check, i.e. is the last wtmp entry a shutdown entry?
    -x: let the monitor execute the given code
    -R: reset the system
+   -d: default CTRL-ALT-DEL shutdown for current bootloader
  */
 
 #define _POSIX_SOURCE	1
@@ -148,6 +149,7 @@ char *argv[];
       case 'h':
       case 'r':
       case 'x':
+      case 'd':
 	reboot_flag = *opt;
 	if (reboot_flag == 'x') {
 	  if (*++opt == 0) {
@@ -271,11 +273,12 @@ char *argv[];
 
 void usage()
 {
-  fputs("Usage: shutdown [-hrRmk] [-x code] [time [message]]\n", stderr);
+  fputs("Usage: shutdown [-hrRmkd] [-x code] [time [message]]\n", stderr);
   fputs("       -h -> halt system after shutdown\n", stderr);
   fputs("       -r -> reboot system after shutdown\n", stderr);
   fputs("       -R -> reset system after shutdown\n", stderr);
   fputs("       -x -> return to the monitor doing...\n", stderr);
+  fputs("       -d -> default CTRL-ALT-DEL shutdown for current bootloader\n", stderr);
   fputs("       -m -> read a shutdown message from standard input\n", stderr);
   fputs("       -k -> stop an already running shutdown\n", stderr);
   fputs("       code -> boot monitor code to be executed\n", stderr);

@@ -35,7 +35,8 @@
 #define RBT_PANIC	   2	/* a server panics */
 #define RBT_MONITOR	   3	/* let the monitor do this */
 #define RBT_RESET	   4	/* hard reset the system */
-#define RBT_INVALID	   5	/* first invalid reboot flag */
+#define RBT_DEFAULT	   5	/* return to monitor, reset if not possible */
+#define RBT_INVALID	   6	/* first invalid reboot flag */
 
 #define _PM_SEG_FLAG (1L << 30)	/* for read() and write() to FS by PM */
 #endif

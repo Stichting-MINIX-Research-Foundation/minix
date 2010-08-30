@@ -66,9 +66,10 @@ PRIVATE __dead void arch_bios_poweroff(void)
 
 PUBLIC int cpu_has_tsc;
 
-PUBLIC __dead void arch_shutdown(const int how)
+PUBLIC __dead void arch_shutdown(int how)
 {
 	static char mybuffer[sizeof(params_buffer)];
+	u16_t magic;
 	vm_stop();
 
 	/* Mask all interrupts, including the clock. */
@@ -83,6 +84,10 @@ PUBLIC __dead void arch_shutdown(const int how)
 		if(read_ds() != read_ss()) {
 			printseg("ss: ", 0, NULL, read_ss());
 		}
+	}
+
+	if (how == RBT_DEFAULT) {
+		how = mon_return ? RBT_HALT : RBT_RESET;
 	}
 
 	if(how != RBT_RESET) {
@@ -129,24 +134,52 @@ PUBLIC __dead void arch_shutdown(const int how)
 		}
 		if (mon_return)
 			arch_monitor();
-		else {
+
+		/* monitor command with no monitor: reset or poweroff 
+		 * depending on the parameters
+		 */
+		if (how == RBT_MONITOR) {
 			mybuffer[0] = '\0';
-			arch_get_params(mybuffer,sizeof(mybuffer));
+			arch_get_params(mybuffer, sizeof(mybuffer));
 			if (strstr(mybuffer, "boot") ||
 				strstr(mybuffer, "menu") ||	
 				strstr(mybuffer, "reset"))
-				reset();
-			else 
-				arch_bios_poweroff();
+				how = RBT_RESET;
+			else
+				how = RBT_HALT;
 		}
-	} else {
-		/* Reset the system by forcing a processor shutdown. First stop
-		 * the BIOS memory test by setting a soft reset flag.
-		 */
-		u16_t magic = STOP_MEM_CHECK;
-		phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR,
-       	 	SOFT_RESET_FLAG_SIZE);
-		reset();
+	}
+
+	switch (how) {
+		case RBT_REBOOT:
+		case RBT_RESET:
+			/* Reset the system by forcing a processor shutdown. 
+			 * First stop the BIOS memory test by setting a soft
+			 * reset flag.
+			 */
+			magic = STOP_MEM_CHECK;
+			phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR,
+       		 	SOFT_RESET_FLAG_SIZE);
+			reset();
+			NOT_REACHABLE;
+
+		case RBT_HALT:
+			/* Poweroff without boot monitor */
+			arch_bios_poweroff();
+			NOT_REACHABLE;
+
+		case RBT_PANIC:
+			/* Allow user to read panic message */
+			for (; ; ) halt_cpu();
+			NOT_REACHABLE;
+
+		default:	
+			/* Not possible! trigger panic */
+			assert(how != RBT_MONITOR);
+			assert(how != RBT_DEFAULT);
+			assert(how < RBT_INVALID);
+			panic("unexpected value for how: %d", how);
+			NOT_REACHABLE;
 	}
 
 	NOT_REACHABLE;

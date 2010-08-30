@@ -30,7 +30,7 @@
 #include <utmp.h>
 
 /* Command to execute as a response to the three finger salute. */
-char *REBOOT_CMD[] =	{ "shutdown", "now", "CTRL-ALT-DEL", NULL };
+char *REBOOT_CMD[] =	{ "shutdown", "-d", "now", "CTRL-ALT-DEL", NULL };
 
 /* Associated fake ttytab entry. */
 struct ttyent TT_REBOOT = { "console", "-", REBOOT_CMD, NULL };

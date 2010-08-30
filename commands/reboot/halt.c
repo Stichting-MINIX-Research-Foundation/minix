@@ -32,7 +32,7 @@ char *reboot_code = "delay; boot";
 void
 usage()
 {
-  fprintf(stderr, "Usage: %s [-hrRf] [-x reboot-code]\n", prog);
+  fprintf(stderr, "Usage: %s [-hrRfd] [-x reboot-code]\n", prog);
   exit(1);
 }
 
@@ -63,6 +63,7 @@ char **argv;
       case 'h': flag = RBT_HALT; 	break;
       case 'r': flag = RBT_REBOOT; 	break;
       case 'R': flag = RBT_RESET; 	break;
+      case 'd': flag = RBT_DEFAULT; 	break;
       case 'f': fast = 1; break;
       case 'x':
 	flag = RBT_MONITOR;
