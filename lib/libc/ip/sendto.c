@@ -206,10 +206,7 @@ static ssize_t _uds_sendto_conn(int socket, const void *message, size_t length,
 static ssize_t _uds_sendto_dgram(int socket, const void *message, size_t length,
 	int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
-	char real_sun_path[PATH_MAX+1];
-	char *realpath_result;
-	int null_found;
-	int i, r;
+	int r;
 
 	/* for connectionless unix domain sockets (SOCK_DGRAM) */
 
@@ -225,46 +222,6 @@ static ssize_t _uds_sendto_dgram(int socket, const void *message, size_t length,
 		errno = EFAULT;
 		return -1;
 	}
-
-	/* sun_family is always supposed to be AF_UNIX */
-	if (((struct sockaddr_un *) dest_addr)->sun_family != AF_UNIX) {
-		errno = EAFNOSUPPORT;
-		return -1;
-	}
-
-	/* an empty path is not supported */
-	if (((struct sockaddr_un *) dest_addr)->sun_path[0] == '\0') {
-		errno = ENOENT;
-		return -1;
-	}
-
-	/* the path must be a null terminated string for realpath to work */
-	for (null_found = i = 0;
-		i < sizeof(((struct sockaddr_un *) dest_addr)->sun_path); i++) {
-		if (((struct sockaddr_un *) dest_addr)->sun_path[i] == '\0') {
-			null_found = 1;
-			break;
-		}
-	}
-
-	if (!null_found) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	realpath_result = realpath(
-		((struct sockaddr_un *) dest_addr)->sun_path, real_sun_path);
-
-	if (realpath_result == NULL) {
-		return -1;
-	}
-
-	if (strlen(real_sun_path) >= UNIX_PATH_MAX) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-
-	strcpy(((struct sockaddr_un *) dest_addr)->sun_path, real_sun_path);
 
 	/* set the target address */
 	r= ioctl(socket, NWIOSUDSTADDR, (void *) dest_addr);

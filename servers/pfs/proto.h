@@ -7,6 +7,7 @@
 struct buf;
 struct inode;
 struct sockaddr_un;
+struct ancillary;
 
 /* buffer.c */
 _PROTOTYPE( struct buf *get_block, (dev_t dev, ino_t inum)		);
@@ -90,9 +91,11 @@ _PROTOTYPE( int do_setsockopt_rcvbuf,
 				(message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_sendto, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_recvfrom, (message *dev_m_in, message *dev_m_out)	);
+_PROTOTYPE( int do_sendmsg, (message *dev_m_in, message *dev_m_out)	);
+_PROTOTYPE( int do_recvmsg, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int perform_connection,
 				(message *dev_m_in, message *dev_m_out, 
 				struct sockaddr_un *addr, int minorx, 
 				int minory)				);
-
+_PROTOTYPE( int clear_fds, (int minor, struct ancillary *data)		);
 #endif

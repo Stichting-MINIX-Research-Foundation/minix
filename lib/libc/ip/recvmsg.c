@@ -23,8 +23,7 @@ ssize_t recvmsg(int socket, struct msghdr *msg, int flags)
 	}
 
 	r= ioctl(socket, NWIOGUDSSOTYPE, &uds_sotype);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
-	{
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL)) {
 		if (r == -1) {
 			return r;
 		}
@@ -46,7 +45,7 @@ ssize_t recvmsg(int socket, struct msghdr *msg, int flags)
 
 static ssize_t _uds_recvmsg_conn(int socket, struct msghdr *msg, int flags)
 {
-	int r;
+	int r, rc;
 
 	if (flags != 0) {
 #if DEBUG
@@ -56,11 +55,28 @@ static ssize_t _uds_recvmsg_conn(int socket, struct msghdr *msg, int flags)
 		return -1;
 	}
 
-	r = readv(socket, msg->msg_iov, msg->msg_iovlen);
+	r= readv(socket, msg->msg_iov, msg->msg_iovlen);
 
-	if (r >= 0 && msg->msg_name && msg->msg_namelen > 0)
-	{
+	if (r >= 0 && msg->msg_name && msg->msg_namelen > 0) {
 		getpeername(socket, msg->msg_name, &msg->msg_namelen);
+	}
+
+	/* get control data */
+	if (r >= 0 && msg->msg_control && msg->msg_controllen > 0) {
+		struct msg_control msg_ctrl;
+
+		memset(&msg_ctrl, '\0', sizeof(struct msg_control));
+		msg_ctrl.msg_controllen = msg->msg_controllen;
+		rc = ioctl(socket, NWIOGUDSCTRL, &msg_ctrl);
+		if (rc == -1) {
+			return rc;
+		}
+
+		if (msg_ctrl.msg_controllen <= msg->msg_controllen) {
+			memcpy(msg->msg_control, msg_ctrl.msg_control,
+						msg_ctrl.msg_controllen);
+			msg->msg_controllen = msg_ctrl.msg_controllen;
+		}
 	}
 
 	msg->msg_flags = 0;
@@ -70,7 +86,7 @@ static ssize_t _uds_recvmsg_conn(int socket, struct msghdr *msg, int flags)
 
 static ssize_t _uds_recvmsg_dgram(int socket, struct msghdr *msg, int flags)
 {
-	int r;
+	int r, rc;
 
 	if (flags != 0) {
 #if DEBUG
@@ -80,13 +96,34 @@ static ssize_t _uds_recvmsg_dgram(int socket, struct msghdr *msg, int flags)
 		return -1;
 	}
 
-	r = readv(socket, msg->msg_iov, msg->msg_iovlen);
+	r= readv(socket, msg->msg_iov, msg->msg_iovlen);
 
-	if (r >= 0 && msg->msg_name && msg->msg_namelen > 0)
+	if (r >= 0 && msg->msg_name &&
+				msg->msg_namelen >= sizeof(struct sockaddr_un))
 	{
-		ioctl(socket, NWIOGUDSFADDR, msg->msg_name);
+		rc= ioctl(socket, NWIOGUDSFADDR, msg->msg_name);
+		if (rc == -1) {
+			return rc;
+		}
 		msg->msg_namelen= sizeof(struct sockaddr_un);
+	}
 
+	/* get control data */
+	if (r >= 0 && msg->msg_control && msg->msg_controllen > 0) {
+		struct msg_control msg_ctrl;
+
+		memset(&msg_ctrl, '\0', sizeof(struct msg_control));
+		msg_ctrl.msg_controllen = msg->msg_controllen;
+		rc = ioctl(socket, NWIOGUDSCTRL, &msg_ctrl);
+		if (rc == -1) {
+			return rc;
+		}
+
+		if (msg_ctrl.msg_controllen <= msg->msg_controllen) {
+			memcpy(msg->msg_control, msg_ctrl.msg_control,
+						msg_ctrl.msg_controllen);
+			msg->msg_controllen = msg_ctrl.msg_controllen;
+		}
 	}
 
 	msg->msg_flags = 0;

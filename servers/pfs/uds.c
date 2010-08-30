@@ -23,7 +23,10 @@
  *   do_setsockopt_rcvbuf:   handles the  setsockopt(2) syscall.
  *   do_sendto:              handles the      sendto(2) syscall.
  *   do_recvfrom:            handles the    recvfrom(2) syscall.
+ *   do_sendmsg:             handles the     sendmsg(2) syscall.
+ *   do_recvmsg:             handles the     recvmsg(2) syscall.
  *   perform_connection:     performs the connection of two descriptors.
+ *   clear_fds:              calls put_filp for undelivered FDs.
  *
  * Also see...
  *
@@ -48,6 +51,187 @@ PUBLIC void uds_init(void)
 	 * state to UDS_FREE.
 	 */
 	memset(uds_fd_table, '\0', sizeof(uds_fd_t) * NR_FDS);
+}
+
+/* check the permissions of a socket file */
+PRIVATE int check_perms(int minor, struct sockaddr_un *addr)
+{
+	int rc;
+	message vfs_m;
+	cp_grant_id_t grant_id;
+
+	grant_id = cpf_grant_direct(VFS_PROC_NR, (vir_bytes) addr->sun_path,
+					UNIX_PATH_MAX, CPF_READ | CPF_WRITE);
+
+	/* ask the VFS to verify the permissions */
+	memset(&vfs_m, '\0', sizeof(message));
+
+	vfs_m.m_type = PFS_REQ_CHECK_PERMS;
+	vfs_m.IO_ENDPT = uds_fd_table[minor].owner;
+	vfs_m.IO_GRANT = (char *) grant_id;
+	vfs_m.COUNT = UNIX_PATH_MAX;
+
+	rc = sendrec(VFS_PROC_NR, &vfs_m);
+	cpf_revoke(grant_id);
+	if (OK != rc) {
+                printf("(uds) sendrec error... req_nr: %d err: %d\n",  
+			vfs_m.m_type, rc);
+
+			return EIO;
+	}
+
+#if DEBUG == 1
+	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
+	printf("(uds) Canonical Path => %s\n", addr->sun_path);
+#endif
+
+	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
+}
+
+PRIVATE filp_id_t verify_fd(endpoint_t ep, int fd)
+{
+	int rc;
+	message vfs_m;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) verify_fd(%d,%d) call_count=%d\n", ep, fd, 
+							++call_count);
+#endif
+
+	memset(&vfs_m, '\0', sizeof(message));
+
+	vfs_m.m_type = PFS_REQ_VERIFY_FD;
+	vfs_m.IO_ENDPT = ep;
+	vfs_m.COUNT = fd;
+
+	rc = sendrec(VFS_PROC_NR, &vfs_m);
+	if (OK != rc) {
+                printf("(uds) sendrec error... req_nr: %d err: %d\n",  
+			vfs_m.m_type, rc);
+			return NULL;;
+	}
+
+#if DEBUG == 1
+	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
+#endif
+
+	return vfs_m.ADDRESS;
+}
+
+PRIVATE int set_filp(filp_id_t sfilp)
+{
+	int rc;
+	message vfs_m;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) set_filp(0x%x) call_count=%d\n", sfilp, ++call_count);
+#endif
+
+	memset(&vfs_m, '\0', sizeof(message));
+
+	vfs_m.m_type = PFS_REQ_SET_FILP;
+	vfs_m.ADDRESS = sfilp;
+
+	rc = sendrec(VFS_PROC_NR, &vfs_m);
+	if (OK != rc) {
+                printf("(uds) sendrec error... req_nr: %d err: %d\n",  
+			vfs_m.m_type, rc);
+			return EIO;
+	}
+
+#if DEBUG == 1
+	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
+#endif
+	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
+}
+
+PRIVATE int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
+{
+	int rc;
+	message vfs_m;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) copy_filp(%d, 0x%x) call_count=%d\n",to_ep, cfilp, 
+							++call_count);
+#endif
+
+	memset(&vfs_m, '\0', sizeof(message));
+
+	vfs_m.m_type = PFS_REQ_COPY_FILP;
+	vfs_m.IO_ENDPT = to_ep;
+	vfs_m.ADDRESS = cfilp;
+
+	rc = sendrec(VFS_PROC_NR, &vfs_m);
+	if (OK != rc) {
+                printf("(uds) sendrec error... req_nr: %d err: %d\n",  
+			vfs_m.m_type, rc);
+			return EIO;
+	}
+
+#if DEBUG == 1
+	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
+#endif
+	return vfs_m.m_type;
+}
+
+PRIVATE int put_filp(filp_id_t pfilp)
+{
+	int rc;
+	message vfs_m;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) put_filp(0x%x) call_count=%d\n", pfilp, ++call_count);
+#endif
+
+	memset(&vfs_m, '\0', sizeof(message));
+
+	vfs_m.m_type = PFS_REQ_PUT_FILP;
+	vfs_m.ADDRESS = pfilp;
+
+	rc = sendrec(VFS_PROC_NR, &vfs_m);
+	if (OK != rc) {
+                printf("(uds) sendrec error... req_nr: %d err: %d\n",  
+			vfs_m.m_type, rc);
+			return EIO;
+	}
+
+#if DEBUG == 1
+	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
+#endif
+	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
+}
+
+PRIVATE int cancel_fd(endpoint_t ep, int fd)
+{
+	int rc;
+	message vfs_m;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) cancel_fd(%d,%d) call_count=%d\n", ep, fd, ++call_count);
+#endif
+
+	memset(&vfs_m, '\0', sizeof(message));
+
+	vfs_m.m_type = PFS_REQ_CANCEL_FD;
+	vfs_m.IO_ENDPT = ep;
+	vfs_m.COUNT = fd;
+
+	rc = sendrec(VFS_PROC_NR, &vfs_m);
+	if (OK != rc) {
+                printf("(uds) sendrec error... req_nr: %d err: %d\n",  
+			vfs_m.m_type, rc);
+			return EIO;
+	}
+
+#if DEBUG == 1
+	printf("(uds) VFS reply => %d\n", vfs_m.m_type);
+#endif
+	return vfs_m.m_type; /* return reply code OK, ELOOP, etc. */
 }
 
 PUBLIC int perform_connection(message *dev_m_in, message *dev_m_out, 
@@ -152,7 +336,8 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 		if (uds_fd_table[i].addr.sun_family == AF_UNIX &&
 				!strncmp(addr.sun_path, 
 				uds_fd_table[i].addr.sun_path,
-				UNIX_PATH_MAX)) {
+				UNIX_PATH_MAX) &&
+				uds_fd_table[i].listening == 1) {
 
 			rc = 0;
 			break;
@@ -233,7 +418,8 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 	/* if peer is blocked on connect() revive peer */
 	if (uds_fd_table[minorpeer].suspended) {
 #if DEBUG == 1
-		printf("(uds) [%d] {do_accept} revive %d", minor, minorpeer);
+		printf("(uds) [%d] {do_accept} revive %d\n", minor, 
+								minorpeer);
 #endif
 		uds_fd_table[minorpeer].ready_to_revive = 1;
 		notify(dev_m_in->m_source);
@@ -298,6 +484,18 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 		return EIO;
 	}
 
+	rc = check_perms(minor, &addr);
+	if (rc != OK) {
+
+		/* permission denied, socket file doesn't exist, etc. */
+		uds_fd_table[minor].syscall_done = 1;
+
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+			(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+
+		return rc;
+	}
+
 	/* look for a socket of the same type that is listening on the 
 	 * address we want to connect to
 	 */
@@ -323,7 +521,7 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 					uds_fd_table[i].child = -1;
 
 #if DEBUG == 1
-			printf("(uds) [%d] {do_connect} revive %d", minor, i);
+			printf("(uds) [%d] {do_connect} revive %d\n", minor, i);
 #endif
 
 					/* wake the parent (server) */
@@ -432,7 +630,7 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 	}
 
 #if DEBUG == 1
-	printf("(uds) [%d] {do_connect} suspend", minor);
+	printf("(uds) [%d] {do_connect} suspend\n", minor);
 #endif
 
 	/* suspend until the server side completes the connection with accept()
@@ -625,7 +823,7 @@ PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
 
 PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
+	int minor, strlen;
 	struct sockaddr_un addr;
 	int rc, i;
 
@@ -667,15 +865,39 @@ PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 	}
 
 	/* do some basic sanity checks on the address */
-	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0') {
+	if (addr.sun_family != AF_UNIX) {
+
+		/* bad family */
+		uds_fd_table[minor].syscall_done = 1;
+
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT,
+				EAFNOSUPPORT);
+
+		return EAFNOSUPPORT;
+	}
+
+	if (addr.sun_path[0] == '\0') {
 
 		/* bad address */
 		uds_fd_table[minor].syscall_done = 1;
 
 		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
+				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOENT);
 
-		return EINVAL;
+		return ENOENT;
+	}
+
+	rc = check_perms(minor, &addr);
+	if (rc != OK) {
+
+		/* permission denied, socket file doesn't exist, etc. */
+		uds_fd_table[minor].syscall_done = 1;
+
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+			(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+
+		return rc;
 	}
 
 	/* make sure the address isn't already in use by another socket. */
@@ -939,8 +1161,12 @@ PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
 
 	minory = (minor(minorin) & BYTE);
 
+#if DEBUG == 1
+	printf("socketpair() %d - %d\n", minorx, minory);
+#endif
+
 	/* security check - both sockets must have the same endpoint (owner) */
-	if (uds_fd_table[minorx].endpoint != uds_fd_table[minory].endpoint) {
+	if (uds_fd_table[minorx].owner != uds_fd_table[minory].owner) {
 
 		/* we won't allow you to magically connect your socket to
 		 * someone elses socket
@@ -1307,6 +1533,17 @@ PUBLIC int do_sendto(message *dev_m_in, message *dev_m_out)
 		return EINVAL;
 	}
 
+	rc = check_perms(minor, &addr);
+	if (rc != OK) {
+
+		uds_fd_table[minor].syscall_done = 1;
+
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+
+		return rc;
+	}
+
 	memcpy(&(uds_fd_table[minor].target), &addr,
 					sizeof(struct sockaddr_un));
 
@@ -1347,6 +1584,417 @@ PUBLIC int do_recvfrom(message *dev_m_in, message *dev_m_out)
 
 	uds_fd_table[minor].syscall_done = 1;
 
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
+
+	return OK;
+}
+
+int msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
+							int minor)
+{
+	int rc;
+	struct msghdr msghdr;
+	struct cmsghdr *cmsg = NULL;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] msg_control_read() call_count=%d\n", minor, 
+							++call_count);
+#endif
+
+	data->nfiledes = 0;
+
+	memset(&msghdr, '\0', sizeof(struct msghdr));
+	msghdr.msg_control = msg_ctrl->msg_control;
+	msghdr.msg_controllen = msg_ctrl->msg_controllen;
+
+	for(cmsg = CMSG_FIRSTHDR(&msghdr); cmsg != NULL;
+					cmsg = CMSG_NXTHDR(&msghdr, cmsg)) {
+
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+					cmsg->cmsg_type == SCM_RIGHTS) {
+
+			int i;
+			int nfds =
+				MIN((cmsg->cmsg_len-CMSG_LEN(0))/sizeof(int),
+								OPEN_MAX);
+
+			for (i = 0; i < nfds; i++) {
+				if (data->nfiledes == OPEN_MAX) {
+					return EOVERFLOW;
+				}
+
+				data->fds[data->nfiledes] =
+					((int *) CMSG_DATA(cmsg))[i];
+#if DEBUG == 1
+				printf("(uds) [%d] fd[%d]=%d\n", minor,
+				data->nfiledes, data->fds[data->nfiledes]);
+#endif
+				data->nfiledes++;
+			}
+		}
+	}
+
+	/* obtain this socket's credentials */
+	rc = getnucred(uds_fd_table[minor].owner, &(data->cred));
+	if (rc == -1) {
+		return errno;
+	}
+#if DEBUG == 1
+	printf("(uds) [%d] cred={%d,%d,%d}\n", minor,
+		data->cred.pid, data->cred.uid,
+		data->cred.gid);
+#endif
+	return OK;
+}
+
+PRIVATE int send_fds(int minor, struct ancillary *data)
+{
+	int rc, i, j;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] send_fds() call_count=%d\n", minor, ++call_count);
+#endif
+
+	/* verify the file descriptors and get their filps. */
+	for (i = 0; i < data->nfiledes; i++) {
+		data->filps[i] = verify_fd(uds_fd_table[minor].owner,
+						data->fds[i]);
+
+		if (data->filps[i] == NULL) {
+			return EINVAL;
+		}
+	}
+
+	/* set them as in-flight */
+	for (i = 0; i < data->nfiledes; i++) {
+		rc = set_filp(data->filps[i]);
+		if (rc != OK) {
+			/* revert set_filp() calls */
+			for (j = i; j >= 0; j--) {
+				put_filp(data->filps[j]);
+			}
+			return rc;
+		}
+	}
+
+	return OK;
+}
+
+PUBLIC int clear_fds(int minor, struct ancillary *data)
+{
+/* This function calls put_filp() for all of the FDs in data.
+ * This is used when a Unix Domain Socket is closed and there 
+ * exists references to file descriptors that haven't been received 
+ * with recvmsg().
+ */
+	int i;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] recv_fds() call_count=%d\n", minor,
+							++call_count);
+#endif
+
+	for (i = 0; i < data->nfiledes; i++) {
+		put_filp(data->filps[i]);
+#if DEBUG == 1
+		printf("(uds) clear_fds() => %d\n", data->fds[i]);
+#endif
+		data->fds[i] = -1;
+		data->filps[i] = NULL;
+	}
+
+	data->nfiledes = 0;
+
+	return OK;
+}
+
+PRIVATE int recv_fds(int minor, struct ancillary *data,
+					struct msg_control *msg_ctrl)
+{
+	int rc, i, j;
+	struct msghdr msghdr;
+	struct cmsghdr *cmsg;
+	endpoint_t to_ep;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] recv_fds() call_count=%d\n", minor,
+							++call_count);
+#endif
+
+	msghdr.msg_control = msg_ctrl->msg_control;
+	msghdr.msg_controllen = msg_ctrl->msg_controllen;
+
+	cmsg = CMSG_FIRSTHDR(&msghdr);
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int) * data->nfiledes);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+
+	to_ep = uds_fd_table[minor].owner;
+
+	/* copy to the target endpoint */
+	for (i = 0; i < data->nfiledes; i++) {
+		rc = copy_filp(to_ep, data->filps[i]);
+		if (rc < 0) {
+			/* revert set_filp() calls */
+			for (j = 0; j < data->nfiledes; j++) {
+				put_filp(data->filps[j]);
+			}
+			/* revert copy_filp() calls */
+			for (j = i; j >= 0; j--) {
+				cancel_fd(to_ep, data->fds[j]);
+			}
+			return rc;
+		}
+		data->fds[i] = rc; /* data->fds[i] now has the new FD */
+	}
+
+	for (i = 0; i < data->nfiledes; i++) {
+		put_filp(data->filps[i]);
+#if DEBUG == 1
+		printf("(uds) recv_fds() => %d\n", data->fds[i]);
+#endif
+		((int *)CMSG_DATA(cmsg))[i] = data->fds[i];
+		data->fds[i] = -1;
+		data->filps[i] = NULL;
+	}
+
+	data->nfiledes = 0;
+
+	return OK;
+}
+
+PRIVATE int recv_cred(int minor, struct ancillary *data,
+					struct msg_control *msg_ctrl)
+{
+	int rc, i;
+	struct msghdr msghdr;
+	struct cmsghdr *cmsg;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] recv_cred() call_count=%d\n", minor,
+							++call_count);
+#endif
+
+	msghdr.msg_control = msg_ctrl->msg_control;
+	msghdr.msg_controllen = msg_ctrl->msg_controllen;
+
+	cmsg = CMSG_FIRSTHDR(&msghdr);
+	if (cmsg->cmsg_len > 0) {
+		cmsg = CMSG_NXTHDR(&msghdr, cmsg);
+	}
+
+	cmsg->cmsg_len = CMSG_LEN(sizeof(struct ucred));
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_CREDENTIALS;
+	memcpy(CMSG_DATA(cmsg), &(data->cred), sizeof(struct ucred));
+
+	return OK;
+}
+
+PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
+{
+	int minor, peer, rc, i;
+	struct msg_control msg_ctrl;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] do_sendmsg() call_count=%d\n",
+					uds_minor(dev_m_in), ++call_count);
+#endif
+
+	minor = uds_minor(dev_m_in);
+
+	memset(&msg_ctrl, '\0', sizeof(struct msg_control));
+
+	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
+					(vir_bytes) 0, (vir_bytes) &msg_ctrl,
+					sizeof(struct msg_control), D);
+
+	if (rc != OK) {
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
+		return EIO;
+	}
+
+	/* locate peer */
+	peer = -1;
+	if (uds_fd_table[minor].type == SOCK_DGRAM) {
+		if (uds_fd_table[minor].target.sun_path[0] == '\0' ||
+			uds_fd_table[minor].target.sun_family != AF_UNIX) {
+
+			uds_fd_table[minor].syscall_done = 1;
+			uds_set_reply(dev_m_out, TASK_REPLY,
+				dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT,
+				EDESTADDRREQ);
+			return EDESTADDRREQ;
+		}
+
+		for (i = 0; i < NR_FDS; i++) {
+
+			/* look for a SOCK_DGRAM socket that is bound on
+			 * the target address
+			 */
+			if (uds_fd_table[i].type == SOCK_DGRAM &&
+				uds_fd_table[i].addr.sun_family == AF_UNIX &&
+				!strncmp(uds_fd_table[minor].target.sun_path,
+				uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)){
+
+				peer = i;
+				break;
+			}
+		}
+
+		if (peer == -1) {
+			uds_fd_table[minor].syscall_done = 1;
+			uds_set_reply(dev_m_out, TASK_REPLY,
+				dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOENT);
+			return ENOENT;
+		}
+	} else {
+		peer = uds_fd_table[minor].peer;
+		if (peer == -1) {
+			uds_fd_table[minor].syscall_done = 1;
+			uds_set_reply(dev_m_out, TASK_REPLY,
+				dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOTCONN);
+			return ENOTCONN;
+		}
+	}
+
+#if DEBUG == 1
+	printf("(uds) [%d] sendmsg() -- peer=%d\n", minor, peer);
+#endif
+	/* note: it's possible that there is already some file 
+	 * descriptors in ancillary_data if the peer didn't call
+	 * recvmsg() yet. That's okay. The receiver will
+	 * get the current file descriptors plus the new ones.
+	 */
+	rc = msg_control_read(&msg_ctrl, &uds_fd_table[peer].ancillary_data, 
+								minor);
+	if (rc != OK) {
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+		return rc;
+	}
+
+	rc = send_fds(minor, &uds_fd_table[peer].ancillary_data);
+	if (rc != OK) {
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+		return rc;
+	}
+
+	uds_fd_table[minor].syscall_done = 1;
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
+	return OK;
+}
+
+PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
+{
+	int minor;
+	int rc;
+	struct msg_control msg_ctrl;
+	socklen_t controllen_avail = 0;
+	socklen_t controllen_needed = 0;
+	socklen_t controllen_desired = 0;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] do_sendmsg() call_count=%d\n",
+					uds_minor(dev_m_in), ++call_count);
+#endif
+
+	minor = uds_minor(dev_m_in);
+
+
+#if DEBUG == 1
+	printf("(uds) [%d] CREDENTIALS {pid:%d,uid:%d,gid:%d}\n", minor,
+				uds_fd_table[minor].ancillary_data.cred.pid,
+				uds_fd_table[minor].ancillary_data.cred.uid,
+				uds_fd_table[minor].ancillary_data.cred.gid);
+#endif
+
+	memset(&msg_ctrl, '\0', sizeof(struct msg_control));
+
+	/* get the msg_control from the user, it will include the
+	 * amount of space the user has allocated for control data.
+	 */
+	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
+					(vir_bytes) 0, (vir_bytes) &msg_ctrl,
+					sizeof(struct msg_control), D);
+
+	if (rc != OK) {
+
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
+		return EIO;
+	}
+
+	controllen_avail = MIN(msg_ctrl.msg_controllen, MSG_CONTROL_MAX);
+
+	if (uds_fd_table[minor].ancillary_data.nfiledes > 0) {
+		controllen_needed = CMSG_LEN(sizeof(int) * 
+				(uds_fd_table[minor].ancillary_data.nfiledes));
+	}
+
+	/* if there is room we also include credentials */
+	controllen_desired = controllen_needed +
+				CMSG_LEN(sizeof(struct ucred));
+
+	if (controllen_needed > controllen_avail) {
+
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, EOVERFLOW);
+		return EOVERFLOW;
+	}
+
+	rc = recv_fds(minor, &uds_fd_table[minor].ancillary_data, &msg_ctrl);
+	if (rc != OK) {
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+		return rc;
+	}
+
+	if (controllen_desired <= controllen_avail) {
+		rc = recv_cred(minor, &uds_fd_table[minor].ancillary_data,
+								&msg_ctrl);
+		if (rc != OK) {
+			uds_fd_table[minor].syscall_done = 1;
+			uds_set_reply(dev_m_out, TASK_REPLY, 
+				dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+			return rc;
+		}
+	}
+
+	/* send the user the control data */
+	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
+		(vir_bytes) 0, (vir_bytes) &msg_ctrl, 
+		sizeof(struct msg_control), D);
+
+	if (rc != OK) {
+		uds_fd_table[minor].syscall_done = 1;
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
+		return EIO;
+	}
+
+	uds_fd_table[minor].syscall_done = 1;
 	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 

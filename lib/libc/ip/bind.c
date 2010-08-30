@@ -207,14 +207,7 @@ static int in_group(uid_t uid, gid_t gid)
 static int _uds_bind(int socket, const struct sockaddr *address,
 	socklen_t address_len, struct sockaddr_un *uds_addr)
 {
-	mode_t bits, perm_bits, access_desired;
-	struct stat buf;
-	uid_t euid;
-	gid_t egid;
-	char real_sun_path[PATH_MAX+1];
-	char *realpath_result;
-	int i, r, shift;
-	int null_found;
+	int r;
 	int did_mknod;
 
 	if (address == NULL) {
@@ -222,120 +215,14 @@ static int _uds_bind(int socket, const struct sockaddr *address,
 		return -1;
 	}
 
-	/* sun_family is always supposed to be AF_UNIX */
-	if (((struct sockaddr_un *) address)->sun_family != AF_UNIX) {
-		errno = EAFNOSUPPORT;
-		return -1;
-	}
-
-	/* an empty path is not supported */
-	if (((struct sockaddr_un *) address)->sun_path[0] == '\0') {
-		errno = ENOENT;
-		return -1;
-	}
-
-	/* the path must be a null terminated string for realpath to work */
-	for (null_found = i = 0;
-		i < sizeof(((struct sockaddr_un *) address)->sun_path); i++) {
-		if (((struct sockaddr_un *) address)->sun_path[i] == '\0') {
-			null_found = 1;
-			break;
-		}
-	}
-
-	if (!null_found) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	/*
-	 * Get the realpath(3) of the socket file.
-	 */
-
-	realpath_result = realpath(((struct sockaddr_un *) address)->sun_path,
-						real_sun_path);
-	if (realpath_result == NULL) {
-		return -1;
-	}
-
-	if (strlen(real_sun_path) >= UNIX_PATH_MAX) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-
-	strcpy(((struct sockaddr_un *) address)->sun_path, real_sun_path);
-
-	/*
-	 * input parameters look good -- create the socket file on the 
-	 * file system
-	 */
-
 	did_mknod = 0;
 
 	r = mknod(((struct sockaddr_un *) address)->sun_path,
 		S_IFSOCK|S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH, 0);
 
-	if (r == -1) {
-		if (errno == EEXIST) {
-			/* file already exists, verify that it is a socket */
-
-			r = stat(((struct sockaddr_un *) address)->sun_path,
-								&buf);
-			if (r == -1) {
-				return -1;
-			}
-
-			if (!S_ISSOCK(buf.st_mode)) {
-				errno = EADDRINUSE;
-				return -1;
-			}
-
-			/* check permissions the permissions of the 
-			 * socket file.
-			 */
-
-			/* read + write access */
-			access_desired = R_BIT | W_BIT;
-
-			euid = geteuid();
-			egid = getegid();
-
-			if (euid == -1 || egid == -1) {
-				errno = EACCES;
-				return -1;
-			}
-
-			bits = buf.st_mode;
-
-			if (euid == ((uid_t) 0)) {
-				perm_bits = R_BIT | W_BIT;
-			} else {
-				if (euid == buf.st_uid) {
-					shift = 6; /* owner */
-				} else if (egid == buf.st_gid) {
-					shift = 3; /* group */
-				} else if (in_group(euid, buf.st_gid)) {
-					shift = 3; /* suppl. groups */
-				} else {
-					shift = 0; /* other */
-				}
-
-				perm_bits = 
-				(bits >> shift) & (R_BIT | W_BIT | X_BIT);
-			}
-
-			if ((perm_bits | access_desired) != perm_bits) {
-				errno = EACCES;
-				return -1;
-			}
-
-			/* if we get here permissions are OK */
-
-		} else {
-
-			return -1;
-		}
-	} else {
+	if (r == -1 && errno != EEXIST) {
+		return -1;
+	} else if (r == 0) {
 		did_mknod = 1;
 	}
 

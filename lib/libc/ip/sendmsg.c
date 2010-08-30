@@ -26,8 +26,7 @@ ssize_t sendmsg(int socket, const struct msghdr *msg, int flags)
 	}
 
 	r= ioctl(socket, NWIOGUDSSOTYPE, &uds_sotype);
-	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
-	{
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL)) {
 		if (r == -1) {
 			return r;
 		}
@@ -51,6 +50,8 @@ ssize_t sendmsg(int socket, const struct msghdr *msg, int flags)
 static ssize_t _uds_sendmsg_conn(int socket, const struct msghdr *msg, 
 	int flags)
 {
+	struct msg_control msg_ctrl;
+	int r;
 
 	if (flags != 0) {
 #if DEBUG
@@ -61,6 +62,23 @@ static ssize_t _uds_sendmsg_conn(int socket, const struct msghdr *msg,
 
 	}
 
+	/* grab the control data */
+	memset(&msg_ctrl, '\0', sizeof(struct msg_control));
+	if (msg->msg_controllen > MSG_CONTROL_MAX) {
+		errno = ENOMEM;
+		return -1;
+	} else if (msg->msg_controllen > 0) {
+		memcpy(&msg_ctrl.msg_control, msg->msg_control,
+							msg->msg_controllen);
+	}
+	msg_ctrl.msg_controllen = msg->msg_controllen;
+
+	/* send the control data to PFS */
+	r= ioctl(socket, NWIOSUDSCTRL, (void *) &msg_ctrl);
+	if (r == -1) {
+		return r;
+	}
+
 	/* Silently ignore destination, if given. */
 
 	return writev(socket, msg->msg_iov, msg->msg_iovlen);
@@ -69,10 +87,8 @@ static ssize_t _uds_sendmsg_conn(int socket, const struct msghdr *msg,
 static ssize_t _uds_sendmsg_dgram(int socket, const struct msghdr *msg, 
 	int flags)
 {
-	char real_sun_path[PATH_MAX+1];
-	char *realpath_result;
-	char *dest_addr;
-	int null_found;
+	struct msg_control msg_ctrl;
+	struct sockaddr_un *dest_addr;
 	int i, r;
 
 	if (flags != 0) {
@@ -90,46 +106,25 @@ static ssize_t _uds_sendmsg_dgram(int socket, const struct msghdr *msg,
 		return -1;
 	}
 
-	/* sun_family is always supposed to be AF_UNIX */
-	if (((struct sockaddr_un *) dest_addr)->sun_family != AF_UNIX) {
-		errno = EAFNOSUPPORT;
-		return -1;
-	}
-
-	/* an empty path is not supported */
-	if (((struct sockaddr_un *) dest_addr)->sun_path[0] == '\0') {
-		errno = ENOENT;
-		return -1;
-	}
-
-	/* the path must be a null terminated string for realpath to work */
-	for (null_found = i = 0;
-		i < sizeof(((struct sockaddr_un *) dest_addr)->sun_path); i++) {
-		if (((struct sockaddr_un *) dest_addr)->sun_path[i] == '\0') {
-			null_found = 1;
-			break;
-		}
-	}
-
-	if (!null_found) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	realpath_result = realpath(
-		((struct sockaddr_un *) dest_addr)->sun_path, real_sun_path);
-
-	if (realpath_result == NULL) {
-		return -1;
-	}
-
-	if (strlen(real_sun_path) >= UNIX_PATH_MAX) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-
 	/* set the target address */
 	r= ioctl(socket, NWIOSUDSTADDR, (void *) dest_addr);
+	if (r == -1) {
+		return r;
+	}
+
+	/* grab the control data */
+	memset(&msg_ctrl, '\0', sizeof(struct msg_control));
+	if (msg->msg_controllen > MSG_CONTROL_MAX) {
+		errno = ENOMEM;
+		return -1;
+	} else if (msg->msg_controllen > 0) {
+		memcpy(&msg_ctrl.msg_control, msg->msg_control,
+							msg->msg_controllen);
+	}
+	msg_ctrl.msg_controllen = msg->msg_controllen;
+
+	/* send the control data to PFS */
+	r= ioctl(socket, NWIOSUDSCTRL, (void *) &msg_ctrl);
 	if (r == -1) {
 		return r;
 	}

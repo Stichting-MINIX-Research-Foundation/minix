@@ -9,7 +9,9 @@
  *   dev_uds.c, table.c, uds.c
  */
 
+#include <limits.h>
 #include <sys/types.h>
+#include <sys/ucred.h>
 #include <sys/un.h>
 
 #include <minix/endpoint.h>
@@ -17,8 +19,15 @@
 /* max connection backlog for incoming connections */
 #define UDS_SOMAXCONN 64
 
-/* UDS FD state Flags */
-#define UDS_CONNECTING	 0x10
+typedef void* filp_id_t;
+
+/* ancillary data to be sent */
+struct ancillary {
+	filp_id_t filps[OPEN_MAX];
+	int fds[OPEN_MAX];
+	int nfiledes;
+	struct ucred cred;
+};
 
 /*
  * Internal State Information for a socket descriptor.
@@ -121,6 +130,11 @@ struct uds_fd {
 	 * Default to 0. Set to 1 by do_listen()
 	 */
 	int listening;
+
+	/* stores file pointers and credentials being sent between 
+	 * processes with sendmsg(2) and recvmsg(2).
+	 */
+	struct ancillary ancillary_data;
 
 	/* Holds an errno. This is set when a connected socket is
 	 * closed and we need to pass ECONNRESET on to a suspended
