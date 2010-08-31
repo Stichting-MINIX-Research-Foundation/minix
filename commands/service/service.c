@@ -116,6 +116,7 @@ PRIVATE long req_period = 0;
 PRIVATE char *req_script = NULL;
 PRIVATE char *req_ipc = NULL;
 PRIVATE char *req_config = PATH_CONFIG;
+PRIVATE int custom_config_file = 0;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
 PRIVATE int req_lu_state = DEFAULT_LU_STATE;
 PRIVATE int req_lu_maxtime = DEFAULT_LU_MAXTIME;
@@ -339,6 +340,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
           }
           else if (strcmp(argv[i], ARG_CONFIG)==0) {
               req_config = argv[i+1];
+ 	      custom_config_file = 1;
           }
           else if (strcmp(argv[i], ARG_LU_STATE)==0) {
               errno=0;
@@ -1343,16 +1345,15 @@ PRIVATE void do_service(config_t *cpe, config_t *config)
 	}
 }
 
-PRIVATE void do_config(char *label, char *filename)
+PRIVATE int do_config(char *label, char *filename)
 {
 	config_t *config, *cp, *cpe;
 
 	config= config_read(filename, 0, NULL);
 	if (config == NULL)
 	{
-		fprintf(stderr, "config_read failed for '%s': %s\n",
-			filename, strerror(errno));
-		exit(1);
+		/* config file read failed. */
+		return 1;
 	}
 
 	/* Find an entry for our service */
@@ -1396,6 +1397,9 @@ PRIVATE void do_config(char *label, char *filename)
 	cpe= cpe->next;
 
 	do_service(cpe, config);
+
+	/* config file read ok. */
+	return 0;
 }
 
 /* Main program. 
@@ -1464,8 +1468,29 @@ PUBLIC int main(int argc, char **argv)
       rs_start.rss_cpu = DSRV_CPU;
 
       if (req_config) {
+	int config_fail = 0;
 	assert(progname);
-	do_config(progname, req_config);
+	if(custom_config_file) {
+	  config_fail = do_config(progname, req_config);
+	} else {
+	  char *specificconfig;
+	  if(asprintf(&specificconfig, "%s/%s", _PATH_SYSTEM_CONF_DIR,
+		progname) < 0) {
+		errx(1, "no memory");
+	  }
+
+	  /* Try specific config filename first, 
+	   * and only if it fails, the global system one.
+	   */
+	  config_fail =
+		do_config(progname, specificconfig) &&
+	  	do_config(progname, req_config);
+	}
+
+        if(config_fail) {
+                 fprintf(stderr, "config_read failed for %s\n", progname);
+                 exit(1);
+        }
       }
 
       assert(rs_start.rss_priority < NR_SCHED_QUEUES);

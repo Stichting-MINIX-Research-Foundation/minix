@@ -21,5 +21,6 @@
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_SERVICE	"/bin/service"
 #define _PATH_SYSTEM_CONF	"/etc/system.conf"
+#define _PATH_SYSTEM_CONF_DIR	"/etc/system.conf.d"
 
 #endif
