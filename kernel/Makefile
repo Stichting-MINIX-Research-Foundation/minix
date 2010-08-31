@@ -15,7 +15,7 @@ LDADD+=	-ltimers -lsys
 .if ${COMPILER_TYPE} == "ack"
 LDFLAGS+= -.o
 .elif ${COMPILER_TYPE} == "gnu"
-CPPFLAGS+= -fno-builtin -ffreestanding -fno-stack-protector
+CPPFLAGS+= -ffreestanding -fno-stack-protector
 LDFLAGS+= -T arch/${ARCH}/kernel.lds
 LDFLAGS+= -nostdlib -L/usr/gnu/lib
 CFLAGS+=-march=i386
