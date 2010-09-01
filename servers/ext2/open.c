@@ -286,6 +286,11 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
   register struct inode *rip;
   register int r;
 
+  if (ldirp->i_links_count == NO_LINK) { /* Dir does not actually exist */
+	err_code = ENOENT;
+	return(NULL);
+  }
+
   /* Get final component of the path. */
   rip = advance(ldirp, string, IGN_PERM);
 

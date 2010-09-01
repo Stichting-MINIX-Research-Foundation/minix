@@ -71,6 +71,11 @@ PUBLIC int fs_link()
   if( (ip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_DIR_INO)) == NULL)
 	  return(EINVAL);
 
+  if (ip->i_nlinks == NO_LINK) {	/* Dir does not actually exist */
+	put_inode(ip);
+  	return(ENOENT);
+  }
+
   /* If 'name2' exists in full (even if no space) set 'r' to error. */
   if((new_ip = advance(ip, string, IGN_PERM)) == NULL) {
 	  r = err_code;
@@ -317,6 +322,14 @@ PUBLIC int fs_rename()
   /* Get new dir inode */ 
   if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) 
 	r = err_code;
+
+  if (new_dirp->i_nlinks == NO_LINK) {	/* Dir does not actually exist */
+  	put_inode(old_ip);
+  	put_inode(old_dirp);
+  	put_inode(new_dirp);
+  	return(ENOENT);
+  }
+  
   new_ip = advance(new_dirp, new_name, IGN_PERM); /* not required to exist */
 
   /* However, if the check failed because the file does exist, don't continue.

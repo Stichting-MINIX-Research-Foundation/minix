@@ -90,7 +90,7 @@ PUBLIC int fs_mknod()
   /* Get last directory inode */
   if((ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(ENOENT);
-  
+
   /* Try to create the new node */
   ip = new_node(ldirp, lastc, (mode_t) fs_m_in.REQ_MODE,
   		(zone_t) fs_m_in.REQ_DEV);
@@ -192,7 +192,7 @@ PUBLIC int fs_slink()
   /* Temporarily open the dir. */
   if( (ldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
-  
+
   /* Create the inode for the symlink. */
   sip = new_node(ldirp, string, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),
 		   (zone_t) 0);
@@ -260,6 +260,11 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
 
   register struct inode *rip;
   register int r;
+
+  if (ldirp->i_nlinks == NO_LINK) {	/* Dir does not actually exist */
+  	err_code = ENOENT;
+  	return(NULL);
+  }
 
   /* Get final component of the path. */
   rip = advance(ldirp, string, IGN_PERM);
