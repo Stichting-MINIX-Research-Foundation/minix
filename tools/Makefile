@@ -42,14 +42,23 @@ usage:
 
 all: services image
 
+# Pad the kernel text only if ACK compiler is used. padtext does not work for
+# gnu-like compilers as they generate common I&D and a linker script can do the
+# same in a nicer way
+.if ${COMPILER_TYPE} == "gnu"
+PAD_KERNEL_TEXT := cp ../kernel/kernel kernel
+.else
+PAD_KERNEL_TEXT := padtext ../kernel/kernel kernel
+.endif
+
 # for fast complie kernel and generate image, skip servers and drivers
 image_mb: includes
 	cd ../kernel && $(MAKE)
-	padtext ../kernel/kernel kernel
+	${PAD_KERNEL_TEXT}
 	installboot -image $@ $(PROGRAMS)
 	
 image:  includes services
-	padtext ../kernel/kernel kernel
+	${PAD_KERNEL_TEXT}
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
