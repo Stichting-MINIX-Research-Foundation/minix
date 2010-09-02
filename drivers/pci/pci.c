@@ -15,10 +15,10 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <minix/syslib.h>
 
 #include "pci.h"
-#include "pci_amd.h"
-#include "pci_intel.h"
-#include "pci_sis.h"
-#include "pci_via.h"
+#include <machine/pci_amd.h>
+#include <machine/pci_intel.h>
+#include <machine/pci_sis.h>
+#include <machine/pci_via.h>
 #if __minix_vmd
 #include "config.h"
 #endif
