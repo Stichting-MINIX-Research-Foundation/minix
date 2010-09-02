@@ -2,6 +2,12 @@
 
 PROGRAMS=ahci at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
 	newroot pci sh service sysenv mfs ext2
+
+# acpi is not compiled with ack
+.if ${COMPILER_TYPE} == "gnu"
+PROGRAMS += acpi
+.endif
+
 EXTRA=system.conf passwd rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
@@ -22,7 +28,7 @@ image.c:	bintoc image
 bintoc:	bintoc.c
 	$(CC) -o $@ bintoc.c
 
-image:	proto.gen mtab rc $(PROGRAMS) $(EXTRA)
+image:	proto.gen mtab rc $(EXTRA)
 	mkfs.mfs image proto.gen || { rm -f image; false; }
 
 ahci: ../ahci/ahci
@@ -48,6 +54,12 @@ floppy: ../floppy/floppy
 
 ../floppy/floppy:
 	$(MAKE) -C ../floppy
+
+acpi: ../acpi/acpi
+	install -s ../$@/$@ $@
+
+../acpi/acpi:
+	$(MAKE) -C ../acpi
 
 pci: ../pci/pci
 	install -s ../$@/$@ $@
@@ -124,7 +136,7 @@ passwd: ../../etc/passwd
 rs.single: ../../etc/rs.single
 	install -s ../../etc/$@ $@
 
-proto.gen: $(MAKEDEV) proto.sh proto
+proto.gen: $(PROGRAMS) $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
 
 .include <bsd.prog.mk>

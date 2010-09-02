@@ -1,6 +1,11 @@
 #!/bin/sh
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
-sed -n '1,/@DEV/p' <proto  | grep -v @DEV@
+sed -n '1,/@ACPI/p' <proto | grep -v @ACPI@
+if [ -e acpi ]
+then
+echo "		acpi ---755 0 0 acpi"
+fi
+sed -n '/@ACPI/,/@DEV/p' <proto  | grep -v -e @ACPI@ -e @DEV@
 (
 cd /dev
 ls -aln | grep '^[bc]' | egrep -v ' (fd1|fd0p|tcp|eth|ip|udp|tty[pq]|pty)' | grep -v 13, | \

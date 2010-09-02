@@ -1,5 +1,5 @@
 boot 
-320 440
+420 440
 d--755 0 0
 	bin d--755 0 0
 		cdprobe ---755 0 0 cdprobe
@@ -12,6 +12,7 @@ d--755 0 0
 		sysenv ---755 0 0 sysenv
 	$
 	sbin d--755 0 0
+		@ACPI@
 		ahci ---755 0 0 ahci
 		at_wini ---755 0 0 at_wini
 		bios_wini ---755 0 0 bios_wini

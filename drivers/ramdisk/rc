@@ -5,6 +5,10 @@ exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
 
+if [ -e /sbin/acpi ]
+then
+	/bin/service -c up /sbin/acpi
+fi
 /bin/service -c up /sbin/pci
 /bin/service -cn up /sbin/floppy -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
