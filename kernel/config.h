@@ -57,7 +57,11 @@
  * the maximum needed by any given driver. The number of interrupt hooks may
  * be incremented on systems with many device drivers. 
  */
+#ifndef CONFIG_APIC
 #define NR_IRQ_HOOKS	  16		/* number of interrupt hooks */
+#else
+#define NR_IRQ_HOOKS	  64		/* number of interrupt hooks */
+#endif
 #define VDEVIO_BUF_SIZE   64		/* max elements per VDEVIO request */
 
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */

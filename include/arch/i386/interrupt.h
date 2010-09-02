@@ -35,7 +35,11 @@
 #define IRQ8_VECTOR     0x70	/* no need to move IRQ8-15 */
 
 /* Hardware interrupt numbers. */
+#ifndef CONFIG_APIC
 #define NR_IRQ_VECTORS    16
+#else
+#define NR_IRQ_VECTORS    64
+#endif
 #define CLOCK_IRQ          0
 #define KEYBOARD_IRQ       1
 #define CASCADE_IRQ        2	/* cascade enable for 2nd AT controller */

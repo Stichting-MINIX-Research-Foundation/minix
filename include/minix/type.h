@@ -182,7 +182,7 @@ struct kmessages {
 #include <machine/interrupt.h>
 
 /* randomness struct: random sources after interrupts: */
-#define RANDOM_SOURCES			NR_IRQ_VECTORS
+#define RANDOM_SOURCES			16
 #define RANDOM_ELEMENTS			64
 
 typedef unsigned short rand_t;
