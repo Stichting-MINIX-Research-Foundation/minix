@@ -16,6 +16,7 @@ INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/crtso.h minix/debug.h minix/devio.h minix/dirent.h \
 	minix/dir.h minix/dl_eth.h minix/dmap.h minix/driver.h \
 	minix/limits.h \
+	minix/acpi.h \
 	minix/drivers.h minix/drvlib.h minix/ds.h minix/endpoint.h \
 	minix/fslib.h minix/ioctl.h minix/ipc.h minix/ipcconst.h \
 	minix/keymap.h minix/minlib.h minix/mq.h \
