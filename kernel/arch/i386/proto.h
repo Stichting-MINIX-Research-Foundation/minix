@@ -167,6 +167,7 @@ _PROTOTYPE(int platform_tbl_ptr, (phys_bytes start,
 					unsigned increment,
 					void * buff,
 					unsigned size,
+					phys_bytes * phys_addr,
 					int ((* cmp_f)(void *))));
 
 /* breakpoints.c */

@@ -1089,14 +1089,18 @@ PUBLIC int platform_tbl_ptr(phys_bytes start,
 					unsigned increment,
 					void * buff,
 					unsigned size,
+					phys_bytes * phys_addr,
 					int ((* cmp_f)(void *)))
 {
 	phys_bytes addr;
 
 	for (addr = start; addr < end; addr += increment) {
 		phys_copy (addr, vir2phys(buff), size);
-		if (cmp_f(buff))
+		if (cmp_f(buff)) {
+			if (phys_addr)
+				*phys_addr = addr;
 			return 1;
+		}
 	}
 	return 0;
 }

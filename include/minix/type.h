@@ -127,6 +127,8 @@ struct machine {
   int padding;	/* used to be protected */
   int vdu_ega;
   int vdu_vga;
+  int apic_enabled; /* does the kernel use APIC or not? */
+  phys_bytes	acpi_rsdp; /* where is the acpi RSDP */
 };
 
 struct io_range

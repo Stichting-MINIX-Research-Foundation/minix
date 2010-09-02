@@ -247,15 +247,19 @@ PRIVATE int get_acpi_rsdp(void)
 	if (ebda) {
 		ebda <<= 4;
 		if(platform_tbl_ptr(ebda, ebda + 0x400, 16, &acpi_rsdp,
-					sizeof(acpi_rsdp), acpi_rsdp_test))
+					sizeof(acpi_rsdp), &machine.acpi_rsdp,
+					acpi_rsdp_test))
 			return 1;
 	} 
 
 	/* try BIOS read only mem space */
 	if(platform_tbl_ptr(0xE0000, 0x100000, 16, &acpi_rsdp,
-				sizeof(acpi_rsdp), acpi_rsdp_test))
+				sizeof(acpi_rsdp), &machine.acpi_rsdp,
+				acpi_rsdp_test))
 		return 1;
-
+	
+	machine.acpi_rsdp = 0; /* RSDP cannot be found at this address therefore
+				  it is a valid negative value */
 	return 0;
 }
 
