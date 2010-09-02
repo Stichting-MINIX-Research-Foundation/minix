@@ -1073,3 +1073,30 @@ PUBLIC void release_address_space(struct proc *pr)
 {
 	pr->p_seg.p_cr3_v = NULL;
 }
+
+/* computes a checksum of a buffer of a given length. The byte sum must be zero */
+PUBLIC int platform_tbl_checksum_ok(void *ptr, unsigned int length)
+{
+	u8_t total = 0;
+	unsigned int i;
+	for (i = 0; i < length; i++)
+		total += ((unsigned char *)ptr)[i];
+	return !total;
+}
+
+PUBLIC int platform_tbl_ptr(phys_bytes start,
+					phys_bytes end,
+					unsigned increment,
+					void * buff,
+					unsigned size,
+					int ((* cmp_f)(void *)))
+{
+	phys_bytes addr;
+
+	for (addr = start; addr < end; addr += increment) {
+		phys_copy (addr, vir2phys(buff), size);
+		if (cmp_f(buff))
+			return 1;
+	}
+	return 0;
+}

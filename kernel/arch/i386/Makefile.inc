@@ -30,7 +30,8 @@ SRCS+=	arch_do_vmctl.c \
 	apic.c \
 	apic_asm.S \
 	arch_watchdog.c \
-	pre_init.c
+	pre_init.c \
+	acpi.c
 
 .if ${COMPILER_TYPE} == "ack"
 I86CPPFLAGS =	-mi86

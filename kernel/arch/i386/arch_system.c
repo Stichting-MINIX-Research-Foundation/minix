@@ -28,6 +28,8 @@
 #include "apic.h"
 #endif
 
+#include "acpi.h"
+
 PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 
 extern __dead void poweroff_jmp();
@@ -312,6 +314,8 @@ PUBLIC void arch_init(void)
 	idt_init();
 
 	tss_init(&tss, &k_boot_stktop, 0);
+
+	acpi_init();
 
 #if defined(CONFIG_APIC) && !defined(CONFIG_SMP)
 	if (config_no_apic) {

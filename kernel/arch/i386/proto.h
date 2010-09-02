@@ -161,6 +161,14 @@ _PROTOTYPE(void __copy_msg_from_user_end, (void));
 _PROTOTYPE(void __copy_msg_to_user_end, (void));
 _PROTOTYPE(void __user_copy_msg_pointer_failure, (void));
 
+_PROTOTYPE(int platform_tbl_checksum_ok, (void *ptr, unsigned int length));
+_PROTOTYPE(int platform_tbl_ptr, (phys_bytes start,
+					phys_bytes end,
+					unsigned increment,
+					void * buff,
+					unsigned size,
+					int ((* cmp_f)(void *))));
+
 /* breakpoints.c */
 #define BREAKPOINT_COUNT		4
 #define BREAKPOINT_FLAG_RW_MASK		(3 << 0)
