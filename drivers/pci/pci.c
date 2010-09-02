@@ -30,6 +30,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <stdlib.h>
 #include <stdio.h>
 #include <minix/sysutil.h>
+#include <minix/acpi.h>
 
 #define PBT_INTEL_HOST	 1
 #define PBT_PCIBRIDGE	 2
@@ -150,6 +151,9 @@ FORWARD _PROTOTYPE( void print_capabilities, (int devind)		);
 FORWARD _PROTOTYPE( int visible, (struct rs_pci *aclp, int devind)	);
 FORWARD _PROTOTYPE( void print_hyper_cap, (int devind, u8_t capptr)	);
 
+PRIVATE struct machine machine;
+PRIVATE endpoint_t acpi_ep;
+
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
@@ -163,6 +167,15 @@ PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	v= 0;
 	env_parse("pci_debug", "d", 0, &v, 0, 1);
 	debug= v;
+
+	if (sys_getmachine(&machine)) {
+		printf("PCI: no machine\n");
+		return ENODEV;
+	}
+	if (machine.apic_enabled &&
+			ds_retrieve_label_endpt("acpi", &acpi_ep) != OK) {
+		panic("PCI: Cannot use APIC mode without ACPI!\n");
+	}
 
 	/* Only Intel (compatible) PCI controllers are supported at the
 	 * moment.
@@ -768,9 +781,8 @@ PRIVATE void probe_bus(int busind)
 	int devind, busnr;
 	char *s, *dstr;
 
-#if DEBUG
-printf("probe_bus(%d)\n", busind);
-#endif
+	if (debug)
+		printf("probe_bus(%d)\n", busind);
 	if (nr_pcidev >= NR_PCIDEV)
 		panic("too many PCI devices: %d", nr_pcidev);
 	devind= nr_pcidev;
@@ -933,6 +945,37 @@ PRIVATE int is_duplicate(u8_t busnr, u8_t dev, u8_t func)
 	return 0;
 }
 
+PRIVATE int acpi_get_irq(unsigned dev, unsigned pin)
+{
+	int err;
+	message m;
+
+	((struct acpi_get_irq_req *)&m)->hdr.request = ACPI_REQ_GET_IRQ;
+	((struct acpi_get_irq_req *)&m)->dev = dev;
+	((struct acpi_get_irq_req *)&m)->pin = pin;
+
+	if ((err = sendrec(acpi_ep, &m)) != OK)
+		panic("PCI: error %d while receiveing from ACPI\n", err);
+
+	return ((struct acpi_get_irq_resp *)&m)->irq;
+}
+
+PRIVATE int derive_irq(struct pcidev * dev, int pin)
+{
+	struct pcidev * parent_brige;
+	int slot;
+	
+	parent_brige = &pcidev[pcibus[get_busind(dev->pd_busnr)].pb_devind];
+
+	/*
+	 * We don't support PCI-Express, no ARI, decode the slot of the device
+	 * and mangle the pin as the device is behind a bridge
+	 */
+	slot = ((dev->pd_func) >> 3) & 0x1f;
+
+	return acpi_get_irq(parent_brige->pd_dev, (pin + slot) % 4);
+}
+
 /*===========================================================================*
  *				record_irq				     *
  *===========================================================================*/
@@ -943,6 +986,36 @@ int devind;
 
 	ilr= pci_attr_r8_u(devind, PCI_ILR);
 	ipr= pci_attr_r8_u(devind, PCI_IPR);
+
+	if (ipr && machine.apic_enabled) {
+		int irq;
+
+		irq = acpi_get_irq(pcidev[devind].pd_dev, ipr - 1);
+
+		if (irq < 0)
+			irq = derive_irq(&pcidev[devind], ipr - 1);
+
+		if (irq >= 0) {
+			ilr = irq;
+			pci_attr_w8(devind, PCI_ILR, ilr);
+			printf("PCI: ACPI IRQ %d for "
+					"device %d.%d.%d INT%c\n",
+					irq,
+					pcidev[devind].pd_busnr,
+					pcidev[devind].pd_dev,
+					pcidev[devind].pd_func,
+					'A' + ipr-1);
+		}
+		else {
+			printf("PCI: no ACPI IRQ routing for "
+					"device %d.%d.%d INT%c\n",
+					pcidev[devind].pd_busnr,
+					pcidev[devind].pd_dev,
+					pcidev[devind].pd_func,
+					'A' + ipr-1);
+		}
+	}
+
 	if (ilr == 0)
 	{
 		static int first= 1;
@@ -1778,7 +1851,7 @@ int busind;
 	{
 #if 0
 		printf("do_pcibridge: trying %u.%u.%u\n",
-			pcidev[devind].pd_busind, pcidev[devind].pd_dev, 
+			pcidev[devind].pd_busnr, pcidev[devind].pd_dev, 
 			pcidev[devind].pd_func);
 #endif
 
