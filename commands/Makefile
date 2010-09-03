@@ -9,7 +9,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut date \
 	dd de decomp16 DESCRIBE dev2name devsize df dhcpd \
-	dhrystone diff dirname dis88 diskctl du dumpcore easypack \
+	dhrystone diff dirname dis88 diskctl du dumpcore \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	fsck1 ftp101 ftpd200 gcov-pull getty grep gomoku head host \
@@ -19,7 +19,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	lpd ls lspci M m4 mail make  MAKEDEV man \
 	mdb mdocml mesg mined mkdep mkdir mkdist mkfifo mkfs.mfs mknod \
 	mkproto modem mount mt netconf newroot nice acknm nohup \
-	nonamed od packit packman passwd paste patch pax \
+	nonamed od packman passwd paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
