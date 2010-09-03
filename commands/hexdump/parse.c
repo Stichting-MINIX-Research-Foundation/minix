@@ -194,7 +194,11 @@ size(FS *fs)
 				bcnt += 4;
 				break;
 			case 'e': case 'E': case 'f': case 'g': case 'G':
+#ifdef __LONG_LONG_SUPPORTED
 				bcnt += 8;
+#else
+				bcnt += 4;
+#endif
 				break;
 			case 's':
 				bcnt += prec;
@@ -320,9 +324,11 @@ isint:
 				case 2:
 					pr->bcnt = 2;
 					break;
+#ifdef __LONG_LONG_SUPPORTED
 				case 8:
 					pr->bcnt = 8;
 					break;
+#endif
 				default:
 					p1[1] = '\0';
 					badcnt(p1);
@@ -331,9 +337,13 @@ isint:
 			case 'e': case 'E': case 'f': case 'g': case 'G':
 				pr->flags = F_DBL;
 				switch(fu->bcnt) {
+#ifdef __LONG_LONG_SUPPORTED
 				case 0: case 8:
 					pr->bcnt = 8;
 					break;
+#else
+				case 0:
+#endif
 				case 4:
 					pr->bcnt = 4;
 					break;

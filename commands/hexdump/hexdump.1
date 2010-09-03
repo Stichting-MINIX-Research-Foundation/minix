@@ -310,6 +310,10 @@ option.
 .Pp
 .Nm
 exits 0 on success and \*[Gt]0 if an error occurred.
+.Sh MINIX-SPECIFIC notes
+If hexdump is compiled on a compiler that does not support long long (that is,
+ACK), 64-bit (8 byte) integer formats are not supported. Conversions where this
+is the default are changed to use a 32-bit 4 byte) default instead.
 .Sh EXAMPLES
 Display the input in perusal format:
 .Bd -literal -offset indent

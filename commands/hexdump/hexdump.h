@@ -68,6 +68,17 @@ typedef struct _fs {			/* format strings */
 	int bcnt;
 } FS;
 
+#ifdef __minix
+#define inline
+
+#ifndef __LONG_LONG_SUPPORTED
+#include <minix/u64.h>
+typedef long int64_t;
+typedef unsigned long uint64_t;
+#define PRId64 "ld"
+#endif
+#endif
+
 enum _vflag { ALL, DUP, FIRST, WAIT };	/* -v values */
 
 extern int blocksize;			/* data block size */

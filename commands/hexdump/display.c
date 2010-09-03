@@ -128,10 +128,14 @@ print(PR *pr, u_char *bp)
 	    float f4;
 	  int16_t s2;
 	  int32_t s4;
+#ifdef __LONG_LONG_SUPPORTED
 	  int64_t s8;
+#endif
 	 uint16_t u2;
 	 uint32_t u4;
+#ifdef __LONG_LONG_SUPPORTED
 	 uint64_t u8;
+#endif
 
 	switch(pr->flags) {
 	case F_ADDRESS:
@@ -171,10 +175,12 @@ print(PR *pr, u_char *bp)
 			memmove(&s4, bp, sizeof(s4));
 			(void)printf(pr->fmt, (int64_t)s4);
 			break;
+#ifdef __LONG_LONG_SUPPORTED
 		case 8:
 			memmove(&s8, bp, sizeof(s8));
 			(void)printf(pr->fmt, (int64_t)s8);
 			break;
+#endif
 		}
 		break;
 	case F_P:
@@ -202,10 +208,12 @@ print(PR *pr, u_char *bp)
 			memmove(&u4, bp, sizeof(u4));
 			(void)printf(pr->fmt, (uint64_t)u4);
 			break;
+#ifdef __LONG_LONG_SUPPORTED
 		case 8:
 			memmove(&u8, bp, sizeof(u8));
 			(void)printf(pr->fmt, (uint64_t)u8);
 			break;
+#endif
 		}
 		break;
 	}
