@@ -170,8 +170,8 @@ static char *realpath_recurse(const char *file_name, char *resolved_name,
 			max_depth))
 			return NULL;
 
-		/* skip the slash */
-		if (*file_name == '/')
+		/* skip the slash(es) */
+		while (*file_name == '/')
 			file_name++;
 	}
 
