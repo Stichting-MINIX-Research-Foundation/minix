@@ -888,6 +888,19 @@ ENTRY(poweroff_jmp)
 	
 	/* Jump to 16-bit code that is copied to below 1MB */
 	ljmp	$MON_CS_SELECTOR, $0
+
+/* acknowledge just the master PIC */
+ENTRY(eoi_8259_master)
+	movb	$END_OF_INT, %al
+	outb	$INT_CTL
+	ret
+	
+/* we have to acknowledge both PICs */
+ENTRY(eoi_8259_slave)
+	movb	$END_OF_INT, %al
+	outb	$INT_CTL
+	outb	$INT2_CTL
+	ret
 	
 .data
 idt_ptr:

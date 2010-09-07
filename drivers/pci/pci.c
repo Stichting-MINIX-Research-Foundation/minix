@@ -962,10 +962,10 @@ PRIVATE int acpi_get_irq(unsigned dev, unsigned pin)
 
 PRIVATE int derive_irq(struct pcidev * dev, int pin)
 {
-	struct pcidev * parent_brige;
+	struct pcidev * parent_bridge;
 	int slot;
 	
-	parent_brige = &pcidev[pcibus[get_busind(dev->pd_busnr)].pb_devind];
+	parent_bridge = &pcidev[pcibus[get_busind(dev->pd_busnr)].pb_devind];
 
 	/*
 	 * We don't support PCI-Express, no ARI, decode the slot of the device
@@ -973,7 +973,7 @@ PRIVATE int derive_irq(struct pcidev * dev, int pin)
 	 */
 	slot = ((dev->pd_func) >> 3) & 0x1f;
 
-	return acpi_get_irq(parent_brige->pd_dev, (pin + slot) % 4);
+	return acpi_get_irq(parent_bridge->pd_dev, (pin + slot) % 4);
 }
 
 /*===========================================================================*
@@ -998,15 +998,16 @@ int devind;
 		if (irq >= 0) {
 			ilr = irq;
 			pci_attr_w8(devind, PCI_ILR, ilr);
-			printf("PCI: ACPI IRQ %d for "
-					"device %d.%d.%d INT%c\n",
-					irq,
-					pcidev[devind].pd_busnr,
-					pcidev[devind].pd_dev,
-					pcidev[devind].pd_func,
-					'A' + ipr-1);
+			if (debug)
+				printf("PCI: ACPI IRQ %d for "
+						"device %d.%d.%d INT%c\n",
+						irq,
+						pcidev[devind].pd_busnr,
+						pcidev[devind].pd_dev,
+						pcidev[devind].pd_func,
+						'A' + ipr-1);
 		}
-		else {
+		else if (debug) {
 			printf("PCI: no ACPI IRQ routing for "
 					"device %d.%d.%d INT%c\n",
 					pcidev[devind].pd_busnr,

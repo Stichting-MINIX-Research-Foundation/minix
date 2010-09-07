@@ -12,6 +12,7 @@ PUBLIC struct machine machine;
 #define IRQ_TABLE_ENTRIES	(PCI_MAX_DEVICES * PCI_MAX_PINS)
 
 PRIVATE int irqtable[IRQ_TABLE_ENTRIES];
+PRIVATE ACPI_HANDLE pci_root_handle; 
 
 /* don't know where ACPI tables are, we may need to access any memory */
 PRIVATE int init_mem_priv(void)
@@ -93,7 +94,7 @@ PRIVATE ACPI_STATUS get_irq_resource(ACPI_RESOURCE *res, void *context)
 		irq = &res->Data.Irq;
 		add_irq(tbl->Address >> 16, tbl->Pin,
 				irq->Interrupts[tbl->SourceIndex]);
-	} if (res->Type == ACPI_RESOURCE_TYPE_EXTENDED_IRQ) {
+	} else if (res->Type == ACPI_RESOURCE_TYPE_EXTENDED_IRQ) {
 		ACPI_RESOURCE_EXTENDED_IRQ *irq;
 		
 		add_irq(tbl->Address >> 16, tbl->Pin,
@@ -103,32 +104,18 @@ PRIVATE ACPI_STATUS get_irq_resource(ACPI_RESOURCE *res, void *context)
 	return AE_OK;
 }
 
-PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
-				UINT32 level,
-				void *context,
-				void **retval)
+PRIVATE ACPI_STATUS get_pci_irq_routing(ACPI_HANDLE handle)
 {
 	ACPI_STATUS status;
 	ACPI_BUFFER abuff;
 	char buff[4096];
 	ACPI_PCI_ROUTING_TABLE *tbl;
-	int i;
-	static unsigned called;
 
-	if (++called > 1) {
-		printf("ACPI: Warning! Multi rooted PCI is not supported!\n");
-		return AE_OK;
-	}
-	
 	abuff.Length = sizeof(buff);
 	abuff.Pointer = buff;
 
-	for (i = 0; i < IRQ_TABLE_ENTRIES; i++)
-		irqtable[i] = -1;
-
 	status = AcpiGetIrqRoutingTable(handle, &abuff);
 	if (ACPI_FAILURE(status)) {
-		printf("ACPI: ACPI no routing table\n");
 		return AE_OK;
 	}
 
@@ -154,15 +141,51 @@ PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
 			continue;
 		}
 	}
-
+	
 	return AE_OK;
+}
+
+PRIVATE ACPI_STATUS add_pci_root_dev(ACPI_HANDLE handle,
+				UINT32 level,
+				void *context,
+				void **retval)
+{
+	int i;
+	static unsigned called;
+
+	if (++called > 1) {
+		printf("ACPI: Warning! Multi rooted PCI is not supported!\n");
+		return AE_OK;
+	}
+
+	for (i = 0; i < IRQ_TABLE_ENTRIES; i++)
+		irqtable[i] = -1;
+
+	return get_pci_irq_routing(handle);
+}
+
+PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
+				UINT32 level,
+				void *context,
+				void **retval)
+{
+	/* skip pci root when we get to it again */
+	if (handle == pci_root_handle)
+		return AE_OK;
+
+	return get_pci_irq_routing(handle);
 }
 
 PRIVATE void scan_devices(void)
 {
 	ACPI_STATUS(status);
+	
+	/* get the root first */
+	status = AcpiGetDevices("PNP0A03", add_pci_root_dev, NULL, NULL);
+	assert(ACPI_SUCCESS(status));
 
-	status = AcpiGetDevices("PNP0A03", add_pci_dev, NULL, NULL);
+	/* get the rest of the devices that implement _PRT */
+	status = AcpiGetDevices(NULL, add_pci_dev, NULL, NULL);
 	assert(ACPI_SUCCESS(status));
 }
 PRIVATE ACPI_STATUS init_acpica(void)

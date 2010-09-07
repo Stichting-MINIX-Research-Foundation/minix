@@ -19,6 +19,7 @@
 #include "proc.h"
 #include "debug.h"
 #include "clock.h"
+#include "hw_intr.h"
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
@@ -323,6 +324,7 @@ PUBLIC void minix_shutdown(timer_t *tp)
  * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
  */
   arch_stop_local_timer();
+  hw_intr_disable_all();
   intr_init(INTS_ORIG, 0);
   arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
 }

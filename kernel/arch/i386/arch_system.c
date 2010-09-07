@@ -434,6 +434,11 @@ PRIVATE void ser_debug(const int c)
 	TOGGLECASE('8', VF_SCHEDULING)
 	TOGGLECASE('9', VF_PICKPROC)
 #endif
+#ifdef CONFIG_APIC
+	case 'I':
+		dump_apic_irq_state();
+		break;
+#endif
 	}
 	serial_debug_active = 0;
 }

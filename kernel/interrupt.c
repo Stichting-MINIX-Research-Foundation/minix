@@ -20,6 +20,7 @@
 #include "archconst.h"
 #include "hw_intr.h"
 
+
 /* number of lists of IRQ hooks, one list per supported line. */
 PRIVATE irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};
 
@@ -58,13 +59,13 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq,
   hook->irq = irq;
   hook->id = id;
   *line = hook;
-  irq_use |= 1 << irq;  /* this does not work for irq >= 32 */
 
   /* And as last enable the irq at the hardware.
    *
    * Internal this activates the line or source of the given interrupt.
    */
   if((irq_actids[hook->irq] &= ~hook->id) == 0) {
+	  hw_intr_used(irq);
 	  hw_intr_unmask(hook->irq);
   }
 }
@@ -86,8 +87,6 @@ PUBLIC void rm_irq_handler( const irq_hook_t* hook ) {
   while( (*line) != NULL ) {
 	if((*line)->id == id) {
 		(*line) = (*line)->next;
-		if(!irq_handlers[irq])
-			irq_use &= ~(1 << irq);
 		if (irq_actids[irq] & id)
 			irq_actids[irq] &= ~id;
     	}
@@ -101,6 +100,7 @@ PUBLIC void rm_irq_handler( const irq_hook_t* hook ) {
    */
   if (irq_handlers[irq] == NULL) {
 	hw_intr_mask(irq);
+	hw_intr_not_used(irq);
   }
   else if (irq_actids[irq] == 0) {
 	hw_intr_unmask(irq);
@@ -155,6 +155,8 @@ PUBLIC void irq_handle(int irq)
   /* reenable the IRQ only if there is no active handler */
   if (irq_actids[irq] == 0)
 	  hw_intr_unmask(irq);
+
+  hw_intr_ack(irq);
 }
 
 /* Enable/Disable a interrupt line.  */

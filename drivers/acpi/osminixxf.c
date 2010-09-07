@@ -883,7 +883,9 @@ AcpiOsReadMemory (
     UINT32                  *Value,
     UINT32                  Width)
 {
-	panic("NOTIMPLEMENTED %s\n", __func__);
+	/* FIXME this operation is ignored */
+	*Value = 0;
+
 	return (AE_OK);
 }
 
@@ -908,7 +910,7 @@ AcpiOsWriteMemory (
     UINT32                  Value,
     UINT32                  Width)
 {
-	panic("NOTIMPLEMENTED %s\n", __func__);
+	/* FIXME this operation is ignored */
 	return (AE_OK);
 }
 

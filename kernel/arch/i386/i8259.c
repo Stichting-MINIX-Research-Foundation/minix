@@ -84,10 +84,17 @@ PUBLIC void irq_8259_mask(const int irq)
 }
 
 /* Disable 8259 - write 0xFF in OCW1 master and slave. */
-PRIVATE void i8259_disable(void)
+PUBLIC void i8259_disable(void)
 {
 	outb(INT2_CTLMASK, 0xFF);
 	outb(INT_CTLMASK, 0xFF);
 	inb(INT_CTLMASK);
 }
 
+PUBLIC void irq_8259_eoi(int irq)
+{
+	if (irq < 8)
+		eoi_8259_master();
+	else
+		eoi_8259_slave();
+}

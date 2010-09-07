@@ -5,18 +5,17 @@
 #include <machine/asm.h>
 
 #define APIC_IRQ_HANDLER(irq)	\
-	push	$irq							    	;\
-	call	_C_LABEL(irq_handle)	/* intr_handle(irq_handlers[irq]) */	;\
-	add	$4, %esp						    	;\
-	mov	_C_LABEL(lapic_eoi_addr), %eax				    	;\
-	movl	$0, (%eax)						    	;\
+	push	$irq						;\
+	call	_C_LABEL(irq_handle)		/* intr_handle(irq) */	;\
+	add	$4, %esp					;
 
 /*===========================================================================*/
 /*				interrupt handlers			     */
 /*		interrupt handlers for 386 32-bit protected mode	     */
 /*		APIC interrupt handlers for 386 32-bit protected mode	     */
 /*===========================================================================*/
-#define apic_hwint(irq) \
+#define apic_hwint(irq)							\
+ENTRY(apic_hwint##irq)							\
 	TEST_INT_IN_KERNEL(4, 0f)					;\
 									\
 	SAVE_PROCESS_CTX(0)						;\
@@ -34,73 +33,6 @@
 	CLEAR_IF(10*4(%esp))						;\
 	popa								;\
 	iret								;
-
-/*  Handlers for hardware interrupts */
-/*  Each of these entry points is an expansion of the hwint_master macro */
-ENTRY(apic_hwint00)
-/*  Interrupt routine for irq 0 (the clock). */
-	apic_hwint(0)
-
-ENTRY(apic_hwint01)
-/*  Interrupt routine for irq 1 (keyboard) */
-	apic_hwint(1)
-
-ENTRY(apic_hwint02)
-/*  Interrupt routine for irq 2 (cascade!) */
-	apic_hwint(2)
-
-ENTRY(apic_hwint03)
-/*  Interrupt routine for irq 3 (second serial) */
-	apic_hwint(3)
-
-ENTRY(apic_hwint04)
-/*  Interrupt routine for irq 4 (first serial) */
-	apic_hwint(4)
-
-ENTRY(apic_hwint05)
-/*  Interrupt routine for irq 5 (XT winchester) */
-	apic_hwint(5)
-
-ENTRY(apic_hwint06)
-/*  Interrupt routine for irq 6 (floppy) */
-	apic_hwint(6)
-
-ENTRY(apic_hwint07)
-/*  Interrupt routine for irq 7 (printer) */
-	apic_hwint(7)
-
-ENTRY(apic_hwint08)
-/*  Interrupt routine for irq 8 (realtime clock) */
-	apic_hwint(8)
-
-ENTRY(apic_hwint09)
-/*  Interrupt routine for irq 9 (irq 2 redirected) */
-	apic_hwint(9)
-
-ENTRY(apic_hwint10)
-/*  Interrupt routine for irq 10 */
-	apic_hwint(10)
-
-ENTRY(apic_hwint11)
-/*  Interrupt routine for irq 11 */
-	apic_hwint(11)
-
-ENTRY(apic_hwint12)
-/*  Interrupt routine for irq 12 */
-	apic_hwint(12)
-
-ENTRY(apic_hwint13)
-/*  Interrupt routine for irq 13 (FPU exception) */
-	apic_hwint(13)
-
-ENTRY(apic_hwint14)
-/*  Interrupt routine for irq 14 (AT winchester) */
-	apic_hwint(14)
-
-ENTRY(apic_hwint15)
-/*  Interrupt routine for irq 15 */
-	apic_hwint(15)
-
 
 #define LAPIC_INTR_HANDLER(func)	\
 	movl	$func, %eax						;\
@@ -142,7 +74,7 @@ ENTRY(lapic_ap_timer_int_handler)
 
 .data
 lapic_intr_dummy_handler_msg:
-.ascii "UNHABLED APIC interrupt vector %d\n"
+.ascii "UNHANDLED APIC interrupt vector %d\n"
 
 .text
 
@@ -155,6 +87,71 @@ lapic_intr_dummy_handler_msg:
 #define LAPIC_INTR_DUMMY_HANDLER(vect)			\
 	.balign	LAPIC_INTR_DUMMY_HANDLER_SIZE;		\
 	lapic_intr_dummy_handler_##vect: lapic_intr_dummy_handler(vect)
+
+apic_hwint(0)
+apic_hwint(1)
+apic_hwint(2)
+apic_hwint(3)
+apic_hwint(4)
+apic_hwint(5)
+apic_hwint(6)
+apic_hwint(7)
+apic_hwint(8)
+apic_hwint(9)
+apic_hwint(10)
+apic_hwint(11)
+apic_hwint(12)
+apic_hwint(13)
+apic_hwint(14)
+apic_hwint(15)
+apic_hwint(16)
+apic_hwint(17)
+apic_hwint(18)
+apic_hwint(19)
+apic_hwint(20)
+apic_hwint(21)
+apic_hwint(22)
+apic_hwint(23)
+apic_hwint(24)
+apic_hwint(25)
+apic_hwint(26)
+apic_hwint(27)
+apic_hwint(28)
+apic_hwint(29)
+apic_hwint(30)
+apic_hwint(31)
+apic_hwint(32)
+apic_hwint(33)
+apic_hwint(34)
+apic_hwint(35)
+apic_hwint(36)
+apic_hwint(37)
+apic_hwint(38)
+apic_hwint(39)
+apic_hwint(40)
+apic_hwint(41)
+apic_hwint(42)
+apic_hwint(43)
+apic_hwint(44)
+apic_hwint(45)
+apic_hwint(46)
+apic_hwint(47)
+apic_hwint(48)
+apic_hwint(49)
+apic_hwint(50)
+apic_hwint(51)
+apic_hwint(52)
+apic_hwint(53)
+apic_hwint(54)
+apic_hwint(55)
+apic_hwint(56)
+apic_hwint(57)
+apic_hwint(58)
+apic_hwint(59)
+apic_hwint(60)
+apic_hwint(61)
+apic_hwint(62)
+apic_hwint(63)
 
 LABEL(lapic_intr_dummy_handles_start)
 	LAPIC_INTR_DUMMY_HANDLER(0)

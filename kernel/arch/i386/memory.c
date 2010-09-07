@@ -1,5 +1,4 @@
 
-
 #include "kernel/kernel.h"
 #include "kernel/proc.h"
 #include "kernel/vm.h"
@@ -955,7 +954,7 @@ void i386_freepde(const int pde)
 	freepdes[nfreepdes++] = pde;
 }
 
-PRIVATE int lapic_mapping_index = -1, oxpcie_mapping_index = -1;
+PRIVATE int oxpcie_mapping_index = -1;
 
 PUBLIC int arch_phys_map(const int index, phys_bytes *addr,
   phys_bytes *len, int *flags)
@@ -967,7 +966,9 @@ PUBLIC int arch_phys_map(const int index, phys_bytes *addr,
 	if(first) {
 #ifdef CONFIG_APIC
 		if(lapic_addr)
-			lapic_mapping_index = freeidx++;
+			freeidx++;
+		if (ioapic_enabled)
+			freeidx += nioapics;
 #endif
 
 #ifdef CONFIG_OXPCIE
@@ -984,8 +985,16 @@ PUBLIC int arch_phys_map(const int index, phys_bytes *addr,
 
 #ifdef CONFIG_APIC
 	/* map the local APIC if enabled */
-	if (index == lapic_mapping_index) {
+	if (index == 0) {
+		if (!lapic_addr)
+			return EINVAL;
 		*addr = vir2phys(lapic_addr);
+		*len = 4 << 10 /* 4kB */;
+		*flags = VMMF_UNCACHED;
+		return OK;
+	}
+	else if (ioapic_enabled && index <= nioapics) {
+		*addr = io_apic[index - 1].paddr;
 		*len = 4 << 10 /* 4kB */;
 		*flags = VMMF_UNCACHED;
 		return OK;
@@ -1008,18 +1017,24 @@ PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
 #ifdef CONFIG_APIC
 	/* if local APIC is enabled */
-	if (index == lapic_mapping_index && lapic_addr) {
+	if (index == 0 && lapic_addr) {
 		lapic_addr_vaddr = addr;
+		return OK;
+	}
+	else if (ioapic_enabled && index <= nioapics) {
+		io_apic[index - 1].vaddr = addr;
+		return OK;
 	}
 #endif
 
 #if CONFIG_OXPCIE
 	if (index == oxpcie_mapping_index) {
 		oxpcie_set_vaddr((unsigned char *) addr);
+		return OK;
 	}
 #endif
 
-	return OK;
+	return EINVAL;
 }
 
 PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
@@ -1050,10 +1065,20 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 		panic("arch_enable_paging: newmap failed");
 
 #ifdef CONFIG_APIC
+	/* start using the virtual addresses */
+
 	/* if local APIC is enabled */
 	if (lapic_addr) {
 		lapic_addr = lapic_addr_vaddr;
 		lapic_eoi_addr = LAPIC_EOI;
+	}
+	/* if IO apics are enabled */
+	if (ioapic_enabled) {
+		int i;
+
+		for (i = 0; i < nioapics; i++) {
+			io_apic[i].addr = io_apic[i].vaddr;
+		}
 	}
 #endif
 #ifdef CONFIG_WATCHDOG
