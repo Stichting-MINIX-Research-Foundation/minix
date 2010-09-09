@@ -324,7 +324,7 @@ unsigned nr_req;		/* length of request vector */
 	             s=sys_safecopyto(proc_nr, user_vir,
 		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk, D);
 		    if(s != OK)
-	    	        printf("MEM: sys_safecopyto failed: %d\n", s);
+	    	        return s;
 	    	    left -= chunk;
  	            suboffset += chunk;
 	    	}
