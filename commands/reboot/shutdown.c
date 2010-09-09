@@ -160,7 +160,7 @@ char *argv[];
 	    opt=argv[i];
 	  }
 	  reboot_code=opt;
-	  opt="";
+	  opt+=strlen(opt)-1;
 	}
 	break;
       case 'R':
