@@ -7,8 +7,5 @@ can do by typing 'setup' while logged in as root.  Then just follow the
 on-screen directions.
 
 After setup is complete, type 'shutdown' and when the boot monitor
-starts, boot your new system by following the instructions at the end of
-setup.  Keep the CD-ROM in the drive, login as root and type 'packman'
-to begin installing the many software packages available.  After you
-have installed the packages, type 'xdm' to start X Windows if you have
-installed it.
+starts, boot your new system by following the instructions at the end
+of setup.
