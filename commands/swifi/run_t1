@@ -103,7 +103,7 @@ esac
 # Start our own driver.
 service down $LABEL
 sleep 2	# Allow driver to die
-service up $EXE -script `pwd`/rs.restart_imm -config /etc/system.conf -period 3HZ $DEV
+service up $EXE -script `pwd`/rs.restart_imm -period 3HZ $DEV
 
 i=0
 while [ $i -lt "$count" ]

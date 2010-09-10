@@ -91,13 +91,12 @@ int mountflags;
   }
 
   if(strlen(_PATH_SERVICE)+strlen(path)+strlen(label)+
-     strlen(_PATH_SYSTEM_CONF)+strlen(args)+50 >= sizeof(cmd)) {
+     strlen(args)+50 >= sizeof(cmd)) {
 	errno = E2BIG;
 	return -1;
   }
 
-  sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -config " _PATH_SYSTEM_CONF
-	" -args '%s%s'",
+  sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -args '%s%s'",
 	  reuse ? "-r ": "", path, label, args[0] ? "-o " : "", args);
 
   if((r = system(cmd)) != 0) {
