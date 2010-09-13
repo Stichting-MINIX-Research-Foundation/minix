@@ -68,8 +68,6 @@
 755  root    operator  /var
 /var/log -> /usr/log
 755  root    operator  /usr/log
-755  root    operator  /usr/gnu
-755  root    operator  /usr/gnu/lib
 755  root    operator  /usr/var
 755  root    operator  /usr/var/db
 755  root    operator  /usr/var/db/pkg

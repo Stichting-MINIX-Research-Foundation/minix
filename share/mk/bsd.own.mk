@@ -474,7 +474,7 @@ INFOMODE?=	${NONBINMODE}
 .if ${COMPILER_TYPE} == "ack"
 LIBDIR?=	/usr/lib/i386
 .elif ${COMPILER_TYPE} == "gnu"
-LIBDIR?=	/usr/gnu/lib
+LIBDIR?=	/usr/lib
 .endif
 
 LINTLIBDIR?=	/usr/libdata/lint

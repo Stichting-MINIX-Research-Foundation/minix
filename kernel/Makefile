@@ -17,7 +17,7 @@ LDFLAGS+= -.o
 .elif ${COMPILER_TYPE} == "gnu"
 CPPFLAGS+= -ffreestanding -fno-stack-protector
 LDFLAGS+= -T arch/${ARCH}/kernel.lds
-LDFLAGS+= -nostdlib -L/usr/gnu/lib
+LDFLAGS+= -nostdlib -L/usr/lib
 CFLAGS+=-march=i386
 DPADD+=	${LIBC}
 LDADD+=	-lc

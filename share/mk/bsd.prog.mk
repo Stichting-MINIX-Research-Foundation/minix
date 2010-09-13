@@ -63,7 +63,7 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .if ${COMPILER_TYPE} == "ack"
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/i386/lib${_lib}.a
 .elif ${COMPILER_TYPE} == "gnu"
-LIB${_lib:tu}=	${DESTDIR}/usr/gnu/lib/lib${_lib}.a
+LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .endif
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
