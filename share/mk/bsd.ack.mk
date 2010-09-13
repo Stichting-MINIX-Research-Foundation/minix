@@ -11,7 +11,7 @@ CPPFLAGS+= -wo
 # .endif
 
 ASMCONV=gas2ack
-AFLAGS+=-D__ASSEMBLY__ -D__minix -w -wo
+AFLAGS+=-D__ASSEMBLY__ -w -wo
 CPP.s=${CC} -E ${AFLAGS}
 ASMCONVFLAGS+=-mi386
 
