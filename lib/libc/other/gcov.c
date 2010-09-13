@@ -16,8 +16,7 @@ int gcov_flush_svr(char *buff, int buff_sz, int server_nr)
 	 * buffer the stdio requests, and copy the buffer to this user
 	 * space
 	 */
-  	_syscall(VFS_PROC_NR, GCOV_FLUSH, &msg);
-	return;
+  	return _syscall(VFS_PROC_NR, GCOV_FLUSH, &msg);
 }
 
 

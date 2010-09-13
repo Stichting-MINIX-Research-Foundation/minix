@@ -55,7 +55,7 @@ static void add_int(int value)
 
 FILE *_gcov_fopen(char *name, char *mode)
 {
-	if(!gcov_enable) return;
+	if(!gcov_enable) return NULL;
 
 	assert(!gcov_opened);
 
@@ -80,7 +80,7 @@ size_t _gcov_fwrite(void *ptr, size_t itemsize, size_t nitems, FILE *stream)
 {
 	int size = itemsize * nitems;
 
-	if(!gcov_enable) return;
+	if(!gcov_enable) return NULL;
 
 	/* only have one file open at a time to ensure writes go
 	 * to the right place.
@@ -98,7 +98,7 @@ size_t _gcov_fwrite(void *ptr, size_t itemsize, size_t nitems, FILE *stream)
 
 int _gcov_fclose(FILE *stream)
 {
-	if(!gcov_enable) return;
+	if(!gcov_enable) return EOF;
 
 	add_int(GCOVOP_CLOSE);
 	assert(gcov_opened);
