@@ -1826,6 +1826,19 @@ PUBLIC int map_get_ref(struct vmproc *vmp, vir_bytes addr, u8_t *cnt)
 }
 
 /*========================================================================*
+ *				get_stats_info				  *
+ *========================================================================*/
+PUBLIC void get_stats_info(struct vm_stats_info *vsi)
+{
+	yielded_t *yb;
+
+	vsi->vsi_cached = 0L;
+
+	for(yb = lru_youngest; yb; yb = yb->older)
+		vsi->vsi_cached += yb->len / VM_PAGE_SIZE;
+}
+
+/*========================================================================*
  *				get_usage_info				  *
  *========================================================================*/
 PUBLIC void get_usage_info(struct vmproc *vmp, struct vm_usage_info *vui)

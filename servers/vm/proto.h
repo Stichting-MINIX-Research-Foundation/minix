@@ -168,6 +168,7 @@ _PROTOTYPE(int map_get_ref, (struct vmproc *vmp, vir_bytes addr, u8_t *cnt));
 
 _PROTOTYPE(void pb_unreferenced, (struct vir_region *region,
 	struct phys_region *pr));
+_PROTOTYPE(void get_stats_info, (struct vm_stats_info *vsi));
 _PROTOTYPE(void get_usage_info, (struct vmproc *vmp,
 	struct vm_usage_info *vui));
 _PROTOTYPE(int get_region_info, (struct vmproc *vmp,

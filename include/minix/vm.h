@@ -45,10 +45,11 @@ _PROTOTYPE( int vm_yield_block_get_block, (u64_t yieldid, u64_t getid,
 #define VMPTYPE_SUNMAP		4
 
 struct vm_stats_info {
-  int vsi_pagesize;		/* page size */
-  int vsi_total;		/* total number of memory pages */
-  int vsi_free;			/* number of free pages */
-  int vsi_largest;		/* largest number of consecutive free pages */
+  unsigned int vsi_pagesize;	/* page size */
+  unsigned long vsi_total;	/* total number of memory pages */
+  unsigned long vsi_free;	/* number of free pages */
+  unsigned long vsi_largest;	/* largest number of consecutive free pages */
+  unsigned long vsi_cached;	/* number of pages cached for file systems */
 };
 
 struct vm_usage_info {

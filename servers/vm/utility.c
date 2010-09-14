@@ -173,7 +173,7 @@ PUBLIC int do_info(message *m)
 	static struct vm_region_info vri[MAX_VRI_COUNT];
 	struct vmproc *vmp;
 	vir_bytes addr, size, next, ptr;
-	int r, pr, dummy, count;
+	int r, pr, dummy, count, free_pages, largest_contig;
 
 	if (vm_isokendpt(m->m_source, &pr) != OK)
 		return EINVAL;
@@ -185,7 +185,11 @@ PUBLIC int do_info(message *m)
 	case VMIW_STATS:
 		vsi.vsi_pagesize = VM_PAGE_SIZE;
 		vsi.vsi_total = total_pages;
-		memstats(&dummy, &vsi.vsi_free, &vsi.vsi_largest);
+		memstats(&dummy, &free_pages, &largest_contig);
+		vsi.vsi_free = free_pages;
+		vsi.vsi_largest = largest_contig;
+
+		get_stats_info(&vsi);
 
 		addr = (vir_bytes) &vsi;
 		size = sizeof(vsi);

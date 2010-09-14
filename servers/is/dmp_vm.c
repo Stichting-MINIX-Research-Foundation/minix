@@ -77,10 +77,11 @@ PUBLIC void vm_dmp()
 		return;
 	}
 
-	printf("Total %u kB, free %u kB, largest free area %u kB\n",	
+	printf("Total %u kB, free %u kB, largest free %u kB, cached %u kB\n",
 		vsi.vsi_total * (vsi.vsi_pagesize / 1024),
 		vsi.vsi_free * (vsi.vsi_pagesize / 1024),
-		vsi.vsi_largest * (vsi.vsi_pagesize / 1024));
+		vsi.vsi_largest * (vsi.vsi_pagesize / 1024),
+		vsi.vsi_cached * (vsi.vsi_pagesize / 1024));
 	n++;
 	printf("\n");
 	n++;
