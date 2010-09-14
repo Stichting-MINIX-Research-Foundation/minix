@@ -30,7 +30,6 @@
 #include <minix/partition.h>
 #include <minix/u64.h>
 #include <minix/com.h>
-#include <minix/sysinfo.h>
 #include <machine/partition.h>
 #include <termios.h>
 #include <stdarg.h>
@@ -1597,10 +1596,7 @@ void m_read(int ev, int *biosdrive)
 		return;
 	}
 
-	if(getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
-		fprintf(stderr, "autopart: system hz not found\n");
-		exit(1);
-	}
+	system_hz = (u32_t) sysconf(_SC_CLK_TCK);
 	v = 2*system_hz;
 	ioctl(device, DIOCTIMEOUT, &v);
 

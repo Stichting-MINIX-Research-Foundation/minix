@@ -7,7 +7,6 @@
 #include <string.h>
 #include <time.h>
 #include <minix/config.h>
-#include <minix/sysinfo.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -72,7 +71,7 @@ char **argv;
 {
   int i, m = 0xFFFF, n = 0xF;
 
-  getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
+  system_hz = sysconf(_SC_CLK_TCK);
 
   if (strcmp(argv[0], "DO CHECK") == 0) {
   	timer = atoi(argv[1]);

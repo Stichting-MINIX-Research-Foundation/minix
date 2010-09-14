@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <minix/minlib.h>
-#include <minix/sysinfo.h>
 #include <stdio.h>
 
 /* -DNEW prints time to 0.01 sec. */
@@ -111,7 +110,7 @@ register clock_t t;
   int hours, minutes, seconds, hundredths, i;
   u32_t system_hz;
 
-  getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
+  system_hz = (u32_t) sysconf(_SC_CLK_TCK);
 
   digit_seen = 0;
   for (i = 0; i < 8; i++) a[i] = ' ';

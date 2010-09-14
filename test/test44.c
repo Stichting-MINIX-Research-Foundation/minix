@@ -4,7 +4,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include <minix/com.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
 
@@ -15,6 +14,7 @@ main(int argc, char *argv[])
 #define CHUNKS1	3
 #define CHUNKS2	2
 #define CHUNKS (CHUNKS1+CHUNKS2)
+#define LARGESIZE 262144
 	int i, fd;
 	char *v[CHUNKS];
 #define STARTV 0x90000000
@@ -86,11 +86,11 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	} else {
-		/* Child performs bogus getsysinfo */
+		/* Child performs bogus read */
 		int res;
 		char *buf = v[CHUNKS-1];
 		errno = 0;
-      		res = getsysinfo( PM_PROC_NR, SI_PROC_TAB, buf);
+		res = read(fd, buf, LARGESIZE);
 		if(res >= 0)  {
 			fprintf(stderr, "res %d\n", res);
 			exit(1);

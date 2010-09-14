@@ -23,7 +23,6 @@
 #include <minix/ipc.h>
 #include <minix/rs.h>
 #include <minix/syslib.h>
-#include <minix/sysinfo.h>
 #include <minix/bitmap.h>
 #include <minix/paths.h>
 #include <minix/sef.h>
@@ -277,12 +276,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
       }
 
       /* Get HZ. */
-      if(getsysinfo_up(PM_PROC_NR,
-          SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
-          system_hz = DEFAULT_HZ;
-          fprintf(stderr, "WARNING: reverting to default HZ %d\n",
-              (int) system_hz);
-      }
+      system_hz = (u32_t) sysconf(_SC_CLK_TCK);
 
       /* Check optional arguments that come in pairs like "-args arglist". */
       for (i=optind+MIN_ARG_COUNT+1; i<argc; i=i+2) {

@@ -932,9 +932,9 @@ SPDP dtime()
  return q;
 }
 #else
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/times.h>
-#include <minix/sysinfo.h>
 #include <time.h>
 
 struct tms tms;
@@ -945,7 +945,7 @@ SPDP dtime(void)
  int secs, msecs;
  u32_t system_hz;
  times(&tms);
- getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
+ system_hz = (u32_t) sysconf(_SC_CLK_TCK);
  secs = tms.tms_utime / system_hz;
  q = secs;
  tms.tms_utime -= secs * system_hz;

@@ -25,7 +25,6 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include <net/gen/socket.h>
 #include <minix/queryparam.h>
 #include <minix/com.h>
-#include <minix/sysinfo.h>
 
 #include <inet/generic/buf.h>
 #include <inet/generic/clock.h>
@@ -55,7 +54,7 @@ int main(int argc, char*argv[])
 	int a_flag, n_flag, v_flag;
 	struct tms tmsbuf;
 
-	getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
+	system_hz = (u32_t) sysconf(_SC_CLK_TCK);
 
 	(prog_name=strrchr(argv[0], '/')) ? prog_name++ : (prog_name=argv[0]);
 
