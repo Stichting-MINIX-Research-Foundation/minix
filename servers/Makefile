@@ -3,7 +3,8 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	ds ext2 hgfs inet init ipc is iso9660fs mfs pfs pm rs sched vfs vm 
+SUBDIR=	ds ext2 hgfs inet init ipc is iso9660fs \
+	mfs pfs pm procfs rs sched vfs vm 
 
 IMAGE_SUBDIR=	ds init mfs pfs pm rs sched vfs vm
 

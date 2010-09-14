@@ -1,0 +1,68 @@
+Development notes regarding ProcFS. Original document by David van Moolenbroek.
+
+
+SECURITY MODEL
+
+Right now, procfs is not able to deal with security-sensitive information,
+because there would be too many opportunities for rogue processes to obtain
+values they shouldn't be able to get to. This is mainly due to the fact that
+while procfs is running, the environment around it may change arbitrarily: for
+example, a /proc/<pid>/mem file could offer access to a process's core memory,
+but if a rogue process opened that file right before the victim process invokes
+an exec() on a setuid binary, the rogue process could read from the victim
+process's memory while a victim user provides this process with their password.
+This is only one example out of many; such time-to-check/time-to-use race
+conditions are inherent to the inherently race-prone situation that procfs
+finds itself in, trying to provide information about an asynchronously running
+system.
+
+A little more specifically, this problem mainly comes up when system calls are
+made to obtain information (long) after a certain PID directory has been
+updated, which typically happens right after pulling in a new copy of the
+process tables of the kernel, PM, and VFS. Returning stale information from
+those tables is usually not a problem: at worst, the caller gets outdated
+information about the system as it once was, after passing a security check for
+that point in time. Hence, it can not obtain information it never had access
+to. Using information from those tables to perform calls later, however, is
+a different case. In the "mem" example above, procfs would have the old user ID
+in its copy of the process tables, and yet perform on-demand sys_datacopy calls
+(or something similar) to retrieve memory from the process, bypassing a check
+on the then-current user ID. A similar situation already exists right now for
+the /proc/<pid>/map file for example, which pulls in information on demand -
+but it provides only public information anyway, just like the other files that
+procfs currently exposes.
+
+A proper solution to this problem has simply not been implemented yet. It is
+possible to change the system in such a way that procfs check whether the
+target process is still in the same security state before returning information
+to the caller process. This can be done either while or after obtaining the
+information, depending on what is most convenient for the design of the system.
+Any such solution obviously has an impact on system design and procfs'
+performance, and was found not worth implementing for the first version of
+procfs, since all offered information was public anyway. However, such a change
+*must* be made before procfs can expose anything that provides a potential for
+security breaches.
+
+Finally, it must be kept in mind that even updating the process tables from
+various other sources is not an atomic operation. There might be mismatches
+between the tables. Procfs must be able to handle such occurrences with care,
+from both a security perspective and a general functionality perspective.
+
+
+FUTURE EXPANSIONS
+
+It would be trivial to add a /proc/self symlink pointing to the caller's PID
+directory, if the VFS-FS protocol's REQ_RDLINK request were augmented to
+include the caller's PID or endpoint. However, this would be a procfs-specific
+protocol change, and there does not seem to be a need for this just yet.
+
+Even more custom protocol changes or procfs-specific backcalls would have to be
+added to expose processes' current working directory, root directory,
+executable path, or open files. A number of VFS parts would have to be changed
+significantly to fully support all of these, possibly including an entire DNLC.
+
+All the necessary infrastructure is there to add static (sub)directories - for
+example, a /proc/net/ directory. It would be more tricky to add subdirectories
+for dynamic (process) directories, for example /proc/<pid>/fd/. This would
+require some changes to the VTreeFS side of the tree management. Some of the
+current assumptions are documented in type.h.
