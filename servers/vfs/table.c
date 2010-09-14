@@ -112,7 +112,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_ftruncate,	/* 94 = truncate */
 	do_chmod,	/* 95 = fchmod */
 	do_chown,	/* 96 = fchown */
-	no_sys,		/* 97 = getsysinfo_up */
+	no_sys,		/* 97 = (getsysinfo_up) */
 	no_sys,		/* 98 = (sprofile) */
 	no_sys,		/* 99 = (cprofile) */
 	/* THE MINIX3 ABI ENDS HERE */

@@ -5,6 +5,7 @@ LIB=		sys
 SRCS=  \
 	alloc_util.c \
 	assert.c \
+	getsysinfo.c \
 	kernel_call.c \
 	panic.c \
 	pci_attr_r16.c \

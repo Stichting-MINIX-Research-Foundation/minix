@@ -26,6 +26,7 @@
 #include <minix/const.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
+#include <minix/sysinfo.h>
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
@@ -46,7 +47,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <signal.h>
 #include <assert.h>
 #include <sys/param.h>

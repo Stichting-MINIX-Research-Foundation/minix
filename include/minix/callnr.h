@@ -69,8 +69,8 @@
 #define REBOOT		  76
 #define SVRCTL		  77
 #define SYSUNAME	  78
-#define GETSYSINFO	  79	/* to PM, VFS, RS, or DS */
-#define GETDENTS	  80	/* to FS */
+#define GETSYSINFO	  79	/* to PM or VFS (obsolete) */
+#define GETDENTS	  80	/* to VFS */
 #define LLSEEK		  81	/* to VFS */
 #define FSTATFS	 	  82	/* to VFS */
 #define STATVFS 	  83	/* to VFS */
@@ -87,7 +87,7 @@
 #define FTRUNCATE	  94	/* to VFS */
 #define FCHMOD		  95	/* to VFS */
 #define FCHOWN		  96	/* to VFS */
-#define GETSYSINFO_UP	  97	/* to PM or VFS */
+#define GETSYSINFO_UP	  97	/* to PM (obsolete) */
 #define SPROF             98    /* to PM */
 #define CPROF             99    /* to PM */
 

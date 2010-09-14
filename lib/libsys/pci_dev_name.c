@@ -11,7 +11,7 @@ pci_dev_name.c
  *===========================================================================*/
 PUBLIC char *pci_dev_name(u16_t vid, u16_t did)
 {
-	static char name[PCIINFO_ENTRY_SIZE];	/* We need a better interface for this */
+	static char name[80];	/* We need a better interface for this */
 
 	int r;
 	cp_grant_id_t gid;

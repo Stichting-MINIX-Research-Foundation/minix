@@ -162,7 +162,10 @@ PUBLIC int main(void)
 		error= do_mapdriver();
 		if (error != SUSPEND) reply(who_e, error);
 		break;
-
+	      case COMMON_GETSYSINFO:
+		error= do_getsysinfo();
+		if (error != SUSPEND) reply(who_e, error);
+		break;
 	      default:
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 

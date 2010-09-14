@@ -26,6 +26,7 @@
 #include <minix/safecopies.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
+#include <minix/sysinfo.h>
 #include <minix/u64.h>
 #include <sys/ptrace.h>
 #include <sys/svrctl.h>
@@ -72,12 +73,15 @@ PUBLIC int do_getsysinfo()
 
   if (!super_user) return(EPERM);
 
+  /* This call should no longer be used by user applications. In the future,
+   * requests from non-system processes should be denied. For now, just warn.
+   */
+  if (call_nr == GETSYSINFO) {
+	printf("VFS: obsolete call of do_getsysinfo() by proc %d\n",
+		fp->fp_endpoint);
+  }
+
   switch(m_in.info_what) {
-  case SI_PROC_ADDR:
-  	proc_addr = &fproc[0];
-  	src_addr = (vir_bytes) &proc_addr;
-  	len = sizeof(struct fproc *);
-  	break; 
   case SI_PROC_TAB:
   	src_addr = (vir_bytes) fproc;
   	len = sizeof(struct fproc) * NR_PROCS;

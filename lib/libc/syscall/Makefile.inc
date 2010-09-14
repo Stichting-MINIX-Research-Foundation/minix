@@ -56,7 +56,6 @@ SRCS+=  \
 	getpprocnr.S \
 	getprocnr.S \
 	getsigset.S \
-	getsysinfo.S \
 	getuid.S \
 	ioctl.S \
 	isatty.S \

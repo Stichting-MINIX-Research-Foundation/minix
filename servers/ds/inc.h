@@ -21,6 +21,7 @@
 #include <minix/com.h>
 #include <minix/ds.h>
 #include <minix/syslib.h>
+#include <minix/sysinfo.h>
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
@@ -29,7 +30,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <signal.h>
 
 #include "proto.h"

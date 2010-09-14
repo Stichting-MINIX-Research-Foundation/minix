@@ -877,8 +877,10 @@
 #define PM_NUID					m2_i1
 #define PM_NGID					m2_i2
 
-/* Field names for GETSYSINFO_UP (PM). */
+/* Field names for GETSYSINFO_UP (PM) (obsolete). */
 #define SIU_WHAT	m2_i1
+#  define SIU_LOADINFO	1		/* retrieve load info data */
+#  define SIU_SYSTEMHZ	2		/* retrieve system clock frequency */
 #define SIU_LEN		m2_i2
 #define SIU_WHERE	m2_p1
 
@@ -901,6 +903,14 @@
 #	define GCOV_PID     m1_i3
 #	define GCOV_BUFF_P  m1_p1
 #	define GCOV_BUFF_SZ m1_i1
+
+/* Common request to several system servers: retrieve system information.
+ * The GETSYSINFO userland call is an (old and deprecated) alias of this, so do
+ * not change the fields or old userland applications may break.
+ */
+#define COMMON_GETSYSINFO	(COMMON_RQ_BASE+2)
+#	define SI_WHAT		m1_i1
+#	define SI_WHERE		m1_p1
 
 /*===========================================================================*
  *                Messages for VM server				     *

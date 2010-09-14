@@ -72,7 +72,7 @@ PUBLIC int main(int argc, char **argv)
       case DS_SNAPSHOT:
 	  result = do_snapshot(&m);
 	  break;
-      case GETSYSINFO:
+      case COMMON_GETSYSINFO:
 	  result = do_getsysinfo(&m);
 	  break;
       default: 

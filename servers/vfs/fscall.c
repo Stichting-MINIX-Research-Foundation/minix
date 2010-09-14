@@ -130,18 +130,14 @@ message *m;				/* request/reply message pointer */
 	/* Initialize global variables for the nested call */
 	set_globals(m);
 
-	/* Perform the nested call */
-	if (call_nr < 0 || call_nr >= NCALLS) {
+	/* Perform the nested call - only getsysinfo() is allowed right now */
+	if (call_nr == COMMON_GETSYSINFO) {
+		r = do_getsysinfo();
+	} else {
 		printf("VFS: invalid nested call %d from FS %d\n", call_nr,
 			who_e);
 
 		r = ENOSYS;
-	} else {
-#if ENABLE_SYSCALL_STATS
-		calls_stats[call_nr]++;
-#endif
-
-		r = (*call_vec[call_nr])();
 	}
 
 	/* Store the result, and restore original global variables */

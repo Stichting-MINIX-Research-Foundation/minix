@@ -6,21 +6,19 @@
  *   getidle();
  *   ...
  *   idleperc = getidle();
- *   printf("CPU usage: %lg%%\n", 100.0 - idleperc);
+ *   if (idleperc >= 0.0)
+ *     printf("CPU usage: %lg%%\n", 100.0 - idleperc);
  *
- * This routine goes through PM to get the idle time, rather than making the
- * sys_getinfo() call to the kernel directly. This means that it can be used
- * by non-system processes as well, but it will incur some extra overhead in
- * the system case. The overhead does not end up being measured, because the
- * system is clearly not idle while the system calls are being made. In any
- * case, for this reason, only one getidle() run is allowed at a time.
+ * Notes:
+ * - This functionality can only be used by system processes.
+ * - The kernel has to be compiled with CONFIG_IDLE_TSC support.
+ * - Only one getidle() run is allowed per process at a time.
  *
- * Note that the kernel has to be compiled with CONFIG_IDLE_TSC support.
  */
 
 #define _MINIX 1
 #define _SYSTEM 1
-#include <minix/sysinfo.h>
+#include <lib.h>
 #include <minix/u64.h>
 #include <minix/sysutil.h>
 
@@ -52,8 +50,7 @@ double getidle(void)
   int r;
 
   if (!running) {
-	r = getsysinfo_up(PM_PROC_NR, SIU_IDLETSC, sizeof(idle), &idle);
-	if (r != sizeof(idle))
+	if ((r = sys_getidletsc(&idle)) != OK)
 		return -1.0;
 
 	running = 1;
@@ -67,8 +64,7 @@ double getidle(void)
 
 	running = 0;
 
-	r = getsysinfo_up(PM_PROC_NR, SIU_IDLETSC, sizeof(idle2), &idle2);
-	if (r != sizeof(idle2))
+	if ((r = sys_getidletsc(&idle2)) != OK)
 		return -1.0;
 
 	idelta = sub64(idle2, idle);

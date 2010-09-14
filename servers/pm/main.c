@@ -128,6 +128,9 @@ PUBLIC int main()
 		else
 			result= ENOSYS;
 		break;
+	case COMMON_GETSYSINFO:
+		result = do_getsysinfo();
+		break;
 	default:
 		/* Else, if the system call number is valid, perform the
 		 * call.

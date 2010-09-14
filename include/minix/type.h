@@ -198,20 +198,5 @@ struct k_randomness {
   } bin[RANDOM_SOURCES];
 };
 
-/* information on PCI devices */
-
-#define PCIINFO_ENTRY_SIZE 80
-
-struct pciinfo_entry {
-	u16_t pie_vid;
-	u16_t pie_did;
-	char pie_name[PCIINFO_ENTRY_SIZE];
-};
-
-struct pciinfo {
-	size_t pi_count;
-	struct pciinfo_entry pi_entries[NR_PCIDEV];
-};
-
 #endif /* _TYPE_H */
 
