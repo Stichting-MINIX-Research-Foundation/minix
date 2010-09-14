@@ -23,4 +23,6 @@
 #define _PATH_SYSTEM_CONF	"/etc/system.conf"
 #define _PATH_SYSTEM_CONF_DIR	"/etc/system.conf.d"
 
+#define _PATH_PROC	"/proc"
+
 #endif
