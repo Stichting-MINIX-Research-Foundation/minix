@@ -50,8 +50,11 @@ EXTERN struct mproc {
 
   unsigned mp_flags;		/* flag bits */
   unsigned mp_trace_flags;	/* trace options */
-  vir_bytes mp_procargs;        /* ptr to proc's initial stack arguments */
   message mp_reply;		/* reply message to be sent to one */
+
+  /* Process execution frame. Both fields are used by procfs. */
+  vir_bytes mp_frame_addr;	/* ptr to proc's initial stack arguments */
+  size_t mp_frame_len;		/* size of proc's initial stack arguments */
 
   /* Scheduling priority. */
   signed int mp_nice;		/* nice is PRIO_MIN..PRIO_MAX, standard 0. */

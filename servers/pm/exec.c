@@ -8,7 +8,7 @@
  *    - take care of setuid and setgid bits
  *    - fix up 'mproc' table
  *    - tell kernel about EXEC
- *    - save offset to initial argc (for ps)
+ *    - save offset to initial argc (for procfs)
  *
  * The entry points into this file are:
  *   do_exec:	 perform the EXEC system call
@@ -95,8 +95,9 @@ PUBLIC int do_exec_newmem()
 		strncpy(rmp->mp_name, args.progname, PROC_NAME_LEN-1);
 		rmp->mp_name[PROC_NAME_LEN-1] = '\0';
 
-		/* Save offset to initial argc (for ps) */
-		rmp->mp_procargs = (vir_bytes) stack_top - args.args_bytes;
+		/* Save offset to initial argc (for procfs) */
+		rmp->mp_frame_addr = (vir_bytes) stack_top - args.args_bytes;
+		rmp->mp_frame_len = args.args_bytes;
 
 		/* Kill process if something goes wrong after this point. */
 		rmp->mp_flags |= PARTIAL_EXEC;
@@ -183,7 +184,7 @@ vir_bytes pc;
 		check_sig(rmp->mp_pid, sn, FALSE /* ksig */);
 	}
 
-	new_sp= (char *)rmp->mp_procargs;
+	new_sp= (char *)rmp->mp_frame_addr;
 	r= sys_exec(rmp->mp_endpoint, new_sp, rmp->mp_name, pc);
 	if (r != OK) panic("sys_exec failed: %d", r);
 }

@@ -562,7 +562,7 @@ int pstat(int p_nr, struct pstat *bufp, int endpoints)
   bufp->ps_utime = ps_proc[p_ki].p_user_time;
   bufp->ps_stime = ps_proc[p_ki].p_sys_time;
 
-  bufp->ps_procargs = ps_mproc[p_nr].mp_procargs;
+  bufp->ps_procargs = ps_mproc[p_nr].mp_frame_addr;
 
   if (bufp->ps_state == Z_STATE)
 	bufp->ps_args = "<defunct>";
