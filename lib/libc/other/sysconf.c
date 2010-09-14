@@ -10,6 +10,27 @@
 #include <lib.h>
 #include <unistd.h>
 #include <time.h>
+#include <stdio.h>
+#include <minix/paths.h>
+
+PRIVATE u32_t get_hz(void)
+{
+  FILE *fp;
+  u32_t hz;
+  int r;
+
+  if ((fp = fopen(_PATH_PROC "/hz", "r")) != NULL)
+  {
+	r = fscanf(fp, "%lu", &hz);
+
+	fclose(fp);
+
+	if (r == 1)
+		return hz;
+  }
+
+  return DEFAULT_HZ;
+}
 
 PUBLIC long int sysconf(name)
 int name;			/* property being inspected */
@@ -22,7 +43,7 @@ int name;			/* property being inspected */
 		return (long) CHILD_MAX;
 
 	case _SC_CLK_TCK:
-		return (long) CLOCKS_PER_SEC;
+		return (long) get_hz();
 
 	case _SC_NGROUPS_MAX:
 		return (long) NGROUPS_MAX;
