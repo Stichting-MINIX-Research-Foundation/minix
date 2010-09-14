@@ -1,5 +1,6 @@
 
 /* Author: Ben Gras <beng@few.vu.nl>  17 march 2006 */
+/* Modified for ProcFS by Alen Stojanov and David van Moolenbroek */
 
 #define _MINIX 1
 #define _POSIX_SOURCE 1
@@ -18,6 +19,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include <sys/ioc_tty.h>
 #include <sys/times.h>
@@ -25,21 +27,21 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-#include <minix/ipc.h>
 #include <minix/com.h>
-#include <minix/sysinfo.h>
 #include <minix/config.h>
 #include <minix/type.h>
+#include <minix/endpoint.h>
 #include <minix/const.h>
-
 #include <minix/u64.h>
-
-#include <machine/archtypes.h>
-#include "pm/mproc.h"
-#include "kernel/const.h"
-#include "kernel/proc.h"
+#include <minix/paths.h>
+#include <minix/procfs.h>
 
 u32_t system_hz;
+
+unsigned int nr_procs, nr_tasks;
+int nr_total;
+
+#define  SLOT_NR(e) (_ENDPOINT_P(e) + nr_tasks)
 
 #define  TC_BUFFER  1024        /* Size of termcap(3) buffer    */
 #define  TC_STRINGS  200        /* Enough room for cm,cl,so,se  */
@@ -48,26 +50,167 @@ char *Tclr_all;
 
 int blockedverbose = 0;
 
-#if 0
-int print_memory(struct pm_mem_info *pmi)
-{
-        int h;
-        int largest_bytes = 0, total_bytes = 0; 
-        for(h = 0; h < _NR_HOLES; h++) {
-                if(pmi->pmi_holes[h].h_base && pmi->pmi_holes[h].h_len) {
-                        int bytes;
-                        bytes = pmi->pmi_holes[h].h_len << CLICK_SHIFT;
-                        if(bytes > largest_bytes) largest_bytes = bytes;
-                        total_bytes += bytes;
-                }
-        }
+#define  USED		0x1
+#define  IS_TASK	0x2
+#define  IS_SYSTEM	0x4
+#define  BLOCKED	0x8
 
-	printf("Mem: %dK Free, %dK Contiguous Free\n",
-		total_bytes/1024, largest_bytes/1024);
+struct proc {
+	int p_flags;
+	endpoint_t p_endpoint;
+	pid_t p_pid;
+	u64_t p_cycles;
+	int p_priority;
+	endpoint_t p_blocked;
+	time_t p_user_time;
+	vir_bytes p_memory;
+	uid_t p_effuid;
+	int p_nice;
+	char p_name[PROC_NAME_LEN+1];
+};
+
+struct proc *proc = NULL, *prev_proc = NULL;
+
+void parse_file(pid_t pid)
+{
+	char path[PATH_MAX], name[256], type, state;
+	int version, endpt, effuid;
+	unsigned long cycles_hi, cycles_lo;
+	FILE *fp;
+	struct proc *p;
+
+	sprintf(path, "%d/psinfo", pid);
+
+	if ((fp = fopen(path, "r")) == NULL)
+		return;
+
+	if (fscanf(fp, "%d", &version) != 1) {
+		fclose(fp);
+		return;
+	}
+
+	if (version != PSINFO_VERSION) {
+		fputs("procfs version mismatch!\n", stderr);
+		exit(1);
+	}
+
+	if (fscanf(fp, " %c %d", &type, &endpt) != 2) {
+		fclose(fp);
+		return;
+	}
+
+	p = &proc[SLOT_NR(endpt)];
+
+	if (type == TYPE_TASK)
+		p->p_flags |= IS_TASK;
+	else if (type == TYPE_SYSTEM)
+		p->p_flags |= IS_SYSTEM;
+
+	p->p_endpoint = endpt;
+	p->p_pid = pid;
+
+	if (fscanf(fp, " %255s %c %d %d %lu %*u %lu %lu",
+		name, &state, &p->p_blocked, &p->p_priority,
+		&p->p_user_time, &cycles_hi, &cycles_lo) != 7) {
+
+		fclose(fp);
+		return;
+	}
+
+	strncpy(p->p_name, name, sizeof(p->p_name)-1);
+	p->p_name[sizeof(p->p_name)-1] = 0;
+
+	if (state != STATE_RUN)
+		p->p_flags |= BLOCKED;
+	p->p_cycles = make64(cycles_lo, cycles_hi);
+	p->p_memory = 0L;
+
+	if (!(p->p_flags & IS_TASK)) {
+		if (fscanf(fp, " %lu %*u %*u %*c %*d %*u %u %*u %d",
+			&p->p_memory, &effuid, &p->p_nice) != 3) {
+
+			fclose(fp);
+			return;
+		}
+
+		p->p_effuid = effuid;
+	}
+
+	p->p_flags |= USED;
+
+	fclose(fp);
+}
+
+void parse_dir(void)
+{
+	DIR *p_dir;
+	struct dirent *p_ent;
+	pid_t pid;
+	char *end;
+
+	if ((p_dir = opendir(".")) == NULL) {
+		perror("opendir on " _PATH_PROC);
+		exit(1);
+	}
+
+	for (p_ent = readdir(p_dir); p_ent != NULL; p_ent = readdir(p_dir)) {
+		pid = strtol(p_ent->d_name, &end, 10);
+
+		if (!end[0] && pid != 0)
+			parse_file(pid);
+	}
+
+	closedir(p_dir);
+}
+
+void get_procs(void)
+{
+	struct proc *p;
+	int i;
+
+	p = prev_proc;
+	prev_proc = proc;
+	proc = p;
+
+	if (proc == NULL) {
+		proc = malloc(nr_total * sizeof(proc[0]));
+
+		if (proc == NULL) {
+			fprintf(stderr, "Out of memory!\n");
+			exit(1);
+		}
+	}
+
+	for (i = 0; i < nr_total; i++)
+		proc[i].p_flags = 0;
+
+	parse_dir();
+}
+
+int print_memory(void)
+{
+	FILE *fp;
+	unsigned int pagesize; 
+	unsigned long total, free, largest, cached;
+
+	if ((fp = fopen("meminfo", "r")) == NULL)	
+		return 0;
+
+	if (fscanf(fp, "%u %lu %lu %lu %lu", &pagesize, &total, &free,
+			&largest, &cached) != 5) {
+		fclose(fp);
+		return 0;
+	}
+
+	fclose(fp);
+
+	printf("main memory: %uK total, %uK free, %uK contig free, "
+		"%uK cached\n",
+		(pagesize * total)/1024, (pagesize * free)/1024,
+		(pagesize * largest)/1024, (pagesize * cached)/1024);
 
 	return 1;
 }
-#endif
 
 int print_load(double *loads, int nloads)
 {
@@ -79,21 +222,19 @@ int print_load(double *loads, int nloads)
 	return 1;
 }
 
-#define PROCS (NR_PROCS+NR_TASKS)
-
 int print_proc_summary(struct proc *proc)
 {
 	int p, alive, running, sleeping;
 
 	alive = running = sleeping = 0;
 
-	for(p = 0; p < PROCS; p++) {
-		if(p - NR_TASKS == IDLE)
+	for(p = 0; p < nr_total; p++) {
+		if (proc[p].p_endpoint == IDLE)
 			continue;
-		if(isemptyp(&proc[p]))
+		if(!(proc[p].p_flags & USED))
 			continue;
 		alive++;
-		if(!proc_is_runnable(&proc[p]))
+		if(proc[p].p_flags & BLOCKED)
 			sleeping++;
 		else
 			running++;
@@ -103,7 +244,7 @@ int print_proc_summary(struct proc *proc)
 	return 1;
 }
 
-static struct tp {
+struct tp {
 	struct proc *p;
 	u64_t ticks;
 };
@@ -114,8 +255,8 @@ int cmp_ticks(const void *v1, const void *v2)
 	struct tp *p1 = (struct tp *) v1, *p2 = (struct tp *) v2;
 	int p1blocked, p2blocked;
 
-	p1blocked = !!p1->p->p_rts_flags;
-	p2blocked = !!p2->p->p_rts_flags;
+	p1blocked = !!(p1->p->p_flags & BLOCKED);
+	p2blocked = !!(p2->p->p_flags & BLOCKED);
 
 	/* Primarily order by used number of cpu cycles.
 	 * 
@@ -135,14 +276,7 @@ int cmp_ticks(const void *v1, const void *v2)
 		return -c;
 
 	/* Process slot number is a tie breaker. */
-
-	if(p1->p->p_nr < p2->p->p_nr)
-		return -1;
-	if(p1->p->p_nr > p2->p->p_nr)
-		return 1;
-
-	fprintf(stderr, "unreachable.\n");
-	abort();
+	return (int) (p1->p - p2->p);
 }
 
 struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
@@ -168,7 +302,7 @@ struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
  */
 #define SCALE	(1 << 12)
 
-void print_proc(struct tp *tp, struct mproc *mpr, u32_t tcyc)
+void print_proc(struct tp *tp, u32_t tcyc)
 {
 	int euid = 0;
 	static struct passwd *who = NULL;
@@ -178,9 +312,9 @@ void print_proc(struct tp *tp, struct mproc *mpr, u32_t tcyc)
 	int ticks;
 	struct proc *pr = tp->p;
 
-	printf("%5d ", mpr->mp_pid);
-	euid = mpr->mp_effuid;
-	name = mpr->mp_name;
+	printf("%5d ", pr->p_pid);
+	euid = pr->p_effuid;
+	name = pr->p_name;
 
 	if(last_who != euid || !who) {
 		who = getpwuid(euid);
@@ -188,17 +322,15 @@ void print_proc(struct tp *tp, struct mproc *mpr, u32_t tcyc)
 	}
 
 	if(who && who->pw_name) printf("%-8s ", who->pw_name);
-	else if(pr->p_nr >= 0) printf("%8d ", mpr->mp_effuid);
+	else if(!(pr->p_flags & IS_TASK)) printf("%8d ", pr->p_effuid);
 	else printf("         ");
 
 	printf(" %2d ", pr->p_priority);
-	if(pr->p_nr >= 0) {
-		printf(" %3d ", mpr->mp_nice);
+	if(!(pr->p_flags & IS_TASK)) {
+		printf(" %3d ", pr->p_nice);
 	} else printf("     ");
-	printf("%5dK",
-		((pr->p_memmap[T].mem_len + 
-		pr->p_memmap[D].mem_len) << CLICK_SHIFT)/1024);
-	printf("%6s", pr->p_rts_flags ? "" : "RUN");
+	printf("%5ldK", (pr->p_memory + 512) / 1024);
+	printf("%6s", (pr->p_flags & BLOCKED) ? "" : "RUN");
 	ticks = pr->p_user_time;
 	printf(" %3ld:%02ld ", (ticks/system_hz/60), (ticks/system_hz)%60);
 
@@ -208,10 +340,9 @@ void print_proc(struct tp *tp, struct mproc *mpr, u32_t tcyc)
 }
 
 void print_procs(int maxlines,
-	struct proc *proc1, struct proc *proc2,
-	struct mproc *mproc)
+	struct proc *proc1, struct proc *proc2)
 {
-	int p, nprocs, tot=0;
+	int p, nprocs;
 	u64_t idleticks = cvu64(0);
 	u64_t kernelticks = cvu64(0);
 	u64_t systemticks = cvu64(0);
@@ -220,10 +351,20 @@ void print_procs(int maxlines,
 	unsigned long tcyc;
 	unsigned long tmp;
 	int blockedseen = 0;
-	struct tp tick_procs[PROCS];
+	static struct tp *tick_procs = NULL;
 
-	for(p = nprocs = 0; p < PROCS; p++) {
-		if(isemptyp(&proc2[p]))
+	if (tick_procs == NULL) {
+		tick_procs = malloc(nr_total * sizeof(tick_procs[0]));
+
+		if (tick_procs == NULL) {
+			fprintf(stderr, "Out of memory!\n");
+			exit(1);
+		}
+	}
+
+	for(p = nprocs = 0; p < nr_total; p++) {
+		
+		if(!(proc2[p].p_flags & USED))
 			continue;
 		tick_procs[nprocs].p = proc2 + p;
 		if(proc1[p].p_endpoint == proc2[p].p_endpoint) {
@@ -242,10 +383,14 @@ void print_procs(int maxlines,
 			kernelticks = tick_procs[nprocs].ticks;
 			continue;
 		}
-		if(mproc[proc2[p].p_nr].mp_procgrp == 0)
-			systemticks = add64(systemticks, tick_procs[nprocs].ticks);
-		else if (p > NR_TASKS)
-			userticks = add64(userticks, tick_procs[nprocs].ticks);
+		if(!(proc2[p].p_flags & IS_TASK)) {
+			if(proc2[p].p_flags & IS_SYSTEM)
+				systemticks = add64(systemticks,
+					tick_procs[nprocs].ticks);
+			else
+				userticks = add64(userticks,
+					tick_procs[nprocs].ticks);
+		}
 
 		nprocs++;
 	}
@@ -277,41 +422,38 @@ void print_procs(int maxlines,
 	NEWLINE;
 	for(p = 0; p < nprocs; p++) {
 		struct proc *pr;
-		int pnr;
 		int level = 0;
 
-		pnr = tick_procs[p].p->p_nr;
+		pr = tick_procs[p].p;
 
-		if(pnr < 0) {
+		if(pr->p_flags & IS_TASK) {
 			/* skip old kernel tasks as they don't run anymore */
 			continue;
 		}
 
-		pr = tick_procs[p].p;
-
 		/* If we're in blocked verbose mode, indicate start of
 		 * blocked processes.
 		 */
-		if(blockedverbose && pr->p_rts_flags && !blockedseen) {
+		if(blockedverbose && (pr->p_flags & BLOCKED) && !blockedseen) {
 			NEWLINE;
 			printf("Blocked processes:");
 			NEWLINE;
 			blockedseen = 1;
 		}
 
-		print_proc(&tick_procs[p], &mproc[pnr], tcyc);
+		print_proc(&tick_procs[p], tcyc);
 		NEWLINE;
 
 		if(!blockedverbose)
 			continue;
 
 		/* Traverse dependency chain if blocked. */
-		while(pr->p_rts_flags) {
+		while(pr->p_flags & BLOCKED) {
 			endpoint_t dep = NONE;
 			struct tp *tpdep;
 			level += 5;
 
-			if((dep = P_BLOCKEDON(pr)) == NONE) {
+			if((dep = pr->p_blocked) == NONE) {
 				printf("not blocked on a process");
 				NEWLINE;
 				break;
@@ -323,7 +465,7 @@ void print_procs(int maxlines,
 			tpdep = lookup(dep, tick_procs, nprocs);
 			pr = tpdep->p;
 			printf("%*s> ", level, "");
-			print_proc(tpdep, &mproc[pr->p_nr], tcyc);
+			print_proc(tpdep, tcyc);
 			NEWLINE;
 		}
 	}
@@ -333,15 +475,8 @@ void showtop(int r)
 {
 #define NLOADS 3
 	double loads[NLOADS];
-	int nloads, i, p, lines = 0;
-	static struct proc prev_proc[PROCS], proc[PROCS];
-	static int preheated = 0;
+	int nloads, lines = 0;
 	struct winsize winsize;
-        /*
-	static struct pm_mem_info pmi;
-	*/
-	static struct mproc mproc[NR_PROCS];
-	int mem = 0;
 
 	if(ioctl(STDIN_FILENO, TIOCGWINSZ, &winsize) != 0) {
 		perror("TIOCGWINSZ");
@@ -349,30 +484,9 @@ void showtop(int r)
 		exit(1);
 	}
 
-#if 0
-        if(getsysinfo(PM_PROC_NR, SI_MEM_ALLOC, &pmi) < 0) {
-		fprintf(stderr, "getsysinfo() for SI_MEM_ALLOC failed.\n");
-		mem = 0;
-		exit(1);;
-	} else mem = 1;
-#endif
-
-retry:
-	if(minix_getkproctab(proc, PROCS, 1) < 0) {
-		fprintf(stderr, "minix_getkproctab failed.\n");
-		exit(1);
-	}
-
-	if (!preheated) {
-		preheated = 1;
-		memcpy(prev_proc, proc, sizeof(prev_proc));
-		goto retry;;
-	}
-
-	if(getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc) < 0) {
-		fprintf(stderr, "getsysinfo() for SI_PROC_TAB failed.\n");
-		exit(1);
-	}
+	get_procs();
+	if (prev_proc == NULL)
+		get_procs();
 
 	if((nloads = getloadavg(loads, NLOADS)) != NLOADS) {
 		fprintf(stderr, "getloadavg() failed - %d loads\n", nloads);
@@ -384,16 +498,11 @@ retry:
 
 	lines += print_load(loads, NLOADS);
 	lines += print_proc_summary(proc);
-#if 0
-	if(mem) { lines += print_memory(&pmi); }
-#endif
+	lines += print_memory();
 
 	if(winsize.ws_row > 0) r = winsize.ws_row;
 
-	print_procs(r - lines - 2, prev_proc,
-		proc, mproc);
-
-	memcpy(prev_proc, proc, sizeof(prev_proc));
+	print_procs(r - lines - 2, prev_proc, proc);
 }
 
 void init(int *rows)
@@ -430,11 +539,37 @@ void init(int *rows)
 
 void sigwinch(int sig) { }
 
+void getkinfo(void)
+{
+	FILE *fp;
+
+	if ((fp = fopen("kinfo", "r")) == NULL) {
+		fprintf(stderr, "opening " _PATH_PROC "/kinfo failed\n");
+		exit(1);
+	}
+
+	if (fscanf(fp, "%u %u", &nr_procs, &nr_tasks) != 2) {
+		fprintf(stderr, "reading from " _PATH_PROC "/kinfo failed\n");
+		exit(1);
+	}
+
+	fclose(fp);
+
+	nr_total = (int) (nr_procs + nr_tasks);
+}
+
 int main(int argc, char *argv[])
 {
-	int r, c, s = 0, orig;
+	int r, c, s = 0;
 
-	getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
+	if (chdir(_PATH_PROC) != 0) {
+		perror("chdir to " _PATH_PROC);
+		return 1;
+	}
+
+	system_hz = (u32_t) sysconf(_SC_CLK_TCK);
+
+	getkinfo();
 
 	init(&r);
 
@@ -483,6 +618,7 @@ int main(int argc, char *argv[])
 			if(read(STDIN_FILENO, &c, 1) == 1) {
 				switch(c) {
 					case 'q':
+						putchar('\r');
 						return 0;
 						break;
 				}
