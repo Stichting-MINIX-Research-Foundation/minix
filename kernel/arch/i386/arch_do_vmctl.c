@@ -30,7 +30,7 @@ struct proc *p;
 			p->p_seg.p_cr3 = m_ptr->SVMCTL_PTROOT;
 			p->p_seg.p_cr3_v = (u32_t *) m_ptr->SVMCTL_PTROOT_V;
 			p->p_misc_flags |= MF_FULLVM;
-			if(p == ptproc) {
+			if(p == get_cpulocal_var(ptproc)) {
 				write_cr3(p->p_seg.p_cr3);
 			}
 		} else {

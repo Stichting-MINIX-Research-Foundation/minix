@@ -136,7 +136,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
   struct proc *saved_proc;
 
   /* Save proc_ptr, because it may be changed by debug statements. */
-  saved_proc = proc_ptr;	
+  saved_proc = get_cpulocal_var(proc_ptr);
   
   ep = &ex_data[frame->vector];
 

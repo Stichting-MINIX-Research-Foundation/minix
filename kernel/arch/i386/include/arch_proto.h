@@ -95,6 +95,11 @@ _PROTOTYPE( void frstor, (void *));
 _PROTOTYPE( unsigned short fnstsw, (void));
 _PROTOTYPE( void fnstcw, (unsigned short* cw));
 
+_PROTOTYPE(void __switch_address_space, (struct proc * p,
+						struct proc ** __ptproc));
+#define switch_address_space(proc)	\
+	__switch_address_space(proc, get_cpulocal_var_ptr(ptproc))
+
 /* protect.c */
 struct tss_s {
   reg_t backlink;

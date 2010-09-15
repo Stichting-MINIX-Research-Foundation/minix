@@ -76,7 +76,7 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
 
   proc_stacktrace(src_rp);
   proc_stacktrace(dst_rp);
-  printf("do_update: curr ptproc %d\n", ptproc->p_endpoint);
+  printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
 #endif
 
   /* Let destination inherit the target mask from source. */
@@ -107,7 +107,7 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
   adjust_priv_slot(priv(dst_rp), &orig_dst_priv);
 
   /* Swap global process slot addresses. */
-  swap_proc_slot_pointer(&ptproc, src_rp, dst_rp);
+  swap_proc_slot_pointer(get_cpulocal_var_ptr(ptproc), src_rp, dst_rp);
 
   /* Fix segments. */
   alloc_segments(src_rp);
@@ -121,7 +121,7 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
 
   proc_stacktrace(src_rp);
   proc_stacktrace(dst_rp);
-  printf("do_update: curr ptproc %d\n", ptproc->p_endpoint);
+  printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
 #endif
 
   return OK;

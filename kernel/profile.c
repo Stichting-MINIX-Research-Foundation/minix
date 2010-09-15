@@ -65,6 +65,7 @@ PUBLIC void stop_profile_clock()
  *===========================================================================*/
 PRIVATE int profile_clock_handler(irq_hook_t *hook)
 {
+  struct proc * p;
 /* This executes on every tick of the CMOS timer. */
 
   /* Are we profiling, and profiling memory not full? */
@@ -76,25 +77,27 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
 	return(1);
   }
 
+  p = get_cpulocal_var(proc_ptr);
+
   /* All is OK */
 
   /* Idle process? */
-  if (priv(proc_ptr)->s_proc_nr == IDLE) {
+  if (priv(p)->s_proc_nr == IDLE) {
 	sprof_info.idle_samples++;
   } else
   /* Runnable system process? */
-  if (priv(proc_ptr)->s_flags & SYS_PROC && proc_is_runnable(proc_ptr)) {
+  if (priv(p)->s_flags & SYS_PROC && proc_is_runnable(p)) {
 	/* Note: k_reenter is always 0 here. */
 
 	/* Store sample (process name and program counter). */
-	data_copy(KERNEL, (vir_bytes) proc_ptr->p_name,
+	data_copy(KERNEL, (vir_bytes) p->p_name,
 		sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
-		strlen(proc_ptr->p_name));
+		strlen(p->p_name));
 
-	data_copy(KERNEL, (vir_bytes) &proc_ptr->p_reg.pc, sprof_ep,
+	data_copy(KERNEL, (vir_bytes) &p->p_reg.pc, sprof_ep,
 		(vir_bytes) (sprof_data_addr_vir + sprof_info.mem_used +
-					sizeof(proc_ptr->p_name)),
-		(vir_bytes) sizeof(proc_ptr->p_reg.pc));
+					sizeof(p->p_name)),
+		(vir_bytes) sizeof(p->p_reg.pc));
 
 	sprof_info.mem_used += sizeof(sprof_sample);
 

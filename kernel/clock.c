@@ -60,7 +60,7 @@ PRIVATE clock_t next_timeout;	/* realtime that next timer expires */
 PRIVATE clock_t realtime = 0;		      /* real time clock */
 
 /*
- * The boot processor timer interrupt handler. In addition to non-boot cpus it
+ * The boot processos timer interrupt handler. In addition to non-boot cpus it
  * keeps real time and notifies the clock task if need be
  */
 extern unsigned ooq_msg;
@@ -195,9 +195,8 @@ PUBLIC int ap_timer_int_handler(void)
 	 * user's system time.
 	 */
 
-	/* FIXME prepared for get_cpu_local_var() */
-	p = proc_ptr;
-	billp = bill_ptr;
+	p = get_cpulocal_var(proc_ptr);
+	billp = get_cpulocal_var(bill_ptr);
 
 	p->p_user_time += ticks;
 

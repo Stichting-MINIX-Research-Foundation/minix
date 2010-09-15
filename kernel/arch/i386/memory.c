@@ -81,7 +81,7 @@ PRIVATE phys_bytes createpde(
 	pde = freepdes[free_pde_idx];
 	assert(pde >= 0 && pde < 1024);
 
-	if(pr && ((pr == ptproc) || !HASPT(pr))) {
+	if(pr && ((pr == get_cpulocal_var(ptproc)) || !HASPT(pr))) {
 		/* Process memory is requested, and
 		 * it's a process that is already in current page table, or
 		 * a process that is in every page table.
@@ -109,9 +109,9 @@ PRIVATE phys_bytes createpde(
 	 * can access, into the currently loaded page table so it becomes
 	 * visible.
 	 */
-	assert(ptproc->p_seg.p_cr3_v);
-	if(ptproc->p_seg.p_cr3_v[pde] != pdeval) {
-		ptproc->p_seg.p_cr3_v[pde] = pdeval;
+	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
+	if(get_cpulocal_var(ptproc)->p_seg.p_cr3_v[pde] != pdeval) {
+		get_cpulocal_var(ptproc)->p_seg.p_cr3_v[pde] = pdeval;
 		*changed = 1;
 	}
 
@@ -139,18 +139,18 @@ PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr,
 	assert(vm_running);
 	assert(nfreepdes >= 3);
 
-	assert(ptproc);
-	assert(proc_ptr);
-	assert(read_cr3() == ptproc->p_seg.p_cr3);
+	assert(get_cpulocal_var(ptproc));
+	assert(get_cpulocal_var(proc_ptr));
+	assert(read_cr3() == get_cpulocal_var(ptproc)->p_seg.p_cr3);
 
-	procslot = ptproc->p_nr;
+	procslot = get_cpulocal_var(ptproc)->p_nr;
 
 	assert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
 
 	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_SLOT_FREE));
 	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
-	assert(!RTS_ISSET(ptproc, RTS_SLOT_FREE));
-	assert(ptproc->p_seg.p_cr3_v);
+	assert(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE));
+	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;
@@ -190,8 +190,8 @@ PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr,
 
 	if(srcproc) assert(!RTS_ISSET(srcproc, RTS_SLOT_FREE));
 	if(dstproc) assert(!RTS_ISSET(dstproc, RTS_SLOT_FREE));
-	assert(!RTS_ISSET(ptproc, RTS_SLOT_FREE));
-	assert(ptproc->p_seg.p_cr3_v);
+	assert(!RTS_ISSET(get_cpulocal_var(ptproc), RTS_SLOT_FREE));
+	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
 	return OK;
 }
@@ -682,7 +682,7 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 
 	assert(nfreepdes >= 3);
 
-	assert(ptproc->p_seg.p_cr3_v);
+	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
 	/* With VM, we have to map in the physical memory. 
 	 * We can do this 4MB at a time.
@@ -702,7 +702,7 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 		ph += chunk;
 	}
 
-	assert(ptproc->p_seg.p_cr3_v);
+	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
 	return OK;
 }

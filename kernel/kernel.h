@@ -2,7 +2,9 @@
 #define KERNEL_H
 
 /* APIC is turned on by default */
+#ifndef CONFIG_APIC
 #define CONFIG_APIC
+#endif
 /* boot verbose */
 #define CONFIG_BOOT_VERBOSE
 /*
@@ -52,6 +54,7 @@
 #include "profile.h"		/* system profiling */
 #include "perf.h"		/* performance-related definitions */
 #include "debug.h"		/* debugging, MUST be last kernel header */
+#include "cpulocals.h"
 
 #endif /* __ASSEMBLY__ */
 

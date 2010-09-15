@@ -26,8 +26,6 @@ EXTERN struct k_randomness krandom;	/* gather kernel random information */
 EXTERN struct loadinfo kloadinfo;	/* status of load average */
 
 /* Process scheduling information and the kernel reentry count. */
-EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
-EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 EXTERN char *ipc_call_names[IPCNO_HIGHEST+1]; /* human-readable call names */
@@ -67,7 +65,6 @@ EXTERN u64_t cpu_hz[CONFIG_MAX_CPUS];
 /* VM */
 EXTERN int vm_running;
 EXTERN int catch_pagefaults;
-EXTERN struct proc *ptproc;
 
 /* Timing */
 EXTERN util_timingdata_t timingdata[TIMING_CATEGORIES];

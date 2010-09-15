@@ -7,7 +7,7 @@ PROG=	kernel
 SRCS=	mpx.S
 SRCS+=	start.c table.c main.c proc.c \
 	system.c clock.c utility.c debug.c profile.c interrupt.c \
-	watchdog.c
+	watchdog.c cpulocals.c
 
 DPADD+=	${LIBTIMERS} ${LIBSYS}
 LDADD+=	-ltimers -lsys

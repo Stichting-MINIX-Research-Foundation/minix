@@ -812,15 +812,15 @@ ENTRY(reload_ds)
 	ret
 
 /*===========================================================================*/
-/*			      switch_address_space			     */
+/*			      __switch_address_space			     */
 /*===========================================================================*/
-/* PUBLIC void switch_address_space(struct proc *p)
+/* PUBLIC void __switch_address_space(struct proc *p, struct ** ptproc)
  *
  * sets the %cr3 register to the supplied value if it is not already set to the
  * same value in which case it would only result in an extra TLB flush which is
  * not desirable
  */
-ENTRY(switch_address_space)
+ENTRY(__switch_address_space)
 	/* read the process pointer */
 	mov	4(%esp), %edx
 	/* enable process' segment descriptors  */
@@ -839,7 +839,9 @@ ENTRY(switch_address_space)
 	cmp	%ecx, %eax
 	je	0f
 	mov	%eax, %cr3
-	mov	%edx, _C_LABEL(ptproc)
+	/* get ptproc */
+	mov	8(%esp), %eax
+	mov	%edx, (%eax)
 0:
 	ret
 

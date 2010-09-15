@@ -81,8 +81,8 @@ PUBLIC __dead void arch_shutdown(int how)
 		/* We're panicing? Then retrieve and decode currently
 		 * loaded segment selectors.
 		 */
-		printseg("cs: ", 1, proc_ptr, read_cs());
-		printseg("ds: ", 0, proc_ptr, read_ds());
+		printseg("cs: ", 1, get_cpulocal_var(proc_ptr), read_cs());
+		printseg("ds: ", 0, get_cpulocal_var(proc_ptr), read_ds());
 		if(read_ds() != read_ss()) {
 			printseg("ss: ", 0, NULL, read_ss());
 		}
@@ -536,7 +536,7 @@ PUBLIC int arch_set_params(char *params, int size)
 PUBLIC void arch_do_syscall(struct proc *proc)
 {
   /* do_ipc assumes that it's running because of the current process */
-  assert(proc == proc_ptr);
+  assert(proc == get_cpulocal_var(proc_ptr));
   /* Make the system call, for real this time. */
   proc->p_reg.retreg =
 	  do_ipc(proc->p_reg.cx, proc->p_reg.retreg, proc->p_reg.bx);
@@ -545,11 +545,13 @@ PUBLIC void arch_do_syscall(struct proc *proc)
 PUBLIC struct proc * arch_finish_switch_to_user(void)
 {
 	char * stk;
+	struct proc * p;
+
 	stk = (char *)tss.sp0;
 	/* set pointer to the process to run on the stack */
-	*((reg_t *)stk) = (reg_t) proc_ptr;
-	
-	return proc_ptr;
+	p = get_cpulocal_var(proc_ptr);
+	*((reg_t *)stk) = (reg_t) p;
+	return p;
 }
 
 PUBLIC void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigcontext *sc)

@@ -180,7 +180,8 @@ PUBLIC int main(void)
 	}
 
 	/* scheduling functions depend on proc_ptr pointing somewhere. */
-	if(!proc_ptr) proc_ptr = rp;
+	if(!get_cpulocal_var(proc_ptr))
+		get_cpulocal_var(proc_ptr) = rp;
 
 	/* If this process has its own page table, VM will set the
 	 * PT up and manage it. VM will signal the kernel when it has
@@ -218,7 +219,7 @@ PUBLIC int main(void)
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
-  bill_ptr = proc_addr(IDLE);	/* it has to point somewhere */
+  get_cpulocal_var(bill_ptr) = proc_addr(IDLE);	/* it has to point somewhere */
   announce();				/* print MINIX startup banner */
 
   /*

@@ -43,6 +43,8 @@
 #include "vm.h"
 #include "clock.h"
 
+#include "arch_proto.h"
+
 /* Scheduling and message passing functions */
 FORWARD _PROTOTYPE( void idle, (void));
 /**
@@ -135,12 +137,14 @@ PUBLIC void switch_to_user(void)
 	/* This function is called an instant before proc_ptr is
 	 * to be scheduled again.
 	 */
+	struct proc * p;
 
+	p = get_cpulocal_var(proc_ptr);
 	/*
 	 * if the current process is still runnable check the misc flags and let
 	 * it run unless it becomes not runnable in the meantime
 	 */
-	if (proc_is_runnable(proc_ptr))
+	if (proc_is_runnable(p))
 		goto check_misc_flags;
 	/*
 	 * if a process becomes not runnable while handling the misc flags, we
@@ -148,13 +152,13 @@ PUBLIC void switch_to_user(void)
 	 * current process wasn' runnable, we pick a new one here
 	 */
 not_runnable_pick_new:
-	if (proc_is_preempted(proc_ptr)) {
-		proc_ptr->p_rts_flags &= ~RTS_PREEMPTED;
-		if (proc_is_runnable(proc_ptr)) {
-			if (!is_zero64(proc_ptr->p_cpu_time_left))
-				enqueue_head(proc_ptr);
+	if (proc_is_preempted(p)) {
+		p->p_rts_flags &= ~RTS_PREEMPTED;
+		if (proc_is_runnable(p)) {
+			if (!is_zero64(p->p_cpu_time_left))
+				enqueue_head(p);
 			else
-				enqueue(proc_ptr);
+				enqueue(p);
 		}
 	}
 
@@ -164,104 +168,111 @@ not_runnable_pick_new:
 	 * timer interrupt the execution resumes here and we can pick another
 	 * process. If there is still nothing runnable we "schedule" IDLE again
 	 */
-	while (!(proc_ptr = pick_proc())) {
-		proc_ptr = proc_addr(IDLE);
-		if (priv(proc_ptr)->s_flags & BILLABLE)
-			bill_ptr = proc_ptr;
+	while (!(p = pick_proc())) {
+		p = get_cpulocal_var(proc_ptr) = proc_addr(IDLE);
+		if (priv(p)->s_flags & BILLABLE)
+			get_cpulocal_var(bill_ptr) = p;
 		idle();
 	}
 
-	switch_address_space(proc_ptr);
+	/* update the global variable */
+	get_cpulocal_var(proc_ptr) = p;
+
+	switch_address_space(p);
 
 check_misc_flags:
 
-	assert(proc_ptr);
-	assert(proc_is_runnable(proc_ptr));
-	while (proc_ptr->p_misc_flags &
+	assert(p);
+	assert(proc_is_runnable(p));
+	while (p->p_misc_flags &
 		(MF_KCALL_RESUME | MF_DELIVERMSG |
 		 MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
 
-		assert(proc_is_runnable(proc_ptr));
-		if (proc_ptr->p_misc_flags & MF_KCALL_RESUME) {
-			kernel_call_resume(proc_ptr);
+		assert(proc_is_runnable(p));
+		if (p->p_misc_flags & MF_KCALL_RESUME) {
+			kernel_call_resume(p);
 		}
-		else if (proc_ptr->p_misc_flags & MF_DELIVERMSG) {
+		else if (p->p_misc_flags & MF_DELIVERMSG) {
 			TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
-				proc_ptr->p_name, proc_ptr->p_endpoint););
-			delivermsg(proc_ptr);
+				p->p_name, p->p_endpoint););
+			delivermsg(p);
 		}
-		else if (proc_ptr->p_misc_flags & MF_SC_DEFER) {
+		else if (p->p_misc_flags & MF_SC_DEFER) {
 			/* Perform the system call that we deferred earlier. */
 
-			assert (!(proc_ptr->p_misc_flags & MF_SC_ACTIVE));
+			assert (!(p->p_misc_flags & MF_SC_ACTIVE));
 
-			arch_do_syscall(proc_ptr);
+			arch_do_syscall(p);
 
 			/* If the process is stopped for signal delivery, and
 			 * not blocked sending a message after the system call,
 			 * inform PM.
 			 */
-			if ((proc_ptr->p_misc_flags & MF_SIG_DELAY) &&
-					!RTS_ISSET(proc_ptr, RTS_SENDING))
-				sig_delay_done(proc_ptr);
+			if ((p->p_misc_flags & MF_SIG_DELAY) &&
+					!RTS_ISSET(p, RTS_SENDING))
+				sig_delay_done(p);
 		}
-		else if (proc_ptr->p_misc_flags & MF_SC_TRACE) {
+		else if (p->p_misc_flags & MF_SC_TRACE) {
 			/* Trigger a system call leave event if this was a
 			 * system call. We must do this after processing the
 			 * other flags above, both for tracing correctness and
 			 * to be able to use 'break'.
 			 */
-			if (!(proc_ptr->p_misc_flags & MF_SC_ACTIVE))
+			if (!(p->p_misc_flags & MF_SC_ACTIVE))
 				break;
 
-			proc_ptr->p_misc_flags &=
+			p->p_misc_flags &=
 				~(MF_SC_TRACE | MF_SC_ACTIVE);
 
 			/* Signal the "leave system call" event.
 			 * Block the process.
 			 */
-			cause_sig(proc_nr(proc_ptr), SIGTRAP);
+			cause_sig(proc_nr(p), SIGTRAP);
 		}
-		else if (proc_ptr->p_misc_flags & MF_SC_ACTIVE) {
+		else if (p->p_misc_flags & MF_SC_ACTIVE) {
 			/* If MF_SC_ACTIVE was set, remove it now:
 			 * we're leaving the system call.
 			 */
-			proc_ptr->p_misc_flags &= ~MF_SC_ACTIVE;
+			p->p_misc_flags &= ~MF_SC_ACTIVE;
 
 			break;
 		}
 
-		if (!proc_is_runnable(proc_ptr))
-			break;
+		/*
+		 * the selected process might not be runnable anymore. We have
+		 * to checkit and schedule another one
+		 */
+		if (!proc_is_runnable(p))
+			goto not_runnable_pick_new;
 	}
 	/*
 	 * check the quantum left before it runs again. We must do it only here
 	 * as we are sure that a possible out-of-quantum message to the
 	 * scheduler will not collide with the regular ipc
 	 */
-	if (is_zero64(proc_ptr->p_cpu_time_left))
-		proc_no_time(proc_ptr);
+	if (is_zero64(p->p_cpu_time_left))
+		proc_no_time(p);
 	/*
 	 * After handling the misc flags the selected process might not be
 	 * runnable anymore. We have to checkit and schedule another one
 	 */
-	if (!proc_is_runnable(proc_ptr))
+	if (!proc_is_runnable(p))
 		goto not_runnable_pick_new;
 
 	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
-		proc_ptr->p_name, proc_ptr->p_endpoint););
+		p->p_name, p->p_endpoint););
 #if DEBUG_TRACE
-	proc_ptr->p_schedules++;
+	p->p_schedules++;
 #endif
 
 
-	proc_ptr = arch_finish_switch_to_user();
-	assert(!is_zero64(proc_ptr->p_cpu_time_left));
+	p = arch_finish_switch_to_user();
+	assert(!is_zero64(p->p_cpu_time_left));
 
 	context_stop(proc_addr(KERNEL));
 
 	/* If the process isn't the owner of FPU, enable the FPU exception */
-	if(fpu_owner != proc_ptr)
+	if(fpu_owner != p)
 		enable_fpu_exception();
 	else
 		disable_fpu_exception();
@@ -269,13 +280,13 @@ check_misc_flags:
 	/* If MF_CONTEXT_SET is set, don't clobber process state within
 	 * the kernel. The next kernel entry is OK again though.
 	 */
-	proc_ptr->p_misc_flags &= ~MF_CONTEXT_SET;
+	p->p_misc_flags &= ~MF_CONTEXT_SET;
 
 	/*
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return
 	 */
-	restore_user_context(proc_ptr);
+	restore_user_context(p);
 	NOT_REACHABLE;
 }
 
@@ -404,7 +415,7 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 
 PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 {
-  struct proc * caller_ptr = proc_ptr;	/* always the current process */
+  struct proc *const caller_ptr = get_cpulocal_var(proc_ptr);	/* get pointer to caller */
   int call_nr = (int) r1;
 
   assert(!RTS_ISSET(caller_ptr, RTS_SLOT_FREE));
@@ -1199,6 +1210,7 @@ PUBLIC void enqueue(
  * defined in sched() and pick_proc().
  */
   int q = rp->p_priority;	 		/* scheduling queue to use */
+  struct proc * p;
 
 #if DEBUG_RACE
   /* With DEBUG_RACE, schedule everyone at the same priority level. */
@@ -1225,10 +1237,11 @@ PUBLIC void enqueue(
    * preempted. The current process must be preemptible. Testing the priority
    * also makes sure that a process does not preempt itself
    */
-  assert(proc_ptr && proc_ptr_ok(proc_ptr));
-  if ((proc_ptr->p_priority > rp->p_priority) &&
-		  (priv(proc_ptr)->s_flags & PREEMPTIBLE))
-     RTS_SET(proc_ptr, RTS_PREEMPTED); /* calls dequeue() */
+  p = get_cpulocal_var(proc_ptr);
+  assert(p);
+  if((p->p_priority > rp->p_priority) &&
+		  (priv(p)->s_flags & PREEMPTIBLE))
+     RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
 
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok());
@@ -1372,7 +1385,7 @@ PRIVATE struct proc * pick_proc(void)
 		rp->p_name, rp->p_endpoint, q););
 	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)	 	
-		bill_ptr = rp;		/* bill for system time */
+		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */
 	return rp;
   }
   return NULL;
@@ -1485,6 +1498,7 @@ PUBLIC void proc_no_time(struct proc * p)
 	
 PUBLIC void copr_not_available_handler(void)
 {
+	struct proc * p;
 	/*
 	 * Disable the FPU exception (both for the kernel and for the process
 	 * once it's scheduled), and initialize or restore the FPU state.
@@ -1492,9 +1506,11 @@ PUBLIC void copr_not_available_handler(void)
 
 	disable_fpu_exception();
 
+	p = get_cpulocal_var(proc_ptr);
+
 	/* if FPU is not owned by anyone, do not store anything */
 	if (fpu_owner != NULL) {
-		assert(fpu_owner != proc_ptr);
+		assert(fpu_owner != p);
 		save_fpu(fpu_owner);
 	}
 
@@ -1502,10 +1518,10 @@ PUBLIC void copr_not_available_handler(void)
 	 * restore the current process' state and let it run again, do not
 	 * schedule!
 	 */
-	restore_fpu(proc_ptr);
-	fpu_owner = proc_ptr;
+	restore_fpu(p);
+	fpu_owner = p;
 	context_stop(proc_addr(KERNEL));
-	restore_user_context(proc_ptr);
+	restore_user_context(p);
 	NOT_REACHABLE;
 }
 
