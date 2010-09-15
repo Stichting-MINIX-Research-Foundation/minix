@@ -635,6 +635,8 @@
 #define VMCTL_KERN_PHYSMAP	27
 #define VMCTL_KERN_MAP_REPLY	28
 #define VMCTL_SETADDRSPACE	29
+#define VMCTL_VMINHIBIT_SET	30
+#define VMCTL_VMINHIBIT_CLEAR	31
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */

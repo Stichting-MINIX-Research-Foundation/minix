@@ -425,7 +425,7 @@ PRIVATE int munmap_lin(vir_bytes addr, size_t len)
 		return EFAULT;
 	}
 
-	if(pt_writemap(&vmproc[VM_PROC_NR].vm_pt, addr, MAP_NONE, len, 0,
+	if(pt_writemap(NULL, &vmproc[VM_PROC_NR].vm_pt, addr, MAP_NONE, len, 0,
 		WMF_OVERWRITE | WMF_FREE) != OK) {
 		printf("munmap_lin: pt_writemap failed\n");
 		return EFAULT;

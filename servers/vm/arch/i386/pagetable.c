@@ -204,7 +204,7 @@ PRIVATE void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 		assert(!(vir % I386_PAGE_SIZE)); 
 		assert(!(phys % I386_PAGE_SIZE)); 
 		free_mem(ABS2CLICK(phys), pages);
-		if(pt_writemap(&vmprocess->vm_pt, arch_vir2map(vmprocess, vir),
+		if(pt_writemap(vmprocess, &vmprocess->vm_pt, arch_vir2map(vmprocess, vir),
 			MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
 			panic("vm_freepages: pt_writemap failed");
 	} else {
@@ -325,7 +325,7 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 	*phys = CLICK2ABS(newpage);
 
 	/* Map this page into our address space. */
-	if((r=pt_writemap(pt, loc, *phys, I386_PAGE_SIZE,
+	if((r=pt_writemap(vmprocess, pt, loc, *phys, I386_PAGE_SIZE,
 		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, 0)) != OK) {
 		free_mem(newpage, CLICKSPERPAGE);
 		printf("vm_allocpage writemap failed\n");
@@ -365,7 +365,7 @@ PUBLIC void vm_pagelock(void *vir, int lockflag)
 		flags |= I386_VM_WRITE;
 
 	/* Update flags. */
-	if((r=pt_writemap(pt, m, 0, I386_PAGE_SIZE,
+	if((r=pt_writemap(vmprocess, pt, m, 0, I386_PAGE_SIZE,
 		flags, WMF_OVERWRITE | WMF_WRITEFLAGSONLY)) != OK) {
 		panic("vm_lockpage: pt_writemap failed");
 	}
@@ -605,7 +605,7 @@ PUBLIC int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	assert((vir_bytes) pt->pt_dir >= src_vmp->vm_stacktop);
 	viraddr = arch_vir2map(src_vmp, (vir_bytes) pt->pt_dir);
 	physaddr = pt->pt_dir_phys & I386_VM_ADDR_MASK;
-	if((r=pt_writemap(&dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
+	if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
 		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
 		WMF_OVERWRITE)) != OK) {
 		return r;
@@ -625,7 +625,7 @@ PUBLIC int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 		assert((vir_bytes) pt->pt_pt[pde] >= src_vmp->vm_stacktop);
 		viraddr = arch_vir2map(src_vmp, (vir_bytes) pt->pt_pt[pde]);
 		physaddr = pt->pt_dir[pde] & I386_VM_ADDR_MASK;
-		if((r=pt_writemap(&dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
+		if((r=pt_writemap(dst_vmp, &dst_vmp->vm_pt, viraddr, physaddr, I386_PAGE_SIZE,
 			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE,
 			WMF_OVERWRITE)) != OK) {
 			return r;
@@ -642,13 +642,28 @@ PUBLIC int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 /*===========================================================================*
  *				pt_writemap		     		     *
  *===========================================================================*/
-PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
-	size_t bytes, u32_t flags, u32_t writemapflags)
+PUBLIC int pt_writemap(struct vmproc * vmp,
+			pt_t *pt,
+			vir_bytes v,
+			phys_bytes physaddr,
+			size_t bytes,
+			u32_t flags,
+			u32_t writemapflags)
 {
 /* Write mapping into page table. Allocate a new page table if necessary. */
 /* Page directory and table entries for this virtual address. */
 	int p, r, pages;
 	int verify = 0;
+	int ret = OK;
+
+	/* FIXME
+	 * don't do it everytime, stop the process only on the first change and
+	 * resume the execution on the last change. Do in a wrapper of this
+	 * function
+	 */
+	if (vmp && vmp->vm_endpoint != NONE && vmp->vm_endpoint != VM_PROC_NR &&
+			!(vmp->vm_flags & VMF_EXITING))
+		sys_vmctl(vmp->vm_endpoint, VMCTL_VMINHIBIT_SET, 0);
 
 	if(writemapflags & WMF_VERIFY)
 		verify = 1;
@@ -669,9 +684,9 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 	 * before we start writing in any of them, because it's a pain
 	 * to undo our work properly.
 	 */
-	r = pt_ptalloc_in_range(pt, v, v + I386_PAGE_SIZE*pages, flags, verify);
-	if(r != OK) {
-		return r;
+	ret = pt_ptalloc_in_range(pt, v, v + I386_PAGE_SIZE*pages, flags, verify);
+	if(ret != OK) {
+		goto resume_exit;
 	}
 
 	/* Now write in them. */
@@ -729,7 +744,8 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 				printf(" masked %s; ",
 					ptestr(maskedentry));
 				printf(" expected %s\n", ptestr(entry));
-				return EFAULT;
+				ret = EFAULT;
+				goto resume_exit;
 			}
 		} else {
 			/* Write pagetable entry. */
@@ -743,7 +759,13 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 		v += I386_PAGE_SIZE;
 	}
 
-	return OK;
+resume_exit:
+
+	if (vmp && vmp->vm_endpoint != NONE && vmp->vm_endpoint != VM_PROC_NR &&
+			!(vmp->vm_flags & VMF_EXITING))
+		sys_vmctl(vmp->vm_endpoint, VMCTL_VMINHIBIT_CLEAR, 0);
+
+	return ret;
 }
 
 /*===========================================================================*
@@ -923,7 +945,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
                 /* We have to write the new position in the PT,
                  * so we can move our segments.
                  */ 
-                if(pt_writemap(newpt, v+moveup, v, I386_PAGE_SIZE,
+                if(pt_writemap(vmprocess, newpt, v+moveup, v, I386_PAGE_SIZE,
                         I386_VM_PRESENT|I386_VM_WRITE|I386_VM_USER, 0) != OK)
                         panic("pt_init: pt_writemap failed");
         }
@@ -1212,7 +1234,7 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 	}
 
 	for(i = 0; i < kernmappings; i++) {
-		if(pt_writemap(pt,
+		if(pt_writemap(NULL, pt,
 			kern_mappings[i].lin_addr,
 			kern_mappings[i].phys_addr,
 			kern_mappings[i].len,

@@ -107,8 +107,9 @@ _PROTOTYPE( int pt_map_in_range, (struct vmproc *src_vmp, struct vmproc *dst_vmp
 _PROTOTYPE( int pt_ptmap, (struct vmproc *src_vmp, struct vmproc *dst_vmp) );
 _PROTOTYPE( int pt_ptalloc_in_range, (pt_t *pt, vir_bytes start, vir_bytes end,
         u32_t flags, int verify));
-_PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
-        size_t bytes, u32_t flags, u32_t writemapflags));
+_PROTOTYPE( int pt_writemap, (struct vmproc * vmp, pt_t *pt, vir_bytes v,
+			phys_bytes physaddr, size_t bytes, u32_t flags,
+			u32_t writemapflags));
 _PROTOTYPE( int pt_checkrange, (pt_t *pt, vir_bytes v,  size_t bytes, int write));
 _PROTOTYPE( int pt_bind, (pt_t *pt, struct vmproc *who)			);
 _PROTOTYPE( void *vm_allocpage, (phys_bytes *p, int cat));

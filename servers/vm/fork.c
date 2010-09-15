@@ -190,6 +190,9 @@ PUBLIC int do_fork(message *msg)
         panic("do_fork can't sys_fork: %d", r);
   }
 
+  if((r=pt_bind(&vmc->vm_pt, vmc)) != OK)
+	panic("fork can't pt_bind: %d", r);
+
   if(fullvm) {
 	vir_bytes vir;
 	/* making these messages writable is an optimisation
@@ -200,9 +203,6 @@ PUBLIC int do_fork(message *msg)
 	vir = arch_vir2map(vmp, msgaddr);
 	handle_memory(vmp, vir, sizeof(message), 1);
   }
-
-  if((r=pt_bind(&vmc->vm_pt, vmc)) != OK)
-	panic("fork can't pt_bind: %d", r);
 
   /* Inform caller of new child endpoint. */
   msg->VMF_CHILD_ENDPOINT = vmc->vm_endpoint;
