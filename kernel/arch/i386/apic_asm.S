@@ -68,26 +68,12 @@ ENTRY(lapic_timer_int_handler)
 	lapic_intr(_C_LABEL(timer_int_handler))
 
 #ifdef CONFIG_SMP
-#include "arch_smp.h"
 
-/* FIXME dummy stubs */
-ENTRY(smp_ipi_sched)
-1:	jmp 1b
+ENTRY(apic_ipi_sched_intr)
+	lapic_intr(_C_LABEL(apic_ipi_sched_handler))
 
-ENTRY(smp_ipi_dequeue)
-1:	jmp 1b
-
-ENTRY(smp_ipi_stop)
-1:	jmp 1b
-
-ENTRY(smp_ipi_reboot)
-1:	jmp 1b
-
-ENTRY(smp_ipi_err_int)
-1:	jmp 1b
-
-ENTRY(smp_ipi_spv_int)
-1:	jmp 1b
+ENTRY(apic_ipi_halt_intr)
+	lapic_intr(_C_LABEL(apic_ipi_halt_handler))
 
 #endif /* CONFIG_SMP */
 

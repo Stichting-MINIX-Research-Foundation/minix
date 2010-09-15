@@ -23,7 +23,5 @@ void wait_for_APs_to_finish_booting(void)
 
 void ap_boot_finished(unsigned cpu)
 {
-	printf("CPU %d is running\n", cpu);
-
 	ap_cpus_booted++;
 }

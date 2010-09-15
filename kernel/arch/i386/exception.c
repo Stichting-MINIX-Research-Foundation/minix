@@ -69,8 +69,9 @@ PRIVATE void pagefault( struct proc *pr,
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		printf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
-			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
+		printf("pagefault for process %d ('%s') on CPU %d, "
+			"pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
+			pr->p_endpoint, pr->p_name, cpuid, pr->p_reg.pc,
 			pagefaultcr2, frame->errcode, is_nested);
 		proc_stacktrace(pr);
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
@@ -207,7 +208,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 	printf("\nIntel-reserved exception %d\n", frame->vector);
   else
 	printf("\n%s\n", ep->msg);
-  printf("is_nested = %d ", is_nested);
+  printf("cpu %d is_nested = %d ", cpuid, is_nested);
 
   printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, "
 	"cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",

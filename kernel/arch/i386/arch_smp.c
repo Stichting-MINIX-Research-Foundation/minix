@@ -126,13 +126,10 @@ PRIVATE void smp_start_aps(void)
 	 * using the processor's apic id values.
 	 */
 	for (cpu = 0; cpu < ncpus; cpu++) {
-		printf("Booting cpu %d\n", cpu);
 		ap_cpu_ready = -1;
 		/* Don't send INIT/SIPI to boot cpu.  */
 		if((apicid() == cpuid2apicid[cpu]) && 
 				(apicid() == bsp_lapic_id)) {
-			cpu_set_flag(cpu, CPU_IS_READY);
-			printf("Skiping bsp\n");
 			continue;
 		}
 
@@ -150,7 +147,6 @@ PRIVATE void smp_start_aps(void)
 
 		while (lapic_read(LAPIC_TIMER_CCR)) {
 			if (ap_cpu_ready == cpu) {
-				printf("CPU %d is up\n", cpu);
 				cpu_set_flag(cpu, CPU_IS_READY);
 				break;
 			}
@@ -176,14 +172,42 @@ PUBLIC void smp_halt_cpu (void)
 
 PUBLIC void smp_shutdown_aps (void)
 {
-	NOT_IMPLEMENTED;
+	u8_t cpu;
+	unsigned aid = apicid();
+	
+	if (ncpus == 1)
+		goto exit_shutdown_aps;
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		u16_t i;
+		if (!cpu_is_ready(cpu))
+			continue;
+		if ((aid == cpuid2apicid[cpu]) && (aid == bsp_lapic_id))
+			continue;
+		apic_send_ipi(APIC_SMP_CPU_HALT_VECTOR, cpu, APIC_IPI_DEST);
+		/* TODO wait for the cpu to be down */
+	}
+
+	/* Sending INIT to a processor makes it to wait in a halt state */
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		if ((aid == cpuid2apicid[cpu]) && (aid == bsp_lapic_id))
+			continue;
+		apic_send_init_ipi (cpu, 0);
+	}
+exit_shutdown_aps:
+	ioapic_disable_all();
+
+	lapic_disable();
+
+	ncpus = 1; /* hopefully !!! */
+	lapic_addr = lapic_eoi_addr = 0;
+	return;
 }
 
 PRIVATE void ap_finish_booting(void)
 {
 	unsigned cpu = cpuid;
 
-	printf("CPU %d says hello world!\n", cpu);
 	/* inform the world of our presence. */
 	ap_cpu_ready = cpu;
 
@@ -221,12 +245,6 @@ PRIVATE void ap_finish_booting(void)
 
 	ap_boot_finished(cpu);
 	spinlock_unlock(&boot_lock);
-
-	/* finish processor initialisation. */
-	lapic_enable(cpu);
-
-	BKL_UNLOCK();
-	for(;;);
 
 	switch_to_user();
 	NOT_REACHABLE;

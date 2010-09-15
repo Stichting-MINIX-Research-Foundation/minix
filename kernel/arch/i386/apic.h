@@ -88,6 +88,8 @@
 #define IOAPIC_REDIR_TABLE		0x10
 
 #define APIC_TIMER_INT_VECTOR		0xf0
+#define APIC_SMP_SCHED_PROC_VECTOR	0xf1
+#define APIC_SMP_CPU_HALT_VECTOR	0xf2
 #define APIC_ERROR_INT_VECTOR		0xfe
 #define APIC_SPURIOUS_INT_VECTOR	0xff
 
@@ -157,11 +159,30 @@ _PROTOTYPE(void ioapic_unset_irq, (unsigned irq));
  /* signal the end of interrupt handler to apic */
 _PROTOTYPE(void ioapic_eoi, (int irq));
 
-_PROTOTYPE(void lapic_disable, (void));
-_PROTOTYPE(void ioapic_disable_all, (void));
-_PROTOTYPE(void ioapic_reset_pic, (void));
-
 _PROTOTYPE(void dump_apic_irq_state, (void));
+
+_PROTOTYPE(void apic_send_ipi, (unsigned vector, unsigned cpu, int type));
+
+_PROTOTYPE(void apic_ipi_sched_intr, (void));
+_PROTOTYPE(void apic_ipi_halt_intr, (void));
+
+_PROTOTYPE(void apic_ipi_sched_handler, (void));
+_PROTOTYPE(void apic_ipi_halt_handler, (void));
+
+#define APIC_IPI_DEST			0
+#define APIC_IPI_SELF			1
+#define APIC_IPI_TO_ALL			2
+#define APIC_IPI_TO_ALL_BUT_SELF	3
+
+#define apic_send_ipi_single(vector,cpu) \
+	apic_send_ipi(vector, cpu, APIC_IPI_DEST);
+#define apic_send_ipi_self(vector) \
+	apic_send_ipi(vector, 0, APIC_IPI_SELF)
+#define apic_send_ipi_all(vector) \
+	apic_send_ipi (vector, 0, APIC_IPI_TO_ALL)
+#define apic_send_ipi_allbutself(vector) \
+	apic_send_ipi (vector, 0, APIC_IPI_TO_ALL_BUT_SELF);
+
 
 #include <minix/cpufeature.h>
 

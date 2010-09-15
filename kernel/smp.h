@@ -28,13 +28,6 @@ EXTERN unsigned bsp_cpu_id;
  */
 _PROTOTYPE(void smp_init, (void));
 
-_PROTOTYPE(void smp_ipi_err_int, (void));
-_PROTOTYPE(void smp_ipi_spv_int, (void));
-_PROTOTYPE(void smp_ipi_sched, (void));
-_PROTOTYPE(void smp_ipi_dequeue, (void));
-_PROTOTYPE(void smp_ipi_stop, (void));
-_PROTOTYPE(void smp_ipi_reboot, (void));
-
 #define CPU_IS_BSP	1
 #define CPU_IS_READY	2
 

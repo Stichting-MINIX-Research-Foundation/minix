@@ -294,6 +294,11 @@ PUBLIC void ioapic_eoi(int irq)
 		irq_8259_eoi(irq);
 }
  
+PUBLIC void ioapic_set_id(u32_t addr, unsigned int id)
+{
+	ioapic_write(addr, IOAPIC_ID, id << 24);
+}
+
 PUBLIC int ioapic_enable_all(void)
 {
 	i8259_disable();
@@ -389,14 +394,17 @@ PUBLIC void ioapic_mask_irq(unsigned irq)
 		irq_8259_mask(irq);
 }
 
+PUBLIC void apic_ipi_sched_handler(void)
+{
+}
+
+PUBLIC void apic_ipi_halt_handler(void)
+{
+}
+
 PUBLIC unsigned int apicid(void)
 {
 	return lapic_read(LAPIC_ID);
-}
-
-PUBLIC void ioapic_set_id(u32_t addr, unsigned int id)
-{
-	ioapic_write(addr, IOAPIC_ID, id << 24);
 }
 
 PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
@@ -793,10 +801,8 @@ PRIVATE struct gate_table_s gate_table_common[] = {
 
 #ifdef CONFIG_SMP
 PRIVATE struct gate_table_s gate_table_smp[] = {
-	{ smp_ipi_sched, SMP_SCHED_PROC, INTR_PRIVILEGE },
-	{ smp_ipi_dequeue, SMP_DEQUEUE_PROC, INTR_PRIVILEGE },
-	{ smp_ipi_reboot,SMP_CPU_REBOOT, INTR_PRIVILEGE },
-	{ smp_ipi_stop,  SMP_CPU_HALT, INTR_PRIVILEGE },
+	{ apic_ipi_sched_intr, APIC_SMP_SCHED_PROC_VECTOR, INTR_PRIVILEGE },
+	{ apic_ipi_halt_intr,  APIC_SMP_CPU_HALT_VECTOR, INTR_PRIVILEGE },
 	{ NULL, 0, 0}
 };
 #endif
@@ -909,6 +915,45 @@ PUBLIC int detect_ioapics(void)
 
 #ifdef CONFIG_SMP
 
+PUBLIC void apic_send_ipi(unsigned vector, unsigned cpu, int type)
+{
+	u32_t icr1, icr2;
+
+	if (ncpus == 1)
+		/* no need of sending an IPI */
+		return;
+
+	while (lapic_read_icr1() & APIC_ICR_DELIVERY_PENDING) 
+		arch_pause();
+
+	icr1 = lapic_read_icr1() & 0xFFF0F800;
+	icr2 = lapic_read_icr2() & 0xFFFFFF;
+
+	switch (type) {
+		case APIC_IPI_DEST:
+			if (!cpu_is_ready(cpu))
+				return;
+			lapic_write_icr2(icr2 |	(cpuid2apicid[cpu] << 24));
+			lapic_write_icr1(icr1 |	APIC_ICR_DEST_FIELD | vector);
+			break;
+		case APIC_IPI_SELF:
+			lapic_write_icr2(icr2);
+			lapic_write_icr1(icr1 |	APIC_ICR_DEST_SELF | vector);
+			break;
+		case APIC_IPI_TO_ALL_BUT_SELF:
+			lapic_write_icr2(icr2);
+			lapic_write_icr1(icr1 |	APIC_ICR_DEST_ALL_BUT_SELF | vector);
+			break;
+		case APIC_IPI_TO_ALL:
+			lapic_write_icr2(icr2);
+			lapic_write_icr1(icr1 |	APIC_ICR_DEST_ALL | vector);
+			break;
+		default:
+			printf("WARNING : unknown send ipi type request\n");
+	}
+
+}
+
 PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 {
 	int timeout;
@@ -919,6 +964,8 @@ PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 
 	for (i = 0; i < 2; i++) {
 		u32_t val;
+		
+		/* clear err status */
 		lapic_errstatus();
 
 		/* set target pe */
@@ -938,8 +985,8 @@ PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
 		lapic_microsec_sleep (200);
 		errstatus = 0;
 
-		while ((lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) && !errstatus)
-		{
+		while ((lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) &&
+				!errstatus) {
 			errstatus = lapic_errstatus();
 			timeout--;
 			if (!timeout) break;
