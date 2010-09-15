@@ -38,6 +38,7 @@
 #include <pwd.h>
 #include <termios.h>
 #include <utmp.h>
+#include <ansi.h>
 
 #ifdef  _BSD_TIME_T_
 typedef _BSD_TIME_T_    time_t;

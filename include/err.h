@@ -34,10 +34,6 @@
 #ifndef _ERR_H_
 #define	_ERR_H_
 
-#ifdef __minix
-#define _BSD_VA_LIST_ va_list
-#include <stdarg.h>
-#else
 /*
  * Don't use va_list in the err/warn prototypes.   Va_list is typedef'd in two
  * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
@@ -45,6 +41,9 @@
  * for utilities to have to include one of them to include err.h, so we get
  * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
  */
+#ifdef __minix
+#include <ansi.h>
+#else
 #include <machine/ansi.h>
 #endif
 #include <sys/cdefs.h>

@@ -7,9 +7,11 @@
  * other kernel headers.
  */
 
+#ifndef __ASSEMBLY__
 #include <ansi.h>
 #include <minix/debug.h>
 #include "config.h"
+#endif
 
 /* Enable prints such as
  *  . send/receive failed due to deadlock or dead source or dead destination

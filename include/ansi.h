@@ -69,4 +69,8 @@
 #define _POSIX_SOURCE	1
 #endif
 
+/* What is a va_list? */
+#include <stdarg.h>
+#define _BSD_VA_LIST_ va_list
+
 #endif /* ANSI_H */
