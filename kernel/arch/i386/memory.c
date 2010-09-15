@@ -38,32 +38,11 @@ FORWARD _PROTOTYPE( u32_t phys_get32, (phys_bytes v)			);
 FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 
 	
-/* *** Internal VM Functions *** */
-
-PUBLIC void vm_init(struct proc *newptproc)
+PUBLIC void segmentation2paging(struct proc * current)
 {
-	if(vm_running)
-		panic("vm_init: vm_running");
-
-	/* switch_address_space() checks what is in cr3, and doesn't do
-	 * anything if it's the same as the cr3 of its argument, newptproc.
-	 * If MINIX was previously booted, this could very well be the case.
-	 *
-	 * The first time switch_address_space() is called, we want to
-	 * force it to do something (load cr3 and set newptproc), so we
-	 * zero cr3, and force paging off to make that a safe thing to do.
-	 *
-	 * After that, vm_enable_paging() enables paging with the page table
-	 * of newptproc loaded.
-	 */
-
-	vm_stop();
-	write_cr3(0);
-	switch_address_space(newptproc);
-	assert(ptproc == newptproc);
-	catch_pagefaults = 0;
+	/* switch to the current process page tables before turning paging on */
+	switch_address_space(current);
 	vm_enable_paging();
-	vm_running = 1;
 }
 
 /* This function sets up a mapping from within the kernel's address
@@ -1041,6 +1020,26 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 {
 	struct vm_ep_data ep_data;
 	int r;
+
+	/* switch_address_space() checks what is in cr3, and do nothing if it's
+	 * the same as the cr3 of its argument, newptproc.  If MINIX was
+	 * previously booted, this could very well be the case.
+	 *
+	 * The first time switch_address_space() is called, we want to
+	 * force it to do something (load cr3 and set newptproc), so we
+	 * zero cr3, and force paging off to make that a safe thing to do.
+	 *
+	 * After that, segmentation2paging() enables paging with the page table
+	 * of caller loaded.
+	 */
+
+	vm_stop();
+	write_cr3(0);
+
+	/* switch from segmentation only to paging */
+	segmentation2paging(caller);
+
+	vm_running = 1;
 
 	/*
 	 * copy the extra data associated with the call from userspace

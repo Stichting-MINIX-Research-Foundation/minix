@@ -123,10 +123,10 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 	case VMCTL_ENABLE_PAGING:
 		if(vm_running) 
 			panic("do_vmctl: paging already enabled");
-		vm_init(p);
-		if(!vm_running)
+		if (arch_enable_paging(caller, m_ptr) != OK)
 			panic("do_vmctl: paging enabling failed");
-		return arch_enable_paging(caller, m_ptr);
+		return OK;
+
 	case VMCTL_KERN_PHYSMAP:
 	{
 		int i = m_ptr->SVMCTL_VALUE;
