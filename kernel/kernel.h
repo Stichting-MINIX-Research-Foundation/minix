@@ -12,9 +12,10 @@
  * (non-zero) is set in monitor
  */
 #define CONFIG_WATCHDOG
-/* We only support 1 cpu now */
+
+#ifndef CONFIG_MAX_CPUS
 #define CONFIG_MAX_CPUS	1
-#define cpuid		0
+#endif
 
 /* OXPCIe952 PCIe with 2 UARTs in-kernel support */
 #define CONFIG_OXPCIE	0
@@ -55,6 +56,17 @@
 #include "perf.h"		/* performance-related definitions */
 #include "debug.h"		/* debugging, MUST be last kernel header */
 #include "cpulocals.h"
+
+#ifndef CONFIG_SMP
+/* We only support 1 cpu now */
+#define CONFIG_MAX_CPUS	1
+#define cpuid		0
+
+#else
+
+#include "smp.h"
+
+#endif
 
 #endif /* __ASSEMBLY__ */
 

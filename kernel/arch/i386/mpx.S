@@ -43,7 +43,7 @@ begdata:
 begbss:
 #endif
 
-
+#include "../../kernel.h"
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/com.h>
@@ -54,6 +54,12 @@ begbss:
 #include "kernel/proc.h"
 #include "sconst.h"
 #include "multiboot.h"
+
+#include "arch_proto.h" /* K_STACK_SIZE */
+
+#ifdef CONFIG_SMP
+#include "kernel/smp.h"
+#endif
 
 /* Selected 386 tss offsets. */
 #define TSS3_S_SP0	4
@@ -72,7 +78,7 @@ IMPORT(switch_to_user)
 /*===========================================================================*/
 /*				MINIX					     */
 /*===========================================================================*/
-.globl MINIX
+.global MINIX
 MINIX:
 /* this is the entry point for the MINIX kernel */
 	jmp	over_flags	/* skip over the next few bytes */
@@ -164,7 +170,7 @@ copygdt:
 	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
-	mov	$_C_LABEL(k_boot_stktop), %esp	/* set sp to point to the top of kernel stack */
+	mov	$_C_LABEL(k_boot_stktop) - 4, %esp	/* set sp to point to the top of kernel stack */
 
 /* Save boot parameters into these global variables for i386 code */
 	movl	%edx, _C_LABEL(params_size)
@@ -194,7 +200,7 @@ csinit:
 	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
-	movw	$TSS_SELECTOR, %ax	/* no other TSS is used */
+	movw	$TSS_SELECTOR_BOOT, %ax	/* no other TSS is used */
 	ltr	%ax
 	push	$0	/* set flags to known good state */
 	popf	/* esp, clear nested task and int enable */
@@ -615,6 +621,36 @@ ENTRY(reload_cr3)
 	pop     %ebp
 	ret
 
+#ifdef CONFIG_SMP
+ENTRY(startup_ap_32)
+	/*
+	 * we are in protected mode now, %cs is correct and we need to set the
+	 * data descriptors before we can touch anything
+	 */
+	movw	$DS_SELECTOR, %ax
+	mov	%ax, %ds
+	mov	%ax, %ss
+	mov	%ax, %es
+	movw	$0, %ax
+	mov	%ax, %fs
+	mov	%ax, %gs
+
+	/* load TSS for this cpu which was prepared by BSP */
+	movl	_C_LABEL(__ap_id), %ecx
+	shl	$3, %cx
+	mov	$TSS_SELECTOR(0), %eax
+	add	%cx, %ax
+	ltr	%ax
+	
+	/*
+	 * use the boot stack for now. The running CPUs are already using their
+	 * own stack, the rest is still waiting to be booted
+	 */
+	mov	$_C_LABEL(k_boot_stktop) - 4, %esp
+	jmp	_C_LABEL(smp_ap_boot)
+	hlt
+#endif
+
 /*===========================================================================*/
 /*				data					     */
 /*===========================================================================*/
@@ -630,5 +666,15 @@ ENTRY(reload_cr3)
  * the kernel stack
  */
 k_boot_stack:
-.space	4096		/* kernel stack */ /* FIXME use macro here */
+.space	K_STACK_SIZE	/* kernel stack */ /* FIXME use macro here */
 LABEL(k_boot_stktop)	/* top of kernel stack */
+
+.balign K_STACK_SIZE
+LABEL(k_stacks_start)
+
+/* two pages for each stack, one for data, other as a sandbox */
+.space	2 * (K_STACK_SIZE * (CONFIG_MAX_CPUS + 1))
+
+LABEL(k_stacks_end)
+
+/* top of kernel stack */

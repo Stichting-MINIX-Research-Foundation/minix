@@ -27,6 +27,8 @@
 #endif
 #endif
 
+PUBLIC int i386_paging_enabled = 0;
+
 PRIVATE int psok = 0;
 
 #define MAX_FREEPDES (3 * CONFIG_MAX_CPUS)
@@ -935,8 +937,10 @@ void i386_freepde(const int pde)
 
 PRIVATE int oxpcie_mapping_index = -1;
 
-PUBLIC int arch_phys_map(const int index, phys_bytes *addr,
-  phys_bytes *len, int *flags)
+PUBLIC int arch_phys_map(const int index,
+			phys_bytes *addr,
+			phys_bytes *len,
+			int *flags)
 {
 	static int first = 1;
 	int freeidx = 0;
@@ -1079,7 +1083,12 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 			io_apic[i].addr = io_apic[i].vaddr;
 		}
 	}
+
+	/* TODO APs are still waiting, release them */
 #endif
+
+	i386_paging_enabled = 1;
+
 #ifdef CONFIG_WATCHDOG
 	/*
 	 * We make sure that we don't enable the watchdog until paging is turned

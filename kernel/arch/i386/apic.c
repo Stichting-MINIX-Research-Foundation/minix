@@ -106,7 +106,6 @@
 #define SPL0				0x0
 #define	SPLHI				0xF
 
-#define cpu_is_bsp(x) 1
 
 PUBLIC struct io_apic io_apic[MAX_NR_IOAPICS];
 PUBLIC unsigned nioapics;
@@ -124,6 +123,22 @@ struct irq {
 
 PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
 
+/* 
+ * to make APIC work if SMP is not configured, we need to set the maximal number
+ * of CPUS to 1, cpuid to return 0 and the current cpu is always BSP
+ */
+#ifndef CONFIG_SMP
+/* this is always true on an uniprocessor */
+#define cpu_is_bsp(x) 1
+
+#else
+
+#include "kernel/smp.h"
+
+#endif
+
+#include "kernel/spinlock.h"
+
 
 #define lapic_write_icr1(val)	lapic_write(LAPIC_ICR1, val)
 #define lapic_write_icr2(val)	lapic_write(LAPIC_ICR2, val)
@@ -131,12 +146,15 @@ PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
 #define lapic_read_icr1(x)	lapic_read(LAPIC_ICR1)
 #define lapic_read_icr2(x)	lapic_read(LAPIC_ICR2)
 
+#define is_boot_apic(apicid)	((apicid) == bsp_lapic_id)
+
 #define VERBOSE_APIC(x) x
 
 PUBLIC int ioapic_enabled;
 PUBLIC u32_t lapic_addr_vaddr;
 PUBLIC vir_bytes lapic_addr;
 PUBLIC vir_bytes lapic_eoi_addr;
+PUBLIC int bsp_lapic_id;
 
 PRIVATE volatile unsigned probe_ticks;
 PRIVATE	u64_t tsc0, tsc1;
@@ -171,8 +189,8 @@ PRIVATE void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
 	*((u32_t *)(ioa_base + IOAPIC_IOWIN)) = val;
 }
 
-FORWARD _PROTOTYPE(void lapic_microsec_sleep, (unsigned count));
-FORWARD _PROTOTYPE(void apic_idt_init, (const int reset));
+_PROTOTYPE(void lapic_microsec_sleep, (unsigned count));
+_PROTOTYPE(void apic_idt_init, (const int reset));
 
 PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
 {
@@ -375,6 +393,16 @@ PUBLIC void ioapic_mask_irq(unsigned irq)
 		irq_8259_mask(irq);
 }
 
+PUBLIC unsigned int apicid(void)
+{
+	return lapic_read(LAPIC_ID);
+}
+
+PUBLIC void ioapic_set_id(u32_t addr, unsigned int id)
+{
+	ioapic_write(addr, IOAPIC_ID, id << 24);
+}
+
 PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 {
 	u32_t tcrt;
@@ -398,7 +426,7 @@ PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 	return 1;
 }
 
-PRIVATE void apic_calibrate_clocks(void)
+PRIVATE void apic_calibrate_clocks(unsigned cpu)
 {
 	u32_t lvtt, val, lapic_delta;
 	u64_t tsc_delta;
@@ -462,7 +490,7 @@ PRIVATE void apic_calibrate_clocks(void)
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
-PRIVATE void lapic_set_timer_one_shot(const u32_t value)
+PUBLIC void lapic_set_timer_one_shot(const u32_t value)
 {
 	/* sleep in micro seconds */
 	u32_t lvtt;
@@ -508,10 +536,11 @@ PUBLIC void lapic_stop_timer(void)
 	lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
 }
 
-PRIVATE void lapic_microsec_sleep(unsigned count)
+PUBLIC void lapic_microsec_sleep(unsigned count)
 {
 	lapic_set_timer_one_shot(count);
-	while (lapic_read(LAPIC_TIMER_CCR));
+	while (lapic_read(LAPIC_TIMER_CCR))
+		arch_pause();
 }
 
 PRIVATE  u32_t lapic_errstatus(void)
@@ -541,7 +570,10 @@ PUBLIC void lapic_disable(void)
 	if (!lapic_addr)
 		return;
 	
-	if (!apic_imcrp) {
+#ifdef CONFIG_SMP
+	if (cpu_is_bsp(cpuid) && !apic_imcrp)
+#endif
+	{
 		/* leave it enabled if imcr is not set */
 		val = lapic_read(LAPIC_LINT0);
 		val &= ~(APIC_ICR_DM_MASK|APIC_ICR_INT_MASK);
@@ -591,14 +623,9 @@ PRIVATE int lapic_enable_in_msr(void)
 	return 1;
 }
 
-PUBLIC int lapic_enable(void)
+PUBLIC int lapic_enable(unsigned cpu)
 {
 	u32_t val, nlvt;
-#if 0
-	u32_t timeout = 0xFFFF;
-	u32_t errstatus = 0;
-#endif
-	unsigned cpu = cpuid;
 
 	if (!lapic_addr)
 		return 0;
@@ -628,8 +655,6 @@ PUBLIC int lapic_enable(void)
 	(void) lapic_read(LAPIC_SIVR);
 
 	apic_eoi();
-
-	cpu = cpuid;
 
 	/* Program Logical Destination Register. */
 	val = lapic_read(LAPIC_LDR) & ~0xFF000000;
@@ -663,7 +688,7 @@ PUBLIC int lapic_enable(void)
 	(void) lapic_read (LAPIC_SIVR);
 	apic_eoi();
 
-	apic_calibrate_clocks();
+	apic_calibrate_clocks(cpu);
 	BOOT_VERBOSE(printf("APIC timer calibrated\n"));
 
 	return 1;
@@ -785,13 +810,14 @@ PRIVATE void lapic_set_dummy_handlers(void)
 #endif
 
 /* Build descriptors for interrupt gates in IDT. */
-PRIVATE void apic_idt_init(const int reset)
+PUBLIC void apic_idt_init(const int reset)
 {
 	u32_t val;
 
 	/* Set up idt tables for smp mode.
 	 */
 	vir_bytes local_timer_intr_handler;
+	int is_bsp = is_boot_apic(apicid());
 
 	if (reset) {
 		idt_copy_vectors(gate_table_pic);
@@ -825,7 +851,7 @@ PRIVATE void apic_idt_init(const int reset)
 	(void) lapic_read(LAPIC_LVTER);
 
 	/* configure the timer interupt handler */
-	if (cpu_is_bsp(cpuid)) {
+	if (is_bsp) {
 		local_timer_intr_handler = (vir_bytes) lapic_bsp_timer_int_handler;
 		BOOT_VERBOSE(printf("Initiating BSP timer handler\n"));
 	} else {
@@ -865,7 +891,7 @@ PRIVATE int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max
 	return n;
 }
 
-PRIVATE int detect_ioapics(void)
+PUBLIC int detect_ioapics(void)
 {
 	int status;
 
@@ -874,11 +900,130 @@ PRIVATE int detect_ioapics(void)
 	if (!status) {
 		/* try something different like MPS */
 	}
-
-	printf("nioapics %d\n", nioapics);
 	return status;
 }
 
+#ifdef CONFIG_SMP
+
+PUBLIC int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline)
+{
+	int timeout;
+	u32_t errstatus = 0;
+	int i;
+
+	/* INIT-SIPI-SIPI sequence */
+
+	for (i = 0; i < 2; i++) {
+		u32_t val;
+		lapic_errstatus();
+
+		/* set target pe */
+		val = lapic_read(LAPIC_ICR2) & 0xFFFFFF;
+		val |= cpuid2apicid[cpu] << 24;
+		lapic_write(LAPIC_ICR2, val);
+
+		/* send SIPI */
+		val = lapic_read(LAPIC_ICR1) & 0xFFF32000;
+		val |= APIC_ICR_LEVEL_ASSERT |APIC_ICR_DM_STARTUP;
+		val |= (((u32_t)trampoline >> 12)&0xff);
+		lapic_write(LAPIC_ICR1, val);
+
+		timeout = 1000;
+
+		/* wait for 200 micro-seconds*/
+		lapic_microsec_sleep (200);
+		errstatus = 0;
+
+		while ((lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) && !errstatus)
+		{
+			errstatus = lapic_errstatus();
+			timeout--;
+			if (!timeout) break;
+		}
+
+		/* skip this one and continue with another cpu */
+		if (errstatus)
+			return -1;
+	}
+
+	return 0;
+}
+
+PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline) 
+{
+	u32_t ptr, errstatus = 0;
+	int timeout;
+
+	/* set the warm reset vector */
+	ptr = (u32_t)(trampoline & 0xF);
+	phys_copy(0x467, vir2phys(&ptr), sizeof(u16_t ));
+	ptr = (u32_t)(trampoline >> 4);
+	phys_copy(0x469, vir2phys(&ptr), sizeof(u16_t ));
+
+	/* set shutdown code */
+	outb (RTC_INDEX, 0xF);
+	outb (RTC_IO, 0xA);
+
+	/* clear error state register. */
+	(void) lapic_errstatus();
+
+	/* assert INIT IPI , No Shorthand, destination mode : physical */
+	lapic_write(LAPIC_ICR2, (lapic_read (LAPIC_ICR2) & 0xFFFFFF) |
+					(cpuid2apicid[cpu] << 24));
+	lapic_write(LAPIC_ICR1, (lapic_read (LAPIC_ICR1) & 0xFFF32000) |
+		APIC_ICR_DM_INIT | APIC_ICR_TM_LEVEL | APIC_ICR_LEVEL_ASSERT);
+
+	timeout = 1000;
+
+	/* sleep for 200 micro-seconds */
+	lapic_microsec_sleep(200);
+
+	errstatus = 0;
+
+	while ((lapic_read(LAPIC_ICR1) & APIC_ICR_DELIVERY_PENDING) && !errstatus) {
+		errstatus = lapic_errstatus();
+		timeout--;
+		if (!timeout) break;
+	}
+
+	if (errstatus) 
+		return -1; /* to continue with a new processor */
+
+	/* clear error state register. */
+	lapic_errstatus();
+
+	/* deassert INIT IPI , No Shorthand, destination mode : physical */
+	lapic_write(LAPIC_ICR2, (lapic_read (LAPIC_ICR2) & 0xFFFFFF) |
+					(cpuid2apicid[cpu] << 24));
+	lapic_write(LAPIC_ICR1, (lapic_read (LAPIC_ICR1) & 0xFFF32000) |
+		APIC_ICR_DEST_ALL | APIC_ICR_TM_LEVEL | APIC_ICR_DM_INIT);
+
+	timeout = 1000;
+	errstatus = 0;
+
+	/* sleep for 200 micro-seconds */
+	lapic_microsec_sleep(200);
+
+	while ((lapic_read(LAPIC_ICR1)&APIC_ICR_DELIVERY_PENDING) && !errstatus) {
+		errstatus = lapic_errstatus();
+		timeout--;
+		if(!timeout) break;
+	}
+
+	if (errstatus) 
+		return -1; /* with the new processor */
+
+	/* clear error state register.  */
+	(void) lapic_errstatus();
+
+	/* wait 10ms */
+	lapic_microsec_sleep (10000);
+
+	return 0;
+}
+#endif
+
+#ifndef CONFIG_SMP
 PUBLIC int apic_single_cpu_init(void)
 {
 	if (!cpu_feature_apic_on_chip())
@@ -887,7 +1032,7 @@ PUBLIC int apic_single_cpu_init(void)
 	lapic_addr = phys2vir(LOCAL_APIC_DEF_ADDR);
 	ioapic_enabled = 0;
 
-	if (!lapic_enable()) {
+	if (!lapic_enable(0)) {
 		lapic_addr = 0x0;
 		return 0;
 	}
@@ -909,6 +1054,7 @@ PUBLIC int apic_single_cpu_init(void)
 	idt_reload();
 	return 1;
 }
+#endif
 
 PRIVATE eoi_method_t set_eoi_method(unsigned irq)
 {

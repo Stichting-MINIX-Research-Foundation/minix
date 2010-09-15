@@ -2,6 +2,12 @@
 #ifndef _I386_PROTO_H
 #define _I386_PROTO_H
 
+#include <machine/vm.h>
+
+#define K_STACK_SIZE	I386_PAGE_SIZE
+
+#ifndef __ASSEMBLY__
+
 /* Hardware interrupt handlers. */
 _PROTOTYPE( void hwint00, (void) );
 _PROTOTYPE( void hwint01, (void) );
@@ -95,6 +101,8 @@ _PROTOTYPE( void frstor, (void *));
 _PROTOTYPE( unsigned short fnstsw, (void));
 _PROTOTYPE( void fnstcw, (unsigned short* cw));
 
+_PROTOTYPE( void switch_k_stack, (void * esp, void (* continuation)(void)));
+
 _PROTOTYPE(void __switch_address_space, (struct proc * p,
 						struct proc ** __ptproc));
 #define switch_address_space(proc)	\
@@ -132,8 +140,7 @@ struct tss_s {
 /* u8_t iomap[0]; */
 };
 
-EXTERN struct tss_s tss;
-
+_PROTOTYPE( void prot_init, (void)                     			);
 _PROTOTYPE( void idt_init, (void)                     			);
 _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
                 vir_bytes size, int privilege)                          );
@@ -151,13 +158,32 @@ struct gate_table_s {
 	unsigned char privilege;
 };
 
-EXTERN struct gate_table_s gate_table_pic[];
+extern struct gate_table_s gate_table_pic[];
 
 /* copies an array of vectors to the IDT. The last vector must be zero filled */
 _PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
 _PROTOTYPE(void idt_reload,(void));
 
 EXTERN void * k_boot_stktop;
+EXTERN void * k_stacks_start;
+extern void * k_stacks;
+
+#define get_k_stack_top(cpu)	((void *)(((char*)(k_stacks)) \
+					+ 2 * ((cpu) + 1) * K_STACK_SIZE))
+
+#ifndef __GNUC__
+/* call a function to read the stack fram pointer (%ebp) */
+_PROTOTYPE(reg_t read_ebp, (void));
+#define get_stack_frame(__X)	((reg_t)read_ebp())
+#else
+/* read %ebp directly */
+#define get_stack_frame(__X)	((reg_t)__builtin_frame_address(0))
+#endif
+
+/*
+ * sets up TSS for a cpu and assigns kernel stack and cpu id
+ */
+_PROTOTYPE(void tss_init, (unsigned cpu, void * kernel_stack));
 
 _PROTOTYPE( void int_gate, (unsigned vec_nr, vir_bytes offset,
 		unsigned dpl_type) );
@@ -192,5 +218,7 @@ _PROTOTYPE(int platform_tbl_ptr, (phys_bytes start,
 
 /* functions defined in architecture-independent kernel source. */
 #include "kernel/proto.h"
+
+#endif /* __ASSEMBLY__ */
 
 #endif

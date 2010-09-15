@@ -62,6 +62,10 @@ EXTERN u64_t cpu_hz[CONFIG_MAX_CPUS];
 #define cpu_set_freq(cpu, freq)	do {cpu_hz[cpu] = freq;} while (0)
 #define cpu_get_freq(cpu)	cpu_hz[cpu]
 
+#ifdef CONFIG_SMP
+EXTERN int config_no_smp; /* optionaly turn off SMP */
+#endif
+
 /* VM */
 EXTERN int vm_running;
 EXTERN int catch_pagefaults;

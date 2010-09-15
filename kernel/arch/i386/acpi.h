@@ -90,5 +90,7 @@ _PROTOTYPE(void acpi_init, (void));
  * this function thus no memory needs to be freed
  */
 _PROTOTYPE(struct acpi_madt_ioapic * acpi_get_ioapic_next, (void));
+/* same as above for local APICs */
+_PROTOTYPE(struct acpi_madt_lapic * acpi_get_lapic_next, (void));
 
 #endif /* __ACPI_H__ */

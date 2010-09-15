@@ -97,6 +97,8 @@
 
 EXTERN vir_bytes lapic_addr;
 EXTERN vir_bytes lapic_eoi_addr;
+EXTERN int ioapic_enabled;
+EXTERN int bsp_lapic_id;
 
 #define MAX_NR_IOAPICS		32
 #define MAX_IOAPIC_IRQS		64
@@ -118,9 +120,35 @@ EXTERN unsigned nioapics;
 EXTERN u32_t lapic_addr_vaddr; /* we remember the virtual address here until we
 				  switch to paging */
 
-_PROTOTYPE(int apic_single_cpu_init, (void));
+_PROTOTYPE (int lapic_enable, (unsigned cpu));
 
-_PROTOTYPE(void lapic_set_timer_periodic, (unsigned freq));
+EXTERN int ioapic_enabled;
+EXTERN unsigned nioapics;
+
+_PROTOTYPE (void lapic_microsec_sleep, (unsigned count));
+_PROTOTYPE (void ioapic_disable_irqs, (u32_t irqs));
+_PROTOTYPE (void ioapic_enable_irqs, (u32_t irqs));
+
+_PROTOTYPE (int lapic_enable, (unsigned cpu));
+_PROTOTYPE (void lapic_disable, (void));
+
+_PROTOTYPE (void ioapic_disable_all, (void));
+_PROTOTYPE (int ioapic_enable_all, (void));
+
+_PROTOTYPE(int detect_ioapics, (void));
+_PROTOTYPE(void apic_idt_init, (int reset));
+
+#ifdef CONFIG_SMP
+_PROTOTYPE(int apic_send_startup_ipi, (unsigned cpu, phys_bytes trampoline));
+_PROTOTYPE(int apic_send_init_ipi, (unsigned cpu, phys_bytes trampoline));
+_PROTOTYPE(unsigned int apicid, (void));
+_PROTOTYPE(void ioapic_set_id, (u32_t addr, unsigned int id));
+#else
+_PROTOTYPE(int apic_single_cpu_init, (void));
+#endif
+
+_PROTOTYPE(void lapic_set_timer_periodic, (const unsigned freq));
+_PROTOTYPE(void lapic_set_timer_one_shot, (const u32_t value));
 _PROTOTYPE(void lapic_stop_timer, (void));
 
 _PROTOTYPE(void ioapic_set_irq, (unsigned irq));
@@ -141,7 +169,7 @@ _PROTOTYPE(void dump_apic_irq_state, (void));
 
 #define lapic_read(what)	(*((volatile u32_t *)((what))))
 #define lapic_write(what, data)	do {			\
-	(*((volatile u32_t *)((what)))) = data;			\
+	(*((volatile u32_t *)((what)))) = data;		\
 } while(0)
 
 #endif /* __ASSEMBLY__ */

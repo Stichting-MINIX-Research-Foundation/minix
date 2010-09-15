@@ -243,3 +243,34 @@ PUBLIC struct acpi_madt_ioapic * acpi_get_ioapic_next(void)
 
 	return ret;
 }
+
+PUBLIC struct acpi_madt_lapic * acpi_get_lapic_next(void)
+{
+	static unsigned idx = 0;
+	static struct acpi_madt_hdr * madt_hdr;
+
+	struct acpi_madt_lapic * ret;
+
+	if (idx == 0) {
+		madt_hdr = (struct acpi_madt_hdr *)
+			phys2vir(acpi_get_table_base("APIC"));
+		if (madt_hdr == NULL)
+			return NULL;
+	}
+
+	for (;;) {
+		ret = (struct acpi_madt_lapic *)
+			acpi_madt_get_typed_item(madt_hdr,
+					ACPI_MADT_TYPE_LAPIC, idx);
+		if (!ret)
+			break;
+
+		idx++;
+
+		/* report only usable CPUs */
+		if (ret->flags & 1)
+			break;
+	}
+
+	return ret;
+}

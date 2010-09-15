@@ -1,5 +1,8 @@
 /* Function prototypes. */
 
+/* FIXME this is a hack how to avoid inclusion conflicts */
+#ifdef __kernel__
+
 #ifndef PROTO_H
 #define PROTO_H
 
@@ -37,6 +40,7 @@ _PROTOTYPE( void fpu_sigcontext, (struct proc *, struct sigframe *fr, struct sig
 _PROTOTYPE( int main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( __dead void minix_shutdown, (struct timer *tp)		);
+_PROTOTYPE( void bsp_finish_booting, (void)				);
 
 /* proc.c */
 
@@ -207,4 +211,6 @@ _PROTOTYPE(void release_fpu, (void));
 
 /* utility.c */
 _PROTOTYPE( void cpu_print_freq, (unsigned cpu));
+#endif /* __kernel__ */
+
 #endif /* PROTO_H */

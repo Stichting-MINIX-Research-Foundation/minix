@@ -128,7 +128,7 @@
 	push	%ebp					;\
 							;\
 	movl	(CURR_PROC_PTR + 4 + displ)(%esp), %ebp	;\
-							;\
+							\
 	/* save the segment registers */		\
 	SAVE_SEGS(%ebp)					;\
 							\

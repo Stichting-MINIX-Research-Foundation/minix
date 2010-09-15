@@ -70,6 +70,30 @@ ENTRY(lapic_bsp_timer_int_handler)
 ENTRY(lapic_ap_timer_int_handler)
 	lapic_intr(_C_LABEL(ap_timer_int_handler))
 
+#ifdef CONFIG_SMP
+#include "arch_smp.h"
+
+/* FIXME dummy stubs */
+ENTRY(smp_ipi_sched)
+1:	jmp 1b
+
+ENTRY(smp_ipi_dequeue)
+1:	jmp 1b
+
+ENTRY(smp_ipi_stop)
+1:	jmp 1b
+
+ENTRY(smp_ipi_reboot)
+1:	jmp 1b
+
+ENTRY(smp_ipi_err_int)
+1:	jmp 1b
+
+ENTRY(smp_ipi_spv_int)
+1:	jmp 1b
+
+#endif /* CONFIG_SMP */
+
 #ifdef CONFIG_APIC_DEBUG
 
 .data
@@ -86,7 +110,7 @@ lapic_intr_dummy_handler_msg:
 
 #define LAPIC_INTR_DUMMY_HANDLER(vect)			\
 	.balign	LAPIC_INTR_DUMMY_HANDLER_SIZE;		\
-	lapic_intr_dummy_handler_##vect: lapic_intr_dummy_handler(vect)
+	_lapic_intr_dummy_handler_##vect: lapic_intr_dummy_handler(vect)
 
 apic_hwint(0)
 apic_hwint(1)
@@ -414,4 +438,3 @@ LABEL(lapic_intr_dummy_handles_end)
 
 
 #endif /* CONFIG_APIC_DEBUG */
-

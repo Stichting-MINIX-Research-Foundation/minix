@@ -9,8 +9,14 @@ SRCS+=	start.c table.c main.c proc.c \
 	system.c clock.c utility.c debug.c profile.c interrupt.c \
 	watchdog.c cpulocals.c
 
+.ifdef CONFIG_SMP
+SRCS += smp.c
+.endif
+
 DPADD+=	${LIBTIMERS} ${LIBSYS}
 LDADD+=	-ltimers -lsys
+
+CFLAGS += -D__kernel__
 
 .if ${COMPILER_TYPE} == "ack"
 LDFLAGS+= -.o

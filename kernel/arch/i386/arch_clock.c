@@ -9,6 +9,7 @@
 #include "kernel/clock.h"
 #include "kernel/proc.h"
 #include <minix/u64.h>
+#include "glo.h"
 
 
 #ifdef CONFIG_APIC

@@ -101,6 +101,16 @@ PUBLIC void cstart(
 	  watchdog_enabled = atoi(value);
 #endif
 
+#ifdef CONFIG_SMP
+  if (config_no_apic)
+	  config_no_smp = 1;
+  value = env_get("no_smp");
+  if(value)
+	config_no_smp = atoi(value);
+  else
+	config_no_smp = 0;
+#endif
+
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
    */

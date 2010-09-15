@@ -21,8 +21,61 @@
 #include "clock.h"
 #include "hw_intr.h"
 
+#ifdef CONFIG_SMP
+#include "smp.h"
+#endif
+
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
+
+PUBLIC void bsp_finish_booting(void)
+{
+#if SPROFILE
+  sprofiling = 0;      /* we're not profiling until instructed to */
+#endif /* SPROFILE */
+  cprof_procs_no = 0;  /* init nr of hash table slots used */
+
+  vm_running = 0;
+  krandom.random_sources = RANDOM_SOURCES;
+  krandom.random_elements = RANDOM_ELEMENTS;
+
+  /* MINIX is now ready. All boot image processes are on the ready queue.
+   * Return to the assembly code to start running the current process. 
+   */
+  get_cpulocal_var(bill_ptr) = proc_addr(IDLE);	/* it has to point somewhere */
+  announce();				/* print MINIX startup banner */
+
+  /*
+   * enable timer interrupts and clock task on the boot CPU
+   */
+  if (boot_cpu_init_timer(system_hz)) {
+	  panic("FATAL : failed to initialize timer interrupts, "
+			  "cannot continue without any clock source!");
+  }
+
+/* Warnings for sanity checks that take time. These warnings are printed
+ * so it's a clear warning no full release should be done with them
+ * enabled.
+ */
+#if DEBUG_SCHED_CHECK
+  FIXME("DEBUG_SCHED_CHECK enabled");
+#endif
+#if DEBUG_VMASSERT
+  FIXME("DEBUG_VMASSERT enabled");
+#endif
+#if DEBUG_PROC_CHECK
+  FIXME("PROC check enabled");
+#endif
+
+  DEBUGEXTRA(("cycles_accounting_init()... "));
+  cycles_accounting_init();
+  DEBUGEXTRA(("done\n"));
+
+  assert(runqueues_ok());
+
+  switch_to_user();
+  NOT_REACHABLE;
+}
 
 /*===========================================================================*
  *				main                                         *
@@ -197,52 +250,6 @@ PUBLIC int main(void)
 	DEBUGEXTRA(("done\n"));
   }
 
-  /* Architecture-dependent initialization. */
-  DEBUGEXTRA(("arch_init()... "));
-  arch_init();
-  DEBUGEXTRA(("done\n"));
-
-  /* System and processes initialization */
-  DEBUGEXTRA(("system_init()... "));
-  system_init();
-  DEBUGEXTRA(("done\n"));
-
-#if SPROFILE
-  sprofiling = 0;      /* we're not profiling until instructed to */
-#endif /* SPROFILE */
-  cprof_procs_no = 0;  /* init nr of hash table slots used */
-
-  vm_running = 0;
-  krandom.random_sources = RANDOM_SOURCES;
-  krandom.random_elements = RANDOM_ELEMENTS;
-
-  /* MINIX is now ready. All boot image processes are on the ready queue.
-   * Return to the assembly code to start running the current process. 
-   */
-  get_cpulocal_var(bill_ptr) = proc_addr(IDLE);	/* it has to point somewhere */
-  announce();				/* print MINIX startup banner */
-
-  /*
-   * enable timer interrupts and clock task on the boot CPU
-   */
-
-  if (boot_cpu_init_timer(system_hz)) {
-	  panic( "FATAL : failed to initialize timer interrupts; "
-		"cannot continue without any clock source!");
-  }
-
-/* Warnings for sanity checks that take time. These warnings are printed
- * so it's a clear warning no full release should be done with them
- * enabled.
- */
-#if DEBUG_PROC_CHECK
-  FIXME("PROC check enabled");
-#endif
-
-  DEBUGEXTRA(("cycles_accounting_init()... "));
-  cycles_accounting_init();
-  DEBUGEXTRA(("done\n"));
-
 #define IPCNAME(n) { \
 	assert((n) >= 0 && (n) <= IPCNO_HIGHEST); \
 	assert(!ipc_call_names[n]);	\
@@ -256,9 +263,34 @@ PUBLIC int main(void)
   IPCNAME(SENDNB);
   IPCNAME(SENDA);
 
-  assert(runqueues_ok());
+  /* Architecture-dependent initialization. */
+  DEBUGEXTRA(("arch_init()... "));
+  arch_init();
+  DEBUGEXTRA(("done\n"));
 
-  switch_to_user();
+  /* System and processes initialization */
+  DEBUGEXTRA(("system_init()... "));
+  system_init();
+  DEBUGEXTRA(("done\n"));
+
+#ifdef CONFIG_SMP
+  if (config_no_apic) {
+	  BOOT_VERBOSE(printf("APIC disabled, disables SMP, using legacy PIC\n"));
+	  smp_single_cpu_fallback();
+  } else if (config_no_smp) {
+	  BOOT_VERBOSE(printf("SMP disabled, using legacy PIC\n"));
+	  smp_single_cpu_fallback();
+  } else
+	  smp_init();
+#else
+  /* 
+   * if configured for a single CPU, we are already on the kernel stack which we
+   * are going to use everytime we execute kernel code. We finish booting and we
+   * never return here
+   */
+  bsp_finish_booting();
+#endif
+
   NOT_REACHABLE;
   return 1;
 }
@@ -304,6 +336,17 @@ PUBLIC void minix_shutdown(timer_t *tp)
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
  * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
  */
+#ifdef CONFIG_SMP
+  /* 
+   * FIXME
+   *
+   * we will need to stop timers on all cpus if SMP is enabled and put them in
+   * such a state that we can perform the whole boot process once restarted from
+   * monitor again
+   */
+  if (ncpus > 1)
+	  NOT_IMPLEMENTED;
+#endif
   arch_stop_local_timer();
   hw_intr_disable_all();
   intr_init(INTS_ORIG, 0);

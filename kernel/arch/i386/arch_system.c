@@ -24,6 +24,8 @@
 #include "kernel/debug.h"
 #include "multiboot.h"
 
+#include "glo.h"
+
 #ifdef CONFIG_APIC
 #include "apic.h"
 #endif
@@ -42,6 +44,8 @@ extern void poweroff16_end();
 #define CR4_OSFXSR	(1L<<9)
 /* set OSXMMEXCPT[bit 10] if we provide #XM handler. */
 #define CR4_OSXMMEXCPT	(1L<<10)
+
+PUBLIC void * k_stacks;
 
 FORWARD _PROTOTYPE( void ser_debug, (int c));
 
@@ -198,23 +202,6 @@ PUBLIC void arch_get_aout_headers(const int i, struct exec *h)
 	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
 
-PRIVATE void tss_init(struct tss_s * tss, void * kernel_stack,
- const unsigned cpu)
-{
-	/*
-	 * make space for process pointer and cpu id and point to the first
-	 * usable word
-	 */
-	tss->sp0 = ((unsigned) kernel_stack) - 2 * sizeof(void *);
-	tss->ss0 = DS_SELECTOR;
-
-	/*
-	 * set the cpu id at the top of the stack so we know on which cpu is
-	 * this stak in use when we trap to kernel
-	 */
-	*((reg_t *)(tss->sp0 + 1 * sizeof(reg_t))) = cpu;
-}
-
 PRIVATE void fpu_init(void)
 {
 	unsigned short cw, sw;
@@ -313,7 +300,20 @@ PUBLIC void arch_init(void)
 
 	idt_init();
 
-	tss_init(&tss, &k_boot_stktop, 0);
+	/* FIXME stupid a.out
+	 * align the stacks in the stack are to the K_STACK_SIZE which is a
+	 * power of 2
+	 */
+	k_stacks = (void*) (((vir_bytes)&k_stacks_start + K_STACK_SIZE - 1) &
+							~(K_STACK_SIZE - 1));
+
+#ifndef CONFIG_SMP
+	/*
+	 * use stack 0 and cpu id 0 on a single processor machine, SMP
+	 * configuration does this in smp_init() for all cpus at once
+	 */
+	tss_init(0, get_k_stack_top(0));
+#endif
 
 	acpi_init();
 
@@ -547,7 +547,11 @@ PUBLIC struct proc * arch_finish_switch_to_user(void)
 	char * stk;
 	struct proc * p;
 
-	stk = (char *)tss.sp0;
+#ifdef CONFIG_SMP
+	stk = (char *)tss[cpuid].sp0;
+#else
+	stk = (char *)tss[0].sp0;
+#endif
 	/* set pointer to the process to run on the stack */
 	p = get_cpulocal_var(proc_ptr);
 	*((reg_t *)stk) = (reg_t) p;

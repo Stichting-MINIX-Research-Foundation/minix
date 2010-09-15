@@ -64,8 +64,7 @@
 #endif
 #define VDEVIO_BUF_SIZE   64		/* max elements per VDEVIO request */
 
-/* How many bytes for the kernel stack. Space allocated in mpx.s. */
-#define K_STACK_BYTES   1024	
+#define K_PARAM_SIZE     512
 
 #endif /* CONFIG_H */
 

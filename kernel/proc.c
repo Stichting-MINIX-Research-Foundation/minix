@@ -42,6 +42,7 @@
 #include "proc.h"
 #include "vm.h"
 #include "clock.h"
+#include "spinlock.h"
 
 #include "arch_proto.h"
 

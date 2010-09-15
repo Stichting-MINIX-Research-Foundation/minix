@@ -22,8 +22,10 @@
 #define SS_INDEX             5	/* kernel SS (386: monitor SS at startup) */
 #define CS_INDEX             6	/* kernel CS */
 #define MON_CS_INDEX         7	/* temp for BIOS (386: monitor CS at startup) */
-#define TSS_INDEX            8	/* kernel TSS */
-#define FIRST_LDT_INDEX      9	/* rest of descriptors are LDT's */
+#define TSS_INDEX_FIRST      8	/* first kernel TSS */
+#define TSS_INDEX_BOOT	    TSS_INDEX_FIRST
+#define TSS_INDEX(cpu)      (TSS_INDEX_FIRST + (cpu)) /* per cpu kernel tss */
+#define FIRST_LDT_INDEX     TSS_INDEX(CONFIG_MAX_CPUS)	/* rest of descriptors are LDT's */
 
 /* Descriptor structure offsets. */
 #define DESC_BASE            2	/* to base_low */
@@ -44,7 +46,8 @@
 #define SS_SELECTOR		SS_INDEX * DESC_SIZE
 #define CS_SELECTOR		CS_INDEX * DESC_SIZE
 #define MON_CS_SELECTOR		MON_CS_INDEX * DESC_SIZE
-#define TSS_SELECTOR		TSS_INDEX * DESC_SIZE
+#define TSS_SELECTOR(cpu)	(TSS_INDEX(cpu) * DESC_SIZE)
+#define TSS_SELECTOR_BOOT	(TSS_INDEX_BOOT * DESC_SIZE)
 
 /* Privileges. */
 #define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
@@ -155,5 +158,12 @@
 
 /* Poweroff 16-bit code address */
 #define BIOS_POWEROFF_ENTRY 0x1000
+
+
+/* 
+ * defines how many bytes are reserved at the top of the kernel stack for global
+ * information like currently scheduled process or current cpu id
+ */
+#define X86_STACK_TOP_RESERVED	(2 * sizeof(reg_t))
 
 #endif /* _I386_ACONST_H */
