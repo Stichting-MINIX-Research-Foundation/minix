@@ -30,6 +30,12 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
+.if ${COMPILER_TYPE} == "ack"
+world: mkfiles includes depend libraries install etcforce
+.elif ${COMPILER_TYPE} == "gnu"
+world: mkfiles includes depend gnu-libraries install etcforce
+.endif
+
 mkfiles:
 	make -C share/mk install
 
