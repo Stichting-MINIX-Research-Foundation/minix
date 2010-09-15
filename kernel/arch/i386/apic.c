@@ -159,7 +159,10 @@ PRIVATE	u32_t lapic_tctr0, lapic_tctr1;
 PRIVATE unsigned apic_imcrp;
 PRIVATE const unsigned nlints = 0;
 
-#define apic_eoi() do { *((volatile u32_t *) lapic_eoi_addr) = 0; } while(0)
+PUBLIC void arch_eoi(void)
+{
+	apic_eoi();
+}
 
 /*
  * FIXME this should be a cpulocal variable but there are some problems with
@@ -394,10 +397,6 @@ PUBLIC void ioapic_mask_irq(unsigned irq)
 		irq_8259_mask(irq);
 }
 
-PUBLIC void apic_ipi_sched_handler(void)
-{
-}
-
 PUBLIC unsigned int apicid(void)
 {
 	return lapic_read(LAPIC_ID);
@@ -544,6 +543,13 @@ PUBLIC void lapic_stop_timer(void)
 	u32_t lvtt;
 	lvtt = lapic_read(LAPIC_LVTTR);
 	lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
+}
+
+PUBLIC void lapic_restart_timer(void)
+{
+	u32_t lvtt;
+	lvtt = lapic_read(LAPIC_LVTTR);
+	lapic_write(LAPIC_LVTTR, lvtt & ~APIC_LVTT_MASK);
 }
 
 PUBLIC void lapic_microsec_sleep(unsigned count)

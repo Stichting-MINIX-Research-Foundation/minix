@@ -33,6 +33,9 @@ _PROTOTYPE(void i8259_disable,(void));
 					ioapic_reset_pic();		\
 					lapic_disable();		\
 				} while (0)
+#ifdef CONFIG_SMP
+#define ipi_ack			apic_eoi
+#endif
 
 #else
 /* legacy PIC */

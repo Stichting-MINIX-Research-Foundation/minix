@@ -1,4 +1,5 @@
 #include "smp.h"
+#include "interrupt.h"
 
 unsigned ncpus;
 unsigned ht_per_core;
@@ -28,7 +29,25 @@ PUBLIC void ap_boot_finished(unsigned cpu)
 
 PUBLIC void smp_ipi_halt_handler(void)
 {
+	ipi_ack();
 	arch_stop_local_timer();
 	arch_smp_halt_cpu();
+}
+
+PUBLIC void smp_schedule(unsigned cpu)
+{
+	arch_send_smp_schedule_ipi(cpu);
+}
+
+PUBLIC void smp_ipi_sched_handler(void)
+{
+	struct proc * p;
+	
+	ipi_ack();
+	
+	p = get_cpulocal_var(proc_ptr);
+
+	if (p->p_endpoint != IDLE)
+		RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
 }
 

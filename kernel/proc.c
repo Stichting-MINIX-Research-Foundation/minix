@@ -149,6 +149,7 @@ PUBLIC void proc_init(void)
 	/* initialize IDLE structures for every CPU */
 	for (i = 0; i < CONFIG_MAX_CPUS; i++) {
 		struct proc * ip = get_cpu_var_ptr(i, idle_proc);
+		ip->p_endpoint = IDLE;
 		ip->p_priv = &idle_priv;
 		/* must not let idle ever get scheduled */
 		ip->p_rts_flags |= RTS_PROC_STOP;
@@ -186,6 +187,11 @@ PRIVATE void idle(void)
 		get_cpulocal_var(bill_ptr) = p;
 
 	switch_address_space_idle();
+
+	/* we don't need to keep time on APs as it is handled on the BSP */
+	if (cpuid != bsp_cpu_id)
+		arch_stop_local_timer();
+	get_cpulocal_var(cpu_is_idle) = 1;
 
 	/* start accounting for the idle time */
 	context_stop(proc_addr(KERNEL));
@@ -1277,7 +1283,6 @@ PUBLIC void enqueue(
  * process is assigned to.
  */
   int q = rp->p_priority;	 		/* scheduling queue to use */
-  struct proc * p;
   struct proc **rdy_head, **rdy_tail;
   
   assert(proc_is_runnable(rp));
@@ -1298,16 +1303,29 @@ PUBLIC void enqueue(
       rp->p_nextready = NULL;		/* mark new end */
   }
 
+  if (cpuid == rp->p_cpu) {
+	  /*
+	   * enqueueing a process with a higher priority than the current one,
+	   * it gets preempted. The current process must be preemptible. Testing
+	   * the priority also makes sure that a process does not preempt itself
+	   */
+	  struct proc * p;
+	  p = get_cpulocal_var(proc_ptr);
+	  assert(p);
+	  if((p->p_priority > rp->p_priority) &&
+			  (priv(p)->s_flags & PREEMPTIBLE))
+		  RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
+  }
+#ifdef CONFIG_SMP
   /*
-   * enqueueing a process with a higher priority than the current one, it gets
-   * preempted. The current process must be preemptible. Testing the priority
-   * also makes sure that a process does not preempt itself
+   * if the process was enqueued on a different cpu and the cpu is idle, i.e.
+   * the time is off, we need to wake up that cpu and let it schedule this new
+   * process
    */
-  p = get_cpulocal_var(proc_ptr);
-  assert(p);
-  if((p->p_priority > rp->p_priority) &&
-		  (priv(p)->s_flags & PREEMPTIBLE))
-     RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
+  else if (get_cpu_var(rp->p_cpu, cpu_is_idle)) {
+	  smp_schedule(rp->p_cpu);
+  }
+#endif
 
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());

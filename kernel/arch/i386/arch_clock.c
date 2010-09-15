@@ -8,6 +8,7 @@
 
 #include "kernel/clock.h"
 #include "kernel/proc.h"
+#include "kernel/interrupt.h"
 #include <minix/u64.h>
 #include "glo.h"
 
@@ -144,10 +145,23 @@ PUBLIC void arch_stop_local_timer(void)
 #ifdef CONFIG_APIC
 	if (lapic_addr) {
 		lapic_stop_timer();
+		apic_eoi();
 	} else
 #endif
 	{
 		stop_8253A_timer();
+	}
+}
+
+PUBLIC void arch_restart_local_timer(void)
+{
+#ifdef CONFIG_APIC
+	if (lapic_addr) {
+		lapic_restart_timer();
+	} else
+#endif
+	{
+		init_8253A_timer(system_hz);
 	}
 }
 
@@ -243,7 +257,16 @@ PUBLIC void context_stop(struct proc * p)
 
 PUBLIC void context_stop_idle(void)
 {
-	context_stop(proc_addr(IDLE));
+	int is_idle;
+	unsigned cpu = cpuid;
+	
+	is_idle = get_cpu_var(cpu, cpu_is_idle);
+	get_cpu_var(cpu, cpu_is_idle) = 0;
+
+	context_stop(get_cpulocal_var_ptr(idle_proc));
+
+	if (is_idle)
+		arch_restart_local_timer();
 }
 
 PUBLIC u64_t ms_2_cpu_time(unsigned ms)

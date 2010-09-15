@@ -353,3 +353,8 @@ PUBLIC void arch_smp_halt_cpu(void)
 	BKL_UNLOCK();
 	for(;;);
 }
+
+PUBLIC void arch_send_smp_schedule_ipi(unsigned cpu)
+{
+	apic_send_ipi(APIC_SMP_SCHED_PROC_VECTOR, cpu, APIC_IPI_DEST);
+}

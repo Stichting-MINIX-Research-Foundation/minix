@@ -152,11 +152,14 @@ _PROTOTYPE(int apic_single_cpu_init, (void));
 _PROTOTYPE(void lapic_set_timer_periodic, (const unsigned freq));
 _PROTOTYPE(void lapic_set_timer_one_shot, (const u32_t value));
 _PROTOTYPE(void lapic_stop_timer, (void));
+_PROTOTYPE(void lapic_restart_timer, (void));
 
 _PROTOTYPE(void ioapic_set_irq, (unsigned irq));
 _PROTOTYPE(void ioapic_unset_irq, (unsigned irq));
 
- /* signal the end of interrupt handler to apic */
+/* signal the end of interrupt handler to apic */
+#define apic_eoi() do { *((volatile u32_t *) lapic_eoi_addr) = 0; } while(0)
+
 _PROTOTYPE(void ioapic_eoi, (int irq));
 
 _PROTOTYPE(void dump_apic_irq_state, (void));
@@ -165,8 +168,6 @@ _PROTOTYPE(void apic_send_ipi, (unsigned vector, unsigned cpu, int type));
 
 _PROTOTYPE(void apic_ipi_sched_intr, (void));
 _PROTOTYPE(void apic_ipi_halt_intr, (void));
-
-_PROTOTYPE(void apic_ipi_sched_handler, (void));
 
 #define APIC_IPI_DEST			0
 #define APIC_IPI_SELF			1
