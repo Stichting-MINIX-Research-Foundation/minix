@@ -29,5 +29,5 @@ EXTERN char monitor_code[256];
 
 EXTERN struct machine machine;		/* machine info */
 #ifdef CONFIG_SMP
-EXTERN unsigned cpu_proc[CONFIG_MAX_CPUS];
+EXTERN int cpu_proc[CONFIG_MAX_CPUS];
 #endif

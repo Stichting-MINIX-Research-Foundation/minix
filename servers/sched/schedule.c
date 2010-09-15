@@ -38,6 +38,10 @@ FORWARD _PROTOTYPE( void balance_queues, (struct timer *tp)		);
 #define schedule_process_migrate(p)	\
 	schedule_process(p, SCHEDULE_CHANGE_CPU)
 
+#define CPU_DEAD	-1
+
+#define cpu_is_available(c)	(cpu_proc[c] >= 0)
+
 #define DEFAULT_USER_TIME_SLICE 200
 
 /* processes created by RS are sysytem processes */
@@ -62,7 +66,12 @@ PRIVATE void pick_cpu(struct schedproc * proc)
 		return;
 	}
 
+	/* if no other cpu available, try BSP */
+	cpu = machine.bsp_id;
 	for (c = 0; c < machine.processors_count; c++) {
+		/* skip dead cpus */
+		if (!cpu_is_available(c))
+			continue;
 		if (c != machine.bsp_id && cpu_load > cpu_proc[c]) {
 			cpu_load = cpu_proc[c];
 			cpu = c;
@@ -218,7 +227,13 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 
 	/* Schedule the process, giving it some quantum */
 	pick_cpu(rmp);
-	if ((rv = schedule_process(rmp, SCHEDULE_CHANGE_ALL)) != OK) {
+	while ((rv = schedule_process(rmp, SCHEDULE_CHANGE_ALL)) == EBADCPU) {
+		/* don't try this CPU ever again */
+		cpu_proc[rmp->cpu] = CPU_DEAD;
+		pick_cpu(rmp);
+	}
+
+	if (rv != OK) {
 		printf("Sched: Error while scheduling process, kernel replied %d\n",
 			rv);
 		return rv;

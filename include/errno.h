@@ -130,4 +130,6 @@ extern int errno;		  /* place where the error numbers go */
 #define EBADEPT      (_SIGN 301)  /* specified endpoint is bad */
 #define EDEADEPT     (_SIGN 302)  /* specified endpoint is not alive */
 
+#define EBADCPU		(_SIGN 1000) /* requested CPU does not work */
+
 #endif /* _ERRNO_H */

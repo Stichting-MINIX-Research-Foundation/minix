@@ -27,9 +27,20 @@ SPINLOCK_DEFINE(boot_lock)
 
 PUBLIC void wait_for_APs_to_finish_booting(void)
 {
+	unsigned n = 0;
+	int i;
+
+	/* check how many cpus are actually alive */
+	for (i = 0 ; i < ncpus ; i++) {
+		if (cpu_test_flag(i, CPU_IS_READY))
+			n++;
+	}
+	if (n != ncpus)
+		printf("WARNING only %d out of %d cpus booted\n", n, ncpus);
+
 	/* we must let the other CPUs to run in kernel mode first */
 	BKL_UNLOCK();
-	while (ap_cpus_booted != (ncpus - 1))
+	while (ap_cpus_booted != (n - 1))
 		arch_pause();
 	/* now we have to take the lock again as we continu execution */
 	BKL_LOCK();

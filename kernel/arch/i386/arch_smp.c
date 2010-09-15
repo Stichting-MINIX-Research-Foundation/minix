@@ -36,8 +36,8 @@ extern void * __trampoline_end;
 extern u32_t busclock[CONFIG_MAX_CPUS];
 extern int panicking;
 
-static int ap_cpu_ready;
-static int cpu_down;
+static int volatile ap_cpu_ready;
+static int volatile cpu_down;
 
 /* there can be at most 255 local APIC ids, each fits in 8 bits */
 PRIVATE unsigned char apicid2cpuid[255];
@@ -186,6 +186,11 @@ PUBLIC void smp_shutdown_aps(void)
 	for (cpu = 0; cpu < ncpus; cpu++) {
 		if (cpu == cpuid)
 			continue;
+		if (!cpu_test_flag(cpu, CPU_IS_READY)) {
+			printf("CPU %d didn't boot\n", cpu);
+			continue;
+		}
+
 		cpu_down = -1;
 		barrier();
 		apic_send_ipi(APIC_SMP_CPU_HALT_VECTOR, cpu, APIC_IPI_DEST);

@@ -653,6 +653,8 @@ PUBLIC int sched_proc(struct proc *p,
 #ifdef CONFIG_SMP
 	if ((cpu < 0 && cpu != -1) || (cpu > 0 && (unsigned) cpu >= ncpus))
 		return(EINVAL);
+	if (cpu != -1 && !(cpu_is_ready(cpu)))
+		return EBADCPU;
 #endif
 
 	/* In some cases, we might be rescheduling a runnable process. In such
