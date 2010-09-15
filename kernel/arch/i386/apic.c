@@ -423,6 +423,7 @@ PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 		stop_8253A_timer();
 	}
 
+	BKL_UNLOCK();
 	return 1;
 }
 
@@ -467,6 +468,14 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 
 	/* set the PIC timer to get some time */
 	init_8253A_timer(system_hz);
+
+	/*
+	 * We must unlock BKL here as the in-kernel interrupt will lock it
+	 * again. The handler will unlock it after it is done. This is
+	 * absolutely safe as only the BSP is running. It is just a workaround a
+	 * corner case for APIC timer calibration
+	 */
+	BKL_UNLOCK();
 	intr_enable();
 
 	/* loop for some time to get a sample */

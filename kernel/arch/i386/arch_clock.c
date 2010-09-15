@@ -15,6 +15,7 @@
 #ifdef CONFIG_APIC
 #include "apic.h"
 #endif
+#include "spinlock.h"
 
 #define CLOCK_ACK_BIT   0x80    /* PS/2 clock interrupt acknowledge bit */
 
@@ -79,6 +80,8 @@ PRIVATE int calib_cpu_handler(irq_hook_t * UNUSED(hook))
 		tsc1 = tsc;
 	}
 
+	/* just in case we are in an SMP single cpu fallback mode */
+	BKL_UNLOCK();
 	return 1;
 }
 
@@ -92,6 +95,8 @@ PRIVATE void estimate_cpu_freq(void)
 	/* set the probe, we use the legacy timer, IRQ 0 */
 	put_irq_handler(&calib_cpu, CLOCK_IRQ, calib_cpu_handler);
 
+	/* just in case we are in an SMP single cpu fallback mode */
+	BKL_UNLOCK();
 	/* set the PIC timer to get some time */
 	intr_enable();
 
@@ -101,6 +106,8 @@ PRIVATE void estimate_cpu_freq(void)
 	}
 
 	intr_disable();
+	/* just in case we are in an SMP single cpu fallback mode */
+	BKL_LOCK();
 
 	/* remove the probe */
 	rm_irq_handler(&calib_cpu);
@@ -199,6 +206,19 @@ PUBLIC void context_stop(struct proc * p)
 		}
 #endif
 	}
+	
+	/*
+	 * This function is called only if we switch from kernel to user or idle
+	 * or back. Therefore this is a perfect location to place the big kernel
+	 * lock which will hopefully disappear soon.
+	 *
+	 * If we stop accounting for KERNEL we must unlock the BKL. If account
+	 * for IDLE we must not hold the lock
+	 */
+	if (p == proc_addr(KERNEL))
+		BKL_UNLOCK();
+	else
+		BKL_LOCK();
 }
 
 PUBLIC void context_stop_idle(void)

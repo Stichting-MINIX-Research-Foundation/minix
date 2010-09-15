@@ -24,6 +24,10 @@
 #ifdef CONFIG_SMP
 #include "smp.h"
 #endif
+#ifdef CONFIG_WATCHDOG
+#include "watchdog.h"
+#endif
+#include "spinlock.h"
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
@@ -93,6 +97,7 @@ PUBLIC int main(void)
   struct exec e_hdr;		/* for a copy of an a.out header */
   size_t argsz;			/* size of arguments passed to crtso on stack */
 
+  BKL_LOCK();
    /* Global value to test segment sanity. */
    magictest = MAGICTEST;
  

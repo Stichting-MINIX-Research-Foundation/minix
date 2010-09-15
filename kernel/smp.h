@@ -7,6 +7,7 @@
 
 #include "kernel.h"
 #include "arch_smp.h"
+#include "spinlock.h"
 
 /* number of CPUs (execution strands in the system */
 EXTERN unsigned ncpus;
@@ -47,6 +48,8 @@ EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
 #define cpu_clear_flag(cpu, flag) do { cpus[cpu].flags &= ~(flag); } while(0)
 #define cpu_test_flag(cpu, flag) (cpus[cpu].flags & (flag))
 #define cpu_is_ready(cpu) cpu_test_flag(cpu, CPU_IS_READY)
+
+SPINLOCK_DECLARE(big_kernel_lock)
 
 #endif /* __ASSEMBLY__ */
 

@@ -964,26 +964,27 @@ ENTRY(smp_get_cores)
  * eax register is clobbered.
  */
 ENTRY(arch_spinlock_lock)
-	push	%ebp
-	mov	%esp, %ebp
-	push	%ebx
-	mov	8(%ebp), %eax
-	mov	$1, %ebx
-/* FIXME use exponential backoff */
+	mov	4(%esp), %eax
+	mov	$1, %edx
 2:
-	xchg	%ebx, (%eax)
-	test	%ebx, %ebx
+	mov	$1, %ecx
+	xchg	%ecx, (%eax)
+	test	%ecx, %ecx
 	je	0f
+
+	cmp	$(1<< 16), %edx
+	je	1f
+	shl	%edx
 1:
-/* FIXME don't use the byte code */
-.byte	0xf3, 0x90	/*  pause */
-	cmp	$0, (%eax)
-	jne	1b
-	jmp	2b
+	mov	%edx, %ecx
+3:
+	pause
+	sub	$1, %ecx
+	test	%ecx, %ecx
+	jz	2b
+	jmp	3b
 0:
 	mfence
-	pop	%ebx
-	pop	%ebp
 	ret
 
 /*===========================================================================*/
@@ -993,11 +994,9 @@ ENTRY(arch_spinlock_lock)
 /*  spin lock release routine. */
 ENTRY(arch_spinlock_unlock)
 	mov	4(%esp), %eax
-	push	%ebx
-	mov	$0, %ebx
-	xchg	%ebx, (%eax)
+	mov	$0, %ecx
+	xchg	%ecx, (%eax)
 	mfence
-	pop	%ebx
 	ret
 
 /*===========================================================================*/

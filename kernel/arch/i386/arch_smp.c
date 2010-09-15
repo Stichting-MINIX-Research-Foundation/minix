@@ -189,6 +189,10 @@ PRIVATE void ap_finish_booting(void)
 
 	while(!i386_paging_enabled)
 		arch_pause();
+
+	BKL_LOCK();
+	printf("CPU %d is running\n", cpu);
+	BKL_UNLOCK();
 	for(;;);
 
 	/* finish processor initialisation. */
