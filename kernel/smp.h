@@ -59,6 +59,7 @@ _PROTOTYPE(void smp_ipi_halt_handler, (void));
 _PROTOTYPE(void smp_ipi_sched_handler, (void));
 
 _PROTOTYPE(void smp_schedule, (unsigned cpu));
+_PROTOTYPE(void smp_schedule_stop_proc, (struct proc * p));
 
 _PROTOTYPE(void arch_send_smp_schedule_ipi, (unsigned cpu));
 _PROTOTYPE(void arch_smp_halt_cpu, (void));
