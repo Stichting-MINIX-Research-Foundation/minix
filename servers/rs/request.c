@@ -958,6 +958,18 @@ PRIVATE int check_request(struct rs_start *rs_start)
 	return EINVAL;
   }
 
+  if (rs_start->rss_cpu == RS_CPU_BSP)
+	  rs_start->rss_cpu = machine.bsp_id;
+  else if (rs_start->rss_cpu == RS_CPU_DEFAULT) {
+	  /* keep the default value */
+  } else if (rs_start->rss_cpu < 0)
+	  return EINVAL;
+  else if (rs_start->rss_cpu > machine.processors_count) {
+	  printf("RS: cpu number %d out of range 0-%d, using BSP\n",
+			  rs_start->rss_cpu, machine.processors_count);
+	  rs_start->rss_cpu = machine.bsp_id;
+  }
+
   /* Verify signal manager. */
   if (rs_start->rss_sigmgr != SELF && 
 	(rs_start->rss_sigmgr < 0 || 

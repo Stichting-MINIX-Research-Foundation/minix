@@ -50,5 +50,7 @@ EXTERN int shutting_down;
 
 EXTERN unsigned system_hz;
 
+EXTERN struct machine machine;		/* machine info */
+
 #endif /* RS_GLO_H */
 

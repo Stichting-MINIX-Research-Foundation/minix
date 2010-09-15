@@ -39,6 +39,7 @@ PUBLIC void sched_init(void)
 				parent_e,		/* parent_e */
 				USER_Q, 		/* maxprio */
 				USER_QUANTUM, 		/* quantum */
+				-1,			/* don't change cpu */
 				&trmp->mp_scheduler);	/* *newsched_e */
 			if (s != OK) {
 				printf("PM: SCHED denied taking over scheduling of %s: %d\n",

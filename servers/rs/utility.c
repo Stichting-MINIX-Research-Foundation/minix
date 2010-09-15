@@ -205,7 +205,7 @@ PUBLIC int sched_init_proc(struct rproc *rp)
 
   /* Start scheduling for the given process. */
   if ((s = sched_start(rp->r_scheduler, rp->r_pub->endpoint, 
-      RS_PROC_NR, rp->r_priority, rp->r_quantum, 
+      RS_PROC_NR, rp->r_priority, rp->r_quantum, rp->r_cpu,
       &rp->r_scheduler)) != OK) {
       return s;
   }

@@ -46,9 +46,13 @@ PUBLIC int sched_inherit(endpoint_t scheduler_e,
 /*===========================================================================*
  *				sched_start				     *
  *===========================================================================*/
-PUBLIC int sched_start(endpoint_t scheduler_e, endpoint_t schedulee_e, 
-	endpoint_t parent_e, unsigned maxprio, unsigned quantum,
-	endpoint_t *newscheduler_e)
+PUBLIC int sched_start(endpoint_t scheduler_e,
+			endpoint_t schedulee_e, 
+			endpoint_t parent_e,
+			int maxprio,
+			int quantum,
+			int cpu,
+			endpoint_t *newscheduler_e)
 {
 	int rv;
 	message m;
@@ -68,7 +72,7 @@ PUBLIC int sched_start(endpoint_t scheduler_e, endpoint_t schedulee_e,
 	/* The KERNEL must schedule this process. */
 	if(scheduler_e == KERNEL) {
 		if ((rv = sys_schedctl(SCHEDCTL_FLAG_KERNEL, 
-			schedulee_e, maxprio, quantum)) != OK) {
+			schedulee_e, maxprio, quantum, cpu)) != OK) {
 			return rv;
 		}
 		*newscheduler_e = scheduler_e;

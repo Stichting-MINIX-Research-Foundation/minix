@@ -676,6 +676,7 @@
 #define SCHEDCTL_ENDPOINT	m9_l2	/* endpt of process to be scheduled */
 #define SCHEDCTL_QUANTUM	m9_l3   /* current scheduling quantum */
 #define SCHEDCTL_PRIORITY	m9_s4   /* current scheduling priority */
+#define SCHEDCTL_CPU		m9_l5   /* where to place this process */
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
@@ -1141,6 +1142,7 @@
 #	define SCHEDULING_ENDPOINT	m9_l1
 #	define SCHEDULING_QUANTUM	m9_l2
 #	define SCHEDULING_PRIORITY	m9_s1
+#	define SCHEDULING_CPU		m9_l4
 
 /* SCHEDULING_START uses _ENDPOINT, _PRIORITY and _QUANTUM from
  * SCHEDULING_NO_QUANTUM */

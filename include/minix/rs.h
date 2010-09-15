@@ -33,6 +33,10 @@ Interface to the reincarnation server
 #define RS_NR_PCI_CLASS		 4
 #define RS_MAX_LABEL_LEN	16
 
+/* CPU special values */
+#define RS_CPU_DEFAULT		-1 /* use the default cpu or do not change the current one */
+#define RS_CPU_BSP		-2 /* use the bootstrap cpu */
+
 /* Labels are copied over separately. */
 struct rss_label
 {

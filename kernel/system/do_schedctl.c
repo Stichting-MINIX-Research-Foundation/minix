@@ -8,7 +8,7 @@ PUBLIC int do_schedctl(struct proc * caller, message * m_ptr)
 {
 	struct proc *p;
 	unsigned flags;
-	unsigned priority, quantum;
+	int priority, quantum, cpu;
 	int proc_nr;
 	int r;
 
@@ -29,11 +29,12 @@ PUBLIC int do_schedctl(struct proc * caller, message * m_ptr)
 		/* the kernel becomes the scheduler and starts 
 		 * scheduling the process.
 		 */
-		priority = (unsigned) m_ptr->SCHEDCTL_PRIORITY;
-		quantum = (unsigned) m_ptr->SCHEDCTL_QUANTUM;
+		priority = (int) m_ptr->SCHEDCTL_PRIORITY;
+		quantum = (int) m_ptr->SCHEDCTL_QUANTUM;
+		cpu = (int) m_ptr->SCHEDCTL_CPU;
 
 		/* Try to schedule the process. */
-		if((r = sched_proc(p, priority, quantum) != OK))
+		if((r = sched_proc(p, priority, quantum, cpu) != OK))
 			return r;
 		p->p_scheduler = NULL;
 	} else {

@@ -33,6 +33,7 @@ FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 FORWARD _PROTOTYPE( int sef_cb_signal_manager, (endpoint_t target, int signo) );
 
+
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
@@ -46,9 +47,13 @@ PUBLIC int main(void)
   int ipc_status;				/* status code */
   int call_nr, who_e,who_p;			/* call number and caller */
   int result;                 			/* result to return */
+  int s;
 
   /* SEF local startup. */
   sef_local_startup();
+  
+  if (OK != (s=sys_getmachine(&machine)))
+	  panic("couldn't get machine info: %d", s);
 
   /* Main loop - get work and do it, forever. */         
   while (TRUE) {              

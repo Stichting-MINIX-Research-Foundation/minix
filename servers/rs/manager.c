@@ -1361,6 +1361,7 @@ endpoint_t source;
       rp->r_scheduler = rs_start->rss_scheduler;
       rp->r_priority = rs_start->rss_priority;
       rp->r_quantum = rs_start->rss_quantum;
+      rp->r_cpu = rs_start->rss_cpu;
   }
 
   /* Update command and arguments. */

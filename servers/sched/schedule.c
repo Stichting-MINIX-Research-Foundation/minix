@@ -189,7 +189,7 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 
 	/* Take over scheduling the process. The kernel reply message populates
 	 * the processes current priority and its time slice */
-	if ((rv = sys_schedctl(0, rmp->endpoint, 0, 0)) != OK) {
+	if ((rv = sys_schedctl(0, rmp->endpoint, 0, 0, 0)) != OK) {
 		printf("Sched: Error taking over scheduling for %d, kernel said %d\n",
 			rmp->endpoint, rv);
 		return rv;
@@ -268,7 +268,7 @@ PRIVATE int schedule_process(struct schedproc * rmp)
 	pick_cpu(rmp);
 
 	if ((rv = sys_schedule(rmp->endpoint, rmp->priority,
-			rmp->time_slice)) != OK) {
+			rmp->time_slice, rmp->cpu)) != OK) {
 		printf("SCHED: An error occurred when trying to schedule %d: %d\n",
 		rmp->endpoint, rv);
 	}

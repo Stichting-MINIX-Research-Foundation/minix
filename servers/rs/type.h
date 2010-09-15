@@ -62,8 +62,9 @@ struct rproc {
 				 */
   uid_t r_uid;
   endpoint_t r_scheduler;	/* scheduler */
-  unsigned r_priority;
-  unsigned r_quantum;
+  int r_priority;		/* negative values are reserved for special meanings */
+  int r_quantum;
+  int r_cpu;
 
   char r_ipc_list[MAX_IPC_LIST];
   int r_nr_control;
