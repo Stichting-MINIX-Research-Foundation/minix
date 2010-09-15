@@ -14,11 +14,14 @@
 
 #define MAX_LOOP (NR_PROCS + NR_TASKS)
 
-PUBLIC int
-runqueues_ok(void)
+PUBLIC int runqueues_ok_cpu(unsigned cpu)
 {
   int q, l = 0;
   register struct proc *xp;
+  struct proc **rdy_head, **rdy_tail;
+
+  rdy_head = get_cpu_var(cpu, run_q_head);
+  rdy_tail = get_cpu_var(cpu, run_q_tail);
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	xp->p_found = 0;
@@ -108,6 +111,33 @@ runqueues_ok(void)
   /* All is ok. */
   return 1;
 }
+
+#ifdef CONFIG_SMP
+PRIVATE int runqueues_ok_all(void)
+{
+	unsigned c;
+
+	for (c = 0 ; c < ncpus; c++) {
+		if (!runqueues_ok_cpu(c))
+			return 0;
+	}
+	return 1;	
+}
+
+PUBLIC int runqueues_ok(void)
+{
+	return runqueues_ok_all();
+}
+
+#else
+
+PUBLIC int runqueues_ok(void)
+{
+	return runqueues_ok_cpu(0);
+}
+
+
+#endif
 
 PUBLIC char *
 rtsflagstr(const int flags)

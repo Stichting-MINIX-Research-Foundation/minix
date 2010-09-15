@@ -252,8 +252,6 @@ struct proc {
 #ifndef __ASSEMBLY__
 
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
-EXTERN struct proc *rdy_head[NR_SCHED_QUEUES]; /* ptrs to ready list headers */
-EXTERN struct proc *rdy_tail[NR_SCHED_QUEUES]; /* ptrs to ready list tails */
 
 _PROTOTYPE( int mini_send, (struct proc *caller_ptr, endpoint_t dst_e,
 		message *m_ptr, int flags));

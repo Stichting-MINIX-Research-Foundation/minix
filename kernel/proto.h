@@ -102,6 +102,12 @@ _PROTOTYPE( int disable_irq, (const irq_hook_t *hook)			);
 
 /* debug.c */
 _PROTOTYPE( int runqueues_ok, (void) );
+#ifndef CONFIG_SMP
+#define runqueues_ok_local runqueues_ok
+#else
+#define runqueues_ok_local() runqueues_ok_cpu(cpuid)
+_PROTOTYPE( int runqueues_ok_cpu, (unsigned cpu));
+#endif
 _PROTOTYPE( char *rtsflagstr, (int flags) );
 _PROTOTYPE( char *miscflagstr, (int flags) );
 _PROTOTYPE( char *schedulerstr, (struct proc *scheduler) );

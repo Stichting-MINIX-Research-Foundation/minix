@@ -2,7 +2,7 @@
 #define __GLO_X86_H__
 
 #include "kernel/kernel.h"
-#include "proto.h"
+#include "arch_proto.h"
 
 EXTERN int cpu_has_tsc;	/* signal whether this cpu has time stamp register. This
 			   feature was introduced by Pentium */

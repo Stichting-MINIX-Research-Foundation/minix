@@ -110,6 +110,18 @@ PUBLIC void proc_init(void)
 	}
 }
 
+PRIVATE void switch_address_space_idle(void)
+{
+#ifdef CONFIG_SMP
+	/*
+	 * currently we bet that VM is always alive and its pages available so
+	 * when the CPU wakes up the kernel is mapped and no surprises happen.
+	 * This is only a problem if more than 1 cpus are available
+	 */
+	switch_address_space(proc_addr(VM_PROC_NR));
+#endif
+}
+
 /*===========================================================================*
  *				idle					     * 
  *===========================================================================*/
@@ -120,6 +132,8 @@ PRIVATE void idle(void)
 	 * spent not doing anything. This allows test setups to measure
 	 * the CPU utiliziation of certain workloads with high precision.
 	 */
+
+	switch_address_space_idle();
 
 	/* start accounting for the idle time */
 	context_stop(proc_addr(KERNEL));
@@ -1209,18 +1223,20 @@ PUBLIC void enqueue(
  * responsible for inserting a process into one of the scheduling queues. 
  * The mechanism is implemented here.   The actual scheduling policy is
  * defined in sched() and pick_proc().
+ *
+ * This function can be used x-cpu as it always uses the queues of the cpu the
+ * process is assigned to.
  */
   int q = rp->p_priority;	 		/* scheduling queue to use */
   struct proc * p;
-
-#if DEBUG_RACE
-  /* With DEBUG_RACE, schedule everyone at the same priority level. */
-  rp->p_priority = q = MIN_USER_Q;
-#endif
-
+  struct proc **rdy_head, **rdy_tail;
+  
   assert(proc_is_runnable(rp));
 
   assert(q >= 0);
+
+  rdy_head = get_cpu_var(rp->p_cpu, run_q_head);
+  rdy_tail = get_cpu_var(rp->p_cpu, run_q_tail);
 
   /* Now add the process to the queue. */
   if (!rdy_head[q]) {		/* add to empty queue */
@@ -1245,7 +1261,7 @@ PUBLIC void enqueue(
      RTS_SET(p, RTS_PREEMPTED); /* calls dequeue() */
 
 #if DEBUG_SANITYCHECKS
-  assert(runqueues_ok());
+  assert(runqueues_ok_local());
 #endif
 }
 
@@ -1262,6 +1278,8 @@ PRIVATE void enqueue_head(struct proc *rp)
 {
   const int q = rp->p_priority;	 		/* scheduling queue to use */
 
+  struct proc **rdy_head, **rdy_tail;
+
   assert(proc_ptr_ok(rp));
   assert(proc_is_runnable(rp));
 
@@ -1274,6 +1292,9 @@ PRIVATE void enqueue_head(struct proc *rp)
   assert(q >= 0);
 
 
+  rdy_head = get_cpu_var(rp->p_cpu, run_q_head);
+  rdy_tail = get_cpu_var(rp->p_cpu, run_q_tail);
+
   /* Now add the process to the queue. */
   if (!rdy_head[q]) {		/* add to empty queue */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
@@ -1284,7 +1305,7 @@ PRIVATE void enqueue_head(struct proc *rp)
       rdy_head[q] = rp;				/* set new queue head */
 
 #if DEBUG_SANITYCHECKS
-  assert(runqueues_ok());
+  assert(runqueues_ok_local());
 #endif
 }
 
@@ -1297,10 +1318,15 @@ PUBLIC void dequeue(const struct proc *rp)
 /* A process must be removed from the scheduling queues, for example, because
  * it has blocked.  If the currently active process is removed, a new process
  * is picked to run by calling pick_proc().
+ *
+ * This function can operate x-cpu as it always removes the process from the
+ * queue of the cpu the process is currently assigned to.
  */
   register int q = rp->p_priority;		/* queue to use */
   register struct proc **xpp;			/* iterate over queue */
   register struct proc *prev_xp;
+
+  struct proc **rdy_tail;
 
   assert(proc_ptr_ok(rp));
   assert(!proc_is_runnable(rp));
@@ -1308,12 +1334,15 @@ PUBLIC void dequeue(const struct proc *rp)
   /* Side-effect for kernel: check if the task's stack still is ok? */
   assert (!iskernelp(rp) || *priv(rp)->s_stack_guard == STACK_GUARD);
 
+  rdy_tail = get_cpu_var(rp->p_cpu, run_q_tail);
+
   /* Now make sure that the process is not in its ready queue. Remove the 
    * process if it is found. A process can be made unready even if it is not 
    * running by being sent a signal that kills it.
    */
   prev_xp = NULL;				
-  for (xpp = &rdy_head[q]; *xpp; xpp = &(*xpp)->p_nextready) {
+  for (xpp = get_cpu_var_ptr(rp->p_cpu, run_q_head[q]); *xpp;
+		  xpp = &(*xpp)->p_nextready) {
       if (*xpp == rp) {				/* found process to remove */
           *xpp = (*xpp)->p_nextready;		/* replace with next chain */
           if (rp == rdy_tail[q]) {		/* queue tail removed */
@@ -1326,35 +1355,9 @@ PUBLIC void dequeue(const struct proc *rp)
   }
 
 #if DEBUG_SANITYCHECKS
-  assert(runqueues_ok());
+  assert(runqueues_ok_local());
 #endif
 }
-
-#if DEBUG_RACE
-/*===========================================================================*
- *				random_process				     * 
- *===========================================================================*/
-PRIVATE struct proc *random_process(struct proc *head)
-{
-	int i, n = 0;
-	struct proc *rp;
-	u64_t r;
-	read_tsc_64(&r);
-
-	for(rp = head; rp; rp = rp->p_nextready)
-		n++;
-
-	/* Use low-order word of TSC as pseudorandom value. */
-	i = r.lo % n;
-
-	for(rp = head; i--; rp = rp->p_nextready)
-		;
-
-	assert(rp);
-
-	return rp;
-}
-#endif
 
 /*===========================================================================*
  *				pick_proc				     * 
@@ -1364,26 +1367,23 @@ PRIVATE struct proc * pick_proc(void)
 /* Decide who to run now.  A new process is selected an returned.
  * When a billable process is selected, record it in 'bill_ptr', so that the 
  * clock task can tell who to bill for system time.
+ *
+ * This functions always uses the run queues of the local cpu!
  */
   register struct proc *rp;			/* process to run */
+  struct proc **rdy_head;
   int q;				/* iterate over queues */
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
    * The lowest queue contains IDLE, which is always ready.
    */
+  rdy_head = get_cpulocal_var(run_q_head);
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
 	if(!(rp = rdy_head[q])) {
 		TRACE(VF_PICKPROC, printf("queue %d empty\n", q););
 		continue;
 	}
-
-#if DEBUG_RACE
-	rp = random_process(rdy_head[q]);
-#endif
-
-	TRACE(VF_PICKPROC, printf("found %s / %d on queue %d\n", 
-		rp->p_name, rp->p_endpoint, q););
 	assert(proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)	 	
 		get_cpulocal_var(bill_ptr) = rp; /* bill for system time */

@@ -370,19 +370,38 @@ PUBLIC void do_ser_debug()
 	ser_debug(c);
 }
 
-PRIVATE void ser_dump_queues(void)
+PRIVATE void ser_dump_queue_cpu(unsigned cpu)
 {
 	int q;
+	struct proc ** rdy_head;
+	
+	rdy_head = get_cpu_var(cpu, run_q_head);
+
 	for(q = 0; q < NR_SCHED_QUEUES; q++) {
 		struct proc *p;
-		if(rdy_head[q])	
+		if(rdy_head[q])	 {
 			printf("%2d: ", q);
-		for(p = rdy_head[q]; p; p = p->p_nextready) {
-			printf("%s / %d  ", p->p_name, p->p_endpoint);
+			for(p = rdy_head[q]; p; p = p->p_nextready) {
+				printf("%s / %d  ", p->p_name, p->p_endpoint);
+			}
+			printf("\n");
 		}
-		printf("\n");
 	}
+}
 
+PRIVATE void ser_dump_queues(void)
+{
+#ifdef CONFIG_SMP
+	unsigned cpu;
+
+	printf("--- run queues ---\n");
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		printf("CPU %d :\n", cpu);
+		ser_dump_queue_cpu(cpu);
+	}
+#else
+	ser_dump_queue_cpu(0);
+#endif
 }
 
 PRIVATE void ser_dump_segs(void)

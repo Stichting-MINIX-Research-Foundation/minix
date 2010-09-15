@@ -5,6 +5,7 @@
 #ifndef __ASSEMBLY__
 
 #include "kernel.h"
+#include "proc.h"
 
 #ifdef CONFIG_SMP
 
@@ -67,6 +68,10 @@ DECLARE_CPULOCAL(int, pagefault_handled);
  * pagetables. Therefore we cannot use the proc_ptr pointer
  */
 DECLARE_CPULOCAL(struct proc *, ptproc);
+
+/* CPU private run queues */
+DECLARE_CPULOCAL(struct proc *, run_q_head[NR_SCHED_QUEUES]); /* ptrs to ready list headers */
+DECLARE_CPULOCAL(struct proc *, run_q_tail[NR_SCHED_QUEUES]); /* ptrs to ready list tails */
 
 DECLARE_CPULOCAL_END
 

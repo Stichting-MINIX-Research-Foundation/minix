@@ -32,8 +32,10 @@
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
 
+void ser_dump_queues(void);
 PUBLIC void bsp_finish_booting(void)
 {
+  int i;
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
@@ -49,6 +51,13 @@ PUBLIC void bsp_finish_booting(void)
   get_cpulocal_var(bill_ptr) = proc_addr(IDLE);	/* it has to point somewhere */
   announce();				/* print MINIX startup banner */
 
+  /*
+   * we have access to the cpu local run queue, only now schedule the processes.
+   * We ignore the slots for the former kernel tasks
+   */
+  for (i=0; i < NR_BOOT_PROCS - NR_TASKS; i++) {
+	RTS_UNSET(proc_addr(i), RTS_PROC_STOP);
+  }
   /*
    * enable timer interrupts and clock task on the boot CPU
    */
@@ -75,8 +84,10 @@ PUBLIC void bsp_finish_booting(void)
   cycles_accounting_init();
   DEBUGEXTRA(("done\n"));
 
-  assert(runqueues_ok());
-
+#ifdef CONFIG_SMP
+  cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
+#endif
+  
   switch_to_user();
   NOT_REACHABLE;
 }
@@ -246,11 +257,10 @@ PUBLIC int main(void)
 	 * done this; until then, don't let it run.
 	 */
 	if(ip->flags & PROC_FULLVM)
-		RTS_SET(rp, RTS_VMINHIBIT);
+		rp->p_rts_flags |= RTS_VMINHIBIT;
 
-	/* None of the kernel tasks run */
-	if (rp->p_nr < 0) RTS_SET(rp, RTS_PROC_STOP);
-	RTS_UNSET(rp, RTS_SLOT_FREE); /* remove RTS_SLOT_FREE and schedule */
+	rp->p_rts_flags |= RTS_PROC_STOP;
+	rp->p_rts_flags &= ~RTS_SLOT_FREE;
 	alloc_segments(rp);
 	DEBUGEXTRA(("done\n"));
   }
