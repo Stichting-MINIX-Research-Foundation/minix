@@ -79,6 +79,34 @@ FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
 		break;							\
 	}
 
+PUBLIC void proc_init(void)
+{
+	struct proc * rp;
+	struct priv *sp;
+	int i;
+
+	/* Clear the process table. Anounce each slot as empty and set up
+	 * mappings for proc_addr() and proc_nr() macros. Do the same for the
+	 * table with privilege structures for the system processes. 
+	 */
+	for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
+		rp->p_rts_flags = RTS_SLOT_FREE;/* initialize free slot */
+		rp->p_magic = PMAGIC;
+		rp->p_nr = i;			/* proc number from ptr */
+		rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
+		rp->p_scheduler = NULL;		/* no user space scheduler */
+		rp->p_priority = 0;		/* no priority */
+		rp->p_quantum_size_ms = 0;	/* no quantum size */
+	}
+	for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
+		sp->s_proc_nr = NONE;		/* initialize as free */
+		sp->s_id = (sys_id_t) i;	/* priv structure index */
+		ppriv_addr[i] = sp;		/* priv ptr from number */
+		sp->s_sig_mgr = NONE;		/* clear signal managers */
+		sp->s_bak_sig_mgr = NONE;
+	}
+}
+
 /*===========================================================================*
  *				idle					     * 
  *===========================================================================*/

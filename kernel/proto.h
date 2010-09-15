@@ -41,6 +41,7 @@ _PROTOTYPE( __dead void minix_shutdown, (struct timer *tp)		);
 /* proc.c */
 
 _PROTOTYPE( int do_ipc, (reg_t r1, reg_t r2, reg_t r3)			);
+_PROTOTYPE( void proc_init, (void)					);
 _PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (const struct proc *rp)			);
