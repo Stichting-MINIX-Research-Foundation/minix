@@ -35,7 +35,6 @@
 #include <assert.h>
 
 #include "clock.h"
-#include "debug.h"
 
 #ifdef CONFIG_WATCHDOG
 #include "watchdog.h"
@@ -63,30 +62,87 @@ PRIVATE clock_t realtime = 0;		      /* real time clock */
  * The boot processos timer interrupt handler. In addition to non-boot cpus it
  * keeps real time and notifies the clock task if need be
  */
-extern unsigned ooq_msg;
-PUBLIC int bsp_timer_int_handler(void)
+PUBLIC int timer_int_handler(void)
 {
-	unsigned ticks;
+	/* Update user and system accounting times. Charge the current process
+	 * for user time. If the current process is not billable, that is, if a
+	 * non-user process is running, charge the billable process for system
+	 * time as well.  Thus the unbillable process' user time is the billable
+	 * user's system time.
+	 */
 
-	if(minix_panicing)
-		return 0;
+	struct proc * p, * billp;
 
-	/* Get number of ticks and update realtime. */
-	ticks = lost_ticks + 1;
-	lost_ticks = 0;
-	realtime += ticks;
+	/* FIXME watchdog for slave cpus! */
+#ifdef CONFIG_WATCHDOG
+	/*
+	 * we need to know whether local timer ticks are happening or whether
+	 * the kernel is locked up. We don't care about overflows as we only
+	 * need to know that it's still ticking or not
+	 */
+	watchdog_local_timer_ticks++;
+#endif
 
-	ap_timer_int_handler();
+	if (cpu_is_bsp(cpuid))
+		realtime++;
 
-	/* if a timer expired, notify the clock task */
-	if ((next_timeout <= realtime)) {
-		tmrs_exptimers(&clock_timers, realtime, NULL);
-		next_timeout = (clock_timers == NULL) ?
-			TMR_NEVER : clock_timers->tmr_exp_time;
+	/* Update user and system accounting times. Charge the current process
+	 * for user time. If the current process is not billable, that is, if a
+	 * non-user process is running, charge the billable process for system
+	 * time as well.  Thus the unbillable process' user time is the billable
+	 * user's system time.
+	 */
+
+	p = get_cpulocal_var(proc_ptr);
+	billp = get_cpulocal_var(bill_ptr);
+
+	p->p_user_time++;
+
+	if (! (priv(p)->s_flags & BILLABLE)) {
+		billp->p_sys_time++;
 	}
 
-	if (do_serial_debug)
-		do_ser_debug();
+	/* Decrement virtual timers, if applicable. We decrement both the
+	 * virtual and the profile timer of the current process, and if the
+	 * current process is not billable, the timer of the billed process as
+	 * well.  If any of the timers expire, do_clocktick() will send out
+	 * signals.
+	 */
+	if ((p->p_misc_flags & MF_VIRT_TIMER)){
+		p->p_virt_left--;
+	}
+	if ((p->p_misc_flags & MF_PROF_TIMER)){
+		p->p_prof_left--;
+	}
+	if (! (priv(p)->s_flags & BILLABLE) &&
+			(billp->p_misc_flags & MF_PROF_TIMER)){
+		billp->p_prof_left--;
+	}
+
+	/*
+	 * Check if a process-virtual timer expired. Check current process, but
+	 * also bill_ptr - one process's user time is another's system time, and
+	 * the profile timer decreases for both!
+	 */
+	vtimer_check(p);
+
+	if (p != billp)
+		vtimer_check(billp);
+
+	/* Update load average. */
+	load_update();
+
+	if (cpu_is_bsp(cpuid)) {
+		/* if a timer expired, notify the clock task */
+		if ((next_timeout <= realtime)) {
+			tmrs_exptimers(&clock_timers, realtime, NULL);
+			next_timeout = (clock_timers == NULL) ?
+				TMR_NEVER : clock_timers->tmr_exp_time;
+		}
+
+		if (do_serial_debug)
+			do_ser_debug();
+	}
 
 	return(1);					/* reenable interrupts */
 }
@@ -152,90 +208,16 @@ PRIVATE void load_update(void)
 	}
 
 	/* Cumulation. How many processes are ready now? */
-	for(q = 0; q < NR_SCHED_QUEUES; q++)
-		for(p = rdy_head[q]; p; p = p->p_nextready)
+	for(q = 0; q < NR_SCHED_QUEUES; q++) {
+		for(p = rdy_head[q]; p != NULL; p = p->p_nextready) {
 			enqueued++;
+		}
+	}
 
 	kloadinfo.proc_load_history[slot] += enqueued;
 
 	/* Up-to-dateness. */
 	kloadinfo.last_clock = realtime;
-}
-
-/*
- * Timer interupt handler. This is the only thing executed on non boot
- * processors. It is called by bsp_timer_int_handler() on the boot processor
- */
-PUBLIC int ap_timer_int_handler(void)
-{
-
-	/* Update user and system accounting times. Charge the current process
-	 * for user time. If the current process is not billable, that is, if a
-	 * non-user process is running, charge the billable process for system
-	 * time as well.  Thus the unbillable process' user time is the billable
-	 * user's system time.
-	 */
-
-	const unsigned ticks = 1;
-	struct proc * p, * billp;
-
-#ifdef CONFIG_WATCHDOG
-	/*
-	 * we need to know whether local timer ticks are happening or whether
-	 * the kernel is locked up. We don't care about overflows as we only
-	 * need to know that it's still ticking or not
-	 */
-	watchdog_local_timer_ticks++;
-#endif
-
-	/* Update user and system accounting times. Charge the current process
-	 * for user time. If the current process is not billable, that is, if a
-	 * non-user process is running, charge the billable process for system
-	 * time as well.  Thus the unbillable process' user time is the billable
-	 * user's system time.
-	 */
-
-	p = get_cpulocal_var(proc_ptr);
-	billp = get_cpulocal_var(bill_ptr);
-
-	p->p_user_time += ticks;
-
-	/* FIXME make this ms too */
-	if (! (priv(p)->s_flags & BILLABLE)) {
-		billp->p_sys_time += ticks;
-	}
-
-	/* Decrement virtual timers, if applicable. We decrement both the
-	 * virtual and the profile timer of the current process, and if the
-	 * current process is not billable, the timer of the billed process as
-	 * well.  If any of the timers expire, do_clocktick() will send out
-	 * signals.
-	 */
-	if ((p->p_misc_flags & MF_VIRT_TIMER)){
-		p->p_virt_left -= ticks;
-	}
-	if ((p->p_misc_flags & MF_PROF_TIMER)){
-		p->p_prof_left -= ticks;
-	}
-	if (! (priv(p)->s_flags & BILLABLE) &&
-			(billp->p_misc_flags & MF_PROF_TIMER)){
-		billp->p_prof_left -= ticks;
-	}
-
-	/*
-	 * Check if a process-virtual timer expired. Check current process, but
-	 * also bill_ptr - one process's user time is another's system time, and
-	 * the profile timer decreases for both!
-	 */
-	vtimer_check(p);
-
-	if (p != billp)
-		vtimer_check(billp);
-
-	/* Update load average. */
-	load_update();
-
-	return 1;
 }
 
 PUBLIC int boot_cpu_init_timer(unsigned freq)
@@ -244,8 +226,14 @@ PUBLIC int boot_cpu_init_timer(unsigned freq)
 		return -1;
 
 	if (arch_register_local_timer_handler(
-				(irq_handler_t) bsp_timer_int_handler))
+				(irq_handler_t) timer_int_handler))
 		return -1;
 
 	return 0;
+}
+
+PUBLIC int app_cpu_init_timer(unsigned freq)
+{
+	if (arch_init_local_timer(freq))
+		return -1;
 }

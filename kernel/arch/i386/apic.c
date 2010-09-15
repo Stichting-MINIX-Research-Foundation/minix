@@ -484,6 +484,7 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 	}
 
 	intr_disable();
+	BKL_LOCK();
 
 	/* remove the probe */
 	rm_irq_handler(&calib_clk);
@@ -613,6 +614,8 @@ PRIVATE int lapic_enable_in_msr(void)
 
 	ia32_msr_read(IA32_APIC_BASE, &msr.hi, &msr.lo);
 
+#if 0
+	/*FIXME this is a problem on AP */
 	/*
 	 * FIXME if the location is different (unlikely) then the one we expect,
 	 * update it
@@ -625,6 +628,7 @@ PRIVATE int lapic_enable_in_msr(void)
 		}
 		lapic_addr = phys2vir(msr.lo & ~((1 << 12) - 1));
 	}
+#endif
 
 	msr.lo |= (1 << IA32_APIC_BASE_ENABLE_BIT);
 	ia32_msr_write(IA32_APIC_BASE, msr.hi, msr.lo);
@@ -825,7 +829,6 @@ PUBLIC void apic_idt_init(const int reset)
 
 	/* Set up idt tables for smp mode.
 	 */
-	vir_bytes local_timer_intr_handler;
 	int is_bsp = is_boot_apic(apicid());
 
 	if (reset) {
@@ -861,16 +864,12 @@ PUBLIC void apic_idt_init(const int reset)
 
 	/* configure the timer interupt handler */
 	if (is_bsp) {
-		local_timer_intr_handler = (vir_bytes) lapic_bsp_timer_int_handler;
-		BOOT_VERBOSE(printf("Initiating BSP timer handler\n"));
-	} else {
-		local_timer_intr_handler = (vir_bytes) lapic_ap_timer_int_handler;
-		BOOT_VERBOSE(printf("Initiating AP timer handler\n"));
+		BOOT_VERBOSE(printf("Initiating APIC timer handler\n"));
+		/* register the timer interrupt handler for this CPU */
+		int_gate(APIC_TIMER_INT_VECTOR, (vir_bytes) lapic_timer_int_handler,
+				PRESENT | INT_GATE_TYPE | (INTR_PRIVILEGE << DPL_SHIFT));
 	}
 
-	/* register the timer interrupt handler for this CPU */
-	int_gate(APIC_TIMER_INT_VECTOR, (vir_bytes) local_timer_intr_handler,
-		PRESENT | INT_GATE_TYPE | (INTR_PRIVILEGE << DPL_SHIFT));
 }
 
 PRIVATE int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max)

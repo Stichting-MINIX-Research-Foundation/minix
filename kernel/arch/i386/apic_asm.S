@@ -64,11 +64,8 @@ ENTRY(apic_hwint##irq)							\
 	iret								;
 
 /* apic timer tick handlers */
-ENTRY(lapic_bsp_timer_int_handler)
-	lapic_intr(_C_LABEL(bsp_timer_int_handler))
-
-ENTRY(lapic_ap_timer_int_handler)
-	lapic_intr(_C_LABEL(ap_timer_int_handler))
+ENTRY(lapic_timer_int_handler)
+	lapic_intr(_C_LABEL(timer_int_handler))
 
 #ifdef CONFIG_SMP
 #include "arch_smp.h"
