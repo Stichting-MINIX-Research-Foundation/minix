@@ -18,3 +18,5 @@
 #include <errno.h>
 
 #include "proto.h"
+
+extern struct machine machine;		/* machine info */

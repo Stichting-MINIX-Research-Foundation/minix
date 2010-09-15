@@ -24,6 +24,41 @@ FORWARD _PROTOTYPE( void balance_queues, (struct timer *tp)		);
 
 #define DEFAULT_USER_TIME_SLICE 200
 
+/* processes created by RS are sysytem processes */
+#define is_system_proc(p)	((p)->parent == RS_PROC_NR)
+
+PRIVATE unsigned cpu_proc[CONFIG_MAX_CPUS];
+
+PRIVATE void pick_cpu(struct schedproc * proc)
+{
+#ifdef CONFIG_SMP
+	unsigned cpu, c;
+	unsigned cpu_load = (unsigned) -1;
+	
+	if (machine.processors_count == 1) {
+		proc->cpu = machine.bsp_id;
+		return;
+	}
+
+	/* schedule sysytem processes only on the boot cpu */
+	if (is_system_proc(proc)) {
+		proc->cpu = machine.bsp_id;
+		return;
+	}
+
+	for (c = 0; c < machine.processors_count; c++) {
+		if (c != machine.bsp_id && cpu_load > cpu_proc[c]) {
+			cpu_load = cpu_proc[c];
+			cpu = c;
+		}
+	}
+	proc->cpu = cpu;
+	cpu_proc[cpu]++;
+#else
+	proc->cpu = 0;
+#endif
+}
+
 /*===========================================================================*
  *				do_noquantum				     *
  *===========================================================================*/
@@ -69,6 +104,7 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
+	cpu_proc[rmp->cpu]--;
 	rmp->flags = 0; /*&= ~IN_USE;*/
 
 	return OK;
@@ -103,6 +139,25 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 	rmp->max_priority = (unsigned) m_ptr->SCHEDULING_MAXPRIO;
 	if (rmp->max_priority >= NR_SCHED_QUEUES) {
 		return EINVAL;
+	}
+
+	/* Inherit current priority and time slice from parent. Since there
+	 * is currently only one scheduler scheduling the whole system, this
+	 * value is local and we assert that the parent endpoint is valid */
+	if (rmp->endpoint == rmp->parent) {
+		/* We have a special case here for init, which is the first
+		   process scheduled, and the parent of itself. */
+		rmp->priority   = USER_Q;
+		rmp->time_slice = DEFAULT_USER_TIME_SLICE;
+
+		/*
+		 * Since kernel never changes the cpu of a process, all are
+		 * started on the BSP and the userspace scheduling hasn't
+		 * changed that yet either, we can be sure that BSP is the
+		 * processor where the processes run now.
+		 */
+		rmp->cpu = machine.bsp_id;
+		/* FIXME set the cpu mask */
 	}
 	
 	switch (m_ptr->m_type) {
@@ -209,6 +264,8 @@ PUBLIC int do_nice(message *m_ptr)
 PRIVATE int schedule_process(struct schedproc * rmp)
 {
 	int rv;
+
+	pick_cpu(rmp);
 
 	if ((rv = sys_schedule(rmp->endpoint, rmp->priority,
 			rmp->time_slice)) != OK) {

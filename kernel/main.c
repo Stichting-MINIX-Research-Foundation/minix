@@ -89,6 +89,11 @@ PUBLIC void bsp_finish_booting(void)
 
 #ifdef CONFIG_SMP
   cpu_set_flag(bsp_cpu_id, CPU_IS_READY);
+  machine.processors_count = ncpus;
+  machine.bsp_id = bsp_cpu_id;
+#else
+  machine.processors_count = 1;
+  machine.bsp_id = 0;
 #endif
   
   switch_to_user();

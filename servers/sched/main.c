@@ -13,6 +13,8 @@
 FORWARD _PROTOTYPE( void reply, (endpoint_t whom, message *m_ptr)	);
 FORWARD _PROTOTYPE( void sef_local_startup, (void)			);
 
+PUBLIC struct machine machine;		/* machine info */
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -24,10 +26,13 @@ PUBLIC int main(void)
 	int who_e;	/* caller's endpoint */
 	int result;	/* result to system call */
 	int rv;
+	int s;
 
 	/* SEF local startup. */
 	sef_local_startup();
 
+	if (OK != (s=sys_getmachine(&machine)))
+		panic("couldn't get machine info: %d", s);
 	/* Initialize scheduling timers, used for running balance_queues */
 	init_scheduling();
 
