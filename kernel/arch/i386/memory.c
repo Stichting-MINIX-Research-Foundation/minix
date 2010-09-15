@@ -31,7 +31,8 @@ PUBLIC int i386_paging_enabled = 0;
 
 PRIVATE int psok = 0;
 
-#define MAX_FREEPDES (3 * CONFIG_MAX_CPUS)
+#define FREE_PDES_PER_CPU	3
+#define MAX_FREEPDES		(FREE_PDES_PER_CPU * CONFIG_MAX_CPUS)
 PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
@@ -79,7 +80,12 @@ PRIVATE phys_bytes createpde(
 	phys_bytes offset;
 	int pde;
 
-	assert(free_pde_idx >= 0 && free_pde_idx < nfreepdes);
+	assert(free_pde_idx >= 0 && free_pde_idx < FREE_PDES_PER_CPU);
+
+	/* make the index CPU local */
+	free_pde_idx += cpuid * FREE_PDES_PER_CPU;
+	assert(free_pde_idx < nfreepdes);
+
 	pde = freepdes[free_pde_idx];
 	assert(pde >= 0 && pde < 1024);
 
