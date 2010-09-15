@@ -49,7 +49,17 @@ EXTERN struct cpu cpus[CONFIG_MAX_CPUS];
 #define cpu_test_flag(cpu, flag) (cpus[cpu].flags & (flag))
 #define cpu_is_ready(cpu) cpu_test_flag(cpu, CPU_IS_READY)
 
+/*
+ * Big Kernel Lock prevents more then one cpu executing the kernel code
+ */
 SPINLOCK_DECLARE(big_kernel_lock)
+/*
+ * to sync the booting APs
+ */
+SPINLOCK_DECLARE(boot_lock)
+	
+_PROTOTYPE(void wait_for_APs_to_finish_booting, (void));
+_PROTOTYPE(void ap_boot_finished, (unsigned cpu));
 
 #endif /* __ASSEMBLY__ */
 

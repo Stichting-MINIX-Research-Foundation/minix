@@ -127,11 +127,7 @@ PRIVATE struct irq io_apic_irq[NR_IRQ_VECTORS];
  * to make APIC work if SMP is not configured, we need to set the maximal number
  * of CPUS to 1, cpuid to return 0 and the current cpu is always BSP
  */
-#ifndef CONFIG_SMP
-/* this is always true on an uniprocessor */
-#define cpu_is_bsp(x) 1
-
-#else
+#ifdef CONFIG_SMP
 
 #include "kernel/smp.h"
 

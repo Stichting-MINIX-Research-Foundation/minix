@@ -172,6 +172,9 @@ extern void * k_stacks;
 #define get_k_stack_top(cpu)	((void *)(((char*)(k_stacks)) \
 					+ 2 * ((cpu) + 1) * K_STACK_SIZE))
 
+#define barrier()	do { mfence(); } while(0)
+
+
 #ifndef __GNUC__
 /* call a function to read the stack fram pointer (%ebp) */
 _PROTOTYPE(reg_t read_ebp, (void));

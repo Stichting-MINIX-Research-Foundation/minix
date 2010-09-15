@@ -191,14 +191,34 @@ PRIVATE void ap_finish_booting(void)
 		arch_pause();
 
 	/*
+	 * Finish processor initialisation.  CPUs must be excluded from running.
+	 * lapic timer calibration locks and unlocks the BKL because of the
+	 * nested interrupts used for calibration. Therefore BKL is not good
+	 * enough, the boot_lock must be held.
+	 */
+	spinlock_lock(&boot_lock);
+	BKL_LOCK();
+
+	/*
 	 * we must load some page tables befre we turn paging on. As VM is
 	 * always present we use those
 	 */
 	segmentation2paging(proc_addr(VM_PROC_NR));
+	
+	printf("CPU %d paging is on\n", cpu);
 
-	BKL_LOCK();
-	printf("CPU %d is running\n", cpu);
+	lapic_enable(cpu);
+
+	if (app_cpu_init_timer(system_hz)) {
+		panic("FATAL : failed to initialize timer interrupts CPU %d, "
+				"cannot continue without any clock source!", cpuid);
+	}
+	printf("CPU %d local APIC timer is ticking\n", cpu);
+
 	BKL_UNLOCK();
+	
+	ap_boot_finished(cpu);
+	spinlock_unlock(&boot_lock);
 	for(;;);
 
 	/* finish processor initialisation. */

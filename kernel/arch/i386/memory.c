@@ -1083,11 +1083,14 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 			io_apic[i].addr = io_apic[i].vaddr;
 		}
 	}
-
-	/* TODO APs are still waiting, release them */
-#endif
+#if CONFIG_SMP
+	barrier();
 
 	i386_paging_enabled = 1;
+
+	wait_for_APs_to_finish_booting();
+#endif
+#endif
 
 #ifdef CONFIG_WATCHDOG
 	/*
