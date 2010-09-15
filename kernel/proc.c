@@ -329,8 +329,9 @@ check_misc_flags:
 	if (!proc_is_runnable(p))
 		goto not_runnable_pick_new;
 
-	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
-		p->p_name, p->p_endpoint););
+	TRACE(VF_SCHEDULING, printf("cpu %d starting %s / %d "
+				"pc 0x%08x\n",
+		cpuid, p->p_name, p->p_endpoint, p->p_reg.pc););
 #if DEBUG_TRACE
 	p->p_schedules++;
 #endif
@@ -1448,7 +1449,7 @@ PRIVATE struct proc * pick_proc(void)
   rdy_head = get_cpulocal_var(run_q_head);
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
 	if(!(rp = rdy_head[q])) {
-		TRACE(VF_PICKPROC, printf("queue %d empty\n", q););
+		TRACE(VF_PICKPROC, printf("cpu %d queue %d empty\n", cpuid, q););
 		continue;
 	}
 	assert(proc_is_runnable(rp));

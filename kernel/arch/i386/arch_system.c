@@ -48,6 +48,9 @@ extern void poweroff16_end();
 PUBLIC void * k_stacks;
 
 FORWARD _PROTOTYPE( void ser_debug, (int c));
+#ifdef CONFIG_SMP
+FORWARD _PROTOTYPE( void ser_dump_proc_cpu, (void));
+#endif
 
 PUBLIC __dead void arch_monitor(void)
 {
@@ -471,6 +474,11 @@ PRIVATE void ser_debug(const int c)
 	case '3':
 		ser_dump_segs();
 		break;
+#ifdef CONFIG_SMP
+	case '4':
+		ser_dump_proc_cpu();
+		break;
+#endif
 #if DEBUG_TRACE
 #define TOGGLECASE(ch, flag)				\
 	case ch: {					\
@@ -495,7 +503,6 @@ PRIVATE void ser_debug(const int c)
 	serial_debug_active = 0;
 }
 
-
 PUBLIC void ser_dump_proc()
 {
 	struct proc *pp;
@@ -507,6 +514,23 @@ PUBLIC void ser_dump_proc()
 		print_proc_recursive(pp);
 	}
 }
+
+#ifdef CONFIG_SMP
+PRIVATE void ser_dump_proc_cpu(void)
+{
+	struct proc *pp;
+	unsigned cpu;
+
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		printf("CPU %d processes : \n", cpu);
+		for (pp= BEG_USER_ADDR; pp < END_PROC_ADDR; pp++) {
+			if (isemptyp(pp) || pp->p_cpu != cpu)
+				continue;
+			print_proc(pp);
+		}
+	}
+}
+#endif
 
 #if SPROFILE
 
