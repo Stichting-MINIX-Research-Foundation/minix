@@ -150,6 +150,8 @@ PUBLIC void proc_init(void)
 	for (i = 0; i < CONFIG_MAX_CPUS; i++) {
 		struct proc * ip = get_cpu_var_ptr(i, idle_proc);
 		ip->p_priv = &idle_priv;
+		/* must not let idle ever get scheduled */
+		ip->p_rts_flags |= RTS_PROC_STOP;
 		set_idle_name(ip->p_name, i);
 	}
 }

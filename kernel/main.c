@@ -48,7 +48,10 @@ PUBLIC void bsp_finish_booting(void)
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
-  get_cpulocal_var(bill_ptr) = proc_addr(IDLE);	/* it has to point somewhere */
+  
+  /* it should point somewhere */
+  get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
+  get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
   announce();				/* print MINIX startup banner */
 
   /*

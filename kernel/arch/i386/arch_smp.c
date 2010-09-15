@@ -216,16 +216,17 @@ PRIVATE void ap_finish_booting(void)
 	printf("CPU %d local APIC timer is ticking\n", cpu);
 
 	/* FIXME assign CPU local idle structure */
-	get_cpulocal_var(proc_ptr) = proc_addr(IDLE);
-	get_cpulocal_var(bill_ptr) = proc_addr(IDLE);
-
-	BKL_UNLOCK();
+	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+	get_cpulocal_var(bill_ptr) = get_cpulocal_var_ptr(idle_proc);
 
 	ap_boot_finished(cpu);
 	spinlock_unlock(&boot_lock);
 
 	/* finish processor initialisation. */
 	lapic_enable(cpu);
+
+	BKL_UNLOCK();
+	for(;;);
 
 	switch_to_user();
 	NOT_REACHABLE;
