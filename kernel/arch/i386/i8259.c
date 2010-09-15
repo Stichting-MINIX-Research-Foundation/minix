@@ -7,7 +7,7 @@
 
 #include "kernel/kernel.h"
 #include "kernel/proc.h"
-#include "proto.h"
+#include "arch_proto.h"
 #include <minix/portio.h>
 #include <machine/cpu.h>
 

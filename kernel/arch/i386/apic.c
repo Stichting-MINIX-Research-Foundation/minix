@@ -12,7 +12,7 @@
 
 #include "kernel/proc.h"
 #include "kernel/glo.h"
-#include "proto.h"
+#include "arch_proto.h"
 
 #include <minix/u64.h>
 

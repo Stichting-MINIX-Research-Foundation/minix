@@ -10,7 +10,7 @@
 #include "kernel/system.h"
 #include <minix/type.h>
 
-#include "proto.h"
+#include "arch_proto.h"
 
 /*===========================================================================*
  *				arch_do_vmctl				     *

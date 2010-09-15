@@ -17,7 +17,7 @@
 #include <sys/sigcontext.h>
 
 #include "archconst.h"
-#include "proto.h"
+#include "arch_proto.h"
 #include "serial.h"
 #include "oxpcie.h"
 #include "kernel/proc.h"

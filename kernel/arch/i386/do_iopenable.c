@@ -12,7 +12,7 @@
 #include "kernel/kernel.h"
 #include <minix/endpoint.h>
 
-#include "proto.h"
+#include "arch_proto.h"
 
 /*===========================================================================*
  *			        do_iopenable				     *

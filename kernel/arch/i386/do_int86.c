@@ -10,7 +10,7 @@
 #include <minix/endpoint.h>
 #include <machine/int86.h>
 
-#include "proto.h"
+#include "arch_proto.h"
 
 struct reg86u reg86;
 

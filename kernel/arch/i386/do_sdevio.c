@@ -14,7 +14,7 @@
 #include <minix/devio.h>
 #include <minix/endpoint.h>
 
-#include "proto.h"
+#include "arch_proto.h"
 
 #if USE_SDEVIO
 

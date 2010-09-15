@@ -1,5 +1,5 @@
 #include "kernel/kernel.h"
-#include "proto.h"
+#include "arch_proto.h"
 
 #include "debugreg.h"
 

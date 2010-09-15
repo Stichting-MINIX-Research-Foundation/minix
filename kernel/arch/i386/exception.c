@@ -4,7 +4,7 @@
  */
 
 #include "kernel/kernel.h"
-#include "proto.h"
+#include "arch_proto.h"
 #include <signal.h>
 #include <string.h>
 #include <assert.h>

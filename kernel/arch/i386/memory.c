@@ -16,7 +16,7 @@
 #include <machine/vm.h>
 
 #include "oxpcie.h"
-#include "proto.h"
+#include "arch_proto.h"
 #include "kernel/proto.h"
 #include "kernel/debug.h"
 

@@ -7,7 +7,7 @@
 #include "kernel/proc.h"
 #include "archconst.h"
 
-#include "proto.h"
+#include "arch_proto.h"
 
 #define INT_GATE_TYPE	(INT_286_GATE | DESC_386_BIT)
 #define TSS_TYPE	(AVL_286_TSS  | DESC_386_BIT)

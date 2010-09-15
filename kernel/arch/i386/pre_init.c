@@ -15,7 +15,7 @@
 #include <machine/partition.h>
 #include "../../../boot/image.h"
 #include "string.h"
-#include "proto.h"
+#include "arch_proto.h"
 #include "multiboot.h"
 
 /* Granularity used in image file and copying */
