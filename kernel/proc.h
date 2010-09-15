@@ -32,6 +32,12 @@ struct proc {
   unsigned p_quantum_size_ms;	/* assigned time quantum in ms
 				   FIXME remove this */
   struct proc *p_scheduler;	/* who should get out of quantum msg */
+  unsigned p_cpu;		/* what CPU is the process running on */
+#ifdef CONFIG_SMP
+  bitchunk_t p_cpu_mask[BITMAP_CHUNKS(CONFIG_MAX_CPUS)]; /* what CPUs is hte
+							    process allowed to
+							    run on */
+#endif
 
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
 
