@@ -30,6 +30,7 @@
 #define get_cpulocal_var(name)		CPULOCAL_STRUCT.name
 #define get_cpulocal_var_ptr(name)	&(get_cpulocal_var(name))
 #define get_cpu_var(cpu, name)		get_cpulocal_var(name)
+#define get_cpu_var_ptr(cpu, name)	get_cpulocal_var_ptr(name)
 
 #endif
 
@@ -73,6 +74,8 @@ DECLARE_CPULOCAL(struct proc *, ptproc);
 /* CPU private run queues */
 DECLARE_CPULOCAL(struct proc *, run_q_head[NR_SCHED_QUEUES]); /* ptrs to ready list headers */
 DECLARE_CPULOCAL(struct proc *, run_q_tail[NR_SCHED_QUEUES]); /* ptrs to ready list tails */
+
+DECLARE_CPULOCAL(u64_t ,tsc_ctr_switch); /* when did we switched time accounting */
 
 DECLARE_CPULOCAL_END
 

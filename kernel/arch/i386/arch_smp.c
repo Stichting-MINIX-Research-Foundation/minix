@@ -211,7 +211,7 @@ PRIVATE void ap_finish_booting(void)
 
 	if (app_cpu_init_timer(system_hz)) {
 		panic("FATAL : failed to initialize timer interrupts CPU %d, "
-				"cannot continue without any clock source!", cpuid);
+				"cannot continue without any clock source!", cpu);
 	}
 	printf("CPU %d local APIC timer is ticking\n", cpu);
 

@@ -27,9 +27,6 @@
 #define TIMER_FREQ  1193182    /* clock frequency for timer in PC and AT */
 #define TIMER_COUNT(freq) (TIMER_FREQ/(freq)) /* initial value for counter*/
 
-/* FIXME make it cpu local! */
-PRIVATE u64_t tsc_ctr_switch; /* when did we switched time accounting */
-
 PRIVATE irq_hook_t pic_timer_hook;		/* interrupt handler hook */
 
 PRIVATE unsigned probe_ticks;
@@ -175,17 +172,17 @@ PUBLIC int arch_register_local_timer_handler(const irq_handler_t handler)
 
 PUBLIC void cycles_accounting_init(void)
 {
-	read_tsc_64(&tsc_ctr_switch);
+	read_tsc_64(get_cpulocal_var_ptr(tsc_ctr_switch));
 }
 
 PUBLIC void context_stop(struct proc * p)
 {
 	u64_t tsc, tsc_delta;
+	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
 	read_tsc_64(&tsc);
-	tsc_delta = sub64(tsc, tsc_ctr_switch);
+	tsc_delta = sub64(tsc, *__tsc_ctr_switch);
 	p->p_cycles = add64(p->p_cycles, tsc_delta);
-	tsc_ctr_switch = tsc;
 
 	/*
 	 * deduct the just consumed cpu cycles from the cpu time left for this
@@ -215,10 +212,17 @@ PUBLIC void context_stop(struct proc * p)
 	 * If we stop accounting for KERNEL we must unlock the BKL. If account
 	 * for IDLE we must not hold the lock
 	 */
-	if (p == proc_addr(KERNEL))
+	if (p == proc_addr(KERNEL)) {
+		read_tsc_64(&tsc);
+		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
 		BKL_UNLOCK();
-	else
+	} else {
 		BKL_LOCK();
+		read_tsc_64(&tsc);
+		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
+	}
+	
+	*__tsc_ctr_switch = tsc;
 }
 
 PUBLIC void context_stop_idle(void)
