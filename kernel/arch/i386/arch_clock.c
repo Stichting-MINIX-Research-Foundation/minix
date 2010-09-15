@@ -217,9 +217,25 @@ PUBLIC void context_stop(struct proc * p)
 		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
 		BKL_UNLOCK();
 	} else {
+		u64_t bkl_tsc, tmp;
+		unsigned cpu = cpuid;
+		atomic_t succ;
+		
+		read_tsc_64(&bkl_tsc);
+		/* this only gives a good estimate */
+		succ = big_kernel_lock.val;
+		
 		BKL_LOCK();
+		
 		read_tsc_64(&tsc);
-		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
+
+		bkl_ticks[cpu] = add64(bkl_ticks[cpu], sub64(tsc, bkl_tsc));
+		bkl_tries[cpu]++;
+		bkl_succ[cpu] += !(!(succ == 0));
+
+		tmp = sub64(tsc, *__tsc_ctr_switch);
+		kernel_ticks[cpu] = add64(kernel_ticks[cpu], tmp);
+		p->p_cycles = add64(p->p_cycles, tmp);
 	}
 	
 	*__tsc_ctr_switch = tsc;

@@ -420,6 +420,31 @@ PRIVATE void ser_dump_segs(void)
 	}
 }
 
+#ifdef CONFIG_SMP
+PRIVATE void dump_bkl_usage(void)
+{
+	unsigned cpu;
+
+	printf("--- BKL usage ---\n");
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		printf("cpu %3d kernel ticks 0x%x%08x bkl ticks 0x%x%08x succ %d tries %d\n", cpu,
+				kernel_ticks[cpu].hi, kernel_ticks[cpu].lo, 
+				bkl_ticks[cpu].hi, bkl_ticks[cpu].lo,
+				bkl_succ[cpu], bkl_tries[cpu]);
+	}
+}
+
+PRIVATE void reset_bkl_usage(void)
+{
+	unsigned cpu;
+
+	memset(kernel_ticks, 0, sizeof(kernel_ticks));
+	memset(bkl_ticks, 0, sizeof(bkl_ticks));
+	memset(bkl_tries, 0, sizeof(bkl_tries));
+	memset(bkl_succ, 0, sizeof(bkl_succ));
+}
+#endif
+
 PRIVATE void ser_debug(const int c)
 {
 	serial_debug_active = 1;
@@ -429,6 +454,14 @@ PRIVATE void ser_debug(const int c)
 	case 'Q':
 		minix_shutdown(NULL);
 		NOT_REACHABLE;
+#ifdef CONFIG_SMP
+	case 'B':
+		dump_bkl_usage();
+		break;
+	case 'b':
+		reset_bkl_usage();
+		break;
+#endif
 	case '1':
 		ser_dump_proc();
 		break;

@@ -80,4 +80,10 @@ extern struct segdesc_s gdt[];		/* global descriptor table */
 
 EXTERN volatile int serial_debug_active;
 
+/* BKL stats */
+EXTERN u64_t kernel_ticks[CONFIG_MAX_CPUS];
+EXTERN u64_t bkl_ticks[CONFIG_MAX_CPUS];
+EXTERN unsigned bkl_tries[CONFIG_MAX_CPUS];
+EXTERN unsigned bkl_succ[CONFIG_MAX_CPUS];
+
 #endif /* GLO_H */
