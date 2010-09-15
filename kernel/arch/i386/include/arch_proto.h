@@ -109,6 +109,8 @@ _PROTOTYPE(void __switch_address_space, (struct proc * p,
 #define switch_address_space(proc)	\
 	__switch_address_space(proc, get_cpulocal_var_ptr(ptproc))
 
+_PROTOTYPE(void refresh_tlb, (void));
+
 /* protect.c */
 struct tss_s {
   reg_t backlink;

@@ -803,9 +803,11 @@ ENTRY(__switch_address_space)
 	 * test if the cr3 is loaded with the current value to avoid unnecessary
 	 * TLB flushes
 	 */
+#if 0
 	mov	%cr3, %ecx
 	cmp	%ecx, %eax
 	je	0f
+#endif
 	mov	%eax, %cr3
 	/* get ptproc */
 	mov	8(%esp), %eax
@@ -872,10 +874,12 @@ ENTRY(eoi_8259_slave)
 	outb	$INT2_CTL
 	ret
 	
-.data
-idt_ptr:
-	.short 0x3ff
-	.long 0x0
+/* in some cases we need to force TLB update, reloading cr3 does the trick */
+ENTRY(refresh_tlb)
+	mov	%cr3, %eax
+	mov	%eax, %cr3
+	ret
+
 #ifdef CONFIG_SMP
 
 /*===========================================================================*/
@@ -1043,3 +1047,8 @@ ENTRY(switch_k_stack)
 
 	/* NOT_REACHABLE */
 0:	jmp	0b
+
+.data
+idt_ptr:
+	.short 0x3ff
+	.long 0x0

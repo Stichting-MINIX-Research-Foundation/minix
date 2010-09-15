@@ -356,6 +356,8 @@ check_misc_flags:
 	 */
 	p->p_misc_flags &= ~MF_CONTEXT_SET;
 
+  	assert(!(p->p_misc_flags & MF_FULLVM) || p->p_seg.p_cr3 != 0);
+	refresh_tlb();
 	/*
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return
