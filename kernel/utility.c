@@ -80,3 +80,8 @@ PUBLIC void cpu_print_freq(unsigned cpu)
 	freq = cpu_get_freq(cpu);
 	printf("CPU %d freq %lu MHz\n", cpu, div64u(freq, 1000000));
 }
+
+PUBLIC int is_fpu(void)
+{
+	return get_cpulocal_var(fpu_presence);
+}

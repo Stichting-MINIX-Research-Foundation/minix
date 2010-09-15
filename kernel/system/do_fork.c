@@ -53,10 +53,7 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   map_ptr= (struct mem_map *) m_ptr->PR_MEM_PTR;
 
   /* make sure that the FPU context is saved in parent before copy */
-  if (fpu_owner == rpp) {
-	  disable_fpu_exception();
-	  save_fpu(rpp);
-  }
+  save_fpu(rpp);
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
   gen = _ENDPOINT_G(rpc->p_endpoint);
 #if (_MINIX_CHIP == _CHIP_INTEL)

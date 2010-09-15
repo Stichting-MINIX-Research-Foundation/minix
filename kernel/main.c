@@ -32,7 +32,6 @@
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
 
-void ser_dump_queues(void);
 PUBLIC void bsp_finish_booting(void)
 {
   int i;
@@ -68,6 +67,19 @@ PUBLIC void bsp_finish_booting(void)
 	  panic("FATAL : failed to initialize timer interrupts, "
 			  "cannot continue without any clock source!");
   }
+
+  fpu_init();
+
+#ifdef CONFIG_WATCHDOG
+  if (watchdog_enabled) {
+	  if (arch_watchdog_init()) {
+		  printf("WARNING watchdog initialization failed! Disabled\n");
+		  watchdog_enabled = 0;
+	  }
+	  else
+		  BOOT_VERBOSE(printf("Watchdog enabled\n"););
+  }
+#endif
 
 /* Warnings for sanity checks that take time. These warnings are printed
  * so it's a clear warning no full release should be done with them

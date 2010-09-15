@@ -155,6 +155,23 @@ PUBLIC void proc_init(void)
 		ip->p_rts_flags |= RTS_PROC_STOP;
 		set_idle_name(ip->p_name, i);
 	}
+
+	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
+		/*
+		 * FXSR requires 16-byte alignment of memory image, but
+		 * unfortunately a.out does not preserve the alignment while
+		 * linking.  Thus we have to do manual alignment.
+		 */
+		phys_bytes aligned_fp_area;
+		aligned_fp_area =
+			(phys_bytes) &rp->p_fpu_state.fpu_image;
+		if(aligned_fp_area % FPUALIGN) {
+			aligned_fp_area += FPUALIGN -
+				(aligned_fp_area % FPUALIGN);
+		}
+		rp->p_fpu_state.fpu_save_area_p =
+			(void *) aligned_fp_area;
+	}
 }
 
 PRIVATE void switch_address_space_idle(void)
@@ -346,7 +363,7 @@ check_misc_flags:
 	context_stop(proc_addr(KERNEL));
 
 	/* If the process isn't the owner of FPU, enable the FPU exception */
-	if(fpu_owner != p)
+	if(get_cpulocal_var(fpu_owner) != p)
 		enable_fpu_exception();
 	else
 		disable_fpu_exception();
@@ -1573,6 +1590,7 @@ PUBLIC void proc_no_time(struct proc * p)
 PUBLIC void copr_not_available_handler(void)
 {
 	struct proc * p;
+	struct proc ** local_fpu_owner;
 	/*
 	 * Disable the FPU exception (both for the kernel and for the process
 	 * once it's scheduled), and initialize or restore the FPU state.
@@ -1583,9 +1601,10 @@ PUBLIC void copr_not_available_handler(void)
 	p = get_cpulocal_var(proc_ptr);
 
 	/* if FPU is not owned by anyone, do not store anything */
-	if (fpu_owner != NULL) {
-		assert(fpu_owner != p);
-		save_fpu(fpu_owner);
+	local_fpu_owner = get_cpulocal_var_ptr(fpu_owner);
+	if (*local_fpu_owner != NULL) {
+		assert(*local_fpu_owner != p);
+		save_local_fpu(*local_fpu_owner);
 	}
 
 	/*
@@ -1593,12 +1612,17 @@ PUBLIC void copr_not_available_handler(void)
 	 * schedule!
 	 */
 	restore_fpu(p);
-	fpu_owner = p;
+	*local_fpu_owner = p;
 	context_stop(proc_addr(KERNEL));
 	restore_user_context(p);
 	NOT_REACHABLE;
 }
 
-PUBLIC void release_fpu(void) {
-	fpu_owner = NULL;
+PUBLIC void release_fpu(struct proc * p) {
+	struct proc ** fpu_owner_ptr;
+
+	fpu_owner_ptr = get_cpu_var_ptr(p->p_cpu, fpu_owner);
+
+	if (*fpu_owner_ptr == p)
+		*fpu_owner_ptr = NULL;
 }

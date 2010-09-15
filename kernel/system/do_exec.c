@@ -46,8 +46,7 @@ PUBLIC int do_exec(struct proc * caller, message * m_ptr)
    * will be initialized, when it's used next time. */
   rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
   /* force reloading FPU if the current process is the owner */
-  if (rp == fpu_owner)
-	  release_fpu();
+  release_fpu(rp);
   return(OK);
 }
 #endif /* USE_EXEC */

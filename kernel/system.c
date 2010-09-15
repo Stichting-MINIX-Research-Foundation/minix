@@ -669,9 +669,7 @@ PUBLIC int sched_proc(struct proc *p,
 	if (proc_is_runnable(p)) {
 #ifdef CONFIG_SMP
 		if (p->p_cpu != cpuid && cpu != -1 && cpu != p->p_cpu) {
-			printf("WARNING : changing cpu of a runnable process %d "
-					"on a different cpu!\n", p->p_endpoint);
-			return(EINVAL);
+			smp_schedule_migrate_proc(p, cpu);
 		}
 #endif
 

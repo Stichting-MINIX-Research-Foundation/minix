@@ -60,6 +60,7 @@ PRIVATE phys_bytes copy_trampoline(void)
 
 	tramp_size = (unsigned) &__trampoline_end - (unsigned)&trampoline;
 	s = env_get("memory");
+	s = (char *) get_value(params_buffer, "memory");
 	if (!s)
 		return 0;
 	
@@ -238,6 +239,7 @@ PRIVATE void ap_finish_booting(void)
 	printf("CPU %d paging is on\n", cpu);
 
 	lapic_enable(cpu);
+	fpu_init();
 
 	if (app_cpu_init_timer(system_hz)) {
 		panic("FATAL : failed to initialize timer interrupts CPU %d, "

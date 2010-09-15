@@ -46,10 +46,7 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
   #if (_MINIX_CHIP == _CHIP_INTEL)
     if(proc_used_fpu(rp)) {
 	    /* save the FPU context before saving it to the sig context */
-	    if (fpu_owner == rp) {
-		    disable_fpu_exception();
-		    save_fpu(rp);
-	    }
+	    save_fpu(rp);
 	    memcpy(&sc.sc_fpu_state, rp->p_fpu_state.fpu_save_area_p,
 	   	 FPU_XFP_SIZE);
     }

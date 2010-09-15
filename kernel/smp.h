@@ -63,6 +63,11 @@ _PROTOTYPE(void smp_schedule, (unsigned cpu));
 _PROTOTYPE(void smp_schedule_stop_proc, (struct proc * p));
 /* stop a process on a different cpu because its adress space is being changed */
 _PROTOTYPE(void smp_schedule_vminhibit, (struct proc * p));
+/* stop the process and for saving its full context */
+_PROTOTYPE(void smp_schedule_stop_proc_save_ctx, (struct proc * p));
+/* migrate the full context of a process to the destination CPU */
+_PROTOTYPE(void smp_schedule_migrate_proc,
+		(struct proc * p, unsigned dest_cpu));
 
 _PROTOTYPE(void arch_send_smp_schedule_ipi, (unsigned cpu));
 _PROTOTYPE(void arch_smp_halt_cpu, (void));

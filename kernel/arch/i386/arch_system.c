@@ -205,7 +205,7 @@ PUBLIC void arch_get_aout_headers(const int i, struct exec *h)
 	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
 
-PRIVATE void fpu_init(void)
+PUBLIC void fpu_init(void)
 {
 	unsigned short cw, sw;
 
@@ -219,10 +219,8 @@ PRIVATE void fpu_init(void)
 		 * Set CR0_NE and CR0_MP to handle fpu exceptions
 		 * in native mode. */
 		write_cr0(read_cr0() | CR0_MP_NE);
-		fpu_presence = 1;
+		get_cpulocal_var(fpu_presence) = 1;
 		if(_cpufeature(_CPUF_I386_FXSR)) {
-			register struct proc *rp;
-			phys_bytes aligned_fp_area;
 			u32_t cr4 = read_cr4() | CR4_OSFXSR; /* Enable FXSR. */
 
 			/* OSXMMEXCPT if supported
@@ -233,35 +231,18 @@ PRIVATE void fpu_init(void)
 
 			write_cr4(cr4);
 			osfxsr_feature = 1;
-
-			for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
-				/* FXSR requires 16-byte alignment of memory
-				 * image, but unfortunately some old tools
-				 * (probably linker) ignores ".balign 16"
-				 * applied to our memory image.
-				 * Thus we have to do manual alignment.
-				 */
-				aligned_fp_area =
-					(phys_bytes) &rp->p_fpu_state.fpu_image;
-				if(aligned_fp_area % FPUALIGN) {
-				    aligned_fp_area += FPUALIGN -
-						   (aligned_fp_area % FPUALIGN);
-				}
-				rp->p_fpu_state.fpu_save_area_p =
-						    (void *) aligned_fp_area;
-			}
 		} else {
 			osfxsr_feature = 0;
 		}
 	} else {
 		/* No FPU presents. */
-                fpu_presence = 0;
+		get_cpulocal_var(fpu_presence) = 0;
                 osfxsr_feature = 0;
                 return;
         }
 }
 
-PUBLIC void save_fpu(struct proc *pr)
+PUBLIC void save_local_fpu(struct proc *pr)
 {
 	if(!fpu_presence)
 		return;
@@ -273,6 +254,34 @@ PUBLIC void save_fpu(struct proc *pr)
 	} else {
 		fnsave(pr->p_fpu_state.fpu_save_area_p);
 	}
+}
+
+PUBLIC void save_fpu(struct proc *pr)
+{
+#if CONFIG_SMP
+	if (cpuid == pr->p_cpu) {
+		save_local_fpu(pr);
+	}
+	else {
+		int stopped;
+
+		/* remember if the process was already stopped */
+		stopped = RTS_ISSET(pr, RTS_PROC_STOP);
+
+		/* stop the remote process and force it's context to be saved */
+		smp_schedule_stop_proc_save_ctx(pr);
+
+		/*
+		 * If the process wasn't stopped let the process run again. The
+		 * process is kept block by the fact that the kernel cannot run
+		 * on its cpu
+		 */
+		if (!stopped)
+			RTS_UNSET(pr, RTS_PROC_STOP);
+	}
+#else
+	save_local_fpu(pr);
+#endif
 }
 
 PUBLIC void restore_fpu(struct proc *pr)
@@ -328,8 +337,6 @@ PUBLIC void arch_init(void)
 		BOOT_VERBOSE(printf("APIC not present, using legacy PIC\n"));
 	}
 #endif
-
-	fpu_init();
 }
 
 PUBLIC void ser_putc(char c)

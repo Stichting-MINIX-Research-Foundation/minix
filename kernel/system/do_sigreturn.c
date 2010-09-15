@@ -60,8 +60,7 @@ PUBLIC int do_sigreturn(struct proc * caller, message * m_ptr)
 		FPU_XFP_SIZE);
 	rp->p_misc_flags |=  MF_FPU_INITIALIZED; /* Restore math usage flag. */
 	/* force reloading FPU */
-	if (fpu_owner == rp)
-		release_fpu();
+	release_fpu(rp);
   }
 #endif
 

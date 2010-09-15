@@ -54,6 +54,9 @@ PUBLIC int do_clear(struct proc * caller, message * m_ptr)
    * and mark slot as FREE. Also mark saved fpu contents as not significant.
    */
   RTS_SETFLAGS(rc, RTS_SLOT_FREE);
+  
+  /* release FPU */
+  release_fpu(rc);
   rc->p_misc_flags &= ~MF_FPU_INITIALIZED;
 
   /* Release the process table slot. If this is a system process, also
@@ -69,10 +72,6 @@ PUBLIC int do_clear(struct proc * caller, message * m_ptr)
   	vm_map_default(rc);
   }
 #endif
-
-  /* release FPU */
-  if (fpu_owner == rc)
-	  release_fpu();
 
   return OK;
 }

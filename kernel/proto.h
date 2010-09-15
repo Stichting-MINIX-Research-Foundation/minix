@@ -34,6 +34,7 @@ _PROTOTYPE( void context_stop, (struct proc * p)			);
 _PROTOTYPE( void context_stop_idle, (void)				);
 _PROTOTYPE( void restore_fpu, (struct proc *)				);
 _PROTOTYPE( void save_fpu, (struct proc *)				);
+_PROTOTYPE( void save_local_fpu, (struct proc *)			);
 _PROTOTYPE( void fpu_sigcontext, (struct proc *, struct sigframe *fr, struct sigcontext *sc)	);
 
 /* main.c */
@@ -178,6 +179,10 @@ _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
 _PROTOTYPE( int intr_init, (int, int)					);
 _PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );
+/* arch dependent FPU initialization per CPU */
+_PROTOTYPE( void fpu_init, (void)					);
+/* returns true if pfu is present and initialized */
+_PROTOTYPE( int is_fpu, (void)						);
 _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( __dead void arch_shutdown, (int)				);
 _PROTOTYPE( __dead void arch_monitor, (void)				);
@@ -213,7 +218,7 @@ _PROTOTYPE(void release_address_space, (struct proc *pr));
 
 _PROTOTYPE(void enable_fpu_exception, (void));
 _PROTOTYPE(void disable_fpu_exception, (void));
-_PROTOTYPE(void release_fpu, (void));
+_PROTOTYPE(void release_fpu, (struct proc * p));
 
 /* utility.c */
 _PROTOTYPE( void cpu_print_freq, (unsigned cpu));

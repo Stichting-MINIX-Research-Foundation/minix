@@ -19,6 +19,7 @@ PRIVATE struct sched_ipi_data  sched_ipi_data[CONFIG_MAX_CPUS];
 
 #define SCHED_IPI_STOP_PROC	1
 #define SCHED_IPI_VM_INHIBIT	2
+#define SCHED_IPI_SAVE_CTX	4
 
 static volatile unsigned ap_cpus_booted;
 
@@ -116,6 +117,30 @@ PUBLIC void smp_schedule_vminhibit(struct proc * p)
 	assert(RTS_ISSET(p, RTS_VMINHIBIT));
 }
 
+PUBLIC void smp_schedule_stop_proc_save_ctx(struct proc * p)
+{
+	/*
+	 * stop the processes and force the complete context of the process to
+	 * be saved (i.e. including FPU state and such)
+	 */
+	smp_schedule_sync(p, SCHED_IPI_STOP_PROC | SCHED_IPI_SAVE_CTX);
+	assert(RTS_ISSET(p, RTS_PROC_STOP));
+}
+
+PUBLIC void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu)
+{
+	/*
+	 * stop the processes and force the complete context of the process to
+	 * be saved (i.e. including FPU state and such)
+	 */
+	smp_schedule_sync(p, SCHED_IPI_STOP_PROC | SCHED_IPI_SAVE_CTX);
+	assert(RTS_ISSET(p, RTS_PROC_STOP));
+	
+	/* assign the new cpu and let the process run again */
+	p->p_cpu = dest_cpu;
+	RTS_UNSET(p, RTS_PROC_STOP);
+}
+
 PUBLIC void smp_ipi_sched_handler(void)
 {
 	struct proc * curr;
@@ -133,6 +158,16 @@ PUBLIC void smp_ipi_sched_handler(void)
 
 		if (flgs & SCHED_IPI_STOP_PROC) {
 			RTS_SET(p, RTS_PROC_STOP);
+		}
+		if (flgs & SCHED_IPI_SAVE_CTX) {
+			/* all context have been save already,  FPU remains */
+			if (proc_used_fpu(p) &&
+					get_cpulocal_var(fpu_owner) == p) {
+				disable_fpu_exception();
+				save_local_fpu(p);
+				/* we re preparing to migrate somewhere else */
+				release_fpu(p);
+			}
 		}
 		if (flgs & SCHED_IPI_VM_INHIBIT) {
 			RTS_SET(p, RTS_VMINHIBIT);
