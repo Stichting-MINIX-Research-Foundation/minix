@@ -662,11 +662,14 @@ PUBLIC int sched_proc(struct proc *p,
 
 	/* FIXME this is a problem for SMP if the processes currently runs on a
 	 * different CPU */
-	if (proc_is_runnable(p) && p->p_cpu != cpuid &&
-			(cpu != -1 || cpu != p->p_cpu)) {
-		printf("WARNING : changing cpu of a runnable process %d "
-				"on a different cpu!\n", p->p_endpoint);
-		return(EINVAL);
+	if (proc_is_runnable(p)) {
+		if (p->p_cpu != cpuid && cpu != -1 && cpu != p->p_cpu) {
+			printf("WARNING : changing cpu of a runnable process %d "
+					"on a different cpu!\n", p->p_endpoint);
+			return(EINVAL);
+		}
+
+		RTS_SET(p, RTS_NO_QUANTUM);
 	}
 
 	if (proc_is_runnable(p))

@@ -19,8 +19,24 @@ PRIVATE unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
-FORWARD _PROTOTYPE( int schedule_process, (struct schedproc * rmp)	);
+FORWARD _PROTOTYPE( int schedule_process, (struct schedproc * rmp,
+			unsigned flags));
 FORWARD _PROTOTYPE( void balance_queues, (struct timer *tp)		);
+
+#define SCHEDULE_CHANGE_PRIO	0x1
+#define SCHEDULE_CHANGE_QUANTUM	0x2
+#define SCHEDULE_CHANGE_CPU	0x4
+
+#define SCHEDULE_CHANGE_ALL	(	\
+		SCHEDULE_CHANGE_PRIO	|	\
+		SCHEDULE_CHANGE_QUANTUM	|	\
+		SCHEDULE_CHANGE_CPU		\
+		)
+
+#define schedule_process_local(p)	\
+	schedule_process(p, SCHEDULE_CHANGE_PRIO | SCHEDULE_CHANGE_QUANTUM)
+#define schedule_process_migrate(p)	\
+	schedule_process(p, SCHEDULE_CHANGE_CPU)
 
 #define DEFAULT_USER_TIME_SLICE 200
 
@@ -79,7 +95,7 @@ PUBLIC int do_noquantum(message *m_ptr)
 		rmp->priority += 1; /* lower priority */
 	}
 
-	if ((rv = schedule_process(rmp)) != OK) {
+	if ((rv = schedule_process_local(rmp)) != OK) {
 		return rv;
 	}
 	return OK;
@@ -197,7 +213,8 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 	rmp->flags = IN_USE;
 
 	/* Schedule the process, giving it some quantum */
-	if ((rv = schedule_process(rmp)) != OK) {
+	pick_cpu(rmp);
+	if ((rv = schedule_process(rmp, SCHEDULE_CHANGE_ALL)) != OK) {
 		printf("Sched: Error while scheduling process, kernel replied %d\n",
 			rv);
 		return rv;
@@ -248,7 +265,7 @@ PUBLIC int do_nice(message *m_ptr)
 	/* Update the proc entry and reschedule the process */
 	rmp->max_priority = rmp->priority = new_q;
 
-	if ((rv = schedule_process(rmp)) != OK) {
+	if ((rv = schedule_process_local(rmp)) != OK) {
 		/* Something went wrong when rescheduling the process, roll
 		 * back the changes to proc struct */
 		rmp->priority     = old_q;
@@ -261,19 +278,35 @@ PUBLIC int do_nice(message *m_ptr)
 /*===========================================================================*
  *				schedule_process			     *
  *===========================================================================*/
-PRIVATE int schedule_process(struct schedproc * rmp)
+PRIVATE int schedule_process(struct schedproc * rmp, unsigned flags)
 {
-	int rv;
+	int err;
+	int new_prio, new_quantum, new_cpu;
 
 	pick_cpu(rmp);
 
-	if ((rv = sys_schedule(rmp->endpoint, rmp->priority,
-			rmp->time_slice, rmp->cpu)) != OK) {
-		printf("SCHED: An error occurred when trying to schedule %d: %d\n",
-		rmp->endpoint, rv);
+	if (flags & SCHEDULE_CHANGE_PRIO)
+		new_prio = rmp->priority;
+	else
+		new_prio = -1;
+
+	if (flags & SCHEDULE_CHANGE_QUANTUM)
+		new_quantum = rmp->time_slice;
+	else
+		new_quantum = -1;
+
+	if (flags & SCHEDULE_CHANGE_CPU)
+		new_cpu = rmp->cpu;
+	else
+		new_cpu = -1;
+
+	if ((err = sys_schedule(rmp->endpoint, new_prio,
+		new_quantum, new_cpu)) != OK) {
+		printf("PM: An error occurred when trying to schedule %d: %d\n",
+		rmp->endpoint, err);
 	}
 
-	return rv;
+	return err;
 }
 
 
@@ -307,7 +340,7 @@ PRIVATE void balance_queues(struct timer *tp)
 		if (rmp->flags & IN_USE) {
 			if (rmp->priority > rmp->max_priority) {
 				rmp->priority -= 1; /* increase priority */
-				schedule_process(rmp);
+				schedule_process_local(rmp);
 			}
 		}
 	}
