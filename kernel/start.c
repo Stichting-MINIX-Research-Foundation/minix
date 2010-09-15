@@ -123,7 +123,7 @@ PUBLIC void cstart(
  *				get_value				     *
  *===========================================================================*/
 
-PRIVATE char *get_value(
+PUBLIC char *get_value(
   const char *params,			/* boot monitor parameters */
   const char *name			/* key to look up */
 )

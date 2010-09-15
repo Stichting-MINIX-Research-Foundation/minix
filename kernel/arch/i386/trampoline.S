@@ -29,3 +29,4 @@ LABEL(__ap_gdt)
 .space 8
 LABEL(__ap_idt)
 .space 8
+LABEL(__trampoline_end)

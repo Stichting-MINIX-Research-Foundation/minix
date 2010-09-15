@@ -31,6 +31,7 @@ _PROTOTYPE(void trampoline, (void));
  */
 extern volatile u32_t __ap_id;
 extern volatile struct segdesc_s __ap_gdt, __ap_idt;
+extern void * __trampoline_end;
 
 extern u32_t busclock[CONFIG_MAX_CPUS];
 extern int panicking;
@@ -47,6 +48,49 @@ SPINLOCK_DEFINE(dispq_lock)
 FORWARD _PROTOTYPE(void smp_init_vars, (void));
 FORWARD _PROTOTYPE(void smp_reinit_vars, (void));
 
+/*
+ * copies the 16-bit AP trampoline code to the first 1M of memory
+ */
+PRIVATE phys_bytes copy_trampoline(void)
+{
+	char * s, *end;
+	phys_bytes tramp_base;
+	unsigned tramp_size;
+
+	tramp_size = (unsigned) &__trampoline_end - (unsigned)&trampoline;
+	s = env_get("memory");
+	if (!s)
+		return 0;
+	
+	while (*s != 0) {
+		phys_bytes base = 0xfffffff;
+		unsigned size;
+		/* Read fresh base and expect colon as next char. */ 
+		base = strtoul(s, &end, 0x10);		/* get number */
+		if (end != s && *end == ':')
+			s = ++end;	/* skip ':' */ 
+		else
+			*s=0;
+
+		/* Read fresh size and expect comma or assume end. */ 
+		size = strtoul(s, &end, 0x10);		/* get number */
+		if (end != s && *end == ',')
+			s = ++end;	/* skip ',' */
+
+		tramp_base = (base + 0xfff) & ~(0xfff);
+		/* the address must be less than 1M */
+		if (tramp_base >= (1 << 20))
+			continue;
+		if (size - (tramp_base - base) < tramp_size)
+			continue;
+		break;
+	}
+
+	phys_copy(vir2phys(trampoline), tramp_base, tramp_size);
+
+	return tramp_base;
+}
+
 PRIVATE void smp_start_aps(void)
 {
 	/* 
@@ -54,7 +98,7 @@ PRIVATE void smp_start_aps(void)
 	 */
 	unsigned cpu;
 	u32_t biosresetvector;
-	phys_bytes trampoline_base = vir2phys(trampoline);
+	phys_bytes trampoline_base, __ap_id_phys;
 
 	/* TODO hack around the alignment problem */
 
@@ -64,12 +108,19 @@ PRIVATE void smp_start_aps(void)
 	outb(RTC_INDEX, 0xF);
 	outb(RTC_IO, 0xA);
 
-	/* setup the warm reset vector */
-	phys_copy(vir2phys(&trampoline_base), 0x467, sizeof(u32_t));
-
 	/* prepare gdt and idt for the new cpus */
 	__ap_gdt = gdt[GDT_INDEX];
 	__ap_idt = gdt[IDT_INDEX];
+
+	if (!(trampoline_base = copy_trampoline())) {
+		printf("Copying trampoline code failed, cannot boot SMP\n");
+		ncpus = 1;
+	}
+	__ap_id_phys = trampoline_base +
+		(phys_bytes) &__ap_id - (phys_bytes)&trampoline;
+
+	/* setup the warm reset vector */
+	phys_copy(vir2phys(&trampoline_base), 0x467, sizeof(u32_t));
 
 	/* okay, we're ready to go.  boot all of the ap's now.  we loop through
 	 * using the processor's apic id values.
@@ -86,6 +137,8 @@ PRIVATE void smp_start_aps(void)
 		}
 
 		__ap_id = cpu;
+		phys_copy(vir2phys(__ap_id), __ap_id_phys, sizeof(__ap_id));
+		mfence();
 		if (apic_send_init_ipi(cpu, trampoline_base) ||
 				apic_send_startup_ipi(cpu, trampoline_base)) {
 			printf("WARNING cannot boot cpu %d\n", cpu);
@@ -222,7 +275,7 @@ PUBLIC void smp_init (void)
 	/* set smp idt entries. */ 
 	apic_idt_init(0); /* Not a reset ! */
 	idt_reload();
-	
+
 	BOOT_VERBOSE(printf("SMP initialized\n"));
 
 	switch_k_stack((char *)get_k_stack_top(bsp_cpu_id) -
