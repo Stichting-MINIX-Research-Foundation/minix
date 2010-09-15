@@ -191,7 +191,7 @@ PRIVATE void idle(void)
 #ifdef CONFIG_SMP
 	/* we don't need to keep time on APs as it is handled on the BSP */
 	if (cpuid != bsp_cpu_id)
-		arch_stop_local_timer();
+		stop_local_timer();
 	get_cpulocal_var(cpu_is_idle) = 1;
 #endif
 
@@ -338,10 +338,11 @@ check_misc_flags:
 	p->p_schedules++;
 #endif
 
-
 	p = arch_finish_switch_to_user();
 	assert(!is_zero64(p->p_cpu_time_left));
 
+	restart_local_timer();
+	
 	context_stop(proc_addr(KERNEL));
 
 	/* If the process isn't the owner of FPU, enable the FPU exception */

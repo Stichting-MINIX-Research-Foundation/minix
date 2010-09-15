@@ -117,7 +117,7 @@ PRIVATE void estimate_cpu_freq(void)
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
-PUBLIC int arch_init_local_timer(unsigned freq)
+PUBLIC int init_local_timer(unsigned freq)
 {
 #ifdef CONFIG_APIC
 	/* if we know the address, lapic is enabled and we should use it */
@@ -140,7 +140,7 @@ PUBLIC int arch_init_local_timer(unsigned freq)
 	return 0;
 }
 
-PUBLIC void arch_stop_local_timer(void)
+PUBLIC void stop_local_timer(void)
 {
 #ifdef CONFIG_APIC
 	if (lapic_addr) {
@@ -153,19 +153,16 @@ PUBLIC void arch_stop_local_timer(void)
 	}
 }
 
-PUBLIC void arch_restart_local_timer(void)
+PUBLIC void restart_local_timer(void)
 {
 #ifdef CONFIG_APIC
 	if (lapic_addr) {
 		lapic_restart_timer();
-	} else
-#endif
-	{
-		init_8253A_timer(system_hz);
 	}
+#endif
 }
 
-PUBLIC int arch_register_local_timer_handler(const irq_handler_t handler)
+PUBLIC int register_local_timer_handler(const irq_handler_t handler)
 {
 #ifdef CONFIG_APIC
 	if (lapic_addr) {
@@ -269,7 +266,7 @@ PUBLIC void context_stop_idle(void)
 	context_stop(get_cpulocal_var_ptr(idle_proc));
 
 	if (is_idle)
-		arch_restart_local_timer();
+		restart_local_timer();
 }
 
 PUBLIC u64_t ms_2_cpu_time(unsigned ms)

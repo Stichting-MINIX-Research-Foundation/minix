@@ -499,7 +499,7 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 
-PUBLIC void lapic_set_timer_one_shot(const u32_t value)
+PUBLIC void lapic_set_timer_one_shot(const u32_t usec)
 {
 	/* sleep in micro seconds */
 	u32_t lvtt;
@@ -508,7 +508,6 @@ PUBLIC void lapic_set_timer_one_shot(const u32_t value)
 
 	ticks_per_us = lapic_bus_freq[cpu] / 1000000;
 
-	/* calculate divisor and count from value */
 	lvtt = APIC_TDCR_1;
 	lapic_write(LAPIC_TIMER_DCR, lvtt);
 
@@ -516,7 +515,7 @@ PUBLIC void lapic_set_timer_one_shot(const u32_t value)
 	lvtt = APIC_TIMER_INT_VECTOR;
 	lapic_write(LAPIC_LVTTR, lvtt);
 
-	lapic_write(LAPIC_TIMER_ICR, value * ticks_per_us);
+	lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }
 
 PUBLIC void lapic_set_timer_periodic(const unsigned freq)
@@ -543,13 +542,16 @@ PUBLIC void lapic_stop_timer(void)
 	u32_t lvtt;
 	lvtt = lapic_read(LAPIC_LVTTR);
 	lapic_write(LAPIC_LVTTR, lvtt | APIC_LVTT_MASK);
+	/* zero the current counter so it can be restarted again */
+	lapic_write(LAPIC_TIMER_ICR, 0);
+	lapic_write(LAPIC_TIMER_CCR, 0);
 }
 
 PUBLIC void lapic_restart_timer(void)
 {
-	u32_t lvtt;
-	lvtt = lapic_read(LAPIC_LVTTR);
-	lapic_write(LAPIC_LVTTR, lvtt & ~APIC_LVTT_MASK);
+	/* restart the timer only if the counter reached zero, i.e. expired */
+	if (lapic_read(LAPIC_TIMER_CCR) == 0)
+		lapic_set_timer_one_shot(1000000/system_hz);
 }
 
 PUBLIC void lapic_microsec_sleep(unsigned count)

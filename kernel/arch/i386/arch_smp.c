@@ -238,7 +238,6 @@ PRIVATE void ap_finish_booting(void)
 		panic("FATAL : failed to initialize timer interrupts CPU %d, "
 				"cannot continue without any clock source!", cpu);
 	}
-	printf("CPU %d local APIC timer is ticking\n", cpu);
 
 	/* FIXME assign CPU local idle structure */
 	get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);

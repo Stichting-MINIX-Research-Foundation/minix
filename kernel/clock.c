@@ -224,10 +224,10 @@ PRIVATE void load_update(void)
 
 PUBLIC int boot_cpu_init_timer(unsigned freq)
 {
-	if (arch_init_local_timer(freq))
+	if (init_local_timer(freq))
 		return -1;
 
-	if (arch_register_local_timer_handler(
+	if (register_local_timer_handler(
 				(irq_handler_t) timer_int_handler))
 		return -1;
 
@@ -236,6 +236,6 @@ PUBLIC int boot_cpu_init_timer(unsigned freq)
 
 PUBLIC int app_cpu_init_timer(unsigned freq)
 {
-	if (arch_init_local_timer(freq))
+	if (init_local_timer(freq))
 		return -1;
 }

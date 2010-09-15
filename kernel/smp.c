@@ -30,7 +30,7 @@ PUBLIC void ap_boot_finished(unsigned cpu)
 PUBLIC void smp_ipi_halt_handler(void)
 {
 	ipi_ack();
-	arch_stop_local_timer();
+	stop_local_timer();
 	arch_smp_halt_cpu();
 }
 

@@ -376,8 +376,8 @@ PUBLIC void minix_shutdown(timer_t *tp)
   if (ncpus > 1)
 	  smp_shutdown_aps();
 #endif
-  arch_stop_local_timer();
   hw_intr_disable_all();
+  stop_local_timer();
   intr_init(INTS_ORIG, 0);
   arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
 }
