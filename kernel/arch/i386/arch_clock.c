@@ -194,30 +194,7 @@ PUBLIC void context_stop(struct proc * p)
 	u64_t tsc, tsc_delta;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
-	read_tsc_64(&tsc);
-	tsc_delta = sub64(tsc, *__tsc_ctr_switch);
-	p->p_cycles = add64(p->p_cycles, tsc_delta);
-
-	/*
-	 * deduct the just consumed cpu cycles from the cpu time left for this
-	 * process during its current quantum. Skip IDLE and other pseudo kernel
-	 * tasks
-	 */
-	if (p->p_endpoint >= 0) {
-#if DEBUG_RACE
-		make_zero64(p->p_cpu_time_left);
-#else
-		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
-		if (tsc_delta.hi < p->p_cpu_time_left.hi ||
-				(tsc_delta.hi == p->p_cpu_time_left.hi &&
-				 tsc_delta.lo < p->p_cpu_time_left.lo))
-			p->p_cpu_time_left = sub64(p->p_cpu_time_left, tsc_delta);
-		else {
-			make_zero64(p->p_cpu_time_left);
-		}
-#endif
-	}
-	
+#ifdef CONFIG_SMP
 	/*
 	 * This function is called only if we switch from kernel to user or idle
 	 * or back. Therefore this is a perfect location to place the big kernel
@@ -251,7 +228,33 @@ PUBLIC void context_stop(struct proc * p)
 		kernel_ticks[cpu] = add64(kernel_ticks[cpu], tmp);
 		p->p_cycles = add64(p->p_cycles, tmp);
 	}
+#else
+	read_tsc_64(&tsc);
+	p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
+#endif
 	
+	tsc_delta = sub64(tsc, *__tsc_ctr_switch);
+
+	/*
+	 * deduct the just consumed cpu cycles from the cpu time left for this
+	 * process during its current quantum. Skip IDLE and other pseudo kernel
+	 * tasks
+	 */
+	if (p->p_endpoint >= 0) {
+#if DEBUG_RACE
+		make_zero64(p->p_cpu_time_left);
+#else
+		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
+		if (tsc_delta.hi < p->p_cpu_time_left.hi ||
+				(tsc_delta.hi == p->p_cpu_time_left.hi &&
+				 tsc_delta.lo < p->p_cpu_time_left.lo))
+			p->p_cpu_time_left = sub64(p->p_cpu_time_left, tsc_delta);
+		else {
+			make_zero64(p->p_cpu_time_left);
+		}
+#endif
+	}
+
 	*__tsc_ctr_switch = tsc;
 }
 

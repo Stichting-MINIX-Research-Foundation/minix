@@ -120,7 +120,9 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
+#ifdef CONFIG_SMP
 	cpu_proc[rmp->cpu]--;
+#endif
 	rmp->flags = 0; /*&= ~IN_USE;*/
 
 	return OK;
@@ -172,8 +174,10 @@ PUBLIC int do_start_scheduling(message *m_ptr)
 		 * changed that yet either, we can be sure that BSP is the
 		 * processor where the processes run now.
 		 */
+#ifdef CONFIG_SMP
 		rmp->cpu = machine.bsp_id;
 		/* FIXME set the cpu mask */
+#endif
 	}
 	
 	switch (m_ptr->m_type) {

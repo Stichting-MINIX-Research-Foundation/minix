@@ -650,8 +650,10 @@ PUBLIC int sched_proc(struct proc *p,
 	if (quantum < 1 && quantum != -1)
 		return(EINVAL);
 
+#ifdef CONFIG_SMP
 	if ((cpu < 0 && cpu != -1) || (cpu > 0 && (unsigned) cpu >= ncpus))
 		return(EINVAL);
+#endif
 
 	/* In some cases, we might be rescheduling a runnable process. In such
 	 * a case (i.e. if we are updating the priority) we set the NO_QUANTUM
@@ -663,11 +665,13 @@ PUBLIC int sched_proc(struct proc *p,
 	/* FIXME this is a problem for SMP if the processes currently runs on a
 	 * different CPU */
 	if (proc_is_runnable(p)) {
+#ifdef CONFIG_SMP
 		if (p->p_cpu != cpuid && cpu != -1 && cpu != p->p_cpu) {
 			printf("WARNING : changing cpu of a runnable process %d "
 					"on a different cpu!\n", p->p_endpoint);
 			return(EINVAL);
 		}
+#endif
 
 		RTS_SET(p, RTS_NO_QUANTUM);
 	}
@@ -681,8 +685,10 @@ PUBLIC int sched_proc(struct proc *p,
 		p->p_quantum_size_ms = quantum;
 		p->p_cpu_time_left = ms_2_cpu_time(quantum);
 	}
+#ifdef CONFIG_SMP
 	if (cpu != -1)
 		p->p_cpu = cpu;
+#endif
 
 	/* Clear the scheduling bit and enqueue the process */
 	RTS_UNSET(p, RTS_NO_QUANTUM);

@@ -188,10 +188,12 @@ PRIVATE void idle(void)
 
 	switch_address_space_idle();
 
+#ifdef CONFIG_SMP
 	/* we don't need to keep time on APs as it is handled on the BSP */
 	if (cpuid != bsp_cpu_id)
 		arch_stop_local_timer();
 	get_cpulocal_var(cpu_is_idle) = 1;
+#endif
 
 	/* start accounting for the idle time */
 	context_stop(proc_addr(KERNEL));

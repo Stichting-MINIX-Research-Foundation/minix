@@ -16,7 +16,6 @@
  * kernel.
  */
 
-
 /*
  * The routines only guarantee to preserve the registers the C compiler 
  * expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and 
