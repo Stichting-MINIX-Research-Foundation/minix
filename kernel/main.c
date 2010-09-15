@@ -285,8 +285,14 @@ PUBLIC int main(void)
   } else if (config_no_smp) {
 	  BOOT_VERBOSE(printf("SMP disabled, using legacy PIC\n"));
 	  smp_single_cpu_fallback();
-  } else
+  } else {
 	  smp_init();
+	  /*
+	   * if smp_init() returns it means that it failed and we try to finish
+	   * single CPU booting
+	   */
+	  bsp_finish_booting();
+  }
 #else
   /* 
    * if configured for a single CPU, we are already on the kernel stack which we

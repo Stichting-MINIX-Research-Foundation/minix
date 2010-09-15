@@ -835,7 +835,7 @@ PUBLIC void apic_idt_init(const int reset)
 	}
 
 #ifdef CONFIG_APIC_DEBUG
-	if (cpu_is_bsp(cpuid))
+	if (is_bsp)
 		printf("APIC debugging is enabled\n");
 	lapic_set_dummy_handlers();
 #endif

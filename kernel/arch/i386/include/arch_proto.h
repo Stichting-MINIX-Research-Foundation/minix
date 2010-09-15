@@ -54,6 +54,7 @@ _PROTOTYPE( void kernel_call_entry, (void) );
 _PROTOTYPE( void level0_call, (void) );
 
 /* memory.c */
+_PROTOTYPE( void segmentation2paging, (struct proc * current));
 _PROTOTYPE( void i386_freepde, (int pde));
 _PROTOTYPE( void getcr3val, (void));
 

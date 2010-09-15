@@ -190,6 +190,12 @@ PRIVATE void ap_finish_booting(void)
 	while(!i386_paging_enabled)
 		arch_pause();
 
+	/*
+	 * we must load some page tables befre we turn paging on. As VM is
+	 * always present we use those
+	 */
+	segmentation2paging(proc_addr(VM_PROC_NR));
+
 	BKL_LOCK();
 	printf("CPU %d is running\n", cpu);
 	BKL_UNLOCK();
