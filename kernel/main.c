@@ -374,7 +374,7 @@ PUBLIC void minix_shutdown(timer_t *tp)
    * monitor again
    */
   if (ncpus > 1)
-	  NOT_IMPLEMENTED;
+	  smp_shutdown_aps();
 #endif
   arch_stop_local_timer();
   hw_intr_disable_all();

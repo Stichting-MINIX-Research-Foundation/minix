@@ -11,7 +11,7 @@ static volatile unsigned ap_cpus_booted;
 SPINLOCK_DEFINE(big_kernel_lock)
 SPINLOCK_DEFINE(boot_lock)
 
-void wait_for_APs_to_finish_booting(void)
+PUBLIC void wait_for_APs_to_finish_booting(void)
 {
 	/* we must let the other CPUs to run in kernel mode first */
 	BKL_UNLOCK();
@@ -21,7 +21,14 @@ void wait_for_APs_to_finish_booting(void)
 	BKL_LOCK();
 }
 
-void ap_boot_finished(unsigned cpu)
+PUBLIC void ap_boot_finished(unsigned cpu)
 {
 	ap_cpus_booted++;
 }
+
+PUBLIC void smp_ipi_halt_handler(void)
+{
+	arch_stop_local_timer();
+	arch_smp_halt_cpu();
+}
+

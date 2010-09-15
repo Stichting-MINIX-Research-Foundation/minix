@@ -73,7 +73,7 @@ ENTRY(apic_ipi_sched_intr)
 	lapic_intr(_C_LABEL(apic_ipi_sched_handler))
 
 ENTRY(apic_ipi_halt_intr)
-	lapic_intr(_C_LABEL(apic_ipi_halt_handler))
+	lapic_intr(_C_LABEL(smp_ipi_halt_handler))
 
 #endif /* CONFIG_SMP */
 

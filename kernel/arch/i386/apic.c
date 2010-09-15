@@ -398,10 +398,6 @@ PUBLIC void apic_ipi_sched_handler(void)
 {
 }
 
-PUBLIC void apic_ipi_halt_handler(void)
-{
-}
-
 PUBLIC unsigned int apicid(void)
 {
 	return lapic_read(LAPIC_ID);

@@ -37,6 +37,7 @@ extern u32_t busclock[CONFIG_MAX_CPUS];
 extern int panicking;
 
 static int ap_cpu_ready;
+static int cpu_down;
 
 /* there can be at most 255 local APIC ids, each fits in 8 bits */
 PRIVATE unsigned char apicid2cpuid[255];
@@ -170,30 +171,30 @@ PUBLIC void smp_halt_cpu (void)
 	NOT_IMPLEMENTED;
 }
 
-PUBLIC void smp_shutdown_aps (void)
+PUBLIC void smp_shutdown_aps(void)
 {
-	u8_t cpu;
+	unsigned cpu;
 	unsigned aid = apicid();
+	unsigned local_cpu = cpuid;
 	
 	if (ncpus == 1)
 		goto exit_shutdown_aps;
+	
+	/* we must let the other cpus enter the kernel mode */
+	BKL_UNLOCK();
 
 	for (cpu = 0; cpu < ncpus; cpu++) {
-		u16_t i;
-		if (!cpu_is_ready(cpu))
+		if (cpu == cpuid)
 			continue;
-		if ((aid == cpuid2apicid[cpu]) && (aid == bsp_lapic_id))
-			continue;
+		cpu_down = -1;
+		barrier();
 		apic_send_ipi(APIC_SMP_CPU_HALT_VECTOR, cpu, APIC_IPI_DEST);
-		/* TODO wait for the cpu to be down */
+		/* wait for the cpu to be down */
+		while (cpu_down != cpu);
+		printf("CPU %d is down\n", cpu);
+		cpu_clear_flag(cpu, CPU_IS_READY);
 	}
 
-	/* Sending INIT to a processor makes it to wait in a halt state */
-	for (cpu = 0; cpu < ncpus; cpu++) {
-		if ((aid == cpuid2apicid[cpu]) && (aid == bsp_lapic_id))
-			continue;
-		apic_send_init_ipi (cpu, 0);
-	}
 exit_shutdown_aps:
 	ioapic_disable_all();
 
@@ -341,4 +342,14 @@ uniproc_fallback:
 	smp_reinit_vars (); /* revert to a single proc system. */
 	intr_init (INTS_MINIX, 0); /* no auto eoi */
 	printf("WARNING : SMP initialization failed\n");
+}
+	
+PUBLIC void arch_smp_halt_cpu(void)
+{
+	/* say that we are down */
+	cpu_down = cpuid;
+	barrier();
+	/* unlock the BKL and don't continue */
+	BKL_UNLOCK();
+	for(;;);
 }

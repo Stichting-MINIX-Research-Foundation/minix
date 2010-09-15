@@ -167,7 +167,6 @@ _PROTOTYPE(void apic_ipi_sched_intr, (void));
 _PROTOTYPE(void apic_ipi_halt_intr, (void));
 
 _PROTOTYPE(void apic_ipi_sched_handler, (void));
-_PROTOTYPE(void apic_ipi_halt_handler, (void));
 
 #define APIC_IPI_DEST			0
 #define APIC_IPI_SELF			1

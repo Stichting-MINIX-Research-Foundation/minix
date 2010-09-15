@@ -23,6 +23,8 @@
 
 extern unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
 
+#define barrier()	do { mfence(); } while(0)
+
 #endif
 
 #endif /* __SMP_X86_H__ */
