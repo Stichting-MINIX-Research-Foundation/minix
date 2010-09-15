@@ -17,6 +17,19 @@
 
 #if USE_GETINFO
 
+#include <minix/u64.h>
+
+PRIVATE void update_idle_time(void)
+{
+	int i;
+	struct proc * idl = proc_addr(IDLE);
+
+	for (i = 0; i < CONFIG_MAX_CPUS ; i++) {
+		idl->p_cycles = add64(idl->p_cycles,
+				get_cpu_var(i, idle_proc).p_cycles);
+	}
+}
+
 /*===========================================================================*
  *			        do_getinfo				     *
  *===========================================================================*/
@@ -64,6 +77,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         break;
     }
     case GET_PROCTAB: {
+	update_idle_time();
         length = sizeof(struct proc) * (NR_PROCS + NR_TASKS);
         src_vir = (vir_bytes) proc;
         break;

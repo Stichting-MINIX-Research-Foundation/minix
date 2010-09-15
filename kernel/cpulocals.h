@@ -55,6 +55,7 @@ DECLARE_CPULOCAL_START
 /* Process scheduling information and the kernel reentry count. */
 DECLARE_CPULOCAL(struct proc *,proc_ptr);/* pointer to currently running process */
 DECLARE_CPULOCAL(struct proc *,bill_ptr);/* process to bill for clock ticks */
+DECLARE_CPULOCAL(struct proc ,idle_proc);/* stub for an idle process */
 
 /* 
  * signal whether pagefault is already being handled to detect recursive

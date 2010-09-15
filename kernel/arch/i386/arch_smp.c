@@ -223,7 +223,6 @@ PRIVATE void ap_finish_booting(void)
 
 	ap_boot_finished(cpu);
 	spinlock_unlock(&boot_lock);
-	for(;;);
 
 	/* finish processor initialisation. */
 	lapic_enable(cpu);

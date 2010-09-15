@@ -65,6 +65,42 @@ FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
 FORWARD _PROTOTYPE( struct proc * pick_proc, (void));
 FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
 
+/* all idles share the same idle_priv structure */
+PRIVATE struct priv idle_priv;
+
+PRIVATE void set_idle_name(char * name, int n)
+{
+        int i, c;
+        int p_z = 0;
+        /*   
+         * P_NAME_LEN limits us to 3 characters for the idle task numer. 999
+         * should be enough though.
+         */
+        if (n > 999) 
+                n = 999; 
+
+        name[0] = 'i'; 
+        name[1] = 'd'; 
+        name[2] = 'l'; 
+        name[3] = 'e'; 
+
+        for (i = 4, c = 100; c > 0; c /= 10) {
+                int digit;
+
+                digit = n / c;  
+                n -= digit * c;  
+
+                if (p_z || digit != 0 || c == 1) {
+                        p_z = 1;
+                        name[i++] = '0' + digit;
+                }   
+        }    
+
+        name[i] = '\0';
+
+}
+
+
 #define PICK_ANY	1
 #define PICK_HIGHERONLY	2
 
@@ -108,6 +144,14 @@ PUBLIC void proc_init(void)
 		sp->s_sig_mgr = NONE;		/* clear signal managers */
 		sp->s_bak_sig_mgr = NONE;
 	}
+
+	idle_priv.s_flags = IDL_F;
+	/* initialize IDLE structures for every CPU */
+	for (i = 0; i < CONFIG_MAX_CPUS; i++) {
+		struct proc * ip = get_cpu_var_ptr(i, idle_proc);
+		ip->p_priv = &idle_priv;
+		set_idle_name(ip->p_name, i);
+	}
 }
 
 PRIVATE void switch_address_space_idle(void)
@@ -127,11 +171,17 @@ PRIVATE void switch_address_space_idle(void)
  *===========================================================================*/
 PRIVATE void idle(void)
 {
+	struct proc * p;
+
 	/* This function is called whenever there is no work to do.
 	 * Halt the CPU, and measure how many timestamp counter ticks are
 	 * spent not doing anything. This allows test setups to measure
 	 * the CPU utiliziation of certain workloads with high precision.
 	 */
+
+	p = get_cpulocal_var(proc_ptr) = get_cpulocal_var_ptr(idle_proc);
+	if (priv(p)->s_flags & BILLABLE)
+		get_cpulocal_var(bill_ptr) = p;
 
 	switch_address_space_idle();
 
@@ -184,9 +234,6 @@ not_runnable_pick_new:
 	 * process. If there is still nothing runnable we "schedule" IDLE again
 	 */
 	while (!(p = pick_proc())) {
-		p = get_cpulocal_var(proc_ptr) = proc_addr(IDLE);
-		if (priv(p)->s_flags & BILLABLE)
-			get_cpulocal_var(bill_ptr) = p;
 		idle();
 	}
 
