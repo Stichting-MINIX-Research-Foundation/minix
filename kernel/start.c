@@ -93,6 +93,11 @@ PUBLIC void cstart(
 	config_no_apic = atoi(value);
   else
 	config_no_apic = 1;
+  value = env_get("apic_timer_x");
+  if(value)
+	config_apic_timer_x = atoi(value);
+  else
+	config_apic_timer_x = 1;
 #endif
 
 #ifdef CONFIG_WATCHDOG

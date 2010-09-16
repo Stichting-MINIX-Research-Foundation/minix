@@ -506,7 +506,7 @@ PUBLIC void lapic_set_timer_one_shot(const u32_t usec)
 	u32_t ticks_per_us;
 	const u8_t cpu = cpuid;
 
-	ticks_per_us = lapic_bus_freq[cpu] / 1000000;
+	ticks_per_us = (lapic_bus_freq[cpu] / 1000000) * config_apic_timer_x;
 
 	lvtt = APIC_TDCR_1;
 	lapic_write(LAPIC_TIMER_DCR, lvtt);
@@ -525,7 +525,7 @@ PUBLIC void lapic_set_timer_periodic(const unsigned freq)
 	u32_t lapic_ticks_per_clock_tick;
 	const u8_t cpu = cpuid;
 
-	lapic_ticks_per_clock_tick = lapic_bus_freq[cpu] / freq;
+	lapic_ticks_per_clock_tick = (lapic_bus_freq[cpu] / freq) * config_apic_timer_x;
 
 	lvtt = APIC_TDCR_1;
 	lapic_write(LAPIC_TIMER_DCR, lvtt);

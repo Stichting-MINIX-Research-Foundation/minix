@@ -54,6 +54,7 @@ EXTERN int verboseflags;
 
 #ifdef CONFIG_APIC
 EXTERN int config_no_apic; /* optionaly turn off apic */
+EXTERN int config_apic_timer_x; /* apic timer slowdown factor */
 #endif
 
 EXTERN u64_t cpu_hz[CONFIG_MAX_CPUS];
