@@ -43,7 +43,6 @@ EXTERN int do_serial_debug;
 EXTERN time_t boottime;
 EXTERN char params_buffer[512];		/* boot monitor parameters */
 EXTERN int minix_panicing;
-EXTERN char fpu_presence;
 EXTERN int verboseboot;			/* verbose boot, init'ed in cstart */
 #define MAGICTEST 0xC0FFEE23
 EXTERN u32_t magictest;			/* global magic number */

@@ -244,7 +244,7 @@ PUBLIC void fpu_init(void)
 
 PUBLIC void save_local_fpu(struct proc *pr)
 {
-	if(!fpu_presence)
+	if(!is_fpu())
 		return;
 
 	/* Save changed FPU context. */
@@ -258,9 +258,12 @@ PUBLIC void save_local_fpu(struct proc *pr)
 
 PUBLIC void save_fpu(struct proc *pr)
 {
-#if CONFIG_SMP
+#ifdef CONFIG_SMP
 	if (cpuid == pr->p_cpu) {
-		save_local_fpu(pr);
+		if (get_cpulocal_var(fpu_owner) == pr) {
+			disable_fpu_exception();
+			save_local_fpu(pr);
+		}
 	}
 	else {
 		int stopped;
@@ -280,7 +283,10 @@ PUBLIC void save_fpu(struct proc *pr)
 			RTS_UNSET(pr, RTS_PROC_STOP);
 	}
 #else
-	save_local_fpu(pr);
+	if (get_cpulocal_var(fpu_owner) == pr) {
+		disable_fpu_exception();
+		save_local_fpu(pr);
+	}
 #endif
 }
 
