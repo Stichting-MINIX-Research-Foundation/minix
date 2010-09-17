@@ -74,10 +74,13 @@ PUBLIC int fs_link()
   }
 
   /* Temporarily open the last dir */
-  if( (ip = get_inode(fs_dev, fs_m_in.REQ_DIR_INO)) == NULL)
-	  return(EINVAL);
+  if( (ip = get_inode(fs_dev, fs_m_in.REQ_DIR_INO)) == NULL) {
+  	put_inode(rip);
+	return(EINVAL);
+  }
 
   if (ip->i_links_count == NO_LINK) {	/* Dir does not actually exist */
+  	put_inode(rip);
 	put_inode(ip);
 	return(ENOENT);
   }
@@ -347,6 +350,7 @@ PUBLIC int fs_rename()
 
   if (r == EENTERMOUNT || r == ELEAVEMOUNT) {
 	put_inode(old_ip);
+	old_ip = NULL;
 	if (r == EENTERMOUNT) r = EXDEV;	/* should this fail at all? */
 	else if (r == ELEAVEMOUNT) r = EINVAL;	/* rename on dot-dot */
   }
@@ -354,12 +358,13 @@ PUBLIC int fs_rename()
   /* Get new dir inode */
   if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL)
 	r = err_code;
-
-  if (new_dirp->i_links_count == NO_LINK) { /* Dir does not actually exist */
-  	put_inode(old_ip);
-  	put_inode(old_dirp);
-  	put_inode(new_dirp);
-  	return(ENOENT);
+  else {
+	if (new_dirp->i_links_count == NO_LINK) { /* Dir does not actually exist */
+		put_inode(old_ip);
+		put_inode(old_dirp);
+		put_inode(new_dirp);
+		return(ENOENT);
+	}
   }
 
   new_ip = advance(new_dirp, new_name, IGN_PERM); /* not required to exist */
@@ -368,6 +373,7 @@ PUBLIC int fs_rename()
    * Note that ELEAVEMOUNT is covered by the dot-dot check later. */
   if(err_code == EENTERMOUNT) {
 	put_inode(new_ip);
+	new_ip = NULL;
 	r = EBUSY;
   }
 
