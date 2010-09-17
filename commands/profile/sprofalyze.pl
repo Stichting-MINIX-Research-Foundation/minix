@@ -33,7 +33,9 @@ servers/iso9660fs/isofs
 servers/mfs/mfs
 servers/pfs/pfs
 servers/pm/pm
+servers/procfs/procfs
 servers/rs/rs
+servers/sched/sched
 servers/vfs/vfs
 servers/vm/vm
 commands/service/service
