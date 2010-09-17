@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/pkg/bin/perl
 #
 # sprofalyze.pl
 #
@@ -36,7 +36,7 @@ servers/pm/pm
 servers/rs/rs
 servers/vfs/vfs
 servers/vm/vm
-servers/rs/service
+commands/service/service
 
 drivers/ahci/ahci
 drivers/amddev/amddev
