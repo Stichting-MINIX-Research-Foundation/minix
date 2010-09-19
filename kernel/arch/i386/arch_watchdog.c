@@ -65,7 +65,7 @@ int arch_watchdog_init(void)
 
 	_cpuid(&eax, &ebx, &ecx, &edx);
 
-	/* FIXME currently we support only watchdog base on the intel
+	/* FIXME currently we support only watchdog based on the intel
 	 * architectural performance counters. Some Intel CPUs don't have this
 	 * feature
 	 */
@@ -76,7 +76,7 @@ int arch_watchdog_init(void)
 
 	watchdog = &intel_arch_watchdog;
 
-	/* Setup PC tas NMI for watchdog, is is masked for now */
+	/* Setup PC overflow as NMI for watchdog, it is masked for now */
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_INT_MASK | APIC_ICR_DM_NMI);
 	(void) lapic_read(LAPIC_LVTPCR);
 
