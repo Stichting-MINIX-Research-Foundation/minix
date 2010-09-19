@@ -309,7 +309,6 @@ PUBLIC short cpu_load(void)
 		busy = sub64(tsc_delta, idle_delta);
 		busy = mul64(busy, make64(100, 0));
 		load = div64(busy, tsc_delta).lo;
-		printf("CPULOAD %d\n", load);
 
 		if (load > 100)
 			load = 100;
