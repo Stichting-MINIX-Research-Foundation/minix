@@ -39,6 +39,16 @@ struct proc {
 							    run on */
 #endif
 
+  /* Accounting statistics that get passed to the process' scheduler */
+  struct {
+	u64_t enter_queue;	/* time when enqueued (cycles) */
+	u64_t time_in_queue;	/* time spent in queue */
+	unsigned long dequeues;
+	unsigned long ipc_sync;
+	unsigned long ipc_async;
+	unsigned long preempted;
+  } p_accounting;
+
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
 
   clock_t p_user_time;		/* user time in ticks */

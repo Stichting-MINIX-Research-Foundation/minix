@@ -17,5 +17,6 @@ _PROTOTYPE(void restart_local_timer, (void));
 _PROTOTYPE(int register_local_timer_handler, (irq_handler_t handler));
 
 _PROTOTYPE( u64_t ms_2_cpu_time, (unsigned ms));
+_PROTOTYPE( unsigned cpu_time_2_ms, (u64_t cpu_time));
 
 #endif /* __CLOCK_H__ */

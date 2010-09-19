@@ -49,7 +49,7 @@ _PROTOTYPE( int do_ipc, (reg_t r1, reg_t r2, reg_t r3)			);
 _PROTOTYPE( void proc_init, (void)					);
 _PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
-_PROTOTYPE( void dequeue, (const struct proc *rp)			);
+_PROTOTYPE( void dequeue, (struct proc *rp)				);
 _PROTOTYPE( void switch_to_user, (void)					);
 _PROTOTYPE( struct proc * arch_finish_switch_to_user, (void)		);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
@@ -61,6 +61,8 @@ _PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
 #define isokendpt_d(e, p, f) isokendpt_f((e), (p), (f))
 #endif
 _PROTOTYPE( void proc_no_time, (struct proc *p));
+_PROTOTYPE( void reset_proc_accounting, (struct proc *p));
+_PROTOTYPE( void flag_account, (struct proc *p, int flag));
 
 /* start.c */
 _PROTOTYPE( void cstart, (u16_t cs, u16_t ds, u16_t mds,

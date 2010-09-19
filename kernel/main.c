@@ -158,6 +158,8 @@ PUBLIC int main(void)
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	make_zero64(rp->p_cpu_time_left);
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
+	
+	reset_proc_accounting(rp);
 
 	/* See if this process is immediately schedulable.
 	 * In that case, set its privileges now and allow it to run.

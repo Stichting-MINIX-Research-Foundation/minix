@@ -560,16 +560,24 @@ PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
   	case RECEIVE:			
   	case NOTIFY:
   	case SENDNB:
+  	{
+  	    /* Process accounting for scheduling */
+	    caller_ptr->p_accounting.ipc_sync++;
+
   	    return do_sync_ipc(caller_ptr, call_nr, (endpoint_t) r2,
 			    (message *) r3);
+  	}
   	case SENDA:
   	{
-  	    /*
+ 	    /*
   	     * Get and check the size of the argument in bytes as it is a
   	     * table
   	     */
   	    size_t msg_size = (size_t) r2;
   
+  	    /* Process accounting for scheduling */
+	    caller_ptr->p_accounting.ipc_async++;
+ 
   	    /* Limit size to something reasonable. An arbitrary choice is 16
   	     * times the number of process table entries.
   	     */
@@ -1350,6 +1358,10 @@ PUBLIC void enqueue(
   }
 #endif
 
+  /* Make note of when this process was added to queue */
+  read_tsc_64(&(get_cpulocal_var(proc_ptr)->p_accounting.enter_queue));
+
+
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());
 #endif
@@ -1394,6 +1406,14 @@ PRIVATE void enqueue_head(struct proc *rp)
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
       rdy_head[q] = rp;				/* set new queue head */
 
+  /* Make note of when this process was added to queue */
+  read_tsc_64(&(get_cpulocal_var(proc_ptr->p_accounting.enter_queue)));
+
+
+  /* Process accounting for scheduling */
+  rp->p_accounting.dequeues--;
+  rp->p_accounting.preempted++;
+
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());
 #endif
@@ -1402,7 +1422,7 @@ PRIVATE void enqueue_head(struct proc *rp)
 /*===========================================================================*
  *				dequeue					     * 
  *===========================================================================*/
-PUBLIC void dequeue(const struct proc *rp)
+PUBLIC void dequeue(struct proc *rp)
 /* this process is no longer runnable */
 {
 /* A process must be removed from the scheduling queues, for example, because
@@ -1412,9 +1432,10 @@ PUBLIC void dequeue(const struct proc *rp)
  * This function can operate x-cpu as it always removes the process from the
  * queue of the cpu the process is currently assigned to.
  */
-  register int q = rp->p_priority;		/* queue to use */
-  register struct proc **xpp;			/* iterate over queue */
-  register struct proc *prev_xp;
+  int q = rp->p_priority;		/* queue to use */
+  struct proc **xpp;			/* iterate over queue */
+  struct proc *prev_xp;
+  u64_t tsc, tsc_delta;
 
   struct proc **rdy_tail;
 
@@ -1443,6 +1464,22 @@ PUBLIC void dequeue(const struct proc *rp)
       }
       prev_xp = *xpp;				/* save previous in chain */
   }
+
+	
+  /* Process accounting for scheduling */
+  rp->p_accounting.dequeues++;
+
+  /* this is not all that accurate on virtual machines, especially with
+     IO bound processes that only spend a short amount of time in the queue
+     at a time. */
+  if (!is_zero64(rp->p_accounting.enter_queue)) {
+	read_tsc_64(&tsc);
+	tsc_delta = sub64(tsc, rp->p_accounting.enter_queue);
+	rp->p_accounting.time_in_queue = add64(rp->p_accounting.time_in_queue,
+		tsc_delta);
+	make_zero64(rp->p_accounting.enter_queue);
+  }
+
 
 #if DEBUG_SANITYCHECKS
   assert(runqueues_ok_local());
@@ -1561,6 +1598,16 @@ PRIVATE void notify_scheduler(struct proc *p)
 	 */
 	m_no_quantum.m_source = p->p_endpoint;
 	m_no_quantum.m_type   = SCHEDULING_NO_QUANTUM;
+	m_no_quantum.SCHEDULING_ACNT_QUEUE = cpu_time_2_ms(p->p_accounting.time_in_queue);
+	m_no_quantum.SCHEDULING_ACNT_DEQS      = p->p_accounting.dequeues;
+	m_no_quantum.SCHEDULING_ACNT_IPC_SYNC  = p->p_accounting.ipc_sync;
+	m_no_quantum.SCHEDULING_ACNT_IPC_ASYNC = p->p_accounting.ipc_async;
+	m_no_quantum.SCHEDULING_ACNT_PREEMPT   = p->p_accounting.preempted;
+	m_no_quantum.SCHEDULING_ACNT_CPU       = cpuid;
+	m_no_quantum.SCHEDULING_ACNT_CPU_LOAD  = cpu_load();
+
+	/* Reset accounting */
+	reset_proc_accounting(p);
 
 	if ((err = mini_send(p, p->p_scheduler->p_endpoint,
 					&m_no_quantum, FROM_KERNEL))) {
@@ -1585,6 +1632,16 @@ PUBLIC void proc_no_time(struct proc * p)
 		RTS_UNSET(proc_ptr, RTS_PREEMPTED);
 #endif
 	}
+}
+
+PUBLIC void reset_proc_accounting(struct proc *p)
+{
+  p->p_accounting.preempted = 0;
+  p->p_accounting.ipc_sync  = 0;
+  p->p_accounting.ipc_async = 0;
+  p->p_accounting.dequeues  = 0;
+  make_zero64(p->p_accounting.time_in_queue);
+  make_zero64(p->p_accounting.enter_queue);
 }
 	
 PUBLIC void copr_not_available_handler(void)

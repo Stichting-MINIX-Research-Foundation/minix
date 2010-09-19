@@ -183,7 +183,12 @@ PUBLIC int register_local_timer_handler(const irq_handler_t handler)
 
 PUBLIC void cycles_accounting_init(void)
 {
-	read_tsc_64(get_cpulocal_var_ptr(tsc_ctr_switch));
+	unsigned cpu = cpuid;
+
+	read_tsc_64(get_cpu_var_ptr(cpu, tsc_ctr_switch));
+
+	make_zero64(get_cpu_var(cpu, cpu_last_tsc));
+	make_zero64(get_cpu_var(cpu, cpu_last_idle));
 }
 
 PUBLIC void context_stop(struct proc * p)
@@ -272,4 +277,46 @@ PUBLIC void context_stop_idle(void)
 PUBLIC u64_t ms_2_cpu_time(unsigned ms)
 {
 	return mul64u(tsc_per_ms[cpuid], ms);
+}
+
+PUBLIC unsigned cpu_time_2_ms(u64_t cpu_time)
+{
+	return div64u(cpu_time, tsc_per_ms[cpuid]);
+}
+
+PUBLIC short cpu_load(void)
+{
+	u64_t current_tsc, *current_idle;
+	u64_t tsc_delta, idle_delta, busy;
+	struct proc *idle;
+	short load;
+	unsigned cpu = cpuid;
+
+	u64_t *last_tsc, *last_idle;
+
+	last_tsc = get_cpu_var_ptr(cpu, cpu_last_tsc);
+	last_idle = get_cpu_var_ptr(cpu, cpu_last_idle);
+
+	idle = get_cpu_var_ptr(cpu, idle_proc);;
+	read_tsc_64(&current_tsc);
+	current_idle = &idle->p_cycles; /* ptr to idle proc */
+
+	/* calculate load since last cpu_load invocation */
+	if (!is_zero64(*last_tsc)) {
+		tsc_delta = sub64(current_tsc, *last_tsc);
+		idle_delta = sub64(*current_idle, *last_idle);
+
+		busy = sub64(tsc_delta, idle_delta);
+		busy = mul64(busy, make64(100, 0));
+		load = div64(busy, tsc_delta).lo;
+		printf("CPULOAD %d\n", load);
+
+		if (load > 100)
+			load = 100;
+	} else
+		load = 0;
+	
+	*last_tsc = current_tsc;
+	*last_idle = *current_idle;
+	return load;
 }

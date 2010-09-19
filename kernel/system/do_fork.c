@@ -85,6 +85,7 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 
   /* the child process is not runnable until it's scheduled. */
   RTS_SET(rpc, RTS_NO_QUANTUM);
+  reset_proc_accounting(rpc);
 
   make_zero64(rpc->p_cpu_time_left);
   make_zero64(rpc->p_cycles);

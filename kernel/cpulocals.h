@@ -78,6 +78,11 @@ DECLARE_CPULOCAL(int, cpu_is_idle); /* let the others know that you are idle */
 
 DECLARE_CPULOCAL(u64_t ,tsc_ctr_switch); /* when did we switched time accounting */
 
+/* last values read from cpu when sending ooq msg to scheduler */
+DECLARE_CPULOCAL(u64_t, cpu_last_tsc);
+DECLARE_CPULOCAL(u64_t, cpu_last_idle);
+
+
 DECLARE_CPULOCAL(char ,fpu_presence); /* whether the cpu has FPU or not */
 DECLARE_CPULOCAL(struct proc * ,fpu_owner); /* who owns the FPU of the local cpu */
 
