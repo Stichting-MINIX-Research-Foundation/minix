@@ -80,7 +80,7 @@ size_t _gcov_fwrite(void *ptr, size_t itemsize, size_t nitems, FILE *stream)
 {
 	int size = itemsize * nitems;
 
-	if(!gcov_enable) return NULL;
+	if(!gcov_enable) return -1;
 
 	/* only have one file open at a time to ensure writes go
 	 * to the right place.
