@@ -2,12 +2,10 @@
 
 set -e
 
-PATH=$PATH:/usr/local/bin
-
 XBIN=usr/xbin
 SRC=src
 
-PACKAGEDIR=/usr/pkgsrc/packages
+PACKAGEDIR=/usr/pkgsrc/packages/`uname -r`/`uname -m`
 # List of packages included on installation media
 PACKAGELIST=packages.install
 secs=`expr 32 '*' 64`
@@ -429,7 +427,7 @@ fi
 echo " * Counting files"
 extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
-find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
+find $RELEASEDIR -print -path $RELEASEDIR/usr -prune | wc -l >$RELEASEDIR/.rootfiles
 
 echo " * Writing fstab"
 if [ "$USB" -ne 0 ]
