@@ -1,3 +1,9 @@
+20100921:
+	gcc format libraries are created in /usr/lib now, 
+	so throw out /usr/gnu/lib/ if you want to make sure you
+	don't pick up the old ones.
+	(with pkgsrc and this, all of /usr/gnu is obsolete now.)
+
 20100914:
 	mkdir /proc
 	chmod 555 /proc
