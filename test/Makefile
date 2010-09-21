@@ -19,7 +19,7 @@ ROOTOBJ= test11 test33 test43 test44 test46
 GCCOBJ=  test45-gcc test49-gcc 
 GCCFPUOBJ= test51-gcc test52-gcc
 
-all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ) test57
+all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ) test57 test59
 	chmod 755 *.sh run
 
 $(OBJ):
@@ -115,3 +115,5 @@ test56: test56.c
 test57: test57.c test57loop.S
 	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ test57.c test57loop.S; fi
 test58: test58.c
+test59: test59.c
+	$(CC) $(CFLAGS) -o $@ $@.c -lmthread 
