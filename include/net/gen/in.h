@@ -5,6 +5,9 @@ server/ip/gen/in.h
 #ifndef __SERVER__IP__GEN__IN_H__
 #define __SERVER__IP__GEN__IN_H__
 
+#include <net/gen/in.h>
+#include <minix/types.h>
+
 #define IP_MIN_HDR_SIZE		20
 #define IP_MAX_HDR_SIZE		60		/* 15 * 4 */
 #define IP_VERSION		4
