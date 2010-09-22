@@ -178,7 +178,11 @@ PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
 
 PRIVATE void scan_devices(void)
 {
-	ACPI_STATUS(status);
+	ACPI_STATUS status;
+
+	/* do not scan devices in PIC mode */
+	if (!machine.apic_enabled)
+		return;
 	
 	/* get the root first */
 	status = AcpiGetDevices("PNP0A03", add_pci_root_dev, NULL, NULL);
