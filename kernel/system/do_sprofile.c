@@ -34,6 +34,7 @@ PRIVATE clean_seen_flag(void)
 PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 {
   int proc_nr;
+  int err;
 
   switch(m_ptr->PROF_ACTION) {
 
@@ -66,7 +67,19 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 
 	sprof_mem_size = m_ptr->PROF_MEM_SIZE;
 
-	init_profile_clock(m_ptr->PROF_FREQ);
+	switch (sprofiling_type = m_ptr->PROF_INTR_TYPE) {
+		case PROF_RTC:
+			init_profile_clock(m_ptr->PROF_FREQ);
+			break;
+		case PROF_NMI:
+			err = nmi_watchdog_start_profiling(m_ptr->PROF_FREQ);
+			if (err)
+				return err;
+			break;
+		default:
+			printf("ERROR : unknown profiling interrupt type\n");
+			return EINVAL;
+	}
 	
 	sprofiling = 1;
 
@@ -87,7 +100,14 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 
 	sprofiling = 0;
 
-	stop_profile_clock();
+	switch (sprofiling_type) {
+		case PROF_RTC:
+			stop_profile_clock();
+			break;
+		case PROF_NMI:
+			nmi_watchdog_stop_profiling();
+			break;
+	}
 
 	data_copy(KERNEL, (vir_bytes) &sprof_info,
 		sprof_ep, sprof_info_addr_vir, sizeof(sprof_info));

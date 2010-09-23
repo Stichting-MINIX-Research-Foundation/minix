@@ -18,7 +18,9 @@
  * Intel architecture performance counters watchdog
  */
 
-PRIVATE void intel_arch_watchdog_init(int cpu)
+PRIVATE struct arch_watchdog intel_arch_watchdog;
+
+PRIVATE void intel_arch_watchdog_init(const unsigned cpu)
 {
 	u64_t cpuf;
 	u32_t val;
@@ -36,7 +38,7 @@ PRIVATE void intel_arch_watchdog_init(int cpu)
 	cpuf = cpu_get_freq(cpu);
 	while (cpuf.hi || cpuf.lo > 0x7fffffffU)
 		cpuf = div64u64(cpuf, 2);
-	watchdog->resetval = cpuf.lo;
+	watchdog->resetval = watchdog->watchdog_resetval = cpuf.lo;
 
 	ia32_msr_write(MSR_PERFMON_CRT0, 0, -cpuf.lo);
 
@@ -46,20 +48,20 @@ PRIVATE void intel_arch_watchdog_init(int cpu)
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 }
 
-PRIVATE void intel_arch_watchdog_reinit(const int cpu)
+PRIVATE void intel_arch_watchdog_reinit(const unsigned cpu)
 {
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 	ia32_msr_write(MSR_PERFMON_CRT0, 0, -watchdog->resetval);
 }
 
-PRIVATE struct arch_watchdog intel_arch_watchdog = {
-	/*.init = */	intel_arch_watchdog_init,
-	/*.reinit = */	intel_arch_watchdog_reinit
-};
-
-int arch_watchdog_init(void)
+PUBLIC int arch_watchdog_init(void)
 {
 	u32_t eax, ebx, ecx, edx;
+
+	if (!lapic_addr) {
+		printf("ERROR : Cannot use NMI watchdog if APIC is not enabled\n");
+		return -1;
+	}
 
 	eax = 0xA;
 
@@ -81,14 +83,18 @@ int arch_watchdog_init(void)
 	(void) lapic_read(LAPIC_LVTPCR);
 
 	/* double check if LAPIC is enabled */
-	if (lapic_addr && watchdog_enabled && watchdog->init) {
+	if (lapic_addr && watchdog->init) {
 		watchdog->init(cpuid);
 	}
 
 	return 0;
 }
 
-void arch_watchdog_lockup(const struct nmi_frame * frame)
+PUBLIC void arch_watchdog_stop(void)
+{
+}
+
+PUBLIC void arch_watchdog_lockup(const struct nmi_frame * frame)
 {
 	printf("KERNEL LOCK UP\n"
 			"eax    0x%08x\n"
@@ -123,15 +129,44 @@ void arch_watchdog_lockup(const struct nmi_frame * frame)
 	panic("Kernel lockup");
 }
 
-void i386_watchdog_start(void)
+PUBLIC int i386_watchdog_start(void)
 {
-	if (watchdog_enabled) {
-		if (arch_watchdog_init()) {
-			printf("WARNING watchdog initialization "
-					"failed! Disabled\n");
-			watchdog_enabled = 0;
-		}
-		else
-			BOOT_VERBOSE(printf("Watchdog enabled\n"););
+	if (arch_watchdog_init()) {
+		printf("WARNING watchdog initialization "
+				"failed! Disabled\n");
+		watchdog_enabled = 0;
+		return -1;
 	}
+	else
+		BOOT_VERBOSE(printf("Watchdog enabled\n"););
+
+	return 0;
 }
+
+PRIVATE int intel_arch_watchdog_profile_init(const unsigned freq)
+{
+	u64_t cpuf;
+
+	/* FIXME works only if all CPUs have the same freq */
+	cpuf = cpu_get_freq(cpuid);
+	cpuf = div64u64(cpuf, freq);
+
+	/*
+	 * if freq is too low and the cpu freq too high we may get in a range of
+	 * insane value which cannot be handled by the 31bit CPU perf counter
+	 */
+	if (cpuf.hi != 0 || cpuf.lo > 0x7fffffffU) {
+		printf("ERROR : nmi watchdog ticks exceed 31bits, use higher frequency\n");
+		return EINVAL;
+	}
+
+	watchdog->profile_resetval = cpuf.lo;
+
+	return OK;
+}
+
+PRIVATE struct arch_watchdog intel_arch_watchdog = {
+	/*.init = */		intel_arch_watchdog_init,
+	/*.reinit = */		intel_arch_watchdog_reinit,
+	/*.profile_init = */	intel_arch_watchdog_profile_init
+};

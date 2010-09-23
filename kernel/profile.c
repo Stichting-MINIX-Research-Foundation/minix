@@ -26,6 +26,7 @@
 #if SPROFILE
 
 #include <string.h>
+#include "watchdog.h"
 
 /* Function prototype for the profiling clock handler. */ 
 FORWARD _PROTOTYPE( int profile_clock_handler, (irq_hook_t *hook) );
@@ -90,24 +91,19 @@ PRIVATE sprof_save_proc(struct proc * p)
 	sprof_info.mem_used += sizeof(s);
 }
 
-/*===========================================================================*
- *			profile_clock_handler                           *
- *===========================================================================*/
-PRIVATE int profile_clock_handler(irq_hook_t *hook)
+PRIVATE void profile_sample(struct proc * p)
 {
-  struct proc * p;
 /* This executes on every tick of the CMOS timer. */
 
   /* Are we profiling, and profiling memory not full? */
-  if (!sprofiling || sprof_info.mem_used == -1) return (1);
+  if (!sprofiling || sprof_info.mem_used == -1)
+	  return;
 
   /* Check if enough memory available before writing sample. */
   if (sprof_info.mem_used + sizeof(sprof_info) > sprof_mem_size) {
 	sprof_info.mem_used = -1;
-	return(1);
+	return;
   }
-
-  p = get_cpulocal_var(proc_ptr);
 
   if (!(p->p_misc_flags & MF_SPROF_SEEN)) {
 	  p->p_misc_flags |= MF_SPROF_SEEN;
@@ -126,11 +122,41 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
   }
   
   sprof_info.total_samples++;
+}
+
+/*===========================================================================*
+ *			profile_clock_handler                           *
+ *===========================================================================*/
+PRIVATE int profile_clock_handler(irq_hook_t *hook)
+{
+  struct proc * p;
+  p = get_cpulocal_var(proc_ptr);
+
+  profile_sample(p);
 
   /* Acknowledge interrupt if necessary. */
   arch_ack_profile_clock();
 
   return(1);                                    /* reenable interrupts */
+}
+
+PUBLIC void nmi_sprofile_handler(struct nmi_frame * frame)
+{
+	/*
+	 * test if the kernel was interrupted. If so, save first a sample fo
+	 * kernel and than for the current process, otherwise save just the
+	 * process
+	 */
+	if (nmi_in_kernel(frame)) {
+		struct proc *kern;
+
+		kern = proc_addr(KERNEL);
+		kern->p_reg.pc = frame->pc;
+
+		profile_sample(kern);
+	}
+	
+	profile_sample(get_cpulocal_var(proc_ptr));
 }
 
 #endif /* SPROFILE */

@@ -13,18 +13,23 @@ extern unsigned watchdog_local_timer_ticks; /* is timer still ticking? */
  * implement it in runtime after the correct arch/model was detected
  */
 
-typedef void (* arch_watchdog_method_t)(int);
+typedef void (* arch_watchdog_method_t)(const unsigned);
+typedef int (* arch_watchdog_profile_init_t)(const unsigned);
 
 struct arch_watchdog {
-	arch_watchdog_method_t	init;	/* initial setup */
-	arch_watchdog_method_t	reinit;	/* reinitialization after a tick */
-	unsigned		resetval;
+	arch_watchdog_method_t		init;	/* initial setup */
+	arch_watchdog_method_t		reinit;	/* reinit after a tick */
+	arch_watchdog_profile_init_t	profile_init;
+	unsigned			resetval;
+	unsigned			watchdog_resetval;
+	unsigned			profile_resetval;
 };
 
 extern struct arch_watchdog *watchdog;
 
-/* let the arch code do whatever it needs to setup the watchdog */
+/* let the arch code do whatever it needs to setup or quit the watchdog */
 int arch_watchdog_init(void);
+void arch_watchdog_stop(void);
 /* if the watchdog detects lockup, let the arch code to handle it */
 void arch_watchdog_lockup(const struct nmi_frame * frame);
 
@@ -32,5 +37,11 @@ void arch_watchdog_lockup(const struct nmi_frame * frame);
  * specific low level handler dumped CPU information and can be inspected by the
  * arch specific code of the watchdog implementaion */
 void nmi_watchdog_handler(struct nmi_frame * frame);
+
+/*
+ * start and stop profiling using the NMI watchdog
+ */
+int nmi_watchdog_start_profiling(const unsigned freq);
+void nmi_watchdog_stop_profiling(void);
 
 #endif /* __WATCHDOG_H__ */

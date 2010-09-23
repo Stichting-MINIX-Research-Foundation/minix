@@ -1103,11 +1103,12 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 #ifdef CONFIG_WATCHDOG
 	/*
 	 * We make sure that we don't enable the watchdog until paging is turned
-	 * on as we might get a NMI while switching and we might still use wrong
+	 * on as we might get an NMI while switching and we might still use wrong
 	 * lapic address. Bad things would happen. It is unfortunate but such is
 	 * life
 	 */
-	i386_watchdog_start();
+	if (watchdog_enabled)
+		i386_watchdog_start();
 #endif
 
 	return OK;
