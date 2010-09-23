@@ -48,6 +48,7 @@ int action = 0;
 int mem_size = 0;
 int mem_used = 0;
 int freq = 0;
+int intr_type = PROF_RTC;
 char *outfile = "";
 char *mem_ptr;
 int outfile_fd, npipe_fd;
@@ -104,15 +105,27 @@ int main(int argc, char *argv[])
 			break;
 	}
 
+	/*
+	 * Check the frequency when we know the intr type. Only selected values
+	 * are correct for RTC
+	 */
+	if (action == START && intr_type == PROF_RTC && 
+			freq < MIN_FREQ || freq > MAX_FREQ) {
+		printf("Incorrect frequency.\n");
+		return 1;
+	}
+
         printf("Statistical Profiling:\n");
-	printf("  profile start [-m memsize] [-o outfile] [-f frequency]\n");
+	printf("  profile start [--rtc | --nmi] "
+			"[-m memsize] [-o outfile] [-f frequency]\n");
         printf("  profile stop\n\n");
+	printf("   --rtc is default, --nmi allows kernel profiling\n");
         printf("Call Profiling:\n");
 	printf("  profile get   [-m memsize] [-o outfile]\n");
         printf("  profile reset\n\n");
 	printf("   - memsize in MB, default: %u\n", DEF_MEMSIZE);
 	printf("   - default output file: profile.{stat|call}.out\n");
-	printf( "   - sample frequencies (default: %u):\n", DEF_FREQ);
+	printf( "   - sample frequencies for --rtc (default: %u):\n", DEF_FREQ);
 	printf("      3    8192 Hz          10     64 Hz\n");
 	printf("      4    4096 Hz          11     32 Hz\n");
 	printf("      5    2048 Hz          12     16 Hz\n");
@@ -160,12 +173,18 @@ int handle_args(int argc, char *argv[])
 	} else
 	if (strcmp(*argv, "-f") == 0) {
 		if (--argc == 0) return ESYNTAX;
-		if (sscanf(*++argv, "%u", &freq) != 1 ||
-			freq < MIN_FREQ || freq > MAX_FREQ) return EFREQ;
+		if (sscanf(*++argv, "%u", &freq) != 1)
+			return EFREQ;
 	} else
 	if (strcmp(*argv, "-o") == 0) {
 		if (--argc == 0) return ESYNTAX;
 		outfile = *++argv;
+	} else
+	if (strcmp(*argv, "--rtc") == 0) {
+		intr_type = PROF_RTC;
+	} else
+	if (strcmp(*argv, "--nmi") == 0) {
+		intr_type = PROF_NMI;
 	} else
 	if (strcmp(*argv, "start") == 0) {
 		if (action) return EACTION;
@@ -224,7 +243,7 @@ int start()
 
   if (alloc_mem()) return 1;
 
-  if (sprofile(PROF_START, mem_size, freq, &sprof_info, mem_ptr)) {
+  if (sprofile(PROF_START, mem_size, freq, intr_type, &sprof_info, mem_ptr)) {
 	perror("sprofile");
 	printf("Error starting profiling.\n");
 	return 1;
@@ -280,7 +299,7 @@ int stop()
   int n;
   char buf[BUFSIZE];
 
-  if (sprofile(PROF_STOP, 0, 0, 0, 0)) {
+  if (sprofile(PROF_STOP, 0, 0, 0, 0, 0)) {
 	perror("sprofile");
 	printf("Error stopping profiling.\n");
   	return 1;

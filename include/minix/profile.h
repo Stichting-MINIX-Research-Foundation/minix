@@ -14,6 +14,9 @@
 #  define PROF_START       0    /* start statistical profiling */
 #  define PROF_STOP        1    /* stop statistical profiling */
 
+#define PROF_RTC	0 /* RTC based profiling */
+#define PROF_NMI	1 /* NMI based profiling, profiles kernel too */
+
 /* Info struct to be copied to from kernel to user program. */
 struct sprof_info_s {
   int mem_used;
@@ -101,7 +104,7 @@ struct cprof_tbl_s {
   u64_t cycles;				/* execution time of path, in cycles */
 } cprof_tbl_inst;
 
-_PROTOTYPE( int sprofile, (int action, int size, int freq, 
+_PROTOTYPE( int sprofile, (int action, int size, int freq, int type,
                                        void *ctl_ptr, void *mem_ptr)   );
 
 _PROTOTYPE( int cprofile, (int action, int size, void *ctl_ptr,

@@ -38,10 +38,11 @@ PUBLIC int do_sprofile(void)
 		return r;
 
 	return sys_sprof(PROF_START, m_in.PROF_MEM_SIZE, m_in.PROF_FREQ,
+			m_in.PROF_INTR_TYPE,
 			who_e, m_in.PROF_CTL_PTR, m_in.PROF_MEM_PTR);
 
   case PROF_STOP:
-	return sys_sprof(PROF_STOP,0,0,0,0,0);
+	return sys_sprof(PROF_STOP,0,0,0,0,0,0);
 
   default:
 	return EINVAL;

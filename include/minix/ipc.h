@@ -22,7 +22,7 @@ typedef struct {long m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
 typedef struct {short m5s1, m5s2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
 typedef struct {long m6l1, m6l2, m6l3; short m6s1, m6s2, m6s3; char m6c1, m6c2;
         char *m6p1, *m6p2;} mess_6;
-typedef struct {int m7i1, m7i2, m7i3, m7i4; char *m7p1, *m7p2;} mess_7;
+typedef struct {int m7i1, m7i2, m7i3, m7i4, m7i5; char *m7p1, *m7p2;} mess_7;
 typedef struct {int m8i1, m8i2; char *m8p1, *m8p2, *m8p3, *m8p4;} mess_8;
 typedef struct {long m9l1, m9l2, m9l3, m9l4, m9l5;
 	short m9s1, m9s2, m9s3, m9s4; } mess_9;
@@ -94,6 +94,7 @@ typedef struct {
 #define m7_i2  m_u.m_m7.m7i2
 #define m7_i3  m_u.m_m7.m7i3
 #define m7_i4  m_u.m_m7.m7i4
+#define m7_i5  m_u.m_m7.m7i5
 #define m7_p1  m_u.m_m7.m7p1
 #define m7_p2  m_u.m_m7.m7p2
 
