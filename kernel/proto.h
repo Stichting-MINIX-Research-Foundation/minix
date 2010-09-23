@@ -111,8 +111,8 @@ _PROTOTYPE( int runqueues_ok, (void) );
 #define runqueues_ok_local() runqueues_ok_cpu(cpuid)
 _PROTOTYPE( int runqueues_ok_cpu, (unsigned cpu));
 #endif
-_PROTOTYPE( char *rtsflagstr, (int flags) );
-_PROTOTYPE( char *miscflagstr, (int flags) );
+_PROTOTYPE( char *rtsflagstr, (u32_t flags) );
+_PROTOTYPE( char *miscflagstr, (u32_t flags) );
 _PROTOTYPE( char *schedulerstr, (struct proc *scheduler) );
 /* prints process information */
 _PROTOTYPE( void print_proc, (struct proc *pp));

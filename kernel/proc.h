@@ -24,8 +24,8 @@ struct proc {
   struct segframe p_seg;	/* segment descriptors */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
   struct priv *p_priv;		/* system privileges structure */
-  short p_rts_flags;		/* process is runnable only if zero */
-  short p_misc_flags;		/* flags that do not suspend the process */
+  u32_t p_rts_flags;		/* process is runnable only if zero */
+  u32_t p_misc_flags;		/* flags that do not suspend the process */
 
   char p_priority;		/* current process priority */
   u64_t p_cpu_time_left;	/* time left to use the cpu */
