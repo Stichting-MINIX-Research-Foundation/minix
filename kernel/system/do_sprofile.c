@@ -65,7 +65,8 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 	sprof_info.system_samples = 0;
 	sprof_info.user_samples = 0;
 
-	sprof_mem_size = m_ptr->PROF_MEM_SIZE;
+	sprof_mem_size = m_ptr->PROF_MEM_SIZE < SAMPLE_BUFFER_SIZE ?
+				m_ptr->PROF_MEM_SIZE : SAMPLE_BUFFER_SIZE;
 
 	switch (sprofiling_type = m_ptr->PROF_INTR_TYPE) {
 		case PROF_RTC:
@@ -111,6 +112,8 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 
 	data_copy(KERNEL, (vir_bytes) &sprof_info,
 		sprof_ep, sprof_info_addr_vir, sizeof(sprof_info));
+	data_copy(KERNEL, (vir_bytes) sprof_sample_buffer,
+		sprof_ep, sprof_data_addr_vir, sprof_info.mem_used);
 
 	clean_seen_flag();
 

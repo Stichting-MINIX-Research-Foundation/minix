@@ -63,32 +63,26 @@ PUBLIC void stop_profile_clock()
 
 PRIVATE sprof_save_sample(struct proc * p)
 {
-	struct sprof_sample s;
+	struct sprof_sample *s;
 
-	s.proc = p->p_endpoint;
-	s.pc = (void *) p->p_reg.pc;
+	s = (struct sprof_sample *) (sprof_sample_buffer + sprof_info.mem_used);
 
-	/* Store sample (process name and program counter). */
-	data_copy(KERNEL, (vir_bytes) &s,
-			sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
-			sizeof(s));
+	s->proc = p->p_endpoint;
+	s->pc = (void *) p->p_reg.pc;
 
-	sprof_info.mem_used += sizeof(s);
+	sprof_info.mem_used += sizeof(struct sprof_sample);
 }
 
 PRIVATE sprof_save_proc(struct proc * p)
 {
-	struct sprof_proc s;
+	struct sprof_proc * s;
 
-	s.proc = p->p_endpoint;
-	memcpy(s.name, p->p_name, P_NAME_LEN);
+	s = (struct sprof_proc *) (sprof_sample_buffer + sprof_info.mem_used);
 
-	/* Store sample (process name and program counter). */
-	data_copy(KERNEL, (vir_bytes) &s,
-			sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
-			sizeof(s));
+	s->proc = p->p_endpoint;
+	memcpy(&s->name, p->p_name, P_NAME_LEN);
 
-	sprof_info.mem_used += sizeof(s);
+	sprof_info.mem_used += sizeof(struct sprof_proc);
 }
 
 PRIVATE void profile_sample(struct proc * p)
@@ -100,7 +94,9 @@ PRIVATE void profile_sample(struct proc * p)
 	  return;
 
   /* Check if enough memory available before writing sample. */
-  if (sprof_info.mem_used + sizeof(sprof_info) > sprof_mem_size) {
+  if (sprof_info.mem_used + sizeof(sprof_info) +
+		  2*sizeof(struct sprof_sample) +
+		  2*sizeof(struct sprof_sample) > sprof_mem_size) {
 	sprof_info.mem_used = -1;
 	return;
   }
