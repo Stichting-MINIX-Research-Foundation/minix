@@ -20,9 +20,9 @@ struct arch_watchdog {
 	arch_watchdog_method_t		init;	/* initial setup */
 	arch_watchdog_method_t		reinit;	/* reinit after a tick */
 	arch_watchdog_profile_init_t	profile_init;
-	unsigned			resetval;
-	unsigned			watchdog_resetval;
-	unsigned			profile_resetval;
+	u64_t				resetval;
+	u64_t				watchdog_resetval;
+	u64_t				profile_resetval;
 };
 
 extern struct arch_watchdog *watchdog;
