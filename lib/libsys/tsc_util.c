@@ -6,6 +6,7 @@
 #include <minix/u64.h>
 #include <minix/config.h>
 #include <minix/const.h>
+#include <minix/minlib.h>
 
 #include "sysutil.h"
 
@@ -93,22 +94,44 @@ micro_delay(u32_t micros)
 
 u32_t tsc_64_to_micros(u64_t tsc)
 {
-	return tsc_to_micros(ex64lo(tsc), ex64hi(tsc));
+	u64_t tmp;
+	u32_t imv;
+
+	CALIBRATE;
+
+	/* Various formulas provide various levels of accuracy depending on
+	 * what still fits in a 64-bit number.
+	 */
+	if (ex64hi(tsc) != 0) {
+		if (ex64hi(tsc) < ULONG_MAX) {
+			tmp = mul64u(ex64hi(tsc) + 1, MICROHZ);
+
+			if (ex64hi(tmp) == 0) {
+				imv = div64u(mul64(tsc, cvu64(MICROHZ)),
+					calib_tsc);
+
+				tmp = mul64u(imv, CALIBRATE_TICKS(Hz));
+
+				if (ex64hi(tmp) == 0) {
+					/* Mid accuracy. */
+					return ex64lo(tmp) / Hz;
+				}
+			}
+		}
+
+		/* Low accuracy for large numbers. */
+		return div64u(mul64u(div64u(tsc, calib_tsc),
+			MICROHZ * CALIBRATE_TICKS(Hz)), Hz);
+	}
+
+	/* High accuracy for small numbers (the common case). */
+	return div64u(mul64u(ex64lo(tsc), MICROHZ * CALIBRATE_TICKS(Hz)),
+		calib_tsc) / Hz;
 }
 
 u32_t tsc_to_micros(u32_t low, u32_t high)
 {
-	u32_t micros;
-
-	if(high) {
-		return 0;
-	}
-	CALIBRATE;
-
-	micros = (div64u(mul64u(low, MICROHZ * CALIBRATE_TICKS(Hz)),
-		calib_tsc)/Hz);
-
-	return micros;
+	return tsc_64_to_micros(make64(low, high));
 }
 
 u32_t tsc_get_khz(void)
