@@ -43,6 +43,7 @@ servers/sched/sched
 commands/service/service
 
 drivers/ahci/ahci
+drivers/acpi/acpi
 drivers/amddev/amddev
 drivers/at_wini/at_wini
 drivers/atl2/atl2
@@ -136,9 +137,9 @@ sub read_symbols
 	$fullname = $src_root . $exe;
 
 	if ((! -x $fullname) || (! -r $fullname)) {
-		print "\nERROR: $fullname does not exist or not readable.\n";
+		print "\nWARNING: $fullname does not exist or not readable.\n";
 		print "Did you do a make?\n";
-		return 1;
+		next;
 	}
 
 	if (`file $fullname | grep NSYM`) {
