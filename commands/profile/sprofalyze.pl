@@ -12,7 +12,8 @@
 # Configuration options:
 
 # Location and parameters of nm program to extract symbol tables
-$nm = "/usr/bin/acknm -dn";
+$acknm = "/usr/bin/acknm -dn";
+$gnm = "/usr/pkg/bin/nm --radix=d -n";
 
 # Location of src (including trailing /)
 	$src_root = qw(
@@ -140,6 +141,11 @@ sub read_symbols
 		return 1;
 	}
 
+	if (`file $fullname | grep NSYM`) {
+		$nm = $gnm;
+	} else {
+		$nm = $acknm;
+	}
 	# Create a hash entry for each symbol table (text) entry.
 	foreach $_ (`$nm $fullname`) {
 		if (/^0{0,7}(\d{0,8})\s[tT]\s(\w{1,8})\n$/) {
