@@ -43,4 +43,10 @@ u64_t not64(u64_t a);
 #define is_zero64(i)	((i).lo == 0 && (i).hi == 0)
 #define make_zero64(i)	do { (i).lo = (i).hi = 0; } while(0)
 
+#define neg64(i)	do {				\
+				(i).lo = ~(i).lo;	\
+				(i).hi = ~(i).hi;	\
+				(i) = add64u((i), 1);	\
+			} while(0)
+
 #endif /* _MINIX__U64_H */
