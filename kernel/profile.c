@@ -61,14 +61,14 @@ PUBLIC void stop_profile_clock()
   rm_irq_handler(&profile_clock_hook);
 }
 
-PRIVATE sprof_save_sample(struct proc * p)
+PRIVATE sprof_save_sample(struct proc * p, void * pc)
 {
 	struct sprof_sample *s;
 
 	s = (struct sprof_sample *) (sprof_sample_buffer + sprof_info.mem_used);
 
 	s->proc = p->p_endpoint;
-	s->pc = (void *) p->p_reg.pc;
+	s->pc = pc;
 
 	sprof_info.mem_used += sizeof(struct sprof_sample);
 }
@@ -85,7 +85,7 @@ PRIVATE sprof_save_proc(struct proc * p)
 	sprof_info.mem_used += sizeof(struct sprof_proc);
 }
 
-PRIVATE void profile_sample(struct proc * p)
+PRIVATE void profile_sample(struct proc * p, void * pc)
 {
 /* This executes on every tick of the CMOS timer. */
 
@@ -109,8 +109,9 @@ PRIVATE void profile_sample(struct proc * p)
   /* Runnable system process? */
   if (p->p_endpoint == IDLE)
 	  sprof_info.idle_samples++;
-  else if (priv(p)->s_flags & SYS_PROC && proc_is_runnable(p)) {
-	  sprof_save_sample(p);
+  else if (p->p_endpoint == KERNEL ||
+		  (priv(p)->s_flags & SYS_PROC && proc_is_runnable(p))) {
+	  sprof_save_sample(p, pc);
 	  sprof_info.system_samples++;
   } else {
 	/* User process. */
@@ -128,7 +129,7 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
   struct proc * p;
   p = get_cpulocal_var(proc_ptr);
 
-  profile_sample(p);
+  profile_sample(p, (void *) p->p_reg.pc);
 
   /* Acknowledge interrupt if necessary. */
   arch_ack_profile_clock();
@@ -138,6 +139,7 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
 
 PUBLIC void nmi_sprofile_handler(struct nmi_frame * frame)
 {
+	struct proc * p = get_cpulocal_var(proc_ptr);
 	/*
 	 * test if the kernel was interrupted. If so, save first a sample fo
 	 * kernel and than for the current process, otherwise save just the
@@ -146,13 +148,22 @@ PUBLIC void nmi_sprofile_handler(struct nmi_frame * frame)
 	if (nmi_in_kernel(frame)) {
 		struct proc *kern;
 
-		kern = proc_addr(KERNEL);
-		kern->p_reg.pc = frame->pc;
+		/*
+		 * if we sample kernel, check if IDLE is scheduled. If so,
+		 * account for idle time rather than taking kernel sample
+		 */
+		if (p->p_endpoint == IDLE) {
+			sprof_info.idle_samples++;
+			sprof_info.total_samples++;
+			return;
+		}
 
-		profile_sample(kern);
+		kern = proc_addr(KERNEL);
+
+		profile_sample(kern, (void *) frame->pc);
 	}
-	
-	profile_sample(get_cpulocal_var(proc_ptr));
+	else
+		profile_sample(p, (void *) frame->pc);
 }
 
 #endif /* SPROFILE */
