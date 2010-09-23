@@ -1,6 +1,5 @@
 #ifndef _MTHREAD_H
 #define _MTHREAD_H
-#define _SYSTEM
 
 #include <minix/config.h>	/* MUST be first */
 #include <ansi.h>		/* MUST be second */
