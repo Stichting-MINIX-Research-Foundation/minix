@@ -149,7 +149,7 @@ sub read_symbols
 	}
 	# Create a hash entry for each symbol table (text) entry.
 	foreach $_ (`$nm $fullname`) {
-		if (/^0{0,7}(\d{0,8})\s[tT]\s(\w{1,8})\n$/) {
+		if (/^0{0,7}(\d{0,8})\s[tT]\s(\w{1,32})\n$/) {
 			${$shortname."_hash"}{$1} = $2;
 		}
 	}
@@ -258,7 +258,7 @@ sub process_datafile
 	}
 
 	foreach my $key (keys %{$res{$exe}}) {
-		$merged{sprintf("%8s %8s", $exe, $key)} = $res{$exe}{$key};
+		$merged{sprintf("%8s %32s", $exe, $key)} = $res{$exe}{$key};
 	}
   }
 
@@ -300,11 +300,11 @@ sub process_hash
   printf "----------------------------------------";
   printf "----------------------------------------\n";
   if ($aggr) {
-	$astr_max = 55;
+	$astr_max = 31;
 	$perc_hits = $system_hits / 100;
   	printf("Total system process time %46d samples\n", $system_hits);
   } else {
-	$astr_max = 64;
+	$astr_max = 40;
 	$perc_hits = $exe_hits{$exe} / 100;
 	$total_system_perc += $exe_perc =
 		sprintf("%5.1f", $exe_hits{$exe} / $system_hits * 100);
@@ -361,7 +361,7 @@ sub process_line
   if ($aggr) {
 	print "$func ";
   } else {
-	printf("%8s ", $func);
+	printf("%32s ", $func);
   }
   for ($i = 0; $i < $astr_max; $i++) {
 	if ($i <= $astr) {
