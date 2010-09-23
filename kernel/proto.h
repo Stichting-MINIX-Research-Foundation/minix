@@ -103,6 +103,9 @@ _PROTOTYPE( void rm_irq_handler, (const irq_hook_t *hook)		);
 _PROTOTYPE( void enable_irq, (const irq_hook_t *hook)			);
 _PROTOTYPE( int disable_irq, (const irq_hook_t *hook)			);
 
+_PROTOTYPE(void interrupts_enable, (void));
+_PROTOTYPE(void interrupts_disable, (void));
+
 /* debug.c */
 _PROTOTYPE( int runqueues_ok, (void) );
 #ifndef CONFIG_SMP

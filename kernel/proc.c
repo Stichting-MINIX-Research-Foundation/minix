@@ -43,6 +43,7 @@
 #include "vm.h"
 #include "clock.h"
 #include "spinlock.h"
+#include "profile.h"
 
 #include "arch_proto.h"
 
@@ -214,7 +215,18 @@ PRIVATE void idle(void)
 
 	/* start accounting for the idle time */
 	context_stop(proc_addr(KERNEL));
-	halt_cpu();
+	if (!sprofiling)
+		halt_cpu();
+	else {
+		volatile int * v;
+
+		v = get_cpulocal_var_ptr(idle_interrupted);
+		interrupts_enable();
+		while (!*v)
+			arch_pause();
+		interrupts_disable();
+		*v = 0;
+	}
 	/*
 	 * end of accounting for the idle task does not happen here, the kernel
 	 * is handling stuff for quite a while before it gets back here!

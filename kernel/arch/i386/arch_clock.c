@@ -11,6 +11,7 @@
 #include "kernel/interrupt.h"
 #include <minix/u64.h>
 #include "glo.h"
+#include "profile.h"
 
 
 #ifdef CONFIG_APIC
@@ -272,6 +273,9 @@ PUBLIC void context_stop_idle(void)
 
 	if (is_idle)
 		restart_local_timer();
+
+	if (sprofiling)
+		get_cpulocal_var(idle_interrupted) = 1;
 }
 
 PUBLIC u64_t ms_2_cpu_time(unsigned ms)

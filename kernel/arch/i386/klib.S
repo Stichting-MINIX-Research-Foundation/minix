@@ -1030,6 +1030,14 @@ ENTRY(read_ebp)
 	mov	%ebp, %eax
 	ret
 
+ENTRY(interrupts_enable)
+	sti
+	ret
+
+ENTRY(interrupts_disable)
+	cli
+	ret
+
 
 /*
  * void switch_k_stack(void * esp, void (* continuation)(void));

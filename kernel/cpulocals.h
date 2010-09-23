@@ -76,6 +76,9 @@ DECLARE_CPULOCAL(struct proc *, run_q_head[NR_SCHED_QUEUES]); /* ptrs to ready l
 DECLARE_CPULOCAL(struct proc *, run_q_tail[NR_SCHED_QUEUES]); /* ptrs to ready list tails */
 DECLARE_CPULOCAL(int, cpu_is_idle); /* let the others know that you are idle */
 
+DECLARE_CPULOCAL(volatile int, idle_interrupted); /* to interrupt busy-idle
+						     while profiling */
+
 DECLARE_CPULOCAL(u64_t ,tsc_ctr_switch); /* when did we switched time accounting */
 
 /* last values read from cpu when sending ooq msg to scheduler */
