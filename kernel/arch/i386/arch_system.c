@@ -304,8 +304,43 @@ PUBLIC void restore_fpu(struct proc *pr)
 	}
 }
 
+PRIVATE void cpu_identify(void)
+{
+	u32_t eax, ebx, ecx, edx;
+	
+	eax = 0;
+	_cpuid(&eax, &ebx, &ecx, &edx);
+
+	if (ebx == INTEL_CPUID_GEN_EBX && ecx == INTEL_CPUID_GEN_ECX &&
+			edx == INTEL_CPUID_GEN_EDX) {
+		machine.cpu_type.vendor = CPU_VENDOR_INTEL;
+		printf("Genuine Intel found\n");
+	} else if (ebx == AMD_CPUID_GEN_EBX && ecx == AMD_CPUID_GEN_ECX &&
+			edx == AMD_CPUID_GEN_EDX) {
+		machine.cpu_type.vendor = CPU_VENDOR_AMD;
+		printf("Authentic AMD found\n");
+	} else
+		machine.cpu_type.vendor = CPU_VENDOR_UNKNOWN;
+
+	if (eax == 0) 
+		return;
+
+	eax = 1;
+	_cpuid(&eax, &ebx, &ecx, &edx);
+
+	machine.cpu_type.family = (eax >> 8) & 0xf;
+	if (machine.cpu_type.family == 0xf)
+		machine.cpu_type.family += (eax >> 20) & 0xff;
+	machine.cpu_type.model = (eax >> 4) & 0xf;
+	if (machine.cpu_type.model == 0xf || machine.cpu_type.model == 0x6)
+		machine.cpu_type.model += ((eax >> 16) & 0xf) << 4 ;
+	machine.cpu_type.stepping = eax & 0xf;
+}
+
 PUBLIC void arch_init(void)
 {
+	cpu_identify();
+
 #ifdef CONFIG_APIC
 	/*
 	 * this is setting kernel segments to cover most of the phys memory. The

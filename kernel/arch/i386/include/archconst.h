@@ -153,6 +153,10 @@
 #define AMD_CPUID_GEN_EDX	0x69746e65 /* ASCII value of "enti" */
 #define AMD_CPUID_GEN_ECX	0x444d4163 /* ASCII value of "cAMD" */
 
+#define CPU_VENDOR_INTEL	0
+#define CPU_VENDOR_AMD		2
+#define CPU_VENDOR_UNKNOWN	0xff
+
 /* fpu context should be saved in 16-byte aligned memory */
 #define FPUALIGN		16
 

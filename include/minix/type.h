@@ -120,6 +120,13 @@ struct loadinfo {
   clock_t last_clock;
 };
 
+struct cpu_type {
+	u8_t	vendor;
+	u8_t	family;
+	u8_t	model;
+	u8_t	stepping;
+};
+
 struct machine {
   int pc_at;
   int ps_mca;
@@ -131,6 +138,7 @@ struct machine {
   int vdu_vga;
   int apic_enabled; /* does the kernel use APIC or not? */
   phys_bytes	acpi_rsdp; /* where is the acpi RSDP */
+  struct cpu_type	cpu_type;
 };
 
 struct io_range
