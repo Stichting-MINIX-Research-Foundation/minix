@@ -241,6 +241,7 @@ struct proc {
 					 * regs are significant (initialized)*/
 #define MF_SENDING_FROM_KERNEL	0x2000 /* message of this process is from kernel */
 #define MF_CONTEXT_SET	0x4000 /* don't touch context */
+#define MF_SPROF_SEEN	0x8000 /* profiling has seen this process */
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

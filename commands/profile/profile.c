@@ -54,6 +54,15 @@ int outfile_fd, npipe_fd;
 struct sprof_info_s sprof_info;
 struct cprof_info_s cprof_info;
 
+#define HASH_MOD	128
+struct sproc {
+	endpoint_t	ep;
+	char		name[8];
+	struct sproc *	next;
+};
+
+static struct sproc * proc_hash[HASH_MOD];
+
 _PROTOTYPE(int handle_args, (int argc, char *argv[]));
 _PROTOTYPE(int start, (void));
 _PROTOTYPE(int stop, (void));
@@ -186,7 +195,7 @@ int handle_args(int argc, char *argv[])
 	mem_size *= MB;				   /* mem_size in bytes */
   }
   if (action == START) {
-	mem_size -= mem_size % sizeof(sprof_sample); /* align to sample size */
+	mem_size -= mem_size % sizeof(struct sprof_sample); /* align to sample size */
 	if (freq == 0) freq = DEF_FREQ;		   /* default frequency */
   }
   return 0;
@@ -398,12 +407,38 @@ int detach()
   close(2);
 }
 
+static void add_proc(struct sprof_proc * p)
+{
+	struct sproc * n;
+	int slot = ((unsigned)(p->proc)) % HASH_MOD;
+
+	n = malloc(sizeof(struct sproc));
+	if (!n)
+		abort();
+	n->ep = p->proc;
+	memcpy(n->name, p->name, 8);
+	n->next = proc_hash[slot];
+	proc_hash[slot] = n;
+}
+
+static char * get_proc_name(endpoint_t ep)
+{
+	struct sproc * p;
+
+	for (p = proc_hash[((unsigned)ep) % HASH_MOD]; p; p = p->next) {
+		if (p->ep == ep)
+			return p->name;
+	}
+
+	return NULL;
+}
 
 int write_outfile()
 {
   int n, towrite, written = 0;
   char *buf = mem_ptr;
   char header[80];
+  struct sprof_sample *sample;
 
   printf("Writing to %s ...", outfile);
 
@@ -424,16 +459,33 @@ int write_outfile()
   /* Write data. */
   towrite = mem_used == -1 ? mem_size : mem_used;
 
+  sample = (struct sprof_sample *) mem_ptr;
   while (towrite > 0) {
+	  unsigned bytes;
+	  char	entry[12];
+	  char * name;
 
-	n = write(outfile_fd, buf, towrite);
+	  name = get_proc_name(sample->proc);
+	  if (!name) {
+		  add_proc((struct sprof_proc *)sample);
+		  bytes = sizeof(struct sprof_proc);
+		  towrite -= bytes;
+		  sample = (struct sprof_sample *)(((char *) sample) + bytes);
+		  continue;
+	  }
 
-	if (n < 0)
-		{ printf("Error writing to outfile %s.\n", outfile); return 1; }
+	  memset(entry, 0, 12);
+	  memcpy(entry, name, strlen(name));
+	  memcpy(entry + 8, &sample->pc, 4);
 
-	towrite -= n;
-	buf += n;
-	written += n;
+	  if (write(outfile_fd, entry, 12) != 12) {
+		  printf("Error writing to outfile %s.\n", outfile);
+		  return 1;
+	  }
+	  towrite -= sizeof(struct sprof_sample);
+	  sample++;
+
+	  written += 12;
   }
 
   printf(" header %d bytes, data %d bytes.\n", strlen(header), written);

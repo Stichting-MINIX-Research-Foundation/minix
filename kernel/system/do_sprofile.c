@@ -20,6 +20,14 @@
 /* user address to write info struct */
 PRIVATE vir_bytes sprof_info_addr_vir;
 
+PRIVATE clean_seen_flag(void)
+{
+	int i;
+
+	for (i = 0; i < NR_TASKS + NR_PROCS; i++)
+		proc[i].p_misc_flags &= ~MF_SPROF_SEEN;
+}
+
 /*===========================================================================*
  *				do_sprofile				     *
  *===========================================================================*/
@@ -62,6 +70,8 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 	
 	sprofiling = 1;
 
+	clean_seen_flag();
+
   	return OK;
 
   case PROF_STOP:
@@ -81,6 +91,8 @@ PUBLIC int do_sprofile(struct proc * caller, message * m_ptr)
 
 	data_copy(KERNEL, (vir_bytes) &sprof_info,
 		sprof_ep, sprof_info_addr_vir, sizeof(sprof_info));
+
+	clean_seen_flag();
 
   	return OK;
 

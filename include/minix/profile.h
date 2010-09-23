@@ -2,6 +2,7 @@
 #define _PROFILE_H
 
 #include <ansi.h>
+#include <minix/type.h>
 
 /*
  * Types relating to system profiling.  Types are supplied for both
@@ -23,10 +24,15 @@ struct sprof_info_s {
 } sprof_info_inst;
 
 /* What a profiling sample looks like (used for sizeof()). */
-struct {
-  char name[8];
-  int pc;
-} sprof_sample;
+struct sprof_sample {
+	endpoint_t	proc;
+	void *		pc;
+};
+
+struct sprof_proc {
+	endpoint_t	proc;
+	char		name[8];
+}i;
 
 #endif /* SPROFILE */
 

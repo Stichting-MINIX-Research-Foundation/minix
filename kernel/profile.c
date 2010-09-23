@@ -60,6 +60,36 @@ PUBLIC void stop_profile_clock()
   rm_irq_handler(&profile_clock_hook);
 }
 
+PRIVATE sprof_save_sample(struct proc * p)
+{
+	struct sprof_sample s;
+
+	s.proc = p->p_endpoint;
+	s.pc = (void *) p->p_reg.pc;
+
+	/* Store sample (process name and program counter). */
+	data_copy(KERNEL, (vir_bytes) &s,
+			sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
+			sizeof(s));
+
+	sprof_info.mem_used += sizeof(s);
+}
+
+PRIVATE sprof_save_proc(struct proc * p)
+{
+	struct sprof_proc s;
+
+	s.proc = p->p_endpoint;
+	memcpy(s.name, p->p_name, P_NAME_LEN);
+
+	/* Store sample (process name and program counter). */
+	data_copy(KERNEL, (vir_bytes) &s,
+			sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
+			sizeof(s));
+
+	sprof_info.mem_used += sizeof(s);
+}
+
 /*===========================================================================*
  *			profile_clock_handler                           *
  *===========================================================================*/
@@ -79,29 +109,17 @@ PRIVATE int profile_clock_handler(irq_hook_t *hook)
 
   p = get_cpulocal_var(proc_ptr);
 
-  /* All is OK */
+  if (!(p->p_misc_flags & MF_SPROF_SEEN)) {
+	  p->p_misc_flags |= MF_SPROF_SEEN;
+	  sprof_save_proc(p);
+  }
 
-  /* Idle process? */
-  if (priv(p)->s_proc_nr == IDLE) {
-	sprof_info.idle_samples++;
-  } else
   /* Runnable system process? */
-  if (priv(p)->s_flags & SYS_PROC && proc_is_runnable(p)) {
-	/* Note: k_reenter is always 0 here. */
-
-	/* Store sample (process name and program counter). */
-	data_copy(KERNEL, (vir_bytes) p->p_name,
-		sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
-		strlen(p->p_name));
-
-	data_copy(KERNEL, (vir_bytes) &p->p_reg.pc, sprof_ep,
-		(vir_bytes) (sprof_data_addr_vir + sprof_info.mem_used +
-					sizeof(p->p_name)),
-		(vir_bytes) sizeof(p->p_reg.pc));
-
-	sprof_info.mem_used += sizeof(sprof_sample);
-
-	sprof_info.system_samples++;
+  if (p->p_endpoint == IDLE)
+	  sprof_info.idle_samples++;
+  else if (priv(p)->s_flags & SYS_PROC && proc_is_runnable(p)) {
+	  sprof_save_sample(p);
+	  sprof_info.system_samples++;
   } else {
 	/* User process. */
 	sprof_info.user_samples++;

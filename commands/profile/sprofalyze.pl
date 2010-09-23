@@ -42,7 +42,6 @@ servers/sched/sched
 commands/service/service
 
 drivers/ahci/ahci
-drivers/acpi/acpi
 drivers/amddev/amddev
 drivers/at_wini/at_wini
 drivers/atl2/atl2
