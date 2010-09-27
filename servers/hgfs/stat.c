@@ -68,7 +68,10 @@ PUBLIC int do_stat()
   stat.st_uid = opt.uid;
   stat.st_gid = opt.gid;
   stat.st_rdev = NO_DEV;
-  stat.st_size = ex64hi(attr.a_size) ? ULONG_MAX : ex64lo(attr.a_size);
+  if (cmp64u(attr.a_size, LONG_MAX) > 0)
+	stat.st_size = LONG_MAX;
+  else
+	stat.st_size = ex64lo(attr.a_size);
   stat.st_atime = attr.a_atime;
   stat.st_mtime = attr.a_mtime;
   stat.st_ctime = attr.a_ctime;
