@@ -1,6 +1,6 @@
 #include <minix/mthread.h>
-#include "proto.h"
 #include "global.h"
+#include "proto.h"
 
 PRIVATE struct __mthread_mutex *vm_front, *vm_rear;
 FORWARD _PROTOTYPE( void mthread_mutex_add, (mthread_mutex_t *m)	);
@@ -45,7 +45,8 @@ mthread_mutex_t *mutex;
 {
 /* Invalidate mutex and deallocate resources. */
 
-  int i;
+  mthread_thread_t t;
+  mthread_tcb_t *tcb;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
@@ -58,15 +59,16 @@ mthread_mutex_t *mutex;
   	errno = EINVAL;
   	return(-1);
   } else if ((*mutex)->owner != NO_THREAD) {
+  	printf("mutex owner is %d, so not destroying\n", (*mutex)->owner);
   	errno = EBUSY;
   	return(-1);
   }
 
   /* Check if this mutex is not associated with a condition */
-  for (i = 0; i < no_threads; i++) {
-	if (threads[i].m_state == CONDITION) {
-		if (threads[i].m_cond != NULL &&
-		    threads[i].m_cond->mutex == *mutex) {
+  for (t = (mthread_thread_t) 0; t < no_threads; t++) {
+  	tcb = mthread_find_tcb(t);
+	if (tcb->m_state == MS_CONDITION) {
+		if (tcb->m_cond != NULL && tcb->m_cond->mutex == *mutex) {
 			errno = EBUSY;
 			return(-1);
 		}
@@ -120,8 +122,10 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 /*===========================================================================*
  *				mthread_mutex_lock			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_lock(mutex)
+PUBLIC int mthread_mutex_lock_f(mutex, file, line)
 mthread_mutex_t *mutex;	/* Mutex that is to be locked */
+char file[NAME_MAX + 1];
+int line;
 {
 /* Try to lock this mutex. If already locked, append the current thread to
  * FIFO queue associated with this mutex and suspend the thread. */
@@ -141,12 +145,16 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
   	return(-1);
   } else if (m->owner == NO_THREAD) { /* Not locked */
 	m->owner = current_thread;
+	if (current_thread == MAIN_THREAD)
+		mthread_debug("MAIN_THREAD now mutex owner\n");
   } else if (m->owner == current_thread) {
   	errno = EDEADLK;
   	return(-1);
   } else {
 	mthread_queue_add( &(m->queue), current_thread);
-	mthread_suspend(MUTEX);
+	if (m->owner == MAIN_THREAD)
+		mthread_dump_queue(&(m->queue));
+	mthread_suspend(MS_MUTEX);
   }
 
   /* When we get here we acquired the lock. */
@@ -277,6 +285,7 @@ PUBLIC int mthread_mutex_verify(void)
   loopitem = vm_front;
 
   while (loopitem != NULL) {
+  	printf("mutex corruption: owner: %d\n", loopitem->owner);
   	loopitem = loopitem->next;
   	r = 0;
   }

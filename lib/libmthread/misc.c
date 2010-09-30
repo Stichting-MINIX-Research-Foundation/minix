@@ -1,7 +1,7 @@
 #include <minix/mthread.h>
 #include <stdio.h>
-#include "proto.h"
 #include "global.h"
+#include "proto.h"
 
 /*===========================================================================*
  *				mthread_debug_f				     *
@@ -21,9 +21,11 @@ PUBLIC void mthread_debug_f(const char *file, int line, const char *msg)
 PUBLIC void mthread_panic_f(const char *file, int line, const char *msg)
 {
   /* Print panic message to stdout and exit */
-  printf("mthreads panic (%s:%d): ", file, line);
+  printf("mthread panic (%s:%d): ", file, line);
   printf(msg);
   printf("\n");
+  fflush(stdout);	/* Force debug print to screen */
+  *((int *)0) = 1;	/* Cause segfault to generate trace */
   exit(1);
 }
 
@@ -39,11 +41,14 @@ PUBLIC void mthread_verify_f(char *file, int line)
    * quiescent; no mutexes, conditions, or threads in use. All threads are to
    * be in DEAD state.
    */
-  int i;
+  mthread_thread_t t;
+  mthread_tcb_t *tcb;
   int threads_ok = 1, conditions_ok = 1, mutexes_ok = 1, attributes_ok = 1;
 
-  for (i = 0; threads_ok && i < no_threads; i++)
-  	if (threads[i].m_state != DEAD) threads_ok = 0;
+  for (t = (mthread_thread_t) 0; threads_ok && t < no_threads; t++) {
+  	tcb = mthread_find_tcb(t);
+  	if (tcb->m_state != MS_DEAD) threads_ok = 0;
+  }
 
   conditions_ok = mthread_cond_verify();
   mutexes_ok = mthread_mutex_verify();
@@ -69,17 +74,20 @@ PUBLIC void mthread_verify_f(char *f, int l) { ; }
  *===========================================================================*/
 PUBLIC void mthread_stats(void)
 {
-  int i, st_run, st_dead, st_cond, st_mutex, st_exit, st_fbexit;;
+  mthread_thread_t t;
+  mthread_tcb_t *tcb;
+  int st_run, st_dead, st_cond, st_mutex, st_exit, st_fbexit;
   st_run = st_dead = st_cond = st_mutex = st_exit = st_fbexit = 0;
 
-  for (i = 0; i < no_threads; i++) {
-  	switch(threads[i].m_state) {
-  		case RUNNABLE: st_run++; break;
-  		case DEAD: st_dead++; break;
-  		case MUTEX: st_mutex++; break;
-  		case CONDITION: st_cond++; break;
-  		case EXITING: st_exit++; break;
-  		case FALLBACK_EXITING: st_fbexit++; break;
+  for (t = (mthread_thread_t) 0; t < no_threads; t++) {
+  	tcb = mthread_find_tcb(t);
+  	switch(tcb->m_state) {
+  		case MS_RUNNABLE: st_run++; break;
+  		case MS_DEAD: st_dead++; break;
+  		case MS_MUTEX: st_mutex++; break;
+  		case MS_CONDITION: st_cond++; break;
+  		case MS_EXITING: st_exit++; break;
+  		case MS_FALLBACK_EXITING: st_fbexit++; break;
   		default: mthread_panic("Unknown state");
   	}
   }

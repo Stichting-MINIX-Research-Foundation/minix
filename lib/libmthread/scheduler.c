@@ -3,9 +3,10 @@
 #include "proto.h"
 
 #define MAIN_CTX	&(mainthread.m_context)
-#define OLD_CTX		&(threads[old_thread].m_context);
-#define CURRENT_CTX	&(threads[current_thread].m_context)
-#define CURRENT_STATE	threads[current_thread].m_state
+#define MAIN_STATE	mainthread.m_state
+#define OLD_CTX		&(threads[old_thread]->m_context)
+#define CURRENT_CTX	&(threads[current_thread]->m_context)
+#define CURRENT_STATE	threads[current_thread]->m_state
 PRIVATE int yield_all;
 
 /*===========================================================================*
@@ -33,10 +34,11 @@ PUBLIC void mthread_schedule(void)
  * first thread off the (FIFO) run queue and resuming that thread. 
  */
 
-  int old_thread;
+  mthread_thread_t old_thread;
+  mthread_tcb_t *new_tcb, *old_tcb;
   ucontext_t *new_ctx, *old_ctx;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   old_thread = current_thread;
 
@@ -54,24 +56,23 @@ PUBLIC void mthread_schedule(void)
 	 * thread as there is no work left.
 	 */
 	running_main_thread = 1;
-	current_thread = NO_THREAD;
+	current_thread = MAIN_THREAD;
   } else {
 	current_thread = mthread_queue_remove(&run_queue);
 	running_main_thread = 0;	/* Running thread after swap */
   }
 
-  if (current_thread == NO_THREAD) 
-  	new_ctx = MAIN_CTX;
-  else
-  	new_ctx = CURRENT_CTX;
+  /* Find thread entries in tcb... */
+  new_tcb = mthread_find_tcb(current_thread);
+  old_tcb = mthread_find_tcb(old_thread);
 
-  if (old_thread == NO_THREAD) 
-	old_ctx = MAIN_CTX;
-  else
-	old_ctx = OLD_CTX;
+  /* ...and subsequently their contexts */
+  new_ctx = &(new_tcb->m_context);
+  old_ctx = &(old_tcb->m_context);
 
-  if (swapcontext(old_ctx, new_ctx) == -1) 
-  	mthread_panic("Could not swap context");
+  if (swapcontext(old_ctx, new_ctx) == -1)
+	mthread_panic("Could not swap context");
+  
 }
 
 
@@ -101,15 +102,18 @@ mthread_state_t state;
  */
 
   int continue_thread = 0;
+  mthread_tcb_t *tcb;
+  ucontext_t *ctx;
 
-  if (state == DEAD) mthread_panic("Shouldn't suspend with DEAD state");
+  if (state == MS_DEAD) mthread_panic("Shouldn't suspend with MS_DEAD state");
+  tcb = mthread_find_tcb(current_thread);
+  tcb->m_state = state;
+  ctx = &(tcb->m_context);
 
-  threads[current_thread].m_state = state;
-  
   /* Save current thread's context */
-  if (mthread_getcontext(CURRENT_CTX) != 0)
+  if (mthread_getcontext(ctx) != 0)
 	mthread_panic("Couldn't save current thread's context");
-
+  
   /* We return execution here with setcontext/swapcontext, but also when we
    * simply return from the getcontext call. If continue_thread is non-zero, we
    * are continuing the execution of this thread after a call from setcontext 
@@ -130,9 +134,12 @@ PUBLIC void mthread_unsuspend(thread)
 mthread_thread_t thread; /* Thread to make runnable */
 {
 /* Mark the state of a thread runnable and add it to the run queue */
+  mthread_tcb_t *tcb;
 
-  if (!isokthreadid(thread)) mthread_panic("Invalid thread id\n");
-  threads[thread].m_state = RUNNABLE;
+  if (!isokthreadid(thread)) mthread_panic("Invalid thread id");
+  
+  tcb = mthread_find_tcb(thread);
+  tcb->m_state = MS_RUNNABLE;
   mthread_queue_add(&run_queue, thread);
 }
 
@@ -144,7 +151,7 @@ PUBLIC int mthread_yield(void)
 {
 /* Defer further execution of the current thread and let another thread run. */
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (mthread_queue_isempty(&run_queue)) {	/* No point in yielding. */
   	return(-1);
@@ -157,9 +164,9 @@ PUBLIC int mthread_yield(void)
   }
 
   mthread_queue_add(&run_queue, current_thread);
-  mthread_suspend(RUNNABLE); /* We're still runnable, but we're just kind
-			      *	enough to let someone else run.
-			      */
+  mthread_suspend(MS_RUNNABLE);	/* We're still runnable, but we're just kind
+				 * enough to let someone else run.
+				 */
   return(0);
 }
 
@@ -173,7 +180,7 @@ PUBLIC void mthread_yield_all(void)
  * this function will lead to a deadlock.
  */
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (yield_all) mthread_panic("Deadlock: two threads trying to yield_all");
   yield_all = 1;

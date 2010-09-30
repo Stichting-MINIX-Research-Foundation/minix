@@ -1,12 +1,12 @@
 #include <minix/mthread.h>
-#include "proto.h"
 #include "global.h"
+#include "proto.h"
 
 PRIVATE struct __mthread_cond *vc_front, *vc_rear;
 FORWARD _PROTOTYPE( void mthread_cond_add, (mthread_cond_t *c)		);
 FORWARD _PROTOTYPE( void mthread_cond_remove, (mthread_cond_t *c)	);
 FORWARD _PROTOTYPE( int mthread_cond_valid, (mthread_cond_t *c)	);
-
+#define MAIN_COND mainthread.m_cond
 
 /*===========================================================================*
  *				mthread_init_valid_conditions		     *
@@ -46,9 +46,10 @@ PUBLIC int mthread_cond_broadcast(cond)
 mthread_cond_t *cond;
 {
 /* Signal all threads waiting for condition 'cond'. */
-  int i;
+  mthread_thread_t t;
+  mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if(cond == NULL) {
   	errno = EINVAL;
@@ -60,9 +61,15 @@ mthread_cond_t *cond;
   	return(-1);
   }
 
-  for (i = 0; i < no_threads; i++) 
-	if (threads[i].m_state == CONDITION && threads[i].m_cond == *cond) 
-		mthread_unsuspend(i);
+  tcb = mthread_find_tcb(MAIN_THREAD);
+  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
+  	mthread_unsuspend(MAIN_THREAD);
+
+  for (t = (mthread_thread_t) 0; t < no_threads; t++) {
+  	tcb = mthread_find_tcb(t);
+	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond) 
+		mthread_unsuspend(t);
+  }
 
   return(0);
 }
@@ -75,9 +82,10 @@ PUBLIC int mthread_cond_destroy(cond)
 mthread_cond_t *cond;
 {
 /* Destroy a condition variable. Make sure it's not in use */
-  int i;
+  mthread_thread_t t;
+  mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (cond == NULL) { 
   	errno = EINVAL;
@@ -90,8 +98,15 @@ mthread_cond_t *cond;
   }
 
   /* Is another thread currently using this condition variable? */
-  for (i = 0; i < no_threads; i++) {
-	if (threads[i].m_state == CONDITION && threads[i].m_cond == *cond) {
+  tcb = mthread_find_tcb(MAIN_THREAD);
+  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond) {
+  	errno = EBUSY;
+  	return(-1);
+  }
+
+  for (t = (mthread_thread_t) 0; t < no_threads; t++) {
+  	tcb = mthread_find_tcb(t);
+	if(tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
 		errno = EBUSY;
 		return(-1);
 	}
@@ -116,7 +131,7 @@ mthread_condattr_t *cattr;
 /* Initialize condition variable to a known state. cattr is ignored */
   struct __mthread_cond *c;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (cond == NULL) {
 	errno = EINVAL;
@@ -171,9 +186,10 @@ PUBLIC int mthread_cond_signal(cond)
 mthread_cond_t *cond;
 {
 /* Signal a thread that condition 'cond' was met. Just a single thread. */
-  int i;
+  mthread_thread_t t;
+  mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if(cond == NULL) {
 	errno = EINVAL;
@@ -185,9 +201,14 @@ mthread_cond_t *cond;
 	return(-1);
   }
 
-  for (i = 0; i < no_threads; i++) {
-	if (threads[i].m_state == CONDITION && threads[i].m_cond == *cond) {
-		mthread_unsuspend(i);
+  tcb = mthread_find_tcb(MAIN_THREAD);
+  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
+  	mthread_unsuspend(MAIN_THREAD);
+
+  for (t = (mthread_thread_t) 0; t < no_threads; t++) {
+  	tcb = mthread_find_tcb(t);
+	if(tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
+		mthread_unsuspend(t);
 		break;
 	}
   }
@@ -226,7 +247,7 @@ PUBLIC int mthread_cond_verify(void)
 {
 /* Return true in case no condition variables are in use. */
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   return(vc_front == NULL);
 }
@@ -241,10 +262,11 @@ mthread_cond_t *cond;
 mthread_mutex_t *mutex;
 {
 /* Wait for a condition to be signaled */
+  mthread_tcb_t *tcb;
   struct __mthread_cond *c;
   struct __mthread_mutex *m;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (cond == NULL || mutex == NULL) {
 	errno = EINVAL;
@@ -263,13 +285,13 @@ mthread_mutex_t *mutex;
   if (mthread_mutex_unlock(mutex) != 0) /* Fails when we're not the owner */
   	return(-1);
 
-  threads[current_thread].m_cond = c; /* Register condition variable. */
-
-  mthread_suspend(CONDITION);
+  tcb = mthread_find_tcb(current_thread);
+  tcb->m_cond = c; /* Register condition variable. */
+  mthread_suspend(MS_CONDITION);
 
   /* When execution returns here, the condition was met. Lock mutex again. */
   c->mutex = NULL;				/* Forget about this mutex */
-  threads[current_thread].m_cond = NULL;	/* ... and condition var */
+  tcb->m_cond = NULL;				/* ... and condition var */
   if (mthread_mutex_lock(mutex) != 0)
   	return(-1);
 

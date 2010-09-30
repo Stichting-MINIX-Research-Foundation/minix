@@ -1,6 +1,9 @@
 #ifndef __MTHREAD_PROTO_H__
 #define __MTHREAD_PROTO_H__
 
+/* allocate.c */
+_PROTOTYPE( mthread_tcb_t * mthread_find_tcb, (mthread_thread_t thread)	);
+
 /* attribute.c */
 _PROTOTYPE( void mthread_init_valid_attributes, (void)			);
 #ifdef MDEBUG
@@ -28,12 +31,19 @@ _PROTOTYPE( int mthread_mutex_valid, (mthread_mutex_t *mutex)		);
 _PROTOTYPE( int mthread_mutex_verify, (void)				);
 #endif
 
-
 /* schedule.c */
 _PROTOTYPE( int mthread_getcontext, (ucontext_t *ctxt)			);
 _PROTOTYPE( void mthread_init_scheduler, (void)				);
+_PROTOTYPE( void mthread_schedule, (void)				);
+_PROTOTYPE( void mthread_suspend, (mthread_state_t state)		);
+_PROTOTYPE( void mthread_unsuspend, (mthread_thread_t thread)		);
 
 /* queue.c */
 _PROTOTYPE( void mthread_dump_queue, (mthread_queue_t *queue)		);
+_PROTOTYPE( void mthread_queue_init, (mthread_queue_t *queue)		);
+_PROTOTYPE( void mthread_queue_add, (mthread_queue_t *queue, 
+				     mthread_thread_t thread)		);
+_PROTOTYPE( mthread_thread_t mthread_queue_remove, (mthread_queue_t *queue));
+_PROTOTYPE( int mthread_queue_isempty, (mthread_queue_t *queue)	);
 
 #endif

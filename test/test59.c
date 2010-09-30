@@ -16,10 +16,19 @@
 PUBLIC int errct;
 PRIVATE int count, condition_met;
 PRIVATE int th_a, th_b, th_c, th_d, th_e, th_f, th_g, th_h;
-PRIVATE mutex_t mu[2];
+PRIVATE int mutex_a_step, mutex_b_step, mutex_c_step;
+PRIVATE mutex_t mu[3];
 PRIVATE cond_t condition;
 PRIVATE mutex_t *count_mutex, *condition_mutex;
 PRIVATE once_t once;
+#define VERIFY_MUTEX(a,b,c,esub,eno)	do { \
+	if (mutex_a_step != a) { \
+		printf("Expected %d %d %d, got: %d %d %d\n", \
+			a, b, c, mutex_a_step, mutex_b_step, mutex_c_step); \
+		err(esub, eno); \
+	} else if (mutex_b_step != b) err(esub, eno); \
+	else if (mutex_c_step != c) err(esub, eno); \
+					} while(0)
 #define ROUNDS 14
 #define THRESH1 3
 #define THRESH2 8
@@ -152,13 +161,15 @@ PRIVATE void test_scheduling(void)
   if (mthread_create(&t[2], NULL, thread_a, NULL) != 0) err(1, 3);
   if (mthread_create(&t[3], NULL, thread_d, NULL) != 0) err(1, 4);
   if (mthread_once(&once, thread_e) != 0) err(1, 5);
-  mthread_schedule();
+
+  mthread_yield();
+
   if (mthread_create(&t[4], NULL, thread_c, NULL) != 0) err(1, 6);
-  mthread_schedule();
+  mthread_yield();
   if (mthread_create(&t[5], NULL, thread_b, NULL) != 0) err(1, 7);
   if (mthread_create(&t[6], NULL, thread_a, NULL) != 0) err(1, 8);
-  mthread_schedule();
-  mthread_schedule();
+  mthread_yield();
+  mthread_yield();
   if (mthread_once(&once, thread_e) != 0) err(1, 9);
   if (mthread_once(&once, thread_e) != 0) err(1, 10);
 
@@ -205,7 +216,8 @@ PRIVATE void mutex_a(void *arg)
   mutex_t *mu = (mutex_t *) arg;
   mutex_t mu2;
 
-  if (mthread_mutex_lock(&mu[0]) != 0) err(3, 1);
+  VERIFY_MUTEX(0, 0, 0, 3, 1);
+  if (mthread_mutex_lock(&mu[0]) != 0) err(3, 2);
 
   /* Trying to acquire lock again should fail with EDEADLK */
   if (mthread_mutex_lock(&mu[0]) != -1) err(3, 2);
@@ -225,17 +237,31 @@ PRIVATE void mutex_a(void *arg)
   if (errno != EINVAL) err(3, 7); 
 
   if (mthread_mutex_trylock(&mu[1]) != 0) err(3, 8);
+  mutex_a_step = 1;
+  mthread_yield();
+  VERIFY_MUTEX(1, 0, 0, 3, 9);
+  errno = 0;
+  if (mthread_mutex_trylock(&mu[2]) != -1) err(3, 10);
+  if (errno != EBUSY) err(3, 11);
+  if (mthread_mutex_lock(&mu[2]) != 0) err(3, 12); /* Transfer control to main
+  						    * loop.
+  						    */
+  VERIFY_MUTEX(1, 0, 0, 3, 13);
+
+  if (mthread_mutex_unlock(&mu[0]) != 0) err(3, 14);
+  mutex_a_step = 2;
   mthread_yield();
 
-  if (mthread_mutex_unlock(&mu[0]) != 0) err(3, 9);
-  mthread_yield();
-
-  if (mthread_mutex_unlock(&mu[1]) != 0) err(3, 10);
+  VERIFY_MUTEX(2, 1, 0, 3, 15);
+  if (mthread_mutex_unlock(&mu[1]) != 0) err(3, 16);
+  mutex_a_step = 3;
 
   /* Try with faulty memory locations */
-  if (mthread_mutex_lock(NULL) == 0) err(3, 11);
-  if (mthread_mutex_trylock(NULL) == 0) err(3, 12);
-  if (mthread_mutex_unlock(NULL) == 0) err(3, 13);
+  if (mthread_mutex_lock(NULL) == 0) err(3, 17);
+  if (mthread_mutex_trylock(NULL) == 0) err(3, 18);
+  if (mthread_mutex_unlock(NULL) == 0) err(3, 19);
+
+  if (mthread_mutex_unlock(&mu[2]) != 0) err(3, 20);
 }
 
 
@@ -250,21 +276,29 @@ PRIVATE void mutex_b(void *arg)
    * should not be able to unlock it on behalf of that thread.
    */
 
-  if (mthread_mutex_unlock(&mu[0]) != -1) err(4, 1);
-  if (errno != EPERM) err(4, 2);
+  VERIFY_MUTEX(1, 0, 0, 4, 1);
+  if (mthread_mutex_unlock(&mu[0]) != -1) err(4, 2);
+  if (errno != EPERM) err(4, 3);
 
   /* Probing mu[0] to lock it should tell us it's locked */
-  if (mthread_mutex_trylock(&mu[0]) == 0) err(4, 3);
-  if (errno != EBUSY) err(4, 4);
+  if (mthread_mutex_trylock(&mu[0]) == 0) err(4, 4);
+  if (errno != EBUSY) err(4, 5);
 
   if (mthread_mutex_lock(&mu[0]) != 0) err(4, 5);
+  mutex_b_step = 1;
+  VERIFY_MUTEX(2, 1, 0, 4, 6);
   if (mthread_mutex_lock(&mu[1]) != 0) err(4, 6);
+  mutex_b_step = 2;
+  VERIFY_MUTEX(3, 2, 2, 4, 7);
   mthread_yield();
+  VERIFY_MUTEX(3, 2, 2, 4, 8);
 
   if (mthread_mutex_unlock(&mu[0]) != 0) err(4, 7);
+  mutex_b_step = 3;
   mthread_yield();
 
   if (mthread_mutex_unlock(&mu[1]) != 0) err(4, 8);
+  mutex_b_step = 4;
 }
 
 
@@ -275,14 +309,23 @@ PRIVATE void mutex_c(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
 
-  if (mthread_mutex_lock(&mu[1]) != 0) err(5, 1);
+  VERIFY_MUTEX(1, 0, 0, 5, 1);
+  if (mthread_mutex_lock(&mu[1]) != 0) err(5, 2);
+  mutex_c_step = 1;
+  VERIFY_MUTEX(3, 1, 1, 5, 3);
   mthread_yield();
+  VERIFY_MUTEX(3, 1, 1, 5, 4);
 
-  if (mthread_mutex_unlock(&mu[1]) != 0) err(5, 2);
-  if (mthread_mutex_lock(&mu[0]) != 0) err(5, 3);
+  if (mthread_mutex_unlock(&mu[1]) != 0) err(5, 5);
+  mutex_c_step = 2;
+  if (mthread_mutex_lock(&mu[0]) != 0) err(5, 6);
+  mutex_c_step = 3;
+  VERIFY_MUTEX(3, 3, 3, 5, 7);
   mthread_yield();
+  VERIFY_MUTEX(3, 4, 3, 5, 8);
 
-  if (mthread_mutex_unlock(&mu[0]) != 0) err(5, 4);
+  if (mthread_mutex_unlock(&mu[0]) != 0) err(5, 9);
+  mutex_c_step = 4;
 }
 
 
@@ -298,24 +341,33 @@ PRIVATE void test_mutex(void)
 #endif
   if (mthread_mutex_init(&mu[0], NULL) != 0) err(2, 1);
   if (mthread_mutex_init(&mu[1], NULL) != 0) err(2, 2);
+  if (mthread_mutex_init(&mu[2], NULL) != 0) err(2, 3);
 
   if (mthread_create(&t[0], NULL, mutex_a, (void *) mu) != 0) err(2, 3);
   if (mthread_create(&t[1], NULL, mutex_b, (void *) mu) != 0) err(2, 4);
   if (mthread_create(&t[2], NULL, mutex_c, (void *) mu) != 0) err(2, 5);
 
+  if (mthread_mutex_lock(&mu[2]) != 0) err(2, 6);
+
   mthread_yield_all(); /* Should result in a RUNNABLE mutex_a, and a blocked
   			* on mutex mutex_b and mutex_c.
   			*/ 
-  mthread_schedule();  /* Should schedule mutex_a to release the locks on its
-  			* mutexes. Consequently allowing mutex_b and mutex_c
+
+  VERIFY_MUTEX(1, 0, 0, 2, 7); /* err(2, 7) */
+  if (mthread_mutex_unlock(&mu[2]) != 0) err(2, 8);
+
+  mthread_yield();	/* Should schedule mutex_a to release the lock on the
+			 * mu[0] mutex. Consequently allowing mutex_b and mutex_c
   			* to acquire locks on the mutexes and exit.
   			*/
+  VERIFY_MUTEX(2, 0, 0, 2, 9);
 
   for (i = 0; i < (sizeof(t) / sizeof(thread_t)); i++) 
-	if (mthread_join(t[i], NULL) != 0) err(2, 6);
+	if (mthread_join(t[i], NULL) != 0) err(2, 10);
 
-  if (mthread_mutex_destroy(&mu[0]) != 0) err(2, 7);
-  if (mthread_mutex_destroy(&mu[1]) != 0) err(2, 8);
+  if (mthread_mutex_destroy(&mu[0]) != 0) err(2, 11);
+  if (mthread_mutex_destroy(&mu[1]) != 0) err(2, 12);
+  if (mthread_mutex_destroy(&mu[2]) != 0) err(2, 13);
 
 #ifdef MDEBUG
   mthread_verify();
@@ -534,7 +586,7 @@ PRIVATE void test_attributes(void)
   if (mthread_attr_getstack(&tattr, &stackaddr, &stacksize) != 0) err(11, 13);
   if (stackaddr != newstackaddr) err(11, 14);
   if (stacksize != newstacksize) err(11, 15);
-
+  if (mthread_attr_destroy(&tattr) != 0) err(11, 16);
   /* Freeing the stack. Note that this is only possible because it wasn't
    * actually used yet by a thread. If it was, mthread would clean it up after
    * usage and this free would do something undefined. */
@@ -544,12 +596,17 @@ PRIVATE void test_attributes(void)
    * values should remain as is.
    */
   newstacksize = MTHREAD_STACK_MIN - 1;
-  if ((newstackaddr = malloc(newstacksize)) == NULL) err(11, 16);
+  stackaddr = NULL;
+  stacksize = 0;
+  if (mthread_attr_init(&tattr) != 0) err(11, 17);
+  if ((newstackaddr = malloc(newstacksize)) == NULL) err(11, 18);
   if (mthread_attr_setstack(&tattr, newstackaddr, newstacksize) == 0)
-  	err(11, 17);
-  if (mthread_attr_getstack(&tattr, &stackaddr, &stacksize) != 0) err(11, 18);
-  if (stackaddr == newstackaddr) err(11, 19);
-  if (stacksize == newstacksize) err(11, 20);
+  	err(11, 19);
+  if (errno != EINVAL) err(11, 20);
+  if (mthread_attr_getstack(&tattr, &stackaddr, &stacksize) != 0) err(11, 21);
+  if (stackaddr == newstackaddr) err(11, 22);
+  if (stacksize == newstacksize) err(11, 23);
+  if (mthread_attr_destroy(&tattr) != 0) err(11, 24);
   /* Again, freeing because we can. Shouldn't do it if it was actually used. */
   free(newstackaddr);
 
@@ -557,69 +614,70 @@ PRIVATE void test_attributes(void)
    * dictate how big that stack should be (2 megabyte, not actually allocated
    * yet).
    */
+  if (mthread_attr_init(&tattr) != 0) err(11, 25);
   if (mthread_attr_setstack(&tattr, NULL /* System allocated */, 2*MEG) != 0)
-  	err(11, 21);
-  if (mthread_attr_getstack(&tattr, &stackaddr, &stacksize) != 0) err(11, 22);
-  if (stackaddr != NULL) err(11, 23);
-  if (stacksize != 2*MEG) err(11, 24);
+  	err(11, 26);
+  if (mthread_attr_getstack(&tattr, &stackaddr, &stacksize) != 0) err(11, 27);
+  if (stackaddr != NULL) err(11, 28);
+  if (stacksize != 2*MEG) err(11, 29);
 
   /* Use set/getstacksize to set and retrieve new stack sizes */
   stacksize = 0;
-  if (mthread_attr_getstacksize(&tattr, &stacksize) != 0) err(11, 25);
-  if (stacksize != 2*MEG) err(11, 26);
+  if (mthread_attr_getstacksize(&tattr, &stacksize) != 0) err(11, 30);
+  if (stacksize != 2*MEG) err(11, 31);
   newstacksize = MEG;
-  if (mthread_attr_setstacksize(&tattr, newstacksize) != 0) err(11, 27);
-  if (mthread_attr_getstacksize(&tattr, &stacksize) != 0) err(11, 28);
-  if (stacksize != newstacksize) err(11, 29);
-  if (mthread_attr_destroy(&tattr) != 0) err(11, 30);
+  if (mthread_attr_setstacksize(&tattr, newstacksize) != 0) err(11, 32);
+  if (mthread_attr_getstacksize(&tattr, &stacksize) != 0) err(11, 33);
+  if (stacksize != newstacksize) err(11, 34);
+  if (mthread_attr_destroy(&tattr) != 0) err(11, 35);
 
   /* Perform same tests, but also actually use them in a thread */
-  if (mthread_attr_init(&tattr) != 0) err(11, 31);
+  if (mthread_attr_init(&tattr) != 0) err(11, 36);
   if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
-  	err(11, 32);
+  	err(11, 37);
   condition_mutex = &mu[0];
-  if (mthread_mutex_init(condition_mutex, NULL) != 0) err(11, 33);
-  if (mthread_cond_init(&condition, NULL) != 0) err(11, 34);
-  if (mthread_mutex_lock(condition_mutex) != 0) err(11, 35);
-  if (mthread_create(&tid, &tattr, thread_f, NULL) != 0) err(11, 36);
+  if (mthread_mutex_init(condition_mutex, NULL) != 0) err(11, 38);
+  if (mthread_cond_init(&condition, NULL) != 0) err(11, 39);
+  if (mthread_mutex_lock(condition_mutex) != 0) err(11, 40);
+  if (mthread_create(&tid, &tattr, thread_f, NULL) != 0) err(11, 41);
   /* Wait for thread_f to finish */
-  if (mthread_cond_wait(&condition, condition_mutex) != 0) err(11, 37);
-  if (mthread_mutex_unlock(condition_mutex) != 0) err(11, 38);
-  if (th_f != 1) err(11, 39);
+  if (mthread_cond_wait(&condition, condition_mutex) != 0) err(11, 42);
+  if (mthread_mutex_unlock(condition_mutex) != 0) err(11, 43);
+  if (th_f != 1) err(11, 44);
   /* Joining a detached thread should fail */
-  if (mthread_join(tid, NULL) == 0) err(11, 40);
-  if (mthread_attr_destroy(&tattr) != 0) err(11, 41);
+  if (mthread_join(tid, NULL) == 0) err(11, 45);
+  if (mthread_attr_destroy(&tattr) != 0) err(11, 46);
 
   /* Try telling the attribute how large the stack should be */
-  if (mthread_attr_init(&tattr) != 0) err(11, 42);
+  if (mthread_attr_init(&tattr) != 0) err(11, 47);
   if (mthread_attr_setstack(&tattr, NULL, 2 * MTHREAD_STACK_MIN) != 0)
-  	err(11, 43);
-  if (mthread_mutex_lock(condition_mutex) != 0) err(11, 44);
-  if (mthread_create(&tid, &tattr, thread_g, NULL) != 0) err(11, 45);
+  	err(11, 48);
+  if (mthread_mutex_lock(condition_mutex) != 0) err(11, 49);
+  if (mthread_create(&tid, &tattr, thread_g, NULL) != 0) err(11, 50);
   /* Wait for thread_g to finish */
-  if (mthread_cond_wait(&condition, condition_mutex) != 0) err(11, 46);
-  if (mthread_mutex_unlock(condition_mutex) != 0) err(11, 47);
-  if (th_g != 1) err(11, 48);
+  if (mthread_cond_wait(&condition, condition_mutex) != 0) err(11, 51);
+  if (mthread_mutex_unlock(condition_mutex) != 0) err(11, 52);
+  if (th_g != 1) err(11, 53);
   if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
-  	err(11, 49); /* Shouldn't affect the join below, as thread is already
+  	err(11, 54); /* Shouldn't affect the join below, as thread is already
   		      * running as joinable. If this attribute should be 
   		      * modified after thread creation, use mthread_detach().
   		      */
-  if (mthread_join(tid, NULL) != 0) err(11, 50);
-  if (mthread_attr_destroy(&tattr) != 0) err(11, 51);
+  if (mthread_join(tid, NULL) != 0) err(11, 55);
+  if (mthread_attr_destroy(&tattr) != 0) err(11, 56);
 
   /* Try telling the attribute how large the stack should be and where it is
    * located.
    */
-  if (mthread_attr_init(&tattr) != 0) err(11, 52);
+  if (mthread_attr_init(&tattr) != 0) err(11, 57);
   stacksize = 3 * MEG;
   /* Make sure this test is meaningful. We have to verify that we actually
    * use a custom stack. So we're going to allocate an array on the stack in
    * thread_h that should at least be bigger than the default stack size
    * allocated by the system.
    */
-  if (2 * MEG <= MTHREAD_STACK_MIN) err(11, 53);
-  if ((stackaddr = malloc(stacksize)) == NULL) err(11, 54);
+  if (2 * MEG <= MTHREAD_STACK_MIN) err(11, 58);
+  if ((stackaddr = malloc(stacksize)) == NULL) err(11, 59);
   /* Fill stack with pattern. We assume that the beginning of the stack
    * should be overwritten with something and that the end should remain
    * untouched. The thread will zero-fill around two-thirds of the stack with
@@ -629,33 +687,34 @@ PRIVATE void test_attributes(void)
   no_ints = stacksize / sizeof(int);
   for (i = 0; i < no_ints ; i++) 
 	stackp[i] = MAGIC;
-  if (mthread_attr_setstack(&tattr, stackaddr, stacksize) != 0) err(11, 55);
-  if (mthread_mutex_lock(condition_mutex) != 0) err(11, 56);
+  if (mthread_attr_setstack(&tattr, stackaddr, stacksize) != 0) err(11, 60);
+  if (mthread_mutex_lock(condition_mutex) != 0) err(11, 61);
   if (mthread_create(&tid, &tattr, thread_h, (void *) &stacksize) != 0)	
-  	err(11, 57);
+  	err(11, 62);
   /* Wait for thread h to finish */
-  if (mthread_cond_wait(&condition, condition_mutex) != 0) err(11, 58);
-  if (th_h != 1) err(11, 59);
+  if (mthread_cond_wait(&condition, condition_mutex) != 0) err(11, 63);
+  if (th_h != 1) err(11, 64);
+  if (mthread_mutex_unlock(condition_mutex) != 0) err(11, 65);
 
   /* Verify stack hypothesis; we assume a stack is used from the top and grows
    * downwards. At this point the stack should still exist, because we haven't
    * 'joined' yet. After joining, the stack is cleaned up and this test becomes
    * useless. */
 #if (_MINIX_CHIP == _CHIP_INTEL)
-  if (stackp[0] != MAGIC) err(11, 60); /* End of the stack */
+  if (stackp[0] != MAGIC) err(11, 66); /* End of the stack */
   for (i = no_ints - 1 - 16; i < no_ints; i++)
   	if (stackp[i] != MAGIC) stack_untouched = 0;
-  if (stack_untouched) err(11, 61); /* Beginning of the stack */
-  if (stackp[no_ints / 2] != 0) err(11, 62);/*Zero half way through the stack*/
+  if (stack_untouched) err(11, 67); /* Beginning of the stack */
+  if (stackp[no_ints / 2] != 0) err(11, 68);/*Zero half way through the stack*/
 #else
 #error "Unsupported chip for this test"
 #endif
 
-  if (mthread_join(tid, (void *) &status) != 0) err(11, 63);
-  if (status != stacksize) err(11, 64);
-  if (mthread_attr_destroy(&tattr) != 0) err(11, 65); 
-  if (mthread_mutex_destroy(condition_mutex) != 0) err(11, 66);
-  if (mthread_cond_destroy(&condition) != 0) err(11, 67);
+  if (mthread_join(tid, (void *) &status) != 0) err(11, 69);
+  if (status != stacksize) err(11, 70);
+  if (mthread_attr_destroy(&tattr) != 0) err(11, 71); 
+  if (mthread_mutex_destroy(condition_mutex) != 0) err(11, 72);
+  if (mthread_cond_destroy(&condition) != 0) err(11, 73);
 
 #ifdef MDEBUG
   mthread_verify();
@@ -669,6 +728,7 @@ int main(void)
 {
   errct = 0;
   th_a = th_b = th_c = th_d = th_e = th_f = th_g = th_h = 0;
+  mutex_a_step = mutex_b_step = mutex_c_step = 0;
   once = MTHREAD_ONCE_INIT;
 
   start(59);

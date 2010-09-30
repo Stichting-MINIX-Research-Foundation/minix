@@ -1,5 +1,6 @@
 #include <minix/mthread.h>
 #include "global.h"
+#include "proto.h"
 
 /*===========================================================================*
  *				mthread_queue_add			     *
@@ -12,12 +13,18 @@ mthread_thread_t thread;
  * only one queue at the same time, we can use the threads array's 'next'
  * pointer to point to the next thread on the queue.
  */
+  mthread_tcb_t *last;
+
+  if (!isokthreadid(thread))
+  	mthread_panic("Can't append invalid thread ID to a queue");
+
+  last = mthread_find_tcb(thread);
 
   if (mthread_queue_isempty(queue)) {
-	queue->head = queue->tail = thread;
-  } else {
-	threads[queue->tail].m_next = thread;
-	queue->tail = thread; /* 'thread' is the new last in line */
+  	queue->head = queue->tail = last;
+  } else  {
+	queue->tail->m_next = last;
+	queue->tail = last;	/* 'last' is the new last in line */
   }
 }
 
@@ -30,7 +37,7 @@ mthread_queue_t *queue;		/* Queue that has to be initialized */
 {
 /* Initialize queue to a known state */
 
-  queue->head = queue->tail = NO_THREAD;
+  queue->head = queue->tail = NULL;
 }
 
 
@@ -40,7 +47,7 @@ mthread_queue_t *queue;		/* Queue that has to be initialized */
 PUBLIC int mthread_queue_isempty(queue)
 mthread_queue_t *queue;
 {
-  return(queue->head == NO_THREAD);
+  return(queue->head == NULL);
 }
 
 
@@ -51,23 +58,28 @@ PUBLIC void mthread_dump_queue(queue)
 mthread_queue_t *queue;
 {
   int threshold, count = 0;
-  mthread_thread_t t;
+  mthread_tcb_t *t;
+  mthread_thread_t tid;
   threshold = no_threads;
 #ifdef MDEBUG
   printf("Dumping queue: ");
 #endif
-  if(queue->head != NO_THREAD) {
+  if(queue->head != NULL) {
   	t = queue->head;
+	if (t == &mainthread) tid = MAIN_THREAD;
+	else tid = t->m_tid;
 #ifdef MDEBUG
-	printf("%d ", t);
+	printf("%d ", tid);
 #endif
 	count++;
-	t = threads[t].m_next;
-	while (t != NO_THREAD) {
+	t = t->m_next; 
+	while (t != NULL) {
+		if (t == &mainthread) tid = MAIN_THREAD;
+		else tid = t->m_tid;
 #ifdef MDEBUG
-		printf("%d ", t);
+		printf("%d ", tid);
 #endif
-		t = threads[t].m_next;
+		t = t->m_next; 
 		count++;
 		if (count > threshold) break;
 	}
@@ -90,14 +102,25 @@ PUBLIC mthread_thread_t mthread_queue_remove(queue)
 mthread_queue_t *queue;		/* Queue we want a thread from */
 {
 /* Get the first thread in this queue, if there is one. */
-  mthread_thread_t thread = queue->head;
+  mthread_thread_t thread;
+  mthread_tcb_t *tcb;
+
+  /* Calculate thread id from queue head */
+  if (queue->head == NULL) thread = NO_THREAD;
+  else if (queue->head == &mainthread) thread = MAIN_THREAD;
+  else thread = (queue->head->m_tid);
 
   if (thread != NO_THREAD) { /* i.e., this queue is not empty */
-	if (queue->head == queue->tail) /* Queue holds only one thread */
-		queue->head = queue->tail = NO_THREAD; /*So mark thread empty*/
-	else
+  	tcb = queue->head;
+	if (queue->head == queue->tail) {
+		/* Queue holds only one thread */
+		queue->head = queue->tail = NULL; /* So mark thread empty */
+	} else {
 		/* Second thread in line is the new first */
-		queue->head = threads[thread].m_next;
+		queue->head = queue->head->m_next;
+	}
+
+	tcb->m_next = NULL; /* This thread is no longer part of a queue */
   }
 
   return(thread);

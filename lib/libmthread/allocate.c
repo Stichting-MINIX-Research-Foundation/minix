@@ -87,22 +87,25 @@ mthread_thread_t detach;
 /* Mark a thread as detached. Consequently, upon exit, resources allocated for
  * this thread are automatically freed.
  */
-
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_tcb_t *tcb;
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (!isokthreadid(detach)) {
   	errno = ESRCH;
   	return(-1);
-  } else if (threads[detach].m_state == DEAD) {
+  }
+
+  tcb = mthread_find_tcb(detach);
+  if (tcb->m_state == MS_DEAD) {
   	errno = ESRCH;
   	return(-1);
-  } else if (threads[detach].m_attr.a_detachstate != MTHREAD_CREATE_DETACHED) {
-  	if (threads[detach].m_state == EXITING) {
+  } else if (tcb->m_attr.a_detachstate != MTHREAD_CREATE_DETACHED) {
+  	if (tcb->m_state == MS_EXITING) 
   		mthread_thread_stop(detach);
-  	} else {
-		threads[detach].m_attr.a_detachstate = MTHREAD_CREATE_DETACHED;
-	}
+  	else 
+		tcb->m_attr.a_detachstate = MTHREAD_CREATE_DETACHED;
   }
+
   return(0);
 }
 
@@ -115,30 +118,30 @@ void *value;
 {
 /* Make a thread stop running and store the result value. */
   int fallback_exit = 0;
-  mthread_thread_t stop;
+  mthread_tcb_t *tcb;
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
-  stop = current_thread;
+  tcb = mthread_find_tcb(current_thread);
 
-  if (threads[stop].m_state == EXITING) /* Already stopping, nothing to do. */
+  if (tcb->m_state == MS_EXITING)	/* Already stopping, nothing to do. */
   	return;
 
   /* When we're called from the fallback thread, the fallback thread 
    * will invoke the scheduler. However, if the thread itself called 
    * mthread_exit, _we_ will have to wake up the scheduler.
    */
-  if (threads[stop].m_state == FALLBACK_EXITING)
+  if (tcb->m_state == MS_FALLBACK_EXITING)
   	fallback_exit = 1;
 
-  threads[stop].m_result = value;
-  threads[stop].m_state = EXITING;
+  tcb->m_result = value;
+  tcb->m_state = MS_EXITING;
 
-  if (threads[stop].m_attr.a_detachstate == MTHREAD_CREATE_DETACHED) {
-	mthread_thread_stop(stop);
+  if (tcb->m_attr.a_detachstate == MTHREAD_CREATE_DETACHED) {
+	mthread_thread_stop(current_thread);
   } else {
   	/* Joinable thread; notify possibly waiting thread */
-	if (mthread_cond_signal(&(threads[stop].m_exited)) != 0) 
+	if (mthread_cond_signal(&(tcb->m_exited)) != 0) 
 		mthread_panic("Couldn't signal exit");
 
 	/* The thread that's actually doing the join will eventually clean
@@ -160,15 +163,18 @@ void *value;
  *===========================================================================*/
 PRIVATE void mthread_fallback(void)
 {
-/* The mthreads fallback thread. The idea is that every thread calls 
+/* The libmthread fallback thread. The idea is that every thread calls 
  * mthread_exit(...) to stop running when it has nothing to do anymore. 
  * However, in case a thread forgets to do that, the whole process  exit()s and
  * that might be a bit problematic. Therefore, all threads will run this
  * fallback thread when they exit, giving the scheduler a chance to fix the
  * situation.
  */
+  mthread_tcb_t *tcb;
 
-  threads[current_thread].m_state = FALLBACK_EXITING;
+  tcb = mthread_find_tcb(current_thread);
+
+  tcb->m_state = MS_FALLBACK_EXITING;
   mthread_exit(NULL);
 
   /* Reconstruct fallback context for next invocation */
@@ -176,7 +182,25 @@ PRIVATE void mthread_fallback(void)
 
   /* Let another thread run */
   mthread_schedule();
+}
 
+
+/*===========================================================================*
+ *			mthread_find_tcb				     *
+ *===========================================================================*/
+PUBLIC mthread_tcb_t * mthread_find_tcb(thread)
+mthread_thread_t thread;
+{
+  mthread_tcb_t *rt = NULL;
+
+  if (!isokthreadid(thread)) mthread_panic("Invalid thread id");
+
+  if (thread == MAIN_THREAD)
+  	rt = &mainthread;
+  else
+  	rt = threads[thread];
+
+  return(rt);
 }
 
 
@@ -186,23 +210,44 @@ PRIVATE void mthread_fallback(void)
 PRIVATE int mthread_increase_thread_pool(void)
 {
 /* Increase thread pool. No fancy algorithms, just double the size. */
-  mthread_tcb_t *new_tcb;
+  mthread_tcb_t **new_tcb;
   int new_no_threads, old_no_threads, i;
 
   old_no_threads = no_threads;
-  new_no_threads = 2 * old_no_threads;
+
+  if (old_no_threads == 0)
+  	new_no_threads = NO_THREADS;
+  else
+	new_no_threads = 2 * old_no_threads;
+
 
   if (new_no_threads >= MAX_THREAD_POOL) {
   	mthread_debug("Reached max number of threads");
   	return(-1);
   }
 
-  new_tcb = realloc(threads, new_no_threads * sizeof(mthread_tcb_t));
+  /* Allocate space to store pointers to thread control blocks */
+  if (old_no_threads == 0)	/* No data yet: allocate space */
+  	new_tcb = calloc(new_no_threads, sizeof(mthread_tcb_t *));
+  else				/* Preserve existing data: reallocate space */
+	new_tcb = realloc(threads, new_no_threads * sizeof(mthread_tcb_t *));
+
   if (new_tcb == NULL) {
   	mthread_debug("Can't increase thread pool");
   	return(-1);
   }
 
+  /* Allocate space for thread control blocks itself */
+  for (i = old_no_threads; i < new_no_threads; i++) {
+  	new_tcb[i] = malloc(sizeof(mthread_tcb_t));
+  	if (new_tcb[i] == NULL) {
+  		mthread_debug("Can't allocate space for tcb");
+  		return(-1);
+  	}
+  	memset(new_tcb[i], '\0', sizeof(mthread_tcb_t)); /* Clear entry */
+  }
+
+  /* We can breath again, let's tell the others about the good news */
   threads = new_tcb; 
   no_threads = new_no_threads;
 
@@ -213,7 +258,8 @@ PRIVATE int mthread_increase_thread_pool(void)
   }
 
 #ifdef MDEBUG
-  printf("Increased thread pool from %d to %d threads\n", no_threads, new_no_threads);
+  printf("Increased thread pool from %d to %d threads\n", old_no_threads,
+  	 new_no_threads);
 #endif
   return(0);
 }
@@ -230,7 +276,7 @@ PUBLIC void mthread_init(void)
 
   if (!initialized) {
   	int i;
-  	no_threads = NO_THREADS;
+  	no_threads = 0;
   	used_threads = 0;
   	running_main_thread = 1;/* mthread_init can only be called from the
   				 * main thread. Calling it from a thread will
@@ -239,34 +285,20 @@ PUBLIC void mthread_init(void)
 
   	if (getcontext(&(mainthread.m_context)) == -1)
   		mthread_panic("Couldn't save state for main thread");
-  	current_thread = NO_THREAD;
-
-	/* Allocate a bunch of thread control blocks */
-	threads = malloc(no_threads * sizeof(mthread_tcb_t));
-	if (threads == NULL)
-		mthread_panic("No memory, can't initialize threads");
+  	current_thread = MAIN_THREAD;
 
 	mthread_init_valid_mutexes();
 	mthread_init_valid_conditions();
 	mthread_init_valid_attributes();
 	mthread_init_scheduler();
 
-	/* Put initial threads on the free threads queue */
-	mthread_queue_init(&free_threads);
-	for (i = 0; i < no_threads; i++) {
-		mthread_queue_add(&free_threads, i);
-		mthread_thread_reset(i);
-	}
-
 	/* Initialize the fallback thread */
 	if (getcontext(FALLBACK_CTX) == -1)
 		mthread_panic("Could not initialize fallback thread");
 	FALLBACK_CTX->uc_link = &(mainthread.m_context);
-	FALLBACK_CTX->uc_stack.ss_sp = malloc(STACKSZ);
+	FALLBACK_CTX->uc_stack.ss_sp = fallback_stack;
 	FALLBACK_CTX->uc_stack.ss_size = STACKSZ;
-	if (FALLBACK_CTX->uc_stack.ss_sp == NULL)
-		mthread_panic("Could not allocate stack space to fallback "
-			      "thread");
+	memset(fallback_stack, '\0', STACKSZ);
   	makecontext(FALLBACK_CTX, (void (*) (void)) mthread_fallback, 0);
 
 	initialized = 1;
@@ -283,7 +315,9 @@ void **value;
 {
 /* Wait for a thread to stop running and copy the result. */
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_tcb_t *tcb;
+
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (!isokthreadid(join)) {
   	errno = ESRCH;
@@ -291,21 +325,24 @@ void **value;
   } else if (join == current_thread) {
 	errno = EDEADLK;
 	return(-1);
-  } else if (threads[join].m_state == DEAD) {
+  }
+
+  tcb = mthread_find_tcb(join);
+  if (tcb->m_state == MS_DEAD) {
   	errno = ESRCH;
   	return(-1);
-  } else if (threads[join].m_attr.a_detachstate == MTHREAD_CREATE_DETACHED) {
+  } else if (tcb->m_attr.a_detachstate == MTHREAD_CREATE_DETACHED) {
 	errno = EINVAL;
 	return(-1);
   }
 
   /* When the thread hasn't exited yet, we have to wait for that to happen */
-  if (threads[join].m_state != EXITING) {
+  if (tcb->m_state != MS_EXITING) {
   	mthread_cond_t *c;
   	mthread_mutex_t *m;
 
-  	c = &(threads[join].m_exited);
-  	m = &(threads[join].m_exitm);
+  	c = &(tcb->m_exited);
+  	m = &(tcb->m_exitm);
 
   	if (mthread_mutex_init(m, NULL) != 0)
 		mthread_panic("Couldn't initialize mutex to join\n");
@@ -325,7 +362,7 @@ void **value;
 
   /* Thread has exited; copy results */
   if(value != NULL)
-	*value = threads[join].m_result;
+	*value = tcb->m_result;
 
   /* Deallocate resources */
   mthread_thread_stop(join);
@@ -342,7 +379,7 @@ void (*proc)(void);
 {
 /* Run procedure proc just once */
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   if (once == NULL || proc == NULL) {
   	errno = EINVAL;
@@ -362,7 +399,7 @@ PUBLIC mthread_thread_t mthread_self(void)
 {
 /* Return the thread id of the thread calling this function. */
 
-  mthread_init();	/* Make sure mthreads is initialized */
+  mthread_init();	/* Make sure libmthread is initialized */
 
   return(current_thread);
 }
@@ -381,50 +418,52 @@ void *arg;
  * procedure with the given parameter. The thread is marked as runnable.
  */
 
-#define THIS_CTX (&(threads[thread].m_context))
+#define THIS_CTX (&(threads[thread]->m_context))
+  mthread_tcb_t *tcb;
   size_t stacksize;
   char *stackaddr;
 
-  threads[thread].m_next = NO_THREAD;
-  threads[thread].m_state = DEAD;
-  threads[thread].m_proc = (void *(*)(void *)) proc; /* Yikes */
-  threads[thread].m_arg = arg;
+  tcb = mthread_find_tcb(thread);
+  tcb->m_next = NULL;
+  tcb->m_state = MS_DEAD;
+  tcb->m_proc = (void *(*)(void *)) proc; /* Yikes */
+  tcb->m_arg = arg;
   /* Threads use a copy of the provided attributes. This way, if another
    * thread modifies the attributes (such as detach state), already running
    * threads are not affected.
    */
   if (tattr != NULL)
-  	threads[thread].m_attr = *((struct __mthread_attr *) *tattr);
+  	tcb->m_attr = *((struct __mthread_attr *) *tattr);
   else {
-  	threads[thread].m_attr = default_attr;
+  	tcb->m_attr = default_attr;
   }
 
-  if (mthread_cond_init(&(threads[thread].m_exited), NULL) != 0)
+  if (mthread_cond_init(&(tcb->m_exited), NULL) != 0)
   	mthread_panic("Could not initialize thread");
 
   /* First set the fallback thread, */
-  THIS_CTX->uc_link = FALLBACK_CTX;
+  tcb->m_context.uc_link = FALLBACK_CTX;
 
   /* then construct this thread's context to run procedure proc. */
-  if (getcontext(THIS_CTX) == -1)
+  if (getcontext(&(tcb->m_context)) == -1)
   	mthread_panic("Failed to initialize context state");
 
-  stacksize = threads[thread].m_attr.a_stacksize;
-  stackaddr = threads[thread].m_attr.a_stackaddr;
+  stacksize = tcb->m_attr.a_stacksize;
+  stackaddr = tcb->m_attr.a_stackaddr;
 
   if (stacksize == (size_t) 0)
 	stacksize = (size_t) MTHREAD_STACK_MIN;
 
   if (stackaddr == NULL) {
 	/* Allocate stack space */
-  	THIS_CTX->uc_stack.ss_sp = malloc(stacksize);
-	if (THIS_CTX->uc_stack.ss_sp == NULL)
+  	tcb->m_context.uc_stack.ss_sp = malloc(stacksize);
+	if (tcb->m_context.uc_stack.ss_sp == NULL)
   		mthread_panic("Failed to allocate stack to thread");
   } else
-  	THIS_CTX->uc_stack.ss_sp = stackaddr;
+  	tcb->m_context.uc_stack.ss_sp = stackaddr;
 
-  THIS_CTX->uc_stack.ss_size = stacksize;
-  makecontext(THIS_CTX, mthread_trampoline, 0);
+  tcb->m_context.uc_stack.ss_size = stacksize;
+  makecontext(&(tcb->m_context), mthread_trampoline, 0);
 
   mthread_unsuspend(thread); /* Make thread runnable */
 }
@@ -441,10 +480,10 @@ mthread_thread_t thread;
   mthread_tcb_t *rt;
   if (!isokthreadid(thread)) mthread_panic("Invalid thread id"); 
 
-  rt = &(threads[thread]);
-
-  rt->m_next = NO_THREAD;
-  rt->m_state = DEAD;
+  rt = mthread_find_tcb(thread);
+  rt->m_tid = thread;
+  rt->m_next = NULL;
+  rt->m_state = MS_DEAD;
   rt->m_proc = NULL;
   rt->m_arg = NULL;
   rt->m_result = NULL;
@@ -468,10 +507,10 @@ mthread_thread_t thread;
 
   if (!isokthreadid(thread)) mthread_panic("Invalid thread id"); 
 
-  stop_thread = &(threads[thread]);
+  stop_thread = mthread_find_tcb(thread);
 
-  if (stop_thread->m_state == DEAD) {
-  	/* Already DEAD, nothing to do */
+  if (stop_thread->m_state == MS_DEAD) {
+  	/* Already dead, nothing to do */
   	return;
   }
 
@@ -492,9 +531,12 @@ PRIVATE void mthread_trampoline(void)
 {
 /* Execute the /current_thread's/ procedure. Store its result. */
 
+  mthread_tcb_t *tcb;
   void *r;
 
-  r = (threads[current_thread].m_proc)(threads[current_thread].m_arg);
+  tcb = mthread_find_tcb(current_thread);
+
+  r = (tcb->m_proc)(tcb->m_arg);
   mthread_exit(r); 
 }
 
