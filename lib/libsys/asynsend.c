@@ -13,11 +13,12 @@
 #include <unistd.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <minix/sys_config.h>
 
 #include <limits.h>
 #include <errno.h>
 
-#define ASYN_NR	100
+#define ASYN_NR	(2*_NR_PROCS)
 PRIVATE asynmsg_t msgtable[ASYN_NR];
 PRIVATE int first_slot= 0, next_slot= 0;
 
