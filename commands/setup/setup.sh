@@ -56,8 +56,8 @@ Usage:	setup		# Install a skeleton system on the hard disk.
 
 	# To install from other things then floppies:
 
-	urlget http://... | setup /usr		# Read from a web site.
-	urlget ftp://... | setup /usr		# Read from an FTP site.
+	fetch -q -o - http://... | setup /usr	# Read from a web site.
+	fetch -q -o - ftp://... | setup /usr	# Read from an FTP site.
 	mtools copy c0d0p0:... - | setup /usr	# Read from the C: drive.
 	dosread c0d0p0 ... | setup /usr		# Likewise if no mtools.
 EOF

@@ -471,12 +471,12 @@ as root, and to use the following command on the remote host:
 .XB "rsh\0\-l\0root\0\fIminix-box\fP\0setup\0/usr\0< USR.TAZ"
 .PP
 Two is to use
-.B urlget
+.B fetch
 to copy the data directly from a Web or FTP site by using these
 commands under MINIX:
 .PP
 .XB "cd\0/usr"
-.XB "urlget\0\fIurl\fP.../USR.TAZ | setup\0/usr"
+.XB "fetch\0-q\0-o\0-\0\fIurl\fP.../USR.TAZ | setup\0/usr"
 .PP
 The sources may be installed using exactly the same commands, but with
 .3B USR.TAZ

@@ -22,7 +22,7 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	synctree.1 sysenv.1 sz.1 tail.1 tee.1 telnet.1 template.1 \
 	term.1 termcap.1 tget.1 time.1 top.1 tr.1 true.1 \
 	truncate.1 tsort.1 tty.1 umount.1 uname.1 unexpand.1 uniq.1 \
-	urlget.1 uud.1 uue.1 vol.1 wc.1 whereis.1 which.1 \
+	uud.1 uue.1 vol.1 wc.1 whereis.1 which.1 \
 	who.1 write.1 xargs.1 yap.1 yes.1 linkfarm.1 pkg_view.1
 
 
