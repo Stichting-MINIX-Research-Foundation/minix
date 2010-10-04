@@ -48,9 +48,6 @@ addr_avl addravl;
 
 /* Used for sanity check. */
 PRIVATE phys_bytes mem_low, mem_high;
-#define assert_range(addr, len)  			\
-	assert((addr) >= mem_low);			\
-	assert((addr) + (len) - 1 <= mem_high);
 
 struct hole {
 	struct hole *h_next;          /* pointer to next entry on the list */
@@ -841,7 +838,6 @@ int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
 	assert(!(addr % VM_PAGE_SIZE));
 	assert(!(len % VM_PAGE_SIZE));
 	assert(len > 0);
-	assert_range(addr, len);
 
 	pagestart = addr / VM_PAGE_SIZE;
 	pages = len / VM_PAGE_SIZE;
