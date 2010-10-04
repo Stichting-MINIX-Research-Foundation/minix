@@ -292,7 +292,6 @@ PUBLIC int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
  *===========================================================================*/
 PUBLIC int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 {
-	struct vir_region *vr;
 	int is_vm;
 	int r;
 
@@ -320,12 +319,8 @@ PUBLIC int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 #endif
 
 	/* Swap vir_regions' parents. */
-	for(vr = src_vmp->vm_regions; vr; vr = vr->next) {
-		USE(vr, vr->parent = src_vmp;);
-	}
-	for(vr = dst_vmp->vm_regions; vr; vr = vr->next) {
-		USE(vr, vr->parent = dst_vmp;);
-	}
+	map_setparent(src_vmp);
+	map_setparent(dst_vmp);
 
 	/* For regular processes, transfer regions above the stack now.
 	 * In case of rollback, we need to skip this step. To sandbox the
@@ -333,6 +328,7 @@ PUBLIC int swap_proc_dyn_data(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	 * the regions between the two instances as COW.
 	 */
 	if(!is_vm && (dst_vmp->vm_flags & VMF_HASPT)) {
+		struct vir_region *vr;
 		vr = map_lookup(dst_vmp, arch_vir2map(dst_vmp, dst_vmp->vm_stacktop));
 		if(vr && !map_lookup(src_vmp, arch_vir2map(src_vmp, src_vmp->vm_stacktop))) {
 #if LU_DEBUG

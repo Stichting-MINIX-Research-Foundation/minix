@@ -90,6 +90,8 @@ L__SC AVL_HANDLE L__(search_least)(L__(avl) *tree);
 
 L__SC AVL_HANDLE L__(search_greatest)(L__(avl) *tree);
 
+L__SC AVL_HANDLE L__(search_root)(L__(avl) *tree);
+
 L__SC AVL_HANDLE L__(remove)(L__(avl) *tree, AVL_KEY k);
 
 L__SC AVL_HANDLE L__(subst)(L__(avl) *tree, AVL_HANDLE new_node);

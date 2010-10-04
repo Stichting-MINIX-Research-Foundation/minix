@@ -10,6 +10,7 @@
 #include "vm.h"
 #include "physravl.h"
 #include "yieldedavl.h"
+#include "regionavl.h"
 
 struct vmproc;
 
@@ -29,7 +30,7 @@ struct vmproc {
 	time_t vm_ctime;	/* inode changed time */
 
 	/* Regions in virtual address space. */
-	struct vir_region *vm_regions;
+	region_avl vm_regions_avl;
 	yielded_avl	vm_yielded_blocks;	 /* avl of yielded physblocks */
 
 	/* Heap for brk() to extend. */

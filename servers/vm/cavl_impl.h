@@ -501,6 +501,12 @@ L__SC AVL_HANDLE L__(search_least)(L__(avl) *L__tree)
 
 #endif
 
+L__SC AVL_HANDLE L__(search_root)(L__(avl) *L__tree)
+  {
+    return L__tree->root;
+  }
+
+
 #if (L__IMPL_MASK & AVL_IMPL_SEARCH_GREATEST)
 
 L__SC AVL_HANDLE L__(search_greatest)(L__(avl) *L__tree)

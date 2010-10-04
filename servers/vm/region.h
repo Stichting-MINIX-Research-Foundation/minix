@@ -34,15 +34,18 @@ struct phys_block {
 	struct phys_region	*firstregion;	
 };
 
-struct vir_region {
-	struct vir_region *next; /* next virtual region in this process */
+typedef struct vir_region {
 	vir_bytes	vaddr;	/* virtual address, offset from pagetable */
 	vir_bytes	length;	/* length in bytes */
 	physr_avl	*phys;	/* avl tree of physical memory blocks */
 	u16_t		flags;
 	u32_t tag;		/* Opaque to mapping code. */
 	struct vmproc *parent;	/* Process that owns this vir_region. */
-};
+
+	/* AVL fields */
+	struct vir_region *lower, *higher;
+	int		factor;
+} region_t;
 
 /* Mapping flags: */
 #define VR_WRITABLE	0x001	/* Process may write here. */

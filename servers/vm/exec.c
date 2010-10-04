@@ -182,9 +182,12 @@ SANITYCHECK(SCL_DETAIL);
 
   assert(!(vmpold->vm_flags & VMF_INUSE));
   *vmpold = *rmp;	/* copy current state. */
-  rmp->vm_regions = NULL; /* exec()ing process regions thrown out. */
-SANITYCHECK(SCL_DETAIL);
+#if SANITYCHECKS
+  map_setparent(vmpold);
+#endif
 
+  region_init(&rmp->vm_regions_avl); /* exec()ing process regions thrown out. */
+SANITYCHECK(SCL_DETAIL);
 
   /* Build new process in current slot, without freeing old
    * one. If it fails, revert.
@@ -212,6 +215,7 @@ SANITYCHECK(SCL_DETAIL);
       pt_free(&rmp->vm_pt);
     }
     *rmp = *vmpold;	/* undo. */
+    map_setparent(rmp);
     clear_proc(vmpold);	/* disappear. */
     SANITYCHECK(SCL_DETAIL);
     if(hadpt) {

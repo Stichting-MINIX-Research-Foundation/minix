@@ -158,6 +158,7 @@ _PROTOTYPE(void map_printmap, (struct vmproc *vmp));
 _PROTOTYPE(int map_writept, (struct vmproc *vmp));
 _PROTOTYPE(void printregionstats, (struct vmproc *vmp));
 _PROTOTYPE(phys_bytes map_lookup_phys, (struct vmproc *vmp, u32_t tag));
+_PROTOTYPE(void map_setparent, (struct vmproc *vmp));
 
 _PROTOTYPE(struct vir_region * map_region_lookup_tag, (struct vmproc *vmp, u32_t tag));
 _PROTOTYPE(void map_region_set_tag, (struct vir_region *vr, u32_t tag));
