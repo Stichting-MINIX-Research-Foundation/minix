@@ -142,6 +142,7 @@ int vprintf(const char *fmt, va_list argp)
 			/* A string.  The other cases will join in here. */
 		case 's':
 			p= va_arg(argp, char *);
+			if (!p) p = "(null)";
 
 		string_length:
 			for (len= 0; p[len] != 0 && len < max; len++) {}
