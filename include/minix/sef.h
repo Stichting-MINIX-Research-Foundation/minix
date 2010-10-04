@@ -16,7 +16,7 @@ _PROTOTYPE( void sef_exit, (int status) );
 #include <stdio.h>
 #define sef_dprint                      printf
 #define sef_debug_begin()               (void)(NULL)
-#define sef_debug_end()                 fflush(stdout)
+#define sef_debug_end()                 (void)(NULL)
 
 /*===========================================================================*
  *				  SEF Init				     *
