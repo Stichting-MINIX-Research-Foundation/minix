@@ -1,6 +1,7 @@
 #define ALLOCATE
 #include <errno.h>
 #include <minix/mthread.h>
+#include <string.h>
 #include "global.h"
 #include "proto.h"
 
@@ -275,7 +276,6 @@ PUBLIC void mthread_init(void)
  */
 
   if (!initialized) {
-  	int i;
   	no_threads = 0;
   	used_threads = 0;
   	running_main_thread = 1;/* mthread_init can only be called from the
