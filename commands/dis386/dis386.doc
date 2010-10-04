@@ -1,0 +1,77 @@
+Dis36: a static disassembler for Minix 2.0.  C W Rose, 20 Oct 97.
+
+SUMMARY
+
+This is the second release of dis386, a disassembler for Minix 2.0  At present
+it is comprised of two programs, dise which understands executable files, and
+diso which understands object files.   The programs have been written using as
+much common code as possible, and in time they will be merged.  Meantime, they
+are easier to debug separately.
+
+The two programs are both front ends for Bruce Evan's x86 disassembler.  The
+disassembler can handle both 16-bit and 32-bit code, but since the programs
+use large data tables (kept in memory for speedy access) they have been tested
+only on 32-bit Minix.
+
+The changes between versions 1.0 and 1.1 are small, but add to the ease of
+use: addresses can now be entered in decimal or hexadecimal (leading 0x),
+and starting offset and program counter now have more intelligble values.
+
+OPTIONS
+
+Object, executable and core files have the following structures, where
+Name is the section name, and Option the option needed to display the section.
+
+Object file			Executable file		Core file
+Name			Option	Name		Option	Name		Option
+Header		}	h	Header		h	Memory map	m
+Section headers	}					Process table	p
+Sections		-	Sections	-	Sections	-
+ text			t	 text		t	text		t
+ rom			m
+ data			d	 data		d	data		d
+ bss			-				stack		k
+Relocation structures	r
+Symbol table		s	Symbol table	s
+Symbol names		n
+
+Other options are:
+	-A str	set executable file name
+	-C str	set core file name
+	-O str	set object file name
+	-a	display all sections
+	-b	dump in straight binary
+	-f #	set the first address to be displayed
+	-l #	set the last address to be displayed
+	-x #	set debugging level
+
+Not all these options are functional at present; in particular, the file type
+override of -A/C/O isn't implemented (since the programs are single-purpose).
+
+The default option is -h.  The default input file is a.out for dise, and test.o
+for diso.  Otherwise, input is taken from the first file option on the command
+line.  Output is always written to standard output, and error messages to
+standard error.
+
+BUGS AND FEATURES
+
+The programs search the data area for possible local symbols; generally, these
+are the start of strings.  At the moment this search is limited, and accepts
+even single printing characters as strings; it should probably accept only
+runs of three or more characters.
+
+There is no search for local text symbols, as opposed to data symbols; this
+would need two full passes over the text with the disassembler, and doesn't
+seem worthwhile.  Once the data symbols are out of the way, the disassembled
+text is fairly easy to read.
+
+The programs do a fair amount of error checking to ensure that they are
+using eg. addresses that are within scope, but if they do fail they tend
+to abandon the task completely and bale out with a (supposedly informative)
+error message.
+
+There are many apparent dead-ends in the code, left as hooks for later
+additions.
+
+/* eof */
+
