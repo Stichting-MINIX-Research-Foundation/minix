@@ -8,6 +8,7 @@
 #endif
 
 #include <stddef.h>
+#include <sys/cdefs.h>
 #include <sys/null.h>
 
 #define EXIT_FAILURE       1	/* standard error return using exit() */
@@ -29,7 +30,7 @@ _PROTOTYPE( int atoi, (const char *_nptr)				);
 _PROTOTYPE( long atol, (const char *_nptr)				);
 _PROTOTYPE( void *calloc, (size_t _nmemb, size_t _size)			);
 _PROTOTYPE( div_t div, (int _numer, int _denom)				);
-_PROTOTYPE( void exit, (int _status)					);
+_PROTOTYPE( __dead void exit, (int _status)				);
 _PROTOTYPE( void free, (void *_ptr)					);
 _PROTOTYPE( char *getenv, (const char *_name)				);
 _PROTOTYPE( long labs, (long _j)					);
