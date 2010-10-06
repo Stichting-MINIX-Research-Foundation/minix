@@ -2,6 +2,7 @@
 #define _MINIX_SYSUTIL_H 1
 
 #include <minix/ipc.h>
+#include <sys/cdefs.h>
 
 /* Extra system library definitions to support device drivers and servers.
  *
