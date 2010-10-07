@@ -187,6 +187,7 @@ SANITYCHECK(SCL_DETAIL);
 #endif
 
   region_init(&rmp->vm_regions_avl); /* exec()ing process regions thrown out. */
+  rmp->vm_region_top = 0;
 SANITYCHECK(SCL_DETAIL);
 
   /* Build new process in current slot, without freeing old

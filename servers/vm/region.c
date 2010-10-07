@@ -365,19 +365,18 @@ PRIVATE int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	return OK;
 }
 
+#define SLOT_FAIL ((vir_bytes) -1)
+
 /*===========================================================================*
- *				region_find_slot			     *
+ *				region_find_slot_range			     *
  *===========================================================================*/
-PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
-		vir_bytes minv, vir_bytes maxv, vir_bytes length,
-		struct vir_region **prev)
+PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
+		vir_bytes minv, vir_bytes maxv, vir_bytes length)
 {
-	struct vir_region *firstregion, *prevregion = NULL;
+	struct vir_region *firstregion;
 	vir_bytes startv;
 	int foundflag = 0;
-
-	/* XXX start search closer to minv to optimise. */
-	firstregion = region_search_least(&vmp->vm_regions_avl);
+	region_iter iter;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
@@ -395,7 +394,7 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
                         printf("region_find_slot: minv 0x%lx and bytes 0x%lx\n",
                                 minv, length);
 			map_printmap(vmp);
-                        return (vir_bytes) -1;
+                        return SLOT_FAIL;
                 }
         }
 
@@ -408,30 +407,37 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 	assert(minv < maxv);
 	assert(minv + length <= maxv);
 
-#define FREEVRANGE(rangestart, rangeend, foundcode) {		\
+#define FREEVRANGE(rangestart, rangeend) {		\
 	vir_bytes frstart = (rangestart), frend = (rangeend);	\
 	frstart = MAX(frstart, minv);				\
 	frend   = MIN(frend, maxv);				\
 	if(frend > frstart && (frend - frstart) >= length) {	\
 		startv = frstart;				\
 		foundflag = 1;					\
-		foundcode;					\
 	} }
 
-	/* This is the free virtual address space before the first region. */
-	FREEVRANGE(0, firstregion ? firstregion->vaddr : VM_DATATOP, ;);
+	/* find region before minv. */
+	region_start_iter(&vmp->vm_regions_avl, &iter, minv, AVL_LESS_EQUAL);
+	firstregion = region_get_iter(&iter);
+
+	if(!firstregion) {
+		/* This is the free virtual address space before the first region. */
+		region_start_iter(&vmp->vm_regions_avl, &iter, minv, AVL_GREATER_EQUAL);
+		firstregion = region_get_iter(&iter);
+		FREEVRANGE(0, firstregion ? firstregion->vaddr : VM_DATATOP);
+	}
 
 	if(!foundflag) {
 		struct vir_region *vr;
-		region_iter iter;
-		region_start_iter_least(&vmp->vm_regions_avl, &iter);
 		while((vr = region_get_iter(&iter)) && !foundflag) {
 			struct vir_region *nextvr;
 			region_incr_iter(&iter);
 			nextvr = region_get_iter(&iter);
 			FREEVRANGE(vr->vaddr + vr->length,
-			  nextvr ? nextvr->vaddr : VM_DATATOP,
-				prevregion = vr;);
+			  nextvr ? nextvr->vaddr : VM_DATATOP);
+			if(!foundflag) {
+				printf("incr from 0x%lx to 0x%lx; v range 0x%lx-0x%lx\n", vr->vaddr, nextvr->vaddr);
+			}
 		}
 	}
 
@@ -439,21 +445,40 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 		printf("VM: region_find_slot: no 0x%lx bytes found for %d between 0x%lx and 0x%lx\n",
 			length, vmp->vm_endpoint, minv, maxv);
 		map_printmap(vmp);
-		return (vir_bytes) -1;
+		return SLOT_FAIL;
 	}
-
-#if SANITYCHECKS
-	if(prevregion) assert(prevregion->vaddr < startv);
-#endif
 
 	/* However we got it, startv must be in the requested range. */
 	assert(startv >= minv);
 	assert(startv < maxv);
 	assert(startv + length <= maxv);
 
-	if (prev)
-		*prev = prevregion;
+	/* remember this position as a hint for next time. */
+	vmp->vm_region_top = startv + length;
+
 	return startv;
+}
+
+/*===========================================================================*
+ *				region_find_slot			     *
+ *===========================================================================*/
+PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
+		vir_bytes minv, vir_bytes maxv, vir_bytes length)
+{
+	vir_bytes v, hint = vmp->vm_region_top;
+
+	/* use the top of the last inserted region as a minv hint if
+	 * possible. remember that a zero maxv is a special case.
+	 */
+
+	if(maxv && hint < maxv) {
+		v = region_find_slot_range(vmp, hint, maxv, length);
+
+		if(v != SLOT_FAIL)
+			return v;
+	}
+
+	return region_find_slot_range(vmp, minv, maxv, length);
 }
 
 /*===========================================================================*
@@ -469,7 +494,7 @@ vir_bytes what;
 u32_t flags;
 int mapflags;
 {
-	struct vir_region *prevregion = NULL, *newregion;
+	struct vir_region *newregion;
 	vir_bytes startv;
 	struct phys_region *ph;
 	physr_avl *phavl;
@@ -478,8 +503,8 @@ int mapflags;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	startv = region_find_slot(vmp, minv, maxv, length, &prevregion);
-	if (startv == (vir_bytes) -1)
+	startv = region_find_slot(vmp, minv, maxv, length);
+	if (startv == SLOT_FAIL)
 		return NULL;
 
 	/* Now we want a new region. */
@@ -1305,7 +1330,7 @@ int write;
 }
 
 #if SANITYCHECKS
-static int countregions(struct vir_region *vr)
+static int count_phys_regions(struct vir_region *vr)
 {
 	int n = 0;
 	struct phys_region *ph;
@@ -1338,7 +1363,7 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 	physr_avl *phavl;
 #if SANITYCHECKS
 	int cr;
-	cr = countregions(vr);
+	cr = count_phys_regions(vr);
 #endif
 
 	if(!SLABALLOC(newvr))
@@ -1372,13 +1397,13 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 #endif
 		physr_insert(newvr->phys, newph);
 #if SANITYCHECKS
-		assert(countregions(vr) == cr);
+		assert(count_phys_regions(vr) == cr);
 #endif
 		physr_incr_iter(&iter);
 	}
 
 #if SANITYCHECKS
-	assert(countregions(vr) == countregions(newvr));
+	assert(count_phys_regions(vr) == count_phys_regions(newvr));
 #endif
 
 	return newvr;
@@ -1738,7 +1763,7 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
 PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 		struct vir_region *region, vir_bytes *r)
 {
-	struct vir_region *vr, *prev;
+	struct vir_region *vr;
 	struct phys_region *ph;
 	vir_bytes startv, dst_addr;
 	physr_iter iter;
@@ -1754,11 +1779,10 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 		dst_addr = da;
 	dst_addr = arch_vir2map(dvmp, dst_addr);
 
-	prev = NULL;
 	/* round up to page size */
 	assert(!(size % VM_PAGE_SIZE));
-	startv = region_find_slot(dvmp, dst_addr, VM_DATATOP, size, &prev);
-	if (startv == (vir_bytes) -1) {
+	startv = region_find_slot(dvmp, dst_addr, VM_DATATOP, size);
+	if (startv == SLOT_FAIL) {
 		printf("map_remap: search 0x%lx...\n", dst_addr);
 		map_printmap(dvmp);
 		return ENOMEM;

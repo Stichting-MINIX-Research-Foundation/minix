@@ -32,6 +32,7 @@ PUBLIC void free_proc(struct vmproc *vmp)
 		pt_free(&vmp->vm_pt);
 	}
 	region_init(&vmp->vm_regions_avl);
+	vmp->vm_region_top = 0;
 #if VMSTATS
 	vmp->vm_bytecopies = 0;
 #endif
@@ -40,6 +41,7 @@ PUBLIC void free_proc(struct vmproc *vmp)
 PUBLIC void clear_proc(struct vmproc *vmp)
 {
 	region_init(&vmp->vm_regions_avl);
+	vmp->vm_region_top = 0;
 	vmp->vm_callback = NULL;	/* No pending vfs callback. */
 	vmp->vm_flags = 0;		/* Clear INUSE, so slot is free. */
 	vmp->vm_heap = NULL;

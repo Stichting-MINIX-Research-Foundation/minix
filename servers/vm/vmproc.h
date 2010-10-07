@@ -31,6 +31,7 @@ struct vmproc {
 
 	/* Regions in virtual address space. */
 	region_avl vm_regions_avl;
+	vir_bytes  vm_region_top;	/* highest vaddr last inserted */
 	yielded_avl	vm_yielded_blocks;	 /* avl of yielded physblocks */
 
 	/* Heap for brk() to extend. */
