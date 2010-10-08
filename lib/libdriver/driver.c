@@ -132,6 +132,7 @@ int r;
 
   case DEV_READ_S:
   case DEV_WRITE_S:
+  case DEV_IOCTL_S:
 	if (r == SUSPEND)
 		printf("driver_task: reviving %d with SUSPEND\n", proc_nr);
 
