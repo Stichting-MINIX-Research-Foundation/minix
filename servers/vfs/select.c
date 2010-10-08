@@ -170,7 +170,10 @@ PUBLIC int do_select(void)
 		}
 	}
 
-	if (type == -1)	return(EBADF);
+	if (type == -1)	{
+		select_cancel_all(se);
+		return(EBADF);
+	}
 	se->type[fd] = type;
 
 	/* Test filp for select operations if not already done so. e.g., files
@@ -210,7 +213,6 @@ PUBLIC int do_select(void)
 	 */
 	r = copy_fdsets(se, se->nfds, TO_PROC);
 	select_cancel_all(se);
-	se->requestor = NULL;
 
 	if (r != OK) return(r);
 	else return(se->nreadyfds);
@@ -320,7 +322,6 @@ PRIVATE int select_request_asynch(struct filp *f, int *ops, int block)
 
   return(SEL_DEFERRED);
 }
-
 
 /*===========================================================================*
  *				select_major_match			     *
@@ -433,6 +434,7 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 {
 	int fd;
 
+	e->requestor = NULL;
 	for(fd = 0; fd < e->nfds; fd++) {
 		struct filp *fp;
 		fp = e->filps[fd];
@@ -516,7 +518,6 @@ PRIVATE void select_return(struct selectentry *se, int r)
   select_cancel_all(se);
   copy_fdsets(se, se->nfds, TO_PROC); /* FIXME, return error status */
   select_wakeup(se, r ? r : se->nreadyfds);
-  se->requestor = NULL;
 }
 
 
@@ -642,7 +643,6 @@ PUBLIC void select_forget(int proc_e)
 	}
 
 	select_cancel_all(&selecttab[s]);
-	selecttab[s].requestor = NULL;
 
 	return;
 }
@@ -964,9 +964,7 @@ int slot;
 		se->deferred= FALSE;
 	}
 	if (se->nreadyfds > 0 || !se->block) {
-		copy_fdsets(se, se->nfds, TO_PROC); /* FIXME, return error */
-		select_wakeup(se, se->nreadyfds);
-		se->requestor = NULL;
+		select_return(se, 0);
 	}
 }
 
