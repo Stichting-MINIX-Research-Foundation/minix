@@ -105,7 +105,7 @@
 #define PIPE_BUF         32768	/* # bytes in atomic write to a pipe */
 #define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
 #define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */
-#define SSIZE_MAX        32767	/* max defined byte count for read() */
+#define SSIZE_MAX     INT_MAX /* max defined byte count for read() */
 #define SIZE_MAX      UINT_MAX
 #define SYMLINK_MAX       1024 	/* # bytes in a symbolic link */ 
 #define SYMLOOP_MAX	    16	/* maximum number of symbolic links that can
