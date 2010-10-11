@@ -52,7 +52,6 @@ EXTERN struct buf *rear;	/* points to most recently used free block */
 EXTERN unsigned int bufs_in_use;/* # bufs currently in use (not on free list)*/
 
 /* When a block is released, the type of usage is passed to put_block(). */
-#define WRITE_IMMED   0100 /* block should be written to disk now */
 #define ONE_SHOT      0200 /* set if block not likely to be needed soon */
 
 #define INODE_BLOCK        0				 /* inode block */

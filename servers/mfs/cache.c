@@ -263,14 +263,6 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
 		rear->b_next = bp;
 	rear = bp;
   }
-
-  /* Some blocks are so important (e.g., inodes, indirect blocks) that they
-   * should be written to the disk immediately to avoid messing up the file
-   * system in the event of a crash.
-   */
-  if ((block_type & WRITE_IMMED) && bp->b_dirt==DIRTY && bp->b_dev != NO_DEV) {
-		rw_block(bp, WRITING);
-  } 
 }
 
 /*===========================================================================*
