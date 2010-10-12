@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 	 * are correct for RTC
 	 */
 	if (action == START && intr_type == PROF_RTC && 
-			freq < MIN_FREQ || freq > MAX_FREQ) {
+			(freq < MIN_FREQ || freq > MAX_FREQ)) {
 		printf("Incorrect frequency.\n");
 		return 1;
 	}
