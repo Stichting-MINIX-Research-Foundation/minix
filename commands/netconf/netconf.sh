@@ -110,7 +110,9 @@ cards()
     card 5 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
     card 6 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
     card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
-    card 8 "Intel PRO/1000 Gigabit" "8086:100E" "8086:107C" "8086:10CD"
+    card 8 "Intel PRO/1000 Gigabit" 				       \
+           "8086:100E" "8086:107C" "8086:10CD" "8086:10D3"
+    	
     card 9 "Attansic/Atheros L2 FastEthernet" "1969:2048"
     card 10 "DEC Tulip 21140A in VirtualPC" "1011:0009"
     card 11 "Different Ethernet card (no networking)"

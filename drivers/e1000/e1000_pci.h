@@ -107,6 +107,7 @@
 #define E1000_DEV_ID_PCH_M_HV_LC              0x10EB
 #define E1000_DEV_ID_PCH_D_HV_DM              0x10EF
 #define E1000_DEV_ID_PCH_D_HV_DC              0x10F0
+#define E1000_DEV_ID_82574L                   0x10D3
 #define E1000_DEV_ID_82576                    0x10C9
 #define E1000_DEV_ID_82576_FIBER              0x10E6
 #define E1000_DEV_ID_82576_SERDES             0x10E7

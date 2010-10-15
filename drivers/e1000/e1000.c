@@ -26,6 +26,7 @@ PRIVATE u16_t pcitab_e1000[] =
     E1000_DEV_ID_82540EM,
     E1000_DEV_ID_82541GI_LF,
     E1000_DEV_ID_ICH10_R_BM_LF,
+    E1000_DEV_ID_82574L,
     0,
 };
 
@@ -285,6 +286,7 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
             e->eeprom_read = eeprom_ich;
             break;
 
+    	case E1000_DEV_ID_82574L:
 	case E1000_DEV_ID_82541GI_LF:
 	    e->eeprom_done_bit = (1 << 1);
 	    e->eeprom_addr_off =  2;
@@ -320,7 +322,9 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
 		panic("failed to map hardware registers from PCI");
     }
     /* Optionally map flash memory. */
-    if (pci_attr_r32(devind, PCI_BAR_3))
+    if (did != E1000_DEV_ID_82540EM &&
+	did != E1000_DEV_ID_82540EP &&
+	pci_attr_r32(devind, PCI_BAR_2))
     {
        if((e->flash = vm_map_phys(SELF,
          (void *) pci_attr_r32(devind, PCI_BAR_2), 0x10000)) == MAP_FAILED) {
