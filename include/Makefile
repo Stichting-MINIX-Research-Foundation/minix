@@ -29,7 +29,7 @@ INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
 	minix/sysutil.h minix/timers.h minix/tty.h minix/type.h minix/types.h \
 	minix/u64.h minix/vfsif.h minix/vm.h minix/vtreefs.h minix/gcov.h  \
 	minix/compiler.h minix/compiler-ack.h minix/sha2.h minix/sha1.h minix/md5.h \
-	minix/audio_fw.h
+	minix/audio_fw.h minix/hash.h
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
 INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
 	net/gen/eth_hdr.h net/gen/eth_io.h net/gen/icmp.h \
