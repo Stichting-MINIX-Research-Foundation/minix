@@ -4,10 +4,17 @@
 
 #include <minix/type.h>
 
-typedef struct yielded {
+typedef struct block_id {
 	u64_t		id;
-	phys_bytes	addr, len;
 	endpoint_t	owner;
+} block_id_t;
+
+typedef struct yielded {
+	/* the owner-given id and owner together
+	 * uniquely identify a yielded block.
+	 */
+	block_id_t	id;
+	phys_bytes	addr, len;
 
 	/* LRU fields */
 	struct yielded	*younger, *older;

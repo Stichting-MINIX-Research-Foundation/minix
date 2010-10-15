@@ -45,6 +45,7 @@ PUBLIC void clear_proc(struct vmproc *vmp)
 	vmp->vm_callback = NULL;	/* No pending vfs callback. */
 	vmp->vm_flags = 0;		/* Clear INUSE, so slot is free. */
 	vmp->vm_heap = NULL;
+	vmp->vm_yielded = 0;
 #if VMSTATS
 	vmp->vm_bytecopies = 0;
 #endif

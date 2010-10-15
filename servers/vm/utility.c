@@ -274,10 +274,6 @@ PUBLIC int swap_proc_slot(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	dst_vmp->vm_endpoint = orig_dst_vmproc.vm_endpoint;
 	dst_vmp->vm_slot = orig_dst_vmproc.vm_slot;
 
-	/* Preserve yielded blocks. */
-	src_vmp->vm_yielded_blocks = orig_src_vmproc.vm_yielded_blocks;
-	dst_vmp->vm_yielded_blocks = orig_dst_vmproc.vm_yielded_blocks;
-
 #if LU_DEBUG
 	printf("VM: swap_proc: swapped %d (%d) and %d (%d)\n",
 	    src_vmp->vm_endpoint, src_vmp->vm_slot,

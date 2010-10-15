@@ -255,6 +255,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			vmp->vm_flags |= VMF_SEPARATE;
 	}
 
+	/* region management initialization. */
+	map_region_init();
+
 	/* Architecture-dependent initialization. */
 	pt_init(limit);
 

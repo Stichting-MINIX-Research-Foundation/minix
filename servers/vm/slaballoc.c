@@ -468,6 +468,9 @@ PUBLIC void slabfree(void *mem, int bytes)
 #if MEMPROTECT
 	slabunlock(mem, bytes);
 #endif
+#if JUNKFREE
+	memset(mem, 0xa6, bytes);
+#endif
 	*(u32_t *) mem = JUNK;
 	nojunkwarning++;
 #if MEMPROTECT

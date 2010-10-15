@@ -16,6 +16,7 @@ struct phys_region;
 #include <pagetable.h>
 
 #include "vm.h"
+#include "yielded.h"
 
 /* alloc.c */
 _PROTOTYPE( phys_clicks alloc_mem, (phys_clicks clicks, u32_t flags)	);
@@ -137,6 +138,7 @@ _PROTOTYPE(int slabsane_f,(char *file, int line, void *mem, int bytes));
 #endif
 
 /* region.c */
+_PROTOTYPE(void map_region_init, (void));
 _PROTOTYPE(struct vir_region * map_page_region,(struct vmproc *vmp, \
 	vir_bytes min, vir_bytes max, vir_bytes length, vir_bytes what, \
 	u32_t flags, int mapflags));
@@ -159,6 +161,7 @@ _PROTOTYPE(int map_writept, (struct vmproc *vmp));
 _PROTOTYPE(void printregionstats, (struct vmproc *vmp));
 _PROTOTYPE(phys_bytes map_lookup_phys, (struct vmproc *vmp, u32_t tag));
 _PROTOTYPE(void map_setparent, (struct vmproc *vmp));
+_PROTOTYPE(int yielded_block_cmp, (struct block_id *, struct block_id *));
 
 _PROTOTYPE(struct vir_region * map_region_lookup_tag, (struct vmproc *vmp, u32_t tag));
 _PROTOTYPE(void map_region_set_tag, (struct vir_region *vr, u32_t tag));

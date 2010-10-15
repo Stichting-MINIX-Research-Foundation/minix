@@ -10,6 +10,7 @@
 #include <minix/syslib.h>
 #include <minix/debug.h>
 #include <minix/bitmap.h>
+#include <minix/hash.h>
 
 #include <sys/mman.h>
 
@@ -55,6 +56,36 @@ FORWARD _PROTOTYPE(struct phys_region *map_clone_ph_block, (struct vmproc *vmp,
 #if SANITYCHECKS
 FORWARD _PROTOTYPE(void lrucheck, (void));
 #endif
+
+/* hash table of yielded blocks */
+#define YIELD_HASHSIZE 65536
+PRIVATE yielded_avl vm_yielded_blocks[YIELD_HASHSIZE];
+
+PRIVATE int avl_inited = 0;
+
+PUBLIC void map_region_init(void)
+{
+	int h;
+	assert(!avl_inited);
+	for(h = 0; h < YIELD_HASHSIZE; h++)
+		yielded_init(&vm_yielded_blocks[h]);
+	avl_inited = 1;
+}
+
+PRIVATE yielded_avl *get_yielded_avl(block_id_t id)
+{
+	u32_t h;
+
+	assert(avl_inited);
+
+	hash_i_64(id.owner, id.id, h);
+	h = h % YIELD_HASHSIZE;
+
+	assert(h >= 0);
+	assert(h < YIELD_HASHSIZE);
+
+	return &vm_yielded_blocks[h];
+}
 
 PRIVATE char *map_name(struct vir_region *vr)
 {
@@ -435,9 +466,6 @@ PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
 			nextvr = region_get_iter(&iter);
 			FREEVRANGE(vr->vaddr + vr->length,
 			  nextvr ? nextvr->vaddr : VM_DATATOP);
-			if(!foundflag) {
-				printf("incr from 0x%lx to 0x%lx; v range 0x%lx-0x%lx\n", vr->vaddr, nextvr->vaddr);
-			}
 		}
 	}
 
@@ -721,26 +749,51 @@ PRIVATE int map_free(struct vmproc *vmp, struct vir_region *region)
 	return OK;
 }
 
+/*===========================================================================*
+ *				yielded_block_cmp			     *
+ *===========================================================================*/
+PUBLIC int yielded_block_cmp(struct block_id *id1, struct block_id *id2)
+{
+	if(id1->owner < id2->owner)
+		return -1;
+	if(id1->owner > id2->owner)
+		return 1;
+	return cmp64(id1->id, id2->id);
+}
+
 
 /*===========================================================================*
  *				free_yielded_proc			     *
  *===========================================================================*/
 PRIVATE vir_bytes free_yielded_proc(struct vmproc *vmp)
 {
-	yielded_t *yb;
-	int y = 0;
 	vir_bytes total = 0;
+	int h;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	/* Free associated regions. */
-	while((yb = yielded_search_root(&vmp->vm_yielded_blocks))) {
-		SLABSANE(yb);
-		total += freeyieldednode(yb, 1);
-		y++;
+	for(h = 0; h < YIELD_HASHSIZE && vmp->vm_yielded > 0; h++) {
+		yielded_t *yb;
+		yielded_iter iter;
+		yielded_avl *avl = &vm_yielded_blocks[h];
+		yielded_start_iter_least(avl, &iter);
+		while((yb = yielded_get_iter(&iter))) {
+			yielded_t *next_yb;
+			SLABSANE(yb);
+			yielded_incr_iter(&iter);
+			if(yb->id.owner != vmp->vm_endpoint)
+				continue;
+			next_yb = yielded_get_iter(&iter); 
+			total += freeyieldednode(yb, 1);
+			/* the above removal invalidated our iter; restart it
+			 * for the node we want to start at.
+			 */
+			if(!next_yb) break; 
+			yielded_start_iter(avl, &iter, next_yb->id, AVL_EQUAL);
+			assert(yielded_get_iter(&iter) == next_yb);
+		}
 	}
-
-	yielded_init(&vmp->vm_yielded_blocks);
 
 	return total;
 }
@@ -749,8 +802,9 @@ PRIVATE vir_bytes free_yielded_proc(struct vmproc *vmp)
 PRIVATE phys_bytes freeyieldednode(yielded_t *node, int freemem)
 {
 	yielded_t *older, *younger, *removed;
-	int p;
 	vir_bytes len;
+	yielded_avl *avl; 
+	int p;
 
 	SLABSANE(node);
 
@@ -783,11 +837,13 @@ PRIVATE phys_bytes freeyieldednode(yielded_t *node, int freemem)
 
 	/* Update AVL. */
 
-	if(vm_isokendpt(node->owner, &p) != OK)
-		panic("out of date owner of yielded block %d", node->owner);
-
-	removed = yielded_remove(&vmproc[p].vm_yielded_blocks, node->id);
+	if(vm_isokendpt(node->id.owner, &p) != OK)
+		panic("out of date owner of yielded block %d", node->id.owner);
+	avl = get_yielded_avl(node->id);
+	removed = yielded_remove(avl, node->id);
 	assert(removed == node);
+	assert(vmproc[p].vm_yielded > 0);
+	vmproc[p].vm_yielded--;
 
 	/* Free associated memory if requested. */
 
@@ -1199,7 +1255,6 @@ PUBLIC int map_pin_memory(struct vmproc *vmp)
 		}
 		region_incr_iter(&iter);
 	}
-
 	return OK;
 }
 
@@ -2388,9 +2443,14 @@ PRIVATE int getblock(struct vmproc *vmp, u64_t id,
 	yielded_t *yb;
 	struct phys_region *ph;
 	struct vir_region *region;
+	yielded_avl *avl;
+	block_id_t blockid;
 
 	/* Try to get the yielded block */
-	if(!(yb = yielded_search(&vmp->vm_yielded_blocks, id, AVL_EQUAL))) {
+	blockid.owner = vmp->vm_endpoint;
+	blockid.id = id;
+	avl = get_yielded_avl(blockid);
+	if(!(yb = yielded_search(avl, blockid, AVL_EQUAL))) {
 		return ESRCH;
 	}
 
@@ -2434,11 +2494,16 @@ PRIVATE int yieldblock(struct vmproc *vmp, u64_t id,
 	vir_bytes mem_clicks, newmem, clicks;
 	struct vir_region *region;
 	struct phys_region *ph;
+	yielded_avl *avl;
+	block_id_t blockid;
 
 	/* Makes no sense if yielded block ID already exists, and
 	 * is likely a serious bug in the caller.
 	 */
-	if(yielded_search(&vmp->vm_yielded_blocks, id, AVL_EQUAL)) {
+	blockid.id = id;
+	blockid.owner = vmp->vm_endpoint;
+	avl = get_yielded_avl(blockid);
+	if(yielded_search(avl, blockid, AVL_EQUAL)) {
 		printf("!");
 		return EINVAL;
 	}
@@ -2465,10 +2530,9 @@ PRIVATE int yieldblock(struct vmproc *vmp, u64_t id,
 
 	/* Update yielded block info. */
 	USE(newyb,
-		newyb->id = id;
+		newyb->id = blockid;
 		newyb->addr = ph->ph->phys;
 		newyb->len = ph->ph->length;
-		newyb->owner = vmp->vm_endpoint;
 		newyb->younger = NULL;);
 
 	/* Set new phys block to new addr and update pagetable. */
@@ -2482,7 +2546,9 @@ PRIVATE int yieldblock(struct vmproc *vmp, u64_t id,
 	}
 
 	/* Remember yielded block. */
-	yielded_insert(&vmp->vm_yielded_blocks, newyb);
+
+	yielded_insert(avl, newyb);
+	vmp->vm_yielded++;
 
 	/* Add to LRU list too. It's the youngest block. */
 	LRUCHECK;
@@ -2542,6 +2608,8 @@ PUBLIC int do_forgetblock(message *m)
 	endpoint_t caller = m->m_source;
 	yielded_t *yb;
 	u64_t id;
+	block_id_t blockid;
+	yielded_avl *avl;
 
 	if(vm_isokendpt(caller, &n) != OK)
 		panic("do_yield_block: message from strange source: %d",
@@ -2556,7 +2624,10 @@ PUBLIC int do_forgetblock(message *m)
 
 	id = make64(m->VMFB_IDLO, m->VMFB_IDHI);
 
-	if((yb = yielded_search(&vmp->vm_yielded_blocks, id, AVL_EQUAL))) {
+	blockid.id = id;
+	blockid.owner = vmp->vm_endpoint;
+	avl = get_yielded_avl(blockid);
+	if((yb = yielded_search(avl, blockid, AVL_EQUAL))) {
 		freeyieldednode(yb, 1);
 	}
 
