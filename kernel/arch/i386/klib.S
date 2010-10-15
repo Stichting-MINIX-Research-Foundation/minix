@@ -5,7 +5,7 @@
 #include <minix/const.h>
 #include <machine/asm.h>
 #include <machine/interrupt.h>
-#include <i386/vm.h>
+#include <machine/vm.h>
 #include "archconst.h"
 #include "kernel/const.h"
 #include "sconst.h"
