@@ -471,7 +471,7 @@ PRIVATE vir_bytes region_find_slot(struct vmproc *vmp,
 	 * possible. remember that a zero maxv is a special case.
 	 */
 
-	if(maxv && hint < maxv) {
+	if(maxv && hint < maxv && hint >= minv) {
 		v = region_find_slot_range(vmp, hint, maxv, length);
 
 		if(v != SLOT_FAIL)
