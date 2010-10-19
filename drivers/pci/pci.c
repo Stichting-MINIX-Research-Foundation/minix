@@ -838,7 +838,7 @@ PRIVATE void probe_bus(int busind)
 				if (dstr)
 				{
 					printf("%d.%lu.%lu: %s (%04X/%04X)\n",
-						busind, (unsigned long)dev,
+						busnr, (unsigned long)dev,
 						(unsigned long)func, dstr,
 						vid, did);
 				}
@@ -846,7 +846,7 @@ PRIVATE void probe_bus(int busind)
 				{
 					printf(
 		"%d.%lu.%lu: Unknown device, vendor %04X (%s), device %04X\n",
-						busind, (unsigned long)dev,
+						busnr, (unsigned long)dev,
 						(unsigned long)func, vid,
 						pci_vid_name(vid), did);
 				}
