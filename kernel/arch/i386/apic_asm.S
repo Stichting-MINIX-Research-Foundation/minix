@@ -67,6 +67,12 @@ ENTRY(apic_hwint##irq)							\
 ENTRY(lapic_timer_int_handler)
 	lapic_intr(_C_LABEL(timer_int_handler))
 
+ENTRY(apic_spurios_intr)
+	lapic_intr(_C_LABEL(apic_spurios_intr_handler))
+
+ENTRY(apic_error_intr)
+	lapic_intr(_C_LABEL(apic_error_intr_handler))
+
 #ifdef CONFIG_SMP
 
 ENTRY(apic_ipi_sched_intr)

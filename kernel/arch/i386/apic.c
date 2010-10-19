@@ -715,16 +715,23 @@ PUBLIC int lapic_enable(unsigned cpu)
 	return 1;
 }
 
-PRIVATE void apic_spurios_intr(void)
+PUBLIC void apic_spurios_intr_handler(void)
 {
-	printf("WARNING spurious interrupt\n");
-	for(;;);
+	static unsigned x;
+
+	x++;
+	if (x == 1 || (x % 100) == 0)
+		printf("WARNING spurious interrupt(s) %d on cpu %d\n", x, cpuid);
 }
 
-PRIVATE void apic_error_intr(void)
+PUBLIC void apic_error_intr_handler(void)
 {
-	printf("WARNING local apic error interrupt\n");
-	for(;;);
+	static unsigned x;
+
+	x++;
+	if (x == 1 || (x % 100) == 0)
+		printf("WARNING apic error (0x%x) interrupt(s) %d on cpu %d\n",
+				lapic_errstatus(), x, cpuid);
 }
 
 PRIVATE struct gate_table_s gate_table_ioapic[] = {

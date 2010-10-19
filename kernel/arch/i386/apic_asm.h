@@ -72,6 +72,8 @@ _PROTOTYPE( void apic_hwint63, (void) );
 
 /* The local APIC timer tick handlers */
 _PROTOTYPE(void lapic_timer_int_handler, (void));
+_PROTOTYPE(void apic_spurios_intr, (void));
+_PROTOTYPE(void apic_error_intr, (void));
 
 #endif
 
