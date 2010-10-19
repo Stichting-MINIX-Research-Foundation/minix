@@ -88,7 +88,7 @@ lapic_intr_dummy_handler_msg:
 #define lapic_intr_dummy_handler(vect)			\
 	pushl	$vect;					\
 	push	$lapic_intr_dummy_handler_msg;		\
-	call	_C_LABEL(printf);			\
+	call	_C_LABEL(panic);			\
 1:	jmp	1b; /* never return */
 
 #define LAPIC_INTR_DUMMY_HANDLER(vect)			\
