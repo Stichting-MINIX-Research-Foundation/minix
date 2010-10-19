@@ -194,6 +194,7 @@ PUBLIC void cycles_accounting_init(void)
 
 PUBLIC void context_stop(struct proc * p)
 {
+	unsigned cpu = cpuid;
 	u64_t tsc, tsc_delta;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
 
@@ -207,12 +208,15 @@ PUBLIC void context_stop(struct proc * p)
 	 * for IDLE we must not hold the lock
 	 */
 	if (p == proc_addr(KERNEL)) {
+		u64_t tmp;
+
 		read_tsc_64(&tsc);
-		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
+		tmp = sub64(tsc, *__tsc_ctr_switch);
+		kernel_ticks[cpu] = add64(kernel_ticks[cpu], tmp);
+		p->p_cycles = add64(p->p_cycles, tmp);
 		BKL_UNLOCK();
 	} else {
-		u64_t bkl_tsc, tmp;
-		unsigned cpu = cpuid;
+		u64_t bkl_tsc;
 		atomic_t succ;
 		
 		read_tsc_64(&bkl_tsc);
@@ -227,9 +231,7 @@ PUBLIC void context_stop(struct proc * p)
 		bkl_tries[cpu]++;
 		bkl_succ[cpu] += !(!(succ == 0));
 
-		tmp = sub64(tsc, *__tsc_ctr_switch);
-		kernel_ticks[cpu] = add64(kernel_ticks[cpu], tmp);
-		p->p_cycles = add64(p->p_cycles, tmp);
+		p->p_cycles = add64(p->p_cycles, sub64(tsc, *__tsc_ctr_switch));
 	}
 #else
 	read_tsc_64(&tsc);
