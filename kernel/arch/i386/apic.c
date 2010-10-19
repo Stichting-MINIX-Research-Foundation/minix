@@ -1092,6 +1092,8 @@ PUBLIC int apic_single_cpu_init(void)
 		return 0;
 	}
 
+	bsp_lapic_id = apicid();
+
 	acpi_init();
 
 	if (!detect_ioapics()) {

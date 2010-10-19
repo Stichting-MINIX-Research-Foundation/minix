@@ -317,6 +317,8 @@ PUBLIC void smp_init (void)
 		printf("ERROR : failed to initialize BSP Local APIC\n");
 		goto uniproc_fallback;
 	}
+
+	bsp_lapic_id = apicid();
 	
 	acpi_init();
 
