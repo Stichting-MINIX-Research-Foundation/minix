@@ -2,6 +2,7 @@
 #include <minix/ipc.h>
 
 #define ACPI_REQ_GET_IRQ	1
+#define ACPI_REQ_MAP_BRIDGE	2
 
 struct acpi_request_hdr {
 	endpoint_t 	m_source; /* message header */
@@ -14,14 +15,30 @@ struct acpi_request_hdr {
  */
 struct acpi_get_irq_req {
 	struct acpi_request_hdr	hdr;
+	u32_t			bus;
 	u32_t			dev;
 	u32_t			pin;
-	u32_t			__padding[5];
+	u32_t			__padding[4];
 };
 
 /* response from acpi to acpi_get_irq_req */
 struct acpi_get_irq_resp {
 	endpoint_t 	m_source; /* message header */
 	i32_t		irq;
+	u32_t		__padding[7];
+};
+
+/* message format for pci bridge mappings to acpi */
+struct acpi_map_bridge_req {
+	struct acpi_request_hdr	hdr;
+	u32_t	primary_bus;
+	u32_t	secondary_bus;
+	u32_t	device;
+	u32_t	__padding[4];
+};
+
+struct acpi_map_bridge_resp {
+	endpoint_t 	m_source; /* message header */
+	int		err;
 	u32_t		__padding[7];
 };

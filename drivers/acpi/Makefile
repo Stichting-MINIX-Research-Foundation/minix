@@ -8,6 +8,7 @@ PROG=	acpi
 
 SRCS= \
 	acpi.c \
+	pci.c \
 	osminixxf.c
 
 ACPICA_SRCS= \

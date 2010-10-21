@@ -945,12 +945,13 @@ PRIVATE int is_duplicate(u8_t busnr, u8_t dev, u8_t func)
 	return 0;
 }
 
-PRIVATE int acpi_get_irq(unsigned dev, unsigned pin)
+PRIVATE int acpi_get_irq(unsigned bus, unsigned dev, unsigned pin)
 {
 	int err;
 	message m;
 
 	((struct acpi_get_irq_req *)&m)->hdr.request = ACPI_REQ_GET_IRQ;
+	((struct acpi_get_irq_req *)&m)->bus = bus;
 	((struct acpi_get_irq_req *)&m)->dev = dev;
 	((struct acpi_get_irq_req *)&m)->pin = pin;
 
@@ -973,7 +974,8 @@ PRIVATE int derive_irq(struct pcidev * dev, int pin)
 	 */
 	slot = ((dev->pd_func) >> 3) & 0x1f;
 
-	return acpi_get_irq(parent_bridge->pd_dev, (pin + slot) % 4);
+	return acpi_get_irq(parent_bridge->pd_busnr,
+			parent_bridge->pd_dev, (pin + slot) % 4);
 }
 
 /*===========================================================================*
@@ -990,7 +992,8 @@ int devind;
 	if (ipr && machine.apic_enabled) {
 		int irq;
 
-		irq = acpi_get_irq(pcidev[devind].pd_dev, ipr - 1);
+		irq = acpi_get_irq(pcidev[devind].pd_busnr,
+				pcidev[devind].pd_dev, ipr - 1);
 
 		if (irq < 0)
 			irq = derive_irq(&pcidev[devind], ipr - 1);
@@ -1834,6 +1837,29 @@ int busind;
 	return 0;
 }
 
+/*
+ * tells acpi which two busses are connected by this bridge. The primary bus
+ * (pbnr) must be already known to acpi and it must map dev as the connection to
+ * the secondary (sbnr) bus
+ */
+PRIVATE void acpi_map_bridge(unsigned pbnr, unsigned dev, unsigned sbnr)
+{
+	int err;
+	message m;
+
+	((struct acpi_map_bridge_req *)&m)->hdr.request = ACPI_REQ_MAP_BRIDGE;
+	((struct acpi_map_bridge_req *)&m)->primary_bus = pbnr;
+	((struct acpi_map_bridge_req *)&m)->secondary_bus = sbnr;
+	((struct acpi_map_bridge_req *)&m)->device = dev;
+
+	if ((err = sendrec(acpi_ep, &m)) != OK)
+		panic("PCI: error %d while receiveing from ACPI\n", err);
+
+	if (((struct acpi_map_bridge_resp *)&m)->err != OK)
+		panic("PCI: acpi failed to map pci (%d) to pci (%d) bridge\n",
+								pbnr, sbnr);
+}
+
 /*===========================================================================*
  *				do_pcibridge				     *
  *===========================================================================*/
@@ -1963,6 +1989,11 @@ int busind;
 		default:
 		    panic("unknown PCI-PCI bridge type: %d", type);
 		}
+
+		if (machine.apic_enabled)
+			acpi_map_bridge(pcidev[devind].pd_busnr,
+					pcidev[devind].pd_dev, sbusn);
+
 		if (debug)
 		{
 			printf(
