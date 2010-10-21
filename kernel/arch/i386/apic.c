@@ -399,7 +399,7 @@ PUBLIC void ioapic_mask_irq(unsigned irq)
 
 PUBLIC unsigned int apicid(void)
 {
-	return lapic_read(LAPIC_ID);
+	return lapic_read(LAPIC_ID) >> 24;
 }
 
 PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
@@ -1100,6 +1100,7 @@ PUBLIC int apic_single_cpu_init(void)
 	}
 
 	bsp_lapic_id = apicid();
+	printf("Boot cpu apic id %d\n", bsp_lapic_id);
 
 	acpi_init();
 
@@ -1186,7 +1187,7 @@ PUBLIC void ioapic_set_irq(unsigned irq)
 			/*
 			 * route the interrupts to the bsp by default
 			 */
-			hi_32 = 0;
+			hi_32 = bsp_lapic_id << 24;
 			ioapic_redirt_entry_write((void *) io_apic[ioa].addr,
 					io_apic_irq[irq].pin, hi_32, low_32);
 		}
