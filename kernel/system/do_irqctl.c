@@ -9,6 +9,7 @@
  *      ,,          ,,          (returns index of irq hook assigned at kernel)
  */
 
+#include "kernel/kernel.h"
 #include "kernel/system.h"
 
 #include <minix/endpoint.h>
@@ -112,6 +113,8 @@ PUBLIC int do_irqctl(struct proc * caller, message * m_ptr)
       hook_ptr->notify_id = notify_id;		/* identifier to pass */   	
       hook_ptr->policy = m_ptr->IRQ_POLICY;	/* policy for interrupts */
       put_irq_handler(hook_ptr, irq_vec, generic_handler);
+      DEBUGBASIC(("IRQ %d handler registered by %s / %d\n",
+			      irq_vec, caller->p_name, caller->p_endpoint));
 
       /* Return index of the IRQ hook in use. */
       m_ptr->IRQ_HOOK_ID = irq_hook_id + 1;
