@@ -370,8 +370,6 @@ check_misc_flags:
 	p = arch_finish_switch_to_user();
 	assert(!is_zero64(p->p_cpu_time_left));
 
-	restart_local_timer();
-	
 	context_stop(proc_addr(KERNEL));
 
 	/* If the process isn't the owner of FPU, enable the FPU exception */
@@ -389,6 +387,9 @@ check_misc_flags:
 #ifdef CONFIG_SMP
 	refresh_tlb();
 #endif
+	
+	restart_local_timer();
+	
 	/*
 	 * restore_user_context() carries out the actual mode switch from kernel
 	 * to userspace. This function does not return

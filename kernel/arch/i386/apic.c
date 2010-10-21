@@ -508,14 +508,14 @@ PUBLIC void lapic_set_timer_one_shot(const u32_t usec)
 
 	ticks_per_us = (lapic_bus_freq[cpu] / 1000000) * config_apic_timer_x;
 
+	lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
+
 	lvtt = APIC_TDCR_1;
 	lapic_write(LAPIC_TIMER_DCR, lvtt);
 
 	/* configure timer as one-shot */
 	lvtt = APIC_TIMER_INT_VECTOR;
 	lapic_write(LAPIC_LVTTR, lvtt);
-
-	lapic_write(LAPIC_TIMER_ICR, usec * ticks_per_us);
 }
 
 PUBLIC void lapic_set_timer_periodic(const unsigned freq)

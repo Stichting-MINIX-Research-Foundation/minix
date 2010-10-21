@@ -124,8 +124,8 @@ PUBLIC int init_local_timer(unsigned freq)
 	/* if we know the address, lapic is enabled and we should use it */
 	if (lapic_addr) {
 		unsigned cpu = cpuid;
-		lapic_set_timer_periodic(freq);
 		tsc_per_ms[cpu] = div64u(cpu_get_freq(cpu), 1000);
+		lapic_set_timer_one_shot(1000000/system_hz);
 	} else
 	{
 		BOOT_VERBOSE(printf("Initiating legacy i8253 timer\n"));
