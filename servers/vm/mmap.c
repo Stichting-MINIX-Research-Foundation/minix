@@ -133,6 +133,7 @@ PUBLIC int do_map_phys(message *m)
 	struct vir_region *vr;
 	vir_bytes len;
 	phys_bytes startaddr;
+	size_t offset;
 
 	target = m->VMMP_EP;
 	len = m->VMMP_LEN;
@@ -159,6 +160,10 @@ PUBLIC int do_map_phys(message *m)
 	if(!(vmp->vm_flags & VMF_HASPT))
 		return ENXIO;
 
+	offset = startaddr % VM_PAGE_SIZE;
+	len += offset;
+	startaddr -= offset;
+
 	if(len % VM_PAGE_SIZE)
 		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
@@ -168,7 +173,7 @@ PUBLIC int do_map_phys(message *m)
 		return ENOMEM;
 	}
 
-	m->VMMP_VADDR_REPLY = (void *) arch_map2vir(vmp, vr->vaddr);
+	m->VMMP_VADDR_REPLY = (void *) (arch_map2vir(vmp, vr->vaddr) + offset);
 
 	return OK;
 }
