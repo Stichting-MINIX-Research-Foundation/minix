@@ -148,6 +148,9 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 		} else
 #endif
 			RTS_SET(p, RTS_VMINHIBIT);
+#if CONFIG_SMP
+		p->p_misc_flags |= MF_FLUSH_TLB;
+#endif
 		return OK;
 	case VMCTL_VMINHIBIT_CLEAR:
 		assert(RTS_ISSET(p, RTS_VMINHIBIT));

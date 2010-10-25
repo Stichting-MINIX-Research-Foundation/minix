@@ -242,6 +242,9 @@ struct proc {
 #define MF_SENDING_FROM_KERNEL	0x2000 /* message of this process is from kernel */
 #define MF_CONTEXT_SET	0x4000 /* don't touch context */
 #define MF_SPROF_SEEN	0x8000 /* profiling has seen this process */
+#define MF_FLUSH_TLB	0x10000	/* if set, TLB must be flushed before letting
+				   this process run again. Currently it only
+				   applies to SMP */
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])
