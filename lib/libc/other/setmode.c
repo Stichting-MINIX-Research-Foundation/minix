@@ -236,11 +236,11 @@ setmode(p)
 			goto out;
 		}
 		perm = (mode_t)lval;
-		ADDCMD('=', (STANDARD_BITS
 #ifdef S_ISTXT
-		|S_ISTXT
+		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
+#else
+		ADDCMD('=', (STANDARD_BITS), perm, mask);
 #endif
-		), perm, mask);
 		set->cmd = 0;
 		return (saveset);
 	}
