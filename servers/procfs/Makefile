@@ -1,6 +1,6 @@
 # Makefile for ProcFS server
 PROG=	procfs
-SRCS=	buf.c main.c pid.c root.c tree.c util.c
+SRCS=	buf.c main.c pid.c root.c tree.c util.c cpuinfo.c
 
 CPPFLAGS+= -I${MINIXSRCDIR} -I${MINIXSRCDIR}/servers
 

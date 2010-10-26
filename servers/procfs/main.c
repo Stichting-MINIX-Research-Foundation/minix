@@ -1,6 +1,7 @@
 /* ProcFS - main.c - by Alen Stojanov and David van Moolenbroek */
 
 #include "inc.h"
+#include "cpuinfo.h"
 
 FORWARD _PROTOTYPE( void init_hook, (void)				);
 

@@ -2,6 +2,7 @@
 
 #include "inc.h"
 #include <machine/pci.h>
+#include "cpuinfo.h"
 
 FORWARD _PROTOTYPE( void root_hz, (void)				);
 FORWARD _PROTOTYPE( void root_uptime, (void)				);
@@ -17,6 +18,7 @@ struct file root_files[] = {
 	{ "kinfo",	REG_ALL_MODE,	(data_t) root_kinfo	},
 	{ "meminfo",	REG_ALL_MODE,	(data_t) root_meminfo	},
 	{ "pci",	REG_ALL_MODE,	(data_t) root_pci	},
+	{ "cpuinfo",	REG_ALL_MODE,	(data_t) root_cpuinfo	},
 	{ NULL,		0,		NULL			}
 };
 
