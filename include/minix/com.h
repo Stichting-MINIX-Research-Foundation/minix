@@ -491,6 +491,7 @@
 #   define GET_RANDOMNESS_BIN 20 /* get one randomness bin */
 #   define GET_IDLETSC	  21	/* get cumulative idle time stamp counter */
 #   define GET_AOUTHEADER 22    /* get a.out headers from the boot image */
+#   define GET_CPUINFO    23    /* get information about cpus */
 #define I_ENDPT        m7_i4	/* calling process (may only be SELF) */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */

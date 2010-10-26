@@ -63,6 +63,11 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &kloadinfo;
         break;
     }
+    case GET_CPUINFO: {
+        length = sizeof(cpu_info);
+        src_vir = (vir_bytes) &cpu_info;
+        break;
+    }
     case GET_HZ: {
         length = sizeof(system_hz);
         src_vir = (vir_bytes) &system_hz;
