@@ -496,6 +496,7 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 				lapic_bus_freq[cpuid] / 1000000));
 	cpu_freq = mul64(div64u64(tsc_delta, PROBE_TICKS - 1), make64(system_hz, 0));
 	cpu_set_freq(cpuid, cpu_freq);
+	cpu_info[cpuid].freq = div64u(cpu_freq, 1000000);
 	BOOT_VERBOSE(cpu_print_freq(cpuid));
 }
 

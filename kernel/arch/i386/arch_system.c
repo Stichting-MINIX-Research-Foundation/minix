@@ -304,23 +304,22 @@ PUBLIC void restore_fpu(struct proc *pr)
 	}
 }
 
-PRIVATE void cpu_identify(void)
+PUBLIC void cpu_identify(void)
 {
 	u32_t eax, ebx, ecx, edx;
+	unsigned cpu = cpuid;
 	
 	eax = 0;
 	_cpuid(&eax, &ebx, &ecx, &edx);
 
 	if (ebx == INTEL_CPUID_GEN_EBX && ecx == INTEL_CPUID_GEN_ECX &&
 			edx == INTEL_CPUID_GEN_EDX) {
-		machine.cpu_type.vendor = CPU_VENDOR_INTEL;
-		printf("Genuine Intel found\n");
+		cpu_info[cpu].vendor = CPU_VENDOR_INTEL;
 	} else if (ebx == AMD_CPUID_GEN_EBX && ecx == AMD_CPUID_GEN_ECX &&
 			edx == AMD_CPUID_GEN_EDX) {
-		machine.cpu_type.vendor = CPU_VENDOR_AMD;
-		printf("Authentic AMD found\n");
+		cpu_info[cpu].vendor = CPU_VENDOR_AMD;
 	} else
-		machine.cpu_type.vendor = CPU_VENDOR_UNKNOWN;
+		cpu_info[cpu].vendor = CPU_VENDOR_UNKNOWN;
 
 	if (eax == 0) 
 		return;
@@ -328,19 +327,19 @@ PRIVATE void cpu_identify(void)
 	eax = 1;
 	_cpuid(&eax, &ebx, &ecx, &edx);
 
-	machine.cpu_type.family = (eax >> 8) & 0xf;
-	if (machine.cpu_type.family == 0xf)
-		machine.cpu_type.family += (eax >> 20) & 0xff;
-	machine.cpu_type.model = (eax >> 4) & 0xf;
-	if (machine.cpu_type.model == 0xf || machine.cpu_type.model == 0x6)
-		machine.cpu_type.model += ((eax >> 16) & 0xf) << 4 ;
-	machine.cpu_type.stepping = eax & 0xf;
+	cpu_info[cpu].family = (eax >> 8) & 0xf;
+	if (cpu_info[cpu].family == 0xf)
+		cpu_info[cpu].family += (eax >> 20) & 0xff;
+	cpu_info[cpu].model = (eax >> 4) & 0xf;
+	if (cpu_info[cpu].model == 0xf || cpu_info[cpu].model == 0x6)
+		cpu_info[cpu].model += ((eax >> 16) & 0xf) << 4 ;
+	cpu_info[cpu].stepping = eax & 0xf;
+	cpu_info[cpu].flags[0] = ecx;
+	cpu_info[cpu].flags[1] = edx;
 }
 
 PUBLIC void arch_init(void)
 {
-	cpu_identify();
-
 #ifdef CONFIG_APIC
 	/*
 	 * this is setting kernel segments to cover most of the phys memory. The

@@ -238,6 +238,8 @@ PRIVATE void ap_finish_booting(void)
 	
 	printf("CPU %d paging is on\n", cpu);
 
+	cpu_identify();
+
 	lapic_enable(cpu);
 	fpu_init();
 

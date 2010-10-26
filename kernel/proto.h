@@ -184,6 +184,7 @@ _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
 _PROTOTYPE( int intr_init, (int, int)					);
 _PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );
+_PROTOTYPE( void cpu_identify, (void)					);
 /* arch dependent FPU initialization per CPU */
 _PROTOTYPE( void fpu_init, (void)					);
 /* returns true if pfu is present and initialized */

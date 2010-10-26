@@ -79,6 +79,8 @@ extern struct segdesc_s gdt[];		/* global descriptor table */
 
 EXTERN volatile int serial_debug_active;
 
+EXTERN struct cpu_info cpu_info[CONFIG_MAX_CPUS];
+
 /* BKL stats */
 EXTERN u64_t kernel_ticks[CONFIG_MAX_CPUS];
 EXTERN u64_t bkl_ticks[CONFIG_MAX_CPUS];

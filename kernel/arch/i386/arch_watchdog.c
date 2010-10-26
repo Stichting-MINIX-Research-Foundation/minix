@@ -60,13 +60,14 @@ PRIVATE void intel_arch_watchdog_reinit(const unsigned cpu)
 PUBLIC int arch_watchdog_init(void)
 {
 	u32_t eax, ebx, ecx, edx;
+	unsigned cpu = cpuid;
 
 	if (!lapic_addr) {
 		printf("ERROR : Cannot use NMI watchdog if APIC is not enabled\n");
 		return -1;
 	}
 
-	if (machine.cpu_type.vendor == CPU_VENDOR_INTEL) {
+	if (cpu_info[cpu].vendor == CPU_VENDOR_INTEL) {
 		eax = 0xA;
 
 		_cpuid(&eax, &ebx, &ecx, &edx);
@@ -81,11 +82,11 @@ PUBLIC int arch_watchdog_init(void)
 			return -1;
 
 		watchdog = &intel_arch_watchdog;
-	} else if (machine.cpu_type.vendor == CPU_VENDOR_AMD) {
-		if (machine.cpu_type.family != 6 &&
-				machine.cpu_type.family != 15 &&
-				machine.cpu_type.family != 16 &&
-				machine.cpu_type.family != 17)
+	} else if (cpu_info[cpu].vendor == CPU_VENDOR_AMD) {
+		if (cpu_info[cpu].family != 6 &&
+				cpu_info[cpu].family != 15 &&
+				cpu_info[cpu].family != 16 &&
+				cpu_info[cpu].family != 17)
 			return -1;
 		else
 			watchdog = &amd_watchdog;
