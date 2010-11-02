@@ -39,6 +39,22 @@ freopen(const char *name, const char *mode, FILE *stream)
 	(void) fflush(stream);				/* ignore errors */
 	(void) _close(fileno(stream));
 
+	/* Find the slot the stream had, if any. */
+	for(i = 0; i < FOPEN_MAX; i++)
+		if (stream == __iotab[i])
+			break;
+
+	/* If none, it might've been fclose()d; find a new slot for it. */
+	if(i >= FOPEN_MAX) {
+	        for (i = 0; __iotab[i] != 0 ; i++) {
+                	if ( i >= FOPEN_MAX-1 )
+                        	return (FILE *)NULL;
+		}
+	}
+
+	/* If it was valid, it isn't any more until the freopen() succeeds. */
+	__iotab[i] = 0;
+
 	switch(*mode++) {
 	case 'r':
 		flags |= _IOREAD;	
@@ -95,15 +111,10 @@ freopen(const char *name, const char *mode, FILE *stream)
 	stream->_count = 0;
 	stream->_fd = fd;
 	stream->_flags = flags;
+	__iotab[i] = stream;
 	return stream;
 
 loser:
-	for( i = 0; i < FOPEN_MAX; i++) {
-		if (stream == __iotab[i]) {
-			__iotab[i] = 0;
-			break;
-		}
-	}
 	if (stream != stdin && stream != stdout && stream != stderr)
 		free((void *)stream);
 	return (FILE *)NULL;	
