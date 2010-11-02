@@ -25,6 +25,7 @@ fclose(FILE *fp)
 	if (_close(fileno(fp))) retval = EOF;
 	if ( io_testflag(fp,_IOMYBUF) && fp->_buf )
 		free((void *)fp->_buf);
+	fp->_buf = NULL;
 	if (fp != stdin && fp != stdout && fp != stderr)
 		free((void *)fp);
 	return retval;
