@@ -53,5 +53,6 @@ SRCS+=  \
 	vfprintf.c \
 	vprintf.c \
 	vscanf.c \
+	vsnprintf.c \
 	vsprintf.c \
 	vsscanf.c
