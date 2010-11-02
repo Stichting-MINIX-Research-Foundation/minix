@@ -251,6 +251,7 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
 {
 	reg_t v_bp, v_pc, v_hbp;
 	int iskernel;
+	int n = 0;
 
 	v_bp = whichproc->p_reg.fp;
 
@@ -279,6 +280,8 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
 			break;
 		}
 		v_bp = v_hbp;
+		if(n++ > 50)
+			break;
 	}
 	printf("\n");
 }
