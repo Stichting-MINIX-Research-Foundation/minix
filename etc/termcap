@@ -72,7 +72,6 @@ d0|vt100|vt100-am|vt100am|dec-vt100|dec vt100:\
 # - copied the following screen* entries from
 # http://www.catb.org/terminfo/termtypes.tc.gz
 #	Version 11.0.1
-#	$Date$
 # ("This file deliberately has no copyright.  It belongs to no one and
 # everyone.")
 #

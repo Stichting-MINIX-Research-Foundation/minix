@@ -14,4 +14,3 @@ Version 1.3
   -	Merged code from usyslogd.c to handle kernel messages.
   -	Reworked Makefile to make a correct installation
 
-$Id$

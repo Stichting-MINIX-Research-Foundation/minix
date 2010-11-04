@@ -2,7 +2,6 @@
 ##  @(#)Makefile	1.00	Jan. 11, 2000
 ##
 ##  Makefile for syslogd/klogd
-##  $Id$
 
 PROG=	syslogd
 PIDFILE= -DPIDFILE=\"/var/run/syslogd.pid\"
