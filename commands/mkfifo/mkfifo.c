@@ -1,194 +1,114 @@
-/* mkfifo - Make FIFO special files		Author: V. Archer */
+/*	$NetBSD: mkfifo.c,v 1.12 2008/07/21 14:19:24 lukem Exp $	*/
 
-/* Copyright 1991 by Vincent Archer
- *	You may freely redistribute this software, in source or binary
- *	form, provided that you do not alter this copyright mention in any
- *	way.
+/*
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <unistd.h>
-#include <minix/minlib.h>
+#include <sys/cdefs.h>
+#if 0
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
+#endif /* not lint */
+#endif
+
+#if 0
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
+#endif
+__RCSID("$NetBSD: mkfifo.c,v 1.12 2008/07/21 14:19:24 lukem Exp $");
+#endif /* not lint */
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <locale.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <err.h>
 
-#define USR_MODES (S_ISUID|S_IRWXU)
-#define GRP_MODES (S_ISGID|S_IRWXG)
-#define EXE_MODES (S_IXUSR|S_IXGRP|S_IXOTH)
-#ifdef S_ISVTX
-#define ALL_MODES (USR_MODES|GRP_MODES|S_IRWXO|S_ISVTX)
-#else
-#define ALL_MODES (USR_MODES|GRP_MODES|S_IRWXO)
-#endif
-#define DEFAULT_MODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
+int	main __P((int, char **));
+static void usage __P((void));
 
-
-/* Global u_mask needed in changemode.h */
-mode_t u_mask;
-
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(mode_t parsemode, (char *symbolic, mode_t oldmode));
-_PROTOTYPE(void usage, (void));
-
-/* Parse a P1003.2 4.7.7-conformant symbolic mode. */
-mode_t parsemode(char *symbolic, mode_t oldmode)
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-  mode_t who, mask, newmode, tmpmask;
-  char action;
+	int ch, exitval;
+	void *set;
+	mode_t mode;
 
-  newmode = oldmode & ALL_MODES;
-  while (*symbolic) {
-	who = 0;
-	for (; *symbolic; symbolic++) {
-		if (*symbolic == 'a') {
-			who |= ALL_MODES;
-			continue;
-		}
-		if (*symbolic == 'u') {
-			who |= USR_MODES;
-			continue;
-		}
-		if (*symbolic == 'g') {
-			who |= GRP_MODES;
-			continue;
-		}
-		if (*symbolic == 'o') {
-			who |= S_IRWXO;
-			continue;
-		}
-		break;
-	}
-	if (!*symbolic || *symbolic == ',') usage();
-	while (*symbolic) {
-		if (*symbolic == ',') break;
-		switch (*symbolic) {
-		    default:
+	setlocale (LC_ALL, "");
+
+	/* The default mode is the value of the bitwise inclusive or of
+	   S_IRUSR, S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH
+	   modified by the file creation mask */
+	mode = 0666 & ~umask(0);
+
+	while ((ch = getopt(argc, argv, "m:")) != -1)
+		switch(ch) {
+		case 'm':
+			if (!(set = setmode(optarg))) {
+				err(1, "Cannot set file mode `%s'", optarg);
+				/* NOTREACHED */
+			}
+			/* In symbolic mode strings, the + and - operators are
+			   interpreted relative to an assumed initial mode of
+			   a=rw. */
+			mode = getmode(set, 0666);
+			free(set);
+			break;
+		case '?':
+		default:
 			usage();
-		    case '+':
-		    case '-':
-		    case '=':	action = *symbolic++;
 		}
-		mask = 0;
-		for (; *symbolic; symbolic++) {
-			if (*symbolic == 'u') {
-				tmpmask = newmode & S_IRWXU;
-				mask |= tmpmask | (tmpmask << 3) | (tmpmask << 6);
-				symbolic++;
-				break;
-			}
-			if (*symbolic == 'g') {
-				tmpmask = newmode & S_IRWXG;
-				mask |= tmpmask | (tmpmask >> 3) | (tmpmask << 3);
-				symbolic++;
-				break;
-			}
-			if (*symbolic == 'o') {
-				tmpmask = newmode & S_IRWXO;
-				mask |= tmpmask | (tmpmask >> 3) | (tmpmask >> 6);
-				symbolic++;
-				break;
-			}
-			if (*symbolic == 'r') {
-				mask |= S_IRUSR | S_IRGRP | S_IROTH;
-				continue;
-			}
-			if (*symbolic == 'w') {
-				mask |= S_IWUSR | S_IWGRP | S_IWOTH;
-				continue;
-			}
-			if (*symbolic == 'x') {
-				mask |= EXE_MODES;
-				continue;
-			}
-			if (*symbolic == 's') {
-				mask |= S_ISUID | S_ISGID;
-				continue;
-			}
-			if (*symbolic == 'X') {
-				if (S_ISDIR(oldmode) || (oldmode & EXE_MODES))
-					mask |= EXE_MODES;
-				continue;
-			}
-#ifdef S_ISVTX
-			if (*symbolic == 't') {
-				mask |= S_ISVTX;
-				who |= S_ISVTX;
-				continue;
-			}
-#endif
-			break;
-		}
-		switch (action) {
-		    case '=':
-			if (who)
-				newmode &= ~who;
-			else
-				newmode = 0;
-		    case '+':
-			if (who)
-				newmode |= who & mask;
-			else
-				newmode |= mask & (~u_mask);
-			break;
-		    case '-':
-			if (who)
-				newmode &= ~(who & mask);
-			else
-				newmode &= ~mask | u_mask;
+	argc -= optind;
+	argv += optind;
+	if (argv[0] == NULL)
+		usage();
+
+	for (exitval = 0; *argv; ++argv) {
+		if (mkfifo(*argv, mode) < 0) {
+			warn("%s", *argv);
+			exitval = 1;
 		}
 	}
-	if (*symbolic) symbolic++;
-  }
-  return(newmode);
+	exit(exitval);
 }
 
-
-/* Main module. Since only one option (-m mode) is allowed, there's no need
- * to include the whole getopt() stuff.
- */
-int main(argc, argv)
-int argc;
-char *argv[];
+void
+usage()
 {
-  int errors = 0;
-  char *symbolic;
-
-  if (argc > 2 && *argv[1] == '-' && strcmp(argv[1], "-m") != 0) usage();
-  argc--;
-  argv++;
-  if (argc && strncmp(*argv, "-m", (size_t) 2) == 0) {
-	argc--;
-	if ((argv[0])[2])
-		symbolic = (*argv++) + 2;
-	else {
-		if (!argc--) usage();
-		argv++;
-		symbolic = *argv++;
-	}
-	u_mask = umask(0);
-	umask(u_mask);
-  } else
-	symbolic = (char *) 0;
-
-  if (!argc) usage();
-  for (; argc--; argv++)
-	if (mkfifo(*argv, DEFAULT_MODE)) {
-		perror(*argv);
-		errors = 1;
-	} else if (symbolic && chmod(*argv, parsemode(symbolic, DEFAULT_MODE))) {
-		unlink(*argv);
-		perror(*argv);
-		errors = 1;
-	}
-  return(errors);
-}
-
-
-/* Posix command prototype. */
-void usage()
-{
-  std_err("Usage: mkfifo [-m mode] file...\n");
-  exit(1);
+	(void)fprintf(stderr, "usage: mkfifo [-m mode] fifoname ...\n");
+	exit(1);
 }
