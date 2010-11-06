@@ -33,7 +33,7 @@
 #include <minix/endpoint.h>
 #include <minix/const.h>
 #include <minix/u64.h>
-#include <minix/paths.h>
+#include <paths.h>
 #include <minix/procfs.h>
 
 u32_t system_hz;
@@ -544,12 +544,12 @@ void getkinfo(void)
 	FILE *fp;
 
 	if ((fp = fopen("kinfo", "r")) == NULL) {
-		fprintf(stderr, "opening " _PATH_PROC "/kinfo failed\n");
+		fprintf(stderr, "opening " _PATH_PROC "kinfo failed\n");
 		exit(1);
 	}
 
 	if (fscanf(fp, "%u %u", &nr_procs, &nr_tasks) != 2) {
-		fprintf(stderr, "reading from " _PATH_PROC "/kinfo failed\n");
+		fprintf(stderr, "reading from " _PATH_PROC "kinfo failed\n");
 		exit(1);
 	}
 

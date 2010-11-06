@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <minix/syslib.h>
 #include <minix/rs.h>
-#include <minix/paths.h>
+#include <paths.h>
 #define OK	0
 
 #define FSPATH "/sbin/"

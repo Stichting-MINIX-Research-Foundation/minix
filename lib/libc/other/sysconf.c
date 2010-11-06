@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
-#include <minix/paths.h>
+#include <paths.h>
 
 PRIVATE u32_t get_hz(void)
 {
@@ -19,7 +19,7 @@ PRIVATE u32_t get_hz(void)
   u32_t hz;
   int r;
 
-  if ((fp = fopen(_PATH_PROC "/hz", "r")) != NULL)
+  if ((fp = fopen(_PATH_PROC "hz", "r")) != NULL)
   {
 	r = fscanf(fp, "%lu", &hz);
 

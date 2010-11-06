@@ -10,7 +10,7 @@
 #include <utmp.h>
 #include <time.h>
 #include <string.h>
-#include <minix/paths.h>
+#include <paths.h>
 
 char PATH_UTMP[] = _PATH_UTMP;
 

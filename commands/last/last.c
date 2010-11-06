@@ -57,7 +57,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include <minix/paths.h>
+#include <paths.h>
 
 #define  FALSE	0
 #define  TRUE	1

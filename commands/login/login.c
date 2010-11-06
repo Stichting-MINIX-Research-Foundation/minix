@@ -75,7 +75,7 @@
 #include <time.h>
 #include <sys/utsname.h>
 #include <minix/minlib.h>
-#include <minix/paths.h>
+#include <paths.h>
 
 char PATH_UTMP[] = _PATH_UTMP;			/* current logins */
 char PATH_WTMP[] = _PATH_WTMP;		/* login/logout history */

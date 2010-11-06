@@ -53,7 +53,7 @@
 
 #include <minix/config.h>
 #include <minix/endpoint.h>
-#include <minix/paths.h>
+#include <paths.h>
 #include <minix/procfs.h>
 #include <limits.h>
 #include <sys/types.h>
@@ -229,10 +229,10 @@ PRIVATE void getkinfo(void)
 	FILE *fp;
 
 	if ((fp = fopen("kinfo", "r")) == NULL)
-		err("Unable to open " _PATH_PROC "/kinfo");
+		err("Unable to open " _PATH_PROC "kinfo");
 
 	if (fscanf(fp, "%u %u", &nr_procs, &nr_tasks) != 2)
-		err("Unable to read from " _PATH_PROC "/kinfo");
+		err("Unable to read from " _PATH_PROC "kinfo");
 
 	fclose(fp);
 }

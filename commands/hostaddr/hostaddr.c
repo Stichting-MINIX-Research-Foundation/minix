@@ -30,7 +30,7 @@ Created:	Jan 27, 1992 by Philip Homburg
 #include <net/gen/resolv.h>
 #include <net/gen/dhcp.h>
 
-#include <minix/paths.h>
+#include <paths.h>
 
 char *prog_name;
 

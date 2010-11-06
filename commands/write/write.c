@@ -25,7 +25,7 @@
 #include <utmp.h>
 #include <time.h>
 #include <stdio.h>
-#include <minix/paths.h>
+#include <paths.h>
 
 static char *Version = "@(#) WRITE 1.6 (10/24/92)";
 

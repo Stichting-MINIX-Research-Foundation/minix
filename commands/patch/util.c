@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <minix/paths.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>

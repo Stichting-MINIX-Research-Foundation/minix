@@ -31,7 +31,7 @@ YFLAGS=	-d
 EDIT=-DEDITLINE
 
 # Enable this line if your system does not have a <paths.h>
-NO_PATHS_H=-DNO_PATHS_H 
+#NO_PATHS_H=-DNO_PATHS_H
 
 # Enable this if you don't want job control
 NO_JOBS=-DJOBS=0

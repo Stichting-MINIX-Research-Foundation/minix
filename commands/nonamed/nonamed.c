@@ -41,7 +41,7 @@ static const char version[] = "2.7";
 #include <net/gen/udp_io.h>
 #include <net/gen/dhcp.h>
 
-#include <minix/paths.h>
+#include <paths.h>
 
 #define HTTL	  	3600L	/* Default time to live for /etc/hosts data. */
 #define SHORT_TIMEOUT	   2	/* If you expect an answer soon. */

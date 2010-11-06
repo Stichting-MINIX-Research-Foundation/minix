@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
-#include <minix/paths.h>
+#include <paths.h>
 #include <sys/statfs.h>
 #include <stdio.h>
 #include <stdlib.h>

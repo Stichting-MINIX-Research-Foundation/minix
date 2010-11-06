@@ -335,7 +335,7 @@
 /* #undef HAVE_OPENSSL_SHA_H */
 
 /* Define to 1 if you have the <paths.h> header file. */
-/* #undef HAVE_PATHS_H */
+#define HAVE_PATHS_H 1
 
 /* Define to 1 if you have the `pipe' function. */
 #define HAVE_PIPE 1

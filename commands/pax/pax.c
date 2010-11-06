@@ -50,7 +50,7 @@ static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
-#include <minix/paths.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: pathnames.h,v 1.5 2003/08/07 11:15:11 agc Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,12 +26,47 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	8.3 (Berkeley) 1/2/94
+ *	@(#)paths.h	8.1 (Berkeley) 6/2/93
  */
 
-#include <paths.h>
+#ifndef _PATHS_H
+#define _PATHS_H
 
-#define	_PATH_MANCONF	"/etc/man.conf"
-#define	_PATH_PAGER	"/usr/bin/more -s"
-#define	_PATH_WHATIS	"whatis.db"
-#define	TMPFILE		"man.XXXXXX"
+/* Default search path. */
+#define	_PATH_DEFPATH	"/usr/bin:/bin:/usr/pkg/bin:/usr/local/bin"
+/* All standard utilities path. */
+#define	_PATH_STDPATH \
+	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin"
+
+#define _PATH_DHCPCONF	"/etc/dhcp.conf"
+#define _PATH_DHCPPID	"/usr/run/dhcpd.pid"
+#define _PATH_DHCPCACHE	"/usr/adm/dhcp.cache"
+#define _PATH_DHCPPOOL	"/usr/adm/dhcp.pool"
+
+#define _PATH_WTMP	"/usr/adm/wtmp"
+#define _PATH_UTMP	"/etc/utmp"
+#define _PATH_LASTLOG	"/usr/adm/lastlog"
+#define _PATH_MOTD	"/etc/motd"
+#define _PATH_HOSTS	"/etc/hosts"
+
+#define    _PATH_DEFTAPE   "/dev/sa0"
+#define    _PATH_RAMDISK   "/dev/ram"
+#define    _PATH_TTY       "/dev/tty"
+#define    _PATH_DEVNULL   "/dev/null"
+#define    _PATH_CONSOLE   "/dev/console"
+#define    _PATH_KMEM      "/dev/kmem"
+#define    _PATH_MEM       "/dev/mem"
+#define    _PATH_RANDOM    "/dev/random"
+#define    _PATH_URANDOM   "/dev/urandom"
+
+#define _PATH_BSHELL	"/bin/sh"
+#define _PATH_SERVICE	"/bin/service"
+#define _PATH_SYSTEM_CONF	"/etc/system.conf"
+#define _PATH_SYSTEM_CONF_DIR	"/etc/system.conf.d"
+
+/* Provide trailing slash, since mostly used for building pathnames. */
+#define _PATH_DEV	"/dev/"
+#define _PATH_TMP	"/tmp/"
+#define _PATH_PROC	"/proc/"
+
+#endif

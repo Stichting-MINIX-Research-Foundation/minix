@@ -1,6 +1,6 @@
 
 #include <sys/types.h>
-#include <minix/paths.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -17,7 +17,7 @@ int getloadavg(double *loadavg, int nelem)
 	return -1;
   }
 
-  if((fp = fopen(_PATH_PROC "/loadavg", "r")) == NULL)
+  if((fp = fopen(_PATH_PROC "loadavg", "r")) == NULL)
 	return -1;
 
   for(i = 0; i < nelem; i++)

@@ -50,7 +50,7 @@ static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <minix/paths.h>
+#include <paths.h>
 
 #include <sys/types.h>
 #include <string.h>

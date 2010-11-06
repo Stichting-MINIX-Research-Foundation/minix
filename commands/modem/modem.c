@@ -23,7 +23,7 @@
 #include <utmp.h>
 #include <errno.h>
 
-#include <minix/paths.h>
+#include <paths.h>
 
 char PATH_UTMP[] = _PATH_UTMP;			/* current logins */
 
