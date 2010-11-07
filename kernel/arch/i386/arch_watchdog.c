@@ -37,12 +37,12 @@ PRIVATE void intel_arch_watchdog_init(const unsigned cpu)
 	 * lowest 31 bits writable :(
 	 */
 	cpuf = cpu_get_freq(cpu);
-	while (cpuf.hi || cpuf.lo > 0x7fffffffU)
+	while (ex64hi(cpuf) || ex64lo(cpuf) > 0x7fffffffU)
 		cpuf = div64u64(cpuf, 2);
-	cpuf.lo = -cpuf.lo;
+	cpuf = make64(-ex64lo(cpuf), ex64hi(cpuf));
 	watchdog->resetval = watchdog->watchdog_resetval = cpuf;
 
-	ia32_msr_write(INTEL_MSR_PERFMON_CRT0, 0, cpuf.lo);
+	ia32_msr_write(INTEL_MSR_PERFMON_CRT0, 0, ex64lo(cpuf));
 
 	ia32_msr_write(INTEL_MSR_PERFMON_SEL0, 0,
 			val | INTEL_MSR_PERFMON_SEL0_ENABLE);
@@ -54,7 +54,7 @@ PRIVATE void intel_arch_watchdog_init(const unsigned cpu)
 PRIVATE void intel_arch_watchdog_reinit(const unsigned cpu)
 {
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
-	ia32_msr_write(INTEL_MSR_PERFMON_CRT0, 0, watchdog->resetval.lo);
+	ia32_msr_write(INTEL_MSR_PERFMON_CRT0, 0, ex64lo(watchdog->resetval));
 }
 
 PUBLIC int arch_watchdog_init(void)
@@ -170,12 +170,12 @@ PRIVATE int intel_arch_watchdog_profile_init(const unsigned freq)
 	 * if freq is too low and the cpu freq too high we may get in a range of
 	 * insane value which cannot be handled by the 31bit CPU perf counter
 	 */
-	if (cpuf.hi != 0 || cpuf.lo > 0x7fffffffU) {
+	if (ex64hi(cpuf) != 0 || ex64lo(cpuf) > 0x7fffffffU) {
 		printf("ERROR : nmi watchdog ticks exceed 31bits, use higher frequency\n");
 		return EINVAL;
 	}
 
-	cpuf.lo = -cpuf.lo;
+	cpuf = make64(-ex64lo(cpuf), ex64hi(cpuf));
 	watchdog->profile_resetval = cpuf;
 
 	return OK;
@@ -207,7 +207,7 @@ PRIVATE void amd_watchdog_init(const unsigned cpu)
 	watchdog->resetval = watchdog->watchdog_resetval = cpuf;
 
 	ia32_msr_write(AMD_MSR_EVENT_CTR0,
-			watchdog->resetval.hi, watchdog->resetval.lo);
+		       ex64hi(watchdog->resetval), ex64lo(watchdog->resetval));
 
 	ia32_msr_write(AMD_MSR_EVENT_SEL0, 0,
 			val | AMD_MSR_EVENT_SEL0_ENABLE);
@@ -220,7 +220,7 @@ PRIVATE void amd_watchdog_reinit(const unsigned cpu)
 {
 	lapic_write(LAPIC_LVTPCR, APIC_ICR_DM_NMI);
 	ia32_msr_write(AMD_MSR_EVENT_CTR0,
-			watchdog->resetval.hi, watchdog->resetval.lo);
+		       ex64hi(watchdog->resetval), ex64lo(watchdog->resetval));
 }
 
 PRIVATE int amd_watchdog_profile_init(const unsigned freq)

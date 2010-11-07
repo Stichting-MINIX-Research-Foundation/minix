@@ -72,10 +72,8 @@ PRIVATE int hello_close(d, m)
 PRIVATE struct device * hello_prepare(dev)
     int dev;
 {
-    hello_device.dv_base.lo = 0;
-    hello_device.dv_base.hi = 0;
-    hello_device.dv_size.lo = strlen(HELLO_MESSAGE);
-    hello_device.dv_size.hi = 0;
+    hello_device.dv_base = make64(0, 0);
+    hello_device.dv_size = make64(strlen(HELLO_MESSAGE), 0);
     return &hello_device;
 }
 
@@ -90,8 +88,8 @@ PRIVATE int hello_transfer(proc_nr, opcode, position, iov, nr_req)
 
     printf("hello_transfer()\n");
 
-    bytes = strlen(HELLO_MESSAGE) - position.lo < iov->iov_size ?
-            strlen(HELLO_MESSAGE) - position.lo : iov->iov_size;
+    bytes = strlen(HELLO_MESSAGE) - ex64lo(position) < iov->iov_size ?
+            strlen(HELLO_MESSAGE) - ex64lo(position) : iov->iov_size;
 
     if (bytes <= 0)
     {
@@ -101,7 +99,7 @@ PRIVATE int hello_transfer(proc_nr, opcode, position, iov, nr_req)
     {
         case DEV_GATHER_S:
             ret = sys_safecopyto(proc_nr, iov->iov_addr, 0,
-                                (vir_bytes) (HELLO_MESSAGE + position.lo),
+                                (vir_bytes) (HELLO_MESSAGE + ex64lo(position)),
                                  bytes, D);
             iov->iov_size -= bytes;
             break;

@@ -262,7 +262,8 @@ PUBLIC void print_proc(struct proc *pp)
 			"cr3 0x%lx rts %s misc %s sched %s ",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_user_time,
-		pp->p_sys_time, pp->p_cycles.hi, pp->p_cycles.lo, pp->p_cpu,
+		pp->p_sys_time, ex64hi(pp->p_cycles),
+		ex64lo(pp->p_cycles), pp->p_cpu,
 		pp->p_seg.p_cr3,
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags),
 		schedulerstr(pp->p_scheduler));

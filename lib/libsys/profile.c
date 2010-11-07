@@ -170,12 +170,14 @@ PUBLIC void procentry (char *name)
 PUBLIC void procexit (char *UNUSED(name))
 {
   u64_t stop, spent;
+  u32_t tsc_lo, tsc_hi;
 
   /* Procexit is not reentrant. */
   if (cprof_locked) return; else cprof_locked = 1;
 
   /* First thing: read CPU cycle count into local variable. */
-  read_tsc(&stop.hi, &stop.lo);
+  read_tsc(&tsc_hi, &tsc_lo);
+  stop = make64(tsc_lo, tsc_hi);
 
   /* Only continue if sane. */
   if (control.err) return;
@@ -210,7 +212,8 @@ PUBLIC void procexit (char *UNUSED(name))
    */
 
   /* Read CPU cycle count. */
-  read_tsc(&stop.hi, &stop.lo);
+  read_tsc(&tsc_hi, &tsc_lo);
+  stop = make64(tsc_lo, tsc_hi);
 
   /* Calculate "big" difference. */
   spent = sub64(stop, cprof_stk[cprof_stk_top].start_1);
@@ -263,8 +266,7 @@ PRIVATE void clear_tbl()
 	memset(cprof_tbl[i].cpath, '\0', CPROF_CPATH_MAX_LEN);
 	cprof_tbl[i].next = 0;
 	cprof_tbl[i].calls = 0;
-	cprof_tbl[i].cycles.lo = 0;
-	cprof_tbl[i].cycles.hi = 0;
+	cprof_tbl[i].cycles = make64(0, 0);
   }
 }
 

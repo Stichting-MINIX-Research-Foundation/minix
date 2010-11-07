@@ -251,9 +251,9 @@ PUBLIC void context_stop(struct proc * p)
 		make_zero64(p->p_cpu_time_left);
 #else
 		/* if (tsc_delta < p->p_cpu_time_left) in 64bit */
-		if (tsc_delta.hi < p->p_cpu_time_left.hi ||
-				(tsc_delta.hi == p->p_cpu_time_left.hi &&
-				 tsc_delta.lo < p->p_cpu_time_left.lo))
+		if (ex64hi(tsc_delta) < ex64hi(p->p_cpu_time_left) ||
+				(ex64hi(tsc_delta) == ex64hi(p->p_cpu_time_left) &&
+				 ex64lo(tsc_delta) < ex64lo(p->p_cpu_time_left)))
 			p->p_cpu_time_left = sub64(p->p_cpu_time_left, tsc_delta);
 		else {
 			make_zero64(p->p_cpu_time_left);
@@ -315,7 +315,7 @@ PUBLIC short cpu_load(void)
 
 		busy = sub64(tsc_delta, idle_delta);
 		busy = mul64(busy, make64(100, 0));
-		load = div64(busy, tsc_delta).lo;
+		load = ex64lo(div64(busy, tsc_delta));
 
 		if (load > 100)
 			load = 100;

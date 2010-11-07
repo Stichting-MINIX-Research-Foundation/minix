@@ -570,13 +570,12 @@ PRIVATE  u32_t lapic_errstatus(void)
 
 PRIVATE int lapic_disable_in_msr(void)
 {
-	u64_t msr;
-	u32_t addr;
+	u32_t addr, msr_hi, msr_lo;
 
-	ia32_msr_read(IA32_APIC_BASE, &msr.hi, &msr.lo);
+	ia32_msr_read(IA32_APIC_BASE, &msr_hi, &msr_lo);
 
-	msr.lo &= ~(1 << IA32_APIC_BASE_ENABLE_BIT);
-	ia32_msr_write(IA32_APIC_BASE, msr.hi, msr.lo);
+	msr_lo &= ~(1 << IA32_APIC_BASE_ENABLE_BIT);
+	ia32_msr_write(IA32_APIC_BASE, msr_hi, msr_lo);
 
 	return 1;
 }
@@ -618,10 +617,9 @@ PUBLIC void lapic_disable(void)
 
 PRIVATE int lapic_enable_in_msr(void)
 {
-	u64_t msr;
-	u32_t addr;
+	u32_t addr, msr_hi, msr_lo;
 
-	ia32_msr_read(IA32_APIC_BASE, &msr.hi, &msr.lo);
+	ia32_msr_read(IA32_APIC_BASE, &msr_hi, &msr_lo);
 
 #if 0
 	/*FIXME this is a problem on AP */
@@ -629,18 +627,18 @@ PRIVATE int lapic_enable_in_msr(void)
 	 * FIXME if the location is different (unlikely) then the one we expect,
 	 * update it
 	 */
-	addr = (msr.lo >> 12) | ((msr.hi & 0xf) << 20);
+	addr = (msr_lo >> 12) | ((msr_hi & 0xf) << 20);
 	if (phys2vir(addr) != (lapic_addr >> 12)) {
-		if (msr.hi & 0xf) {
+		if (msr_hi & 0xf) {
 			printf("ERROR : APIC address needs more then 32 bits\n");
 			return 0;
 		}
-		lapic_addr = phys2vir(msr.lo & ~((1 << 12) - 1));
+		lapic_addr = phys2vir(msr_lo & ~((1 << 12) - 1));
 	}
 #endif
 
-	msr.lo |= (1 << IA32_APIC_BASE_ENABLE_BIT);
-	ia32_msr_write(IA32_APIC_BASE, msr.hi, msr.lo);
+	msr_lo |= (1 << IA32_APIC_BASE_ENABLE_BIT);
+	ia32_msr_write(IA32_APIC_BASE, msr_hi, msr_lo);
 
 	return 1;
 }
