@@ -35,7 +35,7 @@ struct sprof_sample {
 struct sprof_proc {
 	endpoint_t	proc;
 	char		name[8];
-}i;
+};
 
 #endif /* SPROFILE */
 
