@@ -177,6 +177,15 @@ PACKAGES=1
 MINIMAL=0
 MAKEMAP=0
 
+# Do we have git?
+if git --version >/dev/null
+then	if [ -d ../.git ]
+	then	REVTAG="`git describe --always`"
+		echo "git mode; building $REVTAG"
+		GITMODE=1
+	fi
+fi
+
 FILENAMEOUT=""
 
 while getopts "s:pmMchu?r:f:" c
@@ -273,6 +282,8 @@ cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/sh /bin/echo $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv $RELEASEDIR/usr/bin
 
+CONFIGHEADER=$RELEASEDIR/usr/src/include/minix/sys_config.h
+
 if [ -d $PACKAGEDIR -a -f $PACKAGELIST -a $PACKAGES -ne 0 ]
 then
 	index=pkg_summary
@@ -327,7 +338,7 @@ fi
 chown -R root $RELEASEDIR/usr/lib
 chmod -R u+w $RELEASEDIR/usr/lib
 
-if [ "$COPY" -ne 1 ]
+if [ "$COPY" -ne 1 -a "$GITMODE" -ne 1 ]
 then
 	echo " * Doing new svn export"
 	TOOLSREPO="`svn info | grep '^URL: ' | awk '{ print $2 }'`"
@@ -344,9 +355,9 @@ then
 	echo "
 
 /* Added by release script  */
-#ifndef _SVN_REVISION
-#define _SVN_REVISION \"$REVTAG\"
-#endif" >>$RELEASEDIR/usr/src/include/minix/sys_config.h
+#ifndef _VCS_REVISION
+#define _VCS_REVISION \"$REVTAG\"
+#endif" >>$CONFIGHEADER
 
 # output image name
 if [ "$USB" -ne 0 ]; then
@@ -355,13 +366,26 @@ else
 	IMG=${IMG_BASE}_${REVTAG}.iso
 fi
 
-else
+elif [ "$COPY" -eq 1 ]
+then
 	( cd .. && make depend && make clean )
 	srcdir=/usr/$SRC
 	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
 	REVTAG=copy
 	REVISION=unknown
 	IMG=${IMG_BASE}_copy.iso
+elif [ "$GITMODE" -eq 1 ]
+then
+	srcdir=$RELEASEDIR/usr/src
+	git clone file://.. $srcdir
+	( cd $srcdir && git checkout $REVTAG && rm -r .git )
+	echo "
+
+/* Added by release script  */
+#ifndef _VCS_REVISION
+#define _VCS_REVISION \"$REVTAG\"
+#endif" >>$CONFIGHEADER
+
 fi
 
 echo " * Fixups for owners and modes of dirs and files"

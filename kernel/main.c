@@ -347,8 +347,8 @@ PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
   printf("\nMINIX %s.%s. "
-#ifdef _SVN_REVISION
-	"(" _SVN_REVISION ")\n"
+#ifdef _VCS_REVISION
+	"(" _VCS_REVISION ")\n"
 #endif
       "Copyright 2010, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
