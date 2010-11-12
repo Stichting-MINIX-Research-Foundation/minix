@@ -26,7 +26,7 @@ LDFLAGS+= -T arch/${ARCH}/kernel.lds
 LDFLAGS+= -nostdlib -L/usr/lib
 CFLAGS+=-march=i386
 DPADD+=	${LIBC}
-LDADD+=	-lc
+LDADD+=	-lgcc -lc -lgcc
 .endif
 
 CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}

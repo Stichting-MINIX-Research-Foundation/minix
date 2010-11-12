@@ -316,10 +316,12 @@ struct vnode *dirp;
 struct vnode *entry;
 char ename[NAME_MAX + 1];
 {
-  u64_t pos = {0, 0}, new_pos;
+  u64_t pos, new_pos;
   int r, consumed, totalbytes;
   char buf[(sizeof(struct dirent) + NAME_MAX) * 8];
   struct dirent *cur;
+
+  pos = make64(0, 0);
 
   if ((dirp->v_mode & I_TYPE) != I_DIRECTORY) {
 	return(EBADF);

@@ -499,8 +499,11 @@ format_number(int32_t v, char *p, int s, int maxsize, int strict)
 	 */
 	u64_t limit;
 
-	/* limit = (1 << (s*3)) */
+#if !defined(__LONG_LONG_SUPPORTED)
 	limit = lshift64(cvu64(1), s*3);
+#else
+	limit = (1 << (s*3));
+#endif
 
 	/* "Strict" only permits octal values with proper termination. */
 	if (strict)
@@ -518,8 +521,11 @@ format_number(int32_t v, char *p, int s, int maxsize, int strict)
 			if (cmp64ul(limit, v) > 0)
 				return (format_octal(v, p, s));
 			s++;
-			/* limit <<= 3 */
+#if !defined(__LONG_LONG_SUPPORTED)
 			limit = lshift64(limit, 3);
+#else
+			limit <<= 3;
+#endif
 		}
 	}
 

@@ -1,5 +1,6 @@
 #include "minix_utils.h"
 
+#if !defined(__LONG_LONG_SUPPORTED)
 u64_t lshift64(u64_t x, unsigned short b)
 {
 	u64_t r;
@@ -13,3 +14,4 @@ u64_t lshift64(u64_t x, unsigned short b)
 	}
 	return r;
 }
+#endif

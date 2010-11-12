@@ -1,6 +1,7 @@
 # int64 sources
 .PATH: ${.CURDIR}/arch/${ARCH}/int64
 
+.if ${COMPILER_TYPE} == "ack"
 SRCS+=  \
 	add64.S \
 	add64u.S \
@@ -17,3 +18,6 @@ SRCS+=  \
 	mul64u.S \
 	sub64.S \
 	sub64u.S
+.elif ${COMPILER_TYPE} == "gnu"
+SRCS+=	int64.c
+.endif

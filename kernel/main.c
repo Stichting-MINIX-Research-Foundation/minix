@@ -29,6 +29,9 @@
 #endif
 #include "spinlock.h"
 
+/* dummy for linking */
+char *** _penviron;
+
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
 

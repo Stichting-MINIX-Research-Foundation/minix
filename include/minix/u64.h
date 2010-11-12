@@ -40,6 +40,7 @@ u64_t xor64(u64_t a, u64_t b);
 u64_t and64(u64_t a, u64_t b);
 u64_t not64(u64_t a);
 
+#if !defined(__LONG_LONG_SUPPORTED)
 #define is_zero64(i)	((i).lo == 0 && (i).hi == 0)
 #define make_zero64(i)	do { (i).lo = (i).hi = 0; } while(0)
 
@@ -48,5 +49,10 @@ u64_t not64(u64_t a);
 				(i).hi = ~(i).hi;	\
 				(i) = add64u((i), 1);	\
 			} while(0)
+#else
+#define is_zero64(i)	((i) == 0)
+#define make_zero64(i)  ((i) = 0)
+#define neg64(i)	((i) = -(i))
+#endif
 
 #endif /* _MINIX__U64_H */

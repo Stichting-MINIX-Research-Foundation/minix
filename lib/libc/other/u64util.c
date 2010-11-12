@@ -3,6 +3,7 @@
  */
 #include <minix/u64.h>
 
+#if !defined(__LONG_LONG_SUPPORTED)
 u64_t rrotate64(u64_t x, unsigned short b)
 {
 	u64_t r, t;
@@ -72,5 +73,40 @@ u64_t not64(u64_t a)
 
 	return r;
 }
+#else
 
+#if !defined(__LONG_LONG_SUPPORTED)
+#error "ERROR: These functions require long long support"
+#endif
+
+u64_t rrotate64(u64_t x, unsigned short b)
+{
+	b %= 64;
+	if ((b &= 63) == 0)
+		return x;
+	return (x >> b) | (x << (64 - b));
+}
+
+u64_t rshift64(u64_t x, unsigned short b)
+{
+	if (b >= 64)
+		return 0;
+	return x >> b;
+}
+
+u64_t xor64(u64_t a, u64_t b)
+{
+	return a ^ b;
+}
+
+u64_t and64(u64_t a, u64_t b)
+{
+	return a & b;
+}
+
+u64_t not64(u64_t a)
+{
+	return ~a;
+}
+#endif
 

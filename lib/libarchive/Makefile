@@ -58,8 +58,11 @@ SRCS= 	archive_check_magic.c \
 		archive_write_set_format_shar.c \
 		archive_write_set_format_ustar.c \
 		archive_write_set_format_zip.c \
-		filter_fork.c \
-		minix_utils.c
+		filter_fork.c
+
+.if ${COMPILER_TYPE} == "ack"
+SRCS+=  minix_utils.c
+.endif
 
 CPPFLAGS+= -DHAVE_CONFIG_H
 INCSDIR= /usr/include

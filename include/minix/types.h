@@ -26,10 +26,18 @@ typedef unsigned long  u32_t;	   /* 32 bit type */
 typedef long           i32_t;      /* 32 bit signed type */
 #endif
 
+#if !defined(__LONG_LONG_SUPPORTED)
 typedef struct {
 	u32_t lo;
 	u32_t hi;
 } u64_t;
+#else
+#if __SIZEOF_LONG__ > 4
+typedef unsigned long u64_t;
+#else
+typedef unsigned long long u64_t;
+#endif
+#endif
 
 /* some Minix specific types that do not conflict with posix */
 typedef u32_t zone_t;	   /* zone number */

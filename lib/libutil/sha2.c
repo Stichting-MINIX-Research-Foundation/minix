@@ -148,11 +148,20 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
  * 64-bit words):
  */
 #define ADDINC128(w,n)	{ \
+	(w)[0] += (sha2_word64)(n); \
+	if ((w)[0] < (n)) { \
+		(w)[1]++; \
+	} \
+}
+#if MINIX_64BIT
+#undef ADDINC128
+#define ADDINC128(w,n)	{ \
 	(w)[0] = add64u((w)[0], (n)); \
 	if (cmp64u((w)[0], (n)) < 0) { \
 		(w)[1] = add64u((w)[1], 1); \
 	} \
 }
+#endif /* MINIX_64BIT */
 
 /*** THE SIX LOGICAL FUNCTIONS ****************************************/
 /*
@@ -168,15 +177,20 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
 /* 32-bit Rotate-right (used in SHA-256): */
 #define S32(b,x)	(((x) >> (b)) | ((x) << (32 - (b))))
 /* 64-bit Rotate-right (used in SHA-384 and SHA-512): */
+#define S64(b,x)	(((x) >> (b)) | ((x) << (64 - (b))))
+#if MINIX_64BIT
+#undef S64
 #define S64(b,x)	(rrotate64((x), (b)))
 #define R64(b, x)   (rshift64(x, b))
+#endif /* MINIX_64BIT */
 
 /* Two of six logical functions used in SHA-256, SHA-384, and SHA-512: */
 #define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
-
+#if MINIX_64BIT
 #define Ch64(x,y,z)	(xor64(and64((x), (y)), and64(not64((x)), (z))))
 #define Maj64(x,y,z) (xor64(xor64(and64((x), (y)), and64((x), (z))), and64((y), (z))))
+#endif /* MINIX_64BIT */
 
 /* Four of six logical functions used in SHA-256: */
 #define Sigma0_256(x)	(S32(2,  (x)) ^ S32(13, (x)) ^ S32(22, (x)))
@@ -185,10 +199,20 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
 #define sigma1_256(x)	(S32(17, (x)) ^ S32(19, (x)) ^ R(10,   (x)))
 
 /* Four of six logical functions used in SHA-384 and SHA-512: */
+#define Sigma0_512(x)	(S64(28, (x)) ^ S64(34, (x)) ^ S64(39, (x)))
+#define Sigma1_512(x)	(S64(14, (x)) ^ S64(18, (x)) ^ S64(41, (x)))
+#define sigma0_512(x)	(S64( 1, (x)) ^ S64( 8, (x)) ^ R( 7,   (x)))
+#define sigma1_512(x)	(S64(19, (x)) ^ S64(61, (x)) ^ R( 6,   (x)))
+#if MINIX_64BIT
+#undef Sigma0_512
+#undef Sigma1_512
+#undef sigma0_512
+#undef sigma1_512
 #define Sigma0_512(x)	(xor64(xor64(S64(28, (x)), S64(34, (x))), S64(39, (x))))
 #define Sigma1_512(x)	(xor64(xor64(S64(14, (x)), S64(18, (x))), S64(41, (x))))
 #define sigma0_512(x)	(xor64(xor64(S64( 1, (x)), S64( 8, (x))), R64( 7, (x))))
 #define sigma1_512(x)	(xor64(xor64(S64(19, (x)), S64(61, (x))), R64( 6, (x))))
+#endif /* MINIX_64BIT */
 
 /*** INTERNAL FUNCTION PROTOTYPES *************************************/
 /* NOTE: These should not be accessed directly from outside this
@@ -235,6 +259,7 @@ static const sha2_word32 sha256_initial_hash_value[8] = {
 };
 
 /* Hash constant words K for SHA-384 and SHA-512: */
+#if MINIX_64BIT
 const static sha2_word64 K512[80] = {
 	{0xd728ae22UL, 0x428a2f98UL}, {0x23ef65cdUL, 0x71374491UL},
 	{0xec4d3b2fUL, 0xb5c0fbcfUL}, {0x8189dbbcUL, 0xe9b5dba5UL},
@@ -277,8 +302,53 @@ const static sha2_word64 K512[80] = {
 	{0xcb3e42b6UL, 0x4cc5d4beUL}, {0xfc657e2aUL, 0x597f299cUL},
 	{0x3ad6faecUL, 0x5fcb6fabUL}, {0x4a475817UL, 0x6c44198cUL}
 };
+#else /* !MINIX_64BIT */
+static const sha2_word64 K512[80] = {
+	0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL,
+	0xb5c0fbcfec4d3b2fULL, 0xe9b5dba58189dbbcULL,
+	0x3956c25bf348b538ULL, 0x59f111f1b605d019ULL,
+	0x923f82a4af194f9bULL, 0xab1c5ed5da6d8118ULL,
+	0xd807aa98a3030242ULL, 0x12835b0145706fbeULL,
+	0x243185be4ee4b28cULL, 0x550c7dc3d5ffb4e2ULL,
+	0x72be5d74f27b896fULL, 0x80deb1fe3b1696b1ULL,
+	0x9bdc06a725c71235ULL, 0xc19bf174cf692694ULL,
+	0xe49b69c19ef14ad2ULL, 0xefbe4786384f25e3ULL,
+	0x0fc19dc68b8cd5b5ULL, 0x240ca1cc77ac9c65ULL,
+	0x2de92c6f592b0275ULL, 0x4a7484aa6ea6e483ULL,
+	0x5cb0a9dcbd41fbd4ULL, 0x76f988da831153b5ULL,
+	0x983e5152ee66dfabULL, 0xa831c66d2db43210ULL,
+	0xb00327c898fb213fULL, 0xbf597fc7beef0ee4ULL,
+	0xc6e00bf33da88fc2ULL, 0xd5a79147930aa725ULL,
+	0x06ca6351e003826fULL, 0x142929670a0e6e70ULL,
+	0x27b70a8546d22ffcULL, 0x2e1b21385c26c926ULL,
+	0x4d2c6dfc5ac42aedULL, 0x53380d139d95b3dfULL,
+	0x650a73548baf63deULL, 0x766a0abb3c77b2a8ULL,
+	0x81c2c92e47edaee6ULL, 0x92722c851482353bULL,
+	0xa2bfe8a14cf10364ULL, 0xa81a664bbc423001ULL,
+	0xc24b8b70d0f89791ULL, 0xc76c51a30654be30ULL,
+	0xd192e819d6ef5218ULL, 0xd69906245565a910ULL,
+	0xf40e35855771202aULL, 0x106aa07032bbd1b8ULL,
+	0x19a4c116b8d2d0c8ULL, 0x1e376c085141ab53ULL,
+	0x2748774cdf8eeb99ULL, 0x34b0bcb5e19b48a8ULL,
+	0x391c0cb3c5c95a63ULL, 0x4ed8aa4ae3418acbULL,
+	0x5b9cca4f7763e373ULL, 0x682e6ff3d6b2b8a3ULL,
+	0x748f82ee5defb2fcULL, 0x78a5636f43172f60ULL,
+	0x84c87814a1f0ab72ULL, 0x8cc702081a6439ecULL,
+	0x90befffa23631e28ULL, 0xa4506cebde82bde9ULL,
+	0xbef9a3f7b2c67915ULL, 0xc67178f2e372532bULL,
+	0xca273eceea26619cULL, 0xd186b8c721c0c207ULL,
+	0xeada7dd6cde0eb1eULL, 0xf57d4f7fee6ed178ULL,
+	0x06f067aa72176fbaULL, 0x0a637dc5a2c898a6ULL,
+	0x113f9804bef90daeULL, 0x1b710b35131c471bULL,
+	0x28db77f523047d84ULL, 0x32caab7b40c72493ULL,
+	0x3c9ebe0a15c9bebcULL, 0x431d67c49c100d4cULL,
+	0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL,
+	0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL
+};
+#endif /* MINIX_64BIT */
 
 /* Initial hash value H for SHA-384 */
+#if MINIX_64BIT
 const static sha2_word64 sha384_initial_hash_value[8] = {
 	{0xc1059ed8UL, 0xcbbb9d5dUL},
 	{0x367cd507UL, 0x629a292aUL},
@@ -289,7 +359,21 @@ const static sha2_word64 sha384_initial_hash_value[8] = {
 	{0x64f98fa7UL, 0xdb0c2e0dUL},
 	{0xbefa4fa4UL, 0x47b5481dUL}
 };
+#else /* !MINIX_64BIT */
+static const sha2_word64 sha384_initial_hash_value[8] = {
+	0xcbbb9d5dc1059ed8ULL,
+	0x629a292a367cd507ULL,
+	0x9159015a3070dd17ULL,
+	0x152fecd8f70e5939ULL,
+	0x67332667ffc00b31ULL,
+	0x8eb44a8768581511ULL,
+	0xdb0c2e0d64f98fa7ULL,
+	0x47b5481dbefa4fa4ULL
+};
+#endif /* MINIX_64BIT */
 
+/* Initial hash value H for SHA-512 */
+#if MINIX_64BIT
 const static sha2_word64 sha512_initial_hash_value[8] = {
 	{0xf3bcc908UL, 0x6a09e667UL},
 	{0x84caa73bUL, 0xbb67ae85UL},
@@ -300,6 +384,18 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
 	{0xfb41bd6bUL, 0x1f83d9abUL},
 	{0x137e2179UL, 0x5be0cd19UL}
 };
+#else /* !MINIX_64BIT */
+static const sha2_word64 sha512_initial_hash_value[8] = {
+	0x6a09e667f3bcc908ULL,
+	0xbb67ae8584caa73bULL,
+	0x3c6ef372fe94f82bULL,
+	0xa54ff53a5f1d36f1ULL,
+	0x510e527fade682d1ULL,
+	0x9b05688c2b3e6c1fULL,
+	0x1f83d9abfb41bd6bULL,
+	0x5be0cd19137e2179ULL
+};
+#endif /* MINIX_64BIT */
 
 /*** SHA-256: *********************************************************/
 void SHA256_Init(SHA256_CTX* context) {
@@ -308,7 +404,11 @@ void SHA256_Init(SHA256_CTX* context) {
 	}
 	memcpy(context->state, sha256_initial_hash_value, (size_t)(SHA256_DIGEST_LENGTH));
 	memset(context->buffer, 0, (size_t)(SHA256_BLOCK_LENGTH));
+#if MINIX_64BIT
 	context->bitcount = cvu64(0);
+#else /* !MINIX_64BIT */
+	context->bitcount = 0;
+#endif /* MINIX_64BIT */
 }
 
 #ifdef SHA2_UNROLL_TRANSFORM
@@ -654,8 +754,12 @@ void SHA512_Init(SHA512_CTX* context) {
 	}
 	memcpy(context->state, sha512_initial_hash_value, (size_t)(SHA512_DIGEST_LENGTH));
 	memset(context->buffer, 0, (size_t)(SHA512_BLOCK_LENGTH));
+#if MINIX_64BIT
 	make_zero64(context->bitcount[0]);
 	make_zero64(context->bitcount[1]);
+#else /* !MINIX_64BIT */
+	context->bitcount[0] = context->bitcount[1] =  0;
+#endif /* MINIX_64BIT */
 }
 
 #ifdef SHA2_UNROLL_TRANSFORM
@@ -769,21 +873,37 @@ void SHA512_Transform(SHA512_CTX* context, const sha2_word64* data) {
 #if SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN
 		/* Convert TO host byte order */
 		REVERSE64(*data++, W512[j]);
-#else /* SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN */
-		W512[j] = *data++;
-#endif /* SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN */
-		/* Apply the SHA-512 compression function to update a..h */
+#if MINIX_64BIT
+		/* Apply the SHA-512 compression function to update a..h with copy */
 		T1 = add64(add64(add64(add64(h, Sigma1_512(e)), Ch64(e, f, g)), K512[j]), W512[j]);
+#else /* !MINIX_64BIT */
+		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] + W512[j];
+#endif /* MINIX_64BIT */
+#else /* SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN */
+		/* Apply the SHA-512 compression function to update a..h with copy */
+		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] + (W512[j] = *data++);
+#endif /* SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN */
+#ifdef MINIX_64BIT
 		T2 = add64(Sigma0_512(a), Maj64(a, b, c));
-
+#else /* !MINIX_64BIT */
+		T2 = Sigma0_512(a) + Maj(a, b, c);
+#endif /* MINIX_64BIT */
 		h = g;
 		g = f;
 		f = e;
+#if MINIX_64BIT
 		e = add64(d, T1);
+#else /* !MINIX_64BIT */
+		e = d + T1;
+#endif /* MINIX_64BIT */
 		d = c;
 		c = b;
 		b = a;
+#if MINIX_64BIT
 		a = add64(T1, T2);
+#else /* !MINIX_64BIT */
+		a = T1 + T2;
+#endif /* MINIX_64BIT */
 
 		j++;
 	} while (j < 16);
@@ -796,22 +916,37 @@ void SHA512_Transform(SHA512_CTX* context, const sha2_word64* data) {
 		s1 =  sigma1_512(s1);
 
 		/* Apply the SHA-512 compression function to update a..h */
+#ifdef MINIX_64BIT
 		W512[j&0x0f] = add64(add64(add64(W512[j&0x0f], s1), W512[(j+9)&0x0f]),  s0);
 		T1 = add64(add64(add64(add64(h, Sigma1_512(e)), Ch64(e, f, g)), K512[j]), W512[j&0x0f]);
 		T2 = add64(Sigma0_512(a), Maj64(a, b, c));
+#else /* !MINIX_64BIT */
+		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] +
+		     (W512[j&0x0f] += s1 + W512[(j+9)&0x0f] + s0);
+		T2 = Sigma0_512(a) + Maj(a, b, c);
+#endif /* MINIX_64BIT */
 		h = g;
 		g = f;
 		f = e;
+#if MINIX_64BIT
 		e = add64(d, T1);
+#else /* !MINIX_64BIT */
+		e = d + T1;
+#endif /* MINIX_64BIT */
 		d = c;
 		c = b;
 		b = a;
+#if MINIX_64BIT
 		a = add64(T1, T2);
+#else /* !MINIX_64BIT */
+		a = T1 + T2;
+#endif /* MINIX_64BIT */
 
 		j++;
 	} while (j < 80);
 
 	/* Compute the current intermediate hash value */
+#ifdef MINIX_64BIT
 	context->state[0] = add64(context->state[0], a);
 	context->state[1] = add64(context->state[1], b);
 	context->state[2] = add64(context->state[2], c);
@@ -820,9 +955,19 @@ void SHA512_Transform(SHA512_CTX* context, const sha2_word64* data) {
 	context->state[5] = add64(context->state[5], f);
 	context->state[6] = add64(context->state[6], g);
 	context->state[7] = add64(context->state[7], h);
-
 	/* Clean up */
 	a = b = c = d = e = f = g = h = T1 = T2 = cvu64(0);
+#else /* !MINIX_64BIT */
+	context->state[0] += a;
+	context->state[1] += b;
+	context->state[2] += c;
+	context->state[3] += d;
+	context->state[4] += e;
+	context->state[5] += f;
+	context->state[6] += g;
+	context->state[7] += h;
+	a = b = c = d = e = f = g = h = T1 = T2 = 0;
+#endif /* MINIX_64BIT */
 }
 
 #endif /* SHA2_UNROLL_TRANSFORM */
@@ -838,7 +983,11 @@ void SHA512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 	/* Sanity check: */
 	assert(context != (SHA512_CTX*)0 && data != (sha2_byte*)0);
 
+#if MINIX_64BIT
 	usedspace = (unsigned int)rem64u(rshift64(context->bitcount[0], 3), SHA512_BLOCK_LENGTH);
+#else /* !MINIX_64BIT */
+	usedspace = (unsigned int)((context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH);
+#endif /* MINIX_64BIT */
 	if (usedspace > 0) {
 		/* Calculate how much free space is available in the buffer */
 		freespace = SHA512_BLOCK_LENGTH - usedspace;
@@ -970,8 +1119,12 @@ void SHA384_Init(SHA384_CTX* context) {
 	}
 	memcpy(context->state, sha384_initial_hash_value, (size_t)(SHA512_DIGEST_LENGTH));
 	memset(context->buffer, 0, (size_t)(SHA384_BLOCK_LENGTH));
+#if MINIX_64BIT
 	make_zero64(context->bitcount[0]);
 	make_zero64(context->bitcount[1]);
+#else /* !MINIX_64BIT */
+	context->bitcount[0] = context->bitcount[1] = 0;
+#endif /* MINIX_64BIT */
 }
 
 void SHA384_Update(SHA384_CTX* context, const sha2_byte* data, size_t len) {
