@@ -6,7 +6,7 @@ Created:	Oct 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 Generate 256-bit random numbers 
 */
 
-#include <sha2.h>
+#include <minix/sha2.h>
 #include "inet.h"
 #include "rand256.h"
 

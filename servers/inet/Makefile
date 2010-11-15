@@ -8,12 +8,12 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 	ipr.c rand256.c tcp.c tcp_lib.c \
 	tcp_recv.c tcp_send.c ip_eth.c \
 	ip_ps.c psip.c \
-	queryparam.c sha2.c version.c
+	queryparam.c version.c
 
 .PATH:	${.CURDIR}/generic
 
-DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBUTIL}
+LDADD+=	-ldriver -lsys -lutil
 
 MAN=
 
