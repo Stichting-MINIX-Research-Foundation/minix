@@ -42,6 +42,8 @@ MAN=
 
 debug.d: extracted-errno.h extracted-mfield.h extracted-mtype.h
 
+CLEANFILES+=extracted-errno.h extracted-mfield.h extracted-mtype.h
+
 extracted-errno.h: extract-errno.sh ../include/errno.h
 	${_MKTARGET_CREATE}
 	cd ${.CURDIR} ; sh extract-errno.sh > ${.OBJDIR}/extracted-errno.h

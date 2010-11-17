@@ -12,13 +12,11 @@ EXTRA=system.conf passwd rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
 MAKEDEV=/usr/bin/MAKEDEV
+CLEANFILES += $(PROGRAMS) $(EXTRA) bintoc image image.c t proto.gen
 
 install: all
 
 all:	image.c
-
-clean:
-	rm -rf $(PROGRAMS) $(EXTRA) bintoc image image.c t proto.gen
 
 image.c:	bintoc image
 	./bintoc -o $@ image
