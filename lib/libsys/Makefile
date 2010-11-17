@@ -5,8 +5,24 @@ LIB=		sys
 SRCS=  \
 	alloc_util.c \
 	assert.c \
+	asynsend.c \
+	ds.c	\
+	env_get_prm.c \
+	env_panic.c \
+	env_parse.c \
+	env_prefix.c \
+	fkey_ctl.c \
+	gcov.c \
+	get_randomness.c \
+	getidle.c \
 	getsysinfo.c \
+	getuptime.c \
+	getuptime2.c \
+	input.c \
 	kernel_call.c \
+	kprintf.c \
+	kputc.c \
+	kputs.c \
 	panic.c \
 	pci_attr_r16.c \
 	pci_attr_r32.c \
@@ -27,6 +43,8 @@ SRCS=  \
 	pci_reserve.c \
 	pci_set_acl.c \
 	pci_slot_name.c \
+	profile.c \
+	profile_extern.c \
 	safecopies.c \
 	sched_start.c \
 	sched_stop.c \
@@ -36,9 +54,11 @@ SRCS=  \
 	sef_liveupdate.c \
 	sef_ping.c \
 	sef_signal.c \
+	ser_putc.c \
+	spin.c \
+	stacktrace.c \
 	sys_abort.c \
 	sys_clear.c \
-	sys_mcontext.c \
 	sys_cprof.c \
 	sys_endsig.c \
 	sys_eniop.c \
@@ -47,37 +67,38 @@ SRCS=  \
 	sys_fork.c \
 	sys_getinfo.c \
 	sys_getsig.c \
+	sys_hz.c \
 	sys_in.c \
 	sys_int86.c \
 	sys_irqctl.c \
 	sys_kill.c \
+	sys_mcontext.c \
 	sys_memset.c \
 	sys_newmap.c \
 	sys_out.c \
 	sys_physcopy.c \
+	sys_privctl.c \
+	sys_profbuf.c \
 	sys_readbios.c \
 	sys_runctl.c \
-	sys_update.c \
 	sys_safecopy.c \
 	sys_safemap.c \
-	sys_sysctl.c \
-	sys_vsafecopy.c \
-	sys_profbuf.c \
+	sys_schedctl.c \
+	sys_schedule.c \
 	sys_sdevio.c \
 	sys_segctl.c \
 	sys_setalarm.c \
+	sys_setgrant.c \
 	sys_sigreturn.c \
 	sys_sigsend.c \
-	sys_privctl.c \
-	sys_setgrant.c \
 	sys_sprof.c \
+	sys_statectl.c \
 	sys_stime.c \
-        sys_schedule.c \
-        sys_schedctl.c \
-        sys_statectl.c \
+	sys_sysctl.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \
+	sys_update.c \
 	sys_vinb.c \
 	sys_vinl.c \
 	sys_vinw.c \
@@ -86,44 +107,24 @@ SRCS=  \
 	sys_voutb.c \
 	sys_voutl.c \
 	sys_voutw.c \
+	sys_vsafecopy.c \
 	sys_vtimer.c \
 	taskcall.c \
-	ds.c	\
+	tickdelay.c \
+	timers.c \
+	timing.c \
+	tsc_util.c \
 	vm_brk.c \
 	vm_exec_newmem.c \
 	vm_exit.c \
-	vm_notify_sig.c \
 	vm_fork.c \
 	vm_info.c \
 	vm_map_phys.c \
-	vm_umap.c \
+	vm_notify_sig.c \
 	vm_push_sig.c \
+	vm_umap.c \
 	vm_yield_get_block.c \
-	asynsend.c \
-	kprintf.c \
-	kputc.c \
-	kputs.c \
-	tickdelay.c \
-	get_randomness.c \
-	getidle.c \
-	getuptime.c \
-	getuptime2.c \
-	env_get_prm.c \
-	env_parse.c \
-	env_panic.c \
-	env_prefix.c \
-	fkey_ctl.c \
-	tsc_util.c \
-	ser_putc.c \
-	stacktrace.c \
-	sys_hz.c \
-	timing.c \
-	profile_extern.c \
-	profile.c \
 	vprintf.c \
-	timers.c \
-	spin.c \
-	gcov.c
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 

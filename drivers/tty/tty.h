@@ -180,6 +180,7 @@ _PROTOTYPE( int kbd_loadmap, (message *m, int safe)			);
 _PROTOTYPE( void do_fkey_ctl, (message *m)				);
 _PROTOTYPE( void kbd_interrupt, (message *m)				);
 _PROTOTYPE( void do_kbd, (message *m)					);
+_PROTOTYPE( void do_kb_inject, (message *m)             );
 _PROTOTYPE( void do_kbdaux, (message *m)				);
 _PROTOTYPE( int kbd_status, (message *m_ptr)				);
 

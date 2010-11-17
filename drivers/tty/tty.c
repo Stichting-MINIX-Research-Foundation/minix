@@ -232,6 +232,9 @@ PUBLIC int main(void)
 	case FKEY_CONTROL:		/* (un)register a fkey observer */
 		do_fkey_ctl(&tty_mess);
 		continue;
+	case INPUT_EVENT:
+		do_kb_inject(&tty_mess);
+		continue;
 	default:			/* should be a driver request */
 		;			/* do nothing; end switch */
 	}

@@ -268,5 +268,8 @@ _PROTOTYPE( int sys_profbuf, (void *ctl_ptr, void *mem_ptr)            );
 _PROTOTYPE( int sys_getmcontext, (endpoint_t proc, mcontext_t *mcp)	);
 _PROTOTYPE( int sys_setmcontext, (endpoint_t proc, mcontext_t *mcp)	);
 
+/* input */
+_PROTOTYPE( int tty_input_inject, (int type, int code, int val) );
+
 #endif /* _SYSLIB_H */
 

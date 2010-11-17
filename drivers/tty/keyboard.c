@@ -17,6 +17,7 @@
 #include <machine/archtypes.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/input.h>
 #include <minix/keymap.h>
 #include "tty.h"
 #include "kernel/const.h"
@@ -74,6 +75,12 @@ PRIVATE int aux_irq_hook_id = -1;
 
 #define CONSOLE		   0	/* line number for console */
 #define KB_IN_BYTES	  32	/* size of keyboard input buffer */
+
+PRIVATE char injbuf[KB_IN_BYTES];
+PRIVATE char *injhead = injbuf;
+PRIVATE char *injtail = injbuf;
+PRIVATE int injcount;
+
 PRIVATE char ibuf[KB_IN_BYTES];	/* input buffer */
 PRIVATE char *ihead = ibuf;	/* next free spot in input buffer */
 PRIVATE char *itail = ibuf;	/* scan code to return to TTY */
@@ -558,6 +565,31 @@ message *m_ptr;
   }
 }
 
+
+PUBLIC void do_kb_inject(message *msg)
+{
+	unsigned char scode;
+	/* only handle keyboard events */
+	if (msg->INPUT_TYPE == INPUT_EV_KEY) {
+		scode = msg->INPUT_CODE;
+		
+		/* is it a KEY RELEASE? */
+		if (msg->INPUT_VALUE == 0) {
+			scode |= KEY_RELEASE;	
+		}
+
+		if (injcount < KB_IN_BYTES) {
+			*injhead++ = scode;
+			if (injhead == injbuf + KB_IN_BYTES) injhead = injbuf;
+			injcount++;
+			tty_table[ccurrent].tty_events = 1;
+			if (tty_table[ccurrent].tty_select_ops & SEL_RD) {
+				select_retry(&tty_table[ccurrent]);
+			}
+		}
+	}
+}
+
 /*===========================================================================*
  *				kb_read					     *
  *===========================================================================*/
@@ -569,23 +601,33 @@ int try;
   char buf[7], *p, suffix;
   int scode;
   unsigned ch;
-
-  tp = &tty_table[ccurrent];		/* always use the current console */
+  
+  /* always use the current console */
+  tp = &tty_table[ccurrent];
 
   if (try) {
   	if (icount > 0) return 1;
   	return 0;
   }
 
-  while (icount > 0) {
-	scode = *itail++;			/* take one key scan code */
-	if (itail == ibuf + KB_IN_BYTES) itail = ibuf;
-	icount--;
+  while (icount > 0 || injcount > 0) {
+	  if (injcount > 0) { 
+		  /* take one key scan code */
+		  scode = *injtail++;
+		  if (injtail == injbuf + KB_IN_BYTES) injtail = injbuf;
+		  injcount--;
+	  } else {
+		  /* take one key scan code */
+		  scode = *itail++;			
+		  if (itail == ibuf + KB_IN_BYTES) itail = ibuf;
+		  icount--;
+	  }
 
 	/* Function keys are being used for debug dumps (if enabled). */
 	if (debug_fkeys && func_key(scode)) continue;
 
 	/* Perform make/break processing. */
+
 	ch = make_break(scode);
 
 	if (ch <= 0xFF) {
