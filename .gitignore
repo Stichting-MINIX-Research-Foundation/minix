@@ -24,6 +24,8 @@ GSYMS
 GTAGS
 \#*#
 CVS
+!/.gitignore
+.gitignore
 .svn
 
 boot/boot
