@@ -68,6 +68,8 @@ _PROTOTYPE( void driver_announce, (void) );
 _PROTOTYPE( int driver_receive, (endpoint_t src, message *m_ptr,
 	int *status_ptr) );
 _PROTOTYPE( int driver_receive_mq, (message *m_ptr, int *status_ptr) );
+_PROTOTYPE( int driver_handle_msg, (struct driver *dp, int type, message *m_ptr,
+	int ipc_status));
 _PROTOTYPE( void driver_terminate, (void) );
 _PROTOTYPE( void driver_task, (struct driver *dr, int type) );
 _PROTOTYPE( int driver_mq_queue, (message *m_ptr, int status) );

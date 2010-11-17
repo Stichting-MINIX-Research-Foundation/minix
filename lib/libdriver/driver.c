@@ -355,90 +355,99 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
    * it out, and sends a reply.
    */
   while (driver_running) {
-	if ((r=driver_receive_mq(&mess, &ipc_status)) != OK)
+	if ((r=driver_receive_mq(&mess, &ipc_status)) != OK) {
 		panic("driver_receive_mq failed: %d", r);
-
-	device_caller = mess.m_source;
-	proc_nr = mess.IO_ENDPT;
-
-	/* Now carry out the work. */
-	if (is_ipc_notify(ipc_status)) {
-		switch (_ENDPOINT_P(mess.m_source)) {
-			case HARDWARE:
-				/* leftover interrupt or expired timer. */
-				if(dp->dr_hw_int) {
-					(*dp->dr_hw_int)(dp, &mess);
-				}
-				break;
-			case CLOCK:
-				(*dp->dr_alarm)(dp, &mess);	
-				break;
-			default:		
-				if(dp->dr_other)
-					r = (*dp->dr_other)(dp, &mess);
-				else	
-					r = EINVAL;
-				goto send_reply;
-		}
-
-		/* done, get a new message */
-		continue;
 	}
-
-	switch(mess.m_type) {
-	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
-	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
-	case DEV_IOCTL_S:	r = (*dp->dr_ioctl)(dp, &mess); break;
-	case CANCEL:		r = (*dp->dr_cancel)(dp, &mess);break;
-	case DEV_SELECT:	r = (*dp->dr_select)(dp, &mess);break;
-	case DEV_READ_S:	
-	case DEV_WRITE_S:  	r = do_rdwt(dp, &mess); break;
-	case DEV_GATHER_S: 
-	case DEV_SCATTER_S: 	r = do_vrdwt(dp, &mess); break;
-
-	default:		
-		if(dp->dr_other)
-			r = (*dp->dr_other)(dp, &mess);
-		else	
-			r = EINVAL;
-		break;
-	}
-
-send_reply:
-	/* Clean up leftover state. */
-	(*dp->dr_cleanup)();
-
-	/* Finally, prepare and send the reply message. */
-	if (r == EDONTREPLY)
-		continue;
-
-	switch (type) {
-	case DRIVER_STD:
-		mess.m_type = TASK_REPLY;
-		mess.REP_ENDPT = proc_nr;
-		/* Status is # of bytes transferred or error code. */
-		mess.REP_STATUS = r;
-
-		r= driver_reply(device_caller, ipc_status, &mess);
-		if (r != OK)
-		{
-			printf("driver_task: unable to send reply to %d: %d\n",
-				device_caller, r);
-		}
-
-		break;
-
-	case DRIVER_ASYN:
-		asyn_reply(&mess, proc_nr, r);
-
-		break;
-
-	default:
-		panic("unknown driver type: %d", type);
-	}
+	driver_handle_msg(dp, type, &mess, ipc_status);
   }
 }
 
+/*===========================================================================*
+ *                driver_handle_msg                                          *
+ *===========================================================================*/
+PUBLIC int driver_handle_msg(dp, type, m_ptr, ipc_status)
+struct driver *dp;	/* Device dependent entry points. */
+int type; /* Driver type (DRIVER_STD or DRIVER_ASYN) */
+message *m_ptr; /* Pointer to message to handle */
+int ipc_status; 
+{
+  int r, proc_nr;
+
+  device_caller = m_ptr->m_source;
+  proc_nr = m_ptr->IO_ENDPT;
+  if (is_ipc_notify(ipc_status)) {
+	switch (_ENDPOINT_P(m_ptr->m_source)) {
+		case HARDWARE:
+			/* leftover interrupt or expired timer. */
+			if(dp->dr_hw_int) {
+				(*dp->dr_hw_int)(dp, m_ptr);
+			}
+			break;
+		case CLOCK:
+			(*dp->dr_alarm)(dp, m_ptr);	
+			break;
+		default:		
+			if(dp->dr_other)
+				r = (*dp->dr_other)(dp, m_ptr);
+			else	
+				r = EINVAL;
+		    goto send_reply;
+	}
+	return 0;
+  }
+
+  switch(m_ptr->m_type) {
+	case DEV_OPEN:		r = (*dp->dr_open)(dp, m_ptr);	break;	
+	case DEV_CLOSE:		r = (*dp->dr_close)(dp, m_ptr);	break;
+	case DEV_IOCTL_S:	r = (*dp->dr_ioctl)(dp, m_ptr); break;
+	case CANCEL:		r = (*dp->dr_cancel)(dp, m_ptr);break;
+	case DEV_SELECT:	r = (*dp->dr_select)(dp, m_ptr);break;
+	case DEV_READ_S:	
+	case DEV_WRITE_S:  	r = do_rdwt(dp, m_ptr); break;
+	case DEV_GATHER_S: 
+	case DEV_SCATTER_S: 	r = do_vrdwt(dp, m_ptr); break;
+	default:		
+		if(dp->dr_other)
+			r = (*dp->dr_other)(dp, m_ptr);
+		else	
+			r = EINVAL;
+		break;
+  }
+ 
+send_reply:
+  /* Clean up leftover state. */
+  (*dp->dr_cleanup)();
+  
+  /* Finally, prepare and send the reply m_ptrage. */
+  if (r == EDONTREPLY)
+	return 0;
+
+  switch (type) {
+	case DRIVER_STD:
+		m_ptr->m_type = TASK_REPLY;
+		m_ptr->REP_ENDPT = proc_nr;
+		/* Status is # of bytes transferred or error code. */
+		m_ptr->REP_STATUS = r;
+
+		r = driver_reply(device_caller, ipc_status, m_ptr);
+		
+		if (r != OK) {
+			printf("driver_task: unable to send reply to %d: %d\n",
+			device_caller, r);
+		}
+		
+		break;
+
+	case DRIVER_ASYN:
+		asyn_reply(m_ptr, proc_nr, r);
+
+		break;
+		
+	default:
+		panic("unknown driver type: %d", type);
+  }
+  return 0;
+}
 
 /*===========================================================================*
  *			     driver_init_buffer				     *
