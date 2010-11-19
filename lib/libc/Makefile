@@ -18,7 +18,6 @@ LIB=		c
 .include "${.CURDIR}/sysvipc/Makefile.inc"
 .include "${.CURDIR}/wchar/Makefile.inc"
 
-.include "${.CURDIR}/arch/${ARCH}/int64/Makefile.inc"
 .include "${.CURDIR}/arch/${ARCH}/misc/Makefile.inc"
 .include "${.CURDIR}/arch/${ARCH}/math/Makefile.inc"
 .include "${.CURDIR}/arch/${ARCH}/rts/Makefile.inc"
@@ -28,6 +27,7 @@ LIB=		c
 .include "${.CURDIR}/ack/fphook/Makefile.inc"
 .include "${.CURDIR}/ack/math/Makefile.inc"
 .include "${.CURDIR}/ack/rts/Makefile.inc"
+.include "${.CURDIR}/arch/${ARCH}/int64/Makefile.inc"
 .elif ${COMPILER_TYPE} == "gnu"
 .include "${.CURDIR}/gnu/ieee_float/Makefile.inc"
 .include "${.CURDIR}/gnu/arch/${ARCH}/rts/Makefile.inc"
