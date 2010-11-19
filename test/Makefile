@@ -1,6 +1,6 @@
 # Makefile for the tests.
 
-GCC=gcc
+GCC?=gcc
 CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE
 CFLAGS-GCC= $(CFLAGS) -Wall 
 CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float
