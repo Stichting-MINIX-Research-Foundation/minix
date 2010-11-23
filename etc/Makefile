@@ -29,7 +29,7 @@ install::
 	@echo "Installing fonts.."
 	install -m 644 -o root -g operator fonts/*.fnt /usr/lib/fonts/
 
-installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(USRETC)/rc
+installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(USRETC)/rc $(USR)/Makefile
 
 $(ETC)/rc: rc
 	install -m 755 -o root -g operator $> $@
@@ -46,3 +46,5 @@ $(ETC)/system.conf: system.conf
 $(USRETC)/rc: usr/rc
 	install -m 755 -o root -g operator $> $@
 
+$(USR)/Makefile: usr/Makefile
+	install -m 644 -o root -g operator $> $@

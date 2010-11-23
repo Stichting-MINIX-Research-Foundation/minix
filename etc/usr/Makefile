@@ -26,14 +26,14 @@ pkgsrc-create:
 	mkdir -p ${.CURDIR}/pkgsrc
 	cd ${.CURDIR}/pkgsrc && git init
 	cd ${.CURDIR}/pkgsrc && \
-		git remote add origin http://github.com/gautambt/Pkgsrc-Minix.git
+		git remote add origin git://git.minix3.org/pkgsrc.git
 	cd ${.CURDIR}/pkgsrc && git fetch origin
-	cd ${.CURDIR}/pkgsrc && git branch minix origin/minix
-	cd ${.CURDIR}/pkgsrc && git checkout minix
+	cd ${.CURDIR}/pkgsrc && git branch minix-master origin/minix-master
+	cd ${.CURDIR}/pkgsrc && git checkout minix-master
 	cd ${.CURDIR}/pkgsrc && git pull
 
 pkgsrc-checkout:
-	cd ${.CURDIR}/pkgsrc && git checkout minix
+	cd ${.CURDIR}/pkgsrc && git checkout minix-master
 
 pkgsrc-update:
 	cd ${.CURDIR}/pkgsrc && git pull
