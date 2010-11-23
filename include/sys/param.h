@@ -12,6 +12,8 @@ sys/param.h
 #define NGROUPS		8	/* max number of supplementary groups */
 #define MAXPATHLEN	__MINIX_PATH_MAX
 
+#include <machine/param.h>
+
 /* Macros for min/max. */
 #define MIN(a,b)        ((/*CONSTCOND*/(a)<(b))?(a):(b))
 #define MAX(a,b)        ((/*CONSTCOND*/(a)>(b))?(a):(b))
