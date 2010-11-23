@@ -268,7 +268,6 @@ PUBLIC int cancel_fd(ep, fd)
 endpoint_t ep;
 int fd;
 {
-  int j;
   int proc;
 
   if (isokendpt(ep, &proc) != OK) {

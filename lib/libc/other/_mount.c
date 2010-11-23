@@ -35,7 +35,8 @@ int mountflags;
   char path[60];
   char cmd[200];
   char *p;
-  int reuse;
+  int reuse = 0;
+  int use_existing = 0;
 
   /* Default values. */
   if (type == NULL) type = FSDEFAULT;
@@ -47,6 +48,11 @@ int mountflags;
 	reuse = 1;
 	mountflags &= ~MS_REUSE; /* Temporary: turn off to not confuse VFS */
   }
+  
+  if(mountflags & MS_EXISTING) {
+	use_existing = 1;
+	mountflags &= ~MS_EXISTING; /* Temporary: turn off to not confuse VFS */
+  }
 
   /* Make a label for the file system process. This label must be unique and
    * may currently not exceed 16 characters including terminating null. For
@@ -55,17 +61,27 @@ int mountflags;
    * hopefully enough). For requests with no associated block device, we use
    * the device number and inode of the mount point, in hexadecimal form.
    */
-  if (special) {
-	p = strrchr(special, '/');
-	p = p ? p + 1 : special;
-	if (strchr(p, '\'')) {
-		errno = EINVAL;
-		return -1;
+  if (!use_existing) {
+	if (special) {
+		p = strrchr(special, '/');
+		p = p ? p + 1 : special;
+		if (strchr(p, '\'')) {
+			errno = EINVAL;
+			return -1;
+		}
+		sprintf(label, "fs_%.12s", p);
+	} else {
+		if (stat(name, &statbuf) < 0) return -1;
+		sprintf(label, "fs_%04x%x", statbuf.st_dev, statbuf.st_ino);
 	}
-	sprintf(label, "fs_%.12s", p);
   } else {
-	if (stat(name, &statbuf) < 0) return -1;
-	sprintf(label, "fs_%04x%lx", statbuf.st_dev, statbuf.st_ino);
+		/* label to long? */
+		if (strlen(type) < 16) {
+			sprintf(label, "%s", type);
+		} else {
+			errno = ENOMEM;
+			return -1;
+		}
   }
 
   /* Tell VFS that we are passing in a 16-byte label. */
@@ -89,20 +105,22 @@ int mountflags;
   	errno = EINVAL;
 	return -1;
   }
+  /* start the fs-server if not using existing one */
+  if (!use_existing) {
+	if(strlen(_PATH_SERVICE)+strlen(path)+strlen(label)+
+		strlen(args)+50 >= sizeof(cmd)) {
+		errno = E2BIG;
+		return -1;
+	}
 
-  if(strlen(_PATH_SERVICE)+strlen(path)+strlen(label)+
-     strlen(args)+50 >= sizeof(cmd)) {
-	errno = E2BIG;
-	return -1;
-  }
+	sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -args '%s%s'",
+		reuse ? "-r ": "", path, label, args[0] ? "-o " : "", args);
 
-  sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -args '%s%s'",
-	  reuse ? "-r ": "", path, label, args[0] ? "-o " : "", args);
-
-  if((r = system(cmd)) != 0) {
-	fprintf(stderr, "mount: couldn't run %s\n", cmd);
-	errno = r;
-	return -1;
+	if((r = system(cmd)) != 0) {
+		fprintf(stderr, "mount: couldn't run %s\n", cmd);
+		errno = r;
+		return -1;
+	}
   }
   
   /* Now perform mount(). */
@@ -127,17 +145,28 @@ int mountflags;
 PUBLIC int umount(name)
 _CONST char *name;
 {
+	return umount2(name, 0);
+}
+
+PUBLIC int umount2(name, flags)
+_CONST char *name;
+int flags;
+{
   message m;
   int r;
+
 
   _loadname(name, &m);
   r = _syscall(VFS_PROC_NR, UMOUNT, &m);
 
-  if(r == OK) {
-	/* VFS returns the label of the unmounted file system in the reply.
-	 * As of writing, the size of the m3_ca1 field is 16 bytes.
-	 */
-	rs_down(m.m3_ca1);
+  /* don't shut down the driver when exist flag is set */	
+  if (!(flags & MS_EXISTING)) {
+	  if (r == OK) {
+		/* VFS returns the label of the unmounted file system in the reply.
+		* As of writing, the size of the m3_ca1 field is 16 bytes.
+		*/
+		rs_down(m.m3_ca1);
+	}
   }
 
   return r;

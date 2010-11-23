@@ -46,7 +46,7 @@ struct fproc *rfp;
   int r;
   struct vnode *new_vp, *vp;
   struct vmnt *vmp;
-  struct node_details res;
+  struct node_details res = {0,0,0,0,0,0,0};
 
   assert(dirp);
 

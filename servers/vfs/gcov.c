@@ -3,6 +3,7 @@
 #include "file.h"
 #include "fproc.h"
 
+_PROTOTYPE( int gcov_flush, (cp_grant_id_t grantid, size_t size ));
 
 /*===========================================================================*
  *				do_gcov_flush				*
@@ -15,7 +16,6 @@ PUBLIC int do_gcov_flush()
  * makes the target copy its buffer to the caller (incl vfs
  * itself).
  */
-	int i;
 	struct fproc *rfp;
 	ssize_t size;
 	cp_grant_id_t grantid;

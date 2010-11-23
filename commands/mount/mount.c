@@ -45,6 +45,7 @@ char *argv[];
 				type = argv[i];
 				break;
 		case 'i':	mountflags |= MS_REUSE;		break;
+		case 'e':	mountflags |= MS_EXISTING;		break;
 		case 'n':	write_mtab = 0;			break;
 		case 'o':	if (++i == argc) usage();
 				args = argv[i];
@@ -149,6 +150,6 @@ void list()
 
 void usage()
 {
-  std_err("Usage: mount [-r] [-t type] [-o options] special name\n");
+  std_err("Usage: mount [-r] [-e] [-t type] [-o options] special name\n");
   exit(1);
 }

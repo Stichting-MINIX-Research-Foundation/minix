@@ -48,31 +48,8 @@ FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)				);
  *===========================================================================*/
 PUBLIC int do_fslogin()
 {
-  int r;
-
-  /* Login before mount request */
-  if (mount_fs_e != who_e) {
-      last_login_fs_e = who_e;
-      r = SUSPEND;
-  }
-  /* Login after a suspended mount */
-  else {
-	/* Copy back original mount request message */
-	m_in = mount_m_in;
-
-	/* Set up last login FS */
-	last_login_fs_e = who_e;
-
-	/* Set up endpoint and call nr */
-	who_e = m_in.m_source;
-	who_p = _ENDPOINT_P(who_e);
-	call_nr = m_in.m_type;
-	fp = &fproc[who_p];       /* pointer to proc table struct */
-	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
-      
-	r = mount_fs(mount_fs_e);
-  }
-  return(r);
+  /* deprecated */
+  return(SUSPEND);
 }
 
 
@@ -136,19 +113,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
 
-  /* If FS not yet logged in, save message and suspend mount */
-  if (last_login_fs_e != fs_e) {
-	mount_m_in = m_in;
-	mount_fs_e = fs_e;
-	/* mount_label is already saved */
-	return(SUSPEND);
-  }
-  
-  /* Mount request got after FS login or FS login arrived after a suspended
-   * mount.
-   */
-  last_login_fs_e = NONE;
-  
   /* Clear endpoint field */
   mount_fs_e = NONE;
 

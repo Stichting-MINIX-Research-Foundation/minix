@@ -117,7 +117,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the Minix file server. */
-  int i, r;
+  int i;
 
   /* Defaults */
   opt.use_orlov = TRUE;
@@ -148,12 +148,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   SELF_E = getprocnr();
   buf_pool(DEFAULT_NR_BUFS);
   fs_block_size = _MIN_BLOCK_SIZE;
-
-  fs_m_in.m_type = FS_READY;
-
-  if ((r = send(VFS_PROC_NR, &fs_m_in)) != OK) {
-	panic("Error sending login to VFS: %d", r);
-  }
 
   return(OK);
 }

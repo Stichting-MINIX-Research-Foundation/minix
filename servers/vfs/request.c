@@ -387,7 +387,7 @@ PUBLIC int req_lookup(
 {
   int r;
   size_t len;
-  cp_grant_id_t grant_id, grant_id2;
+  cp_grant_id_t grant_id=0, grant_id2=0;
   message m;
   vfs_ucred_t credentials;
 
@@ -1061,8 +1061,8 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
  * It also handles driver recovery mechanism and reissuing the
  * request which failed due to a dead driver.
  */
-  int r, old_driver_e;
-  message origm, m;
+  int r;
+  message origm;
 
   if(fs_e <= 0 || fs_e == NONE)
 	panic("talking to bogus endpoint: %d", fs_e);

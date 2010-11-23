@@ -62,7 +62,6 @@ FORWARD _PROTOTYPE( int write_seg, (struct inode *rip, off_t off, int proc_e,
  *===========================================================================*/
 PUBLIC int do_getsysinfo()
 {
-  struct fproc *proc_addr;
   vir_bytes src_addr, dst_addr;
   size_t len;
   int s;

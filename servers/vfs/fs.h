@@ -31,6 +31,7 @@
 
 #include <limits.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <minix/syslib.h>
 #include <minix/sysutil.h>

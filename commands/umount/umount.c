@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <errno.h>
 #include <limits.h>
 #include <minix/minlib.h>
@@ -28,10 +29,30 @@ int argc;
 char *argv[];
 {
   int found;
+  int flags = 0UL;
+  int i;
+  char c;
+  char *name;
 
-  if (argc != 2) usage();
-  found = find_mtab_entry(argv[1]);
-  if (umount(argv[1]) < 0) {
+  while ((c = getopt (argc, argv, "e")) != -1)
+  {
+	switch (c) {
+		case 'e': flags |= MS_EXISTING; break;
+		default: break;
+	}
+  }
+  
+  if (argc - optind != 1) {
+	   usage();
+  }
+
+  name = argv[optind];
+ 
+
+  found = find_mtab_entry(name);
+
+
+  if (umount2(name, flags) < 0) {
 	if (errno == EINVAL)
 		std_err("umount: Device not mounted\n");
 	else if (errno == ENOTBLK)
@@ -44,7 +65,7 @@ char *argv[];
 	printf("%s unmounted from %s\n", device, mountpoint);
 	update_mtab();
   }
-  else printf("%s unmounted (mtab not updated)\n", argv[1]);
+  else printf("%s unmounted (mtab not updated)\n", name);
   return(0);
 }
 
@@ -105,6 +126,6 @@ void update_mtab()
 
 void usage()
 {
-  std_err("Usage: umount name\n");
+  std_err("Usage: umount [-e] name\n");
   exit(1);
 }

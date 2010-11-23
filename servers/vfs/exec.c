@@ -68,9 +68,9 @@ vir_bytes *pc;
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
  */
-  int r, r1, sep_id, round, proc_s, hdrlen, load_text, allow_setuid;
-  vir_bytes text_bytes, data_bytes, bss_bytes;
-  phys_bytes tot_bytes;		/* total space for program, including gap */
+  int r, r1, sep_id=0, round, proc_s, hdrlen=0, load_text, allow_setuid;
+  vir_bytes text_bytes=0, data_bytes=0, bss_bytes=0;
+  phys_bytes tot_bytes=0;		/* total space for program, including gap */
   vir_bytes stack_top, vsp;
   off_t off;
   uid_t new_uid;

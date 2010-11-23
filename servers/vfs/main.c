@@ -224,7 +224,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   struct rprocpub rprocpub[NR_BOOT_PROCS];
 
   /* Clear endpoint field */
-  last_login_fs_e = NONE;
   mount_m_in.m1_p3 = (char *) NONE;
 
   /* Initialize the process table with help of the process manager messages. 
@@ -447,22 +446,6 @@ PRIVATE void init_root()
   /* Open the root device. */
   root_dev = DEV_IMGRD;
   ROOT_FS_E = MFS_PROC_NR;
-  
-  /* Wait FS login message */
-  if (last_login_fs_e != ROOT_FS_E) {
-	  /* Wait FS login message */
-	  if (sef_receive(ROOT_FS_E, &m) != OK) {
-		  printf("VFS: Error receiving login request from FS_e %d\n", 
-				  ROOT_FS_E);
-		  panic("Error receiving login request from root filesystem: %d", ROOT_FS_E);
-	  }
-	  if (m.m_type != FS_READY) {
-		  printf("VFS: Invalid login request from FS_e %d\n", 
-				  ROOT_FS_E);
-		  panic("Error receiving login request from root filesystem: %d", ROOT_FS_E);
-	  }
-  }
-  last_login_fs_e = NONE;
   
   /* Initialize vmnt table */
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)

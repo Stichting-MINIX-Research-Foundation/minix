@@ -17,16 +17,9 @@ PRIVATE int init_server(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize internal state, and register with VFS.
 	 */
-	int r;
 
 	/* Initialize the virtual tree. */
 	init_inodes(inodes, root_stat, root_entries);
-
-	/* Tell VFS that we are here. */
-	fs_m_out.m_type = FS_READY;
-
-	if ((r = send(VFS_PROC_NR, &fs_m_out)) != OK)
-		panic(__FILE__, "error sending login to VFS", r);
 
 	/* Do not yet allow any requests except REQ_READSUPER. */
 	fs_mounted = FALSE;
