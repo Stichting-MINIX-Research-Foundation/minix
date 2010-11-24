@@ -22,7 +22,7 @@ CFLAGS += -D__kernel__
 LDFLAGS+= -.o
 .elif ${COMPILER_TYPE} == "gnu"
 CPPFLAGS+= -ffreestanding -fno-stack-protector
-LDFLAGS+= -T arch/${ARCH}/kernel.lds
+LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
 LDFLAGS+= -nostdlib -L${LIBDIR}
 CFLAGS+=-march=i386
 DPADD+=	${LIBC}
