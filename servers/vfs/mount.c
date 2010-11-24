@@ -114,8 +114,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   if (!super_user) return(EPERM);
 
   /* Clear endpoint field */
-  mount_fs_e = NONE;
-
   /* Should the file system be mounted read-only? */
   rdonly = (m_in.mount_flags & MS_RDONLY);
 
