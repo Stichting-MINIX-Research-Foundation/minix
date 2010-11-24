@@ -73,15 +73,6 @@ sef_init_info_t *info;
 
   state.mounted = FALSE;
 
-  /* Announce our presence to VFS. */
-  m.m_type = FS_READY;
-
-  if ((r = send(VFS_PROC_NR, &m)) != OK) {
-	printf("HGFS: unable to login to VFS (%d)\n", r);
-
-	return r;
-  }
-
   return OK;
 }
 
