@@ -64,33 +64,33 @@ hdboot)
 	sh tell_config OS_RELEASE . OS_VERSION >/tmp/mkb.$$
 	version=`sed 's/[" 	]//g;/^$/d' </tmp/mkb.$$`
 
+	# Retrieve the git revision; this only succeeds
+	# if git is available, it's a git checkout, *and*
+	# there are no uncommitted changes.
+	if git diff --quiet 2>/dev/null
+	then	gitrev="-`git describe --always`"
+	fi
+
 	revision=`cat revision 2>/dev/null`
 
 	if [ -z "$revision" ]
 	then	rrevision=""
+		gitrev=""
 	else	rrevision=r$revision
 	fi
 
 	oldrev=$revision
 
-	target="${version}r${revision}"
-
 	if [ -z "$revision" ]
 	then
 		revision=0
 		rrevision=""
-	elif [ -f $rootdir/boot/image/$target ]
-	then
-		if [ $rootdir/boot/image/$target -newer image ]
-		then
-			echo "$root:/boot/image/$target is up to date"
-			test $realroot != $root && umount $root
-			exit 0
-		fi
+	else
 		revision=`expr $revision + 1`
 		rrevision=r$revision
 	fi
-	target="${version}${rrevision}"
+
+	target="${version}${rrevision}${gitrev}"
 
 	set -- `ls -t $rootdir/boot/image`
 
