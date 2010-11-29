@@ -324,13 +324,13 @@ PRIVATE const char *mtypename(int mtype, int iscall)
 		switch(mtype) {
 #define IDENT(x) case x: return #x;
 #include "extracted-mtype.h"
-#undef IDENT(
+#undef IDENT
 		}
 	} else {
 		switch(mtype) {
 #define IDENT(x) case x: return #x;
 #include "extracted-errno.h"
-#undef IDENT(
+#undef IDENT
 		}
 	}
 
