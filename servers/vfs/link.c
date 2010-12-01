@@ -293,6 +293,7 @@ struct fproc *rfp;
   else
 	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, (endpoint_t) 0,
 						link_path, PATH_MAX+1, 1);
+  if (r > 0) link_path[r] = '\0';
 
   put_vnode(vp);
   return r;
