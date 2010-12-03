@@ -1050,6 +1050,15 @@ PUBLIC void restart_service(struct rproc *rp)
   /* See if a late reply has to be sent. */
   late_reply(rp, OK);
 
+  /* This hack disables restarting of file servers, which at the moment always
+   * cause VFS to hang indefinitely. As soon as VFS no longer blocks on calls
+   * to file servers, this exception can be removed again.
+   */
+  if (!strncmp(rp->r_pub->label, "fs_", 3)) {
+      kill_service(rp, "file servers cannot be restarted yet", ENOSYS);
+      return;
+  }
+
   /* Run a recovery script if available. */
   if (rp->r_script[0] != '\0') {
       run_script(rp);
