@@ -30,6 +30,7 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
   struct proc *rp;
   proc_nr_t proc_nr;
   sys_id_t priv_id;
+  sys_map_t map;
   int ipc_to_m, kcalls;
   int i, r;
   struct io_range io_range;
@@ -119,8 +120,13 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	/* Set defaults for privilege bitmaps. */
 	priv(rp)->s_flags= DSRV_F;           /* privilege flags */
 	priv(rp)->s_trap_mask= DSRV_T;       /* allowed traps */
+	memset(&map, 0, sizeof(map));
 	ipc_to_m = DSRV_M;                   /* allowed targets */
-	fill_sendto_mask(rp, ipc_to_m);
+	if (ipc_to_m == ALL_M) {
+		for (i = 0; i < NR_SYS_PROCS; i++)
+			set_sys_bit(map, i);
+	}
+	fill_sendto_mask(rp, &map);
 	kcalls = DSRV_KC;                    /* allowed kernel calls */
 	for(i = 0; i < SYS_CALL_MASK_SIZE; i++) {
 		priv(rp)->s_k_call_mask[i] = (kcalls == NO_C ? 0 : (~0));
@@ -294,7 +300,7 @@ PRIVATE int update_priv(struct proc *rp, struct priv *priv)
 {
 /* Update the privilege structure of a given process. */
 
-  int ipc_to_m, i;
+  int i;
 
   /* Copy s_flags and signal managers. */
   priv(rp)->s_flags = priv->s_flags;
@@ -362,8 +368,7 @@ PRIVATE int update_priv(struct proc *rp, struct priv *priv)
   printf("\n");
 #endif
 
-  memcpy(&ipc_to_m, &priv->s_ipc_to, sizeof(ipc_to_m));
-  fill_sendto_mask(rp, ipc_to_m);
+  fill_sendto_mask(rp, &priv->s_ipc_to);
 
 #if PRIV_DEBUG
   printf("do_privctl: Set ipc target mask for %d:");

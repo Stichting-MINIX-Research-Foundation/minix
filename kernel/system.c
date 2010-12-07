@@ -339,12 +339,12 @@ PUBLIC void unset_sendto_bit(const struct proc *rp, int id)
 /*===========================================================================*
  *			      fill_sendto_mask				     *
  *===========================================================================*/
-PUBLIC void fill_sendto_mask(const struct proc *rp, int mask)
+PUBLIC void fill_sendto_mask(const struct proc *rp, sys_map_t *map)
 {
   int i;
 
   for (i=0; i < NR_SYS_PROCS; i++) {
-  	if (mask & (1 << i))
+  	if (get_sys_bit(*map, i))
   		set_sendto_bit(rp, i);
   	else
   		unset_sendto_bit(rp, i);

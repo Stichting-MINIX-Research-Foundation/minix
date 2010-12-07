@@ -52,6 +52,24 @@ int type;					/* type of initialization */
 }
 
 /*===========================================================================*
+ *			      fill_send_mask                                 *
+ *===========================================================================*/
+PUBLIC void fill_send_mask(send_mask, set_bits)
+sys_map_t *send_mask;		/* the send mask to fill in */
+int set_bits;			/* TRUE sets all bits, FALSE clears all bits */
+{
+/* Fill in a send mask. */
+  int i;
+
+  for (i = 0; i < NR_SYS_PROCS; i++) {
+	if (set_bits)
+		set_sys_bit(*send_mask, i);
+	else
+		unset_sys_bit(*send_mask, i);
+  }
+}
+
+/*===========================================================================*
  *			      fill_call_mask                                 *
  *===========================================================================*/
 PUBLIC void fill_call_mask(calls, tot_nr_calls, call_mask, call_base, is_init)

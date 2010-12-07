@@ -90,6 +90,7 @@ _PROTOTYPE( void end_update, (int result, int reply_flag) );
 
 /* utility.c */
 _PROTOTYPE( int init_service, (struct rproc *rp, int type));
+_PROTOTYPE( void fill_send_mask, (sys_map_t *send_mask, int set_bits));
 _PROTOTYPE(void fill_call_mask, ( int *calls, int tot_nr_calls,
 	bitchunk_t *call_mask, int call_base, int is_init));
 _PROTOTYPE( char* srv_to_string, (struct rproc *rp));

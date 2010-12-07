@@ -165,7 +165,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the reincarnation server. */
   struct boot_image *ip;
-  int s,i,j;
+  int s,i;
   int nr_image_srvs, nr_image_priv_srvs, nr_uncaught_init_srvs;
   struct rproc *rp;
   struct rproc *replica_rp;
@@ -272,7 +272,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       rp->r_priv.s_flags = boot_image_priv->flags;          /* priv flags */
       rp->r_priv.s_trap_mask= SRV_OR_USR(rp, SRV_T, USR_T); /* traps */
       ipc_to = SRV_OR_USR(rp, SRV_M, USR_M);                /* targets */
-      memcpy(&rp->r_priv.s_ipc_to, &ipc_to, sizeof(rp->r_priv.s_ipc_to));
+      fill_send_mask(&rp->r_priv.s_ipc_to, ipc_to == ALL_M);
       rp->r_priv.s_sig_mgr= SRV_OR_USR(rp, SRV_SM, USR_SM); /* sig mgr */
       rp->r_priv.s_bak_sig_mgr = NONE;                      /* backup sig mgr */
       

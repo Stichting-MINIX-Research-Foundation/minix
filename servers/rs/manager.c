@@ -1988,7 +1988,7 @@ struct priv *privp;
 	int is_ipc_all, is_ipc_all_sys;
 
 	/* Clear s_ipc_to */
-	memset(&privp->s_ipc_to, '\0', sizeof(privp->s_ipc_to));
+	fill_send_mask(&privp->s_ipc_to, FALSE);
 
 	is_ipc_all = !strcmp(rp->r_ipc_list, RSS_IPC_ALL);
 	is_ipc_all_sys = !strcmp(rp->r_ipc_list, RSS_IPC_ALL_SYS);

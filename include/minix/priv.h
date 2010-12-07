@@ -20,6 +20,10 @@
  */
 #define NULL_PRIV_ID	(-1)
 
+/* Allowed targets. */
+#define NO_M      (-1)              /* no targets allowed */
+#define ALL_M     (-2)              /* all targets allowed */
+
 /* Allowed calls. */
 #define NO_C      (-1)              /* no calls allowed */
 #define ALL_C     (-2)              /* all calls allowed */
@@ -53,10 +57,10 @@
 #define USR_T     (1 << SENDREC)                   /* user processes */
 
 /* allowed targets */
-#define TSK_M     0                                /* all kernel tasks */
-#define SRV_M     (~0)                             /* system services */
-#define DSRV_M    (~0)                             /* dynamic system services */
-#define USR_M     (~0)                             /* user processes */
+#define TSK_M     NO_M                             /* all kernel tasks */
+#define SRV_M     ALL_M                            /* system services */
+#define DSRV_M    ALL_M                            /* dynamic system services */
+#define USR_M     ALL_M                            /* user processes */
 
 /* allowed kernel calls */
 #define TSK_KC    NO_C                             /* all kernel tasks */

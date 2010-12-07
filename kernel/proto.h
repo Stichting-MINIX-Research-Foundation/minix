@@ -73,7 +73,8 @@ _PROTOTYPE( char *env_get, (const char *key));
 _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( void set_sendto_bit, (const struct proc *rc, int id)	);
 _PROTOTYPE( void unset_sendto_bit, (const struct proc *rc, int id)	);
-_PROTOTYPE( void fill_sendto_mask, (const struct proc *rc, int mask)	);
+_PROTOTYPE( void fill_sendto_mask, (const struct proc *rc,
+							sys_map_t *map)	);
 _PROTOTYPE( void send_sig, (endpoint_t proc_nr, int sig_nr)		);
 _PROTOTYPE( void cause_sig, (proc_nr_t proc_nr, int sig_nr)			);
 _PROTOTYPE( void sig_delay_done, (struct proc *rp)			);

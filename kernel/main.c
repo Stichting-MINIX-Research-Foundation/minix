@@ -156,6 +156,7 @@ PUBLIC int main(void)
 	int schedulable_proc;
 	proc_nr_t proc_nr;
 	int ipc_to_m, kcalls;
+	sys_map_t map;
 
 	ip = &image[i];				/* process' attributes */
 	DEBUGEXTRA(("initializing %s... ", ip->proc_name));
@@ -205,7 +206,14 @@ PUBLIC int main(void)
             }
 
             /* Fill in target mask. */
-            fill_sendto_mask(rp, ipc_to_m);
+            memset(&map, 0, sizeof(map));
+
+            if (ipc_to_m == ALL_M) {
+                for(j = 0; j < NR_SYS_PROCS; j++)
+                    set_sys_bit(map, j);
+            }
+
+            fill_sendto_mask(rp, &map);
 
             /* Fill in kernel call mask. */
             for(j = 0; j < SYS_CALL_MASK_SIZE; j++) {
