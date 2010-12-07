@@ -12,7 +12,7 @@
 /*===========================================================================*
  *				caller_is_root				     *
  *===========================================================================*/
-PUBLIC int caller_is_root(endpoint)
+PRIVATE int caller_is_root(endpoint)
 endpoint_t endpoint;				/* caller endpoint */
 {
   uid_t euid;
@@ -30,43 +30,41 @@ endpoint_t endpoint;				/* caller endpoint */
 /*===========================================================================*
  *				caller_can_control			     *
  *===========================================================================*/
-PUBLIC int caller_can_control(endpoint, label)
+PRIVATE int caller_can_control(endpoint, target_rp)
 endpoint_t endpoint;
-char *label;
+struct rproc *target_rp;
 {
   int control_allowed = 0;
   register struct rproc *rp;
   register struct rprocpub *rpub;
+  char *proc_name;
   int c;
-  char *progname;
 
-  /* Find name of binary for given label. */
-  rp = lookup_slot_by_label(label);
-  if (!rp) return 0;
-  progname = strrchr(rp->r_argv[0], '/');
-  if (progname != NULL)
-	progname++;
-  else
-	progname = rp->r_argv[0];
+  proc_name = target_rp->r_pub->proc_name;
 
   /* Check if label is listed in caller's isolation policy. */
   for (rp = BEG_RPROC_ADDR; rp < END_RPROC_ADDR; rp++) {
+	if (!(rp->r_flags & RS_IN_USE))
+		continue;
+
 	rpub = rp->r_pub;
 	if (rpub->endpoint == endpoint) {
 		break;
 	}
   }
   if (rp == END_RPROC_ADDR) return 0;
-  if (rp->r_nr_control > 0) {
-	for (c = 0; c < rp->r_nr_control; c++) {
-		if (strcmp(rp->r_control[c], progname) == 0)
-			control_allowed = 1;
+
+  for (c = 0; c < rp->r_nr_control; c++) {
+	if (strcmp(rp->r_control[c], proc_name) == 0) {
+		control_allowed = 1;
+		break;
 	}
   }
 
   if (rs_verbose) 
 	printf("RS: allowing %u control over %s via policy: %s\n",
-		endpoint, label, control_allowed ? "yes" : "no");
+		endpoint, target_rp->r_pub->label,
+		control_allowed ? "yes" : "no");
 
   return control_allowed;
 }
@@ -86,7 +84,7 @@ struct rproc *rp;
   /* Caller should be either root or have control privileges. */
   call_allowed = caller_is_root(caller);
   if(rp) {
-      call_allowed |= caller_can_control(caller, rp->r_pub->label);
+      call_allowed |= caller_can_control(caller, rp);
   }
   if(!call_allowed) {
       return EPERM;
@@ -1828,14 +1826,14 @@ struct rproc *rp;
 
 
 /*===========================================================================*
- *				get_next_label				     *
+ *				get_next_name				     *
  *===========================================================================*/
-PUBLIC char *get_next_label(ptr, label, caller_label)
+PRIVATE char *get_next_name(ptr, name, caller_label)
 char *ptr;
-char *label;
+char *name;
 char *caller_label;
 {
-	/* Get the next label from the list of (IPC) labels.
+	/* Get the next name from the list of (IPC) program names.
 	 */
 	char *p, *q;
 	size_t len;
@@ -1856,12 +1854,12 @@ char *caller_label;
 		if (len > RS_MAX_LABEL_LEN)
 		{
 			printf(
-	"rs:get_next_label: bad ipc list entry '%.*s' for %s: too long\n",
+	"rs:get_next_name: bad ipc list entry '%.*s' for %s: too long\n",
 				len, p, caller_label);
 			continue;
 		}
-		memcpy(label, p, len);
-		label[len]= '\0';
+		memcpy(name, p, len);
+		name[len]= '\0';
 
 		return q; /* found another */
 	}
@@ -1879,9 +1877,8 @@ struct priv *privp;
 	/* Add IPC send permissions to a process based on that process's IPC
 	 * list.
 	 */
-	char label[RS_MAX_LABEL_LEN+1], *p;
-	struct rproc *tmp_rp;
-	struct rprocpub *tmp_rpub;
+	char name[RS_MAX_LABEL_LEN+1], *p;
+	struct rproc *rrp;
 	endpoint_t endpoint;
 	int r;
 	int priv_id;
@@ -1891,29 +1888,48 @@ struct priv *privp;
 	rpub = rp->r_pub;
 	p = rp->r_ipc_list;
 
-	while ((p = get_next_label(p, label, rpub->label)) != NULL) {
+	while ((p = get_next_name(p, name, rpub->label)) != NULL) {
 
-		if (strcmp(label, "SYSTEM") == 0)
+		if (strcmp(name, "SYSTEM") == 0)
 			endpoint= SYSTEM;
-		else if (strcmp(label, "USER") == 0)
+		else if (strcmp(name, "USER") == 0)
 			endpoint= INIT_PROC_NR; /* all user procs */
 		else
 		{
-			/* Try to find process */
-			tmp_rp = lookup_slot_by_label(label);
-			if (!tmp_rp)
-				continue;
-			tmp_rpub = tmp_rp->r_pub;
-			endpoint= tmp_rpub->endpoint;
+			/* Set a privilege bit for every process matching the
+			 * given process name. It is perfectly fine if this
+			 * loop does not find any matches, as the target
+			 * process(es) may not have been started yet. See
+			 * add_backward_ipc() below.
+			 */
+			for (rrp=BEG_RPROC_ADDR; rrp<END_RPROC_ADDR; rrp++) {
+				if (!(rrp->r_flags & RS_IN_USE))
+					continue;
+
+				if (!strcmp(rrp->r_pub->proc_name, name)) {
+#if PRIV_DEBUG
+					printf("  RS: add_forward_ipc: setting"
+						" sendto bit for %d...\n",
+						rrp->r_pub->endpoint);
+#endif
+
+					priv_id= rrp->r_priv.s_id;
+					set_sys_bit(privp->s_ipc_to, priv_id);
+				}
+			}
+
+			continue;
 		}
 
+		/* This code only applies to the exception cases. */
 		if ((r = sys_getpriv(&priv, endpoint)) < 0)
 		{
 			printf(
 		"add_forward_ipc: unable to get priv_id for '%s': %d\n",
-				label, r);
+				name, r);
 			continue;
 		}
+
 #if PRIV_DEBUG
 		printf("  RS: add_forward_ipc: setting sendto bit for %d...\n",
 			endpoint);
@@ -1937,41 +1953,38 @@ struct priv *privp;
 	 * add these permissions now because the current process may not yet
 	 * have existed at the time that the other process was initialized.
 	 */
-	char label[RS_MAX_LABEL_LEN+1], *p;
+	char name[RS_MAX_LABEL_LEN+1], *p;
 	struct rproc *rrp;
 	struct rprocpub *rrpub;
-	int priv_id, found;
+	char *proc_name;
+	int priv_id;
+
+	proc_name = rp->r_pub->proc_name;
 
 	for (rrp=BEG_RPROC_ADDR; rrp<END_RPROC_ADDR; rrp++) {
 		if (!(rrp->r_flags & RS_IN_USE))
 			continue;
 
 		/* If an IPC target list was provided for the process being
-		 * checked here, make sure that the label of the new process
-		 * is in that process's list.
+		 * checked here, make sure that the name of the new process
+		 * is in that process's list. There may be multiple matches.
 		 */
 		if (rrp->r_ipc_list[0]) {
-			found = 0;
-
 			rrpub = rrp->r_pub;
 			p = rrp->r_ipc_list;
 
-			while ((p = get_next_label(p, label,
+			while ((p = get_next_name(p, name,
 				rrpub->label)) != NULL) {
-				if (!strcmp(rrpub->label, label)) {
-					found = 1;
-					break;
+				if (!strcmp(proc_name, name)) {
+#if PRIV_DEBUG
+					printf("  RS: add_backward_ipc: setting"
+						" sendto bit for %d...\n",
+						rrpub->endpoint);
+#endif
+					priv_id= rrp->r_priv.s_id;
+					set_sys_bit(privp->s_ipc_to, priv_id);
 				}
 			}
-
-			if (!found)
-				continue;
-#if PRIV_DEBUG
-		printf("  RS: add_backward_ipc: setting sendto bit for %d...\n",
-			rrpub->endpoint);
-#endif
-			priv_id= rrp->r_priv.s_id;
-			set_sys_bit(privp->s_ipc_to, priv_id);
 		}
 	}
 }

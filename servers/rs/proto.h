@@ -27,8 +27,6 @@ _PROTOTYPE( int do_getsysinfo, (message *m));
 _PROTOTYPE( int do_lookup, (message *m));
 
 /* manager.c */
-_PROTOTYPE( int caller_is_root, (endpoint_t endpoint) );
-_PROTOTYPE( int caller_can_control, (endpoint_t endpoint, char *label) );
 _PROTOTYPE( int check_call_permission, (endpoint_t caller, int call,
 	struct rproc *rp) );
 _PROTOTYPE( int copy_rs_start, (endpoint_t src_e, char *src_rs_start,

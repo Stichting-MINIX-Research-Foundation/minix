@@ -50,15 +50,15 @@ Many system services run with root privileges (uid \fB0\fR).
 The default user is service (uid \fB12\fR).
 .RE
 .PP
-\fBipc\fR \fI<ALL|ALL_SYS|NONE|label1 label2...labelN>\fR\fB;\fR
+\fBipc\fR \fI<ALL|ALL_SYS|NONE|name1 name2...nameN>\fR\fB;\fR
 .PP
 .RS
 specifies the list of ipc targets (processes and kernel) the system service can
 talk to. \fIALL\fR allows all the possible targets, \fIALL_SYS\fR is similar but
 excludes user processes. When an explicit list is given, each target
-must be identified by its label (assigned to the corresponding system service).
-Exceptions are user processes (use pseudo-label \fIUSER\fR) and
-the kernel for kernel calls (use pseudo-label \fISYSTEM\fR). The default is
+must be identified by its process (binary) name.
+Exceptions are user processes (use pseudo-name \fIUSER\fR) and
+the kernel for kernel calls (use pseudo-name \fISYSTEM\fR). The default is
 \fIALL_SYS\fR.
 .RE
 .PP
@@ -158,11 +158,11 @@ specifies the PCI classes the system service is allowed to use
 The default is to allow no PCI classes.
 .RE
 .PP
-\fBcontrol\fR \fI<label1 label2...labelN>\fR\fB;\fR
+\fBcontrol\fR \fI<name1 name2...nameN>\fR\fB;\fR
 .PP
 .RS
-specifies the list of system services (identified by their labels) that are
-allowed to control the system service. A controller service can ask RS
+specifies the list of system services (identified by their process names) that
+are allowed to control the system service. A controller service can ask RS
 to perform privileged actions like immediately restarting the service.
 The default is to allow no controller services.
 .RE
