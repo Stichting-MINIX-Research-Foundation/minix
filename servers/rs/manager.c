@@ -1957,7 +1957,7 @@ struct priv *privp;
 	struct rproc *rrp;
 	struct rprocpub *rrpub;
 	char *proc_name;
-	int priv_id;
+	int priv_id, is_ipc_all, is_ipc_all_sys;
 
 	proc_name = rp->r_pub->proc_name;
 
@@ -1965,25 +1965,45 @@ struct priv *privp;
 		if (!(rrp->r_flags & RS_IN_USE))
 			continue;
 
-		/* If an IPC target list was provided for the process being
-		 * checked here, make sure that the name of the new process
+		if (!rrp->r_ipc_list[0])
+			continue;
+
+		/* If the process being checked is set to allow IPC to all
+		 * other processes, or for all other system processes and the
+		 * target process is a system process, add a permission bit.
+		 */
+		rrpub = rrp->r_pub;
+
+		is_ipc_all = !strcmp(rrp->r_ipc_list, RSS_IPC_ALL);
+		is_ipc_all_sys = !strcmp(rrp->r_ipc_list, RSS_IPC_ALL_SYS);
+
+		if (is_ipc_all ||
+			(is_ipc_all_sys && (privp->s_flags & SYS_PROC))) {
+#if PRIV_DEBUG
+			printf("  RS: add_backward_ipc: setting sendto bit "
+				"for %d...\n", rrpub->endpoint);
+#endif
+			priv_id= rrp->r_priv.s_id;
+			set_sys_bit(privp->s_ipc_to, priv_id);
+
+			continue;
+		}
+
+		/* An IPC target list was provided for the process being
+		 * checked here. Make sure that the name of the new process
 		 * is in that process's list. There may be multiple matches.
 		 */
-		if (rrp->r_ipc_list[0]) {
-			rrpub = rrp->r_pub;
-			p = rrp->r_ipc_list;
+		p = rrp->r_ipc_list;
 
-			while ((p = get_next_name(p, name,
-				rrpub->label)) != NULL) {
-				if (!strcmp(proc_name, name)) {
+		while ((p = get_next_name(p, name, rrpub->label)) != NULL) {
+			if (!strcmp(proc_name, name)) {
 #if PRIV_DEBUG
-					printf("  RS: add_backward_ipc: setting"
-						" sendto bit for %d...\n",
-						rrpub->endpoint);
+				printf("  RS: add_backward_ipc: setting sendto"
+					" bit for %d...\n",
+					rrpub->endpoint);
 #endif
-					priv_id= rrp->r_priv.s_id;
-					set_sys_bit(privp->s_ipc_to, priv_id);
-				}
+				priv_id= rrp->r_priv.s_id;
+				set_sys_bit(privp->s_ipc_to, priv_id);
 			}
 		}
 	}

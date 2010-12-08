@@ -326,7 +326,8 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("-nr- -id- -name-- -flags-    traps  grants -ipc_to--  -kernel calls-\n");
+  printf("-nr- -id- -name-- -flags- traps grants -ipc_to--"
+    "            -kernel calls-\n");
 
   PROCLOOP(rp, oldrp)
         r = -1;
@@ -335,7 +336,7 @@ PUBLIC void privileges_dmp()
         if (r == -1 && !isemptyp(rp)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s %s    %s %7d",
+	printf("(%02u) %-7.7s %s %s %6d",
 	       sp->s_id, rp->p_name,
 	       s_flags_str(sp->s_flags), s_traps_str(sp->s_trap_mask),
 		sp->s_grant_entries);
