@@ -1,3 +1,4 @@
+
 /* file - report on file type.		Author: Andy Tanenbaum */
 /* Magic number detection changed to look-up table 08-Jan-91 - ajm */
 
@@ -16,7 +17,7 @@ unsigned char buf[BLOCK_SIZE];
 
 struct info {
   int execflag;			/* 1 == ack executable, 2 == gnu executable,
-				 * 3 == core */
+				 * 3 == core, 4 == elf executable */
   unsigned char magic[4];	/* First four bytes of the magic number */
   unsigned char mask[4];	/* Mask to apply when matching */
   char *description;		/* What it means */
@@ -57,6 +58,8 @@ struct info {
 	"MINIX-68k gnu executable",
   0x03, 0x82, 0x12, 0xC4, 0xC0,		0xff, 0xff, 0xff, 0xff,
 	"core file",
+  0x04, 0x7F, 0x45, 0x4C, 0x46,		0xff, 0xff, 0xff, 0xff,
+	"ELF executable",
 };
 
 int tabsize = sizeof(table) / sizeof(struct info);
@@ -265,6 +268,11 @@ int type;
 		default:printf(" of unknown executable"); break;
 	}
 	printf(" '%.32s'\n", buf+4);
+	return;
+  }
+
+  if (type == 4) {	/* ELF executable */
+	printf("\n");
 	return;
   }
 
