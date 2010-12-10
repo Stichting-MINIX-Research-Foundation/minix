@@ -483,8 +483,6 @@ INFOMODE?=	${NONBINMODE}
 #LIBDIR?=	/usr/lib
 .if ${COMPILER_TYPE} == "ack"
 LIBDIR?=	/usr/lib/i386
-.elif ${COMPILER_TYPE} == "gnu"
-LIBDIR?=	/usr/lib
 .endif
 
 LINTLIBDIR?=	/usr/libdata/lint
@@ -533,7 +531,18 @@ DEBUGMODE?=	${NONBINMODE}
 # All platforms are ELF.
 #
 #OBJECT_FMT=	ELF
+.if !empty(CC:Mi386-pc-minix3-gcc)
+OBJECT_FMT=	ELF
+.else
 OBJECT_FMT=	a.out
+.endif
+.if ${COMPILER_TYPE} == "gnu"
+.if ${OBJECT_FMT} == "a.out"
+LIBDIR?=	/usr/lib
+.elif ${OBJECT_FMT} == "ELF"
+LIBDIR?=	/usr/gnu_cross/i386-pc-minix3/lib
+.endif
+.endif
 
 #
 # If this platform's toolchain is missing, we obviously cannot build it.

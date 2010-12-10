@@ -1,5 +1,7 @@
 # Master Makefile to compile everything in /usr/src except the system.
 
+.include <bsd.own.mk>
+
 MAKE=make
 
 usage:
@@ -33,7 +35,11 @@ usage:
 .if ${COMPILER_TYPE} == "ack"
 world: mkfiles includes depend libraries install etcforce
 .elif ${COMPILER_TYPE} == "gnu"
+.if ${OBJECT_FMT} == "a.out"
 world: mkfiles includes depend gnu-libraries install etcforce
+.elif ${OBJECT_FMT} == "ELF"
+world: mkfiles elf-includes depend elf-libraries install etcforce
+.endif
 .endif
 
 mkfiles:
@@ -60,43 +66,52 @@ gnu-libraries: gnu-includes
 clang-libraries: includes
 	$(MAKE) -C lib build_clang
 
+MKHEADERS443_ELF=/usr/gnu_cross/libexec/gcc/i386-pc-minix3/4.4.3/install-tools/mkheaders
+elf-includes: includes
+	cp -r /usr/include/* /usr/gnu_cross/i386-pc-minix3/sys-include
+	SHELL=/bin/sh; if [ -f $(MKHEADERS443_ELF) ] ; then sh -e $(MKHEADERS443_ELF) ; fi
+
+elf-libraries: elf-includes
+	$(MAKE) -C lib build_elf
+
 commands: includes libraries
 	$(MAKE) -C commands all
 
-depend::
+depend:
 	$(MAKE) -C boot depend
 	$(MAKE) -C commands depend
 	$(MAKE) -C kernel depend
 	$(MAKE) -C servers depend
 	$(MAKE) -C drivers depend
 
-etcfiles::
+etcfiles:
 	$(MAKE) -C etc install
 
-etcforce::
+etcforce:
 	$(MAKE) -C etc installforce
 
-all::
+all:
 	$(MAKE) -C boot all
 	$(MAKE) -C commands all
 	$(MAKE) -C tools all
 
-install::
+install:
 	$(MAKE) -C boot install
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
 	$(MAKE) -C share install
 	$(MAKE) -C tools install
 
-clean::
+clean:
 	$(MAKE) -C boot clean
 	$(MAKE) -C commands clean
 	$(MAKE) -C tools clean
 	$(MAKE) -C lib clean_gnu
 	$(MAKE) -C lib clean_ack
+	$(MAKE) -C lib clean_elf
 	$(MAKE) -C test clean
 
-cleandepend::
+cleandepend:
 	$(MAKE) -C boot cleandepend
 	$(MAKE) -C commands cleandepend
 	$(MAKE) -C tools cleandepend

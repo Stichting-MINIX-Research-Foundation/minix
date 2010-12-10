@@ -233,4 +233,9 @@ AR=ar
 .elif !empty(CC:Mclang)
 COMPILER_TYPE=gnu
 AR=ar
+.elif !empty(CC:Mi386-pc-minix3-gcc)
+COMPILER_TYPE=gnu
+AR=i386-pc-minix3-ar
+LD=i386-pc-minix3-ld
+OBJCOPY=i386-pc-minix3-objcopy
 .endif

@@ -1,14 +1,9 @@
 .include <bsd.own.mk>
 
-.PATH:	${.CURDIR}/${ARCH}
+.if ${OBJECT_FMT} == "a.out"
+SUBDIR=${ARCH}-aout
+.elif ${OBJECT_FMT} == "ELF"
+SUBDIR=${ARCH}-elf
+.endif
 
-SRCS=	crtso.S
-OBJS=	crtso.o
-
-realall: ${OBJS}
-
-FILES=${OBJS}
-FILESDIR=${LIBDIR}
-CLEANFILES=${OBJS}
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
