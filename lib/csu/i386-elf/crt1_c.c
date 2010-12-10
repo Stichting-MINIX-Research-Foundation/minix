@@ -54,6 +54,8 @@ extern int etext;
 char **environ;
 const char *__progname = "";
 
+char ***_penviron;
+
 __dead void _start1(fptr, int, char *[]);
 
 /* The entry function, C part. */
@@ -62,6 +64,8 @@ _start1(fptr cleanup, int argc, char *argv[])
 {
 	char **env;
 	const char *s;
+
+	_penviron = &environ;
 
 	env = argv + argc + 1;
 	environ = env;
