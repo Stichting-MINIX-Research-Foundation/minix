@@ -106,7 +106,7 @@ main(argc, argv)
 	exit(exitval);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: mkfifo [-m mode] fifoname ...\n");
