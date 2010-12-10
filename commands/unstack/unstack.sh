@@ -34,9 +34,13 @@ then	GNM=gnm
 else	GNM=nm
 fi
 
+ELFNM=/usr/gnu_cross/bin/i386-pc-minix3-nm
+
 # Invoke gnu nm or ack nm?
 if file $executable | grep NSYM >/dev/null 2>&1
 then	NM="$GNM --radix=d"
+elif file $executable | grep ELF >/dev/null 2>&1
+then	NM="$ELFNM --radix=d"
 else	NM="acknm -d"
 fi
 
