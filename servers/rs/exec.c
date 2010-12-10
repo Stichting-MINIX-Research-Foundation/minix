@@ -1,26 +1,35 @@
 #include "inc.h"
 #include <a.out.h>
+#include <assert.h>
+#include <libexec.h>
+#include "exec.h"
 
 #define BLOCK_SIZE	1024
 
 static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	char *frame, int frame_len);
-FORWARD _PROTOTYPE( int read_header, (char *exec, size_t exec_len, int *sep_id,
-	vir_bytes *text_bytes, vir_bytes *data_bytes,
-	vir_bytes *bss_bytes, phys_bytes *tot_bytes, vir_bytes *pc,
-	int *hdrlenp)							);
-FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_bytes,
-	vir_bytes data_bytes, vir_bytes bss_bytes, vir_bytes tot_bytes,
-	vir_bytes frame_len, int sep_id,
+static int exec_newmem(int proc_e, vir_bytes text_addr,
+	vir_bytes text_bytes, vir_bytes data_addr,
+	vir_bytes data_bytes, vir_bytes tot_bytes,
+	vir_bytes frame_len, int sep_id, int is_elf,
 	dev_t st_dev, ino_t st_ino, time_t st_ctime, char *progname,
-	int new_uid, int new_gid,
-	vir_bytes *stack_topp, int *load_textp, int *allow_setuidp)	);
-FORWARD _PROTOTYPE( int exec_restart, (int proc_e, int result,
-				       vir_bytes pc)    		);
-FORWARD _PROTOTYPE( void patch_ptr, (char stack[ARG_MAX],
-							vir_bytes base)	);
-FORWARD _PROTOTYPE( int read_seg, (char *exec, size_t exec_len, off_t off,
-	int proc_e, int seg, phys_bytes seg_bytes)			);
+	int new_uid, int new_gid, vir_bytes *stack_topp,
+	int *load_textp, int *allow_setuidp);
+static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
+static int exec_restart(int proc_e, int result, vir_bytes pc);
+static int read_seg(struct exec_info *execi, off_t off,
+        int proc_e, int seg, vir_bytes seg_addr, phys_bytes seg_bytes);
+static int load_aout(struct exec_info *execi);
+static int load_elf(struct exec_info *execi);
+
+/* Array of loaders for different object formats */
+struct exec_loaders {
+	int (*load_object)(struct exec_info *);
+} static const exec_loaders[] = {
+	{ load_aout },
+	{ load_elf },
+	{ NULL }
+};
 
 int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	char **Xenvp)
@@ -112,107 +121,201 @@ int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
 	return r;
 }
 
+
 static int do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	char *frame, int frame_len)
 {
 	int r;
-	int hdrlen, sep_id, load_text, allow_setuid;
-	int need_restart, error;
-	vir_bytes stack_top, vsp;
-	vir_bytes text_bytes, data_bytes, bss_bytes, pc;
-	phys_bytes tot_bytes;
-	off_t off;
-	uid_t new_uid;
-	gid_t new_gid;
+	vir_bytes vsp;
+	struct exec_info execi;
+	int i;
 
-	need_restart= 0;
-	error= 0;
+	execi.proc_e = proc_e;
+	execi.image = exec;
+	execi.image_len = exec_len;
+	strncpy(execi.progname, progname, PROC_NAME_LEN-1);
+	execi.progname[PROC_NAME_LEN-1] = '\0';
+	execi.frame_len = frame_len;
 
-	/* Read the file header and extract the segment sizes. */
-	r = read_header(exec, exec_len, &sep_id,
-		&text_bytes, &data_bytes, &bss_bytes, 
-		&tot_bytes, &pc, &hdrlen);
-	if (r != OK)
-	{
-		printf("do_exec: read_header failed\n");
-		error= r;
-		goto fail;
+	for(i = 0; exec_loaders[i].load_object != NULL; i++) {
+	    r = (*exec_loaders[i].load_object)(&execi);
+	    /* Loaded successfully, so no need to try other loaders */
+	    if (r == OK) break;
 	}
-	need_restart= 1;
 
-	new_uid= getuid();
-	new_gid= getgid();
-	/* XXX what should we use to identify the executable? */
-	r= exec_newmem(proc_e, text_bytes, data_bytes, bss_bytes, tot_bytes,
-		frame_len, sep_id, 0 /*dev*/, proc_e /*inum*/, 0 /*ctime*/, 
-		progname, new_uid, new_gid, &stack_top, &load_text,
-		&allow_setuid);
-	if (r != OK)
-	{
-		printf("do_exec: exec_newmap failed: %d\n", r);
-		error= r;
-		goto fail;
+	/* No exec loader could load the object */
+	if (r != OK) {
+	    printf("RS: do_exec: loading error %d\n", r);
+	    return r;
 	}
 
 	/* Patch up stack and copy it from RS to new core image. */
-	vsp = stack_top;
+	vsp = execi.stack_top;
 	vsp -= frame_len;
 	patch_ptr(frame, vsp);
 	r = sys_datacopy(SELF, (vir_bytes) frame,
 		proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
 	if (r != OK) {
 		printf("RS: stack_top is 0x%lx; tried to copy to 0x%lx in %d\n",
-			stack_top, vsp, proc_e);
+			execi.stack_top, vsp, proc_e);
 		printf("do_exec: copying out new stack failed: %d\n", r);
-		error= r;
-		goto fail;
+		exec_restart(proc_e, r, execi.pc);
+		return r;
+	}
+
+	return exec_restart(proc_e, OK, execi.pc);
+}
+
+static int load_aout(struct exec_info *execi)
+{
+	int r;
+	int hdrlen, sep_id, load_text, allow_setuid;
+	vir_bytes text_bytes, data_bytes, bss_bytes;
+	phys_bytes tot_bytes;
+	off_t off;
+	uid_t new_uid;
+	gid_t new_gid;
+	int proc_e;
+
+	assert(execi != NULL);
+	assert(execi->image != NULL);
+
+	proc_e = execi->proc_e;
+
+	/* Read the file header and extract the segment sizes. */
+	r = read_header_aout(execi->image, execi->image_len, &sep_id,
+		&text_bytes, &data_bytes, &bss_bytes,
+		&tot_bytes, &execi->pc, &hdrlen);
+	if (r != OK)
+	{
+		return r;
+	}
+
+	new_uid= getuid();
+	new_gid= getgid();
+
+	/* XXX what should we use to identify the executable? */
+	r= exec_newmem(proc_e, 0 /*text_addr*/, text_bytes,
+		0 /*data_addr*/, data_bytes + bss_bytes, tot_bytes,
+		execi->frame_len, sep_id, 0 /*is_elf*/, 0 /*dev*/, proc_e /*inum*/, 0 /*ctime*/,
+		execi->progname, new_uid, new_gid, &execi->stack_top, &load_text,
+		&allow_setuid);
+	if (r != OK)
+	{
+		printf("RS: load_aout: exec_newmem failed: %d\n", r);
+		exec_restart(proc_e, r, execi->pc);
+		return r;
 	}
 
 	off = hdrlen;
 
 	/* Read in text and data segments. */
 	if (load_text) {
-		r= read_seg(exec, exec_len, off, proc_e, T, text_bytes);
+		r= read_seg(execi, off, proc_e, T, 0, text_bytes);
 		if (r != OK)
 		{
-			printf("do_exec: read_seg failed: %d\n", r);
-			error= r;
-			goto fail;
+			printf("RS: load_aout: read_seg failed: %d\n", r);
+			exec_restart(proc_e, r, execi->pc);
+			return r;
 		}
 	}
 	else
-		printf("do_exec: not loading text segment\n");
+		printf("RS: load_aout: not loading text segment\n");
 
 	off += text_bytes;
-	r= read_seg(exec, exec_len, off, proc_e, D, data_bytes);
+	r= read_seg(execi, off, proc_e, D, 0, data_bytes);
 	if (r != OK)
 	{
-		printf("do_exec: read_seg failed: %d\n", r);
-		error= r;
-		goto fail;
+		printf("RS: load_aout: read_seg failed: %d\n", r);
+		exec_restart(proc_e, r, execi->pc);
+		return r;
 	}
 
-	return exec_restart(proc_e, OK, pc);
+	return OK;
+}
 
-fail:
-	printf("do_exec(fail): error = %d\n", error);
-	if (need_restart)
-               exec_restart(proc_e, error, pc);
+static int load_elf(struct exec_info *execi)
+{
+  int r;
+  int proc_e;
+  phys_bytes tot_bytes;		/* total space for program, including gap */
+  vir_bytes text_addr, text_filebytes, text_membytes;
+  vir_bytes data_addr, data_filebytes, data_membytes;
+  off_t text_offset, data_offset;
+  int sep_id, is_elf, load_text, allow_setuid;
+  uid_t new_uid;
+  gid_t new_gid;
 
-	return error;
+  assert(execi != NULL);
+  assert(execi->image != NULL);
+
+  proc_e = execi->proc_e;
+
+  /* Read the file header and extract the segment sizes. */
+  r = read_header_elf(execi->image, &text_addr, &text_filebytes, &text_membytes,
+		      &data_addr, &data_filebytes, &data_membytes,
+		      &tot_bytes, &execi->pc, &text_offset, &data_offset);
+  if (r != OK) {
+      return(r);
+  }
+
+  new_uid= getuid();
+  new_gid= getgid();
+
+  sep_id = 1;
+  is_elf = 1;
+
+  r = exec_newmem(proc_e,
+		  trunc_page(text_addr), text_membytes,
+		  trunc_page(data_addr), data_membytes,
+		  tot_bytes, execi->frame_len, sep_id, is_elf,
+		  0 /*dev*/, proc_e /*inum*/, 0 /*ctime*/,
+		  execi->progname, new_uid, new_gid,
+		  &execi->stack_top, &load_text, &allow_setuid);
+  if (r != OK)
+  {
+      printf("RS: load_elf: exec_newmem failed: %d\n", r);
+      exec_restart(proc_e, r, execi->pc);
+      return r;
+  }
+
+  /* Read in text and data segments. */
+  if (load_text) {
+      r = read_seg(execi, text_offset, proc_e, T, text_addr, text_filebytes);
+      if (r != OK)
+      {
+	  printf("RS: load_elf: read_seg failed: %d\n", r);
+	  exec_restart(proc_e, r, execi->pc);
+	  return r;
+      }
+  }
+  else
+      printf("RS: load_elf: not loading text segment\n");
+
+  r = read_seg(execi, data_offset, proc_e, D, data_addr, data_filebytes);
+  if (r != OK)
+  {
+      printf("RS: load_elf: read_seg failed: %d\n", r);
+      exec_restart(proc_e, r, execi->pc);
+      return r;
+  }
+
+  return(OK);
 }
 
 /*===========================================================================*
  *				exec_newmem				     *
  *===========================================================================*/
-PRIVATE int exec_newmem(
+static int exec_newmem(
   int proc_e,
+  vir_bytes text_addr,
   vir_bytes text_bytes,
+  vir_bytes data_addr,
   vir_bytes data_bytes,
-  vir_bytes bss_bytes,
   vir_bytes tot_bytes,
   vir_bytes frame_len,
   int sep_id,
+  int is_elf,
   dev_t st_dev,
   ino_t st_ino,
   time_t st_ctime,
@@ -228,12 +331,14 @@ PRIVATE int exec_newmem(
 	struct exec_newmem e;
 	message m;
 
+	e.text_addr = text_addr;
 	e.text_bytes= text_bytes;
+	e.data_addr = data_addr;
 	e.data_bytes= data_bytes;
-	e.bss_bytes= bss_bytes;
 	e.tot_bytes= tot_bytes;
 	e.args_bytes= frame_len;
 	e.sep_id= sep_id;
+	e.is_elf= is_elf;
 	e.st_dev= st_dev;
 	e.st_ino= st_ino;
 	e.st_ctime= st_ctime;
@@ -265,10 +370,7 @@ PRIVATE int exec_newmem(
 /*===========================================================================*
  *				exec_restart				     *
  *===========================================================================*/
-PRIVATE int exec_restart(proc_e, result, pc)
-int proc_e;
-int result;
-vir_bytes pc;
+static int exec_restart(int proc_e, int result, vir_bytes pc)
 {
 	int r;
 	message m;
@@ -283,91 +385,13 @@ vir_bytes pc;
 	return m.m_type;
 }
 
-
-/*===========================================================================*
- *				read_header				     *
- *===========================================================================*/
-PRIVATE int read_header(exec, exec_len, sep_id, text_bytes, data_bytes,
-	bss_bytes, tot_bytes, pc, hdrlenp)
-char *exec;			/* executable image */
-size_t exec_len;		/* size of the image */
-int *sep_id;			/* true iff sep I&D */
-vir_bytes *text_bytes;		/* place to return text size */
-vir_bytes *data_bytes;		/* place to return initialized data size */
-vir_bytes *bss_bytes;		/* place to return bss size */
-phys_bytes *tot_bytes;		/* place to return total size */
-vir_bytes *pc;			/* program entry point (initial PC) */
-int *hdrlenp;
-{
-/* Read the header and extract the text, data, bss and total sizes from it. */
-  struct exec hdr;		/* a.out header is read in here */
-
-  /* Read the header and check the magic number.  The standard MINIX header 
-   * is defined in <a.out.h>.  It consists of 8 chars followed by 6 longs.
-   * Then come 4 more longs that are not used here.
-   *	Byte 0: magic number 0x01
-   *	Byte 1: magic number 0x03
-   *	Byte 2: normal = 0x10 (not checked, 0 is OK), separate I/D = 0x20
-   *	Byte 3: CPU type, Intel 16 bit = 0x04, Intel 32 bit = 0x10, 
-   *            Motorola = 0x0B, Sun SPARC = 0x17
-   *	Byte 4: Header length = 0x20
-   *	Bytes 5-7 are not used.
-   *
-   *	Now come the 6 longs
-   *	Bytes  8-11: size of text segments in bytes
-   *	Bytes 12-15: size of initialized data segment in bytes
-   *	Bytes 16-19: size of bss in bytes
-   *	Bytes 20-23: program entry point
-   *	Bytes 24-27: total memory allocated to program (text, data + stack)
-   *	Bytes 28-31: size of symbol table in bytes
-   * The longs are represented in a machine dependent order,
-   * little-endian on the 8088, big-endian on the 68000.
-   * The header is followed directly by the text and data segments, and the 
-   * symbol table (if any). The sizes are given in the header. Only the 
-   * text and data segments are copied into memory by exec. The header is 
-   * used here only. The symbol table is for the benefit of a debugger and 
-   * is ignored here.
-   */
-  if (exec_len < sizeof(hdr)) return(ENOEXEC);
-
-  memcpy(&hdr, exec, sizeof(hdr));
-
-  /* Check magic number, cpu type, and flags. */
-  if (BADMAG(hdr)) return(ENOEXEC);
-#if (CHIP == INTEL && _WORD_SIZE == 2)
-  if (hdr.a_cpu != A_I8086) return(ENOEXEC);
-#endif
-#if (CHIP == INTEL && _WORD_SIZE == 4)
-  if (hdr.a_cpu != A_I80386) return(ENOEXEC);
-#endif
-  if ((hdr.a_flags & ~(A_NSYM | A_EXEC | A_SEP)) != 0) return(ENOEXEC);
-
-  *sep_id = !!(hdr.a_flags & A_SEP);	    /* separate I & D or not */
-
-  /* Get text and data sizes. */
-  *text_bytes = (vir_bytes) hdr.a_text;	/* text size in bytes */
-  *data_bytes = (vir_bytes) hdr.a_data;	/* data size in bytes */
-  *bss_bytes  = (vir_bytes) hdr.a_bss;	/* bss size in bytes */
-  *tot_bytes  = hdr.a_total;		/* total bytes to allocate for prog */
-  if (*tot_bytes == 0) return(ENOEXEC);
-
-  if (!*sep_id) {
-	/* If I & D space is not separated, it is all considered data. Text=0*/
-	*data_bytes += *text_bytes;
-	*text_bytes = 0;
-  }
-  *pc = hdr.a_entry;	/* initial address to start execution */
-  *hdrlenp = hdr.a_hdrlen & BYTE;		/* header length */
-
-  return(OK);
-}
-
 /*===========================================================================*
  *				patch_ptr				     *
  *===========================================================================*/
-PRIVATE void patch_ptr(stack, base)
-char stack[ARG_MAX];		/* pointer to stack image within PM */
-vir_bytes base;			/* virtual address of stack base inside user */
+static void patch_ptr(
+char stack[ARG_MAX],		/* pointer to stack image within PM */
+vir_bytes base			/* virtual address of stack base inside user */
+)
 {
 /* When doing an exec(name, argv, envp) call, the user builds up a stack
  * image with arg and env pointers relative to the start of the stack.  Now
@@ -397,13 +421,14 @@ vir_bytes base;			/* virtual address of stack base inside user */
 /*===========================================================================*
  *				read_seg				     *
  *===========================================================================*/
-PRIVATE int read_seg(exec, exec_len, off, proc_e, seg, seg_bytes)
-char *exec;			/* executable image */
-size_t exec_len;		/* size of the image */
-off_t off;			/* offset in file */
-int proc_e;			/* process number (endpoint) */
-int seg;			/* T, D, or S */
-phys_bytes seg_bytes;		/* how much is to be transferred? */
+static int read_seg(
+struct exec_info *execi,	/* various data needed for exec */
+off_t off,			/* offset in file */
+int proc_e,			/* process number (endpoint) */
+int seg,			/* T, D, or S */
+vir_bytes seg_addr,		/* address to load segment */
+phys_bytes seg_bytes		/* how much is to be transferred? */
+)
 {
 /*
  * The byte count on read is usually smaller than the segment count, because
@@ -413,8 +438,9 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
 
   int r;
 
-  if (off+seg_bytes > exec_len) return ENOEXEC;
-  r= sys_vircopy(SELF, D, (vir_bytes)exec+off, proc_e, seg, 0, seg_bytes);
+  assert((seg == T)||(seg == D));
+
+  if (off+seg_bytes > execi->image_len) return ENOEXEC;
+  r= sys_vircopy(SELF, D, ((vir_bytes)execi->image)+off, proc_e, seg, seg_addr, seg_bytes);
   return r;
 }
-

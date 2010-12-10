@@ -4,8 +4,8 @@
 PROG=	rs
 SRCS=	exec.c main.c request.c manager.c table.c utility.c memory.c error.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+DPADD+=	${LIBSYS} ${LIBEXEC}
+LDADD+=	-lsys -lexec
 
 MAN=
 

@@ -6,8 +6,8 @@ SRCS=	main.c open.c read.c write.c pipe.c dmap.c \
 	lock.c misc.c utility.c select.c table.c \
 	vnode.c vmnt.c request.c fscall.c gcov.c
 
-DPADD+=	${LIBSYS} ${LIBTIMERS}
-LDADD+=	-lsys -ltimers
+DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
+LDADD+=	-lsys -ltimers -lexec
 
 MAN=
 

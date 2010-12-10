@@ -32,7 +32,7 @@
 #include "memory.h"
 
 FORWARD _PROTOTYPE( int new_mem, (struct vmproc *vmp,
-	vir_bytes text_bytes, vir_bytes data_bytes, vir_bytes bss_bytes,
+	vir_bytes text_bytes, vir_bytes data_bytes,
 	vir_bytes stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top));
 
 static int failcount;
@@ -82,7 +82,7 @@ SANITYCHECK(SCL_DETAIL);
 
 	/* Check to see if segment sizes are feasible. */
 	tc = (vir_clicks) (CLICK_CEIL(args.text_bytes) >> CLICK_SHIFT);
-	dc = (vir_clicks) (CLICK_CEIL(args.data_bytes+args.bss_bytes) >> CLICK_SHIFT);
+	dc = (vir_clicks) (CLICK_CEIL(args.data_bytes) >> CLICK_SHIFT);
 	totc = (vir_clicks) (CLICK_CEIL(args.tot_bytes) >> CLICK_SHIFT);
 	sc = (vir_clicks) (CLICK_CEIL(args.args_bytes) >> CLICK_SHIFT);
 	if (dc >= totc) {
@@ -102,7 +102,7 @@ SANITYCHECK(SCL_DETAIL);
 	 * kernel.
 	 */
 	r = new_mem(vmp, args.text_bytes, args.data_bytes,
-		args.bss_bytes, args.args_bytes, args.tot_bytes, &stack_top);
+		args.args_bytes, args.tot_bytes, &stack_top);
 	if (r != OK) {
 		printf("VM: newmem: new_mem failed\n");
 		return(r);
@@ -130,11 +130,10 @@ SANITYCHECK(SCL_DETAIL);
  *				new_mem					     *
  *===========================================================================*/
 PRIVATE int new_mem(rmp, text_bytes, data_bytes,
-	bss_bytes,stk_bytes,tot_bytes,stack_top)
+	stk_bytes,tot_bytes,stack_top)
 struct vmproc *rmp;		/* process to get a new memory map */
 vir_bytes text_bytes;		/* text segment size in bytes */
-vir_bytes data_bytes;		/* size of initialized data in bytes */
-vir_bytes bss_bytes;		/* size of bss in bytes */
+vir_bytes data_bytes;		/* size of data (incl bss) in bytes */
 vir_bytes stk_bytes;		/* size of initial stack segment in bytes */
 phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 vir_bytes *stack_top;		/* top of process stack */
@@ -158,7 +157,7 @@ vir_bytes *stack_top;		/* top of process stack */
    * boundary.  The data and bss parts are run together with no space.
    */
   text_clicks = (vir_clicks) (CLICK_CEIL(text_bytes) >> CLICK_SHIFT);
-  data_clicks = (vir_clicks) (CLICK_CEIL(data_bytes + bss_bytes) >> CLICK_SHIFT);
+  data_clicks = (vir_clicks) (CLICK_CEIL(data_bytes) >> CLICK_SHIFT);
   stack_clicks = (vir_clicks) (CLICK_CEIL(stk_bytes) >> CLICK_SHIFT);
   tot_clicks = (vir_clicks) (CLICK_CEIL(tot_bytes) >> CLICK_SHIFT);
   gap_clicks = tot_clicks - data_clicks - stack_clicks;
