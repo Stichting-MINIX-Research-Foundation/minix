@@ -95,7 +95,10 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
   if ((r = fetch_name(path, path_len, 0)) != OK) return(r);
 
   /* Fetch the stack from the user before destroying the old core image. */
-  if (frame_len > ARG_MAX) return(ENOMEM);	/* stack too big */
+  if (frame_len > ARG_MAX) {
+		printf("VFS: pm_exec: stack too big\n");
+		return(ENOMEM);	/* stack too big */
+	}
   r = sys_datacopy(proc_e, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
   		   (phys_bytes) frame_len);
   if (r != OK) { /* can't fetch stack (e.g. bad virtual addr) */
@@ -152,7 +155,6 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 		printf("VFS pm_exec: 2nd fetch_name failed\n");
 	else if ((r = patch_stack(vp, mbuf, &frame_len)) != OK) 
 		printf("VFS pm_exec: patch_stack failed\n");
-	free(execi.hdr);
 	put_vnode(vp);
 	if (r != OK) return(r);
   }
@@ -165,7 +167,6 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
       /* Loaded successfully, so no need to try other loaders */
       if (r == OK) break;
   }
-  free(execi.hdr);
   put_vnode(vp);
 
   /* No exec loader could load the object */
@@ -394,7 +395,10 @@ vir_bytes *stk_bytes		/* size of initial stack */
   char buf[_MAX_BLOCK_SIZE];
 
   /* Make user_fullpath the new argv[0]. */
-  if (!insert_arg(stack, stk_bytes, user_fullpath, REPLACE)) return(ENOMEM);
+  if (!insert_arg(stack, stk_bytes, user_fullpath, REPLACE)) {
+		printf("VFS: patch_stack: insert_arg for argv[0] failed\n");
+		return(ENOMEM);
+	}
 
   pos = 0;	/* Read from the start of the file */
 
@@ -429,7 +433,10 @@ vir_bytes *stk_bytes		/* size of initial stack */
 	while (sp > user_fullpath && sp[-1] != ' ' && sp[-1] != '\t') --sp;
 
 	interp = sp;
-	if (!insert_arg(stack, stk_bytes, sp, INSERT)) return(ENOMEM);
+	if (!insert_arg(stack, stk_bytes, sp, INSERT)) {
+		printf("VFS: patch_stack: insert_arg failed\n");
+		return(ENOMEM);
+	}
   }
 
   /* Round *stk_bytes up to the size of a pointer for alignment contraints. */
@@ -629,20 +636,17 @@ static int map_header(char **exec_hdr, const struct vnode *vp)
   u64_t new_pos;
   unsigned int cum_io;
   off_t pos;
-  char *hdr;
+  static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 
   pos = 0;	/* Read from the start of the file */
-
-  /* Assume that header is not larger than a page */
-  hdr = (char*)malloc(PAGE_SIZE);
-  if (hdr == NULL) {
-      return ENOMEM;
-  }
 
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
 		    VFS_PROC_NR, hdr, MIN(vp->v_size, PAGE_SIZE),
 		    &new_pos, &cum_io);
-  if (r != OK) return(r);
+  if (r != OK) {
+	printf("VFS: exec: map_header: req_readwrite failed\n");
+	return(r);
+  }
 
   *exec_hdr = hdr;
   return(OK);
