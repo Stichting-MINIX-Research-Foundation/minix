@@ -79,7 +79,8 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   rpc->p_sys_time = 0;
 
   rpc->p_reg.psw &= ~TRACEBIT;		/* clear trace bit */
-  rpc->p_misc_flags &= ~(MF_VIRT_TIMER | MF_PROF_TIMER | MF_SC_TRACE);
+  rpc->p_misc_flags &=
+	~(MF_VIRT_TIMER | MF_PROF_TIMER | MF_SC_TRACE | MF_SPROF_SEEN);
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
   rpc->p_prof_left = 0;
 
