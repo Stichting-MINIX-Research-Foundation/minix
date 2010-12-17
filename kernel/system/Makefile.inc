@@ -34,7 +34,6 @@ SRCS+= 	\
 	do_sigreturn.c \
 	do_abort.c \
 	do_getinfo.c \
-	do_sprofile.c \
 	do_cprofile.c \
 	do_profbuf.c \
 	do_vmctl.c \

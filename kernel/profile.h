@@ -8,7 +8,7 @@
 #include "arch_watchdog.h"
 
 #define SAMPLE_BUFFER_SIZE	(64 << 20)
-EXTERN char sprof_sample_buffer[SAMPLE_BUFFER_SIZE];
+extern char sprof_sample_buffer[SAMPLE_BUFFER_SIZE];
 
 EXTERN int sprofiling;			/* whether profiling is running */
 EXTERN int sprofiling_type;			/* whether profiling is running */
