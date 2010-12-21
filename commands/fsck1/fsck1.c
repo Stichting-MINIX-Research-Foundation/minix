@@ -56,7 +56,7 @@
 
 #define BLOCK_SIZE _STATIC_BLOCK_SIZE
 
-#define BITSHIFT	  4	/* = log2(#bits(int)) */
+#define BITSHIFT	  5	/* = log2(#bits(int)) */
 
 #define MAXPRINT	  8	/* max. number of error lines in chkmap */
 #define CINDIR		128	/* number of indirect zno's read at a time */

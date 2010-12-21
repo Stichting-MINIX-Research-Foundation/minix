@@ -90,13 +90,10 @@ PUBLIC struct boot_image image[] = {
 {INIT_PROC_NR, BVM_F, 0,     "init"  },
 };
 
-/* Verify the size of the system image table at compile time. Also verify that 
- * the first chunk of the ipc mask has enough bits to accommodate the processes
- * in the image.  
+/* Verify the size of the system image table at compile time.
  * If a problem is detected, the size of the 'dummy' array will be negative, 
  * causing a compile time error. Note that no space is actually allocated 
  * because 'dummy' is declared extern.
  */
 extern int dummy[(NR_BOOT_PROCS==sizeof(image)/
 	sizeof(struct boot_image))?1:-1];
-extern int dummy[(BITCHUNK_BITS > NR_BOOT_PROCS - 1) ? 1 : -1];

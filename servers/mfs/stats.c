@@ -57,11 +57,10 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
     /* Iterate over the words in block. */
     for (wptr = &bp->b_bitmap[word]; wptr < wlim; wptr++) {
 
-        /* Does this word contain a free bit? */
+      /* Does this word contain a free bit? */
       if (*wptr == (bitchunk_t) ~0) continue;
 
-      /* Find and allocate the free bit. */
-      k = (bitchunk_t) conv2(sp->s_native, (int) *wptr);
+      k = (bitchunk_t) conv4(sp->s_native, (int) *wptr);
 
       for (i = 0; i < 8*sizeof(k); ++i) {
         /* Bit number from the start of the bit map. */

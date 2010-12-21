@@ -363,7 +363,7 @@ PRIVATE int update_priv(struct proc *rp, struct priv *priv)
 #if PRIV_DEBUG
   printf("do_privctl: Setting ipc target mask for %d:");
   for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
-  	printf(" %04x", get_sys_bits(priv->s_ipc_to, i));
+  	printf(" %08x", get_sys_bits(priv->s_ipc_to, i));
   }
   printf("\n");
 #endif
@@ -373,7 +373,7 @@ PRIVATE int update_priv(struct proc *rp, struct priv *priv)
 #if PRIV_DEBUG
   printf("do_privctl: Set ipc target mask for %d:");
   for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
-  	printf(" %04x", get_sys_bits(priv(rp)->s_ipc_to, i));
+  	printf(" %08x", get_sys_bits(priv(rp)->s_ipc_to, i));
   }
   printf("\n");
 #endif

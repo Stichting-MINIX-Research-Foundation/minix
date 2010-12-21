@@ -62,7 +62,7 @@
 
 unsigned int fs_version = 2, block_size = 0;
 
-#define BITSHIFT	  4	/* = log2(#bits(int)) */
+#define BITSHIFT	  5	/* = log2(#bits(int)) */
 
 #define MAXPRINT	  80	/* max. number of error lines in chkmap */
 #define CINDIR		128	/* number of indirect zno's read at a time */

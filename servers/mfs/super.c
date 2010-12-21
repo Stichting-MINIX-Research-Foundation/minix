@@ -73,7 +73,7 @@ bit_t origin;			/* number of bit to start searching at */
 		if (*wptr == (bitchunk_t) ~0) continue;
 
 		/* Find and allocate the free bit. */
-		k = (bitchunk_t) conv2(sp->s_native, (int) *wptr);
+		k = (bitchunk_t) conv4(sp->s_native, (int) *wptr);
 		for (i = 0; (k & (1 << i)) != 0; ++i) {}
 
 		/* Bit number from the start of the bit map. */
@@ -86,7 +86,7 @@ bit_t origin;			/* number of bit to start searching at */
 
 		/* Allocate and return bit number. */
 		k |= 1 << i;
-		*wptr = (bitchunk_t) conv2(sp->s_native, (int) k);
+		*wptr = (bitchunk_t) conv4(sp->s_native, (int) k);
 		bp->b_dirt = DIRTY;
 		put_block(bp, MAP_BLOCK);
 		return(b);
@@ -131,14 +131,14 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 
   bp = get_block(sp->s_dev, start_block + block, NORMAL);
 
-  k = (bitchunk_t) conv2(sp->s_native, (int) bp->b_bitmap[word]);
+  k = (bitchunk_t) conv4(sp->s_native, (int) bp->b_bitmap[word]);
   if (!(k & mask)) {
   	if (map == IMAP) panic("tried to free unused inode");
   	else panic("tried to free unused block: %u", bit_returned);
   }
 
   k &= ~mask;
-  bp->b_bitmap[word] = (bitchunk_t) conv2(sp->s_native, (int) k);
+  bp->b_bitmap[word] = (bitchunk_t) conv4(sp->s_native, (int) k);
   bp->b_dirt = DIRTY;
 
   put_block(bp, MAP_BLOCK);

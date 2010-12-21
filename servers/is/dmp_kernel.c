@@ -327,7 +327,7 @@ PUBLIC void privileges_dmp()
   }
 
   printf("-nr- -id- -name-- -flags- traps grants -ipc_to--"
-    "            -kernel calls-\n");
+    "          -kernel calls-\n");
 
   PROCLOOP(rp, oldrp)
         r = -1;
@@ -341,12 +341,12 @@ PUBLIC void privileges_dmp()
 	       s_flags_str(sp->s_flags), s_traps_str(sp->s_trap_mask),
 		sp->s_grant_entries);
         for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
-	    printf(" %04x", get_sys_bits(sp->s_ipc_to, i));
+	    printf(" %08x", get_sys_bits(sp->s_ipc_to, i));
        	}
 
 	printf(" ");
         for (i=0; i < NR_SYS_CALLS; i += BITCHUNK_BITS) {
-	    printf(" %04x", sp->s_k_call_mask[i/BITCHUNK_BITS]);
+	    printf(" %08x", sp->s_k_call_mask[i/BITCHUNK_BITS]);
        	}
 	printf("\n");
 
