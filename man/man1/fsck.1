@@ -1,6 +1,6 @@
 .TH FSCK 1
 .SH NAME
-fsck, fsck1 \- perform file system consistency check
+fsck \- perform file system consistency check
 .SH SYNOPSIS
 \fBfsck\fR [\fB\-aclmrs\fR]\fR [\fIdevice\fR] ...\fR
 .br
@@ -29,7 +29,6 @@ fsck, fsck1 \- perform file system consistency check
 .PP
 \fIFsck\fR performs consistency checks on the file systems which reside 
 on the specified devices.
-\fIFsck1\fR is an alternate version for use on obsolete V1 file systems.
 When either the \fB\-a\fR or \fB\-r\fR flags are given, the file system
 will be repaired if errors are found.
 Before running \fIfsck\fR on a mounted file system, it must first be unmounted.
