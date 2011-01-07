@@ -538,18 +538,6 @@ struct rproc *rp;
         free_exec(rp);
   }
 
-  /* The purpose of non-blocking forks is to avoid involving VFS in the forking
-   * process, because VFS may be blocked on a sendrec() to a MFS that is
-   * waiting for a endpoint update for a dead driver. We have just published
-   * that update, but VFS may still be blocked. As a result, VFS may not yet
-   * have received PM's fork message. Hence, if we call mapdriver()
-   * immediately, VFS may not know about the process and thus refuse to add the
-   * driver entry. The following temporary hack works around this by forcing
-   * blocking communication from PM to VFS. Once VFS has been made non-blocking
-   * towards MFS instances, this hack and the big part of srv_fork() can go.
-   */
-  setuid(0);
-
   /* If this is a VM instance, let VM know now. */
   if(rp->r_priv.s_flags & VM_SYS_PROC) {
       if(rs_verbose)
@@ -663,6 +651,19 @@ struct rproc *rp;				/* pointer to service slot */
 
   /* If the service is a driver, map it. */
   if (rpub->dev_nr > 0) {
+      /* The purpose of non-blocking forks is to avoid involving VFS in the
+       * forking process, because VFS may be blocked on a sendrec() to a MFS
+       * that is waiting for a endpoint update for a dead driver. We have just
+       * published that update, but VFS may still be blocked. As a result, VFS
+       * may not yet have received PM's fork message. Hence, if we call
+       * mapdriver() immediately, VFS may not know about the process and thus
+       * refuse to add the driver entry. The following temporary hack works
+       * around this by forcing blocking communication from PM to VFS. Once VFS
+       * has been made non-blocking towards MFS instances, this hack and the
+       * big part of srv_fork() can go.
+       */
+      setuid(0);
+
       if (mapdriver(rpub->label, rpub->dev_nr, rpub->dev_style,
           rpub->dev_flags) != OK) {
           return kill_service(rp, "couldn't map driver", errno);
