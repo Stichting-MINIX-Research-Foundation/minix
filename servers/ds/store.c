@@ -120,7 +120,7 @@ PRIVATE endpoint_t ds_getprocep(const char *s)
 
 	if((dsp = lookup_entry(s, DSF_TYPE_LABEL)) != NULL)
 		return dsp->u.u32;
-	return (endpoint_t) -1;
+	panic("ds_getprocep: process endpoint not found");
 }
 
 /*===========================================================================*
@@ -629,9 +629,6 @@ PUBLIC int do_check(message *m_ptr)
 
   /* Copy the type and the owner of the original entry. */
   entry_owner_e = ds_getprocep(ds_store[i].owner);
-  if(entry_owner_e == -1) {
-      panic("ds_getprocep failed");
-  }
   m_ptr->DS_FLAGS = ds_store[i].flags & DSF_MASK_TYPE;
   m_ptr->DS_OWNER = entry_owner_e;
 
@@ -688,6 +685,8 @@ PUBLIC int do_delete(message *m_ptr)
 	for (i = 0; i < NR_DS_KEYS; i++) {
 		if ((ds_store[i].flags & DSF_IN_USE)
 			&& !strcmp(ds_store[i].owner, label)) {
+			update_subscribers(&ds_store[i], 0);
+
 			ds_store[i].flags = 0;
 		}
 	}
