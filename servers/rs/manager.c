@@ -1426,6 +1426,9 @@ endpoint_t source;
 
           for(i = 0; i < NR_SYS_PROCS; i++) {
               rp2 = &rproc[i];
+              if (!(rp2->r_flags & RS_IN_USE)) {
+              	  continue;
+              }
               rpub2 = rproc[i].r_pub;
               if(strcmp(rpub->proc_name, rpub2->proc_name) == 0 &&
                   (rpub2->sys_flags & SF_USE_COPY)) {
