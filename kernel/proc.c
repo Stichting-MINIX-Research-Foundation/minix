@@ -796,8 +796,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
  */
   register struct proc **xpp;
   sys_map_t *map;
-  bitchunk_t *chunk;
-  int i, r, src_id, src_proc_nr, src_p;
+  int i, r, src_id, found, src_proc_nr, src_p;
 
   assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 
@@ -823,24 +822,38 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 
     /* Check if there are pending notifications, except for SENDREC. */
     if (! (caller_ptr->p_misc_flags & MF_REPLY_PEND)) {
-
         map = &priv(caller_ptr)->s_notify_pending;
-        for (chunk=&map->chunk[0]; chunk<&map->chunk[NR_SYS_CHUNKS]; chunk++) {
-		endpoint_t hisep;
 
-            /* Find a pending notification from the requested source. */ 
-            if (! *chunk) continue; 			/* no bits in chunk */
-            for (i=0; ! (*chunk & (1<<i)); ++i) {} 	/* look up the bit */
-            src_id = (chunk - &map->chunk[0]) * BITCHUNK_BITS + i;
-            if (src_id >= NR_SYS_PROCS) break;		/* out of range */
+        /* Either check a specific bit in the pending notifications mask, or
+         * find the first bit set in it (if any), depending on whether the
+         * receive was called on a specific source endpoint.
+         */
+        if (src_p != ANY) {
+            src_id = nr_to_id(src_p);
+
+            found = get_sys_bit(*map, src_id);
+        } else {
+            for (src_id = 0; src_id < NR_SYS_PROCS; src_id += BITCHUNK_BITS) {
+                if (get_sys_bits(*map, src_id) != 0) {
+                    while (!get_sys_bit(*map, src_id)) src_id++;
+
+                    break;
+                }
+            }
+
+            found = (src_id < NR_SYS_PROCS);
+        }
+
+        if (found) {
+            endpoint_t hisep;
+
             src_proc_nr = id_to_nr(src_id);		/* get source proc */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	    if(src_proc_nr == NONE) {
 		printf("mini_receive: sending notify from NONE\n");
 	    }
 #endif
-            if (src_e!=ANY && src_p != src_proc_nr) continue;/* source not ok */
-            *chunk &= ~(1 << i);			/* no longer pending */
+            unset_sys_bit(*map, src_id);		/* no longer pending */
 
             /* Found a suitable source, deliver the notification message. */
 	    hisep = proc_addr(src_proc_nr)->p_endpoint;
