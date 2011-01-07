@@ -519,7 +519,7 @@ PUBLIC int do_retrieve_label(const message *m_ptr)
  *===========================================================================*/
 PUBLIC int do_subscribe(message *m_ptr)
 {
-  char regex[DS_MAX_KEYLEN+3];
+  char regex[DS_MAX_KEYLEN+2];
   struct subscription *subp;
   char errbuf[80];
   char *owner;
@@ -546,9 +546,8 @@ PUBLIC int do_subscribe(message *m_ptr)
    * and the usual case is for a complete match.
    */
   regex[0] = '^';
-  if((r = get_key_name(m_ptr, regex)) != OK)
+  if((r = get_key_name(m_ptr, regex+1)) != OK)
 	return r;
-  regex[DS_MAX_KEYLEN-1] = '\0';
   strcat(regex, "$");
 
   /* Compile regular expression. */
