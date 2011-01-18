@@ -540,9 +540,9 @@ PRIVATE void clear_ipc(
           }
           xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
       }
-      rc->p_rts_flags &= ~RTS_SENDING;
+      RTS_UNSET(rc, RTS_SENDING);
   }
-  rc->p_rts_flags &= ~RTS_RECEIVING;
+  RTS_UNSET(rc, RTS_RECEIVING);
 }
 
 /*===========================================================================*
@@ -600,7 +600,7 @@ int caller_ret;				/* code to return on callers */
       /* Check if process depends on given process. */
       if (P_BLOCKEDON(rp) == rc->p_endpoint) {
           rp->p_reg.retreg = caller_ret;	/* return requested code */
-	  RTS_UNSET(rp, (RTS_RECEIVING|RTS_SENDING)); /* no longer blocking */
+	  clear_ipc(rp);
       }
   }
 }
