@@ -141,4 +141,8 @@ typedef char		*caddr_t;
 
 #endif /* _MINIX || __minix */
 
+#if defined(_MINIX)
+typedef unsigned int    uint;           /* Sys V compatibility */
+#endif
+
 #endif /* _TYPES_H */
