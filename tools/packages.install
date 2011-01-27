@@ -1,6 +1,6 @@
 9e-1.0
-apr-1.3.9
-apr-util-1.3.9nb1
+apr-1.4.2
+apr-util-1.3.10
 autoconf-2.65nb2
 automake-1.11.1
 bash-2.05.2.7nb10
@@ -19,7 +19,7 @@ f2c-20090411nb4
 figlet-2.2.2nb1
 flex-2.5.35nb1
 gawk-3.1.7
-gcc44-4.4.3
+gcc44-4.4.3nb3
 gettext-lib-0.14.6
 gettext-tools-0.14.6nb1
 gmake-3.81
@@ -27,7 +27,6 @@ gmp-5.0.1
 grep-2.5.3
 groff-1.20.1nb2
 gsed-4.2.1
-gtar-base-1.23
 gtexinfo-4.12
 gzip-1.3.12nb3
 lcov-1.7
