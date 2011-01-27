@@ -74,7 +74,6 @@ EXTERN util_timingdata_t timingdata[TIMING_CATEGORIES];
 
 /* Variables that are initialized elsewhere are just extern here. */
 extern struct boot_image image[]; 	/* system image processes */
-extern char *t_stack[];			/* task stack space */
 extern struct segdesc_s gdt[];		/* global descriptor table */
 
 EXTERN volatile int serial_debug_active;

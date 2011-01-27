@@ -129,7 +129,6 @@ PUBLIC int main(void)
   int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
   vir_clicks text_clicks, data_clicks, st_clicks;
-  reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
   size_t argsz;			/* size of arguments passed to crtso on stack */
 
@@ -141,16 +140,10 @@ PUBLIC int main(void)
 
    proc_init();
 
-  /* Set up proc table entries for processes in boot image.  The stacks of the
-   * kernel tasks are initialized to an array in data space.  The stacks
+  /* Set up proc table entries for processes in boot image.  The stacks
    * of the servers have been added to the data segment by the monitor, so
-   * the stack pointer is set to the end of the data segment.  All the
-   * processes are in low memory on the 8086.  On the 386 only the kernel
-   * is in low memory, the rest is loaded in extended memory.
+   * the stack pointer is set to the end of the data segment.
    */
-
-  /* Task stacks. */
-  ktsb = (reg_t) t_stack;
 
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	int schedulable_proc;
@@ -226,12 +219,6 @@ PUBLIC int main(void)
 	}
 
 	if (iskerneln(proc_nr)) {		/* part of the kernel? */ 
-		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
-			rp->p_priv->s_stack_guard = (reg_t *) ktsb;
-			*rp->p_priv->s_stack_guard = STACK_GUARD;
-		}
-		ktsb += ip->stksize;	/* point to high end of stack */
-		rp->p_reg.sp = ktsb;	/* this task's initial stack ptr */
 		hdrindex = 0;		/* all use the first a.out header */
 	} else {
 		hdrindex = 1 + i-NR_TASKS;	/* system/user processes */

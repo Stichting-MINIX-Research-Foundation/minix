@@ -223,9 +223,9 @@ PUBLIC void image_dmp()
   printf("---name- -nr- flags -stack-\n");
   for (m=0; m<NR_BOOT_PROCS; m++) { 
       ip = &image[m];
-      printf("%8s %4d %5s %7d\n",
+      printf("%8s %4d %5s\n",
           ip->proc_name, ip->proc_nr,
-          boot_flags_str(ip->flags), ip->stksize); 
+          boot_flags_str(ip->flags));
   }
   printf("\n");
 }

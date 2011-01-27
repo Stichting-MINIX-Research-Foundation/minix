@@ -34,17 +34,6 @@
 #include "ipc.h"
 #include <minix/com.h>
 
-/* Define stack sizes for the kernel tasks included in the system image. */
-#define NO_STACK	0
-#define SMALL_STACK	(1024 * sizeof(char *))
-#define IDL_S	SMALL_STACK	/* 3 intr, 3 temps, 4 db for Intel */
-#define	HRD_S	NO_STACK	/* dummy task, uses kernel stack */
-#define	TSK_S	SMALL_STACK	/* system and clock task */
-
-/* Stack space for all the task stacks.  Declared as (char *) to align it. */
-#define	TOT_STACK_SPACE	(IDL_S + HRD_S + (2 * TSK_S))
-PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
-
 /* Define boot process flags. */
 #define BVM_F   (PROC_FULLVM)                    /* boot processes with VM */
 #define OVM_F   (PERF_SYS_CORE_FULLVM ? PROC_FULLVM : 0) /* critical boot
@@ -61,33 +50,30 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * allow reliable asynchronous publishing of system events. RS comes right after
  * to prioritize ping messages periodically delivered to system processes.
  *
- * Each entry provides the process number, flags, quantum size, scheduling
- * queue, and a name for the process table. The initial program counter and
- * stack size is also provided for kernel tasks.
- *
- * Note: the quantum size must be positive in all cases! 
+ * Each entry provides the process number, flags, and a name for the process
+ * table.
  */
 
 PUBLIC struct boot_image image[] = {
-/* process nr, flags, stack,   name */
-{IDLE,             0, IDL_S, "idle"  },
-{CLOCK,            0, IDL_S, "clock" },
-{SYSTEM,           0, IDL_S, "system"},
-{HARDWARE,         0, HRD_S, "kernel"},
+/* process nr, flags, name */
+{IDLE,             0, "idle"  },
+{CLOCK,            0, "clock" },
+{SYSTEM,           0, "system"},
+{HARDWARE,         0, "kernel"},
                       
-{DS_PROC_NR,   BVM_F, 0,     "ds"    },
-{RS_PROC_NR,       0, 0,     "rs"    },
+{DS_PROC_NR,   BVM_F, "ds"    },
+{RS_PROC_NR,       0, "rs"    },
                       
-{PM_PROC_NR,   OVM_F, 0,     "pm"    },
-{SCHED_PROC_NR,OVM_F, 0,     "sched" },
-{VFS_PROC_NR,  OVM_F, 0,     "vfs"   },
-{MEM_PROC_NR,  BVM_F, 0,     "memory"},
-{LOG_PROC_NR,  BVM_F, 0,     "log"   },
-{TTY_PROC_NR,  BVM_F, 0,     "tty"   },
-{MFS_PROC_NR,  BVM_F, 0,     "mfs"   },
-{VM_PROC_NR,       0, 0,     "vm"    },
-{PFS_PROC_NR,  BVM_F, 0,     "pfs"   },
-{INIT_PROC_NR, BVM_F, 0,     "init"  },
+{PM_PROC_NR,   OVM_F, "pm"    },
+{SCHED_PROC_NR,OVM_F, "sched" },
+{VFS_PROC_NR,  OVM_F, "vfs"   },
+{MEM_PROC_NR,  BVM_F, "memory"},
+{LOG_PROC_NR,  BVM_F, "log"   },
+{TTY_PROC_NR,  BVM_F, "tty"   },
+{MFS_PROC_NR,  BVM_F, "mfs"   },
+{VM_PROC_NR,       0, "vm"    },
+{PFS_PROC_NR,  BVM_F, "pfs"   },
+{INIT_PROC_NR, BVM_F, "init"  },
 };
 
 /* Verify the size of the system image table at compile time.
