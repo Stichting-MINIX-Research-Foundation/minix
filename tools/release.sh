@@ -12,7 +12,7 @@ secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
 
 # Packages we have to pre-install, and url to use
-PREINSTALLED_PACKAGES=pkgin-0.3.3.1nb1
+PREINSTALLED_PACKAGES="pkgin-0.3.3.4.tgz pkg_install-20101212"
 PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/`uname -r`/`uname -m`/All/
 
 RELEASERC=$HOME/.releaserc
