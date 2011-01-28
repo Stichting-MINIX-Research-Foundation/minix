@@ -7,7 +7,7 @@
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 #define _SYSTEM            1    /* get OK and negative error codes */
 
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <limits.h>

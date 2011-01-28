@@ -1,7 +1,7 @@
 #ifndef _PROFILE_H
 #define _PROFILE_H
 
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <minix/type.h>
 
 /*

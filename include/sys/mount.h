@@ -12,8 +12,8 @@
 
 
 /* Function Prototypes. */
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 _PROTOTYPE( int mount, (char *_spec, char *_name, int _mountflags,

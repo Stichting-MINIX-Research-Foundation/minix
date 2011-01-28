@@ -4,8 +4,8 @@
 #ifndef _REGEXP_H
 #define _REGEXP_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 #define CHARBITS 0377

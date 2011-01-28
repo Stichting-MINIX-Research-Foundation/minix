@@ -5,7 +5,7 @@
  * It should be a mask, e.g. 0377 for an 8-bit machine.
  */
 
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <stddef.h>
 
 _PROTOTYPE( void *memccpy, (void *dst, const void *src,

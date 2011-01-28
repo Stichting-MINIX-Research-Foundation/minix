@@ -2,7 +2,7 @@
 strings.h
 */
 
-#include <ansi.h>
+#include <minix/ansi.h>
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( char *index, (const char *_s, int _charwanted)		);

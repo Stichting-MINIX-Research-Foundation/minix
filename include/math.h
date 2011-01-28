@@ -3,8 +3,8 @@
 #ifndef _MATH_H
 #define _MATH_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 #define INFINITY	(__infinity())

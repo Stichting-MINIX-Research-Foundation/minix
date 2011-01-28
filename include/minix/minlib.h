@@ -1,8 +1,8 @@
 #ifndef _MINLIB
 #define _MINLIB
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 /* Miscellaneous BSD. */

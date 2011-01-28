@@ -8,7 +8,7 @@
  */
 
 #ifndef __ASSEMBLY__
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <minix/debug.h>
 #include "config.h"
 #endif

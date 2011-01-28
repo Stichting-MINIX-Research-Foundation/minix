@@ -1,7 +1,7 @@
 /* fslib.c - routines needed by fs and fs utilities */
 
 #include <minix/config.h>	/* for unused stuff in <minix/type.h> :-( */
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <limits.h>
 #include <dirent.h>
 #include <sys/types.h>

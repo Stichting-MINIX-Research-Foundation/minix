@@ -24,7 +24,7 @@ static char sccsid[] = "@(#)getproto.c	5.6 (Berkeley) 6/1/90";
 #include <stddef.h>
 
 #ifdef _MINIX
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <net/gen/netdb.h>
 #endif
 

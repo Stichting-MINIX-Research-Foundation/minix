@@ -6,8 +6,8 @@
 #ifndef _SIGNAL_H
 #define _SIGNAL_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 #ifdef _POSIX_SOURCE
 #ifndef _TYPES_H

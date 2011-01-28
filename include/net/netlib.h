@@ -6,7 +6,7 @@ net/netlib.h
 #define _NET__NETLIB_H_
 
 #ifndef _ANSI
-#include <ansi.h>
+#include <minix/ansi.h>
 #endif
 
 _PROTOTYPE (int iruserok, (unsigned long raddr, int superuser,

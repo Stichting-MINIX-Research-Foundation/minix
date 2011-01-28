@@ -56,7 +56,7 @@
 #ifndef _WCHAR_H_
 #define _WCHAR_H_
 
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <stdarg.h>
 #include <stddef.h>
 

@@ -4,7 +4,7 @@
 /* $Header$ */
 
 #include	<stdio.h>
-#include	<ansi.h>
+#include	<minix/ansi.h>
 
 #define	io_testflag(p,x)	((p)->_flags & (x))
 

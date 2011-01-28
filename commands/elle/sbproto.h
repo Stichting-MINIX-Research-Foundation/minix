@@ -1,5 +1,5 @@
 #ifndef _ANSI
-#include <ansi.h>
+#include <minix/ansi.h>
 #endif
 
 /* sbbcpy.c */

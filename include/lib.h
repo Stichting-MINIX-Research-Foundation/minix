@@ -14,7 +14,7 @@
 #include <minix/types.h>
 #include <limits.h>
 #include <errno.h>
-#include <ansi.h>
+#include <minix/ansi.h>
 
 #include <minix/const.h>
 #include <minix/com.h>

@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <strings.h>
 #include <ctype.h>
 

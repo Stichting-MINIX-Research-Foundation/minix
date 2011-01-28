@@ -5,7 +5,7 @@ sys/time.h
 #ifndef _SYS__TIME_H
 #define _SYS__TIME_H
 
-#include <ansi.h>
+#include <minix/ansi.h>
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 struct timeval

@@ -42,7 +42,7 @@
  * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
  */
 #ifdef __minix
-#include <ansi.h>
+#include <minix/ansi.h>
 #else
 #include <machine/ansi.h>
 #endif

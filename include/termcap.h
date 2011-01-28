@@ -1,7 +1,7 @@
 #ifndef _TERMCAP_H
 #define _TERMCAP_H
 
-#include <ansi.h>
+#include <minix/ansi.h>
 
 _PROTOTYPE( int tgetent, (char *_bp, char *_name)			);
 _PROTOTYPE( int tgetflag, (char *_id)					);

@@ -7,8 +7,8 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 typedef unsigned char   u8_t;	   /* 8 bit type */

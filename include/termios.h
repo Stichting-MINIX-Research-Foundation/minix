@@ -117,8 +117,8 @@ struct termios {
 #define TCION              4	/* transmit a START character on the line */
 
 /* Function Prototypes. */
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 _PROTOTYPE( int tcsendbreak, (int _fildes, int _duration)		     );

@@ -17,7 +17,7 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <a.out.h>
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>

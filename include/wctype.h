@@ -29,7 +29,7 @@
 #ifndef _WCTYPE_H_
 #define	_WCTYPE_H_
 
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <stddef.h>
 #include <wchar.h>
 

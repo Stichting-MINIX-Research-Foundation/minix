@@ -1,4 +1,4 @@
-/* The <ansi.h> header attempts to decide whether the compiler has enough
+/* The <minix/ansi.h> header attempts to decide whether the compiler has enough
  * conformance to Standard C for Minix to take advantage of.  If so, the
  * symbol _ANSI is defined (as 31459).  Otherwise _ANSI is not defined
  * here, but it may be defined by applications that want to bend the rules.
@@ -18,8 +18,8 @@
  * The appropriate macros are defined here.
  */
 
-#ifndef _ANSI_H
-#define _ANSI_H
+#ifndef _MINIX_ANSI_H
+#define _MINIX_ANSI_H
 
 #if __STDC__ == 1
 #define _ANSI		31459	/* compiler claims full ANSI conformance */
@@ -73,4 +73,4 @@
 #include <stdarg.h>
 #define _BSD_VA_LIST_ va_list
 
-#endif /* ANSI_H */
+#endif /* _MINIX_ANSI_H */

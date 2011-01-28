@@ -11,7 +11,7 @@
 
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* MUST be first */
-#include <ansi.h>		/* MUST be second */
+#include <minix/ansi.h>		/* MUST be second */
 #include <minix/type.h>
 #include <minix/com.h>
 #include <minix/dmap.h>

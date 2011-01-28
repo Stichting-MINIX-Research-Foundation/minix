@@ -3,7 +3,7 @@
  * See the copyright notice in the ACK home directory, in the file "Copyright".
  */
 
-#include <ansi.h>
+#include <minix/ansi.h>
 
 #ifndef __OBJECT_INCLUDED__
 #define __OBJECT_INCLUDED__

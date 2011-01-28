@@ -6,7 +6,7 @@ Created:	Jan 3, 1992 by Philip Homburg
 Copyright 1995 Philip Homburg
 */
 
-#include <ansi.h>
+#include <minix/ansi.h>
 #include <assert.h>
 
 #include <minix/config.h>

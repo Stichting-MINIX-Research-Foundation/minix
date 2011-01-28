@@ -6,8 +6,8 @@
 #ifndef _LOCALE_H
 #define _LOCALE_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 struct lconv {

@@ -18,8 +18,8 @@ typedef unsigned int size_t;	/* type returned by sizeof */
 #endif /*_SIZE_T */
 
 /* Function Prototypes. */
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 _PROTOTYPE( void *memchr, (const void *_s, int _c, size_t _n)		);

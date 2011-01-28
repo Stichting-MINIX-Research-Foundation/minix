@@ -9,8 +9,8 @@
 #ifndef _STDIO_H
 #define	_STDIO_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 #include <sys/null.h>   /* For NULL */

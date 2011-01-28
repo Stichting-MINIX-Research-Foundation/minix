@@ -3,9 +3,11 @@
 #ifndef _UTSNAME_H
 #define _UTSNAME_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
+
+#include <minix/types.h>
 
 struct utsname {
   char sysname[15+1];

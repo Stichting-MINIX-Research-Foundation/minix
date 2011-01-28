@@ -7,8 +7,8 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H
 
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 extern char	__ctype[];	/* property array defined in chartab.c */

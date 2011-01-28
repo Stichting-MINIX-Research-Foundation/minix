@@ -49,8 +49,8 @@ struct ptrace_range {
 };
 
 /* Function Prototypes. */
-#ifndef _ANSI_H
-#include <ansi.h>
+#ifndef _MINIX_ANSI_H
+#include <minix/ansi.h>
 #endif
 
 _PROTOTYPE( long ptrace, (int _req, pid_t _pid, long _addr, long _data) );

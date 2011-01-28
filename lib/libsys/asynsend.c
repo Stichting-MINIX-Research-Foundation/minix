@@ -3,7 +3,7 @@
 #define _SYSTEM 1
 
 #include <minix/config.h>
-#include <ansi.h> 
+#include <minix/ansi.h> 
 #include <assert.h> 
 #include <sys/types.h>
 #include <minix/const.h>

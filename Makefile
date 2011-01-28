@@ -60,7 +60,7 @@ gnu-includes: includes
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443) ] ; then sh -e $(MKHEADERS443) ; fi
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443_PKGSRC) ] ; then sh -e $(MKHEADERS443_PKGSRC) ; fi
 
-gnu-libraries: gnu-includes
+gnu-libraries: #gnu-includes
 	$(MAKE) -C lib build_gnu
 
 clang-libraries: includes
