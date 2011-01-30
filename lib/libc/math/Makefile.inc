@@ -21,4 +21,7 @@ SRCS+=  \
 	sinh.c \
 	sqrt.c \
 	tan.c \
-	tanh.c
+	n_j1.c \
+	tanh.c \
+	s_finite.c \
+	s_copysign.c
