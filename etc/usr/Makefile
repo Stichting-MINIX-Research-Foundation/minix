@@ -20,7 +20,7 @@ help all:
 .endif
 	@echo ""
 
-pkgsrc-create:
+pkgsrc-create: git
 	@echo "If problems occur you may have to rm -rf pkgsrc and try again."
 	@echo ""
 	mkdir -p ${.CURDIR}/pkgsrc
@@ -32,8 +32,11 @@ pkgsrc-create:
 	cd ${.CURDIR}/pkgsrc && git checkout minix-master
 	cd ${.CURDIR}/pkgsrc && git pull
 
-pkgsrc-checkout:
+pkgsrc-checkout: git
 	cd ${.CURDIR}/pkgsrc && git checkout minix-master
 
-pkgsrc-update:
+pkgsrc-update: git
 	cd ${.CURDIR}/pkgsrc && git pull
+
+git:
+	pkgin in scmgit-base
