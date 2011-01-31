@@ -39,4 +39,5 @@ pkgsrc-update: git
 	cd ${.CURDIR}/pkgsrc && git pull
 
 git:
-	pkgin in scmgit-base
+	pkgin update
+	pkgin install scmgit-base
