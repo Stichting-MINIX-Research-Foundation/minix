@@ -418,7 +418,7 @@ send_reply:
   /* Clean up leftover state. */
   (*dp->dr_cleanup)();
   
-  /* Finally, prepare and send the reply m_ptrage. */
+  /* Finally, prepare and send the reply message. */
   if (r == EDONTREPLY)
 	return 0;
 
