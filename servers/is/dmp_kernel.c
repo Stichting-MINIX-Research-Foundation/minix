@@ -56,41 +56,6 @@ PUBLIC struct priv priv[NR_SYS_PROCS];
 PUBLIC struct boot_image image[NR_BOOT_PROCS];
 
 /*===========================================================================*
- *				timing_dmp				     *
- *===========================================================================*/
-PUBLIC void timing_dmp()
-{
-  static struct util_timingdata timingdata[TIMING_CATEGORIES];
-  int r, c, x = 0;
-
-  if ((r = sys_getlocktimings(&timingdata[0])) != OK) {
-      printf("IS: warning: couldn't get copy of lock timings: %d\n", r);
-      return;
-  } 
-
-  for(c = 0; c < TIMING_CATEGORIES; c++) {
-	int b;
-	if (!timingdata[c].lock_timings_range[0] || !timingdata[c].binsize)
-		continue;
-	x = printf("%-*s: misses %lu, resets %lu, measurements %lu: ",
-	TIMING_NAME, timingdata[c].names,
-		timingdata[c].misses,
-		timingdata[c].resets,
-		timingdata[c].measurements);
-	for(b = 0; b < TIMING_POINTS; b++) {
-		int w;
-		if (!timingdata[c].lock_timings[b])
-			continue;
-		x += (w = printf(" %5lu: %5lu", timingdata[c].lock_timings_range[0] +
-			b*timingdata[c].binsize,
-			timingdata[c].lock_timings[b]));
-	 	if (x + w >= 80) { printf("\n"); x = 0; }
-	}
-  	if (x > 0) printf("\n");
-  }
-}
-
-/*===========================================================================*
  *				kmessages_dmp				     *
  *===========================================================================*/
 PUBLIC void kmessages_dmp()

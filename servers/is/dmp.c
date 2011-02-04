@@ -25,7 +25,6 @@ struct hook_entry {
 	{ F7,	kmessages_dmp, "Kernel messages" },
 	{ F8,	vm_dmp, "VM status and process maps" },
 	{ F10,	kenv_dmp, "Kernel parameters" },
-	{ F11,	timing_dmp, "Timing details (if enabled)" },
 	{ SF1,	mproc_dmp, "Process manager process table" },
 	{ SF2,	sigaction_dmp, "Signals" },
 	{ SF3,	fproc_dmp, "Filesystem process table" },
