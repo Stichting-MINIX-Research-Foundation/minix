@@ -161,13 +161,6 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &kmess;
         break;
     }
-#if DEBUG_TIME_LOCKS
-    case GET_LOCKTIMING: {
-    length = sizeof(timingdata);
-    src_vir = (vir_bytes) timingdata;
-    break;
-    }
-#endif
     case GET_IRQACTIDS: {
         length = sizeof(irq_actids);
         src_vir = (vir_bytes) irq_actids;

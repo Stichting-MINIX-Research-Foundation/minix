@@ -24,7 +24,6 @@
  */
 #define DEBUG_ENABLE_IPC_WARNINGS	1
 #define DEBUG_STACKTRACE		1
-#define DEBUG_TIME_LOCKS		1
 
 /* Sanity checks. */
 #define DEBUG_SANITYCHECKS		0

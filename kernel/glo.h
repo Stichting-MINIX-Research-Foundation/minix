@@ -69,9 +69,6 @@ EXTERN int config_no_smp; /* optionaly turn off SMP */
 EXTERN int vm_running;
 EXTERN int catch_pagefaults;
 
-/* Timing */
-EXTERN util_timingdata_t timingdata[TIMING_CATEGORIES];
-
 /* Variables that are initialized elsewhere are just extern here. */
 extern struct boot_image image[]; 	/* system image processes */
 extern struct segdesc_s gdt[];		/* global descriptor table */
