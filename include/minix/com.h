@@ -482,7 +482,6 @@
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
 #   define GET_PROC 	  11	/* get process slot if given process */
 #   define GET_MACHINE 	  12	/* get machine information */
-#   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
 #   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
 #   define GET_LOADINFO   15	/* get load average information */
 #   define GET_IRQACTIDS  16	/* get the IRQ masks */
