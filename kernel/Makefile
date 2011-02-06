@@ -56,7 +56,7 @@ extracted-mfield.h: extract-mfield.sh ../lib/libc/other/*.c ../lib/libc/posix/*.
 	${_MKTARGET_CREATE}
 	cd ${.CURDIR} ; sh extract-mfield.sh > ${.OBJDIR}/extracted-mfield.h
 
-extracted-mtype.h: extract-mtype.sh ../include/minix/com.h
+extracted-mtype.h: extract-mtype.sh ../common/include/minix/com.h
 	${_MKTARGET_CREATE}
 	cd ${.CURDIR} ; sh extract-mtype.sh > ${.OBJDIR}/extracted-mtype.h
 

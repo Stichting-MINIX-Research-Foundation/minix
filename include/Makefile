@@ -7,29 +7,26 @@ INCS=	alloca.h a.out.h ar.h assert.h configfile.h ctype.h \
 	mathconst.h math.h midiparser.h netdb.h pwd.h regex.h \
 	regexp.h setjmp.h sgtty.h signal.h stdarg.h stddef.h \
 	stdint.h stdbool.h stdio.h stdlib.h string.h strings.h sysexits.h \
-	syslog.h tar.h termcap.h termios.h time.h timers.h tools.h \
+	syslog.h tar.h termcap.h time.h timers.h tools.h \
 	ttyent.h ucontext.h unistd.h utime.h utmp.h wchar.h wctype.h \
 	hgfs.h tzfile.h util.h fetch.h mpool.h ndbm.h db.h poll.h resolv.h \
 	memory.h paths.h libexec.h complex.h
 INCS+=	arpa/inet.h arpa/nameser.h
-INCS+=	minix/a.out.h minix/bitmap.h minix/callnr.h minix/cdrom.h \
-	minix/com.h minix/config.h minix/const.h minix/cpufeature.h \
-	minix/crtso.h minix/debug.h minix/devio.h minix/dirent.h \
+INCS+=	minix/a.out.h minix/cdrom.h minix/cpufeature.h \
+	minix/crtso.h minix/dirent.h \
 	minix/dir.h minix/dl_eth.h minix/dmap.h minix/driver.h \
-	minix/limits.h \
 	minix/acpi.h \
-	minix/drivers.h minix/drvlib.h minix/ds.h minix/endpoint.h \
-	minix/fslib.h minix/ioctl.h minix/ipc.h minix/ipcconst.h \
-	minix/keymap.h minix/minlib.h minix/mq.h minix/mthread.h \
+	minix/drivers.h minix/drvlib.h \
+	minix/fslib.h \
+	minix/mq.h minix/mthread.h \
 	minix/netdriver.h minix/partition.h \
-	minix/portio.h minix/priv.h minix/procfs.h minix/profile.h \
+	minix/procfs.h \
 	minix/queryparam.h \
-	minix/rs.h minix/safecopies.h minix/sched.h minix/sef.h minix/sound.h \
-	minix/spin.h minix/sys_config.h minix/sysinfo.h minix/syslib.h \
-	minix/sysutil.h minix/timers.h minix/tty.h minix/type.h minix/types.h \
-	minix/u64.h minix/vfsif.h minix/vm.h minix/vtreefs.h minix/gcov.h  \
-	minix/compiler.h minix/compiler-ack.h minix/sha2.h minix/sha1.h minix/md5.h \
-	minix/audio_fw.h minix/hash.h minix/input.h minix/ansi.h
+	minix/sched.h minix/sound.h \
+	minix/tty.h minix/types.h \
+	minix/u64.h minix/vfsif.h minix/vtreefs.h \
+	minix/compiler-ack.h minix/sha2.h minix/sha1.h minix/md5.h \
+	minix/audio_fw.h minix/hash.h minix/input.h 
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
 INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
 	net/gen/eth_hdr.h net/gen/eth_io.h net/gen/icmp.h \
@@ -46,6 +43,9 @@ INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
 .include <bsd.own.mk>
 
 INCSDIR=        /usr/include
+
+.include "../common/include/Makefile.inc"
+.include "../common/include/Makefile.termios.inc"
 
 SUBDIR=		sys arch
 

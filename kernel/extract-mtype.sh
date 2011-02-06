@@ -4,12 +4,12 @@ set -e
 
 # grep message type constants and make them into a .h file
 (
-	cat ../include/minix/callnr.h | \
+	cat ../common/include/minix/callnr.h | \
 	tr -s ' \t' ' ' | \
 	sed 's/^# /#/' | \
 	egrep '^#define [A-Z_][A-Z0-9_]* [0-9]+' | grep -v NCALLS 
 	
-	cat ../include/minix/com.h | \
+	cat ../common/include/minix/com.h | \
 	tr -s ' \t' ' ' | \
 	sed 's/^# /#/' | \
 	egrep '^#define [A-Z_][A-Z0-9_]* \( ?([A-Z0-9_]+_BASE|KERNEL_CALL) ?\+[A-Za-z0-9_ +]+\)'	
