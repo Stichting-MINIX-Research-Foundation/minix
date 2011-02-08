@@ -168,6 +168,13 @@ PRIVATE void pid_psinfo(int i)
 		);
 	}
 
+	/* always add kernel cycles */
+	buf_printf(" %lu %lu %lu %lu",
+		ex64hi(proc[i].p_kipc_cycles),
+		ex64lo(proc[i].p_kipc_cycles),
+		ex64hi(proc[i].p_kcall_cycles),
+		ex64lo(proc[i].p_kcall_cycles));
+
 	/* Newline at the end of the file. */
 	buf_printf("\n");
 }
