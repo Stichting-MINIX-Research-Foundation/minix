@@ -539,6 +539,9 @@ PUBLIC int do_ipc(reg_t r1, reg_t r2, reg_t r3)
 
   assert(!RTS_ISSET(caller_ptr, RTS_SLOT_FREE));
 
+  /* bill kernel time to this process. */
+  kbill_ipc = caller_ptr;
+
   /* If this process is subject to system call tracing, handle that first. */
   if (caller_ptr->p_misc_flags & (MF_SC_TRACE | MF_SC_DEFER)) {
 	/* Are we tracing this process, and is it the first sys_call entry? */

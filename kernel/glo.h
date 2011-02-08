@@ -29,6 +29,8 @@ EXTERN struct loadinfo kloadinfo;	/* status of load average */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 EXTERN char *ipc_call_names[IPCNO_HIGHEST+1]; /* human-readable call names */
+EXTERN struct proc *kbill_kcall; /* process that made kernel call */
+EXTERN struct proc *kbill_ipc; /* process that invoked ipc */
 
 /* Interrupt related variables. */
 EXTERN irq_hook_t irq_hooks[NR_IRQ_HOOKS];	/* hooks for general use */

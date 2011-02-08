@@ -241,6 +241,18 @@ PUBLIC void context_stop(struct proc * p)
 	
 	tsc_delta = sub64(tsc, *__tsc_ctr_switch);
 
+	if(kbill_ipc) {
+		kbill_ipc->p_kipc_cycles =
+			add64(kbill_ipc->p_kipc_cycles, tsc_delta);
+		kbill_ipc = NULL;
+	}
+
+	if(kbill_kcall) {
+		kbill_kcall->p_kcall_cycles =
+			add64(kbill_kcall->p_kcall_cycles, tsc_delta);
+		kbill_kcall = NULL;
+	}
+
 	/*
 	 * deduct the just consumed cpu cycles from the cpu time left for this
 	 * process during its current quantum. Skip IDLE and other pseudo kernel

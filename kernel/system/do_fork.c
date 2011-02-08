@@ -90,6 +90,8 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 
   make_zero64(rpc->p_cpu_time_left);
   make_zero64(rpc->p_cycles);
+  make_zero64(rpc->p_kcall_cycles);
+  make_zero64(rpc->p_kipc_cycles);
 
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.

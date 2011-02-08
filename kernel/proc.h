@@ -58,6 +58,8 @@ struct proc {
   clock_t p_prof_left;		/* number of ticks left on profile timer */
 
   u64_t p_cycles;		/* how many cycles did the process use */
+  u64_t p_kcall_cycles;		/* kernel cycles caused by this proc (kcall) */
+  u64_t p_kipc_cycles;		/* cycles caused by this proc (ipc) */
 
   struct proc *p_nextready;	/* pointer to next ready process */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
