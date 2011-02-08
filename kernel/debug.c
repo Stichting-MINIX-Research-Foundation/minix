@@ -12,6 +12,7 @@
 #include <minix/u64.h>
 #include <limits.h>
 #include <string.h>
+#include <assert.h>
 
 #define MAX_LOOP (NR_PROCS + NR_TASKS)
 
@@ -338,6 +339,14 @@ PRIVATE const char *mtypename(int mtype, int iscall)
 	return NULL;
 }
 
+PRIVATE void printproc(struct proc *rp)
+{
+	if (rp)
+		printf(" %s(%d)", rp->p_name, rp - proc);
+	else
+		printf(" kernel");
+}
+
 PRIVATE void printparam(const char *name, const void *data, size_t size)
 {
 	printf(" %s=", name);
@@ -347,14 +356,6 @@ PRIVATE void printparam(const char *name, const void *data, size_t size)
 		case sizeof(int):	printf("%d", *(int *) data);	break;
 		default:		printf("(%u bytes)", size);	break;
 	}
-}
-
-PRIVATE void printproc(struct proc *rp)
-{
-	if (rp)
-		printf(" %s(%d)", rp->p_name, rp - proc);
-	else
-		printf(" kernel");
 }
 
 PRIVATE void printmsg(message *msg, struct proc *src, struct proc *dst, 
@@ -381,24 +382,141 @@ PRIVATE void printmsg(message *msg, struct proc *src, struct proc *dst,
 	}
 	printf("\n");
 }
+#endif
 
-PUBLIC void printmsgkcall(message *msg, struct proc *proc)
+#if DEBUG_IPCSTATS
+#define IPCPROCS (NR_PROCS+1)	/* number of slots we need */
+#define KERNELIPC NR_PROCS	/* slot number to use for kernel calls */
+PRIVATE int messages[IPCPROCS][IPCPROCS];
+
+#define PRINTSLOTS 20
+PRIVATE struct {
+	int src, dst, messages;
+} winners[PRINTSLOTS];
+PRIVATE int total, goodslots;
+
+PRIVATE void printstats(int ticks)
 {
+	int i;
+	for(i = 0; i < goodslots; i++) {
+#define name(s) (s == KERNELIPC ? "kernel" : proc_addr(s)->p_name)
+#define persec(n) (system_hz*(n)/ticks)
+		char	*n1 = name(winners[i].src),
+			*n2 = name(winners[i].dst);
+		printf("%2d.  %8s -> %8s  %9d/s\n",
+			i, n1, n2, persec(winners[i].messages));
+	}
+	printf("total %d/s\n", persec(total));
+}
+
+PRIVATE void sortstats(void)
+{
+	/* Print top message senders/receivers. */
+	int src_slot, dst_slot;
+	total = goodslots = 0;
+	for(src_slot = 0; src_slot < IPCPROCS; src_slot++) {
+		for(dst_slot = 0; dst_slot < IPCPROCS; dst_slot++) {
+			int w = PRINTSLOTS, rem,
+				n = messages[src_slot][dst_slot];
+			total += n;
+			while(w > 0 && n > winners[w-1].messages)
+				w--;
+			if(w >= PRINTSLOTS) continue;
+
+			/* This combination has beaten the current winners
+			 * and should be inserted at position 'w.'
+			 */
+			rem = PRINTSLOTS-w-1;
+			assert(rem >= 0);
+			assert(rem < PRINTSLOTS);
+			if(rem > 0) {
+				assert(w+1 <= PRINTSLOTS-1);
+				assert(w >= 0);
+				memmove(&winners[w+1], &winners[w],
+					rem*sizeof(winners[0]));
+			}
+			winners[w].src = src_slot;
+			winners[w].dst = dst_slot;
+			winners[w].messages = n;
+			if(goodslots < PRINTSLOTS) goodslots++;
+		}
+	}
+}
+
+#define proc2slot(p, s) { \
+	if(p) { s = p->p_nr; } \
+	else { s = KERNELIPC; } \
+	assert(s >= 0 && s < IPCPROCS); \
+}
+
+PRIVATE void statmsg(message *msg, struct proc *srcp, struct proc *dstp)
+{
+	int src, dst, now, secs, dt;
+	static int lastprint;
+
+	/* Stat message. */
+	assert(src);
+	proc2slot(srcp, src);
+	proc2slot(dstp, dst);
+	messages[src][dst]++;
+
+	/* Print something? */
+	now = get_uptime();
+	dt = now - lastprint;
+	secs = dt/system_hz;
+	if(secs >= 30) {
+		memset(winners, 0, sizeof(winners));
+		sortstats();
+		printstats(dt);
+		memset(messages, 0, sizeof(messages));
+		lastprint = now;
+	}
+}
+#endif
+
+#if DEBUG_IPC_HOOK
+PUBLIC void hook_ipc_msgkcall(message *msg, struct proc *proc)
+{
+#if DEBUG_DUMPIPC
 	printmsg(msg, proc, NULL, 'k', 1, 1);
+#endif
 }
 
-PUBLIC void printmsgkresult(message *msg, struct proc *proc)
+PUBLIC void hook_ipc_msgkresult(message *msg, struct proc *proc)
 {
+#if DEBUG_DUMPIPC
 	printmsg(msg, NULL, proc, 'k', 0, 0);
+#endif
+#if DEBUG_IPCSTATS
+	statmsg(msg, proc, NULL);
+#endif
 }
 
-PUBLIC void printmsgrecv(message *msg, struct proc *src, struct proc *dst)
+PUBLIC void hook_ipc_msgrecv(message *msg, struct proc *src, struct proc *dst)
 {
+#if DEBUG_DUMPIPC
 	printmsg(msg, src, dst, 'r', src->p_misc_flags & MF_REPLY_PEND, 0);
+#endif
+#if DEBUG_IPCSTATS
+	statmsg(msg, src, dst);
+#endif
 }
 
-PUBLIC void printmsgsend(message *msg, struct proc *src, struct proc *dst)
+PUBLIC void hook_ipc_msgsend(message *msg, struct proc *src, struct proc *dst)
 {
+#if DEBUG_DUMPIPC
 	printmsg(msg, src, dst, 's', src->p_misc_flags & MF_REPLY_PEND, 1);
+#endif
+}
+
+PUBLIC void hook_ipc_clear(struct proc *p)
+{
+#if DEBUG_IPCSTATS
+	int slot, i;
+	assert(p);
+	proc2slot(p, slot);
+	for(i = 0; i < IPCPROCS; i++)
+		messages[slot][i] = messages[i][slot] = 0;
+#endif
 }
 #endif

@@ -23,7 +23,6 @@
  * are disabled.
  */
 #define DEBUG_ENABLE_IPC_WARNINGS	1
-#define DEBUG_STACKTRACE		1
 
 /* Sanity checks. */
 #define DEBUG_SANITYCHECKS		0
@@ -44,6 +43,13 @@
  * just to boot
  */
 #define DEBUG_DUMPIPC			0
+
+/* DEBUG_IPCSTATS collects information on who sends messages to whom. */
+#define DEBUG_IPCSTATS			0
+
+#if DEBUG_DUMPIPC || DEBUG_IPCSTATS	/* either of these needs the hook */
+#define DEBUG_IPC_HOOK			1
+#endif
 
 #if DEBUG_TRACE
 

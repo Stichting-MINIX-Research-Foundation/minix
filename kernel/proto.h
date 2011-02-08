@@ -122,13 +122,14 @@ _PROTOTYPE( char *schedulerstr, (struct proc *scheduler) );
 _PROTOTYPE( void print_proc, (struct proc *pp));
 /* prints the given process and recursively all processes it depends on */
 _PROTOTYPE( void print_proc_recursive, (struct proc *pp));
-#if DEBUG_DUMPIPC
-_PROTOTYPE( void printmsgrecv, (message *msg, struct proc *src, 
+#if DEBUG_IPC_HOOK
+_PROTOTYPE( void hook_ipc_msgrecv, (message *msg, struct proc *src, 
 						struct proc *dst)	);
-_PROTOTYPE( void printmsgsend, (message *msg, struct proc *src, 
+_PROTOTYPE( void hook_ipc_msgsend, (message *msg, struct proc *src, 
 						struct proc *dst)	);
-_PROTOTYPE( void printmsgkcall, (message *msg, struct proc *proc)	);
-_PROTOTYPE( void printmsgkresult, (message *msg, struct proc *proc)	);
+_PROTOTYPE( void hook_ipc_msgkcall, (message *msg, struct proc *proc)	);
+_PROTOTYPE( void hook_ipc_msgkresult, (message *msg, struct proc *proc)	);
+_PROTOTYPE( void hook_ipc_clear, (struct proc *proc)	);
 #endif
 
 /* system/do_safemap.c */

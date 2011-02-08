@@ -79,8 +79,8 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 		  /* copy the result as a message to the original user buffer */
 		  msg->m_source = SYSTEM;
 		  msg->m_type = result;		/* report status of call */
-#if DEBUG_DUMPIPC
-	printmsgkresult(msg, caller);
+#if DEBUG_IPC_HOOK
+	hook_ipc_msgkresult(msg, caller);
 #endif
 		  if (copy_msg_to_user(caller, msg,
 				  (message *)caller->p_delivermsg_vir)) {
@@ -99,8 +99,8 @@ PRIVATE int kernel_call_dispatch(struct proc * caller, message *msg)
   int result = OK;
   int call_nr;
   
-#if DEBUG_DUMPIPC
-	printmsgkcall(msg, caller);
+#if DEBUG_IPC_HOOK
+	hook_ipc_msgkcall(msg, caller);
 #endif
   call_nr = msg->m_type - KERNEL_CALL;
 
@@ -552,6 +552,11 @@ PUBLIC void clear_endpoint(rc)
 register struct proc *rc;		/* slot of process to clean up */
 {
   if(isemptyp(rc)) panic("clear_proc: empty process: %d",  rc->p_endpoint);
+
+
+#if DEBUG_IPC_HOOK
+  hook_ipc_clear(rc);
+#endif
 
   /* Make sure that the exiting process is no longer scheduled. */
   RTS_SET(rc, RTS_NO_ENDPOINT);
