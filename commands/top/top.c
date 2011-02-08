@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <dirent.h>
+#include <assert.h>
 
 #include <sys/ioc_tty.h>
 #include <sys/times.h>
@@ -36,7 +37,16 @@
 #include <paths.h>
 #include <minix/procfs.h>
 
+#define TIMECYCLEKEY 't'
+
 u32_t system_hz;
+
+/* name of cpu cycle types, in the order they appear in /psinfo. */
+char *cputimenames[] = { "user", "ipc", "kernelcall" };
+
+#define CPUTIMENAMES (sizeof(cputimenames)/sizeof(cputimenames[0]))
+
+#define CPUTIME(m, i) (m & (1L << (i)))
 
 unsigned int nr_procs, nr_tasks;
 int nr_total;
@@ -59,7 +69,7 @@ struct proc {
 	int p_flags;
 	endpoint_t p_endpoint;
 	pid_t p_pid;
-	u64_t p_cycles;
+	u64_t p_cpucycles[CPUTIMENAMES];
 	int p_priority;
 	endpoint_t p_blocked;
 	time_t p_user_time;
@@ -78,6 +88,7 @@ void parse_file(pid_t pid)
 	unsigned long cycles_hi, cycles_lo;
 	FILE *fp;
 	struct proc *p;
+	int i;
 
 	sprintf(path, "%d/psinfo", pid);
 
@@ -122,18 +133,28 @@ void parse_file(pid_t pid)
 
 	if (state != STATE_RUN)
 		p->p_flags |= BLOCKED;
-	p->p_cycles = make64(cycles_lo, cycles_hi);
+	p->p_cpucycles[0] = make64(cycles_lo, cycles_hi);
 	p->p_memory = 0L;
 
 	if (!(p->p_flags & IS_TASK)) {
-		if (fscanf(fp, " %lu %*u %*u %*c %*d %*u %u %*u %d",
-			&p->p_memory, &effuid, &p->p_nice) != 3) {
+		int i;
+		if ((i=fscanf(fp, " %lu %*u %*u %*c %*d %*u %u %*u %d %*c %*d %*u",
+			&p->p_memory, &effuid, &p->p_nice)) != 3) {
 
 			fclose(fp);
 			return;
 		}
 
 		p->p_effuid = effuid;
+	}
+
+	for(i = 1; i < CPUTIMENAMES; i++) {
+		if(fscanf(fp, " %lu %lu",
+			&cycles_hi, &cycles_lo) == 2) {
+			p->p_cpucycles[i] = make64(cycles_lo, cycles_hi);
+		} else	{
+			p->p_cpucycles[i] = make64(0, 0);
+		}
 	}
 
 	p->p_flags |= USED;
@@ -302,6 +323,8 @@ struct tp *lookup(endpoint_t who, struct tp *tptab, int np)
  */
 #define SCALE	(1 << 12)
 
+double ktotal = 0;
+
 void print_proc(struct tp *tp, u32_t tcyc)
 {
 	int euid = 0;
@@ -339,8 +362,45 @@ void print_proc(struct tp *tp, u32_t tcyc)
 	printf("%6.2f%% %s", 100.0*pcyc/tcyc, name);
 }
 
+char *cputimemodename(int cputimemode)
+{
+	static char name[100];
+	int i;
+
+	name[0] = '\0';
+	
+	for(i = 0; i < CPUTIMENAMES; i++) {
+		if(CPUTIME(cputimemode, i)) {
+			assert(strlen(name) +
+				strlen(cputimenames[i]) < sizeof(name));
+			strcat(name, cputimenames[i]);
+			strcat(name, " ");
+		}
+	}
+
+	return name;
+}
+
+u64_t cputicks(struct proc *p1, struct proc *p2, int timemode)
+{
+	int i;
+	u64_t t = make64(0, 0);
+	for(i = 0; i < CPUTIMENAMES; i++) {
+		if(!CPUTIME(timemode, i)) 
+			continue;
+		if(p1->p_endpoint == p2->p_endpoint) {
+			t = add64(t, sub64(p2->p_cpucycles[i],
+				p1->p_cpucycles[i]));
+		} else {
+			t = add64(t, p2->p_cpucycles[i]);
+		}
+	}
+
+	return t;
+}
+
 void print_procs(int maxlines,
-	struct proc *proc1, struct proc *proc2)
+	struct proc *proc1, struct proc *proc2, int cputimemode)
 {
 	int p, nprocs;
 	u64_t idleticks = cvu64(0);
@@ -363,24 +423,19 @@ void print_procs(int maxlines,
 	}
 
 	for(p = nprocs = 0; p < nr_total; p++) {
-		
+		u64_t uticks;
 		if(!(proc2[p].p_flags & USED))
 			continue;
 		tick_procs[nprocs].p = proc2 + p;
-		if(proc1[p].p_endpoint == proc2[p].p_endpoint) {
-			tick_procs[nprocs].ticks =
-				sub64(proc2[p].p_cycles, proc1[p].p_cycles);
-		} else {
-			tick_procs[nprocs].ticks =
-				proc2[p].p_cycles;
-		}
-		total_ticks = add64(total_ticks, tick_procs[nprocs].ticks);
+		tick_procs[nprocs].ticks = cputicks(&proc1[p], &proc2[p], cputimemode);
+		uticks = cputicks(&proc1[p], &proc2[p], 1);
+		total_ticks = add64(total_ticks, uticks);
 		if(p-NR_TASKS == IDLE) {
-			idleticks = tick_procs[nprocs].ticks;
+			idleticks = uticks;
 			continue;
 		}
 		if(p-NR_TASKS == KERNEL) {
-			kernelticks = tick_procs[nprocs].ticks;
+			kernelticks = uticks;
 			continue;
 		}
 		if(!(proc2[p].p_flags & IS_TASK)) {
@@ -416,6 +471,11 @@ void print_procs(int maxlines,
 
 #define NEWLINE do { printf("\n"); if(--maxlines <= 0) { return; } } while(0) 
 	NEWLINE;
+
+	printf("CPU time displayed (press '%c' to cycle): %s",
+		TIMECYCLEKEY, cputimemodename(cputimemode));
+	NEWLINE;
+
 	NEWLINE;
 
 	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME     CPU COMMAND");
@@ -471,7 +531,7 @@ void print_procs(int maxlines,
 	}
 }
 
-void showtop(int r)
+void showtop(int cputimemode, int r)
 {
 #define NLOADS 3
 	double loads[NLOADS];
@@ -502,7 +562,7 @@ void showtop(int r)
 
 	if(winsize.ws_row > 0) r = winsize.ws_row;
 
-	print_procs(r - lines - 2, prev_proc, proc);
+	print_procs(r - lines - 2, prev_proc, proc, cputimemode);
 }
 
 void init(int *rows)
@@ -561,6 +621,7 @@ void getkinfo(void)
 int main(int argc, char *argv[])
 {
 	int r, c, s = 0;
+	int cputimemode = 1;	/* bitmap. */
 
 	if (chdir(_PATH_PROC) != 0) {
 		perror("chdir to " _PATH_PROC);
@@ -601,7 +662,7 @@ int main(int argc, char *argv[])
 		fd_set fds;
 		int ns;
 		struct timeval tv;
-		showtop(r);
+		showtop(cputimemode, r);
 		tv.tv_sec = s;
 		tv.tv_usec = 0;
 
@@ -620,6 +681,11 @@ int main(int argc, char *argv[])
 					case 'q':
 						putchar('\r');
 						return 0;
+						break;
+					case TIMECYCLEKEY:
+						cputimemode++;
+						if(cputimemode >= (1L << CPUTIMENAMES))
+						cputimemode = 1;
 						break;
 				}
 			}
