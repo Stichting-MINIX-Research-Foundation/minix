@@ -12,7 +12,7 @@ secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
 
 # Packages we have to pre-install, and url to use
-PREINSTALLED_PACKAGES="pkgin-0.3.3.4.tgz pkg_install-20101212"
+PREINSTALLED_PACKAGES="pkgin-0.3.3.4.tgz pkg_install-20101212 bmake-20100808"
 PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/`uname -r`/`uname -m`/All/
 
 RELEASERC=$HOME/.releaserc
@@ -282,7 +282,7 @@ cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/sh /bin/echo $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv $RELEASEDIR/usr/bin
 
-CONFIGHEADER=$RELEASEDIR/usr/src/include/minix/sys_config.h
+CONFIGHEADER=$RELEASEDIR/usr/src/common/include/minix/sys_config.h
 
 if [ -d $PACKAGEDIR -a -f $PACKAGELIST -a $PACKAGES -ne 0 ]
 then
@@ -415,7 +415,7 @@ echo " * Make hierarchy"
 chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh etcfiles" || exit 1
 
 for p in $PREINSTALLED_PACKAGES
-do	echo " * Pre-installing: $p from $url"
+do	echo " * Pre-installing: $p from $PACKAGEURL"
     pkg_add -P $RELEASEDIR $PACKAGEURL/$p
 done
 
