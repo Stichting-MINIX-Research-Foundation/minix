@@ -31,6 +31,7 @@ pkgsrc-create: git
 	cd ${.CURDIR}/pkgsrc && git branch minix-master origin/minix-master
 	cd ${.CURDIR}/pkgsrc && git checkout minix-master
 	cd ${.CURDIR}/pkgsrc && git pull
+	cd ${.CURDIR}/pkgsrc/minix && sh minibootstrap.sh
 
 pkgsrc-checkout: git
 	cd ${.CURDIR}/pkgsrc && git checkout minix-master
