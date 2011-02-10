@@ -20,6 +20,7 @@
 #include <sys/ioc_memory.h>
 #include <minix/ds.h>
 #include <minix/vm.h>
+#include <machine/param.h>
 #include <sys/mman.h>
 #include "kernel/const.h"
 #include "kernel/config.h"
@@ -392,6 +393,28 @@ message *m_ptr;
       panic("closed too often");
   }
   openct[m_device]--;
+
+  /* Special case: free initial ramdisk after it's been unmounted once. */
+  if(m_device == IMGRD_DEV && openct[m_device] == 0 && m_vaddrs[IMGRD_DEV]) {
+  	vir_bytes vaddr, vlen;
+	vaddr = m_vaddrs[IMGRD_DEV];
+	vlen = imgrd_size;
+	/* Align `inwards' so as to not unmap more than the initial
+	 * ramdisk image.
+	 */
+	if(vaddr % PAGE_SIZE) {
+		vir_bytes o = PAGE_SIZE - (vaddr % PAGE_SIZE);
+		vlen -= o;
+		vaddr += o;
+	}
+	if(vlen % PAGE_SIZE) {
+		vlen -= vlen % PAGE_SIZE;
+	}
+	munmap((void *) vaddr, vlen);
+	m_geom[IMGRD_DEV].dv_base= cvul64(0);
+	m_geom[IMGRD_DEV].dv_size= cvul64(0);
+	m_vaddrs[IMGRD_DEV] = 0;
+  }
 
   return(OK);
 }
