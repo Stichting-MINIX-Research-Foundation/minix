@@ -34,9 +34,11 @@ pkgsrc-create: git
 
 pkgsrc-checkout: git
 	cd ${.CURDIR}/pkgsrc && git checkout minix-master
+	cd ${.CURDIR}/pkgsrc/minix && sh minibootstrap.sh
 
 pkgsrc-update: git
 	cd ${.CURDIR}/pkgsrc && git pull
+	cd ${.CURDIR}/pkgsrc/minix && sh minibootstrap.sh
 
 git:
 	pkgin update
