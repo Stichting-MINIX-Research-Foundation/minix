@@ -656,6 +656,7 @@ PUBLIC int pt_writemap(struct vmproc * vmp,
 	int verify = 0;
 	int ret = OK;
 
+#ifdef CONFIG_SMP
 	/* FIXME
 	 * don't do it everytime, stop the process only on the first change and
 	 * resume the execution on the last change. Do in a wrapper of this
@@ -664,6 +665,7 @@ PUBLIC int pt_writemap(struct vmproc * vmp,
 	if (vmp && vmp->vm_endpoint != NONE && vmp->vm_endpoint != VM_PROC_NR &&
 			!(vmp->vm_flags & VMF_EXITING))
 		sys_vmctl(vmp->vm_endpoint, VMCTL_VMINHIBIT_SET, 0);
+#endif
 
 	if(writemapflags & WMF_VERIFY)
 		verify = 1;
@@ -761,9 +763,11 @@ PUBLIC int pt_writemap(struct vmproc * vmp,
 
 resume_exit:
 
+#ifdef CONFIG_SMP
 	if (vmp && vmp->vm_endpoint != NONE && vmp->vm_endpoint != VM_PROC_NR &&
 			!(vmp->vm_flags & VMF_EXITING))
 		sys_vmctl(vmp->vm_endpoint, VMCTL_VMINHIBIT_CLEAR, 0);
+#endif
 
 	return ret;
 }
