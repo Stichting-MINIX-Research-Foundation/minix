@@ -1,0 +1,114 @@
+.\" $NetBSD: bm.3,v 1.8 2006/10/16 08:48:45 wiz Exp $
+.\"
+.\" Copyright (c) 1994
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Andrew Hume of AT&T Bell Laboratories.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)bm.3	8.4 (Berkeley) 6/21/94
+.\"
+.Dd April 8, 2001
+.Dt BM 3
+.Os
+.Sh NAME
+.Nm bm_comp ,
+.Nm bm_exec ,
+.Nm bm_free
+.Nd Boyer-Moore string search
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/types.h
+.In bm.h
+.Ft bm_pat *
+.Fn bm_comp "u_char *pattern" "size_t patlen" "u_char freq[256]"
+.Ft u_char *
+.Fn bm_exec "bm_pat *pdesc" "u_char *text" "size_t len"
+.Ft void
+.Fn bm_free "bm_pat *pdesc"
+.Sh DESCRIPTION
+These routines implement an efficient mechanism to find an
+occurrence of a byte string within another byte string.
+.Pp
+.Fn bm_comp
+evaluates the
+.Fa patlen
+bytes starting at
+.Fa pattern ,
+and returns a pointer to a structure describing them.
+The bytes referenced by
+.Fa pattern
+may be of any value.
+.Pp
+The search takes advantage of the frequency distribution of the
+bytes in the text to be searched.
+If specified,
+.Fa freq
+should be an array of 256 values,
+with higher values indicating that the corresponding character occurs
+more frequently.
+(A less than optimal frequency distribution can only result in less
+than optimal performance, not incorrect results.)
+If
+.Fa freq
+is
+.Dv NULL ,
+a system default table is used.
+.Pp
+.Fn bm_exec
+returns a pointer to the leftmost occurrence of the string given to
+.Fn bm_comp
+within
+.Fa text ,
+or
+.Dv NULL
+if none occurs.
+The number of bytes in
+.Fa text
+must be specified by
+.Fa len .
+.Pp
+Space allocated for the returned description is discarded
+by calling
+.Fn bm_free
+with the returned description as an argument.
+.Pp
+The asymptotic speed of
+.Fn bm_exec
+is O(len/patlen).
+.Sh SEE ALSO
+.Xr regexp 3 ,
+.Xr strstr 3
+.Rs
+.%A Hume and Sunday
+.%D November 1991
+.%J "Software Practice and Experience"
+.%P pp. 1221-48
+.%T "Fast String Searching"
+.%V Vol. 21, 11
+.Re

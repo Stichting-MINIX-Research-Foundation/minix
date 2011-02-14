@@ -1,0 +1,133 @@
+.\"	$NetBSD: madvise.2,v 1.26 2009/06/03 09:04:18 wiz Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)madvise.2	8.1 (Berkeley) 6/9/93
+.\"
+.Dd June 2, 2009
+.Dt MADVISE 2
+.Os
+.Sh NAME
+.Nm madvise
+.Nd give advice about use of memory
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/mman.h
+.Ft int
+.Fn madvise "void *addr" "size_t len" "int behav"
+.Ft int
+.Fn posix_madvise "void *addr" "size_t len" "int advice"
+.Sh DESCRIPTION
+The
+.Fn madvise
+system call
+allows a process that has knowledge of its memory behavior
+to describe it to the system.
+The
+.Fn posix_madvise
+interface is identical and is provided for standards conformance.
+.Pp
+The known behaviors are:
+.Bl -tag -width MADV_NORMAL
+.It Dv MADV_NORMAL
+Tells the system to revert to the default paging
+behavior.
+.It Dv MADV_RANDOM
+Is a hint that pages will be accessed randomly, and prefetching
+is likely not advantageous.
+.It Dv MADV_SEQUENTIAL
+Is a hint that pages will be accessed sequentially, from the lower address to
+higher address.
+It might cause the VM system to depress the priority of
+pages immediately preceding a given page when it is faulted in.
+.It Dv MADV_WILLNEED
+Is a hint that pages will be accessed in the near future.
+It might cause the VM system to make pages that are in a given virtual
+address range to temporarily have higher priority, and if they are in
+memory, decrease the likelihood of them being freed.
+It might immediately map the pages that are already in memory into the
+process, thereby eliminating unnecessary overhead of going through
+the entire process of faulting the pages in.
+It might or might not fault pages in from backing store.
+.It Dv MADV_DONTNEED
+Is a hint that pages will not be accessed in the near future.
+It might allow the VM system to decrease the in-memory priority
+of pages in the specified range.
+.It Dv MADV_FREE
+Gives the VM system the freedom to free pages,
+and tells the system that information in the specified page range
+is no longer important.
+.El
+.Pp
+Portable programs that call the
+.Fn posix_madvise
+interface should use the aliases
+.Dv POSIX_MADV_NORMAL , POSIX_MADV_SEQUENTIAL ,
+.Dv POSIX_MADV_RANDOM , POSIX_MADV_WILLNEED ,
+and
+.Dv POSIX_MADV_DONTNEED
+rather than the flags described above.
+.Sh RETURN VALUES
+Upon successful completion,
+a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn madvise
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid parameters were provided.
+.El
+.Sh SEE ALSO
+.Xr mincore 2 ,
+.Xr mprotect 2 ,
+.Xr msync 2 ,
+.Xr munmap 2 ,
+.Xr posix_fadvise 2
+.Sh STANDARDS
+The
+.Fn posix_madvise
+system call is expected to conform to the
+.St -p1003.1-2001
+standard.
+.Sh HISTORY
+The
+.Nm madvise
+system call first appeared in
+.Bx 4.4 ,
+but until
+.Nx 1.5
+it did not perform any of the requests on, or change any behavior of the
+address range given.
+The
+.Fn posix_madvise
+was invented in
+.Nx 5.0 .

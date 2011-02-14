@@ -1,0 +1,940 @@
+.\"	$NetBSD: nsdispatch.3,v 1.29 2009/10/14 17:24:03 joerg Exp $
+.\"
+.\" Copyright (c) 1997, 1998, 1999, 2004, 2005, 2008
+.\" The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn; and by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 8, 2008
+.Dt NSDISPATCH 3
+.Os
+.Sh NAME
+.Nm nsdispatch
+.Nd name-service switch dispatcher routine
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In nsswitch.h
+.Ft int
+.Fo nsdispatch
+.Fa "void *nsdrv"
+.Fa "const ns_dtab dtab[]"
+.Fa "const char *database"
+.Fa "const char *name"
+.Fa "const ns_src defaults[]"
+.Fa "..."
+.Fc
+.Sh DESCRIPTION
+The
+.Fn nsdispatch
+function invokes the callback functions specified in
+.Fa dtab
+in the order given in
+.Pa /etc/nsswitch.conf
+for the database
+.Fa database
+until the action criteria for a source of that database is fulfilled.
+.Pp
+.Fa nsdrv
+is passed to each callback function to use as necessary
+(to pass back to the caller of
+.Fn nsdispatch ) .
+.Pp
+.Fa dtab
+is an array of
+.Fa ns_dtab
+structures, which have the following format:
+.Bl -item -offset indent
+.It
+.Bd -literal
+typedef struct {
+	const char *src;
+	nss_method cb;
+	void *cb_data;
+} ns_dtab;
+.Ed
+.It
+The
+.Fa dtab
+array should consist of one entry for each source type that has a
+static implementation,
+with
+.Fa src
+as the name of the source,
+.Fa cb
+as a callback function which handles that source, and
+.Fa cb_data
+as a pointer to arbitrary data to be passed to the callback function.
+The last entry in
+.Fa dtab
+should contain
+.Dv NULL
+values for
+.Fa src ,
+.Fa cb ,
+and
+.Fa cb_data .
+.It
+The callback function signature is described by the typedef:
+.Bd -ragged -offset indent
+.Ft typedef int
+.Fo \*(lp*nss_method\*(rp
+.Fa "void *cbrv"
+.Fa "void *cbdata"
+.Fa "va_list ap"
+.Fc ;
+.Bl -tag -width cbdata
+.It Fa cbrv
+The
+.Fa nsdrv
+that
+.Fn nsdispatch
+was invoked with.
+.It Fa cbdata
+The
+.Fa cb_data
+member of the array entry for the source that this
+callback function implements in the
+.Fa dtab
+argument of
+.Fn nsdispatch .
+.It Fa ap
+The
+.Fa ...
+arguments to
+.Fn nsdispatch ,
+converted to a
+.Ft va_list .
+.El
+.Ed
+.El
+.Pp
+.Fa database
+and
+.Fa name
+are used to select methods from optional per-source
+dynamically-loaded modules.
+.Fa name
+is usually the name of the function calling
+.Fn nsdispatch .
+Note that the callback functions provided by
+.Fa dtab
+take priority over those implemented in dynamically-loaded modules in the
+event of a conflict.
+.Pp
+.Fa defaults
+contains a list of default sources to try in the case of
+a missing or corrupt
+.Xr nsswitch.conf 5 ,
+or if there isn't a relevant entry for
+.Fa database .
+It is an array of
+.Fa ns_src
+structures, which have the following format:
+.Bl -item -offset indent
+.It
+.Bd -literal
+typedef struct {
+	const char *src;
+	uint32_t flags;
+} ns_src;
+.Ed
+.It
+The
+.Fa defaults
+array should consist of one entry for each source to consult by default
+indicated by
+.Fa src ,
+and
+.Fa flags
+set to the desired behavior
+(usually
+.Dv NS_SUCCESS ;
+refer to
+.Sx Callback function return values
+for more information).
+The last entry in
+.Fa defaults
+should have
+.Fa src
+set to
+.Dv NULL
+and
+.Fa flags
+set to 0.
+.It
+Some invokers of
+.Fn nsdispatch
+(such as
+.Xr setgrent 3 )
+need to force all callback functions to be invoked,
+irrespective of the action criteria listed in
+.Xr nsswitch.conf 5 .
+This can be achieved by adding
+.Dv NS_FORCEALL
+to
+.Fa defaults[0].flags
+before invoking
+.Fn nsdispatch .
+The return value of
+.Fn nsdispatch
+will be the result of the final callback function invoked.
+.It
+For convenience, a global variable defined as:
+.Dl extern const ns_src __nsdefaultsrc[];
+exists which contains a single default entry for
+.Sq files
+for use by callers which don't require complicated default rules.
+.El
+.Pp
+.Fa ...
+are optional extra arguments, which
+are passed to the appropriate callback function as a
+.Xr stdarg 3
+variable argument
+list of the type
+.Fa va_list .
+.Pp
+.Nm
+returns the value of the callback function that caused the dispatcher
+to finish, or
+.Dv NS_NOTFOUND
+otherwise.
+.\"
+.Ss Dynamically-loaded module interface
+The
+.Fn nsdispatch
+function loads callback functions from the run-time link-editor's search
+path using the following naming convention:
+.Bl -item -offset indent
+.It
+.Bd -literal
+nss_\*[Lt]source\*[Gt].so.\*[Lt]version\*[Gt]
+.Ed
+.Bl -tag -width XversionX
+.It Aq source
+The source that the module implements.
+.It Aq version
+The
+.Nm nsdispatch
+module interface version, which is defined by the integer
+.Dv NSS_MODULE_INTERFACE_VERSION ,
+which has the value 0.
+.El
+.El
+.Pp
+When a module is loaded,
+.Fn nsdispatch
+looks for and calls the following function in the module:
+.Pp
+.Bd -ragged -offset indent
+.Ft ns_mtab *
+.Fo nss_module_register
+.Fa "const char *source"
+.Fa "u_int *nelems"
+.Fa "nss_module_unregister_fn *unreg"
+.Fc ;
+.Pp
+.Bl -tag -width source
+.It Fa source
+The name of the source that the module implements, as used by
+.Fn nsdispatch
+to construct the module's name.
+.It Fa nelems
+A pointer to an unsigned integer that
+.Fn nss_module_register
+should set to the number of elements in the
+.Ft ns_mtab
+array returned by
+.Fn nss_module_register ,
+or
+.Dv 0
+if there was a failure.
+.It Fa unreg
+A pointer to a function pointer that
+.Fn nss_module_register
+can optionally set to an unregister function to be invoked when the module is
+unloaded, or
+.Dv NULL
+if there isn't one.
+.El
+.Ed
+.Pp
+The unregister function signature is described by the typedef:
+.Pp
+.Bd -ragged -offset indent
+.Ft typedef void
+.Fo \*(lp*nss_module_unregister_fn\*(rp
+.Fa "ns_mtab *mtab"
+.Fa "u_int nelems"
+.Fc ;
+.Pp
+.Bl -tag -width nelems
+.It Fa mtab
+The array of
+.Ft ns_mtab
+structures returned by
+.Fn nss_module_register .
+.It Fa nelems
+The
+.Fa *nelems
+value set by
+.Fn nss_module_register .
+.El
+.Ed
+.Pp
+.Fn nss_module_register
+returns an array of
+.Ft ns_mtab
+structures
+(with
+.Fa *nelems
+entries), or
+.Dv NULL
+if there was a failure.
+The
+.Ft ns_mtab
+structures have the following format:
+.Bl -item -offset indent
+.It
+.Bd -literal
+typedef struct {
+	const char *database;
+	const char *name;
+	nss_method method;
+	void *mdata;
+} ns_mtab;
+.Ed
+.It
+The
+.Fa mtab
+array should consist of one entry for each callback function (method)
+that is implemented,
+with
+.Fa database
+as the name of the database,
+.Fa name
+as the name of the callback function,
+.Fa method
+as the
+.Ft nss_method
+callback function that implements the method, and
+.Fa mdata
+as a pointer to arbitrary data to be passed to the callback function as its
+.Fa cbdata
+argument.
+.El
+.\"
+.Ss Valid source types
+While there is support for arbitrary sources, the following
+#defines for commonly implemented sources are provided:
+.Bl -column NSSRC_COMPAT COMPAT -offset indent
+.It Sy #define	Value
+.It NSSRC_FILES	"files"
+.It NSSRC_DNS	"dns"
+.It NSSRC_NIS	"nis"
+.It NSSRC_COMPAT	"compat"
+.El
+.Pp
+Refer to
+.Xr nsswitch.conf 5
+for a complete description of what each source type is.
+.\"
+.Ss Valid database types
+While there is support for arbitrary databases, the following
+#defines for currently implemented system databases are provided:
+.Bl -column NSDB_PASSWD_COMPAT PASSWD_COMPAT -offset indent
+.It Sy #define	Value
+.It NSDB_HOSTS	"hosts"
+.It NSDB_GROUP	"group"
+.It NSDB_GROUP_COMPAT	"group_compat"
+.It NSDB_NETGROUP	"netgroup"
+.It NSDB_NETWORKS	"networks"
+.It NSDB_PASSWD	"passwd"
+.It NSDB_PASSWD_COMPAT	"passwd_compat"
+.It NSDB_SHELLS	"shells"
+.El
+.Pp
+Refer to
+.Xr nsswitch.conf 5
+for a complete description of what each database is.
+.\"
+.Ss Callback function return values
+The callback functions should return one of the following values
+depending upon status of the lookup:
+.Bl -column NS_NOTFOUND -offset indent
+.It Sy "Return value"	Status code
+.It NS_SUCCESS	The requested entry was found.
+.It NS_NOTFOUND	The entry is not present at this source.
+.It NS_TRYAGAIN	The source is busy, and may respond to retries.
+.It NS_UNAVAIL	The source is not responding, or entry is corrupt.
+.El
+.\"
+.Sh CALLBACK FUNCTION API FOR STANDARD DATABASES
+The organization of the
+.Fa ap
+argument for an
+.Fn nss_method
+callback function for a standard method in a standard database is:
+.Bl -enum -offset indent -compact
+.It
+Pointer to return value of the standard function.
+.It
+First argument of the standard function.
+.It
+(etc.)
+.El
+.Pp
+For example, given the standard function
+.Xr getgrnam 3 :
+.Bd -ragged -offset indent -compact
+.Ft struct group *
+.Fn getgrnam "const char *name"
+.Ed
+the
+.Fa ap
+organization used by the callback functions is:
+.Bl -enum -offset indent -compact
+.It
+.Ft "struct group **"
+.It
+.Ft "const char *"
+.El
+.Pp
+.Sy NOTE:
+Not all standard databases are using this calling convention yet;
+those that aren't are noted below.
+These will be changed in the future.
+.Pp
+The callback function names and
+.Ft va_list
+organization for various standard database callback functions are:
+.\"
+.Ss Methods for hosts database
+.Sy NOTE:
+The method APIs for this database will be changing in the near future.
+.Bl -tag -width 3n
+.It Sy getaddrinfo
+.Ft "char *name" ,
+.Ft "const struct addrinfo *pai"
+.Pp
+Returns
+.Ft "struct addrinfo *"
+via
+.Ft "void *cbrv" .
+.It Sy gethostbyaddr
+.Ft "unsigned char *addr" ,
+.Ft "int addrlen" ,
+.Ft "int af"
+.Pp
+Returns
+.Ft "struct hostent *"
+via
+.Ft "void *cbrv" .
+.It Sy gethostbyname
+.Ft "char *name" ,
+.Ft "int namelen" ,
+.Ft "int af"
+.Pp
+Returns
+.Ft "struct hostent *"
+via
+.Ft "void *cbrv" .
+.El
+.\"
+.Ss Methods for group and group_compat databases
+.Bl -tag -width 3n
+.It Sy endgrent
+Empty
+.Fa ap .
+.Pp
+All methods for all sources are invoked for this method name.
+.It Sy getgrent
+.Ft "struct group **retval"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct group"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getgrent 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getgrent_r
+.Ft "int *retval" ,
+.Ft "struct group *grp" ,
+.Ft "char *buffer" ,
+.Ft "size_t buflen" ,
+.Ft "struct group **result"
+.Pp
+.Fa *retval
+should be set to an appropriate
+.Xr errno 2
+on failure.
+.Pp
+.Xr getgrent_r 3
+returns 0
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS
+or
+.Dv NS_NOTFOUND ,
+and
+.Fa *retval
+otherwise.
+.It Sy getgrgid
+.Ft "struct group **retval" ,
+.Ft "gid_t gid"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct group"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getgrgid 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getgrgid_r
+.Ft "int *retval" ,
+.Ft "gid_t gid" ,
+.Ft "struct group *grp" ,
+.Ft "char *buffer" ,
+.Ft "size_t buflen" ,
+.Ft "struct group **result"
+.Pp
+.Fa *retval
+should be set to an appropriate
+.Xr errno 2
+on failure.
+.Pp
+.Xr getgrgid_r 3
+returns 0
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS
+or
+.Dv NS_NOTFOUND ,
+and
+.Fa *retval
+otherwise.
+.It Sy getgrnam
+.Ft "struct group **retval" ,
+.Ft "const char *name"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct group"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getgrnam 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getgrnam_r
+.Ft "int *retval" ,
+.Ft "const char *name" ,
+.Ft "struct group *grp" ,
+.Ft "char *buffer" ,
+.Ft "size_t buflen" ,
+.Ft "struct group **result"
+.Pp
+.Fa *retval
+should be set to an appropriate
+.Xr errno 2
+on failure.
+.Pp
+.Xr getgrnam_r 3
+returns 0
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS
+or
+.Dv NS_NOTFOUND ,
+and
+.Fa *retval
+otherwise.
+.It Sy getgroupmembership
+.Ft "int *retval" ,
+.Ft "const char *name" ,
+.Ft "gid_t basegid" ,
+.Ft "gid_t *groups" ,
+.Ft "int maxgrp" ,
+.Ft "int *groupc"
+.Pp
+.Fa retval
+is unused.
+.Pp
+Lookups for
+.Sy group_compat
+are also stopped if
+.Dv NS_SUCCESS
+was returned to prevent multiple
+.Dq "+:"
+compat entries from being expanded.
+.Pp
+.Xr getgroupmembership 3
+returns
+is -1 if
+.Fa *groupc
+is greater than to
+.Fa maxgrp ,
+and 0 otherwise.
+.It Sy setgroupent
+.Ft "int *retval" ,
+.Ft "int stayopen"
+.Pp
+.Fa retval
+should be set to 0 on failure and 1 on success.
+.Pp
+All methods for all sources are invoked for this method name.
+.It Sy setgrent
+Empty
+.Fa ap .
+.Pp
+All methods for all sources are invoked for this method name.
+.El
+.\"
+.Ss Methods for netgroup database
+.Sy NOTE:
+The method APIs for this database will be changing in the near future.
+.Bl -tag -width 3n
+.It Sy endnetgrent
+Empty
+.Fa ap .
+.It Sy lookup
+.Ft "char *name" ,
+.Ft "char **line" ,
+.Ft "int bywhat"
+.Pp
+Find the given
+.Fa name
+and return its value in
+.Fa line .
+.Fa bywhat
+is one of
+.Dv _NG_KEYBYNAME ,
+.Dv _NG_KEYBYUSER ,
+or
+.Dv _NG_KEYBYHOST .
+.It Sy getnetgrent
+.Ft "int *retval" ,
+.Ft "const char **host" ,
+.Ft "const char **user" ,
+.Ft "const char **domain"
+.Pp
+.Fa *retval
+should be set to 0 for no more netgroup members and 1 otherwise.
+.Pp
+.Xr getnetgrent 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+0 otherwise.
+.It Sy innetgr
+.Ft "int *retval" ,
+.Ft "const char *grp" ,
+.Ft "const char *host" ,
+.Ft "const char *user" ,
+.Ft "const char *domain"
+.Pp
+.Fa *retval
+should be set to 1 for a successful match and 0 otherwise.
+.It Sy setnetgrent
+.Ft "const char *netgroup"
+.El
+.\"
+.Ss Methods for networks database
+.Bl -tag -width 3n
+.It Sy getnetbyaddr
+.Ft "struct netent **retval" ,
+.Ft "uint32_t net" ,
+.Ft "int type"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct netent"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getnetbyaddr 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getnetbyname
+.Ft "struct netent **retval" ,
+.Ft "const char *name"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct netent"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getnetbyname 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.El
+.\"
+.Ss Methods for passwd and passwd_compat databases
+.Bl -tag -width 3n
+.It Sy endpwent
+Empty
+.Fa ap .
+.Pp
+All methods for all sources are invoked for this method name.
+.It Sy getpwent
+.Ft "struct passwd **retval"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct passwd"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getpwent 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getpwent_r
+.Ft "int *retval" ,
+.Ft "struct passwd *pw" ,
+.Ft "char *buffer" ,
+.Ft "size_t buflen" ,
+.Ft "struct passwd **result"
+.Pp
+.Fa *retval
+should be set to an appropriate
+.Xr errno 2
+on failure.
+.Pp
+.Xr getpwent_r 3
+returns 0
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS
+or
+.Dv NS_NOTFOUND ,
+and
+.Fa *retval
+otherwise.
+.It Sy getpwnam
+.Ft "struct passwd **retval" ,
+.Ft "const char *name"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct passwd"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getpwnam 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getpwnam_r
+.Ft "int *retval" ,
+.Ft "const char *name" ,
+.Ft "struct passwd *pw" ,
+.Ft "char *buffer" ,
+.Ft "size_t buflen" ,
+.Ft "struct passwd **result"
+.Pp
+.Fa *retval
+should be set to an appropriate
+.Xr errno 2
+on failure.
+.Pp
+.Xr getpwnam_r 3
+returns 0
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS
+or
+.Dv NS_NOTFOUND ,
+and
+.Fa *retval
+otherwise.
+.It Sy getpwuid
+.Ft "struct passwd **retval" ,
+.Ft "uid_t uid"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
+.Ft "struct passwd"
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getpwuid 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getpwuid_r
+.Ft "int *retval" ,
+.Ft "uid_t uid" ,
+.Ft "struct passwd *pw" ,
+.Ft "char *buffer" ,
+.Ft "size_t buflen" ,
+.Ft "struct passwd **result"
+.Pp
+.Fa *retval
+should be set to an appropriate
+.Xr errno 2
+on failure.
+.Pp
+.Xr getpwuid_r
+returns 0
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS
+or
+.Dv NS_NOTFOUND ,
+and
+.Fa *retval
+otherwise.
+.It Sy setpassent
+.Ft "int *retval" ,
+.Ft "int stayopen"
+.Pp
+.Fa retval
+should be set to 0 on failure and 1 on success.
+.Pp
+All methods for all sources are invoked for this method name.
+.It Sy setpwent
+Empty
+.Fa ap .
+.Pp
+All methods for all sources are invoked for this method name.
+.El
+.\"
+.Ss Methods for shells database
+.Bl -tag -width 3n
+.It Sy endusershell
+Empty
+.Fa ap .
+.Pp
+All methods for all sources are invoked for this method name.
+.It Sy getusershell
+.Ft "char **retval"
+.Pp
+.Xr getusershell 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+and 0 otherwise.
+.It Sy setusershell
+Empty
+.Fa ap .
+.Pp
+All methods for all sources are invoked for this method name.
+.El
+.\"
+.Sh SEE ALSO
+.Xr ld.elf_so 1 ,
+.Xr hesiod 3 ,
+.Xr stdarg 3 ,
+.Xr ypclnt 3 ,
+.Xr nsswitch.conf 5
+.Sh HISTORY
+The
+.Nm
+routines first appeared in
+.Nx 1.4 .
+Support for dynamically-loaded modules first appeared in
+.Nx 3.0 .
+.Sh AUTHORS
+Luke Mewburn
+.Aq lukem@NetBSD.org
+wrote this freely distributable name-service switch implementation,
+using ideas from the
+.Tn ULTRIX
+.Xr svc.conf 5
+and
+.Tn Solaris
+.Xr nsswitch.conf 4
+manual pages.
+Support for dynamically-loaded modules was added by Jason Thorpe
+.Aq thorpej@NetBSD.org ,
+based on code developed by the
+.Fx
+Project.

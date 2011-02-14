@@ -1,0 +1,94 @@
+.\"	$NetBSD: _lwp_suspend.2,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of Wasabi Systems, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 13, 2003
+.Dt _LWP_SUSPEND 2
+.Os
+.Sh NAME
+.Nm _lwp_suspend ,
+.Nm _lwp_continue
+.Nd suspend or continue a light-weight process
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In lwp.h
+.Ft int
+.Fn _lwp_suspend "lwpid_t lwp"
+.Ft int
+.Fn _lwp_continue "lwpid_t lwp"
+.Sh DESCRIPTION
+.Fn _lwp_suspend
+suspends execution of the LWP specified by
+.Fa lwp .
+Once an LWP is suspended, subsequent calls to
+.Fn _lwp_suspend
+have no effect.
+The only way to resume execution of a suspended LWP is via
+.Fn _lwp_continue .
+.Pp
+.Fn _lwp_continue
+resumes execution of the LWP specified by
+.Fa lwp .
+Once an LWP is resumed, subsequent calls to
+.Fn _lwp_continue
+have no effect.
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn _lwp_suspend
+and
+.Fn _lwp_continue
+return a value of 0.
+Otherwise, an error code is returned to indicate the error.
+.Sh ERRORS
+.Fn _lwp_suspend
+and
+.Fn _lwp_continue
+will fail if:
+.Bl -tag -width [EDEADLK]
+.It Bq Er ESRCH
+No LWP can be found in the current process corresponding to that
+specified by
+.Fa lwp .
+.El
+.Pp
+.Fn _lwp_suspend
+will fail if:
+.Bl -tag -width [EDEADLK]
+.It Bq Er EDEADLK
+The LWP specified by
+.Fa lwp
+is the only LWP in the process.
+.El
+.Sh SEE ALSO
+.Xr _lwp_create 2
+.Sh HISTORY
+The
+.Fn _lwp_create
+system call first appeared in
+.Nx 2.0 .

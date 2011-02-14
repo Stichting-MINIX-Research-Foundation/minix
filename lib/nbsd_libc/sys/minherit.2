@@ -1,0 +1,99 @@
+.\"	$NetBSD: minherit.2,v 1.18 2006/10/13 20:52:57 wiz Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)minherit.2	8.1 (Berkeley) 6/9/93
+.\"
+.Dd October 7, 2006
+.Dt MINHERIT 2
+.Os
+.Sh NAME
+.Nm minherit
+.Nd control the inheritance of pages
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/mman.h
+.Ft int
+.Fn minherit "void *addr" "size_t len" "int inherit"
+.Sh DESCRIPTION
+The
+.Fn minherit
+system call
+changes the specified range of virtual addresses to have the specified
+fork-time inheritance characteristic
+.Fa inherit ,
+which can be set to
+.Dv MAP_INHERIT_NONE ,
+.Dv MAP_INHERIT_COPY ,
+or
+.Dv MAP_INHERIT_SHARE .
+Also possible is
+.Dv MAP_INHERIT_DEFAULT ,
+which defaults to
+.Dv MAP_INHERIT_COPY .
+Not all implementations will guarantee that the inheritance characteristic
+can be set on a page basis;
+the granularity of changes may be as large as an entire region.
+.Pp
+Normally, the entire address space is marked
+.Dv MAP_INHERIT_COPY ;
+when the process calls
+.Fn fork ,
+the child receives a (virtual) copy of the entire address space.
+Pages or regions marked
+.Dv MAP_INHERIT_SHARE
+are shared between the address spaces, while pages or regions marked
+.Dv MAP_INHERIT_NONE
+will be unmapped in the child.
+.Sh RETURN VALUES
+.Rv -std minherit
+.Sh ERRORS
+.Fn minherit
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+An invalid region or invalid parameters were specified.
+.El
+.Sh SEE ALSO
+.Xr fork 2 ,
+.Xr madvise 2 ,
+.Xr mincore 2 ,
+.Xr mprotect 2 ,
+.Xr msync 2 ,
+.Xr munmap 2
+.Sh HISTORY
+The
+.Fn minherit
+function first appeared in
+.Ox .
+.Sh BUGS
+If a particular port does not support page-granularity
+inheritance, there's no way to figure out how large a region is
+actually affected by
+.Fn minherit .

@@ -1,0 +1,104 @@
+.\"	$NetBSD: cdb.5,v 1.3 2010/04/27 14:26:52 jruoho Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Joerg Sonnenberger.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+.\" COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.Dd April 27, 2010
+.Dt CDB 5
+.Os
+.Sh NAME
+.Nm cdb
+.Nd format of the constant database
+.Sh DESCRIPTION
+The
+.Nm
+database format provides a space-efficient (key,value) database.
+The format doesn't allow updates in any convenient form.
+The file overhead is around 5 bytes per key and 5 bytes per entry.
+Keys are not stored and it is the responsibility of the caller
+to validate matches.
+The index structure is based on a minimal perfect hash table, so exactly
+one entry has to be checked for a match.
+.Ss General Format
+The header record of a
+.Nm
+database consists of the following:
+.Bd -literal -offset indent
+struct header_cdb {
+	uint8_t magic[7];
+	uint8_t version;
+	uint8_t description[16];
+	uint32_t data_size;
+	uint32_t entries;
+	uint32_t entries_index;
+	uint32_t seed;
+};
+.Ed
+.Pp
+All fields are in Little Endian byte order.
+.Pp
+This is followed by a description of the hash function of
+.Va entries_index
+records.
+The size of each index entry is the logarithm of
+.Va entries
+to base 256, rounded up.
+.Pp
+The index records are followed by the start offsets of the entries,
+followed by
+.Va data_size .
+The offsets are relative to the end of the offset record table and are
+monotically increasing.
+The size of each offset record is the logarithm of
+.Va data_size
+to base 256, rounded up.
+.Pp
+The offset table is followed by the entries in order.
+No separation or padding is added.
+.Ss Limitations
+The
+.Nm
+file format is by design intended for a database that can be
+mapped into memory.
+The hard limit for the number of entries and keys is 3435973836.
+The total size of all values must be smaller than 4GiB.
+.Sh SEE ALSO
+.Xr cdbr 3 ,
+.Xr cdbw 3
+.Sh HISTORY
+Support for the
+.Nm cdb
+format first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+The
+.Nm cdbr
+and
+.Nm cdbw
+functions have been written by
+.An Joerg Sonnenberger Aq joerg@NetBSD.org .

@@ -1,0 +1,150 @@
+.\"	$NetBSD: setmode.3,v 1.21 2009/01/11 02:46:27 christos Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)setmode.3	8.2 (Berkeley) 4/28/95
+.\"
+.Dd January 4, 2009
+.Dt SETMODE 3
+.Os
+.Sh NAME
+.Nm getmode ,
+.Nm setmode
+.Nd modify mode bits
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In unistd.h
+.Ft void *
+.Fn setmode "const char *mode_str"
+.Ft mode_t
+.Fn getmode "const void *set" "mode_t mode"
+.Sh DESCRIPTION
+The
+.Fn setmode
+function accepts a string representation of a file mode change,
+compiles it to binary form, and returns an abstract representation
+that may be passed to
+.Fn getmode .
+The string may be an numeric (octal) or symbolic string of the form
+accepted by
+.Xr chmod 1 ,
+and may represent either an exact mode to set or a change to make to
+the existing mode.
+.Pp
+The
+.Fn getmode
+function
+adjusts the file permission bits given by
+.Fa mode
+according to the compiled change representation
+.Fa set ,
+and returns the adjusted mode.
+While only the permission bits are altered, other parts of the file
+mode, particularly the type, may be examined.
+.Pp
+Because some of the possible symbolic values are defined relative to
+the file creation mask,
+.Fn setmode
+may call
+.Xr umask 2 ,
+temporarily changing the mask.
+If this occurs, the file creation mask will be restored before
+.Fn setmode
+returns.
+If the calling program changes the value of its file creation mask
+after calling
+.Fn setmode ,
+.Fn setmode
+must be called again to recompile the mode string if
+.Fn getmode
+is to modify future file modes correctly.
+.Pp
+If the mode passed to
+.Fn setmode
+is invalid,
+.Fn setmode
+returns
+.Dv NULL .
+.Sh EXAMPLES
+The effects of the shell command
+.Ql "chmod a+x myscript.sh"
+can be duplicated as follows:
+.Bd -literal -offset indent
+const char *file = "myscript.sh";
+struct stat st;
+mode_t newmode;
+
+stat(file, \*[Am]st);
+newmode = getmode(setmode("a+x"), st.st_mode);
+chmod(file, newmode);
+.Ed
+.Sh ERRORS
+The
+.Fn setmode
+function
+may fail and set
+.Va errno
+for any of the errors specified for the library routines
+.Xr malloc 3
+or
+.Xr strtol 3 .
+In addition,
+.Fn setmode
+will fail and set
+.Va errno
+to:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa mode
+argument does not represent a valid mode.
+.El
+.Sh SEE ALSO
+.Xr chmod 1 ,
+.Xr stat 2 ,
+.Xr umask 2 ,
+.Xr malloc 3
+.Sh HISTORY
+The
+.Fn getmode
+and
+.Fn setmode
+functions first appeared in
+.Bx 4.4 .
+.Sh BUGS
+Each call to
+.Nm setmode
+allocates a small amount of memory that there is no correct way to
+free.
+.Pp
+The type of
+.Fa set
+should really be some opaque struct type used only by these functions
+rather than
+.Ft void * .

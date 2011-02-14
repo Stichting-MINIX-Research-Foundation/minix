@@ -1,0 +1,85 @@
+.\"	$NetBSD: lfs_segwait.2,v 1.8 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Konrad Schroder.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 23, 2000
+.Dt LFS_SEGWAIT 2
+.Os
+.Sh NAME
+.Nm lfs_segwait
+.Nd wait until a segment is written
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/types.h
+.Ft int
+.Fn lfs_segwait "fsid_t *fsidp" "struct timeval *tv"
+.Sh DESCRIPTION
+.Fn lfs_segwait
+blocks until a new segment is acquired for writing by the filesystem
+specified by
+.Fa *fsidp
+or if
+.Fa *fsidp
+is \-1, until a segment is acquired for writing by any LFS filesystem.
+.Pp
+If
+.Fa timeout
+is non-zero,
+.Fn lfs_segwait
+will return after
+.Fa timeout
+milliseconds regardless of whether a new segment has been designated for
+writing or not.
+.Sh RETURN VALUES
+.Fn lfs_segwait
+returns 0 if a new segment was acquired; 1 if it timed out; or \-1 on error.
+.Sh ERRORS
+An error return from
+.Fn lfs_segwait
+indicates:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+.Fa fsidp
+points outside the process's allocated address space.
+.It Bq Er EINTR
+A signal was delivered before the time limit expired and
+before a new segment was designated for writing.
+.It Bq Er EINVAL
+The specified time limit is negative.
+.El
+.Sh SEE ALSO
+.Xr lfs_bmapv 2 ,
+.Xr lfs_markv 2 ,
+.Xr lfs_segclean 2 ,
+.Xr lfs_cleanerd 8
+.Sh HISTORY
+The
+.Fn lfs_segwait
+function call appeared in
+.Bx 4.4 .

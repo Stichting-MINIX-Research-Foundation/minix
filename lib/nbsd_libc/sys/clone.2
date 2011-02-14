@@ -1,0 +1,204 @@
+.\"	$NetBSD: clone.2,v 1.12 2010/05/04 06:13:43 jruoho Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 4, 2010
+.Dt CLONE 2
+.Os
+.Sh NAME
+.Nm clone
+.Nd spawn new process with options
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sched.h
+.Ft pid_t
+.Fn clone "int (*func)(void *arg)" "void *stack" "int flags" "void *arg"
+.Ft pid_t
+.Fn __clone "int (*func)(void *arg)" "void *stack" "int flags" "void *arg"
+.Sh DESCRIPTION
+The
+.Nm
+system call (and associated library support code) creates a new process
+in a way that allows the caller to specify several options for the new
+process creation.
+.Pp
+Unlike
+.Xr fork 2
+or
+.Xr vfork 2 ,
+in which the child process returns to the call site,
+.Nm
+causes the child process to begin execution at the function specified
+by
+.Ar func .
+The argument
+.Ar arg
+is passed to the entry point, as a means for the parent to provide
+context to the child.
+The stack pointer for the child process will be set to
+.Ar stack .
+Note that the
+.Nm
+interface requires that the application know the stack direction
+for the architecture, and that the caller initialize the
+.Ar stack
+argument as appropriate for the stack direction.
+.Pp
+The
+.Ar flags
+argument specifies several options that control how the child process
+is created.
+The lower 8 bits of
+.Ar flags
+specify the signal that is to be sent to the parent when the child
+exits.
+The following flags may also be specified by bitwise-or'ing
+them with the signal value:
+.Bl -tag -width "CLONE_SIGHAND" -offset 2n
+.It Dv CLONE_VM
+Share the virtual address space with the parent.
+The address space is shared in the same way as
+.Xr vfork 2 .
+.It Dv CLONE_FS
+Share the
+.Dq file system information
+with the parent.
+This include the current working directory and file creation mask.
+.It Dv CLONE_FILES
+Share the file descriptor table with the parent.
+.It Dv CLONE_SIGHAND
+Share the signal handler set with the parent.
+Note that the signal mask
+is never shared between the parent and the child, even if
+.Dv CLONE_SIGHAND
+is set.
+.It Dv CLONE_VFORK
+Preserve the synchronization semantics of
+.Xr vfork 2 ;
+the parent blocks until the child exits.
+.El
+.Pp
+The
+.Nm
+call returns the pid of the child in the parent's context.
+The child is provided no return value, since it begins execution at
+a different address.
+.Pp
+If the child process's entry point returns, the value it returns
+is passed to
+.Xr _exit 2 ,
+and the child process exits.
+Note that if the child process wants to exit directly, it should use
+.Xr _exit 2 ,
+and not
+.Xr exit 3 ,
+since
+.Xr exit 3
+will flush and close standard I/O channels, and thereby corrupt the
+parent process's standard I/O data structures (even with
+.Xr fork 2
+it is wrong to call
+.Xr exit 3
+since buffered data would then be flushed twice).
+.Pp
+Note that
+.Nm
+is not intended to be used for new native
+.Nx
+applications.
+It is provided as a means to port software
+originally written for the Linux operating system to
+.Nx .
+.Sh RETURN VALUES
+Same as for
+.Xr fork 2 .
+.Sh ERRORS
+Same as for
+.Xr fork 2 .
+.Sh SEE ALSO
+.Xr chdir 2 ,
+.Xr chroot 2 ,
+.Xr fork 2 ,
+.Xr sigaction 2 ,
+.Xr sigprocmask 2 ,
+.Xr umask 2 ,
+.Xr vfork 2 ,
+.Xr wait 2
+.Sh HISTORY
+The
+.Fn clone
+function call appeared in
+.Nx 1.6 .
+It is compatible with the Linux function call of the same name
+with respect to the described options.
+.Sh BUGS
+The
+.Nx
+implementation of
+.Fn clone
+does not implement the following
+.Ar flags
+that are present in the Linux implementation:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+.Dv CLONE_CHILD_CLEARTID
+.It
+.Dv CLONE_CHILD_SETTID
+.It
+.Dv CLONE_IO
+.It
+.Dv CLONE_NEWIPC
+.It
+.Dv CLONE_NEWNET
+.It
+.Dv CLONE_NEWNS
+.It
+.Dv CLONE_NEWPID
+.It
+.Dv CLONE_NEWUTS
+.It
+.Dv CLONE_PARENT
+.It
+.Dv CLONE_PARENT_SETTID
+.It
+.Dv CLONE_PID
+.It
+.Dv CLONE_PTRACE
+.It
+.Dv CLONE_SETTLS
+.It
+.Dv CLONE_STOPPED
+.It
+.Dv CLONE_SYSVSEM
+.It
+.Dv CLONE_THREAD
+.It
+.Dv CLONE_UNTRACED
+.El

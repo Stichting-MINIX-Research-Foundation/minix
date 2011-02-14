@@ -1,0 +1,74 @@
+.\"	$NetBSD: offtime.3,v 1.2 2010/12/16 18:38:07 christos Exp $
+.\" Written by Klaus Klein, May 10, 2004.
+.\" Public domain.
+.Dd December 14, 2010
+.Dt OFFTIME 3
+.Os
+.Sh NAME
+.Nm offtime ,
+.Nm timeoff ,
+.Nm timegm ,
+.Nm timelocal
+.Nd convert date and time
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In time.h
+.Ft struct tm *
+.Fn offtime "const time_t * clock" "long int offset"
+.Ft struct tm *
+.Fn offtime_r "const time_t * clock" "long int offset" "struct tm *ret"
+.Ft time_t
+.Fn timeoff "struct tm * tm" "long int offset"
+.Ft time_t
+.Fn timegm "struct tm * tm"
+.Ft time_t
+.Fn timelocal "struct tm * tm"
+.Sh DESCRIPTION
+These functions are inspired by C standard interfaces named similarly.
+.Pp
+.Fn offtime
+converts the calendar time
+.Fa clock ,
+offset by
+.Fa offset
+seconds,
+into broken-down time, expressed as Coordinated Universal Time (UTC).
+.Pp
+.Fn offtime_r
+is similar to
+.Fn offtime
+but it places the returned
+.Ft "struct tm *"
+in the user supplied
+.Fa ret
+argument.
+.Pp
+.Fn timeoff
+converts the broken-down time
+.Fa tm ,
+expressed as UTC,
+offset by
+.Fa offset
+seconds,
+into a calendar time value.
+.Pp
+.Fn timegm
+converts the broken-down time
+.Fa tm
+into a calendar time value, effectively being the inverse of
+.Xr gmtime 3 .
+It is equivalent to the C standard function
+.Xr mktime 3
+operating in UTC.
+.Pp
+.Fn timelocal
+converts the broken down time
+.Fa tm ,
+expressed as local time, into a calendar time value.
+It is equivalent to the C standard function
+.Xr mktime 3 ,
+and is provided for symmetry only.
+.Sh SEE ALSO
+.Xr ctime 3 ,
+.Xr tzset 3

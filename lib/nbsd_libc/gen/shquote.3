@@ -1,0 +1,244 @@
+.\" $NetBSD: shquote.3,v 1.9 2008/09/07 08:55:46 apb Exp $
+.\"
+.\" Copyright (c) 2001 Christopher G. Demetriou
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"          This product includes software developed for the
+.\"          NetBSD Project.  See http://www.NetBSD.org/ for
+.\"          information about NetBSD.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
+.\"
+.Dd September 7, 2008
+.Dt SHQUOTE 3
+.Os
+.Sh NAME
+.Nm shquote ,
+.Nm shquotev
+.Nd quote argument strings for use with the shell
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.Ft size_t
+.Fn shquote "const char *arg" "char *buf" "size_t bufsize"
+.Ft size_t
+.Fn shquotev "int argc" "char * const *argv" "char *buf" "size_t bufsize"
+.Sh DESCRIPTION
+The
+.Fn shquote
+and
+.Fn shquotev
+functions copy strings and transform the copies by adding shell
+escape and quoting characters.
+They are used to encapsulate
+arguments to be included in command strings passed to the
+.Fn system
+and
+.Fn popen
+functions, so that the arguments will have the correct values
+after being evaluated by the shell.
+.Pp
+The exact method of quoting and escaping may vary, and is intended
+to match the conventions of the shell used by
+.Fn system
+and
+.Fn popen .
+It may not match the conventions used by other shells.
+In this implementation, the following
+transformation is applied to each input string:
+.Bl -bullet -width indent
+.It
+it is surrounded by single quotes
+.Pq ' ,
+.It
+any single quotes in the input are escaped by replacing them with
+the four-character sequence:
+.Li '\e'' ,
+and
+.It
+extraneous pairs of single quotes (caused by multiple adjacent single
+quotes in the input string, or by single quotes at the beginning or
+end of the input string) are elided.
+.El
+.Pp
+The
+.Fn shquote
+function transforms the string specified by its
+.Fa arg
+argument, and places the result into the memory pointed to by
+.Fa buf .
+.Pp
+The
+.Fn shquotev
+function transforms each of the
+.Fa argc
+strings specified by the array
+.Fa argv
+independently.
+The transformed strings are placed in the memory pointed to by
+.Fa buf ,
+separated by spaces.
+It does not modify the pointer array specified by
+.Fa argv
+or the strings pointed to by the pointers in the array.
+.Pp
+Both functions write up to
+.Fa bufsize
+- 1 characters of output into the buffer pointed to by
+.Fa buf ,
+then add a
+.Li NUL
+character to terminate the output string.
+If
+.Fa bufsize
+is given as zero, the
+.Fa buf
+parameter is ignored and no output is written.
+.Sh RETURN VALUES
+The
+.Fn shquote
+and
+.Fn shquotev
+functions return the number of characters necessary to hold the
+result from operating on their input strings,
+not including the terminating
+.Li NUL .
+That is, they return the length of the string that would have
+been written to the output buffer, if it were large enough.
+If an error occurs during processing, the value ((size_t)\-1)
+is returned and
+.Va errno
+is set appropriately.
+.Sh EXAMPLES
+The following code fragment demonstrates how you might use
+.Fn shquotev
+to construct a command string to be used with
+.Fn system .
+The command uses an environment variable (which will be expanded by
+the shell) to determine the actual program to run.
+Note that the environment variable may be expanded by
+the shell into multiple words.
+The first word of the expansion will be used by the shell
+as the name of the program to run,
+and the rest will be passed as arguments to the program.
+.Bd -literal -offset indent
+char **argv, c, *cmd;
+size_t cmdlen, len, qlen;
+int argc;
+
+\&...
+
+/*
+ * Size buffer to hold the command string, and allocate it.
+ * Buffer of length one given to snprintf() for portability.
+ */
+cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
+qlen = shquotev(argc, argv, NULL, 0);
+if (qlen == (size_t)-1) {
+	\&...
+}
+cmdlen += qlen + 1;
+cmd = malloc(cmdlen);
+if (cmd == NULL) {
+	\&...
+}
+
+/* Create the command string. */
+len = snprintf(cmd, cmdlen, "${PROG-%s} ", PROG_DEFAULT);
+qlen = shquotev(argc, argv, cmd + len, cmdlen - len);
+if (qlen == (size_t)-1) {
+	/* Should not ever happen. */
+	\&...
+}
+len += qlen;
+
+/* "cmd" can now be passed to system(). */
+.Ed
+.Pp
+The following example shows how you would implement the same
+functionality using the
+.Fn shquote
+function directly.
+.Bd -literal -offset indent
+char **argv, c, *cmd;
+size_t cmdlen, len, qlen;
+int argc, i;
+
+\&...
+
+/*
+ * Size buffer to hold the command string, and allocate it.
+ * Buffer of length one given to snprintf() for portability.
+ */
+cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
+for (i = 0; i \*[Lt] argc; i++) {
+	qlen = shquote(argv[i], NULL, 0);
+	if (qlen == (size_t)-1) {
+		\&...
+	}
+	cmdlen += qlen + 1;
+}
+cmd = malloc(cmdlen);
+if (cmd == NULL) {
+	\&...
+}
+
+/* Start the command string with the env var reference. */
+len = snprintf(cmd, cmdlen, "${PROG-%s} ", PROG_DEFAULT);
+
+/* Quote all of the arguments when copying them. */
+for (i = 0; i \*[Lt] argc; i++) {
+	qlen = shquote(argv[i], cmd + len, cmdlen - len);
+	if (qlen == (size_t)-1) {
+		/* Should not ever happen. */
+		\&...
+	}
+	len += qlen;
+	cmd[len++] = ' ';
+}
+cmd[--len] = '\e0';
+
+/* "cmd" can now be passed to system(). */
+.Ed
+.Sh SEE ALSO
+.Xr sh 1 ,
+.Xr popen 3 ,
+.Xr system 3
+.Sh BUGS
+This implementation does not currently handle strings containing multibyte
+characters properly.
+To address this issue,
+.Pa /bin/sh
+.Po
+the shell used by
+.Fn system
+and
+.Fn popen
+.Pc
+must first be fixed to handle multibyte characters.
+When that has been done,
+these functions can have multibyte character support enabled.

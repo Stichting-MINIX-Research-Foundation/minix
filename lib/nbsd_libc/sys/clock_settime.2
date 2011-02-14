@@ -1,0 +1,189 @@
+.\" $NetBSD: clock_settime.2,v 1.20 2009/03/11 13:39:14 joerg Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 11, 1999
+.Dt CLOCK_SETTIME 2
+.Os
+.Sh NAME
+.Nm clock_settime ,
+.Nm clock_gettime ,
+.Nm clock_getres
+.Nd clock and timer functions
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In time.h
+.Ft int
+.Fn clock_settime "clockid_t clock_id" "const struct timespec *tp"
+.Ft int
+.Fn clock_gettime "clockid_t clock_id" "struct timespec *tp"
+.Ft int
+.Fn clock_getres "clockid_t clock_id" "struct timespec *res"
+.Sh DESCRIPTION
+The
+.Fn clock_settime
+function sets the clock identified by
+.Fa clock_id
+to the absolute time specified by
+.Fa tp .
+If the time specified by
+.Fa tp
+is not a multiple of the resolution of the clock,
+.Fa tp
+is truncated to a multiple of the resolution.
+.Pp
+The
+.Fn clock_gettime
+function stores the time of the clock identified by
+.Fa clock_id
+into the location specified by
+.Fa tp .
+.Pp
+The
+.Fn clock_getres
+function stores the resolution of the clock identified by
+.Fa clock_id
+into the location specified by
+.Fa res ,
+unless
+.Fa res
+is
+.Dv NULL .
+.Pp
+A
+.Fa clock_id
+of
+.Dv CLOCK_REALTIME
+identifies the realtime clock for the system.
+For this clock, the values specified by
+.Fn clock_settime
+and obtained by
+.Fn clock_gettime
+represent the amount of time (in seconds and nanoseconds)
+since 00:00 Universal Coordinated Time, January 1, 1970.
+.Pp
+A
+.Fa clock_id
+of
+.Dv CLOCK_MONOTONIC
+identifies a clock that increases at a steady rate (monotonically).
+This clock
+is not affected by calls to
+.Xr adjtime 2
+and
+.Xr settimeofday 2
+and will
+fail with an
+.Er EINVAL
+error if it's the clock specified in a call to
+.Fn clock_settime .
+The origin of the clock is unspecified.
+.Pp
+If the calling user is not the super-user, then the
+.Fn clock_settime
+function in the standard C library will try to use the
+.Xr clockctl 4
+device if present, thus making possible for non privileged users to
+set the system time.
+If
+.Xr clockctl 4
+is not present or not accessible, then
+.Fn clock_settime
+reverts to the
+.Fn clock_settime
+system call, which is restricted to the super user.
+.Sh RETURN VALUES
+A value of 0 is returned on success.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Fn clock_settime ,
+.Fn clock_gettime
+and
+.Fn clock_getres
+functions will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa clock_id
+argument does not specify a known clock.
+.It Bq Er ENOSYS
+The function is not supported by this implementation.
+.El
+.Pp
+The
+.Fn clock_settime
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa tp
+argument is outside the range for the specified clock,
+.Fa clock_id .
+.It Bq Er EINVAL
+The
+.Fa tp
+argument specified a nanosecond value less than zero of greater than or equal
+1000 million.
+.It Bq Er EINVAL
+The
+.Fa clock_id
+argument is a clock that can not be adjusted.
+.It Bq Er EPERM
+The
+calling process does not have the appropriate privilege to set the specified
+clock,
+.Fa clock_id .
+.El
+.Pp
+The
+.Fn clock_gettime
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+The
+.Fa tp
+argument specifies an address that is not a valid part of the process address
+space.
+.El
+.Sh SEE ALSO
+.Xr ctime 3 ,
+.Xr time 3 ,
+.\" .Xr timer_gettime 3 ,
+.Xr clockctl 4
+.Sh STANDARDS
+The
+.Fn clock_settime ,
+.Fn clock_gettime
+and
+.Fn clock_getres
+functions conform to
+.St -p1003.1b-93 .

@@ -1,0 +1,102 @@
+.\"	$NetBSD: posix_fadvise.2,v 1.3 2009/06/09 11:21:33 yamt Exp $
+.\"
+.\" Copyright (c)2006,2009 YAMAMOTO Takashi,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd June 9, 2009
+.Dt POSIX_FADVISE 2
+.Os
+.Sh NAME
+.Nm posix_fadvise
+.Nd hint at the future access pattern of a file
+.\" ------------------------------------------------------------
+.Sh LIBRARY
+.Lb libc
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In sys/fcntl.h
+.Ft int
+.Fn posix_fadvise "int fd" "off_t offset" "off_t size" "int hint"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+.Fn posix_fadvise
+hints at the application's access pattern to the file and range
+given by
+the file descriptor,
+.Fa fd ,
+and
+.Fa offset
+and
+.Fa size .
+If
+.Fa size
+is zero, it means to the end of file.
+.Pp
+.Fa hint
+should be one of the followings.
+.Pp
+.Bl -tag -offset indent -width POSIX_FADV_SEQUENTIAL -compact
+.It POSIX_FADV_NORMAL
+No hint.
+(default)
+.It POSIX_FADV_RANDOM
+Random access.
+.It POSIX_FADV_SEQUENTIAL
+Sequential access.
+(from lower offset to higher offset.)
+.It POSIX_FADV_WILLNEED
+Will be accessed.
+.It POSIX_FADV_DONTNEED
+Will not be accessed.
+.It POSIX_FADV_NOREUSE
+Will be accessed just once.
+.El
+.Pp
+Calling
+.Fn posix_fadvise
+doesn't alter the semantics of the operations,
+it is only a matter of performance.
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+On success,
+.Fn posix_fadvise
+returns 0.
+Otherwise, it returns an error number.
+.\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr errno 2 ,
+.Xr madvise 2
+.\" ------------------------------------------------------------
+.Sh BUGS
+For
+.Dv POSIX_FADV_NORMAL ,
+.Dv POSIX_FADV_RANDOM ,
+and
+.Dv POSIX_FADV_SEQUENTIAL ,
+the current implementation ignores
+.Fa offset
+and
+.Fa size ,
+and applies the hint to the whole file.

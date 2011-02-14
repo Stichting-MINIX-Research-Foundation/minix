@@ -1,0 +1,242 @@
+#!/bin/sh -
+# $NetBSD: makelintstub,v 1.23 2008/08/05 02:08:13 lukem Exp $
+#
+# Copyright (c) 1996, 1997 Christopher G. Demetriou
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#          This product includes software developed for the
+#          NetBSD Project.  See http://www.NetBSD.org/ for
+#          information about NetBSD.
+# 4. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
+
+usage()
+{
+
+cat << _EOF 1>&2
+Usage: $PROG [-n|-p] [-o filename] [-s syscall.h] object ...
+	-n		Create SYSCALL_NOERROR.
+	-p		Create PSEUDO_NOERROR.
+			(also removes leading "_" on syscall name).
+	-o filename	Output to filename.
+	-s syscall.h	Header to #include instead of <sys/syscall.h>.
+
+	The CPP environment variable must be set
+	to the path to the C preprocessor.
+_EOF
+	exit 1
+}
+
+header()
+{
+
+	cat <<- __EOF__
+	/*
+	 * THIS IS AN AUTOMATICALLY GENERATED FILE.  DO NOT EDIT.
+	 */
+
+	#include <sys/param.h>
+	#include <sys/aio.h>
+	#include <sys/time.h>
+	#include <sys/mount.h>
+	#include <sys/stat.h>
+	#include <ufs/ufs/dinode.h>
+	#include <ufs/lfs/lfs.h>
+	#include <sys/resource.h>
+	#include <sys/poll.h>
+	#include <sys/uio.h>
+	#include <sys/ipc.h>
+	#include <sys/lwpctl.h>
+	#include <sys/mqueue.h>
+	#include <sys/msg.h>
+	#include <sys/sem.h>
+	#include <sys/shm.h>
+	#include <sys/sched.h>
+	#include <sys/timex.h>
+	#include <sys/socket.h>
+	#include <sys/event.h>
+	#include <sys/uuid.h>
+	#ifdef __STDC__
+	#include <stdarg.h>
+	#else
+	#include <varargs.h>
+	#endif
+
+	__EOF__
+}
+
+syscall_stub()
+{
+
+	syscalldump="$1"
+	syscallname="$2"
+	funcname="$3"
+
+    	arglist="$(
+    	sed -e 'ta
+		:a
+		s,^/\* syscall: \"'"$syscallname"'\" ,,
+	        tb
+		d
+		:b
+		s, \*/$,,' $syscalldump
+	)"
+
+	eval set -f -- "$arglist"
+
+	if [ $# -lt 3 ]; then
+		echo syscall $syscallname not found! 1>&2
+		exit 1
+	fi
+
+	shift			# kill "ret:"
+	returntype=$1; shift
+	shift			# kill "args:"
+
+	cat <<- __EOF__
+	/*ARGSUSED*/
+	$returntype
+	__EOF__
+
+	# do ANSI C function header
+	echo	"#ifdef __STDC__"
+
+	echo "$funcname("
+	first=true; i=1
+	for arg; do
+		if $first; then
+			first=false
+		else
+			echo ", "
+		fi
+		case "$arg" in
+		"...") echo "...";;
+		*) echo "$arg arg$i"; i=$(($i + 1));;
+		esac
+	done
+	if $first; then
+		echo "void"
+	fi
+	echo	")"
+
+	# do K&R C function header
+	echo	"#else"
+
+	echo "$funcname("
+	first=true; i=1
+	for arg; do
+		if $first; then
+			first=false
+		else
+			echo ", "
+		fi
+		case "$arg" in
+		"...") echo "va_alist";;
+		*) echo "arg$i"; i=$(($i + 1));;
+		esac
+	done
+	echo	")"
+	i=1
+	for arg; do
+		case "$arg" in
+		"...") echo "	va_dcl";;
+		*) echo "	$arg arg$i;"; i=$(($i + 1));;
+		esac
+	done
+
+	# do function body
+	echo	"#endif"
+
+	echo	"{"
+	if [ "$returntype" != "void" ]; then
+		echo "        return (($returntype)0);"
+	fi
+	echo	"}"
+}
+
+trailer()
+{
+
+	cat <<- __EOF__
+	/* END */
+	__EOF__
+}
+
+
+pflag=false
+nflag=false
+oarg=""
+syscallhdr=/usr/include/sys/syscall.h
+syscalldump=/tmp/makelintstub.$$
+PROG="$(basename "$0")"
+
+if [ -z "${CPP}" ]; then
+	usage
+fi
+
+while getopts no:ps: i
+do
+	case "$i" in
+	n)	nflag=true;;
+	o)	oarg=$OPTARG;;
+	p)	pflag=true;;
+	s)	syscallhdr=$OPTARG;;
+	*)	usage;;
+	esac
+done
+
+shift $(expr $OPTIND - 1)
+
+if $pflag && $nflag
+then
+	echo "$PROG: -n flag and -p flag may not be used together" 1>&2
+	usage
+fi
+
+if [ -n "$oarg" ]; then
+	exec > $oarg
+fi
+
+trap "rm -f $syscalldump" 0 1 2 3 15
+
+header
+
+echo "#include \"$syscallhdr\"" | ${CPP} -D_LIBC -C > $syscalldump
+
+for syscall; do
+	fnname=${syscall%.S}
+	if $pflag; then
+		scname=${fnname#_}
+	else
+		scname=$fnname
+	fi
+	syscall_stub $syscalldump $scname $fnname
+	echo ""
+done
+
+trailer
+
+exit 0

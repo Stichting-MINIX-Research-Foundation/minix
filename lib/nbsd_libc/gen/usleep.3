@@ -1,0 +1,104 @@
+.\"	$NetBSD: usleep.3,v 1.19 2010/04/29 17:29:56 jruoho Exp $
+.\"
+.\" Copyright (c) 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)usleep.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd April 29, 2010
+.Dt USLEEP 3
+.Os
+.Sh NAME
+.Nm usleep
+.Nd suspend execution for interval of microseconds
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In unistd.h
+.Ft int
+.Fn usleep "useconds_t microseconds"
+.Sh DESCRIPTION
+The
+.Fn usleep
+function
+suspends execution of the calling process
+until either the number of microseconds specified by
+.Fa microseconds
+have elapsed or a signal is delivered to the calling process and its
+action is to invoke a signal catching function or to terminate the
+process.
+The suspension time may be longer than requested due to the
+scheduling of other activity by the system.
+.Pp
+The
+.Fa microseconds
+argument must be less than 1,000,000.
+If the value of
+.Fa microseconds
+is 0, then the call has no effect.
+.Sh RETURN VALUES
+On successful completion,
+.Fn usleep
+returns 0.
+Otherwise, it returns \-1 and sets
+.Va errno
+to indicate the error.
+.Sh ERRORS
+The
+.Fn usleep
+function may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa microseconds
+interval specified 1,000,000 or more microseconds.
+.El
+.Sh SEE ALSO
+.Xr nanosleep 2 ,
+.Xr sleep 3
+.Sh STANDARDS
+The
+.Fn usleep
+function conforms to
+.St -xpg4.2 .
+It later appeared in the
+.Tn POSIX
+standard, but in
+.St -p1003.1-2004
+it was marked as legacy and the use of
+.Xr nanosleep 2
+was recommended instead.
+The
+.St -p1003.1-2008
+revision removed
+.Fn usleep
+from the specification.
+.Sh HISTORY
+The
+.Fn usleep
+function appeared in
+.Bx 4.3 .

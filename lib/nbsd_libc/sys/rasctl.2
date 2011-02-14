@@ -1,0 +1,212 @@
+.\"     $NetBSD: rasctl.2,v 1.13 2008/04/29 21:06:28 scw Exp $
+.\"
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gregory McGarry.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 29, 2008
+.Dt RASCTL 2
+.Os
+.Sh NAME
+.Nm rasctl
+.Nd restartable atomic sequences
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/types.h
+.In sys/ras.h
+.Ft int
+.Fn rasctl "void *addr" "size_t len" "int op"
+.Sh DESCRIPTION
+Restartable atomic sequences are code sequences which are guaranteed
+to execute without preemption.
+This property is assured by the kernel
+by re-executing a preempted sequence from the start.
+This functionality enables applications to build atomic sequences which,
+when executed to completion, will have executed atomically.
+Restartable atomic sequences are intended to be used on systems that
+do not have hardware support for low-overhead atomic primitives.
+.Pp
+The
+.Nm
+function manipulates a process's set of restartable atomic sequences.
+If a restartable atomic sequence is registered and the process is
+preempted within the range
+.Fa addr
+and
+.Fa addr Ns + Ns Fa len ,
+then the process is resumed at
+.Fa addr .
+.Pp
+As the process execution can be rolled-back, the code in the sequence
+should have no side effects other than a final store at
+.Fa addr Ns + Ns Fa len Ns \-1 .
+The kernel does not guarantee that the sequences are successfully
+restartable.
+It assumes that the application knows what it is doing.
+Restartable atomic sequences should adhere to the following guidelines:
+.Pp
+.Bl -bullet -compact
+.It
+have a single entry point and a single exit point;
+.It
+not execute emulated instructions; and
+.It
+not invoke any functions or system calls.
+.El
+.Pp
+Restartable atomic sequences are inherited from the parent by the
+child during the
+.Xr fork 2
+operation.
+Restartable atomic sequences for a process are removed during
+.Xr exec 3 .
+.Pp
+The operations that can be applied to a restartable atomic sequence
+are specified by the
+.Fa op
+argument.
+Possible operations are:
+.Pp
+.Bl -tag -compact -width RAS_PURGE_ALLXXX
+.It Dv RAS_INSTALL
+Install this sequence.
+.It Dv RAS_PURGE
+Remove the specified registered sequence for this process.
+.It Dv RAS_PURGE_ALL
+Remove all registered sequences for this process.
+.El
+.Pp
+The
+.Dv RAS_PURGE
+and
+.Dv RAS_PURGE_ALL
+operations should be considered to have
+undefined behaviour if there are any other runnable threads in the
+address space which might be executing within the restartable atomic
+sequence(s) at the time of the purge.
+The caller must be responsible for ensuring that there is some form of
+coordination with other threads to prevent unexpected behaviour.
+.Pp
+To preserve the atomicity of sequences, the kernel attempts to protect
+the sequences from alteration by the
+.Xr ptrace 2
+facility.
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn rasctl
+returns zero.
+Otherwise, \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Nm
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid input was supplied, such as an invalid operation, an invalid
+address, or an invalid length.
+A process may have a finite number of
+atomic sequences that is defined at compile time.
+.It Bq Er EOPNOTSUPP
+Restartable atomic sequences are not supported by the kernel.
+.It Bq Er ESRCH
+Restartable atomic sequence not registered.
+.El
+.Sh SEE ALSO
+.Xr ptrace 2
+.\" .Xr lock 9
+.Sh HISTORY
+The
+.Nm
+functionality first appeared in
+.Nx 2.0
+based on a similar interface that appeared in Mach 2.5.
+.Sh CAVEATS
+Modern compilers reorder instruction sequences to optimize speed.
+The start address and size of a
+.Nm RAS
+need to be protected against this.
+One level of protection is created by compiler dependent instructions,
+abstracted from user level code via the following macros:
+.Bl -tag -width RAS_START(name)
+.It Dv RAS_DECL(name)
+Declares the start and end labels used internally by the
+other macros to mark a
+.Nm RAS .
+The name uniquely identifies the
+.Nm RAS .
+.It Dv RAS_START(name)
+Marks the start of the code.
+Each restart returns to the instruction following this macro.
+.It Dv RAS_END(name)
+Marks the end of the restartable code.
+.It Dv RAS_ADDR(name)
+Returns the start address of a
+.Nm RAS
+and is used to create the first argument to
+.Nm .
+.It Dv RAS_SIZE(name)
+Returns the size of a
+.Nm RAS
+and is used as second argument to
+.Nm .
+.El
+Recent versions of
+.Xr gcc 1
+require the
+.Fl fno-reorder-blocks
+flag to prevent blocks of code wrapped with
+.Dv RAS_START Ns / Ns Dv RAS_END
+being moved outside these labels.
+However, be aware that this may not always be sufficient to prevent
+.Xr gcc 1
+from generating non-restartable code within the
+.Nm RAS
+due to register clobbers.
+It is, therefore, strongly recommended that restartable atomic sequences
+are coded in assembly.
+.Nm RAS
+blocks within assembly code can be specified by using the following macros:
+.Bl -tag -width RAS_START_ASM_HIDDEN(name)
+.It Dv RAS_START_ASM(name)
+Similar to
+.Nm RAS_START
+but for use in assembly source code.
+.It Dv RAS_END_ASM(name)
+Similar to
+.Nm RAS_END
+but for use in assembly source code.
+.It Dv RAS_START_ASM_HIDDEN(name)
+Similar to
+.Nm RAS_START_ASM
+except that the symbol will not be placed in the dynamic symbol table.
+.It Dv RAS_END_ASM_HIDDEN(name)
+Similar to
+.Nm RAS_END_ASM
+except that the symbol will not be placed in the dynamic symbol table.
+.El

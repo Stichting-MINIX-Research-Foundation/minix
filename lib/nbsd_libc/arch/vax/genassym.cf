@@ -1,0 +1,83 @@
+#	$NetBSD: genassym.cf,v 1.4 2008/04/28 20:22:57 martin Exp $
+
+#
+# Copyright (c) 2001 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas <matt@3am-sfotware.com>.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <ucontext.h>
+include <signal.h>
+
+define UC_LEN		sizeof(ucontext_t)
+define UC_FLAGS		offsetof(ucontext_t, uc_flags)
+define UC_LINK		offsetof(ucontext_t, uc_link)
+define UC_STACK		offsetof(ucontext_t, uc_stack)
+define UC_SIGMASK	offsetof(ucontext_t, uc_sigmask)
+define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
+define _UC_SIGMASK	_UC_SIGMASK
+define _UC_STACK	_UC_STACK
+define _UC_CPU		_UC_CPU
+
+define _REG_R0		4*_REG_R0
+define _REG_R1		4*_REG_R1
+define _REG_R2		4*_REG_R2
+define _REG_R4		4*_REG_R4
+define _REG_R6		4*_REG_R6
+define _REG_R8		4*_REG_R8
+define _REG_R10		4*_REG_R10
+define _REG_AP		4*_REG_AP
+define _REG_SP		4*_REG_SP
+define _REG_FP		4*_REG_FP
+define _REG_PC		4*_REG_PC
+define _REG_PSL		4*_REG_PSL
+
+define	SS_SP		offsetof(stack_t, ss_sp)
+define	SS_SIZE		offsetof(stack_t, ss_size)
+define	SS_FLAGS	offsetof(stack_t, ss_flags)
+define	SS_ONSTACK	SS_ONSTACK
+
+define	SC13_LEN	sizeof(struct sigcontext13)
+define	SC13_ONSTACK	offsetof(struct sigcontext13, sc_onstack)
+define	SC13_MASK	offsetof(struct sigcontext13, sc_mask)
+define	SC13_SP		offsetof(struct sigcontext13, sc_sp)
+define	SC13_FP		offsetof(struct sigcontext13, sc_fp)
+define	SC13_AP		offsetof(struct sigcontext13, sc_ap)
+define	SC13_PC		offsetof(struct sigcontext13, sc_pc)
+define	SC13_PS		offsetof(struct sigcontext13, sc_ps)
+
+define	SC_LEN		sizeof(struct sigcontext)
+define	SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
+define	SC_MASK13	offsetof(struct sigcontext, __sc_mask13)
+define	SC_SP		offsetof(struct sigcontext, sc_sp)
+define	SC_FP		offsetof(struct sigcontext, sc_fp)
+define	SC_AP		offsetof(struct sigcontext, sc_ap)
+define	SC_PC		offsetof(struct sigcontext, sc_pc)
+define	SC_PS		offsetof(struct sigcontext, sc_ps)
+define	SC_MASK		offsetof(struct sigcontext, sc_mask)
+
+define	SIG_BLOCK	SIG_BLOCK
+define	SS_LEN		sizeof(sigset_t)

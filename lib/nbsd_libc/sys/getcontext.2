@@ -1,0 +1,152 @@
+.\"	$NetBSD: getcontext.2,v 1.7 2010/04/29 06:07:35 jruoho Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 28, 2010
+.Dt GETCONTEXT 2
+.Os
+.Sh NAME
+.Nm getcontext ,
+.Nm setcontext
+.Nd get and set current user context
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In ucontext.h
+.Ft int
+.Fn getcontext "ucontext_t *ucp"
+.Ft int
+.Fn setcontext "const ucontext_t *ucp"
+.Sh DESCRIPTION
+The
+.Fn getcontext
+function initializes the object pointed to by
+.Fa ucp
+to the current user context of the calling thread.
+The user context defines a thread's execution environment and includes
+the contents of its machine registers,
+its signal mask,
+and its current execution stack.
+.Pp
+The
+.Fn setcontext
+function restores the user context defined in the object pointed to by
+.Fa ucp
+as most recently initialized by a previous call to either
+.Fn getcontext
+or
+.Xr makecontext 3 .
+.\" TODO: signal handler
+If successful, execution of the program resumes as defined in the
+.Fa ucp
+argument, and
+.Fn setcontext
+will not return.
+If
+.Fa ucp
+was initialized by the
+.Fn getcontext
+function, program execution continues as if the corresponding invocation of
+.Fn getcontext
+had just returned (successfully).
+If
+.Fa ucp
+was initialized by the
+.Xr makecontext 3
+function, program execution continues with the function (and function
+arguments) passed to
+.Xr makecontext 3 .
+.Sh RETURN VALUES
+On successful completion,
+.Fn getcontext
+returns 0 and
+.Fn setcontext
+does not return.
+Otherwise a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Fn getcontext
+and
+.Fn setcontext
+functions will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+The
+.Fa ucp
+argument points to an invalid address.
+.El
+.Pp
+The
+.Fn setcontext
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The contents of the datum pointed to by
+.Fa ucp
+are invalid.
+.El
+.Sh SEE ALSO
+.Xr sigprocmask 2 ,
+.Xr longjmp 3 ,
+.Xr makecontext 3 ,
+.Xr setjmp 3 ,
+.Xr swapcontext 3
+.Sh STANDARDS
+The
+.Fn getcontext
+and
+.Fn setcontext
+functions conform to
+.St -xsh5
+and
+.St -p1003.1-2001 .
+The
+.Va errno
+indications are an extension to the standard.
+.Pp
+The
+.St -p1003.1-2004
+revision marked the functions
+.Fn getcontext
+and
+.Fn setcontext
+as obsolete, citing portability issues and recommending the use of
+.Tn POSIX
+threads instead.
+The
+.St -p1003.1-2008
+revision removed the functions from the specification.
+.Sh HISTORY
+The
+.Fn getcontext
+and
+.Fn setcontext
+functions first appeared in
+.At V.4 .

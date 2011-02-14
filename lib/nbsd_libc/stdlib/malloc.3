@@ -1,0 +1,229 @@
+.\" $NetBSD: malloc.3,v 1.38 2010/05/03 08:23:20 jruoho Exp $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the American National Standards Committee X3, on Information
+.\" Processing Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
+.\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
+.\"
+.Dd May 3, 2010
+.Dt MALLOC 3
+.Os
+.Sh NAME
+.Nm malloc , calloc , realloc , free
+.Nd general purpose memory allocation functions
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.Ft void *
+.Fn malloc "size_t size"
+.Ft void *
+.Fn calloc "size_t number" "size_t size"
+.Ft void *
+.Fn realloc "void *ptr" "size_t size"
+.Ft void
+.Fn free "void *ptr"
+.Sh DESCRIPTION
+The
+.Fn malloc
+function allocates
+.Fa size
+bytes of uninitialized memory.
+The allocated space is suitably aligned (after possible pointer coercion)
+for storage of any type of object.
+.Pp
+The
+.Fn calloc
+function allocates space for
+.Fa number
+objects,
+each
+.Fa size
+bytes in length.
+The result is identical to calling
+.Fn malloc
+with an argument of
+.Dq "number * size" ,
+with the exception that the allocated memory is explicitly initialized
+to zero bytes.
+.Pp
+The
+.Fn realloc
+function changes the size of the previously allocated memory referenced by
+.Fa ptr
+to
+.Fa size
+bytes.
+The contents of the memory are unchanged up to the lesser of the new and
+old sizes.
+If the new size is larger,
+the value of the newly allocated portion of the memory is undefined.
+Upon success, the memory referenced by
+.Fa ptr
+is freed and a pointer to the newly allocated memory is returned.
+Note that
+.Fn realloc
+may move the memory allocation, resulting in a different return value than
+.Fa ptr .
+If
+.Fa ptr
+is
+.Dv NULL ,
+the
+.Fn realloc
+function behaves identically to
+.Fn malloc
+for the specified size.
+.Pp
+The
+.Fn free
+function causes the allocated memory referenced by
+.Fa ptr
+to be made available for future allocations.
+If
+.Fa ptr
+is
+.Dv NULL ,
+no action occurs.
+.Sh RETURN VALUES
+The
+.Fn malloc
+and
+.Fn calloc
+functions return a pointer to the allocated memory if successful; otherwise
+a
+.Dv NULL
+pointer is returned and
+.Va errno
+is set to
+.Er ENOMEM .
+.Pp
+The
+.Fn realloc
+function returns a pointer, possibly identical to
+.Fa ptr ,
+to the allocated memory
+if successful; otherwise a
+.Dv NULL
+pointer is returned, and
+.Va errno
+is set to
+.Er ENOMEM
+if the error was the result of an allocation failure.
+The
+.Fn realloc
+function always leaves the original buffer intact
+when an error occurs.
+.Pp
+The
+.Fn free
+function returns no value.
+.Sh EXAMPLES
+When using
+.Fn malloc ,
+be careful to avoid the following idiom:
+.Bd -literal -offset indent
+if ((p = malloc(number * size)) == NULL)
+	err(EXIT_FAILURE, "malloc");
+.Ed
+.Pp
+The multiplication may lead to an integer overflow.
+To avoid this,
+.Fn calloc
+is recommended.
+.Pp
+If
+.Fn malloc
+must be used, be sure to test for overflow:
+.Bd -literal -offset indent
+if (size && number > SIZE_MAX / size) {
+	errno = EOVERFLOW;
+	err(EXIT_FAILURE, "allocation");
+}
+.Ed
+.Pp
+When using
+.Fn realloc ,
+one must be careful to avoid the following idiom:
+.Pp
+.Bd -literal -offset indent
+nsize += 50;
+
+if ((p = realloc(p, nsize)) == NULL)
+	return NULL;
+.Ed
+.Pp
+Do not adjust the variable describing how much memory has been allocated
+until it is known that the allocation has been successful.
+This can cause aberrant program behavior if the incorrect size value is used.
+In most cases, the above example will also leak memory.
+As stated earlier, a return value of
+.Dv NULL
+indicates that the old object still remains allocated.
+Better code looks like this:
+.Bd -literal -offset indent
+newsize = size + 50;
+
+if ((p2 = realloc(p, newsize)) == NULL) {
+
+	if (p != NULL)
+		free(p);
+
+	p = NULL;
+	return NULL;
+}
+
+p = p2;
+size = newsize;
+.Ed
+.Sh SEE ALSO
+.\" .Xr limits 1 ,
+.Xr madvise 2 ,
+.Xr mmap 2 ,
+.Xr sbrk 2 ,
+.Xr alloca 3 ,
+.Xr atexit 3 ,
+.Xr getpagesize 3 ,
+.Xr memory 3 ,
+.Xr posix_memalign 3
+.Pp
+For the implementation details, see
+.Xr jemalloc 3 .
+.Sh STANDARDS
+The
+.Fn malloc ,
+.Fn calloc ,
+.Fn realloc
+and
+.Fn free
+functions conform to
+.St -isoC .

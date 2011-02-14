@@ -1,0 +1,34 @@
+#	$NetBSD: shlib_version,v 1.220 2010/12/16 18:38:06 christos Exp $
+#	Remember to update distrib/sets/lists/base/shl.* when changing
+#
+# things we wish to do on next major version bump:
+# - libc/net/rcmd.c: make __ivaliduser() and __ivaliduser_sa() static
+# - libc/net: resolver update to BIND8/9?
+# - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
+# - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
+# - libc/gen/times.c: remove; __times13() -> times()
+# - libc/gen/timezone.c: remove; __timezone13 -> timezone
+# - libc/net/getaddrinfo.c, netdb.h: remove __ai_pad0
+# - libc/gen/utmpx.c, utmpx.h: remove lastlogxname, __getlastlogx13 -> getlastlogx
+# - infinity{,f,l}.c, math.h: __infinity -> __huge_val
+# - libc/gen/is{inf,nan}d_ieee754.c: remove is{inf,nan} aliases
+# - libc/arch/vax/gen/is{inf,nan}.c: remove
+# - libc/db/hash/ndbm.c: remove; __ndbm13 -> ndbm
+# - libc/net/getnet{ent,namadr}.c, netdb.h: remove __n_pad0
+# - libc/stdio: make _file an int, hide struct FILE, stdin, stdout, stderr impls
+# - libc/stdio: make fpos_t larger.  see BUGS section in fgetpos(3).
+#   probably s/fpos_t/off_t/ in __sFILE and __sseek().  it involves
+#   funopen(3) api change.
+# - remove frexp, ldexp, modf: they belong to libm.
+# - make sure we can support thread local [on arm don't use r9 for example,
+#   consider other risc architectures: mips, powerpc, sparc, etc]
+# - rename __libc_mutex_lock and similar back to pthread_mutex_lock.
+#   the functions are used by third party code without prototypes.
+#   for example in assembler code.
+# - kill sigcontext: never request version 0 or 1 signal trampoline.
+#   always request version 2 trampoline. (on vax, 3).
+# - change _ctype_ table in ctype.h and gen/ctype_.c 8bit -> 16 or 32bit.
+#   it's insufficient bitwidth to implement all ctype class.
+#   see isblank's comment in ctype.h.
+major=12
+minor=175

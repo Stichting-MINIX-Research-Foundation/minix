@@ -1,0 +1,456 @@
+.\" $NetBSD: ctime.3,v 1.37 2010/12/17 01:30:50 wiz Exp $
+.Dd December 14, 2010
+.Dt CTIME 3
+.Os
+.Sh NAME
+.Nm asctime ,
+.Nm asctime_r ,
+.Nm ctime ,
+.Nm ctime_r ,
+.Nm ctime_rz ,
+.Nm difftime ,
+.Nm gmtime ,
+.Nm gmtime_r ,
+.Nm localtime ,
+.Nm localtime_r ,
+.Nm localtime_rz ,
+.Nm mktime ,
+.Nm mktime_z ,
+.Nm tzalloc ,
+.Nm tzgetname ,
+.Nm tzfree ,
+.Nd convert date and time to ASCII
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In time.h
+.Dv extern char *tzname[2];
+.Ft char *
+.Fn ctime "const time_t *clock"
+.Ft char *
+.Fn ctime_r "const time_t *clock"  "char *buf"
+.Ft char *
+.Fn ctime_rz "const timezone_t tz" "const time_t *clock"  "char *buf"
+.Ft double
+.Fn difftime "time_t time1" "time_t time0"
+.Ft char *
+.Fn asctime "const struct tm *tm"
+.Ft char *
+.Fn asctime_r "const struct tm restrict tm" "char * restrict buf"
+.Ft struct tm *
+.Fn localtime "const time_t *clock"
+.Ft struct tm *
+.Fn localtime_r "const time_t * restrict clock" "struct tm * restrict result"
+.Ft struct tm *
+.Fn localtime_rz "const timezone_t tz" "const time_t * restrict clock" "struct tm * restrict result"
+.Ft struct tm *
+.Fn gmtime "const time_t *clock"
+.Ft struct tm *
+.Fn gmtime_r "const time_t * restrict clock" "struct tm * restrict result"
+.Ft time_t
+.Fn mktime "struct tm *tm"
+.Ft time_t
+.Fn mktime_z "const timezone_t tz" "struct tm *tm"
+.Ft timezone_t
+.Fn tzalloc "const char *zone"
+.Ft const char *
+.Fn tzgetname "const timezone_t tz" "int isdst"
+.Ft void
+.Fn tzfree "const timezone_t tz"
+.Sh DESCRIPTION
+.Fn ctime
+converts a
+.Tp time_t ,
+pointed to by
+.Fa clock ,
+representing the time in seconds since
+00:00:00 UTC, 1970-01-01,
+and returns a pointer to a
+string of the form
+.D1 Thu Nov 24 18:22:48 1986\en\e0
+Years requiring fewer than four characters are padded with leading zeroes.
+For years longer than four characters, the string is of the form
+.D1 Thu Nov 24 18:22:48     81986\en\e0
+with five spaces before the year.
+These unusual formats are designed to make it less likely that older
+software that expects exactly 26 bytes of output will mistakenly output
+misleading values for out-of-range years.
+.Pp
+.Fn ctime_r
+is similar to
+.Fn ctime ,
+except it places the result of the conversion on the
+.Fa buf
+argument which should be 26 or more bytes long, instead of using a global
+static buffer.
+.Pp
+.Fn ctime_rz
+is similar to
+.Fn ctime_r ,
+but it also takes a
+.Ft "const timezone_t"
+argument, returned by a previous call to
+.Fn tzalloc .
+.Pp
+.Fn localtime
+and
+.Fn gmtime
+return pointers to
+.Va tm
+structures, described below.
+.Fn localtime
+corrects for the time zone and any time zone adjustments
+(such as Daylight Saving Time in the U.S.A.).
+After filling in the
+.Va tm
+structure,
+.Fn localtime
+sets the
+.Fa tm_isdst Ns 'th
+element of
+.Fa tzname
+to a pointer to an
+ASCII string that's the time zone abbreviation to be used with
+.Fn localtime Ns 's
+return value.
+.Pp
+.Fn gmtime
+converts to Coordinated Universal Time.
+.Pp
+The
+.Fn gmtime_r
+and
+.Fn localtime_r
+functions provide the same functionality as
+.Fn gmtime
+and
+.Fn localtime
+differing in that the caller must supply a buffer area
+.Fa result
+in which the result is stored; also,
+.Fn localtime_r
+does not imply initialization of the local time conversion information;
+the application may need to do so by calling
+.Xr tzset 3 .
+.Pp
+.Fn localtime_rz
+is similar to
+.Fn localtime_r ,
+but it also takes a
+.Ft "const timezone_t"
+argument, returned by a previous call to
+.Fn tzalloc .
+.Pp
+.Fn asctime
+converts a time value contained in a
+.Dq tm
+structure to a string,
+as shown in the above example,
+and returns a pointer to the string.
+.Pp
+.Fn mktime
+converts the broken-down time,
+expressed as local time,
+in the structure pointed to by
+.Fa tm
+into a calendar time value with the same encoding as that of the values
+returned by the
+.Xr time 3
+function.
+The original values of the
+.Fa tm_wday
+and
+.Fa tm_yday
+components of the structure are ignored,
+and the original values of the other components are not restricted
+to their normal ranges.
+(A positive or zero value for
+.Fa tm_isdst
+causes
+.Fn mktime
+to presume initially that summer time (for example, Daylight Saving Time
+in the U.S.A.) respectively,
+is or is not in effect for the specified time.
+A negative value for
+.Fa tm_isdst
+causes the
+.Fn mktime
+function to attempt to divine whether summer time is in effect
+for the specified time; in this case it does not use a consistent
+rule and may give a different answer when later
+presented with the same argument.)
+On successful completion, the values of the
+.Fa tm_wday
+and
+.Fa tm_yday
+components of the structure are set appropriately,
+and the other components are set to represent the specified calendar time,
+but with their values forced to their normal ranges; the final value of
+.Fa tm_mday
+is not set until
+.Fa tm_mon
+and
+.Fa tm_year
+are determined.
+.Fn mktime
+returns the specified calendar time; if the calendar time cannot be
+represented, it returns
+.Va "(time_t)-1" .
+.Pp
+.Fn mktime_z
+is similar to
+.Fn mktime
+but it also takes a
+.Ft "const timezone_t"
+argument, returned by a previous call to
+.Fn tzalloc .
+.Pp
+.Fn difftime
+returns the difference between two calendar times,
+.Fa ( time1 No - Fa time0 ) ,
+expressed in seconds.
+.Pp
+.Fn tzalloc
+takes as an argument a timezone name and returns a
+.Ft timezone_t
+object suitable to be used in
+.Fn ctime_rz ,
+.Fn localtime_rz ,
+and
+.Fn mktime_z .
+Instead of setting the environment variable
+.Va TZ ,
+and globally changing the behavior of the calling program, one can use
+multiple timezones at the same time by using separate
+.Ft timezone_t
+objects allocated by
+.Fn tzalloc
+and calling the
+.Dq z
+variants of the functions.
+.Pp
+.Fn tzgetname
+returns the name for the given
+.Fa tz .
+If
+.Fa isdst
+is
+.Va 0 ,
+the call is equivalent to
+.Va tzname[0] .
+If
+.Fa isdst
+is set to
+.Va 1
+the call is equivalent to
+.Va tzname[1] .
+.Pp
+.Fn tzfree
+frees the
+.Fa tz
+argument previously returned by
+.Fa tzalloc .
+.Pp
+The structure (of type)
+.Va "struct tm"
+includes the following fields:
+.Bd -literal -offset indent
+int tm_sec;	/* seconds after the minute [0,61] */
+int tm_min;	/* minutes after the hour [0,59] */
+int tm_hour;	/* hours since midnight [0,23] */
+int tm_mday;	/* day of the month [1,31] */
+int tm_mon;	/* months since January [0,11] */
+int tm_year;	/* years since 1900 */
+int tm_wday;	/* day of week [0,6] (Sunday = 0) */
+int tm_yday;	/* day of year [0,365] (Jan 1 = 0) */
+int tm_isdst;	/* daylight savings flag */
+long tm_gmtoff;	/* offset from UTC in seconds */
+char *tm_zone;	/* abbreviation of timezone name */
+.Ed
+.Pp
+The
+.Fa tm_zone
+and
+.Fa tm_gmtoff
+fields exist, and are filled in, only if arrangements to do
+so were made when the library containing these functions was
+created.
+There is no guarantee that these fields will continue to exist
+in this form in future releases of this code.
+The
+.Fa tm_zone
+field will become invalid and point to freed storage if the corresponding
+.Va "struct tm"
+was returned by
+.Fn localtime_rz
+and the
+.Ft "const timezone_t"
+.Fa tz
+argument has been freed by
+.Fn tzfree .
+.Pp
+.Fa tm_isdst
+is non-zero if summer time is in effect.
+.Pp
+.Fa tm_gmtoff
+is the offset (in seconds) of the time represented
+from UTC, with positive values indicating east
+of the Prime Meridian.
+.Sh RETURN VALUES
+On success the
+.Fn asctime
+and
+.Fn ctime
+functions return a pointer to a static character buffer, and the
+.Fn asctime_r ,
+.Fn ctime_r ,
+and
+.Fn ctime_rz
+function return a pointer to the user-supplied buffer.
+On failure they all return
+.Dv NULL
+and no errors are defined for them.
+On success the
+.Fn gmtime ,
+and
+.Fn localtime
+functions return a pointer to a statically allocated
+.Va "struct tm"
+whereas the
+.Fn gmtime_r ,
+.Fn localtime_r ,
+and
+.Fn localtime_rz ,
+functions return a pointer to the user-supplied
+.Va "struct tm" .
+On failure they all return
+.Dv NULL
+and the global variable
+.Va errno
+is set to indicate the error.
+The
+.Fn mktime
+and
+.Fn mktime_z
+function returns the specified time since the Epoch as a
+.Va time_t
+type value.
+If the time cannot be represented, then
+.Fn mktime
+and
+.Fn mktime_z
+return
+.Va "(time_t)-1"
+setting the global variable
+.Va errno
+to indicate the error.
+The
+.Fn tzalloc
+function returns a pointer to a
+.Ft timezone_t
+object or
+.Dv NULL
+on failure, setting
+.Va errno
+to indicate the error.
+.Fn tzgetzone
+function returns string containing the name of the timezone given in
+.Fa tz .
+.Sh FILES
+.Bl -tag -width /usr/share/zoneinfo/posixrules -compact
+.It Pa /etc/localtime
+local time zone file
+.It Pa /usr/share/zoneinfo
+time zone information directory
+.It Pa /usr/share/zoneinfo/posixrules
+used with POSIX-style TZ's
+.It Pa /usr/share/zoneinfo/GMT
+for UTC leap seconds
+.El
+.Pp
+If
+.Pa /usr/share/zoneinfo/GMT
+is absent, UTC leap seconds are loaded from
+.Pa /usr/share/zoneinfo/posixrules .
+.Sh ERRORS
+The
+.Fn gmtime_r ,
+.Fn localtime_r ,
+.Fn localtime_rz ,
+.Fn gmtime ,
+.Fn localtime ,
+and
+.Fn mktime ,
+and
+.Fn mktime_z
+will fail when:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The result cannot be represented.
+.It Bq Er EOVERFLOW
+The result cannot be represented.
+.El
+.Pp
+All functions that return values except their
+.Dq z
+variants, can also return the same errors as
+.Xr open 2
+and
+.Xr malloc 3 .
+.Sh SEE ALSO
+.Xr getenv 3 ,
+.Xr strftime 3 ,
+.Xr time 3 ,
+.Xr tzset 3 ,
+.Xr tzfile 5
+.Sh STANDARDS
+The
+.Fn ctime ,
+.Fn difftime ,
+.Fn asctime ,
+.Fn localtime ,
+.Fn gmtime
+and
+.Fn mktime
+functions conform to
+.St -ansiC
+The
+.Fn ctime_r ,
+.Fn asctime_r ,
+.Fn localtime_r
+and
+.Fn gmtime_r
+functions conform to
+.St -p1003.1c-95 .
+.Sh NOTES
+The return values point to static data; the data is overwritten by
+each call.
+The
+.Fa tm_zone
+field of a returned
+.Va "struct tm"
+points to a static array of characters, which
+will also be overwritten at the next call
+(and by calls to
+.Xr tzset 3 ) .
+.Pp
+.Fn asctime
+and
+.Fn ctime
+behave strangely for years before 1000 or after 9999.
+The 1989 and 1999 editions of the C Standard say
+that years from \-99 through 999 are converted without
+extra spaces, but this conflicts with longstanding
+tradition and with this implementation.
+Traditional implementations of these two functions are
+restricted to years in the range 1900 through 2099.
+To avoid this portability mess, new programs should use
+.Fn strftime
+instead.
+.Pp
+Avoid using out-of-range values with
+.Fn mktime
+when setting up lunch with promptness sticklers in Riyadh.
+.\" @(#)newctime.3	8.3
+.\" This file is in the public domain, so clarified as of
+.\" 2009-05-17 by Arthur David Olson.

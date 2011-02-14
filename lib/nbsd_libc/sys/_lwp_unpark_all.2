@@ -1,0 +1,99 @@
+.\"	$NetBSD: _lwp_unpark_all.2,v 1.6 2010/11/02 20:49:47 skrll Exp $
+.\"
+.\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of Wasabi Systems, Inc, and by Andrew Doran.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 10, 2007
+.Dt _LWP_UNPARK_ALL 2
+.Os
+.Sh NAME
+.Nm _lwp_unpark_all
+.Nd resume execution of a waiting LWP
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In lwp.h
+.Ft ssize_t
+.Fn _lwp_unpark_all "lwpid_t *targets" "size_t ntargets" "const void *hint"
+.Sh DESCRIPTION
+.Fn _lwp_unpark_all
+resumes execution of one or more light-weight processes listed in
+the array pointed to by
+.Fa targets .
+.Pp
+The target LWPs are assumed to be waiting in the kernel as a result of
+calls to
+.Fn _lwp_park .
+If any of the target LWPs are not currently waiting, those LWPs will return
+immediately upon the next call to
+.Fn _lwp_park .
+.Pp
+The value pointed to by
+.Fa ntargets
+specifies the size of the array pointed to by
+.Fa targets .
+If the
+.Fa targets
+argument is given as
+.Dv NULL ,
+the maximum size of the array (expressed
+as the number of entries) is returned.
+.Pp
+See
+.Xr _lwp_park 2
+for a description of the
+.Fa hint
+argument.
+.Sh RETURN VALUES
+If the maximum size of the
+.Fa targets
+array is not being queried, a return of 0 indicates that the call succeeded.
+A \-1 return value indicates an error occurred and
+.Va errno
+is set to indicate the reason.
+.Sh ERRORS
+.Bl -tag -width [EINVAL]
+.It Bq Er EFAULT
+The value specified for
+.Fa targets
+is invalid.
+.It Bq Er EINVAL
+The value specified for
+.Fa ntargets
+is out of range.
+.It Bq Er ENOMEM
+Insufficient resources are available to complete the operation.
+.El
+.Sh SEE ALSO
+.Xr _lwp_park 2 ,
+.Xr _lwp_unpark 2 ,
+.Xr _lwp_wakeup 2
+.Sh HISTORY
+The
+.Fn _lwp_unpark_all
+system call first appeared in
+.Nx 5.0 .

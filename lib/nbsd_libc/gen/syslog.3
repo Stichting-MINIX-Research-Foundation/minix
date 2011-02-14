@@ -1,0 +1,517 @@
+.\"	$NetBSD: syslog.3,v 1.28 2010/05/13 18:04:58 jruoho Exp $
+.\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
+.\"
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)syslog.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd May 3, 2010
+.Dt SYSLOG 3
+.Os
+.Sh NAME
+.Nm syslog ,
+.Nm syslog_r ,
+.Nm vsyslog ,
+.Nm vsyslog_r ,
+.Nm syslogp ,
+.Nm syslogp_r ,
+.Nm vsyslogp ,
+.Nm vsyslogp_r ,
+.Nm openlog ,
+.Nm openlog_r ,
+.Nm closelog ,
+.Nm closelog_r ,
+.Nm setlogmask ,
+.Nm setlogmask_r
+.Nd control system log
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In syslog.h
+.Ft void
+.Fn syslog "int priority" "const char *message" "..."
+.Ft void
+.Fn syslog_r "int priority" "struct syslog_data *data" "const char *message" "..."
+.Ft void
+.Fn syslogp "int priority" "const char *msgid" "const char *sdfmt" "const char *message" "..."
+.Ft void
+.Fn syslogp_r "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "..."
+.\" .Ft void
+.\" .Fn syslog_ss "int priority" "struct syslog_data *data" "const char *message" "..."
+.Ft void
+.Fn openlog "const char *ident" "int logopt" "int facility"
+.Ft void
+.Fn openlog_r "const char *ident" "int logopt" "int facility" "struct syslog_data *data"
+.Ft void
+.Fn closelog void
+.Ft void
+.Fn closelog_r "struct syslog_data *data"
+.Ft int
+.Fn setlogmask "int maskpri"
+.Ft int
+.Fn setlogmask_r "int maskpri" "struct syslog_data *data"
+.In stdarg.h
+.Ft void
+.Fn vsyslog "int priority" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslog_r "int priority" "struct syslog_data *data" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslogp "int priority" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslogp_r "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
+.\" .Ft void
+.\" .Fn vsyslog_ss "int priority" "struct syslog_data *data" "const char *message" "va_list args"
+.Sh DESCRIPTION
+The
+.Fn syslog
+function
+writes
+.Fa message
+to the system message logger.
+The message is then written to the system console, log files,
+logged-in users, or forwarded to other machines as appropriate (see
+.Xr syslogd 8 ) .
+.Pp
+The message is identical to a
+.Xr printf 3
+format string, except that
+.Ql %m
+is replaced by the current error
+message.
+(As denoted by the global variable
+.Va errno ;
+see
+.Xr strerror 3 . )
+A trailing newline is added if none is present.
+.\" shouldn't the newline statement be removed?
+.\" when logging through a socket a newline is
+.\" not added nor is it required. -- ms
+.Pp
+The
+.Fn syslog_r
+function is a multithread-safe version of the
+.Fn syslog
+function.
+It takes a pointer to a
+.Fa syslog_data
+structure which is used to store
+information.
+This parameter must be initialized before
+.Fn syslog_r
+is called.
+The
+.Dv SYSLOG_DATA_INIT
+constant is used for this purpose.
+The
+.Fa syslog_data
+structure and the
+.Dv SYSLOG_DATA_INIT
+constant are defined as:
+.Bd -literal -offset indent
+struct syslog_data {
+        int             log_file;
+        int             connected;
+        int             opened;
+        int             log_stat;
+        const char     *log_tag;
+        int             log_fac;
+        int             log_mask;
+};
+
+#define SYSLOG_DATA_INIT { \e
+    .log_file = -1, \e
+    .log_fac = LOG_USER, \e
+    .log_mask = 0xff, \e
+}
+.Ed
+.Pp
+The structure is composed of the following elements:
+.Bl -tag -width connected -offset indent
+.It Va log_file
+contains the file descriptor of the file where the message is logged
+.It Va connected
+indicates if connect has been done
+.It Va opened
+indicates if
+.Fn openlog_r
+has been called
+.It Va log_stat
+status bits, set by
+.Fn openlog_r
+.It Va log_tag
+string to tag the entry with
+.It Va log_fac
+facility code
+.It Va log_mask
+mask of priorities to be logged
+.El
+.\" .Pp
+.\" The
+.\" .Fn syslog_ss
+.\" is the async-signal-safe version of
+.\" .Fn syslog_r
+.\" and is also multithread-safe.
+.\" It has the following limitations:
+.\" .Bl -enum -offset indent
+.\" .It
+.\" The format string cannot contain multi-byte character sequences.
+.\" .It
+.\" Floating point formats are not supported and print
+.\" .Dq UNK .
+.\" .It
+.\" The time of the event is not sent to
+.\" .Xr syslogd 8 .
+.\" .It
+.\" The error string in the %m format is not printed symbolically but as
+.\" .Dq Error %d .
+.\" .El
+.\" .Pp
+.\" For more information about async-signal-safe functions and signal handlers, see
+.\" .Xr signal 7 .
+.Pp
+The
+.Fn vsyslog
+function
+is an alternative form in which the arguments have already been captured
+using the variable-length argument facilities of
+.Xr varargs 3 .
+.Pp
+The
+.Fn syslogp
+variants take additional arguments which correspond to new fields in the
+syslog-protocol message format.
+All three arguments are evaluated as
+.Xr printf 3
+format strings and any of them can be
+.Dv NULL .
+This enables applications to use message IDs, structured data, and UTF-8 encoded
+content in messages.
+.Pp
+The message is tagged with
+.Fa priority .
+Priorities are encoded as a
+.Fa facility
+and a
+.Em level .
+The facility describes the part of the system
+generating the message.
+The level is selected from the following
+.Em ordered
+(high to low) list:
+.Bl -tag -width LOG_AUTHPRIV
+.It Dv LOG_EMERG
+A panic condition.
+This is normally broadcast to all users.
+.It Dv LOG_ALERT
+A condition that should be corrected immediately, such as a corrupted
+system database.
+.It Dv LOG_CRIT
+Critical conditions, e.g., hard device errors.
+.It Dv LOG_ERR
+Errors.
+.It Dv LOG_WARNING
+Warning messages.
+.It Dv LOG_NOTICE
+Conditions that are not error conditions,
+but should possibly be handled specially.
+.It Dv LOG_INFO
+Informational messages.
+.It Dv LOG_DEBUG
+Messages that contain information
+normally of use only when debugging a program.
+.El
+.Pp
+The
+.Fn vsyslog_r
+is used the same way as
+.Fn vsyslog
+except that it takes an additional pointer to a
+.Fa syslog_data
+structure.
+It is a multithread-safe version of the
+.Fn vsyslog
+function described above.
+.\" The
+.\" .Fn vsyslog_ss
+.\" is the async-signal-safe version of
+.\" .Fn vsyslog_r ,
+.\" is also multithread-safe, and has the same limitations as
+.\" .Fn syslog_ss .
+.Pp
+The
+.Fn openlog
+function
+provides for more specialized processing of the messages sent
+by
+.Fn syslog
+and
+.Fn vsyslog .
+The parameter
+.Fa ident
+is a string that will be prepended to every message.
+The
+.Fa logopt
+argument
+is a bit field specifying logging options, which is formed by
+.Tn OR Ns 'ing
+one or more of the following values:
+.Bl -tag -width LOG_AUTHPRIV
+.It Dv LOG_CONS
+If
+.Fn syslog
+cannot pass the message to
+.Xr syslogd 8
+it will attempt to write the message to the console
+.Pq Dq Pa /dev/console .
+.It Dv LOG_NDELAY
+Open the connection to
+.Xr syslogd 8
+immediately.
+Normally the open is delayed until the first message is logged.
+Useful for programs that need to manage the order in which file
+descriptors are allocated.
+.It Dv LOG_PERROR
+Write the message to standard error output as well to the system log.
+.It Dv LOG_PID
+Log the process id with each message: useful for identifying
+instantiations of daemons.
+(This PID is placed within brackets
+between the ident and the message.)
+.El
+.Pp
+The
+.Fa facility
+parameter encodes a default facility to be assigned to all messages
+that do not have an explicit facility encoded:
+.Bl -tag -width LOG_AUTHPRIV
+.It Dv LOG_AUTH
+The authorization system:
+.Xr login 1 ,
+.Xr su 1 ,
+.Xr getty 8 ,
+etc.
+.It Dv LOG_AUTHPRIV
+The same as
+.Dv LOG_AUTH ,
+but logged to a file readable only by
+selected individuals.
+.It Dv LOG_CRON
+The cron daemon:
+.Xr cron 8 .
+.It Dv LOG_DAEMON
+System daemons, such as
+.Xr routed 8 ,
+that are not provided for explicitly by other facilities.
+.It Dv LOG_FTP
+The file transfer protocol daemon:
+.Xr ftpd 8 .
+.It Dv LOG_KERN
+Messages generated by the kernel.
+These cannot be generated by any user processes.
+.It Dv LOG_LPR
+The line printer spooling system:
+.Xr lpr 1 ,
+.Xr lpc 8 ,
+.Xr lpd 8 ,
+etc.
+.It Dv LOG_MAIL
+The mail system.
+.It Dv LOG_NEWS
+The network news system.
+.It Dv LOG_SYSLOG
+Messages generated internally by
+.Xr syslogd 8 .
+.It Dv LOG_USER
+Messages generated by random user processes.
+This is the default facility identifier if none is specified.
+.It Dv LOG_UUCP
+The uucp system.
+.It Dv LOG_LOCAL0
+Reserved for local use.
+Similarly for
+.Dv LOG_LOCAL1
+through
+.Dv LOG_LOCAL7 .
+.El
+.Pp
+The
+.Fn openlog_r
+function is the multithread-safe version of the
+.Fn openlog
+function.
+It takes an additional pointer to a
+.Fa syslog_data
+structure.
+This function must be used in conjunction with the other
+multithread-safe functions.
+.Pp
+The
+.Fn closelog
+function
+can be used to close the log file.
+.Pp
+The
+.Fn closelog_r
+does the same thing as
+.Xr closelog 3
+but in a multithread-safe way and takes an additional
+pointer to a
+.Fa syslog_data
+structure.
+.Pp
+The
+.Fn setlogmask
+function
+sets the log priority mask to
+.Fa maskpri
+and returns the previous mask.
+Calls to
+.Fn syslog
+with a priority not set in
+.Fa maskpri
+are rejected.
+The mask for an individual priority
+.Fa pri
+is calculated by the macro
+.Fn LOG_MASK pri ;
+the mask for all priorities up to and including
+.Fa toppri
+is given by the macro
+.Fn LOG_UPTO toppri .
+The default allows all priorities to be logged.
+.Pp
+The
+.Fn setlogmask_r
+function is the multithread-safe version of
+.Fn setlogmask .
+It takes an additional pointer to a
+.Fa syslog_data
+structure.
+.Sh RETURN VALUES
+The routines
+.Fn closelog ,
+.Fn closelog_r ,
+.Fn openlog ,
+.Fn openlog_r ,
+.Fn syslog ,
+.Fn syslog_r ,
+.Fn vsyslog ,
+.Fn vsyslog_r ,
+.Fn syslogp ,
+.Fn syslogp_r ,
+.Fn vsyslogp ,
+and
+.Fn vsyslogp_r
+return no value.
+.Pp
+The routines
+.Fn setlogmask
+and
+.Fn setlogmask_r
+always return the previous log mask level.
+.Sh EXAMPLES
+.Bd -literal -offset indent -compact
+syslog(LOG_ALERT, "who: internal error 23");
+
+openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
+
+setlogmask(LOG_UPTO(LOG_ERR));
+
+syslog(LOG_INFO, "Connection from host %d", CallingHost);
+
+syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
+
+syslogp(LOG_INFO|LOG_LOCAL2, NULL, NULL, "foobar error: %m");
+
+syslogp(LOG_INFO, "ID%d", "[meta language=\e"en-US\e"]",
+        "event: %s", 42, EventDescription);
+.Ed
+.Pp
+For the multithread-safe functions:
+.Bd -literal -offset indent
+struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+syslog_r(LOG_INFO|LOG_LOCAL2, \*[Am]sdata, "foobar error: %m");
+.Ed
+.Sh SEE ALSO
+.Xr logger 1 ,
+.Xr syslogd 8
+.Rs
+.%R RFC
+.%N 3164
+.%D August 2001
+.%T The BSD syslog Protocol
+.Re
+.Rs
+.%R Internet-Draft
+.%N draft-ietf-syslog-protocol-23
+.%D September 2007
+.%T The syslog Protocol
+.Re
+.Sh HISTORY
+These non-multithread-safe functions appeared in
+.Bx 4.2 .
+The multithread-safe functions appeared in
+.Ox 3.1
+and then in
+.Nx 4.0 .
+The async-signal-safe functions appeared in
+.Nx 4.0 .
+The syslog-protocol functions appeared in
+.Nx 5.0 .
+.Sh CAVEATS
+It is important never to pass a string with user-supplied data as a
+format without using
+.Ql %s .
+An attacker can put format specifiers in the string to mangle your stack,
+leading to a possible security hole.
+This holds true even if you have built the string
+.Dq by hand
+using a function like
+.Fn snprintf ,
+as the resulting string may still contain user-supplied conversion specifiers
+for later interpolation by
+.Fn syslog .
+.Pp
+Always be sure to use the proper secure idiom:
+.Bd -literal -offset indent
+syslog(priority, "%s", string);
+.Ed
+.Pp
+With
+.Fn syslogp
+the caller is responsible to use the right formatting for the message fields.
+A
+.Fa msgid
+must only contain up to 32 ASCII characters.
+A
+.Fa sdfmt
+has strict rules for paranthesis and character quoting.
+If the
+.Fa msgfmt
+contains UTF-8 characters, then it has to start with a Byte Order Mark.

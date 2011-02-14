@@ -1,0 +1,123 @@
+.\" $NetBSD: md2.3,v 1.1 2005/09/24 20:51:14 elad Exp $
+.\"
+.\" ----------------------------------------------------------------------------
+.\" "THE BEER-WARE LICENSE" (Revision 42):
+.\" <phk@login.dkuug.dk> wrote this file.  As long as you retain this notice you
+.\" can do whatever you want with this stuff. If we meet some day, and you think
+.\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
+.\" ----------------------------------------------------------------------------
+.\"
+.\"	from FreeBSD Id: mdX.3,v 1.7 1996/10/22 16:28:56 phk Exp
+.\"
+.Dd September 24, 2005
+.Dt MD2 3
+.Os
+.Sh NAME
+.Nm MD2Init ,
+.Nm MD2Update ,
+.Nm MD2Final ,
+.Nm MD2End ,
+.Nm MD2File ,
+.Nm MD2Data
+.Nd calculate the RSA Data Security, Inc.,
+.Dq MD2
+message digest
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/types.h
+.In mdX.h
+.Ft void
+.Fn MD2Init "MD2_CTX *context"
+.Ft void
+.Fn MD2Update "MD2_CTX *context" "const unsigned char *data" "unsigned int len"
+.Ft void
+.Fn MD2Final "unsigned char digest[16]" "MD2_CTX *context"
+.Ft "char *"
+.Fn MD2End "MD2_CTX *context" "char *buf"
+.Ft "char *"
+.Fn MD2File "const char *filename" "char *buf"
+.Ft "char *"
+.Fn MD2Data "const unsigned char *data" "unsigned int len" "char *buf"
+.Sh DESCRIPTION
+The MD2 functions calculate a 128-bit cryptographic checksum (digest)
+for any number of input bytes.
+A cryptographic checksum is a one-way
+hash-function, that is, you cannot find (except by exhaustive search)
+the input corresponding to a particular output.
+This net result is
+a ``fingerprint'' of the input-data, which doesn't disclose the actual
+input.
+.Pp
+The MD2 routines should not be used for any security-related purpose.
+.Pp
+The
+.Fn MD2Init ,
+.Fn MD2Update ,
+and
+.Fn MD2Final
+functions are the core functions.
+Allocate an MD2_CTX, initialize it with
+.Fn MD2Init ,
+run over the data with
+.Fn MD2Update ,
+and finally extract the result using
+.Fn MD2Final .
+.Pp
+.Fn MD2End
+is a wrapper for
+.Fn MD2Final
+which converts the return value to a 33-character
+(including the terminating '\e0')
+.Tn ASCII
+string which represents the 128 bits in hexadecimal.
+.Pp
+.Fn MD2File
+calculates the digest of a file, and uses
+.Fn MD2End
+to return the result.
+If the file cannot be opened, a null pointer is returned.
+.Fn MD2Data
+calculates the digest of a chunk of data in memory, and uses
+.Fn MD2End
+to return the result.
+.Pp
+When using
+.Fn MD2End ,
+.Fn MD2File ,
+or
+.Fn MD2Data ,
+the
+.Ar buf
+argument can be a null pointer, in which case the returned string
+is allocated with
+.Xr malloc 3
+and subsequently must be explicitly deallocated using
+.Xr free 3
+after use.
+If the
+.Ar buf
+argument is non-null it must point to at least 33 characters of buffer space.
+.Sh SEE ALSO
+.Xr md2 3 ,
+.Rs
+.%A B. Kaliski
+.%T The MD2 Message-Digest Algorithm
+.%O RFC 1319
+.Re
+.Rs
+.%A RSA Laboratories
+.%T Frequently Asked Questions About today's Cryptography
+.Re
+.Sh HISTORY
+These functions appeared in
+.Nx 1.3 .
+.Sh AUTHORS
+The original MD2 routines were developed by
+.Tn RSA
+Data Security, Inc., and published in the above references.
+This code is a public domain implementation by Andrew Brown.
+.Sh BUGS
+No method is known to exist which finds two files having the same hash value,
+nor to find a file with a specific hash value.
+There is on the other hand no guarantee that such a method doesn't exist.

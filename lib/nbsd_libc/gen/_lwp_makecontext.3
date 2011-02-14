@@ -1,0 +1,74 @@
+.\"	$NetBSD: _lwp_makecontext.3,v 1.4 2008/04/30 13:10:50 martin Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of Wasabi Systems, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 16, 2003
+.Dt _LWP_MAKECONTEXT 3
+.Os
+.Sh NAME
+.Nm _lwp_makecontext
+.Nd create a new initial light-weight process execution context
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In lwp.h
+.Ft void
+.Fn _lwp_makecontext "ucontext_t *context" "void (*start_routine)(void *)" \
+    "void *arg" "void *private" "caddr_t stack_base" "size_t stack_size"
+.Sh DESCRIPTION
+.Fn _lwp_makecontext
+initializes the context structure pointed to by
+.Fa context
+in a manner suitable for using with
+.Xr _lwp_create 2 .
+The LWP will begin execution at the function specified by
+.Fa start_routine
+which will be passed a single argument
+.Fa arg .
+The LWP private data pointer will be set to
+.Fa private .
+The stack region for the new LWP is specified by the
+.Fa stack_base
+and
+.Fa stack_size
+arguments.
+.Pp
+The signal mask in the context structure is not initialized by
+.Fn _lwp_makecontext .
+.Sh SEE ALSO
+.Xr _lwp_create 2 ,
+.Xr _lwp_getprivate 2
+.Sh HISTORY
+The
+.Fn _lwp_create
+system call first appeared in
+.Nx 2.0 .
+.Sh BUGS
+The LWP private data pointer is not initialized by the current
+implementation of
+.Fn _lwp_makecontext .

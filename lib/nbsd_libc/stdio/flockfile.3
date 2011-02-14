@@ -1,0 +1,120 @@
+.\"	$NetBSD: flockfile.3,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 28, 2003
+.Dt FLOCKFILE 3
+.Os
+.Sh NAME
+.Nm flockfile ,
+.Nm ftrylockfile ,
+.Nm funlockfile
+.Nd stdio stream locking functions
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdio.h
+.Ft void
+.Fn flockfile "FILE *file"
+.Ft int
+.Fn ftrylockfile "FILE *file"
+.Ft void
+.Fn funlockfile "FILE *file"
+.Sh DESCRIPTION
+The
+.Fn flockfile ,
+.Fn ftrylockfile ,
+and
+.Fn funlockfile
+functions provide applications with explicit control of locking of
+stdio stream objects.
+They can be used by a thread to execute a sequence of I/O operations
+as a unit, without interference from another thread.
+.Pp
+Locks on stdio streams are recursive, and a lock count is maintained.
+stdio streams are created unlocked, with a lock count of zero.
+After successful acquisition of the lock, its count is incremented
+to one, indicating locked state of the stdio stream.
+Each subsequent relock operation performed by the owner thread
+increments the lock count by one, and each subsequent unlock
+operation performed by the owner thread decrements the lock count by one,
+allowing matching lock and unlock operations to be nested.
+After its lock count is decremented to zero, the stdio stream returns
+to unlocked state, and ownership of the stdio stream is relinquished.
+.Pp
+The
+.Fn flockfile
+function acquires the ownership of
+.Fa file
+for the calling thread.
+If
+.Fa file
+is already owned by another thread, the calling thread is suspended
+until the acquisition is possible (i.e.,
+.Fa file
+is relinquished again and the calling thread is scheduled to acquire it).
+.Pp
+The
+.Fn ftrylockfile
+function acquires the ownership of
+.Fa file
+for the calling thread only if
+.Fa file
+is available.
+.Pp
+The
+.Fn funlockfile
+function relinquishes the ownership of
+.Fa file
+previously granted to the calling thread.
+Only the current owner of
+.Fa file
+may
+.Fn funlockfile
+it.
+.Sh RETURN VALUES
+If successful, the
+.Fn ftrylockfile
+function returns 0.
+Otherwise, it returns non-zero to indicate that the lock cannot be acquired.
+.Sh SEE ALSO
+.Xr getc_unlocked 3 ,
+.Xr getchar_unlocked 3 ,
+.Xr putc_unlocked 3 ,
+.Xr putchar_unlocked 3
+.Sh STANDARDS
+The
+.Fn flockfile ,
+.Fn ftrylockfile
+and
+.Fn funlockfile
+functions conform to
+.St -p1003.1-2001 .
+.Sh BUGS
+The design of these interfaces does not allow for addressing the
+problem of priority inversion.

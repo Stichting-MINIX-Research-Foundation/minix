@@ -1,0 +1,246 @@
+.\"	$NetBSD: poll.2,v 1.28 2010/03/22 19:30:55 joerg Exp $
+.\"
+.\" Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Charles M. Hannum.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 8, 2006
+.Dt POLL 2
+.Os
+.Sh NAME
+.Nm poll, pollts
+.Nd synchronous I/O multiplexing
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In poll.h
+.Ft int
+.Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
+.In poll.h
+.In signal.h
+.In time.h
+.Ft int
+.Fn pollts "struct pollfd * restrict fds" "nfds_t nfds" "const struct timespec * restrict ts" "const sigset_t * restrict sigmask"
+.Sh DESCRIPTION
+.Fn poll
+and
+.Fn pollts
+examine a set of file descriptors to see if some of them are ready for
+I/O.
+The
+.Fa fds
+argument is a pointer to an array of pollfd structures as defined in
+.In poll.h
+(shown below).
+The
+.Fa nfds
+argument determines the size of the
+.Fa fds
+array.
+.Bd -literal
+struct pollfd {
+    int    fd;       /* file descriptor */
+    short  events;   /* events to look for */
+    short  revents;  /* events returned */
+};
+.Ed
+.Pp
+The fields of
+.Fa struct pollfd
+are as follows:
+.Bl -tag -width XXXrevents
+.It fd
+File descriptor to poll.
+If the value in
+.Em fd
+is negative, the file descriptor is ignored and
+.Em revents
+is set to 0.
+.It events
+Events to poll for.
+(See below.)
+.It revents
+Events which may occur.
+(See below.)
+.El
+.Pp
+The event bitmasks in
+.Fa events
+and
+.Fa revents
+have the following bits:
+.Bl -tag -width XXXPOLLWRNORM
+.It POLLIN
+Data other than high priority data may be read without blocking.
+.It POLLRDNORM
+Normal data may be read without blocking.
+.It POLLRDBAND
+Data with a non-zero priority may be read without blocking.
+.It POLLPRI
+High priority data may be read without blocking.
+.It POLLOUT
+Normal data may be written without blocking.
+.It POLLWRNORM
+Equivalent to
+POLLOUT.
+.It POLLWRBAND
+Data with a non-zero priority may be written without blocking.
+.It POLLERR
+An exceptional condition has occurred on the device or socket.
+This flag is always checked, even if not present in the
+.Fa events
+bitmask.
+.It POLLHUP
+The device or socket has been disconnected.
+This flag is always
+checked, even if not present in the
+.Fa events
+bitmask.
+Note that
+POLLHUP
+and
+POLLOUT
+should never be present in the
+.Fa revents
+bitmask at the same time.
+If the remote end of a socket is closed,
+.Fn poll
+returns a
+POLLIN
+event, rather than a
+POLLHUP.
+.It POLLNVAL
+The file descriptor is not open.
+This flag is always checked, even
+if not present in the
+.Fa events
+bitmask.
+.El
+.Pp
+If
+.Fa timeout
+is neither zero nor INFTIM (\-1), it specifies a maximum interval to
+wait for any file descriptor to become ready, in milliseconds.
+If
+.Fa timeout
+is INFTIM (\-1), the poll blocks indefinitely.
+If
+.Fa timeout
+is zero, then
+.Fn poll
+will return without blocking.
+.Pp
+If
+.Fa ts
+is a non-null pointer, it references a timespec structure which specifies a
+maximum interval to wait for any file descriptor to become ready.
+If
+.Fa ts
+is a null pointer,
+.Fn pollts
+blocks indefinitely.
+If
+.Fa ts
+is a non-null pointer, referencing a zero-valued timespec structure, then
+.Fn pollts
+will return without blocking.
+.Pp
+If
+.Fa sigmask
+is a non-null pointer, then the
+.Fn pollts
+function shall replace the signal mask of the caller by the set of
+signals pointed to by
+.Fa sigmask
+before examining the descriptors, and shall restore the signal mask
+of the caller before returning.
+.Sh RETURN VALUES
+.Fn poll
+returns the number of descriptors that are ready for I/O, or \-1 if an
+error occurred.
+If the time limit expires,
+.Fn poll
+returns 0.
+If
+.Fn poll
+returns with an error,
+including one due to an interrupted call,
+the
+.Fa fds
+array will be unmodified.
+.Sh COMPATIBILITY
+This implementation differs from the historical one in that a given
+file descriptor may not cause
+.Fn poll
+to return with an error.
+In cases where this would have happened in the historical implementation
+(e.g. trying to poll a
+.Xr revoke 2 Ns d
+descriptor), this implementation instead copies the
+.Fa events
+bitmask to the
+.Fa revents
+bitmask.
+Attempting to perform I/O on this descriptor will then return an error.
+This behaviour is believed to be more useful.
+.Sh ERRORS
+An error return from
+.Fn poll
+indicates:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+.Fa fds
+points outside the process's allocated address space.
+.It Bq Er EINTR
+A signal was delivered before the time limit expired and
+before any of the selected events occurred.
+.It Bq Er EINVAL
+The specified time limit is negative.
+.El
+.Sh SEE ALSO
+.Xr accept 2 ,
+.Xr connect 2 ,
+.Xr read 2 ,
+.Xr recv 2 ,
+.Xr select 2 ,
+.Xr send 2 ,
+.Xr write 2
+.Sh HISTORY
+The
+.Fn poll
+function appeared in
+.At V.3 .
+The
+.Fn pollts
+function first appeared in
+.Nx 3.0 .
+.Sh BUGS
+The distinction between some of the fields in the
+.Fa events
+and
+.Fa revents
+bitmasks is really not useful without STREAMS.
+The fields are defined for compatibility with existing software.

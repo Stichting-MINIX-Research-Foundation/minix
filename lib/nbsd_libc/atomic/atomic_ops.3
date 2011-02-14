@@ -1,0 +1,129 @@
+.\"	$NetBSD: atomic_ops.3,v 1.5 2010/04/14 08:49:49 jruoho Exp $
+.\"
+.\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 14, 2010
+.Dt ATOMIC_OPS 3
+.Os
+.Sh NAME
+.Nm atomic_ops
+.Nd atomic memory operations
+.\" .Sh LIBRARY
+.\" .Lb libc
+.Sh SYNOPSIS
+.In sys/atomic.h
+.Sh DESCRIPTION
+The
+.Nm atomic_ops
+family of functions provide atomic memory operations.
+There are 7 classes of atomic memory operations available:
+.Pp
+.Bl -tag -width "atomic_swap(3)" -offset indent
+.It Xr atomic_add 3
+These functions perform atomic addition.
+.It Xr atomic_and 3
+These functions perform atomic logical
+.Dq and .
+.It Xr atomic_cas 3
+These functions perform atomic compare-and-swap.
+.It Xr atomic_dec 3
+These functions perform atomic decrement.
+.It Xr atomic_inc 3
+These functions perform atomic increment.
+.It Xr atomic_or 3
+These functions perform atomic logical
+.Dq or .
+.It Xr atomic_swap 3
+These functions perform atomic swap.
+.El
+.Ss Synchronization Mechanisms
+Where the architecture does not provide hardware support for atomic compare
+and swap (CAS), atomicity is provided by a restartable sequence or by a
+spinlock.
+The chosen method is not ordinarily distinguishable by or visible to users
+of the interface.
+The following architectures can be assumed to provide CAS in hardware:
+alpha, amd64, i386, powerpc, powerpc64, sparc64.
+.Ss Scope and Restrictions
+If hardware CAS is available, the atomic operations are globally atomic:
+operations within a memory region shared between processes are
+guaranteed to be performed atomically.
+If hardware CAS is not available, it may only be assumed that the operations
+are atomic with respect to threads in the same process.
+Additionally, if hardware CAS is not available, the atomic operations must
+not be used within a signal handler.
+.Pp
+Users of atomic memory operations should not make assumptions about how
+the memory access is performed
+.Pq specifically, the width of the memory access .
+For this reason, applications making use of atomic memory operations should
+limit their use to regular memory.
+The results of using atomic memory operations on anything other than
+regular memory are undefined.
+.Pp
+Users of atomic memory operations should take care to modify any given
+memory location either entirely with atomic operations or entirely with
+some other synchronization mechanism.
+Intermixing of atomic operations with other synchronization mechanisms
+for the same memory location results in undefined behavior.
+.Ss Visibility and Ordering of Memory Accesses
+If hardware CAS is available, stores to the target memory location by an
+atomic operation will reach global visibility before the operation
+completes.
+If hardware CAS is not available, the store may not reach global visibility
+until some time after the atomic operation has completed.
+However, in all cases a subsequent atomic operation on the same memory cell
+will be delayed until the result of any preceeding operation has reached
+global visibility.
+.Pp
+Atomic operations are strongly ordered with respect to each other.
+The global visibility of other loads and stores before and after an atomic
+operation is undefined.
+Applications that require synchronization of loads and stores with respect
+to an atomic operation must use memory barriers.
+See
+.Xr membar_ops 3 .
+.Ss Performance
+Because atomic memory operations require expensive synchronization at the
+hardware level, applications should take care to minimize their use.
+In certain cases, it may be more appropriate to use a mutex, especially
+if more than one memory location will be modified.
+.Sh SEE ALSO
+.Xr atomic_add 3 ,
+.Xr atomic_and 3 ,
+.Xr atomic_cas 3 ,
+.Xr atomic_dec 3 ,
+.Xr atomic_inc 3 ,
+.Xr atomic_or 3 ,
+.Xr atomic_swap 3 ,
+.Xr membar_ops 3
+.Sh HISTORY
+The
+.Nm atomic_ops
+functions first appeared in
+.Nx 5.0 .

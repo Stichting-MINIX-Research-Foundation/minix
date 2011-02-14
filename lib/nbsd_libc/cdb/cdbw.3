@@ -1,0 +1,130 @@
+.\"	$NetBSD: cdbw.3,v 1.3 2010/11/03 16:17:48 plunky Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Joerg Sonnenberger.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+.\" COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.Dd November 3, 2010
+.Dt CDBW 3
+.Os
+.Sh NAME
+.Nm cdbw_open ,
+.Nm cdbw_put ,
+.Nm cdbw_put_data ,
+.Nm cdbw_put_key ,
+.Nm cdbw_close
+.Nd create constant databases
+.Sh SYNOPSIS
+.In archive_entry.h
+.Ft "struct cdbw *"
+.Fn cdbw_open "void"
+.Ft int
+.Fo cdbw_put
+.Fa "struct cdbw *cdbw"
+.Fa "const void *key"
+.Fa "size_t keylen"
+.Fa "const void *data"
+.Fa "size_t datalen"
+.Fc
+.Ft int
+.Fo cdbw_put_data
+.Fa "struct cdbw *cdbw"
+.Fa "const void *data"
+.Fa "size_t datalen"
+.Fa "uint32_t *index"
+.Fc
+.Ft int
+.Fo cdbw_put_key
+.Fa "struct cdbw *cdbw"
+.Fa "const void *key"
+.Fa "size_t keylen"
+.Fa "uint32_t index"
+.Fc
+.Ft int
+.Fo cdbw_output
+.Fa "struct cdbw *cdbw"
+.Fa "int output"
+.Fa "const char descr[16]"
+.Fa "uint32_t (*seedgen)(void)"
+.Fc
+.Ft void
+.Fn cdbw_close "struct cdbw *cdbw"
+.Sh DESCRIPTION
+The
+.Nm cdbw
+functions are used to create a constant databases for use with
+.Xr cdbr 3 .
+Details about the file format, including overhead and limitations,
+can be found in
+.Xr cdb 5 .
+.Pp
+.Fn cdbw_open
+prepares a new
+.Nm cdb
+writer.
+The function returns a handle to pass to the other functions.
+.Pp
+.Fn cdbw_close
+frees all resources associated with the handle.
+.Pp
+.Fn cdbw_put
+adds the given (key,value) pair after checking for a duplicate key.
+.Fn cdbw_put_data
+adds the given value to the writer without adding a key reference.
+The returned index can be used in subsequent calls to
+.Fn cdbw_put_key
+to add one or more keys pointing to this value.
+.Fn cdbw_put_key
+checks for duplicate keys and valid index arguments.
+On success it adds the given key.
+.Pp
+.Fn cdbw_output
+computes the database file and writes it to the given descriptor.
+The function returns an error if the file cannot be written correctly.
+The
+.Fn descr
+parameter provides a human readable description of the database content.
+The
+.Fn seedgen
+parameter can be used to override the default PRNG.
+The function should return a different value for each invokation.
+The bitwise layout of the output depends on the chosen seed.
+.Sh SEE ALSO
+.Xr cdbr 3 ,
+.Xr cdb 5
+.Sh HISTORY
+Support for the
+.Nm cdb
+format first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+The
+.Nm cdbr
+and
+.Nm cdbw
+functions have been written by
+.An Joerg Sonnenberger Aq joerg@NetBSD.org .

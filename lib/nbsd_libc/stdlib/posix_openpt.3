@@ -1,0 +1,80 @@
+.\" $NetBSD: posix_openpt.3,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 25, 2004
+.Dt POSIX_OPENPT 3
+.Os
+.Sh NAME
+.Nm posix_openpt
+.Nd open a pseudo-terminal device
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.In fcntl.h
+.Ft int
+.Fn posix_openpt "int oflag"
+.Sh DESCRIPTION
+.Fn posix_openpt
+Searches for an unused master pseudo-terminal device, opens it, and returns
+a file descriptor associated the now used pseudo-terminal device.
+The
+.Fa oflag
+argument has the same meaning as in the
+.Xr open 2
+call.
+.Sh RETURN VALUES
+If successful,
+.Fn posix_openpt
+returns a non-negative integer, which corresponds to a file descriptor
+pointing to the master pseudo-terminal device.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr open 2 ,
+.Xr grantpt 3 ,
+.Xr ptsname 3 ,
+.Xr unlockpt 3
+.Sh RATIONALE
+The standards committee did not want to directly expose the cloning device,
+thus decided to wrap the functionality in this function.
+The equivalent code would be:
+.Bd -literal
+	int
+	posix_openpt(int oflag) {
+		return open("/dev/ptmx", oflag);
+	}
+.Ed
+.Sh STANDARDS
+The
+.Fn posix_openpt
+function conforms to
+.St -p1003.1-2001 .

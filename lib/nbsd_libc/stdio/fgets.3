@@ -1,0 +1,201 @@
+.\"	$NetBSD: fgets.3,v 1.22 2010/05/13 18:38:24 jruoho Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Chris Torek and the American National Standards Committee X3,
+.\" on Information Processing Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)fgets.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd May 13, 2010
+.Dt FGETS 3
+.Os
+.Sh NAME
+.Nm fgets ,
+.Nm gets
+.Nd get a line from a stream
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdio.h
+.Ft char *
+.Fn fgets "char * restrict str" "int size" "FILE * restrict stream"
+.Ft char *
+.Fn gets "char *str"
+.Sh DESCRIPTION
+The
+.Fn fgets
+function
+reads at most one less than the number of characters specified by
+.Fa size
+from the given
+.Fa stream
+and stores them in the string
+.Fa str .
+Reading stops when a newline character is found,
+at end-of-file or error.
+The newline, if any, is retained, and a
+.Ql \e0
+character is appended to end the string.
+.Pp
+The
+.Fn gets
+function
+is equivalent to
+.Fn fgets
+with an infinite
+.Fa size
+and a
+.Fa stream
+of
+.Em stdin ,
+except that the newline character (if any) is not stored in the string.
+It is the caller's responsibility to ensure that the input line,
+if any, is sufficiently short to fit in the string.
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn fgets
+and
+.Fn gets
+return
+a pointer to the string.
+If end-of-file or an error occurs before any characters are read,
+they return
+.Dv NULL .
+The
+.Fn fgets
+and
+.Fn gets
+functions
+do not distinguish between end-of-file and error, and callers must use
+.Xr feof 3
+and
+.Xr ferror 3
+to determine which occurred.
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EBADF
+The given
+.Fa stream
+is not a readable stream.
+.El
+.Pp
+The function
+.Fn fgets
+may also fail and set
+.Va errno
+for any of the errors specified for the routines
+.Xr fflush 3 ,
+.Xr fstat 2 ,
+.Xr read 2 ,
+or
+.Xr malloc 3 .
+.Pp
+The function
+.Fn gets
+may also fail and set
+.Va errno
+for any of the errors specified for the routine
+.Xr getchar 3 .
+.Sh SEE ALSO
+.Xr feof 3 ,
+.Xr ferror 3 ,
+.Xr fgetln 3
+.Sh STANDARDS
+The functions
+.Fn fgets
+and
+.Fn gets
+conform to
+.St -ansiC
+and
+.St -p1003.1-2001 .
+The
+.St -p1003.1-2008
+revision marked
+.Fn gets
+as obsolescent.
+.Sh CAVEATS
+The following bit of code illustrates a case where the programmer assumes a
+string is too long if it does not contain a newline:
+.Bd -literal
+	char buf[1024], *p;
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		if ((p = strchr(buf, '\en')) == NULL) {
+			fprintf(stderr, "input line too long.\en");
+			exit(1);
+		}
+		*p = '\e0';
+		printf("%s\en", buf);
+	}
+.Ed
+.Pp
+While the error would be true if a line longer than 1023 characters
+were read, it would be false in two other cases:
+.Bl -enum -offset indent
+.It
+If the last line in a file does not contain a newline, the string returned by
+.Fn fgets
+will not contain a newline either.
+Thus
+.Fn strchr
+will return
+.Dv NULL
+and the program will terminate, even if the line was valid.
+.It
+All C string functions, including
+.Fn strchr ,
+correctly assume the end of the string is represented by a null
+.Pq Sq \e0
+character.
+If the first character of a line returned by
+.Fn fgets
+were null,
+.Fn strchr
+would immediately return without considering the rest of the returned text
+which may indeed include a newline.
+.El
+.Pp
+Consider using
+.Xr fgetln 3
+instead when dealing with untrusted input.
+.Sh SECURITY CONSIDERATIONS
+Since it is usually impossible to ensure that the next input line
+is less than some arbitrary length, and because overflowing the
+input buffer is almost invariably a security violation, programs
+should
+.Em NEVER
+use
+.Fn gets .
+The
+.Fn gets
+function
+exists purely to conform to
+.St -ansiC .

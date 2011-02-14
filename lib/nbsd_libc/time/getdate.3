@@ -1,0 +1,234 @@
+.\"	$NetBSD: getdate.3,v 1.1 2009/05/14 02:37:36 ginsbach Exp $
+.\"
+.\" Copyright (c) 2009, The NetBSD Foundation.
+.\" All Rights Reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Brian Ginsbach.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 8, 2009
+.Dt GETDATE 3
+.Os
+.Sh NAME
+.Nm getdate ,
+.Nm getdate_err
+.Nd convert user format date and time
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In time.h
+.Ft "struct tm *"
+.Fo "getdate"
+.Fa "const char *str"
+.Fc
+.Vt extern int getdate_err ;
+.Sh DESCRIPTION
+The
+.Fn getdate
+function converts a date or time character string pointed to by
+.Fa str
+into a static
+.Va tm
+structure.
+.Pp
+The input string is parsed and interpreted using templates.
+A text file containing templates is specified by the
+environment variable
+.Ev DATEMSK .
+This should contain the full path to the template file.
+Lines in the template file represent acceptable date and/or time
+conversion specifications.
+These specifications are similar to those given for
+.Xr strptime 3 .
+The first line in the template file that matches the input string
+is used to interpret and convert to internal time format.
+.Ss Internal Format Conversion
+The following rules apply to converting the input into the internal format.
+.Bl -bullet -offset indent
+.It
+If only the weekday is given, the conversion assumes today when the
+weekday matches today or the first future matching weekday.
+.It
+If only the month and no year is given, the conversion assumes the
+current month when the month matches or the first future matching month.
+The first day of the month is assumed if no day is given.
+.It
+If only the year is given, the values of the
+.Fa tm_mon ,
+.Fa tm_mday ,
+.Fa tm_wday ,
+.Fa tm_yday ,
+and
+.Fa tm_isdst
+members of the returned
+.Va "struct tm"
+are unspecified.
+.It
+If the century is given, but the year within the century is not given,
+the conversion assumes the current year.
+.It
+If no hour, minute, and second are given, the conversion assumes
+the current hour, minute, and second.
+.It
+If no date is given, the conversion assumes today when the given hour
+is greater than the current hour and tomorrow when the given hour is less.
+.It
+If
+.Cm \&%Z
+is being scanned, then the broken-down time is based on the the
+current time of the matched timezone and not the current runtime
+environment timezone.
+.El
+.Sh RETURN VALUES
+If successful, the
+.Fn getdate
+function returns a pointer to a static
+.Va tm
+structure containing the broken-down time.
+Otherwise, a null pointer is returned and
+.Va getdate_err
+is set to indicate the error.
+.Pp
+The variable
+.Va getdate_err
+can have the following values:
+.Bl -tag -width NNN
+.It 1
+.Ev DATEMSK
+environment variable is null or undefined.
+.It 2
+Cannot open the template file for reading.
+.It 3
+Get file status failed for template file.
+.It 4
+Template file is not a regular file.
+.It 5
+Encountered an error while reading the template file.
+.It 6
+Cannot allocate memory.
+.It 7
+Input string does not match any line in the template file.
+.It 8
+Input string is invalid
+.Pq for example February 31
+or could not be represented in a
+.Va time_t .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width DATEMSK
+.It Ev DATEMSK
+The full path to the text file containing the templates
+for acceptable date and/or time conversions.
+.El
+.Sh FILES
+.Bl -tag -width DATEMSK
+.It  Pa /usr/share/examples/getdate/datemsk.template
+An example template file that could be specified via the
+.Ev DATEMSK
+environment variable.
+.El
+.Sh EXAMPLES
+The following example shows the possible contents of a template file:
+.Pp
+.Bd -literal -offset indent -compact
+%m
+%A %B %d, %Y, %H:%M:%S
+%A
+%B
+%m/%d/%y %I %p
+%d,%m,%Y %H:%M
+at %A the %dst of %B in %Y
+run job at %I %p, %B %dnd
+%A den %d. %B %Y %H.%M Uhr
+.Ed
+.Pp
+The following are examples of valid input for the above template:
+.Pp
+.Bd -literal -offset indent -compact
+10/1/87 4 PM
+Friday
+Firday September 18, 1987, 10:30:30
+24,9,1986 10:30
+at monday the 1st of december in 1986
+run job at 3 PM, december 2nd
+.Ed
+.Pp
+The following examples show how local data and time specification can be
+defined in the template.
+.Pp
+.Bl -column -offset indent ".Sy Input String" ".Sy Line in Template"
+.It Sy "Input String" Ta Sy "Line in Template"
+.It Li 11/27/86 Ta Li \&%m/\&%d/\&%y
+.It Li 27.11.86 Ta Li \&%d.\&%m/\&%y
+.It Li 86-11-27 Ta Li \&%y-\&%m-\&%d
+.It Li "Friday 12:00:00" Ta "\&%A \&%H:\&%M:\&%S"
+.El
+.Pp
+The following examples illustrate the Internal Format Conversion rules
+given that the current date is
+.Li "Mon Sep 22 12:19:47 EDT 1986"
+and the
+.Ev LC_TIME
+environment variable is set to the default C locale.
+.Pp
+.Bl -column -offset indent ".Sy Input String" ".Sy Line in Template" ".Sy Date"
+.It Sy Input String Ta Sy Line in Template Ta Sy Date
+.It Li Mon Ta Li \&%a Ta Li "Mon Sep 22 12:19:47 EDT 1986"
+.It Li Sun Ta Li \&%a Ta Li "Sun Sep 28 12:19:47 EDT 1986"
+.It Li Fri Ta Li \&%a Ta Li "Sun Sep 26 12:19:47 EDT 1986"
+.It Li September Ta Li \&%B Ta Li "Mon Sep  1 12:19:47 EDT 1986"
+.It Li January Ta Li \&%B Ta Li "Thu Jan  1 12:19:47 EST 1987"
+.It Li December Ta Li \&%B Ta Li "Mon Dec  1 12:19:47 EST 1987"
+.It Li "Sep Mon" Ta Li "\&%b %a" Ta Li "Mon Sep  1 12:19:47 EDT 1986"
+.It Li "Jan Fri" Ta Li "\&%b %a" Ta Li "Fri Jan  2 12:19:47 EDT 1987"
+.It Li "Dec Mon" Ta Li "\&%b %a" Ta Li "Mon Dec  1 12:19:47 EDT 1986"
+.It Li "Jan Wed 1989" Ta Li "\&%b \&%a \&%Y" Ta Li "Wed Jan  4 12:19:47 EST 1989"
+.It Li "Fri 9" Ta Li "\&%a \&%H" Ta Li "Fri Sep 26 09:00:00 EDT 1986"
+.It Li "Feb 10:30" Ta Li "\&%b \&%H:\&%S" Ta Li "Sun Feb  1 10:00:30 EST 1987"
+.It Li 10:30 Ta Li "\&%H:\&%M" Ta Li "Tue Sep 23 10:30:00 EDT 1986"
+.It Li 13:30 Ta Li "\&%H:\&%M" Ta Li "Tue Sep 22 13:30:00 EDT 1986"
+.El
+.Sh SEE ALSO
+.Xr ctime 3 ,
+.Xr localtime 3 ,
+.Xr mktime 3 ,
+.Xr strftime 3 ,
+.Xr strptime 3 ,
+.Xr time 3
+.Sh STANDARDS
+The
+.Fn getdate
+function conforms to
+.St -p1003.1-2001 .
+.Sh HISTORY
+The
+.Nm
+function appeared in
+.At V.4 .
+.Sh BUGS
+The
+.Nm
+interface is inherently unsafe for multi-threaded programs or libraries,
+since it returns a pointer to a static variable and uses a global state
+variable.

@@ -1,0 +1,84 @@
+.\"	$NetBSD: memmem.3,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2005 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Perry E. Metzger of Metzger, Dowdeswell & Co. LLC.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 12, 2005
+.Dt MEMMEM 3
+.Os
+.Sh NAME
+.Nm memmem
+.Nd locate substring in byte string
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In string.h
+.Ft void *
+.Fn memmem "const void *block" "size_t blen" "const void *pat" "size_t plen"
+.Sh DESCRIPTION
+The
+.Fn memmem
+function locates the first occurrence of the binary string
+.Fa pat
+of size
+.Fa plen
+bytes in the byte string
+.Fa block
+of size
+.Fa blen
+bytes.
+.Sh RETURN VALUES
+The
+.Fn memmem
+function returns a pointer to the substring located, or
+.Dv NULL
+if no such substring exists within
+.Fa block .
+.Pp
+If
+.Fa plen
+is zero,
+.Fa block
+is returned, i.e. a zero length
+.Fa pat
+is deemed to match the start of the string, as with
+.Xr strstr 3 .
+.Sh SEE ALSO
+.Xr bm 3 ,
+.Xr memchr 3 ,
+.Xr strchr 3 ,
+.Xr strstr 3
+.Sh STANDARDS
+The
+.Fn memmem
+function is not currently standardized.
+However, it is meant to be API compatible with functions in
+.Fx
+and Linux.
+.Sh HISTORY
+.Fn memmem
+first appeared in the Free Software Foundation's glibc library.

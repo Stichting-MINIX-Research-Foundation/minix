@@ -1,0 +1,106 @@
+.\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
+.\"	$NetBSD: bindresvport.3,v 1.13 2007/01/27 07:58:47 cbiere Exp $
+.\"
+.Dd January 27, 2007
+.Dt BINDRESVPORT 3
+.Os
+.Sh NAME
+.Nm bindresvport ,
+.Nm bindresvport_sa
+.Nd bind a socket to a reserved privileged IP port
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/types.h
+.In rpc/rpc.h
+.Ft int
+.Fn bindresvport "int sd" "struct sockaddr_in *sin"
+.Ft int
+.Fn bindresvport_sa "int sd" "struct sockaddr *sa"
+.Sh DESCRIPTION
+.Fn bindresvport
+and
+.Fn bindresvport_sa
+are used to bind a socket descriptor to a reserved privileged
+.Tn IP
+port, that is, a
+port number in the range 0-1023.
+The routine returns 0 if it is successful,
+otherwise -1 is returned and
+.Va errno
+set to reflect the cause of the error.
+.Pp
+If
+.Fa sin
+is a pointer to a
+.Ft "struct sockaddr_in"
+then the appropriate fields in the structure should be defined.
+Note that
+.Fa sin-\*[Gt]sin_family
+must be initialized to the address family of the socket, passed by
+.Fa sd .
+If
+.Fa sin-\*[Gt]sin_port
+is
+.Sq 0
+then a port (in the range 600-1023) will be
+chosen, and if
+.Xr bind 2
+is successful, the
+.Fa sin-\*[Gt]sin_port
+will be updated to contain the allocated port.
+.Pp
+If
+.Fa sin
+is the
+.Dv NULL
+pointer,
+a port will be allocated (as above).
+However, there is no way for
+.Fn bindresvport
+to return the allocated port in this case.
+.Xr getsockname 2
+can be used to determine the assigned port.
+.Pp
+Only root can bind to a privileged port; this call will fail for any
+other users.
+.Pp
+Function prototype of
+.Fn bindresvport
+is biased to
+.Dv AF_INET
+socket.
+.Fn bindresvport_sa
+acts exactly the same, with more neutral function prototype.
+Note that both functions behave exactly the same, and
+both support
+.Dv AF_INET6
+sockets as well as
+.Dv AF_INET
+sockets.
+.Sh RETURN VALUES
+If the bind is successful, a 0 value is returned.
+A return value of -1 indicates an error, which is
+further specified in the global
+.Va errno .
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EPFNOSUPPORT
+If second argument was supplied,
+and address family did not match between arguments.
+.El
+.Pp
+.Fn bindresvport
+may also fail and set
+.Va errno
+for any of the errors specified for the calls
+.Xr bind 2 ,
+.Xr getsockopt 2 ,
+or
+.Xr setsockopt 2 .
+.Sh SEE ALSO
+.Xr bind 2 ,
+.Xr getsockname 2 ,
+.Xr getsockopt 2 ,
+.Xr setsockopt 2 ,
+.Xr ip 4

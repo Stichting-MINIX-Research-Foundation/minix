@@ -1,0 +1,154 @@
+.\"	$NetBSD: ctype.3,v 1.21 2010/05/06 11:46:11 jruoho Exp $
+.\"
+.\" Copyright (c) 1991 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
+.\"
+.Dd May 6, 2010
+.Dt CTYPE 3
+.Os
+.Sh NAME
+.Nm isalpha ,
+.Nm isupper ,
+.Nm islower ,
+.Nm isdigit ,
+.Nm isxdigit ,
+.Nm isalnum ,
+.Nm isspace ,
+.Nm ispunct ,
+.Nm isprint ,
+.Nm isgraph ,
+.Nm iscntrl ,
+.Nm isblank ,
+.Nm toupper ,
+.Nm tolower ,
+.Nd character classification and mapping functions
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In ctype.h
+.Fn isalpha "int c"
+.Fn isupper "int c"
+.Fn islower "int c"
+.Fn isdigit "int c"
+.Fn isxdigit "int c"
+.Fn isalnum "int c"
+.Fn isspace "int c"
+.Fn ispunct "int c"
+.Fn isprint "int c"
+.Fn isgraph "int c"
+.Fn iscntrl "int c"
+.Fn isblank "int c"
+.Fn toupper "int c"
+.Fn tolower "int c"
+.Sh DESCRIPTION
+The above functions perform character tests and conversions on the integer
+.Ar c .
+.Pp
+See the specific manual pages for information about the
+test or conversion performed by each function.
+.Sh EXAMPLES
+To print an upper-case version of a string to stdout,
+the following code can be used:
+.Bd -literal -offset indent
+const char *s = "xyz";
+
+while (*s != '\e0') {
+    putchar(toupper((int)(unsigned char)*s));
+    s++;
+}
+.Ed
+.Sh SEE ALSO
+.Xr isalnum 3 ,
+.Xr isalpha 3 ,
+.Xr isblank 3 ,
+.Xr iscntrl 3 ,
+.Xr isdigit 3 ,
+.Xr isgraph 3 ,
+.Xr islower 3 ,
+.Xr isprint 3 ,
+.Xr ispunct 3 ,
+.Xr isspace 3 ,
+.Xr isupper 3 ,
+.Xr isxdigit 3 ,
+.Xr tolower 3 ,
+.Xr toupper 3 ,
+.Xr ascii 7
+.Sh STANDARDS
+These functions, with the exception of
+.Fn isblank ,
+conform to
+.St -ansiC .
+All described functions, including
+.Fn isblank ,
+also conform to
+.St -p1003.1-2001 .
+.Sh CAVEATS
+The first argument of these functions is of type
+.Vt int ,
+but only a very restricted subset of values are actually valid.
+The argument must either be the value of the macro
+.Dv EOF
+(which has a negative value),
+or must be a non-negative value within the range representable as
+.Vt unsigned char .
+Passing invalid values leads to undefined behavior.
+.Pp
+Values of type
+.Vt int
+that were returned by
+.Xr getc 3 ,
+.Xr fgetc 3 ,
+and similar functions or macros
+are already in the correct range, and may be safely passed to these
+.Nm ctype
+functions without any casts.
+.Pp
+Values of type
+.Vt char
+or
+.Vt signed char
+must first be cast to
+.Vt unsigned char ,
+to ensure that the values are within the correct range.
+The result should then be cast to
+.Vt int
+to avoid warnings from some compilers.
+Casting a negative-valued
+.Vt char
+or
+.Vt signed char
+directly to
+.Vt int
+will produce a negative-valued
+.Vt int ,
+which will be outside the range of allowed values
+(unless it happens to be equal to
+.Dv EOF ,
+but even that would not give the desired result).

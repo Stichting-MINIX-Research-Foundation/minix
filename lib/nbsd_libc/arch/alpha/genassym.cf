@@ -1,0 +1,84 @@
+#	$NetBSD: genassym.cf,v 1.2 2008/04/28 20:22:55 martin Exp $
+
+#
+# Copyright (c) 2001 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas <matt@3am-sfotware.com>.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <sys/types.h>
+include <machine/reg.h>
+include <ucontext.h>
+include <signal.h>
+
+define _REG_V0		8*_REG_V0	/* 0 */
+define _REG_T0		8*_REG_T0	/* 1 */
+define _REG_T1		8*_REG_T1	/* 2 */
+define _REG_T2		8*_REG_T2	/* 3 */
+define _REG_T3		8*_REG_T3	/* 4 */
+define _REG_T4		8*_REG_T4	/* 5 */
+define _REG_T5		8*_REG_T5	/* 6 */
+define _REG_T6		8*_REG_T6	/* 7 */
+define _REG_T7		8*_REG_T7	/* 8 */
+define _REG_S0		8*_REG_S0	/* 9 */
+define _REG_S1		8*_REG_S1	/* 10 */
+define _REG_S2		8*_REG_S2	/* 11 */
+define _REG_S3		8*_REG_S3	/* 12 */
+define _REG_S4		8*_REG_S4	/* 13 */
+define _REG_S5		8*_REG_S5	/* 14 */
+define _REG_S6		8*_REG_S6	/* 15 */
+define _REG_A0		8*_REG_A0	/* 16 */
+define _REG_A1		8*_REG_A1	/* 17 */
+define _REG_A2		8*_REG_A2	/* 18 */
+define _REG_A3		8*_REG_A3	/* 19 */
+define _REG_A4		8*_REG_A4	/* 20 */
+define _REG_A5		8*_REG_A5	/* 21 */
+define _REG_T8		8*_REG_T8	/* 22 */
+define _REG_T9		8*_REG_T9	/* 23 */
+define _REG_T10		8*_REG_T10	/* 24 */
+define _REG_T11		8*_REG_T11	/* 25 */
+define _REG_RA		8*_REG_RA	/* 26 */
+define _REG_T12		8*_REG_T12	/* 27 */
+define _REG_PV		8*_REG_PV	/* 27 */
+define _REG_AT		8*_REG_AT	/* 28 */
+define _REG_GP		8*_REG_GP	/* 29 */
+define _REG_SP		8*_REG_SP	/* 30 */
+define _REG_UNIQUE	8*_REG_UNIQUE	/* 31 */
+define _REG_PC		8*_REG_PC	/* 32 */
+define _REG_PS		8*_REG_PS	/* 33 */
+
+define	SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
+define	SC_SP		offsetof(struct sigcontext, sc_sp)
+define	SC_PC		offsetof(struct sigcontext, sc_pc)
+define	SC_PS		offsetof(struct sigcontext, sc_ps)
+define	SC_REGS		offsetof(struct sigcontext, sc_regs)
+define	SC_OWNEDFP	offsetof(struct sigcontext, sc_regs)
+define	SC_FPREGS	offsetof(struct sigcontext, sc_fpregs)
+define	SC_FPCR		offsetof(struct sigcontext, sc_fpcr)
+define	SC_FP_CONTROL	offsetof(struct sigcontext, sc_fp_control)
+define	SC_MASK		offsetof(struct sigcontext, sc_mask)
+define	SC_RESERVED	offsetof(struct sigcontext, sc_reserved)
+define	SC_XXX		offsetof(struct sigcontext, sc_xxx)

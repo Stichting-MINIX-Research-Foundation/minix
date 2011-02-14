@@ -1,0 +1,154 @@
+.\" $NetBSD: sigtimedwait.2,v 1.7 2010/05/31 11:02:24 drochner Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jaromir Dolecek.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 30, 2010
+.Dt SIGTIMEDWAIT 2
+.Os
+.Sh NAME
+.Nm sigtimedwait ,
+.Nm sigwaitinfo ,
+.Nm sigwait
+.Nd wait for queued signals
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In signal.h
+.Ft int
+.Fn sigtimedwait "const sigset_t * restrict set" "siginfo_t * restrict info" "const struct timespec * restrict timeout"
+.Ft int
+.Fn sigwaitinfo "const sigset_t * restrict set" "siginfo_t * restrict info"
+.Ft int
+.Fn sigwait "const sigset_t * restrict set" "int * restrict sig"
+.Sh DESCRIPTION
+.Fn sigwaitinfo
+and
+.Fn sigwait
+return the first pending signal from the set specified by
+.Fa set .
+Should multiple signals from
+.Fa set
+be pending, the lowest numbered one is returned.
+The selection order between realtime and non-realtime signals is unspecified.
+If there is no signal from
+.Ar set
+pending at the time of the call, the calling thread
+is suspended until one of the specified signals is generated.
+.Pp
+.Fn sigtimedwait
+is exactly equal to
+.Fn sigwaitinfo ,
+except
+.Fa timeout
+specifies the maximum time interval for which the calling thread will
+be suspended.
+If
+.Fa timeout
+is zero (tv_sec == tv_nsec == 0),
+.Fn sigtimedwait
+only checks the currently pending signals and returns immediately.
+If
+.Dv NULL
+is used for
+.Fa timeout ,
+.Fn sigtimedwait
+behaves exactly like
+.Fn sigwaitinfo
+in all regards.
+.Pp
+If several threads are waiting for a given signal, exactly one of them
+returns from the signal wait when the signal is generated.
+.Pp
+Behaviour of these functions is unspecified if any of the signals in
+.Fa set
+are unblocked at the time these functions are called.
+.Sh RETURN VALUES
+Upon successful completion of
+.Fn sigtimedwait
+or
+.Fn sigwaitinfo
+.Fa info
+is updated with signal information, and the function returns the signal number.
+Otherwise, \-1 is returned and the global variable
+.Va errno
+indicates the error.
+Upon successful completion of
+.Fn sigwait
+.Fa sig
+is updated with ihe signal number, and the function returns 0.
+Otherwise, a non-zero error code is returned,
+.Sh ERRORS
+.Fn sigwaitinfo
+and
+.Fn sigwait
+always succeed.
+.Pp
+.Fn sigtimedwait
+will fail and the
+.Fa info
+pointer will remain unchanged if:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+No signal specified in
+.Fa set
+was generated in the specified
+.Fa timeout .
+.El
+.Pp
+.Fn sigtimedwait
+may also fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The specified
+.Fa timeout
+was invalid.
+.El
+.Pp
+This error is only checked if no signal from
+.Fa set
+is pending and it would be necessary to wait.
+.Sh SEE ALSO
+.Xr sigaction 2 ,
+.Xr sigprocmask 2 ,
+.Xr signal 7
+.Sh STANDARDS
+The functions
+.Fn sigtimedwait ,
+.Fn sigwaitinfo ,
+and
+.Fn sigwait
+conform to
+.St -p1003.1-2001 .
+.Sh HISTORY
+The
+.Fn sigtimedwait ,
+.Fn sigwaitinfo ,
+and
+.Fn sigwait
+functions appeared in
+.Nx 2.0 .

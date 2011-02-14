@@ -1,0 +1,118 @@
+.\"	$NetBSD: getdevmajor.3,v 1.5 2009/03/24 22:34:54 drochner Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Andrew Brown.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 20, 2009
+.Dt GETDEVMAJOR 3
+.Os
+.Sh NAME
+.Nm getdevmajor
+.Nd get block or character device major number
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.In sys/stat.h
+.Ft devmajor_t
+.Fn getdevmajor "const char *name" "mode_t type"
+.Sh DESCRIPTION
+The
+.Fn getdevmajor
+function returns the major device number of the block or character
+device specified by
+.Ar name
+and a file type matching the one encoded in
+.Fa type
+which must be one of
+.Dv S_IFBLK
+or
+.Dv S_IFCHR .
+.Sh RETURN VALUES
+If no device matches the specified values, no information is
+available, or an error occurs,
+.Dv NODEVMAJOR
+is returned and
+.Va errno
+is set to indicate the error.
+.Sh EXAMPLES
+To retrieve the major number for
+.Xr pty 4
+slave devices (aka pts devices):
+.Bd -literal -offset indent
+#include \*[Lt]stdlib.h\*[Gt]
+#include \*[Lt]sys/stat.h\*[Gt]
+.sp
+devmajor_t pts;
+pts = getdevmajor("pts", S_IFCHR);
+.Ed
+.Pp
+To retrieve the major numbers for the block and character
+.Xr wd 4
+devices:
+.Bd -literal -offset indent
+#include \*[Lt]stdlib.h\*[Gt]
+#include \*[Lt]sys/stat.h\*[Gt]
+.sp
+devmajor_t c, b;
+c = getdevmajor("wd", S_IFCHR);
+b = getdevmajor("wd", S_IFBLK);
+.Ed
+.Sh ERRORS
+The
+.Fn getdevmajor
+function may fail and set
+.Va errno
+for any of the errors specified for the library functions
+.Xr malloc 3
+and
+.Xr sysctlbyname 3 .
+In addition, the following errors may be reported:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa type
+argument is not
+.Dv S_IFCHR
+or
+.Dv S_IFBLK .
+.It Bq Er ENOENT
+The named device is not found.
+.El
+.Sh SEE ALSO
+.Xr stat 2 ,
+.Xr devname 3 ,
+.Xr malloc 3 ,
+.Xr sysctlbyname 3
+.Sh HISTORY
+The
+.Fn getdevmajor
+function call appeared in
+.Nx 3.0 .

@@ -1,0 +1,385 @@
+.\" $NetBSD $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the American National Standards Committee X3, on Information
+.\" Processing Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
+.\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
+.\"
+.Dd May 14, 2010
+.Os
+.Dt JEMALLOC 3
+.Sh NAME
+.Nm jemalloc
+.Nd the default system allocator
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.Ft const char *
+.Va _malloc_options ;
+.Sh DESCRIPTION
+The
+.Nm
+is a general-purpose concurrent
+.Xr malloc 3
+implementation specifically designed to be scalable
+on modern multi-processor systems.
+It is the default user space system allocator in
+.Nx .
+.Pp
+When the first call is made to one of the memory allocation
+routines such as
+.Fn malloc
+or
+.Fn realloc ,
+various flags that affect the workings of the allocator are set or reset.
+These are described below.
+.Pp
+The
+.Dq name
+of the file referenced by the symbolic link named
+.Pa /etc/malloc.conf ,
+the value of the environment variable
+.Ev MALLOC_OPTIONS ,
+and the string pointed to by the global variable
+.Va _malloc_options
+will be interpreted, in that order, character by character as flags.
+.Pp
+Most flags are single letters.
+Uppercase letters indicate that the behavior is set, or on,
+and lowercase letters mean that the behavior is not set, or off.
+The following options are available.
+.Bl -tag -width "A   " -offset 3n
+.It Em A
+All warnings (except for the warning about unknown
+flags being set) become fatal.
+The process will call
+.Xr abort 3
+in these cases.
+.It Em H
+Use
+.Xr madvise 2
+when pages within a chunk are no longer in use, but the chunk as a whole cannot
+yet be deallocated.
+This is primarily of use when swapping is a real possibility, due to the high
+overhead of the
+.Fn madvise
+system call.
+.It Em J
+Each byte of new memory allocated by
+.Fn malloc ,
+.Fn realloc
+will be initialized to 0xa5.
+All memory returned by
+.Fn free ,
+.Fn realloc
+will be initialized to 0x5a.
+This is intended for debugging and will impact performance negatively.
+.It Em K
+Increase/decrease the virtual memory chunk size by a factor of two.
+The default chunk size is 1 MB.
+This option can be specified multiple times.
+.It Em N
+Increase/decrease the number of arenas by a factor of two.
+The default number of arenas is four times the number of CPUs, or one if there
+is a single CPU.
+This option can be specified multiple times.
+.It Em P
+Various statistics are printed at program exit via an
+.Xr atexit 3
+function.
+This has the potential to cause deadlock for a multi-threaded process that exits
+while one or more threads are executing in the memory allocation functions.
+Therefore, this option should only be used with care; it is primarily intended
+as a performance tuning aid during application development.
+.It Em Q
+Increase/decrease the size of the allocation quantum by a factor of two.
+The default quantum is the minimum allowed by the architecture (typically 8 or
+16 bytes).
+This option can be specified multiple times.
+.It Em S
+Increase/decrease the size of the maximum size class that is a multiple of the
+quantum by a factor of two.
+Above this size, power-of-two spacing is used for size classes.
+The default value is 512 bytes.
+This option can be specified multiple times.
+.It Em U
+Generate
+.Dq utrace
+entries for
+.Xr ktrace 1 ,
+for all operations.
+Consult the source for details on this option.
+.It Em V
+Attempting to allocate zero bytes will return a
+.Dv NULL
+pointer instead of a valid pointer.
+(The default behavior is to make a minimal allocation and return a
+pointer to it.)
+This option is provided for System V compatibility.
+This option is incompatible with the
+.Em X
+option.
+.It Em X
+Rather than return failure for any allocation function,
+display a diagnostic message on
+.Dv stderr
+and cause the program to drop
+core (using
+.Xr abort 3 ) .
+This option should be set at compile time by including the following in
+the source code:
+.Bd -literal -offset indent
+_malloc_options = "X";
+.Ed
+.Pp
+.It Em Z
+Each byte of new memory allocated by
+.Fn malloc ,
+.Fn realloc
+will be initialized to 0.
+Note that this initialization only happens once for each byte, so
+.Fn realloc
+does not zero memory that was previously allocated.
+This is intended for debugging and will impact performance negatively.
+.El
+.Pp
+The
+.Em J
+and
+.Em Z
+options are intended for testing and debugging.
+An application which changes its behavior when these options are used
+is flawed.
+.Sh IMPLEMENTATION NOTES
+The
+.Nm
+allocator uses multiple arenas in order to reduce lock
+contention for threaded programs on multi-processor systems.
+This works well with regard to threading scalability, but incurs some costs.
+There is a small fixed per-arena overhead, and additionally, arenas manage
+memory completely independently of each other, which means a small fixed
+increase in overall memory fragmentation.
+These overheads are not generally an issue,
+given the number of arenas normally used.
+Note that using substantially more arenas than the default is not likely to
+improve performance, mainly due to reduced cache performance.
+However, it may make sense to reduce the number of arenas if an application
+does not make much use of the allocation functions.
+.Pp
+Memory is conceptually broken into equal-sized chunks,
+where the chunk size is a power of two that is greater than the page size.
+Chunks are always aligned to multiples of the chunk size.
+This alignment makes it possible to find
+metadata for user objects very quickly.
+.Pp
+User objects are broken into three categories according to size:
+.Bl -enum -offset 3n
+.It
+Small objects are smaller than one page.
+.It
+Large objects are smaller than the chunk size.
+.It
+Huge objects are a multiple of the chunk size.
+.El
+.Pp
+Small and large objects are managed by arenas; huge objects are managed
+separately in a single data structure that is shared by all threads.
+Huge objects are used by applications infrequently enough that this single
+data structure is not a scalability issue.
+.Pp
+Each chunk that is managed by an arena tracks its contents in a page map as
+runs of contiguous pages (unused, backing a set of small objects, or backing
+one large object).
+The combination of chunk alignment and chunk page maps makes it possible to
+determine all metadata regarding small and large allocations in constant time.
+.Pp
+Small objects are managed in groups by page runs.
+Each run maintains a bitmap that tracks which regions are in use.
+Allocation requests can be grouped as follows.
+.Pp
+.Bl -bullet -offset 3n
+.It
+Allocation requests that are no more than half the quantum (see the
+.Em Q
+option) are rounded up to the nearest power of two (typically 2, 4, or 8).
+.It
+Allocation requests that are more than half the quantum, but no more than the
+maximum quantum-multiple size class (see the
+.Em S
+option) are rounded up to the nearest multiple of the quantum.
+.It
+Allocation requests that are larger than the maximum quantum-multiple size
+class, but no larger than one half of a page, are rounded up to the nearest
+power of two.
+.It
+Allocation requests that are larger than half of a page, but small enough to
+fit in an arena-managed chunk (see the
+.Em K
+option), are rounded up to the nearest run size.
+.It
+Allocation requests that are too large to fit in an arena-managed chunk are
+rounded up to the nearest multiple of the chunk size.
+.El
+.Pp
+Allocations are packed tightly together, which can be an issue for
+multi-threaded applications.
+If you need to assure that allocations do not suffer from cache line sharing,
+round your allocation requests up to the nearest multiple of the cache line
+size.
+.Sh DEBUGGING
+The first thing to do is to set the
+.Em A
+option.
+This option forces a coredump (if possible) at the first sign of trouble,
+rather than the normal policy of trying to continue if at all possible.
+.Pp
+It is probably also a good idea to recompile the program with suitable
+options and symbols for debugger support.
+.Pp
+If the program starts to give unusual results, coredump or generally behave
+differently without emitting any of the messages mentioned in the next
+section, it is likely because it depends on the storage being filled with
+zero bytes.
+Try running it with the
+.Em Z
+option set;
+if that improves the situation, this diagnosis has been confirmed.
+If the program still misbehaves,
+the likely problem is accessing memory outside the allocated area.
+.Pp
+Alternatively, if the symptoms are not easy to reproduce, setting the
+.Em J
+option may help provoke the problem.
+In truly difficult cases, the
+.Em U
+option, if supported by the kernel, can provide a detailed trace of
+all calls made to these functions.
+.Pp
+Unfortunately,
+.Nm
+does not provide much detail about the problems it detects;
+the performance impact for storing such information would be prohibitive.
+There are a number of allocator implementations available on the Internet
+which focus on detecting and pinpointing problems by trading performance for
+extra sanity checks and detailed diagnostics.
+.Sh DIAGNOSTICS
+If any of the memory allocation/deallocation functions detect an error or
+warning condition, a message will be printed to file descriptor
+.Dv STDERR_FILENO .
+Errors will result in the process dumping core.
+If the
+.Em A
+option is set, all warnings are treated as errors.
+.Pp
+.\"
+.\" XXX: The _malloc_message should be documented
+.\"	 better in order to be worth mentioning.
+.\"
+The
+.Va _malloc_message
+variable allows the programmer to override the function which emits
+the text strings forming the errors and warnings if for some reason
+the
+.Dv stderr
+file descriptor is not suitable for this.
+Please note that doing anything which tries to allocate memory in
+this function is likely to result in a crash or deadlock.
+.Pp
+All messages are prefixed by
+.Dq Ao Ar progname Ac Ns Li \&: Pq malloc .
+.Sh ENVIRONMENT
+The following environment variables affect the execution of the allocation
+functions:
+.Bl -tag -width ".Ev MALLOC_OPTIONS"
+.It Ev MALLOC_OPTIONS
+If the environment variable
+.Ev MALLOC_OPTIONS
+is set, the characters it contains will be interpreted as flags to the
+allocation functions.
+.El
+.Sh EXAMPLES
+To dump core whenever a problem occurs:
+.Pp
+.Bd -literal -offset indent
+ln -s 'A' /etc/malloc.conf
+.Ed
+.Pp
+To specify in the source that a program does no return value checking
+on calls to these functions:
+.Bd -literal -offset indent
+_malloc_options = "X";
+.Ed
+.Sh SEE ALSO
+.Xr emalloc 3 ,
+.Xr malloc 3 ,
+.Xr memory 3 ,
+.Xr memoryallocators 9
+.\"
+.\" XXX: Add more references that could be worth reading.
+.\"
+.Rs
+.%A Jason Evans
+.%T "A Scalable Concurrent malloc(3) Implementation for FreeBSD"
+.%D April 16, 2006
+.%O BSDCan 2006
+.%U http://people.freebsd.org/~jasone/jemalloc/bsdcan2006/jemalloc.pdf
+.Re
+.Rs
+.%A Poul-Henning Kamp
+.%T "Malloc(3) revisited"
+.%I USENIX Association
+.%B Proceedings of the FREENIX Track: 1998 USENIX Annual Technical Conference
+.%D June 15-19, 1998
+.%U http://www.usenix.org/publications/library/proceedings/usenix98/freenix/kamp.pdf
+.Re
+.Rs
+.%A Paul R. Wilson
+.%A Mark S. Johnstone
+.%A Michael Neely
+.%A David Boles
+.%T "Dynamic Storage Allocation: A Survey and Critical Review"
+.%D 1995
+.%I University of Texas at Austin
+.%U ftp://ftp.cs.utexas.edu/pub/garbage/allocsrv.ps
+.Re
+.Sh HISTORY
+The
+.Nm
+allocator became the default system allocator first in
+.Fx 7.0
+and then in
+.Nx 5.0 .
+In both systems it replaced the older so-called
+.Dq phkmalloc
+implementation.
+.Sh AUTHORS
+.An Jason Evans Aq jasone@canonware.com

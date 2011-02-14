@@ -1,0 +1,220 @@
+.\"	$NetBSD: fmtmsg.3,v 1.6 2008/04/30 13:10:50 martin Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 10, 1999
+.Dt FMTMSG 3
+.Os
+.Sh NAME
+.Nm fmtmsg
+.Nd format and display a message
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In fmtmsg.h
+.Ft int
+.Fn fmtmsg "long classification" "const char *label" "int severity" "const char *text" "const char *action" "const char *tag"
+.Sh DESCRIPTION
+The
+.Fn fmtmsg
+function can be used to display messages in the specified format.
+Messages may be written either to standard error, to the console, or both.
+.Pp
+A formatted message consists of up to five components specified in
+.Fa label ,
+.Fa severity ,
+.Fa text ,
+.Fa action
+and
+.Fa tag .
+Further information such as the origin of the message, the recoverability
+from the condition causing the message and where to display the message
+is specified in
+.Fa classification .
+.Ss classification
+The
+.Fa classification
+argument consists of a major classification and several sub-classifications.
+It has no effect on the content of the message displayed.
+With the exception of the display sub-classification, only a single identifier
+may be specified for each (sub-)classification.
+The following classifications
+are available:
+.Bl -tag -width MessageXSourceXSub-classificationsXX
+.It Major Classifications
+The source of the condition.
+Available identifiers are:
+.Dv MM_HARD
+(hardware),
+.Dv MM_SOFT
+(software), and
+.Dv MM_FIRM
+(firmware).
+.It Message Source Sub-classifications
+The type of software detecting the condition.
+Available identifiers are:
+.Dv MM_APPL
+(application),
+.Dv MM_UTIL
+(utility), and
+.Dv MM_OPSYS
+(operating system).
+.It Display Sub-classifications
+The displays the formatted messages is to be written to.
+Available identifiers are:
+.Dv MM_PRINT
+(standard error stream) and
+.Dv MM_CONSOLE
+(system console).
+.It Status Sub-classifications
+The capability of the calling software to recover from the condition.
+Available identifiers are:
+.Dv MM_RECOVER
+(recoverable) and
+.Dv MM_NRECOV
+(non-recoverable).
+.El
+.Pp
+If no
+.Fa classification
+is to be supplied,
+.Dv MM_NULLMC
+must be specified.
+.Ss label
+The
+.Fa label
+argument identifies the source of the message.
+It consists of two fields separated by a colon (:).
+The first field is up to 10 characters, the second is up to 14 characters.
+.Pp
+If no
+.Fa label
+is to be supplied,
+.Dv MM_NULLLBL
+must be specified.
+.Ss severity
+The seriousness of the condition causing the message.
+The following
+.Fa severity
+levels are available:
+.Bl -tag -width MM_WARNINGXX
+.It Dv MM_HALT
+The software has encountered a severe fault and is halting.
+.It Dv MM_ERROR
+The software has encountered a fault.
+.It Dv MM_WARNING
+The software has encountered an unusual non-fault condition.
+.It Dv MM_INFO
+The software informs about a non-error condition.
+.El
+.Pp
+If no
+.Fa severity
+level is to be supplied,
+.Dv MM_NOSEV
+must be specified.
+.Ss text
+The description of the condition the software encountered.
+The character
+string is not limited to a specific size.
+.Pp
+If no
+.Fa text
+is to be supplied,
+.Dv MM_NOTXT
+must be specified.
+.Ss action
+The first step to be taken to recover from the condition the software
+encountered; it will be preceded by the prefix
+.Dq TO FIX: .
+The character string is not limited to a specific size.
+.Pp
+If no
+.Fa action
+is to be supplied,
+.Dv MM_NOACT
+must be specified.
+.Ss tag
+The on-line documentation which provides further information about the
+condition and the message, such as
+.Dq Xr fmtmsg 3 .
+The character string is not limited to a specific size.
+.Pp
+If no
+.Fa tag
+is to be supplied,
+.Dv MM_NOTAG
+must be specified.
+.Pp
+Further effect on the formatting of the message as displayed on the
+standard error stream (but not on the system console!) may be taken by
+setting the
+.Ev MSGVERB
+environment variable, which selects the subset of message components
+to be printed.
+It consists of a colon-separated list of the optional keywords
+.Fa label ,
+.Fa severity ,
+.Fa text ,
+.Fa action ,
+and
+.Fa tag ,
+which correspond to the arguments to
+.Fn fmtmsg
+with the same names.
+If
+.Ev MSGVERB
+is either not set or malformed (containing empty or unknown keywords),
+its content is ignored an all message components will be selected.
+.Pp
+Note that displaying a message on the system console may fail due to
+inappropriate privileges or a non-permissive file mode of the console device.
+.Sh RETURN VALUES
+The
+.Fn fmtmsg
+function returns one of the following values:
+.Bl -tag -width MM_NOTOKXXX
+.It Dv MM_OK
+The function succeeded.
+.It Dv MM_NOTOK
+The function failed completely.
+.It Dv MM_NOMSG
+The function was unable to generate a message on standard error,
+but otherwise succeeded.
+.It Dv MM_NOCOM
+The function was unable to generate a message on the console,
+but otherwise succeeded.
+.El
+.Sh SEE ALSO
+.Xr printf 3 ,
+.Xr syslog 3
+.Sh STANDARDS
+The
+.Fn fmtmsg
+function conforms to
+.St -xsh5 .

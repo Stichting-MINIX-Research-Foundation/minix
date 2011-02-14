@@ -1,0 +1,363 @@
+.\"	$NetBSD: sigaction.2,v 1.43 2006/06/03 18:23:52 christos Exp $
+.\"
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
+.\"
+.Dd June 3, 2006
+.Dt SIGACTION 2
+.Os
+.Sh NAME
+.Nm sigaction
+.Nd software signal facilities
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In signal.h
+.Ft int
+.Fn sigaction "int sig" "const struct sigaction * restrict act" "struct sigaction * restrict oact"
+.Sh DESCRIPTION
+The system defines a set of signals that may be delivered to a process.
+Signal delivery resembles the occurrence of a hardware interrupt:
+the signal is blocked from further occurrence, the current process
+context is saved, and a new one is built.
+A process may specify a
+.Em handler
+to which a signal is delivered, or specify that a signal is to be
+.Em ignored .
+A process may also specify that a default action is to be taken
+by the system when a signal occurs.
+A signal may also be
+.Em blocked ,
+in which case its delivery is postponed until it is
+.Em unblocked .
+The action to be taken on delivery is determined at the time of delivery.
+Normally, signal handlers execute on the current stack of the process.
+This may be changed, on a per-handler basis, so that signals are
+taken on a special
+.Em "signal stack" .
+.Pp
+Signal routines execute with the signal that caused their
+invocation
+.Em blocked ,
+but other signals may yet occur.
+A global
+.Em "signal mask"
+defines the set of signals currently blocked from delivery
+to a process.
+The signal mask for a process is initialized from that of its parent
+(normally empty).
+It may be changed with a
+.Xr sigprocmask 2
+call, or when a signal is delivered to the process.
+Signal masks are represented using the
+.Em sigset_t
+type; the
+.Xr sigsetops 3
+interface is used to modify such data.
+.Pp
+When a signal
+condition arises for a process, the signal is added to a set of
+signals pending for the process.
+If the signal is not currently
+.Em blocked
+by the process then it is delivered to the process.
+Signals may be delivered any time a process enters the operating system
+(e.g., during a system call, page fault or trap, or clock interrupt).
+If multiple signals are ready to be delivered at the same time,
+any signals that could be caused by traps are delivered first.
+Additional signals may be processed at the same time, with each
+appearing to interrupt the handlers for the previous signals
+before their first instructions.
+The set of pending signals is returned by the
+.Xr sigpending 2
+function.
+When a caught signal
+is delivered, the current state of the process is saved,
+a new signal mask is calculated (as described below),
+and the signal handler is invoked.
+The call to the handler is arranged so that if the signal handling
+routine returns normally the process will resume execution in the
+context from before the signal's delivery.
+If the process wishes to resume in a different context, then it
+must arrange to restore the previous context itself.
+.Pp
+.Em "struct sigaction"
+includes the following members:
+.Bd -literal -offset indent
+void 	  (*sa_sigaction)(int sig, siginfo_t *info, void *ctx);
+void      (*sa_handler)(int sig);
+sigset_t  sa_mask;
+int       sa_flags;
+.Ed
+.Pp
+When a signal is delivered to a process a new signal mask is
+installed for the duration of the process' signal handler
+(or until a
+.Xr sigprocmask 2
+call is made).
+This mask is formed by taking the union of the current signal mask,
+the signal to be delivered, and
+the signal mask associated with the handler to be invoked,
+.Em sa_mask .
+.Pp
+.Fn sigaction
+assigns an action for a specific signal.
+If
+.Fa act
+is non-zero, it
+specifies an action
+.Pf ( Dv SIG_DFL ,
+.Dv SIG_IGN ,
+or a handler routine) and mask
+to be used when delivering the specified signal.
+If
+.Fa oact
+is non-zero, the previous handling information for the signal
+is returned to the user.
+.Pp
+Once a signal handler is installed, it remains installed
+until another
+.Fn sigaction
+call is made, or an
+.Xr execve 2
+is performed.
+A signal-specific default action may be reset by
+setting
+.Fa sa_handler
+to
+.Dv SIG_DFL .
+The defaults are process termination, possibly with core dump;
+no action; stopping the process; or continuing the process.
+See the signal list below for each signal's default action.
+If
+.Fa sa_handler
+is set to
+.Dv SIG_DFL ,
+the default action for the signal is to discard the signal,
+and if a signal is pending,
+the pending signal is discarded even if the signal is masked.
+If
+.Fa sa_handler
+is set to
+.Dv SIG_IGN ,
+current and pending instances
+of the signal are ignored and discarded.
+.Pp
+Options may be specified by setting
+.Em sa_flags .
+.Bl -tag -width SA_NOKERNINFO
+.It Dv SA_NODEFER
+If set, then the signal that caused the handler to be executed is not added
+to the list of block signals.
+Please note that
+.Fa sa_mask
+takes precedence over
+.Dv SA_NODEFER ,
+so that if the specified signal is blocked in
+.Fa sa_mask ,
+then
+.Dv SA_NODEFER
+will have no effect.
+.It Dv SA_NOCLDSTOP
+If set when installing a catching function
+for the
+.Dv SIGCHLD
+signal,
+the
+.Dv SIGCHLD
+signal will be generated only when a child process exits,
+not when a child process stops.
+.It Dv SA_NOCLDWAIT
+If set, the system will not create a zombie when the child exits,
+but the child process will be automatically waited for.
+The same effect can be achieved by setting the signal handler for
+.Dv SIGCHLD
+to
+.Dv SIG_IGN .
+.It Dv SA_ONSTACK
+If set, the system will deliver the signal to the process on a
+.Em "signal stack" ,
+specified with
+.Xr sigaltstack 2 .
+.It Dv SA_RESETHAND
+If set, the default action will be reinstated when the signal
+is first posted.
+.It Dv SA_RESTART
+Normally, if a signal is caught during the system calls listed below,
+the call may be forced to terminate
+with the error
+.Er EINTR ,
+the call may return with a data transfer shorter than requested,
+or the call may be restarted.
+Restarting of pending calls is requested
+by setting the
+.Dv SA_RESTART
+bit in
+.Ar sa_flags .
+The affected system calls include
+.Xr open 2 ,
+.Xr read 2 ,
+.Xr write 2 ,
+.Xr sendto 2 ,
+.Xr recvfrom 2 ,
+.Xr sendmsg 2
+and
+.Xr recvmsg 2
+on a communications channel or a slow device (such as a terminal,
+but not a regular file)
+and during a
+.Xr wait 2
+or
+.Xr ioctl 2 .
+However, calls that have already committed are not restarted,
+but instead return a partial success (for example, a short read count).
+.Pp
+After a
+.Xr fork 2
+or
+.Xr vfork 2
+all signals, the signal mask, the signal stack,
+and the restart/interrupt flags are inherited by the child.
+.Pp
+The
+.Xr execve 2
+system call reinstates the default
+action for all signals which were caught and
+resets all signals to be caught on the user stack.
+Ignored signals remain ignored;
+the signal mask remains the same;
+signals that restart pending system calls continue to do so.
+.Pp
+See
+.Xr signal 7
+for comprehensive list of supported signals.
+.It Dv SA_SIGINFO
+If set, the signal handler function will receive additional information
+about the caught signal.
+An alternative handler that gets passed additional arguments will
+be called which is named
+.Fa sa_sigaction .
+The
+.Ar sig
+argument of this handler contains the signal number that was caught.
+The
+.Ar info
+argument contains additional signal specific information which
+is listed in
+.Xr siginfo 2 .
+The
+.Ar ctx
+argument
+is a pointer to the
+.Xr ucontext 2
+context where the signal handler will return to.
+.It Dv SA_NOKERNINFO
+This flag is relevant only to
+.Dv SIGINFO ,
+and turns off printing kernel messages on the tty.
+It is similar to the
+.Dv NOKERNINFO
+flag in
+.Xr termios 4 .
+.El
+.Pp
+Only functions that are async-signal-safe can safely be used in signal
+handlers, see
+.Xr signal 7
+for a complete list.
+.Sh NOTES
+The mask specified in
+.Fa act
+is not allowed to block
+.Dv SIGKILL
+or
+.Dv SIGSTOP .
+This is enforced silently by the system.
+.Sh RETURN VALUES
+A 0 value indicates that the call succeeded.
+A \-1 return value indicates an error occurred and
+.Va errno
+is set to indicate the reason.
+.Sh ERRORS
+.Fn sigaction
+will fail and no new signal handler will be installed if one
+of the following occurs:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Either
+.Fa act
+or
+.Fa oact
+points to memory that is not a valid part of the process
+address space.
+.It Bq Er EINVAL
+.Fa sig
+is not a valid signal number.
+.It Bq Er EINVAL
+An attempt is made to ignore or supply a handler for
+.Dv SIGKILL
+or
+.Dv SIGSTOP .
+.It Bq Er EINVAL
+The
+.Em sa_flags
+word contains bits other than
+.Dv SA_NOCLDSTOP ,
+.Dv SA_NOCLDWAIT ,
+.Dv SA_NODEFER ,
+.Dv SA_ONSTACK ,
+.Dv SA_RESETHAND ,
+.Dv SA_RESTART ,
+and
+.Dv SA_SIGINFO .
+.El
+.Sh SEE ALSO
+.Xr kill 1 ,
+.Xr kill 2 ,
+.Xr ptrace 2 ,
+.Xr sigaltstack 2 ,
+.Xr siginfo 2 ,
+.Xr sigprocmask 2 ,
+.Xr sigsuspend 2 ,
+.Xr setjmp 3 ,
+.Xr sigsetops 3 ,
+.Xr tty 4 ,
+.Xr signal 7
+.Sh STANDARDS
+The
+.Fn sigaction
+function conforms to
+.St -p1003.1-90 .
+The
+.Dv SA_ONSTACK
+and
+.Dv SA_RESTART
+flags are Berkeley extensions, available on most
+.Bx Ns \-derived
+systems.

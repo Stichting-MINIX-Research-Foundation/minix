@@ -1,0 +1,71 @@
+.\"     $NetBSD: _lwp_getname.2,v 1.2 2009/05/18 14:49:35 wiz Exp $
+.\"
+.\" Copyright (c)2007 YAMAMOTO Takashi,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd December 15, 2007
+.Dt _LWP_GETNAME 2
+.Os
+.Sh NAME
+.Nm _lwp_getname
+.Nd get descriptive name of an LWP
+.\" ------------------------------------------------------------
+.Sh LIBRARY
+.Lb libc
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In lwp.h
+.Ft int
+.Fn _lwp_getname "lwpid_t target" "char *name" "size_t len"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+.Fn _lwp_getname
+gets the descriptive name of the LWP.
+It takes the following arguments.
+.Bl -tag -width target
+.It Fa target
+The LWP whose descriptive name will be obtained.
+.It Fa name
+The buffer to be filled with the descriptive name of the LWP.
+.It Fa len
+The size of the buffer
+.Fa name
+in bytes.
+.El
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+.Fn _lwp_getname
+returns 0 on success.
+Otherwise, \-1 is returned and
+.Va errno
+is set to indicate the error.
+.\" ------------------------------------------------------------
+.\".Sh ERRORS
+.\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr ps 1 ,
+.Xr top 1 ,
+.Xr _lwp_setname 2 ,
+.Xr errno 2

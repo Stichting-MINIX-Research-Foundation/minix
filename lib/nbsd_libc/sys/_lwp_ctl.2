@@ -1,0 +1,96 @@
+.\"     $NetBSD: _lwp_ctl.2,v 1.3 2009/02/17 18:51:56 njoly Exp $
+.\"
+.\" Copyright (c)2007 YAMAMOTO Takashi,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd May 5, 2008
+.Dt _LWP_CTL 2
+.Os
+.Sh NAME
+.Nm _lwp_ctl
+.Nd prepare per-LWP communication area between kernel and userland
+.\" ------------------------------------------------------------
+.Sh LIBRARY
+.Lb libc
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In lwp.h
+.Ft int
+.Fn _lwp_ctl "int features" "struct lwpctl **address"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+.Fn _lwp_ctl
+prepares per-LWP communication area for the calling LWP,
+and maps it into the calling process' address space.
+It takes the following arguments.
+.Bl -tag -width features
+.It Fa features
+The bitwise-OR of the following flags.
+.Bl -tag -width LWPCTL_FEATURE_CURCPU
+.It Dv LWPCTL_FEATURE_CURCPU
+Request lc_curcpu.
+.It Dv LWPCTL_FEATURE_PCTR
+Request lc_pctr.
+.El
+.It Fa address
+The address to store a pointer to lwpctl structure for the calling LWP.
+.El
+.Pp
+The per-LWP communication area is described by an lwpctl structure.
+It has following members, depending on
+.Fa features .
+.Bl -tag -width int_lc_curcpu
+.It int lc_curcpu
+The integral identifier of the CPU on which the LWP is running,
+or
+.Dv LWPCTL_CPU_NONE
+when the LWP is not running on any CPU.
+It's updated by the kernel and should be considered as read-only for
+userland.
+It's available only if requested with the
+.Dv LWPCTL_FEATURE_CURCPU
+flag.
+.It int lc_pctr
+The integer which is incremented on every context switches to the LWP.
+It can be used to detect preemption of the LWP.
+(thus its name "preemption counter".)
+It's updated by the kernel and should be considered as read-only for
+userland.
+It's available only if requested with the
+.Dv LWPCTL_FEATURE_PCTR
+flag.
+.El
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+.Fn _lwp_ctl
+returns 0 on success.
+Otherwise, \-1 is returned and
+.Va errno
+is set to indicate the error.
+.\" ------------------------------------------------------------
+.\".Sh ERRORS
+.\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr errno 2

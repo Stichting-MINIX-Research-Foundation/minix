@@ -1,0 +1,119 @@
+.\"	$NetBSD: ulimit.3,v 1.9 2010/04/30 05:09:23 jruoho Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 30, 2010
+.Dt ULIMIT 3
+.Os
+.Sh NAME
+.Nm ulimit
+.Nd get and set process limits
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In ulimit.h
+.Ft long int
+.Fn ulimit "int cmd" ...
+.Sh DESCRIPTION
+The
+.Fn ulimit
+function provides a method to query or alter resource limits of the calling
+process.
+The method to be performed is specified by the
+.Fa cmd
+argument; possible values are:
+.Bl -tag -width UL_GETFSIZEXX
+.It Li UL_GETFSIZE
+Return the soft file size limit of the process.
+The value returned is in units of 512-byte blocks.
+If the result cannot be represented in an object of type
+.Fa long int ,
+the result is unspecified.
+.It Li UL_SETFSIZE
+Set the hard and soft file size limits of the process to the value of the
+second argument passed, which is in units of 512-byte blocks, and which is
+expected to be of type
+.Fa long int .
+The new file size limit of the process is returned.
+Any process may decrease the limit, but raising it is only permitted if
+the caller is the super-user.
+.El
+.Pp
+If successful, the
+.Fn ulimit
+function will not change the setting of
+.Va errno .
+.Sh RETURN VALUES
+If successful, the
+.Fn ulimit
+function returns the value of the requested limit.
+Otherwise, it returns \-1, sets
+.Va errno
+to indicate an error, and the limit is not changed.
+Therefore, to detect an error condition applications should set
+.Va errno
+to 0, call
+.Fn ulimit ,
+and check if \-1 is returned and
+.Va errno
+is non-zero.
+.Sh ERRORS
+The
+.Fn ulimit
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa cmd
+argument is not valid.
+.It Bq Er EPERM
+It was attempted to increase a limit, and the caller is not the super-user.
+.El
+.Sh SEE ALSO
+.Xr getrlimit 2 ,
+.Xr setrlimit 2
+.Sh STANDARDS
+The
+.Fn ulimit
+function conforms to
+.St -xsh5
+and
+.St -p1003.1-2001 .
+It was marked as obsolete in the
+.St -p1003.1-2008
+revision, which recommended the use of
+.Xr getrlimit 2
+and
+.Xr setrlimit 2
+instead, noting that because
+.Fn ulimit
+uses the type
+.Vt long
+rather than
+.Vt rlim_t ,
+it may not be sufficient for file sizes on many current systems.

@@ -1,0 +1,120 @@
+.\"	$NetBSD: pthread_atfork.3,v 1.5 2008/04/30 13:10:50 martin Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Nathan J. Williams.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 12, 2003
+.Dt PTHREAD_ATFORK 3
+.Os
+.Sh NAME
+.Nm pthread_atfork
+.Nd register handlers to be called when process forks
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In pthread.h
+.Ft int
+.Fn pthread_atfork "void (*prepare)(void)" "void (*parent)(void)" "void (*child)(void)"
+.Sh DESCRIPTION
+The
+.Fn pthread_atfork
+function registers the provided handler functions to be called when the
+.Xr fork 2
+function is called.
+Each of the three handlers is called at a different place in the
+.Xr fork 2
+sequence.
+The
+.Ar prepare
+handler is called in the parent process before the fork happens, the
+.Ar parent
+handler is called in the parent process after the fork has happened, and the
+.Ar child
+handler is called in the child process after the fork has happened.
+The
+.Ar parent
+and
+.Ar child
+handlers are called in the order in which they were registered, while the
+.Ar prepare
+handlers are called in reverse of the order in which they were registered.
+.Pp
+Any of the handlers given may be
+.Dv NULL .
+.Pp
+The intended use of
+.Fn pthread_atfork
+is to provide a consistent state to a child process from a multithreaded parent
+process where locks may be acquired and released asynchronously with respect to the
+.Xr fork 2
+call.
+Each subsystem with locks that are used in a child process should register
+handlers with
+.Fn pthread_atfork
+that acquires those locks in the
+.Ar prepare
+handler and releases them in the
+.Ar parent
+handler.
+.Sh RETURN VALUES
+The
+.Fn pthread_atfork
+function returns 0 on success and an error number on failure.
+.Sh ERRORS
+The following error code may be returned:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+Insufficient memory exists to register the fork handlers.
+.El
+.Sh SEE ALSO
+.Xr fork 2
+.Sh STANDARDS
+The
+.Fn pthread_atfork
+function conforms to
+.St -p1003.1c-95 .
+.Sh HISTORY
+The
+.Fn pthread_atfork
+function first appeared in
+.Nx 2.0 .
+.Sh CAVEATS
+After calling
+.Xr fork 2
+from a multithreaded process, it is only safe to call
+async-signal-safe functions until calling one of the
+.Xr exec 3
+functions.
+The
+.Fn pthread_*
+functions are not async-signal-safe, so it is not safe to use such functions
+in the
+.Ar child
+handler.
+.Sh BUGS
+There is no way to unregister a handler registered with
+.Fn pthread_atfork .

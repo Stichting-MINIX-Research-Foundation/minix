@@ -1,0 +1,75 @@
+.\"     $NetBSD: sa_register.2,v 1.2 2004/03/14 10:19:59 snj Exp $
+.\"
+.\" Copyright (c)2004 YAMAMOTO Takashi,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd March 14, 2004
+.Dt SA_REGISTER 2
+.Os
+.Sh NAME
+.Nm sa_register
+.Nd register a scheduler activation upcall handler
+.\" ------------------------------------------------------------
+.Sh LIBRARY
+.Lb libc
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In sa.h
+.Ft int
+.Fn sa_register \
+    "sa_upcall_t new" \
+    "sa_upcall_t *old" \
+    "int flags" \
+    "ssize_t stackinfo_offset"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+.Nm
+is used to prepare scheduler activation.
+It registers the upcall handler specified by
+.Fa new .
+If
+.Fa old
+isn't
+.Dv NULL ,
+the previous handler will be returned to the location pointed by it.
+If
+.Dv SA_FLAG_STACKINFO
+is specified in
+.Fa flags ,
+.Fa stackinfo_offset
+is used to locate per upcall stack memory areas shared between
+userland and kernel.
+.Fa stackinfo_offset
+is a byte offset from the corresponding upcall stack.
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+.Fn sa_register
+returns zero on success.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
+.\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr pthread 3

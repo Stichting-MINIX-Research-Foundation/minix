@@ -1,0 +1,236 @@
+.\" $NetBSD: pmc_control.2,v 1.7 2005/10/31 11:34:16 wiz Exp $
+.\"
+.\" Copyright (c) 2002 Wasabi Systems, Inc.
+.\" All rights reserved.
+.\"
+.\" Written by Allen Briggs for Wasabi Systems, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed for the NetBSD Project by
+.\"      Wasabi Systems, Inc.
+.\" 4. The name of Wasabi Systems, Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 27, 2005
+.Dt PMC_CONTROL 2
+.Os
+.Sh NAME
+.Nm pmc_control ,
+.Nm pmc_get_info
+.Nd Hardware Performance Monitoring Interface
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/pmc.h
+.Ft int
+.Fn pmc_control "int ctr" "int op" "void *argp"
+.Ft int
+.Fn pmc_get_info "int ctr" "int op" "void *argp"
+.Sh DESCRIPTION
+.Fn pmc_get_info
+returns the number of counters in the system or information on a specified
+counter
+.Fa ctr .
+The possible values for
+.Fa op
+are:
+.Bl -tag -width width
+.It Dv PMC_INFO_NCOUNTERS
+When querying the number of counters in the system,
+.Fa ctr
+is ignored and
+.Fa argp
+is of type
+.Ft int * .
+Upon return, the integer pointed to by
+.Fa argp
+will contain the number of counters that are available in the system.
+.It Dv PMC_INFO_CPUCTR_TYPE
+When querying the type of a counter in the system,
+.Fa ctr
+refers to the counter being queried, and
+.Fa argp
+is of type
+.Ft int * .
+Upon return, the integer pointed to by
+.Fa argp
+will contain the implementation-dependent type of the specified counter.
+.Pp
+If
+.Fa ctr
+is \-1, the integer pointed to by
+.Fa argp
+will contain the machine-dependent type
+describing the CPU or counter configuration.
+.It Dv PMC_INFO_COUNTER_VALUE
+When querying the value of a counter in the system,
+.Fa ctr
+refers to the counter being queried, and
+.Fa argp
+is of type
+.Ft uint64_t * .
+Upon return, the 64-bit integer pointed to by
+.Fa argp
+will contain the value of the specified counter.
+.It Dv PMC_INFO_ACCUMULATED_COUNTER_VALUE
+When querying the value of a counter in the system,
+.Fa ctr
+refers to the counter being queried, and
+.Fa argp
+is of type
+.Ft uint64_t * .
+Upon return, the 64-bit integer pointed to by
+.Fa argp
+will contain the sum of the accumulated values of specified counter in
+all exited subprocesses of the current process.
+.El
+.Pp
+.Fn pmc_control
+manipulates the specified counter
+.Fa ctr
+in one of several fashions.
+The
+.Fa op
+parameter determines the action taken by the kernel and also the interpretation of the
+.Fa argp
+parameter.
+The possible values for
+.Fa op
+are:
+.Bl -tag -width width
+.It Dv PMC_OP_START
+Starts the specified
+.Fa ctr
+running.
+It must be preceded by a call with
+.Dv PMC_OP_CONFIGURE .
+.Fa argp
+is ignored in this case and may be
+.Dv NULL .
+.It Dv PMC_OP_STOP
+Stops the specified
+.Fa ctr
+from running.
+.Fa argp
+is ignored in this case and may be
+.Dv NULL .
+.It Dv PMC_OP_CONFIGURE
+Configures the specified
+.Fa ctr
+prior to running.
+.Fa argp
+is a pointer to a
+.Ft struct pmc_counter_cfg .
+.Bd -literal
+	struct pmc_counter_cfg {
+		pmc_evid_t	event_id;
+		pmc_ctr_t	reset_value;
+		uint32_t	flags;
+	};
+.Ed
+.Bl -tag -width width
+.It Dv event_id
+is the event ID to be counted.
+.It Dv reset_value
+is a value to which the counter should be reset on overflow (if supported
+by the implementation).
+This is most useful when profiling (see
+.Dv PMC_OP_PROFSTART ,
+below).
+This value is defined to be the number of counter ticks before
+the next overflow.
+So, to get a profiling tick on every hundredth data cache miss, set the
+.Dv event_id
+to the proper value for
+.Dq dcache-miss
+and set
+.Dv reset_value
+to 100.
+.It Dv flags
+Currently unused.
+.El
+.It Dv PMC_OP_PROFSTART
+Configures the specified
+.Fa ctr
+for use in profiling.
+.Fa argp
+is a pointer to a
+.Ft struct pmc_counter_cfg
+as in
+.Dv PMC_OP_CONFIGURE ,
+above.
+This request allocates a kernel counter, which will fail if any
+process is using the requested counter.
+Not all implementations or counters may support this option.
+.It Dv PMC_OP_PROFSTOP
+Stops the specified
+.Fa ctr
+from being used for profiling.
+.Fa argp
+is ignored in this case and may be
+.Dv NULL .
+.El
+.Sh RETURN VALUES
+A return value of 0 indicates that the call succeeded.
+Otherwise, \-1 is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+Among the possible error codes from
+.Fn pmc_control
+and
+.Fn pmc_get_info
+are
+.Bl -tag -width Er
+.It Bq Er EFAULT
+The address specified for the
+.Fa argp
+is invalid.
+.It Bq Er ENXIO
+Specified counter is not yet configured.
+.It Bq Er EINPROGRESS
+.Dv PMC_OP_START
+was passed for a counter that is already running.
+.It Bq Er EINVAL
+Specified counter was invalid.
+.It Bq Er EBUSY
+If the requested counter is already in use--either by the current process
+or by the kernel.
+.It Bq Er ENODEV
+If and only if the specified counter event is not valid for the specified
+counter when configuring a counter or starting profiling.
+.It Bq Er ENOMEM
+If the kernel is unable to allocate memory.
+.El
+.Sh SEE ALSO
+.Xr pmc 1 ,
+.Xr pmc 9
+.Sh HISTORY
+The
+.Fn pmc_control
+and
+.Fn pmc_get_info
+system calls appeared in
+.Nx 2.0 .

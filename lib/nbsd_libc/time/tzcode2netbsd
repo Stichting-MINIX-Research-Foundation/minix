@@ -1,0 +1,33 @@
+#! /bin/sh
+
+#
+# $NetBSD: tzcode2netbsd,v 1.5 2004/05/27 20:33:31 kleink Exp $
+#
+# Convert an extracted tzcode distribution into the format suitable
+# for importing it into the NetBSD source tree.
+# Last updated for: tzcode2004a.
+# 
+
+NOIMPORT="Makefile
+	date.1 date.1.txt date.c
+	gccdiffs
+	itca.jpg
+	logwtmp.c
+	newctime.3.txt
+	newstrftime.3 newstrftime.3.txt
+	newtzset.3.txt
+	time2posix.3.txt
+	tzfile.5.txt
+	tzselect.8.txt
+	usno1988 usno1989 usno1989a usno1995 usno1997 usno1998
+	zdump.8.txt
+	zic.8.txt"
+
+NEWTONORMAL="ctime.3
+	tzset.3"
+
+rm -f ${NOIMPORT}
+
+for f in ${NEWTONORMAL}; do
+	mv new${f} ${f};
+done

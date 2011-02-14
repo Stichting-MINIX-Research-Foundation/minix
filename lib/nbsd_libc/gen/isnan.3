@@ -1,0 +1,86 @@
+.\"	$NetBSD: isnan.3,v 1.2 2004/03/04 23:49:31 wiz Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     From: @(#)isinf.3	8.2 (Berkeley) 1/29/94
+.\"	from: NetBSD: isinf.3,v 1.10 2003/08/07 16:42:52 agc Exp
+.\"
+.Dd March 5, 2004
+.Dt ISNAN 3
+.Os
+.Sh NAME
+.Nm isnan
+.Nd test for not-a-number
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In math.h
+.Ft int
+.Fn isnan "real-floating x"
+.Sh DESCRIPTION
+The
+.Fn isnan
+macro determines whether its argument
+.Fa x
+is not-a-number
+.Pq Dq NaN .
+An argument represented in a format wider than its semantic type is
+converted to its semantic type first.
+The determination is then based on the type of the argument.
+.Ss IEEE 754
+It is determined whether the value of
+.Fa x
+is a NaN.
+.Ss VAX
+NaNs are not supported.
+.Sh RETURN VALUES
+The
+.Fn isnan
+macro returns a non-zero value if the value of
+.Fa x
+is a NaN.
+Otherwise 0 is returned.
+.Sh SEE ALSO
+.Xr fpclassify 3 ,
+.Xr isfinite 3 ,
+.Xr isinf 3 ,
+.Xr isinff 3 ,
+.Xr isnanf 3 ,
+.Xr isnormal 3 ,
+.Xr math 3 ,
+.Xr signbit 3
+.Rs
+.%T "IEEE Standard for Binary Floating-Point Arithmetic"
+.%Q ANSI
+.%R Std 754-1985
+.Re
+.Sh STANDARDS
+The
+.Fn isnan
+macro conforms to
+.St -isoC-99 .

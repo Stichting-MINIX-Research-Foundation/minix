@@ -1,0 +1,103 @@
+.\"	$NetBSD: sockatmark.3,v 1.9 2008/04/30 13:10:50 martin Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 15, 2003
+.Dt SOCKATMARK 3
+.Os
+.Sh NAME
+.Nm sockatmark
+.Nd determine whether a socket is at the out-of-band mark
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/socket.h
+.Ft int
+.Fn sockatmark "int s"
+.Sh DESCRIPTION
+The
+.Nm sockatmark
+function determines whether the socket referenced by the file descriptor
+.Fa s
+is at the out-of-band mark.
+.Sh RETURN VALUES
+If successful, the
+.Nm sockatmark
+function returns 1 to indicate that the socket is at an out-of-band mark;
+0 is returned if there is no out-of-band mark or the mark is preceded
+by in-band data.
+Otherwise, -1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Nm sockatmark
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The argument
+.Fa s
+is not a valid file descriptor.
+.It Bq Er ENOTTY
+The file descriptor
+.Fa s
+does not refer to a socket.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr recv 2 ,
+.Xr socket 2
+.Rs
+.%T "An Introductory 4.4BSD Interprocess Communication Tutorial"
+.%A Stuart Sechrest
+.Re
+.Pq see Pa /usr/share/doc/psd/20.ipctut
+.Rs
+.%T "Advanced 4.4BSD IPC Tutorial"
+.%A Samuel J. Leffler
+.%A Robert S. Fabry
+.%A William N. Joy
+.%A Phil Lapsley
+.%A Steve Miller
+.%A Chris Torek
+.Re
+.Pq see Pa /usr/share/doc/psd/21.ipc
+.Sh STANDARDS
+The
+.Nm sockatmark
+function conforms to
+.St -p1003.1-2001 .
+.Sh HISTORY
+The
+.Nm sockatmark
+function appeared in
+.St -p1003.1g-2000
+as a replacement for the
+.Dv SIOCATMARK
+.Xr ioctl 2
+interface.

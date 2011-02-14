@@ -1,0 +1,155 @@
+.\"	$NetBSD: gettimeofday.2,v 1.27 2010/05/18 07:14:18 jruoho Exp $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)gettimeofday.2	8.2 (Berkeley) 5/26/95
+.\"
+.Dd May 18, 2010
+.Dt GETTIMEOFDAY 2
+.Os
+.Sh NAME
+.Nm gettimeofday ,
+.Nm settimeofday
+.Nd get/set date and time
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/time.h
+.Ft int
+.Fn gettimeofday "struct timeval * restrict tp" "void * restrict tzp"
+.Ft int
+.Fn settimeofday "const struct timeval * restrict tp" "const void * restrict tzp"
+.Sh DESCRIPTION
+.Bf -symbolic
+Note: time zone information is no longer provided by this interface.
+See
+.Xr localtime 3
+for information on how to retrieve it.
+.Ef
+.Pp
+The system's notion of the current UTC time is obtained with the
+.Fn gettimeofday
+call, and set with the
+.Fn settimeofday
+call.
+The time is expressed in seconds and microseconds
+since midnight (0 hour), January 1, 1970.
+The resolution of the system clock is hardware dependent,
+and the time may be updated continuously or in
+.Dq ticks .
+.Pp
+If
+.Fa tp
+is NULL, the time will not be returned or set.
+Despite being declared
+.Fa void * ,
+the objects pointed to by
+.Fa tzp
+shall be of type
+.Fa struct timezone .
+.Pp
+The structures pointed to by
+.Fa tp
+and
+.Fa tzp
+are defined in
+.In sys/time.h .
+The first one is described in
+.Xr timeval 3
+and the latter legacy structure is defined as:
+.Bd -literal -offset indent
+struct timezone {
+	int	tz_minuteswest; /* of Greenwich */
+	int	tz_dsttime;	/* type of dst correction to apply */
+};
+.Ed
+.Pp
+The
+.Fa timezone
+structure is provided only for source compatibility.
+It is ignored by
+.Fn settimeofday ,
+and
+.Fn gettimeofday
+will always return zeroes.
+.Pp
+If the calling user is not the super-user, then the
+.Fn settimeofday
+function in the standard C library will try to use the
+.Xr clockctl 4
+device if present, thus making possible for non privileged users to
+set the system time.
+If
+.Xr clockctl 4
+is not present or not accessible, then
+.Fn settimeofday
+reverts to the
+.Fn settimeofday
+system call, which is restricted to the super user.
+.\" XXX uncomment when/if this is put into place!
+.\" If the system is running in secure mode (see
+.\" .Xr init 8 ),
+.\" the time may only be advanced.
+.\" This limitation is imposed to prevent a malicious super user
+.\" from setting arbitrary time stamps on files.
+.\" The system time can still be adjusted backwards using the
+.\" .Xr adjtime 2
+.\" system call even when the system is secure.
+.Sh RETURN VALUES
+A return value 0 indicates that the call succeeded.
+A return value \-1 indicates an error occurred, and in this
+case an error code is stored into the global variable
+.Va errno .
+.Sh ERRORS
+The following error codes may be set in
+.Va errno :
+.Bl -tag -width Er
+.It Bq Er EFAULT
+An argument address referenced invalid memory.
+.It Bq Er EPERM
+A user other than the super user attempted to set the time, or the specified
+time was less than the current time, which was not permitted at the current
+security level.
+.El
+.Sh SEE ALSO
+.Xr date 1 ,
+.Xr adjtime 2 ,
+.Xr ctime 3 ,
+.Xr localtime 3 ,
+.Xr clockctl 4 ,
+.Xr timed 8
+.Sh HISTORY
+The
+.Fn gettimeofday
+function call appeared in
+.Bx 4.2 .
+The
+.Fa tzp
+argument was deprecated in
+.Bx 4.4
+(and many other systems).

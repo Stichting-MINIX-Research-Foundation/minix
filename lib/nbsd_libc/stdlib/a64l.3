@@ -1,0 +1,133 @@
+.\" $NetBSD: a64l.3,v 1.10 2010/05/06 18:55:34 jruoho Exp $
+.\"
+.\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 6, 2010
+.Dt A64L 3
+.Os
+.Sh NAME
+.Nm a64l ,
+.Nm l64a ,
+.Nm l64a_r
+.Nd "convert between a long integer and a base-64 ASCII string"
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.Ft long
+.Fn a64l "const char *s"
+.Ft char *
+.Fn l64a "long int l"
+.Ft int
+.Fn l64a_r "long int l" "char *buffer" "int buflen"
+.Sh DESCRIPTION
+The
+.Fn a64l
+and
+.Fn l64a
+functions convert between a long integer and its base-64 ASCII string
+representation.
+.Pp
+The characters used to represent ``digits'' are
+`.' for 0,
+`/' for 1,
+`0' - `9' for 2 - 11,
+`A' - `Z' for 12 - 37, and
+`a' - `z' for 38 - 63.
+.Pp
+.Fn a64l
+takes a pointer to a NUL-terminated base-64 ASCII string
+representation,
+.Fa s ,
+and returns the corresponding long integer value.
+.Pp
+.Fn l64a
+takes a long integer value,
+.Fa l ,
+and returns a pointer to the corresponding NUL-terminated base-64
+ASCII string representation.
+.Pp
+.Fn l64a_r
+performs a conversion identical to that of
+.Fn l64a
+and stores the resulting representation in the memory area pointed to by
+.Fa buffer ,
+consuming at most
+.Fa buflen
+characters including the terminating NUL character.
+.Sh RETURN VALUES
+On successful completion,
+.Fn a64l
+returns the long integer value corresponding to the input string.
+If the string pointed to by
+.Fa s
+is an empty string,
+.Fn a64l
+returns a value of 0L.
+.Pp
+.Fn l64a
+returns a pointer to the base-64 ASCII string representation corresponding to
+the input value.
+If
+.Fa l
+is 0L,
+.Fn l64a
+returns a pointer to an empty string.
+.Pp
+On successful completion,
+.Fn l64a_r
+returns 0; if
+.Fa buffer
+is of insufficient length, -1 is returned.
+.Sh SEE ALSO
+.Xr strtol 3
+.Sh STANDARDS
+The
+.Fn a64l
+and
+.Fn l64a
+functions conform to
+.St -xpg4.2
+and
+.St -p1003.1-2004 .
+The
+.Fn l64a_r
+function conforms to
+.St -svid4 ,
+Multithreading Extension.
+.Sh BUGS
+The
+.Fn l64a
+function is not reentrant.
+The value returned by it points into a static buffer area;
+subsequent calls to
+.Fn la64a
+may overwrite this buffer.
+In multi-threaded applications,
+.Fn l64a_r
+should be used instead.

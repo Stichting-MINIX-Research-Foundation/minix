@@ -1,0 +1,129 @@
+.\"	$NetBSD: atomic_cas.3,v 1.2 2010/02/12 22:23:17 dyoung Exp $
+.\"
+.\" Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 11, 2010
+.Dt ATOMIC_CAS 3
+.Os
+.Sh NAME
+.Nm atomic_cas ,
+.Nm atomic_cas_32 ,
+.Nm atomic_cas_uint ,
+.Nm atomic_cas_ulong ,
+.Nm atomic_cas_ptr ,
+.Nm atomic_cas_64 ,
+.Nm atomic_cas_32_ni ,
+.Nm atomic_cas_uint_ni ,
+.Nm atomic_cas_ulong_ni ,
+.Nm atomic_cas_ptr_ni ,
+.Nm atomic_cas_64_ni
+.Nd atomic compare-and-swap operations
+.\" .Sh LIBRARY
+.\" .Lb libc
+.Sh SYNOPSIS
+.In sys/atomic.h
+.Ft uint32_t
+.Fn atomic_cas_32 "volatile uint32_t *ptr" "uint32_t old" "uint32_t new"
+.Ft unsigned int
+.Fn atomic_cas_uint "volatile unsigned int *ptr" "unsigned int old" \
+    "unsigned int new"
+.Ft unsigned long
+.Fn atomic_cas_ulong "volatile unsigned long *ptr" "unsigned long old" \
+    "unsigned long new"
+.Ft void *
+.Fn atomic_cas_ptr "volatile void *ptr" "void *old" "void *new"
+.Ft uint64_t
+.Fn atomic_cas_64 "volatile uint64_t *ptr" "uint64_t old" "uint64_t new"
+.Ft uint32_t
+.Fn atomic_cas_32_ni "volatile uint32_t *ptr" "uint32_t old" "uint32_t new"
+.Ft unsigned int
+.Fn atomic_cas_uint_ni "volatile unsigned int *ptr" "unsigned int old" \
+    "unsigned int new"
+.Ft unsigned long
+.Fn atomic_cas_ulong_ni "volatile unsigned long *ptr" "unsigned long old" \
+    "unsigned long new"
+.Ft void *
+.Fn atomic_cas_ptr_ni "volatile void *ptr" "void *old" "void *new"
+.Ft uint64_t
+.Fn atomic_cas_64_ni "volatile uint64_t *ptr" "uint64_t old" "uint64_t new"
+.Sh DESCRIPTION
+The
+.Nm atomic_cas
+family of functions perform a compare-and-swap operation in an atomic fashion.
+The value of the variable referenced by
+.Fa ptr
+is compared against
+.Fa old .
+If the values are equal,
+.Fa new
+is stored in the variable referenced by
+.Fa ptr .
+.Pp
+The old value of the variable referenced by
+.Fa ptr
+is always returned regardless of whether or not the new value was stored.
+Applications can test for success of the operation by comparing the
+return value to the value passed as
+.Fa old ;
+if they are equal then the new value was stored.
+.Pp
+The non-interlocked variants,
+.Fn *_ni ,
+guarantee atomicity within the same CPU with respect to
+interrupts and preemption.
+For example, they are suitable for synchronizing compare-and-swap
+operations on a variable shared by a thread and an interrupt
+that are bound to the same CPU.
+The
+.Fn *_ni
+variants are not atomic with respect to different CPUs.
+.Fn *_ni
+variants should avoid the interprocessor synchronization overhead
+of the standard compare-and-swap operations.
+.Pp
+The 64-bit variants of these functions are available only on platforms
+that can support atomic 64-bit memory access.
+Applications can check for the availability of 64-bit atomic memory
+operations by testing if the pre-processor macro
+.Dv __HAVE_ATOMIC64_OPS
+is defined.
+.Sh SEE ALSO
+.Xr atomic_ops 3
+.Sh HISTORY
+The
+.Nm atomic_cas
+functions first appeared in
+.Nx 5.0 .
+.Sh NOTES
+On some architectures, a
+.Fn *_ni
+variant is merely an alias for the corresponding standard
+compare-and-swap operation.
+While the non-interlocked variant behaves correctly on those
+architectures, it does not avoid the interprocessor synchronization
+overhead.

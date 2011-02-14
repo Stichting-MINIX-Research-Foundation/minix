@@ -1,0 +1,122 @@
+.\"	$NetBSD: getfh.2,v 1.21 2006/10/30 18:53:42 mjf Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
+.\"
+.Dd October 30, 2006
+.Dt GETFH 2
+.Os
+.Sh NAME
+.Nm getfh
+.Nd get file handle
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/types.h
+.In sys/mount.h
+.Ft int
+.Fn getfh "const char *path" "void *fhp" "size_t *fh_size"
+.Sh DESCRIPTION
+.Fn getfh
+returns a file handle for the specified file or directory
+in the file handle pointed to by
+.Fa fhp .
+The variable pointed to by
+.Fa fh_size
+has to be initialized to the memory allocated for the variable sized file
+handle.
+On return the value will be replaced by the actual size
+needed (which will vary depending on the file system the path is on).
+This system call is restricted to the superuser.
+To query the necessary size for the filehandle, a
+.Dv NULL
+pointer may
+be passed as
+.Fa fhp ,
+and the value pointed to by
+.Fa fh_size
+should be initialized to zero.
+.Sh RETURN VALUES
+Upon successful completion, a value of 0 is returned.
+Otherwise, \-1 is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn getfh
+fails if one or more of the following are true:
+.Bl -tag -width Er
+.It Bq Er ENOTDIR
+A component of the path prefix of
+.Fa path
+is not a directory.
+.It Bq Er ENAMETOOLONG
+The length of a component of
+.Fa path
+exceeds
+.Brq Dv NAME_MAX
+characters, or the length of
+.Fa path
+exceeds
+.Brq Dv PATH_MAX
+characters.
+.It Bq Er ENOENT
+The file referred to by
+.Fa path
+does not exist.
+.It Bq Er EACCES
+Search permission is denied for a component of the path prefix of
+.Fa path .
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating
+.Fa path .
+.It Bq Er EFAULT
+.Fa fhp
+points to an invalid address.
+.It Bq Er EIO
+An
+.Tn I/O
+error occurred while reading from or writing to the file system.
+.It Bq Er E2BIG
+The memory allocated for the file handle is too small.
+The size needed has been written to the variable pointed to by
+.Fa fh_size .
+.It Bq Er ENOMEM
+The kernel failed to allocate temporary memory to create a filehandle of the
+requested size.
+.El
+.Sh SEE ALSO
+.Xr fhstat 2 ,
+.Xr fhstatvfs 2 ,
+.Xr fhstatvfs1 2
+.Sh HISTORY
+The
+.Fn getfh
+function
+first appeared in
+.Bx 4.4 .

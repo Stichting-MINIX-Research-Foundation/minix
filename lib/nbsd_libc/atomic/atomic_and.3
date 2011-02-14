@@ -1,0 +1,95 @@
+.\"	$NetBSD: atomic_and.3,v 1.1 2008/06/23 10:22:40 ad Exp $
+.\"
+.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 11, 2007
+.Dt ATOMIC_AND 3
+.Os
+.Sh NAME
+.Nm atomic_and ,
+.Nm atomic_and_32 ,
+.Nm atomic_and_uint ,
+.Nm atomic_and_ulong ,
+.Nm atomic_and_64 ,
+.Nm atomic_and_32_nv ,
+.Nm atomic_and_uint_nv ,
+.Nm atomic_and_ulong_nv ,
+.Nm atomic_and_64_nv
+.Nd atomic logical
+.Sq and
+operations
+.\" .Sh LIBRARY
+.\" .Lb libc
+.Sh SYNOPSIS
+.In sys/atomic.h
+.Ft void
+.Fn atomic_and_32 "volatile uint32_t *ptr" "uint32_t bits"
+.Ft void
+.Fn atomic_and_uint "volatile unsigned int *ptr" "unsigned int bits"
+.Ft void
+.Fn atomic_and_ulong "volatile unsigned long *ptr" "unsigned long bits"
+.Ft void
+.Fn atomic_and_64 "volatile uint64_t *ptr" "uint64_t bits"
+.Ft uint32_t
+.Fn atomic_and_32_nv "volatile uint32_t *ptr" "uint32_t bits"
+.Ft unsigned int
+.Fn atomic_and_uint_nv "volatile unsigned int *ptr" "unsigned int bits"
+.Ft unsigned long
+.Fn atomic_and_ulong_nv "volatile unsigned long *ptr" "unsigned long bits"
+.Ft uint64_t
+.Fn atomic_and_64_nv "volatile uint64_t *ptr" "uint64_t bits"
+.Sh DESCRIPTION
+The
+.Nm atomic_and
+family of functions load the value of the variable referenced by
+.Fa ptr ,
+perform a logical
+.Sq and
+with the value
+.Fa bits ,
+and store the result back to the variable referenced by
+.Fa ptr
+in an atomic fashion.
+.Pp
+The
+.Fn *_nv
+variants of these functions return the new value.
+.Pp
+The 64-bit variants of these functions are available only on platforms
+that can support atomic 64-bit memory access.
+Applications can check for the availability of 64-bit atomic memory
+operations by testing if the pre-processor macro
+.Dv __HAVE_ATOMIC64_OPS
+is defined.
+.Sh SEE ALSO
+.Xr atomic_ops 3
+.Sh HISTORY
+The
+.Nm atomic_and
+functions first appeared in
+.Nx 5.0 .

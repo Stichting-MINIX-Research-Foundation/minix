@@ -1,0 +1,171 @@
+.\"	$NetBSD: timer_settime.2,v 1.6 2010/05/17 07:22:03 jruoho Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 17, 2010
+.Dt TIMER_SETTIME 2
+.Os
+.Sh NAME
+.Nm timer_settime ,
+.Nm timer_gettime ,
+.Nm timer_getoverrun
+.Nd process timer manipulation
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In time.h
+.Ft int
+.Fn timer_settime "timer_t timerid" "int flags" "const struct itimerspec * restrict tim" "struct itimerspec * restrict otim"
+.Ft int
+.Fn timer_gettime "timer_t timerid" "struct itimerspec *tim"
+.Ft int
+.Fn timer_getoverrun "timer_t timerid"
+.Sh DESCRIPTION
+The
+.Fn timer_settime
+sets the next expiration time of the timer with ID
+.Ar timerid
+to the
+.Fa it_value
+(see
+.Xr itimerspec 3 )
+specified in the
+.Ar tim
+argument.
+If the value is 0, the timer is disarmed.
+If the argument
+.Ar otim
+is not
+.Dv NULL
+the old timer settingas are returned.
+.Pp
+If the
+.Ar flags
+argument is set to
+.Dv TIMER_RELTIME
+then the expiration time is set to the value in nanoseconds specified
+in the
+.Ar tim
+argument from the time the call to
+.Fn timer_settime
+was made.
+If the
+.Ar flags
+argument is set to
+.Dv TIMER_ABSTIME
+then the expiration time is set to be equal to the difference between the
+clock associated with this timer, and the value specified in the
+.Ar tim
+argument.
+If that time has already passed, then the call succeeds, and the
+expiration notification occurs.
+.Pp
+If the
+.Fa it_interval
+of the
+.Ar tim
+argument is non-zero, then the timer reloads upon expiration.
+.Pp
+The
+.Fn timer_gettime
+function returns the current settings of the timer
+specified by the
+.Ar timerid
+argument in the
+.Ar tim
+argument.
+.Pp
+Only one notification event (signal) can be pending for a given timer
+and process.
+If a timer expires while the signal is still queued for delivery, then
+the overrun counter for that timer is increased.
+The counter can store values up to
+.Dv DELAYTIMER_MAX .
+When the signal is finally delivered to the process, then the
+.Fn timer_getoverrun
+function can be used to retrieve the overrun counter for the timer
+specified in the
+.Ar timerid
+argument.
+.Sh NOTES
+Expiration time values are always rounded up to the resolution of the timer,
+so a notification will never be sent before the requested time.
+Values returned in the
+.Ar otim
+argument of
+.Fn timer_settime
+or in the
+.Ar tim
+argment of
+.Fn timer_gettime
+are subject to the above rounding effect and might not exactly match the
+requested values by the user.
+.Sh RETURN VALUES
+If successful, the
+.Fn timer_gettime
+and
+.Fn timer_settime
+functions return 0, and the
+.Fn timer_getoverrun
+function returns the expiration overrun count for the specified timer.
+Otherwise, the functions return \-1, and set
+.Dv errno
+to indicate the error.
+.Sh ERRORS
+The
+.Fn timer_gettime ,
+.Fn timer_getoverrun ,
+and
+.Fn timer_settime
+functions will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The argument
+.Ar timerid
+does not correspond to a valid timer id as returned by
+.Fn timer_create
+or that timer id has been deleted by
+.Fn timer_delete .
+.El
+.Pp
+The
+.Fn timer_settime
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+A nanosecond field in the
+.Ar tim
+structure specified a value less than zero or greater than or equal to 10e9.
+.El
+.Sh SEE ALSO
+.Xr clock_gettime 2 ,
+.Xr timer_create 2 ,
+.Xr timer_delete 2
+.Sh STANDARDS
+.St -p1003.1b-93 ,
+.St -p1003.1i-95

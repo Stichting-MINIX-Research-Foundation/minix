@@ -1,0 +1,101 @@
+.\" $NetBSD: ptsname.3,v 1.5 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 25, 2004
+.Dt PTSNAME 3
+.Os
+.Sh NAME
+.Nm ptsname
+.Nd get the pathname of the slave pseudo-terminal device
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.Ft char *
+.Fn ptsname "int masterfd"
+.Sh DESCRIPTION
+The
+.Fn ptsname
+function returns the pathname of the slave pseudo-terminal device
+that corresponds to the master pseudo-terminal device associated with
+.Fa masterfd .
+The
+.Fn ptsname
+function is not reentrant or thread-safe.
+.Sh RETURN VALUES
+If successful,
+.Fn ptsname
+returns a pointer to a nul-terminated string containing the pathname
+of the slave pseudo-terminal device.
+If an error occurs
+.Fn ptsname
+will return
+.Dv NULL
+and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+The
+.Fn ptsname
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EACCESS
+the corresponding pseudo-terminal device could not be accessed.
+.It Bq Er EBADF
+.Fa masterfd
+is not a valid descriptor.
+.It Bq Er EINVAL
+.Fa masterfd
+is not associated with a master pseudo-terminal device.
+.El
+.Sh NOTES
+The error returns of
+.Fn ptsname
+are a
+.Nx
+extension.
+The
+.Fn ptsname
+function is equivalent to:
+.Bd -literal
+	struct ptmget pm;
+	return ioctl(masterfd, TIOCPTSNAME, \*[Am]pm) == -1 ? NULL : pm.ps;
+.Ed
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr grantpt 3 ,
+.Xr posix_openpt 3 ,
+.Xr unlockpt 3
+.Sh STANDARDS
+The
+.Fn ptsname
+function conforms to
+.St -p1003.1-2001 .
+Its first release was in
+.St -xpg4.2 .

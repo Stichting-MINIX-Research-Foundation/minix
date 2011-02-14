@@ -1,0 +1,86 @@
+#	$NetBSD: genassym.cf,v 1.2 2009/12/14 01:07:41 matt Exp $
+
+#
+# Copyright (c) 2001 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Matt Thomas <matt@3am-sfotware.com>.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <sys/types.h>
+include <machine/reg.h>
+include <machine/regnum.h>
+include <ucontext.h>
+include <signal.h>
+include <sys/siginfo.h>
+
+define _OFFSETOF_UC_GREGS	offsetof(ucontext_t, uc_mcontext.__gregs[0])
+define _OFFSETOF_UC_GREGS_V0	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_V0])
+define _OFFSETOF_UC_GREGS_SP	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_SP])
+define _OFFSETOF_UC_GREGS_EPC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EPC])
+define _OFFSETOF_UC_LINK	offsetof(ucontext_t, uc_link)
+define UCONTEXT_SIZE		sizeof(ucontext_t)
+
+define _OFFSETOF_SC_REGS	offsetof(struct sigcontext, sc_regs[0])
+define _OFFSETOF_SC_REGS_V0	offsetof(struct sigcontext, sc_regs[_R_V0])
+define _OFFSETOF_SC_REGS_S0	offsetof(struct sigcontext, sc_regs[_R_S0])
+define _OFFSETOF_SC_REGS_S1	offsetof(struct sigcontext, sc_regs[_R_S1])
+define _OFFSETOF_SC_REGS_S2	offsetof(struct sigcontext, sc_regs[_R_S2])
+define _OFFSETOF_SC_REGS_S3	offsetof(struct sigcontext, sc_regs[_R_S3])
+define _OFFSETOF_SC_REGS_S4	offsetof(struct sigcontext, sc_regs[_R_S4])
+define _OFFSETOF_SC_REGS_S5	offsetof(struct sigcontext, sc_regs[_R_S5])
+define _OFFSETOF_SC_REGS_S6	offsetof(struct sigcontext, sc_regs[_R_S6])
+define _OFFSETOF_SC_REGS_S7	offsetof(struct sigcontext, sc_regs[_R_S7])
+define _OFFSETOF_SC_REGS_S8	offsetof(struct sigcontext, sc_regs[_R_S8])
+define _OFFSETOF_SC_REGS_SP	offsetof(struct sigcontext, sc_regs[_R_SP])
+define _OFFSETOF_SC_REGS_GP	offsetof(struct sigcontext, sc_regs[_R_GP])
+define _OFFSETOF_SC_FPREGS	offsetof(struct sigcontext, sc_fpregs[0])
+define _OFFSETOF_SC_FPREGS_F20	offsetof(struct sigcontext, sc_fpregs[20])
+define _OFFSETOF_SC_FPREGS_F21	offsetof(struct sigcontext, sc_fpregs[21])
+define _OFFSETOF_SC_FPREGS_F22	offsetof(struct sigcontext, sc_fpregs[22])
+define _OFFSETOF_SC_FPREGS_F23	offsetof(struct sigcontext, sc_fpregs[23])
+define _OFFSETOF_SC_FPREGS_F24	offsetof(struct sigcontext, sc_fpregs[24])
+define _OFFSETOF_SC_FPREGS_F25	offsetof(struct sigcontext, sc_fpregs[25])
+define _OFFSETOF_SC_FPREGS_F26	offsetof(struct sigcontext, sc_fpregs[26])
+define _OFFSETOF_SC_FPREGS_F27	offsetof(struct sigcontext, sc_fpregs[27])
+define _OFFSETOF_SC_FPREGS_F28	offsetof(struct sigcontext, sc_fpregs[28])
+define _OFFSETOF_SC_FPREGS_F29	offsetof(struct sigcontext, sc_fpregs[29])
+define _OFFSETOF_SC_FPREGS_F30	offsetof(struct sigcontext, sc_fpregs[30])
+define _OFFSETOF_SC_FPREGS_F31	offsetof(struct sigcontext, sc_fpregs[31])
+define _OFFSETOF_SC_FPREGS_FCSR	offsetof(struct sigcontext, sc_fpregs[32])
+define _OFFSETOF_SC_PC		offsetof(struct sigcontext, sc_pc)
+define _OFFSETOF_SC_MASK	offsetof(struct sigcontext, sc_mask)
+define _OFFSETOF_SC_MASK13	offsetof(struct sigcontext, __sc_mask13)
+define _OFFSETOF_SC_ONSTACK	offsetof(struct sigcontext, sc_onstack)
+define _OFFSETOF_SC_FPUSED	offsetof(struct sigcontext, sc_fpused)
+
+define SIGINFO_SIZE		sizeof(siginfo_t)
+
+define STACK_T_SIZE		((sizeof(stack_t) + 2 * sizeof(register_t) - 1) & -(2 * sizeof(register_t)))
+define _OFFSETOF_STACK_T_SP	offsetof(stack_t, ss_sp)
+define _OFFSETOF_STACK_T_SIZE	offsetof(stack_t, ss_size)
+define _OFFSETOF_STACK_T_FLAGS	offsetof(stack_t, ss_flags)
+
+define SS_ONSTACK		SS_ONSTACK

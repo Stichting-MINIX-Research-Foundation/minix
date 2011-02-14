@@ -1,0 +1,138 @@
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Chris Torek and the American National Standards Committee X3,
+.\" on Information Processing Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)strcat.3	8.1 (Berkeley) 6/4/93
+.\"	$NetBSD: strcat.3,v 1.16 2006/10/16 08:48:45 wiz Exp $
+.\"
+.Dd August 11, 2002
+.Dt STRCAT 3
+.Os
+.Sh NAME
+.Nm strcat ,
+.Nm strncat
+.Nd concatenate strings
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In string.h
+.Ft char *
+.Fn strcat "char * restrict s" "const char * restrict append"
+.Ft char *
+.Fn strncat "char * restrict s" "const char * restrict append" "size_t count"
+.Sh DESCRIPTION
+The
+.Fn strcat
+and
+.Fn strncat
+functions
+append a copy of the nul-terminated string
+.Fa append
+to the end of the nul-terminated string
+.Fa s ,
+then add a terminating
+.Ql \e0 .
+The string
+.Fa s
+must have sufficient space to hold the result.
+.Pp
+The
+.Fn strncat
+function
+appends not more than
+.Fa count
+characters where space for the terminating
+.Ql \e0
+should not be included in
+.Fa count .
+.Sh RETURN VALUES
+The
+.Fn strcat
+and
+.Fn strncat
+functions
+return the pointer
+.Fa s .
+.Sh EXAMPLES
+The following appends
+.Dq Li abc
+to
+.Dq Li chararray :
+.Bd -literal -offset indent
+char *letters = "abcdefghi";
+
+(void)strncat(chararray, letters, 3);
+.Ed
+.Pp
+The following example shows how to use
+.Fn strncat
+safely in conjunction with
+.Xr strncpy 3 .
+.Bd -literal -offset indent
+char buf[BUFSIZ];
+char *input, *suffix;
+
+(void)strncpy(buf, input, sizeof(buf) - 1);
+buf[sizeof(buf) - 1] = '\e0';
+(void)strncat(buf, suffix, sizeof(buf) - 1 - strlen(buf));
+.Ed
+.Pp
+The above will copy as many characters from
+.Dq Li input
+to
+.Dq Li buf
+as will fit.
+It then appends as many characters from suffix as will fit (or none
+if there is no space).
+For operations like this, the
+.Xr strlcpy 3
+and
+.Xr strlcat 3
+functions are a better choice, as shown below.
+.Bd -literal -offset indent
+(void)strlcpy(buf, input, sizeof(buf));
+(void)strlcat(buf, suffix, sizeof(buf));
+.Ed
+.Sh SEE ALSO
+.Xr bcopy 3 ,
+.Xr memccpy 3 ,
+.Xr memcpy 3 ,
+.Xr memmove 3 ,
+.Xr strcpy 3 ,
+.Xr strlcat 3 ,
+.Xr strlcpy 3
+.Sh STANDARDS
+The
+.Fn strcat
+and
+.Fn strncat
+functions
+conform to
+.St -isoC-99 .

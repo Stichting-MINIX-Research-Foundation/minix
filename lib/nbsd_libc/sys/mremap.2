@@ -1,0 +1,109 @@
+.\"	$NetBSD: mremap.2,v 1.3 2008/02/16 17:45:39 tnn Exp $
+.\"
+.\" Copyright (c) 2007 Thomas Klausner and Joerg Sonnenberger
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd February 14, 2008
+.Dt MREMAP 2
+.Os
+.Sh NAME
+.Nm mremap
+.Nd re-map a virtual memory address
+.\" ------------------------------------------------------------
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/mman.h
+.Ft void *
+.Fn mremap "void *oldp" "size_t oldsize" "void *newp" "size_t newsize" \
+"int flags"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+The
+.Fn mremap
+function resizes the mapped range (see
+.Xr mmap 2 )
+starting at
+.Ar oldp
+and having size
+.Ar oldsize
+to
+.Ar newsize .
+The following arguments can be
+.Dv OR Ap ed
+together in the
+.Ar flags
+argument:
+.Bl -tag -width XXMAPXALIGNEDXnXX
+.It Dv MAP_ALIGNED Ns Pq Ar n
+The allocation should be aligned to the given boundary, i.e. ensure
+that the lowest
+.Ar n
+bits of the address are zero.
+The parameter
+.Ar n
+should be the base 2 logarithm of the desired alignment (e.g., to
+request alignment to 16K, use 14 as the value for n).
+The alignment must be equal to or greater than the platform's page
+size as returned by
+.Xr sysconf 3
+with the
+.Dv _SC_PAGESIZE
+request.
+.It Dv MAP_FIXED
+.Ar newp
+is tried and
+.Fn mremap
+fails if that address can't be used as new base address for the range.
+Otherwise,
+.Ar oldp
+and
+.Ar newp
+are used as hints for the position, factoring in the given alignment.
+.El
+.Sh RETURN VALUES
+.Fn mremap
+returns the new address or
+.Dv MAP_FAILED ,
+if the remap failed.
+.Sh HISTORY
+The 
+.Fn mremap
+system call appeared in
+.Nx 5.0 .
+It was based on the code that supports
+.Fn mremap
+compatibility for Linux binaries.
+.Sh COMPATIBILITY
+The semantics of
+.Fn mremap
+differ from the one provided by glibc on Linux in that the
+.Ar newp
+argument was added and a different set of
+.Ar flags
+are implemented.
+.Sh SEE ALSO
+.Xr mmap 2 ,
+.Xr munmap 2

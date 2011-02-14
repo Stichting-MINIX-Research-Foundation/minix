@@ -1,0 +1,61 @@
+.\"	$NetBSD: _lwp_exit.2,v 1.5 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of Wasabi Systems, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 13, 2003
+.Dt _LWP_EXIT 2
+.Os
+.Sh NAME
+.Nm _lwp_exit
+.Nd terminate the calling light-weight process
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In lwp.h
+.Ft void
+.Fn _lwp_exit void
+.Sh DESCRIPTION
+.Fn _lwp_exit
+terminates the calling LWP.
+If it is the last LWP in the process, the process exits with a status of 0.
+If the LWP was not created in a detached state, then the system will not
+reclaim its LWP ID until its status is reported to another LWP in the process
+via
+.Xr _lwp_wait 2 .
+.Sh RETURN VALUES
+.Fn _lwp_exit
+can never return.
+.Sh SEE ALSO
+.Xr _exit 2 ,
+.Xr _lwp_create 2 ,
+.Xr _lwp_wait 2
+.Sh HISTORY
+The
+.Fn _lwp_exit
+system call first appeared in
+.Nx 2.0 .

@@ -1,0 +1,118 @@
+.\"	$NetBSD: cpuset.3,v 1.3 2008/09/12 13:39:04 rmind Exp $
+.\"
+.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Mindaugas Rasiukevicius <rmind at NetBSD org>.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 12, 2008
+.Dt CPUSET 3
+.Os
+.Sh NAME
+.Nm cpuset_create ,
+.Nm cpuset_destroy ,
+.Nm cpuset_zero ,
+.Nm cpuset_set ,
+.Nm cpuset_clr ,
+.Nm cpuset_isset ,
+.Nm cpuset_size
+.Nd dynamic CPU sets
+.Sh SYNOPSIS
+.In sched.h
+.Ft cpuset_t
+.Fn cpuset_create "void"
+.Ft void
+.Fn cpuset_destroy "cpuset_t *set"
+.Ft void
+.Fn cpuset_zero "cpuset_t *set"
+.Ft int
+.Fn cpuset_set "cpuid_t cpu" "cpuset_t *set"
+.Ft int
+.Fn cpuset_clr "cpuid_t cpu" "cpuset_t *set"
+.Ft int
+.Fn cpuset_isset "cpuid_t cpu" "const cpuset_t *set"
+.Ft size_t
+.Fn cpuset_size "const cpuset_t *set"
+.Sh DESCRIPTION
+This section describes the functions used to create, set, use and destroy
+the dynamic CPU sets.
+.Pp
+This API can be used with the POSIX threads, see
+.Xr pthread 3
+and
+.Xr affinity 3 .
+.Pp
+The ID of the primary CPU in the system is 0.
+.Sh FUNCTIONS
+.Bl -tag -width compact
+.It Fn cpuset_create
+Allocates and initializes a clean CPU-set.
+Returns the pointer to the CPU-set, or
+.Dv NULL
+on failure.
+.It Fn cpuset_destroy set
+Destroy the CPU-set specified by
+.Fa set .
+.It Fn cpuset_zero set
+Makes the CPU-set specified by
+.Fa set
+clean, that is, memory is initialized to zero bytes, and none of
+the CPUs set.
+.It Fn cpuset_set cpu set
+Sets the CPU specified by
+.Fa cpu
+in
+.Fa set .
+Returns zero on success, and \-1 if
+.Fa cpu
+is invalid.
+.It Fn cpuset_clr cpu set
+Clears the CPU specified by
+.Fa cpu
+in the CPU-set
+.Fa set .
+Returns zero on success, and \-1 if
+.Fa cpu
+is invalid.
+.It Fn cpuset_isset cpu set
+Checks if CPU specified by
+.Fa cpu
+is set in the CPU-set
+.Fa set .
+Returns the positive number if set, zero if not set, and \-1 if
+.Fa cpu
+is invalid.
+.It Fn cpuset_size set
+Returns the size in bytes of CPU-set specified by
+.Fa set .
+.El
+.Sh SEE ALSO
+.Xr affinity 3 ,
+.Xr pset 3 ,
+.Xr sched 3 ,
+.Xr schedctl 8
+.Sh HISTORY
+The dynamic CPU sets appeared in
+.Nx 5.0 .

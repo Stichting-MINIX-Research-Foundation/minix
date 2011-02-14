@@ -1,0 +1,150 @@
+.\"	$NetBSD: strsuftoll.3,v 1.11 2010/12/14 13:00:34 jruoho Exp $
+.\"
+.\" Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 14, 2010
+.Dt STRSUFTOLL 3
+.Os
+.Sh NAME
+.Nm strsuftoll ,
+.Nm strsuftollx
+.Nd "convert a string to a long long, with suffix parsing"
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In stdlib.h
+.Ft long long
+.Fn strsuftoll "const char *desc" "const char *val" "long long min" "long long max"
+.Ft long long
+.Fn strsuftollx "const char *desc" "const char *val" "long long min" "long long max" "char *errbuf" "size_t errbuflen"
+.Sh DESCRIPTION
+The functions
+.Fn strsuftoll
+and
+.Fn strsuftollx
+convert
+.Fa val
+into a number of type
+.Vt long long ,
+checking that the result is not smaller than
+.Fa min
+or larger than
+.Fa max .
+Two or more decimal numbers may be separated by an
+.Dq x
+to indicate a product.
+.Pp
+Each decimal number may have one of the following optional suffixes:
+.Pp
+.Bl -tag -width 3n -offset indent -compact
+.It Em b
+Block; multiply by 512
+.It Em k
+Kibi; multiply by 1024 (1 KiB)
+.It Em m
+Mebi; multiply by 1048576 (1 MiB)
+.It Em g
+Gibi; multiply by 1073741824 (1 GiB)
+.It Em t
+Tebi; multiply by 1099511627776 (1 TiB)
+.It Em w
+Word; multiply by the number of bytes in an integer
+.El
+.Pp
+In the case of an error (range overflow or an invalid number),
+.Fn strsuftollx
+places an error message into
+.Fa errbuf
+(which is
+.Fa errbuflen
+bytes long) and returns 0,
+and
+.Fn strsuftoll
+displays that error and terminates the process.
+The parameter
+.Fa desc
+is used to construct
+.Fa errbuf .
+.Pp
+Neither
+.Fa desc
+nor
+.Fa val
+may be
+.Dv NULL .
+.Sh RETURN VALUES
+The functions
+.Fn strsuftoll
+and
+.Fn strsuftollx
+return either the result of the conversion,
+unless the value overflows or is not a number;
+in the latter case,
+.Fn strsuftoll
+displays an error message and terminates the process with exit code
+.Dv EXIT_FAILURE ,
+and
+.Fn strsuftollx
+returns with 0 and
+.Fa errbuf
+contains a non-empty error message.
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er ERANGE
+The given string was out of range; the value converted has been clamped.
+.El
+.Sh SEE ALSO
+.Xr errx 3 ,
+.Xr strtoll 3 ,
+.Xr orders 7
+.Sh BUGS
+At least few limitations should be mentioned:
+.Bl -bullet
+.It
+Both functions ignore the current locale.
+.It
+Neither
+.Fn strsuftoll
+nor
+.Fn strsuftollx
+fail gracefully in case of invalid,
+.Dv NULL ,
+pointers.
+.It
+Arguably the return type should be
+.Vt intmax_t
+instead of
+.Vt long long .
+.It
+The
+.Fn strsuftollx
+function is prone to buffer overflows if used incorrectly.
+Arguably only
+.Fn strsuftoll
+should be exposed to a caller.
+.El

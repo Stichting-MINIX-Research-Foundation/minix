@@ -1,0 +1,279 @@
+.\"	$NetBSD: modctl.2,v 1.8 2010/12/14 16:23:59 jruoho Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 14, 2010
+.Dt MODCTL 2
+.Os
+.Sh NAME
+.Nm modctl
+.Nd module control
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/module.h
+.Ft int
+.Fn modctl "int operation" "void *argp"
+.Sh DESCRIPTION
+.Fn modctl
+provides control over loaded kernel modules.
+The argument
+.Fa operation
+is one of
+.Dv MODCTL_LOAD ,
+.Dv MODCTL_UNLOAD ,
+or
+.Dv MODCTL_STAT .
+The argument
+.Fa argp
+depends on the
+.Fa operation
+to be performed.
+.Pp
+Operations are:
+.Bl -tag -width MODCTL_UNLOAD
+.It Dv MODCTL_LOAD
+Load a module.
+The
+.Fa argp
+argument should be a pointer to a
+.Em modctl_load_t
+structure, described below.
+.It Dv MODCTL_UNLOAD
+Unload a module.
+In this case,
+.Fa argp
+should be a string containing the name of the module to be unloaded.
+.It Dv MODCTL_STAT
+Return a list of loaded modules.
+In this case, the
+.Fa argp
+argument should be a
+.Em struct iovec
+pointing to a suitable block of memory.
+The kernel will fill this block with an array of
+.Em modstat_t
+structures, one per loaded module.
+If the block is not large enough, the data returned will be truncated
+to fit.
+The kernel will then update the
+.Fa iov_len
+member of the
+.Em iovec
+to reflect the size of the complete report, regardless of whether this
+is larger or smaller than the size passed in.
+.El
+.Ss Data Types
+The
+.Em modctl_load_t
+structure used with
+.Dv MODCTL_LOAD
+contains the following elements, which should be filled in by the caller:
+.Bl -tag -width aaaaaaaa
+.It Fa "const char *ml_filename"
+The name/path of the module to load.
+.It Fa "int ml_flags"
+Zero or more of the following flag values:
+.Bl -tag -compact -width "MODCTL_LOAD_FORCE"
+.It Dv MODCTL_NO_PROP
+Don't load \*[Lt]module\*[Gt].plist.
+.It Dv MODCTL_LOAD_FORCE
+Ignore kernel version mismatch.
+.El
+.It Fa "const char *ml_props"
+Externalized proplib dictionary to pass to module.
+.It Fa "size_t ml_propslen"
+Size of the dictionary blob.
+.Fa ml_props
+may be
+.Dv NULL
+in which case
+.Fa ml_propslen
+must be
+.Dv 0 .
+.El
+.Pp
+The
+.Em modstat_t
+structure used with
+.Dv MODCTL_STAT
+contains the following elements, which are filled in by the kernel:
+.Bl -tag -width aaaaaaaa
+.It Fa "char ms_name[MAXMODNAME]"
+The name of the module.
+.It Fa "char ms_required[MAXMODNAME * MAXMODDEPS]"
+The list of modules required by this module
+as a comma-delimited list of module names.
+.It Fa "modsrc_t ms_source"
+One of the following enumerated constants:
+.Bl -tag -compact -width "MODULE_SOURCE_FILESYS"
+.It Dv MODULE_SOURCE_KERNEL
+The module is compiled into the kernel.
+.It Dv MODULE_SOURCE_BOOT
+The module was provided by the bootstrap loader.
+.It Dv MODULE_SOURCE_FILESYS
+The module was loaded from the file system.
+.El
+.It Fa "modclass_t ms_class"
+One of the following enumerated constants:
+.Bl -tag -compact -width "MODULE_SOURCE_FILESYS"
+.It Dv MODULE_CLASS_SECMODEL
+Security model.
+.It Dv MODULE_CLASS_VFS
+File system.
+.It Dv MODULE_CLASS_DRIVER
+Device driver.
+.It Dv MODULE_CLASS_EXEC
+Executable file format.
+.It Dv MODULE_CLASS_MISC
+Miscellaneous.
+.It Dv MODULE_CLASS_ANY
+Any module class.
+.\" XXX: is MODULE_CLASS_ANY ever returned by this interface?
+.El
+.It Fa "uint64_t ms_addr"
+The load address within the kernel.
+.It Fa "u_int ms_size"
+Loaded size of the module.
+.It Fa "u_int ms_refcnt"
+Current number of live references to this module.
+.El
+.Sh RETURN VALUES
+Upon successful completion, the value returned is 0.
+.Pp
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn modctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBUSY
+The argument
+.Fa operation
+is
+.Dv MODCTL_UNLOAD
+and the module is in use or the module is compiled into the kernel.
+.It Bq Er EDEADLK
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD
+and there is a circular dependency in the module's dependency chain.
+.It Bq Er EEXIST
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD
+and the module is already loaded.
+.It Bq Er EFAULT
+A bad address was given for
+.Fa argp .
+.It Bq Er EFBIG
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD ,
+the specified module resides in the file system, and the module's default
+proplib file was too large.
+.It Bq Er EINVAL
+The argument
+.Fa operation
+is invalid.
+.Pp
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD
+and ml_props is not
+.Dv NULL
+and
+.Dq ml_propslen
+is
+.Dv 0 ,
+or
+ml_props is
+.Dv NULL
+and
+.Dq ml_propslen
+is not
+.Dv 0 .
+The kernel is unable to internalize the plist.
+Or, there is a problem with the module or \*[Lt]module\*[Gt].plist.
+.It Bq Er EMLINK
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD
+and the module has too many dependencies.
+.It Bq Er ENAMETOOLONG
+A module name/path is too long.
+.It Bq Er ENOENT
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD
+and the module or a dependency can't be found.
+The argument
+.Fa operation
+is
+.Dv MODCTL_UNLOAD
+and no module by the name of
+.Fa argp
+is loaded.
+.It Bq Er ENOEXEC
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD
+and the module is not a valid object for the system.
+.It Bq Er ENOMEM
+There was not enough memory to perform the
+.Fa operation .
+.It Bq Er EPERM
+Not allowed to perform the
+.Fa operation .
+.It Bq Er EPROGMISMATCH
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD ,
+the
+.Fa ml_flags
+field in the
+.Em modctl_load_t
+structure does not include
+.Dv MODCTL_LOAD_FORCE ,
+and the requested module does not match the current kernel's version
+information.
+.El
+.Sh SEE ALSO
+.Xr module 7 ,
+.Xr module 9
+.Sh HISTORY
+The
+.Fn modctl
+function call first appeared in
+.Nx 5.0 .

@@ -1,0 +1,98 @@
+.\" $NetBSD: strings.3,v 1.1 2007/02/17 09:32:58 wiz Exp $
+.\"
+.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 17, 2007
+.Dt STRINGS 3
+.Os
+.Sh NAME
+.Nm bcmp ,
+.Nm bcopy ,
+.Nm bzero ,
+.Nm ffs ,
+.Nm index ,
+.Nm rindex ,
+.Nm strcasecmp ,
+.Nm strncasecmp
+.Nd string operations
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In strings.h
+.Ft int
+.Fn bcmp "const void *b1" "const void *b2" "size_t len"
+.Ft void
+.Fn bcopy "const void *src" "void *dst" "size_t len"
+.Ft void
+.Fn bzero "void *b" "size_t len"
+.Ft int
+.Fn ffs "int value"
+.Ft char *
+.Fn index "const char *s" "int c"
+.Ft char *
+.Fn rindex "const char *s" "int c"
+.Ft int
+.Fn strcasecmp "const char *s1" "const char *s2"
+.Ft int
+.Fn strncasecmp "const char *s1" "const char *s2" "size_t len"
+.Sh DESCRIPTION
+These functions all live in the
+.Pa strings.h
+header file.
+Except for
+.Fn ffs ,
+they operate on strings.
+.Fn index ,
+.Fn rindex ,
+and
+.Fn strcasecmp
+need nul-terminated strings.
+.Pp
+See the specific manual pages for more information.
+.Pp
+See
+.Xr string 3
+for string functions that follow
+.St -ansiC
+or
+.St -isoC-99 ,
+.Xr bstring 3
+for functions that operate on strings that are not nul-terminated, and
+.Xr bitstring 3
+for bit-string manipulation macros.
+.Sh SEE ALSO
+.Xr bcmp 3 ,
+.Xr bcopy 3 ,
+.Xr bitstring 3 ,
+.Xr bstring 3 ,
+.Xr bzero 3 ,
+.Xr ffs 3 ,
+.Xr index 3 ,
+.Xr rindex 3 ,
+.Xr strcasecmp 3 ,
+.Xr string 3

@@ -1,0 +1,140 @@
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)sigsetmask.2	8.1 (Berkeley) 6/2/93
+.\"	$NetBSD: sigsetmask.3,v 1.18 2003/08/07 16:42:40 agc Exp $
+.\"
+.Dd August 10, 2002
+.Dt SIGSETMASK 3
+.Os
+.Sh NAME
+.Nm sigsetmask
+.Nd set current signal mask
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In signal.h
+.Ft int
+.Fn sigsetmask "int mask"
+.Fn sigmask signum
+.Sh DESCRIPTION
+.Bf -symbolic
+This interface is made obsolete by:
+.Ef
+.Xr sigprocmask 2 .
+.Pp
+.Fn sigsetmask
+sets the current signal mask
+Signals are blocked from delivery if the
+corresponding bit in
+.Fa mask
+is a 1; the macro
+.Fn sigmask
+is provided to construct the mask for a given
+.Fa signum .
+.Pp
+The system
+quietly disallows
+.Dv SIGKILL
+or
+.Dv SIGSTOP
+to be blocked.
+.Sh RETURN VALUES
+The previous set of masked signals is returned.
+.Sh EXAMPLES
+The following example using
+.Fn sigsetmask :
+.Bd -literal -offset indent
+int omask;
+
+omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+
+\&...
+
+sigsetmask(omask & ~(sigmask(SIGINT) | sigmask(SIGHUP)));
+.Ed
+.Pp
+Could be converted literally to:
+.Bd -literal -offset indent
+sigset_t set, oset;
+
+sigemptyset(&set);
+sigaddset(&set, SIGINT);
+sigaddset(&set, SIGHUP);
+sigprocmask(SIG_BLOCK, &set, &oset);
+
+\&...
+
+sigdelset(&oset, SIGINT);
+sigdelset(&oset, SIGHUP);
+sigprocmask(SIG_SETMASK, &oset, NULL);
+.Ed
+.Pp
+Another, clearer, alternative is:
+.Bd -literal -offset indent
+sigset_t set;
+
+sigemptyset(&set);
+sigaddset(&set, SIGINT);
+sigaddset(&set, SIGHUP);
+sigprocmask(SIG_BLOCK, &set, NULL);
+
+\&...
+
+sigprocmask(SIG_UNBLOCK, &set, NULL);
+.Ed
+.Pp
+To completely clear the signal mask using
+.Fn sigsetmask
+one can do:
+.Bd -literal -offset indent
+(void) sigsetmask(0);
+.Ed
+.Pp
+Which can be expressed via
+.Xr sigprocmask 2
+as:
+.Bd -literal -offset indent
+sigset_t eset;
+
+sigemptyset(&eset);
+(void) sigprocmask(SIG_SETMASK, &eset, NULL);
+.Ed
+.Sh SEE ALSO
+.Xr kill 2 ,
+.Xr sigaction 2 ,
+.Xr sigprocmask 2 ,
+.Xr sigsuspend 2 ,
+.Xr sigblock 3 ,
+.Xr sigsetops 3 ,
+.Xr sigvec 3
+.Sh HISTORY
+The
+.Fn sigsetmask
+function call appeared in
+.Bx 4.2
+and has been deprecated.

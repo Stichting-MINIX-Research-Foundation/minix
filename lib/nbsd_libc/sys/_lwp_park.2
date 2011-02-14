@@ -1,0 +1,146 @@
+.\"	$NetBSD: _lwp_park.2,v 1.7 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of Wasabi Systems, Inc, and by Andrew Doran.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 25, 2007
+.Dt _LWP_PARK 2
+.Os
+.Sh NAME
+.Nm _lwp_park
+.Nd wait interruptably in the kernel
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In lwp.h
+.Ft int
+.Fn _lwp_park "const struct timespec *abstime" "lwpid_t unpark" "const void *hint" "const void *unparkhint"
+.Sh DESCRIPTION
+.Fn _lwp_park
+can be used to synchronize access to resources among multiple light-weight
+processes.
+It causes the calling LWP to wait interruptably in the kernel, until one
+of the following conditions is met:
+.Bl -bullet
+.It
+The
+.Fa abstime
+argument is non-NULL, and the absolute UTC time it specifies has passed.
+.It
+The LWP receives a directed signal posted using
+.Fn _lwp_kill ,
+or is elected to handle a signal on behalf of its containing process.
+.It
+The LWP is awoken by another LWP in the same process that has made
+a call to
+.Fn _lwp_wakeup .
+.It
+The LWP is awoken by another LWP in the same process that has made
+a call to
+.Fn _lwp_unpark
+or
+.Fn _lwp_unpark_all .
+.El
+.Pp
+The preferred method to awaken an LWP sleeping as a result of a call
+to
+.Fn _lwp_park
+is to make a call to
+.Fn _lwp_unpark ,
+or
+.Fn _lwp_unpark_all .
+The
+.Fn _lwp_wakeup
+system call is a more general facility, and requires more resources
+to execute.
+.Pp
+The optional
+.Fa hint
+argument specifies the address of object upon which the LWP is
+synchronizing.
+When the
+.Fa hint
+value is matched between calls to
+.Fn _lwp_park
+and
+.Fn _lwp_unpark
+or
+.Fn _lwp_unpark_all ,
+it may reduce the time necessary for the system to resume execution
+of waiting LWPs.
+.Pp
+The
+.Fa unpark
+and
+.Fa unparkhint
+arguments can be used to fold a park operation and unpark operation into a
+single system call.
+If
+.Fa unpark
+is non-zero, the system will behave as if the following call had been made
+before the calling thread begins to wait:
+.Bd -literal
+	_lwp_unpark(unpark, unparkhint);
+.Ed
+.Sh RETURN VALUES
+.Fn _lwp_park
+may return a value of 0.
+Otherwise, \-1 is returned and
+.Va errno
+is set to provide more information.
+.Sh ERRORS
+.Bl -tag -width [EINVAL]
+.It Bq Er EALREADY
+A request was made to wake the LWP before it began to wait in
+the kernel.
+.It Bq Er EINTR
+The LWP has been awoken by a signal or by a call to one of the
+following functions:
+.Fn _lwp_unpark ,
+.Fn _lwp_unpark_all ,
+.Fn _lwp_wakeup .
+.It Bq Er EINVAL
+The time value specified by
+.Fa abstime
+is invalid.
+.It Bq Er ESRCH
+No LWP can be found in the current process corresponding to
+.Fa unpark .
+.It Bq Er ETIMEDOUT
+The UTC time specified by
+.Fa abstime
+has passed.
+.El
+.Sh SEE ALSO
+.Xr _lwp_unpark 2 ,
+.Xr _lwp_unpark_all 2 ,
+.Xr _lwp_wakeup 2
+.Sh HISTORY
+The
+.Fn _lwp_park
+system call first appeared in
+.Nx 5.0 .
