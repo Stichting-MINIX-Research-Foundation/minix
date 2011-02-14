@@ -133,10 +133,18 @@ _PROTOTYPE( int tcgetattr, (int _filedes, struct termios *_termios_p)        );
 _PROTOTYPE( int tcsetattr, \
 	(int _filedes, int _opt_actions, const struct termios *_termios_p)   );
 
+#ifndef cfgetispeed
 #define cfgetispeed(termios_p)		((termios_p)->c_ispeed)
+#endif
+#ifndef cfgetospeed
 #define cfgetospeed(termios_p)		((termios_p)->c_ospeed)
+#endif
+#ifndef cfsetispeed
 #define cfsetispeed(termios_p, speed)	((termios_p)->c_ispeed = (speed), 0)
+#endif
+#ifndef cfsetospeed
 #define cfsetospeed(termios_p, speed)	((termios_p)->c_ospeed = (speed), 0)
+#endif
 
 #ifdef _MINIX
 /* Here are the local extensions to the POSIX standard for Minix. Posix
