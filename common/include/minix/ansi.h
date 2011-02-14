@@ -69,8 +69,10 @@
 #define _POSIX_SOURCE	1
 #endif
 
+#ifndef __NBSD_LIBC
 /* What is a va_list? */
 #include <stdarg.h>
 #define _BSD_VA_LIST_ va_list
+#endif /* !__NBSD_LIBC */
 
 #endif /* _MINIX_ANSI_H */

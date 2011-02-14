@@ -74,6 +74,9 @@ struct termios {
 #define VSTART               9	/* cc_c[VSTART] = START char (^S) */
 #define VSTOP               10	/* cc_c[VSTOP] = STOP char (^Q) */
 
+#ifdef __NBSD_LIBC
+/* This is defined in <unistd.h> in NetBSD headers.
+#else /* !__NBSD_LIBC */
 #define _POSIX_VDISABLE	  (cc_t)0xFF	/* You can't even generate this 
 					 * character with 'normal' keyboards.
 					 * But some language specific keyboards
@@ -81,6 +84,7 @@ struct termios {
 					 * 256 are used, so cc_t should be a
 					 * short...
 					 */
+#endif /* !__NBSD_LIBC */
 
 /* Values for the baud rate settings.  POSIX Table 7-6. */
 #define B0		0x0000	/* hang up the line */
