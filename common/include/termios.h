@@ -75,7 +75,7 @@ struct termios {
 #define VSTOP               10	/* cc_c[VSTOP] = STOP char (^Q) */
 
 #ifdef __NBSD_LIBC
-/* This is defined in <unistd.h> in NetBSD headers.
+/* This is defined in <unistd.h> in NetBSD headers. */
 #else /* !__NBSD_LIBC */
 #define _POSIX_VDISABLE	  (cc_t)0xFF	/* You can't even generate this 
 					 * character with 'normal' keyboards.
