@@ -1,0 +1,39 @@
+diff -ru /home/netbsd/src/common/lib/libc/Makefile.inc ./Makefile.inc
+--- /home/netbsd/src/common/lib/libc/Makefile.inc	2008-10-27 03:01:48.000000000 +0000
++++ ./Makefile.inc	2011-02-15 13:10:57.000000000 +0000
+@@ -1,7 +1,11 @@
+ # $NetBSD: Makefile.inc,v 1.10 2008/10/26 07:22:50 mrg Exp $
+ 
+ COMMON_DIR:=${.PARSEDIR}
++.if defined(__MINIX)
++COMMON_CODEDIRS=atomic gen inet md net quad stdlib string 
++.else
+ COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
++.endif
+ COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
+ 
+ .if defined(COMMON_MACHINE_ARCH) && !empty(COMMON_MACHINE_ARCH) && \
+diff -ru /home/netbsd/src/common/lib/libc/arch/i386/string/strchr.S ./arch/i386/string/strchr.S
+--- /home/netbsd/src/common/lib/libc/arch/i386/string/strchr.S	2009-07-18 03:01:04.000000000 +0000
++++ ./arch/i386/string/strchr.S	2011-02-15 13:26:06.000000000 +0000
+@@ -100,4 +100,8 @@
+ 	popl	%esi
+ 	ret
+ 
++#ifdef __minix
++STRONG_ALIAS(_C_LABEL(index),_C_LABEL(strchr))
++#else
+ STRONG_ALIAS(index,strchr)
++#endif
+diff -ru /home/netbsd/src/common/lib/libc/arch/i386/string/strrchr.S ./arch/i386/string/strrchr.S
+--- /home/netbsd/src/common/lib/libc/arch/i386/string/strrchr.S	2009-07-18 03:01:04.000000000 +0000
++++ ./arch/i386/string/strrchr.S	2011-02-15 13:27:15.000000000 +0000
+@@ -93,4 +93,8 @@
+ 	popl	%esi
+ 	ret
+ 
++#ifdef __minix
++STRONG_ALIAS(_C_LABEL(rindex),_C_LABEL(strrchr))
++#else
+ STRONG_ALIAS(rindex,strrchr)
++#endif

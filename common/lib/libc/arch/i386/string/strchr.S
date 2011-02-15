@@ -100,4 +100,8 @@ ENTRY(strchr)
 	popl	%esi
 	ret
 
+#ifdef __minix
+STRONG_ALIAS(_C_LABEL(index),_C_LABEL(strchr))
+#else
 STRONG_ALIAS(index,strchr)
+#endif

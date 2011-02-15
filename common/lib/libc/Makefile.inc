@@ -1,7 +1,11 @@
 # $NetBSD: Makefile.inc,v 1.10 2008/10/26 07:22:50 mrg Exp $
 
 COMMON_DIR:=${.PARSEDIR}
+.if defined(__MINIX)
+COMMON_CODEDIRS=atomic gen inet md net quad stdlib string 
+.else
 COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
+.endif
 COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 
 .if defined(COMMON_MACHINE_ARCH) && !empty(COMMON_MACHINE_ARCH) && \
