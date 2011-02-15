@@ -13,7 +13,9 @@ __RCSID("$NetBSD: _verr.c,v 1.10 2005/09/13 01:44:09 christos Exp $");
 #if defined(__indr_reference)
 __indr_reference(_verr, verr)
 #else
-#include <sys/ansi.h> 
+#ifdef __minix
+#include <stdarg.h>
+#endif
 
 __dead void _verr(int, const char *, _BSD_VA_LIST_);
 

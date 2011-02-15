@@ -469,7 +469,7 @@ __res_vinit(res_state statp, int preinit) {
 				*cp++ = n;
 				net = cp;
 				while (*cp && *cp != ';' &&
-				isascii(*cp) &&
+					isascii(*cp) &&
 					!isspace((unsigned char)*cp))
 				    cp++;
 				n = *cp;
@@ -603,7 +603,6 @@ out:
 			break;
 		}
 	}
-
 	(void)__res_vinit(statp, 0);
 	if (mtime)
 		*mtime = __res_conf_time;

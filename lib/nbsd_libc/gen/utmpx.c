@@ -376,6 +376,7 @@ updwtmpx(const char *file, const struct utmpx *utx)
 	return -1;
 }
 
+
 int
 utmpxname(const char *fname)
 {
@@ -500,7 +501,6 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	if (flock(db->fd(db), LOCK_EX) < 0)
 		return -1;
 #endif
-	
 	key.data = &uid;
 	key.size = sizeof(uid);
 	data.data = ll;

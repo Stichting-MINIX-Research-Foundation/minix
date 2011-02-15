@@ -2,8 +2,13 @@
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
-.PATH: ${ARCHDIR}/net ${.CURDIR}/net/minix ${.CURDIR}/net
+.if defined(__MINIX)
+.PATH: ${.CURDIR}/net/minix
+.endif
+.PATH: ${ARCHDIR}/net ${.CURDIR}/net
 
+.if defined(__MINIX)
+# Not supported by minix: iso_addr.c link_addr.c sockatmark.c
 SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getnetnamadr.c getnetent.c getpeereid.c \
 	getprotobyname.c getprotobynumber.c getprotoent.c \
@@ -11,11 +16,19 @@ SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getservbyname.c getservbyport.c getservent.c \
 	getservbyname_r.c getservbyport_r.c getservent_r.c \
 	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
-	rcmd.c recv.c send.c sethostent.c
-	
-	
-# Not supported by Minix:
-#	sockatmark.c
+	rcmd.c recv.c send.c sethostent.c 
+.else
+SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
+	getnetnamadr.c getnetent.c getpeereid.c \
+	getprotobyname.c getprotobynumber.c getprotoent.c \
+	getprotobyname_r.c getprotobynumber_r.c getprotoent_r.c \
+	getservbyname.c getservbyport.c getservent.c \
+	getservbyname_r.c getservbyport_r.c getservent_r.c \
+	iso_addr.c linkaddr.c \
+	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
+	rcmd.c recv.c send.c sethostent.c \
+	sockatmark.c
+.endif
 
 .if (${MKHESIOD} != "no")
 SRCS+=	hesiod.c
@@ -25,9 +38,9 @@ SRCS+=	getaddrinfo.c getnameinfo.c
 .if (${USE_INET6} != "no")
 SRCS+=	ip6opt.c rthdr.c vars6.c
 .endif
-# Not supported by minix
-#SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
-#	iso_addr.c linkaddr.c \
+.if !defined(__MINIX)
+SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
+.endif
 
 LPREFIX=_nsyy
 YPREFIX=_nsyy

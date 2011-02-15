@@ -82,6 +82,7 @@ ttyname_r(int fd, char *buf, size_t len)
 	if (len <= DEVSZ) {
 		return ERANGE;
 	}
+
 #ifndef __minix
 	/* If it is a pty, deal with it quickly */
 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
@@ -91,7 +92,6 @@ ttyname_r(int fd, char *buf, size_t len)
 		return 0;
 	}
 #endif
-
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) == -1)
 		return errno;

@@ -34,8 +34,6 @@
 __RCSID("$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-
-
 #include "namespace.h"
 
 #ifdef __minix

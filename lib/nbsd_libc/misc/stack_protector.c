@@ -63,6 +63,7 @@ __guard_setup(void)
 
 	if (__stack_chk_guard[0] != 0)
 		return;
+
 #ifndef __minix
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ARND;

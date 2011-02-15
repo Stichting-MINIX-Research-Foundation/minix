@@ -56,7 +56,11 @@ __writelockenv(void)
 }
 
 static __inline bool
+#ifdef __minix
 __unlockenv(void)
+#else /* Bug-to-bug compatibility? */
+__unlocklockenv(void)
+#endif
 {
 	return true;
 }

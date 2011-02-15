@@ -398,6 +398,7 @@ _mcleanup(void)
 
 	if (p->state == GMON_PROF_ERROR)
 		warnx("%s: tos overflow", __func__);
+
 #ifdef __minix
 	clockinfo.profhz = sysconf(_SC_CLK_TCK);
 #else /* !__minix */

@@ -814,6 +814,7 @@ _dns_getgrgid(void *nsrv, void *nscb, va_list ap)
 #else
 	gid_t		 gid	= va_arg(ap, gid_t);
 #endif
+
 	int	rv, rerror;
 
 	_DIAGASSERT(retval != NULL);
@@ -1168,6 +1169,7 @@ _nis_getgrgid(void *nsrv, void *nscb, va_list ap)
 #else
 	gid_t		 gid	= va_arg(ap, gid_t);
 #endif
+
 	int	rv, rerror;
 
 	_DIAGASSERT(retval != NULL);
@@ -1430,7 +1432,11 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 				crv = nsdispatch(NULL, compatgiddtab,
 				    NSDB_GROUP_COMPAT, "getgrgid_r",
 				    __nsdefaultnis,
+#ifdef __minix
 				    &cretval, (int)gid,
+#else
+				    &cretval, gid,
+#endif
 				    &cgrp, filebuf, sizeof(filebuf), &cgrpres);
 			}
 			if (crv != NS_SUCCESS) {	/* not found */
@@ -1632,7 +1638,11 @@ static int
 _compat_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
-	gid_t		 gid	= va_arg(ap, int);
+#ifdef __minix
+	gid_t		 gid	= (gid_t)va_arg(ap, int);
+#else
+	gid_t		 gid	= va_arg(ap, gid_t);
+#endif
 
 	int	rv, rerror;
 
@@ -1759,6 +1769,7 @@ getgrent(void)
 		NS_COMPAT_CB(_compat_getgrent, NULL)
 		NS_NULL_CB
 	};
+
 	mutex_lock(&__grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrent", __nsdefaultcompat,
 	    &retval);
@@ -1810,7 +1821,11 @@ getgrgid(gid_t gid)
 
 	mutex_lock(&__grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid", __nsdefaultcompat,
+#ifdef __minix
 	    &retval, (int)gid);
+#else
+	    &retval, gid);
+#endif
 	mutex_unlock(&__grmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
 }
@@ -1837,7 +1852,11 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t buflen,
 	retval = 0;
 	mutex_lock(&__grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid_r", __nsdefaultcompat,
+#ifdef __minix
 	    &retval, (int)gid, grp, buffer, buflen, result);
+#else
+	    &retval, gid, grp, buffer, buflen, result);
+#endif
 	mutex_unlock(&__grmutex);
 	switch (rv) {
 	case NS_SUCCESS:

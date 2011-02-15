@@ -7,13 +7,18 @@ SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S \
 
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
-# Already defined in sys-minix /* __minix */
-#SRCS+=	resumecontext.S swapcontext.S
+.if defined(__MINIX)
+# Already defined in sys-minix
+.else
+SRCS+=	resumecontext.S swapcontext.S
+.endif
 
 # objects built from C sources
-#SRCS+=	bswap64.c _lwp.c makecontext.c
-# __minix
-SRCS+= bswap64.c
+.if defined(__MINIX)
+SRCS+=	bswap64.c
+.else
+SRCS+=	bswap64.c _lwp.c makecontext.c
+.endif
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c

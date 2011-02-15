@@ -17,7 +17,9 @@
 # The Hesiod functions are always in libc. To choose that getpwent() and friends
 # actually call the Hesiod functions, put -DHESIOD on the CPPFLAGS line below.
 
+.if defined(__MINIX)
 .include "minix-config.inc"
+.endif
 .include "Makefile.inc"
 
 LIB=		c
@@ -42,17 +44,21 @@ assym.h: ${ARCHDIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 .endif
 
+.if !defined(__MINIX)
 # The following controls how to build compatibility code for old NetBSD
 # binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
 # we include the code in libc.
-#BUILDCOLD?= no
-#.if "${BUILDCOLD}" == "yes"
-#SUBDIR=compat
-#.include <bsd.subdir.mk>
-#.else
-#COMPATDIR=${.CURDIR}/compat
-#.include "${.CURDIR}/compat/Makefile.inc"
-#.endif
+BUILDCOLD?= no
+.if "${BUILDCOLD}" == "yes"
+SUBDIR=compat
+.include <bsd.subdir.mk>
+.else
+COMPATDIR=${.CURDIR}/compat
+.include "${.CURDIR}/compat/Makefile.inc"
+.endif
+.else
+BUILDCOLD= no
+.endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/atomic/Makefile.inc"
@@ -62,11 +68,16 @@ assym.h: ${ARCHDIR}/genassym.cf
 .include "${.CURDIR}/citrus/Makefile.inc"
 .endif
 .include "${.CURDIR}/compat-43/Makefile.inc"
-#.include "${.CURDIR}/dlfcn/Makefile.inc"
+.ifndef(__MINIX)
+.include "${.CURDIR}/dlfcn/Makefile.inc"
+.endif
 .include "${.CURDIR}/gdtoa/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
+.if defined(__MINIX)
 # gmon needs profil()
-#.include "${.CURDIR}/gmon/Makefile.inc"
+.else
+.include "${.CURDIR}/gmon/Makefile.inc"
+.endif
 .include "${.CURDIR}/hash/Makefile.inc"
 .include "${.CURDIR}/iconv/Makefile.inc"
 .include "${.CURDIR}/inet/Makefile.inc"
@@ -86,8 +97,11 @@ assym.h: ${ARCHDIR}/genassym.cf
 .include "${.CURDIR}/regex/Makefile.inc"
 .endif
 .include "${.CURDIR}/resolv/Makefile.inc"
-# RPC needs pollts and a reserved port allocator.
-#.include "${.CURDIR}/rpc/Makefile.inc"
+.if defined(__MINIX)
+# RPC needs pollts() and a reserved port allocator.
+.else
+.include "${.CURDIR}/rpc/Makefile.inc"
+.endif
 .include "${.CURDIR}/ssp/Makefile.inc"
 .include "${.CURDIR}/stdio/Makefile.inc"
 .include "${.CURDIR}/stdlib/Makefile.inc"
@@ -95,7 +109,11 @@ assym.h: ${ARCHDIR}/genassym.cf
 .include "${.CURDIR}/termios/Makefile.inc"
 .include "${.CURDIR}/thread-stub/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
+.if defined(__MINIX)
 .include "${.CURDIR}/sys-minix/Makefile.inc"
+.else
+.include "${.CURDIR}/sys/Makefile.inc"
+.endif
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"

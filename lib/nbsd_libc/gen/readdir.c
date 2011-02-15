@@ -47,7 +47,6 @@ __RCSID("$NetBSD: readdir.c,v 1.25 2010/09/16 02:38:50 yamt Exp $");
 #endif
 
 #include "extern.h"
-
 #include <sys/param.h>
 
 #include <dirent.h>

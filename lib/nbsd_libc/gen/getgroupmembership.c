@@ -321,8 +321,8 @@ _compat_ggm_search(void *cookie, struct group **groupres)
 	    &rerror, cp->uname, (int)cp->agroup, cp->groups, cp->maxgrp, cp->groupc);
 #else
 	    &rerror, cp->uname, cp->agroup, cp->groups, cp->maxgrp, cp->groupc);
-
 #endif
+
 	if (crv == NS_SUCCESS)
 		crv = NS_NOTFOUND;	/* indicate "no more +: entries" */
 

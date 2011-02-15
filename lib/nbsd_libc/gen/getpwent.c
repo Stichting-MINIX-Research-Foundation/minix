@@ -1929,7 +1929,6 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 		    NSDB_PASSWD_COMPAT, "getpwuid_r", __nsdefaultnis,
 		    &crv, uid, pw, buffer, buflen, &cpw);
 #endif
-
 		break;
 	default:
 		abort();

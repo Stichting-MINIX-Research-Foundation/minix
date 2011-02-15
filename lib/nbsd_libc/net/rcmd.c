@@ -48,7 +48,9 @@ __RCSID("$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $");
 #include <sys/wait.h>
 
 #include <netinet/in.h>
+#ifndef __minix
 #include <rpc/rpc.h>
+#endif
 #include <arpa/inet.h>
 #include <netgroup.h>
 
@@ -69,6 +71,10 @@ __RCSID("$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $");
 #include <unistd.h>
 
 #include "pathnames.h"
+
+#ifdef __minix
+#undef BSD4_4
+#endif
 
 int	orcmd __P((char **, u_int, const char *, const char *, const char *,
 	    int *));
@@ -200,7 +206,6 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	freeaddrinfo(res);
 	return (error);
 }
-
 
 /*ARGSUSED*/
 static int
@@ -543,7 +548,7 @@ rresvport_af(alport, family)
 	sa = (struct sockaddr *)(void *)&ss;
 	switch (family) {
 	case AF_INET:
-#if defined(BSD4_4) && !defined(__minix)
+#ifdef BSD4_4
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in);
@@ -551,7 +556,7 @@ rresvport_af(alport, family)
 		break;
 #ifdef INET6
 	case AF_INET6:
-#if defined(BSD4_4) && !defined(__minix)
+#ifdef BSD4_4
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in6);
@@ -654,7 +659,7 @@ iruserok(raddr, superuser, ruser, luser)
 
 	memset(&irsin, 0, sizeof(irsin));
 	irsin.sin_family = AF_INET;
-#if defined(BSD4_4) && !defined(__minix)
+#ifdef BSD4_4
 	irsin.sin_len = sizeof(struct sockaddr_in);
 #endif
 	memcpy(&irsin.sin_addr, &raddr, sizeof(irsin.sin_addr));
@@ -774,7 +779,7 @@ __ivaliduser(hostf, raddr, luser, ruser)
 
 	memset(&ivusin, 0, sizeof(ivusin));
 	ivusin.sin_family = AF_INET;
-#if defined(BSD4_4) && !defined(__minix)
+#ifdef BSD4_4
 	ivusin.sin_len = sizeof(struct sockaddr_in);
 #endif
 	memcpy(&ivusin.sin_addr, &raddr, sizeof(ivusin.sin_addr));

@@ -162,7 +162,6 @@ __setlocale(int category, const char *name)
 	return NULL;
 }
 
-
 char *
 setlocale(int category, const char *locale)
 {

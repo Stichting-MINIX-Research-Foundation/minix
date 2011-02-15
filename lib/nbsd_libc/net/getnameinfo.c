@@ -500,6 +500,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 }
 #endif /* INET6 */
 
+
 #ifndef __minix
 /*
  * getnameinfo_link():

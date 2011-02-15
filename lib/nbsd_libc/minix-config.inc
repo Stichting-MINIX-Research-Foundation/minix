@@ -7,9 +7,12 @@ CPPFLAGS+= -nostdinc -O -D__minix -D_POSIX_SOURCE -I${NETBSDINCLUDES}  -D_NETBSD
 AFLAGS+= -nostdinc -D__minix -I${NETBSDINCLUDES}
 
 
+
 CITRUS=yes 
 USE_INET6=no
 
 MKYP=no #requires RPC
 USE_JEMALLOC=no
 USE_FORT=no
+USE_LIBTRE=no
+

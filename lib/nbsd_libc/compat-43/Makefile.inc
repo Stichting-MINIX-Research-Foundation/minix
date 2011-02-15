@@ -4,14 +4,19 @@
 # compat-43 sources
 .PATH: ${ARCHDIR}/compat-43 ${.CURDIR}/compat-43
 
-# unsupported by Minix
+.if defined(__MINIX)
+# Unsupported by Minix
 #	gethostid.c sethostid.c setpgrp.c setrgid.c setruid.c sigcompat.c
 
-SRCS+=	creat.c getdtablesize.c \
-	killpg.c \
+SRCS+=	creat.c getdtablesize.c killpg.c
 
+.else
+SRCS+=	creat.c getdtablesize.c gethostid.c \
+	killpg.c sethostid.c setpgrp.c \
+	setrgid.c setruid.c sigcompat.c
 .if !defined(AUDIT)
 SRCS+=	getwd.c
+.endif
 .endif
 
 # XXX this is to get <compat/sys/signal.h>

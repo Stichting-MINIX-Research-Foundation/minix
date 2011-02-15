@@ -2,8 +2,12 @@
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
-.PATH: ${.CURDIR}/gen/minix ${ARCHDIR}/gen ${.CURDIR}/gen
+.if defined(__MINIX)
+.PATH: ${.CURDIR}/gen/minix
+.endif
+.PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
+.if defined(__MINIX)
 # Unsupported by Minix.
 # 	closefrom.c confstr.c extattr.c getdevmajor.c getmntinfo.c \
 #	pthread_atfork.c setdomainname.c sethostname.c setproctitle.c \
@@ -47,6 +51,36 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
 	utmpx.c valloc.c vis.c warn.c warnx.c \
 	vwarn.c vwarnx.c verr.c verrx.c wait.c waitpid.c wordexp.c
+.else
+SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
+	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
+	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
+	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
+	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
+	fts.c ftw.c getbsize.c getcap.c getcwd.c \
+	getdevmajor.c getdomainname.c getgrent.c \
+	getgrouplist.c getgroupmembership.c gethostname.c \
+	getloadavg.c getlogin.c getmntinfo.c \
+	getnetgrent.c getpagesize.c \
+	getpass.c getprogname.c getpwent.c getttyent.c \
+	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
+	isascii.c isatty.c isctype.c lockf.c nftw.c \
+	nice.c nlist.c nlist_aout.c \
+	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
+	pause.c popen.c psignal.c pthread_atfork.c ptree.c pwcache.c \
+	pw_scan.c raise.c randomid.c rb.c readdir.c rewinddir.c \
+	scandir.c seekdir.c setdomainname.c \
+	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
+	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
+	siglist.c signal.c signame.c sigrelse.c \
+	sigset.c sigsetops.c sleep.c \
+	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
+	sysctlnametomib.c syslog.c telldir.c time.c \
+	times.c toascii.c tolower_.c ttyname.c ttyslot.c \
+	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
+	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
+	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
+.endif
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c \
@@ -178,7 +212,12 @@ CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
-errlist.c: errlist-minix.awk ${NETBSDSRCDIR}/nbsd_include/sys/errno.h
+.if defined(__MINIX)
+errlist.c: errlist-minix.awk ${MINIXSRCDIR}/nbsd_include/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+.else
+errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
+	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+.endif
 
 CLEANFILES+= errlist.c

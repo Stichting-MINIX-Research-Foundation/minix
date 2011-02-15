@@ -1,0 +1,2062 @@
+diff -ru /home/netbsd/src/lib/libc/Makefile ./Makefile
+--- /home/netbsd/src/lib/libc/Makefile	2010-09-05 03:00:50.000000000 +0000
++++ ./Makefile	2011-02-15 09:23:55.000000000 +0000
+@@ -17,6 +17,9 @@
+ # The Hesiod functions are always in libc. To choose that getpwent() and friends
+ # actually call the Hesiod functions, put -DHESIOD on the CPPFLAGS line below.
+ 
++.if defined(__MINIX)
++.include "minix-config.inc"
++.endif
+ .include "Makefile.inc"
+ 
+ LIB=		c
+@@ -41,6 +44,7 @@
+ 	mv -f assym.h.tmp assym.h
+ .endif
+ 
++.if !defined(__MINIX)
+ # The following controls how to build compatibility code for old NetBSD
+ # binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
+ # we include the code in libc.
+@@ -52,6 +56,9 @@
+ COMPATDIR=${.CURDIR}/compat
+ .include "${.CURDIR}/compat/Makefile.inc"
+ .endif
++.else
++BUILDCOLD= no
++.endif
+ 
+ .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
+ .include "${.CURDIR}/atomic/Makefile.inc"
+@@ -61,10 +68,16 @@
+ .include "${.CURDIR}/citrus/Makefile.inc"
+ .endif
+ .include "${.CURDIR}/compat-43/Makefile.inc"
++.ifndef(__MINIX)
+ .include "${.CURDIR}/dlfcn/Makefile.inc"
++.endif
+ .include "${.CURDIR}/gdtoa/Makefile.inc"
+ .include "${.CURDIR}/gen/Makefile.inc"
++.if defined(__MINIX)
++# gmon needs profil()
++.else
+ .include "${.CURDIR}/gmon/Makefile.inc"
++.endif
+ .include "${.CURDIR}/hash/Makefile.inc"
+ .include "${.CURDIR}/iconv/Makefile.inc"
+ .include "${.CURDIR}/inet/Makefile.inc"
+@@ -84,7 +97,11 @@
+ .include "${.CURDIR}/regex/Makefile.inc"
+ .endif
+ .include "${.CURDIR}/resolv/Makefile.inc"
++.if defined(__MINIX)
++# RPC needs pollts() and a reserved port allocator.
++.else
+ .include "${.CURDIR}/rpc/Makefile.inc"
++.endif
+ .include "${.CURDIR}/ssp/Makefile.inc"
+ .include "${.CURDIR}/stdio/Makefile.inc"
+ .include "${.CURDIR}/stdlib/Makefile.inc"
+@@ -92,7 +109,11 @@
+ .include "${.CURDIR}/termios/Makefile.inc"
+ .include "${.CURDIR}/thread-stub/Makefile.inc"
+ .include "${.CURDIR}/time/Makefile.inc"
++.if defined(__MINIX)
++.include "${.CURDIR}/sys-minix/Makefile.inc"
++.else
+ .include "${.CURDIR}/sys/Makefile.inc"
++.endif
+ .include "${.CURDIR}/uuid/Makefile.inc"
+ .if (${MKYP} != "no")
+ .include "${.CURDIR}/yp/Makefile.inc"
+diff -ru /home/netbsd/src/lib/libc/Makefile.inc ./Makefile.inc
+--- /home/netbsd/src/lib/libc/Makefile.inc	2010-05-31 03:02:07.000000000 +0000
++++ ./Makefile.inc	2011-02-15 09:14:25.000000000 +0000
+@@ -19,14 +19,22 @@
+ 
+ USE_FORT?=	yes
+ 
++.if defined(__MINIX)
++USE_SHLIBDIR= no
++.else
+ USE_SHLIBDIR=	yes
++.endif
+ 
+ CITRUS?=	yes
+ 
+ .include <bsd.own.mk>
+ 
+ WARNS=4
++.if defined(__MINIX)
++CPPFLAGS+=	-D_LIBC -DLIBC_SCSS -DSYSLIBC_SCSS
++.else
+ CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
++.endif
+ 
+ .if (${USE_HESIOD} != "no")
+ CPPFLAGS+=	-DHESIOD
+diff -ru /home/netbsd/src/lib/libc/arch/i386/Makefile.inc ./arch/i386/Makefile.inc
+--- /home/netbsd/src/lib/libc/arch/i386/Makefile.inc	2006-06-17 18:04:23.000000000 +0000
++++ ./arch/i386/Makefile.inc	2011-02-15 10:09:38.000000000 +0000
+@@ -1,3 +1,5 @@
+ #	$NetBSD: Makefile.inc,v 1.20 2006/06/17 18:04:23 uwe Exp $
+ 
++.if !defined(__MINIX)
+ SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
++.endif
+diff -ru /home/netbsd/src/lib/libc/arch/i386/gen/Makefile.inc ./arch/i386/gen/Makefile.inc
+--- /home/netbsd/src/lib/libc/arch/i386/gen/Makefile.inc	2009-12-06 07:12:17.000000000 +0000
++++ ./arch/i386/gen/Makefile.inc	2011-02-15 10:11:52.000000000 +0000
+@@ -7,10 +7,18 @@
+ 
+ SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
+ 
++.if defined(__MINIX)
++# Already defined in sys-minix
++.else
+ SRCS+=	resumecontext.S swapcontext.S
++.endif
+ 
+ # objects built from C sources
++.if defined(__MINIX)
++SRCS+=	bswap64.c
++.else
+ SRCS+=	bswap64.c _lwp.c makecontext.c
++.endif
+ 
+ # Common ieee754 constants and functions
+ SRCS+=	infinityf_ieee754.c infinity_ieee754.c
+diff -ru /home/netbsd/src/lib/libc/cdb/cdbr.c ./cdb/cdbr.c
+--- /home/netbsd/src/lib/libc/cdb/cdbr.c	2010-06-04 03:06:19.000000000 +0000
++++ ./cdb/cdbr.c	2011-02-14 17:48:18.000000000 +0000
+@@ -122,7 +122,22 @@
+ 		cdbr->index_size = 4;
+ 
+ 	cdbr->mmap_size = (size_t)sb.st_size;
++#ifdef __minix
++	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_ANON, -1, (off_t)0);
++	if (cdbr->mmap_base == MAP_FAILED) {
++		free(cdbr);
++		return NULL;
++	}
++
++	if (read(fd, cdbr->mmap_base, cdbr->mmap_size) != cdbr->mmap_size)
++	{
++		munmap(cdbr->mmap_base, cdbr->mmap_size);
++		free(cdbr);
++		return NULL;
++	}
++#else /* !__minix */
+ 	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
++#endif /* __minix */
+ 	close(fd);
+ 
+ 	if (cdbr->mmap_base == MAP_FAILED) {
+diff -ru /home/netbsd/src/lib/libc/citrus/citrus_mmap.c ./citrus/citrus_mmap.c
+--- /home/netbsd/src/lib/libc/citrus/citrus_mmap.c	2005-01-19 00:52:37.000000000 +0000
++++ ./citrus/citrus_mmap.c	2011-02-14 17:48:18.000000000 +0000
+@@ -74,12 +74,25 @@
+ 		goto error;
+ 	}
+ 
++#ifdef __minix
++	head = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_ANON, -1, (off_t)0);
++	if (head == MAP_FAILED) {
++		ret = errno;
++		goto error;
++	}
++
++	if (read(fd, head, st.st_size) != st.st_size) {
++		ret = errno;
++		goto error;
++	}
++#else /* !__minix */
+ 	head = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_PRIVATE,
+ 	    fd, (off_t)0);
+ 	if (head == MAP_FAILED) {
+ 		ret = errno;
+ 		goto error;
+ 	}
++#endif /* !__minix */
+ 	_region_init(r, head, (size_t)st.st_size);
+ 
+ error:
+diff -ru /home/netbsd/src/lib/libc/compat-43/Makefile.inc ./compat-43/Makefile.inc
+--- /home/netbsd/src/lib/libc/compat-43/Makefile.inc	2006-04-24 17:15:06.000000000 +0000
++++ ./compat-43/Makefile.inc	2011-02-15 11:17:14.000000000 +0000
+@@ -4,12 +4,20 @@
+ # compat-43 sources
+ .PATH: ${ARCHDIR}/compat-43 ${.CURDIR}/compat-43
+ 
++.if defined(__MINIX)
++# Unsupported by Minix
++#	gethostid.c sethostid.c setpgrp.c setrgid.c setruid.c sigcompat.c
++
++SRCS+=	creat.c getdtablesize.c killpg.c
++
++.else
+ SRCS+=	creat.c getdtablesize.c gethostid.c \
+ 	killpg.c sethostid.c setpgrp.c \
+ 	setrgid.c setruid.c sigcompat.c
+ .if !defined(AUDIT)
+ SRCS+=	getwd.c
+ .endif
++.endif
+ 
+ # XXX this is to get <compat/sys/signal.h>
+ CPPFLAGS.sigcompat.c+=	-I${NETBSDSRCDIR}/sys
+diff -ru /home/netbsd/src/lib/libc/db/db/db.c ./db/db/db.c
+--- /home/netbsd/src/lib/libc/db/db/db.c	2008-09-11 12:58:00.000000000 +0000
++++ ./db/db/db.c	2011-02-14 17:48:19.000000000 +0000
+@@ -57,9 +57,15 @@
+ {
+ 
+ #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
++#ifdef __minix
++#define USE_OPEN_FLAGS 							\
++	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |			\
++	 O_RDWR | O_TRUNC)
++#else /* !__minix */
+ #define	USE_OPEN_FLAGS							\
+ 	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
+ 	 O_RDWR | O_SHLOCK | O_TRUNC)
++#endif /* __minix */
+ 
+ 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
+ 		switch (type) {
+diff -ru /home/netbsd/src/lib/libc/gdtoa/gdtoa_locks.c ./gdtoa/gdtoa_locks.c
+--- /home/netbsd/src/lib/libc/gdtoa/gdtoa_locks.c	2006-01-25 15:36:13.000000000 +0000
++++ ./gdtoa/gdtoa_locks.c	2011-02-14 17:48:19.000000000 +0000
+@@ -7,4 +7,6 @@
+ 
+ #include "gdtoaimp.h"
+ 
++#ifdef _REENTRANT /* !__minix */
+ mutex_t __gdtoa_locks[2] = { MUTEX_INITIALIZER, MUTEX_INITIALIZER };
++#endif /* _REENTRANT */
+diff -ru /home/netbsd/src/lib/libc/gen/Makefile.inc ./gen/Makefile.inc
+--- /home/netbsd/src/lib/libc/gen/Makefile.inc	2010-12-13 03:52:36.000000000 +0000
++++ ./gen/Makefile.inc	2011-02-15 09:31:05.000000000 +0000
+@@ -2,8 +2,56 @@
+ #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
+ 
+ # gen sources
++.if defined(__MINIX)
++.PATH: ${.CURDIR}/gen/minix
++.endif
+ .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
+ 
++.if defined(__MINIX)
++# Unsupported by Minix.
++# 	closefrom.c confstr.c extattr.c getdevmajor.c getmntinfo.c \
++#	pthread_atfork.c setdomainname.c sethostname.c setproctitle.c \
++#	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
++#	devname.c wait3.c
++
++# To be ported
++# nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c
++#
++# Not useful but portable
++#	disklabel.c
++#
++# Already in getprogname
++#	setprogname.c
++
++SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
++	closedir.c ctermid.c ctype_.c daemon.c \
++	dehumanize_number.c dirname.c err.c errx.c \
++	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
++	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
++	fts.c ftw.c getbsize.c getcap.c getcwd.c \
++	getdomainname.c getgrent.c \
++	getgrouplist.c getgroupmembership.c gethostname.c \
++	getloadavg.c getlogin.c \
++	getnetgrent.c getpagesize.c \
++	getpass.c getprogname.c getpwent.c getttyent.c \
++	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
++	isascii.c isatty.c isctype.c lockf.c nftw.c \
++	nice.c \
++	opendir.c \
++	pause.c popen.c psignal.c ptree.c pwcache.c \
++	pw_scan.c raise.c randomid.c rb.c readdir.c rewinddir.c \
++	scandir.c seekdir.c \
++	setjmperr.c setmode.c \
++	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
++	siglist.c signal.c signame.c sigrelse.c \
++	sigset.c sigsetops.c sleep.c \
++	stringlist.c sysconf.c \
++	syslog.c telldir.c time.c \
++	times.c toascii.c tolower_.c ttyname.c ttyslot.c \
++	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
++	utmpx.c valloc.c vis.c warn.c warnx.c \
++	vwarn.c vwarnx.c verr.c verrx.c wait.c waitpid.c wordexp.c
++.else
+ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
+ 	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
+ 	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
+@@ -32,6 +80,7 @@
+ 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
+ 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
+ 	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
++.endif
+ 
+ # indirect reference stubs, to be removed soon.
+ SRCS+=	_err.c _errx.c \
+@@ -163,7 +212,12 @@
+ CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
+ CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
+ 
++.if defined(__MINIX)
++errlist.c: errlist-minix.awk ${MINIXSRCDIR}/nbsd_include/sys/errno.h
++	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
++.else
+ errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
+ 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
++.endif
+ 
+ CLEANFILES+= errlist.c
+diff -ru /home/netbsd/src/lib/libc/gen/_verr.c ./gen/_verr.c
+--- /home/netbsd/src/lib/libc/gen/_verr.c	2005-09-13 01:44:09.000000000 +0000
++++ ./gen/_verr.c	2011-02-15 09:35:56.000000000 +0000
+@@ -13,6 +13,9 @@
+ #if defined(__indr_reference)
+ __indr_reference(_verr, verr)
+ #else
++#ifdef __minix
++#include <stdarg.h>
++#endif
+ 
+ __dead void _verr(int, const char *, _BSD_VA_LIST_);
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/_verrx.c ./gen/_verrx.c
+--- /home/netbsd/src/lib/libc/gen/_verrx.c	2005-09-13 01:44:09.000000000 +0000
++++ ./gen/_verrx.c	2011-02-15 09:36:27.000000000 +0000
+@@ -13,6 +13,9 @@
+ #if defined(__indr_reference)
+ __indr_reference(_verrx, verrx)
+ #else
++#ifdef __minix
++#include <stdarg.h>
++#endif
+ 
+ __dead void _verrx(int, const char *, _BSD_VA_LIST_);
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/_vwarn.c ./gen/_vwarn.c
+--- /home/netbsd/src/lib/libc/gen/_vwarn.c	2005-09-13 01:44:09.000000000 +0000
++++ ./gen/_vwarn.c	2011-02-15 09:37:12.000000000 +0000
+@@ -13,6 +13,9 @@
+ #if defined(__indr_reference)
+ __indr_reference(_vwarn, vwarn)
+ #else
++#ifdef __minix
++#include <stdarg.h>
++#endif
+ 
+ void _vwarn(const char *, _BSD_VA_LIST_);
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/_vwarnx.c ./gen/_vwarnx.c
+--- /home/netbsd/src/lib/libc/gen/_vwarnx.c	2005-09-13 01:44:09.000000000 +0000
++++ ./gen/_vwarnx.c	2011-02-15 09:37:49.000000000 +0000
+@@ -13,6 +13,9 @@
+ #if defined(__indr_reference)
+ __indr_reference(_vwarnx, vwarnx)
+ #else
++#ifdef __minix
++#include <stdarg.h>
++#endif
+ 
+ void _vwarnx(const char *, _BSD_VA_LIST_);
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/_warn.c ./gen/_warn.c
+--- /home/netbsd/src/lib/libc/gen/_warn.c	2005-09-13 01:44:09.000000000 +0000
++++ ./gen/_warn.c	2011-02-15 09:34:53.000000000 +0000
+@@ -24,7 +24,11 @@
+ 	va_list ap;
+ 
+ 	va_start(ap, fmt);
++#ifdef __minix
++	_vwarn(fmt, ap);
++#else
+ 	_vwarn(eval, fmt, ap);
++#endif
+ 	va_end(ap);
+ }
+ #endif
+diff -ru /home/netbsd/src/lib/libc/gen/_warnx.c ./gen/_warnx.c
+--- /home/netbsd/src/lib/libc/gen/_warnx.c	2005-09-13 01:44:09.000000000 +0000
++++ ./gen/_warnx.c	2011-02-15 09:33:48.000000000 +0000
+@@ -24,7 +24,11 @@
+ 	va_list ap;
+ 
+ 	va_start(ap, fmt);
++#ifdef __minix
++	_vwarnx(fmt, ap);
++#else
+ 	_vwarnx(eval, fmt, ap);
++#endif
+ 	va_end(ap);
+ }
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/closedir.c ./gen/closedir.c
+--- /home/netbsd/src/lib/libc/gen/closedir.c	2010-09-26 03:01:02.000000000 +0000
++++ ./gen/closedir.c	2011-02-14 17:48:19.000000000 +0000
+@@ -38,6 +38,11 @@
+ #endif
+ #endif /* LIBC_SCCS and not lint */
+ 
++#ifdef __minix
++/* NetBSD BUG: reentrant.h defines includes. */
++#include <sys/types.h>
++#endif /* !__minix */
++
+ #include "namespace.h"
+ #include "reentrant.h"
+ #include "extern.h"
+diff -ru /home/netbsd/src/lib/libc/gen/fts.c ./gen/fts.c
+--- /home/netbsd/src/lib/libc/gen/fts.c	2009-11-02 17:17:34.000000000 +0000
++++ ./gen/fts.c	2011-02-14 17:48:19.000000000 +0000
+@@ -56,8 +56,10 @@
+ #include <unistd.h>
+ 
+ #if ! HAVE_NBTOOL_CONFIG_H
++#ifndef __minix
+ #define	HAVE_STRUCT_DIRENT_D_NAMLEN
+ #endif
++#endif
+ 
+ static FTSENT	*fts_alloc(FTS *, const char *, size_t);
+ static FTSENT	*fts_build(FTS *, int);
+diff -ru /home/netbsd/src/lib/libc/gen/getgrent.c ./gen/getgrent.c
+--- /home/netbsd/src/lib/libc/gen/getgrent.c	2008-04-28 20:22:59.000000000 +0000
++++ ./gen/getgrent.c	2011-02-15 10:00:10.000000000 +0000
+@@ -481,7 +481,11 @@
+ _files_getgrgid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct group	**retval = va_arg(ap, struct group **);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -506,7 +510,11 @@
+ _files_getgrgid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 	struct group	*grp	= va_arg(ap, struct group *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -801,7 +809,11 @@
+ _dns_getgrgid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct group	**retval = va_arg(ap, struct group **);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -825,7 +837,11 @@
+ _dns_getgrgid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 	struct group	*grp	= va_arg(ap, struct group *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -1148,7 +1164,11 @@
+ _nis_getgrgid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct group	**retval = va_arg(ap, struct group **);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -1172,7 +1192,11 @@
+ _nis_getgrgid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 	struct group	*grp	= va_arg(ap, struct group *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -1408,7 +1432,11 @@
+ 				crv = nsdispatch(NULL, compatgiddtab,
+ 				    NSDB_GROUP_COMPAT, "getgrgid_r",
+ 				    __nsdefaultnis,
++#ifdef __minix
++				    &cretval, (int)gid,
++#else
+ 				    &cretval, gid,
++#endif
+ 				    &cgrp, filebuf, sizeof(filebuf), &cgrpres);
+ 			}
+ 			if (crv != NS_SUCCESS) {	/* not found */
+@@ -1610,7 +1638,11 @@
+ _compat_getgrgid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct group	**retval = va_arg(ap, struct group **);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -1635,7 +1667,11 @@
+ _compat_getgrgid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	gid_t		 gid	= (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 gid	= va_arg(ap, gid_t);
++#endif
+ 	struct group	*grp	= va_arg(ap, struct group *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -1785,7 +1821,11 @@
+ 
+ 	mutex_lock(&__grmutex);
+ 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid", __nsdefaultcompat,
++#ifdef __minix
++	    &retval, (int)gid);
++#else
+ 	    &retval, gid);
++#endif
+ 	mutex_unlock(&__grmutex);
+ 	return (rv == NS_SUCCESS) ? retval : NULL;
+ }
+@@ -1812,7 +1852,11 @@
+ 	retval = 0;
+ 	mutex_lock(&__grmutex);
+ 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid_r", __nsdefaultcompat,
++#ifdef __minix
++	    &retval, (int)gid, grp, buffer, buflen, result);
++#else
+ 	    &retval, gid, grp, buffer, buflen, result);
++#endif
+ 	mutex_unlock(&__grmutex);
+ 	switch (rv) {
+ 	case NS_SUCCESS:
+diff -ru /home/netbsd/src/lib/libc/gen/getgroupmembership.c ./gen/getgroupmembership.c
+--- /home/netbsd/src/lib/libc/gen/getgroupmembership.c	2008-04-28 20:22:59.000000000 +0000
++++ ./gen/getgroupmembership.c	2011-02-15 10:06:06.000000000 +0000
+@@ -101,7 +101,11 @@
+ {
+ 	int		*result	= va_arg(ap, int *);
+ 	const char 	*uname	= va_arg(ap, const char *);
++#ifdef __minix
++	gid_t		 agroup = (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 agroup	= va_arg(ap, gid_t);
++#endif
+ 	gid_t		*groups	= va_arg(ap, gid_t *);
+ 	int		 maxgrp	= va_arg(ap, int);
+ 	int		*groupc	= va_arg(ap, int *);
+@@ -144,7 +148,11 @@
+ {
+ 	int		*result	= va_arg(ap, int *);
+ 	const char 	*uname	= va_arg(ap, const char *);
++#ifdef __minix
++	gid_t		 agroup = (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 agroup	= va_arg(ap, gid_t);
++#endif
+ 	gid_t		*groups	= va_arg(ap, gid_t *);
+ 	int		 maxgrp	= va_arg(ap, int);
+ 	int		*groupc	= va_arg(ap, int *);
+@@ -237,7 +245,11 @@
+ {
+ 	int		*result	= va_arg(ap, int *);
+ 	const char 	*uname	= va_arg(ap, const char *);
++#ifdef __minix
++	gid_t		 agroup = (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 agroup	= va_arg(ap, gid_t);
++#endif
+ 	gid_t		*groups	= va_arg(ap, gid_t *);
+ 	int		 maxgrp	= va_arg(ap, int);
+ 	int		*groupc	= va_arg(ap, int *);
+@@ -305,7 +317,11 @@
+ 	crv = nsdispatch(NULL, dtab,
+ 	    NSDB_GROUP_COMPAT, "getgroupmembership",
+ 	    __nsdefaultnis,
++#ifdef __minix
++	    &rerror, cp->uname, (int)cp->agroup, cp->groups, cp->maxgrp, cp->groupc);
++#else
+ 	    &rerror, cp->uname, cp->agroup, cp->groups, cp->maxgrp, cp->groupc);
++#endif
+ 
+ 	if (crv == NS_SUCCESS)
+ 		crv = NS_NOTFOUND;	/* indicate "no more +: entries" */
+@@ -319,7 +335,11 @@
+ {
+ 	int		*result	= va_arg(ap, int *);
+ 	const char 	*uname	= va_arg(ap, const char *);
++#ifdef __minix
++	gid_t		 agroup = (gid_t)va_arg(ap, int);
++#else
+ 	gid_t		 agroup	= va_arg(ap, gid_t);
++#endif
+ 	gid_t		*groups	= va_arg(ap, gid_t *);
+ 	int		 maxgrp	= va_arg(ap, int);
+ 	int		*groupc	= va_arg(ap, int *);
+@@ -395,7 +415,11 @@
+ 			 */
+ 	(void) nsdispatch(NULL, dtab, NSDB_GROUP, "getgroupmembership",
+ 	    __nsdefaultcompat,
++#ifdef __minix
++	    &rerror, uname, (int)agroup, groups, maxgrp, groupc);
++#else
+ 	    &rerror, uname, agroup, groups, maxgrp, groupc);
++#endif
+ 	mutex_unlock(&__grmutex);
+ 
+ 	if (*groupc > maxgrp)			/* too many groups found */
+diff -ru /home/netbsd/src/lib/libc/gen/getlogin.c ./gen/getlogin.c
+--- /home/netbsd/src/lib/libc/gen/getlogin.c	2009-01-11 02:46:27.000000000 +0000
++++ ./gen/getlogin.c	2011-02-14 17:48:19.000000000 +0000
+@@ -78,7 +78,9 @@
+ #ifdef __weak_alias
+ __weak_alias(getlogin,_getlogin)
+ __weak_alias(getlogin_r,_getlogin_r)
++#ifndef __minix
+ __weak_alias(setlogin,_setlogin)
++#endif /* !__minix */
+ #endif
+ 
+ int	__logname_valid;		/* known to setlogin() */
+@@ -134,6 +136,7 @@
+ 	return (rv);
+ }
+ 
++#ifndef __minix
+ int
+ setlogin(const char *name)
+ {
+@@ -144,3 +147,4 @@
+ 
+ 	return (retval);
+ }
++#endif 
+diff -ru /home/netbsd/src/lib/libc/gen/getpwent.c ./gen/getpwent.c
+--- /home/netbsd/src/lib/libc/gen/getpwent.c	2010-03-24 03:02:14.000000000 +0000
++++ ./gen/getpwent.c	2011-02-15 10:03:22.000000000 +0000
+@@ -671,7 +671,11 @@
+ _files_getpwuid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct passwd	**retval = va_arg(ap, struct passwd **);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -696,7 +700,11 @@
+ _files_getpwuid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 	struct passwd	*pw	= va_arg(ap, struct passwd *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -992,7 +1000,11 @@
+ _dns_getpwuid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct passwd	**retval = va_arg(ap, struct passwd **);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -1019,7 +1031,11 @@
+ _dns_getpwuid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 	struct passwd	*pw	= va_arg(ap, struct passwd *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -1508,7 +1524,11 @@
+ _nis_getpwuid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct passwd	**retval = va_arg(ap, struct passwd **);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -1534,7 +1554,11 @@
+ _nis_getpwuid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 	struct passwd	*pw	= va_arg(ap, struct passwd *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -1896,9 +1920,15 @@
+ 		    &crv, name, pw, buffer, buflen, &cpw);
+ 		break;
+ 	case _PW_KEYBYUID:
++#ifdef __minix
++		rv = nsdispatch(NULL, compatuiddtab,
++		    NSDB_PASSWD_COMPAT, "getpwuid_r", __nsdefaultnis,
++		    &crv, (int)uid, pw, buffer, buflen, &cpw);
++#else
+ 		rv = nsdispatch(NULL, compatuiddtab,
+ 		    NSDB_PASSWD_COMPAT, "getpwuid_r", __nsdefaultnis,
+ 		    &crv, uid, pw, buffer, buflen, &cpw);
++#endif
+ 		break;
+ 	default:
+ 		abort();
+@@ -2301,7 +2331,11 @@
+ _compat_getpwuid(void *nsrv, void *nscb, va_list ap)
+ {
+ 	struct passwd	**retval = va_arg(ap, struct passwd **);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 
+ 	int	rv, rerror;
+ 
+@@ -2326,7 +2360,11 @@
+ _compat_getpwuid_r(void *nsrv, void *nscb, va_list ap)
+ {
+ 	int		*retval	= va_arg(ap, int *);
++#ifdef __minix
++	uid_t		 uid	= (uid_t)va_arg(ap, int);
++#else
+ 	uid_t		 uid	= va_arg(ap, uid_t);
++#endif
+ 	struct passwd	*pw	= va_arg(ap, struct passwd *);
+ 	char		*buffer	= va_arg(ap, char *);
+ 	size_t		 buflen	= va_arg(ap, size_t);
+@@ -2482,8 +2520,13 @@
+ 	};
+ 
+ 	mutex_lock(&_pwmutex);
++#ifdef __minix
++	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", __nsdefaultcompat,
++	    &retval, (int)uid);
++#else
+ 	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", __nsdefaultcompat,
+ 	    &retval, uid);
++#endif
+ 	mutex_unlock(&_pwmutex);
+ 	return (rv == NS_SUCCESS) ? retval : NULL;
+ }
+@@ -2509,8 +2552,14 @@
+ 	*result = NULL;
+ 	retval = 0;
+ 	mutex_lock(&_pwmutex);
++#ifdef __minix
++	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", __nsdefaultcompat,
++	    &retval, (int)uid, pwd, buffer, buflen, result);
++#else
+ 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", __nsdefaultcompat,
+ 	    &retval, uid, pwd, buffer, buflen, result);
++#endif
++
+ 	mutex_unlock(&_pwmutex);
+ 	switch (r) {
+ 	case NS_SUCCESS:
+diff -ru /home/netbsd/src/lib/libc/gen/gr_private.h ./gen/gr_private.h
+--- /home/netbsd/src/lib/libc/gen/gr_private.h	2008-04-28 20:22:59.000000000 +0000
++++ ./gen/gr_private.h	2011-02-15 09:46:39.000000000 +0000
+@@ -40,11 +40,13 @@
+ #define _GROUP_COMPAT	/* "group" defaults to compat, so always provide it */
+ 
+ 
++#ifndef __minix /* should be _REENTRANT */
+ 	/*
+ 	 * mutex to serialize the public group(5) functions use of the
+ 	 * back-end implementations, which may not be reentrant.
+ 	 */
+ extern 	mutex_t		__grmutex;
++#endif
+ 
+ 	/*
+ 	 * files methods
+diff -ru /home/netbsd/src/lib/libc/gen/initdir.c ./gen/initdir.c
+--- /home/netbsd/src/lib/libc/gen/initdir.c	2010-09-26 02:26:59.000000000 +0000
++++ ./gen/initdir.c	2011-02-15 10:48:19.000000000 +0000
+@@ -35,6 +35,13 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include "namespace.h"
++
++#ifdef __minix
++/* NetBSD BUG on !_REENTRANT */
++#include <sys/cdefs.h>
++#include <sys/types.h>
++#endif
++
+ #include "reentrant.h"
+ #include "extern.h"
+ 
+@@ -221,9 +228,11 @@
+ 							xp = dp;
+ 						else
+ 							dp->d_fileno = 0;
++#ifndef __minix
+ 						if (dp->d_type == DT_WHT &&
+ 						    (flags & DTF_HIDEW))
+ 							dp->d_fileno = 0;
++#endif
+ 					}
+ 
+ 					free(dpv);
+diff -ru /home/netbsd/src/lib/libc/gen/opendir.c ./gen/opendir.c
+--- /home/netbsd/src/lib/libc/gen/opendir.c	2010-09-26 03:01:02.000000000 +0000
++++ ./gen/opendir.c	2011-02-14 17:48:19.000000000 +0000
+@@ -40,6 +40,12 @@
+ 
+ #include "namespace.h"
+ #include "reentrant.h"
++
++#ifdef __minix
++#include <sys/cdefs.h>
++#include <sys/types.h>
++#endif
++
+ #include "extern.h"
+ 
+ #include <sys/param.h>
+@@ -122,6 +128,12 @@
+ 	 * Tweak flags for the underlying filesystem.
+ 	 */
+ 
++#ifdef __minix
++	if (fstatvfs(fd, &sfb) < 0)
++		goto error;
++	/* MOUNT_UNION and MOUNT_NFS not supported */
++	flags &= ~DTF_NODUP;
++#else
+ 	if (fstatvfs1(fd, &sfb, ST_NOWAIT) < 0)
+ 		goto error;
+ 	if ((flags & DTF_NODUP) != 0) {
+@@ -136,6 +148,7 @@
+ 	if (!strncmp(sfb.f_fstypename, MOUNT_NFS, sizeof(sfb.f_fstypename))) {
+ 		flags |= __DTF_READALL | __DTF_RETRY_ON_BADCOOKIE;
+ 	}
++#endif
+ 
+ 	dirp->dd_flags = flags;
+ 	error = _initdir(dirp, fd, name);
+diff -ru /home/netbsd/src/lib/libc/gen/readdir.c ./gen/readdir.c
+--- /home/netbsd/src/lib/libc/gen/readdir.c	2010-09-16 03:01:30.000000000 +0000
++++ ./gen/readdir.c	2011-02-15 09:43:12.000000000 +0000
+@@ -40,6 +40,12 @@
+ 
+ #include "namespace.h"
+ #include "reentrant.h"
++
++#ifdef __minix
++#include <sys/cdefs.h>
++#include <sys/types.h>
++#endif
++
+ #include "extern.h"
+ #include <sys/param.h>
+ 
+@@ -81,8 +87,10 @@
+ 		dirp->dd_loc += dp->d_reclen;
+ 		if (dp->d_ino == 0 && skipdeleted)
+ 			continue;
++#ifndef __minix
+ 		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
+ 			continue;
++#endif
+ 		return (dp);
+ 	}
+ }
+diff -ru /home/netbsd/src/lib/libc/gen/rewinddir.c ./gen/rewinddir.c
+--- /home/netbsd/src/lib/libc/gen/rewinddir.c	2010-09-26 03:01:02.000000000 +0000
++++ ./gen/rewinddir.c	2011-02-14 17:48:19.000000000 +0000
+@@ -40,6 +40,11 @@
+ 
+ #include "namespace.h"
+ #include "reentrant.h"
++
++#ifdef __minix
++#include <sys/types.h>
++#endif
++
+ #include "extern.h"
+ #include <sys/types.h>
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/scandir.c ./gen/scandir.c
+--- /home/netbsd/src/lib/libc/gen/scandir.c	2007-06-09 23:57:25.000000000 +0000
++++ ./gen/scandir.c	2011-02-14 17:48:19.000000000 +0000
+@@ -130,9 +130,13 @@
+ 			goto bad2;
+ 		p->d_fileno = d->d_fileno;
+ 		p->d_reclen = d->d_reclen;
++#ifndef __minix
+ 		p->d_type = d->d_type;
+ 		p->d_namlen = d->d_namlen;
+ 		(void)memmove(p->d_name, d->d_name, (size_t)(p->d_namlen + 1));
++#else
++		(void)memmove(p->d_name, d->d_name, (size_t)(strlen(d->d_name) + 1));
++#endif
+ 		names[nitems++] = p;
+ 	}
+ 	(void)closedir(dirp);
+diff -ru /home/netbsd/src/lib/libc/gen/seekdir.c ./gen/seekdir.c
+--- /home/netbsd/src/lib/libc/gen/seekdir.c	2006-05-17 20:36:50.000000000 +0000
++++ ./gen/seekdir.c	2011-02-14 17:48:19.000000000 +0000
+@@ -40,6 +40,9 @@
+ 
+ #include "namespace.h"
+ #include "reentrant.h"
++#ifdef __minix
++#include <sys/types.h>
++#endif
+ #include "extern.h"
+ #include <sys/param.h>
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/syslog.c ./gen/syslog.c
+--- /home/netbsd/src/lib/libc/gen/syslog.c	2010-05-14 04:47:24.000000000 +0000
++++ ./gen/syslog.c	2011-02-14 17:48:19.000000000 +0000
+@@ -492,7 +492,9 @@
+ 	/* AF_UNIX address of local logger */
+ 	static const struct sockaddr_un sun = {
+ 		.sun_family = AF_LOCAL,
++#ifndef __minix
+ 		.sun_len = sizeof(sun),
++#endif
+ 		.sun_path = _PATH_LOG,
+ 	};
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/telldir.c ./gen/telldir.c
+--- /home/netbsd/src/lib/libc/gen/telldir.c	2008-05-04 18:53:26.000000000 +0000
++++ ./gen/telldir.c	2011-02-14 17:48:19.000000000 +0000
+@@ -40,6 +40,11 @@
+ 
+ #include "namespace.h"
+ #include "reentrant.h"
++
++#ifdef __minix
++#include <sys/types.h>
++#endif
++
+ #include "extern.h"
+ #include <sys/param.h>
+ 
+diff -ru /home/netbsd/src/lib/libc/gen/ttyname.c ./gen/ttyname.c
+--- /home/netbsd/src/lib/libc/gen/ttyname.c	2008-06-25 11:47:29.000000000 +0000
++++ ./gen/ttyname.c	2011-02-15 10:58:47.000000000 +0000
+@@ -72,7 +72,9 @@
+ 		mode_t type;
+ 		dev_t dev;
+ 	} bkey;
++#ifndef __minix
+ 	struct ptmget ptm;
++#endif
+ #define DEVSZ (sizeof(_PATH_DEV) - 1)
+ 
+ 	_DIAGASSERT(fd != -1);
+@@ -81,6 +83,7 @@
+ 		return ERANGE;
+ 	}
+ 
++#ifndef __minix
+ 	/* If it is a pty, deal with it quickly */
+ 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
+ 		if (strlcpy(buf, ptm.sn, len) >= len) {
+@@ -88,6 +91,7 @@
+ 		}
+ 		return 0;
+ 	}
++#endif
+ 	/* Must be a terminal. */
+ 	if (tcgetattr(fd, &ttyb) == -1)
+ 		return errno;
+@@ -136,7 +140,11 @@
+ 	while ((dirp = readdir(dp)) != NULL) {
+ 		if (dirp->d_fileno != sb->st_ino)
+ 			continue;
++#ifdef __minix
++		dlen = strlen(dirp->d_name);
++#else
+ 		dlen = dirp->d_namlen + 1;
++#endif
+ 		if (len - DEVSZ <= dlen) {
+ 			/*
+ 			 * XXX: we return an error if *any* entry does not
+diff -ru /home/netbsd/src/lib/libc/gen/ttyslot.c ./gen/ttyslot.c
+--- /home/netbsd/src/lib/libc/gen/ttyslot.c	2009-01-11 02:46:27.000000000 +0000
++++ ./gen/ttyslot.c	2011-02-14 17:48:19.000000000 +0000
+@@ -59,14 +59,20 @@
+ 	char *p;
+ 	int cnt;
+ 	char *name;
++#ifndef __minix
+ 	struct ptmget ptm;
++#endif
+ 
+ 	setttyent();
+ 	for (cnt = 0; cnt < 3; ++cnt) {
++#ifndef __minix
+ 		if (ioctl(cnt, TIOCPTSNAME, &ptm) != -1) {
+ 			ispty = 1;
+ 			name = ptm.sn;
+ 		} else if ((name = ttyname(cnt)) != NULL) {
++#else
++		if ((name = ttyname(cnt)) != NULL) {
++#endif
+ 			ispty = 0;
+ 		} else
+ 			continue;
+diff -ru /home/netbsd/src/lib/libc/gen/ulimit.c ./gen/ulimit.c
+--- /home/netbsd/src/lib/libc/gen/ulimit.c	2008-04-28 20:22:59.000000000 +0000
++++ ./gen/ulimit.c	2011-02-14 17:48:19.000000000 +0000
+@@ -54,12 +54,14 @@
+ 		if (getrlimit(RLIMIT_FSIZE, &rlimit) == 0)
+ 			result = (long int)(rlimit.rlim_cur / 512);
+ 		break;
++#ifndef __minix
+ 	case UL_SETFSIZE:
+ 		new_limit = va_arg(ap, long int);
+ 		rlimit.rlim_cur = rlimit.rlim_max = (rlim_t)new_limit * 512;
+ 		if (setrlimit(RLIMIT_FSIZE, &rlimit) == 0)
+ 			result = new_limit;
+ 		break;
++#endif
+ 	default:
+ 		errno = EINVAL;
+ 	}
+diff -ru /home/netbsd/src/lib/libc/gen/utmpx.c ./gen/utmpx.c
+--- /home/netbsd/src/lib/libc/gen/utmpx.c	2009-01-11 02:46:27.000000000 +0000
++++ ./gen/utmpx.c	2011-02-15 09:44:12.000000000 +0000
+@@ -336,16 +336,32 @@
+ 	_DIAGASSERT(file != NULL);
+ 	_DIAGASSERT(utx != NULL);
+ 
++#ifndef __minix
+ 	fd = open(file, O_WRONLY|O_APPEND|O_SHLOCK);
++#else
++	fd = open(file, O_WRONLY|O_APPEND);
++#endif
+ 
+ 	if (fd == -1) {
++#ifndef __minix
+ 		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
+ 			return -1;
++#else
++		if ((fd = open(file, O_CREAT|O_WRONLY, 0644)) < 0)
++			return -1;
++		if (flock(fd, LOCK_EX) < 0)
++			return -1;
++#endif
+ 		(void)memset(&ut, 0, sizeof(ut));
+ 		ut.ut_type = SIGNATURE;
+ 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
+ 		if (write(fd, &ut, sizeof(ut)) == -1)
+ 			goto failed;
++	} else {
++#ifdef __minix
++		if (flock(fd, LOCK_SH) < 0 )
++			return -1;
++#endif
+ 	}
+ 	if (write(fd, utx, sizeof(*utx)) == -1)
+ 		goto failed;
+@@ -425,10 +441,18 @@
+ 	_DIAGASSERT(fname != NULL);
+ 	_DIAGASSERT(ll != NULL);
+ 
++#ifdef __minix
++	db = dbopen(fname, O_RDONLY, 0, DB_HASH, NULL);
++#else
+ 	db = dbopen(fname, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
++#endif
+ 
+ 	if (db == NULL)
+ 		return NULL;
++#ifdef __minix
++	if (flock(db->fd(db), LOCK_SH) < 0)
++		return NULL;
++#endif
+ 
+ 	key.data = &uid;
+ 	key.size = sizeof(uid);
+@@ -464,11 +488,19 @@
+ 	_DIAGASSERT(fname != NULL);
+ 	_DIAGASSERT(ll != NULL);
+ 
++#ifndef __minix
+ 	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0644, DB_HASH, NULL);
++#else 
++	db = dbopen(fname, O_RDWR|O_CREAT, 0644, DB_HASH, NULL);
++#endif
+ 
+ 	if (db == NULL)
+ 		return -1;
+ 
++#ifdef __minix
++	if (flock(db->fd(db), LOCK_EX) < 0)
++		return -1;
++#endif
+ 	key.data = &uid;
+ 	key.size = sizeof(uid);
+ 	data.data = ll;
+diff -ru /home/netbsd/src/lib/libc/gmon/gmon.c ./gmon/gmon.c
+--- /home/netbsd/src/lib/libc/gmon/gmon.c	2011-01-05 03:01:31.000000000 +0000
++++ ./gmon/gmon.c	2011-02-15 10:55:22.000000000 +0000
+@@ -373,8 +373,10 @@
+ 	struct gmonparam *p = &_gmonparam;
+ 	struct gmonhdr gmonhdr, *hdr;
+ 	struct clockinfo clockinfo;
++#ifndef __minix
+ 	int mib[2];
+ 	size_t size;
++#endif 
+ 	char *profdir;
+ 	const char *proffile;
+ 	char  buf[PATH_MAX];
+@@ -397,6 +399,9 @@
+ 	if (p->state == GMON_PROF_ERROR)
+ 		warnx("%s: tos overflow", __func__);
+ 
++#ifdef __minix
++	clockinfo.profhz = sysconf(_SC_CLK_TCK);
++#else /* !__minix */
+ 	size = sizeof(clockinfo);
+ 	mib[0] = CTL_KERN;
+ 	mib[1] = KERN_CLOCKRATE;
+@@ -411,6 +416,7 @@
+ 		else
+ 			clockinfo.profhz = hertz();
+ 	}
++#endif /* !__minix */
+ 
+ 	moncontrol(0);
+ 
+@@ -509,6 +515,7 @@
+ 	}
+ }
+ 
++#ifndef __minix
+ /*
+  * discover the tick frequency of the machine
+  * if something goes wrong, we return 0, an impossible hertz.
+@@ -542,3 +549,4 @@
+ 	(void)timer_delete(t);
+ 	return rv;
+ }
++#endif /* !__minix */
+diff -ru /home/netbsd/src/lib/libc/include/env.h ./include/env.h
+--- /home/netbsd/src/lib/libc/include/env.h	2010-11-14 22:04:36.000000000 +0000
++++ ./include/env.h	2011-02-15 10:17:15.000000000 +0000
+@@ -56,7 +56,11 @@
+ }
+ 
+ static __inline bool
++#ifdef __minix
++__unlockenv(void)
++#else /* Bug-to-bug compatibility? */
+ __unlocklockenv(void)
++#endif
+ {
+ 	return true;
+ }
+diff -ru /home/netbsd/src/lib/libc/include/namespace.h ./include/namespace.h
+--- /home/netbsd/src/lib/libc/include/namespace.h	2010-12-17 03:01:54.000000000 +0000
++++ ./include/namespace.h	2011-02-15 08:57:32.000000000 +0000
+@@ -47,7 +47,9 @@
+ #define fork		_fork
+ #define fseeko		_fseeko
+ #define ftello		_ftello
++#ifndef __minix
+ #define getcontext	_getcontext
++#endif /* !__minix */
+ #define getenv_r	_getenv_r
+ #define imaxabs		_imaxabs
+ #define imaxdiv		_imaxdiv
+@@ -530,7 +532,13 @@
+ #define seed48			_seed48
+ #define seekdir			_seekdir
+ #define select			_select
++#ifdef __minix
++/* '_send' unfortunately collides with Minix IPC's _send function.
++ * This solution is fragile, a proper renaming of Minix IPCs should 
++ * be done insted. */
++#else /* !__minix */
+ #define send			_send
++#endif /* !__minix */
+ #define setdomainname		_setdomainname
+ #define setenv			_setenv
+ #define setfsent		_setfsent
+@@ -845,6 +853,80 @@
+ #define xprtlist_lock		__rpc_xprtlist_lock
+ 
+ #define __learn_tree		___learn_tree
++
++#ifdef __minix
++#define _exit __exit
++#define access _access
++#define bind _bind
++#define chdir _chdir
++#define chmod _chmod
++#define chown _chown
++#define chroot _chroot
++#define close _close
++#define dup _dup
++#define dup2 _dup2
++#define execve _execve
++#define fchdir _fchdir
++#define fchmod _fchmod
++#define fchown _fchown
++#define fcntl _fcntl
++#define flock _flock
++#define fstat _fstat
++#define fsync _fsync
++#define fpathconf _fpathconf
++#define getegid _getegid
++#define geteuid _geteuid
++#define getgroups _getgroups
++#define getpid _getpid
++#define getpgrp _getpgrp
++#define getppid _getppid
++#define gettimeofday _gettimeofday
++#define getgid _getgid
++#define getuid _getuid
++#define ioctl _ioctl
++#define link _link
++#define lstat _lstat
++#define mount _mount
++#define mkdir _mkdir
++#define mkfifo _mkfifo
++#define mknod _mknod
++#define munmap _munmap
++#define munmap_text _munmap_text
++#define open _open
++#define pathconf _pathconf
++#define ptrace _ptrace
++#define readv _readv
++#define rmdir _rmdir
++#define setegid _setegid
++#define seteuid _seteuid
++#define setgid _setgid
++#define setgroups _setgroups
++#define setprogname _setprogname
++#define setsid _setsid
++#define setuid _setuid
++#define shmat _shmat
++#define shmdt _shmdt
++#define shmget _shmget
++#define sigreturn	_sigreturn
++#define socket _socket
++#define socketpair _socketpair
++#define symlink _symlink
++#define sync _sync
++#define stat(a, b) _stat(a, b)
++#define stime _stime
++#define umask _umask
++#define umount _umount
++#define umount2 _umount2
++#define unlink _unlink
++#define vm_remap _vm_remap
++#define vm_unmap _vm_unmap
++#define vm_getphys _vm_getphys
++#define vm_getrefcount _vm_getrefcount
++#define truncate _truncate
++#define write _write
++#define writev _writev
++#endif /* __minix */
++
+ #endif /* __weak_alias */
+ #endif /* !__lint__ */
+ 
+diff -ru /home/netbsd/src/lib/libc/libcincludes.mk ./libcincludes.mk
+--- /home/netbsd/src/lib/libc/libcincludes.mk	2008-10-26 07:28:06.000000000 +0000
++++ ./libcincludes.mk	2011-02-15 10:39:27.000000000 +0000
+@@ -3,6 +3,22 @@
+ # Makefile fragment shared across several parts that want to look
+ # inside libc's include tree.
+ 
++.if defined(__MINIX)
++.if defined(LIBC_MACHINE_ARCH) && \
++    exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
++ARCHSUBDIR=	${LIBC_MACHINE_ARCH}
++.elif exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${MACHINE_ARCH}/SYS.h)
++ARCHSUBDIR=	${MACHINE_ARCH}
++.elif exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${MACHINE_CPU}/SYS.h)
++ARCHSUBDIR=	${MACHINE_CPU}
++.else
++.BEGIN:
++	@echo no ARCHDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
++	@false
++.endif
++
++ARCHDIR=	${MINIXSRCCDIR}/lib/nbsd_libc/arch/${ARCHSUBDIR}
++.else
+ .if defined(LIBC_MACHINE_ARCH) && \
+     exists(${NETBSDSRCDIR}/lib/libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
+ ARCHSUBDIR=	${LIBC_MACHINE_ARCH}
+@@ -17,3 +33,4 @@
+ .endif
+ 
+ ARCHDIR=	${NETBSDSRCDIR}/lib/libc/arch/${ARCHSUBDIR}
++.endif
+diff -ru /home/netbsd/src/lib/libc/locale/setlocale.c ./locale/setlocale.c
+--- /home/netbsd/src/lib/libc/locale/setlocale.c	2010-06-08 03:01:34.000000000 +0000
++++ ./locale/setlocale.c	2011-02-15 11:04:03.000000000 +0000
+@@ -61,6 +61,38 @@
+ extern const _locale_category_t _localeio_LC_MESSAGES_desc;
+ #endif
+ 
++#ifdef __minix
++/* GNU binutils 2.x a.out support is rotten and link sets are not
++   supported. Workaround this by explicitely creating the structure
++   the linker was supposed to create. */
++
++struct {
++	int __ls_length;
++	_locale_category_t *__ls_items[7];
++} __link_set_all_categories = {
++	.__ls_length = 7,
++	.__ls_items = {
++		[0] = &_generic_LC_ALL_desc,
++		[1] = &_dummy_LC_COLLATE_desc,
++#ifdef WITH_RUNE
++		[2] = &_citrus_LC_CTYPE_desc,
++		[3] = &_citrus_LC_MONETARY_desc,
++		[4] = &_citrus_LC_NUMERIC_desc,
++		[5] = &_citrus_LC_TIME_desc,
++		[6] = &_citrus_LC_MESSAGES_desc,
++#else
++		[2] = &_localeio_LC_CTYPE_desc,
++		[3] = &_localeio_LC_MONETARY_desc,
++		[4] = &_localeio_LC_NUMERIC_desc,
++		[5] = &_localeio_LC_TIME_desc,
++		[6] = &_localeio_LC_MESSAGES_desc,
++#endif
++	},
++};
++
++#endif /* __minix */
++
++
+ __link_set_add_data(all_categories, _generic_LC_ALL_desc);
+ __link_set_add_data(all_categories, _dummy_LC_COLLATE_desc);
+ #ifdef WITH_RUNE
+diff -ru /home/netbsd/src/lib/libc/misc/initfini.c ./misc/initfini.c
+--- /home/netbsd/src/lib/libc/misc/initfini.c	2010-11-15 03:02:00.000000000 +0000
++++ ./misc/initfini.c	2011-02-14 17:48:20.000000000 +0000
+@@ -55,8 +55,10 @@
+ 	/* Atomic operations */
+ 	__libc_atomic_init();
+ 
++#ifdef _REENTRANT
+ 	/* Threads */
+ 	__libc_thr_init();
++#endif
+ 
+ 	/* Initialize the atexit mutexes */
+ 	__libc_atexit_init();
+diff -ru /home/netbsd/src/lib/libc/misc/stack_protector.c ./misc/stack_protector.c
+--- /home/netbsd/src/lib/libc/misc/stack_protector.c	2010-12-08 03:01:48.000000000 +0000
++++ ./misc/stack_protector.c	2011-02-15 11:00:49.000000000 +0000
+@@ -56,24 +56,30 @@
+ void
+ __guard_setup(void)
+ {
++#ifndef __minix
+ 	int mib[2];
++#endif
+ 	size_t len;
+ 
+ 	if (__stack_chk_guard[0] != 0)
+ 		return;
+ 
++#ifndef __minix
+ 	mib[0] = CTL_KERN;
+ 	mib[1] = KERN_ARND;
+ 
+ 	len = sizeof(__stack_chk_guard);
+ 	if (__sysctl(mib, 2, __stack_chk_guard, &len, NULL, 0) == -1 ||
+ 	    len != sizeof(__stack_chk_guard)) {
++#endif
+ 		/* If sysctl was unsuccessful, use the "terminator canary". */
+ 		((unsigned char *)(void *)__stack_chk_guard)[0] = 0;
+ 		((unsigned char *)(void *)__stack_chk_guard)[1] = 0;
+ 		((unsigned char *)(void *)__stack_chk_guard)[2] = '\n';
+ 		((unsigned char *)(void *)__stack_chk_guard)[3] = 255;
++#ifndef __minix
+ 	}
++#endif
+ }
+ 
+ /*ARGSUSED*/
+diff -ru /home/netbsd/src/lib/libc/net/Makefile.inc ./net/Makefile.inc
+--- /home/netbsd/src/lib/libc/net/Makefile.inc	2009-10-02 02:45:29.000000000 +0000
++++ ./net/Makefile.inc	2011-02-15 10:29:00.000000000 +0000
+@@ -2,8 +2,22 @@
+ #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
+ 
+ # net sources
++.if defined(__MINIX)
++.PATH: ${.CURDIR}/net/minix
++.endif
+ .PATH: ${ARCHDIR}/net ${.CURDIR}/net
+ 
++.if defined(__MINIX)
++# Not supported by minix: iso_addr.c link_addr.c sockatmark.c
++SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
++	getnetnamadr.c getnetent.c getpeereid.c \
++	getprotobyname.c getprotobynumber.c getprotoent.c \
++	getprotobyname_r.c getprotobynumber_r.c getprotoent_r.c \
++	getservbyname.c getservbyport.c getservent.c \
++	getservbyname_r.c getservbyport_r.c getservent_r.c \
++	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
++	rcmd.c recv.c send.c sethostent.c 
++.else
+ SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
+ 	getnetnamadr.c getnetent.c getpeereid.c \
+ 	getprotobyname.c getprotobynumber.c getprotoent.c \
+@@ -14,6 +28,7 @@
+ 	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
+ 	rcmd.c recv.c send.c sethostent.c \
+ 	sockatmark.c
++.endif
+ 
+ .if (${MKHESIOD} != "no")
+ SRCS+=	hesiod.c
+@@ -23,7 +38,9 @@
+ .if (${USE_INET6} != "no")
+ SRCS+=	ip6opt.c rthdr.c vars6.c
+ .endif
++.if !defined(__MINIX)
+ SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
++.endif
+ 
+ LPREFIX=_nsyy
+ YPREFIX=_nsyy
+diff -ru /home/netbsd/src/lib/libc/net/getaddrinfo.c ./net/getaddrinfo.c
+--- /home/netbsd/src/lib/libc/net/getaddrinfo.c	2009-10-02 07:41:08.000000000 +0000
++++ ./net/getaddrinfo.c	2011-02-14 17:48:20.000000000 +0000
+@@ -855,7 +855,12 @@
+ 	ai = calloc(sizeof(struct addrinfo) + addrlen, 1);
+ 	if (ai) {
+ 		ai->ai_addr = (void *)(ai+1);
++#ifndef __minix
+ 		ai->ai_addrlen = ai->ai_addr->sa_len = addrlen;
++#else /* __minix */
++		ai->ai_addrlen = addrlen;
++#endif
++
+ 	}
+ 
+ 	return ai;
+diff -ru /home/netbsd/src/lib/libc/net/getnameinfo.c ./net/getnameinfo.c
+--- /home/netbsd/src/lib/libc/net/getnameinfo.c	2010-06-30 03:52:09.000000000 +0000
++++ ./net/getnameinfo.c	2011-02-15 11:05:26.000000000 +0000
+@@ -54,10 +54,12 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <net/if.h>
++#ifndef __minix
+ #include <net/if_dl.h>
+ #include <net/if_ieee1394.h>
+ #include <net/if_types.h>
+ #include <netatalk/at.h>
++#endif /* !__minix */
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <arpa/nameser.h>
+@@ -103,11 +105,13 @@
+ static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t,
+ 				 int));
+ #endif
++#ifndef __minix
+ static int getnameinfo_atalk __P((const struct sockaddr *, socklen_t, char *,
+     socklen_t, char *, socklen_t, int));
+ 
+ static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
+     socklen_t, char *, socklen_t, int));
++#endif /* __minix */
+ static int hexname __P((const u_int8_t *, size_t, char *, socklen_t));
+ 
+ /*
+@@ -124,21 +128,26 @@
+ {
+ 
+ 	switch (sa->sa_family) {
++#ifndef __minix
+ 	case AF_APPLETALK:
+ 		return getnameinfo_atalk(sa, salen, host, hostlen,
+ 		    serv, servlen, flags);
++#endif /* !__minix */
+ 	case AF_INET:
+ 	case AF_INET6:
+ 		return getnameinfo_inet(sa, salen, host, hostlen,
+ 		    serv, servlen, flags);
++#ifndef __minix
+ 	case AF_LINK:
+ 		return getnameinfo_link(sa, salen, host, hostlen,
+ 		    serv, servlen, flags);
++#endif /* !__minix */
+ 	default:
+ 		return EAI_FAMILY;
+ 	}
+ }
+ 
++#ifndef __minix
+ /*
+  * getnameinfo_atalk():
+  * Format an AppleTalk address into a printable format.
+@@ -198,6 +207,7 @@
+ 
+ 	return EAI_MEMORY;
+ }
++#endif /* !__minix */
+ 
+ /*
+  * getnameinfo_inet():
+@@ -491,6 +501,7 @@
+ #endif /* INET6 */
+ 
+ 
++#ifndef __minix
+ /*
+  * getnameinfo_link():
+  * Format a link-layer address into a printable format, paying attention to
+@@ -568,6 +579,7 @@
+ 		    (size_t)sdl->sdl_alen, host, hostlen);
+ 	}
+ }
++#endif /* !__minix */
+ 
+ static int
+ hexname(cp, len, host, hostlen)
+diff -ru /home/netbsd/src/lib/libc/net/rcmd.c ./net/rcmd.c
+--- /home/netbsd/src/lib/libc/net/rcmd.c	2007-01-03 11:46:22.000000000 +0000
++++ ./net/rcmd.c	2011-02-15 11:21:01.000000000 +0000
+@@ -48,7 +48,9 @@
+ #include <sys/wait.h>
+ 
+ #include <netinet/in.h>
++#ifndef __minix
+ #include <rpc/rpc.h>
++#endif
+ #include <arpa/inet.h>
+ #include <netgroup.h>
+ 
+@@ -70,6 +72,10 @@
+ 
+ #include "pathnames.h"
+ 
++#ifdef __minix
++#undef BSD4_4
++#endif
++
+ int	orcmd __P((char **, u_int, const char *, const char *, const char *,
+ 	    int *));
+ int	orcmd_af __P((char **, u_int, const char *, const char *, const char *,
+@@ -213,7 +219,11 @@
+ 	struct addrinfo *r;
+ 	struct sockaddr_storage from;
+ 	struct pollfd reads[2];
++#ifdef __minix
++	/* No support for OOB data in Minix. */
++#else
+ 	sigset_t nmask, omask;
++#endif /* !__minix */
+ 	pid_t pid;
+ 	int s, lport, timo;
+ 	int pollr;
+@@ -230,10 +240,14 @@
+ 	r = res;
+ 	refused = 0;
+ 	pid = getpid();
++#ifndef __minix
++	/* Minix has no support for OOB data, 
++	   no need to block SIGURG. */
+ 	sigemptyset(&nmask);
+ 	sigaddset(&nmask, SIGURG);
+ 	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
+ 		return -1;
++#endif /* !__minix */
+ 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
+ 		s = rresvport_af(&lport, r->ai_family);
+ 		if (s < 0) {
+@@ -245,11 +259,16 @@
+ 				r = r->ai_next;
+ 				continue;
+ 			} else {
++#ifndef __minix
+ 				(void)sigprocmask(SIG_SETMASK, &omask, NULL);
++#endif /* !__minix */
+ 				return (-1);
+ 			}
+ 		}
++#ifndef __minix
++		/* No OOB support in Minix. */
+ 		fcntl(s, F_SETOWN, pid);
++#endif /* !__minix */
+ 		if (connect(s, r->ai_addr, r->ai_addrlen) >= 0)
+ 			break;
+ 		(void)close(s);
+@@ -286,7 +305,10 @@
+ 		}
+ 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
+ 		    strerror(errno));
++#ifndef __minix
++		/* No OOB support in Minix. */
+ 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
++#endif /* !__minix */
+ 		return (-1);
+ 	}
+ 	lport--;
+@@ -363,14 +385,18 @@
+ 		}
+ 		goto bad2;
+ 	}
++#ifndef __minix
+ 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
++#endif /* __minix */
+ 	return (s);
+ bad2:
+ 	if (lport)
+ 		(void)close(*fd2p);
+ bad:
+ 	(void)close(s);
++#ifndef __minix
+ 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
++#endif /* __minix */
+ 	return (-1);
+ }
+ 
+diff -ru /home/netbsd/src/lib/libc/net/send.c ./net/send.c
+--- /home/netbsd/src/lib/libc/net/send.c	2003-08-07 16:43:15.000000000 +0000
++++ ./net/send.c	2011-02-14 17:48:20.000000000 +0000
+@@ -44,9 +44,15 @@
+ 
+ #include <stddef.h>
+ 
++#ifdef __minix
++/* UGLY: name clash with minix ipc.
++ * Better solution: redefine minix ipc.
++ */
++#else /* !__minix */
+ #ifdef __weak_alias
+ __weak_alias(send, _send)
+ #endif
++#endif /* !__minix */
+ 
+ ssize_t
+ send(s, msg, len, flags)
+diff -ru /home/netbsd/src/lib/libc/nls/catopen.c ./nls/catopen.c
+--- /home/netbsd/src/lib/libc/nls/catopen.c	2009-03-10 13:15:40.000000000 +0000
++++ ./nls/catopen.c	2011-02-14 17:48:20.000000000 +0000
+@@ -169,6 +169,19 @@
+ 		return (nl_catd)-1;
+ 	}
+ 
++#ifdef __minix
++	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_ANON, -1, (off_t)0);
++	if (data == MAP_FAILED) {
++		return (nl_catd)-1;
++	}
++
++	if (read(fd, data, st.st_size) != st.st_size)
++	{
++		munmap(data, (size_t)st.st_size);
++		return (nl_catd)-1;
++	}
++	close (fd);
++#else /* !__minix */
+ 	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
+ 	    (off_t)0);
+ 	close (fd);
+@@ -176,6 +189,7 @@
+ 	if (data == MAP_FAILED) {
+ 		return (nl_catd)-1;
+ 	}
++#endif /* __minix */
+ 
+ 	if (ntohl((u_int32_t)((struct _nls_cat_hdr *)data)->__magic) !=
+ 	    _NLS_MAGIC) {
+diff -ru /home/netbsd/src/lib/libc/resolv/res_init.c ./resolv/res_init.c
+--- /home/netbsd/src/lib/libc/resolv/res_init.c	2009-10-24 17:24:01.000000000 +0000
++++ ./resolv/res_init.c	2011-02-15 08:57:32.000000000 +0000
+@@ -88,7 +88,9 @@
+ #include <sys/socket.h>
+ #include <sys/stat.h>
+ #include <sys/time.h>
++#ifndef __minix
+ #include <sys/event.h>
++#endif /* !__minix */
+ 
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+@@ -348,7 +350,9 @@
+ 	nserv = 0;
+ 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
+ 	    struct stat st;
++#ifndef __minix
+ 	    struct kevent kc;
++#endif /* !__minix */
+ 
+ 	    /* read the config file */
+ 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
+@@ -502,6 +506,7 @@
+ 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
+ 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
+ 			st.st_mtimespec;
++#ifndef __minix
+ 	    statp->_u._ext.ext->kq = kqueue();
+ 	    (void)fcntl(statp->_u._ext.ext->kq, F_SETFD, FD_CLOEXEC);
+ 	    (void)fcntl(statp->_u._ext.ext->resfd, F_SETFD, FD_CLOEXEC);
+@@ -509,6 +514,9 @@
+ 		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
+ 		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
+ 	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
++#else /* __minix */
++	statp->_u._ext.ext->kq = -1;
++#endif /* !__minix */
+ 	} else {
+ 	    statp->_u._ext.ext->kq = -1;
+ 	    statp->_u._ext.ext->resfd = -1;
+@@ -565,6 +573,12 @@
+ int
+ res_check(res_state statp, struct timespec *mtime)
+ {
++#ifdef __minix
++	/*
++	 * XXX: No update on change.
++	 */
++	return 0;
++#else /* !__minix */
+ 	/*
+ 	 * If the times are equal, then we check if there
+ 	 * was a kevent related to resolv.conf and reload.
+@@ -593,6 +607,7 @@
+ 	if (mtime)
+ 		*mtime = __res_conf_time;
+ 	return 1;
++#endif /* !__minix */
+ }
+ 
+ static void
+diff -ru /home/netbsd/src/lib/libc/stdlib/Makefile.inc ./stdlib/Makefile.inc
+--- /home/netbsd/src/lib/libc/stdlib/Makefile.inc	2010-11-15 03:02:00.000000000 +0000
++++ ./stdlib/Makefile.inc	2011-02-15 09:09:03.000000000 +0000
+@@ -4,6 +4,21 @@
+ # stdlib sources
+ .PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
+ 
++.if defined(__MINIX)
++# pty.c not compiled
++SRCS+=	_env.c _rand48.c \
++	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
++	bsearch.c drand48.c exit.c \
++	getenv.c getopt.c getopt_long.c getsubopt.c \
++	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
++	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
++	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c \
++	radixsort.c rand.c rand_r.c random.c remque.c \
++	seed48.c setenv.c srand48.c strsuftoll.c \
++	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
++	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
++	unsetenv.c strfmon.c
++.else
+ SRCS+=	_env.c _rand48.c \
+ 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
+ 	bsearch.c drand48.c exit.c \
+@@ -16,6 +31,7 @@
+ 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
+ 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
+ 	unsetenv.c strfmon.c
++.endif
+ 
+ # These are often replaced by MD .S versions
+ SRCS+=	abs.c labs.c llabs.c imaxabs.c
+diff -ru /home/netbsd/src/lib/libc/stdlib/atexit.c ./stdlib/atexit.c
+--- /home/netbsd/src/lib/libc/stdlib/atexit.c	2009-10-08 16:33:45.000000000 +0000
++++ ./stdlib/atexit.c	2011-02-14 17:48:20.000000000 +0000
+@@ -120,10 +120,12 @@
+ void
+ __libc_atexit_init(void)
+ {
++#ifdef _REENTRANT /* !__minix */
+ 	mutexattr_t atexit_mutex_attr;
+ 	mutexattr_init(&atexit_mutex_attr);
+ 	mutexattr_settype(&atexit_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+ 	mutex_init(&atexit_mutex, &atexit_mutex_attr);
++#endif /* _REENTRANT */
+ }
+ 
+ /*
+diff -ru /home/netbsd/src/lib/libc/stdlib/malloc.c ./stdlib/malloc.c
+--- /home/netbsd/src/lib/libc/stdlib/malloc.c	2008-02-03 22:56:53.000000000 +0000
++++ ./stdlib/malloc.c	2011-02-14 17:48:20.000000000 +0000
+@@ -65,8 +65,10 @@
+ #       define malloc_pageshift         12U
+ #       define malloc_minsize           16U
+ #   endif
++#ifndef __minix
+ #   define HAS_UTRACE
+ #   define UTRACE_LABEL
++#endif /* __minix */
+ 
+ #include <sys/cdefs.h>
+ void utrace(struct ut *, int);
+@@ -210,9 +212,11 @@
+ #define INIT_MMAP()
+ #endif
+ 
++#ifndef __minix
+ #ifndef MADV_FREE
+ #define MADV_FREE MADV_DONTNEED
+ #endif
++#endif /* !__minix */
+ 
+ /* Number of free pages we cache */
+ static size_t malloc_cache = 16;
+@@ -485,8 +489,10 @@
+ 		case '<': malloc_cache   >>= 1; break;
+ 		case 'a': malloc_abort   = 0; break;
+ 		case 'A': malloc_abort   = 1; break;
++#ifndef __minix
+ 		case 'h': malloc_hint    = 0; break;
+ 		case 'H': malloc_hint    = 1; break;
++#endif /* !__minix */
+ 		case 'r': malloc_realloc = 0; break;
+ 		case 'R': malloc_realloc = 1; break;
+ 		case 'j': malloc_junk    = 0; break;
+@@ -932,8 +938,10 @@
+     if (malloc_junk)
+ 	memset(ptr, SOME_JUNK, l);
+ 
++#ifndef __minix
+     if (malloc_hint)
+ 	madvise(ptr, l, MADV_FREE);
++#endif /* !__minix */
+ 
+     tail = (char *)ptr+l;
+ 
+diff -ru /home/netbsd/src/lib/libc/stdlib/system.c ./stdlib/system.c
+--- /home/netbsd/src/lib/libc/stdlib/system.c	2010-11-15 03:02:00.000000000 +0000
++++ ./stdlib/system.c	2011-02-14 17:48:20.000000000 +0000
+@@ -91,7 +91,11 @@
+ 	}
+ 
+ 	(void)__readlockenv();
++#ifdef __minix
++	switch(pid = fork() ) {
++#else /* !__minix */
+ 	switch(pid = vfork()) {
++#endif /* !__minix */
+ 	case -1:			/* error */
+ 		(void)__unlockenv();
+ 		sigaction(SIGINT, &intsa, NULL);
+diff -ru /home/netbsd/src/lib/libc/termios/Makefile.inc ./termios/Makefile.inc
+--- /home/netbsd/src/lib/libc/termios/Makefile.inc	1998-02-14 20:20:44.000000000 +0000
++++ ./termios/Makefile.inc	2011-02-15 10:14:47.000000000 +0000
+@@ -2,9 +2,18 @@
+ 
+ .PATH:	${.CURDIR}/termios
+ 
++.if defined(__MINIX)
++# Not supported by Minix: tcgetsid.c
++SRCS+=	cfgetispeed.c cfgetospeed.c cfmakeraw.c cfsetispeed.c cfsetospeed.c \
++	cfsetspeed.c tcdrain.c tcflow.c tcflush.c tcgetattr.c tcgetpgrp.c \
++	tcsendbreak.c tcsetattr.c tcsetpgrp.c
++.else
+ SRCS+=	cfgetispeed.c cfgetospeed.c cfmakeraw.c cfsetispeed.c cfsetospeed.c \
+ 	cfsetspeed.c tcdrain.c tcflow.c tcflush.c tcgetattr.c tcgetpgrp.c \
+ 	tcgetsid.c tcsendbreak.c tcsetattr.c tcsetpgrp.c
++.endif
++
++
+ 
+ MAN+=	tcgetpgrp.3 tcgetsid.3 tcsendbreak.3 tcsetattr.3 tcsetpgrp.3
+ 
+diff -ru /home/netbsd/src/lib/libc/termios/cfmakeraw.c ./termios/cfmakeraw.c
+--- /home/netbsd/src/lib/libc/termios/cfmakeraw.c	2003-08-07 16:44:12.000000000 +0000
++++ ./termios/cfmakeraw.c	2011-02-14 17:48:20.000000000 +0000
+@@ -59,7 +59,11 @@
+ 
+ 	_DIAGASSERT(t != NULL);
+ 
++#ifdef __minix
++	t->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
++#else /* !__minix */
+ 	t->c_iflag &= ~(IMAXBEL|IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
++#endif /* !__minix */
+ 	t->c_oflag &= ~OPOST;
+ 	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+ 	t->c_cflag &= ~(CSIZE|PARENB);
+diff -ru /home/netbsd/src/lib/libc/termios/tcflow.c ./termios/tcflow.c
+--- /home/netbsd/src/lib/libc/termios/tcflow.c	2003-08-07 16:44:13.000000000 +0000
++++ ./termios/tcflow.c	2011-02-14 17:48:20.000000000 +0000
+@@ -54,6 +54,10 @@
+ tcflow(fd, action)
+ 	int fd, action;
+ {
++#ifdef __minix
++	_DIAGASSERT(fd != -1);
++	return ioctl(fd, TCFLOW, &action);
++#else /* !__minix */
+ 	struct termios term;
+ 	u_char c;
+ 
+@@ -77,4 +81,5 @@
+ 		return (-1);
+ 	}
+ 	/* NOTREACHED */
++#endif /* !__minix */
+ }
+diff -ru /home/netbsd/src/lib/libc/termios/tcflush.c ./termios/tcflush.c
+--- /home/netbsd/src/lib/libc/termios/tcflush.c	2003-08-07 16:44:13.000000000 +0000
++++ ./termios/tcflush.c	2011-02-14 17:48:20.000000000 +0000
+@@ -54,6 +54,10 @@
+ tcflush(fd, which)
+ 	int fd, which;
+ {
++#ifdef __minix
++	_DIAGASSERT(fd != -1);
++	return ioctl(fd, TCFLSH, &which);
++#else /* !__minix */
+ 	int com;
+ 
+ 	_DIAGASSERT(fd != -1);
+@@ -73,4 +77,5 @@
+ 		return (-1);
+ 	}
+ 	return (ioctl(fd, TIOCFLUSH, &com));
++#endif /* !__minix */
+ }
+diff -ru /home/netbsd/src/lib/libc/termios/tcsendbreak.c ./termios/tcsendbreak.c
+--- /home/netbsd/src/lib/libc/termios/tcsendbreak.c	2003-08-07 16:44:14.000000000 +0000
++++ ./termios/tcsendbreak.c	2011-02-14 17:48:20.000000000 +0000
+@@ -41,7 +41,9 @@
+ #include "namespace.h"
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
++#ifndef __minix
+ #include <sys/time.h>
++#endif /* !__minix */
+ 
+ #include <assert.h>
+ #include <errno.h>
+@@ -57,6 +59,10 @@
+ tcsendbreak(fd, len)
+ 	int fd, len;
+ {
++#ifdef __minix
++	_DIAGASSERT(fd != -1);
++	return ioctl(fd, TCSBRK, &len);
++#else /* !__minix */
+ 	static const struct timespec sleepytime = { 0, 400000000 };
+ 
+ 	_DIAGASSERT(fd != -1);
+@@ -67,4 +73,5 @@
+ 	if (ioctl(fd, TIOCCBRK, 0) == -1)
+ 		return (-1);
+ 	return (0);
++#endif /* !__minix */
+ }
+diff -ru /home/netbsd/src/lib/libc/termios/tcsetattr.c ./termios/tcsetattr.c
+--- /home/netbsd/src/lib/libc/termios/tcsetattr.c	2003-08-07 16:44:14.000000000 +0000
++++ ./termios/tcsetattr.c	2011-02-14 17:48:20.000000000 +0000
+@@ -60,11 +60,15 @@
+ 	_DIAGASSERT(fd != -1);
+ 	_DIAGASSERT(t != NULL);
+ 
++#ifndef __minix
+ 	if (opt & TCSASOFT) {
+ 		localterm = *t;
+ 		localterm.c_cflag |= CIGNORE;
+ 		t = &localterm;
+ 	}
++#else /* __minix */
++#define	TCSASOFT	0 
++#endif /* __minix */
+ 	switch (opt & ~TCSASOFT) {
+ 	case TCSANOW:
+ 		return (ioctl(fd, TIOCSETA, t));
+diff -ru /home/netbsd/src/lib/libc/yp/yplib.c ./yp/yplib.c
+--- /home/netbsd/src/lib/libc/yp/yplib.c	2006-11-03 20:18:49.000000000 +0000
++++ ./yp/yplib.c	2011-02-14 17:48:21.000000000 +0000
+@@ -172,8 +172,10 @@
+ 			}
+ 			(void)memset(&ysd->dom_server_addr, 0,
+ 				     sizeof ysd->dom_server_addr);
++#ifndef __minix
+ 			ysd->dom_server_addr.sin_len =
+ 				sizeof(struct sockaddr_in);
++#endif /* !__minix */
+ 			ysd->dom_server_addr.sin_family = AF_INET;
+ 			bn = &ybr.ypbind_respbody.ypbind_bindinfo;
+ 			ysd->dom_server_addr.sin_port =
+@@ -197,7 +199,9 @@
+ 	if (ysd->dom_vers == -1 || ysd->dom_vers == 0) {
+ 		struct ypbind_binding *bn;
+ 		(void)memset(&clnt_sin, 0, sizeof clnt_sin);
++#ifndef __minix
+ 		clnt_sin.sin_len = sizeof(struct sockaddr_in);
++#endif /* !__minix */
+ 		clnt_sin.sin_family = AF_INET;
+ 		clnt_sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+ 
+@@ -228,7 +232,9 @@
+ 
+ 		(void)memset(&ysd->dom_server_addr, 0, 
+ 			     sizeof ysd->dom_server_addr);
++#ifndef __minix
+ 		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
++#endif /* !__minix */
+ 		ysd->dom_server_addr.sin_family = AF_INET;
+ 		bn = &ypbr.ypbind_respbody.ypbind_bindinfo;
+ 		ysd->dom_server_addr.sin_port =
