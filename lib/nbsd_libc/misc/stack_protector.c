@@ -56,24 +56,29 @@ void __guard_setup(void);
 void
 __guard_setup(void)
 {
+#ifndef __minix
 	int mib[2];
+#endif
 	size_t len;
 
 	if (__stack_chk_guard[0] != 0)
 		return;
-
+#ifndef __minix
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ARND;
 
 	len = sizeof(__stack_chk_guard);
 	if (__sysctl(mib, 2, __stack_chk_guard, &len, NULL, 0) == -1 ||
 	    len != sizeof(__stack_chk_guard)) {
+#endif
 		/* If sysctl was unsuccessful, use the "terminator canary". */
 		((unsigned char *)(void *)__stack_chk_guard)[0] = 0;
 		((unsigned char *)(void *)__stack_chk_guard)[1] = 0;
 		((unsigned char *)(void *)__stack_chk_guard)[2] = '\n';
 		((unsigned char *)(void *)__stack_chk_guard)[3] = 255;
+#ifndef __minix
 	}
+#endif
 }
 
 /*ARGSUSED*/

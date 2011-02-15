@@ -72,7 +72,9 @@ ttyname_r(int fd, char *buf, size_t len)
 		mode_t type;
 		dev_t dev;
 	} bkey;
+#ifndef __minix
 	struct ptmget ptm;
+#endif
 #define DEVSZ (sizeof(_PATH_DEV) - 1)
 
 	_DIAGASSERT(fd != -1);
@@ -80,7 +82,7 @@ ttyname_r(int fd, char *buf, size_t len)
 	if (len <= DEVSZ) {
 		return ERANGE;
 	}
-
+#ifndef __minix
 	/* If it is a pty, deal with it quickly */
 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
 		if (strlcpy(buf, ptm.sn, len) >= len) {
@@ -88,6 +90,8 @@ ttyname_r(int fd, char *buf, size_t len)
 		}
 		return 0;
 	}
+#endif
+
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) == -1)
 		return errno;
@@ -136,7 +140,11 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
+#ifdef __minix
+		dlen = strlen(dirp->d_name);
+#else
 		dlen = dirp->d_namlen + 1;
+#endif
 		if (len - DEVSZ <= dlen) {
 			/*
 			 * XXX: we return an error if *any* entry does not

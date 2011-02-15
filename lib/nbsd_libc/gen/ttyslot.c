@@ -59,14 +59,20 @@ ttyslot(void)
 	char *p;
 	int cnt;
 	char *name;
+#ifndef __minix
 	struct ptmget ptm;
+#endif
 
 	setttyent();
 	for (cnt = 0; cnt < 3; ++cnt) {
+#ifndef __minix
 		if (ioctl(cnt, TIOCPTSNAME, &ptm) != -1) {
 			ispty = 1;
 			name = ptm.sn;
 		} else if ((name = ttyname(cnt)) != NULL) {
+#else
+		if ((name = ttyname(cnt)) != NULL) {
+#endif
 			ispty = 0;
 		} else
 			continue;

@@ -2,36 +2,51 @@
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
-.PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
+.PATH: ${.CURDIR}/gen/minix ${ARCHDIR}/gen ${.CURDIR}/gen
+
+# Unsupported by Minix.
+# 	closefrom.c confstr.c extattr.c getdevmajor.c getmntinfo.c \
+#	pthread_atfork.c setdomainname.c sethostname.c setproctitle.c \
+#	sysctl.c sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c \
+#	devname.c wait3.c
+
+# To be ported
+# nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c
+#
+# Not useful but portable
+#	disklabel.c
+#
+# Already in getprogname
+#	setprogname.c
 
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
-	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
-	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
+	closedir.c ctermid.c ctype_.c daemon.c \
+	dehumanize_number.c dirname.c err.c errx.c \
 	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
-	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
+	fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
-	getdevmajor.c getdomainname.c getgrent.c \
+	getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
-	getloadavg.c getlogin.c getmntinfo.c \
+	getloadavg.c getlogin.c \
 	getnetgrent.c getpagesize.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
 	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nftw.c \
-	nice.c nlist.c nlist_aout.c \
-	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
-	pause.c popen.c psignal.c pthread_atfork.c ptree.c pwcache.c \
+	nice.c \
+	opendir.c \
+	pause.c popen.c psignal.c ptree.c pwcache.c \
 	pw_scan.c raise.c randomid.c rb.c readdir.c rewinddir.c \
-	scandir.c seekdir.c setdomainname.c \
-	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
+	scandir.c seekdir.c \
+	setjmperr.c setmode.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	siglist.c signal.c signame.c sigrelse.c \
 	sigset.c sigsetops.c sleep.c \
-	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
-	sysctlnametomib.c syslog.c telldir.c time.c \
+	stringlist.c sysconf.c \
+	syslog.c telldir.c time.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
-	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
-	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
+	utmpx.c valloc.c vis.c warn.c warnx.c \
+	vwarn.c vwarnx.c verr.c verrx.c wait.c waitpid.c wordexp.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c \
@@ -163,7 +178,7 @@ CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
-errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
+errlist.c: errlist-minix.awk ${NETBSDSRCDIR}/nbsd_include/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= errlist.c

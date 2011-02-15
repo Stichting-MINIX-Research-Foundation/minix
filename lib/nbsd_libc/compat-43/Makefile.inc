@@ -4,9 +4,12 @@
 # compat-43 sources
 .PATH: ${ARCHDIR}/compat-43 ${.CURDIR}/compat-43
 
-SRCS+=	creat.c getdtablesize.c gethostid.c \
-	killpg.c sethostid.c setpgrp.c \
-	setrgid.c setruid.c sigcompat.c
+# unsupported by Minix
+#	gethostid.c sethostid.c setpgrp.c setrgid.c setruid.c sigcompat.c
+
+SRCS+=	creat.c getdtablesize.c \
+	killpg.c \
+
 .if !defined(AUDIT)
 SRCS+=	getwd.c
 .endif

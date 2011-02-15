@@ -24,7 +24,7 @@ warnx(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	_vwarnx(eval, fmt, ap);
+	_vwarnx(fmt, ap);
 	va_end(ap);
 }
 

@@ -65,8 +65,10 @@
 #       define malloc_pageshift         12U
 #       define malloc_minsize           16U
 #   endif
+#ifndef __minix
 #   define HAS_UTRACE
 #   define UTRACE_LABEL
+#endif /* __minix */
 
 #include <sys/cdefs.h>
 void utrace(struct ut *, int);
@@ -210,9 +212,11 @@ static size_t malloc_pagemask;
 #define INIT_MMAP()
 #endif
 
+#ifndef __minix
 #ifndef MADV_FREE
 #define MADV_FREE MADV_DONTNEED
 #endif
+#endif /* !__minix */
 
 /* Number of free pages we cache */
 static size_t malloc_cache = 16;
@@ -485,8 +489,10 @@ malloc_init(void)
 		case '<': malloc_cache   >>= 1; break;
 		case 'a': malloc_abort   = 0; break;
 		case 'A': malloc_abort   = 1; break;
+#ifndef __minix
 		case 'h': malloc_hint    = 0; break;
 		case 'H': malloc_hint    = 1; break;
+#endif /* !__minix */
 		case 'r': malloc_realloc = 0; break;
 		case 'R': malloc_realloc = 1; break;
 		case 'j': malloc_junk    = 0; break;
@@ -932,8 +938,10 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
     if (malloc_junk)
 	memset(ptr, SOME_JUNK, l);
 
+#ifndef __minix
     if (malloc_hint)
 	madvise(ptr, l, MADV_FREE);
+#endif /* !__minix */
 
     tail = (char *)ptr+l;
 

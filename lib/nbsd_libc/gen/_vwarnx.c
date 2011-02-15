@@ -13,6 +13,7 @@ __RCSID("$NetBSD: _vwarnx.c,v 1.10 2005/09/13 01:44:09 christos Exp $");
 #if defined(__indr_reference)
 __indr_reference(_vwarnx, vwarnx)
 #else
+#include <stdarg.h>
 
 void _vwarnx(const char *, _BSD_VA_LIST_);
 

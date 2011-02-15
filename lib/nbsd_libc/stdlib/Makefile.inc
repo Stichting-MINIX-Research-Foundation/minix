@@ -10,7 +10,7 @@ SRCS+=	_env.c _rand48.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
-	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
+	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c \
 	radixsort.c rand.c rand_r.c random.c remque.c \
 	seed48.c setenv.c srand48.c strsuftoll.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \

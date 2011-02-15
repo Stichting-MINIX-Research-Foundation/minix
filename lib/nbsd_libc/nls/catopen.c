@@ -169,6 +169,19 @@ load_msgcat(path)
 		return (nl_catd)-1;
 	}
 
+#ifdef __minix
+	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_ANON, -1, (off_t)0);
+	if (data == MAP_FAILED) {
+		return (nl_catd)-1;
+	}
+
+	if (read(fd, data, st.st_size) != st.st_size)
+	{
+		munmap(data, (size_t)st.st_size);
+		return (nl_catd)-1;
+	}
+	close (fd);
+#else /* !__minix */
 	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd,
 	    (off_t)0);
 	close (fd);
@@ -176,6 +189,7 @@ load_msgcat(path)
 	if (data == MAP_FAILED) {
 		return (nl_catd)-1;
 	}
+#endif /* __minix */
 
 	if (ntohl((u_int32_t)((struct _nls_cat_hdr *)data)->__magic) !=
 	    _NLS_MAGIC) {

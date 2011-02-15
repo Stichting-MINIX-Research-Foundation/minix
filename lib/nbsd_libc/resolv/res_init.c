@@ -88,7 +88,9 @@ __RCSID("$NetBSD: res_init.c,v 1.22 2009/10/24 17:24:01 christos Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifndef __minix
 #include <sys/event.h>
+#endif /* !__minix */
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -348,7 +350,9 @@ __res_vinit(res_state statp, int preinit) {
 	nserv = 0;
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
 	    struct stat st;
+#ifndef __minix
 	    struct kevent kc;
+#endif /* !__minix */
 
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -465,7 +469,7 @@ __res_vinit(res_state statp, int preinit) {
 				*cp++ = n;
 				net = cp;
 				while (*cp && *cp != ';' &&
-					isascii(*cp) &&
+				isascii(*cp) &&
 					!isspace((unsigned char)*cp))
 				    cp++;
 				n = *cp;
@@ -502,6 +506,7 @@ __res_vinit(res_state statp, int preinit) {
 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
+#ifndef __minix
 	    statp->_u._ext.ext->kq = kqueue();
 	    (void)fcntl(statp->_u._ext.ext->kq, F_SETFD, FD_CLOEXEC);
 	    (void)fcntl(statp->_u._ext.ext->resfd, F_SETFD, FD_CLOEXEC);
@@ -509,6 +514,9 @@ __res_vinit(res_state statp, int preinit) {
 		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
 		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
 	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
+#else /* __minix */
+	statp->_u._ext.ext->kq = -1;
+#endif /* !__minix */
 	} else {
 	    statp->_u._ext.ext->kq = -1;
 	    statp->_u._ext.ext->resfd = -1;
@@ -565,6 +573,12 @@ __res_vinit(res_state statp, int preinit) {
 int
 res_check(res_state statp, struct timespec *mtime)
 {
+#ifdef __minix
+	/*
+	 * XXX: No update on change.
+	 */
+	return 0;
+#else /* !__minix */
 	/*
 	 * If the times are equal, then we check if there
 	 * was a kevent related to resolv.conf and reload.
@@ -589,10 +603,12 @@ out:
 			break;
 		}
 	}
+
 	(void)__res_vinit(statp, 0);
 	if (mtime)
 		*mtime = __res_conf_time;
 	return 1;
+#endif /* !__minix */
 }
 
 static void

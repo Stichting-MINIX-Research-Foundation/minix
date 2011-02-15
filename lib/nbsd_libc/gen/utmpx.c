@@ -336,16 +336,32 @@ updwtmpx(const char *file, const struct utmpx *utx)
 	_DIAGASSERT(file != NULL);
 	_DIAGASSERT(utx != NULL);
 
+#ifndef __minix
 	fd = open(file, O_WRONLY|O_APPEND|O_SHLOCK);
+#else
+	fd = open(file, O_WRONLY|O_APPEND);
+#endif
 
 	if (fd == -1) {
+#ifndef __minix
 		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
 			return -1;
+#else
+		if ((fd = open(file, O_CREAT|O_WRONLY, 0644)) < 0)
+			return -1;
+		if (flock(fd, LOCK_EX) < 0)
+			return -1;
+#endif
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
 		if (write(fd, &ut, sizeof(ut)) == -1)
 			goto failed;
+	} else {
+#ifdef __minix
+		if (flock(fd, LOCK_SH) < 0 )
+			return -1;
+#endif
 	}
 	if (write(fd, utx, sizeof(*utx)) == -1)
 		goto failed;
@@ -359,7 +375,6 @@ updwtmpx(const char *file, const struct utmpx *utx)
 	errno = saved_errno;
 	return -1;
 }
-
 
 int
 utmpxname(const char *fname)
@@ -425,10 +440,18 @@ getlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
+#ifdef __minix
+	db = dbopen(fname, O_RDONLY, 0, DB_HASH, NULL);
+#else
 	db = dbopen(fname, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+#endif
 
 	if (db == NULL)
 		return NULL;
+#ifdef __minix
+	if (flock(db->fd(db), LOCK_SH) < 0)
+		return NULL;
+#endif
 
 	key.data = &uid;
 	key.size = sizeof(uid);
@@ -464,11 +487,20 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
+#ifndef __minix
 	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0644, DB_HASH, NULL);
+#else 
+	db = dbopen(fname, O_RDWR|O_CREAT, 0644, DB_HASH, NULL);
+#endif
 
 	if (db == NULL)
 		return -1;
 
+#ifdef __minix
+	if (flock(db->fd(db), LOCK_EX) < 0)
+		return -1;
+#endif
+	
 	key.data = &uid;
 	key.size = sizeof(uid);
 	data.data = ll;

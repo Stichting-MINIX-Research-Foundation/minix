@@ -492,7 +492,9 @@ connectlog_r(struct syslog_data *data)
 	/* AF_UNIX address of local logger */
 	static const struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
+#ifndef __minix
 		.sun_len = sizeof(sun),
+#endif
 		.sun_path = _PATH_LOG,
 	};
 

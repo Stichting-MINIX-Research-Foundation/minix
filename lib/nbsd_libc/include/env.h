@@ -56,7 +56,7 @@ __writelockenv(void)
 }
 
 static __inline bool
-__unlocklockenv(void)
+__unlockenv(void)
 {
 	return true;
 }

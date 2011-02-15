@@ -54,6 +54,10 @@ int
 tcflow(fd, action)
 	int fd, action;
 {
+#ifdef __minix
+	_DIAGASSERT(fd != -1);
+	return ioctl(fd, TCFLOW, &action);
+#else /* !__minix */
 	struct termios term;
 	u_char c;
 
@@ -77,4 +81,5 @@ tcflow(fd, action)
 		return (-1);
 	}
 	/* NOTREACHED */
+#endif /* !__minix */
 }

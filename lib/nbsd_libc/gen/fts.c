@@ -56,7 +56,9 @@ __RCSID("$NetBSD: fts.c,v 1.40 2009/11/02 17:17:34 stacktic Exp $");
 #include <unistd.h>
 
 #if ! HAVE_NBTOOL_CONFIG_H
+#ifndef __minix
 #define	HAVE_STRUCT_DIRENT_D_NAMLEN
+#endif
 #endif
 
 static FTSENT	*fts_alloc(FTS *, const char *, size_t);

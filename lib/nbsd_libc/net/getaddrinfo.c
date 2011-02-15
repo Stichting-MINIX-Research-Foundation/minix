@@ -855,7 +855,12 @@ allocaddrinfo(socklen_t addrlen)
 	ai = calloc(sizeof(struct addrinfo) + addrlen, 1);
 	if (ai) {
 		ai->ai_addr = (void *)(ai+1);
+#ifndef __minix
 		ai->ai_addrlen = ai->ai_addr->sa_len = addrlen;
+#else /* __minix */
+		ai->ai_addrlen = addrlen;
+#endif
+
 	}
 
 	return ai;

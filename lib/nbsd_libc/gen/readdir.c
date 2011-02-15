@@ -40,7 +40,14 @@ __RCSID("$NetBSD: readdir.c,v 1.25 2010/09/16 02:38:50 yamt Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
+
+#ifdef __minix
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#endif
+
 #include "extern.h"
+
 #include <sys/param.h>
 
 #include <dirent.h>
@@ -81,8 +88,10 @@ _readdir_unlocked(DIR *dirp, int skipdeleted)
 		dirp->dd_loc += dp->d_reclen;
 		if (dp->d_ino == 0 && skipdeleted)
 			continue;
+#ifndef __minix
 		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
 			continue;
+#endif
 		return (dp);
 	}
 }

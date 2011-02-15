@@ -59,7 +59,11 @@ cfmakeraw(t)
 
 	_DIAGASSERT(t != NULL);
 
+#ifdef __minix
+	t->c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+#else /* !__minix */
 	t->c_iflag &= ~(IMAXBEL|IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+#endif /* !__minix */
 	t->c_oflag &= ~OPOST;
 	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	t->c_cflag &= ~(CSIZE|PARENB);

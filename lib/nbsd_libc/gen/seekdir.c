@@ -40,6 +40,9 @@ __RCSID("$NetBSD: seekdir.c,v 1.14 2006/05/17 20:36:50 christos Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
+#ifdef __minix
+#include <sys/types.h>
+#endif
 #include "extern.h"
 #include <sys/param.h>
 

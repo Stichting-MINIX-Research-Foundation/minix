@@ -122,7 +122,22 @@ cdbr_open(const char *path, int flags)
 		cdbr->index_size = 4;
 
 	cdbr->mmap_size = (size_t)sb.st_size;
+#ifdef __minix
+	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_ANON, -1, (off_t)0);
+	if (cdbr->mmap_base == MAP_FAILED) {
+		free(cdbr);
+		return NULL;
+	}
+
+	if (read(fd, cdbr->mmap_base, cdbr->mmap_size) != cdbr->mmap_size)
+	{
+		munmap(cdbr->mmap_base, cdbr->mmap_size);
+		free(cdbr);
+		return NULL;
+	}
+#else /* !__minix */
 	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
+#endif /* __minix */
 	close(fd);
 
 	if (cdbr->mmap_base == MAP_FAILED) {

@@ -78,7 +78,9 @@ __RCSID("$NetBSD: getlogin.c,v 1.15 2009/01/11 02:46:27 christos Exp $");
 #ifdef __weak_alias
 __weak_alias(getlogin,_getlogin)
 __weak_alias(getlogin_r,_getlogin_r)
+#ifndef __minix
 __weak_alias(setlogin,_setlogin)
+#endif /* !__minix */
 #endif
 
 int	__logname_valid;		/* known to setlogin() */
@@ -134,6 +136,7 @@ getlogin_r(char *name, size_t namelen)
 	return (rv);
 }
 
+#ifndef __minix
 int
 setlogin(const char *name)
 {
@@ -144,3 +147,4 @@ setlogin(const char *name)
 
 	return (retval);
 }
+#endif 

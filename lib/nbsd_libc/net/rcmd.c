@@ -201,6 +201,7 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	return (error);
 }
 
+
 /*ARGSUSED*/
 static int
 resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
@@ -213,7 +214,11 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 	struct addrinfo *r;
 	struct sockaddr_storage from;
 	struct pollfd reads[2];
+#ifdef __minix
+	/* No support for OOB data in Minix. */
+#else
 	sigset_t nmask, omask;
+#endif /* !__minix */
 	pid_t pid;
 	int s, lport, timo;
 	int pollr;
@@ -230,10 +235,14 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 	r = res;
 	refused = 0;
 	pid = getpid();
+#ifndef __minix
+	/* Minix has no support for OOB data, 
+	   no need to block SIGURG. */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGURG);
 	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
 		return -1;
+#endif /* !__minix */
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
 		if (s < 0) {
@@ -245,11 +254,16 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 				r = r->ai_next;
 				continue;
 			} else {
+#ifndef __minix
 				(void)sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif /* !__minix */
 				return (-1);
 			}
 		}
+#ifndef __minix
+		/* No OOB support in Minix. */
 		fcntl(s, F_SETOWN, pid);
+#endif /* !__minix */
 		if (connect(s, r->ai_addr, r->ai_addrlen) >= 0)
 			break;
 		(void)close(s);
@@ -286,7 +300,10 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 		}
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
 		    strerror(errno));
+#ifndef __minix
+		/* No OOB support in Minix. */
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif /* !__minix */
 		return (-1);
 	}
 	lport--;
@@ -363,14 +380,18 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 		}
 		goto bad2;
 	}
+#ifndef __minix
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif /* __minix */
 	return (s);
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
 	(void)close(s);
+#ifndef __minix
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif /* __minix */
 	return (-1);
 }
 
@@ -522,7 +543,7 @@ rresvport_af(alport, family)
 	sa = (struct sockaddr *)(void *)&ss;
 	switch (family) {
 	case AF_INET:
-#ifdef BSD4_4
+#if defined(BSD4_4) && !defined(__minix)
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in);
@@ -530,7 +551,7 @@ rresvport_af(alport, family)
 		break;
 #ifdef INET6
 	case AF_INET6:
-#ifdef BSD4_4
+#if defined(BSD4_4) && !defined(__minix)
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in6);
@@ -633,7 +654,7 @@ iruserok(raddr, superuser, ruser, luser)
 
 	memset(&irsin, 0, sizeof(irsin));
 	irsin.sin_family = AF_INET;
-#ifdef BSD4_4
+#if defined(BSD4_4) && !defined(__minix)
 	irsin.sin_len = sizeof(struct sockaddr_in);
 #endif
 	memcpy(&irsin.sin_addr, &raddr, sizeof(irsin.sin_addr));
@@ -753,7 +774,7 @@ __ivaliduser(hostf, raddr, luser, ruser)
 
 	memset(&ivusin, 0, sizeof(ivusin));
 	ivusin.sin_family = AF_INET;
-#ifdef BSD4_4
+#if defined(BSD4_4) && !defined(__minix)
 	ivusin.sin_len = sizeof(struct sockaddr_in);
 #endif
 	memcpy(&ivusin.sin_addr, &raddr, sizeof(ivusin.sin_addr));

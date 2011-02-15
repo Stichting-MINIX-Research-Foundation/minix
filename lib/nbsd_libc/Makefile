@@ -17,6 +17,7 @@
 # The Hesiod functions are always in libc. To choose that getpwent() and friends
 # actually call the Hesiod functions, put -DHESIOD on the CPPFLAGS line below.
 
+.include "minix-config.inc"
 .include "Makefile.inc"
 
 LIB=		c
@@ -44,14 +45,14 @@ assym.h: ${ARCHDIR}/genassym.cf
 # The following controls how to build compatibility code for old NetBSD
 # binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
 # we include the code in libc.
-BUILDCOLD?= no
-.if "${BUILDCOLD}" == "yes"
-SUBDIR=compat
-.include <bsd.subdir.mk>
-.else
-COMPATDIR=${.CURDIR}/compat
-.include "${.CURDIR}/compat/Makefile.inc"
-.endif
+#BUILDCOLD?= no
+#.if "${BUILDCOLD}" == "yes"
+#SUBDIR=compat
+#.include <bsd.subdir.mk>
+#.else
+#COMPATDIR=${.CURDIR}/compat
+#.include "${.CURDIR}/compat/Makefile.inc"
+#.endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/atomic/Makefile.inc"
@@ -61,10 +62,11 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/citrus/Makefile.inc"
 .endif
 .include "${.CURDIR}/compat-43/Makefile.inc"
-.include "${.CURDIR}/dlfcn/Makefile.inc"
+#.include "${.CURDIR}/dlfcn/Makefile.inc"
 .include "${.CURDIR}/gdtoa/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
-.include "${.CURDIR}/gmon/Makefile.inc"
+# gmon needs profil()
+#.include "${.CURDIR}/gmon/Makefile.inc"
 .include "${.CURDIR}/hash/Makefile.inc"
 .include "${.CURDIR}/iconv/Makefile.inc"
 .include "${.CURDIR}/inet/Makefile.inc"
@@ -84,7 +86,8 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/regex/Makefile.inc"
 .endif
 .include "${.CURDIR}/resolv/Makefile.inc"
-.include "${.CURDIR}/rpc/Makefile.inc"
+# RPC needs pollts and a reserved port allocator.
+#.include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/ssp/Makefile.inc"
 .include "${.CURDIR}/stdio/Makefile.inc"
 .include "${.CURDIR}/stdlib/Makefile.inc"
@@ -92,7 +95,7 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/termios/Makefile.inc"
 .include "${.CURDIR}/thread-stub/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
-.include "${.CURDIR}/sys/Makefile.inc"
+.include "${.CURDIR}/sys-minix/Makefile.inc"
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
 .include "${.CURDIR}/yp/Makefile.inc"

@@ -61,6 +61,38 @@ extern const _locale_category_t _localeio_LC_TIME_desc;
 extern const _locale_category_t _localeio_LC_MESSAGES_desc;
 #endif
 
+#ifdef __minix
+/* GNU binutils 2.x a.out support is rotten and link sets are not
+   supported. Workaround this by explicitely creating the structure
+   the linker was supposed to create. */
+
+struct {
+	int __ls_length;
+	_locale_category_t *__ls_items[7];
+} __link_set_all_categories = {
+	.__ls_length = 7,
+	.__ls_items = {
+		[0] = &_generic_LC_ALL_desc,
+		[1] = &_dummy_LC_COLLATE_desc,
+#ifdef WITH_RUNE
+		[2] = &_citrus_LC_CTYPE_desc,
+		[3] = &_citrus_LC_MONETARY_desc,
+		[4] = &_citrus_LC_NUMERIC_desc,
+		[5] = &_citrus_LC_TIME_desc,
+		[6] = &_citrus_LC_MESSAGES_desc,
+#else
+		[2] = &_localeio_LC_CTYPE_desc,
+		[3] = &_localeio_LC_MONETARY_desc,
+		[4] = &_localeio_LC_NUMERIC_desc,
+		[5] = &_localeio_LC_TIME_desc,
+		[6] = &_localeio_LC_MESSAGES_desc,
+#endif
+	},
+};
+
+#endif /* __minix */
+
+
 __link_set_add_data(all_categories, _generic_LC_ALL_desc);
 __link_set_add_data(all_categories, _dummy_LC_COLLATE_desc);
 #ifdef WITH_RUNE
@@ -129,6 +161,7 @@ __setlocale(int category, const char *name)
 	}
 	return NULL;
 }
+
 
 char *
 setlocale(int category, const char *locale)

@@ -373,8 +373,10 @@ _mcleanup(void)
 	struct gmonparam *p = &_gmonparam;
 	struct gmonhdr gmonhdr, *hdr;
 	struct clockinfo clockinfo;
+#ifndef __minix
 	int mib[2];
 	size_t size;
+#endif 
 	char *profdir;
 	const char *proffile;
 	char  buf[PATH_MAX];
@@ -396,7 +398,9 @@ _mcleanup(void)
 
 	if (p->state == GMON_PROF_ERROR)
 		warnx("%s: tos overflow", __func__);
-
+#ifdef __minix
+	clockinfo.profhz = sysconf(_SC_CLK_TCK);
+#else /* !__minix */
 	size = sizeof(clockinfo);
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -411,6 +415,7 @@ _mcleanup(void)
 		else
 			clockinfo.profhz = hertz();
 	}
+#endif /* !__minix */
 
 	moncontrol(0);
 
@@ -509,6 +514,7 @@ moncontrol(int mode)
 	}
 }
 
+#ifndef __minix
 /*
  * discover the tick frequency of the machine
  * if something goes wrong, we return 0, an impossible hertz.
@@ -542,3 +548,4 @@ out:
 	(void)timer_delete(t);
 	return rv;
 }
+#endif /* !__minix */

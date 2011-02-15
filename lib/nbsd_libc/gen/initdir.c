@@ -34,7 +34,16 @@
 __RCSID("$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+
+
 #include "namespace.h"
+
+#ifdef __minix
+/* NetBSD BUG on !_REENTRANT */
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#endif
+
 #include "reentrant.h"
 #include "extern.h"
 
@@ -221,9 +230,11 @@ retry:
 							xp = dp;
 						else
 							dp->d_fileno = 0;
+#ifndef __minix
 						if (dp->d_type == DT_WHT &&
 						    (flags & DTF_HIDEW))
 							dp->d_fileno = 0;
+#endif
 					}
 
 					free(dpv);

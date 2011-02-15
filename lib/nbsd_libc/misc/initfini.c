@@ -55,8 +55,10 @@ __libc_init(void)
 	/* Atomic operations */
 	__libc_atomic_init();
 
+#ifdef _REENTRANT
 	/* Threads */
 	__libc_thr_init();
+#endif
 
 	/* Initialize the atexit mutexes */
 	__libc_atexit_init();

@@ -44,9 +44,15 @@ __RCSID("$NetBSD: send.c,v 1.9 2003/08/07 16:43:15 agc Exp $");
 
 #include <stddef.h>
 
+#ifdef __minix
+/* UGLY: name clash with minix ipc.
+ * Better solution: redefine minix ipc.
+ */
+#else /* !__minix */
 #ifdef __weak_alias
 __weak_alias(send, _send)
 #endif
+#endif /* !__minix */
 
 ssize_t
 send(s, msg, len, flags)

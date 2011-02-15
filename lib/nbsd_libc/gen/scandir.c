@@ -130,9 +130,13 @@ scandir(const char *dirname, struct dirent ***namelist,
 			goto bad2;
 		p->d_fileno = d->d_fileno;
 		p->d_reclen = d->d_reclen;
+#ifndef __minix
 		p->d_type = d->d_type;
 		p->d_namlen = d->d_namlen;
 		(void)memmove(p->d_name, d->d_name, (size_t)(p->d_namlen + 1));
+#else
+		(void)memmove(p->d_name, d->d_name, (size_t)(strlen(d->d_name) + 1));
+#endif
 		names[nitems++] = p;
 	}
 	(void)closedir(dirp);

@@ -74,12 +74,25 @@ _citrus_map_file(struct _citrus_region * __restrict r,
 		goto error;
 	}
 
+#ifdef __minix
+	head = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_ANON, -1, (off_t)0);
+	if (head == MAP_FAILED) {
+		ret = errno;
+		goto error;
+	}
+
+	if (read(fd, head, st.st_size) != st.st_size) {
+		ret = errno;
+		goto error;
+	}
+#else /* !__minix */
 	head = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_PRIVATE,
 	    fd, (off_t)0);
 	if (head == MAP_FAILED) {
 		ret = errno;
 		goto error;
 	}
+#endif /* !__minix */
 	_region_init(r, head, (size_t)st.st_size);
 
 error:

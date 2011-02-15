@@ -60,11 +60,15 @@ tcsetattr(fd, opt, t)
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(t != NULL);
 
+#ifndef __minix
 	if (opt & TCSASOFT) {
 		localterm = *t;
 		localterm.c_cflag |= CIGNORE;
 		t = &localterm;
 	}
+#else /* __minix */
+#define	TCSASOFT	0 
+#endif /* __minix */
 	switch (opt & ~TCSASOFT) {
 	case TCSANOW:
 		return (ioctl(fd, TIOCSETA, t));

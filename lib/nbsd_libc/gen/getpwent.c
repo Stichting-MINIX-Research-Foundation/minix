@@ -671,7 +671,11 @@ static int
 _files_getpwuid(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 
 	int	rv, rerror;
 
@@ -696,7 +700,11 @@ static int
 _files_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 	struct passwd	*pw	= va_arg(ap, struct passwd *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -992,7 +1000,11 @@ static int
 _dns_getpwuid(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 
 	int	rv, rerror;
 
@@ -1019,7 +1031,11 @@ static int
 _dns_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 	struct passwd	*pw	= va_arg(ap, struct passwd *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -1508,7 +1524,11 @@ static int
 _nis_getpwuid(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 
 	int	rv, rerror;
 
@@ -1534,7 +1554,11 @@ static int
 _nis_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 	struct passwd	*pw	= va_arg(ap, struct passwd *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -1896,9 +1920,16 @@ _passwdcompat_pwscan(struct passwd *pw, char *buffer, size_t buflen,
 		    &crv, name, pw, buffer, buflen, &cpw);
 		break;
 	case _PW_KEYBYUID:
+#ifdef __minix
+		rv = nsdispatch(NULL, compatuiddtab,
+		    NSDB_PASSWD_COMPAT, "getpwuid_r", __nsdefaultnis,
+		    &crv, (int)uid, pw, buffer, buflen, &cpw);
+#else
 		rv = nsdispatch(NULL, compatuiddtab,
 		    NSDB_PASSWD_COMPAT, "getpwuid_r", __nsdefaultnis,
 		    &crv, uid, pw, buffer, buflen, &cpw);
+#endif
+
 		break;
 	default:
 		abort();
@@ -2301,7 +2332,11 @@ static int
 _compat_getpwuid(void *nsrv, void *nscb, va_list ap)
 {
 	struct passwd	**retval = va_arg(ap, struct passwd **);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 
 	int	rv, rerror;
 
@@ -2326,7 +2361,11 @@ static int
 _compat_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
+#ifdef __minix
+	uid_t		 uid	= (uid_t)va_arg(ap, int);
+#else
 	uid_t		 uid	= va_arg(ap, uid_t);
+#endif
 	struct passwd	*pw	= va_arg(ap, struct passwd *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -2482,8 +2521,13 @@ getpwuid(uid_t uid)
 	};
 
 	mutex_lock(&_pwmutex);
+#ifdef __minix
+	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", __nsdefaultcompat,
+	    &retval, (int)uid);
+#else
 	rv = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", __nsdefaultcompat,
 	    &retval, uid);
+#endif
 	mutex_unlock(&_pwmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
 }
@@ -2509,8 +2553,14 @@ getpwuid_r(uid_t uid, struct passwd *pwd, char *buffer, size_t buflen,
 	*result = NULL;
 	retval = 0;
 	mutex_lock(&_pwmutex);
+#ifdef __minix
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", __nsdefaultcompat,
+	    &retval, (int)uid, pwd, buffer, buflen, result);
+#else
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid_r", __nsdefaultcompat,
 	    &retval, uid, pwd, buffer, buflen, result);
+#endif
+
 	mutex_unlock(&_pwmutex);
 	switch (r) {
 	case NS_SUCCESS:

@@ -40,6 +40,11 @@ __RCSID("$NetBSD: telldir.c,v 1.19 2008/05/04 18:53:26 tonnerre Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
+
+#ifdef __minix
+#include <sys/types.h>
+#endif
+
 #include "extern.h"
 #include <sys/param.h>
 

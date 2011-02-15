@@ -40,6 +40,12 @@ __RCSID("$NetBSD: opendir.c,v 1.37 2010/09/26 02:26:59 yamt Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
+
+#ifdef __minix
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#endif
+
 #include "extern.h"
 
 #include <sys/param.h>
@@ -122,6 +128,12 @@ __opendir_common(int fd, const char *name, int flags)
 	 * Tweak flags for the underlying filesystem.
 	 */
 
+#ifdef __minix
+	if (fstatvfs(fd, &sfb) < 0)
+		goto error;
+	/* MOUNT_UNION and MOUNT_NFS not supported */
+	flags &= ~DTF_NODUP;
+#else
 	if (fstatvfs1(fd, &sfb, ST_NOWAIT) < 0)
 		goto error;
 	if ((flags & DTF_NODUP) != 0) {
@@ -136,6 +148,7 @@ __opendir_common(int fd, const char *name, int flags)
 	if (!strncmp(sfb.f_fstypename, MOUNT_NFS, sizeof(sfb.f_fstypename))) {
 		flags |= __DTF_READALL | __DTF_RETRY_ON_BADCOOKIE;
 	}
+#endif
 
 	dirp->dd_flags = flags;
 	error = _initdir(dirp, fd, name);

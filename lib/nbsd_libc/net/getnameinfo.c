@@ -54,10 +54,12 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.50 2010/06/29 14:44:19 seanb Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#ifndef __minix
 #include <net/if_dl.h>
 #include <net/if_ieee1394.h>
 #include <net/if_types.h>
 #include <netatalk/at.h>
+#endif /* !__minix */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -103,11 +105,13 @@ static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
 static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t,
 				 int));
 #endif
+#ifndef __minix
 static int getnameinfo_atalk __P((const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int));
 
 static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int));
+#endif /* __minix */
 static int hexname __P((const u_int8_t *, size_t, char *, socklen_t));
 
 /*
@@ -124,21 +128,26 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 {
 
 	switch (sa->sa_family) {
+#ifndef __minix
 	case AF_APPLETALK:
 		return getnameinfo_atalk(sa, salen, host, hostlen,
 		    serv, servlen, flags);
+#endif /* !__minix */
 	case AF_INET:
 	case AF_INET6:
 		return getnameinfo_inet(sa, salen, host, hostlen,
 		    serv, servlen, flags);
+#ifndef __minix
 	case AF_LINK:
 		return getnameinfo_link(sa, salen, host, hostlen,
 		    serv, servlen, flags);
+#endif /* !__minix */
 	default:
 		return EAI_FAMILY;
 	}
 }
 
+#ifndef __minix
 /*
  * getnameinfo_atalk():
  * Format an AppleTalk address into a printable format.
@@ -198,6 +207,7 @@ errout:
 
 	return EAI_MEMORY;
 }
+#endif /* !__minix */
 
 /*
  * getnameinfo_inet():
@@ -490,7 +500,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 }
 #endif /* INET6 */
 
-
+#ifndef __minix
 /*
  * getnameinfo_link():
  * Format a link-layer address into a printable format, paying attention to
@@ -568,6 +578,7 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		    (size_t)sdl->sdl_alen, host, hostlen);
 	}
 }
+#endif /* !__minix */
 
 static int
 hexname(cp, len, host, hostlen)

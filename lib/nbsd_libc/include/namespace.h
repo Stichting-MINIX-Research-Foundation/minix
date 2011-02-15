@@ -4,7 +4,7 @@
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, ith or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -47,7 +47,9 @@
 #define fork		_fork
 #define fseeko		_fseeko
 #define ftello		_ftello
+#ifndef __minix
 #define getcontext	_getcontext
+#endif /* !__minix */
 #define getenv_r	_getenv_r
 #define imaxabs		_imaxabs
 #define imaxdiv		_imaxdiv
@@ -530,7 +532,13 @@
 #define seed48			_seed48
 #define seekdir			_seekdir
 #define select			_select
+#ifdef __minix
+/* '_send' unfortunately collides with Minix IPC's _send function.
+ * This solution is fragile, a proper renaming of Minix IPCs should 
+ * be done insted. */
+#else /* !__minix */
 #define send			_send
+#endif /* !__minix */
 #define setdomainname		_setdomainname
 #define setenv			_setenv
 #define setfsent		_setfsent
@@ -845,6 +853,80 @@
 #define xprtlist_lock		__rpc_xprtlist_lock
 
 #define __learn_tree		___learn_tree
+
+#ifdef __minix
+#define _exit __exit
+#define access _access
+#define bind _bind
+#define chdir _chdir
+#define chmod _chmod
+#define chown _chown
+#define chroot _chroot
+#define close _close
+#define dup _dup
+#define dup2 _dup2
+#define execve _execve
+#define fchdir _fchdir
+#define fchmod _fchmod
+#define fchown _fchown
+#define fcntl _fcntl
+#define flock _flock
+#define fstat _fstat
+#define fsync _fsync
+#define fpathconf _fpathconf
+#define getegid _getegid
+#define geteuid _geteuid
+#define getgroups _getgroups
+#define getpid _getpid
+#define getpgrp _getpgrp
+#define getppid _getppid
+#define gettimeofday _gettimeofday
+#define getgid _getgid
+#define getuid _getuid
+#define ioctl _ioctl
+#define link _link
+#define lstat _lstat
+#define mount _mount
+#define mkdir _mkdir
+#define mkfifo _mkfifo
+#define mknod _mknod
+#define munmap _munmap
+#define munmap_text _munmap_text
+#define open _open
+#define pathconf _pathconf
+#define ptrace _ptrace
+#define readv _readv
+#define rmdir _rmdir
+#define setegid _setegid
+#define seteuid _seteuid
+#define setgid _setgid
+#define setgroups _setgroups
+#define setprogname _setprogname
+#define setsid _setsid
+#define setuid _setuid
+#define shmat _shmat
+#define shmdt _shmdt
+#define shmget _shmget
+#define sigreturn	_sigreturn
+#define socket _socket
+#define socketpair _socketpair
+#define symlink _symlink
+#define sync _sync
+#define stat(a, b) _stat(a, b)
+#define stime _stime
+#define umask _umask
+#define umount _umount
+#define umount2 _umount2
+#define unlink _unlink
+#define vm_remap _vm_remap
+#define vm_unmap _vm_unmap
+#define vm_getphys _vm_getphys
+#define vm_getrefcount _vm_getrefcount
+#define truncate _truncate
+#define write _write
+#define writev _writev
+#endif /* __minix */
+
 #endif /* __weak_alias */
 #endif /* !__lint__ */
 

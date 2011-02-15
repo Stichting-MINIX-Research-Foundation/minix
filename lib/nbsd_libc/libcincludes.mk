@@ -4,11 +4,11 @@
 # inside libc's include tree.
 
 .if defined(LIBC_MACHINE_ARCH) && \
-    exists(${NETBSDSRCDIR}/lib/libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
+    exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
 ARCHSUBDIR=	${LIBC_MACHINE_ARCH}
-.elif exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH}/SYS.h)
+.elif exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${MACHINE_ARCH}/SYS.h)
 ARCHSUBDIR=	${MACHINE_ARCH}
-.elif exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_CPU}/SYS.h)
+.elif exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${MACHINE_CPU}/SYS.h)
 ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
@@ -16,4 +16,4 @@ ARCHSUBDIR=	${MACHINE_CPU}
 	@false
 .endif
 
-ARCHDIR=	${NETBSDSRCDIR}/lib/libc/arch/${ARCHSUBDIR}
+ARCHDIR=	${MINIXSRCCDIR}/lib/nbsd_libc/arch/${ARCHSUBDIR}
