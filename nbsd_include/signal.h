@@ -202,7 +202,6 @@ int	__sigtimedwait(const sigset_t * __restrict,
 #endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE_EXTENDED || ... */
 
 
-
 #if defined(_NETBSD_SOURCE)
 #ifndef __minix
 #ifndef __PSIGNAL_DECLARED

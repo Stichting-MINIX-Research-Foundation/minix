@@ -183,7 +183,7 @@ int	 truncate(const char *, off_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE) 
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 int	 ftruncate(int, off_t);
 #endif
 #endif /* __OFF_T_SYSCALLS_DECLARED */
@@ -286,7 +286,7 @@ void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
 #ifndef __minix
-#ifndef __LIBC12_SOURCE__ 
+#ifndef __LIBC12_SOURCE__
 pid_t	 vfork(void) __RENAME(__vfork14);
 #endif
 #endif /* !__minix */

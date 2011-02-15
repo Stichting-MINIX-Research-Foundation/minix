@@ -7,6 +7,8 @@ NOOBJ=		# defined
 
 # Missing: mp.h
 
+.if defined(__MINIX)
+# Avoid installing: kvm.h lwp.h sa.h (latter not installed anyway)
 INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
@@ -22,6 +24,23 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
+.else
+INCS=	a.out.h aio.h ar.h assert.h atomic.h \
+	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
+	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
+	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
+	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
+	limits.h link.h link_aout.h link_elf.h locale.h \
+	login_cap.h lwp.h malloc.h math.h md2.h \
+	memory.h mntopts.h monetary.h mpool.h mqueue.h \
+	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
+	paths.h pwd.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
+	resolv.h res_update.h rmt.h sched.h search.h semaphore.h setjmp.h \
+	sgtty.h signal.h stab.h stdbool.h stddef.h stdio.h stdlib.h string.h \
+	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
+	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
+	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
+.endif
 INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/nameser_compat.h \
 	arpa/telnet.h arpa/tftp.h
 INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
@@ -40,16 +59,27 @@ INCS+=	ieeefp.h
 .include <bsd.own.mk>
 
 
+.if defined(__MINIX)
 INCSDIR=	/usr/netbsd/include
+.else
+INCSDIR=	/usr/include
+.endif
 
+.if defined(__MINIX)
+# RPC is not compiled in the libc. This include also needs
+# rpcgen, which can be compiled if needed.
+.else
+SUBDIR=		rpc
+.endif
+.if !defined(__MINIX)
+SUBDIR+=	../common/include/prop
+.endif
+
+.if defined(__MINIX)
 .include "${MINIXSRCDIR}/common/include/Makefile.inc"
-
-#SUBDIR=		rpc
-SUBDIR+=	#../common/include/prop
-
-
 SUBDIR+= 	arch sys minix
 SUBDIR+= 	net netinet netinet6
+.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

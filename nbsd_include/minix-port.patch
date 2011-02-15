@@ -1,0 +1,385 @@
+diff -ru /home/netbsd/src/include/Makefile ./Makefile
+--- /home/netbsd/src/include/Makefile	2010-08-01 03:01:48.000000000 +0000
++++ ./Makefile	2011-02-15 12:52:02.000000000 +0000
+@@ -7,6 +7,24 @@
+ 
+ # Missing: mp.h
+ 
++.if defined(__MINIX)
++# Avoid installing: kvm.h lwp.h sa.h (latter not installed anyway)
++INCS=	a.out.h aio.h ar.h assert.h atomic.h \
++	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
++	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
++	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
++	inttypes.h iso646.h langinfo.h libgen.h \
++	limits.h link.h link_aout.h link_elf.h locale.h \
++	login_cap.h malloc.h math.h md2.h \
++	memory.h mntopts.h monetary.h mpool.h mqueue.h \
++	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
++	paths.h pwd.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
++	resolv.h res_update.h rmt.h sched.h search.h semaphore.h setjmp.h \
++	sgtty.h signal.h stab.h stdbool.h stddef.h stdio.h stdlib.h string.h \
++	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
++	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
++	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
++.else
+ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
+ 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
+ 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
+@@ -22,6 +40,7 @@
+ 	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
+ 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
+ 	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
++.endif
+ INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/nameser_compat.h \
+ 	arpa/telnet.h arpa/tftp.h
+ INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
+@@ -40,10 +59,27 @@
+ .include <bsd.own.mk>
+ 
+ 
++.if defined(__MINIX)
++INCSDIR=	/usr/netbsd/include
++.else
+ INCSDIR=	/usr/include
++.endif
+ 
++.if defined(__MINIX)
++# RPC is not compiled in the libc. This include also needs
++# rpcgen, which can be compiled if needed.
++.else
+ SUBDIR=		rpc
++.endif
++.if !defined(__MINIX)
+ SUBDIR+=	../common/include/prop
++.endif
++
++.if defined(__MINIX)
++.include "${MINIXSRCDIR}/common/include/Makefile.inc"
++SUBDIR+= 	arch sys minix
++SUBDIR+= 	net netinet netinet6
++.endif
+ 
+ .include <bsd.prog.mk>
+ .include <bsd.subdir.mk>
+diff -ru /home/netbsd/src/include/fts.h ./fts.h
+--- /home/netbsd/src/include/fts.h	2009-08-19 20:23:46.000000000 +0000
++++ ./fts.h	2011-02-14 17:04:58.000000000 +0000
+@@ -75,7 +75,9 @@
+ #define	FTS_PHYSICAL	0x010		/* physical walk */
+ #define	FTS_SEEDOT	0x020		/* return dot and dot-dot */
+ #define	FTS_XDEV	0x040		/* don't cross devices */
++#ifndef __minix
+ #define	FTS_WHITEOUT	0x080		/* return whiteout information */
++#endif 
+ #define	FTS_OPTIONMASK	0x0ff		/* valid user option mask */
+ 
+ #define	FTS_NAMEONLY	0x100		/* (private) child names only */
+diff -ru /home/netbsd/src/include/paths.h ./paths.h
+--- /home/netbsd/src/include/paths.h	2010-12-30 03:02:34.000000000 +0000
++++ ./paths.h	2011-02-14 17:04:58.000000000 +0000
+@@ -124,5 +124,9 @@
+ #define	_PATH_VI	"/usr/bin/vi"
+ #endif
+ 
++#ifdef __minix
++#include <minix/paths.h>
++#endif /* !__minix */
++
+ #endif /* !_PATHS_H_ */
+ 
+diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
+--- /home/netbsd/src/include/rpc/Makefile	2003-01-11 13:28:43.000000000 +0000
++++ ./rpc/Makefile	2011-02-15 12:36:08.000000000 +0000
+@@ -7,7 +7,11 @@
+ 	svc.h svc_auth.h svc_soc.h types.h xdr.h
+ RPC_INCS=	rpcb_prot.h
+ 
++.if defined(__MINIX)
++INCSDIR=	/usr/netbsd/include/rpc
++.else
+ INCSDIR=	/usr/include/rpc
++.endif
+ 
+ .include <bsd.rpc.mk>
+ .include <bsd.prog.mk>
+diff -ru /home/netbsd/src/include/sched.h ./sched.h
+--- /home/netbsd/src/include/sched.h	2009-01-11 03:05:43.000000000 +0000
++++ ./sched.h	2011-02-14 17:04:58.000000000 +0000
+@@ -29,6 +29,9 @@
+  * POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
++#ifdef __minix
++#define _SCHED_H_
++#endif /* !__minix */
+ #ifndef _SCHED_H_
+ #define _SCHED_H_
+ 
+diff -ru /home/netbsd/src/include/signal.h ./signal.h
+--- /home/netbsd/src/include/signal.h	2010-08-28 03:00:54.000000000 +0000
++++ ./signal.h	2011-02-15 12:11:57.000000000 +0000
+@@ -62,6 +62,7 @@
+ int	__libc_sigaction14(int, const struct sigaction * __restrict,
+ 	    struct sigaction * __restrict);
+ 
++#ifndef __minix
+ #if (_POSIX_C_SOURCE - 0L) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+     defined(_NETBSD_SOURCE)
+ int	pthread_sigmask(int, const sigset_t * __restrict,
+@@ -73,6 +74,7 @@
+ #define	pthread_sigmask		__libc_thr_sigsetmask
+ #endif /* __LIBPTHREAD_SOURCE__ */
+ #endif
++#endif /* __minix */
+ 
+ #ifndef __LIBC12_SOURCE__
+ int	sigaction(int, const struct sigaction * __restrict,
+@@ -160,11 +162,13 @@
+     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+ int	killpg(pid_t, int);
+ int	siginterrupt(int, int);
++#ifndef __minix
+ int	sigstack(const struct sigstack *, struct sigstack *);
+ #ifndef __LIBC12_SOURCE__
+ int	sigaltstack(const stack_t * __restrict, stack_t * __restrict)
+     __RENAME(__sigaltstack14);
+ #endif
++#endif /* !__minix */
+ int	sighold(int);
+ int	sigignore(int);
+ int	sigpause(int);
+@@ -178,10 +182,13 @@
+  */      
+ #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+     defined(_NETBSD_SOURCE)
++#ifndef __minix 
+ int	sigwait	(const sigset_t * __restrict, int * __restrict);
+ int	sigwaitinfo(const sigset_t * __restrict, siginfo_t * __restrict);
++#endif /* !__minix */
+ void	psiginfo(const siginfo_t *, const char *);
+ 
++#ifndef __minix
+ #ifndef __LIBC12_SOURCE__
+ struct timespec;
+ int	sigtimedwait(const sigset_t * __restrict,
+@@ -191,15 +198,18 @@
+     siginfo_t * __restrict, struct timespec * __restrict)
+     __RENAME(____sigtimedwait50);
+ #endif
++#endif /* !__minix */
+ #endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE_EXTENDED || ... */
+ 
+ 
+ #if defined(_NETBSD_SOURCE)
++#ifndef __minix
+ #ifndef __PSIGNAL_DECLARED
+ #define __PSIGNAL_DECLARED
+ /* also in unistd.h */
+ void	psignal(int, const char *);
+ #endif /* __PSIGNAL_DECLARED */
++#endif /* !__minix */
+ int	sigblock(int);
+ int	sigsetmask(int);
+ #endif /* _NETBSD_SOURCE */
+diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
+--- /home/netbsd/src/include/stdio.h	2010-09-25 03:01:11.000000000 +0000
++++ ./stdio.h	2011-02-14 17:04:58.000000000 +0000
+@@ -274,7 +274,7 @@
+ 		__printflike(2, 0);
+ #endif
+ 
+-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
++#if !defined(__minix) && (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE))
+ int	 rename (const char *, const char *) __RENAME(__posix_rename);
+ #else
+ int	 rename (const char *, const char *);
+diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
+--- /home/netbsd/src/include/stdlib.h	2010-12-23 03:03:09.000000000 +0000
++++ ./stdlib.h	2011-02-14 17:04:58.000000000 +0000
+@@ -280,7 +280,9 @@
+ int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
+ int	 dehumanize_number(const char *, int64_t *);
+ 
++#ifndef __minix
+ devmajor_t getdevmajor(const char *, mode_t);
++#endif /* !__minix */
+ int	 getloadavg(double [], int);
+ 
+ int	 getenv_r(const char *, char *, size_t);
+diff -ru /home/netbsd/src/include/time.h ./time.h
+--- /home/netbsd/src/include/time.h	2010-12-17 03:01:54.000000000 +0000
++++ ./time.h	2011-02-14 17:04:58.000000000 +0000
+@@ -110,7 +110,11 @@
+  * need to include unistd.h
+  */
+ long __sysconf(int);
++#ifdef __minix
++#define CLK_TCK		(__sysconf(3))
++#else
+ #define CLK_TCK		(__sysconf(39))
++#endif /* !__minix */
+ #endif
+ #endif
+ 
+@@ -143,22 +147,28 @@
+ struct sigevent;
+ struct itimerspec;
+ #ifndef __LIBC12_SOURCE__
++#ifndef __minix
+ int clock_getres(clockid_t, struct timespec *)
+     __RENAME(__clock_getres50);
+ int clock_gettime(clockid_t, struct timespec *)
+     __RENAME(__clock_gettime50);
+ int clock_settime(clockid_t, const struct timespec *)
+     __RENAME(__clock_settime50);
++#endif /* !__minix */
+ int nanosleep(const struct timespec *, struct timespec *)
+     __RENAME(__nanosleep50);
++#ifndef __minix
+ int timer_gettime(timer_t, struct itimerspec *) __RENAME(__timer_gettime50);
+ int timer_settime(timer_t, int, const struct itimerspec * __restrict, 
+     struct itimerspec * __restrict) __RENAME(__timer_settime50);
++#endif /* !__minix */ 
+ #endif
++#ifndef __minix
+ int timer_create(clockid_t, struct sigevent * __restrict,
+     timer_t * __restrict);
+ int timer_delete(timer_t);
+ int timer_getoverrun(timer_t);
++#endif /* __minix */
+ #endif /* _POSIX_C_SOURCE >= 199309 || _XOPEN_SOURCE >= 500 || ... */
+ 
+ #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+@@ -205,6 +215,10 @@
+ 
+ #endif /* _NETBSD_SOURCE */
+ 
++#ifdef _MINIX
++int stime(time_t *_top);
++#endif /* _MINIX */
++
+ __END_DECLS
+ 
+ #endif /* !_TIME_H_ */
+diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
+--- /home/netbsd/src/include/unistd.h	2011-01-20 03:02:09.000000000 +0000
++++ ./unistd.h	2011-02-15 12:17:07.000000000 +0000
+@@ -133,7 +133,9 @@
+ #endif
+ int	 rmdir(const char *);
+ int	 setgid(gid_t);
++#ifndef __minix
+ int	 setpgid(pid_t, pid_t);
++#endif /* !__minix */
+ pid_t	 setsid(void);
+ int	 setuid(uid_t);
+ unsigned int	 sleep(unsigned int);
+@@ -192,7 +194,9 @@
+  */
+ #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+     defined(_NETBSD_SOURCE)
++#ifndef __minix 
+ int	 fdatasync(int);
++#endif /* !__minix */
+ int	 fsync(int);
+ #endif
+ 
+@@ -222,7 +226,9 @@
+ __aconst char *crypt(const char *, const char *);
+ int	 encrypt(char *, int);
+ char	*getpass(const char *);
++#ifndef __minix
+ pid_t	 getsid(pid_t);
++#endif /* !__minix */
+ #endif
+ 
+ 
+@@ -253,29 +259,37 @@
+ int	 gethostname(char *, size_t);
+ __pure int
+ 	 getpagesize(void);		/* legacy */
++#ifndef __minix
+ pid_t	 getpgid(pid_t);
++#endif /* !__minix */
++#ifndef __minix
+ #if defined(_XOPEN_SOURCE)
+ int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
+ #else
+ int	 lchown(const char *, uid_t, gid_t);
+ #endif
++#endif /* !__minix */
+ int	 lockf(int, int, off_t);
+ #if __SSP_FORTIFY_LEVEL == 0
+ ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
+ #endif
+ void	*sbrk(intptr_t);
++#ifndef __minix
+ /* XXX prototype wrong! */
+ int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
+ int	 setregid(gid_t, gid_t);
+ int	 setreuid(uid_t, uid_t);
++#endif /* !__minix */
+ void	 swab(const void * __restrict, void * __restrict, ssize_t);
+ int	 symlink(const char *, const char *);
+ void	 sync(void);
+ useconds_t ualarm(useconds_t, useconds_t);
+ int	 usleep(useconds_t);
++#ifndef __minix
+ #ifndef __LIBC12_SOURCE__
+ pid_t	 vfork(void) __RENAME(__vfork14);
+ #endif
++#endif /* !__minix */
+ 
+ #ifndef __AUDIT__
+ char	*getwd(char *);				/* obsoleted by getcwd() */
+@@ -295,8 +309,14 @@
+ /*
+  * Implementation-defined extensions
+  */
++#if defined(__minix)
++int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
++#endif /* !__minix */
++
+ #if defined(_NETBSD_SOURCE)
++#ifndef __minix
+ int	 acct(const char *);
++#endif /* !__minix */
+ int	 closefrom(int);
+ int	 des_cipher(const char *, char *, long, int);
+ int	 des_setkey(const char *);
+@@ -315,15 +335,23 @@
+ int	 iruserok(uint32_t, int, const char *, const char *);
+ int      issetugid(void);
+ int	 nfssvc(int, void *);
++#ifndef __minix
+ int	 profil(char *, size_t, u_long, u_int);
+ #ifndef __PSIGNAL_DECLARED
+ #define __PSIGNAL_DECLARED
+ /* also in signal.h */
+ void	psignal(int, const char *);
+ #endif /* __PSIGNAL_DECLARED */
++#endif /* !__minix */
+ int	 rcmd(char **, int, const char *, const char *, const char *, int *);
++#ifdef __minix
++int	 reboot(int, ...);
++#else
+ int	 reboot(int, char *);
++#endif
++#ifndef __minix
+ int	 revoke(const char *);
++#endif
+ int	 rresvport(int *);
+ int	 ruserok(const char *, int, const char *, const char *);
+ int	 setdomainname(const char *, size_t);
+@@ -341,8 +369,10 @@
+ /* backwards-compatibility; also in string.h */
+ __aconst char *strsignal(int);
+ #endif /* __STRSIGNAL_DECLARED */
++#ifndef __minix
+ int	 swapctl(int, void *, int);
+ int	 swapon(const char *);			/* obsoleted by swapctl() */
++#endif /* !__minix */
+ int	 syscall(int, ...);
+ quad_t	 __syscall(quad_t, ...);
+ int	 undelete(const char *);
