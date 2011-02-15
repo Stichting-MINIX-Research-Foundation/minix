@@ -133,7 +133,9 @@ ssize_t	 read(int, void *, size_t);
 #endif
 int	 rmdir(const char *);
 int	 setgid(gid_t);
+#ifndef __minix
 int	 setpgid(pid_t, pid_t);
+#endif /* !__minix */
 pid_t	 setsid(void);
 int	 setuid(uid_t);
 unsigned int	 sleep(unsigned int);
@@ -181,7 +183,7 @@ int	 truncate(const char *, off_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE) 
 int	 ftruncate(int, off_t);
 #endif
 #endif /* __OFF_T_SYSCALLS_DECLARED */
@@ -192,7 +194,9 @@ int	 ftruncate(int, off_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
+#ifndef __minix 
 int	 fdatasync(int);
+#endif /* !__minix */
 int	 fsync(int);
 #endif
 
@@ -222,7 +226,9 @@ int	 nice(int);
 __aconst char *crypt(const char *, const char *);
 int	 encrypt(char *, int);
 char	*getpass(const char *);
+#ifndef __minix
 pid_t	 getsid(pid_t);
+#endif /* !__minix */
 #endif
 
 
@@ -253,29 +259,37 @@ long	 gethostid(void);
 int	 gethostname(char *, size_t);
 __pure int
 	 getpagesize(void);		/* legacy */
+#ifndef __minix
 pid_t	 getpgid(pid_t);
+#endif /* !__minix */
+#ifndef __minix
 #if defined(_XOPEN_SOURCE)
 int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 #else
 int	 lchown(const char *, uid_t, gid_t);
 #endif
+#endif /* !__minix */
 int	 lockf(int, int, off_t);
 #if __SSP_FORTIFY_LEVEL == 0
 ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
 #endif
 void	*sbrk(intptr_t);
+#ifndef __minix
 /* XXX prototype wrong! */
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
+#endif /* !__minix */
 void	 swab(const void * __restrict, void * __restrict, ssize_t);
 int	 symlink(const char *, const char *);
 void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
-#ifndef __LIBC12_SOURCE__
+#ifndef __minix
+#ifndef __LIBC12_SOURCE__ 
 pid_t	 vfork(void) __RENAME(__vfork14);
 #endif
+#endif /* !__minix */
 
 #ifndef __AUDIT__
 char	*getwd(char *);				/* obsoleted by getcwd() */
@@ -295,8 +309,14 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
 /*
  * Implementation-defined extensions
  */
+#if defined(__minix)
+int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
+#endif /* !__minix */
+
 #if defined(_NETBSD_SOURCE)
+#ifndef __minix
 int	 acct(const char *);
+#endif /* !__minix */
 int	 closefrom(int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
@@ -315,15 +335,23 @@ int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
 int	 nfssvc(int, void *);
+#ifndef __minix
 int	 profil(char *, size_t, u_long, u_int);
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in signal.h */
 void	psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
+#endif /* !__minix */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
+#ifdef __minix
+int	 reboot(int, ...);
+#else
 int	 reboot(int, char *);
+#endif
+#ifndef __minix
 int	 revoke(const char *);
+#endif
 int	 rresvport(int *);
 int	 ruserok(const char *, int, const char *, const char *);
 int	 setdomainname(const char *, size_t);
@@ -341,8 +369,10 @@ void	 strmode(mode_t, char *);
 /* backwards-compatibility; also in string.h */
 __aconst char *strsignal(int);
 #endif /* __STRSIGNAL_DECLARED */
+#ifndef __minix
 int	 swapctl(int, void *, int);
 int	 swapon(const char *);			/* obsoleted by swapctl() */
+#endif /* !__minix */
 int	 syscall(int, ...);
 quad_t	 __syscall(quad_t, ...);
 int	 undelete(const char *);

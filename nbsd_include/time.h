@@ -110,7 +110,11 @@ size_t strftime(char * __restrict, size_t, const char * __restrict,
  * need to include unistd.h
  */
 long __sysconf(int);
+#ifdef __minix
+#define CLK_TCK		(__sysconf(3))
+#else
 #define CLK_TCK		(__sysconf(39))
+#endif /* !__minix */
 #endif
 #endif
 
@@ -143,22 +147,28 @@ extern int getdate_err;
 struct sigevent;
 struct itimerspec;
 #ifndef __LIBC12_SOURCE__
+#ifndef __minix
 int clock_getres(clockid_t, struct timespec *)
     __RENAME(__clock_getres50);
 int clock_gettime(clockid_t, struct timespec *)
     __RENAME(__clock_gettime50);
 int clock_settime(clockid_t, const struct timespec *)
     __RENAME(__clock_settime50);
+#endif /* !__minix */
 int nanosleep(const struct timespec *, struct timespec *)
     __RENAME(__nanosleep50);
+#ifndef __minix
 int timer_gettime(timer_t, struct itimerspec *) __RENAME(__timer_gettime50);
 int timer_settime(timer_t, int, const struct itimerspec * __restrict, 
     struct itimerspec * __restrict) __RENAME(__timer_settime50);
+#endif /* !__minix */ 
 #endif
+#ifndef __minix
 int timer_create(clockid_t, struct sigevent * __restrict,
     timer_t * __restrict);
 int timer_delete(timer_t);
 int timer_getoverrun(timer_t);
+#endif /* __minix */
 #endif /* _POSIX_C_SOURCE >= 199309 || _XOPEN_SOURCE >= 500 || ... */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
@@ -204,6 +214,10 @@ size_t strftime_z(const timezone_t, char * __restrict, size_t,
     __attribute__((__format__(__strftime__, 4, 0)));
 
 #endif /* _NETBSD_SOURCE */
+
+#ifdef _MINIX
+int stime(time_t *_top);
+#endif /* _MINIX */
 
 __END_DECLS
 

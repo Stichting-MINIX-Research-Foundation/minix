@@ -11,9 +11,9 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
 	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
-	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
+	inttypes.h iso646.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
-	login_cap.h lwp.h malloc.h math.h md2.h \
+	login_cap.h malloc.h math.h md2.h \
 	memory.h mntopts.h monetary.h mpool.h mqueue.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
 	paths.h pwd.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
@@ -40,10 +40,16 @@ INCS+=	ieeefp.h
 .include <bsd.own.mk>
 
 
-INCSDIR=	/usr/include
+INCSDIR=	/usr/netbsd/include
 
-SUBDIR=		rpc
-SUBDIR+=	../common/include/prop
+.include "${MINIXSRCDIR}/common/include/Makefile.inc"
+
+#SUBDIR=		rpc
+SUBDIR+=	#../common/include/prop
+
+
+SUBDIR+= 	arch sys minix
+SUBDIR+= 	net netinet netinet6
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

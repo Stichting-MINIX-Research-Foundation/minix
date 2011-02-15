@@ -29,6 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __minix
+#define _SCHED_H_
+#endif /* !__minix */
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
