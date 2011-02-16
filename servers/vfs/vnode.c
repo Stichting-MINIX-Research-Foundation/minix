@@ -16,6 +16,11 @@
 #include <minix/vfsif.h>
 
 /* Is vnode pointer reasonable? */
+#if NDEBUG
+#define SANEVP(v)
+#define CHECKVN(v)
+#define ASSERTVP(v)
+#else
 #define SANEVP(v) ((((v) >= &vnode[0] && (v) < &vnode[NR_VNODES])))
 
 #define BADVP(v, f, l) printf("%s:%d: bad vp %p\n", f, l, v)
@@ -29,6 +34,7 @@
 /* vp check that panics */
 #define ASSERTVP(v) if(!SANEVP(v)) { \
 	BADVP(v, __FILE__, __LINE__); panic("bad vp"); }
+#endif
 
 /*===========================================================================*
  *				get_free_vnode				     *

@@ -16,6 +16,10 @@ AFLAGS += ${SMP_FLAGS}
 MAKECONF?=	/etc/make.conf
 .-include "${MAKECONF}"
 
+.ifdef NOASSERTS
+CFLAGS += -DNDEBUG=1
+.endif
+
 #
 # CPU model, derived from MACHINE_ARCH
 #
