@@ -449,6 +449,8 @@ int ksig;			/* non-zero means signal comes from kernel  */
 		return;
 
 	/* We were unable to spawn a signal handler. Kill the process. */
+	printf("PM: %d can't catch signal %d - killing\n",
+		rmp->mp_pid, signo);
   }
   else if (!badignore && sigismember(&ign_sset, signo)) {
 	/* Signal defaults to being ignored. */
@@ -732,8 +734,16 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
 
   /* Ask the kernel to deliver the signal */
   r = sys_sigsend(rmp->mp_endpoint, &sigmsg);
-  if (r != OK)
+ /* sys_sigsend can fail legitimately with EFAULT if
+  * the process memory can't accomodate the signal handler.
+  */
+  if(r == EFAULT) {
+	return(FALSE);
+  }
+  /* Other errors are unexpected pm/kernel discrepancies. */
+  if (r != OK) {
 	panic("sys_sigsend failed: %d", r);
+  }
 
   /* Was the process suspended in PM? Then interrupt the blocking call. */
   if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
