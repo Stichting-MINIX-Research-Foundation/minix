@@ -10,7 +10,7 @@ typedef void *cbdata_t;
 /* Maximum file name length, excluding terminating null character. It is set
  * to a low value to limit memory usage, but can be changed to any value.
  */
-#define PNAME_MAX	16
+#define PNAME_MAX	24
 
 struct inode_stat {
 	mode_t mode;		/* file mode (type and permissions) */
