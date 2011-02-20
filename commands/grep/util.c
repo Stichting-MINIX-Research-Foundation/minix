@@ -516,7 +516,7 @@ grep_calloc(size_t nmemb, size_t size)
 {
 	void	*ptr;
 
-	if ((ptr = calloc(nmemb, size)) == NULL)
+	if ((ptr = calloc(nmemb, size)) == NULL && (size > 0) && (nmemb > 0))
 		err(2, "calloc");
 	return ptr;
 }
