@@ -535,7 +535,7 @@ DEBUGMODE?=	${NONBINMODE}
 # All platforms are ELF.
 #
 #OBJECT_FMT=	ELF
-.if !empty(CC:Mi386-pc-minix3-gcc)
+.if !empty(CC:Mi386-pc-minix3-gcc) || !empty(CC:Mclang)
 OBJECT_FMT=	ELF
 .else
 OBJECT_FMT=	a.out
