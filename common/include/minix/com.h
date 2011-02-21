@@ -22,6 +22,7 @@
  *    0xE00 -  0xEFF	Common system messages (e.g. system signals)
  *    0xF00 -  0xFFF    Scheduling messages
  *   0x1000 - 0x10FF	Notify messages
+ *   0x1100 - 0x11FF	USB  
  *   0x1300 - 0x13FF    TTY Input
  *
  * Zero and negative values are widely used for OK and error responses.
@@ -482,6 +483,7 @@
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
 #   define GET_PROC 	  11	/* get process slot if given process */
 #   define GET_MACHINE 	  12	/* get machine information */
+#   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
 #   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
 #   define GET_LOADINFO   15	/* get load average information */
 #   define GET_IRQACTIDS  16	/* get the IRQ masks */
@@ -1171,6 +1173,35 @@
 
 /* SCHEDULING_INHERIT is like SCHEDULING_START, but without _QUANTUM field */
 #define SCHEDULING_INHERIT	(SCHEDULING_BASE+5)
+
+/*===========================================================================*
+ *              Messages for USB                                             *
+ *===========================================================================*/
+
+#define USB_BASE 0x1100
+
+/* those are from driver to USBD */
+#define USB_RQ_INIT          (USB_BASE +  0) /* First message to HCD driver */
+#define USB_RQ_DEINIT        (USB_BASE +  1) /* Quit the session */
+#define USB_RQ_SEND_URB      (USB_BASE +  2) /* Send URB */
+#define USB_RQ_CANCEL_URB    (USB_BASE +  3) /* Cancel URB */
+#define USB_REPLY            (USB_BASE +  4) 
+
+
+/* those are from USBD to driver */
+#define USB_COMPLETE_URB    (USB_BASE +  6)
+#define USB_ANNOUCE_DEV     (USB_BASE +  7) /* Announce a new USB Device */
+#define USB_WITHDRAW_DEV    (USB_BASE +  8) /* Withdraw a allready anncounced
+                                              USB device*/
+#   define USB_GRANT_ID     m4_l1
+#   define USB_GRANT_SIZE   m4_l2
+
+#   define USB_URB_ID       m4_l1
+#   define USB_RESULT       m4_l2
+#   define USB_DEV_ID       m4_l1
+#   define USB_DRIVER_EP    m4_l2
+#   define USB_INTERFACES   m4_l3
+#   define USB_RB_INIT_NAME m3_ca1
 
 /*===========================================================================*
  *              TTY INPUT INJECTION                                          *
