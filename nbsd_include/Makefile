@@ -77,6 +77,7 @@ SUBDIR+=	../common/include/prop
 
 .if defined(__MINIX)
 .include "${MINIXSRCDIR}/common/include/Makefile.inc"
+SUBDIR+=	arch/${MACHINE}
 SUBDIR+= 	arch sys minix
 SUBDIR+= 	net netinet netinet6
 .endif
