@@ -127,6 +127,36 @@ diff -ru /home/netbsd/src/lib/libc/arch/i386/gen/Makefile.inc ./arch/i386/gen/Ma
  
  # Common ieee754 constants and functions
  SRCS+=	infinityf_ieee754.c infinity_ieee754.c
+diff -ru /home/netbsd/src/lib/libc/arch/i386/gen/setjmp.S ./arch/i386/gen/setjmp.S
+--- /home/netbsd/src/lib/libc/arch/i386/gen/setjmp.S	2005-09-13 01:44:08.000000000 +0000
++++ ./arch/i386/gen/setjmp.S	2011-02-18 17:41:55.000000000 +0000
+@@ -85,7 +85,11 @@
+ 	PIC_PROLOGUE
+ 	pushl	$0
+ 	pushl	%edx
++#ifdef __minix
++	pushl 	$2			/* SIG_SETMASK */
++#else
+ 	pushl	$3			/* SIG_SETMASK */
++#endif
+ #ifdef PIC
+ 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
+ #else
+diff -ru /home/netbsd/src/lib/libc/arch/i386/gen/sigsetjmp.S ./arch/i386/gen/sigsetjmp.S
+--- /home/netbsd/src/lib/libc/arch/i386/gen/sigsetjmp.S	2005-09-13 01:44:08.000000000 +0000
++++ ./arch/i386/gen/sigsetjmp.S	2011-02-18 17:43:21.000000000 +0000
+@@ -85,7 +85,11 @@
+ 	PIC_PROLOGUE
+ 	pushl	$0
+ 	pushl	%edx
++#ifdef __minix
++	pushl	$2			/* SIG_SETMASK */
++#else
+ 	pushl	$3			/* SIG_SETMASK */
++#endif
+ #ifdef PIC
+ 	call	PIC_PLT(_C_LABEL(__sigprocmask14))
+ #else
 diff -ru /home/netbsd/src/lib/libc/cdb/cdbr.c ./cdb/cdbr.c
 --- /home/netbsd/src/lib/libc/cdb/cdbr.c	2010-06-04 03:06:19.000000000 +0000
 +++ ./cdb/cdbr.c	2011-02-14 17:48:18.000000000 +0000
@@ -1318,7 +1348,7 @@ diff -ru /home/netbsd/src/lib/libc/include/namespace.h ./include/namespace.h
  
 diff -ru /home/netbsd/src/lib/libc/libcincludes.mk ./libcincludes.mk
 --- /home/netbsd/src/lib/libc/libcincludes.mk	2008-10-26 07:28:06.000000000 +0000
-+++ ./libcincludes.mk	2011-02-15 10:39:27.000000000 +0000
++++ ./libcincludes.mk	2011-02-21 12:57:21.000000000 +0000
 @@ -3,6 +3,22 @@
  # Makefile fragment shared across several parts that want to look
  # inside libc's include tree.

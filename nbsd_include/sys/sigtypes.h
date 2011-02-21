@@ -23,7 +23,11 @@ typedef unsigned long sigset_t;
 /*
  * Macro for manipulating signal masks.
  */
+#ifndef __minix
 #define __sigmask(n)		(1 << (((unsigned int)(n) - 1)))
+#else /* __minix */
+#define __sigmask(n)		(1 << (unsigned int)(n))
+#endif /* !__minix */ 
 #define __sigaddset(s, n)					\
 	do {							\
 		*(s) = *(unsigned long *)(s) | __sigmask(n);	\
