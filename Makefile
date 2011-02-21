@@ -109,6 +109,7 @@ clean:
 	$(MAKE) -C lib clean_gnu
 	$(MAKE) -C lib clean_ack
 	$(MAKE) -C lib clean_elf
+	$(MAKE) -C lib clean_clang
 	$(MAKE) -C test clean
 
 cleandepend:
