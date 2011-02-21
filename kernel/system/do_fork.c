@@ -34,6 +34,7 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
   struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
   int gen, r;
   int p_proc;
+  int namelen;
 
   if(!isokendpt(m_ptr->PR_ENDPT, &p_proc))
 	return EINVAL;
@@ -83,6 +84,12 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 	~(MF_VIRT_TIMER | MF_PROF_TIMER | MF_SC_TRACE | MF_SPROF_SEEN);
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
   rpc->p_prof_left = 0;
+
+  /* Mark process name as being a forked copy */
+  namelen = strlen(rpc->p_name);
+#define FORKSTR "*F"
+  if(namelen+strlen(FORKSTR) < sizeof(rpc->p_name))
+	strcat(rpc->p_name, FORKSTR);
 
   /* the child process is not runnable until it's scheduled. */
   RTS_SET(rpc, RTS_NO_QUANTUM);
