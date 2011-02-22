@@ -87,18 +87,7 @@ int mountflags;
   /* Tell VFS that we are passing in a 16-byte label. */
   mountflags |= MS_LABEL16;
 
-  /* See if the given type is even remotely valid. */
-  if(strlen(FSPATH)+strlen(type) >= sizeof(path)) {
-	errno = E2BIG;
-	return -1;
-  }
-  strcpy(path, FSPATH);
-  strcat(path, type);
-  
-  if(stat(path, &statbuf) != 0) {
-  	errno = EINVAL;
-  	return -1;
-  }
+
 
   /* Sanity check on user input. */
   if(strchr(args, '\'')) {
@@ -107,6 +96,19 @@ int mountflags;
   }
   /* start the fs-server if not using existing one */
   if (!use_existing) {
+	/* See if the given type is even remotely valid. */
+    if(strlen(FSPATH)+strlen(type) >= sizeof(path)) {
+		errno = E2BIG;
+		return -1;
+	}
+	strcpy(path, FSPATH);
+	strcat(path, type);
+  
+	if(stat(path, &statbuf) != 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	
 	if(strlen(_PATH_SERVICE)+strlen(path)+strlen(label)+
 		strlen(args)+50 >= sizeof(cmd)) {
 		errno = E2BIG;
@@ -132,7 +134,7 @@ int mountflags;
   m.m1_p3 = label;
   r = _syscall(VFS_PROC_NR, MOUNT, &m);
 
-  if(r != OK) {
+  if(r != OK && !use_existing) {
 	/* If mount() failed, tell RS to shutdown MFS process.
 	 * No error check - won't do anything with this error anyway.
 	 */
