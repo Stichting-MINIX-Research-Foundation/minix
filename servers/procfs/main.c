@@ -54,11 +54,16 @@ PRIVATE void init_hook(void)
 {
 	/* Initialization hook. Generate the static part of the tree.
 	 */
+	static int first_time = 1;
 	struct inode *root;
 
-	root = get_root_inode();
+	if (first_time) {
+		root = get_root_inode();
 
-	construct_tree(root, root_files);
+		construct_tree(root, root_files);
+
+		first_time = 0;
+	}
 }
 
 /*===========================================================================*
