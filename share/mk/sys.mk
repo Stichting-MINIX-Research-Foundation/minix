@@ -230,10 +230,7 @@ COMPILER_TYPE=ack
 .elif !empty(CC:Mgcc)
 COMPILER_TYPE=gnu
 AR=ar
-.elif !empty(CC:Mclang)
-COMPILER_TYPE=gnu
-AR=ar
-.elif !empty(CC:Mi386-pc-minix3-gcc)
+.elif !empty(CC:Mi386-pc-minix3-gcc) || !empty(CC:Mclang)
 COMPILER_TYPE=gnu
 AR=i386-pc-minix3-ar
 LD=i386-pc-minix3-ld
