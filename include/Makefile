@@ -27,7 +27,7 @@ INCS+=	minix/a.out.h minix/cdrom.h minix/cpufeature.h \
 	minix/vfsif.h minix/vtreefs.h \
 	minix/compiler-ack.h minix/sha2.h minix/sha1.h minix/md5.h \
 	minix/audio_fw.h minix/hash.h minix/input.h \
-	minix/usb_ch9.h 
+	minix/usb.h minix/usb_ch9.h 
 	
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
 INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h

@@ -2,7 +2,7 @@
 
 SUBDIR= csu libc libcurses libdriver libnetdriver libedit libm libsys \
 	libtimers libutil libbz2 libl libhgfs libz libfetch libarchive \
-	libvtreefs libaudiodriver libmthread libexec
+	libvtreefs libaudiodriver libmthread libexec libusb 
 
 .if ${COMPILER_TYPE} == "ack"
 SUBDIR+= ack/libd ack/libe ack/libfp ack/liby
