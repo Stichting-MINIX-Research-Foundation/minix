@@ -4,6 +4,8 @@
 # inside libc's include tree.
 
 .if defined(__MINIX)
+MACHINE_ARCH= ${MACHINE}
+MACHINE_CPU= ${MACHINE}
 .if defined(LIBC_MACHINE_ARCH) && \
     exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
 ARCHSUBDIR=	${LIBC_MACHINE_ARCH}

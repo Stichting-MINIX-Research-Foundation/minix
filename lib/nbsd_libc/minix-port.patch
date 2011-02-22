@@ -1364,12 +1364,14 @@ diff -ru /home/netbsd/src/lib/libc/include/namespace.h ./include/namespace.h
  
 diff -ru /home/netbsd/src/lib/libc/libcincludes.mk ./libcincludes.mk
 --- /home/netbsd/src/lib/libc/libcincludes.mk	2008-10-26 07:28:06.000000000 +0000
-+++ ./libcincludes.mk	2011-02-21 12:57:21.000000000 +0000
-@@ -3,6 +3,22 @@
++++ ./libcincludes.mk	2011-02-21 13:47:02.000000000 +0000
+@@ -3,6 +3,24 @@
  # Makefile fragment shared across several parts that want to look
  # inside libc's include tree.
  
 +.if defined(__MINIX)
++MACHINE_ARCH= ${MACHINE}
++MACHINE_CPU= ${MACHINE}
 +.if defined(LIBC_MACHINE_ARCH) && \
 +    exists(${MINIXSRCDIR}/lib/nbsd_libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
 +ARCHSUBDIR=	${LIBC_MACHINE_ARCH}
@@ -1388,7 +1390,7 @@ diff -ru /home/netbsd/src/lib/libc/libcincludes.mk ./libcincludes.mk
  .if defined(LIBC_MACHINE_ARCH) && \
      exists(${NETBSDSRCDIR}/lib/libc/arch/${LIBC_MACHINE_ARCH}/SYS.h)
  ARCHSUBDIR=	${LIBC_MACHINE_ARCH}
-@@ -17,3 +33,4 @@
+@@ -17,3 +35,4 @@
  .endif
  
  ARCHDIR=	${NETBSDSRCDIR}/lib/libc/arch/${ARCHSUBDIR}
