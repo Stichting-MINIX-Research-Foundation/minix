@@ -457,6 +457,22 @@ diff -ru /home/netbsd/src/lib/libc/gen/fts.c ./gen/fts.c
  
  static FTSENT	*fts_alloc(FTS *, const char *, size_t);
  static FTSENT	*fts_build(FTS *, int);
+diff -ru /home/netbsd/src/lib/libc/gen/getcwd.c ./gen/getcwd.c
+--- /home/netbsd/src/lib/libc/gen/getcwd.c	2011-01-20 03:02:11.000000000 +0000
++++ ./gen/getcwd.c	2011-02-21 14:27:44.000000000 +0000
+@@ -54,8 +54,12 @@
+ #include "extern.h"
+ 
+ #ifdef __weak_alias
++#ifdef __minix
++__weak_alias(getcwd,_getcwd)
++#else
+ __weak_alias(getcwd,_sys_getcwd)
+ __weak_alias(_getcwd,_sys_getcwd)
++#endif
+ __weak_alias(realpath,_realpath)
+ 
+ #if defined(_FORTIFY_SOURCE) && !defined(__lint__)
 diff -ru /home/netbsd/src/lib/libc/gen/getgrent.c ./gen/getgrent.c
 --- /home/netbsd/src/lib/libc/gen/getgrent.c	2008-04-28 20:22:59.000000000 +0000
 +++ ./gen/getgrent.c	2011-02-15 10:00:10.000000000 +0000

@@ -54,8 +54,12 @@ __RCSID("$NetBSD: getcwd.c,v 1.47 2011/01/20 02:57:00 christos Exp $");
 #include "extern.h"
 
 #ifdef __weak_alias
+#ifdef __minix
+__weak_alias(getcwd,_getcwd)
+#else
 __weak_alias(getcwd,_sys_getcwd)
 __weak_alias(_getcwd,_sys_getcwd)
+#endif
 __weak_alias(realpath,_realpath)
 
 #if defined(_FORTIFY_SOURCE) && !defined(__lint__)
