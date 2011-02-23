@@ -192,8 +192,6 @@ Mount $usr /usr failed -- Single user."
     then mount $bin_img $home /home || echo "WARNING: couldn't mount $home on /home"
     fi
 
-    mount -t procfs none /proc || echo "WARNING: couldn't mount procfs"
-
     # This file is necessary for above 'shutdown -C' check.
     # (Silence stderr in case of running from cd.)
     touch /usr/adm/wtmp 2>/dev/null

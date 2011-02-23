@@ -24,6 +24,7 @@ else
 	/bin/service -cr up /sbin/at_wini -dev /dev/c1d0 -label at_wini_1 -args instance=1
 fi
 /bin/service -c edit /sbin/mfs -label fs_imgrd
+/bin/service up /sbin/procfs || echo "WARNING: couldn't start procfs"
 
 rootdev=`sysenv rootdev` || echo 'No rootdev?'
 rootdevname=`/bin/dev2name "$rootdev"` ||
@@ -55,4 +56,5 @@ then
 fi
 echo "Root device name is $rootdevname"
 /bin/newroot $bin_img"$rootdevname"
+/bin/mount -e -t procfs none /proc || echo "WARNING: couldn't mount procfs"
 exec /bin/sh /etc/rc "$@"

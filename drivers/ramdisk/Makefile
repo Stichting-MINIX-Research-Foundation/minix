@@ -1,18 +1,27 @@
 # Makefile for ramdisk image
 
+.include <bsd.own.mk>
+
 PROGRAMS=ahci at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
-	newroot pci sh service sysenv mfs ext2
+	pci procfs sh service sysenv mfs ext2
+SCRIPTS=newroot
 
 # acpi is not compiled with ack
 .if ${COMPILER_TYPE} == "gnu"
 PROGRAMS += acpi
 .endif
 
+.if ${OBJECT_FMT} == "ELF"
+ELFSTRIP=/usr/gnu_cross/bin/i386-pc-minix3-strip
+.else
+STRIPFLAG+= -s
+.endif
+
 EXTRA=system.conf passwd rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
 MAKEDEV=/usr/bin/MAKEDEV
-CLEANFILES += $(PROGRAMS) $(EXTRA) bintoc image image.c t proto.gen
+CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) bintoc image image.c t proto.gen
 
 install: all
 
@@ -30,111 +39,126 @@ image:	proto.gen mtab rc $(EXTRA)
 	mkfs.mfs image proto.gen || { rm -f image; false; }
 
 ahci: ../ahci/ahci
-	install -s ../$@/$@ $@
+	install ${STRIPFLAG} ../$@/$@ $@
 
 ../ahci/ahci:
 	$(MAKE) -C ../ahci
 
 at_wini: ../at_wini/at_wini
-	install -s ../$@/$@ $@
+	install ${STRIPFLAG} ../$@/$@ $@
 
 ../at_wini/at_wini:
 	$(MAKE) -C ../at_wini
 
 bios_wini: ../bios_wini/bios_wini
-	install -s ../$@/$@ $@
+	install ${STRIPFLAG} ../$@/$@ $@
 
 ../bios_wini/bios_wini:
 	$(MAKE) -C ../bios_wini
 
 floppy: ../floppy/floppy
-	install -s ../$@/$@ $@
+	install ${STRIPFLAG} ../$@/$@ $@
 
 ../floppy/floppy:
 	$(MAKE) -C ../floppy
 
 acpi: ../acpi/acpi
-	install -s ../$@/$@ $@
+	install ${STRIPFLAG} ../$@/$@ $@
 
 ../acpi/acpi:
 	$(MAKE) -C ../acpi
 
 pci: ../pci/pci
-	install -s ../$@/$@ $@
+	install ${STRIPFLAG} ../$@/$@ $@
 
 ../pci/pci:
 	$(MAKE) -C ../pci
 
 cdprobe:  ../../commands/cdprobe/cdprobe
-	install -s ../../commands/$@/$@ $@
+	install ${STRIPFLAG} ../../commands/$@/$@ $@
 
 ../../commands/cdprobe:
 	$(MAKE) -C ../../commands/cdprobe
 
 dev2name:  ../../commands/dev2name/dev2name
-	install -s ../../commands/$@/$@ $@
+	install ${STRIPFLAG} ../../commands/$@/$@ $@
 
 ../../commands/dev2name/dev2name:
 	$(MAKE) -C ../../commands/dev2name
 
 loadramdisk:  ../../commands/loadramdisk/loadramdisk
-	install -s ../../commands/$@/$@ $@
+	install ${STRIPFLAG} ../../commands/$@/$@ $@
 
 ../../commands/loadramdisk/loadramdisk:
 	$(MAKE) -C ../../commands/loadramdisk
 
 mount:  ../../commands/mount/mount
-	install -s ../../commands/$@/$@ $@
+	install ${STRIPFLAG} ../../commands/$@/$@ $@
 
 ../../commands/mount/mount:
 	$(MAKE) -C ../../commands/mount
 
 newroot:  ../../commands/newroot/newroot.sh
-	install -s ../../commands/$@/$@.sh $@
+	install ${STRIPFLAG} ../../commands/$@/$@.sh $@
 
 ../../commands/newroot/newroot:
 	$(MAKE) -C ../../commands/newroot
 
 sysenv:  ../../commands/sysenv/sysenv
-	install -s ../../commands/$@/$@ $@
+	install ${STRIPFLAG} ../../commands/$@/$@ $@
 
 ../../commands/sysenv:
 	$(MAKE) -C ../../commands/sysenv
 
 sh:	../../commands/ash/sh
-	install -s ../../commands/ash/$@ $@
+	install ${STRIPFLAG} ../../commands/ash/$@ $@
 
 ../../commands/ash/sh:
 	$(MAKE) -C ../../commands/ash sh
 
 service: ../../commands/service/service
-	install -s ../../commands/service/$@ $@
+	install ${STRIPFLAG} ../../commands/service/$@ $@
 
 ../../commands/service:
 	$(MAKE) -C ../../commands/service
 
 mfs: ../../servers/mfs/mfs
-	install -s ../../servers/mfs/$@ $@
+	install ${STRIPFLAG} ../../servers/mfs/$@ $@
 
 ../../servers/mfs/mfs:
 	$(MAKE) -C ../../servers/mfs
 
+procfs: ../../servers/procfs/procfs
+	install ${STRIPFLAG} ../../servers/procfs/$@ $@
+
+../../servers/procfs/procfs:
+	$(MAKE) -C ../../servers/procfs
+
 ext2: ../../servers/ext2/ext2
-	install -s ../../servers/ext2/$@ $@
+	install ${STRIPFLAG} ../../servers/ext2/$@ $@
 
 ../../servers/ext2/ext2:
 	$(MAKE) -C ../../servers/ext2
 
 system.conf: ../../etc/system.conf
-	install -s ../../etc/$@ $@
+	install ${STRIPFLAG} ../../etc/$@ $@
 
 passwd: ../../etc/passwd
-	install -s ../../etc/$@ $@
+	install ${STRIPFLAG} ../../etc/$@ $@
 
 rs.single: ../../etc/rs.single
-	install -s ../../etc/$@ $@
+	install ${STRIPFLAG} ../../etc/$@ $@
 
-proto.gen: $(PROGRAMS) $(MAKEDEV) proto.sh proto
+proto.gen: $(PROGRAMS) $(SCRIPTS) $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
+
+.if ${OBJECT_FMT} == "ELF"
+proto.gen: elfstrip
+
+.PHONY: elfstrip
+
+elfstrip: $(PROGRAMS)
+	${ELFSTRIP} $(PROGRAMS)
+.endif
 
 .include <bsd.prog.mk>

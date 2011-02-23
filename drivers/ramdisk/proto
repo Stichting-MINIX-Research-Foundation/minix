@@ -20,6 +20,7 @@ d--755 0 0
 		floppy ---755 0 0 floppy
 		pci ---755 0 0 pci
 		mfs ---755 0 0 mfs
+		procfs ---755 0 0 procfs
 	$
 	dev d--755 0 0
 @DEV@
