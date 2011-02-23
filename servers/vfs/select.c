@@ -767,19 +767,18 @@ PUBLIC void select_reply1()
 	dp->dmap_sel_filp= NULL;
 	fp->filp_select_flags &= ~FSF_BUSY;
 	if (!(fp->filp_select_flags & (FSF_UPDATE|FSF_BLOCK)))
-		fp->filp_select_ops= 0;
-	if (status != 0)
+	fp->filp_select_ops= 0;
+
+	if (status > 0)
 	{
-		if (status > 0)
-		{
-			/* Clear the replied bits from the request mask unless
-			 * FSF_UPDATE is set.
-			 */
-			if (!(fp->filp_select_flags & FSF_UPDATE))
-				fp->filp_select_ops &= ~status;
-		}
-		filp_status(fp, status);
+		/* Clear the replied bits from the request mask unless
+		 * FSF_UPDATE is set.
+		 */
+		if (!(fp->filp_select_flags & FSF_UPDATE))
+			fp->filp_select_ops &= ~status;
 	}
+	filp_status(fp, status);
+
 	if (fp->filp_count > 1)
 		fp->filp_count--;
 	else
