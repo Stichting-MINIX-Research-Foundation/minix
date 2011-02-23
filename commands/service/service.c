@@ -147,9 +147,9 @@ PRIVATE void print_usage(char *app_name, char *problem)
 
 /* A request to the RS server failed. Report and exit. 
  */
-PRIVATE void failure(void) 
+PRIVATE void failure(int request)
 {
-  fprintf(stderr, "Request to RS failed: %s (error %d)\n", strerror(errno), errno);
+  fprintf(stderr, "Request 0x%x to RS failed: %s (error %d)\n", request, strerror(errno), errno);
   exit(errno);
 }
 
@@ -1521,7 +1521,7 @@ PUBLIC int main(int argc, char **argv)
   /* Build request message and send the request. */
   if(result == OK) {
     if (_syscall(RS_PROC_NR, request, &m) == -1)
-        failure();
+        failure(request);
     result = m.m_type;
   }
 
