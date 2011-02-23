@@ -35,6 +35,10 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	xargs yacc yes zdump zic zmodem pkgin_cd \
 	mktemp
 
+.if ${COMPILER_TYPE} == "gnu"
+SUBDIR += elf2aout
+.endif
+
 .if ${ARCH} == "i386"
 SUBDIR+=	atnormalize dosread fdisk loadfont \
 	mixer autopart part partition playwave postmort \
