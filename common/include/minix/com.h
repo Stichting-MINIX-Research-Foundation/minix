@@ -23,6 +23,7 @@
  *    0xF00 -  0xFFF    Scheduling messages
  *   0x1000 - 0x10FF	Notify messages
  *   0x1100 - 0x11FF	USB  
+ *   0x1200 - 0x12FF    Devman
  *   0x1300 - 0x13FF    TTY Input
  *
  * Zero and negative values are widely used for OK and error responses.
@@ -1202,6 +1203,32 @@
 #   define USB_DRIVER_EP    m4_l2
 #   define USB_INTERFACES   m4_l3
 #   define USB_RB_INIT_NAME m3_ca1
+
+/*===========================================================================*
+ *              Messages for DeviceManager (s/t like SysFS)                  *
+ *===========================================================================*/
+
+#define DEVMAN_BASE 0x1200
+
+#define DEVMAN_ADD_DEV     (DEVMAN_BASE + 0)
+#define DEVMAN_DEL_DEV     (DEVMAN_BASE + 1)
+#define DEVMAN_ADD_BUS     (DEVMAN_BASE + 2)
+#define DEVMAN_DEL_BUS     (DEVMAN_BASE + 3)
+#define DEVMAN_ADD_DEVFILE (DEVMAN_BASE + 4)
+#define DEVMAN_DEL_DEVFILE (DEVMAN_BASE + 5)
+
+#define DEVMAN_REQUEST     (DEVMAN_BASE + 6)
+#define DEVMAN_REPLY       (DEVMAN_BASE + 7)
+
+#define DEVMAN_BIND        (DEVMAN_BASE + 8)
+#define DEVMAN_UNBIND      (DEVMAN_BASE + 9)
+
+#   define DEVMAN_GRANT_ID       m4_l1
+#   define DEVMAN_GRANT_SIZE     m4_l2
+
+#   define DEVMAN_ENDPOINT       m4_l3
+#   define DEVMAN_DEVICE_ID      m4_l2
+#   define DEVMAN_RESULT         m4_l1
 
 /*===========================================================================*
  *              TTY INPUT INJECTION                                          *
