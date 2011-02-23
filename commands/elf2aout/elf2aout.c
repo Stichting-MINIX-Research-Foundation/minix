@@ -223,6 +223,9 @@ usage:
 			| OMAGIC);
 #endif
 		
+	aex.a_text = text.len;
+	aex.a_data = data.len;
+	aex.a_bss = bss.len;
 #ifdef __minix
 	aex.a_hdrlen = sizeof(struct exec);
 	aex.a_magic[0] = A_MAGIC0;
@@ -234,9 +237,6 @@ usage:
 	/* total adds an implicit stack limit */
 	aex.a_total = aex.a_text + aex.a_data + aex.a_bss + 20 * 1024 * 1024;
 #endif
-	aex.a_text = text.len;
-	aex.a_data = data.len;
-	aex.a_bss = bss.len;
 	aex.a_entry = ex.e_entry;
 	aex.a_syms = (sizeof(struct nlist) *
 	    (symtabix != -1
