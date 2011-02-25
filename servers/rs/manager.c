@@ -640,6 +640,8 @@ struct rproc *rp;				/* pointer to service slot */
   int r;
   struct rprocpub *rpub;
   struct rs_pci pci_acl;
+  message m;
+  endpoint_t ep;
 
   rpub = rp->r_pub;
 
@@ -682,6 +684,21 @@ struct rproc *rp;				/* pointer to service slot */
       }
   }
 
+  if (rpub->devman_id != 0) {
+	  r = ds_retrieve_label_endpt("devman",&ep);
+	  
+	  if (r != OK) {
+		return kill_service(rp, "devman not running?", r);
+	  }
+	  m.m_type = DEVMAN_BIND;
+	  m.DEVMAN_ENDPOINT  = rpub->endpoint;
+	  m.DEVMAN_DEVICE_ID = rpub->devman_id;
+	  r = sendrec(ep, &m);
+	  if (r != OK || m.DEVMAN_RESULT != OK) {
+		 return kill_service(rp, "devman bind device failed", r);
+	  }
+  }
+
   if(rs_verbose)
       printf("RS: %s published\n", srv_to_string(rp));
 
@@ -697,6 +714,9 @@ struct rproc *rp;				/* pointer to service slot */
 /* Unpublish a service. */
   struct rprocpub *rpub;
   int r, result;
+  message m;
+  endpoint_t ep;
+
 
   rpub = rp->r_pub;
   result = OK;
@@ -717,6 +737,23 @@ struct rproc *rp;				/* pointer to service slot */
           printf("RS: pci_del_acl call failed (error %d)\n", r);
           result = r;
       }
+  }
+
+  if (rpub->devman_id != 0) {
+	  r = ds_retrieve_label_endpt("devman",&ep);
+  
+	  if (r != OK) {
+		   printf("RS: devman not running?", r);
+	  } else {
+		m.m_type = DEVMAN_UNBIND;
+		m.DEVMAN_ENDPOINT  = rpub->endpoint;
+		m.DEVMAN_DEVICE_ID = rpub->devman_id;
+		r = sendrec(ep, &m);
+
+		if (r != OK || m.DEVMAN_RESULT != OK) {
+			 printf("RS: devman unbind device failed");
+		}
+	  }
   }
 
   if(rs_verbose)
@@ -1496,6 +1533,7 @@ endpoint_t source;
   rpub->dev_flags = DSRV_DF;
   rpub->dev_nr = rs_start->rss_major;
   rpub->dev_style = rs_start->rss_dev_style;
+  rpub->devman_id = rs_start->devman_id;
   if(rpub->dev_nr && !IS_DEV_STYLE(rs_start->rss_dev_style)) {
       printf("RS: init_slot: bad device style\n");
       return EINVAL;

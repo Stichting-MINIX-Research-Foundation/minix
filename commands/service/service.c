@@ -82,6 +82,7 @@ PRIVATE char *known_requests[] = {
 
 #define ARG_ARGS	"-args"		/* list of arguments to be passed */
 #define ARG_DEV		"-dev"		/* major device number for drivers */
+#define ARG_MAJOR	"-major"	/* major number */
 #define ARG_DEVSTYLE	"-devstyle"	/* device style */
 #define ARG_PERIOD	"-period"	/* heartbeat period in ticks */
 #define ARG_SCRIPT	"-script"	/* name of the script to restart a
@@ -94,6 +95,8 @@ PRIVATE char *known_requests[] = {
 
 #define ARG_LU_STATE	"-state"	/* the live update state required */
 #define ARG_LU_MAXTIME	"-maxtime"      /* max time to prepare for the update */
+#define ARG_DEVMANID	"-devid"    /* the id of the devman device this
+                                       driver should be able to access  */
 
 #define SERVICE_LOGIN	"service"	/* passwd file entry for services */
 
@@ -110,6 +113,7 @@ PRIVATE char *req_path = NULL;
 PRIVATE char *req_path_self = SELF_REQ_PATH;
 PRIVATE char *req_args = "";
 PRIVATE int req_major = 0;
+PRIVATE int devman_id = 0;
 PRIVATE int req_dev_style = STYLE_NDEV;
 PRIVATE long req_period = 0;
 PRIVATE char *req_script = NULL;
@@ -133,9 +137,9 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "Warning, %s\n", problem);
   fprintf(stderr, "Usage:\n");
   fprintf(stderr,
-  "    %s [%s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <style>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
+  "    %s [%s %s %s %s] (up|run|edit|update) <binary|%s> [%s <args>] [%s <special>] [%s <style>] [%s <major_nr>] [%s <dev_id>] [%s <ticks>] [%s <path>] [%s <name>] [%s <path>] [%s <state>] [%s <time>]\n", 
 	app_name, OPT_COPY, OPT_REUSE, OPT_NOBLOCK, OPT_REPLICA, SELF_BINARY,
-	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_PERIOD, ARG_SCRIPT,
+	ARG_ARGS, ARG_DEV, ARG_DEVSTYLE, ARG_MAJOR, ARG_DEVMANID, ARG_PERIOD, ARG_SCRIPT,
 	ARG_LABELNAME, ARG_CONFIG, ARG_LU_STATE, ARG_LU_MAXTIME);
   fprintf(stderr, "    %s down <label>\n", app_name);
   fprintf(stderr, "    %s refresh <label>\n", app_name);
@@ -305,11 +309,29 @@ PRIVATE int parse_arguments(int argc, char **argv)
                   print_usage(argv[ARG_NAME], "special file is not a device");
                   exit(EINVAL);
        	      } 
+              if (req_major != 0) {
+				  print_usage(argv[ARG_NAME], "major already set");
+				  exit(EINVAL);
+			  }
               req_major = (stat_buf.st_rdev >> MAJOR) & BYTE;
               if(req_dev_style == STYLE_NDEV) {
                   req_dev_style = STYLE_DEV;
               }
           }
+		  else if (strcmp(argv[i], ARG_MAJOR)==0) {
+			  if (req_major != 0) {
+				  print_usage(argv[ARG_NAME], "major already set");
+				  exit(EINVAL);
+			  }
+			 if (i+1 < argc) { 
+				 req_major = atoi(argv[i+1]);
+			 } else {
+				 exit(EINVAL);
+			 }
+			 if(req_dev_style == STYLE_NDEV) {
+                  req_dev_style = STYLE_DEV;
+              }
+		  }
           else if (strcmp(argv[i], ARG_DEVSTYLE)==0) {
               char* dev_style_keys[] = { "STYLE_DEV", "STYLE_DEVA", "STYLE_TTY",
                   "STYLE_CTTY", "STYLE_CLONE", NULL };
@@ -358,8 +380,13 @@ PRIVATE int parse_arguments(int argc, char **argv)
                   exit(EINVAL);
               }
               if (strcmp(hz,"HZ")==0) req_lu_maxtime *= system_hz;
-          }
-          else {
+          } else if (strcmp(argv[i], ARG_DEVMANID) == 0) {
+			 if (i+1 < argc) { 
+				 devman_id = atoi(argv[i+1]);
+			 } else {
+				 exit(EINVAL);
+			 }
+		  } else {
               print_usage(argv[ARG_NAME], "unknown optional argument given");
               exit(EINVAL);
           }
@@ -1438,6 +1465,7 @@ PUBLIC int main(int argc, char **argv)
       rs_start.rss_dev_style= req_dev_style;
       rs_start.rss_period= req_period;
       rs_start.rss_script= req_script;
+      rs_start.devman_id= devman_id;
       if(req_label) {
         rs_start.rss_label.l_addr = req_label;
         rs_start.rss_label.l_len = strlen(req_label);
