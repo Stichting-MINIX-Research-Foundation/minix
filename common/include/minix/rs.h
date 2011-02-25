@@ -75,7 +75,7 @@ struct rs_start
 	bitchunk_t rss_vm[VM_CALL_MASK_SIZE];
 	int rss_nr_control;
 	struct rss_label rss_control[RS_NR_CONTROL];
-
+	int devman_id;
 	/*
 	 * SMP specific data
 	 *
@@ -113,6 +113,7 @@ struct rprocpub {
   bitchunk_t vm_call_mask[VM_CALL_MASK_SIZE]; /* vm call mask */
 
   struct rs_pci pci_acl;	  /* pci acl */
+  int devman_id;
 };
 
 _PROTOTYPE( int minix_rs_lookup, (const char *name, endpoint_t *value));
