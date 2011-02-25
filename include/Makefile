@@ -32,6 +32,14 @@ INCS+=	minix/a.out.h minix/cdrom.h minix/cpufeature.h \
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
 INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
 
+INCS+=	ddekit/assert.h ddekit/initcall.h ddekit/memory.h  ddekit/pgtab.h \
+        ddekit/thread.h ddekit/attribs.h ddekit/inline.h  ddekit/printf.h \
+        ddekit/timer.h ddekit/condvar.h ddekit/interrupt.h ddekit/panic.h \
+        ddekit/resources.h  ddekit/types.h  ddekit/debug.h  ddekit/lock.h \
+        ddekit/pci.h ddekit/semaphore.h  ddekit/usb.h  ddekit/minix/pci.h \
+        ddekit/minix/msg_queue.h ddekit/ddekit.h
+
+
 .include <bsd.own.mk>
 
 INCSDIR=        /usr/include
