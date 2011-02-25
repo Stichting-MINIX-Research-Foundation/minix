@@ -59,7 +59,7 @@ MKDEP_SUFFIXES?=	.o .ln
 # 	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
 .for _lib in \
 	c curses driver netdriver edit end m sys timers util bz2 l hgfs \
-	audiodriver exec usb 
+	audiodriver exec devman usb  
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .if ${COMPILER_TYPE} == "ack"
