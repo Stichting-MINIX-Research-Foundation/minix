@@ -1537,7 +1537,7 @@ PRIVATE struct proc * pick_proc(void)
  * When a billable process is selected, record it in 'bill_ptr', so that the 
  * clock task can tell who to bill for system time.
  *
- * This functions always uses the run queues of the local cpu!
+ * This function always uses the run queues of the local cpu!
  */
   register struct proc *rp;			/* process to run */
   struct proc **rdy_head;
@@ -1545,7 +1545,7 @@ PRIVATE struct proc * pick_proc(void)
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
-   * The lowest queue contains IDLE, which is always ready.
+   * If there are no processes ready to run, return NULL.
    */
   rdy_head = get_cpulocal_var(run_q_head);
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
