@@ -49,12 +49,7 @@
 
 #undef printf		/* defined as printk in <minix/const.h> */
 
-#if (CHIP == M68000)
-#define __mc68000__	/* controls processor-dependent stuff */
-#error "only the MINIX_ST 1.5.x implementation works on 68K's"
-#endif
-
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 #if (MACHINE == IBM_PC)
 #define MINIX_PC
 #else
@@ -87,7 +82,7 @@
 #define CSEG		0x2E	/* 8088 through 80386 */
 #define DSEG		0x3E
 
-#if (CHIP == INTEL )
+#if (_MINIX_CHIP == _CHIP_INTEL )
 #ifdef __i86
 #define N_REG16	2
 #endif
@@ -99,7 +94,7 @@
 #endif
 #endif
 
-#if (CHIP == INTEL )
+#if (_MINIX_CHIP == _CHIP_INTEL )
 #define ADDA(l) ((u16_t) (l) == 0xC481)
 
 #ifdef __i386

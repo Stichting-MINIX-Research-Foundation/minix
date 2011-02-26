@@ -92,20 +92,9 @@
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *
  *===========================================================================*/
-/* Set the CHIP type based on the machine selected. The symbol CHIP is actually
- * indicative of more than just the CPU.  For example, machines for which
- * CHIP == INTEL are expected to have 8259A interrrupt controllers and the
- * other properties of IBM PC/XT/AT/386 types machines in general. */
-#define INTEL             _CHIP_INTEL	/* CHIP type for PC, XT, AT, 386 and clones */
-#define M68000            _CHIP_M68000	/* CHIP type for Atari, Amiga, Macintosh    */
-#define SPARC             _CHIP_SPARC	/* CHIP type for SUN-4 (e.g. SPARCstation)  */
-
 /* Set the FP_FORMAT type based on the machine selected, either hw or sw    */
 #define FP_NONE	 _FP_NONE	/* no floating point support                */
 #define FP_IEEE	 _FP_IEEE	/* conform IEEE floating point standard     */
-
-/* _MINIX_CHIP is defined in sys_config.h. */
-#define CHIP	_MINIX_CHIP
 
 /* _MINIX_FP_FORMAT is defined in sys_config.h. */
 #define FP_FORMAT	_MINIX_FP_FORMAT

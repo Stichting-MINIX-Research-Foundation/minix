@@ -80,19 +80,11 @@
 
 /*  a.out header constants  (see a.out.h, if you have it)  */
 
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 #define   A_OUT    0x0301
 #define   SPLIT    0x0420
-#endif
-
-#if (CHIP == M68000)
-#define   A_OUT    0x0301
-#define   SPLIT	   0x0B20
-#endif
-
-#if (CHIP == SPARC)
-#define   A_OUT    0x0301
-#define   SPLIT    0x0B20
+#else
+#error only chip == intel is reasonable.
 #endif
 
 /*  Each buffer is 1k.  In WORD mode 16 words (32 bytes) can be	*/
@@ -143,22 +135,6 @@
 #define   BOX_ALL	'\333'		/*  Filled box		*/
 #define   BOX_TOP	'\337'		/*  Filled upper half	*/
 #define   BOX_BOT	'\334'		/*  Filled lower half   */
-#endif
-
-#if (CHIP == M68000)
-/*  Please change these.  */
-#define   BOX_CLR	' '		/*  Empty box		*/
-#define   BOX_ALL	'='		/*  Filled box		*/
-#define   BOX_TOP	'-'		/*  Filled upper half	*/
-#define   BOX_BOT	'_'		/*  Filled lower half   */
-#endif
-
-#if (CHIP == SPARC)
-/*  Please change these.  */
-#define   BOX_CLR	' '		/*  Empty box		*/
-#define   BOX_ALL	'='		/*  Filled box		*/
-#define   BOX_TOP	'-'		/*  Filled upper half	*/
-#define   BOX_BOT	'_'		/*  Filled lower half   */
 #endif
 
 /*  Move positions for the output display.  */

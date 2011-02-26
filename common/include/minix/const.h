@@ -1,8 +1,8 @@
 #ifndef _MINIX_CONST_H
 #define _MINIX_CONST_H
 
-#ifndef CHIP
-#error CHIP is not defined
+#ifndef _MINIX_CHIP
+#error _MINIX_CHIP is not defined
 #endif
 
 /* The UNUSED annotation tells the compiler or lint not to complain
@@ -92,14 +92,11 @@
 #define HAVE_SCATTERED_IO  1	/* scattered I/O is now standard */
 
 /* Memory is allocated in clicks. */
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 #define CLICK_SIZE      4096	/* unit in which memory is allocated */
 #define CLICK_SHIFT       12	/* log2 of CLICK_SIZE */
-#endif
-
-#if (CHIP == SPARC) || (CHIP == M68000)
-#define CLICK_SIZE	4096	/* unit in which memory is allocated */
-#define CLICK_SHIFT	  12	/* log2 of CLICK_SIZE */
+#else
+#error No reasonable CHIP setting.
 #endif
 
 /* Click alignment macros. */

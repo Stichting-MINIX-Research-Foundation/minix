@@ -41,8 +41,8 @@
 #include "minix/config.h"
 
 /*#define BLOCK_SIZE	1024*/
-#define LITTLE_ENDIAN	(CHIP == INTEL)
-#define USE_SHADOWING	(CHIP == M68000)
+#define LITTLE_ENDIAN	(_MINIX_CHIP == _CHIP_INTEL)
+#define USE_SHADOWING	(_MINIX_CHIP == _CHIP_M68000)
 #else
 #define LITTLE_ENDIAN	0
 #define USE_SHADOWING	0
