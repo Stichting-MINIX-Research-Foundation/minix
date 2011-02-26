@@ -178,6 +178,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	struct boot_image *ip;
 	struct rprocpub rprocpub[NR_BOOT_PROCS];
 	phys_bytes limit = 0;
+	int is_elf = 0;
 
 #if SANITYCHECKS
 	incheck = nocheck = 0;
@@ -272,7 +273,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
 		int s;
 		struct vmproc *vmp;
-		vir_bytes old_stacktop, old_stack;
+		vir_bytes old_stacktop, old_stacklen;
 
 		if(ip->proc_nr < 0) continue;
 
@@ -280,11 +281,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
                if(!(ip->flags & PROC_FULLVM))
                        continue;
-
-		old_stack = 
-			vmp->vm_arch.vm_seg[S].mem_vir +
-			vmp->vm_arch.vm_seg[S].mem_len - 
-			vmp->vm_arch.vm_seg[D].mem_len;
 
         	if(pt_new(&vmp->vm_pt) != OK)
 			panic("VM: no new pagetable");
@@ -296,21 +292,34 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			panic("VM: vmctl for new stack failed");
 		}
 
+		old_stacklen =
+			vmp->vm_arch.vm_seg[S].mem_vir +
+			vmp->vm_arch.vm_seg[S].mem_len -
+			vmp->vm_arch.vm_seg[D].mem_len -
+			vmp->vm_arch.vm_seg[D].mem_vir;
+
 		free_mem(vmp->vm_arch.vm_seg[D].mem_phys +
 			vmp->vm_arch.vm_seg[D].mem_len,
-			old_stack);
+			old_stacklen);
+
+#if defined(__ELF__)
+		is_elf = 1;
+#endif
 
 		if(proc_new(vmp,
 			VM_PROCSTART,
+			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_vir),
 			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len),
+			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_vir),
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_len),
 			BASICSTACK,
 			CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
 				vmp->vm_arch.vm_seg[S].mem_len -
-				vmp->vm_arch.vm_seg[D].mem_len) - BASICSTACK,
+				vmp->vm_arch.vm_seg[D].mem_len -
+				vmp->vm_arch.vm_seg[D].mem_vir) - BASICSTACK,
 			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
-				VM_STACKTOP, 0) != OK) {
+			    VM_STACKTOP, 0, is_elf) != OK) {
 			panic("failed proc_new for boot process");
 		}
 	}
@@ -372,7 +381,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Unmap our own low pages. */
 	unmap_ok = 1;
+#if !defined(__ELF__)
 	_minix_unmapzero();
+#endif
 
 	/* Map all the services in the boot image. */
 	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,

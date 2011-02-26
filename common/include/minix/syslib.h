@@ -196,7 +196,9 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getpriv(dst, nr)	sys_getinfo(GET_PRIV, dst, 0,0, nr)
 #define sys_getidletsc(dst)	sys_getinfo(GET_IDLETSC, dst, 0,0,0)
+#if !defined(__ELF__)
 #define sys_getaoutheader(dst,nr) sys_getinfo(GET_AOUTHEADER, dst, 0,0,nr)
+#endif
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *val_ptr2, int val_len2)		);
 _PROTOTYPE(int sys_whoami, (endpoint_t *ep, char *name, int namelen,

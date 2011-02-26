@@ -105,6 +105,8 @@ PUBLIC int do_fork(message *msg)
 	struct vir_region *heap, *stack;
 	vir_bytes text_bytes, data_bytes, stack_bytes, parent_gap_bytes,
 		child_gap_bytes;
+	vir_bytes text_addr, data_addr;
+	int is_elf = 0;
 
 	/* Get SP of new process (using parent). */
 	if(get_stack_ptr(vmp->vm_endpoint, &sp) != OK) {
@@ -123,7 +125,9 @@ PUBLIC int do_fork(message *msg)
 	/* Copy newly adjust()ed stack segment size to child. */
 	vmc->vm_arch.vm_seg[S] = vmp->vm_arch.vm_seg[S];
 
+	text_addr = CLICK2ABS(vmc->vm_arch.vm_seg[T].mem_vir);
         text_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[T].mem_len);
+	data_addr = CLICK2ABS(vmc->vm_arch.vm_seg[D].mem_vir);
         data_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[D].mem_len);
 	stack_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_len);
 
@@ -131,7 +135,8 @@ PUBLIC int do_fork(message *msg)
 	 * logical top) of stack for the parent
 	 */
 	parent_gap_bytes = CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_vir -
-		vmc->vm_arch.vm_seg[D].mem_len);
+		vmc->vm_arch.vm_seg[D].mem_len -
+		vmc->vm_arch.vm_seg[D].mem_vir);
 
 	/* how much space can the child stack grow downwards, below
 	 * the current SP? The rest of the gap is available for the
@@ -139,10 +144,17 @@ PUBLIC int do_fork(message *msg)
 	 */
 	child_gap_bytes = VM_PAGE_SIZE;
 
+#if defined(__ELF__)
+	is_elf = 1;
+#endif
+
         if((r=proc_new(vmc, VM_PROCSTART,
-		text_bytes, data_bytes, stack_bytes, child_gap_bytes, 0, 0,
+		text_addr, text_bytes,
+		data_addr, data_bytes,
+		stack_bytes, child_gap_bytes, 0, 0,
 		CLICK2ABS(vmc->vm_arch.vm_seg[S].mem_vir +
-                        vmc->vm_arch.vm_seg[S].mem_len), 1)) != OK) {
+			  vmc->vm_arch.vm_seg[S].mem_len),
+		1, is_elf)) != OK) {
 			printf("VM: fork: proc_new failed\n");
 			return r;
 	}
@@ -198,9 +210,11 @@ PUBLIC int do_fork(message *msg)
 	 * and its return value needn't be checked.
 	 */
 	vir = arch_vir2map(vmc, msgaddr);
-	handle_memory(vmc, vir, sizeof(message), 1);
+	if (handle_memory(vmc, vir, sizeof(message), 1) != OK)
+	    panic("do_fork: handle_memory for child failed\n");
 	vir = arch_vir2map(vmp, msgaddr);
-	handle_memory(vmp, vir, sizeof(message), 1);
+	if (handle_memory(vmp, vir, sizeof(message), 1) != OK)
+	    panic("do_fork: handle_memory for parent failed\n");
   }
 
   /* Inform caller of new child endpoint. */

@@ -493,7 +493,9 @@
 #   define GET_WHOAMI	  19	/* get own name, endpoint, and privileges */
 #   define GET_RANDOMNESS_BIN 20 /* get one randomness bin */
 #   define GET_IDLETSC	  21	/* get cumulative idle time stamp counter */
+#if !defined(__ELF__)
 #   define GET_AOUTHEADER 22    /* get a.out headers from the boot image */
+#endif
 #   define GET_CPUINFO    23    /* get information about cpus */
 #define I_ENDPT        m7_i4	/* calling process (may only be SELF) */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 

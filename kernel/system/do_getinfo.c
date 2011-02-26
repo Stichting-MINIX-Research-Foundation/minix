@@ -174,6 +174,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &idl->p_cycles;
         break;
     }
+#if !defined(__ELF__)
     case GET_AOUTHEADER: {
         int hdrindex, index = m_ptr->I_VAL_LEN2_E;
         if(index < 0 || index >= NR_BOOT_PROCS) {
@@ -189,7 +190,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &e_hdr;
         break;
     }
-
+#endif
     default:
 	printf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
         return(EINVAL);

@@ -29,11 +29,11 @@ PUBLIC struct segdesc_s gdt[GDT_SIZE]=		/* used in klib.s and mpx.s */
 {	{0},
 	{0,0,0,0}, 				/* GDT descriptor */
 	{0,0,0,0}, 				/* IDT descriptor */
-	{0xffff,0,0,0x92,0x4f,0}, 	/* kernel DS */
-	{0xffff,0,0,0x92,0xcf,0},	/* kernel ES (386: flag 4 Gb at startup) */
-	{0xffff,0,0,0x92,0x4f,0},	/* kernel SS (386: monitor SS at startup) */
-	{0xffff,0,0,0x9a,0x4f,0},	/* kernel CS */
-	{0xffff,0,0,0x9a,0x0f,0},	/* temp for BIOS (386: monitor CS at startup) */
+	{0xffff,0,0,0x93,0xcf,0}, 	/* kernel DS */
+	{0xffff,0,0,0x93,0xcf,0},	/* kernel ES (386: flag 4 Gb at startup) */
+	{0xffff,0,0,0x93,0xcf,0},	/* kernel SS (386: monitor SS at startup) */
+	{0xffff,0,0,0x9b,0xcf,0},	/* kernel CS */
+	{0xffff,0,0,0x9b,0xcf,0},	/* temp for BIOS (386: monitor CS at startup) */
 };
 PRIVATE struct gatedesc_s idt[IDT_SIZE];	/* zero-init so none present */
 PUBLIC struct tss_s tss[CONFIG_MAX_CPUS];			/* zero init */
@@ -297,6 +297,8 @@ PUBLIC void alloc_segments(register struct proc *rp)
  */
   phys_bytes code_bytes;
   phys_bytes data_bytes;
+  phys_bytes text_vaddr, data_vaddr;
+  phys_bytes text_segbase, data_segbase;
   int privilege;
 
       data_bytes = (phys_bytes) (rp->p_memmap[S].mem_vir + 
@@ -306,12 +308,20 @@ PUBLIC void alloc_segments(register struct proc *rp)
       else
           code_bytes = (phys_bytes) rp->p_memmap[T].mem_len << CLICK_SHIFT;
       privilege = USER_PRIVILEGE;
+
+      text_vaddr = rp->p_memmap[T].mem_vir << CLICK_SHIFT;
+      data_vaddr = rp->p_memmap[D].mem_vir << CLICK_SHIFT;
+      text_segbase = (rp->p_memmap[T].mem_phys -
+		      rp->p_memmap[T].mem_vir) << CLICK_SHIFT;
+      data_segbase = (rp->p_memmap[D].mem_phys -
+		      rp->p_memmap[D].mem_vir) << CLICK_SHIFT;
+
       init_codeseg(&rp->p_seg.p_ldt[CS_LDT_INDEX],
-          (phys_bytes) rp->p_memmap[T].mem_phys << CLICK_SHIFT,
-          code_bytes, privilege);
+		   text_segbase,
+		   text_vaddr + code_bytes, privilege);
       init_dataseg(&rp->p_seg.p_ldt[DS_LDT_INDEX],
-          (phys_bytes) rp->p_memmap[D].mem_phys << CLICK_SHIFT,
-          data_bytes, privilege);
+		   data_segbase,
+		   data_vaddr + data_bytes, privilege);
       rp->p_reg.cs = (CS_LDT_INDEX * DESC_SIZE) | TI | privilege;
       rp->p_reg.gs =
       rp->p_reg.fs =

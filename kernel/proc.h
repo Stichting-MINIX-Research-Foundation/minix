@@ -2,6 +2,7 @@
 #define PROC_H
 
 #include <minix/const.h>
+#include <sys/cdefs.h>
 
 #ifndef __ASSEMBLY__
 

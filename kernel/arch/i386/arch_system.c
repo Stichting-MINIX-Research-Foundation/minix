@@ -9,7 +9,9 @@
 #include <machine/bios.h>
 #include <minix/portio.h>
 #include <minix/cpufeature.h>
+#if !defined(__ELF__)
 #include <a.out.h>
+#endif
 #include <assert.h>
 #include <signal.h>
 #include <machine/vm.h>
@@ -194,6 +196,7 @@ PUBLIC __dead void arch_shutdown(int how)
 	NOT_REACHABLE;
 }
 
+#if !defined(__ELF__)
 /* address of a.out headers, set in mpx386.s */
 phys_bytes aout;
 
@@ -204,6 +207,7 @@ PUBLIC void arch_get_aout_headers(const int i, struct exec *h)
 	 */
 	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
+#endif
 
 PUBLIC void fpu_init(void)
 {

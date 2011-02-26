@@ -5,6 +5,7 @@
 #include <minix/sys_config.h>
 #include <machine/stackframe.h>
 #include <machine/fpu.h>
+#include <sys/cdefs.h>
 
 struct segdesc_s {		/* segment descriptor for protected mode */
   u16_t limit_low;

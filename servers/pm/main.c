@@ -308,7 +308,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   * what the ranges are of the filler data.
   */
   unmap_ok = 1;
+#if !defined(__ELF__)
   _minix_unmapzero();
+#endif
 
   /* Initialize user-space scheduling. */
   sched_init();

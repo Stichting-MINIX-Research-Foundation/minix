@@ -463,7 +463,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
       /* Map out our own text and data. */
       unmap_ok = 1;
+#if !defined(__ELF__)
       _minix_unmapzero();
+#endif
 
       /* Ask VM to pin memory for the new RS instance. */
       if((s = vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN)) != OK) {

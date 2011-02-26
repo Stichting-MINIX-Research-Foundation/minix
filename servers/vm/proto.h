@@ -60,9 +60,11 @@ _PROTOTYPE( int do_fork, (message *msg)					);
 /* exec.c */
 _PROTOTYPE( int do_exec_newmem, (message *msg)				);
 _PROTOTYPE( int proc_new, (struct vmproc *vmp, phys_bytes start,
-	phys_bytes text, phys_bytes data, phys_bytes stack, phys_bytes gap,
+	phys_bytes text_addr, phys_bytes text_bytes,
+	phys_bytes data_addr, phys_bytes data_bytes,
+	phys_bytes stack, phys_bytes gap,
 	phys_bytes text_here, phys_bytes data_here, vir_bytes stacktop,
-	int prealloc_stack));
+	int prealloc_stack, int is_elf));
 _PROTOTYPE( phys_bytes find_kernel_top, (void)				);
 
 /* break.c */

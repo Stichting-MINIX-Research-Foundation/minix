@@ -34,11 +34,13 @@ PUBLIC vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr)
 {
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
 	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
+	vir_bytes datasegbase = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys -
+					  vmp->vm_arch.vm_seg[D].mem_vir);
 
 	/* Could be a text address. */
 	assert(datastart <= addr || textstart <= addr);
 
-	return addr - datastart;
+	return addr - datasegbase;
 }
 
 /*===========================================================================*
@@ -50,13 +52,17 @@ PUBLIC char *arch_map2str(struct vmproc *vmp, vir_bytes addr)
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
 	vir_bytes textend = textstart + CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len);
 	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
+	vir_bytes textsegbase = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys -
+					  vmp->vm_arch.vm_seg[T].mem_vir);
+	vir_bytes datasegbase = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys -
+					  vmp->vm_arch.vm_seg[D].mem_vir);
 
 	if(addr < textstart) {
 		sprintf(bufstr, "<lin:0x%lx>", addr);
 	} else if(addr < datastart) {
-		sprintf(bufstr, "0x%lx (codeseg)", addr - textstart);
+		sprintf(bufstr, "0x%lx (codeseg)", addr - textsegbase);
 	} else {
-		sprintf(bufstr, "0x%lx (dataseg)", addr - datastart);
+		sprintf(bufstr, "0x%lx (dataseg)", addr - datasegbase);
 	}
 
 	return bufstr;
@@ -72,6 +78,10 @@ PUBLIC vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *seg,
 	vir_bytes textend = textstart +
 		CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len);
 	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
+	vir_bytes textsegbase = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys -
+					  vmp->vm_arch.vm_seg[T].mem_vir);
+	vir_bytes datasegbase = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys -
+					  vmp->vm_arch.vm_seg[D].mem_vir);
 
 	/* The protection to be returned here is that of the segment. */
 	if(addr < textstart) {
@@ -81,14 +91,14 @@ PUBLIC vir_bytes arch_map2info(struct vmproc *vmp, vir_bytes addr, int *seg,
 	} else if(addr < datastart) {
 		*seg = T;
 		*prot = PROT_READ | PROT_EXEC;
-		return addr - textstart;
+		return addr - textsegbase;
 	} else {
 		*seg = D;
 		if (textstart == textend)	/* common I&D? */
 			*prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 		else
 			*prot = PROT_READ | PROT_WRITE;
-		return addr - datastart;
+		return addr - datasegbase;
 	}
 }
 
@@ -116,9 +126,10 @@ PUBLIC vir_bytes arch_addrok(struct vmproc *vmp, vir_bytes addr)
  *===========================================================================*/
 PUBLIC vir_bytes arch_vir2map(struct vmproc *vmp, vir_bytes addr)
 {
-	vir_bytes bottom = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
+	vir_bytes datasegbase = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys -
+					  vmp->vm_arch.vm_seg[D].mem_vir);
 
-	return addr + bottom;
+	return addr + datasegbase;
 }
 
 /*===========================================================================*
@@ -126,7 +137,8 @@ PUBLIC vir_bytes arch_vir2map(struct vmproc *vmp, vir_bytes addr)
  *===========================================================================*/
 PUBLIC vir_bytes arch_vir2map_text(struct vmproc *vmp, vir_bytes addr)
 {
-	vir_bytes bottom = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
+	vir_bytes textsegbase = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys -
+					  vmp->vm_arch.vm_seg[T].mem_vir);
 
-	return addr + bottom;
+	return addr + textsegbase;
 }

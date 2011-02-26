@@ -32,8 +32,10 @@
 #include "memory.h"
 
 FORWARD _PROTOTYPE( int new_mem, (struct vmproc *vmp,
-	vir_bytes text_bytes, vir_bytes data_bytes,
-	vir_bytes stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top));
+	vir_bytes text_addr, vir_bytes text_bytes,
+	vir_bytes data_addr, vir_bytes data_bytes,
+	vir_bytes stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top,
+	int is_elf));
 
 static int failcount;
 
@@ -101,8 +103,10 @@ SANITYCHECK(SCL_DETAIL);
 	/* Allocate new memory and release old memory.  Fix map and tell
 	 * kernel.
 	 */
-	r = new_mem(vmp, args.text_bytes, args.data_bytes,
-		args.args_bytes, args.tot_bytes, &stack_top);
+	r = new_mem(vmp, args.text_addr, args.text_bytes,
+		args.data_addr, args.data_bytes,
+		args.args_bytes, args.tot_bytes, &stack_top,
+	        args.is_elf);
 	if (r != OK) {
 		printf("VM: newmem: new_mem failed\n");
 		return(r);
@@ -129,14 +133,17 @@ SANITYCHECK(SCL_DETAIL);
 /*===========================================================================*
  *				new_mem					     *
  *===========================================================================*/
-PRIVATE int new_mem(rmp, text_bytes, data_bytes,
-	stk_bytes,tot_bytes,stack_top)
-struct vmproc *rmp;		/* process to get a new memory map */
-vir_bytes text_bytes;		/* text segment size in bytes */
-vir_bytes data_bytes;		/* size of data (incl bss) in bytes */
-vir_bytes stk_bytes;		/* size of initial stack segment in bytes */
-phys_bytes tot_bytes;		/* total memory to allocate, including gap */
-vir_bytes *stack_top;		/* top of process stack */
+PRIVATE int new_mem(
+  struct vmproc *rmp,           /* process to get a new memory map */
+  vir_bytes text_addr,          /* text segement load address */
+  vir_bytes text_bytes,         /* text segment size in bytes */
+  vir_bytes data_addr,          /* data segment load address */
+  vir_bytes data_bytes,         /* size of data (incl bss) in bytes */
+  vir_bytes stk_bytes,          /* size of initial stack segment in bytes */
+  phys_bytes tot_bytes,         /* total memory to allocate, including gap */
+  vir_bytes *stack_top,         /* top of process stack */
+  int is_elf
+)
 {
 /* Allocate new memory and release the old memory.  Change the map and report
  * the new map to the kernel.  Zero the new core image's bss, gap and stack.
@@ -201,13 +208,15 @@ SANITYCHECK(SCL_DETAIL);
   SANITYCHECK(SCL_DETAIL);
   if(r != OK || (r=proc_new(rmp,
 	 VM_PROCSTART,	/* where to start the process in the page table */
+	 text_addr, /* text load address */
 	 CLICK2ABS(text_clicks),/* how big is the text in bytes, page-aligned */
+	 data_addr, /* data load address */
 	 CLICK2ABS(data_clicks),/* how big is data+bss, page-aligned */
 	 CLICK2ABS(stack_clicks),/* how big is stack, page-aligned */
 	 CLICK2ABS(gap_clicks),	/* how big is gap, page-aligned */
 	 0,0,			/* not preallocated */
 	 VM_STACKTOP,		/* regular stack top */
-	 0)) != OK) {
+	 0, is_elf)) != OK) {
     SANITYCHECK(SCL_DETAIL);
     printf("VM: new_mem: failed\n");
     if(ptok) {
@@ -274,23 +283,29 @@ PUBLIC phys_bytes find_kernel_top(void)
  *===========================================================================*/
 PUBLIC int proc_new(struct vmproc *vmp,
   phys_bytes vstart,	  /* where to start the process in page table */
+  phys_bytes text_addr,   /* address at which to load code */
   phys_bytes text_bytes,  /* how much code, in bytes but page aligned */
+  phys_bytes data_addr,   /* address at which to load data */
   phys_bytes data_bytes,  /* how much data + bss, in bytes but page aligned */
   phys_bytes stack_bytes, /* stack space to reserve, in bytes, page aligned */
   phys_bytes gap_bytes,   /* gap bytes, page aligned */
   phys_bytes text_start,  /* text starts here, if preallocated, otherwise 0 */
   phys_bytes data_start,  /* data starts here, if preallocated, otherwise 0 */
   phys_bytes stacktop,
-  int prealloc_stack
+  int prealloc_stack,
+  int is_elf
 )
 {
 	int s;
 	vir_bytes hole_bytes;
 	int prealloc;
 	struct vir_region *reg;
+	phys_bytes map_text_addr, map_data_addr, map_stack_addr;
 
 	assert(!(vstart % VM_PAGE_SIZE));
+	assert(!(text_addr % VM_PAGE_SIZE));
 	assert(!(text_bytes % VM_PAGE_SIZE));
+	assert(!(data_addr % VM_PAGE_SIZE));
 	assert(!(data_bytes % VM_PAGE_SIZE));
 	assert(!(stack_bytes % VM_PAGE_SIZE));
 	assert(!(gap_bytes % VM_PAGE_SIZE));
@@ -299,8 +314,9 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	assert((!text_start && !data_start) || (text_start && data_start));
 
 	/* Place text at start of process. */
-	vmp->vm_arch.vm_seg[T].mem_phys = ABS2CLICK(vstart);
-	vmp->vm_arch.vm_seg[T].mem_vir = 0;
+	map_text_addr = vstart + text_addr;
+	vmp->vm_arch.vm_seg[T].mem_phys = ABS2CLICK(map_text_addr);
+	vmp->vm_arch.vm_seg[T].mem_vir = ABS2CLICK(text_addr);
 	vmp->vm_arch.vm_seg[T].mem_len = ABS2CLICK(text_bytes);
 
 	vmp->vm_offset = vstart;
@@ -309,7 +325,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 #define TEXTFLAGS (PTF_PRESENT | PTF_USER)
 	SANITYCHECK(SCL_DETAIL);
 	if(text_bytes > 0) {
-		if(!(reg=map_page_region(vmp, vstart, 0, text_bytes,
+		if(!(reg=map_page_region(vmp, map_text_addr, 0, text_bytes,
 		  text_start ? text_start : MAP_NONE,
 		  VR_ANON | VR_WRITABLE, text_start ? 0 : MF_PREALLOC))) {
 			SANITYCHECK(SCL_DETAIL);
@@ -318,6 +334,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 			SANITYCHECK(SCL_DETAIL);
 			return(ENOMEM);
 		}
+
 		map_region_set_tag(reg, VRT_TEXT);
 		SANITYCHECK(SCL_DETAIL);
 	}
@@ -327,7 +344,13 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	 * or stack), make sure it's cleared, and map it in after text
 	 * (if any).
 	 */
-	if(!(vmp->vm_heap = map_page_region(vmp, vstart + text_bytes, 0,
+	if (is_elf) {
+	    map_data_addr = vstart + data_addr;
+	} else {
+	    map_data_addr = vstart + text_bytes;
+	}
+
+	if(!(vmp->vm_heap = map_page_region(vmp, map_data_addr, 0,
 	  data_bytes, data_start ? data_start : MAP_NONE, VR_ANON | VR_WRITABLE,
 		data_start ? 0 : MF_PREALLOC))) {
 		printf("VM: exec: map_page_region for data failed\n");
@@ -344,10 +367,13 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	 * stacktop is the first address after the stack, as addressed
 	 * from within the user process.
 	 */
-	hole_bytes = stacktop - data_bytes - stack_bytes - gap_bytes;
+	hole_bytes = stacktop - data_bytes - stack_bytes
+	    - gap_bytes - data_addr;
+
+	map_stack_addr = map_data_addr + data_bytes + hole_bytes;
 
 	if(!(reg=map_page_region(vmp,
-		vstart + text_bytes + data_bytes + hole_bytes,
+		map_stack_addr,
 	  0, stack_bytes + gap_bytes, MAP_NONE,
 	  VR_ANON | VR_WRITABLE, prealloc_stack ? MF_PREALLOC : 0)) != OK) {
 	  	panic("map_page_region failed for stack");
@@ -355,13 +381,14 @@ PUBLIC int proc_new(struct vmproc *vmp,
 
 	map_region_set_tag(reg, VRT_STACK);
 
-	vmp->vm_arch.vm_seg[D].mem_phys = ABS2CLICK(vstart + text_bytes);
-	vmp->vm_arch.vm_seg[D].mem_vir = 0;
+	vmp->vm_arch.vm_seg[D].mem_phys = ABS2CLICK(map_data_addr);
+	vmp->vm_arch.vm_seg[D].mem_vir = ABS2CLICK(data_addr);
 	vmp->vm_arch.vm_seg[D].mem_len = ABS2CLICK(data_bytes);
 
-	vmp->vm_arch.vm_seg[S].mem_phys = ABS2CLICK(vstart +
-		text_bytes + data_bytes + gap_bytes + hole_bytes);
-	vmp->vm_arch.vm_seg[S].mem_vir = ABS2CLICK(data_bytes + gap_bytes + hole_bytes);
+	vmp->vm_arch.vm_seg[S].mem_phys = ABS2CLICK(map_data_addr +
+		data_bytes + gap_bytes + hole_bytes);
+	vmp->vm_arch.vm_seg[S].mem_vir = ABS2CLICK(data_addr +
+		data_bytes + gap_bytes + hole_bytes);
 
 	/* Where are we allowed to start using the rest of the virtual
 	 * address space?
@@ -372,18 +399,18 @@ PUBLIC int proc_new(struct vmproc *vmp,
 
 	if(vmp->vm_endpoint != NONE) {
 
-	/* Pretend the stack is the full size of the data segment, so 
-	 * we get a full-sized data segment, up to VM_DATATOP.
-	 * After sys_newmap(), change the stack to what we know the
-	 * stack to be (up to stacktop).
-	 */
-	vmp->vm_arch.vm_seg[S].mem_len = (VM_DATATOP >> CLICK_SHIFT) -
-		vmp->vm_arch.vm_seg[S].mem_vir - ABS2CLICK(vstart) - ABS2CLICK(text_bytes);
+		/* Pretend the stack is the full size of the data segment, so
+		 * we get a full-sized data segment, up to VM_DATATOP.
+		 * After sys_newmap(), change the stack to what we know the
+		 * stack to be (up to stacktop).
+		 */
+		vmp->vm_arch.vm_seg[S].mem_len = (VM_DATATOP >> CLICK_SHIFT) -
+		    vmp->vm_arch.vm_seg[S].mem_vir - ABS2CLICK(map_data_addr);
 
-	/* What is the final size of the data segment in bytes? */
-	vmp->vm_arch.vm_data_top = 
-		(vmp->vm_arch.vm_seg[S].mem_vir + 
-		vmp->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
+		/* What is the final size of the data segment in bytes? */
+		vmp->vm_arch.vm_data_top =
+		    (vmp->vm_arch.vm_seg[S].mem_vir +
+		     vmp->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
 
 		if((s=sys_newmap(vmp->vm_endpoint, vmp->vm_arch.vm_seg)) != OK)
 			panic("sys_newmap (vm) failed: %d", s);
