@@ -1,3 +1,7 @@
+20110225:
+	Create ddekit include dirs:
+	mkdir -p /usr/include/ddekit/minix
+
 20100921:
 	gcc format libraries are created in /usr/lib now, 
 	so throw out /usr/gnu/lib/ if you want to make sure you
