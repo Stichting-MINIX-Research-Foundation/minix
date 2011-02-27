@@ -235,7 +235,7 @@ PRIVATE void do_bind(message *m)
 /****************************************************************************
  *     do_unbind                                                            *
  ***************************************************************************/
-PRIVATE int do_unbind(message *m)
+PRIVATE void do_unbind(message *m)
 {
 	struct devman_dev *dev;
 	int res;
