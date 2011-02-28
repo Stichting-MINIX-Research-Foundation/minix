@@ -18,7 +18,7 @@ _PROTOTYPE( void free_zone, (dev_t dev, zone_t numb)			);
 _PROTOTYPE( struct buf *get_block, (dev_t dev, block_t block,int only_search));
 _PROTOTYPE( void invalidate, (dev_t device)				);
 _PROTOTYPE( void put_block, (struct buf *bp, int block_type)		);
-_PROTOTYPE( void set_blocksize, (unsigned int blocksize)				);
+_PROTOTYPE( void set_blocksize, (struct super_block *)			);
 _PROTOTYPE( void rw_scattered, (dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
 
@@ -103,6 +103,7 @@ _PROTOTYPE( int read_super, (struct super_block *sp)			);
 
 /* stats.c */
 _PROTOTYPE( bit_t count_free_bits, (struct super_block *sp, int map));
+_PROTOTYPE( void blockstats, (u32_t *total, u32_t *free, u32_t *avail));
 
 /* time.c */
 _PROTOTYPE( int fs_utime, (void)					);

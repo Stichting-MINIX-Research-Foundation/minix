@@ -1100,7 +1100,7 @@
 /* Basic vm calls allowed to every process. */
 #define VM_BASIC_CALLS \
     VM_MMAP, VM_MUNMAP, VM_MUNMAP_TEXT, VM_MAP_PHYS, VM_UNMAP_PHYS, \
-    VM_FORGETBLOCKS, VM_FORGETBLOCK, VM_YIELDBLOCKGETBLOCK
+    VM_FORGETBLOCKS, VM_FORGETBLOCK, VM_YIELDBLOCKGETBLOCK, VM_INFO
 
 /*===========================================================================*
  *                Messages for IPC server				     *

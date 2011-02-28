@@ -85,3 +85,25 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
   } while (--bcount > 0);
   return free_bits;        /* no bit could be allocated */
 }
+
+
+/*===========================================================================*
+ *				blockstats				     *
+ *===========================================================================*/
+PUBLIC void blockstats(u32_t *blocks, u32_t *free, u32_t *used)
+{
+  struct super_block *sp;
+  int scale;
+
+  sp = get_super(fs_dev);
+
+  assert(sp);
+
+  scale = sp->s_log_zone_size;
+
+  *blocks = sp->s_zones << scale;
+  *free = count_free_bits(sp, ZMAP) << scale;
+  *used = *blocks - *free;
+
+  return;
+}

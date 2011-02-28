@@ -68,7 +68,7 @@ PUBLIC int fs_readsuper()
 	return(r);
   }
 
-  set_blocksize(superblock.s_block_size);
+  set_blocksize(&superblock);
   
   /* Get the root inode of the mounted file system. */
   if( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {

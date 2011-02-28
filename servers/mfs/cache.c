@@ -16,8 +16,10 @@
 
 #include "fs.h"
 #include <minix/u64.h>
+#include <sys/param.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include "buf.h"
 #include "super.h"
 #include "inode.h"
@@ -538,14 +540,17 @@ struct buf *bp;
 }
 
 /*===========================================================================*
- *				set_blocksize				     *
+ *				cache_resize				     *
  *===========================================================================*/
-PUBLIC void set_blocksize(unsigned int blocksize)
+PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
 {
   struct buf *bp;
   struct inode *rip;
+  int scale, r;
 
-  ASSERT(blocksize > 0);
+#define MINBUFS 10
+  assert(blocksize > 0);
+  assert(bufs >= MINBUFS);
 
   for (bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
 	if(bp->b_count != 0) panic("change blocksize with buffer in use");
@@ -553,8 +558,74 @@ PUBLIC void set_blocksize(unsigned int blocksize)
   for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 	if (rip->i_count > 0) panic("change blocksize with inode in use");
 
-  buf_pool(nr_bufs);
+  buf_pool(bufs);
+
   fs_block_size = blocksize;
+}
+
+/*===========================================================================*
+ *				bufs_heuristic				     *
+ *===========================================================================*/
+PRIVATE int bufs_heuristic(struct super_block *sp)
+{
+  struct vm_stats_info vsi;
+  int r, bufs;
+  u32_t btotal, bfree, bused, kbytes_used_fs,
+	kbytes_total_fs, kbcache, kb_fsmax;
+  u32_t kbytes_remain_mem;
+
+  /* but we simply need MINBUFS no matter what, and we don't
+   * want more than that if we're a memory device
+   */
+  if(major(sp->s_dev) == MEMORY_MAJOR) {
+	bufs = MINBUFS;
+	return bufs;
+  }
+
+  /* set a reasonable cache size; cache at most a certain
+   * portion of the used FS, and at most a certain %age of remaining
+   * memory
+   */
+  if((vm_info_stats(&vsi) != OK)) {
+	bufs = 1024;
+	printf("mfs: heuristic info fail: default to %d bufs\n", bufs);
+	return bufs;
+  }
+
+  kbytes_remain_mem = div64u(mul64u(vsi.vsi_free, vsi.vsi_pagesize), 1024);
+
+  /* check fs usage. */
+  blockstats(&btotal, &bfree, &bused);
+  kbytes_used_fs = div64u(mul64u(bused, sp->s_block_size), 1024);
+  kbytes_total_fs = div64u(mul64u(btotal, sp->s_block_size), 1024);
+
+  /* heuristic for a desired cache size based on FS usage;
+   * but never bigger than half of the total filesystem
+   */
+  kb_fsmax = sqrt(kbytes_used_fs)*40;
+  kb_fsmax = MIN(kb_fsmax, kbytes_total_fs/2);
+
+  /* heuristic for a maximum usage - 10% of remaining memory */
+  kbcache = MIN(kbytes_remain_mem/10, kb_fsmax);
+  bufs = kbcache * 1024 / sp->s_block_size;
+
+  /* but we simply need MINBUFS no matter what */
+  if(bufs < MINBUFS)
+	bufs = MINBUFS;
+
+  return bufs;
+}
+
+/*===========================================================================*
+ *				set_blocksize				     *
+ *===========================================================================*/
+PUBLIC void set_blocksize(struct super_block *sp)
+{
+  int bufs;
+
+  cache_resize(sp->s_block_size, MINBUFS);
+  bufs = bufs_heuristic(sp);
+  cache_resize(sp->s_block_size, bufs);
 }
 
 /*===========================================================================*
@@ -565,7 +636,7 @@ PUBLIC void buf_pool(int new_nr_bufs)
 /* Initialize the buffer pool. */
   register struct buf *bp;
 
-  assert(new_nr_bufs > 0);
+  assert(new_nr_bufs >= MINBUFS);
 
   if(nr_bufs > 0) {
 	assert(buf);

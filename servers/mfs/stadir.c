@@ -81,16 +81,17 @@ PUBLIC int fs_statvfs()
   struct statvfs st;
   struct super_block *sp;
   int r, scale;
+  u32_t used;
 
   sp = get_super(fs_dev);
 
   scale = sp->s_log_zone_size;
 
+  blockstats(&st.f_blocks, &st.f_bfree, &used);
+  st.f_bavail = st.f_bfree;
+
   st.f_bsize =  sp->s_block_size << scale;
   st.f_frsize = sp->s_block_size;
-  st.f_blocks = sp->s_zones << scale;
-  st.f_bfree = count_free_bits(sp, ZMAP) << scale;
-  st.f_bavail = st.f_bfree;
   st.f_files = sp->s_ninodes;
   st.f_ffree = count_free_bits(sp, IMAP);
   st.f_favail = st.f_ffree;
