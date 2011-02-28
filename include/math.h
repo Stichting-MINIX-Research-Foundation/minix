@@ -75,6 +75,7 @@ _PROTOTYPE( double trunc,       (double x)		);
  * We allow them in the GNU compiler because they are builtins there.
  */
 #ifdef __GNUC__
+#ifndef __cplusplus
 _PROTOTYPE( float powf,		(float, float)		);
 _PROTOTYPE( float fmodf,	(float, float)		);
 _PROTOTYPE( double erf,		(double)		);
@@ -97,6 +98,7 @@ _PROTOTYPE( double log1p,	(double)		);
 _PROTOTYPE( double logb,	(double)		);
 _PROTOTYPE( double nextafter,	(double, double)	);
 _PROTOTYPE( double scalb,	(double, double)	);
+#endif
 #endif
 
 #endif /* _MATH_H */
