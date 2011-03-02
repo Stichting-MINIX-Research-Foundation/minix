@@ -105,6 +105,6 @@
 
 #define trunc_page_ps(va, ps)	((va) & ~(ps - 1))
 #define round_page_ps(va, ps)	(((va) + (ps - 1)) & ~(ps - 1))
-#define aligned(a, t)		(trunc_page_ps((u_long)(a), sizeof(t)) == (u_long)(a))
+#define _minix_aligned(a, t)	(trunc_page_ps((u_long)(a), sizeof(t)) == (u_long)(a))
 
 #endif /* !_I386_INCLUDE_PARAM_H_ */

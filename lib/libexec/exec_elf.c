@@ -53,7 +53,7 @@ int read_header_elf(
   }
 
   phdr = (const Elf_Phdr *)(exec_hdr + hdr->e_phoff);
-  if (!aligned(phdr, Elf_Addr)) {
+  if (!_minix_aligned(phdr, Elf_Addr)) {
      return ENOEXEC;
   }
 
