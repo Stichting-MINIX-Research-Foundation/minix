@@ -12,33 +12,11 @@ INCS=	alloca.h a.out.h ar.h assert.h configfile.h ctype.h \
 	hgfs.h tzfile.h util.h fetch.h mpool.h ndbm.h db.h poll.h resolv.h \
 	memory.h paths.h libexec.h complex.h
 INCS+=	arpa/inet.h arpa/nameser.h
-INCS+=	minix/a.out.h minix/cdrom.h minix/cpufeature.h \
-	minix/crtso.h minix/dirent.h \
-	minix/dir.h minix/dl_eth.h minix/dmap.h minix/driver.h \
-	minix/acpi.h \
-	minix/drivers.h minix/drvlib.h \
-	minix/fslib.h \
-	minix/mq.h minix/mthread.h \
-	minix/netdriver.h minix/partition.h \
-	minix/procfs.h \
-	minix/queryparam.h \
-	minix/sched.h minix/sound.h \
-	minix/tty.h minix/types.h \
-	minix/vfsif.h minix/vtreefs.h \
-	minix/compiler-ack.h minix/sha2.h minix/sha1.h minix/md5.h \
-	minix/audio_fw.h minix/hash.h minix/input.h \
-	minix/devman.h minix/usb.h minix/usb_ch9.h 
+INCS+=	minix/a.out.h minix/cdrom.h minix/compiler-ack.h minix/dirent.h \
+	minix/dl_eth.h minix/md5.h minix/sha1.h minix/sha2.h minix/types.h
 	
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
 INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
-
-INCS+=	ddekit/assert.h ddekit/initcall.h ddekit/memory.h  ddekit/pgtab.h \
-        ddekit/thread.h ddekit/attribs.h ddekit/inline.h  ddekit/printf.h \
-        ddekit/timer.h ddekit/condvar.h ddekit/interrupt.h ddekit/panic.h \
-        ddekit/resources.h  ddekit/types.h  ddekit/debug.h  ddekit/lock.h \
-        ddekit/pci.h ddekit/semaphore.h  ddekit/usb.h  ddekit/minix/pci.h \
-        ddekit/minix/msg_queue.h ddekit/ddekit.h
-
 
 .include <bsd.own.mk>
 

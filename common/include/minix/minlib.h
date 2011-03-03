@@ -6,9 +6,11 @@
 #endif
 
 /* Miscellaneous BSD. */
-_PROTOTYPE(void swab, (char *_from, char *_to, int _count));
 _PROTOTYPE(char *itoa, (int _n));
+#ifndef __NBSD_LIBC
 _PROTOTYPE(char *getpass, (const char *_prompt));
+_PROTOTYPE(void swab, (char *_from, char *_to, int _count));
+#endif /* !_NBSD_LIBC */
 
 /* Miscellaneous MINIX. */
 _PROTOTYPE(void std_err, (const char *_s));

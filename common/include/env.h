@@ -1,3 +1,6 @@
+#ifdef __NBSD_LIBC
+#include <minix/ansi.h>
+#endif
 _PROTOTYPE( int env_parse, (char *env, char *fmt, int field,
 			long *param, long min, long max)		);
 _PROTOTYPE( void env_panic, (char *env)					);

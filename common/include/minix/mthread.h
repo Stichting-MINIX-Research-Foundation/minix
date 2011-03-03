@@ -9,8 +9,13 @@
 #include <ucontext.h>
 #include <errno.h>
 #include <stdlib.h>
+#ifndef __NBSD_LIBC
 #include <alloca.h>
+#endif
 #include <limits.h>
+#ifdef __NBSD_LIBC
+#include <sys/signal.h>
+#endif
 
 typedef int mthread_thread_t;
 typedef int mthread_once_t;

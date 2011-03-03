@@ -61,6 +61,15 @@
 /* This should be defined as restrict when a C99 compiler is used. */
 #define _RESTRICT
 
+#ifdef __NBSD_LIBC
+/* Setting of _POSIX_SOURCE (or _NETBSD_SOURCE) in NBSD headers is 
+ * done in <sys/featuretest.h> */
+#include <sys/featuretest.h>
+
+/* Also, do not redefine _BSD_VA_LIST */
+
+#else /* !__NBSD_LIBC */
+
 /* Setting any of _MINIX, _POSIX_C_SOURCE or _POSIX2_SOURCE implies
  * _POSIX_SOURCE.  (Seems wrong to put this here in ANSI space.)
  */
@@ -69,7 +78,6 @@
 #define _POSIX_SOURCE	1
 #endif
 
-#ifndef __NBSD_LIBC
 /* What is a va_list? */
 #include <stdarg.h>
 #define _BSD_VA_LIST_ va_list
