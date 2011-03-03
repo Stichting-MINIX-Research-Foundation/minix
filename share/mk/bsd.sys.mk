@@ -61,6 +61,11 @@ HAS_SSP=	no
 HAS_SSP=	yes
 .endif
 
+.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
+CPPFLAGS+=	-nostdinc -D__NBSD_LIBC -I /usr/netbsd/include
+LDFLAGS+=	-L /usr/netbsd/lib
+.endif
+
 .if defined(USE_FORT) && (${USE_FORT} != "no")
 USE_SSP?=	yes
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules

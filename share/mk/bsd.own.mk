@@ -541,6 +541,9 @@ OBJECT_FMT=	ELF
 OBJECT_FMT=	a.out
 .endif
 .if ${COMPILER_TYPE} == "gnu"
+.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
+LIBDIR?=	/usr/netbsd/lib
+.endif
 .if ${OBJECT_FMT} == "a.out"
 LIBDIR?=	/usr/lib
 .elif ${OBJECT_FMT} == "ELF"

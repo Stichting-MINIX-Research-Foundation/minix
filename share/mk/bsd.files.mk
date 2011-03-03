@@ -156,6 +156,6 @@ cleanuudecodefiles: .PHONY
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
-#.include <bsd.sys.mk>
+.include <bsd.sys.mk>
 
 .endif	# !defined(_MINIX_FILES_MK_)

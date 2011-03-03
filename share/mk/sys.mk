@@ -3,6 +3,9 @@
 
 unix?=		We run MINIX.
 
+# This variable should be used to differentiate Minix builds in Makefiles.
+__MINIX=	yes
+
 .SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y #.sh
 
 .LIBS:		.a
@@ -235,4 +238,12 @@ COMPILER_TYPE=gnu
 AR=i386-pc-minix3-ar
 LD=i386-pc-minix3-ld
 OBJCOPY=i386-pc-minix3-objcopy
+.endif
+
+# Set NBSD_LIBC to either "yes" or "no".
+.if !defined(NBSD) || (${NBSD} == "no") \
+    || (${COMPILER_TYPE} == "ack") 
+NBSD_LIBC=	no
+.else
+NBSD_LIBC=	yes
 .endif
