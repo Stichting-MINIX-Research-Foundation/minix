@@ -2,9 +2,14 @@
  *								2 Dec 1994
  */
 #define nil 0
+#include "namespace.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(getdomainname, _getdomainname)
+#endif
 
 int getdomainname(char *domain, size_t size)
 {
