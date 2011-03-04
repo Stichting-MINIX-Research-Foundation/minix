@@ -36,6 +36,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+#include <sys/syslimits.h>
 #include <machine/int_types.h>
 
 /*
@@ -57,7 +58,7 @@ typedef __int32_t	__fd_mask;
  * be enough for most uses.
  */
 #ifndef	FD_SETSIZE
-#define	FD_SETSIZE	256
+#define	FD_SETSIZE	__MINIX_OPEN_MAX
 #endif
 
 typedef	struct fd_set {

@@ -1,10 +1,9 @@
 #ifndef _SYS_DIRENT_H_
 #define _SYS_DIRENT_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
-
-/* Redefine d_ino here. */
-#define d_ino d_fileno
+#include <minix/dirent.h>
 
 /*
  * The dirent structure defines the format of directory entries returned by
@@ -17,6 +16,10 @@ struct dirent {		/* Largest entry (8 slots) */
 	unsigned short	d_reclen;	/* Length of this record */
 	char		d_name[1];	/* Null terminated name */
 };
+
+#if defined(_NETBSD_SOURCE)
+#define	d_fileno	d_ino
+#endif
 
 #define _DIRENT_NAME_LEN 61 /* Backward compatibility with Minix. */
 #if defined(_NETBSD_SOURCE)

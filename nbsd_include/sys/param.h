@@ -6,7 +6,9 @@
  */
 #define	BSD	199506		/* System version (year & month). */
 #define	BSD4_3	1
+#ifndef __minix
 #define	BSD4_4	1
+#endif
 
 /*
  *	#define __NetBSD_Version__ MMmmrrpp00

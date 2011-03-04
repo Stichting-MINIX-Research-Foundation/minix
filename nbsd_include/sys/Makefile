@@ -7,12 +7,12 @@ INCSDIR= /usr/netbsd/include/sys
 
 
 # Present only in minix
-INCS+= ioc_net.h
+INCS+= ioc_net.h statfs.h
 
 INCS+=	ansi.h atomic.h \
 	bitops.h bswap.h \
 	cdefs.h cdefs_aout.h ctype_bits.h ctype_inline.h \
-	dirent.h \
+	dir.h dirent.h \
 	endian.h errno.h \
 	fcntl.h fd_set.h featuretest.h file.h \
 	float_ieee754.h gcq.h gmon.h hash.h \

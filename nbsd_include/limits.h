@@ -113,4 +113,9 @@
 #include <machine/limits.h>
 #include <sys/syslimits.h>
 
+#ifdef __minix
+#define SYMLOOP_MAX		16
+#define SYMLINK_MAX		1024
+#endif
+
 #endif /* !_LIMITS_H_ */

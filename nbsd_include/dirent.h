@@ -43,16 +43,20 @@
  */
 #include <sys/dirent.h>
 
+#ifndef __minix
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
+#endif /* !__minix */
 
 typedef struct _dirdesc DIR;
 
 #if defined(_NETBSD_SOURCE)
 
+#ifndef __minix
 /* definitions for library routines operating on directories. */
 #define	DIRBLKSIZ	1024
+#endif 
 
 /* structure describing an open directory. */
 struct _dirdesc {

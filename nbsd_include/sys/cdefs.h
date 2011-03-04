@@ -482,4 +482,9 @@
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
 
+#ifdef _MINIX
+/* If compiling in Minix tree, Minix ANSI definitions are always useful. */
+#include <minix/ansi.h>
+#endif
+
 #endif /* !_SYS_CDEFS_H_ */

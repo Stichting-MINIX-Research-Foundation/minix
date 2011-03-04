@@ -88,7 +88,7 @@ __dead	 void _exit(int);
 int	 access(const char *, int);
 unsigned int alarm(unsigned int);
 int	 chdir(const char *);
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if !defined(__minix) && (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE))
 int	chown(const char *, uid_t, gid_t) __RENAME(__posix_chown);
 #else
 int	chown(const char *, uid_t, gid_t);
@@ -249,7 +249,7 @@ typedef	__intptr_t	intptr_t;
 
 int	 brk(void *);
 int	 fchdir(int);
-#if defined(_XOPEN_SOURCE)
+#if !defined(__minix) && defined(_XOPEN_SOURCE)
 int	 fchown(int, uid_t, gid_t) __RENAME(__posix_fchown);
 #else
 int	 fchown(int, uid_t, gid_t);

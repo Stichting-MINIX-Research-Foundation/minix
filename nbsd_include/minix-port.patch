@@ -1,6 +1,6 @@
 diff -ru /home/netbsd/src/include/Makefile ./Makefile
 --- /home/netbsd/src/include/Makefile	2010-08-01 03:01:48.000000000 +0000
-+++ ./Makefile	2011-02-15 12:52:02.000000000 +0000
++++ ./Makefile	2011-02-21 16:03:25.000000000 +0000
 @@ -7,6 +7,24 @@
  
  # Missing: mp.h
@@ -34,7 +34,7 @@ diff -ru /home/netbsd/src/include/Makefile ./Makefile
  INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/nameser_compat.h \
  	arpa/telnet.h arpa/tftp.h
  INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
-@@ -40,10 +59,27 @@
+@@ -40,10 +59,28 @@
  .include <bsd.own.mk>
  
  
@@ -56,15 +56,40 @@ diff -ru /home/netbsd/src/include/Makefile ./Makefile
 +
 +.if defined(__MINIX)
 +.include "${MINIXSRCDIR}/common/include/Makefile.inc"
++SUBDIR+=	arch/${MACHINE}
 +SUBDIR+= 	arch sys minix
 +SUBDIR+= 	net netinet netinet6
 +.endif
  
  .include <bsd.prog.mk>
  .include <bsd.subdir.mk>
+diff -ru /home/netbsd/src/include/dirent.h ./dirent.h
+--- /home/netbsd/src/include/dirent.h	2010-09-26 03:01:02.000000000 +0000
++++ ./dirent.h	2011-02-24 09:08:12.000000000 +0000
+@@ -43,16 +43,20 @@
+  */
+ #include <sys/dirent.h>
+ 
++#ifndef __minix
+ #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+ #define	d_ino		d_fileno	/* backward compatibility */
+ #endif
++#endif /* !__minix */
+ 
+ typedef struct _dirdesc DIR;
+ 
+ #if defined(_NETBSD_SOURCE)
+ 
++#ifndef __minix
+ /* definitions for library routines operating on directories. */
+ #define	DIRBLKSIZ	1024
++#endif 
+ 
+ /* structure describing an open directory. */
+ struct _dirdesc {
 diff -ru /home/netbsd/src/include/fts.h ./fts.h
 --- /home/netbsd/src/include/fts.h	2009-08-19 20:23:46.000000000 +0000
-+++ ./fts.h	2011-02-14 17:04:58.000000000 +0000
++++ ./fts.h	2011-02-21 16:03:25.000000000 +0000
 @@ -75,7 +75,9 @@
  #define	FTS_PHYSICAL	0x010		/* physical walk */
  #define	FTS_SEEDOT	0x020		/* return dot and dot-dot */
@@ -75,9 +100,22 @@ diff -ru /home/netbsd/src/include/fts.h ./fts.h
  #define	FTS_OPTIONMASK	0x0ff		/* valid user option mask */
  
  #define	FTS_NAMEONLY	0x100		/* (private) child names only */
+diff -ru /home/netbsd/src/include/limits.h ./limits.h
+--- /home/netbsd/src/include/limits.h	2010-06-08 03:01:32.000000000 +0000
++++ ./limits.h	2011-03-04 11:24:14.000000000 +0000
+@@ -113,4 +113,9 @@
+ #include <machine/limits.h>
+ #include <sys/syslimits.h>
+ 
++#ifdef __minix
++#define SYMLOOP_MAX		16
++#define SYMLINK_MAX		1024
++#endif
++
+ #endif /* !_LIMITS_H_ */
 diff -ru /home/netbsd/src/include/paths.h ./paths.h
 --- /home/netbsd/src/include/paths.h	2010-12-30 03:02:34.000000000 +0000
-+++ ./paths.h	2011-02-14 17:04:58.000000000 +0000
++++ ./paths.h	2011-02-21 16:03:25.000000000 +0000
 @@ -124,5 +124,9 @@
  #define	_PATH_VI	"/usr/bin/vi"
  #endif
@@ -90,7 +128,7 @@ diff -ru /home/netbsd/src/include/paths.h ./paths.h
  
 diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
 --- /home/netbsd/src/include/rpc/Makefile	2003-01-11 13:28:43.000000000 +0000
-+++ ./rpc/Makefile	2011-02-15 12:36:08.000000000 +0000
++++ ./rpc/Makefile	2011-02-21 16:03:24.000000000 +0000
 @@ -7,7 +7,11 @@
  	svc.h svc_auth.h svc_soc.h types.h xdr.h
  RPC_INCS=	rpcb_prot.h
@@ -105,7 +143,7 @@ diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
  .include <bsd.prog.mk>
 diff -ru /home/netbsd/src/include/sched.h ./sched.h
 --- /home/netbsd/src/include/sched.h	2009-01-11 03:05:43.000000000 +0000
-+++ ./sched.h	2011-02-14 17:04:58.000000000 +0000
++++ ./sched.h	2011-02-21 16:03:25.000000000 +0000
 @@ -29,6 +29,9 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
@@ -118,7 +156,7 @@ diff -ru /home/netbsd/src/include/sched.h ./sched.h
  
 diff -ru /home/netbsd/src/include/signal.h ./signal.h
 --- /home/netbsd/src/include/signal.h	2010-08-28 03:00:54.000000000 +0000
-+++ ./signal.h	2011-02-15 12:11:57.000000000 +0000
++++ ./signal.h	2011-02-21 16:03:25.000000000 +0000
 @@ -62,6 +62,7 @@
  int	__libc_sigaction14(int, const struct sigaction * __restrict,
  	    struct sigaction * __restrict);
@@ -184,7 +222,7 @@ diff -ru /home/netbsd/src/include/signal.h ./signal.h
  #endif /* _NETBSD_SOURCE */
 diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
 --- /home/netbsd/src/include/stdio.h	2010-09-25 03:01:11.000000000 +0000
-+++ ./stdio.h	2011-02-14 17:04:58.000000000 +0000
++++ ./stdio.h	2011-02-21 16:03:25.000000000 +0000
 @@ -274,7 +274,7 @@
  		__printflike(2, 0);
  #endif
@@ -196,8 +234,20 @@ diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
  int	 rename (const char *, const char *);
 diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
 --- /home/netbsd/src/include/stdlib.h	2010-12-23 03:03:09.000000000 +0000
-+++ ./stdlib.h	2011-02-14 17:04:58.000000000 +0000
-@@ -280,7 +280,9 @@
++++ ./stdlib.h	2011-02-24 02:42:48.000000000 +0000
+@@ -265,9 +265,11 @@
+ void	 csetexpandtc(int);
+ 
+ int	 daemon(int, int);
++#ifndef __minix
+ #ifndef __LIBC12_SOURCE__
+ __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
+ #endif
++#endif /* !__minix */
+ 
+ #define	HN_DECIMAL		0x01
+ #define	HN_NOSPACE		0x02
+@@ -280,7 +282,9 @@
  int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
  int	 dehumanize_number(const char *, int64_t *);
  
@@ -209,8 +259,27 @@ diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
  int	 getenv_r(const char *, char *, size_t);
 diff -ru /home/netbsd/src/include/time.h ./time.h
 --- /home/netbsd/src/include/time.h	2010-12-17 03:01:54.000000000 +0000
-+++ ./time.h	2011-02-14 17:04:58.000000000 +0000
-@@ -110,7 +110,11 @@
++++ ./time.h	2011-03-02 07:10:52.000000000 +0000
+@@ -65,12 +65,18 @@
+ #undef	_BSD_CLOCKID_T_
+ #endif
+ 
++#ifndef __minix
+ #ifdef	_BSD_TIMER_T_
+ typedef	_BSD_TIMER_T_	timer_t;
+ #undef	_BSD_TIMER_T_
+ #endif
++#endif /* !__minix */
+ 
++#ifdef __minix
++#define CLOCKS_PER_SEC	60
++#else
+ #define CLOCKS_PER_SEC	100
++#endif
+ 
+ struct tm {
+ 	int	tm_sec;		/* seconds after the minute [0-61] */
+@@ -110,7 +116,11 @@
   * need to include unistd.h
   */
  long __sysconf(int);
@@ -222,7 +291,7 @@ diff -ru /home/netbsd/src/include/time.h ./time.h
  #endif
  #endif
  
-@@ -143,22 +147,28 @@
+@@ -143,22 +153,28 @@
  struct sigevent;
  struct itimerspec;
  #ifndef __LIBC12_SOURCE__
@@ -251,7 +320,7 @@ diff -ru /home/netbsd/src/include/time.h ./time.h
  #endif /* _POSIX_C_SOURCE >= 199309 || _XOPEN_SOURCE >= 500 || ... */
  
  #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-@@ -205,6 +215,10 @@
+@@ -205,6 +221,10 @@
  
  #endif /* _NETBSD_SOURCE */
  
@@ -264,7 +333,16 @@ diff -ru /home/netbsd/src/include/time.h ./time.h
  #endif /* !_TIME_H_ */
 diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
 --- /home/netbsd/src/include/unistd.h	2011-01-20 03:02:09.000000000 +0000
-+++ ./unistd.h	2011-02-15 12:17:07.000000000 +0000
++++ ./unistd.h	2011-03-03 15:29:11.000000000 +0000
+@@ -88,7 +88,7 @@
+ int	 access(const char *, int);
+ unsigned int alarm(unsigned int);
+ int	 chdir(const char *);
+-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
++#if !defined(__minix) && (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE))
+ int	chown(const char *, uid_t, gid_t) __RENAME(__posix_chown);
+ #else
+ int	chown(const char *, uid_t, gid_t);
 @@ -133,7 +133,9 @@
  #endif
  int	 rmdir(const char *);
@@ -295,6 +373,15 @@ diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
  #endif
  
  
+@@ -243,7 +249,7 @@
+ 
+ int	 brk(void *);
+ int	 fchdir(int);
+-#if defined(_XOPEN_SOURCE)
++#if !defined(__minix) && defined(_XOPEN_SOURCE)
+ int	 fchown(int, uid_t, gid_t) __RENAME(__posix_fchown);
+ #else
+ int	 fchown(int, uid_t, gid_t);
 @@ -253,29 +259,37 @@
  int	 gethostname(char *, size_t);
  __pure int
@@ -383,3 +470,68 @@ diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
  int	 syscall(int, ...);
  quad_t	 __syscall(quad_t, ...);
  int	 undelete(const char *);
+diff -ru /home/netbsd/src/include/utmp.h ./utmp.h
+--- /home/netbsd/src/include/utmp.h	2009-01-11 03:05:43.000000000 +0000
++++ ./utmp.h	2011-03-01 12:59:49.000000000 +0000
+@@ -39,12 +39,26 @@
+ #ifndef	_UTMP_H_
+ #define	_UTMP_H_
+ 
++#ifdef __minix
++#define _PATH_UTMP	"/etc/utmp"
++#define _PATH_WTMP	"/usr/adm/wtmp"
++#define _PATH_BTMP	"/usr/adm/btmp"
++#define _PATH_LASTLOG	"/usr/adm/lastlog"
++#define UTMP		_PATH_UTMP
++#define WTMP		_PATH_WTMP
++#define BTMP		_PATH_BTMP
++#else
+ #define	_PATH_UTMP	"/var/run/utmp"
+ #define	_PATH_WTMP	"/var/log/wtmp"
+ #define	_PATH_LASTLOG	"/var/log/lastlog"
++#endif
+ 
+ #define	UT_NAMESIZE	8
++#ifdef __minix
++#define UT_LINESIZE	12
++#else
+ #define	UT_LINESIZE	8
++#endif
+ #define	UT_HOSTSIZE	16
+ 
+ struct lastlog {
+@@ -53,12 +67,34 @@
+ 	char	ll_host[UT_HOSTSIZE];
+ };
+ 
++#ifdef __minix
++struct utmp {
++  char ut_name[UT_NAMESIZE];		/* user name */
++  char ut_id[4];		/* /etc/inittab ID */
++  char ut_line[UT_LINESIZE];		/* terminal name */
++  char ut_host[UT_HOSTSIZE];		/* host name, when remote */
++  short ut_pid;			/* process id */
++  short int ut_type;		/* type of entry */
++  long ut_time;			/* login/logout time */
++};
++
++/* Definitions for ut_type. */
++#define RUN_LVL            1	/* this is a RUN_LEVEL record */
++#define BOOT_TIME          2	/* this is a REBOOT record */
++#define INIT_PROCESS       5	/* this process was spawned by INIT */
++#define LOGIN_PROCESS      6	/* this is a 'getty' process waiting */
++#define USER_PROCESS       7	/* any other user process */
++#define DEAD_PROCESS       8	/* this process has died (wtmp only) */
++
++#else /* !__minix */
++
+ struct utmp {
+ 	char	ut_line[UT_LINESIZE];
+ 	char	ut_name[UT_NAMESIZE];
+ 	char	ut_host[UT_HOSTSIZE];
+ 	time_t	ut_time;
+ };
++#endif /* __minix */
+ 
+ __BEGIN_DECLS
+ int utmpname(const char *);

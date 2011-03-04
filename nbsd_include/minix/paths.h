@@ -4,4 +4,16 @@
 #define _PATH_SERVICE	"/bin/service"
 #define _PATH_PROC	"/proc/"
 
+#define _PATH_SYSTEM_CONF "/etc/system.conf"
+#define _PATH_SYSTEM_CONF_DIR "/etc/system.conf.d"
+
+#define _PATH_DHCPCONF	"/etc/dhcp.conf"
+#define _PATH_DHCPPID	"/usr/run/dhcpd.pid"
+#define _PATH_DHCPCACHE	"/usr/adm/dhcp.cache"
+#define _PATH_DHCPPOOL	"/usr/adm/dhcp.pool"
+
+#define _PATH_MOTD	"/etc/motd"
+
+#define _PATH_RAMDISK	"/dev/ram"
+
 #endif /* _MINIX_PATHS_H_ */

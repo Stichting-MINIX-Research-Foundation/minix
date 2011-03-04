@@ -41,18 +41,6 @@
  * Machine dependent constants for Intel 386.
  */
 
-#ifdef _KERNEL
-#include <machine/cpu.h>
-#endif
-
-#ifndef _MINIX
-#define	_MACHINE	i386
-#define	MACHINE		"i386"
-#define	_MACHINE_ARCH	i386
-#define	MACHINE_ARCH	"i386"
-#define	MID_MACHINE	MID_I386
-#endif
-
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
@@ -86,5 +74,14 @@
 #define	x86_trunc_page(x)	((paddr_t)(x) & ~PGOFSET)
 #define	x86_btop(x)		((paddr_t)(x) >> PGSHIFT)
 #define	x86_ptob(x)		((paddr_t)(x) << PGSHIFT)
+
+#ifdef __minix
+/* Minix expect to find in this file PAGE_* defines. */
+#include <machine/vmparam.h>
+
+#define trunc_page(x) x86_trunc_page(x)
+#define round_page(x) x86_round_page(x)
+
+#endif
 
 #endif /* _I386_PARAM_H_ */

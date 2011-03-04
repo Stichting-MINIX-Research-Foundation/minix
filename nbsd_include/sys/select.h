@@ -64,13 +64,24 @@ int	pollsock(struct socket *, const struct timespec *, int);
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
+#ifndef __minix
 int	pselect(int, fd_set * __restrict, fd_set * __restrict,
     fd_set * __restrict, const struct timespec * __restrict,
     const sigset_t * __restrict) __RENAME(__pselect50);
+#endif /* !__minix */
 int	select(int, fd_set * __restrict, fd_set * __restrict,
     fd_set * __restrict, struct timeval * __restrict) __RENAME(__select50);
 #endif /* __LIBC12_SOURCE__ */
 __END_DECLS
 #endif /* _KERNEL */
+
+#ifdef _MINIX
+/* possible select() operation types; read, write, errors */
+/* (FS/driver internal use only) */
+#define SEL_RD		(1 << 0)
+#define SEL_WR		(1 << 1)
+#define SEL_ERR		(1 << 2)
+#define SEL_NOTIFY	(1 << 3) /* not a real select operation */
+#endif
 
 #endif /* !_SYS_SELECT_H_ */

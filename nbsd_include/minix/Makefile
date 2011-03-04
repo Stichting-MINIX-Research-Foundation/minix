@@ -4,7 +4,7 @@ NOOBJ=		# defined
 
 INCSDIR=	/usr/netbsd/include/minix
 
-INCS+= paths.h types.h
+INCS+= dirent.h paths.h types.h
 
 .include "${MINIXSRCDIR}/common/include/sys/Makefile.mount.inc"
 .include "${MINIXSRCDIR}/common/include/Makefile.termios.inc"
