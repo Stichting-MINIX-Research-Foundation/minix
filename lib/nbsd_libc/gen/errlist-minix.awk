@@ -73,11 +73,16 @@ BEGIN {
 	}
 	perror("ENOERROR", 0, "Undefined error: 0");
 	errno = 1;
+	last = 0;
 }
 /^#define/ {
+	if ( last ) next;
+
 	name = $2;
-	if (name == "ELAST")
+	if (name == "ELAST") {
+		last = 1;
 		next;
+	}
 	number = $4;
 	if (number < 0 || number == "EAGAIN")
 		next;

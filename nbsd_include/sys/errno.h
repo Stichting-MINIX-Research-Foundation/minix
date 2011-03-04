@@ -107,12 +107,12 @@
 #define EOPNOTSUPP    (_SIGN 76 )  /* Operation not supported */
 #define ENOTSUP       EOPNOTSUPP  /* Not supported */
 #define ENETDOWN      (_SIGN 77 )  /* network is down */
-#define	ECONNABORTED  (_SIGN 78 )  /* Software caused connection abort */
+#define	EPFNOSUPPORT  (_SIGN 78 ) /* Protocol family not supported */
 #define	EDESTADDRREQ  (_SIGN 79 )  /* Destination address required */
 #define EHOSTDOWN     (_SIGN 80 )  /* Host is down */
 #define ENETRESET     (_SIGN 81 )  /* Network dropped connection on reset */
 #define	ESOCKTNOSUPPORT	(_SIGN 82 ) /* Socket type not supported */
-#define	EPFNOSUPPORT   (_SIGN 83 ) /* Protocol family not supported */
+#define	ECONNABORTED  (_SIGN 83 )  /* Software caused connection abort */
 #define	ETOOMANYREFS   (_SIGN 84 ) /* Too many references: can't splice */
 
 /* The following are not POSIX errors, but they can still happen. 
@@ -166,8 +166,20 @@
 #define ENOSTR	     (_SIGN 192 )  /* Not a STREAM */
 #define ETIME	     (_SIGN 193 )  /* STREAM ioctl timeout */
 
-#define	ELAST	     EDONTREPLY   /* Must equal largest errno */
+/* The following are non-POSIX server responses */
+#define EBADEPT      (_SIGN 301 )  /* specified endpoint is bad */
+#define EDEADEPT     (_SIGN 302 )  /* specified endpoint is not alive */
+
+/* This define is put before EBADCPU to instruct errlist-minix.awk to
+   stop creating the errlist array here. '1000' infact is definitely
+   too large for an error number to be included in a fixed array, as
+   this would need ~700 empty array entries. */
+#define	ELAST	     EBADCPU /* Must equal largest errno */
+
+#define EBADCPU	     (_SIGN 1000 ) /* requested CPU does not work */
+
+
 
 /* Here are the numerical values of the error numbers. */
-#define _NERROR               201  /* number of errors */  
+#define _NERROR      1000	 /* number of errors */  
 #endif /* _ERRNO_H */
