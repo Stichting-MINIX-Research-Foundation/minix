@@ -8,37 +8,49 @@
 #include <sys/time.h>
 #endif
 
-#define __MINIX_EMULATE_NETBSD_STAT
-
 /* 
  * __MINIX_EMULATE_NETBSD_STAT
  *
- * Userspace flag to emulate netbsd stat structure. Please note that
- * this might be dangerous, and should be enabled only when we're sure
- * that the program doesn't use the emulated information for doing
- * something harmful.
- * It is meant to be temporary, until we add a new syscall.
+ * Userspace flag to emulate netbsd stat structure.
  */
 #ifdef __MINIX_EMULATE_NETBSD_STAT
 #define __netbsd_stat stat
 #else
-#define __minix_stat stat
+#define __ext_stat stat
 #endif
 
 struct __minix_stat {
 	dev_t st_dev;			/* major/minor device number */
 	ino_t st_ino;			/* i-node number */
-	mode_t st_mode;		/* file mode, protection bits, etc. */
+	mode_t st_mode;			/* file mode, protection bits, etc. */
 	nlink_t st_nlink;		/* # links; */
 	uid_t st_uid;			/* uid of the file's owner */ 
-	gid_t st_gid;		/* gid */
+	gid_t st_gid;			/* gid */
 	dev_t st_rdev;
-	off_t st_size;		/* file size */
+	off_t st_size;			/* file size */
 	time_t st_atime;		/* time of last access */
 	time_t st_mtime;		/* time of last data modification */
 	time_t st_ctime;		/* time of last file status change */
 };
 
+struct __ext_stat {
+	dev_t st_dev;			/* major/minor device number */
+	ino_t st_ino;			/* i-node number */
+	mode_t st_mode;			/* file mode, protection bits, etc. */
+	nlink_t st_nlink;		/* # links; */
+	uid_t st_uid;			/* uid of the file's owner */ 
+	gid_t st_gid;			/* gid */
+	dev_t st_rdev;
+	off_t st_size;			/* file size */
+	time_t st_atime;		/* time of last access */
+	time_t st_mtime;		/* time of last data modification */
+	time_t st_ctime;		/* time of last file status change */
+
+	/* Extended values. */
+	blksize_t st_blksize;		/* optimal blocksize for I/O */
+};
+
+#if defined(_NETBSD_SOURCE)
 struct __netbsd_stat {
 	dev_t st_dev;			/* major/minor device number */
 	ino_t st_ino;			/* i-node number */
@@ -59,9 +71,6 @@ struct __netbsd_stat {
 	struct 	  timespec st_birthtimespec; /* time of creation */
 	blkcnt_t  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
-	uint32_t  st_flags;		/* user defined flags for file */
-	uint32_t  st_gen;		/* file generation number */
-	uint32_t  st_spare[2];
 };
 
 #ifdef __MINIX_EMULATE_NETBSD_STAT
@@ -71,6 +80,7 @@ struct __netbsd_stat {
 #define st_birthtime		st_birthtimespec.tv_sec
 #define st_birthtimensec	st_birthtimespec.tv_nsec
 #endif 
+#endif /* _NETBSD_SOURCE */
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
@@ -154,26 +164,29 @@ struct __netbsd_stat {
 #define MINIX_ST_BLKSIZE PAGE_SIZE
 #endif
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	chmod(const char *, mode_t);
 int	mkdir(const char *, mode_t);
 int	mkfifo(const char *, mode_t);
-#ifndef __LIBC12_SOURCE__
-int	stat(const char *, struct stat *);
-int	fstat(int, struct stat *);
+#ifdef __MINIX_EMULATE_NETBSD_STAT
+int	stat(const char *, struct stat *) __RENAME(__emu_netbsd_stat);
+int	fstat(int, struct stat *) __RENAME(__emu_netbsd_fstat);
+#else
+int 	stat(const char *, struct stat *) __RENAME(__ext_minix_stat);
+int	fstat(int, struct stat *) __RENAME(__ext_minix_fstat);
 #endif
 mode_t	umask(mode_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	fchmod(int, mode_t);
-#ifndef __LIBC12_SOURCE__
-int	lstat(const char *, struct stat *);
-int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
+#ifdef __MINIX_EMULATE_NETBSD_STAT
+int	lstat(const char *, struct stat *) __RENAME(__emu_netbsd_lstat);
+#else
+int	lstat(const char *, struct stat *) __RENAME(__ext_minix_lstat);
 #endif
+int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 __END_DECLS
 
-#endif /* !_KERNEL && !_STANDALONE */
 #endif /* !_SYS_STAT_H_ */

@@ -39,6 +39,7 @@ __RCSID("$NetBSD: initdir.c,v 1.1 2010/09/26 02:26:59 yamt Exp $");
 #ifdef __minix
 /* NetBSD BUG on !_REENTRANT */
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 #endif
 

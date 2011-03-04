@@ -2,33 +2,12 @@
 #include "namespace.h"
 #include <lib.h>
 
-#ifdef __weak_alias
-__weak_alias(stat, _stat)
-__weak_alias(fstat, _fstat)
-__weak_alias(lstat, _lstat)
-#ifdef __MINIX_EMULATE_NETBSD_STAT
-__weak_alias(_stat, __emu_netbsd_stat)
-__weak_alias(_fstat, __emu_netbsd_fstat)
-__weak_alias(_lstat, __emu_netbsd_lstat)
-#else
-__weak_alias(_stat, __orig_minix_stat)
-__weak_alias(_fstat, __orig_minix_fstat)
-__weak_alias(_lstat, __orig_minix_lstat)
-#endif
-#else /* !__weak_alias */
-#ifdef __MINIX_EMULATE_NETBSD_STAT
-#define __emu_netbsd_stat stat
-#define __emu_netbsd_fstat fstat
-#define __emu_netbsd_lstat lstat
-#else
-#define __orig_minix_stat stat
-#define __orig_minix_fstat fstat
-#define __orig_minix_lstat lstat
-#endif
-#endif /* !__weak_alias */
-
 #include <sys/stat.h>
 #include <string.h>
+
+#ifdef __MINIX_EMULATE_NETBSD_STAT
+#error __MINIX_EMULATE_NETBSD_STAT is set.
+#endif
 
 int __orig_minix_stat(name, buffer)
 const char *name;
@@ -68,6 +47,42 @@ struct __minix_stat *buffer;
   return __orig_minix_stat(name, buffer);
 }
 
+int __ext_minix_stat(name, buffer)
+const char *name;
+struct stat *buffer;
+{
+  int r;
+  r = __orig_minix_stat(name, buffer);
+  if ( r < 0)
+    return r;
+  buffer->st_blksize = MINIX_ST_BLKSIZE;
+  return r;
+} 
+
+int __ext_minix_fstat(fd, buffer)
+int fd;
+struct stat *buffer;
+{
+  int r;
+  r = __orig_minix_fstat(fd, buffer);
+  if ( r < 0 )
+    return r;
+  buffer->st_blksize = MINIX_ST_BLKSIZE;  
+  return r;
+}
+
+int __ext_minix_lstat(name, buffer)
+const char *name;
+struct stat *buffer;
+{
+  int r;
+  r = __orig_minix_lstat(name, buffer);
+  if ( r < 0 )
+    return r;
+  buffer->st_blksize = MINIX_ST_BLKSIZE;
+  return r;
+}
+
 /*
  * NetBSD Fields Emulation.
  */
@@ -85,8 +100,6 @@ static void __emulate_netbsd_fields(struct __netbsd_stat *buffer)
 	buffer->st_birthtimespec.tv_nsec = 0;
 	buffer->st_blocks = (buffer->st_size / S_BLKSIZE) + 1;
 	buffer->st_blksize = MINIX_ST_BLKSIZE;
-	buffer->st_flags = 0;
-	buffer->st_gen = 0;
 }
 
 const int __emu_netbsd_stat(name, buffer)

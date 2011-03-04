@@ -871,7 +871,7 @@
 #define fchown _fchown
 #define fcntl _fcntl
 #define flock _flock
-#define fstat _fstat
+#define fstatfs _fstatfs
 #define fsync _fsync
 #define fpathconf _fpathconf
 #define getegid _getegid
@@ -885,7 +885,6 @@
 #define getuid _getuid
 #define ioctl _ioctl
 #define link _link
-#define lstat _lstat
 #define mount _mount
 #define mkdir _mkdir
 #define mkfifo _mkfifo
@@ -912,7 +911,6 @@
 #define socketpair _socketpair
 #define symlink _symlink
 #define sync _sync
-#define stat(a, b) _stat(a, b)
 #define stime _stime
 #define umask _umask
 #define umount _umount

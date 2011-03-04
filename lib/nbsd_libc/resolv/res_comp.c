@@ -96,7 +96,7 @@ __RCSID("$NetBSD: res_comp.c,v 1.10 2009/04/12 17:07:17 christos Exp $");
 #ifdef __weak_alias
 __weak_alias(dn_expand,_dn_expand)
 __weak_alias(dn_comp,__dn_comp)
-#if 0
+#ifdef __minix
 __weak_alias(dn_skipname,__dn_skipname)
 __weak_alias(res_hnok,__res_hnok)
 __weak_alias(res_ownok,__res_ownok)
