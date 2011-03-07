@@ -10,7 +10,6 @@
 #include <ddekit/panic.h>
 #include <minix/syslib.h>
 
-
 #ifdef DDEBUG_LEVEL_PCI
 #undef DDEBUG
 #define DDEBUG DDEBUG_LEVEL_PCI
@@ -297,7 +296,7 @@ PUBLIC struct ddekit_pci_dev *ddekit_pci_find_device
 { 
 	int i,search=0;
 
-	if(!start)
+	if(start)
 		search = 1;
 
 	for(i=0; i < PCI_MAX_DEVS ; i++) 
@@ -311,11 +310,30 @@ PUBLIC struct ddekit_pci_dev *ddekit_pci_find_device
 			if ((*slot==dev->slot || *slot == DDEKIT_PCI_ANY_ID)
 				&& (*func==dev->func || *func == DDEKIT_PCI_ANY_ID))
 			{
+				*bus  = 0;
+				*slot = dev->slot;
+				*func = dev->func; 
 				return dev;
 			}
 		}
 	}	
 	return 0;
+}
+
+/****************************************************************************/
+/*      ddekit_pci_get_vendor                                               */
+/****************************************************************************/
+PUBLIC unsigned short ddekit_pci_get_vendor(struct ddekit_pci_dev *dev)
+{ 
+	return dev->vid;
+}
+
+/****************************************************************************/
+/*      ddekit_pci_get_device_id                                            */
+/****************************************************************************/
+PUBLIC unsigned short ddekit_pci_get_device_id(struct ddekit_pci_dev *dev)
+{ 
+	return dev->did;
 }
 
 /*
@@ -349,23 +367,6 @@ PUBLIC void ddekit_pci_set_master(struct ddekit_pci_dev *dev)
 	WARN_UNIMPL;
 }
 
-/****************************************************************************/
-/*      ddekit_pci_get_vendor                                               */
-/****************************************************************************/
-PUBLIC unsigned short ddekit_pci_get_vendor(struct ddekit_pci_dev *dev)
-{ 
-	WARN_UNIMPL;
-	return 0;
-}
-
-/****************************************************************************/
-/*      ddekit_pci_get_device_id                                            */
-/****************************************************************************/
-PUBLIC unsigned short ddekit_pci_get_device_id(struct ddekit_pci_dev *dev)
-{ 
-	WARN_UNIMPL;
-	return 0;
-}
 
 /****************************************************************************/
 /*      ddekit_pci_get_sub_vendor                                           */
