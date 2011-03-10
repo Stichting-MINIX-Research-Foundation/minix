@@ -11,6 +11,13 @@ PACKAGELIST=packages.install
 secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
 
+PKG_ADD=/usr/pkg/sbin/pkg_add
+
+if [ ! -x $PKG_ADD ]
+then	echo Please install pkg_install from pkgsrc.
+	exit 1
+fi
+
 # Packages we have to pre-install, and url to use
 PREINSTALLED_PACKAGES="pkgin-0.3.3.4.tgz pkg_install-20101212 bmake-20100808"
 PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/`uname -r`/`uname -m`/All/
@@ -416,7 +423,7 @@ chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh etcfiles" ||
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PACKAGEURL"
-    pkg_add -P $RELEASEDIR $PACKAGEURL/$p
+    $PKG_ADD -P $RELEASEDIR $PACKAGEURL/$p
 done
 
 echo " * Chroot build"
