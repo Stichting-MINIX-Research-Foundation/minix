@@ -54,8 +54,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "ansi.h"
-
 /* Maximum number of errors that we'll allow to occur before this test 
  * program gives us and quits.
  */
