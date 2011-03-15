@@ -25,6 +25,7 @@ PRIVATE u16_t pcitab_e1000[] =
 {
     E1000_DEV_ID_82540EM,
     E1000_DEV_ID_82541GI_LF,
+    E1000_DEV_ID_ICH10_D_BM_LM,
     E1000_DEV_ID_ICH10_R_BM_LF,
     E1000_DEV_ID_82574L,
     0,
@@ -282,11 +283,12 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
      */
     switch (did)
     {
+        case E1000_DEV_ID_ICH10_D_BM_LM:
         case E1000_DEV_ID_ICH10_R_BM_LF:
             e->eeprom_read = eeprom_ich;
             break;
 
-    	case E1000_DEV_ID_82574L:
+	case E1000_DEV_ID_82574L:
 	case E1000_DEV_ID_82541GI_LF:
 	    e->eeprom_done_bit = (1 << 1);
 	    e->eeprom_addr_off =  2;
@@ -326,14 +328,24 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
 	did != E1000_DEV_ID_82540EP &&
 	pci_attr_r32(devind, PCI_BAR_2))
     {
-       if((e->flash = vm_map_phys(SELF,
-         (void *) pci_attr_r32(devind, PCI_BAR_2), 0x10000)) == MAP_FAILED) {
-               if((e->flash = vm_map_phys(SELF,
-                       (void *) pci_attr_r32(devind, PCI_BAR_2), 0x1000))
-                               == MAP_FAILED) {
-                               panic("e1000: couldn't map in flash.");
-               }
-       }
+        size_t flash_size;
+
+        /* 82566/82567/82562V series support mapping 4kB of flash memory */
+        switch(did)
+        {
+            case E1000_DEV_ID_ICH10_D_BM_LM:
+            case E1000_DEV_ID_ICH10_R_BM_LF:
+                flash_size = 0x1000;
+                break;
+            default:
+                flash_size = 0x10000;
+        }
+
+        if ((e->flash = vm_map_phys(SELF,
+                                    (void *) pci_attr_r32(devind, PCI_BAR_2),
+                                    flash_size)) == MAP_FAILED) {
+            panic("e1000: couldn't map in flash.");
+        }
 
 	gfpreg = E1000_READ_FLASH_REG(e, ICH_FLASH_GFPREG);
         /*

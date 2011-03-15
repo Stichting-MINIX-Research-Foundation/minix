@@ -111,7 +111,7 @@ cards()
     card 6 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
     card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
     card 8 "Intel PRO/1000 Gigabit" 				       \
-           "8086:100E" "8086:107C" "8086:10CD" "8086:10D3"
+           "8086:100E" "8086:107C" "8086:10CD" "8086:10D3" "8086:10DE"
     	
     card 9 "Attansic/Atheros L2 FastEthernet" "1969:2048"
     card 10 "DEC Tulip 21140A in VirtualPC" "1011:0009"
