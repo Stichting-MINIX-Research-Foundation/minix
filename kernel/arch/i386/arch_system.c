@@ -53,6 +53,9 @@ FORWARD _PROTOTYPE( void ser_debug, (int c));
 #ifdef CONFIG_SMP
 FORWARD _PROTOTYPE( void ser_dump_proc_cpu, (void));
 #endif
+#if !CONFIG_OXPCIE
+FORWARD _PROTOTYPE( void ser_init, (void));
+#endif
 
 PUBLIC __dead void arch_monitor(void)
 {
@@ -369,6 +372,10 @@ PUBLIC void arch_init(void)
 	 * configuration does this in smp_init() for all cpus at once
 	 */
 	tss_init(0, get_k_stack_top(0));
+#endif
+
+#if !CONFIG_OXPCIE
+	ser_init();
 #endif
 
 	acpi_init();
@@ -719,3 +726,30 @@ PUBLIC void fpu_sigcontext(struct proc *pr, struct sigframe *fr, struct sigconte
 				  * FPE_INTDIV */
 	}
 }
+
+#if !CONFIG_OXPCIE
+PRIVATE void ser_init(void)
+{
+	unsigned char lcr;
+	unsigned divisor;
+
+	/* keep BIOS settings if cttybaud is not set */
+	if (serial_debug_baud <= 0) return;
+
+	/* set DLAB to make baud accessible */
+	lcr = LCR_8BIT | LCR_1STOP | LCR_NPAR;
+	outb(COM1_LCR, lcr | LCR_DLAB);
+
+	/* set baud rate */
+	divisor = UART_BASE_FREQ / serial_debug_baud;
+	if (divisor < 1) divisor = 1;
+	if (divisor > 65535) divisor = 65535;
+	
+	outb(COM1_DLL, divisor & 0xff);
+	outb(COM1_DLM, (divisor >> 8) & 0xff);
+
+	/* clear DLAB */
+	outb(COM1_LCR, lcr);
+}
+#endif
+

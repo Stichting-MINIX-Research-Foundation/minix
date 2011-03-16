@@ -158,6 +158,7 @@
 #define INVAL_GID	       ((gid_t) -1)	/* invalid gid value */
 
 #define SERVARNAME		"cttyline"
+#define SERBAUDVARNAME		"cttybaud"
 
 /* Bits for the system property flags in boot image processes. */
 #define PROC_FULLVM    0x100    /* VM sets and manages full pagetable */

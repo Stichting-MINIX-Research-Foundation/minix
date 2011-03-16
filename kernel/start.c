@@ -83,9 +83,15 @@ PUBLIC void cstart(
 	system_hz = atoi(value);
   if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
 	system_hz = DEFAULT_HZ;
+
+  /* Intitialize serial debugging */
   value = env_get(SERVARNAME);
-  if(value && atoi(value) == 0)
+  if(value && atoi(value) == 0) {
 	do_serial_debug=1;
+
+  	value = env_get(SERBAUDVARNAME);
+  	if (value) serial_debug_baud = atoi(value);
+  }
 
 #ifdef CONFIG_APIC
   value = env_get("no_apic");
