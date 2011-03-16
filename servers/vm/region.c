@@ -424,7 +424,6 @@ PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
                 if(maxv <= minv) {
                         printf("region_find_slot: minv 0x%lx and bytes 0x%lx\n",
                                 minv, length);
-			map_printmap(vmp);
                         return SLOT_FAIL;
                 }
         }
@@ -472,7 +471,6 @@ PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
 	if(!foundflag) {
 		printf("VM: region_find_slot: no 0x%lx bytes found for %d between 0x%lx and 0x%lx\n",
 			length, vmp->vm_endpoint, minv, maxv);
-		map_printmap(vmp);
 		return SLOT_FAIL;
 	}
 
@@ -1699,8 +1697,6 @@ PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 		return OK;
 	}
 
-	map_printmap(vmp);
-
 	return ENOMEM;
 }
 
@@ -1838,8 +1834,6 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 	assert(!(size % VM_PAGE_SIZE));
 	startv = region_find_slot(dvmp, dst_addr, VM_DATATOP, size);
 	if (startv == SLOT_FAIL) {
-		printf("map_remap: search 0x%lx...\n", dst_addr);
-		map_printmap(dvmp);
 		return ENOMEM;
 	}
 	/* when the user specifies the address, we cannot change it */
