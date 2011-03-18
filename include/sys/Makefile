@@ -8,8 +8,7 @@ INCS=	asynchio.h dir.h file.h  \
 	select.h sem.h shm.h sigcontext.h signal.h socket.h \
 	soundcard.h statfs.h statvfs.h stat.h svrctl.h timeb.h \
 	time.h times.h types.h ucontext.h ucred.h uio.h un.h \
-	utsname.h video.h vm.h wait.h cdefs.h null.h poll.h \
-	elf32.h elf64.h elf_common.h elf_generic.h
+	utsname.h video.h vm.h wait.h cdefs.h null.h poll.h
 
 .include "../../common/include/sys/Makefile.inc"
 .include "../../common/include/sys/Makefile.mount.inc"
