@@ -1,0 +1,5 @@
+#	$NetBSD: shlib_version,v 1.2 2005/07/21 22:49:16 rpaulo Exp $
+#	Remember to update distrib/sets/lists/base/md.i386 when changing
+#
+major=0
+minor=1

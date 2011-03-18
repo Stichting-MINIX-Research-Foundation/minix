@@ -1,0 +1,123 @@
+.\" Copyright (c) 1985, 1991 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
+.\"	$NetBSD: lgamma.3,v 1.21 2003/08/07 16:44:48 agc Exp $
+.\"
+.Dd December 3, 1992
+.Dt LGAMMA 3
+.Os
+.Sh NAME
+.Nm lgamma ,
+.Nm lgammaf ,
+.Nm lgamma_r ,
+.Nm lgammaf_r ,
+.Nm gamma ,
+.Nm gammaf ,
+.Nm gamma_r ,
+.Nm gammaf_r
+.Nd log gamma function
+.Sh LIBRARY
+.Lb libm
+.Sh SYNOPSIS
+.In math.h
+.Ft extern int
+.Fa signgam ;
+.sp
+.Ft double
+.Fn lgamma "double x"
+.Ft float
+.Fn lgammaf "float x"
+.Ft double
+.Fn lgamma_r "double x" "int *sign"
+.Ft float
+.Fn lgammaf_r "float x" "int *sign"
+.Ft double
+.Fn gamma "double x"
+.Ft float
+.Fn gammaf "float x"
+.Ft double
+.Fn gamma_r "double x" "int *sign"
+.Ft float
+.Fn gammaf_r "float x" "int *sign"
+.Sh DESCRIPTION
+.Fn lgamma x
+.if t \{\
+returns ln\||\(*G(x)| where
+.Bd -unfilled -offset indent
+\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x \*[Gt] 0 and
+.br
+\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x \*[Lt] 1.
+.Ed
+.\}
+.if n \
+returns ln\||\(*G(x)|.
+.Pp
+The external integer
+.Fa signgam
+returns the sign of \(*G(x).
+.Pp
+.Fn lgamma_r
+is a reentrant interface that performs identically to
+.Fn lgamma ,
+differing in that the sign of \(*G(x) is stored in the location
+pointed to by the
+.Fa sign
+argument and
+.Fa signgam
+is not modified.
+.Sh IDIOSYNCRASIES
+Do not use the expression
+.Dq Li signgam\(**exp(lgamma(x))
+to compute g := \(*G(x).
+Instead use a program like this (in C):
+.Bd -literal -offset indent
+lg = lgamma(x); g = signgam\(**exp(lg);
+.Ed
+.Pp
+Only after
+.Fn lgamma
+has returned can signgam be correct.
+.Sh RETURN VALUES
+.Fn lgamma
+returns appropriate values unless an argument is out of range.
+Overflow will occur for sufficiently large positive values, and
+non-positive integers.
+On the
+.Tn VAX ,
+the reserved operator is returned,
+and
+.Va errno
+is set to
+.Er ERANGE .
+.Sh SEE ALSO
+.Xr math 3
+.Sh HISTORY
+The
+.Nm lgamma
+function appeared in
+.Bx 4.3 .

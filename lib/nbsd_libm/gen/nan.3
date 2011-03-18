@@ -1,0 +1,95 @@
+.\"	$NetBSD: nan.3,v 1.3 2010/12/17 23:57:07 njoly Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 15, 2006
+.Dt NAN 3
+.Os
+.Sh NAME
+.Nm nan ,
+.Nm nanf ,
+.Nm nanl
+.Nd return quiet NaN
+.Sh LIBRARY
+.Lb libm
+.Sh SYNOPSIS
+.In math.h
+.Ft double
+.Fn nan "const char *tagp"
+.Ft float
+.Fn nanf "const char *tagp"
+.Ft long double
+.Fn nanl "const char *tagp"
+.Sh DESCRIPTION
+The call
+.Fn nan "\*qn-char-sequence\*q"
+is equivalent to the call
+.Fn strod "\*qNAN(n-char-sequence)\*q" "NULL" .
+The call
+.Fn nan "\*q\*q"
+is equivalent to the call
+.Fn strod "\*qNAN()\*q" "NULL" .
+.Pp
+The
+.Fn nanf
+and
+.Fn nanl
+functions are equivalent to
+.Fn nan
+but substituting
+.Fn strtof
+and
+.Fn strtod ,
+respectively.
+.Sh RETURN VALUES
+.Ss IEEE 754
+The
+.Fn nan ,
+.Fn nanf ,
+and
+.Fn nanl
+functions return a quiet NaN as specified by
+.Fa tagp .
+.Ss VAX
+The
+.Fn nan ,
+.Fn nanf ,
+and
+.Fn nanl
+functions return zero.
+.Sh SEE ALSO
+.Xr math 3 ,
+.Xr strtod 3
+.Sh STANDARDS
+The
+.Fn nan ,
+.Fn nanf ,
+and
+.Fn nanl
+functions conform to
+.St -isoC-99 .
