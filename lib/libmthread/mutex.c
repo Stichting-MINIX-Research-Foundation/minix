@@ -3,8 +3,13 @@
 #include "proto.h"
 
 PRIVATE struct __mthread_mutex *vm_front, *vm_rear;
+#ifdef MTHREAD_STRICT
 FORWARD _PROTOTYPE( void mthread_mutex_add, (mthread_mutex_t *m)	);
 FORWARD _PROTOTYPE( void mthread_mutex_remove, (mthread_mutex_t *m)	);
+#else
+# define mthread_mutex_add(m)		((*m)->mm_magic = MTHREAD_INIT_MAGIC)
+# define mthread_mutex_remove(m)	((*m)->mm_magic = MTHREAD_NOT_INUSE)
+#endif
 
 /*===========================================================================*
  *				mthread_init_valid_mutexes			     *
@@ -19,6 +24,7 @@ PUBLIC void mthread_init_valid_mutexes(void)
 /*===========================================================================*
  *				mthread_mutex_add			     *
  *===========================================================================*/
+#ifdef MTHREAD_STRICT
 PRIVATE void mthread_mutex_add(m) 
 mthread_mutex_t *m;
 {
@@ -26,16 +32,16 @@ mthread_mutex_t *m;
 
   if (vm_front == NULL) {	/* Empty list */
   	vm_front = *m;
-  	(*m)->prev = NULL;
+  	(*m)->mm_prev = NULL;
   } else {
-  	vm_rear->next = *m;
-  	(*m)->prev = vm_rear;
+  	vm_rear->mm_next = *m;
+  	(*m)->mm_prev = vm_rear;
   }
 
-  (*m)->next = NULL;
+  (*m)->mm_next = NULL;
   vm_rear = *m;
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_mutex_destroy			     *
@@ -58,8 +64,7 @@ mthread_mutex_t *mutex;
   if (!mthread_mutex_valid(mutex)) {
   	errno = EINVAL;
   	return(-1);
-  } else if ((*mutex)->owner != NO_THREAD) {
-  	printf("mutex owner is %d, so not destroying\n", (*mutex)->owner);
+  } else if ((*mutex)->mm_owner != NO_THREAD) {
   	errno = EBUSY;
   	return(-1);
   }
@@ -68,7 +73,7 @@ mthread_mutex_t *mutex;
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
 	if (tcb->m_state == MS_CONDITION) {
-		if (tcb->m_cond != NULL && tcb->m_cond->mutex == *mutex) {
+		if (tcb->m_cond != NULL && tcb->m_cond->mc_mutex == *mutex) {
 			errno = EBUSY;
 			return(-1);
 		}
@@ -103,16 +108,20 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
   } else if (mattr != NULL) {
   	errno = ENOSYS;
   	return(-1);
-  } else if (mthread_mutex_valid(mutex)) {
+  } 
+#ifdef MTHREAD_STRICT
+  else if (mthread_mutex_valid(mutex)) {
   	errno = EBUSY;
   	return(-1);
   }
-
-  if ((m = malloc(sizeof(struct __mthread_mutex))) == NULL)
+#endif
+  else if ((m = malloc(sizeof(struct __mthread_mutex))) == NULL) {
+  	errno = ENOMEM;
   	return(-1);
+  }
 
-  mthread_queue_init( &(m->queue) );
-  m->owner = NO_THREAD;
+  mthread_queue_init(&m->mm_queue);
+  m->mm_owner = NO_THREAD;
   *mutex = (mthread_mutex_t) m;
   mthread_mutex_add(mutex); /* Validate mutex; mutex now in use */
 
@@ -122,10 +131,8 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 /*===========================================================================*
  *				mthread_mutex_lock			     *
  *===========================================================================*/
-PUBLIC int mthread_mutex_lock_f(mutex, file, line)
+PUBLIC int mthread_mutex_lock(mutex)
 mthread_mutex_t *mutex;	/* Mutex that is to be locked */
-char file[NAME_MAX + 1];
-int line;
 {
 /* Try to lock this mutex. If already locked, append the current thread to
  * FIFO queue associated with this mutex and suspend the thread. */
@@ -143,17 +150,17 @@ int line;
   if (!mthread_mutex_valid(&m)) {
   	errno = EINVAL;
   	return(-1);
-  } else if (m->owner == NO_THREAD) { /* Not locked */
-	m->owner = current_thread;
+  } else if (m->mm_owner == NO_THREAD) { /* Not locked */
+	m->mm_owner = current_thread;
 	if (current_thread == MAIN_THREAD)
 		mthread_debug("MAIN_THREAD now mutex owner\n");
-  } else if (m->owner == current_thread) {
+  } else if (m->mm_owner == current_thread) {
   	errno = EDEADLK;
   	return(-1);
   } else {
-	mthread_queue_add( &(m->queue), current_thread);
-	if (m->owner == MAIN_THREAD)
-		mthread_dump_queue(&(m->queue));
+	mthread_queue_add(&m->mm_queue, current_thread);
+	if (m->mm_owner == MAIN_THREAD)
+		mthread_dump_queue(&m->mm_queue);
 	mthread_suspend(MS_MUTEX);
   }
 
@@ -165,22 +172,23 @@ int line;
 /*===========================================================================*
  *				mthread_mutex_remove			     *
  *===========================================================================*/
+#ifdef MTHREAD_STRICT
 PRIVATE void mthread_mutex_remove(m)
 mthread_mutex_t *m;
 {
 /* Remove mutex from list of valid, initialized mutexes */
 
-  if ((*m)->prev == NULL)
-  	vm_front = (*m)->next;
+  if ((*m)->mm_prev == NULL)
+  	vm_front = (*m)->mm_next;
   else
-  	(*m)->prev->next = (*m)->next;
+  	(*m)->mm_prev->mm_next = (*m)->mm_next;
 
-  if ((*m)->next == NULL)
-  	vm_rear = (*m)->prev;
+  if ((*m)->mm_next == NULL)
+  	vm_rear = (*m)->mm_prev;
   else
-  	(*m)->next->prev = (*m)->prev;
+  	(*m)->mm_next->mm_prev = (*m)->mm_prev;
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_mutex_trylock			     *
@@ -203,8 +211,8 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
   if (!mthread_mutex_valid(&m)) {
   	errno = EINVAL;
   	return(-1);
-  } else if (m->owner == NO_THREAD) {
-	m->owner = current_thread;
+  } else if (m->mm_owner == NO_THREAD) {
+	m->mm_owner = current_thread;
 	return(0);
   } 
 
@@ -235,13 +243,13 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
   if (!mthread_mutex_valid(&m)) {
 	errno = EINVAL;
 	return(-1);
-  } else if (m->owner != current_thread) {
+  } else if (m->mm_owner != current_thread) {
   	errno = EPERM;
   	return(-1); /* Can't unlock a mutex locked by another thread. */
   }
 
-  m->owner = mthread_queue_remove( &(m->queue) );
-  if (m->owner != NO_THREAD) mthread_unsuspend(m->owner);
+  m->mm_owner = mthread_queue_remove(&m->mm_queue);
+  if (m->mm_owner != NO_THREAD) mthread_unsuspend(m->mm_owner);
   return(0);
 }
 
@@ -249,6 +257,7 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
 /*===========================================================================*
  *				mthread_mutex_valid			     *
  *===========================================================================*/
+#ifdef MTHREAD_STRICT
 PUBLIC int mthread_mutex_valid(m)
 mthread_mutex_t *m;
 {
@@ -263,12 +272,12 @@ mthread_mutex_t *m;
   	if (loopitem == *m) 
   		return(1);
 
-  	loopitem = loopitem->next;
+  	loopitem = loopitem->mm_next;
   }
 
   return(0);
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_mutex_verify			     *
@@ -285,7 +294,7 @@ PUBLIC int mthread_mutex_verify(void)
   loopitem = vm_front;
 
   while (loopitem != NULL) {
-  	printf("mutex corruption: owner: %d\n", loopitem->owner);
+  	printf("mutex corruption: owner: %d\n", loopitem->mm_owner);
   	loopitem = loopitem->next;
   	r = 0;
   }

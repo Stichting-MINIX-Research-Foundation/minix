@@ -100,11 +100,11 @@ mthread_thread_t detach;
   if (tcb->m_state == MS_DEAD) {
   	errno = ESRCH;
   	return(-1);
-  } else if (tcb->m_attr.a_detachstate != MTHREAD_CREATE_DETACHED) {
+  } else if (tcb->m_attr.ma_detachstate != MTHREAD_CREATE_DETACHED) {
   	if (tcb->m_state == MS_EXITING) 
   		mthread_thread_stop(detach);
   	else 
-		tcb->m_attr.a_detachstate = MTHREAD_CREATE_DETACHED;
+		tcb->m_attr.ma_detachstate = MTHREAD_CREATE_DETACHED;
   }
 
   return(0);
@@ -138,7 +138,7 @@ void *value;
   tcb->m_result = value;
   tcb->m_state = MS_EXITING;
 
-  if (tcb->m_attr.a_detachstate == MTHREAD_CREATE_DETACHED) {
+  if (tcb->m_attr.ma_detachstate == MTHREAD_CREATE_DETACHED) {
 	mthread_thread_stop(current_thread);
   } else {
   	/* Joinable thread; notify possibly waiting thread */
@@ -283,7 +283,7 @@ PUBLIC void mthread_init(void)
   				 * not enter this clause.
   				 */
 
-  	if (getcontext(&(mainthread.m_context)) == -1)
+  	if (mthread_getcontext(&(mainthread.m_context)) == -1)
   		mthread_panic("Couldn't save state for main thread");
   	current_thread = MAIN_THREAD;
 
@@ -293,7 +293,7 @@ PUBLIC void mthread_init(void)
 	mthread_init_scheduler();
 
 	/* Initialize the fallback thread */
-	if (getcontext(FALLBACK_CTX) == -1)
+	if (mthread_getcontext(FALLBACK_CTX) == -1)
 		mthread_panic("Could not initialize fallback thread");
 	FALLBACK_CTX->uc_link = &(mainthread.m_context);
 	FALLBACK_CTX->uc_stack.ss_sp = fallback_stack;
@@ -331,7 +331,7 @@ void **value;
   if (tcb->m_state == MS_DEAD) {
   	errno = ESRCH;
   	return(-1);
-  } else if (tcb->m_attr.a_detachstate == MTHREAD_CREATE_DETACHED) {
+  } else if (tcb->m_attr.ma_detachstate == MTHREAD_CREATE_DETACHED) {
 	errno = EINVAL;
 	return(-1);
   }
@@ -445,11 +445,11 @@ void *arg;
   tcb->m_context.uc_link = FALLBACK_CTX;
 
   /* then construct this thread's context to run procedure proc. */
-  if (getcontext(&(tcb->m_context)) == -1)
+  if (mthread_getcontext(&(tcb->m_context)) == -1)
   	mthread_panic("Failed to initialize context state");
 
-  stacksize = tcb->m_attr.a_stacksize;
-  stackaddr = tcb->m_attr.a_stackaddr;
+  stacksize = tcb->m_attr.ma_stacksize;
+  stackaddr = tcb->m_attr.ma_stackaddr;
 
   if (stacksize == (size_t) 0)
 	stacksize = (size_t) MTHREAD_STACK_MIN;
@@ -488,9 +488,10 @@ mthread_thread_t thread;
   rt->m_arg = NULL;
   rt->m_result = NULL;
   rt->m_cond = NULL;
-  if (rt->m_context.uc_stack.ss_sp)
+  if (rt->m_context.uc_stack.ss_sp) {
   	free(rt->m_context.uc_stack.ss_sp); /* Free allocated stack */
-  rt->m_context.uc_stack.ss_sp = NULL;
+  	rt->m_context.uc_stack.ss_sp = NULL;
+  }
   rt->m_context.uc_stack.ss_size = 0;
   rt->m_context.uc_link = NULL;
 }

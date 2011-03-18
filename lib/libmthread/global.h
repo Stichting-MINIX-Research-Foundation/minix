@@ -12,6 +12,8 @@
 #define MAIN_THREAD -1
 #define NO_THREAD -2
 #define isokthreadid(i)	(i == MAIN_THREAD || (i >= 0 && i < no_threads))
+#define MTHREAD_INIT_MAGIC 0xca11ab1e
+#define MTHREAD_NOT_INUSE  0xdefec7
 
 typedef enum {
   MS_CONDITION, MS_DEAD, MS_EXITING, MS_FALLBACK_EXITING, MS_MUTEX, MS_RUNNABLE

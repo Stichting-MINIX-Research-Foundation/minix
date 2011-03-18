@@ -3,9 +3,15 @@
 #include "proto.h"
 
 PRIVATE struct __mthread_cond *vc_front, *vc_rear;
+#ifdef MTHREAD_STRICT
 FORWARD _PROTOTYPE( void mthread_cond_add, (mthread_cond_t *c)		);
 FORWARD _PROTOTYPE( void mthread_cond_remove, (mthread_cond_t *c)	);
 FORWARD _PROTOTYPE( int mthread_cond_valid, (mthread_cond_t *c)	);
+#else
+# define mthread_cond_add(c)		((*c)->mc_magic = MTHREAD_INIT_MAGIC)
+# define mthread_cond_remove(c)		((*c)->mc_magic = MTHREAD_NOT_INUSE)
+# define mthread_cond_valid(c)		((*c)->mc_magic == MTHREAD_INIT_MAGIC)
+#endif
 #define MAIN_COND mainthread.m_cond
 
 /*===========================================================================*
@@ -21,6 +27,7 @@ PUBLIC void mthread_init_valid_conditions(void)
 /*===========================================================================*
  *				mthread_cond_add			     *
  *===========================================================================*/
+#ifdef MTHREAD_STRICT
 PRIVATE void mthread_cond_add(c) 
 mthread_cond_t *c;
 {
@@ -28,16 +35,16 @@ mthread_cond_t *c;
 
   if (vc_front == NULL) {	/* Empty list */
   	vc_front = *c;
-  	(*c)->prev = NULL;
+  	(*c)->mc_prev = NULL;
   } else {
-  	vc_rear->next = *c;
-  	(*c)->prev = vc_rear;
+  	vc_rear->mc_next = *c;
+  	(*c)->mc_prev = vc_rear;
   }
 
-  (*c)->next = NULL;
+  (*c)->mc_next = NULL;
   vc_rear = *c;
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_cond_broadcast			     *
@@ -51,12 +58,10 @@ mthread_cond_t *cond;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if(cond == NULL) {
+  if (cond == NULL) {
   	errno = EINVAL;
   	return(-1);
-  }
-
-  if (!mthread_cond_valid(cond)) {
+  } else if (!mthread_cond_valid(cond)) {
   	errno = EINVAL;
   	return(-1);
   }
@@ -90,9 +95,7 @@ mthread_cond_t *cond;
   if (cond == NULL) { 
   	errno = EINVAL;
   	return(-1);
-  } 
-
-  if (!mthread_cond_valid(cond)) {
+  } else if (!mthread_cond_valid(cond)) {
   	errno = EINVAL;
   	return(-1);
   }
@@ -106,7 +109,7 @@ mthread_cond_t *cond;
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if(tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
+	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
 		errno = EBUSY;
 		return(-1);
 	}
@@ -140,17 +143,19 @@ mthread_condattr_t *cattr;
   	errno = ENOSYS;
   	return(-1);
   }
-
-  if (mthread_cond_valid(cond)) {
+#ifdef MTHREAD_STRICT
+  else if (mthread_cond_valid(cond)) {
 	/* Already initialized */
   	errno = EBUSY;
   	return(-1);
-  } 
-
-  if ((c = malloc(sizeof(struct __mthread_cond))) == NULL)
+  }
+#endif
+  else if ((c = malloc(sizeof(struct __mthread_cond))) == NULL) {
+  	errno = ENOMEM;
   	return(-1);
+  }
 
-  c->mutex = NULL;
+  c->mc_mutex = NULL;
   *cond = (mthread_cond_t) c;
   mthread_cond_add(cond);
 
@@ -161,23 +166,24 @@ mthread_condattr_t *cattr;
 /*===========================================================================*
  *				mthread_cond_remove			     *
  *===========================================================================*/
+#ifdef MTHREAD_STRICT
 PRIVATE void mthread_cond_remove(c)
 mthread_cond_t *c;
 {
 /* Remove condition from list of valid, initialized conditions */
 
-  if ((*c)->prev == NULL)
-  	vc_front = (*c)->next;
+  if ((*c)->mc_prev == NULL)
+  	vc_front = (*c)->mc_next;
   else
-  	(*c)->prev->next = (*c)->next;
+  	(*c)->mc_prev->mc_next = (*c)->mc_next;
 
-  if ((*c)->next == NULL)
-  	vc_rear = (*c)->prev;
+  if ((*c)->mc_next == NULL)
+  	vc_rear = (*c)->mc_prev;
   else
-  	(*c)->next->prev = (*c)->prev;
+  	(*c)->mc_next->mc_prev = (*c)->mc_prev;
 
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_cond_signal			     *
@@ -191,12 +197,10 @@ mthread_cond_t *cond;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if(cond == NULL) {
+  if (cond == NULL) {
 	errno = EINVAL;
 	return(-1);
-  }
-
-  if (!mthread_cond_valid(cond)) {
+  } else if (!mthread_cond_valid(cond)) {
 	errno = EINVAL;
 	return(-1);
   }
@@ -207,7 +211,7 @@ mthread_cond_t *cond;
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if(tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
+	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
 		mthread_unsuspend(t);
 		break;
 	}
@@ -220,11 +224,14 @@ mthread_cond_t *cond;
 /*===========================================================================*
  *				mthread_cond_valid			     *
  *===========================================================================*/
+#ifdef MTHREAD_STRICT
 PRIVATE int mthread_cond_valid(c)
 mthread_cond_t *c;
 {
 /* Check to see if cond is on the list of valid conditions */
   struct __mthread_cond *loopitem;
+
+  mthread_init();
 
   loopitem = vc_front;
 
@@ -232,12 +239,12 @@ mthread_cond_t *c;
   	if (loopitem == *c)
   		return(1);
 
-  	loopitem = loopitem->next;
+  	loopitem = loopitem->mc_next;
   }
 
   return(0);
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_cond_verify			     *
@@ -281,7 +288,7 @@ mthread_mutex_t *mutex;
 	return(-1);
   }
 
-  c->mutex = m;	/* Remember we're using this mutex in a cond_wait */
+  c->mc_mutex = m;	/* Remember we're using this mutex in a cond_wait */
   if (mthread_mutex_unlock(mutex) != 0) /* Fails when we're not the owner */
   	return(-1);
 
@@ -290,7 +297,7 @@ mthread_mutex_t *mutex;
   mthread_suspend(MS_CONDITION);
 
   /* When execution returns here, the condition was met. Lock mutex again. */
-  c->mutex = NULL;				/* Forget about this mutex */
+  c->mc_mutex = NULL;				/* Forget about this mutex */
   tcb->m_cond = NULL;				/* ... and condition var */
   if (mthread_mutex_lock(mutex) != 0)
   	return(-1);

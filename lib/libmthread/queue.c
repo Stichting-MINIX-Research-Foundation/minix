@@ -21,10 +21,10 @@ mthread_thread_t thread;
   last = mthread_find_tcb(thread);
 
   if (mthread_queue_isempty(queue)) {
-  	queue->head = queue->tail = last;
+  	queue->mq_head = queue->mq_tail = last;
   } else  {
-	queue->tail->m_next = last;
-	queue->tail = last;	/* 'last' is the new last in line */
+	queue->mq_tail->m_next = last;
+	queue->mq_tail = last;	/* 'last' is the new last in line */
   }
 }
 
@@ -37,7 +37,7 @@ mthread_queue_t *queue;		/* Queue that has to be initialized */
 {
 /* Initialize queue to a known state */
 
-  queue->head = queue->tail = NULL;
+  queue->mq_head = queue->mq_tail = NULL;
 }
 
 
@@ -47,7 +47,7 @@ mthread_queue_t *queue;		/* Queue that has to be initialized */
 PUBLIC int mthread_queue_isempty(queue)
 mthread_queue_t *queue;
 {
-  return(queue->head == NULL);
+  return(queue->mq_head == NULL);
 }
 
 
@@ -64,8 +64,8 @@ mthread_queue_t *queue;
 #ifdef MDEBUG
   printf("Dumping queue: ");
 #endif
-  if(queue->head != NULL) {
-  	t = queue->head;
+  if(queue->mq_head != NULL) {
+  	t = queue->mq_head;
 	if (t == &mainthread) tid = MAIN_THREAD;
 	else tid = t->m_tid;
 #ifdef MDEBUG
@@ -106,18 +106,18 @@ mthread_queue_t *queue;		/* Queue we want a thread from */
   mthread_tcb_t *tcb;
 
   /* Calculate thread id from queue head */
-  if (queue->head == NULL) thread = NO_THREAD;
-  else if (queue->head == &mainthread) thread = MAIN_THREAD;
-  else thread = (queue->head->m_tid);
+  if (queue->mq_head == NULL) thread = NO_THREAD;
+  else if (queue->mq_head == &mainthread) thread = MAIN_THREAD;
+  else thread = (queue->mq_head->m_tid);
 
   if (thread != NO_THREAD) { /* i.e., this queue is not empty */
-  	tcb = queue->head;
-	if (queue->head == queue->tail) {
+  	tcb = queue->mq_head;
+	if (queue->mq_head == queue->mq_tail) {
 		/* Queue holds only one thread */
-		queue->head = queue->tail = NULL; /* So mark thread empty */
+		queue->mq_head = queue->mq_tail = NULL; /* So mark thread empty */
 	} else {
 		/* Second thread in line is the new first */
-		queue->head = queue->head->m_next;
+		queue->mq_head = queue->mq_head->m_next;
 	}
 
 	tcb->m_next = NULL; /* This thread is no longer part of a queue */

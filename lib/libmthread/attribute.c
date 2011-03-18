@@ -27,13 +27,13 @@ mthread_attr_t *a;
 
   if (va_front == NULL) {	/* Empty list */
   	va_front = *a;
-  	(*a)->prev = NULL;
+  	(*a)->ma_prev = NULL;
   } else {
-  	va_rear->next = *a;
-  	(*a)->prev = va_rear;
+  	va_rear->ma_next = *a;
+  	(*a)->ma_prev = va_rear;
   }
 
-  (*a)->next = NULL;
+  (*a)->ma_next = NULL;
   va_rear = *a;
 }
 
@@ -89,9 +89,9 @@ mthread_attr_t *attr;	/* Attribute */
   if ((a = malloc(sizeof(struct __mthread_attr))) == NULL)
   	return(-1);
 
-  a->a_detachstate = MTHREAD_CREATE_JOINABLE;
-  a->a_stackaddr = NULL;
-  a->a_stacksize = (size_t) 0;
+  a->ma_detachstate = MTHREAD_CREATE_JOINABLE;
+  a->ma_stackaddr = NULL;
+  a->ma_stacksize = (size_t) 0;
 
   *attr = (mthread_attr_t) a;
   mthread_attr_add(attr); /* Validate attribute: attribute now in use */
@@ -122,7 +122,7 @@ int *detachstate;
   	return(-1);
   }
 
-  *detachstate = a->a_detachstate;
+  *detachstate = a->ma_detachstate;
 
   return(0);
 }
@@ -155,7 +155,7 @@ int detachstate;
 	return(-1);
   }
 
-  a->a_detachstate = detachstate;
+  a->ma_detachstate = detachstate;
 
   return(0);
 }
@@ -185,8 +185,8 @@ size_t *stacksize;
   	return(-1);
   } 
 
-  *stackaddr = a->a_stackaddr;
-  *stacksize = a->a_stacksize;
+  *stackaddr = a->ma_stackaddr;
+  *stacksize = a->ma_stacksize;
 
   return(0);
 }
@@ -215,7 +215,7 @@ size_t *stacksize;
   	return(-1);
   } 
 
-  *stacksize = a->a_stacksize;
+  *stacksize = a->ma_stacksize;
 
   return(0);
 }
@@ -249,8 +249,8 @@ size_t stacksize;
    * the cost of some memory if needed).
    */
 
-  a->a_stackaddr = stackaddr;
-  a->a_stacksize = stacksize;
+  a->ma_stackaddr = stackaddr;
+  a->ma_stacksize = stacksize;
 
   return(0);
 }
@@ -279,7 +279,7 @@ size_t stacksize;
   	return(-1);
   } 
 
-  a->a_stacksize = stacksize;
+  a->ma_stacksize = stacksize;
 
   return(0);
 }
@@ -293,15 +293,15 @@ mthread_attr_t *a;
 {
 /* Remove attribute from list of valid, initialized attributes */
 
-  if ((*a)->prev == NULL)
-  	va_front = (*a)->next;
+  if ((*a)->ma_prev == NULL)
+  	va_front = (*a)->ma_next;
   else
-  	(*a)->prev->next = (*a)->next;
+  	(*a)->ma_prev->ma_next = (*a)->ma_next;
 
-  if ((*a)->next == NULL)
-  	va_rear = (*a)->prev;
+  if ((*a)->ma_next == NULL)
+  	va_rear = (*a)->ma_prev;
   else
-  	(*a)->next->prev = (*a)->prev;
+  	(*a)->ma_next->ma_prev = (*a)->ma_prev;
 }
 
 
@@ -322,7 +322,7 @@ mthread_attr_t *a;
   	if (loopitem == *a) 
   		return(1);
 
-  	loopitem = loopitem->next;
+  	loopitem = loopitem->ma_next;
   }
 
   return(0);
@@ -343,7 +343,7 @@ PUBLIC int mthread_attr_verify(void)
   loopitem = va_front;
 
   while (loopitem != NULL) {
-  	loopitem = loopitem->next;
+  	loopitem = loopitem->ma_next;
   	return(0);
   }
 

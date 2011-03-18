@@ -55,11 +55,9 @@ PUBLIC void mthread_schedule(void)
 	/* We're running the last runnable spawned thread. Return to main
 	 * thread as there is no work left.
 	 */
-	running_main_thread = 1;
 	current_thread = MAIN_THREAD;
   } else {
 	current_thread = mthread_queue_remove(&run_queue);
-	running_main_thread = 0;	/* Running thread after swap */
   }
 
   /* Find thread entries in tcb... */
@@ -69,6 +67,9 @@ PUBLIC void mthread_schedule(void)
   /* ...and subsequently their contexts */
   new_ctx = &(new_tcb->m_context);
   old_ctx = &(old_tcb->m_context);
+
+  /* Are we running the 'main' thread after swap? */
+  running_main_thread = (current_thread == MAIN_THREAD);
 
   if (swapcontext(old_ctx, new_ctx) == -1)
 	mthread_panic("Could not swap context");
@@ -156,10 +157,7 @@ PUBLIC int mthread_yield(void)
   if (mthread_queue_isempty(&run_queue)) {	/* No point in yielding. */
   	return(-1);
   } else if (current_thread == NO_THREAD) {
-  	/* Can't yield this thread, but still give other threads a chance to
-  	 * run.
-  	 */
-  	mthread_schedule();
+  	/* Can't yield this thread */
   	return(-1);
   }
 

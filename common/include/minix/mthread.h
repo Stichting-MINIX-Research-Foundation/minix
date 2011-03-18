@@ -24,31 +24,33 @@ typedef void * mthread_mutexattr_t;
 
 struct __mthread_tcb;
 typedef struct {
-  struct __mthread_tcb *head;
-  struct __mthread_tcb *tail;
+  struct __mthread_tcb *mq_head;
+  struct __mthread_tcb *mq_tail;
 } mthread_queue_t;
 
 struct __mthread_mutex {
-  mthread_queue_t queue;	/* Queue of threads blocked on this mutex */
-  mthread_thread_t owner;	/* Thread ID that currently owns mutex */
-  struct __mthread_mutex *prev;
-  struct __mthread_mutex *next;
+  mthread_queue_t mm_queue;	/* Queue of threads blocked on this mutex */
+  mthread_thread_t mm_owner;	/* Thread ID that currently owns mutex */
+  struct __mthread_mutex *mm_prev;
+  struct __mthread_mutex *mm_next;
+  unsigned int mm_magic;
 };
 typedef struct __mthread_mutex *mthread_mutex_t;
 
 struct __mthread_cond {
-  struct __mthread_mutex *mutex;	/* Associate mutex with condition */
-  struct __mthread_cond *prev;
-  struct __mthread_cond *next;
+  struct __mthread_mutex *mc_mutex;	/* Associate mutex with condition */
+  struct __mthread_cond *mc_prev;
+  struct __mthread_cond *mc_next;
+  unsigned int mc_magic;
 };
 typedef struct __mthread_cond *mthread_cond_t;
 
 struct __mthread_attr {
-  size_t a_stacksize;
-  char *a_stackaddr;
-  int a_detachstate;
-  struct __mthread_attr *prev;
-  struct __mthread_attr *next;
+  size_t ma_stacksize;
+  char *ma_stackaddr;
+  int ma_detachstate;
+  struct __mthread_attr *ma_prev;
+  struct __mthread_attr *ma_next;
 }; 
 typedef struct __mthread_attr *mthread_attr_t;
 
@@ -106,12 +108,7 @@ _PROTOTYPE( void mthread_verify_f, (char *f, int l)					);
 _PROTOTYPE( int mthread_mutex_destroy, (mthread_mutex_t *mutex)	);
 _PROTOTYPE( int mthread_mutex_init, (mthread_mutex_t *mutex,
 				     mthread_mutexattr_t *mattr)	);
-#if 0
 _PROTOTYPE( int mthread_mutex_lock, (mthread_mutex_t *mutex)		);
-#endif
-_PROTOTYPE( int mthread_mutex_lock_f, (mthread_mutex_t *mutex,
-					char *file, int line)		);
-#define mthread_mutex_lock(x) mthread_mutex_lock_f(x, __FILE__, __LINE__)
 _PROTOTYPE( int mthread_mutex_trylock, (mthread_mutex_t *mutex)	);
 _PROTOTYPE( int mthread_mutex_unlock, (mthread_mutex_t *mutex)	);
 

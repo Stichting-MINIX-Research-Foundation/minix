@@ -26,7 +26,13 @@ _PROTOTYPE( void mthread_debug_f, (const char *file, int line,
 
 /* mutex.c */
 _PROTOTYPE( void mthread_init_valid_mutexes, (void)			);
+
+#ifdef MTHREAD_STRICT
 _PROTOTYPE( int mthread_mutex_valid, (mthread_mutex_t *mutex)		);
+#else
+# define mthread_mutex_valid(x) ((*x)->mm_magic == MTHREAD_INIT_MAGIC)
+#endif
+
 #ifdef MDEBUG
 _PROTOTYPE( int mthread_mutex_verify, (void)				);
 #endif

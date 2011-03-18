@@ -222,12 +222,16 @@ PRIVATE void mutex_a(void *arg)
   /* Trying to acquire lock again should fail with EDEADLK */
   if (mthread_mutex_lock(&mu[0]) != -1) err(3, 2);
   if (errno != EDEADLK) err(3, 3);
-
+  
+#ifdef MTHREAD_STRICT 
   /* Try to acquire lock on uninitialized mutex; should fail with EINVAL */
+  /* Note: this check only works when libmthread is compiled with
+   * MTHREAD_STRICT turned on. In POSIX this situation is a MAY fail if... */
   if (mthread_mutex_lock(&mu2) != -1) {
   	err(3, 4);
   	mthread_mutex_unlock(&mu2);
   }
+
   if (errno != EINVAL) err(3, 5); 
   errno = 0;
   if (mthread_mutex_trylock(&mu2) != -1) {
@@ -235,6 +239,7 @@ PRIVATE void mutex_a(void *arg)
   	mthread_mutex_unlock(&mu2);
   }
   if (errno != EINVAL) err(3, 7); 
+#endif
 
   if (mthread_mutex_trylock(&mu[1]) != 0) err(3, 8);
   mutex_a_step = 1;
@@ -502,8 +507,12 @@ PRIVATE void test_condition(void)
   if (mthread_mutex_destroy(condition_mutex) != 0) err(8, 8);
   if (mthread_cond_destroy(&condition) != 0) err(8, 9);
 
+#ifdef MTHREAD_STRICT
   /* Let's try to destroy it again. Should fails as it's uninitialized. */
+  /* Note: this only works when libmthread is compiled with MTHREAD_STRICT. In
+   * POSIX this situation is a MAY fail if... */
   if (mthread_cond_destroy(&condition) == 0) err(8, 10); 
+#endif
 
 #ifdef MDEBUG
   mthread_verify();
@@ -538,8 +547,11 @@ PRIVATE void test_condition(void)
   if (mthread_mutex_destroy(condition_mutex) != 0) err(8, 21);
   if (mthread_cond_destroy(&condition) != 0) err(8, 22); 
 
+#ifdef MTHREAD_STRICT 
   /* Again, destroying the condition variable twice shouldn't work */
+  /* See previous note about MTHREAD_STRICT */
   if (mthread_cond_destroy(&condition) == 0) err(8, 23); 
+#endif
 
 #ifdef MDEBUG
   mthread_verify();
