@@ -1,6 +1,6 @@
 diff -ru /home/netbsd/src/include/Makefile ./Makefile
 --- /home/netbsd/src/include/Makefile	2010-08-01 03:01:48.000000000 +0000
-+++ ./Makefile	2011-02-21 16:03:25.000000000 +0000
++++ ./Makefile	2038-01-19 03:14:07.000000000 +0000
 @@ -7,6 +7,24 @@
  
  # Missing: mp.h
@@ -65,7 +65,7 @@ diff -ru /home/netbsd/src/include/Makefile ./Makefile
  .include <bsd.subdir.mk>
 diff -ru /home/netbsd/src/include/dirent.h ./dirent.h
 --- /home/netbsd/src/include/dirent.h	2010-09-26 03:01:02.000000000 +0000
-+++ ./dirent.h	2011-02-24 09:08:12.000000000 +0000
++++ ./dirent.h	2038-01-19 03:14:07.000000000 +0000
 @@ -43,16 +43,20 @@
   */
  #include <sys/dirent.h>
@@ -89,7 +89,7 @@ diff -ru /home/netbsd/src/include/dirent.h ./dirent.h
  struct _dirdesc {
 diff -ru /home/netbsd/src/include/fts.h ./fts.h
 --- /home/netbsd/src/include/fts.h	2009-08-19 20:23:46.000000000 +0000
-+++ ./fts.h	2011-02-21 16:03:25.000000000 +0000
++++ ./fts.h	2038-01-19 03:14:07.000000000 +0000
 @@ -75,7 +75,9 @@
  #define	FTS_PHYSICAL	0x010		/* physical walk */
  #define	FTS_SEEDOT	0x020		/* return dot and dot-dot */
@@ -102,7 +102,7 @@ diff -ru /home/netbsd/src/include/fts.h ./fts.h
  #define	FTS_NAMEONLY	0x100		/* (private) child names only */
 diff -ru /home/netbsd/src/include/limits.h ./limits.h
 --- /home/netbsd/src/include/limits.h	2010-06-08 03:01:32.000000000 +0000
-+++ ./limits.h	2011-03-04 11:24:14.000000000 +0000
++++ ./limits.h	2038-01-19 03:14:07.000000000 +0000
 @@ -113,4 +113,9 @@
  #include <machine/limits.h>
  #include <sys/syslimits.h>
@@ -115,7 +115,7 @@ diff -ru /home/netbsd/src/include/limits.h ./limits.h
  #endif /* !_LIMITS_H_ */
 diff -ru /home/netbsd/src/include/paths.h ./paths.h
 --- /home/netbsd/src/include/paths.h	2010-12-30 03:02:34.000000000 +0000
-+++ ./paths.h	2011-02-21 16:03:25.000000000 +0000
++++ ./paths.h	2038-01-19 03:14:07.000000000 +0000
 @@ -124,5 +124,9 @@
  #define	_PATH_VI	"/usr/bin/vi"
  #endif
@@ -128,7 +128,7 @@ diff -ru /home/netbsd/src/include/paths.h ./paths.h
  
 diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
 --- /home/netbsd/src/include/rpc/Makefile	2003-01-11 13:28:43.000000000 +0000
-+++ ./rpc/Makefile	2011-02-21 16:03:24.000000000 +0000
++++ ./rpc/Makefile	2038-01-19 03:14:07.000000000 +0000
 @@ -7,7 +7,11 @@
  	svc.h svc_auth.h svc_soc.h types.h xdr.h
  RPC_INCS=	rpcb_prot.h
@@ -143,7 +143,7 @@ diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
  .include <bsd.prog.mk>
 diff -ru /home/netbsd/src/include/sched.h ./sched.h
 --- /home/netbsd/src/include/sched.h	2009-01-11 03:05:43.000000000 +0000
-+++ ./sched.h	2011-02-21 16:03:25.000000000 +0000
++++ ./sched.h	2038-01-19 03:14:07.000000000 +0000
 @@ -29,6 +29,9 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
@@ -156,7 +156,7 @@ diff -ru /home/netbsd/src/include/sched.h ./sched.h
  
 diff -ru /home/netbsd/src/include/signal.h ./signal.h
 --- /home/netbsd/src/include/signal.h	2010-08-28 03:00:54.000000000 +0000
-+++ ./signal.h	2011-02-21 16:03:25.000000000 +0000
++++ ./signal.h	2038-01-19 03:14:07.000000000 +0000
 @@ -62,6 +62,7 @@
  int	__libc_sigaction14(int, const struct sigaction * __restrict,
  	    struct sigaction * __restrict);
@@ -222,7 +222,7 @@ diff -ru /home/netbsd/src/include/signal.h ./signal.h
  #endif /* _NETBSD_SOURCE */
 diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
 --- /home/netbsd/src/include/stdio.h	2010-09-25 03:01:11.000000000 +0000
-+++ ./stdio.h	2011-02-21 16:03:25.000000000 +0000
++++ ./stdio.h	2038-01-19 03:14:07.000000000 +0000
 @@ -274,7 +274,7 @@
  		__printflike(2, 0);
  #endif
@@ -234,7 +234,7 @@ diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
  int	 rename (const char *, const char *);
 diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
 --- /home/netbsd/src/include/stdlib.h	2010-12-23 03:03:09.000000000 +0000
-+++ ./stdlib.h	2011-02-24 02:42:48.000000000 +0000
++++ ./stdlib.h	2038-01-19 03:14:07.000000000 +0000
 @@ -265,9 +265,11 @@
  void	 csetexpandtc(int);
  
@@ -259,7 +259,7 @@ diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
  int	 getenv_r(const char *, char *, size_t);
 diff -ru /home/netbsd/src/include/time.h ./time.h
 --- /home/netbsd/src/include/time.h	2010-12-17 03:01:54.000000000 +0000
-+++ ./time.h	2011-03-02 07:10:52.000000000 +0000
++++ ./time.h	2038-01-19 03:14:07.000000000 +0000
 @@ -65,12 +65,18 @@
  #undef	_BSD_CLOCKID_T_
  #endif
@@ -333,7 +333,7 @@ diff -ru /home/netbsd/src/include/time.h ./time.h
  #endif /* !_TIME_H_ */
 diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
 --- /home/netbsd/src/include/unistd.h	2011-01-20 03:02:09.000000000 +0000
-+++ ./unistd.h	2011-03-03 15:29:11.000000000 +0000
++++ ./unistd.h	2011-03-07 11:01:50.000000000 +0000
 @@ -88,7 +88,7 @@
  int	 access(const char *, int);
  unsigned int alarm(unsigned int);
@@ -470,9 +470,20 @@ diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
  int	 syscall(int, ...);
  quad_t	 __syscall(quad_t, ...);
  int	 undelete(const char *);
+@@ -364,4 +394,10 @@
+ #endif
+ 
+ __END_DECLS
++
++#ifdef __minix
++/* Minix expects RBT_* flags to be included with <unistd.h> */
++#include <sys/reboot.h>
++#endif
++
+ #endif /* !_UNISTD_H_ */
 diff -ru /home/netbsd/src/include/utmp.h ./utmp.h
 --- /home/netbsd/src/include/utmp.h	2009-01-11 03:05:43.000000000 +0000
-+++ ./utmp.h	2011-03-01 12:59:49.000000000 +0000
++++ ./utmp.h	2038-01-19 03:14:07.000000000 +0000
 @@ -39,12 +39,26 @@
  #ifndef	_UTMP_H_
  #define	_UTMP_H_

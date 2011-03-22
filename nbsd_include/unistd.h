@@ -394,4 +394,10 @@ extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
 __END_DECLS
+
+#ifdef __minix
+/* Minix expects RBT_* flags to be included with <unistd.h> */
+#include <sys/reboot.h>
+#endif
+
 #endif /* !_UNISTD_H_ */
