@@ -66,8 +66,6 @@ drivers/printer/printer
 drivers/random/random
 drivers/rtl8139/rtl8139
 drivers/rtl8169/rtl8169
-drivers/sb16/sb16_dsp
-drivers/sb16/sb16_mixer
 drivers/ti1225/ti1225
 drivers/tty/tty
 	);
