@@ -1275,7 +1275,7 @@ unsigned nr_req;		/* length of request vector */
 					(vir_bytes)(dma_buf+dma_buf_offset),
 					n, D);
 				   if (s != OK) {
-						panic("w_transfer: sys_vircopy failed: %d", 						s);
+					panic("w_transfer: sys_safecopy failed: %d", s);
 				   }
 				} else {
 				   memcpy((char *) iov->iov_addr + addr_offset,
@@ -1625,7 +1625,7 @@ int *do_copyoutp;
 					addr_offset, (vir_bytes)dma_buf+offset,
 					n, D);
 				  if (r != OK) { 
-					panic("setup_dma: sys_vircopy failed: %d", r);
+					panic("setup_dma: sys_safecopy failed: %d", r);
 				  }
 				} else {
 				  memcpy(dma_buf + offset,

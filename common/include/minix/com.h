@@ -134,12 +134,6 @@
 #define BUSC_PCI_IDS		(BUSC_RQ_BASE + 4)	/* Get vid/did from an
 							 * index
 							 */
-#define BUSC_PCI_DEV_NAME	(BUSC_RQ_BASE + 5)	/* Get the name of a
-							 * PCI device
-							 */
-#define BUSC_PCI_SLOT_NAME	(BUSC_RQ_BASE + 6)	/* Get the name of a
-							 * PCI slot
-							 */
 #define BUSC_PCI_RESERVE	(BUSC_RQ_BASE + 7)	/* Reserve a PCI dev */
 #define BUSC_PCI_ATTR_R8	(BUSC_RQ_BASE + 8)	/* Read 8-bit
 							 * attribute value

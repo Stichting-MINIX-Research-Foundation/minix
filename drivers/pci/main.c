@@ -11,7 +11,6 @@ FORWARD _PROTOTYPE( void do_first_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_next_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_find_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_ids, (message *mp)				);
-FORWARD _PROTOTYPE( void do_dev_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_dev_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_set_acl, (message *mp)			);
@@ -65,7 +64,6 @@ int main(void)
 		case BUSC_PCI_NEXT_DEV: do_next_dev(&m); break;
 		case BUSC_PCI_FIND_DEV: do_find_dev(&m); break;
 		case BUSC_PCI_IDS: do_ids(&m); break;
-		case BUSC_PCI_DEV_NAME: do_dev_name(&m); break;
 		case BUSC_PCI_RESERVE: do_reserve(&m); break;
 		case BUSC_PCI_ATTR_R8: do_attr_r8(&m); break;
 		case BUSC_PCI_ATTR_R16: do_attr_r16(&m); break;
@@ -220,43 +218,6 @@ message *mp;
 	if (r != 0)
 	{
 		printf("PCI: do_ids: unable to send to %d: %d\n",
-			mp->m_source, r);
-	}
-}
-
-PRIVATE void do_dev_name(mp)
-message *mp;
-{
-	int r, name_len, len;
-	u16_t vid, did;
-	char *name_ptr, *name;
-
-	vid= mp->m1_i1;
-	did= mp->m1_i2;
-	name_len= mp->m1_i3;
-	name_ptr= mp->m1_p1;
-
-	name= pci_dev_name(vid, did);
-	if (name == NULL)
-	{
-		/* No name */
-		r= ENOENT;
-	}
-	else
-	{
-		len= strlen(name)+1;
-		if (len > name_len)
-			len= name_len;
-		printf("PCI: pci`do_dev_name: calling do_vircopy\n");
-		r= sys_vircopy(SELF, D, (vir_bytes)name, mp->m_source, D,
-			(vir_bytes)name_ptr, len);
-	}
-
-	mp->m_type= r;
-	r= send(mp->m_source, mp);
-	if (r != 0)
-	{
-		printf("PCI: do_dev_name: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }

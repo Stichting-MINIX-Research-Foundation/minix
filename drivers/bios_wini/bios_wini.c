@@ -324,7 +324,7 @@ unsigned nr_req;		/* length of request vector */
 				       	chunk, D);
 
 				if (r != OK)
-					panic("sys_vircopy failed: %d", r);
+					panic("sys_safecopy failed: %d", r);
 			} else {
 				memcpy((char *) iop->iov_addr,
 					bios_buf_v+count, chunk);

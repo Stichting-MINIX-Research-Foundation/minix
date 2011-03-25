@@ -98,15 +98,13 @@ PRIVATE int port_base;		/* I/O port for printer */
 PRIVATE int proc_nr;		/* user requesting the printing */
 PRIVATE cp_grant_id_t grant_nr;	/* grant on which print happens */
 PRIVATE int user_left;		/* bytes of output left in user buf */
-PRIVATE vir_bytes user_vir_g;	/* start of user buf (address or grant) */
 PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
-PRIVATE int user_safe;		/* address or grant? */
 PUBLIC int writing;		/* nonzero while write is in progress */
 PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
 
 FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( void output_done, (void) );
-FORWARD _PROTOTYPE( void do_write, (message *m_ptr, int safe) );
+FORWARD _PROTOTYPE( void do_write, (message *m_ptr) );
 FORWARD _PROTOTYPE( void do_status, (message *m_ptr) );
 FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
@@ -157,7 +155,7 @@ PUBLIC int main(int argc, char *argv[])
 	    case DEV_CLOSE:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, OK);
 		break;
-	    case DEV_WRITE_S:	do_write(&pr_mess, 1);	break;
+	    case DEV_WRITE_S:	do_write(&pr_mess);	break;
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;
 	    default:
@@ -203,9 +201,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PRIVATE void do_write(m_ptr, safe)
+PRIVATE void do_write(m_ptr)
 register message *m_ptr;	/* pointer to the newly arrived message */
-int safe;			/* use virtual addresses or grant id's? */
 {
 /* The printer is used by sending DEV_WRITE messages to it. Process one. */
 
@@ -230,11 +227,9 @@ int safe;			/* use virtual addresses or grant id's? */
 	proc_nr = m_ptr->IO_ENDPT;
 	user_left = m_ptr->COUNT;
 	orig_count = m_ptr->COUNT;
-	user_vir_g = (vir_bytes) m_ptr->ADDRESS; /* Address or grant id. */
-	user_vir_d = 0;				 /* Offset. */
-	user_safe = safe;			 /* Address or grant? */
+	user_vir_d = 0;				 	/* Offset. */
 	writing = TRUE;
-	grant_nr = safe ? (cp_grant_id_t) m_ptr->ADDRESS : GRANT_INVALID;
+	grant_nr = (cp_grant_id_t) m_ptr->IO_GRANT;
 
         retries = MAX_ONLINE_RETRIES + 1;  
         while (--retries > 0) {
@@ -397,12 +392,9 @@ PRIVATE void prepare_output()
   register int chunk;
 
   if ( (chunk = user_left) > sizeof obuf) chunk = sizeof obuf;
-  if(user_safe) {
-    s=sys_safecopyfrom(proc_nr, user_vir_g, user_vir_d,
-    (vir_bytes) obuf, chunk, D);
-  } else {
-    s=sys_datacopy(proc_nr, user_vir_g, SELF, (vir_bytes) obuf, chunk);
-  }
+
+  s=sys_safecopyfrom(proc_nr, grant_nr, user_vir_d, (vir_bytes) obuf,
+	chunk, D);
 
   if(s != OK) {
   	done_status = EFAULT;
