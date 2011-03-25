@@ -190,8 +190,8 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 
 		/* likely error: get_block() failed */
 		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, errno);
-		return errno;
+				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+		return rc;
 	}
 
 	/* Process the response */
@@ -375,8 +375,7 @@ PRIVATE int uds_perform_read(int minor, endpoint_t m_source,
 	if (!(uds_fd_table[minor].mode & S_IRUSR)) {
 
 		/* socket is shutdown for reading */
-		errno = EPIPE;
-		return -1;
+		return EPIPE;
 	}
 
 	if (uds_fd_table[minor].size == 0) {
@@ -509,15 +508,13 @@ PRIVATE int uds_perform_write(int minor, endpoint_t m_source,
 	if (!(uds_fd_table[minor].mode & S_IWUSR)) {
 
 		/* socket is shutdown for writing */
-		errno = EPIPE;
-		return -1;
+		return EPIPE;
 	}
 
 	if (size > PIPE_BUF) {
 
 		/* message is too big to ever write to the PIPE */
-		errno = EMSGSIZE;
-		return -1;
+		return EMSGSIZE;
 	}
 
 	if (uds_fd_table[minor].type == SOCK_STREAM ||
@@ -530,12 +527,10 @@ PRIVATE int uds_perform_write(int minor, endpoint_t m_source,
 			if (uds_fd_table[minor].err == ECONNRESET) {
 
 				uds_fd_table[minor].err = 0;
-				errno = ECONNRESET;
+				return ECONNRESET;
 			} else {
-				errno = ENOTCONN;
+				return ENOTCONN;
 			}
-
-			return -1;
 		} else {
 
 			peer = uds_fd_table[minor].peer;
@@ -562,8 +557,7 @@ PRIVATE int uds_perform_write(int minor, endpoint_t m_source,
 		}
 
 		if (peer == -1) {
-			errno = ENOENT;
-			return -1;
+			return ENOENT;
 		}
 	}
 
@@ -704,23 +698,12 @@ PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 	bytes = uds_perform_read(minor, dev_m_in->m_source,
 					uds_fd_table[minor].io_gr_size, 0);
 
-	if (bytes == -1) {
+	uds_set_reply(dev_m_out, TASK_REPLY,
+			uds_fd_table[minor].endpoint, 
+			uds_fd_table[minor].io_gr,
+			bytes);
 
-		uds_set_reply(dev_m_out, TASK_REPLY,
-				uds_fd_table[minor].endpoint, 
-				uds_fd_table[minor].io_gr,
-				errno);
-
-		return errno;
-	} else {
-
-		uds_set_reply(dev_m_out, TASK_REPLY, 
-				uds_fd_table[minor].endpoint, 
-				uds_fd_table[minor].io_gr,
-				bytes);
-
-		return bytes;
-	}
+	return bytes;
 }
 
 PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
@@ -767,29 +750,17 @@ PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 	bytes = uds_perform_write(minor, dev_m_in->m_source,
 					uds_fd_table[minor].io_gr_size, 0);
 
-	if (bytes == -1) {
+	uds_set_reply(dev_m_out, TASK_REPLY, 
+			uds_fd_table[minor].endpoint, 
+			uds_fd_table[minor].io_gr,
+			bytes);
 
-		uds_set_reply(dev_m_out, TASK_REPLY, 
-				uds_fd_table[minor].endpoint, 
-				uds_fd_table[minor].io_gr,
-				errno);
-
-		return errno;
-
-	} else {
-
-		uds_set_reply(dev_m_out, TASK_REPLY, 
-				uds_fd_table[minor].endpoint, 
-				uds_fd_table[minor].io_gr,
-				bytes);
-
-		return bytes;
-	}
+	return bytes;
 }
 
 PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 {
-	int minor;
+	int rc, minor;
 
 #if DEBUG == 1
 	static int call_count = 0;
@@ -828,103 +799,141 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 		case NWIOSUDSCONN:
 
 			/* connect to a listening socket -- connect() */
-			return do_connect(dev_m_in, dev_m_out);
+			rc = do_connect(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSACCEPT:
 
 			/* accept an incoming connection -- accept() */
-			return do_accept(dev_m_in, dev_m_out);
+			rc = do_accept(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSBLOG:
 
 			/* set the backlog_size and put the socket into the
 			 * listening state -- listen()
 			 */
-			return do_listen(dev_m_in, dev_m_out);
+			rc = do_listen(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSTYPE:
 
 			/* set the type for this socket (i.e. 
 			 * SOCK_STREAM, SOCK_DGRAM, etc) -- socket()
 			 */
-			return do_socket(dev_m_in, dev_m_out);
+			rc = do_socket(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSADDR:
 
 			/* set the address for this socket -- bind() */
-			return do_bind(dev_m_in, dev_m_out);
+			rc = do_bind(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSADDR:
 
 			/* get the address for this socket -- getsockname() */
-			return do_getsockname(dev_m_in, dev_m_out);
+			rc = do_getsockname(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSPADDR:
 
 			/* get the address for the peer -- getpeername() */
-			return do_getpeername(dev_m_in, dev_m_out);
+			rc = do_getpeername(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSSHUT:
 
 			/* shutdown a socket for reading, writing, or 
 			 * both -- shutdown()
 			 */
-			return do_shutdown(dev_m_in, dev_m_out);
+			rc = do_shutdown(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSPAIR:
 
 			/* connect two sockets -- socketpair() */
-			return do_socketpair(dev_m_in, dev_m_out);
+			rc = do_socketpair(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSSOTYPE:
 
 			/* get socket type -- getsockopt(SO_TYPE) */
-			return do_getsockopt_sotype(dev_m_in, dev_m_out);
+			rc = do_getsockopt_sotype(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSPEERCRED:
 
 			/* get peer endpoint -- getsockopt(SO_PEERCRED) */
-			return do_getsockopt_peercred(dev_m_in, dev_m_out);
+			rc = do_getsockopt_peercred(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSTADDR:
 
 			/* set target address -- sendto() */
-			return do_sendto(dev_m_in, dev_m_out);
+			rc = do_sendto(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSFADDR:
 
 			/* get from address -- recvfrom() */
-			return do_recvfrom(dev_m_in, dev_m_out);
+			rc = do_recvfrom(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSSNDBUF:
 
 			/* get the send buffer size -- getsockopt(SO_SNDBUF) */
-			return do_getsockopt_sndbuf(dev_m_in, dev_m_out);
+			rc = do_getsockopt_sndbuf(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSSNDBUF:
 
 			/* set the send buffer size -- setsockopt(SO_SNDBUF) */
-			return do_setsockopt_sndbuf(dev_m_in, dev_m_out);
+			rc = do_setsockopt_sndbuf(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSRCVBUF:
 
 			/* get the send buffer size -- getsockopt(SO_SNDBUF) */
-			return do_getsockopt_rcvbuf(dev_m_in, dev_m_out);
+			rc = do_getsockopt_rcvbuf(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSRCVBUF:
 
 			/* set the send buffer size -- setsockopt(SO_SNDBUF) */
-			return do_setsockopt_rcvbuf(dev_m_in, dev_m_out);
+			rc = do_setsockopt_rcvbuf(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOSUDSCTRL:
 
 			/* set the control data -- sendmsg() */
-			return do_sendmsg(dev_m_in, dev_m_out);
+			rc = do_sendmsg(dev_m_in, dev_m_out);
+
+			break;
 
 		case NWIOGUDSCTRL:
 
 			/* set the control data -- recvmsg() */
-			return do_recvmsg(dev_m_in, dev_m_out);
+			rc = do_recvmsg(dev_m_in, dev_m_out);
+
+			break;
 
 		default:
 
@@ -934,14 +943,17 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 			 * IOCTLs. Any not for us simply get a EBADIOCTL
 			 * response.
 			 */
-			uds_fd_table[minor].syscall_done = 1;
-			uds_set_reply(dev_m_out, TASK_REPLY,
-					dev_m_in->IO_ENDPT, 
-					(cp_grant_id_t) dev_m_in->IO_GRANT,
-					EBADIOCTL);
 
-			return EBADIOCTL;
+			rc = EBADIOCTL;
 	}
+
+	if (rc != SUSPEND)
+		uds_fd_table[minor].syscall_done = 1;
+
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
+
+	return rc;
 }
 
 PUBLIC int uds_status(message *dev_m_in, message *dev_m_out)
@@ -985,36 +997,25 @@ PUBLIC int uds_status(message *dev_m_in, message *dev_m_out)
 						uds_fd_table[i].io_gr_size,
 						0);
 
-					if (bytes == -1) {
-
-						uds_set_reply(dev_m_out,
-						DEV_REVIVE, 
-						uds_fd_table[i].endpoint,
-						uds_fd_table[i].io_gr,
-						errno);
-
-						return errno;
-
-					} else if (bytes == SUSPEND) {
+					if (bytes == SUSPEND) {
 
 						dev_m_out->m_type =
 							DEV_NO_STATUS;
 
 						return OK;
 
-					} else  {
+					}
 
-						uds_fd_table[i].suspended =
-							UDS_NOT_SUSPENDED;
+					uds_fd_table[i].suspended =
+						UDS_NOT_SUSPENDED;
 
-						uds_set_reply(dev_m_out,
+					uds_set_reply(dev_m_out,
 						DEV_REVIVE, 
 						uds_fd_table[i].endpoint,
 						uds_fd_table[i].io_gr,
 						bytes);
 
-						return bytes;
-					}
+					return bytes;
 
 				case UDS_SUSPENDED_WRITE:
 
@@ -1023,36 +1024,25 @@ PUBLIC int uds_status(message *dev_m_in, message *dev_m_out)
 						uds_fd_table[i].io_gr_size,
 						0);
 
-					if (bytes == -1) {
-
-						uds_set_reply(dev_m_out,
-						DEV_REVIVE, 
-						uds_fd_table[i].endpoint,
-						uds_fd_table[i].io_gr,
-						errno);
-
-						return errno;
-
-					} else if (bytes == SUSPEND) {
+					if (bytes == SUSPEND) {
 
 						dev_m_out->m_type =
 							DEV_NO_STATUS;
 
 						return OK;
 
-					} else  {
+					}
 
-						uds_fd_table[i].suspended =
-							UDS_NOT_SUSPENDED;
+					uds_fd_table[i].suspended =
+						UDS_NOT_SUSPENDED;
 
-						uds_set_reply(dev_m_out, 
+					uds_set_reply(dev_m_out, 
 						DEV_REVIVE, 
 						uds_fd_table[i].endpoint,
 						uds_fd_table[i].io_gr,
 						bytes);
 
-						return bytes;
-					}
+					return bytes;
 
 				case UDS_SUSPENDED_CONNECT:
 				case UDS_SUSPENDED_ACCEPT:

@@ -77,7 +77,7 @@ PRIVATE int check_perms(int minor, struct sockaddr_un *addr)
                 printf("(uds) sendrec error... req_nr: %d err: %d\n",  
 			vfs_m.m_type, rc);
 
-			return EIO;
+		return EIO;
 	}
 
 #if DEBUG == 1
@@ -109,7 +109,7 @@ PRIVATE filp_id_t verify_fd(endpoint_t ep, int fd)
 	if (OK != rc) {
                 printf("(uds) sendrec error... req_nr: %d err: %d\n",  
 			vfs_m.m_type, rc);
-			return NULL;;
+		return NULL;
 	}
 
 #if DEBUG == 1
@@ -138,7 +138,7 @@ PRIVATE int set_filp(filp_id_t sfilp)
 	if (OK != rc) {
                 printf("(uds) sendrec error... req_nr: %d err: %d\n",  
 			vfs_m.m_type, rc);
-			return EIO;
+		return EIO;
 	}
 
 #if DEBUG == 1
@@ -168,7 +168,7 @@ PRIVATE int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 	if (OK != rc) {
                 printf("(uds) sendrec error... req_nr: %d err: %d\n",  
 			vfs_m.m_type, rc);
-			return EIO;
+		return EIO;
 	}
 
 #if DEBUG == 1
@@ -196,7 +196,7 @@ PRIVATE int put_filp(filp_id_t pfilp)
 	if (OK != rc) {
                 printf("(uds) sendrec error... req_nr: %d err: %d\n",  
 			vfs_m.m_type, rc);
-			return EIO;
+		return EIO;
 	}
 
 #if DEBUG == 1
@@ -225,7 +225,7 @@ PRIVATE int cancel_fd(endpoint_t ep, int fd)
 	if (OK != rc) {
                 printf("(uds) sendrec error... req_nr: %d err: %d\n",  
 			vfs_m.m_type, rc);
-			return EIO;
+		return EIO;
 	}
 
 #if DEBUG == 1
@@ -256,9 +256,6 @@ PUBLIC int perform_connection(message *dev_m_in, message *dev_m_out,
 		uds_fd_table[minorx].type != uds_fd_table[minory].type) {
 
 		/* sockets are not in a valid state */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -269,9 +266,6 @@ PUBLIC int perform_connection(message *dev_m_in, message *dev_m_out,
 	/* Set the address of both sockets */
 	memcpy(&(uds_fd_table[minorx].addr), addr, sizeof(struct sockaddr_un));
 	memcpy(&(uds_fd_table[minory].addr), addr, sizeof(struct sockaddr_un));
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 
 	return OK;
 }
@@ -303,13 +297,7 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 	minor = uds_minor(dev_m_in);
 
 	if (uds_fd_table[minor].type != -1) {
-
 		/* this IOCTL must be called on a 'fresh' socket */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			 (cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -319,12 +307,6 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 		D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
@@ -345,16 +327,9 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 	}
 
 	if (rc == -1) {
-
 		/* there is no server listening on addr. Maybe someone 
 		 * screwed up the ioctl()?
 		 */
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT, 
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -390,9 +365,6 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 		 */
 		uds_fd_table[minor].suspended = UDS_SUSPENDED_ACCEPT;
 
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, SUSPEND);
-
 		return SUSPEND;
 	}
 
@@ -407,10 +379,7 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 		printf("(uds) [%d] {do_accept} connection not performed\n",
 								minor);
 #endif
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, errno);
-
-		return errno;
+		return rc;
 	}
 
 	uds_fd_table[minorparent].child = -1;
@@ -424,11 +393,6 @@ PUBLIC int do_accept(message *dev_m_in, message *dev_m_out)
 		uds_fd_table[minorpeer].ready_to_revive = 1;
 		notify(dev_m_in->m_source);
 	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT, 
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 
 	return OK;
 }
@@ -450,23 +414,11 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 	/* only connection oriented sockets can connect */
 	if (uds_fd_table[minor].type != SOCK_STREAM &&
 			uds_fd_table[minor].type != SOCK_SEQPACKET) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
 	if (uds_fd_table[minor].peer != -1) {
-
 		/* socket is already connected */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, EISCONN);
-
 		return EISCONN;
 	}
 
@@ -475,24 +427,12 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 				sizeof(struct sockaddr_un), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
 	rc = check_perms(minor, &addr);
 	if (rc != OK) {
-
 		/* permission denied, socket file doesn't exist, etc. */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
-
 		return rc;
 	}
 
@@ -527,26 +467,9 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 					/* wake the parent (server) */
 					uds_fd_table[i].ready_to_revive = 1;
 					notify(dev_m_in->m_source);
-
-					uds_fd_table[minor].syscall_done = 1;
-
-					uds_set_reply(dev_m_out, TASK_REPLY,
-						dev_m_in->IO_ENDPT,
-					(cp_grant_id_t) dev_m_in->IO_GRANT,
-						OK);
-
-					return OK;
-				} else {
-
-					uds_fd_table[minor].syscall_done = 1;
-
-					uds_set_reply(dev_m_out, TASK_REPLY,
-						dev_m_in->IO_ENDPT,
-					(cp_grant_id_t) dev_m_in->IO_GRANT,
-						rc);
-
-					return rc;
 				}
+
+				return rc;
 
 			} else {
 
@@ -617,15 +540,9 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 	}
 
 	if (uds_fd_table[minor].peer == -1) {
-
 		/* could not find another open socket listening on the 
 		 * specified address with room in the backlog
 		 */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, ECONNREFUSED);
-
 		return ECONNREFUSED;
 	}
 
@@ -637,9 +554,6 @@ PUBLIC int do_connect(message *dev_m_in, message *dev_m_out)
 	 */
 
 	uds_fd_table[minor].suspended = UDS_SUSPENDED_CONNECT;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, SUSPEND);
 
 	return SUSPEND;
 }
@@ -663,9 +577,6 @@ PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
 		uds_fd_table[minor].addr.sun_family != AF_UNIX) {
 
 		/* probably trying to call listen() before bind() */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -676,11 +587,6 @@ PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
 			uds_fd_table[minor].type != SOCK_SEQPACKET) {
 
 		/* probably trying to call listen() with a SOCK_DGRAM */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT, 
-			(cp_grant_id_t) dev_m_in->IO_GRANT, EOPNOTSUPP);
-
 		return EOPNOTSUPP;
 	}
 
@@ -690,16 +596,9 @@ PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
 	 * don't allow the backlog to shrink
 	 */
 	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
-		(vir_bytes) 0, (vir_bytes) &backlog_size, sizeof(int), 
-		D);
+		(vir_bytes) 0, (vir_bytes) &backlog_size, sizeof(int), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
@@ -736,11 +635,6 @@ PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
 	/* perform listen(2) */
 	uds_fd_table[minor].listening = 1;
 
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
 	return OK;
 }
 
@@ -759,13 +653,7 @@ PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
 
 	/* see if this socket already has a type */
 	if (uds_fd_table[minor].type != -1) {
-
 		/* socket type can only be set once */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -777,11 +665,6 @@ PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
 	if (rc != OK) {
 
 		/* something went wrong and we couldn't get the type */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
@@ -792,13 +675,6 @@ PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
 		case SOCK_SEQPACKET:
 
 			/* the type is one of the 3 valid socket types */
-			uds_fd_table[minor].syscall_done = 1;
-
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, 
-				OK);
-
 			return OK;
 
 		default:
@@ -810,20 +686,13 @@ PUBLIC int do_socket(message *dev_m_in, message *dev_m_out)
 			/* set the type back to '-1' (no type set) */
 			uds_fd_table[minor].type = -1;
 
-			uds_fd_table[minor].syscall_done = 1;
-
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT,
-				EINVAL);
-
 			return EINVAL;
 	}
 }
 
 PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 {
-	int minor, strlen;
+	int minor;
 	struct sockaddr_un addr;
 	int rc, i;
 
@@ -842,11 +711,6 @@ PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 		/* the type hasn't been set by do_socket() yet OR attempting
 		 * to re-bind() a non-SOCK_DGRAM socket
 		 */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -855,12 +719,6 @@ PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 		D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
@@ -868,35 +726,18 @@ PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 	if (addr.sun_family != AF_UNIX) {
 
 		/* bad family */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT,
-				EAFNOSUPPORT);
-
 		return EAFNOSUPPORT;
 	}
 
 	if (addr.sun_path[0] == '\0') {
 
 		/* bad address */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOENT);
-
 		return ENOENT;
 	}
 
 	rc = check_perms(minor, &addr);
 	if (rc != OK) {
-
 		/* permission denied, socket file doesn't exist, etc. */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
-
 		return rc;
 	}
 
@@ -907,24 +748,12 @@ PUBLIC int do_bind(message *dev_m_in, message *dev_m_out)
 			uds_fd_table[i].addr.sun_path, UNIX_PATH_MAX)) {
 
 			/* another socket is bound to this sun_path */
-			uds_fd_table[minor].syscall_done = 1;
-
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT,
-				EADDRINUSE);
-
 			return EADDRINUSE;
 		}
 	}
 
 	/* looks good, perform the bind() */
 	memcpy(&(uds_fd_table[minor].addr), &addr, sizeof(struct sockaddr_un));
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-			(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 
 	return OK;
 }
@@ -952,22 +781,7 @@ PUBLIC int do_getsockname(message *dev_m_in, message *dev_m_out)
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].addr), 
 		sizeof(struct sockaddr_un), D);
 
-	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
 
 PUBLIC int do_getpeername(message *dev_m_in, message *dev_m_out)
@@ -995,40 +809,15 @@ PUBLIC int do_getpeername(message *dev_m_in, message *dev_m_out)
 			(vir_bytes) &(uds_fd_table[peer_minor].addr),
 			sizeof(struct sockaddr_un), D);
 
-		if (rc != OK) {
-
-			uds_fd_table[minor].syscall_done = 1;
-
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-			return EIO;
-		}
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-		return OK;
+		return rc ? EIO : OK;
 	} else {
-
-		int err;
-
 		if (uds_fd_table[minor].err == ECONNRESET) {
-			err = ECONNRESET;
 			uds_fd_table[minor].err = 0;
+
+			return ECONNRESET;
 		} else {
-			err = ENOTCONN;
+			return ENOTCONN;
 		}
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, err);
-
-		return err;
 	}
 }
 
@@ -1049,31 +838,16 @@ PUBLIC int do_shutdown(message *dev_m_in, message *dev_m_out)
 			uds_fd_table[minor].type != SOCK_SEQPACKET) {
 
 		/* socket must be a connection oriented socket */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
 	if (uds_fd_table[minor].peer == -1) {
-
-		int err;
-
-		if (uds_fd_table[minor].err == ECONNRESET) {
-			err = ECONNRESET;
-		} else {
-			err = ENOTCONN;
-		}
-
 		/* shutdown(2) is only valid for connected sockets */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, err);
-
-		return err;
+		if (uds_fd_table[minor].err == ECONNRESET) {
+			return ECONNRESET;
+		} else {
+			return ENOTCONN;
+		}
 	}
 
 	/* get the 'how' parameter from the process */
@@ -1081,12 +855,6 @@ PUBLIC int do_shutdown(message *dev_m_in, message *dev_m_out)
 			(vir_bytes) 0, (vir_bytes) &how, sizeof(int), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
@@ -1109,22 +877,9 @@ PUBLIC int do_shutdown(message *dev_m_in, message *dev_m_out)
 			break;
 
 		default:
-
 			/* the 'how' parameter is invalid */
-			uds_fd_table[minor].syscall_done = 1;
-
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 			return EINVAL;
 	}
-
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 
 	return OK;
 }
@@ -1150,12 +905,6 @@ PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
 			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(dev_t), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minorx].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
@@ -1171,11 +920,6 @@ PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
 		/* we won't allow you to magically connect your socket to
 		 * someone elses socket
 		 */
-		uds_fd_table[minorx].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EPERM);
-
 		return EPERM;
 	}
 
@@ -1205,11 +949,6 @@ PUBLIC int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out)
 		/* the type hasn't been set yet. instead of returning an
 		 * invalid type, we fail with EINVAL
 		 */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -1217,22 +956,7 @@ PUBLIC int do_getsockopt_sotype(message *dev_m_in, message *dev_m_out)
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].type), 
 		sizeof(int), D);
 
-	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
 
 PUBLIC int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
@@ -1252,21 +976,13 @@ PUBLIC int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 
 	if (uds_fd_table[minor].peer == -1) {
 
-		int err;
-
 		if (uds_fd_table[minor].err == ECONNRESET) {
-			err = ECONNRESET;
 			uds_fd_table[minor].err = 0;
+
+			return ECONNRESET;
 		} else {
-			err = ENOTCONN;
+			return ENOTCONN;
 		}
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, err);
-
-		return err;
 	}
 
 	peer_minor = uds_fd_table[minor].peer;
@@ -1274,35 +990,14 @@ PUBLIC int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 	/* obtain the peer's credentials */
 	rc = getnucred(uds_fd_table[peer_minor].owner, &cred);
 	if (rc == -1) {
-
 		/* likely error: invalid endpoint / proc doesn't exist */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, errno);
-
 		return errno;
 	}
 
 	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
 		(vir_bytes) 0, (vir_bytes) &cred, sizeof(struct ucred), D);
 
-	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
 
 int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out) 
@@ -1323,22 +1018,7 @@ int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 		(vir_bytes) 0, (vir_bytes) &(sndbuf), 
 		sizeof(size_t), D);
 
-	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
 
 int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out) 
@@ -1361,35 +1041,17 @@ int do_setsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 				sizeof(size_t), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
 	if (sndbuf > PIPE_BUF) {
-
 		/* The send buffer is limited to 32K at the moment. */
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOSYS);
-
 		return ENOSYS;
 	}
 
 	/* There is no way to reduce the send buffer, do we have to
 	 * let this call fail for smaller buffers?
 	 */
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
 	return OK;
 }
 
@@ -1411,22 +1073,7 @@ int do_getsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 		(vir_bytes) 0, (vir_bytes) &(rcvbuf), 
 		sizeof(size_t), D);
 
-	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
 
 int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
@@ -1449,35 +1096,17 @@ int do_setsockopt_rcvbuf(message *dev_m_in, message *dev_m_out)
 				sizeof(size_t), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
 	if (rcvbuf > PIPE_BUF) {
-
 		/* The send buffer is limited to 32K at the moment. */
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOSYS);
-
 		return ENOSYS;
 	}
 
 	/* There is no way to reduce the send buffer, do we have to
 	 * let this call fail for smaller buffers?
 	 */
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
 	return OK;
 }
 
@@ -1497,13 +1126,7 @@ PUBLIC int do_sendto(message *dev_m_in, message *dev_m_out)
 	minor = uds_minor(dev_m_in);
 
 	if (uds_fd_table[minor].type != SOCK_DGRAM) {
-
 		/* This IOCTL is only for SOCK_DGRAM sockets */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
@@ -1512,45 +1135,22 @@ PUBLIC int do_sendto(message *dev_m_in, message *dev_m_out)
 		D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
 		return EIO;
 	}
 
 	/* do some basic sanity checks on the address */
 	if (addr.sun_family != AF_UNIX || addr.sun_path[0] == '\0') {
-
 		/* bad address */
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
-
 		return EINVAL;
 	}
 
 	rc = check_perms(minor, &addr);
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
-
 		return rc;
 	}
 
 	memcpy(&(uds_fd_table[minor].target), &addr,
 					sizeof(struct sockaddr_un));
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 
 	return OK;
 }
@@ -1572,22 +1172,7 @@ PUBLIC int do_recvfrom(message *dev_m_in, message *dev_m_out)
 		(vir_bytes) 0, (vir_bytes) &(uds_fd_table[minor].source), 
 		sizeof(struct sockaddr_un), D);
 
-	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
 
 int msg_control_read(struct msg_control *msg_ctrl, struct ancillary *data,
@@ -1771,7 +1356,6 @@ PRIVATE int recv_fds(int minor, struct ancillary *data,
 PRIVATE int recv_cred(int minor, struct ancillary *data,
 					struct msg_control *msg_ctrl)
 {
-	int rc, i;
 	struct msghdr msghdr;
 	struct cmsghdr *cmsg;
 
@@ -1817,9 +1401,6 @@ PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
 					sizeof(struct msg_control), D);
 
 	if (rc != OK) {
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
 		return EIO;
 	}
 
@@ -1829,11 +1410,6 @@ PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
 		if (uds_fd_table[minor].target.sun_path[0] == '\0' ||
 			uds_fd_table[minor].target.sun_family != AF_UNIX) {
 
-			uds_fd_table[minor].syscall_done = 1;
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT,
-				EDESTADDRREQ);
 			return EDESTADDRREQ;
 		}
 
@@ -1853,19 +1429,11 @@ PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
 		}
 
 		if (peer == -1) {
-			uds_fd_table[minor].syscall_done = 1;
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOENT);
 			return ENOENT;
 		}
 	} else {
 		peer = uds_fd_table[minor].peer;
 		if (peer == -1) {
-			uds_fd_table[minor].syscall_done = 1;
-			uds_set_reply(dev_m_out, TASK_REPLY,
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, ENOTCONN);
 			return ENOTCONN;
 		}
 	}
@@ -1881,24 +1449,10 @@ PUBLIC int do_sendmsg(message *dev_m_in, message *dev_m_out)
 	rc = msg_control_read(&msg_ctrl, &uds_fd_table[peer].ancillary_data, 
 								minor);
 	if (rc != OK) {
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 		return rc;
 	}
 
-	rc = send_fds(minor, &uds_fd_table[peer].ancillary_data);
-	if (rc != OK) {
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
-		return rc;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-	return OK;
+	return send_fds(minor, &uds_fd_table[peer].ancillary_data);
 }
 
 PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
@@ -1936,10 +1490,6 @@ PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
 					sizeof(struct msg_control), D);
 
 	if (rc != OK) {
-
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
 		return EIO;
 	}
 
@@ -1955,18 +1505,11 @@ PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
 				CMSG_LEN(sizeof(struct ucred));
 
 	if (controllen_needed > controllen_avail) {
-
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EOVERFLOW);
 		return EOVERFLOW;
 	}
 
 	rc = recv_fds(minor, &uds_fd_table[minor].ancillary_data, &msg_ctrl);
 	if (rc != OK) {
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 		return rc;
 	}
 
@@ -1974,10 +1517,6 @@ PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
 		rc = recv_cred(minor, &uds_fd_table[minor].ancillary_data,
 								&msg_ctrl);
 		if (rc != OK) {
-			uds_fd_table[minor].syscall_done = 1;
-			uds_set_reply(dev_m_out, TASK_REPLY, 
-				dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 			return rc;
 		}
 	}
@@ -1987,16 +1526,5 @@ PUBLIC int do_recvmsg(message *dev_m_in, message *dev_m_out)
 		(vir_bytes) 0, (vir_bytes) &msg_ctrl, 
 		sizeof(struct msg_control), D);
 
-	if (rc != OK) {
-		uds_fd_table[minor].syscall_done = 1;
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, EIO);
-		return EIO;
-	}
-
-	uds_fd_table[minor].syscall_done = 1;
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
-				(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
-
-	return OK;
+	return rc ? EIO : OK;
 }
