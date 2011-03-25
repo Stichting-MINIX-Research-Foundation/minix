@@ -440,7 +440,6 @@ PRIVATE void init_root()
   struct vnode *root_node;
   struct dmap *dp;
   char *label;
-  message m;
   struct node_details res;
   
   /* Open the root device. */

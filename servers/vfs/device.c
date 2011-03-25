@@ -20,6 +20,7 @@
 #include "fs.h"
 #include <fcntl.h>
 #include <assert.h>
+#include <sys/stat.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
@@ -851,36 +852,59 @@ PUBLIC void dev_up(int maj)
    * checks if any filesystems are mounted on it, and if so,
    * dev_open()s them so the filesystem can be reused.
   */
-  int r, new_driver_e, needs_reopen, fd_nr;
+  int r, new_driver_e, needs_reopen, fd_nr, found;
   struct filp *fp;
   struct vmnt *vmp;
   struct fproc *rfp;
   struct vnode *vp;
 
-  /* Open a device once for every filp that's opened on it,
-   * and once for every filesystem mounted from it.
+  /* First deal with block devices. We need to consider both mounted file
+   * systems and open block-special files.
    */
   new_driver_e = dmap[maj].dmap_driver;
 
+  /* Tell each affected mounted file system about the new endpoint. This code
+   * is currently useless, as driver endpoints do not change across restarts.
+   */
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-	int minor;
-	if (vmp->m_dev == NO_DEV) continue;
-	if ( ((vmp->m_dev >> MAJOR) & BYTE) != maj) continue;
-	minor = ((vmp->m_dev >> MINOR) & BYTE);
+	if (major(vmp->m_dev) != maj) continue;
 
-	if ((r = dev_open(vmp->m_dev, VFS_PROC_NR,
-		vmp->m_flags ? R_BIT : (R_BIT|W_BIT))) != OK) {
-		printf("VFS: mounted dev %d/%d re-open failed: %d.\n",
-			maj, minor, r);
-	}
-
-	/* Send new driver endpoint */
+	/* Send the new driver endpoint to the mounted file system. */
 	if (OK != req_newdriver(vmp->m_fs_e, vmp->m_dev, new_driver_e))
 		printf("VFSdev_up: error sending new driver endpoint."
 		       " FS_e: %d req_nr: %d\n", vmp->m_fs_e, REQ_NEW_DRIVER);
   }
 
-  /* Look for processes that are suspened in an OPEN call. Set SUSP_REOPEN
+  /* For each block-special file that was previously opened on the affected
+   * device, we need to reopen it on the new driver.
+   */
+  found = 0;
+  for (fp = filp; fp < &filp[NR_FILPS]; fp++) {
+	if(fp->filp_count < 1 || !(vp = fp->filp_vno)) continue;
+	if(major(vp->v_sdev) != maj) continue;
+	if(!S_ISBLK(vp->v_mode)) continue;
+
+	/* Reopen the device on the driver, once per filp. */
+	if ((r = dev_open(vp->v_sdev, VFS_PROC_NR, fp->filp_mode)) != OK)
+		printf("VFS: mounted dev %d/%d re-open failed: %d.\n",
+			maj, minor(vp->v_sdev), r);
+
+	found = 1;
+  }
+
+  /* If any block-special file was open for this major at all, also inform the
+   * root file system about the new endpoint of the driver. We do this even if
+   * the block-special file is linked to another mounted file system, merely
+   * because it is more work to check for that case.
+   */
+  if (found) {
+	if (OK != req_newdriver(ROOT_FS_E, makedev(maj, 0), new_driver_e))
+		printf("VFSdev_up: error sending new driver endpoint."
+		       " FS_e: %d req_nr: %d\n", ROOT_FS_E, REQ_NEW_DRIVER);
+  }
+
+  /* The rest of the code deals with character-special files. To start with,
+   * look for processes that are suspened in an OPEN call. Set SUSP_REOPEN
    * to indicate that this process was suspended before the call to dev_up.
    */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
@@ -901,11 +925,9 @@ PUBLIC void dev_up(int maj)
 
   needs_reopen= FALSE;
   for (fp = filp; fp < &filp[NR_FILPS]; fp++) {
-	struct vnode *vp;
-
 	if(fp->filp_count < 1 || !(vp = fp->filp_vno)) continue;
 	if(((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
-	if(!(vp->v_mode & (I_BLOCK_SPECIAL|I_CHAR_SPECIAL))) continue;
+	if(!S_ISCHR(vp->v_mode)) continue;
 
 	fp->filp_state = FS_NEEDS_REOPEN;
 	needs_reopen = TRUE;

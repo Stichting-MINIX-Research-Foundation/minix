@@ -41,7 +41,23 @@ PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt)		);
 FORWARD _PROTOTYPE( int mount_fs, (endpoint_t fs_e)			);
 FORWARD _PROTOTYPE( int is_nonedev, (dev_t dev)				);
-FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)				);
+FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)			);
+
+/*===========================================================================*
+ *				update_bspec				     *
+ *===========================================================================*/
+PRIVATE void update_bspec(dev_t dev, endpoint_t fs_e)
+{
+/* Update all block special files for a certain device, to use a new FS endpt
+ * to route raw block I/O requests through.
+ */
+  struct vnode *vp;
+
+  for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; ++vp)
+	if (vp->v_ref_count > 0 && S_ISBLK(vp->v_mode) && vp->v_sdev == dev)
+		vp->v_bfs_e = fs_e;
+}
+
 
 /*===========================================================================*
  *                              do_fslogin                                   *
@@ -136,19 +152,11 @@ PRIVATE int mount_fs(endpoint_t fs_e)
    * same device (partition) */
   for (bspec = &vnode[0]; bspec < &vnode[NR_VNODES]; ++bspec) {
 	if (bspec->v_ref_count > 0 && bspec->v_sdev == dev) {
-		/* Found, sync the buffer cache */
-		req_sync(bspec->v_fs_e);          
+		/* Found, flush and invalidate any blocks for this device. */
+		req_flush(bspec->v_fs_e, dev);
 		break;
-		/* Note: there are probably some blocks in the FS process'
-		 * buffer cache which contain data on this minor, although
-		 * they will be purged since the handling moves to the new
-		 * FS process (if everything goes well with the mount...)
-		 */ 
 	}
   }
-  /* Didn't find? */
-  if (bspec == &vnode[NR_VNODES] && bspec->v_sdev != dev)
-	bspec = NULL;
   
   /* Scan vmnt table to see if dev already mounted. If not, find a free slot.*/
   found = FALSE; 
@@ -202,6 +210,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	strcpy(vmp->m_label, mount_label);
 	allow_newroot = 0;             	/* The root is now fixed */
 	if (nodev) alloc_nonedev(dev);	/* Make the allocation final */
+	update_bspec(dev, fs_e);	/* Update open block-special files */
 
 	return(OK);
   } else if (vmp == NULL) {
@@ -218,11 +227,10 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   	/* Get vnode of mountpoint */
 	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
 
-	       if (vp->v_ref_count != 1) {
-	               put_vnode(vp);
-	               return(EBUSY);
-	       }
-
+	if (vp->v_ref_count != 1) {
+		put_vnode(vp);
+		return(EBUSY);
+	}
 
 	/* Tell FS on which vnode it is mounted (glue into mount tree) */
 	if ((r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr)) != OK) {
@@ -285,6 +293,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	vmp->m_mounted_on = NULL;
 	strcpy(vmp->m_label, mount_label);
 	if (nodev) alloc_nonedev(dev);
+	update_bspec(dev, fs_e);
 
 	root_dev = dev;
 	ROOT_FS_E = fs_e;
@@ -331,9 +340,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Allocate the pseudo device that was found, if not using a real device. */
   if (nodev) alloc_nonedev(dev);
 
-  /* There was a block spec file open, and it should be handled by the 
-   * new FS proc now */
-  if (bspec) bspec->v_bfs_e = fs_e; 
+  /* The new FS will handle block I/O requests for its device now. */
+  update_bspec(dev, fs_e);
 
   return(OK);
 }
@@ -431,8 +439,9 @@ PUBLIC int unmount(
 	
   /* Is there a block special file that was handled by that partition? */
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
-	if((vp->v_mode & I_TYPE)==I_BLOCK_SPECIAL && vp->v_bfs_e==vmp->m_fs_e){
-		  
+	if(vp->v_ref_count > 0 && S_ISBLK(vp->v_mode) &&
+			vp->v_bfs_e == vmp->m_fs_e) {
+
 		/* Get the driver endpoint of the block spec device */
 		dp = &dmap[(dev >> MAJOR) & BYTE];
 		if (dp->dmap_driver == NONE) {
