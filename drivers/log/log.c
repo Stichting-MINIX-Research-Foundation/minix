@@ -31,7 +31,7 @@ FORWARD _PROTOTYPE( int log_cancel, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_select, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, vir_bytes user_vir, size_t) );
+FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, cp_grant_id_t grant, size_t) );
 
 /* Entry points to this driver. */
 PRIVATE struct driver log_dtab = {
@@ -128,7 +128,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
   /* Only check for a pending message from the kernel, ignore anything else. */
   if (signo != SIGKMESS) return;
 
-  do_new_kmess(SYSTEM);
+  do_new_kmess();
 }
 
 /*===========================================================================*
@@ -160,7 +160,7 @@ int device;
  *===========================================================================*/
 PRIVATE int
 subwrite(struct logdevice *log, int count, int proc_nr,
-	vir_bytes user_vir, size_t offset)
+	cp_grant_id_t grant, size_t offset, char *localbuf)
 {
 	int d, r;
 	char *buf;
@@ -170,11 +170,11 @@ subwrite(struct logdevice *log, int count, int proc_nr,
 		count = LOG_SIZE - log->log_write;
 	buf = log->log_buffer + log->log_write;
 
-	if(proc_nr == SELF) {
-		memcpy(buf, (char *) user_vir, count);
+	if(localbuf != NULL) {
+		memcpy(buf, localbuf, count);
 	}
 	else {
-		if((r=sys_safecopyfrom(proc_nr, user_vir, offset,
+		if((r=sys_safecopyfrom(proc_nr, grant, offset,
 			(vir_bytes)buf, count, D)) != OK)
 			return r;
 	}
@@ -194,13 +194,13 @@ subwrite(struct logdevice *log, int count, int proc_nr,
         	 * be revived.
         	 */
     		log->log_status = subread(log, log->log_iosize,
-    			log->log_proc_nr, log->log_user_vir_g,
-			log->log_user_vir_offset);
+    			log->log_proc_nr, log->log_user_grant,
+			log->log_user_offset);
 
 		m.m_type = DEV_REVIVE;
 		m.REP_ENDPT = log->log_proc_nr;
 		m.REP_STATUS  = log->log_status;
-		m.REP_IO_GRANT  = log->log_user_vir_g;
+		m.REP_IO_GRANT  = log->log_user_grant;
   		r= send(log->log_source, &m);
 		if (r != OK)
 		{
@@ -243,7 +243,7 @@ subwrite(struct logdevice *log, int count, int proc_nr,
 }
 
 /*===========================================================================*
- *				log_append				*
+ *				log_append				     *
  *===========================================================================*/
 PUBLIC void
 log_append(char *buf, int count)
@@ -254,10 +254,11 @@ log_append(char *buf, int count)
 	if(count > LOG_SIZE) skip = count - LOG_SIZE;
 	count -= skip;
 	buf += skip;
-	w = subwrite(&logdevices[0], count, SELF, (vir_bytes) buf,0);
+	w = subwrite(&logdevices[0], count, SELF, GRANT_INVALID, 0, buf);
 
 	if(w > 0 && w < count)
-		subwrite(&logdevices[0], count-w, SELF, (vir_bytes) buf+w,0);
+		subwrite(&logdevices[0], count-w, SELF, GRANT_INVALID, 0,
+			buf + w);
 	return;
 }
 
@@ -266,7 +267,7 @@ log_append(char *buf, int count)
  *===========================================================================*/
 PRIVATE int
 subread(struct logdevice *log, int count, int proc_nr,
-	vir_bytes user_vir, size_t offset)
+	cp_grant_id_t grant, size_t offset)
 {
 	char *buf;
 	int r;
@@ -276,7 +277,7 @@ subread(struct logdevice *log, int count, int proc_nr,
         	count = LOG_SIZE - log->log_read;
 
     	buf = log->log_buffer + log->log_read;
-	if((r=sys_safecopyto(proc_nr, user_vir, offset,
+	if((r=sys_safecopyto(proc_nr, grant, offset,
 		(vir_bytes)buf, count, D)) != OK)
 		return r;
 
@@ -297,8 +298,8 @@ iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 {
 /* Read or write one the driver's minor devices. */
-  unsigned count;
-  vir_bytes user_vir;
+  int count;
+  cp_grant_id_t grant;
   int accumulated_read = 0;
   struct logdevice *log;
   size_t vir_offset = 0;
@@ -312,7 +313,7 @@ unsigned nr_req;		/* length of request vector */
   while (nr_req > 0) {
 	/* How much to transfer and where to / from. */
 	count = iov->iov_size;
-	user_vir = iov->iov_addr;
+	grant = iov->iov_addr;
 
 	switch (log_device) {
 
@@ -331,8 +332,8 @@ unsigned nr_req;		/* length of request vector */
 	    		/* No data available; let caller block. */
 	    		log->log_proc_nr = proc_nr;
 	    		log->log_iosize = count;
-	    		log->log_user_vir_g = user_vir;
-	    		log->log_user_vir_offset = 0;
+	    		log->log_user_grant = grant;
+	    		log->log_user_offset = 0;
 	    		log->log_revive_alerted = 0;
 
 			/* Device_caller is a global in drivers library. */
@@ -343,13 +344,13 @@ unsigned nr_req;		/* length of request vector */
 #endif
 	    		return(EDONTREPLY);
 	    	}
-	    	count = subread(log, count, proc_nr, user_vir, vir_offset);
+	    	count = subread(log, count, proc_nr, grant, vir_offset);
 	    	if(count < 0) {
 	    		return count;
 	    	}
 	    	accumulated_read += count;
 	    } else {
-	    	count = subwrite(log, count, proc_nr, user_vir, vir_offset);
+	    	count = subwrite(log, count, proc_nr, grant, vir_offset, NULL);
 	    	if(count < 0)
 	    		return count;
 	    }
@@ -419,27 +420,10 @@ message *m_ptr;
 	 * understand.
 	 */
 	if (is_notify(m_ptr->m_type)) {
-		switch (_ENDPOINT_P(m_ptr->m_source)) {
-			case TTY_PROC_NR:
-				do_new_kmess(m_ptr->m_source);
-				r = EDONTREPLY;
-				break;
-			default:
-				r = EINVAL;
-				break;
-		}
-		return r;
+		return EINVAL;
 	}
 
 	switch(m_ptr->m_type) {
-	case DIAGNOSTICS_OLD: {
-		r = do_diagnostics(m_ptr, 0);
-		break;
-	}
-	case ASYN_DIAGNOSTICS_OLD:
-	case DIAGNOSTICS_S_OLD:
-		r = do_diagnostics(m_ptr, 1);
-		break;
 	case DEV_STATUS: {
 		printf("log_other: unexpected DEV_STATUS request\n");
 		r = EDONTREPLY;

@@ -108,10 +108,10 @@ PRIVATE int locks[NR_CONS];	/* per console lock keys state */
 #define CAPS_LOCK	0x04
 #define ALT_LOCK	0x08
 
-PRIVATE char numpad_map[] =
+PRIVATE char numpad_map[12] =
 		{'H', 'Y', 'A', 'B', 'D', 'C', 'V', 'U', 'G', 'S', 'T', '@'};
 
-PRIVATE char *fkey_map[] =
+PRIVATE char *fkey_map[12] =
 		{"11", "12", "13", "14", "15", "17",	/* F1-F6 */
 		 "18", "19", "20", "21", "23", "24"};	/* F7-F12 */
 
@@ -129,8 +129,7 @@ PRIVATE struct kbd
 	int avail;
 	int req_size;
 	int req_proc;
-	int req_safe;		/* nonzero: safe (req_addr_g is grant) */
-	vir_bytes req_addr_g;	/* Virtual address or grant */
+	cp_grant_id_t req_grant;
 	vir_bytes req_addr_offset;
 	int incaller;
 	int select_ops;
@@ -217,7 +216,7 @@ PRIVATE void handle_req(kbdp, m)
 struct kbd *kbdp;
 message *m;
 {
-	int i, n, r, ops, watch, safecopy = 0;
+	int i, n, r, ops, watch;
 	unsigned char c;
 
 	/* Execute the requested device driver function. */
@@ -239,7 +238,6 @@ message *m;
 		r= OK;
 		break;
 	    case DEV_READ_S:
-	        safecopy = 1;
 		if (kbdp->req_size)
 		{
 			/* We handle only request at a time */
@@ -251,9 +249,8 @@ message *m;
 			/* Should record proc */
 			kbdp->req_size= m->COUNT;
 			kbdp->req_proc= m->IO_ENDPT;
-			kbdp->req_addr_g= (vir_bytes)m->ADDRESS;
+			kbdp->req_grant= (cp_grant_id_t) m->IO_GRANT;
 			kbdp->req_addr_offset= 0;
-			kbdp->req_safe= safecopy;
 			kbdp->incaller= m->m_source;
 			r= SUSPEND;
 			break;
@@ -267,13 +264,8 @@ message *m;
 			n= KBD_BUFSZ-kbdp->offset;
 		if (n <= 0)
 			panic("do_kbd(READ): bad n: %d", n);
-		if(safecopy) {
-		  r= sys_safecopyto(m->IO_ENDPT, (vir_bytes) m->ADDRESS, 0, 
+		r= sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT, 0, 
 			(vir_bytes) &kbdp->buf[kbdp->offset], n, D);
-		} else {
-		  r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
-			m->IO_ENDPT, D, (vir_bytes) m->ADDRESS, n);
-		}
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
@@ -286,7 +278,6 @@ message *m;
 		break;
 
 	    case DEV_WRITE_S:
-	        safecopy = 1;
 		if (kbdp != &kbdaux)
 		{
 			printf("write to keyboard not implemented\n");
@@ -300,14 +291,8 @@ message *m;
 		 */
 		for (i= 0; i<m->COUNT; i++)
 		{
-			if(safecopy) {
-		  	  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)
-				m->ADDRESS, i, (vir_bytes)&c, 1, D);
-			} else {
-			  r= sys_vircopy(m->IO_ENDPT, D,
-				(vir_bytes) m->ADDRESS+i,
-				SELF, D, (vir_bytes)&c, 1);
-			}
+			r= sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t)
+				m->IO_GRANT, i, (vir_bytes) &c, 1, D);
 			if (r != OK)
 				break;
 			kbc_cmd1(KBC_WRITE_AUX, c);
@@ -337,21 +322,15 @@ message *m;
 		}
 		break;
 	    case DEV_IOCTL_S:
-		 safecopy=1;
 		if (kbdp == &kbd && m->TTY_REQUEST == KIOCSLEDS)
 		{
 			kio_leds_t leds;
 			unsigned char b;
 
 			
-			if(safecopy) {
-		  	  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)
-				m->ADDRESS, 0, (vir_bytes)&leds,
+			r= sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t)
+				m->IO_GRANT, 0, (vir_bytes) &leds,
 				sizeof(leds), D);
-			} else {
-			 r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
-				SELF, D, (vir_bytes)&leds, sizeof(leds));
-			}
 			if (r != OK)
 				break;
 			b= 0;
@@ -384,14 +363,9 @@ message *m;
 			kio_bell_t bell;
 			clock_t ticks;
 
-			if(safecopy) {
-		  	  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)
-				m->ADDRESS, 0, (vir_bytes)&bell,
+			r = sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t)
+				m->IO_GRANT, 0, (vir_bytes) &bell,
 				sizeof(bell), D);
-			} else {
-			  r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
-				SELF, D, (vir_bytes)&bell, sizeof(bell));
-			}
 			if (r != OK)
 				break;
 
@@ -436,13 +410,8 @@ message *m;
 		if (n <= 0)
 			panic("kbd_status: bad n: %d", n);
 		kbdp->req_size= 0;
-		if(kbdp->req_safe) {
-		  r= sys_safecopyto(kbdp->req_proc, kbdp->req_addr_g, 0,
+		r= sys_safecopyto(kbdp->req_proc, kbdp->req_grant, 0,
 			(vir_bytes)&kbdp->buf[kbdp->offset], n, D);
-		} else {
-		  r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
-			kbdp->req_proc, D, kbdp->req_addr_g, n);
-		}
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
@@ -452,7 +421,7 @@ message *m;
 
 		m->m_type = DEV_REVIVE;
   		m->REP_ENDPT= kbdp->req_proc;
-  		m->REP_IO_GRANT= kbdp->req_addr_g;
+  		m->REP_IO_GRANT= kbdp->req_grant;
   		m->REP_STATUS= r;
 		return 1;
 	}
@@ -653,7 +622,7 @@ int try;
 			ch -= SF1;
 			suffix = '2';
 		} else
-		if (CF1 <= ch && ch <= CF12) {
+		/* (CF1 <= ch && ch <= CF12) */ {
 			ch -= CF1;
 			suffix = shift ? '6' : '5';
 		}
@@ -709,7 +678,6 @@ PRIVATE void kbd_send()
 {
 	unsigned long sb;
 	int r;
-	clock_t now;
 
 	if (!kbdout.avail)
 		return;
@@ -1088,21 +1056,12 @@ PUBLIC void kb_init_once(void)
 /*===========================================================================*
  *				kbd_loadmap				     *
  *===========================================================================*/
-PUBLIC int kbd_loadmap(m, safe)
+PUBLIC int kbd_loadmap(m)
 message *m;
-int safe;
 {
 /* Load a new keymap. */
-  int result;
-  if(safe) {
-    result = sys_safecopyfrom(m->IO_ENDPT, (vir_bytes) m->ADDRESS,
-  	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap), D);
-  } else {
-    result = sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
-  	SELF, D, (vir_bytes) keymap, 
-  	(vir_bytes) sizeof(keymap));
-  }
-  return(result);
+  return sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap), D);
 }
 
 /*===========================================================================*
@@ -1341,8 +1300,6 @@ int *isauxp;
 PRIVATE void kbd_watchdog(tmrp)
 timer_t *tmrp;
 {
-	int r;
-	clock_t now;
 
 	kbd_watchdog_set= 0;
 	if (!kbdout.avail)

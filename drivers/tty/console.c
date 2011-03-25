@@ -171,17 +171,10 @@ int try;
    */
   do {
 	if (count > sizeof(buf)) count = sizeof(buf);
-	if(tp->tty_out_safe) {
-	   if ((result = sys_safecopyfrom(tp->tty_outproc, tp->tty_out_vir_g,
-		tp->tty_out_vir_offset, (vir_bytes) buf, count, D)) != OK)
+	if ((result = sys_safecopyfrom(tp->tty_outproc, tp->tty_outgrant,
+		tp->tty_outoffset, (vir_bytes) buf, count, D)) != OK)
 		break;
-	    tp->tty_out_vir_offset += count;
-	} else {
-	   if ((result = sys_vircopy(tp->tty_outproc, D, tp->tty_out_vir_g, 
-			SELF, D, (vir_bytes) buf, (vir_bytes) count)) != OK)
-		break;
-	    tp->tty_out_vir_g += count;
-	}
+	tp->tty_outoffset += count;
 	tbuf = buf;
 
 	/* Update terminal data structure. */
@@ -767,9 +760,7 @@ PRIVATE void beep()
  */
   static timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
-  clock_t now;
   unsigned long port_b_val;
-  int s;
   
   /* Set timer in advance to prevent beeping delay. */
   set_timer(&tmr_stop_beep, B_TIME, stop_beep, 0);
@@ -793,7 +784,7 @@ PRIVATE void beep()
  *===========================================================================*/
 PUBLIC void do_video(message *m)
 {
-	int r, safe = 0;
+	int r;
 
 	/* Execute the requested device driver function. */
 	r= EINVAL;	/* just in case */
@@ -808,7 +799,6 @@ PUBLIC void do_video(message *m)
 		r= OK;
 		break;
 	    case DEV_IOCTL_S:
-		safe=1;
 		switch(m->TTY_REQUEST) {
 		  case TIOCMAPMEM:
 		  case TIOCUNMAPMEM: {
@@ -817,15 +807,9 @@ PUBLIC void do_video(message *m)
 
 			do_map= (m->REQUEST == TIOCMAPMEM);	/* else unmap */
 
-			/* Get request structure */
-			if(!safe) {
-				printf("tty: safecopy only\n");
-				return;
-			}
-
 	   		r = sys_safecopyfrom(m->IO_ENDPT,
-			  (vir_bytes)m->ADDRESS, 0, (vir_bytes) &mapreqvm,
-			  sizeof(mapreqvm), D);
+				(cp_grant_id_t) m->IO_GRANT, 0,
+				(vir_bytes) &mapreqvm, sizeof(mapreqvm), D);
 
 			if (r != OK)
 			{
@@ -844,7 +828,7 @@ PUBLIC void do_video(message *m)
 				mapreqvm.vaddr_ret = vm_map_phys(m->POSITION,
 				(void *) mapreqvm.phys_offset, mapreqvm.size);
 	   			if((r = sys_safecopyto(m->IO_ENDPT,
-				  (vir_bytes)m->ADDRESS, 0,
+				  (cp_grant_id_t) m->IO_GRANT, 0,
 				  (vir_bytes) &mapreqvm,
 				  sizeof(mapreqvm), D)) != OK) {
 				  printf("tty: sys_safecopyto failed\n");
@@ -883,9 +867,7 @@ clock_t dur;
  */
   static timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
-  clock_t now;
   unsigned long port_b_val;
-  int s;
   
   unsigned long ival= TIMER_FREQ / freq;
   if (ival == 0 || ival > 0xffff)
@@ -1070,86 +1052,6 @@ PUBLIC void do_new_kmess()
 }
 
 /*===========================================================================*
- *				do_diagnostics				     *
- *===========================================================================*/
-PUBLIC void do_diagnostics(m_ptr, safe)
-message *m_ptr;			/* pointer to request message */
-int safe;
-{
-/* Print a string for a server. */
-  char c;
-  vir_bytes src;
-  int count, offset = 0;
-  int result = OK;
-  int proc_nr = m_ptr->m_source;
-
-  src = (vir_bytes) m_ptr->DIAG_PRINT_BUF_G;
-  for (count = m_ptr->DIAG_BUF_COUNT; count > 0; count--) {
-	int r;
-	if(safe) {
-	   r = sys_safecopyfrom(proc_nr, src, offset, (vir_bytes) &c, 1, D);
-	   if(r != OK)
-	  	   printf("<tty: proc %d, grant %ld>", proc_nr, src);
-	} else {
-	   r = sys_vircopy(proc_nr, D, src+offset, SELF, D, (vir_bytes) &c, 1);
-	}
-	offset++;
-	if(r != OK) {
-		result = EFAULT;
-		break;
-	}
-	cons_putk(c);
-  }
-  cons_putk(0);			/* always terminate, even with EFAULT */
-
-  if(m_ptr->m_type != ASYN_DIAGNOSTICS_OLD) {
-	  m_ptr->m_type = DIAG_REPL_OLD;
-	  m_ptr->REP_STATUS = result;
-	  send(m_ptr->m_source, m_ptr);
-  }
-}
-
-/*===========================================================================*
- *				do_get_kmess				     *
- *===========================================================================*/
-PUBLIC void do_get_kmess(m_ptr)
-message *m_ptr;			/* pointer to request message */
-{
-/* Provide the log device with debug output */
-  vir_bytes dst;
-  int r;
-
-  dst = (vir_bytes) m_ptr->GETKM_PTR;
-  r= OK;
-  if (sys_vircopy(SELF, D, (vir_bytes)&kmess, m_ptr->m_source, D,
-	dst, sizeof(kmess)) != OK) {
-	r = EFAULT;
-  }
-  m_ptr->m_type = r;
-  send(m_ptr->m_source, m_ptr);
-}
-
-/*===========================================================================*
- *				do_get_kmess_s				     *
- *===========================================================================*/
-PUBLIC void do_get_kmess_s(m_ptr)
-message *m_ptr;			/* pointer to request message */
-{
-/* Provide the log device with debug output */
-  cp_grant_id_t gid;
-  int r;
-
-  gid = m_ptr->GETKM_GRANT;
-  r= OK;
-  if (sys_safecopyto(m_ptr->m_source, gid, 0, (vir_bytes)&kmess, sizeof(kmess),
-	D) != OK) {
-	r = EFAULT;
-  }
-  m_ptr->m_type = r;
-  send(m_ptr->m_source, m_ptr);
-}
-
-/*===========================================================================*
  *				cons_putk				     *
  *===========================================================================*/
 PRIVATE void cons_putk(c)
@@ -1299,7 +1201,7 @@ message *m;
   if (!machine.vdu_ega) return(ENOTTY);
   result = ga_program(seq1);	/* bring font memory into view */
 
-  if(sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t) m->ADDRESS, 0,
+  if(sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT, 0,
 	(vir_bytes) font_memory, GA_FONT_SIZE, D) != OK) {
 	printf("tty: copying from %d failed\n", m->IO_ENDPT);
 	return EFAULT;

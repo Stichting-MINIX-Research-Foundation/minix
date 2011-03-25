@@ -30,15 +30,15 @@
  *   DEV_STATUS:     FS wants to know status for SELECT or REVIVE
  *   CANCEL:         terminate a previous incomplete system call immediately
  *
- *    m_type      TTY_LINE   IO_ENDPT    COUNT   TTY_SPEKS  ADDRESS
+ *    m_type      TTY_LINE   IO_ENDPT    COUNT   TTY_SPEKS IO_GRANT
  * -----------------------------------------------------------------
  * | HARD_INT    |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------|
  * | SYS_SIG     | sig set |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------|
- * | DEV_READ    |minor dev| proc nr |  count  |         | buf ptr |
+ * | DEV_READ    |minor dev| proc nr |  count  |         |  grant  |
  * |-------------+---------+---------+---------+---------+---------|
- * | DEV_WRITE   |minor dev| proc nr |  count  |         | buf ptr |
+ * | DEV_WRITE   |minor dev| proc nr |  count  |         |  grant  |
  * |-------------+---------+---------+---------+---------+---------|
  * | DEV_IOCTL   |minor dev| proc nr |func code|erase etc|         |
  * |-------------+---------+---------+---------+---------+---------|
@@ -104,11 +104,11 @@ struct kmessages kmess;
 FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
 FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
 FORWARD _PROTOTYPE( void do_cancel, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_ioctl, (tty_t *tp, message *m_ptr, int s)	);
+FORWARD _PROTOTYPE( void do_ioctl, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_open, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_close, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr, int s)	);
-FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr, int s)	);
+FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr)		);
+FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_select, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_status, (message *m_ptr)			);
 FORWARD _PROTOTYPE( void in_transfer, (tty_t *tp)			);
@@ -210,25 +210,6 @@ PUBLIC int main(void)
 	}
 
 	switch (tty_mess.m_type) { 
-	case DIAGNOSTICS_OLD: 		/* a server wants to print some */
-#if 0
-		if (tty_mess.m_source != LOG_PROC_NR)
-		{
-			printf("[%d ", tty_mess.m_source);
-		}
-#endif
-		do_diagnostics(&tty_mess, 0);
-		continue;
-	case DIAGNOSTICS_S_OLD: 
-	case ASYN_DIAGNOSTICS_OLD: 
-		do_diagnostics(&tty_mess, 1);
-		continue;
-	case GET_KMESS:
-		do_get_kmess(&tty_mess);
-		continue;
-	case GET_KMESS_S:
-		do_get_kmess_s(&tty_mess);
-		continue;
 	case FKEY_CONTROL:		/* (un)register a fkey observer */
 		do_fkey_ctl(&tty_mess);
 		continue;
@@ -289,9 +270,9 @@ PUBLIC int main(void)
 
 	/* Execute the requested device driver function. */
 	switch (tty_mess.m_type) {
-	    case DEV_READ_S:	 do_read(tp, &tty_mess, 1);	  break;
-	    case DEV_WRITE_S:	 do_write(tp, &tty_mess, 1);	  break;
-	    case DEV_IOCTL_S:	 do_ioctl(tp, &tty_mess, 1);	  break;
+	    case DEV_READ_S:	 do_read(tp, &tty_mess);	  break;
+	    case DEV_WRITE_S:	 do_write(tp, &tty_mess);	  break;
+	    case DEV_IOCTL_S:	 do_ioctl(tp, &tty_mess);	  break;
 	    case DEV_OPEN:	 do_open(tp, &tty_mess);	  break;
 	    case DEV_CLOSE:	 do_close(tp, &tty_mess);	  break;
 	    case DEV_SELECT:	 do_select(tp, &tty_mess);	  break;
@@ -399,7 +380,7 @@ message *m_ptr;
 		/* Suspended request finished. Send a REVIVE. */
 		m_ptr->m_type = DEV_REVIVE;
   		m_ptr->REP_ENDPT = tp->tty_inproc;
-  		m_ptr->REP_IO_GRANT = tp->tty_in_vir_g;
+  		m_ptr->REP_IO_GRANT = tp->tty_ingrant;
   		m_ptr->REP_STATUS = tp->tty_incum;
 
 		tp->tty_inleft = tp->tty_incum = 0;
@@ -412,7 +393,7 @@ message *m_ptr;
 		/* Suspended request finished. Send a REVIVE. */
 		m_ptr->m_type = DEV_REVIVE;
   		m_ptr->REP_ENDPT = tp->tty_outproc;
-  		m_ptr->REP_IO_GRANT = tp->tty_out_vir_g;
+  		m_ptr->REP_IO_GRANT = tp->tty_outgrant;
   		m_ptr->REP_STATUS = tp->tty_outcum;
 
 		tp->tty_outcum = 0;
@@ -424,7 +405,7 @@ message *m_ptr;
 		/* Suspended request finished. Send a REVIVE. */
 		m_ptr->m_type = DEV_REVIVE;
   		m_ptr->REP_ENDPT = tp->tty_ioproc;
-  		m_ptr->REP_IO_GRANT = tp->tty_iovir_g;
+  		m_ptr->REP_IO_GRANT = tp->tty_iogrant;
   		m_ptr->REP_STATUS = tp->tty_iostatus;
 		tp->tty_iorevived = 0;		/* unmark revive event */
   		event_found = 1;
@@ -455,10 +436,9 @@ message *m_ptr;
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-PRIVATE void do_read(tp, m_ptr, safe)
+PRIVATE void do_read(tp, m_ptr)
 register tty_t *tp;		/* pointer to tty struct */
 register message *m_ptr;	/* pointer to message sent to the task */
-int safe;			/* use safecopies? */
 {
 /* A process wants to read from a terminal. */
   int r;
@@ -476,9 +456,8 @@ int safe;			/* use safecopies? */
 	tp->tty_inrepcode = TASK_REPLY;
 	tp->tty_incaller = m_ptr->m_source;
 	tp->tty_inproc = m_ptr->IO_ENDPT;
-	tp->tty_in_vir_g = (vir_bytes) m_ptr->ADDRESS;
-	tp->tty_in_vir_offset = 0;
-	tp->tty_in_safe = safe;
+	tp->tty_ingrant = (cp_grant_id_t) m_ptr->IO_GRANT;
+	tp->tty_inoffset = 0;
 	tp->tty_inleft = m_ptr->COUNT;
 
 	if (!(tp->tty_termios.c_lflag & ICANON)
@@ -524,10 +503,9 @@ int safe;			/* use safecopies? */
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PRIVATE void do_write(tp, m_ptr, safe)
+PRIVATE void do_write(tp, m_ptr)
 register tty_t *tp;
 register message *m_ptr;	/* pointer to message sent to the task */
-int safe;
 {
 /* A process wants to write on a terminal. */
   int r;
@@ -545,9 +523,8 @@ int safe;
 	tp->tty_outrepcode = TASK_REPLY;
 	tp->tty_outcaller = m_ptr->m_source;
 	tp->tty_outproc = m_ptr->IO_ENDPT;
-	tp->tty_out_vir_g = (vir_bytes) m_ptr->ADDRESS;
-	tp->tty_out_vir_offset = 0;
-	tp->tty_out_safe = safe;
+	tp->tty_outgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
+	tp->tty_outoffset = 0;
 	tp->tty_outleft = m_ptr->COUNT;
 
 	/* Try to write. */
@@ -567,10 +544,9 @@ int safe;
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-PRIVATE void do_ioctl(tp, m_ptr, safe)
+PRIVATE void do_ioctl(tp, m_ptr)
 register tty_t *tp;
 message *m_ptr;			/* pointer to message sent to task */
-int safe;
 {
 /* Perform an IOCTL on this terminal. Posix termios calls are handled
  * by the IOCTL system call
@@ -622,14 +598,8 @@ int safe;
   switch (m_ptr->TTY_REQUEST) {
     case TCGETS:
 	/* Get the termios attributes. */
-	if(safe) {
-	    r = sys_safecopyto(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+	r = sys_safecopyto(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
 		(vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
-	} else {
-	    r = sys_vircopy(SELF, D, (vir_bytes) &tp->tty_termios,
-		m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, 
-		(vir_bytes) size);
-	}
 	break;
 
     case TCSETSW:
@@ -640,8 +610,7 @@ int safe;
 		tp->tty_iocaller = m_ptr->m_source;
 		tp->tty_ioproc = m_ptr->IO_ENDPT;
 		tp->tty_ioreq = m_ptr->REQUEST;
-		tp->tty_iovir_g = (vir_bytes) m_ptr->ADDRESS;
-		tp->tty_io_safe = safe;
+		tp->tty_iogrant = (cp_grant_id_t) m_ptr->IO_GRANT;
 		r = SUSPEND;
 		break;
 	}
@@ -650,25 +619,15 @@ int safe;
 	/*FALL THROUGH*/
     case TCSETS:
 	/* Set the termios attributes. */
-	if(safe) {
-	    r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
-		(vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
-	} else {
-	    r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-	        SELF, D, (vir_bytes) &tp->tty_termios, (vir_bytes) size);
-	}
+	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+		0, (vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
 	if (r != OK) break;
 	setattr(tp);
 	break;
 
     case TCFLSH:
-	if(safe) {
-	   r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
-		(vir_bytes) &param.i, (vir_bytes) size, D);
-	} else {
-	   r = sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		SELF, D, (vir_bytes) &param.i, (vir_bytes) size);
-	}
+	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+		0, (vir_bytes) &param.i, (vir_bytes) size, D);
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCIFLUSH:	tty_icancel(tp);		 	    break;
@@ -679,13 +638,8 @@ int safe;
 	break;
 
     case TCFLOW:
-	if(safe) {
-	   r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
-		(vir_bytes) &param.i, (vir_bytes) size, D);
-	} else {
-	    r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		SELF, D, (vir_bytes) &param.i, (vir_bytes) size);
-	}
+	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+		0, (vir_bytes) &param.i, (vir_bytes) size, D);
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCOOFF:
@@ -709,31 +663,20 @@ int safe;
 	break;
 
     case TIOCGWINSZ:
-	if(safe) {
-	   r = sys_safecopyto(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+	r = sys_safecopyto(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
 		(vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
-	} else {
-	   r = sys_vircopy(SELF, D, (vir_bytes) &tp->tty_winsize,
-		m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, 
-		(vir_bytes) size);
-	}
 	break;
 
     case TIOCSWINSZ:
-	if(safe) {
-	   r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
-		(vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
-	} else {
-	   r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		SELF, D, (vir_bytes) &tp->tty_winsize, (vir_bytes) size);
-	}
+	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+		0, (vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
 	sigchar(tp, SIGWINCH, 0);
 	break;
 
 #if (MACHINE == IBM_PC)
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
-	if (isconsole(tp)) r = kbd_loadmap(m_ptr, safe);
+	if (isconsole(tp)) r = kbd_loadmap(m_ptr);
 	break;
 
     case TIOCSFON_OLD:
@@ -742,12 +685,6 @@ int safe;
     case TIOCSFON:
 	/* Load a font into an EGA or VGA card (hs@hck.hr) */
 	if (isconsole(tp)) r = con_loadfont(m_ptr);
-	break;
-#endif
-
-#if (MACHINE == ATARI)
-    case VDU_LOADFONT:
-	r = vdu_loadfont(m_ptr);
 	break;
 #endif
 
@@ -830,14 +767,14 @@ message *m_ptr;			/* pointer to message sent to task */
   proc_nr = m_ptr->IO_ENDPT;
   mode = m_ptr->COUNT;
   if ((mode & R_BIT) && tp->tty_inleft != 0 && proc_nr == tp->tty_inproc &&
-	(!tp->tty_in_safe || tp->tty_in_vir_g==(vir_bytes)m_ptr->IO_GRANT)) {
+	tp->tty_ingrant == (cp_grant_id_t) m_ptr->IO_GRANT) {
 	/* Process was reading when killed.  Clean up input. */
 	tty_icancel(tp); 
 	r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
 	tp->tty_inleft = tp->tty_incum = tp->tty_inrevived = 0;
   } 
   if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc &&
-	(!tp->tty_out_safe || tp->tty_out_vir_g==(vir_bytes)m_ptr->IO_GRANT)) {
+	tp->tty_outgrant == (cp_grant_id_t) m_ptr->IO_GRANT) {
 	/* Process was writing when killed.  Clean up output. */
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = tp->tty_outrevived = 0;
@@ -976,18 +913,11 @@ register tty_t *tp;		/* pointer to terminal to read from */
 		tp->tty_inleft--;
 		if (++bp == bufend(buf)) {
 			/* Temp buffer full, copy to user space. */
-			if(tp->tty_in_safe) {
-				sys_safecopyto(tp->tty_inproc,
-					tp->tty_in_vir_g, tp->tty_in_vir_offset,
-					(vir_bytes) buf,
-					(vir_bytes) buflen(buf), D);
-				tp->tty_in_vir_offset += buflen(buf);
-			} else {
-				sys_vircopy(SELF, D, (vir_bytes) buf, 
-					tp->tty_inproc, D, tp->tty_in_vir_g,
-					(vir_bytes) buflen(buf));
-				tp->tty_in_vir_g += buflen(buf);
-			}
+			sys_safecopyto(tp->tty_inproc,
+				tp->tty_ingrant, tp->tty_inoffset,
+				(vir_bytes) buf,
+				(vir_bytes) buflen(buf), D);
+			tp->tty_inoffset += buflen(buf);
 			tp->tty_incum += buflen(buf);
 			bp = buf;
 		}
@@ -1007,16 +937,10 @@ register tty_t *tp;		/* pointer to terminal to read from */
   if (bp > buf) {
 	/* Leftover characters in the buffer. */
 	count = bp - buf;
-	if(tp->tty_in_safe) {
-		sys_safecopyto(tp->tty_inproc,
-			tp->tty_in_vir_g, tp->tty_in_vir_offset,
-			(vir_bytes) buf, (vir_bytes) count, D);
-		tp->tty_in_vir_offset += count;
-	} else {
-		sys_vircopy(SELF, D, (vir_bytes) buf, 
-			tp->tty_inproc, D, tp->tty_in_vir_g, (vir_bytes) count);
-		tp->tty_in_vir_g += count;
-	}
+	sys_safecopyto(tp->tty_inproc,
+		tp->tty_ingrant, tp->tty_inoffset,
+		(vir_bytes) buf, (vir_bytes) count, D);
+	tp->tty_inoffset += count;
 	tp->tty_incum += count;
   }
 
@@ -1453,16 +1377,10 @@ tty_t *tp;
 
   if (tp->tty_ioreq != TCDRAIN) {
 	if (tp->tty_ioreq == TCSETSF) tty_icancel(tp);
-	if(tp->tty_io_safe) {
-	   result = sys_safecopyfrom(tp->tty_ioproc, tp->tty_iovir_g, 0,
+	result = sys_safecopyfrom(tp->tty_ioproc, tp->tty_iogrant, 0,
 		(vir_bytes) &tp->tty_termios,
 		(vir_bytes) sizeof(tp->tty_termios), D);
-	} else {
-	    result = sys_vircopy(tp->tty_ioproc, D, tp->tty_iovir_g,
-			SELF, D, (vir_bytes) &tp->tty_termios,
-			(vir_bytes) sizeof(tp->tty_termios));
-	}
-	setattr(tp);
+	if (result == OK) setattr(tp);
   }
   tp->tty_ioreq = 0;
   notify(tp->tty_iocaller);

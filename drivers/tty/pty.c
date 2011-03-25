@@ -36,9 +36,8 @@ typedef struct pty {
   char		rdsendreply;	/* send a reply (instead of notify) */
   int		rdcaller;	/* process making the call (usually FS) */
   int		rdproc;		/* process that wants to read from the pty */
-  vir_bytes	rdvir_g;	/* virtual address in readers address space */
-  vir_bytes	rdvir_offset;	/* offset in above grant */
-  int		rdsafe;		/* safe read mode? */
+  cp_grant_id_t	rdgrant;	/* grant for readers address space */
+  vir_bytes	rdoffset;	/* offset in above grant */
   int		rdleft;		/* # bytes yet to be read */
   int		rdcum;		/* # bytes written so far */
 
@@ -46,9 +45,8 @@ typedef struct pty {
   char		wrsendreply;	/* send a reply (instead of notify) */
   int		wrcaller;	/* process making the call (usually FS) */
   int		wrproc;		/* process that wants to write to the pty */
-  vir_bytes	wrvir_g;	/* virtual address in writers address space */
-  vir_bytes	wrvir_offset;	/* offset in above grant */
-  int		wrsafe;		/* safe write mode? */
+  cp_grant_id_t	wrgrant;	/* grant for writers address space */
+  vir_bytes	wroffset;	/* offset in above grant */
   int		wrleft;		/* # bytes yet to be written */
   int		wrcum;		/* # bytes written so far */
 
@@ -87,11 +85,9 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 /* Perform an open/close/read/write call on a /dev/ptypX device. */
   pty_t *pp = tp->tty_priv;
   int r;
-  int safe = 0;
 
   switch (m_ptr->m_type) {
     case DEV_READ_S:
-	safe=1;
 	/* Check, store information on the reader, do I/O. */
 	if (pp->state & TTY_CLOSED) {
 		r = 0;
@@ -108,9 +104,8 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
 	pp->rdproc = m_ptr->IO_ENDPT;
-	pp->rdvir_g = (vir_bytes) m_ptr->ADDRESS;
-	pp->rdvir_offset = 0;
-	pp->rdsafe = safe;
+	pp->rdgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
+	pp->rdoffset = 0;
 	pp->rdleft = m_ptr->COUNT;
 	pty_start(pp);
 	handle_events(tp);
@@ -125,7 +120,6 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 	break;
 
     case DEV_WRITE_S:
-	safe=1;
 	/* Check, store information on the writer, do I/O. */
 	if (pp->state & TTY_CLOSED) {
 		r = EIO;
@@ -142,9 +136,8 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
 	pp->wrproc = m_ptr->IO_ENDPT;
-	pp->wrvir_g = (vir_bytes) m_ptr->ADDRESS;
-	pp->wrvir_offset = 0;
-	pp->wrsafe = safe;
+	pp->wrgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
+	pp->wroffset = 0;
 	pp->wrleft = m_ptr->COUNT;
 	handle_events(tp);
 	if (pp->wrleft == 0) {
@@ -237,16 +230,9 @@ PRIVATE int pty_write(tty_t *tp, int try)
 		break;
 
 	/* Copy from user space to the PTY output buffer. */
-	if(tp->tty_out_safe) {
-	  if ((s = sys_safecopyfrom(tp->tty_outproc, tp->tty_out_vir_g,
-		tp->tty_out_vir_offset, (vir_bytes) pp->ohead, count, D))!=OK) {
+	if ((s = sys_safecopyfrom(tp->tty_outproc, tp->tty_outgrant,
+		tp->tty_outoffset, (vir_bytes) pp->ohead, count, D))!=OK) {
 		break;
- 	  }
-	} else {
-	  if ((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir_g,
-		SELF, D, (vir_bytes) pp->ohead, (phys_bytes) count)) != OK) {
-		break;
-	  }
 	}
 
 	/* Perform output processing on the output buffer. */
@@ -262,8 +248,7 @@ PRIVATE int pty_write(tty_t *tp, int try)
 		pp->ohead -= buflen(pp->obuf);
 	pty_start(pp);
 
-	if(tp->tty_out_safe) tp->tty_out_vir_offset += count;
-	else tp->tty_out_vir_g += count;
+	tp->tty_outoffset += count;
 
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
@@ -322,20 +307,11 @@ PRIVATE void pty_start(pty_t *pp)
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
-	if (pp->rdsafe) {
-	  if((s = sys_safecopyto(pp->rdproc, pp->rdvir_g,
-		pp->rdvir_offset, (vir_bytes) pp->otail, count, D)) != OK) {
+	if((s = sys_safecopyto(pp->rdproc, pp->rdgrant,
+		pp->rdoffset, (vir_bytes) pp->otail, count, D)) != OK) {
 		break;
- 	  }
-	  pp->rdvir_offset += count;
-	} else {
-	  if ((s = sys_vircopy(SELF, D, (vir_bytes)pp->otail,
-		(vir_bytes) pp->rdproc, D, (vir_bytes) pp->rdvir_g, (phys_bytes) count)) != OK) {
-		printf("pty tty: copy failed (error %d)\n",  s);
-		break;
-	  }
-	  pp->rdvir_g += count;
-	}
+ 	}
+	pp->rdoffset += count;
 
 	/* Bookkeeping. */
 	pp->ocount -= count;
@@ -400,21 +376,12 @@ PRIVATE int pty_read(tty_t *tp, int try)
   	int s;
 
 	/* Transfer one character to 'c'. */
-	if(pp->wrsafe) {
-	   if ((s = sys_safecopyfrom(pp->wrproc, pp->wrvir_g,
-	     pp->wrvir_offset, (vir_bytes) &c, 1, D)) != OK) {
+	if ((s = sys_safecopyfrom(pp->wrproc, pp->wrgrant, pp->wroffset,
+		(vir_bytes) &c, 1, D)) != OK) {
 		printf("pty: safecopy failed (error %d)\n", s);
 		break;
-	   }
-	  pp->wrvir_offset++;
-	} else {
-  	  if ((s = sys_vircopy(pp->wrproc, D, (vir_bytes) pp->wrvir_g,
-		SELF, D, (vir_bytes) &c, (phys_bytes) 1)) != OK) {
-		printf("pty: copy failed (error %d)\n", s);
-		break;
-	  }
-	  pp->wrvir_g++;
 	}
+	pp->wroffset++;
 
 	/* Input processing. */
 	if (in_process(tp, &c, 1, -1) == 0) break;
@@ -534,7 +501,7 @@ PUBLIC int pty_status(message *m_ptr)
 		{
 			m_ptr->m_type = DEV_REVIVE;
 			m_ptr->REP_ENDPT = pp->rdproc;
-			m_ptr->REP_IO_GRANT = pp->rdvir_g;
+			m_ptr->REP_IO_GRANT = pp->rdgrant;
 			m_ptr->REP_STATUS = pp->rdcum;
 
 			pp->rdleft = pp->rdcum = 0;
@@ -548,7 +515,7 @@ PUBLIC int pty_status(message *m_ptr)
 		{
 			m_ptr->m_type = DEV_REVIVE;
 			m_ptr->REP_ENDPT = pp->wrproc;
-			m_ptr->REP_IO_GRANT = pp->wrvir_g;
+			m_ptr->REP_IO_GRANT = pp->wrgrant;
 			if (pp->wrcum == 0)
 				m_ptr->REP_STATUS = EIO;
 			else

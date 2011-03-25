@@ -248,13 +248,8 @@ PRIVATE int rs_write(register tty_t *tp, int try)
 	if (try) return 1;
 
 	/* Copy from user space to the RS232 output buffer. */
-	if(tp->tty_out_safe) {
-	   sys_safecopyfrom(tp->tty_outproc, tp->tty_out_vir_g, 
-		tp->tty_out_vir_offset, (vir_bytes) rs->ohead, count, D);
-	} else {
-	   sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir_g, 
-		SELF, D, (vir_bytes) rs->ohead, (phys_bytes) count);
-	}
+	sys_safecopyfrom(tp->tty_outproc, tp->tty_outgrant, 
+		tp->tty_outoffset, (vir_bytes) rs->ohead, count, D);
 
 	/* Perform output processing on the output buffer. */
 	out_process(tp, rs->obuf, rs->ohead, bufend(rs->obuf), &count, &ocount);
@@ -270,11 +265,7 @@ PRIVATE int rs_write(register tty_t *tp, int try)
 	unlock();
 	if ((rs->ohead += ocount) >= bufend(rs->obuf))
 		rs->ohead -= buflen(rs->obuf);
-	if(tp->tty_out_safe) {
-		tp->tty_out_vir_offset += count;
-	} else {
-		tp->tty_out_vir_g += count;
-	}
+	tp->tty_outoffset += count;
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
 		/* Output is finished, reply to the writer. */

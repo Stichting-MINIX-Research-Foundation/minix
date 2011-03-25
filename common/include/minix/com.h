@@ -14,7 +14,6 @@
  *    0x700 -  0x7FF	Reincarnation Server (RS) requests
  *    0x800 -  0x8FF	Data Store (DS) requests
  *    0x900 -  0x9FF	Requests from PM to VFS, and responses
- *   (0xA00 -  0xAFF	old TTY and LOG requests, being phased out)
  *    0xA00 -  0xAFF	Requests from VFS to file systems (see vfsif.h)
  *    0xB00 -  0xBFF	Requests from VM to VFS
  *    0xC00 -  0xCFF	Virtual Memory (VM) requests
@@ -762,18 +761,6 @@
 #  define    FKEY_EVENTS	12	/* request open key presses */
 #  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
 #  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
-#define DIAG_BASE	0xa00
-#define DIAGNOSTICS_OLD 	(DIAG_BASE+1) 	/* output a string without FS in between */
-#define DIAGNOSTICS_S_OLD 	(DIAG_BASE+2) 	/* grant-based version of DIAGNOSTICS */
-#  define DIAG_PRINT_BUF_G    m1_p1
-#  define DIAG_BUF_COUNT      m1_i1
-#define GET_KMESS	(DIAG_BASE+3)	/* get kmess from TTY */
-#  define GETKM_PTR	      m1_p1
-#define GET_KMESS_S	(DIAG_BASE+4)	/* get kmess from TTY */
-#  define GETKM_GRANT	      m1_i1
-#define ASYN_DIAGNOSTICS_OLD (DIAG_BASE+5) 	/* grant-based, replyless DIAGNOSTICS */
-
-#define DIAG_REPL_OLD 	(DIAG_BASE+0x80+0) 	/* reply to DIAGNOSTICS(_S) */
 
 /*===========================================================================*
  *                Messages used between PM and VFS			     *
