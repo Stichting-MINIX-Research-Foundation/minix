@@ -326,6 +326,8 @@ int keep_reading()
   off_t pos;
   struct stat st;
 
+  fflush(stdout);
+
   pos = lseek(0, (off_t) 0, SEEK_CUR);
   for (;;) {
   	for (i = 0; i < 60; i++) {
