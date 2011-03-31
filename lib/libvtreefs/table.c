@@ -11,7 +11,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
 	no_sys,		/*  4	ftrunc		*/
 	no_sys,		/*  5	chown		*/
 	no_sys,		/*  6	chmod		*/
-	no_sys,		/*  7	inhibread	*/
+	do_noop,	/*  7	inhibread	*/
 	fs_stat,	/*  8	stat		*/
 	no_sys,		/*  9	utime		*/
 	fs_fstatfs,	/* 10	fstatfs		*/
