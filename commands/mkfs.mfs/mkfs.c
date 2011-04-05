@@ -960,14 +960,14 @@ int bit;
 {
   /* Insert 'count' bits in the bitmap */
   int w, s;
-  short *buf;
+  bitchunk_t *buf;
 
-  buf = (short *) alloc_block();
+  buf = (bitchunk_t *) alloc_block();
 
   if (block < 0) pexit("insert_bit called with negative argument");
   get_block(block, (char *) buf);
-  w = bit / (8 * sizeof(short));
-  s = bit % (8 * sizeof(short));
+  w = bit / (8 * sizeof(bitchunk_t));
+  s = bit % (8 * sizeof(bitchunk_t));
   buf[w] |= (1 << s);
   put_block(block, (char *) buf);
 
