@@ -16,7 +16,7 @@
 #ifdef __MINIX_EMULATE_NETBSD_STAT
 #define __netbsd_stat stat
 #else
-#define __ext_stat stat
+#define __minix_stat stat
 #endif
 
 struct __minix_stat {
@@ -31,23 +31,6 @@ struct __minix_stat {
 	time_t st_atime;		/* time of last access */
 	time_t st_mtime;		/* time of last data modification */
 	time_t st_ctime;		/* time of last file status change */
-};
-
-struct __ext_stat {
-	dev_t st_dev;			/* major/minor device number */
-	ino_t st_ino;			/* i-node number */
-	mode_t st_mode;			/* file mode, protection bits, etc. */
-	nlink_t st_nlink;		/* # links; */
-	uid_t st_uid;			/* uid of the file's owner */ 
-	gid_t st_gid;			/* gid */
-	dev_t st_rdev;
-	off_t st_size;			/* file size */
-	time_t st_atime;		/* time of last access */
-	time_t st_mtime;		/* time of last data modification */
-	time_t st_ctime;		/* time of last file status change */
-
-	/* Extended values. */
-	blksize_t st_blksize;		/* optimal blocksize for I/O */
 };
 
 #if defined(_NETBSD_SOURCE)
@@ -174,8 +157,8 @@ int	mkfifo(const char *, mode_t);
 int	stat(const char *, struct stat *) __RENAME(__emu_netbsd_stat);
 int	fstat(int, struct stat *) __RENAME(__emu_netbsd_fstat);
 #else
-int 	stat(const char *, struct stat *) __RENAME(__ext_minix_stat);
-int	fstat(int, struct stat *) __RENAME(__ext_minix_fstat);
+int 	stat(const char *, struct stat *) __RENAME(__orig_minix_stat);
+int	fstat(int, struct stat *) __RENAME(__orig_minix_fstat);
 #endif
 mode_t	umask(mode_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
@@ -183,7 +166,7 @@ int	fchmod(int, mode_t);
 #ifdef __MINIX_EMULATE_NETBSD_STAT
 int	lstat(const char *, struct stat *) __RENAME(__emu_netbsd_lstat);
 #else
-int	lstat(const char *, struct stat *) __RENAME(__ext_minix_lstat);
+int	lstat(const char *, struct stat *) __RENAME(__orig_minix_lstat);
 #endif
 int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */

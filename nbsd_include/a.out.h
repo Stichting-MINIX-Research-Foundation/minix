@@ -60,9 +60,14 @@
 #ifndef	_AOUT_H_
 #define	_AOUT_H_
 
+#ifdef __minix
+#include <compat/a.out.h>
+#else /* !__minix */
+
 #include <sys/exec_aout.h>
 
 #define	_AOUT_INCLUDE_
 #include <nlist.h>
 
+#endif /* !__minix */
 #endif /* !_AOUT_H_ */

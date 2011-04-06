@@ -47,42 +47,6 @@ struct __minix_stat *buffer;
   return __orig_minix_stat(name, buffer);
 }
 
-int __ext_minix_stat(name, buffer)
-const char *name;
-struct stat *buffer;
-{
-  int r;
-  r = __orig_minix_stat(name, buffer);
-  if ( r < 0)
-    return r;
-  buffer->st_blksize = MINIX_ST_BLKSIZE;
-  return r;
-} 
-
-int __ext_minix_fstat(fd, buffer)
-int fd;
-struct stat *buffer;
-{
-  int r;
-  r = __orig_minix_fstat(fd, buffer);
-  if ( r < 0 )
-    return r;
-  buffer->st_blksize = MINIX_ST_BLKSIZE;  
-  return r;
-}
-
-int __ext_minix_lstat(name, buffer)
-const char *name;
-struct stat *buffer;
-{
-  int r;
-  r = __orig_minix_lstat(name, buffer);
-  if ( r < 0 )
-    return r;
-  buffer->st_blksize = MINIX_ST_BLKSIZE;
-  return r;
-}
-
 /*
  * NetBSD Fields Emulation.
  */

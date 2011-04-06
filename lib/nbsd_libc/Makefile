@@ -142,7 +142,11 @@ LSRCS := ${LSRCS} ${unwanted_file}
 NLS=	C.msg Pig.msg ca.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg \
 	no.msg pl.msg sk.msg sv.msg
 
+.if defined(__MINIX)
+realall: 
+.else
 realall: tags
+.endif
 tags: ${.OBJDIR}/tags
 ${.OBJDIR}/tags: ${SRCS}
 	${_MKTARGET_CREATE}
@@ -151,9 +155,11 @@ ${.OBJDIR}/tags: ${SRCS}
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${.TARGET}; sort -o ${.TARGET} ${.TARGET}
 
+.if !defined(__MINIX)
 FILES=		${.OBJDIR}/tags
 FILESNAME=	libc.tags
 FILESDIR=	/var/db
+.endif
 
 
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,

@@ -262,7 +262,11 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 		 * Don't overflow the page offset type.
 		 */
 		if (b.psize == 0) {
+#ifdef __minix
+			b.psize = MINIX_ST_BLKSIZE;
+#else
 			b.psize = sb.st_blksize;
+#endif
 			if (b.psize < MINPSIZE)
 				b.psize = MINPSIZE;
 			if (b.psize > MAX_PAGE_OFFSET + 1)

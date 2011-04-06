@@ -72,10 +72,6 @@ __RCSID("$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $");
 
 #include "pathnames.h"
 
-#ifdef __minix
-#undef BSD4_4
-#endif
-
 int	orcmd __P((char **, u_int, const char *, const char *, const char *,
 	    int *));
 int	orcmd_af __P((char **, u_int, const char *, const char *, const char *,

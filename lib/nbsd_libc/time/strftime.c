@@ -553,6 +553,11 @@ label:
 				pt = _conv(diff, "%04d", pt, ptlim);
 				}
 				continue;
+#ifdef __minix
+			case '+':
+				pt = _fmt(sp, Locale->c_fmt, t, pt, ptlim, warnp);
+				continue;
+#endif /* !__minix */
 #if 0
 			case '+':
 				pt = _fmt(sp, Locale->date_fmt, t, pt, ptlim,

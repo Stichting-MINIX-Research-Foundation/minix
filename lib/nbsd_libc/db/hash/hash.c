@@ -301,7 +301,11 @@ init_hash(HTAB *hashp, const char *file, const HASHINFO *info)
 	if (file != NULL) {
 		if (stat(file, &statbuf))
 			return (NULL);
+#ifdef __minix
+		hashp->BSIZE = MIN(MINIX_ST_BLKSIZE, MAX_BSIZE);
+#else
 		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
+#endif
 		hashp->BSHIFT = __log2((uint32_t)hashp->BSIZE);
 	}
 

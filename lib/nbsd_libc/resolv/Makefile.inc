@@ -2,7 +2,11 @@
 
 # net sources
 .PATH: ${.CURDIR}/resolv
+.if defined(__MINIX)
+CPPFLAGS+=-DCOMPAT__RES -DNEED_PSELECT
+.else
 CPPFLAGS+=-DCOMPAT__RES -DUSE_POLL
+.endif
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c h_errno.c \
 	herror.c res_comp.c res_data.c res_debug.c \

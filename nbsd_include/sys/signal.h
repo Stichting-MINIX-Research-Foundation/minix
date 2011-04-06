@@ -4,11 +4,13 @@
 #include <sys/featuretest.h>
 #include <sys/sigtypes.h>
 
-#define _NSIG		26
-
+#ifdef _SYSTEM
+#define _NSIG		31
+#else
+#define _NSIG		27
+#endif
 #if defined(_NETBSD_SOURCE)
 #define NSIG _NSIG
-
 #endif /* _NETBSD_SOURCE */
 
 
@@ -42,9 +44,6 @@
 #define SIGTSTP           20	/* interactive stop signal */
 #define SIGTTIN           22	/* background process wants to read */
 #define SIGTTOU           23	/* background process wants to write */
-
-#define _NSIG             26	/* highest signal number plus one */
-#define NSIG             _NSIG
 
 #ifdef _MINIX
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */
