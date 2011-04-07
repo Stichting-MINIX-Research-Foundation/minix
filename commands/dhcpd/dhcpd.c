@@ -45,6 +45,8 @@ static int aflag, rflag;	/* True if adding or deleting pool addresses. */
 #define N_NETS		32
 static unsigned n_nets;		/* Actual number of networks. */
 
+int lwip;
+
 void report(const char *label)
 {
     static FILE *logfp;
@@ -685,6 +687,11 @@ main:
 	char *opt= argv[i++]+1;
 
 	if (opt[0] == '-' && opt[1] == 0) break;	/* -- */
+	
+	if (strcmp(opt, "-lwip") == 0) {
+		lwip = 1;
+		continue;
+	}
 
 	while (*opt != 0) switch (*opt++) {
 	case 'f':
@@ -776,7 +783,9 @@ main:
 	np->n= i;
 
 	/* Ethernet? */
-	if (opendev(np, FT_ETHERNET, 1)) {
+	if (lwip) {
+		np->type = NT_ETHERNET;
+	} else if (opendev(np, FT_ETHERNET, 1)) {
 	    np->type= B(&np->eth)[0] != 'Z' ? NT_ETHERNET : NT_SINK;
 	    if (debug >= 1) {
 		printf("%s: Ethernet address is %s%s\n",
@@ -956,8 +965,8 @@ main:
 		if (!(np->flags & NF_BOUND)) {
 		    /* Rebind over Ethernet. */
 		    udp2ether(bp, np);
-		    if (sendpacket(np, bp->eth, 
-		    			sizeof(eth_hdr_t) + sizeof(ip_hdr_t)
+		    if (sendpacket(np, (lwip ? bp->ip : bp->eth), 
+		    			(lwip ? 0 : sizeof(eth_hdr_t)) + sizeof(ip_hdr_t)
 					+ sizeof(udp_hdr_t) + sizeof(dhcp_t))) {
 			if (debug >= 1) {
 			    printf("%s: Broadcast DHCP %s\n",
@@ -1007,8 +1016,9 @@ main:
 	    if (!(np->flags & NF_BOUND)) {
 		if (!opendev(np, FT_ETHERNET, 0)) continue;
 		get_buf(&np->fdp->bp);
-		r= asyn_read(&asyn, np->fdp->fd, np->fdp->bp->eth,
-							BUF_ETH_SIZE);
+		r= asyn_read(&asyn, np->fdp->fd,
+				lwip ? np->fdp->bp->ip : np->fdp->bp->eth,
+				lwip ? BUF_IP_SIZE : BUF_ETH_SIZE);
 	    } else {
 		if (!opendev(np, FT_BOOTPC, 0)) continue;
 		get_buf(&np->fdp->bp);
@@ -1026,7 +1036,7 @@ main:
 	if (i < n_nets) {
 	    give_buf(&bp, &np->fdp->bp);
 	    if (((!(np->flags & NF_BOUND)
-		    && r >= (sizeof(eth_hdr_t) + sizeof(ip_hdr_t)
+		    && r >= (lwip ? 0 : (sizeof(eth_hdr_t)) + sizeof(ip_hdr_t)
 				+ sizeof(udp_hdr_t) + offsetof(dhcp_t, options))
 		    && ether2udp(bp)
 		    && bp->udpio->uih_dst_port == port_client)

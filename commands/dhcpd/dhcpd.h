@@ -19,6 +19,8 @@
 #define EXTERN	extern
 #endif
 
+extern int lwip;
+
 EXTERN char *program;		/* This program's name. */
 extern char *configfile;	/* Configuration file. */
 extern char *poolfile;		/* Dynamic address pool. */

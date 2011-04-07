@@ -16,6 +16,8 @@
 #include <sys/asynchio.h>
 #include <net/hton.h>
 #include <net/gen/in.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_hdr.h>
 #include <net/gen/eth_io.h>
@@ -166,7 +168,10 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
     /* Open the proper device in the proper mode. */
     fdp= fdold;
     fdp->n= np->n;
-    sprintf(fdp->device, "/dev/%s%d", devbytype[fdtype], np->n);
+    if (lwip && (fdtype == FT_ETHERNET || fdtype == FT_ICMP))
+	    sprintf(fdp->device, "/dev/ip");
+    else
+	    sprintf(fdp->device, "/dev/%s%d", devbytype[fdtype], np->n);
     np->fdp= fdp;
 
     if ((fdp->fd= open(fdp->device, O_RDWR)) < 0) {
@@ -176,6 +181,38 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
 
     switch (fdtype) {
     case FT_ETHERNET:
+	 if (lwip) {
+		 nwio_ipopt_t ipopt;
+		 int result;
+		 char ethdev[64];
+		 int efd;
+		 
+		 sprintf(ethdev, "/dev/eth%d", np->n);
+    
+		 if ((efd = open(fdp->device, O_RDWR)) < 0) {
+			 if (errno == ENOENT || errno == ENODEV ||
+					 errno == ENXIO)
+				 return 0;
+			 fatal(ethdev);
+		 }
+	
+		 if (ioctl(efd, NWIOGETHSTAT, &ethstat) < 0) {
+			 /* Not an Ethernet. */
+			 close(efd);
+			 return 0;
+		 }
+		 close(efd);
+
+		 np->eth= ethstat.nwes_addr;
+
+		 ipopt.nwio_flags= NWIO_COPY | NWIO_PROTOSPEC;
+		 ipopt.nwio_proto= 17; /* UDP */
+		 result= ioctl (fdp->fd, NWIOSIPOPT, &ipopt);
+		 if (result<0)
+			 perror("ioctl (NWIOSIPOPT)"), exit(1);
+
+		 break;
+	 }
 	/* Cannot use NWIOGETHSTAT in non-blocking mode due to a race between 
          * the reply from the ethernet driver and the cancel message from VFS
 	 * for reaching inet. Hence, a signal is used to interrupt NWIOGETHSTAT
@@ -218,6 +255,26 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
 	break;
 
     case FT_BOOTPC:
+	if (lwip) {
+		struct sockaddr_in si_me;
+
+		close(fdp->fd);
+		fdp->fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (fdp->fd < 0)
+			return 0;
+		memset((char *) &si_me, 0, sizeof(si_me));
+		si_me.sin_family = AF_INET;
+		si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+		si_me.sin_port = htons(port_client);
+		if (bind(fdp->fd, (struct sockaddr *) &si_me,
+					sizeof(si_me)) == -1) {
+			close(fdp->fd);
+			printf("DHCP : cannot bind client socket to port %d\n",
+								port_client);
+			return 0;
+		}
+		break;
+	}
 	udpopt.nwuo_flags= NWUO_COPY | NWUO_EN_LOC | NWUO_EN_BROAD
 			| NWUO_RP_ANY | NWUO_RA_ANY | NWUO_RWDATALL
 			| NWUO_DI_IPOPT | NWUO_LP_SET;
