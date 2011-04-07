@@ -61,8 +61,14 @@ kill_by_name dhcpd
 kill_by_name nonamed
 kill_by_name syslogd
 sleep 3
-service up /usr/sbin/inet -script /etc/rs.inet
-daemonize dhcpd
+if [ X`/bin/sysenv lwip` = Xyes ]
+then
+	service up /usr/sbin/lwip -script /etc/rs.inet
+	dhcpd --lwip &
+else
+	service up /usr/sbin/inet -script /etc/rs.inet
+	daemonize dhcpd
+fi
 daemonize nonamed -L
 daemonize syslogd
 

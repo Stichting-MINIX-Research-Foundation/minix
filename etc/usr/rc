@@ -113,7 +113,12 @@ start)
         arg="-args \"instance=$instance$arg\""
         eval up $driver -label $label $arg -period 5HZ
     done
-    up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+    if [ X`/bin/sysenv lwip` = Xyes ]
+    then
+    	up lwip -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+    else
+    	up inet -script /etc/rs.inet -dev /dev/ip -devstyle STYLE_CLONE
+    fi
     up -n printer -dev /dev/lp -period 10HZ
     up -n ipc
     echo .
@@ -150,7 +155,13 @@ start)
 	    if grep -s 'psip0.*default' /etc/inet.conf >/dev/null
 	    then	ifconfig -h 10.0.0.1
 	    else
-	    		daemonize dhcpd
+		    if [ X`/bin/sysenv lwip` = Xyes ]
+		    then
+			dhcpd --lwip &
+			echo -n " dhcpd"
+		    else
+			daemonize dhcpd
+		    fi
 	    fi
 	    daemonize nonamed -L
 	    if [ -f "$DAEMONS" ]
