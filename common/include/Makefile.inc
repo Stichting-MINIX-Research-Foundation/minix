@@ -28,7 +28,7 @@ INCS+=	net/gen/arp_io.h net/gen/dhcp.h net/gen/ether.h \
 	net/gen/psip_hdr.h net/gen/psip_io.h net/gen/resolv.h \
 	net/gen/rip.h net/gen/route.h net/gen/socket.h \
 	net/gen/tcp.h net/gen/tcp_hdr.h net/gen/tcp_io.h \
-	net/gen/udp.h net/gen/udp_hdr.h net/gen/udp_io.h \
+	net/gen/udp.h net/gen/udp_hdr.h net/gen/udp_io.h net/gen/udp_io_hdr.h \
 	net/gen/vjhc.h
 
 INCS+=	ddekit/assert.h ddekit/initcall.h ddekit/memory.h  ddekit/pgtab.h \
