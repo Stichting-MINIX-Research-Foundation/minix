@@ -239,8 +239,8 @@ static int load_elf(struct exec_info *execi)
   int r;
   int proc_e;
   phys_bytes tot_bytes;		/* total space for program, including gap */
-  vir_bytes text_addr, text_filebytes, text_membytes;
-  vir_bytes data_addr, data_filebytes, data_membytes;
+  vir_bytes text_vaddr, text_paddr, text_filebytes, text_membytes;
+  vir_bytes data_vaddr, data_paddr, data_filebytes, data_membytes;
   off_t text_offset, data_offset;
   int sep_id, is_elf, load_text, allow_setuid;
   uid_t new_uid;
@@ -252,9 +252,11 @@ static int load_elf(struct exec_info *execi)
   proc_e = execi->proc_e;
 
   /* Read the file header and extract the segment sizes. */
-  r = read_header_elf(execi->image, &text_addr, &text_filebytes, &text_membytes,
-		      &data_addr, &data_filebytes, &data_membytes,
-		      &tot_bytes, &execi->pc, &text_offset, &data_offset);
+  r = read_header_elf(execi->image, &text_vaddr, &text_paddr,
+		      &text_filebytes, &text_membytes,
+		      &data_vaddr, &data_paddr,
+		      &data_filebytes, &data_membytes,
+		      &execi->pc, &text_offset, &data_offset);
   if (r != OK) {
       return(r);
   }
@@ -264,10 +266,11 @@ static int load_elf(struct exec_info *execi)
 
   sep_id = 1;
   is_elf = 1;
+  tot_bytes = 0; /* Use default stack size */
 
   r = exec_newmem(proc_e,
-		  trunc_page(text_addr), text_membytes,
-		  trunc_page(data_addr), data_membytes,
+		  trunc_page(text_vaddr), text_membytes,
+		  trunc_page(data_vaddr), data_membytes,
 		  tot_bytes, execi->frame_len, sep_id, is_elf,
 		  0 /*dev*/, proc_e /*inum*/, 0 /*ctime*/,
 		  execi->progname, new_uid, new_gid,
@@ -281,7 +284,7 @@ static int load_elf(struct exec_info *execi)
 
   /* Read in text and data segments. */
   if (load_text) {
-      r = read_seg(execi, text_offset, proc_e, T, text_addr, text_filebytes);
+      r = read_seg(execi, text_offset, proc_e, T, text_vaddr, text_filebytes);
       if (r != OK)
       {
 	  printf("RS: load_elf: read_seg failed: %d\n", r);
@@ -292,7 +295,7 @@ static int load_elf(struct exec_info *execi)
   else
       printf("RS: load_elf: not loading text segment\n");
 
-  r = read_seg(execi, data_offset, proc_e, D, data_addr, data_filebytes);
+  r = read_seg(execi, data_offset, proc_e, D, data_vaddr, data_filebytes);
   if (r != OK)
   {
       printf("RS: load_elf: read_seg failed: %d\n", r);

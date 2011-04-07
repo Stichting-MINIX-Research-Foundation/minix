@@ -18,13 +18,14 @@ static int __elfN(check_header)(const Elf_Ehdr *hdr);
 
 int read_header_elf(
   const char *exec_hdr,		/* executable header */
-  vir_bytes *text_addr,		/* text virtual address */
+  vir_bytes *text_vaddr,	/* text virtual address */
+  phys_bytes *text_paddr,	/* text physical address */
   vir_bytes *text_filebytes,	/* text segment size (in the file) */
   vir_bytes *text_membytes,	/* text segment size (in memory) */
-  vir_bytes *data_addr,		/* data virtual address */
+  vir_bytes *data_vaddr,	/* data virtual address */
+  phys_bytes *data_paddr,	/* data physical address */
   vir_bytes *data_filebytes,	/* data segment size (in the file) */
   vir_bytes *data_membytes,	/* data segment size (in memory) */
-  phys_bytes *tot_bytes,	/* total size */
   vir_bytes *pc,		/* program entry point (initial PC) */
   off_t *text_offset,		/* file offset to text segment */
   off_t *data_offset		/* file offset to data segment */
@@ -32,14 +33,16 @@ int read_header_elf(
 {
   const Elf_Ehdr *hdr = NULL;
   const Elf_Phdr *phdr = NULL;
-  unsigned long seg_filebytes, seg_membytes, seg_addr;
+  unsigned long seg_filebytes, seg_membytes;
   int i = 0;
 
   assert(exec_hdr != NULL);
 
-  *text_addr = *text_filebytes = *text_membytes = 0;
-  *data_addr = *data_filebytes = *data_membytes = 0;
-  *tot_bytes = *pc = *text_offset = *data_offset = 0;
+  *text_vaddr = *text_paddr = 0;
+  *text_filebytes = *text_membytes = 0;
+  *data_vaddr = *data_paddr = 0;
+  *data_filebytes = *data_membytes = 0;
+  *pc = *text_offset = *data_offset = 0;
 
   hdr = (const Elf_Ehdr *)exec_hdr;
   if (__elfN(check_header)(hdr) != OK || (hdr->e_type != ET_EXEC))
@@ -73,20 +76,21 @@ int read_header_elf(
       case PT_LOAD:
 	  if (phdr[i].p_memsz == 0)
 	      break;
-	  seg_addr = phdr[i].p_vaddr;
 	  seg_filebytes = phdr[i].p_filesz;
 	  seg_membytes = round_page(phdr[i].p_memsz + phdr[i].p_vaddr -
 				    trunc_page(phdr[i].p_vaddr));
 
 	  if (hdr->e_entry >= phdr[i].p_vaddr &&
 	      hdr->e_entry < (phdr[i].p_vaddr + phdr[i].p_memsz)) {
-	      *text_addr = seg_addr;
+	      *text_vaddr = phdr[i].p_vaddr;
+	      *text_paddr = phdr[i].p_paddr;
 	      *text_filebytes = seg_filebytes;
 	      *text_membytes = seg_membytes;
 	      *pc = (vir_bytes)hdr->e_entry;
 	      *text_offset = phdr[i].p_offset;
 	  } else {
-	      *data_addr = seg_addr;
+	      *data_vaddr = phdr[i].p_vaddr;
+	      *data_paddr = phdr[i].p_paddr;
 	      *data_filebytes = seg_filebytes;
 	      *data_membytes = seg_membytes;
 	      *data_offset = phdr[i].p_offset;
@@ -97,13 +101,13 @@ int read_header_elf(
       }
   }
 
-  *tot_bytes = 0; /* Use default stack size */
-
 #if ELF_DEBUG
-  printf("Text addr:      0x%x\n", *text_addr);
+  printf("Text vaddr:     0x%x\n", *text_vaddr);
+  printf("Text paddr:     0x%x\n", *text_paddr);
   printf("Text filebytes: 0x%x\n", *text_filebytes);
   printf("Text membytes:  0x%x\n", *text_membytes);
-  printf("Data addr:      0x%x\n", *data_addr);
+  printf("Data vaddr:     0x%x\n", *data_vaddr);
+  printf("Data paddr:     0x%x\n", *data_paddr);
   printf("Data filebyte:  0x%x\n", *data_filebytes);
   printf("Data membytes:  0x%x\n", *data_membytes);
   printf("Tot bytes:      0x%x\n", *tot_bytes);
