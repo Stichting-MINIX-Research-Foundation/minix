@@ -411,7 +411,14 @@ void driver_up(const char * label, endpoint_t ep)
 
 	nic->state = DRV_IDLE;
 
-	if (!netif_add(&nic->netif, &ip_addr_none, &ip_addr_none, &ip_addr_none,
+	/*
+	 * FIXME
+	 *
+	 * We set the initial ip to 0.0.0.0 to make dhcpd broadcasing work
+	 * at the very begining. dhcp should use raw socket but it is a little
+	 * tricy in the current dhcp implementation
+	 */
+	if (!netif_add(&nic->netif, &ip_addr_any, &ip_addr_none, &ip_addr_none,
 				nic, ethernetif_init, ethernet_input)) {
 		printf("LWIP : failed to add device /dev/%s\n", nic->name);
 		nic->drv_ep = NONE;
