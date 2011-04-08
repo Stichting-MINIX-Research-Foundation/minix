@@ -875,12 +875,11 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
     }
 
     /* Check if there are pending senda(). */
-    if (caller_ptr->p_misc_flags & MF_ASYNMSG)
-    {
+    if (caller_ptr->p_misc_flags & MF_ASYNMSG) {
 	if (src_e != ANY)
-		r= try_one(proc_addr(src_p), caller_ptr, NULL);
+		r = try_one(proc_addr(src_p), caller_ptr, NULL);
 	else
-		r= try_async(caller_ptr);
+		r = try_async(caller_ptr);
 
 	if (r == OK) {
 		IPC_STATUS_ADD_CALL(caller_ptr, SENDA);
@@ -1009,7 +1008,7 @@ PUBLIC int mini_notify(
 	"(%d/%d, tab 0x%lx)\n",__FILE__,__LINE__,	\
 field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 
-#define A_RETRIEVE(entry, field)	\
+#define A_RETR_FLD(entry, field)	\
   if(data_copy(caller_ptr->p_endpoint,	\
 	 table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
 		KERNEL, (vir_bytes) &tabent.field,	\
@@ -1018,7 +1017,17 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 		return EFAULT; \
 	}
 
-#define A_INSERT(entry, field)	\
+#define A_RETR(entry) do {			\
+  if (data_copy(				\
+  		caller_ptr->p_endpoint, table_v + (entry)*sizeof(asynmsg_t),\
+  		KERNEL, (vir_bytes) &tabent,	\
+  		sizeof(tabent)) != OK) {	\
+  			ASCOMPLAIN(caller_ptr, entry, "message entry");	\
+  			return(EFAULT);		\
+  }						\
+  			 } while(0)
+
+#define A_INSRT_FLD(entry, field)	\
   if(data_copy(KERNEL, (vir_bytes) &tabent.field, \
 	caller_ptr->p_endpoint,	\
  	table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
@@ -1027,179 +1036,122 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 		return EFAULT; \
 	}
 
+#define A_INSRT(entry) do {			\
+  if (data_copy(KERNEL, (vir_bytes) &tabent,	\
+  		caller_ptr->p_endpoint, table_v + (entry)*sizeof(asynmsg_t),\
+  		sizeof(tabent)) != OK) {	\
+  			ASCOMPLAIN(caller_ptr, entry, "message entry");	\
+  			return(EFAULT);		\
+  }						\
+  			  } while(0)	
+
 /*===========================================================================*
  *				mini_senda				     *
  *===========================================================================*/
 PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 {
-	int i, dst_p, done, do_notify;
-	unsigned flags;
-	struct proc *dst_ptr;
-	struct priv *privp;
-	asynmsg_t tabent;
-	const vir_bytes table_v = (vir_bytes) table;
+  int r = OK, i, dst_p, done, do_notify;
+  unsigned flags;
+  endpoint_t dst;
+  struct proc *dst_ptr;
+  struct priv *privp;
+  asynmsg_t tabent;
+  const vir_bytes table_v = (vir_bytes) table;
 
-	privp= priv(caller_ptr);
-	if (!(privp->s_flags & SYS_PROC))
-	{
-		printf(
-		"mini_senda: warning caller has no privilege structure\n");
-		return EPERM;
-	}
+  privp = priv(caller_ptr);
+  if (!(privp->s_flags & SYS_PROC)) {
+	printf( "mini_senda: warning caller has no privilege structure\n");
+	return(EPERM);
+  }
 
-	/* Clear table */
-	privp->s_asyntab= -1;	
-	privp->s_asynsize= 0;
+  /* Clear table */
+  privp->s_asyntab = -1;	
+  privp->s_asynsize = 0;
 
-	if (size == 0)
-	{
-		/* Nothing to do, just return */
-		return OK;
-	}
+  if (size == 0) return(OK);  /* Nothing to do, just return */
 
-	/* Limit size to something reasonable. An arbitrary choice is 16
-	 * times the number of process table entries.
-	 *
-	 * (this check has been duplicated in sys_call but is left here
-	 * as a sanity check)
-	 */
-	if (size > 16*(NR_TASKS + NR_PROCS))
-	{
-		return EDOM;
-	}
+  /* Limit size to something reasonable. An arbitrary choice is 16
+   * times the number of process table entries.
+   *
+   * (this check has been duplicated in sys_call but is left here
+   * as a sanity check)
+   */
+  if (size > 16*(NR_TASKS + NR_PROCS)) return(EDOM);
 	
-	/* Scan the table */
-	do_notify= FALSE;	
-	done= TRUE;
-	for (i= 0; i<size; i++)
-	{
+  /* Scan the table */
+  do_notify = FALSE;	/* XXX: this doesn't do anything? */
+  done = TRUE;
+  for (i = 0; i < size; i++) {
+	/* Process each entry in the table and store the result in the table.
+	 * If we're done handling a message, copy the result to the sender. */
+  	int pending_recv = FALSE;
 
-		/* Read status word */
-		A_RETRIEVE(i, flags);
-		flags= tabent.flags;
+	/* Copy message to kernel */
+	A_RETR(i);
+	flags = tabent.flags;
+	dst = tabent.dst;
 
-		/* Skip empty entries */
-		if (flags == 0)
-			continue;
+	if (flags == 0) continue; /* Skip empty entries */
 
-		/* Check for reserved bits in the flags field */
-		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY) ||
-			!(flags & AMF_VALID))
-		{
-			return EINVAL;
-		}
+	/* 'flags' field must contain only valid bits */
+	if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY))
+		return(EINVAL);
+	if (!(flags & AMF_VALID)) return(EINVAL); /* Must contain message */
+	if (flags & AMF_DONE) continue;	/* Already done processing */
 
-		/* Skip entry if AMF_DONE is already set */
-		if (flags & AMF_DONE)
-			continue;
-
-		/* Get destination */
-		A_RETRIEVE(i, dst);
-
-		if (!isokendpt(tabent.dst, &dst_p))
-		{
-			/* Bad destination, report the error */
-			tabent.result= EDEADSRCDST;
-			A_INSERT(i, result);
-			tabent.flags= flags | AMF_DONE;
-			A_INSERT(i, flags);
-
-			if (flags & AMF_NOTIFY)
-				do_notify= 1;
-			continue;
-		}
-
-		if (iskerneln(dst_p))
-		{
-			/* Asynchronous sends to the kernel are not allowed */
-			tabent.result= ECALLDENIED;
-			A_INSERT(i, result);
-			tabent.flags= flags | AMF_DONE;
-			A_INSERT(i, flags);
-
-			if (flags & AMF_NOTIFY)
-				do_notify= 1;
-			continue;
-		}
-
-		if (!may_send_to(caller_ptr, dst_p))
-		{
-			/* Send denied by IPC mask */
-			tabent.result= ECALLDENIED;
-			A_INSERT(i, result);
-			tabent.flags= flags | AMF_DONE;
-			A_INSERT(i, flags);
-
-			if (flags & AMF_NOTIFY)
-				do_notify= 1;
-			continue;
-		}
-
-#if 0
-		printf("mini_senda: entry[%d]: flags 0x%x dst %d/%d\n",
-			i, tabent.flags, tabent.dst, dst_p);
-#endif
-
+	if (!isokendpt(tabent.dst, &dst_p)) 
+		r = EDEADSRCDST; /* Bad destination, report the error */
+	else if (iskerneln(dst_p)) 
+		r = ECALLDENIED; /* Asyn sends to the kernel are not allowed */
+	else if (!may_send_to(caller_ptr, dst_p)) 
+		r = ECALLDENIED; /* Send denied by IPC mask */
+	else 	/* r == OK */
 		dst_ptr = proc_addr(dst_p);
 
-		/* RTS_NO_ENDPOINT should be removed */
-		if (RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT))
-		{
-			tabent.result= EDEADSRCDST;
-			A_INSERT(i, result);
-			tabent.flags= flags | AMF_DONE;
-			A_INSERT(i, flags);
-
-			if (flags & AMF_NOTIFY)
-				do_notify= TRUE;
-			continue;
-		}
-
-		/* Check if 'dst' is blocked waiting for this message.
-		 * If AMF_NOREPLY is set, do not satisfy the receiving part of
-		 * a SENDREC.
-		 */
-		if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint) &&
-			(!(flags & AMF_NOREPLY) ||
-			!(dst_ptr->p_misc_flags & MF_REPLY_PEND)))
-		{
-			/* Destination is indeed waiting for this message. */
-			/* Copy message from sender. */
-			if(copy_msg_from_user(caller_ptr, &table[i].msg,
-						&dst_ptr->p_delivermsg))
-				tabent.result = EFAULT;
-			else {
-				dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
-				dst_ptr->p_misc_flags |= MF_DELIVERMSG;
-				IPC_STATUS_ADD_CALL(dst_ptr, SENDA);
-				RTS_UNSET(dst_ptr, RTS_RECEIVING);
-				tabent.result = OK;
-			}
-
-			A_INSERT(i, result);
-			tabent.flags= flags | AMF_DONE;
-			A_INSERT(i, flags);
-
-			if (flags & AMF_NOTIFY)
-				do_notify= 1;
-			continue;
-		}
-		else 
-		{
-			/* Should inform receiver that something is pending */
-			dst_ptr->p_misc_flags |= MF_ASYNMSG;
-			done= FALSE;
-			continue;
-		} 
+	/* XXX: RTS_NO_ENDPOINT should be removed */
+	if (r == OK && RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT)) {
+		r = EDEADSRCDST;
 	}
-	if (do_notify)
-		printf("mini_senda: should notify caller\n");
-	if (!done)
-	{
-		privp->s_asyntab= (vir_bytes)table;
-		privp->s_asynsize= size;
-	}
-	return OK;
+
+	/* Check if 'dst' is blocked waiting for this message.
+	 * If AMF_NOREPLY is set, do not satisfy the receiving part of
+	 * a SENDREC.
+	 */
+	if (r == OK && WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint) &&
+	    (!(flags&AMF_NOREPLY) || !(dst_ptr->p_misc_flags&MF_REPLY_PEND))) {
+		/* Destination is indeed waiting for this message. */
+		dst_ptr->p_delivermsg = tabent.msg;
+		dst_ptr->p_delivermsg.m_source = caller_ptr->p_endpoint;
+		dst_ptr->p_misc_flags |= MF_DELIVERMSG;
+		IPC_STATUS_ADD_CALL(dst_ptr, SENDA);
+		RTS_UNSET(dst_ptr, RTS_RECEIVING);
+	} else if (r == OK) {
+		/* Should inform receiver that something is pending */
+		dst_ptr->p_misc_flags |= MF_ASYNMSG;
+		pending_recv = TRUE;
+	} 
+
+	if (!pending_recv) flags |= AMF_DONE; /* Done handling message */
+
+	/* Store results */
+	tabent.result = r;
+	tabent.flags = flags;
+	if (flags & AMF_DONE) {
+		if (r != EDEADSRCDST && (flags & AMF_NOTIFY))
+			do_notify = TRUE; /* XXX: ? */
+		A_INSRT(i);	/* Copy results to caller */
+	} else
+		done = FALSE;
+  }
+
+  if (do_notify) printf("mini_senda: should notify caller\n"); /* XXX: ? */
+
+  if (!done) {
+	privp->s_asyntab = (vir_bytes) table;
+	privp->s_asynsize = size;
+  }
+
+  return(OK);
 }
 
 
@@ -1209,30 +1161,29 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 PRIVATE int try_async(caller_ptr)
 struct proc *caller_ptr;
 {
-	int r;
-	struct priv *privp;
-	struct proc *src_ptr;
-	int postponed = FALSE;
+  int r;
+  struct priv *privp;
+  struct proc *src_ptr;
+  int postponed = FALSE;
 
-	/* Try all privilege structures */
-	for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; ++privp) 
-	{
-		if (privp->s_proc_nr == NONE)
-			continue;
+  /* Try all privilege structures */
+  for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; ++privp)  {
+	if (privp->s_proc_nr == NONE)
+		continue;
 
-		src_ptr= proc_addr(privp->s_proc_nr);
+	src_ptr = proc_addr(privp->s_proc_nr);
 
-	  	assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
-		r= try_one(src_ptr, caller_ptr, &postponed);
-		if (r == OK)
-			return r;
-	}
+	assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
+	r = try_one(src_ptr, caller_ptr, &postponed);
+	if (r == OK)
+		return(r);
+  }
 
-	/* Nothing found, clear MF_ASYNMSG unless messages were postponed */
-	if (postponed == FALSE)
-		caller_ptr->p_misc_flags &= ~MF_ASYNMSG;
+  /* Nothing found, clear MF_ASYNMSG unless messages were postponed */
+  if (postponed == FALSE)
+	caller_ptr->p_misc_flags &= ~MF_ASYNMSG;
 
-	return ESRCH;
+  return(ESRCH);
 }
 
 
@@ -1241,103 +1192,97 @@ struct proc *caller_ptr;
  *===========================================================================*/
 PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 {
-	int i, done;
-	unsigned flags;
-	size_t size;
-	endpoint_t dst_e;
-	struct priv *privp;
-	asynmsg_t tabent;
-	vir_bytes table_v;
-	struct proc *caller_ptr;
+  int r = EAGAIN, i, done, do_notify, pending_recv = FALSE;
+  unsigned flags;
+  size_t size;
+  endpoint_t dst;
+  struct proc *caller_ptr;
+  struct priv *privp;
+  asynmsg_t tabent;
+  vir_bytes table_v;
 
-	privp= priv(src_ptr);
+  privp = priv(src_ptr);
+  if (!(privp->s_flags & SYS_PROC)) return(EPERM);
+  size = privp->s_asynsize;
+  table_v = privp->s_asyntab;
 
-	/* Basic validity checks */
-	if (privp->s_id == USER_PRIV_ID) return EAGAIN;
-	if (privp->s_asynsize == 0) return EAGAIN;
-	if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return EAGAIN;
+  /* Clear table */
+  privp->s_asyntab = -1;
+  privp->s_asynsize = 0;
 
-	size= privp->s_asynsize;
-	table_v = privp->s_asyntab;
-	caller_ptr = src_ptr;
+  if (size == 0) return(EAGAIN);
+  if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return(EAGAIN);
 
-	dst_e= dst_ptr->p_endpoint;
+  caller_ptr = src_ptr;
 
-	/* Scan the table */
-	done= TRUE;
-	for (i= 0; i<size; i++)
-	{
-		/* Read status word */
-		A_RETRIEVE(i, flags);
-		flags= tabent.flags;
+  /* Scan the table */
+  do_notify = FALSE;	/* XXX: this doesn't do anything? */
+  done = TRUE;
+  for (i = 0; i < size; i++) {
+  	/* Process each entry in the table and store the result in the table.
+  	 * If we're done handling a message, copy the result to the sender.
+  	 * Some checks done in mini_senda are duplicated here, as the sender
+  	 * could've altered the contents of the table in the mean time.
+  	 */
 
-		/* Skip empty entries */
-		if (flags == 0)
-		{
-			continue;
-		}
+	/* Copy message to kernel */
+	A_RETR(i);
+	flags = tabent.flags;
+	dst = tabent.dst;
 
-		/* Check for reserved bits in the flags field */
-		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY) ||
-			!(flags & AMF_VALID))
-		{
-			printf("try_one: bad bits in table\n");
-			privp->s_asynsize= 0;
-			return EINVAL;
-		}
+	if (flags == 0) continue;	/* Skip empty entries */
 
-		/* Skip entry is AMF_DONE is already set */
-		if (flags & AMF_DONE)
-		{
-			continue;
-		}
+	/* 'flags' field must contain only valid bits */
+	if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY))
+		return(EINVAL);
+	if (!(flags & AMF_VALID)) return(EINVAL); /* Must contain message */
+	if (flags & AMF_DONE) continue; /* Already done processing */
 
-		/* Clear done. We are done when all entries are either empty
-		 * or done at the start of the call.
-		 */
-		done= FALSE;
+	/* Clear done flag. The sender is done sending when all messages in the
+	 * table are marked done or empty. However, we will know that only
+	 * the next time we enter this function or when the sender decides to
+	 * send additional asynchronous messages and manages to deliver them
+	 * all.
+	 */
+	done = FALSE;
 
-		/* Get destination */
-		A_RETRIEVE(i, dst);
+	/* Message must be directed at receiving end */
+	if (dst != dst_ptr->p_endpoint) continue;
 
-		if (tabent.dst != dst_e)
-		{
-			continue;
-		}
+	/* If AMF_NOREPLY is set, then this message is not a reply to a
+	 * SENDREC and thus should not satisfy the receiving part of the
+	 * SENDREC. This message is to be delivered later.
+	 */
+	if ((flags & AMF_NOREPLY) && (dst_ptr->p_misc_flags & MF_REPLY_PEND)) {
+		if (postponed != NULL)
+			*postponed = TRUE;
 
-		/* If AMF_NOREPLY is set, do not satisfy the receiving part of
-		 * a SENDREC. Do not unset MF_ASYNMSG later because of this,
-		 * though: this message is still to be delivered later.
-		 */
-		if ((flags & AMF_NOREPLY) &&
-			(dst_ptr->p_misc_flags & MF_REPLY_PEND))
-		{
-			if (postponed != NULL)
-				*postponed = TRUE;
-
-			continue;
-		}
-
-		/* Deliver message */
-		A_RETRIEVE(i, msg);
-		dst_ptr->p_delivermsg = tabent.msg;
-		dst_ptr->p_delivermsg.m_source = src_ptr->p_endpoint;
-		dst_ptr->p_misc_flags |= MF_DELIVERMSG;
-
-		tabent.result = OK;
-		A_INSERT(i, result);
-		tabent.flags= flags | AMF_DONE;
-		A_INSERT(i, flags);
-
-		if (flags & AMF_NOTIFY)
-		{
-			printf("try_one: should notify caller\n");
-		}
-		return OK;
+		continue;
 	}
-	if (done)
-		privp->s_asynsize= 0;
-	return EAGAIN;
+
+	/* Destination is ready to receive the message; deliver it */
+	dst_ptr->p_delivermsg = tabent.msg;
+	dst_ptr->p_delivermsg.m_source = src_ptr->p_endpoint;
+	dst_ptr->p_misc_flags |= MF_DELIVERMSG;
+
+	/* Store results for sender */
+	tabent.result = OK;
+	tabent.flags = flags | AMF_DONE;
+	if (flags & AMF_NOTIFY) do_notify = TRUE; /* XXX: ? */
+	A_INSRT(i);	/* Copy results to sender */
+
+	r = OK;
+	break;
+  }
+
+  if (do_notify) printf("mini_senda: should notify caller\n"); /* XXX: ? */
+
+  if (!done) {
+	privp->s_asyntab = table_v;
+	privp->s_asynsize = size;
+  }
+
+  return(r);
 }
 
 /*===========================================================================*
