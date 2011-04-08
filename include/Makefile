@@ -16,6 +16,7 @@ INCS+=	minix/a.out.h minix/cdrom.h minix/compiler-ack.h minix/dirent.h \
 	minix/dl_eth.h minix/md5.h minix/sha1.h minix/sha2.h minix/types.h
 	
 INCS+=	net/hton.h net/if.h net/ioctl.h net/netlib.h
+INCS+=	net/gen/netdb.h net/gen/resolv.h net/gen/nameser.h
 INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
 
 .include <bsd.own.mk>
