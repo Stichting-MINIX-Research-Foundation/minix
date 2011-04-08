@@ -68,6 +68,7 @@ _PROTOTYPE( void get_randomness, (struct k_randomness *, int));
 
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
 _PROTOTYPE( int asynsend3, (endpoint_t ep, message *msg, int flags));
+_PROTOTYPE( int asyn_geterror, (endpoint_t *dst, message *msg, int *err));
 
 #define ASSERT(c) if(!(c)) { panic("%s:%d: assert %s failed", __FILE__, __LINE__, #c); }
 
