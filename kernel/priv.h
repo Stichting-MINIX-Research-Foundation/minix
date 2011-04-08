@@ -38,6 +38,7 @@ struct priv {
   endpoint_t s_sig_mgr;		/* signal manager for system signals */
   endpoint_t s_bak_sig_mgr;	/* backup signal manager for system signals */
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
+  sys_map_t s_asyn_pending;	/* bit map with pending asyn messages */
   irq_id_t s_int_pending;	/* pending hardware interrupts */
   sigset_t s_sig_pending;	/* pending signals */
 

@@ -599,12 +599,8 @@ int caller_ret;				/* code to return on callers */
       /* Unset pending notification bits. */
       unset_sys_bit(priv(rp)->s_notify_pending, priv(rc)->s_id);
 
-      /* XXX FIXME: Cleanup should be done for senda() as well. For this to be
-       * done in a realistic way, we need a better implementation of senda
-       * with a bitmap similar to s_notify_pending for notify() rather than
-       * a single global MF_ASYNMSG flag. The current arrangement exposes
-       * several performance issues.
-       */
+      /* Unset pending asynchronous messages */
+      unset_sys_bit(priv(rp)->s_asyn_pending, priv(rc)->s_id);
 
       /* Check if process depends on given process. */
       if (P_BLOCKEDON(rp) == rc->p_endpoint) {

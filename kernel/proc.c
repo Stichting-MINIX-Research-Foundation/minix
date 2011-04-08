@@ -54,6 +54,7 @@ FORWARD _PROTOTYPE( void idle, (void));
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, endpoint_t dst_e,
 		message *m_ptr, int flags));
 */
+FORWARD _PROTOTYPE( int has_pending, (sys_map_t *map, int src_p)	);
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, endpoint_t src,
 		message *m_ptr, int flags));
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
@@ -61,8 +62,7 @@ FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 FORWARD _PROTOTYPE( int deadlock, (int function,
 		register struct proc *caller, endpoint_t src_dst_e));
 FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
-FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
-		int *postponed));
+FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
 FORWARD _PROTOTYPE( struct proc * pick_proc, (void));
 FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
 
@@ -689,6 +689,41 @@ endpoint_t src_dst_e;				/* src or dst process */
 }
 
 /*===========================================================================*
+ *				has_pending				     * 
+ *===========================================================================*/
+PRIVATE int has_pending(sys_map_t *map, int src_p)
+{
+/* Check to see if there is a pending message from the desired source
+ * available.
+ */
+
+  int src_id;
+  sys_id_t id = NULL_PRIV_ID;
+
+  /* Either check a specific bit in the mask map, or find the first bit set in
+   * it (if any), depending on whether the receive was called on a specific
+   * source endpoint.
+   */
+  if (src_p != ANY) {
+	src_id = nr_to_id(src_p);
+	if (get_sys_bit(*map, src_id)) 
+		id = src_id;		
+  } else {
+	/* Find a source with a pending message */
+	for (src_id = 0; src_id < NR_SYS_PROCS; src_id += BITCHUNK_BITS) {
+		if (get_sys_bits(*map, src_id) != 0) {
+			while(!get_sys_bit(*map, src_id)) src_id++;
+			break;
+		}
+	}
+	if (src_id < NR_SYS_PROCS)	/* Found one */
+		id = src_id;
+  }
+
+  return(id);
+}
+
+/*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
 PUBLIC int mini_send(
@@ -799,7 +834,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
  */
   register struct proc **xpp;
   sys_map_t *map;
-  int i, r, src_id, found, src_proc_nr, src_p;
+  int i, r, src_id, src_proc_nr, src_p;
 
   assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 
@@ -827,27 +862,8 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
     if (! (caller_ptr->p_misc_flags & MF_REPLY_PEND)) {
         map = &priv(caller_ptr)->s_notify_pending;
 
-        /* Either check a specific bit in the pending notifications mask, or
-         * find the first bit set in it (if any), depending on whether the
-         * receive was called on a specific source endpoint.
-         */
-        if (src_p != ANY) {
-            src_id = nr_to_id(src_p);
-
-            found = get_sys_bit(*map, src_id);
-        } else {
-            for (src_id = 0; src_id < NR_SYS_PROCS; src_id += BITCHUNK_BITS) {
-                if (get_sys_bits(*map, src_id) != 0) {
-                    while (!get_sys_bit(*map, src_id)) src_id++;
-
-                    break;
-                }
-            }
-
-            found = (src_id < NR_SYS_PROCS);
-        }
-
-        if (found) {
+	/* Check for pending notifications */
+        if ((src_id = has_pending(map, src_p)) != NULL_PRIV_ID) {
             endpoint_t hisep;
 
             src_proc_nr = id_to_nr(src_id);		/* get source proc */
@@ -874,17 +890,19 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
         }
     }
 
-    /* Check if there are pending senda(). */
-    if (caller_ptr->p_misc_flags & MF_ASYNMSG) {
-	if (src_e != ANY)
-		r = try_one(proc_addr(src_p), caller_ptr, NULL);
-	else
-		r = try_async(caller_ptr);
+    /* Check for pending asynchronous messages */
+    map = &priv(caller_ptr)->s_asyn_pending;
+
+    if (has_pending(map, src_p) != NULL_PRIV_ID) {
+        if (src_p != ANY)
+        	r = try_one(proc_addr(src_p), caller_ptr);
+        else
+        	r = try_async(caller_ptr);
 
 	if (r == OK) {
-		IPC_STATUS_ADD_CALL(caller_ptr, SENDA);
-		goto receive_done;
-	}
+            IPC_STATUS_ADD_CALL(caller_ptr, SENDA);
+            goto receive_done;
+        }
     }
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
@@ -1050,7 +1068,8 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
  *===========================================================================*/
 PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 {
-  int r = OK, i, dst_p, done, do_notify;
+  int r = OK, dst_p, done, do_notify;
+  unsigned int i;
   unsigned flags;
   endpoint_t dst;
   struct proc *dst_ptr;
@@ -1126,8 +1145,9 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		IPC_STATUS_ADD_CALL(dst_ptr, SENDA);
 		RTS_UNSET(dst_ptr, RTS_RECEIVING);
 	} else if (r == OK) {
-		/* Should inform receiver that something is pending */
-		dst_ptr->p_misc_flags |= MF_ASYNMSG;
+		/* Inform receiver that something is pending */
+		set_sys_bit(priv(dst_ptr)->s_asyn_pending, 
+			    priv(caller_ptr)->s_id); 
 		pending_recv = TRUE;
 	} 
 
@@ -1164,7 +1184,6 @@ struct proc *caller_ptr;
   int r;
   struct priv *privp;
   struct proc *src_ptr;
-  int postponed = FALSE;
 
   /* Try all privilege structures */
   for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; ++privp)  {
@@ -1174,14 +1193,9 @@ struct proc *caller_ptr;
 	src_ptr = proc_addr(privp->s_proc_nr);
 
 	assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
-	r = try_one(src_ptr, caller_ptr, &postponed);
-	if (r == OK)
+	if ((r = try_one(src_ptr, caller_ptr)) == OK)
 		return(r);
   }
-
-  /* Nothing found, clear MF_ASYNMSG unless messages were postponed */
-  if (postponed == FALSE)
-	caller_ptr->p_misc_flags &= ~MF_ASYNMSG;
 
   return(ESRCH);
 }
@@ -1190,10 +1204,11 @@ struct proc *caller_ptr;
 /*===========================================================================*
  *				try_one					     *
  *===========================================================================*/
-PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
+PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 {
-  int r = EAGAIN, i, done, do_notify, pending_recv = FALSE;
-  unsigned flags;
+/* Try to receive an asynchronous message from 'src_ptr' */
+  int r = EAGAIN, done, do_notify, pending_recv = FALSE;
+  unsigned int flags, i;
   size_t size;
   endpoint_t dst;
   struct proc *caller_ptr;
@@ -1206,9 +1221,10 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
   size = privp->s_asynsize;
   table_v = privp->s_asyntab;
 
-  /* Clear table */
+  /* Clear table pending message flag. We're done unless we're not. */
   privp->s_asyntab = -1;
   privp->s_asynsize = 0;
+  unset_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
 
   if (size == 0) return(EAGAIN);
   if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return(EAGAIN);
@@ -1253,12 +1269,8 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
 	 * SENDREC and thus should not satisfy the receiving part of the
 	 * SENDREC. This message is to be delivered later.
 	 */
-	if ((flags & AMF_NOREPLY) && (dst_ptr->p_misc_flags & MF_REPLY_PEND)) {
-		if (postponed != NULL)
-			*postponed = TRUE;
-
+	if ((flags & AMF_NOREPLY) && (dst_ptr->p_misc_flags & MF_REPLY_PEND)) 
 		continue;
-	}
 
 	/* Destination is ready to receive the message; deliver it */
 	dst_ptr->p_delivermsg = tabent.msg;
@@ -1280,6 +1292,7 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr, int *postponed)
   if (!done) {
 	privp->s_asyntab = table_v;
 	privp->s_asynsize = size;
+  	set_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
   }
 
   return(r);
