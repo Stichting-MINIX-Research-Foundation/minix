@@ -17,6 +17,7 @@
 #include <machine/vm.h>
 
 #include <sys/sigcontext.h>
+#include <minix/u64.h>
 
 #include "archconst.h"
 #include "arch_proto.h"
