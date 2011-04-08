@@ -54,14 +54,13 @@ FORWARD _PROTOTYPE( void idle, (void));
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, endpoint_t dst_e,
 		message *m_ptr, int flags));
 */
-FORWARD _PROTOTYPE( int has_pending, (sys_map_t *map, int src_p)	);
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, endpoint_t src,
 		message *m_ptr, int flags));
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 	asynmsg_t *table, size_t size));
 FORWARD _PROTOTYPE( int deadlock, (int function,
 		register struct proc *caller, endpoint_t src_dst_e));
-FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
+FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr)		);
 FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
 FORWARD _PROTOTYPE( struct proc * pick_proc, (void));
 FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
@@ -691,7 +690,7 @@ endpoint_t src_dst_e;				/* src or dst process */
 /*===========================================================================*
  *				has_pending				     * 
  *===========================================================================*/
-PRIVATE int has_pending(sys_map_t *map, int src_p)
+PUBLIC int has_pending(sys_map_t *map, int src_p)
 {
 /* Check to see if there is a pending message from the desired source
  * available.
@@ -1098,7 +1097,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
   if (size > 16*(NR_TASKS + NR_PROCS)) return(EDOM);
 	
   /* Scan the table */
-  do_notify = FALSE;	/* XXX: this doesn't do anything? */
+  do_notify = FALSE;
   done = TRUE;
   for (i = 0; i < size; i++) {
 	/* Process each entry in the table and store the result in the table.
@@ -1113,7 +1112,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	if (flags == 0) continue; /* Skip empty entries */
 
 	/* 'flags' field must contain only valid bits */
-	if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY))
+	if(flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY|AMF_NOTIFY_ERR))
 		return(EINVAL);
 	if (!(flags & AMF_VALID)) return(EINVAL); /* Must contain message */
 	if (flags & AMF_DONE) continue;	/* Already done processing */
@@ -1157,14 +1156,17 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	tabent.result = r;
 	tabent.flags = flags;
 	if (flags & AMF_DONE) {
-		if (r != EDEADSRCDST && (flags & AMF_NOTIFY))
-			do_notify = TRUE; /* XXX: ? */
+		if (flags & AMF_NOTIFY)
+			do_notify = TRUE; 
+		else if (r != OK && (flags & AMF_NOTIFY_ERR))
+			do_notify = TRUE;
 		A_INSRT(i);	/* Copy results to caller */
 	} else
 		done = FALSE;
   }
 
-  if (do_notify) printf("mini_senda: should notify caller\n"); /* XXX: ? */
+  if (do_notify) 
+	mini_notify(proc_addr(ASYNCM), caller_ptr->p_endpoint);
 
   if (!done) {
 	privp->s_asyntab = (vir_bytes) table;
@@ -1227,9 +1229,9 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
   unset_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
 
   if (size == 0) return(EAGAIN);
-  if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return(EAGAIN);
+  if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return(ECALLDENIED);
 
-  caller_ptr = src_ptr;
+  caller_ptr = src_ptr;	/* Needed for A_ macros later on */
 
   /* Scan the table */
   do_notify = FALSE;	/* XXX: this doesn't do anything? */
@@ -1249,10 +1251,14 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 	if (flags == 0) continue;	/* Skip empty entries */
 
 	/* 'flags' field must contain only valid bits */
-	if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY))
-		return(EINVAL);
-	if (!(flags & AMF_VALID)) return(EINVAL); /* Must contain message */
-	if (flags & AMF_DONE) continue; /* Already done processing */
+	if(flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY|AMF_NOTIFY_ERR))
+		r = EINVAL;
+	else if (!(flags & AMF_VALID)) /* Must contain message */
+		r = EINVAL; 
+	else if (flags & AMF_DONE) continue; /* Already done processing */
+
+	if (r == EINVAL)
+		goto store_result;
 
 	/* Clear done flag. The sender is done sending when all messages in the
 	 * table are marked done or empty. However, we will know that only
@@ -1273,21 +1279,24 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 		continue;
 
 	/* Destination is ready to receive the message; deliver it */
+	r = OK;
 	dst_ptr->p_delivermsg = tabent.msg;
 	dst_ptr->p_delivermsg.m_source = src_ptr->p_endpoint;
 	dst_ptr->p_misc_flags |= MF_DELIVERMSG;
 
+store_result:
 	/* Store results for sender */
-	tabent.result = OK;
+	tabent.result = r;
 	tabent.flags = flags | AMF_DONE;
-	if (flags & AMF_NOTIFY) do_notify = TRUE; /* XXX: ? */
+	if (flags & AMF_NOTIFY) do_notify = TRUE;
+	else if (r != OK && (flags & AMF_NOTIFY_ERR)) do_notify = TRUE;
 	A_INSRT(i);	/* Copy results to sender */
 
-	r = OK;
 	break;
   }
 
-  if (do_notify) printf("mini_senda: should notify caller\n"); /* XXX: ? */
+  if (do_notify) 
+	mini_notify(proc_addr(ASYNCM), src_ptr->p_endpoint);
 
   if (!done) {
 	privp->s_asyntab = table_v;
@@ -1296,6 +1305,88 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
   }
 
   return(r);
+}
+
+/*===========================================================================*
+ *				cancel_async				     *
+ *===========================================================================*/
+PUBLIC int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
+{
+/* Cancel asynchronous messages from src to dst, because dst is not interested
+ * in them (e.g., dst has been restarted) */
+  int done, do_notify, pending_recv = FALSE;
+  unsigned int flags, i;
+  size_t size;
+  endpoint_t dst;
+  struct proc *caller_ptr;
+  struct priv *privp;
+  asynmsg_t tabent;
+  vir_bytes table_v;
+
+  privp = priv(src_ptr);
+  if (!(privp->s_flags & SYS_PROC)) return(EPERM);
+  size = privp->s_asynsize;
+  table_v = privp->s_asyntab;
+
+  /* Clear table pending message flag. We're done unless we're not. */
+  privp->s_asyntab = -1;
+  privp->s_asynsize = 0;
+  unset_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
+
+  if (size == 0) return(EAGAIN);
+  if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return(ECALLDENIED);
+
+  caller_ptr = src_ptr;	/* Needed for A_ macros later on */
+
+  /* Scan the table */
+  do_notify = FALSE;
+  done = TRUE;
+  for (i = 0; i < size; i++) {
+  	/* Process each entry in the table and store the result in the table.
+  	 * If we're done handling a message, copy the result to the sender.
+  	 * Some checks done in mini_senda are duplicated here, as the sender
+  	 * could've altered the contents of the table in the mean time.
+  	 */
+
+  	int r = EDEADSRCDST;	/* Cancel delivery due to dead dst */
+
+	/* Copy message to kernel */
+	A_RETR(i);
+	flags = tabent.flags;
+	dst = tabent.dst;
+
+	if (flags == 0) continue;	/* Skip empty entries */
+
+	/* 'flags' field must contain only valid bits */
+	if(flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY|AMF_NOTIFY_ERR))
+		r = EINVAL;
+	else if (!(flags & AMF_VALID)) /* Must contain message */
+		r = EINVAL; 
+	else if (flags & AMF_DONE) continue; /* Already done processing */
+
+	/* Message must be directed at receiving end */
+	if (dst != dst_ptr->p_endpoint) {
+		done = FALSE;
+		continue;
+	}
+
+	/* Store results for sender */
+	tabent.result = r;
+	tabent.flags = flags | AMF_DONE;
+	if (flags & AMF_NOTIFY) do_notify = TRUE;
+	else if (r != OK && (flags & AMF_NOTIFY_ERR)) do_notify = TRUE;
+	A_INSRT(i);	/* Copy results to sender */
+  }
+
+  if (do_notify) 
+	mini_notify(proc_addr(ASYNCM), src_ptr->p_endpoint);
+
+  if (!done) {
+	privp->s_asyntab = table_v;
+	privp->s_asynsize = size;
+  }
+
+  return(OK);
 }
 
 /*===========================================================================*

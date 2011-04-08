@@ -56,6 +56,7 @@
 
 PUBLIC struct boot_image image[] = {
 /* process nr, flags, name */
+{ASYNCM,           0, "asyncm"},
 {IDLE,             0, "idle"  },
 {CLOCK,            0, "clock" },
 {SYSTEM,           0, "system"},
@@ -66,7 +67,7 @@ PUBLIC struct boot_image image[] = {
                       
 {PM_PROC_NR,   OVM_F, "pm"    },
 {SCHED_PROC_NR,OVM_F, "sched" },
-{VFS_PROC_NR,  OVM_F, "vfs"   },
+{VFS_PROC_NR,  BVM_F, "vfs"   },
 {MEM_PROC_NR,  BVM_F, "memory"},
 {LOG_PROC_NR,  BVM_F, "log"   },
 {TTY_PROC_NR,  BVM_F, "tty"   },

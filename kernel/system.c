@@ -591,6 +591,14 @@ int caller_ret;				/* code to return on callers */
 {
 /* Clear IPC references for a given process slot. */
   struct proc *rp;			/* iterate over process table */
+  int src_id;
+  sys_map_t *map;
+
+  /* Tell processes that sent asynchronous messages to 'rc' they are not
+   * going to be delivered */
+  map = &priv(rc)->s_asyn_pending;
+  while ((src_id = has_pending(map, ANY)) != NULL_PRIV_ID) 
+      cancel_async(proc_addr(id_to_nr(src_id)), rc);
 
   for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
       if(isemptyp(rp))

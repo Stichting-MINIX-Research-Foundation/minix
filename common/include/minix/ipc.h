@@ -132,13 +132,15 @@ typedef struct asynmsg
 } asynmsg_t;
 
 /* Defines for flags field */
-#define AMF_EMPTY	0	/* slot is not inuse */
-#define AMF_VALID	1	/* slot contains message */
-#define AMF_DONE	2	/* Kernel has processed the message. The
+#define AMF_EMPTY	000	/* slot is not inuse */
+#define AMF_VALID	001	/* slot contains message */
+#define AMF_DONE	002	/* Kernel has processed the message. The
 				 * result is stored in 'result'
 				 */
-#define AMF_NOTIFY	4	/* Send a notification when AMF_DONE is set */
-#define AMF_NOREPLY	8	/* Not a reply message for a SENDREC */
+#define AMF_NOTIFY	004	/* Send a notification when AMF_DONE is set */
+#define AMF_NOREPLY	010	/* Not a reply message for a SENDREC */
+#define AMF_NOTIFY_ERR	020	/* Send a notification when AMF_DONE is set and
+				 * delivery of the message failed */
 
 /* Hide names to avoid name space pollution. */
 #define echo		_echo

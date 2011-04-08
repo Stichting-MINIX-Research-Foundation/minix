@@ -54,6 +54,7 @@
  */
 
 /* Kernel tasks. These all run in the same address space. */
+#define ASYNCM	((endpoint_t) -5) /* notifies about finished async sends */
 #define IDLE    ((endpoint_t) -4) /* runs when no one else can run */
 #define CLOCK  	((endpoint_t) -3) /* alarms and other clock functions */
 #define SYSTEM  ((endpoint_t) -2) /* request system functionality */
@@ -62,7 +63,7 @@
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
 #define MAX_NR_TASKS	1023
-#define NR_TASKS	  4 
+#define NR_TASKS	  5 
 
 /* User-space processes, that is, device drivers, servers, and INIT. */
 #define PM_PROC_NR   ((endpoint_t) 0)	/* process manager */
