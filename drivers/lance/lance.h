@@ -51,7 +51,7 @@ typedef struct iovec_dat
 {
   iovec_s_t iod_iovec[IOVEC_NR];
   int iod_iovec_s;
-  int iod_proc_nr;
+  endpoint_t iod_proc_nr;
   cp_grant_id_t iod_grant;
   vir_bytes iod_iovec_offset;
 } iovec_dat_t;

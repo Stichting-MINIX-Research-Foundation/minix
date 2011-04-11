@@ -248,7 +248,7 @@ message *m;
 		{
 			/* Should record proc */
 			kbdp->req_size= m->COUNT;
-			kbdp->req_proc= m->IO_ENDPT;
+			kbdp->req_proc= m->USER_ENDPT;
 			kbdp->req_grant= (cp_grant_id_t) m->IO_GRANT;
 			kbdp->req_addr_offset= 0;
 			kbdp->incaller= m->m_source;
@@ -264,7 +264,7 @@ message *m;
 			n= KBD_BUFSZ-kbdp->offset;
 		if (n <= 0)
 			panic("do_kbd(READ): bad n: %d", n);
-		r= sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT, 0, 
+		r= sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0, 
 			(vir_bytes) &kbdp->buf[kbdp->offset], n, D);
 		if (r == OK)
 		{
@@ -291,7 +291,7 @@ message *m;
 		 */
 		for (i= 0; i<m->COUNT; i++)
 		{
-			r= sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t)
+			r= sys_safecopyfrom(m->m_source, (cp_grant_id_t)
 				m->IO_GRANT, i, (vir_bytes) &c, 1, D);
 			if (r != OK)
 				break;
@@ -305,8 +305,8 @@ message *m;
 		r= OK;
 		break;
 	    case DEV_SELECT:
-		ops = m->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
-		watch = (m->IO_ENDPT & SEL_NOTIFY) ? 1 : 0;
+		ops = m->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+		watch = (m->USER_ENDPT & SEL_NOTIFY) ? 1 : 0;
 		
 		r= 0;
 		if (kbdp->avail && (ops & SEL_RD))
@@ -328,7 +328,7 @@ message *m;
 			unsigned char b;
 
 			
-			r= sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t)
+			r= sys_safecopyfrom(m->m_source, (cp_grant_id_t)
 				m->IO_GRANT, 0, (vir_bytes) &leds,
 				sizeof(leds), D);
 			if (r != OK)
@@ -363,7 +363,7 @@ message *m;
 			kio_bell_t bell;
 			clock_t ticks;
 
-			r = sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t)
+			r = sys_safecopyfrom(m->m_source, (cp_grant_id_t)
 				m->IO_GRANT, 0, (vir_bytes) &bell,
 				sizeof(bell), D);
 			if (r != OK)
@@ -386,7 +386,7 @@ message *m;
 			m->m_type, m->m_source);
 		r= EINVAL;
 	}
-	tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
+	tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
 }
 
 
@@ -410,7 +410,7 @@ message *m;
 		if (n <= 0)
 			panic("kbd_status: bad n: %d", n);
 		kbdp->req_size= 0;
-		r= sys_safecopyto(kbdp->req_proc, kbdp->req_grant, 0,
+		r= sys_safecopyto(kbdp->incaller, kbdp->req_grant, 0,
 			(vir_bytes)&kbdp->buf[kbdp->offset], n, D);
 		if (r == OK)
 		{
@@ -1060,7 +1060,7 @@ PUBLIC int kbd_loadmap(m)
 message *m;
 {
 /* Load a new keymap. */
-  return sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+  return sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT,
 	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap), D);
 }
 

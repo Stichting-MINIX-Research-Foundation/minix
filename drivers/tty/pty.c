@@ -103,7 +103,7 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 	}
 	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
-	pp->rdproc = m_ptr->IO_ENDPT;
+	pp->rdproc = m_ptr->USER_ENDPT;
 	pp->rdgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
 	pp->rdoffset = 0;
 	pp->rdleft = m_ptr->COUNT;
@@ -135,7 +135,7 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 	}
 	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
-	pp->wrproc = m_ptr->IO_ENDPT;
+	pp->wrproc = m_ptr->USER_ENDPT;
 	pp->wrgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
 	pp->wroffset = 0;
 	pp->wrleft = m_ptr->COUNT;
@@ -173,12 +173,12 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
 
     case CANCEL:
 	r = EINTR;
-	if (m_ptr->IO_ENDPT == pp->rdproc) {
+	if (m_ptr->USER_ENDPT == pp->rdproc) {
 		/* Cancel a read from a PTY. */
 		r = pp->rdcum > 0 ? pp->rdcum : EAGAIN;
 		pp->rdleft = pp->rdcum = 0;
 	}
-	if (m_ptr->IO_ENDPT == pp->wrproc) {
+	if (m_ptr->USER_ENDPT == pp->wrproc) {
 		/* Cancel a write to a PTY. */
 		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
 		pp->wrleft = pp->wrcum = 0;
@@ -188,7 +188,7 @@ PUBLIC void do_pty(tty_t *tp, message *m_ptr)
     default:
 	r = EINVAL;
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 }
 
 /*===========================================================================*
@@ -230,7 +230,7 @@ PRIVATE int pty_write(tty_t *tp, int try)
 		break;
 
 	/* Copy from user space to the PTY output buffer. */
-	if ((s = sys_safecopyfrom(tp->tty_outproc, tp->tty_outgrant,
+	if ((s = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
 		tp->tty_outoffset, (vir_bytes) pp->ohead, count, D))!=OK) {
 		break;
 	}
@@ -307,7 +307,7 @@ PRIVATE void pty_start(pty_t *pp)
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
-	if((s = sys_safecopyto(pp->rdproc, pp->rdgrant,
+	if((s = sys_safecopyto(pp->rdcaller, pp->rdgrant,
 		pp->rdoffset, (vir_bytes) pp->otail, count, D)) != OK) {
 		break;
  	}
@@ -376,7 +376,7 @@ PRIVATE int pty_read(tty_t *tp, int try)
   	int s;
 
 	/* Transfer one character to 'c'. */
-	if ((s = sys_safecopyfrom(pp->wrproc, pp->wrgrant, pp->wroffset,
+	if ((s = sys_safecopyfrom(pp->wrcaller, pp->wrgrant, pp->wroffset,
 		(vir_bytes) &c, 1, D)) != OK) {
 		printf("pty: safecopy failed (error %d)\n", s);
 		break;
@@ -587,8 +587,8 @@ PRIVATE int pty_select(tty_t *tp, message *m)
   	pty_t *pp = tp->tty_priv;
 	int ops, ready_ops = 0, watch;
 
-	ops = m->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
-	watch = (m->IO_ENDPT & SEL_NOTIFY) ? 1 : 0;
+	ops = m->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+	watch = (m->USER_ENDPT & SEL_NOTIFY) ? 1 : 0;
 
 	ready_ops = select_try_pty(tp, ops);
 

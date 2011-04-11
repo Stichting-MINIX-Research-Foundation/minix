@@ -48,7 +48,7 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_open() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->IO_ENDPT);
+	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
 #endif
 
 	/*
@@ -71,7 +71,7 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 	if (minor == -1) {
 
 		/* descriptor table full */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, ENFILE);
 		return ENFILE;
 	}
@@ -91,8 +91,8 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 	uds_fd_table[minor].syscall_done = 0;
 
 	/* set the socket owner */
-	uds_fd_table[minor].owner = dev_m_in->IO_ENDPT;
-	uds_fd_table[minor].endpoint = dev_m_in->IO_ENDPT;
+	uds_fd_table[minor].owner = dev_m_in->USER_ENDPT;
+	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
 
 	/* setup select(2) framework */
 	uds_fd_table[minor].selecting = 0;
@@ -168,7 +168,7 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 		memset(&(uds_fd_table[minor]), '\0', sizeof(uds_fd_t));
 
 		/* likely error: invalid endpoint / proc doesn't exist */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, errno);
 		return errno;
 	}
@@ -189,7 +189,7 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 		memset(&(uds_fd_table[minor]), '\0', sizeof(uds_fd_t));
 
 		/* likely error: get_block() failed */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 		return rc;
 	}
@@ -201,7 +201,7 @@ PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 	/* prepare the reply */
 
 	uds_fd_table[minor].syscall_done = 1;
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, minor);
 	return minor;
 }
@@ -216,7 +216,7 @@ PUBLIC int uds_close(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_close() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->IO_ENDPT);
+	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
 #endif
 
 	minor = uds_minor(dev_m_in);
@@ -225,7 +225,7 @@ PUBLIC int uds_close(message *dev_m_in, message *dev_m_out)
 		/* attempted to close a socket that hasn't been opened -- 
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 		return EINVAL;
 	}
@@ -276,7 +276,7 @@ PUBLIC int uds_close(message *dev_m_in, message *dev_m_out)
 		return rc;
 	}
 
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, OK);
 	return OK;
 }
@@ -290,7 +290,7 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_select() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->IO_ENDPT);
+	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
 #endif
 
 	minor = uds_minor(dev_m_in);
@@ -300,7 +300,7 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 		/* attempted to close a socket that hasn't been opened -- 
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 
 		return EINVAL;
@@ -317,7 +317,7 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 
 	/* Can't update the process endpoint here, no info.  */
 
-	uds_fd_table[minor].sel_ops_in = dev_m_in->IO_ENDPT;
+	uds_fd_table[minor].sel_ops_in = dev_m_in->USER_ENDPT;
 	uds_fd_table[minor].sel_ops_out = 0;
 
 	/* check if there is data available to read */
@@ -346,7 +346,7 @@ PUBLIC int uds_select(message *dev_m_in, message *dev_m_out)
 
 	uds_fd_table[minor].syscall_done = 1;
 
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT, 
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT, 
 			(cp_grant_id_t) dev_m_in->IO_GRANT, 
 			uds_fd_table[minor].sel_ops_out);
 
@@ -663,7 +663,7 @@ PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_read() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->IO_ENDPT,
+	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT,
 							dev_m_in->POSITION);
 #endif
 
@@ -674,7 +674,7 @@ PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 		/* attempted to close a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 
 		return EINVAL;
@@ -686,7 +686,7 @@ PUBLIC int uds_read(message *dev_m_in, message *dev_m_out)
 	uds_fd_table[minor].syscall_done = 0;
 
 	/* Update the process endpoint. */
-	uds_fd_table[minor].endpoint = dev_m_in->IO_ENDPT;
+	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
 
 	/* setup select(2) framework */
 	uds_fd_table[minor].selecting = 0;
@@ -715,7 +715,7 @@ PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_write() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->IO_ENDPT, 
+	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT, 
 							dev_m_in->POSITION);
 #endif
 
@@ -726,7 +726,7 @@ PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 		/* attempted to close a socket that hasn't been opened -- 
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 
 		return EINVAL;
@@ -738,7 +738,7 @@ PUBLIC int uds_write(message *dev_m_in, message *dev_m_out)
 	uds_fd_table[minor].syscall_done = 0;
 
 	/* Update the process endpoint. */
-	uds_fd_table[minor].endpoint = dev_m_in->IO_ENDPT;
+	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
 
 	/* setup select(2) framework */
 	uds_fd_table[minor].selecting = 0;
@@ -766,7 +766,7 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_ioctl() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
- 	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->IO_ENDPT, 
+ 	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT, 
 							dev_m_in->POSITION);
 #endif
 
@@ -777,7 +777,7 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 		/* attempted to close a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 
 		return EINVAL;
@@ -950,7 +950,7 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 	if (rc != SUSPEND)
 		uds_fd_table[minor].syscall_done = 1;
 
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 		(cp_grant_id_t) dev_m_in->IO_GRANT, rc);
 
 	return rc;
@@ -964,7 +964,7 @@ PUBLIC int uds_status(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_status() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->IO_ENDPT, dev_m_in->POSITION);
+	printf("Endpoint: 0x%x | Position 0x%x\n", dev_m_in->USER_ENDPT, dev_m_in->POSITION);
 #endif
 
 	for (i = 0; i < NR_FDS; i++) {
@@ -1085,7 +1085,7 @@ PUBLIC int uds_cancel(message *dev_m_in, message *dev_m_out)
 	static int call_count = 0;
 	printf("(uds) [%d] uds_cancel() call_count=%d\n", uds_minor(dev_m_in),
 							++call_count);
-	printf("Endpoint: 0x%x\n", dev_m_in->IO_ENDPT);
+	printf("Endpoint: 0x%x\n", dev_m_in->USER_ENDPT);
 #endif
 
 	minor = uds_minor(dev_m_in);
@@ -1095,14 +1095,14 @@ PUBLIC int uds_cancel(message *dev_m_in, message *dev_m_out)
 		/* attempted to close a socket that hasn't been opened --
 		 * something is very wrong :(
 		 */
-		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+		uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 				(cp_grant_id_t) dev_m_in->IO_GRANT, EINVAL);
 
 		return EINVAL;
 	}
 
 	/* Update the process endpoint. */
-	uds_fd_table[minor].endpoint = dev_m_in->IO_ENDPT;
+	uds_fd_table[minor].endpoint = dev_m_in->USER_ENDPT;
 
 	/* setup select(2) framework */
 	uds_fd_table[minor].selecting = 0;
@@ -1202,7 +1202,7 @@ PUBLIC int uds_cancel(message *dev_m_in, message *dev_m_out)
 	}
 
 
-	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->IO_ENDPT,
+	uds_set_reply(dev_m_out, TASK_REPLY, dev_m_in->USER_ENDPT,
 			(cp_grant_id_t) dev_m_in->IO_GRANT, EINTR);
 
 	return EINTR;

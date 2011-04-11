@@ -67,7 +67,7 @@ PRIVATE struct optset optset_table[] = {
 /* Request message. */
 static message m_in;
 static endpoint_t who_e;			/* m_source */
-static endpoint_t proc_e;			/* IO_ENDPT */
+static endpoint_t proc_e;			/* USER_ENDPT */
 static cp_grant_id_t grant_id;			/* IO_GRANT */
 
 /* Data buffers. */
@@ -87,10 +87,10 @@ static int carry(size_t size, int flag_rw)
 	 */
 
 	if (flag_rw == FLT_WRITE)
-		return sys_safecopyfrom(proc_e, grant_id, 0,
+		return sys_safecopyfrom(who_e, grant_id, 0,
 			(vir_bytes) buffer, size, D);
 	else
-		return sys_safecopyto(proc_e, grant_id, 0,
+		return sys_safecopyto(who_e, grant_id, 0,
 			(vir_bytes) buffer, size, D);
 }
 
@@ -110,11 +110,11 @@ static int vcarry(int grants, iovec_t *iov, int flag_rw, size_t size)
 		bytes = MIN(size, iov[i].iov_size);
 
 		if (flag_rw == FLT_WRITE)
-			r = sys_safecopyfrom(proc_e,
+			r = sys_safecopyfrom(who_e,
 				(vir_bytes) iov[i].iov_addr, 0,
 				(vir_bytes) bufp, bytes, D);
 		else
-			r = sys_safecopyto(proc_e,
+			r = sys_safecopyto(who_e,
 				(vir_bytes) iov[i].iov_addr, 0,
 				(vir_bytes) bufp, bytes, D);
 
@@ -268,7 +268,7 @@ static int do_ioctl(message *m)
 		 */
 		sizepart.size = convert(get_raw_size());
 
-		if(sys_safecopyto(proc_e, (vir_bytes) grant_id, 0,
+		if(sys_safecopyto(who_e, (vir_bytes) grant_id, 0,
 				(vir_bytes) &sizepart,
 				sizeof(struct partition), D) != OK) {
 			printf("Filter: DIOCGETP safecopyto failed\n");
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 		}
 
 		who_e = m_in.m_source;
-		proc_e = m_in.IO_ENDPT;
+		proc_e = m_in.USER_ENDPT;
 		grant_id = (cp_grant_id_t) m_in.IO_GRANT;
 
 		/* Forword the request message to the drivers. */

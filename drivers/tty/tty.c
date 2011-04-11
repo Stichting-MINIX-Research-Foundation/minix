@@ -30,7 +30,7 @@
  *   DEV_STATUS:     FS wants to know status for SELECT or REVIVE
  *   CANCEL:         terminate a previous incomplete system call immediately
  *
- *    m_type      TTY_LINE   IO_ENDPT    COUNT   TTY_SPEKS IO_GRANT
+ *    m_type      TTY_LINE  USER_ENDPT  COUNT   TTY_SPEKS IO_GRANT
  * -----------------------------------------------------------------
  * | HARD_INT    |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------|
@@ -263,7 +263,7 @@ PUBLIC int main(void)
 		if (tty_mess.m_source != LOG_PROC_NR)
 		{
 			tty_reply(TASK_REPLY, tty_mess.m_source,
-						tty_mess.IO_ENDPT, ENXIO);
+						tty_mess.USER_ENDPT, ENXIO);
 		}
 		continue;
 	}
@@ -281,7 +281,7 @@ PUBLIC int main(void)
 		printf("Warning, TTY got unexpected request %d from %d\n",
 			tty_mess.m_type, tty_mess.m_source);
 	    tty_reply(TASK_REPLY, tty_mess.m_source,
-						tty_mess.IO_ENDPT, EINVAL);
+						tty_mess.USER_ENDPT, EINVAL);
 	}
   }
 
@@ -455,7 +455,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	/* Copy information from the message to the tty struct. */
 	tp->tty_inrepcode = TASK_REPLY;
 	tp->tty_incaller = m_ptr->m_source;
-	tp->tty_inproc = m_ptr->IO_ENDPT;
+	tp->tty_inproc = m_ptr->USER_ENDPT;
 	tp->tty_ingrant = (cp_grant_id_t) m_ptr->IO_GRANT;
 	tp->tty_inoffset = 0;
 	tp->tty_inleft = m_ptr->COUNT;
@@ -495,7 +495,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	r = SUSPEND;				/* suspend the caller */
 	tp->tty_inrepcode = TTY_REVIVE;
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
   if (tp->tty_select_ops)
   	select_retry(tp);
 }
@@ -522,7 +522,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	/* Copy message parameters to the tty structure. */
 	tp->tty_outrepcode = TASK_REPLY;
 	tp->tty_outcaller = m_ptr->m_source;
-	tp->tty_outproc = m_ptr->IO_ENDPT;
+	tp->tty_outproc = m_ptr->USER_ENDPT;
 	tp->tty_outgrant = (cp_grant_id_t) m_ptr->IO_GRANT;
 	tp->tty_outoffset = 0;
 	tp->tty_outleft = m_ptr->COUNT;
@@ -538,7 +538,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	r = SUSPEND;				/* suspend the caller */
 	tp->tty_outrepcode = TTY_REVIVE;
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 }
 
 /*===========================================================================*
@@ -598,7 +598,7 @@ message *m_ptr;			/* pointer to message sent to task */
   switch (m_ptr->TTY_REQUEST) {
     case TCGETS:
 	/* Get the termios attributes. */
-	r = sys_safecopyto(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
+	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
 		(vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
 	break;
 
@@ -608,7 +608,7 @@ message *m_ptr;			/* pointer to message sent to task */
 	if (tp->tty_outleft > 0) {
 		/* Wait for all ongoing output processing to finish. */
 		tp->tty_iocaller = m_ptr->m_source;
-		tp->tty_ioproc = m_ptr->IO_ENDPT;
+		tp->tty_ioproc = m_ptr->USER_ENDPT;
 		tp->tty_ioreq = m_ptr->REQUEST;
 		tp->tty_iogrant = (cp_grant_id_t) m_ptr->IO_GRANT;
 		r = SUSPEND;
@@ -619,14 +619,14 @@ message *m_ptr;			/* pointer to message sent to task */
 	/*FALL THROUGH*/
     case TCSETS:
 	/* Set the termios attributes. */
-	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
 		0, (vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
 	if (r != OK) break;
 	setattr(tp);
 	break;
 
     case TCFLSH:
-	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
 		0, (vir_bytes) &param.i, (vir_bytes) size, D);
 	if (r != OK) break;
 	switch (param.i) {
@@ -638,7 +638,7 @@ message *m_ptr;			/* pointer to message sent to task */
 	break;
 
     case TCFLOW:
-	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
 		0, (vir_bytes) &param.i, (vir_bytes) size, D);
 	if (r != OK) break;
 	switch (param.i) {
@@ -663,12 +663,12 @@ message *m_ptr;			/* pointer to message sent to task */
 	break;
 
     case TIOCGWINSZ:
-	r = sys_safecopyto(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
+	r = sys_safecopyto(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT, 0,
 		(vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
 	break;
 
     case TIOCSWINSZ:
-	r = sys_safecopyfrom(m_ptr->IO_ENDPT, (cp_grant_id_t) m_ptr->IO_GRANT,
+	r = sys_safecopyfrom(m_ptr->m_source, (cp_grant_id_t) m_ptr->IO_GRANT,
 		0, (vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
 	sigchar(tp, SIGWINCH, 0);
 	break;
@@ -698,7 +698,7 @@ message *m_ptr;			/* pointer to message sent to task */
   }
 
   /* Send the reply. */
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 }
 
 /*===========================================================================*
@@ -719,12 +719,12 @@ message *m_ptr;			/* pointer to message sent to task */
 	if (m_ptr->COUNT & R_BIT) r = EACCES;
   } else {
 	if (!(m_ptr->COUNT & O_NOCTTY)) {
-		tp->tty_pgrp = m_ptr->IO_ENDPT;
+		tp->tty_pgrp = m_ptr->USER_ENDPT;
 		r = 1;
 	}
 	tp->tty_openct++;
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 }
 
 /*===========================================================================*
@@ -745,7 +745,7 @@ message *m_ptr;			/* pointer to message sent to task */
 	tp->tty_winsize = winsize_defaults;
 	setattr(tp);
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, OK);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, OK);
 }
 
 /*===========================================================================*
@@ -764,7 +764,7 @@ message *m_ptr;			/* pointer to message sent to task */
   int r = EINTR;
 
   /* Check the parameters carefully, to avoid cancelling twice. */
-  proc_nr = m_ptr->IO_ENDPT;
+  proc_nr = m_ptr->USER_ENDPT;
   mode = m_ptr->COUNT;
   if ((mode & R_BIT) && tp->tty_inleft != 0 && proc_nr == tp->tty_inproc &&
 	tp->tty_ingrant == (cp_grant_id_t) m_ptr->IO_GRANT) {
@@ -913,7 +913,7 @@ register tty_t *tp;		/* pointer to terminal to read from */
 		tp->tty_inleft--;
 		if (++bp == bufend(buf)) {
 			/* Temp buffer full, copy to user space. */
-			sys_safecopyto(tp->tty_inproc,
+			sys_safecopyto(tp->tty_incaller,
 				tp->tty_ingrant, tp->tty_inoffset,
 				(vir_bytes) buf,
 				(vir_bytes) buflen(buf), D);
@@ -937,7 +937,7 @@ register tty_t *tp;		/* pointer to terminal to read from */
   if (bp > buf) {
 	/* Leftover characters in the buffer. */
 	count = bp - buf;
-	sys_safecopyto(tp->tty_inproc,
+	sys_safecopyto(tp->tty_incaller,
 		tp->tty_ingrant, tp->tty_inoffset,
 		(vir_bytes) buf, (vir_bytes) count, D);
 	tp->tty_inoffset += count;
@@ -1377,7 +1377,7 @@ tty_t *tp;
 
   if (tp->tty_ioreq != TCDRAIN) {
 	if (tp->tty_ioreq == TCSETSF) tty_icancel(tp);
-	result = sys_safecopyfrom(tp->tty_ioproc, tp->tty_iogrant, 0,
+	result = sys_safecopyfrom(tp->tty_iocaller, tp->tty_iogrant, 0,
 		(vir_bytes) &tp->tty_termios,
 		(vir_bytes) sizeof(tp->tty_termios), D);
 	if (result == OK) setattr(tp);
@@ -1614,8 +1614,8 @@ register message *m_ptr;	/* pointer to message sent to the task */
 {
 	int ops, ready_ops = 0, watch;
 
-	ops = m_ptr->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
-	watch = (m_ptr->IO_ENDPT & SEL_NOTIFY) ? 1 : 0;
+	ops = m_ptr->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+	watch = (m_ptr->USER_ENDPT & SEL_NOTIFY) ? 1 : 0;
 
 	ready_ops = select_try(tp, ops);
 
@@ -1624,7 +1624,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 		tp->tty_select_proc = m_ptr->m_source;
 	}
 
-        tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, ready_ops);
+        tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, ready_ops);
 
         return;
 }

@@ -538,7 +538,7 @@ int proc_nr_e;
 		f = rfp->fp_filp[fild];
 		dev = (dev_t) f->filp_vno->v_sdev;	/* device hung on */
 		mess.TTY_LINE = (dev >> MINOR) & BYTE;
-		mess.IO_ENDPT = rfp->fp_ioproc;
+		mess.USER_ENDPT = rfp->fp_ioproc;
 		mess.IO_GRANT = (char *) rfp->fp_grant;
 
 		/* Tell kernel R or W. Mode is from current call, not open. */

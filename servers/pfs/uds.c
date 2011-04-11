@@ -67,7 +67,7 @@ PRIVATE int check_perms(int minor, struct sockaddr_un *addr)
 	memset(&vfs_m, '\0', sizeof(message));
 
 	vfs_m.m_type = PFS_REQ_CHECK_PERMS;
-	vfs_m.IO_ENDPT = uds_fd_table[minor].owner;
+	vfs_m.USER_ENDPT = uds_fd_table[minor].owner;
 	vfs_m.IO_GRANT = (char *) grant_id;
 	vfs_m.COUNT = UNIX_PATH_MAX;
 
@@ -102,7 +102,7 @@ PRIVATE filp_id_t verify_fd(endpoint_t ep, int fd)
 	memset(&vfs_m, '\0', sizeof(message));
 
 	vfs_m.m_type = PFS_REQ_VERIFY_FD;
-	vfs_m.IO_ENDPT = ep;
+	vfs_m.USER_ENDPT = ep;
 	vfs_m.COUNT = fd;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
@@ -161,7 +161,7 @@ PRIVATE int copy_filp(endpoint_t to_ep, filp_id_t cfilp)
 	memset(&vfs_m, '\0', sizeof(message));
 
 	vfs_m.m_type = PFS_REQ_COPY_FILP;
-	vfs_m.IO_ENDPT = to_ep;
+	vfs_m.USER_ENDPT = to_ep;
 	vfs_m.ADDRESS = cfilp;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);
@@ -218,7 +218,7 @@ PRIVATE int cancel_fd(endpoint_t ep, int fd)
 	memset(&vfs_m, '\0', sizeof(message));
 
 	vfs_m.m_type = PFS_REQ_CANCEL_FD;
-	vfs_m.IO_ENDPT = ep;
+	vfs_m.USER_ENDPT = ep;
 	vfs_m.COUNT = fd;
 
 	rc = sendrec(VFS_PROC_NR, &vfs_m);

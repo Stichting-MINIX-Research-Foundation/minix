@@ -114,7 +114,7 @@ static int mq_cancel(message * m)
 
 	for (mq = mq_tail; mq; mq = mq->prev) {
 		if (m->DEVICE == mq->m.DEVICE &&
-				m->IO_ENDPT == mq->m.IO_ENDPT &&
+				m->USER_ENDPT == mq->m.USER_ENDPT &&
 				m->IO_GRANT == mq->m.IO_GRANT) {
 			debug_sock_print("socket %d\n", mq->m.DEVICE);
 			break;
@@ -181,7 +181,7 @@ static void set_reply_msg(message * m, int status)
 {
 	int proc, ref;
 
-	proc= m->IO_ENDPT;
+	proc= m->USER_ENDPT;
 	ref= (int)m->IO_GRANT;
 
 	m->REP_ENDPT= proc;
@@ -591,9 +591,9 @@ void generic_op_select(struct socket * sock, message * m)
 {
 	int retsel = 0, sel;
 
-	debug_print("socket num %ld 0x%x", get_sock_num(sock), m->IO_ENDPT);
+	debug_print("socket num %ld 0x%x", get_sock_num(sock), m->USER_ENDPT);
 
-	sel = m->IO_ENDPT;
+	sel = m->USER_ENDPT;
 
 	/* in this case any operation would block, no error */
 	if (sock->flags & SOCK_FLG_OP_PENDING) {

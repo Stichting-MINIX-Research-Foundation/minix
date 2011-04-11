@@ -1093,7 +1093,7 @@ static void fxp_writev_s(const message *mp, int from_int)
 	assert(!(fp->fxp_flags & FF_SEND_AVAIL));
 	assert(!(fp->fxp_flags & FF_PACK_SENT));
 
-	iov_endpt= mp->DL_ENDPT;
+	iov_endpt= mp->m_source;
 	iov_grant= mp->DL_GRANT;
 
 	size= 0;
@@ -1228,7 +1228,7 @@ int from_int;
 
 	packlen= rfd_res & RFDSZ_SIZE;
 
-	iov_endpt = mp->DL_ENDPT;
+	iov_endpt = mp->m_source;
 	iov_grant = mp->DL_GRANT;
 
 	size= 0;
@@ -1541,7 +1541,7 @@ static void fxp_getstat_s(message *mp)
 	stats.ets_CDheartbeat= 0;
 	stats.ets_OWC= fp->fxp_stat.sc_tx_latecol;
 
-	r= sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0, (vir_bytes)&stats,
+	r= sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
 		sizeof(stats), D);
 	if (r != OK)
 		panic("fxp_getstat_s: sys_safecopyto failed: %d", r);

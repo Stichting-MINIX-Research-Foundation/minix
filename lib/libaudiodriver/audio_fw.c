@@ -8,7 +8,7 @@
  *
  * The driver supports the following operations:
  *
- *    m_type      DEVICE    IO_ENDPT     COUNT    POSITION  ADRRESS
+ *    m_type      DEVICE    USER_ENDPT  COUNT    POSITION  ADRRESS
  * -----------------------------------------------------------------
  * | DEV_OPEN    | device  | proc nr |         |         |         |
  * |-------------+---------+---------+---------+---------+---------|
@@ -122,7 +122,7 @@ PUBLIC int main(int argc, char *argv[])
 				/* open the special file ( = parameter) */
 				r = msg_open(mess.DEVICE);
 				repl_mess.m_type = DEV_REVIVE;
-				repl_mess.REP_ENDPT = mess.IO_ENDPT;
+				repl_mess.REP_ENDPT = mess.USER_ENDPT;
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 
@@ -132,7 +132,7 @@ PUBLIC int main(int argc, char *argv[])
 				/* close the special file ( = parameter) */
 				r = msg_close(mess.DEVICE);
 				repl_mess.m_type = DEV_CLOSE_REPL;
-				repl_mess.REP_ENDPT = mess.IO_ENDPT;
+				repl_mess.REP_ENDPT = mess.USER_ENDPT;
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 
@@ -144,7 +144,7 @@ PUBLIC int main(int argc, char *argv[])
 				if (r != SUSPEND)
 				{
 					repl_mess.m_type = DEV_REVIVE;
-					repl_mess.REP_ENDPT = mess.IO_ENDPT;
+					repl_mess.REP_ENDPT = mess.USER_ENDPT;
 					repl_mess.REP_IO_GRANT =
 						(unsigned)mess.IO_GRANT;
 					repl_mess.REP_STATUS = r;
@@ -162,7 +162,7 @@ PUBLIC int main(int argc, char *argv[])
 				/* reopen the special file ( = parameter) */
 				r = msg_open(mess.DEVICE);
 				repl_mess.m_type = DEV_REOPEN_REPL;
-				repl_mess.REP_ENDPT = mess.IO_ENDPT;
+				repl_mess.REP_ENDPT = mess.USER_ENDPT;
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 				continue;
@@ -479,7 +479,7 @@ PRIVATE int msg_ioctl(const message *m_ptr)
 	if (m_ptr->REQUEST & _IOC_IN) { /* if there is data for us, copy it */
 		len = io_ctl_length(m_ptr->REQUEST);
 
-		if(sys_safecopyfrom(m_ptr->IO_ENDPT, 
+		if(sys_safecopyfrom(m_ptr->m_source, 
 					(vir_bytes)m_ptr->ADDRESS, 0,
 					(vir_bytes)io_ctl_buf, len, D) != OK) {
 			printf("%s:%d: safecopyfrom failed\n", __FILE__, __LINE__);
@@ -493,7 +493,7 @@ PRIVATE int msg_ioctl(const message *m_ptr)
 	if (status == OK && m_ptr->REQUEST & _IOC_OUT) { 
 		/* copy result back to user */
 
-		if(sys_safecopyto(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, 0, 
+		if(sys_safecopyto(m_ptr->m_source, (vir_bytes)m_ptr->ADDRESS, 0, 
 					(vir_bytes)io_ctl_buf, len, D) != OK) {
 			printf("%s:%d: safecopyto failed\n", __FILE__, __LINE__);
 		}
@@ -515,7 +515,7 @@ PRIVATE void msg_write(const message *m_ptr)
 
 	if (chan == NO_CHANNEL) {
 		error("%s: No write channel specified!\n", drv.DriverName);
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EIO);
 		return;
 	}
 	/* get pointer to sub device data */
@@ -529,20 +529,20 @@ PRIVATE void msg_write(const message *m_ptr)
 	}
 	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
 		error("Fragment size does not match user's buffer length\n");
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);		
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EINVAL);		
 		return;
 	}
 	/* if we are busy with something else than writing, return EBUSY */
 	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_WRITE_S) {
 		error("Already busy with something else then writing\n");
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EBUSY);
 		return;
 	}
 
 	sub_dev_ptr->RevivePending = TRUE;
-	sub_dev_ptr->ReviveProcNr = m_ptr->IO_ENDPT;
+	sub_dev_ptr->ReviveProcNr = m_ptr->USER_ENDPT;
 	sub_dev_ptr->ReviveGrant = (cp_grant_id_t) m_ptr->ADDRESS;
-	sub_dev_ptr->NotifyProcNr = m_ptr->m_source;
+	sub_dev_ptr->SourceProcNr = m_ptr->m_source;
 
 	data_from_user(sub_dev_ptr);
 
@@ -566,7 +566,7 @@ PRIVATE void msg_read(message *m_ptr)
 
 	if (chan == NO_CHANNEL) {
 		error("%s: No read channel specified!\n", drv.DriverName);
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EIO);
 		return;
 	}
 	/* get pointer to sub device data */
@@ -575,25 +575,26 @@ PRIVATE void msg_read(message *m_ptr)
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first read */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
 			error("%s: Could not retrieve fragment size!\n", drv.DriverName);
-			reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);      	
+			reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
+				EIO);      	
 			return;
 		}
 	}
 	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EINVAL);
 		error("fragment size does not match message size\n");
 		return;
 	}
 	/* if we are busy with something else than reading, reply EBUSY */
 	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_READ_S) {
-		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EBUSY);
 		return;
 	}
 
 	sub_dev_ptr->RevivePending = TRUE;
-	sub_dev_ptr->ReviveProcNr = m_ptr->IO_ENDPT;
+	sub_dev_ptr->ReviveProcNr = m_ptr->USER_ENDPT;
 	sub_dev_ptr->ReviveGrant = (cp_grant_id_t) m_ptr->ADDRESS;
-	sub_dev_ptr->NotifyProcNr = m_ptr->m_source;
+	sub_dev_ptr->SourceProcNr = m_ptr->m_source;
 
 	if(!sub_dev_ptr->DmaBusy) { /* Dma tranfer not yet started */
 		get_started(sub_dev_ptr);
@@ -814,7 +815,7 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 
 	if (subdev->DmaLength < subdev->NrOfDmaFragments) { /* room in dma buf */
 
-		sys_safecopyfrom(subdev->ReviveProcNr, 
+		sys_safecopyfrom(subdev->SourceProcNr, 
 				(vir_bytes)subdev->ReviveGrant, 0, 
 				(vir_bytes)subdev->DmaPtr + 
 				subdev->DmaFillNext * subdev->FragSize,
@@ -828,7 +829,7 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 
 	} else { /* room in extra buf */ 
 
-		sys_safecopyfrom(subdev->ReviveProcNr, 
+		sys_safecopyfrom(subdev->SourceProcNr, 
 				(vir_bytes)subdev->ReviveGrant, 0,
 				(vir_bytes)subdev->ExtraBuf + 
 				subdev->BufFillNext * subdev->FragSize, 
@@ -858,11 +859,11 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 	m.REP_ENDPT = subdev->ReviveProcNr;
 	m.REP_IO_GRANT = subdev->ReviveGrant;
 	m.REP_STATUS = subdev->ReviveStatus;
-	r= send(subdev->NotifyProcNr, &m);		/* send the message */
+	r= send(subdev->SourceProcNr, &m);		/* send the message */
 	if (r != OK)
 	{
 		printf("audio_fw: send to %d failed: %d\n",
-			subdev->NotifyProcNr, r);
+			subdev->SourceProcNr, r);
 	}
 
 	/* reset variables */
@@ -883,7 +884,7 @@ PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr)
 
 	if(sub_dev_ptr->BufLength != 0) { /* data in extra buffer available */
 
-		sys_safecopyto(sub_dev_ptr->ReviveProcNr, 
+		sys_safecopyto(sub_dev_ptr->SourceProcNr, 
 				(vir_bytes)sub_dev_ptr->ReviveGrant,
 				0, (vir_bytes)sub_dev_ptr->ExtraBuf + 
 				sub_dev_ptr->BufReadNext * sub_dev_ptr->FragSize,
@@ -898,7 +899,7 @@ PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr)
 
 	} else { /* extra buf empty, but data in dma buf*/ 
 		sys_safecopyto(
-				sub_dev_ptr->ReviveProcNr, 
+				sub_dev_ptr->SourceProcNr, 
 				(vir_bytes)sub_dev_ptr->ReviveGrant, 0, 
 				(vir_bytes)sub_dev_ptr->DmaPtr + 
 				sub_dev_ptr->DmaReadNext * sub_dev_ptr->FragSize,
@@ -920,11 +921,11 @@ PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr)
 	m.REP_ENDPT = sub_dev_ptr->ReviveProcNr;
 	m.REP_IO_GRANT = sub_dev_ptr->ReviveGrant;
 	m.REP_STATUS = sub_dev_ptr->ReviveStatus;
-	r= send(sub_dev_ptr->NotifyProcNr, &m);		/* send the message */
+	r= send(sub_dev_ptr->SourceProcNr, &m);		/* send the message */
 	if (r != OK)
 	{
 		printf("audio_fw: send to %d failed: %d\n",
-			sub_dev_ptr->NotifyProcNr, r);
+			sub_dev_ptr->SourceProcNr, r);
 	}
 
 	/* reset variables */

@@ -6,18 +6,18 @@
  *
  * The valid messages and their parameters are:
  *
- *   m_type        DL_ENDPT  DL_COUNT   DL_MODE   DL_GRANT
- * |--------------+---------+----------+---------+---------|
- * | DL_WRITEV_S  | endpt   | count    |         | grant   |
- * |--------------|---------|----------|---------|---------|
- * | DL_READV_S   | endpt   | count    |         | grant   |
- * |--------------|---------|----------|---------|---------|
- * | DL_CONF      |         |          | mode    |         |
- * |--------------|---------|----------|---------|---------|
- * | DL_GETSTAT_S | endpt   |          |         | grant   |
- * |--------------|---------|----------|---------|---------|
- * | hardware int |         |          |         |         |
- * |--------------|---------|----------|---------|---------|
+ *   m_type        DL_COUNT   DL_MODE   DL_GRANT
+ * |--------------+----------+---------+---------|
+ * | DL_WRITEV_S  | count    |         | grant   |
+ * |--------------|----------|---------|---------|
+ * | DL_READV_S   | count    |         | grant   |
+ * |--------------|----------|---------|---------|
+ * | DL_CONF      |          | mode    |         |
+ * |--------------|----------|---------|---------|
+ * | DL_GETSTAT_S |          |         | grant   |
+ * |--------------|----------|---------|---------|
+ * | hardware int |          |         |         |
+ * |--------------|----------|---------|---------|
  *
  * The messages sent are:
  *
@@ -1023,14 +1023,14 @@ static void do_vread_s(const message *mp)
    ec->client= mp->m_source;
    count = mp->DL_COUNT;
 
-   r = sys_safecopyfrom(mp->DL_ENDPT, mp->DL_GRANT, 0,
+   r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
                         (vir_bytes)ec->read_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
 	panic("do_vread_s: sys_safecopyfrom failed: %d", r);
    ec->read_iovec.iod_iovec_s    = count;
-   ec->read_iovec.iod_proc_nr    = mp->DL_ENDPT;
+   ec->read_iovec.iod_proc_nr    = mp->m_source;
    ec->read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
    ec->read_iovec.iod_iovec_offset = 0;
 
@@ -1141,14 +1141,14 @@ int from_int;
    }
 
    /* convert the message to write_iovec */
-   r = sys_safecopyfrom(mp->DL_ENDPT, mp->DL_GRANT, 0,
+   r = sys_safecopyfrom(mp->m_source, mp->DL_GRANT, 0,
                         (vir_bytes)ec->write_iovec.iod_iovec,
                         (count > IOVEC_NR ? IOVEC_NR : count) *
                         sizeof(iovec_s_t), D);
    if (r != OK)
 	panic("do_vwrite_s: sys_safecopyfrom failed: %d", r);
    ec->write_iovec.iod_iovec_s    = count;
-   ec->write_iovec.iod_proc_nr    = mp->DL_ENDPT;
+   ec->write_iovec.iod_proc_nr    = mp->m_source;
    ec->write_iovec.iod_grant      = mp->DL_GRANT;
    ec->write_iovec.iod_iovec_offset = 0;
 
@@ -1326,7 +1326,7 @@ message *mp;
 
    ec= &ec_state;
 
-   r = sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0,
+   r = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0,
                       (vir_bytes)&ec->eth_stat, sizeof(ec->eth_stat), D);
 
    if (r != OK)

@@ -361,8 +361,8 @@ static void do_vwrite_s(const message * mp)
 	if (dep->de_flags & DEF_SENDING)	/* Is sending in progress? */
 		panic("send already in progress ");
 
-	dep->de_write_iovec.iod_proc_nr = mp->DL_ENDPT;
-	get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
+	dep->de_write_iovec.iod_proc_nr = mp->m_source;
+	get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
 	       mp->DL_COUNT, dep->de_write_iovec.iod_iovec);
 	dep->de_write_iovec.iod_iovec_s = mp->DL_COUNT;
 	dep->de_write_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
@@ -399,8 +399,8 @@ static void do_vread_s(const message * mp)
 	if (dep->de_flags & DEF_READING)	/* Reading in progress */
 		panic("read already in progress");
 
-	dep->de_read_iovec.iod_proc_nr = mp->DL_ENDPT;
-	get_userdata_s(mp->DL_ENDPT, (cp_grant_id_t) mp->DL_GRANT, 0,
+	dep->de_read_iovec.iod_proc_nr = mp->m_source;
+	get_userdata_s(mp->m_source, (cp_grant_id_t) mp->DL_GRANT, 0,
 		mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
 	dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
 	dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
@@ -434,7 +434,7 @@ static void do_getstat_s(const message * mp)
   dep = &de_state;
 
   if (dep->de_mode == DEM_ENABLED) (*dep->de_getstatsf) (dep);
-  if ((rc = sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0,
+  if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0,
 			(vir_bytes)&dep->de_stat,
 			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
         panic(CopyErrMsg, rc);

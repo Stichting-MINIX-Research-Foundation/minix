@@ -185,13 +185,13 @@ PUBLIC int block_dev_io(
   }
   
   /* By default, these are right. */
-  m.IO_ENDPT = proc_e;
+  m.USER_ENDPT = proc_e;
   m.ADDRESS  = buffer;
   buf_used = buffer;
 
   /* Convert parameters to 'safe mode'. */
   op_used = op;
-  safe = safe_io_conversion(driver_e, &gid, &op_used, gids, &m.IO_ENDPT,
+  safe = safe_io_conversion(driver_e, &gid, &op_used, gids, &m.USER_ENDPT,
   			    &buf_used, &vec_grants, bytes);
 
   /* Set up rest of the message. */
@@ -303,7 +303,7 @@ PRIVATE int gen_opcl(
 
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = minor(dev);
-  dev_mess.IO_ENDPT = proc_e;
+  dev_mess.USER_ENDPT = proc_e;
   dev_mess.COUNT    = flags;
 
   /* Call the task. */
@@ -327,7 +327,7 @@ PRIVATE int gen_io(
 
   int r, proc_e;
 
-  proc_e = mess_ptr->IO_ENDPT;
+  proc_e = mess_ptr->USER_ENDPT;
 
   r = sendrec(task_nr, mess_ptr);
   if(r == OK && mess_ptr->REP_STATUS == ERESTART)

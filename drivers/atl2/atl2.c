@@ -791,7 +791,7 @@ PRIVATE void atl2_readv(const message *m, int from_int)
 		/* Copy in the next batch. */
 		batch = MIN(m->DL_COUNT - i, NR_IOREQS);
 
-		r = sys_safecopyfrom(m->DL_ENDPT, m->DL_GRANT, off, 
+		r = sys_safecopyfrom(m->m_source, m->DL_GRANT, off, 
 			(vir_bytes) iovec, batch * sizeof(iovec[0]), D);
 		if (r != OK)
 			panic("vector copy failed: %d", r);
@@ -800,7 +800,7 @@ PRIVATE void atl2_readv(const message *m, int from_int)
 		for (j = 0, iovp = iovec; j < batch && left > 0; j++, iovp++) {
 			size = MIN(iovp->iov_size, left);
 
-			r = sys_safecopyto(m->DL_ENDPT, iovp->iov_grant, 0,
+			r = sys_safecopyto(m->m_source, iovp->iov_grant, 0,
 				(vir_bytes) pos, size, D);
 			if (r != OK)
 				panic("safe copy failed: %d", r);
@@ -888,7 +888,7 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 		/* Copy in the next batch. */
 		batch = MIN(m->DL_COUNT - i, NR_IOREQS);
 
-		r = sys_safecopyfrom(m->DL_ENDPT, m->DL_GRANT, off, 
+		r = sys_safecopyfrom(m->m_source, m->DL_GRANT, off, 
 			(vir_bytes) iovec, batch * sizeof(iovec[0]), D);
 		if (r != OK)
 			panic("vector copy failed: %d", r);
@@ -902,7 +902,7 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 			skip = 0;
 			if (size > ATL2_TXD_BUFSIZE - pos) {
 				skip = ATL2_TXD_BUFSIZE - pos;
-				r = sys_safecopyfrom(m->DL_ENDPT,
+				r = sys_safecopyfrom(m->m_source,
 					iovp->iov_grant, 0,
 					(vir_bytes) (state.txd_base + pos),
 					skip, D);
@@ -911,7 +911,7 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 				pos = 0;
 			}
 
-			r = sys_safecopyfrom(m->DL_ENDPT, iovp->iov_grant,
+			r = sys_safecopyfrom(m->m_source, iovp->iov_grant,
 				skip, (vir_bytes) (state.txd_base + pos),
 				size - skip, D);
 			if (r != OK)
@@ -1062,7 +1062,7 @@ PRIVATE void atl2_getstat(message *m)
 	 */
 	int r;
 
-	sys_safecopyto(m->DL_ENDPT, m->DL_GRANT, 0,
+	sys_safecopyto(m->m_source, m->DL_GRANT, 0,
 		(vir_bytes) &state.stat, sizeof(state.stat), D);
 
 	m->m_type = DL_STAT_REPLY;

@@ -203,7 +203,7 @@ typedef struct iovec_dat
 {
   iovec_t iod_iovec[IOVEC_NR];
   int iod_iovec_s;
-  int iod_proc_nr;
+  endpoint_t iod_proc_nr;
   vir_bytes iod_iovec_addr;
 } iovec_dat_t;
 

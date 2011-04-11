@@ -408,12 +408,12 @@ int from_int;
 	}
 	assert(!(dep->de_flags & DEF_PACK_SEND));
 
-	get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
+	get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
 		sizeof(dep->de_write_iovec_s.iod_iovec[0]),
 		dep->de_write_iovec_s.iod_iovec);
 	dep->de_write_iovec_s.iod_iovec_s = count;
-	dep->de_write_iovec_s.iod_proc_nr = mp->DL_ENDPT;
+	dep->de_write_iovec_s.iod_proc_nr = mp->m_source;
 	dep->de_write_iovec_s.iod_grant = mp->DL_GRANT;
 	dep->de_write_iovec_s.iod_iovec_offset = 0;
 
@@ -481,12 +481,12 @@ message *mp;
 	if(dep->de_flags & DEF_READING)
 		panic("dp8390: read already in progress");
 
-	get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
+	get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
 		(count > IOVEC_NR ? IOVEC_NR : count) *
 		sizeof(dep->de_read_iovec_s.iod_iovec[0]),
 		dep->de_read_iovec_s.iod_iovec);
 	dep->de_read_iovec_s.iod_iovec_s = count;
-	dep->de_read_iovec_s.iod_proc_nr = mp->DL_ENDPT;
+	dep->de_read_iovec_s.iod_proc_nr = mp->m_source;
 	dep->de_read_iovec_s.iod_grant = mp->DL_GRANT;
 	dep->de_read_iovec_s.iod_iovec_offset = 0;
 
@@ -595,7 +595,7 @@ message *mp;
 
 	if (dep->de_mode == DEM_SINK)
 	{
-		put_userdata_s(mp->DL_ENDPT, (vir_bytes) mp->DL_GRANT,
+		put_userdata_s(mp->m_source, (vir_bytes) mp->DL_GRANT,
 			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
 
 		mp->m_type= DL_STAT_REPLY;
@@ -611,7 +611,7 @@ message *mp;
 	dep->de_stat.ets_frameAll += inb_reg0(dep, DP_CNTR1);
 	dep->de_stat.ets_missedP += inb_reg0(dep, DP_CNTR2);
 
-	put_userdata_s(mp->DL_ENDPT, mp->DL_GRANT,
+	put_userdata_s(mp->m_source, mp->DL_GRANT,
 		sizeof(dep->de_stat), &dep->de_stat);
 
 	mp->m_type= DL_STAT_REPLY;

@@ -222,7 +222,7 @@
 
 /* Field names for messages to block and character device drivers. */
 #define DEVICE    	m2_i1	/* major-minor device */
-#define IO_ENDPT	m2_i2	/* which (proc/endpoint) wants I/O? */
+#define USER_ENDPT	m2_i2	/* which endpoint initiated this call? */
 #define COUNT   	m2_i3	/* how many bytes to transfer */
 #define REQUEST 	m2_i3 	/* ioctl request code */
 #define POSITION	m2_l1	/* file offset (low 4 bytes) */
@@ -286,7 +286,7 @@
 #define DL_TASK_REPLY	(DL_RS_BASE + 2)
 
 /* Field names for data link layer messages. */
-#define DL_ENDPT	m2_i2
+#define DL_ENDPT_LEGACY	m2_i2	/* obsolete; will be removed */
 #define DL_COUNT	m2_i3
 #define DL_MODE		m2_l1
 #define DL_FLAGS	m2_l1
@@ -453,6 +453,9 @@
 #define ABRT_MON_ENDPT  m1_i2	/* process where monitor params are */
 #define ABRT_MON_LEN	m1_i3	/* length of monitor params */
 #define ABRT_MON_ADDR   m1_p1	/* virtual address of monitor params */
+
+/* Field names for SYS_IOPENABLE. */
+#define IOP_ENDPT	m2_l1	/* target endpoint */
 
 /* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
 #define CP_SRC_SPACE 	m5_s1	/* T or D space (stack is also D) */

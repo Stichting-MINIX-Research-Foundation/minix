@@ -356,11 +356,11 @@ message *m_ptr;
   if (m_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
   if (m_device == MEM_DEV)
   {
-	r = sys_enable_iop(m_ptr->IO_ENDPT);
+	r = sys_enable_iop(m_ptr->USER_ENDPT);
 	if (r != OK)
 	{
 		printf("m_do_open: sys_enable_iop failed for %d: %d\n",
-			m_ptr->IO_ENDPT, r);
+			m_ptr->USER_ENDPT, r);
 		return r;
 	}
   }
@@ -449,7 +449,7 @@ message *m_ptr;				/* pointer to control message */
         if ((dv = m_prepare(dev)) == NULL) return(ENXIO);
 
 	/* Get request structure */
-	   s= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,
+	   s= sys_safecopyfrom(m_ptr->m_source, (vir_bytes)m_ptr->IO_GRANT,
 		0, (vir_bytes)&ramdev_size, sizeof(ramdev_size), D);
 	if (s != OK)
 		return s;

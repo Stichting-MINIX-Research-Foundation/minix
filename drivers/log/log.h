@@ -18,11 +18,11 @@ struct logdevice {
 		log_read,	/* read mark */
 		log_write;	/* write mark */
 #if SUSPENDABLE
-	int log_proc_nr,
-		log_source,
-		log_iosize,
+	endpoint_t log_proc_nr,
+		log_source;
+	int log_iosize,
 		log_revive_alerted,
-		log_status;	/* proc that is blocking on read */
+		log_status;
 	cp_grant_id_t log_user_grant;
 	vir_bytes log_user_offset;
 #endif

@@ -9,7 +9,7 @@
  *
  * The drivers support the following operations (using message format m2):
  *
- *    m_type         DEVICE   IO_ENDPT   COUNT   POSITION  HIGHPOS   IO_GRANT
+ *    m_type         DEVICE  USER_ENDPT  COUNT   POSITION  HIGHPOS   IO_GRANT
  * ----------------------------------------------------------------------------
  * | DEV_OPEN      | device | proc nr |         |        |        |           |
  * |---------------+--------+---------+---------+--------+--------+-----------|
@@ -53,7 +53,7 @@ FORWARD _PROTOTYPE( void clear_open_devs, (void) );
 FORWARD _PROTOTYPE( int is_open_dev, (int device) );
 FORWARD _PROTOTYPE( void set_open_dev, (int device) );
 
-FORWARD _PROTOTYPE( void asyn_reply, (message *mess, int proc_nr, int r) );
+FORWARD _PROTOTYPE( void asyn_reply, (message *mess, int r) );
 FORWARD _PROTOTYPE( int driver_reply, (endpoint_t caller_e, int caller_status,
 	message *m_ptr) );
 FORWARD _PROTOTYPE( int driver_spurious_reply, (endpoint_t caller_e,
@@ -61,7 +61,8 @@ FORWARD _PROTOTYPE( int driver_spurious_reply, (endpoint_t caller_e,
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp) );
 
-int device_caller;
+PRIVATE endpoint_t device_caller;
+PUBLIC endpoint_t device_endpt;		/* used externally by log driver */
 PRIVATE mq_t *queue_head = NULL;
 PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
 PRIVATE int next_open_devs_slot = 0;
@@ -108,9 +109,8 @@ PRIVATE void set_open_dev(int device)
 /*===========================================================================*
  *				asyn_reply				     *
  *===========================================================================*/
-PRIVATE void asyn_reply(mess, proc_nr, r)
+PRIVATE void asyn_reply(mess, r)
 message *mess;
-int proc_nr;
 int r;
 {
 /* Send a reply using the new asynchronous character device protocol.
@@ -120,13 +120,13 @@ int r;
   switch (mess->m_type) {
   case DEV_OPEN:
 	reply_mess.m_type = DEV_REVIVE;
-	reply_mess.REP_ENDPT = proc_nr;
+	reply_mess.REP_ENDPT = device_endpt;
 	reply_mess.REP_STATUS = r;
 	break;
 
   case DEV_CLOSE:
 	reply_mess.m_type = DEV_CLOSE_REPL;
-	reply_mess.REP_ENDPT = proc_nr;
+	reply_mess.REP_ENDPT = device_endpt;
 	reply_mess.REP_STATUS = r;
 	break;
 
@@ -134,10 +134,11 @@ int r;
   case DEV_WRITE_S:
   case DEV_IOCTL_S:
 	if (r == SUSPEND)
-		printf("driver_task: reviving %d with SUSPEND\n", proc_nr);
+		printf("driver_task: reviving %d (%d) with SUSPEND\n",
+			device_caller, device_endpt);
 
 	reply_mess.m_type = DEV_REVIVE;
-	reply_mess.REP_ENDPT = proc_nr;
+	reply_mess.REP_ENDPT = device_endpt;
 	reply_mess.REP_IO_GRANT = (cp_grant_id_t) mess->IO_GRANT;
 	reply_mess.REP_STATUS = r;
 	break;
@@ -154,7 +155,7 @@ int r;
 
   default:
 	reply_mess.m_type = TASK_REPLY;
-	reply_mess.REP_ENDPT = proc_nr;
+	reply_mess.REP_ENDPT = device_endpt;
 	/* Status is # of bytes transferred or error code. */
 	reply_mess.REP_STATUS = r;
 	break;
@@ -202,7 +203,7 @@ message *m_ptr;
   int r;
 
   m_ptr->m_type = TASK_REPLY;
-  m_ptr->REP_ENDPT = m_ptr->IO_ENDPT;
+  m_ptr->REP_ENDPT = m_ptr->USER_ENDPT;
   m_ptr->REP_STATUS = ERESTART;
 
   r = driver_reply(caller_e, caller_status, m_ptr);
@@ -346,7 +347,7 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 {
 /* Main program of any device driver task. */
 
-  int r, proc_nr, ipc_status;
+  int r, ipc_status;
   message mess;
 
   driver_running = TRUE;
@@ -371,10 +372,10 @@ int type; /* Driver type (DRIVER_STD or DRIVER_ASYN) */
 message *m_ptr; /* Pointer to message to handle */
 int ipc_status; 
 {
-  int r, proc_nr;
+  int r;
 
   device_caller = m_ptr->m_source;
-  proc_nr = m_ptr->IO_ENDPT;
+  device_endpt = m_ptr->USER_ENDPT;
   if (is_ipc_notify(ipc_status)) {
 	switch (_ENDPOINT_P(m_ptr->m_source)) {
 		case HARDWARE:
@@ -425,7 +426,7 @@ send_reply:
   switch (type) {
 	case DRIVER_STD:
 		m_ptr->m_type = TASK_REPLY;
-		m_ptr->REP_ENDPT = proc_nr;
+		m_ptr->REP_ENDPT = device_endpt;
 		/* Status is # of bytes transferred or error code. */
 		m_ptr->REP_STATUS = r;
 
@@ -439,7 +440,7 @@ send_reply:
 		break;
 
 	case DRIVER_ASYN:
-		asyn_reply(m_ptr, proc_nr, r);
+		asyn_reply(m_ptr, r);
 
 		break;
 		
@@ -495,7 +496,7 @@ message *mp;			/* pointer to read or write message */
 
   /* Transfer bytes from/to the device. */
   position= make64(mp->POSITION, mp->HIGHPOS);
-  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, position, &iovec1, 1);
+  r = (*dp->dr_transfer)(mp->m_source, opcode, position, &iovec1, 1);
 
   /* Return the number of bytes transferred or an error code. */
   return(r == OK ? (mp->COUNT - iovec1.iov_size) : r);
@@ -536,7 +537,7 @@ message *mp;		/* pointer to read or write message */
   /* Transfer bytes from/to the device. */
   opcode = mp->m_type;
   position= make64(mp->POSITION, mp->HIGHPOS);
-  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, position, iovec, nr_req);
+  r = (*dp->dr_transfer)(mp->m_source, opcode, position, iovec, nr_req);
 
   /* Copy the I/O vector back to the caller. */
   if (OK != sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT, 
@@ -659,7 +660,7 @@ message *mp;			/* pointer to ioctl request */
 
   if (mp->REQUEST == DIOCSETP) {
 	/* Copy just this one partition table entry. */
-	s=sys_safecopyfrom(mp->IO_ENDPT, (vir_bytes) mp->IO_GRANT, 
+	s=sys_safecopyfrom(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) &entry, sizeof(entry), D);
 	if(s != OK)
 	    return s;
@@ -670,7 +671,7 @@ message *mp;			/* pointer to ioctl request */
 	entry.base = dv->dv_base;
 	entry.size = dv->dv_size;
 	(*dp->dr_geometry)(&entry);
-	s=sys_safecopyto(mp->IO_ENDPT, (vir_bytes) mp->IO_GRANT, 
+	s=sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) &entry, sizeof(entry), D);
         if (OK != s) 
 	    return s;

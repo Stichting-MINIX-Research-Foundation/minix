@@ -55,11 +55,11 @@ typedef struct {
 	int BufLength;
 	int RevivePending;                        /* process waiting for this dev? */
 	int ReviveStatus;                         /* return val when proc unblocked */
-	int ReviveProcNr;                         /* the process to unblock */
+	endpoint_t ReviveProcNr;                  /* the process to unblock */
 	cp_grant_id_t ReviveGrant;		  /* grant id associated with io */
 	void *UserBuf;                            /* address of user's data buffer */
 	int ReadyToRevive;                        /* are we ready to revive process?*/
-	int NotifyProcNr;                         /* process to send notify to (FS) */
+	endpoint_t SourceProcNr;                  /* process to send notify to (FS) */
 	u32_t FragSize;                           /* dma fragment size */
 	char *DmaBuf;        /* the dma buffer; extra space for 
 												  page alignment */

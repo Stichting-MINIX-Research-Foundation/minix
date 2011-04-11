@@ -50,7 +50,7 @@ PRIVATE struct driver log_dtab = {
   NULL		/* HW int */
 };
 
-extern int device_caller;
+extern int device_endpt;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -113,7 +113,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 	 	logdevices[i].log_select_alerted =
 	 	logdevices[i].log_selected =
 	 	logdevices[i].log_select_ready_ops = 0;
- 	logdevices[i].log_proc_nr = 0;
+ 	logdevices[i].log_source = NONE;
  	logdevices[i].log_revive_alerted = 0;
   }
 
@@ -189,12 +189,13 @@ subwrite(struct logdevice *log, int count, int proc_nr,
         	LOGINC(log->log_read, overflow);
         }
 
-        if(log->log_size > 0 && log->log_proc_nr && !log->log_revive_alerted) {
+        if(log->log_size > 0 && log->log_source != NONE &&
+			!log->log_revive_alerted) {
         	/* Someone who was suspended on read can now
         	 * be revived.
         	 */
     		log->log_status = subread(log, log->log_iosize,
-    			log->log_proc_nr, log->log_user_grant,
+    			log->log_source, log->log_user_grant,
 			log->log_user_offset);
 
 		m.m_type = DEV_REVIVE;
@@ -207,7 +208,7 @@ subwrite(struct logdevice *log, int count, int proc_nr,
 			printf("log`subwrite: send to %d failed: %d\n",
 				log->log_source, r);
 		}
-		log->log_proc_nr = 0;
+		log->log_source = NONE;
  	} 
 
 	if(log->log_size > 0)
@@ -319,7 +320,7 @@ unsigned nr_req;		/* length of request vector */
 
 	case MINOR_KLOG:
 	    if (opcode == DEV_GATHER_S) {
-	    	if (log->log_proc_nr || count < 1) {
+	    	if (log->log_source != NONE || count < 1) {
 	    		/* There's already someone hanging to read, or
 	    		 * no real I/O requested.
 	    		 */
@@ -330,14 +331,14 @@ unsigned nr_req;		/* length of request vector */
 	    		if(accumulated_read)
 	    			return OK;
 	    		/* No data available; let caller block. */
-	    		log->log_proc_nr = proc_nr;
+	    		log->log_source = proc_nr;
 	    		log->log_iosize = count;
 	    		log->log_user_grant = grant;
 	    		log->log_user_offset = 0;
 	    		log->log_revive_alerted = 0;
 
-			/* Device_caller is a global in drivers library. */
-	    		log->log_source = device_caller;
+			/* device_endpt is a global in drivers library. */
+	    		log->log_proc_nr = device_endpt;
 #if LOG_DEBUG
 	    		printf("blocked %d (%d)\n", 
 	    			log->log_source, log->log_proc_nr);
@@ -402,7 +403,7 @@ message *m_ptr;
   d = m_ptr->TTY_LINE;
   if(d < 0 || d >= NR_DEVS)
   	return EINVAL;
-  logdevices[d].log_proc_nr = 0;
+  logdevices[d].log_proc_nr = NONE;
   logdevices[d].log_revive_alerted = 0;
   return(OK);
 }
@@ -452,10 +453,10 @@ message *m_ptr;
   	return EINVAL;
   }
 
-  ops = m_ptr->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+  ops = m_ptr->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
 
   	/* Read blocks when there is no log. */
-  if((m_ptr->IO_ENDPT & SEL_RD) && logdevices[d].log_size > 0) {
+  if((m_ptr->USER_ENDPT & SEL_RD) && logdevices[d].log_size > 0) {
 #if LOG_DEBUG
   	printf("log can read; size %d\n", logdevices[d].log_size);
 #endif
@@ -463,13 +464,13 @@ message *m_ptr;
  }
 
   	/* Write never blocks. */
-  if(m_ptr->IO_ENDPT & SEL_WR) ready_ops |= SEL_WR;
+  if(m_ptr->USER_ENDPT & SEL_WR) ready_ops |= SEL_WR;
 
 	/* Enable select calback if no operations were
 	 * ready to go, but operations were requested,
 	 * and notify was enabled.
 	 */
-  if((m_ptr->IO_ENDPT & SEL_NOTIFY) && ops && !ready_ops) {
+  if((m_ptr->USER_ENDPT & SEL_NOTIFY) && ops && !ready_ops) {
   	logdevices[d].log_selected |= ops;
   	logdevices[d].log_select_proc = m_ptr->m_source;
 #if LOG_DEBUG

@@ -2303,7 +2303,7 @@ message *m;
 		return EINVAL;
 
 	if (m->REQUEST == DIOCTIMEOUT) {
-		r= sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+		r= sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes)&timeout, sizeof(timeout), D);
 
 		if(r != OK)
@@ -2334,7 +2334,7 @@ message *m;
 					timeout_usecs = timeout;
 			}
 	
-		  	r= sys_safecopyto(m->IO_ENDPT,
+		  	r= sys_safecopyto(m->m_source,
 		  	        (cp_grant_id_t) m->IO_GRANT,
 				0, (vir_bytes)&prev, sizeof(prev), D);
 
@@ -2347,7 +2347,7 @@ message *m;
 		int count;
 		if (w_prepare(m->DEVICE) == NULL) return ENXIO;
 		count = w_wn->open_ct;
-		r= sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+		r= sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes)&count, sizeof(count), D);
 
 		if(r != OK)

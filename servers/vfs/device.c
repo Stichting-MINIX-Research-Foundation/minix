@@ -377,13 +377,13 @@ PUBLIC int dev_io(
   }
 
   /* By default, these are right. */
-  dev_mess.IO_ENDPT = proc_e;
+  dev_mess.USER_ENDPT = proc_e;
   dev_mess.ADDRESS  = buf;
 
   /* Convert DEV_* to DEV_*_S variants. */
   buf_used = buf;
   safe = safe_io_conversion(dp->dmap_driver, &gid, &op, gids, NR_IOREQS,
-  			    (endpoint_t*) &dev_mess.IO_ENDPT, &buf_used,
+  			    (endpoint_t*) &dev_mess.USER_ENDPT, &buf_used,
 			    &vec_grants, bytes, &pos_lo);
 
   if(buf != buf_used)
@@ -402,7 +402,7 @@ PUBLIC int dev_io(
   dev_mess.HIGHPOS  = pos_high;
 
   /* This will be used if the i/o is suspended. */
-  ioproc = dev_mess.IO_ENDPT;
+  ioproc = dev_mess.USER_ENDPT;
 
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -424,7 +424,7 @@ PUBLIC int dev_io(
 	if ((flags & O_NONBLOCK) && !(dp->dmap_style == STYLE_DEVA)) {
 		/* Not supposed to block. */
 		dev_mess.m_type = CANCEL;
-		dev_mess.IO_ENDPT = ioproc;
+		dev_mess.USER_ENDPT = ioproc;
 		dev_mess.IO_GRANT = (char *) gid;
 
 		/* This R_BIT/W_BIT check taken from suspend()/unpause()
@@ -449,7 +449,7 @@ PUBLIC int dev_io(
 		if (flags & O_NONBLOCK) {
 			/* Not supposed to block, send cancel message */
 			dev_mess.m_type = CANCEL;
-			dev_mess.IO_ENDPT = ioproc;
+			dev_mess.USER_ENDPT = ioproc;
 			dev_mess.IO_GRANT = (char *) gid;
 
 			/* This R_BIT/W_BIT check taken from suspend()/unpause()
@@ -493,7 +493,7 @@ PUBLIC int gen_opcl(
 
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = (dev >> MINOR) & BYTE;
-  dev_mess.IO_ENDPT = proc_e;
+  dev_mess.USER_ENDPT = proc_e;
   dev_mess.COUNT    = flags;
 
   if (dp->dmap_driver == NONE) {
@@ -626,7 +626,7 @@ message *mess_ptr;		/* pointer to message for task */
 	printf("VFS: sending %d to SYSTEM\n", mess_ptr->m_type);
   }
 
-  proc_e = mess_ptr->IO_ENDPT;
+  proc_e = mess_ptr->USER_ENDPT;
 
   for (;;) {
 
@@ -780,7 +780,7 @@ PUBLIC int clone_opcl(
 
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = minor;
-  dev_mess.IO_ENDPT = proc_e;
+  dev_mess.USER_ENDPT = proc_e;
   dev_mess.COUNT    = flags;
 
 

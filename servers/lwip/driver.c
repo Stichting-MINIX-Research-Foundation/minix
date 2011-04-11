@@ -147,7 +147,7 @@ static void driver_setup_read(struct nic * nic)
 	nic->rx_iovec[0].iov_size = nic->rx_pbuf->len;
 
 	m.m_type = DL_READV_S;
-	m.DL_ENDPT = lwip_ep;
+	m.DL_ENDPT_LEGACY = lwip_ep;	/* FIXME: legacy support */
 	m.DL_COUNT = 1;
 	m.DL_GRANT = nic->rx_iogrant;
 
@@ -209,7 +209,7 @@ int driver_tx(struct nic * nic)
 		panic("Failed to set grant");
 
 	m.m_type = DL_WRITEV_S;
-	m.DL_ENDPT = lwip_ep;
+	m.DL_ENDPT_LEGACY = lwip_ep;	/* FIXME: legacy support */
 	m.DL_COUNT = 1;
 	m.DL_GRANT = nic->tx_iogrant;
 
@@ -274,7 +274,7 @@ static int raw_receive(message * m,
 		size_t cp_len;
 
 		cp_len = (rem_len < p->len) ? rem_len : p->len;
-		err = copy_to_user(m->IO_ENDPT,	p->payload, cp_len,
+		err = copy_to_user(m->m_source,	p->payload, cp_len,
 				(cp_grant_id_t) m->IO_GRANT,
 				written);
 
@@ -468,7 +468,7 @@ static void nic_ioctl_set_conf(__unused struct socket * sock,
 	nwio_ipconf_t ipconf;
 	int err;
 
-	err = copy_from_user(m->IO_ENDPT, &ipconf, sizeof(ipconf),
+	err = copy_from_user(m->m_source, &ipconf, sizeof(ipconf),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 	if (err != OK)
 		send_reply(m, err);
@@ -498,7 +498,7 @@ static void nic_ioctl_get_conf(__unused struct socket * sock,
 	ipconf.nwic_netmask = nic->netif.netmask.addr;
 	ipconf.nwic_mtu = nic->netif.mtu;
 	
-	err = copy_to_user(m->IO_ENDPT, &ipconf, sizeof(ipconf),
+	err = copy_to_user(m->m_source, &ipconf, sizeof(ipconf),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 	if (err != OK)
 		send_reply(m, err);
@@ -513,7 +513,7 @@ static void nic_ioctl_set_gateway(__unused struct socket * sock,
 	nwio_route_t route;
 	int err;
 
-	err = copy_from_user(m->IO_ENDPT, &route, sizeof(route),
+	err = copy_from_user(m->m_source, &route, sizeof(route),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 	if (err != OK)
 		send_reply(m, err);
@@ -546,7 +546,7 @@ static void nic_ioctl_get_ethstat(__unused struct socket * sock,
 	memset(&ethstat, 0, sizeof(ethstat));
 	memcpy(&ethstat.nwes_addr, nic->netif.hwaddr, 6);
 	
-	err = copy_to_user(m->IO_ENDPT, &ethstat, sizeof(ethstat),
+	err = copy_to_user(m->m_source, &ethstat, sizeof(ethstat),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 	if (err != OK)
 		send_reply(m, err);
@@ -580,7 +580,7 @@ static void nic_ioctl_set_ethopt(struct socket * sock,
 		return;
 	}
 
-	err = copy_from_user(m->IO_ENDPT, &ethopt, sizeof(ethopt),
+	err = copy_from_user(m->m_source, &ethopt, sizeof(ethopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 	if (err != OK)
 		send_reply(m, err);
@@ -697,7 +697,7 @@ static void nic_op_write(struct socket * sock, message * m)
 		goto write_err;
 	}
 
-	if ((ret = copy_from_user(m->IO_ENDPT, pbuf->payload, m->COUNT,
+	if ((ret = copy_from_user(m->m_source, pbuf->payload, m->COUNT,
 				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
 		pbuf_free(pbuf);
 		goto write_err;

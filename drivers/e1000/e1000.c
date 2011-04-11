@@ -624,7 +624,7 @@ int from_int;
 	/*
 	 * Copy the I/O vector table.
 	 */
-	if ((r = sys_safecopyfrom(e->tx_message.DL_ENDPT,
+	if ((r = sys_safecopyfrom(e->tx_message.m_source,
 				  e->tx_message.DL_GRANT, 0,
 				  (vir_bytes) iovec, e->tx_message.DL_COUNT *
 				  sizeof(iovec_s_t), D)) != OK)
@@ -648,7 +648,7 @@ int from_int;
 	    E1000_DEBUG(4, ("iovec[%d] = %d\n", i, size));
 
 	    /* Copy bytes to TX queue buffers. */
-	    if ((r = sys_safecopyfrom(e->tx_message.DL_ENDPT,
+	    if ((r = sys_safecopyfrom(e->tx_message.m_source,
 				     iovec[i].iov_grant, 0,
 				     (vir_bytes) e->tx_buffer +
 				     (tail * E1000_IOBUF_SIZE),
@@ -715,7 +715,7 @@ int from_int;
 	/*
 	 * Copy the I/O vector table first.
 	 */
-	if ((r = sys_safecopyfrom(e->rx_message.DL_ENDPT,
+	if ((r = sys_safecopyfrom(e->rx_message.m_source,
 				  e->rx_message.DL_GRANT, 0,
 				  (vir_bytes) iovec, e->rx_message.DL_COUNT *
 				  sizeof(iovec_s_t), D)) != OK)
@@ -750,7 +750,7 @@ int from_int;
 	    E1000_DEBUG(4, ("iovec[%d] = %lu[%d]\n",
 			  i, iovec[i].iov_size, size));
 
-	    if ((r = sys_safecopyto(e->rx_message.DL_ENDPT, iovec[i].iov_grant,
+	    if ((r = sys_safecopyto(e->rx_message.m_source, iovec[i].iov_grant,
 				   0, (vir_bytes) e->rx_buffer + bytes + 
 				   (cur * E1000_IOBUF_SIZE),
 				    size, D)) != OK)
@@ -802,7 +802,7 @@ message *mp;
     stats.ets_CDheartbeat = 0;
     stats.ets_OWC = 0;
 
-    sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0, (vir_bytes)&stats,
+    sys_safecopyto(mp->m_source, mp->DL_GRANT, 0, (vir_bytes)&stats,
                    sizeof(stats), D);
     mp->m_type  = DL_STAT_REPLY;
     if((r=send(mp->m_source, mp)) != OK)

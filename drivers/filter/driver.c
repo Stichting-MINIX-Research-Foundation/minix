@@ -31,7 +31,7 @@ static int driver_open(int which)
 
 	msg.m_type = DEV_OPEN;
 	msg.DEVICE = driver[which].minor;
-	msg.IO_ENDPT = self_ep;
+	msg.USER_ENDPT = self_ep;
 	r = sendrec(driver[which].endpt, &msg);
 
 	if (r != OK) {
@@ -57,7 +57,7 @@ static int driver_open(int which)
 	msg.m_type = DEV_IOCTL_S;
 	msg.REQUEST = DIOCGETP;
 	msg.DEVICE = driver[which].minor;
-	msg.IO_ENDPT = self_ep;
+	msg.USER_ENDPT = self_ep;
 	msg.IO_GRANT = (char *) gid;
 
 	r = sendrec(driver[which].endpt, &msg);
@@ -107,7 +107,7 @@ static int driver_close(int which)
 
 	msg.m_type = DEV_CLOSE;
 	msg.DEVICE = driver[which].minor;
-	msg.IO_ENDPT = self_ep;
+	msg.USER_ENDPT = self_ep;
 	r = sendrec(driver[which].endpt, &msg);
 
 	if (r != OK) {
@@ -521,7 +521,7 @@ static int flt_senda(message *mess, int which)
 
 	/* Fill in the last bits of the message. */
 	mess->DEVICE = driver[which].minor;
-	mess->IO_ENDPT = self_ep;
+	mess->USER_ENDPT = self_ep;
 
 	/* Send the message asynchronously. */
 	amp = &amsgtable[which];

@@ -176,7 +176,7 @@ PRIVATE void do_get_stat_s(message * mp)
 
   dep = &de_state;
 
-  if ((rc = sys_safecopyto(mp->DL_ENDPT, mp->DL_GRANT, 0UL,
+  if ((rc = sys_safecopyto(mp->m_source, mp->DL_GRANT, 0UL,
 			(vir_bytes)&dep->de_stat,
 			sizeof(dep->de_stat), 0)) != OK)
         panic(str_CopyErrMsg, rc);
@@ -474,8 +474,8 @@ PRIVATE void do_vread_s(const message * mp, int from_int)
     /* Setup the iovec entry to allow copying into
        client layer
     */
-    dep->de_read_iovec.iod_proc_nr = mp->DL_ENDPT;
-    de_get_userdata_s(mp->DL_ENDPT, (cp_grant_id_t) mp->DL_GRANT, 0,
+    dep->de_read_iovec.iod_proc_nr = mp->m_source;
+    de_get_userdata_s(mp->m_source, (cp_grant_id_t) mp->DL_GRANT, 0,
 		      mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
     dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
     dep->de_read_iovec.iod_grant = (cp_grant_id_t) mp->DL_GRANT;
@@ -827,8 +827,8 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
 
     buffer = descr->buf1;
     iovp = &dep->de_write_iovec;
-    iovp->iod_proc_nr = mp->DL_ENDPT;
-    de_get_userdata_s(mp->DL_ENDPT, mp->DL_GRANT, 0,
+    iovp->iod_proc_nr = mp->m_source;
+    de_get_userdata_s(mp->m_source, mp->DL_GRANT, 0,
 		      mp->DL_COUNT, iovp->iod_iovec);
     iovp->iod_iovec_s = mp->DL_COUNT;
     iovp->iod_grant = (cp_grant_id_t) mp->DL_GRANT;

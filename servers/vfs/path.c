@@ -533,5 +533,6 @@ int pathlen;
  *===========================================================================*/
 PUBLIC int do_check_perms(void)
 {
-  return check_perms(m_in.IO_ENDPT, (cp_grant_id_t) m_in.IO_GRANT, m_in.COUNT);
+  return check_perms(m_in.USER_ENDPT, (cp_grant_id_t) m_in.IO_GRANT,
+	m_in.COUNT);
 }

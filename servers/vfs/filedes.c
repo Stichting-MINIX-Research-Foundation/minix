@@ -174,7 +174,7 @@ int fd;
  *===========================================================================*/
 PUBLIC int do_verify_fd(void)
 {
-  m_out.ADDRESS = (void *) verify_fd(m_in.IO_ENDPT, m_in.COUNT);
+  m_out.ADDRESS = (void *) verify_fd(m_in.USER_ENDPT, m_in.COUNT);
   return (m_out.ADDRESS != NULL) ? OK : EINVAL;
 }
 
@@ -236,7 +236,7 @@ filp_id_t cfilp;
  *===========================================================================*/
 PUBLIC int do_copy_filp(void)
 {
-  return copy_filp(m_in.IO_ENDPT, (filp_id_t) m_in.ADDRESS);
+  return copy_filp(m_in.USER_ENDPT, (filp_id_t) m_in.ADDRESS);
 }
 
 /*===========================================================================*
@@ -294,7 +294,7 @@ int fd;
  *===========================================================================*/
 PUBLIC int do_cancel_fd(void)
 {
-  return cancel_fd(m_in.IO_ENDPT, m_in.COUNT);
+  return cancel_fd(m_in.USER_ENDPT, m_in.COUNT);
 }
 
 /*===========================================================================*

@@ -218,7 +218,7 @@ static int read_from_tcp(struct socket * sock, message * m)
 #if 0
 			print_tcp_payload(p->payload, p->len);
 #endif
-			err = copy_to_user(m->IO_ENDPT, p->payload, p->len,
+			err = copy_to_user(m->m_source, p->payload, p->len,
 					(cp_grant_id_t) m->IO_GRANT, written);
 			if (err != OK)
 				goto cp_error;
@@ -259,7 +259,7 @@ static int read_from_tcp(struct socket * sock, message * m)
 #if 0
 			print_tcp_payload(p->payload, rem_buf);
 #endif
-			err = copy_to_user(m->IO_ENDPT, p->payload, rem_buf,
+			err = copy_to_user(m->m_source, p->payload, rem_buf,
 					(cp_grant_id_t) m->IO_GRANT, written);
 			if (err != OK)
 				goto cp_error;
@@ -308,7 +308,7 @@ static void tcp_op_read(struct socket * sock, message * m)
 	} else {
 		if (sock->flags & SOCK_FLG_CLOSED) {
 			printf("socket %ld already closed!!! call from %d\n",
-					get_sock_num(sock), m->IO_ENDPT);
+					get_sock_num(sock), m->USER_ENDPT);
 			do_tcp_debug = 1;
 			sock_reply(sock, 0);
 			return;
@@ -423,7 +423,7 @@ static void tcp_op_write(struct socket * sock, message * m)
 		sock_reply(sock, ENOMEM);
 	}
 
-	if ((ret = copy_from_user(m->IO_ENDPT, wbuf->data, usr_buf_len,
+	if ((ret = copy_from_user(m->m_source, wbuf->data, usr_buf_len,
 				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
 		sock_reply(sock, ret);
 		return;
@@ -508,7 +508,7 @@ static void tcp_set_conf(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	err = copy_from_user(m->IO_ENDPT, &tconf, sizeof(tconf),
+	err = copy_from_user(m->m_source, &tconf, sizeof(tconf),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)
@@ -569,7 +569,7 @@ static void tcp_get_conf(struct socket * sock, message * m)
 		return;
 	}
 	
-	err = copy_to_user(m->IO_ENDPT, &tconf, sizeof(tconf),
+	err = copy_to_user(m->m_source, &tconf, sizeof(tconf),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)
@@ -835,7 +835,7 @@ static int tcp_do_accept(struct socket * listen_sock,
 
 	debug_tcp_print("socket num %ld", get_sock_num(listen_sock));
 
-	if ((ret = copy_from_user(m->IO_ENDPT, &sock_num, sizeof(sock_num),
+	if ((ret = copy_from_user(m->m_source, &sock_num, sizeof(sock_num),
 				(cp_grant_id_t) m->IO_GRANT, 0)) != OK)
 		return EFAULT;
 	if (!is_valid_sock_num(sock_num))
@@ -903,7 +903,7 @@ static void tcp_op_listen(struct socket * sock, message * m)
 
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
-	err = copy_from_user(m->IO_ENDPT, &backlog, sizeof(backlog),
+	err = copy_from_user(m->m_source, &backlog, sizeof(backlog),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	new_pcb = tcp_listen_with_backlog((struct tcp_pcb *) sock->pcb,
@@ -985,7 +985,7 @@ static void tcp_op_get_cookie(struct socket * sock, message * m)
 	sock_num = get_sock_num(sock);
 	memcpy(&cookie, &sock_num, sizeof(sock_num));
 
-	if (copy_to_user(m->IO_ENDPT, &cookie, sizeof(sock),
+	if (copy_to_user(m->m_source, &cookie, sizeof(sock),
 			(cp_grant_id_t) m->IO_GRANT, 0) == OK)
 		sock_reply(sock, OK);
 	else
@@ -1010,7 +1010,7 @@ static void tcp_get_opt(struct socket * sock, message * m)
 	/* FIXME : not used by the userspace library */
 	tcpopt.nwto_flags = 0;
 	
-	err = copy_to_user(m->IO_ENDPT, &tcpopt, sizeof(tcpopt),
+	err = copy_to_user(m->m_source, &tcpopt, sizeof(tcpopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)
@@ -1029,7 +1029,7 @@ static void tcp_set_opt(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	err = copy_from_user(m->IO_ENDPT, &tcpopt, sizeof(tcpopt),
+	err = copy_from_user(m->m_source, &tcpopt, sizeof(tcpopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)
@@ -1091,7 +1091,7 @@ static void tcp_op_select(struct socket * sock, __unused message * m)
 {
 	int retsel = 0, sel;
 
-	sel = m->IO_ENDPT;
+	sel = m->USER_ENDPT;
 	debug_tcp_print("socket num %ld 0x%x", get_sock_num(sock), sel);
 	
 	/* in this case any operation would block, no error */

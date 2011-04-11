@@ -7,14 +7,14 @@
  * 
  * Requests:
  *
- *    m_type      DEVICE      IO_ENDPT    COUNT
+ *    m_type      DEVICE      USER_ENDPT    COUNT
  * --------------------------------------------------
  * | DEV_OPEN    | minor dev | proc nr   |   mode   |
  * |-------------+-----------+-----------+----------+
  * | DEV_CLOSE   | minor dev | proc nr   |          |
  * |-------------+-----------+-----------+----------+
  *
- *    m_type      DEVICE      IO_ENDPT    COUNT       IO_GRANT
+ *    m_type      DEVICE      USER_ENDPT    COUNT      IO_GRANT
  * ---------------------------------------------------------------
  * | DEV_READ_S  | minor dev | proc nr   |  count    | grant ID  |
  * |-------------+-----------+-----------+-----------+-----------|
@@ -30,7 +30,7 @@
  * | DEV_STATUS  |
  * |-------------|
  * 
- *    m_type      DEVICE      IO_ENDPT    COUNT
+ *    m_type      DEVICE      USER_ENDPT    COUNT
  * --------------------------------------------------|
  * | CANCEL      | minor dev | proc nr   |  mode     |
  * |-------------+-----------+-----------+-----------|
@@ -124,7 +124,7 @@ mq_t *m;
 	{
 		if (m->mq_mess.m_type == CANCEL)
 		{
-			result= sr_repl_queue(m->mq_mess.IO_ENDPT, 
+			result= sr_repl_queue(m->mq_mess.USER_ENDPT, 
 				(int)m->mq_mess.IO_GRANT, 0);
 
 			if (result)
@@ -461,7 +461,7 @@ message *m;
 	int proc_nr, ref;
 
         result=EINTR;
-	proc_nr=  m->IO_ENDPT;
+	proc_nr=  m->USER_ENDPT;
 	ref=  (int)m->IO_GRANT;
 	sr_fd= sr_getchannel(m->DEVICE);
 	assert (sr_fd);
@@ -487,7 +487,7 @@ message *m;
 	ip_panic((
 "request not found: from %d, type %d, MINOR= %d, PROC= %d, REF= %d",
 		m->m_source, m->m_type, m->DEVICE,
-		m->IO_ENDPT, (int) m->IO_GRANT));
+		m->USER_ENDPT, (int) m->IO_GRANT));
 
 	return result;
 }
@@ -504,7 +504,7 @@ message *m;
 
 	sr_fd->srf_select_proc= m->m_source;
 
-	m_ops= m->IO_ENDPT;
+	m_ops= m->USER_ENDPT;
 	i_ops= 0;
 	if (m_ops & SEL_RD) i_ops |= SR_SELECT_READ;
 	if (m_ops & SEL_WR) i_ops |= SR_SELECT_WRITE;
@@ -597,7 +597,7 @@ int first_flag;
 	for(q_ptr_prv= NULL, q_ptr= *q_head_ptr; q_ptr; 
 		q_ptr_prv= q_ptr, q_ptr= q_ptr->mq_next)
 	{
-		if (q_ptr->mq_mess.IO_ENDPT != proc_nr)
+		if (q_ptr->mq_mess.USER_ENDPT != proc_nr)
 			continue;
 		if ((int)q_ptr->mq_mess.IO_GRANT != ref)
 			continue;
@@ -650,7 +650,7 @@ int is_revive;
 	int result, proc, ref;
 	message reply, *mp;
 
-	proc= mq->mq_mess.IO_ENDPT;
+	proc= mq->mq_mess.USER_ENDPT;
 	ref= (int)mq->mq_mess.IO_GRANT;
 
 	if (is_revive)
@@ -744,7 +744,7 @@ int for_ioctl;
 		return NULL;
 	}
 
-	result= cp_u2b ((*head_ptr)->mq_mess.IO_ENDPT,
+	result= cp_u2b ((*head_ptr)->mq_mess.m_source,
 		(int)(*head_ptr)->mq_mess.IO_GRANT, offset, &acc, count);
 
 	return result<0 ? NULL : acc;
@@ -805,7 +805,7 @@ int for_ioctl;
 		return OK;
 	}
 
-	return cp_b2u (data, (*head_ptr)->mq_mess.IO_ENDPT, 
+	return cp_b2u (data, (*head_ptr)->mq_mess.m_source, 
 		(int)(*head_ptr)->mq_mess.IO_GRANT, offset);
 }
 

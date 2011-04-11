@@ -18,7 +18,7 @@ PRIVATE void load_state_info(void)
   found_pending = FALSE;
   for (i = 0; i < NR_DEVS && !found_pending; i++) {
       log = &logdevices[i];
-      if(log->log_proc_nr) {
+      if(log->log_source != NONE) {
           is_read_pending = TRUE;
       }
       if(log->log_selected) {

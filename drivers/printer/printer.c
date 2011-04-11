@@ -14,7 +14,7 @@
  *   DEV_WRITE:	a process wants to write on a terminal
  *   CANCEL:	terminate a previous incomplete system call immediately
  *
- *    m_type      TTY_LINE   IO_ENDPT    COUNT    ADDRESS
+ *    m_type      TTY_LINE  USER_ENDPT  COUNT    ADDRESS
  * |-------------+---------+---------+---------+---------|
  * | DEV_OPEN    |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
@@ -86,7 +86,7 @@
  * with the sys_outb() messages exchanged.
  */
 
-PRIVATE int caller;		/* process to tell when printing done (FS) */
+PRIVATE endpoint_t caller;	/* process to tell when printing done (FS) */
 PRIVATE int revive_pending;	/* set to true if revive is pending */
 PRIVATE int revive_status;	/* revive status */
 PRIVATE int done_status;	/* status of last output completion */
@@ -95,7 +95,7 @@ PRIVATE unsigned char obuf[128];	/* output buffer */
 PRIVATE unsigned const char *optr;	/* ptr to next char in obuf to print */
 PRIVATE int orig_count;		/* original byte count */
 PRIVATE int port_base;		/* I/O port for printer */
-PRIVATE int proc_nr;		/* user requesting the printing */
+PRIVATE endpoint_t proc_nr;	/* user requesting the printing */
 PRIVATE cp_grant_id_t grant_nr;	/* grant on which print happens */
 PRIVATE int user_left;		/* bytes of output left in user buf */
 PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
@@ -143,7 +143,7 @@ PUBLIC int main(int argc, char *argv[])
 				break;
 			default:
 				reply(TASK_REPLY, pr_mess.m_source,
-						pr_mess.IO_ENDPT, EINVAL);
+						pr_mess.USER_ENDPT, EINVAL);
 		}
 		continue;
 	}
@@ -153,13 +153,14 @@ PUBLIC int main(int argc, char *argv[])
                  do_initialize();		/* initialize */
 	        /* fall through */
 	    case DEV_CLOSE:
-		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, OK);
+		reply(TASK_REPLY, pr_mess.m_source, pr_mess.USER_ENDPT, OK);
 		break;
 	    case DEV_WRITE_S:	do_write(&pr_mess);	break;
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;
 	    default:
-		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, EINVAL);
+		reply(TASK_REPLY, pr_mess.m_source, pr_mess.USER_ENDPT,
+			EINVAL);
 	}
   }
 }
@@ -217,14 +218,14 @@ register message *m_ptr;	/* pointer to the newly arrived message */
     else if (m_ptr->COUNT <= 0)  	r = EINVAL;
 
     /* Reply to FS, no matter what happened, possible SUSPEND caller. */
-    reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
+    reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, r);
 
     /* If no errors occurred, continue printing with SUSPENDED caller.
      * First wait until the printer is online to prevent stupid errors.
      */
     if (SUSPEND == r) { 	
 	caller = m_ptr->m_source;
-	proc_nr = m_ptr->IO_ENDPT;
+	proc_nr = m_ptr->USER_ENDPT;
 	user_left = m_ptr->COUNT;
 	orig_count = m_ptr->COUNT;
 	user_vir_d = 0;				 	/* Offset. */
@@ -324,12 +325,12 @@ register message *m_ptr;	/* pointer to the newly arrived message */
  * but rely on FS to handle the EINTR reply and de-suspension properly.
  */
 
-  if (writing && m_ptr->IO_ENDPT == proc_nr) {
+  if (writing && m_ptr->USER_ENDPT == proc_nr) {
 	oleft = 0;		/* cancel output by interrupt handler */
 	writing = FALSE;
 	revive_pending = FALSE;
   }
-  reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EINTR);
+  reply(TASK_REPLY, m_ptr->m_source, m_ptr->USER_ENDPT, EINTR);
 }
 
 /*===========================================================================*
@@ -393,7 +394,7 @@ PRIVATE void prepare_output()
 
   if ( (chunk = user_left) > sizeof obuf) chunk = sizeof obuf;
 
-  s=sys_safecopyfrom(proc_nr, grant_nr, user_vir_d, (vir_bytes) obuf,
+  s=sys_safecopyfrom(caller, grant_nr, user_vir_d, (vir_bytes) obuf,
 	chunk, D);
 
   if(s != OK) {

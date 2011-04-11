@@ -101,7 +101,7 @@ static int udp_do_receive(struct socket * sock,
 		hdr.uih_data_len = 0;
 		hdr.uih_ip_opt_len = 0;
 
-		err = copy_to_user(m->IO_ENDPT,
+		err = copy_to_user(m->m_source,
 				&hdr, sizeof(hdr),
 				(cp_grant_id_t) m->IO_GRANT,
 				0);
@@ -116,7 +116,7 @@ static int udp_do_receive(struct socket * sock,
 		size_t cp_len;
 
 		cp_len = (rem_len < p->len) ? rem_len : p->len;
-		err = copy_to_user(m->IO_ENDPT,	p->payload, cp_len,
+		err = copy_to_user(m->m_source,	p->payload, cp_len,
 				(cp_grant_id_t) m->IO_GRANT,
 				hdr_sz + written);
 
@@ -276,7 +276,7 @@ static void udp_op_write(struct socket * sock, message * m)
 		goto write_err;
 	}
 
-	if ((ret = copy_from_user(m->IO_ENDPT, pbuf->payload, m->COUNT,
+	if ((ret = copy_from_user(m->m_source, pbuf->payload, m->COUNT,
 				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
 		pbuf_free(pbuf);
 		goto write_err;
@@ -304,7 +304,7 @@ static void udp_set_opt(struct socket * sock, message * m)
 
 	assert(pcb);
 
-	err = copy_from_user(m->IO_ENDPT, &udpopt, sizeof(udpopt),
+	err = copy_from_user(m->m_source, &udpopt, sizeof(udpopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)
@@ -376,7 +376,7 @@ static void udp_get_opt(struct socket * sock, message * m)
 		return;
 	}
 
-	err = copy_to_user(m->IO_ENDPT, &udpopt, sizeof(udpopt),
+	err = copy_to_user(m->m_source, &udpopt, sizeof(udpopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)

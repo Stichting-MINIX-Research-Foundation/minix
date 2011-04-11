@@ -2404,7 +2404,7 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		return atapi_load_eject(current_port, 0, FALSE /*load*/);
 
 	case DIOCOPENCT:
-		return sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+		return sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes) &current_port->open_count,
 			sizeof(current_port->open_count), D);
 
@@ -2418,7 +2418,7 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		if (current_port->state != STATE_GOOD_DEV)
 			return EIO;
 
-		if ((r = sys_safecopyfrom(m->IO_ENDPT,
+		if ((r = sys_safecopyfrom(m->m_source,
 			(cp_grant_id_t) m->IO_GRANT, 0, (vir_bytes) &val,
 			sizeof(val), D)) != OK)
 			return r;
@@ -2432,7 +2432,7 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		if ((r = gen_get_wcache(current_port, 0, &val)) != OK)
 			return r;
 
-		return sys_safecopyto(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT,
+		return sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
 			0, (vir_bytes) &val, sizeof(val), D);
 	}
 

@@ -79,7 +79,7 @@ static int raw_ip_do_receive(message * m,
 		size_t cp_len;
 
 		cp_len = (rem_len < p->len) ? rem_len : p->len;
-		err = copy_to_user(m->IO_ENDPT,	p->payload, cp_len,
+		err = copy_to_user(m->m_source,	p->payload, cp_len,
 				(cp_grant_id_t) m->IO_GRANT,
 				hdr_sz + written);
 
@@ -231,7 +231,7 @@ static void raw_ip_op_write(struct socket * sock, message * m)
 		goto write_err;
 	}
 
-	if ((ret = copy_from_user(m->IO_ENDPT, pbuf->payload, m->COUNT,
+	if ((ret = copy_from_user(m->m_source, pbuf->payload, m->COUNT,
 				(cp_grant_id_t) m->IO_GRANT, 0)) != OK) {
 		pbuf_free(pbuf);
 		goto write_err;
@@ -264,7 +264,7 @@ static void raw_ip_set_opt(struct socket * sock, message * m)
 	nwio_ipopt_t ipopt;
 	struct raw_pcb * pcb;
 
-	err = copy_from_user(m->IO_ENDPT, &ipopt, sizeof(ipopt),
+	err = copy_from_user(m->m_source, &ipopt, sizeof(ipopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)
@@ -323,7 +323,7 @@ static void raw_ip_get_opt(struct socket * sock, message * m)
 		return;
 	}
 
-	err = copy_to_user(m->IO_ENDPT, &ipopt, sizeof(ipopt),
+	err = copy_to_user(m->m_source, &ipopt, sizeof(ipopt),
 				(cp_grant_id_t) m->IO_GRANT, 0);
 
 	if (err != OK)

@@ -171,7 +171,7 @@ int try;
    */
   do {
 	if (count > sizeof(buf)) count = sizeof(buf);
-	if ((result = sys_safecopyfrom(tp->tty_outproc, tp->tty_outgrant,
+	if ((result = sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant,
 		tp->tty_outoffset, (vir_bytes) buf, count, D)) != OK)
 		break;
 	tp->tty_outoffset += count;
@@ -807,27 +807,27 @@ PUBLIC void do_video(message *m)
 
 			do_map= (m->REQUEST == TIOCMAPMEM);	/* else unmap */
 
-	   		r = sys_safecopyfrom(m->IO_ENDPT,
+	   		r = sys_safecopyfrom(m->m_source,
 				(cp_grant_id_t) m->IO_GRANT, 0,
 				(vir_bytes) &mapreqvm, sizeof(mapreqvm), D);
 
 			if (r != OK)
 			{
 				printf("tty: sys_safecopyfrom failed\n");
-				tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT,
-					r);
+				tty_reply(TASK_REPLY, m->m_source,
+					m->USER_ENDPT, r);
 				return;
 			}
 
 			/* In safe ioctl mode, the POSITION field contains
 			 * the endpt number of the original requestor.
-			 * IO_ENDPT is always FS.
+			 * USER_ENDPT is always FS.
 			 */
 
 			if(do_map) {
 				mapreqvm.vaddr_ret = vm_map_phys(m->POSITION,
 				(void *) mapreqvm.phys_offset, mapreqvm.size);
-	   			if((r = sys_safecopyto(m->IO_ENDPT,
+	   			if((r = sys_safecopyto(m->m_source,
 				  (cp_grant_id_t) m->IO_GRANT, 0,
 				  (vir_bytes) &mapreqvm,
 				  sizeof(mapreqvm), D)) != OK) {
@@ -837,7 +837,7 @@ PUBLIC void do_video(message *m)
 				r = vm_unmap_phys(m->POSITION, 
 					mapreqvm.vaddr, mapreqvm.size);
 			}
-			tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
+			tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
 			return;
 		   }
 		}
@@ -850,7 +850,7 @@ PUBLIC void do_video(message *m)
 			m->m_type, m->m_source);
 		r= EINVAL;
 	}
-	tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
+	tty_reply(TASK_REPLY, m->m_source, m->USER_ENDPT, r);
 }
 
 
@@ -1201,9 +1201,9 @@ message *m;
   if (!machine.vdu_ega) return(ENOTTY);
   result = ga_program(seq1);	/* bring font memory into view */
 
-  if(sys_safecopyfrom(m->IO_ENDPT, (cp_grant_id_t) m->IO_GRANT, 0,
+  if(sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0,
 	(vir_bytes) font_memory, GA_FONT_SIZE, D) != OK) {
-	printf("tty: copying from %d failed\n", m->IO_ENDPT);
+	printf("tty: copying from %d failed\n", m->m_source);
 	return EFAULT;
   }
 

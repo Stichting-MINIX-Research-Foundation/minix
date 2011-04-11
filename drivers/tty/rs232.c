@@ -248,7 +248,7 @@ PRIVATE int rs_write(register tty_t *tp, int try)
 	if (try) return 1;
 
 	/* Copy from user space to the RS232 output buffer. */
-	sys_safecopyfrom(tp->tty_outproc, tp->tty_outgrant, 
+	sys_safecopyfrom(tp->tty_outcaller, tp->tty_outgrant, 
 		tp->tty_outoffset, (vir_bytes) rs->ohead, count, D);
 
 	/* Perform output processing on the output buffer. */
