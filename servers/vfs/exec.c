@@ -244,12 +244,7 @@ static int load_aout(struct exec_info *execi)
   off += text_bytes;
   if (r == OK) r = read_seg(vp, off, proc_e, D, 0, data_bytes);
 
-  if (r != OK) {
-      printf("VFS: load_aout: read_seg failed: %d\n", r);
-      return (r);
-  }
-
-  return(OK);
+  return (r);
 }
 
 static int load_elf(struct exec_info *execi)
@@ -301,12 +296,7 @@ static int load_elf(struct exec_info *execi)
   if (r == OK)
       r = read_seg(vp, data_offset, proc_e, D, data_vaddr, data_filebytes);
 
-  if (r != OK) {
-      printf("VFS: load_elf: read_seg failed: %d\n", r);
-      return (r);
-  }
-
-  return(OK);
+  return(r);
 }
 
 /*===========================================================================*
