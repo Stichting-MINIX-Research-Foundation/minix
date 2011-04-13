@@ -220,34 +220,28 @@ PRIVATE void mutex_a(void *arg)
   if (mthread_mutex_lock(&mu[0]) != 0) err(3, 2);
 
   /* Trying to acquire lock again should fail with EDEADLK */
-  if (mthread_mutex_lock(&mu[0]) != -1) err(3, 2);
-  if (errno != EDEADLK) err(3, 3);
+  if (mthread_mutex_lock(&mu[0]) != EDEADLK) err(3, 2);
   
 #ifdef MTHREAD_STRICT 
   /* Try to acquire lock on uninitialized mutex; should fail with EINVAL */
   /* Note: this check only works when libmthread is compiled with
    * MTHREAD_STRICT turned on. In POSIX this situation is a MAY fail if... */
-  if (mthread_mutex_lock(&mu2) != -1) {
+  if (mthread_mutex_lock(&mu2) != EINVAL) {
   	err(3, 4);
   	mthread_mutex_unlock(&mu2);
   }
 
-  if (errno != EINVAL) err(3, 5); 
-  errno = 0;
-  if (mthread_mutex_trylock(&mu2) != -1) {
+  if (mthread_mutex_trylock(&mu2) != EINVAL) {
   	err(3, 6);
   	mthread_mutex_unlock(&mu2);
   }
-  if (errno != EINVAL) err(3, 7); 
 #endif
 
   if (mthread_mutex_trylock(&mu[1]) != 0) err(3, 8);
   mutex_a_step = 1;
   mthread_yield();
   VERIFY_MUTEX(1, 0, 0, 3, 9);
-  errno = 0;
-  if (mthread_mutex_trylock(&mu[2]) != -1) err(3, 10);
-  if (errno != EBUSY) err(3, 11);
+  if (mthread_mutex_trylock(&mu[2]) != EBUSY) err(3, 10);
   if (mthread_mutex_lock(&mu[2]) != 0) err(3, 12); /* Transfer control to main
   						    * loop.
   						    */
@@ -282,12 +276,10 @@ PRIVATE void mutex_b(void *arg)
    */
 
   VERIFY_MUTEX(1, 0, 0, 4, 1);
-  if (mthread_mutex_unlock(&mu[0]) != -1) err(4, 2);
-  if (errno != EPERM) err(4, 3);
+  if (mthread_mutex_unlock(&mu[0]) != EPERM) err(4, 2);
 
   /* Probing mu[0] to lock it should tell us it's locked */
-  if (mthread_mutex_trylock(&mu[0]) == 0) err(4, 4);
-  if (errno != EBUSY) err(4, 5);
+  if (mthread_mutex_trylock(&mu[0]) != EBUSY) err(4, 4);
 
   if (mthread_mutex_lock(&mu[0]) != 0) err(4, 5);
   mutex_b_step = 1;
@@ -612,9 +604,8 @@ PRIVATE void test_attributes(void)
   stacksize = 0;
   if (mthread_attr_init(&tattr) != 0) err(11, 17);
   if ((newstackaddr = malloc(newstacksize)) == NULL) err(11, 18);
-  if (mthread_attr_setstack(&tattr, newstackaddr, newstacksize) == 0)
+  if (mthread_attr_setstack(&tattr, newstackaddr, newstacksize) != EINVAL)
   	err(11, 19);
-  if (errno != EINVAL) err(11, 20);
   if (mthread_attr_getstack(&tattr, &stackaddr, &stacksize) != 0) err(11, 21);
   if (stackaddr == newstackaddr) err(11, 22);
   if (stacksize == newstacksize) err(11, 23);

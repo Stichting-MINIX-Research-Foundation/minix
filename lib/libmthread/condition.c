@@ -58,13 +58,10 @@ mthread_cond_t *cond;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (cond == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  } else if (!mthread_cond_valid(cond)) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (cond == NULL) 
+  	return(EINVAL);
+  else if (!mthread_cond_valid(cond))
+  	return(EINVAL);
 
   tcb = mthread_find_tcb(MAIN_THREAD);
   if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
@@ -92,27 +89,20 @@ mthread_cond_t *cond;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (cond == NULL) { 
-  	errno = EINVAL;
-  	return(-1);
-  } else if (!mthread_cond_valid(cond)) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (cond == NULL)
+  	return(EINVAL);
+  else if (!mthread_cond_valid(cond))
+  	return(EINVAL);
 
   /* Is another thread currently using this condition variable? */
   tcb = mthread_find_tcb(MAIN_THREAD);
-  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond) {
-  	errno = EBUSY;
-  	return(-1);
-  }
+  if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
+  	return(EBUSY);
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
-	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond){
-		errno = EBUSY;
-		return(-1);
-	}
+	if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
+		return(EBUSY);
   }
 
   /* Not in use; invalidate it. */
@@ -136,24 +126,18 @@ mthread_condattr_t *cattr;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (cond == NULL) {
-	errno = EINVAL;
-	return(-1); 
-  } else if (cattr != NULL) {
-  	errno = ENOSYS;
-  	return(-1);
-  }
+  if (cond == NULL) 
+	return(EINVAL);
+  else if (cattr != NULL) 
+  	return(ENOSYS);
+
 #ifdef MTHREAD_STRICT
-  else if (mthread_cond_valid(cond)) {
+  else if (mthread_cond_valid(cond)) 
 	/* Already initialized */
-  	errno = EBUSY;
-  	return(-1);
-  }
+  	return(EBUSY);
 #endif
-  else if ((c = malloc(sizeof(struct __mthread_cond))) == NULL) {
-  	errno = ENOMEM;
-  	return(-1);
-  }
+  else if ((c = malloc(sizeof(struct __mthread_cond))) == NULL) 
+  	return(ENOMEM);
 
   c->mc_mutex = NULL;
   *cond = (mthread_cond_t) c;
@@ -197,13 +181,10 @@ mthread_cond_t *cond;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (cond == NULL) {
-	errno = EINVAL;
-	return(-1);
-  } else if (!mthread_cond_valid(cond)) {
-	errno = EINVAL;
-	return(-1);
-  }
+  if (cond == NULL)
+	return(EINVAL);
+  else if (!mthread_cond_valid(cond))
+	return(EINVAL);
 
   tcb = mthread_find_tcb(MAIN_THREAD);
   if (tcb->m_state == MS_CONDITION && tcb->m_cond == *cond)
@@ -275,18 +256,14 @@ mthread_mutex_t *mutex;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (cond == NULL || mutex == NULL) {
-	errno = EINVAL;
-	return(-1);
-  }
+  if (cond == NULL || mutex == NULL)
+	return(EINVAL);
   
   c = (struct __mthread_cond *) *cond;
   m = (struct __mthread_mutex *) *mutex;
 
-  if (!mthread_cond_valid(cond) || !mthread_mutex_valid(mutex)) {
-	errno = EINVAL;
-	return(-1);
-  }
+  if (!mthread_cond_valid(cond) || !mthread_mutex_valid(mutex)) 
+	return(EINVAL);
 
   c->mc_mutex = m;	/* Remember we're using this mutex in a cond_wait */
   if (mthread_mutex_unlock(mutex) != 0) /* Fails when we're not the owner */

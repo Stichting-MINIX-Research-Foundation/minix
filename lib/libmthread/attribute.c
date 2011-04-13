@@ -48,15 +48,11 @@ mthread_attr_t *attr;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL)
+  	return(EINVAL);
 
-  if (!mthread_attr_valid(attr)) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (!mthread_attr_valid(attr)) 
+  	return(EINVAL);
 
   /* Valide attribute; invalidate it */
   mthread_attr_remove(attr);	
@@ -78,13 +74,10 @@ mthread_attr_t *attr;	/* Attribute */
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EAGAIN;
-  	return(-1);
-  } else if (mthread_attr_valid(attr)) {
-  	errno = EBUSY;
-  	return(-1);
-  }
+  if (attr == NULL) 
+  	return(EAGAIN);
+  else if (mthread_attr_valid(attr)) 
+  	return(EBUSY);
 
   if ((a = malloc(sizeof(struct __mthread_attr))) == NULL)
   	return(-1);
@@ -111,16 +104,12 @@ int *detachstate;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL) 
+  	return(EINVAL);
 
   a = (struct __mthread_attr *) *attr;
-  if (!mthread_attr_valid(attr)) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (!mthread_attr_valid(attr)) 
+  	return(EINVAL);
 
   *detachstate = a->ma_detachstate;
 
@@ -140,20 +129,15 @@ int detachstate;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL) 
+  	return(EINVAL);
 
   a = (struct __mthread_attr *) *attr;
-  if (!mthread_attr_valid(attr)) {
-  	errno = EINVAL;
-  	return(-1);
-  } else if(detachstate != MTHREAD_CREATE_JOINABLE &&
-  	    detachstate != MTHREAD_CREATE_DETACHED) {
-	errno = EINVAL;
-	return(-1);
-  }
+  if (!mthread_attr_valid(attr)) 
+  	return(EINVAL);
+  else if(detachstate != MTHREAD_CREATE_JOINABLE &&
+  	  detachstate != MTHREAD_CREATE_DETACHED) 
+	return(EINVAL);
 
   a->ma_detachstate = detachstate;
 
@@ -174,16 +158,12 @@ size_t *stacksize;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL) 
+  	return(EINVAL);
 
   a = (struct __mthread_attr *) *attr;
-  if (!mthread_attr_valid(attr)) {
-  	errno = EINVAL;
-  	return(-1);
-  } 
+  if (!mthread_attr_valid(attr))
+  	return(EINVAL);
 
   *stackaddr = a->ma_stackaddr;
   *stacksize = a->ma_stacksize;
@@ -204,16 +184,12 @@ size_t *stacksize;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL)
+  	return(EINVAL);
 
   a = (struct __mthread_attr *) *attr;
-  if (!mthread_attr_valid(attr)) {
-  	errno = EINVAL;
-  	return(-1);
-  } 
+  if (!mthread_attr_valid(attr))
+  	return(EINVAL);
 
   *stacksize = a->ma_stacksize;
 
@@ -234,16 +210,13 @@ size_t stacksize;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL) 
+  	return(EINVAL);
 
   a = (struct __mthread_attr *) *attr;
-  if (!mthread_attr_valid(attr) || stacksize < MTHREAD_STACK_MIN) {
-  	errno = EINVAL;
-  	return(-1);
-  } 
+  if (!mthread_attr_valid(attr) || stacksize < MTHREAD_STACK_MIN) 
+  	return(EINVAL);
+ 
   /* We don't care about address alignment (POSIX standard). The ucontext
    * system calls will make sure that the provided stack will be aligned (at
    * the cost of some memory if needed).
@@ -268,16 +241,12 @@ size_t stacksize;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (attr == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (attr == NULL)
+  	return(EINVAL);
 
   a = (struct __mthread_attr *) *attr;
-  if (!mthread_attr_valid(attr) || stacksize < MTHREAD_STACK_MIN) {
-  	errno = EINVAL;
-  	return(-1);
-  } 
+  if (!mthread_attr_valid(attr) || stacksize < MTHREAD_STACK_MIN) 
+	return(EINVAL);
 
   a->ma_stacksize = stacksize;
 

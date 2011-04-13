@@ -53,10 +53,8 @@ void *arg;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (proc == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (proc == NULL)
+	return(EINVAL);
 
   if (!mthread_queue_isempty(&free_threads)) {
   	thread = mthread_queue_remove(&free_threads);
@@ -69,10 +67,8 @@ void *arg;
 #endif
  	return(0);
   } else  {
-  	if (mthread_increase_thread_pool() == -1) {
-  		errno = EAGAIN;
-  		return(-1);
-  	}
+  	if (mthread_increase_thread_pool() == -1) 
+  		return(EAGAIN);
 
   	return mthread_create(threadid, tattr, proc, arg);
   }
@@ -91,15 +87,12 @@ mthread_thread_t detach;
   mthread_tcb_t *tcb;
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (!isokthreadid(detach)) {
-  	errno = ESRCH;
-  	return(-1);
-  }
+  if (!isokthreadid(detach)) 
+  	return(ESRCH);
 
   tcb = mthread_find_tcb(detach);
   if (tcb->m_state == MS_DEAD) {
-  	errno = ESRCH;
-  	return(-1);
+  	return(ESRCH);
   } else if (tcb->m_attr.ma_detachstate != MTHREAD_CREATE_DETACHED) {
   	if (tcb->m_state == MS_EXITING) 
   		mthread_thread_stop(detach);
@@ -319,22 +312,16 @@ void **value;
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (!isokthreadid(join)) {
-  	errno = ESRCH;
-  	return(-1);
-  } else if (join == current_thread) {
-	errno = EDEADLK;
-	return(-1);
-  }
+  if (!isokthreadid(join))
+  	return(ESRCH);
+  else if (join == current_thread) 
+	return(EDEADLK);
 
   tcb = mthread_find_tcb(join);
-  if (tcb->m_state == MS_DEAD) {
-  	errno = ESRCH;
-  	return(-1);
-  } else if (tcb->m_attr.ma_detachstate == MTHREAD_CREATE_DETACHED) {
-	errno = EINVAL;
-	return(-1);
-  }
+  if (tcb->m_state == MS_DEAD) 
+  	return(ESRCH);
+  else if (tcb->m_attr.ma_detachstate == MTHREAD_CREATE_DETACHED) 
+	return(EINVAL);
 
   /* When the thread hasn't exited yet, we have to wait for that to happen */
   if (tcb->m_state != MS_EXITING) {
@@ -381,10 +368,8 @@ void (*proc)(void);
 
   mthread_init();	/* Make sure libmthread is initialized */
 
-  if (once == NULL || proc == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  } 
+  if (once == NULL || proc == NULL) 
+  	return(EINVAL);
 
   if (*once != 1) proc();
   *once = 1;

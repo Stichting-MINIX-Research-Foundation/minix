@@ -56,27 +56,20 @@ mthread_mutex_t *mutex;
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (mutex == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (mutex == NULL)
+  	return(EINVAL);
 
-  if (!mthread_mutex_valid(mutex)) {
-  	errno = EINVAL;
-  	return(-1);
-  } else if ((*mutex)->mm_owner != NO_THREAD) {
-  	errno = EBUSY;
-  	return(-1);
-  }
+  if (!mthread_mutex_valid(mutex)) 
+  	return(EINVAL);
+  else if ((*mutex)->mm_owner != NO_THREAD)
+  	return(EBUSY);
 
   /* Check if this mutex is not associated with a condition */
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
 	if (tcb->m_state == MS_CONDITION) {
-		if (tcb->m_cond != NULL && tcb->m_cond->mc_mutex == *mutex) {
-			errno = EBUSY;
-			return(-1);
-		}
+		if (tcb->m_cond != NULL && tcb->m_cond->mc_mutex == *mutex) 
+			return(EBUSY);
 	}
   }
 
@@ -102,23 +95,16 @@ mthread_mutexattr_t *mattr;	/* Mutex attribute */
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (mutex == NULL) {
-  	errno = EAGAIN;
-  	return(-1);
-  } else if (mattr != NULL) {
-  	errno = ENOSYS;
-  	return(-1);
-  } 
+  if (mutex == NULL)
+  	return(EAGAIN);
+  else if (mattr != NULL)
+  	return(ENOSYS);
 #ifdef MTHREAD_STRICT
-  else if (mthread_mutex_valid(mutex)) {
-  	errno = EBUSY;
-  	return(-1);
-  }
+  else if (mthread_mutex_valid(mutex))
+  	return(EBUSY);
 #endif
-  else if ((m = malloc(sizeof(struct __mthread_mutex))) == NULL) {
-  	errno = ENOMEM;
-  	return(-1);
-  }
+  else if ((m = malloc(sizeof(struct __mthread_mutex))) == NULL) 
+  	return(ENOMEM);
 
   mthread_queue_init(&m->mm_queue);
   m->mm_owner = NO_THREAD;
@@ -141,22 +127,18 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (mutex == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (mutex == NULL)
+  	return(EINVAL);
 
   m = (struct __mthread_mutex *) *mutex;
-  if (!mthread_mutex_valid(&m)) {
-  	errno = EINVAL;
-  	return(-1);
-  } else if (m->mm_owner == NO_THREAD) { /* Not locked */
+  if (!mthread_mutex_valid(&m)) 
+  	return(EINVAL);
+  else if (m->mm_owner == NO_THREAD) { /* Not locked */
 	m->mm_owner = current_thread;
 	if (current_thread == MAIN_THREAD)
 		mthread_debug("MAIN_THREAD now mutex owner\n");
   } else if (m->mm_owner == current_thread) {
-  	errno = EDEADLK;
-  	return(-1);
+  	return(EDEADLK);
   } else {
 	mthread_queue_add(&m->mm_queue, current_thread);
 	if (m->mm_owner == MAIN_THREAD)
@@ -202,22 +184,18 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (mutex == NULL) {
-  	errno = EINVAL;
-  	return(-1);
-  }
+  if (mutex == NULL) 
+  	return(EINVAL);
 
   m = (struct __mthread_mutex *) *mutex;
-  if (!mthread_mutex_valid(&m)) {
-  	errno = EINVAL;
-  	return(-1);
-  } else if (m->mm_owner == NO_THREAD) {
+  if (!mthread_mutex_valid(&m))
+  	return(EINVAL);
+  else if (m->mm_owner == NO_THREAD) {
 	m->mm_owner = current_thread;
 	return(0);
   } 
 
-  errno = EBUSY;
-  return(-1);
+  return(EBUSY);
 }
 
 
@@ -234,19 +212,14 @@ mthread_mutex_t *mutex;	/* Mutex that is to be unlocked */
 
   mthread_init();	/* Make sure mthreads is initialized */
 
-  if (mutex == NULL) { 
-	errno = EINVAL;
-	return(-1);
-  }
+  if (mutex == NULL) 
+	return(EINVAL);
 
   m = (struct __mthread_mutex *) *mutex;
-  if (!mthread_mutex_valid(&m)) {
-	errno = EINVAL;
-	return(-1);
-  } else if (m->mm_owner != current_thread) {
-  	errno = EPERM;
-  	return(-1); /* Can't unlock a mutex locked by another thread. */
-  }
+  if (!mthread_mutex_valid(&m))
+	return(EINVAL);
+  else if (m->mm_owner != current_thread) 
+  	return(EPERM);	/* Can't unlock a mutex locked by another thread. */
 
   m->mm_owner = mthread_queue_remove(&m->mm_queue);
   if (m->mm_owner != NO_THREAD) mthread_unsuspend(m->mm_owner);
