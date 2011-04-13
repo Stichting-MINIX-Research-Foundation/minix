@@ -242,3 +242,20 @@ PUBLIC void dmap_endpt_up(int proc_e)
 	}
 	return;
 }
+
+/*===========================================================================*
+ *				get_dmap		 		     *
+ *===========================================================================*/ 
+PUBLIC struct dmap *get_dmap(endpoint_t proc_e)
+{
+/* See if 'proc_e' endpoint belongs to a valid dmap entry. If so, return a
+ * pointer */
+
+  int major;
+  for (major = 0; major < NR_DEVICES; major++)
+  	if (dmap_driver_match(proc_e, major))
+  		return(&dmap[major]);
+
+  return(NULL);
+}
+

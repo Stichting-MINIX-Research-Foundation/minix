@@ -36,14 +36,15 @@ _PROTOTYPE( endpoint_t suspended_ep, (endpoint_t driver,
 _PROTOTYPE( void reopen_reply, (void)					);
 
 /* dmap.c */
-_PROTOTYPE( int do_mapdriver, (void)					);
-_PROTOTYPE( int map_service, (struct rprocpub *rpub)			);
 _PROTOTYPE( void build_dmap, (void)					);
+_PROTOTYPE( int do_mapdriver, (void)					);
+_PROTOTYPE( int dmap_driver_match, (endpoint_t proc, int major)		);
+_PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
+_PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
+_PROTOTYPE( struct dmap *get_dmap, (endpoint_t proc_e)			);
 _PROTOTYPE( int map_driver, (const char *label, int major, endpoint_t proc_nr,
 	int dev_style, int flags)					);
-_PROTOTYPE( int dmap_driver_match, (endpoint_t proc, int major)		);
-_PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
-_PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
+_PROTOTYPE( int map_service, (struct rprocpub *rpub)			);
 
 /* exec.c */
 _PROTOTYPE( int pm_exec, (int proc_e, char *path, vir_bytes path_len,
@@ -150,11 +151,7 @@ _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
 _PROTOTYPE( void pipe_suspend, (int rw_flag, int fd_nr, char *buf,
 							size_t size)	);
-_PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
-_PROTOTYPE( int select_match_pipe, (struct filp *f)			);
 _PROTOTYPE( void unsuspend_by_endpt, (endpoint_t)			);
-_PROTOTYPE( void select_reply1, (void)					);
-_PROTOTYPE( void select_reply2, (void)					);
 _PROTOTYPE( void wait_for, (endpoint_t)					);
 #if DO_SANITYCHECKS
 _PROTOTYPE( int check_pipe, (void)					);
@@ -288,9 +285,10 @@ _PROTOTYPE( int do_gcov_flush, (void)					);
 
 /* select.c */
 _PROTOTYPE( int do_select, (void)					);
-_PROTOTYPE( int select_callback, (struct filp *, int ops)		);
-_PROTOTYPE( void select_forget, (int fproc)				);
-_PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
+_PROTOTYPE( void select_callback, (struct filp *, int ops)		);
+_PROTOTYPE( void select_forget, (endpoint_t proc_e)				);
+_PROTOTYPE( void select_reply1, (endpoint_t driver_e, int minor, int status));
+_PROTOTYPE( void select_reply2, (endpoint_t driver_e, int minor, int status));
+_PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void select_unsuspend_by_endpt, (endpoint_t proc)		);
-_PROTOTYPE( int select_notified, (int major, int minor, int ops)	);

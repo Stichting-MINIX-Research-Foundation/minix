@@ -328,20 +328,18 @@ size_t size;
  *===========================================================================*/
 PUBLIC void unsuspend_by_endpt(endpoint_t proc_e)
 {
+/* Revive processes waiting for drivers (SUSPENDed) that have disappeared with
+ * return code EAGAIN.
+ */
   struct fproc *rp;
 
-  /* Revive processes waiting for drivers (SUSPENDed) that have
-   * disappeared with return code EAGAIN.
-   */
-  for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++)
-	if(rp->fp_pid != PID_FREE &&
-	   rp->fp_blocked_on == FP_BLOCKED_ON_OTHER && rp->fp_task == proc_e) {
+  for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
+  	if (rp->fp_pid == PID_FREE) continue;
+	if (rp->fp_blocked_on == FP_BLOCKED_ON_OTHER && rp->fp_task == proc_e) 
 		revive(rp->fp_endpoint, EAGAIN);
-	}
+  }
 
-  /* Revive processes waiting in drivers on select()s
-   * with EAGAIN too.
-   */
+  /* Revive processes waiting in drivers on select()s with EAGAIN too */
   select_unsuspend_by_endpt(proc_e);
 
   return;

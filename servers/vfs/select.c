@@ -3,22 +3,22 @@
  * The entry points into this file are
  *   do_select:	       perform the SELECT system call
  *   select_callback:  notify select system of possible fd operation 
- *   select_notified:  low-level entry for device notifying select
  *   select_unsuspend_by_endpt: cancel a blocking select on exiting driver
  */
 
-#define DEBUG_SELECT 0
-
 #include "fs.h"
-#include "select.h"
-#include "file.h"
-#include "vnode.h"
-
 #include <sys/time.h>
 #include <sys/select.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <string.h>
+#include <assert.h>
+
+#include "select.h"
+#include "file.h"
+#include "fproc.h"
+#include "dmap.h"
+#include "vnode.h"
 
 /* max. number of simultaneously pending select() calls */
 #define MAXSELECTS 25
@@ -27,15 +27,14 @@
 
 PRIVATE struct selectentry {
   struct fproc *requestor;	/* slot is free iff this is NULL */
-  int req_endpt;
+  endpoint_t req_endpt;
   fd_set readfds, writefds, errorfds;
   fd_set ready_readfds, ready_writefds, ready_errorfds;
   fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
   struct filp *filps[OPEN_MAX];
   int type[OPEN_MAX];
-  int deferred;		/* awaiting initial reply from driver */
-  int deferred_fd;	/* fd awaiting initial reply from driver */
   int nfds, nreadyfds;
+  int error;
   char block;
   clock_t expiry;
   timer_t timer;	/* if expiry > 0 */
@@ -43,39 +42,48 @@ PRIVATE struct selectentry {
 
 FORWARD _PROTOTYPE(int copy_fdsets, (struct selectentry *se, int nfds,
 				      int direction)			);
+FORWARD _PROTOTYPE(int do_select_request, (struct selectentry *se, int fd,
+					   int *ops)			);
 FORWARD _PROTOTYPE(void filp_status, (struct filp *fp, int status)	);
-FORWARD _PROTOTYPE(void restart_proc, (int slot)			);
+FORWARD _PROTOTYPE(int is_deferred, (struct selectentry *se)		);
+FORWARD _PROTOTYPE(void restart_proc, (struct selectentry *se)		);
 FORWARD _PROTOTYPE(void ops2tab, (int ops, int fd, struct selectentry *e));
-FORWARD _PROTOTYPE(int select_reevaluate, (struct filp *fp)		);
+FORWARD _PROTOTYPE(int is_regular_file, (struct filp *f)		);
+FORWARD _PROTOTYPE(int is_pipe, (struct filp *f)			);
+FORWARD _PROTOTYPE(int is_supported_major, (struct filp *f)			);
+FORWARD _PROTOTYPE(int select_request_async, (struct filp *f, int *ops,
+					       int block)		);
 FORWARD _PROTOTYPE(int select_request_file, (struct filp *f, int *ops,
 					     int block)			);
-FORWARD _PROTOTYPE(int select_match_file, (struct filp *f)		);
-FORWARD _PROTOTYPE(int select_request_general, (struct filp *f, int *ops,
+FORWARD _PROTOTYPE(int select_request_major, (struct filp *f, int *ops,
+					     int block)			);
+FORWARD _PROTOTYPE(int select_request_pipe, (struct filp *f, int *ops,
+					     int block)			);
+FORWARD _PROTOTYPE(int select_request_sync, (struct filp *f, int *ops,
 					        int block)		);
-FORWARD _PROTOTYPE(int select_request_asynch, (struct filp *f, int *ops,
-					       int block)		);
-FORWARD _PROTOTYPE(int select_major_match, (int match_major,
-					    struct filp *file)		);
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e)	);
-FORWARD _PROTOTYPE(void select_wakeup, (struct selectentry *e, int r)	);
-FORWARD _PROTOTYPE(void select_return, (struct selectentry *, int)	);
-FORWARD _PROTOTYPE(void sel_restart_dev, (void)				);
+FORWARD _PROTOTYPE(void select_cancel_filp, (struct filp *f)		);
+FORWARD _PROTOTYPE(void select_return, (struct selectentry *)		);
+FORWARD _PROTOTYPE(void select_restart_filps, (void)				);
 FORWARD _PROTOTYPE(int tab2ops, (int fd, struct selectentry *e)		);
 FORWARD _PROTOTYPE(void wipe_select, (struct selectentry *s)		);
 
 PRIVATE struct fdtype {
 	int (*select_request)(struct filp *, int *ops, int block);	
-	int (*select_match)(struct filp *);
-	int select_major;
-} fdtypes[] = {
-	{ select_request_file, select_match_file, 0 },
-	{ select_request_general, NULL, TTY_MAJOR },
-	{ select_request_general, NULL, INET_MAJOR },
-	{ select_request_general, NULL, UDS_MAJOR },
-	{ select_request_pipe, select_match_pipe, 0 },
-	{ select_request_asynch, NULL, LOG_MAJOR },
+	int (*type_match)(struct filp *f);
+} fdtypes[] = { 
+	{ select_request_major, is_supported_major },
+	{ select_request_file, is_regular_file },
+	{ select_request_pipe, is_pipe },
 };
 #define SEL_FDS		(sizeof(fdtypes) / sizeof(fdtypes[0]))
+PRIVATE int select_majors[] = { /* List of majors that support selecting on */
+	TTY_MAJOR,
+	INET_MAJOR,
+	UDS_MAJOR,
+	LOG_MAJOR,
+};
+#define SEL_MAJORS	(sizeof(select_majors) / sizeof(select_majors[0]))
 
 /*===========================================================================*
  *				do_select				      *
@@ -106,7 +114,7 @@ PUBLIC int do_select(void)
   if (s >= MAXSELECTS) return(ENOSPC);
 
   se = &selecttab[s];
-  wipe_select(se);	/* Clear results of previous usage.*/
+  wipe_select(se);	/* Clear results of previous usage */
   se->req_endpt = who_e;
   se->vir_readfds = (fd_set *) m_in.SEL_READFDS;
   se->vir_writefds = (fd_set *) m_in.SEL_WRITEFDS;
@@ -123,13 +131,14 @@ PUBLIC int do_select(void)
 	if (r != OK) return(r);
   }
 
-  /* No nonsense in the timeval. */
-  if(do_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0)) return(EINVAL);
+  /* No nonsense in the timeval */
+  if (do_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0))
+	return(EINVAL);
 
   /* If there is no timeout, we block forever. Otherwise, we block up to the
    * specified time interval.  
    */
-  if(!do_timeout)	/* No timeout value set */
+  if (!do_timeout)	/* No timeout value set */
 	se->block = 1;
   else if (do_timeout && (timeout.tv_sec > 0 || timeout.tv_usec > 0))
   	se->block = 1;
@@ -137,62 +146,78 @@ PUBLIC int do_select(void)
 	se->block = 0;	
   se->expiry = 0;	/* no timer set (yet) */
 
-  /* Check all file descriptors in the set whether one is 'ready' now. */
+  /* Verify that file descriptors are okay to select on */
   for (fd = 0; fd < nfds; fd++) {
-	int ops, t, type = -1, r;
-	struct filp *filp;
-	
-	if (!(ops = tab2ops(fd, se)))
+  	struct filp *f;
+  	int type, ops;
+
+	/* Because the select() interface implicitly includes file descriptors
+	 * you might not want to select on, we have to figure out whether we're
+	 * interested in them. Typically, these file descriptors include fd's
+	 * inherited from the parent proc and file descriptors that have been
+	 * close()d, but had a lower fd than one in the current set.
+	 */
+	if (!(ops = tab2ops(fd, se))) 
 		continue; /* No operations set; nothing to do for this fd */
 
 	/* Get filp belonging to this fd */
-	filp = se->filps[fd] = get_filp(fd);
-	if (filp == NULL) {
-		if (err_code == EBADF) {
-			select_cancel_all(se);
-			return(EBADF);
-		}
+	f = se->filps[fd] = get_filp(fd);
+	if (f == NULL) {
+		if (err_code == EBADF) 
+			r = err_code;
+		else /* File descriptor is 'ready' to return EIO */
+			r = EINTR;
 
-		/* File descriptor is 'ready' to return EIO */
-		printf("VFS do_select: EIO after driver failure\n");
-		ops2tab(SEL_RD|SEL_WR|SEL_ERR, fd, se);
-		continue;
-	}
-
-	/* Figure out what type of file we're dealing with */
-	for(t = 0; t < SEL_FDS; t++) {
-		if (fdtypes[t].select_match) {
-			if (fdtypes[t].select_match(filp)) {
-				type = t;
-			}
-	 	} else if (select_major_match(fdtypes[t].select_major, filp)) {
-			type = t;
-		}
-	}
-
-	if (type == -1)	{
-		select_cancel_all(se);
+		return(r);
+	} else if (f->filp_vno == NULL) 
 		return(EBADF);
-	}
-	se->type[fd] = type;
 
-	/* Test filp for select operations if not already done so. e.g., files
-	 * sharing a filp and both doing a select on that filp. */
-	if ((se->filps[fd]->filp_select_ops & ops) != ops) {
-		int wantops;
-		
-		wantops = (se->filps[fd]->filp_select_ops |= ops);
-		r = fdtypes[type].select_request(filp, &wantops, se->block);
+	/* Check file types. According to POSIX 2008:
+	 * "The pselect() and select() functions shall support regular files,
+	 * terminal and pseudo-terminal devices, FIFOs, pipes, and sockets. The
+	 * behavior of pselect() and select() on file descriptors that refer to
+	 * other types of file is unspecified."
+	 *
+	 * In our case, terminal and pseudo-terminal devices are handled by the
+	 * TTY major and sockets by either INET major (socket type AF_INET) or
+	 * PFS major (socket type AF_UNIX). PFS acts as an FS when it handles
+	 * pipes and as a driver when it handles sockets. Additionally, we
+	 * support select on the LOG major to handle kernel logging, which is
+	 * beyond the POSIX spec. */
+
+	se->type[fd] = -1;
+	for (type = 0; type < SEL_FDS; type++) {
+		if (fdtypes[type].type_match(f)) {
+			se->type[fd] = type;
+			se->nfds = fd+1;
+			se->filps[fd]->filp_selectors++;
+			break;
+		}
+	}
+	if (se->type[fd] == -1)	/* Type not found */
+		return(EBADF);
+  }
+
+  /* Check all file descriptors in the set whether one is 'ready' now */
+  for (fd = 0; fd < nfds; fd++) {
+	int type, ops, r;
+	struct filp *f;
+	
+	/* Again, check for involuntarily selected fd's */
+	if (!(ops = tab2ops(fd, se))) 
+		continue; /* No operations set; nothing to do for this fd */
+
+	/* Test filp for select operations if not already done so. e.g., 
+	 * processes sharing a filp and both doing a select on that filp. */
+	f = se->filps[fd];
+	if ((f->filp_select_ops & ops) != ops) {
+		int wantops, type, block;
+
+		wantops = (f->filp_select_ops |= ops);
+		r = do_select_request(se, fd, &wantops);
 		if (r != SEL_OK) {
-			if (r == SEL_DEFERRED) {
-				se->deferred = TRUE;
-				se->deferred_fd = 0;
-				continue;
-			}
-			
-			/* Error or bogus return code; cancel select. */
-			select_cancel_all(se);
-			return(EINVAL);
+			if (r == SEL_DEFERRED) continue;
+			else break; /* Error or bogus return code; abort */
 		}
 		
 		/* The select request above might have turned on/off some
@@ -201,12 +226,9 @@ PUBLIC int do_select(void)
 		 * in the select table entry. */
 		if (wantops & ops) ops2tab(wantops, fd, se);
 	} 
-
-	se->nfds = fd+1;
-	se->filps[fd]->filp_selectors++;
   }
 
-  if (se->nreadyfds > 0 || (!se->block && !se->deferred)) {
+  if ((se->nreadyfds > 0 || !se->block) && !is_deferred(se)) {
 	/* fd's were found that were ready to go right away, and/or
 	 * we were instructed not to block at all. Must return
 	 * immediately.
@@ -214,8 +236,12 @@ PUBLIC int do_select(void)
 	r = copy_fdsets(se, se->nfds, TO_PROC);
 	select_cancel_all(se);
 
-	if (r != OK) return(r);
-	else return(se->nreadyfds);
+	if (r != OK)
+		return(r);
+	else if (se->error != OK)
+		return(se->error);
+
+	return(se->nreadyfds);
   }
  
   /* Convert timeval to ticks and set the timer. If it fails, undo
@@ -241,7 +267,7 @@ PUBLIC int do_select(void)
 	set_timer(&se->timer, ticks, select_timeout_check, s);
   }
 
-  /* if we're blocking, the table entry is now valid. */
+  /* If we're blocking, the table entry is now valid  */
   se->requestor = fp;
 
   /* process now blocked */
@@ -249,61 +275,103 @@ PUBLIC int do_select(void)
   return(SUSPEND);
 }
 
-
 /*===========================================================================*
- *				select_request_file			     *
+ *				is_deferred				     *
  *===========================================================================*/
-PRIVATE int select_request_file(struct filp *f, int *ops, int block)
+PRIVATE int is_deferred(struct selectentry *se)
 {
-  /* output *ops is input *ops */
-  return(SEL_OK);
+/* Find out whether this select has pending initial replies */
+
+  int fd;
+  struct filp *f;
+
+  for (fd = 0; fd < se->nfds; fd++) {
+	if ((f = se->filps[fd]) == NULL) continue;
+	if (f->filp_select_flags & (FSF_UPDATE|FSF_BUSY)) return(TRUE);
+  }
+
+  return(FALSE);
 }
 
 
 /*===========================================================================*
- *				select_match_file			     *
+ *				is_regular_file				     *
  *===========================================================================*/
-PRIVATE int select_match_file(struct filp *file)
+PRIVATE int is_regular_file(struct filp *f)
 {
-  return(file && file->filp_vno && (file->filp_vno->v_mode & I_REGULAR));
+  return(f && f->filp_vno && (f->filp_vno->v_mode & I_TYPE) == I_REGULAR);
 }
 
-
 /*===========================================================================*
- *				select_request_general			     *
+ *				is_pipe					     *
  *===========================================================================*/
-PRIVATE int select_request_general(struct filp *f, int *ops, int block)
+PRIVATE int is_pipe(struct filp *f)
 {
-  int rops = *ops;
-  if (block) rops |= SEL_NOTIFY;
-  *ops = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
-		cvu64(0), 0, 0, FALSE);
-  if (*ops < 0)
-	return(SEL_ERR);
-
-  return(SEL_OK);
+/* Recognize either anonymous pipe or named pipe (FIFO) */
+  return(f && f->filp_vno && (f->filp_vno->v_mode & I_TYPE) == I_NAMED_PIPE);
 }
 
+/*===========================================================================*
+ *				is_supported_major					     *
+ *===========================================================================*/
+PRIVATE int is_supported_major(struct filp *f)
+{
+/* See if this filp is a handle on a device on which we support select() */
+  int m;
+
+  if (!(f && f->filp_vno)) return(FALSE);
+  if ((f->filp_vno->v_mode & I_TYPE) != I_CHAR_SPECIAL) return(FALSE);
+
+  for (m = 0; m < SEL_MAJORS; m++) 
+  	if (major(f->filp_vno->v_sdev) == select_majors[m]) 
+  		return(TRUE);
+
+  return(FALSE);
+}
 
 /*===========================================================================*
- *				select_request_asynch			     *
+ *				select_request_async			     *
  *===========================================================================*/
-PRIVATE int select_request_asynch(struct filp *f, int *ops, int block)
+PRIVATE int select_request_async(struct filp *f, int *ops, int block)
 {
-  int r, rops;
+  int r, rops, major;
   struct dmap *dp;
 
   rops = *ops;
+
+  if (!block && (f->filp_select_flags & FSF_BLOCKED)) {
+	/* This filp is blocked waiting for a reply, but we don't want to
+	 * block ourselves. Unless we're awaiting the initial reply, these
+	 * operations won't be ready */
+	if (!(f->filp_select_flags & FSF_BUSY)) {
+		if ((rops & SEL_RD) && (f->filp_select_flags & FSF_RD_BLOCK))
+			rops &= ~SEL_RD;
+		if ((rops & SEL_WR) && (f->filp_select_flags & FSF_WR_BLOCK))
+			rops &= ~SEL_WR;
+		if ((rops & SEL_ERR) && (f->filp_select_flags & FSF_ERR_BLOCK))
+			rops &= ~SEL_ERR;
+		if (!(rops & (SEL_RD|SEL_WR|SEL_ERR))) {
+			/* Nothing left to do */
+			*ops = 0;
+			return(SEL_OK);
+		}
+	}
+  }
+
   f->filp_select_flags |= FSF_UPDATE;
   if (block) {
 	rops |= SEL_NOTIFY;
-	f->filp_select_flags |= FSF_BLOCK;
+	if (rops & SEL_RD)	f->filp_select_flags |= FSF_RD_BLOCK;
+	if (rops & SEL_WR)	f->filp_select_flags |= FSF_WR_BLOCK;
+	if (rops & SEL_ERR)	f->filp_select_flags |= FSF_ERR_BLOCK;
   }
 
   if (f->filp_select_flags & FSF_BUSY)
 	return(SEL_DEFERRED);
 
-  dp = &dmap[((f->filp_vno->v_sdev) >> MAJOR) & BYTE];
+  major = major(f->filp_vno->v_sdev);
+  if (major < 0 || major >= NR_DEVICES) return(SEL_ERROR);
+  dp = &dmap[major];
   if (dp->dmap_sel_filp)
 	return(SEL_DEFERRED);
 
@@ -311,12 +379,11 @@ PRIVATE int select_request_asynch(struct filp *f, int *ops, int block)
   r = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
 	     cvu64(0), 0, 0, FALSE);
   if (r < 0 && r != SUSPEND)
-	return(SEL_ERR);
+	return(SEL_ERROR);
 
   if (r != SUSPEND) 
 	panic("select_request_asynch: expected SUSPEND got: %d", r);
 
-  f->filp_count++;
   dp->dmap_sel_filp = f;
   f->filp_select_flags |= FSF_BUSY;
 
@@ -324,19 +391,96 @@ PRIVATE int select_request_asynch(struct filp *f, int *ops, int block)
 }
 
 /*===========================================================================*
- *				select_major_match			     *
+ *				select_request_file			     *
  *===========================================================================*/
-PRIVATE int select_major_match(int match_major, struct filp *file)
+PRIVATE int select_request_file(struct filp *f, int *ops, int block)
 {
-  int major;
-  if (!(file && file->filp_vno &&
-      (file->filp_vno->v_mode & I_TYPE) == I_CHAR_SPECIAL))
-	return(0);
-  major = (file->filp_vno->v_sdev >> MAJOR) & BYTE;
-  if (major == match_major) return 1;
-  return 0;
+  /* Files are always ready, so output *ops is input *ops */
+  return(SEL_OK);
 }
 
+/*===========================================================================*
+ *				select_request_major			     *
+ *===========================================================================*/
+PRIVATE int select_request_major(struct filp *f, int *ops, int block)
+{
+  int major, r;
+
+  major = major(f->filp_vno->v_sdev);
+  if (major < 0 || major >= NR_DEVICES) return(SEL_ERROR);
+
+  if (dmap[major].dmap_style == STYLE_DEVA)
+  	r = select_request_async(f, ops, block);
+  else
+  	r = select_request_sync(f, ops, block);
+
+  return(r);
+}
+
+/*===========================================================================*
+ *				select_request_sync			     *
+ *===========================================================================*/
+PRIVATE int select_request_sync(struct filp *f, int *ops, int block)
+{
+  int rops;
+
+  rops = *ops;
+  if (block) rops |= SEL_NOTIFY;
+  *ops = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
+		cvu64(0), 0, 0, FALSE);
+  if (*ops < 0)
+	return(SEL_ERROR);
+
+  return(SEL_OK);
+}
+
+/*===========================================================================*
+ *				select_request_pipe			     *
+ *===========================================================================*/
+PRIVATE int select_request_pipe(struct filp *f, int *ops, int block)
+{
+  int orig_ops, r = 0, err;
+
+  orig_ops = *ops;
+
+  if ((*ops & (SEL_RD|SEL_ERR))) {
+	err = pipe_check(f->filp_vno, READING, 0, 1, f->filp_pos, 1);
+
+	if (err != SUSPEND)
+		r |= SEL_RD;
+	if (err < 0 && err != SUSPEND)
+		r |= SEL_ERR;
+	if (err == SUSPEND && !(f->filp_mode & R_BIT)) {
+		/* A "meaningless" read select, therefore ready
+		 * for reading and no error set. */
+		r |= SEL_RD; 
+		r &= ~SEL_ERR;
+	}
+  }
+
+  if ((*ops & (SEL_WR|SEL_ERR))) {
+	err = pipe_check(f->filp_vno, WRITING, 0, 1, f->filp_pos, 1);
+
+	if (err != SUSPEND)
+		r |= SEL_WR;
+	if (err < 0 && err != SUSPEND)
+		r |= SEL_ERR;
+	if (err == SUSPEND && !(f->filp_mode & W_BIT)) {
+		/* A "meaningless" write select, therefore ready
+                   for writing and no error set. */
+		r |= SEL_WR; 
+		r &= ~SEL_ERR;
+	}
+  }
+
+  /* Some options we collected might not be requested. */
+  *ops = r & orig_ops;
+
+  if (!*ops && block)
+	f->filp_pipe_select_ops |= orig_ops;
+
+  return(SEL_OK);
+}
 
 /*===========================================================================*
  *				tab2ops					     *
@@ -382,15 +526,16 @@ PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
  *===========================================================================*/
 PRIVATE int copy_fdsets(struct selectentry *se, int nfds, int direction)
 {
-  int fd_setsize, r;
+  int r;
+  size_t fd_setsize;
   endpoint_t src_e, dst_e;
   fd_set *src_fds, *dst_fds;
 
-  if(nfds < 0 || nfds > OPEN_MAX)
+  if (nfds < 0 || nfds > OPEN_MAX)
 	panic("select copy_fdsets: nfds wrong: %d", nfds);
 
   /* Only copy back as many bits as the user expects. */
-  fd_setsize = _FDSETWORDS(nfds) * _FDSETBITSPERWORD/8;
+  fd_setsize = (size_t) (_FDSETWORDS(nfds) * _FDSETBITSPERWORD/8);
 
   /* Set source and destination endpoints */
   src_e = (direction == FROM_PROC) ? se->req_endpt : SELF;
@@ -401,7 +546,7 @@ PRIVATE int copy_fdsets(struct selectentry *se, int nfds, int direction)
   dst_fds = (direction == FROM_PROC) ? &se->readfds : se->vir_readfds;
   if (se->vir_readfds) {
 	r = sys_vircopy(src_e, D, (vir_bytes) src_fds, dst_e, D,
-		    (vir_bytes) dst_fds, fd_setsize);
+			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
 
@@ -410,7 +555,7 @@ PRIVATE int copy_fdsets(struct selectentry *se, int nfds, int direction)
   dst_fds = (direction == FROM_PROC) ? &se->writefds : se->vir_writefds;
   if (se->vir_writefds) {
 	r = sys_vircopy(src_e, D, (vir_bytes) src_fds, dst_e, D,
-		    (vir_bytes) dst_fds, fd_setsize);
+			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
 
@@ -419,7 +564,7 @@ PRIVATE int copy_fdsets(struct selectentry *se, int nfds, int direction)
   dst_fds = (direction == FROM_PROC) ? &se->errorfds : se->vir_errorfds;
   if (se->vir_errorfds) {
 	r = sys_vircopy(src_e, D, (vir_bytes) src_fds, dst_e, D,
-		    (vir_bytes) dst_fds, fd_setsize);
+			(vir_bytes) dst_fds, fd_setsize);
 	if (r != OK) return(r);
   }
 
@@ -430,221 +575,114 @@ PRIVATE int copy_fdsets(struct selectentry *se, int nfds, int direction)
 /*===========================================================================*
  *				select_cancel_all			     *
  *===========================================================================*/
-PRIVATE void select_cancel_all(struct selectentry *e)
+PRIVATE void select_cancel_all(struct selectentry *se)
 {
-	int fd;
+/* Cancel select. Decrease select usage and cancel timer */
 
-	e->requestor = NULL;
-	for(fd = 0; fd < e->nfds; fd++) {
-		struct filp *fp;
-		fp = e->filps[fd];
-		if (!fp) {
-#if DEBUG_SELECT
-			printf("[ fd %d/%d NULL ] ", fd, e->nfds);
-#endif
-			continue;
-		}
-		if (fp->filp_selectors < 1) {
-#if DEBUG_SELECT
-			printf("select: %d selectors?!\n", fp->filp_selectors);
-#endif
-			continue;
-		}
-		fp->filp_selectors--;
-		e->filps[fd] = NULL;
-		select_reevaluate(fp);
-	}
+  int fd;
+  struct filp *f;
 
-	if (e->expiry > 0) {
-#if DEBUG_SELECT
-		printf("cancelling timer %d\n", e - selecttab);
-#endif
-		cancel_timer(&e->timer); 
-		e->expiry = 0;
-	}
+  /* Always await results of asynchronous requests */
+  assert(!is_deferred(se));
 
-	return;
+  for (fd = 0; fd < se->nfds; fd++) {
+	if ((f = se->filps[fd]) == NULL) continue;
+	se->filps[fd] = NULL;
+	select_cancel_filp(f);
+  }
+
+  if (se->expiry > 0) {
+	cancel_timer(&se->timer); 
+	se->expiry = 0;
+  }
+
+  se->requestor = NULL;
 }
-
 
 /*===========================================================================*
- *				select_wakeup				     *
+ *				select_cancel_filp			     *
  *===========================================================================*/
-PRIVATE void select_wakeup(struct selectentry *e, int r)
+PRIVATE void select_cancel_filp(struct filp *f)
 {
-  revive(e->req_endpt, r);
+/* Reduce number of select users of this filp */
+
+  assert(f);
+  assert(f->filp_selectors >= 0);
+  if (f->filp_selectors == 0) return;
+
+  f->filp_selectors--;
+  if (f->filp_selectors == 0) { 
+	/* No one selecting on this filp anymore, forget about select state */
+	f->filp_select_ops = 0;
+	f->filp_select_flags = 0;
+	f->filp_pipe_select_ops = 0;
+  }
 }
-
-
-/*===========================================================================*
- *				select_reevaluate			     *
- *===========================================================================*/
-PRIVATE int select_reevaluate(struct filp *fp)
-{
-	int s, remain_ops = 0, fd;
-
-	if (!fp) {
-		printf("fs: select: reevalute NULL fp\n");
-		return 0;
-	}
-
-	for(s = 0; s < MAXSELECTS; s++) {
-		if (selecttab[s].requestor != NULL) continue;
-		
-		for(fd = 0; fd < selecttab[s].nfds; fd++)
-			if (fp == selecttab[s].filps[fd]) {
-				remain_ops |= tab2ops(fd, &selecttab[s]);
-			}
-	}
-
-	/* If there are any select()s open that want any operations on
-	 * this fd that haven't been satisfied by this callback, then we're
-	 * still in the market for it.
-	 */
-	fp->filp_select_ops = remain_ops;
-#if DEBUG_SELECT
-	printf("remaining operations on fp are %d\n", fp->filp_select_ops);
-#endif
-
-	return remain_ops;
-}
-
 
 /*===========================================================================*
  *				select_return				     *
  *===========================================================================*/
-PRIVATE void select_return(struct selectentry *se, int r)
+PRIVATE void select_return(struct selectentry *se)
 {
+  int r, r1;
+
+  assert(!is_deferred(se));	/* Not done yet, first wait for async reply */
+
   select_cancel_all(se);
-  copy_fdsets(se, se->nfds, TO_PROC); /* FIXME, return error status */
-  select_wakeup(se, r ? r : se->nreadyfds);
+  r1 = copy_fdsets(se, se->nfds, TO_PROC); 
+  if (r1 != OK)
+  	r = r1;
+  else if (se->error != OK)
+  	r = se->error;
+  else
+  	r = se->nreadyfds;
+
+  revive(se->req_endpt, r);
 }
 
 
 /*===========================================================================*
  *				select_callback			             *
  *===========================================================================*/
-PUBLIC int select_callback(struct filp *fp, int ops)
+PUBLIC void select_callback(struct filp *f, int status)
 {
-	int s, fd;
-
-	/* We are being notified that file pointer fp is available for
-	 * operations 'ops'. We must re-register the select for
-	 * operations that we are still interested in, if any.
-	 */
-
-	for(s = 0; s < MAXSELECTS; s++) {
-		int wakehim = 0;
-		if (selecttab[s].requestor == NULL) continue;
-		
-		for(fd = 0; fd < selecttab[s].nfds; fd++) {
-			if (!selecttab[s].filps[fd])
-				continue;
-			if (selecttab[s].filps[fd] == fp) {
-				int this_want_ops;
-				this_want_ops = tab2ops(fd, &selecttab[s]);
-				if (this_want_ops & ops) {
-					/* this select() has been satisfied. */
-					ops2tab(ops, fd, &selecttab[s]);
-					wakehim = 1;
-				}
-			}
-		}
-		if (wakehim)
-			select_return(&selecttab[s], 0);
-	}
-
-	return 0;
+  filp_status(f, status);
 }
-
-
-/*===========================================================================*
- *				select_notified			             *
- *===========================================================================*/
-PUBLIC int select_notified(int major, int minor, int selected_ops)
-{
-	int s, f, t;
-
-#if DEBUG_SELECT
-	printf("select callback: %d, %d: %d\n", major, minor, selected_ops);
-#endif
-
-	for(t = 0; t < SEL_FDS; t++)
-		if (!fdtypes[t].select_match && fdtypes[t].select_major == major)
-		    	break;
-
-	if (t >= SEL_FDS) {
-#if DEBUG_SELECT
-		printf("select callback: no fdtype found for device %d\n", major);
-#endif
-		return OK;
-	}
-
-	/* We have a select callback from major device no.
-	 * d, which corresponds to our select type t.
-	 */
-
-	for(s = 0; s < MAXSELECTS; s++) {
-		int s_minor, ops;
-		if (selecttab[s].requestor == NULL) continue;
-		for(f = 0; f < selecttab[s].nfds; f++) {
-			if (!selecttab[s].filps[f] ||
-			   !select_major_match(major, selecttab[s].filps[f]))
-			   	continue;
-			ops = tab2ops(f, &selecttab[s]);
-			s_minor =
-			(selecttab[s].filps[f]->filp_vno->v_sdev >> MINOR)
-				& BYTE;
-			if ((s_minor == minor) &&
-				(selected_ops & ops)) {
-				select_callback(selecttab[s].filps[f], (selected_ops & ops));
-			}
-		}
-	}
-
-	return OK;
-}
-
 
 /*===========================================================================*
  *				init_select  				     *
  *===========================================================================*/
 PUBLIC void init_select(void)
 {
-	int s;
+  int s;
 
-	for(s = 0; s < MAXSELECTS; s++)
-		init_timer(&selecttab[s].timer);
+  for (s = 0; s < MAXSELECTS; s++)
+	init_timer(&selecttab[s].timer);
 }
 
 
 /*===========================================================================*
  *				select_forget			             *
  *===========================================================================*/
-PUBLIC void select_forget(int proc_e)
+PUBLIC void select_forget(endpoint_t proc_e)
 {
-	/* something has happened (e.g. signal delivered that interrupts
-	 * select()). totally forget about the select().
-	 */
-	int s;
+/* Something has happened (e.g. signal delivered that interrupts select()). 
+ * Totally forget about the select(). */
 
-	for(s = 0; s < MAXSELECTS; s++) {
-		if (selecttab[s].requestor != NULL &&
-		    selecttab[s].req_endpt == proc_e) {
-			break;
-		}
-	}
+  int slot;
+  struct selectentry *se;
 
-	if (s >= MAXSELECTS) {
-#if DEBUG_SELECT
-		printf("select: cancelled select() not found");
-#endif
-		return;
-	}
+  for (slot = 0; slot < MAXSELECTS; slot++) {
+	se = &selecttab[slot];
+	if (se->requestor != NULL && se->req_endpt == proc_e) 
+		break;
+  }
 
-	select_cancel_all(&selecttab[s]);
+  if (slot >= MAXSELECTS) return;	/* Entry not found */
+  se->error = EINTR;
+  if (is_deferred(se)) return;		/* Still awaiting initial reply */
 
-	return;
+  select_cancel_all(se);
 }
 
 
@@ -657,31 +695,14 @@ PUBLIC void select_timeout_check(timer_t *timer)
   struct selectentry *se;
 
   s = tmr_arg(timer)->ta_int;
-  if (s < 0 || s >= MAXSELECTS) {
-#if DEBUG_SELECT
-	printf("select: bogus slot arg to watchdog %d\n", s);
-#endif
-	return;
-  }
-  se = &selecttab[s]; /* Point to select table entry */
-
-  if (se->requestor == NULL) {
-#if DEBUG_SELECT
-	printf("select: no requestor in watchdog\n");
-#endif
-	return;
-  }
-
-  if (se->expiry <= 0) {
-#if DEBUG_SELECT
-	printf("select: strange expiry value in watchdog\n", s);
-#endif
-	return;
-  }
-
+  if (s < 0 || s >= MAXSELECTS) return;	/* Entry does not exist */
+  
+  se = &selecttab[s]; 
+  if (se->requestor == NULL) return;
+  if (se->expiry <= 0) return;	/* Strange, did we even ask for a timeout? */
   se->expiry = 0;
-  select_return(se, 0);
-
+  if (is_deferred(se)) return;	/* Wait for initial replies to DEV_SELECT */
+  select_return(se);
 }
 
 
@@ -690,22 +711,32 @@ PUBLIC void select_timeout_check(timer_t *timer)
  *===========================================================================*/
 PUBLIC void select_unsuspend_by_endpt(endpoint_t proc_e)
 {
-  int fd, s, maj;
+/* Revive blocked processes when a driver has disappeared */
 
-  for(s = 0; s < MAXSELECTS; s++) {
-	if (selecttab[s].requestor == NULL) continue;
+  int fd, s, major;
+  struct selectentry *se;
+  struct filp *f;
+
+  for (s = 0; s < MAXSELECTS; s++) {
+  	int wakehim = 0;
+  	se = &selecttab[s];
+	if (se->requestor == NULL) continue;
 	  
-	for(fd = 0; fd < selecttab[s].nfds; fd++) {
-		if (selecttab[s].filps[fd] == NULL ||
-		    selecttab[s].filps[fd]->filp_vno == NULL) {
+	for (fd = 0; fd < se->nfds; fd++) {
+		if ((f = se->filps[fd]) == NULL || f->filp_vno == NULL) 
 			continue;
+
+		major = major(f->filp_vno->v_sdev);
+		if (dmap_driver_match(proc_e, major)) {
+			se->filps[fd] = NULL;
+			se->error = EINTR;
+			select_cancel_filp(f);
+			wakehim = 1;
 		}
-		
-		maj = (selecttab[s].filps[fd]->filp_vno->v_sdev >> MAJOR)&BYTE;
-		if (dmap_driver_match(proc_e, maj))
-			select_return(&selecttab[s], EAGAIN);
-	    
 	}
+
+	if (wakehim && !is_deferred(se))
+		select_return(se);
   }
 }
 
@@ -713,258 +744,257 @@ PUBLIC void select_unsuspend_by_endpt(endpoint_t proc_e)
 /*===========================================================================*
  *				select_reply1				     *
  *===========================================================================*/
-PUBLIC void select_reply1()
+PUBLIC void select_reply1(driver_e, minor, status)
+endpoint_t driver_e;
+int minor;
+int status;
 {
-	int i, minor, status;
-	endpoint_t driver_e;
-	dev_t dev;
-	struct filp *fp;
-	struct dmap *dp;
-	struct vnode *vp;
+/* Handle reply to DEV_SELECT request */
 
-	driver_e= m_in.m_source;
-	minor= m_in.DEV_MINOR;
-	status= m_in.DEV_SEL_OPS;
+  int major;
+  dev_t dev;
+  struct filp *f;
+  struct dmap *dp;
+  struct vnode *vp;
 
-	/* Locate dmap entry */
-	for (i= 0, dp= dmap; i<NR_DEVICES; i++, dp++)
-	{
-		if (dp->dmap_driver == driver_e)
-			break;
-	}
-	if (i >= NR_DEVICES)
-	{
-		printf("select_reply1: proc %d is not a recoqnized driver\n",
-			driver_e);
-		return;
-	}
-	dev= (i << MAJOR) | (minor & BYTE);
+  /* Figure out which device is replying */
+  if ((dp = get_dmap(driver_e)) == NULL) {
+	printf("VFS (%s:%d): endpoint %d is not a known driver endpoint\n",
+		__FILE__, __LINE__, driver_e);
+	return;
+  }
+  major = dp-dmap;
+  dev = makedev(major, minor);
 
-	fp= dp->dmap_sel_filp;
-	if (!fp)
-	{
-		printf("select_reply1: strange, no dmap_sel_filp\n");
-		return;
-	}
+  /* Get filp belonging to character special file */
+  if ((f = dp->dmap_sel_filp) == NULL) {
+	printf("VFS (%s:%d): major %d was not expecting a DEV_SELECT reply\n",
+		__FILE__, __LINE__, major);
+	return;
+  }
 
-	if (!(fp->filp_select_flags & FSF_BUSY))
-		panic("select_reply1: strange; not FSF_BUSY");
+  /* The filp must be busy waiting for a reply. */
+  assert(f->filp_select_flags & FSF_BUSY);
+  assert(f->filp_count >= 1); /* There should be at least one owner */
 
-	vp= fp->filp_vno;
-	if (!vp)
-		panic("select_reply1: FSF_BUSY but no vp");
+  /* Find vnode and check we got a reply from the device we expected */
+  vp = f->filp_vno;
+  assert(vp != NULL);
+  assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL); /* Must be char. special */
+  if (vp->v_sdev != dev) {
+	printf("VFS (%s:%d): expected reply from dev %d not %d\n",
+		vp->v_sdev, dev);
+	return;
+  }
 
-	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) {
-		panic("select_reply1: FSF_BUSY but not char special");
-	}
+  /* No longer waiting for a reply from this device */
+  f->filp_select_flags &= ~FSF_BUSY;
+  dp->dmap_sel_filp = NULL;
 
-	if (vp->v_sdev != dev)
-	{
-		printf("select_reply1: strange, reply from wrong dev\n");
-		return;
-	}
+  /* The select call is done now, except when 
+   * - another process started a select on the same filp with possibly a
+   *   different set of operations.
+   * - a process does a select on the same filp but using different file
+   *   descriptors.
+   * - the select has a timeout. Upon receiving this reply the operations might
+   *   not be ready yet, so we want to wait for that to ultimately happen.
+   *   Therefore we need to keep remembering what the operations are. */
+  if (!(f->filp_select_flags & (FSF_UPDATE|FSF_BLOCKED)))
+	f->filp_select_ops = 0;		/* done selecting */
+  else if (!(f->filp_select_flags & FSF_UPDATE)) 
+	f->filp_select_ops &= ~status;	/* there may be operations pending */
 
-	dp->dmap_sel_filp= NULL;
-	fp->filp_select_flags &= ~FSF_BUSY;
-	if (!(fp->filp_select_flags & (FSF_UPDATE|FSF_BLOCK)))
-	fp->filp_select_ops= 0;
+  /* Tell filp owners about result unless we need to wait longer */
+  if (!(status == 0 && (f->filp_select_flags & FSF_BLOCKED))) {
+	if (status > 0) {	/* operations ready */
+		if (status & SEL_RD) f->filp_select_flags &= ~FSF_RD_BLOCK;
+		if (status & SEL_WR) f->filp_select_flags &= ~FSF_WR_BLOCK;
+		if (status & SEL_ERR) f->filp_select_flags &= ~FSF_ERR_BLOCK;
+	} else if (status < 0)	/* error */
+  		f->filp_select_flags &= ~FSF_BLOCKED; /* No longer blocking */
+	filp_status(f, status); /* Tell filp owners about the results */
+  }
 
-	if (status > 0)
-	{
-		/* Clear the replied bits from the request mask unless
-		 * FSF_UPDATE is set.
-		 */
-		if (!(fp->filp_select_flags & FSF_UPDATE))
-			fp->filp_select_ops &= ~status;
-	}
-	filp_status(fp, status);
-
-	if (fp->filp_count > 1)
-		fp->filp_count--;
-	else
-	{
-		if (fp->filp_count != 1) {
-			panic("select_reply1: bad filp_count: %d", fp->filp_count);
-		}
-		close_filp(fp);
-	}
-	sel_restart_dev();
+  select_restart_filps();
 }
 
 
 /*===========================================================================*
  *				select_reply2				     *
  *===========================================================================*/
-PUBLIC void select_reply2()
-{
-	int i, s, minor, status;
-	endpoint_t driver_e;
-	dev_t dev;
-	struct filp *fp;
-	struct dmap *dp;
-	struct vnode *vp;
-
-	driver_e= m_in.m_source;
-	minor= m_in.DEV_MINOR;
-	status= m_in.DEV_SEL_OPS;
-
-	/* Locate dmap entry */
-	for (i= 0, dp= dmap; i<NR_DEVICES; i++, dp++)
-	{
-		if (dp->dmap_driver == driver_e)
-			break;
-	}
-	if (i >= NR_DEVICES)
-	{
-		printf("select_reply2: proc %d is not a recognized driver\n",
-			driver_e);
-		return;
-	}
-	dev= (i << MAJOR) | (minor & BYTE);
-
-	/* Find filedescriptors for this device */
-	for (s= 0; s<MAXSELECTS; s++)
-	{
-		if (selecttab[s].requestor == NULL)
-			continue;	/* empty slot */
-					 
-		for (i= 0; i<OPEN_MAX; i++)
-		{
-			fp= selecttab[s].filps[i];
-			if (!fp)
-				continue;
-			vp= fp->filp_vno;
-			if (!vp)
-				continue;
-			if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
-				continue;
-
-			if (vp->v_sdev != dev)
-				continue;
-
-			if (status < 0)
-			{
-				printf("select_reply2: should handle error\n");
-			}
-			else 
-			{
-				/* Clear the replied bits from the request
-				 * mask unless FSF_UPDATE is set.
-				 */
-				if (!(fp->filp_select_flags & FSF_UPDATE))
-					fp->filp_select_ops &= ~status;
-				ops2tab(status, i, &selecttab[s]);
-			}
-		}
-		if (selecttab[s].nreadyfds > 0)
-			restart_proc(s);
-	}
-}
-
-
-PRIVATE void sel_restart_dev()
-{
-	int i, s;
-	struct filp *fp;
-	struct vnode *vp;
-	struct dmap *dp;
-
-	/* Locate filps that can be restarted */
-	for (s= 0; s<MAXSELECTS; s++)
-	{
-		if (selecttab[s].requestor == NULL)
-			continue; /* empty slot */
-		if (!selecttab[s].deferred)
-			continue;	/* process is not waiting for an
-					 * initial reply.
-					 */
-		for (i= 0; i<OPEN_MAX; i++)
-		{
-			fp= selecttab[s].filps[i];
-			if (!fp)
-				continue;
-			if (fp->filp_select_flags & FSF_BUSY)
-				continue;
-			if (!(fp->filp_select_flags & FSF_UPDATE))
-				continue;
-
-			vp= fp->filp_vno;
-			if (!vp) {
-				panic("sel_restart_dev: FSF_UPDATE but no vp");
-			}
-			if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) {
-				panic("sel_restart_dev: FSF_UPDATE but not char special");
-			}
-
-			dp = &dmap[((vp->v_sdev) >> MAJOR) & BYTE];
-			if (dp->dmap_sel_filp)
-				continue;
-
-			printf(
-			"sel_restart_dev: should consider fd %d in slot %d\n",
-				i, s);
-		}
-	}
-}
-
-
-PRIVATE void filp_status(fp, status)
-struct filp *fp;
+PUBLIC void select_reply2(driver_e, minor, status)
+endpoint_t driver_e;
+int minor;
 int status;
 {
-	int i, s;
+/* Handle secondary reply to DEV_SELECT request. A secondary reply occurs when
+ * the select request is 'blocking' until an operation becomes ready. */
+  int major, slot, fd;
+  dev_t dev;
+  struct filp *f;
+  struct dmap *dp;
+  struct vnode *vp;
+  struct selectentry *se;
 
-	/* Locate processes that need to know about this result */
-	for (s= 0; s<MAXSELECTS; s++)
-	{
-		if (selecttab[s].requestor == NULL) continue; /* empty slot */
+  if (status == 0) {
+  	printf("VFS (%s:%d): weird status (%d) to report\n", 
+  		__FILE__, __LINE__, status);
+  	return;
+  }
 
-		for (i= 0; i<OPEN_MAX; i++)
-		{
-			if (selecttab[s].filps[i] != fp)
-				continue;
+  /* Figure out which device is replying */
+  if ((dp = get_dmap(driver_e)) == NULL) {
+	printf("VFS (%s:%d): endpoint %d is not a known driver endpoint\n",
+		__FILE__, __LINE__, driver_e);
+	return;
+  }
+  major = dp-dmap;
+  dev = makedev(major, minor);
 
-			if (status < 0)
-			{
-				printf("filp_status: should handle error\n");
-			}
-			else 
-				ops2tab(status, i, &selecttab[s]);
+  /* Find all file descriptors selecting for this device */
+  for (slot = 0; slot < MAXSELECTS; slot++) {
+  	se = &selecttab[slot];
+	if (se->requestor == NULL) continue;	/* empty slot */
+					 
+	for (fd = 0; fd < se->nfds; fd++) {
+		if ((f = se->filps[fd]) == NULL) continue;
+		if ((vp = f->filp_vno) == NULL) continue;
+		if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
+		if (vp->v_sdev != dev) continue;
+		if (status > 0) {	/* Operations ready */
+			/* Clear the replied bits from the request
+			 * mask unless FSF_UPDATE is set.
+			 */
+			if (!(f->filp_select_flags & FSF_UPDATE)) 
+				f->filp_select_ops &= ~status;
+			if (status & SEL_RD)
+				f->filp_select_flags &= ~FSF_RD_BLOCK;
+			if (status & SEL_WR)
+				f->filp_select_flags &= ~FSF_WR_BLOCK;
+			if (status & SEL_ERR)
+				f->filp_select_flags &= ~FSF_ERR_BLOCK;
 
-			restart_proc(s);
+			ops2tab(status, fd, se);
+		} else {
+			f->filp_select_flags &= ~FSF_BLOCKED; 
+			ops2tab(SEL_RD|SEL_WR|SEL_ERR, fd, se);
 		}
+
+		if (se->nreadyfds > 0) restart_proc(se);
 	}
+  }
+
+  select_restart_filps();
 }
 
-
-PRIVATE void restart_proc(slot)
-int slot;
+/*===========================================================================*
+ *				select_restart_filps			     *
+ *===========================================================================*/
+PRIVATE void select_restart_filps()
 {
-	int fd;
-	struct selectentry *se;
-	struct filp *fp;
+  int fd, slot;
+  struct filp *f;
+  struct vnode *vp;
+  struct selectentry *se;
 
-	se= &selecttab[slot];
-	if (se->deferred)
-	{
-		for (fd= se->deferred_fd; fd < OPEN_MAX; fd++)
-		{
-			fp= se->filps[fd];
-			if (!fp)
-				continue;
-			if (fp->filp_select_flags & (FSF_UPDATE|FSF_BUSY))
-				break;
+  /* Locate filps that can be restarted */
+  for (slot = 0; slot < MAXSELECTS; slot++) {
+	se = &selecttab[slot];
+	if (se->requestor == NULL) continue; /* empty slot */
+
+	/* Only 'deferred' processes are eligible to restart */
+	if (!is_deferred(se)) continue;
+
+	/* Find filps that are not waiting for a reply, but have an updated
+	 * status (i.e., another select on the same filp with possibly a 
+	 * different set of operations is to be done), and thus requires the
+	 * select request to be sent again).
+	 */
+	for (fd = 0; fd < se->nfds; fd++) {
+		int r, type, wantops, ops, block;
+		if ((f = se->filps[fd]) == NULL) continue;
+		if (f->filp_select_flags & FSF_BUSY) /* Still waiting for */
+			continue;		     /* initial reply */
+		if (!(f->filp_select_flags & FSF_UPDATE)) /* Must be in  */
+			continue;			  /* 'update' state */
+
+		vp = f->filp_vno;
+		assert(vp != NULL);
+  		assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL); 
+		wantops = ops = f->filp_select_ops;
+		r = do_select_request(se, fd, &wantops);
+		if (r != SEL_OK) {
+			if (r == SEL_DEFERRED) continue;
+			else break; /* Error or bogus return code; abort */
 		}
-		if (fd < OPEN_MAX)
-		{
-			se->deferred_fd= fd;
-			return;
-		}
-		se->deferred= FALSE;
+		if (wantops & ops) ops2tab(wantops, fd, se);
 	}
-	if (se->nreadyfds > 0 || !se->block) {
-		select_return(se, 0);
+  }
+}
+
+/*===========================================================================*
+ *				do_select_request			     *
+ *===========================================================================*/
+PRIVATE int do_select_request(se, fd, ops)
+struct selectentry *se;
+int fd;
+int *ops;
+{
+/* Perform actual select request for file descriptor fd */
+
+  int r, type, block;
+  struct filp *f;
+
+  type = se->type[fd];
+  block = se->block;
+  f = se->filps[fd];
+  r = fdtypes[type].select_request(f, ops, block);
+  if (r != SEL_OK && r != SEL_DEFERRED) {
+	se->error = EINTR;
+	se->block = 0;	/* Stop blocking to return asap */
+	select_cancel_all(se);
+  }
+
+  return(r);
+}
+
+/*===========================================================================*
+ *				filp_status				     *
+ *===========================================================================*/
+PRIVATE void filp_status(f, status)
+struct filp *f;
+int status;
+{
+/* Tell processes that need to know about the status of this filp */
+  int fd, slot;
+  struct selectentry *se;
+
+  for (slot = 0; slot < MAXSELECTS; slot++) {
+	se = &selecttab[slot];
+	if (se->requestor == NULL) continue; /* empty slot */
+
+	for (fd = 0; fd < se->nfds; fd++) {
+		if (se->filps[fd] != f) continue;
+		if (status < 0)
+			ops2tab(SEL_RD|SEL_WR|SEL_ERR, fd, se);
+		else 
+			ops2tab(status, fd, se);
+		restart_proc(se);
 	}
+  }
+}
+
+/*===========================================================================*
+ *				restart_proc				     *
+ *===========================================================================*/
+PRIVATE void restart_proc(se)
+struct selectentry *se;
+{
+/* Tell process about select results (if any) unless there are still results
+ * pending. */
+
+  if ((se->nreadyfds > 0 || !se->block) && !is_deferred(se)) 
+	select_return(se);
 }
 
 /*===========================================================================*
@@ -972,10 +1002,9 @@ int slot;
  *===========================================================================*/
 PRIVATE void wipe_select(struct selectentry *se)
 {
-  se->deferred = FALSE;
   se->nfds = 0;
   se->nreadyfds = 0;
-/*  memset(se->filps, 0, OPEN_MAX * sizeof(struct filp *)); */
+  se->error = OK;
   memset(se->filps, 0, sizeof(se->filps)); 
 
   FD_ZERO(&se->readfds);

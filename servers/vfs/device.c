@@ -183,8 +183,8 @@ PUBLIC void dev_status(message *m)
 				revive(endpt, st.REP_STATUS);
 				break;
 			case DEV_IO_READY:
-				select_notified(d, st.DEV_MINOR,
-					st.DEV_SEL_OPS);
+				select_reply2(st.m_source, st.DEV_MINOR,
+					      st.DEV_SEL_OPS);
 				break;
 			default:
 				printf("FS: unrecognized reply %d to "

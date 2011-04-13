@@ -95,12 +95,12 @@ PUBLIC int main(void)
 	}
 	if (call_nr == DEV_SEL_REPL1)
 	{
-		select_reply1();
+		select_reply1(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
 		continue;
 	}
 	if (call_nr == DEV_SEL_REPL2)
 	{
-		select_reply2();
+		select_reply2(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
 		continue;
 	}
 

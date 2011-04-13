@@ -1,3 +1,6 @@
+#ifndef __VFS_DMAP_H__
+#define __VFS_DMAP_H__
+
 /*
 dmap.h
 */
@@ -21,3 +24,5 @@ extern struct dmap {
   int dmap_style;
   struct filp *dmap_sel_filp;
 } dmap[];
+
+#endif
