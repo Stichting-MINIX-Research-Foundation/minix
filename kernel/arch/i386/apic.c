@@ -1057,7 +1057,7 @@ PUBLIC int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline)
 	lapic_write(LAPIC_ICR2, (lapic_read (LAPIC_ICR2) & 0xFFFFFF) |
 					(cpuid2apicid[cpu] << 24));
 	lapic_write(LAPIC_ICR1, (lapic_read (LAPIC_ICR1) & 0xFFF32000) |
-		APIC_ICR_DEST_ALL | APIC_ICR_TM_LEVEL | APIC_ICR_DM_INIT);
+		APIC_ICR_DEST_ALL | APIC_ICR_TM_LEVEL);
 
 	timeout = 1000;
 	errstatus = 0;
