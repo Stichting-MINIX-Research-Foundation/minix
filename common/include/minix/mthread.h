@@ -19,6 +19,7 @@
 
 typedef int mthread_thread_t;
 typedef int mthread_once_t;
+typedef int mthread_key_t;
 typedef void * mthread_condattr_t;
 typedef void * mthread_mutexattr_t;
 
@@ -58,6 +59,7 @@ typedef struct __mthread_attr *mthread_attr_t;
 #define MTHREAD_CREATE_DETACHED 002
 #define MTHREAD_ONCE_INIT 0
 #define MTHREAD_STACK_MIN MINSIGSTKSZ
+#define MTHREAD_KEYS_MAX 128
 
 /* allocate.c */
 _PROTOTYPE( int mthread_create, (mthread_thread_t *thread,
@@ -98,6 +100,13 @@ _PROTOTYPE( int mthread_cond_init, (mthread_cond_t *cond,
 _PROTOTYPE( int mthread_cond_signal, (mthread_cond_t *cond)		);
 _PROTOTYPE( int mthread_cond_wait, (mthread_cond_t *cond,
 				    mthread_mutex_t *mutex)		);
+
+/* key.c */
+_PROTOTYPE( int mthread_key_create, (mthread_key_t *key,
+				      void (*destructor)(void *))	);
+_PROTOTYPE( int mthread_key_delete, (mthread_key_t key)			);
+_PROTOTYPE( void *mthread_getspecific, (mthread_key_t key)		);
+_PROTOTYPE( int mthread_setspecific, (mthread_key_t key, void *value)	);
 
 /* misc.c */
 _PROTOTYPE( void mthread_stats, (void)					);

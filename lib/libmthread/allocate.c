@@ -121,6 +121,8 @@ void *value;
   if (tcb->m_state == MS_EXITING)	/* Already stopping, nothing to do. */
   	return;
 
+  mthread_cleanup_values();
+
   /* When we're called from the fallback thread, the fallback thread 
    * will invoke the scheduler. However, if the thread itself called 
    * mthread_exit, _we_ will have to wake up the scheduler.
@@ -283,6 +285,7 @@ PUBLIC void mthread_init(void)
 	mthread_init_valid_mutexes();
 	mthread_init_valid_conditions();
 	mthread_init_valid_attributes();
+	mthread_init_keys();
 	mthread_init_scheduler();
 
 	/* Initialize the fallback thread */

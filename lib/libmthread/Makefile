@@ -11,6 +11,7 @@ SRCS=	\
 	misc.c \
 	queue.c \
 	condition.c \
-	scheduler.c 
+	scheduler.c \
+	key.c
 
 .include <bsd.lib.mk>

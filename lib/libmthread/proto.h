@@ -16,6 +16,10 @@ _PROTOTYPE( void mthread_init_valid_conditions, (void)			);
 _PROTOTYPE( int mthread_cond_verify, (void)				);
 #endif
 
+/* key.c */
+_PROTOTYPE( void mthread_init_keys, (void)				);
+_PROTOTYPE( void mthread_cleanup_values, (void)				);
+
 /* misc.c */
 #define mthread_panic(m) mthread_panic_f(__FILE__, __LINE__, (m))
 _PROTOTYPE( void mthread_panic_f, (const char *file, int line,

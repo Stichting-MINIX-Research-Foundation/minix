@@ -9,8 +9,8 @@
 #define NO_THREADS 4 
 #define MAX_THREAD_POOL 1024
 #define STACKSZ 4096
-#define MAIN_THREAD -1
-#define NO_THREAD -2
+#define MAIN_THREAD (-1)
+#define NO_THREAD (-2)
 #define isokthreadid(i)	(i == MAIN_THREAD || (i >= 0 && i < no_threads))
 #define MTHREAD_INIT_MAGIC 0xca11ab1e
 #define MTHREAD_NOT_INUSE  0xdefec7

@@ -9,6 +9,7 @@
 #define cond_t mthread_cond_t
 #define once_t mthread_once_t
 #define attr_t mthread_attr_t
+#define key_t mthread_key_t
 
 #define MAX_ERROR 5
 #include "common.c"
@@ -21,6 +22,10 @@ PRIVATE mutex_t mu[3];
 PRIVATE cond_t condition;
 PRIVATE mutex_t *count_mutex, *condition_mutex;
 PRIVATE once_t once;
+PRIVATE key_t key[MTHREAD_KEYS_MAX+1];
+PRIVATE int values[4];
+PRIVATE int first;
+
 #define VERIFY_MUTEX(a,b,c,esub,eno)	do { \
 	if (mutex_a_step != a) { \
 		printf("Expected %d %d %d, got: %d %d %d\n", \
@@ -47,6 +52,7 @@ FORWARD _PROTOTYPE( void test_scheduling, (void)			);
 FORWARD _PROTOTYPE( void test_mutex, (void)				);
 FORWARD _PROTOTYPE( void test_condition, (void)				);
 FORWARD _PROTOTYPE( void test_attributes, (void)			);
+FORWARD _PROTOTYPE( void test_keys, (void)				);
 FORWARD _PROTOTYPE( void err, (int subtest, int error)			);
 
 /*===========================================================================*
@@ -725,6 +731,177 @@ PRIVATE void test_attributes(void)
 }
 
 /*===========================================================================*
+ *				destr_a					     *
+ *===========================================================================*/
+PRIVATE void destr_a(void *value)
+{
+  int num;
+
+  num = (int) value;
+
+  /* This destructor must be called once for all of the values 1..4. */
+  if (num <= 0 || num > 4) err(15, 1);
+
+  if (values[num - 1] != 1) err(15, 2);
+
+  values[num - 1] = 2;
+}
+
+/*===========================================================================*
+ *				destr_b					     *
+ *===========================================================================*/
+PRIVATE void destr_b(void *value)
+{
+  /* This destructor must never trigger. */
+  err(16, 1);
+}
+
+/*===========================================================================*
+ *				key_a					     *
+ *===========================================================================*/
+PRIVATE void key_a(void *arg)
+{
+  int i;
+
+  if (!first) mthread_yield();
+
+  /* Each new threads gets NULL-initialized values. */
+  for (i = 0; i < 5; i++)
+	if (mthread_getspecific(key[i]) != NULL) err(17, 1);
+
+  /* Make sure that the local values persist despite other threads' actions. */
+  for (i = 1; i < 5; i++)
+	if (mthread_setspecific(key[i], (void *) i) != 0) err(17, 2);
+
+  mthread_yield();
+
+  for (i = 1; i < 5; i++)
+	if (mthread_getspecific(key[i]) != (void *) i) err(17, 3);
+
+  mthread_yield();
+
+  /* The other thread has deleted this key by now. */
+  if (mthread_setspecific(key[3], NULL) != EINVAL) err(17, 4);
+
+  /* If a key's value is set to NULL, its destructor must not be called. */
+  if (mthread_setspecific(key[4], NULL) != 0) err(17, 5);
+}
+
+/*===========================================================================*
+ *				key_b					     *
+ *===========================================================================*/
+PRIVATE void key_b(void *arg)
+{
+  int i;
+
+  first = 1;
+  mthread_yield();
+
+  /* Each new threads gets NULL-initialized values. */
+  for (i = 0; i < 5; i++)
+	if (mthread_getspecific(key[i]) != NULL) err(18, 1);
+
+  for (i = 0; i < 4; i++)
+	if (mthread_setspecific(key[i], (void *) (i + 2)) != 0) err(18, 2);
+
+  mthread_yield();
+
+  /* Deleting a key will not cause a call its destructor at any point. */
+  if (mthread_key_delete(key[3]) != 0) err(18, 3);
+
+  mthread_exit(NULL);
+}
+
+/*===========================================================================*
+ *				key_c					     *
+ *===========================================================================*/
+PRIVATE void key_c(void *arg)
+{
+  /* The only thing that this thread should do, is set a value. */
+  if (mthread_setspecific(key[0], (void *) mthread_self()) != 0) err(19, 1);
+
+  mthread_yield();
+
+  if (!mthread_equal((thread_t) mthread_getspecific(key[0]), mthread_self()))
+	err(19, 2);
+}
+
+/*===========================================================================*
+ *				test_keys				     *
+ *===========================================================================*/
+PRIVATE void test_keys(void)
+{
+  thread_t t[24];
+  int i, j;
+
+  /* Make sure that we can create exactly MTHREAD_KEYS_MAX keys. */
+  memset(key, 0, sizeof(key));
+
+  for (i = 0; i < MTHREAD_KEYS_MAX; i++) {
+	if (mthread_key_create(&key[i], NULL) != 0) err(20, 1);
+
+	for (j = 0; j < i - 1; j++)
+		if (key[i] == key[j]) err(20, 2);
+  }
+
+  if (mthread_key_create(&key[i], NULL) != EAGAIN) err(20, 3);
+
+  for (i = 3; i < MTHREAD_KEYS_MAX; i++)
+	if (mthread_key_delete(key[i]) != 0) err(20, 4);
+
+  /* Test basic good and bad value assignment and retrieval. */
+  if (mthread_setspecific(key[0], (void *) 1) != 0) err(20, 5);
+  if (mthread_setspecific(key[1], (void *) 2) != 0) err(20, 6);
+  if (mthread_setspecific(key[2], (void *) 3) != 0) err(20, 7);
+  if (mthread_setspecific(key[1], NULL) != 0) err(20, 8);
+  if (mthread_getspecific(key[0]) != (void *) 1) err(20, 9);
+  if (mthread_getspecific(key[1]) != NULL) err(20, 10);
+  if (mthread_getspecific(key[2]) != (void *) 3) err(20, 11);
+  if (mthread_setspecific(key[3], (void *) 4) != EINVAL) err(20, 12);
+  if (mthread_setspecific(key[3], NULL) != EINVAL) err(20, 13);
+
+  if (mthread_key_delete(key[1]) != 0) err(20, 14);
+  if (mthread_key_delete(key[2]) != 0) err(20, 15);
+
+  /* Test thread locality and destructors. */
+  if (mthread_key_create(&key[1], destr_a) != 0) err(20, 16);
+  if (mthread_key_create(&key[2], destr_a) != 0) err(20, 17);
+  if (mthread_key_create(&key[3], destr_b) != 0) err(20, 18);
+  if (mthread_key_create(&key[4], destr_b) != 0) err(20, 19);
+
+  if (mthread_getspecific(key[2]) != NULL) err(20, 20);
+
+  for (i = 0; i < 4; i++)
+	values[i] = 1;
+  first = 0;
+
+  if (mthread_create(&t[0], NULL, key_a, NULL) != 0) err(20, 21);
+  if (mthread_create(&t[1], NULL, key_b, NULL) != 0) err(20, 22);
+
+  for (i = 0; i < 2; i++) 
+	if (mthread_join(t[i], NULL) != 0) err(20, 23);
+
+  /* The destructors must have changed all these values now. */
+  for (i = 0; i < 4; i++)
+	if (values[i] != 2) err(20, 24);
+
+  /* The original values must not have changed. */
+  if (mthread_getspecific(key[0]) != (void *) 1) err(20, 25);
+
+  /* Deleting a deleted key should not cause any problems either. */
+  if (mthread_key_delete(key[3]) != EINVAL) err(20, 26);
+
+  /* Make sure everything still works when using a larger number of threads.
+   * This should trigger reallocation code within libmthread's key handling.
+   */
+  for (i = 0; i < 24; i++)
+	if (mthread_create(&t[i], NULL, key_c, NULL) != 0) err(20, 27);
+
+  for (i = 0; i < 24; i++) 
+	if (mthread_join(t[i], NULL) != 0) err(20, 28);
+}
+
+/*===========================================================================*
  *				main					     *
  *===========================================================================*/
 int main(void)
@@ -740,6 +917,7 @@ int main(void)
   test_mutex();
   test_condition();
   test_attributes();
+  test_keys();
   quit();
 }
 
