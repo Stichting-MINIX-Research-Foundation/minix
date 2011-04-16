@@ -965,7 +965,7 @@ main:
 		if (!(np->flags & NF_BOUND)) {
 		    /* Rebind over Ethernet. */
 		    udp2ether(bp, np);
-		    if (sendpacket(np, (lwip ? bp->ip : bp->eth), 
+		    if (sendpacket(np, (lwip ? bp->ip : (void *) bp->eth), 
 		    			(lwip ? 0 : sizeof(eth_hdr_t)) + sizeof(ip_hdr_t)
 					+ sizeof(udp_hdr_t) + sizeof(dhcp_t))) {
 			if (debug >= 1) {
@@ -1017,8 +1017,8 @@ main:
 		if (!opendev(np, FT_ETHERNET, 0)) continue;
 		get_buf(&np->fdp->bp);
 		r= asyn_read(&asyn, np->fdp->fd,
-				lwip ? np->fdp->bp->ip : np->fdp->bp->eth,
-				lwip ? BUF_IP_SIZE : BUF_ETH_SIZE);
+			lwip ? np->fdp->bp->ip : (void *) np->fdp->bp->eth,
+			lwip ? BUF_IP_SIZE : BUF_ETH_SIZE);
 	    } else {
 		if (!opendev(np, FT_BOOTPC, 0)) continue;
 		get_buf(&np->fdp->bp);
