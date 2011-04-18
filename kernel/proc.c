@@ -1186,10 +1186,16 @@ struct proc *caller_ptr;
   int r;
   struct priv *privp;
   struct proc *src_ptr;
+  sys_map_t *map;
+
+  map = &priv(caller_ptr)->s_asyn_pending;
 
   /* Try all privilege structures */
   for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; ++privp)  {
 	if (privp->s_proc_nr == NONE)
+		continue;
+
+	if (!get_sys_bit(*map, privp->s_id)) 
 		continue;
 
 	src_ptr = proc_addr(privp->s_proc_nr);
@@ -1224,8 +1230,6 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
   table_v = privp->s_asyntab;
 
   /* Clear table pending message flag. We're done unless we're not. */
-  privp->s_asyntab = -1;
-  privp->s_asynsize = 0;
   unset_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
 
   if (size == 0) return(EAGAIN);
@@ -1234,13 +1238,13 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
   caller_ptr = src_ptr;	/* Needed for A_ macros later on */
 
   /* Scan the table */
-  do_notify = FALSE;	/* XXX: this doesn't do anything? */
+  do_notify = FALSE;
   done = TRUE;
   for (i = 0; i < size; i++) {
   	/* Process each entry in the table and store the result in the table.
   	 * If we're done handling a message, copy the result to the sender.
   	 * Some checks done in mini_senda are duplicated here, as the sender
-  	 * could've altered the contents of the table in the mean time.
+  	 * could've altered the contents of the table in the meantime.
   	 */
 
 	/* Copy message to kernel */
@@ -1257,9 +1261,6 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 		r = EINVAL; 
 	else if (flags & AMF_DONE) continue; /* Already done processing */
 
-	if (r == EINVAL)
-		goto store_result;
-
 	/* Clear done flag. The sender is done sending when all messages in the
 	 * table are marked done or empty. However, we will know that only
 	 * the next time we enter this function or when the sender decides to
@@ -1267,6 +1268,9 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 	 * all.
 	 */
 	done = FALSE;
+
+	if (r == EINVAL)
+		goto store_result;
 
 	/* Message must be directed at receiving end */
 	if (dst != dst_ptr->p_endpoint) continue;
@@ -1298,10 +1302,11 @@ store_result:
   if (do_notify) 
 	mini_notify(proc_addr(ASYNCM), src_ptr->p_endpoint);
 
-  if (!done) {
-	privp->s_asyntab = table_v;
-	privp->s_asynsize = size;
-  	set_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
+  if (done) {
+	privp->s_asyntab = -1;
+	privp->s_asynsize = 0;
+  } else {
+	set_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
   }
 
   return(r);
