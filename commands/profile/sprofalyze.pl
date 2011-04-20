@@ -230,6 +230,10 @@ sub process_datafile
 	read(FILE, $buf, $SAMPLE_SIZE) == $SAMPLE_SIZE  or die ("Short read.");
 	($exe, $pc) = unpack("Z8i", $buf);
 
+	# The kernel mangles process names for debugging purposes.
+	# We compensate for that here.
+	$exe =~ s/\*F$//;
+
 	# We can access the hash by pc because they are all in there.
        	if (!defined(${$exe."_hash"}{$pc})) {
 		print "ERROR: Undefined in symbol table indexes: ";
