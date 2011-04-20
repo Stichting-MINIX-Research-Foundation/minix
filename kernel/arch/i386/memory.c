@@ -406,9 +406,10 @@ vir_bytes bytes;                /* # of bytes to be copied */
 			if(vm_lookup(rp, linear, &phys, NULL) != OK) {
 				printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%lx: 0x%lx failed\n", rp->p_name, seg, vir_addr);
 				phys = 0;
+			} else {
+				if(phys == 0)
+					panic("vm_lookup returned phys: %d",  phys);
 			}
-			if(phys == 0)
-				panic("vm_lookup returned phys: %d",  phys);
 		}
 	
 
