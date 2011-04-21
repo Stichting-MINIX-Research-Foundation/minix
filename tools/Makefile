@@ -2,6 +2,7 @@
 
 u=/usr
 MDEC=	/usr/mdec
+GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 
 # Specify the programs that are part of the system image.
 PROGRAMS=	kernel \
@@ -65,8 +66,11 @@ image:  includes services
 includes:
 	$(MAKE) -C .. includes
 
-depend: includes
+depend: includes .gitignore
 	$(MAKE) -C ../ depend
+
+.gitignore: Makefile
+	echo $(GEN_FILES) | tr ' ' '\n' >.gitignore
 
 services: includes kernel servers .WAIT drivers
 
@@ -101,7 +105,7 @@ clean:
 	$(MAKE) -C ../kernel $@
 	$(MAKE) -C ../servers $@
 	$(MAKE) -C ../drivers $@
-	rm -rf *.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
+	rm -rf $(GEN_FILES)
 
 cleandepend::
 	$(MAKE) -C ../kernel $@
