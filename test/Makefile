@@ -18,8 +18,9 @@ BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43 test44 test46
 GCCOBJ=  test45-gcc test49-gcc 
 GCCFPUOBJ= test51-gcc test52-gcc
+OTHEROBJ= test57 test59
 
-all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ) test57 test59
+all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ) $(OTHEROBJ) depend
 	chmod 755 *.sh run
 
 $(OBJ):
@@ -38,6 +39,12 @@ $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
 	@install -c -o root -m 4755 a.out $@
 	@rm a.out
+
+depend: .gitignore
+
+.gitignore: Makefile
+	echo $(OBJ) $(BIGOBJ) $(ROOTOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(OTHEROBJ) | \
+	tr ' ' '\n' >.gitignore
 
 clean:	
 	$(MAKE) -C select clean
