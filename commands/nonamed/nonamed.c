@@ -1156,6 +1156,7 @@ static int job_save_cache(void *data, int expired)
     if (!expired) return 0;
     cache2file();
     dirty= 0;
+    return 1;
 }
 
 static int compose_reply(dns_t *dp, size_t *pdlen)
