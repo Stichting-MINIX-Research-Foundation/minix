@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <time.h>
 
-#define FILE1 "/tmp/selecttest01-1"
+#define FILE1 "selecttestb-1"
 #define FILES 2
 #define TIME 3
 

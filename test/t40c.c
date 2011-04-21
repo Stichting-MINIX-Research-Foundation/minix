@@ -37,19 +37,39 @@ void e(int n, char *s) {
   }
 }
 
-int do_child(void) {
-  int fd, retval;
-  struct timeval tv;
+void open_terminal(int *child_fd, int *parent_fd) {
+  int fd1, fd2, i;
+  char opentermw[5+OPEN_MAX+1];
+  char opentermr[5+OPEN_MAX+1];
+  char *term[] = {"f","e","d","c","b","a","9","8","7","6","5","4","3","2","1"};
 
-  /* Opening master terminal for writing */
-  if((fd = open(TERMINALW, O_WRONLY)) == -1) {
-    printf("Error opening %s for writing, signalling parent to quit\n",
-	   TERMINALW);
-    perror(NULL);
-    printf("Please make sure that %s is not in use while running this test\n",
-	   TERMINALW);
-    exit(-1);
+  if (!child_fd || !parent_fd) exit(EXIT_FAILURE);
+
+  for (i = 0; i < 16; i++) {
+	snprintf(opentermw, 5+OPEN_MAX, "/dev/ttyp%s", term[i]);
+	snprintf(opentermr, 5+OPEN_MAX, "/dev/ptyp%s", term[i]);
+
+	/* Open master terminal for writing */
+	if((fd1 = open(opentermw, O_WRONLY)) == -1) continue;
+
+	/* Open slave terminal for reading */
+	if((fd2 = open(opentermr, O_RDONLY)) == -1) {
+		close(fd1);
+		continue;
+	}
+
+	*child_fd = fd1;
+	*parent_fd = fd2;
+	return;
   }
+
+  /* If we get here we failed to find a terminal pair */
+  exit(EXIT_FAILURE);
+}
+
+int do_child(int terminal) {
+  int retval;
+  struct timeval tv;
 
   /* Going to sleep for two seconds to allow the parent proc to get ready */
   tv.tv_sec = 2;
@@ -57,8 +77,8 @@ int do_child(void) {
   select(0, NULL, NULL, NULL, &tv);
 
   /* Try to write. Doesn't matter how many bytes we actually send. */
-  retval = write(fd, SENDSTRING, strlen(SENDSTRING));
-  close(fd);
+  retval = write(terminal, SENDSTRING, strlen(SENDSTRING));
+  close(terminal);
 
   /* Wait for another second to allow the parent to process incoming data */
   tv.tv_usec = 1000000;
@@ -66,65 +86,55 @@ int do_child(void) {
   exit(0);
 }
 
-int do_parent(int child) {
-  int fd;
+int do_parent(int child, int terminal) {
   fd_set fds_read, fds_write, fds_error;
   int retval;
-
-  /* Open slave terminal for reading */
-  if((fd = open(TERMINALR, O_RDONLY)) == -1) {
-    printf("Error opening %s for reading\n", TERMINALR);
-    perror(NULL);
-    printf("Please make sure that %s is not in use while running this test.\n",
-	   TERMINALR);
-    waitpid(child, &retval, 0);
-    exit(-1);
-  }
 
   /* Clear bit masks */
   FD_ZERO(&fds_read); FD_ZERO(&fds_write); FD_ZERO(&fds_error);
   /* Set read bits */
-  FD_SET(fd, &fds_read);
-  FD_SET(fd, &fds_write);
+  FD_SET(terminal, &fds_read);
+  FD_SET(terminal, &fds_write);
   
   /* Test if we can read or write from/to fd. As fd is opened read only we
    * cannot actually write, so the select should return immediately with fd
    * set in fds_write, but not in fds_read. Note that the child waits two
    * seconds before sending data. This gives us the opportunity run this
    * sub-test as reading from fd is blocking at this point. */
-  retval = select(fd+1, &fds_read, &fds_write, &fds_error, NULL);
+  retval = select(terminal+1, &fds_read, &fds_write, &fds_error, NULL);
   
   if(retval != 1) e(1, "incorrect amount of ready file descriptors");
 
 
-  if(FD_ISSET(fd, &fds_read)) e(2, "read should NOT be set");
-  if(!FD_ISSET(fd, &fds_write)) e(3, "write should be set");
-  if(FD_ISSET(fd, &fds_error)) e(4, "error should NOT be set");
+  if(FD_ISSET(terminal, &fds_read)) e(2, "read should NOT be set");
+  if(!FD_ISSET(terminal, &fds_write)) e(3, "write should be set");
+  if(FD_ISSET(terminal, &fds_error)) e(4, "error should NOT be set");
 
   /* Block until ready; until child wrote stuff */
   FD_ZERO(&fds_read); FD_ZERO(&fds_write); FD_ZERO(&fds_error);
-  FD_SET(fd, &fds_read);
-  retval = select(fd+1, &fds_read, NULL, &fds_error, NULL);
+  FD_SET(terminal, &fds_read);
+  retval = select(terminal+1, &fds_read, NULL, &fds_error, NULL);
  
   if(retval != 1) e(5, "incorrect amount of ready file descriptors");
-  if(!FD_ISSET(fd, &fds_read)) e(6, "read should be set");
-  if(FD_ISSET(fd, &fds_error)) e(7, "error should not be set");
+  if(!FD_ISSET(terminal, &fds_read)) e(6, "read should be set");
+  if(FD_ISSET(terminal, &fds_error)) e(7, "error should not be set");
 
 
   FD_ZERO(&fds_read); FD_ZERO(&fds_error);
-  FD_SET(fd,&fds_write);
-  retval = select(fd+1, NULL, &fds_write, NULL, NULL);
+  FD_SET(terminal, &fds_write);
+  retval = select(terminal+1, NULL, &fds_write, NULL, NULL);
   /* As it is impossible to write to a read only fd, this select should return
    * immediately with fd set in fds_write. */
   if(retval != 1) e(8, "incorrect amount or ready file descriptors");
 
-  close(fd);
+  close(terminal);
   waitpid(child, &retval, 0);
   exit(errct);
 }
 
 int main(int argc, char **argv) {
   int forkres;
+  int master, slave;
 
   /* Get subtest number */
   if(argc != 2) {
@@ -135,9 +145,11 @@ int main(int argc, char **argv) {
     exit(-1);
   }
 
+  open_terminal(&master, &slave);
+
   forkres = fork();
-  if(forkres == 0) do_child();
-  else if(forkres > 0)  do_parent(forkres);
+  if(forkres == 0) do_child(master);
+  else if(forkres > 0)  do_parent(forkres, slave);
   else { /* Fork failed */
     perror("Unable to fork");
     exit(-1);

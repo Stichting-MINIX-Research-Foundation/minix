@@ -36,8 +36,8 @@
 #include <time.h>
 #include <assert.h>
 
-#define NAMEDPIPE1 "/tmp/selecttest03-1"
-#define NAMEDPIPE2 "/tmp/selecttest03-2"
+#define NAMEDPIPE1 "selecttestd-1"
+#define NAMEDPIPE2 "selecttestd-2"
 #define SENDSTRING "minixrocks"
 #define DO_HANDLEDATA 1
 #define DO_PAUSE 3

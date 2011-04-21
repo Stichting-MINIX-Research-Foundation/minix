@@ -11,19 +11,26 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+#define MAX_ERROR 5
+#include "common.c"
+
 int main(int argc, char **argv) {
   char *tests[] = {"t40a", "t40b", "t40c", "t40d", "t40e", "t40f"};
+  char copy_command[8+PATH_MAX+1];
   int no_tests, i, forkres, status = 0, errorct = 0;
 
   no_tests = sizeof(tests) / sizeof(char *);
   
-  printf("Test 40 ");
-  fflush(stdout);
+  start(40);
 
   for(i = 0; i < no_tests; i++) {
     char subtest[2];
-    sprintf(subtest, "%d", i+1);
+    snprintf(subtest, 2, "%d", i+1);
     
+    /* Copy subtest */
+    snprintf(copy_command, 8 + PATH_MAX, "cp ../%s .", tests[i]);
+    system(copy_command);
+
     forkres = fork();
     if(forkres == 0) { /* Child */
       execl(tests[i], tests[i], subtest, (char *) 0); 
@@ -40,13 +47,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  if(errorct == 0) {
-    printf("ok\n");
-    exit(0);
-  } else {
-    printf("%d error(s)\n", errorct);
-    exit(1);
-  }
+  quit();
   
   return (-1); /* Impossible */
 }
