@@ -15,7 +15,7 @@
 ##### "all" and "depend" targets
 realinstall: realall
 realall: depend
-depend: .gitignore
+depend: ${.CURDIR}/.gitignore
 
 ##### Basic targets
 realinstall:	proginstall scriptsinstall
@@ -392,7 +392,7 @@ memalloc: realall
 	${INSTALL} ${INSTALLFLAGS} ${PROG}
 .endif
 
-.gitignore: Makefile
-	echo $(CLEANFILES) $(PROGS) | tr ' ' '\n' >.gitignore
+${.CURDIR}/.gitignore: Makefile
+	echo $(CLEANFILES) $(PROGS) | tr ' ' '\n' >${.TARGET}
 
 .endif	# HOSTPROG
