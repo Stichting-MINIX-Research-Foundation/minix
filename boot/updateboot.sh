@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+MDEC=/usr/mdec
 BOOT=/boot/boot
 ROOT=`printroot -r`
 
@@ -20,8 +21,8 @@ fi
 make install || true
 
 echo Installing boot monitor into $BOOT.
-cp boot $BOOT
+cp $MDEC/boot $BOOT
 
 echo Patching position of $BOOT into $ROOT.
-installboot -d "$ROOT" /usr/mdec/bootblock $BOOT
+installboot -d "$ROOT" $MDEC/bootblock $BOOT
 sync

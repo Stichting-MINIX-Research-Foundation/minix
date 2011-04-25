@@ -167,7 +167,7 @@ RELEASEDIR=/usr/r-staging
 RELEASEMNTDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 
-IMAGE=../boot/cdbootblock
+IMAGE=../boot/cdbootblock/cdbootblock
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
@@ -528,7 +528,7 @@ fi
 if [ "$USB" -ne 0 ]; then
 	mv $bootimage $IMG
 else
-	cp ../boot/boot $CDFILES
+	cp ../boot/boot/boot $CDFILES
 	writeisofs -s0x0 -l MINIX -a boot -b $bootimage $boottype $CDFILES $IMG || exit 1
 
 	if [ "$HDEMU" -eq 0 ]
