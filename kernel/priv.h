@@ -43,7 +43,6 @@ struct priv {
   sigset_t s_sig_pending;	/* pending signals */
 
   timer_t s_alarm_timer;	/* synchronous alarm timer */ 
-  struct far_mem s_farmem[NR_REMOTE_SEGS];  /* remote memory map */
   reg_t *s_stack_guard;		/* stack guard word for kernel tasks */
 
   int s_nr_io_range;		/* allowed I/O ports */

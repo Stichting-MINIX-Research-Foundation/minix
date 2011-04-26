@@ -299,51 +299,6 @@ PRIVATE void vm_enable_paging(void)
 	write_cr4(cr4);
 }
 
-PUBLIC vir_bytes alloc_remote_segment(u32_t *selector,
-	segframe_t *segments, const int index, phys_bytes phys,
-	vir_bytes size, int priv)
-{
-	phys_bytes offset = 0;
-	/* Check if the segment size can be recorded in bytes, that is, check
-	 * if descriptor's limit field can delimited the allowed memory region
-	 * precisely. This works up to 1MB. If the size is larger, 4K pages
-	 * instead of bytes are used.
-	*/
-	if (size < BYTE_GRAN_MAX) {
-		init_dataseg(&segments->p_ldt[EXTRA_LDT_INDEX+index],
-			phys, size, priv);
-		*selector = ((EXTRA_LDT_INDEX+index)*0x08) | (1*0x04) | priv;
-		offset = 0;
-	} else {
-		init_dataseg(&segments->p_ldt[EXTRA_LDT_INDEX+index],
-			phys & ~0xFFFF, 0, priv);
-		*selector = ((EXTRA_LDT_INDEX+index)*0x08) | (1*0x04) | priv;
-		offset = phys & 0xFFFF;
-	}
-
-	return offset;
-}
-
-PUBLIC phys_bytes umap_remote(const struct proc* rp, const int seg,
-	const vir_bytes vir_addr, const vir_bytes bytes)
-{
-/* Calculate the physical memory address for a given virtual address. */
-  struct far_mem *fm;
-
-#if 0
-  if(rp->p_misc_flags & MF_FULLVM) return 0;
-#endif
-
-  if (bytes <= 0) return( (phys_bytes) 0);
-  if (seg < 0 || seg >= NR_REMOTE_SEGS) return( (phys_bytes) 0);
-
-  fm = &rp->p_priv->s_farmem[seg];
-  if (! fm->in_use) return( (phys_bytes) 0);
-  if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
-
-  return(fm->mem_phys + (phys_bytes) vir_addr);
-}
-
 /*===========================================================================*
  *                              umap_local                                   *
  *===========================================================================*/
@@ -729,7 +684,7 @@ vir_bytes bytes;		/* # of bytes to copy  */
 int vmcheck;			/* if nonzero, can return VMSUSPEND */
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. 
- * Virtual addresses can be in ABS, LOCAL_SEG, REMOTE_SEG, or BIOS_SEG.
+ * Virtual addresses can be in ABS, LOCAL_SEG, or BIOS_SEG.
  */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */
   phys_bytes phys_addr[2];	/* absolute source and destination */ 
@@ -779,13 +734,6 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 			type, p->p_name, seg_index, vir_addr[i]->offset,
 			bytes, i);
 	  }
-          break;
-      case REMOTE_SEG:
-	  if(!p) {
-		return EDEADSRCDST;
-	  }
-          seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
-          phys_addr[i] = umap_remote(p, seg_index, vir_addr[i]->offset, bytes);
           break;
 #if _MINIX_CHIP == _CHIP_INTEL
       case BIOS_SEG:
@@ -910,9 +858,7 @@ PUBLIC int data_copy_vmcheck(struct proc * caller,
  *===========================================================================*/
 PUBLIC void arch_pre_exec(struct proc *pr, const u32_t ip, const u32_t sp)
 {
-/* wipe extra LDT entries, set program counter, and stack pointer. */
-	memset(pr->p_seg.p_ldt + EXTRA_LDT_INDEX, 0,
-		sizeof(pr->p_seg.p_ldt[0]) * (LDT_SIZE - EXTRA_LDT_INDEX));
+/* set program counter and stack pointer. */
 	pr->p_reg.pc = ip;
 	pr->p_reg.sp = sp;
 }

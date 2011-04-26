@@ -12,7 +12,7 @@ phys_bytes bytes;		/* how many bytes */
 {
 /* Transfer a block of data.  The source and destination can each either be a
  * process number or SELF (to indicate own process number). Virtual addresses 
- * are offsets within LOCAL_SEG (text, stack, data), REMOTE_SEG, or BIOS_SEG. 
+ * are offsets within LOCAL_SEG (text, stack, data), or BIOS_SEG. 
  * Physicall addressing is also possible with PHYS_SEG.
  */
 

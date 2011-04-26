@@ -216,7 +216,6 @@ PUBLIC void system_init(void)
 
   /* Memory management. */
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
-  map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
   map(SYS_VMCTL, do_vmctl);		/* various VM process settings */
 

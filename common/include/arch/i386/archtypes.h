@@ -16,12 +16,11 @@ struct segdesc_s {		/* segment descriptor for protected mode */
   u8_t base_high;
 };
 
-#define LDT_SIZE (2 + NR_REMOTE_SEGS)   /* CS, DS and remote segments */
+#define LDT_SIZE 2	   /* CS and DS */
 
 /* Fixed local descriptors. */
 #define CS_LDT_INDEX         0  /* process CS */
 #define DS_LDT_INDEX         1  /* process DS=ES=FS=GS=SS */
-#define EXTRA_LDT_INDEX      2  /* first of the extra LDT entries */
 
 typedef struct segframe {
 	reg_t p_ldt_sel;    /* selector in gdt with ldt base and limit */

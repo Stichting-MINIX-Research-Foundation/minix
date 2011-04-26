@@ -86,7 +86,6 @@ SRCS=  \
 	sys_schedctl.c \
 	sys_schedule.c \
 	sys_sdevio.c \
-	sys_segctl.c \
 	sys_setalarm.c \
 	sys_setgrant.c \
 	sys_sigreturn.c \

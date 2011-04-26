@@ -1150,7 +1150,6 @@ struct
 	{ "PRIVCTL",		SYS_PRIVCTL },
 	{ "TRACE",		SYS_TRACE },
 	{ "KILL",		SYS_KILL },
-	{ "SEGCTL",		SYS_SEGCTL },
 	{ "UMAP",		SYS_UMAP },
 	{ "VIRCOPY",		SYS_VIRCOPY },
 	{ "PHYSCOPY",		SYS_PHYSCOPY },

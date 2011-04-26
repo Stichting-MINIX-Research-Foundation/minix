@@ -107,11 +107,6 @@ _PROTOTYPE( int do_privctl, (struct proc * caller, message *m_ptr) );
 #define do_privctl NULL
 #endif
 
-_PROTOTYPE( int do_segctl, (struct proc * caller, message *m_ptr) );
-#if ! USE_SEGCTL
-#define do_segctl NULL
-#endif
-
 _PROTOTYPE( int do_irqctl, (struct proc * caller, message *m_ptr) );
 #if ! USE_IRQCTL
 #define do_irqctl NULL

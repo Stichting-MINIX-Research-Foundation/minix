@@ -329,7 +329,6 @@
 #  define SYS_SIGRETURN  (KERNEL_CALL + 10)	/* sys_sigreturn() */
 
 #  define SYS_NEWMAP     (KERNEL_CALL + 11)	/* sys_newmap() */
-#  define SYS_SEGCTL     (KERNEL_CALL + 12)	/* sys_segctl() */
 #  define SYS_MEMSET     (KERNEL_CALL + 13)	/* sys_memset() */
 
 #  define SYS_UMAP       (KERNEL_CALL + 14)	/* sys_umap() */
@@ -440,13 +439,6 @@
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
 #define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
-
-/* Field names for SYS_SEGCTL. */
-#define SEG_SELECT	m4_l1   /* segment selector returned */ 
-#define SEG_OFFSET	m4_l2	/* offset in segment returned */
-#define SEG_PHYS	m4_l3	/* physical address of segment */
-#define SEG_SIZE	m4_l4	/* segment size */
-#define SEG_INDEX	m4_l5	/* segment index in remote map */
 
 /* Field names for SYS_ABORT. */
 #define ABRT_HOW	m1_i1	/* RBT_REBOOT, RBT_HALT, etc. */

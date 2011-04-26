@@ -46,11 +46,6 @@ PUBLIC int do_umap(struct proc * caller, message * m_ptr)
       if(!lin_addr) return EFAULT;
       naughty = 1;
       break;
-  case REMOTE_SEG:
-      phys_addr = lin_addr = umap_remote(targetpr, seg_index, offset, count); 
-      if(!lin_addr) return EFAULT;
-      naughty = 1;
-      break;
   case LOCAL_VM_SEG:
     if(seg_index == MEM_GRANT) {
 	vir_bytes newoffset;

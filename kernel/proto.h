@@ -176,15 +176,11 @@ _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
 _PROTOTYPE( void vm_stop, (void)        				);
 _PROTOTYPE( phys_bytes umap_local, (register struct proc *rp, int seg,
 	vir_bytes vir_addr, vir_bytes bytes));
-_PROTOTYPE( phys_bytes umap_remote, (const struct proc* rp, int seg,
-        vir_bytes vir_addr, vir_bytes bytes)				);
 _PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp,
 			int seg, vir_bytes vir_addr, vir_bytes bytes)	);
 _PROTOTYPE( phys_bytes seg2phys, (u16_t)                                );
 _PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
                 phys_bytes count)                                       );
-_PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
-        int, phys_bytes, vir_bytes, int));
 _PROTOTYPE( int intr_init, (int, int)					);
 _PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );

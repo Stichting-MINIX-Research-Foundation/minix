@@ -63,11 +63,7 @@
 #define D                  1	/* proc[i].mem_map[D] is for data */
 #define S                  2	/* proc[i].mem_map[S] is for stack */
 
-#define REMOTE_SEG    0x0100	/* flags indicating remote memory segment */
-#define NR_REMOTE_SEGS     3    /* # remote memory regions (variable) */
-
 #define BIOS_SEG      0x0200	/* flags indicating BIOS memory segment */
-#define NR_BIOS_SEGS       3    /* # BIOS memory regions (variable) */
 
 #define PHYS_SEG      0x0400	/* flag indicating entire physical memory */
 

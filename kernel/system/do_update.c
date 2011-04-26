@@ -152,7 +152,6 @@ PRIVATE void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
   privp->s_int_pending = from_privp->s_int_pending;
   privp->s_sig_pending = from_privp->s_sig_pending;
   privp->s_alarm_timer = from_privp->s_alarm_timer;
-  memcpy(privp->s_farmem, from_privp->s_farmem, sizeof(privp->s_farmem));
 }
 
 /*===========================================================================*

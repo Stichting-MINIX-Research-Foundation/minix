@@ -5,8 +5,6 @@
 #include <machine/interrupt.h>
 #include <machine/memory.h>
 
-#define NR_REMOTE_SEGS     3    /* # remote memory regions (variable) */
-
 /* Constants for protected mode. */
 
 /* Table sizes. */
