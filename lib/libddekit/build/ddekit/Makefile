@@ -10,6 +10,10 @@ SRCS = pci.c printf.c mem.c pgtab.c dde.c initcall.c thread.c condvar.c lock.c s
 
 CFLAGS +=  -Wall 
 
+.if ${NBSD_LIBC} != "no"
+CFLAGS += -D_NETBSD_SOURCE
+.endif
+
 .endif
 .include <bsd.lib.mk>
 

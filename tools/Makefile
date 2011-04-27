@@ -1,4 +1,6 @@
 # Makefile for the kernel image.
+.include <bsd.own.mk>
+.include "nbsd.config"
 
 u=/usr
 MDEC=	/usr/mdec
@@ -34,6 +36,8 @@ usage:
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
 	@echo "	make fdboot     # Make image, and install to floppy disk" >&2
 	@echo "	make bootable   # Make hard disk bootable" >&2
+	@echo "	make nbsd_fetch	# Download current NetBSD reference sources" >&2
+	@echo "	make nbsd_diff	# Update minix-port.patch in NetBSD sources" >&2
 	@echo "	make clean      # Remove all compiler results, except libs" >&2
 	@echo " " >&2
 	@echo "To create a fresh MINIX configuration, try:" >&2
@@ -99,6 +103,16 @@ fdboot:	image
 	@sync
 
 install: includes services hdboot
+
+# download and update NetBSD reference sources.
+nbsd_fetch:
+	cd ${MINIXSRCDIR} && awk '{print $$2;}' < tools/nbsd_ports \
+		| xargs -t cvs -d ${NBSD_CVSROOT} co -N -d nbsdsrc ${NBSD_REF}
+
+nbsd_diff:
+	cd ${MINIXSRCDIR} && awk '{ system("sh tools/nbsd_diff.sh " \
+	   "nbsdsrc/"$$2" "$$1" "$$1"/minix-port.patch");}' < tools/nbsd_ports
+
 
 # clean up compile results
 clean:

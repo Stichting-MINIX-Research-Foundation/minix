@@ -65,7 +65,11 @@ SRCS+=  minix_utils.c
 .endif
 
 CPPFLAGS+= -DHAVE_CONFIG_H
+.if (${NBSD_LIBC} != "no")
+INCSDIR= /usr/netbsd/include
+.else
 INCSDIR= /usr/include
+.endif
 INCS=    archive.h \
 		 archive_entry.h
 

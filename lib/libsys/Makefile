@@ -1,4 +1,5 @@
 # Makefile for libsys
+.include <bsd.own.mk>
 
 LIB=		sys
 
@@ -127,5 +128,9 @@ SRCS=  \
 	vprintf.c \
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
+
+.if (${NBSD_LIBC} != "no")
+.include "Makefile.libc.inc"
+.endif
 
 .include <bsd.lib.mk>

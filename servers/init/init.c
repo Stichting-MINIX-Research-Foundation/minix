@@ -29,11 +29,16 @@
 #include <unistd.h>
 #include <utmp.h>
 
+#ifdef __NBSD_LIBC
+/* Different ttyent structure. */
+struct ttyent TT_REBOOT = { "console", "shutdown -d now CTRL-ALT_DEL", "-"};
+#else
 /* Command to execute as a response to the three finger salute. */
 char *REBOOT_CMD[] =	{ "shutdown", "-d", "now", "CTRL-ALT-DEL", NULL };
 
 /* Associated fake ttytab entry. */
 struct ttyent TT_REBOOT = { "console", "-", REBOOT_CMD, NULL };
+#endif
 
 char PATH_UTMP[] = "/etc/utmp";		/* current logins */
 char PATH_WTMP[] = "/usr/adm/wtmp";	/* login/logout history */
@@ -59,6 +64,9 @@ void report(int fd, char *label);
 void wtmp(int type, int linenr, char *line, pid_t pid);
 void startup(int linenr, struct ttyent *ttyp);
 int execute(char **cmd);
+#ifdef __NBSD_LIBC
+char **construct_argv(char *cmd);
+#endif
 void onhup(int sig);
 void onterm(int sig);
 void onabrt(int sig);
@@ -183,7 +191,13 @@ int main(void)
 			if ((ttyp = getttyent()) == NULL) break;
 
 			if (ttyp->ty_getty != NULL
+#ifdef __NBSD_LIBC
+				/* ty_getty is a string, and TTY_ON is
+				 * the way to check for enabled ternimanls. */
+				&& (ttyp->ty_status & TTY_ON)
+#else
 				&& ttyp->ty_getty[0] != NULL
+#endif
 				&& slotp->pid == NO_PID
 				&& slotp->errct < ERRCT_DISABLE)
 			{
@@ -224,6 +238,9 @@ void startup(int linenr, struct ttyent *ttyp)
   int err[2];				/* error reporting pipe */
   char line[32];			/* tty device name */
   int status;
+#ifdef __NBSD_LIBC
+  char **ty_getty_argv;
+#endif
 
   slotp = &slots[linenr];
 
@@ -256,6 +273,9 @@ void startup(int linenr, struct ttyent *ttyp)
 		_exit(1);
 	}
 
+#ifdef __NBSD_LIBC
+	/* ty_init not present. */
+#else
 	if (ttyp->ty_init != NULL && ttyp->ty_init[0] != NULL) {
 		/* Execute a command to initialize the terminal line. */
 
@@ -285,16 +305,31 @@ void startup(int linenr, struct ttyent *ttyp)
 			_exit(1);
 		}
 	}
+#endif
 
 	/* Redirect standard error too. */
 	dup2(0, 2);
 
+#ifdef __NBSD_LIBC
+	/* Construct argv for execute() */
+	ty_getty_argv = construct_argv(ttyp->ty_getty);
+	if (ty_getty_argv == NULL)
+		report(2, "construct_argv");
+
+	/* Execute the getty process. */
+	execute(ty_getty_argv);
+#else
 	/* Execute the getty process. */
 	execute(ttyp->ty_getty);
+#endif
 
 	/* Oops, disaster strikes. */
 	fcntl(2, F_SETFL, fcntl(2, F_GETFL) | O_NONBLOCK);
+#ifdef __NBSD_LIBC
+	if (linenr != 0) report(2, ty_getty_argv[0]);
+#else
 	if (linenr != 0) report(2, ttyp->ty_getty[0]);
+#endif
 	write(err[1], &errno, sizeof(errno));
 	_exit(1);
   }
@@ -446,6 +481,25 @@ pid_t pid;			/* pid of process */
 	if (fd != -1) close(fd);
 	break;
   }
+}
+
+char **
+construct_argv(char *cmd)
+{
+	int argc = 0;
+	static const char sep[] = " \t";
+	char **argv = malloc(((strlen(cmd) + 1) / 2 + 1) * sizeof (char *));
+
+	if (argv == NULL)
+		return NULL;
+
+	if ((argv[argc++] = strtok(cmd, sep)) == 0) {
+		free(argv);
+		return NULL;
+	}
+	while ((argv[argc++] = strtok(NULL, sep)) != NULL)
+		continue;
+	return argv;
 }
 
 void tell(fd, s)

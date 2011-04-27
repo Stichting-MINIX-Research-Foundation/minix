@@ -11,8 +11,8 @@ INCS+= ioc_net.h statfs.h
 
 INCS+=	ansi.h atomic.h \
 	bitops.h bswap.h \
-	cdefs.h cdefs_aout.h ctype_bits.h ctype_inline.h \
-	dir.h dirent.h \
+	cdefs.h cdefs_aout.h cdefs_elf.h ctype_bits.h ctype_inline.h \
+	dir.h dirent.h exec_elf.h \
 	endian.h errno.h \
 	fcntl.h fd_set.h featuretest.h file.h \
 	float_ieee754.h gcq.h gmon.h hash.h \
@@ -38,17 +38,17 @@ INCS+=	ansi.h atomic.h \
 	wait.h
 
 INCSYMLINKS=\
-	${NETBSDINCSDIR}/sys/fcntl.h ${NETBSDINCSDIR}/fcntl.h \
-	${NETBSDINCSDIR}/sys/poll.h ${NETBSDINCSDIR}/poll.h \
-	${NETBSDINCSDIR}/sys/stdint.h ${NETBSDINCSDIR}/stdint.h \
-	${NETBSDINCSDIR}/sys/syslog.h ${NETBSDINCSDIR}/syslog.h \
-	${NETBSDINCSDIR}/sys/termios.h ${NETBSDINCSDIR}/termios.h \
-	${NETBSDINCSDIR}/sys/rmd160.h ${NETBSDINCSDIR}/rmd160.h \
-	${NETBSDINCSDIR}/sys/sha1.h ${NETBSDINCSDIR}/sha1.h \
-	${NETBSDINCSDIR}/sys/sha2.h ${NETBSDINCSDIR}/sha2.h \
-	${NETBSDINCSDIR}/sys/md4.h ${NETBSDINCSDIR}/md4.h \
-	${NETBSDINCSDIR}/sys/md5.h ${NETBSDINCSDIR}/md5.h
-#	sys/exec_elf.h /usr/include/elf.h \
+	sys/fcntl.h ${NETBSDINCSDIR}/fcntl.h \
+	sys/poll.h ${NETBSDINCSDIR}/poll.h \
+	sys/stdint.h ${NETBSDINCSDIR}/stdint.h \
+	sys/syslog.h ${NETBSDINCSDIR}/syslog.h \
+	sys/termios.h ${NETBSDINCSDIR}/termios.h \
+	sys/rmd160.h ${NETBSDINCSDIR}/rmd160.h \
+	sys/sha1.h ${NETBSDINCSDIR}/sha1.h \
+	sys/sha2.h ${NETBSDINCSDIR}/sha2.h \
+	sys/md4.h ${NETBSDINCSDIR}/md4.h \
+	sys/md5.h ${NETBSDINCSDIR}/md5.h \
+	sys/exec_elf.h ${NETBSDINCSDIR}/elf.h \
 
 
 #INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h

@@ -81,7 +81,7 @@ extern char nullstr[1];		/* null string */
 #define TRACE(param)
 #endif
 
-#ifdef __minix
+#if defined(__minix) && !defined(__NBSD_LIBC)
 typedef long quad_t;		/* XXX */
 typedef unsigned long u_quad_t;	/* XXX */
 #endif

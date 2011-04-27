@@ -74,6 +74,7 @@ PUBLIC int Printf(const char *format, ...)
 {
 	va_list ap;
 	int retval;
+#ifndef __NBSD_LIBC
 	FILE tmp_stream;
 
 	va_start(ap, format);
@@ -86,7 +87,11 @@ PUBLIC int Printf(const char *format, ...)
 
 	retval = _doprnt(format, ap, &tmp_stream);
 	putc('\0',&tmp_stream);
+#else
+	va_start(ap, format);
 
+	retval = vsnprintf(outbuf, OUTBUFSIZE, format, ap);
+#endif
 	va_end(ap);
 
         outstr(outbuf);

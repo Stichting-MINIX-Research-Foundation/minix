@@ -26,6 +26,10 @@ static const char version[] = "2.7";
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/asynchio.h>
+#ifdef __NBSD_LIBC
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#endif
 #include <net/hton.h>
 #include <net/netlib.h>
 #include <net/gen/in.h>
@@ -42,6 +46,13 @@ static const char version[] = "2.7";
 #include <net/gen/dhcp.h>
 
 #include <paths.h>
+
+#ifdef __NBSD_LIBC
+#undef HTONL
+#undef HTONS
+#define HTONL htonl
+#define HTONS htons
+#endif
 
 #define HTTL	  	3600L	/* Default time to live for /etc/hosts data. */
 #define SHORT_TIMEOUT	   2	/* If you expect an answer soon. */
@@ -133,8 +144,8 @@ static char *nowgmt(void)
 #define namencmp(n1, n2, len)	strncasecmp(PC(n1), PC(n2), len)
 
 typedef struct dns {		/* A DNS packet. */
-	dns_hdr_t	hdr;		/* DNS header. */
-	u8_t		data[PACKETSZ - sizeof(dns_hdr_t)];	/* DNS data. */
+	HEADER		hdr;		/* DNS header. */
+	u8_t		data[PACKETSZ - sizeof(HEADER)];	/* DNS data. */
 } dns_t;
 
 /* Addres of DNS packet to octet address, or vv. */
@@ -344,12 +355,25 @@ static void dns_tell(int indent, dns_t *dp, size_t size)
 	"NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN", "NOTIMP", "REFUSED"
     };
 
-    if (size < sizeof(dns_hdr_t)) return;
+    if (size < sizeof(HEADER)) return;
 
     printf("%*s", indent, "");
+#ifdef __NBSD_LIBC
+    printf("DNS %s:", (dp->hdr.qr) ? "reply" : "query");
+    r = dp->hdr.rcode;
+#else
     printf("DNS %s:", (dp->hdr.dh_flag1 & DHF_QR) ? "reply" : "query");
     r= dp->hdr.dh_flag2 & DHF_RCODE;
+#endif
     printf(" %s", r < arraysize(rcodes) ? rcodes[r] : itoa("ERR_%lu", r));
+#ifdef __NBSD_LIBC
+    if (dp->hdr.aa) printf(" AA");
+    if (dp->hdr.tc) printf(" TC");
+    if (dp->hdr.rd) printf(" RD");
+    if (dp->hdr.ra) printf(" RA");
+    if (dp->hdr.ad) printf(" AD");
+    if (dp->hdr.cd) printf(" CD");
+#else
     if (dp->hdr.dh_flag1 & DHF_AA) printf(" AA");
     if (dp->hdr.dh_flag1 & DHF_TC) printf(" TC");
     if (dp->hdr.dh_flag1 & DHF_RD) printf(" RD");
@@ -357,6 +381,7 @@ static void dns_tell(int indent, dns_t *dp, size_t size)
 #ifdef DHF_AD
     if (dp->hdr.dh_flag2 & DHF_AD) printf(" AD");
     if (dp->hdr.dh_flag2 & DHF_CD) printf(" CD");
+#endif
 #endif
     fputc('\n', stdout);
 
@@ -394,9 +419,13 @@ static u32_t dns_ttl(dns_t *dp, size_t size, u32_t delta)
     hasttl= hassoa= 0;
     minttl= 365*24*3600L;
     dlim= dns2oct(dp) + size;
-    if (size < sizeof(dns_hdr_t)) return 0;
+    if (size < sizeof(HEADER)) return 0;
 
+#ifdef __NBSD_LIBC
+    rcode= dp->hdr.rcode;
+#else
     rcode= dp->hdr.dh_flag2 & DHF_RCODE;
+#endif
     count[0]= ntohs(dp->hdr.dh_qdcount);
     count[1]= ntohs(dp->hdr.dh_ancount);
     count[2]= ntohs(dp->hdr.dh_nscount);
@@ -898,8 +927,21 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
     if (single) return 0;
 
     /* Assume we can answer. */
+#ifdef __NBSD_LIBC
+    dns.hdr.qr = 1;
+    dns.hdr.opcode = 0;
+    dns.hdr.aa = 1;
+    dns.hdr.tc = 0;
+    dns.hdr.rd = 0;
+    dns.hdr.ra = 1;
+    dns.hdr.unused = 0;
+    dns.hdr.ad = 0;
+    dns.hdr.cd = 0;
+    dns.hdr.rcode = 0;
+#else
     dns.hdr.dh_flag1= DHF_QR | DHF_AA;
     dns.hdr.dh_flag2= DHF_RA;
+#endif
     dns.hdr.dh_qdcount= HTONS(1);
     ancount= 0;
     dns.hdr.dh_nscount= HTONS(0);
@@ -1035,8 +1077,21 @@ static int query_chaos(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
 
     if (type != HTONS(T_TXT) || namecmp(qname, "version.bind") != 0) return 0;
 
+#ifdef __NBSD_LIBC
+    dns.hdr.qr = 1;
+    dns.hdr.opcode = 0;
+    dns.hdr.aa = 1;
+    dns.hdr.tc = 0;
+    dns.hdr.rd = 0;
+    dns.hdr.ra = 1;
+    dns.hdr.unused = 0;
+    dns.hdr.ad = 0;
+    dns.hdr.cd = 0;
+    dns.hdr.rcode = 0;
+#else
     dns.hdr.dh_flag1= DHF_QR | DHF_AA;
     dns.hdr.dh_flag2= DHF_RA;
+#endif
     dns.hdr.dh_qdcount= HTONS(1);
     dns.hdr.dh_ancount= HTONS(1);
     dns.hdr.dh_nscount= HTONS(0);
@@ -1104,7 +1159,11 @@ static void cache_reply(dns_t *dp, size_t dlen)
     u8_t name[MAXDNAME];
     u32_t minttl;
 
+#if __NBSD_LIBC
+    if ((dp->hdr.rd && !dp->hdr.tc)) return;
+#else
     if ((dp->hdr.dh_flag1 & (DHF_RD | DHF_TC)) != DHF_RD) return;
+#endif
     if (dp->hdr.dh_qdcount != HTONS(1)) return;
     cp= dp->data;
     r= dn_expand(dns2oct(dp), dns2oct(dp) + dlen, cp, name, MAXDNAME);
@@ -1188,14 +1247,27 @@ static int compose_reply(dns_t *dp, size_t *pdlen)
 
     /* Remember ID and RD. */
     id= dp->hdr.dh_id;
+#ifdef __NBSD_LIBC
+    rd= dp->hdr.rd;
+#else
     rd= dp->hdr.dh_flag1 & DHF_RD;
+#endif
 
     if (r == -1) {
 	/* Malformed query, reply "FORMERR". */
+#ifdef __NBSD_LIBC
+	dp->hdr.tc = 0;
+	dp->hdr.qr = 1;
+	dp->hdr.aa = 1;
+	dp->hdr.unused = 0;
+	dp->hdr.ra = 1;
+	dp->hdr.rcode = FORMERR;
+#else
 	dp->hdr.dh_flag1 &= ~(DHF_TC);
 	dp->hdr.dh_flag1 |= DHF_QR | DHF_AA;
 	dp->hdr.dh_flag2 &= ~(DHF_UNUSED | DHF_RCODE);
 	dp->hdr.dh_flag2 |= DHF_RA | FORMERR;
+#endif
     } else
     if (class == HTONS(C_IN) && query_hosts(name, type, dp, pdlen)) {
 	/* Answer to this query is in the hosts file. */
@@ -1204,7 +1276,11 @@ static int compose_reply(dns_t *dp, size_t *pdlen)
     if (class == HTONS(C_IN) && (qp= get_query(name, type)) != nil) {
 	/* Answer to this query is present in the cache. */
 	memcpy(dp, &qp->dns, dlen= qp->size);
+#ifdef __NBSD_LIBC
+	dp->hdr.aa = 1;
+#else
 	dp->hdr.dh_flag1 &= ~DHF_AA;
+#endif
 	(void) dns_ttl(dp, dlen, now - qp->age);
 	if (rd) {
 	    if (qp->stale <= now) {
@@ -1223,17 +1299,34 @@ static int compose_reply(dns_t *dp, size_t *pdlen)
 	/* No real name daemon present, or this name has a repeated top level
 	 * domain sequence.  Reply "no such domain".
 	 */
+#ifdef __NBSD_LIBC
+	dp->hdr.tc = 0;
+	dp->hdr.qr = 1;
+	dp->hdr.aa = 1;
+	dp->hdr.unused = 0;
+	dp->hdr.ra = 1;
+	dp->hdr.rcode = NXDOMAIN;
+#else
 	dp->hdr.dh_flag1 &= ~(DHF_TC);
 	dp->hdr.dh_flag1 |= DHF_QR | DHF_AA;
 	dp->hdr.dh_flag2 &= ~(DHF_UNUSED | DHF_RCODE);
 	dp->hdr.dh_flag2 |= DHF_RA | NXDOMAIN;
+#endif
     } else
     if (!rd) {
 	/* "Recursion Desired" is off, so don't bother to relay. */
+#ifdef __NBSD_LIBC
+	dp->hdr.tc = 0;
+	dp->hdr.qr = 1;
+	dp->hdr.unused = 0;
+	dp->hdr.ra = 1;
+	dp->hdr.rcode = NOERROR;
+#else
 	dp->hdr.dh_flag1 &= ~(DHF_TC);
 	dp->hdr.dh_flag1 |= DHF_QR;
 	dp->hdr.dh_flag2 &= ~(DHF_UNUSED | DHF_RCODE);
 	dp->hdr.dh_flag2 |= DHF_RA | NOERROR;
+#endif
     } else {
 	/* Caller needs to consult with a real name daemon. */
 	return 0;
@@ -1241,8 +1334,12 @@ static int compose_reply(dns_t *dp, size_t *pdlen)
 
     /* Copy ID and RD back to answer. */
     dp->hdr.dh_id= id;
+#ifdef __NBSD_LIBC
+    dp->hdr.rd = rd;
+#else
     dp->hdr.dh_flag1 &= ~DHF_RD;
     dp->hdr.dh_flag1 |= rd;
+#endif
     *pdlen= dlen;
     return 1;
 }
@@ -1295,8 +1392,22 @@ static void refresh_cache(void)
     dlen= cp - dns2oct(&udp.dns);
 
     udp.dns.hdr.dh_id= new_id(ID_REFRESH, my_port, ID_IPSELF);
+#ifdef __NBSD_LIBC
+    udp.dns.hdr.qr = 0;
+    udp.dns.hdr.opcode = 0;
+    udp.dns.hdr.aa = 0;
+    udp.dns.hdr.tc = 0;
+    udp.dns.hdr.rd = 1;
+
+    udp.dns.hdr.ra = 0;
+    udp.dns.hdr.unused = 0;
+    udp.dns.hdr.ad = 0;
+    udp.dns.hdr.cd = 0;
+    udp.dns.hdr.rcode = 0;
+#else
     udp.dns.hdr.dh_flag1= DHF_RD;
     udp.dns.hdr.dh_flag2= 0;
+#endif
     udp.dns.hdr.dh_qdcount= HTONS(1);
     udp.dns.hdr.dh_ancount= HTONS(0);
     udp.dns.hdr.dh_nscount= HTONS(0);
@@ -1348,7 +1459,7 @@ static int job_read_udp(void *data, int expired)
     /* Restart this job no matter what. */
     newjob(job_read_udp, NEVER, nil);
 
-    if (ulen < (ssize_t) (sizeof(udp_io_hdr_t) + sizeof(dns_hdr_t))) return 1;
+    if (ulen < (ssize_t) (sizeof(udp_io_hdr_t) + sizeof(HEADER))) return 1;
 
     if (debug >= 1) {
 	printf("%s:%u UDP ", inet_ntoa(udp.hdr.uih_src_addr),
@@ -1359,7 +1470,13 @@ static int job_read_udp(void *data, int expired)
     /* Check, and if necessary reinitialize my configuration. */
     init_config(udp.hdr.uih_dst_addr);
 
-    if (udp.dns.hdr.dh_flag1 & DHF_QR) {
+    if (
+#ifdef __NBSD_LIBC
+	udp.dns.hdr.qr
+#else
+	udp.dns.hdr.dh_flag1 & DHF_QR
+#endif
+				      ) {
 	/* This is a remote named reply, not a query. */
 
 	/* Response to a query previously relayed? */
@@ -1918,8 +2035,21 @@ static void named_probe(ipaddr_t ip)
      * "What are the name servers for the root domain?"
      */
     udp.dns.hdr.dh_id= new_id(ID_PROBE, my_port, ID_IPSELF);
+#ifdef __NBSD_LIBC
+    udp.dns.hdr.qr = 0;
+    udp.dns.hdr.opcode = 0;
+    udp.dns.hdr.aa = 0;
+    udp.dns.hdr.tc = 0;
+    udp.dns.hdr.rd = 0;
+    udp.dns.hdr.ra = 0;
+    udp.dns.hdr.unused = 0;
+    udp.dns.hdr.ad = 0;
+    udp.dns.hdr.cd = 0;
+    udp.dns.hdr.rcode = 0;
+#else
     udp.dns.hdr.dh_flag1= 0;
     udp.dns.hdr.dh_flag2= 0;
+#endif
     udp.dns.hdr.dh_qdcount= HTONS(1);
     udp.dns.hdr.dh_ancount= HTONS(0);
     udp.dns.hdr.dh_nscount= HTONS(0);

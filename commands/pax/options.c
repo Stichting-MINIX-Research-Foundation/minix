@@ -68,6 +68,10 @@ static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
  * Routines which handle command line options
  */
 
+#ifdef __NBSD_LIBC
+#define getline pax_getline
+#endif
+
 static char flgch[] = FLGCH;	/* list of all possible flags */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */

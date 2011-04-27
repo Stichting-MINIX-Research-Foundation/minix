@@ -62,11 +62,10 @@ __FBSDID("$FreeBSD: src/bin/sh/trap.c,v 1.29 2004/04/06 20:06:51 markm Exp $");
 #endif
 #include "builtins.h"
 
-#ifdef __minix
+#if defined(__minix) && !defined(__NBSD_LIBC)
 #define NO_SIGINTERRUPT
 #define NO_SYS_SIGNAME
 #define NO_SYS_SIGLIST
-
 #endif
 
 typedef void (*sig_T)(int);
@@ -560,7 +559,7 @@ int sig;
 static char *strsigname(sig)
 int sig;
 {
-	return sys_signame[sig];
+	return (char *)sys_signame[sig];
 }
 #endif
 
@@ -577,7 +576,7 @@ int sig;
 char *strsiglist(sig)
 int sig;
 {
-	return sys_siglist[sig];
+	return (char *)sys_siglist[sig];
 }
 #endif
 

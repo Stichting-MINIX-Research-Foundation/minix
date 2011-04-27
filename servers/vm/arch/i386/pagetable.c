@@ -56,7 +56,7 @@ struct vmproc *vmprocess = &vmproc[VM_PROC_NR];
 int missing_spares = SPAREPAGES;
 PRIVATE struct {
 	void *page;
-	u32_t phys;
+	phys_bytes phys;
 } sparepages[SPAREPAGES];
 
 #define MAX_KERNMAPPINGS 10
@@ -86,7 +86,8 @@ int kernmappings = 0;
 #define CLICK2PAGE(c) ((c) / CLICKSPERPAGE)
 
 /* Page table that contains pointers to all page directories. */
-u32_t page_directories_phys, *page_directories = NULL;
+phys_bytes page_directories_phys;
+u32_t *page_directories = NULL;
 
 #define STATIC_SPAREPAGES 10
 
@@ -225,7 +226,7 @@ PRIVATE void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 /*===========================================================================*
  *				vm_getsparepage		     		     *
  *===========================================================================*/
-PRIVATE void *vm_getsparepage(u32_t *phys)
+PRIVATE void *vm_getsparepage(phys_bytes *phys)
 {
 	int s;
 	assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
@@ -428,7 +429,7 @@ PRIVATE int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 {
 /* Allocate a page table and write its address into the page directory. */
 	int i;
-	u32_t pt_phys;
+	phys_bytes pt_phys;
 
 	/* Argument must make sense. */
 	assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
@@ -737,7 +738,8 @@ PUBLIC int pt_writemap(struct vmproc * vmp,
 				printf("pt_writemap: mismatch: ");
 				if((entry & I386_VM_ADDR_MASK) !=
 					(maskedentry & I386_VM_ADDR_MASK)) {
-					printf("pt_writemap: physaddr mismatch (0x%lx, 0x%lx); ", entry, maskedentry);
+					printf("pt_writemap: physaddr mismatch (0x%lx, 0x%lx); ",
+						(long)entry, (long)maskedentry);
 				} else printf("phys ok; ");
 				printf(" flags: found %s; ",
 					ptestr(pt->pt_pt[pde][pte]));
@@ -832,7 +834,7 @@ PUBLIC int pt_new(pt_t *pt)
 	 * the page directories (the page_directories data).
 	 */
         if(!pt->pt_dir &&
-          !(pt->pt_dir = vm_allocpage(&pt->pt_dir_phys, VMP_PAGEDIR))) {
+          !(pt->pt_dir = vm_allocpage((phys_bytes *)&pt->pt_dir_phys, VMP_PAGEDIR))) {
 		return ENOMEM;
 	}
 
@@ -1071,9 +1073,12 @@ PUBLIC void pt_init_mem()
  * shared with the kernel and VM's page tables are mapped above the stack,
  * so that we can easily transfer existing mappings for new VM instances.
  */
-        u32_t new_page_directories_phys, *new_page_directories;
-        u32_t new_pt_dir_phys, *new_pt_dir;
-        u32_t new_pt_phys, *new_pt; 
+        phys_bytes new_page_directories_phys;
+	u32_t *new_page_directories;
+        phys_bytes new_pt_dir_phys;
+	u32_t *new_pt_dir;
+        phys_bytes new_pt_phys;
+	u32_t *new_pt; 
         pt_t *vmpt;
         int i;
 

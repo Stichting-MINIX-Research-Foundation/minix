@@ -447,6 +447,10 @@ char *cxsize(struct file *f)
 static int (*CMP)(struct file *f1, struct file *f2);
 static int (*rCMP)(struct file *f1, struct file *f2);
 
+#ifdef __NBSD_LIBC
+#define mergesort _ls_mergesort
+#endif
+
 static void mergesort(struct file **al)
 /* This is either a stable mergesort, or thermal noise, I'm no longer sure.
  * It must be called like this: if (L != nil && L->next != nil) mergesort(&L);

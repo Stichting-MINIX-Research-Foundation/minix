@@ -94,6 +94,12 @@
 #define   K		1024		/*  STD_BLK		*/
 #define   K_MASK	(~(K-1))	/*  Round to K boundary	*/
 #define   K_SHIFT	10		/*  Ie. 1<<10 = K	*/
+#ifdef __NBSD_LIBC
+/* Name pollution with more famous macros describing machine's
+ * page size. These defs should be renamed. */
+#undef    PAGE_MASK
+#undef    PAGE_SHIFT
+#endif /* __NBSD_LIBC */
 #define   PAGE_MASK	0x1f		/*  Word mode: 32 bytes	*/
 #define   PAGE_SHIFT    5		/*  Ie. 1<<5 = 32	*/
 #define   MAP_BITS_PER_BLOCK (8 * K)    /*  1k block, 8192 bits */

@@ -24,6 +24,10 @@ int cflag = 0;
 int fields = 0;
 int chars = 0;
 
+#ifdef __NBSD_LIBC
+#define getline unix_getline
+#endif
+
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(FILE *xfopen, (char *fn, char *mode));
 _PROTOTYPE(char *skip, (char *s));

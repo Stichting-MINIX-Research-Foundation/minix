@@ -5,7 +5,7 @@
 /*===========================================================================*
  *				procfs_getloadavg			     *
  *===========================================================================*/
-PUBLIC int procfs_getloadavg(double *loadavg, int nelem)
+PUBLIC int procfs_getloadavg(struct load *loadavg, int nelem)
 {
 	/* Retrieve system load average information.
 	 */
@@ -34,9 +34,9 @@ PUBLIC int procfs_getloadavg(double *loadavg, int nelem)
 
 	for(p = 0; p < nelem; p++) {
 		int h, slots;
-		double l = 0.0;
 		int latest = loadinfo.proc_last_slot;
 		slots = minutes[p] * 60 / _LOAD_UNIT_SECS;
+		loadavg[p].proc_load = 0;
 
 		/* Add up the total number of process ticks for this number
 		 * of minutes (minutes[p]). Start with the newest slot, which
@@ -48,6 +48,8 @@ PUBLIC int procfs_getloadavg(double *loadavg, int nelem)
 		for(h = 0; h < slots; h++) {
 			int slot;
 			slot = (latest - h + _LOAD_HISTORY) % _LOAD_HISTORY;
+			loadavg[p].proc_load +=
+				 loadinfo.proc_load_history[slot];
 			l += (double) loadinfo.proc_load_history[slot];
 		}
 
@@ -56,7 +58,7 @@ PUBLIC int procfs_getloadavg(double *loadavg, int nelem)
 		 * counting the number of ticks the last slot hasn't been
 		 * around yet.
 		 */
-		loadavg[p] = l / (slots * ticks_per_slot - unfilled_ticks);
+		loadavg[p].ticks = slots * ticks_per_slot - unfilled_ticks;
 	}
 
 	return nelem;

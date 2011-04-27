@@ -543,7 +543,11 @@ PUBLIC int do_svrctl()
 
 extern char *_brksize;
 PUBLIC int brk(brk_addr)
+#ifdef __NBSD_LIBC
+void *brk_addr;
+#else
 char *brk_addr;
+#endif
 {
 	int r;
 /* PM wants to call brk() itself. */

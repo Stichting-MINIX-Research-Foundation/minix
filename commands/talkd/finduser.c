@@ -31,7 +31,11 @@ struct utmp utmp;
 
    while(read(fd, &utmp, sizeof(struct utmp)) == sizeof(struct utmp)) {
 	if(utmp.ut_type != USER_PROCESS) continue;
+#ifdef __NBSD_LIBC
+	if(strncmp(utmp.ut_name, name, sizeof(utmp.ut_name))) continue;
+#else
 	if(strncmp(utmp.ut_user, name, sizeof(utmp.ut_user))) continue;
+#endif
 	if(*tty && strncmp(utmp.ut_line, tty, sizeof(utmp.ut_line))) continue;
 	strcpy(tty, utmp.ut_line);
 	ret = SUCCESS;

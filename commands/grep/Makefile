@@ -19,7 +19,7 @@ LDADD=  -lz
 DPADD=  ${LIBZ}
 
 .if ${COMPILER_TYPE} == "gnu"
-CPPFLAGS+= -isystem ../../../include
+CFLAGS+= -Wall
 .endif
 
 .if ${OPSYS} == "Minix"

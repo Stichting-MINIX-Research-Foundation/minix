@@ -88,6 +88,10 @@ unsigned int block_size;
 
 FILE *proto;
 
+#ifdef __NBSD_LIBC
+#define getline _mkfs_getline
+#endif
+
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(block_t sizeup, (char *device));
 _PROTOTYPE(void super, (zone_t zones, Ino_t inodes));

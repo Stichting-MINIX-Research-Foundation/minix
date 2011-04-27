@@ -24,6 +24,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef __NBSD_LIBC
+#define setkey pwdauth_setkey
+#define encrypt pwdauth_encrypt
+#endif
+
 #define LEN	1024
 char SHADOW[] = "/etc/shadow";
 

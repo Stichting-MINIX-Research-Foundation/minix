@@ -19,6 +19,9 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #endif
+#ifdef __NBSD_LIBC
+#include <unistd.h>
+#endif
 
 /* Default settings, the Minix ones are defined in <termios.h> */
 

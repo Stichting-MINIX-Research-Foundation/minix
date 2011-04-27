@@ -67,8 +67,13 @@ FILE *fp;
    	return(-1);
    }
    fclose(fp);
+#ifdef __NBSD_LIBC
+   strncpy(luser, utmp.ut_name, USER_SIZE < sizeof(utmp.ut_name) ?
+				USER_SIZE : sizeof(utmp.ut_name));
+#else
    strncpy(luser, utmp.ut_user, USER_SIZE < sizeof(utmp.ut_user) ?
    				USER_SIZE : sizeof(utmp.ut_user));
+#endif
    luser[USER_SIZE] = '\0';
 
    /* get local tty */

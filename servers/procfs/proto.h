@@ -18,6 +18,6 @@ _PROTOTYPE( int rdlink_hook, (struct inode *inode, char *ptr,
 	size_t max, cbdata_t cbdata)					);
 
 /* util.c */
-_PROTOTYPE( int	procfs_getloadavg, (double *loadavg, int nelem)		);
+_PROTOTYPE( int	procfs_getloadavg, (struct load *loadavg, int nelem)	);
 
 #endif /* _PROCFS_PROTO_H */

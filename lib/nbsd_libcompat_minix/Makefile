@@ -2,6 +2,7 @@
 
 LIB=	compat_minix
 CPPFLAGS+= -D_MINIX_COMPAT
+MACHINE_ARCH= ${ARCH}
 
 .PATH: 	${.CURDIR}
 

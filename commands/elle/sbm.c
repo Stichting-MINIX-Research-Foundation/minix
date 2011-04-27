@@ -50,7 +50,11 @@ char *sbm_brk();
 #endif /*DBG_SIZE*/
 
 /* Forward routine declarations */
+#ifdef __NBSD_LIBC
+void *sbrk();
+#else
 char *sbrk();
+#endif
 struct smblk *sbm_nmak(), *sbm_nget(), *sbm_mget(), *sbm_split();
 struct smblk *sbm_lmak(), *sbm_err();
 
@@ -759,6 +763,11 @@ free(ptr)
 char *ptr;
 {       register struct smblk *sm, **smp;
 
+#ifdef __NBSD_LIBC
+	/* In NetBSD, free is a nop if ptr == NULL; */
+	if(ptr == NULL)
+		return(1);
+#endif
 	smp = &((struct smblk **)ptr)[-1];	/* Point to addr-1 */
 	sm = *smp;				/* Pluck SM ptr therefrom */
 	if(((sm->smflags&0377) != SM_NID) || sm->smaddr != (SBMA)smp)

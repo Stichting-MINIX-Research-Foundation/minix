@@ -48,7 +48,12 @@ __RCSID("$NetBSD: dlfcn_elf.c,v 1.7 2010/10/16 10:27:07 skrll Exp $");
 #define	dl_iterate_phdr		___dl_iterate_phdr
 
 #define ELFSIZE ARCH_ELFSIZE
+#ifdef __minix
+#include <sys/null.h>
+#include <dlfcn.h>
+#else
 #include "rtld.h"
+#endif
 
 #ifdef __weak_alias
 __weak_alias(dlopen,___dlopen)
@@ -128,6 +133,7 @@ dlinfo(void *handle, int req, void *v)
 	return -1;
 }
 
+#ifndef __minix
 /*ARGSUSED*/
 int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
@@ -136,3 +142,4 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 
 	return 0;
 }
+#endif

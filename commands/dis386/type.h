@@ -114,8 +114,10 @@ void info P((void));
 void reboot P((void));
 void reset_kbd_state P(());
 
+#ifndef __NBSD_LIBC
 /* getline.c */
 char *getline P((char *startline, unsigned maxlength, unsigned offset));
+#endif
 
 /* ihexload.c */
 void ihexload P((void));

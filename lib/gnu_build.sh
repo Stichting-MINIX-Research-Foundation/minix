@@ -1,7 +1,9 @@
 #!/bin/sh
 
 export CC=gcc
-export MAKEOBJDIR=obj-gnu
 export PATH=$PATH:/usr/pkg/bin
 
-make $@
+export MAKEOBJDIR=obj-gnu-nbsd
+make $@ NBSD_LIBC=yes
+export MAKEOBJDIR=obj-gnu
+make $@ NBSD_LIBC=no

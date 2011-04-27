@@ -4,7 +4,9 @@
 #define	_I386_CDEFS_H_
 
 #ifdef __minix
+#ifndef __ELF__
 #define __LEADING_UNDERSCORE
+#endif
 #else /* !__minix */
 /* No arch-specific cdefs. */
 #endif

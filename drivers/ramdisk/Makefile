@@ -107,7 +107,7 @@ newroot:  ../../commands/newroot/newroot.sh
 sysenv:  ../../commands/sysenv/sysenv
 	install ${STRIPFLAG} ../../commands/$@/$@ $@
 
-../../commands/sysenv:
+../../commands/sysenv/sysenv:
 	$(MAKE) -C ../../commands/sysenv
 
 sh:	../../commands/ash/sh
@@ -119,7 +119,7 @@ sh:	../../commands/ash/sh
 service: ../../commands/service/service
 	install ${STRIPFLAG} ../../commands/service/$@ $@
 
-../../commands/service:
+../../commands/service/service:
 	$(MAKE) -C ../../commands/service
 
 mfs: ../../servers/mfs/mfs

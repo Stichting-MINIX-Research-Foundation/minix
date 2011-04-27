@@ -13,9 +13,11 @@ cscope.*
 *.a
 *.d
 .depend
+nbsdsrc/*
 obj-ack
 obj-gnu
 obj-elf-base
+obj-gnu-nbsd
 tools/revision
 TAGS
 tags

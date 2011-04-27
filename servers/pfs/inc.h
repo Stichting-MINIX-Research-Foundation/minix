@@ -4,7 +4,11 @@
 
 #define VERBOSE		   0	/* display diagnostics */
 
+#ifdef __NBSD_LIBC
+#include <sys/ioc_net.h>
+#else
 #include <net/ioctl.h>
+#endif
 
 #include <minix/ansi.h>
 #include <sys/types.h>

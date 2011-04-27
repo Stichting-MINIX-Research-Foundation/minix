@@ -3,6 +3,11 @@
 
 typedef void *data_t;		/* abstract data type; can hold pointer */
 
+struct load {
+	clock_t ticks;		/* in this umber of ticks: */
+	long proc_load;		/* .. the CPU had this load */
+};
+
 /* ProcFS supports two groups of files: dynamic files, which are created within
  * process-specific (PID) directories, and static files, which are global. For
  * both, the following structure is used to construct the files.

@@ -1,16 +1,16 @@
-diff -ru /home/netbsd/src/include/Makefile ./Makefile
---- /home/netbsd/src/include/Makefile	2010-08-01 03:01:48.000000000 +0000
-+++ ./Makefile	2011-01-19 03:14:07.000000000 +0000
-@@ -7,6 +7,24 @@
+diff -ru nbsdsrc/src/include/Makefile nbsd_include/Makefile
+--- nbsdsrc/src/include/Makefile
++++ nbsd_include/Makefile
+@@ -7,10 +7,28 @@
  
  # Missing: mp.h
  
 +.if defined(__MINIX)
 +# Avoid installing: kvm.h lwp.h sa.h (latter not installed anyway)
-+INCS=	a.out.h aio.h ar.h assert.h atomic.h \
-+	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
-+	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
-+	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
+ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
+ 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
+ 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
+ 	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
 +	inttypes.h iso646.h langinfo.h libgen.h \
 +	limits.h link.h link_aout.h link_elf.h locale.h \
 +	login_cap.h malloc.h math.h md2.h \
@@ -23,9 +23,13 @@ diff -ru /home/netbsd/src/include/Makefile ./Makefile
 +	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 +	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
 +.else
- INCS=	a.out.h aio.h ar.h assert.h atomic.h \
- 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
- 	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
++INCS=	a.out.h aio.h ar.h assert.h atomic.h \
++	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \
++	db.h dirent.h disktab.h dlfcn.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
++	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
+ 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
+ 	limits.h link.h link_aout.h link_elf.h locale.h \
+ 	login_cap.h lwp.h malloc.h math.h md2.h \
 @@ -22,6 +40,7 @@
  	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
  	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
@@ -63,9 +67,9 @@ diff -ru /home/netbsd/src/include/Makefile ./Makefile
  
  .include <bsd.prog.mk>
  .include <bsd.subdir.mk>
-diff -ru /home/netbsd/src/include/a.out.h ./a.out.h
---- /home/netbsd/src/include/a.out.h	2009-08-19 20:23:46.000000000 +0000
-+++ ./a.out.h	2011-04-06 05:07:37.000000000 +0000
+diff -ru nbsdsrc/src/include/a.out.h nbsd_include/a.out.h
+--- nbsdsrc/src/include/a.out.h
++++ nbsd_include/a.out.h
 @@ -60,9 +60,14 @@
  #ifndef	_AOUT_H_
  #define	_AOUT_H_
@@ -81,9 +85,9 @@ diff -ru /home/netbsd/src/include/a.out.h ./a.out.h
  
 +#endif /* !__minix */
  #endif /* !_AOUT_H_ */
-diff -ru /home/netbsd/src/include/arpa/nameser_compat.h ./arpa/nameser_compat.h
---- /home/netbsd/src/include/arpa/nameser_compat.h	2009-04-13 03:03:27.000000000 +0000
-+++ ./arpa/nameser_compat.h	2011-03-28 10:57:33.000000000 +0000
+diff -ru nbsdsrc/src/include/arpa/nameser_compat.h nbsd_include/arpa/nameser_compat.h
+--- nbsdsrc/src/include/arpa/nameser_compat.h
++++ nbsd_include/arpa/nameser_compat.h
 @@ -133,6 +133,14 @@
  	unsigned	arcount :16;	/*%< number of resource entries */
  } HEADER;
@@ -99,9 +103,9 @@ diff -ru /home/netbsd/src/include/arpa/nameser_compat.h ./arpa/nameser_compat.h
  #define PACKETSZ	NS_PACKETSZ
  #define MAXDNAME	NS_MAXDNAME
  #define MAXCDNAME	NS_MAXCDNAME
-diff -ru /home/netbsd/src/include/dirent.h ./dirent.h
---- /home/netbsd/src/include/dirent.h	2010-09-26 03:01:02.000000000 +0000
-+++ ./dirent.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/dirent.h nbsd_include/dirent.h
+--- nbsdsrc/src/include/dirent.h
++++ nbsd_include/dirent.h
 @@ -43,16 +43,20 @@
   */
  #include <sys/dirent.h>
@@ -123,9 +127,9 @@ diff -ru /home/netbsd/src/include/dirent.h ./dirent.h
  
  /* structure describing an open directory. */
  struct _dirdesc {
-diff -ru /home/netbsd/src/include/fts.h ./fts.h
---- /home/netbsd/src/include/fts.h	2009-08-19 20:23:46.000000000 +0000
-+++ ./fts.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/fts.h nbsd_include/fts.h
+--- nbsdsrc/src/include/fts.h
++++ nbsd_include/fts.h
 @@ -75,7 +75,9 @@
  #define	FTS_PHYSICAL	0x010		/* physical walk */
  #define	FTS_SEEDOT	0x020		/* return dot and dot-dot */
@@ -136,9 +140,9 @@ diff -ru /home/netbsd/src/include/fts.h ./fts.h
  #define	FTS_OPTIONMASK	0x0ff		/* valid user option mask */
  
  #define	FTS_NAMEONLY	0x100		/* (private) child names only */
-diff -ru /home/netbsd/src/include/limits.h ./limits.h
---- /home/netbsd/src/include/limits.h	2010-06-08 03:01:32.000000000 +0000
-+++ ./limits.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/limits.h nbsd_include/limits.h
+--- nbsdsrc/src/include/limits.h
++++ nbsd_include/limits.h
 @@ -113,4 +113,9 @@
  #include <machine/limits.h>
  #include <sys/syslimits.h>
@@ -149,9 +153,9 @@ diff -ru /home/netbsd/src/include/limits.h ./limits.h
 +#endif
 +
  #endif /* !_LIMITS_H_ */
-diff -ru /home/netbsd/src/include/netdb.h ./netdb.h
---- /home/netbsd/src/include/netdb.h	2010-05-06 03:02:39.000000000 +0000
-+++ ./netdb.h	2011-03-23 16:09:44.000000000 +0000
+diff -ru nbsdsrc/src/include/netdb.h nbsd_include/netdb.h
+--- nbsdsrc/src/include/netdb.h
++++ nbsd_include/netdb.h
 @@ -131,6 +131,9 @@
  #ifndef _PATH_SERVICES_DB
  #define	_PATH_SERVICES_DB "/var/db/services.db"
@@ -162,9 +166,9 @@ diff -ru /home/netbsd/src/include/netdb.h ./netdb.h
  #endif
  
  __BEGIN_DECLS
-diff -ru /home/netbsd/src/include/paths.h ./paths.h
---- /home/netbsd/src/include/paths.h	2010-12-30 03:02:34.000000000 +0000
-+++ ./paths.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/paths.h nbsd_include/paths.h
+--- nbsdsrc/src/include/paths.h
++++ nbsd_include/paths.h
 @@ -124,5 +124,9 @@
  #define	_PATH_VI	"/usr/bin/vi"
  #endif
@@ -175,9 +179,9 @@ diff -ru /home/netbsd/src/include/paths.h ./paths.h
 +
  #endif /* !_PATHS_H_ */
  
-diff -ru /home/netbsd/src/include/pwd.h ./pwd.h
---- /home/netbsd/src/include/pwd.h	2009-01-11 03:05:43.000000000 +0000
-+++ ./pwd.h	2011-03-22 11:35:06.000000000 +0000
+diff -ru nbsdsrc/src/include/pwd.h nbsd_include/pwd.h
+--- nbsdsrc/src/include/pwd.h
++++ nbsd_include/pwd.h
 @@ -61,6 +61,14 @@
   * SUCH DAMAGE.
   */
@@ -193,9 +197,9 @@ diff -ru /home/netbsd/src/include/pwd.h ./pwd.h
  #ifndef _PWD_H_
  #define	_PWD_H_
  
-diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
---- /home/netbsd/src/include/rpc/Makefile	2003-01-11 13:28:43.000000000 +0000
-+++ ./rpc/Makefile	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/rpc/Makefile nbsd_include/rpc/Makefile
+--- nbsdsrc/src/include/rpc/Makefile
++++ nbsd_include/rpc/Makefile
 @@ -7,7 +7,11 @@
  	svc.h svc_auth.h svc_soc.h types.h xdr.h
  RPC_INCS=	rpcb_prot.h
@@ -208,9 +212,9 @@ diff -ru /home/netbsd/src/include/rpc/Makefile ./rpc/Makefile
  
  .include <bsd.rpc.mk>
  .include <bsd.prog.mk>
-diff -ru /home/netbsd/src/include/sched.h ./sched.h
---- /home/netbsd/src/include/sched.h	2009-01-11 03:05:43.000000000 +0000
-+++ ./sched.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/sched.h nbsd_include/sched.h
+--- nbsdsrc/src/include/sched.h
++++ nbsd_include/sched.h
 @@ -29,6 +29,9 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
@@ -221,9 +225,9 @@ diff -ru /home/netbsd/src/include/sched.h ./sched.h
  #ifndef _SCHED_H_
  #define _SCHED_H_
  
-diff -ru /home/netbsd/src/include/signal.h ./signal.h
---- /home/netbsd/src/include/signal.h	2010-08-28 03:00:54.000000000 +0000
-+++ ./signal.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/signal.h nbsd_include/signal.h
+--- nbsdsrc/src/include/signal.h
++++ nbsd_include/signal.h
 @@ -62,6 +62,7 @@
  int	__libc_sigaction14(int, const struct sigaction * __restrict,
  	    struct sigaction * __restrict);
@@ -287,9 +291,9 @@ diff -ru /home/netbsd/src/include/signal.h ./signal.h
  int	sigblock(int);
  int	sigsetmask(int);
  #endif /* _NETBSD_SOURCE */
-diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
---- /home/netbsd/src/include/stdio.h	2010-09-25 03:01:11.000000000 +0000
-+++ ./stdio.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/stdio.h nbsd_include/stdio.h
+--- nbsdsrc/src/include/stdio.h
++++ nbsd_include/stdio.h
 @@ -274,7 +274,7 @@
  		__printflike(2, 0);
  #endif
@@ -299,9 +303,9 @@ diff -ru /home/netbsd/src/include/stdio.h ./stdio.h
  int	 rename (const char *, const char *) __RENAME(__posix_rename);
  #else
  int	 rename (const char *, const char *);
-diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
---- /home/netbsd/src/include/stdlib.h	2010-12-23 03:03:09.000000000 +0000
-+++ ./stdlib.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/stdlib.h nbsd_include/stdlib.h
+--- nbsdsrc/src/include/stdlib.h
++++ nbsd_include/stdlib.h
 @@ -265,9 +265,11 @@
  void	 csetexpandtc(int);
  
@@ -324,9 +328,9 @@ diff -ru /home/netbsd/src/include/stdlib.h ./stdlib.h
  int	 getloadavg(double [], int);
  
  int	 getenv_r(const char *, char *, size_t);
-diff -ru /home/netbsd/src/include/time.h ./time.h
---- /home/netbsd/src/include/time.h	2010-12-17 03:01:54.000000000 +0000
-+++ ./time.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/time.h nbsd_include/time.h
+--- nbsdsrc/src/include/time.h
++++ nbsd_include/time.h
 @@ -65,12 +65,18 @@
  #undef	_BSD_CLOCKID_T_
  #endif
@@ -387,20 +391,20 @@ diff -ru /home/netbsd/src/include/time.h ./time.h
  #endif /* _POSIX_C_SOURCE >= 199309 || _XOPEN_SOURCE >= 500 || ... */
  
  #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-@@ -205,6 +221,10 @@
+@@ -204,6 +220,10 @@
+     __attribute__((__format__(__strftime__, 4, 0)));
  
  #endif /* _NETBSD_SOURCE */
- 
++
 +#ifdef _MINIX
 +int stime(time_t *_top);
 +#endif /* _MINIX */
-+
+ 
  __END_DECLS
  
- #endif /* !_TIME_H_ */
-diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
---- /home/netbsd/src/include/unistd.h	2011-01-20 03:02:09.000000000 +0000
-+++ ./unistd.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/unistd.h nbsd_include/unistd.h
+--- nbsdsrc/src/include/unistd.h
++++ nbsd_include/unistd.h
 @@ -88,7 +88,7 @@
  int	 access(const char *, int);
  unsigned int alarm(unsigned int);
@@ -548,9 +552,9 @@ diff -ru /home/netbsd/src/include/unistd.h ./unistd.h
 +#endif
 +
  #endif /* !_UNISTD_H_ */
-diff -ru /home/netbsd/src/include/utmp.h ./utmp.h
---- /home/netbsd/src/include/utmp.h	2009-01-11 03:05:43.000000000 +0000
-+++ ./utmp.h	2011-01-19 03:14:07.000000000 +0000
+diff -ru nbsdsrc/src/include/utmp.h nbsd_include/utmp.h
+--- nbsdsrc/src/include/utmp.h
++++ nbsd_include/utmp.h
 @@ -39,12 +39,26 @@
  #ifndef	_UTMP_H_
  #define	_UTMP_H_
@@ -583,7 +587,7 @@ diff -ru /home/netbsd/src/include/utmp.h ./utmp.h
  };
  
 +#ifdef __minix
-+struct utmp {
+ struct utmp {
 +  char ut_name[UT_NAMESIZE];		/* user name */
 +  char ut_id[4];		/* /etc/inittab ID */
 +  char ut_line[UT_LINESIZE];		/* terminal name */
@@ -603,7 +607,7 @@ diff -ru /home/netbsd/src/include/utmp.h ./utmp.h
 +
 +#else /* !__minix */
 +
- struct utmp {
++struct utmp {
  	char	ut_line[UT_LINESIZE];
  	char	ut_name[UT_NAMESIZE];
  	char	ut_host[UT_HOSTSIZE];

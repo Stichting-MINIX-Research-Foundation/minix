@@ -40,12 +40,19 @@ PRIVATE void root_loadavg(void)
 {
 	/* Print load averages.
 	 */
-	double avg[3];
+	struct load loads[3];
+	ldiv_t avg[3];
 
-	if (procfs_getloadavg(avg, 3) != 3)
+	if (procfs_getloadavg(loads, 3) != 3)
 		return;
 
-	buf_printf("%.2lf %.2lf %.2lf\n", avg[0], avg[1], avg[2]);
+	avg[0] = ldiv(100L * loads[0].proc_load / loads[0].ticks, 100);
+	avg[1] = ldiv(100L * loads[1].proc_load / loads[1].ticks, 100);
+	avg[2] = ldiv(100L * loads[2].proc_load / loads[2].ticks, 100);
+
+	buf_printf("%ld.%0.2ld %ld.%02ld %ld.%02ld\n",
+		avg[0].quot, avg[0].rem, avg[1].quot, avg[1].rem,
+		avg[2].quot, avg[2].rem);
 }
 
 /*===========================================================================*
@@ -56,11 +63,13 @@ PRIVATE void root_uptime(void)
 	/* Print the current uptime.
 	 */
 	clock_t ticks;
+	ldiv_t division;
 
 	if (getuptime(&ticks) != OK)
 		return;
+	division = ldiv(100L * ticks / sys_hz(), 100L);
 
-	buf_printf("%.2lf\n", (double) ticks / (double) sys_hz());
+	buf_printf("%ld.%0.2ld\n", division.quot, division.rem);
 }
 
 /*===========================================================================*

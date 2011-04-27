@@ -55,8 +55,10 @@ mkfiles:
 	make -C share/mk install
 
 includes:
+	$(MAKE) -C nbsd_include includes
 	$(MAKE) -C include includes
-	$(MAKE) -C lib includes
+	$(MAKE) -C lib includes NBSD_LIBC=yes
+	$(MAKE) -C lib includes NBSD_LIBC=no
 
 libraries: includes
 	$(MAKE) -C lib build_ack
@@ -70,7 +72,7 @@ gnu-includes: includes
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443_PKGSRC) ] ; then sh -e $(MKHEADERS443_PKGSRC) ; fi
 
 .ifndef MINIX_GENERATE_ELF
-gnu-libraries: #gnu-includes
+gnu-libraries: includes #gnu-includes
 	$(MAKE) -C lib build_gnu
 
 clang-libraries: includes
@@ -89,7 +91,7 @@ commands: includes libraries
 	$(MAKE) -C commands all
 
 depend:
-	$(MAKE) -C boot depend
+	$(MAKE) CC=cc -C boot depend
 	$(MAKE) -C commands depend
 	$(MAKE) -C kernel depend
 	$(MAKE) -C servers depend
@@ -102,12 +104,12 @@ etcforce:
 	$(MAKE) -C etc installforce
 
 all:
-	$(MAKE) -C boot all
+	$(MAKE) CC=cc -C boot all
 	$(MAKE) -C commands all
 	$(MAKE) -C tools all
 
 install:
-	$(MAKE) -C boot install
+	$(MAKE) CC=cc -C boot install
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
 	$(MAKE) -C share install

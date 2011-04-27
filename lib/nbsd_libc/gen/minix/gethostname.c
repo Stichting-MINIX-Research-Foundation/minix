@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <net/gen/netdb.h>
 
 #ifdef __weak_alias
 __weak_alias(gethostname, _gethostname)

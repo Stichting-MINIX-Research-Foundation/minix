@@ -39,7 +39,7 @@ char *pf_errstr(u32_t err)
 {
 	static char buf[100];
 
-	sprintf(buf, "err 0x%lx ", err);
+	sprintf(buf, "err 0x%lx ", (long)err);
 	if(PFERR_NOPAGE(err)) strcat(buf, "nopage ");
 	if(PFERR_PROT(err)) strcat(buf, "protection ");
 	if(PFERR_WRITE(err)) strcat(buf, "write");

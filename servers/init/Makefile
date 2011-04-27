@@ -2,9 +2,6 @@
 PROG=	init
 SRCS=	init.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
-
 MAN=
 
 BINDIR?= /usr/sbin

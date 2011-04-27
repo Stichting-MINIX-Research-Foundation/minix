@@ -7,7 +7,11 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef __NBSD_LIBC
+#include <a.out.h>
+#else
 #include <minix/a.out.h>
+#endif
 #include <minix/config.h>
 #include <minix/const.h>
 #include <stdio.h>

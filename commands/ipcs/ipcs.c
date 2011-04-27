@@ -35,6 +35,7 @@
 
 /* remove _() stuff */
 #define _(a) a
+#ifndef __NBSD_LIBC
 typedef unsigned long ulong;
 void err(int eval, const char *fmt, ...)
 {
@@ -44,6 +45,7 @@ void err(int eval, const char *fmt, ...)
 	va_end(ap);
 	exit(eval);
 }
+#endif
 
 /*-------------------------------------------------------------------*/
 /* SHM_DEST and SHM_LOCKED are defined in kernel headers,

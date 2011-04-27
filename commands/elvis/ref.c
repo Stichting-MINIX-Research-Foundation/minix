@@ -123,6 +123,10 @@ char *cktagdir(tag, dir)
 /* This function reads a single textline from a binary file.  It returns
  * the number of bytes read, or 0 at EOF.
  */
+#ifdef __NBSD_LIBC
+/* Avoid name pollution with stdio's getline. */
+#define getline ref_getline
+#endif
 int getline(buf, limit, fp)
 	char	*buf;	/* buffer to read into */
 	int	limit;	/* maximum characters to read */

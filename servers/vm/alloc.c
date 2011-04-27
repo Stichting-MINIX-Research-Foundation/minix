@@ -800,8 +800,8 @@ void printmemstats(void)
 	int nodes, pages, largest;
         memstats(&nodes, &pages, &largest);
         printf("%d blocks, %d pages (%lukB) free, largest %d pages (%lukB)\n",
-                nodes, pages, (u32_t) pages * (VM_PAGE_SIZE/1024),
-		largest, (u32_t) largest * (VM_PAGE_SIZE/1024));
+                nodes, pages, (unsigned long) pages * (VM_PAGE_SIZE/1024),
+		largest, (unsigned long) largest * (VM_PAGE_SIZE/1024));
 }
 
 

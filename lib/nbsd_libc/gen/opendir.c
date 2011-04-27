@@ -103,7 +103,9 @@ __opendir_common(int fd, const char *name, int flags)
 	DIR *dirp = NULL;
 	int serrno;
 	struct stat sb;
+#ifndef __minix
 	struct statvfs sfb;
+#endif
 	int error;
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
@@ -129,8 +131,6 @@ __opendir_common(int fd, const char *name, int flags)
 	 */
 
 #ifdef __minix
-	if (fstatvfs(fd, &sfb) < 0)
-		goto error;
 	/* MOUNT_UNION and MOUNT_NFS not supported */
 	flags &= ~DTF_NODUP;
 #else

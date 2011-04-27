@@ -104,7 +104,11 @@ struct servent *servent;
 
    /* This HACK allows the server to establish data connections correctly */
    /* when using the loopback device to talk to ourselves */
+#ifdef __NBSD_LIBC
+   if((hostip & ntohl(0xFF000000)) == inet_addr("127.0.0.0"))
+#else
    if((hostip & NTOHL(0xFF000000)) == inet_addr("127.0.0.0"))
+#endif
 	hostip = myip;
 
    if((tcp_device = getenv("TCP_DEVICE")) == NULL)
@@ -206,7 +210,11 @@ static int ftpdata_fd = -1;
 char *buff;
 ipaddr_t ripaddr;
 tcpport_t rport;
+#ifdef __NBSD_LIBC
+static tcpport_t lport = htons(0xF000);
+#else
 static tcpport_t lport = HTONS(0xF000);
+#endif
 int s;
 int i;
 int wpid;
@@ -221,7 +229,11 @@ int wasopen;
 #endif
 
    ripaddr = hostip;
+#ifdef __NBSD_LIBC
+   rport = htons(2);
+#else
    rport = HTONS(20);
+#endif
 
    /* here we set up a connection to listen on if not passive mode */
    /* otherwise we use this to connect for passive mode */

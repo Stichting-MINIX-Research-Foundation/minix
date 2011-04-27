@@ -5,7 +5,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#ifdef __NBSD_LIBC
+#include <compat/regexp.h>
+#else
 #include <regexp.h>
+#endif
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>

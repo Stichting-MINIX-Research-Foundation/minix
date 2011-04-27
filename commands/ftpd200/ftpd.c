@@ -39,6 +39,11 @@ char *FtpdVersion = "2.00";
 #include "file.h"
 #include "net.h"
 
+#ifdef __NBSD_LIBC
+/* Already declared in stdio.h */
+#define getline ftpd_getline
+#endif
+
 _PROTOTYPE(static void init, (void));
 _PROTOTYPE(static int doHELP, (char *buff));
 _PROTOTYPE(static int doNOOP, (char *buff));

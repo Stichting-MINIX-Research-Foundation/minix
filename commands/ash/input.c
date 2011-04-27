@@ -225,7 +225,7 @@ retry:
 			{
 				(void) memcpy(parsenextc, rl_cp+rl_off, nr);
 				parsenextc[nr++]= '\n';
-				free(rl_cp);
+				free((void *)rl_cp);
 				rl_cp= NULL;
 				rl_off= 0;
 			}
@@ -385,7 +385,7 @@ pushstring(char *s, int len, void *ap)
 	struct strpush *sp;
 
 	INTOFF;
-/*dprintf("*** calling pushstring: %s, %d\n", s, len);*/
+/*dbgprintf("*** calling pushstring: %s, %d\n", s, len);*/
 	if (parsefile->strpush) {
 		sp = ckmalloc(sizeof (struct strpush));
 		sp->prev = parsefile->strpush;
@@ -412,7 +412,7 @@ popstring(void)
 	parsenextc = sp->prevstring;
 	parsenleft = sp->prevnleft;
 	parselleft = sp->prevlleft;
-/*dprintf("*** calling popstring: restoring to '%s'\n", parsenextc);*/
+/*dbgprintf("*** calling popstring: restoring to '%s'\n", parsenextc);*/
 	if (sp->ap)
 		sp->ap->flag &= ~ALIASINUSE;
 	parsefile->strpush = sp->prev;

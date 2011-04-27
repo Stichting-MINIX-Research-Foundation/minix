@@ -21,8 +21,13 @@
 #include "dhcpd.h"
 
 static ether_addr_t BCAST_ETH =	{{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }};
+#ifdef __NBSD_LIBC
+#define BCAST_IP	htonl(0xFFFFFFFFUL)
+#define LOCALHOST	htonl(0x7F000001UL)
+#else
 #define BCAST_IP	HTONL(0xFFFFFFFFUL)
 #define LOCALHOST	HTONL(0x7F000001UL)
+#endif
 
 static u16_t udp_cksum(ipaddr_t src, ipaddr_t dst, udp_hdr_t *udp)
 {
@@ -64,13 +69,21 @@ void udp2ether(buf_t *bp, network_t *np)
     /* Fill in the Ethernet, IP and UDP headers. */
     bp->eth->eh_dst= BCAST_ETH;
     bp->eth->eh_src= np->eth;
+#ifdef __NBSD_LIBC
+    bp->eth->eh_proto= htons(ETH_IP_PROTO);
+#else
     bp->eth->eh_proto= HTONS(ETH_IP_PROTO);
+#endif
     bp->ip->ih_vers_ihl= 0x45;
     bp->ip->ih_tos= 0;
     bp->ip->ih_length= htons(sizeof(ip_hdr_t)
 			+ sizeof(udp_hdr_t) + udpio.uih_data_len);
     bp->ip->ih_id= 0;
+#ifdef __NBSD_LIBC
+    bp->ip->ih_flags_fragoff= ntohs(0x4000);
+#else
     bp->ip->ih_flags_fragoff= NTOHS(0x4000);
+#endif
     bp->ip->ih_ttl= IP_MAX_TTL;
     bp->ip->ih_proto= IPPROTO_UDP;
     bp->ip->ih_hdr_chk= 0;
@@ -91,7 +104,11 @@ int ether2udp(buf_t *bp)
      */
     udp_io_hdr_t udpio;
 
+#ifdef __NBSD_LIBC
+    if (bp->eth->eh_proto != htons(ETH_IP_PROTO)
+#else
     if (bp->eth->eh_proto != HTONS(ETH_IP_PROTO)
+#endif
 	|| bp->ip->ih_vers_ihl != 0x45
 	|| bp->ip->ih_proto != IPPROTO_UDP
 	|| oneC_sum(0, bp->ip, 20) != (u16_t) ~0
@@ -118,12 +135,20 @@ void make_arp(buf_t *bp, network_t *np)
     memset(arp, 0, sizeof(*arp));
     arp->dstaddr= BCAST_ETH;
     arp->srcaddr= np->eth;
+#ifdef __NBSD_LIBC
+    arp->ethtype= htons(ETH_ARP_PROTO);
+    arp->hdr= htons(ARP_ETHERNET);
+    arp->pro= htons(ETH_IP_PROTO);
+    arp->op= htons(ARP_REQUEST);
+#else
     arp->ethtype= HTONS(ETH_ARP_PROTO);
     arp->hdr= HTONS(ARP_ETHERNET);
     arp->pro= HTONS(ETH_IP_PROTO);
+    arp->op= HTONS(ARP_REQUEST);
+#endif
     arp->hln= 6;
     arp->pln= 4;
-    arp->op= HTONS(ARP_REQUEST);
+
     arp->sha= np->eth;
     memcpy(arp->spa, &np->ip, sizeof(np->ip));
     memcpy(arp->tpa, &np->ip, sizeof(np->ip));
@@ -136,10 +161,18 @@ int is_arp_me(buf_t *bp, network_t *np)
      */
     arp46_t *arp= (arp46_t *) bp->eth;
 
-    if (arp->ethtype == HTONS(ETH_ARP_PROTO)
+    if (
+#ifdef __NBSD_LIBC
+	arp->ethtype == htons(ETH_ARP_PROTO)
+	&& arp->hdr == htons(ARP_ETHERNET)
+	&& arp->pro == htons(ETH_IP_PROTO)
+	&& arp->op == htons(ARP_REPLY)
+#else
+	arp->ethtype == HTONS(ETH_ARP_PROTO)
 	&& arp->hdr == HTONS(ARP_ETHERNET)
 	&& arp->pro == HTONS(ETH_IP_PROTO)
 	&& arp->op == HTONS(ARP_REPLY)
+#endif
 	&& memcmp(&arp->spa, &np->ip, sizeof(np->ip)) == 0
 	&& memcmp(&arp->sha, &np->eth, sizeof(np->eth)) != 0
     ) {
@@ -178,7 +211,11 @@ void icmp_advert(buf_t *bp, network_t *np)
     icmp->ih_hun.ihh_ram.iram_aes= 2;
     icmp->ih_hun.ihh_ram.iram_lt= htons(DELTA_ADV);
     ((u32_t *) icmp->ih_dun.uhd_data)[0] = np->gateway;
+#ifdef __NBSD_LIBC
+    ((u32_t *) icmp->ih_dun.uhd_data)[1] = htonl((u32_t) -9999);
+#else
     ((u32_t *) icmp->ih_dun.uhd_data)[1] = HTONL((u32_t) -9999);
+#endif
     icmp->ih_chksum= 0;
     icmp->ih_chksum= ~oneC_sum(0, icmp, 16);
 }

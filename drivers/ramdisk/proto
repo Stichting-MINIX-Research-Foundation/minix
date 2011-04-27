@@ -1,5 +1,5 @@
 boot 
-420 440
+640 440
 d--755 0 0
 	bin d--755 0 0
 		cdprobe ---755 0 0 cdprobe

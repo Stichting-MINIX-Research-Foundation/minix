@@ -69,7 +69,6 @@ unsigned int sign = 0;
 unsigned int bits = 8; 
 unsigned int stereo = 0; 
 unsigned int rate = 22050; 
-unsigned int time = 10;
 
 int old_stdin;
 struct termios old_tty, new_tty;

@@ -5,8 +5,8 @@ SRCS=	cache.c device.c link.c \
 	stadir.c stats.c table.c time.c utility.c \
 	write.c inode.c main.c path.c super.c
 
-DPADD+=	${LIBSYS}
-LDADD+=	-lsys
+DPADD+=	${LIBM} ${LIBSYS}
+LDADD+=	-lm -lsys
 
 MAN=
 

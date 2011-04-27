@@ -38,6 +38,10 @@
 
 char *prog = 0, *processing = 0;
 
+#ifdef __NBSD_LIBC
+/* getline() already declared in stdio.h */
+#define getline fix_getline
+#endif
 _PROTOTYPE(char *getline, (FILE *fp, char *b));
 _PROTOTYPE(char *range, (char *s, int *p1, int *p2));
 _PROTOTYPE(int getcommand, (FILE *fp, int *o1, int *o2, char *pcmd, int *n1, int *n2));

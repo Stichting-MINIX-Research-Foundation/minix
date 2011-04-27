@@ -55,8 +55,8 @@ SUBDIR+= xen
 
 INCSYMLINKS= ${MACHINE} /usr/netbsd/include/machine
 
-INCSYMLINKS+= /usr/netbsd/include/machine/float.h /usr/netbsd/include/float.h \
-       /usr/netbsd/include/machine/stdarg.h /usr/netbsd/include/stdarg.h
+INCSYMLINKS+= machine/float.h /usr/netbsd/include/float.h \
+       machine/stdarg.h /usr/netbsd/include/stdarg.h
 
 
 .include <bsd.inc.mk>

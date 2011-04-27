@@ -127,6 +127,12 @@ char *ctime();
 
 char *prog_name;
 
+#ifdef __NBSD_LIBC
+/* Already defined in stdio.h */
+#undef fwopen
+#define fwopen finger_fwopen
+#endif
+
 int main (int argc, char *argv[]);
 static void doall(void);
 static void donames(char **args);

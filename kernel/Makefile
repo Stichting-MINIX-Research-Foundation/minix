@@ -29,8 +29,14 @@ LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
 .endif
 LDFLAGS+= -nostdlib -L${LIBDIR}
 CFLAGS+=-march=i386
+.if (${NBSD_LIBC} != "no")
+LDADD+= -lminlib
+DPADD+= ${LIBMINLIB}
+CPPFLAGS+= -D_NETBSD_SOURCE
+.else
 DPADD+=	${LIBC}
 LDADD+=	-lgcc -lc -lgcc
+.endif
 .endif
 
 CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}

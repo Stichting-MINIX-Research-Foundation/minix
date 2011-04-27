@@ -33,6 +33,7 @@
  */
  
 #include <sys/types.h>
+#include <lib.h>
 #include <minix/minlib.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -55,7 +56,7 @@ _PROTOTYPE(int get_mtab_entry, (char *special, char *mounted_on,
 					char *version, char *rw_flag));
 _PROTOTYPE(int put_mtab_entry, (char *special, char *mounted_on, 
 					char *version, char *rw_flag));
-_PROTOTYPE(void err, (char *prog_name, char *str ));
+PRIVATE _PROTOTYPE(void err, (char *prog_name, char *str ));
 
 
 int load_mtab(prog_name)
@@ -194,7 +195,7 @@ char *rw_flag;
 }
 
 
-void
+PRIVATE void
 err(prog_name, str)
 char *prog_name, *str;
 {

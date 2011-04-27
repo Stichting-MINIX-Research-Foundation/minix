@@ -474,7 +474,7 @@ PUBLIC void _ddekit_print_backtrace(ddekit_thread_t *th)
 	bp =th->jb[0].__bp;
 #else /* !__ACK__ */
 #include <sys/jmp_buf.h>
-#if defined(JB_PC) && defined(JB_SP)
+#if defined(JB_BP)
 	/* um, yikes. */
 	bp = (unsigned long) *((void **)(&((char *)th->jb)[JB_BP]));
 #else

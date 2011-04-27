@@ -6,6 +6,9 @@
 #include <minix/minlib.h>
 #include <errno.h>
 #include <stdio.h>
+#ifdef __NBSD_LIBC
+#include <sys/stat.h>
+#endif
 
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void badcomm, (void));

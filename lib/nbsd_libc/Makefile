@@ -68,9 +68,7 @@ BUILDCOLD= no
 .include "${.CURDIR}/citrus/Makefile.inc"
 .endif
 .include "${.CURDIR}/compat-43/Makefile.inc"
-.ifndef(__MINIX)
 .include "${.CURDIR}/dlfcn/Makefile.inc"
-.endif
 .include "${.CURDIR}/gdtoa/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
 .if defined(__MINIX)

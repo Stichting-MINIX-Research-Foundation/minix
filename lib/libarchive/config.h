@@ -710,7 +710,9 @@
 #define _POSIX_1_SOURCE 2
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
+#ifndef __NBSD_LIBC
 #define _POSIX_SOURCE 1
+#endif
 
 /* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
@@ -728,7 +730,9 @@
 /* #undef gid_t */
 
 /* Define to `unsigned long' if <sys/types.h> does not define. */
+#ifndef __NBSD_LIBC
 #define id_t unsigned long
+#endif
 
 /* Define to the type of a signed integer type of width exactly 64 bits if
    such a type exists and the standard includes do not define it. */

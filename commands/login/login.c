@@ -135,7 +135,11 @@ int uid;			/* user id */
   if (fd >= 0) close(fd);
 
   /* Enter new fields. */
+#ifdef __NBSD_LIBC
+  strncpy(entry.ut_name, user, sizeof(entry.ut_name));
+#else
   strncpy(entry.ut_user, user, sizeof(entry.ut_user));
+#endif
   if (hostname) strncpy(entry.ut_host, hostname, sizeof(entry.ut_host));
 
   if (entry.ut_pid == 0) entry.ut_pid = getpid();

@@ -265,7 +265,7 @@ out1fmt(const char *fmt, ...)
 }
 
 void
-dprintf(const char *fmt, ...)
+dbgprintf(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -325,7 +325,7 @@ out1fmt(va_alist)
 }
 
 void
-dprintf(va_alist)
+dbgprintf(va_alist)
 	va_dcl
 	{
 	va_list ap;

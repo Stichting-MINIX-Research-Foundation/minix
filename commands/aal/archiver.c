@@ -42,6 +42,9 @@ static char RcsId[] = "$Header$";
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef __NBSD_LIBC
+#include <sys/time.h>
+#endif
 #ifndef	S_IREAD
 #define	S_IREAD		S_IRUSR
 #endif

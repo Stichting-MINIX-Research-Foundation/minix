@@ -4,7 +4,9 @@ set -e
 
 export CC=clang
 export COMPILER_TYPE=gnu
-export MAKEOBJDIR=obj-elf-base
 export PATH=$PATH:/usr/pkg/bin
 
-make $@
+export MAKEOBJDIR=obj-elfbase-nbsd
+make $@ NBSD_LIBC=yes
+export MAKEOBJDIR=obj-elfbase
+make $@ NBSD_LIBC=no

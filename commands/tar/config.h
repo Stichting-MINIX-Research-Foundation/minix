@@ -728,7 +728,9 @@
 /* #undef gid_t */
 
 /* Define to `unsigned long' if <sys/types.h> does not define. */
+#ifndef __NBSD_LIBC
 #define id_t unsigned long
+#endif
 
 /* Define to the type of a signed integer type of width exactly 64 bits if
    such a type exists and the standard includes do not define it. */
