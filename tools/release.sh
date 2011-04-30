@@ -2,8 +2,11 @@
 
 set -e
 
+. release.functions
+
 XBIN=usr/xbin
 SRC=src
+REPO=git://git.minix3.org/minix
 
 PACKAGEDIR=/usr/pkgsrc/packages/`uname -r`/`uname -m`
 # List of packages included on installation media
@@ -33,136 +36,6 @@ set -- $* $RELOPTS
 # SVN trunk repo
 TRUNK=https://gforge.cs.vu.nl/svn/minix/trunk
 
-make_hdimage()
-{
-	dd if=$TMPDISKUSR of=usrimage bs=$BS count=$USRBLOCKS
-
-	rootsize=`stat -size rootimage`
-	usrsize=`stat -size usrimage`
-
-	rootsects=`expr $rootsize / 512`
-	usrsects=`expr $usrsize / 512`
-
-	# installboot -m needs at least 1KB 
-	dd < /dev/zero >tmpimage count=2
-	partition -fm tmpimage 2 81:$rootsects* 0:0 81:$usrsects
-	installboot -m tmpimage /usr/mdec/masterboot
-	dd < tmpimage > subpart count=1
-
-	primsects=`expr 1 + $rootsects + $usrsects`
-	cyl=`expr '(' $primsects ')' / $secs + 1`
-	padsects=`expr $cyl \* $secs - 1 - $primsects`
-
-	{ dd < /dev/zero count=1
-		cat subpart
-		cat rootimage
-		cat usrimage
-		dd < /dev/zero count=$padsects
-	} > hdimage
-	partition -m hdimage 81:`expr $primsects + $padsects`*
-	installboot -m hdimage /usr/mdec/masterboot
-}
-
-retrieve()
-{
-	dir=$1
-	list=`pwd`/$2
-	url=${PACKAGEURL}
-	(	
-		cd $dir || exit 1
-		echo  " * Updating $dir
-   from $url
-   with $list"
-		files=`awk <$list '{ print "'$url'/" $1 ".tgz" }'`
-		fetch -r $files || true
-	)
-}
-
-cd_root_changes()
-{
-	edparams $TMPDISKROOT 'unset bootopts;
-unset servers;
-unset rootdev;
-unset leader;
-unset image;
-disable=inet;
-bootcd=1;
-cdproberoot=1;
-ata_id_timeout=2;
-bootbig(1, Regular MINIX 3) { unset image; boot }
-leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
-save' 
-}
-
-hdemu_root_changes()
-{
-	$RELEASEDIR/usr/bin/installboot -d $TMPDISKROOT \
-		$RELEASEDIR/usr/mdec/bootblock boot/boot
-	echo \
-'bootcd=2
-disable=inet
-bios_wini=yes
-bios_remap_first=1
-ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
-main() { trap 10000 boot ; menu; }
-save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
-}
-
-usb_root_changes()
-{
-	$RELEASEDIR/usr/bin/installboot -d $TMPDISKROOT \
-		$RELEASEDIR/usr/mdec/bootblock boot/boot
-	echo \
-'bios_wini=yes
-bios_remap_first=1
-rootdev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
-leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
-save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
-}
-
-fitfs()
-{
-	path="$1"
-	ramdisk="$2"
-	extra_inodes="$3"
-	extra_zones="$4"
-	mbsdefault="$5"
-
-	# Determine number of inodes
-	inodes=`find $path | egrep -v ^$path/usr | wc -l`
-	inodes="`expr $inodes + $extra_inodes`"
-
-	# Determine number of data zones
-	zonekbs=`du -Fs $path | cut -d'	' -f1`
-	zonekbsignore=0
-	[ ! -d $path/usr ] || zonekbsignore=`du -Fs $path/usr | cut -d"	" -f1`
-	zones="`expr \( $zonekbs - $zonekbsignore \) / \( $BS / 1024 \) + $extra_zones`"
-
-	# Determine file system size
-	BSBITS="`expr $BS \* 8`"
-	imap_blocks="`expr \( $inodes + $BSBITS - 1 \) / $BSBITS`"
-	inode_blocks="`expr \( $inodes \* 64 + $BS - 1 \) / $BS`"
-	zmap_blocks="`expr \( $zones + $BSBITS - 1 \) / $BSBITS`"
-	blocks="`expr 1 + 1 + $imap_blocks + $zmap_blocks + $inode_blocks + $zones`"
-	kbs="`expr $blocks \* \( $BS / 1024 \)`"
-
-	# Apply default if higher
-	if [ -n "$mbsdefault" ]
-	then
-		kbsdefault="`expr $mbsdefault \* 1024`"
-		if [ "$kbs" -lt "$kbsdefault" ]
-		then kbs=$kbsdefault
-		else echo "warning: ${mbsdefault}mb is too small, using ${kbs}kb"
-		fi
-	fi
-
-	# Create a filesystem on the target ramdisk
-	ramdisk $kbs $ramdisk
-	mkfs.mfs -B $BS -i $inodes $ramdisk
-}
-
 RELEASEDIR=/usr/r-staging
 RELEASEMNTDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
@@ -187,8 +60,7 @@ MAKEMAP=0
 # Do we have git?
 if git --version >/dev/null
 then	if [ -d ../.git ]
-	then	REVTAG="`git describe --always`"
-		echo "git mode; building $REVTAG"
+	then	LOCAL_REVTAG="`git describe --always`"
 		GITMODE=1
 	fi
 fi
@@ -236,6 +108,11 @@ do
 	esac
 done
 
+if [ $GITMODE -ne 1 -a $COPY -ne 1 ]
+then	echo "Need git to retrieve latest minix! Copying src instead!"
+	COPY=1
+fi
+
 if [ ! "$ZIP" ]
 then	ZIP=bzip2
 fi
@@ -243,11 +120,6 @@ fi
 if [ $PACKAGES -ne 0 ]
 then	mkdir -p $PACKAGEDIR/All || true
 	retrieve $PACKAGEDIR/All $PACKAGELIST packages/`uname -p`/`uname -r`
-fi
-
-if [ "$COPY" -ne 1 ]
-then
-	echo "Note: this script wants to do svn operations."
 fi
 
 TMPDISKUSR=/dev/ram0
@@ -291,108 +163,43 @@ cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/lex /usr/bin/asmcon
 
 CONFIGHEADER=$RELEASEDIR/usr/src/common/include/minix/sys_config.h
 
-if [ -d $PACKAGEDIR -a -f $PACKAGELIST -a $PACKAGES -ne 0 ]
-then
-	index=pkg_summary
-	indexpath=$PACKAGEDIR/.index
-
-	if [ ! -d $indexpath ]
-	then	mkdir $indexpath
-	fi
-	if [ ! -d $indexpath ]
-	then	echo "Couldn't create $indexpath."
-		exit 1
-	fi
-
-	echo "" >$PACKAGEDIR/All/$index
-
-        echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
-        for p in `cat $PACKAGELIST`
-        do	if [ -f $PACKAGEDIR/All/$p.tgz ]
-               then
-		  # Copy package and create package's index
-		  (
-		      cd $PACKAGEDIR/All
-		      cp $p.tgz $RELEASEPACKAGE/
-
-		      f=$p.tgz
-		      indexname=$indexpath/$f.$index
-		      pkg_info -X $f >$indexname
-
-		      if [ ! -f $indexname ]
-		      then	echo Missing $indexname.
-			  exit 1
-		      fi
-
-		      if [ "`wc -l $indexname`" -lt 3 ]
-		      then	$indexname is too short.
-			  rm $indexname
-			  exit 1
-		      fi
-
-		      cat $indexname >>$PACKAGEDIR/All/$index
-		  )
-               else
-                  echo "Can't copy $PACKAGEDIR/$p.tgz. Missing."
-               fi
-        done
-
-	bzip2 -f $PACKAGEDIR/All/$index
-	cp $PACKAGEDIR/All/$index.bz2 $RELEASEPACKAGE/
-fi
+copy_local_packages
 
 # Make sure compilers and libraries are root-owned
 chown -R root $RELEASEDIR/usr/lib
 chmod -R u+w $RELEASEDIR/usr/lib
 
-if [ "$COPY" -ne 1 -a "$GITMODE" -ne 1 ]
+if [ "$COPY" -ne 1 ]
 then
-	echo " * Doing new svn export"
-	TOOLSREPO="`svn info | grep '^URL: ' | awk '{ print $2 }'`"
-	REPO="`echo $TOOLSREPO | sed 's/.tools$//'`"
-	BRANCHNAME="`echo $REPO | awk -F/ '{ print $NF }'`"
-	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
-	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn -q $USERNAME export -r$REVISION $REPO $SRC )
-	if [ $BRANCHNAME = src ]
-	then	REVTAG=r$REVISION
-	else	REVTAG=branch-$BRANCHNAME-r$REVISION
+	echo "Retrieving latest minix repo from $REPO."
+	srcdir=$RELEASEDIR/usr/src
+	git clone $REPO $srcdir
+	if [ "$REVTAG" ]
+	then	echo "Doing checkout of $REVTAG."
+		(cd $srcdir && git checkout $REVTAG )
+	else	REVTAG=`(cd $srcdir && git show-ref HEAD -s10)`
+		echo "Retrieved repository head is $REVTAG."
 	fi
-	
+	rm -r $srcdir/.git
 	echo "
-
 /* Added by release script  */
 #ifndef _VCS_REVISION
 #define _VCS_REVISION \"$REVTAG\"
 #endif" >>$CONFIGHEADER
-
-# output image name
-if [ "$USB" -ne 0 ]; then
-	IMG=${IMG_BASE}_${REVTAG}.img
+	# output image name
+	if [ "$USB" -ne 0 ]; then
+		IMG=${IMG_BASE}_${REVTAG}.img
+	else
+		IMG=${IMG_BASE}_${REVTAG}.iso
+	fi
 else
-	IMG=${IMG_BASE}_${REVTAG}.iso
-fi
-
-elif [ "$COPY" -eq 1 ]
-then
+	echo "Copying contents from current src dir."
 	( cd .. && make depend && make clean )
 	srcdir=/usr/$SRC
 	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
 	REVTAG=copy
 	REVISION=unknown
 	IMG=${IMG_BASE}_copy.iso
-elif [ "$GITMODE" -eq 1 ]
-then
-	srcdir=$RELEASEDIR/usr/src
-	git clone file://.. $srcdir
-	( cd $srcdir && git checkout $REVTAG && rm -r .git )
-	echo "
-
-/* Added by release script  */
-#ifndef _VCS_REVISION
-#define _VCS_REVISION \"$REVTAG\"
-#endif" >>$CONFIGHEADER
-
 fi
 
 echo " * Fixups for owners and modes of dirs and files"
