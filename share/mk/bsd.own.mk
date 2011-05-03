@@ -486,7 +486,7 @@ INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
 .if ${COMPILER_TYPE} == "ack"
-LIBDIR?=	/usr/lib/i386
+LIBDIR=		/usr/lib/i386
 .endif
 
 LINTLIBDIR?=	/usr/libdata/lint
@@ -543,7 +543,7 @@ OBJECT_FMT=	a.out
 
 .if ${COMPILER_TYPE} == "gnu"
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-LIBDIR?=	/usr/netbsd/lib
+LIBDIR=		/usr/netbsd/lib
 .endif
 .endif
 
