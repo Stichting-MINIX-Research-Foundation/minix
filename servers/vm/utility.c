@@ -103,11 +103,16 @@ struct mem_map *map_ptr;                        /* memory to remove */
 		if(memp->base <= map_ptr[T].mem_phys 
 			&& memp->base+memp->size >= map_ptr[T].mem_phys)
 		{
+			phys_bytes progsz = map_ptr[S].mem_phys
+			    - map_ptr[T].mem_phys;
+			phys_bytes progend = map_ptr[S].mem_phys;
+
 			if (memp->base == map_ptr[T].mem_phys) {
-					memp->base += map_ptr[T].mem_len + map_ptr[S].mem_vir;
-					memp->size -= map_ptr[T].mem_len + map_ptr[S].mem_vir;
+				memp->base += progsz;
+				memp->size -= progsz;
 			} else {
 				struct memory *mempr;
+
 				/* have to split mem_chunks */
 				if(mem_chunks[NR_MEMS-1].size>0)
 					panic("reserve_proc_mem: can't find free mem_chunks to map: 0x%lx",
@@ -116,9 +121,10 @@ struct mem_map *map_ptr;                        /* memory to remove */
 					*mempr=*(mempr-1);
 				}
 				assert(memp < &mem_chunks[NR_MEMS-1]);
-				(memp+1)->base = map_ptr[T].mem_phys + map_ptr[T].mem_len + map_ptr[S].mem_vir;
-				(memp+1)->size = memp->base + memp->size 
-					- (map_ptr[T].mem_phys + map_ptr[T].mem_len + map_ptr[S].mem_vir);
+
+				(memp+1)->base = progend;
+				(memp+1)->size = memp->base + memp->size
+					- progend;
 				memp->size = map_ptr[T].mem_phys - memp->base;
 			}
 			break;

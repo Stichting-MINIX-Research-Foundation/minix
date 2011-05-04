@@ -14,9 +14,6 @@
 /* special value for v in pt_allocmap */
 #define AM_AUTO         ((u32_t) -1)
 
-#define CLICK2ABS(v) ((v) << CLICK_SHIFT)
-#define ABS2CLICK(a) ((a) >> CLICK_SHIFT)
-
 /* Compile in asserts and custom sanity checks at all? */
 #define SANITYCHECKS	0
 #define VMSTATS		0

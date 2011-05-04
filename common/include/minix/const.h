@@ -117,6 +117,9 @@
 #define hclick_to_physb(n) ((phys_bytes) (n) << HCLICK_SHIFT)
 #define physb_to_hclick(n) ((n) >> HCLICK_SHIFT)
 
+#define CLICK2ABS(v) ((v) << CLICK_SHIFT)
+#define ABS2CLICK(a) ((a) >> CLICK_SHIFT)
+
 #define ABS             -999	/* this process means absolute memory */
 
 /* Flag bits for i_mode in the inode. */

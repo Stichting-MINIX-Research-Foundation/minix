@@ -69,6 +69,7 @@ IMPORT(params_size)
 IMPORT(params_offset)
 IMPORT(mon_ds)
 IMPORT(switch_to_user)
+IMPORT(multiboot_init)
 
 /* Exported variables. */
 .globl	begbss
@@ -81,6 +82,13 @@ IMPORT(switch_to_user)
 .global MINIX
 MINIX:
 /* this is the entry point for the MINIX kernel */
+
+#if defined(__ELF__)
+	/* Check if Multibooting */
+	cmpl $MULTIBOOT_BOOTLOADER_MAGIC, %eax
+	je _C_LABEL(multiboot_init)
+#endif
+
 	jmp	over_flags	/* skip over the next few bytes */
 .short	CLICK_SHIFT	/* for the monitor: memory granularity */
 
@@ -104,16 +112,11 @@ multiboot_flags:
 	.long MULTIBOOT_FLAGS
 multiboot_checksum:
 	.long -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_FLAGS)
-multiboot_header_addr:
-	.long (MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_ENTRY_OFFSET + multiboot_magic)
-multiboot_load_addr:
-	.long MULTIBOOT_LOAD_ADDRESS
-multiboot_load_end_addr:
 	.long 0
-multiboot_bss_end_addr:
 	.long 0
-multiboot_entry_addr:
-	.long (MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_ENTRY_OFFSET + multiboot_init)
+	.long 0
+	.long 0
+	.long 0
 /* Video mode */
 multiboot_mode_type:
 	.long MULTIBOOT_VIDEO_MODE_EGA
@@ -164,7 +167,9 @@ copygdt:
 	mov	8(%ebp), %ebx	/* boot parameters offset */
 	mov	12(%ebp), %edx	/* boot parameters length */
 	mov	16(%ebp), %eax	/* address of a.out headers */
+#if !defined(__ELF__)
 	movl	%eax, _C_LABEL(aout)
+#endif
 	mov	%ds, %ax	/* kernel data */
 	mov	%ax, %es
 	mov	%ax, %fs

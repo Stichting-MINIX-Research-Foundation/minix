@@ -45,8 +45,8 @@ PUBLIC int do_exec()
 	m.PM_PROC = mp->mp_endpoint;
 	m.PM_PATH = m_in.exec_name;
 	m.PM_PATH_LEN = m_in.exec_len;
-	m.PM_FRAME = m_in.stack_ptr;
-	m.PM_FRAME_LEN = m_in.stack_bytes;
+	m.PM_FRAME = m_in.frame_ptr;
+	m.PM_FRAME_LEN = m_in.frame_len;
 
 	tell_vfs(mp, &m);
 

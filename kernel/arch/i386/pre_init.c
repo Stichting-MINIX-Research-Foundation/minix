@@ -11,12 +11,18 @@
 #include <minix/types.h>
 #include <minix/type.h>
 #include <minix/com.h>
-#include <minix/a.out.h>
+#include <sys/param.h>
 #include <machine/partition.h>
 #include "../../../boot/image.h"
 #include "string.h"
 #include "arch_proto.h"
+#include "libexec.h"
 #include "multiboot.h"
+
+#define MULTIBOOT_VERBOSE 1
+
+/* FIXME: Share this define with kernel linker script */
+#define MULTIBOOT_KERNEL_ADDR 0x00200000UL
 
 /* Granularity used in image file and copying */
 #define GRAN 512
@@ -25,15 +31,14 @@
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
 
-/* The a.out headers to pass to kernel. 
- * Not using struct exec because only using short form */
-extern char a_out_headers[];
+/* Info on boot modules */
+phys_bytes mulitboot_modules_addr;
 
 #define mb_load_phymem(buf, phy, len) \
-		phys_copy((phy), PTR2PHY(buf), (len))
+		phys_copy((phy), (u32_t)(buf), (len))
 
 #define mb_save_phymem(buf, phy, len) \
-		phys_copy(PTR2PHY(buf), (phy), (len))
+		phys_copy((u32_t)(buf), (phy), (len))
 
 FORWARD _PROTOTYPE(void mb_print, (char *str));
 
@@ -253,21 +258,20 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 		multiboot_param_buf[i] = 0;
 	
 	if (mbi->flags & MULTIBOOT_INFO_BOOTDEV) {
-		sub = 0xff;
 		disk = ((mbi->boot_device&0xff000000) >> 24)-0x80;
-		prim = (mbi->boot_device&0xff0000) == 0xff0000 ? 
-			0 : (mbi->boot_device & 0xff0000) >> 16;
+		prim = (mbi->boot_device & 0xff0000) >> 16;
+		if (prim == 0xff)
+		    prim = 0;
+		sub = (mbi->boot_device & 0xff00) >> 8;
+		if (sub == 0xff)
+		    sub = 0;
 		ctrlr = 0;
 		dev = dev_cNd0[ctrlr];
+
 		/* Determine the value of rootdev */
-		if ((mbi->boot_device & 0xff00) == 0xff00) {
-			dev += disk * (NR_PARTITIONS + 1) + (prim + 1);
-		} else {
-			sub = (mbi->boot_device & 0xff00) >> 8;
-			dev += 0x80
-				 + (disk * NR_PARTITIONS + prim) * NR_PARTITIONS 
-				 + sub;
-		}
+		dev += 0x80
+		    + (disk * NR_PARTITIONS + prim) * NR_PARTITIONS + sub;
+
 		mb_itoa(dev, temp);
 		mb_set_param("rootdev", temp);
 		mb_set_param("ramimagedev", temp);
@@ -322,96 +326,138 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 	}
 }
 
-PRIVATE void mb_extract_image(void)
+PRIVATE int mb_clear_memrange(phys_bytes start, phys_bytes end)
 {
+	int empty = 0;
 	int i;
-	u32_t text_addr[NR_BOOT_PROCS];
-	u32_t imghdr_addr = MULTIBOOT_LOAD_ADDRESS;
-	int off_sum = 0;
-	struct exec *aout_hdr;
-	int empty, clear_size, j;
-	u32_t p;
-	/* Extract the image to align segments and clear up BSS 
-	 */
-	for (i = 0; i < LAST_SPECIAL_PROC_NR + 2; i++) {
-		aout_hdr = (struct exec *) (a_out_headers + A_MINHDR * i);
-		mb_load_phymem(aout_hdr, imghdr_addr + IM_NAME_MAX + 1, A_MINHDR);
-		text_addr[i] = imghdr_addr + GRAN;
-		if (aout_hdr->a_flags & A_SEP) {
-			off_sum += CLICK_CEIL(aout_hdr->a_total)
-					- SECT_CEIL(aout_hdr->a_data)
-					+ CLICK_CEIL(aout_hdr->a_text)
-					- SECT_CEIL(aout_hdr->a_text)
-					- GRAN;
-			imghdr_addr += SECT_CEIL(aout_hdr->a_text)
-					+ SECT_CEIL(aout_hdr->a_data)
-					+ GRAN;
-		} else {
-			off_sum += CLICK_CEIL(aout_hdr->a_total) 
-					- SECT_CEIL(aout_hdr->a_data + aout_hdr->a_text)
-					- GRAN;
-			imghdr_addr += SECT_CEIL(aout_hdr->a_text + aout_hdr->a_data)
-					+ GRAN;
-		}
-	}
-	for (i = LAST_SPECIAL_PROC_NR + 1; i >= 0;i--) {
-		struct exec * aout_hdr = (struct exec *) (a_out_headers + A_MINHDR * i);
-		if (aout_hdr->a_flags & A_SEP)
-			off_sum -= CLICK_CEIL(aout_hdr->a_total) 
-					- SECT_CEIL(aout_hdr->a_data)
-					+ CLICK_CEIL(aout_hdr->a_text)
-					- SECT_CEIL(aout_hdr->a_text)
-					- GRAN;
-		else
-			off_sum -= CLICK_CEIL(aout_hdr->a_total) 
-					- SECT_CEIL(aout_hdr->a_data + aout_hdr->a_text)
-					- GRAN;
-		if (i > 0) { /* if not kernel */
-			if (aout_hdr->a_flags & A_SEP)	{
-				mb_phys_move(text_addr[i], text_addr[i] + off_sum, 
-					SECT_CEIL(aout_hdr->a_text));
-				mb_phys_move(text_addr[i] + SECT_CEIL(aout_hdr->a_text), 
-					text_addr[i] + off_sum + CLICK_CEIL(aout_hdr->a_text), 
-					SECT_CEIL(aout_hdr->a_data));
-			} else {
-				mb_phys_move(text_addr[i], text_addr[i] + off_sum, 
-					SECT_CEIL(aout_hdr->a_text + aout_hdr->a_data));
-			}
-		}
-		aout_hdr->a_syms = text_addr[i] + off_sum;
-		
-		/* Clear out for expanded text, BSS and stack */
-		empty = 0;
-		if (aout_hdr->a_flags & A_SEP) {
-			p = text_addr[i] + off_sum
-				+ CLICK_CEIL(aout_hdr->a_text) 
-				+ aout_hdr->a_data;
-			clear_size = CLICK_CEIL(aout_hdr->a_total) - aout_hdr->a_data;
-		} else {
-			p = text_addr[i] + off_sum
-				+ aout_hdr->a_text
-				+ aout_hdr->a_data;
-			clear_size = CLICK_CEIL(aout_hdr->a_total) 
-				- aout_hdr->a_data
-				- aout_hdr->a_text;
-		}
-		/* FIXME: use faster function */
-		for (j = 0; j < clear_size; j++)
-			mb_save_phymem(&empty, p + j, 1);
-	}
+
+	/* FIXME: use faster function */
+	for (i = start; i < end; i++)
+		phys_copy((phys_bytes)&empty, i, 1);
+
+	return 0;
 }
 
-PUBLIC u32_t pre_init(u32_t ebx)
+PRIVATE void mb_extract_image(multiboot_info_t mbi)
+{
+	multiboot_module_t *mb_module_info;
+	multiboot_module_t *module;
+	u32_t mods_count = mbi.mods_count;
+	int r, i;
+	vir_bytes text_vaddr, text_filebytes, text_membytes;
+	vir_bytes data_vaddr, data_filebytes, data_membytes;
+	phys_bytes text_paddr, data_paddr;
+	vir_bytes stack_bytes;
+	vir_bytes pc;
+	off_t text_offset, data_offset;
+
+	/* Save memory map for kernel tasks */
+	r = read_header_elf((const char *)MULTIBOOT_KERNEL_ADDR,
+			    &text_vaddr, &text_paddr,
+			    &text_filebytes, &text_membytes,
+			    &data_vaddr, &data_paddr,
+			    &data_filebytes, &data_membytes,
+			    &pc, &text_offset, &data_offset);
+
+	for (i = 0; i < NR_TASKS; ++i) {
+	    image[i].memmap.text_vaddr = trunc_page(text_vaddr);
+	    image[i].memmap.text_paddr = trunc_page(text_paddr);
+	    image[i].memmap.text_bytes = text_membytes;
+	    image[i].memmap.data_vaddr = trunc_page(data_vaddr);
+	    image[i].memmap.data_paddr = trunc_page(data_paddr);
+	    image[i].memmap.data_bytes = data_membytes;
+	    image[i].memmap.stack_bytes = 0;
+	    image[i].memmap.entry = pc;
+	}
+
+#ifdef MULTIBOOT_VERBOSE
+	mb_print("\nKernel:   ");
+	mb_print_hex(trunc_page(text_paddr));
+	mb_print("-");
+	mb_print_hex(trunc_page(data_paddr) + data_membytes + stack_bytes);
+	mb_print(" Entry: ");
+	mb_print_hex(pc);
+	mb_print(" Stack: ");
+	mb_print_hex(stack_bytes);
+#endif
+
+	mb_module_info = ((multiboot_module_t *)mbi.mods_addr);
+	module = &mb_module_info[0];
+
+	/* Load boot image services into memory and save memory map */
+	for (i = 0; module < &mb_module_info[mods_count]; ++module, ++i) {
+	    char zero = 0;
+
+	    r = read_header_elf((const char *)module->mod_start,
+				&text_vaddr, &text_paddr,
+				&text_filebytes, &text_membytes,
+				&data_vaddr, &data_paddr,
+				&data_filebytes, &data_membytes,
+				&pc, &text_offset, &data_offset);
+	    if (r) {
+		mb_print("fatal: ELF parse failure\n");
+		/* Spin here */
+		while (1)
+			;
+	    }
+
+	    stack_bytes = round_page(image[NR_TASKS+i].stack_kbytes * 1024);
+
+	    /* Load text segment */
+	    phys_copy(module->mod_start+text_offset, text_paddr,
+		      text_filebytes);
+	    mb_clear_memrange(text_paddr+text_filebytes,
+			      trunc_page(text_paddr) + text_membytes);
+
+	    /* Load data and stack segments */
+	    phys_copy(module->mod_start+data_offset, data_paddr,
+		      data_filebytes);
+	    mb_clear_memrange(data_paddr+data_filebytes,
+			      trunc_page(data_paddr) + data_membytes
+			      + stack_bytes);
+
+	    /* Save memmap for  non-kernel tasks, so subscript past kernel
+	       tasks. */
+	    image[NR_TASKS+i].memmap.text_vaddr = trunc_page(text_vaddr);
+	    image[NR_TASKS+i].memmap.text_paddr = trunc_page(text_paddr);
+	    image[NR_TASKS+i].memmap.text_bytes = text_membytes;
+	    image[NR_TASKS+i].memmap.data_vaddr = trunc_page(data_vaddr);
+	    image[NR_TASKS+i].memmap.data_paddr = trunc_page(data_paddr);
+	    image[NR_TASKS+i].memmap.data_bytes = data_membytes;
+	    image[NR_TASKS+i].memmap.stack_bytes = stack_bytes;
+	    image[NR_TASKS+i].memmap.entry = pc;
+
+#ifdef MULTIBOOT_VERBOSE
+	    mb_print("\n");
+	    mb_print_hex(i);
+	    mb_print(": ");
+	    mb_print_hex(trunc_page(text_paddr));
+	    mb_print("-");
+	    mb_print_hex(trunc_page(data_paddr) + data_membytes + stack_bytes);
+	    mb_print(" Entry: ");
+	    mb_print_hex(pc);
+	    mb_print(" Stack: ");
+	    mb_print_hex(stack_bytes);
+	    mb_print(" ");
+	    mb_print((char *)module->cmdline);
+#endif
+	}
+
+	return;
+}
+
+PUBLIC phys_bytes pre_init(u32_t ebx)
 {
 	multiboot_info_t mbi;
+
 	/* Do pre-initialization for multiboot, returning physical address of
-	* a_out_headers 
+	*  of multiboot module info
 	*/
 	mb_cls();
 	mb_print("\nMINIX booting... ");
 	mb_load_phymem(&mbi, ebx, sizeof(mbi));
 	get_parameters(&mbi);
 	mb_print("\nLoading image... ");
-	mb_extract_image();
-	return PTR2PHY(a_out_headers);
+	mb_extract_image(mbi);
+	return mbi.mods_addr;
 }

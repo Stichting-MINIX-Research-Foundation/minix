@@ -73,7 +73,7 @@ PRIVATE __dead void arch_bios_poweroff(void)
 	write_cr0(cr0);
 	/* Copy 16-bit poweroff code to below 1M */
 	phys_copy(
-		FUNC2PHY(&poweroff16),
+		(u32_t)&poweroff16,
 		BIOS_POWEROFF_ENTRY,
 		(u32_t)&poweroff16_end-(u32_t)&poweroff16);
 	poweroff_jmp();

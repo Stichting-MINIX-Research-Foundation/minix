@@ -126,11 +126,13 @@ PUBLIC int main(void)
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register int i, j;
-  int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
   vir_clicks text_clicks, data_clicks, st_clicks;
-  struct exec e_hdr;		/* for a copy of an a.out header */
   size_t argsz;			/* size of arguments passed to crtso on stack */
+#if !defined(__ELF__)
+  int hdrindex;			/* index to array of a.out headers */
+  struct exec e_hdr;		/* for a copy of an a.out header */
+#endif
 
   BKL_LOCK();
    /* Global value to test segment sanity. */
@@ -217,7 +219,21 @@ PUBLIC int main(void)
 	    /* Don't let the process run for now. */
             RTS_SET(rp, RTS_NO_PRIV | RTS_NO_QUANTUM);
 	}
-
+#if defined(__ELF__)
+	rp->p_memmap[T].mem_vir  = ABS2CLICK(ip->memmap.text_vaddr);
+	rp->p_memmap[T].mem_phys = ABS2CLICK(ip->memmap.text_paddr);
+	rp->p_memmap[T].mem_len  = ABS2CLICK(ip->memmap.text_bytes);
+	rp->p_memmap[D].mem_vir  = ABS2CLICK(ip->memmap.data_vaddr);
+	rp->p_memmap[D].mem_phys = ABS2CLICK(ip->memmap.data_paddr);
+	rp->p_memmap[D].mem_len  = ABS2CLICK(ip->memmap.data_bytes);
+	rp->p_memmap[S].mem_phys = ABS2CLICK(ip->memmap.data_paddr +
+					     ip->memmap.data_bytes +
+					     ip->memmap.stack_bytes);
+	rp->p_memmap[S].mem_vir  = ABS2CLICK(ip->memmap.data_vaddr +
+					     ip->memmap.data_bytes +
+					     ip->memmap.stack_bytes);
+	rp->p_memmap[S].mem_len  = 0;
+#else
 	if (iskerneln(proc_nr)) {		/* part of the kernel? */ 
 		hdrindex = 0;		/* all use the first a.out header */
 	} else {
@@ -248,12 +264,13 @@ PUBLIC int main(void)
 	rp->p_memmap[S].mem_phys = text_base + text_clicks + st_clicks;
 	rp->p_memmap[S].mem_vir  = st_clicks;
 	rp->p_memmap[S].mem_len  = 0;
+#endif
 
 	/* Set initial register values.  The processor status word for tasks 
 	 * is different from that of other processes because tasks can
 	 * access I/O; this is not allowed to less-privileged processes 
 	 */
-	rp->p_reg.pc = 0; /* we cannot start anything else */
+	rp->p_reg.pc = ip->memmap.entry;
 	rp->p_reg.psw = (iskerneln(proc_nr)) ? INIT_TASK_PSW : INIT_PSW;
 
 	/* Initialize the server stack pointer. Take it down three words

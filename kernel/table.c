@@ -49,32 +49,29 @@
  * the highest priority. DS must be the first system process in the list to
  * allow reliable asynchronous publishing of system events. RS comes right after
  * to prioritize ping messages periodically delivered to system processes.
- *
- * Each entry provides the process number, flags, and a name for the process
- * table.
  */
 
 PUBLIC struct boot_image image[] = {
-/* process nr, flags, name */
-{ASYNCM,           0, "asyncm"},
-{IDLE,             0, "idle"  },
-{CLOCK,            0, "clock" },
-{SYSTEM,           0, "system"},
-{HARDWARE,         0, "kernel"},
+/* process nr, flags, stack size, name */
+{ASYNCM,           0,          0, "asyncm"},
+{IDLE,             0,          0, "idle"  },
+{CLOCK,            0,          0, "clock" },
+{SYSTEM,           0,          0, "system"},
+{HARDWARE,         0,          0, "kernel"},
                       
-{DS_PROC_NR,   BVM_F, "ds"    },
-{RS_PROC_NR,       0, "rs"    },
+{DS_PROC_NR,   BVM_F,         16, "ds"    },
+{RS_PROC_NR,       0,       8125, "rs"    },
                       
-{PM_PROC_NR,   OVM_F, "pm"    },
-{SCHED_PROC_NR,OVM_F, "sched" },
-{VFS_PROC_NR,  BVM_F, "vfs"   },
-{MEM_PROC_NR,  BVM_F, "memory"},
-{LOG_PROC_NR,  BVM_F, "log"   },
-{TTY_PROC_NR,  BVM_F, "tty"   },
-{MFS_PROC_NR,  BVM_F, "mfs"   },
-{VM_PROC_NR,       0, "vm"    },
-{PFS_PROC_NR,  BVM_F, "pfs"   },
-{INIT_PROC_NR, BVM_F, "init"  },
+{PM_PROC_NR,   OVM_F,         32, "pm"    },
+{SCHED_PROC_NR,OVM_F,         32, "sched" },
+{VFS_PROC_NR,  BVM_F,         16, "vfs"   },
+{MEM_PROC_NR,  BVM_F,          8, "memory"},
+{LOG_PROC_NR,  BVM_F,         32, "log"   },
+{TTY_PROC_NR,  BVM_F,         16, "tty"   },
+{MFS_PROC_NR,  BVM_F,        128, "mfs"   },
+{VM_PROC_NR,       0,        128, "vm"    },
+{PFS_PROC_NR,  BVM_F,        128, "pfs"   },
+{INIT_PROC_NR, BVM_F,         64, "init"  },
 };
 
 /* Verify the size of the system image table at compile time.

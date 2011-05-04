@@ -6,21 +6,17 @@
 #define MULTIBOOT_BOOTLOADER_MAGIC 0x2BADB002
 
 /* Must pass memory information to OS. */
+#define MULTIBOOT_PAGE_ALIGN 0x00000001
+
 #define MULTIBOOT_MEMORY_INFO 0x00000002
 
 #define MULTIBOOT_VIDEO_MODE 0x00000004
 
 #define MULTIBOOT_AOUT_KLUDGE 0x00010000
 
-#define MULTIBOOT_FLAGS (MULTIBOOT_MEMORY_INFO | \
-						MULTIBOOT_VIDEO_MODE | \
-						MULTIBOOT_AOUT_KLUDGE)
+#define MULTIBOOT_FLAGS (MULTIBOOT_MEMORY_INFO | MULTIBOOT_PAGE_ALIGN)
 						
 /* consts used for Multiboot pre-init */
-
-#define MULTIBOOT_ENTRY_OFFSET 0x200
-
-#define MULTIBOOT_LOAD_ADDRESS 0x200000-MULTIBOOT_ENTRY_OFFSET
 
 #define MULTIBOOT_VIDEO_MODE_EGA 1
 
@@ -36,10 +32,6 @@
 #define MULTIBOOT_STACK_SIZE 4096
 #define MULTIBOOT_PARAM_BUF_SIZE 1024
 
-#define MULTIBOOT_KERNEL_a_text 0x48
-#define MULTIBOOT_KERNEL_a_data (0x48+4)
-#define MULTIBOOT_KERNEL_a_total (0x48+16)
-
 /* Flags to be set in the ’flags’ member of the multiboot info structure. */
 
 #define MULTIBOOT_INFO_MEMORY 0x00000001
@@ -52,15 +44,6 @@
 
 /* Are there modules to do something with? */
 #define MULTIBOOT_INFO_MODS 0x00000008
-
-/* get physical address by data pointer*/
-#define PTR2PHY(ptr) (kernel_data_addr+(u32_t)(ptr))
-
-/* get data pointer by physical address*/
-#define PHY2PTR(phy) ((char *)((u32_t)(phy)-kernel_data_addr))
-
-/* Get physical address by function pointer*/
-#define FUNC2PHY(fun) (MULTIBOOT_LOAD_ADDRESS + MULTIBOOT_ENTRY_OFFSET + (u32_t)(fun))
 
 #ifndef __ASSEMBLY__
 
@@ -126,11 +109,20 @@ struct multiboot_info
 };
 typedef struct multiboot_info multiboot_info_t;
 
+struct multiboot_mod_list
+{
+	/* Memory used goes from bytes 'mod_start' to 'mod_end-1' inclusive */
+	u32_t mod_start;
+	u32_t mod_end;
+	/* Module command line */
+	u32_t cmdline;
+	/* Pad struct to 16 bytes (must be zero) */
+	u32_t pad;
+};
+typedef struct multiboot_mod_list multiboot_module_t;
+
 /* Buffer for multiboot parameters */
 extern char multiboot_param_buf[];
-
-/* Physical address of kernel data segment */
-extern phys_bytes kernel_data_addr;
 
 #endif /* __ASSEMBLY__ */
 #endif /* __MULTIBOOT_H__ */

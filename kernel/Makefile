@@ -13,8 +13,8 @@ SRCS+=	start.c table.c main.c proc.c \
 SRCS += smp.c
 .endif
 
-DPADD+=	${LIBTIMERS} ${LIBSYS}
-LDADD+=	-ltimers -lsys
+DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC}
+LDADD+=	-ltimers -lsys -lexec
 
 CFLAGS += -D__kernel__
 
@@ -22,7 +22,11 @@ CFLAGS += -D__kernel__
 LDFLAGS+= -.o
 .elif ${COMPILER_TYPE} == "gnu"
 CPPFLAGS+= -ffreestanding -fno-stack-protector
+.if ${OBJECT_FMT} == "ELF"
+LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel_elf.lds
+.else
 LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
+.endif
 LDFLAGS+= -nostdlib -L${LIBDIR}
 CFLAGS+=-march=i386
 DPADD+=	${LIBC}
