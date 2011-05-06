@@ -1856,7 +1856,7 @@ PRIVATE void acpi_map_bridge(unsigned pbnr, unsigned dev, unsigned sbnr)
 		panic("PCI: error %d while receiveing from ACPI\n", err);
 
 	if (((struct acpi_map_bridge_resp *)&m)->err != OK)
-		panic("PCI: acpi failed to map pci (%d) to pci (%d) bridge\n",
+		printf("PCI: acpi failed to map pci (%d) to pci (%d) bridge\n",
 								pbnr, sbnr);
 }
 
