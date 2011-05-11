@@ -206,11 +206,19 @@ PRIVATE void idle(void)
 	switch_address_space_idle();
 
 #ifdef CONFIG_SMP
+	get_cpulocal_var(cpu_is_idle) = 1;
 	/* we don't need to keep time on APs as it is handled on the BSP */
 	if (cpuid != bsp_cpu_id)
 		stop_local_timer();
-	get_cpulocal_var(cpu_is_idle) = 1;
+	else
 #endif
+	{
+		/*
+		 * If the timer has expired while in kernel we must
+		 * rearm it before we go to sleep
+		 */
+		restart_local_timer();
+	}
 
 	/* start accounting for the idle time */
 	context_stop(proc_addr(KERNEL));
