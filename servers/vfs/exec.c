@@ -552,7 +552,7 @@ phys_bytes seg_bytes		/* how much is to be transferred? */
   unsigned n, o;
   u64_t new_pos;
   unsigned int cum_io;
-  char buf[1024];
+  static char buf[128 * 1024];
 
   assert((seg == T)||(seg == D));
 
