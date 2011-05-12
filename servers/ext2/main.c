@@ -3,6 +3,7 @@
 #include <minix/callnr.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>

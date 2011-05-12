@@ -123,7 +123,7 @@ register struct super_block *sp; /* pointer to a superblock */
   /* TODO: this code is for revision 1 (but bw compatible with 0)
    * inode must be power of 2 and smaller, than block size.
    */
-  if (EXT2_INODE_SIZE(sp) & (EXT2_INODE_SIZE(sp) - 1) != 0
+  if ((EXT2_INODE_SIZE(sp) & (EXT2_INODE_SIZE(sp) - 1)) != 0
       || EXT2_INODE_SIZE(sp) > sp->s_block_size) {
 	printf("superblock->s_inode_size is incorrect...\n");
 	return(EINVAL);
