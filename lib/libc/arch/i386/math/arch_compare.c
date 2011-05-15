@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <minix/endpoint.h>
 #include <math.h>
 
 #include "fpu_cw.h"

@@ -16,7 +16,11 @@
 #define _TIMERS_H
 
 #include <limits.h>
+
 #include <minix/types.h>
+#include <minix/u64.h>
+#include <minix/minlib.h>
+#include <minix/endpoint.h>
 
 struct timer;
 typedef void (*tmr_func_t)(struct timer *tp);
@@ -58,6 +62,52 @@ _PROTOTYPE( clock_t tmrs_clrtimer, (timer_t **tmrs, timer_t *tp, clock_t *new_he
 _PROTOTYPE( void tmrs_exptimers, (timer_t **tmrs, clock_t now, clock_t *new_head)		);
 _PROTOTYPE( clock_t tmrs_settimer, (timer_t **tmrs, timer_t *tp, 
 	clock_t exp_time, tmr_func_t watchdog, clock_t *new_head)				);
+
+#define PRINT_STATS(cum_spenttime, cum_instances) {		\
+		if(ex64hi(cum_spenttime)) { printf(" ???\n"); }	\
+		printf("%s:%d,%lu,%lu,%lu,%d.%04d%%\n", \
+			__FILE__, __LINE__, cum_instances,		\
+			div64u(cum_spenttime, cum_instances),	\
+			 ex64lo(cum_spenttime),	\
+			perc/10000, perc%10000);	\
+	}
+
+#define RESET_STATS(starttime, cum_instances, cum_spenttime, cum_starttime) { \
+		cum_instances = 0;				\
+		cum_starttime = starttime;			\
+		cum_spenttime = make64(0,0);			\
+}
+
+#define TIME_BLOCK_VAR(timed_code_block, time_interval) do {	\
+	static u64_t _cum_spenttime, _cum_starttime;		\
+	static int _cum_instances;				\
+	u64_t _next_cum_spent, _starttime, _endtime, _dt, _cum_dt;	\
+	u32_t _dt_micros;					\
+	int perc;						\
+	read_tsc_64(&_starttime);				\
+	do { timed_code_block } while(0);			\
+	read_tsc_64(&_endtime);					\
+	_dt = sub64(_endtime, _starttime);			\
+	if(_cum_instances == 0) {				\
+		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
+	 }							\
+	_next_cum_spent = add64(_cum_spenttime, _dt);		\
+	if(ex64hi(_next_cum_spent)) { 				\
+		PRINT_STATS(_cum_spenttime, _cum_instances);	\
+		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); \
+	} 							\
+	_cum_spenttime = add64(_cum_spenttime, _dt);		\
+	_cum_instances++;					\
+	_cum_dt = sub64(_endtime, _cum_starttime);		\
+	perc=ex64lo(div64(mul64(_cum_spenttime,make64(1000000,0)), _cum_dt));	\
+	if(cmp64(_cum_dt, make64(0, 120)) > 0) {		\
+		PRINT_STATS(_cum_spenttime, _cum_instances);	\
+		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); 	\
+	} 							\
+} while(0)
+
+#define TIME_BLOCK(timed_code_block) TIME_BLOCK_VAR(timed_code_block, 100)
+#define TIME_BLOCK_T(timed_code_block, t) TIME_BLOCK_VAR(timed_code_block, t)
 
 #endif /* _TIMERS_H */
 
