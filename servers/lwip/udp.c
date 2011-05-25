@@ -225,9 +225,9 @@ static void udp_op_read(struct socket * sock, message * m)
 	}
 }
 
-static int udp_op_send(__unused struct socket * sock,
-			__unused struct pbuf * pbuf,
-			__unused message * m)
+static int udp_op_send(struct socket * sock,
+			struct pbuf * pbuf,
+			message * m)
 {
 	int err;
 
