@@ -494,6 +494,7 @@ mount /dev/$root /mnt >/dev/null || exit
 
 # Running from the installation CD.
 cpdir -vx / /mnt | progressbar "$ROOTFILES" || exit	
+chmod o-w /mnt/usr
 cp /mnt/etc/motd.install /mnt/etc/motd
 
 # Fix /var/log
