@@ -52,6 +52,7 @@ PRIVATE void lockup_check(struct nmi_frame * frame)
 
 PUBLIC void nmi_watchdog_handler(struct nmi_frame * frame)
 {
+#if SPROFILE
 	/*
 	 * Do not check for lockups while profiling, it is extremely likely that
 	 * a false positive is detected if the frequency is high
@@ -63,6 +64,13 @@ PUBLIC void nmi_watchdog_handler(struct nmi_frame * frame)
 	
 	if ((watchdog_enabled || sprofiling) && watchdog->reinit)
 		watchdog->reinit(cpuid);
+#else
+	if (watchdog_enabled) {
+		lockup_check(frame);
+		if (watchdog->reinit)
+			watchdog->reinit(cpuid);
+	}
+#endif
 }
 
 int nmi_watchdog_start_profiling(const unsigned freq)

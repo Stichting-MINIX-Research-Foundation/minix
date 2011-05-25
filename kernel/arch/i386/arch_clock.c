@@ -288,9 +288,10 @@ PUBLIC void context_stop_idle(void)
 
 	if (is_idle)
 		restart_local_timer();
-
+#if SPROFILE
 	if (sprofiling)
 		get_cpulocal_var(idle_interrupted) = 1;
+#endif
 }
 
 PUBLIC u64_t ms_2_cpu_time(unsigned ms)
