@@ -11,7 +11,7 @@ PROG=	cdbootblock
 
 SRCS=		bootblock.s
 .PATH:	${.CURDIR}/../bootblock
-CPPFLAGS+=	-DCDBOOT
+AFLAGS+=	-DCDBOOT
 
 BINDIR=		/usr/mdec
 MAN=
