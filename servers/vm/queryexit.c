@@ -39,7 +39,7 @@ static struct query_exit_struct array[NR_PROCS];
 PUBLIC int do_query_exit(message *m)
 {
 	int i, nr;
-	endpoint_t ep;
+	endpoint_t ep = NONE;
 
 	for (i = 0; i < NR_PROCS; i++) {
 		if (!array[i].avail) {

@@ -37,8 +37,6 @@ FORWARD _PROTOTYPE( int new_mem, (struct vmproc *vmp,
 	vir_bytes stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top,
 	int is_elf));
 
-static int failcount;
-
 /*===========================================================================*
  *				exec_newmem				     *
  *===========================================================================*/
@@ -150,8 +148,7 @@ PRIVATE int new_mem(
  */
 
   vir_clicks text_clicks, data_clicks, gap_clicks, stack_clicks, tot_clicks;
-  phys_bytes bytes, base, bss_offset;
-  int s, r2, r, hadpt = 0;
+  int r, hadpt = 0;
   struct vmproc *vmpold = &vmproc[VMP_EXECTMP];
   int ptok = 1;
 
@@ -298,7 +295,6 @@ PUBLIC int proc_new(struct vmproc *vmp,
 {
 	int s;
 	vir_bytes hole_bytes;
-	int prealloc;
 	struct vir_region *reg;
 	phys_bytes map_text_addr, map_data_addr, map_stack_addr;
 

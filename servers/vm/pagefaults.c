@@ -57,7 +57,7 @@ PUBLIC void do_pagefaults(message *m)
 	u32_t addr = m->VPF_ADDR;
 	u32_t err = m->VPF_FLAGS;
 	struct vmproc *vmp;
-	int r, s;
+	int s;
 
 	struct vir_region *region;
 	vir_bytes offset;
@@ -76,7 +76,7 @@ PUBLIC void do_pagefaults(message *m)
 				ep, arch_map2str(vmp, addr), pf_errstr(err));
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
-		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
 			panic("do_pagefaults: sys_vmctl failed: %d", ep);
 		return;
 	}
@@ -97,7 +97,7 @@ PUBLIC void do_pagefaults(message *m)
 				ep, arch_map2vir(vmp, addr), pf_errstr(err));
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
-		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
 			panic("do_pagefaults: sys_vmctl failed: %d", ep);
 		return;
 	}
@@ -106,17 +106,17 @@ PUBLIC void do_pagefaults(message *m)
 	offset = addr - region->vaddr;
 
 	/* Access is allowed; handle it. */
-	if((r=map_pf(vmp, region, offset, wr)) != OK) {
+	if((map_pf(vmp, region, offset, wr)) != OK) {
 		printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
 		if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 			panic("sys_kill failed: %d", s);
-		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
 			panic("do_pagefaults: sys_vmctl failed: %d", ep);
 		return;
 	}
 
 	/* Pagefault is handled, so now reactivate the process. */
-	if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
+	if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, 0 /*unused*/)) != OK)
 		panic("do_pagefaults: sys_vmctl failed: %d", ep);
 }
 
@@ -167,7 +167,6 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 {
 	struct vir_region *region;
 	vir_bytes o;
-	vir_bytes v;
 
 	/* Page-align memory and length. */
 	o = mem % VM_PAGE_SIZE;

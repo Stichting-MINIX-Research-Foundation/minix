@@ -64,7 +64,6 @@ PUBLIC int do_rs_update(message *m_ptr)
 	endpoint_t src_e, dst_e, reply_e;
 	int src_p, dst_p;
 	struct vmproc *src_vmp, *dst_vmp;
-	struct vir_region *vr;
 	int r;
 
 	src_e = m_ptr->VM_RS_SRC_ENDPT;
@@ -118,7 +117,7 @@ PUBLIC int do_rs_update(message *m_ptr)
  *===========================================================================*/
 PRIVATE int rs_memctl_make_vm_instance(struct vmproc *new_vm_vmp)
 {
-	int vm_p, r;
+	int r;
 	u32_t flags;
 	int verify;
 	struct vmproc *this_vm_vmp;

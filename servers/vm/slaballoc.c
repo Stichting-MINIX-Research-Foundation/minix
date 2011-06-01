@@ -277,7 +277,9 @@ PUBLIC int slabsane_f(char *file, int line, void *mem, int bytes)
 }
 #endif
 
+#if SANITYCHECKS
 static int nojunkwarning = 0;
+#endif
 
 /*===========================================================================*
  *				void *slaballoc				     *
@@ -332,7 +334,6 @@ PUBLIC void *slaballoc(int bytes)
 		i = i % ITEMSPERPAGE(bytes);
 
 		if(!GETBIT(firstused, i)) {
-			struct slabdata *f;
 			char *ret;
 			SETBIT(firstused, i);
 	SLABSANITYCHECK(SCL_DETAIL);

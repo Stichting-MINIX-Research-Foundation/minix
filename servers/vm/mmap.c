@@ -52,8 +52,6 @@ PUBLIC int do_mmap(message *m)
 		return ENXIO;
 
 	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
-		int s;
-		vir_bytes v;
 		u32_t vrflags = VR_ANON | VR_WRITABLE;
 		size_t len = (vir_bytes) m->VMM_LEN;
 
@@ -221,7 +219,7 @@ PUBLIC int do_remap(message *m)
 	int dn, sn;
 	vir_bytes da, sa, startv;
 	size_t size;
-	struct vir_region *vr, *region;
+	struct vir_region *region;
 	struct vmproc *dvmp, *svmp;
 	int r;
 

@@ -144,7 +144,7 @@ PRIVATE u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
  * between page-aligned BYTE offsets vmin and vmax, to fit
  * a page in. Return byte offset.
  */
-	u32_t freefound = 0, curv;
+	u32_t curv;
 	int pde = 0, try_restart;
 	static u32_t lastv = 0;
 
@@ -291,7 +291,6 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 	assert(level <= 2);
 
 	if(level > 1 || !(vmprocess->vm_flags & VMF_HASPT) || !meminit_done) {
-		int r;
 		void *s;
 		s=vm_getsparepage(phys);
 		level--;
@@ -536,8 +535,7 @@ PUBLIC int pt_map_in_range(struct vmproc *src_vmp, struct vmproc *dst_vmp,
  * the destination process in the range specified.
  */
 	int pde, pte;
-	int r;
-	vir_bytes viraddr, mapaddr;
+	vir_bytes viraddr;
 	pt_t *pt, *dst_pt;
 
 	pt = &src_vmp->vm_pt;
@@ -652,7 +650,7 @@ PUBLIC int pt_writemap(struct vmproc * vmp,
 {
 /* Write mapping into page table. Allocate a new page table if necessary. */
 /* Page directory and table entries for this virtual address. */
-	int p, r, pages;
+	int p, pages;
 	int verify = 0;
 	int ret = OK;
 
@@ -778,14 +776,13 @@ resume_exit:
 PUBLIC int pt_checkrange(pt_t *pt, vir_bytes v,  size_t bytes,
 	int write)
 {
-	int p, pages, pde;
+	int p, pages;
 
 	assert(!(bytes % I386_PAGE_SIZE));
 
 	pages = bytes / I386_PAGE_SIZE;
 
 	for(p = 0; p < pages; p++) {
-		u32_t entry;
 		int pde = I386_VM_PDE(v);
 		int pte = I386_VM_PTE(v);
 
@@ -873,7 +870,6 @@ PUBLIC void pt_init(phys_bytes usedlimit)
         u32_t moveup = 0;
 	int global_bit_ok = 0;
 	int free_pde;
-	int p;
 	struct vm_ep_data ep_data;
 	vir_bytes sparepages_mem;
 	phys_bytes sparepages_ph;
@@ -943,9 +939,6 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 
         /* Set up mappings for VM process. */
         for(v = lo; v < hi; v += I386_PAGE_SIZE)  {
-                phys_bytes addr;
-                u32_t flags; 
-        
                 /* We have to write the new position in the PT,
                  * so we can move our segments.
                  */ 
@@ -1153,7 +1146,7 @@ PUBLIC void pt_init_mem()
  *===========================================================================*/
 PUBLIC int pt_bind(pt_t *pt, struct vmproc *who)
 {
-	int slot, ispt;
+	int slot;
 	u32_t phys;
 	void *pdes;
 
@@ -1213,7 +1206,7 @@ PUBLIC void pt_free(pt_t *pt)
  *===========================================================================*/
 PUBLIC int pt_mapkernel(pt_t *pt)
 {
-	int r, i;
+	int i;
 
         /* Any i386 page table needs to map in the kernel address space. */
         assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);

@@ -50,7 +50,6 @@ PUBLIC char *arch_map2str(struct vmproc *vmp, vir_bytes addr)
 {
 	static char bufstr[100];
 	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
-	vir_bytes textend = textstart + CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len);
 	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
 	vir_bytes textsegbase = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys -
 					  vmp->vm_arch.vm_seg[T].mem_vir);

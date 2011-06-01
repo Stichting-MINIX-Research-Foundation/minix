@@ -7,6 +7,8 @@
 ** Version: 1.5  Author: Walt Karas
 */
 
+#include <string.h>
+
 #undef L__
 #undef L__EST_LONG_BIT
 #undef L__SIZE
@@ -14,6 +16,7 @@
 #undef L__MASK_HIGH_BIT
 #undef L__LONG_BIT
 #undef L__BIT_ARR_DEFN
+#undef L__BIT_ARR_CLEAR
 #undef L__BIT_ARR_VAL
 #undef L__BIT_ARR_0
 #undef L__BIT_ARR_1
@@ -98,6 +101,8 @@
 
 #define L__BIT_ARR_DEFN(NAME) unsigned long NAME[L__BIT_ARR_LONGS];
 
+#define L__BIT_ARR_CLEAR(NAME) memset(NAME, 0, sizeof(NAME));
+
 #define L__BIT_ARR_VAL(BIT_ARR, BIT_NUM) \
   ((BIT_ARR)[(BIT_NUM) / L__LONG_BIT] & (1L << ((BIT_NUM) % L__LONG_BIT)))
 
@@ -113,6 +118,8 @@
 #else /* The bit array can definitely fit in one long */
 
 #define L__BIT_ARR_DEFN(NAME) unsigned long NAME;
+
+#define L__BIT_ARR_CLEAR(NAME) NAME = 0;
 
 #define L__BIT_ARR_VAL(BIT_ARR, BIT_NUM) ((BIT_ARR) & (1L << (BIT_NUM)))
 
@@ -340,6 +347,8 @@ L__SC AVL_HANDLE L__(insert)(L__(avl) *L__tree, AVL_HANDLE h)
 	AVL_HANDLE hh = L__tree->root;
 	AVL_HANDLE parent = AVL_NULL;
 	int cmp;
+	
+	L__BIT_ARR_CLEAR(branch)
 
 	do
  	  {
@@ -548,11 +557,13 @@ L__SC AVL_HANDLE L__(remove)(L__(avl) *L__tree, AVL_KEY k)
     AVL_HANDLE parent = AVL_NULL;
     AVL_HANDLE child;
     AVL_HANDLE path;
-    int cmp, cmp_shortened_sub_with_path;
+    int cmp, cmp_shortened_sub_with_path = 0;
     int reduced_depth;
     int bf;
     AVL_HANDLE rm;
     AVL_HANDLE parent_rm;
+
+    L__BIT_ARR_CLEAR(branch)
 
     for ( ; ; )
       {
@@ -752,7 +763,7 @@ L__SC AVL_HANDLE L__(subst)(L__(avl) *L__tree, AVL_HANDLE new_node)
   {
     AVL_HANDLE h = L__tree->root;
     AVL_HANDLE parent = AVL_NULL;
-    int cmp, last_cmp;
+    int cmp, last_cmp = 0;
 
     /* Search for node already in tree with same key. */
     for ( ; ; )
@@ -833,6 +844,9 @@ L__SC int L__(build)(
 	return(1);
       }
 
+    L__BIT_ARR_CLEAR(branch)
+    L__BIT_ARR_CLEAR(rem)
+      
     for ( ; ; )
       {
 	while (num_sub > 2)
@@ -1178,6 +1192,7 @@ L__SC void L__(decr_iter)(L__(iter) *iter)
 #undef L__MASK_HIGH_BIT
 #undef L__LONG_BIT
 #undef L__BIT_ARR_DEFN
+#undef L__BIT_ARR_CLEAR
 #undef L__BIT_ARR_VAL
 #undef L__BIT_ARR_0
 #undef L__BIT_ARR_1

@@ -405,7 +405,7 @@ PRIVATE vir_bytes region_find_slot_range(struct vmproc *vmp,
 		vir_bytes minv, vir_bytes maxv, vir_bytes length)
 {
 	struct vir_region *firstregion;
-	vir_bytes startv;
+	vir_bytes startv = 0;
 	int foundflag = 0;
 	region_iter iter;
 
@@ -522,7 +522,6 @@ int mapflags;
 {
 	struct vir_region *newregion;
 	vir_bytes startv;
-	struct phys_region *ph;
 	physr_avl *phavl;
 
 	assert(!(length % VM_PAGE_SIZE));
@@ -606,7 +605,6 @@ USE(newregion,
 PUBLIC void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 {
 	struct phys_block *pb;
-	int remap = 0;
 
 	pb = pr->ph;
 	assert(pb->refcount > 0);
@@ -663,7 +661,7 @@ PRIVATE struct phys_region *reset_physr_iter(struct vir_region *region,
 PRIVATE int map_subfree(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes len)
 {
-	struct phys_region *pr, *nextpr;
+	struct phys_region *pr;
 	physr_iter iter;
 
 
@@ -706,7 +704,6 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 			assert(!(sublen % VM_PAGE_SIZE));
 			assert(sublen < pr->ph->length);
 			if(pr->ph->refcount > 1) {
-				int r;
 				if(!(pr = map_clone_ph_block(vmp, region,
 					pr, &iter)))
 					return ENOMEM;
@@ -1189,7 +1186,6 @@ int write;
 
 	if((ph = physr_search(region->phys, offset, AVL_LESS_EQUAL)) &&
 	   (ph->offset <= offset && offset < ph->offset + ph->ph->length)) {
-		phys_bytes blockoffset = ph->offset;
 		/* Pagefault in existing block. Do copy-on-write. */
 		assert(write);
 		assert(region->flags & VR_WRITABLE);
@@ -1277,7 +1273,6 @@ int write;
 	if(r2) { 	 						\
 		end   = MIN(end, r2->offset); }		\
 	if(start < end) {						\
-		int r;							\
 		SANITYCHECK(SCL_DETAIL);				\
 		if(map_new_physblock(vmp, region, start,		\
 			end-start, MAP_NONE, PAF_CLEAR, 0) != OK) {	\
@@ -1675,7 +1670,6 @@ PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
 {
 	vir_bytes end;
 	struct vir_region *nextvr;
-	region_iter v_iter;
 
 	assert(vr);
 	assert(vr->flags & VR_ANON);
@@ -2187,7 +2181,7 @@ PUBLIC int unmap_memory(endpoint_t sour, endpoint_t dest,
  *===========================================================================*/
 PRIVATE int split_phys(struct phys_region *pr, vir_bytes point)
 {
-        struct phys_region *newpr, *q, *prev;
+        struct phys_region *newpr, *q, *prev = NULL;
         struct phys_block *newpb;
         struct phys_block *pb = pr->ph;
 /* Split the phys region into 2 parts by @point. */
@@ -2224,6 +2218,7 @@ PRIVATE int split_phys(struct phys_region *pr, vir_bytes point)
                         prev = newpr;
                 }
         }
+	assert(prev);
         prev->next_ph_list = NULL;
 
         return OK;
@@ -2299,7 +2294,6 @@ PUBLIC int map_memory(endpoint_t sour, endpoint_t dest,
  */
 	struct vmproc *vms, *vmd;
 	struct vir_region *vrs, *vrd;
-	physr_iter iterd;
 	vir_bytes offset_s, offset_d;
 	int p;
 	int r;
@@ -2416,7 +2410,6 @@ get_clean_phys_region(struct vmproc *vmp, vir_bytes vaddr, vir_bytes length,
 	/* If it's mapped more than once, make a copy. */
 	assert(ph->ph->refcount > 0);
 	if(ph->ph->refcount > 1) {
-		int r;
 		if(!(ph = map_clone_ph_block(vmp, region,
 			ph, NULL))) {
 			printf("VM: get_clean_phys_region: ph copy failed\n");
@@ -2485,7 +2478,7 @@ PRIVATE int yieldblock(struct vmproc *vmp, u64_t id,
 	vir_bytes vaddr, vir_bytes len, yielded_t **retyb)
 {
 	yielded_t *newyb;
-	vir_bytes mem_clicks, newmem, clicks;
+	vir_bytes mem_clicks, clicks;
 	struct vir_region *region;
 	struct phys_region *ph;
 	yielded_avl *avl;
@@ -2634,7 +2627,7 @@ PUBLIC int do_forgetblock(message *m)
 PUBLIC int do_yieldblockgetblock(message *m)
 {
 	u64_t yieldid, getid;
-	int n, get = 0;
+	int n;
 	endpoint_t caller = m->m_source;
 	struct vmproc *vmp;
 	yielded_t *yb = NULL;

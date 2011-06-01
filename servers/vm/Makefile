@@ -16,6 +16,9 @@ INSTALLFLAGS+=	-S 128k
 
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${ARCH}
 CPPFLAGS+=	-I${MINIXSRCDIR}
+.if ${CC} == gcc
+CFLAGS+= -Wall -Werror
+.endif
 
 .include "arch/${ARCH}/Makefile.inc"
 .include <bsd.prog.mk>

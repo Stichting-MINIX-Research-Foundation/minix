@@ -34,7 +34,7 @@
  *===========================================================================*/
 PUBLIC int do_fork(message *msg)
 {
-  int r, proc, s, childproc, fullvm;
+  int r, proc, childproc, fullvm;
   struct vmproc *vmp, *vmc;
   pt_t origpt;
   vir_bytes msgaddr;

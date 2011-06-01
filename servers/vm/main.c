@@ -75,7 +75,6 @@ PUBLIC int main(void)
 {
   message msg;
   int result, who_e, rcv_sts;
-  sigset_t sigset;
   int caller_slot;
   struct vmproc *vmp_caller;
 
@@ -172,7 +171,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the vm server. */
 	int s, i;
-	int click, clicksforgotten = 0;
 	struct memory mem_chunks[NR_MEMS];
 	struct boot_image image[NR_BOOT_PROCS];
 	struct boot_image *ip;
@@ -271,7 +269,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Give these processes their own page table. */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
-		int s;
 		struct vmproc *vmp;
 		vir_bytes old_stacktop, old_stacklen;
 

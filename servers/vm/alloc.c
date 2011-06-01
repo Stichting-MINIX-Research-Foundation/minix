@@ -57,8 +57,6 @@ struct hole {
 	int holelist;
 };
 
-static int startpages;
-
 
 #define _NR_HOLES (_NR_PROCS*2)  /* No. of memory holes maintained by VM */
 
@@ -169,9 +167,7 @@ PUBLIC phys_clicks alloc_mem(phys_clicks clicks, u32_t memflags)
  * always on a click boundary.  This procedure is called when memory is
  * needed for FORK or EXEC.
  */
-  register struct hole *hp, *prev_ptr;
-  phys_clicks old_base, mem = NO_MEM, align_clicks = 0;
-  int s;
+  phys_clicks mem = NO_MEM, align_clicks = 0;
 
   if(memflags & PAF_ALIGN64K) {
   	align_clicks = (64 * 1024) / CLICK_SIZE;
@@ -332,7 +328,6 @@ struct memory *chunks;		/* list of free memory chunks */
  */
   int i, first = 0;
   register struct hole *hp;
-  int nodes, largest;
 
   /* Put all holes on the free list. */
   for (hp = &hole[0]; hp < &hole[_NR_HOLES]; hp++) {
@@ -383,7 +378,7 @@ PRIVATE void sanitycheck(void)
 
 PUBLIC void memstats(int *nodes, int *pages, int *largest)
 {
-	pagerange_t *p, *prevp = NULL;
+	pagerange_t *p;
 	addr_iter iter;
 	addr_start_iter_least(&addravl, &iter);
 	*nodes = 0;
@@ -681,9 +676,8 @@ PUBLIC int do_adddma(message *msg)
 PUBLIC int do_deldma(message *msg)
 {
 	endpoint_t req_proc_e, target_proc_e;
-	int i, j, proc_n;
+	int i, j;
 	phys_bytes base, size;
-	struct vmproc *vmp;
 
 	req_proc_e= msg->VMDD_REQ;
 	target_proc_e= msg->VMDD_EP;
@@ -740,10 +734,7 @@ PUBLIC int do_deldma(message *msg)
  *===========================================================================*/
 PUBLIC int do_getdma(message *msg)
 {
-	endpoint_t target_proc_e;
-	int i, proc_n;
-	phys_bytes base, size;
-	struct vmproc *vmp;
+	int i;
 
 	/* Find slot to report */
 	for (i= 0; i<NR_DMA; i++)
@@ -774,10 +765,8 @@ PUBLIC int do_getdma(message *msg)
  *===========================================================================*/
 PUBLIC void release_dma(struct vmproc *vmp)
 {
-	int i, found_one;
-
-	panic("release_dma not done");
 #if 0
+	int i, found_one;
 
 	found_one= FALSE;
 	for (i= 0; i<NR_DMA; i++)
@@ -796,6 +785,8 @@ PUBLIC void release_dma(struct vmproc *vmp)
 		free_mem(base, size);
 
 	msg->VMRD_FOUND = found_one;
+#else
+	panic("release_dma not done");
 #endif
 
 	return;
