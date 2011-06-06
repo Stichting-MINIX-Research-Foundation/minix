@@ -502,7 +502,7 @@ format_number(int32_t v, char *p, int s, int maxsize, int strict)
 #if !defined(__LONG_LONG_SUPPORTED)
 	limit = lshift64(cvu64(1), s*3);
 #else
-	limit = (1 << (s*3));
+	limit = (1ull << (s*3));
 #endif
 
 	/* "Strict" only permits octal values with proper termination. */
