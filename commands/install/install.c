@@ -226,10 +226,21 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 #	define hdr ((struct exec *) buf)
 	pid_t pid = 0;
 	int status = 0;
+	char *p;
 
 	/* Source must exist as a plain file, dest may exist as a plain file. */
-
-	if (stat(source, &sst) < 0) { report(source); return; }
+	if (make_symlink && source[0] != '/'
+	    && (p = strrchr(dest, '/')) != NULL ) {
+		/* creating a relative symlink; compute real target */
+		strlcpy(buf, dest, sizeof(buf));
+		if (p - dest + 1 >= (int)sizeof(buf))
+			p = dest + sizeof(buf) - 2;
+		buf[p - dest + 1] = '\0';
+		strlcat(buf, source, sizeof(buf));
+		r = stat(buf, &sst);
+	} else
+		r = stat(source, &sst);
+	if (r < 0) { report(source); return; }
 
 	if (mode == -1) {
 		mode= sst.st_mode & 07777;

@@ -1,3 +1,4 @@
+
 20110228: 
 	(Next release bumped to MINIX 3.2.0.)
 	ELF support in the base system. /usr/lib libraries
@@ -6,6 +7,12 @@
 	to as 'elf format,' as they are shared between gcc and clang.
 	To start producing ELF, please see:
 	http://wiki.minix3.org/en/UsersGuide/ELFSwitch
+
+        To create the /usr/netbsd hierarchy:
+	# cd /usr/src
+	# umount /proc
+	# make etcfiles
+	# mount -e -t procfs none /proc
 
 20110225:
 	Create ddekit include dirs:
