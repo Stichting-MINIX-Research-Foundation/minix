@@ -15,6 +15,7 @@ cscope.*
 .depend
 obj-ack
 obj-gnu
+obj-elf-base
 tools/revision
 TAGS
 tags

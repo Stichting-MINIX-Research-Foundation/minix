@@ -1,3 +1,12 @@
+20110228: 
+	(Next release bumped to MINIX 3.2.0.)
+	ELF support in the base system. /usr/lib libraries
+	will be in ELF format once you upgrade.
+	These were know as 'gcc format', but now more properly refered
+	to as 'elf format,' as they are shared between gcc and clang.
+	To start producing ELF, please see:
+	http://wiki.minix3.org/en/UsersGuide/ELFSwitch
+
 20110225:
 	Create ddekit include dirs:
 	mkdir -p /usr/include/ddekit/minix

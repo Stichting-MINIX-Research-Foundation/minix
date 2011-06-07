@@ -12,13 +12,18 @@ usage:
 	@echo "Usage:" 
 	@echo "	make world         # Compile everything (libraries & commands)"
 	@echo "	make includes      # Install include files from src/"
-	@echo "	make libraries     # Compile and install libraries"
+	@echo "	make libraries     # Compile and install libraries (ack)"
+.ifdef MINIX_GENERATE_ELF
+	@echo "	make elf-libraries # Compile and install gcc/clang elf libs"
+.endif
 	@echo "	make commands      # Compile all, commands, but don't install"
 	@echo "	make install       # Compile and install commands"
 	@echo "	make depend        # Generate required .depend files"
 	@echo "	make gnu-includes  # Install include files for GCC"
+.ifndef MINIX_GENERATE_ELF
 	@echo "	make gnu-libraries # Compile and install libraries for GCC"
 	@echo "	make clang-libraries # Compile and install libraries for GCC with clang"
+.endif
 	@echo "	make clean         # Remove all compiler results"
 	@echo "" 
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." 
@@ -32,6 +37,9 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
+.ifdef MINIX_GENERATE_ELF
+world: mkfiles includes depend libraries elf-libraries install etcforce 
+.else
 .if ${COMPILER_TYPE} == "ack"
 world: mkfiles includes depend libraries install etcforce
 .elif ${COMPILER_TYPE} == "gnu"
@@ -39,6 +47,7 @@ world: mkfiles includes depend libraries install etcforce
 world: mkfiles includes depend gnu-libraries install etcforce
 .elif ${OBJECT_FMT} == "ELF"
 world: mkfiles elf-includes depend elf-libraries install etcforce
+.endif
 .endif
 .endif
 
@@ -60,19 +69,21 @@ gnu-includes: includes
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443) ] ; then sh -e $(MKHEADERS443) ; fi
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443_PKGSRC) ] ; then sh -e $(MKHEADERS443_PKGSRC) ; fi
 
+.ifndef MINIX_GENERATE_ELF
 gnu-libraries: #gnu-includes
 	$(MAKE) -C lib build_gnu
 
 clang-libraries: includes
 	$(MAKE) -C lib build_clang
+.endif
 
-MKHEADERS443_ELF=/usr/gnu_cross/libexec/gcc/i386-pc-minix3/4.4.3/install-tools/mkheaders
-elf-includes: includes
-	cp -r /usr/include/* /usr/gnu_cross/i386-pc-minix3/sys-include
-	SHELL=/bin/sh; if [ -f $(MKHEADERS443_ELF) ] ; then sh -e $(MKHEADERS443_ELF) ; fi
-
+.ifdef MINIX_GENERATE_ELF
+elf-libraries: includes
+	$(MAKE) -C lib build_elf_base
+.else
 elf-libraries: elf-includes
 	$(MAKE) -C lib build_elf
+.endif
 
 commands: includes libraries
 	$(MAKE) -C commands all
@@ -106,10 +117,7 @@ clean:
 	$(MAKE) -C boot clean
 	$(MAKE) -C commands clean
 	$(MAKE) -C tools clean
-	$(MAKE) -C lib clean_gnu
-	$(MAKE) -C lib clean_ack
-	$(MAKE) -C lib clean_elf
-	$(MAKE) -C lib clean_clang
+	$(MAKE) -C lib clean_all
 	$(MAKE) -C test clean
 
 cleandepend:

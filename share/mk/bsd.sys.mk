@@ -15,8 +15,11 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # in a traditional environment' warning, as opposed to 'this code behaves
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
-CFLAGS+=	-Wno-sign-compare -Wno-traditional
-.if !defined(NOGCCERROR)
+CFLAGS+=	-Wno-sign-compare 
+.if !empty(CC:Mgcc)
+CFLAGS+=	-Wno-traditional
+.endif
+.if !defined(NOGCCERROR) && !empty(CC:Mgcc)
 # Set assembler warnings to be fatal
 CFLAGS+=	-Wa,--fatal-warnings
 .endif
@@ -24,7 +27,8 @@ CFLAGS+=	-Wa,--fatal-warnings
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
 # XXX on linking static libs
 .if (!defined(MKPIC) || ${MKPIC} != "no") && \
-    (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
+    (!defined(LDSTATIC) || ${LDSTATIC} != "-static") \
+    	&& !empty(CC:Mgcc)
 LDFLAGS+=	-Wl,--fatal-warnings
 .endif
 .endif

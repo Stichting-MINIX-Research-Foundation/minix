@@ -484,7 +484,7 @@ INFOGRP?=	operator
 INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
-#LIBDIR?=	/usr/lib
+LIBDIR?=	/usr/lib
 .if ${COMPILER_TYPE} == "ack"
 LIBDIR?=	/usr/lib/i386
 .endif
@@ -535,19 +535,15 @@ DEBUGMODE?=	${NONBINMODE}
 # All platforms are ELF.
 #
 #OBJECT_FMT=	ELF
-.if !empty(CC:Mi386-pc-minix3-gcc) || !empty(CC:Mclang)
+.if defined(MINIX_GENERATE_ELF) && ${COMPILER_TYPE} == "gnu"
 OBJECT_FMT=	ELF
 .else
 OBJECT_FMT=	a.out
 .endif
+
 .if ${COMPILER_TYPE} == "gnu"
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
 LIBDIR?=	/usr/netbsd/lib
-.endif
-.if ${OBJECT_FMT} == "a.out"
-LIBDIR?=	/usr/lib
-.elif ${OBJECT_FMT} == "ELF"
-LIBDIR?=	/usr/gnu_cross/i386-pc-minix3/lib
 .endif
 .endif
 

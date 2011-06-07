@@ -8,7 +8,7 @@ then	make $@
 	exit $?
 fi
 
-make NOASSERTS=yes world
+make world
 cd tools 
 rm revision
 rm /boot/image/*

@@ -228,16 +228,17 @@ YACC.y?=	${YACC} ${YFLAGS}
 # 	chmod a+x ${.TARGET}
 
 # MINIX
+
 .if !empty(CC:Mcc)
 COMPILER_TYPE=ack
-.elif !empty(CC:Mgcc)
+.elif !empty(CC:Mgcc) || !empty(CC:Mclang)
 COMPILER_TYPE=gnu
 AR=ar
-.elif !empty(CC:Mi386-pc-minix3-gcc) || !empty(CC:Mclang)
-COMPILER_TYPE=gnu
-AR=i386-pc-minix3-ar
-LD=i386-pc-minix3-ld
-OBJCOPY=i386-pc-minix3-objcopy
+.endif
+
+.if exists(/usr/pkg/i386-pc-minix/lib/ldscripts/elf_i386_minix.x)	\
+	&& exists(/usr/pkg/lib/clang/2.9)
+MINIX_GENERATE_ELF=yes
 .endif
 
 # Set NBSD_LIBC to either "yes" or "no".
