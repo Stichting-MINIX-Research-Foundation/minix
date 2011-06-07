@@ -4,11 +4,14 @@ set -e
 
 . release.functions
 
+version_pretty="`sh tell_config OS_RELEASE . OS_VERSION | tr -dc 0-9.`"
+version="`echo $version_pretty | tr . _`"
+PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
+
 XBIN=usr/xbin
 SRC=src
 REPO=git://git.minix3.org/minix
 
-PACKAGEDIR=/usr/pkgsrc/packages/`uname -r`/`uname -m`
 # List of packages included on installation media
 PACKAGELIST=packages.install
 secs=`expr 32 '*' 64`
@@ -23,7 +26,7 @@ fi
 
 # Packages we have to pre-install, and url to use
 PREINSTALLED_PACKAGES="pkgin-0.3.3.4.tgz pkg_install-20101212 bmake-20100808"
-PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/`uname -r`/`uname -m`/All/
+PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/All/
 
 RELEASERC=$HOME/.releaserc
 
@@ -44,8 +47,6 @@ IMAGE=../boot/cdbootblock/cdbootblock
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
-version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
-version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
 IMG_BASE=minix${version}_ide
 BS=4096
 
@@ -119,7 +120,7 @@ fi
 
 if [ $PACKAGES -ne 0 ]
 then	mkdir -p $PACKAGEDIR/All || true
-	retrieve $PACKAGEDIR/All $PACKAGELIST packages/`uname -p`/`uname -r`
+	retrieve $PACKAGEDIR/All $PACKAGELIST packages/`uname -p`/$VERSION_PRETTY
 fi
 
 TMPDISKUSR=/dev/ram0

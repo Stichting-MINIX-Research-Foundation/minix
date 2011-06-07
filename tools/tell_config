@@ -4,7 +4,7 @@
 #						Author: Kees J. Bot
 
 echo "
-#include <minix/config.h>
+#include \"../common/include/minix/config.h\"
 $*
 " >/tmp/tell.$$
 exec </tmp/tell.$$
