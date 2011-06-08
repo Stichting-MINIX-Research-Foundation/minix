@@ -277,7 +277,7 @@ ring_bell()
  * through all modified buffers, complaining about a different one each time,
  * so that the user need not even know how to select a buffer!
  */
-f_retsup()
+void f_retsup()
 {	register char *reply;
 	register int c;
 	register struct buffer *b, *b2;
@@ -354,7 +354,7 @@ f_retsup()
 
 #if FX_WFEXIT
 /* EFUN: "Write File Exit" (not EMACS) - from IMAGEN config */
-f_wfexit()
+void f_wfexit()
 {
 	exp_p = 1;		/* Ensure f_savefiles asks no questions */
 	if (! f_savefiles())	/* Save all modified buffers, but */

@@ -8,20 +8,24 @@
  */
 
 #include "elle.h"
+#include "eeproto.h"
 
 /* Function table, see the included file for explanation. */
 
 	/* First must pre-declare function addrs */
+#if 0
 #define EFUN(rtn,rtnstr,name) int rtn();
 #define EFUNHOLE
 #include "eefdef.h"
+#endif
 
 	/* Now re-insert to define function table */
-int (*funtab[])() =
+typedef int (*eefunc)();
+eefunc funtab[] =
 {
 #undef EFUN		/* Avoid redefinition error message */
 #undef EFUNHOLE
-#define EFUN(rtn,rtnstr,name) rtn,
+#define EFUN(rtn,rtnstr,name) (eefunc) rtn,
 #define EFUNHOLE 0,
 #include "eefdef.h"
 };
@@ -102,8 +106,7 @@ int ch;
 /*	Asks for a profile file and sets profile from it.
  */
 f_setprof()
-{	int set_profile();
-	hack_file("Set Profile: ", set_profile);
+{	hack_file("Set Profile: ", set_profile);
 }
 
 #if FX_VTBUTTONS
@@ -214,7 +217,7 @@ register int c;
 #include <sys/file.h>		/* for O_BINARY */
 #endif
 
-set_profile(filename)
+void set_profile(filename)
 char *filename;
 {	char pfile[200];
 	register int pfd, len;

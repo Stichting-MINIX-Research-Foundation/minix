@@ -61,7 +61,7 @@ _PROTOTYPE( int cmd_wait, (void) );
 _PROTOTYPE( int cmd_read, (void) );
 _PROTOTYPE( int cmd_xct, (int ch) );
 _PROTOTYPE( int cmd_idx, (int c) );
-_PROTOTYPE( int set_profile, (char *filename) );
+_PROTOTYPE( void set_profile, (char *filename) );
 _PROTOTYPE( int init_menu, (void) );
 
 /* eediag.c */
@@ -73,10 +73,10 @@ _PROTOTYPE( int db_prwind, (struct window *w) );
 _PROTOTYPE( char *db_scflgs, (int flags) );
 
 /* eedisp.c */
-_PROTOTYPE( int set_tty, (void) );
+_PROTOTYPE( void set_tty, (void) );
 _PROTOTYPE( int clean_exit, (void) );
 _PROTOTYPE( int set_scr, (void) );
-_PROTOTYPE( int redisplay, (void) );
+_PROTOTYPE( void redisplay, (void) );
 _PROTOTYPE( int fupd_wind, (struct window *w) );
 _PROTOTYPE( int upd_curs, (chroff adot) );
 _PROTOTYPE( int d_line, (chroff cdot) );
@@ -88,15 +88,15 @@ _PROTOTYPE( int inwinp, (struct window *win, chroff cdot) );
 _PROTOTYPE( int upd_wind, (struct window *win) );
 _PROTOTYPE( int slineq, (struct scr_line *olds, struct scr_line *news) );
 _PROTOTYPE( int upd_line, (int y) );
-_PROTOTYPE( int fillset, (char *str, int cnt, int c) );
-_PROTOTYPE( int fillsp, (char *str, int cnt) );
-_PROTOTYPE( int inspc, (char *cp0, char *cpl, int cnt) );
-_PROTOTYPE( int fix_line, (struct scr_line *slp, struct scr_line *olds) );
+_PROTOTYPE( void fillset, (char *str, int cnt, int c) );
+_PROTOTYPE( void fillsp, (char *str, int cnt) );
+_PROTOTYPE( void inspc, (char *cp0, char *cpl, int cnt) );
+_PROTOTYPE( void fix_line, (struct scr_line *slp, struct scr_line *olds) );
 _PROTOTYPE( int sctrin, (char *to, int lim, int ccol) );
 _PROTOTYPE( int inslin, (int line, int n, struct window *win) );
 _PROTOTYPE( int dellin, (int line, int n, struct window *win) );
 _PROTOTYPE( int t_dostandout, (int on) );
-_PROTOTYPE( int t_move, (int y, int x) );
+_PROTOTYPE( void t_move, (int y, int x) );
 _PROTOTYPE( int t_docleol, (void) );
 
 /* eeedit.c */
@@ -338,8 +338,8 @@ _PROTOTYPE( int doargs, (int argc, char **argv) );
 _PROTOTYPE( int initialize, (void) );
 _PROTOTYPE( int f_throw, (void) );
 _PROTOTYPE( int ring_bell, (void) );
-_PROTOTYPE( int f_retsup, (void) );
-_PROTOTYPE( int f_wfexit, (void) );
+_PROTOTYPE( void f_retsup, (void) );
+_PROTOTYPE( void f_wfexit, (void) );
 _PROTOTYPE( int f_pshinf, (void) );
 _PROTOTYPE( char *memalloc, (SBMO size) );
 _PROTOTYPE( int chkfree, (SBMA ptr) );
@@ -406,6 +406,7 @@ _PROTOTYPE( int lin_search, (int backwards) );
 _PROTOTYPE( int srchint, (void) );
 _PROTOTYPE( char *srch_ask, (char *prompt) );
 _PROTOTYPE( int f_risrch, (void) );
+_PROTOTYPE( int f_isrch, (void) );
 _PROTOTYPE( int i_search, (int back) );
 
 /* eeterm.c */

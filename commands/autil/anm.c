@@ -99,6 +99,8 @@ extern int rd_unsigned2();
 extern long lseek();
 extern char *strncpy();
 
+void do_file(int fd);
+
 process(fd)
 	int	fd;
 {
@@ -135,7 +137,7 @@ process(fd)
 	}
 }
 
-do_file(fd)
+void do_file(fd)
 	int	fd;
 {
 	struct	outname	*nbufp = NULL;

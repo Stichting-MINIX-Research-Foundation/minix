@@ -73,7 +73,7 @@ typedef struct bitcmd {
 #define	CMD2_UBITS	0x10
 
 static BITCMD	*addcmd (BITCMD *, int, int, int, unsigned int);
-static int	 compress_mode (BITCMD *);
+static void	 compress_mode (BITCMD *);
 #ifdef SETMODE_DEBUG
 static void	 dumpmode __P((BITCMD *));
 #endif
@@ -408,7 +408,7 @@ dumpmode(set)
  * 'g' and 'o' commands continue to be separate.  They could probably be 
  * compacted, but it's not worth the effort.
  */
-static int
+static void
 compress_mode(set)
 	register BITCMD *set;
 {

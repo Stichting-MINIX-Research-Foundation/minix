@@ -332,7 +332,7 @@ int main(int argc, char **argv)
 	type= fl_type(st.st_rdev);
 
 	/* The drive should not be mounted. */
-	if (load_mtab("mkfs") < 0) return;
+	if (load_mtab("mkfs") < 0) exit(1);
 
 	while (get_mtab_entry(special, mounted_on, version, rw_flag) == 0) {
 		if (stat(special, &st) >= 0 && isfloppy(st.st_rdev)

@@ -10,6 +10,11 @@ CPPFLAGS+= -DIGN_JOB_CONTROl
 MAN.elle=
 MAN.ellec=
 
+.if !empty(CC:Mclang)
+# tons of int functions don't return values
+CFLAGS+= -Wreturn-type 
+.endif
+
 defprf.c:	deffun.e
 	cat deffun.e defprf.e | ellec -Pconf  > defprf.c
 

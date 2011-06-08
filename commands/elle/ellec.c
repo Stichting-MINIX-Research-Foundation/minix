@@ -143,7 +143,7 @@ _PROTOTYPE(int ustrcmp , (char *s1 , char *s2 ));
 _PROTOTYPE(int strueq , (char *s1 , char *s2 ));
 _PROTOTYPE(int do_opcod , (void));
 _PROTOTYPE(int do_opasc , (void));
-_PROTOTYPE(int outkbind , (int c , int fx ));
+_PROTOTYPE(void outkbind , (int c , int fx ));
 _PROTOTYPE(int do_obprof , (void));
 _PROTOTYPE(int mupcase , (int ch ));
 _PROTOTYPE(int upcase , (int ch ));
@@ -156,7 +156,7 @@ _PROTOTYPE(int do_ofxcod , (void));
 _PROTOTYPE(int compile_stdin , (void));
 _PROTOTYPE(int lrch , (void));
 _PROTOTYPE(struct lnode *lread , (void));
-_PROTOTYPE(int wspfls , (void));
+_PROTOTYPE(void wspfls , (void));
 _PROTOTYPE(struct lnode *lrstr , (int flg ));
 _PROTOTYPE(int islword , (int c ));
 _PROTOTYPE(struct lnode *eval , (struct lnode *lp ));
@@ -561,7 +561,7 @@ do_opasc()
 		fatal("%d errors encountered, check output file.", oerrs);
 }
 
-outkbind(c, fx)
+void outkbind(c, fx)
 {
 	if(fx == 0)		/* Allow key to be mapped to nothing. */
 		return;
@@ -899,7 +899,7 @@ lread()
 	return(lrstr(0));
 }
 
-wspfls()
+void wspfls()
 {	register int c;
 	for(;;)
 	  {	c = lrch();

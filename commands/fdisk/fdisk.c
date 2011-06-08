@@ -86,14 +86,14 @@ _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void getgeom, (void));
 _PROTOTYPE(int getboot, (char *buffer));
 _PROTOTYPE(int putboot, (char *buffer));
-_PROTOTYPE(int load_from_file, (void));
-_PROTOTYPE(int save_to_file, (void));
+_PROTOTYPE(void load_from_file, (void));
+_PROTOTYPE(void save_to_file, (void));
 _PROTOTYPE(int dpl_partitions, (int rawflag));
 _PROTOTYPE(int chk_table, (void));
 _PROTOTYPE(int sec_to_hst, (long logsec, unsigned char *hd, unsigned char *sec,
 							 unsigned char *cyl));
 _PROTOTYPE(int mark_partition, (struct part_entry *pe));
-_PROTOTYPE(int change_partition, (struct part_entry *entry));
+_PROTOTYPE(void change_partition, (struct part_entry *entry));
 _PROTOTYPE(int get_a_char, (void));
 _PROTOTYPE(int print_menu, (void));
 _PROTOTYPE(void adj_base, (struct part_entry *pe));
@@ -292,7 +292,7 @@ char *buffer;
 #endif
 
 
-load_from_file()
+void load_from_file()
 {
 /* Load buffer from file  */
 
@@ -315,7 +315,7 @@ load_from_file()
 }
 
 
-save_to_file()
+void save_to_file()
 {
 /* Save to file  */
 
@@ -561,7 +561,7 @@ struct part_entry *pe;
   }
 }
 
-change_partition(entry)
+void change_partition(entry)
 struct part_entry *entry;
 {
 /* Get partition info : first & last cylinder */

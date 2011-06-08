@@ -186,7 +186,7 @@ char *p = &line[80];
 
    *p-- = '\0';
    getyx(w, r, c);
-   if(c == 0) return;
+   if(c == 0) return NULL;
    while(c >= 0) {
    	c--;
    	ch = mvwinch(w, r, c);

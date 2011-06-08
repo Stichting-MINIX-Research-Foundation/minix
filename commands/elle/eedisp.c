@@ -189,7 +189,7 @@ redp_init ()
 
 /* SET_TTY() - Set up terminal modes for editing */
 
-set_tty()
+void set_tty()
 {	if(trm_mode) return;	/* Ignore if detached or in edit mode */
 	trm_mode++;
 	ts_enter();		/* Set up system's ideas about terminal */
@@ -249,7 +249,7 @@ set_scr()
  * as to what has changed or needs updating, to avoid wasting time
  * on things which don't need attention.
  */
-redisplay ()
+void redisplay ()
 {	register struct window *w;
 	register i;
 	struct window *make_mode();
@@ -1301,7 +1301,7 @@ done:	s->sl_line = s->sl_nlin;	/* Replace old image by new */
 }
 
 #if FX_SOWIND
-fillset(str,cnt,c)
+void fillset(str,cnt,c)
 char *str;
 int cnt;
 int c;
@@ -1314,7 +1314,7 @@ int c;
 }
 #endif
 
-fillsp(str,cnt)
+void fillsp(str,cnt)
 char *str;
 int cnt;
 {	register int n;
@@ -1324,7 +1324,8 @@ int cnt;
 	do{ *cp++ = SP;
 	  } while(--n);
 }
-inspc(cp0, cpl, cnt)
+
+void inspc(cp0, cpl, cnt)
 char *cp0, *cpl;
 int cnt;
 {	register char *cp, *cp2;
@@ -1348,7 +1349,7 @@ int cnt;
 
 int sctreol = 0;	/* Ugly crock for talking to sctrin() */
 			/* 0 = no EOL seen, 1 = EOL seen, -1 = EOF seen */
-fix_line(slp, olds)
+void fix_line(slp, olds)
 struct scr_line *slp;
 struct scr_line *olds;
 {	register struct scr_line *s;
@@ -1653,7 +1654,7 @@ int on;
 #endif
 
 
-t_move(y,x)
+void t_move(y,x)
 register int y,x;
 {	register int d;
 
