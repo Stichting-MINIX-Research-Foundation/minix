@@ -152,9 +152,8 @@ FORWARD _PROTOTYPE( int w_transfer, (endpoint_t proc_nr, int opcode,
               u64_t position, iovec_t *iov, unsigned nr_req)            );
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
 FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
-FORWARD _PROTOTYPE( void setup_dma, (unsigned *sizep, endpoint_t proc_nr,
-			iovec_t *iov, size_t addr_offset, int do_write,
-			int *do_copyoutp)				);
+FORWARD _PROTOTYPE( int setup_dma, (unsigned *sizep, endpoint_t proc_nr,
+			iovec_t *iov, size_t addr_offset, int do_write)	);
 FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
 FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr)	);
@@ -1161,7 +1160,7 @@ unsigned nr_req;		/* length of request vector */
 {
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
-  int n, r, s, errors, do_dma, do_write, do_copyout;
+  int n, r, s, errors, do_dma, do_write;
   unsigned long block, w_status;
   u64_t dv_size = w_dv->dv_size;
   unsigned nbytes;
@@ -1204,8 +1203,9 @@ unsigned nr_req;		/* length of request vector */
 
 	if (do_dma) {
 		stop_dma(wn);
-		setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write,
-			&do_copyout);
+		if (!setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write)) {
+			do_dma = 0;
+		}
 #if 0
 		printf("nbytes = %d\n", nbytes);
 #endif
@@ -1264,22 +1264,6 @@ unsigned nr_req;		/* length of request vector */
 			n= iov->iov_size;
 			if (n > nbytes)
 				n= nbytes;
-
-			if (do_copyout)
-			{
-				if(proc_nr != SELF) {
-				   s= sys_safecopyto(proc_nr, iov->iov_addr,
-					addr_offset,
-					(vir_bytes)(dma_buf+dma_buf_offset),
-					n, D);
-				   if (s != OK) {
-					panic("w_transfer: sys_safecopy failed: %d", s);
-				   }
-				} else {
-				   memcpy((char *) iov->iov_addr + addr_offset,
-				  	 dma_buf + dma_buf_offset, n);
-				}
-			}
 
 			/* Book the bytes successfully transferred. */
 			nbytes -= n;
@@ -1485,18 +1469,16 @@ struct command *cmd;		/* Command block */
 /*===========================================================================*
  *				setup_dma				     *
  *===========================================================================*/
-PRIVATE void setup_dma(sizep, proc_nr, iov, addr_offset, do_write,
-	do_copyoutp)
+PRIVATE int setup_dma(sizep, proc_nr, iov, addr_offset, do_write)
 unsigned *sizep;
 endpoint_t proc_nr;
 iovec_t *iov;
 size_t addr_offset;
 int do_write;
-int *do_copyoutp;
 {
-	phys_bytes phys, user_phys;
+	phys_bytes user_phys;
 	unsigned n, offset, size;
-	int i, j, r, bad;
+	int i, j, r;
 	unsigned long v;
 	struct wini *wn = w_wn;
 	int verbose = 0;
@@ -1505,7 +1487,6 @@ int *do_copyoutp;
 	size= *sizep;
 	i= 0;	/* iov index */
 	j= 0;	/* prdt index */
-	bad= 0;
 	offset= 0;	/* Offset in current iov */
 
 	if(verbose)
@@ -1541,8 +1522,7 @@ int *do_copyoutp;
 		{
 			/* Buffer is not aligned */
 			printf("setup_dma: user buffer is not aligned\n");
-			bad= 1;
-			break;
+			return 0;
 		}
 
 		/* vector is not allowed to cross a 64K boundary */
@@ -1556,9 +1536,8 @@ int *do_copyoutp;
 		if (j >= N_PRDTE)
 		{
 			/* Too many entries */
-
-			bad= 1;
-			break;
+			printf("setup_dma: user buffer has too many entries\n");
+			return 0;
 		}
 
 		prdt[j].prdte_base= user_phys;
@@ -1578,8 +1557,6 @@ int *do_copyoutp;
 		size -= n;
 	}
 
-	if (!bad)
-	{
 		if (j <= 0 || j > N_PRDTE)
 			panic("bad prdt index: %d", j);
 		prdt[j-1].prdte_flags |= PRDTE_FL_EOT;
@@ -1592,97 +1569,6 @@ int *do_copyoutp;
 				prdt[i].prdte_flags);
 		}
 	   }
-	}
-
-	/* The caller needs to perform a copy-out from the dma buffer if
-	 * this is a read request and we can't DMA directly to the user's
-	 * buffers.
-	 */
-	*do_copyoutp= (!do_write && bad);
-
-	if (bad)
-	{
-		if(verbose)
-			printf("partially bad dma\n");
-		/* Adjust request size */
-		size= *sizep;
-		if (size > ATA_DMA_BUF_SIZE)
-			*sizep= size= ATA_DMA_BUF_SIZE;
-
-		if (do_write)
-		{
-			/* Copy-in */
-			for (offset= 0; offset < size; offset += n)
-			{
-				n= size-offset;
-				if (n > iov->iov_size)
-					n= iov->iov_size;
-			
-				if(proc_nr != SELF) {
-				  r= sys_safecopyfrom(proc_nr, iov->iov_addr,
-					addr_offset, (vir_bytes)dma_buf+offset,
-					n, D);
-				  if (r != OK) { 
-					panic("setup_dma: sys_safecopy failed: %d", r);
-				  }
-				} else {
-				  memcpy(dma_buf + offset,
-				 	 (char *) iov->iov_addr + addr_offset,
-				 	 n);
-				}
-				iov++;
-				addr_offset= 0;
-			}
-		}
-	
-		/* Fill-in the physical region descriptor table */
-		phys= dma_buf_phys;
-		if (phys & 1)
-		{
-			/* Two byte alignment is required */
-			panic("bad buffer alignment in setup_dma: 0x%lx", phys);
-		}
-		for (j= 0; j<N_PRDTE; i++)
-		{
-			if (size == 0) {
-				panic("bad size in setup_dma: %d", size);
-			}
-			if (size & 1)
-			{
-				/* Two byte alignment is required for size */
-				panic("bad size alignment in setup_dma: %d", size);
-			}
-			n= size;
-
-			/* Buffer is not allowed to cross a 64K boundary */
-			if (phys / 0x10000 != (phys+n-1) / 0x10000)
-			{
-				n= ((phys/0x10000)+1)*0x10000 - phys;
-			}
-			prdt[j].prdte_base= phys;
-			prdt[j].prdte_count= n;
-			prdt[j].prdte_reserved= 0;
-			prdt[j].prdte_flags= 0;
-
-			size -= n;
-			if (size == 0)
-			{
-				prdt[j].prdte_flags |= PRDTE_FL_EOT;
-				break;
-			}
-		}
-		if (size != 0)
-			panic("size to large for prdt");
-
-	   if(verbose) {
-		for (i= 0; i<=j; i++)
-		{
-			printf("prdt[%d]: base 0x%x, size %d, flags 0x%x\n",
-				i, prdt[i].prdte_base, prdt[i].prdte_count,
-				prdt[i].prdte_flags);
-		}
-	  }
-	}
 
 	/* Verify that the bus master is not active */
 	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
@@ -1699,6 +1585,7 @@ int *do_copyoutp;
 	r= sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
 	if (r != 0) panic("setup_dma: sys_outb failed: %d", r);
 
+	return 1;
 }
 
 
@@ -2102,11 +1989,10 @@ unsigned nr_req;		/* length of request vector */
 	packet[11] = 0;
 
 	if(do_dma) {
-		int do_copyout = 0;
 		stop_dma(wn);
-		setup_dma(&nbytes, proc_nr, iov, addr_offset, 0,
-			&do_copyout);
-		if(do_copyout || (nbytes != nblocks * CD_SECTOR_SIZE)) {
+		if (!setup_dma(&nbytes, proc_nr, iov, addr_offset, 0)) {
+			do_dma = 0;
+		} else if(nbytes != nblocks * CD_SECTOR_SIZE) {
 			stop_dma(wn);
 			do_dma = 0;
 		}
