@@ -21,4 +21,4 @@ if [ $MAKEMAP -ne 0 ]; then
 fi
 make clean
 make cleandepend
-find . -name obj-ack -type d|xargs rm -rf
+find . -name 'obj-*' -type d|xargs rm -rf
