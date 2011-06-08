@@ -19,7 +19,6 @@ LDADD=  -lz
 DPADD=  ${LIBZ}
 
 .if ${COMPILER_TYPE} == "gnu"
-CFLAGS+= -Wall
 CPPFLAGS+= -isystem ../../../include
 .endif
 

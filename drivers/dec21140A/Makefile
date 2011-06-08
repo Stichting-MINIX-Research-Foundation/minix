@@ -12,6 +12,6 @@ MAN=
 BINDIR?= /usr/sbin
 
 debug=		0
-CPPFLAGS+=	-Ddebug=${debug} -ws -w -Wall
+CPPFLAGS+=	-Ddebug=${debug} -w
 
 .include <bsd.prog.mk>

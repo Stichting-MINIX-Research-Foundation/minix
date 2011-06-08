@@ -21,6 +21,6 @@ BINDIR?= /usr/sbin
 CPPFLAGS+=  -I${.CURDIR} -D_MINIX -D_SYSTEM
 CPPFLAGS+= -I${.CURDIR}/../../lib/liblwip/include
 
-CFLAGS += -Wall -Wextra -std=c99
+CFLAGS += -Wextra -std=c99
 
 .include <bsd.prog.mk>

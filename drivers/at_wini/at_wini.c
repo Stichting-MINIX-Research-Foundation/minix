@@ -399,8 +399,6 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
 }
 
 PRIVATE int quirkmatch(struct quirk *table, u8_t bcr, u8_t scr, u8_t interface, u16_t vid, u16_t did) {
-	int i = 0;
-
 	while(table->vendor) {
 		if(table->vendor == vid && table->device == did &&
 			table->pci_class == bcr &&

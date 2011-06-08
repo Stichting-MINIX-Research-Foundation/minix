@@ -6,7 +6,7 @@ SRCS.elle= eemain.c eecmds.c eesite.c eevini.c eedisp.c eeterm.c eeerr.c  \
       eef2.c eefd.c eehelp.c eekmac.c eef3.c eesrch.c eequer.c \
       eefill.c eediag.c sbstr.c sbm.c sberr.c
 SRCS.ellec= ellec.c
-CPPFLAGS+= -DIGN_JOB_CONTROL -wa
+CPPFLAGS+= -DIGN_JOB_CONTROl
 MAN.elle=
 MAN.ellec=
 
