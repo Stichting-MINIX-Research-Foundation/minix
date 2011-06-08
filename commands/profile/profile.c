@@ -14,6 +14,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#undef SPROFILE
+#define SPROFILE 1
 #include <minix/profile.h>
 
 #define EHELP			1
