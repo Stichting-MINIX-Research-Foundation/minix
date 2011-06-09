@@ -350,10 +350,6 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	vir_bytes linear;
 	u32_t phys = 0;
 
-	if(seg == MEM_GRANT) {
-		return umap_grant(rp, (cp_grant_id_t) vir_addr, bytes);
-	}
-	
 	if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {
 			printf("SYSTEM:umap_virtual: umap_local failed\n");
 			phys = 0;

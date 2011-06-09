@@ -479,45 +479,6 @@ vir_bytes bytes;		/* # of bytes to be copied */
 #endif
 
 /*===========================================================================*
- *                              umap_grant                                   *
- *===========================================================================*/
-PUBLIC phys_bytes umap_grant(rp, grant, bytes)
-struct proc *rp;                /* pointer to proc table entry for process */
-cp_grant_id_t grant;            /* grant no. */
-vir_bytes bytes;                /* size */
-{
-        int proc_nr;
-        vir_bytes offset, ret;
-        endpoint_t granter;
-
-        /* See if the grant in that process is sensible, and 
-         * find out the virtual address and (optionally) new
-         * process for that address.
-         *
-         * Then convert that process to a slot number.
-         */
-        if(verify_grant(rp->p_endpoint, ANY, grant, bytes, 0, 0,
-                &offset, &granter) != OK) {
-		printf("SYSTEM: umap_grant: verify_grant failed\n");
-                return 0;
-        }
-
-        if(!isokendpt(granter, &proc_nr)) {
-		printf("SYSTEM: umap_grant: isokendpt failed\n");
-                return 0;
-        }
- 
-        /* Do the mapping from virtual to physical. */
-        ret = umap_virtual(proc_addr(proc_nr), D, offset, bytes);
-	if(!ret) {
-		printf("SYSTEM:umap_grant:umap_virtual failed; grant %s:%d -> %s: vir 0x%lx\n",
-			rp->p_name, grant, 
-			proc_addr(proc_nr)->p_name, offset);
-	}
-	return ret;
-}
-
-/*===========================================================================*
  *			         clear_ipc				     *
  *===========================================================================*/
 PRIVATE void clear_ipc(
