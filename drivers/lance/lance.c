@@ -645,7 +645,7 @@ ec_conf_t *ecp;
 static void ec_init(ec)
 ether_card_t *ec;
 {
-   int i, r;
+   int r;
 
    /* General initialization */
    ec->flags = ECF_EMPTY;

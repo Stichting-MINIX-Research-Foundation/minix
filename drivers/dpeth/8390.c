@@ -135,12 +135,12 @@ static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 */
 static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
 {
+#if 1
+  panic("mem_user2nic: not converted to safecopies");
+#else
   phys_bytes offset, phys_user;
   iovec_dat_s_t *iovp = &dep->de_write_iovec;
   int bytes, ix = 0;
-
-  panic("mem_user2nic: not converted to safecopies");
-#if 0
 
   /* Computes shared memory address */
   offset = pageno * DP_PAGESIZE;
@@ -387,7 +387,6 @@ static void ns_reset(dpeth_t * dep)
 static void ns_recv(dpeth_t *dep, int fromint, int size)
 {
   dp_rcvhdr_t header;
-  dp_rcvhdr_t dummy;
   unsigned pageno, curr, next;
   vir_bytes length;
   int packet_processed = FALSE;

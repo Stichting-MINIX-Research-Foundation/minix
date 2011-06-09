@@ -142,7 +142,6 @@ static void rtl_init(dep)
 dpeth_t *dep;
 {
 	u8_t reg_a, reg_b, cr, config0, config2, config3;
-	int i;
 
 #if DEBUG
 	printf("rtl_init called\n");

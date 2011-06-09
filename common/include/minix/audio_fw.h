@@ -6,18 +6,6 @@
 #include <sys/ioc_sound.h>
 
 
-/* change to DEBUG to 1 to print debug info and error messages */
-
-#define DEBUG 0
-
-#if DEBUG
-#define dprint printf 
-#else
-#define dprint (void) 
-#endif
-#define error printf
-
-
 _PROTOTYPE( int drv_init, (void) );
 _PROTOTYPE( int drv_init_hw, (void) );
 _PROTOTYPE( int drv_reset, (void) );

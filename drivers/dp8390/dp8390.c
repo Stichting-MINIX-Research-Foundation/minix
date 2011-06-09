@@ -125,10 +125,6 @@ _PROTOTYPE( static void do_vir_insb, (port_t port, int proc,
 					vir_bytes buf, size_t size)	);
 _PROTOTYPE( static void do_vir_insw, (port_t port, int proc,
 					vir_bytes buf, size_t size)	);
-_PROTOTYPE( static void do_vir_outsb, (port_t port, int proc,
-					vir_bytes buf, size_t size)	);
-_PROTOTYPE( static void do_vir_outsw, (port_t port, int proc,
-					vir_bytes buf, size_t size)	);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -1898,24 +1894,6 @@ static void do_vir_insw(port_t port, int proc, vir_bytes buf, size_t size)
 	int r;
 
 	r= sys_insw(port, proc, (void *) buf, size);
-	if (r != OK)
-		panic("sys_sdevio failed: %d", r);
-}
-
-static void do_vir_outsb(port_t port, int proc, vir_bytes buf, size_t size)
-{
-	int r;
-
-	r= sys_outsb(port, proc, (void *) buf, size);
-	if (r != OK)
-		panic("sys_sdevio failed: %d", r);
-}
-
-static void do_vir_outsw(port_t port, int proc, vir_bytes buf, size_t size)
-{
-	int r;
-
-	r= sys_outsw(port, proc, (void *) buf, size);
 	if (r != OK)
 		panic("sys_sdevio failed: %d", r);
 }

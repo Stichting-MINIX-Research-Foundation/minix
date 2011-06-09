@@ -42,14 +42,14 @@ PUBLIC int mixer_init() {
 
 	mixer_set(MIXER_DAC_LEVEL, 0x10);       /* write something to it */
 	if(mixer_get(MIXER_DAC_LEVEL) != 0x10) {
-		dprint("sb16: Mixer not detected\n");
+		Dprint(("sb16: Mixer not detected\n"));
 		return EIO;
 	}
 
 	/* Enable Automatic Gain Control */
 	mixer_set(MIXER_AGC, 0x01);
 
-	dprint("Mixer detected\n");
+	Dprint(("Mixer detected\n"));
 
 	return OK;
 }

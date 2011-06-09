@@ -4,6 +4,12 @@
 #include <minix/sound.h>
 #include <minix/audio_fw.h>
 
+#if DEBUG
+#define Dprint(args) printf args
+#else
+#define Dprint(args)
+#endif
+
 #define AUDIO 0
 #define MIXER 1
 

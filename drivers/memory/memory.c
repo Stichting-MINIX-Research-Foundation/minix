@@ -121,7 +121,6 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the memory driver. */
-  u32_t ramdev_size;
   int i, s;
 
   /* Initialize all minor devices one by one. */
@@ -381,8 +380,6 @@ PRIVATE int m_do_close(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
 {
-  int r;
-
   if (m_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
   if(m_device < 0 || m_device >= NR_DEVS) {

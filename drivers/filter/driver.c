@@ -958,7 +958,7 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 		 * OR if we did NOT exceed the disk size, then we should
 		 * report the driver for acting strangely!
 		 */
-		if (sizes[0] < 0 || sizes[0] > *sizep ||
+		if (sizes[0] > *sizep ||
 			cmp64(add64u(pos, sizes[0]), disk_size) < 0)
 			return bad_driver(DRIVER_MAIN, BD_PROTO, EFAULT);
 
@@ -980,7 +980,7 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 			printf("Filter: truncated reply from backup driver\n");
 
 			/* As above */
-			if (sizes[1] < 0 || sizes[1] > *sizep ||
+			if (sizes[1] > *sizep ||
 				cmp64(add64u(pos, sizes[1]), disk_size) < 0)
 				return bad_driver(DRIVER_BACKUP, BD_PROTO,
 					EFAULT);

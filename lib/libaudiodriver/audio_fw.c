@@ -108,7 +108,7 @@ PUBLIC int main(int argc, char *argv[])
 					msg_hardware();
 					break;
 				default:
-					dprint("%s: %d uncaught notify!\n",
+					printf("%s: %d uncaught notify!\n",
 						drv.DriverName, mess.m_type);
 			}
 
@@ -167,7 +167,7 @@ PUBLIC int main(int argc, char *argv[])
 				send(caller, &repl_mess);
 				continue;
 			default:          
-				dprint("%s: %d uncaught msg!\n",
+				printf("%s: %d uncaught msg!\n",
 					drv.DriverName, mess.m_type);
 				continue;
 		}
@@ -233,13 +233,13 @@ PRIVATE int init_driver(void) {
 
 	/* initialize hardware*/
 	if (drv_init_hw() != OK) {
-		error("%s: Could not initialize hardware\n", drv.DriverName);
+		printf("%s: Could not initialize hardware\n", drv.DriverName);
 		return EIO;
 	}
 
 	/* get irq from device driver...*/
 	if (drv_get_irq(&irq) != OK) {
-		error("%s: init driver couldn't get IRQ", drv.DriverName);
+		printf("%s: init driver couldn't get IRQ", drv.DriverName);
 		return EIO;
 	}
 	/* TODO: execute the rest of this function only once 
@@ -249,7 +249,7 @@ PRIVATE int init_driver(void) {
 
 	/* ...and register interrupt vector */
 	if ((i=sys_irqsetpolicy(irq, 0, &irq_hook_id )) != OK){
-		error("%s: init driver couldn't set IRQ policy: %d", drv.DriverName, i);
+		printf("%s: init driver couldn't set IRQ policy: %d", drv.DriverName, i);
 		return EIO;
 	}
 	irq_hook_set = TRUE; /* now signal handler knows it must unregister policy*/
@@ -276,15 +276,15 @@ PRIVATE void sef_cb_signal_handler(int signo)
 	}
 	if (irq_hook_set) {
 		if (sys_irqdisable(&irq_hook_id) != OK) {
-			error("Could not disable IRQ\n");
+			printf("Could not disable IRQ\n");
 		}
 		/* get irq from device driver*/
 		if (drv_get_irq(&irq) != OK) {
-			error("Msg SIG_STOP Couldn't get IRQ");
+			printf("Msg SIG_STOP Couldn't get IRQ");
 		}
 		/* remove the policy */
 		if (sys_irqrmpolicy(&irq_hook_id) != OK) {
-			error("%s: Could not disable IRQ\n",drv.DriverName);
+			printf("%s: Could not disable IRQ\n",drv.DriverName);
 		}
 	}
 }
@@ -292,8 +292,6 @@ PRIVATE void sef_cb_signal_handler(int signo)
 PRIVATE int msg_open (int minor_dev_nr) {
 	int r, read_chan, write_chan, io_ctl;
 	special_file_t* special_file_ptr;
-
-	dprint("%s: msg_open() special file %d\n", drv.DriverName, minor_dev_nr);
 
 	special_file_ptr = get_special_file(minor_dev_nr);
 	if(special_file_ptr == NULL) {
@@ -305,19 +303,19 @@ PRIVATE int msg_open (int minor_dev_nr) {
 	io_ctl = special_file_ptr->io_ctl;
 
 	if (read_chan==NO_CHANNEL && write_chan==NO_CHANNEL && io_ctl==NO_CHANNEL) {
-		error("%s: No channel specified for minor device %d!\n", 
+		printf("%s: No channel specified for minor device %d!\n", 
 				drv.DriverName, minor_dev_nr);
 		return EIO;
 	}
 	if (read_chan == write_chan && read_chan != NO_CHANNEL) {
-		error("%s: Read and write channels are equal: %d!\n", 
+		printf("%s: Read and write channels are equal: %d!\n", 
 				drv.DriverName, minor_dev_nr);
 		return EIO;
 	}
 	/* init driver */
 	if (!device_available) {  
 		if (init_driver() != OK) {
-			error("%s: Couldn't init driver!\n", drv.DriverName);
+			printf("%s: Couldn't init driver!\n", drv.DriverName);
 			return EIO;
 		} else {
 			device_available = TRUE;
@@ -349,12 +347,12 @@ PRIVATE int open_sub_dev(int sub_dev_nr, int dma_mode) {
 
 	/* Only one open at a time per sub device */
 	if (sub_dev_ptr->Opened) { 
-		error("%s: Sub device %d is already opened\n", 
+		printf("%s: Sub device %d is already opened\n", 
 				drv.DriverName, sub_dev_nr);
 		return EBUSY;
 	}
 	if (sub_dev_ptr->DmaBusy) { 
-		error("%s: Sub device %d is still busy\n", drv.DriverName, sub_dev_nr);
+		printf("%s: Sub device %d is still busy\n", drv.DriverName, sub_dev_nr);
 		return EBUSY;
 	}
 	/* Setup variables */
@@ -383,8 +381,6 @@ PRIVATE int msg_close(int minor_dev_nr) {
 
 	int r, read_chan, write_chan, io_ctl; 
 	special_file_t* special_file_ptr;
-
-	dprint("%s: msg_close() minor device %d\n", drv.DriverName, minor_dev_nr);
 
 	special_file_ptr = get_special_file(minor_dev_nr);
 	if(special_file_ptr == NULL) {
@@ -446,8 +442,6 @@ PRIVATE int msg_ioctl(const message *m_ptr)
 	sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
-	dprint("%s: msg_ioctl() device %d\n", drv.DriverName, m_ptr->DEVICE);
-
 	special_file_ptr = get_special_file(m_ptr->DEVICE);
 	if(special_file_ptr == NULL) {
 		return EIO;
@@ -456,14 +450,14 @@ PRIVATE int msg_ioctl(const message *m_ptr)
 	chan = special_file_ptr->io_ctl;
 
 	if (chan == NO_CHANNEL) {
-		error("%s: No io control channel specified!\n", drv.DriverName);
+		printf("%s: No io control channel specified!\n", drv.DriverName);
 		return EIO;
 	}
 	/* get pointer to sub device data */
 	sub_dev_ptr = &sub_dev[chan];
 
 	if(!sub_dev_ptr->Opened) {
-		error("%s: io control impossible - not opened!\n", drv.DriverName);
+		printf("%s: io control impossible - not opened!\n", drv.DriverName);
 		return EIO;
 	}
 
@@ -508,13 +502,11 @@ PRIVATE void msg_write(const message *m_ptr)
 	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
-	dprint("%s: msg_write() device %d\n", drv.DriverName, m_ptr->DEVICE);
-
 	special_file_ptr = get_special_file(m_ptr->DEVICE); 
 	chan = special_file_ptr->write_chan;
 
 	if (chan == NO_CHANNEL) {
-		error("%s: No write channel specified!\n", drv.DriverName);
+		printf("%s: No write channel specified!\n", drv.DriverName);
 		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EIO);
 		return;
 	}
@@ -523,18 +515,18 @@ PRIVATE void msg_write(const message *m_ptr)
 
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first write */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
-			error("%s; Failed to get fragment size!\n", drv.DriverName);
+			printf("%s; Failed to get fragment size!\n", drv.DriverName);
 			return;	
 		}
 	}
 	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
-		error("Fragment size does not match user's buffer length\n");
+		printf("Fragment size does not match user's buffer length\n");
 		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EINVAL);		
 		return;
 	}
 	/* if we are busy with something else than writing, return EBUSY */
 	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_WRITE_S) {
-		error("Already busy with something else then writing\n");
+		printf("Already busy with something else then writing\n");
 		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EBUSY);
 		return;
 	}
@@ -547,7 +539,6 @@ PRIVATE void msg_write(const message *m_ptr)
 	data_from_user(sub_dev_ptr);
 
 	if(!sub_dev_ptr->DmaBusy) { /* Dma tranfer not yet started */
-		dprint("starting audio device\n");
 		get_started(sub_dev_ptr);    
 		sub_dev_ptr->DmaMode = DEV_WRITE_S; /* Dma mode is writing */
 	} 
@@ -559,13 +550,11 @@ PRIVATE void msg_read(message *m_ptr)
 	int chan; sub_dev_t *sub_dev_ptr;
 	special_file_t* special_file_ptr;
 
-	dprint("%s: msg_read() device %d\n", drv.DriverName, m_ptr->DEVICE);
-
 	special_file_ptr = get_special_file(m_ptr->DEVICE); 
 	chan = special_file_ptr->read_chan;
 
 	if (chan == NO_CHANNEL) {
-		error("%s: No read channel specified!\n", drv.DriverName);
+		printf("%s: No read channel specified!\n", drv.DriverName);
 		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EIO);
 		return;
 	}
@@ -574,7 +563,7 @@ PRIVATE void msg_read(message *m_ptr)
 
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first read */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
-			error("%s: Could not retrieve fragment size!\n", drv.DriverName);
+			printf("%s: Could not retrieve fragment size!\n", drv.DriverName);
 			reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT,
 				EIO);      	
 			return;
@@ -582,7 +571,7 @@ PRIVATE void msg_read(message *m_ptr)
 	}
 	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
 		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->USER_ENDPT, EINVAL);
-		error("fragment size does not match message size\n");
+		printf("fragment size does not match message size\n");
 		return;
 	}
 	/* if we are busy with something else than reading, reply EBUSY */
@@ -610,8 +599,6 @@ PRIVATE void msg_hardware(void) {
 
 	u32_t     i;
 
-	dprint("%s: handling hardware message\n", drv.DriverName);
-
 	/* while we have an interrupt  */
 	while ( drv_int_sum()) {
 		/* loop over all sub devices */
@@ -629,7 +616,7 @@ PRIVATE void msg_hardware(void) {
 	 * re-enable out interrupt after every interrupt.
 	 */
 	if ((sys_irqenable(&irq_hook_id)) != OK) {
-	  error("%s: msg_hardware: Couldn't enable IRQ\n", drv.DriverName);
+	  printf("%s: msg_hardware: Couldn't enable IRQ\n", drv.DriverName);
 	}
 }
 
@@ -638,7 +625,6 @@ PRIVATE void msg_status(message *m_ptr)
 {
 	int i; 
 
-	dprint("got a status message\n");
 	for (i = 0; i < drv.NrOfSubDevices; i++) {
 
 		if(sub_dev[i].ReadyToRevive) 
@@ -671,15 +657,12 @@ PRIVATE void handle_int_write(int sub_dev_nr)
 
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
-	dprint("Finished playing dma[%d] ", sub_dev_ptr->DmaReadNext);
 	sub_dev_ptr->DmaReadNext = 
 		(sub_dev_ptr->DmaReadNext + 1) % sub_dev_ptr->NrOfDmaFragments;
 	sub_dev_ptr->DmaLength -= 1;
 
 	if (sub_dev_ptr->BufLength != 0) { /* Data in extra buf, copy to Dma buf */
 
-		dprint(" buf[%d] -> dma[%d] ", 
-				sub_dev_ptr->BufReadNext, sub_dev_ptr->DmaFillNext);
 		memcpy(sub_dev_ptr->DmaPtr + 
 				sub_dev_ptr->DmaFillNext * sub_dev_ptr->FragSize, 
 				sub_dev_ptr->ExtraBuf + 
@@ -701,25 +684,20 @@ PRIVATE void handle_int_write(int sub_dev_nr)
 	if(sub_dev_ptr->DmaLength == 0) { /* Dma buffer empty, stop Dma transfer */
 
 		sub_dev_ptr->OutOfData = TRUE; /* we're out of data */
-		dprint("No more work...!\n");
 		if (!sub_dev_ptr->Opened) {
 			close_sub_dev(sub_dev_ptr->Nr);
-			dprint("Stopping sub device %d\n", sub_dev_ptr->Nr);
 			return;
 		}
-		dprint("Pausing sub device %d\n",sub_dev_ptr->Nr);
 		drv_pause(sub_dev_ptr->Nr);
 		return;
 	}
-
-	dprint("\n");
 
 	/* confirm and reenable interrupt from this sub dev */
 	drv_reenable_int(sub_dev_nr);
 #if 0
 	/* reenable irq_hook*/
 	if (sys_irqenable(&irq_hook_id != OK) {
-		error("%s Couldn't enable IRQ\n", drv.DriverName);
+		printf("%s Couldn't enable IRQ\n", drv.DriverName);
 	}
 #endif
 }
@@ -732,7 +710,6 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 
 	sub_dev_ptr = &sub_dev[sub_dev_nr];
 
-	dprint("Device filled dma[%d]\n", sub_dev_ptr->DmaFillNext);
 	sub_dev_ptr->DmaLength += 1; 
 	sub_dev_ptr->DmaFillNext = 
 		(sub_dev_ptr->DmaFillNext + 1) % sub_dev_ptr->NrOfDmaFragments;
@@ -744,7 +721,7 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 		/* if dma buffer full */
 
 		if (sub_dev_ptr->BufLength == sub_dev_ptr->NrOfExtraBuffers) {
-			error("All buffers full, we have a problem.\n");
+			printf("All buffers full, we have a problem.\n");
 			drv_stop(sub_dev_nr);        /* stop the sub device */
 			sub_dev_ptr->DmaBusy = FALSE;
 			sub_dev_ptr->ReviveStatus = 0;   /* no data for user, 
@@ -754,8 +731,6 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 		} 
 		else { /* dma full, still room in extra buf; 
 				  copy from dma to extra buf */
-			dprint("dma full: going to copy buf[%d] <- dma[%d]\n", 
-					sub_dev_ptr->BufFillNext, sub_dev_ptr->DmaReadNext);
 			memcpy(sub_dev_ptr->ExtraBuf + 
 					sub_dev_ptr->BufFillNext * sub_dev_ptr->FragSize, 
 					sub_dev_ptr->DmaPtr + 
@@ -774,7 +749,7 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 #if 0
 	/* reenable irq_hook*/
 	if (sys_irqenable(&irq_hook_id) != OK) {
-		error("%s: Couldn't reenable IRQ", drv.DriverName);
+		printf("%s: Couldn't reenable IRQ", drv.DriverName);
 	}
 #endif
 }
@@ -785,12 +760,12 @@ PRIVATE int get_started(sub_dev_t *sub_dev_ptr) {
 
 	/* enable interrupt messages from MINIX */
 	if ((i=sys_irqenable(&irq_hook_id)) != OK) {
-		error("%s: Couldn't enable IRQs: error code %u",drv.DriverName, (unsigned int) i);
+		printf("%s: Couldn't enable IRQs: error code %u",drv.DriverName, (unsigned int) i);
 		return EIO;
 	}
 	/* let the lower part of the driver start the device */
 	if (drv_start(sub_dev_ptr->Nr, sub_dev_ptr->DmaMode) != OK) {
-		error("%s: Could not start device %d\n", 
+		printf("%s: Could not start device %d\n", 
 				drv.DriverName, sub_dev_ptr->Nr);
 	}
 
@@ -822,7 +797,6 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 				(phys_bytes)subdev->FragSize, D);
 
 
-		dprint(" user -> dma[%d]\n", subdev->DmaFillNext);
 		subdev->DmaLength += 1;
 		subdev->DmaFillNext = 
 			(subdev->DmaFillNext + 1) % subdev->NrOfDmaFragments;
@@ -835,7 +809,6 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 				subdev->BufFillNext * subdev->FragSize, 
 				(phys_bytes)subdev->FragSize, D);
 
-		dprint(" user -> buf[%d]\n", subdev->BufFillNext);
 		subdev->BufLength += 1;
 
 		subdev->BufFillNext = 
@@ -847,7 +820,7 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 		drv_reenable_int(subdev->Nr);
 		/* reenable irq_hook*/
 		if ((sys_irqenable(&irq_hook_id)) != OK) {
-			error("%s: Couldn't enable IRQ", drv.DriverName);
+			printf("%s: Couldn't enable IRQ", drv.DriverName);
 		}
 		drv_resume(subdev->Nr);  /* resume resume the sub device */
 	}
@@ -890,8 +863,6 @@ PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr)
 				sub_dev_ptr->BufReadNext * sub_dev_ptr->FragSize,
 				(phys_bytes)sub_dev_ptr->FragSize, D);
 
-		dprint(" copied buf[%d] to user\n", sub_dev_ptr->BufReadNext); 
-
 		/* adjust the buffer status variables */
 		sub_dev_ptr->BufReadNext = 
 			(sub_dev_ptr->BufReadNext + 1) % sub_dev_ptr->NrOfExtraBuffers;
@@ -904,8 +875,6 @@ PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr)
 				(vir_bytes)sub_dev_ptr->DmaPtr + 
 				sub_dev_ptr->DmaReadNext * sub_dev_ptr->FragSize,
 				(phys_bytes)sub_dev_ptr->FragSize, D);
-
-		dprint(" copied dma[%d] to user\n", sub_dev_ptr->DmaReadNext);
 
 		/* adjust the buffer status variables */
 		sub_dev_ptr->DmaReadNext = 
@@ -946,7 +915,7 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	size= sub_dev_ptr->DmaSize + 64 * 1024;
 	base= alloc_contig(size, AC_ALIGN4K, &ph);
 	if (!base) {
-		error("%s: failed to allocate dma buffer for a channel\n", 
+		printf("%s: failed to allocate dma buffer for a channel\n", 
 				drv.DriverName);
 		return EIO;
 	}
@@ -958,7 +927,7 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	if (!(sub_dev_ptr->ExtraBuf = malloc(sub_dev_ptr->NrOfExtraBuffers * 
 					sub_dev_ptr->DmaSize / 
 					sub_dev_ptr->NrOfDmaFragments))) {
-		error("%s failed to allocate extra buffer for a channel\n", 
+		printf("%s failed to allocate extra buffer for a channel\n", 
 				drv.DriverName);
 		return EIO;
 	}
@@ -986,7 +955,7 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	return OK;
 
 #else /* CHIP != INTEL */
-	error("%s: init_buffers() failed, CHIP != INTEL", drv.DriverName);
+	printf("%s: init_buffers() failed, CHIP != INTEL", drv.DriverName);
 	return EIO;
 #endif /* CHIP == INTEL */
 }
@@ -1017,7 +986,7 @@ PRIVATE special_file_t* get_special_file(int minor_dev_nr) {
 		}
 	}
 
-	error("%s: No subdevice specified for minor device %d!\n", 
+	printf("%s: No subdevice specified for minor device %d!\n", 
 			drv.DriverName, minor_dev_nr);
 
 	return NULL;

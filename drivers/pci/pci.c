@@ -12,6 +12,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <machine/pci.h>
 #include <machine/vm.h>
 #include <minix/com.h>
+#include <minix/ds.h>
 #include <minix/syslib.h>
 
 #include "pci.h"

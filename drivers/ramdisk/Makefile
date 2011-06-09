@@ -152,13 +152,13 @@ rs.single: ../../etc/rs.single
 proto.gen: $(PROGRAMS) $(SCRIPTS) $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
 
-.if ${OBJECT_FMT} == "ELF"
-proto.gen: elfstrip
-
-.PHONY: elfstrip
-
-elfstrip: $(PROGRAMS)
-	${ELFSTRIP} $(PROGRAMS)
-.endif
+#.if ${OBJECT_FMT} == "ELF"
+#proto.gen: elfstrip
+#
+#.PHONY: elfstrip
+#
+#elfstrip: $(PROGRAMS)
+#	${ELFSTRIP} $(PROGRAMS)
+#.endif
 
 .include <bsd.prog.mk>

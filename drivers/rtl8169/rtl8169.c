@@ -252,7 +252,6 @@ _PROTOTYPE( static void reply, (re_t *rep)				);
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
 _PROTOTYPE( static void check_int_events, (void)			);
 _PROTOTYPE( static void do_hard_int, (void)				);
-_PROTOTYPE( static void rtl8169_dump, (void)				);
 _PROTOTYPE( static void dump_phy, (const re_t *rep)			);
 _PROTOTYPE( static void rl_handler, (re_t *rep)				);
 _PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
@@ -474,6 +473,7 @@ static void rtl8169_update_stat(re_t *rep)
 		rep->v_dtcc_buf->Tx1Col + rep->v_dtcc_buf->TxMCol;
 }
 
+#if 0
 /*===========================================================================*
  *				rtl8169_dump				     *
  *===========================================================================*/
@@ -560,6 +560,7 @@ static void rtl8169_dump(void)
 	printf("tx_head    :%8d  busy %d\t",
 		rep->re_tx_head, rep->re_tx[rep->re_tx_head].ret_busy);
 }
+#endif
 
 /*===========================================================================*
  *				do_init					     *
@@ -1003,7 +1004,6 @@ re_t *rep;
 	port_t port;
 	u32_t t;
 	int i;
-	clock_t t0, t1;
 
 	port = rep->re_base_port;
 

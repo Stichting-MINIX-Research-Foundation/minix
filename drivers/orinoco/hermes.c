@@ -477,7 +477,7 @@ int hermes_bap_pread (hermes_t * hw, int bap, void *buf, unsigned len,
 	int err = 0;
 
 	/* reading (and writing) data goes a word a time, so should be even */
-	if ((len < 0) || (len % 2))	{
+	if ((len % 2))	{
 		printf("Hermes: Error in length to be read\n");
 		return -EINVAL;
 	}
@@ -522,7 +522,7 @@ int hermes_bap_pwrite (hermes_t * hw, int bap, const void *buf, unsigned len,
 	int dreg = bap ? HERMES_DATA1 : HERMES_DATA0;
 	int err = 0;
 
-	if ((len < 0) || (len % 2)) {
+	if ((len % 2)) {
 		printf("Hermes: Error in length to be written\n");
 		return -EINVAL;
 	}
@@ -592,7 +592,7 @@ int hermes_read_ltv (hermes_t * hw, int bap, u16_t rid, unsigned bufsize,
 	u16_t rlength, rtype;
 	unsigned nwords;
 
-	if ((bufsize < 0) || (bufsize % 2))	{
+	if ((bufsize % 2))	{
 		printf("Hermes: error in bufsize\n");
 		return -EINVAL;
 	}

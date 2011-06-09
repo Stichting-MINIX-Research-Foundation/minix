@@ -75,10 +75,10 @@ PUBLIC int drv_init(void) {
 PUBLIC int drv_init_hw(void) {
 	int i;
 	int DspVersion[2];
-	dprint("drv_init_hw():\n");
+	Dprint(("drv_init_hw():\n"));
 
 	if(drv_reset () != OK) { 
-		dprint("sb16: No SoundBlaster card detected\n");
+		Dprint(("sb16: No SoundBlaster card detected\n"));
 		return -1;
 	}
 
@@ -97,11 +97,11 @@ PUBLIC int drv_init_hw(void) {
 	}
 
 	if(DspVersion[0] < 4) {
-		dprint("sb16: No SoundBlaster 16 compatible card detected\n");
+		Dprint(("sb16: No SoundBlaster 16 compatible card detected\n"));
 		return -1;
 	} 
 	
-	dprint("sb16: SoundBlaster DSP version %d.%d detected!\n", DspVersion[0], DspVersion[1]);
+	Dprint(("sb16: SoundBlaster DSP version %d.%d detected!\n", DspVersion[0], DspVersion[1]));
 
 	/* set SB to use our IRQ and DMA channels */
 	mixer_set(MIXER_SET_IRQ, (1 << (SB_IRQ / 2 - 1)));
@@ -116,7 +116,7 @@ PUBLIC int drv_init_hw(void) {
 
 PUBLIC int drv_reset(void) {
 	int i;
-	dprint("drv_reset():\n");
+	Dprint(("drv_reset():\n"));
 
 	sb16_outb(DSP_RESET, 1);
 	for(i = 0; i < 1000; i++); /* wait a while */
@@ -132,7 +132,7 @@ PUBLIC int drv_reset(void) {
 
 
 PUBLIC int drv_start(int channel, int DmaMode) {
-	dprint("drv_start():\n");
+	Dprint(("drv_start():\n"));
 
 	drv_reset();
 
@@ -180,7 +180,7 @@ PUBLIC int drv_start(int channel, int DmaMode) {
 
 PUBLIC int drv_stop(int sub_dev) {
 	if(running) {
-		dprint("drv_stop():\n");
+		Dprint(("drv_stop():\n"));
 		dsp_command((DspBits == 8 ? DSP_CMD_DMA8HALT : DSP_CMD_DMA16HALT));
 		running = FALSE;
 		drv_reenable_int(sub_dev);
@@ -191,7 +191,7 @@ PUBLIC int drv_stop(int sub_dev) {
 
 
 PUBLIC int drv_set_dma(u32_t dma, u32_t length, int chan) {
-	dprint("drv_set_dma():\n");
+	Dprint(("drv_set_dma():\n"));
 	DmaPhys = dma;
 	return OK;
 }
@@ -199,7 +199,7 @@ PUBLIC int drv_set_dma(u32_t dma, u32_t length, int chan) {
 
 
 PUBLIC int drv_reenable_int(int chan) {
-	dprint("drv_reenable_int()\n");
+	Dprint(("drv_reenable_int()\n"));
 	sb16_inb((DspBits == 8 ? DSP_DATA_AVL : DSP_DATA16_AVL));
 	return OK;
 }
@@ -233,7 +233,7 @@ PUBLIC int drv_resume(int chan) {
 
 
 PUBLIC int drv_io_ctl(int request, void *val, int *len, int sub_dev) {
-	dprint("dsp_ioctl: got ioctl %d, argument: %d sub_dev: %d\n", request, val, sub_dev);
+	Dprint(("dsp_ioctl: got ioctl %d, argument: %d sub_dev: %d\n", request, val, sub_dev));
 
 	if(sub_dev == AUDIO) {
 		return dsp_ioctl(request, val, len);
@@ -247,7 +247,7 @@ PUBLIC int drv_io_ctl(int request, void *val, int *len, int sub_dev) {
 
 
 PUBLIC int drv_get_irq(char *irq) {
-	dprint("drv_get_irq():\n");
+	Dprint(("drv_get_irq():\n"));
 	*irq = SB_IRQ;
 	return OK;
 }
@@ -255,7 +255,7 @@ PUBLIC int drv_get_irq(char *irq) {
 
 
 PUBLIC int drv_get_frag_size(u32_t *frag_size, int sub_dev) {
-	dprint("drv_get_frag_size():\n");
+	Dprint(("drv_get_frag_size():\n"));
 	*frag_size = DspFragmentSize;
 	return OK;
 }
@@ -284,7 +284,7 @@ PRIVATE int dsp_ioctl(int request, void *val, int *len) {
 PRIVATE void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 	pvb_pair_t pvb[9];
 
-	dprint("Setting up %d bit DMA\n", DspBits);
+	Dprint(("Setting up %d bit DMA\n", DspBits));
 
 	if(DspBits == 8) {   /* 8 bit sound */
 		count--;     
@@ -327,7 +327,7 @@ PRIVATE void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 
 
 PRIVATE int dsp_set_size(unsigned int size) {
-	dprint("dsp_set_size(): set fragment size to %u\n", size);
+	Dprint(("dsp_set_size(): set fragment size to %u\n", size));
 
 	/* Sanity checks */
 	if(size < sub_dev[AUDIO].MinFragmentSize || size > sub_dev[AUDIO].DmaSize / sub_dev[AUDIO].NrOfDmaFragments || size % 2 != 0) {
@@ -342,7 +342,7 @@ PRIVATE int dsp_set_size(unsigned int size) {
 
 
 PRIVATE int dsp_set_speed(unsigned int speed) {
-	dprint("sb16: setting speed to %u, stereo = %d\n", speed, DspStereo);
+	Dprint(("sb16: setting speed to %u, stereo = %d\n", speed, DspStereo));
 
 	if(speed < DSP_MIN_SPEED || speed > DSP_MAX_SPEED) {
 		return EPERM;
@@ -395,7 +395,7 @@ PRIVATE int dsp_set_bits(unsigned int bits) {
 
 
 PRIVATE int dsp_set_sign(unsigned int sign) {
-	dprint("sb16: set sign to %u\n", sign);
+	Dprint(("sb16: set sign to %u\n", sign));
 
 	DspSign = (sign > 0 ? 1 : 0); 
 
@@ -422,7 +422,7 @@ PUBLIC int dsp_command(int value) {
 		}
 	}
 
-	dprint("sb16: SoundBlaster: DSP Command(%x) timeout\n", value);
+	Dprint(("sb16: SoundBlaster: DSP Command(%x) timeout\n", value));
 	return -1;
 }
 

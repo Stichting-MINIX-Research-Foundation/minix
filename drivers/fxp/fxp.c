@@ -60,7 +60,7 @@ PRIVATE struct pcitab pcitab_fxp[]=
 typedef int irq_hook_t;
 
 /* ignore interrupt for the moment */
-#define interrupt(x)	0
+#define interrupt(x)	do { } while(0)
 
 PRIVATE union tmpbuf
 {
@@ -421,7 +421,6 @@ message *mp;
 static void fxp_pci_conf()
 {
 	static char envvar[] = FXP_ENVVAR "#";
-	static char envfmt[] = "*:d.d.d";
 
 	fxp_t *fp;
 	long v;
@@ -627,7 +626,6 @@ static int fxp_probe(fxp_t *fp, int skip)
  *===========================================================================*/
 static void fxp_conf_hw(fxp_t *fp)
 {
-	int i;
 	int mwi, ext_stat1, ext_stat2, lim_fifo, i82503, fc;
 
 	fp->fxp_mode= FM_DISABLED;	/* Superfluous */

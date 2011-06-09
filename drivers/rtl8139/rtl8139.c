@@ -461,7 +461,6 @@ int skip;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
-	char *dname;
 
 	if ((rep->re_pcibus | rep->re_pcidev | rep->re_pcifunc) != 0)
 	{
@@ -864,7 +863,6 @@ static void rl_readv_s(const message *mp, int from_int)
 	int i, j, n, o, s, s1, count, size;
 	port_t port;
 	unsigned amount, totlen, packlen;
-	phys_bytes dst_phys;
 	u16_t d_start, d_end;
 	u32_t l, rxstat = 0x12345678;
 	re_t *rep;

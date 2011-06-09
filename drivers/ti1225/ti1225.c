@@ -54,8 +54,6 @@ PRIVATE int debug;
 FORWARD _PROTOTYPE( void hw_init, (struct port *pp)			);
 FORWARD _PROTOTYPE( void map_regs, (struct port *pp, u32_t base)	);
 FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
-FORWARD _PROTOTYPE( void do_outb, (port_t port, u8_t value)		);
-FORWARD _PROTOTYPE( u8_t do_inb, (port_t port)				);
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -185,7 +183,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 PRIVATE void hw_init(struct port *pp)
 {
-	int r, devind, irq;
+	int devind;
 	u8_t v8;
 	u16_t v16;
 	u32_t v32;
@@ -312,7 +310,7 @@ PRIVATE void map_regs(struct port *pp, u32_t base)
 
 PRIVATE void do_int(struct port *pp)
 {
-	int r, devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
+	int devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
 		socket_5v, socket_3v, socket_Xv, socket_Yv;
 	spin_t spin;
 	u32_t csr_event, csr_present, csr_control;
@@ -491,26 +489,4 @@ PRIVATE void do_int(struct port *pp)
 #endif
 
 }
-
-
-PRIVATE u8_t do_inb(port_t port)
-{
-	int r;
-	u32_t value;
-
-	r= sys_inb(port, &value);
-	if (r != OK)
-		panic("sys_inb failed: %d", r);
-	return value;
-}
-
-PRIVATE void do_outb(port_t port, u8_t value)
-{
-	int r;
-
-	r= sys_outb(port, value);
-	if (r != OK)
-		panic("sys_outb failed: %d", r);
-}
-
 
