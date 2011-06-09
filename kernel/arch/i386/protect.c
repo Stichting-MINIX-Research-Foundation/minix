@@ -73,18 +73,6 @@ PUBLIC phys_bytes seg2phys(const u16_t seg)
 }
 
 /*===========================================================================*
- *				phys2seg				     *
- *===========================================================================*/
-PRIVATE void phys2seg(u16_t *seg, vir_bytes *off, phys_bytes phys)
-{
-/* Return a segment selector and offset that can be used to reach a physical
- * address, for use by a driver doing memory I/O in the A0000 - DFFFF range.
- */
-  *seg = FLAT_DS_SELECTOR;
-  *off = (vir_bytes) phys;
-}
-
-/*===========================================================================*
  *				init_dataseg				     *
  *===========================================================================*/
 PUBLIC void init_dataseg(register struct segdesc_s *segdp,
@@ -330,6 +318,7 @@ PUBLIC void alloc_segments(register struct proc *rp)
       rp->p_reg.ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
 }
 
+#if 0
 /*===========================================================================*
  *				check_segments				     *
  *===========================================================================*/
@@ -369,6 +358,7 @@ for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
      	panic("wrong: %d",  fail);
      }
 }
+#endif
 
 /*===========================================================================*
  *				printseg			     *

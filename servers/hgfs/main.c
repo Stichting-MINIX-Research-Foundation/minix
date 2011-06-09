@@ -43,7 +43,6 @@ sef_init_info_t *info;
 {
 /* Initialize this file server. Called at startup time.
  */
-  message m;
   int i, r;
 
   /* Defaults */

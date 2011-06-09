@@ -225,6 +225,7 @@ PRIVATE u32_t phys_get32(phys_bytes addr)
 	return v;
 }
 
+#if 0
 PRIVATE char *cr0_str(u32_t e)
 {
 	static char str[80];
@@ -256,6 +257,7 @@ PRIVATE char *cr4_str(u32_t e)
 	if(e) { strcat(str, " (++)"); }
 	return str;
 }
+#endif
 
 PUBLIC void vm_stop(void)
 {
@@ -531,7 +533,6 @@ PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
  *===========================================================================*/
 PUBLIC void delivermsg(struct proc *rp)
 {
-	phys_bytes addr;  
 	int r;
 
 	assert(rp->p_misc_flags & MF_DELIVERMSG);
@@ -557,6 +558,7 @@ PUBLIC void delivermsg(struct proc *rp)
 	}
 }
 
+#if 0
 PRIVATE char *flagstr(u32_t e, const int dir)
 {
 	static char str[80];
@@ -627,6 +629,7 @@ PRIVATE void vm_print(u32_t *root)
 
 	return;
 }
+#endif
 
 /*===========================================================================*
  *				lin_memset				     *

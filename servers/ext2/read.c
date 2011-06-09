@@ -551,7 +551,6 @@ PUBLIC int fs_getdents(void)
   struct buf *bp;
   struct ext2_disk_dir_desc *d_desc;
   struct dirent *dep;
-  char *cp;
 
   ino = (ino_t) fs_m_in.REQ_INODE_NR;
   gid = (gid_t) fs_m_in.REQ_GRANT;

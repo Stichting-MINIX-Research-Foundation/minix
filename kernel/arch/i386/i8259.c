@@ -8,6 +8,7 @@
 #include "kernel/kernel.h"
 #include "kernel/proc.h"
 #include "arch_proto.h"
+#include "hw_intr.h"
 #include <minix/portio.h>
 #include <machine/cpu.h>
 

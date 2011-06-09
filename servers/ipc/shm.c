@@ -327,6 +327,7 @@ PUBLIC int do_shmctl(message *m)
 	return OK;
 }
 
+#if 0
 PRIVATE void list_shm_ds(void)
 {
 	int i;
@@ -337,6 +338,7 @@ PRIVATE void list_shm_ds(void)
 			shm_list[i].id,
 			shm_list[i].page);
 }
+#endif
 
 /*===========================================================================*
  *				is_shm_nil		     		     *

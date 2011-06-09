@@ -44,7 +44,9 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
   vir_bytes src_vir; 
   int nr_e, nr, r;
   int wipe_rnd_bin = -1;
+#if !defined(__ELF__)
   struct exec e_hdr;
+#endif
 
   /* Set source address and length based on request type. */
   switch (m_ptr->I_REQUEST) {

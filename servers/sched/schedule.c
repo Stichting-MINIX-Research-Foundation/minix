@@ -116,7 +116,7 @@ PUBLIC int do_noquantum(message *m_ptr)
 PUBLIC int do_stop_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
-	int rv, proc_nr_n;
+	int proc_nr_n;
 
 	/* check who can send you requests */
 	if (!accept_message(m_ptr))
@@ -143,7 +143,7 @@ PUBLIC int do_stop_scheduling(message *m_ptr)
 PUBLIC int do_start_scheduling(message *m_ptr)
 {
 	register struct schedproc *rmp;
-	int rv, proc_nr_n, parent_nr_n, nice;
+	int rv, proc_nr_n, parent_nr_n;
 	
 	/* we can handle two kinds of messages here */
 	assert(m_ptr->m_type == SCHEDULING_START || 
@@ -353,7 +353,6 @@ PRIVATE void balance_queues(struct timer *tp)
 {
 	struct schedproc *rmp;
 	int proc_nr;
-	int rv;
 
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if (rmp->flags & IN_USE) {

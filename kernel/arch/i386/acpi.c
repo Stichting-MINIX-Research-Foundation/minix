@@ -1,5 +1,9 @@
+
+#include <string.h>
+
 #include "kernel/kernel.h"
 #include "acpi.h"
+#include "arch_proto.h"
 
 typedef int ((* acpi_read_t)(phys_bytes addr, void * buff, size_t size));
 
@@ -80,7 +84,7 @@ PRIVATE int acpi_read_sdt_at(phys_bytes addr,
 	return tb->length;
 }
 
-PRIVATE phys_bytes acpi_get_table_base(const char * name)
+PUBLIC phys_bytes acpi_get_table_base(const char * name)
 {
 	int i;
 
@@ -93,7 +97,7 @@ PRIVATE phys_bytes acpi_get_table_base(const char * name)
 	return (phys_bytes) NULL;
 }
 
-PRIVATE size_t acpi_get_table_length(const char * name)
+PUBLIC size_t acpi_get_table_length(const char * name)
 {
 	int i;
 
@@ -130,6 +134,7 @@ PRIVATE void * acpi_madt_get_typed_item(struct acpi_madt_hdr * hdr,
 	return NULL;
 }
 
+#if 0
 PRIVATE void * acpi_madt_get_item(struct acpi_madt_hdr * hdr,
 				unsigned idx)
 {
@@ -147,6 +152,8 @@ PRIVATE void * acpi_madt_get_item(struct acpi_madt_hdr * hdr,
 
 	return NULL;
 }
+#endif
+
 PRIVATE int acpi_rsdp_test(void * buff)
 {
 	struct acpi_rsdp * rsdp = (struct acpi_rsdp *) buff;

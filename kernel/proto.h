@@ -226,6 +226,8 @@ _PROTOTYPE(void release_address_space, (struct proc *pr));
 _PROTOTYPE(void enable_fpu_exception, (void));
 _PROTOTYPE(void disable_fpu_exception, (void));
 _PROTOTYPE(void release_fpu, (struct proc * p));
+_PROTOTYPE(void arch_pause,(void));
+_PROTOTYPE(short cpu_load, (void));
 
 /* utility.c */
 _PROTOTYPE( void cpu_print_freq, (unsigned cpu));

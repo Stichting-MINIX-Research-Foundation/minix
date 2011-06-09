@@ -154,13 +154,10 @@ PUBLIC int do_sysuname()
  *===========================================================================*/
 PUBLIC int do_getsysinfo()
 {
-  struct mproc *proc_addr;
   vir_bytes src_addr, dst_addr;
-  struct kinfo kinfo;
   struct loadinfo loadinfo;
-  static struct proc proctab[NR_PROCS+NR_TASKS];
   size_t len;
-  int s, r;
+  int s;
 
   /* This call leaks important information (the contents of registers). */
   if (mp->mp_effuid != 0)

@@ -546,7 +546,6 @@ PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
 {
   struct buf *bp;
   struct inode *rip;
-  int scale, r;
 
 #define MINBUFS 10
   assert(blocksize > 0);
@@ -569,7 +568,7 @@ PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
 PRIVATE int bufs_heuristic(struct super_block *sp)
 {
   struct vm_stats_info vsi;
-  int r, bufs;
+  int bufs;
   u32_t btotal, bfree, bused, kbytes_used_fs,
 	kbytes_total_fs, kbcache, kb_fsmax;
   u32_t kbytes_remain_mem;

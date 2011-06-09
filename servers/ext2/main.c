@@ -16,7 +16,6 @@
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
-FORWARD _PROTOTYPE(void cch_check, (void)				);
 FORWARD _PROTOTYPE( void reply, (endpoint_t who, message *m_out)		);
 
 /* SEF functions and variables. */
@@ -83,7 +82,6 @@ PUBLIC int main(int argc, char *argv[])
 		error = EINVAL;
 	} else {
 		error = (*fs_call_vec[ind])();
-		/*cch_check();*/
 	}
 
 	fs_m_out.m_type = error;
@@ -208,24 +206,4 @@ PRIVATE void reply(
 {
   if (OK != send(who, m_out))    /* send the message */
 	printf("ext2(%d) was unable to send reply\n", SELF_E);
-}
-
-
-/*===========================================================================*
- *				cch_check				     *
- *===========================================================================*/
-PRIVATE void cch_check(void)
-{
-  int i;
-
-  for (i = 0; i < NR_INODES; ++i) {
-	if (inode[i].i_count != cch[i] && req_nr != REQ_GETNODE &&
-	    req_nr != REQ_PUTNODE && req_nr != REQ_READSUPER &&
-	    req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
-	    req_nr != REQ_SYNC && req_nr != REQ_LOOKUP) {
-		printf("ext2(%d) inode(%ul) cc: %d req_nr: %d\n", SELF_E,
-			inode[i].i_num, inode[i].i_count - cch[i], req_nr);
-	}
-	cch[i] = inode[i].i_count;
-  }
 }

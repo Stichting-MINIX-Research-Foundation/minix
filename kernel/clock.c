@@ -238,4 +238,6 @@ PUBLIC int app_cpu_init_timer(unsigned freq)
 {
 	if (init_local_timer(freq))
 		return -1;
+
+	return 0;
 }

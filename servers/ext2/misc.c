@@ -20,7 +20,6 @@ PUBLIC int fs_sync()
  */
   struct inode *rip;
   struct buf *bp;
-  int r;
 
   assert(nr_bufs > 0);
   assert(buf);

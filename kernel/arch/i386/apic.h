@@ -123,6 +123,9 @@ EXTERN u32_t lapic_addr_vaddr; /* we remember the virtual address here until we
 				  switch to paging */
 
 _PROTOTYPE (int lapic_enable, (unsigned cpu));
+_PROTOTYPE (void ioapic_unmask_irq, (unsigned irq));
+_PROTOTYPE (void ioapic_mask_irq, (unsigned irq));
+_PROTOTYPE (void ioapic_reset_pic, (void));
 
 EXTERN int ioapic_enabled;
 EXTERN unsigned nioapics;

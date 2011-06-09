@@ -14,13 +14,14 @@
  */
 
 #include "kernel/system.h"
+#include "watchdog.h"
 
 #if SPROFILE
 
 /* user address to write info struct */
 PRIVATE vir_bytes sprof_info_addr_vir;
 
-PRIVATE clean_seen_flag(void)
+PRIVATE void clean_seen_flag(void)
 {
 	int i;
 

@@ -185,8 +185,6 @@ PUBLIC int register_local_timer_handler(const irq_handler_t handler)
 
 PUBLIC void cycles_accounting_init(void)
 {
-	unsigned cpu = cpuid;
-
 	read_tsc_64(get_cpu_var_ptr(cpu, tsc_ctr_switch));
 
 	make_zero64(get_cpu_var(cpu, cpu_last_tsc));
@@ -195,11 +193,11 @@ PUBLIC void cycles_accounting_init(void)
 
 PUBLIC void context_stop(struct proc * p)
 {
-	unsigned cpu = cpuid;
 	u64_t tsc, tsc_delta;
 	u64_t * __tsc_ctr_switch = get_cpulocal_var_ptr(tsc_ctr_switch);
-
 #ifdef CONFIG_SMP
+	unsigned cpu = cpuid;
+
 	/*
 	 * This function is called only if we switch from kernel to user or idle
 	 * or back. Therefore this is a perfect location to place the big kernel
@@ -279,7 +277,9 @@ PUBLIC void context_stop(struct proc * p)
 PUBLIC void context_stop_idle(void)
 {
 	int is_idle;
+#ifdef CONFIG_SMP
 	unsigned cpu = cpuid;
+#endif
 	
 	is_idle = get_cpu_var(cpu, cpu_is_idle);
 	get_cpu_var(cpu, cpu_is_idle) = 0;
@@ -310,7 +310,9 @@ PUBLIC short cpu_load(void)
 	u64_t tsc_delta, idle_delta, busy;
 	struct proc *idle;
 	short load;
+#ifdef CONFIG_SMP
 	unsigned cpu = cpuid;
+#endif
 
 	u64_t *last_tsc, *last_idle;
 

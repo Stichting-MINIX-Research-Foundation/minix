@@ -845,7 +845,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
  */
   register struct proc **xpp;
   sys_map_t *map;
-  int i, r, src_id, src_proc_nr, src_p;
+  int r, src_id, src_proc_nr, src_p;
 
   assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 
@@ -1227,7 +1227,7 @@ struct proc *caller_ptr;
 PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
 {
 /* Try to receive an asynchronous message from 'src_ptr' */
-  int r = EAGAIN, done, do_notify, pending_recv = FALSE;
+  int r = EAGAIN, done, do_notify;
   unsigned int flags, i;
   size_t size;
   endpoint_t dst;
@@ -1331,7 +1331,7 @@ PUBLIC int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
 {
 /* Cancel asynchronous messages from src to dst, because dst is not interested
  * in them (e.g., dst has been restarted) */
-  int done, do_notify, pending_recv = FALSE;
+  int done, do_notify;
   unsigned int flags, i;
   size_t size;
   endpoint_t dst;

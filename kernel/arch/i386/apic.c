@@ -176,7 +176,7 @@ PRIVATE u32_t lapic_bus_freq[CONFIG_MAX_CPUS];
 #define IOAPIC_IOREGSEL	0x0
 #define IOAPIC_IOWIN	0x10
 
-PUBLIC u32_t ioapic_read(u32_t ioa_base, u32_t reg)
+PRIVATE u32_t ioapic_read(u32_t ioa_base, u32_t reg)
 {
 	*((u32_t *)(ioa_base + IOAPIC_IOREGSEL)) = (reg & 0xff);
 	return *(u32_t *)(ioa_base + IOAPIC_IOWIN);
@@ -207,6 +207,7 @@ PRIVATE void ioapic_disable_pin(vir_bytes ioapic_addr, int pin)
 	ioapic_write(ioapic_addr, IOAPIC_REDIR_TABLE + pin * 2, lo);
 }
 
+#if 0
 PRIVATE void ioapic_redirt_entry_read(void * ioapic_addr,
 					int entry,
 					u32_t *hi,
@@ -216,6 +217,7 @@ PRIVATE void ioapic_redirt_entry_read(void * ioapic_addr,
 	*hi = ioapic_read((u32_t)ioapic_addr, (u8_t) (IOAPIC_REDIR_TABLE + entry * 2 + 1));
 
 }
+#endif
 
 PRIVATE void ioapic_redirt_entry_write(void * ioapic_addr,
 					int entry,
@@ -570,7 +572,7 @@ PRIVATE  u32_t lapic_errstatus(void)
 
 PRIVATE int lapic_disable_in_msr(void)
 {
-	u32_t addr, msr_hi, msr_lo;
+	u32_t msr_hi, msr_lo;
 
 	ia32_msr_read(IA32_APIC_BASE, &msr_hi, &msr_lo);
 
@@ -617,11 +619,12 @@ PUBLIC void lapic_disable(void)
 
 PRIVATE int lapic_enable_in_msr(void)
 {
-	u32_t addr, msr_hi, msr_lo;
+	u32_t msr_hi, msr_lo;
 
 	ia32_msr_read(IA32_APIC_BASE, &msr_hi, &msr_lo);
 
 #if 0
+	u32_t addr;
 	/*FIXME this is a problem on AP */
 	/*
 	 * FIXME if the location is different (unlikely) then the one we expect,

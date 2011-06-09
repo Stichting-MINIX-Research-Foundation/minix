@@ -63,7 +63,7 @@ PUBLIC void stop_profile_clock()
   rm_irq_handler(&profile_clock_hook);
 }
 
-PRIVATE sprof_save_sample(struct proc * p, void * pc)
+PRIVATE void sprof_save_sample(struct proc * p, void * pc)
 {
 	struct sprof_sample *s;
 
@@ -75,7 +75,7 @@ PRIVATE sprof_save_sample(struct proc * p, void * pc)
 	sprof_info.mem_used += sizeof(struct sprof_sample);
 }
 
-PRIVATE sprof_save_proc(struct proc * p)
+PRIVATE void sprof_save_proc(struct proc * p)
 {
 	struct sprof_proc * s;
 

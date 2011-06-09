@@ -634,23 +634,6 @@ PUBLIC void arch_ack_profile_clock(void)
 
 #define COLOR_BASE	0xB8000L
 
-PRIVATE void cons_setc(const int pos, const int c)
-{
-	char ch;
-
-	ch= c;
-	phys_copy(vir2phys((vir_bytes)&ch), COLOR_BASE+(20*80+pos)*2, 1);
-}
-
-PRIVATE void cons_seth(int pos, int n)
-{
-	n &= 0xf;
-	if (n < 10)
-		cons_setc(pos, '0'+n);
-	else
-		cons_setc(pos, 'A'+(n-10));
-}
-
 /* Saved by mpx386.s into these variables. */
 u32_t params_size, params_offset, mon_ds;
 

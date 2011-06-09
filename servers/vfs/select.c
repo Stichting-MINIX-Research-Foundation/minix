@@ -200,7 +200,7 @@ PUBLIC int do_select(void)
 
   /* Check all file descriptors in the set whether one is 'ready' now */
   for (fd = 0; fd < nfds; fd++) {
-	int type, ops, r;
+	int ops, r;
 	struct filp *f;
 	
 	/* Again, check for involuntarily selected fd's */
@@ -211,7 +211,7 @@ PUBLIC int do_select(void)
 	 * processes sharing a filp and both doing a select on that filp. */
 	f = se->filps[fd];
 	if ((f->filp_select_ops & ops) != ops) {
-		int wantops, type, block;
+		int wantops;
 
 		wantops = (f->filp_select_ops |= ops);
 		r = do_select_request(se, fd, &wantops);
@@ -911,7 +911,7 @@ PRIVATE void select_restart_filps()
 	 * select request to be sent again).
 	 */
 	for (fd = 0; fd < se->nfds; fd++) {
-		int r, type, wantops, ops, block;
+		int r, wantops, ops;
 		if ((f = se->filps[fd]) == NULL) continue;
 		if (f->filp_select_flags & FSF_BUSY) /* Still waiting for */
 			continue;		     /* initial reply */

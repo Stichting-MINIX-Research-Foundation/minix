@@ -42,27 +42,6 @@ phys_bytes mulitboot_modules_addr;
 
 FORWARD _PROTOTYPE(void mb_print, (char *str));
 
-PRIVATE void mb_phys_move(u32_t src, u32_t dest, u32_t len) 
-{
-	char data[GRAN + 1];
-	int i;
-	/* Move upward (start moving from tail), block by block 
-	* len should be aligned to GRAN 
-	*/
-	if (len % GRAN) {
-		mb_print("fatal: not aligned phys move");
-		/* Spin here */
-		while (1)
-			;
-	}
-
-	len /= GRAN;
-	for (i = len - 1; i >= 0; i--) {
-		mb_load_phymem(data, src + i * GRAN, GRAN);
-		mb_save_phymem(data, dest + i * GRAN, GRAN);
-	}
-}
-
 PRIVATE void mb_itoa(u32_t val, char * out) 
 {
 	char ret[ITOA_BUFFER_SIZE];
@@ -244,7 +223,7 @@ PRIVATE int mb_set_param(char *name, char *value)
 PRIVATE void get_parameters(multiboot_info_t *mbi) 
 {
 	char mem_value[40], temp[ITOA_BUFFER_SIZE];
-	int i, r, processor;
+	int i, processor;
 	int dev;
 	int ctrlr;
 	int disk, prim, sub;
@@ -386,8 +365,6 @@ PRIVATE void mb_extract_image(multiboot_info_t mbi)
 
 	/* Load boot image services into memory and save memory map */
 	for (i = 0; module < &mb_module_info[mods_count]; ++module, ++i) {
-	    char zero = 0;
-
 	    r = read_header_elf((const char *)module->mod_start,
 				&text_vaddr, &text_paddr,
 				&text_filebytes, &text_membytes,

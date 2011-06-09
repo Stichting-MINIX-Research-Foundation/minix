@@ -1,8 +1,6 @@
 #include "inc.h"
 #include <minix/vfsif.h>
 
-PRIVATE int dummyproc;
-
 FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t, cp_grant_id_t *,
 					     int *, cp_grant_id_t *, int,
 					     endpoint_t *, void **, int *,

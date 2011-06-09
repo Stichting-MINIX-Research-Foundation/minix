@@ -257,7 +257,6 @@ print_sigmgr(struct proc *pp)
 
 PUBLIC void print_proc(struct proc *pp)
 {
-	struct proc *depproc = NULL;
 	endpoint_t dep;
 
 	printf("%d: %s %d prio %d time %d/%d cycles 0x%x%08x cpu %2d "

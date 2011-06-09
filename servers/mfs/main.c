@@ -14,7 +14,6 @@
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
-FORWARD _PROTOTYPE(void cch_check, (void)				);
 FORWARD _PROTOTYPE( void reply, (endpoint_t who, message *m_out)		);
 
 /* SEF functions and variables. */
@@ -178,6 +177,7 @@ PRIVATE void reply(
 }
 
 
+#if 0
 /*===========================================================================*
  *				cch_check				     *	
  *===========================================================================*/
@@ -197,4 +197,5 @@ PRIVATE void cch_check(void)
 	cch[i] = inode[i].i_count;
   }
 }
+#endif
 

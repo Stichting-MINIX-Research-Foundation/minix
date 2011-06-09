@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "clock.h"
 #include "hw_intr.h"
+#include "arch_proto.h"
 
 #ifdef CONFIG_SMP
 #include "smp.h"
@@ -126,10 +127,10 @@ PUBLIC int main(void)
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register int i, j;
-  phys_clicks text_base;
-  vir_clicks text_clicks, data_clicks, st_clicks;
   size_t argsz;			/* size of arguments passed to crtso on stack */
 #if !defined(__ELF__)
+  vir_clicks text_clicks, data_clicks, st_clicks;
+  phys_clicks text_base;
   int hdrindex;			/* index to array of a.out headers */
   struct exec e_hdr;		/* for a copy of an a.out header */
 #endif

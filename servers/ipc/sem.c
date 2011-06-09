@@ -128,6 +128,7 @@ PRIVATE void remove_semaphore(struct sem_struct *sem)
 		sem_list[i] = sem_list[sem_list_nr];
 }
 
+#if 0
 PRIVATE void show_semaphore(void)
 {
 	int i, j, k;
@@ -161,6 +162,7 @@ PRIVATE void show_semaphore(void)
 	}
 	printf("\n");
 }
+#endif
 
 PRIVATE void remove_process(endpoint_t pt)
 {

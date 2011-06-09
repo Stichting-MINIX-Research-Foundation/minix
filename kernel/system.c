@@ -54,9 +54,10 @@
  */
 PRIVATE int (*call_vec[NR_SYS_CALLS])(struct proc * caller, message *m_ptr);
 
-#define map(call_nr, handler) \
-    {extern int dummy[NR_SYS_CALLS>(unsigned)(call_nr-KERNEL_CALL) ? 1:-1];} \
-    call_vec[(call_nr-KERNEL_CALL)] = (handler)  
+#define map(call_nr, handler) 					\
+    {	int call_index = call_nr-KERNEL_CALL; 				\
+    	assert(call_index >= 0 && call_index < NR_SYS_CALLS);			\
+    call_vec[call_index] = (handler)  ; }
 
 PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 {
