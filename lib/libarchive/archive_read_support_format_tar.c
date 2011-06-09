@@ -26,6 +26,9 @@
 #include "archive_platform.h"
 __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_tar.c 201161 2009-12-29 05:44:39Z kientzle $");
 
+#include <grp.h>
+#include <pwd.h>
+
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
@@ -948,8 +951,11 @@ static int
 header_common(struct archive_read *a, struct tar *tar,
     struct archive_entry *entry, const void *h)
 {
+	int err = ARCHIVE_OK;
 	const struct archive_entry_header_ustar	*header;
 	char	tartype;
+	uid_t uid;
+	gid_t gid;
 
 	(void)a; /* UNUSED */
 
@@ -962,8 +968,85 @@ header_common(struct archive_read *a, struct tar *tar,
 
 	/* Parse out the numeric fields (all are octal) */
 	archive_entry_set_mode(entry, tar_atol(header->mode, sizeof(header->mode)));
-	archive_entry_set_uid(entry, tar_atol(header->uid, sizeof(header->uid)));
-	archive_entry_set_gid(entry, tar_atol(header->gid, sizeof(header->gid)));
+
+	uid = (uid_t) tar_atol(header->uid, sizeof(header->uid));
+
+	/* Sanity check: uid overflow. Some systems have a limited uid_t.
+	 * For example, Minix 3.2.0 has 16-bit uids.
+	 */
+	if (uid != tar_atol(header->uid, sizeof(header->uid))) {
+
+		/* This isn't a fatal error, so we try to set the uid to
+		 * the uid of the "nobody" user or 99.
+		 */
+
+		static int warned = 0;
+		static struct passwd *nobodyuser = NULL;
+
+		if (nobodyuser == NULL) {
+			nobodyuser = getpwnam("nobody");
+		}
+
+		if (nobodyuser != NULL) {
+			uid = nobodyuser->pw_uid;
+		} else {
+			uid = (uid_t) 99;
+		}
+
+		if (warned == 0) {
+			archive_set_error(&a->archive, EINVAL,
+				"uid %ld out of range; will be extracted as %d.",
+				tar_atol(header->uid, sizeof(header->uid)),
+				uid);
+
+			warned = 1; /* only warn once about invalid uid */
+			err = ARCHIVE_WARN;
+		}
+	}
+
+	archive_entry_set_uid(entry, uid);
+
+	gid = (gid_t) tar_atol(header->gid, sizeof(header->gid));
+
+	/* Sanity check: gid overflow. Some systems have a limited gid_t.
+	 * For example, Minix 3.2.0 has 8-bit gids.
+	 */
+	if (gid != tar_atol(header->gid, sizeof(header->gid))) {
+
+		/* This isn't a fatal error, so we try to set the gid to
+		 * the gid of the "nobody" or "nogroup" group or 99.
+		 */
+
+		static int warned = 0;
+		static struct group *nobodygroup = NULL;
+
+		if (nobodygroup == NULL) {
+
+			nobodygroup = getgrnam("nobody");
+			if (nobodygroup == NULL) {
+				nobodygroup = getgrnam("nogroup");
+			}
+		}
+
+		if (nobodygroup != NULL) {
+			gid = nobodygroup->gr_gid;
+		} else {
+			gid = (gid_t) 99;
+		}
+
+		if (warned == 0) {
+			archive_set_error(&a->archive, EINVAL,
+				"gid %ld out of range; will be extracted as %d",
+				tar_atol(header->gid, sizeof(header->gid)),
+				gid);
+
+			warned = 1; /* only warn once about invalid gid */
+			err = ARCHIVE_WARN;
+		}
+	}
+
+	archive_entry_set_gid(entry, gid);
+
 	tar->entry_bytes_remaining = tar_atol(header->size, sizeof(header->size));
 	tar->realsize = tar->entry_bytes_remaining;
 	archive_entry_set_size(entry, tar->entry_bytes_remaining);
@@ -1094,7 +1177,8 @@ header_common(struct archive_read *a, struct tar *tar,
 		archive_entry_set_filetype(entry, AE_IFREG);
 		break;
 	}
-	return (0);
+
+	return err;
 }
 
 /*
@@ -1104,6 +1188,7 @@ static int
 header_old_tar(struct archive_read *a, struct tar *tar,
     struct archive_entry *entry, const void *h)
 {
+	int err;
 	const struct archive_entry_header_ustar	*header;
 
 	/* Copy filename over (to ensure null termination). */
@@ -1112,10 +1197,10 @@ header_old_tar(struct archive_read *a, struct tar *tar,
 	archive_entry_copy_pathname(entry, tar->entry_pathname.s);
 
 	/* Grab rest of common fields */
-	header_common(a, tar, entry, h);
+	err = header_common(a, tar, entry, h);
 
 	tar->entry_padding = 0x1ff & (-tar->entry_bytes_remaining);
-	return (0);
+	return err;
 }
 
 /*
@@ -1174,6 +1259,7 @@ static int
 header_ustar(struct archive_read *a, struct tar *tar,
     struct archive_entry *entry, const void *h)
 {
+	int err;
 	const struct archive_entry_header_ustar	*header;
 	struct archive_string *as;
 
@@ -1192,7 +1278,7 @@ header_ustar(struct archive_read *a, struct tar *tar,
 	archive_entry_copy_pathname(entry, as->s);
 
 	/* Handle rest of common fields. */
-	header_common(a, tar, entry, h);
+	err = header_common(a, tar, entry, h);
 
 	/* Handle POSIX ustar fields. */
 	archive_strncpy(&(tar->entry_uname), header->uname,
@@ -1213,7 +1299,7 @@ header_ustar(struct archive_read *a, struct tar *tar,
 
 	tar->entry_padding = 0x1ff & (-tar->entry_bytes_remaining);
 
-	return (0);
+	return err;
 }
 
 
@@ -1745,6 +1831,7 @@ static int
 header_gnutar(struct archive_read *a, struct tar *tar,
     struct archive_entry *entry, const void *h)
 {
+	int err;
 	const struct archive_entry_header_gnutar *header;
 
 	(void)a;
@@ -1756,7 +1843,7 @@ header_gnutar(struct archive_read *a, struct tar *tar,
 	 */
 
 	/* Grab fields common to all tar variants. */
-	header_common(a, tar, entry, h);
+	err = header_common(a, tar, entry, h);
 
 	/* Copy filename over (to ensure null termination). */
 	header = (const struct archive_entry_header_gnutar *)h;
@@ -1806,7 +1893,7 @@ header_gnutar(struct archive_read *a, struct tar *tar,
 		}
 	}
 
-	return (0);
+	return err;
 }
 
 static void
