@@ -222,6 +222,7 @@ PUBLIC void system_init(void)
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
+  map(SYS_UMAP_REMOTE, do_umap_remote);	/* do_umap for non-caller process */
   map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
   map(SYS_PHYSCOPY, do_copy);	 	/* use physical addressing */
   map(SYS_SAFECOPYFROM, do_safecopy_from);/* copy with pre-granted permission */

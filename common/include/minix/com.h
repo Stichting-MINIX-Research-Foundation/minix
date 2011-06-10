@@ -334,6 +334,7 @@
 #  define SYS_UMAP       (KERNEL_CALL + 14)	/* sys_umap() */
 #  define SYS_VIRCOPY    (KERNEL_CALL + 15)	/* sys_vircopy() */
 #  define SYS_PHYSCOPY   (KERNEL_CALL + 16) 	/* sys_physcopy() */
+#  define SYS_UMAP_REMOTE (KERNEL_CALL + 17)	/* sys_umap_remote() */
 
 #  define SYS_IRQCTL     (KERNEL_CALL + 19)	/* sys_irqctl() */
 #  define SYS_INT86      (KERNEL_CALL + 20)	/* sys_int86() */

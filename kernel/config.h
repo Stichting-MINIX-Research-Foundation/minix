@@ -37,6 +37,7 @@
 #define USE_IRQCTL     	   1	/* set an interrupt policy */
 #define USE_PRIVCTL    	   1	/* system privileges control */
 #define USE_UMAP       	   1	/* map virtual to physical address */
+#define USE_UMAP_REMOTE	   1	/* sys_umap on behalf of another process */
 #define USE_VIRCOPY   	   1	/* copy using virtual addressing */ 
 #define USE_PHYSCOPY  	   1 	/* copy using physical addressing */
 #define USE_MEMSET  	   1	/* write char to a given memory area */

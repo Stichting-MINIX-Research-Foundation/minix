@@ -357,7 +357,7 @@ static int do_add(message *m)
 			size, proc);
 		return EINVAL;
 	}
-	r= sys_umap(proc, VM_D, (vir_bytes)start, size, &busaddr);
+	r= sys_umap_remote(proc, SELF, VM_D, (vir_bytes)start, size, &busaddr);
 	if (r != OK)
 	{
 		printf("amddev`do_add: umap failed for 0x%x@0x%x, proc %d\n",
@@ -405,7 +405,7 @@ static int do_add4pci(const message *m)
 
 	printf("amddev`do_add4pci: should check with PCI\n");
 
-	r= sys_umap(proc, VM_D, (vir_bytes)start, size, &busaddr);
+	r= sys_umap_remote(proc, SELF, VM_D, (vir_bytes)start, size, &busaddr);
 	if (r != OK)
 	{
 		printf(

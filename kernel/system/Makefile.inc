@@ -20,6 +20,7 @@ SRCS+= 	\
 	do_vdevio.c \
 	do_copy.c \
 	do_umap.c \
+	do_umap_remote.c \
 	do_memset.c \
 	do_setgrant.c \
 	do_privctl.c \

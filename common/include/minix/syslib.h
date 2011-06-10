@@ -175,6 +175,8 @@ _PROTOTYPE(int sys_umap, (endpoint_t proc_ep, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));
 _PROTOTYPE(int sys_umap_data_fb, (endpoint_t proc_ep, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));
+_PROTOTYPE(int sys_umap_remote, (endpoint_t proc_ep, endpoint_t grantee,
+	int seg, vir_bytes vir_addr, vir_bytes bytes, phys_bytes *phys_addr));
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkmessages(dst)	sys_getinfo(GET_KMESSAGES, dst, 0,0,0)

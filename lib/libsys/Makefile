@@ -97,6 +97,7 @@ SRCS=  \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \
+	sys_umap_remote.c \
 	sys_update.c \
 	sys_vinb.c \
 	sys_vinl.c \
