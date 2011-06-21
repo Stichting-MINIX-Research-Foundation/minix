@@ -22,6 +22,7 @@
 755 root    operator /usr/pkg/etc/rc.d
 755 root    operator /home
 755 root    operator /usr/include
+755 root    operator /usr/include/i386
 755 root    operator /usr/include/arpa
 755 root    operator /usr/include/minix
 755 root    operator /usr/include/net
