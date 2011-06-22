@@ -88,6 +88,7 @@ void parse_file(pid_t pid)
 	unsigned long cycles_hi, cycles_lo;
 	FILE *fp;
 	struct proc *p;
+	int slot;
 	int i;
 
 	sprintf(path, "%d/psinfo", pid);
@@ -110,7 +111,15 @@ void parse_file(pid_t pid)
 		return;
 	}
 
-	p = &proc[SLOT_NR(endpt)];
+	slot = SLOT_NR(endpt);
+
+	if(slot < 0 || slot >= nr_total) {
+		fprintf(stderr, "top: unreasonable endpoint number %d\n", endpt);
+		fclose(fp);
+		return;
+	}
+
+	p = &proc[slot];
 
 	if (type == TYPE_TASK)
 		p->p_flags |= IS_TASK;
