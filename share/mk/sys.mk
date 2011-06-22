@@ -10,7 +10,8 @@ __MINIX=	yes
 
 .LIBS:		.a
 
-AR?=		aal
+### MINIX: see at bottom
+#AR?=		aal
 ARFLAGS?=	rl
 RANLIB?=	ranlib
 
@@ -229,11 +230,12 @@ YACC.y?=	${YACC} ${YFLAGS}
 
 # MINIX
 
-.if !empty(CC:Mcc)
+.if !empty(CC:Mcc) || !empty(CC:Macd) || !empty(CC:M*acc)
 COMPILER_TYPE=ack
-.elif !empty(CC:Mgcc) || !empty(CC:Mclang)
+AR?=	aal
+.elif !empty(CC:M*gcc) || !empty(CC:M*clang) || !empty(CC:M*pcc)
 COMPILER_TYPE=gnu
-AR=ar
+AR?=	ar
 .endif
 
 .if exists(/usr/pkg/i386-pc-minix/lib/ldscripts/elf_i386_minix.x)	\
@@ -243,7 +245,7 @@ MINIX_GENERATE_ELF=yes
 
 # Set NBSD_LIBC to either "yes" or "no".
 .if !defined(NBSD) || (${NBSD} == "no") \
-    || (${COMPILER_TYPE} == "ack") 
+    || !defined(COMPILER_TYPE) || (${COMPILER_TYPE} == "ack")
 NBSD_LIBC=	no
 .else
 NBSD_LIBC=	yes
