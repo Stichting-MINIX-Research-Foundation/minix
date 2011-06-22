@@ -76,17 +76,6 @@ PUBLIC void bsp_finish_booting(void)
 
   fpu_init();
 
-#ifdef CONFIG_WATCHDOG
-  if (watchdog_enabled) {
-	  if (arch_watchdog_init()) {
-		  printf("WARNING watchdog initialization failed! Disabled\n");
-		  watchdog_enabled = 0;
-	  }
-	  else
-		  BOOT_VERBOSE(printf("Watchdog enabled\n"););
-  }
-#endif
-
 /* Warnings for sanity checks that take time. These warnings are printed
  * so it's a clear warning no full release should be done with them
  * enabled.
