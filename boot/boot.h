@@ -151,8 +151,14 @@ void bootstrap(int device, struct part_entry *entry);
 void minix(u32_t koff, u32_t kcs, u32_t kds,
 				char *bootparams, size_t paramsize, u32_t aout);
 			/* Start Minix. */
-void int15(bios_env_t *);
 
+void int15(bios_env_t *);
+			/* Do an "INT 15" call, primarily for APM. */
+void scan_keyboard(void);
+			/* Read keyboard character.
+			 * Needs to be done in case one is waiting. */
+void reset(void);
+			/* */
 
 /* Shared between boot.c and bootimage.c: */
 

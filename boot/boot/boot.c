@@ -265,7 +265,7 @@ int rwsectors(int rw, void *addr, u32_t sec, int nsec)
 #define writesectors(a, s, n)	 rwsectors(1, (a), (s), (n))
 #define readerr(sec, err)	(errno= (err), report(bootdev.name))
 #define writerr(sec, err)	(errno= (err), report(bootdev.name))
-#define putch(c)		putchar(c)
+#define putch(c)		(void)putchar(c)
 #define unix_err(err)		strerror(err)
 
 void readblock(off_t blk, char *buf, int block_size)
@@ -333,7 +333,7 @@ int getch(void)
 #define clear_screen()		printf("[clear]")
 #define boot_device(device)	printf("[boot %s]\n", device)
 #define ctty(line)		printf("[ctty %s]\n", line)
-#define bootminix()		(run_trailer() && printf("[boot]\n"))
+#define bootminix()		(void)(run_trailer() && printf("[boot]\n"))
 #define off()			printf("[off]")
 
 #endif /* UNIX */
@@ -939,7 +939,9 @@ static void get_parameters(void)
 {
 	char params[SECTOR_SIZE + 1];
 	token **acmds;
-	int r, processor;
+	int r;
+#if BIOS
+	int processor;
 	memory *mp;
 	static char bus_type[][4] = {
 		"xt", "at", "mca"
@@ -950,6 +952,7 @@ static void get_parameters(void)
 	static char vid_chrome[][6] = {
 		"mono", "color"
 	};
+#endif
 
 	/* Variables that Minix needs: */
 	b_setvar(E_SPECIAL|E_VAR|E_DEV, "rootdev", "ram");
@@ -1491,7 +1494,7 @@ static void ctty(char *line)
 	printf("No serial line support under DOS\n");
 }
 
-reset()
+static void reset(void)
 {
 	printf("No reset support under DOS\n");
 }
@@ -1686,7 +1689,7 @@ void help(void)
 static void execute(void)
 /* Get one command from the command chain and execute it. */
 {
-	token *second, *third, *fourth, *sep;
+	token *second, *third=nil, *fourth=nil, *sep;
 	char *name;
 	enum resnames res;
 	size_t n= 0;
@@ -2065,7 +2068,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-reset() { }
+void reset(void) { }
 
 #endif /* UNIX */
 
