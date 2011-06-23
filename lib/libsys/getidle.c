@@ -21,6 +21,8 @@
 #include <lib.h>
 #include <minix/u64.h>
 #include <minix/sysutil.h>
+#include <minix/syslib.h>
+#include <minix/minlib.h>
 
 static u64_t start, idle;
 static int running = 0;

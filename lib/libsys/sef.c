@@ -2,6 +2,9 @@
 #include <assert.h>
 #include <minix/sysutil.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 /* Self variables. */
 #define SEF_SELF_NAME_MAXLEN 20
@@ -21,6 +24,7 @@ FORWARD _PROTOTYPE( void sef_debug_refresh_params, (void) );
 PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
 
 /* SEF Init prototypes. */
+EXTERN _PROTOTYPE( int do_sef_gcov_request, (message *m_ptr) );
 EXTERN _PROTOTYPE( int do_sef_rs_init, (endpoint_t old_endpoint) );
 EXTERN _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
 

@@ -18,6 +18,7 @@
 #include <minix/profile.h>
 #include <minix/sysutil.h>
 #include <minix/u64.h>
+#include <minix/minlib.h>
 
 PRIVATE char cpath[CPROF_CPATH_MAX_LEN];	/* current call path string */
 PRIVATE int cpath_len;				/* current call path len */

@@ -1214,7 +1214,7 @@ __archive_read_skip(struct archive_read *a, int64_t request)
 ssize_t
 __archive_read_skip(struct archive_read *a, ssize_t request)
 {
-	size_t skipped = __archive_read_skip_lenient(a, request);
+	ssize_t skipped = __archive_read_skip_lenient(a, request);
 	if (skipped == request)
 		return (skipped);
 	/* We hit EOF before we satisfied the skip request. */
@@ -1319,7 +1319,7 @@ __archive_read_filter_skip(struct archive_read_filter *filter, int64_t request)
 ssize_t
 __archive_read_filter_skip(struct archive_read_filter *filter, ssize_t request)
 {
-	size_t bytes_skipped, total_bytes_skipped = 0;
+	ssize_t bytes_skipped, total_bytes_skipped = 0;
 	size_t min;
 
 	if (filter->fatal)

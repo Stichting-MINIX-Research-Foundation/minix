@@ -3,6 +3,8 @@
 #include <minix/usb.h>
 #include <minix/com.h>
 #include <minix/safecopies.h>
+#include <minix/sysutil.h>
+#include <minix/ds.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>

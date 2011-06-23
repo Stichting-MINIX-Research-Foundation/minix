@@ -107,9 +107,6 @@ static int freezeset(struct parse *p, cset *cs);
 static int firstch(struct parse *p, cset *cs);
 static int nch(struct parse *p, cset *cs);
 static void mcadd(struct parse *p, cset *cs, char *cp);
-static void mcsub(cset *cs, char *cp);
-static int mcin(cset *cs, char *cp);
-static char *mcfind(cset *cs, char *cp);
 static void mcinvert(struct parse *p, cset *cs);
 static void mccase(struct parse *p, cset *cs);
 static int isinsets(struct re_guts *g, int c);
@@ -677,7 +674,6 @@ static void
 p_bracket(p)
 register struct parse *p;
 {
-	register char c;
 	register cset *cs = allocset(p);
 	register int invert = 0;
 
@@ -825,7 +821,7 @@ register cset *cs;
 	register char *u;
 	register char c;
 
-	while (MORE() && isalpha(PEEK()))
+	while (MORE() && isalpha((unsigned char) (PEEK())))
 		NEXT();
 	len = p->next - sp;
 	for (cp = cclasses; cp->name != NULL; cp++)
@@ -893,7 +889,6 @@ int endc;			/* name ended by endc,']' */
 	register char *sp = p->next;
 	register struct cname *cp;
 	register int len;
-	register char c;
 
 	while (MORE() && !SEETWO(endc, ']'))
 		NEXT();
@@ -1266,64 +1261,6 @@ register char *cp;
 
 	(void) strcpy(cs->multis + oldend - 1, cp);
 	cs->multis[cs->smultis - 1] = '\0';
-}
-
-/*
- - mcsub - subtract a collating element from a cset
- == static void mcsub(register cset *cs, register char *cp);
- */
-static void
-mcsub(cs, cp)
-register cset *cs;
-register char *cp;
-{
-	register char *fp = mcfind(cs, cp);
-	register size_t len = strlen(fp);
-
-	assert(fp != NULL);
-	(void) memmove(fp, fp + len + 1,
-				cs->smultis - (fp + len + 1 - cs->multis));
-	cs->smultis -= len;
-
-	if (cs->smultis == 0) {
-		free(cs->multis);
-		cs->multis = NULL;
-		return;
-	}
-
-	cs->multis = realloc(cs->multis, cs->smultis);
-	assert(cs->multis != NULL);
-}
-
-/*
- - mcin - is a collating element in a cset?
- == static int mcin(register cset *cs, register char *cp);
- */
-static int
-mcin(cs, cp)
-register cset *cs;
-register char *cp;
-{
-	return(mcfind(cs, cp) != NULL);
-}
-
-/*
- - mcfind - find a collating element in a cset
- == static char *mcfind(register cset *cs, register char *cp);
- */
-static char *
-mcfind(cs, cp)
-register cset *cs;
-register char *cp;
-{
-	register char *p;
-
-	if (cs->multis == NULL)
-		return(NULL);
-	for (p = cs->multis; *p != '\0'; p += strlen(p) + 1)
-		if (strcmp(cp, p) == 0)
-			return(p);
-	return(NULL);
 }
 
 /*

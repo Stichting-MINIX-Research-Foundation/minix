@@ -16,7 +16,6 @@
 #include <minix/gcov.h>
 
 static int grant, pos;           /* data-buffer pointer from user space tool */
-static int gcov_fd=0;               /* file descriptor for writing gcov data */
 static int gcov_enable=0;     /* nothing will be done with gcov-data if zero */
 static int gcov_buff_sz;                        /* size of user space buffer */
 static FILE gcov_file;                      /* used as fopen() return value. */

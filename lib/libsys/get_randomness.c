@@ -5,6 +5,7 @@
 #include <minix/profile.h>
 #include <minix/syslib.h>
 #include <minix/type.h>
+#include <minix/minlib.h>
 #include <minix/sysutil.h>
 
 /*===========================================================================*

@@ -3,6 +3,7 @@
 #include <minix/syslib.h>
 #include <minix/config.h>
 #include <minix/const.h>
+#include <minix/minlib.h>
 
 #define HIGHCOUNT	0
 #define LOWCOUNT	1

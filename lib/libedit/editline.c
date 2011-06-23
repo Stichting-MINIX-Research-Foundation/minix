@@ -294,7 +294,7 @@ reposition()
     CHAR	*p;
 
     TTYput('\r');
-    TTYputs((CONST CHAR *)Prompt);
+    TTYputs((CHAR *)Prompt);
     for (i = Point, p = Line; --i >= 0; p++)
 	TTYshow(*p);
 }
@@ -487,8 +487,8 @@ insert_string(p)
 STATIC STATUS
 redisplay()
 {
-    TTYputs((CONST CHAR *)NEWLINE);
-    TTYputs((CONST CHAR *)Prompt);
+    TTYputs((CHAR *) NEWLINE);
+    TTYputs((CHAR *)Prompt);
     TTYstring(Line);
     return CSmove;
 }
@@ -640,12 +640,12 @@ h_search()
     clear_line();
     old_prompt = Prompt;
     Prompt = "Search: ";
-    TTYputs((CONST CHAR *)Prompt);
+    TTYputs((CHAR *)Prompt);
     move = Repeat == NO_ARG ? prev_hist : next_hist;
     p = editinput();
     Prompt = old_prompt;
     Searching = 0;
-    TTYputs((CONST CHAR *)Prompt);
+    TTYputs((CHAR *)Prompt);
     if (p == NULL && Signal > 0) {
 	Signal = 0;
 	clear_line();
@@ -1007,7 +1007,7 @@ readline(prompt)
     ScreenSize = SCREEN_INC;
     Screen = NEW(char, ScreenSize);
     Prompt = prompt ? prompt : (char *)NIL;
-    TTYputs((CONST CHAR *)Prompt);
+    TTYputs((CHAR *)Prompt);
     if ((line = editinput()) != NULL) {
 	line = (CHAR *)strdup((char *)line);
 	TTYputs((CHAR *)NEWLINE);

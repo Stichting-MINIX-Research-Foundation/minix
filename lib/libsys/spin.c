@@ -12,6 +12,7 @@
  */
 #include "sysutil.h"
 #include <minix/spin.h>
+#include <minix/minlib.h>
 
 /* Number of microseconds to keep spinning initially, without performing a
  * system call. We pick a value somewhat smaller than a typical clock tick.

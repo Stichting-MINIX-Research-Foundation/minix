@@ -1,6 +1,5 @@
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)logwtmp.c	7.7";
 /* As received from UCB, with include reordering and OLD_TIME condition. */
 #endif /* !defined NOID */
 #endif /* !defined lint */
