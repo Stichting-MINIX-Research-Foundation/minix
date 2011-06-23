@@ -64,12 +64,11 @@ _PROTOTYPE( clock_t tmrs_settimer, (timer_t **tmrs, timer_t *tp,
 	clock_t exp_time, tmr_func_t watchdog, clock_t *new_head)				);
 
 #define PRINT_STATS(cum_spenttime, cum_instances) {		\
-		if(ex64hi(cum_spenttime)) { printf(" ???\n"); }	\
-		printf("%s:%d,%lu,%lu,%lu,%d.%04d%%\n", \
-			__FILE__, __LINE__, cum_instances,		\
-			div64u(cum_spenttime, cum_instances),	\
-			 ex64lo(cum_spenttime),	\
-			perc/10000, perc%10000);	\
+		if(ex64hi(cum_spenttime)) { util_stacktrace(); printf(" ( ??? %lu %lu)\n",	\
+			ex64hi(cum_spenttime), ex64lo(cum_spenttime)); } \
+		printf("%s:%d,%lu,%lu\n", \
+			__FILE__, __LINE__, cum_instances,	\
+			 ex64lo(cum_spenttime)); \
 	}
 
 #define RESET_STATS(starttime, cum_instances, cum_spenttime, cum_starttime) { \
@@ -83,7 +82,6 @@ _PROTOTYPE( clock_t tmrs_settimer, (timer_t **tmrs, timer_t *tp,
 	static int _cum_instances;				\
 	u64_t _next_cum_spent, _starttime, _endtime, _dt, _cum_dt;	\
 	u32_t _dt_micros;					\
-	int perc;						\
 	read_tsc_64(&_starttime);				\
 	do { timed_code_block } while(0);			\
 	read_tsc_64(&_endtime);					\
@@ -99,7 +97,6 @@ _PROTOTYPE( clock_t tmrs_settimer, (timer_t **tmrs, timer_t *tp,
 	_cum_spenttime = add64(_cum_spenttime, _dt);		\
 	_cum_instances++;					\
 	_cum_dt = sub64(_endtime, _cum_starttime);		\
-	perc=ex64lo(div64(mul64(_cum_spenttime,make64(1000000,0)), _cum_dt));	\
 	if(cmp64(_cum_dt, make64(0, 120)) > 0) {		\
 		PRINT_STATS(_cum_spenttime, _cum_instances);	\
 		RESET_STATS(_starttime, _cum_instances, _cum_spenttime, _cum_starttime); 	\

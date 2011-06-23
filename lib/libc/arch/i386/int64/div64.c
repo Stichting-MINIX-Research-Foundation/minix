@@ -26,11 +26,6 @@ static u64_t divrem64(u64_t *i, u64_t j)
 	u64_t result = { 0, 0 };
 	unsigned shift;
 
-	assert(i);
-
-	/* this function is not suitable for small divisors */
-	assert(ex64hi(j) != 0);
-
 	/* as long as i >= j we work on reducing i */
 	while (cmp64(*i, j) >= 0) {
 		/* shift to obtain the 32 most significant bits */

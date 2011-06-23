@@ -24,18 +24,12 @@ PRIVATE void pagefault( struct proc *pr,
 	message m_pagefault;
 	int err;
 
-	assert(frame);
-
 	pagefaultcr2 = read_cr2();
 
 #if 0
 	printf("kernel: pagefault in pr %d, addr 0x%lx, his cr3 0x%lx, actual cr3 0x%lx\n",
 		pr->p_endpoint, pagefaultcr2, pr->p_seg.p_cr3, read_cr3());
 #endif
-
-	if(pr->p_seg.p_cr3) {
-		assert(pr->p_seg.p_cr3 == read_cr3());
-	}
 
 	in_physcopy = (frame->eip > (vir_bytes) phys_copy) &&
 	   (frame->eip < (vir_bytes) phys_copy_fault);
@@ -81,8 +75,6 @@ PRIVATE void pagefault( struct proc *pr,
 	}
 
 	/* Don't schedule this process until pagefault is handled. */
-	assert(pr->p_seg.p_cr3 == read_cr3());
-	assert(!RTS_ISSET(pr, RTS_PAGEFAULT));
 	RTS_SET(pr, RTS_PAGEFAULT);
 
 	/* tell Vm about the pagefault */
