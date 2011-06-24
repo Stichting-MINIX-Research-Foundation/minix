@@ -1,6 +1,4 @@
 # Makefile for memory driver (MEMORY)
-.include <bsd.own.mk>
-
 PROG=	memory
 SRCS=	memory.c imgrd.c
 
@@ -20,4 +18,4 @@ imgrd.d: touch-genfiles
 touch-genfiles:
 	[ -e ${.CURDIR}/../ramdisk/image.c ] || touch -t 197001010000.00 ${.CURDIR}/../ramdisk/image.c
 
-.include <bsd.prog.mk>
+.include <minix.bootprog.mk>

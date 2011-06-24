@@ -10,6 +10,9 @@ FILES=	bsd.ack.mk bsd.dep.mk bsd.files.mk \
 	bsd.prog.mk bsd.subdir.mk bsd.sys.mk bsd.gcov.mk \
 	sys.mk
 
+# MINIX-specific files
+FILES+= minix.bootprog.mk
+
 FILESDIR=/usr/share/mk
 .endif
 

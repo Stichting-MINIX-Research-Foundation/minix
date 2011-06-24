@@ -11,7 +11,10 @@ LIBDIR?=	/usr/lib/i86
 PROG=	boot
 
 SRCS=		boothead.s boot.c bootimage.c rawfs.c
-.PATH:	${.CURDIR}/..
+# Need exec_elf.c from libexec
+SRCS+=		exec_elf.c
+.PATH:	${.CURDIR}/.. ${MINIXSRCDIR}/lib/libexec
+
 CPPFLAGS+=	-I${MINIXSRCDIR} -I${.CURDIR} -I${.CURDIR}/..
 
 DPADD+=	${LIBSYS}	# for kprintf, kmalloc

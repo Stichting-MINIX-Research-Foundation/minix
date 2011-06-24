@@ -25,7 +25,7 @@
 #include "oxpcie.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
-#include "multiboot.h"
+#include <machine/multiboot.h>
 
 #include "glo.h"
 

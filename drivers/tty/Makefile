@@ -1,7 +1,5 @@
 # Makefile for terminal driver (TTY)
 
-.include <bsd.own.mk>
-
 PROG=	tty
 SRCS=	tty.c console.c keyboard.c pty.c rs232.c
 
@@ -18,5 +16,5 @@ SUBDIR= keymaps
 # Needs kernel/const.h, etc
 CPPFLAGS+=	-I${MINIXSRCDIR}
 
-.include <bsd.prog.mk>
+.include <minix.bootprog.mk>
 .include <bsd.subdir.mk>

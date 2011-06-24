@@ -17,7 +17,7 @@
 #include "string.h"
 #include "arch_proto.h"
 #include "libexec.h"
-#include "multiboot.h"
+#include <machine/multiboot.h>
 
 #define MULTIBOOT_VERBOSE 1
 
@@ -279,10 +279,6 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 		mb_set_param("memory", mem_value);
 	}
 	
-	/* FIXME: this is dummy value, 
-	 * we can't get real image file name from multiboot */
-	mb_set_param("image", "boot/image_latest");
-	
 	if (mbi->flags&MULTIBOOT_INFO_CMDLINE) {
 		/* Override values with cmdline argument */
 		p = mb_cmd_buff;
@@ -353,11 +349,9 @@ PRIVATE void mb_extract_image(multiboot_info_t mbi)
 	mb_print("\nKernel:   ");
 	mb_print_hex(trunc_page(text_paddr));
 	mb_print("-");
-	mb_print_hex(trunc_page(data_paddr) + data_membytes + stack_bytes);
+	mb_print_hex(trunc_page(data_paddr) + data_membytes);
 	mb_print(" Entry: ");
 	mb_print_hex(pc);
-	mb_print(" Stack: ");
-	mb_print_hex(stack_bytes);
 #endif
 
 	mb_module_info = ((multiboot_module_t *)mbi.mods_addr);

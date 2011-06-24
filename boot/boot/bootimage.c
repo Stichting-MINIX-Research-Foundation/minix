@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -27,6 +28,10 @@
 #include "image.h"
 #include "boot.h"
 
+#include <machine/multiboot.h>
+#include <machine/elf.h>
+
+
 static int block_size = 0;
 static int verboseboot = VERBOSEBOOT_QUIET;
 
@@ -40,6 +45,7 @@ extern int serial_line;
 extern u16_t vid_port;         /* Video i/o port. */
 extern u32_t vid_mem_base;     /* Video memory base address. */
 extern u32_t vid_mem_size;     /* Video memory size. */
+extern u32_t mbdev;            /* Device number in multiboot format */
 
 #define click_shift	clck_shft	/* 7 char clash with click_size. */
 
@@ -82,8 +88,16 @@ int n_procs;			/* Number of processes. */
 #define P_SIZ_OFF	0	/* Process' sizes into kernel data. */
 #define P_INIT_OFF	4	/* Init cs & sizes into fs data. */
 
+/* Where multiboot info struct goes in memory */
+#define MULTIBOOT_INFO_ADDR 0x9500
 
 #define between(a, c, z)	((unsigned) ((c) - (a)) <= ((z) - (a)))
+
+char *select_image(char *image);
+size_t strspn(const char *string, const char *in);
+char * strpbrk(register const char *string, register const char *brk);
+char * strtok(register char *string, const char *separators);
+char * strdup(const char *s1);
 
 void pretty_image(const char *image)
 /* Pretty print the name of the image to load.  Translate '/' and '_' to
@@ -141,6 +155,7 @@ unsigned click_shift;
 unsigned click_size;	/* click_size = Smallest kernel memory object. */
 unsigned k_flags;	/* Not all kernels are created equal. */
 u32_t reboot_code;	/* Obsolete reboot code return pointer. */
+int do_multiboot;
 
 int params2params(char *params, size_t psize)
 /* Repackage the environment settings for the kernel. */
@@ -262,7 +277,7 @@ static u32_t proc_size(const struct image_header *hdr)
 	return len >> SECTOR_SHIFT;
 }
 
-off_t image_off, image_size;
+off_t image_off, image_sectors, image_bytes;
 u32_t (*vir2sec)(u32_t vsec);	/* Where is a sector on disk? */
 
 u32_t file_vir2sec(u32_t vsec)
@@ -379,7 +394,7 @@ int get_segment(u32_t *vsec, long *size, u32_t *addr, u32_t limit)
 			cnt= SECTOR_SIZE;
 		}
 		if (*addr + click_size > limit) 
-		{ 
+		{
 			DEBUGEXTRA(("get_segment: out of memory; "
 				"addr=0x%lx; limit=0x%lx; size=%lx\n", 
 				*addr, limit, size));
@@ -444,6 +459,256 @@ static void restore_screen(void)
         }
 }
 
+int split_module_list(char *modules)
+{
+	int i;
+	char *c, *s;
+
+	for (s= modules, i= 1; (c= strrchr(s, ' ')) != NULL; i++) {
+	    *c = '\0';
+	}
+
+	return i;
+}
+
+void exec_mb(char *kernel, char* modules)
+/* Get a Minix image into core, patch it up and execute. */
+{
+	int i;
+	static char hdr[SECTOR_SIZE];
+	char *buf;
+	u32_t vsec, addr, limit, n, totalmem = 0;
+	u16_t kmagic, mode;
+	char *console;
+	char params[SECTOR_SIZE];
+	extern char *sbrk(int);
+	char *verb;
+	u32_t text_vaddr, text_paddr, text_filebytes, text_membytes;
+	u32_t data_vaddr, data_paddr, data_filebytes, data_membytes;
+	u32_t pc;
+	u32_t text_offset, data_offset;
+	i32_t segsize;
+	int r;
+	u32_t cs, ds;
+	char *modstring, *mod;
+	multiboot_info_t *mbinfo;
+	multiboot_module_t *mbmodinfo;
+	u32_t mbinfo_size, mbmodinfo_size;
+	char *memvar;
+	memory *mp;
+	u32_t mod_cmdline_start, kernel_cmdline_start;
+	u32_t modstringlen;
+	int modnr;
+
+	/* The stack is pretty deep here, so check if heap and stack collide. */
+	(void) sbrk(0);
+
+	if ((verb= b_value(VERBOSEBOOTVARNAME)) != nil)
+		verboseboot = a2l(verb);
+
+	printf("\nLoading %s\n", kernel);
+
+	vsec= 0;			/* Load this sector from kernel next. */
+	addr= mem[0].base;		/* Into this memory block. */
+	limit= mem[0].base + mem[0].size;
+	if (limit > caddr) limit= caddr;
+
+	/* set click size for get_segment */
+	click_size = PAGE_SIZE;
+
+	k_flags = K_KHIGH|K_BRET|K_MEML|K_INT86|K_RET|K_HDR
+	    |K_HIGH|K_CHMEM|K_I386;
+
+	/* big kernels must be loaded into extended memory */
+	addr= mem[1].base;
+	limit= mem[1].base + mem[1].size;
+
+	/* Get first sector */
+	DEBUGEXTRA(("get_sector\n"));
+	if ((buf= get_sector(vsec++)) == nil) {
+	    DEBUGEXTRA(("get_sector failed\n"));
+	    return;
+	}
+	memcpy(hdr, buf, SECTOR_SIZE);
+
+	/* Get ELF header */
+	DEBUGEXTRA(("read_header_elf\n"));
+	r = read_header_elf(hdr, &text_vaddr, &text_paddr,
+			    &text_filebytes, &text_membytes,
+			    &data_vaddr, &data_paddr,
+			    &data_filebytes, &data_membytes,
+			    &pc, &text_offset, &data_offset);
+	if (r < 0) { errno= ENOEXEC; return; }
+
+	/* Read the text segment. */
+	addr = text_paddr;
+	segsize = (i32_t) text_filebytes;
+	vsec = text_offset / SECTOR_SIZE;
+	DEBUGEXTRA(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
+		    vsec, segsize, addr, limit));
+	if (!get_segment(&vsec, &segsize, &addr, limit)) return;
+	DEBUGEXTRA(("get_segment done vsec=0x%lx size=0x%lx "
+		    "addr=0x%lx\n",
+		    vsec, segsize, addr));
+
+	/* Read the data segment. */
+	addr = data_paddr;
+	segsize = (i32_t) data_filebytes;
+	vsec = data_offset / SECTOR_SIZE;
+
+	DEBUGEXTRA(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
+		    vsec, segsize, addr, limit));
+	if (!get_segment(&vsec, &segsize, &addr, limit)) return;
+	DEBUGEXTRA(("get_segment done vsec=0x%lx size=0x%lx "
+		    "addr=0x%lx\n",
+		    vsec, segsize, addr));
+
+	n = data_membytes - align(data_filebytes, click_size);
+
+	/* Zero out bss. */
+	DEBUGEXTRA(("\nraw_clear(0x%lx, 0x%lx); limit=0x%lx... ", addr, n, limit));
+	if (addr + n > limit) { errno= ENOMEM; return; }
+	raw_clear(addr, n);
+	DEBUGEXTRA(("done\n"));
+	addr+= n;
+
+	/* Check the kernel magic number. */
+	raw_copy(mon2abs(&kmagic),
+		 data_paddr + MAGIC_OFF, sizeof(kmagic));
+	if (kmagic != KERNEL_D_MAGIC) {
+		printf("Kernel magic number is incorrect (0x%x@0x%lx)\n",
+			kmagic, data_paddr + MAGIC_OFF);
+		errno= 0;
+		return;
+	}
+
+	/* Translate the boot parameters to what Minix likes best. */
+	DEBUGEXTRA(("params2params(0x%x, 0x%x)... ", params, sizeof(params)));
+	if (!params2params(params, sizeof(params))) { errno= 0; return; }
+	DEBUGEXTRA(("done\n"));
+
+	/* Create multiboot info struct */
+	mbinfo = malloc(sizeof(multiboot_info_t));
+	if (mbinfo == nil) { errno= ENOMEM; return; }
+	memset(mbinfo, 0, sizeof(multiboot_info_t));
+
+	/* Module info structs start where kernel ends */
+	mbinfo->mods_addr = addr;
+
+	modstring = strdup(modules);
+	if (modstring == nil) {errno = ENOMEM; return; }
+	modstringlen = strlen(modules);
+	mbinfo->mods_count = split_module_list(modules);
+
+	mbmodinfo_size = sizeof(multiboot_module_t) * mbinfo->mods_count;
+	mbmodinfo = malloc(mbmodinfo_size);
+	if (mbmodinfo == nil) { errno= ENOMEM; return; }
+	addr+= mbmodinfo_size;
+	addr= align(addr, click_size);
+
+	mod_cmdline_start = mbinfo->mods_addr + sizeof(multiboot_module_t) *
+	    mbinfo->mods_count;
+
+	raw_copy(mod_cmdline_start, mon2abs(modules),
+		 modstringlen+1);
+
+	mbmodinfo[0].cmdline = mod_cmdline_start;
+	modnr = 1;
+	for (i= 0; i < modstringlen; ++i) {
+	    if (modules[i] == '\0') {
+		mbmodinfo[modnr].cmdline = mod_cmdline_start + i + 1;
+		++modnr;
+	    }
+	}
+
+	kernel_cmdline_start = mod_cmdline_start + modstringlen + 1;
+	mbinfo->cmdline = kernel_cmdline_start;
+	raw_copy(kernel_cmdline_start, mon2abs(kernel),
+		 strlen(kernel)+1);
+
+	mbinfo->flags = MULTIBOOT_INFO_MODS|MULTIBOOT_INFO_CMDLINE|
+	    MULTIBOOT_INFO_BOOTDEV|MULTIBOOT_INFO_MEMORY;
+
+	mbinfo->boot_device = mbdev;
+	mbinfo->mem_lower = mem[0].size/1024;
+	mbinfo->mem_upper = mem[1].size/1024;
+
+	for (i = 0, mod = strtok(modstring, " "); mod != nil;
+	     mod = strtok(nil, " "), i++) {
+
+		mod = select_image(mod);
+		if (mod == nil) {errno = 0; return; }
+
+		mbmodinfo[i].mod_start = addr;
+		mbmodinfo[i].mod_end = addr + image_bytes;
+		mbmodinfo[i].pad = 0;
+
+		segsize= image_bytes;
+		vsec= 0;
+		DEBUGEXTRA(("get_segment(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n",
+		       vsec, segsize, addr, limit));
+		if (!get_segment(&vsec, &segsize, &addr, limit)) return;
+		DEBUGEXTRA(("get_segment done vsec=0x%lx size=0x%lx "
+		       "addr=0x%lx\n",
+		       vsec, segsize, addr));
+		addr+= segsize;
+		addr= align(addr, click_size);
+	}
+	free(modstring);
+
+	DEBUGEXTRA(("modinfo raw_copy: dst 0x%lx src 0x%lx sz 0x%lx\n",
+	    mbinfo->mods_addr, mon2abs(mbmodinfo),
+	    mbmodinfo_size));
+	raw_copy(mbinfo->mods_addr, mon2abs(mbmodinfo),
+	    mbmodinfo_size);
+	free(mbmodinfo);
+
+	raw_copy(MULTIBOOT_INFO_ADDR, mon2abs(mbinfo),
+		 sizeof(multiboot_info_t));
+	free(mbinfo);
+
+	/* Run the trailer function just before starting Minix. */
+	DEBUGEXTRA(("run_trailer()... "));
+	if (!run_trailer()) { errno= 0; return; }
+	DEBUGEXTRA(("done\n"));
+
+	/* Set the video to the required mode. */
+	if ((console= b_value("console")) == nil || (mode= a2x(console)) == 0) {
+		mode= strcmp(b_value("chrome"), "color") == 0 ? COLOR_MODE :
+								MONO_MODE;
+	}
+	DEBUGEXTRA(("set_mode(%d)... ", mode));
+	set_mode(mode);
+	DEBUGEXTRA(("done\n"));
+
+	/* Close the disk. */
+	DEBUGEXTRA(("dev_close()... "));
+	(void) dev_close();
+	DEBUGEXTRA(("done\n"));
+
+	/* Minix. */
+	cs = ds = text_paddr;
+	DEBUGEXTRA(("minix(0x%lx, 0x%lx, 0x%lx, 0x%x, 0x%x, 0x%lx)\n",
+		pc, cs, ds, params, sizeof(params), 0));
+	minix(pc, cs, ds, params, sizeof(params), 0);
+
+	if (!(k_flags & K_BRET)) {
+		extern u32_t reboot_code;
+		raw_copy(mon2abs(params), reboot_code, sizeof(params));
+	}
+	parse_code(params);
+
+	/* Return from Minix.  Things may have changed, so assume nothing. */
+	fsok= -1;
+	errno= 0;
+
+	/* Read leftover character, if any. */
+	scan_keyboard();
+
+	/* Restore screen contents. */
+	restore_screen();
+}
+
 void exec_image(char *image)
 /* Get a Minix image into core, patch it up and execute. */
 {
@@ -483,7 +748,7 @@ void exec_image(char *image)
 	raw_clear(aout, PROCESS_MAX * A_MINHDR);
 
 	/* Read the many different processes: */
-	for (i= 0; vsec < image_size; i++) {
+	for (i= 0; vsec < image_sectors; i++) {
 		u32_t startaddr;
 		startaddr = addr;
 		if (i == PROCESS_MAX) {
@@ -778,7 +1043,7 @@ char *select_image(char *image)
 						&& numeric(size)) {
 			vir2sec= flat_vir2sec;
 			image_off= a2l(image);
-			image_size= a2l(size);
+			image_sectors= a2l(size);
 			strcpy(image, "Minix");
 			return image;
 		}
@@ -790,6 +1055,8 @@ char *select_image(char *image)
 	}
 
 	r_stat(image_ino, &st);
+	image_bytes = st.st_size;
+
 	if (!S_ISREG(st.st_mode)) {
 		char *version= image + strlen(image);
 		char dots[NAME_MAX + 1];
@@ -809,7 +1076,7 @@ char *select_image(char *image)
 		r_stat(image_ino, &st);
 	}
 	vir2sec= file_vir2sec;
-	image_size= (st.st_size + SECTOR_SIZE - 1) >> SECTOR_SHIFT;
+	image_sectors= (st.st_size + SECTOR_SIZE - 1) >> SECTOR_SHIFT;
 	return image;
 bail_out:
 	free(image);
@@ -822,8 +1089,25 @@ void bootminix(void)
  */
 {
 	char *image;
+	char *mb;
+	char *kernel;
+	/* FIXME: modules should come from environment */
+	char modules[] = "boot/ds boot/rs boot/pm boot/sched boot/vfs boot/memory boot/log boot/tty boot/mfs boot/vm boot/pfs boot/init";
 
-	if ((image= select_image(b_value("image"))) == nil) return;
+	if ((mb = b_value("mb")) != nil) {
+		do_multiboot = a2l(mb);
+		kernel = b_value("kernel");
+		if (kernel == nil) {
+			printf("kernel not set\n");
+			return;
+		}
+	}
+
+	if (do_multiboot) {
+		if ((kernel= select_image(b_value("kernel"))) == nil) return;
+	} else {
+		if ((image= select_image(b_value("image"))) == nil) return;
+	}
 
 	if(serial_line >= 0) {
 		char linename[2];
@@ -832,24 +1116,103 @@ void bootminix(void)
 		b_setvar(E_VAR, SERVARNAME, linename);
 	}
 
-	exec_image(image);
+	if (do_multiboot)
+		exec_mb(kernel, modules);
+	else
+		exec_image(image);
 
 	switch (errno) {
 	case ENOEXEC:
-		printf("%s contains a bad program header\n", image);
+		printf("%s contains a bad program header\n",
+			   do_multiboot ? kernel : image);
 		break;
 	case ENOMEM:
-		printf("Not enough memory to load %s\n", image);
+		printf("Not enough memory to load %s\n",
+			   do_multiboot ? kernel : image);
 		break;
 	case EIO:
-		printf("Unexpected EOF on %s\n", image);
+		printf("Unexpected EOF on %s\n",
+			   do_multiboot ? kernel : image);
 	case 0:
 		/* No error or error already reported. */;
 	}
-	free(image);
+
+	if (do_multiboot)
+		free(kernel);
+	else
+		free(image);
 
 	if(serial_line >= 0) 
 		b_unset(SERVARNAME);
+}
+
+size_t
+strspn(const char *string, const char *in)
+{
+	register const char *s1, *s2;
+
+	for (s1 = string; *s1; s1++) {
+		for (s2 = in; *s2 && *s2 != *s1; s2++)
+			/* EMPTY */ ;
+		if (*s2 == '\0')
+			break;
+	}
+	return s1 - string;
+}
+
+char *
+strpbrk(register const char *string, register const char *brk)
+{
+	register const char *s1;
+
+	while (*string) {
+		for (s1 = brk; *s1 && *s1 != *string; s1++)
+			/* EMPTY */ ;
+		if (*s1)
+			return (char *)string;
+		string++;
+	}
+	return (char *)NULL;
+}
+
+char *
+strtok(register char *string, const char *separators)
+{
+	register char *s1, *s2;
+	static char *savestring = NULL;
+
+	if (string == NULL) {
+		string = savestring;
+		if (string == NULL) return (char *)NULL;
+	}
+
+	s1 = string + strspn(string, separators);
+	if (*s1 == '\0') {
+		savestring = NULL;
+		return (char *)NULL;
+	}
+
+	s2 = strpbrk(s1, separators);
+	if (s2 != NULL)
+		*s2++ = '\0';
+	savestring = s2;
+	return s1;
+}
+
+char *
+strdup(const char *s1)
+{
+	size_t len;
+	char *s2;
+
+	len= strlen(s1)+1;
+
+	s2= malloc(len);
+	if (s2 == NULL)
+		return NULL;
+	strcpy(s2, s1);
+
+	return s2;
 }
 
 /*

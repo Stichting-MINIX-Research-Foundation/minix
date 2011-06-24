@@ -15,7 +15,7 @@
 #define MULTIBOOT_AOUT_KLUDGE 0x00010000
 
 #define MULTIBOOT_FLAGS (MULTIBOOT_MEMORY_INFO | MULTIBOOT_PAGE_ALIGN)
-						
+
 /* consts used for Multiboot pre-init */
 
 #define MULTIBOOT_VIDEO_MODE_EGA 1

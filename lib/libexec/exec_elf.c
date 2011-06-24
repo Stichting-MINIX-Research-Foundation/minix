@@ -14,6 +14,8 @@
 /* Support only 32-bit ELF objects */
 #define __ELF_WORD_SIZE 32
 
+#define SECTOR_SIZE 512
+
 static int __elfN(check_header)(const Elf_Ehdr *hdr);
 
 int read_header_elf(
@@ -36,8 +38,6 @@ int read_header_elf(
   unsigned long seg_filebytes, seg_membytes;
   int i = 0;
 
-  assert(exec_hdr != NULL);
-
   *text_vaddr = *text_paddr = 0;
   *text_filebytes = *text_membytes = 0;
   *data_vaddr = *data_paddr = 0;
@@ -50,8 +50,8 @@ int read_header_elf(
      return ENOEXEC;
   }
 
-  if ((hdr->e_phoff > PAGE_SIZE) ||
-      (hdr->e_phoff + hdr->e_phentsize * hdr->e_phnum) > PAGE_SIZE) {
+  if ((hdr->e_phoff > SECTOR_SIZE) ||
+      (hdr->e_phoff + hdr->e_phentsize * hdr->e_phnum) > SECTOR_SIZE) {
      return ENOEXEC;
   }
 
@@ -60,21 +60,21 @@ int read_header_elf(
 #ifdef __NBSD_LIBC
       rounddown((uintptr_t)phdr, sizeof(Elf_Addr)) != (uintptr_t)phdr
 #else
-      !_minix_aligned(phdr, Elf_Addr)
+      !_minix_aligned(hdr->e_phoff, Elf_Addr)
 #endif
      ) {
      return ENOEXEC;
   }
 
 #if ELF_DEBUG
-  printf("Program header file offset (phoff): %d\n", hdr->e_phoff);
-  printf("Section header file offset (shoff): %d\n", hdr->e_shoff);
+  printf("Program header file offset (phoff): %ld\n", hdr->e_phoff);
+  printf("Section header file offset (shoff): %ld\n", hdr->e_shoff);
   printf("Program header entry size (phentsize): %d\n", hdr->e_phentsize);
   printf("Program header entry num (phnum): %d\n", hdr->e_phnum);
   printf("Section header entry size (shentsize): %d\n", hdr->e_shentsize);
   printf("Section header entry num (shnum): %d\n", hdr->e_shnum);
   printf("Section name strings index (shstrndx): %d\n", hdr->e_shstrndx);
-  printf("Entry Point: 0x%x\n", hdr->e_entry);
+  printf("Entry Point: 0x%lx\n", hdr->e_entry);
 #endif
 
   for (i = 0; i < hdr->e_phnum; i++) {
@@ -108,18 +108,17 @@ int read_header_elf(
   }
 
 #if ELF_DEBUG
-  printf("Text vaddr:     0x%x\n", *text_vaddr);
-  printf("Text paddr:     0x%x\n", *text_paddr);
-  printf("Text filebytes: 0x%x\n", *text_filebytes);
-  printf("Text membytes:  0x%x\n", *text_membytes);
-  printf("Data vaddr:     0x%x\n", *data_vaddr);
-  printf("Data paddr:     0x%x\n", *data_paddr);
-  printf("Data filebyte:  0x%x\n", *data_filebytes);
-  printf("Data membytes:  0x%x\n", *data_membytes);
-  printf("Tot bytes:      0x%x\n", *tot_bytes);
-  printf("PC:             0x%x\n", *pc);
-  printf("Text offset:    0x%x\n", *text_offset);
-  printf("Data offset:    0x%x\n", *data_offset);
+  printf("Text vaddr:     0x%lx\n", *text_vaddr);
+  printf("Text paddr:     0x%lx\n", *text_paddr);
+  printf("Text filebytes: 0x%lx\n", *text_filebytes);
+  printf("Text membytes:  0x%lx\n", *text_membytes);
+  printf("Data vaddr:     0x%lx\n", *data_vaddr);
+  printf("Data paddr:     0x%lx\n", *data_paddr);
+  printf("Data filebyte:  0x%lx\n", *data_filebytes);
+  printf("Data membytes:  0x%lx\n", *data_membytes);
+  printf("PC:             0x%lx\n", *pc);
+  printf("Text offset:    0x%lx\n", *text_offset);
+  printf("Data offset:    0x%lx\n", *data_offset);
 #endif
 
   return OK;

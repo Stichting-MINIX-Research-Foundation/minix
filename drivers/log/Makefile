@@ -10,4 +10,4 @@ MAN=
 BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 32k
 
-.include <bsd.prog.mk>
+.include <minix.bootprog.mk>

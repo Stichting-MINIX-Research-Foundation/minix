@@ -8,7 +8,7 @@
 #include "kernel/const.h"
 #include "kernel/proc.h"
 #include "sconst.h"
-#include "multiboot.h"
+#include <machine/multiboot.h>
 
 #define GDT_SET_ENTRY(selector, base, limit) \
 	mov	%ebp, %edi; \
@@ -44,6 +44,8 @@ reload_cs:
 	mov	%eax, %ds
 	mov	%eax, %ss
 	mov	%eax, %es
+	mov	%eax, %fs
+	mov	%eax, %gs
 	
 	mov	$(multiboot_stack + MULTIBOOT_STACK_SIZE), %esp
 

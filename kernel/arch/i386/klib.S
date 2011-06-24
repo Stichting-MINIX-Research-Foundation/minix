@@ -9,7 +9,7 @@
 #include "archconst.h"
 #include "kernel/const.h"
 #include "sconst.h"
-#include "multiboot.h"
+#include <machine/multiboot.h>
 
 /*
  * This file contains a number of assembly code utility routines needed by the

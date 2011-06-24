@@ -2,12 +2,15 @@
 .include <bsd.own.mk>
 .include "nbsd.config"
 
+.include <bsd.own.mk>
+
 u=/usr
 MDEC=	/usr/mdec
 GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 
 # Specify the programs that are part of the system image.
-PROGRAMS=	kernel \
+KERNEL= kernel
+PROGRAMS= \
 	../servers/ds/ds \
 	../servers/rs/rs \
 	../servers/pm/pm \
@@ -56,15 +59,17 @@ PAD_KERNEL_TEXT := cp ../kernel/kernel kernel
 PAD_KERNEL_TEXT := padtext ../kernel/kernel kernel
 .endif
 
-# for fast complie kernel and generate image, skip servers and drivers
-image_mb: includes
-	cd ../kernel && $(MAKE)
+.if ${OBJECT_FMT} == "ELF"
+image: includes services
 	${PAD_KERNEL_TEXT}
-	installboot -image $@ $(PROGRAMS)
-	
+	mkimage $(PROGRAMS)
+	cp ${KERNEL} ${PROGRAMS} /boot
+	strip ${KERNEL:T:S/^/\/boot\//} ${PROGRAMS:T:S/^/\/boot\//}
+.else
 image:  includes services
 	${PAD_KERNEL_TEXT}
-	installboot -image $@ $(PROGRAMS)
+	installboot -image $@ $(KERNEL) $(PROGRAMS)
+.endif
 
 # rebuild the program or system libraries
 includes:
@@ -94,9 +99,13 @@ libraries: includes
 bootable:
 	exec su root mkboot bootable
 
+.if ${OBJECT_FMT} == "ELF"
+hdboot: image
+.else
 hdboot:	image
 	exec sh mkboot $@
 	@sync
+.endif
 
 fdboot:	image
 	exec su root mkboot $@

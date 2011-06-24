@@ -35,6 +35,9 @@
 
 	ESC	    =	  0x1B	! Escape character
 
+	MB_BOOT_MAGIC	=	  0x2BADB002	! Multiboot BootLoader Magic
+	MULTIBOOT_STRUCT_ADDR	=	0x9500	! Multiboot Struct's Location
+
 ! Imported variables and functions:
 .extern _caddr, _daddr, _runsize, _edata, _end	! Runtime environment
 .extern _device					! BIOS device number
@@ -45,6 +48,7 @@
 .extern _mem_entries				! Free memory E820 list entries
 .extern _cdbooted				! Whether we booted from CD
 .extern _cddevice				! Whether we booted from CD
+.extern _do_multiboot				! Whether we are multibooting
 
 .text
 
@@ -1157,21 +1161,25 @@ minix386:
 	mov	p_gdt_desc+2, ax
 	movb	p_gdt_desc+4, dl ! Set base of global descriptor table
 
+	cmp	_do_multiboot, #1
+	je	set_monss
+
 	mov	ax, 12(bp)
 	mov	dx, 14(bp)	! Kernel ds (absolute address)
 	mov	p_ds_desc+2, ax
 	movb	p_ds_desc+4, dl ! Set base of kernel data segment
 
+	mov	ax, 8(bp)
+	mov	dx, 10(bp)	! Kernel cs (absolute address)
+	mov	p_cs_desc+2, ax
+	movb	p_cs_desc+4, dl
+
+set_monss:
 	mov	dx, ss		! Monitor ss
 	xor	ax, ax		! dx:ax = Monitor stack segment
 	call	seg2abs		! Minix starts with the stack of the monitor
 	mov	p_ss_desc+2, ax
 	movb	p_ss_desc+4, dl
-
-	mov	ax, 8(bp)
-	mov	dx, 10(bp)	! Kernel cs (absolute address)
-	mov	p_cs_desc+2, ax
-	movb	p_cs_desc+4, dl
 
 	mov	dx, cs		! Monitor cs
 	xor	ax, ax		! dx:ax = Monitor code segment
@@ -1207,13 +1215,29 @@ noret386:
 	push	6(bp)
 	push	4(bp)		! 32 bit far address to kernel entry point
 
+	cmp	_do_multiboot, #1
+	je	multiboot
+
 	call	real2prot	! Switch to protected mode
 	mov	ax, #DS_SELECTOR ! Kernel data
 	mov	ds, ax
 	mov	ax, #ES_SELECTOR ! Flat 4 Gb
 	mov	es, ax
-	.data1	o32		! Make a far call to the kernel
-	retf
+
+       .data1  o32             ! Make a far call to the kernel
+       retf
+
+multiboot:
+	call	real2prot	! Switch to protected mode
+	mov	ax, #DS_SELECTOR ! Kernel data
+	mov	ds, ax
+	mov	ax, #ES_SELECTOR ! Flat 4 Gb
+	mov	es, ax
+!	mov	fs, ax
+!	mov	gs, ax
+	mov	bx, #MULTIBOOT_STRUCT_ADDR
+       .data1  o32             ! Make a far call to the kernel
+       retf
 
 ! Minix-86 returns here on a halt or reboot.
 ret86:

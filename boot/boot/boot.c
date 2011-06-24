@@ -500,6 +500,9 @@ struct biosdev {
 	int device, primary, secondary;
 } bootdev, tmpdev;
 
+/* Device number in multiboot format <drive, part1, part2, part3> */
+u32_t mbdev;
+
 static int get_master(char *master, struct part_entry **table, u32_t pos)
 /* Read a master boot sector and its partition table. */
 {
@@ -1224,6 +1227,11 @@ dev_t name2dev(char *name)
 			tmpdev.device+= 0x80;
 		}
 	}
+
+	mbdev = (u32_t)tmpdev.device << 24
+	    | (u32_t)tmpdev.primary << 16
+	    | (u32_t)tmpdev.secondary << 8
+	    | 0xff;
 
 	/* Look the name up on the boot device for the UNIX device number. */
 	if (fsok == -1) fsok= r_super(&block_size) != 0;

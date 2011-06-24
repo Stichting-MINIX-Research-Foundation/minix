@@ -53,7 +53,7 @@ begbss:
 #include "kernel/const.h"
 #include "kernel/proc.h"
 #include "sconst.h"
-#include "multiboot.h"
+#include <machine/multiboot.h>
 
 #include "arch_proto.h" /* K_STACK_SIZE */
 
@@ -84,9 +84,7 @@ MINIX:
 /* this is the entry point for the MINIX kernel */
 
 #if defined(__ELF__)
-	/* Check if Multibooting */
-	cmpl $MULTIBOOT_BOOTLOADER_MAGIC, %eax
-	je _C_LABEL(multiboot_init)
+	jmp _C_LABEL(multiboot_init)
 #endif
 
 	jmp	over_flags	/* skip over the next few bytes */
