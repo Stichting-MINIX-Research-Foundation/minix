@@ -17,6 +17,7 @@ nbsdsrc/*
 obj-ack
 obj-gnu
 obj-elf-base
+obj-elfbase-nbsd
 obj-gnu-nbsd
 tools/revision
 TAGS
