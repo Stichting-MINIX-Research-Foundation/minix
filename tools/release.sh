@@ -30,7 +30,7 @@ PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/Al
 PREINSTALLED_PACKAGES="
 	pkgin-0.4.1
 	pkg_install-20101212
-	bmake-20100808
+	bmake-20110606
 	binutils-2.17nb3
 	clang-2.9nb2
 	compiler-rt-r123836nb3

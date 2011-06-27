@@ -35,4 +35,8 @@ INCS+= tools.h
 
 .include "${MACHINE}/Makefile.inc"
 
+.include <bsd.own.mk>
+SUBDIR+= pkgconfig
+.include <bsd.subdir.mk>
+
 .include <bsd.lib.mk>

@@ -44,4 +44,8 @@ SRCS+= cuserid.c
 
 .include "include/Makefile.inc"
 
+.include <bsd.own.mk>
+SUBDIR+= pkgconfig
+.include <bsd.subdir.mk>
+
 .include <bsd.lib.mk>

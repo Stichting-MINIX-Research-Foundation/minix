@@ -5,10 +5,10 @@ NOOBJ=	# defined
 .if ${MKSHARE} != "no"
 FILES=	bsd.ack.mk bsd.dep.mk bsd.files.mk \
 	bsd.gcc.mk bsd.inc.mk \
-	bsd.init.mk bsd.kinc.mk bsd.klinks.mk \
-	bsd.lib.mk bsd.links.mk bsd.man.mk bsd.obj.mk bsd.own.mk \
+	bsd.init.mk bsd.kinc.mk bsd.klinks.mk bsd.lib.mk \
+	bsd.links.mk bsd.man.mk bsd.obj.mk bsd.own.mk \
 	bsd.prog.mk bsd.subdir.mk bsd.sys.mk bsd.gcov.mk \
-	sys.mk
+	minix.libc.mk pkgsrchooks.mk sys.mk
 
 # MINIX-specific files
 FILES+= minix.bootprog.mk

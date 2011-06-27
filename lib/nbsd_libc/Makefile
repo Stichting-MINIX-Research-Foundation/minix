@@ -172,3 +172,7 @@ CSHLIBFLAGS+=	-D_I18N_DYNAMIC
 # force the dynamic linker to initialize libc first
 SHLIB_SHFLAGS+=	-Wl,-z,initfirst
 
+.include <bsd.own.mk>
+SUBDIR+= pkgconfig
+.include <bsd.subdir.mk>
+
