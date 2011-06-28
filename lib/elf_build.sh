@@ -1,16 +1,12 @@
 #!/bin/sh
 
-# This file is obsolete and is only useful to 'clean' its objects.
+set -e
 
-export CC=i386-pc-minix3-gcc
+export CC=clang
 export COMPILER_TYPE=gnu
-export MAKEOBJDIR=obj-elf
-export PATH=$PATH:/usr/gnu_cross/bin
-export NBSD_LIBC=${NBSD_LIBC}
+export PATH=$PATH:/usr/pkg/bin
 
-if [ "$@" != clean ]
-then	echo "$0: Unexpected arguments $@"
-	exit 1
-fi
-
-make $@
+export MAKEOBJDIR=obj-elfbase-nbsd
+make $@ NBSD_LIBC=yes
+export MAKEOBJDIR=obj-elfbase
+make $@ NBSD_LIBC=no

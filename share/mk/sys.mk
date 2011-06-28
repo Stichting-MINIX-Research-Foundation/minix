@@ -238,11 +238,6 @@ COMPILER_TYPE=gnu
 AR?=	ar
 .endif
 
-.if exists(/usr/pkg/i386-pc-minix/lib/ldscripts/elf_i386_minix.x)	\
-	&& exists(/usr/pkg/lib/clang/2.9)
-MINIX_GENERATE_ELF=yes
-.endif
-
 # Set NBSD_LIBC to either "yes" or "no".
 .if !defined(NBSD) || (${NBSD} == "no") \
     || !defined(COMPILER_TYPE) || (${COMPILER_TYPE} == "ack")

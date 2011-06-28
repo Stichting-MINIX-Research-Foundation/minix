@@ -535,7 +535,7 @@ DEBUGMODE?=	${NONBINMODE}
 # All platforms are ELF.
 #
 #OBJECT_FMT=	ELF
-.if defined(MINIX_GENERATE_ELF) && ${COMPILER_TYPE} == "gnu"
+.if ${COMPILER_TYPE} == "gnu"
 OBJECT_FMT=	ELF
 .else
 OBJECT_FMT=	a.out

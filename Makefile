@@ -13,17 +13,11 @@ usage:
 	@echo "	make world         # Compile everything (libraries & commands)"
 	@echo "	make includes      # Install include files from src/"
 	@echo "	make libraries     # Compile and install libraries (ack)"
-.ifdef MINIX_GENERATE_ELF
 	@echo "	make elf-libraries # Compile and install gcc/clang elf libs"
-.endif
 	@echo "	make commands      # Compile all, commands, but don't install"
 	@echo "	make install       # Compile and install commands"
 	@echo "	make depend        # Generate required .depend files"
 	@echo "	make gnu-includes  # Install include files for GCC"
-.ifndef MINIX_GENERATE_ELF
-	@echo "	make gnu-libraries # Compile and install libraries for GCC"
-	@echo "	make clang-libraries # Compile and install libraries for GCC with clang"
-.endif
 	@echo "	make clean         # Remove all compiler results"
 	@echo "" 
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." 
@@ -37,19 +31,7 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-.ifdef MINIX_GENERATE_ELF
-world: mkfiles includes depend libraries elf-libraries install etcforce 
-.else
-.if ${COMPILER_TYPE} == "ack"
-world: mkfiles includes depend libraries install etcforce
-.elif ${COMPILER_TYPE} == "gnu"
-.if ${OBJECT_FMT} == "a.out"
-world: mkfiles includes depend gnu-libraries install etcforce
-.elif ${OBJECT_FMT} == "ELF"
-world: mkfiles elf-includes depend elf-libraries install etcforce
-.endif
-.endif
-.endif
+world: mkfiles includes depend libraries elf-libraries install etcforce
 
 mkfiles:
 	make -C share/mk install
@@ -63,29 +45,12 @@ includes:
 libraries: includes
 	$(MAKE) -C lib build_ack
 
-MKHEADERS411=/usr/gnu/libexec/gcc/i386-pc-minix/4.1.1/install-tools/mkheaders
-MKHEADERS443=/usr/gnu/libexec/gcc/i686-pc-minix/4.4.3/install-tools/mkheaders
 MKHEADERS443_PKGSRC=/usr/pkg/gcc44/libexec/gcc/i686-pc-minix/4.4.3/install-tools/mkheaders
 gnu-includes: includes
-	SHELL=/bin/sh; if [ -f $(MKHEADERS411) ] ; then sh -e $(MKHEADERS411) ; fi
-	SHELL=/bin/sh; if [ -f $(MKHEADERS443) ] ; then sh -e $(MKHEADERS443) ; fi
 	SHELL=/bin/sh; if [ -f $(MKHEADERS443_PKGSRC) ] ; then sh -e $(MKHEADERS443_PKGSRC) ; fi
 
-.ifndef MINIX_GENERATE_ELF
-gnu-libraries: includes #gnu-includes
-	$(MAKE) -C lib build_gnu
-
-clang-libraries: includes
-	$(MAKE) -C lib build_clang
-.endif
-
-.ifdef MINIX_GENERATE_ELF
 elf-libraries: includes
-	$(MAKE) -C lib build_elf_base
-.else
-elf-libraries: elf-includes
 	$(MAKE) -C lib build_elf
-.endif
 
 commands: includes libraries
 	$(MAKE) -C commands all

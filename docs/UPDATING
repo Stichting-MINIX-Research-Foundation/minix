@@ -1,3 +1,8 @@
+20110628:
+	Since buildworld will also build the elf-libraries, you
+	must follow the process in
+	http://wiki.minix3.org/en/UsersGuide/ELFSwitch
+
 20110624:
 	(Next release bumped to MINIX 3.2.0.)
 	ELF support in the base system. /usr/lib libraries

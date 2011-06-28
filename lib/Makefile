@@ -33,18 +33,10 @@ SUBDIR+= libend
 build_ack:
 	sh ack_build.sh obj depend all install
 
-.if defined(MINIX_GENERATE_ELF)
-build_elf_base:
-	sh elf_build_base.sh obj depend all install
-.else
-build_gnu:
-	sh gnu_build.sh obj depend all install
-.endif
+build_elf:
+	sh elf_build.sh obj depend all install
 
 clean_all:
 	sh ack_build.sh clean
-	sh clang_build.sh clean
-	sh gnu_build.sh clean
-	sh elf_build_base.sh clean
 	sh elf_build.sh clean
 
