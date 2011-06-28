@@ -1,4 +1,4 @@
-20110427:
+20110624:
 	(Next release bumped to MINIX 3.2.0.)
 	ELF support in the base system. /usr/lib libraries
 	will be in ELF format once you upgrade.
