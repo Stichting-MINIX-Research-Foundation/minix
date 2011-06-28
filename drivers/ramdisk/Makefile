@@ -11,9 +11,7 @@ SCRIPTS=newroot
 PROGRAMS += acpi
 .endif
 
-.if ${OBJECT_FMT} == "ELF"
-ELFSTRIP=/usr/gnu_cross/bin/i386-pc-minix3-strip
-.else
+.if ${OBJECT_FMT} == "a.out"
 STRIPFLAG+= -s
 .endif
 
@@ -152,13 +150,13 @@ rs.single: ../../etc/rs.single
 proto.gen: $(PROGRAMS) $(SCRIPTS) $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen
 
-#.if ${OBJECT_FMT} == "ELF"
-#proto.gen: elfstrip
-#
-#.PHONY: elfstrip
-#
-#elfstrip: $(PROGRAMS)
-#	${ELFSTRIP} $(PROGRAMS)
-#.endif
+.if ${OBJECT_FMT} == "ELF"
+proto.gen: elfstrip
+
+.PHONY: elfstrip
+
+elfstrip: $(PROGRAMS)
+	strip $(PROGRAMS)
+.endif
 
 .include <bsd.prog.mk>
