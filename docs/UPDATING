@@ -1,4 +1,8 @@
 20110629:
+	Rebuild m4:
+	make -C usr.bin/m4 install
+
+20110629:
 	You must install clang. It is now used to build some of
 	the userland utilities.
 

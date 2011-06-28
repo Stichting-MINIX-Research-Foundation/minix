@@ -1,7 +1,9 @@
 # $Id$
 
-# Requires NBSD_LIBC
+# Requires clang and NBSD_LIBC
 NBSD_LIBC:= yes
+CC:= clang
+COMPILER_TYPE:= gnu
 
 LIB=	elf
 
@@ -55,13 +57,16 @@ SRCS=	elf.c							\
 	libelf_phdr.c						\
 	libelf_shdr.c						\
 	libelf_xlate.c						\
-	compat/mmap.c						\
 	${GENSRCS}
 INCS=	libelf.h gelf.h elfdefinitions.h
 
 GENSRCS=	libelf_fsize.c libelf_msize.c libelf_convert.c
 CLEANFILES=	${GENSRCS}
-CFLAGS+=        -I. -I${.CURDIR} -DNO_MMAP_FILE
+CFLAGS+=        -I. -I${.CURDIR}
+
+.PATH:		${.CURDIR}/compat
+SRCS+=		mmap.c
+CFLAGS+=	-DNO_MMAP_FILE
 
 SHLIB_MAJOR=	1
 
@@ -166,8 +171,7 @@ INCSDIR= /usr/include
 
 .include <bsd.lib.mk>
 
-# FIXME: Change to using base m4 when base m4 is updated
 # Keep the .SUFFIXES line after the include of bsd.lib.mk
 .SUFFIXES:	.m4 .c
 .m4.c:
-	gm4 -D SRCDIR=${.CURDIR} ${.IMPSRC} > ${.TARGET}
+	m4 -D SRCDIR=${.CURDIR} ${.IMPSRC} > ${.TARGET}

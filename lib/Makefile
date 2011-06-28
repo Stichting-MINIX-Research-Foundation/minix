@@ -20,6 +20,10 @@ SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libcurses libdriver libnetdriver \
 	libexec libdevman libusb ${LIBMINLIB_DIR} ${LIBASYN_DIR}          \
 	libddekit
 
+.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
+SUBDIR+= libelf
+.endif
+
 .if ${COMPILER_TYPE} == "ack"
 SUBDIR+= ack/libd ack/libe ack/libfp ack/liby
 .endif
