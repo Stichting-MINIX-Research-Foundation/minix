@@ -2,12 +2,7 @@ OUTPUT_ARCH("i386")
 ENTRY(MINIX)
 SECTIONS
 {
-	. = 0x0;
-	_text = .;
-	begtext = .;
-	.text.head . : AT (0x0) {
-		*(.text.head)
-	}
+	. = 0x200000 + SIZEOF_HEADERS;
 	.text . : AT (ADDR(.text) - 0x0000) {
 		*(.text)
 		*(.text.*)
@@ -16,8 +11,6 @@ SECTIONS
 	_etext = .;
 	etext = .;
 
-	_data = .;
-	begdata = .;
 	.data . : AT (ADDR(.data) - 0x0000) {
 		_rodata = .;
 		/* kernel data starts with this magic number */
@@ -27,17 +20,15 @@ SECTIONS
 		_erodata = .;
 		*(.data)
 		*(.data.*)
+		. = ALIGN(4096);
 	}
 	_edata = .;
-	_bss = .;
-	begbss = .;
+
 	.bss . : AT (ADDR(.bss) - 0x0000) {
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
 	}
-	_ebss = .;
-	endbss = .;
 	_end = .;
 	end = .;
 

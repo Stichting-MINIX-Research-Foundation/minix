@@ -21,22 +21,27 @@ CFLAGS += -D__kernel__
 .if ${COMPILER_TYPE} == "ack"
 LDFLAGS+= -.o
 .elif ${COMPILER_TYPE} == "gnu"
-CPPFLAGS+= -ffreestanding -fno-stack-protector
-.if ${OBJECT_FMT} == "ELF"
-LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel_elf.lds
-.else
-LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
-.endif
-LDFLAGS+= -nostdlib -L${LIBDIR}
 CFLAGS+=-march=i386
+CPPFLAGS+= -ffreestanding -fno-stack-protector
+LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
+LDFLAGS+= -nostdlib -L${LIBDIR}
+.endif
+
 .if (${NBSD_LIBC} != "no")
 LDADD+= -lminlib
 DPADD+= ${LIBMINLIB}
 CPPFLAGS+= -D_NETBSD_SOURCE
 .else
+
+.if ${CC} == "gcc"
 DPADD+=	${LIBC}
 LDADD+=	-lgcc -lc -lgcc
+.elif ${CC} == "clang"
+DPADD+=	${LIBC}
+LDADD+= -L/usr/pkg/lib
+LDADD+= -lCompilerRT-Generic -lc -lCompilerRT-Generic
 .endif
+
 .endif
 
 CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
