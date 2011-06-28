@@ -54,10 +54,12 @@ elf-libraries: includes
 
 commands: includes libraries
 	$(MAKE) -C commands all
+	$(MAKE) -C usr.bin all
 
 depend:
 	$(MAKE) CC=cc -C boot depend
 	$(MAKE) -C commands depend
+	$(MAKE) -C usr.bin depend
 	$(MAKE) -C kernel depend
 	$(MAKE) -C servers depend
 	$(MAKE) -C drivers depend
@@ -71,18 +73,21 @@ etcforce:
 all:
 	$(MAKE) CC=cc -C boot all
 	$(MAKE) -C commands all
+	$(MAKE) -C usr.bin all
 	$(MAKE) -C tools all
 
 install:
 	$(MAKE) CC=cc -C boot install
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
+	$(MAKE) -C usr.bin install
 	$(MAKE) -C share install
 	$(MAKE) -C tools install
 
 clean:
 	$(MAKE) -C boot clean
 	$(MAKE) -C commands clean
+	$(MAKE) -C usr.bin clean
 	$(MAKE) -C tools clean
 	$(MAKE) -C lib clean_all
 	$(MAKE) -C test clean
@@ -90,4 +95,5 @@ clean:
 cleandepend:
 	$(MAKE) -C boot cleandepend
 	$(MAKE) -C commands cleandepend
+	$(MAKE) -C usr.bin cleandepend
 	$(MAKE) -C tools cleandepend

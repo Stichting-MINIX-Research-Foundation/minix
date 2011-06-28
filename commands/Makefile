@@ -16,7 +16,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	hostaddr id ifconfig ifdef indent install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	less lex life loadkeys loadramdisk logger login look lp \
-	lpd ls lspci M m4 mail make  MAKEDEV man \
+	lpd ls lspci M mail make  MAKEDEV man \
 	mdb mdocml mesg mined mkdep mkdir mkfifo mkfs.mfs mknod \
 	mkproto modem mount mt netconf newroot nice acknm nohup \
 	nonamed od packman passwd paste patch pax \

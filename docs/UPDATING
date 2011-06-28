@@ -1,3 +1,7 @@
+20110629:
+	You must install clang. It is now used to build some of
+	the userland utilities.
+
 20110628:
 	Since buildworld will also build the elf-libraries, you
 	must follow the process in
