@@ -239,7 +239,7 @@ chown -R root $RELEASEDIR/usr/share/mk
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
 
 echo " * Make hierarchy"
-chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh etcfiles" || exit 1
+chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin sh -x /usr/$SRC/tools/chrootmake.sh etcfiles" || exit 1
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PKG_ADD_URL"
@@ -247,7 +247,7 @@ do	echo " * Pre-installing: $p from $PKG_ADD_URL"
 done
 
 echo " * Chroot build"
-chroot $RELEASEDIR "PATH=/$XBIN MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
+chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 # Copy built images for cd booting
 cp $RELEASEDIR/boot/image_big image
 echo " * Chroot build done"
