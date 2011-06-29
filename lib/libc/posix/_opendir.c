@@ -32,12 +32,13 @@ DIR *opendir(const char *name)
 
 	/* Check the type again, mark close-on-exec, get a buffer. */
 	if (fstat(d, &st) < 0
-		|| (errno= ENOTDIR, !S_ISDIR(st.st_mode))
+		|| !S_ISDIR(st.st_mode)
 		|| (f= fcntl(d, F_GETFD)) < 0
 		|| fcntl(d, F_SETFD, f | FD_CLOEXEC) < 0
 		|| (dp= (DIR *) malloc(sizeof(*dp))) == nil
 	) {
 		int err= errno;
+		if (!S_ISDIR(st.st_mode)) err= ENOTDIR;
 		(void) close(d);
 		errno= err;
 		return nil;

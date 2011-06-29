@@ -73,18 +73,20 @@ void test24a()
 
   if ((fd = dup(0)) != 3) e(1);	/* dup stdin */
   close(fd);			/* free the fd again */
+  errno= 0;
   dirp = opendir("/");		/* open "/" */
   if (dirp == ((DIR *) NULL)) e(2);	/* has to succseed */
-  if ((fd = dup(0)) <= 2) e(3);	/* dup stdin */
+  if (errno != 0) e(3); 	/* success implies errno didn't change */
+  if ((fd = dup(0)) <= 2) e(4);	/* dup stdin */
   if (fd > 3) {			/* if opendir() uses fd 3 */
 	flags = fcntl(3, F_GETFD);	/* get fd fags of 3 */
-	if (!(flags & FD_CLOEXEC)) e(4);	/* it should be closed on */
+	if (!(flags & FD_CLOEXEC)) e(5);	/* it should be closed on */
   }				/* exec..() calls */
   close(fd);			/* free the fd again */
   ret = closedir(dirp);		/* close, we don't need it */
-  if (ret == -1) e(5);		/* closedir () unsucces full */
-  if (ret != 0) e(6);		/* should be 0 or -1 */
-  if ((fd = dup(0)) != 3) e(7);	/* see if next fd is same */
+  if (ret == -1) e(6);		/* closedir () unsucces full */
+  if (ret != 0) e(7);		/* should be 0 or -1 */
+  if ((fd = dup(0)) != 3) e(8);	/* see if next fd is same */
   close(fd);			/* free the fd again */
 
   System("rm -rf foo; mkdir foo");
@@ -93,71 +95,71 @@ void test24a()
   System("rm f[24]");		/* creat `holes' in entrys */
   Chdir("..");
 
-  if ((dirp = opendir("foo")) == ((DIR *) NULL)) e(8);	/* open foo */
+  if ((dirp = opendir("foo")) == ((DIR *) NULL)) e(9);	/* open foo */
   chk_dir(dirp);		/* test if foo's ok */
   for (j = 0; j < 10; j++) {
 	errno = j * 47 % 7;	/* there should */
-	if (readdir(dirp) != DIRENT0) e(9);	/* be nomore dir */
-	if (errno != j * 47 % 7) e(10);	/* entrys */
+	if (readdir(dirp) != DIRENT0) e(10);	/* be nomore dir */
+	if (errno != j * 47 % 7) e(11);	/* entrys */
   }
   rewinddir(dirp);		/* rewind foo */
   chk_dir(dirp);		/* test foosok */
   for (j = 0; j < 10; j++) {
 	errno = j * 23 % 7;	/* there should */
-	if (readdir(dirp) != DIRENT0) e(11);	/* be nomore dir */
-	if (errno != j * 23 % 7) e(12);	/* entrys */
+	if (readdir(dirp) != DIRENT0) e(12);	/* be nomore dir */
+	if (errno != j * 23 % 7) e(13);	/* entrys */
   }
-  if ((fd4 = creat("foo/f4", 0666)) <= 2) e(13);	/* Open a file. */
+  if ((fd4 = creat("foo/f4", 0666)) <= 2) e(14);	/* Open a file. */
   System("rm foo/f4");		/* Kill entry. */
   rewinddir(dirp);		/* Rewind foo. */
-  if ((fd3 = open("foo/f3", O_WRONLY)) <= 2) e(14);	/* Open more files. */
-  if ((fd5 = open("foo/f5", O_WRONLY)) <= 2) e(15);
-  if (write(fd3, "Hello", 6) != 6) e(16);
-  if (write(fd4, "Hello", 6) != 6) e(17);	/* write some data */
-  if (close(fd5) != 0) e(18);
+  if ((fd3 = open("foo/f3", O_WRONLY)) <= 2) e(15);	/* Open more files. */
+  if ((fd5 = open("foo/f5", O_WRONLY)) <= 2) e(16);
+  if (write(fd3, "Hello", 6) != 6) e(17);
+  if (write(fd4, "Hello", 6) != 6) e(18);	/* write some data */
+  if (close(fd5) != 0) e(19);
   chk_dir(dirp);
   for (j = 0; j < 10; j++) {
 	errno = j * 101 % 7;	/* there should */
-	if (readdir(dirp) != DIRENT0) e(19);	/* be nomore dir */
-	if (errno != j * 101 % 7) e(20);	/* entrys */
+	if (readdir(dirp) != DIRENT0) e(20);	/* be nomore dir */
+	if (errno != j * 101 % 7) e(21);	/* entrys */
   }
-  if (close(fd4) != 0) e(21);	/* shouldn't matter */
-  if (close(fd3) != 0) e(22);	/* when we do this */
-  if (closedir(dirp) != 0) e(23);	/* close foo again */
+  if (close(fd4) != 0) e(22);	/* shouldn't matter */
+  if (close(fd3) != 0) e(23);	/* when we do this */
+  if (closedir(dirp) != 0) e(24);	/* close foo again */
 
   Chdir("foo");
-  if ((dirp = opendir(".//")) == ((DIR *) NULL)) e(24);	/* open foo again */
+  if ((dirp = opendir(".//")) == ((DIR *) NULL)) e(25);	/* open foo again */
   Chdir("..");
   chk_dir(dirp);		/* foosok? */
   for (j = 0; j < 10; j++) {
 	errno = (j * 101) % 7;	/* there should */
-	if (readdir(dirp) != DIRENT0) e(25);	/* be nomore dir */
-	if (errno != (j * 101) % 7) e(26);	/* entrys */
+	if (readdir(dirp) != DIRENT0) e(26);	/* be nomore dir */
+	if (errno != (j * 101) % 7) e(27);	/* entrys */
   }
 
-  if (closedir(dirp) != 0) e(27);	/* It should be closable */
+  if (closedir(dirp) != 0) e(28);	/* It should be closable */
 
   stat("foo", &st1);		/* get stat */
   time(&time1);
   while (time1 >= time((time_t *)0))
 	;
-  if ((dirp = opendir("foo")) == ((DIR *) NULL)) e(28);	/* open, */
-  if (readdir(dirp) == DIRENT0) e(29);	/* read and */
+  if ((dirp = opendir("foo")) == ((DIR *) NULL)) e(29);	/* open, */
+  if (readdir(dirp) == DIRENT0) e(30);	/* read and */
   stat("foo", &st2);		/* get new stat */
-  if (st1.st_atime > st2.st_atime) e(30);	/* st_atime check */
+  if (st1.st_atime > st2.st_atime) e(31);	/* st_atime check */
 
   switch (fork()) {
       case -1:	printf("Can't fork\n");	break;
       case 0:
 	rewinddir(dirp);	/* rewind childs dirp */
-	if (readdir(dirp) == DIRENT0) e(31);	/* read should be ok */
-	if (closedir(dirp) != 0) e(32);	/* close child'd foo */
+	if (readdir(dirp) == DIRENT0) e(32);	/* read should be ok */
+	if (closedir(dirp) != 0) e(33);	/* close child'd foo */
 	exit(0);		/* 0 stops here */
       default:
-	if (wait(&stat_loc) == -1) e(33);	/* PARENT wait()'s */
+	if (wait(&stat_loc) == -1) e(34);	/* PARENT wait()'s */
 	break;
   }
-  if (closedir(dirp) != 0) e(34);	/* close parent's foo */
+  if (closedir(dirp) != 0) e(35);	/* close parent's foo */
 }
 
 void test24b()
