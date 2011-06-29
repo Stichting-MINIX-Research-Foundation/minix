@@ -3,8 +3,8 @@
 	make -C usr.bin/m4 install
 
 20110629:
-	You must install clang. It is now used to build some of
-	the userland utilities.
+	You must install clang. By default, it is used to build the
+	elf libraries and some userland utilities.
 
 20110628:
 	Since buildworld will also build the elf-libraries, you

@@ -2,7 +2,7 @@
 
 set -e
 
-export CC=clang
+export CC=${CC:-clang}
 export COMPILER_TYPE=gnu
 export PATH=$PATH:/usr/pkg/bin
 
