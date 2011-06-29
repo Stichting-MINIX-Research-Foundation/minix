@@ -45,9 +45,9 @@ includes:
 libraries: includes
 	$(MAKE) -C lib build_ack
 
-MKHEADERS443_PKGSRC=/usr/pkg/gcc44/libexec/gcc/i686-pc-minix/4.4.3/install-tools/mkheaders
+MKHEADERSS=/usr/pkg/gcc*/libexec/gcc/*/*/install-tools/mkheaders
 gnu-includes: includes
-	SHELL=/bin/sh; if [ -f $(MKHEADERS443_PKGSRC) ] ; then sh -e $(MKHEADERS443_PKGSRC) ; fi
+	SHELL=/bin/sh; for d in $(MKHEADERSS); do if [ -f $$d ] ; then sh -e $$d ; fi; done
 
 elf-libraries: includes
 	$(MAKE) -C lib build_elf
