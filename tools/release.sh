@@ -171,7 +171,7 @@ mkdir -p $RELEASEPACKAGE
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
-cp -rp /bin/sh /bin/echo /bin/install $RELEASEDIR/bin
+cp -rp /bin/sh /bin/echo /bin/install /bin/rm $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv $RELEASEDIR/usr/bin
 
 CONFIGHEADER=$RELEASEDIR/usr/src/common/include/minix/sys_config.h
