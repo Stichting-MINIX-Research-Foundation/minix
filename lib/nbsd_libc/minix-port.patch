@@ -365,6 +365,24 @@ diff -ru nbsdsrc/src/lib/libc/gdtoa/gdtoa_locks.c lib/nbsd_libc/gdtoa/gdtoa_lock
 +#ifdef _REENTRANT /* !__minix */
  mutex_t __gdtoa_locks[2] = { MUTEX_INITIALIZER, MUTEX_INITIALIZER };
 +#endif /* _REENTRANT */
+diff -ru nbsdsrc/src/lib/libc/gdtoa/gdtoaimp.h lib/nbsd_libc/gdtoa/gdtoaimp.h
+--- nbsdsrc/src/lib/libc/gdtoa/gdtoaimp.h
++++ lib/nbsd_libc/gdtoa/gdtoaimp.h
+@@ -1,4 +1,4 @@
+-/* $NetBSD: gdtoaimp.h,v 1.7 2009/05/07 20:31:44 christos Exp $ */
++/* $NetBSD: gdtoaimp.h,v 1.8 2011/01/21 23:36:49 christos Exp $ */
+ 
+ /****************************************************************
+ 
+@@ -276,7 +276,7 @@
+ Exactly one of IEEE_LITTLE_ENDIAN, IEEE_BIG_ENDIAN, VAX, or IBM should be defined.
+ #endif
+ 
+-typedef union { double d; ULong L[2]; } U;
++typedef union { double d; ULong L[2]; } __attribute__((__may_alias__)) U;
+ 
+ #ifdef YES_ALIAS
+ #define dval(x) x
 diff -ru nbsdsrc/src/lib/libc/gen/Makefile.inc lib/nbsd_libc/gen/Makefile.inc
 --- nbsdsrc/src/lib/libc/gen/Makefile.inc
 +++ lib/nbsd_libc/gen/Makefile.inc
@@ -953,6 +971,231 @@ diff -ru nbsdsrc/src/lib/libc/gen/getpwent.c lib/nbsd_libc/gen/getpwent.c
  	mutex_unlock(&_pwmutex);
  	switch (r) {
  	case NS_SUCCESS:
+diff -ru nbsdsrc/src/lib/libc/gen/glob.c lib/nbsd_libc/gen/glob.c
+--- nbsdsrc/src/lib/libc/gen/glob.c
++++ lib/nbsd_libc/gen/glob.c
+@@ -1,4 +1,4 @@
+-/*	$NetBSD: glob.c,v 1.27 2010/09/06 14:40:25 christos Exp $	*/
++/*	$NetBSD: glob.c,v 1.28 2011/01/21 23:30:31 christos Exp $	*/
+ 
+ /*
+  * Copyright (c) 1989, 1993
+@@ -37,7 +37,7 @@
+ #if 0
+ static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
+ #else
+-__RCSID("$NetBSD: glob.c,v 1.27 2010/09/06 14:40:25 christos Exp $");
++__RCSID("$NetBSD: glob.c,v 1.28 2011/01/21 23:30:31 christos Exp $");
+ #endif
+ #endif /* LIBC_SCCS and not lint */
+ 
+@@ -87,13 +87,18 @@
+ #define NO_GETPW_R
+ #endif
+ 
+-#define	GLOB_LIMIT_MALLOC	65536
+-#define	GLOB_LIMIT_STAT		128
+-#define	GLOB_LIMIT_READDIR	16384
++#define	GLOB_LIMIT_STRING	65536	/* number of readdirs */
++#define	GLOB_LIMIT_STAT		128	/* number of stat system calls */
++#define	GLOB_LIMIT_READDIR	16384	/* total buffer size of path strings */
++#define	GLOB_LIMIT_PATH		1024	/* number of path elements */
++#define GLOB_LIMIT_BRACE	128	/* Number of brace calls */
+ 
+-#define	GLOB_INDEX_MALLOC	0
+-#define	GLOB_INDEX_STAT		1
+-#define	GLOB_INDEX_READDIR	2
++struct glob_limit {
++	size_t l_string;
++	size_t l_stat;	
++	size_t l_readdir;	
++	size_t l_brace;
++};
+ 
+ /*
+  * XXX: For NetBSD 1.4.x compatibility. (kill me l8r)
+@@ -158,17 +163,17 @@
+ static DIR	*g_opendir(Char *, glob_t *);
+ static Char	*g_strchr(const Char *, int);
+ static int	 g_stat(Char *, __gl_stat_t *, glob_t *);
+-static int	 glob0(const Char *, glob_t *, size_t *);
+-static int	 glob1(Char *, glob_t *, size_t *);
++static int	 glob0(const Char *, glob_t *, struct glob_limit *);
++static int	 glob1(Char *, glob_t *, struct glob_limit *);
+ static int	 glob2(Char *, Char *, Char *, const Char *, glob_t *,
+-    size_t *);
++    struct glob_limit *);
+ static int	 glob3(Char *, Char *, Char *, const Char *, const Char *,
+-    const Char *, glob_t *, size_t *);
+-static int	 globextend(const Char *, glob_t *, size_t *);
++    const Char *, glob_t *, struct glob_limit *);
++static int	 globextend(const Char *, glob_t *, struct glob_limit *);
+ static const Char *globtilde(const Char *, Char *, size_t, glob_t *);
+-static int	 globexp1(const Char *, glob_t *, size_t *);
++static int	 globexp1(const Char *, glob_t *, struct glob_limit *);
+ static int	 globexp2(const Char *, const Char *, glob_t *, int *,
+-    size_t *);
++    struct glob_limit *);
+ static int	 match(const Char *, const Char *, const Char *);
+ #ifdef DEBUG
+ static void	 qprintf(const char *, Char *);
+@@ -181,8 +186,7 @@
+ 	const u_char *patnext;
+ 	int c;
+ 	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
+-	/* 0 = malloc(), 1 = stat(), 2 = readdir() */
+-	size_t limit[] = { 0, 0, 0 };
++	struct glob_limit limit = { 0, 0, 0, 0 };
+ 
+ 	_DIAGASSERT(pattern != NULL);
+ 
+@@ -218,9 +222,9 @@
+ 	*bufnext = EOS;
+ 
+ 	if (flags & GLOB_BRACE)
+-	    return globexp1(patbuf, pglob, limit);
++	    return globexp1(patbuf, pglob, &limit);
+ 	else
+-	    return glob0(patbuf, pglob, limit);
++	    return glob0(patbuf, pglob, &limit);
+ }
+ 
+ /*
+@@ -229,7 +233,7 @@
+  * characters
+  */
+ static int
+-globexp1(const Char *pattern, glob_t *pglob, size_t *limit)
++globexp1(const Char *pattern, glob_t *pglob, struct glob_limit *limit)
+ {
+ 	const Char* ptr = pattern;
+ 	int rv;
+@@ -237,6 +241,12 @@
+ 	_DIAGASSERT(pattern != NULL);
+ 	_DIAGASSERT(pglob != NULL);
+ 
++	if ((pglob->gl_flags & GLOB_LIMIT) &&
++	    limit->l_brace++ >= GLOB_LIMIT_BRACE) {
++		errno = 0;
++		return GLOB_NOSPACE;
++	}
++
+ 	/* Protect a single {}, for find(1), like csh */
+ 	if (pattern[0] == LBRACE && pattern[1] == RBRACE && pattern[2] == EOS)
+ 		return glob0(pattern, pglob, limit);
+@@ -256,7 +266,7 @@
+  */
+ static int
+ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv,
+-    size_t *limit)
++    struct glob_limit *limit)
+ {
+ 	int     i;
+ 	Char   *lm, *ls;
+@@ -461,7 +471,7 @@
+  * to find no matches.
+  */
+ static int
+-glob0(const Char *pattern, glob_t *pglob, size_t *limit)
++glob0(const Char *pattern, glob_t *pglob, struct glob_limit *limit)
+ {
+ 	const Char *qpatnext;
+ 	int c, error;
+@@ -570,7 +580,7 @@
+ }
+ 
+ static int
+-glob1(Char *pattern, glob_t *pglob, size_t *limit)
++glob1(Char *pattern, glob_t *pglob, struct glob_limit *limit)
+ {
+ 	Char pathbuf[MAXPATHLEN+1];
+ 
+@@ -596,7 +606,7 @@
+  */
+ static int
+ glob2(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
+-    glob_t *pglob, size_t *limit)
++    glob_t *pglob, struct glob_limit *limit)
+ {
+ 	__gl_stat_t sb;
+ 	const Char *p;
+@@ -624,10 +634,11 @@
+ 				return 0;
+ 		
+ 			if ((pglob->gl_flags & GLOB_LIMIT) &&
+-			    limit[GLOB_INDEX_STAT]++ >= GLOB_LIMIT_STAT) {
++			    limit->l_stat++ >= GLOB_LIMIT_STAT) {
+ 				errno = 0;
+ 				*pathend++ = SEP;
+ 				*pathend = EOS;
++printf("stat limit\n");
+ 				return GLOB_NOSPACE;
+ 			}
+ 			if (((pglob->gl_flags & GLOB_MARK) &&
+@@ -692,7 +703,7 @@
+ static int
+ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
+     const Char *restpattern, const Char *pglobstar, glob_t *pglob,
+-    size_t *limit)
++    struct glob_limit *limit)
+ {
+ 	struct dirent *dp;
+ 	DIR *dirp;
+@@ -785,7 +796,7 @@
+ 		Char *dc;
+ 
+ 		if ((pglob->gl_flags & GLOB_LIMIT) &&
+-		    limit[GLOB_INDEX_READDIR]++ >= GLOB_LIMIT_READDIR) {
++		    limit->l_readdir++ >= GLOB_LIMIT_READDIR) {
+ 			errno = 0;
+ 			*pathend++ = SEP;
+ 			*pathend = EOS;
+@@ -894,7 +905,7 @@
+  *	gl_pathv points to (gl_offs + gl_pathc + 1) items.
+  */
+ static int
+-globextend(const Char *path, glob_t *pglob, size_t *limit)
++globextend(const Char *path, glob_t *pglob, struct glob_limit *limit)
+ {
+ 	char **pathv;
+ 	size_t i, newsize, len;
+@@ -905,6 +916,9 @@
+ 	_DIAGASSERT(pglob != NULL);
+ 
+ 	newsize = sizeof(*pathv) * (2 + pglob->gl_pathc + pglob->gl_offs);
++	if ((pglob->gl_flags & GLOB_LIMIT) &&
++	    newsize > GLOB_LIMIT_PATH * sizeof(*pathv))
++		goto nospace;
+ 	pathv = pglob->gl_pathv ? realloc(pglob->gl_pathv, newsize) :
+ 	    malloc(newsize);
+ 	if (pathv == NULL)
+@@ -921,7 +935,7 @@
+ 	for (p = path; *p++;)
+ 		continue;
+ 	len = (size_t)(p - path);
+-	limit[GLOB_INDEX_MALLOC] += len;
++	limit->l_string += len;
+ 	if ((copy = malloc(len)) != NULL) {
+ 		if (g_Ctoc(path, copy, len)) {
+ 			free(copy);
+@@ -932,12 +946,13 @@
+ 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
+ 
+ 	if ((pglob->gl_flags & GLOB_LIMIT) &&
+-	    (newsize + limit[GLOB_INDEX_MALLOC]) >= GLOB_LIMIT_MALLOC) {
+-		errno = 0;
+-		return GLOB_NOSPACE;
+-	}
++	    (newsize + limit->l_string) >= GLOB_LIMIT_STRING)
++		goto nospace;
+ 
+ 	return copy == NULL ? GLOB_NOSPACE : 0;
++nospace:
++	errno = 0;
++	return GLOB_NOSPACE;
+ }
+ 
+ 
 diff -ru nbsdsrc/src/lib/libc/gen/gr_private.h lib/nbsd_libc/gen/gr_private.h
 --- nbsdsrc/src/lib/libc/gen/gr_private.h
 +++ lib/nbsd_libc/gen/gr_private.h

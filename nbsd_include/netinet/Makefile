@@ -1,4 +1,4 @@
-INCSDIR= /usr/netbsd/include/netinet
+INCSDIR= /usr/include/netinet
 
 INCS+= in.h tcp.h
 

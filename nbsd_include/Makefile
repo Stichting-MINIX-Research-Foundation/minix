@@ -59,11 +59,7 @@ INCS+=	ieeefp.h
 .include <bsd.own.mk>
 
 
-.if defined(__MINIX)
-INCSDIR=	/usr/netbsd/include
-.else
 INCSDIR=	/usr/include
-.endif
 
 .if defined(__MINIX)
 # RPC is not compiled in the libc. This include also needs

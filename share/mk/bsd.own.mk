@@ -541,12 +541,6 @@ OBJECT_FMT=	ELF
 OBJECT_FMT=	a.out
 .endif
 
-.if ${COMPILER_TYPE} == "gnu"
-.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-LIBDIR=		/usr/netbsd/lib
-.endif
-.endif
-
 #
 # If this platform's toolchain is missing, we obviously cannot build it.
 #

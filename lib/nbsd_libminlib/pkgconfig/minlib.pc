@@ -1,6 +1,6 @@
 Name: minlib
 Description: Minix Compatibility Library
 Version: 1.0
-Libs: -L/usr/netbsd/lib -lminlib
-Cflags: -I/usr/netbsd/include
+Libs: -lminlib
+Cflags:
 

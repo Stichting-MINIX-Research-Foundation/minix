@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 .PATH: 	${.CURDIR} ${.CURDIR}/${MACHINE}
-INCSDIR= /usr/netbsd/include
+INCSDIR= /usr/include
 LIB=	minlib
 
 CPPFLAGS.fslib.c+= -I${MINIXSRCDIR}/servers

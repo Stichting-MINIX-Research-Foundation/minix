@@ -21,7 +21,7 @@ INCS+=	netinet/if_ether.h netinet/in.h netinet/tcp.h
 
 .include <bsd.own.mk>
 
-INCSDIR=        /usr/include
+INCSDIR=        /usr/include.ack
 
 .include "${MINIXSRCDIR}/common/include/Makefile.inc"
 .include "${MINIXSRCDIR}/common/include/Makefile.termios.inc"

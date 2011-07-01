@@ -7,11 +7,7 @@ INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
 	svc.h svc_auth.h svc_soc.h types.h xdr.h
 RPC_INCS=	rpcb_prot.h
 
-.if defined(__MINIX)
-INCSDIR=	/usr/netbsd/include/rpc
-.else
 INCSDIR=	/usr/include/rpc
-.endif
 
 .include <bsd.rpc.mk>
 .include <bsd.prog.mk>

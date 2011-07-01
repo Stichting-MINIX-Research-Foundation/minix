@@ -1,10 +1,5 @@
 # $Id$
 
-# Requires NBSD_LIBC and clang/gcc (we default to using clang)
-NBSD_LIBC:= yes
-CC:=${CC:C/^cc/clang/}
-COMPILER_TYPE:= gnu
-
 LIB=	elf
 
 SRCS=	elf.c							\
@@ -163,11 +158,7 @@ libelf_convert.c:	elf_types.m4 libelf_convert.m4
 libelf_fsize.c:		elf_types.m4 libelf_fsize.m4
 libelf_msize.c:		elf_types.m4 libelf_msize.m4
 
-.if (${NBSD_LIBC} != "no")
-INCSDIR= /usr/netbsd/include
-.else
 INCSDIR= /usr/include
-.endif
 
 .include <bsd.lib.mk>
 

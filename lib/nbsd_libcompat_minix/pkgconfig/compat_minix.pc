@@ -1,5 +1,4 @@
 Name: compat_minix
 Description: Minix Compatibility Library
 Version: 1.0
-Libs: -L/usr/netbsd/lib -lcompat_minix
-Cflags: -I/usr/netbsd/include
+Libs: -lcompat_minix

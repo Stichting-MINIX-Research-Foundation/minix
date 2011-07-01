@@ -28,11 +28,7 @@ cleanprog: .PHONY cleanobjs cleanextra
 
 ##### Default values
 .if empty(CPPFLAGS:M-nostdinc)
-.if (${NBSD_LIBC} == "yes")
-CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/netbsd/include}
-.else
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
-.endif
 .endif
 .if empty(CXXFLAGS:M-nostdinc++)
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
@@ -69,11 +65,7 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .if ${COMPILER_TYPE} == "ack"
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/i386/lib${_lib}.a
 .elif ${COMPILER_TYPE} == "gnu"
-.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-LIB${_lib:tu}=  ${DESTDIR}/usr/netbsd/lib/lib${_lib}.a
-.else
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
-.endif
 .endif
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif

@@ -1,7 +1,7 @@
 #	$NetBSD: Makefile,v 1.126 2010/03/01 21:10:13 darran Exp $
 
-NETBSDINCSDIR= /usr/netbsd/include
-INCSDIR= /usr/netbsd/include/sys
+NETBSDINCSDIR= /usr/include
+INCSDIR= /usr/include/sys
 
 .include <bsd.sys.mk>
 

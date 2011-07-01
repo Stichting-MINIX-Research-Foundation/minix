@@ -2,7 +2,7 @@ NOOBJ=		# defined
 
 .include <bsd.own.mk>
 
-INCSDIR=	/usr/netbsd/include/minix
+INCSDIR=	/usr/include/minix
 
 INCS+= dirent.h paths.h types.h
 

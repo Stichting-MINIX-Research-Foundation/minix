@@ -38,15 +38,9 @@ diff -ru nbsdsrc/src/include/Makefile nbsd_include/Makefile
  INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/nameser_compat.h \
  	arpa/telnet.h arpa/tftp.h
  INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
-@@ -40,10 +59,28 @@
- .include <bsd.own.mk>
+@@ -42,8 +61,22 @@
  
- 
-+.if defined(__MINIX)
-+INCSDIR=	/usr/netbsd/include
-+.else
  INCSDIR=	/usr/include
-+.endif
  
 +.if defined(__MINIX)
 +# RPC is not compiled in the libc. This include also needs
@@ -197,21 +191,6 @@ diff -ru nbsdsrc/src/include/pwd.h nbsd_include/pwd.h
  #ifndef _PWD_H_
  #define	_PWD_H_
  
-diff -ru nbsdsrc/src/include/rpc/Makefile nbsd_include/rpc/Makefile
---- nbsdsrc/src/include/rpc/Makefile
-+++ nbsd_include/rpc/Makefile
-@@ -7,7 +7,11 @@
- 	svc.h svc_auth.h svc_soc.h types.h xdr.h
- RPC_INCS=	rpcb_prot.h
- 
-+.if defined(__MINIX)
-+INCSDIR=	/usr/netbsd/include/rpc
-+.else
- INCSDIR=	/usr/include/rpc
-+.endif
- 
- .include <bsd.rpc.mk>
- .include <bsd.prog.mk>
 diff -ru nbsdsrc/src/include/sched.h nbsd_include/sched.h
 --- nbsdsrc/src/include/sched.h
 +++ nbsd_include/sched.h

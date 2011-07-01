@@ -1,5 +1,5 @@
 NETBSDSRCDIR=	${MINIXSRCDIR}
-NETBSDINCLUDES= /usr/netbsd/include/
+NETBSDINCLUDES= /usr/include/
 MACHINE_ARCH?= 	i386
 
 CITRUS=yes 

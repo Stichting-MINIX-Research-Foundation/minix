@@ -1,4 +1,4 @@
-INCSDIR= /usr/netbsd/include/netinet6
+INCSDIR= /usr/include/netinet6
 
 INCS+= in6.h
 

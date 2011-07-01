@@ -1,3 +1,34 @@
+20110701:
+	# rm -rf /usr/include /usr/netbsd
+	# make etcfiles includes cleandepend depend gnu-includes
+
+        DOWNGRADING:
+	  Important: this automatically updates your /usr/lib/descr,
+	  something you will have to revert manually if you
+	  want to go back a revision! Previous to this
+	  revision, you do this by:
+	  # cp commands/acd/acd.descr /usr/lib/descr
+	  Repeating the above commands to make sure your /usr/include
+	  is re-acked is probably a good idea too for going back revisions.
+
+	This change moves 
+		1. /usr/include to /usr/include.ack
+		2. /usr/netbsd/include to /usr/include
+
+	Reduce compiler cases to only two:
+		1. ack, a.out, minix headers (moved to /usr/include.ack),
+		   minix libc
+		2. gcc/clang, elf, netbsd headers (moved to /usr/include),
+		   netbsd libc (moved to /usr/lib)
+
+	So this obsoletes the /usr/netbsd hierarchy.
+
+	There are no specific UPDATING instructions, but you should know
+	that starting with this version, gcc/clang use the netbsd libc and
+	headers system exclusively, and those files are in the standard
+	locations now. It's the first step to switching completely and
+	simplifying building.
+
 20110629:
 	Rebuild m4:
 	make -C usr.bin/m4 install

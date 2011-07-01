@@ -1,8 +1,5 @@
 .include <bsd.own.mk>
 
-SUBDIR= mk
-.if (${NBSD_LIBC} == "no")
-SUBDIR+= zoneinfo
-.endif
+SUBDIR= mk zoneinfo
 
 .include <bsd.subdir.mk>

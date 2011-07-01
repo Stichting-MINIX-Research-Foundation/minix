@@ -1,5 +1,4 @@
-# Requires NBSD_LIBC and clang/gcc (we default to using clang)
-NBSD_LIBC:= yes
+# Requires clang/gcc for NetBSD libc
 CC:=${CC:C/^cc/clang/}
 COMPILER_TYPE:= gnu
 

@@ -98,6 +98,7 @@ clean:
 	$(MAKE) -C test clean
 
 cleandepend:
+	$(MAKE) -C lib cleandepend_all
 	$(MAKE) -C boot cleandepend
 	$(MAKE) -C commands cleandepend
 	$(MAKE) -C bin cleandepend

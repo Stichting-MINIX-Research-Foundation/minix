@@ -8,10 +8,11 @@ SRCS=		bzlib.c blocksort.c compress.c crctable.c decompress.c \
 		huffman.c randtable.c
 CPPFLAGS+=	-I ${BZ2DIR}
 INCS=		bzlib.h
+
 .if (${NBSD_LIBC} != "no")
-INCSDIR=	/usr/netbsd/include
+INCSDIR=       /usr/include
 .else
-INCSDIR=	/usr/include
+INCSDIR=       /usr/include.ack
 .endif
 
 .include <bsd.lib.mk>

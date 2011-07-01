@@ -13,8 +13,8 @@ USRFILES=Makefile
 clean::
 
 install::
-	@echo "Installing /etc and /usr/etc.."
-	mkdir -p $(ETC)
+	@echo "Installing /etc, /usr/etc and /usr/lib.."
+	mkdir -p $(ETC) $(USRLIB)
 	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
 	@for f in $(FILES2); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 600 $(ETC)/$$f; fi; done
 	@for f in $(USRFILES); do cp usr/$$f $(USR)/$$f; chmod 644 $(USR)/$$f; done
@@ -29,6 +29,8 @@ install::
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 	@echo "Installing fonts.."
 	install -m 644 -o root -g operator fonts/*.fnt /usr/lib/fonts/
+	@echo "Installing /usr/lib/descr.."
+	install -m 644 -o root -g operator descr /usr/lib/
 
 installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(USRETC)/rc $(USR)/Makefile
 

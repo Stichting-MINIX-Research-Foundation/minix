@@ -1,4 +1,4 @@
-INCSDIR= /usr/netbsd/include/net
+INCSDIR= /usr/include/net
 
 INCS+= hton.h ethertypes.h if.h if_ether.h netlib.h
 

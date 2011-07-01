@@ -1,6 +1,6 @@
 .include <bsd.sys.mk>
 
-INCSDIR=        /usr/include/sys
+INCSDIR=        /usr/include.ack/sys
 
 INCS=	asynchio.h dir.h file.h  \
 	ioctl.h ipc.h jmp_buf.h kbdio.h mman.h \

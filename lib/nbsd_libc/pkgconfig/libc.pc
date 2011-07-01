@@ -1,5 +1,4 @@
 Name: c
 Description: NetBSD C Library
 Version: 1.0
-Libs: -nostdlib /usr/netbsd/lib/crt1.o /usr/netbsd/lib/crti.o /usr/netbsd/lib/crtn.o -L/usr/netbsd/lib -lc -L/usr/pkg/lib -lgcc -L/usr/netbsd/lib -lminlib -lcompat_minix
-Cflags: -nostdinc -D__NBSD_LIBC -isystem /usr/netbsd/include
+Libs: -lc -lminlib -lcompat_minix

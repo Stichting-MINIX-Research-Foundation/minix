@@ -1,4 +1,4 @@
-INCSDIR= /usr/include/i386
+INCSDIR= /usr/include.ack/i386
 
 INCS+=	_align.h asm.h mcontext.h multiboot.h param.h
 

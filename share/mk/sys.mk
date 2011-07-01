@@ -239,8 +239,7 @@ AR?=	ar
 .endif
 
 # Set NBSD_LIBC to either "yes" or "no".
-.if !defined(NBSD) || (${NBSD} == "no") \
-    || !defined(COMPILER_TYPE) || (${COMPILER_TYPE} == "ack")
+.if ${COMPILER_TYPE} == "ack"
 NBSD_LIBC=	no
 .else
 NBSD_LIBC=	yes

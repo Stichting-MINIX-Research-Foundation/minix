@@ -53,10 +53,10 @@ SUBDIR+= xen
 #	x68k x86_64 xen \
 #	zaurus
 
-INCSYMLINKS= ${MACHINE} /usr/netbsd/include/machine
+INCSYMLINKS= ${MACHINE} /usr/include/machine
 
-INCSYMLINKS+= machine/float.h /usr/netbsd/include/float.h \
-       machine/stdarg.h /usr/netbsd/include/stdarg.h
+INCSYMLINKS+= machine/float.h /usr/include/float.h \
+       machine/stdarg.h /usr/include/stdarg.h
 
 
 .include <bsd.inc.mk>

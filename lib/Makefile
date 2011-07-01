@@ -44,3 +44,6 @@ clean_all:
 	sh ack_build.sh clean
 	sh elf_build.sh clean
 
+cleandepend_all:
+	sh ack_build.sh cleandepend
+	sh elf_build.sh cleandepend

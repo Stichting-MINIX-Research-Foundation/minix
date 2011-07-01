@@ -66,8 +66,7 @@ HAS_SSP=	yes
 .endif
 
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-CPPFLAGS+=	-nostdinc -D__NBSD_LIBC -isystem /usr/netbsd/include
-LDFLAGS+=	-L /usr/netbsd/lib
+CPPFLAGS+=     -D__NBSD_LIBC
 .endif
 
 .if defined(USE_FORT) && (${USE_FORT} != "no")
