@@ -62,6 +62,8 @@ PUBLIC int do_stat()
   if ((r = verify_inode(ino, path, &attr)) != OK)
 	return r;
 
+  memset(&stat, 0, sizeof(struct stat));
+
   stat.st_dev = state.dev;
   stat.st_ino = ino_nr;
   stat.st_mode = get_mode(ino, attr.a_mode);
@@ -75,6 +77,12 @@ PUBLIC int do_stat()
   stat.st_atime = attr.a_atime;
   stat.st_mtime = attr.a_mtime;
   stat.st_ctime = attr.a_ctime;
+
+  stat.st_blocks = stat.st_size / S_BLKSIZE;
+  if (stat.st_size % S_BLKSIZE != 0)
+	stat.st_blocks += 1;
+
+  stat.st_blksize = BLOCK_SIZE;
 
   /* We could make this more accurate by iterating over directory inodes'
    * children, counting how many of those are directories as well.

@@ -8,62 +8,66 @@
 #include <sys/time.h>
 #endif
 
-/* 
- * __MINIX_EMULATE_NETBSD_STAT
- *
- * Userspace flag to emulate netbsd stat structure.
- */
-#ifdef __MINIX_EMULATE_NETBSD_STAT
-#define __netbsd_stat stat
-#else
-#define __minix_stat stat
-#endif
 
-struct __minix_stat {
-	dev_t st_dev;			/* major/minor device number */
-	ino_t st_ino;			/* i-node number */
-	mode_t st_mode;			/* file mode, protection bits, etc. */
-	nlink_t st_nlink;		/* # links; */
-	uid_t st_uid;			/* uid of the file's owner */ 
-	gid_t st_gid;			/* gid */
-	dev_t st_rdev;
-	off_t st_size;			/* file size */
-	time_t st_atime;		/* time of last access */
-	time_t st_mtime;		/* time of last data modification */
-	time_t st_ctime;		/* time of last file status change */
+struct stat {
+  big_dev_t     st_dev;               /* inode's device */
+  big_mode_t    st_mode;              /* inode protection mode */
+  big_ino_t	st_ino;		      /* inode's number */
+  big_nlink_t   st_nlink;             /* number of hard links */
+  big_uid_t     st_uid;               /* user ID of the file's owner */
+  big_gid_t     st_gid;               /* group ID of the file's group */
+  big_dev_t     st_rdev;              /* device type */
+#if defined(_NETBSD_SOURCE)
+  struct    timespec st_atimespec;/* time of last access */
+  struct    timespec st_mtimespec;/* time of last data modification */
+  struct    timespec st_ctimespec;/* time of last file status change */
+  struct    timespec st_birthtimespec; /* time of creation */
+#else
+  time_t    st_atime;             /* time of last access */
+  long      st_atimensec;         /* nsec of last access */
+  time_t    st_mtime;             /* time of last data modification */
+  long      st_mtimensec;         /* nsec of last data modification */
+  time_t    st_ctime;             /* time of last file status change */
+  long      st_ctimensec;         /* nsec of last file status change */
+  time_t    st_birthtime;         /* time of creation */
+  long      st_birthtimensec;     /* nsec of time of creation */
+#endif
+  big_off_t st_size;		/* file size, in bytes */
+  blkcnt_t  st_blocks;		/* blocks allocated for file */
+  blksize_t st_blksize;		/* optimal blocksize for I/O */
+  u32_t     st_flags;		/* user defined flags for file */
+  u32_t     st_gen;		/* file generation number */
+  u32_t     st_spare[2];
 };
+
+
+struct minix_prev_stat {
+  dev_t st_dev;			/* major/minor device number */
+  ino_t st_ino;			/* i-node number */
+  mode_t st_mode;		/* file mode, protection bits, etc. */
+  nlink_t st_nlink;		/* # links; */
+  uid_t st_uid;			/* uid of the file's owner */
+  short int st_gid;		/* gid; TEMPORARY HACK: should be gid_t */
+  dev_t st_rdev;
+  off_t st_size;		/* file size */
+  time_t st_atime;		/* time of last access */
+  time_t st_mtime;		/* time of last data modification */
+  time_t st_ctime;		/* time of last file status change */
+};
+
 
 #if defined(_NETBSD_SOURCE)
-struct __netbsd_stat {
-	dev_t st_dev;			/* major/minor device number */
-	ino_t st_ino;			/* i-node number */
-	mode_t st_mode;		/* file mode, protection bits, etc. */
-	nlink_t st_nlink;		/* # links; */
-	uid_t st_uid;			/* uid of the file's owner */ 
-	gid_t st_gid;		/* gid */
-	dev_t st_rdev;
-	off_t st_size;		/* file size */
-	time_t st_atime;		/* time of last access */
-	time_t st_mtime;		/* time of last data modification */
-	time_t st_ctime;		/* time of last file status change */
+/* XXX after updating stat struct we don't want to update all the code */
+#define st_atime		st_atimespec.tv_sec
+#define st_mtime		st_mtimespec.tv_sec
+#define st_ctime		st_ctimespec.tv_sec
+#define st_birthtime            st_birthtimespec.tv_sec
+#define st_atimensec            st_atimespec.tv_nsec
+#define st_mtimensec            st_mtimespec.tv_nsec
+#define st_ctimensec            st_ctimespec.tv_nsec
+#define st_birthtimensec        st_birthtimespec.tv_nsec
+#endif
 
-	/* XXX: Currently not supported by Minix, and here are just emulated. */
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
-	struct 	  timespec st_birthtimespec; /* time of creation */
-	blkcnt_t  st_blocks;		/* blocks allocated for file */
-	blksize_t st_blksize;		/* optimal blocksize for I/O */
-};
-
-#ifdef __MINIX_EMULATE_NETBSD_STAT
-#define	st_atimensec		st_atimespec.tv_nsec
-#define	st_mtimensec		st_mtimespec.tv_nsec
-#define	st_ctimensec		st_ctimespec.tv_nsec
-#define st_birthtime		st_birthtimespec.tv_sec
-#define st_birthtimensec	st_birthtimespec.tv_nsec
-#endif 
-#endif /* _NETBSD_SOURCE */
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
@@ -153,21 +157,12 @@ __BEGIN_DECLS
 int	chmod(const char *, mode_t);
 int	mkdir(const char *, mode_t);
 int	mkfifo(const char *, mode_t);
-#ifdef __MINIX_EMULATE_NETBSD_STAT
-int	stat(const char *, struct stat *) __RENAME(__emu_netbsd_stat);
-int	fstat(int, struct stat *) __RENAME(__emu_netbsd_fstat);
-#else
-int 	stat(const char *, struct stat *) __RENAME(__orig_minix_stat);
-int	fstat(int, struct stat *) __RENAME(__orig_minix_fstat);
-#endif
+int	stat(const char *, struct stat *) __RENAME(_stat);
+int	fstat(int, struct stat *) __RENAME(_fstat);
+int	lstat(const char *, struct stat *) __RENAME(_lstat);
 mode_t	umask(mode_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	fchmod(int, mode_t);
-#ifdef __MINIX_EMULATE_NETBSD_STAT
-int	lstat(const char *, struct stat *) __RENAME(__emu_netbsd_lstat);
-#else
-int	lstat(const char *, struct stat *) __RENAME(__orig_minix_lstat);
-#endif
 int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 __END_DECLS

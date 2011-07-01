@@ -226,7 +226,7 @@ _PROTOTYPE(int req_slink, (endpoint_t fs_e, ino_t inode_nr, char *lastc,
 		endpoint_t who_e, char *path_addr,
 		unsigned short path_length, uid_t uid, gid_t gid)	);
 _PROTOTYPE( int req_stat, (int fs_e, ino_t inode_nr, int who_e,
-						char *buf, int pos)	);
+				char *buf, int pos, int stat_version)	);
 _PROTOTYPE( int req_sync, (endpoint_t fs_e)                             );
 _PROTOTYPE( int req_unlink, (endpoint_t fs_e, ino_t inode_nr,
 							char *lastc)	);

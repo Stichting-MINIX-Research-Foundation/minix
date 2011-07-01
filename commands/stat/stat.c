@@ -76,10 +76,8 @@ struct field {
     { "mtime",		addr(st_mtime),		size(st_mtime),		0 },
     { "Ctime",		addr(st_ctime),		size(st_ctime),		0 },
     { "ctime",		addr(st_ctime),		size(st_ctime),		0 },
-# ifdef BSD
     { "blksize", 	addr(st_blksize),	size(st_blksize),	0 },
     { "blocks",		addr(st_blocks),	size(st_blocks),	0 },
-# endif
     { NULL,		0,			0,			0 },
 };
     

@@ -12,7 +12,7 @@ static int exec_newmem(int proc_e, vir_bytes text_addr,
 	vir_bytes text_bytes, vir_bytes data_addr,
 	vir_bytes data_bytes, vir_bytes tot_bytes,
 	vir_bytes frame_len, int sep_id, int is_elf,
-	dev_t st_dev, ino_t st_ino, time_t st_ctime, char *progname,
+	dev_t st_dev, ino_t st_ino, time_t ctime, char *progname,
 	int new_uid, int new_gid, vir_bytes *stack_topp,
 	int *load_textp, int *allow_setuidp);
 static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
@@ -321,7 +321,7 @@ static int exec_newmem(
   int is_elf,
   dev_t st_dev,
   ino_t st_ino,
-  time_t st_ctime,
+  time_t ctime,
   char *progname,
   int new_uid,
   int new_gid,
@@ -344,7 +344,7 @@ static int exec_newmem(
 	e.is_elf= is_elf;
 	e.st_dev= st_dev;
 	e.st_ino= st_ino;
-	e.st_ctime= st_ctime;
+	e.enst_ctime= ctime;
 	e.new_uid= new_uid;
 	e.new_gid= new_gid;
 	strncpy(e.progname, progname, sizeof(e.progname)-1);

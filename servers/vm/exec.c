@@ -113,7 +113,7 @@ SANITYCHECK(SCL_DETAIL);
 	/* Save file identification to allow it to be shared. */
 	vmp->vm_ino = args.st_ino;
 	vmp->vm_dev = args.st_dev;
-	vmp->vm_ctime = args.st_ctime;
+	vmp->vm_ctime = args.enst_ctime;
 
 	/* set/clear separate I&D flag */
 	if (args.sep_id)

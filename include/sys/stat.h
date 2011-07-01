@@ -10,7 +10,43 @@
 #include <minix/types.h>
 #endif
 
+
 struct stat {
+  big_dev_t     st_dev;               /* inode's device */
+  big_mode_t    st_mode;              /* inode protection mode */
+  ino_t         st_ino;               /* inode's number */
+  u32_t         padding;              /* inode's padding */
+  big_nlink_t   st_nlink;             /* number of hard links */
+  big_uid_t     st_uid;               /* user ID of the file's owner */
+  big_gid_t     st_gid;               /* group ID of the file's group */
+  big_dev_t     st_rdev;              /* device type */
+#if defined(_NETBSD_SOURCE)
+  struct    timespec st_atimespec;/* time of last access */
+  struct    timespec st_mtimespec;/* time of last data modification */
+  struct    timespec st_ctimespec;/* time of last file status change */
+  struct    timespec st_birthtimespec; /* time of creation */
+#else
+  time_t    st_atime;             /* time of last access */
+  long      st_atimensec;         /* nsec of last access */
+  time_t    st_mtime;             /* time of last data modification */
+  long      st_mtimensec;         /* nsec of last data modification */
+  time_t    st_ctime;             /* time of last file status change */
+  long      st_ctimensec;         /* nsec of last file status change */
+  time_t    st_birthtime;         /* time of creation */
+  long      st_birthtimensec;     /* nsec of time of creation */
+#endif
+  off_t st_size;		/* file size, in bytes */
+  u32_t     padding2;		/* size padding */
+  blkcnt_t  st_blocks;		/* blocks allocated for file */
+  u32_t     padding3;		/* blocks padding */
+  blksize_t st_blksize;		/* optimal blocksize for I/O */
+  u32_t     st_flags;		/* user defined flags for file */
+  u32_t     st_gen;		/* file generation number */
+  u32_t     st_spare[2];
+};
+
+
+struct minix_prev_stat {
   dev_t st_dev;			/* major/minor device number */
   ino_t st_ino;			/* i-node number */
   mode_t st_mode;		/* file mode, protection bits, etc. */
@@ -23,6 +59,25 @@ struct stat {
   time_t st_mtime;		/* time of last data modification */
   time_t st_ctime;		/* time of last file status change */
 };
+
+
+/* Copy field by field because of st_gid type mismath and
+ * difference in order after atime.
+ */
+#define COPY_PREV_STAT_TO_NEW(dest, src)\
+	(dest)->st_dev = (src)->st_dev;\
+	(dest)->st_ino = (src)->st_ino;\
+	(dest)->st_mode = (src)->st_mode;\
+	(dest)->st_nlink = (src)->st_nlink;\
+	(dest)->st_uid = (src)->st_uid;\
+	(dest)->st_gid = (src)->st_gid;\
+	(dest)->st_rdev = (src)->st_rdev;\
+	(dest)->st_size = (src)->st_size;\
+	(dest)->st_atime = (src)->st_atime;\
+	(dest)->st_mtime = (src)->st_mtime;\
+	(dest)->st_ctime = (src)->st_ctime
+
+#define S_BLKSIZE	512		/* block size used in the stat struct */
 
 /* Traditional mask definitions for st_mode. */
 #define S_IFMT   0170000	/* type of file */

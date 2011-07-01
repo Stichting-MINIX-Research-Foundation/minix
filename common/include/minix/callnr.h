@@ -17,7 +17,7 @@
 #define CHMOD		  15 
 #define CHOWN		  16 
 #define BRK		  17
-#define STAT		  18 
+#define PREV_STAT	  18
 #define LSEEK		  19
 #define MINIX_GETPID	  20
 #define MOUNT		  21 
@@ -27,7 +27,7 @@
 #define STIME		  25
 #define PTRACE		  26
 #define ALARM		  27
-#define FSTAT		  28 
+#define PREV_FSTAT	  28
 #define PAUSE		  29
 #define UTIME		  30 
 #define ACCESS		  33 
@@ -44,7 +44,7 @@
 #define GETGID		  47
 #define SIGNAL		  48
 #define RDLNK		  49
-#define LSTAT		  50
+#define PREV_LSTAT	  50
 #define IOCTL		  54
 #define FCNTL		  55
 #define FS_READY	  57
@@ -114,6 +114,11 @@
 #define SRV_KILL  	111	/* to PM: special kill call for RS */
 
 #define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */
+
+/* Numbers reused intentionally */
+#define STAT		65
+#define FSTAT		66
+#define LSTAT		67
 
 #define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
 				 * really a standalone call.

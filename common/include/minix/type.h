@@ -167,7 +167,7 @@ struct exec_newmem
 	int is_elf;		/* Is ELF exe? */
 	dev_t st_dev;		/* Device holding executable file */
 	ino_t st_ino;		/* Inode of executable file */
-	time_t st_ctime;	/* Last changed time of executable file */
+	time_t enst_ctime;	/* Last changed time of executable file */
 	uid_t new_uid;		/* Process UID after exec */
 	gid_t new_gid;		/* Process GID after exec */
 	char progname[16];	/* Should be at least PROC_NAME_LEN */

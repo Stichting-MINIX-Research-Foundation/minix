@@ -99,17 +99,28 @@ typedef long key_t;
 typedef long useconds_t;	/* Time in microseconds */
 
 typedef short          dev_t;	   /* holds (major|minor) device pair */
+typedef u32_t          big_dev_t;
 
-/* Types used in disk, inode, etc. data structures. */
+/* Types used in disk, inode, etc. data structures.
+ * Some u64_t should be i64_t, but anyway with old libc we use .lo only.
+ */
 typedef char           gid_t;	   /* group id */
+typedef u32_t          big_gid_t;  /* group id */
 typedef unsigned long  ino_t; 	   /* i-node number (V3 filesystem) */
+typedef u64_t          big_ino_t;  /* i-node number (V3 filesystem) */
 typedef unsigned short mode_t;	   /* file type and permissions bits */
-typedef short        nlink_t;	   /* number of links to a file */
+typedef u32_t          big_mode_t; /* file type and permissions bits */
+typedef short          nlink_t;	   /* number of links to a file */
+typedef u32_t          big_nlink_t;/* number of links to a file */
 typedef long	       off_t;	   /* offset within a file */
+typedef u64_t          big_off_t;  /* offset within a file */
 typedef int            pid_t;	   /* process id (must be signed) */
 typedef short          uid_t;	   /* user id */
+typedef u32_t          big_uid_t;  /* user id */
 typedef unsigned long  fsblkcnt_t; /* File system block count */
 typedef unsigned long  fsfilcnt_t; /* File system file count */
+typedef u32_t          blkcnt_t;   /* File system block count */
+typedef unsigned long  blksize_t;  /* File system block size */
 
 /* Signal handler type, e.g. SIG_IGN */
 typedef void _PROTOTYPE( (*sighandler_t), (int) );

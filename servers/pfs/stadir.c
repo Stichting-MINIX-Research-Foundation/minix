@@ -1,5 +1,6 @@
 #include "fs.h"
 #include "inode.h"
+#include <string.h>
 #include <sys/stat.h>
 
 
@@ -15,6 +16,7 @@ PRIVATE int stat_inode(
 /* Common code for stat and fstat system calls. */
   mode_t type;
   struct stat statbuf;
+  u32_t blocks; /* The unit of this is 512 */
   int r, s;
 
   type = rip->i_mode & I_TYPE;
@@ -22,6 +24,12 @@ PRIVATE int stat_inode(
 
   /* Update the atime, ctime, and mtime fields in the inode, if need be. */
   if (rip->i_update) update_times(rip);
+
+  blocks = rip->i_size / S_BLKSIZE;
+  if (rip->i_size % S_BLKSIZE != 0)
+	blocks += 1;
+
+  memset(&statbuf, 0, sizeof(struct stat));
 
   statbuf.st_dev = rip->i_dev;
   statbuf.st_ino = rip->i_num;
@@ -35,6 +43,8 @@ PRIVATE int stat_inode(
   statbuf.st_atime = rip->i_atime;
   statbuf.st_mtime = rip->i_mtime;
   statbuf.st_ctime = rip->i_ctime;
+  statbuf.st_blksize = PIPE_BUF;
+  statbuf.st_blocks = blocks;
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,

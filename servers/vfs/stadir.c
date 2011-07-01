@@ -22,6 +22,7 @@
 #include "fproc.h"
 #include "param.h"
 #include <minix/vfsif.h>
+#include <minix/callnr.h>
 #include "vnode.h"
 #include "vmnt.h"
 
@@ -121,10 +122,14 @@ PUBLIC int do_stat()
 /* Perform the stat(name, buf) system call. */
   int r;
   struct vnode *vp;
+  int old_stat = 0;
+
+  if (call_nr == PREV_STAT)
+	old_stat = 1;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0, old_stat);
 
   put_vnode(vp);
   return r;
@@ -139,6 +144,10 @@ PUBLIC int do_fstat()
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
   int pipe_pos = 0;
+  int old_stat = 0;
+
+  if (call_nr == PREV_FSTAT)
+	old_stat = 1;
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(m_in.fd)) == NULL) return(err_code);
@@ -153,7 +162,7 @@ PUBLIC int do_fstat()
   }
 
   return req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-		  who_e, m_in.buffer, pipe_pos);
+		  who_e, m_in.buffer, pipe_pos, old_stat);
 }
 
 
@@ -212,10 +221,14 @@ PUBLIC int do_lstat()
 /* Perform the lstat(name, buf) system call. */
   struct vnode *vp;
   int r;
+  int old_stat = 0;
+
+  if (call_nr == PREV_LSTAT)
+	old_stat = 1;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   if ((vp = eat_path(PATH_RET_SYMLINK, fp)) == NULL) return(err_code);
-  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0);
+  r = req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0, old_stat);
 
   put_vnode(vp);
   return(r);

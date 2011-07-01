@@ -105,6 +105,14 @@ typedef int16_t		i16_t;
 typedef int32_t		i32_t;
 typedef int64_t		i64_t;
 
+typedef uint64_t	big_ino_t;
+typedef int64_t		big_off_t;
+typedef u32_t		big_dev_t;
+typedef u32_t		big_gid_t;
+typedef u32_t		big_mode_t;
+typedef u32_t		big_nlink_t;
+typedef u32_t		big_uid_t;
+
 
 /* some Minix specific types that do not conflict with posix */
 typedef u32_t zone_t;      /* zone number */

@@ -280,15 +280,21 @@ diff -ru nbsdsrc/src/lib/libc/compat-43/Makefile.inc lib/nbsd_libc/compat-43/Mak
 diff -ru nbsdsrc/src/lib/libc/db/btree/bt_open.c lib/nbsd_libc/db/btree/bt_open.c
 --- nbsdsrc/src/lib/libc/db/btree/bt_open.c
 +++ lib/nbsd_libc/db/btree/bt_open.c
-@@ -262,7 +262,11 @@
+@@ -262,7 +262,16 @@
  		 * Don't overflow the page offset type.
  		 */
  		if (b.psize == 0) {
+-			b.psize = sb.st_blksize;
 +#ifdef __minix
-+			b.psize = MINIX_ST_BLKSIZE;
-+#else
- 			b.psize = sb.st_blksize;
++			if (sb.st_blksize == 0) {
++				/* 0 in 2 cases: upgrade from old to new struct stat or
++				 * there is a bug in underlying fs.
++				 */
++				b.psize = MINIX_ST_BLKSIZE;
++			} else
 +#endif
++				b.psize = sb.st_blksize;
++
  			if (b.psize < MINPSIZE)
  				b.psize = MINPSIZE;
  			if (b.psize > MAX_PAGE_OFFSET + 1)
@@ -314,15 +320,21 @@ diff -ru nbsdsrc/src/lib/libc/db/db/db.c lib/nbsd_libc/db/db/db.c
 diff -ru nbsdsrc/src/lib/libc/db/hash/hash.c lib/nbsd_libc/db/hash/hash.c
 --- nbsdsrc/src/lib/libc/db/hash/hash.c
 +++ lib/nbsd_libc/db/hash/hash.c
-@@ -301,7 +301,11 @@
+@@ -301,7 +301,16 @@
  	if (file != NULL) {
  		if (stat(file, &statbuf))
  			return (NULL);
+-		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
 +#ifdef __minix
-+		hashp->BSIZE = MIN(MINIX_ST_BLKSIZE, MAX_BSIZE);
-+#else
- 		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
++		if (statbuf.st_blksize == 0) {
++			/* 0 in 2 cases: upgrade from old to new struct stat or
++			 * there is a bug in underlying fs.
++			 */
++			hashp->BSIZE = MIN(MINIX_ST_BLKSIZE, MAX_BSIZE);
++		} else
 +#endif
++			hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
++
  		hashp->BSHIFT = __log2((uint32_t)hashp->BSIZE);
  	}
  
@@ -2184,18 +2196,7 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_comp.c lib/nbsd_libc/resolv/res_comp.c
 diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
 --- nbsdsrc/src/lib/libc/resolv/res_init.c
 +++ lib/nbsd_libc/resolv/res_init.c
-@@ -70,6 +70,10 @@
-  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-  */
- 
-+#ifdef __minix
-+#define __MINIX_EMULATE_NETBSD_STAT
-+#endif
-+
- #include <sys/cdefs.h>
- #if defined(LIBC_SCCS) && !defined(lint)
- #ifdef notdef
-@@ -88,7 +92,9 @@
+@@ -88,7 +88,9 @@
  #include <sys/socket.h>
  #include <sys/stat.h>
  #include <sys/time.h>
@@ -2205,7 +2206,7 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
  
  #include <netinet/in.h>
  #include <arpa/inet.h>
-@@ -348,7 +354,9 @@
+@@ -348,7 +350,9 @@
  	nserv = 0;
  	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
  	    struct stat st;
@@ -2215,7 +2216,7 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
  
  	    /* read the config file */
  	    while (fgets(buf, sizeof(buf), fp) != NULL) {
-@@ -502,6 +510,7 @@
+@@ -502,6 +506,7 @@
  	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
  		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
  			st.st_mtimespec;
@@ -2223,7 +2224,7 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
  	    statp->_u._ext.ext->kq = kqueue();
  	    (void)fcntl(statp->_u._ext.ext->kq, F_SETFD, FD_CLOEXEC);
  	    (void)fcntl(statp->_u._ext.ext->resfd, F_SETFD, FD_CLOEXEC);
-@@ -509,6 +518,9 @@
+@@ -509,6 +514,9 @@
  		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
  		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
  	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
@@ -2233,7 +2234,7 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
  	} else {
  	    statp->_u._ext.ext->kq = -1;
  	    statp->_u._ext.ext->resfd = -1;
-@@ -565,7 +577,13 @@
+@@ -565,7 +573,13 @@
  int
  res_check(res_state statp, struct timespec *mtime)
  {
@@ -2247,7 +2248,7 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
  	 * If the times are equal, then we check if there
  	 * was a kevent related to resolv.conf and reload.
  	 * If the times are not equal, then we don't bother
-@@ -593,6 +611,7 @@
+@@ -593,6 +607,7 @@
  	if (mtime)
  		*mtime = __res_conf_time;
  	return 1;
@@ -2258,44 +2259,53 @@ diff -ru nbsdsrc/src/lib/libc/resolv/res_init.c lib/nbsd_libc/resolv/res_init.c
 diff -ru nbsdsrc/src/lib/libc/stdio/fseeko.c lib/nbsd_libc/stdio/fseeko.c
 --- nbsdsrc/src/lib/libc/stdio/fseeko.c
 +++ lib/nbsd_libc/stdio/fseeko.c
-@@ -150,7 +150,11 @@
+@@ -150,7 +150,16 @@
  			fp->_flags |= __SNPT;
  			goto dumb;
  		}
+-		fp->_blksize = st.st_blksize;
 +#ifdef __minix
-+		fp->_blksize = MINIX_ST_BLKSIZE;
-+#else
- 		fp->_blksize = st.st_blksize;
++		if (st.st_blksize == 0) {
++			/* 0 in 2 cases: upgrade from old to new struct stat or
++			 * there is a bug in underlying fs.
++			 */
++			fp->_blksize = MINIX_ST_BLKSIZE;
++		} else
 +#endif
++			fp->_blksize = st.st_blksize;
++
  		fp->_flags |= __SOPT;
  	}
  
 diff -ru nbsdsrc/src/lib/libc/stdio/makebuf.c lib/nbsd_libc/stdio/makebuf.c
 --- nbsdsrc/src/lib/libc/stdio/makebuf.c
 +++ lib/nbsd_libc/stdio/makebuf.c
-@@ -114,18 +114,25 @@
+@@ -114,18 +114,22 @@
  
  	/* could be a tty iff it is a character device */
  	*couldbetty = S_ISCHR(st.st_mode);
-+#ifndef __minix
- 	if (st.st_blksize == 0) {
- 		*bufsize = BUFSIZ;
- 		return (__SNPT);
- 	}
-+#endif
+-	if (st.st_blksize == 0) {
+-		*bufsize = BUFSIZ;
+-		return (__SNPT);
+-	}
  
  	/*
  	 * Optimise fseek() only if it is a regular file.  (The test for
  	 * __sseek is mainly paranoia.)  It is safe to set _blksize
  	 * unconditionally; it will only be used if __SOPT is also set.
  	 */
+-	*bufsize = st.st_blksize;
+-	fp->_blksize = st.st_blksize;
 +#ifdef __minix
-+	*bufsize = MINIX_ST_BLKSIZE;
-+	fp->_blksize = MINIX_ST_BLKSIZE;
-+#else
- 	*bufsize = st.st_blksize;
- 	fp->_blksize = st.st_blksize;
++	if (st.st_blksize == 0) {
++		/* 0 in 2 cases: upgrade from old to new struct stat or
++		 * there is a bug in underlying fs.
++		 */
++		*bufsize = fp->_blksize = MINIX_ST_BLKSIZE;
++	} else
 +#endif
++		*bufsize = fp->_blksize = st.st_blksize;
++
  	return ((st.st_mode & S_IFMT) == S_IFREG && fp->_seek == __sseek ?
  	    __SOPT : __SNPT);
  }

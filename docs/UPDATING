@@ -1,3 +1,20 @@
+20110708
+        * VFS and installed MFSes must be in sync before and after this change *
+
+	You must update the GNU headers.
+	# cd /usr/src
+	# make gnu-includes
+
+	You must rebuild both MFS and VFS (including those one in the image).
+	Either make world or do the following:
+	# cd /usr/src/servers/mfs
+	# make install
+	# cd /usr/src/servers/vfs
+	# make install
+	# cd /usr/src/tools
+	# make hdboot
+	# shutdown -r now
+
 20110701:
 	# rm -rf /usr/include /usr/netbsd
 	# make etcfiles includes cleandepend depend gnu-includes

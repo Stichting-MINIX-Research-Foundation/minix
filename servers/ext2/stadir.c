@@ -3,6 +3,7 @@
  */
 
 #include "fs.h"
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
@@ -35,6 +36,8 @@ PRIVATE int stat_inode(
   /* true iff special */
   s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);
 
+  memset(&statbuf, 0, sizeof(struct stat));
+
   statbuf.st_dev = rip->i_dev;
   statbuf.st_ino = rip->i_num;
   statbuf.st_mode = rip->i_mode;
@@ -46,6 +49,8 @@ PRIVATE int stat_inode(
   statbuf.st_atime = rip->i_atime;
   statbuf.st_mtime = rip->i_mtime;
   statbuf.st_ctime = rip->i_ctime;
+  statbuf.st_blksize = rip->i_sp->s_block_size;
+  statbuf.st_blocks = rip->i_blocks;
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,

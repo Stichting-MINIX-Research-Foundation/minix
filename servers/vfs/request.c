@@ -9,6 +9,7 @@
 
 #include "fs.h"
 #include <string.h>
+#include <assert.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
@@ -925,19 +926,21 @@ PUBLIC int req_slink(
 /*===========================================================================*
  *				req_stat	       			     *
  *===========================================================================*/
-PUBLIC int req_stat(fs_e, inode_nr, who_e, buf, pos)
+PUBLIC int req_stat(fs_e, inode_nr, who_e, buf, pos, stat_version)
 int fs_e;
 ino_t inode_nr;
 int who_e;
 char *buf;
 int pos;
+int stat_version;
 {
   cp_grant_id_t grant_id;
   int r;
   message m;
   struct stat sb;
+  struct minix_prev_stat old_sb; /* for backward compatibility */
 
-  if (pos != 0)
+  if (pos != 0 || stat_version != 0)
 	  grant_id = cpf_grant_direct(fs_e, (vir_bytes) &sb,
 	  			      sizeof(struct stat), CPF_WRITE);
   else
@@ -956,11 +959,51 @@ int pos;
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
 
-  if (r == OK && pos != 0) {
-	  sb.st_size -= pos;
-	  r = sys_vircopy(SELF, D, (vir_bytes) &sb, who_e, D, (vir_bytes) buf, 
-			  sizeof(struct stat));
+  if (r != OK || (pos == 0 && stat_version == 0))
+	return(r);
+
+  if (pos != 0)
+	sb.st_size -= pos;
+  if (stat_version == 0) {
+	r = sys_vircopy(SELF, D, (vir_bytes) &sb, who_e, D, (vir_bytes) buf, 
+			sizeof(struct stat));
+	return(r);
   }
+
+  /* User needs old struct stat.
+   * Just 1 prev version at this moment */
+  assert(stat_version == 1);
+ 
+/* XXX until that st_Xtime macroses used, we have to undefine them,
+ * because of minix_prev_stat
+ */
+#undef st_atime
+#undef st_ctime
+#undef st_mtime
+
+/* Copy field by field because of st_gid type mismath and
+ * difference in order after atime.
+ */
+  old_sb.st_dev = sb.st_dev;
+  old_sb.st_ino = sb.st_ino;
+  old_sb.st_mode = sb.st_mode;
+  old_sb.st_nlink = sb.st_nlink;
+  old_sb.st_uid = sb.st_uid;
+  old_sb.st_gid = sb.st_gid;
+  old_sb.st_rdev = sb.st_rdev;
+  old_sb.st_size = sb.st_size;
+#if defined(_NETBSD_SOURCE)
+  old_sb.st_atime = sb.st_atimespec.tv_sec;
+  old_sb.st_mtime = sb.st_mtimespec.tv_sec;
+  old_sb.st_ctime = sb.st_ctimespec.tv_sec;
+#else
+  old_sb.st_atime = sb.st_atime;
+  old_sb.st_mtime = sb.st_mtime;
+  old_sb.st_ctime = sb.st_ctime;
+#endif
+
+  r = sys_vircopy(SELF, D, (vir_bytes) &old_sb, who_e, D, (vir_bytes) buf, 
+		  sizeof(struct minix_prev_stat));
   
   return(r);
 }

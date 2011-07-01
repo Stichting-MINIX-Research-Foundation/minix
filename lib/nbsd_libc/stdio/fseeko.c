@@ -151,10 +151,15 @@ fseeko(FILE *fp, off_t offset, int whence)
 			goto dumb;
 		}
 #ifdef __minix
-		fp->_blksize = MINIX_ST_BLKSIZE;
-#else
-		fp->_blksize = st.st_blksize;
+		if (st.st_blksize == 0) {
+			/* 0 in 2 cases: upgrade from old to new struct stat or
+			 * there is a bug in underlying fs.
+			 */
+			fp->_blksize = MINIX_ST_BLKSIZE;
+		} else
 #endif
+			fp->_blksize = st.st_blksize;
+
 		fp->_flags |= __SOPT;
 	}
 

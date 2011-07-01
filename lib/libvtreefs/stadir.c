@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
+#include <string.h>
 
 /*===========================================================================*
  *				fs_stat					     *
@@ -21,6 +22,8 @@ PUBLIC int fs_stat(void)
 
 	if ((node = find_inode(fs_m_in.REQ_INODE_NR)) == NULL)
 		return EINVAL;
+
+	memset(&statbuf, 0, sizeof(struct stat));
 
 	/* Fill in the basic info. */
 	statbuf.st_dev = fs_dev;
