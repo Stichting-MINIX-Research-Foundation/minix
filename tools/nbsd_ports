@@ -3,3 +3,4 @@ lib/nbsd_libc		src/lib/libc
 lib/nbsd_libm		src/lib/libm
 nbsd_include		src/include
 usr.bin/m4		src/usr.bin/m4
+usr.bin/indent		src/usr.bin/indent

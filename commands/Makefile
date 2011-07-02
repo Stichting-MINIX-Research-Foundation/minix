@@ -13,7 +13,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	ftp101 ftpd200 gcov-pull getty grep gomoku head hexdump host \
-	hostaddr id ifconfig ifdef indent install \
+	hostaddr id ifconfig ifdef install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	less lex life loadkeys loadramdisk logger login look lp \
 	lpd ls lspci M mail make  MAKEDEV man \

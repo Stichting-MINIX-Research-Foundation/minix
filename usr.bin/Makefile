@@ -2,6 +2,6 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= m4 mkimage
+SUBDIR= indent m4 mkimage
 
 .include <bsd.subdir.mk>
