@@ -169,7 +169,7 @@ PUBLIC int main(void)
 	      default:
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 
-			error = SUSPEND;
+			error = ENOSYS;
 			/* Not supposed to happen. */
 			printf("VFS: illegal %d system call by %d\n",
 				call_nr, who_e);
