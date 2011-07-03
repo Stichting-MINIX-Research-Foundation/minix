@@ -1,4 +1,33 @@
 #!/bin/sh
-cat $1 | while read line
-do	 echo $line | awk 'NF==4 { print "mkdir -p "$4" || exit 1; chmod "$1" "$4" || exit 1; chown "$2" "$4" || exit 1; chgrp "$3" "$4" || exit 1" } NF==3 { print "rm "$1" ; ln -s "$3" "$1" || exit 1" } ' | sh || exit 1
+set -e
+
+if [ $# -ne 1 ]
+then	echo "Usage: $0 mtreefile"
+	exit 1
+fi
+
+cat "$1" | while read line
+do
+	NF="`echo $line | awk '{ print NF }'`"
+	if [ $NF = 4 ]
+	then	mode="`echo $line | awk '{ print $1 }'`"
+		owner="`echo $line | awk '{ print $2 }'`"
+		group="`echo $line | awk '{ print $3 }'`"
+		dir="`echo $line | awk '{ print $4 }'`"
+		mkdir -p $dir
+		targetdev="`stat -dev $dir/.`"
+		if [ $targetdev -eq 1 ]
+		then	echo "skipping $dir properties"
+		else	chown $owner $dir
+			chmod $mode $dir
+			chgrp $group $dir
+		fi
+	elif [ $NF = 3 ]
+	then	target="`echo $line | awk '{ print $3 }'`"
+		linkfile="`echo $line | awk '{ print $1 }'`"
+		rm -f $linkfile
+		ln -s $target $linkfile
+	else	echo odd line.
+		exit 1
+	fi
 done
