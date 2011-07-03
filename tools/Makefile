@@ -87,7 +87,7 @@ kernel: includes
 	$(MAKE) -C ../kernel 
 
 servers: includes
-	$(MAKE) -C ../servers all install
+	$(MAKE) -C ../servers all
 
 drivers: includes servers
 	$(MAKE) -C ../drivers all install
