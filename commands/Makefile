@@ -30,7 +30,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	syslogd tail talk talkd tar tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time tinyhalt top touch tr \
 	truncate tsort ttt tty udpstat umount uname unexpand \
-	uniq unstack update uud uue version vol wc \
+	unstack update uud uue version vol wc \
 	whereis which who write writeisofs fetch \
 	xargs yacc yes zdump zic zmodem pkgin_cd \
 	mktemp
