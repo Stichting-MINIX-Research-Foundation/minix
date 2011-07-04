@@ -878,7 +878,7 @@ uint32_t reg;
     assert(reg < 0x1ffff);
 
     /* Read from memory mapped register. */
-    value = *(u32_t *)(e->regs + reg);
+    value = *(volatile u32_t *)(e->regs + reg);
 
     /* Return the result. */    
     return value;
@@ -896,7 +896,7 @@ uint32_t value;
     assert(reg < 0x1ffff);
     
     /* Write to memory mapped register. */
-    *(u32_t *)(e->regs + reg) = value;
+    *(volatile u32_t *)(e->regs + reg) = value;
 }
 
 /*===========================================================================*
