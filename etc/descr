@@ -18,8 +18,8 @@ ifndef ARCH
 import ARCH
 
 # Compiler passes.
-ACK_CPP =	$A/cpp.ansi $CPP_F $PREDEF $NOLINENO -I/usr/include.ack
-ACK_CEM =	$A/em_cemcom.ansi  -L $CPP_F $PREDEF \
+ACK_CPP =	$A/cpp.ansi -I $CPP_F $PREDEF $NOLINENO -I/usr/include.ack
+ACK_CEM =	$A/em_cemcom.ansi -I -L $CPP_F $PREDEF \
 		    -Vw${W}.${W}i${W}.${W}p${P}.${W}f4.${W}s2.2l4.${W}d8.${W}
 ACK_M2 =	$A/em_m2 -I$MOD_INCL -WR \
 		    -Vw${W}.${W}i${W}.${W}p${P}.${W}l4.${W}f4.${W}d8.${W}
