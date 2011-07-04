@@ -601,7 +601,7 @@ PRIVATE int bufs_heuristic(struct super_block *sp)
   /* heuristic for a desired cache size based on FS usage;
    * but never bigger than half of the total filesystem
    */
-  kb_fsmax = sqrt(kbytes_used_fs)*40;
+  kb_fsmax = sqrt_approx(kbytes_used_fs)*40;
   kb_fsmax = MIN(kb_fsmax, kbytes_total_fs/2);
 
   /* heuristic for a maximum usage - 10% of remaining memory */

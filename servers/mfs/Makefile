@@ -6,7 +6,7 @@ SRCS=	cache.c device.c link.c \
 	write.c inode.c main.c path.c super.c
 
 DPADD+=	${LIBM} ${LIBSYS}
-LDADD+=	-lm -lsys
+LDADD+= -lsys
 
 MAN=
 

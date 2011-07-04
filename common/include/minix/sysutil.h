@@ -65,6 +65,7 @@ _PROTOTYPE( u32_t tsc_get_khz, (void));
 _PROTOTYPE( u32_t micros_to_ticks, (u32_t micros));
 _PROTOTYPE( void ser_putc, (char c));
 _PROTOTYPE( void get_randomness, (struct k_randomness *, int));
+_PROTOTYPE( u32_t sqrt_approx, (u32_t));
 
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
 _PROTOTYPE( int asynsend3, (endpoint_t ep, message *msg, int flags));

@@ -57,6 +57,7 @@ SRCS=  \
 	sef_signal.c \
 	ser_putc.c \
 	spin.c \
+	sqrt_approx.c \
 	stacktrace.c \
 	sys_abort.c \
 	sys_clear.c \
@@ -126,6 +127,7 @@ SRCS=  \
 	vm_umap.c \
 	vm_yield_get_block.c \
 	vprintf.c \
+
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 
