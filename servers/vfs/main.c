@@ -171,8 +171,6 @@ PUBLIC int main(void)
 		if (call_nr < 0 || call_nr >= NCALLS) { 
 			error = ENOSYS;
 			/* Not supposed to happen. */
-			printf("VFS: illegal %d system call by %d\n",
-				call_nr, who_e);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
 			printf(

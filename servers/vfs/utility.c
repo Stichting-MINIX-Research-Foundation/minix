@@ -79,7 +79,6 @@ int flag;			/* M3 means path may be in message */
 PUBLIC int no_sys()
 {
 /* Somebody has used an illegal system call number */
-  printf("VFS no_sys: call %d from %d (pid %d)\n", call_nr, who_e, who_p);
   return(ENOSYS);
 }
 

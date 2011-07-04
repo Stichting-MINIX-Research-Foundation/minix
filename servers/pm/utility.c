@@ -65,7 +65,6 @@ PUBLIC pid_t get_free_pid()
 PUBLIC int no_sys()
 {
 /* A system call number not implemented by PM has been requested. */
-  printf("PM: in no_sys, call nr %d from %d\n", call_nr, who_e);
   return(ENOSYS);
 }
 
