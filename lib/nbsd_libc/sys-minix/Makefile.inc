@@ -1,6 +1,6 @@
 .PATH:	${.CURDIR}/sys-minix
 
-SRCS+= 	accept.c access.c bind.c brk.c sbrk.c \
+SRCS+= 	accept.c access.c bind.c brk.c sbrk.c compat.S \
 	chdir.c chmod.c fchmod.c chown.c fchown.c chroot.c close.c \
 	connect.c dup.c dup2.c execve.c fcntl.c flock.c fpathconf.c fork.c \
 	fstatfs.c fstatvfs.c fsync.c ftruncate.c getdents.c getegid.c getgid.c \
