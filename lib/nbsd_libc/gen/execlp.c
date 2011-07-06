@@ -50,7 +50,7 @@ __weak_alias(execlp,_execlp)
 int
 execlp(const char *name, const char *arg, ...)
 {
-#if defined(__i386__) || defined(__m68k__)
+#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
 	return execvp(name, __UNCONST(&arg));
 #else
 	va_list ap;

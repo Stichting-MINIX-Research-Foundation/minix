@@ -50,7 +50,7 @@ __weak_alias(execle,_execle)
 int
 execle(const char *name, const char *arg, ...)
 {
-#if defined(__i386__) || defined(__m68k__)
+#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
 	va_list ap;
 	char **envp;
 

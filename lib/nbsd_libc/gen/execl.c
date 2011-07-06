@@ -56,7 +56,7 @@ int
 execl(const char *name, const char *arg, ...)
 {
 	int r;
-#if defined(__i386__) || defined(__m68k__)
+#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
 	r = execve(name, __UNCONST(&arg), environ);
 	return r;
 #else
