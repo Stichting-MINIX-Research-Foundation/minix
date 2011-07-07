@@ -941,20 +941,16 @@ void *v;
 int reg;
 {
     e1000_t *e = (e1000_t *) v;
-    u16_t data;
+    u32_t data;
 
     /* Request EEPROM read. */
     e1000_reg_write(e, E1000_REG_EERD,
 		   (reg << e->eeprom_addr_off) | (E1000_REG_EERD_START));
 
     /* Wait until ready. */
-    while (!(e1000_reg_read(e, E1000_REG_EERD) &
-			       e->eeprom_done_bit));
+    while (!(data = (e1000_reg_read(e, E1000_REG_EERD)) & e->eeprom_done_bit));
 
-    /* Fetch data. */
-    data = (e1000_reg_read(e, E1000_REG_EERD) &
-			      E1000_REG_EERD_DATA) >> 16;
-    return data;
+    return data >> 16;
 }
 
 /*===========================================================================* 
