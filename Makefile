@@ -84,6 +84,7 @@ install:
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
 	$(MAKE) -C bin install
+	$(MAKE) -C servers install
 	$(MAKE) -C usr.bin install
 	$(MAKE) -C share install
 	$(MAKE) -C tools install
