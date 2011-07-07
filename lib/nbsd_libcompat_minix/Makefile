@@ -42,6 +42,11 @@ SRCS+= fttyslot.c
 # Now considered "compat" feature in NetBSD.
 SRCS+= cuserid.c
 
+# XXX: hack
+# user_from_uid(), uid_from_user()
+# group_from_gid(), gid_from_group()
+SRCS+= passwd.c
+
 .include "include/Makefile.inc"
 
 .include <bsd.own.mk>
