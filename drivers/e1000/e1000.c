@@ -250,11 +250,13 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
     /* Loop devices on the PCI bus. */
     for(;;)
     {
+	E1000_DEBUG(3, ("%s: probe() devind %d vid 0x%x did 0x%x\n",
+				e->name, devind, vid, did));
+	if (vid != 0x8086)
+		goto get_next;
+
 	for (i = 0; pcitab_e1000[i] != 0; i++)
 	{
-	    if (vid != 0x8086)
-		continue;
-	
 	    if (did != pcitab_e1000[i])
 		continue;
 	    else
@@ -267,6 +269,7 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
 	    skip--;
 	}
 
+get_next:
 	if (!(r = pci_next_dev(&devind, &vid, &did)))
 	{
 	    return FALSE;
