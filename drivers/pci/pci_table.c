@@ -139,6 +139,7 @@ struct pci_device pci_device_table[]=
 	{ 0x8086, 0x107C, "Intel PRO/1000 GT Desktop Adapter" },
 	{ 0x8086, 0x10CD, "Intel PRO/1000 Gigabit Network Connection" },
 	{ 0x8086, 0x10D3, "Intel 82574L Gigabit Network Connection" },
+	{ 0x8086, 0x105E, "Intel 82571EB Gigabit Ethernet Controller" },
  	{ 0x8086, 0x1209, "Intel EtherExpressPro100 82559ER" },
  	{ 0x8086, 0x1229, "Intel EtherExpressPro100 82557/8/9" },
 	{ 0x8086, 0x122D, "Intel 82437FX" },
