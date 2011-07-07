@@ -906,6 +906,7 @@
 #define shmat _shmat
 #define shmdt _shmdt
 #define shmget _shmget
+#define shutdown _shutdown
 #define sigreturn	_sigreturn
 #define socket _socket
 #define socketpair _socketpair
