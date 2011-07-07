@@ -288,15 +288,14 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
             e->eeprom_read = eeprom_ich;
             break;
 
-	case E1000_DEV_ID_82574L:
-	case E1000_DEV_ID_82541GI_LF:
-	    e->eeprom_done_bit = (1 << 1);
-	    e->eeprom_addr_off =  2;
+    	case E1000_DEV_ID_82540EM:
+	    e->eeprom_done_bit = (1 << 4);
+	    e->eeprom_addr_off =  8;
 	    break;
 
 	default:
-	    e->eeprom_done_bit = (1 << 4);
-	    e->eeprom_addr_off =  8;
+	    e->eeprom_done_bit = (1 << 1);
+	    e->eeprom_addr_off =  2;
 	    break;
     }
 
