@@ -21,11 +21,15 @@ PUBLIC void mthread_debug_f(const char *file, int line, const char *msg)
 PUBLIC void mthread_panic_f(const char *file, int line, const char *msg)
 {
   /* Print panic message to stdout and exit */
+  volatile int *sf;
+
+  sf = NULL;
+
   printf("mthread panic (%s:%d): ", file, line);
-  printf(msg);
+  printf("%s", msg);
   printf("\n");
   fflush(stdout);	/* Force debug print to screen */
-  *((int *)0) = 1;	/* Cause segfault to generate trace */
+  *((int *) sf ) = 1;	/* Cause segfault to generate trace */
   exit(1);
 }
 

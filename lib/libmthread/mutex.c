@@ -190,6 +190,8 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
   m = (struct __mthread_mutex *) *mutex;
   if (!mthread_mutex_valid(&m))
   	return(EINVAL);
+  else if (m->mm_owner == current_thread)
+	return(EDEADLK);
   else if (m->mm_owner == NO_THREAD) {
 	m->mm_owner = current_thread;
 	return(0);
