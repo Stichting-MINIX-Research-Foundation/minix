@@ -2,8 +2,8 @@
 
 GCC?=gcc
 CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE
-CFLAGS-GCC= $(CFLAGS) -Wall 
-CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float
+CFLAGS-GCC= $(CFLAGS) -Wall  -D_NETBSD_SOURCE 
+CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float 
 CFLAGS-GCCFPU= $(CFLAGS-GCC) -W -mhard-float
 
 OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
@@ -33,7 +33,7 @@ $(GCCOBJ):
 	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c; fi
 
 $(GCCFPUOBJ):
-	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c; fi
+	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c -lm; fi
 
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c

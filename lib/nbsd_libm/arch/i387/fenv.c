@@ -122,8 +122,10 @@ static void __test_sse(void)
 	size_t oldlen = sizeof(__HAS_SSE);
 	int rv;
 
+#ifndef __minix
 	rv = sysctlbyname("machdep.sse", &__HAS_SSE, &oldlen, NULL, 0);
 	if (rv == -1)
+#endif
 		__HAS_SSE = 0;
 }
 

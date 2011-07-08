@@ -5,6 +5,7 @@
  * Part of this test is somewhat based on the GNU GCC ucontext test set.
  *
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,6 +14,8 @@
 #include <ucontext.h>
 #include <math.h>
 #include <fenv.h>
+
+#include <sys/signal.h>
 
 _PROTOTYPE( void do_calcs, (void)					);
 _PROTOTYPE( void do_child, (void)					);
