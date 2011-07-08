@@ -562,6 +562,42 @@ diff -ru nbsdsrc/src/lib/libc/gen/closedir.c lib/nbsd_libc/gen/closedir.c
  #include "namespace.h"
  #include "reentrant.h"
  #include "extern.h"
+diff -ru nbsdsrc/src/lib/libc/gen/execl.c lib/nbsd_libc/gen/execl.c
+--- nbsdsrc/src/lib/libc/gen/execl.c
++++ lib/nbsd_libc/gen/execl.c
+@@ -56,7 +56,7 @@
+ execl(const char *name, const char *arg, ...)
+ {
+ 	int r;
+-#if defined(__i386__) || defined(__m68k__)
++#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
+ 	r = execve(name, __UNCONST(&arg), environ);
+ 	return r;
+ #else
+diff -ru nbsdsrc/src/lib/libc/gen/execle.c lib/nbsd_libc/gen/execle.c
+--- nbsdsrc/src/lib/libc/gen/execle.c
++++ lib/nbsd_libc/gen/execle.c
+@@ -50,7 +50,7 @@
+ int
+ execle(const char *name, const char *arg, ...)
+ {
+-#if defined(__i386__) || defined(__m68k__)
++#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
+ 	va_list ap;
+ 	char **envp;
+ 
+diff -ru nbsdsrc/src/lib/libc/gen/execlp.c lib/nbsd_libc/gen/execlp.c
+--- nbsdsrc/src/lib/libc/gen/execlp.c
++++ lib/nbsd_libc/gen/execlp.c
+@@ -50,7 +50,7 @@
+ int
+ execlp(const char *name, const char *arg, ...)
+ {
+-#if defined(__i386__) || defined(__m68k__)
++#if (defined(__i386__) || defined(__m68k__)) && !defined(__minix)
+ 	return execvp(name, __UNCONST(&arg));
+ #else
+ 	va_list ap;
 diff -ru nbsdsrc/src/lib/libc/gen/fts.c lib/nbsd_libc/gen/fts.c
 --- nbsdsrc/src/lib/libc/gen/fts.c
 +++ lib/nbsd_libc/gen/fts.c
@@ -1633,7 +1669,7 @@ diff -ru nbsdsrc/src/lib/libc/include/namespace.h lib/nbsd_libc/include/namespac
  #define setdomainname		_setdomainname
  #define setenv			_setenv
  #define setfsent		_setfsent
-@@ -845,6 +853,78 @@
+@@ -845,6 +853,79 @@
  #define xprtlist_lock		__rpc_xprtlist_lock
  
  #define __learn_tree		___learn_tree
@@ -1690,6 +1726,7 @@ diff -ru nbsdsrc/src/lib/libc/include/namespace.h lib/nbsd_libc/include/namespac
 +#define shmat _shmat
 +#define shmdt _shmdt
 +#define shmget _shmget
++#define shutdown _shutdown
 +#define sigreturn	_sigreturn
 +#define socket _socket
 +#define socketpair _socketpair
@@ -2300,6 +2337,59 @@ diff -ru nbsdsrc/src/lib/libc/stdlib/Makefile.inc lib/nbsd_libc/stdlib/Makefile.
  
  # These are often replaced by MD .S versions
  SRCS+=	abs.c labs.c llabs.c imaxabs.c
+diff -ru nbsdsrc/src/lib/libc/stdlib/_env.c lib/nbsd_libc/stdlib/_env.c
+--- nbsdsrc/src/lib/libc/stdlib/_env.c
++++ lib/nbsd_libc/stdlib/_env.c
+@@ -29,6 +29,8 @@
+  * POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
++static int inited = 0;
++
+ #include <sys/cdefs.h>
+ #if defined(LIBC_SCCS) && !defined(lint)
+ __RCSID("$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $");
+@@ -157,6 +159,7 @@
+ 	env_node_t *node;
+ 
+ 	_DIAGASSERT(envvar != NULL);
++	assert(inited);
+ 	node = rb_tree_find_node(&env_tree, envvar);
+ 	if (node != NULL) {
+ 		rb_tree_remove_node(&env_tree, node);
+@@ -173,6 +176,7 @@
+ {
+ 	env_node_t *node;
+ 
++	assert(inited);
+ 	node = malloc(sizeof(*node) + length);
+ 	if (node != NULL) {
+ 		node->length = length;
+@@ -194,6 +198,8 @@
+ {
+ 	env_node_t *node;
+ 
++	assert(inited);
++
+ 	_DIAGASSERT(envvar != NULL);
+ 
+ 	node = rb_tree_find_node(&env_tree, envvar);
+@@ -208,6 +214,7 @@
+ 	size_t num_entries;
+ 	env_node_t *node, *next;
+ 
++	assert(inited);
+ 	while (++marker == 0);
+ 
+ 	/* Mark all nodes which are currently used. */
+@@ -401,5 +408,7 @@
+ void
+ __libc_env_init(void)
+ {
++	assert(!inited);
+ 	rb_tree_init(&env_tree, &env_tree_ops);
++	inited = 1;
+ }
 diff -ru nbsdsrc/src/lib/libc/stdlib/atexit.c lib/nbsd_libc/stdlib/atexit.c
 --- nbsdsrc/src/lib/libc/stdlib/atexit.c
 +++ lib/nbsd_libc/stdlib/atexit.c

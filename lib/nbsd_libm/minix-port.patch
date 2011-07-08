@@ -1,0 +1,32 @@
+diff -ru nbsdsrc/src/lib/libm/Makefile lib/nbsd_libm/Makefile
+--- nbsdsrc/src/lib/libm/Makefile
++++ lib/nbsd_libm/Makefile
+@@ -13,6 +13,14 @@
+ #
+ #
+ 
++.warning  MACHINE_ARCH is first ${MACHINE_ARCH}
++
++.if ${MACHINE_ARCH} == "unknown"
++MACHINE_ARCH:= ${MACHINE}
++.endif
++
++.warning  MACHINE_ARCH is now ${MACHINE_ARCH}
++
+ #
+ # There are two options in making libm at fdlibm compile time:
+ # 	_IEEE_LIBM 	--- IEEE libm; smaller, and somewhat faster
+diff -ru nbsdsrc/src/lib/libm/arch/i387/fenv.c lib/nbsd_libm/arch/i387/fenv.c
+--- nbsdsrc/src/lib/libm/arch/i387/fenv.c
++++ lib/nbsd_libm/arch/i387/fenv.c
+@@ -122,8 +122,10 @@
+ 	size_t oldlen = sizeof(__HAS_SSE);
+ 	int rv;
+ 
++#ifndef __minix
+ 	rv = sysctlbyname("machdep.sse", &__HAS_SSE, &oldlen, NULL, 0);
+ 	if (rv == -1)
++#endif
+ 		__HAS_SSE = 0;
+ }
+ 
