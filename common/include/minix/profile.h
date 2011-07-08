@@ -9,8 +9,6 @@
  * statistical profiling and call profiling.
  */
 
-#if SPROFILE
-
 #  define PROF_START       0    /* start statistical profiling */
 #  define PROF_STOP        1    /* stop statistical profiling */
 
@@ -36,9 +34,6 @@ struct sprof_proc {
 	endpoint_t	proc;
 	char		name[8];
 };
-
-#endif /* SPROFILE */
-
 
 #include <minix/types.h>
 
