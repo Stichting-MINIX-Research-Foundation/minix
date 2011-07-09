@@ -13,13 +13,9 @@
 #
 #
 
-.warning  MACHINE_ARCH is first ${MACHINE_ARCH}
-
 .if ${MACHINE_ARCH} == "unknown"
 MACHINE_ARCH:= ${MACHINE}
 .endif
-
-.warning  MACHINE_ARCH is now ${MACHINE_ARCH}
 
 #
 # There are two options in making libm at fdlibm compile time:
