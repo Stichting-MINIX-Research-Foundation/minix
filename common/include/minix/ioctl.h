@@ -7,6 +7,8 @@
 #ifndef _M_IOCTL_H
 #define _M_IOCTL_H
 
+#include <sys/cdefs.h>
+
 #ifndef _TYPES_H
 #include <minix/types.h>
 #endif
@@ -63,6 +65,8 @@
 #define _IORW(x,y,t)	_IO(x,y)
 #endif
 
+__BEGIN_DECLS
 int ioctl(int _fd, int _request, void *_data);
+__END_DECLS
 
 #endif /* _M_IOCTL_H */
