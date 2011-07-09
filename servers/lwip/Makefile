@@ -23,4 +23,4 @@ CPPFLAGS+= -I${.CURDIR}/../../lib/liblwip/include
 
 CFLAGS += -Wextra -std=c99
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

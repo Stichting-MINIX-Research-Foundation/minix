@@ -16,4 +16,4 @@ INSTALLFLAGS+= -S 128k
 DEFAULT_NR_BUFS= 1024
 CPPFLAGS+= -DDEFAULT_NR_BUFS=${DEFAULT_NR_BUFS}
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

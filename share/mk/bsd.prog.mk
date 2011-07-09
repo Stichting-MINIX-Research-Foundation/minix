@@ -187,12 +187,6 @@ _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
 
-.if defined(NBSD_LIBC) && (${NBSD_LIBC} == "yes") && \
-    !empty(_LDADD.${_P}:M-lsys)
-#    defined(USE_LIBSYS) && (${USE_LIBSYS} == "yes")
-_LDADD.${_P}+=		-nodefaultlibs -lgcc -lsys -lgcc
-.endif
-
 ##### Build and install rules
 .if !empty(_APPEND_SRCS:M[Yy][Ee][Ss])
 SRCS+=		${SRCS.${_P}} # For bsd.dep.mk

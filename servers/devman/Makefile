@@ -9,4 +9,4 @@ BINDIR?= /sbin
 INSTALLFLAGS+=	-S 128k
 
 MAN=
-.include <bsd.prog.mk>
+.include <minix.service.mk>

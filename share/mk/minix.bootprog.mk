@@ -5,4 +5,4 @@
 LDFLAGS+= -Wl,--section-start=.init=0x0
 .endif
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

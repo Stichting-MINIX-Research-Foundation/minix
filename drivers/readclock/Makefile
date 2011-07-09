@@ -11,4 +11,4 @@ BINDIR?= /sbin
 
 CPPFLAGS+= -D_SYSTEM=1
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

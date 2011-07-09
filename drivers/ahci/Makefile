@@ -9,4 +9,4 @@ MAN=
 
 BINDIR?= /sbin
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

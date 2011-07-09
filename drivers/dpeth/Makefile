@@ -14,4 +14,4 @@ BINDIR?= /usr/sbin
 debug=		0
 CPPFLAGS+=	-Ddebug=$(debug)
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

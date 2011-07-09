@@ -13,5 +13,5 @@ BINDIR?= /usr/sbin
 
 CPPFLAGS.random.c+=	-I${MINIXSRCDIR}
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>
 

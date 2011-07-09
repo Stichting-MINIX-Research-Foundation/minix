@@ -159,4 +159,4 @@ elfstrip: $(PROGRAMS)
 	strip $(PROGRAMS)
 .endif
 
-.include <bsd.prog.mk>
+.include <minix.service.mk>

@@ -1,4 +1,4 @@
-.if (${NBSD_LIBC} != "no")
+.if ${COMPILER_TYPE} == "gnu"
 CPPFLAGS+= -D_MINIX -D_NETBSD_SOURCE
 LDADD+= -lminlib -lcompat_minix
 DPADD+= ${LIBMINLIB} ${LIBCOMPAT_MINIX}
