@@ -4,9 +4,9 @@
 .if ${COMPILER_TYPE} == "gnu"
 
 .if ${CC} == "gcc"
-LDADD+= -nodefaultlibs -lgcc -lsys -lgcc
+LDADD+= -nodefaultlibs -lgcc -lsys -lgcc -lminc
 .elif ${CC} == "clang"
-LDADD+= -nodefaultlibs -L/usr/pkg/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic
+LDADD+= -nodefaultlibs -L/usr/pkg/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic -lminc
 .endif
 
 .endif

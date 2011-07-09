@@ -2,9 +2,14 @@
 # Minimal libc for servers and drivers.
 #
 
+.include <bsd.own.mk>
+
+LIB=		minc
+
+CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
+
 LIBCSRCDIR=${MINIXSRCDIR}/lib/nbsd_libc
 
-.if (${NBSD_LIBC} != "no")
 MACHINE_ARCH=${MACHINE}
 
 #
@@ -133,4 +138,4 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/include
 
 CPPFLAGS+= -D_LIBSYS
 
-.endif
+.include <bsd.lib.mk>

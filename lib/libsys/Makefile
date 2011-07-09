@@ -131,8 +131,8 @@ SRCS=  \
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 
-.if (${NBSD_LIBC} != "no")
-.include "Makefile.libc.inc"
+.if (${CC} == "gcc") || (${CC} == "clang")
+LDADD+=	-lminc
 .endif
 
 .include <bsd.lib.mk>

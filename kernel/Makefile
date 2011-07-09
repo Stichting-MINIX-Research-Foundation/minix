@@ -28,9 +28,9 @@ LDFLAGS+= -nostdlib -L${LIBDIR}
 LDADD+= -lminlib
 DPADD+= ${LIBMINLIB}
 .if ${CC} == "gcc"
-LDADD+=	-lgcc -lsys -lgcc
+LDADD+=	-lgcc -lsys -lgcc -lminc
 .elif ${CC} == "clang"
-LDADD+= -L/usr/pkg/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic
+LDADD+= -L/usr/pkg/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic -lminc
 DPADD+=	${LIBC}
 .endif
 .endif
