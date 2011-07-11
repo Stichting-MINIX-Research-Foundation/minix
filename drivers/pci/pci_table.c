@@ -134,6 +134,8 @@ struct pci_device pci_device_table[]=
 	{ 0x8086, 0x100E, "Intel PRO/1000 MT Desktop Adapter" },
  	{ 0x8086, 0x1029, "Intel EtherExpressPro100 ID1029" },
  	{ 0x8086, 0x1030, "Intel Corporation 82559 InBusiness 10/100" },
+	{ 0x8086, 0x1031, "Intel Corporation 82801CAM PRO/100 VE" },
+	{ 0x8086, 0x1032, "Intel Corporation 82801CAM PRO/100 VE" },
  	{ 0x8086, 0x103d, "Intel Corporation 82801DB PRO/100 VE (MOB)" },
  	{ 0x8086, 0x1064, "Intel Corporation 82562 PRO/100 VE" },
 	{ 0x8086, 0x107C, "Intel PRO/1000 GT Desktop Adapter" },

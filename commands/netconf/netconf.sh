@@ -97,7 +97,8 @@ card()
 cards()
 {
     card 0 "No Ethernet card (no networking)"
-    card 1 "Intel Pro/100" "8086:103D" "8086:1064" "8086:1229" "8086:2449"
+    card 1 "Intel Pro/100" "8086:103D" "8086:1064" "8086:1229" "8086:2449" \
+           "8086:1031" "8086:1032"
     card 2 "3Com 501 or 3Com 509 based card"
     card 3 "Realtek 8139 based card (also emulated by KVM)"            \
            "10EC:8139" "02AC:1012" "1065:8139" "1113:1211" "1186:1300" \

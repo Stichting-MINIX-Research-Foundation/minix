@@ -53,6 +53,8 @@ PRIVATE struct pcitab pcitab_fxp[]=
 	{ 0x8086, 0x2449, 0 },		/* Intel 82801BA/BAM/CA/CAM */
 	{ 0x8086, 0x103d, 0 },		/* Intel 82801DB */
 	{ 0x8086, 0x1064, 0 },		/* Intel 82562 */
+	{ 0x8086, 0x1031, 0 },		/* Intel 82801CAM VE */
+	{ 0x8086, 0x1032, 0 },		/* Intel 82801CAM VE */
 
 	{ 0x0000, 0x0000, 0 }
 };
@@ -599,6 +601,9 @@ static int fxp_probe(fxp_t *fp, int skip)
 				break;
 	case FXP_REV_82551_2:	str= "82551(2)"; 		/* 0x10 */
 				fp->fxp_type= FT_82559;
+				break;
+	case FXP_REV_82801CAM:	str= "82801CAM"; 		/* 0x42 */
+				fp->fxp_type= FT_82801;
 				break;
 	case FXP_REV_82801DB:	str= "82801DB"; 		/* 0x81 */
 				fp->fxp_type= FT_82801;
