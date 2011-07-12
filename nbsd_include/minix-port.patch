@@ -285,7 +285,16 @@ diff -ru nbsdsrc/src/include/stdio.h nbsd_include/stdio.h
 diff -ru nbsdsrc/src/include/stdlib.h nbsd_include/stdlib.h
 --- nbsdsrc/src/include/stdlib.h
 +++ nbsd_include/stdlib.h
-@@ -265,9 +265,11 @@
+@@ -244,6 +244,8 @@
+ void	*alloca(int);     /* built-in for gcc */
+ #elif defined(__PCC__) && !defined(__GNUC__)
+ #define alloca(size) __builtin_alloca(size)
++#elif (__GNUC__ >= 2)
++#define alloca(size) __builtin_alloca(size)
+ #else
+ void	*alloca(size_t);
+ #endif /* __GNUC__ */
+@@ -265,9 +267,11 @@
  void	 csetexpandtc(int);
  
  int	 daemon(int, int);
@@ -297,7 +306,7 @@ diff -ru nbsdsrc/src/include/stdlib.h nbsd_include/stdlib.h
  
  #define	HN_DECIMAL		0x01
  #define	HN_NOSPACE		0x02
-@@ -280,7 +282,9 @@
+@@ -280,7 +284,9 @@
  int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
  int	 dehumanize_number(const char *, int64_t *);
  
