@@ -8,6 +8,24 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
+PRIVATE int copy_new_to_old_stat(endpoint_t who_e,
+	cp_grant_id_t gid, struct stat *st)
+{
+	struct minix_prev_stat prevst;
+
+  	memset(&prevst, 0, sizeof(prevst));
+
+	prevst.st_dev = st->st_dev;
+	prevst.st_ino = st->st_ino;
+	prevst.st_mode = st->st_mode;
+	prevst.st_uid = st->st_uid;
+	prevst.st_gid = st->st_gid;
+	prevst.st_size = st->st_size;
+	prevst.st_rdev = st->st_rdev;
+
+	return sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &prevst,
+  		(size_t) sizeof(prevst), D);
+}
 
 /*===========================================================================*
  *				stat_inode				     *
@@ -57,10 +75,16 @@ PRIVATE int stat_inode(
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
   		(size_t) sizeof(statbuf), D);
+
+  /* Fallback for older VFS (old stat) */
+  if(r != OK) {
+  	r = copy_new_to_old_stat(who_e, gid, &statbuf);
+	if(r == OK) printf("MFS: old vfs stat fallback ok\n");
+	else	printf("MFS: old vfs stat fallback failed\n");
+  }
   
   return(r);
 }
-
 
 /*===========================================================================*
  *				fs_fstatfs				     *
