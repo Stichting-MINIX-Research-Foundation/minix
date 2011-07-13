@@ -62,6 +62,7 @@ BS=4096
 
 HDEMU=0
 COPY=0
+JAILMODE=0
 SVNREV=""
 REVTAG=""
 PACKAGES=1
@@ -78,11 +79,11 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "ls:pmMchu?r:f:" c
+while getopts "j:ls:pmMchu?r:f:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>]" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir>" >&2
 		exit 1
 	;;
 	h)
@@ -99,6 +100,24 @@ do
 		;;
 	r)	
 		SVNREV=-r$OPTARG
+		;;
+	j)
+		FINAL_JAILDIR=$OPTARG
+
+		# Make sure no important directory will be wiped
+		if [ -d "$FINAL_JAILDIR" ]
+		then	echo "$FINAL_JAILDIR exists."
+			exit 1
+		fi
+
+		# Sanity check name
+		if mkdir $FINAL_JAILDIR
+		then	:
+		else	echo "Could not create $FINAL_JAILDIR."
+			exit 1
+		fi
+		rm -rf $FINAL_JAILDIR
+		JAILMODE=1
 		;;
 	u)
 		echo " * Making live USB-stick image"
@@ -149,11 +168,13 @@ then
 	exit
 fi
 
-echo " * Cleanup old files"
-umount $TMPDISKUSR || true
-umount $TMPDISKROOT || true
-umount $RELEASEMNTDIR/usr || true
-umount $RELEASEMNTDIR || true
+if [ $JAILMODE = 0 ]
+then	echo " * Cleanup old files"
+	umount $TMPDISKUSR || true
+	umount $TMPDISKROOT || true
+	umount $RELEASEMNTDIR/usr || true
+	umount $RELEASEMNTDIR || true
+fi
 
 rm -rf $RELEASEDIR $RELEASEMNTDIR $IMG $ROOTIMAGE $CDFILES image*
 mkdir -p $CDFILES || exit
@@ -259,6 +280,7 @@ cp issue.install $RELEASEDIR/etc/issue
 
 echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
 rm -rf $RELEASEDIR/tmp/*
+
 if [ $MINIMAL -ne 0 ]
 then
 	if [ "$MAKEMAP" -ne 0 ]
@@ -273,6 +295,15 @@ then
 		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src
 	mkdir -p $RELEASEDIR/usr/src/tools
 	ln $RELEASEDIR/boot/image_big $RELEASEDIR/boot/image/$version
+fi
+
+# If we are making a jail, all is done!
+if [ $JAILMODE = 1 ]
+then	mv $RELEASEDIR $FINAL_JAILDIR
+	echo "Created new minix install in $FINAL_JAILDIR."
+	echo "Enter it by typing: "
+	echo "# chroot $FINAL_JAILDIR /bin/sh"
+	exit 0
 fi
 
 echo " * Counting files"
