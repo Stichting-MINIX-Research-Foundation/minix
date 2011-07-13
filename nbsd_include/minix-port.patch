@@ -479,7 +479,7 @@ diff -ru nbsdsrc/src/include/unistd.h nbsd_include/unistd.h
  
  #ifndef __AUDIT__
  char	*getwd(char *);				/* obsoleted by getcwd() */
-@@ -295,8 +309,14 @@
+@@ -295,9 +309,15 @@
  /*
   * Implementation-defined extensions
   */
@@ -490,10 +490,11 @@ diff -ru nbsdsrc/src/include/unistd.h nbsd_include/unistd.h
  #if defined(_NETBSD_SOURCE)
 +#ifndef __minix
  int	 acct(const char *);
-+#endif /* !__minix */
  int	 closefrom(int);
++#endif /* !__minix */
  int	 des_cipher(const char *, char *, long, int);
  int	 des_setkey(const char *);
+ void	 endusershell(void);
 @@ -315,15 +335,23 @@
  int	 iruserok(uint32_t, int, const char *, const char *);
  int      issetugid(void);
