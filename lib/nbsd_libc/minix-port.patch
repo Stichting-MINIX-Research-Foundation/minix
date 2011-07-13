@@ -469,8 +469,8 @@ diff -ru nbsdsrc/src/lib/libc/gen/Makefile.inc lib/nbsd_libc/gen/Makefile.inc
  CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
  
 +.if defined(__MINIX)
-+errlist.c: errlist-minix.awk ${MINIXSRCDIR}/nbsd_include/sys/errno.h
-+	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
++errlist.c: errlist.awk ${MINIXSRCDIR}/nbsd_include/sys/errno.h
++	cat ${MINIXSRCDIR}/nbsd_include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${MINIXSRCDIR}/lib/nbsd_libc/gen/errlist.awk > ${.TARGET}
 +.else
  errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
  	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
@@ -574,6 +574,25 @@ diff -ru nbsdsrc/src/lib/libc/gen/closedir.c lib/nbsd_libc/gen/closedir.c
  #include "namespace.h"
  #include "reentrant.h"
  #include "extern.h"
+diff -ru nbsdsrc/src/lib/libc/gen/errlist.awk lib/nbsd_libc/gen/errlist.awk
+--- nbsdsrc/src/lib/libc/gen/errlist.awk
++++ lib/nbsd_libc/gen/errlist.awk
+@@ -85,9 +85,13 @@
+ 	i1 = index(desc, "/*") + 3;
+ 	l = length(desc);
+ 	desc = substr(desc, i1, l - i1 - 2);
+-	if (number != errno) {
+-		printf("error number mismatch %d != %d\n", number, errno) > "/dev/stderr";
++	if (number < errno) {
++		printf("%s\n error number mismatch %d != %d\n", $0, number, errno) > "/dev/stderr";
+ 		exit(1);
++	}
++	while(errno < number) {
++		perror("UNDEFINED", errno, "Undefined error: " errno);
++		errno++;
+ 	}
+ 	perror(name, number, desc);
+ 	errno++;
 diff -ru nbsdsrc/src/lib/libc/gen/execl.c lib/nbsd_libc/gen/execl.c
 --- nbsdsrc/src/lib/libc/gen/execl.c
 +++ lib/nbsd_libc/gen/execl.c

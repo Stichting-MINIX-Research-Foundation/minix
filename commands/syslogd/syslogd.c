@@ -377,11 +377,7 @@ void logerror(char *type)
 
   if (errno == 0) sprintf(buf, "%s %s", ProgName, type);
 
-  else if (errno >= _NERROR)
-	sprintf(buf, "%s %s - error %d", ProgName, type, errno);
-
-  else
-	sprintf(buf, "%s %s - %s", ProgName, type, strerror(errno));
+  sprintf(buf, "%s %s - %s", ProgName, type, strerror(errno));
 
   errno = 0;
   dprintf("%s\n", buf);

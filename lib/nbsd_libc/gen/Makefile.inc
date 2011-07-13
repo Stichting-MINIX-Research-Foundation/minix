@@ -213,8 +213,8 @@ CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
 .if defined(__MINIX)
-errlist.c: errlist-minix.awk ${MINIXSRCDIR}/nbsd_include/sys/errno.h
-	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+errlist.c: errlist.awk ${MINIXSRCDIR}/nbsd_include/sys/errno.h
+	cat ${MINIXSRCDIR}/nbsd_include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${MINIXSRCDIR}/lib/nbsd_libc/gen/errlist.awk > ${.TARGET}
 .else
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}

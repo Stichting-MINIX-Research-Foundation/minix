@@ -73,9 +73,9 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/stdlib -I${LIBCSRCDIR}/include
 .endfor
 # Import from gen
 
-errlist.c: ${LIBCSRCDIR}/gen/errlist-minix.awk \
+errlist.c: ${LIBCSRCDIR}/gen/errlist.awk \
 	   ${MINIXSRCDIR}/nbsd_include/sys/errno.h
-	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+	cat ${MINIXSRCDIR}/nbsd_include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCSRCDIR}/gen/errlist.awk > ${.TARGET}
 
 .for i in assert.c _errno.c errno.c _env.c errlist.c \
 	execle.c getprogname.c sleep.c time.c \

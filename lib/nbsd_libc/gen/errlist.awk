@@ -85,9 +85,13 @@ BEGIN {
 	i1 = index(desc, "/*") + 3;
 	l = length(desc);
 	desc = substr(desc, i1, l - i1 - 2);
-	if (number != errno) {
-		printf("error number mismatch %d != %d\n", number, errno) > "/dev/stderr";
+	if (number < errno) {
+		printf("%s\n error number mismatch %d != %d\n", $0, number, errno) > "/dev/stderr";
 		exit(1);
+	}
+	while(errno < number) {
+		perror("UNDEFINED", errno, "Undefined error: " errno);
+		errno++;
 	}
 	perror(name, number, desc);
 	errno++;
