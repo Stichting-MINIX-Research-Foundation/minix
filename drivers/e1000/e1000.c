@@ -952,7 +952,7 @@ int reg;
 		   (reg << e->eeprom_addr_off) | (E1000_REG_EERD_START));
 
     /* Wait until ready. */
-    while (!(data = (e1000_reg_read(e, E1000_REG_EERD)) & e->eeprom_done_bit));
+    while (!((data = (e1000_reg_read(e, E1000_REG_EERD))) & e->eeprom_done_bit));
 
     return data >> 16;
 }
