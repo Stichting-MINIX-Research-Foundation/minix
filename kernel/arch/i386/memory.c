@@ -889,7 +889,10 @@ void i386_freepde(const int pde)
 	freepdes[nfreepdes++] = pde;
 }
 
-PRIVATE int oxpcie_mapping_index = -1;
+PRIVATE int oxpcie_mapping_index = -1,
+	lapic_mapping_index = -1,
+	ioapic_first_index = -1,
+	ioapic_last_index = -1;
 
 PUBLIC int arch_phys_map(const int index,
 			phys_bytes *addr,
@@ -903,9 +906,14 @@ PUBLIC int arch_phys_map(const int index,
 	if(first) {
 #ifdef USE_APIC
 		if(lapic_addr)
-			freeidx++;
-		if (ioapic_enabled)
+			lapic_mapping_index = freeidx++;
+		if (ioapic_enabled) {
+			int i;
+			ioapic_first_index = freeidx;
+			assert(nioapics > 0);
 			freeidx += nioapics;
+			ioapic_last_index = freeidx-1;
+		}
 #endif
 
 #ifdef CONFIG_OXPCIE
@@ -913,6 +921,7 @@ PUBLIC int arch_phys_map(const int index,
 			if(ser_var[0] != '0' || ser_var[1] != 'x') {
 				printf("oxpcie address in hex please\n");
 			} else {
+				printf("oxpcie address is %s\n", ser_var);
 				oxpcie_mapping_index = freeidx++;
 			}
 		}
@@ -922,7 +931,7 @@ PUBLIC int arch_phys_map(const int index,
 
 #ifdef USE_APIC
 	/* map the local APIC if enabled */
-	if (index == 0) {
+	if (index == lapic_mapping_index) {
 		if (!lapic_addr)
 			return EINVAL;
 		*addr = vir2phys(lapic_addr);
@@ -954,12 +963,13 @@ PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
 #ifdef USE_APIC
 	/* if local APIC is enabled */
-	if (index == 0 && lapic_addr) {
+	if (index == lapic_mapping_index && lapic_addr) {
 		lapic_addr_vaddr = addr;
 		return OK;
 	}
-	else if (ioapic_enabled && index <= nioapics) {
-		io_apic[index - 1].vaddr = addr;
+	else if (ioapic_enabled && index >= ioapic_first_index &&
+		index <= ioapic_last_index) {
+		io_apic[index - ioapic_first_index].vaddr = addr;
 		return OK;
 	}
 #endif
