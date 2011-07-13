@@ -8,5 +8,8 @@ SRCS=	ftpd.c access.c file.c net.c
 MAN=		ftpd.8
 SCRIPTS=	ftpdsh
 FILES=		setup.anonftp
+.if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
+LDADD+=        -lcrypt
+.endif
 
 .include <bsd.prog.mk>
