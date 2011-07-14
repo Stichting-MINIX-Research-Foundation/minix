@@ -299,7 +299,8 @@ fi
 
 # If we are making a jail, all is done!
 if [ $JAILMODE = 1 ]
-then	mv $RELEASEDIR $FINAL_JAILDIR
+then	rm -rf $FINAL_JAILDIR
+	mv $RELEASEDIR $FINAL_JAILDIR
 	echo "Created new minix install in $FINAL_JAILDIR."
 	echo "Enter it by typing: "
 	echo "# chroot $FINAL_JAILDIR /bin/sh"
