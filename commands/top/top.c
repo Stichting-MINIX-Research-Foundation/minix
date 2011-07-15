@@ -361,7 +361,7 @@ void print_proc(struct tp *tp, u32_t tcyc)
 	if(!(pr->p_flags & IS_TASK)) {
 		printf(" %3d ", pr->p_nice);
 	} else printf("     ");
-	printf("%5ldK", (pr->p_memory + 512) / 1024);
+	printf("%6ldK", (pr->p_memory + 512) / 1024);
 	printf("%6s", (pr->p_flags & BLOCKED) ? "" : "RUN");
 	ticks = pr->p_user_time;
 	printf(" %3ld:%02ld ", (ticks/system_hz/60), (ticks/system_hz)%60);
@@ -487,7 +487,7 @@ void print_procs(int maxlines,
 
 	NEWLINE;
 
-	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME     CPU COMMAND");
+	printf("  PID USERNAME PRI NICE    SIZE STATE   TIME     CPU COMMAND");
 	NEWLINE;
 	for(p = 0; p < nprocs; p++) {
 		struct proc *pr;
