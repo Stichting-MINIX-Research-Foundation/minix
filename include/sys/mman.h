@@ -13,7 +13,6 @@
 #define PROT_EXEC       0x04    /* pages can be executed */
 
 /* flags argument for mmap()  */
-#define MAP_SHARED      0x0001          /* share changes */
 #define MAP_PRIVATE     0x0002          /* changes are private */
 #define MAP_ANON	0x0004          /* anonymous memory */
 #define MAP_PREALLOC	0x0008		/* not on-demand */
@@ -21,6 +20,7 @@
 #define MAP_LOWER16M	0x0020		/* physically below 16MB */
 #define MAP_ALIGN64K	0x0040		/* physically aligned at 64kB */
 #define MAP_LOWER1M	0x0080		/* physically below 16MB */
+#define MAP_IPC_SHARED  0x0100          /* used to implement shared memory */
 
 /* mmap() error return */
 #define MAP_FAILED      ((void *)-1)

@@ -35,7 +35,9 @@ typedef	__off_t		off_t;		/* file offset */
  * Flags contain sharing type and options.
  * Sharing types; choose one.
  */
+#ifndef __minix
 #define	MAP_SHARED	0x0001	/* share changes */
+#endif
 #define	MAP_PRIVATE	0x0002	/* changes are private */
 
 /*
@@ -52,6 +54,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define MAP_ALIGN64K	0x0040		/* physically aligned at 64kB */
 #define MAP_LOWER1M	0x0080		/* physically below 16MB */
 #define	MAP_ALIGNMENT_64KB	MAP_ALIGN64K
+#define	MAP_IPC_SHARED	0x0100	/* share changes */
 
 /*
  * Error indicator returned by mmap(2)

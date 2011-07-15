@@ -368,7 +368,7 @@ PRIVATE int dump_regions(int slot)
 				(vri[i].vri_prot & PROT_READ) ? 'r' : '-',
 				(vri[i].vri_prot & PROT_WRITE) ? 'w' : '-',
 				(vri[i].vri_prot & PROT_EXEC) ? 'x' : '-',
-				(vri[i].vri_flags & MAP_SHARED) ? 's' : 'p');
+				(vri[i].vri_flags & MAP_IPC_SHARED) ? 's' : 'p');
 
 			count++;
 		}

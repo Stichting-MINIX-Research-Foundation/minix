@@ -74,7 +74,7 @@ PUBLIC int do_shmget(message *m)
 		memset(shm, 0, sizeof(struct shm_struct));
 		shm->page = (vir_bytes) mmap(0, size,
 					PROT_READ|PROT_WRITE,
-					MAP_CONTIG|MAP_PREALLOC|MAP_ANON|MAP_SHARED,
+					MAP_CONTIG|MAP_PREALLOC|MAP_ANON|MAP_IPC_SHARED,
 					-1, 0);
 		if (shm->page == (vir_bytes) MAP_FAILED)
 			return ENOMEM;

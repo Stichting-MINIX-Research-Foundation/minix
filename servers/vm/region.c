@@ -1999,7 +1999,7 @@ PUBLIC int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 		if (!(vr->flags & VR_WRITABLE))
 			vri->vri_prot &= ~PROT_WRITE;
 
-		vri->vri_flags = (vr->flags & VR_SHARED) ? MAP_SHARED : 0;
+		vri->vri_flags = (vr->flags & VR_SHARED) ? MAP_IPC_SHARED : 0;
 
 		next = vr->vaddr + vr->length;
 		region_incr_iter(&v_iter);

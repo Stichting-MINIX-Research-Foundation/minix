@@ -68,7 +68,14 @@ PUBLIC int do_mmap(message *m)
 		if(m->VMM_FLAGS & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
 		if(m->VMM_FLAGS & MAP_LOWER1M)  vrflags |= VR_LOWER1MB;
 		if(m->VMM_FLAGS & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
-		if(m->VMM_FLAGS & MAP_SHARED) vrflags |= VR_SHARED;
+		if(m->VMM_FLAGS & MAP_IPC_SHARED) {
+			vrflags |= VR_SHARED;
+			/* Shared memory has to be preallocated. */
+			if(m->VMM_FLAGS & (MAP_PREALLOC|MAP_ANON) !=
+				(MAP_PREALLOC|MAP_ANON)) {
+				return EINVAL;
+			}
+		}
 		if(m->VMM_FLAGS & MAP_CONTIG) vrflags |= VR_CONTIG;
 
 		if(len % VM_PAGE_SIZE)
