@@ -563,6 +563,8 @@ off_t newsize;			/* inode must become this size */
 	return(EINVAL);
   if (newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
 	return(EFBIG);
+  if (rip->i_size == newsize)
+	return(OK);
 
   /* Free the actual space if truncating. */
   if (newsize < rip->i_size) {

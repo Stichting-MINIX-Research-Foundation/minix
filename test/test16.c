@@ -204,6 +204,15 @@ void test16a()
   if (unlink("T16.i1") != 0) e(84); 
   if (unlink("T16.j") != 0) e(85); 
   if (unlink("T16.k") != 0) e(86); 
+
+  /* Test the times for truncate. */
+  if (system("echo 1 > T16.l") != 0) e(87);
+  stat("T16.l", &s);
+  get_times("T16.l", &a, &c, &m);
+  sleep(1);
+  truncate("T16.l", s.st_size);
+  get_times("T16.l", &ta, &tc, &tm);
+  if (a != ta || c != tc || m != tm) e(88);
 }
 
 void get_times(name, a, c, m)
