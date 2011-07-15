@@ -777,18 +777,18 @@ int status;
 	return;
   }
 
-  /* The filp must be busy waiting for a reply. */
-  assert(f->filp_select_flags & FSF_BUSY);
-  assert(f->filp_count >= 1); /* There should be at least one owner */
-
-  /* Find vnode and check we got a reply from the device we expected */
-  vp = f->filp_vno;
-  assert(vp != NULL);
-  assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL); /* Must be char. special */
-  if (vp->v_sdev != dev) {
-	printf("VFS (%s:%d): expected reply from dev %d not %d\n",
-		vp->v_sdev, dev);
-	return;
+  /* Is the filp still in use and busy waiting for a reply? The owner might
+   * have vanished before the driver was able to reply. */
+  if (f->filp_count >= 1 && (f->filp_select_flags & FSF_BUSY)) {
+	/* Find vnode and check we got a reply from the device we expected */
+	vp = f->filp_vno;
+	assert(vp != NULL);
+	assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL); /* Must be char. special */
+	if (vp->v_sdev != dev) {
+		printf("VFS (%s:%d): expected reply from dev %d not %d\n",
+			vp->v_sdev, dev);
+		return;
+	}
   }
 
   /* No longer waiting for a reply from this device */
