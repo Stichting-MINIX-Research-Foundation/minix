@@ -10,6 +10,9 @@ __weak_alias(vm_remap, _vm_remap)
 __weak_alias(vm_unmap, _vm_unmap)
 __weak_alias(vm_getphys, _vm_getphys)
 __weak_alias(vm_getrefcount, _vm_getrefcount)
+__weak_alias(minix_mmap, _minix_mmap)
+__weak_alias(minix_munmap, _minix_munmap)
+__weak_alias(minix_munmap_text, _minix_munmap_text)
 #endif
 
 

@@ -921,6 +921,9 @@
 #define truncate _truncate
 #define write _write
 #define writev _writev
+#define minix_mmap _minix_mmap
+#define minix_munmap _minix_munmap
+#define minix_munmap_text _minix_munmap_text
 #endif /* __minix */
 
 #endif /* __weak_alias */
