@@ -1,8 +1,8 @@
 #define _SYSTEM 1
 #include <lib.h>
-#define mmap	_mmap
-#define munmap	_munmap
-#define munmap_text	_munmap_text
+#define minix_mmap	_minix_mmap
+#define minix_munmap	_minix_munmap
+#define minix_munmap_text	_minix_munmap_text
 #define vm_remap _vm_remap
 #define vm_unmap _vm_unmap
 #define vm_getphys _vm_getphys
@@ -12,7 +12,7 @@
 #include <string.h>
 #include <errno.h>
 
-PUBLIC void *mmap(void *addr, size_t len, int prot, int flags,
+PUBLIC void *minix_mmap(void *addr, size_t len, int prot, int flags,
 	int fd, off_t offset)
 {
 	message m;
@@ -34,7 +34,7 @@ PUBLIC void *mmap(void *addr, size_t len, int prot, int flags,
 	return (void *) m.VMM_RETADDR;
 }
 
-PUBLIC int munmap(void *addr, size_t len)
+PUBLIC int minix_munmap(void *addr, size_t len)
 {
 	message m;
 
@@ -45,7 +45,7 @@ PUBLIC int munmap(void *addr, size_t len)
 }
 
 
-PUBLIC int munmap_text(void *addr, size_t len)
+PUBLIC int minix_munmap_text(void *addr, size_t len)
 {
 	message m;
 

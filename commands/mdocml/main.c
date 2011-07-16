@@ -644,9 +644,13 @@ fdesc(struct curparse *curp)
 		roff_reset(roff);
 	if (ln.buf)
 		free(ln.buf);
+#ifdef __minix
+	assert(!with_mmap);
+#else
 	if (with_mmap)
 		munmap(blk.buf, blk.sz);
 	else
+#endif
 		free(blk.buf);
 
 	return;

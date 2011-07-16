@@ -443,7 +443,6 @@
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
 #define mktime_z		_mktime_z
-#define mmap			_mmap
 #define mpool_close		_mpool_close
 #define mpool_filter		_mpool_filter
 #define mpool_get		_mpool_get
@@ -889,8 +888,6 @@
 #define mkdir _mkdir
 #define mkfifo _mkfifo
 #define mknod _mknod
-#define munmap _munmap
-#define munmap_text _munmap_text
 #define open _open
 #define pathconf _pathconf
 #define ptrace _ptrace

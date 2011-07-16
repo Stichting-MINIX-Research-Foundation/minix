@@ -75,8 +75,7 @@ _citrus_map_file(struct _citrus_region * __restrict r,
 	}
 
 #ifdef __minix
-	head = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_ANON, -1, (off_t)0);
-	if (head == MAP_FAILED) {
+	if(!(head = malloc(st.st_size))) {
 		ret = errno;
 		goto error;
 	}
@@ -107,7 +106,11 @@ _citrus_unmap_file(struct _citrus_region *r)
 	_DIAGASSERT(r != NULL);
 
 	if (_region_head(r) != NULL) {
+#ifdef __minix
+		free(_region_head(r));
+#else
 		(void)munmap(_region_head(r), _region_size(r));
+#endif
 		_region_init(r, NULL, 0);
 	}
 }

@@ -10,6 +10,9 @@
 #include <string.h>
 #include <sys/mman.h>
 
+#define mmap minix_mmap
+#define munmap minix_munmap
+
 #include "malloc-debug.h"
 
 #if 0

@@ -25,9 +25,9 @@
 /* mmap() error return */
 #define MAP_FAILED      ((void *)-1)
 
-_PROTOTYPE( void *mmap, (void *, size_t, int, int, int, off_t));
-_PROTOTYPE( int munmap, (void *, size_t));
-_PROTOTYPE( int munmap_text, (void *, size_t));
+_PROTOTYPE( void *minix_mmap, (void *, size_t, int, int, int, off_t));
+_PROTOTYPE( int minix_munmap, (void *, size_t));
+_PROTOTYPE( int minix_munmap_text, (void *, size_t));
 _PROTOTYPE( void *vm_remap, (endpoint_t d, endpoint_t s, void *da,
 				void *sa, size_t si));
 _PROTOTYPE( int vm_unmap, (endpoint_t endpt, void *addr));

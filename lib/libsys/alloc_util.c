@@ -33,12 +33,12 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 	if(flags & AC_ALIGN64K)
 		mmapflags |= MAP_ALIGN64K;
 
-	/* First try to get memory with mmap. This is guaranteed
+	/* First try to get memory with minix_mmap. This is guaranteed
 	 * to be page-aligned, and we can tell VM it has to be
 	 * pre-allocated and contiguous.
 	 */
 	errno = 0;
-	buf = (vir_bytes) mmap(0, len, PROT_READ|PROT_WRITE, mmapflags, -1, 0);
+	buf = (vir_bytes) minix_mmap(0, len, PROT_READ|PROT_WRITE, mmapflags, -1, 0);
 
 	/* If that failed, maybe we're not running in paged mode.
 	 * If that's the case, ENXIO will be returned.
@@ -74,6 +74,6 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 
 int free_contig(void *addr, size_t len)
 {
-	return munmap(addr, len);
+	return minix_munmap(addr, len);
 }
 

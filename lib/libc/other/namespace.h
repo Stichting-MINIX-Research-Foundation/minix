@@ -155,6 +155,9 @@
 #define		system				_system
 #define		tcdrain				_tcdrain
 #define		wait				_wait
+#define		minix_mmap			_minix_mmap
+#define		minix_munmap			_minix_munmap
+#define		minix_munmap_text		_minix_munmap_text
 #endif
 
 #endif /* _NAMESPACE_H_ */

@@ -6,32 +6,32 @@
 
 #include "inc.h"
 
-#define munmap _munmap
-#define munmap_text _munmap_text
+#define minix_munmap _minix_munmap
+#define minix_munmap_text _minix_munmap_text
 #include <sys/mman.h>
-#undef munmap
-#undef munmap_text
+#undef minix_munmap
+#undef minix_munmap_text
 
 PUBLIC int unmap_ok = 0;
 
 /*===========================================================================*
- *				    munmap	            		     *
+ *				    minix_munmap            		     *
  *===========================================================================*/
-PUBLIC int munmap(void *addrstart, vir_bytes len)
+PUBLIC int minix_munmap(void *addrstart, vir_bytes len)
 {
   if(!unmap_ok) 
       return ENOSYS;
 
-  return _munmap(addrstart, len);
+  return _minix_munmap(addrstart, len);
 }
 
 /*===========================================================================*
- *			         munmap_text	            		     *
+ *			         minix_munmap_text            		     *
  *===========================================================================*/
-PUBLIC int munmap_text(void *addrstart, vir_bytes len)
+PUBLIC int minix_munmap_text(void *addrstart, vir_bytes len)
 {
   if(!unmap_ok)
       return ENOSYS;
 
-  return _munmap_text(addrstart, len);
+  return _minix_munmap_text(addrstart, len);
 }

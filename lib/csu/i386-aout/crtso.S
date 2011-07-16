@@ -91,7 +91,7 @@ __minix_unmapzero:
 	/* unmap 0-page code */
 	push	$I386_PAGE_SIZE
 	push	$crtso
-	call	_munmap_text		/* unmap_text(crtso, I386_PAGE_SIZE) */
+	call	_minix_munmap_text		/* unmap_text(crtso, I386_PAGE_SIZE) */
 	add	$8, %esp
 
 #ifdef __ACK__
@@ -103,7 +103,7 @@ __minix_unmapzero:
 	/* unmap 0-page data */
 	push	$I386_PAGE_SIZE
 	push	$romstart
-	call	_munmap			/* munmap(romstart, I386_PAGE_SIZE) */
+	call	_minix_munmap			/* munmap(romstart, I386_PAGE_SIZE) */
 	add	$8, %esp
 #endif
 

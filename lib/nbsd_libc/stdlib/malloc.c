@@ -12,6 +12,11 @@
  *
  */
 
+#ifdef __minix
+#define mmap minix_mmap
+#define munmap minix_munmap
+#endif
+
 /*
  * Defining MALLOC_EXTRA_SANITY will enable extra checks which are related
  * to internal conditions and consistency in malloc.c. This has a

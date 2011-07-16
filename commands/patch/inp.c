@@ -102,7 +102,11 @@ re_input(void)
 		free(i_ptr);
 		i_ptr = NULL;
 		if (i_womp != NULL) {
+#ifndef __minix
 			munmap(i_womp, i_size);
+#else
+			free(i_womp);
+#endif
 			i_womp = NULL;
 		}
 	} else {
@@ -139,7 +143,11 @@ reallocate_lines(size_t *lines_allocated)
 	new_size = *lines_allocated * 3 / 2;
 	p = realloc(i_ptr, (new_size + 2) * sizeof(char *));
 	if (p == NULL) {	/* shucks, it was a near thing */
+#ifndef __minix
 		munmap(i_womp, i_size);
+#else
+		free(i_womp);
+#endif
 		i_womp = NULL;
 		free(i_ptr);
 		i_ptr = NULL;

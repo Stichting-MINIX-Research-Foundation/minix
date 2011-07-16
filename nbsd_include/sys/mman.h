@@ -64,11 +64,13 @@ typedef	__off_t		off_t;		/* file offset */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+#ifndef __minix
 void *	mmap(void *, size_t, int, int, int, off_t);
 int	munmap(void *, size_t);
-
-#ifdef __minix
-int 		munmap_text(void *, size_t);
+#else
+void *	minix_mmap(void *, size_t, int, int, int, off_t);
+int	minix_munmap(void *, size_t);
+int 		minix_munmap_text(void *, size_t);
 void *		vm_remap(int d, int s, void *da, void *sa, size_t si);
 int 		vm_unmap(int endpt, void *addr);
 unsigned long 	vm_getphys(int endpt, void *addr);

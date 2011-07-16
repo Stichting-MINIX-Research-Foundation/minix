@@ -57,7 +57,11 @@ _catclose(catd)
 	}
 	
 	if (catd) {
+#ifdef __minix
+		free(catd->__data);
+#else
 		munmap(catd->__data, (size_t)catd->__size);
+#endif
 		free (catd);
 	}
 

@@ -407,7 +407,7 @@ message *m_ptr;
 	if(vlen % PAGE_SIZE) {
 		vlen -= vlen % PAGE_SIZE;
 	}
-	munmap((void *) vaddr, vlen);
+	minix_munmap((void *) vaddr, vlen);
 	m_geom[IMGRD_DEV].dv_base= cvul64(0);
 	m_geom[IMGRD_DEV].dv_size= cvul64(0);
 	m_vaddrs[IMGRD_DEV] = 0;
@@ -465,7 +465,7 @@ message *m_ptr;				/* pointer to control message */
 			panic("huge old ramdisk");
 		}
 		size = ex64lo(dv->dv_size);
-		munmap((void *) m_vaddrs[dev], size);
+		minix_munmap((void *) m_vaddrs[dev], size);
 		m_vaddrs[dev] = (vir_bytes) NULL;
 	}
 
@@ -474,7 +474,7 @@ message *m_ptr;				/* pointer to control message */
 #endif
 
 	/* Try to allocate a piece of memory for the RAM disk. */
-	if((mem = mmap(NULL, ramdev_size, PROT_READ|PROT_WRITE,
+	if((mem = minix_mmap(NULL, ramdev_size, PROT_READ|PROT_WRITE,
 	  MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	    printf("MEM: failed to get memory for ramdisk\n");
             return(ENOMEM);

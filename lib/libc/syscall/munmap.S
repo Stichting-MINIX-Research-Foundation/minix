@@ -1,10 +1,10 @@
 #include <machine/asm.h>
 
-IMPORT(_munmap)
-ENTRY(munmap)
-	jmp	_C_LABEL(_munmap)
+IMPORT(_minix_munmap)
+ENTRY(minix_munmap)
+	jmp	_C_LABEL(_minix_munmap)
 
-IMPORT(_munmap_text)
-ENTRY(munmap_text)
-	jmp	_C_LABEL(_munmap_text)
+IMPORT(_minix_munmap_text)
+ENTRY(minix_munmap_text)
+	jmp	_C_LABEL(_minix_munmap_text)
 
