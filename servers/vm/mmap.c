@@ -447,7 +447,7 @@ PRIVATE int munmap_lin(vir_bytes addr, size_t len)
 /*===========================================================================*
  *                              munmap (override for VM)                    *
  *===========================================================================*/
-PUBLIC int munmap(void *addr, size_t len)
+PUBLIC int minix_munmap(void *addr, size_t len)
 {
 	vir_bytes laddr;
 	if(!unmap_ok)
@@ -459,7 +459,7 @@ PUBLIC int munmap(void *addr, size_t len)
 /*===========================================================================*
  *                              munmap_text (override for VM)                *
  *===========================================================================*/
-PUBLIC int munmap_text(void *addr, size_t len)
+PUBLIC int minix_munmap_text(void *addr, size_t len)
 {
 	vir_bytes laddr;
 	if(!unmap_ok)
