@@ -350,14 +350,14 @@ vir_bytes vir_addr;             /* virtual address in bytes within the seg */
 vir_bytes bytes;                /* # of bytes to be copied */
 {
 	vir_bytes linear;
-	u32_t phys = 0;
+	phys_bytes phys = 0;
 
 	if(!(linear = umap_local(rp, seg, vir_addr, bytes))) {
 			printf("SYSTEM:umap_virtual: umap_local failed\n");
 			phys = 0;
 		} else {
 			if(vm_lookup(rp, linear, &phys, NULL) != OK) {
-				printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%lx: 0x%lx failed\n", rp->p_name, seg, vir_addr);
+				printf("SYSTEM:umap_virtual: vm_lookup of %s: seg 0x%x: 0x%lx failed\n", rp->p_name, seg, vir_addr);
 				phys = 0;
 			} else {
 				if(phys == 0)
@@ -375,7 +375,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	 * so that the umap makes sense.
 	 */
 	if(bytes > 0 && !vm_contiguous(rp, linear, bytes)) {
-		printf("umap_virtual: %s: %d at 0x%lx (vir 0x%lx) not contiguous\n",
+		printf("umap_virtual: %s: %lu at 0x%lx (vir 0x%lx) not contiguous\n",
 			rp->p_name, bytes, linear, vir_addr);
 		return 0;
 	}
@@ -393,7 +393,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
  *                              vm_lookup                                    *
  *===========================================================================*/
 PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
- vir_bytes *physical, u32_t *ptent)
+ phys_bytes *physical, u32_t *ptent)
 {
 	u32_t *root, *pt;
 	int pde, pte;
@@ -451,7 +451,7 @@ PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 PUBLIC int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf, size_t bytes)
 {
 	int first = 1, r;
-	u32_t prev_phys = 0;    /* Keep lints happy. */
+	phys_bytes prev_phys = 0;    /* Keep lints happy. */
 	u32_t po;
 
 	assert(targetproc);
@@ -472,7 +472,7 @@ PUBLIC int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf, size_
 
 	/* Keep going as long as we cross a page boundary. */
 	while(bytes > 0) {
-		u32_t phys;
+		phys_bytes phys;
 
 		if((r=vm_lookup(targetproc, vir_buf, &phys, NULL)) != OK) {
 			printf("vm_contiguous: vm_lookup failed, %d\n", r);
@@ -540,7 +540,7 @@ PUBLIC void delivermsg(struct proc *rp)
 
 	if (copy_msg_to_user(rp, &rp->p_delivermsg,
 				(message *) rp->p_delivermsg_vir)) {
-		printf("WARNING wrong user pointer 0x%08x from "
+		printf("WARNING wrong user pointer 0x%08lx from "
 				"process %s / %d\n",
 				rp->p_delivermsg_vir,
 				rp->p_name,
@@ -729,7 +729,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 				vir_addr[i]->offset, bytes);
 	  if(phys_addr[i] == 0) {
 		printf("virtual_copy: map 0x%x failed for %s seg %d, "
-			"offset %lx, len %d, i %d\n",
+			"offset %lx, len %lu, i %d\n",
 			type, p->p_name, seg_index, vir_addr[i]->offset,
 			bytes, i);
 	  }
@@ -799,11 +799,11 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   /* can't copy to/from process with PT without VM */
 #define NOPT(p) (!(p) || !HASPT(p))
   if(!NOPT(procs[_SRC_])) {
-	printf("ignoring page table src: %s / %d at 0x%lx\n",
+	printf("ignoring page table src: %s / %d at 0x%x\n",
 		procs[_SRC_]->p_name, procs[_SRC_]->p_endpoint, procs[_SRC_]->p_seg.p_cr3);
 }
   if(!NOPT(procs[_DST_])) {
-	printf("ignoring page table dst: %s / %d at 0x%lx\n",
+	printf("ignoring page table dst: %s / %d at 0x%x\n",
 		procs[_DST_]->p_name, procs[_DST_]->p_endpoint,
 		procs[_DST_]->p_seg.p_cr3);
   }

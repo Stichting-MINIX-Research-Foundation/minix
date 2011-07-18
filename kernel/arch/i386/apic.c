@@ -494,7 +494,7 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 	tsc_delta = sub64(tsc1, tsc0);
 
 	lapic_bus_freq[cpuid] = system_hz * lapic_delta / (PROBE_TICKS - 1);
-	BOOT_VERBOSE(printf("APIC bus freq %lu MHz\n",
+	BOOT_VERBOSE(printf("APIC bus freq %u MHz\n",
 				lapic_bus_freq[cpuid] / 1000000));
 	cpu_freq = mul64(div64u64(tsc_delta, PROBE_TICKS - 1), make64(system_hz, 0));
 	cpu_set_freq(cpuid, cpu_freq);
@@ -903,7 +903,7 @@ PRIVATE int acpi_get_ioapics(struct io_apic * ioa, unsigned * nioa, unsigned max
 		ioa[n].gsi_base = acpi_ioa->global_int_base;
 		ioa[n].pins = ((ioapic_read(ioa[n].addr,
 				IOAPIC_VERSION) & 0xff0000) >> 16)+1;
-		printf("IO APIC %d addr 0x%x paddr 0x%x pins %d\n",
+		printf("IO APIC %d addr 0x%lx paddr 0x%lx pins %d\n",
 				acpi_ioa->id, ioa[n].addr, ioa[n].paddr,
 				ioa[n].pins);
 
@@ -920,6 +920,8 @@ PUBLIC int detect_ioapics(void)
 
 	if (machine.acpi_rsdp)
 		status = acpi_get_ioapics(io_apic, &nioapics, MAX_NR_IOAPICS);
+	else
+		status = 0;
 	if (!status) {
 		/* try something different like MPS */
 	}

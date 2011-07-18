@@ -54,7 +54,7 @@ PUBLIC int do_sigsend(struct proc * caller, message * m_ptr)
 
   /* Finish the sigcontext initialization. */
   sc.sc_mask = smsg.sm_mask;
-  sc.sc_flags = 0 | rp->p_misc_flags & MF_FPU_INITIALIZED;
+  sc.sc_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
 
   /* Copy the sigcontext structure to the user's stack. */
   if((r=data_copy_vmcheck(caller, KERNEL, (vir_bytes) &sc, m_ptr->SIG_ENDPT,

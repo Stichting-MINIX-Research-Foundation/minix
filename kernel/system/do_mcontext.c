@@ -44,7 +44,7 @@ PUBLIC int do_getmcontext(struct proc * caller, message * m_ptr)
   if (proc_used_fpu(rp)) {
 	/* make sure that the FPU context is saved into proc structure first */
 	save_fpu(rp);
-	mc.mc_fpu_flags = 0 | rp->p_misc_flags & MF_FPU_INITIALIZED;
+	mc.mc_fpu_flags = rp->p_misc_flags & MF_FPU_INITIALIZED;
 	memcpy(&(mc.mc_fpu_state), rp->p_fpu_state.fpu_save_area_p,
 							FPU_XFP_SIZE);
   } 

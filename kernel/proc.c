@@ -506,7 +506,7 @@ PRIVATE int do_sync_ipc(struct proc * caller_ptr, /* who made the call */
 
   if (call_nr != SENDREC && call_nr != RECEIVE && iskerneln(src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-      printf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
+      printf("sys_call: trap %s not allowed, caller %d, src_dst %d\n",
            callname, proc_nr(caller_ptr), src_dst_e);
 #endif
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
