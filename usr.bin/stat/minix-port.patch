@@ -1,0 +1,31 @@
+diff -ru nbsdsrc/src/usr.bin/stat/Makefile usr.bin/stat/Makefile
+--- nbsdsrc/src/usr.bin/stat/Makefile
++++ usr.bin/stat/Makefile
+@@ -4,6 +4,11 @@
+ 
+ .if !defined(HOSTPROG)
+ LINKS=	${BINDIR}/stat ${BINDIR}/readlink
++.if defined(__MINIX)
++# To prevent breaking of existing utilities in commands/
++LINKS+=	${BINDIR}/stat ${BINDIR}/fstat
++LINKS+=	${BINDIR}/stat ${BINDIR}/lstat
++.endif
+ MLINKS=	stat.1 readlink.1
+ .endif
+ 
+diff -ru nbsdsrc/src/usr.bin/stat/stat.c usr.bin/stat/stat.c
+--- nbsdsrc/src/usr.bin/stat/stat.c
++++ usr.bin/stat/stat.c
+@@ -44,7 +44,12 @@
+ #define HAVE_STRUCT_STAT_ST_BIRTHTIME 1
+ #define HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC 1
+ #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
++#ifdef __minix
++/* Not supported in Minix. */
++#define HAVE_DEVNAME 0 
++#else /* __minix */
+ #define HAVE_DEVNAME 1
++#endif /* __minx */
+ #endif /* HAVE_NBTOOL_CONFIG_H */
+ 
+ #include <sys/types.h>

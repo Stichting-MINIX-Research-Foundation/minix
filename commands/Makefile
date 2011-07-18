@@ -25,7 +25,7 @@ SUBDIR=	aal add_route adduser advent arp ash at autil awk \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
 	readfs reboot remsync rev rget rlogin rlogind rmdir \
 	rotate rsh rshd sed service setup shar size \
-	sleep slip sort spell split srccrc stat strings ackstrip \
+	sleep slip sort spell split srccrc strings ackstrip \
 	stty su sum svclog swapfs swifi sync synctree sysenv \
 	syslogd tail talk talkd tar tcpd tcpdp tcpstat tee telnet \
 	telnetd term termcap tget time tinyhalt top touch tr \

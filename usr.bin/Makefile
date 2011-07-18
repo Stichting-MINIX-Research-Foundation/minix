@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 # NetBSD imports
-SUBDIR= indent m4 mkimage
+SUBDIR= indent m4 mkimage stat
 
 # Non-NetBSD imports
 SUBDIR+= ministat
