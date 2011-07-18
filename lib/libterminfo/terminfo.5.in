@@ -1,0 +1,267 @@
+.\"	$NetBSD: terminfo.5.in,v 1.14 2010/02/26 07:03:49 wiz Exp $
+.\"
+.\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Roy Marples.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 26, 2010
+.Dt TERMINFO 5
+.Os
+.Sh NAME
+.Nm terminfo
+.Nd terminal capability definition
+.Sh DESCRIPTION
+.Nm
+describes the capabilities of terminals, used by programs such as
+.Xr vi 1 ,
+.Xr rogue 6
+and libraries such as
+.Xr curses 3 .
+The
+.Nm
+source described here needs to be compiled with
+.Xr tic 1
+to be of any use.
+.Pp
+Entries in
+.Nm
+consist of a number of comma separated fields.
+White space after each comma is ignored.
+Embedded commas must be escaped by using a backslash.
+Lines beginning with
+.Sq #
+in the first column are treated as comments.
+Blank lines are ignored.
+.Pp
+The header line must begin in column one and end with a comma.
+Inside the header line are terminal name and aliases,
+separated by vertical bars, the last one being the long
+description of the terminal.
+.Pp
+Capability lines then follow, starting on column two and ending with a comma.
+Each capability is listed by its name, followed by its value if applicable.
+Booleans have no values, numeric values are prefixed by
+.Sq #
+and strings are prefixed by
+.Sq = .
+Numbers can range from 0 to 32767 and string values can be up to 1000
+characters long.
+This implementation supports strings upto 32767 characters long, including the
+.Dv NUL
+terminator.
+.Pp
+Some escapes are available for strings - both
+.Sy \eE
+and
+.Sy \ee
+map to the
+.Dv ESC
+character,
+.Sy ^X
+maps to a control-X for any appropriate X, and the sequences
+.Sy \en ,
+.Sy \er ,
+.Sy \et ,
+.Sy \eb
+and
+.Sy \ef
+map to linefeed, return, tab, backspace, and formfeed respectively.
+Any character can be escaped in octal, such as
+.Sy \e072 .
+If you need to encode a
+.Dv NUL
+character, it should be escaped as
+.Sy \e200 .
+.Pp
+A delay in milliseconds may appear anywhere in a string capability,
+prefixed with a dollar sign and enclosed by angled brackets, such as
+.Sy $\*[Lt]5\*[Gt] .
+.Ss String Parameters
+String capabilities sometimes require parameters.
+Normally this just involves replacing the parameter with a supplied
+variable; however, there are cases where the variable needs to be manipulated
+or used in conditional expressions.
+A stack is also provided for simple pop and push operations.
+.Pp
+The below % encodings have the following meanings:
+.Bl -tag -width %P[a-z]
+.It Sy %%
+outputs %
+.It Sy %[[:]flags][width[.precision]][doxXs]
+flags are
+.Dq [-+#] .
+Prefix with
+.Sq \&:
+to avoid interpreting
+.Dq %-
+as an operator.
+.It Sy %c
+pop a parameter and print the character representation of it.
+.It Sy %s
+pop a parameter and print the string representation of it.
+.It Sy %p[1-9]
+push the parameter [1-9].
+.It Sy %P[a-z]
+pop a parameter and push it to dynamic variable [a-z].
+.It Sy %g[a-z]
+push the dynamic variable [a-z].
+.It Sy %P[A-Z]
+pop a parameter and push it to static variable [a-z].
+.It Sy %g[A-Z]
+push the dynamic variable [A-Z].
+.Pp
+Static variables persist over
+.Fn tparm
+whereas dynamic variables do not.
+.It Sy %'c'
+char constant c.
+.It Sy %{nn}
+integer constant nn.
+.It Sy %l
+push the string length of the previously popped parameter.
+.It Sy %+ Sy %- Sy %* Sy %/ Sy %m
+arithmetic: pop two parameters and push the result.
+.It Sy %& Sy %| Sy %^
+bit operations: pop two parameters and push the result.
+.It Sy %! Sy %~
+unary operations: pop two parameters and push the result.
+.It Sy %i
+add 1 to parameters 1 and 2.
+.It Sy %? Va expr Sy %t Ic then Sy %e Ic else Sy %;
+If expr equates to zero then control passes to the optional else part.
+.El
+.Ss Boolean Capabilities
+.Bl -column "enter_near_quality_letter" "setcolor" "TC"
+.It Sy "Long name" Ta Sy "Code" Ta Sy "TC"
+@BOOLCAPS@
+.El
+.Ss Numeric Capabilities
+.Bl -column "enter_near_quality_letter" "setcolor" "TC"
+.It Sy "Long name" Ta Sy "Code" Ta Sy "TC"
+@NUMCAPS@
+.El
+.Ss String Capabilities
+.Bl -column "enter_near_quality_letter" "setcolor" "TC"
+.It Sy "Long name" Ta Sy "Code" Ta Sy "TC"
+@STRCAPS@
+.El
+.Ss A Sample Entry
+.Bd -literal
+vt100\||dec vt100 (w/advanced video),
+am, xenl, msgr, mc5i, xon,
+cols#80, it#8, lines#24, vt#3,
+acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, bel=^G,
+cr=^M, csr=\eE[%i%p1%d;%p2%dr, tbc=\eE[3g, clear=\eE[H\eE[J$\*[Lt]50\*[Gt],
+el1=\eE[1K$\*[Lt]3\*[Gt], el=\eE[K$\*[Lt]3\*[Gt], ed=\eE[J$\*[Lt]50\*[Gt],
+cup=\eE[%i%p1%d;%p2%dH$\*[Lt]5\*[Gt], cud1=^J, home=\eE[H, cub1=^H,
+cuf1=\eE[C$\*[Lt]2\*[Gt], cuu1=\eE[A$\*[Lt]2\*[Gt], enacs=\eE(B\eE)0, smacs=^N,
+smam=\eE[?7h, blink=\eE[5m$\*[Lt]2\*[Gt], bold=\eE[1m$\*[Lt]2\*[Gt], rev=\eE[7m$\*[Lt]2\*[Gt],
+smso=\eE[7m$\*[Lt]2\*[Gt], smul=\eE[4m$\*[Lt]2\*[Gt], rmacs=^O, rmam=\eE[?7l,
+sgr0=\eE[m017$\*[Lt]2\*[Gt], rmso=\eE[m$\*[Lt]2\*[Gt], rmul=\eE[m$\*[Lt]2\*[Gt], ka1=\eEOq,
+ka3=\eEOs, kb2=\eEOr, kbs=^H, kc1=\eEOp, kc3=\eEOn, kcud1=\eEOB,
+kent=\eEOM, kf0=\eEOy, kf1=\eEOP, kf2=\eEOQ, kf3=\eEOR, kf4=\eEOS,
+kf5=\eEOt, kf6=\eEOu, kf7=\eEOv, kf8=\eEOl, kf9=\eEOw, kf10=\eEOx,
+kcub1=\eEOD, kcuf1=\eEOC, kcuu1=\eEOA, rmkx=\eE[?1l\eE\*[Gt],
+smkx=\eE[?1h\eE=, lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4,
+cud=\eE[%p1%dB, cub=\eE[%p1%dD, cuf=\eE[%p1%dC, cuu=\eE[%p1%dA,
+mc0=\eE[0i, mc4=\eE[4i, mc5=\eE[5i,
+rs2=\eE\*[Gt]\eE[?3l\eE[?4l\eE[?5l\eE[?7h\eE[?8h, rc=\eE8, sc=\eE7,
+ind=^J, ri=\eEM$\*[Lt]5\*[Gt],
+sgr=\eE[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t016%e017%;$\*[Lt]2\*[Gt],
+hts=\eEH, ht=^I,
+.Ed
+.Ss Fetching Compiled Descriptions
+This implementation uses hashed databases managed by
+.Xr ndbm 3
+instead of directories.
+To maintain compatability with other implementations,
+.Pa .db
+is appended to each file checked.
+.Pp
+If the environment variable
+.Ev TERMINFO
+is available, does not begin with
+.Pq Sq / ,
+can be compiled with the above rules and whose name matches
+.Ev TERM
+then it is used.
+.Pp
+If the environment variable
+.Ev TERMCAP
+is available and does not begin with a slash
+.Pq Sq /
+then it will be translated into
+terminfo and compiled as above.
+If its name matches
+.Ev TERM
+then it is used.
+.Pp
+If the environment variable
+.Ev TERMINFO
+is available and begins with a slash
+.Pq Sq /
+then only this file is searched.
+Otherwise
+.Nm
+will first look for
+.Pa $HOME/.terminfo ,
+followed by
+.Pa /usr/share/misc/terminfo
+unless
+.Ev TERMINFO_DIRS
+is available.
+If a matching description is not found then a small embedded database is
+searched, which currently holds descriptions for ansi, dumb, vt100, vt220,
+wsvt25, and xterm.
+.Sh FILES
+.Bl -tag -width /usr/share/misc/terminfo.db -compact
+.It Pa $HOME/.terminfo.db
+Database of terminal descriptions for personal use.
+.It Pa /usr/share/misc/terminfo
+File containing terminal descriptions.
+.It Pa /usr/share/misc/terminfo.db
+Database of terminal descriptions.
+.El
+.Sh SEE ALSO
+.Xr infocmp 1 ,
+.Xr tic 1 ,
+.Xr tput 1 ,
+.Xr curses 3 ,
+.Xr ndbm 3
+.Sh STANDARDS
+.Nm
+complies with the
+.St -xcurses4.2
+standard.
+.Pp
+Extensions to the standard are noted in
+.Xr tic 1 .
+.Sh AUTHORS
+.An Roy Marples Aq roy@NetBSD.org
+.Sh BUGS
+The
+.Ev TERMCAP
+capabilities %\*[Gt], %B and %D are not converted into terminfo capabilities.

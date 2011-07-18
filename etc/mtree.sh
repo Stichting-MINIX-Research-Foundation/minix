@@ -15,7 +15,7 @@ do
 		group="`echo $line | awk '{ print $3 }'`"
 		dir="`echo $line | awk '{ print $4 }'`"
 		mkdir -p $dir
-		targetdev="`stat -dev $dir/.`"
+		targetdev="`stat -f %d $dir/.`"
 		if [ $targetdev -eq 1 ]
 		then	echo "skipping $dir properties"
 		else	chown $owner $dir

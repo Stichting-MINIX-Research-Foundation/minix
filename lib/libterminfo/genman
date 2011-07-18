@@ -1,0 +1,69 @@
+#!/bin/sh
+# $NetBSD: genman,v 1.4 2010/10/12 12:57:51 christos Exp $
+
+# Copyright (c) 2009 The NetBSD Foundation, Inc.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Roy Marples.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# Generate variable tables for terminfo.5 from our source files.
+
+set -e
+: ${TOOL_SED:=sed}
+: ${TOOL_SORT:=sort}
+
+TERMM=${1:-terminfo.5.in}
+TERMH=${2:-term.h}
+TERMC=${3:-termcap_map.c}
+
+gentab()
+{
+	local ti=$1 tc=$2 tab=$3
+
+	# Generate a list of long names and codes
+	$TOOL_SED -n \
+	-e "s/#define t_\([^(]*\).*>$tab\[TICODE_\([^]]*\).*/\1 \2/p" \
+	$ti | $TOOL_SORT | while read name code foo; do
+		cap=$($TOOL_SED -ne "s/.*{ \"\(..\)\", TICODE_$code }.*/\1/p" \
+		    $tc | head -n 1)
+		echo ".It Li \"$name\" Ta Sy \"\\&$code\" Ta Sy \"\\&$cap\""
+	done
+}
+
+boolcaps=$(gentab $TERMH $TERMC flags)
+numcaps=$(gentab $TERMH $TERMC nums)
+strcaps=$(gentab $TERMH $TERMC strs)
+
+echo ".\\\"DO NOT EDIT"
+echo ".\\\"Automatically generated from termcap.5.in"
+echo ".\\\""
+
+while read -r line; do
+	case "$line" in
+	"@BOOLCAPS@")	echo "$boolcaps";;
+	"@NUMCAPS@")	echo "$numcaps";;
+	"@STRCAPS@")	echo "$strcaps";;
+	*)		echo "$line";;
+	esac
+done <$TERMM

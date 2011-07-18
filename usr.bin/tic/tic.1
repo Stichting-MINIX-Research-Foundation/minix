@@ -1,0 +1,105 @@
+.\"	$NetBSD: tic.1,v 1.8 2010/02/11 13:44:14 wiz Exp $
+.\"
+.\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Roy Marples.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 11, 2010
+.Dt TIC 1
+.Os
+.Sh NAME
+.Nm tic
+.Nd terminfo compiler
+.Sh SYNOPSIS
+.Nm tic
+.Op Fl acSsx
+.Op Fl o Ar file
+.Ar source
+.Op Ar term1 term2 ...
+.Sh DESCRIPTION
+The
+.Nm
+utility compiles
+.Xr terminfo 5
+source into a database for use by other programs.
+The created database path name is the same as the source but with .db appended.
+.Pp
+The following options are available:
+.Bl -tag -width Fl
+.It Fl a
+Do not discard commented out capabilities.
+.It Fl c
+Only check for errors, don't write the final database.
+.It Fl o Ar file
+Write the database to
+.Ar file Ns .db
+instead of
+.Ar source Ns .db .
+.It Fl S
+For
+.Ar term1 , term2 , ...
+output a C structure containing name, compiled description, and compiled size.
+This can be used to embed terminal descriptons into a program.
+.It Fl s
+Display the number of terminal descritions written to the database.
+.It Fl x
+Include non standard capabilities defined in the
+.Ar source .
+.El
+.Ss Extensions To Terminfo
+When
+.Nm
+discovers a
+.Sy use Ns = Ns Va term
+capability, the terminal description for
+.Va term
+is merged in.
+Capabilities do not overwrite previously disovered ones and capabilities
+ending with @ are marked as absent so the terminal does not inherit the
+capability from
+.Sy use Ns d
+terminals.
+.Sh EXIT STATUS
+.Ex -std tic
+.Sh EXAMPLES
+To maintain your private terminfo definitions, if the system supplied
+ones do not support your terminal:
+.Bd -literal -offset indent
+.Ic tic ~/.terminfo
+.Ed
+.Sh SEE ALSO
+.Xr infocmp 1 ,
+.Xr tput 1 ,
+.Xr curses 3 ,
+.Xr terminfo 5
+.Sh STANDARDS
+The
+.Nm
+utility works with terminfo files that conform to the
+.St -xcurses4.2
+standard.
+.Sh AUTHORS
+.An Roy Marples Aq roy@NetBSD.org

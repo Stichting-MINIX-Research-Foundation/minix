@@ -1,3 +1,15 @@
+20110716:
+	To install libterminfo and terminfo database, you need 
+	the new stat:
+	# cd /usr/src/usr.bin/stat
+	# make clean install
+
+	You must create a directory /usr/share/terminfo for terminfo database
+	to be installed. 
+	# make -C etc install
+
+	Then make clean world as normal.
+
 20110708
         * VFS and installed MFSes must be in sync before and after this change *
 

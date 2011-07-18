@@ -21,7 +21,7 @@ SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libcurses libdriver libnetdriver \
 	libddekit
 
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-SUBDIR+= libelf libminc libcrypt
+SUBDIR+= libelf libminc libcrypt libterminfo
 .endif
 
 .if ${COMPILER_TYPE} == "ack"

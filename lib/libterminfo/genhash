@@ -1,0 +1,108 @@
+#!/bin/sh
+# $NetBSD: genhash,v 1.7 2010/10/12 12:57:51 christos Exp $
+
+# Copyright (c) 2009 The NetBSD Foundation, Inc.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Roy Marples.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# Generate string and hash tables for our terminfo strings in term.h
+# We don't expose the hash or tables directly, but instead via functions.
+# This allows us to freely change how we hash or store our string tables
+# in the future.
+
+set -e
+: ${TOOL_AWK:=awk}
+: ${TOOL_NBPERF:=nbperf}
+: ${TOOL_SED:=sed}
+
+TERMH=${1:-term.h}
+
+genent()
+{
+	local name=$1 NAME=$2 len=
+
+	# Calculate the maximum word length plus terminator
+	len=$($TOOL_SED -e "1,/enum TI${NAME}/d" -e '/};/,$d' \
+            -e 's/.*TICODE_\([^,]*\).*/\1X/' $TERMH | \
+	    $TOOL_AWK \
+	    'BEGIN {L=0} {if (length($1)>L) L=length($1)} END {print L}')
+
+	echo
+	echo "static const char _ti_${name}ids[][${len}] = {"
+	$TOOL_SED -e "1,/enum TI${NAME}/d" -e '/};/,$d' \
+            -e 's/.*TICODE_\([^,]*\).*/	"\1",/' $TERMH
+	echo "};"
+	echo
+	$TOOL_SED -e "1,/enum TI${NAME}/d" -e '/};/,$d' \
+	    -e 's/.*TICODE_\([^,]*\).*/\1/' $TERMH | \
+	    $TOOL_NBPERF -sn _ti_${name}hash;
+
+	cat <<EOF
+
+const char *
+_ti_${name}id(ssize_t idx)
+{
+
+	if ((size_t)idx > __arraycount(_ti_${name}ids))
+		return NULL;
+	return _ti_${name}ids[idx];
+}
+
+ssize_t
+_ti_${name}index(const char *key)
+{
+	uint32_t idx;
+
+	idx = _ti_${name}hash((const unsigned char *)key, strlen(key));
+	if (idx > __arraycount(_ti_${name}ids) ||
+	    strcmp(key, _ti_${name}ids[idx]) != 0)
+		return -1;
+	return idx;
+}
+EOF
+}
+
+cat <<EOF
+/* \$NetBSD\$ */
+/* DO NOT EDIT
+ * Automatically generated from term.h */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#include <sys/cdefs.h>
+__RCSID("\$NetBSD: genhash,v 1.7 2010/10/12 12:57:51 christos Exp $");
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <term_private.h>
+#include <term.h>
+EOF
+
+genent flag FLAG
+genent num NUM
+genent str STR

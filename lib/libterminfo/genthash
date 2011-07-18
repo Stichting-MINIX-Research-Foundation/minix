@@ -1,0 +1,62 @@
+#!/bin/sh
+# $NetBSD: genthash,v 1.4 2010/03/03 12:09:49 roy Exp $
+
+# Copyright (c) 2009 The NetBSD Foundation, Inc.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Roy Marples.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# Generate string and hash tables for our termcap strings in termcap.c
+
+set -e
+: ${TOOL_NBPERF:=nbperf}
+: ${TOOL_SED:=sed}
+
+TERMCAPC=${1:-termcap_map.c}
+
+cat <<EOF
+/* \$NetBSD\$ */
+/* DO NOT EDIT
+ * Automatically generated from termcap.c */
+
+#include <sys/cdefs.h>
+__RCSID("\$NetBSD: genthash,v 1.4 2010/03/03 12:09:49 roy Exp $");
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <term_private.h>
+
+EOF
+
+$TOOL_SED -n -e "1,/_ti_cap_flagids/d" -e '/};/,$d' \
+	-e 's/.*"\([^"]*\)".*/\1/p' $TERMCAPC | \
+	$TOOL_NBPERF -s -n _t_flaghash
+echo
+$TOOL_SED -n -e "1,/_ti_cap_numids/d" -e '/};/,$d' \
+	-e 's/.*"\([^"]*\)".*/\1/p' $TERMCAPC | \
+	$TOOL_NBPERF -s -n _t_numhash
+echo
+$TOOL_SED -n -e "1,/_ti_cap_strids/d" -e '/};/,$d' \
+	-e 's/.*"\([^"]*\)".*/\1/p' $TERMCAPC | \
+	$TOOL_NBPERF -s -n _t_strhash

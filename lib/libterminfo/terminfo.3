@@ -1,0 +1,228 @@
+.\"	$NetBSD: terminfo.3,v 1.4 2010/02/04 09:12:56 wiz Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Roy Marples.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 7, 2009
+.Dt TERMINFO 3
+.Os
+.Sh NAME
+.Nm setupterm ,
+.Nm set_curterm ,
+.Nm del_curterm ,
+.Nm tigetflag ,
+.Nm tigetnum ,
+.Nm tigetstr ,
+.Nm tparm ,
+.Nm tputs ,
+.Nm putp
+.Nd terminal independent operation routines
+.Sh LIBRARY
+.Lb libterminfo
+.Sh SYNOPSIS
+.In term.h
+.Vt char PC ;
+.Vt short ospeed ;
+.Vt TERMINAL *cur_term ;
+.Ft int
+.Fn setupterm "const char *name" "int fildes" "int *errret"
+.Ft TERMINAL *
+.Fn set_curterm "TERMINAL *term"
+.Ft int
+.Fn del_curterm "TERMINAL *term"
+.Ft int
+.Fn tigetnum "const char *id"
+.Ft int
+.Fn tigetflag "const char *id"
+.Ft char *
+.Fn tigetstr "const char *id"
+.Ft char *
+.Fn tparm "const char *cm" "long p1" "long p2" "long p3" "long p4" "long p5" "long p6" "long p7" "long p8" "long p9"
+.Ft int
+.Fn tputs "const char *cp" "int affcnt" "int (*outc)(int)"
+.Ft int
+.Fn putp "const char *cp"
+.Ft int
+.Fn ti_setupterm "TERMINAL **" "const char *name" "int fildes" "int *error"
+.Ft int
+.Fn ti_getflag "const TERMINAL *" "const char *id"
+.Ft int
+.Fn ti_getnum "const TERMINAL *" "const char *id"
+.Ft const char *
+.Fn ti_getstr "const TERMINAL *" "const char *id"
+.Ft char *
+.Fn t_parm "const TERMINAL *" "const char *cm" "long p1" "long p2" "long p3" "long p4" "long p5" "long p6" "long p7" "long p8" "long p9"
+.Ft char *
+.Fn t_parm "const char *cm" "..."
+.Ft char *
+.Fn t_vparm "TERMINAL *" "const char *cm" "..."
+.Ft int
+.Fn ti_puts "const TERMINAL *term" "const char *str" "int affcnt" "int (*outc)(int, void *)"
+.Ft int
+.Fn ti_putp "const TERMINAL *term" "const char *str"
+.Sh DESCRIPTION
+These functions extract and use capabilities from a terminal capability
+database, usually
+.Pa /usr/share/misc/terminfo ,
+the format of which is described in
+.Xr terminfo 5 .
+These are low level routines;
+see
+.Xr curses 3
+for a higher level package.
+.Pp
+The
+.Fn setupterm
+function extracts the entry for terminal
+.Fa name
+and then calls
+.Fn set_curterm
+to set
+.Va cur_term
+to it.
+If
+.Fa name
+is
+.Dv NULL
+then it is replaced by the environment variable
+.Ev TERM .
+The
+.Fn setupterm
+function returns 0 on success and \-1 on error.
+.Va errret
+is set to \-1 if the
+.Nm terminfo
+database could not be opened,
+0 if the terminal could not be found in the database, and
+1 if all went well.
+.Pp
+The
+.Fn set_curterm
+function sets the variable
+.Va cur_term
+to
+.Va nterm
+and makes all of the
+.Nm terminfo
+boolean, numeric and string variables use the values from
+.Va nterm .
+The global variables
+.Va PC
+and
+.Va ospeed
+are then set.
+The old value of
+.Va cur_term
+is returned.
+The
+.Fn del_curterm
+function frees space pointed to by
+.Va oterm .
+.Pp
+The
+.Fn tigetflag
+function gets the boolean value of capability
+.Va id ,
+returning \-1 if it is not a valid capability.
+The
+.Fn tigetnum
+function gets the numeric value of the capability
+.Va id ,
+returning \-2 if it is not a valid capability.
+The
+.Fn tigetstr
+function returns the string value of the capability
+.Va id ,
+returning (char *)-1 if it is not a valid capability.
+.Pp
+The
+.Fn tparm
+function returns a string decoded from
+.Va cm
+with the parameters
+.Va p1
+\&...
+.Va p9
+applied.
+Some capabilities require string parameters and only platforms that can fit
+a
+.Vt char *
+pointer inside a
+.Vt long
+can use them.
+The string encoding and parameter application is described in
+.Xr terminfo 5 .
+.Pp
+The
+.Fn tputs
+function applies padding information to the string
+.Va cp ;
+.Va affcnt
+gives the number of lines affected by the operation,
+or 1 if this is not applicable;
+.Va outc
+is a function which is called by each character in turn.
+The external variable
+.Va ospeed
+controls how many padding characters are sent in relation to the terminal
+speed.
+The
+.Fn putp
+function calls tputs(str, 1, putchar).
+The output from
+.Fn putp
+always goes to stdout.
+.Ss NetBSD Extensions To Terminfo
+The
+.Fn vtparm
+function allows variadic parameters instead of 9 fixed longs.
+Numeric parameters must be longs.
+String parameters can be used even if the platform cannot fit a
+.Vt char *
+into a
+.Vt long .
+.Pp
+The
+.Fn ti_*
+functions correspond to the standard
+.Fn t*
+functions but take an additional
+.Ft TERMINAL *
+parameter so that the terminal can be specified instead of assuming
+.Va cur_term .
+These functions use private variables to the
+.Ft TERMINAL
+instead of the global variables, such as
+.Va PC
+and
+.Va ospeed .
+.Sh SEE ALSO
+.Xr ex 1 ,
+.Xr curses 3 ,
+.Xr terminfo 5
+.Sh AUTHORS
+.An Roy Marples Aq roy@NetBSD.org

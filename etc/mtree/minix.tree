@@ -73,6 +73,7 @@
 755  root    operator  /usr/run
 755  root    operator  /usr/share
 755  root    operator  /usr/share/mk
+755  root    operator  /usr/share/terminfo
 755  root    operator  /usr/share/zoneinfo
 755  root    operator  /usr/spool
 711  root    operator  /usr/spool/at

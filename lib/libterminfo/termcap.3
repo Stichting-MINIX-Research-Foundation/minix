@@ -1,0 +1,144 @@
+.\"	$NetBSD: termcap.3,v 1.4 2010/02/04 09:12:55 wiz Exp $
+.\"
+.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Roy Marples.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 7, 2009
+.Dt TERMCAP 3
+.Os
+.Sh NAME
+.Nm tgetent ,
+.Nm tgetnum ,
+.Nm tgetflag ,
+.Nm tgetstr ,
+.Nm tgoto ,
+.Nm tputs
+.Nd terminal independent operation routines
+.Sh LIBRARY
+.Lb libtermcap
+.Sh SYNOPSIS
+.In termcap.h
+.Vt char PC ;
+.Vt char *BC ;
+.Vt char *UP ;
+.Ft int
+.Fn tgetent "char *bp" "const char *name"
+.Ft int
+.Fn tgetnum "const char *id"
+.Ft int
+.Fn tgetflag "const char *id"
+.Ft char *
+.Fn tgetstr "const char *id" "char **area"
+.Ft char *
+.Fn tgoto "const char *cm" "int destcol" "int destline"
+.Sh DESCRIPTION
+These functions extract and use capabilities from a terminal capability
+database.
+They exist as wrappers around equivalent
+.Xr terminfo 3
+functions, which new code should use.
+These are low level routines; see
+.Xr curses 3
+for a higher level package.
+.Pp
+The
+.Fn tgetent
+function calls
+.Fn setupterm
+and configures
+.Va PC ,
+.Va UP
+and
+.Va BC .
+Only
+.Va PC
+is actually used internally.
+The
+.Fn tgetent
+function returns \-1 if none of the
+.Nm terminfo
+data base files could be opened,
+0 if the terminal name given does not match an entry,
+and 1 if all goes well.
+The
+.Fa bp
+argument is not used.
+.Pp
+The
+.Fn tgetnum
+function gets the numeric value of the capability
+.Fa id ,
+returning \-1 if it is not given for the terminal.
+The
+.Fn tgetflag
+function returns 1 if the specified capability is present in the terminal's
+entry, 0 if it is not.
+The
+.Fn tgetstr
+function returns the string value of the capability
+.Fa id .
+This is a
+.Xr terminfo 5
+string and not a
+.Nm termcap
+string;
+as such it should only be processed by
+.Fn tgoto .
+The
+.Fn tgetstr
+function returns
+.Dv NULL
+if the capability was not found.
+The
+.Fa area
+argument is unused.
+.Pp
+The
+.Fn tgoto
+function returns a cursor addressing string decoded from
+.Fa cm
+to go to column
+.Fa destcol
+in line
+.Fa destline .
+.Sh SEE ALSO
+.Xr terminfo 3 ,
+.Xr terminfo 5
+.Sh HISTORY
+.Nm termcap
+first appeared in 4.0BSD.
+.Nx 1.5
+introduced some
+.Nm termcap
+.Fn t_*
+extensions which were removed in
+.Nx 6.0
+when
+.Xr terminfo 3
+was introduced.
+.Sh AUTHORS
+.An Roy Marples Aq roy@NetBSD.org
