@@ -65,23 +65,14 @@ incinstall::	${_F}
 
 .if defined(INCSYMLINKS) && !empty(INCSYMLINKS)
 incinstall::
-# XXX: Minix can't handle stat -qf
-#	@(set ${INCSYMLINKS}; \
-#	 while test $$# -ge 2; do \
-#		l=$$1; shift; \
-#		t=${DESTDIR}$$1; shift; \
-#		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
-#		    [ "$$l" = "$$ttarg" ]; then \
-#			continue ; \
-#		fi ; \
-#		${_MKSHMSG_INSTALL} $$t; \
-#		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
-#		${INSTALL_SYMLINK} $$l $$t; \
-#	 done; )
 	@(set ${INCSYMLINKS}; \
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
+		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		    [ "$$l" = "$$ttarg" ]; then \
+			continue ; \
+		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
 		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
 		${INSTALL_SYMLINK} $$l $$t; \
