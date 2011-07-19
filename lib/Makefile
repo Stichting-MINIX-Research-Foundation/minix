@@ -35,10 +35,10 @@ SUBDIR+= libend
 .include <bsd.subdir.mk>
 
 build_ack:
-	sh ack_build.sh obj depend all install
+	sh ack_build.sh obj dependall install
 
 build_elf:
-	sh elf_build.sh obj depend all install
+	sh elf_build.sh obj dependall install
 
 clean_all:
 	sh ack_build.sh clean

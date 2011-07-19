@@ -16,7 +16,6 @@ usage:
 	@echo "	make elf-libraries # Compile and install gcc/clang elf libs"
 	@echo "	make commands      # Compile all, commands, but don't install"
 	@echo "	make install       # Compile and install commands"
-	@echo "	make depend        # Generate required .depend files"
 	@echo "	make gnu-includes  # Install include files for GCC"
 	@echo "	make clean         # Remove all compiler results"
 	@echo "" 
@@ -31,7 +30,7 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: mkfiles includes depend libraries elf-libraries install etcforce
+world: mkfiles includes libraries elf-libraries dep-all install etcforce
 
 mkfiles:
 	make -C share/mk install
@@ -57,14 +56,14 @@ commands: includes libraries
 	$(MAKE) -C bin all
 	$(MAKE) -C usr.bin all
 
-depend:
-	$(MAKE) CC=cc -C boot depend
-	$(MAKE) -C commands depend
-	$(MAKE) -C bin depend
-	$(MAKE) -C usr.bin depend
-	$(MAKE) -C kernel depend
-	$(MAKE) -C servers depend
-	$(MAKE) -C drivers depend
+dep-all:
+	$(MAKE) CC=cc -C boot dependall
+	$(MAKE) -C commands dependall
+	$(MAKE) -C bin dependall
+	$(MAKE) -C usr.bin dependall
+	$(MAKE) -C kernel dependall
+	$(MAKE) -C servers dependall
+	$(MAKE) -C drivers dependall
 
 etcfiles:
 	$(MAKE) -C etc install
@@ -84,8 +83,8 @@ install:
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
 	$(MAKE) -C bin install
-	$(MAKE) -C servers install
 	$(MAKE) -C usr.bin install
+	$(MAKE) -C servers install
 	$(MAKE) -C share install
 	$(MAKE) -C tools install
 

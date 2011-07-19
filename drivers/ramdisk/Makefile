@@ -23,7 +23,7 @@ CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) bintoc image image.c t proto.gen
 
 install: all
 
-all:	image.c
+realall: image.c
 
 image.c:	bintoc image
 	./bintoc -o $@ image
