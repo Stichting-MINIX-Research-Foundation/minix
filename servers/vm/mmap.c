@@ -55,7 +55,7 @@ PUBLIC int do_mmap(message *m)
 		u32_t vrflags = VR_ANON | VR_WRITABLE;
 		size_t len = (vir_bytes) m->VMM_LEN;
 
-		if(m->VMM_FD != -1) {
+		if(m->VMM_FD != -1 || len <= 0) {
 			return EINVAL;
 		}
 
@@ -142,6 +142,8 @@ PUBLIC int do_map_phys(message *m)
 
 	target = m->VMMP_EP;
 	len = m->VMMP_LEN;
+
+	if (len <= 0) return EINVAL;
 
 	if(target == SELF)
 		target = m->m_source;
@@ -233,6 +235,8 @@ PUBLIC int do_remap(message *m)
 	da = (vir_bytes) m->VMRE_DA;
 	sa = (vir_bytes) m->VMRE_SA;
 	size = m->VMRE_SIZE;
+
+	if (size <= 0) return EINVAL;
 
 	if ((r = vm_isokendpt((endpoint_t) m->VMRE_D, &dn)) != OK)
 		return EINVAL;
