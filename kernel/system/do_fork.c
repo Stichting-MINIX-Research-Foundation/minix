@@ -65,10 +65,13 @@ PUBLIC int do_fork(struct proc * caller, message * m_ptr)
 #if (_MINIX_CHIP == _CHIP_INTEL)
   rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
   rpc->p_fpu_state.fpu_save_area_p = old_fpu_save_area_p;
-  if(proc_used_fpu(rpp))
+  if(proc_used_fpu(rpp)) {
+  	fpu_verifychecksum(rpp);
 	memcpy(rpc->p_fpu_state.fpu_save_area_p,
 	       rpp->p_fpu_state.fpu_save_area_p,
 	       FPU_XFP_SIZE);
+  	fpu_verifychecksum(rpc);
+  }
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
 	gen = 1;			/* generation number wraparound */

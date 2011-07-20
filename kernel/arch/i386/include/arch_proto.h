@@ -95,10 +95,10 @@ _PROTOTYPE( void ia32_msr_read, (u32_t reg, u32_t * hi, u32_t * lo)	);
 _PROTOTYPE( void ia32_msr_write, (u32_t reg, u32_t hi, u32_t lo)	);
 _PROTOTYPE( void fninit, (void));
 _PROTOTYPE( void clts, (void));
-_PROTOTYPE( void fxsave, (void *));
-_PROTOTYPE( void fnsave, (void *));
-_PROTOTYPE( void fxrstor, (void *));
-_PROTOTYPE( void frstor, (void *));
+_PROTOTYPE( void fxsave, (vir_bytes));
+_PROTOTYPE( void fnsave, (vir_bytes));
+_PROTOTYPE( void fxrstor, (vir_bytes));
+_PROTOTYPE( void frstor, (vir_bytes));
 _PROTOTYPE( unsigned short fnstsw, (void));
 _PROTOTYPE( void fnstcw, (unsigned short* cw));
 

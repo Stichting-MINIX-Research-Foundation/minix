@@ -37,6 +37,7 @@ struct fpu_state_s {
 	/* fpu_image includes 512 bytes of image itself and
 	 * additional 15 bytes required for manual 16-byte alignment. */
 	char fpu_image[527];
+	u32_t checksum;
 };
 
 #define INMEMORY(p) (!p->p_seg.p_cr3 || get_cpulocal_var(ptproc) == p)

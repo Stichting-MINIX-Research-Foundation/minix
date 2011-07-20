@@ -58,6 +58,27 @@ FORWARD _PROTOTYPE( void ser_dump_proc_cpu, (void));
 FORWARD _PROTOTYPE( void ser_init, (void));
 #endif
 
+PRIVATE u32_t fpusum(struct proc *p)
+{
+	void *save_area = p->p_fpu_state.fpu_save_area_p;
+	return crc32(0, save_area, FPU_XFP_SIZE);
+}
+
+PUBLIC void fpu_makechecksum(struct proc *p)
+{
+	p->p_fpu_state.checksum = fpusum(p);
+}
+
+PUBLIC void fpu_verifychecksum(struct proc *p)
+{
+	static int n;
+	n++;
+	if(p->p_fpu_state.checksum != fpusum(p)) {
+		printf("%d / %s fpu state broken!", p->p_endpoint, p->p_name);
+		util_stacktrace();
+	}
+}
+
 PUBLIC __dead void arch_monitor(void)
 {
 	monitor();
@@ -252,16 +273,23 @@ PUBLIC void fpu_init(void)
 
 PUBLIC void save_local_fpu(struct proc *pr)
 {
+	static int n;
+	phys_bytes save_area = (phys_bytes) pr->p_fpu_state.fpu_save_area_p;
 	if(!is_fpu())
 		return;
 
+	/* save area must be 16-byte aligned */
+	assert(!(save_area % FPUALIGN));
+
 	/* Save changed FPU context. */
 	if(osfxsr_feature) {
-		fxsave(pr->p_fpu_state.fpu_save_area_p);
+		fxsave(save_area);
 		fninit();
 	} else {
-		fnsave(pr->p_fpu_state.fpu_save_area_p);
+		fnsave(save_area);
 	}
+
+	fpu_makechecksum(pr);
 }
 
 PUBLIC void save_fpu(struct proc *pr)
@@ -304,10 +332,14 @@ PUBLIC void restore_fpu(struct proc *pr)
 		fninit();
 		pr->p_misc_flags |= MF_FPU_INITIALIZED;
 	} else {
+		phys_bytes save_area = (phys_bytes) pr->p_fpu_state.fpu_save_area_p;
+		/* save area must be 16-byte aligned */
+		assert(!(save_area % FPUALIGN));
+		fpu_verifychecksum(pr);
 		if(osfxsr_feature) {
-			fxrstor(pr->p_fpu_state.fpu_save_area_p);
+			fxrstor(save_area);
 		} else {
-			frstor(pr->p_fpu_state.fpu_save_area_p);
+			frstor(save_area);
 		}
 	}
 }

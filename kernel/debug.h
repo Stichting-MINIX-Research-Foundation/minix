@@ -37,6 +37,8 @@
  */
 #define DEBUG_RACE			0
 
+#define DEBUG_FPUCHECK			1
+
 /* DEBUG_DUMPIPC dumps all IPC to serial; due to the amount of logging it is 
  * strongly recommended to set "ctty 0" in the boot monitor and run inside a 
  * virtual machine if you enable this; on the hardware it would take forever 
