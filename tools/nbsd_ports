@@ -6,5 +6,6 @@ lib/libterminfo		src/lib/libterminfo
 nbsd_include		src/include
 usr.bin/m4		src/usr.bin/m4
 usr.bin/indent		src/usr.bin/indent
+usr.bin/sed		src/usr.bin/sed
 usr.bin/stat		src/usr.bin/stat
 usr.bin/tic		src/usr.bin/tic

@@ -43,7 +43,7 @@ case $# in
 		echo
 
 		$cpp "$f" | \
-			sed -e '/^#/!d
+			/usr/bin/sed -e '/^#/!d
 				s/.*"\(.*\)".*/\1/
 				s:^\./::' \
 			    -e '/^<built-in>$/d' \
