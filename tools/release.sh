@@ -193,7 +193,7 @@ echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/sh /bin/echo /bin/install /bin/rm \
-    /bin/date $RELEASEDIR/bin
+    /bin/date /bin/ls $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv \
 	/usr/bin/grep /usr/bin/egrep /usr/bin/awk /usr/bin/sed $RELEASEDIR/usr/bin
 

@@ -1,4 +1,7 @@
 #!/bin/sh
+
+set -e
+
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 sed -n '1,/@ACPI/p' <proto | grep -v @ACPI@
 if [ -e acpi ]
