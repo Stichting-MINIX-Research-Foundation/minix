@@ -50,7 +50,8 @@ struct rproc {
 
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
   char r_args[MAX_COMMAND_LEN];	/* null-separated raw command plus arguments */
-  char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */
+#define ARGV_ELEMENTS (MAX_NR_ARGS+2) /* path, args, null */
+  char *r_argv[ARGV_ELEMENTS];
   int r_argc;  			/* number of arguments */
   char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
 

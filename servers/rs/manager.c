@@ -181,11 +181,17 @@ PUBLIC void build_cmd_dep(struct rproc *rp)
           *cmd_ptr = '\0';			/* terminate previous */
 	  while (*++cmd_ptr == ' ') ; 		/* skip spaces */
 	  if (*cmd_ptr == '\0') break;		/* no arg following */
-	  if (arg_count>MAX_NR_ARGS+1) break;	/* arg vector full */
+	  /* There are ARGV_ELEMENTS elements; must leave one for null */
+	  if (arg_count>=ARGV_ELEMENTS-1) {	/* arg vector full */
+		printf("RS: build_cmd_dep: too many args\n");
+	  	break;
+	  }
+	  assert(arg_count < ARGV_ELEMENTS);
           rp->r_argv[arg_count++] = cmd_ptr;	/* add to arg vector */
       }
       cmd_ptr ++;				/* continue parsing */
   }
+  assert(arg_count < ARGV_ELEMENTS);
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
   
