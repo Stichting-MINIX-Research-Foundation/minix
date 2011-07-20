@@ -192,8 +192,9 @@ mkdir -p $RELEASEPACKAGE
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
-cp -rp /bin/sh /bin/echo /bin/install /bin/rm $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv $RELEASEDIR/usr/bin
+cp -rp /bin/sh /bin/echo /bin/install /bin/rm /bin/sed $RELEASEDIR/bin
+cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv \
+	/usr/bin/grep /usr/bin/egrep /usr/bin/awk $RELEASEDIR/usr/bin
 
 CONFIGHEADER=$RELEASEDIR/usr/src/common/include/minix/sys_config.h
 
@@ -387,7 +388,7 @@ else
 	then
 		echo "Appending Minix root and usr filesystem"
 		# Pad ISO out to cylinder boundary
-		isobytes=`stat -size $IMG`
+		isobytes=`stat -f %z $IMG`
 		isosects=`expr $isobytes / 512`
 		isopad=`expr $secs - '(' $isosects % $secs ')'`
 		dd if=/dev/zero count=$isopad >>$IMG
