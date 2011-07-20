@@ -192,7 +192,8 @@ mkdir -p $RELEASEPACKAGE
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
-cp -rp /bin/sh /bin/echo /bin/install /bin/rm /bin/sed $RELEASEDIR/bin
+cp -rp /bin/sh /bin/echo /bin/install /bin/rm /bin/sed \
+    /bin/date $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv \
 	/usr/bin/grep /usr/bin/egrep /usr/bin/awk $RELEASEDIR/usr/bin
 
@@ -221,11 +222,12 @@ then
 #ifndef _VCS_REVISION
 #define _VCS_REVISION \"$REVTAG\"
 #endif" >>$CONFIGHEADER
+	DATE=`date +%Y%m%d`
 	# output image name
 	if [ "$USB" -ne 0 ]; then
-		IMG=${IMG_BASE}_${REVTAG}.img
+		IMG=${IMG_BASE}_${DATE}_${REVTAG}.img
 	else
-		IMG=${IMG_BASE}_${REVTAG}.iso
+		IMG=${IMG_BASE}_${DATE}_${REVTAG}.iso
 	fi
 else
 	echo "Copying contents from current src dir."
