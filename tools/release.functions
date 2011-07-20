@@ -3,8 +3,8 @@ make_hdimage()
 {
 	dd if=$TMPDISKUSR of=usrimage bs=$BS count=$USRBLOCKS
 
-	rootsize=`stat -size rootimage`
-	usrsize=`stat -size usrimage`
+	rootsize=`stat -f %z rootimage`
+	usrsize=`stat -f %z usrimage`
 
 	rootsects=`expr $rootsize / 512`
 	usrsects=`expr $usrsize / 512`
