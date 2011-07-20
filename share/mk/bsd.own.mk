@@ -770,6 +770,9 @@ _MKVARS.no= \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
 	MKUNPRIVED MKUPDATE MKX11 MKZFS
+#MINIX-specific vars
+_MKVARS.no+= \
+	MKIMAGEONLY
 .for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
