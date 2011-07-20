@@ -24,12 +24,6 @@ SRCS+= nlist.c
 # NetBSD's 'mtab' format.
 SRCS+= mtab.c
 
-# Termcap. 
-# Included in the Minix libc. 
-#
-# Should be removed once we switch to terminfo.
-SRCS+= termcap.c
-
 # Minix legacy passwd format
 # These should be removed when we switch to
 # NetBSD's 'passwd' db-based format.
