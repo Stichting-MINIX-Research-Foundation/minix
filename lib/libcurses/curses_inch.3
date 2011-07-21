@@ -1,0 +1,257 @@
+.\"	$NetBSD: curses_inch.3,v 1.10 2004/04/21 06:24:32 jdc Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd April 18, 2004
+.Dt CURSES_INCH 3
+.Os
+.Sh NAME
+.Nm curses_inch ,
+.Nm inch ,
+.Nm winch ,
+.Nm inchnstr ,
+.Nm mvinchnstr ,
+.Nm winchnstr ,
+.Nm mvwinchnstr ,
+.Nm inchstr ,
+.Nm mvinchstr ,
+.Nm winchstr ,
+.Nm mvwinchstr ,
+.Nm innstr ,
+.Nm winnstr ,
+.Nm mvinnstr ,
+.Nm mvwinnstr ,
+.Nm instr ,
+.Nm winstr
+.Nm mvinstr ,
+.Nm mvwinstr
+.Nd curses read screen contents routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft chtype
+.Fn inch "void"
+.Ft chtype
+.Fn winch "WINDOW *win"
+.Ft int
+.Fn inchnstr "chtype *chars" "int n"
+.Ft int
+.Fn mvinchnstr "int y" "int x" "chtype *chstr" "int n"
+.Ft int
+.Fn winchnstr "WINDOW *win" "chtype *chars" "int n"
+.Ft int
+.Fn mvwinchnstr "WINDOW *win" "int y" "int x" "chtype *chstr" "int n"
+.Ft int
+.Fn inchstr "chtype *chars"
+.Ft int
+.Fn mvinchstr "int y" "int x" "chtype *chstr"
+.Ft int
+.Fn winchstr "WINDOW *win" "chtype *chars"
+.Ft int
+.Ft mvwinchstr "WINDOW *win" "int y" "int x" "chtype *chstr"
+.Ft int
+.Fn innstr "char *str" "int n"
+.Ft int
+.Fn winnstr "WINDOW *win" "char *str" "int n"
+.Ft int
+.Fn mvinnstr "int y" "int x" "char *str" "int n"
+.Ft int
+.Fn mvwinnstr "WINDOW *win" "int y" "int x" "char *str" "int n"
+.Ft int
+.Fn instr "char *str"
+.Ft int
+.Fn winstr "WINDOW *win" "char *str"
+.Ft int
+.Fn mvinstr "int y" "int x" "char *str"
+.Ft int
+.Fn mvwinstr "WINDOW *win" "int y" "int x" "char *str"
+.Sh DESCRIPTION
+These functions read the contents of
+.Dv stdscr
+or of the specified window.
+.Pp
+The
+.Fn inch
+function returns the character that is displayed on
+.Dv stdscr
+at the current cursor position.
+.Pp
+The
+.Fn winch
+function is the same as the
+.Fn inch
+function, excepting that the character is read from window specified by
+.Fa win .
+.Pp
+The
+.Fn inchnstr
+function fills an array of
+.Ft chtype
+with characters read from
+.Dv stdscr ,
+the characters are read starting from the current cursor position and
+continuing until either n \- 1 characters are read or the right hand
+side of the screen is reached.
+The resulting character array will be
+.Dv NULL
+terminated.
+.Pp
+The
+.Fn winchnstr
+function is the same as
+.Fn inchnstr
+excepting that the characters are read from the window specified by
+.Fa win .
+.Pp
+The
+.Fn inchstr
+and
+.Fn winchstr
+functions are the same as the
+.Fn inchnstr
+and
+.Fn winchnstr
+functions, respectively, excepting that they do not limit the number
+of characters read.
+The characters returned are those from the current starting position to
+the right hand side of the screen.
+The use of
+.Fn inchstr
+and
+.Fn winchstr
+is not recommended as the character buffer can be overflowed.
+.Pp
+The
+.Fn innstr
+function
+is similar to the
+.Fn inchstr
+function, excepting that the array of characters returned is stripped of all
+the curses attributes making it a plain character string.
+.Pp
+The
+.Fn mvinchstr ,
+.Fn mvinchnstr ,
+.Fn mvwinchstr ,
+and
+.Fn mvwinchnstr
+functions are the same as the
+.Fn inchstr ,
+.Fn inchnstr ,
+.Fn winchstr ,
+and
+.Fn winchstr
+functions, respectively, except that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the output is printed on the window.
+Likewise, the
+.Fn mvinstr ,
+.Fn mvinnstr ,
+.Fn mvwinstr ,
+and
+.Fn mvwinnstr
+functions are the same as the
+.Fn instr ,
+.Fn innstr ,
+.Fn winstr ,
+and
+.Fn winstr
+functions, respectively, except that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the output is printed on the window.
+.Pp
+The
+.Fn winnstr
+function is the same as the
+.Fn innstr
+function, excepting that characters are read from the window specified by
+.Fa win .
+.Pp
+The
+.Fn instr
+and
+.Fn winstr
+functions
+are the same as the
+.Fn innstr
+and
+.Fn winnstr
+functions, respectively, excepting that there are no limits placed on the
+size of the returned string, which may cause buffer overflows.
+For this reason, the use of
+.Fn instr
+and
+.Fn winstr
+is not recommended.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_addch 3 ,
+.Xr curses_addstr 3 ,
+.Xr curses_attributes 3 ,
+.Xr curses_insertch 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part
+of the Single Unix Specification.
+.Sh NOTES
+The
+.Fn inchnstr
+and
+.Fn innstr
+function read at most n \- 1 characters from the screen so as to leave
+room for
+.Dv NULL
+termination.
+The X/Open specification is unclear as to whether or not this is the correct
+behaviour.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

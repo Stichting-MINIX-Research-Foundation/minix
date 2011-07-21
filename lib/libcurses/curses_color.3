@@ -1,0 +1,232 @@
+.\"	$NetBSD: curses_color.3,v 1.12 2009/07/22 16:57:14 roy Exp $
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 20, 2009
+.Dt CURSES_COLOR 3
+.Os
+.Sh NAME
+.Nm curses_color ,
+.Nm has_colors ,
+.Nm can_change_color ,
+.Nm start_color ,
+.Nm init_pair ,
+.Nm pair_content ,
+.Nm COLOR_PAIR ,
+.Nm PAIR_NUMBER ,
+.Nm init_color ,
+.Nm color_content ,
+.Nm no_color_attributes
+.Nd curses color manipulation routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft bool
+.Fn has_colors void
+.Ft bool
+.Fn can_change_color void
+.Ft int
+.Fn start_color void
+.Ft int
+.Fn init_pair "short pair" "short fore" "short back"
+.Ft int
+.Fn pair_content "short pair" "short *fore" "short *back"
+.Ft int
+.Fn COLOR_PAIR "int n"
+.Ft int
+.Fn PAIR_NUMBER "int val"
+.Ft int
+.Fn init_color "short color" "short red" "short green" "short blue"
+.Ft int
+.Fn color_content "short color" "short *red" "short *green" "short *blue"
+.Ft attr_t
+.Fn no_color_attributes void
+.Pp
+.Va extern int COLOR_PAIRS ;
+.Pp
+.Va extern int COLORS ;
+.Sh DESCRIPTION
+These functions manipulate color on terminals that support color attributes.
+.Pp
+The function
+.Fn has_colors
+indicates whether a terminal is capable of displaying color attributes.
+It returns
+.Dv TRUE
+if the terminal is capable of displaying color attributes and
+.Dv FALSE
+otherwise.
+.Pp
+The function
+.Fn can_change_color
+indicates whether a terminal is capable of redefining colors.
+It returns
+.Dv TRUE
+if colors can be redefined and
+.Dv FALSE
+if they can not.
+.Pp
+The function
+.Fn start_color
+initializes the curses color support on a terminal.
+It must be called before any color manipulation functions are called on that
+terminal.
+The function initializes the eight basic colors (black, red, green, yellow,
+blue, magenta, cyan and white) that are specified using the color macros
+(such as
+.Dv COLOR_BLACK )
+defined in
+.Em \*[Lt]curses.h\*[Gt] .
+.Fn start_color
+also initializes the global external variables
+.Va COLORS
+and
+.Va COLOR_PAIRS .
+.Va COLORS
+defines the number of colors that the terminal supports and
+.Va COLOR_PAIRS
+defines the number of color-pairs that the terminal supports.
+These color-pairs are initialized to white foreground on black background.
+.Fn start_color
+sets the colors on the terminal to the curses defaults of white
+foreground on black background unless the functions
+.Fn assume_default_colors
+or
+.Fn use_default_colors
+have been called previously.
+.Pp
+The function
+.Fn init_pair pair fore back
+sets foreground color
+.Fa fore
+and background color
+.Fa back
+for color-pair number
+.Fa pair .
+The valid range for the color-pair
+.Fa pair
+is from 1 to
+.Va COLOR_PAIRS
+\&- 1
+and the valid range for the colors is any number less than
+.Va COLORS .
+Specifying a negative number will set that color to the default foreground
+or background color.
+The 8 initial colors are defined as:
+.Bl -tag -width "COLOR_MAGENTA" -compact -offset indent
+.It COLOR_BLACK
+.It COLOR_RED
+.It COLOR_GREEN
+.It COLOR_YELLOW
+.It COLOR_BLUE
+.It COLOR_MAGENTA
+.It COLOR_CYAN
+.It COLOR_WHITE
+.El
+Color-pair 0 is used as the default color pair, so changing this will
+have no effect.
+Use the function
+.Fn assume_default_colors
+to change the default colors.
+.Pp
+The function
+.Fn pair_content pair *fore *back
+stores the foreground and background color numbers of color-pair
+.Fa pair
+in the variables
+.Fa fore
+and
+.Fa back ,
+respectively.
+.Pp
+The macro
+.Fn COLOR_PAIR n
+gives the attribute value of color-pair number
+.Fa n .
+This is the value that is used to set the attribute of a character to this
+color-pair.
+For example,
+.Dl attrset(COLOR_PAIR(2))
+will display characters using color-pair 2.
+.Pp
+The macro
+.Fn PAIR_NUMBER val
+gives the color-pair number associated with the attribute value
+.Fa val .
+.Pp
+The function
+.Fn init_color color red green blue
+sets the red, green and blue intensity components of color
+.Fa color
+to the values
+.Fa red ,
+.Fa green
+and
+.Fa blue ,
+respectively.
+The minimum intensity value is 0 and the maximum intensity value is 1000.
+.Pp
+The function
+.Fn color_content color *red *green *blue
+stores the red, green and blue intensity components of color
+.Fa color
+in the variables
+.Fa red ,
+.Fa green ,
+and
+.Fa blue ,
+respectively.
+.Pp
+The function
+.Fn no_color_attributes
+returns those attributes that a terminal is unable to combine with color.
+.Sh RETURN VALUES
+The functions
+.Fn start_color ,
+.Fn init_pair ,
+.Fn pair_content ,
+.Fn init_color
+and
+.Fn color_content
+return OK on success and ERR on failure.
+.Sh SEE ALSO
+.Xr curses_attributes 3 ,
+.Xr curses_background 3 ,
+.Xr curses_default_colors 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Pp
+The function
+.Fn no_color_attributes
+and the use of negative color numbers
+are extensions to the X/Open Curses specification.
+.Sh HISTORY
+These functions first appeared in
+.Nx 1.5 .

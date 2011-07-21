@@ -1,0 +1,360 @@
+.\"	$NetBSD: curses_tty.3,v 1.8 2004/03/16 19:27:35 snj Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd June 13, 2003
+.Dt CURSES_TTY 3
+.Os
+.Sh NAME
+.Nm curses_tty ,
+.Nm beep ,
+.Nm flash ,
+.Nm curs_set ,
+.Nm def_prog_mode ,
+.Nm reset_prog_mode ,
+.Nm def_shell_mode ,
+.Nm reset_shell_mode ,
+.Nm echo ,
+.Nm noecho ,
+.Nm delay_output ,
+.Nm erasechar ,
+.Nm flushinp ,
+.Nm gettmode ,
+.Nm halfdelay ,
+.Nm has_ic ,
+.Nm has_il ,
+.Nm idcok ,
+.Nm idlok ,
+.Nm intrflush ,
+.Nm noqiflush ,
+.Nm qiflush ,
+.Nm killchar ,
+.Nm meta ,
+.Nm napms ,
+.Nm nl ,
+.Nm nonl ,
+.Nm cbreak ,
+.Nm nocbreak ,
+.Nm raw ,
+.Nm noraw ,
+.Nm savetty ,
+.Nm resetty
+.Nd curses terminal manipulation routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn beep "void"
+.Ft int
+.Fn flash "void"
+.Ft int
+.Fn curs_set "int visibility"
+.Ft int
+.Fn def_prog_mode "void"
+.Ft int
+.Fn reset_prog_mode "void"
+.Ft int
+.Fn def_shell_mode "void"
+.Ft int
+.Fn reset_shell_mode "void"
+.Ft int
+.Fn echo "void"
+.Ft int
+.Fn noecho "void"
+.Ft int
+.Fn delay_output "int ms"
+.Ft char
+.Fn erasechar "void"
+.Ft int
+.Fn flushinp "void"
+.Ft int
+.Fn gettmode "void"
+.Ft int
+.Fn has_ic "void"
+.Ft int
+.Fn has_il "void"
+.Ft int
+.Fn idcok "WINDOW *win" "boolf flag"
+.Ft int
+.Fn idlok "WINDOW *win" "boolf flag"
+.Ft int
+.Fn intrflush "WINDOW *win" "boolf flag"
+.Ft void
+.Fn noqiflush "void"
+.Ft void
+.Fn qiflush "void"
+.Ft char
+.Fn killchar "void"
+.Ft int
+.Fn meta "WINDOW *win" "boolf flag"
+.Ft int
+.Fn napms "int ms"
+.Ft int
+.Fn nl "void"
+.Ft int
+.Fn nonl "void"
+.Ft int
+.Fn cbreak "void"
+.Ft int
+.Fn nocbreak "void"
+.Ft int
+.Fn halfdelay "int"
+.Ft int
+.Fn raw "void"
+.Ft int
+.Fn noraw "void"
+.Ft int
+.Fn savetty "void"
+.Ft int
+.Fn resetty "void"
+.Sh DESCRIPTION
+These functions manipulate curses terminal settings.
+.Pp
+The
+.Fn beep
+function rings the terminal bell, if this is possible.
+Failing that, the terminal screen will be flashed.
+If neither of these are possible, then no action will be taken.
+.Fn flash
+will flash the terminal screen if possible.
+Failing that, the terminal bell will be rung.
+If neither of these are possible then no action will be taken.
+.Pp
+The cursor
+visibility can be set by calling
+.Fn curs_set .
+The following visibility settings are valid for
+.Fn curs_set :
+.Pp
+.Bl -tag -width visibility -compact -offset indent
+.It Visibility
+Effect
+.It 0
+cursor is invisible.
+.It 1
+cursor is normal visibility
+.It 2
+cursor is high visibility
+.El
+.Pp
+A successful call to
+.Fn curs_set
+will return the previous visibility setting for the cursor.
+.Pp
+The
+.Fn delay_output
+function pauses the output to the terminal by sending the appropriate
+number of terminal pad characters such that the transmission time of
+the pad characters will take
+.Fa ms
+milliseconds.
+.Pp
+Calling
+.Fn def_prog_mode
+will cause the current terminal curses setting to be saved.
+A subsequent call to
+.Fn reset_prog_mode ,
+will restore the saved settings.
+This is useful when calls to external programs are made that may
+reset the terminal characteristics.
+.Pp
+The
+.Fn def_shell_mode
+function saves the current terminal line settings.
+These settings are the ones that will be restored when the curses
+application exits.
+Conversely,
+.Fn reset_shell_mode
+will save the current terminal curses settings for later restoration and
+restores the previously saved terminal line settings.
+.Pp
+The
+.Fn echo
+function turns on curses echo mode, characters entered will be echoed
+to the terminal by curses.
+The
+.Fn noecho
+function disables this feature.
+.Pp
+The current erase character for the terminal can be determined by
+calling the
+.Fn erasechar
+function.
+.Pp
+The
+.Fn flushinp
+function discards any pending input for the current screen.
+.Pp
+The modes
+for the current terminal can be reset by calling
+.Fn gettmode ,
+this will perform the initialisation on the terminal that is normally
+done by curses at start up.
+.Pp
+The
+.Fn has_ic
+function returns either
+.Dv TRUE
+or
+.Dv FALSE
+depending on whether or not the terminal has a insert character
+capability or not.
+Similarly the
+.Fn has_il
+function does the same test but for a insert line capability.
+.Pp
+The use of the insert character capability in curses operations can be
+enabled or disabled by calling
+.Fn idcok
+on the desired window.
+Similarly, the use of the insert line capability can be controlled using the
+.Fn idlok
+function.
+.Pp
+The
+.Fn intrflush
+function controls whether or not a flush of the input buffer is
+performed when an interrupt key (kill, suspend or quit) is pressed.
+The
+.Fa win
+parameter is ignored.
+The
+.Fn noqiflush
+function is equivalent to
+.Fn intrflush stdscr FALSE .
+The
+.Fn qiflush
+function is equivalent to
+.Fn intrflush stdscr TRUE .
+.Pp
+The character that performs the line kill function can be determined
+by calling the
+.Fn killchar
+function.
+.Pp
+The
+.Fn meta
+function turns on and off the generation of 8 bit characters by the
+terminal, if
+.Fa flag
+is
+.Dv FALSE
+then only 7 bit characters will be returned, if
+.Fa flag
+is
+.Dv TRUE
+then 8 bit characters will be returned by the terminal.
+.Pp
+The
+.Fn napms
+causes the application to sleep for the number of milliseconds
+specified by
+.Fa ms .
+.Pp
+Calling
+.Fn nl
+will cause curses to map all carriage returns to newlines on input,
+this functionality is enabled by default.
+The
+.Fn nonl
+function disables this behaviour.
+.Pp
+The
+.Fn cbreak
+function will put the terminal into cbreak mode, which means that
+characters will be returned one at a time instead of waiting for a
+newline character, line discipline processing will be performed.
+The
+.Fn nocbreak
+function disables this mode.
+.Pp
+Calling
+.Fn halfdelay
+puts the terminal into the same mode as
+.Fn cbreak
+with the exception that if no character is received within the specified
+number of tenths of a second then the input routine will return
+.Er ERR .
+This mode can be cancelled by calling
+.Fn nocbreak .
+The valid range for the timeout is from 1 to 255 tenths of a second.
+.Pp
+The
+.Fn noraw
+function sets the input mode for the current terminal into Cooked mode,
+that is input character translation and signal character processing is
+performed.
+The
+.Fn raw
+function puts the terminal into Raw mode, no input character
+translation is done nor is signal character processing.
+.Pp
+The terminal
+tty flags can be saved by calling
+.Fn savetty
+and may be restored by calling
+.Fn resetty ,
+the use of these functions is discouraged as they may cause the
+terminal to be put into a state that is incompatible with curses
+operation.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr getch 3 ,
+.Xr termios 4
+.Sh NOTES
+The
+.Fn idcok
+and
+.Fn idlok
+currently have no effect on the curses code at all, currently curses
+will always use the terminal insert character and insert line
+capabilities if available.
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

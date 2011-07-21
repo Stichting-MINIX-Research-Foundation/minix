@@ -1,0 +1,338 @@
+.\"	$NetBSD: curses.3,v 1.61 2010/12/09 13:26:27 njoly Exp $
+.\"
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd July 6, 2009
+.Dt CURSES 3
+.Os
+.Sh NAME
+.Nm curses
+.Nd screen functions with
+.Dq optimal
+cursor motion
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.Nm cc
+.Op Ar flags
+.Ar files
+.Fl lcurses
+.Op Ar libraries
+.Sh DESCRIPTION
+These routines give the user a method of updating screens with reasonable
+optimization.
+They keep an image of the current screen,
+and the user sets up an image of a new one.
+Then the
+.Fn refresh
+tells the routines to make the current screen look like the new one.
+In order to initialize the routines, the routine
+.Fn initscr
+must be called before any of the other routines that deal with windows and
+screens are used.
+The routine
+.Fn endwin
+should be called before exiting.
+The routine
+.Fn start_color
+must be called before any of the other routines that deal with color are used.
+.Sh FUNCTIONS
+.Bl -column "subwin(win,lines,cols,begin_y,begin_x)"
+.It Sy "Function Name" Ta Sy "Manual Page Name"
+.It addch Ta Xr curses_addch 3
+.It addchnstr Ta Xr curses_addchstr 3
+.It addchstr Ta Xr curses_addchstr 3
+.It addnstr Ta Xr curses_addstr 3
+.It addstr Ta Xr curses_addstr 3
+.It assume_default_colors Ta Xr curses_default_colors 3
+.It attr_get Ta Xr curses_attributes 3
+.It attr_off Ta Xr curses_attributes 3
+.It attr_on Ta Xr curses_attributes 3
+.It attr_set Ta Xr curses_attributes 3
+.It attroff Ta Xr curses_attributes 3
+.It attron Ta Xr curses_attributes 3
+.It attrset Ta Xr curses_attributes 3
+.It beep Ta Xr curses_tty 3
+.It bkgd Ta Xr curses_background 3
+.It bkgdset Ta Xr curses_background 3
+.It border Ta Xr curses_border 3
+.It box Ta Xr curses_border 3
+.It can_change_color Ta Xr curses_color 3
+.It cbreak Ta Xr curses_tty 3
+.It chgat Ta Xr curses_chgat 3
+.It clear Ta Xr curses_clear 3
+.It clearok Ta Xr curses_clear 3
+.It clrtobot Ta Xr curses_clear 3
+.It clrtoeol Ta Xr curses_clear 3
+.It color_content Ta Xr curses_color 3
+.It color_set Ta Xr curses_attributes 3
+.It copywin Ta Xr curses_window 3
+.It curs_set Ta Xr curses_tty 3
+.It def_prog_mode Ta Xr curses_tty 3
+.It def_shell_mode Ta Xr curses_tty 3
+.It define_key Ta Xr curses_input 3
+.It delay_output Ta Xr curses_tty 3
+.It delch Ta Xr curses_delch 3
+.It deleteln Ta Xr curses_deleteln 3
+.It delscreen Ta Xr curses_screen 3
+.It delwin Ta Xr curses_window 3
+.It derwin Ta Xr curses_window 3
+.It doupdate Ta Xr curses_refresh 3
+.It dupwin Ta Xr curses_window 3
+.It echo Ta Xr curses_tty 3
+.It endwin Ta Xr curses_screen 3
+.It erase Ta Xr curses_clear 3
+.It erasechar Ta Xr curses_tty 3
+.It flash Ta Xr curses_tty 3
+.It flushinp Ta Xr curses_tty 3
+.It flushok Ta Xr curses_refresh 3
+.It fullname Ta Xr curses_termcap 3
+.It getattrs Ta Xr curses_attributes 3
+.It getbegx Ta Xr curses_cursor 3
+.It getbegy Ta Xr curses_cursor 3
+.It getbkgd Ta Xr curses_background 3
+.It getcap Ta Xr curses_termcap 3
+.It getch Ta Xr curses_input 3
+.It getcurx Ta Xr curses_cursor 3
+.It getcury Ta Xr curses_cursor 3
+.It getmaxx Ta Xr curses_cursor 3
+.It getmaxy Ta Xr curses_cursor 3
+.It getnstr Ta Xr curses_input 3
+.It getparx Ta Xr curses_cursor 3
+.It getpary Ta Xr curses_cursor 3
+.It getparyx Ta Xr curses_cursor 3
+.It getstr Ta Xr curses_input 3
+.It gettmode Ta Xr curses_tty 3
+.It getwin Ta Xr curses_fileio 3
+.It getyx Ta Xr curses_cursor 3
+.It has_colors Ta Xr curses_color 3
+.It has_ic Ta Xr curses_tty 3
+.It has_il Ta Xr curses_tty 3
+.It hline Ta Xr curses_line 3
+.It idcok Ta Xr curses_tty 3
+.It idlok Ta Xr curses_tty 3
+.It inch Ta Xr curses_inch 3
+.It inchnstr Ta Xr curses_inch 3
+.It inchstr Ta Xr curses_inch 3
+.It init_color Ta Xr curses_color 3
+.It init_pair Ta Xr curses_color 3
+.It initscr Ta Xr curses_screen 3
+.It innstr Ta Xr curses_inch 3
+.It insch Ta Xr curses_insertch 3
+.It insdelln Ta Xr curses_insdelln 3
+.It insertln Ta Xr curses_insertln 3
+.It instr Ta Xr curses_inch 3
+.It intrflush Ta Xr curses_tty 3
+.It is_linetouched Ta Xr curses_touch 3
+.It is_wintouched Ta Xr curses_touch 3
+.It isendwin Ta Xr curses_screen 3
+.It keyname Ta Xr curses_keyname 3
+.It keyok Ta Xr curses_input 3
+.It keypad Ta Xr curses_input 3
+.It killchar Ta Xr curses_tty 3
+.It leaveok Ta Xr curses_tty 3
+.It longname Ta Xr curses_termcap 3
+.It meta Ta Xr curses_tty 3
+.It move Ta Xr curses_cursor 3
+.It mvaddch Ta Xr curses_addch 3
+.It mvaddchnstr Ta Xr curses_addchstr 3
+.It mvaddchstr Ta Xr curses_addchstr 3
+.It mvaddnstr Ta Xr curses_addstr 3
+.It mvaddstr Ta Xr curses_addstr 3
+.It mvchgat Ta Xr curses_chgat 3
+.It mvcur Ta Xr curses_cursor 3
+.It mvderwin Ta Xr curses_window 3
+.It mvgetnstr Ta Xr curses_input 3
+.It mvgetstr Ta Xr curses_input 3
+.It mvhline Ta Xr curses_line 3
+.It mvinchstr Ta Xr curses_inch 3
+.It mvinchnstr Ta Xr curses_inch 3
+.It mvprintw Ta Xr curses_print 3
+.It mvscanw Ta Xr curses_scanw 3
+.It mvvline Ta Xr curses_line 3
+.It mvwaddch Ta Xr curses_addch 3
+.It mvwaddchnstr Ta Xr curses_addchstr 3
+.It mvwaddchstr Ta Xr curses_addchstr 3
+.It mvwaddnstr Ta Xr curses_addstr 3
+.It mvwaddstr Ta Xr curses_addstr 3
+.It mvwchgat Ta Xr curses_chgat 3
+.It mvwgetnstr Ta Xr curses_input 3
+.It mvwgetstr Ta Xr curses_input 3
+.It mvwhline Ta Xr curses_line 3
+.It mvwinchstr Ta Xr curses_inch 3
+.It mvwinchnstr Ta Xr curses_inch 3
+.It mvwprintw Ta Xr curses_print 3
+.It mvwscanw Ta Xr curses_scanw 3
+.It mvwvline Ta Xr curses_line 3
+.It napms Ta Xr curses_tty 3
+.It newpad Ta Xr curses_pad 3
+.It newterm Ta Xr curses_screen 3
+.It newwin Ta Xr curses_window 3
+.It \&nl Ta Xr curses_tty 3
+.It nocbreak Ta Xr curses_tty 3
+.It nodelay Ta Xr curses_input 3
+.It noecho Ta Xr curses_tty 3
+.It nonl Ta Xr curses_tty 3
+.It noqiflush Ta Xr curses_tty 3
+.It noraw Ta Xr curses_tty 3
+.It notimeout Ta Xr curses_input 3
+.It overlay Ta Xr curses_window 3
+.It overwrite Ta Xr curses_window 3
+.It pair_content Ta Xr curses_color 3
+.It pnoutrefresh Ta Xr curses_pad 3
+.It prefresh Ta Xr curses_pad 3
+.It printw Ta Xr curses_print 3
+.It putwin Ta Xr curses_fileio 3
+.It qiflush Ta Xr curses_tty 3
+.It raw Ta Xr curses_tty 3
+.It redrawwin Ta Xr curses_touch 3
+.It refresh Ta Xr curses_refresh 3
+.It reset_prog_mode Ta Xr curses_tty 3
+.It reset_shell_mode Ta Xr curses_tty 3
+.It resetty Ta Xr curses_tty 3
+.It resizeterm Ta Xr curses_screen 3
+.It savetty Ta Xr curses_tty 3
+.It scanw Ta Xr curses_scanw 3
+.It scrl Ta Xr curses_scroll 3
+.It scroll Ta Xr curses_scroll 3
+.It scrollok Ta Xr curses_scroll 3
+.It set_term Ta Xr curses_screen 3
+.It setscrreg Ta Xr curses_scroll 3
+.It setterm Ta Xr curses_screen 3
+.It standend Ta Xr curses_standout 3
+.It standout Ta Xr curses_standout 3
+.It start_color Ta Xr curses_color 3
+.It subpad Ta Xr curses_pad 3
+.It subwin Ta Xr curses_window 3
+.It termattrs Ta Xr curses_attributes 3
+.It timeout Ta Xr curses_input 3
+.It touchline Ta Xr curses_touch 3
+.It touchoverlap Ta Xr curses_touch 3
+.It touchwin Ta Xr curses_touch 3
+.It unctrl Ta Xr curses_print 3
+.It underend Ta Xr curses_underscore 3
+.It underscore Ta Xr curses_underscore 3
+.It ungetch Ta Xr curses_input 3
+.It untouchwin Ta Xr curses_touch 3
+.It use_default_colors Ta Xr curses_default_colors 3
+.It vline Ta Xr curses_line 3
+.It waddch Ta Xr curses_addch 3
+.It waddchnstr Ta Xr curses_addchstr 3
+.It waddchstr Ta Xr curses_addchstr 3
+.It waddnstr Ta Xr curses_addstr 3
+.It waddstr Ta Xr curses_addstr 3
+.It wattr_get Ta Xr curses_attributes 3
+.It wattr_off Ta Xr curses_attributes 3
+.It wattr_on Ta Xr curses_attributes 3
+.It wattr_set Ta Xr curses_attributes 3
+.It wattroff Ta Xr curses_attributes 3
+.It wattron Ta Xr curses_attributes 3
+.It wattrset Ta Xr curses_attributes 3
+.It wbkgd Ta Xr curses_background 3
+.It wbkgdset Ta Xr curses_background 3
+.It wborder Ta Xr curses_border 3
+.It wchgat Ta Xr curses_chgat 3
+.It wclear Ta Xr curses_clear 3
+.It wclrtobot Ta Xr curses_clear 3
+.It wclrtoeol Ta Xr curses_clear 3
+.It wcolor_set Ta Xr curses_attributes 3
+.It wdelch Ta Xr curses_delch 3
+.It wdeleteln Ta Xr curses_deleteln 3
+.It werase Ta Xr curses_clear 3
+.It wgetch Ta Xr curses_input 3
+.It wgetnstr Ta Xr curses_input 3
+.It wgetstr Ta Xr curses_input 3
+.It whline Ta Xr curses_line 3
+.It winch Ta Xr curses_inch 3
+.It winchnstr Ta Xr curses_inch 3
+.It winchstr Ta Xr curses_inch 3
+.It winnstr Ta Xr curses_inch 3
+.It winsch Ta Xr curses_insertch 3
+.It winsdelln Ta Xr curses_insdelln 3
+.It winsertln Ta Xr curses_insertln 3
+.It winstr Ta Xr curses_inch 3
+.It wmove Ta Xr curses_cursor 3
+.It wnoutrefresh Ta Xr curses_refresh 3
+.It wprintw Ta Xr curses_print 3
+.It wredrawln Ta Xr curses_touch 3
+.It wrefresh Ta Xr curses_refresh 3
+.It wresize Ta Xr curses_window 3
+.It wscanw Ta Xr curses_scanw 3
+.It wscrl Ta Xr curses_scroll 3
+.It wsetscrreg Ta Xr curses_scroll 3
+.It wstandend Ta Xr curses_standout 3
+.It wstandout Ta Xr curses_standout 3
+.It wtimeout Ta Xr curses_input 3
+.It wtouchln Ta Xr curses_touch 3
+.It wunderend Ta Xr curses_underscore 3
+.It wunderscore Ta Xr curses_underscore 3
+.It wvline Ta Xr curses_line 3
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width CURSES_TRACE_MASK
+.It COLUMNS
+The number of columns in the terminal if set.
+This is usually automatically configured by querying the kernel.
+.It CURSES_TRACE_MASK
+An integer mask that enables specific debugging traces.
+Enabled only in the debug build of curses.
+.It CURSES_TRACE_FILE
+A file where to output debugging information.
+Enabled only in the debug build of curses.
+.It ESCDELAY
+The maximum delay in milliseconds between characters in multi-character
+keystrokes (such are arrow keys) where the adjacent characters are considered
+part of the same multi-character sequence.
+The default is 300 milliseconds.
+.It LINES
+The number of lines in the terminal if set.
+is usually automatically configured by querying the kernel.
+.It TERM
+The terminal type of the current terminal.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr getenv 3 ,
+.Xr tty 4 ,
+.Xr termcap 5
+.Rs
+.%T Screen Updating and Cursor Movement Optimization: A Library Package
+.%A Ken Arnold
+.Re
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .
+.Sh AUTHORS
+.An Ken Arnold

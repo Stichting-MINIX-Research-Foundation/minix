@@ -1,5 +1,5 @@
 MAN=	abort.3 abs.3 assert.3 atof.3 bstring.3 configfile.3 \
-	crypt.3 ctime.3 ctype.3 curses.3 directory.3 dirname.3 \
+	crypt.3 ctime.3 ctype.3 directory.3 dirname.3 \
 	editline.3 end.3 execl.3 exit.3 fabs.3 fclose.3 \
 	feholdexcept.3 ferror.3 fesetround.3 fnmatch.3 fopen.3 \
 	fpclassify.3 fread.3 fseek.3 getaddrinfo.3 getc.3 getcontext.3 \

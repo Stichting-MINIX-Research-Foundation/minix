@@ -1,7 +1,7 @@
 # Doing a make includes builds /usr/include
 
 INCS=	alloca.h a.out.h ar.h assert.h configfile.h ctype.h \
-	curses.h dirent.h env.h err.h errno.h fcntl.h fenv.h \
+	dirent.h env.h err.h errno.h fcntl.h fenv.h \
 	float.h fnmatch.h fts.h getopt.h glob.h grp.h ifaddrs.h \
 	inttypes.h libgen.h libutil.h limits.h locale.h \
 	mathconst.h math.h midiparser.h netdb.h pwd.h regex.h \

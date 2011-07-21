@@ -1,0 +1,141 @@
+.\"	$NetBSD: curses_clear.3,v 1.3 2003/04/16 13:35:00 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd August 12, 2002
+.Dt CURSES_CLEAR 3
+.Os
+.Sh NAME
+.Nm curses_clear ,
+.Nm clear ,
+.Nm wclear ,
+.Nm clearok ,
+.Nm clrtobot ,
+.Nm clrtoeol ,
+.Nm erase ,
+.Nm werase ,
+.Nm wclrtobot ,
+.Nm wclrtoeol
+.Nd curses clear window routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn clear "void"
+.Ft int
+.Fn clearok "WINDOW *win" "bool flag"
+.Ft int
+.Fn clrtobot "void"
+.Ft int
+.Fn clrtoeol "void"
+.Ft int
+.Fn erase "void"
+.Ft int
+.Fn wclear "WINDOW *win"
+.Ft int
+.Fn werase "WINDOW *win"
+.Ft int
+.Fn wclrtobot "WINDOW *win"
+.Ft int
+.Fn wclrtoeol "WINDOW *win"
+.Sh DESCRIPTION
+These functions clear all or part of
+.Dv stdscr
+or of the specified window.
+.Pp
+The
+.Fn clear
+and
+.Fn erase
+functions erase all characters on
+.Dv stdscr .
+.Fn wclear
+and
+.Fn werase
+perform the same function as
+.Fn clear
+and
+.Fn erase ,
+respectively, excepting that the specified window is cleared.
+.Pp
+By setting
+.Fa flag
+to
+.Dv TRUE ,
+the
+.Fn clearok
+function is used to force the next call to
+.Fn wrefresh
+to clear and completely redraw the window given in
+.Fa win .
+.Pp
+The function
+.Fn clrtobot
+will clear
+.Dv stdscr
+from the current row to the bottom of the screen.
+.Fn clrtoeol
+will clear
+.Dv stdscr
+from the current column position to the end of the line.
+.Fn wclrtobot
+and
+.Fn wclrtoeol
+are the same as
+.Fn clrtobot
+and
+.Fn clrtoeol ,
+respectively, excepting the window specified is operated on instead of
+.Dv stdscr .
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_refresh 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

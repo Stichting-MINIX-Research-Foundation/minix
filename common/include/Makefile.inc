@@ -2,7 +2,7 @@
 
 .PATH: ${MINIXSRCDIR}/common/include
 
-INCS+= 	curses.h env.h fetch.h hgfs.h lib.h libutil.h timers.h
+INCS+=  env.h fetch.h hgfs.h lib.h libutil.h timers.h
 
 INCS+= 	minix/acpi.h minix/ansi.h minix/audio_fw.h minix/bitmap.h \
 	minix/callnr.h minix/com.h minix/compiler.h minix/config.h \

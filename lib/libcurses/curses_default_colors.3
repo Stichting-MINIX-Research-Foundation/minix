@@ -1,0 +1,73 @@
+.\"	$NetBSD: curses_default_colors.3,v 1.6 2008/04/30 13:10:51 martin Exp $
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 13, 2002
+.Dt CURSES_DEFAULT_COLORS 3
+.Os
+.Sh NAME
+.Nm curses_default_colors ,
+.Nm assume_default_colors ,
+.Nm use_default_colors
+.Nd curses default colors setting routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn assume_default_colors "short fore" "short back"
+.Ft int
+.Fn use_default_colors ""
+.Sh DESCRIPTION
+These functions tell the curses library to set the default colors or to use
+the terminal's default colors instead of using the default colors for curses
+applications (which are white foreground on black background).
+.Pp
+The function
+.Fn assume_default_colors fore back
+sets the default colors to foreground color
+.Fa fore
+and background color
+.Fa back .
+If a value of \-1 is used for a color, then the terminal default color is used
+for that color.
+.Pp
+The function
+.Fn use_default_colors
+sets both the foreground and background colors to the terminal default colors.
+This is equivalent to
+.Fn assume_default_colors \-1 \-1 .
+.Sh RETURN VALUES
+These functions return OK on success and ERR on failure.
+.Sh SEE ALSO
+.Xr curses_color 3
+.Sh STANDARDS
+These functions are based on
+.Em ncurses
+extensions to the curses standards.
+.Sh HISTORY
+These functions first appeared in
+.Nx 2.0 .

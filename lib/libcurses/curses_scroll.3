@@ -1,0 +1,169 @@
+.\"	$NetBSD: curses_scroll.3,v 1.4 2003/04/16 13:35:01 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd August 12, 2002
+.Dt CURSES_SCROLL 3
+.Os
+.Sh NAME
+.Nm curses_scroll ,
+.Nm scrl ,
+.Nm wscrl
+.Nm scroll ,
+.Nm scrollok ,
+.Nm setscrreg ,
+.Nm wsetscrreg
+.Nd curses window scrolling routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn scrl "int n"
+.Ft int
+.Fn wscrl "WINDOW *win" "int n"
+.Ft int
+.Fn scroll "WINDOW *win"
+.Ft int
+.Fn scrollok "WINDOW *win" "boolf flag"
+.Ft int
+.Fn setscrreg "int top" "int bottom"
+.Ft int
+.Fn wsetscrreg "WINDOW *win" "int top" "int bottom"
+.Sh DESCRIPTION
+These functions scroll areas on
+.Dv stdscr
+or on the specified window.
+.Pp
+The
+.Fn scrl
+function scrolls
+.Dv stdscr
+by
+.Fa n
+lines.
+If
+.Fa n
+is positive then then
+.Dv stdscr
+is scrolled up.
+.Fa n
+lines are lost from the top of
+.Dv stdscr
+and
+.Fa n
+blank lines are inserted at the bottom.
+If
+.Fa n
+is negative then
+.Dv stdscr
+is scrolled down.
+.Fa n
+blank lines are inserted at the top of
+.Dv stdscr
+and
+.Fa n
+lines are lost from the bottom.
+.Pp
+The
+.Fn wscrl
+function is the same as the
+.Fn scrl
+function, excepting that it scrolls the window specified by
+.Fa win .
+.Pp
+The
+.Fn scroll
+function scrolls the window
+.Fa win
+up by one line.
+.Pp
+The scrolling behaviour of a window can be controlled by using the
+.Fn scrollok
+function.
+If the
+.Fa flag
+argument is
+.Dv TRUE
+then a line wrap at the bottom of the window will cause the window to
+be scrolled up one line, if
+.Fa flag
+is
+.Dv FALSE
+then lines that would force a scroll will be truncated.
+.Pp
+The
+.Fn setscrreg
+function sets up a software scrolling region on
+.Dv stdscr
+which will define a region of the screen that will be scrolled.
+The scrolling of this region is also controlled by the
+.Fn scrollok
+function.
+.Pp
+The
+.Fn wsetscrreg
+function does the same as the
+.Fn setscrreg
+function, except that the scrolling region is set on the window specified by
+.Fa win .
+.Pp
+If a scrolling region has been set with the
+.Fn setscrreg
+or
+.Fn wsetscrreg
+functions and the current cursor position is inside the scrolling region,
+then only the area inside the scrolling region is scrolled.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_deleteln 3 ,
+.Xr curses_insdelln 3 ,
+.Xr curses_insertln 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

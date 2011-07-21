@@ -1,0 +1,223 @@
+.\"	$NetBSD: curses_cursor.3,v 1.7 2010/02/24 13:02:13 drochner Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd February 23, 2010
+.Dt CURSES 3
+.Os
+.Sh NAME
+.Nm curses_cursor ,
+.Nm getcury ,
+.Nm getcurx ,
+.Nm getyx ,
+.Nm getbegy ,
+.Nm getbegx ,
+.Nm getbegyx ,
+.Nm getmaxy ,
+.Nm getmaxx ,
+.Nm getmaxyx ,
+.Nm getpary ,
+.Nm getparx ,
+.Nm getparyx ,
+.Nm move ,
+.Nm wmove ,
+.Nm mvcur ,
+.Nm wcursyncup
+.Nd curses cursor and window location and positioning routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn getcury "WINDOW *win"
+.Ft int
+.Fn getcurx "WINDOW *win"
+.Ft void
+.Fn getyx "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn getbegy "WINDOW *win"
+.Ft int
+.Fn getbegx "WINDOW *win"
+.Ft void
+.Fn getbegyx "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn getmaxy "WINDOW *win"
+.Ft int
+.Fn getmaxx "WINDOW *win"
+.Ft void
+.Fn getmaxyx "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn getpary "WINDOW *win"
+.Ft int
+.Fn getparx "WINDOW *win"
+.Ft void
+.Fn getparyx "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn move "int y" "int x"
+.Ft int
+.Fn wmove "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn mvcur "int oldy" "int oldx" "int y" "int x"
+.Ft void
+.Fn wcursyncup "WINDOW *win"
+.Sh DESCRIPTION
+These functions and macros locate and position cursors and windows.
+.Pp
+The
+.Fn getcury
+and
+.Fn getcurx
+functions get the current row and column positions, respectively, of the cursor in
+the window
+.Fa win .
+The
+.Fn getyx
+macro sets the values of
+.Fa y
+and
+.Fa x
+to the current row and column positions of the cursor in the window
+.Fa win .
+.Pp
+The origin row and columns of a window
+.Fa win
+can be
+determined by calling the
+.Fn getbegy
+and
+.Fn getbegx
+functions, respectively, and the maximum row and column for the window can be
+found by calling the functions
+.Fn getmaxy
+and
+.Fn getmaxx ,
+respectively.
+The
+.Fn getbegyx
+and
+.Fn getmaxyx
+macros set the values of
+.Fa y
+and
+.Fa x
+to the origin and maximum row and column positions, respectively, for the window
+.Fa win .
+.Pp
+The
+.Fn getpary
+and
+.Fn getparx
+functions return the row and column position of the given subwindow relative to
+the window's parent.
+The macro
+.Fn getparyx
+sets the values of
+.Fa y
+and
+.Fa x
+to the origin of the subwindow relative to the window's parent.
+.Pp
+The
+.Fn move
+function positions the cursor on the current window at the position given by
+.Fa y ,
+.Fa x .
+The cursor position is not changed on the screen until the next
+.Fn refresh .
+.Pp
+The
+.Fn wmove
+function is the same as the
+.Fn move
+function, excepting that the cursor is moved in the window specified by
+.Fa win .
+.Pp
+The function
+.Fn mvcur
+moves the cursor to
+.Fa y ,
+.Fa x
+on the screen.
+The arguments
+.Fa oldy ,
+.Fa oldx
+define the previous cursor position for terminals that do not support
+absolute cursor motions.
+The curses library may optimise the cursor motion based on these values.
+If the
+.Fn mvcur
+succeeds then the curses internal structures are updated with the new
+position of the cursor.
+If the destination arguments for
+.Fn mvcur
+exceed the terminal bounds an error will be returned and the cursor
+position will be unchanged.
+.Pp
+The
+.Fn wcursyncup
+function sets the cursor positions of all ancestors of
+.Fa win
+to that of
+.Fa win .
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_refresh 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of
+the Single Unix Specification.
+The
+.Fn getbegx ,
+.Fn getbegy ,
+.Fn getcurx ,
+.Fn getcury ,
+.Fn getmaxx ,
+.Fn getmaxy ,
+.Fn getparx ,
+and
+.Fn getpary
+functions are extensions.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

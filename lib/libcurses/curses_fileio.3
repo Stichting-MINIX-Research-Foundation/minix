@@ -1,0 +1,93 @@
+.\"	$NetBSD: curses_fileio.3,v 1.4 2010/12/09 11:21:49 njoly Exp $
+.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 31, 2008
+.Dt CURSES_FILEIO 3
+.Os
+.Sh NAME
+.Nm curses_fileio ,
+.Nm getwin ,
+.Nm putwin
+.Nd curses file input/output routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft WINDOW *
+.Fn getwin "FILE *fp"
+.Ft int
+.Fn putwin "WINDOW *win" "FILE *fp"
+.Sh DESCRIPTION
+These functions read and write data to and from files.
+.Pp
+The
+.Fn getwin
+function reads window data that has been stored in the file to which
+.Fa fp
+points, and then creates a new window using that data.
+.Pp
+The
+.Fn putwin
+function writes window data from the window
+.Fa win
+to the file pointed to by
+.Fa fp .
+.Sh RETURN VALUES
+The
+.Fn getwin
+function returns one of the following values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Pp
+The
+.Fn putwin
+function returns
+.Dv NULL
+if an error is detected.
+.Sh SEE ALSO
+.Xr curses_window 3 ,
+.Xr fread 3 ,
+.Xr fwrite 3
+.Sh NOTES
+Subwindows can not be created by the
+.Fn getwin
+function, nor written by the
+.Fn putwin
+function.
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+These functions first appeared in
+.Nx 5.0 .

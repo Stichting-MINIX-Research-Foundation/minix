@@ -14,14 +14,14 @@ LIBCOMPAT_DIR?=
 LIBMINLIB_DIR?=
 LIBASYN_DIR?=
 
-SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libcurses libdriver libnetdriver \
+SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libdriver libnetdriver \
 	libedit ${LIBM_DIR} libsys libtimers libutil libbz2 libl libhgfs  \
 	libz libfetch libarchive libvtreefs libaudiodriver libmthread     \
 	libexec libdevman libusb ${LIBMINLIB_DIR} ${LIBASYN_DIR}          \
 	libddekit
 
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-SUBDIR+= libelf libminc libcrypt libterminfo
+SUBDIR+= libelf libminc libcrypt libterminfo libcurses
 .endif
 
 .if ${COMPILER_TYPE} == "ack"

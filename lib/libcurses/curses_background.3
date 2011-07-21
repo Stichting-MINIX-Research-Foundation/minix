@@ -1,0 +1,124 @@
+.\"	$NetBSD: curses_background.3,v 1.6 2008/04/30 13:10:51 martin Exp $
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 15, 2006
+.Dt CURSES_BACKGROUND 3
+.Os
+.Sh NAME
+.Nm curses_background ,
+.Nm bkgd ,
+.Nm bkgdset ,
+.Nm getbkgd ,
+.Nm wbkgd ,
+.Nm wbkgdset
+.Nd curses attribute manipulation routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn bkgd chtype
+.Ft int
+.Fn bkgdset chtype
+.Ft chtype
+.Fn getbkgd "WINDOW *"
+.Ft int
+.Fn wbkgd chtype
+.Ft int
+.Fn wbkgdset chtype
+.Sh DESCRIPTION
+These functions manipulate the background attributes on
+.Dv stdscr
+or on the specified window.
+.Pp
+The function
+.Fn wbkgdset win ch
+sets the background attributes of the specified window
+.Fa win
+to
+.Fa ch .
+.Pp
+When the background attributes are set on a window, characters are added to
+the window with the logical
+.Em OR
+of the background attributes and the character's attributes.
+If both the background attribute and the character attribute contain color,
+the color of the character attribute is rendered.
+If the background attribute contains a non-space character, then this
+character is added where the foreground character is a space character.
+.Pp
+Note that subwindows created from
+.Fa win
+inherit the background attributes of
+.Fa win .
+.Pp
+The function
+.Fn wbkgd win ch
+sets the background attributes of the specified window
+.Fa win
+to
+.Fa ch
+and also sets the rendition of every character position on that window,
+as if the characters had been newly added to
+.Fa win .
+The rendition of characters on subwindows of
+.Fa win
+is also set to
+.Fa ch .
+.Pp
+The functions
+.Fn bkgdset ch
+and
+.Fn bkgd ch
+are equivalent to
+.Fn wbkgdset stdscr ch
+and
+.Fn wbkgd stdscr ch ,
+respectively.
+.Pp
+The function
+.Fn getbkgd win
+returns the background attributes for the window
+.Fa win .
+.Sh RETURN VALUES
+The functions
+.Fn wbkgdset
+and
+.Fn wbkgd
+return OK on success and ERR on failure.
+.Sh SEE ALSO
+.Xr curses_attributes 3 ,
+.Xr curses_color 3 ,
+.Xr curses_window 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+These functions first appeared in
+.Nx 1.6 .

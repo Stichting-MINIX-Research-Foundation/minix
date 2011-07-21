@@ -1,0 +1,109 @@
+.\"	$NetBSD: curses_insertln.3,v 1.4 2006/02/05 17:07:13 jdc Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd February 5, 2006
+.Dt CURSES_INSERTLN 3
+.Os
+.Sh NAME
+.Nm curses_insertln ,
+.Nm insertln ,
+.Nm winsertln
+.Nd curses insert single line routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn insertln "void"
+.Ft int
+.Fn winsertln "WINDOW *win"
+.Sh DESCRIPTION
+These functions insert a single line on
+.Dv stdscr
+or on the specified window.
+.Pp
+The
+.Fn insertln
+function inserts a blank line before the current line on
+.Dv stdscr .
+The current line and all lines below are moved down one line away from
+the cursor and the bottom line of the window is lost.
+.Pp
+The
+.Fn winsertln
+function is the same as the
+.Fn insertln
+function, excepting that the line is inserted on the window
+.Fa win .
+.Pp
+If a scrolling region has been set with the
+.Fn setscrreg
+or
+.Fn wsetscrreg
+functions and the current cursor position is inside the scrolling region,
+then only the lines from the current line to the bottom of the scrolling
+region are moved down and the bottom line of the scrolling region lost.
+.Pp
+The functions
+.Fn insertln
+and
+.Fn winsertln win
+are equivalent to
+.Fn insdelln 1
+and
+.Fn winsdelln win 1 ,
+respectively.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_deleteln 3 ,
+.Xr curses_insdelln 3 ,
+.Xr curses_scroll 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of
+the Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

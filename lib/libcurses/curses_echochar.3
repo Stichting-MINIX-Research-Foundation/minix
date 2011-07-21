@@ -1,0 +1,123 @@
+.\"	$NetBSD: curses_echochar.3,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 27, 2004
+.Dt CURSES_ECHOCHAR 3
+.Os
+.Sh NAME
+.Nm curses_echochar ,
+.Nm echochar ,
+.Nm wechochar ,
+.Nm pechochar
+.Nd curses add characters and then refresh routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn echochar "const chtype ch"
+.Ft int
+.Fn wechochar "WINDOW *win" "const chtype ch"
+.Ft int
+.Fn pechochar "WINDOW *pad" "const chtype ch"
+.Sh DESCRIPTION
+These functions add characters to
+.Dv stdscr
+or to the specified window or pad and then cause an immediate
+.Fn refresh
+of that window or pad.
+.Pp
+The
+.Fn echochar
+function adds the character given in
+.Fa ch
+to
+.Dv stdscr
+at the current cursor position and advances the current cursor position by one.
+Any character attributes set in
+.Fa ch
+will be merged with the background attributes currently set on
+.Dv stdscr .
+.Dv stdscr
+is then refreshed.
+Calling
+.Fn echochar
+is equivalent to calling
+.Fn addch
+followed by
+.Fn refresh .
+.Pp
+The
+.Fn wechochar
+function is the same as the
+.Fn echochar
+function, excepting that the character is added to the window specified by
+.Fa win
+and
+.Fa win
+is refreshed.
+.Pp
+The
+.Fn pechochar
+function is the similar to the
+.Fn echochar
+function, excepting that the character is added to the pad specified by
+.Fa pad
+and
+.Fa pad
+is refreshed at its previous location on the screen.
+Calling
+.Fn pechochar
+is equivalent to calling
+.Fn addch
+followed by
+.Fn prefresh .
+.Sh RETURN VALUES
+These functions will return one of the following values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_addch 3 ,
+.Xr curses_attributes 3 ,
+.Xr curses_pad 3 ,
+.Xr curses_refresh 3
+.Sh STANDARDS
+The
+.Fn echochar ,
+.Fn wechochar ,
+and
+.Fn pechochar
+functions comply with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

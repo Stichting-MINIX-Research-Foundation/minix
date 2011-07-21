@@ -1,0 +1,259 @@
+.\"	$NetBSD: curses_window.3,v 1.13 2009/05/18 09:30:31 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd March 31, 2008
+.Dt CURSES_WINDOW 3
+.Os
+.Sh NAME
+.Nm curses_window ,
+.Nm copywin ,
+.Nm dupwin ,
+.Nm delwin ,
+.Nm derwin ,
+.Nm mvwin ,
+.Nm mvderwin ,
+.Nm newwin ,
+.Nm overlay ,
+.Nm overwrite ,
+.Nm subwin ,
+.Nm wresize
+.Nd curses window routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fo copywin
+.Fa "WINDOW *source"
+.Fa "WINDOW *dest"
+.Fa "int sminrow"
+.Fa "int smincol"
+.Fa "int dminrow"
+.Fa "int dmincol"
+.Fa "int dmaxrow"
+.Fa "int dmaxcol"
+.Fa "int overlay"
+.Fc
+.Ft WINDOW *
+.Fn dupwin "WINDOW *win"
+.Ft WINDOW *
+.Fn derwin "WINDOW *win" "int lines" "int cols" "int y" "int x"
+.Ft int
+.Fn delwin "WINDOW *win"
+.Ft int
+.Fn mvwin "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn mvderwin "WINDOW *win" "int y" "int x"
+.Ft WINDOW *
+.Fn newwin "int lines" "int cols" "int begin_y" "int begin_x"
+.Ft WINDOW *
+.Fn subwin "WINDOW *win" "int lines" "int cols" "int begin_y" "int begin_x"
+.Ft int
+.Fn overlay "WINDOW *source" "WINDOW *dest"
+.Ft int
+.Fn overwrite "WINDOW *source" "WINDOW *dest"
+.Ft int
+.Fn wresize "WINDOW *win" "int lines" "int cols"
+.Sh DESCRIPTION
+These functions create, modify and delete windows on the current screen.
+.Pp
+The contents of a window may be copied to another window by using the
+.Fn copywin
+function, a section of the destination window
+.Fa dest
+bounded by
+.Fa (dminrow ,
+.Fa dmincol )
+and
+.Fa (dmaxrow ,
+.Fa dmaxcol )
+will be overwritten with the contents of the window
+.Fa source
+starting at the coordinates
+.Fa (sminrow ,
+.Fa smincol ) .
+If the
+.Fa overlay
+flag is
+.Dv TRUE
+then only non-blank characters from
+.Fa source
+will be copied to
+.Fa dest ,
+if
+.Fa overlay
+is
+.Dv FALSE
+then all characters from
+.Fa source
+will be copied to
+.Fa dest .
+If the bounding rectangles of either the source or the destination
+windows lay outside the maximum size of the respective windows then
+the size of the window copied will be adjusted to be within the bounds
+of both the source and destination windows.
+.Pp
+The
+.Fn dupwin
+function creates an exact duplicate of
+.Fa win
+and returns a pointer to it.
+.Pp
+Calling
+.Fn derwin
+will create a subwindow of
+.Fa win
+in the same manner as
+.Fn subwin
+excepting that the starting column and row
+.Fa y ,
+.Fa x
+are relative to the parent window origin.
+.Pp
+A window may deleted and all resources freed by calling the
+.Fn delwin
+function with the pointer to the window to be deleted in
+.Fa win .
+.Pp
+A window can be moved to a new position by calling the
+.Fn mvwin
+function.
+The
+.Fa y
+and
+.Fa x
+positions are the new origin of the window on the screen.
+If the new position would cause the any part of the window to lie outside
+the screen, it is an error and the window is not moved.
+.Pp
+A subwindow can be moved relative to the parent window by calling the
+.Fn mvderwin
+function, the
+.Fa y
+and
+.Fa x
+positions are relative to the origin of the parent window.
+If the given window in
+.Fa win
+is not a subwindow then an error will be returned.
+If the new position would cause the any part of the window to lie outside
+the parent window, it is an error and the window is not moved.
+.Pp
+The
+.Fn newwin
+function creates a new window of size
+.Fa lines ,
+.Fa cols
+with an origin at
+.Fa begin_y ,
+.Fa begin_x .
+If
+.Fa lines
+is less than or equal to zero then the number of rows
+for the window is set to
+.Dv LINES -
+.Fa begin_x
++
+.Fa lines .
+Similarly if
+.Fa cols
+is less than or equal to zero then the number of columns
+for the window is set to
+.Dv COLS -
+.Fa begin_y
++
+.Fa cols .
+.Pp
+.Fn subwin
+is similar to
+.Fn newwin
+excepting that the size of the subwindow is bounded by the parent
+window
+.Fa win .
+The subwindow shares internal data structures with the parent window
+and will be refreshed when the parent window is refreshed.
+The subwindow inherits the background character and attributes of the
+parent window.
+.Pp
+The
+.Fn overlay
+function copies the contents of the source window
+.Fa source
+to the destination window
+.Fa dest ,
+only the characters that are not the background character in the
+source window are copied to the destination.
+The windows need not be the same size, only the overlapping portion of both
+windows will be copied.
+The
+.Fn overwrite
+function performs the same functions as
+.Fn overlay
+excepting that characters from the source window are copied to the
+destination without exception.
+.Pp
+.Fn wresize
+resizes the specified window to the new number of lines and columns
+given, all internal curses structures are resized.
+Any subwindows of the specified window will also be resized if any part
+of them falls outside the new parent window size.
+The application must redraw the window after it has been resized.
+Note that
+.Dv curscr
+and
+.Dv stdscr
+can not be resized to be larger than the size of the screen.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_fileio 3 ,
+.Xr curses_pad 3 ,
+.Xr curses_screen 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

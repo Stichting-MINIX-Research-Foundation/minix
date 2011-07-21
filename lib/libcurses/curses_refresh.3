@@ -1,0 +1,157 @@
+.\"	$NetBSD: curses_refresh.3,v 1.10 2003/04/16 13:35:01 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd March 26, 2003
+.Dt CURSES_REFRESH 3
+.Os
+.Sh NAME
+.Nm curses_refresh ,
+.Nm refresh ,
+.Nm wrefresh ,
+.Nm wnoutrefresh ,
+.Nm doupdate ,
+.Nm leaveok ,
+.Nm flushok
+.Nd curses terminal update routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn refresh "void"
+.Ft int
+.Fn wrefresh "WINDOW *win"
+.Ft int
+.Fn wnoutrefresh "WINDOW *win"
+.Ft int
+.Fn doupdate "void"
+.Ft int
+.Fn leaveok "WINDOW *win" "boolf flag"
+.Ft int
+.Fn flushok "WINDOW *win" "boolf flag"
+.Sh DESCRIPTION
+These functions update the terminal with the contents of
+.Dv stdscr
+or of the specified window(s).
+.Pp
+The
+.Fn refresh
+function causes curses to propagate changes made to
+.Dv stdscr
+to the terminal display.
+Any changes made to subwindows of
+.Dv stdscr
+are also propagated.
+.Pp
+The
+.Fn wrefresh
+function is the same as the
+.Fn refresh
+function, excepting that changes are propagated to the terminal from the
+window specified by
+.Fa win .
+.Pp
+The
+.Fn wnoutrefresh
+function performs the internal processing required by curses to determine
+what changes need to be made to synchronise the internal screen buffer
+and the terminal but does not modify the terminal display.
+.Pp
+The
+.Fn doupdate
+function updates the terminal display to match the internal curses
+representation of the display.
+.Pp
+The
+.Fn wnoutrefresh
+and
+.Fn doupdate
+functions can be used together to speed up terminal redraws by
+deferring the actual terminal updates until after a batch of updates
+to multiple windows has been done.
+.Pp
+The
+.Fn refresh
+function is equivalent to
+.Fn wnoutrefresh stdscr
+followed by
+.Fn doupdate .
+.Pp
+The
+.Fn leaveok
+function determines whether refresh operations may leave the screen cursor
+in an arbitrary position on the screen.
+Setting
+.Fa flag
+to
+.Dv FALSE
+ensures that the screen cursor is positioned at the current cursor
+position after a refresh operation has taken place.
+.Pp
+The
+.Fn flushok
+function is used to determine whether or not the screen's output file
+descriptor will be flushed on refresh.
+Setting
+.Fa flag
+to
+.Dv TRUE
+will cause the output to be flushed.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_pad 3 ,
+.Xr curses_touch 3 ,
+.Xr getch 3
+.Sh NOTES
+Calling
+.Fn wrefresh
+on a new, unchanged window has no effect.
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

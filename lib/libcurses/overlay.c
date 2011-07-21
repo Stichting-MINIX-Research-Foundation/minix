@@ -1,124 +1,60 @@
-/****************************************************************/
-/* Overlay() and overwrite() functions of the PCcurses package	*/
-/*								*/
-/****************************************************************/
-/* This version of curses is based on ncurses, a curses version	*/
-/* Originally written by Pavel Curtis at Cornell University.	*/
-/* I have made substantial changes to make it run on IBM PC's,	*/
-/* And therefore consider myself free to make it public domain.	*/
-/*		Bjorn Larsson (...mcvax!enea!infovax!bl)	*/
-/****************************************************************/
-/* 1.0:	Release:					870515	*/
-/****************************************************************/
-/* Modified to run under the MINIX operating system by Don Cope */
-/* These changes are also released into the public domain.      */
-/* 							900906  */
-/****************************************************************/
+/*	$NetBSD: overlay.c,v 1.17 2007/01/21 13:25:36 jdc Exp $	*/
 
-#include <curses.h>
-#include "curspriv.h"
+/*
+ * Copyright (c) 1981, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
-/****************************************************************/
-/* Overlay() overwrites 'win1' upon 'win2', with origins alig-	*/
-/* Ned. Overlay is transparent; blanks from 'win1' are not	*/
-/* Copied to 'win2'.						*/
-/****************************************************************/
-void overlay(win1, win2)
-WINDOW *win1, *win2;
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)overlay.c	8.2 (Berkeley) 5/4/94";
+#else
+__RCSID("$NetBSD: overlay.c,v 1.17 2007/01/21 13:25:36 jdc Exp $");
+#endif
+#endif				/* not lint */
+
+#include <ctype.h>
+
+#include "curses.h"
+#include "curses_private.h"
+
+/*
+ * overlay --
+ *	Writes win1 on win2 non-destructively.
+ */
+int
+overlay(const WINDOW *win1, WINDOW *win2)
 {
-  int *minchng;
-  int *maxchng;
-  int *w1ptr;
-  int *w2ptr;
-  int attrs;
-  int col;
-  int line;
-  int last_line;
-  int last_col;
 
-  last_col = min(win1->_maxx, win2->_maxx);
-  last_line = min(win1->_maxy, win2->_maxy);
-  attrs = win2->_attrs & ATR_MSK;
-  minchng = win2->_minchng;
-  maxchng = win2->_maxchng;
-
-  for (line = 0; line <= last_line; line++) {
-	register short fc, lc = 0;
-	w1ptr = win1->_line[line];
-	w2ptr = win2->_line[line];
-	fc = _NO_CHANGE;
-	for (col = 0; col <= last_col; col++) {
-		if ((*w1ptr & CHR_MSK) != ' ') {
-			*w2ptr = (*w1ptr & CHR_MSK) | attrs;
-			if (fc == _NO_CHANGE) fc = col;
-			lc = col;
-		}
-		w1ptr++;
-		w2ptr++;
-	}
-
-	if (*minchng == _NO_CHANGE) {
-		*minchng = fc;
-		*maxchng = lc;
-	} else if (fc != _NO_CHANGE) {
-		if (fc < *minchng) *minchng = fc;
-		if (lc > *maxchng) *maxchng = lc;
-	}
-	minchng++;
-	maxchng++;
-  }				/* for */
-}				/* overlay */
-
-/****************************************************************/
-/* Overwrite() overwrites 'win1' upon 'win2', with origins	*/
-/* Aligned. Overwrite is non-transparent; blanks from 'win1'	*/
-/* Are copied to 'win2'.					*/
-/****************************************************************/
-void overwrite(win1, win2)
-WINDOW *win1, *win2;
-{
-  int *minchng;
-  int *maxchng;
-  int *w1ptr;
-  int *w2ptr;
-  int attrs;
-  int col;
-  int line;
-  int last_line;
-  int last_col;
-
-  last_col = min(win1->_maxx, win2->_maxx);
-  last_line = min(win1->_maxy, win2->_maxy);
-  attrs = win2->_attrs & ATR_MSK;
-  minchng = win2->_minchng;
-  maxchng = win2->_maxchng;
-
-  for (line = 0; line <= last_line; line++) {
-	register short fc, lc = 0;
-
-	w1ptr = win1->_line[line];
-	w2ptr = win2->_line[line];
-	fc = _NO_CHANGE;
-
-	for (col = 0; col <= last_col; col++) {
-		if ((*w1ptr & CHR_MSK) != (*w2ptr & CHR_MSK)) {
-			*w2ptr = (*w1ptr & CHR_MSK) | attrs;
-
-			if (fc == _NO_CHANGE) fc = col;
-			lc = col;
-		}
-		w1ptr++;
-		w2ptr++;
-	}			/* for */
-
-	if (*minchng == _NO_CHANGE) {
-		*minchng = fc;
-		*maxchng = lc;
-	} else if (fc != _NO_CHANGE) {
-		if (fc < *minchng) *minchng = fc;
-		if (lc > *maxchng) *maxchng = lc;
-	}
-	minchng++;
-	maxchng++;
-  }
+#ifdef DEBUG
+	__CTRACE(__CTRACE_WINDOW, "overlay: (%p, %p);\n", win1, win2);
+#endif
+	return copywin(win1, win2,
+			win2->begy - win1->begy, win2->begx - win1->begx,
+			0, 0, win2->maxy - 1, win2->maxx - 1, TRUE);
 }

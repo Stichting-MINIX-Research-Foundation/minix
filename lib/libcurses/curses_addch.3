@@ -1,0 +1,187 @@
+.\"	$NetBSD: curses_addch.3,v 1.8 2007/07/15 21:37:55 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd July 11, 2007
+.Dt CURSES_ADDCH 3
+.Os
+.Sh NAME
+.Nm curses_addch ,
+.Nm addch ,
+.Nm waddch ,
+.Nm mvaddch ,
+.Nm mvwaddch
+.Nd curses add characters to windows routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn addch "chtype ch"
+.Ft int
+.Fn waddch "WINDOW *win" "chtype ch"
+.Ft int
+.Fn mvaddch "int y" "int x" "chtype ch"
+.Ft int
+.Fn mvwaddch "WINDOW *win" "int y" "int x" "chtype ch"
+.Sh DESCRIPTION
+These functions add characters to
+.Dv stdscr
+or to the specified window.
+.Pp
+The
+.Fn addch
+function adds the character given in
+.Fa ch
+to
+.Dv stdscr
+at the current cursor position and advances the current cursor position by one.
+Any character attributes set in
+.Fa ch
+will be merged with the background attributes currently set on
+.Dv stdscr .
+.Pp
+The
+.Fn waddch
+function is the same as the
+.Fn addch
+function, excepting that the character is added to the window specified by
+.Fa win .
+.Pp
+The
+.Fn mvaddch
+and
+.Fn mvwaddch
+functions are the same as the
+.Fn addch
+and
+.Fn waddch
+functions, respectively, excepting that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the character is added to the window.
+.Ss LINE DRAWING CHARACTERS
+Some terminals support the display of line drawing and graphics characters.
+These characters can be added using their defined names, as shown in the
+table below.
+Where the terminal does not support a specific character, the default
+(non-graphics) character is displayed instead.
+.Bl -column -offset indent ".Sy System V Name" ".Sy Default"
+.It Sy "Name" Ta Sy "Default" Ta Sy "Description"
+.It ACS_RARROW Ta \*[Gt] Ta "Arrow pointing right"
+.It ACS_LARROW Ta \*[Lt] Ta "Arrow pointing left"
+.It ACS_UARROW Ta ^ Ta "Arrow pointing up"
+.It ACS_DARROW Ta v Ta "Arrow pointing down"
+.It ACS_BLOCK Ta # Ta "Solid square block"
+.It ACS_DIAMOND Ta + Ta "Diamond"
+.It ACS_CKBOARD Ta : Ta "Checker board (stipple)"
+.It ACS_DEGREE Ta ' Ta "Degree symbol"
+.It ACS_PLMINUS Ta # Ta "Plus/minus"
+.It ACS_BOARD Ta # Ta "Board of squares"
+.It ACS_LANTERN Ta # Ta "Lantern symbol"
+.It ACS_LRCORNER Ta + Ta "Lower right-hand corner"
+.It ACS_URCORNER Ta + Ta "Upper right-hand corner"
+.It ACS_ULCORNER Ta + Ta "Upper left-hand corner"
+.It ACS_LLCORNER Ta + Ta "Lower left-hand corner"
+.It ACS_PLUS Ta + Ta "Plus"
+.It ACS_HLINE Ta - Ta "Horizontal line"
+.It ACS_S1 Ta - Ta "Scan line 1"
+.It ACS_S9 Ta - Ta "Scan line 9"
+.It ACS_LTEE Ta + Ta "Left tee"
+.It ACS_RTEE Ta + Ta "Right tee"
+.It ACS_BTEE Ta + Ta "Bottom tee"
+.It ACS_TTEE Ta + Ta "Top tee"
+.It ACS_VLINE Ta | Ta "Vertical line"
+.It ACS_BULLET Ta o Ta "Bullet"
+.El
+.Pp
+The following additional,
+.Em ncurses
+compatible, characters are also supported.
+.Bl -column -offset indent ".Sy System V Name" ".Sy Default"
+.It Sy "Name" Ta Sy "Default" Ta Sy "Description"
+.It ACS_S3 Ta - Ta "Scan line 3"
+.It ACS_S7 Ta - Ta "Scan line 7"
+.It ACS_LEQUAL Ta \*[Lt] Ta "Less than or equal to"
+.It ACS_GEQUAL Ta \*[Gt] Ta "Greater than or equal to"
+.It ACS_PI Ta * Ta "Pi symbol"
+.It ACS_NEQUAL Ta ! Ta "Not equal to"
+.It ACS_STERLING Ta f Ta "Sterling symbol"
+.El
+.Pp
+For compatibility with some
+.Em System V
+implementations, the following definitions are also supported.
+.Bl -column -offset indent ".Sy System V Name" ".Sy Default"
+.It Sy "System V Name" Ta Sy "NetBSD Curses Name"
+.It ACS_SBBS Ta ACS_LRCORNER
+.It ACS_BBSS Ta ACS_URCORNER
+.It ACS_BSSB Ta ACS_ULCORNER
+.It ACS_SSBB Ta ACS_LLCORNER
+.It ACS_SSSS Ta ACS_PLUS
+.It ACS_BSBS Ta ACS_HLINE
+.It ACS_SSSB Ta ACS_LTEE
+.It ACS_SBSS Ta ACS_RTEE
+.It ACS_SSBS Ta ACS_BTEE
+.It ACS_BSSS Ta ACS_TTEE
+.It ACS_SBSB Ta ACS_VLINE
+.El
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_addchstr 3 ,
+.Xr curses_addstr 3 ,
+.Xr curses_attributes 3 ,
+.Xr curses_cursor 3 ,
+.Xr curses_delch 3 ,
+.Xr curses_inch 3 ,
+.Xr curses_insertch 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

@@ -1,0 +1,204 @@
+.\"	$NetBSD: curses_screen.3,v 1.14 2007/10/25 20:42:07 jdc Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd October 24, 2007
+.Dt CURSES_SCREEN 3
+.Os
+.Sh NAME
+.Nm curses_screen ,
+.Nm newterm ,
+.Nm set_term ,
+.Nm delscreen ,
+.Nm endwin ,
+.Nm initscr ,
+.Nm isendwin ,
+.Nm resizeterm ,
+.Nm setterm
+.Nd curses terminal and screen routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft SCREEN *
+.Fn newterm "char *type" "FILE *outfd" "FILE *infd"
+.Ft SCREEN *
+.Fn set_term "SCREEN *screen"
+.Ft void
+.Fn delscreen "SCREEN *screen"
+.Ft int
+.Fn endwin "void"
+.Ft WINDOW *
+.Fn initscr "void"
+.Ft bool
+.Fn isendwin "void"
+.Ft int
+.Fn resizeterm "int lines" "int cols"
+.Ft int
+.Fn setterm "char *name"
+.Pp
+.Va extern int LINES ;
+.Pp
+.Va extern int COLS ;
+.Sh DESCRIPTION
+These functions initialize terminals and screens.
+.Pp
+The
+.Fn newterm
+function initialises the curses data structures and pointers ready for
+use by curses.
+The
+.Fa type
+argument points to a
+.Xr termcap 5
+capability name, or it may be
+.Dv NULL
+in which case the TERM environment variable is used.
+The
+.Fa outfd
+and
+.Fa infd
+are the output and input file descriptors for the terminal.
+The
+.Fn newterm
+function must only be called once  per terminal.
+.Pp
+The
+.Fn set_term
+function can be used to switch between the screens defined by calling
+.Fn newterm ,
+a pointer to the previous screen structure that was in use will be
+returned on success.
+.Pp
+Calling
+.Fn delscreen
+will destroy the given screen and free all allocated resources.
+.Pp
+Calling
+.Fn endwin
+will end the curses session and restore the saved terminal settings.
+.Pp
+The curses session must be initialised by calling
+.Fn initscr
+which saves the current terminal state and sets up the terminal and
+internal data structures to support the curses application.
+This
+function call must be, with few exceptions, the first Curses library
+call made.
+The exception to this rule is the
+.Fn newterm
+call which may be called prior to
+.Fn initscr .
+The size of the curses screen is determined by checking the
+.Xr tty 4
+size and then the
+.Xr termcap 5
+entries for the terminal type.
+If the environment variables
+.Va LINES
+or
+.Va COLS
+are set, then these will be used instead.
+.Pp
+When either
+.Fn newterm
+or
+.Fn initscr
+are called, the Curses library sets up signal handlers for
+.Dv SIGTSTP
+and
+.Dv SIGWINCH .
+If a signal handler is already installed for
+.Dv SIGWINCH ,
+this will also be called when the Curses library handler is called.
+.Pp
+The
+.Fn isendwin
+function can be used to determine whether or not a refresh of the
+screen has occurred since the last call to
+.Fn endwin .
+.Pp
+The size of the screen may be changed  by calling
+.Fn resizeterm
+with the updated number of lines and columns.
+This will resize the curses internal data structures to accommodate the
+changed terminal geometry.
+The
+.Dv curscr
+and
+.Dv stdscr
+windows and any of their subwindows will be resized to fit the new
+screen size.
+The application must redraw the screen after a call to
+.Fn resizeterm .
+.Pp
+The
+.Fn setterm
+function sets the terminal type for the current screen to the one
+passed, initialising all the curses internal data structures with
+information related to the named terminal.
+The
+.Fa name
+argument must be a valid name or alias in the
+.Xr termcap 5
+database for this function to succeed.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_window 3 ,
+.Xr tty 4 ,
+.Xr termcap 5 ,
+.Xr signal 7
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .
+The
+.Fn resizeterm
+function is a
+.Em ncurses
+extension to the Curses library and was added in
+.Nx 1.6 .

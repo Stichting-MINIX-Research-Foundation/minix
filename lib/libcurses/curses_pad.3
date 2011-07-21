@@ -1,0 +1,142 @@
+.\"	$NetBSD: curses_pad.3,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 4, 2002
+.Dt CURSES_PAD 3
+.Os
+.Sh NAME
+.Nm curses_pad ,
+.Nm newpad ,
+.Nm subpad ,
+.Nm prefresh ,
+.Nm pnoutrefresh
+.Nd curses pad routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft WINDOW *
+.Fn newpad "int lines" "int cols"
+.Ft WINDOW *
+.Fn subpad "WINDOW *pad" "int lines" "int cols" "int begin_y" "int begin_x"
+.Ft int
+.Fn prefresh "WINDOW *pad" "int pbeg_y" "int pbeg_x" "int sbeg_y" "int sbeg_x" "int smax_y" "int smax_x"
+.Ft int
+.Fn pnoutrefresh "WINDOW *pad" "int pbeg_y" "int pbeg_x" "int sbeg_y" "int sbeg_x" "int smax_y" "int smax_x"
+.Sh DESCRIPTION
+These functions create and display pads on the current screen.
+.Pp
+The
+.Fn newpad
+function creates a new pad of size
+.Fa lines ,
+.Fa cols .
+.Pp
+.Fn subpad
+is similar to
+.Fn newpad
+excepting that the size of the subpad is bounded by the parent
+pad
+.Fa pad .
+The subpad shares internal data structures with the parent pad
+and will be refreshed when the parent pad is refreshed.
+The starting column and row
+.Fa begin_y ,
+.Fa begin_x
+are relative to the parent pad origin.
+.Pp
+The
+.Fn pnoutrefresh
+function performs the internal processing required by curses to determine
+what changes need to be made to synchronise the internal screen buffer
+and the terminal but does not modify the terminal display.
+A rectangular area of the pad starting at column and row
+.Fa pbeg_y ,
+.Fa pbeg_x
+is copied to the corresponding rectangular area of the screen buffer starting
+at column and row
+.Fa sbeg_y ,
+.Fa sbeg_x
+and extending to
+.Fa smax_y ,
+.Fa smax_x .
+.Pp
+The
+.Fn prefresh
+function causes curses to propagate changes made to the pad specified by
+.Fa pad
+to the terminal display.
+A rectangular area of the pad starting at column and row
+.Fa pbeg_y ,
+.Fa pbeg_x
+is copied to the corresponding rectangular area of the terminal starting
+at column and row
+.Fa sbeg_y ,
+.Fa sbeg_x
+and extending to
+.Fa smax_y ,
+.Fa smax_x .
+.Pp
+The
+.Fn pnoutrefresh
+and
+.Fn doupdate
+functions can be used together to speed up terminal redraws by
+deferring the actual terminal updates until after a batch of updates
+to multiple pads has been done.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_refresh 3 ,
+.Xr curses_window 3
+.Sh NOTES
+The
+.Fn subpad
+function is similar to the
+.Xr derwin 3
+function, and not the
+.Xr subwin 3
+function.
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

@@ -1,0 +1,159 @@
+.\"	$NetBSD: curses_border.3,v 1.4 2004/03/16 19:20:20 snj Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd August 12, 2002
+.Dt CURSES_BORDER 3
+.Os
+.Sh NAME
+.Nm curses_border ,
+.Nm border ,
+.Nm box ,
+.Nm wborder
+.Nd curses border drawing routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fo border
+.Fa "chtype ls"
+.Fa "chtype rs"
+.Fa "chtype ts"
+.Fa "chtype bs"
+.Fa "chtype tl"
+.Fa "chtype tr"
+.Fa "chtype bl"
+.Fa "chtype br"
+.Fc
+.Ft int
+.Fn box "WINDOW *win" "chtype vertical" "chtype horizontal"
+.Ft int
+.Fo wborder
+.Fa "WINDOW *win"
+.Fa "chtype ls"
+.Fa "chtype rs"
+.Fa "chtype ts"
+.Fa "chtype bs"
+.Fa "chtype tl"
+.Fa "chtype tr"
+.Fa "chtype bl"
+.Fa "chtype br"
+.Fc
+.Sh DESCRIPTION
+These functions draw borders around
+.Dv stdscr
+or around the specified window.
+.Pp
+The
+.Fn border
+function draws a border around
+.Dv stdscr
+using the characters given as arguments to the function.
+The
+.Fa ls ,
+.Fa rs ,
+.Fa ts
+and
+.Fa bs
+are the characters used to draw the left, right, top and bottom sides,
+respectively.
+The
+.Fa tl ,
+.Fa tr ,
+.Fa bl
+and
+.Fa br
+are the characters used to draw the top-left, top-right, bottom-left
+and bottom-right corners, respectively.
+If any of the characters have a text portion that is 0 then a default
+alternate character set character is used for that character.
+Note that even though the text portion of the argument is 0, the argument
+can still be used to specify the attributes for that portion of the border.
+The following table shows the default characters for each argument:
+.Pp
+.Bl -column "ls" -offset indent
+.It ls	ACS_VLINE
+.It rs	ACS_VLINE
+.It ts	ACS_HLINE
+.It bs	ACS_HLINE
+.It tl	ACS_ULCORNER
+.It tr	ACS_URCORNER
+.It bl	ACS_LLCORNER
+.It br	ACS_LRCORNER
+.El
+.Pp
+.Fn wborder
+is the same as
+.Fn border
+excepting that the border is drawn around the specified window.
+.Pp
+The
+.Fn box
+command draws a box around the window given in
+.Fa win
+using the
+.Fa vertical
+character for the vertical lines and the
+.Fa horizontal
+character for the horizontal lines.
+The corner characters of this box will be the defaults as described for
+.Fn border
+above.
+Passing characters with text portion that is 0 to
+.Fn box
+will result in the same defaults as those for
+.Fn border
+as described above.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_attributes 3 ,
+.Xr curses_line 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

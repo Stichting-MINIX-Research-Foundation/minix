@@ -1,0 +1,104 @@
+.\"	$NetBSD: curses_standout.3,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 13, 2002
+.Dt CURSES_STANDOUT 3
+.Os
+.Sh NAME
+.Nm curses_standout ,
+.Nm standout ,
+.Nm standend ,
+.Nm wstandout ,
+.Nm wstandend
+.Nd curses standout attribute manipulation routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn standout void
+.Ft int
+.Fn standend void
+.Ft int
+.Fn wstandout void
+.Ft int
+.Fn wstandend void
+.Sh DESCRIPTION
+These functions manipulate the standout attribute on
+.Dv stdscr
+or on the specified window.
+.Pp
+The
+.Fn standout
+function turns on the standout attribute
+on
+.Dv stdscr .
+The
+.Fn standend
+function turns off the standout attribute
+on
+.Dv stdscr .
+.Pp
+The
+.Fn wstandout
+and
+.Fn wstandend
+functions are equivalent to
+.Fn standout
+and
+.Fn standend ,
+respectively, excepting that the attribute is manipulated on the
+window specified by
+.Fa win .
+.Pp
+The
+.Fn standout
+and
+.Fn standend
+functions are equivalent to
+.Fn attron A_STANDOUT
+and
+.Fn attroff A_STANDOUT ,
+respectively.
+.Sh RETURN VALUES
+These functions always return 1.
+.Sh SEE ALSO
+.Xr curses_attributes 3 ,
+.Xr curses_underscore 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .
+.Sh BUGS
+On modern terminals that support other attributes, there is no difference
+between characters displayed with the standout attribute set and those
+displayed with one of the other attributes set (usually bold).
+It is best to avoid using standout if the terminal supports other attributes.

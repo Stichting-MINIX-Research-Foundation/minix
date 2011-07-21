@@ -1,0 +1,199 @@
+.\"	$NetBSD: curses_touch.3,v 1.8 2010/02/24 13:02:13 drochner Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd February 23, 2010
+.Dt CURSES_TOUCH 3
+.Os
+.Sh NAME
+.Nm curses_touch ,
+.Nm touchline ,
+.Nm touchoverlap ,
+.Nm touchwin ,
+.Nm untouchwin ,
+.Nm wtouchln ,
+.Nm is_linetouched ,
+.Nm is_wintouched ,
+.Nm redrawwin ,
+.Nm wredrawln ,
+.Nm wsyncup ,
+.Nm wsyncdown
+.Nd curses window modification routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn touchline "WINDOW *win" "int start" "int count"
+.Ft int
+.Fn touchoverlap "WINDOW *win1" "WINDOW *win2"
+.Ft int
+.Fn touchwin "WINDOW *win"
+.Ft int
+.Fn untouchwin "WINDOW *win"
+.Ft int
+.Fn wtouchln "WINDOW *win" "int line" "int n" "boolf changed"
+.Ft bool
+.Fn is_linetouched "WINDOW *win" "int line"
+.Ft bool
+.Fn is_wintouched "WINDOW *win"
+.Ft int
+.Fn redrawwin "WINDOW *win"
+.Ft int
+.Fn wredrawln "WINDOW *win" "int line" "int n"
+.Ft void
+.Fn wsyncup "WINDOW *win"
+.Ft void
+.Fn wsyncdown "WINDOW *win"
+.Sh DESCRIPTION
+These functions mark lines and windows as modified and check the modification
+status of lines and windows.
+.Pp
+The
+.Fn touchline
+function marks
+.Fa count
+lines starting from
+.Fa start
+in window
+.Fa win
+as having been modified.
+These characters will be synced to the terminal on the next call to
+.Fn wrefresh .
+.Pp
+The
+.Fn touchoverlap
+function marks the portion of
+.Fa win2
+that overlaps
+.Fa win1
+as being modified.
+.Pp
+The
+.Fn touchwin
+function marks the entire window
+.Fa win
+as having been modified.
+Conversely,
+the
+.Fn untouchwin
+function marks the window
+.Fa win
+as being unmodified, so that any changes made to that window will
+not be synced to the terminal during a
+.Fn wrefresh .
+.Pp
+The
+.Fn wtouchln
+function performs one of two operations on
+.Fa n
+lines starting at
+.Fa line
+in the given window.
+If
+.Fa changed
+is 1 then the given line range is marked as being modified, if
+.Fa changed
+is 0 then the given line range is set to being unmodified.
+.Pp
+The
+.Fn is_linetouched
+function returns
+.Dv TRUE
+if
+.Fa line
+in window
+.Fa win
+has been modified since the last refresh was done, otherwise
+.Dv FALSE
+is returned.
+.Pp
+.Fn is_wintouched
+returns
+.Dv TRUE
+if the window
+.Fa win
+has been modified since the last refresh, otherwise
+.Dv FALSE
+is returned.
+.Pp
+The
+.Fn redrawwin
+function marks the entire window
+.Fa win
+as having been corrupted.
+Is is equivalent to the
+.Fn touchwin
+function.
+.Pp
+The
+.Fn wredrawln
+function marks
+.Fa n
+lines starting at
+.Fa line
+in the given window as corrupted.
+It is equivalent to
+.Fn wtouchln win line n 1 .
+.Pp
+The
+.Fn wsyncup
+function touches all ancestors of
+.Fa win .
+.Pp
+The
+.Fn wsyncdown
+function touches
+.Fa win
+if any of its ancestors is touched.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_refresh 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

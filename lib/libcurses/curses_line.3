@@ -1,0 +1,171 @@
+.\"	$NetBSD: curses_line.3,v 1.6 2010/02/20 10:23:04 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd February 19, 2010
+.Dt CURSES_LINE 3
+.Os
+.Sh NAME
+.Nm curses_line ,
+.Nm hline ,
+.Nm whline ,
+.Nm vline ,
+.Nm wvline ,
+.Nm mvhline ,
+.Nm mvwhline ,
+.Nm mvvline ,
+.Nm mvwvline
+.Nd curses draw lines on windows routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn hline "chtype ch" "int n"
+.Ft int
+.Fn whline "WINDOW *win" "chtype ch" "int n"
+.Ft int
+.Fn mvhline "int y" "int x" "chtype ch" "int n"
+.Ft int
+.Fn mvwvline "WINDOW *win" "int y" "int x" "chtype c" "int n"
+.Ft int
+.Fn vline "chtype c" "int n"
+.Ft int
+.Fn wvline "WINDOW *win" "chtype c" "int n"
+.Ft int
+.Fn mvvline "int y" "int x" "chtype ch" "int n"
+.Ft int
+.Fn mvwhline "WINDOW *win" "int y" "int x" "chtype c" "int n"
+.Sh DESCRIPTION
+These functions draw lines on
+.Dv stdscr
+or on the specified window.
+.Pp
+The
+.Fn hline
+function draws a horizontal line of the character
+.Fa ch
+on
+.Dv stdscr
+starting at the current cursor position and extending for
+.Fa n
+characters, or until the right hand side of
+.Dv stdscr
+is reached.
+If the text portion of
+.Fa ch
+is 0 then the line will be drawn with the
+.Dv ACS_HLINE
+character.
+.Pp
+The
+.Fn whline
+function is the same as the
+.Fn hline
+function, excepting that the line is drawn in the window specified by
+.Fa win .
+.Pp
+The
+.Fn vline
+function draws a vertical line of character
+.Fa ch
+on
+.Dv stdscr
+starting at the current cursor position and moving down until either
+.Fa n
+characters have been drawn or the bottom of
+.Dv stdscr
+is reached.
+If the text portion of
+.Fa ch
+is 0 then the line will be drawn with the
+.Dv ACS_VLINE
+character.
+.Pp
+The
+.Fn wvline
+function is the same as the
+.Fn vline
+function, excepting that the line is drawn on the given window.
+.Pp
+The
+.Fn mvhline ,
+.Fn mvwhline ,
+.Fn mvvline
+and
+.Fn mvwvline
+functions are the same as the
+.Fn hline ,
+.Fn whline ,
+.Fn vline
+and
+.Fn wvline
+functions, respectively, excepting that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the line is drawn on the window.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_border 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of
+the Single Unix Specification.
+.Pp
+The use of
+.Dv ACS_HLINE
+and
+.Dv ACS_VLINE
+as default drawing character in
+.Fn hline
+and
+.Fn vline
+is a
+.Nx
+extension which should not be relied on in portable code.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

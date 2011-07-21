@@ -1,0 +1,124 @@
+.\"	$NetBSD: curses_print.3,v 1.6 2003/04/16 13:35:01 wiz Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd August 12, 2002
+.Dt CURSES_PRINT 3
+.Os
+.Sh NAME
+.Nm curses_print ,
+.Nm printw ,
+.Nm wprintw ,
+.Nm mvprintw ,
+.Nm mvwprintw ,
+.Nm unctrl
+.Nd curses print formatted strings on windows routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn printw "const char *fmt" "..."
+.Ft int
+.Fn wprintw "WINDOW *win" "const char *fmt" "..."
+.Ft int
+.Fn mvprintw "int y" "int x" "const char *fmt" "..."
+.Ft int
+.Fn mvwprintw "WINDOW *win" "int y" "int x" "const char *fmt" "..."
+.Ft char *
+.Fn unctrl "chtype ch"
+.Sh DESCRIPTION
+These functions print formatted strings on
+.Dv stdscr
+or on the specified window.
+.Pp
+The
+.Fn printw
+function formats and prints its arguments on
+.Dv stdscr .
+The behaviour is the same as that of
+.Fn printf .
+.Pp
+The
+.Fn wprintw
+function is the same as the
+.Fn printw
+function, excepting that the resulting output is printed on the window
+specified by
+.Fa win .
+.Pp
+The
+.Fn mvprintw
+and
+.Fn mvwprintw
+functions are the same as the
+.Fn printw
+and
+.Fn wprintw
+functions, respectively, excepting that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the output is printed on the window.
+.Pp
+The
+.Fn unctrl
+function returns a printable string representation of the character
+.Fa ch .
+If
+.Fa ch
+is a control character then it will be converted to the form ^Y.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_cursor 3 ,
+.Xr curses_scanw 3 ,
+.Xr printf 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

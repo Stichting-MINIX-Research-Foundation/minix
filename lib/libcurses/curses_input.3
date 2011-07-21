@@ -1,0 +1,584 @@
+.\"	$NetBSD: curses_input.3,v 1.21 2010/08/06 04:03:26 dholland Exp $
+.\"
+.\" Copyright (c) 2002
+.\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
+.\"
+.\" This code is donated to the NetBSD Foundation by the Author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd July 25, 2006
+.Dt CURSES_INPUT 3
+.Os
+.Sh NAME
+.Nm curses_input ,
+.Nm getch ,
+.Nm wgetch ,
+.Nm mvgetch ,
+.Nm mvwgetch ,
+.Nm define_key ,
+.Nm keyok ,
+.Nm getnstr ,
+.Nm wgetnstr ,
+.Nm mvgetnstr ,
+.Nm mvwgetnstr ,
+.Nm getstr ,
+.Nm wgetstr ,
+.Nm mvgetstr ,
+.Nm mvwgetstr ,
+.Nm keypad ,
+.Nm notimeout ,
+.Nm timeout ,
+.Nm wtimeout ,
+.Nm nodelay ,
+.Nm ungetch
+.Nd curses input stream routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn getch "void"
+.Ft int
+.Fn wgetch "WINDOW *win"
+.Ft int
+.Fn mvgetch "int y" "int x"
+.Ft int
+.Fn mvwgetch "WINDOW *win" "int y" "int x"
+.Ft int
+.Fn keyok "int key_symbol" "bool flag"
+.Ft int
+.Fn define_key "char *sequence" "int key_symbol"
+.Ft int
+.Fn getnstr "char *str" "int limit"
+.Ft int
+.Fn wgetnstr "WINDOW *win" "char *str" "int limit"
+.Ft int
+.Fn mvgetnstr "int y" "int x" "char *str" "int limit"
+.Ft int
+.Fn mvwgetnstr "WINDOW *win" "int y" "int x" "char *str" "int limit"
+.Ft int
+.Fn getstr "char *str"
+.Ft int
+.Fn wgetstr "WINDOW *win" "char *str"
+.Ft int
+.Fn mvgetstr "int y" "int x" "char *str"
+.Ft int
+.Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str"
+.Ft int
+.Fn keypad "WINDOW *win" "boolf flag"
+.Ft int
+.Fn notimeout "WINDOW *win" "boolf flag"
+.Ft int
+.Fn timeout "int delay"
+.Ft int
+.Fn wtimeout "WINDOW *win" "int delay"
+.Ft int
+.Fn nodelay "WINDOW *win" "boolf flag"
+.Ft int
+.Fn ungetch "int c"
+.Pp
+.Va extern int ESCDELAY ;
+.Sh DESCRIPTION
+These functions read characters and strings from the window input file
+descriptor.
+.Pp
+The
+.Fn getch
+function reads a character from the
+.Dv stdscr
+input file descriptor and returns it.
+If the
+.Fn keypad
+flag has been set to
+.Dv TRUE ,
+then
+.Fn getch
+will assemble multi-character key sequences into key symbols,
+If the terminal is resized,
+.Fn getch
+will return
+.Dv KEY_RESIZE ,
+regardless of the setting of
+.Fn keypad .
+Calling
+.Fn getch
+will cause an implicit
+.Fn refresh
+on
+.Dv stdscr .
+.Pp
+The
+.Fn wgetch
+function is the same as the
+.Fn getch
+function, excepting that it reads from the input file descriptor associated
+with the window specified by
+.Fa win .
+.Pp
+If the
+.Fn keypad
+flag is
+.Dv TRUE
+then the assembly of specific key symbols can be disabled by using the
+.Fn keyok
+function.
+If the
+.Fa flag
+is set to
+.Dv FALSE
+on a key symbol then
+.Fn getch
+will behave as if the character sequence associated with that key symbol
+was not recognised and will return the component characters one at a time to
+the caller.
+.Pp
+Custom associations between sequences of characters and a key symbol can
+be made by using the
+.Fn define_key
+function.
+Normally, these associations are made by the information in the
+.Xr termcap 5
+database but the
+.Fn define_key
+function gives the capability to remove or add more associations.
+If
+.Fn define_key
+is passed a non-NULL string in
+.Fa sequence
+it will associate that sequence with the key symbol passed in
+.Fa key_symbol .
+The key symbol may be one of the ones listed below or a custom value that
+is application defined.
+It is valid to have multiple character sequences map to the same key
+symbol and there are no constraints on the length of the sequence allowed.
+The assembly of custom sequences follow the same rules for inter-character
+timing and so forth as the
+.Xr termcap 5
+derived ones.
+If
+.Fn define_key
+is passed a NULL in
+.Fa sequence
+then all associations for the key symbol in
+.Fa key_symbol
+will be deleted, this includes any associations that were derived from
+.Xr termcap 5 .
+.Pp
+The
+.Fn mvgetch
+and
+.Fn mvwgetch
+functions are the same as the
+.Fn getch
+and
+.Fn wgetch
+functions, respectively, excepting that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the character is read.
+.Pp
+Calling
+.Fn getnstr ,
+.Fn wgetnstr ,
+.Fn mvgetnstr
+or
+.Fn mvwgetnstr
+is effectively the same as calling
+.Fn getch
+repeatedly until a newline is received or the character limit
+.Fa limit
+is reached.
+Once this happens the string is
+.Dv NULL
+terminated and returned in
+.Fa str .
+During input, the normal curses input key processing is performed and
+affects the input buffer.
+The
+.Fn mvgetnstr
+function calls
+.Fn wmove
+to move the cursor to the position given by
+.Fa y ,
+.Fa x
+before getting the string,
+.Fn wgetnstr
+reads the input from the designated window,
+.Fn mvwgetnstr
+moves the cursor to the position given by
+.Fa y ,
+.Fa x
+before getting the input from the designated window.
+.Pp
+The functions
+.Fn getstr ,
+.Fn wgetstr ,
+.Fn mvgetstr ,
+and
+.Fn mvwgetstr
+are similar to
+.Fn getnstr ,
+.Fn wgetnstr ,
+.Fn mvgetnstr ,
+and
+.Fn mvwgetnstr ,
+respectively, excepting that there is no limit on the number of characters
+that may be inserted into
+.Fa str .
+This may cause the buffer to be overflowed, so their use is not recommended.
+.Pp
+The
+.Fn keypad
+function is used to affect how
+.Fn getch
+processes input characters.
+If
+.Fa flag
+is set to
+.Dv TRUE ,
+then
+.Fn getch
+will scan the input stream looking for multi-character key sequences
+that are emitted by some terminal function keys.
+If a recognised sequence of characters is found, then
+.Fn getch
+will collapse that sequence into an integer key symbol, as shown below.
+The default setting for the flag is
+.Dv FALSE .
+.Pp
+The
+.Fn notimeout
+function controls whether or not
+.Fn getch
+will wait indefinitely between characters in a multi-character key
+sequence or not.
+If
+.Fa flag
+is
+.Dv TRUE ,
+then there is no timeout applied between characters comprising a
+multi-character key sequence.
+If
+.Fa flag
+is
+.Dv FALSE ,
+then the component characters of a multi-character sequence must not
+have an inter-character gap of more than
+.Va ESCDELAY .
+If this timing is exceeded, then the multi-character key assembly is
+deemed to have failed and the characters read thus far are returned
+one at a time when
+.Fn getch
+is called.
+The default setting for the flag is
+.Dv FALSE .
+The default value of
+.Va ESCDELAY
+is 300ms.
+If
+.Va ESCDELAY
+is negative, no timeout is applied between characters comprising a
+multi-character key sequence.
+.Pp
+The
+.Fn timeout
+function affects the behaviour of
+.Fn getch
+when reading a character from
+.Dv stdscr .
+If
+.Fa delay
+is negative, then
+.Fn getch
+will block indefinitely on a read.
+If
+.Fa delay
+is 0, then
+.Fn getch
+will return immediately with
+.Dv ERR
+if there are no characters immediately available.
+If
+.Fa delay
+is a positive number, then
+.Fn getch
+will wait for that many milliseconds before returning and, if no character
+was available, then
+.Dv ERR
+will be returned.
+Note that for a positive number, the timeout is only accurate to the nearest
+tenth of a second.
+Also, the maximum value of
+.Fa delay
+is 25500 milliseconds.
+The
+.Fn wtimeout
+function does the same as
+.Fn timeout
+but applies to the specified window
+.Fa win .
+.Pp
+The
+.Fn nodelay
+function turns on and off blocking reads for
+.Fn getch .
+If
+.Fa flag
+is
+.Dv TRUE ,
+then
+.Fn getch
+will not block on reads, if
+.Fa flag
+is
+.Dv FALSE ,
+then reads will block.
+The default setting for the flag is
+.Dv FALSE .
+.Fn nodelay win TRUE
+is equivalent to
+.Fn wtimeout win 0
+and
+.Fn nodelay win FALSE
+is equivalent to
+.Fn wtimeout win \-1 .
+.Pp
+.Fn ungetch
+will convert
+.Fa c
+into an unsigned char and push that character back onto the input stream.
+Only one character of push-back is guaranteed to work, more may be possible
+depending on system resources.
+.Sh RETURN VALUES
+The functions
+.Fn getch ,
+.Fn wgetch ,
+.Fn mvgetch ,
+and
+.Fn mvwgetch
+will return the value of the key pressed or
+.Dv ERR
+in the case of an error or a timeout.
+Additionally, if
+.Fn keypad TRUE
+has been called on a window, then it may return one of the following values:
+.Pp
+.Bl -column "Termcap entry" "getch Return Value" "Key Function" -offset indent
+.It Sy "Termcap entry" Ta Sy "getch Return Value" Ta Sy "Key Function"
+.It \&!1 Ta KEY_SSAVE Ta Shift Save
+.It \&!2 Ta KEY_SSUSPEND Ta Shift Suspend
+.It \&!3 Ta KEY_SUNDO Ta Shift Undo
+.It \&#1 Ta KEY_SHELP Ta Shift Help
+.It \&#2 Ta KEY_SHOME Ta Shift Home
+.It \&#3 Ta KEY_SIC Ta Shift Insert Character
+.It \&#4 Ta KEY_SLEFT Ta Shift Left Arrow
+.It \&%0 Ta KEY_REDO Ta Redo
+.It \&%1 Ta KEY_HELP Ta Help
+.It \&%2 Ta KEY_MARK Ta Mark
+.It \&%3 Ta KEY_MESSAGE Ta Message
+.It \&%4 Ta KEY_MOVE Ta Move
+.It \&%5 Ta KEY_NEXT Ta Next Object
+.It \&%6 Ta KEY_OPEN Ta Open
+.It \&%7 Ta KEY_OPTIONS Ta Options
+.It \&%8 Ta KEY_PREVIOUS Ta Previous Object
+.It \&%9 Ta KEY_PRINT Ta Print
+.It \&%a Ta KEY_SMESSAGE Ta Shift Message
+.It \&%b Ta KEY_SMOVE Ta Shift Move
+.It \&%c Ta KEY_SNEXT Ta Shift Next Object
+.It \&%d Ta KEY_SOPTIONS Ta Shift Options
+.It \&%e Ta KEY_SPREVIOUS Ta Shift Previous Object
+.It \&%f Ta KEY_SPRINT Ta Shift Print
+.It \&%g Ta KEY_SREDO Ta Shift Redo
+.It \&%h Ta KEY_SREPLACE Ta Shift Replace
+.It \&%i Ta KEY_SRIGHT Ta Shift Right Arrow
+.It \&%j Ta KEY_SRSUME Ta Shift Resume
+.It \&\*[Am]0 Ta KEY_SCANCEL Ta Shift Cancel
+.It \&\*[Am]1 Ta KEY_REFERENCE Ta Reference
+.It \&\*[Am]2 Ta KEY_REFRESH Ta Refresh
+.It \&\*[Am]3 Ta KEY_REPLACE Ta Replace
+.It \&\*[Am]4 Ta KEY_RESTART Ta Restart
+.It \&\*[Am]5 Ta KEY_RESUME Ta Resume
+.It \&\*[Am]6 Ta KEY_SAVE Ta Save
+.It \&\*[Am]7 Ta KEY_SUSPEND Ta Suspend
+.It \&\*[Am]8 Ta KEY_UNDO Ta Undo
+.It \&\*[Am]9 Ta KEY_SBEG Ta Shift Begin
+.It \&*0 Ta KEY_SFIND Ta Shift Find
+.It \&*1 Ta KEY_SCOMMAND Ta Shift Command
+.It \&*2 Ta KEY_SCOPY Ta Shift Copy
+.It \&*3 Ta KEY_SCREATE Ta Shift Create
+.It \&*4 Ta KEY_SDC Ta Shift Delete Character
+.It \&*5 Ta KEY_SDL Ta Shift Delete Line
+.It \&*6 Ta KEY_SELECT Ta Select
+.It \&*7 Ta KEY_SEND Ta Shift End
+.It \&*8 Ta KEY_SEOL Ta Shift Clear to EOL
+.It \&*9 Ta KEY_SEXIT Ta Shift Exit
+.It \&@0 Ta KEY_FIND Ta Find
+.It \&@1 Ta KEY_BEG Ta Begin
+.It \&@2 Ta KEY_CANCEL Ta Cancel
+.It \&@3 Ta KEY_CLOSE Ta Close
+.It \&@4 Ta KEY_COMMAND Ta Command
+.It \&@5 Ta KEY_COPY Ta Copy
+.It \&@6 Ta KEY_CREATE Ta Create
+.It \&@7 Ta KEY_END Ta End
+.It \&@8 Ta KEY_ENTER Ta Enter
+.It \&@9 Ta KEY_EXIT Ta Exit
+.It \&F1 Ta KEY_F(11) Ta Function Key 11
+.It \&F2 Ta KEY_F(12) Ta Function Key 12
+.It \&F3 Ta KEY_F(13) Ta Function Key 13
+.It \&F4 Ta KEY_F(14) Ta Function Key 14
+.It \&F5 Ta KEY_F(15) Ta Function Key 15
+.It \&F6 Ta KEY_F(16) Ta Function Key 16
+.It \&F7 Ta KEY_F(17) Ta Function Key 17
+.It \&F8 Ta KEY_F(18) Ta Function Key 18
+.It \&F9 Ta KEY_F(19) Ta Function Key 19
+.It \&FA Ta KEY_F(20) Ta Function Key 20
+.It \&FB Ta KEY_F(21) Ta Function Key 21
+.It \&FC Ta KEY_F(22) Ta Function Key 22
+.It \&FD Ta KEY_F(23) Ta Function Key 23
+.It \&FE Ta KEY_F(24) Ta Function Key 24
+.It \&FF Ta KEY_F(25) Ta Function Key 25
+.It \&FG Ta KEY_F(26) Ta Function Key 26
+.It \&FH Ta KEY_F(27) Ta Function Key 27
+.It \&FI Ta KEY_F(28) Ta Function Key 28
+.It \&FJ Ta KEY_F(29) Ta Function Key 29
+.It \&FK Ta KEY_F(30) Ta Function Key 30
+.It \&FL Ta KEY_F(31) Ta Function Key 31
+.It \&FM Ta KEY_F(32) Ta Function Key 32
+.It \&FN Ta KEY_F(33) Ta Function Key 33
+.It \&FO Ta KEY_F(34) Ta Function Key 34
+.It \&FP Ta KEY_F(35) Ta Function Key 35
+.It \&FQ Ta KEY_F(36) Ta Function Key 36
+.It \&FR Ta KEY_F(37) Ta Function Key 37
+.It \&FS Ta KEY_F(38) Ta Function Key 38
+.It \&FT Ta KEY_F(39) Ta Function Key 39
+.It \&FU Ta KEY_F(40) Ta Function Key 40
+.It \&FV Ta KEY_F(41) Ta Function Key 41
+.It \&FW Ta KEY_F(42) Ta Function Key 42
+.It \&FX Ta KEY_F(43) Ta Function Key 43
+.It \&FY Ta KEY_F(44) Ta Function Key 44
+.It \&FZ Ta KEY_F(45) Ta Function Key 45
+.It \&Fa Ta KEY_F(46) Ta Function Key 46
+.It \&Fb Ta KEY_F(47) Ta Function Key 47
+.It \&Fc Ta KEY_F(48) Ta Function Key 48
+.It \&Fd Ta KEY_F(49) Ta Function Key 49
+.It \&Fe Ta KEY_F(50) Ta Function Key 50
+.It \&Ff Ta KEY_F(51) Ta Function Key 51
+.It \&Fg Ta KEY_F(52) Ta Function Key 52
+.It \&Fh Ta KEY_F(53) Ta Function Key 53
+.It \&Fi Ta KEY_F(54) Ta Function Key 54
+.It \&Fj Ta KEY_F(55) Ta Function Key 55
+.It \&Fk Ta KEY_F(56) Ta Function Key 56
+.It \&Fl Ta KEY_F(57) Ta Function Key 57
+.It \&Fm Ta KEY_F(58) Ta Function Key 58
+.It \&Fn Ta KEY_F(59) Ta Function Key 59
+.It \&Fo Ta KEY_F(60) Ta Function Key 60
+.It \&Fp Ta KEY_F(61) Ta Function Key 61
+.It \&Fq Ta KEY_F(62) Ta Function Key 62
+.It \&Fr Ta KEY_F(63) Ta Function Key 63
+.It \&K1 Ta KEY_A1 Ta Upper left key in keypad
+.It \&K2 Ta KEY_B2 Ta Centre key in keypad
+.It \&K3 Ta KEY_A3 Ta Upper right key in keypad
+.It \&K4 Ta KEY_C1 Ta Lower left key in keypad
+.It \&K5 Ta KEY_C3 Ta Lower right key in keypad
+.It \&Km Ta KEY_MOUSE Ta Mouse Event
+.It \&k0 Ta KEY_F0 Ta Function Key 0
+.It \&k1 Ta KEY_F(1) Ta Function Key 1
+.It \&k2 Ta KEY_F(2) Ta Function Key 2
+.It \&k3 Ta KEY_F(3) Ta Function Key 3
+.It \&k4 Ta KEY_F(4) Ta Function Key 4
+.It \&k5 Ta KEY_F(5) Ta Function Key 5
+.It \&k6 Ta KEY_F(6) Ta Function Key 6
+.It \&k7 Ta KEY_F(7) Ta Function Key 7
+.It \&k8 Ta KEY_F(8) Ta Function Key 8
+.It \&k9 Ta KEY_F(9) Ta Function Key 9
+.It \&k; Ta KEY_F(10) Ta Function Key 10
+.It \&kA Ta KEY_IL Ta Insert Line
+.It \&ka Ta KEY_CATAB Ta Clear All Tabs
+.It \&kB Ta KEY_BTAB Ta Back Tab
+.It \&kb Ta KEY_BACKSPACE Ta Backspace
+.It \&kC Ta KEY_CLEAR Ta Clear
+.It \&kD Ta KEY_DC Ta Delete Character
+.It \&kd Ta KEY_DOWN Ta Down Arrow
+.It \&kE Ta KEY_EOL Ta Clear to End Of Line
+.It \&kF Ta KEY_SF Ta Scroll Forward one line
+.It \&kH Ta KEY_LL Ta Home Down
+.It \&kh Ta KEY_HOME Ta Home
+.It \&kI Ta KEY_IC Ta Insert Character
+.It \&kL Ta KEY_DL Ta Delete Line
+.It \&kl Ta KEY_LEFT Ta Left Arrow
+.It \&kM Ta KEY_EIC Ta Exit Insert Character Mode
+.It \&kN Ta KEY_NPAGE Ta Next Page
+.It \&kP Ta KEY_PPAGE Ta Previous Page
+.It \&kR Ta KEY_SR Ta Scroll One Line Back
+.It \&kr Ta KEY_RIGHT Ta Right Arrow
+.It \&kS Ta KEY_EOS Ta Clear to End Of Screen
+.It \&kT Ta KEY_STAB Ta Set Tab
+.It \&kt Ta KEY_CTAB Ta Clear Tab
+.It \&ku Ta KEY_UP Ta Up Arrow
+.El
+.Pp
+Note that not all terminals are capable of generating all the keycodes
+listed above nor are termcap entries normally configured with all the
+above capabilities defined.
+.Pp
+Other functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Pp
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+.Sh SEE ALSO
+.Xr curses_cursor 3 ,
+.Xr curses_keyname 3 ,
+.Xr curses_refresh 3 ,
+.Xr curses_tty 3 ,
+.Xr termcap 5
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh NOTES
+The
+.Fn keyok
+and
+.Fn define_key
+functions are implementations of extensions made by the NCurses library
+to the Curses standard.
+Portable implementations should avoid the use of these functions.
+.Sh HISTORY
+The Curses package appeared in
+.Bx 4.0 .

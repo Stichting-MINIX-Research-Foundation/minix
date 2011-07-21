@@ -1,0 +1,155 @@
+.\"	$NetBSD: curses_addchstr.3,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\"
+.\" Copyright (c) 2003
+.\"	Douwe Kiela (virtus@wanadoo.nl)
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Douwe Kiela (virtus@wanadoo.nl).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd May 21, 2003
+.Dt CURSES_ADDCHSTR 3
+.Os
+.Sh NAME
+.Nm curses_addchstr ,
+.Nm addchstr ,
+.Nm waddchstr ,
+.Nm addchnstr ,
+.Nm waddchnstr ,
+.Nm mvaddchstr ,
+.Nm mvwaddchstr ,
+.Nm mvaddchnstr ,
+.Nm mvwaddchnstr
+.Nd curses add character strings to windows routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn addchstr "const chtype *chstr"
+.Ft int
+.Fn waddchstr "WINDOW *win" "const chtype *chstr"
+.Ft int
+.Fn mvaddchstr "int y" "int x" "const chtype *chstr"
+.Ft int
+.Fn mvwaddchstr "WINDOW *win" "int y" "int x" "const chtype *chstr"
+.Ft int
+.Fn addchnstr "const chtype *chstr" "int n"
+.Ft int
+.Fn waddchnstr "WINDOW *win" "const chtype *chstr" "int n"
+.Ft int
+.Fn mvaddchnstr "int y" "int x" "const chtype *chstr" "int n"
+.Ft int
+.Fn mvwaddchnstr "WINDOW *win" "int y" "int x" "const chtype *chstr" "int n"
+.Sh DESCRIPTION
+These functions add character strings and attributes to
+.Dv stdscr
+or to the specified window.
+.Pp
+The
+.Fn addchstr
+function will add the characters and their attributes passed in
+.Fa chstr
+to
+.Dv stdscr
+starting at the current cursor position.
+Any character attributes set in
+.Fa chstr
+will be merged with the background attributes currently set on
+.Dv stdscr .
+The
+.Fn waddstr
+function does the same as
+.Fn addchstr
+but adds the string to the window specified by
+.Fn win .
+.Pp
+The
+.Fn addchnstr
+function will add the contents of
+.Fa string
+to
+.Dv stdscr
+but will limit the number of characters added to be, at most,
+.Fa n .
+If
+.Fa n
+is \-1 then
+.Fa addchnstr
+will add the number of characters contained in the null terminated string
+.Fa chstr .
+Any character attributes set in
+.Fa chstr
+will be merged with the background attributes currently set on
+.Dv stdscr .
+.Pp
+The
+.Fn waddchnstr
+function does the same as
+.Fa addchnstr
+but adds the string to the window specified by
+.Fa win .
+.Pp
+The functions
+.Fn mvaddchstr ,
+.Fn mwaddchnstr ,
+.Fn mvwaddchstr
+and
+.Fn mvwaddchnstr
+are the same as the functions
+.Fn addchstr ,
+.Fn waddchstr ,
+.Fn waddchstr
+and
+.Fn waddchnstr ,
+respectively, except that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the string is added to the window.
+.Sh RETURN VALUES
+The functions will return one of the following values:
+.Pp
+.Bl -tag -width ERR -compact
+.It Er OK
+The function completed successfully.
+.It Er ERR
+An error occurred in the function.
+.El
+.Sh SEE ALSO
+.Xr curses_addch 3 ,
+.Xr curses_addstr 3 ,
+.Xr curses_attributes 3 ,
+.Xr curses_cursor 3 ,
+.Xr curses_inch 3
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Sh HISTORY
+These functions first appeared in
+.Nx 2.0 .

@@ -1,0 +1,342 @@
+.\"	$NetBSD: curses_attributes.3,v 1.8 2008/04/30 13:10:51 martin Exp $
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 14, 2008
+.Dt CURSES_ATTRIBUTES 3
+.Os
+.Sh NAME
+.Nm curses_attributes ,
+.Nm attron ,
+.Nm attroff ,
+.Nm attrset ,
+.Nm color_set ,
+.Nm getattrs ,
+.Nm termattrs ,
+.Nm wattron ,
+.Nm wattroff ,
+.Nm wattrset ,
+.Nm wcolor_set ,
+.Nm attr_on ,
+.Nm attr_off ,
+.Nm attr_set ,
+.Nm attr_get ,
+.Nm term_attrs ,
+.Nm wattr_on ,
+.Nm wattr_off ,
+.Nm wattr_set ,
+.Nm wattr_get
+.Nd curses general attribute manipulation routines
+.Sh LIBRARY
+.Lb libcurses
+.Sh SYNOPSIS
+.In curses.h
+.Ft int
+.Fn attron "int attr"
+.Ft int
+.Fn attroff "int attr"
+.Ft int
+.Fn attrset "int attr"
+.Ft int
+.Fn color_set "short pair" "void *opt"
+.Ft chtype
+.Fn getattrs "WINDOW *win"
+.Ft chtype
+.Fn termattrs "void"
+.Ft int
+.Fn wcolor_set "WINDOW *win" "short pair" "void *opt"
+.Ft int
+.Fn wattron "WINDOW * win" "int attr"
+.Ft int
+.Fn wattroff "WINDOW * win" "int attr"
+.Ft int
+.Fn wattrset "WINDOW * win" "int attr"
+.Ft int
+.Fn attr_on "attr_t attr" "void *opt"
+.Ft int
+.Fn attr_off "attr_t attr" "void *opt"
+.Ft int
+.Fn attr_set "attr_t attr" "short pair" "void *opt"
+.Ft int
+.Fn attr_get "attr_t *attr" "short *pair" "void *opt"
+.Ft attr_t
+.Fn term_attrs "void"
+.Ft int
+.Fn wattr_on "WINDOW *win" "attr_t attr" "void *opt"
+.Ft int
+.Fn wattr_off "WINDOW *win" "attr_t attr" "void *opt"
+.Ft int
+.Fn wattr_set "WINDOW *win" "attr_t attr" "short pair" "void *opt"
+.Ft int
+.Fn wattr_get "WINDOW *win" "attr_t *attr" "short *pair" "void *opt"
+.Sh DESCRIPTION
+These functions manipulate attributes on
+.Dv stdscr
+or on the specified window.
+The attributes that can be manipulated are:
+.Pp
+.Bl -tag -width "COLOR_PAIR(n)" -compact -offset indent
+.It A_NORMAL
+no special attributes are applied
+.It A_STANDOUT
+characters are displayed in standout mode
+.It A_UNDERLINE
+characters are displayed underlined
+.It A_REVERSE
+characters are displayed in inverse video
+.It A_BLINK
+characters blink
+.It A_DIM
+characters are displayed at a lower intensity
+.It A_BOLD
+characters are displayed at a higher intensity
+.It A_INVIS
+characters are added invisibly
+.It A_PROTECT
+characters are protected from modification
+.It A_ALTCHARSET
+characters are displayed using the alternate character set (ACS)
+.It COLOR_PAIR(n)
+characters are displayed using color pair n.
+.El
+.Pp
+The
+.Fn attron
+function turns on the attributes specified in
+.Fa attr
+on
+.Dv stdscr ,
+while the
+.Fn attroff
+function turns off the attributes specified in
+.Fa attr
+on
+.Dv stdscr .
+.Pp
+The function
+.Fn attrset
+sets the attributes of
+.Dv stdscr
+to those specified in
+.Fa attr ,
+turning off any others.
+To turn off all the attributes (including color and alternate character set),
+use
+.Fn attrset A_NORMAL .
+.Pp
+Multiple attributes can be manipulated by combining the attributes
+using a logical
+.Em OR .
+For example,
+.Fn attron "A_REVERSE | A_BOLD"
+will turn on both inverse video and higher intensity.
+.Pp
+The function
+.Fn color_set
+sets the color pair attribute to the pair specified in
+.Fa pair .
+.Pp
+The function
+.Fn getattrs
+returns the attributes that are currently applied to window specified by
+.Fa win .
+.Pp
+The function
+.Fn termattrs
+returns the logical
+.Em OR
+of attributes that can be applied to the screen.
+.Pp
+The functions
+.Fn wattron ,
+.Fn wattroff ,
+.Fn wattrset ,
+and
+.Fn wcolor_set
+are equivalent to
+.Fn attron ,
+.Fn attroff
+.Fn attrset ,
+and
+.Fn color_set
+respectively, excepting that the attributes are applied to the window
+specified by
+.Fa win .
+.Pp
+The following functions additionally manipulate wide attributes on
+.Dv stdscr
+or on the specified window.
+The additional wide attributes that can be manipulated are:
+.Pp
+.Bl -tag -width "COLOR_PAIR(n)" -compact -offset indent
+.It WA_STANDOUT
+characters are displayed in standout mode
+.It WA_UNDERLINE
+characters are displayed underlined
+.It WA_REVERSE
+characters are displayed in inverse video
+.It WA_BLINK
+characters blink
+.It WA_DIM
+characters are displayed at a lower intensity
+.It WA_BOLD
+characters are displayed at a higher intensity
+.It WA_INVIS
+characters are added invisibly
+.It WA_PROTECT
+characters are protected from modification
+.It WA_ALTCHARSET
+characters are displayed using the alternate character set (ACS)
+.It WA_LOW
+characters are displayed with low highlight
+.It WA_TOP
+characters are displayed with top highlight
+.It WA_HORIZONTAL
+characters are displayed with horizontal highlight
+.It WA_VERTICAL
+characters are displayed with vertical highlight
+.It WA_LEFT
+characters are displayed with left highlight
+.It WA_RIGHT
+characters are displayed with right highlight
+.El
+.Pp
+The
+.Fn attr_on
+function turns on the wide attributes specified in
+.Fa attr
+on
+.Dv stdscr ,
+while the
+.Fn attr_off
+function turns off the wide attributes specified in
+.Fa attr
+on
+.Dv stdscr .
+.Pp
+The function
+.Fn attr_set
+sets the wide attributes of
+.Dv stdscr
+to those specified in
+.Fa attr
+and
+.Fa pair ,
+turning off any others.
+Note that a color pair specified in
+.Fa pair
+will override any color pair specified in
+.Fa attr .
+.Pp
+The function
+.Fn attr_get
+sets
+.Fa attr
+to the wide attributes and
+.Fa pair
+to the color pair currently applied to
+.Dv stdscr .
+Either of
+.Fa attr
+and
+.Fa pair
+can be
+.Dv NULL ,
+if the relevant value is of no interest.
+.Pp
+The function
+.Fn term_attrs
+returns the logical
+.Em OR
+of wide attributes that can be applied to the screen.
+.Pp
+The functions
+.Fn wattr_on ,
+.Fn wattr_off
+and
+.Fn wattr_set
+are equivalent to
+.Fn attr_on ,
+.Fn attr_off
+and
+.Fn attr_set
+respectively, excepting that the character is added to the window specified by
+.Fa win .
+.Pp
+The function
+.Fn wattr_get
+is equivalent to
+.Fn attr_get ,
+excepting that the wide attributes and color pair currently applied to
+.Fa win
+are set.
+.Pp
+The following constants can be used to extract the components of a
+.Dv chtype :
+.Pp
+.Bl -tag -width "COLOR_PAIR(n)" -compact -offset indent
+.It A_ATTRIBUTES
+bit-mask containing attributes part
+.It A_CHARTEXT
+bit-mask containing character part
+.It A_COLOR
+bit-mask containing color-pair part
+.El
+.Sh RETURN VALUES
+These functions return OK on success and ERR on failure.
+.Sh SEE ALSO
+.Xr curses_addch 3 ,
+.Xr curses_addchstr 3 ,
+.Xr curses_addstr 3 ,
+.Xr curses_background 3 ,
+.Xr curses_color 3 ,
+.Xr curses_insertch 3 ,
+.Xr curses_standout 3 ,
+.Xr curses_underscore 3
+.Sh NOTES
+The
+.Fa opt
+argument is not currently used but is reserved for a future version of the
+specification.
+.Sh STANDARDS
+The
+.Nx
+Curses library complies with the X/Open Curses specification, part of the
+Single Unix Specification.
+.Pp
+The
+.Fn getattrs
+function
+is a
+.Nx
+extension.
+.Sh HISTORY
+These functions first appeared in
+.Nx 1.5 .
+.Sh BUGS
+Some terminals do not support characters with both color and other attributes
+set.
+In this case, the other attribute is displayed instead of the color attribute.
