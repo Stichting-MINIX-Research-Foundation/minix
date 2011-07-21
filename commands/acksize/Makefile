@@ -1,4 +1,4 @@
-PROG=	size
+PROG=	acksize
 MAN=
 
 .include <bsd.prog.mk>
