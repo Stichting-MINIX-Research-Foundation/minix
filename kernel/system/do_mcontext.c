@@ -86,7 +86,6 @@ PUBLIC int do_setmcontext(struct proc * caller, message * m_ptr)
 	rp->p_misc_flags |= MF_FPU_INITIALIZED;
 	memcpy(rp->p_fpu_state.fpu_save_area_p, &(mc.mc_fpu_state),
 								FPU_XFP_SIZE);
-	fpu_makechecksum(rp);
   } else
 	rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
   /* force reloading FPU in either case */

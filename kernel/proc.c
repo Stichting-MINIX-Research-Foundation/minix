@@ -257,10 +257,6 @@ PUBLIC void switch_to_user(void)
 	int tlb_must_refresh = 0;
 #endif
 
-	char buf[100];
-	u32_t c;
-	c = crc32(0, buf, 100);
-
 	p = get_cpulocal_var(proc_ptr);
 	/*
 	 * if the current process is still runnable check the misc flags and let

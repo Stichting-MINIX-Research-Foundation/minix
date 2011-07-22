@@ -14,7 +14,7 @@ SRCS += smp.c
 .endif
 
 DPADD+=	${LIBTIMERS} ${LIBSYS} ${LIBEXEC}
-LDADD+=	-ltimers -lsys -lexec -lz
+LDADD+=	-ltimers -lsys -lexec
 
 CFLAGS += -D__kernel__
 
