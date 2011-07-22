@@ -64,7 +64,7 @@ image: includes services
 	${PAD_KERNEL_TEXT}
 	mkimage $(PROGRAMS)
 	cp ${KERNEL} ${PROGRAMS} /boot
-	strip ${KERNEL:T:S/^/\/boot\//} ${PROGRAMS:T:S/^/\/boot\//}
+	strip -s ${KERNEL:T:S/^/\/boot\//} ${PROGRAMS:T:S/^/\/boot\//}
 .else
 image:  includes services
 	${PAD_KERNEL_TEXT}

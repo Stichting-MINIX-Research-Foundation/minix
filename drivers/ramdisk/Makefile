@@ -155,7 +155,7 @@ proto.gen: elfstrip
 .PHONY: elfstrip
 
 elfstrip: $(PROGRAMS)
-	strip $(PROGRAMS)
+	strip -s $(PROGRAMS)
 .endif
 
 .include <minix.service.mk>
