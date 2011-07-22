@@ -91,11 +91,7 @@ system(command)
 	}
 
 	(void)__readlockenv();
-#ifdef __minix
-	switch(pid = fork() ) {
-#else /* !__minix */
 	switch(pid = vfork()) {
-#endif /* !__minix */
 	case -1:			/* error */
 		(void)__unlockenv();
 		sigaction(SIGINT, &intsa, NULL);

@@ -289,6 +289,8 @@ int	 usleep(useconds_t);
 #ifndef __LIBC12_SOURCE__
 pid_t	 vfork(void) __RENAME(__vfork14);
 #endif
+#else
+pid_t	 vfork(void);
 #endif /* !__minix */
 
 #ifndef __AUDIT__
