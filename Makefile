@@ -30,7 +30,7 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: mkfiles includes libraries elf-libraries dep-all install etcforce
+world: mkfiles etcfiles includes libraries elf-libraries dep-all install etcforce
 
 mkfiles:
 	make -C share/mk install
