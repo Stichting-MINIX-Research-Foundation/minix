@@ -4,7 +4,7 @@
 .ifndef HOSTPROG
 
 .include <bsd.init.mk>
-.include <bsd.gcov.mk>
+.include <minix.gcov.mk>
 
 #
 # Definitions and targets shared among all programs built by a single
