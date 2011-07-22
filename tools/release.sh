@@ -102,21 +102,7 @@ do
 		SVNREV=-r$OPTARG
 		;;
 	j)
-		FINAL_JAILDIR=$OPTARG
-
-		# Make sure no important directory will be wiped
-		if [ -d "$FINAL_JAILDIR" ]
-		then	echo "$FINAL_JAILDIR exists."
-			exit 1
-		fi
-
-		# Sanity check name
-		if mkdir $FINAL_JAILDIR
-		then	:
-		else	echo "Could not create $FINAL_JAILDIR."
-			exit 1
-		fi
-		rm -rf $FINAL_JAILDIR
+		RELEASEDIR=$OPTARG
 		JAILMODE=1
 		;;
 	u)
@@ -302,11 +288,9 @@ fi
 
 # If we are making a jail, all is done!
 if [ $JAILMODE = 1 ]
-then	rm -rf $FINAL_JAILDIR
-	mv $RELEASEDIR $FINAL_JAILDIR
-	echo "Created new minix install in $FINAL_JAILDIR."
+then	echo "Created new minix install in $RELEASEDIR."
 	echo "Enter it by typing: "
-	echo "# chroot $FINAL_JAILDIR /bin/sh"
+	echo "# chroot $RELEASEDIR /bin/sh"
 	exit 0
 fi
 
