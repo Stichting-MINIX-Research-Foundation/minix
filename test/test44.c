@@ -26,14 +26,16 @@ main(int argc, char *argv[])
 	fflush(stdout);
 
 	for(i = 0; i < CHUNKS; i++) {
-		v[i] = mmap(vaddr, CHUNKSIZE, PROT_READ|PROT_WRITE, 0, -1, 0);
+		v[i] = minix_mmap(vaddr, CHUNKSIZE, PROT_READ|PROT_WRITE, 0,
+				  -1, 0);
 		if(v[i] == MAP_FAILED) {
-			perror("mmap");
-			fprintf(stderr, "mmap failed\n");
+			perror("minix_mmap");
+			fprintf(stderr, "minix_mmap failed\n");
 			exit(1);
 		}
 		if(v[i] != vaddr) {
-			fprintf(stderr, "mmap said 0x%p but i wanted 0x%p\n",
+			fprintf(stderr,
+				"minix_mmap said 0x%p but i wanted 0x%p\n",
 				v[i], vaddr);
 			exit(1);
 		}
