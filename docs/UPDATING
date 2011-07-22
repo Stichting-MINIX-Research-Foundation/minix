@@ -1,3 +1,11 @@
+20110722:
+	To install the new mkdep:
+	# cp /usr/bin/mkdep /usr/bin/ackmkdep
+	# make elf-libraries
+	# cd usr.bin/mkdep
+	# touch findcc.d mkdep.d .depend
+	# make install
+
 20110716:
 	To install libterminfo and terminfo database, you need 
 	the new stat:

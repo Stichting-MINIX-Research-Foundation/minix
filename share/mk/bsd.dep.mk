@@ -15,7 +15,6 @@ MKDEP_SUFFIXES?=	.o
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)							# {
-#_TRADITIONAL_CPP?=-traditional-cpp
 __acpp_flags=	${_TRADITIONAL_CPP}
 
 __DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
@@ -32,43 +31,35 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 .depend: ${__DPSRCS.d}
 	${_MKTARGET_CREATE}
 	rm -f .depend
-#	${MKDEP} -d -f ${.TARGET} -s ${MKDEP_SUFFIXES:Q} ${__DPSRCS.d}
-	cat ${__DPSRCS.d} > ${.TARGET}
+	${MKDEP} -d -f ${.TARGET} -s ${MKDEP_SUFFIXES:Q} ${__DPSRCS.d}
 
 .SUFFIXES: .d .s .S .c .C .cc .cpp .cxx .m
 
 .c.d:
 	${_MKTARGET_CREATE}
-#	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
-#	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-#	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-#	mkdep -- ${MKDEPFLAGS} \
-#	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-#	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} > ${.TARGET}
-	mkdep "$(CC)  ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} -E" ${.IMPSRC} > ${.TARGET}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-# .m.d:
-# 	${_MKTARGET_CREATE}
-# 	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
-# 	    ${OBJCFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-# 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+.m.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	    ${OBJCFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .s.d .S.d:
 	${_MKTARGET_CREATE}
-#	 ${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
-#	     ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-#	     ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${.IMPSRC}
-	mkdep "$(CC) ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} -E" ${.IMPSRC} > ${.TARGET}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	    ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${.IMPSRC}
 
-# .C.d .cc.d .cpp.d .cxx.d:
-# 	${_MKTARGET_CREATE}
-# 	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
-# 	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-# 	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
-# 			${DESTDIR}/usr/include/g++} \
-# 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+.C.d .cc.d .cpp.d .cxx.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
+	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
+			${DESTDIR}/usr/include/g++} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .endif # defined(SRCS)							# }
 
@@ -79,10 +70,10 @@ cleandepend: .PHONY
 .endif
 
 ##### Custom rules
-# .if !target(tags)
-# tags: ${SRCS}
-# .if defined(SRCS)
-# 	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
-# 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
-# .endif
-# .endif
+.if !target(tags)
+tags: ${SRCS}
+.if defined(SRCS)
+	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
+	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
+.endif
+.endif

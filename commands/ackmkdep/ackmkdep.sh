@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	mkdep 1.1 - Generate Makefile dependencies.	Author: Kees J. Bot
+#	ackmkdep 1.1 - Generate Makefile dependencies.	Author: Kees J. Bot
 #
 # Does what 'cc -M' should do, but no compiler gets it right, they all
 # strip the leading path of the '.o' file.)
@@ -14,8 +14,8 @@ case $# in
 
 # Display help ...
 0)	
-	echo "Usage: mkdep 'cpp command' file ..." >&2
-	echo "       mkdep directory" >&2
+	echo "Usage: ackmkdep 'cpp command' file ..." >&2
+	echo "       ackmkdep directory" >&2
 ;;
 
 # Create .depend files ...

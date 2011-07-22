@@ -9,3 +9,4 @@ usr.bin/indent		src/usr.bin/indent
 usr.bin/sed		src/usr.bin/sed
 usr.bin/stat		src/usr.bin/stat
 usr.bin/tic		src/usr.bin/tic
+usr.bin/mkdep		src/usr.bin/mkdep
