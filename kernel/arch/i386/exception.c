@@ -41,6 +41,9 @@ static struct ex_s ex_data[] = {
 	{ "SIMD exception", SIGFPE, 386 },
 };
 
+PRIVATE void inkernel_disaster(struct proc *saved_proc,
+	struct exception_frame *frame, struct ex_s *ep, int is_nested);
+
 extern int catch_pagefaults;
 
 PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc);
