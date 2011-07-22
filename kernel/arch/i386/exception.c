@@ -12,7 +12,38 @@
 #include "kernel/proto.h"
 #include <machine/vm.h>
 
+struct ex_s {
+	char *msg;
+	int signum;
+	int minprocessor;
+};
+
+static struct ex_s ex_data[] = {
+	{ "Divide error", SIGFPE, 86 },
+	{ "Debug exception", SIGTRAP, 86 },
+	{ "Nonmaskable interrupt", SIGBUS, 86 },
+	{ "Breakpoint", SIGEMT, 86 },
+	{ "Overflow", SIGFPE, 86 },
+	{ "Bounds check", SIGFPE, 186 },
+	{ "Invalid opcode", SIGILL, 186 },
+	{ "Coprocessor not available", SIGFPE, 186 },
+	{ "Double fault", SIGBUS, 286 },
+	{ "Coprocessor segment overrun", SIGSEGV, 286 },
+	{ "Invalid TSS", SIGSEGV, 286 },
+	{ "Segment not present", SIGSEGV, 286 },
+	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */
+	{ "General protection", SIGSEGV, 286 },
+	{ "Page fault", SIGSEGV, 386 },		/* not close */
+	{ NULL, SIGILL, 0 },			/* probably software trap */
+	{ "Coprocessor error", SIGFPE, 386 },
+	{ "Alignment check", SIGBUS, 386 },
+	{ "Machine check", SIGBUS, 386 },
+	{ "SIMD exception", SIGFPE, 386 },
+};
+
 extern int catch_pagefaults;
+
+PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc);
 
 PRIVATE void pagefault( struct proc *pr,
 			struct exception_frame * frame,
@@ -51,7 +82,9 @@ PRIVATE void pagefault( struct proc *pr,
 	}
 
 	if(is_nested) {
-		panic("pagefault in kernel at pc 0x%lx address 0x%lx", frame->eip, pagefaultcr2);
+		printf("pagefault in kernel at pc 0x%lx address 0x%lx\n",
+			frame->eip, pagefaultcr2);
+		inkernel_disaster(pr, frame, NULL, is_nested);
 	}
 
 	/* System processes that don't have their own page table can't
@@ -91,40 +124,59 @@ PRIVATE void pagefault( struct proc *pr,
 	return;
 }
 
+PRIVATE void inkernel_disaster(struct proc *saved_proc,
+	struct exception_frame * frame, struct ex_s *ep,
+	int is_nested)
+{
+  if(ep) {
+  	if (ep->msg == NULL || machine.processor < ep->minprocessor)
+		printf("\nIntel-reserved exception %d\n", frame->vector);
+	  else
+		printf("\n%s\n", ep->msg);
+  }
+
+  printf("cpu %d is_nested = %d ", cpuid, is_nested);
+
+  printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, "
+	"cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
+	frame->vector, frame->errcode, frame->eip,
+	frame->cs, frame->eflags, frame);
+  printf("KERNEL registers :\n");
+#define REG(n) (((u32_t *)frame)[-n])
+  printf(
+		  "\t%%eax 0x%08x %%ebx 0x%08x %%ecx 0x%08x %%edx 0x%08x\n"
+		  "\t%%esp 0x%08x %%ebp 0x%08x %%esi 0x%08x %%edi 0x%08x\n",
+		  REG(1), REG(2), REG(3), REG(4),
+		  REG(5), REG(6), REG(7), REG(8));
+
+  { 
+  	reg_t k_ebp = REG(6);
+  	printf("KERNEL stacktrace, starting with ebp = 0x%lx:\n", k_ebp);
+  	proc_stacktrace_execute(proc_addr(SYSTEM), k_ebp, frame->eip);
+  }
+
+  printseg("ker cs: ", 1, NULL, frame->cs);
+  printseg("ker ds: ", 0, NULL, DS_SELECTOR);
+
+  if (saved_proc) {
+	  printf("scheduled was: process %d (%s), ", saved_proc->p_endpoint, saved_proc->p_name);
+	  printf("pc = %u:0x%x\n", (unsigned) saved_proc->p_reg.cs,
+			  (unsigned) saved_proc->p_reg.pc);
+	  proc_stacktrace(saved_proc);
+
+	  panic("Unhandled kernel exception");
+  }
+
+  /* in an early stage of boot process we don't have processes yet */
+  panic("exception in kernel while booting, no saved_proc yet");
+}
+
 /*===========================================================================*
  *				exception				     *
  *===========================================================================*/
 PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 {
 /* An exception or unexpected interrupt has occurred. */
-
-  struct ex_s {
-	char *msg;
-	int signum;
-	int minprocessor;
-  };
-  static struct ex_s ex_data[] = {
-	{ "Divide error", SIGFPE, 86 },
-	{ "Debug exception", SIGTRAP, 86 },
-	{ "Nonmaskable interrupt", SIGBUS, 86 },
-	{ "Breakpoint", SIGEMT, 86 },
-	{ "Overflow", SIGFPE, 86 },
-	{ "Bounds check", SIGFPE, 186 },
-	{ "Invalid opcode", SIGILL, 186 },
-	{ "Coprocessor not available", SIGFPE, 186 },
-	{ "Double fault", SIGBUS, 286 },
-	{ "Coprocessor segment overrun", SIGSEGV, 286 },
-	{ "Invalid TSS", SIGSEGV, 286 },
-	{ "Segment not present", SIGSEGV, 286 },
-	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */
-	{ "General protection", SIGSEGV, 286 },
-	{ "Page fault", SIGSEGV, 386 },		/* not close */
-	{ NULL, SIGILL, 0 },			/* probably software trap */
-	{ "Coprocessor error", SIGFPE, 386 },
-	{ "Alignment check", SIGBUS, 386 },
-	{ "Machine check", SIGBUS, 386 },
-	{ "SIMD exception", SIGFPE, 386 },
-  };
   register struct ex_s *ep;
   struct proc *saved_proc;
 
@@ -196,63 +248,27 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
   }
 
   /* Exception in system code. This is not supposed to happen. */
-  if (ep->msg == NULL || machine.processor < ep->minprocessor)
-	printf("\nIntel-reserved exception %d\n", frame->vector);
-  else
-	printf("\n%s\n", ep->msg);
-  printf("cpu %d is_nested = %d ", cpuid, is_nested);
+  inkernel_disaster(saved_proc, frame, ep, is_nested);
 
-  printf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, "
-	"cs= 0x%x, eflags= 0x%x trap_esp 0x%08x\n",
-	frame->vector, frame->errcode, frame->eip,
-	frame->cs, frame->eflags, frame);
-  printf("KERNEL registers :\n");
-  printf(
-		  "\t%%eax 0x%08x %%ebx 0x%08x %%ecx 0x%08x %%edx 0x%08x\n"
-		  "\t%%esp 0x%08x %%ebp 0x%08x %%esi 0x%08x %%edi 0x%08x\n",
-		  ((u32_t *)frame)[-1],
-		  ((u32_t *)frame)[-2],
-		  ((u32_t *)frame)[-3],
-		  ((u32_t *)frame)[-4],
-		  ((u32_t *)frame)[-5],
-		  ((u32_t *)frame)[-6],
-		  ((u32_t *)frame)[-7],
-		  ((u32_t *)frame)[-8]
-	 );
-  printseg("ker cs: ", 1, NULL, frame->cs);
-  printseg("ker ds: ", 0, NULL, DS_SELECTOR);
-  /* TODO should we enable this only when compiled for some debug mode? */
-  if (saved_proc) {
-	  printf("scheduled was: process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
-	  printf("pc = %u:0x%x\n", (unsigned) saved_proc->p_reg.cs,
-			  (unsigned) saved_proc->p_reg.pc);
-	  proc_stacktrace(saved_proc);
-
-	  panic("Unhandled kernel exception");
-  }
-  else {
-	  /* in an early stage of boot process we don't have processes yet */
-	  panic("exception in kernel while booting");
-  }
+  panic("return from inkernel_disaster");
 }
 
 /*===========================================================================*
- *				stacktrace				     *
+ *				proc_stacktrace_execute			     *
  *===========================================================================*/
-PUBLIC void proc_stacktrace(struct proc *whichproc)
+PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t pc)
 {
-	reg_t v_bp, v_pc, v_hbp;
+	reg_t v_hbp;
 	int iskernel;
 	int n = 0;
-
-	v_bp = whichproc->p_reg.fp;
 
 	iskernel = iskernelp(whichproc);
 
 	printf("%-8.8s %6d 0x%lx ",
-		whichproc->p_name, whichproc->p_endpoint, whichproc->p_reg.pc);
+		whichproc->p_name, whichproc->p_endpoint, pc);
 
 	while(v_bp) {
+		reg_t v_pc;
 
 #define PRCOPY(pr, pv, v, n) \
   (iskernel ? (memcpy((char *) v, (char *) pv, n), OK) : \
@@ -272,10 +288,20 @@ PUBLIC void proc_stacktrace(struct proc *whichproc)
 			break;
 		}
 		v_bp = v_hbp;
-		if(n++ > 50)
+		if(n++ > 50) {
+			printf("(truncated after %d steps) ", n);
 			break;
+		}
 	}
 	printf("\n");
+}
+
+/*===========================================================================*
+ *				proc_stacktrace			     *
+ *===========================================================================*/
+PUBLIC void proc_stacktrace(struct proc *whichproc)
+{
+	proc_stacktrace_execute(whichproc, whichproc->p_reg.fp, whichproc->p_reg.pc);
 }
 
 PUBLIC void enable_fpu_exception(void)
