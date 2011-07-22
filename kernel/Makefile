@@ -21,7 +21,6 @@ CFLAGS += -D__kernel__
 .if ${COMPILER_TYPE} == "ack"
 LDFLAGS+= -.o
 .elif ${COMPILER_TYPE} == "gnu"
-CFLAGS+=-march=i386
 CPPFLAGS+= -ffreestanding -fno-stack-protector -D_NETBSD_SOURCE
 LDFLAGS+= -T ${.CURDIR}/arch/${ARCH}/kernel.lds
 LDFLAGS+= -nostdlib -L${LIBDIR}
