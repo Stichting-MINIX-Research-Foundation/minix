@@ -30,7 +30,11 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
+.if ${COMPILER_TYPE} == "ack"
 world: mkfiles etcfiles includes libraries elf-libraries dep-all install etcforce
+.else
+world: mkfiles etcfiles includes elf-libraries dep-all install etcforce
+.endif
 
 mkfiles:
 	make -C share/mk install
@@ -39,7 +43,9 @@ includes:
 	$(MAKE) -C nbsd_include includes
 	$(MAKE) -C include includes
 	$(MAKE) -C lib includes NBSD_LIBC=yes
+.if ${COMPILER_TYPE} == "ack"
 	$(MAKE) -C lib includes NBSD_LIBC=no
+.endif
 
 libraries: includes
 	$(MAKE) -C lib build_ack
