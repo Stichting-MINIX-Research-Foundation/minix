@@ -12,3 +12,4 @@ usr.bin/stat		src/usr.bin/stat
 usr.bin/tic		src/usr.bin/tic
 usr.bin/mkdep		src/usr.bin/mkdep
 usr.bin/uniq		src/usr.bin/uniq
+usr.bin/sort		src/usr.bin/sort
