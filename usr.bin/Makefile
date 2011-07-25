@@ -6,9 +6,9 @@
 SUBDIR= indent m4 stat tic sed mkdep uniq
 
 # Non-NetBSD imports
-SUBDIR+= ministat mkimage
+SUBDIR+= ministat
 
 # Minix commands
-SUBDIR+= top
+SUBDIR+= top mkimage
 
 .include <bsd.subdir.mk>
