@@ -2,7 +2,7 @@
 
 # Shell script #2 used to test MINIX.
 
-PATH=:/bin:/usr/bin
+PATH=:/bin:/usr/bin:/usr/pkg/bin
 export PATH
 
 # CC="exec cc -wo -F"		# nonstandard flags for ACK :-(
