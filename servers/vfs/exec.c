@@ -273,7 +273,7 @@ static int load_elf(struct exec_info *execi)
 		      &execi->pc, &text_offset, &data_offset);
   if (r != OK) return(r);
 
-  sep_id = 1;
+  sep_id = 0;
   is_elf = 1;
   tot_bytes = 0; /* Use default stack size */
   r = exec_newmem(proc_e,

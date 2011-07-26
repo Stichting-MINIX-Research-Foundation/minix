@@ -264,7 +264,7 @@ static int load_elf(struct exec_info *execi)
   new_uid= getuid();
   new_gid= getgid();
 
-  sep_id = 1;
+  sep_id = 0;
   is_elf = 1;
   tot_bytes = 0; /* Use default stack size */
 
