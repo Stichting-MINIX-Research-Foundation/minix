@@ -3,8 +3,8 @@
 .include <bsd.own.mk>
 
 SUBDIR=	aal add_route adduser arp ash at autil awk \
-	backup badblocks banner basename bigmake binpackage \
-	binpackages binsizes bzip2 bzip2recover cal calendar \
+	backup badblocks banner basename binpackage \
+	binpackages bzip2 bzip2recover cal calendar \
 	cat cawf cd  cdprobe checkhier chmem \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut date \
@@ -19,7 +19,7 @@ SUBDIR=	aal add_route adduser arp ash at autil awk \
 	lpd ls lspci M mail make  MAKEDEV man \
 	mdb mdocml mesg mined ackmkdep mkdir mkfifo mkfs.mfs mknod \
 	mkproto modem mount mt netconf newroot nice acknm nohup \
-	nonamed od packman passwd paste patch pax \
+	nonamed od passwd paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
