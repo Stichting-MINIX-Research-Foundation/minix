@@ -2,6 +2,9 @@
 
 GCC?=gcc
 CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE
+.if ${COMPILER_TYPE} == "gnu"
+CFLAGS+= -D_NETBSD_SOURCE
+.endif
 CFLAGS-GCC= $(CFLAGS) -Wall  -D_NETBSD_SOURCE 
 CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float 
 CFLAGS-GCCFPU= $(CFLAGS-GCC) -W -mhard-float
