@@ -62,8 +62,10 @@ __FBSDID("$FreeBSD: src/bin/sh/trap.c,v 1.29 2004/04/06 20:06:51 markm Exp $");
 #endif
 #include "builtins.h"
 
-#if defined(__minix) && !defined(__NBSD_LIBC)
+#if defined(__minix)
+#if !defined(__NBSD_LIBC)
 #define NO_SIGINTERRUPT
+#endif
 #define NO_SYS_SIGNAME
 #define NO_SYS_SIGLIST
 #endif
