@@ -237,7 +237,7 @@ AR?=	aal
 COMPILER_TYPE=gnu
 AR?=	ar
 
-.if ${MKEMBED} == "yes"
+.if defined(MKEMBED) && ${MKEMBED} == "yes"
 DBG=	-Os
 CFLAGS+= -DNDEBUG=1
 .endif
