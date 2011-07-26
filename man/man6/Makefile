@@ -1,4 +1,4 @@
-MAN=	advent.6 ttt.6
+MAN=
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
