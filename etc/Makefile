@@ -4,7 +4,7 @@ USRETC=/usr/etc/
 FILES1=fstab group hostname.file inet.conf motd.install mtab passwd profile \
 	protocols rc services termcap ttytab utmp rc.cd binary_sizes \
 	binary_sizes.big binary_sizes.xxl syslog.conf rc.daemons.dist \
-	rs.inet rs.single make.conf system.conf ttys
+	rs.inet rs.single make.conf system.conf ttys resolv.conf
 
 FILES2=shadow
 FILES3=daily dhcptags.conf rc 
