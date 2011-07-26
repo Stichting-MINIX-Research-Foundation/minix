@@ -772,7 +772,7 @@ _MKVARS.no= \
 	MKUNPRIVED MKUPDATE MKX11 MKZFS
 #MINIX-specific vars
 _MKVARS.no+= \
-	MKIMAGEONLY
+	MKIMAGEONLY MKEMBED
 .for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
