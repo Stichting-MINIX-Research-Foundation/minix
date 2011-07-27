@@ -5,8 +5,8 @@
 #include <minix/ipc.h>
 
 enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
-	STYLE_CLONE };
-#define IS_DEV_STYLE(s) (s>=STYLE_NDEV && s<=STYLE_CLONE)
+	STYLE_CLONE, STYLE_CLONE_A };
+#define IS_DEV_STYLE(s) (s>=STYLE_NDEV && s<=STYLE_CLONE_A)
 
 /*===========================================================================*
  *               	 Major and minor device numbers  		     *

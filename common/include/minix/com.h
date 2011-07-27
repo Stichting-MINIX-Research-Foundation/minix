@@ -217,6 +217,7 @@
 #define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
 #define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
 #define DEV_SEL_REPL2	(DEV_RS_BASE + 8) /* (opt) second reply to DEV_SELECT */
+#define DEV_OPEN_REPL	(DEV_RS_BASE + 9) /* reply to DEV_OPEN */
 
 #define IS_DEV_RS(type) (((type) & ~0xff) == DEV_RS_BASE)
 

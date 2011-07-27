@@ -334,9 +334,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 		  }
           else if (strcmp(argv[i], ARG_DEVSTYLE)==0) {
               char* dev_style_keys[] = { "STYLE_DEV", "STYLE_DEVA", "STYLE_TTY",
-                  "STYLE_CTTY", "STYLE_CLONE", NULL };
+                  "STYLE_CTTY", "STYLE_CLONE", "STYLE_CLONE_A", NULL };
               int dev_style_values[] = { STYLE_DEV, STYLE_DEVA, STYLE_TTY,
-                  STYLE_CTTY, STYLE_CLONE };
+                  STYLE_CTTY, STYLE_CLONE, STYLE_CLONE_A };
               for(j=0;dev_style_keys[j]!=NULL;j++) {
                   if(!strcmp(dev_style_keys[j], argv[i+1])) {
                       break;

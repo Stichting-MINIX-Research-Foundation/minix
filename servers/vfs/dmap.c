@@ -143,6 +143,7 @@ int flags;			/* device flags */
 	dp->dmap_io = ctty_io;
 	break;
   case STYLE_CLONE:
+  case STYLE_CLONE_A:
 	dp->dmap_opcl = clone_opcl;
 	dp->dmap_io = gen_io;
 	break;

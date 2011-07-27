@@ -76,6 +76,7 @@ PRIVATE char * dmap_style(int dev_style)
 	case STYLE_TTY:    strcpy(str, "STYLE_TTY"); break;
 	case STYLE_CTTY:   strcpy(str, "STYLE_CTTY"); break;
 	case STYLE_CLONE:  strcpy(str, "STYLE_CLONE"); break;
+	case STYLE_CLONE_A:  strcpy(str, "STYLE_CLONE_A"); break;
 	default:           strcpy(str, "UNKNOWN"); break;
 	}
 
