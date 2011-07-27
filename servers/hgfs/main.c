@@ -15,8 +15,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-FORWARD _PROTOTYPE( int get_work, (endpoint_t *who_e)			);
-FORWARD _PROTOTYPE( void send_reply, (int err)				);
+FORWARD _PROTOTYPE( void get_work, (endpoint_t *who_e)			);
+FORWARD _PROTOTYPE( void send_reply, (int err, int transid)		);
 
 PRIVATE struct optset optset_table[] = {
   { "prefix",   OPT_STRING, opt.prefix,       sizeof(opt.prefix) },
@@ -124,14 +124,24 @@ char *argv[];
  * reply back to VFS.
  */
   endpoint_t who_e;
-  int call_nr, err;
+  int call_nr, err, transid;
 
   env_setargs(argc, argv);
   sef_local_startup();
 
   for (;;) {
-	call_nr = get_work(&who_e);
+	get_work(&who_e);
 
+	transid = TRNS_GET_ID(m_in.m_type);
+	m_in.m_type = TRNS_DEL_ID(m_in.m_type);
+	if (m_in.m_type == 0) {
+		assert(!IS_VFS_FS_TRANSID(transid));
+		m_in.m_type = transid;		/* Backwards compat. */
+		transid = 0;
+	} else
+		assert(IS_VFS_FS_TRANSID(transid));
+
+	call_nr = m_in.m_type;
 	if (who_e != VFS_PROC_NR) {
 		continue;
 	}
@@ -151,7 +161,7 @@ char *argv[];
 	}
 	else err = EINVAL;
 
-	send_reply(err);
+	send_reply(err, transid);
   }
 
   return 0;
@@ -160,7 +170,7 @@ char *argv[];
 /*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
-PRIVATE int get_work(who_e)
+PRIVATE void get_work(who_e)
 endpoint_t *who_e;
 {
 /* Receive a request message from VFS. Return the request call number.
@@ -171,22 +181,24 @@ endpoint_t *who_e;
 	panic("receive failed: %d", r);
 
   *who_e = m_in.m_source;
-
-  return m_in.m_type;
 }
 
 /*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-PRIVATE void send_reply(err)
+PRIVATE void send_reply(err, transid)
 int err;				/* resulting error code */
+int transid;
 {
 /* Send a reply message to the requesting party, with the given error code.
  */
   int r;
 
   m_out.m_type = err;
-
+  if (IS_VFS_FS_TRANSID(transid)) {
+	/* If a transaction ID was set, reset it */
+	m_out.m_type = TRNS_ADD_ID(m_out.m_type, transid);
+  }
   if ((r = send(m_in.m_source, &m_out)) != OK)
 	printf("HGFS: send failed (%d)\n", r);
 }

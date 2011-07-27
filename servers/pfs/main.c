@@ -25,7 +25,7 @@ PUBLIC int main(int argc, char *argv[])
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int ind;
+  int ind, transid;
   message pfs_m_in;
   message pfs_m_out;
 
@@ -38,6 +38,15 @@ PUBLIC int main(int argc, char *argv[])
 
 	/* Wait for request message. */
 	get_work(&pfs_m_in);
+
+	transid = TRNS_GET_ID(pfs_m_in.m_type);
+	pfs_m_in.m_type = TRNS_DEL_ID(pfs_m_in.m_type);
+	if (pfs_m_in.m_type == 0) {
+		assert(!IS_VFS_FS_TRANSID(transid));
+		pfs_m_in.m_type = transid;
+		transid = 0;
+	} else
+		assert(IS_VFS_FS_TRANSID(transid) || transid == 0);
 
 	src = pfs_m_in.m_source;
 	caller_uid = INVAL_UID;	/* To trap errors */
@@ -66,6 +75,9 @@ PUBLIC int main(int argc, char *argv[])
 		pfs_m_out.m_type = EINVAL;
 	}
 
+	if (IS_VFS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
+		pfs_m_out.m_type = TRNS_ADD_ID(pfs_m_out.m_type, transid);
+	}
 	reply(src, &pfs_m_out);
   }
   return(OK);
@@ -158,6 +170,6 @@ PUBLIC void reply(who, m_out)
 endpoint_t who;	
 message *m_out;                       	/* report result */
 {
-  if (OK != send(who, m_out))    /* send the message */
+  if (OK != send(who, m_out))	/* send the message */
 	printf("PFS(%d) was unable to send reply\n", SELF_E);
 }

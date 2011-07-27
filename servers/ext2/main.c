@@ -46,7 +46,7 @@ PUBLIC int main(int argc, char *argv[])
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int error, ind;
+  int error, ind, transid;
   unsigned short test_endian = 1;
 
   /* SEF local startup. */
@@ -63,6 +63,15 @@ PUBLIC int main(int argc, char *argv[])
 
 	/* Wait for request message. */
 	get_work(&fs_m_in);
+
+	transid = TRNS_GET_ID(fs_m_in.m_type);
+	fs_m_in.m_type = TRNS_DEL_ID(fs_m_in.m_type);
+	if (fs_m_in.m_type == 0) {
+		assert(!IS_VFS_FS_TRANSID(transid));
+		fs_m_in.m_type = transid;       /* Backwards compat. */
+		transid = 0;
+	} else
+		assert(IS_VFS_FS_TRANSID(transid));
 
 	src = fs_m_in.m_source;
 	error = OK;
@@ -85,6 +94,10 @@ PUBLIC int main(int argc, char *argv[])
 	}
 
 	fs_m_out.m_type = error;
+	if (IS_VFS_FS_TRANSID(transid)) {
+		/* If a transaction ID was set, reset it */
+		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
+	}
 	reply(src, &fs_m_out);
 
 	if (error == OK)

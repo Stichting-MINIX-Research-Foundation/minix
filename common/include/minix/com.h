@@ -24,6 +24,7 @@
  *   0x1100 - 0x11FF	USB  
  *   0x1200 - 0x12FF    Devman
  *   0x1300 - 0x13FF    TTY Input
+ *   0x1400 - 0x14FF	VFS-FS transaction IDs
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -1224,5 +1225,14 @@
 #	define INPUT_VALUE       m4_l3
 
 #endif
+
+/*===========================================================================*
+ *			VFS-FS TRANSACTION IDs				     *
+ *===========================================================================*/
+
+#define VFS_TRANSACTION_BASE 0x1400
+
+#define VFS_TRANSID	(VFS_TRANSACTION_BASE + 1)
+#define IS_VFS_FS_TRANSID(type) (((type) & ~0xff) == VFS_TRANSACTION_BASE)
 
 /* _MINIX_COM_H */

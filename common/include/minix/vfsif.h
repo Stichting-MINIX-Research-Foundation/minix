@@ -113,11 +113,15 @@ typedef struct {
 #define REQ_NEWNODE	(VFS_BASE + 29)
 #define REQ_RDLINK	(VFS_BASE + 30)
 #define REQ_GETDENTS	(VFS_BASE + 31)
-#define REQ_STATVFS		(VFS_BASE + 32)
+#define REQ_STATVFS	(VFS_BASE + 32)
 
-#define NREQS                   33
+#define NREQS			    33
 
 #define IS_VFS_RQ(type) (((type) & ~0xff) == VFS_BASE)
+
+#define TRNS_GET_ID(t)		((t) & 0xFFFF)
+#define TRNS_ADD_ID(t,id)	(((t) << 16) | ((id) & 0xFFFF))
+#define TRNS_DEL_ID(t)		((short)((t) >> 16))
 
 #define PFS_BASE		(VFS_BASE + 100)
 

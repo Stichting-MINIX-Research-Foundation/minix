@@ -5,6 +5,7 @@
 
 #include "inc.h"
 #include <minix/vfsif.h>
+#include <assert.h>
 #include "const.h"
 #include "glo.h"
 
@@ -20,7 +21,8 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
  *				main                                         *
  *===========================================================================*/
 PUBLIC int main(void) {
-  endpoint_t who_e, ind, error;
+  endpoint_t who_e;
+  int ind, error, transid;
 
   /* SEF local startup. */
   sef_local_startup();
@@ -29,6 +31,16 @@ PUBLIC int main(void) {
 
 	/* Wait for request message. */
 	get_work(&fs_m_in);
+
+	transid = TRNS_GET_ID(fs_m_in.m_type);
+	fs_m_in.m_type = TRNS_DEL_ID(fs_m_in.m_type);
+	if (fs_m_in.m_type == 0) {
+		assert(!IS_VFS_FS_TRANSID(transid));
+		fs_m_in.m_type = transid;	/* Backwards compat. */
+		transid = 0;
+	} else
+		assert(IS_VFS_FS_TRANSID(transid));
+
 	error = OK;
 
 	caller_uid = -1;	/* To trap errors */
@@ -57,6 +69,10 @@ PUBLIC int main(void) {
 						* the appropriate function. */
 
 	fs_m_out.m_type = error; 
+	if (IS_VFS_FS_TRANSID(transid)) {
+		/* If a transaction ID was set, reset it */
+		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
+	}
 	reply(who_e, &fs_m_out); 	/* returns the response to VFS */
   }
 }

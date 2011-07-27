@@ -3,7 +3,7 @@
 #include "inc.h"
 
 FORWARD _PROTOTYPE( int get_work, (void)				);
-FORWARD _PROTOTYPE( void send_reply, (int err)				);
+FORWARD _PROTOTYPE( void send_reply, (int err, int transid)		);
 FORWARD _PROTOTYPE( void got_signal, (int signal)			);
 
 PRIVATE unsigned int inodes;
@@ -53,7 +53,7 @@ PUBLIC void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
 	 * sending the reply. The loop exits when the process is signaled to
 	 * exit; due to limitations of SEF, it can not return to the caller.
 	 */
-	int call_nr, err;
+	int call_nr, err, transid;
 
 	/* Use global variables to work around the inability to pass parameters
 	 * through SEF to the initialization function..
@@ -66,7 +66,18 @@ PUBLIC void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
 	sef_local_startup();
 
 	for (;;) {
-		call_nr = get_work();
+		get_work();
+
+		transid = TRNS_GET_ID(fs_m_in.m_type);
+		fs_m_in.m_type = TRNS_DEL_ID(fs_m_in.m_type);
+		if (fs_m_in.m_type == 0) {
+			assert(!IS_VFS_FS_TRANSID(transid));
+			fs_m_in.m_type = transid;	/* Backwards compat. */
+			transid = 0;
+		} else
+			assert(IS_VFS_FS_TRANSID(transid));
+
+		call_nr = fs_m_in.m_type;
 
 		if (fs_m_in.m_source != VFS_PROC_NR) {
 			if (vtreefs_hooks->message_hook != NULL) {
@@ -90,7 +101,7 @@ PUBLIC void start_vtreefs(struct fs_hooks *hooks, unsigned int nr_inodes,
 		}
 		else err = EINVAL;
 
-		send_reply(err);
+		send_reply(err, transid);
 	}
 }
 
@@ -112,13 +123,16 @@ PRIVATE int get_work(void)
 /*===========================================================================*
  *				send_reply				     *
  *===========================================================================*/
-PRIVATE void send_reply(int err)
+PRIVATE void send_reply(int err, int transid)
 {
 	/* Send a reply to the caller.
 	 */
 	int r;
 
 	fs_m_out.m_type = err;
+	if (IS_VFS_FS_TRANSID(transid)) {
+		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
+	}
 
 	if ((r = send(fs_m_in.m_source, &fs_m_out)) != OK)
 		panic(__FILE__, "unable to send reply", r);

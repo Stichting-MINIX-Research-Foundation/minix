@@ -468,8 +468,8 @@ PUBLIC void rw_scattered(
 		iop->iov_size = (vir_bytes) fs_block_size;
 	}
 	r = block_dev_io(rw_flag == WRITING ? MFS_DEV_SCATTER : MFS_DEV_GATHER,
-		dev, SELF_E, iovec,
-		mul64u(bufq[0]->b_blocknr, fs_block_size), j);
+			 dev, SELF_E, iovec,
+			 mul64u(bufq[0]->b_blocknr, fs_block_size), j);
 
 	/* Harvest the results.  Dev_io reports the first error it may have
 	 * encountered, but we only care if it's the first block that failed.
@@ -480,7 +480,7 @@ PUBLIC void rw_scattered(
 			/* Transfer failed. An error? Do we care? */
 			if (r != OK && i == 0) {
 				printf(
-				"fs: I/O error on device %d/%d, block %lu\n",
+				"MFS: I/O error on device %d/%d, block %lu\n",
 					major(dev), minor(dev), bp->b_blocknr);
 				bp->b_dev = NO_DEV;	/* invalidate block */
   				vm_forgetblocks();

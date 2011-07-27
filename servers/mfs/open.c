@@ -10,13 +10,12 @@
 FORWARD _PROTOTYPE( struct inode *new_node, (struct inode *ldirp, 
 	char *string, mode_t bits, zone_t z0));
 
-
 /*===========================================================================*
  *				fs_create				     *
  *===========================================================================*/
 PUBLIC int fs_create()
 {
-  phys_bytes len;
+  size_t len;
   int r;
   struct inode *ldirp;
   struct inode *rip;
@@ -33,7 +32,7 @@ PUBLIC int fs_create()
   /* Copy the last component (i.e., file name) */
   len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-  			    (vir_bytes) 0, (vir_bytes) lastc, (size_t) len, D);
+			      (vir_bytes) 0, (vir_bytes) lastc, len, D);
   if (err_code != OK) return err_code;
   NUL(lastc, len, sizeof(lastc));
 
@@ -57,7 +56,7 @@ PUBLIC int fs_create()
   fs_m_out.RES_MODE = rip->i_mode;
   fs_m_out.RES_FILE_SIZE_LO = rip->i_size;
 
-  /* This values are needed for the execution */
+  /* These values are needed for the execution */
   fs_m_out.RES_UID = rip->i_uid;
   fs_m_out.RES_GID = rip->i_gid;
 
