@@ -3,7 +3,7 @@
 
 PROG=	cut
 
-LDADD+=	-lutil
-DPADD+=	${LIBUTIL}
+LDADD+=	-lminixutil
+DPADD+=	${LIBMINIXUTIL}
 
 .include <bsd.prog.mk>

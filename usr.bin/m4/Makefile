@@ -16,8 +16,8 @@ SRCS+=	ohash_create_entry.c ohash_delete.c ohash_do.c ohash_entries.c \
 	ohash_qlookupi.c strtonum.c
 YHEADER=1
 .if (${HOSTPROG:U} == "")
-DPADD+=		${LIBUTIL} ${LIBL}
-LDADD+=		-lutil -ll
+DPADD+=		${LIBMINIXUTIL} ${LIBL}
+LDADD+=		-lminixutil -ll
 .endif
 
 tokenizer.o: parser.h

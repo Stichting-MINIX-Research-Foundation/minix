@@ -15,7 +15,7 @@ LIBMINLIB_DIR?=
 LIBASYN_DIR?=
 
 SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libdriver libnetdriver \
-	libedit ${LIBM_DIR} libsys libtimers libutil libbz2 libl libhgfs  \
+	libedit ${LIBM_DIR} libsys libtimers libminixutil libbz2 libl libhgfs  \
 	libz libfetch libarchive libvtreefs libaudiodriver libmthread     \
 	libexec libdevman libusb ${LIBMINLIB_DIR} ${LIBASYN_DIR}          \
 	libddekit

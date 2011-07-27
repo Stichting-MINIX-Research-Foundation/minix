@@ -4,8 +4,8 @@ SRCS=	main.c random.c rijndael_api.c rijndael_alg.c
 
 .PATH:	${.CURDIR}/aes
 
-DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBUTIL}
-LDADD+=	-ldriver -lsys -lutil
+DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBMINIXUTIL}
+LDADD+=	-ldriver -lsys -lminixutil
 
 MAN=
 

@@ -1,6 +1,6 @@
-# Makefile for libutil
+# Makefile for libminixutil
 
-LIB=	util
+LIB=	minixutil
 
 .if (${NBSD_LIBC} != "no")
 # SHA and MD5 functions already in libc

@@ -5,8 +5,8 @@ PROG=	man
 SRCS=	man.c manconf.c
 MAN=	man.1 man.conf.5
 
-DPADD+=	${LIBUTIL}
-LDADD+=	-lutil
+DPADD+=	${LIBMINIXUTIL}
+LDADD+=	-lminixutil
 
 FILES=man.conf
 FILESDIR=/etc
