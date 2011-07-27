@@ -54,6 +54,7 @@ mthread_queue_t *queue;
 /*===========================================================================*
  *				mthread_dump_queue			     *
  *===========================================================================*/
+#ifdef MDEBUG
 PUBLIC void mthread_dump_queue(queue)
 mthread_queue_t *queue;
 {
@@ -61,39 +62,30 @@ mthread_queue_t *queue;
   mthread_tcb_t *t;
   mthread_thread_t tid;
   threshold = no_threads;
-#ifdef MDEBUG
   printf("Dumping queue: ");
-#endif
+
   if(queue->mq_head != NULL) {
   	t = queue->mq_head;
 	if (t == &mainthread) tid = MAIN_THREAD;
 	else tid = t->m_tid;
-#ifdef MDEBUG
 	printf("%d ", tid);
-#endif
 	count++;
 	t = t->m_next; 
 	while (t != NULL) {
 		if (t == &mainthread) tid = MAIN_THREAD;
 		else tid = t->m_tid;
-#ifdef MDEBUG
 		printf("%d ", tid);
-#endif
 		t = t->m_next; 
 		count++;
 		if (count > threshold) break;
 	}
   } else {
-#ifdef MDEBUG
   	printf("[empty]");
-#endif
   }
 
-#ifdef MDEBUG
   printf("\n");
-#endif
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_queue_remove			     *

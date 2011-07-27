@@ -21,12 +21,18 @@ _PROTOTYPE( void mthread_init_keys, (void)				);
 _PROTOTYPE( void mthread_cleanup_values, (void)				);
 
 /* misc.c */
+#ifdef MDEBUG
 #define mthread_panic(m) mthread_panic_f(__FILE__, __LINE__, (m))
 _PROTOTYPE( void mthread_panic_f, (const char *file, int line,
 				   const char *msg)			);
 #define mthread_debug(m) mthread_debug_f(__FILE__, __LINE__, (m))
 _PROTOTYPE( void mthread_debug_f, (const char *file, int line,
 				   const char *msg)			);
+#else
+_PROTOTYPE( void mthread_panic_s, (void)					);
+# define mthread_panic(m) mthread_panic_s()
+# define mthread_debug(m)
+#endif
 
 /* mutex.c */
 _PROTOTYPE( void mthread_init_valid_mutexes, (void)			);
@@ -49,7 +55,9 @@ _PROTOTYPE( void mthread_suspend, (mthread_state_t state)		);
 _PROTOTYPE( void mthread_unsuspend, (mthread_thread_t thread)		);
 
 /* queue.c */
+#ifdef MDEBUG
 _PROTOTYPE( void mthread_dump_queue, (mthread_queue_t *queue)		);
+#endif
 _PROTOTYPE( void mthread_queue_init, (mthread_queue_t *queue)		);
 _PROTOTYPE( void mthread_queue_add, (mthread_queue_t *queue, 
 				     mthread_thread_t thread)		);

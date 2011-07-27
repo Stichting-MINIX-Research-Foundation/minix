@@ -3,6 +3,7 @@
  * lets you check the internal integrity of the library. */
 #include <stdio.h>
 #include <minix/mthread.h>
+#include <signal.h>
 
 #define thread_t mthread_thread_t
 #define mutex_t mthread_mutex_t
@@ -38,16 +39,18 @@ PRIVATE int first;
 #define THRESH1 3
 #define THRESH2 8
 #define MEG 1024*1024
-#define MAGIC 0xb4a3f1c2
+#define MAGIC ((signed) 0xb4a3f1c2)
 
-FORWARD _PROTOTYPE( void thread_a, (void *arg)				);
-FORWARD _PROTOTYPE( void thread_b, (void *arg)				);
-FORWARD _PROTOTYPE( void thread_c, (void *arg)				);
-FORWARD _PROTOTYPE( void thread_d, (void *arg)				);
+FORWARD _PROTOTYPE( void destr_a, (void *arg)				);
+FORWARD _PROTOTYPE( void destr_b, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_a, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_b, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_c, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_d, (void *arg)				);
 FORWARD _PROTOTYPE( void thread_e, (void)				);
-FORWARD _PROTOTYPE( void thread_f, (void *arg)				);
-FORWARD _PROTOTYPE( void thread_g, (void *arg)				);
-FORWARD _PROTOTYPE( void thread_h, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_f, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_g, (void *arg)				);
+FORWARD _PROTOTYPE( void *thread_h, (void *arg)				);
 FORWARD _PROTOTYPE( void test_scheduling, (void)			);
 FORWARD _PROTOTYPE( void test_mutex, (void)				);
 FORWARD _PROTOTYPE( void test_condition, (void)				);
@@ -58,34 +61,38 @@ FORWARD _PROTOTYPE( void err, (int subtest, int error)			);
 /*===========================================================================*
  *				thread_a				     *
  *===========================================================================*/
-PRIVATE void thread_a(void *arg) {
+PRIVATE void *thread_a(void *arg) {
   th_a++;
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				thread_b				     *
  *===========================================================================*/
-PRIVATE void thread_b(void *arg) {
+PRIVATE void *thread_b(void *arg) {
   th_b++;
   if (mthread_once(&once, thread_e) != 0) err(10, 1);
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				thread_c				     *
  *===========================================================================*/
-PRIVATE void thread_c(void *arg) {
+PRIVATE void *thread_c(void *arg) {
   th_c++;
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				thread_d				     *
  *===========================================================================*/
-PRIVATE void thread_d(void *arg) {
+PRIVATE void *thread_d(void *arg) {
   th_d++;
   mthread_exit(NULL); /* Thread wants to stop running */
+  return(NULL);
 }
 
 
@@ -100,31 +107,33 @@ PRIVATE void thread_e(void) {
 /*===========================================================================*
  *				thread_f				     *
  *===========================================================================*/
-PRIVATE void thread_f(void *arg) {
+PRIVATE void *thread_f(void *arg) {
   if (mthread_mutex_lock(condition_mutex) != 0) err(12, 1);
   th_f++;
   if (mthread_cond_signal(&condition) != 0) err(12, 2);
   if (mthread_mutex_unlock(condition_mutex) != 0) err(12, 3);
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				thread_g				     *
  *===========================================================================*/
-PRIVATE void thread_g(void *arg) {
+PRIVATE void *thread_g(void *arg) {
   char bigarray[MTHREAD_STACK_MIN + 1];
   if (mthread_mutex_lock(condition_mutex) != 0) err(13, 1);
   memset(bigarray, '\0', MTHREAD_STACK_MIN + 1); /* Actually allocate it */
   th_g++;
   if (mthread_cond_signal(&condition) != 0) err(13, 2);
   if (mthread_mutex_unlock(condition_mutex) != 0) err(13, 3);
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				thread_h				     *
  *===========================================================================*/
-PRIVATE void thread_h(void *arg) {
+PRIVATE void *thread_h(void *arg) {
   char bigarray[2 * MEG];
   int reply;
   if (mthread_mutex_lock(condition_mutex) != 0) err(14, 1);
@@ -134,6 +143,7 @@ PRIVATE void thread_h(void *arg) {
   if (mthread_mutex_unlock(condition_mutex) != 0) err(14, 3);
   reply = *((int *) arg); 
   mthread_exit((void *) reply);
+  return(NULL);
 }
 
 
@@ -154,7 +164,7 @@ PRIVATE void err(int sub, int error) {
  *===========================================================================*/
 PRIVATE void test_scheduling(void)
 {
-  int i;
+  unsigned int i;
   thread_t t[7];
 
 #ifdef MDEBUG
@@ -217,10 +227,9 @@ PRIVATE void test_scheduling(void)
 /*===========================================================================*
  *				mutex_a					     *
  *===========================================================================*/
-PRIVATE void mutex_a(void *arg)
+PRIVATE void *mutex_a(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
-  mutex_t mu2;
 
   VERIFY_MUTEX(0, 0, 0, 3, 1);
   if (mthread_mutex_lock(&mu[0]) != 0) err(3, 2);
@@ -267,13 +276,14 @@ PRIVATE void mutex_a(void *arg)
   if (mthread_mutex_unlock(NULL) == 0) err(3, 19);
 
   if (mthread_mutex_unlock(&mu[2]) != 0) err(3, 20);
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				mutex_b					     *
  *===========================================================================*/
-PRIVATE void mutex_b(void *arg)
+PRIVATE void *mutex_b(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
 
@@ -302,13 +312,14 @@ PRIVATE void mutex_b(void *arg)
 
   if (mthread_mutex_unlock(&mu[1]) != 0) err(4, 8);
   mutex_b_step = 4;
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *				mutex_c					     *
  *===========================================================================*/
-PRIVATE void mutex_c(void *arg)
+PRIVATE void *mutex_c(void *arg)
 {
   mutex_t *mu = (mutex_t *) arg;
 
@@ -329,6 +340,7 @@ PRIVATE void mutex_c(void *arg)
 
   if (mthread_mutex_unlock(&mu[0]) != 0) err(5, 9);
   mutex_c_step = 4;
+  return(NULL);
 }
 
 
@@ -337,7 +349,7 @@ PRIVATE void mutex_c(void *arg)
  *===========================================================================*/
 PRIVATE void test_mutex(void)
 {
-  int i;
+  unsigned int i;
   thread_t t[3];
 #ifdef MDEBUG
   mthread_verify();
@@ -381,7 +393,7 @@ PRIVATE void test_mutex(void)
 /*===========================================================================*
  *					cond_a				     *
  *===========================================================================*/
-PRIVATE void cond_a(void *arg)
+PRIVATE void *cond_a(void *arg)
 {
   cond_t c;
   int did_count = 0;
@@ -406,6 +418,7 @@ PRIVATE void cond_a(void *arg)
 
   /* Try faulty addresses */
   if (mthread_mutex_lock(condition_mutex) != 0) err(6, 7);
+#ifdef MTHREAD_STRICT
   /* Condition c is not initialized, so whatever we do with it should fail. */
   if (mthread_cond_wait(&c, condition_mutex) == 0) err(6, 8);
   if (mthread_cond_wait(NULL, condition_mutex) == 0) err(6, 9);
@@ -415,19 +428,21 @@ PRIVATE void cond_a(void *arg)
   /* Try again with an unlocked mutex */
   if (mthread_cond_wait(&c, condition_mutex) == 0) err(6, 12);
   if (mthread_cond_signal(&c) == 0) err(6, 13);
+#endif
 
   /* And again with an unlocked mutex, but initialized c */
   if (mthread_cond_init(&c, NULL) != 0) err(6, 14);
   if (mthread_cond_wait(&c, condition_mutex) == 0) err(6, 15);
   if (mthread_cond_signal(&c) != 0) err(6, 16);/*c.f., 6.10 this should work!*/
   if (mthread_cond_destroy(&c) != 0) err(6, 17);
+  return(NULL);
 }
 
 
 /*===========================================================================*
  *					cond_b				     *
  *===========================================================================*/
-PRIVATE void cond_b(void *arg)
+PRIVATE void *cond_b(void *arg)
 {
   int did_count = 0;
   while(1) {
@@ -448,14 +463,14 @@ PRIVATE void cond_b(void *arg)
 
   if (!(did_count >= count - (THRESH2 - THRESH1 + 1))) err(7, 6);
 
+  return(NULL);
 }
 
 /*===========================================================================*
  *				cond_broadcast				     *
  *===========================================================================*/
-PRIVATE void cond_broadcast(void *arg)
+PRIVATE void *cond_broadcast(void *arg)
 {
-  int rounds = 0;
   if (mthread_mutex_lock(condition_mutex) != 0) err(9, 1);
 
   while(!condition_met) 
@@ -466,6 +481,7 @@ PRIVATE void cond_broadcast(void *arg)
   if (mthread_mutex_lock(count_mutex) != 0) err(9, 4);
   count++;
   if (mthread_mutex_unlock(count_mutex) != 0) err(9, 5);
+  return(NULL);
 }
 
 /*===========================================================================*
@@ -474,7 +490,7 @@ PRIVATE void cond_broadcast(void *arg)
 PRIVATE void test_condition(void)
 {
 #define NTHREADS 10
-  int i, r;
+  int i;
   thread_t t[2], s[NTHREADS];
   count_mutex = &mu[0];
   condition_mutex = &mu[1];
@@ -498,7 +514,7 @@ PRIVATE void test_condition(void)
   if (mthread_create(&t[0], NULL, cond_a, NULL) != 0) err(8, 4);
   if (mthread_create(&t[1], NULL, cond_b, NULL) != 0) err(8, 5);
 
-  for (i = 0; i < (sizeof(t) / sizeof(thread_t)); i++) 
+  for (i = 0; i < (sizeof(t) / sizeof(thread_t)); i++)
 	if (mthread_join(t[i], NULL) != 0) err(8, 6);
 
   if (mthread_mutex_destroy(count_mutex) != 0) err(8, 7);
@@ -564,7 +580,7 @@ PRIVATE void test_attributes(void)
   attr_t tattr;
   thread_t tid;
   int detachstate = -1, status = 0;
-  int i, no_ints, stack_untouched = 1;
+  unsigned int i, no_ints, stack_untouched = 1;
   void *stackaddr, *newstackaddr;
   int *stackp;
   size_t stacksize, newstacksize;
@@ -720,7 +736,7 @@ PRIVATE void test_attributes(void)
 #endif
 
   if (mthread_join(tid, (void *) &status) != 0) err(11, 69);
-  if (status != stacksize) err(11, 70);
+  if ((size_t) status != stacksize) err(11, 70);
   if (mthread_attr_destroy(&tattr) != 0) err(11, 71); 
   if (mthread_mutex_destroy(condition_mutex) != 0) err(11, 72);
   if (mthread_cond_destroy(&condition) != 0) err(11, 73);
@@ -759,7 +775,7 @@ PRIVATE void destr_b(void *value)
 /*===========================================================================*
  *				key_a					     *
  *===========================================================================*/
-PRIVATE void key_a(void *arg)
+PRIVATE void *key_a(void *arg)
 {
   int i;
 
@@ -785,12 +801,13 @@ PRIVATE void key_a(void *arg)
 
   /* If a key's value is set to NULL, its destructor must not be called. */
   if (mthread_setspecific(key[4], NULL) != 0) err(17, 5);
+  return(NULL);
 }
 
 /*===========================================================================*
  *				key_b					     *
  *===========================================================================*/
-PRIVATE void key_b(void *arg)
+PRIVATE void *key_b(void *arg)
 {
   int i;
 
@@ -810,12 +827,13 @@ PRIVATE void key_b(void *arg)
   if (mthread_key_delete(key[3]) != 0) err(18, 3);
 
   mthread_exit(NULL);
+  return(NULL);
 }
 
 /*===========================================================================*
  *				key_c					     *
  *===========================================================================*/
-PRIVATE void key_c(void *arg)
+PRIVATE void *key_c(void *arg)
 {
   /* The only thing that this thread should do, is set a value. */
   if (mthread_setspecific(key[0], (void *) mthread_self()) != 0) err(19, 1);
@@ -824,6 +842,7 @@ PRIVATE void key_c(void *arg)
 
   if (!mthread_equal((thread_t) mthread_getspecific(key[0]), mthread_self()))
 	err(19, 2);
+  return(NULL);
 }
 
 /*===========================================================================*
@@ -919,5 +938,6 @@ int main(void)
   test_attributes();
   test_keys();
   quit();
+  return(0);	/* Not reachable */
 }
 

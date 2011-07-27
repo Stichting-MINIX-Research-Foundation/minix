@@ -6,18 +6,18 @@
 /*===========================================================================*
  *				mthread_debug_f				     *
  *===========================================================================*/
+#ifdef MDEBUG
 PUBLIC void mthread_debug_f(const char *file, int line, const char *msg)
 {
   /* Print debug message */
-#ifdef MDEBUG
   printf("MTH (%s:%d): %s\n", file, line, msg);
-#endif
 }
-
+#endif
 
 /*===========================================================================*
  *				mthread_panic_f				     *
  *===========================================================================*/
+#ifdef MDEBUG
 PUBLIC void mthread_panic_f(const char *file, int line, const char *msg)
 {
   /* Print panic message to stdout and exit */
@@ -32,6 +32,17 @@ PUBLIC void mthread_panic_f(const char *file, int line, const char *msg)
   *((int *) sf ) = 1;	/* Cause segfault to generate trace */
   exit(1);
 }
+#else
+PUBLIC void mthread_panic_s(void)
+{
+  /* Silent panic */
+  volatile int *sf;
+
+  sf = NULL;
+  *((int *) sf ) = 1;	/* Cause segfault to generate trace */
+  exit(1);
+}
+#endif
 
 
 /*===========================================================================*
@@ -68,9 +79,6 @@ PUBLIC void mthread_verify_f(char *file, int line)
   if(!threads_ok || !conditions_ok || !mutexes_ok)
 	mthread_panic("Library state corrupt\n");
 }
-#else
-PUBLIC void mthread_verify_f(char *f, int l) { ; }
-#endif
 
 
 /*===========================================================================*
@@ -80,8 +88,8 @@ PUBLIC void mthread_stats(void)
 {
   mthread_thread_t t;
   mthread_tcb_t *tcb;
-  int st_run, st_dead, st_cond, st_mutex, st_exit, st_fbexit;
-  st_run = st_dead = st_cond = st_mutex = st_exit = st_fbexit = 0;
+  int st_run, st_dead, st_cond, st_mutex, st_exit;
+  st_run = st_dead = st_cond = st_mutex = st_exit = 0;
 
   for (t = (mthread_thread_t) 0; t < no_threads; t++) {
   	tcb = mthread_find_tcb(t);
@@ -91,13 +99,13 @@ PUBLIC void mthread_stats(void)
   		case MS_MUTEX: st_mutex++; break;
   		case MS_CONDITION: st_cond++; break;
   		case MS_EXITING: st_exit++; break;
-  		case MS_FALLBACK_EXITING: st_fbexit++; break;
   		default: mthread_panic("Unknown state");
   	}
   }
 
-  printf("Pool: %-5d In use: %-5d R: %-5d D: %-5d M: %-5d C: %-5d E: %-5d"
-  	 "F: %-5d\n",
+  printf("Pool: %-5d In use: %-5d R: %-5d D: %-5d M: %-5d C: %-5d E: %-5d\n",
   	 no_threads, used_threads, st_run, st_dead, st_mutex, st_cond,
-  	 st_exit, st_fbexit);
+	 st_exit);
 }
+
+#endif

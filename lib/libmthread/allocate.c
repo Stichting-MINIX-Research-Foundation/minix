@@ -5,13 +5,10 @@
 #include "global.h"
 #include "proto.h"
 
-#define FALLBACK_CTX (&(fallback.m_context))
-
-FORWARD _PROTOTYPE( void mthread_fallback, (void)			);
 FORWARD _PROTOTYPE( int mthread_increase_thread_pool, (void)			);
 FORWARD _PROTOTYPE( void mthread_thread_init, (mthread_thread_t thread,
 					       mthread_attr_t *tattr,
-					       void (*proc)(void *),
+					       void *(*proc)(void *),
 					       void *arg)		);
 
 FORWARD _PROTOTYPE( void mthread_thread_reset, (mthread_thread_t thread));
@@ -45,7 +42,7 @@ mthread_thread_t r;
 PUBLIC int mthread_create(threadid, tattr, proc, arg)
 mthread_thread_t *threadid;
 mthread_attr_t *tattr;
-void (*proc)(void *);
+void *(*proc)(void *);
 void *arg;
 {
 /* Register procedure proc for execution in a thread. */
@@ -111,7 +108,6 @@ PUBLIC void mthread_exit(value)
 void *value;
 {
 /* Make a thread stop running and store the result value. */
-  int fallback_exit = 0;
   mthread_tcb_t *tcb;
 
   mthread_init();	/* Make sure libmthread is initialized */
@@ -122,13 +118,6 @@ void *value;
   	return;
 
   mthread_cleanup_values();
-
-  /* When we're called from the fallback thread, the fallback thread 
-   * will invoke the scheduler. However, if the thread itself called 
-   * mthread_exit, _we_ will have to wake up the scheduler.
-   */
-  if (tcb->m_state == MS_FALLBACK_EXITING)
-  	fallback_exit = 1;
 
   tcb->m_result = value;
   tcb->m_state = MS_EXITING;
@@ -145,41 +134,8 @@ void *value;
 	 */
   }
 
-  /* The fallback thread does a mthread_schedule. If we're not running from
-   * that thread, we have to do it ourselves.
-   */
-  if (!fallback_exit) 
-	mthread_schedule();
-
-}
-
-
-/*===========================================================================*
- *				mthread_fallback			     *
- *===========================================================================*/
-PRIVATE void mthread_fallback(void)
-{
-/* The libmthread fallback thread. The idea is that every thread calls 
- * mthread_exit(...) to stop running when it has nothing to do anymore. 
- * However, in case a thread forgets to do that, the whole process  exit()s and
- * that might be a bit problematic. Therefore, all threads will run this
- * fallback thread when they exit, giving the scheduler a chance to fix the
- * situation.
- */
-  mthread_tcb_t *tcb;
-
-  tcb = mthread_find_tcb(current_thread);
-
-  tcb->m_state = MS_FALLBACK_EXITING;
-  mthread_exit(NULL);
-
-  /* Reconstruct fallback context for next invocation */
-  makecontext(FALLBACK_CTX, (void (*) (void)) mthread_fallback, 0);
-
-  /* Let another thread run */
   mthread_schedule();
 }
-
 
 /*===========================================================================*
  *			mthread_find_tcb				     *
@@ -288,15 +244,6 @@ PUBLIC void mthread_init(void)
 	mthread_init_keys();
 	mthread_init_scheduler();
 
-	/* Initialize the fallback thread */
-	if (mthread_getcontext(FALLBACK_CTX) == -1)
-		mthread_panic("Could not initialize fallback thread");
-	FALLBACK_CTX->uc_link = &(mainthread.m_context);
-	FALLBACK_CTX->uc_stack.ss_sp = fallback_stack;
-	FALLBACK_CTX->uc_stack.ss_size = STACKSZ;
-	memset(fallback_stack, '\0', STACKSZ);
-  	makecontext(FALLBACK_CTX, (void (*) (void)) mthread_fallback, 0);
-
 	initialized = 1;
   }
 }
@@ -399,7 +346,7 @@ PUBLIC mthread_thread_t mthread_self(void)
 PRIVATE void mthread_thread_init(thread, tattr, proc, arg)
 mthread_thread_t thread;
 mthread_attr_t *tattr;
-void (*proc)(void *);
+void *(*proc)(void *);
 void *arg;
 {
 /* Initialize a thread so that it, when unsuspended, will run the given
@@ -414,7 +361,7 @@ void *arg;
   tcb = mthread_find_tcb(thread);
   tcb->m_next = NULL;
   tcb->m_state = MS_DEAD;
-  tcb->m_proc = (void *(*)(void *)) proc; /* Yikes */
+  tcb->m_proc = proc;
   tcb->m_arg = arg;
   /* Threads use a copy of the provided attributes. This way, if another
    * thread modifies the attributes (such as detach state), already running
@@ -429,10 +376,9 @@ void *arg;
   if (mthread_cond_init(&(tcb->m_exited), NULL) != 0)
   	mthread_panic("Could not initialize thread");
 
-  /* First set the fallback thread, */
-  tcb->m_context.uc_link = FALLBACK_CTX;
+  tcb->m_context.uc_link = NULL;
 
-  /* then construct this thread's context to run procedure proc. */
+  /* Construct this thread's context to run procedure proc. */
   if (mthread_getcontext(&(tcb->m_context)) == -1)
   	mthread_panic("Failed to initialize context state");
 

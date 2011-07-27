@@ -16,7 +16,7 @@
 #define MTHREAD_NOT_INUSE  0xdefec7
 
 typedef enum {
-  MS_CONDITION, MS_DEAD, MS_EXITING, MS_FALLBACK_EXITING, MS_MUTEX, MS_RUNNABLE
+  MS_CONDITION, MS_DEAD, MS_EXITING, MS_MUTEX, MS_RUNNABLE
 } mthread_state_t;
 
 struct __mthread_tcb {
@@ -40,10 +40,8 @@ EXTERN mthread_thread_t current_thread;
 EXTERN mthread_queue_t free_threads;
 EXTERN mthread_queue_t run_queue;		/* FIFO of runnable threads */
 EXTERN mthread_tcb_t **threads;
-EXTERN mthread_tcb_t fallback;
 EXTERN mthread_tcb_t mainthread;
 EXTERN int no_threads;
 EXTERN int used_threads;
 EXTERN int running_main_thread;
-EXTERN char fallback_stack[STACKSZ];
 

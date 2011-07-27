@@ -2,8 +2,8 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE struct __mthread_mutex *vm_front, *vm_rear;
 #ifdef MTHREAD_STRICT
+PRIVATE struct __mthread_mutex *vm_front, *vm_rear;
 FORWARD _PROTOTYPE( void mthread_mutex_add, (mthread_mutex_t *m)	);
 FORWARD _PROTOTYPE( void mthread_mutex_remove, (mthread_mutex_t *m)	);
 #else
@@ -16,8 +16,10 @@ FORWARD _PROTOTYPE( void mthread_mutex_remove, (mthread_mutex_t *m)	);
  *===========================================================================*/
 PUBLIC void mthread_init_valid_mutexes(void)
 {
+#ifdef MTHREAD_STRICT
 /* Initialize list of valid mutexes */
   vm_front = vm_rear = NULL;
+#endif
 }
 
 
@@ -135,14 +137,10 @@ mthread_mutex_t *mutex;	/* Mutex that is to be locked */
   	return(EINVAL);
   else if (m->mm_owner == NO_THREAD) { /* Not locked */
 	m->mm_owner = current_thread;
-	if (current_thread == MAIN_THREAD)
-		mthread_debug("MAIN_THREAD now mutex owner\n");
   } else if (m->mm_owner == current_thread) {
   	return(EDEADLK);
   } else {
 	mthread_queue_add(&m->mm_queue, current_thread);
-	if (m->mm_owner == MAIN_THREAD)
-		mthread_dump_queue(&m->mm_queue);
 	mthread_suspend(MS_MUTEX);
   }
 
@@ -244,10 +242,10 @@ mthread_mutex_t *m;
   loopitem = vm_front;
 
   while (loopitem != NULL) {
-  	if (loopitem == *m) 
-  		return(1);
+	if (loopitem == *m)
+		return(1);
 
-  	loopitem = loopitem->mm_next;
+	loopitem = loopitem->mm_next;
   }
 
   return(0);
@@ -266,13 +264,15 @@ PUBLIC int mthread_mutex_verify(void)
 
   mthread_init();	/* Make sure mthreads is initialized */
 
+#ifdef MTHREAD_STRICT
   loopitem = vm_front;
 
   while (loopitem != NULL) {
   	printf("mutex corruption: owner: %d\n", loopitem->mm_owner);
-  	loopitem = loopitem->next;
+	loopitem = loopitem->mm_next;
   	r = 0;
   }
+#endif
 
   return(r);
 }

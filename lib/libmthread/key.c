@@ -3,6 +3,7 @@
 #include "global.h"
 #include "proto.h"
 
+PRIVATE int keys_used = 0;
 PRIVATE struct {
   int used;
   int nvalues;
@@ -34,6 +35,7 @@ PUBLIC int mthread_key_create(mthread_key_t *key, void (*destructor)(void *))
   mthread_key_t k;
 
   mthread_init();	/* Make sure libmthread is initialized */
+  keys_used = 1;
 
   /* We do not yet allocate storage space for the values here, because we can
    * not estimate how many threads will be created in the common case that the
@@ -149,6 +151,8 @@ PUBLIC void mthread_cleanup_values(void)
   mthread_key_t k;
   void *value;
   int found;
+
+  if (!keys_used) return;	/* Only clean up if we used any keys at all */
 
   /* Any of the destructors may set a new value on any key, so we may have to
    * loop over the table of keys multiple times. This implementation has no

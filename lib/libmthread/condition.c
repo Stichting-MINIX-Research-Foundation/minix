@@ -2,8 +2,8 @@
 #include "global.h"
 #include "proto.h"
 
-PRIVATE struct __mthread_cond *vc_front, *vc_rear;
 #ifdef MTHREAD_STRICT
+PRIVATE struct __mthread_cond *vc_front, *vc_rear;
 FORWARD _PROTOTYPE( void mthread_cond_add, (mthread_cond_t *c)		);
 FORWARD _PROTOTYPE( void mthread_cond_remove, (mthread_cond_t *c)	);
 FORWARD _PROTOTYPE( int mthread_cond_valid, (mthread_cond_t *c)	);
@@ -19,8 +19,10 @@ FORWARD _PROTOTYPE( int mthread_cond_valid, (mthread_cond_t *c)	);
  *===========================================================================*/
 PUBLIC void mthread_init_valid_conditions(void)
 {
+#ifdef MTHREAD_STRICT
 /* Initialize condition variable list */
   vc_front = vc_rear = NULL;
+#endif
 }
 
 

@@ -9,9 +9,6 @@
 #include <ucontext.h>
 #include <errno.h>
 #include <stdlib.h>
-#ifndef __NBSD_LIBC
-#include <alloca.h>
-#endif
 #include <limits.h>
 #ifdef __NBSD_LIBC
 #include <sys/signal.h>
@@ -32,16 +29,20 @@ typedef struct {
 struct __mthread_mutex {
   mthread_queue_t mm_queue;	/* Queue of threads blocked on this mutex */
   mthread_thread_t mm_owner;	/* Thread ID that currently owns mutex */
+#ifdef MTHREAD_STRICT
   struct __mthread_mutex *mm_prev;
   struct __mthread_mutex *mm_next;
+#endif
   unsigned int mm_magic;
 };
 typedef struct __mthread_mutex *mthread_mutex_t;
 
 struct __mthread_cond {
   struct __mthread_mutex *mc_mutex;	/* Associate mutex with condition */
+#ifdef MTHREAD_STRICT
   struct __mthread_cond *mc_prev;
   struct __mthread_cond *mc_next;
+#endif
   unsigned int mc_magic;
 };
 typedef struct __mthread_cond *mthread_cond_t;
@@ -64,7 +65,7 @@ typedef struct __mthread_attr *mthread_attr_t;
 /* allocate.c */
 _PROTOTYPE( int mthread_create, (mthread_thread_t *thread,
 				 mthread_attr_t *tattr,
-				 void (*proc)(void *), void *arg)	);
+				 void *(*proc)(void *), void *arg)	);
 _PROTOTYPE( int mthread_detach, (mthread_thread_t thread)		);
 _PROTOTYPE( int mthread_equal, (mthread_thread_t l, mthread_thread_t r)	);
 _PROTOTYPE( void mthread_exit, (void *value)				);
