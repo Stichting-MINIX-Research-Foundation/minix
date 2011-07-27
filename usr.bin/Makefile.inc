@@ -1,6 +1,4 @@
-# Requires clang/gcc for NetBSD libc
-CC:=${CC:C/^cc/clang/}
-COMPILER_TYPE:= gnu
+.include <minix.newlibc.mk>
 
 CPPFLAGS+= -D_NETBSD_SOURCE -D__NBSD_LIBC=1
 

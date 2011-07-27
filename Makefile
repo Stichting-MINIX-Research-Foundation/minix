@@ -94,7 +94,7 @@ install:
 	$(MAKE) -C share install
 	$(MAKE) -C tools install
 
-clean:
+clean: mkfiles
 	$(MAKE) -C boot clean
 	$(MAKE) -C commands clean
 	$(MAKE) -C bin clean
@@ -103,7 +103,7 @@ clean:
 	$(MAKE) -C lib clean_all
 	$(MAKE) -C test clean
 
-cleandepend:
+cleandepend: mkfiles
 	$(MAKE) -C lib cleandepend_all
 	$(MAKE) -C boot cleandepend
 	$(MAKE) -C commands cleandepend
