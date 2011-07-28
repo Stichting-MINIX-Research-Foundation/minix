@@ -89,6 +89,7 @@
 1777 root    operator  /usr/tmp
 755  root    operator  /var
 /var/log -> /usr/log
+/var/tmp -> /usr/tmp
 755  root    operator  /usr/log
 755  root    operator  /usr/var
 755  root    operator  /usr/var/db
