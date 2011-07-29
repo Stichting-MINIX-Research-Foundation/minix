@@ -25,7 +25,7 @@
 #ifdef CONFIG_SMP
 #include "smp.h"
 #endif
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 #include "watchdog.h"
 #endif
 #include "spinlock.h"

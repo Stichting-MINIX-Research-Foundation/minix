@@ -7,11 +7,6 @@
 #endif
 /* boot verbose */
 #define CONFIG_BOOT_VERBOSE
-/*
- * compile in the nmi watchdog by default. It is not enabled until watchdog=1
- * (non-zero) is set in monitor
- */
-#define CONFIG_WATCHDOG
 
 #ifndef CONFIG_MAX_CPUS
 #define CONFIG_MAX_CPUS	1

@@ -29,7 +29,6 @@ SRCS+=	arch_do_vmctl.c \
 	arch_system.c \
 	apic.c \
 	apic_asm.S \
-	arch_watchdog.c \
 	pre_init.c \
 	acpi.c
 

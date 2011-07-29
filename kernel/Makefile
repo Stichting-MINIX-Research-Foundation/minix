@@ -7,7 +7,7 @@ PROG=	kernel
 SRCS=	mpx.S
 SRCS+=	start.c table.c main.c proc.c \
 	system.c clock.c utility.c debug.c interrupt.c \
-	watchdog.c cpulocals.c
+	cpulocals.c
 
 .ifdef CONFIG_SMP
 SRCS += smp.c
@@ -43,6 +43,11 @@ MAN=
 
 .include "system/Makefile.inc"
 .include "arch/${ARCH}/Makefile.inc"
+
+.if ${USE_WATCHDOG} != "no"
+SRCS+= watchdog.c arch_watchdog.c
+CPPFLAGS+= -DUSE_WATCHDOG
+.endif
 
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c

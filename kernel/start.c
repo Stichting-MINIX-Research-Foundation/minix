@@ -7,7 +7,7 @@
 #include <string.h>
 #include "proto.h"
 
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 #include "watchdog.h"
 #endif
 
@@ -106,7 +106,7 @@ PUBLIC void cstart(
 	config_apic_timer_x = 1;
 #endif
 
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
   value = env_get("watchdog");
   if (value)
 	  watchdog_enabled = atoi(value);

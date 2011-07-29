@@ -22,7 +22,7 @@
 
 #ifdef CONFIG_APIC
 #include "apic.h"
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 #include "kernel/watchdog.h"
 #endif
 #endif
@@ -1046,7 +1046,7 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 #endif
 #endif
 
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 	/*
 	 * We make sure that we don't enable the watchdog until paging is turned
 	 * on as we might get an NMI while switching and we might still use wrong

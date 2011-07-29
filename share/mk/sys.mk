@@ -236,12 +236,6 @@ AR?=	aal
 .elif !empty(CC:M*gcc) || !empty(CC:M*clang) || !empty(CC:M*pcc)
 COMPILER_TYPE=gnu
 AR?=	ar
-
-.if defined(MKEMBED) && ${MKEMBED} == "yes"
-DBG=	-Os
-CFLAGS+= -DNDEBUG=1
-.endif
-
 .endif
 
 # Set NBSD_LIBC to either "yes" or "no".
@@ -249,4 +243,9 @@ CFLAGS+= -DNDEBUG=1
 NBSD_LIBC=	no
 .else
 NBSD_LIBC=	yes
+.endif
+
+.if ${COMPILER_TYPE} == "gnu" && defined(MKEMBED) && ${MKEMBED} == "yes"
+DBG=	-Os
+CFLAGS+= -DNDEBUG=1
 .endif

@@ -36,7 +36,7 @@
 
 #include "clock.h"
 
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 #include "watchdog.h"
 #endif
 
@@ -74,7 +74,7 @@ PUBLIC int timer_int_handler(void)
 	struct proc * p, * billp;
 
 	/* FIXME watchdog for slave cpus! */
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 	/*
 	 * we need to know whether local timer ticks are happening or whether
 	 * the kernel is locked up. We don't care about overflows as we only

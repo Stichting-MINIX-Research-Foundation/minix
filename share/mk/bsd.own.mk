@@ -756,6 +756,9 @@ _MKVARS.yes= \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKX11FONTS \
 	MKYP
+#MINIX-specific vars
+_MKVARS.yes+= \
+	MKWATCHDOG
 .for var in ${_MKVARS.yes}
 ${var}?=	yes
 .endfor
@@ -811,6 +814,11 @@ MKINFO:=	no
 MKHTML:=	no
 MKMAN:=		no
 MKNLS:=		no
+.endif
+
+# MINIX
+.if ${MKEMBED} == "yes"
+MKWATCHDOG:=	no
 .endif
 
 #
@@ -871,7 +879,8 @@ ${var}?= no
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP
+.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP \
+USE_WATCHDOG
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else

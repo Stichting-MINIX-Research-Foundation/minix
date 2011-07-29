@@ -24,7 +24,7 @@
 
 #include "acpi.h"
 
-#ifdef CONFIG_WATCHDOG
+#ifdef USE_WATCHDOG
 #include "kernel/watchdog.h"
 #endif
 
