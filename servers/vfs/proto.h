@@ -104,7 +104,7 @@ _PROTOTYPE( int do_fsync, (void)					);
 _PROTOTYPE( void pm_reboot, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
-_PROTOTYPE( int pm_dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
+_PROTOTYPE( int pm_dumpcore, (int proc_e, int sig, char *exe_name)      );
 _PROTOTYPE( void ds_event, (void)					);
 
 /* mount.c */
@@ -123,6 +123,7 @@ _PROTOTYPE( int do_llseek, (void)					);
 _PROTOTYPE( int do_mknod, (void)					);
 _PROTOTYPE( int do_mkdir, (void)					);
 _PROTOTYPE( int do_open, (void)						);
+_PROTOTYPE( int common_open, (register int oflags, mode_t omode)	);
 _PROTOTYPE( int do_slink, (void)                                        );
 _PROTOTYPE( int do_vm_open, (void)					);
 _PROTOTYPE( int do_vm_close, (void)					);
@@ -295,3 +296,6 @@ _PROTOTYPE( void select_reply1, (endpoint_t driver_e, int minor, int status));
 _PROTOTYPE( void select_reply2, (endpoint_t driver_e, int minor, int status));
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void select_unsuspend_by_endpt, (endpoint_t proc)		);
+
+/* elf_core_dump.c */
+_PROTOTYPE( void write_elf_core_file, (int csig, char *exe_name)	);

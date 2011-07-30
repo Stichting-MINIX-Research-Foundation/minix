@@ -575,17 +575,41 @@ PUBLIC int do_svrctl()
 /*===========================================================================*
  *				pm_dumpcore				     *
  *===========================================================================*/
-PUBLIC int pm_dumpcore(proc_e, seg_ptr)
+PUBLIC int pm_dumpcore(proc_e, csig, exe_name)
 int proc_e;
-struct mem_map *seg_ptr;
+int csig;
+char *exe_name;
 {
-	int proc_s;
+  int proc_s, r, old_who_e;
 	
-	/* Terminate the process */
-	okendpt(proc_e, &proc_s);
-	free_proc(&fproc[proc_s], FP_EXITING);
-        
-	return OK;
+  okendpt(proc_e, &proc_s);
+  fp = &fproc[proc_s];
+
+  /* Open the core file */
+  sprintf(user_fullpath, "%s.%d", CORE_NAME, fproc[proc_s].fp_pid);
+  r = common_open(O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
+  if (r < 0) {
+	printf("VFS: Cannot open file to dump core\n");
+	return r;
+  }
+
+  old_who_e = who_e;
+  who_e = VFS_PROC_NR;
+
+  /* Write the core file in ELF format */
+  write_elf_core_file(csig, exe_name);
+
+  /* Close file */
+  close_fd(fp, r);
+
+  /* Terminate the process */
+  free_proc(&fproc[proc_s], FP_EXITING);
+
+  /* Restore the important variables that have been overwritten */
+  m_in.PM_PROC = proc_e;
+  who_e = old_who_e;
+
+  return OK;
 }
 
 /*===========================================================================*

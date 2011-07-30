@@ -318,6 +318,11 @@ int dump_core;			/* flag indicating whether to dump core */
   m.m_type = dump_core ? PM_DUMPCORE : PM_EXIT;
   m.PM_PROC = rmp->mp_endpoint;
 
+  if (dump_core) {
+    m.PM_TERM_SIG = rmp->mp_sigstatus;
+    m.PM_PATH = rmp->mp_name;
+  }
+
   tell_vfs(rmp, &m);
 
   if (rmp->mp_flags & PRIV_PROC)

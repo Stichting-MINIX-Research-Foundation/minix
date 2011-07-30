@@ -30,7 +30,6 @@
 
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
 FORWARD _PROTOTYPE( struct vnode *new_node, (int oflags, mode_t bits)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
 
@@ -75,7 +74,7 @@ PUBLIC int do_open()
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-PRIVATE int common_open(register int oflags, mode_t omode)
+PUBLIC int common_open(register int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
   int b, r, exist = TRUE;

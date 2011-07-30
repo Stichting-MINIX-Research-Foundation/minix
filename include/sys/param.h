@@ -11,6 +11,7 @@ sys/param.h
 #define MAXHOSTNAMELEN  256	/* max hostname size */
 #define NGROUPS		8	/* max number of supplementary groups */
 #define MAXPATHLEN	__MINIX_PATH_MAX
+#define MAXCOMLEN       16      /* max command length */
 
 #include <machine/param.h>
 

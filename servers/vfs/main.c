@@ -553,8 +553,7 @@ PRIVATE void service_pm()
 	break;
 
   case PM_DUMPCORE:
-	r = pm_dumpcore(m_in.PM_PROC,
-		NULL /* (struct mem_map *) m_in.PM_SEGPTR */);
+	r = pm_dumpcore(m_in.PM_PROC, m_in.PM_TERM_SIG, m_in.PM_PATH);
 
 	/* Reply status to PM */
 	m_out.m_type = PM_CORE_REPLY;

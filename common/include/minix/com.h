@@ -792,6 +792,9 @@
 #  define PM_PPROC		m1_i2	/* parent process endpoint */
 #  define PM_CPID		m1_i3	/* child pid */
 
+/* Additional parameters for PM_DUMPCORE */
+#  define PM_TERM_SIG		m1_i2	/* process's termination signal */
+
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */
 #define EXC_NM_PTR	m1_p1		/* parameters in struct exec_newmem */
