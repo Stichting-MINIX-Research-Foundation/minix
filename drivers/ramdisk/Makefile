@@ -2,13 +2,23 @@
 
 .include <bsd.own.mk>
 
-PROGRAMS=ahci at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
-	pci procfs sh service sysenv mfs ext2
+PROGRAMS= at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
+	pci procfs sh service sysenv mfs
 SCRIPTS=newroot
 
-# acpi is not compiled with ack
-.if ${COMPILER_TYPE} == "gnu"
-PROGRAMS += acpi
+.if ${MKEMBED} != "yes"
+PROGRAMS+= ahci ext2
+.endif
+
+# acpi is not compiled with ack or if MKEMBED
+.if ${COMPILER_TYPE} == "gnu" && ${MKEMBED} != "yes"
+PROGRAMS+= acpi
+.endif
+
+.if ${MKEMBED} != "yes"
+PROTO= proto
+.else
+PROTO= proto.embed
 .endif
 
 .if ${OBJECT_FMT} == "a.out"
@@ -146,8 +156,8 @@ passwd: ../../etc/passwd
 rs.single: ../../etc/rs.single
 	install ${STRIPFLAG} ../../etc/$@ $@
 
-proto.gen: $(PROGRAMS) $(SCRIPTS) proto.sh proto
-	sh -e proto.sh >proto.gen
+proto.gen: $(PROGRAMS) $(SCRIPTS) proto.sh ${PROTO}
+	sh -e proto.sh ${PROTO} >proto.gen
 
 .if ${OBJECT_FMT} == "ELF"
 proto.gen: elfstrip

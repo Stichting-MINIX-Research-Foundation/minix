@@ -1,0 +1,33 @@
+boot
+640 440
+d--755 0 0
+	bin d--755 0 0
+		cdprobe ---755 0 0 cdprobe
+		dev2name ---755 0 0 dev2name
+		loadramdisk ---755 0 0 loadramdisk
+		mount ---755 0 0 mount
+		newroot ---755 0 0 newroot
+		sh ---755 0 0 sh
+		service ---755 0 0 service
+		sysenv ---755 0 0 sysenv
+	$
+	sbin d--755 0 0
+		@ACPI@
+		at_wini ---755 0 0 at_wini
+		bios_wini ---755 0 0 bios_wini
+		floppy ---755 0 0 floppy
+		pci ---755 0 0 pci
+		mfs ---755 0 0 mfs
+		procfs ---755 0 0 procfs
+	$
+	dev d--755 0 0
+@DEV@
+	$
+	etc d--755 0 0
+		system.conf ---644 0 0 system.conf
+		mtab ---644 0 0 mtab
+		passwd ---644 0 0 passwd
+		rc ---755 0 0 rc
+		rs.single ---755 0 0 rs.single
+	$
+$
