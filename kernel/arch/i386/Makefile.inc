@@ -27,10 +27,7 @@ SRCS+=	arch_do_vmctl.c \
 	oxpcie.c \
 	protect.c \
 	arch_system.c \
-	apic.c \
-	apic_asm.S \
-	pre_init.c \
-	acpi.c
+	pre_init.c
 
 .ifdef CONFIG_SMP
 SRCS += arch_smp.c trampoline.S

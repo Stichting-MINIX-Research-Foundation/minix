@@ -93,7 +93,7 @@ PUBLIC void cstart(
   	if (value) serial_debug_baud = atoi(value);
   }
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
   value = env_get("no_apic");
   if(value)
 	config_no_apic = atoi(value);

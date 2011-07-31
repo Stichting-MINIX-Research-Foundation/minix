@@ -16,7 +16,7 @@ _PROTOTYPE(void eoi_8259_slave,(void));
  * configurations. ACPI would be another option, however we don't support it
  * either
  */
-#if defined(CONFIG_APIC)
+#if defined(USE_APIC)
 #include "arch/i386/apic.h"
 
 #define hw_intr_mask(irq)	ioapic_mask_irq(irq)

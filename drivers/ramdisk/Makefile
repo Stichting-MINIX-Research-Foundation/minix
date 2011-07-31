@@ -10,8 +10,8 @@ SCRIPTS=newroot
 PROGRAMS+= ahci ext2
 .endif
 
-# acpi is not compiled with ack or if MKEMBED
-.if ${COMPILER_TYPE} == "gnu" && ${MKEMBED} != "yes"
+# acpi is not compiled with ack
+.if ${COMPILER_TYPE} == "gnu" && ${MKACPI} != "no"
 PROGRAMS+= acpi
 .endif
 

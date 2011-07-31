@@ -57,7 +57,7 @@
  * the maximum needed by any given driver. The number of interrupt hooks may
  * be incremented on systems with many device drivers. 
  */
-#ifndef CONFIG_APIC
+#ifndef USE_APIC
 #define NR_IRQ_HOOKS	  16		/* number of interrupt hooks */
 #else
 #define NR_IRQ_HOOKS	  64		/* number of interrupt hooks */

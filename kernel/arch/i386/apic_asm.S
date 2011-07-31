@@ -83,7 +83,7 @@ ENTRY(apic_ipi_halt_intr)
 
 #endif /* CONFIG_SMP */
 
-#ifdef CONFIG_APIC_DEBUG
+#ifdef APIC_DEBUG
 
 .data
 lapic_intr_dummy_handler_msg:
@@ -426,4 +426,4 @@ LABEL(lapic_intr_dummy_handles_start)
 LABEL(lapic_intr_dummy_handles_end)
 
 
-#endif /* CONFIG_APIC_DEBUG */
+#endif /* APIC_DEBUG */

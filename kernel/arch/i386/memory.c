@@ -20,7 +20,7 @@
 #include "kernel/proto.h"
 #include "kernel/debug.h"
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 #include "apic.h"
 #ifdef USE_WATCHDOG
 #include "kernel/watchdog.h"
@@ -901,7 +901,7 @@ PUBLIC int arch_phys_map(const int index,
 	static char *ser_var = NULL;
 
 	if(first) {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 		if(lapic_addr)
 			freeidx++;
 		if (ioapic_enabled)
@@ -920,7 +920,7 @@ PUBLIC int arch_phys_map(const int index,
 		first = 0;
 	}
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	/* map the local APIC if enabled */
 	if (index == 0) {
 		if (!lapic_addr)
@@ -952,7 +952,7 @@ PUBLIC int arch_phys_map(const int index,
 
 PUBLIC int arch_phys_map_reply(const int index, const vir_bytes addr)
 {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	/* if local APIC is enabled */
 	if (index == 0 && lapic_addr) {
 		lapic_addr_vaddr = addr;
@@ -1021,7 +1021,7 @@ PUBLIC int arch_enable_paging(struct proc * caller, const message * m_ptr)
 	if (newmap(caller, caller, ep_data.mem_map) != OK)
 		panic("arch_enable_paging: newmap failed");
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	/* start using the virtual addresses */
 
 	/* if local APIC is enabled */

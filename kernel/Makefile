@@ -49,6 +49,16 @@ SRCS+= watchdog.c arch_watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
 .endif
 
+.if ${USE_ACPI} != "no"
+SRCS+= acpi.c
+CPPFLAGS+= -DUSE_ACPI
+.endif
+
+.if ${USE_APIC} != "no"
+SRCS+= apic.c apic_asm.S
+CPPFLAGS+= -DUSE_APIC
+.endif
+
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c
 

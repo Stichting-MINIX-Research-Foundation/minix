@@ -35,7 +35,7 @@
 #define IRQ8_VECTOR     0x70	/* no need to move IRQ8-15 */
 
 /* Hardware interrupt numbers. */
-#ifndef CONFIG_APIC
+#ifndef USE_APIC
 #define NR_IRQ_VECTORS    16
 #else
 #define NR_IRQ_VECTORS    64

@@ -14,7 +14,7 @@
 #include "profile.h"
 
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 #include "apic.h"
 #endif
 #include "spinlock.h"
@@ -121,7 +121,7 @@ PRIVATE void estimate_cpu_freq(void)
 
 PUBLIC int init_local_timer(unsigned freq)
 {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	/* if we know the address, lapic is enabled and we should use it */
 	if (lapic_addr) {
 		unsigned cpu = cpuid;
@@ -144,7 +144,7 @@ PUBLIC int init_local_timer(unsigned freq)
 
 PUBLIC void stop_local_timer(void)
 {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	if (lapic_addr) {
 		lapic_stop_timer();
 		apic_eoi();
@@ -157,7 +157,7 @@ PUBLIC void stop_local_timer(void)
 
 PUBLIC void restart_local_timer(void)
 {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	if (lapic_addr) {
 		lapic_restart_timer();
 	}
@@ -166,7 +166,7 @@ PUBLIC void restart_local_timer(void)
 
 PUBLIC int register_local_timer_handler(const irq_handler_t handler)
 {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	if (lapic_addr) {
 		/* Using APIC, it is configured in apic_idt_init() */
 		BOOT_VERBOSE(printf("Using LAPIC timer as tick source\n"));

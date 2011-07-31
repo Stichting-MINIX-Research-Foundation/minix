@@ -77,9 +77,9 @@ _PROTOTYPE(void apic_error_intr, (void));
 
 #endif
 
-#define CONFIG_APIC_DEBUG
+#define APIC_DEBUG
 
-#ifdef CONFIG_APIC_DEBUG
+#ifdef APIC_DEBUG
 
 #define LAPIC_INTR_DUMMY_HANDLER_SIZE	32
 
@@ -88,6 +88,6 @@ EXTERN char lapic_intr_dummy_handles_start;
 EXTERN char lapic_intr_dummy_handles_end;
 #endif
 
-#endif /* CONFIG_APIC_DEBUG */
+#endif /* APIC_DEBUG */
 
 #endif /* __APIC_ASM_H__ */

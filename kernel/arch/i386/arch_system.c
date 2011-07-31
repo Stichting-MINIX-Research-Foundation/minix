@@ -29,11 +29,13 @@
 
 #include "glo.h"
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 #include "apic.h"
 #endif
 
+#ifdef USE_ACPI
 #include "acpi.h"
+#endif
 
 PRIVATE int osfxsr_feature; /* FXSAVE/FXRSTOR instructions support (SSEx) */
 
@@ -348,7 +350,7 @@ PUBLIC void cpu_identify(void)
 
 PUBLIC void arch_init(void)
 {
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	/*
 	 * this is setting kernel segments to cover most of the phys memory. The
 	 * value is high enough to reach local APIC nad IOAPICs before paging is
@@ -379,9 +381,11 @@ PUBLIC void arch_init(void)
 	ser_init();
 #endif
 
+#ifdef USE_ACPI
 	acpi_init();
+#endif
 
-#if defined(CONFIG_APIC) && !defined(CONFIG_SMP)
+#if defined(USE_APIC) && !defined(CONFIG_SMP)
 	if (config_no_apic) {
 		BOOT_VERBOSE(printf("APIC disabled, using legacy PIC\n"));
 	}
@@ -555,7 +559,7 @@ PRIVATE void ser_debug(const int c)
 	TOGGLECASE('8', VF_SCHEDULING)
 	TOGGLECASE('9', VF_PICKPROC)
 #endif
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 	case 'I':
 		dump_apic_irq_state();
 		break;

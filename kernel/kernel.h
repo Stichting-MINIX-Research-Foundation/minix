@@ -1,10 +1,6 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
-/* APIC is turned on by default */
-#ifndef CONFIG_APIC
-#define CONFIG_APIC
-#endif
 /* boot verbose */
 #define CONFIG_BOOT_VERBOSE
 

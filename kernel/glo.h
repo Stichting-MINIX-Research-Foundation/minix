@@ -54,7 +54,7 @@ EXTERN u32_t magictest;			/* global magic number */
 EXTERN int verboseflags;
 #endif
 
-#ifdef CONFIG_APIC
+#ifdef USE_APIC
 EXTERN int config_no_apic; /* optionaly turn off apic */
 EXTERN int config_apic_timer_x; /* apic timer slowdown factor */
 #endif

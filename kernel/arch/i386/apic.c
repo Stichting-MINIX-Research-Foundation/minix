@@ -820,7 +820,7 @@ PRIVATE struct gate_table_s gate_table_smp[] = {
 };
 #endif
 
-#ifdef CONFIG_APIC_DEBUG
+#ifdef APIC_DEBUG
 PRIVATE void lapic_set_dummy_handlers(void)
 {
 	char * handler;
@@ -852,7 +852,7 @@ PUBLIC void apic_idt_init(const int reset)
 		return;
 	}
 
-#ifdef CONFIG_APIC_DEBUG
+#ifdef APIC_DEBUG
 	if (is_bsp)
 		printf("APIC debugging is enabled\n");
 	lapic_set_dummy_handlers();
