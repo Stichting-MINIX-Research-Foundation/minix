@@ -145,7 +145,7 @@
 					/* timeouts */
 #undef	_POSIX_TIMEOUTS
 					/* timers */
-#define	_POSIX_TIMERS			200112L
+#undef	_POSIX_TIMERS			200112L
 					/* typed memory objects */
 #undef	_POSIX_TYPED_MEMORY_OBJECTS
 					/* may disable terminal spec chars */
