@@ -775,7 +775,7 @@ _MKVARS.no= \
 	MKUNPRIVED MKUPDATE MKX11 MKZFS
 #MINIX-specific vars
 _MKVARS.no+= \
-	MKIMAGEONLY MKEMBED
+	MKIMAGEONLY MKSMALL
 .for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
@@ -817,7 +817,7 @@ MKNLS:=		no
 .endif
 
 # MINIX
-.if ${MKEMBED} == "yes"
+.if ${MKSMALL} == "yes"
 MKWATCHDOG:=	no
 MKACPI:=	no
 MKAPIC:=	no

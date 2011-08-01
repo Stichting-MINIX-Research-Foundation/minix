@@ -6,7 +6,7 @@ PROGRAMS= at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
 	pci procfs sh service sysenv mfs
 SCRIPTS=newroot
 
-.if ${MKEMBED} != "yes"
+.if ${MKSMALL} != "yes"
 PROGRAMS+= ahci ext2
 .endif
 
@@ -15,10 +15,10 @@ PROGRAMS+= ahci ext2
 PROGRAMS+= acpi
 .endif
 
-.if ${MKEMBED} != "yes"
+.if ${MKSMALL} != "yes"
 PROTO= proto
 .else
-PROTO= proto.embed
+PROTO= proto.small
 .endif
 
 .if ${OBJECT_FMT} == "a.out"
