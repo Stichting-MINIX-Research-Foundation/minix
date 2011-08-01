@@ -89,6 +89,7 @@ _PROTOTYPE( void phys_outsb, (u16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( void phys_outsw, (u16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( u32_t read_cr3, (void) );
 _PROTOTYPE( void reload_cr3, (void) );
+_PROTOTYPE( void i386_invlpg, (phys_bytes linaddr) );
 _PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes));
 _PROTOTYPE( void reload_ds, (void)					);
 _PROTOTYPE( void ia32_msr_read, (u32_t reg, u32_t * hi, u32_t * lo)	);

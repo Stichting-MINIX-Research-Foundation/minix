@@ -333,8 +333,8 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 		return NULL;
 	}
 
-	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-		panic("VMCTL_FLUSHTLB failed: %d", r);
+	if((r=sys_vmctl(SELF, VMCTL_I386_INVLPG, loc)) != OK) {
+		panic("VMCTL_I386_INVLPG failed: %d", r);
 	}
 
 	level--;
@@ -370,8 +370,8 @@ PUBLIC void vm_pagelock(void *vir, int lockflag)
 		panic("vm_lockpage: pt_writemap failed");
 	}
 
-	if((r=sys_vmctl(SELF, VMCTL_FLUSHTLB, 0)) != OK) {
-		panic("VMCTL_FLUSHTLB failed: %d", r);
+	if((r=sys_vmctl(SELF, VMCTL_I386_INVLPG, m)) != OK) {
+		panic("VMCTL_I386_INVLPG failed: %d", r);
 	}
 
 	return;

@@ -61,6 +61,12 @@ struct proc *p;
 		reload_cr3();
 		return OK;
 	}
+	case VMCTL_I386_INVLPG:
+	{
+		i386_invlpg(m_ptr->SVMCTL_VALUE);
+		return OK;
+	}
+
   }
 
 
