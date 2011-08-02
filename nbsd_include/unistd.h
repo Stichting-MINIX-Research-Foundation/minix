@@ -318,8 +318,8 @@ int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
 #if defined(_NETBSD_SOURCE)
 #ifndef __minix
 int	 acct(const char *);
-int	 closefrom(int);
 #endif /* !__minix */
+int	 closefrom(int);
 int	 des_cipher(const char *, char *, long, int);
 int	 des_setkey(const char *);
 void	 endusershell(void);
