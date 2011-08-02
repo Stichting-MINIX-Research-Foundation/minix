@@ -37,7 +37,6 @@ SRCS+= 	\
 	do_cprofile.c \
 	do_profbuf.c \
 	do_vmctl.c \
-	do_mcontext.c \
 	do_schedule.c \
 	do_schedctl.c \
 	do_statectl.c

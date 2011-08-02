@@ -49,6 +49,10 @@ _PROTOTYPE( void setreply, (int proc_nr, int result)			);
 /* mcontext.c */
 _PROTOTYPE( int do_getmcontext, (void)					);
 _PROTOTYPE( int do_setmcontext, (void)					);
+#if ! USE_MCONTEXT
+#define do_getmcontext no_sys
+#define do_setmcontext no_sys
+#endif
 
 /* misc.c */
 _PROTOTYPE( int do_reboot, (void)					);

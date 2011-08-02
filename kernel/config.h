@@ -43,7 +43,6 @@
 #define USE_MEMSET  	   1	/* write char to a given memory area */
 #define USE_RUNCTL         1	/* control stop flags of a process */
 #define USE_UPDATE         1	/* update a process into another */
-#define USE_MCONTEXT       1    /* enable getting and setting of mach context*/
 #define USE_STATECTL       1    /* let a process control its state */
 
 /* Length of program names stored in the process table. This is only used

@@ -1,8 +1,15 @@
+.include <bsd.own.mk>
+
 # Makefile for Process Manager (PM)
 PROG=	pm
 SRCS=	main.c forkexit.c break.c exec.c time.c alarm.c \
 	signal.c utility.c table.c trace.c getset.c misc.c \
-	profile.c dma.c mcontext.c schedule.c
+	profile.c dma.c schedule.c
+
+.if ${USE_MCONTEXT} != "no"
+SRCS+= mcontext.c
+CPPFLAGS+= -DUSE_MCONTEXT
+.endif
 
 DPADD+=	${LIBSYS} ${LIBTIMERS}
 LDADD+=	-lsys -ltimers

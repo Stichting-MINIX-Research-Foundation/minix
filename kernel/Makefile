@@ -59,6 +59,12 @@ SRCS+= apic.c apic_asm.S
 CPPFLAGS+= -DUSE_APIC
 .endif
 
+.if ${USE_MCONTEXT} != "no"
+SRCS+= do_mcontext.c
+CPPFLAGS+= -DUSE_MCONTEXT
+.endif
+
+
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c
 
