@@ -18,7 +18,7 @@
  *===========================================================================*/
 PUBLIC int do_get()
 {
-/* Handle GETUID, GETGID, GETPID, GETPGRP.
+/* Handle GETUID, GETGID, GETPID, GETPGRP, GETSID.
  */
 
   register struct mproc *rmp = mp;
@@ -68,6 +68,16 @@ PUBLIC int do_get()
 		r = rmp->mp_procgrp;
 		break;
 
+	case PM_GETSID:
+	{
+		struct mproc *target;
+		pid_t p = m_in.PM_GETSID_PID;
+		target = p ? find_proc(p) : &mproc[who_p];
+		r = ESRCH;
+		if(target)
+			r = target->mp_procgrp;
+		break;
+	}
 	default:
 		r = EINVAL;
 		break;	

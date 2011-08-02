@@ -260,6 +260,9 @@
 #define STATVFS_LEN m1_i1
 #define STATVFS_NAME m1_p1
 #define STATVFS_BUF m1_p2
+
+#define PM_GETSID_PID	m1_i1
+
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
  *===========================================================================*/
