@@ -11,6 +11,8 @@
 
 #include "kernel/system.h"
 
+#if CPROFILE
+
 /*===========================================================================*
  *				do_profbuf				     *
  *===========================================================================*/
@@ -45,4 +47,5 @@ PUBLIC int do_profbuf(struct proc * caller, message * m_ptr)
   return OK;
 }
 
+#endif /* CPROFILE */
 

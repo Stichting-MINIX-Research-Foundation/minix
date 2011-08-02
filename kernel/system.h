@@ -195,6 +195,10 @@ _PROTOTYPE( int do_sprofile, (struct proc * caller, message *m_ptr) );
 
 _PROTOTYPE( int do_cprofile, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_profbuf, (struct proc * caller, message *m_ptr) );
+#if ! CPROFILE
+#define do_cprofile NULL
+#define do_profbuf NULL
+#endif
 
 _PROTOTYPE( int do_getmcontext, (struct proc * caller, message *m_ptr) );
 _PROTOTYPE( int do_setmcontext, (struct proc * caller, message *m_ptr) );

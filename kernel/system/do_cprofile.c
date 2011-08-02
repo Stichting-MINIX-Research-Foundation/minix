@@ -16,6 +16,8 @@
 
 #include <string.h>
 
+#if CPROFILE
+
 /*===========================================================================*
  *				do_cprofile				     *
  *===========================================================================*/
@@ -144,3 +146,4 @@ PUBLIC int do_cprofile(struct proc * caller, message * m_ptr)
   }
 }
 
+#endif /* CPROFILE */
