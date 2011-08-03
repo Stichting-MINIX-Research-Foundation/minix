@@ -79,11 +79,11 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "j:ls:pmMchu?r:f:" c
+while getopts "j:ls:pmMchu?r:f:L:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir>" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>]" >&2
 		exit 1
 	;;
 	h)
@@ -121,7 +121,9 @@ do
 		;;
 	M)	MAKEMAP=1
 		;;
-	l)	PKG_ADD_URL=file://$PACKAGEDIR
+	l)	PKG_ADD_URL=file://$PACKAGEDIR/All
+		;;
+	L)	PACKAGEURL="$OPTARG"
 		;;
 	esac
 done
