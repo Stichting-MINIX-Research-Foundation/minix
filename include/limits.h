@@ -53,8 +53,6 @@
 						 */
 #endif
 
-#include <minix/dir.h>
-
 /* Minimum sizes required by the POSIX P1003.1 standard (Table 2-3). */
 #ifdef _POSIX_SOURCE		/* these are only visible for POSIX */
 #define _POSIX_ARG_MAX    4096	/* exec() may have 4K worth of args */
@@ -62,7 +60,7 @@
 #define _POSIX_LINK_MAX      8	/* a file may have 8 links */
 #define _POSIX_MAX_CANON   255	/* size of the canonical input queue */
 #define _POSIX_MAX_INPUT   255	/* you can type 255 chars ahead */
-#define _POSIX_NAME_MAX DIRSIZ	/* max. file name length */
+#define _POSIX_NAME_MAX NAME_MAX /* max. file name length */
 #define _POSIX_NGROUPS_MAX   8	/* max. number of supplemental groups */
 
 /* a process may have this many files open */
@@ -100,7 +98,7 @@
 #endif
 #define MAX_CANON          255	/* size of the canonical input queue */
 #define MAX_INPUT          255	/* size of the type-ahead buffer */
-#define NAME_MAX        DIRSIZ	/* # chars in a file name */
+#define NAME_MAX       	   255	/* system-wide filename limit (up to fs) */
 #define PATH_MAX  __MINIX_PATH_MAX	/* # chars in a path name */
 #define PIPE_BUF         32768	/* # bytes in atomic write to a pipe */
 #define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */

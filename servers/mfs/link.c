@@ -13,9 +13,9 @@
 FORWARD _PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st,
 					off_t end)			);
 FORWARD _PROTOTYPE( int remove_dir, (struct inode *rldirp,
-			struct inode *rip, char dir_name[NAME_MAX])	);
+			struct inode *rip, char dir_name[MFS_NAME_MAX])	);
 FORWARD _PROTOTYPE( int unlink_file, (struct inode *dirp,
-			struct inode *rip, char file_name[NAME_MAX])	);
+			struct inode *rip, char file_name[MFS_NAME_MAX])	);
 FORWARD _PROTOTYPE( off_t nextblock, (off_t pos, int zone_size)		);
 FORWARD _PROTOTYPE( void zerozone_half, (struct inode *rip, off_t pos,
 			int half, int zone_size)			);
@@ -36,7 +36,7 @@ PUBLIC int fs_link()
 
   struct inode *ip, *rip;
   register int r;
-  char string[NAME_MAX];
+  char string[MFS_NAME_MAX];
   struct inode *new_ip;
   phys_bytes len;
 
@@ -119,7 +119,7 @@ PUBLIC int fs_unlink()
   register struct inode *rip;
   struct inode *rldirp;
   int r;
-  char string[NAME_MAX];
+  char string[MFS_NAME_MAX];
   phys_bytes len;
   
   /* Copy the last component */
@@ -213,7 +213,7 @@ PUBLIC int fs_rdlink()
 PRIVATE int remove_dir(rldirp, rip, dir_name)
 struct inode *rldirp;		 	/* parent directory */
 struct inode *rip;			/* directory to be removed */
-char dir_name[NAME_MAX];		/* name of directory to be removed */
+char dir_name[MFS_NAME_MAX];		/* name of directory to be removed */
 {
   /* A directory file has to be removed. Five conditions have to met:
    * 	- The file must be a directory
@@ -249,7 +249,7 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
 PRIVATE int unlink_file(dirp, rip, file_name)
 struct inode *dirp;		/* parent directory of file */
 struct inode *rip;		/* inode of file, may be NULL too. */
-char file_name[NAME_MAX];	/* name of file to be removed */
+char file_name[MFS_NAME_MAX];	/* name of file to be removed */
 {
 /* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
 
@@ -291,7 +291,7 @@ PUBLIC int fs_rename()
   int r = OK;				/* error flag; initially no error */
   int odir, ndir;			/* TRUE iff {old|new} file is dir */
   int same_pdir;			/* TRUE iff parent dirs are the same */
-  char old_name[NAME_MAX], new_name[NAME_MAX];
+  char old_name[MFS_NAME_MAX], new_name[MFS_NAME_MAX];
   ino_t numb;
   phys_bytes len;
   

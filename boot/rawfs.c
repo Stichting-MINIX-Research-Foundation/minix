@@ -15,10 +15,10 @@
 #include <minix/type.h>
 #include <servers/mfs/const.h>
 #include <servers/mfs/type.h>
-#include <servers/mfs/buf.h>
 #include <servers/mfs/super.h>
 #include <servers/mfs/inode.h>
 #include "rawfs.h"
+#include <servers/mfs/buf.h>
 
 void readblock(off_t blockno, char *buf, int);
 
@@ -36,12 +36,6 @@ static unsigned nr_dzones;	/* Fill these in after reading superblock. */
 static unsigned nr_indirects;
 static unsigned inodes_per_block;
 static int block_size;
-#ifdef FLEX
-#include <dirent.h>
-#define direct _v7_direct
-#else
-#include <sys/dir.h>
-#endif
 
 #if __minix_vmd
 static struct v12_super_block super;	/* Superblock of file system */
@@ -192,24 +186,13 @@ ino_t r_readdir(char *name)
 
 			readblock(r_vir2abs(dirpos / block_size), dirbuf, block_size);
 		}
-#ifdef FLEX
-		if (super.s_flags & S_FLEX) {
-			struct _fl_direct *dp;
-
-			dp= (struct _fl_direct *) (dirbuf + blkpos);
-			if ((inum= dp->d_ino) != 0) strcpy(name, dp->d_name);
-
-			dirpos+= (1 + dp->d_extent) * FL_DIR_ENTRY_SIZE;
-			continue;
-		}
-#endif
 		/* Let dp point to the next entry. */
 		dp= (struct direct *) (dirbuf + blkpos);
 
-		if ((inum= dp->d_ino) != 0) {
+		if ((inum= dp->mfs_d_ino) != 0) {
 			/* This entry is occupied, return name. */
-			strncpy(name, dp->d_name, sizeof(dp->d_name));
-			name[sizeof(dp->d_name)]= 0;
+			strncpy(name, dp->mfs_d_name, sizeof(dp->mfs_d_name));
+			name[sizeof(dp->mfs_d_name)]= 0;
 		}
 		dirpos+= DIR_ENTRY_SIZE;
 	}
@@ -290,7 +273,7 @@ ino_t r_lookup(Ino_t cwd, const char *path)
  * function, it only needs r_stat and r_readdir.
  */
 {
-	char name[NAME_MAX+1], r_name[NAME_MAX+1];
+	char name[MFS_DIRSIZ+1], r_name[MFS_DIRSIZ+1];
 	char *n;
 	struct stat st;
 	ino_t ino;
@@ -316,7 +299,7 @@ ino_t r_lookup(Ino_t cwd, const char *path)
 
 		n= name;
 		while (*path != 0 && *path != '/')
-			if (n < name + NAME_MAX) *n++ = *path++;
+			if (n < name + MFS_DIRSIZ) *n++ = *path++;
 		*n= 0;
 
 		while ((ino= r_readdir(r_name)) != 0

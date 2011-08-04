@@ -24,8 +24,6 @@
 #endif
 #include <assert.h>
 
-#include <sys/dir.h>
-
 /* Copy files in this size chunks: */
 #if __minix && !__minix_vmd
 #define CHUNK	(8192 * sizeof(char *))
@@ -129,7 +127,7 @@ typedef struct pathname {
 void path_init(pathname_t *pp)
 /* Initialize a pathname to the null string. */
 {
-    pp->path= allocate(nil, pp->lim= DIRSIZ + 2);
+    pp->path= allocate(nil, pp->lim= NAME_MAX + 2);
     pp->path[pp->idx= 0]= 0;
 }
 

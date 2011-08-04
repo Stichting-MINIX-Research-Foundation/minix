@@ -1003,7 +1003,7 @@ ino_t latest_version(char *version, struct stat *stp)
  * the way up.  (One can't use r_stat while reading a directory.)
  */
 {
-	char name[NAME_MAX + 1];
+	char name[MFS_DIRSIZ + 1];
 	ino_t ino, newest;
 	time_t mtime;
 
@@ -1032,7 +1032,7 @@ char *select_image(char *image)
 	ino_t image_ino;
 	struct stat st;
 
-	image= strcpy(malloc((strlen(image) + 1 + NAME_MAX + 1)
+	image= strcpy(malloc((strlen(image) + 1 + MFS_DIRSIZ + 1)
 						 * sizeof(char)), image);
 
 	fsok= r_super(&block_size) != 0;
@@ -1059,7 +1059,7 @@ char *select_image(char *image)
 
 	if (!S_ISREG(st.st_mode)) {
 		char *version= image + strlen(image);
-		char dots[NAME_MAX + 1];
+		char dots[MFS_DIRSIZ + 1];
 
 		if (!S_ISDIR(st.st_mode)) {
 			printf("%s: %s\n", image, unix_err(ENOTDIR));

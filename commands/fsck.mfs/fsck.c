@@ -11,7 +11,7 @@
 #define bit_nr bit_t
 #define block_nr block_t
 #define d_inode d2_inode
-#define d_inum d_ino
+#define d_inum mfs_d_ino
 #define dir_struct struct direct
 #define i_mode d2_mode
 #define i_nlinks d2_nlinks
@@ -36,7 +36,6 @@
 */
 
 #include <sys/types.h>
-#include <sys/dir.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -51,6 +50,7 @@
 #include "mfs/const.h"
 #include "mfs/inode.h"
 #include "mfs/type.h"
+#include "mfs/mfsdir.h"
 #include <minix/fslib.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -327,7 +327,7 @@ unsigned nelem, elsize;
 void printname(s)
 char *s;
 {
-  register n = NAME_MAX;
+  register n = MFS_NAME_MAX;
   int c;
 
   do {
@@ -346,7 +346,7 @@ void printrec(struct stack *sp)
   if (sp->st_next != 0) {
 	printrec(sp->st_next);
 	putchar('/');
-	printname(sp->st_dir->d_name);
+	printname(sp->st_dir->mfs_d_name);
   }
 }
 
@@ -991,10 +991,10 @@ register int n;
 /* See if the `.' or `..' entry is as expected. */
 int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 {
-  char printable_name[4 * NAME_MAX + 1];
+  char printable_name[4 * MFS_NAME_MAX + 1];
 
   if (dp->d_inum != exp) {
-	make_printable_name(printable_name, dp->d_name, sizeof(dp->d_name));
+	make_printable_name(printable_name, dp->mfs_d_name, sizeof(dp->mfs_d_name));
 	printf("bad %s in ", printable_name);
 	printpath(1, 0);
 	printf("%s is linked to %u ", printable_name, dp->d_inum);
@@ -1008,8 +1008,8 @@ int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 		count[exp]++;
 		return(0);
 	}
-  } else if (pos != (dp->d_name[1] ? DIR_ENTRY_SIZE : 0)) {
-	make_printable_name(printable_name, dp->d_name, sizeof(dp->d_name));
+  } else if (pos != (dp->mfs_d_name[1] ? DIR_ENTRY_SIZE : 0)) {
+	make_printable_name(printable_name, dp->mfs_d_name, sizeof(dp->mfs_d_name));
 	printf("warning: %s has offset %ld in ", printable_name, pos);
 	printpath(1, 0);
 	printf("%s is linked to %u)\n", printable_name, dp->d_inum);
@@ -1023,8 +1023,8 @@ int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp)
 /* Check the name in a directory entry. */
 int chkname(ino_t ino, dir_struct *dp)
 {
-  register n = NAME_MAX + 1;
-  register char *p = dp->d_name;
+  register n = MFS_NAME_MAX + 1;
+  register char *p = dp->mfs_d_name;
 
   if (*p == '\0') {
 	printf("null name found in ");
@@ -1038,7 +1038,7 @@ int chkname(ino_t ino, dir_struct *dp)
 		printpath(1, 0);
 		setbit(spec_imap, (bit_nr) ino);
 		printf("entry = '");
-		printname(dp->d_name);
+		printname(dp->mfs_d_name);
 		printf("')");
 		if (Remove(dp)) return(0);
 		break;
@@ -1056,7 +1056,7 @@ int chkentry(ino_t ino, off_t pos, dir_struct *dp)
 	printpath(1, 0);
 	printf("ino found = %u, ", dp->d_inum);
 	printf("name = '");
-	printname(dp->d_name);
+	printname(dp->mfs_d_name);
 	printf("')");
 	if (yes(". remove entry")) {
 		memset((void *) dp, 0, sizeof(dir_struct));
@@ -1067,17 +1067,17 @@ int chkentry(ino_t ino, off_t pos, dir_struct *dp)
   if ((unsigned) count[dp->d_inum] == SHRT_MAX) {
 	printf("too many links to ino %u\n", dp->d_inum);
 	printf("discovered at entry '");
-	printname(dp->d_name);
+	printname(dp->mfs_d_name);
 	printf("' in directory ");
 	printpath(0, 1);
 	if (Remove(dp)) return(0);
   }
   count[dp->d_inum]++;
-  if (strcmp(dp->d_name, ".") == 0) {
+  if (strcmp(dp->mfs_d_name, ".") == 0) {
 	ftop->st_presence |= DOT;
 	return(chkdots(ino, pos, dp, ino));
   }
-  if (strcmp(dp->d_name, "..") == 0) {
+  if (strcmp(dp->mfs_d_name, "..") == 0) {
 	ftop->st_presence |= DOTDOT;
 	return(chkdots(ino, pos, dp, ino == ROOT_INODE ? ino :
 			ftop->st_next->st_dir->d_inum));
@@ -1087,7 +1087,7 @@ int chkentry(ino_t ino, off_t pos, dir_struct *dp)
 	printf("link to directory discovered in ");
 	printpath(1, 0);
 	printf("name = '");
-	printname(dp->d_name);
+	printname(dp->mfs_d_name);
 	printf("', dir ino = %u)", dp->d_inum);
 	return !Remove(dp);
   }
@@ -1463,7 +1463,7 @@ void chktree()
   nfreeinode = sb.s_ninodes;
   nfreezone = N_DATA;
   dir.d_inum = ROOT_INODE;
-  dir.d_name[0] = 0;
+  dir.mfs_d_name[0] = 0;
   if (!descendtree(&dir)) fatal("bad root inode");
   putchar('\n');
 }

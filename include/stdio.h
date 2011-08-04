@@ -12,6 +12,7 @@
 #ifndef _MINIX_ANSI_H
 #include <minix/ansi.h>
 #endif
+#include <minix/types.h>
 
 #include <sys/null.h>   /* For NULL */
 
@@ -56,8 +57,7 @@ typedef struct __iobuf {
 
 #define	FOPEN_MAX	20
 
-#include <minix/dir.h>
-#define	FILENAME_MAX	DIRSIZ
+#define	FILENAME_MAX	NAME_MAX
 
 #define	TMP_MAX		999
 #define	L_tmpnam	(sizeof("/tmp/") + FILENAME_MAX)

@@ -132,7 +132,7 @@ PUBLIC int fs_statvfs()
   st.f_favail = st.f_ffree;
   st.f_fsid = fs_dev;
   st.f_flag = (sp->s_rd_only == 1 ? ST_RDONLY : 0);
-  st.f_namemax = NAME_MAX;
+  st.f_namemax = MFS_DIRSIZ;
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(fs_m_in.m_source, fs_m_in.REQ_GRANT, 0, (vir_bytes) &st,

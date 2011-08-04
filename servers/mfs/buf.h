@@ -14,7 +14,6 @@
  * will eventually be rewritten to the disk.
  */
 
-#include <sys/dir.h>			/* need struct direct */
 #include <dirent.h>
 
 union fsdata_u {

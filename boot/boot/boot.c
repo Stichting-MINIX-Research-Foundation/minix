@@ -1515,7 +1515,7 @@ static void ls(char *dir)
 {
 	ino_t ino;
 	struct stat st;
-	char name[NAME_MAX+1];
+	char name[MFS_DIRSIZ+1];
 
 	if (fsok == -1) fsok= r_super(&block_size) != 0;
 	if (!fsok) return;

@@ -33,6 +33,9 @@
 #ifndef INC_RAWFS_H
 #define INC_RAWFS_H
 
+#include <minix/dirent.h>
+#include <servers/mfs/mfsdir.h>
+
 #define ROOT_INO	((ino_t) 1)	/* Inode nr of root dir. */
 
 extern off_t r_super(int *);

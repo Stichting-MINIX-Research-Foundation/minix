@@ -7,7 +7,7 @@ INCS+=  env.h fetch.h hgfs.h lib.h libutil.h timers.h
 INCS+= 	minix/acpi.h minix/ansi.h minix/audio_fw.h minix/bitmap.h \
 	minix/callnr.h minix/com.h minix/compiler.h minix/config.h \
 	minix/const.h minix/cpufeature.h minix/crtso.h minix/debug.h \
-	minix/devio.h minix/devman.h minix/dir.h minix/dmap.h \
+	minix/devio.h minix/devman.h minix/dmap.h \
 	minix/driver.h minix/drivers.h minix/drvlib.h minix/ds.h \
 	minix/endpoint.h minix/fslib.h minix/gcov.h minix/hash.h \
 	minix/ioctl.h minix/input.h minix/ipc.h minix/ipcconst.h \

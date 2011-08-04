@@ -14,7 +14,6 @@
 #ifndef EXT2_BUF_H
 #define EXT2_BUF_H
 
-#include <sys/dir.h>            /* need struct direct */
 #include <dirent.h>
 
 union fsdata_u {

@@ -2,7 +2,7 @@
 
 INCSDIR=        /usr/include.ack/sys
 
-INCS=	asynchio.h dir.h file.h  \
+INCS=	asynchio.h file.h  \
 	ioctl.h ipc.h jmp_buf.h kbdio.h mman.h \
 	mount.h mtio.h param.h ptrace.h queue.h resource.h \
 	select.h sem.h shm.h sigcontext.h signal.h socket.h \

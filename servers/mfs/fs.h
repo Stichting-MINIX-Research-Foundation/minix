@@ -24,6 +24,7 @@
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 
+#include "mfsdir.h"
 #include "const.h"
 #include "type.h"
 #include "proto.h"

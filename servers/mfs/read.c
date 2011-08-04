@@ -605,15 +605,15 @@ PUBLIC int fs_getdents(void)
 	  else
 		  dp = &bp->b_dir[0];
 	  for (; dp < &bp->b_dir[NR_DIR_ENTRIES(block_size)]; dp++) {
-		  if (dp->d_ino == 0) 
+		  if (dp->mfs_d_ino == 0) 
 			  continue;	/* Entry is not in use */
 
 		  /* Compute the length of the name */
-		  cp = memchr(dp->d_name, '\0', NAME_MAX);
+		  cp = memchr(dp->mfs_d_name, '\0', sizeof(dp->mfs_d_name));
 		  if (cp == NULL)
-			  len = NAME_MAX;
+			  len = sizeof(dp->mfs_d_name);
 		  else
-			  len = cp - (dp->d_name);
+			  len = cp - (dp->mfs_d_name);
 		
 		  /* Compute record length */
 		  reclen = offsetof(struct dirent, d_name) + len + 1;
@@ -651,10 +651,10 @@ PUBLIC int fs_getdents(void)
 		  }
 
 		  dep = (struct dirent *) &getdents_buf[tmpbuf_off];
-		  dep->d_ino = dp->d_ino;
+		  dep->d_ino = dp->mfs_d_ino;
 		  dep->d_off = ent_pos;
 		  dep->d_reclen = (unsigned short) reclen;
-		  memcpy(dep->d_name, dp->d_name, len);
+		  memcpy(dep->d_name, dp->mfs_d_name, len);
 		  dep->d_name[len] = '\0';
 		  tmpbuf_off += reclen;
 	  }

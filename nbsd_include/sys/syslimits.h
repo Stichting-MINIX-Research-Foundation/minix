@@ -26,7 +26,7 @@
 #define LINK_MAX      SHRT_MAX	/* # links a file may have */
 #define MAX_CANON          255	/* size of the canonical input queue */
 #define MAX_INPUT          255	/* size of the type-ahead buffer */
-#define NAME_MAX            60	/* # chars in a file name (actually DIRSZ) */
+#define NAME_MAX           255	/* system-wide max # chars in a file name */
 #define NGROUPS_MAX          8	/* max. number of supplemental groups */
 #define UID_MAX       SHRT_MAX  /* max value for a uid_t */
 #ifndef OPEN_MAX

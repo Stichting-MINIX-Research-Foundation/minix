@@ -15,7 +15,7 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	mkproto.1 modem.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
 	ossinfo.1 ossmix.1 ossplay.1 ossrecord.1 osstest.1 passwd.1 \
 	paste.1 ping.1 playwave.1 postmort.1 pr.1 prep.1 \
-	profile.1 ps.1 pwd.1 rcp.1 readall.1 readfs.1 recwave.1 \
+	profile.1 ps.1 pwd.1 rcp.1 readall.1 recwave.1 \
 	ref.1 remsync.1 rget.1 rlogin.1 rmdir.1 rsh.1 rz.1 \
 	shar.1 acksize.1 sleep.1 sort.1 soundoff.1 soundon.1 spell.1 \
 	split.1 strip.1 stty.1 su.1 sum.1 svc.1 \

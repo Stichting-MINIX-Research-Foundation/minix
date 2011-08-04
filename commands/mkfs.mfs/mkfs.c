@@ -11,7 +11,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/dir.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <errno.h>
@@ -26,6 +25,7 @@
 #include <minix/type.h>
 #include <minix/minlib.h>
 #include "mfs/const.h"
+#include "mfs/mfsdir.h"
 #if (MACHINE == IBM_PC)
 #include <minix/partition.h>
 #include <minix/u64.h>
@@ -686,11 +686,11 @@ char *name;
 	for (l = 0; l < zone_size; l++) {
 		get_block((z << zone_shift) + l, (char *) dir_entry);
 		for (i = 0; i < NR_DIR_ENTRIES(block_size); i++) {
-			if (dir_entry[i].d_ino == 0) {
-				dir_entry[i].d_ino = child;
+			if (dir_entry[i].mfs_d_ino == 0) {
+				dir_entry[i].mfs_d_ino = child;
 				p1 = name;
-				p2 = dir_entry[i].d_name;
-				j = sizeof(dir_entry[i].d_name);
+				p2 = dir_entry[i].mfs_d_name;
+				j = sizeof(dir_entry[i].mfs_d_name);
 				while (j--) {
 					*p2++ = *p1;
 					if (*p1 != 0) p1++;
@@ -1189,8 +1189,8 @@ void print_fs()
 				/* This is a directory */
 				get_block(inode1[i].d1_zone[0], (char *) dir);
 				for (j = 0; j < NR_DIR_ENTRIES(block_size); j++)
-					if (dir[j].d_ino)
-						printf("\tInode %2d: %s\n", dir[j].d_ino, dir[j].d_name);
+					if (dir[j].mfs_d_ino)
+						printf("\tInode %2d: %s\n", dir[j].mfs_d_ino, dir[j].mfs_d_name);
 			}
 		} else {
 			if (inode2[i].d2_mode != 0) {
@@ -1205,8 +1205,8 @@ void print_fs()
 				/* This is a directory */
 				get_block(inode2[i].d2_zone[0], (char *) dir);
 				for (j = 0; j < NR_DIR_ENTRIES(block_size); j++)
-					if (dir[j].d_ino)
-						printf("\tInode %2d: %s\n", dir[j].d_ino, dir[j].d_name);
+					if (dir[j].mfs_d_ino)
+						printf("\tInode %2d: %s\n", dir[j].mfs_d_ino, dir[j].mfs_d_name);
 			}
 		}
 	}

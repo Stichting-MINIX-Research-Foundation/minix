@@ -24,7 +24,7 @@
 PUBLIC char dot1[2] = ".";	/* used for search_dir to bypass the access */
 PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
 
-FORWARD _PROTOTYPE( char *get_name, (char *name, char string[NAME_MAX+1]) );
+FORWARD _PROTOTYPE( char *get_name, (char *name, char string[MFS_NAME_MAX+1]) );
 FORWARD _PROTOTYPE( int ltraverse, (struct inode *rip, char *suffix)	);
 FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino,
 					int flags, struct inode **res_inop,
@@ -143,7 +143,7 @@ int *symlinkp;
   int r, leaving_mount;
   struct inode *rip, *dir_ip;
   char *cp, *next_cp; /* component and next component */
-  char component[NAME_MAX+1];
+  char component[MFS_NAME_MAX+1];
 
   /* Start parsing path at the first component in user_path */
   cp = user_path;  
@@ -356,7 +356,7 @@ char *suffix;			/* current remaining path. Has to point in the
  *===========================================================================*/
 PUBLIC struct inode *advance(dirp, string, chk_perm)
 struct inode *dirp;		/* inode for directory to be searched */
-char string[NAME_MAX];		/* component name to look for */
+char string[MFS_NAME_MAX];		/* component name to look for */
 int chk_perm;			/* check permissions when string is looked up*/
 {
 /* Given a directory and a component of a path, look up the component in
@@ -424,7 +424,7 @@ int chk_perm;			/* check permissions when string is looked up*/
  *===========================================================================*/
 PRIVATE char *get_name(path_name, string)
 char *path_name;		/* path name to parse */
-char string[NAME_MAX+1];	/* component extracted from 'old_name' */
+char string[MFS_NAME_MAX+1];	/* component extracted from 'old_name' */
 {
 /* Given a pointer to a path name in fs space, 'path_name', copy the first
  * component to 'string' (truncated if necessary, always nul terminated).
@@ -450,8 +450,8 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
 
   len = (size_t) (ep - cp);
 
-  /* Truncate the amount to be copied if it exceeds NAME_MAX */
-  if (len > NAME_MAX) len = NAME_MAX;
+  /* Truncate the amount to be copied if it exceeds MFS_NAME_MAX */
+  if (len > MFS_NAME_MAX) len = MFS_NAME_MAX;
 
   /* Special case of the string at cp is empty */
   if (len == 0) 
@@ -470,7 +470,7 @@ char string[NAME_MAX+1];	/* component extracted from 'old_name' */
  *===========================================================================*/
 PUBLIC int search_dir(ldir_ptr, string, numb, flag, check_permissions)
 register struct inode *ldir_ptr; /* ptr to inode for dir to search */
-char string[NAME_MAX];		 /* component to search for */
+char string[MFS_NAME_MAX];		 /* component to search for */
 ino_t *numb;			 /* pointer to inode number */
 int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
@@ -543,13 +543,14 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 		}
 
 		/* Match occurs if string found. */
-		if (flag != ENTER && dp->d_ino != NO_ENTRY) {
+		if (flag != ENTER && dp->mfs_d_ino != NO_ENTRY) {
 			if (flag == IS_EMPTY) {
 				/* If this test succeeds, dir is not empty. */
-				if (strcmp(dp->d_name, "." ) != 0 &&
-				    strcmp(dp->d_name, "..") != 0) match = 1;
+				if (strcmp(dp->mfs_d_name, "." ) != 0 &&
+				    strcmp(dp->mfs_d_name, "..") != 0) match = 1;
 			} else {
-				if (strncmp(dp->d_name, string, NAME_MAX) == 0){
+				if (strncmp(dp->mfs_d_name, string,
+					sizeof(dp->mfs_d_name)) == 0){
 					match = 1;
 				}
 			}
@@ -561,9 +562,9 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 			if (flag == IS_EMPTY) r = ENOTEMPTY;
 			else if (flag == DELETE) {
 				/* Save d_ino for recovery. */
-				t = NAME_MAX - sizeof(ino_t);
-				*((ino_t *) &dp->d_name[t]) = dp->d_ino;
-				dp->d_ino = NO_ENTRY;	/* erase entry */
+				t = MFS_NAME_MAX - sizeof(ino_t);
+				*((ino_t *) &dp->mfs_d_name[t]) = dp->mfs_d_ino;
+				dp->mfs_d_ino = NO_ENTRY;	/* erase entry */
 				bp->b_dirt = DIRTY;
 				ldir_ptr->i_update |= CTIME | MTIME;
 				ldir_ptr->i_dirt = DIRTY;
@@ -572,14 +573,14 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 			} else {
 				sp = ldir_ptr->i_sp;	/* 'flag' is LOOK_UP */
 				*numb = (ino_t) conv4(sp->s_native,
-						      (int) dp->d_ino);
+						      (int) dp->mfs_d_ino);
 			}
 			put_block(bp, DIRECTORY_BLOCK);
 			return(r);
 		}
 
 		/* Check for free slot for the benefit of ENTER. */
-		if (flag == ENTER && dp->d_ino == 0) {
+		if (flag == ENTER && dp->mfs_d_ino == 0) {
 			e_hit = TRUE;	/* we found a free slot */
 			break;
 		}
@@ -613,10 +614,10 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   }
 
   /* 'bp' now points to a directory block with space. 'dp' points to slot. */
-  (void) memset(dp->d_name, 0, (size_t) NAME_MAX); /* clear entry */
-  for (i = 0; i < NAME_MAX && string[i]; i++) dp->d_name[i] = string[i];
+  (void) memset(dp->mfs_d_name, 0, (size_t) MFS_NAME_MAX); /* clear entry */
+  for (i = 0; i < MFS_NAME_MAX && string[i]; i++) dp->mfs_d_name[i] = string[i];
   sp = ldir_ptr->i_sp; 
-  dp->d_ino = conv4(sp->s_native, (int) *numb);
+  dp->mfs_d_ino = conv4(sp->s_native, (int) *numb);
   bp->b_dirt = DIRTY;
   put_block(bp, DIRECTORY_BLOCK);
   ldir_ptr->i_update |= CTIME | MTIME;	/* mark mtime for update later */

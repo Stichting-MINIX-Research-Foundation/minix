@@ -20,7 +20,7 @@ PUBLIC int fs_create()
   struct inode *ldirp;
   struct inode *rip;
   mode_t omode;
-  char lastc[NAME_MAX];
+  char lastc[MFS_NAME_MAX];
   
   /* Read request message */
   omode = (mode_t) fs_m_in.REQ_MODE;
@@ -73,7 +73,7 @@ PUBLIC int fs_create()
 PUBLIC int fs_mknod()
 {
   struct inode *ip, *ldirp;
-  char lastc[NAME_MAX];
+  char lastc[MFS_NAME_MAX];
   phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
@@ -108,7 +108,7 @@ PUBLIC int fs_mkdir()
   int r1, r2;			/* status codes */
   ino_t dot, dotdot;		/* inode numbers for . and .. */
   struct inode *rip, *ldirp;
-  char lastc[NAME_MAX];         /* last component */
+  char lastc[MFS_NAME_MAX];         /* last component */
   phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
@@ -175,7 +175,7 @@ PUBLIC int fs_slink()
   struct inode *sip;           /* inode containing symbolic link */
   struct inode *ldirp;         /* directory containing link */
   register int r;              /* error code */
-  char string[NAME_MAX];       /* last component of the new dir's path name */
+  char string[MFS_NAME_MAX];       /* last component of the new dir's path name */
   struct buf *bp;              /* disk buffer for link */
     
   caller_uid = (uid_t) fs_m_in.REQ_UID;
@@ -254,7 +254,7 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
  * to an appropriate value (OK or an error code).
  * 
  * The parsed path rest is returned in 'parsed' if parsed is nonzero. It
- * has to hold at least NAME_MAX bytes.
+ * has to hold at least MFS_NAME_MAX bytes.
  */
 
   register struct inode *rip;

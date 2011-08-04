@@ -8,7 +8,7 @@ SUBDIR=	aal add_route adduser arp ash at autil awk \
 	cat cawf cd  cdprobe checkhier chmem \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut date \
-	dd de decomp16 DESCRIBE dev2name devsize df dhcpd \
+	dd decomp16 DESCRIBE dev2name devsize df dhcpd \
 	dhrystone diff dirname  dis386 dis88 diskctl du dumpcore \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck.mfs \
@@ -23,7 +23,7 @@ SUBDIR=	aal add_route adduser arp ash at autil awk \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
-	readfs reboot remsync rev rget rlogin rlogind rmdir \
+	reboot remsync rev rget rlogin rlogind rmdir \
 	rotate rsh rshd sed service setup shar acksize \
 	sleep slip sort spell split srccrc ackstrip \
 	stty su sum svclog swifi sync synctree sysenv \

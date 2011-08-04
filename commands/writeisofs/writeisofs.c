@@ -36,7 +36,7 @@ typedef unsigned long int u_int32_t;
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define NAMELEN		(DIRSIZ+5)
+#define NAMELEN		(NAME_MAX+5)
 #define ISONAMELEN	12
 #define PLATFORM_80X86	0
 

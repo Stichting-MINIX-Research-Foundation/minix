@@ -68,9 +68,9 @@ _PROTOTYPE( int fs_slink, (void)					);
 /* path.c */
 _PROTOTYPE( int fs_lookup, (void)					);
 _PROTOTYPE( struct inode *advance, (struct inode *dirp,
-				char string[NAME_MAX], int chk_perm)	);
+				char string[MFS_NAME_MAX], int chk_perm)	);
 _PROTOTYPE( int search_dir, (struct inode *ldir_ptr, 
-			char string [NAME_MAX], ino_t *numb, int flag,
+			char string [MFS_NAME_MAX], ino_t *numb, int flag,
 			     int check_permissions)			);	
 
 

@@ -17,6 +17,9 @@
 #define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)
 #define INODE_HASH_MASK   (((unsigned long)1<<INODE_HASH_LOG2)-1)
 
+/* Max. filename length */
+#define MFS_NAME_MAX	 MFS_DIRSIZ
+
 
 /* The type of sizeof may be (unsigned) long.  Use the following macro for
  * taking the sizes of small objects so that there are no surprises like
