@@ -365,6 +365,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	CALLMAP(VM_GETREF, do_get_refcount);
 	CALLMAP(VM_INFO, do_info);
 	CALLMAP(VM_QUERY_EXIT, do_query_exit);
+	CALLMAP(VM_WATCH_EXIT, do_watch_exit);
 	CALLMAP(VM_FORGETBLOCKS, do_forgetblocks);
 	CALLMAP(VM_FORGETBLOCK, do_forgetblock);
 	CALLMAP(VM_YIELDBLOCKGETBLOCK, do_yieldblockgetblock);

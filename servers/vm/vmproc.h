@@ -65,5 +65,6 @@ struct vmproc {
 #define VMF_HAS_DMA	0x010	/* Process directly or indirectly granted
 				 * DMA buffers.
 				 */
+#define VMF_WATCHEXIT	0x020	/* Store in queryexit table */
 
 #endif

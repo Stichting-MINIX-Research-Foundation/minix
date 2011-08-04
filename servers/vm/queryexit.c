@@ -67,10 +67,19 @@ PUBLIC int do_query_exit(message *m)
  *===========================================================================*/
 PUBLIC int do_notify_sig(message *m)
 {
-	int i, avails = 0;
+	int i, avails = 0, p;
 	endpoint_t ep = m->VM_NOTIFY_SIG_ENDPOINT;
 	endpoint_t ipc_ep = m->VM_NOTIFY_SIG_IPC;
 	int r;
+	struct vmproc *vmp;
+	int pslot;
+
+	if(vm_isokendpt(ep, &pslot) != OK) return ESRCH;
+	vmp = &vmproc[pslot];
+
+	/* Only record the event if we've been asked to report it. */
+	if(!(vmp->vm_flags & VMF_WATCHEXIT))
+		return OK;
 
 	for (i = 0; i < NR_PROCS; i++) {
 		/* its signal is already here */
@@ -80,7 +89,7 @@ PUBLIC int do_notify_sig(message *m)
 			avails++;
 	}
 	if (!avails) {
-		/* no slot for signals, impossible */
+		/* no slot for signals, unlikely */
 		printf("VM: no slot for signals!\n");
 		return ENOMEM;
 	}
@@ -103,6 +112,21 @@ out:
 		if (r != OK)
 			printf("VM: notify IPC error!\n");
 	}
+	return OK;
+}
+
+/*===========================================================================*
+ *				do_watch_exit				     *
+ *===========================================================================*/
+PUBLIC int do_watch_exit(message *m)
+{
+	endpoint_t e = m->VM_WE_EP;
+	struct vmproc *vmp;
+	int p;
+	if(vm_isokendpt(e, &p) != OK) return ESRCH;
+	vmp = &vmproc[p];
+	vmp->vm_flags |= VMF_WATCHEXIT;
+
 	return OK;
 }
 

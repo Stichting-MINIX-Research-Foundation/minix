@@ -207,5 +207,6 @@ _PROTOTYPE(int do_rs_memctl, (message *m));
 
 /* queryexit.c */
 _PROTOTYPE(int do_query_exit, (message *m));
+_PROTOTYPE(int do_watch_exit, (message *m));
 _PROTOTYPE(int do_notify_sig, (message *m));
 _PROTOTYPE(void init_query_exit, (void));

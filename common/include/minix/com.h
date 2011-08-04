@@ -1071,8 +1071,11 @@
 #		define VM_RS_MEM_PIN	    0	/* pin memory */
 #		define VM_RS_MEM_MAKE_VM    1	/* make VM instance */
 
+#define VM_WATCH_EXIT		(VM_RQ_BASE+43)
+#	define VM_WE_EP		m1_i1
+
 /* Total. */
-#define NR_VM_CALLS				43
+#define NR_VM_CALLS				44
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */

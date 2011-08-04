@@ -26,7 +26,8 @@ _PROTOTYPE( int vm_notify_sig, (endpoint_t ep, endpoint_t ipc_ep));
 _PROTOTYPE( int vm_set_priv, (int procnr, void *buf));
 _PROTOTYPE( int vm_update, (endpoint_t src_e, endpoint_t dst_e));
 _PROTOTYPE( int vm_memctl, (endpoint_t ep, int req));
-_PROTOTYPE( int vm_query_exit, (int *endpt));
+_PROTOTYPE( int vm_query_exit, (endpoint_t *endpt));
+_PROTOTYPE( int vm_watch_exit, (endpoint_t ep));
 _PROTOTYPE( int vm_forgetblock, (u64_t id));
 _PROTOTYPE( void vm_forgetblocks, (void));
 _PROTOTYPE( int vm_yield_block_get_block, (u64_t yieldid, u64_t getid,

@@ -64,6 +64,14 @@ PUBLIC int main(int argc, char *argv[])
 
 		/* dispatch messages */
 		for (i = 0; i < SIZE(ipc_calls); i++) {
+			/* If any process does an IPC call,
+			 * we have to know about it exiting.
+			 * Tell VM to watch it for us.
+			 */
+			if(vm_watch_exit(m.m_source) != OK) {
+				printf("IPC: watch failed on %d\n", m.m_source);
+			}
+
 			if (ipc_calls[i].type == call_type) {
 				int result;
 
