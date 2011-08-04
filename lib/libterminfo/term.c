@@ -44,7 +44,11 @@ __RCSID("$NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
+#ifndef __minix
 #define _PATH_TERMINFO		"/usr/share/misc/terminfo"
+#else
+#define _PATH_TERMINFO		"/usr/share/terminfo/terminfo"
+#endif
 
 static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];

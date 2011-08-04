@@ -572,6 +572,7 @@ void showtop(int cputimemode, int r)
 	if(winsize.ws_row > 0) r = winsize.ws_row;
 
 	print_procs(r - lines - 2, prev_proc, proc, cputimemode);
+	fflush(NULL);
 }
 
 void init(int *rows)
@@ -591,6 +592,9 @@ void init(int *rows)
 		fprintf(stderr, "tgetent failed for term %s\n", term);
 		exit(1);
 	}
+
+	initscr();
+	cbreak();
 
 	if ( (Tclr_all = tgetstr( "cl", &s )) == NULL )
 		Tclr_all = "\f";

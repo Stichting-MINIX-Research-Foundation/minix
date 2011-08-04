@@ -31,12 +31,13 @@
 
 set -e
 : ${TOOL_TIC:=tic}
-: ${NETBSDSRCDIR:=/usr/src}
-: ${TERMINFO:=${NETBSDSRCDIR}/share/terminfo/terminfo}
+: ${MINIXSRCDIR:=/usr/src}
+: ${TERMINFO:=${MINIXSRCDIR}/share/terminfo/terminfo}
 
 echo "/* \$NetBSD\$ */"
+echo "/* * * MODIFIED FOR MINIX * * */"
 echo "/* DO NOT EDIT"
 echo " * Regenerate by doing \`\`make compiled_terms''"
 echo " */"
 echo
-${TOOL_TIC} -Sx ${TERMINFO} ansi dumb vt100 vt220 wsvt25 xterm
+${TOOL_TIC} -Sx ${TERMINFO} ansi dumb minix vt100 vt220 wsvt25 xterm
