@@ -35,7 +35,6 @@ DPADD+=	${LIBC}
 .endif
 
 CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
-AFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${ARCH}/include -I${MINIXSRCDIR}
 
 INSTALLFLAGS+=	-S 0
 BINDIR=	/usr/sbin

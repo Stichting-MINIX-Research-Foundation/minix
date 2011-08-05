@@ -10,8 +10,7 @@ SMP_FLAGS += -DCONFIG_MAX_CPUS=${CONFIG_MAX_CPUS}
 .endif
 .endif
 
-CFLAGS += ${SMP_FLAGS}
-AFLAGS += ${SMP_FLAGS}
+CPPFLAGS+= ${SMP_FLAGS}
 
 MAKECONF?=	/etc/make.conf
 .-include "${MAKECONF}"

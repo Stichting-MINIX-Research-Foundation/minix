@@ -12,7 +12,7 @@ CPPFLAGS+= -wo
 
 ASMCONV=gas2ack
 AFLAGS+=-D__ASSEMBLY__ -w -wo
-CPP.s=${CC} -E ${AFLAGS}
+CPP.s=${CC} -E ${AFLAGS} ${CPPFLAGS}
 ASMCONVFLAGS+=-mi386
 
 # Need to convert ACK assembly files to GNU assembly before building
