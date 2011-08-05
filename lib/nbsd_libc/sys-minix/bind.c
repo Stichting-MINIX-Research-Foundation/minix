@@ -93,7 +93,7 @@ static int _tcp_bind(int sock, const struct sockaddr *address,
 	struct sockaddr_in *sinp;
 
 	sinp= (struct sockaddr_in *)address;
-	if (sinp->sin_family != AF_INET || address_len != sizeof(*sinp))
+	if (sinp->sin_family != AF_INET || address_len < sizeof(*sinp))
 	{
 #if DEBUG
 		fprintf(stderr, "bind(tcp): sin_family = %d, len = %d\n",
@@ -133,7 +133,7 @@ static int _udp_bind(int sock, const struct sockaddr *address,
 	struct sockaddr_in *sinp;
 
 	sinp= (struct sockaddr_in *)address;
-	if (sinp->sin_family != AF_INET || address_len != sizeof(*sinp))
+	if (sinp->sin_family != AF_INET || address_len < sizeof(*sinp))
 	{
 #if DEBUG
 		fprintf(stderr, "bind(udp): sin_family = %d, len = %d\n",
