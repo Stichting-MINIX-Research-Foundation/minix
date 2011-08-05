@@ -605,7 +605,7 @@ PUBLIC int do_listen(message *dev_m_in, message *dev_m_out)
 	if (uds_fd_table[minor].listening == 0) {
 
 		/* See if backlog_size is between 0 and UDS_SOMAXCONN */
-		if (backlog_size >= 0 || backlog_size < UDS_SOMAXCONN) {
+		if (backlog_size >= 0 && backlog_size < UDS_SOMAXCONN) {
 
 			/* use the user provided backlog_size */
 			uds_fd_table[minor].backlog_size = backlog_size;
