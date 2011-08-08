@@ -381,7 +381,7 @@ cleanextra: .PHONY
 ${TARGETS}:	# ensure existence
 
 ###### Minix rule to set up mem allocations for boot image services
-.if defined(INSTALLFLAGS)
+.if defined(INSTALLFLAGS) && ${COMPILER_TYPE} == "ack"
 all: .PHONY memalloc
 
 memalloc: realall
