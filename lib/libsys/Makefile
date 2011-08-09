@@ -13,7 +13,6 @@ SRCS=  \
 	env_parse.c \
 	env_prefix.c \
 	fkey_ctl.c \
-	gcov.c \
 	get_randomness.c \
 	getidle.c \
 	getsysinfo.c \
@@ -50,7 +49,6 @@ SRCS=  \
 	sched_start.c \
 	sched_stop.c \
 	sef.c \
-	sef_gcov.c \
 	sef_init.c \
 	sef_liveupdate.c \
 	sef_ping.c \
@@ -128,6 +126,11 @@ SRCS=  \
 	vm_yield_get_block.c \
 	vprintf.c \
 
+.if ${MKCOVERAGE} != "no"
+SRCS+=	gcov.c \
+	sef_gcov.c
+CPPFLAGS+= -DUSE_COVERAGE
+.endif
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 

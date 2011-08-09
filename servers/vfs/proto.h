@@ -282,6 +282,9 @@ _PROTOTYPE( int do_write, (void)					);
 
 /* gcov.c */
 _PROTOTYPE( int do_gcov_flush, (void)					);
+#if ! USE_COVERAGE
+#define do_gcov_flush no_sys
+#endif
 
 /* select.c */
 _PROTOTYPE( int do_select, (void)					);

@@ -821,6 +821,7 @@ MKWATCHDOG:=	no
 MKACPI:=	no
 MKAPIC:=	no
 MKMCONTEXT:=	no
+MKCOVERAGE:=	no
 .endif
 
 #

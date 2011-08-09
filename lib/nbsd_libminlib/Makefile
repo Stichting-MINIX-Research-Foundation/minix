@@ -11,7 +11,9 @@ SRCS+= 	fslib.c fsversion.c
 SRCS+= dhcp_gettag.c dhcp_settag.c
 
 # Gcov support.
+.if ${MKCOVERAGE} != "no"
 SRCS+= gcov.c gcov_flush.c
+.endif
 
 # Various utils
 SRCS+= itoa.c u64util.c

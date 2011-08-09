@@ -24,7 +24,9 @@ FORWARD _PROTOTYPE( void sef_debug_refresh_params, (void) );
 PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
 
 /* SEF Init prototypes. */
+#ifdef USE_COVERAGE
 EXTERN _PROTOTYPE( int do_sef_gcov_request, (message *m_ptr) );
+#endif
 EXTERN _PROTOTYPE( int do_sef_rs_init, (endpoint_t old_endpoint) );
 EXTERN _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
 
@@ -155,6 +157,7 @@ PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
       }
 #endif
 
+#ifdef USE_COVERAGE
       /* Intercept GCOV data requests (sent by VFS in vfs/gcov.c). */
       if(m_ptr->m_type == COMMON_REQ_GCOV_DATA &&
 	 m_ptr->m_source == VFS_PROC_NR) {
@@ -162,6 +165,7 @@ PUBLIC int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr)
               continue;
           }
       }
+#endif
 
       /* If we get this far, this is not a valid SEF request, return and
        * let the caller deal with that.
