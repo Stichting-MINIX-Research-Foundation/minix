@@ -31,3 +31,4 @@ CVS
 !/.gitignore
 .gitignore
 .svn
+minix-port.patch
