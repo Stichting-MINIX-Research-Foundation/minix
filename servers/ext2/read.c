@@ -432,7 +432,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
   block_t block, blocks_left;
   off_t ind1_pos;
   dev_t dev;
-  struct buf *bp;
+  struct buf *bp = NULL;
   static unsigned int readqsize = 0;
   static struct buf **read_q;
 
@@ -456,6 +456,7 @@ unsigned bytes_ahead;           /* bytes beyond position for immediate use */
 
   block = baseblock;
   bp = get_block(dev, block, PREFETCH);
+  assert(bp != NULL);
   if (bp->b_dev != NO_DEV) return(bp);
 
   /* The best guess for the number of blocks to prefetch:  A lot.

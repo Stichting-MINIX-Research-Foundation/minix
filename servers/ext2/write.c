@@ -106,7 +106,7 @@ int op;				/* special actions */
 		 * or newly created.
 		 * If there wasn't one and WMAP_FREE is set, 'b3' is NO_BLOCK.
 		 */
-		if (b3 == NO_BLOCK) {
+		if (b3 == NO_BLOCK && (op & WMAP_FREE)) {
 		/* WMAP_FREE and no triple indirect block - then no
 		 * double and single indirect blocks either.
 		 */
@@ -147,7 +147,7 @@ int op;				/* special actions */
 	 * or newly created.
 	 * If there wasn't one and WMAP_FREE is set, 'b2' is NO_BLOCK.
 	 */
-	if (b2 == NO_BLOCK) {
+	if (b2 == NO_BLOCK && (op & WMAP_FREE)) {
 	/* WMAP_FREE and no double indirect block - then no
 	 * single indirect block either.
 	 */

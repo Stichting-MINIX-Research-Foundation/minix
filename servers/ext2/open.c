@@ -229,13 +229,16 @@ PUBLIC int fs_slink()
 		sip->i_dirt = DIRTY;
 		link_target_buf = (char*) sip->i_block;
         } else {
-		r = (bp = new_block(sip, (off_t) 0)) == NULL ? err_code :
+		if ((bp = new_block(sip, (off_t) 0)) != NULL) {
 			sys_safecopyfrom(VFS_PROC_NR,
 					 (cp_grant_id_t) fs_m_in.REQ_GRANT3,
 					 (vir_bytes) 0, (vir_bytes) bp->b_data,
 					 (vir_bytes) fs_m_in.REQ_MEM_SIZE, D);
-		bp->b_dirt = DIRTY;
-		link_target_buf = bp->b_data;
+			bp->b_dirt = DIRTY;
+			link_target_buf = bp->b_data;
+		} else {
+			r = err_code;
+		}
 	}
 	if (r == OK) {
 		link_target_buf[fs_m_in.REQ_MEM_SIZE] = '\0';
