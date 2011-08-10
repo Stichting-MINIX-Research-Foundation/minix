@@ -92,7 +92,7 @@ int op;				/* special actions */
 	excess = excess % nr_indirects;
 	if (ind_ex >= nr_indirects) return(EFBIG);
 
-	if(z == NO_ZONE) {
+	if(z == NO_ZONE && (op & WMAP_FREE)) {
 		/* WMAP_FREE and no double indirect block - then no
 		 * single indirect block either.
 		 */

@@ -27,6 +27,8 @@ int map;			/* IMAP (inode map) or ZMAP (zone map) */
   bit_t i, b;
   bit_t free_bits;
 
+  assert(sp != NULL);
+
   if (map == IMAP) {
     start_block = START_BLOCK;
     map_bits = (bit_t) (sp->s_ninodes + 1);

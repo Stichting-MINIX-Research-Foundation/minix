@@ -30,7 +30,7 @@ PUBLIC int main(int argc, char *argv[])
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int error, ind, transid;
+  int error = OK, ind, transid;
 
   /* SEF local startup. */
   env_setargs(argc, argv);
@@ -52,7 +52,6 @@ PUBLIC int main(int argc, char *argv[])
 		assert(IS_VFS_FS_TRANSID(transid));
 
 	src = fs_m_in.m_source;
-	error = OK;
 	caller_uid = INVAL_UID;	/* To trap errors */
 	caller_gid = INVAL_GID;
 	req_nr = fs_m_in.m_type;

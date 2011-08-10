@@ -321,12 +321,16 @@ PUBLIC int fs_rename()
 	old_ip = NULL;
 	if (r == EENTERMOUNT) r = EXDEV;	/* should this fail at all? */
 	else if (r == ELEAVEMOUNT) r = EINVAL;	/* rename on dot-dot */
+  } else if (old_ip == NULL) {
+	return(err_code);
   }
 
   /* Get new dir inode */ 
-  if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) 
-	r = err_code;
-  else {
+  if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) {
+        put_inode(old_ip);
+        put_inode(old_dirp);
+        return(err_code);
+  } else {
 	if (new_dirp->i_nlinks == NO_LINK) {	/* Dir does not actually exist */
   		put_inode(old_ip);
   		put_inode(old_dirp);
