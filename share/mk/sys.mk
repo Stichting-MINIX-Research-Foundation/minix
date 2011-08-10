@@ -233,7 +233,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .if !empty(CC:Mcc) || !empty(CC:Macd) || !empty(CC:M*acc)
 COMPILER_TYPE=ack
 AR?=	aal
-.elif !empty(CC:M*gcc) || !empty(CC:M*clang) || !empty(CC:M*pcc)
+.elif !empty(CC:M*gcc) || !empty(CC:M*clang) || !empty(CC:M*pcc) || !empty(CC:M*ccc-analyzer)
 COMPILER_TYPE=gnu
 AR?=	ar
 .endif
