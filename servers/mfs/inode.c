@@ -172,6 +172,7 @@ PUBLIC struct inode *get_inode(
   rip->i_update = 0;		/* all the times are initially up-to-date */
   rip->i_zsearch = NO_ZONE;	/* no zones searched for yet */
   rip->i_mountpoint= FALSE;
+  rip->i_last_dpos = 0;		/* no dentries searched for yet */
 
   /* Add to hash */
   addhash_inode(rip);

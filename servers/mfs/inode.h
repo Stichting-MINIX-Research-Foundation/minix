@@ -36,6 +36,7 @@ EXTERN struct inode {
   struct super_block *i_sp;	/* pointer to super block for inode's device */
   char i_dirt;			/* CLEAN or DIRTY */
   zone_t i_zsearch;		/* where to start search for new zones */
+  off_t i_last_dpos;		/* where to start dentry search */
   
   char i_mountpoint;		/* true if mounted on */
 

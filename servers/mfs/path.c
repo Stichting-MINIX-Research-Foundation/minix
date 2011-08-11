@@ -519,7 +519,13 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   e_hit = FALSE;
   match = 0;			/* set when a string match occurs */
 
-  for (pos = 0; pos < ldir_ptr->i_size; pos += ldir_ptr->i_sp->s_block_size) {
+  pos = 0;
+  if (flag == ENTER && ldir_ptr->i_last_dpos < ldir_ptr->i_size) {
+	pos = ldir_ptr->i_last_dpos;
+	new_slots = (unsigned) (pos/DIR_ENTRY_SIZE);
+  }
+
+  for (; pos < ldir_ptr->i_size; pos += ldir_ptr->i_sp->s_block_size) {
 	b = read_map(ldir_ptr, pos);	/* get block number */
 
 	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
@@ -561,6 +567,8 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
 				bp->b_dirt = DIRTY;
 				ldir_ptr->i_update |= CTIME | MTIME;
 				ldir_ptr->i_dirt = DIRTY;
+				if (pos < ldir_ptr->i_last_dpos)
+					ldir_ptr->i_last_dpos = pos;
 			} else {
 				sp = ldir_ptr->i_sp;	/* 'flag' is LOOK_UP */
 				*numb = (ino_t) conv4(sp->s_native,
@@ -586,6 +594,11 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   if (flag != ENTER) {
   	return(flag == IS_EMPTY ? OK : ENOENT);
   }
+
+  /* When ENTER next time, start searching for free slot from
+   * i_last_dpos. It gives some performance improvement (3-5%).
+   */
+  ldir_ptr->i_last_dpos = pos;
 
   /* This call is for ENTER.  If no free slot has been found so far, try to
    * extend directory.
