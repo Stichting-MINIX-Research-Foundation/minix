@@ -608,9 +608,11 @@ int ftype;			 /* used when ENTER and
 				if (!HAS_COMPAT_FEATURE(ldir_ptr->i_sp,
 							COMPAT_DIR_INDEX))
 					ldir_ptr->i_flags &= ~EXT2_INDEX_FL;
-				ldir_ptr->i_last_dpos = pos;
-				ldir_ptr->i_last_dentry_size = conv2(le_CPU,
-								dp->d_rec_len);
+				if (pos < ldir_ptr->i_last_dpos) {
+					ldir_ptr->i_last_dpos = pos;
+					ldir_ptr->i_last_dentry_size =
+						conv2(le_CPU, dp->d_rec_len);
+				}
 				ldir_ptr->i_update |= CTIME | MTIME;
 				ldir_ptr->i_dirt = DIRTY;
 				/* Now we have cleared dentry, if it's not
