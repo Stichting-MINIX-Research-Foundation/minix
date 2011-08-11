@@ -399,26 +399,6 @@ int queue;				/* store mem chunks here */
   return nice_val;
 }
 
-void checkme(char *str, int line)
-{
-	struct mproc *trmp;
-	int boned = 0;
-	int proc_nr;
-	for (proc_nr=0, trmp=mproc; proc_nr < NR_PROCS; proc_nr++, trmp++) {
-		if ((trmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
-		   (REPLY | IN_USE)) {
-			int tp;
-  			if(pm_isokendpt(trmp->mp_endpoint, &tp) != OK) {
-			   printf("PM: %s:%d: reply %d to %s is bogus endpoint %d after call %d by %d\n",
-				str, line, trmp->mp_reply.m_type,
-				trmp->mp_name, trmp->mp_endpoint, call_nr, who_e);
-			   boned=1;
-			}
-		}
-		if(boned) panic("corrupt mp_endpoint?");
-	}
-}
-
 /*===========================================================================*
  *				handle_vfs_reply       			     *
  *===========================================================================*/
