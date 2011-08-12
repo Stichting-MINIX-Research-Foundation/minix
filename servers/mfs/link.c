@@ -321,8 +321,11 @@ PUBLIC int fs_rename()
 	old_ip = NULL;
 	if (r == EENTERMOUNT) r = EXDEV;	/* should this fail at all? */
 	else if (r == ELEAVEMOUNT) r = EINVAL;	/* rename on dot-dot */
-  } else if (old_ip == NULL) {
-	return(err_code);
+  }
+
+  if (old_ip == NULL) {
+	put_inode(old_dirp);
+	return(r);
   }
 
   /* Get new dir inode */ 
@@ -349,10 +352,7 @@ PUBLIC int fs_rename()
 	r = EBUSY;
   }
 
-  if(old_ip != NULL)
-	  odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY); /* TRUE iff dir */
-  else
-	  odir = FALSE; 
+  odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY); /* TRUE iff dir */
 
   /* If it is ok, check for a variety of possible errors. */
   if(r == OK) {
