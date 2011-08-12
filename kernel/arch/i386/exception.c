@@ -103,6 +103,11 @@ PRIVATE void pagefault( struct proc *pr,
 			"pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
 			pr->p_endpoint, pr->p_name, cpuid, pr->p_reg.pc,
 			pagefaultcr2, frame->errcode, is_nested);
+		if(!is_nested) {
+			printf("process vir addr of pagefault is 0x%lx\n",
+				pagefaultcr2 -
+				  (pr->p_memmap[D].mem_phys << CLICK_SHIFT));
+		}
 		proc_stacktrace(pr);
 		printf("pc of pagefault: 0x%lx\n", frame->eip);
 		cause_sig(proc_nr(pr), SIGSEGV);
