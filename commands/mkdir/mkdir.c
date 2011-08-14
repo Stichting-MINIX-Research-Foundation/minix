@@ -231,6 +231,10 @@ char *fordir;
 int makedir(dirname)
 char *dirname;
 {
+  while (strlen(dirname) > 1 && dirname[strlen(dirname) - 1] == '/') {
+    dirname[strlen(dirname) - 1] = '\0'; /* trim trailing '/' */
+  }
+
   if (mkdir(dirname, DEFAULT_MODE)) {
 	if (!pflag) {
 		perror(dirname);
