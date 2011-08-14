@@ -5,6 +5,7 @@ lib/libcrypt		src/lib/libcrypt
 lib/libterminfo		src/lib/libterminfo
 lib/libcurses		src/lib/libcurses
 nbsd_include		src/include
+bin/mkdir		src/bin/mkdir
 usr.bin/m4		src/usr.bin/m4
 usr.bin/indent		src/usr.bin/indent
 usr.bin/sed		src/usr.bin/sed
