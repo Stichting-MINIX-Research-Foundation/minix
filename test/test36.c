@@ -109,11 +109,14 @@ void test36a()
 #endif
 
 #ifdef _POSIX_VDISABLE
-# if _POSIX_VDISABLE - 0 == -1
-  if (not_provided_option(_PC_VDISABLE) != 0) e(7);
-# else
-  if (provided_option(_PC_VDISABLE, 0) != 0) e(8);
-# endif
+ {
+	int _posix_vdisable = _POSIX_VDISABLE;
+	if(_posix_vdisable == -1) {
+		if (not_provided_option(_PC_VDISABLE) != 0) e(7);
+	} else {
+		if (provided_option(_PC_VDISABLE, 0) != 0) e(8);
+	}
+ }
 #else
   if (variating_option(_PC_VDISABLE, 0) != 0) e(9);
 #endif

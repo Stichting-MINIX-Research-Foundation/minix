@@ -170,7 +170,7 @@ void do_test(void)
   }
 }
 
-int main(int argc, void* argv[])
+int main(int argc, char* argv[])
 {
   start(58);
   do_test();

@@ -1,9 +1,10 @@
 # Makefile for the tests.
 
 GCC?=gcc
-CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE
+CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE  -g 
 .if ${COMPILER_TYPE} == "gnu"
 CFLAGS+= -D_NETBSD_SOURCE
+LIBS+= -lm -lcompat_minix
 .endif
 CFLAGS-GCC= $(CFLAGS) -Wall  -D_NETBSD_SOURCE 
 CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float 
@@ -27,10 +28,10 @@ all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ) $(OTHEROBJ) depend
 	chmod 755 *.sh run
 
 $(OBJ):
-	$(CC) $(CFLAGS) -o $@ $@.c
+	$(CC) $(CFLAGS) -o $@ $@.c $(LIBS)
 
 $(BIGOBJ):
-	$(CC) $(CFLAGS) -o $@ $@.c
+	$(CC) $(CFLAGS) -o $@ $@.c $(LIBS)
 
 $(GCCOBJ):
 	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c; fi
@@ -39,7 +40,7 @@ $(GCCFPUOBJ):
 	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c -lm; fi
 
 $(ROOTOBJ):
-	$(CC) $(CFLAGS) $@.c
+	$(CC) $(CFLAGS) $@.c $(LIBS)
 	@install -c -o root -m 4755 a.out $@
 	@rm a.out
 
