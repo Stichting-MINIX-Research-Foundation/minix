@@ -123,7 +123,8 @@ do
 		;;
 	l)	PKG_ADD_URL=file://$PACKAGEDIR/All
 		;;
-	L)	PACKAGEURL="$OPTARG"
+	L)	PKG_ADD_URL="$OPTARG"
+		CUSTOM_PACKAGES=1
 		;;
 	esac
 done
@@ -255,8 +256,12 @@ chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin sh -x /usr/$SRC/tools/chrootmake.sh
 
 for p in $PREINSTALLED_PACKAGES
 do	echo " * Pre-installing: $p from $PKG_ADD_URL"
-    $PKG_ADD -P $RELEASEDIR $PKG_ADD_URL/$p
+    $PKG_ADD -f -P $RELEASEDIR $PKG_ADD_URL/$p
 done
+
+if [ "$CUSTOM_PACKAGES" ]
+then	echo $PKG_ADD_URL >$RELEASEDIR/usr/pkg/etc/pkgin/repositories.conf
+fi
 
 echo " * Chroot build"
 chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
