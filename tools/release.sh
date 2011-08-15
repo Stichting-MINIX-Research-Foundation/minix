@@ -28,12 +28,11 @@ fi
 # Packages we have to pre-install, and url to use
 PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/All/
 PREINSTALLED_PACKAGES="
-	pkgin-0.4.1
-	pkg_install-20101212
-	bmake-20110606
-	binutils-2.17nb3
-	clang-2.9nb2
-	compiler-rt-r123836nb3
+	pkgin
+	pkg_install
+	bmake
+	binutils
+	clang
 	"
 
 PKG_ADD_URL=$PACKAGEURL
