@@ -13,4 +13,6 @@ server:*:11:
 games:*:13:
 sshd:*:23:
 smtpd:*:26:
+postfix:*:27:
+maildrop:*:28:
 nogroup:*:99:
