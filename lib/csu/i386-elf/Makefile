@@ -1,6 +1,6 @@
 .include <bsd.own.mk>
 
-SRCS=		crti.S crtn.S
+SRCS=		crti.S crtn.S crtbegin.S crtend.S
 OBJS=		${SRCS:N*.h:R:S/$/.o/g} gcrt1.o crt1.o Scrt1.o
 
 realall: ${OBJS}
