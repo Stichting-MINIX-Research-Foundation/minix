@@ -526,7 +526,7 @@ int main(int argc, char **argv)
 				} else {
 					if ((gr= getgrnam(p)) == nil) {
 						fprintf(stderr,
-						"install: %s: unknown user\n",
+						"install: %s: unknown group\n",
 							p);
 						exit(1);
 					}
