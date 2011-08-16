@@ -395,6 +395,7 @@ PUBLIC void arch_init(void)
 #endif
 }
 
+#if DEBUG_SERIAL
 PUBLIC void ser_putc(char c)
 {
         int i;
@@ -413,6 +414,7 @@ PUBLIC void ser_putc(char c)
         outb( thr, c);
 #endif
 }
+
 
 /*===========================================================================*
  *				do_ser_debug				     * 
@@ -596,6 +598,8 @@ PRIVATE void ser_dump_proc_cpu(void)
 	}
 }
 #endif
+
+#endif /* DEBUG_SERIAL */
 
 #if SPROFILE
 

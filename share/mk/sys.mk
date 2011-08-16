@@ -247,5 +247,5 @@ NBSD_LIBC=	yes
 
 .if ${COMPILER_TYPE} == "gnu" && defined(MKSMALL) && ${MKSMALL} == "yes"
 DBG=	-Os
-CFLAGS+= -DNDEBUG=1
+CFLAGS+= -DNDEBUG=1 -DUSE_SMALL=1
 .endif

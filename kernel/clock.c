@@ -140,8 +140,11 @@ PUBLIC int timer_int_handler(void)
 				TMR_NEVER : clock_timers->tmr_exp_time;
 		}
 
+#if DEBUG_SERIAL
 		if (do_serial_debug)
 			do_ser_debug();
+#endif
+
 	}
 
 	return(1);					/* reenable interrupts */

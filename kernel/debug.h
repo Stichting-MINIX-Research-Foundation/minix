@@ -13,6 +13,9 @@
 #include "config.h"
 #endif
 
+/* Debug info via serial (see ser_debug()) */
+#define DEBUG_SERIAL			1
+
 /* Enable prints such as
  *  . send/receive failed due to deadlock or dead source or dead destination
  *  . trap not allowed
@@ -46,6 +49,11 @@
 
 /* DEBUG_IPCSTATS collects information on who sends messages to whom. */
 #define DEBUG_IPCSTATS			0
+
+#if USE_SMALL
+#undef DEBUG_SERIAL
+#undef DEBUG_ENABLE_IPC_WARNINGS
+#endif
 
 #if DEBUG_DUMPIPC || DEBUG_IPCSTATS	/* either of these needs the hook */
 #define DEBUG_IPC_HOOK			1

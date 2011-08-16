@@ -6,7 +6,7 @@ PROG=	kernel
 # first-stage, arch-dependent startup code
 SRCS=	mpx.S
 SRCS+=	start.c table.c main.c proc.c \
-	system.c clock.c utility.c debug.c interrupt.c \
+	system.c clock.c utility.c interrupt.c \
 	cpulocals.c
 
 .ifdef CONFIG_SMP
@@ -63,6 +63,14 @@ SRCS+= do_mcontext.c
 CPPFLAGS+= -DUSE_MCONTEXT
 .endif
 
+.if ${USE_DEBUGREG} != "no"
+SRCS+= 	breakpoints.c debugreg.S
+.endif
+
+# Extra debugging routines
+.if ${USE_DEBUG} != "no"
+SRCS+= 	debug.c
+.endif
 
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c

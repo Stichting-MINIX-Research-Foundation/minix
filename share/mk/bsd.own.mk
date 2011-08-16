@@ -757,7 +757,7 @@ _MKVARS.yes= \
 	MKYP
 #MINIX-specific vars
 _MKVARS.yes+= \
-	MKWATCHDOG MKACPI MKAPIC MKMCONTEXT
+	MKWATCHDOG MKACPI MKAPIC MKMCONTEXT MKDEBUGREG MKDEBUG
 .for var in ${_MKVARS.yes}
 ${var}?=	yes
 .endfor
@@ -822,6 +822,8 @@ MKACPI:=	no
 MKAPIC:=	no
 MKMCONTEXT:=	no
 MKCOVERAGE:=	no
+MKDEBUGREG:=	no
+MKDEBUG:=	no
 .endif
 
 #
@@ -883,7 +885,7 @@ ${var}?= no
 # variable is set to "no".
 #
 .for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP \
-USE_WATCHDOG USE_ACPI USE_APIC USE_MCONTEXT
+USE_WATCHDOG USE_ACPI USE_APIC USE_MCONTEXT USE_DEBUGREG USE_DEBUG
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else
