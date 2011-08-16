@@ -68,7 +68,7 @@ SRCS+= 	breakpoints.c debugreg.S
 .endif
 
 # Extra debugging routines
-.if ${USE_DEBUG} != "no"
+.if ${USE_SYSDEBUG} != "no"
 SRCS+= 	debug.c
 .endif
 
