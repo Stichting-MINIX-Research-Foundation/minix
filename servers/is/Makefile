@@ -19,6 +19,8 @@ CPPFLAGS.dmp_vm.c+=	-I${MINIXSRCDIR}
 
 .if ${BUILDAVFS} == "yes"
 CFLAGS+= -D_USEAVFS
+.else
+CFLAGS+= -D_USEVFS
 .endif
 
 .include <minix.service.mk>

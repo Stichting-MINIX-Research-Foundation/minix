@@ -41,7 +41,7 @@ PUBLIC void fproc_dmp()
   	fp = &fproc[i];
   	if (fp->fp_pid <= 0) continue;
   	if (++n > 22) break;
-#if defined(_USEVFS)
+#if !defined(_USEAVFS)
   	printf("%3d  %4d  %2d/%d  0x%05x %2d (%2d) %2d (%2d) %3d   %3d %3d ",
   		i, fp->fp_pid, 
   		((fp->fp_tty>>MAJOR)&BYTE), ((fp->fp_tty>>MINOR)&BYTE), 
