@@ -1,3 +1,13 @@
+20110817:
+	To use the new asynchronous version of VFS do:
+	# BUILDAVFS=yes make cleandepend world
+
+	To switch back to the normal VFS do:
+	# make cleandepend world
+
+	By default the old VFS and PFS are built and included in the boot
+	image. AVFS is a work in progress and not yet mature. Use at your own
+	risk.
 20110722:
 	To install the new mkdep:
 	# cp /usr/bin/mkdep /usr/bin/ackmkdep
