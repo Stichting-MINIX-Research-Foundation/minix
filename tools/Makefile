@@ -9,19 +9,26 @@ MDEC=	/usr/mdec
 GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 
 # Specify the programs that are part of the system image.
+.if ${BUILDAVFS} == "yes"
+VFS= "../servers/avfs/vfs"
+PFS= "../servers/apfs/pfs"
+.else
+VFS= "../servers/vfs/vfs"
+PFS= "../servers/pfs/pfs"
+.endif
 KERNEL= kernel
 PROGRAMS= \
 	../servers/ds/ds \
 	../servers/rs/rs \
 	../servers/pm/pm \
 	../servers/sched/sched \
-	../servers/vfs/vfs \
+	${VFS} \
 	../drivers/memory/memory \
 	../drivers/log/log \
 	../drivers/tty/tty \
 	../servers/mfs/mfs \
 	../servers/vm/vm \
-	../servers/pfs/pfs \
+	${PFS} \
 	../servers/init/init
 
 usage:	
