@@ -81,6 +81,10 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.93 2008/11/08 04:43:24 kientzle
 #define	_PATH_DEFTAPE "\\\\.\\tape0"
 #endif
 
+#ifdef _PATH_DEFTAPE
+#undef _PATH_DEFTAPE
+#endif
+
 #ifndef _PATH_DEFTAPE
 #define	_PATH_DEFTAPE "/dev/tape"
 #endif

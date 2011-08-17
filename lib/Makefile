@@ -17,14 +17,14 @@ LIBMINLIB_DIR?=
 LIBASYN_DIR?=
 
 SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libdriver libnetdriver \
-	libedit ${LIBM_DIR} libsys libtimers ${LIBUTIL_DIR} libbz2 libl libhgfs  \
+	libedit ${LIBM_DIR} libsys libtimers ${LIBUTIL_DIR} libl libhgfs  \
 	libz libfetch libarchive libvtreefs libaudiodriver libmthread     \
 	libexec libdevman libusb ${LIBMINLIB_DIR} ${LIBASYN_DIR}          \
 	libddekit libminixfs libbdev
 
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
 SUBDIR+= libelf libminc libcrypt libterminfo libcurses libvassert libutil \
-	 libpuffs librefuse
+	 libpuffs librefuse libbz2
 .endif
 
 .if ${COMPILER_TYPE} == "ack"

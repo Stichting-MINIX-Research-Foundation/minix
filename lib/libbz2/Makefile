@@ -1,18 +1,40 @@
+#	$NetBSD: Makefile,v 1.14 2008/08/29 00:02:22 gmcgarry Exp $
+
+.if defined(__MINIX)
+# ssp-buffer-size=0, __SSP_FORTIFY_LEVEL=0
+USE_FORT=no
+.else
+USE_FORT?= yes	# data driven bugs?
+.endif
+
+NOMAN=		# defined
+
 .include <bsd.own.mk>
 
 LIB=		bz2
-BZ2DIR=		${MINIXSRCDIR}/commands/bzip2
-.PATH:		${BZ2DIR}
+DIST=		${NETBSDSRCDIR}/dist/bzip2
+.PATH:		${DIST}
 
-SRCS=		bzlib.c blocksort.c compress.c crctable.c decompress.c \
-		huffman.c randtable.c
-CPPFLAGS+=	-I ${BZ2DIR}
+SRCS=		blocksort.c huffman.c crctable.c randtable.c compress.c \
+		decompress.c bzlib.c
 INCS=		bzlib.h
+INCSDIR=	/usr/include
 
-.if (${NBSD_LIBC} != "no")
-INCSDIR=       /usr/include
-.else
-INCSDIR=       /usr/include.ack
+# XXX huffman.c gets mis-compiled with 2.95.3
+.if ${MACHINE_ARCH} == "vax"
+COPTS+=		-O0
 .endif
 
+# XXX blocksort.c gets mis-compiled with 4.1
+.if (${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb") && \
+    (defined(HAVE_GCC) && ${HAVE_GCC} == 4)
+COPTS.blocksort.c+=	-fno-loop-optimize
+.endif
+
+.if ${MKSHARE} != "no"
+FILESDIR=	${HTMLDOCDIR}/bzip2
+FILES=		manual.html
+.endif
+
+.include <bsd.info.mk>
 .include <bsd.lib.mk>

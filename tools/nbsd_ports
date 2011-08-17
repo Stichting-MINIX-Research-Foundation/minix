@@ -6,6 +6,7 @@ lib/libterminfo		src/lib/libterminfo
 lib/libcurses		src/lib/libcurses
 lib/libutil		src/lib/libutil
 common/lib/libutil	src/common/lib/libutil
+lib/libbz2		src/lib/libbz2
 nbsd_include		src/include
 bin/mkdir		src/bin/mkdir
 usr.bin/chpass		src/usr.bin/chpass
@@ -24,4 +25,7 @@ usr.bin/mdocml		src/external/bsd/mdocml
 usr.sbin/pwd_mkdb	src/usr.sbin/pwd_mkdb
 usr.sbin/user		src/usr.sbin/user
 usr.sbin/vipw		src/usr.sbin/vipw
+usr.bin/bzip2		src/usr.bin/bzip2
+usr.bin/bzip2recover	src/usr.bin/bzip2recover
 libexec/makewhatis	src/libexec/makewhatis
+dist/bzip2		dist/bzip2
