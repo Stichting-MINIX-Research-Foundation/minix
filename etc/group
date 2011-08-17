@@ -15,4 +15,5 @@ sshd:*:23:
 smtpd:*:26:
 postfix:*:27:
 maildrop:*:28:
+mail:*:29:
 nogroup:*:99:
