@@ -16,8 +16,8 @@ do
 		dir="`echo $line | awk '{ print $4 }'`"
 		mkdir -p $dir
 		targetdev="`stat -f %d $dir/.`"
-		if [ $targetdev -eq 1 ]
-		then	echo "skipping $dir properties"
+		if [ $targetdev -lt 256 ]
+		then	echo "skipping non-dev $dir properties"
 		else	chown $owner $dir
 			chmod $mode $dir
 			chgrp $group $dir
