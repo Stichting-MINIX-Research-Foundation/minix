@@ -50,7 +50,7 @@ int c;					/* character to append */
  * to the output driver if an END_OF_KMESS is encountered. 
  */
   if (c != END_OF_KMESS) {
-#if DEBUG_SERIAL
+#ifdef DEBUG_SERIAL
       if (do_serial_debug) {
 	if(c == '\n')
       		ser_putc('\r');

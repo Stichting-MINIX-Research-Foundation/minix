@@ -50,7 +50,7 @@
 /* DEBUG_IPCSTATS collects information on who sends messages to whom. */
 #define DEBUG_IPCSTATS			0
 
-#if USE_SMALL
+#if !USE_SYSDEBUG
 #undef DEBUG_SERIAL
 #undef DEBUG_ENABLE_IPC_WARNINGS
 #endif

@@ -395,7 +395,7 @@ PUBLIC void arch_init(void)
 #endif
 }
 
-#if DEBUG_SERIAL
+#ifdef DEBUG_SERIAL
 PUBLIC void ser_putc(char c)
 {
         int i;

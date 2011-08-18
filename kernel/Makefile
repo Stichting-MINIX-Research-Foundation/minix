@@ -70,6 +70,7 @@ SRCS+= 	breakpoints.c debugreg.S
 # Extra debugging routines
 .if ${USE_SYSDEBUG} != "no"
 SRCS+= 	debug.c
+CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
 # These come last, so the profiling buffer is at the end of the data segment
