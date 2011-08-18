@@ -42,6 +42,11 @@ SRCS+= erand48_ieee754.c
 
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
+.elif (${USE_MINIXMALLOC} != "no")
+SRCS+=	\
+	${LIBCDIR}/../libc/stdlib/malloc.c	\
+	${LIBCDIR}/../libc/stdlib/calloc.c	\
+	${LIBCDIR}/../libc/stdlib/malloc-debug.c
 .else
 SRCS+=	malloc.c
 .endif
