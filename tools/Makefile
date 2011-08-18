@@ -10,11 +10,11 @@ GEN_FILES=	*.bak image kernel *.iso *.iso.gz cdfdimage rootimage src
 
 # Specify the programs that are part of the system image.
 .if ${BUILDAVFS} == "yes"
-VFS= "../servers/avfs/vfs"
-PFS= "../servers/apfs/pfs"
+VFS= avfs
+PFS= apfs
 .else
-VFS= "../servers/vfs/vfs"
-PFS= "../servers/pfs/pfs"
+VFS= vfs
+PFS= pfs
 .endif
 KERNEL= kernel
 PROGRAMS= \
@@ -22,13 +22,13 @@ PROGRAMS= \
 	../servers/rs/rs \
 	../servers/pm/pm \
 	../servers/sched/sched \
-	${VFS} \
+	../servers/${VFS}/vfs \
 	../drivers/memory/memory \
 	../drivers/log/log \
 	../drivers/tty/tty \
 	../servers/mfs/mfs \
 	../servers/vm/vm \
-	${PFS} \
+	../servers/${PFS}/pfs \
 	../servers/init/init
 
 usage:	
