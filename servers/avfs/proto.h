@@ -141,6 +141,7 @@ _PROTOTYPE( void ds_event, (void)					);
 _PROTOTYPE( int do_fsready, (void)                                      );
 _PROTOTYPE( int do_mount, (void)					);
 _PROTOTYPE( int do_umount, (void)					);
+_PROTOTYPE( int is_nonedev, (dev_t dev)					);
 _PROTOTYPE( void mount_pfs, (void)					);
 _PROTOTYPE( int mount_fs, (dev_t dev, char fullpath[PATH_MAX+1],
 				   endpoint_t fs_e, int rdonly,

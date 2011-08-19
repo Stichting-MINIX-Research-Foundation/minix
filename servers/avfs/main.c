@@ -385,6 +385,10 @@ PRIVATE void *do_work(void *arg)
 
   lock_proc(fp, 0); /* This proc is busy */
 
+  if (verbose) {
+	printf("Doing call_nr = %d for %d\n", call_nr, who_e);
+  }
+
   if (call_nr == MAPDRIVER) {
 	error = do_mapdriver();
   } else if (call_nr == COMMON_GETSYSINFO) {

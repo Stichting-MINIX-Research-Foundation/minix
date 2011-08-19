@@ -43,7 +43,6 @@ PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 
 FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt,
 					char path[PATH_MAX+1])		);
-FORWARD _PROTOTYPE( int is_nonedev, (dev_t dev)				);
 FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)			);
 FORWARD _PROTOTYPE( void update_bspec, (dev_t dev, endpoint_t fs_e,
 				      int send_drv_e)			);
@@ -153,7 +152,8 @@ PUBLIC int do_mount()
 	return(err_code);
 
   /* Do the actual job */
-  return mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
+  r = mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
+  return(r);
 }
 
 
@@ -191,32 +191,18 @@ char mount_label[LABEL_MAX] )
 	assert(strlen(label) > 0);
   }
 
-  lock_bsf();
-
-  /* Check whether there is a block special file open which uses the
-   * same device (partition) */
-  for (bspec = &vnode[0]; bspec < &vnode[NR_VNODES]; ++bspec) {
-	if (bspec->v_ref_count > 0 && bspec->v_sdev == dev) {
-		/* Found, flush and invalidate any blocks for this device. */
-		req_flush(bspec->v_fs_e, dev);
-		break;
-	}
-  }
-
   /* Scan vmnt table to see if dev already mounted. If not, find a free slot.*/
   found = FALSE;
   for (i = 0; i < NR_MNTS; ++i) {
 	if (vmnt[i].m_dev == dev) found = TRUE;
   }
   if (found) {
-	unlock_bsf();
 	return(EBUSY);
   } else if ((new_vmp = get_free_vmnt()) == NULL) {
-	unlock_bsf();
 	return(ENOMEM);
   }
 
-  lock_vmnt(new_vmp, VMNT_EXCL);
+  if ((r = lock_vmnt(new_vmp, VMNT_EXCL)) != OK) return(r);
 
   isroot = (strcmp(mountpoint, "/") == 0);
   mount_root = (isroot && have_root < 2); /* Root can be mounted twice:
@@ -237,14 +223,15 @@ char mount_label[LABEL_MAX] )
 	} else
 		r = EBUSY;
 
+	if (vp != NULL)
+		unlock_vmnt(parent_vmp);
+
 	if (r != OK) {
 		if (vp != NULL) {
 			unlock_vnode(vp);
-			unlock_vmnt(parent_vmp);
 			put_vnode(vp);
 		}
 		unlock_vmnt(new_vmp);
-		unlock_bsf();
 		return(r);
 	}
   }
@@ -254,11 +241,9 @@ char mount_label[LABEL_MAX] )
   if ((root_node = get_free_vnode()) == NULL || dev == 266) {
 	if (vp != NULL) {
 		unlock_vnode(vp);
-		unlock_vmnt(parent_vmp);
 		put_vnode(vp);
 	}
 	unlock_vmnt(new_vmp);
-	unlock_bsf();
 	return(err_code);
   }
 
@@ -271,19 +256,21 @@ char mount_label[LABEL_MAX] )
   else new_vmp->m_flags &= ~VMNT_READONLY;
 
   /* Tell FS which device to mount */
+  if (verbose)
+	printf("Tell FS %d to mount device %s %d\n", fs_e, label, dev);
   if ((r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res)) != OK) {
+	if (verbose) printf("Failed: %d\n", r);
 	if (vp != NULL) {
 		unlock_vnode(vp);
-		unlock_vmnt(parent_vmp);
 		put_vnode(vp);
 	}
 	new_vmp->m_fs_e = NONE;
 	new_vmp->m_dev = NO_DEV;
 	unlock_vnode(root_node);
 	unlock_vmnt(new_vmp);
-	unlock_bsf();
 	return(r);
   }
+  if (verbose) printf("Ok done: r=%d\n", r);
 
   /* Fill in root node's fields */
   root_node->v_fs_e = res.fs_e;
@@ -300,7 +287,9 @@ char mount_label[LABEL_MAX] )
   root_node->v_vmnt = new_vmp;
   root_node->v_dev = new_vmp->m_dev;
 
-  if(mount_root) {
+  lock_bsf();
+
+  if (mount_root) {
 	/* Superblock and root node already read.
 	 * Nothing else can go wrong. Perform the mount. */
 	new_vmp->m_root_node = root_node;
@@ -342,7 +331,6 @@ char mount_label[LABEL_MAX] )
   /* If error, return the super block and both inodes; release the vmnt. */
   if (r != OK) {
 	unlock_vnode(vp);
-	unlock_vmnt(parent_vmp);
 	unlock_vnode(root_node);
 	unlock_vmnt(new_vmp);
 	put_vnode(vp);
@@ -364,7 +352,6 @@ char mount_label[LABEL_MAX] )
   update_bspec(dev, fs_e, 0 /* Don't send new driver endpoint */);
 
   unlock_vnode(vp);
-  unlock_vmnt(parent_vmp);
   unlock_vnode(root_node);
   unlock_vmnt(new_vmp);
   unlock_bsf();
@@ -454,7 +441,10 @@ PUBLIC int unmount(
 
   lock_bsf();
 
-  assert(lock_vmnt(vmp, VMNT_EXCL) == OK);
+  if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK) {
+	unlock_bsf();
+	return(r);
+  }
 
   /* See if the mounted device is busy.  Only 1 vnode using it should be
    * open -- the root vnode -- and that inode only 1 time. */
@@ -577,7 +567,7 @@ PRIVATE dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX+1])
 /*===========================================================================*
  *                              is_nonedev				     *
  *===========================================================================*/
-PRIVATE int is_nonedev(dev_t dev)
+PUBLIC int is_nonedev(dev_t dev)
 {
 /* Return whether the given device is a "none" pseudo device.
  */

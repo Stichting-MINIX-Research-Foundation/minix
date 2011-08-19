@@ -50,13 +50,13 @@ PUBLIC int do_pipe()
   struct vmnt *vmp;
   struct node_details res;
 
+  /* Get a lock on PFS */
+  if ((vmp = find_vmnt(PFS_PROC_NR)) == NULL) panic("PFS gone");
+  if ((r = lock_vmnt(vmp, VMNT_WRITE)) != OK) return(r);
+
   /* See if a free vnode is available */
   if ((vp = get_free_vnode()) == NULL) return(err_code);
   lock_vnode(vp, VNODE_OPCL);
-
-  /* Get a lock on PFS */
-  if ((vmp = find_vmnt(PFS_PROC_NR)) == NULL) panic("PFS gone");
-  lock_vmnt(vmp, VMNT_WRITE);
 
   /* Acquire two file descriptors. */
   rfp = fp;
@@ -147,8 +147,13 @@ endpoint_t map_to_fs_e;
 
   if ((vmp = find_vmnt(map_to_fs_e)) == NULL)
 	panic("Can't map to unknown endpoint");
-  if (lock_vmnt(vmp, VMNT_WRITE) == EBUSY)
-	vmp = NULL;	/* Already locked, do not unlock */
+  if ((r = lock_vmnt(vmp, VMNT_WRITE)) != OK) {
+	if (r == EBUSY)
+		vmp = NULL;	/* Already locked, do not unlock */
+	else
+		return(r);
+
+  }
 
   /* Create a temporary mapping of this inode to another FS. Read and write
    * operations on data will be handled by that FS. The rest by the 'original'

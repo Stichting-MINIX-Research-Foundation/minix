@@ -180,7 +180,8 @@ PRIVATE int common_open(char path[PATH_MAX+1], int oflags, mode_t omode)
 			 * we default to ROOT_FS. */
 			vp->v_bfs_e = ROOT_FS_E; /* By default */
 			for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)
-				if (vmp->m_dev == vp->v_sdev)
+				if (vmp->m_dev == vp->v_sdev &&
+				    !is_nonedev(vmp->m_dev))
 					vp->v_bfs_e = vmp->m_fs_e;
 
 			/* Get the driver endpoint of the block spec device */

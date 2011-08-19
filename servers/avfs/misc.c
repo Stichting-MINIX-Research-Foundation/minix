@@ -284,14 +284,19 @@ PUBLIC int do_fcntl()
 PUBLIC int do_sync()
 {
   struct vmnt *vmp;
+  int r = OK;
+
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-	lock_vmnt(vmp, VMNT_EXCL);
-	if (vmp->m_dev != NO_DEV && vmp->m_fs_e != NONE)
+	if (vmp->m_dev != NO_DEV && vmp->m_fs_e != NONE &&
+		 vmp->m_root_node != NULL) {
+		if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
+			break;
 		req_sync(vmp->m_fs_e);
-	unlock_vmnt(vmp);
+		unlock_vmnt(vmp);
+	}
   }
 
-  return(OK);
+  return(r);
 }
 
 /*===========================================================================*
@@ -299,23 +304,28 @@ PUBLIC int do_sync()
  *===========================================================================*/
 PUBLIC int do_fsync()
 {
-/* Perform the fsync() system call. For now, don't be unnecessarily smart. */
+/* Perform the fsync() system call. */
   struct filp *rfilp;
   struct vmnt *vmp;
   dev_t dev;
+  int r = OK;
 
   if ((rfilp = get_filp(m_in.m1_i1, VNODE_READ)) == NULL) return(err_code);
   dev = rfilp->filp_vno->v_dev;
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-	lock_vmnt(vmp, VMNT_EXCL);
-	if (vmp->m_dev != NO_DEV && vmp->m_dev == dev && vmp->m_fs_e != NONE)
+	if (vmp->m_dev != NO_DEV && vmp->m_dev == dev &&
+		vmp->m_fs_e != NONE && vmp->m_root_node != NULL) {
+
+		if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
+			break;
 		req_sync(vmp->m_fs_e);
-	unlock_vmnt(vmp);
+		unlock_vmnt(vmp);
+	}
   }
 
   unlock_filp(rfilp);
 
-  return(OK);
+  return(r);
 }
 
 /*===========================================================================*
@@ -344,6 +354,7 @@ PUBLIC void pm_reboot()
 	}
   }
 
+  do_sync();
   unmount_all();
 }
 

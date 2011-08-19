@@ -169,6 +169,10 @@ struct fproc *rfp;
   char *cp;
   char dir_entry[PATH_MAX+1];
   struct vnode *start_dir, *res;
+  int r;
+
+  *resolve->l_vnode = NULL;
+  *resolve->l_vmp = NULL;
 
   /* Is the path absolute or relative? Initialize 'start_dir' accordingly. */
   start_dir = (resolve->l_path[0] == '/' ? rfp->fp_rd : rfp->fp_wd);
@@ -195,8 +199,12 @@ struct fproc *rfp;
 	struct vmnt *vmp;
 
 	vmp = find_vmnt(start_dir->v_fs_e);
-	if (lock_vmnt(vmp, resolve->l_vmnt_lock) != EBUSY)
+	r = lock_vmnt(vmp, resolve->l_vmnt_lock);
+	if (r == EDEADLK)
+		return(NULL);
+	else if (r == OK)
 		*resolve->l_vmp = vmp;
+
 	lock_vnode(start_dir, resolve->l_vnode_lock);
 	*resolve->l_vnode = start_dir;
 	dup_vnode(start_dir);
@@ -285,6 +293,8 @@ struct fproc *rfp;
   if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
 	if (r == EBUSY) /* vmnt already locked */
 		vmpres = NULL;
+	else
+		return(r);
   }
   *(resolve->l_vmp) = vmpres;
 
@@ -320,7 +330,7 @@ struct fproc *rfp;
 		vmp = NULL;
 	} else if (r == EENTERMOUNT) {
 		/* Entering a new partition */
-		dir_vp = 0;
+		dir_vp = NULL;
 		/* Start node is now the mounted partition's root node */
 		for (vmp = &vmnt[0]; vmp != &vmnt[NR_MNTS]; ++vmp) {
 			if (vmp->m_dev != NO_DEV && vmp->m_mounted_on) {
@@ -374,6 +384,8 @@ struct fproc *rfp;
 	if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
 		if (r == EBUSY)
 			vmpres = NULL;	/* Already locked */
+		else
+			return(r);
 	}
 	*(resolve->l_vmp) = vmpres;
 

@@ -129,6 +129,8 @@ PUBLIC int lock_vmnt(struct vmnt *vmp, tll_access_t locktype)
 
   initial_locktype = (locktype == VMNT_EXCL) ? VMNT_WRITE : locktype;
 
+  if (vmp->m_fs_e == who_e) return(EDEADLK);
+
   r = tll_lock(&vmp->m_lock, initial_locktype);
 
   if (r == EBUSY) return(r);
