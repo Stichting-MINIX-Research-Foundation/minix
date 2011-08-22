@@ -17,7 +17,7 @@
 /* Space reserved for program and arguments. */
 #define MAX_COMMAND_LEN     512         /* maximum argument string length */
 #define MAX_SCRIPT_LEN      256         /* maximum restart script name length */
-#define MAX_NR_ARGS           4         /* maximum number of arguments */
+#define MAX_NR_ARGS          10         /* maximum number of arguments */
 
 #define MAX_IPC_LIST        256         /* Max size of list for IPC target
                                          * process names
