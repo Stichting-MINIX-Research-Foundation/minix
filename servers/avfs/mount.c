@@ -404,7 +404,9 @@ PUBLIC int do_umount(void)
   if ((dev = name_to_dev(TRUE /*allow_mountpt*/, fullpath)) == NO_DEV)
 	return(err_code);
 
-  if ((r = unmount(dev, label)) != OK) return(r);
+  if ((r = unmount(dev, label)) != OK) { verbose2=0; verbose_e = NONE; return(r); }
+  verbose2 = 0;
+  verbose_e = NONE;
 
   /* Return the label of the mounted file system, so that the caller
    * can shut down the corresponding server process.
@@ -439,12 +441,9 @@ PUBLIC int unmount(
   /* Did we find the vmnt (i.e., was dev a mounted device)? */
   if(!vmp) return(EINVAL);
 
-  lock_bsf();
-
-  if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK) {
-	unlock_bsf();
-	return(r);
-  }
+  verbose2=1;
+  verbose_e = vmp->m_fs_e;
+  if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK) return(r);
 
   /* See if the mounted device is busy.  Only 1 vnode using it should be
    * open -- the root vnode -- and that inode only 1 time. */
@@ -457,7 +456,6 @@ PUBLIC int unmount(
 
   if (count > 1 || locks > 1) {
 	unlock_vmnt(vmp);
-	unlock_bsf();
 	return(EBUSY);    /* can't umount a busy file system */
   }
 
@@ -491,11 +489,13 @@ PUBLIC int unmount(
   vmp->m_dev = NO_DEV;
   vmp->m_fs_e = NONE;
 
-  /* The root FS will handle block I/O requests for this device now. */
-  update_bspec(dev, ROOT_FS_E, 1 /* send new driver endpoint */);
-
   unlock_vmnt(vmp);
+
+  /* The root FS will handle block I/O requests for this device now. */
+  lock_bsf();
+  update_bspec(dev, ROOT_FS_E, 1 /* send new driver endpoint */);
   unlock_bsf();
+
   return(OK);
 }
 
