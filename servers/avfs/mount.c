@@ -404,9 +404,7 @@ PUBLIC int do_umount(void)
   if ((dev = name_to_dev(TRUE /*allow_mountpt*/, fullpath)) == NO_DEV)
 	return(err_code);
 
-  if ((r = unmount(dev, label)) != OK) { verbose2=0; verbose_e = NONE; return(r); }
-  verbose2 = 0;
-  verbose_e = NONE;
+  if ((r = unmount(dev, label)) != OK) return(r);
 
   /* Return the label of the mounted file system, so that the caller
    * can shut down the corresponding server process.
@@ -441,8 +439,6 @@ PUBLIC int unmount(
   /* Did we find the vmnt (i.e., was dev a mounted device)? */
   if(!vmp) return(EINVAL);
 
-  verbose2=1;
-  verbose_e = vmp->m_fs_e;
   if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK) return(r);
 
   /* See if the mounted device is busy.  Only 1 vnode using it should be
