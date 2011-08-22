@@ -707,7 +707,8 @@ PUBLIC int req_readsuper(
   dev_t dev,
   int readonly,
   int isroot,
-  struct node_details *res_nodep
+  struct node_details *res_nodep,
+  int *con_reqs
 )
 {
   int r;
@@ -741,6 +742,7 @@ PUBLIC int req_readsuper(
 	res_nodep->fsize = m.RES_FILE_SIZE_LO;
 	res_nodep->uid = m.RES_UID;
 	res_nodep->gid = m.RES_GID;
+	*con_reqs = m.RES_CONREQS;
   }
 
   return(r);

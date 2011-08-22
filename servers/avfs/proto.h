@@ -252,7 +252,8 @@ _PROTOTYPE( int req_rdlink, (endpoint_t fs_e, ino_t inode_nr,
 				int direct)				);
 _PROTOTYPE( int req_readsuper, (endpoint_t fs_e, char *driver_name,
 				dev_t dev, int readonly, int isroot,
-				struct node_details *res_nodep)		);
+				struct node_details *res_nodep,
+				int *con_reqs)				);
 _PROTOTYPE( int req_readwrite, (endpoint_t fs_e, ino_t inode_nr,
 				u64_t pos, int rw_flag,
 				endpoint_t user_e, char *user_addr,

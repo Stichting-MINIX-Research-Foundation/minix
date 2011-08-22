@@ -172,7 +172,7 @@ int rdonly,
 char mount_label[LABEL_MAX] )
 {
   int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
-  int i, r = OK, found, isroot, mount_root;
+  int i, r = OK, found, isroot, mount_root, con_reqs;
   struct fproc *tfp;
   struct dmap *dp;
   struct vnode *root_node, *vp = NULL, *bspec;
@@ -260,10 +260,8 @@ char mount_label[LABEL_MAX] )
   else new_vmp->m_flags &= ~VMNT_READONLY;
 
   /* Tell FS which device to mount */
-  if (verbose)
-	printf("Tell FS %d to mount device %s %d\n", fs_e, label, dev);
-  if ((r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res)) != OK) {
-	if (verbose) printf("Failed: %d\n", r);
+  r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
+  if (r != OK) {
 	if (vp != NULL) {
 		unlock_vnode(vp);
 		put_vnode(vp);
@@ -274,7 +272,6 @@ char mount_label[LABEL_MAX] )
 	unlock_vmnt(new_vmp);
 	return(r);
   }
-  if (verbose) printf("Ok done: r=%d\n", r);
 
   /* Fill in root node's fields */
   root_node->v_fs_e = res.fs_e;
@@ -290,6 +287,11 @@ char mount_label[LABEL_MAX] )
   /* Root node is indeed on the partition */
   root_node->v_vmnt = new_vmp;
   root_node->v_dev = new_vmp->m_dev;
+  if (con_reqs == 0)
+	new_vmp->m_comm.c_max_reqs = 1;	/* Default if FS doesn't tell us */
+  else
+	new_vmp->m_comm.c_max_reqs = con_reqs;
+  new_vmp->m_comm.c_cur_reqs = 0;
 
   lock_bsf();
 
@@ -454,7 +456,7 @@ PUBLIC int unmount(
 		if (is_vnode_locked(vp)) locks++;
 	  }
 
-  if (count > 1 || locks > 1) {
+  if (count > 1 || locks > 1 || tll_haspendinglock(&vmp->m_lock)) {
 	unlock_vmnt(vmp);
 	return(EBUSY);    /* can't umount a busy file system */
   }
