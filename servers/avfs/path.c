@@ -341,7 +341,12 @@ struct fproc *rfp;
 			   }
 			}
 		}
-		assert(dir_vp);
+		if (dir_vp == NULL) {
+			printf("VFS: path lookup error; root node not found\n");
+			if (vmpres) unlock_vmnt(vmpres);
+			*(resolve->l_vmp) = NULL;
+			return(EIO);
+		}
 	} else {
 		/* Climbing up mount */
 		/* Find the vmnt that represents the partition on
