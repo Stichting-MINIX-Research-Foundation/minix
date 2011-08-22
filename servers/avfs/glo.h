@@ -37,6 +37,8 @@ EXTERN struct worker_thread *self;
 EXTERN endpoint_t receive_from;/* endpoint with pending reply */
 EXTERN int force_sync;		/* toggle forced synchronous communication */
 EXTERN int verbose;
+EXTERN int verbose2;
+EXTERN endpoint_t verbose_e;
 EXTERN int deadlock_resolving;
 EXTERN mutex_t exec_lock;
 EXTERN mutex_t bsf_lock;/* Global lock for access to block special files */

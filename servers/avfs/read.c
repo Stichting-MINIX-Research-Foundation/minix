@@ -137,17 +137,12 @@ int rw_flag;			/* READING or WRITING */
   } else if (block_spec) {		/* Block special files. */
 	lock_bsf();
 
-	printf("Doing block read_write(%d) from dev %d/ep=%d\n",
-		rw_flag == READING,
-		vp->v_sdev, vp->v_bfs_e);
 	r = req_breadwrite(vp->v_bfs_e, who_e, vp->v_sdev, position,
 		m_in.nbytes, m_in.buffer, rw_flag, &res_pos, &res_cum_io);
 	if (r == OK) {
-		printf("OK res_cum_io = %d\n", res_cum_io);
 		position = res_pos;
 		cum_io += res_cum_io;
-	} else
-		printf("Failed with %d\n", r);
+	}
 
 	unlock_bsf();
   } else {				/* Regular files */
