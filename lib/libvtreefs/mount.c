@@ -35,6 +35,8 @@ PUBLIC int fs_readsuper(void)
 	fs_m_out.RES_GID = root->i_stat.gid;
 	fs_m_out.RES_DEV = NO_DEV;
 
+	fs_m_out.RES_CONREQS = 1;/* We can handle only 1 request at a time */
+
 	fs_mounted = TRUE;
 
 	return OK;

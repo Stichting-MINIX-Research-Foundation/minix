@@ -59,6 +59,8 @@ PUBLIC int fs_readsuper() {
   fs_m_out.RES_UID = SYS_UID; /* Always root */
   fs_m_out.RES_GID = SYS_GID; /* operator */
 
+  fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+
   return(r);
 }
 

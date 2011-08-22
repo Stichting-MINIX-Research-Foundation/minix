@@ -169,6 +169,8 @@ PUBLIC int fs_readsuper()
   fs_m_out.RES_UID = root_ip->i_uid;
   fs_m_out.RES_GID = root_ip->i_gid;
 
+  fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+
   return(r);
 }
 

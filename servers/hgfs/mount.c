@@ -62,6 +62,8 @@ PUBLIC int do_readsuper()
   m_out.RES_GID = opt.gid;
   m_out.RES_DEV = NO_DEV;
 
+  m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+
   state.mounted = TRUE;
 
   return OK;
