@@ -29,9 +29,9 @@
 
 int subtest = 1;
 int superuser;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
+char *MaxName;			/* Name of maximum length */
 char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
+char *ToLongName;		/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 _PROTOTYPE(void test25a, (void));
@@ -40,8 +40,6 @@ _PROTOTYPE(void test25c, (void));
 _PROTOTYPE(void test25d, (void));
 _PROTOTYPE(void test25e, (void));
 _PROTOTYPE(void makelongnames, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
@@ -50,8 +48,8 @@ int main(int argc, char *argv[])
 
   sync();
 
-  if (argc == 2) m = atoi(argv[1]);
   start(25);
+  if (argc == 2) m = atoi(argv[1]);
   makelongnames();
   superuser = (geteuid() == 0);
 
@@ -66,7 +64,6 @@ int main(int argc, char *argv[])
 	if (m & 020) test25e();
   }
   quit();
-  return 1;
 }
 
 void test25a()
@@ -688,9 +685,15 @@ void test25e()
 void makelongnames()
 {
   register int i;
+  int max_name_length;
 
-  memset(MaxName, 'a', NAME_MAX);
-  MaxName[NAME_MAX] = '\0';
+  max_name_length = name_max("."); /* Aka NAME_MAX, but not every FS supports
+				    * the same length, hence runtime check */
+  MaxName = malloc(max_name_length + 1);
+  ToLongName = malloc(max_name_length + 1 + 1); /* Name of maximum +1 length */
+  memset(MaxName, 'a', max_name_length);
+  MaxName[max_name_length] = '\0';
+
   for (i = 0; i < PATH_MAX - 1; i++) {	/* idem path */
 	MaxPath[i++] = '.';
 	MaxPath[i] = '/';
@@ -700,8 +703,8 @@ void makelongnames()
   strcpy(ToLongName, MaxName);	/* copy them Max to ToLong */
   strcpy(ToLongPath, MaxPath);
 
-  ToLongName[NAME_MAX] = 'a';
-  ToLongName[NAME_MAX + 1] = '\0';	/* extend ToLongName by one too many */
+  ToLongName[max_name_length] = 'a';
+  ToLongName[max_name_length+1] = '\0';/* extend ToLongName by one too many */
   ToLongPath[PATH_MAX - 1] = '/';
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }

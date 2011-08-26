@@ -18,7 +18,7 @@
 #define ITERATIONS        1
 #define MAX_ERROR 4
 
-int subtest, errct;
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void test21a, (void));
@@ -36,8 +36,6 @@ _PROTOTYPE(void test21m, (void));
 _PROTOTYPE(void test21n, (void));
 _PROTOTYPE(void test21o, (void));
 _PROTOTYPE(int get_link, (char *name));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
 
 int main(argc, argv)
 int argc;
@@ -50,12 +48,8 @@ char *argv[];
   sync();
 
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 21 ");
-  fflush(stdout);
 
-  system("rm -rf DIR_21; mkdir DIR_21");
-  chdir("DIR_21");
-
+  start(21);
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 00001) test21a();
 	if (m & 00002) test21b();
@@ -73,7 +67,6 @@ char *argv[];
 	if (m & 020000) test21o();
   }
   quit();
-  return(-1);			/* impossible */
 }
 
 void test21a()
@@ -360,12 +353,6 @@ void test21e()
   errno = 0;
   if (mkdir("D1", 0777) != -1) e(8);
   if (errno != EEXIST) e(9);
-#if NAME_MAX == 14
-  if (mkdir("D1/ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0777) != 0) e(10);
-  if (access("D1/ABCDEFGHIJKLMN", 7 ) != 0) e(11);
-  if (rmdir("D1/ABCDEFGHIJKLMNOPQ") != 0) e(12);
-  if (access("D1/ABCDEFGHIJKLMN", 7 ) != -1) e(13);
-#endif
   errno = 0;
   if (mkdir("D1/D2/x", 0777) != -1) e(14);
   if (errno != ENOENT) e(15);
@@ -651,32 +638,3 @@ char *name;
   return(statbuf.st_nlink);
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}
-
-void quit()
-{
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

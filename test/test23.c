@@ -25,17 +25,15 @@ int superuser;			/* True if we are root. */
 char cwd[PATH_MAX];		/* Space for path names. */
 char cwd2[PATH_MAX];
 char buf[PATH_MAX];
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
+char *MaxName;			/* Name of maximum length */
 char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
+char *ToLongName;		/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 _PROTOTYPE(void test23a, (void));
 _PROTOTYPE(void test23b, (void));
 _PROTOTYPE(void test23c, (void));
 _PROTOTYPE(void makelongnames, (void));	/* Fill MaxName etc. */
-_PROTOTYPE(char *last_index, (char *string, int ch));
-_PROTOTYPE(char *my_getcwd, (char *buf, int size));
 
 int main(int argc, char *argv[])
 {
@@ -135,7 +133,7 @@ void test23b()
 
   System("rm -rf ../DIR_23/*");
 
-  /* Fiddle with the size (2nt) parameter of `getcwd ()'. */
+  /* Fiddle with the size (2nd) parameter of `getcwd ()'. */
   if (getcwd(cwd, PATH_MAX) != cwd) e(1);	/* get cwd */
   if (getcwd(buf, strlen(cwd)) != (char *) 0) e(2);   /* size 1 to small */
   if (errno != ERANGE) e(3);
@@ -279,9 +277,15 @@ void test23c()
 void makelongnames()
 {
   register int i;
+  int max_name_length;
 
-  memset(MaxName, 'a', NAME_MAX);
-  MaxName[NAME_MAX] = '\0';
+  max_name_length = name_max("."); /* Aka NAME_MAX, but not every FS supports
+				    * the same length, hence runtime check */
+  MaxName = malloc(max_name_length + 1);
+  ToLongName = malloc(max_name_length + 1 + 1); /* Name of maximum +1 length */
+  memset(MaxName, 'a', max_name_length);
+  MaxName[max_name_length] = '\0';
+
   for (i = 0; i < PATH_MAX - 1; i++) {	/* idem path */
 	MaxPath[i++] = '.';
 	MaxPath[i] = '/';
@@ -291,79 +295,9 @@ void makelongnames()
   strcpy(ToLongName, MaxName);	/* copy them Max to ToLong */
   strcpy(ToLongPath, MaxPath);
 
-  ToLongName[NAME_MAX] = 'a';
-  ToLongName[NAME_MAX + 1] = '\0';	/* extend ToLongName by one too many */
+  ToLongName[max_name_length] = 'a';
+  ToLongName[max_name_length+1] = '\0';/* extend ToLongName by one too many */
   ToLongPath[PATH_MAX - 1] = '/';
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
-}
-
-/* The following code, is take from pwd written by Adri Koppes */
-
-/* My_getcwd() helper. */
-char *last_index(string, ch)
-char *string;
-char ch;
-{
-  register char *retval = '\0';
-
-  while (*string != '\0') {
-	if (*string == ch) retval = string;
-	string++;
-  }
-  return(retval);
-}
-
-char *my_getcwd(buf, size)
-char *buf;
-int size;
-{				/* should be like getcwd() */
-  int sd;
-  register int fd;
-  register char *n;
-  char name[128];
-  struct stat s, st, sk;
-  struct direct d;
-
-  if (size <= 0) return(char *) 0;
-
-  *buf = '\0';
-  *name = '\0';
-  stat(".", &s);
-  do {
-	if ((fd = open("..", O_RDONLY)) < 0) return(char *) 0;
-	st.st_dev = s.st_dev;
-	st.st_ino = s.st_ino;
-	stat("..", &s);
-	Chdir("..");
-	sd = sizeof(struct direct);
-	if (s.st_dev == st.st_dev) {
-		do {
-			if (read(fd, (char *) &d, sd) < sd) return(char *) 0;
-		} while (d.d_ino != st.st_ino);
-	} else {
-		do {
-			if (read(fd, (char *) &d, sd) < sd) return(char *) 0;
-			stat(d.d_name, &sk);
-		} while ((sk.st_dev != st.st_dev) ||
-			 (sk.st_ino != st.st_ino));
-	}
-	close(fd);
-	if (strcmp(".", d.d_name) != 0) {
-		strcat(name, "/");
-		strcat(name, d.d_name);
-	}
-  } while ((s.st_ino != st.st_ino) || (s.st_dev != st.st_dev));
-  if (*name == '\0')
-	strncat(buf, "/", size);
-  else
-	while ((n = last_index(name, '/')) != NULL) {
-		n[NAME_MAX] = '\0';
-		strncat(buf, n, size - strlen(buf));
-		*n = '\0';
-	}
-  strncat(buf, name, size - strlen(buf));
-  buf[size - 1] = '\0';
-  Chdir(buf);			/* get back there */
-  return buf;
 }
 

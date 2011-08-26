@@ -19,21 +19,14 @@
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-int errct = 0;
-int subtest = 1;
+#include "common.c"
+
 int superuser;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
-char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
-char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 _PROTOTYPE(void test36a, (void));
 _PROTOTYPE(void test36b, (void));
 _PROTOTYPE(void test36c, (void));
 _PROTOTYPE(void test36d, (void));
-_PROTOTYPE(void makelongnames, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 _PROTOTYPE(int not_provided_option, (int _option));
 _PROTOTYPE(int provided_option, (int _option, int _minimum_value));
 _PROTOTYPE(int variating_option, (int _option, int _minimum_value));
@@ -65,12 +58,8 @@ int main(int argc, char *argv[])
   int i, m = 0xFFFF;
 
   sync();
+  start(36);
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 36 ");
-  fflush(stdout);
-  System("rm -rf DIR_36; mkdir DIR_36");
-  Chdir("DIR_36");
-  makelongnames();
   superuser = (geteuid() == 0);
 
   for (i = 0; i < ITERATIONS; i++) {
@@ -139,58 +128,6 @@ void test36d()
 {
   subtest = 4;
   System("rm -rf ../DIR_36/*");
-}
-
-void makelongnames()
-{
-  register int i;
-
-  memset(MaxName, 'a', NAME_MAX);
-  MaxName[NAME_MAX] = '\0';
-  for (i = 0; i < PATH_MAX - 1; i++) {	/* idem path */
-	MaxPath[i++] = '.';
-	MaxPath[i] = '/';
-  }
-  MaxPath[PATH_MAX - 1] = '\0';
-
-  strcpy(ToLongName, MaxName);	/* copy them Max to ToLong */
-  strcpy(ToLongPath, MaxPath);
-
-  ToLongName[NAME_MAX] = 'a';
-  ToLongName[NAME_MAX + 1] = '\0';	/* extend ToLongName by one too many */
-  ToLongPath[PATH_MAX - 1] = '/';
-  ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_36");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
 }
 
 int not_provided_option(option)

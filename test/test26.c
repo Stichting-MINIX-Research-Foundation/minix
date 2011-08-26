@@ -20,18 +20,11 @@
 #define Stat(a,b)     if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 #define Mkfifo(f)     if (mkfifo(f,0777)!=0) printf("Can't make fifo %s\n", f)
 
-int errct = 0;
-int subtest = 1;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
-char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
-char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
+#include "common.c"
 
 _PROTOTYPE(void test26a, (void));
 _PROTOTYPE(void test26b, (void));
 _PROTOTYPE(void test26c, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
@@ -39,10 +32,8 @@ int main(int argc, char *argv[])
 
   sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 26 ");
-  fflush(stdout);
-  System("rm -rf DIR_26; mkdir DIR_26");
-  Chdir("DIR_26");
+
+  start(26);
 
   for (i = 0; i < 10; i++) {
 	if (m & 0001) test26a();
@@ -241,33 +232,3 @@ void test26c()
   }
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_26");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

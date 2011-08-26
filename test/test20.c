@@ -27,22 +27,15 @@
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-int errct = 0;
-int subtest = 1;
+#include "common.c"
+
 int superuser;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
-char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
-char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 _PROTOTYPE(void test20a, (void));
 _PROTOTYPE(void test20b, (void));
 _PROTOTYPE(void test20c, (void));
 _PROTOTYPE(void test20d, (void));
 _PROTOTYPE(int do_check, (void));
-_PROTOTYPE(void makelongnames, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 char executable[1024];
 
@@ -60,11 +53,7 @@ int main(int argc, char *argv[])
   strcpy(executable, "../");
   strcat(executable, argv[0]);
 
-  printf("Test 20 ");
-  fflush(stdout);
-  System("rm -rf DIR_20; mkdir DIR_20");
-  Chdir("DIR_20");
-  makelongnames();
+  start(20);
   superuser = (geteuid() == 0);
 
   for (i = 0; i < ITERATIONS; i++) {
@@ -339,57 +328,3 @@ int do_check()
   return retval;
 }
 
-void makelongnames()
-{
-  register int i;
-
-  memset(MaxName, 'a', NAME_MAX);
-  MaxName[NAME_MAX] = '\0';
-  for (i = 0; i < PATH_MAX - 1; i++) {	/* idem path */
-	MaxPath[i++] = '.';
-	MaxPath[i] = '/';
-  }
-  MaxPath[PATH_MAX - 1] = '\0';
-
-  strcpy(ToLongName, MaxName);	/* copy them Max to ToLong */
-  strcpy(ToLongPath, MaxPath);
-
-  ToLongName[NAME_MAX] = 'a';
-  ToLongName[NAME_MAX + 1] = '\0';	/* extend ToLongName by one too many */
-  ToLongPath[PATH_MAX - 1] = '/';
-  ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_20");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else if (errct < 10000) {
-	printf("%d errors\n", errct);
-	exit(1);
-  } else {
-	printf("errors\n");
-	exit(2);
-  }
-}

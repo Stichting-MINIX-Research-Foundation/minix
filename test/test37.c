@@ -17,7 +17,9 @@
 #define SIGS 14
 #define MAX_ERROR 4
 
-int iteration, cumsig, subtest, errct = 0, sig1, sig2;
+#include "common.c"
+
+int iteration, cumsig, sig1, sig2;
 
 int sigarray[SIGS] = {SIGHUP, SIGILL, SIGTRAP, SIGABRT, SIGIOT, 
 	      SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2, SIGPIPE, SIGALRM,
@@ -64,9 +66,7 @@ _PROTOTYPE(void test37n, (void));
 _PROTOTYPE(void catch15, (int signo));
 _PROTOTYPE(void test37o, (void));
 _PROTOTYPE(void clearsigstate, (void));
-_PROTOTYPE(void quit, (void));
 _PROTOTYPE(void wait_for, (int pid));
-_PROTOTYPE(void e, (int n));
 
 int main(argc, argv)
 int argc;
@@ -76,13 +76,9 @@ char *argv[];
 
   sync();
 
+  start(37);
+
   if (argc == 2) m = atoi(argv[1]);
-
-  printf("Test 37 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_37; mkdir DIR_37");
-  chdir("DIR_37");
 
   for (i = 0; i < ITERATIONS; i++) {
 	iteration = i;
@@ -106,7 +102,6 @@ char *argv[];
   }
 
   quit();
-  return(-1);			/* impossible */
 }
 
 void test37a()
@@ -1001,21 +996,6 @@ void clearsigstate()
   sigprocmask(SIG_UNBLOCK, &sigset_var, (sigset_t *)NULL);
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(4);
-  }
-}
-
 void wait_for(pid)
 pid_t pid;
 {
@@ -1041,17 +1021,3 @@ pid_t pid;
   }
 }
 
-void e(n)
-int n;
-{
-  char msgbuf[80];
-
-  sprintf(msgbuf, "Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  perror(msgbuf);
-  if (errct++ > MAX_ERROR) {
-	fprintf(stderr, "Too many errors;  test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}

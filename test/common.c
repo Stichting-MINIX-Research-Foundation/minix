@@ -15,6 +15,7 @@ int common_test_nr = -1, errct = 0, subtest;
 _PROTOTYPE(void cleanup, (void));
 _PROTOTYPE(int does_fs_truncate, (void));
 _PROTOTYPE(void e, (int n));
+_PROTOTYPE(int name_max, (char *path));
 _PROTOTYPE(void quit, (void));
 _PROTOTYPE(void rm_rf_dir, (int test_nr));
 _PROTOTYPE(void rm_rf_ppdir, (int test_nr));
@@ -57,6 +58,14 @@ int does_fs_truncate(void)
   if (!(stvfs.f_flag & ST_NOTRUNC)) does_truncate = 1;
  
   return(does_truncate); 
+}
+
+int name_max(char *path)
+{
+  struct statvfs stvfs;
+
+  if (statvfs(path, &stvfs) != 0) e(7779);
+  return(stvfs.f_namemax);
 }
 
 

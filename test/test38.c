@@ -26,8 +26,8 @@
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-int errct = 0;
-int subtest = 1;
+#include "common.c"
+
 int superuser;
 int signumber = 0;
 
@@ -35,19 +35,15 @@ _PROTOTYPE(void test38a, (void));
 _PROTOTYPE(void test38b, (void));
 _PROTOTYPE(void test38c, (void));
 _PROTOTYPE(void setsignumber, (int _signumber));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
   sync();
+  start(38);
+
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 38 ");
-  fflush(stdout);
-  System("rm -rf DIR_38; mkdir DIR_38");
-  Chdir("DIR_38");
   superuser = (geteuid() == 0);
   umask(0000);
 
@@ -57,7 +53,6 @@ int main(int argc, char *argv[])
 	if (m & 0004) test38c();
   }
   quit();
-  return 1;
 }
 
 void test38a()
@@ -736,33 +731,3 @@ int signum;
   signumber = signum;
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_38");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

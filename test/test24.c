@@ -32,21 +32,17 @@ _PROTOTYPE(void makelongnames, (void));
 int subtest = 1;
 int superuser;
 
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
+char *MaxName;			/* Name of maximum length */
 char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
+char *ToLongName;		/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
-  sync();
+  start(24);
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 24 ");
-  fflush(stdout);
-  System("rm -rf DIR_24; mkdir DIR_24");
-  Chdir("DIR_24");
   makelongnames();
   superuser = (geteuid() == 0);
 
@@ -171,12 +167,17 @@ void test24b()
   int i, j;			/* i = highest open dir count */
   DIR *dirp[OVERFLOW_DIR_NR], *dp;
   struct dirent *dep, *dep1, *dep2;
-  char name[NAME_MAX + 2];	/* buffer for file name, and count */
+  char *name;	/* buffer for file name, and count */
   int dot = 0, dotdot = 0;
+  int max_name_length;
 
   subtest = 2;
 
   System("rm -rf ../DIR_24/*");
+
+  max_name_length = name_max(".");
+  name = malloc(max_name_length + 2);
+  memset(name, '\0', max_name_length + 2);
 
   for (i = 0; i < OVERFLOW_DIR_NR; i++) {
 	dirp[i] = opendir("/");
@@ -195,7 +196,7 @@ void test24b()
   System("rm -rf foo; mkdir foo");
   Chdir("foo");
   name[0] = 0;
-  for (i = 0; i <= NAME_MAX; i++) {
+  for (i = 0; i <= max_name_length; i++) {
 	if (strcat(name, "X") != name) e(5);
 	close(creat(name, 0666));	/* fails once on */
   }				/* XX..XX, 1 too long */
@@ -211,13 +212,13 @@ void test24b()
 		name[strlen(dep->d_name)] += 1;	/* 'X' + 1 == 'Y' */
   }
   if (closedir(dp) != 0) e(7);
-  for (i = 1; i <= NAME_MAX; i++) {	/* Check if every length */
+  for (i = 1; i <= max_name_length; i++) {	/* Check if every length */
 	if (name[i] != 'Y') e(8);	/* has been seen once. */
   }
 
   /* Check upper and lower bound. */
   if (name[0] != 'X') e(9);
-  if (name[NAME_MAX + 1] != '\0') e(10);
+  if (name[max_name_length + 1] != '\0') e(10);
 
   /* Now check if two simultaniouse open dirs do the same */
   if ((dirp[1] = opendir("foo")) == ((DIR *) NULL)) e(11);
@@ -343,9 +344,15 @@ DIR *dirp;			/* (`f1', `f3', `f5', `.', `..')  */
 void makelongnames()
 {
   register int i;
+  int max_name_length;
 
-  memset(MaxName, 'a', NAME_MAX);
-  MaxName[NAME_MAX] = '\0';
+  max_name_length = name_max("."); /* Aka NAME_MAX, but not every FS supports
+				    * the same length, hence runtime check */
+  MaxName = malloc(max_name_length + 1);
+  ToLongName = malloc(max_name_length + 1 + 1); /* Name of maximum +1 length */
+  memset(MaxName, 'a', max_name_length);
+  MaxName[max_name_length] = '\0';
+
   for (i = 0; i < PATH_MAX - 1; i++) {	/* idem path */
 	MaxPath[i++] = '.';
 	MaxPath[i] = '/';
@@ -355,9 +362,8 @@ void makelongnames()
   strcpy(ToLongName, MaxName);	/* copy them Max to ToLong */
   strcpy(ToLongPath, MaxPath);
 
-  ToLongName[NAME_MAX] = 'a';
-  ToLongName[NAME_MAX + 1] = '\0';	/* extend ToLongName by one too many */
+  ToLongName[max_name_length] = 'a';
+  ToLongName[max_name_length+1] = '\0';/* extend ToLongName by one too many */
   ToLongPath[PATH_MAX - 1] = '/';
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
-

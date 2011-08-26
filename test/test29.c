@@ -34,19 +34,13 @@
 #define IS_CLOEXEC(fd)	((fcntl(fd, F_GETFD) & FD_CLOEXEC) == FD_CLOEXEC)
 #define SET_CLOEXEC(fd)	fcntl(fd, F_SETFD, FD_CLOEXEC)
 
-int errct = 0;
-int subtest = 1;
+#include "common.c"
+
 int superuser;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
-char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
-char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 _PROTOTYPE(void test29a, (void));
 _PROTOTYPE(void test29b, (void));
 _PROTOTYPE(void test29c, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
@@ -54,10 +48,8 @@ int main(int argc, char *argv[])
 
   sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 29 ");
-  fflush(stdout);
-  System("rm -rf DIR_29; mkdir DIR_29");
-  Chdir("DIR_29");
+
+  start(29);
   superuser = (geteuid() == 0);
 
   for (i = 0; i < ITERATIONS; i++) {
@@ -209,35 +201,4 @@ void test29c()
   }
 
   System("rm -rf ../DIR_29/*");
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  System("rm -rf DIR_29");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
 }

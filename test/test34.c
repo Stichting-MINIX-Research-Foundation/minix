@@ -39,12 +39,11 @@
 /* This program uses /etc/passwd and assumes things about it's contents. */
 #define PASSWD_FILE	"/etc/passwd"
 
-int subtest = 1;
 int superuser;
 int I_can_chown;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
+char *MaxName;			/* Name of maximum length */
 char MaxPath[PATH_MAX];		/* Same for path */
-char NameTooLong[NAME_MAX + 2];	/* Name of maximum +1 length */
+char *NameTooLong;		/* Name of maximum +1 length */
 char PathTooLong[PATH_MAX + 1];	/* Same for path, both too long */
 
 _PROTOTYPE(void test34a, (void));
@@ -541,22 +540,28 @@ void test34c()
 void makelongnames()
 {
   register int i;
+  int max_name_length;
 
-  memset(MaxName, 'a', NAME_MAX);
-  MaxName[NAME_MAX] = '\0';
+  max_name_length = name_max("."); /* Aka NAME_MAX, but not every FS supports
+				    * the same length, hence runtime check */
+  MaxName = malloc(max_name_length + 1);
+  NameTooLong = malloc(max_name_length + 1 + 1); /* Name of maximum +1 length */
+  memset(MaxName, 'a', max_name_length);
+  MaxName[max_name_length] = '\0';
+
   for (i = 0; i < PATH_MAX - 1; i++) {	/* idem path */
 	MaxPath[i++] = '.';
 	MaxPath[i] = '/';
   }
   MaxPath[PATH_MAX - 1] = '\0';
 
-  strcpy(NameTooLong, MaxName);	/* copy them Max to TooLong */
+  strcpy(NameTooLong, MaxName);	/* copy them Max to ToLong */
   strcpy(PathTooLong, MaxPath);
 
-  NameTooLong[NAME_MAX] = 'a';
-  NameTooLong[NAME_MAX + 1] = '\0';	/* extend NameTooLong by one too many*/
+  NameTooLong[max_name_length] = 'a';
+  NameTooLong[max_name_length+1] = '\0';/* extend ToLongName by one too many */
   PathTooLong[PATH_MAX - 1] = '/';
-  PathTooLong[PATH_MAX] = '\0';	/* inc PathTooLong by one */
+  PathTooLong[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
 /* Getids returns a valid uid and gid. Is used PASSWD FILE.

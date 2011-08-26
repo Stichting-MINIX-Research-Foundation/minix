@@ -11,22 +11,11 @@
 #define MAX_ERROR 4
 #define TIMED 0
 
-static volatile int errct;
+#include "common.c"
+
 static volatile int expect_SIGFPE;
 static u64_t i, j, k;
 static jmp_buf jmpbuf_SIGFPE, jmpbuf_main;
-
-static void quit(void)
-{
-	if (errct == 0) {
-		printf("ok\n");
-		exit(0);
-	} else {
-		printf("%d errors\n", errct);
-		exit(1);
-	}
-	assert(0); /* not reachable */
-}
 
 static void err(int line)
 {
@@ -272,7 +261,7 @@ static void test(void)
 
 int main(void)
 {
-	printf("Test 53 ");
+	start(53);
 
 	/* set up signal handler to deal with div by zero */
 	if (setjmp(jmpbuf_main) == 0) {
@@ -287,6 +276,4 @@ int main(void)
 
 	/* this was all */
 	quit();
-	assert(0); /* not reachable */
-	return -1;
 }

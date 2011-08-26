@@ -16,8 +16,7 @@
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
 #define Stat(a,b)	if (stat(a,b) != 0) printf("Can't stat %s\n", a)
 
-int errct = 0;			/* Total error counter. */
-int subtest = 1;
+#include "common.c"
 
 _PROTOTYPE(void test22a, (void));
 _PROTOTYPE(int mode, (char *filename));
@@ -31,11 +30,7 @@ int main(int argc, char *argv[])
 
   sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test 22 ");
-  fflush(stdout);
-  system("chmod 777 DIR_22/* DIR_22/*/* > /dev/null 2>&1");
-  System("rm -rf DIR_22; mkdir DIR_22");
-  Chdir("DIR_22");
+  start(22);
 
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 0001) test22a();
@@ -165,34 +160,3 @@ char *arg;
   return 0777 ^ mode(arg);
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  Chdir("..");
-  system("chmod 777 ../DIR_22/* ../DIR_22/*/* > /dev/null 2>&1");
-  System("rm -rf DIR_22");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}
