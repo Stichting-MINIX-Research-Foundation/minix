@@ -344,14 +344,17 @@ PUBLIC void pm_reboot()
    * will tell us about it).
    */
   for (i = 0; i < NR_PROCS; i++) {
+	rfp = &fproc[i];
+	if (rfp->fp_endpoint == NONE) continue;
+
+	/* Let FSes exit themselves */
+	if (find_vmnt(rfp->fp_endpoint) != NULL) continue;
+
 	/* Don't just free the proc right away, but let it finish what it was
 	 * doing first */
-	rfp = &fproc[i];
-	if (rfp->fp_endpoint != NONE) {
-		lock_proc(rfp, 0);
-		free_proc(rfp, 0);
-		unlock_proc(rfp);
-	}
+	lock_proc(rfp, 0);
+	free_proc(rfp, 0);
+	unlock_proc(rfp);
   }
 
   do_sync();
