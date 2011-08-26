@@ -152,12 +152,7 @@ PUBLIC int do_mount()
 	return(err_code);
 
   /* Do the actual job */
-  verbose2 = 1;
-  verbose_e = fs_e;
-  r = mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
-  verbose2 = 0;
-  verbose_e = NONE;
-  return(r);
+  return mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
 }
 
 
