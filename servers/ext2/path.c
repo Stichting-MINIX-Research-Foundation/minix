@@ -305,7 +305,7 @@ char *suffix;			/* current remaining path. Has to point in the
 
   llen = (size_t) rip->i_size;
 
-  if (llen > MAX_FAST_SYMLINK_LENGTH) {
+  if (llen >= MAX_FAST_SYMLINK_LENGTH) {
 	/* normal symlink */
 	if ((blink = read_map(rip, (off_t) 0)) == NO_BLOCK)
 		return(EIO);
@@ -358,7 +358,7 @@ char *suffix;			/* current remaining path. Has to point in the
   /* Everything is set, now copy the expanded link to user_path */
   memmove(user_path, sp, llen);
 
-  if (llen > MAX_FAST_SYMLINK_LENGTH)
+  if (llen >= MAX_FAST_SYMLINK_LENGTH)
 	put_block(bp, DIRECTORY_BLOCK);
 
   return(OK);

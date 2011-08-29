@@ -195,7 +195,7 @@ PUBLIC int fs_rdlink()
   if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
-  if (rip->i_size > MAX_FAST_SYMLINK_LENGTH) {
+  if (rip->i_size >= MAX_FAST_SYMLINK_LENGTH) {
   /* normal symlink */
 	if ((b = read_map(rip, (off_t) 0)) == NO_BLOCK) {
 		r = EIO;
