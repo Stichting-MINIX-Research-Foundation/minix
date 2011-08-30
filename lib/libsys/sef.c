@@ -76,7 +76,7 @@ PUBLIC void sef_startup()
   if(sef_self_priv_flags & ROOT_SYS_PROC) {
       /* RS initialization is special. */
       if((r = do_sef_rs_init(old_endpoint)) != OK) {
-          panic("RS unable to complete init: %d (%s)", r, strerror(-r));
+          panic("RS unable to complete init: %d", r);
       }
   }
   else {
