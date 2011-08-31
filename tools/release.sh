@@ -30,11 +30,11 @@ PACKAGEURL=ftp://ftp.minix3.org/pub/minix/packages/$version_pretty/`uname -m`/Al
 PREINSTALLED_PACKAGES="
 	pkgin
 	pkg_install
-	pkg_tarup
 	bmake
 	binutils
 	clang
 	"
+#	pkg_tarup
 
 PKG_ADD_URL=$PACKAGEURL
 
