@@ -855,6 +855,13 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 
 			break;
 
+		case NWIOSUDSPAIROLD:
+
+			/* connect two sockets -- socketpair() */
+			rc = do_socketpair_old(dev_m_in, dev_m_out);
+
+			break;
+
 		case NWIOGUDSSOTYPE:
 
 			/* get socket type -- getsockopt(SO_TYPE) */

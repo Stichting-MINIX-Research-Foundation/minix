@@ -884,6 +884,53 @@ PUBLIC int do_shutdown(message *dev_m_in, message *dev_m_out)
 	return OK;
 }
 
+PUBLIC int do_socketpair_old(message *dev_m_in, message *dev_m_out)
+{
+	int rc;
+	short minorin;
+	int minorx, minory;
+	struct sockaddr_un addr;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] do_socketpair() call_count=%d\n",
+				uds_minor(dev_m_in), ++call_count);
+#endif
+
+	/* first ioctl param is the first socket */
+	minorx = uds_minor_old(dev_m_in);
+
+	/* third ioctl param is the minor number of the second socket */
+	rc = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
+			(vir_bytes) 0, (vir_bytes) &minorin, sizeof(short), D);
+
+	if (rc != OK) {
+		return EIO;
+	}
+
+	minory = minor(minorin);
+
+#if DEBUG == 1
+	printf("socketpair() %d - %d\n", minorx, minory);
+#endif
+
+	/* security check - both sockets must have the same endpoint (owner) */
+	if (uds_fd_table[minorx].owner != uds_fd_table[minory].owner) {
+
+		/* we won't allow you to magically connect your socket to
+		 * someone elses socket
+		 */
+		return EPERM;
+	}
+
+	addr.sun_family = AF_UNIX;
+	addr.sun_path[0] = 'X';
+	addr.sun_path[1] = '\0';
+
+	uds_fd_table[minorx].syscall_done = 1;
+	return perform_connection(dev_m_in, dev_m_out, &addr, minorx, minory);
+}
+
 PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
 {
 	int rc;
@@ -908,7 +955,7 @@ PUBLIC int do_socketpair(message *dev_m_in, message *dev_m_out)
 		return EIO;
 	}
 
-	minory = (minor(minorin) & BYTE);
+	minory = minor(minorin);
 
 #if DEBUG == 1
 	printf("socketpair() %d - %d\n", minorx, minory);

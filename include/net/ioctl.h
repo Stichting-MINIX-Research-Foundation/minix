@@ -73,6 +73,7 @@ struct msg_control
 #define NWIOSUDSBLOG	_IOW ('n', 73, int)		   /* listen() */
 #define NWIOSUDSCONN	_IOW ('n', 74, struct sockaddr_un) /* connect() */
 #define NWIOSUDSSHUT    _IOW ('n', 75, int)		  /* shutdown() */
+#define NWIOSUDSPAIROLD	_IOW ('n', 76, short)		  /* socketpair() */
 #define NWIOSUDSPAIR	_IOW ('n', 76, dev_t)		  /* socketpair() */
 #define NWIOSUDSACCEPT	_IOW ('n', 77, struct sockaddr_un) /* accept() */
 #define NWIOSUDSCTRL	_IOW ('n', 78, struct msg_control) /* sendmsg() */

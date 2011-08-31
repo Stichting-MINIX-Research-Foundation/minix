@@ -98,7 +98,7 @@ typedef long key_t;
 /* Open Group Base Specifications Issue 6 (not complete) */
 typedef long useconds_t;	/* Time in microseconds */
 
-typedef short          dev_t;	   /* holds (major|minor) device pair */
+typedef u32_t          dev_t;	   /* holds (major|minor) device pair */
 typedef u32_t          big_dev_t;
 
 /* Types used in disk, inode, etc. data structures.

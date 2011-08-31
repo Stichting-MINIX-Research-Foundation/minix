@@ -77,6 +77,7 @@ _PROTOTYPE( int do_getsockname, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_getpeername, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_shutdown, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_socketpair, (message *dev_m_in, message *dev_m_out)	);
+_PROTOTYPE( int do_socketpair_old, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_getsockopt_sotype,
 				(message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_getsockopt_peercred,

@@ -42,13 +42,13 @@ struct stat {
 
 
 struct minix_prev_stat {
-  dev_t st_dev;			/* major/minor device number */
+  short st_dev;			/* major/minor device number */
   ino_t st_ino;			/* i-node number */
   mode_t st_mode;		/* file mode, protection bits, etc. */
   nlink_t st_nlink;		/* # links; */
   uid_t st_uid;			/* uid of the file's owner */
   short int st_gid;		/* gid; TEMPORARY HACK: should be gid_t */
-  dev_t st_rdev;
+  short st_rdev;
   off_t st_size;		/* file size */
   time_t st_atime;		/* time of last access */
   time_t st_mtime;		/* time of last data modification */

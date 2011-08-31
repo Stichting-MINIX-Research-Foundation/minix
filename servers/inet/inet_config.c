@@ -67,7 +67,7 @@ static void check_mknod(char *device, mode_t mode, int minor)
 	struct stat st;
 	dev_t dev;
 
-	dev= (ip_dev & 0xFF00) | minor;
+	dev= makedev(major(ip_dev), minor);
 
 	if (stat(device, &st) < 0) {
 		if (errno != ENOENT) fatal(device);
@@ -77,7 +77,7 @@ static void check_mknod(char *device, mode_t mode, int minor)
 	}
 
 	if (mknod(device, S_IFCHR | mode, dev) < 0) fatal(device);
-	printf("mknod %s c %d %d\n", device, (ip_dev >> 8), minor);
+	printf("mknod %s c %d %d\n", device, major(ip_dev), minor);
 }
 
 static void check_ln(char *old, char *new)

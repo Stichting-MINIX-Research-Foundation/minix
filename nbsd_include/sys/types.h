@@ -193,7 +193,7 @@ typedef	int64_t		daddr_t;	/* disk address */
 #endif
 
 
-typedef	short		dev_t;		/* device number */
+typedef	uint32_t	dev_t;		/* device number */
 typedef	uint32_t	fixpt_t;	/* fixed point number */
 
 #ifndef	gid_t

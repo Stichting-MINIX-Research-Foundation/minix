@@ -77,6 +77,7 @@ struct msg_control
 #define NWIOSUDSCONN	_IOW ('n', 74, struct sockaddr_un) /* connect() */
 #define NWIOSUDSSHUT    _IOW ('n', 75, int)		  /* shutdown() */
 #define NWIOSUDSPAIR	_IOW ('n', 76, dev_t)		  /* socketpair() */
+#define NWIOSUDSPAIROLD	_IOW ('n', 76, short)		  /* socketpair() */
 #define NWIOSUDSACCEPT	_IOW ('n', 77, struct sockaddr_un) /* accept() */
 #define NWIOSUDSCTRL	_IOW ('n', 78, struct msg_control) /* sendmsg() */
 #define NWIOGUDSCTRL	_IORW('n', 79, struct msg_control) /* recvmsg() */
