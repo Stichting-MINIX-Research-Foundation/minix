@@ -62,23 +62,6 @@ EXTERN u16_t cddevice;		/* Drive that is CD if known. */
 
 #define CDNAME	"cd"		/* Name of the CD device. */
 
-typedef struct {		/* One chunk of free memory. */
-	u32_t	base;		/* Start byte. */
-	u32_t	size;		/* Number of bytes. */
-} memory;
-
-typedef struct {		/* One chunk of free memory. */
-	u32_t	base_lo;	/* Start byte. */
-	u32_t	base_hi;
-	u32_t	size_lo;	/* Number of bytes. */
-	u32_t	size_hi;	/* Number of bytes. */
-	u32_t	type;
-	u32_t	acpi_attrs;
-} e820_memory;
-
-EXTERN memory mem[3];		/* List of available memory. */
-EXTERN e820_memory emem[16];		/* List of available memory. */
-EXTERN int mem_entries;
 EXTERN int mon_return;		/* Monitor stays in memory? */
 EXTERN int cdbooted;		/* Did we boot from CD? (Set by boothead.s.) */
 

@@ -1,3 +1,4 @@
+#
 !	Boothead.s - BIOS support for boot.c		Author: Kees J. Bot
 !
 !
@@ -32,11 +33,14 @@
 	SS_SELECTOR =	   5*8	! Monitor stack
 	CS_SELECTOR =	   6*8	! Kernel code
 	MCS_SELECTOR=	   7*8	! Monitor code
+	E820_MAGIC=	 0x534D4150
 
 	ESC	    =	  0x1B	! Escape character
 
 	MB_BOOT_MAGIC	=	  0x2BADB002	! Multiboot BootLoader Magic
 	MULTIBOOT_STRUCT_ADDR	=	0x9500	! Multiboot Struct's Location
+
+#include "emem.h"
 
 ! Imported variables and functions:
 .extern _caddr, _daddr, _runsize, _edata, _end	! Runtime environment
@@ -45,7 +49,7 @@
 .extern _k_flags				! Special kernel flags
 .extern _mem					! Free memory list
 .extern _emem				! Free memory list for E820
-.extern _mem_entries				! Free memory E820 list entries
+.extern _emem_entries				! Free memory E820 list entries
 .extern _cdbooted				! Whether we booted from CD
 .extern _cddevice				! Whether we booted from CD
 .extern _do_multiboot				! Whether we are multibooting
@@ -157,17 +161,17 @@ sepID:
 	xor	bx, bx		! zero EBX
 	xor	bp, bp		!zero bp
 	.data1 o32
-	mov 	dx, e820_magic
+	mov 	dx, #E820_MAGIC
 	.data1 o32
-	mov	cx, const_24		! request 24 bytes
+	mov	cx, #EMEM_SIZE	! request 24 bytes
 	
 	.data1 o32
-	mov	ax, const_0xe820
+	mov	ax, #0xE820
 	int	0x15
 	jc	e820_failed
 
 	.data1 o32
-	mov 	dx, e820_magic
+	mov 	dx, #E820_MAGIC
 	.data1 o32
 	cmp	dx, ax
 	jne	e820_failed
@@ -179,30 +183,30 @@ sepID:
 
 e820_next:
 	.data1 o32
-	mov	ax, const_0xe820
+	mov	ax, #0xE820
 	mov	20(di), #1	! force a valid ACPI 3.X entry
 	
 	.data1 o32
-	mov	cx, const_24	! request 24 bytes
+	mov	cx, #EMEM_SIZE	! request 24 bytes
 	int	0x15
 	jc	e820_done
 	.data1 o32
-	mov 	dx, e820_magic
+	mov 	dx, #E820_MAGIC
 
 
 e820_gotit:
 	jcxz	e820_skip
-	cmp	bp, #16
-	je	e820_done	! we have only space for 16 entries
+	cmp	bp, #EMEM_ENTRIES
+	je	e820_done	! we have EMEM_ENTRIES storage
 	inc	bp
-	add	di, #24
+	add	di, #EMEM_SIZE	! increase di for next entry
 e820_skip:
 	.data1 o32
 	test	bx, bx
 	jne	e820_next
 
 e820_done:
-	mov	_mem_entries, bp
+	mov	_emem_entries, bp
 	jmp	memory_detected
 
 e820_failed:
@@ -250,7 +254,6 @@ adj_ext:
 no_ext:
 
 memory_detected:
-
 
 ! Time to switch to a higher level language (not much higher)
 	call	_boot
@@ -1619,14 +1622,6 @@ p_mcs_desc:
 	! Monitor code segment descriptor (64 kb flat)
 	.data2	0xFFFF, UNSET
 	.data1	UNSET, 0x9A, 0x00, 0x00
-
-e820_magic:
-!	.data1 0x53, 0x4D, 0x41, 0x50
-	.data1 0x50, 0x41, 0x4D, 0x53
-const_24:
-	.data1 0x18, 0x0, 0x0, 0x0
-const_0xe820:
-	.data2 0xe820
 
 
 .bss

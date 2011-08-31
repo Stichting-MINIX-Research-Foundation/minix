@@ -103,7 +103,7 @@
  * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
  * for DOS MINIX.
 */
-#define NR_MEMS            8 
+#define NR_MEMS            16
 
 
 /* Click to byte conversions (and vice versa). */

@@ -2,9 +2,9 @@
 .include <bsd.own.mk>
 
 # XXX: Can only be built with ACK currently
+MINIXID=	-sep
 .include "${.CURDIR}/../minix.ack16.mk"
 AFLAGS+=	-Was-ncc
-#LDFLAGS+=	-stack 12kb
 STRIPFLAG=	-s
 LIBDIR?=	/usr/lib/i86
 

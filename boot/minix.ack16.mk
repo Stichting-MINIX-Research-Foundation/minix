@@ -8,4 +8,5 @@ COMPILER_TYPE=ack
 OBJECT_FMT=a.out
 CPPFLAGS+=	-mi86
 AFLAGS+=	-mi86
-LDFLAGS+=	-mi86 -.o -com	# no crtso, common I+D
+LDFLAGS+=	-mi86 -.o $(MINIXID)	# no crtso
+MINIXID?=	-com			# common I+D default

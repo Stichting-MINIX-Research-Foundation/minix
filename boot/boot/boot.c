@@ -41,6 +41,7 @@ char version[]=		"2.20";
 #undef EXTERN
 #define EXTERN	/* Empty */
 #include "boot.h"
+#include "emem.h"
 
 #define arraysize(a)		(sizeof(a) / sizeof((a)[0]))
 #define arraylimit(a)		((a) + arraysize(a))
@@ -548,14 +549,19 @@ static void initialize(void)
 	u32_t dma64k;
 #endif
 
-	if (mem_entries) {
+	if (emem_entries) {
 		int i, j;
 		j = 0;
-		for(i = 0; i < mem_entries ; i++) {
-			if (j < 3 && emem[i].type == 1 && !emem[i].base_hi) {
-				mem[j].base = emem[i].base_lo;
-				mem[j].size = emem[i].size_lo;
-				j++;
+		for(i = 0; i < emem_entries ; i++) {
+			if (emem[i].type == 1 &&
+			    !emem[i].base_hi && !emem[i].size_hi) {
+			    	if(j < MEM_ENTRIES) {
+					mem[j].base = emem[i].base_lo;
+					mem[j].size = emem[i].size_lo;
+					j++;
+				} else {
+					printf("WARNING: boot skipping memory\n");
+				}
 			}
 		}
 	}

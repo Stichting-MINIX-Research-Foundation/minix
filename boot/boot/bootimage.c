@@ -26,6 +26,7 @@
 #include <machine/partition.h>
 #include "rawfs.h"
 #include "image.h"
+#include "emem.h"
 #include "boot.h"
 
 #include <machine/multiboot.h>
