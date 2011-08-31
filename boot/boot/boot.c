@@ -1228,9 +1228,9 @@ dev_t name2dev(char *name)
 		}
 	}
 
-	mbdev = (u32_t)tmpdev.device << 24
-	    | (u32_t)tmpdev.primary << 16
-	    | (u32_t)tmpdev.secondary << 8
+	mbdev = (u32_t)(tmpdev.device & 0xff) << 24
+	    | (u32_t)(tmpdev.primary & 0xff) << 16
+	    | (u32_t)(tmpdev.secondary & 0xff) << 8 /* (-1 & 0xff) is 0xff */
 	    | 0xff;
 
 	/* Look the name up on the boot device for the UNIX device number. */
