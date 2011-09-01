@@ -298,4 +298,9 @@ int	socket(int, int, int);
 int	socketpair(int, int, int, int *);
 __END_DECLS
 
+#define MSG_OOB         0x0001  /* process out-of-band data */
+#define MSG_PEEK        0x0002  /* peek at incoming message */
+#define MSG_DONTROUTE   0x0004  /* send without using routing tables */
+#define MSG_EOR         0x0008         /* complete record */
+
 #endif /* !_SYS_SOCKET_H_ */
