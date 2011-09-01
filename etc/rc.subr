@@ -1,0 +1,1284 @@
+# $NetBSD: rc.subr,v 1.88 2011/08/11 22:52:47 apb Exp $
+#
+# Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Luke Mewburn.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# rc.subr
+#	functions used by various rc scripts
+#
+
+: ${rcvar_manpage:='rc.conf(5)'}
+: ${RC_PID:=$$} ; export RC_PID
+nl='
+' # a literal newline
+
+#
+#	functions
+#	---------
+
+#
+# checkyesno var
+#	Test $1 variable, and warn if not set to YES or NO.
+#	Return 0 if it's "yes" (et al), nonzero otherwise.
+#
+checkyesno()
+{
+	eval _value=\$${1}
+	case $_value in
+
+		#	"yes", "true", "on", or "1"
+	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+		return 0
+		;;
+
+		#	"no", "false", "off", or "0"
+	[Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+		return 1
+		;;
+	*)
+		warn "\$${1} is not set properly - see ${rcvar_manpage}."
+		return 1
+		;;
+	esac
+}
+
+#
+# yesno_to_truefalse var
+#	Convert the value of a variable from any of the values
+#	understood by checkyesno() to "true" or "false".
+#
+yesno_to_truefalse()
+{
+	local var=$1
+	if checkyesno $var; then
+		eval $var=true
+		return 0
+	else
+		eval $var=false
+		return 1
+	fi
+}
+
+#
+# reverse_list list
+#	print the list in reverse order
+#
+reverse_list()
+{
+	_revlist=
+	for _revfile; do
+		_revlist="$_revfile $_revlist"
+	done
+	echo $_revlist
+}
+
+#
+# If booting directly to multiuser, send SIGTERM to
+# the parent (/etc/rc) to abort the boot.
+# Otherwise just exit.
+#
+stop_boot()
+{
+	if [ "$autoboot" = yes ]; then
+		echo "ERROR: ABORTING BOOT (sending SIGTERM to parent)!"
+		kill -TERM ${RC_PID}
+	fi
+	exit 1
+}
+
+#
+# mount_critical_filesystems type
+#	Go through the list of critical filesystems as provided in
+#	the rc.conf(5) variable $critical_filesystems_${type}, checking
+#	each one to see if it is mounted, and if it is not, mounting it.
+#	It's not an error if file systems prefixed with "OPTIONAL:"
+#	are not mentioned in /etc/fstab.
+#
+mount_critical_filesystems()
+{
+	eval _fslist=\$critical_filesystems_${1}
+	_mountcrit_es=0
+	for _fs in $_fslist; do
+		_optional=false
+		case "$_fs" in
+		OPTIONAL:*)
+			_optional=true
+			_fs="${_fs#*:}"
+			;;
+		esac
+		_ismounted=false
+		# look for a line like "${fs} on * type *"
+		# or "* on ${fs} type *" in the output from mount.
+		case "${nl}$( mount )${nl}" in
+		*" on ${_fs} type "*)
+			_ismounted=true
+			;;
+		*"${nl}${_fs} on "*)
+			_ismounted=true
+			;;
+		esac
+		if $_ismounted; then
+			print_rc_metadata \
+			"note:File system ${_fs} was already mounted"
+		else
+			_mount_output=$( mount $_fs 2>&1 )
+			_mount_es=$?
+			case "$_mount_output" in
+			*"${nl}"*)
+				# multiple lines can't be good,
+				# not even if $_optional is true
+				;;
+			*'unknown special file or file system'*)
+				if $_optional; then
+					# ignore this error
+					print_rc_metadata \
+			"note:Optional file system ${_fs} is not present"
+					_mount_es=0
+					_mount_output=""
+				fi
+				;;
+			esac
+			if [ -n "$_mount_output" ]; then
+				printf >&2 "%s\n" "$_mount_output"
+			fi
+			if [ "$_mount_es" != 0 ]; then
+				_mountcrit_es="$_mount_es"
+			fi
+		fi
+	done
+	return $_mountcrit_es
+}
+
+#
+# check_pidfile pidfile procname [interpreter]
+#	Parses the first line of pidfile for a PID, and ensures
+#	that the process is running and matches procname.
+#	Prints the matching PID upon success, nothing otherwise.
+#	interpreter is optional; see _find_processes() for details.
+#
+check_pidfile()
+{
+	_pidfile=$1
+	_procname=$2
+	_interpreter=$3
+	if [ -z "$_pidfile" -o -z "$_procname" ]; then
+		err 3 'USAGE: check_pidfile pidfile procname [interpreter]'
+	fi
+	if [ ! -f $_pidfile ]; then
+		return
+	fi
+	read _pid _junk < $_pidfile
+	if [ -z "$_pid" ]; then
+		return
+	fi
+	_find_processes $_procname ${_interpreter:-.} '-p '"$_pid"
+}
+
+#
+# check_process procname [interpreter]
+#	Ensures that a process (or processes) named procname is running.
+#	Prints a list of matching PIDs.
+#	interpreter is optional; see _find_processes() for details.
+#
+check_process()
+{
+	_procname=$1
+	_interpreter=$2
+	if [ -z "$_procname" ]; then
+		err 3 'USAGE: check_process procname [interpreter]'
+	fi
+	_find_processes $_procname ${_interpreter:-.} '-ax'
+}
+
+#
+# _find_processes procname interpreter psargs
+#	Search for procname in the output of ps generated by psargs.
+#	Prints the PIDs of any matching processes, space separated.
+#
+#	If interpreter == ".", check the following variations of procname
+#	against the first word of each command:
+#		procname
+#		`basename procname`
+#		`basename procname` + ":"
+#		"(" + `basename procname` + ")"
+#
+#	If interpreter != ".", read the first line of procname, remove the
+#	leading #!, normalise whitespace, append procname, and attempt to
+#	match that against each command, either as is, or with extra words
+#	at the end.  As an alternative, to deal with interpreted daemons
+#	using perl, the basename of the interpreter plus a colon is also
+#	tried as the prefix to procname.
+#
+_find_processes()
+{
+	if [ $# -ne 3 ]; then
+		err 3 'USAGE: _find_processes procname interpreter psargs'
+	fi
+	_procname=$1
+	_interpreter=$2
+	_psargs=$3
+
+	_pref=
+	_procnamebn=${_procname##*/}
+	if [ $_interpreter != "." ]; then	# an interpreted script
+		read _interp < ${_chroot:-}/$_procname	# read interpreter name
+		_interp=${_interp#\#!}		# strip #!
+		set -- $_interp
+		if [ $1 = "/usr/bin/env" ]; then
+			shift
+			set -- $(type $1)
+			shift $(($# - 1))
+			_interp="${1##*/} $_procname"
+		else
+			_interp="$* $_procname"
+		fi
+		if [ $_interpreter != $1 ]; then
+			warn "\$command_interpreter $_interpreter != $1"
+		fi
+		_interpbn=${1##*/}
+		_fp_args='_argv'
+		_fp_match='case "$_argv" in
+		    ${_interp}|"${_interp} "*|"${_interpbn}: "*${_procnamebn}*)'
+	else					# a normal daemon
+		_fp_args='_arg0 _argv'
+		_fp_match='case "$_arg0" in
+		    $_procname|$_procnamebn|${_procnamebn}:|"(${_procnamebn})")'
+	fi
+
+	_proccheck='
+		ps -o "pid,command" '"$_psargs"' |
+		while read _npid '"$_fp_args"'; do
+			case "$_npid" in
+			    PID)
+				continue ;;
+			esac ; '"$_fp_match"'
+				echo -n "$_pref$_npid" ;
+				_pref=" "
+				;;
+			esac
+		done'
+
+#echo 1>&2 "proccheck is :$_proccheck:"
+	eval $_proccheck
+}
+
+#
+# wait_for_pids pid [pid ...]
+#	spins until none of the pids exist
+#
+wait_for_pids()
+{
+	_list="$@"
+	if [ -z "$_list" ]; then
+		return
+	fi
+	_prefix=
+	while true; do
+		_nlist="";
+		for _j in $_list; do
+			if kill -0 $_j 2>/dev/null; then
+				_nlist="${_nlist}${_nlist:+ }$_j"
+			fi
+		done
+		if [ -z "$_nlist" ]; then
+			break
+		fi
+		_list=$_nlist
+		echo -n ${_prefix:-"Waiting for PIDS: "}$_list
+		_prefix=", "
+		sleep 2
+	done
+	if [ -n "$_prefix" ]; then
+		echo "."
+	fi
+}
+
+#
+# run_rc_command argument [parameters]
+#	Search for argument in the list of supported commands, which is:
+#		"start stop restart rcvar status poll ${extra_commands}"
+#	If there's a match, run ${argument}_cmd or the default method
+#	(see below), and pass the optional list of parameters to it.
+#
+#	If argument has a given prefix, then change the operation as follows:
+#		Prefix	Operation
+#		------	---------
+#		fast	Skip the pid check, and set rc_fast=yes
+#		force	Set ${rcvar} to YES, and set rc_force=yes
+#		one	Set ${rcvar} to YES
+#
+#	The following globals are used:
+#
+#	Name		Needed	Purpose
+#	----		------	-------
+#	name		y	Name of script.
+#
+#	command		n	Full path to command.
+#				Not needed if ${rc_arg}_cmd is set for
+#				each keyword.
+#
+#	command_args	n	Optional args/shell directives for command.
+#
+#	command_interpreter n	If not empty, command is interpreted, so
+#				call check_{pidfile,process}() appropriately.
+#
+#	extra_commands	n	List of extra commands supported.
+#
+#	pidfile		n	If set, use check_pidfile $pidfile $command,
+#				otherwise use check_process $command.
+#				In either case, only check if $command is set.
+#
+#	procname	n	Process name to check for instead of $command.
+#
+#	rcvar		n	This is checked with checkyesno to determine
+#				if the action should be run.
+#
+#	${name}_chroot	n	Directory to chroot to before running ${command}
+#				Requires /usr to be mounted.
+#
+#	${name}_chdir	n	Directory to cd to before running ${command}
+#				(if not using ${name}_chroot).
+#
+#	${name}_flags	n	Arguments to call ${command} with.
+#				NOTE:	$flags from the parent environment
+#					can be used to override this.
+#
+#	${name}_env	n	Additional environment variable settings
+#				for running ${command}
+#
+#	${name}_nice	n	Nice level to run ${command} at.
+#
+#	${name}_user	n	User to run ${command} as, using su(1) if not
+#				using ${name}_chroot.
+#				Requires /usr to be mounted.
+#
+#	${name}_group	n	Group to run chrooted ${command} as.
+#				Requires /usr to be mounted.
+#
+#	${name}_groups	n	Comma separated list of supplementary groups
+#				to run the chrooted ${command} with.
+#				Requires /usr to be mounted.
+#
+#	${rc_arg}_cmd	n	If set, use this as the method when invoked;
+#				Otherwise, use default command (see below)
+#
+#	${rc_arg}_precmd n	If set, run just before performing the
+#				${rc_arg}_cmd method in the default
+#				operation (i.e, after checking for required
+#				bits and process (non)existence).
+#				If this completes with a non-zero exit code,
+#				don't run ${rc_arg}_cmd.
+#
+#	${rc_arg}_postcmd n	If set, run just after performing the
+#				${rc_arg}_cmd method, if that method
+#				returned a zero exit code.
+#
+#	required_dirs	n	If set, check for the existence of the given
+#				directories before running the default
+#				(re)start command.
+#
+#	required_files	n	If set, check for the readability of the given
+#				files before running the default (re)start
+#				command.
+#
+#	required_vars	n	If set, perform checkyesno on each of the
+#				listed variables before running the default
+#				(re)start command.
+#
+#	Default behaviour for a given argument, if no override method is
+#	provided:
+#
+#	Argument	Default behaviour
+#	--------	-----------------
+#	start		if !running && checkyesno ${rcvar}
+#				${command}
+#
+#	stop		if ${pidfile}
+#				rc_pid=$(check_pidfile $pidfile $command)
+#			else
+#				rc_pid=$(check_process $command)
+#			kill $sig_stop $rc_pid
+#			wait_for_pids $rc_pid
+#			($sig_stop defaults to TERM.)
+#
+#	reload		Similar to stop, except use $sig_reload instead,
+#			and doesn't wait_for_pids.
+#			$sig_reload defaults to HUP.
+#
+#	restart		Run `stop' then `start'.
+#
+#	status		Show if ${command} is running, etc.
+#
+#	poll		Wait for ${command} to exit.
+#
+#	rcvar		Display what rc.conf variable is used (if any).
+#
+#	Variables available to methods, and after run_rc_command() has
+#	completed:
+#
+#	Variable	Purpose
+#	--------	-------
+#	rc_arg		Argument to command, after fast/force/one processing
+#			performed
+#
+#	rc_flags	Flags to start the default command with.
+#			Defaults to ${name}_flags, unless overridden
+#			by $flags from the environment.
+#			This variable may be changed by the precmd method.
+#
+#	rc_pid		PID of command (if appropriate)
+#
+#	rc_fast		Not empty if "fast" was provided (q.v.)
+#
+#	rc_force	Not empty if "force" was provided (q.v.)
+#
+#
+run_rc_command()
+{
+	rc_arg=$1
+	if [ -z "$name" ]; then
+		err 3 'run_rc_command: $name is not set.'
+	fi
+
+	_rc_prefix=
+	case "$rc_arg" in
+	fast*)				# "fast" prefix; don't check pid
+		rc_arg=${rc_arg#fast}
+		rc_fast=yes
+		;;
+	force*)				# "force" prefix; always run
+		rc_force=yes
+		_rc_prefix=force
+		rc_arg=${rc_arg#${_rc_prefix}}
+		if [ -n "${rcvar}" ]; then
+			eval ${rcvar}=YES
+		fi
+		;;
+	one*)				# "one" prefix; set ${rcvar}=yes
+		_rc_prefix=one
+		rc_arg=${rc_arg#${_rc_prefix}}
+		if [ -n "${rcvar}" ]; then
+			eval ${rcvar}=YES
+		fi
+		;;
+	esac
+
+	_keywords="start stop restart rcvar"
+	if [ -n "$extra_commands" ]; then
+		_keywords="${_keywords} ${extra_commands}"
+	fi
+	rc_pid=
+	_pidcmd=
+	_procname=${procname:-${command}}
+
+					# setup pid check command if not fast
+	if [ -z "$rc_fast" -a -n "$_procname" ]; then
+		if [ -n "$pidfile" ]; then
+			_pidcmd='rc_pid=$(check_pidfile '"$pidfile $_procname $command_interpreter"')'
+		else
+			_pidcmd='rc_pid=$(check_process '"$_procname $command_interpreter"')'
+		fi
+		if [ -n "$_pidcmd" ]; then
+			_keywords="${_keywords} status poll"
+		fi
+	fi
+
+	if [ -z "$rc_arg" ]; then
+		rc_usage "$_keywords"
+	fi
+	shift	# remove $rc_arg from the positional parameters
+
+	if [ -n "$flags" ]; then	# allow override from environment
+		rc_flags=$flags
+	else
+		eval rc_flags=\$${name}_flags
+	fi
+	eval _chdir=\$${name}_chdir	_chroot=\$${name}_chroot \
+	    _nice=\$${name}_nice	_user=\$${name}_user \
+	    _group=\$${name}_group	_groups=\$${name}_groups \
+	    _env=\"\$${name}_env\"
+
+	if [ -n "$_user" ]; then	# unset $_user if running as that user
+		if [ "$_user" = "$(id -un)" ]; then
+			unset _user
+		fi
+	fi
+
+					# if ${rcvar} is set, and $1 is not
+					# "rcvar", then run
+					#	checkyesno ${rcvar}
+					# and return if that failed or warn
+					# user and exit when interactive
+					#
+	if [ -n "${rcvar}" -a "$rc_arg" != "rcvar" ]; then
+		if ! checkyesno ${rcvar}; then
+					# check whether interactive or not
+			if [ -n "$_run_rc_script" ]; then
+				return 0
+			fi
+			for _elem in $_keywords; do
+				if [ "$_elem" = "$rc_arg" ]; then
+					cat 1>&2 <<EOF
+\$${rcvar} is not enabled - see ${rcvar_manpage}.
+Use the following if you wish to perform the operation:
+  $0 one${rc_arg}
+EOF
+					exit 1
+				fi
+			done
+			echo 1>&2 "$0: unknown directive '$rc_arg'."
+			rc_usage "$_keywords"
+		fi
+	fi
+
+	eval $_pidcmd			# determine the pid if necessary
+
+	for _elem in $_keywords; do
+		if [ "$_elem" != "$rc_arg" ]; then
+			continue
+		fi
+
+					# if there's a custom ${XXX_cmd},
+					# run that instead of the default
+					#
+		eval _cmd=\$${rc_arg}_cmd _precmd=\$${rc_arg}_precmd \
+		    _postcmd=\$${rc_arg}_postcmd
+		if [ -n "$_cmd" ]; then
+					# if the precmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_precmd && [ -z "$rc_force" ]; then
+				return 1
+			fi
+
+			if ! eval $_cmd \"\${@}\" && [ -z "$rc_force" ]; then
+				return 1
+			fi
+			eval $_postcmd
+			return 0
+		fi
+
+		if [ ${#} -gt 0 ]; then
+			err 1 "the $rc_arg command does not take any parameters"
+		fi
+
+		case "$rc_arg" in	# default operations...
+
+		status)
+			if [ -n "$rc_pid" ]; then
+				echo "${name} is running as pid $rc_pid."
+			else
+				echo "${name} is not running."
+				return 1
+			fi
+			;;
+
+		start)
+			if [ -n "$rc_pid" ]; then
+				echo 1>&2 "${name} already running? (pid=$rc_pid)."
+				exit 1
+			fi
+
+			if [ ! -x ${_chroot}${command} ]; then
+				return 0
+			fi
+
+					# check for required variables,
+					# directories, and files
+					#
+			for _f in $required_vars; do
+				if ! checkyesno $_f; then
+					warn "\$${_f} is not enabled."
+					if [ -z "$rc_force" ]; then
+						return 1
+					fi
+				fi
+			done
+			for _f in $required_dirs; do
+				if [ ! -d "${_f}/." ]; then
+					warn "${_f} is not a directory."
+					if [ -z "$rc_force" ]; then
+						return 1
+					fi
+				fi
+			done
+			for _f in $required_files; do
+				if [ ! -r "${_f}" ]; then
+					warn "${_f} is not readable."
+					if [ -z "$rc_force" ]; then
+						return 1
+					fi
+				fi
+			done
+
+					# if the precmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_precmd && [ -z "$rc_force" ]; then
+				return 1
+			fi
+
+					# setup the command to run, and run it
+					#
+			echo "Starting ${name}."
+			if [ -n "$_chroot" ]; then
+				_doit="\
+${_env:+env $_env }\
+${_nice:+nice -n $_nice }\
+chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
+$_chroot $command $rc_flags $command_args"
+			else
+				_doit="\
+${_chdir:+cd $_chdir; }\
+${_env:+env $_env }\
+${_nice:+nice -n $_nice }\
+$command $rc_flags $command_args"
+				if [ -n "$_user" ]; then
+				    _doit="su -m $_user -c 'sh -c \"$_doit\"'"
+				fi
+			fi
+
+					# if the cmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_doit && [ -z "$rc_force" ]; then
+				return 1
+			fi
+
+					# finally, run postcmd
+					#
+			eval $_postcmd
+			;;
+
+		stop)
+			if [ -z "$rc_pid" ]; then
+				if [ -n "$pidfile" ]; then
+					echo 1>&2 \
+				    "${name} not running? (check $pidfile)."
+				else
+					echo 1>&2 "${name} not running?"
+				fi
+				exit 1
+			fi
+
+					# if the precmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_precmd && [ -z "$rc_force" ]; then
+				return 1
+			fi
+
+					# send the signal to stop
+					#
+			echo "Stopping ${name}."
+			_doit="kill -${sig_stop:-TERM} $rc_pid"
+			if [ -n "$_user" ]; then
+				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
+			fi
+
+					# if the stop cmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_doit && [ -z "$rc_force" ]; then
+				return 1
+			fi
+
+					# wait for the command to exit,
+					# and run postcmd.
+			wait_for_pids $rc_pid
+			eval $_postcmd
+			;;
+
+		reload)
+			if [ -z "$rc_pid" ]; then
+				if [ -n "$pidfile" ]; then
+					echo 1>&2 \
+				    "${name} not running? (check $pidfile)."
+				else
+					echo 1>&2 "${name} not running?"
+				fi
+				exit 1
+			fi
+			echo "Reloading ${name} config files."
+			if ! eval $_precmd && [ -z "$rc_force" ]; then
+				return 1
+			fi
+			_doit="kill -${sig_reload:-HUP} $rc_pid"
+			if [ -n "$_user" ]; then
+				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
+			fi
+			if ! eval $_doit && [ -z "$rc_force" ]; then
+				return 1
+			fi
+			eval $_postcmd
+			;;
+
+		restart)
+			if ! eval $_precmd && [ -z "$rc_force" ]; then
+				return 1
+			fi
+					# prevent restart being called more
+					# than once by any given script
+					#
+			if ${_rc_restart_done:-false}; then
+				return 0
+			fi
+			_rc_restart_done=true
+
+			( $0 ${_rc_prefix}stop )
+			$0 ${_rc_prefix}start
+
+			eval $_postcmd
+			;;
+
+		poll)
+			if [ -n "$rc_pid" ]; then
+				wait_for_pids $rc_pid
+			fi
+			;;
+
+		rcvar)
+			echo "# $name"
+			if [ -n "$rcvar" ]; then
+				if checkyesno ${rcvar}; then
+					echo "\$${rcvar}=YES"
+				else
+					echo "\$${rcvar}=NO"
+				fi
+			fi
+			;;
+
+		*)
+			rc_usage "$_keywords"
+			;;
+
+		esac
+		return 0
+	done
+
+	echo 1>&2 "$0: unknown directive '$rc_arg'."
+	rc_usage "$_keywords"
+	exit 1
+}
+
+#
+# run_rc_script file arg
+#	Start the script `file' with `arg', and correctly handle the
+#	return value from the script.  If `file' ends with `.sh', it's
+#	sourced into the current environment.  If `file' appears to be
+#	a backup or scratch file, ignore it.  Otherwise if it's
+#	executable run as a child process.
+#
+#	If `file' contains "KEYWORD: interactive" and if we are
+#	running inside /etc/rc with postprocessing (as signified by
+#	_rc_postprocessor_fd being defined) then the script's stdout
+#	and stderr are redirected to $_rc_original_stdout_fd and
+#	$_rc_original_stderr_fd, so the output will be displayed on the
+#	console but not intercepted by /etc/rc's postprocessor.
+#
+run_rc_script()
+{
+	_file=$1
+	_arg=$2
+	if [ -z "$_file" -o -z "$_arg" ]; then
+		err 3 'USAGE: run_rc_script file arg'
+	fi
+
+	_run_rc_script=true
+
+	unset	name command command_args command_interpreter \
+		extra_commands pidfile procname \
+		rcvar required_dirs required_files required_vars
+	eval unset ${_arg}_cmd ${_arg}_precmd ${_arg}_postcmd
+
+	_must_redirect=false
+	if [ -n "${_rc_postprocessor_fd}" ] \
+	    && _has_rcorder_keyword interactive $_file
+	then
+		_must_redirect=true
+	fi
+
+	case "$_file" in
+	*.sh)				# run in current shell
+		if $_must_redirect; then
+			print_rc_metadata \
+			    "note:Output from ${_file} is not logged"
+			no_rc_postprocess eval \
+			    'set $_arg ; . $_file'
+		else
+			set $_arg ; . $_file
+		fi
+		;;
+	*[~#]|*.OLD|*.orig|*,v)		# scratch file; skip
+		warn "Ignoring scratch file $_file"
+		;;
+	*)				# run in subshell
+		if [ -x $_file ] && $_must_redirect; then
+			print_rc_metadata \
+			    "note:Output from ${_file} is not logged"
+			if [ -n "$rc_fast_and_loose" ]; then
+				no_rc_postprocess eval \
+				    'set $_arg ; . $_file'
+			else
+				no_rc_postprocess eval \
+				    '( set $_arg ; . $_file )'
+			fi
+		elif [ -x $_file ]; then
+			if [ -n "$rc_fast_and_loose" ]; then
+				set $_arg ; . $_file
+			else
+				( set $_arg ; . $_file )
+			fi
+		else
+			warn "Ignoring non-executable file $_file"
+		fi
+		;;
+	esac
+}
+
+#
+# load_rc_config command
+#	Source in the configuration file for a given command.
+#
+load_rc_config()
+{
+	_command=$1
+	if [ -z "$_command" ]; then
+		err 3 'USAGE: load_rc_config command'
+	fi
+
+	if ${_rc_conf_loaded:-false}; then
+		:
+	else
+		. /etc/rc.conf
+		_rc_conf_loaded=true
+	fi
+	if [ -f /etc/rc.conf.d/"$_command" ]; then
+		. /etc/rc.conf.d/"$_command"
+	fi
+}
+
+#
+# load_rc_config_var cmd var
+#	Read the rc.conf(5) var for cmd and set in the
+#	current shell, using load_rc_config in a subshell to prevent
+#	unwanted side effects from other variable assignments.
+#
+load_rc_config_var()
+{
+	if [ $# -ne 2 ]; then
+		err 3 'USAGE: load_rc_config_var cmd var'
+	fi
+	eval $(eval '(
+		load_rc_config '$1' >/dev/null;
+		if [ -n "${'$2'}" -o "${'$2'-UNSET}" != "UNSET" ]; then
+			echo '$2'=\'\''${'$2'}\'\'';
+		fi
+	)' )
+}
+
+#
+# rc_usage commands
+#	Print a usage string for $0, with `commands' being a list of
+#	valid commands.
+#
+rc_usage()
+{
+	echo -n 1>&2 "Usage: $0 [fast|force|one]("
+
+	_sep=
+	for _elem; do
+		echo -n 1>&2 "$_sep$_elem"
+		_sep="|"
+	done
+	echo 1>&2 ")"
+	exit 1
+}
+
+#
+# err exitval message
+#	Display message to stderr and log to the syslog, and exit with exitval.
+#
+err()
+{
+	exitval=$1
+	shift
+
+	if [ -x /usr/bin/logger ]; then
+		logger "$0: ERROR: $*"
+	fi
+	echo 1>&2 "$0: ERROR: $*"
+	exit $exitval
+}
+
+#
+# warn message
+#	Display message to stderr and log to the syslog.
+#
+warn()
+{
+	if [ -x /usr/bin/logger ]; then
+		logger "$0: WARNING: $*"
+	fi
+	echo 1>&2 "$0: WARNING: $*"
+}
+
+#
+# backup_file action file cur backup
+#	Make a backup copy of `file' into `cur', and save the previous
+#	version of `cur' as `backup' or use rcs for archiving.
+#
+#	This routine checks the value of the backup_uses_rcs variable,
+#	which can be either YES or NO.
+#
+#	The `action' keyword can be one of the following:
+#
+#	add		`file' is now being backed up (and is possibly
+#			being reentered into the backups system).  `cur'
+#			is created and RCS files, if necessary, are
+#			created as well.
+#
+#	update		`file' has changed and needs to be backed up.
+#			If `cur' exists, it is copied to to `back' or
+#			checked into RCS (if the repository file is old),
+#			and then `file' is copied to `cur'.  Another RCS
+#			check in done here if RCS is being used.
+#
+#	remove		`file' is no longer being tracked by the backups
+#			system.  If RCS is not being used, `cur' is moved
+#			to `back', otherwise an empty file is checked in,
+#			and then `cur' is removed.
+#
+#
+backup_file()
+{
+	_action=$1
+	_file=$2
+	_cur=$3
+	_back=$4
+
+	if checkyesno backup_uses_rcs; then
+		_msg0="backup archive"
+		_msg1="update"
+
+		# ensure that history file is not locked
+		if [ -f $_cur,v ]; then
+			rcs -q -u -U -M $_cur
+		fi
+
+		# ensure after switching to rcs that the
+		# current backup is not lost
+		if [ -f $_cur ]; then
+			# no archive, or current newer than archive
+			if [ ! -f $_cur,v -o $_cur -nt $_cur,v ]; then
+				ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
+				rcs -q -kb -U $_cur
+				co -q -f -u $_cur
+			fi
+		fi
+
+		case $_action in
+		add|update)
+			cp -p $_file $_cur
+			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
+			rcs -q -kb -U $_cur
+			co -q -f -u $_cur
+			chown root:wheel $_cur $_cur,v
+			;;
+		remove)
+			cp /dev/null $_cur
+			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
+			rcs -q -kb -U $_cur
+			chown root:wheel $_cur $_cur,v
+			rm $_cur
+			;;
+		esac
+	else
+		case $_action in
+		add|update)
+			if [ -f $_cur ]; then
+				cp -p $_cur $_back
+			fi
+			cp -p $_file $_cur
+			chown root:wheel $_cur
+			;;
+		remove)
+			mv -f $_cur $_back
+			;;
+		esac
+	fi
+}
+
+#
+# handle_fsck_error fsck_exit_code
+#	Take action depending on the return code from fsck.
+#
+handle_fsck_error()
+{
+	case $1 in
+	0)	# OK
+		return
+		;;
+	2)	# Needs re-run, still fs errors
+		echo "File system still has errors; re-run fsck manually!"
+		;;
+	4)	# Root modified
+		echo "Root filesystem was modified, rebooting ..."
+		reboot -n
+		echo "Reboot failed; help!"
+		;;
+	8)	# Check failed
+		echo "Automatic file system check failed; help!"
+		;;
+	12)	# Got signal
+		echo "Boot interrupted."
+		;;
+	*)
+		echo "Unknown error $1; help!"
+		;;
+	esac
+	stop_boot
+}
+
+#
+# _has_rcorder_keyword word file
+#	Check whether a file contains a "# KEYWORD:" comment with a
+#	specified keyword in the style used by rcorder(8).
+#
+_has_rcorder_keyword()
+{
+	local word="$1"
+	local file="$2"
+	local line
+
+	[ -r "$file" ] || return 1
+	while read line; do
+		case "${line} " in
+		"# KEYWORD:"*[\ \	]"${word}"[\ \	]*)
+			return 0
+			;;
+		"#"*)
+			continue
+			;;
+		*[A-Za-z0-9]*)
+			# give up at the first non-empty non-comment line
+			return 1
+			;;
+		esac
+	done <"$file"
+	return 1
+}
+
+#
+# print_rc_metadata string
+#	Print the specified string in such a way that the post-processor
+#	inside /etc/rc will treat it as meta-data.
+#
+#	If we are not running inside /etc/rc, do nothing.
+#
+#	For public use by any rc.d script, the string must begin with
+#	"note:", followed by arbitrary text.  The intent is that the text
+#	will appear in a log file but not on the console.
+#
+#	For private use within /etc/rc, the string must contain a
+#	keyword recognised by the rc_postprocess_metadata() function
+#	defined in /etc/rc, followed by a colon, followed by one or more
+#	colon-separated arguments associated with the keyword.
+#
+print_rc_metadata()
+{
+	# _rc_postprocessor fd, if defined, is the fd to which we must
+	# print, prefixing the output with $_rc_metadata_prefix.
+	#
+	if [ -n "$_rc_postprocessor_fd" ]; then
+		command printf "%s%s\n" "$rc_metadata_prefix" "$1" \
+			>&${_rc_postprocessor_fd}
+	fi
+}
+
+#
+# _flush_rc_output
+#	Arrange for output to be flushed, if we are running
+#	inside /etc/rc with postprocessing.
+#
+_flush_rc_output()
+{
+	print_rc_metadata "nop"
+}
+
+#
+# print_rc_normal [-n] string
+#	Print the specified string in such way that it is treated as
+#	normal output, regardless of whether or not we are running
+#	inside /etc/rc with post-processing.
+#
+#	If "-n" is specified in $1, then the string in $2 is printed
+#	without a newline; otherwise, the string in $1 is printed
+#	with a newline.
+#
+#	Intended use cases include:
+#
+#	o   An rc.d script can use ``print_rc_normal -n'' to print a
+#	    partial line in such a way that it appears immediately
+#	    instead of being buffered by rc(8)'s post-processor.
+#
+#	o   An rc.d script that is run via the no_rc_postprocess
+#	    function (so most of its output is invisible to rc(8)'s
+#	    post-processor) can use print_rc_normal to force some of its
+#	    output to be seen by the post-processor.
+#
+#
+print_rc_normal()
+{
+	# If _rc_postprocessor_fd is defined, then it is the fd
+	# to which we must print; otherwise print to stdout.
+	#
+	local fd="${_rc_postprocessor_fd:-1}"
+	case "$1" in
+	"-n")
+		command printf "%s" "$2" >&${fd}
+		_flush_rc_output
+		;;
+	*)
+		command printf "%s\n" "$1" >&${fd}
+		;;
+	esac
+}
+
+#
+# no_rc_postprocess cmd...
+#	Execute the specified command in such a way that its output
+#	bypasses the post-processor that handles the output from
+#	most commands that are run inside /etc/rc.  If we are not
+#	inside /etc/rc, then just execute the command without special
+#	treatment.
+#
+#	The intent is that interactive commands can be run via
+#	no_rc_postprocess(), and their output will apear immediately
+#	on the console instead of being hidden or delayed by the
+#	post-processor.	 An unfortunate consequence of the output
+#	bypassing the post-processor is that the output will not be
+#	logged.
+#
+no_rc_postprocess()
+{
+	if [ -n "${_rc_postprocessor_fd}" ]; then
+		"$@" >&${_rc_original_stdout_fd} 2>&${_rc_original_stderr_fd}
+	else
+		"$@"
+	fi
+}
+
+#
+# twiddle
+#	On each call, print a different one of "/", "-", "\\", "|",
+#	followed by a backspace.  The most recently printed value is
+#	saved in $_twiddle_state.
+#
+#	Output is to /dev/tty, so this function may be useful even inside
+#	a script whose output is redirected.
+#
+twiddle()
+{
+	case "$_twiddle_state" in
+	'/')	_next='-' ;;
+	'-')	_next='\' ;;
+	'\')	_next='|' ;;
+	*)	_next='/' ;;
+	esac
+	command printf "%s\b" "$_next" >/dev/tty
+	_twiddle_state="$_next"
+}
+
+#
+# human_exit_code
+#	Print the a human version of the exit code.
+#
+human_exit_code()
+{
+	if [ "$1" -lt 127 ]
+	then
+		echo "exited with code $1"
+	elif [ "$(expr $1 % 256)" -eq 127 ]
+	then
+		# This cannot really happen because the shell will not
+		# pass stopped job status out and the exit code is limited
+		# to 8 bits. This code is here just for completeness.
+		echo "stopped with signal $(expr $1 / 256)"
+	else
+		echo "terminated with signal $(expr $1 - 128)"
+	fi
+}
+
+#
+# collapse_backslash_newline
+#	Copy input to output, collapsing <backslash><newline>
+#	to nothing, but leaving other backslashes alone.
+#
+collapse_backslash_newline()
+{
+	local line
+	while read -r line ; do
+		case "$line" in
+		*\\)
+			# print it, without the backslash or newline
+			command printf "%s" "${line%?}"
+			;;
+		*)
+			# print it, with a newline
+			command printf "%s\n" "${line}"
+			;;
+		esac
+	done
+}
+
+# Override the normal "echo" and "printf" commands, so that
+# partial lines printed by rc.d scripts appear immediately,
+# instead of being buffered by rc(8)'s post-processor.
+#
+# Naive use of the echo or printf commands from rc.d scripts,
+# elsewhere in rc.subr, or anything else that sources rc.subr,
+# will call these functions.  To call the real echo and printf
+# commands, use "command echo" or "command printf".
+#
+echo()
+{
+	command echo "$@"
+	case "$1" in
+	'-n')	_flush_rc_output ;;
+	esac
+}
+printf()
+{
+	command printf "$@"
+	case "$1" in
+	*'\n')	: ;;
+	*)	_flush_rc_output ;;
+	esac
+}
+
+_rc_subr_loaded=:
