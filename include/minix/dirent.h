@@ -46,8 +46,6 @@ typedef struct {
 						 */
 } DIR;
 
-#define _DIRENT_NAME_LEN 61
-
 struct dirent {		/* Largest entry (8 slots) */
 	ino_t		d_ino;		/* I-node number */
 	off_t 		d_off;		/* Offset in directory */

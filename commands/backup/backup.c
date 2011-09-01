@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include <dirent.h>
 
-#define NAME_SIZE _DIRENT_NAME_LEN
+#define NAME_SIZE NAME_MAX
 
 #undef NARROW			/* Width of verbose output */
 #define COPY_SIZE 4096

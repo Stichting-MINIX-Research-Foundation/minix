@@ -575,7 +575,7 @@ char **argv;
 					cp++;
 				else
 					cp = ofname;
-				if (strlen(cp) >= _DIRENT_NAME_LEN-3) 
+				if (strlen(cp) >= NAME_MAX-3) 
 				{
 				    fprintf(stderr,"%s: filename too long to tack on .Z\n",cp);
 				    continue;

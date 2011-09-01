@@ -21,11 +21,6 @@ struct dirent {		/* Largest entry (8 slots) */
 #define	d_fileno	d_ino
 #endif
 
-#define _DIRENT_NAME_LEN 61 /* Backward compatibility with Minix. */
-#if defined(_NETBSD_SOURCE)
-#define	MAXNAMLEN	_DIRENT_NAME_LEN
-#endif
-
 
 /*
  * The _DIRENT_ALIGN macro returns the alignment of struct dirent.  It
