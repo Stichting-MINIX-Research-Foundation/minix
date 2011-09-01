@@ -122,6 +122,7 @@ install: includes services hdboot
 
 # download and update NetBSD reference sources.
 nbsd_fetch:
+	export CVS_RSH=ssh; \
 	cd ${MINIXSRCDIR} && awk '{print $$2;}' < tools/nbsd_ports \
 		| xargs -t cvs -d ${NBSD_CVSROOT} co -N -d nbsdsrc ${NBSD_REF}
 
