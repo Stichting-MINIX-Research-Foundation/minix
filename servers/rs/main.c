@@ -430,6 +430,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("couldn't set alarm: %d", s);
 
+#if USE_LIVEUPDATE
   /* Now create a new RS instance with a private page table and let the current
    * instance live update into the replica. Clone RS' own slot first.
    */
@@ -489,6 +490,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
       }
       NOT_REACHABLE;
   }
+#endif /* USE_LIVEUPDATE */
 
   return(OK);
 }

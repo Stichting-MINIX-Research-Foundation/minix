@@ -132,6 +132,10 @@ SRCS+=	gcov.c \
 CPPFLAGS+= -DUSE_COVERAGE
 .endif
 
+.if ${USE_LIVEUPDATE} != "no"
+CPPFLAGS+= -DUSE_LIVEUPDATE
+.endif
+
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 
 .if (${CC} == "gcc") || (${CC} == "clang")

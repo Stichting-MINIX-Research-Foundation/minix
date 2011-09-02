@@ -231,5 +231,10 @@ _PROTOTYPE( void sef_cb_signal_handler_posix_default, (int signo) );
 #define sef_signal_debug_begin          sef_debug_begin
 #define sef_signal_debug_end            sef_debug_end
 
+#if !defined(USE_LIVEUPDATE)
+#undef INTERCEPT_SEF_LU_REQUESTS
+#undef SEF_LU_DEBUG
+#endif
+
 #endif /* _SEF_H */
 

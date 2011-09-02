@@ -73,6 +73,14 @@ SRCS+= 	debug.c
 CPPFLAGS+= -DUSE_SYSDEBUG
 .endif
 
+.if ${USE_LIVEUPDATE} != "no"
+CPPFLAGS+= -DUSE_UPDATE
+.endif
+
+.if ${USE_STATECTL} != "no"
+CPPFLAGS+= -DUSE_STATECTL
+.endif
+
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c
 

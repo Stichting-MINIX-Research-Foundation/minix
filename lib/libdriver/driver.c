@@ -230,10 +230,12 @@ PUBLIC void driver_announce()
    * For this reason, there may blocked callers when a driver restarts.
    * Ask the kernel to unblock them (if any).
    */
+#if USE_STATECTL
   r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS);
   if (r != OK) {
 	panic("driver_announce: sys_statectl failed: %d\n", r);
   }
+#endif
 
   /* Publish a driver up event. */
   r = ds_retrieve_label_name(label, getprocnr());

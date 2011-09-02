@@ -60,6 +60,7 @@ PUBLIC void sef_startup()
   sef_self_priv_flags = priv_flags;
   old_endpoint = NONE;
 
+#if USE_LIVEUPDATE
   /* RS may wake up with the wrong endpoint, perfom the update in that case. */
   if((sef_self_priv_flags & ROOT_SYS_PROC) && sef_self_endpoint != RS_PROC_NR) {
       r = vm_update(RS_PROC_NR, sef_self_endpoint);
@@ -70,6 +71,7 @@ PUBLIC void sef_startup()
       old_endpoint = sef_self_endpoint;
       sef_self_endpoint = RS_PROC_NR;
   }
+#endif /* USE_LIVEUPDATE */
 
 #if INTERCEPT_SEF_INIT_REQUESTS
   /* Intercept SEF Init requests. */
