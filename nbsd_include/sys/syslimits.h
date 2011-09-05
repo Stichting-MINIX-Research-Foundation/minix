@@ -22,13 +22,13 @@
 #define	CHILD_MAX	_NO_LIMIT /* max simultaneous processes */
 #endif
 
-#define GID_MAX	      CHAR_MAX  /* max value for a gid_t */
+#define GID_MAX	      USHRT_MAX  /* max value for a gid_t */
 #define LINK_MAX      SHRT_MAX	/* # links a file may have */
 #define MAX_CANON          255	/* size of the canonical input queue */
 #define MAX_INPUT          255	/* size of the type-ahead buffer */
 #define NAME_MAX           255	/* system-wide max # chars in a file name */
 #define NGROUPS_MAX          8	/* max. number of supplemental groups */
-#define UID_MAX       SHRT_MAX  /* max value for a uid_t */
+#define UID_MAX       USHRT_MAX  /* max value for a uid_t */
 #ifndef OPEN_MAX
 #define	OPEN_MAX __MINIX_OPEN_MAX /* max open files per process */
 #endif

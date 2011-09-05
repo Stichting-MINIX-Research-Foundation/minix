@@ -886,6 +886,13 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 
 			break;
 
+		case NWIOGUDSPEERCREDOLD:
+
+			/* get peer endpoint -- getsockopt(SO_PEERCRED) */
+			rc = do_getsockopt_peercred_old(dev_m_in, dev_m_out);
+
+			break;
+
 		case NWIOSUDSTADDR:
 
 			/* set target address -- sendto() */

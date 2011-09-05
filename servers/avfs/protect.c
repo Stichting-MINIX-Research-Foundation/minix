@@ -137,8 +137,11 @@ PUBLIC int do_chown()
 	/* Do not change uid/gid if new uid/gid is -1. */
 	uid = (m_in.owner == (uid_t)-1 ? vp->v_uid : m_in.owner);
 	gid = (m_in.group == (gid_t)-1 ? vp->v_gid : m_in.group);
-	if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, uid, gid,
-		      &new_mode)) == OK) {
+
+	if (uid > UID_MAX || gid > GID_MAX)
+		r = EINVAL;
+	else if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, uid, gid,
+				&new_mode)) == OK) {
 		vp->v_uid = uid;
 		vp->v_gid = gid;
 		vp->v_mode = new_mode;
@@ -155,7 +158,6 @@ PUBLIC int do_chown()
   put_vnode(vp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_umask				     *

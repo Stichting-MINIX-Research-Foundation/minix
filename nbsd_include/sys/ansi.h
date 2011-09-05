@@ -35,7 +35,7 @@
 #include <machine/ansi.h>
 
 typedef char *		__caddr_t;	/* core address */
-typedef char	   	__gid_t;	/* group id */
+typedef __uint32_t   	__gid_t;	/* group id */
 typedef __uint32_t	__in_addr_t;	/* IP(v4) address */
 typedef __uint16_t	__in_port_t;	/* "Internet" port number */
 typedef unsigned short	__mode_t;	/* file permissions */
@@ -43,7 +43,7 @@ typedef long 		__off_t;	/* file offset */
 typedef int		__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef __int32_t	__socklen_t;	/* socket-related datum length */
-typedef short	   	__uid_t;	/* user id */
+typedef __uint32_t   	__uid_t;	/* user id */
 typedef	unsigned long	__fsblkcnt_t;	/* fs block count (statvfs) */
 typedef	unsigned long	__fsfilcnt_t;	/* fs file count */
 

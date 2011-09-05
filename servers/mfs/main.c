@@ -82,6 +82,8 @@ PUBLIC int main(int argc, char *argv[])
 		read_ahead(); /* do block read ahead */
       
   }
+
+  return(OK);
 }
 
 /*===========================================================================*

@@ -164,9 +164,9 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
   if (direction == READING) {
 	/* Copy V2.x inode to the in-core table, swapping bytes if need be. */
 	rip->i_mode    = conv2(norm,dip->d2_mode);
-	rip->i_uid     = conv2(norm,dip->d2_uid );
+	rip->i_uid     = conv4(norm,dip->d2_uid );
 	rip->i_nlinks  = conv2(norm,(int) dip->d2_nlinks);
-	rip->i_gid     = conv2(norm,(int) dip->d2_gid );
+	rip->i_gid     = conv4(norm,(int) dip->d2_gid );
 	rip->i_size    = conv4(norm,dip->d2_size);
 	rip->i_atime   = conv4(norm,dip->d2_atime);
 	rip->i_ctime   = conv4(norm,dip->d2_ctime);
@@ -178,9 +178,9 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
   } else {
 	/* Copying V2.x inode to disk from the in-core table. */
 	dip->d2_mode   = conv2(norm,rip->i_mode);
-	dip->d2_uid    = conv2(norm,rip->i_uid );
+	dip->d2_uid    = conv4(norm,rip->i_uid );
 	dip->d2_nlinks = conv2(norm,rip->i_nlinks);
-	dip->d2_gid    = conv2(norm,rip->i_gid );
+	dip->d2_gid    = conv4(norm,rip->i_gid );
 	dip->d2_size   = conv4(norm,rip->i_size);
 	dip->d2_atime  = conv4(norm,rip->i_atime);
 	dip->d2_ctime  = conv4(norm,rip->i_ctime);

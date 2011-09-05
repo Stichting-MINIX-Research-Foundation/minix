@@ -62,6 +62,7 @@ _PROTOTYPE( int do_getsysinfo, (void)					);
 _PROTOTYPE( int do_getsysinfo_up, (void)					);
 _PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_getepinfo, (void)					);
+_PROTOTYPE( int do_getepinfo_o, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsetpriority, (void)				);
 

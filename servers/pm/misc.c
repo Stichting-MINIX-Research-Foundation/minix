@@ -316,15 +316,14 @@ PUBLIC int do_getepinfo()
   endpoint_t ep;
 
   /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0)
-  {
-	printf("PM: unauthorized call of do_getepinfo by proc %d\n",
+  if (mp->mp_effuid != 0) {
+	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
 		mp->mp_endpoint);
 	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
-  ep= m_in.PM_ENDPT;
+  ep = m_in.PM_ENDPT;
 
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
@@ -332,7 +331,37 @@ PUBLIC int do_getepinfo()
 		mp->mp_reply.reply_res3 = rmp->mp_effgid;
 		return(rmp->mp_pid);
 	}
-  } 
+  }
+
+  /* Process not found */
+  return(ESRCH);
+}
+
+/*===========================================================================*
+ *				do_getepinfo_o			             *
+ *===========================================================================*/
+PUBLIC int do_getepinfo_o()
+{
+  register struct mproc *rmp;
+  endpoint_t ep;
+
+  /* This call should be moved to DS. */
+  if (mp->mp_effuid != 0) {
+	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
+		mp->mp_endpoint);
+	sys_sysctl_stacktrace(mp->mp_endpoint);
+	return EPERM;
+  }
+
+  ep = m_in.PM_ENDPT;
+
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
+		mp->mp_reply.reply_res2 = (short) rmp->mp_effuid;
+		mp->mp_reply.reply_res3 = (char) rmp->mp_effgid;
+		return(rmp->mp_pid);
+	}
+  }
 
   /* Process not found */
   return(ESRCH);

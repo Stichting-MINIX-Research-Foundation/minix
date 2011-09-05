@@ -352,7 +352,7 @@ int rw_flag;			/* READING or WRITING */
 	op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
 	r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, fs_block_size);
 	if (r < 0) {
-		printf("MFS(%d) I/O error on device %d/%d, block %lu\n",
+		printf("MFS(%d) I/O error on device %d/%d, block %u\n",
 		SELF_E, major(dev), minor(dev), bp->b_blocknr);
 		op_failed = 1;
 	} else if( (unsigned) r != fs_block_size) {
@@ -480,7 +480,7 @@ PUBLIC void rw_scattered(
 			/* Transfer failed. An error? Do we care? */
 			if (r != OK && i == 0) {
 				printf(
-				"MFS: I/O error on device %d/%d, block %lu\n",
+				"MFS: I/O error on device %d/%d, block %u\n",
 					major(dev), minor(dev), bp->b_blocknr);
 				bp->b_dev = NO_DEV;	/* invalidate block */
   				vm_forgetblocks();

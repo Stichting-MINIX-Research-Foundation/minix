@@ -101,11 +101,7 @@ _files_getgroupmembership(void *retval, void *cb_data, va_list ap)
 {
 	int		*result	= va_arg(ap, int *);
 	const char 	*uname	= va_arg(ap, const char *);
-#ifdef __minix
-	gid_t		 agroup = (gid_t)va_arg(ap, int);
-#else
 	gid_t		 agroup	= va_arg(ap, gid_t);
-#endif
 	gid_t		*groups	= va_arg(ap, gid_t *);
 	int		 maxgrp	= va_arg(ap, int);
 	int		*groupc	= va_arg(ap, int *);
@@ -148,11 +144,7 @@ _dns_getgroupmembership(void *retval, void *cb_data, va_list ap)
 {
 	int		*result	= va_arg(ap, int *);
 	const char 	*uname	= va_arg(ap, const char *);
-#ifdef __minix
-	gid_t		 agroup = (gid_t)va_arg(ap, int);
-#else
 	gid_t		 agroup	= va_arg(ap, gid_t);
-#endif
 	gid_t		*groups	= va_arg(ap, gid_t *);
 	int		 maxgrp	= va_arg(ap, int);
 	int		*groupc	= va_arg(ap, int *);
@@ -245,11 +237,7 @@ _nis_getgroupmembership(void *retval, void *cb_data, va_list ap)
 {
 	int		*result	= va_arg(ap, int *);
 	const char 	*uname	= va_arg(ap, const char *);
-#ifdef __minix
-	gid_t		 agroup = (gid_t)va_arg(ap, int);
-#else
 	gid_t		 agroup	= va_arg(ap, gid_t);
-#endif
 	gid_t		*groups	= va_arg(ap, gid_t *);
 	int		 maxgrp	= va_arg(ap, int);
 	int		*groupc	= va_arg(ap, int *);
@@ -317,11 +305,7 @@ _compat_ggm_search(void *cookie, struct group **groupres)
 	crv = nsdispatch(NULL, dtab,
 	    NSDB_GROUP_COMPAT, "getgroupmembership",
 	    __nsdefaultnis,
-#ifdef __minix
-	    &rerror, cp->uname, (int)cp->agroup, cp->groups, cp->maxgrp, cp->groupc);
-#else
 	    &rerror, cp->uname, cp->agroup, cp->groups, cp->maxgrp, cp->groupc);
-#endif
 
 	if (crv == NS_SUCCESS)
 		crv = NS_NOTFOUND;	/* indicate "no more +: entries" */
@@ -335,11 +319,7 @@ _compat_getgroupmembership(void *retval, void *cb_data, va_list ap)
 {
 	int		*result	= va_arg(ap, int *);
 	const char 	*uname	= va_arg(ap, const char *);
-#ifdef __minix
-	gid_t		 agroup = (gid_t)va_arg(ap, int);
-#else
 	gid_t		 agroup	= va_arg(ap, gid_t);
-#endif
 	gid_t		*groups	= va_arg(ap, gid_t *);
 	int		 maxgrp	= va_arg(ap, int);
 	int		*groupc	= va_arg(ap, int *);
@@ -415,11 +395,7 @@ getgroupmembership(const char *uname, gid_t agroup,
 			 */
 	(void) nsdispatch(NULL, dtab, NSDB_GROUP, "getgroupmembership",
 	    __nsdefaultcompat,
-#ifdef __minix
-	    &rerror, uname, (int)agroup, groups, maxgrp, groupc);
-#else
 	    &rerror, uname, agroup, groups, maxgrp, groupc);
-#endif
 	mutex_unlock(&__grmutex);
 
 	if (*groupc > maxgrp)			/* too many groups found */

@@ -18,8 +18,8 @@ PRIVATE int copy_new_to_old_stat(endpoint_t who_e,
 	prevst.st_dev = st->st_dev;
 	prevst.st_ino = st->st_ino;
 	prevst.st_mode = st->st_mode;
-	prevst.st_uid = st->st_uid;
-	prevst.st_gid = st->st_gid;
+	prevst.st_uid = (short) st->st_uid;
+	prevst.st_gid = (short) st->st_gid;
 	prevst.st_size = st->st_size;
 	prevst.st_rdev = st->st_rdev;
 
@@ -63,7 +63,7 @@ PRIVATE int stat_inode(
   statbuf.st_mode = rip->i_mode;
   statbuf.st_nlink = rip->i_nlinks;
   statbuf.st_uid = rip->i_uid;
-  statbuf.st_gid = (short) rip->i_gid; /* FIXME: should become gid_t */
+  statbuf.st_gid = rip->i_gid;
   statbuf.st_rdev = (s ? (dev_t) rip->i_zone[0] : NO_DEV);
   statbuf.st_size = rip->i_size;
   statbuf.st_atime = rip->i_atime;
@@ -122,7 +122,7 @@ PUBLIC int fs_statvfs()
 
   scale = sp->s_log_zone_size;
 
-  blockstats(&st.f_blocks, &st.f_bfree, &used);
+  blockstats((u32_t *) &st.f_blocks, (u32_t *) &st.f_bfree, &used);
   st.f_bavail = st.f_bfree;
 
   st.f_bsize =  sp->s_block_size << scale;

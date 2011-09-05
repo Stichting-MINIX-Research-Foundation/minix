@@ -1045,6 +1045,54 @@ PUBLIC int do_getsockopt_peercred(message *dev_m_in, message *dev_m_out)
 	return rc ? EIO : OK;
 }
 
+PUBLIC int do_getsockopt_peercred_old(message *dev_m_in, message *dev_m_out)
+{
+	int minor;
+	int peer_minor;
+	int rc;
+	struct ucred cred;
+	struct ucred_old cred_old;
+
+#if DEBUG == 1
+	static int call_count = 0;
+	printf("(uds) [%d] do_getsockopt_peercred() call_count=%d\n",
+					uds_minor(dev_m_in), ++call_count);
+#endif
+
+	minor = uds_minor(dev_m_in);
+
+	if (uds_fd_table[minor].peer == -1) {
+
+		if (uds_fd_table[minor].err == ECONNRESET) {
+			uds_fd_table[minor].err = 0;
+
+			return ECONNRESET;
+		} else {
+			return ENOTCONN;
+		}
+	}
+
+	peer_minor = uds_fd_table[minor].peer;
+
+	/* obtain the peer's credentials */
+	rc = getnucred(uds_fd_table[peer_minor].owner, &cred);
+	if (rc == -1) {
+		/* likely error: invalid endpoint / proc doesn't exist */
+		return errno;
+	}
+
+	/* copy to old structure */
+	cred_old.pid = cred.pid;
+	cred_old.uid = (short) cred.uid;
+	cred_old.gid = (char) cred.gid;
+
+	rc = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) dev_m_in->IO_GRANT,
+		(vir_bytes) 0, (vir_bytes) &cred_old, sizeof(struct ucred_old),
+		D);
+
+	return rc ? EIO : OK;
+}
+
 int do_getsockopt_sndbuf(message *dev_m_in, message *dev_m_out)
 {
 	int minor;

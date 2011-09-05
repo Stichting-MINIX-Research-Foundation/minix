@@ -28,8 +28,7 @@ _PROTOTYPE( void group_test_4, (void)					);
 _PROTOTYPE( void group_test_5, (void)					);
 _PROTOTYPE( int dotest, (void (*testfunc)(void))				);
 
-int subtest = -1, errorct = 0;
-#define ERROR_MAX 5
+#define MAX_ERROR 5
 #define IMAGINARY_GID 100
 #define IMAGINARY_GID_STR "100"
 #define IMAGINARY_UID 101
@@ -38,12 +37,14 @@ int subtest = -1, errorct = 0;
 			  setgid((IMAGINARY_GID) + 1 ); \
 			  setuid(IMAGINARY_UID); \
 			} while(0)
+#include "common.c"
+
+int subtest = -1, errorct = 0;
 
 int main(int argc, char *argv[])
 {
   int superuser;
-  printf("Test 46 ");
-  fflush(stdout);
+  start(46);
 
   superuser = (geteuid() == 0);
 
@@ -58,13 +59,7 @@ int main(int argc, char *argv[])
   api_test();	/* Perform some very basic API tests */
   group_test();	/* Perform some tests that mimic actual use */
 
-  if(errorct > 0) {
-	printf("%d error(s)\n", errorct);
-	return(errorct);
-  }
-
-  printf("ok\n");
-  return(0);
+  quit();
 }
 
 void limit_test() {
@@ -115,8 +110,8 @@ void api_test() {
 
   /* Let's invent some imaginary groups */
 #define START_GID 20001
-  for (i = START_GID; i < START_GID + ngroups_max; i++)
-	grouplist[i - START_GID] = i;
+  for (i = 0; i < ngroups_max; i++)
+	grouplist[i] = i + START_GID;
 
   /* Normal usage */
   if (setgroups(ngroups_max, grouplist) != 0) e(1);
@@ -183,6 +178,11 @@ void api_test() {
 		break;
 	}
   }
+
+  /* Try to set too high a group ID */
+  grouplist2[0] = GID_MAX + 1;	/* Out of range */
+  if (setgroups(1, grouplist2) == 0) e(23);
+  if (errno != EINVAL) e(24);
 
   free(grouplist);
   free(grouplist2);
@@ -343,13 +343,3 @@ void group_test_5() {
   dirp = opendir("DIR_046/sub");
   exit(dirp != NULL); /* If not NULL, we were able to access it */
 }
-
-void e(int error_no) {
-  printf("Subtest %d, error %d\n", subtest, error_no);
-
-  if (errorct++ > ERROR_MAX) {
-	printf("Too many errors, test aborted\n");
-	exit(1);
-  }
-}
-

@@ -572,7 +572,7 @@ PRIVATE void service_pm()
 
 	break;
   case PM_SETGROUPS:
-	pm_setgroups(m_in.PM_PROC, m_in.PM_GROUP_NO, m_in.PM_GROUP_ADDR);
+	pm_setgroups(m_in.PM_PROC, m_in.PM_GROUP_NO, (gid_t *) m_in.PM_GROUP_ADDR);
 
 	m_out.m_type = PM_SETGROUPS_REPLY;
 	m_out.PM_PROC = m_in.PM_PROC;

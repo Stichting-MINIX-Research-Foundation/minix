@@ -113,4 +113,7 @@
 #define IOV_MAX        INT_MAX  /* maximum number of buffers for readv/writev */
 #endif /* _POSIX_SOURCE */
 
+#define GID_MAX		USHRT_MAX
+#define UID_MAX		USHRT_MAX
+
 #endif /* _LIMITS_H */

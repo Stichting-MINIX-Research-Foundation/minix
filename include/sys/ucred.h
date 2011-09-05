@@ -1,11 +1,18 @@
 #ifndef __SYS_UCRED_H
 #define __SYS_UCRED_H
 
-struct ucred
+struct ucred_old
 {
 	pid_t   pid;
-	uid_t   uid;
-	gid_t   gid;
+	short   uid;
+	char    gid;
+};
+
+struct ucred
+{
+	pid_t	pid;
+	uid_t	uid;
+	gid_t	gid;
 };
 
 #endif

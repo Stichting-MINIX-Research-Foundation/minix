@@ -481,11 +481,7 @@ static int
 _files_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 
 	int	rv, rerror;
 
@@ -510,11 +506,7 @@ static int
 _files_getgrgid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 	struct group	*grp	= va_arg(ap, struct group *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -809,11 +801,7 @@ static int
 _dns_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 
 	int	rv, rerror;
 
@@ -837,11 +825,7 @@ static int
 _dns_getgrgid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 	struct group	*grp	= va_arg(ap, struct group *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -1164,11 +1148,7 @@ static int
 _nis_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 
 	int	rv, rerror;
 
@@ -1192,11 +1172,7 @@ static int
 _nis_getgrgid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 	struct group	*grp	= va_arg(ap, struct group *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -1432,11 +1408,7 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 				crv = nsdispatch(NULL, compatgiddtab,
 				    NSDB_GROUP_COMPAT, "getgrgid_r",
 				    __nsdefaultnis,
-#ifdef __minix
-				    &cretval, (int)gid,
-#else
 				    &cretval, gid,
-#endif
 				    &cgrp, filebuf, sizeof(filebuf), &cgrpres);
 			}
 			if (crv != NS_SUCCESS) {	/* not found */
@@ -1638,11 +1610,7 @@ static int
 _compat_getgrgid(void *nsrv, void *nscb, va_list ap)
 {
 	struct group	**retval = va_arg(ap, struct group **);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 
 	int	rv, rerror;
 
@@ -1667,11 +1635,7 @@ static int
 _compat_getgrgid_r(void *nsrv, void *nscb, va_list ap)
 {
 	int		*retval	= va_arg(ap, int *);
-#ifdef __minix
-	gid_t		 gid	= (gid_t)va_arg(ap, int);
-#else
 	gid_t		 gid	= va_arg(ap, gid_t);
-#endif
 	struct group	*grp	= va_arg(ap, struct group *);
 	char		*buffer	= va_arg(ap, char *);
 	size_t		 buflen	= va_arg(ap, size_t);
@@ -1821,11 +1785,7 @@ getgrgid(gid_t gid)
 
 	mutex_lock(&__grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid", __nsdefaultcompat,
-#ifdef __minix
-	    &retval, (int)gid);
-#else
 	    &retval, gid);
-#endif
 	mutex_unlock(&__grmutex);
 	return (rv == NS_SUCCESS) ? retval : NULL;
 }
@@ -1852,11 +1812,7 @@ getgrgid_r(gid_t gid, struct group *grp, char *buffer, size_t buflen,
 	retval = 0;
 	mutex_lock(&__grmutex);
 	rv = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrgid_r", __nsdefaultcompat,
-#ifdef __minix
-	    &retval, (int)gid, grp, buffer, buflen, result);
-#else
 	    &retval, gid, grp, buffer, buflen, result);
-#endif
 	mutex_unlock(&__grmutex);
 	switch (rv) {
 	case NS_SUCCESS:

@@ -30,7 +30,10 @@
 #define PREV_FSTAT	  28
 #define PAUSE		  29
 #define UTIME		  30 
+#define GETEPINFO	  31
+#define SETGROUPS	  32
 #define ACCESS		  33 
+#define GETGROUPS	  34
 #define SYNC		  36 
 #define KILL		  37
 #define RENAME		  38
@@ -54,8 +57,8 @@
 #define SETSID		  62
 #define GETPGRP		  63
 #define ITIMER		  64
-#define GETGROUPS	  65
-#define SETGROUPS	  66
+#define GETGROUPS_O	  65
+#define SETGROUPS_O	  66
 #define GETMCONTEXT       67
 #define SETMCONTEXT       68
 
@@ -100,7 +103,7 @@
 #define PROCSTAT	103	/* to PM */
 #define GETPROCNR	104	/* to PM */
 
-#define GETEPINFO	107	/* to PM: get pid/uid/gid of an endpoint */
+#define GETEPINFO_O	107	/* to PM: get pid/uid/gid of an endpoint */
 #define ADDDMA		108	/* to PM: inform PM about a region of memory
 				 * that is used for bus-master DMA
 				 */
