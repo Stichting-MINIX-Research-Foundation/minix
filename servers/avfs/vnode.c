@@ -177,9 +177,11 @@ PUBLIC int lock_vnode(struct vnode *vp, tll_access_t locktype)
  *===========================================================================*/
 PUBLIC void unlock_vnode(struct vnode *vp)
 {
+#if LOCK_DEBUG
   int i;
   register struct vnode *rvp;
   struct worker_thread *w;
+#endif
   ASSERTVP(vp);
 
 #if LOCK_DEBUG

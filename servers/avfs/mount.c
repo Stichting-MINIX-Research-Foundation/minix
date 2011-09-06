@@ -222,8 +222,11 @@ char mount_label[LABEL_MAX] )
 	} else
 		r = EBUSY;
 
-	if (vp != NULL)
+	if (vp != NULL)	{
+		/* Quickly unlock to allow back calls (from e.g. FUSE) to
+		 * relock */
 		unlock_vmnt(parent_vmp);
+	}
 
 	if (r != OK) {
 		if (vp != NULL) {

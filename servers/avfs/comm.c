@@ -24,6 +24,7 @@ struct fproc *rfp;
 
   transid = rfp->fp_wtid + VFS_TRANSID;
   rfp->fp_sendrec->m_type = TRNS_ADD_ID(rfp->fp_sendrec->m_type, transid);
+  rfp->fp_task = vmp->m_fs_e;
   if ((r = asynsend3(vmp->m_fs_e, rfp->fp_sendrec, AMF_NOREPLY)) != OK) {
 	printf("VFS: sendmsg: error sending message. "
 	       "FS_e: %d req_nr: %d err: %d\n", vmp->m_fs_e,

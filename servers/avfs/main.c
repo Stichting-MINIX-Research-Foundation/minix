@@ -257,6 +257,7 @@ PRIVATE void *do_fs_reply(struct job *job)
   }
 
   *rfp->fp_sendrec = m_in;
+  rfp->fp_task = NONE;
   vmp->m_comm.c_cur_reqs--;	/* We've got our reply, make room for others */
 
   worker_signal(worker_get(rfp->fp_wtid));/* Continue this worker thread */
@@ -342,7 +343,7 @@ PRIVATE void *do_pending_pipe(void *arg)
 	      fp->fp_buffer, fp->fp_nbytes);
 
   if (r != SUSPEND)  /* Do we have results to report? */
-	reply(who_e, r);
+	(void) reply(who_e, r);
 
   unlock_filp(f);
 
@@ -376,8 +377,10 @@ PUBLIC void *do_dummy(void *arg)
  *===========================================================================*/
 PRIVATE void *do_work(void *arg)
 {
-  int error;
+  int error, i;
   struct job my_job;
+  struct fproc *rfp;
+  struct vmnt *vmp;
 
   my_job = *((struct job *) arg);
   fp = my_job.j_fp;
@@ -422,14 +425,24 @@ PRIVATE void *do_work(void *arg)
   /* Copy the results back to the user and send reply. */
   if (error != SUSPEND) {
 	if (deadlock_resolving) {
-		struct vmnt *vmp;
 		if ((vmp = find_vmnt(who_e)) != NULL)
 			vmp->m_flags &= ~VMNT_BACKCALL;
 
 		if (fp->fp_wtid == dl_worker.w_tid)
 			deadlock_resolving = 0;
 	}
-	reply(who_e, error );
+	if (reply(who_e, error) != OK) {
+		if ((vmp = find_vmnt(who_e)) != NULL) {
+			for (i = 0; i < NR_PROCS; i++) {
+				rfp = &fproc[i];
+				if (rfp->fp_task == vmp->m_fs_e) {
+					/* We found a process waiting for a
+					 * reply from non-responsive FS */
+					worker_stop(worker_get(rfp->fp_wtid));
+				}
+			}
+		}
+	}
   }
 
   thread_cleanup(fp);
@@ -751,7 +764,7 @@ PRIVATE void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC void reply(whom, result)
+PUBLIC int reply(whom, result)
 int whom;			/* process to reply to */
 int result;			/* result of the call (usually OK or error #) */
 {
@@ -762,8 +775,8 @@ int result;			/* result of the call (usually OK or error #) */
   r = sendnb(whom, &m_out);
   if (r != OK) {
 	printf("VFS: couldn't send reply %d to %d: %d\n", result, whom, r);
-	panic("Yikes %d", call_nr);
   }
+  return(r);
 }
 
 /*===========================================================================*
@@ -895,7 +908,8 @@ PRIVATE void service_pm()
 
 	break;
     case PM_SETGROUPS:
-	pm_setgroups(m_in.PM_PROC, m_in.PM_GROUP_NO, m_in.PM_GROUP_ADDR);
+	pm_setgroups(m_in.PM_PROC, m_in.PM_GROUP_NO,
+			(gid_t *) m_in.PM_GROUP_ADDR);
 
 	m_out.m_type = PM_SETGROUPS_REPLY;
 	m_out.PM_PROC = m_in.PM_PROC;

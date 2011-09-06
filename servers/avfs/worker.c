@@ -287,6 +287,16 @@ PUBLIC void worker_signal(struct worker_thread *worker)
 }
 
 /*===========================================================================*
+ *				worker_stop				     *
+ *===========================================================================*/
+PUBLIC void worker_stop(struct worker_thread *worker)
+{
+  ASSERTW(worker);		/* Make sure we have a valid thread */
+  worker->w_job.j_m_in.m_type = -EIO;
+  worker_wake(worker);
+}
+
+/*===========================================================================*
  *				worker_self				     *
  *===========================================================================*/
 PUBLIC struct worker_thread *worker_self(void)

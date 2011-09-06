@@ -116,7 +116,7 @@ _PROTOTYPE( void lock_revive, (void)					);
 
 /* main.c */
 _PROTOTYPE( int main, (void)						);
-_PROTOTYPE( void reply, (int whom, int result)				);
+_PROTOTYPE( int reply, (int whom, int result)				);
 _PROTOTYPE( void lock_proc, (struct fproc *rfp, int force_lock)		);
 _PROTOTYPE( void unlock_proc, (struct fproc *rfp)			);
 _PROTOTYPE( void *do_dummy, (void *arg)					);
@@ -366,8 +366,9 @@ _PROTOTYPE( struct worker_thread *worker_get, (thread_t worker_tid)	);
 _PROTOTYPE( struct job *worker_getjob, (thread_t worker_tid)		);
 _PROTOTYPE( void worker_init, (struct worker_thread *worker)		);
 _PROTOTYPE( struct worker_thread *worker_self, (void)			);
-_PROTOTYPE( void worker_start, (void *(*func)(void *arg))		);
 _PROTOTYPE( void worker_signal, (struct worker_thread *worker)		);
+_PROTOTYPE( void worker_start, (void *(*func)(void *arg))		);
+_PROTOTYPE( void worker_stop, (struct worker_thread *worker)		);
 _PROTOTYPE( void worker_wait, (void)					);
 _PROTOTYPE( void sys_worker_start, (void *(*func)(void *arg))		);
 _PROTOTYPE( void dl_worker_start, (void *(*func)(void *arg))		);
