@@ -88,6 +88,7 @@ struct msg_control
 /* setsockopt/setsockopt for unix domain sockets */
 #define NWIOGUDSSOTYPE	 _IOR('n', 90, int)		  /* SO_TYPE */
 #define NWIOGUDSPEERCRED _IOR('n', 91, struct ucred)	  /* SO_PEERCRED */
+#define NWIOGUDSPEERCREDOLD _IOR('n', 91, struct ucred_old)	  /* SO_PEERCRED */
 #define NWIOGUDSSNDBUF	 _IOR('n', 92, size_t)            /* SO_SNDBUF */
 #define NWIOSUDSSNDBUF	 _IOW('n', 93, size_t)            /* SO_SNDBUF */
 #define NWIOGUDSRCVBUF	 _IOR('n', 94, size_t)            /* SO_RCVBUF */
