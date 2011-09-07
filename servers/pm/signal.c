@@ -332,6 +332,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	panic("");
   }
 
+#if USE_TRACE
   if (trace == TRUE && rmp->mp_tracer != NO_TRACER && signo != SIGKILL) {
 	/* Signal should be passed to the debugger first.
 	 * This happens before any checks on block/ignore masks; otherwise,
@@ -345,6 +346,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 
 	return;
   }
+#endif
 
   if (rmp->mp_flags & VFS_CALL) {
 	(void) sigaddset(&rmp->mp_sigpending, signo);
@@ -414,6 +416,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 	return;
   }
 
+#if USE_TRACE
   if ((rmp->mp_flags & STOPPED) && signo != SIGKILL) {
 	/* If the process is stopped for a debugger, do not deliver any signals
 	 * (except SIGKILL) in order not to confuse the debugger. The signals
@@ -424,6 +427,7 @@ int ksig;			/* non-zero means signal comes from kernel  */
 		(void) sigaddset(&rmp->mp_ksigpending, signo);
 	return;
   }
+#endif /* USE_TRACE */
   if (!badignore && sigismember(&rmp->mp_catch, signo)) {
 	/* Signal is caught. First interrupt the process's current call, if
 	 * applicable. This may involve a roundtrip to VFS, in which case we'll
@@ -604,8 +608,10 @@ struct mproc *rmp;
   if (rmp->mp_flags & (VFS_CALL | EXITING)) return;
 
   if (rmp->mp_flags & TRACE_EXIT) {
+#if USE_TRACE
 	/* Tracer requested exit with specific exit value */
 	exit_proc(rmp, rmp->mp_exitstatus, FALSE /*dump_core*/);
+#endif /* USE_TRACE */
   }
   else if (rmp->mp_flags & PM_SIG_PENDING) {
 	/* We saved signal(s) for after finishing a VFS call. Deal with this.

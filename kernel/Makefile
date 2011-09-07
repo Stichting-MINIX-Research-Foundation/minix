@@ -81,6 +81,10 @@ CPPFLAGS+= -DUSE_UPDATE
 CPPFLAGS+= -DUSE_STATECTL
 .endif
 
+.if ${USE_TRACE} != "no"
+CPPFLAGS+= -DUSE_TRACE
+.endif
+
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c
 

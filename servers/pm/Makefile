@@ -3,12 +3,17 @@
 # Makefile for Process Manager (PM)
 PROG=	pm
 SRCS=	main.c forkexit.c break.c exec.c time.c alarm.c \
-	signal.c utility.c table.c trace.c getset.c misc.c \
+	signal.c utility.c table.c getset.c misc.c \
 	profile.c dma.c schedule.c
 
 .if ${USE_MCONTEXT} != "no"
 SRCS+= mcontext.c
 CPPFLAGS+= -DUSE_MCONTEXT
+.endif
+
+.if ${USE_TRACE} != "no"
+SRCS+= trace.c
+CPPFLAGS+= -DUSE_TRACE
 .endif
 
 DPADD+=	${LIBSYS} ${LIBTIMERS}

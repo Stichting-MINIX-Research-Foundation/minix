@@ -177,12 +177,14 @@ vir_bytes pc;
 	/* Cause a signal if this process is traced.
 	 * Do this before making the process runnable again!
 	 */
+#if USE_TRACE
 	if (rmp->mp_tracer != NO_TRACER && !(rmp->mp_trace_flags & TO_NOEXEC))
 	{
 		sn = (rmp->mp_trace_flags & TO_ALTEXEC) ? SIGSTOP : SIGTRAP;
 
 		check_sig(rmp->mp_pid, sn, FALSE /* ksig */);
 	}
+#endif /* USE_TRACE */
 
 	new_sp= (char *)rmp->mp_frame_addr;
 	r= sys_exec(rmp->mp_endpoint, new_sp, rmp->mp_name, pc);

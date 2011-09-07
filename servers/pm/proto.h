@@ -100,6 +100,10 @@ _PROTOTYPE( int do_times, (void)					);
 /* trace.c */
 _PROTOTYPE( int do_trace, (void)					);
 _PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);
+#if ! USE_TRACE
+#define do_trace no_sys
+#define stop_proc no_sys
+#endif
 
 /* utility.c */
 _PROTOTYPE( pid_t get_free_pid, (void)					);
