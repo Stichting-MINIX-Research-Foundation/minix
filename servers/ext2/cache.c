@@ -17,6 +17,7 @@
 
 #include "fs.h"
 #include <minix/u64.h>
+#include <minix/libminixfs.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "buf.h"
@@ -489,10 +490,12 @@ PRIVATE void rm_lru(
 /*===========================================================================*
  *				set_blocksize				     *
  *===========================================================================*/
-PUBLIC void set_blocksize(unsigned int blocksize)
+PUBLIC void set_blocksize(unsigned int blocksize, u32_t blocks,
+	u32_t freeblocks, dev_t majordev)
 {
   struct buf *bp;
   struct inode *rip;
+  int new_nr_bufs;
 
   ASSERT(blocksize > 0);
 
@@ -502,7 +505,9 @@ PUBLIC void set_blocksize(unsigned int blocksize)
   for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
 	if (rip->i_count > 0) panic("change blocksize with inode in use");
 
-  buf_pool(nr_bufs);
+  new_nr_bufs = fs_bufs_heuristic(10, blocks, freeblocks, blocksize, majordev);
+
+  buf_pool(new_nr_bufs);
   fs_block_size = blocksize;
 }
 

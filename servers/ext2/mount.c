@@ -70,7 +70,7 @@ PUBLIC int fs_readsuper()
   }
 
   /* Fill in the super block. */
-  STATICINIT(superblock, sizeof(struct super_block));
+  STATICINIT(superblock, 1);
   if (!superblock)
 	panic("Can't allocate memory for superblock.");
   superblock->s_dev = fs_dev;	/* read_super() needs to know which dev */
@@ -125,7 +125,10 @@ PUBLIC int fs_readsuper()
   }
 
 
-  set_blocksize(superblock->s_block_size);
+  set_blocksize(superblock->s_block_size,
+  	superblock->s_blocks_count,
+	superblock->s_free_blocks_count,
+	major(fs_dev));
 
   /* Get the root inode of the mounted file system. */
   if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {

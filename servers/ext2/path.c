@@ -36,10 +36,10 @@ FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino,
  *===========================================================================*/
 PUBLIC int fs_lookup()
 {
-  cp_grant_id_t grant, grant2;
+  cp_grant_id_t grant;
   int r, r1, flags, symlinks;
   unsigned int len;
-  size_t offset = 0, path_size, cred_size;
+  size_t offset = 0, path_size;
   ino_t dir_ino, root_ino;
   struct inode *rip;
 
@@ -62,21 +62,16 @@ PUBLIC int fs_lookup()
   /* Verify this is a null-terminated path. */
   if(user_path[len - 1] != '\0') return(EINVAL);
 
-  if(flags & PATH_GET_UCRED) { /* Do we have to copy uid/gid credentials? */
-	grant2 = (cp_grant_id_t) fs_m_in.REQ_GRANT2;
-	cred_size = (size_t) fs_m_in.REQ_UCRED_SIZE;
-
-	if (cred_size > sizeof(credentials)) return(EINVAL); /* Too big. */
-	r = sys_safecopyfrom(VFS_PROC_NR, grant2, (vir_bytes) 0,
-			     (vir_bytes) &credentials, cred_size, D);
-	if (r != OK) return(r);
-
-	caller_uid = (uid_t) credentials.vu_uid;
-	caller_gid = (gid_t) credentials.vu_gid;
-  } else {
-	memset(&credentials, 0, sizeof(credentials));
-	caller_uid	= fs_m_in.REQ_UID;
-	caller_gid	= fs_m_in.REQ_GID;
+  memset(&credentials, 0, sizeof(credentials));
+  if(!(flags & PATH_GET_UCRED)) { /* Do we have to copy uid/gid credentials? */
+        caller_uid      = (uid_t) fs_m_in.REQ_UID;
+        caller_gid      = (gid_t) fs_m_in.REQ_GID;
+   } else {
+         if((r=fs_lookup_credentials(&credentials,
+               &caller_uid, &caller_gid,
+               (cp_grant_id_t) fs_m_in.REQ_GRANT2,
+               (size_t) fs_m_in.REQ_UCRED_SIZE)) != OK)
+               return r;
   }
 
   /* Lookup inode */

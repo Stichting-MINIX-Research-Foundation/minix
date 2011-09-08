@@ -157,7 +157,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	driver_endpoints[i].driver_e = NONE;
 
   SELF_E = getprocnr();
-  buf_pool(DEFAULT_NR_BUFS);
+
+  /* just a small number before we find out the block size at mount time */
+  buf_pool(10);
   fs_block_size = _MIN_BLOCK_SIZE;
 
   return(OK);

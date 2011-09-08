@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <minix/libminixfs.h>
 #include <math.h>
 #include "buf.h"
 #include "super.h"
@@ -567,52 +568,12 @@ PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
  *===========================================================================*/
 PRIVATE int bufs_heuristic(struct super_block *sp)
 {
-  struct vm_stats_info vsi;
-  int bufs;
-  u32_t btotal, bfree, bused, kbytes_used_fs,
-	kbytes_total_fs, kbcache, kb_fsmax;
-  u32_t kbytes_remain_mem;
+  u32_t btotal, bfree, bused;
 
-  /* but we simply need MINBUFS no matter what, and we don't
-   * want more than that if we're a memory device
-   */
-  if(major(sp->s_dev) == MEMORY_MAJOR) {
-	bufs = MINBUFS;
-	return bufs;
-  }
-
-  /* set a reasonable cache size; cache at most a certain
-   * portion of the used FS, and at most a certain %age of remaining
-   * memory
-   */
-  if((vm_info_stats(&vsi) != OK)) {
-	bufs = 1024;
-	printf("mfs: heuristic info fail: default to %d bufs\n", bufs);
-	return bufs;
-  }
-
-  kbytes_remain_mem = div64u(mul64u(vsi.vsi_free, vsi.vsi_pagesize), 1024);
-
-  /* check fs usage. */
   blockstats(&btotal, &bfree, &bused);
-  kbytes_used_fs = div64u(mul64u(bused, sp->s_block_size), 1024);
-  kbytes_total_fs = div64u(mul64u(btotal, sp->s_block_size), 1024);
 
-  /* heuristic for a desired cache size based on FS usage;
-   * but never bigger than half of the total filesystem
-   */
-  kb_fsmax = sqrt_approx(kbytes_used_fs)*40;
-  kb_fsmax = MIN(kb_fsmax, kbytes_total_fs/2);
-
-  /* heuristic for a maximum usage - 10% of remaining memory */
-  kbcache = MIN(kbytes_remain_mem/10, kb_fsmax);
-  bufs = kbcache * 1024 / sp->s_block_size;
-
-  /* but we simply need MINBUFS no matter what */
-  if(bufs < MINBUFS)
-	bufs = MINBUFS;
-
-  return bufs;
+  return fs_bufs_heuristic(MINBUFS, btotal, bfree,
+  	sp->s_block_size, major(sp->s_dev));
 }
 
 /*===========================================================================*

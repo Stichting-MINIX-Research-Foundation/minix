@@ -21,7 +21,8 @@ _PROTOTYPE( void flushall, (dev_t dev)					);
 _PROTOTYPE( struct buf *get_block, (dev_t dev, block_t block,int only_search));
 _PROTOTYPE( void invalidate, (dev_t device)				);
 _PROTOTYPE( void put_block, (struct buf *bp, int block_type)		);
-_PROTOTYPE( void set_blocksize, (unsigned int blocksize)		);
+_PROTOTYPE( void set_blocksize, (unsigned int blocksize, u32_t blocks, 
+	u32_t freeblocks, dev_t major));
 _PROTOTYPE( void rw_scattered, (dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
 

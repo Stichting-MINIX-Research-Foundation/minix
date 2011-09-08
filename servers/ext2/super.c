@@ -85,14 +85,17 @@ register struct super_block *sp; /* pointer to a superblock */
 	super_block_offset = opt.block_with_super * 1024;
   }
 
-  STATICINIT(ondisk_superblock, sizeof(struct super_block));
+  STATICINIT(ondisk_superblock, 1);
 
   if (!sp || !ondisk_superblock)
 	panic("can't allocate memory for super_block buffers");
 
+  printf("ext2: reading %d bytes into %d buffer\n", _MIN_BLOCK_SIZE, sizeof(*ondisk_superblock));
+
   r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
 		   (char*) ondisk_superblock, cvu64(super_block_offset),
 		   _MIN_BLOCK_SIZE);
+		   
   if (r != _MIN_BLOCK_SIZE)
 	return(EINVAL);
 

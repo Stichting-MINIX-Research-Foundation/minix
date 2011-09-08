@@ -83,7 +83,6 @@
 /* Some of these old names had better be defined when not POSIX. */
 #define _NO_LIMIT          100	/* arbitrary number; limit not enforced */
 
-#define NGROUPS_MAX          8	/* max. number of supplemental groups */
 #if _EM_WSIZE > 2
 #define ARG_MAX          262144 /* # bytes of args + environ for exec() */
 #else
@@ -112,6 +111,8 @@
 				 */
 #define IOV_MAX        INT_MAX  /* maximum number of buffers for readv/writev */
 #endif /* _POSIX_SOURCE */
+
+#define NGROUPS_MAX          8	/* max. number of supplemental groups */
 
 #define GID_MAX		USHRT_MAX
 #define UID_MAX		USHRT_MAX
