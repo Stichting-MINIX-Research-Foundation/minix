@@ -123,7 +123,11 @@ PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
 PRIVATE int in_group(gid_t grp)
 {
   int i;
-  for(i = 0; i < credentials.vu_ngroups; i++)
+
+  if (credentials.vu_ngroups >= NGROUPS_MAX)
+	return(EINVAL);
+
+  for (i = 0; i < credentials.vu_ngroups; i++)
   	if (credentials.vu_sgroups[i] == grp)
   		return(OK);
 
