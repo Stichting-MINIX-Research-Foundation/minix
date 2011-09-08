@@ -749,7 +749,7 @@ struct rproc *rp;				/* pointer to service slot */
 	  r = ds_retrieve_label_endpt("devman",&ep);
   
 	  if (r != OK) {
-		   printf("RS: devman not running?", r);
+		printf("RS: devman not running?");
 	  } else {
 		m.m_type = DEVMAN_UNBIND;
 		m.DEVMAN_ENDPOINT  = rpub->endpoint;

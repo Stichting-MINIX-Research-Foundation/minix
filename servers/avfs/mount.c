@@ -170,7 +170,7 @@ char mount_label[LABEL_MAX] )
   int i, r = OK, found, isroot, mount_root, con_reqs;
   struct fproc *tfp;
   struct dmap *dp;
-  struct vnode *root_node, *vp = NULL, *bspec;
+  struct vnode *root_node, *vp = NULL;
   struct vmnt *new_vmp, *parent_vmp;
   char *label;
   struct node_details res;

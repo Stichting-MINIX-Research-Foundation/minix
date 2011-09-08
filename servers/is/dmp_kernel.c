@@ -420,7 +420,7 @@ PUBLIC void memmap_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
 						- rp->p_memmap[D].mem_phys);
-	printf("%-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8lu\n",
+	printf("%-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8u\n",
 	       rp->p_name,
 	       (unsigned long) rp->p_reg.pc,
 	       (unsigned long) rp->p_reg.sp,

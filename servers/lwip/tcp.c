@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <minix/sysutil.h>
 
-#include <net/ioctl.h>
+#include <sys/ioc_net.h>
 #include <net/gen/in.h>
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>

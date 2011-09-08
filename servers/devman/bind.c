@@ -36,7 +36,7 @@ PUBLIC int do_bind_device(message *m)
 				m->DEVMAN_RESULT= res;
 			} else if (m->DEVMAN_RESULT != OK) {
 				printf("[W] devman.do_bind_device(): driver could"
-				       " not bind device (%d)\n", m->DEVMAN_RESULT);
+				       " not bind device (%ld)\n", m->DEVMAN_RESULT);
 			} else {
 				dev->state = DEVMAN_DEVICE_BOUND;
 				devman_get_device(dev);
@@ -85,7 +85,7 @@ PUBLIC int do_unbind_device(message *m)
 			} else if (m->DEVMAN_RESULT != OK && m->DEVMAN_RESULT != 19) {
 				/* device drive deleted device already? */
 				printf("[W] devman.do_unbind_device(): driver could"
-				       " not unbind device (%d)\n", m->DEVMAN_RESULT);
+				       " not unbind device (%ld)\n", m->DEVMAN_RESULT);
 			} else { 
 				if (dev->state != DEVMAN_DEVICE_ZOMBIE) {
 					dev->state = DEVMAN_DEVICE_UNBOUND;

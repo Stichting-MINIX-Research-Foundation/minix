@@ -786,7 +786,7 @@ int status;
 	assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL); /* Must be char. special */
 	if (vp->v_sdev != dev) {
 		printf("VFS (%s:%d): expected reply from dev %d not %d\n",
-			vp->v_sdev, dev);
+			__FILE__, __LINE__, vp->v_sdev, dev);
 		return;
 	}
   }

@@ -21,7 +21,8 @@
 #include "fs.h"
 #include <fcntl.h>
 #include <assert.h>
-#include <unistd.h>	/* cc runs out of memory with unistd.h :-( */
+#include <unistd.h>
+#include <string.h>
 #include <minix/callnr.h>
 #include <minix/safecopies.h>
 #include <minix/endpoint.h>
@@ -387,11 +388,11 @@ int cpid;	/* Child process id */
    * as it isn't blocking on i/o.
    */
   if(GRANT_VALID(fp->fp_grant)) {
-	printf("vfs: fork: fp (endpoint %d) has grant %ld\n", fp->fp_endpoint, fp->fp_grant);
+	printf("vfs: fork: fp (endpoint %d) has grant %d\n", fp->fp_endpoint, fp->fp_grant);
 	panic("fp contains valid grant");
   }
   if(GRANT_VALID(cp->fp_grant)) {
-	printf("vfs: fork: cp (endpoint %d) has grant %ld\n", cp->fp_endpoint, cp->fp_grant);
+	printf("vfs: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint, cp->fp_grant);
 	panic("cp contains valid grant");
   }
 

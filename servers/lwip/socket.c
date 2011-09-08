@@ -13,7 +13,7 @@
 
 #include <lwip/tcp.h>
 
-#include <net/ioctl.h>
+#include <sys/ioc_net.h>
 
 #include "inet_config.h"
 #include "proto.h"

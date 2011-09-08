@@ -79,7 +79,6 @@ extern struct ip_conf ip_conf[IP_PORT_MAX];
 extern struct tcp_conf tcp_conf[IP_PORT_MAX];
 extern struct udp_conf udp_conf[IP_PORT_MAX];
 void read_conf(void);
-extern char *sbrk(int);
 void *alloc(size_t size);
 
 /* Options */

@@ -103,7 +103,7 @@ register struct buf *bp;	/* buffer pointer */
   if (r != block_size) {
     if (r >= 0) r = END_OF_FILE;
     if (r != END_OF_FILE)
-      printf("ISOFS(%d) I/O error on device %d/%d, block %ld\n",
+      printf("ISOFS(%d) I/O error on device %d/%d, block %u\n",
 	     SELF_E, (fs_dev>>MAJOR)&BYTE, (fs_dev>>MINOR)&BYTE,
 	     bp->b_blocknr);
 

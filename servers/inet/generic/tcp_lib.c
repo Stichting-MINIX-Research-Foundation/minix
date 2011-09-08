@@ -366,7 +366,7 @@ tcp_conn_t *tcp_conn;
 		{
 			printf("RCV_NXT-RCV_LO != 0\n");
 			tcp_print_conn(tcp_conn);
-			printf("lo_queue= %lu, hi_queue= %lu\n",
+			printf("lo_queue= %u, hi_queue= %u\n",
 				lo_queue, hi_queue);
 			allright= FALSE;
 		}
@@ -376,7 +376,7 @@ tcp_conn_t *tcp_conn;
 		printf("RCV_NXT-RCV_LO != sizeof tc_rcvd_data\n");
 		tcp_print_conn(tcp_conn);
 		printf(
-		"lo_queue= %lu, hi_queue= %lu, sizeof tc_rcvd_data= %d\n",
+		"lo_queue= %u, hi_queue= %u, sizeof tc_rcvd_data= %d\n",
 			lo_queue, hi_queue, bf_bufsize(tcp_conn->tc_rcvd_data));
 		allright= FALSE;
 	}
@@ -497,7 +497,7 @@ tcp_hdr_t *tcp_hdr;
 	else
 		printf("???");
 	printf(",%u ", ntohs(tcp_hdr->th_dstport));
-	printf(" 0x%lx", ntohl(tcp_hdr->th_seq_nr));
+	printf(" 0x%x", ntohl(tcp_hdr->th_seq_nr));
 	if (tcp_hdr->th_flags & THF_FIN)
 		printf(" <FIN>");
 	if (tcp_hdr->th_flags & THF_SYN)
@@ -507,7 +507,7 @@ tcp_hdr_t *tcp_hdr;
 	if (tcp_hdr->th_flags & THF_PSH)
 		printf(" <PSH>");
 	if (tcp_hdr->th_flags & THF_ACK)
-		printf(" <ACK 0x%lx %u>", ntohl(tcp_hdr->th_ack_nr),
+		printf(" <ACK 0x%x %u>", ntohl(tcp_hdr->th_ack_nr),
 			ntohs(tcp_hdr->th_window));
 	if (tcp_hdr->th_flags & THF_URG)
 		printf(" <URG %u>", tcp_hdr->th_urgptr);
@@ -527,15 +527,15 @@ tcp_conn_t *tcp_conn;
 
 	tcp_print_state (tcp_conn);
 	printf(
-	" ISS 0x%lx UNA +0x%lx(0x%lx) TRM +0x%lx(0x%lx) NXT +0x%lx(0x%lx)",
+	" ISS 0x%x UNA +0x%x(0x%x) TRM +0x%x(0x%x) NXT +0x%x(0x%x)",
 		iss, tcp_conn->tc_SND_UNA-iss, tcp_conn->tc_SND_UNA, 
 		tcp_conn->tc_SND_TRM-iss, tcp_conn->tc_SND_TRM,
 		tcp_conn->tc_SND_NXT-iss, tcp_conn->tc_SND_NXT);
 	printf(
-	" UP +0x%lx(0x%lx) PSH +0x%lx(0x%lx) ",
+	" UP +0x%x(0x%x) PSH +0x%x(0x%x) ",
 		tcp_conn->tc_SND_UP-iss, tcp_conn->tc_SND_UP,
 		tcp_conn->tc_SND_PSH-iss, tcp_conn->tc_SND_PSH);
-	printf(" snd_cwnd +0x%lx(0x%lx)",
+	printf(" snd_cwnd +0x%x(0x%x)",
 		tcp_conn->tc_snd_cwnd-tcp_conn->tc_SND_UNA,
 		tcp_conn->tc_snd_cwnd);
 	printf(" transmit_seq ");
@@ -543,10 +543,10 @@ tcp_conn_t *tcp_conn;
 		printf("0");
 	else
 	{
-		printf("+0x%lx(0x%lx)", tcp_conn->tc_transmit_seq-iss,
+		printf("+0x%x(0x%x)", tcp_conn->tc_transmit_seq-iss,
 			tcp_conn->tc_transmit_seq);
 	}
-	printf(" IRS 0x%lx LO +0x%lx(0x%lx) NXT +0x%lx(0x%lx) HI +0x%lx(0x%lx)",
+	printf(" IRS 0x%x LO +0x%x(0x%x) NXT +0x%x(0x%x) HI +0x%x(0x%x)",
 		irs, tcp_conn->tc_RCV_LO-irs, tcp_conn->tc_RCV_LO,
 		tcp_conn->tc_RCV_NXT-irs, tcp_conn->tc_RCV_NXT,
 		tcp_conn->tc_RCV_HI-irs, tcp_conn->tc_RCV_HI);

@@ -237,7 +237,9 @@ void startup(int linenr, struct ttyent *ttyp)
   pid_t pid;				/* new pid */
   int err[2];				/* error reporting pipe */
   char line[32];			/* tty device name */
+#ifndef __NBSD_LIBC
   int status;
+#endif
 #ifdef __NBSD_LIBC
   char **ty_getty_argv;
 #endif

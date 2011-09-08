@@ -17,6 +17,10 @@ CPPFLAGS+= -DUSE_COVERAGE
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
 LDADD+=	-lsys -ltimers -lexec -lmthread
 
+.if ${COMPILER_TYPE} == "gnu"
+LDADD+=	-lc
+.endif
+
 MAN=
 
 BINDIR?= /usr/sbin

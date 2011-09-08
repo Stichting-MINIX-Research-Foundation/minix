@@ -311,9 +311,26 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
 /*
  * Implementation-defined extensions
  */
-#if defined(__minix)
+#ifdef __minix
 int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
-#endif /* !__minix */
+#if defined(_MINIX)
+#include <minix/type.h>
+
+int getsigset(sigset_t *sigset);
+int getprocnr(void);
+int getnprocnr(pid_t pid);
+int getpprocnr(void);
+int _pm_findproc(char *proc_name, int *proc_nr);
+int mapdriver(char *label, int major, int style, int flags);
+int adddma(endpoint_t proc_e, phys_bytes start, phys_bytes size);
+int deldma(endpoint_t proc_e, phys_bytes start, phys_bytes size);
+int getdma(endpoint_t *procp, phys_bytes *basep, phys_bytes *sizep);
+pid_t getnpid(endpoint_t proc_ep);
+uid_t getnuid(endpoint_t proc_ep);
+gid_t getngid(endpoint_t proc_ep);
+int getnucred(endpoint_t proc_ep, struct ucred *ucred);
+#endif /* __MINIX */
+#endif /* __minix */
 
 #if defined(_NETBSD_SOURCE)
 #ifndef __minix

@@ -2629,7 +2629,7 @@ tcp_conn_t *tcp_conn;
 	if (mtu > tcp_conn->tc_max_mtu)
 		mtu= tcp_conn->tc_max_mtu;
 	tcp_conn->tc_mtu= mtu;
-	DBLOCK(0x1, printf("tcp_mtu_incr: new mtu %ld for conn %d\n",
+	DBLOCK(0x1, printf("tcp_mtu_incr: new mtu %u for conn %u\n",
 		mtu, tcp_conn-tcp_conn_table););
 }
 

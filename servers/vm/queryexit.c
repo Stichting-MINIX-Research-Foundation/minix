@@ -67,7 +67,7 @@ PUBLIC int do_query_exit(message *m)
  *===========================================================================*/
 PUBLIC int do_notify_sig(message *m)
 {
-	int i, avails = 0, p;
+	int i, avails = 0;
 	endpoint_t ep = m->VM_NOTIFY_SIG_ENDPOINT;
 	endpoint_t ipc_ep = m->VM_NOTIFY_SIG_IPC;
 	int r;

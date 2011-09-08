@@ -71,7 +71,7 @@ PUBLIC int do_mmap(message *m)
 		if(m->VMM_FLAGS & MAP_IPC_SHARED) {
 			vrflags |= VR_SHARED;
 			/* Shared memory has to be preallocated. */
-			if(m->VMM_FLAGS & (MAP_PREALLOC|MAP_ANON) !=
+			if((m->VMM_FLAGS & (MAP_PREALLOC|MAP_ANON)) !=
 				(MAP_PREALLOC|MAP_ANON)) {
 				return EINVAL;
 			}

@@ -7,8 +7,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#define BYTE_ORDER LITTLE_ENDIAN
-
 typedef i8_t s8_t;
 typedef i16_t s16_t;
 typedef i32_t s32_t;

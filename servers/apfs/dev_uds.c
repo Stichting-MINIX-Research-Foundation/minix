@@ -962,7 +962,7 @@ PUBLIC int uds_ioctl(message *dev_m_in, message *dev_m_out)
 
 PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
 {
-	int r, bytes;
+	int r = OK, bytes;
 	message m_out;
 	uds_fd_t *fdp;
 
@@ -976,7 +976,6 @@ PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
 
 		/* prepare the response */
 		uds_sel_reply(&m_out, DEV_SEL_REPL2, minor, fdp->sel_ops_out);
-		r = OK;
 	} else if (fdp->ready_to_revive == 1) {
 
 		/* clear the ready to revive flag */
@@ -999,7 +998,6 @@ PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
 				uds_set_reply(&m_out, DEV_REVIVE, fdp->endpoint,
 					      fdp->io_gr, bytes);
 
-				r = OK;
 				break;
 
 			case UDS_SUSPENDED_WRITE:
@@ -1017,7 +1015,6 @@ PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
 				uds_set_reply(&m_out, DEV_REVIVE, fdp->endpoint,
 					      fdp->io_gr, bytes);
 
-				r = OK;
 				break;
 
 			case UDS_SUSPENDED_CONNECT:
@@ -1035,7 +1032,6 @@ PUBLIC int uds_unsuspend(endpoint_t m_source, int minor)
 				uds_set_reply(&m_out, DEV_REVIVE, fdp->endpoint,
 					      fdp->io_gr, OK);
 
-				r = OK;
 				break;
 
 			default:

@@ -716,7 +716,7 @@ TIME-WAIT:
 			tcp_conn_write(tcp_conn, 1);
 			DBLOCK(1, printf(
 			"got an ack of something I haven't send\n");
-				printf( "seg_ack= %lu, SND_NXT= %lu\n",
+				printf( "seg_ack= %u, SND_NXT= %u\n",
 				seg_ack, snd_nxt));
 			break;
 		}

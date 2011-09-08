@@ -168,14 +168,11 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   int s,i;
   int nr_image_srvs, nr_image_priv_srvs, nr_uncaught_init_srvs;
   struct rproc *rp;
-  struct rproc *replica_rp;
   struct rprocpub *rpub;
   struct boot_image image[NR_BOOT_PROCS];
   struct boot_image_priv *boot_image_priv;
   struct boot_image_sys *boot_image_sys;
   struct boot_image_dev *boot_image_dev;
-  int pid, replica_pid;
-  endpoint_t replica_endpoint;
   int ipc_to;
   int *calls;
   int all_c[] = { ALL_C, NULL_C };
