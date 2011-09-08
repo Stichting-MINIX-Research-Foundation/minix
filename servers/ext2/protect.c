@@ -130,7 +130,7 @@ PRIVATE int in_group(gid_t grp)
 {
   int i;
 
-  if (credentials.vu_ngroups >= NGROUPS_MAX)
+  if (credentials.vu_ngroups > NGROUPS_MAX)
 	return(EINVAL);
 
   for (i = 0; i < credentials.vu_ngroups; i++)
