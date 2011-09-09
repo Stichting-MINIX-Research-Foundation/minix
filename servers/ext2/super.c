@@ -11,6 +11,7 @@
 #include "fs.h"
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include "buf.h"
@@ -90,8 +91,7 @@ register struct super_block *sp; /* pointer to a superblock */
   if (!sp || !ondisk_superblock)
 	panic("can't allocate memory for super_block buffers");
 
-  printf("ext2: reading %d bytes into %d buffer\n", _MIN_BLOCK_SIZE, sizeof(*ondisk_superblock));
-
+  assert(_MIN_BLOCK_SIZE <= sizeof(*ondisk_superblock));
   r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
 		   (char*) ondisk_superblock, cvu64(super_block_offset),
 		   _MIN_BLOCK_SIZE);
