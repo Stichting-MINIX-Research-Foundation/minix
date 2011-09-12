@@ -34,7 +34,7 @@ PUBLIC int do_link()
   int r = OK;
   struct vnode *vp = NULL, *dirp = NULL;
   struct vmnt *vmp1 = NULL, *vmp2 = NULL;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp1, &vp);
@@ -94,7 +94,7 @@ PUBLIC int do_unlink()
   struct vnode *dirp, *vp;
   struct vmnt *vmp, *vmp2;
   int r;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &dirp);
@@ -170,8 +170,8 @@ PUBLIC int do_rename()
   int r = OK, r1;
   struct vnode *old_dirp, *new_dirp = NULL, *vp;
   struct vmnt *oldvmp, *newvmp, *vmp2;
-  char old_name[PATH_MAX+1];
-  char fullpath[PATH_MAX+1];
+  char old_name[PATH_MAX];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &oldvmp, &old_dirp);
@@ -273,7 +273,7 @@ PUBLIC int do_truncate()
   struct vnode *vp;
   struct vmnt *vmp;
   int r;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
@@ -348,7 +348,7 @@ PUBLIC int do_slink()
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
@@ -382,30 +382,31 @@ PUBLIC int do_slink()
  *===========================================================================*/
 PUBLIC int rdlink_direct(orig_path, link_path, rfp)
 char *orig_path;
-char *link_path; /* should have length PATH_MAX+1 */
+char link_path[PATH_MAX]; /* should have length PATH_MAX */
 struct fproc *rfp;
 {
 /* Perform a readlink()-like call from within the VFS */
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
   struct lookup resolve;
 
-  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);
+  lookup_init(&resolve, link_path, PATH_RET_SYMLINK, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
 
-  /* Temporarily open the file containing the symbolic link */
-  strncpy(fullpath, orig_path, PATH_MAX);
+  /* Temporarily open the file containing the symbolic link. Use link_path
+   * for temporary storage to keep orig_path untouched. */
+  strncpy(link_path, orig_path, PATH_MAX);	/* PATH_MAX includes '\0' */
+  link_path[PATH_MAX - 1] = '\0';
   if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
   /* Make sure this is a symbolic link */
   if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK)
 	r = EINVAL;
   else
-	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, (endpoint_t) 0,
-						link_path, PATH_MAX+1, 1);
+	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, NONE, link_path,
+		       PATH_MAX - 1, 1);
 
   if (r > 0) link_path[r] = '\0';	/* Terminate string when succesful */
 
@@ -425,7 +426,7 @@ PUBLIC int do_rdlink()
   int r, copylen;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);

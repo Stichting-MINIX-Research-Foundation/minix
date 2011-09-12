@@ -31,7 +31,7 @@ PUBLIC int do_chmod()
   struct vmnt *vmp;
   int r;
   mode_t new_mode;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   flp = NULL;
@@ -98,7 +98,7 @@ PUBLIC int do_chown()
   uid_t uid;
   gid_t gid;
   mode_t new_mode;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   flp = NULL;
@@ -182,7 +182,7 @@ PUBLIC int do_access()
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);

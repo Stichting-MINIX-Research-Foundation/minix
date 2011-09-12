@@ -174,8 +174,7 @@ _PROTOTYPE( void lookup_init, (struct lookup *resolve, char *path, int flags,
 			       struct vmnt **vmp, struct vnode **vp)	);
 _PROTOTYPE( int get_name, (struct vnode *dirp, struct vnode *entry,
 							char *_name)	);
-_PROTOTYPE( int canonical_path, (char *orig_path, char *canon_path,
-						struct fproc *rfp)	);
+_PROTOTYPE( int canonical_path, (char *orig_path, struct fproc *rfp)	);
 _PROTOTYPE( int do_check_perms, (void)					);
 
 /* pipe.c */

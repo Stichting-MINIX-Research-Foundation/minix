@@ -26,7 +26,7 @@ PUBLIC int do_utime()
   time_t actime, modtime;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);

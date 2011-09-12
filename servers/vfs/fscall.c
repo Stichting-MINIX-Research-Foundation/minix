@@ -27,7 +27,7 @@ PRIVATE struct {
   int g_who_p;				/* slot number of caller process */
   int g_call_nr;			/* call number */
   int g_super_user;			/* is the caller root? */
-  char g_user_fullpath[PATH_MAX+1];	/* path to look up */
+  char g_user_fullpath[PATH_MAX];	/* path to look up */
 } globals[MAX_DEPTH];
 
 PRIVATE int depth = 0;			/* current globals stack level */

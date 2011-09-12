@@ -31,7 +31,7 @@ EXTERN int req_nr;
 
 EXTERN endpoint_t SELF_E;
 
-EXTERN char user_path[PATH_MAX+1];  /* pathname to be processed */
+EXTERN char user_path[PATH_MAX];  /* pathname to be processed */
 
 EXTERN dev_t fs_dev;    	/* The device that is handled by this FS proc.
 				 */

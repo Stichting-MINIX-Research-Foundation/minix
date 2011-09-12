@@ -78,7 +78,7 @@ int len;			/* length of the directory name string */
 /* Do the actual work for chdir() and chroot(). */
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
   int r;
 
@@ -130,7 +130,7 @@ PUBLIC int do_stat()
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
   int old_stat = 0;
 
@@ -215,7 +215,7 @@ PUBLIC int do_statvfs()
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
@@ -263,7 +263,7 @@ PUBLIC int do_lstat()
   struct vnode *vp;
   struct vmnt *vmp;
   int r;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
   int old_stat = 0;
 

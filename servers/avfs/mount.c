@@ -42,7 +42,7 @@ PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 #define free_nonedev(dev) UNSET_BIT(nonedev, minor(dev) - 1)
 
 FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt,
-					char path[PATH_MAX+1])		);
+					char path[PATH_MAX])		);
 FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)			);
 FORWARD _PROTOTYPE( void update_bspec, (dev_t dev, endpoint_t fs_e,
 				      int send_drv_e)			);
@@ -103,7 +103,7 @@ PUBLIC int do_mount()
 /* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
   int r, slot, rdonly, nodev;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   char mount_label[LABEL_MAX];
   dev_t dev;
 
@@ -161,7 +161,7 @@ PUBLIC int do_mount()
  *===========================================================================*/
 PUBLIC int mount_fs(
 dev_t dev,
-char mountpoint[PATH_MAX+1],
+char mountpoint[PATH_MAX],
 endpoint_t fs_e,
 int rdonly,
 char mount_label[LABEL_MAX] )
@@ -397,7 +397,7 @@ PUBLIC int do_umount(void)
   char label[LABEL_MAX];
   dev_t dev;
   int r;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
 
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);
@@ -529,7 +529,7 @@ PUBLIC void unmount_all(void)
 /*===========================================================================*
  *                              name_to_dev                                  *
  *===========================================================================*/
-PRIVATE dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX+1])
+PRIVATE dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX])
 {
 /* Convert the block special file in 'user_fullpath' to a device number.
  * If the given path is not a block special file, but 'allow_mountpt' is set

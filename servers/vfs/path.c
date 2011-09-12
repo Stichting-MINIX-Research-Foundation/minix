@@ -119,7 +119,7 @@ struct fproc *rfp;
 
   size_t len;
   char *cp;
-  char dir_entry[PATH_MAX+1];
+  char dir_entry[NAME_MAX+1];
   struct vnode *vp, *res;
   
   /* Is the path absolute or relative? Initialize 'vp' accordingly. */
@@ -151,8 +151,9 @@ struct fproc *rfp;
 	  strcpy(dir_entry, ".");
   } else {
 	  /* A path name for the directory and a directory entry */
-	  strcpy(dir_entry, cp+1);
+	  strncpy(dir_entry, cp+1, NAME_MAX);
 	  cp[1]= '\0';
+	  dir_entry[NAME_MAX] = '\0';
   }
 
   /* Remove trailing slashes */
@@ -165,7 +166,7 @@ struct fproc *rfp;
   if (res == NULL) return(NULL);
 
   /* Copy the directory entry back to user_fullpath */
-  strcpy(user_fullpath, dir_entry);
+  strncpy(user_fullpath, dir_entry, NAME_MAX);
   
   return(res);
 }
@@ -362,16 +363,17 @@ char ename[NAME_MAX + 1];
  *===========================================================================*/
 PUBLIC int canonical_path(orig_path, canon_path, rfp)
 char *orig_path;
-char *canon_path; /* should have length PATH_MAX+1 */
+char *canon_path; /* should have length PATH_MAX */
 struct fproc *rfp;
 {
   int len = 0;
   int r, symloop = 0;
   struct vnode *dir_vp, *parent_dir;
   char component[NAME_MAX+1];
-  char link_path[PATH_MAX+1];
+  char link_path[PATH_MAX];
 
   dir_vp = NULL;
+  orig_path[PATH_MAX - 1] = '\0';
   strncpy(user_fullpath, orig_path, PATH_MAX);
 
   do {
@@ -429,7 +431,7 @@ struct fproc *rfp;
 	}
 
 	len += strlen(component) + 1;
-	if (len > PATH_MAX) {
+	if (len >= PATH_MAX) {
 		/* adding the component to canon_path would exceed PATH_MAX */
 		put_vnode(dir_vp);
 		put_vnode(parent_dir);
@@ -476,16 +478,16 @@ int pathlen;
   int r, i;
   struct vnode *vp;
   struct fproc *rfp;
-  char orig_path[PATH_MAX+1];
-  char canon_path[PATH_MAX+1];
+  char orig_path[PATH_MAX];
+  char canon_path[PATH_MAX];
 
   i = _ENDPOINT_P(ep);
-  if (pathlen < UNIX_PATH_MAX || pathlen > PATH_MAX || i < 0 || i >= NR_PROCS) {
+  if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX || i < 0 || i >= NR_PROCS)
 	return EINVAL;
-  }
+
   rfp = &(fproc[i]);
 
-  memset(canon_path, '\0', PATH_MAX+1);
+  memset(canon_path, '\0', PATH_MAX);
 
   r = sys_safecopyfrom(PFS_PROC_NR, io_gr, (vir_bytes) 0,
 				(vir_bytes) &user_fullpath, pathlen, D);
@@ -495,7 +497,7 @@ int pathlen;
   user_fullpath[pathlen] = '\0';
 
   /* save path from pfs before permissions checking modifies it */
-  memcpy(orig_path, user_fullpath, PATH_MAX+1);
+  memcpy(orig_path, user_fullpath, PATH_MAX);
 
   /* get the canonical path to the socket file */
   r = canonical_path(orig_path, canon_path, rfp);
@@ -516,7 +518,7 @@ int pathlen;
   }
 
   /* reload user_fullpath for permissions checking */
-  memcpy(user_fullpath, orig_path, PATH_MAX+1);
+  memcpy(user_fullpath, orig_path, PATH_MAX);
   if ((vp = eat_path(PATH_NOFLAGS, rfp)) == NULL) {
 	return(err_code);
   }

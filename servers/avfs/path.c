@@ -167,7 +167,7 @@ struct fproc *rfp;
 
   size_t len;
   char *cp;
-  char dir_entry[PATH_MAX+1];
+  char dir_entry[NAME_MAX+1];
   struct vnode *start_dir, *res;
   int r;
 
@@ -215,8 +215,9 @@ struct fproc *rfp;
 	strcpy(dir_entry, ".");
   } else {
 	/* A path name for the directory and a directory entry */
-	strcpy(dir_entry, cp+1);
+	strncpy(dir_entry, cp+1, NAME_MAX);
 	cp[1] = '\0';
+	dir_entry[NAME_MAX] = '\0';
   }
 
   /* Remove trailing slashes */
@@ -230,7 +231,7 @@ struct fproc *rfp;
   if (res == NULL) return(NULL);
 
   /* Copy the directory entry back to user_fullpath */
-  strncpy(resolve->l_path, dir_entry, PATH_MAX);
+  strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
 
   return(res);
 }
@@ -490,23 +491,24 @@ char ename[NAME_MAX + 1];
 /*===========================================================================*
  *				canonical_path				     *
  *===========================================================================*/
-PUBLIC int canonical_path(orig_path, canon_path, rfp)
-char *orig_path;
-char canon_path[PATH_MAX+1]; /* should have length PATH_MAX+1 */
+PUBLIC int canonical_path(orig_path, rfp)
+char orig_path[PATH_MAX];
 struct fproc *rfp;
 {
+/* Find canonical path of a given path */
   int len = 0;
   int r, symloop = 0;
   struct vnode *dir_vp, *parent_dir;
   struct vmnt *dir_vmp, *parent_vmp;
-  char component[NAME_MAX+1];
-  char link_path[PATH_MAX+1];
-  char temp_path[PATH_MAX+1];
+  char component[NAME_MAX+1];	/* NAME_MAX does /not/ include '\0' */
+  char temp_path[PATH_MAX];
   struct lookup resolve;
 
   dir_vp = NULL;
   strncpy(temp_path, orig_path, PATH_MAX);
+  temp_path[PATH_MAX - 1] = '\0';
 
+  /* First resolve path to the last directory holding the file */
   do {
 	if (dir_vp) {
 		unlock_vnode(dir_vp);
@@ -514,7 +516,6 @@ struct fproc *rfp;
 		put_vnode(dir_vp);
 	}
 
-	/* Resolve to the last directory holding the file */
 	lookup_init(&resolve, temp_path, PATH_NOFLAGS, &dir_vmp, &dir_vp);
 	resolve.l_vmnt_lock = VMNT_READ;
 	resolve.l_vnode_lock = VNODE_READ;
@@ -523,18 +524,16 @@ struct fproc *rfp;
 	/* dir_vp points to dir and resolve path now contains only the
 	 * filename.
 	 */
-	strcpy(canon_path, resolve.l_path); /* Store file name */
+	strncpy(orig_path, temp_path, NAME_MAX);	/* Store file name */
 
 	/* check if the file is a symlink, if so resolve it */
-	r = rdlink_direct(canon_path, link_path, rfp);
-	if (r <= 0) {
-		strcpy(temp_path, canon_path);
+	r = rdlink_direct(orig_path, temp_path, rfp);
+
+	if (r <= 0)
 		break;
-	}
 
 	/* encountered a symlink -- loop again */
-	strcpy(temp_path, link_path);
-
+	strncpy(orig_path, temp_path, PATH_MAX - 1);
 	symloop++;
   } while (symloop < SYMLOOP_MAX);
 
@@ -547,7 +546,9 @@ struct fproc *rfp;
 	return(ELOOP);
   }
 
-  while(dir_vp != rfp->fp_rd) {
+  /* We've got the filename and the actual directory holding the file. From
+   * here we start building up the canonical path by climbing up the tree */
+  while (dir_vp != rfp->fp_rd) {
 
 	strcpy(temp_path, "..");
 
@@ -587,8 +588,8 @@ struct fproc *rfp;
 	}
 
 	len += strlen(component) + 1;
-	if (len > PATH_MAX) {
-		/* adding the component to canon_path would exceed PATH_MAX */
+	if (len >= PATH_MAX) {
+		/* adding the component to orig_path would exceed PATH_MAX */
 		unlock_vnode(parent_dir);
 		unlock_vmnt(parent_vmp);
 		unlock_vnode(dir_vp);
@@ -598,19 +599,16 @@ struct fproc *rfp;
 		return(ENOMEM);
 	}
 
-	/* store result of component in canon_path */
-
-	/* first make space by moving the contents of canon_path to
-	 * the right. Move strlen + 1 bytes to include the terminating '\0'.
+	/* Store result of component in orig_path. First make space by moving
+	 * the contents of orig_path to the right. Move strlen + 1 bytes to
+	 * include the terminating '\0'. Move to strlen + 1 bytes to reserve
+	 * space for the slash.
 	 */
-	memmove(canon_path+strlen(component)+1, canon_path,
-						strlen(canon_path) + 1);
-
+	memmove(orig_path+strlen(component)+1, orig_path, strlen(orig_path)+1);
 	/* Copy component into canon_path */
-	memmove(canon_path, component, strlen(component));
-
+	memmove(orig_path, component, strlen(component));
 	/* Put slash into place */
-	canon_path[strlen(component)] = '/';
+	orig_path[strlen(component)] = '/';
 
 	/* Store parent_dir result, and continue the loop once more */
 	unlock_vnode(dir_vp);
@@ -625,9 +623,9 @@ struct fproc *rfp;
   put_vnode(dir_vp);
 
   /* add the leading slash */
-  if (strlen(canon_path) >= PATH_MAX) return(ENAMETOOLONG);
-  memmove(canon_path+1, canon_path, strlen(canon_path));
-  canon_path[0] = '/';
+  if (strlen(orig_path) >= PATH_MAX) return(ENAMETOOLONG);
+  memmove(orig_path+1, orig_path, strlen(orig_path));
+  orig_path[0] = '/';
 
   return(OK);
 }
@@ -644,44 +642,33 @@ size_t pathlen;
   struct vnode *vp;
   struct vmnt *vmp;
   struct fproc *rfp;
-  char orig_path[PATH_MAX+1];
-  char canon_path[PATH_MAX+1];
-  char temp_path[PATH_MAX+1];
+  char canon_path[PATH_MAX];
   struct lookup resolve;
 
   if (isokendpt(ep, &slot) != OK) return(EINVAL);
-  if (pathlen < UNIX_PATH_MAX || pathlen > PATH_MAX) return(EINVAL);
+  if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX) return(EINVAL);
 
   rfp = &(fproc[slot]);
-  memset(canon_path, '\0', PATH_MAX+1);
-
   r = sys_safecopyfrom(PFS_PROC_NR, io_gr, (vir_bytes) 0,
-				(vir_bytes) temp_path, pathlen, D);
+				(vir_bytes) canon_path, pathlen, D);
   if (r != OK) return(r);
+  canon_path[pathlen] = '\0';
 
-  temp_path[pathlen] = '\0';
-
-  /* save path from pfs before permissions checking modifies it */
-  memcpy(orig_path, temp_path, PATH_MAX+1);
-
-  /* get the canonical path to the socket file */
-  if ((r = canonical_path(orig_path, canon_path, rfp)) != OK)
+  /* Turn path into canonical path to the socket file */
+  if ((r = canonical_path(canon_path, rfp)) != OK)
 	return(r);
 
   if (strlen(canon_path) >= pathlen) return(ENAMETOOLONG);
 
   /* copy canon_path back to PFS */
   r = sys_safecopyto(PFS_PROC_NR, (cp_grant_id_t) io_gr, (vir_bytes) 0,
-				(vir_bytes) canon_path, strlen(canon_path)+1,
-				D);
+				(vir_bytes) canon_path, pathlen, D);
   if (r != OK) return(r);
 
-  /* reload user_fullpath for permissions checking */
-  memcpy(temp_path, orig_path, PATH_MAX+1);
-  lookup_init(&resolve, temp_path, PATH_NOFLAGS, &vmp, &vp);
+  /* Now do permissions checking */
+  lookup_init(&resolve, canon_path, PATH_NOFLAGS, &vmp, &vp);
   resolve.l_vmnt_lock = VMNT_READ;
   resolve.l_vnode_lock = VNODE_READ;
-
   if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
   /* check permissions */

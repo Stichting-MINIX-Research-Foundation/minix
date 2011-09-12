@@ -125,7 +125,7 @@ PUBLIC int do_rename()
 /* Perform the rename(name1, name2) system call. */
   int r = OK, r1;
   struct vnode *old_dirp, *new_dirp = NULL, *vp;
-  char old_name[PATH_MAX+1];
+  char old_name[PATH_MAX];
   
   /* See if 'name1' (existing file) exists.  Get dir and file inodes. */
   if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
@@ -276,7 +276,7 @@ PUBLIC int do_slink()
  *===========================================================================*/
 PUBLIC int rdlink_direct(orig_path, link_path, rfp)
 char *orig_path;
-char *link_path; /* should have length PATH_MAX+1 */
+char *link_path; /* should have length PATH_MAX */
 struct fproc *rfp;
 {
 /* Perform a readlink()-like call from within the VFS */
@@ -284,6 +284,7 @@ struct fproc *rfp;
   struct vnode *vp;
 
   /* Temporarily open the file containing the symbolic link */
+  orig_path[PATH_MAX - 1] = '\0';
   strncpy(user_fullpath, orig_path, PATH_MAX);
   if ((vp = eat_path(PATH_RET_SYMLINK, rfp)) == NULL) return(err_code);
 
@@ -292,7 +293,7 @@ struct fproc *rfp;
 	r = EINVAL;
   else
 	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, (endpoint_t) 0,
-						link_path, PATH_MAX+1, 1);
+						link_path, PATH_MAX - 1, 1);
   if (r > 0) link_path[r] = '\0';
 
   put_vnode(vp);

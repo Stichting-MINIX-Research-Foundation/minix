@@ -46,7 +46,7 @@ FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_addr, vir_bytes
 		       int *allow_setuidp)				);
 FORWARD _PROTOTYPE( int is_script, (const char *exec_hdr, size_t exec_len));
 FORWARD _PROTOTYPE( int patch_stack, (struct vnode *vp, char stack[ARG_MAX],
-		       vir_bytes *stk_bytes, char path[PATH_MAX+1])	);
+		       vir_bytes *stk_bytes, char path[PATH_MAX])	);
 FORWARD _PROTOTYPE( int insert_arg, (char stack[ARG_MAX], vir_bytes *stk_bytes,
 					char *arg, int replace)		);
 FORWARD _PROTOTYPE( void patch_ptr, (char stack[ARG_MAX], vir_bytes base));
@@ -127,7 +127,7 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
   static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
   struct exec_info execi;
   int i;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lock_exec();
@@ -435,7 +435,7 @@ PRIVATE int patch_stack(vp, stack, stk_bytes, path)
 struct vnode *vp;		/* pointer for open script file */
 char stack[ARG_MAX];		/* pointer to stack image within VFS */
 vir_bytes *stk_bytes;		/* size of initial stack */
-char path[PATH_MAX+1];		/* path to script file */
+char path[PATH_MAX];		/* path to script file */
 {
 /* Patch the argument vector to include the path name of the script to be
  * interpreted, and all strings on the #! line.  Returns the path name of

@@ -24,7 +24,7 @@ EXTERN int call_nr;		/* system call number */
 EXTERN message mount_m_in;	/* the input message for a mount request */
 EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 
-EXTERN char user_fullpath[PATH_MAX+1];    /* storage for user path name */
+EXTERN char user_fullpath[PATH_MAX];    /* storage for user path name */
 
 /* The following variables are used for returning results to the caller. */
 EXTERN int err_code;		/* temporary storage for error number */

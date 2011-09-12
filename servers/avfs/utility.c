@@ -38,7 +38,7 @@ char *dest;			/* pointer to where path is to be stored */
   register char *rpu, *rpm;
   int r, count;
 
-  if (len > PATH_MAX) {
+  if (len > PATH_MAX) {	/* 'len' includes terminating-nul */
 	err_code = ENAMETOOLONG;
 	return(EGENERIC);
   }

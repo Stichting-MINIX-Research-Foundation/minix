@@ -33,7 +33,7 @@
 
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD _PROTOTYPE( int common_open, (char path[PATH_MAX+1], int oflags,
+FORWARD _PROTOTYPE( int common_open, (char path[PATH_MAX], int oflags,
 				      mode_t omode)			);
 FORWARD _PROTOTYPE( struct vnode *new_node, (struct lookup *resolve,
 					     int oflags, mode_t bits)	);
@@ -48,7 +48,7 @@ PUBLIC int do_creat()
 {
 /* Perform the creat(name, mode) system call. */
   int r;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
 
   if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
 	return(err_code);
@@ -65,7 +65,7 @@ PUBLIC int do_open()
 /* Perform the open(name, flags,...) system call. */
   int create_mode = 0;		/* is really mode_t but this gives problems */
   int r;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
 
   /* If O_CREAT is set, open has three parameters, otherwise two. */
   if (m_in.mode & O_CREAT) {
@@ -84,7 +84,7 @@ PUBLIC int do_open()
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-PRIVATE int common_open(char path[PATH_MAX+1], int oflags, mode_t omode)
+PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
   int b, r, exist = TRUE, major_dev;
@@ -369,7 +369,7 @@ printf("XXX: dangling symlink needs re-resolving\n");
 						       slp->v_inode_nr,
 						       VFS_PROC_NR,
 						       path,
-						       PATH_MAX, 0);
+						       PATH_MAX - 1, 0);
 					if (r < 0) {
 						/* Failed to read link */
 						unlock_vnode(slp);
@@ -500,7 +500,7 @@ PUBLIC int do_mknod()
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
@@ -544,7 +544,7 @@ PUBLIC int do_mkdir()
   int r;
   struct vnode *vp;
   struct vmnt *vmp;
-  char fullpath[PATH_MAX+1];
+  char fullpath[PATH_MAX];
   struct lookup resolve;
 
   lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);

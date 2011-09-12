@@ -389,7 +389,7 @@ PUBLIC int req_lookup(
   vfs_ucred_t credentials;
   int flags;
 
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) resolve->l_path, PATH_MAX+1,
+  grant_id = cpf_grant_direct(fs_e, (vir_bytes) resolve->l_path, PATH_MAX,
 			      CPF_READ | CPF_WRITE);
   if(grant_id == -1)
 	  panic("req_lookup: cpf_grant_direct failed");

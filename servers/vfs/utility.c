@@ -37,12 +37,12 @@ int flag;			/* M3 means path may be in message */
   register char *rpu, *rpm;
   int r, count;
 
-  if (len > PATH_MAX) {
+  if (len > PATH_MAX) {	/* 'len' includes terminating-nul */
 	err_code = ENAMETOOLONG;
 	return(EGENERIC);
   }
 
-  if(len >= sizeof(user_fullpath)) 
+  if (len > sizeof(user_fullpath))
 	panic("fetch_name: len too much for user_fullpath: %d", len);
 
   /* Check name length for validity. */

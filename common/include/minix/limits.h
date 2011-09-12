@@ -7,6 +7,6 @@
 #define _MINIX_LIMITS_H
 
 #define __MINIX_OPEN_MAX    255	/* a process may have 255 files open */
-#define __MINIX_PATH_MAX    255	/* a pathname may contain 255 chars */
+#define __MINIX_PATH_MAX    1024/* a pathname may contain 1023 chars (+ '\0')*/
 
 #endif /* _MINIX_LIMITS_H */
