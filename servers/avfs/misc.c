@@ -456,6 +456,7 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
    * dmap table is used in the first step.)
    */
   unsuspend_by_endpt(exiter->fp_endpoint);
+  dmap_unmap_by_endpt(exiter->fp_endpoint);
 
   /* Release root and working directories. */
   if (exiter->fp_rd) { put_vnode(exiter->fp_rd); exiter->fp_rd = NULL; }

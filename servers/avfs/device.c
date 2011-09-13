@@ -565,8 +565,8 @@ PUBLIC int do_ioctl()
 /*===========================================================================*
  *				gen_io					     *
  *===========================================================================*/
-PUBLIC int gen_io(task_nr, mess_ptr)
-endpoint_t task_nr;		/* which task to call */
+PUBLIC int gen_io(driver_e, mess_ptr)
+endpoint_t driver_e;		/* which endpoint to call */
 message *mess_ptr;		/* pointer to message for task */
 {
 /* All file system I/O ultimately comes down to I/O on major/minor device
@@ -577,15 +577,15 @@ message *mess_ptr;		/* pointer to message for task */
 
   proc_e = mess_ptr->USER_ENDPT;
 
-  r = sendrec(task_nr, mess_ptr);
+  r = sendrec(driver_e, mess_ptr);
   if (r == OK && mess_ptr->REP_STATUS == ERESTART) r = EDEADEPT;
   if (r != OK) {
 	if (r == EDEADSRCDST || r == EDEADEPT) {
-		printf("VFS: dead driver %d\n", task_nr);
-		dmap_unmap_by_endpt(task_nr);
+		printf("VFS: dead driver %d\n", driver_e);
+		dmap_unmap_by_endpt(driver_e);
 		return(r);
 	} else if (r == ELOCKED) {
-		printf("VFS: ELOCKED talking to %d\n", task_nr);
+		printf("VFS: ELOCKED talking to %d\n", driver_e);
 		return(r);
 	}
 	panic("call_task: can't send/receive: %d", r);

@@ -32,7 +32,7 @@ _PROTOTYPE( int dev_close, (dev_t dev, int filp_no)			);
 _PROTOTYPE( int dev_io, (int op, dev_t dev, endpoint_t proc_e, void *buf,
 		u64_t pos, size_t bytes, int flags, int suspend_reopen)	);
 _PROTOTYPE( int gen_opcl, (int op, dev_t dev, endpoint_t task_nr, int flags));
-_PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)		);
+_PROTOTYPE( int gen_io, (endpoint_t driver_e, message *mess_ptr)		);
 _PROTOTYPE( int asyn_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int no_dev, (int op, dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int no_dev_io, (int, message *)				);
