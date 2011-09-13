@@ -773,11 +773,8 @@ int status;
   struct vnode *vp;
 
   /* Figure out which device is replying */
-  if ((dp = get_dmap(driver_e)) == NULL) {
-	printf("VFS (%s:%d): endpoint %d is not a known driver endpoint\n",
-		__FILE__, __LINE__, driver_e);
-	return;
-  }
+  if ((dp = get_dmap(driver_e)) == NULL) return;
+
   major = dp-dmap;
   dev = makedev(major, minor);
 
