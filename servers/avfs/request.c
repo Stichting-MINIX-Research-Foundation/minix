@@ -556,6 +556,7 @@ PUBLIC int req_mknod(
 PUBLIC int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 {
   message m;
+  int r;
 
   /* Fill in request message */
   m.m_type = REQ_MOUNTPOINT;

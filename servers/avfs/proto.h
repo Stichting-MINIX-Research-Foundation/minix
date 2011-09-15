@@ -116,7 +116,7 @@ _PROTOTYPE( void lock_revive, (void)					);
 
 /* main.c */
 _PROTOTYPE( int main, (void)						);
-_PROTOTYPE( int reply, (int whom, int result)				);
+_PROTOTYPE( void reply, (int whom, int result)				);
 _PROTOTYPE( void lock_proc, (struct fproc *rfp, int force_lock)		);
 _PROTOTYPE( void unlock_proc, (struct fproc *rfp)			);
 _PROTOTYPE( void *do_dummy, (void *arg)					);
@@ -323,6 +323,7 @@ _PROTOTYPE( struct vmnt *get_locked_vmnt, (struct fproc *rfp)		);
 _PROTOTYPE( void init_vmnts, (void)					);
 _PROTOTYPE( int lock_vmnt, (struct vmnt *vp, tll_access_t locktype)	);
 _PROTOTYPE( void unlock_vmnt, (struct vmnt *vp)				);
+_PROTOTYPE( void vmnt_unmap_by_endpt, (endpoint_t proc_e)		);
 
 /* vnode.c */
 _PROTOTYPE( void check_vnode_locks, (void)				);

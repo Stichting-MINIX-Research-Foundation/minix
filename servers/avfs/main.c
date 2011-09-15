@@ -343,7 +343,7 @@ PRIVATE void *do_pending_pipe(void *arg)
 	      fp->fp_buffer, fp->fp_nbytes);
 
   if (r != SUSPEND)  /* Do we have results to report? */
-	(void) reply(who_e, r);
+	reply(who_e, r);
 
   unlock_filp(f);
 
@@ -431,18 +431,7 @@ PRIVATE void *do_work(void *arg)
 		if (fp->fp_wtid == dl_worker.w_tid)
 			deadlock_resolving = 0;
 	}
-	if (reply(who_e, error) != OK) {
-		if ((vmp = find_vmnt(who_e)) != NULL) {
-			for (i = 0; i < NR_PROCS; i++) {
-				rfp = &fproc[i];
-				if (rfp->fp_task == vmp->m_fs_e) {
-					/* We found a process waiting for a
-					 * reply from non-responsive FS */
-					worker_stop(worker_get(rfp->fp_wtid));
-				}
-			}
-		}
-	}
+	reply(who_e, error);
   }
 
   thread_cleanup(fp);
@@ -764,7 +753,7 @@ PRIVATE void get_work()
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PUBLIC int reply(whom, result)
+PUBLIC void reply(whom, result)
 int whom;			/* process to reply to */
 int result;			/* result of the call (usually OK or error #) */
 {
@@ -776,7 +765,6 @@ int result;			/* result of the call (usually OK or error #) */
   if (r != OK) {
 	printf("VFS: couldn't send reply %d to %d: %d\n", result, whom, r);
   }
-  return(r);
 }
 
 /*===========================================================================*

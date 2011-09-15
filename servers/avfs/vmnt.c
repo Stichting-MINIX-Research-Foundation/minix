@@ -9,6 +9,7 @@
 #include "fproc.h"
 
 FORWARD _PROTOTYPE( int is_vmnt_locked, (struct vmnt *vmp)		);
+FORWARD _PROTOTYPE( void clear_vmnt, (struct vmnt *vmp)			);
 
 /* Is vmp pointer reasonable? */
 #define SANEVMP(v) ((((v) >= &vmnt[0] && (v) < &vmnt[NR_MNTS])))
@@ -59,6 +60,25 @@ PUBLIC void check_vmnt_locks()
 }
 
 /*===========================================================================*
+ *                             clear_vmnt				     *
+ *===========================================================================*/
+PRIVATE void clear_vmnt(struct vmnt *vmp)
+{
+/* Reset vmp to initial parameters */
+  ASSERTVMP(vmp);
+
+  vmp->m_fs_e = NONE;
+  vmp->m_dev = NO_DEV;
+  vmp->m_flags = 0;
+  vmp->m_mounted_on = NULL;
+  vmp->m_root_node = NULL;
+  vmp->m_label[0] = '\0';
+  vmp->m_comm.c_max_reqs = 1;
+  vmp->m_comm.c_cur_reqs = 0;
+  vmp->m_comm.c_req_queue = NULL;
+}
+
+/*===========================================================================*
  *                             get_free_vmnt				     *
  *===========================================================================*/
 PUBLIC struct vmnt *get_free_vmnt(void)
@@ -92,19 +112,11 @@ PUBLIC struct vmnt *find_vmnt(endpoint_t fs_e)
 PUBLIC void init_vmnts(void)
 {
 /* Initialize vmnt table */
-  struct vmnt *vp;
+  struct vmnt *vmp;
 
-  for (vp = &vmnt[0]; vp < &vmnt[NR_MNTS]; vp++) {
-	vp->m_fs_e = NONE;
-	vp->m_dev = NO_DEV;
-	vp->m_flags = 0;
-	vp->m_mounted_on = NULL;
-	vp->m_root_node = NULL;
-	vp->m_label[0] = '\0';
-	vp->m_comm.c_max_reqs = 1;
-	vp->m_comm.c_cur_reqs = 0;
-	vp->m_comm.c_req_queue = NULL;
-	tll_init(&vp->m_lock);
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
+	clear_vmnt(vmp);
+	tll_init(&vmp->m_lock);
   }
 }
 
@@ -166,5 +178,17 @@ PUBLIC void unlock_vmnt(struct vmnt *vmp)
 #if LOCK_DEBUG
   assert(!tll_locked_by_me(&vmp->m_lock));
 #endif
+
+}
+
+/*===========================================================================*
+ *                             vmnt_unmap_by_endpoint			     *
+ *===========================================================================*/
+PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
+{
+  struct vmnt *vmp;
+
+  if ((vmp = find_vmnt(proc_e)) != NULL)
+	clear_vmnt(vmp);
 
 }

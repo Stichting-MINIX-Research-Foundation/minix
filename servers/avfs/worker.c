@@ -11,6 +11,8 @@ FORWARD _PROTOTYPE( void get_work, (struct worker_thread *worker)	);
 FORWARD _PROTOTYPE( void *worker_main, (void *arg)			);
 FORWARD _PROTOTYPE( void worker_sleep, (struct worker_thread *worker)	);
 FORWARD _PROTOTYPE( void worker_wake, (struct worker_thread *worker)	);
+FORWARD _PROTOTYPE( int worker_waiting_for, (struct worker_thread *worker,
+						endpoint_t proc_e)	);
 PRIVATE int init = 0;
 PRIVATE mthread_attr_t tattr;
 
@@ -26,7 +28,7 @@ PRIVATE mthread_attr_t tattr;
 /*===========================================================================*
  *				worker_init				     *
  *===========================================================================*/
-PUBLIC void worker_init(struct worker_thread *worker)
+PUBLIC void worker_init(struct worker_thread *wp)
 {
 /* Initialize worker thread */
   if (!init) {
@@ -40,13 +42,13 @@ PUBLIC void worker_init(struct worker_thread *worker)
 	init = 1;
   }
 
-  ASSERTW(worker);
+  ASSERTW(wp);
 
-  worker->w_job.j_func = NULL;		/* Mark not in use */
-  worker->w_next = NULL;
-  assert(mutex_init(&worker->w_event_mutex, NULL) == 0);
-  assert(cond_init(&worker->w_event, NULL) == 0);
-  assert(mthread_create(&worker->w_tid, &tattr, worker_main, (void *) worker) == 0);
+  wp->w_job.j_func = NULL;		/* Mark not in use */
+  wp->w_next = NULL;
+  assert(mutex_init(&wp->w_event_mutex, NULL) == 0);
+  assert(cond_init(&wp->w_event, NULL) == 0);
+  assert(mthread_create(&wp->w_tid, &tattr, worker_main, (void *) wp) == 0);
   yield();
 }
 
@@ -292,8 +294,28 @@ PUBLIC void worker_signal(struct worker_thread *worker)
 PUBLIC void worker_stop(struct worker_thread *worker)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
-  worker->w_job.j_m_in.m_type = -EIO;
+  worker->w_job.j_m_in.m_type = EIO;
   worker_wake(worker);
+}
+
+/*===========================================================================*
+ *				worker_stop_by_endpt			     *
+ *===========================================================================*/
+PUBLIC void worker_stop_by_endpt(endpoint_t proc_e)
+{
+  struct worker_thread *worker;
+  int i;
+
+  if (proc_e == NONE) return;
+
+  if (worker_waiting_for(&sys_worker, proc_e)) worker_stop(&sys_worker);
+  if (worker_waiting_for(&dl_worker, proc_e)) worker_stop(&dl_worker);
+
+  for (i = 0; i < NR_WTHREADS; i++) {
+	worker = &workers[i];
+	if (worker_waiting_for(worker, proc_e))
+		worker_stop(worker);
+  }
 }
 
 /*===========================================================================*
@@ -343,4 +365,20 @@ PUBLIC struct job *worker_getjob(thread_t worker_tid)
 	return(&worker->w_job);
 
   return(NULL);
+}
+
+/*===========================================================================*
+ *				worker_waiting_for			     *
+ *===========================================================================*/
+PRIVATE int worker_waiting_for(struct worker_thread *worker, endpoint_t proc_e)
+{
+  ASSERTW(worker);		/* Make sure we have a valid thread */
+
+  if (worker->w_job.j_func != NULL) {
+	if (worker->w_job.j_fp != NULL) {
+		return(worker->w_job.j_fp->fp_task == proc_e);
+	}
+  }
+
+  return(0);
 }
