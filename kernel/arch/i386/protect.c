@@ -366,6 +366,7 @@ for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
 PUBLIC void printseg(char *banner, const int iscs, struct proc *pr,
   const u32_t selector)
 {
+#if USE_SYSDEBUG
 	u32_t base, limit, index, dpl;
 	struct segdesc_s *desc;
 
@@ -446,6 +447,7 @@ PUBLIC void printseg(char *banner, const int iscs, struct proc *pr,
 	printf("DPL %d\n", dpl);
 
 	return;
+#endif /* USE_SYSDEBUG */
 }
 
 /*===========================================================================*

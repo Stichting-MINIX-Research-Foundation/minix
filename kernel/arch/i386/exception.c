@@ -136,6 +136,7 @@ PRIVATE void inkernel_disaster(struct proc *saved_proc,
 	struct exception_frame * frame, struct ex_s *ep,
 	int is_nested)
 {
+#if USE_SYSDEBUG
   if(ep) {
   	if (ep->msg == NULL || machine.processor < ep->minprocessor)
 		printf("\nIntel-reserved exception %d\n", frame->vector);
@@ -177,6 +178,7 @@ PRIVATE void inkernel_disaster(struct proc *saved_proc,
 
   /* in an early stage of boot process we don't have processes yet */
   panic("exception in kernel while booting, no saved_proc yet");
+#endif /* USE_SYSDEBUG */
 }
 
 /*===========================================================================*
@@ -261,6 +263,7 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
   panic("return from inkernel_disaster");
 }
 
+#if USE_SYSDEBUG
 /*===========================================================================*
  *				proc_stacktrace_execute			     *
  *===========================================================================*/
@@ -303,13 +306,16 @@ PRIVATE void proc_stacktrace_execute(struct proc *whichproc, reg_t v_bp, reg_t p
 	}
 	printf("\n");
 }
+#endif /* USE_SYSDEBUG */
 
 /*===========================================================================*
  *				proc_stacktrace			     *
  *===========================================================================*/
 PUBLIC void proc_stacktrace(struct proc *whichproc)
 {
+#if USE_SYSDEBUG
 	proc_stacktrace_execute(whichproc, whichproc->p_reg.fp, whichproc->p_reg.pc);
+#endif /* USE_SYSDEBUG */
 }
 
 PUBLIC void enable_fpu_exception(void)

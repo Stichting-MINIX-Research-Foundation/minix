@@ -19,7 +19,9 @@
 #include "libexec.h"
 #include <machine/multiboot.h>
 
+#if USE_SYSDEBUG
 #define MULTIBOOT_VERBOSE 1
+#endif
 
 /* FIXME: Share this define with kernel linker script */
 #define MULTIBOOT_KERNEL_ADDR 0x00200000UL
@@ -142,6 +144,7 @@ PRIVATE void mb_scroll_up(int lines)
 
 PRIVATE void mb_print(char *str) 
 {
+#if MULTIBOOT_VERBOSE
 	while (*str) {
 		if (*str == '\n') {
 			str++;
@@ -157,6 +160,7 @@ PRIVATE void mb_print(char *str)
 		while (print_line >= MULTIBOOT_CONSOLE_LINES)
 			mb_scroll_up(1);
 	}
+#endif /* MULTIBOOT_VERBOSE */
 }
 
 PRIVATE void mb_print_hex(u32_t value) 

@@ -136,6 +136,10 @@ CPPFLAGS+= -DUSE_COVERAGE
 CPPFLAGS+= -DUSE_LIVEUPDATE
 .endif
 
+.if ${USE_SYSDEBUG} != "no"
+CPPFLAGS+= -DUSE_SYSDEBUG
+.endif
+
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 
 .if (${CC} == "gcc") || (${CC} == "clang")

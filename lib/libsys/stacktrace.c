@@ -34,6 +34,7 @@ typedef unsigned int reg_t;
 
 void util_nstrcat(char *str, unsigned long number)
 {
+#if USE_SYSDEBUG
 	int n = 10, lead = 1;
 	char nbuf[12], *p;
 	p = nbuf;
@@ -51,16 +52,21 @@ void util_nstrcat(char *str, unsigned long number)
 	*p++ = ' ';
 	*p++ = '\0';
 	strcat(str, nbuf);
+#endif /* USE_SYSDEBUG */
 }
 
 void util_stacktrace(void)
 {
+#if USE_SYSDEBUG
 	FUNC_STACKTRACE(printf("0x%lx ", (unsigned long) pc));
 	printf("\n");
+#endif /* USE_SYSDEBUG */
 }
 
 void util_stacktrace_strcat(char *str)
 {
+#if USE_SYSDEBUG
 	FUNC_STACKTRACE(util_nstrcat(str, pc));
+#endif /* USE_SYSDEBUG */
 }
 
