@@ -92,6 +92,7 @@ PUBLIC __dead void arch_shutdown(int how)
 	/* Mask all interrupts, including the clock. */
 	outb( INT_CTLMASK, ~0);
 
+#if USE_BOOTPARAM
 	if(minix_panicing) {
 		/* We're panicing? Then retrieve and decode currently
 		 * loaded segment selectors.
@@ -198,6 +199,10 @@ PUBLIC __dead void arch_shutdown(int how)
 			panic("unexpected value for how: %d", how);
 			NOT_REACHABLE;
 	}
+#else /* !USE_BOOTPARAM */
+	/* Poweroff without boot monitor */
+	arch_bios_poweroff();
+#endif
 
 	NOT_REACHABLE;
 }

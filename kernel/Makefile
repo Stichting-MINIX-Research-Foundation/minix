@@ -85,6 +85,10 @@ CPPFLAGS+= -DUSE_STATECTL
 CPPFLAGS+= -DUSE_TRACE
 .endif
 
+.if ${USE_BOOTPARAM} != "no"
+CPPFLAGS+= -DUSE_BOOTPARAM
+.endif
+
 # These come last, so the profiling buffer is at the end of the data segment
 SRCS+= profile.c do_sprofile.c
 
