@@ -37,8 +37,6 @@
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 
-PRIVATE int pc_at = 1;	/* What about PC XTs? */
-
 /* Variables. */
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned cylinders;		/* number of cylinders */
@@ -466,11 +464,9 @@ PRIVATE void w_init()
 	reg86.u.w.bx = 0x55AA;
 	reg86.u.b.dl = drive_id;
 
-	if (pc_at) {
-		r= sys_int86(&reg86);
-		if (r != OK)
-			panic("BIOS call failed: %d", r);
-	}
+	r= sys_int86(&reg86);
+	if (r != OK)
+	    panic("BIOS call failed: %d", r);
 
 	if (!(reg86.u.w.f & 0x0001) && reg86.u.w.bx == 0xAA55
 				&& (reg86.u.w.cx & 0x0001)) {

@@ -950,7 +950,7 @@ tty_t *tp;
   	vid_port = bios_crtbase;
   	scr_width = bios_columns;
   	font_lines = bios_fontlines;
-  	scr_lines = machine.vdu_ega ? bios_rows+1 : 25;
+	scr_lines = bios_rows+1;
 
   	if (color) {
 		vid_base = COLOR_BASE;
@@ -959,8 +959,8 @@ tty_t *tp;
 		vid_base = MONO_BASE;
 		vid_size = MONO_SIZE;
   	}
-  	if (machine.vdu_ega) vid_size = EGA_SIZE;
-  	wrap = ! machine.vdu_ega;
+	vid_size = EGA_SIZE;
+	wrap = 0;
 
 	console_memory = vm_map_phys(SELF, (void *) vid_base, vid_size);
 
@@ -1202,7 +1202,6 @@ message *m;
 
   seq2[6].value= color ? 0x0E : 0x0A;
 
-  if (!machine.vdu_ega) return(ENOTTY);
   result = ga_program(seq1);	/* bring font memory into view */
 
   if(sys_safecopyfrom(m->m_source, (cp_grant_id_t) m->IO_GRANT, 0,

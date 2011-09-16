@@ -138,7 +138,7 @@ PRIVATE void inkernel_disaster(struct proc *saved_proc,
 {
 #if USE_SYSDEBUG
   if(ep) {
-  	if (ep->msg == NULL || machine.processor < ep->minprocessor)
+	if (ep->msg == NULL)
 		printf("\nIntel-reserved exception %d\n", frame->vector);
 	  else
 		printf("\n%s\n", ep->msg);

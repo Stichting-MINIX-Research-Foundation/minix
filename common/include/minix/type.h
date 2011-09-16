@@ -130,14 +130,9 @@ struct cpu_info {
 };
 
 struct machine {
-  int pc_at;
-  int ps_mca;
-  int processor;
   unsigned processors_count;	/* how many cpus are available */
   unsigned bsp_id;		/* id of the bootstrap cpu */
   int padding;			/* used to be protected */
-  int vdu_ega;
-  int vdu_vga;
   int apic_enabled; /* does the kernel use APIC or not? */
   phys_bytes	acpi_rsdp; /* where is the acpi RSDP */
 };

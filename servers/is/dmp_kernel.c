@@ -213,13 +213,7 @@ PUBLIC void kenv_dmp()
     	return;
     }
 
-    printf("Dump of kinfo and machine structures.\n\n");
-    printf("Machine structure:\n");
-    printf("- pc_at:      %3d\n", machine.pc_at); 
-    printf("- ps_mca:     %3d\n", machine.ps_mca); 
-    printf("- processor:  %3d\n", machine.processor); 
-    printf("- vdu_ega:    %3d\n", machine.vdu_ega); 
-    printf("- vdu_vga:    %3d\n\n", machine.vdu_vga); 
+    printf("Dump of kinfo structure.\n\n");
     printf("Kernel info structure:\n");
     printf("- code_base:  %5lu\n", kinfo.code_base); 
     printf("- code_size:  %5lu\n", kinfo.code_size); 

@@ -41,9 +41,20 @@ PUBLIC void cstart(
   /* Copy the boot parameters to the local buffer. */
   arch_get_params(params_buffer, sizeof(params_buffer));
 
+#if USE_BOOTPARAM
   /* determine verbosity */
   if ((value = env_get(VERBOSEBOOTVARNAME)))
 	  verboseboot = atoi(value);
+
+  /* Get clock tick frequency. */
+  value = env_get("hz");
+  if(value)
+	system_hz = atoi(value);
+  if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
+	system_hz = DEFAULT_HZ;
+#else /* !USE_BOOTPARAM */
+  system_hz = DEFAULT_HZ;
+#endif
 
   DEBUGEXTRA(("cstart\n"));
 
@@ -60,29 +71,6 @@ PUBLIC void cstart(
   kloadinfo.proc_last_slot = 0;
   for(h = 0; h < _LOAD_HISTORY; h++)
 	kloadinfo.proc_load_history[h] = 0;
-
-  /* Processor? Decide if mode is protected for older machines. */
-  machine.processor=atoi(env_get("processor")); 
-
-  /* XT, AT or MCA bus? */
-  value = env_get("bus");
-  if (value == NULL || strcmp(value, "at") == 0) {
-      machine.pc_at = TRUE;			/* PC-AT compatible hardware */
-  } else if (strcmp(value, "mca") == 0) {
-      machine.pc_at = machine.ps_mca = TRUE;	/* PS/2 with micro channel */
-  }
-
-  /* Type of VDU: */
-  value = env_get("video");	/* EGA or VGA video unit */
-  if (strcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
-  if (strcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
-
-  /* Get clock tick frequency. */
-  value = env_get("hz");
-  if(value)
-	system_hz = atoi(value);
-  if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
-	system_hz = DEFAULT_HZ;
 
 #ifdef DEBUG_SERIAL
   /* Intitialize serial debugging */
