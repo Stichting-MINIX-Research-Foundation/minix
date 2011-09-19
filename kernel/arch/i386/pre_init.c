@@ -124,12 +124,14 @@ PRIVATE int print_line = 1, print_col = 1;
 	
 PRIVATE void mb_cls(void) 
 {
+#if MULTIBOOT_VERBOSE
 	int i, j;
 	/* Clear screen */
 	for (i = 0; i < MULTIBOOT_CONSOLE_LINES; i++ )
 		for (j = 0; j < MULTIBOOT_CONSOLE_COLS; j++ )
 			mb_put_char(0, i, j);
 	print_line = print_col = 0;
+#endif
 }
 
 PRIVATE void mb_scroll_up(int lines) 
@@ -259,15 +261,7 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 		mb_set_param("rootdev", temp);
 		mb_set_param("ramimagedev", temp);
 	}
-	mb_set_param("ramsize", "0");
 	mb_set_param("hz", "60");
-	processor = getprocessor();
-	if (processor == 1586) processor = 686;
-	mb_itoa(processor, temp);
-	mb_set_param("processor", temp);
-	mb_set_param("bus", "at");
-	mb_set_param("video", "ega");
-	mb_set_param("chrome", "color");
 	
 	if (mbi->flags & MULTIBOOT_INFO_MEMORY)
 	{
