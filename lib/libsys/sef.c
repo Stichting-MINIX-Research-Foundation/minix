@@ -14,6 +14,7 @@ PUBLIC int sef_self_priv_flags;
 PUBLIC int sef_self_first_receive_done;
 
 /* Debug. */
+#if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
 #define SEF_DEBUG_HEADER_MAXLEN 32
 PRIVATE time_t sef_debug_boottime = 0;
 PRIVATE u32_t sef_debug_system_hz = 0;
@@ -22,6 +23,7 @@ PRIVATE time_t sef_debug_time_us = 0;
 PRIVATE char sef_debug_header_buff[SEF_DEBUG_HEADER_MAXLEN];
 FORWARD _PROTOTYPE( void sef_debug_refresh_params, (void) );
 PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
+#endif
 
 /* SEF Init prototypes. */
 #ifdef USE_COVERAGE
@@ -220,6 +222,7 @@ PUBLIC void __exit(int status)
   panic("sef_exit failed");
 }
 
+#if SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG
 /*===========================================================================*
  *                         sef_debug_refresh_params              	     *
  *===========================================================================*/
@@ -280,4 +283,5 @@ PUBLIC char* sef_debug_header(void)
 
   return sef_debug_header_buff;
 }
+#endif /*SEF_INIT_DEBUG || SEF_LU_DEBUG || SEF_PING_DEBUG || SEF_SIGNAL_DEBUG*/
 
