@@ -33,7 +33,7 @@ SUBDIR=	aal add_route adduser arp ash at autil awk \
 	unstack update uud uue version vol wc \
 	whereis which who write writeisofs fetch \
 	xargs yacc yes zdump zic zmodem pkgin_cd \
-	mktemp
+	mktemp worldstone
 
 .if ${COMPILER_TYPE} == "gnu"
 SUBDIR += elf2aout

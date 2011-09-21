@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 # NetBSD imports
-SUBDIR= indent m4 stat tic sed mkdep uniq
+SUBDIR= indent m4 stat tic sed mkdep uniq seq
 
 # Non-NetBSD imports
 SUBDIR+= ministat

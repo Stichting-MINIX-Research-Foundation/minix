@@ -32,3 +32,5 @@ CVS
 .gitignore
 .svn
 minix-port.patch
+*.worldstone.log
+.worldstone*

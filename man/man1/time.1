@@ -2,7 +2,7 @@
 .SH NAME
 time \- report how long a command takes
 .SH SYNOPSIS
-\fBtime \fIcommand\fR
+\fBtime [-C] \fIcommand\fR
 .br
 .de FL
 .TP
@@ -14,6 +14,8 @@ time \- report how long a command takes
 \\fB\\$1\\fR
 # \\$2
 ..
+The -C option tells time to report the cpu cycle counter
+difference.
 .SH EXAMPLES
 .EX "time a.out" "Report how long \fIa.out\fR takes"
 .EX "time ls \-l *.c" "Report how long \fIls\fR takes"

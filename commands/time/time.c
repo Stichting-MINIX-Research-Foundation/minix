@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <minix/minlib.h>
+#include <minix/u64.h>
 #include <stdio.h>
 
 /* -DNEW prints time to 0.01 sec. */
@@ -33,7 +34,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-
+  int cycles = 0;
   struct tms pre_buf, post_buf;
   int status, pid;
 #if _VMD_EXT
@@ -42,12 +43,28 @@ char *argv[];
   struct tms dummy;
   int start_time, end_time;
 #endif
+  u64_t start_tsc, end_tsc, spent_tsc;
   clock_t real_time;
+  int c;
 
   if (argc == 1) exit(0);
 
-  args = &argv[1];
-  name = argv[1];
+  while((c=getopt(argc, argv, "C")) != EOF) {
+    switch(c) {
+  	case 'C':
+		cycles = 1;
+		break;
+	default:
+		fprintf(stderr, "usage: time [-C] <command>\n");
+		exit(1);
+    }
+  }
+  
+  argv += optind;
+  argc -= optind;
+
+  args = &argv[0];
+  name = argv[0];
 
   /* Get real time at start of run. */
 #if _VMD_EXT
@@ -55,6 +72,7 @@ char *argv[];
 #else
   start_time = times(&dummy);
 #endif
+  read_tsc_64(&start_tsc);
 
   /* Fork off child. */
   if ((pid = fork()) < 0) {
@@ -70,6 +88,8 @@ char *argv[];
   do {
 	times(&pre_buf);
   } while (wait(&status) != pid);
+  read_tsc_64(&end_tsc);
+  spent_tsc = sub64(end_tsc, start_tsc);
 #if _VMD_EXT
   (void) sysutime(UTIME_TIMEOFDAY, &end_time);
   real_time = (end_time.tv_sec - start_time.tv_sec) * CLOCKS_PER_SEC
@@ -82,6 +102,9 @@ char *argv[];
   if ((status & 0377) != 0) std_err("Command terminated abnormally.\n");
   times(&post_buf);
 
+  if(cycles) {
+  	fprintf(stderr, "%qd tsc ", spent_tsc);
+  }
   /* Print results. -DNEW enables time on one line to 0.01 sec */
 #ifndef NEW
   std_err("real ");

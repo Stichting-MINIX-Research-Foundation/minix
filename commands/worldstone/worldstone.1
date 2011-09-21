@@ -1,0 +1,85 @@
+.Dd $Mdocdate: September 22 2011 $
+.Dt WORLDSTONE 1
+.Os
+.Sh NAME
+.Nm worldstone
+.Nd shell script to consistently execute benchmarks
+.Sh SYNOPSIS
+.Nm worldstone
+.Op Fl n Ar iterations
+.Op Fl c Ar command
+.Op Fl p Ar command
+.Op Fl t Ar tag
+.Sh DESCRIPTION
+The
+.Nm
+utility is a shell script and takes care of some of the
+grunt work around benchmarking, in order to make it easier
+to get consistent and comparable benchmark results. Its basic
+operation is: execute the precommand, then execute and time
+the command, and do this a set number of iterations, and record
+the times in a logfile.
+
+Its features are:
+.Bl -tag -width Ds
+.It -
+It executes the precommand and command once without timing it
+in order to mitigate cold cache effects.
+.It -
+It allows a precommand to run before the command, so that the initial
+state can be set up by the precommand without it being part of the timing
+(e.g. make clean).
+.It -
+It redirects the stdout and stderr to /dev/null so that lots of output
+going over a network connection doesn't influence timing.
+.It -
+It does a sync before running the timed command, and makes sure a final
+sync is part of the timed command, to make the i/o more consistent.
+.It -
+It logs the times of each iteration in an easy-to-parse logfile.
+.It -
+It tries to guess a sensible log file name based on the current git
+branch in /usr/src.
+.El
+
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n Ar iterations
+Set the number of iterations to perform, after the initial run.
+The default is 5.
+.It Fl c Ar command
+Set the command to run to be timed. This is passed to sh -c, so shell constructs
+like loops etc. are okay to do. Default: make all.
+.It Fl p Ar command
+Set the pre-command to run. This command gets run before the timed command in order
+to make the timed command get a consistent state before it starts.
+Default: make clean.
+.It Fl t Ar tag
+Use the given tag name to modify the logfile that the utility uses
+to write its results in. The default is just 'time' plus the git branch you
+are currently on in /usr/src. In order for this to be useful you have to make sure the
+git branch you are on reflects the system you wish to benchmark of course.
+The script checks /usr/src/.git even if you are outside the /usr/src hierarchy
+(such as in pkgsrc).
+.El
+
+The script executes the commands the set number of iterations, redirecting stdout
+and stderr to /dev/null, and records the timed results in the logfile tagged with
+the given tag.
+.Nm
+executes
+.Xr time 1
+with the -C option, resulting in printing the 64-bit cpu cycle counter
+for both HZ-independent high resolution and an easy way not to have to convert minutes
+and seconds to seconds when parsing the results.
+.Pp
+You can feed the two separate logfiles directly to
+.Xr ministat 1
+to have it tell you the statistical properties of the two datasets, and judge whether
+there is a statistically significant difference.
+.Sh ENVIRONMENT
+The default commands, i.e. make all and make clean, can be modified by supplying a MAKE
+environment variable, so e.g. MAKE=bmake worldstone still does something sensible
+by default in /usr/pkgsrc directories.
+.Sh SEE ALSO
+.Xr ministat 1

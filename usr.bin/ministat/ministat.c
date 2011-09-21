@@ -215,14 +215,14 @@ static void
 VitalsHead(void)
 {
 
-	printf("    N           Min           Max        Median           Avg        Stddev\n");
+	printf("    N               Min               Max            Median               Avg            Stddev\n");
 }
 
 static void
 Vitals(struct dataset *ds, int flag)
 {
 
-	printf("%c %3d %13.8g %13.8g %13.8g %13.8g %13.8g", symbol[flag],
+	printf("%c %3d %17.12g %17.12g %17.12g %17.12g %17.12g", symbol[flag],
 	    ds->n, Min(ds), Max(ds), Median(ds), Avg(ds), Stddev(ds));
 	printf("\n");
 }
