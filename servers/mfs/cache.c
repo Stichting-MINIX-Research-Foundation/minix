@@ -28,7 +28,7 @@
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
 FORWARD _PROTOTYPE( void rw_block, (struct buf *, int) );
 
-PRIVATE int vmcache_avail = -1; /* 0 if not available, >0 if available. */
+PRIVATE int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
 
 /*===========================================================================*
  *				get_block				     *
@@ -57,26 +57,10 @@ PUBLIC struct buf *get_block(
   int b;
   static struct buf *bp, *prev_ptr;
   u64_t yieldid = VM_BLOCKID_NONE, getid = make64(dev, block);
-  int vmcache = 0;
 
   assert(buf_hash);
   assert(buf);
   assert(nr_bufs > 0);
-
-  if(vmcache_avail < 0) {
-	/* Test once for the availability of the vm yield block feature. */
-	if(vm_forgetblock(VM_BLOCKID_NONE) == ENOSYS) {
-		vmcache_avail = 0;
-	} else {
-		vmcache_avail = 1;
-	}
-  }
-
-  /* use vmcache if it's available, and allowed, and we're not doing
-   * i/o on a ram disk device.
-   */
-  if(vmcache_avail && may_use_vmcache && major(dev) != MEMORY_MAJOR)
-	vmcache = 1;
 
   ASSERT(fs_block_size > 0);
 
@@ -586,6 +570,19 @@ PUBLIC void set_blocksize(struct super_block *sp)
   cache_resize(sp->s_block_size, MINBUFS);
   bufs = bufs_heuristic(sp);
   cache_resize(sp->s_block_size, bufs);
+  
+  /* Decide whether to use seconday cache or not.
+   * Only do this if
+   *	- it's available, and
+   *	- use of it hasn't been disabled for this fs, and
+   *	- our main FS device isn't a memory device
+   */
+
+  vmcache = 0;
+  if(vm_forgetblock(VM_BLOCKID_NONE) != ENOSYS &&
+  	may_use_vmcache && major(sp->s_dev) != MEMORY_MAJOR) {
+	vmcache = 1;
+  }
 }
 
 /*===========================================================================*

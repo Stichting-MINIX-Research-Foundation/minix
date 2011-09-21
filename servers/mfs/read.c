@@ -412,7 +412,7 @@ PUBLIC void read_ahead()
   rdahed_inode = NULL;	/* turn off read ahead */
   if ( (b = read_map(rip, rdahedpos)) == NO_BLOCK) return;	/* at EOF */
 
-  assert(rdahedpos > 0); /* So we can safely cast it to unsigned below */
+  assert(rdahedpos >= 0); /* So we can safely cast it to unsigned below */
 
   bp = rahead(rip, b, cvul64( (unsigned long) rdahedpos), block_size);
   put_block(bp, PARTIAL_DATA_BLOCK);
