@@ -12,16 +12,13 @@
 
 
 FORWARD _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
-			u64_t position, unsigned bytes_ahead)		);
+                       u64_t position, unsigned bytes_ahead)           );
 FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, u64_t position,
 	unsigned off, size_t chunk, unsigned left, int rw_flag,
 	cp_grant_id_t gid, unsigned buf_off, unsigned int block_size,
 	int *completed)							);
 
 PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
-
-PRIVATE off_t rdahedpos;         /* position to read ahead */
-PRIVATE struct inode *rdahed_inode;      /* pointer to inode to read ahead */
 
 /*===========================================================================*
  *				fs_readwrite				     *
@@ -110,14 +107,6 @@ PUBLIC int fs_readwrite(void)
 	  if (regular || mode_word == I_DIRECTORY) {
 		  if (position > f_size) rip->i_size = position;
 	  }
-  } 
-
-  /* Check to see if read-ahead is called for, and if so, set it up. */
-  if(rw_flag == READING && rip->i_seek == NO_SEEK &&
-     (unsigned int) position % block_size == 0 &&
-     (regular || mode_word == I_DIRECTORY)) {
-	  rdahed_inode = rip;
-	  rdahedpos = position;
   } 
 
   rip->i_seek = NO_SEEK;
@@ -391,33 +380,6 @@ int index;			/* index into *bp */
   
   return(zone);
 }
-
-
-/*===========================================================================*
- *				read_ahead				     *
- *===========================================================================*/
-PUBLIC void read_ahead()
-{
-/* Read a block into the cache before it is needed. */
-  unsigned int block_size;
-  register struct inode *rip;
-  struct buf *bp;
-  block_t b;
-
-  if(!rdahed_inode)
-	return;
-
-  rip = rdahed_inode;		/* pointer to inode to read ahead from */
-  block_size = get_block_size(rip->i_dev);
-  rdahed_inode = NULL;	/* turn off read ahead */
-  if ( (b = read_map(rip, rdahedpos)) == NO_BLOCK) return;	/* at EOF */
-
-  assert(rdahedpos >= 0); /* So we can safely cast it to unsigned below */
-
-  bp = rahead(rip, b, cvul64( (unsigned long) rdahedpos), block_size);
-  put_block(bp, PARTIAL_DATA_BLOCK);
-}
-
 
 /*===========================================================================*
  *				rahead					     *

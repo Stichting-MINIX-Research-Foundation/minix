@@ -77,10 +77,6 @@ PUBLIC int main(int argc, char *argv[])
 		fs_m_out.m_type = TRNS_ADD_ID(fs_m_out.m_type, transid);
 	}
 	reply(src, &fs_m_out);
-
-	if (error == OK) 
-		read_ahead(); /* do block read ahead */
-      
   }
 
   return(OK);
