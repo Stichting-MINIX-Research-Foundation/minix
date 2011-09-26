@@ -3,3 +3,4 @@
 NBSD_LIBC:= yes
 CC:=${CC:C/^cc/clang/}
 COMPILER_TYPE:= gnu
+AR=ar

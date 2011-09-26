@@ -11,5 +11,12 @@ MAN=	accept.2 access.2 alarm.2 bind.2 brk.2 chdir.2 chmod.2 chown.2 \
 	statvfs.2 svrctl.2 symlink.2 sync.2 time.2 times.2 truncate.2 \
 	umask.2 uname.2 unlink.2 utime.2 wait.2 write.2
 
+MLINKS += select.2 FD_CLR.2
+MLINKS += select.2 FD_ISSET.2
+MLINKS += select.2 FD_SET.2
+MLINKS += setuid.2 seteuid.2
+MLINKS += setuid.2 setgid.2
+MLINKS += statvfs.2 fstatvfs.2
+
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

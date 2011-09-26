@@ -1,0 +1,279 @@
+.\"     $NetBSD: snprintb.3,v 1.14 2009/05/13 02:50:32 pgoyette Exp $
+.\"
+.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jeremy Cooper.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 7, 2009
+.Dt SNPRINTB 3
+.Os
+.Sh NAME
+.Nm snprintb
+.Nd bitmask output conversion
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft int
+.Fn "snprintb" "char *buf" "size_t buflen" "const char *fmt" "uint64_t val"
+.Ft int
+.Fn "snprintb_m" "char *buf" "size_t buflen" "const char *fmt" "uint64_t val" \
+"size_t max"
+.Sh DESCRIPTION
+The
+.Fn snprintb
+function formats a bitmask into a mnemonic form suitable for printing.
+.Pp
+This conversion is useful for decoding bit fields in device registers.
+It formats the integer
+.Fa val
+into the buffer
+.Fa buf ,
+of size
+.Fa buflen ,
+using a specified radix and an interpretation of
+the bits within that integer as though they were flags.
+The buffer is always NUL-terminated.
+If the buffer
+.Fa buf
+is too small to hold the formatted output,
+.Fn snprintb
+will fill as much as it can, and return the number of bytes
+that would have written if the buffer was long enough excluding the
+terminating NUL.
+.Pp
+The decoding directive string
+.Fa fmt
+describes how the bitfield is to be interpreted and displayed.
+It follows two possible syntaxes, referred to as
+.Dq old
+and
+.Dq new .
+The main advantage of the
+.Dq new
+formatting is that it is capable of handling multi-bit fields.
+.Pp
+The first character of
+.Fa fmt
+may be
+.Li \e177 ,
+indicating that the remainder of the format string follows the
+.Dq new
+syntax.
+The second character
+.Pq the first for the old format
+is a binary character representation of the
+output numeral base in which the bitfield will be printed before it is decoded.
+Recognized radix values
+.Pq in C escape-character format
+are
+.Li \e10
+.Pq octal ,
+.Li \e12
+.Pq decimal ,
+and
+.Li \e20
+.Pq hexadecimal .
+.Pp
+The remaining characters in
+.Fa fmt
+are interpreted as a list of bit-position\(endescription pairs.
+From here the syntaxes diverge.
+.Pp
+The
+.Dq old
+format syntax is series of bit-position\(endescription pairs.
+Each begins with a binary character value that represents the position
+of the bit being described.
+A bit position value of one describes the least significant bit.
+Whereas a position value of 32
+.Pq octal 40, hexadecimal 20, the ASCII space character
+describes the most significant bit.
+.Pp
+The remaining characters in a bit-position\(endescription pair are the
+characters to print should the bit being described be set.
+Description strings are delimited by the next bit position value character
+encountered
+.Pq distinguishable by its value being \*[Le] 32 ,
+or the end of the decoding directive string itself.
+.Pp
+For the
+.Dq new
+format syntax, a bit-position\(endescription begins with a field type
+followed by a binary bit-position and possibly a field length.
+The least significant bit is bit-position zero, unlike the
+.Dq old
+syntax where it is one.
+.Bl -tag -width "xxxxx"
+.It Cm b\eB
+Describes a bit position.
+The bit-position
+.Fa B
+indicates the corresponding bit, as in the
+.Dq old
+format.
+.It Cm f\eB\eL
+Describes a multi-bit field beginning at bit-position
+.Fa B
+and having a bit-length of
+.Fa L .
+The remaining characters are printed as a description of the field
+followed by
+.Sq \&=
+and the value of the field.
+The value of the field is printed in the base specified as the second
+character of the decoding directive string
+.Ar fmt .
+.It Cm F\eB\eL
+Describes a multi-bit field like
+.Sq f ,
+but just extracts the value for use with the
+.Sq \&=
+and
+.Sq \&:
+formatting directives described below.
+.It Cm \&=\eV
+The field previously extracted by the last
+.Sq f
+or
+.Sq F
+operator is compared to the byte
+.Sq Cm V
+.Pq for values 0 through 255 .
+If they are equal,
+.Sq \&=
+followed by the string following
+.Sq Cm V
+is printed.
+This and the
+.Sq \&:
+operator may be repeated to annotate multiple possible values.
+.It Cm :\eV
+Operates like the
+.Sq \&=
+operator, but omits the leading
+.Sq \&= .
+.El
+.Pp
+Finally, each field is delimited by a NUL
+.Pq Sq \e0
+character.
+By convention, the format string has an additional NUL character at
+the end, following that delimiting the last bit-position\(endescription
+pair.
+.Pp
+The
+.Fn snprintb_m
+function accepts an additional
+.Fa max
+argument.
+If this argument is zero, the
+.Fn snprintb_m
+function returns exactly the same results in the
+.Fa buf
+as the
+.Fn snprintb
+function.
+If the
+.Fa max
+argument is present and has a non-zero value, it represents the maximum
+length of a formatted string.
+If the formatted string would require more than
+.Fa max
+characters, the
+.Fn snprintb_m
+function returns multiple formatted strings in the output buffer
+.Fa buf .
+Each string is NUL-terminated, and the last string is followed by an
+additional NUL character (or, if you prefer, a zero-length string).
+.Sh RETURN VALUES
+The
+.Fn snprintb
+and
+.Fn snprintb_m
+functions return the number of bytes that would have written to the buffer
+if there was adequate space, excluding the final terminating NUL, or \-1 in
+case an error occurred.
+For
+.Fn snprintb_m ,
+the NUL characters terminating each individual string are included in the
+total number of bytes.
+.Sh EXAMPLES
+Two examples of the old formatting style:
+.Bd -literal -offset indent
+snprintb(buf, buflen, "\e10\e2BITTWO\e1BITONE", 3)
+\(rA "3\*[Lt]BITTWO,BITONE\*[Gt]"
+
+snprintb(buf, buflen,
+       "\e20\ex10NOTBOOT\ex0fFPP\ex0eSDVMA\ex0cVIDEO"
+       "\ex0bLORES\ex0aFPA\ex09DIAG\ex07CACHE"
+       "\ex06IOCACHE\ex05LOOPBACK\ex04DBGCACHE",
+       0xe860)
+\(rA "e860\*[Lt]NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE\*[Gt]"
+.Ed
+.Pp
+An example of the new formatting style:
+.Bd -literal -offset indent
+snprintb(buf, buflen,
+       "\e177\e020b\e0LSB\e0b\e1_BITONE\e0f\e4\e4NIBBLE2\e0"
+       "f\ex10\e4BURST\e0=\e4FOUR\e0=\exfSIXTEEN\e0"
+       "b\ex1fMSB\e0\e0",
+       0x800f0701)
+\(rA "800f0701\*[Lt]LSB,NIBBLE2=0,BURST=f=SIXTEEN,MSB\*[Gt]"
+.Ed
+.Sh ERRORS
+.Fn snprintb
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The leading character does not describe a supported format,
+or
+.Fn snprintf
+failed.
+.El
+.Sh SEE ALSO
+.Xr printf 3 ,
+.Xr snprintf 3
+.Sh HISTORY
+The
+.Fn snprintb
+function was originally implemented as a non-standard
+.Li %b
+format string for the kernel
+.Fn printf
+function in
+.Nx 1.5
+and earlier releases.
+It was called
+.Fn bitmask_snprintf
+in
+.Nx 5.0
+and earlier releases.
+.Sh AUTHORS
+The
+.Dq new
+format was the invention of
+.An Chris Torek .

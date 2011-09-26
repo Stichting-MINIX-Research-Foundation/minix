@@ -34,3 +34,4 @@ CVS
 minix-port.patch
 *.worldstone.log
 .worldstone*
+usr.bin/mdocml/man/*.7

@@ -1,0 +1,93 @@
+.\"	$NetBSD: loginx.3,v 1.3 2008/04/30 13:10:52 martin Exp $
+.\"
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 26, 2002
+.Dt LOGINX 3
+.Os
+.Sh NAME
+.Nm loginx ,
+.Nm logoutx ,
+.Nm logwtmpx
+.Nd login utility functions
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft void
+.Fn loginx "const struct utmpx *ut"
+.Ft int
+.Fn logoutx "const char *line" "int status" "int type"
+.Ft void
+.Fn logwtmpx "const char *line" "const char *name" "const char *host" "int status" "int type"
+.Sh DESCRIPTION
+The
+.Fn loginx ,
+.Fn logoutx ,
+and
+.Fn logwtmpx
+operate on the
+.Xr utmpx 5
+database of currently logged in users, and the
+.Xr wtmpx 5
+database of logins and logouts.
+.Pp
+The
+.Fn loginx
+function updates the
+.Pa /var/run/utmpx
+and
+.Pa /var/log/wtmpx
+databases with the information from
+.Fa ut .
+.Pp
+.Fn logoutx
+updates the entry corresponding to
+.Fa line
+with the type and status from
+.Fa type
+and
+.Fa status .
+.Pp
+.Fn logwtmpx
+writes an entry filled with data from
+.Fa line ,
+.Fa name ,
+.Fa host ,
+.Fa status ,
+and
+.Fa type
+to the
+.Xr wtmpx 5
+database.
+.Sh RETURN VALUES
+.Fn logoutx
+returns 1 on success, and 0 if no corresponding entry was found.
+.Sh SEE ALSO
+.Xr endutxent 3 ,
+.Xr utmpx 5

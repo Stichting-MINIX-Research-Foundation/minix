@@ -1,0 +1,108 @@
+.\" $NetBSD: ttyaction.3,v 1.15 2010/05/04 06:41:27 jruoho Exp $
+.\"
+.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gordon W. Ross.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 4, 2010
+.Dt TTYACTION 3
+.Os
+.Sh NAME
+.Nm ttyaction
+.Nd ttyaction utility function
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft int
+.Fn ttyaction "char *ttyname" "char *action" "char *username"
+.Sh DESCRIPTION
+The
+.Fn ttyaction
+function is used by
+.Xr login 1 ,
+.Xr getty 8 ,
+.Xr telnetd 8
+and
+.Xr rlogind 8
+to execute site-specific commands
+when a login session begins and ends.
+.Pp
+The
+.Fn ttyaction
+function scans the
+.Pa /etc/ttyaction
+file for any records that match the current
+.Fa ttyname
+and
+.Fa action
+parameters, and for each matching record,
+runs the shell command shown in that record.
+The record format is described in
+.Xr ttyaction 5 .
+The parameter
+.Fa username
+is the name of the new owner of the
+.Fa ttyname
+device.
+Note that the
+.Fa ttyname
+parameter may be passed as a fully qualified pathname, and the
+.Fn ttyaction
+function will skip the leading "/dev/" part of the string.
+(This is a convenience for login and getty.)
+.Sh RETURN VALUES
+.Fn ttyaction
+returns the status of the last command it executed,
+or zero if no matching commands were found.
+.Sh FILES
+.Bl -tag -width /etc/ttyaction -compact
+.It Pa /dev/\(**
+.It Pa /etc/ttyaction
+.El
+.Sh SEE ALSO
+.Xr ttyaction 5
+.Sh AUTHORS
+.An Gordon W. Ross
+.Aq gwr@NetBSD.org ,
+.An Chris G. Demetriou
+.Aq cgd@NetBSD.org ,
+.An Ty Sarna
+.Aq tsarna@NetBSD.org .
+.Sh BUGS
+There should be some
+.Em other
+mechanism to allow selection of different access control policies
+on a per-line basis.
+It has been suggested that the same
+.Fn ttyaction
+mechanism should also be used for determining access control, but
+it was decided (after much discussion) that
+.Fn ttyaction
+should only describe actions to be performed
+.Em after
+the system has decided to change the ownership of some tty.
+Access control policies will be handled by a separate mechanism.

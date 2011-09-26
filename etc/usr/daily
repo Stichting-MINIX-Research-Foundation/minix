@@ -66,6 +66,9 @@ do
     fi
 done
 
+# Update manpage index
+/usr/libexec/makewhatis
+
 # Continue with a local script if present.
 test -f /usr/local/etc/daily && sh /usr/local/etc/daily $caller
 exit 0

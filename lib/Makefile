@@ -21,7 +21,7 @@ SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libdriver libnetdriver \
 	libddekit libminixfs
 
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
-SUBDIR+= libelf libminc libcrypt libterminfo libcurses libvassert
+SUBDIR+= libelf libminc libcrypt libterminfo libcurses libvassert libutil
 .endif
 
 .if ${COMPILER_TYPE} == "ack"
@@ -31,7 +31,6 @@ SUBDIR+= ack/libd ack/libe ack/libfp ack/liby
 .if ${OBJECT_FMT} == "a.out"
 SUBDIR+= libend
 .endif
-
 .include <bsd.subdir.mk>
 
 build_ack:

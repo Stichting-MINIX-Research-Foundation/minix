@@ -1,3 +1,7 @@
+20110928:
+	Update your /usr/etc/daily and /etc/man.conf if you
+	want to fully enjoy the manpage fixes.
+
 20110817:
 	To use the new asynchronous version of VFS do:
 	# BUILDAVFS=yes make cleandepend world

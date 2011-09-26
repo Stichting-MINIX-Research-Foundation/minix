@@ -1,0 +1,114 @@
+.\"	$NetBSD: pw_getconf.3,v 1.12 2010/05/04 06:41:27 jruoho Exp $
+.\"
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" from OpenBSD: pw_getconf.3,v 1.5 1999/09/21 04:52:46 csapuntz Exp
+.\"
+.Dd May 4, 2010
+.Dt PW_GETCONF 3
+.Os
+.Sh NAME
+.Nm pw_getconf ,
+.Nm pw_getpwconf
+.Nd password encryption configuration access function
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft void
+.Fn pw_getconf "char *data" "size_t len" "const char *key" "const char *option"
+.Ft void
+.Fn pw_getpwconf "char *data" "size_t len" "const struct passwd *pwd" "const char *option"
+.Sh DESCRIPTION
+The
+.Fn pw_getconf
+function reads
+.Pa /etc/passwd.conf
+and retrieves the value of the option specified
+by
+.Pa option
+from the section given by
+.Pa key .
+If no suitable entry is found
+for the
+.Pa key
+an empty string will be returned in data.
+.Pp
+To retrieve default values the key
+.Pa default
+can be used.
+In this case, if
+.Pa /etc/passwd.conf
+does not exist or does not contain a
+.Pa default
+section, the built-in defaults will be returned.
+They are as follows:
+.Bl -column localcipher data -offset indent
+.It Sy option	data
+.It ypcipher	old
+.It localcipher	old
+.El
+.Pp
+An empty string is returned for all errors.
+.Pp
+.Fn pw_getpwconf
+returns the value for the option specified for the particular user
+specified in
+.Ar pwd .
+If that option is not found, then it tries to find the option in
+the primary group of that user, and if that fails, then it returns
+the default entry.
+.Sh FILES
+.Bl -tag -width /etc/passwd.conf -compact
+.It Pa /etc/passwd.conf
+.El
+.Sh ERRORS
+.Fn pw_getconf
+and
+.Fn pw_getpwconf
+will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOENT
+There is no option named
+.Pa option
+in the specified key.
+.It Bq Er ENOTDIR
+There is no key in
+.Pa /etc/passwd.conf
+named
+.Pa key .
+.El
+.Sh SEE ALSO
+.Xr passwd 5 ,
+.Xr passwd.conf 5
+.Sh HISTORY
+The
+.Fn pw_getconf
+function first appeared in
+.Nx 1.6 .

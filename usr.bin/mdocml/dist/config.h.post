@@ -1,0 +1,25 @@
+#include <sys/types.h>
+
+#if !defined(__BEGIN_DECLS)
+#  ifdef __cplusplus
+#  define	__BEGIN_DECLS		extern "C" {
+#  else
+#  define	__BEGIN_DECLS
+#  endif
+#endif
+#if !defined(__END_DECLS)
+#  ifdef __cplusplus
+#  define	__END_DECLS		}
+#  else
+#  define	__END_DECLS
+#  endif
+#endif
+
+#ifndef HAVE_STRLCAT
+extern	size_t	  strlcat(char *, const char *, size_t);
+#endif
+#ifndef HAVE_STRLCPY
+extern	size_t	  strlcpy(char *, const char *, size_t);
+#endif
+
+#endif /* MANDOC_CONFIG_H */

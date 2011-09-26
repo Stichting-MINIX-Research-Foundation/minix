@@ -1,0 +1,184 @@
+.\"	$NetBSD: pidlock.3,v 1.12 2009/03/09 19:24:27 joerg Exp $
+.\"
+.\" Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 19, 2006
+.Dt PIDLOCK 3
+.Os
+.Sh NAME
+.Nm pidlock ,
+.Nm ttylock ,
+.Nm ttyunlock
+.Nd locks based on files containing PIDs
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft int
+.Fn pidlock "const char *lockfile" "int flags" "pid_t *locker" "const char *info"
+.Ft int
+.Fn ttylock "const char *tty" "int flags" "pid_t *locker"
+.Ft int
+.Fn ttyunlock "const char *tty"
+.Sh DESCRIPTION
+The
+.Fn pidlock
+.Fn ttylock ,
+and
+.Fn ttyunlock
+functions attempt to create a lockfile for an arbitrary resource that
+only one program may hold at a time.
+(In the case of
+.Fn ttylock ,
+this is access to a tty device.)
+If the
+function succeeds in creating the lockfile, it will succeed for
+no other program calling it with the same lockfile until the original
+calling program has removed the lockfile or exited.
+The
+.Fn ttyunlock
+function will remove the lockfile created by
+.Fn ttylock .
+.Pp
+These functions use the method of creating a lockfile traditionally
+used by UUCP software.
+This is described as follows in the documentation for Taylor UUCP:
+.Bd -filled -offset indent
+The lock file normally contains the process ID of the locking process.
+This makes it easy to determine whether a lock is still valid.
+The algorithm is to create a temporary file and then link
+it to the name that must be locked.
+If the link fails because a file with that name already exists,
+the existing file is read to get the process ID.
+If the process still exists, the lock attempt fails.
+Otherwise the lock file is deleted and the locking algorithm
+is retried.
+.Ed
+.Pp
+The PID is stored in ASCII format, with leading spaces to pad it
+out to ten characters, and a terminating newline.
+This implementation has been extended to put the hostname
+on the second line of the file, terminated with a newline, and
+optionally an arbitrary comment on the third line of the file, also
+terminated with a newline.
+If a comment is given, but
+.Dv PIDLOCK_NONBLOCK
+is not, a blank line will be written as the second line of the file.
+.Pp
+The
+.Fn pidlock
+function will attempt to create the file
+.Fa lockfile
+and put the current process's pid in it.
+The
+.Fn ttylock
+function will do the same, but should be passed only the base name
+(with no leading directory prefix) of the
+.Fa tty
+to be locked; it will test that the tty exists in
+.Pa /dev
+and is a character device, and then create
+the file in the
+.Pa /var/spool/lock
+directory and prefix the filename with
+.Pa LCK.. .
+Use the
+.Fn ttyunlock
+function to remove this lock.
+.Pp
+The following flags may be passed in
+.Pa flags :
+.Bl -tag -width Dv -offset indent
+.It Dv PIDLOCK_NONBLOCK
+The function should return immediately when a lock is held by another
+active process.
+Otherwise the function will wait (forever, if necessary)
+for the lock to be freed.
+.It Dv PIDLOCK_USEHOSTNAME
+The hostname should be compared against the hostname in the second
+line of the file (if present), and if they differ, no attempt at
+checking for a living process holding the lock will be made, and
+the lockfile will never be deleted.
+(The process is assumed to be alive.)
+This is used for locking on NFS or other remote filesystems.
+(The function will never create a lock if
+.Dv PIDLOCK_USEHOSTNAME
+is specified and no hostname is present.)
+.El
+.Pp
+If
+.Pa locker
+is non-null, it will contain the PID of the locking process, if there
+is one, on return.
+.Pp
+If
+.Pa info
+is non-null and the lock succeeds, the string it points to will be
+written as the third line of the lock file.
+.Sh RETURN VALUES
+Zero is returned if the operation was successful; on an error a -1
+is returned and a standard error code is left in the global location
+.Va errno .
+.Sh ERRORS
+In addition to the errors that are returned from
+.Xr stat 2 ,
+.Xr open 2 ,
+.Xr read 2 ,
+.Xr write 2 ,
+and
+.Xr link 2 ,
+.Fn pidlock
+or
+.Fn ttylock
+can set
+.Va errno
+to the following values on failure:
+.Bl -tag -width Er
+.It Bq Er EWOULDBLOCK
+Another running process has a lock and the
+.Dv PIDLOCK_NONBLOCK
+flag was specified.
+.It Bq Er EFTYPE
+The
+.Fa tty
+specified in
+.Fn ttylock
+is not a character special device.
+.El
+.\" .Sh SEE ALSO
+.Sh HISTORY
+The
+.Fn pidlock
+and
+.Fn ttylock
+functions appeared in
+.Nx 1.3 .
+.Sh AUTHORS
+.An Curt Sampson
+.Aq cjs@NetBSD.org .
+.Sh BUGS
+The lockfile format breaks if a pid is longer than ten digits when
+printed in decimal form.
+.Pp
+The PID returned will be the pid of the locker on the remote machine if
+.Dv PIDLOCK_USEHOSTNAME
+is specified, but there is no indication that this is not on the local
+machine.

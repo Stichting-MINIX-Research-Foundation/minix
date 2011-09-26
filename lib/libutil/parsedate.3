@@ -1,0 +1,278 @@
+.\"     $NetBSD: parsedate.3,v 1.10 2010/12/22 09:12:28 wiz Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 20, 2010
+.Dt PARSEDATE 3
+.Os
+.Sh NAME
+.Nm parsedate
+.Nd date parsing function
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft time_t
+.Fn parsedate "const char *datestr" "const time_t *time" "const int *tzoff"
+.Sh DESCRIPTION
+The
+.Fn parsedate
+function parses a datetime from
+.Ar datestr
+described in english relative to an optional
+.Ar time
+point and an optional timezone offset in seconds specified in
+.Ar tzoff .
+If either
+.Ar time
+or
+.Ar tzoff
+are
+.Dv NULL ,
+then the current time and timezone offset are used.
+.Pp
+The
+.Ar datestr
+is a sequence of white-space separated items.
+The white-space is optional the concatenated items are not ambiguous.
+An empty
+.Ar datestr
+is equivalent to midnight today (the beginning of this day).
+.Pp
+The following words have the indicated numeric meanings:
+.Dv last =
+\-1,
+.Dv this =
+0,
+.Dv first, next, or one =
+1,
+.Dv second
+is unused so that it is not confused with
+.Dq seconds ,
+.Dv two =
+2,
+.Dv third or three =
+3,
+.Dv fourth or four =
+4,
+.Dv fifth or five  =
+5,
+.Dv sixth or six  =
+6,
+.Dv seventh or seven =
+7,
+.Dv eighth or eight =
+8,
+.Dv ninth or nine =
+9,
+.Dv tenth or ten =
+10,
+.Dv eleventh or eleven =
+11,
+.Dv twelfth or twoelve =
+12.
+.Pp
+The following words are recognized in English only:
+.Dv AM ,
+.Dv PM ,
+.Dv a.m. ,
+.Dv p.m.
+.Pp
+The months:
+.Dv january ,
+.Dv february ,
+.Dv march ,
+.Dv april ,
+.Dv may ,
+.Dv june ,
+.Dv july ,
+.Dv august ,
+.Dv september ,
+.Dv sept ,
+.Dv october ,
+.Dv november ,
+.Dv december ,
+.Pp
+The days of the week:
+.Dv sunday ,
+.Dv monday ,
+.Dv tuesday ,
+.Dv tues ,
+.Dv wednesday ,
+.Dv wednes ,
+.Dv thursday ,
+.Dv thur ,
+.Dv thurs ,
+.Dv friday ,
+.Dv saturday .
+.Pp
+Time units:
+.Dv year ,
+.Dv month ,
+.Dv fortnight ,
+.Dv week ,
+.Dv day ,
+.Dv hour ,
+.Dv minute ,
+.Dv min ,
+.Dv second ,
+.Dv sec ,
+.Dv tomorrow ,
+.Dv yesterday .
+.Pp
+Timezone names:
+.Dv gmt ,
+.Dv ut ,
+.Dv utc ,
+.Dv wet ,
+.Dv bst ,
+.Dv wat ,
+.Dv at ,
+.Dv ast ,
+.Dv adt ,
+.Dv est ,
+.Dv edt ,
+.Dv cst ,
+.Dv cdt ,
+.Dv mst ,
+.Dv mdt ,
+.Dv pst ,
+.Dv pdt ,
+.Dv yst ,
+.Dv ydt ,
+.Dv hst ,
+.Dv hdt ,
+.Dv cat ,
+.Dv ahst ,
+.Dv nt ,
+.Dv idlw ,
+.Dv cet ,
+.Dv met ,
+.Dv mewt ,
+.Dv mest ,
+.Dv swt ,
+.Dv sst ,
+.Dv fwt ,
+.Dv fst ,
+.Dv eet ,
+.Dv bt ,
+.Dv zp4 ,
+.Dv zp5 ,
+.Dv zp6 ,
+.Dv wast ,
+.Dv wadt ,
+.Dv cct ,
+.Dv jst ,
+.Dv east ,
+.Dv eadt ,
+.Dv gst ,
+.Dv nzt ,
+.Dv nzst ,
+.Dv nzdt ,
+.Dv idle .
+.Pp
+A variety of unambiguous dates are recognized:
+.Bl -tag -compact -width "20 Jun 1994"
+.It 69-09-10
+For years between 69-99 we assume 1900+ and for years between 0-68
+we assume 2000+.
+.It 2006-11-17
+An ISO-8601 date.
+.It 10/1/2000
+October 10, 2000; the common US format.
+.It 20 Jun 1994
+.It 23jun2001
+.It 1-sep-06
+Other common abbreviations.
+.It 1/11
+the year can be omitted
+.El
+.Pp
+As well as times:
+.Bl -tag -compact -width 12:11:01.000012
+.It 10:01
+.It 10:12pm
+.It 12:11:01.000012
+.It 12:21-0500
+.El
+.Pp
+Relative items are also supported:
+.Bl -tag -compact -width "this thursday"
+.It -1 month
+.It last friday
+.It one week ago
+.It this thursday
+.It next sunday
+.It +2 years
+.El
+.Pp
+Seconds since epoch (also known as UNIX time) are also supported:
+.Bl -tag -compact -width "@735275209"
+.It @735275209
+Tue Apr 20 03:06:49 UTC 1993
+.El
+.Sh RETURN VALUES
+.Fn parsedate
+returns the number of seconds passed since the Epoch, or
+.Dv \-1
+if the date could not be parsed properly.
+.Sh SEE ALSO
+.Xr date 1 ,
+.Xr eeprom 8
+.Sh HISTORY
+The parser used in
+.Fn parsedate
+was originally written by Steven M. Bellovin while at the University
+of North Carolina at Chapel Hill.
+It was later tweaked by a couple of people on Usenet.
+Completely overhauled by Rich $alz and Jim Berets in August, 1990.
+.Pp
+The
+.Fn parsedate
+function first appeared in
+.Nx 4.0 .
+.Sh BUGS
+.Bl -tag -compact -width 1
+.It 1
+The
+.Fn parsedate
+function is not re-entrant or thread-safe.
+.It 2
+The
+.Fn parsedate
+function cannot compute days before the unix epoch (19700101).
+.It 3
+The
+.Fn parsedate
+function assumes years less than 0 mean -
+.Fa year ,
+years less than 70 mean 2000 +
+.Fa year ,
+years less than 100 mean 1900 +
+.Fa year .
+.El

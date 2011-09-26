@@ -4,6 +4,8 @@ lib/nbsd_libm		src/lib/libm
 lib/libcrypt		src/lib/libcrypt
 lib/libterminfo		src/lib/libterminfo
 lib/libcurses		src/lib/libcurses
+lib/libutil		src/lib/libutil
+common/lib/libutil	src/common/lib/libutil
 nbsd_include		src/include
 bin/mkdir		src/bin/mkdir
 usr.bin/m4		src/usr.bin/m4
@@ -14,3 +16,7 @@ usr.bin/tic		src/usr.bin/tic
 usr.bin/mkdep		src/usr.bin/mkdep
 usr.bin/uniq		src/usr.bin/uniq
 usr.bin/seq		src/usr.bin/seq
+usr.bin/man		src/usr.bin/man
+usr.bin/apropos		src/usr.bin/apropos
+usr.bin/mdocml		src/external/bsd/mdocml
+libexec/makewhatis	src/libexec/makewhatis

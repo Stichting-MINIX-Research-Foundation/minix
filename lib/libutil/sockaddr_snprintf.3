@@ -1,0 +1,236 @@
+.\"     $NetBSD: sockaddr_snprintf.3,v 1.7 2009/04/11 16:13:49 joerg Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 9, 2005
+.Dt SOCKADDR_SNPRINTF 3
+.Os
+.Sh NAME
+.Nm sockaddr_snprintf
+.Nd formatting function for socket address structures
+.Sh LIBRARY
+.Lb libutil
+.Sh SYNOPSIS
+.In util.h
+.Ft int
+.Fn sockaddr_snprintf "char *buf" "size_t buflen" "const char *fmt" "const struct sockaddr *sa"
+.Sh DESCRIPTION
+The
+.Fn sockaddr_snprintf
+function formats a socket address into a form suitable for printing.
+.Pp
+This function is convenient because it is protocol independent, i.e. one does
+not need to know the address family of the sockaddr in order to print it.
+The
+.Xr printf 3
+like format string specifies how the address is going to be printed.
+Some formatting characters are only supported by some address families.
+If a certain formatting character is not supported, then the string
+.Dq N/A
+is printed.
+.Pp
+The resulting formatted string is placed into
+.Fa buf .
+Up to
+.Fa buflen
+characters are placed in
+.Fa buf .
+.Pp
+The following formatting characters are supported (immediately
+after a percent
+.Pq Sq %
+sign):
+.Bl -tag -width %a
+.It a
+The node address portion of the socket address is printed numerically.
+For
+.Dv AF_INET
+the address is printed as:
+.Dq A.B.C.D
+and
+for AF_INET6
+the address is printed as:
+.Dq A:B...[%if]
+using
+.Xr getnameinfo 3
+internally with
+.Dv NI_NUMERICHOST .
+For
+.Dv AF_APPLETALK
+the address is printed as:
+.Dq A.B
+For
+.Dv AF_LOCAL
+.Pq Dv AF_UNIX
+the address is printed as:
+.Dq socket-path
+For
+.Dv AF_LINK
+the address is printed as:
+.Dq a.b.c.d.e.f
+using
+.Xr link_ntoa 3 ,
+but the interface portion is skipped (see below).
+For
+.Dv AF_UNSPEC
+nothing is printed.
+.It A
+The symbolic name of the address is printed.
+For
+.Dv AF_INET
+and
+.Dv AF_INET6
+this is the hostname associated with the address.
+For all other address families, it is the same as the
+.Dq a
+format.
+.It f
+The numeric value of the family of the address is printed.
+.It l
+The length of the socket address is printed.
+.It p
+For
+.Dv AF_INET ,
+.Dv AF_INET6 ,
+and
+.Dv AF_APPLETALK
+the numeric value of the port portion of the address is printed.
+.It P
+For
+.Dv AF_INET
+and
+.Dv AF_INET6
+this is the name of the service associated with the port number, if
+available.
+For all other address families, it is the same as the
+.Dq p
+format.
+.It I
+For
+.Dv AF_LINK
+addresses, the interface name portion is printed.
+.It F
+For
+.Dv AF_INET6
+addresses, the flowinfo portion of the address is printed numerically.
+.It R
+For
+.Dv AF_APPLETALK
+addresses, the netrange portion of the address is printed as:
+.Dq phase:[firstnet,lastnet]
+.It S
+For
+.Dv AF_INET6
+addresses, the scope portion of the address is printed numerically.
+.It ?
+If present between
+.Dq %
+and the format character, and the selected format does not apply to
+the given address family, the
+.Dq N/A
+string is elided and no output results.
+.El
+.Sh RETURN VALUES
+The
+.Fn sockaddr_snprintf
+function returns the number of characters that are required to format the
+value
+.Fa val
+given the format string
+.Fa fmt
+excluding the terminating NUL.
+The returned string in
+.Fa buf
+is always NUL-terminated.
+If the address family is not supported,
+.Fn sockaddr_snprintf
+returns \-1 and sets
+.Va errno
+to
+.Dv EAFNOSUPPORT .
+For
+.Dv AF_INET
+and
+.Dv AF_INET6
+addresses
+.Fn sockaddr_snprintf
+returns \-1 if the
+.Xr getnameinfo 3
+conversion failed, and
+.Fa errno
+is set to the error value from
+.Xr getnameinfo 3 .
+.Sh ERRORS
+If the buffer
+.Fa buf
+is too small to hold the formatted output,
+.Fn sockaddr_snprintf
+will still return the buffer, containing a truncated string.
+.Sh SEE ALSO
+.Xr getaddrinfo 3 ,
+.Xr getnameinfo 3 ,
+.Xr link_ntoa 3 ,
+.Xr snprintf 3
+.Sh HISTORY
+The
+.Fn sockaddr_snprintf
+first appeared in
+.Nx 3.0 .
+.Sh BUGS
+The
+.Fn sockaddr_snprintf
+interface is experimental and might change in the future.
+.Pp
+There is no way to specify different formatting styles for particular
+addresses.
+For example it would be useful to print
+.Dv AF_LINK
+addresses as
+.Dq %.2x:%.2x...
+instead of
+.Dq %x.%x...
+.Pp
+This function is supposed to be quick, but
+.Xr getnameinfo 3
+might use system calls to convert the scope number to an interface
+name and the
+.Dq A
+and
+.Dq P
+format characters call
+.Xr getaddrinfo 3
+which may block for a noticeable period of time.
+.Pp
+Not all formatting characters are supported by all address families and
+printing
+.Dq N/A
+is not very convenient.
+The
+.Dq \&?
+character can suppress this, but other formatting (e.g., spacing or
+punctuation) will remain.

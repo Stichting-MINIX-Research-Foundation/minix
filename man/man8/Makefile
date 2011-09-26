@@ -7,9 +7,12 @@ MAN=	add_route.8 adduser.8 backup.8 badblocks.8 boot.8 \
 	ossdevlinks.8 part.8 partition.8 \
 	poweroff.8 printroot.8 pr_routes.8 pwdauth.8 rarpd.8 \
 	rdate.8 readclock.8 reboot.8 repartition.8 rlogind.8 \
-	rshd.8 savemixer.8 screendump.8 serial-ip.8 service.8 \
+	rshd.8  screendump.8 serial-ip.8 service.8 \
 	setup.8 shutdown.8 slip.8 srccrc.8 sync.8 syslogd.8 tcpd.8 \
-	unix.8 update.8 usage.8 vmixctl.8
+	unix.8 update.8 usage.8 
+
+MLINKS += ftpd.8 in.ftpd.8
+MLINKS += httpd.8 in.httpd.8
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
