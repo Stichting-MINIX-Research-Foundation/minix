@@ -32,4 +32,7 @@ FILESDIR=	/usr/man
 FILESNAME=	style.css
 .endif
 
+cleandepend:
+	:
+
 .include <bsd.man.mk>
