@@ -26,29 +26,29 @@
 #include "dec21140A.h"
 
 
-_PROTOTYPE( PRIVATE u32_t io_inl,            (u16_t);                        );
-_PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t);                 );
-_PROTOTYPE( PRIVATE void  do_conf,           (const message *);              );
-_PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *);                    );
-_PROTOTYPE( PRIVATE void  do_interrupt,      (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int);         );
-_PROTOTYPE( PRIVATE void  do_watchdog,       (void *);                       );
+_PROTOTYPE( PRIVATE u32_t io_inl,            (u16_t)                        );
+_PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t)                 );
+_PROTOTYPE( PRIVATE void  do_conf,           (const message *)              );
+_PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *)                    );
+_PROTOTYPE( PRIVATE void  do_interrupt,      (const dpeth_t *)              );
+_PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *)                    );
+_PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int)         );
+_PROTOTYPE( PRIVATE void  do_watchdog,       (void *)                       );
 
-_PROTOTYPE( PRIVATE void  de_update_conf,    (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE int   de_probe,          (dpeth_t *, int skip);          );
-_PROTOTYPE( PRIVATE void  de_conf_addr,      (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE void  de_first_init,     (dpeth_t *);                    );
-_PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE void  de_hw_conf,        (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE void  de_start,          (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE void  de_setup_frame,    (const dpeth_t *);              );
-_PROTOTYPE( PRIVATE u16_t de_read_rom,       (const dpeth_t *, u8_t, u8_t);  );
-_PROTOTYPE( PRIVATE int   de_calc_iov_size,  (iovec_dat_s_t *);              );
-_PROTOTYPE( PRIVATE void  de_next_iov,       (iovec_dat_s_t *);              );
-_PROTOTYPE( PRIVATE void  do_vwrite_s,       (const message *, int);         );
+_PROTOTYPE( PRIVATE void  de_update_conf,    (dpeth_t *)                    );
+_PROTOTYPE( PRIVATE int   de_probe,          (dpeth_t *, int skip)          );
+_PROTOTYPE( PRIVATE void  de_conf_addr,      (dpeth_t *)                    );
+_PROTOTYPE( PRIVATE void  de_first_init,     (dpeth_t *)                    );
+_PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *)              );
+_PROTOTYPE( PRIVATE void  de_hw_conf,        (const dpeth_t *)              );
+_PROTOTYPE( PRIVATE void  de_start,          (const dpeth_t *)              );
+_PROTOTYPE( PRIVATE void  de_setup_frame,    (const dpeth_t *)              );
+_PROTOTYPE( PRIVATE u16_t de_read_rom,       (const dpeth_t *, u8_t, u8_t)  );
+_PROTOTYPE( PRIVATE int   de_calc_iov_size,  (iovec_dat_s_t *)              );
+_PROTOTYPE( PRIVATE void  de_next_iov,       (iovec_dat_s_t *)              );
+_PROTOTYPE( PRIVATE void  do_vwrite_s,       (const message *, int)         );
 _PROTOTYPE( PRIVATE void  de_get_userdata_s, (int, cp_grant_id_t,
-					     vir_bytes, int, void *);        );
+					     vir_bytes, int, void *)        );
 
 /* Error messages */
 static char str_CopyErrMsg[]  = "unable to read/write user data";
@@ -430,7 +430,7 @@ static void de_update_conf(dpeth_t * dep)
 
 PRIVATE void do_vread_s(const message * mp, int from_int)
 {
-  char *buffer;
+  u8_t *buffer;
   u32_t size;
   int r, ix = 0;
   vir_bytes bytes;
@@ -584,8 +584,8 @@ PRIVATE void de_conf_addr(dpeth_t * dep)
 PRIVATE void de_first_init(dpeth_t *dep)
 {
   int i,j,r;
-  vir_bytes descr_vir = dep->sendrecv_descr_buf;
-  vir_bytes buffer_vir = dep->sendrecv_buf;
+  vir_bytes descr_vir = (vir_bytes)dep->sendrecv_descr_buf;
+  vir_bytes buffer_vir = (vir_bytes)dep->sendrecv_buf;
   de_loc_descr_t *loc_descr;
   u32_t temp;
 
@@ -595,11 +595,11 @@ PRIVATE void de_first_init(dpeth_t *dep)
     for(j=0; j < (i==DESCR_RECV ? DE_NB_RECV_DESCR : DE_NB_SEND_DESCR); j++){
 
       /* assign buffer space for descriptor */
-      loc_descr->descr = descr_vir;
+      loc_descr->descr = (void*)descr_vir;
       descr_vir += sizeof(de_descr_t);
 
       /* assign space for buffer */
-      loc_descr->buf1 = buffer_vir; 
+      loc_descr->buf1 = (u8_t*)buffer_vir; 
       buffer_vir += (i==DESCR_RECV ? DE_RECV_BUF_SIZE : DE_SEND_BUF_SIZE);
       loc_descr->buf2 = 0;
       loc_descr++;
@@ -614,7 +614,7 @@ PRIVATE void de_first_init(dpeth_t *dep)
     temp = (i==DESCR_RECV ? DE_RECV_BUF_SIZE : DE_SEND_BUF_SIZE);
     for(j=0; j < (i==DESCR_RECV ? DE_NB_RECV_DESCR : DE_NB_SEND_DESCR); j++){
       /* translate buffers physical address */
-      r = sys_umap(SELF, VM_D, loc_descr->buf1, temp, 
+      r = sys_umap(SELF, VM_D, (vir_bytes)loc_descr->buf1, temp, 
 		   &(loc_descr->descr->des[DES_BUF1]));
       if(r != OK) panic("umap failed: %d", r);      
       loc_descr->descr->des[DES_BUF2] = 0;
@@ -629,11 +629,11 @@ PRIVATE void de_first_init(dpeth_t *dep)
   }
   
   /* record physical location of two first descriptor */
-  r = sys_umap(SELF, VM_D, dep->descr[DESCR_RECV][0].descr, 
+  r = sys_umap(SELF, VM_D, (vir_bytes)dep->descr[DESCR_RECV][0].descr, 
 	       sizeof(de_descr_t), &dep->sendrecv_descr_phys_addr[DESCR_RECV]);
   if(r != OK) panic(str_UmapErrMsg, r);
 
-  r = sys_umap(SELF, VM_D, dep->descr[DESCR_TRAN][0].descr,
+  r = sys_umap(SELF, VM_D, (vir_bytes)dep->descr[DESCR_TRAN][0].descr,
 	       sizeof(de_descr_t), &dep->sendrecv_descr_phys_addr[DESCR_TRAN]);
   if(r != OK) panic(str_UmapErrMsg, r);
 
@@ -645,8 +645,8 @@ PRIVATE void de_first_init(dpeth_t *dep)
   for(i=0;i<2;i++){
     loc_descr = &dep->descr[i][0];
     for(j=0;j< (i==DESCR_RECV?DE_NB_RECV_DESCR:DE_NB_SEND_DESCR);j++){
-      r = sys_umap(SELF, VM_D, &(loc_descr->descr), sizeof(de_descr_t), 
-		   &temp);
+      r = sys_umap(SELF, VM_D, (vir_bytes)&(loc_descr->descr),
+			sizeof(de_descr_t), &temp);
       if(r != OK)
 	panic(str_UmapErrMsg, r);
 
@@ -804,7 +804,7 @@ PRIVATE void do_vwrite_s(const message * mp, int from_int){
   dpeth_t *dep;
   iovec_dat_s_t *iovp = NULL;
   de_loc_descr_t *descr = NULL;
-  char *buffer = NULL;
+  u8_t *buffer = NULL;
 
   dep = &de_state;
 
