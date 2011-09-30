@@ -1,0 +1,219 @@
+.\"	$NetBSD: pwd_mkdb.8,v 1.28 2010/08/18 10:00:49 wiz Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)pwd_mkdb.8	8.2 (Berkeley) 4/27/95
+.\"
+.Dd August 18, 2010
+.Dt PWD_MKDB 8
+.Os
+.Sh NAME
+.Nm pwd_mkdb
+.Nd generate the password databases
+.Sh SYNOPSIS
+.Nm
+.Op Fl BLlpsvw
+.Op Fl c Ar cachesize
+.Op Fl d Ar directory
+.Op Fl u Ar username
+.Op Fl V Ar version
+.Ar file
+.Sh DESCRIPTION
+.Nm
+creates
+.Xr db 3
+style secure and insecure databases for the specified file.
+These databases are then installed into
+.Dq Pa /etc/spwd.db
+and
+.Dq Pa /etc/pwd.db
+respectively.
+The file is installed into
+.Dq Pa /etc/master.passwd .
+The file must be in the correct format (see
+.Xr passwd 5 ) .
+It is important to note that the format used in this system is
+different from the historic Version 7 style format.
+.Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl B
+Store data in big-endian format (see also
+.Fl L ) .
+.It Fl c Ar cachesize
+Specify the size of the memory cache in megabytes used by the
+hashing library.
+On systems with a large user base, a small cache size can lead to
+prohibitively long database file rebuild times.
+As a rough guide, the memory usage of
+.Nm
+in megabytes will be a little bit more than twice the figure
+specified here.
+If unspecified, this value will be calculated based on the size of
+the input file up to a maximum of 8 megabytes.
+.It Fl d Ar directory
+Change the root directory of the generated files from
+.Dq Pa /
+to
+.Ar directory .
+.It Fl L
+Store data in little-endian format (see also
+.Fl B ) .
+.It Fl l
+Use
+.Xr syslog 3
+to report errors.
+.It Fl p
+Create a Version 7 style password file and install it into
+.Dq Pa /etc/passwd .
+.It Fl s
+Update the secure database only.
+This is useful when only encrypted passwords have changed.
+This option negates the effect of any
+.Fl p
+option.
+.It Fl u Ar name
+Don't re-build the database files, but instead modify or add entries
+for the specified user only.
+This option may only be used when the line number and user name in
+the password file have not changed, or when adding a new user from
+the last line in the password file.
+.It Fl V Ar version
+Upgrade or downgrade databases to the numbered version.
+Version
+.Dv 0
+is the old format (up to and including
+.Nx 5.0 )
+with the 4 byte time fields and version
+.Dv 1
+is the new format with the 8 byte time fields (greater than
+.Nx 5.0 ) .
+.Nx 5.0
+cannot read version
+.Dv 1
+databases.
+All versions above
+.Nx 5.0
+can read and write both version
+.Dv 0
+and version
+.Dv 1
+databases.
+By default the databases stay in the version they were before the command
+was run.
+.It Fl v
+Mention when a version change occurs.
+.It Fl w
+Print a warning if the system is using old style databases.
+.El
+.Pp
+The two databases differ in that the secure version contains the user's
+encrypted password and the insecure version has an asterisk
+.Pq Dq * .
+.Pp
+The databases are used by the C library password routines (see
+.Xr getpwent 3 ) .
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /etc/master.passwd
+The current password file.
+.It Pa /etc/passwd
+A Version 7 format password file.
+.It Pa /etc/pwd.db
+The insecure password database file.
+.It Pa /etc/pwd.db.tmp
+A temporary file.
+.It Pa /etc/spwd.db
+The secure password database file.
+.It Pa /etc/spwd.db.tmp
+A temporary file.
+.El
+.Sh EXIT STATUS
+.Nm
+exits zero on success, non-zero on failure.
+.Sh COMPATIBILITY
+Previous versions of the system had a program similar to
+.Nm
+which built
+.Em dbm
+style databases for the password file but depended on the calling programs
+to install them.
+The program was renamed in order that previous users of the program
+not be surprised by the changes in functionality.
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr passwd 1 ,
+.Xr pwhash 1 ,
+.Xr db 3 ,
+.Xr getpwent 3 ,
+.Xr pw_mkdb 3 ,
+.Xr syslog 3 ,
+.Xr passwd 5 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr usermod 8 ,
+.Xr vipw 8
+.Sh BUGS
+Because of the necessity for atomic update of the password files,
+.Nm
+uses
+.Xr rename 2
+to install them.
+This, however, requires that the file specified on the command line live
+on the same file system as the
+.Dq Pa /etc
+directory.
+.Pp
+There are the obvious races with multiple people running
+.Nm
+on different password files at the same time.
+The front-ends to
+.Xr chpass 1 ,
+.Xr passwd 1 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr usermod 8 ,
+and
+.Xr vipw 8
+handle the locking necessary to avoid this problem.
+.Pp
+The database files are copied when the
+.Fl u
+option is used.
+Real locking would make this unnecessary.
+.Pp
+Although the DB format is endian-transparent, the data stored in
+the DB is not.
+Also, the format doesn't lend itself to insertion or removal of
+records from arbitrary locations in the password file.
+This is difficult to fix without breaking compatibility.
+.Pp
+Using the
+.Fl u
+option on a system where multiple users share the same UID can have
+unexpected results.

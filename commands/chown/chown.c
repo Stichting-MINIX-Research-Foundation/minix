@@ -31,7 +31,7 @@
 #define S_IUGID (S_ISUID|S_ISGID)
 
 /* Global variables, such as flags and path names */
-int gflag, oflag, rflag, error;
+int gflag, oflag, rflag, error, hflag = 0;
 char *pgmname, path[PATH_MAX + 1];
 uid_t nuid;
 gid_t ngid;
@@ -44,9 +44,6 @@ _PROTOTYPE(void usage, (void));
  * identical, except that the default when a single name is given as an
  * argument is to take a group id rather than an user id. This allow the
  * non-Posix "chgrp user:group file".
- * The single option switch used by chown/chgrp (-R) does not warrant a
- * call to the getopt stuff. The two others flags (-g, -u) are set from
- * the program name and arguments.
  */
 int main(argc, argv)
 int argc;
@@ -55,20 +52,30 @@ char *argv[];
   char *id, *id2;
   struct group *grp;
   struct passwd *pwp;
+  int ch;
 
   if (pgmname = strrchr(*argv, '/'))
 	pgmname++;
   else
 	pgmname = *argv;
-  argc--;
-  argv++;
   gflag = strcmp(pgmname, "chgrp");
 
-  if (argc && **argv == '-' && argv[0][1] == 'R') {
-	argc--;
-	argv++;
-	rflag = 1;
+  while((ch = getopt(argc, argv, "Rh")) != -1) {
+  	switch(ch) {
+		case 'R':
+			rflag = 1;
+			break;
+		case 'h':
+			hflag = 1;
+			break;
+		default:
+			usage();
+  	}
   }
+
+  argc -= optind;
+  argv += optind;
+
   if (argc < 2) usage();
 
   id = *argv++;
@@ -130,6 +137,11 @@ char *file;
   }
 
   if (S_ISLNK(st.st_mode) && rflag) return;	/* Note: violates POSIX. */
+
+  if (S_ISLNK(st.st_mode) && hflag) {
+  	fprintf(stderr, "chown: cannot lchown %s\n", file);
+	error = 1;
+  }
 
   if (chown(file, oflag ? nuid : st.st_uid, gflag ? ngid : st.st_gid)) {
 	perror(file);

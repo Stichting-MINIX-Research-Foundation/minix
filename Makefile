@@ -62,6 +62,7 @@ commands: includes libraries
 	$(MAKE) -C bin all
 	$(MAKE) -C usr.bin all
 	$(MAKE) -C libexec all
+	$(MAKE) -C usr.sbin all
 
 dep-all:
 	$(MAKE) CC=cc -C boot dependall
@@ -69,6 +70,7 @@ dep-all:
 	$(MAKE) -C bin dependall
 	$(MAKE) -C usr.bin dependall
 	$(MAKE) -C libexec dependall
+	$(MAKE) -C usr.sbin dependall
 	$(MAKE) -C kernel dependall
 	$(MAKE) -C servers dependall
 	$(MAKE) -C drivers dependall
@@ -85,6 +87,7 @@ all:
 	$(MAKE) -C bin all
 	$(MAKE) -C usr.bin all
 	$(MAKE) -C libexec all
+	$(MAKE) -C usr.sbin all
 	$(MAKE) -C tools all
 
 install:
@@ -94,6 +97,7 @@ install:
 	$(MAKE) -C commands install
 	$(MAKE) -C bin install
 	$(MAKE) -C usr.bin install
+	$(MAKE) -C usr.sbin install
 	$(MAKE) -C servers install
 	$(MAKE) -C share install
 	$(MAKE) -C tools install
@@ -104,6 +108,7 @@ clean: mkfiles
 	$(MAKE) -C bin clean
 	$(MAKE) -C usr.bin clean
 	$(MAKE) -C libexec clean
+	$(MAKE) -C usr.sbin clean
 	$(MAKE) -C tools clean
 	$(MAKE) -C lib clean_all
 	$(MAKE) -C test clean
@@ -115,4 +120,5 @@ cleandepend: mkfiles
 	$(MAKE) -C bin cleandepend
 	$(MAKE) -C usr.bin cleandepend
 	$(MAKE) -C libexec cleandepend
+	$(MAKE) -C usr.sbin cleandepend
 	$(MAKE) -C tools cleandepend

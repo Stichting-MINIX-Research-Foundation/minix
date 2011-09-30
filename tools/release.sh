@@ -179,7 +179,7 @@ mkdir -p $RELEASEDIR/bin
 mkdir -p $RELEASEPACKAGE
 
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
-cp -p /bin/* /usr/bin/* /sbin/* $RELEASEDIR/$XBIN
+cp -p /bin/* /usr/bin/* /usr/sbin/* /sbin/* $RELEASEDIR/$XBIN
 cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/sh /bin/echo /bin/install /bin/rm \
     /bin/date /bin/ls $RELEASEDIR/bin

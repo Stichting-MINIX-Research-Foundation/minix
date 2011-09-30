@@ -1,4 +1,38 @@
 20111109:
+	Switch to NetBSD passwd system.
+
+	You have to bootstrap pwd_mkdb:
+	# make clean includes elf-libraries
+	# make -C usr.sbin/pwd_mkdb install
+
+	Now build world.  WARNING: this will blind your system to
+	/etc/shadow, making current user accounts vanish. Updating the
+	group file is necessary to add a 'users' group so the new stock
+	useradd will work.
+
+	# make clean world
+	# cp etc/group /etc/group
+
+	The new shadow file is /etc/master.passwd.  Add your old user
+	accounts back with useradd(8), groups with groupadd(8), and
+	set a root pw with passwd(1) if you want.  Use vipw(8) to edit
+	/etc/master.passwd if you want. See useradd(8) to get started
+	with the new pw format. Test your new system now by logging in.
+
+	Once you're satisfied your new system works, remove the old
+	adduser, and rely exclusively on the new useradd and
+	master.passwd.
+	# rm /usr/bin/adduser
+	# mv /etc/shadow /etc/shadow.orig
+
+	pwdauth is updated so that current binaries (e.g. sshd) will
+	work with the new pw db.
+
+	By default your new users are in the 'users' group. Add yourself
+	to the 'operator' group if you want to be able to su without
+	typing in the password.
+
+20111109:
 	fstab format change. /etc/rc reads both formats for a while.
 	Please convert your /etc/fstab to the new format though as
 	the system will assume the new format in the future.

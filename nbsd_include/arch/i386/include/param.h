@@ -62,6 +62,10 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
+#ifndef MAXPHYS
+#define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#endif
+
 /*
  * Mach derived conversion macros
  */

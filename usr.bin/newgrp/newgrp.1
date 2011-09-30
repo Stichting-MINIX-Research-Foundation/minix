@@ -1,0 +1,121 @@
+.\"	$NetBSD: newgrp.1,v 1.4 2010/05/14 17:28:23 joerg Exp $
+.\"
+.\" Copyright (c) 2007, The NetBSD Foundation.
+.\" All Rights Reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Brian Ginsbach.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 6, 2007
+.Dt NEWGRP 1
+.Os
+.Sh NAME
+.Nm newgrp
+.Nd change to a new primary group
+.Sh SYNOPSIS
+.Nm
+.Op Fl l
+.Op Ar group
+.Sh DESCRIPTION
+The
+.Nm
+command changes a user to a new primary group
+.Pq real and effective group ID
+by starting a new shell.
+The user remains logged in and the current directory
+and file creation mask remain unchanged.
+The user is always given a new shell even if
+the primary group change fails.
+.Pp
+The
+.Nm
+command accepts the following options:
+.Bl -tag -width indent
+.It Fl l
+The environment is changed to what would be expected if the user
+actually logged in again.
+This simulates a full login.
+.El
+.Pp
+The
+.Ar group
+is a group name or non-negative numeric group ID from the group database.
+The real and effective group IDs are set to
+.Ar group
+or the group ID associated with the group name.
+.Pp
+If
+.Ar group
+is not specified,
+.Nm
+restores the user's real and effective group IDs to the user's
+primary group specified in the password database.
+The user's supplementary group IDs are restored to the set specified
+for the user in the group database.
+.Pp
+If the user is not a member of the specified group, and the group
+requires a password, the user will be prompted for the group password.
+.Sh FILES
+.Bl -tag -width /etc/master.passwd -compact
+.It Pa /etc/group
+The group database
+.It Pa /etc/master.passwd
+The user database
+.It Pa /etc/passwd
+A Version 7 format password file
+.El
+.Sh EXIT STATUS
+If a new shell is started the exit status is the exit status of the shell.
+Otherwise the exit status will be \*[Gt]0.
+.Sh SEE ALSO
+.Xr csh 1 ,
+.Xr groups 1 ,
+.Xr login 1 ,
+.Xr sh 1 ,
+.Xr su 1 ,
+.Xr umask 2 ,
+.Xr group 5 ,
+.Xr passwd 5 ,
+.Xr environ 7
+.Sh STANDARDS
+The
+.Nm
+command conforms to
+.St -p1003.1-2001 .
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .
+A
+.Nm
+command appeared in
+.Nx 5.0 .
+.Sh BUGS
+There is no convenient way to enter a password into
+.Pa /etc/group .
+The use of group passwords is strongly discouraged
+since they are inherently insecure.
+It is not possible to stop users from obtaining the encrypted
+password from the group database.

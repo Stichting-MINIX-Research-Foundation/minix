@@ -3,6 +3,7 @@
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
 LIBC_DIR=	nbsd_libc
 LIBM_DIR=	nbsd_libm
+LIBUTIL_DIR=	libutil
 LIBCOMPAT_DIR=	nbsd_libcompat_minix
 LIBMINLIB_DIR=	nbsd_libminlib
 LIBASYN_DIR=	nbsd_libasyn
@@ -10,12 +11,13 @@ LIBASYN_DIR=	nbsd_libasyn
 
 LIBC_DIR?=	libc
 LIBM_DIR?=	libm
+LIBUTIL_DIR?=	libminixutil
 LIBCOMPAT_DIR?=
 LIBMINLIB_DIR?=
 LIBASYN_DIR?=
 
 SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libdriver libnetdriver \
-	libedit ${LIBM_DIR} libsys libtimers libminixutil libbz2 libl libhgfs  \
+	libedit ${LIBM_DIR} libsys libtimers ${LIBUTIL_DIR} libbz2 libl libhgfs  \
 	libz libfetch libarchive libvtreefs libaudiodriver libmthread     \
 	libexec libdevman libusb ${LIBMINLIB_DIR} ${LIBASYN_DIR}          \
 	libddekit libminixfs libbdev

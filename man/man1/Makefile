@@ -13,7 +13,6 @@ MAN=	acd.1 anm.1 ar.1 ash.1 asize.1 at.1 banner.1 basename.1 \
 	look.1 lp.1 ls.1 lspci.1 M.1 mail.1  \
 	mesg.1 mixer.1 ackmkdep.1 mkfs.1 \
 	mkproto.1 modem.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
-	     passwd.1 \
 	paste.1 ping.1 playwave.1 postmort.1 pr.1 prep.1 \
 	profile.1 ps.1 pwd.1 rcp.1 readall.1 recwave.1 \
 	ref.1 remsync.1 rget.1 rlogin.1 rmdir.1 rsh.1 rz.1 \
@@ -61,7 +60,6 @@ MLINKS += cp.1 cpdir.1
 MLINKS += elvis.1 ex.1
 MLINKS += expr.1 test.1
 MLINKS += expr.1 [.1
-MLINKS += passwd.1 chfn.1
 MLINKS += svc.1 ci.1
 MLINKS += svc.1 co.1
 

@@ -339,9 +339,8 @@ char *argv[];
 					 * pre-authorized users.
 					 */
 	} else
-	if (pwd && secure && strcmp(crypt("", pwd->pw_passwd),
-						pwd->pw_passwd) == 0) {
-		check_pw= 0;		/* empty password */
+	if (pwd && secure && (pwd->pw_passwd[0] == '\0')) {
+		check_pw= 0;		/* empty password, pretend password okay */
 	}
 
 	if (check_pw) {

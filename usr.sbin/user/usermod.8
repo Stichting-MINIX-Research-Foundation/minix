@@ -1,0 +1,259 @@
+.\" $NetBSD: usermod.8,v 1.32 2009/03/11 17:54:03 dyoung Exp $ */
+.\"
+.\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd January 13, 2009
+.Dt USERMOD 8
+.Os
+.Sh NAME
+.Nm usermod
+.Nd modify user login information
+.Sh SYNOPSIS
+.Nm
+.Op Fl FmoSv
+.Op Fl C Ar yes/no
+.Op Fl c Ar comment
+.Op Fl d Ar home-dir
+.Op Fl e Ar expiry-time
+.Op Fl f Ar inactive-time
+.Op Fl G Ar secondary-group
+.Op Fl g Ar gid | name | Li =uid
+.Op Fl L Ar login-class
+.Op Fl l Ar new-login
+.Op Fl p Ar password
+.Op Fl s Ar shell
+.Op Fl u Ar uid
+.Ar user
+.Sh DESCRIPTION
+The
+.Nm
+utility modifies user login information on the system.
+.Pp
+Default values are taken from the information provided in the
+.Pa /etc/usermgmt.conf
+file, which, if running as root, is created using the built-in defaults if
+it does not exist.
+.Pp
+See
+.Xr user 8
+for more information about
+.Dv EXTENSIONS .
+.Pp
+After setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
+.Bl -tag -width Ds
+.It Fl C Ar yes/no
+Enable user accounts to be temporary locked/closed.
+The
+.Ar yes/no
+operand can be given as
+.Dq Ar yes
+to lock the account or
+.Dq Ar no
+to unlock the account.
+.It Fl c Ar comment
+Set the comment field (also, for historical reasons known as the
+GECOS field) for the user.
+The comment field will typically include
+the user's full name and, perhaps, contact information for the user.
+.It Fl d Ar home-directory
+Set the home directory without populating it; if the
+.Fl m
+option is specified, tries to move the old home directory to
+.Ar home-directory .
+.It Fl e Ar expiry-time
+Set the time at which the account expires.
+This can be used to implement password aging.
+It should be entered in the form
+.Dq month day year ,
+where month is the month name (the first three characters are
+sufficient), day is the day of the month, and year is the year.
+Time in seconds since the epoch (UTC) is also valid.
+A value of 0 can be used to disable this feature.
+This value can be preset for all users using the
+.Ar expire
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl F
+Force the user to change their password upon next login.
+.It Fl f Ar inactive-time
+Set the time at which the password expires.
+See the
+.Fl e
+option.
+.It Fl G Ar secondary-group
+Specify a secondary group to which the user will be added in the
+.Pa /etc/group
+file.
+The
+.Ar secondary-group
+may be a comma-delimited list for multiple groups.
+Or the option may be repeated for multiple groups.
+(16 groups maximum.)
+.It Fl g Ar gid | name | Li =uid
+Give the group name or identifier to be used for the user's primary group.
+If this is
+.Ql =uid ,
+then a uid and gid will be picked which are both unique
+and the same, and a line will be added to
+.Pa /etc/group
+to describe the new group.
+This value can be preset for all users by using the
+.Ar group
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl L Ar login-class
+Set the login class for the user.
+See
+.Xr login.conf 5
+for more information on user login classes.
+This value can be preset for all users by using the
+.Ar class
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+This option is included if built with
+.Dv EXTENSIONS .
+.It Fl l Ar new-user
+Give the new user name.
+It can consist of alphanumeric characters and the characters
+.Ql \&. ,
+.Ql \&- ,
+and
+.Ql \&_ .
+.It Fl m
+Move the home directory from its old position to the new one.
+If
+.Fl d
+is not specified, the
+.Ar new-user
+argument of the
+.Fl l
+option is used; one of
+.Fl d
+and
+.Fl l
+is needed.
+.It Fl o
+Allow duplicate uids to be given.
+.It Fl p Ar password
+Specify an already-encrypted password for the user.
+This password can then be changed by using the
+.Xr chpass 1
+utility.
+This value can be preset for all users by using the
+.Ar password
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+This option is included if built with
+.Dv EXTENSIONS .
+.It Fl S
+Allow samba user names with a trailing dollar sign to be modified.
+This option is included if built with
+.Dv EXTENSIONS .
+.It Fl s Ar shell
+Specify the login shell for the user.
+This value can be preset for all users by using the
+.Ar shell
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl u Ar uid
+Specify a new uid for the user.
+Boundaries for this value can be preset for all users by using the
+.Ar range
+field in the
+.Pa /etc/usermgmt.conf
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl v
+Enable verbose mode - explain the commands as they are executed.
+This option is included if built with
+.Dv EXTENSIONS .
+.El
+.Pp
+Once the information has been verified,
+.Nm
+uses
+.Xr pwd_mkdb 8
+to update the user database.
+This is run in the background.
+At very large sites this can take several minutes.
+Until this update
+is completed, the password file is unavailable for other updates
+and the new information is not available to programs.
+.Sh EXIT STATUS
+.Ex -std usermod
+.Sh FILES
+.Bl -tag -width /etc/usermgmt.conf -compact
+.It Pa /etc/usermgmt.conf
+.El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr group 5 ,
+.Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
+.Xr pwd_mkdb 8 ,
+.Xr user 8 ,
+.Xr useradd 8 ,
+.Xr userdel 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 1.5 .
+It is based on the
+.Ar addnerd
+package by the same author.
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Alistair G. Crooks
+.Aq agc@NetBSD.org .

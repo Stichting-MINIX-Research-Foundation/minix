@@ -18,6 +18,7 @@ struct dirent {		/* Largest entry (8 slots) */
 };
 
 #if defined(_NETBSD_SOURCE)
+#define MAXNAMLEN	511
 #define	d_fileno	d_ino
 #endif
 

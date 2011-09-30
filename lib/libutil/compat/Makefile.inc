@@ -3,5 +3,6 @@
 .PATH: ${.CURDIR}/compat
 
 CPPFLAGS+=-I${.CURDIR}/../libc -I${.CURDIR}/../../sys
-SRCS+=compat_passwd.c compat_loginx.c compat_login.c compat_parsedate.c \
+SRCS+=compat_passwd.c compat_loginx.c compat_parsedate.c \
     compat_login_cap.c
+    #  compat_login.c

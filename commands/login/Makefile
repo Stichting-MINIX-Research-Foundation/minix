@@ -1,3 +1,5 @@
+.include <minix.newlibc.mk>
+
 PROG=	login
 MAN=
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")

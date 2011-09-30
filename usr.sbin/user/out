@@ -1,0 +1,17 @@
+chown: /home/test1.1/.ashrc: invalid argument
+chown: /home/test1.1/.ellepro.b1: invalid argument
+chown: /home/test1.1/.ellepro.e: invalid argument
+chown: /home/test1.1/.exrc: invalid argument
+chown: /home/test1.1/.profile: invalid argument
+chown: /home/test1.1: invalid argument
+useradd: Error running `/usr/sbin/chown -R -h 4000:4000 /home/test1.1': no such file or directory
+user: User `test1.2' doesn't own directory `/home/test1.1', not removed
+user: Can't add user `test1%1': invalid login name
+usage: useradd -D [-F] [-b base-dir] [-e expiry-time] [-f inactive-time]
+	[-g gid | name | =uid] [-k skel-dir] [-L login-class]
+	[-M homeperm] [-r lowuid..highuid] [-s shell]
+usage: useradd [-moSv] [-b base-dir] [-c comment] [-d home-dir] [-e expiry-time]
+	[-f inactive-time] [-G secondary-group] [-g gid | name | =uid]
+	[-k skeletondir] [-L login-class] [-M homeperm] [-p password]
+	[-r lowuid..highuid] [-s shell] [-u uid] user
+user: Can't find user `test1%1'

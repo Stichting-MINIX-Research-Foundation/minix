@@ -4,7 +4,7 @@
 
 # NetBSD imports
 SUBDIR= indent m4 stat tic sed mkdep uniq seq man mdocml \
-	apropos
+	apropos chpass newgrp passwd 
 
 # Non-NetBSD imports
 SUBDIR+= ministat

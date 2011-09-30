@@ -25,7 +25,7 @@ PROTO= proto.small
 STRIPFLAG+= -s
 .endif
 
-EXTRA=system.conf passwd rs.single
+EXTRA=system.conf master.passwd passwd pwd.db rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
 CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) bintoc image image.c t proto.gen
@@ -150,7 +150,16 @@ ext2: ../../servers/ext2/ext2
 system.conf: ../../etc/system.conf
 	install ${STRIPFLAG} ../../etc/$@ $@
 
-passwd: ../../etc/passwd
+passwd: ../../etc/master.passwd
+	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
+	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
+	../../usr.sbin/pwd_mkdb/pwd_mkdb -V 0 -p -d ../../ ../../etc/master.passwd
+	install ${STRIPFLAG} ../../etc/$@ $@
+
+master.passwd: ../../etc/master.passwd
+	install ${STRIPFLAG} ../../etc/$@ $@
+
+pwd.db: passwd
 	install ${STRIPFLAG} ../../etc/$@ $@
 
 rs.single: ../../etc/rs.single

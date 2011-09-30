@@ -1,0 +1,142 @@
+.\"	$NetBSD: passwd.1,v 1.28 2006/03/07 01:52:09 hubertf Exp $
+.\"
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)passwd.1    8.1 (Berkeley) 6/6/93
+.\"
+.Dd February 25, 2005
+.Dt PASSWD 1
+.Os
+.Sh NAME
+.Nm passwd
+.Nd modify a user's password
+.Sh SYNOPSIS
+.Nm
+.Op Ar user
+.Nm
+.Oo Fl d Ar files | Fl l Oc
+.Op Ar user
+.Nm
+.Oo Fl d Ar nis | Fl y Oc
+.Op Ar user
+.Nm
+.Oo Fl d Ar krb5 | Fl k Oc
+.Op Ar principal
+.Sh DESCRIPTION
+.Nm
+changes the user's password.
+First, the user is
+prompted for their current password.
+If the current password is correctly typed, a new password is
+requested.
+The new password must be entered twice to avoid typing errors.
+.Pp
+The new password should be at least six characters long and not
+purely alphabetic.
+Its total length must be less than
+.Dv _PASSWORD_LEN
+(currently 128 characters).
+Numbers, upper case letters and meta characters
+are encouraged.
+.Pp
+All options may not be available on all systems.
+.Bl -tag -width flag
+.It Fl d Ar database
+This option specifies the password database that should be updated.  The
+following databases are supported:
+.Bl -tag -width files
+.It files
+This specifies that the password change should be applied to the local
+password file.
+When changing only the local password,
+.Nm
+uses
+.Xr pwd_mkdb 8
+to update the password databases.
+.It nis
+This specifies that the password change should be applied to the NIS
+password database.
+The
+.Xr rpc.yppasswdd 8
+daemon should be running on the master NIS server.
+.It krb5
+This specifies that the user's Kerberos 5 password should be changed.
+The host must be configured to use Kerberos.
+See
+.Xr krb5.conf 5 .
+.El
+.It Fl l
+This is the equivalent of
+.Fl d Ar files .
+.It Fl y
+This is the equivalent of
+.Fl d Ar nis .
+.It Fl k
+This is the equivalent of
+.Fl d Ar krb5 .
+.El
+.Pp
+If a password database is not specified,
+.Nm
+will change the password database as determined by the
+Pluggable Authentication Module
+.Pq PAM
+library.
+.Pp
+The type of cipher used to encrypt the password depends on the configuration
+in
+.Xr passwd.conf 5 .
+It can be different for local and NIS passwords.
+.Sh FILES
+.Bl -tag -width /etc/master.passwd -compact
+.It Pa /etc/master.passwd
+The user database
+.It Pa /etc/passwd
+A Version 7 format password file
+.It Pa /etc/passwd.XXXXXX
+Temporary copy of the password file
+.El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr login 1 ,
+.Xr pwhash 1 ,
+.Xr passwd 5 ,
+.Xr passwd.conf 5 ,
+.Xr pam 8 ,
+.Xr pwd_mkdb 8 ,
+.Xr vipw 8
+.Rs
+.%A Robert Morris
+.%A Ken Thompson
+.%T "UNIX password security"
+.Re
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v6 .

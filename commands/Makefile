@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	aal add_route adduser arp ash at autil awk \
+SUBDIR=	aal add_route arp ash at autil awk \
 	backup badblocks banner basename binpackage \
 	binpackages bzip2 bzip2recover cal calendar \
 	cat cawf cd  cdprobe checkhier chmem \
@@ -19,7 +19,7 @@ SUBDIR=	aal add_route adduser arp ash at autil awk \
 	lpd ls lspci M mail make  MAKEDEV \
 	mdb  mesg mined ackmkdep mkfifo mkfs.mfs mknod \
 	mkproto modem mount mt netconf newroot nice acknm nohup \
-	nonamed od passwd paste patch pax \
+	nonamed od paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \

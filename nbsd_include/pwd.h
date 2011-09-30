@@ -61,14 +61,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(__minix) && defined(_MINIX_COMPAT)
-#include <compat/pwd.h>
-/* Avoid inclusion of the rest of the header. */
-#ifndef _PWD_H_
-#define _PWD_H_
-#endif
-#endif /* __minix && _MINIX_COMPAT */
-
 #ifndef _PWD_H_
 #define	_PWD_H_
 

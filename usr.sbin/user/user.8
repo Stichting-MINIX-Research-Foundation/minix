@@ -1,0 +1,115 @@
+.\" $NetBSD: user.8,v 1.23 2005/11/25 08:00:18 agc Exp $ */
+.\"
+.\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd November 16, 2005
+.Dt USER 8
+.Os
+.Sh NAME
+.Nm user
+.Nd manage user login information on the system
+.Sh SYNOPSIS
+.Nm
+.Cm add
+.Fl D
+.Op options
+.Nm
+.Cm add
+.Op options
+.Ar user
+.Nm
+.Cm del
+.Fl D
+.Op options
+.Nm
+.Cm del
+.Op options
+.Ar user
+.Nm
+.Cm info
+.Op options
+.Ar user
+.Nm
+.Cm mod
+.Op options
+.Ar user
+.Sh DESCRIPTION
+The
+.Nm
+utility acts as a frontend to the
+.Xr useradd 8 ,
+.Xr usermod 8 ,
+.Xr userinfo 8 ,
+and
+.Xr userdel 8
+commands.
+The utilities by default are built with
+.Dv EXTENSIONS .
+This allows for further functionality.
+.Pp
+For a full explanation of the options available, please see the relevant manual page.
+.Sh EXIT STATUS
+.Ex -std user
+.Sh FILES
+.Bl -tag -width /usr/share/examples/usermgmt -compact
+.It Pa /etc/skel/.[A-z]*
+Skeleton files for new user
+.It Pa /etc/usermgmt.conf
+Configuration file for
+.Nm ,
+.Xr group 8
+and the backend commands mentioned above.
+.\" .It Pa /usr/share/examples/usermgmt
+.\" A directory containing examples for
+.\" .Nm
+.\" and
+.\" .Xr group 8 .
+.El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr group 5 ,
+.Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
+.Xr useradd 8 ,
+.Xr userdel 8 ,
+.Xr userinfo 8 ,
+.Xr usermod 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 1.5 .
+It is based on the
+.Ar addnerd
+package by the same author.
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Alistair G. Crooks
+.Aq agc@NetBSD.org .

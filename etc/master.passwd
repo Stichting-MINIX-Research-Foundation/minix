@@ -1,0 +1,17 @@
+root::0:0::0:0:Big Brother:/root:/bin/sh
+daemon:*:1:1::0:0:The Deuce:/etc:/bin/sh
+bin:*:2:0::0:0:Binaries:/home/bin:/bin/sh
+uucp:*:5:5::0:0:UNIX to UNIX copy:/usr/spool/uucp:/usr/bin/uucico
+news:*:6:6::0:0:Usenet news:/usr/spool/news:/bin/sh
+ftp:*:7:7::0:0:Anonymous FTP:/usr/ftp:/bin/sh
+ast:*:8:3::0:0:Andrew S. Tanenbaum:/home/ast:/bin/sh
+www:*:9:9::0:0:World Wide Web:/usr/www:/bin/sh
+driver:*:10:10::0:0:Device Drivers:/:/bin/sh
+server:*:11:11::0:0:OS Servers:/:/bin/sh
+service:*:12:12::0:0:System Services:/:/bin/sh
+sshd:*:22:22::0:0:sshd:/:/bin/sh
+smtpd:*:25:25::0:0:smtpd:/:/bin/sh
+postfix:*:27:27::0:0:postfix:/usr/var/spool/postfix:/bin/false
+postgres:*:30:30::0:0:postgresql:/:/bin/false
+games:*:9998:13::0:0:games:/:/bin/sh
+nobody:*:9999:39::0:0:Unprivileged user:/tmp:/bin/sh

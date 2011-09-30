@@ -3,7 +3,9 @@
 /* Modified for ProcFS by Alen Stojanov and David van Moolenbroek */
 
 #define _MINIX 1
+#ifndef __NBSD_LIBC
 #define _POSIX_SOURCE 1
+#endif
 
 #include <stdio.h>
 #include <unistd.h>

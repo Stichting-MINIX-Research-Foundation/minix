@@ -41,7 +41,6 @@ SRCS+=  \
 	bcopy.c \
 	bzero.c \
 	configfile.c \
-	crypt.c \
 	ctermid.c \
 	cuserid.c \
 	dirname.c \
@@ -64,7 +63,6 @@ SRCS+=  \
 	getpagesize.c \
 	getpass.c \
 	getprogname.c \
-	getpwent.c \
 	getsubopt.c \
 	getttyent.c \
 	getw.c \
@@ -85,7 +83,6 @@ SRCS+=  \
 	popen.c \
 	putenv.c \
 	putw.c \
-	pwcache.c \
 	random.c \
 	read_tsc.S \
 	read_tsc_64.c \
@@ -125,3 +122,9 @@ SRCS+=  \
 	vwarnx.c \
 	warn.c \
 	warnx.c
+
+# XXX To be removed after full
+# XXX switch to NetBSD passwd.
+SRCS+=  \
+	getpwent.c \
+	pwcache.c
