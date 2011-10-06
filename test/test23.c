@@ -2,7 +2,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/dir.h>
 #include <limits.h>
 #include <errno.h>
 #include <unistd.h>
