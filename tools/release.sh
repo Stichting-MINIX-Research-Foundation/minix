@@ -205,7 +205,9 @@ then
 	else	REVTAG=`(cd $srcdir && git show-ref HEAD -s10)`
 		echo "Retrieved repository head is $REVTAG."
 	fi
-	rm -r $srcdir/.git
+	if [ $MINIMAL -ne 0 ]
+	then	rm -r $srcdir/.git
+	fi
 	echo "
 /* Added by release script  */
 #ifndef _VCS_REVISION
