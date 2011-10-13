@@ -6,6 +6,7 @@
 
 #define _PATH_SYSTEM_CONF "/etc/system.conf"
 #define _PATH_SYSTEM_CONF_DIR "/etc/system.conf.d"
+#define _PATH_SYSTEM_CONF_PKG_DIR       "/usr/pkg/etc/system.conf.d"
 
 #define _PATH_DHCPCONF	"/etc/dhcp.conf"
 #define _PATH_DHCPPID	"/usr/run/dhcpd.pid"

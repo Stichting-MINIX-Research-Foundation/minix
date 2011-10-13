@@ -63,6 +63,7 @@
 #define _PATH_SERVICE	"/bin/service"
 #define _PATH_SYSTEM_CONF	"/etc/system.conf"
 #define _PATH_SYSTEM_CONF_DIR	"/etc/system.conf.d"
+#define _PATH_SYSTEM_CONF_PKG_DIR	"/usr/pkg/etc/system.conf.d"
 
 /* Provide trailing slash, since mostly used for building pathnames. */
 #define _PATH_DEV	"/dev/"

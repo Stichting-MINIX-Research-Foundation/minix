@@ -3,6 +3,14 @@
 RANDOM_FILE=/usr/adm/random.dat
 LOCAL_FILE=/usr/etc/rc.local
 
+# Get $SERVICES_DIRS
+. /etc/rc.conf
+
+# Directories to find services in
+if [ ! "$SERVICES_DIRS" ]
+then	SERVICES_DIRS=/usr/sbin
+fi
+
 case "$#:$1" in
 1:start|1:stop|1:down)
     action=$1
@@ -69,8 +77,18 @@ up()
     if disabled $service; then return; fi
 
     # Service is not disabled. Try to bring it up.
-    echo -n " $service"
-    service $opt up /usr/sbin/$service "$@" 
+    found=""
+    for dir in $SERVICES_DIRS
+    do	bin=$dir/$service
+	if [ -x $bin -a -z "$found" ]
+	then	service $opt up $bin "$@" 
+    		echo -n " $service"
+		found=yes
+	fi
+    done
+    if [ -z "$found" ]
+    then	echo " ($service not found in $SERVICES_DIRS)"
+    fi
 }
 
 get_eth_labels() {

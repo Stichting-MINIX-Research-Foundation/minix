@@ -9,7 +9,9 @@
 _PROTOTYPE(char *itoa, (int _n));
 #ifndef __NBSD_LIBC
 _PROTOTYPE(char *getpass, (const char *_prompt));
+#ifdef __ACK__
 _PROTOTYPE(void swab, (char *_from, char *_to, int _count));
+#endif
 #endif /* !_NBSD_LIBC */
 
 /* Miscellaneous MINIX. */

@@ -5,12 +5,17 @@
 # Changes:
 #						
 
+# Get system config
+. /etc/rc.conf
+
 LOCALRC=/usr/etc/rc.local
 INETCONF=/etc/inet.conf
 RCNET=/etc/rc.net
 HOSTS=/etc/hosts
 HOSTNAME=/etc/hostname.file
 USRKBFILE=/.usrkb
+LSPCI=/tmp/lspci.$$
+DEVICES=/tmp/devices.$$
 
 step1=""
 step2=""
@@ -81,7 +86,7 @@ card()
 	shift 2
 	while [ $# -gt 0 ]
 	do 
-		lspci | grep > /dev/null "^$1" && card_avail=1
+		cat $LSPCI | grep > /dev/null "^$1" && card_avail=1
 		shift
 	done
 	if [ $card_avail -gt 0 ]
@@ -94,34 +99,57 @@ card()
 	printf "%2d. %s %s\n" "$card_number" "$card_mark" "$card_name"
 }
 
+first_pcicard=4
+
 cards()
 {
     card 0 "No Ethernet card (no networking)"
-    card 1 "Intel Pro/100" "8086:103D" "8086:1064" "8086:1229" "8086:2449" \
-           "8086:1031" "8086:1032"
-    card 2 "3Com 501 or 3Com 509 based card"
-    card 3 "Realtek 8139 based card (also emulated by KVM)"            \
-           "10EC:8139" "02AC:1012" "1065:8139" "1113:1211" "1186:1300" \
-           "1186:1340" "11DB:1234" "1259:A117" "1259:A11E" "126C:1211" \
-           "13D1:AB06" "1432:9130" "14EA:AB06" "14EA:AB07" "1500:1360" \
-           "1743:8139" "4033:1360"
-    card 4 "Realtek 8169 based card"	\
-           "10EC:8129" "10EC:8167" "10EC:8169" "1186:4300" "1259:C107" \
-           "1385:8169" "16EC:0116" "1737:1032" "10EC:8168"
-    card 5 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
-    card 6 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
-    card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
-    card 8 "Intel PRO/1000 Gigabit" 				       \
-           "8086:100E" "8086:107C" "8086:10CD" "8086:10D3" "8086:10DE"
-    	
-    card 9 "Attansic/Atheros L2 FastEthernet" "1969:2048"
-    card 10 "DEC Tulip 21140A in VirtualPC" "1011:0009"
-    card 11 "Different Ethernet card (no networking)"
+    card 1 "3Com 501 or 3Com 509 based card"
+    card 2 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
+    card 3 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
+    n=$first_pcicard
+    for pcicard in $pci_list
+    do	var=\$pci_descr$pcicard; descr="`eval echo $var`"
+    	var=\$pci_pcilist$pcicard; pcilist="`eval echo $var`"
+    	card $n "$descr" $pcilist
+	n="`expr $n + 1`"
+    done
+
+    card $first_after_pci "Different Ethernet card (no networking)"
 }
 
 warn()
 {
     echo -e "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b ! $1"
+}
+
+config_pci_cards() {
+	rm -f $DEVICES
+
+	n=0
+
+	# Collect configs from network devices
+	for dir in $SYSTEM_CONF_DIRS
+	do	for f in $dir/$SYSTEM_CONF_SUBDIR/*
+		do	if [ -f $f ]
+			then	printconfig $f | grep 'type net.*pci device'
+			fi
+		done
+	done >$DEVICES
+	while read devline
+	do	pcilist="`echo $devline | sed 's/.*pci device //' | sed 's/,.*//'`"
+		descr="`echo $devline | sed 's/.*,descr //' | sed 's/,.*//'`"
+		label="`echo $devline | sed 's/.*service //' | sed 's/,.*//'`"
+		pci_list="$pci_list $n"
+		eval "pci_pcilist$n=\"$pcilist\""
+		eval "pci_descr$n=\"$descr\""
+		eval "pci_label$n=\"$label\""
+		n="`expr $n + 1`"
+	done <$DEVICES
+
+	first_after_pci=`expr $first_pcicard + $n`
+
+	rm -f $DEVICES
 }
 
 do_step1()
@@ -146,26 +174,28 @@ do_step1()
 
 drv_params()
 {
+	# If this is a known pci device, we only have to set
+	# the driver.
+	if [ $1 -ge $first_pcicard -a $1 -lt $first_after_pci ]
+	then	pcicard="`expr $1 - $first_pcicard`"
+    		var=\$pci_label$pcicard; driver="`eval echo $var`"
+		return
+	fi
+
+      # Other possibilities.
       case "$1" in
         0) driver=psip0;    ;;    
-	1) driver=fxp;      ;;
-	2) driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+	1) driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
 	   test "$v" = 1 && echo ""
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
 		;;
-	4) driver=rtl8169;  ;;
-	3) driver=rtl8139;  ;;
-	5) driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	6) driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+	2) driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+	3) driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
 	   test "$v" = 1 && echo ""
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
            test "$v" = 1 && echo " chose option 4, the defaults for emulation by Bochs have been set."
 		;;
-        7) driver="lance"; ;;    
-	8) driver="e1000"; ;;
-        9) driver="atl2";   ;;
-        10) driver="dec21140A"; ;;    
-        11) driver="psip0"; ;;    
+        $first_after_pci) driver="psip0"; ;;    
         *) warn "choose a number"
       esac
 }
@@ -253,6 +283,9 @@ do_step2()
     fi
 }
 
+# Find pci cards we know about
+config_pci_cards
+
 # Parse options
 while getopts ":qe:p:aH:i:n:g:d:s:hc" arg; do
     case "$arg" in
@@ -278,6 +311,9 @@ while getopts ":qe:p:aH:i:n:g:d:s:hc" arg; do
 	*)  usage ;;
     esac
 done
+
+# Run lspci once to a temp file
+lspci >$LSPCI || exit
 
 # Verify parameter count
 if [ "$dhcp" != "yes" ] ; then
@@ -328,6 +364,9 @@ else
     echo "eth0 $driver 0 { default; } ;" > $INETCONF
 fi
 echo "$driverargs" > $LOCALRC
+
+# Remove temporary lspci output
+rm -f $LSPCI
 
 if [ -n "$manual" ]
     then
