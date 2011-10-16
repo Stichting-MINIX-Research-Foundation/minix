@@ -9,6 +9,7 @@
 #include "kernel/system.h"
 #include "kernel/ipc.h"
 #include <string.h>
+#include <assert.h>
 
 #if USE_UPDATE
 
@@ -63,6 +64,8 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
   if(!(dst_privp->s_flags & SYS_PROC)) {
       return EPERM;
   }
+
+  assert(!proc_is_runnable(src_rp) && !proc_is_runnable(dst_rp));
 
   /* Check if processes are updatable. */
   if(!proc_is_updatable(src_rp) || !proc_is_updatable(dst_rp)) {
@@ -138,6 +141,14 @@ PRIVATE void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
   rp->p_priv = from_rp->p_priv;
   priv(rp)->s_proc_nr = from_rp->p_nr;
   rp->p_caller_q = from_rp->p_caller_q;
+
+  /* preserve scheduling */
+  rp->p_scheduler = from_rp->p_scheduler;
+#ifdef CONFIG_SMP
+  rp->p_cpu = from_rp->p_cpu;
+  memcpy(rp->p_cpu_mask, from_rp->p_cpu_mask,
+		  sizeof(bitchunk_t) * BITMAP_CHUNKS(CONFIG_MAX_CPUS));
+#endif
 }
 
 /*===========================================================================*
