@@ -187,6 +187,13 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
 		KERNEL, (vir_bytes) &io_range, sizeof(io_range));
 	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
+
+	for (i = 0; i < priv(rp)->s_nr_io_range; i++) {
+		if (priv(rp)->s_io_tab[i].ior_base == io_range.ior_base &&
+			priv(rp)->s_io_tab[i].ior_limit == io_range.ior_limit)
+			return OK;
+	}
+
 	i= priv(rp)->s_nr_io_range;
 	if (i >= NR_IO_RANGE) {
 		printf("do_privctl: %d already has %d i/o ranges.\n",
@@ -213,6 +220,14 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 		KERNEL, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
 	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
+
+	/* When restarting a driver, check if it already has the premission */
+	for (i = 0; i < priv(rp)->s_nr_mem_range; i++) {
+		if (priv(rp)->s_mem_tab[i].mr_base == mem_range.mr_base &&
+			priv(rp)->s_mem_tab[i].mr_limit == mem_range.mr_limit)
+			return OK;
+	}
+
 	i= priv(rp)->s_nr_mem_range;
 	if (i >= NR_MEM_RANGE) {
 		printf("do_privctl: %d already has %d mem ranges.\n",
@@ -237,6 +252,12 @@ PUBLIC int do_privctl(struct proc * caller, message * m_ptr)
 	data_copy(caller->p_endpoint, (vir_bytes) m_ptr->CTL_ARG_PTR,
 		KERNEL, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
+
+	/* When restarting a driver, check if it already has the premission */
+	for (i = 0; i < priv(rp)->s_nr_irq; i++) {
+		if (priv(rp)->s_irq_tab[i] == irq)
+			return OK;
+	}
 
 	i= priv(rp)->s_nr_irq;
 	if (i >= NR_IRQ) {
