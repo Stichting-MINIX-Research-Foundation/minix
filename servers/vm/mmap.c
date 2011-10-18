@@ -294,6 +294,8 @@ PUBLIC int do_shared_unmap(message *m)
 	vir_bytes addr;
 
 	target = m->VMUN_ENDPT;
+	if (target == SELF)
+		target = m->m_source;
 
 	if ((r = vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
