@@ -5,9 +5,10 @@ exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
 
-if [ -e /sbin/acpi ]
+ACPI=/sbin/acpi
+if [ -e $ACPI -a -n "`sysenv acpi`" ]
 then
-	/bin/service -c up /sbin/acpi
+	/bin/service -c up $ACPI
 fi
 /bin/service -c up /sbin/pci
 /bin/service -cn up /sbin/floppy -dev /dev/fd0

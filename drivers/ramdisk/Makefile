@@ -10,8 +10,7 @@ SCRIPTS=newroot
 PROGRAMS+= ahci ext2
 .endif
 
-# acpi is not compiled with ack
-.if ${COMPILER_TYPE} == "gnu" && ${MKACPI} != "no"
+.if ${MKACPI} != "no"
 PROGRAMS+= acpi
 .endif
 
@@ -166,15 +165,7 @@ rs.single: ../../etc/rs.single
 	install ${STRIPFLAG} ../../etc/$@ $@
 
 proto.gen: $(PROGRAMS) $(SCRIPTS) proto.sh ${PROTO}
+	for p in $(PROGRAMS); do file $$p | grep -q ELF && strip -s $$p; done
 	sh -e proto.sh ${PROTO} >proto.gen
-
-.if ${OBJECT_FMT} == "ELF"
-proto.gen: elfstrip
-
-.PHONY: elfstrip
-
-elfstrip: $(PROGRAMS)
-	strip -s $(PROGRAMS)
-.endif
 
 .include <minix.service.mk>

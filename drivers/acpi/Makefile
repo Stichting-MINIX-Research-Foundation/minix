@@ -1,8 +1,8 @@
-.if ${COMPILER_TYPE} == "ack"
-all:
-	echo "Skipping ACPI driver, ACK compiler in use"
-.else
 # The ACPI driver is compilable only with a "gnu" type compiler
+.if ${COMPILER_TYPE} != "gnu"
+CC:=clang
+COMPILER_TYPE:=gnu
+.endif
 
 PROG=	acpi
 
@@ -150,5 +150,3 @@ MAN=
 BINDIR?= /usr/sbin
 
 .include <minix.service.mk>
-
-.endif
