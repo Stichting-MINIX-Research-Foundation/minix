@@ -77,6 +77,22 @@ PRIVATE int dir_is_pid(struct inode *node)
 		get_inode_index(node) != NO_INDEX);
 }
 
+PRIVATE int mproc_ok(struct mproc *tab, int slots)
+{
+	int i;
+
+	/* sanity check of mproc */
+
+	for(i = 0; i < slots; i++) {
+		if(tab[i].mp_magic != MP_MAGIC) {
+			printf("procfs: mproc table magic number mismatch\n");
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 /*===========================================================================*
  *				update_tables				     *
  *===========================================================================*/
@@ -98,6 +114,8 @@ PRIVATE int update_tables(void)
 	}
 
 	if ((r = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) return r;
+
+	if(!mproc_ok(mproc, NR_PROCS)) return EINVAL;
 
 	if ((r = getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc)) != OK) return r;
 

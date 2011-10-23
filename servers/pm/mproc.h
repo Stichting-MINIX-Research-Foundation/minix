@@ -8,6 +8,8 @@
 #include <timers.h>
 #include <signal.h>
 
+#include <sys/cdefs.h>
+
 /* Needs to be included here, for 'ps' etc */
 #include "const.h"
 
@@ -44,6 +46,9 @@ EXTERN struct mproc {
   sigset_t mp_ksigpending;	/* bitmap for pending signals from the kernel */
   sigset_t mp_sigtrace;		/* signals to hand to tracer first */
   struct sigaction mp_sigact[_NSIG]; /* as in sigaction(2) */
+#ifdef __ACK__
+  char mp_padding[60];		/* align structure with new libc */
+#endif
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
   struct timer mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
   clock_t mp_interval[NR_ITIMERS];	/* setitimer(2) repetition intervals */
@@ -63,6 +68,8 @@ EXTERN struct mproc {
   endpoint_t mp_scheduler;	/* scheduler endpoint id */
 
   char mp_name[PROC_NAME_LEN];	/* process name */
+
+  int mp_magic;			/* sanity check, MP_MAGIC */
 } mproc[NR_PROCS];
 
 /* Flag values */
@@ -85,4 +92,4 @@ EXTERN struct mproc {
 #define TRACE_ZOMBIE	0x10000	/* waiting for tracer to issue WAIT call */
 #define DELAY_CALL	0x20000	/* waiting for call before sending signal */
 
-
+#define MP_MAGIC	0xC0FFEE0
