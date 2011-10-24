@@ -5,4 +5,4 @@ The system is now running and many commands work normally.  To use MINIX
 in a serious way, you need to install it to your hard disk.
 
 Type "root" at the login prompt, and hit enter.
-Then type "setup" and hint enter to start the installation process.
+Then type "setup" and hit enter to start the installation process.
