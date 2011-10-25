@@ -25,8 +25,8 @@ struct proc {
   struct segframe p_seg;	/* segment descriptors */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
   struct priv *p_priv;		/* system privileges structure */
-  u32_t p_rts_flags;		/* process is runnable only if zero */
-  u32_t p_misc_flags;		/* flags that do not suspend the process */
+  volatile u32_t p_rts_flags;	/* process is runnable only if zero */
+  volatile u32_t p_misc_flags;	/* flags that do not suspend the process */
 
   char p_priority;		/* current process priority */
   u64_t p_cpu_time_left;	/* time left to use the cpu */
@@ -252,6 +252,10 @@ struct proc {
 #define MF_FLUSH_TLB	0x10000	/* if set, TLB must be flushed before letting
 				   this process run again. Currently it only
 				   applies to SMP */
+#define MF_SENDA_VM_MISS 0x20000 /* set if a processes wanted to receive an asyn
+				    message from this sender but could not
+				    because of VM modifying the sender's address
+				    space*/
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

@@ -710,6 +710,9 @@ PRIVATE int has_pending(sys_map_t *map, int src_p, int asynm)
 
   int src_id;
   sys_id_t id = NULL_PRIV_ID;
+#ifdef CONFIG_SMP
+  struct proc * p;
+#endif
 
   /* Either check a specific bit in the mask map, or find the first bit set in
    * it (if any), depending on whether the receive was called on a specific
@@ -717,16 +720,48 @@ PRIVATE int has_pending(sys_map_t *map, int src_p, int asynm)
    */
   if (src_p != ANY) {
 	src_id = nr_to_id(src_p);
-	if (get_sys_bit(*map, src_id)) 
-		id = src_id;		
+	if (get_sys_bit(*map, src_id)) {
+#ifdef CONFIG_SMP
+		p = proc_addr(id_to_nr(src_id));
+		if (asynm && RTS_ISSET(p, RTS_VMINHIBIT))
+			p->p_misc_flags |= MF_SENDA_VM_MISS;
+		else
+#endif
+			id = src_id;
+	}
   } else {
 	/* Find a source with a pending message */
 	for (src_id = 0; src_id < NR_SYS_PROCS; src_id += BITCHUNK_BITS) {
 		if (get_sys_bits(*map, src_id) != 0) {
-			while(!get_sys_bit(*map, src_id)) src_id++;
-			break;
+#ifdef CONFIG_SMP
+			while (src_id < NR_SYS_PROCS) {
+				while (!get_sys_bit(*map, src_id)) {
+					if (src_id == NR_SYS_PROCS)
+						goto quit_search;
+					src_id++;
+				}
+				p = proc_addr(id_to_nr(src_id));
+				/*
+				 * We must not let kernel fiddle with pages of a
+				 * process which are currently being changed by
+				 * VM.  It is dangerous! So do not report such a
+				 * process as having pending async messages.
+				 * Skip it.
+				 */
+				if (asynm && RTS_ISSET(p, RTS_VMINHIBIT)) {
+					p->p_misc_flags |= MF_SENDA_VM_MISS;
+					src_id++;
+				} else
+					goto quit_search;
+			}
+#else
+			while (!get_sys_bit(*map, src_id)) src_id++;
+			goto quit_search;
+#endif
 		}
 	}
+
+quit_search:
 	if (src_id < NR_SYS_PROCS)	/* Found one */
 		id = src_id;
   }
@@ -1066,7 +1101,8 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
 		KERNEL, (vir_bytes) &tabent.field,	\
 			sizeof(tabent.field)) != OK) {\
 		ASCOMPLAIN(caller_ptr, entry, #field);	\
-		return EFAULT; \
+		r = EFAULT; \
+	        goto asyn_error; \
 	}
 
 #define A_RETR(entry) do {			\
@@ -1075,7 +1111,8 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
   		KERNEL, (vir_bytes) &tabent,	\
   		sizeof(tabent)) != OK) {	\
   			ASCOMPLAIN(caller_ptr, entry, "message entry");	\
-  			return(EFAULT);		\
+  			r = EFAULT;		\
+	                goto asyn_error; \
   }						\
   			 } while(0)
 
@@ -1085,7 +1122,8 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
  	table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
 		sizeof(tabent.field)) != OK) {\
 		ASCOMPLAIN(caller_ptr, entry, #field);	\
-		return EFAULT; \
+		r = EFAULT; \
+	        goto asyn_error; \
 	}
 
 #define A_INSRT(entry) do {			\
@@ -1093,14 +1131,17 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
   		caller_ptr->p_endpoint, table_v + (entry)*sizeof(asynmsg_t),\
   		sizeof(tabent)) != OK) {	\
   			ASCOMPLAIN(caller_ptr, entry, "message entry");	\
-  			return(EFAULT);		\
+  			r = EFAULT;		\
+	                goto asyn_error; \
   }						\
   			  } while(0)	
 
 /*===========================================================================*
- *				mini_senda				     *
+ *				try_deliver_senda			     *
  *===========================================================================*/
-PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
+PUBLIC int try_deliver_senda(struct proc *caller_ptr,
+				asynmsg_t *table,
+				size_t size)
 {
   int r, dst_p, done, do_notify;
   unsigned int i;
@@ -1112,16 +1153,16 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
   const vir_bytes table_v = (vir_bytes) table;
 
   privp = priv(caller_ptr);
-  if (!(privp->s_flags & SYS_PROC)) {
-	printf( "mini_senda: warning caller has no privilege structure\n");
-	return(EPERM);
-  }
 
   /* Clear table */
-  privp->s_asyntab = -1;	
+  privp->s_asyntab = -1;
   privp->s_asynsize = 0;
 
   if (size == 0) return(OK);  /* Nothing to do, just return */
+
+  /* Scan the table */
+  do_notify = FALSE;
+  done = TRUE;
 
   /* Limit size to something reasonable. An arbitrary choice is 16
    * times the number of process table entries.
@@ -1129,16 +1170,17 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
    * (this check has been duplicated in sys_call but is left here
    * as a sanity check)
    */
-  if (size > 16*(NR_TASKS + NR_PROCS)) return(EDOM);
-	
-  /* Scan the table */
-  do_notify = FALSE;
-  done = TRUE;
+  if (size > 16*(NR_TASKS + NR_PROCS)) {
+    r = EDOM;
+    return r;
+  }
+
   for (i = 0; i < size; i++) {
 	/* Process each entry in the table and store the result in the table.
 	 * If we're done handling a message, copy the result to the sender. */
   	int pending_recv = FALSE;
 
+	dst = NONE;
 	/* Copy message to kernel */
 	A_RETR(i);
 	flags = tabent.flags;
@@ -1147,9 +1189,14 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	if (flags == 0) continue; /* Skip empty entries */
 
 	/* 'flags' field must contain only valid bits */
-	if(flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY|AMF_NOTIFY_ERR))
-		return(EINVAL);
-	if (!(flags & AMF_VALID)) return(EINVAL); /* Must contain message */
+	if(flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY|AMF_NOTIFY_ERR)) {
+		r = EINVAL;
+		goto asyn_error;
+	}
+	if (!(flags & AMF_VALID)) { /* Must contain message */
+		r = EINVAL;
+		goto asyn_error;
+	}
 	if (flags & AMF_DONE) continue;	/* Already done processing */
 
 	r = OK;
@@ -1196,6 +1243,13 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	else if (r != OK && (flags & AMF_NOTIFY_ERR))
 		do_notify = TRUE;
 	A_INSRT(i);	/* Copy results to caller */
+	continue;
+
+asyn_error:
+	if (dst != NONE)
+		printf("KERNEL senda error %d to %d\n", r, dst);
+	else
+		printf("KERNEL senda error %d\n", r);
   }
 
   if (do_notify) 
@@ -1207,6 +1261,24 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
   }
 
   return(OK);
+
+  return r;
+}
+
+/*===========================================================================*
+ *				mini_senda				     *
+ *===========================================================================*/
+PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
+{
+  struct priv *privp;
+
+  privp = priv(caller_ptr);
+  if (!(privp->s_flags & SYS_PROC)) {
+	printf( "mini_senda: warning caller has no privilege structure\n");
+	return(EPERM);
+  }
+
+  return try_deliver_senda(caller_ptr, table, size);
 }
 
 
@@ -1232,6 +1304,17 @@ struct proc *caller_ptr;
 		continue;
 
 	src_ptr = proc_addr(privp->s_proc_nr);
+
+#ifdef CONFIG_SMP
+	/*
+	 * Do not copy from a process which does not have a stable address space
+	 * due to VM fiddling with it
+	 */
+	if (RTS_ISSET(src_ptr, RTS_VMINHIBIT)) {
+		src_ptr->p_misc_flags |= MF_SENDA_VM_MISS;
+		continue;
+	}
+#endif
 
 	assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 	if ((r = try_one(src_ptr, caller_ptr)) == OK)
@@ -1273,6 +1356,7 @@ PRIVATE int try_one(struct proc *src_ptr, struct proc *dst_ptr)
   /* Scan the table */
   do_notify = FALSE;
   done = TRUE;
+
   for (i = 0; i < size; i++) {
   	/* Process each entry in the table and store the result in the table.
   	 * If we're done handling a message, copy the result to the sender.
@@ -1342,6 +1426,7 @@ store_result:
 	set_sys_bit(priv(dst_ptr)->s_asyn_pending, privp->s_id);
   }
 
+asyn_error:
   return(r);
 }
 
@@ -1379,6 +1464,8 @@ PUBLIC int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
   /* Scan the table */
   do_notify = FALSE;
   done = TRUE;
+
+
   for (i = 0; i < size; i++) {
   	/* Process each entry in the table and store the result in the table.
   	 * If we're done handling a message, copy the result to the sender.
@@ -1424,6 +1511,7 @@ PUBLIC int cancel_async(struct proc *src_ptr, struct proc *dst_ptr)
 	privp->s_asynsize = size;
   }
 
+asyn_error:
   return(OK);
 }
 

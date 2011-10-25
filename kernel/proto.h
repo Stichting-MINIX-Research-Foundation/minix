@@ -67,6 +67,9 @@ _PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
 _PROTOTYPE( void proc_no_time, (struct proc *p));
 _PROTOTYPE( void reset_proc_accounting, (struct proc *p));
 _PROTOTYPE( void flag_account, (struct proc *p, int flag));
+_PROTOTYPE( int try_deliver_senda, (struct proc *caller_ptr,
+					asynmsg_t *table,
+					size_t size)			);
 
 /* start.c */
 _PROTOTYPE( void cstart, (u16_t cs, u16_t ds, u16_t mds,
