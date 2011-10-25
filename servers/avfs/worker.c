@@ -187,6 +187,7 @@ PRIVATE void append_job(struct job *job, void *(*func)(void *arg))
   new_job->j_m_in = m_in;
   new_job->j_func = func;
   new_job->j_next = NULL;
+  new_job->j_err_code = OK;
 
   /* Append to queue */
   tail = job;
@@ -216,6 +217,7 @@ PUBLIC void worker_start(void *(*func)(void *arg))
 	worker->w_job.j_m_in = m_in;
 	worker->w_job.j_func = func;
 	worker->w_job.j_next = NULL;
+	worker->w_job.j_err_code = OK;
 	worker_wake(worker);
 	return;
   }
@@ -232,6 +234,7 @@ PUBLIC void worker_start(void *(*func)(void *arg))
 	fp->fp_job.j_m_in = m_in;
 	fp->fp_job.j_func = func;
 	fp->fp_job.j_next = NULL;
+	fp->fp_job.j_err_code = OK;
 	fp->fp_flags |= FP_PENDING;
 	pending++;
   }
@@ -271,11 +274,13 @@ PUBLIC void worker_wait(void)
 
   worker = worker_self();
   worker->w_job.j_m_in = m_in;	/* Store important global data */
+  worker->w_job.j_err_code = err_code;
   assert(fp == worker->w_job.j_fp);
   worker_sleep(worker);
   /* We continue here after waking up */
   fp = worker->w_job.j_fp;	/* Restore global data */
   m_in = worker->w_job.j_m_in;
+  err_code = worker->w_job.j_err_code;
   assert(worker->w_next == NULL);
 }
 
