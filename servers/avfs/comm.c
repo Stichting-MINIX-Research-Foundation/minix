@@ -82,6 +82,7 @@ PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqmp)
 
   if ((vmp = find_vmnt(fs_e)) == NULL)
 	panic("Trying to talk to non-existent FS");
+  if (fs_e == fp->fp_endpoint) return(EDEADLK);
 
   if (!force_sync) {
 	fp->fp_sendrec = reqmp;	/* Where to store request and reply */

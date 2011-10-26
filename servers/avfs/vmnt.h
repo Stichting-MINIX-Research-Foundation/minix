@@ -15,6 +15,8 @@ EXTERN struct vmnt {
 /* vmnt flags */
 #define VMNT_READONLY		01	/* Device mounted readonly */
 #define VMNT_BACKCALL		02	/* FS did back call */
+#define VMNT_MOUNTING		04	/* Device is being mounted */
+#define VMNT_FORCEROOTBSF	010	/* Force usage of none-device */
 
 /* vmnt lock types mapping */
 #define VMNT_READ TLL_READ

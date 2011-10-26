@@ -299,7 +299,10 @@ PUBLIC void worker_signal(struct worker_thread *worker)
 PUBLIC void worker_stop(struct worker_thread *worker)
 {
   ASSERTW(worker);		/* Make sure we have a valid thread */
-  worker->w_job.j_m_in.m_type = EIO;
+  if (worker->w_job.j_fp)
+	worker->w_job.j_fp->fp_sendrec->m_type = EIO;
+  else
+	worker->w_job.j_m_in.m_type = EIO;
   worker_wake(worker);
 }
 

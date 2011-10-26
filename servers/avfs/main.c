@@ -144,17 +144,23 @@ PRIVATE void handle_work(void *(*func)(void *arg))
 
   if ((vmp = find_vmnt(who_e)) != NULL) {
 	/* A back call or dev result from an FS endpoint */
+
+	/* When an FS point has to make a callback in order to mount, force
+	 * its device to a "none device" so block reads/writes will be handled
+	 * by ROOT_FS_E.
+	 */
+	if (vmp->m_flags & VMNT_MOUNTING)
+		vmp->m_flags |= VMNT_FORCEROOTBSF;
+
 	if (worker_available() == 0) {
 		/* No worker threads available to handle call */
 		if (deadlock_resolving) {
 			/* Already trying to resolve a deadlock, can't
 			 * handle more, sorry */
-
 			reply(who_e, EAGAIN);
 			return;
 		}
 		deadlock_resolving = 1;
-		vmp->m_flags |= VMNT_BACKCALL;
 		dl_worker_start(func);
 		return;
 	}
@@ -198,10 +204,6 @@ PRIVATE void *do_async_dev_result(void *arg)
 	select_reply2(m_in.m_source, m_in.DEV_MINOR, m_in.DEV_SEL_OPS);
 
   if (deadlock_resolving) {
-	struct vmnt *vmp;
-	if ((vmp = find_vmnt(who_e)) != NULL)
-		vmp->m_flags &= ~VMNT_BACKCALL;
-
 	if (fp != NULL && fp->fp_wtid == dl_worker.w_tid)
 		deadlock_resolving = 0;
   }
@@ -380,7 +382,6 @@ PRIVATE void *do_work(void *arg)
   int error, i;
   struct job my_job;
   struct fproc *rfp;
-  struct vmnt *vmp;
 
   my_job = *((struct job *) arg);
   fp = my_job.j_fp;
@@ -425,9 +426,6 @@ PRIVATE void *do_work(void *arg)
   /* Copy the results back to the user and send reply. */
   if (error != SUSPEND) {
 	if (deadlock_resolving) {
-		if ((vmp = find_vmnt(who_e)) != NULL)
-			vmp->m_flags &= ~VMNT_BACKCALL;
-
 		if (fp->fp_wtid == dl_worker.w_tid)
 			deadlock_resolving = 0;
 	}

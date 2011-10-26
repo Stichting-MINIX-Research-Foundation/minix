@@ -241,11 +241,9 @@ char mount_label[LABEL_MAX] )
 /* XXX: move this upwards before lookup after proper locking. */
   /* We'll need a vnode for the root inode */
   if ((root_node = get_free_vnode()) == NULL || dev == 266) {
-	if (vp != NULL) {
-		unlock_vnode(vp);
-		put_vnode(vp);
-	}
+	unlock_vnode(vp);
 	unlock_vmnt(new_vmp);
+	put_vnode(vp);
 	return(err_code);
   }
 
@@ -258,18 +256,21 @@ char mount_label[LABEL_MAX] )
   else new_vmp->m_flags &= ~VMNT_READONLY;
 
   /* Tell FS which device to mount */
+  new_vmp->m_flags |= VMNT_MOUNTING;
   r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
+  new_vmp->m_flags &= ~VMNT_MOUNTING;
+
   if (r != OK) {
-	if (vp != NULL) {
-		unlock_vnode(vp);
-		put_vnode(vp);
-	}
 	new_vmp->m_fs_e = NONE;
 	new_vmp->m_dev = NO_DEV;
 	unlock_vnode(root_node);
+	unlock_vnode(vp);
 	unlock_vmnt(new_vmp);
+	put_vnode(vp);
 	return(r);
   }
+
+  lock_bsf();
 
   /* Fill in root node's fields */
   root_node->v_fs_e = res.fs_e;
@@ -290,8 +291,6 @@ char mount_label[LABEL_MAX] )
   else
 	new_vmp->m_comm.c_max_reqs = con_reqs;
   new_vmp->m_comm.c_cur_reqs = 0;
-
-  lock_bsf();
 
   if (mount_root) {
 	/* Superblock and root node already read.
@@ -340,6 +339,7 @@ char mount_label[LABEL_MAX] )
 	put_vnode(vp);
 	put_vnode(root_node);
 	new_vmp->m_dev = NO_DEV;
+	new_vmp->m_flags = 0;
 	unlock_bsf();
 	return(r);
   }
@@ -353,14 +353,15 @@ char mount_label[LABEL_MAX] )
   if (is_nonedev(dev)) alloc_nonedev(dev);
 
   /* The new FS will handle block I/O requests for its device now. */
-  update_bspec(dev, fs_e, 0 /* Don't send new driver endpoint */);
+  if (!(new_vmp->m_flags & VMNT_FORCEROOTBSF))
+	update_bspec(dev, fs_e, 0 /* Don't send new driver endpoint */);
 
   unlock_vnode(vp);
   unlock_vnode(root_node);
   unlock_vmnt(new_vmp);
   unlock_bsf();
 
-  return(r);
+  return(OK);
 }
 
 
