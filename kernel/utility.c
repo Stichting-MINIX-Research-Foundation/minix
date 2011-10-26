@@ -33,8 +33,11 @@ PUBLIC void panic(const char *fmt, ...)
 	printf("\n");
   }
 
-  printf("kernel: ");
+  printf("kernel on CPU %d: ", cpuid);
   util_stacktrace();
+
+  printf("current process : ");
+  proc_stacktrace(get_cpulocal_var(proc_ptr));
 
   /* Abort MINIX. */
   minix_shutdown(NULL);

@@ -73,6 +73,9 @@ _PROTOTYPE(void smp_schedule_migrate_proc,
 _PROTOTYPE(void arch_send_smp_schedule_ipi, (unsigned cpu));
 _PROTOTYPE(void arch_smp_halt_cpu, (void));
 
+/* deal with x-cpu scheduling event */
+_PROTOTYPE(void smp_sched_handler, (void));
+
 #endif /* __ASSEMBLY__ */
 
 #endif /* CONFIG_SMP */

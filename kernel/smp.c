@@ -66,10 +66,12 @@ PUBLIC void smp_schedule(unsigned cpu)
 	 * check if the cpu is processing some other ipi already. If yes, no
 	 * need to wake it up
 	 */
-	if ((volatile unsigned)sched_ipi_data[cpu].flags != 0)
+	if (sched_ipi_data[cpu].flags != 0)
 		return;
 	arch_send_smp_schedule_ipi(cpu);
 }
+
+_PROTOTYPE(void smp_sched_handler, (void));
 
 /*
  * tell another cpu about a task to do and return only after the cpu acks that
@@ -79,24 +81,39 @@ PUBLIC void smp_schedule(unsigned cpu)
 PRIVATE void smp_schedule_sync(struct proc * p, unsigned task)
 {
 	unsigned cpu = p->p_cpu;
+	unsigned mycpu = cpuid;
 
-	/* 
+	assert(cpu != mycpu);
+	/*
 	 * if some other cpu made a request to the same cpu, wait until it is
 	 * done before proceeding
 	 */
-	if ((volatile unsigned)sched_ipi_data[cpu].flags != 0) {
+	if (sched_ipi_data[cpu].flags != 0) {
 		BKL_UNLOCK();
-		while ((volatile unsigned)sched_ipi_data[cpu].flags != 0);
+		while (sched_ipi_data[cpu].flags != 0) {
+			if (sched_ipi_data[mycpu].flags) {
+				BKL_LOCK();
+				smp_sched_handler();
+				BKL_UNLOCK();
+			}
+		}
 		BKL_LOCK();
 	}
 
-	sched_ipi_data[cpu].flags |= task;
 	sched_ipi_data[cpu].data = (u32_t) p;
+	sched_ipi_data[cpu].flags |= task;
+	__insn_barrier();
 	arch_send_smp_schedule_ipi(cpu);
 
 	/* wait until the destination cpu finishes its job */
 	BKL_UNLOCK();
-	while ((volatile unsigned)sched_ipi_data[cpu].flags != 0);
+	while (sched_ipi_data[cpu].flags != 0) {
+		if (sched_ipi_data[mycpu].flags) {
+			BKL_LOCK();
+			smp_sched_handler();
+			BKL_UNLOCK();
+		}
+	}
 	BKL_LOCK();
 }
 
@@ -142,20 +159,16 @@ PUBLIC void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu)
 	RTS_UNSET(p, RTS_PROC_STOP);
 }
 
-PUBLIC void smp_ipi_sched_handler(void)
+PUBLIC void smp_sched_handler(void)
 {
-	struct proc * curr;
-	unsigned mycpu = cpuid;
 	unsigned flgs;
-	
-	ipi_ack();
-	
-	curr = get_cpu_var(mycpu, proc_ptr);
-	flgs = sched_ipi_data[mycpu].flags;
+	unsigned cpu = cpuid;
+
+	flgs = sched_ipi_data[cpu].flags;
 
 	if (flgs) {
 		struct proc * p;
-		p = (struct proc *)sched_ipi_data[mycpu].data;
+		p = (struct proc *)sched_ipi_data[cpu].data;
 
 		if (flgs & SCHED_IPI_STOP_PROC) {
 			RTS_SET(p, RTS_PROC_STOP);
@@ -174,9 +187,25 @@ PUBLIC void smp_ipi_sched_handler(void)
 			RTS_SET(p, RTS_VMINHIBIT);
 		}
 	}
-	else if (curr->p_endpoint != IDLE) {
+
+	__insn_barrier();
+	sched_ipi_data[cpu].flags = 0;
+}
+
+/*
+ * This function gets always called only after smp_sched_handler() has been
+ * already called. It only serves the purpose of acknowledging the IPI and
+ * preempting the current process if the CPU was not idle.
+ */
+PUBLIC void smp_ipi_sched_handler(void)
+{
+	struct proc * curr;
+
+	ipi_ack();
+
+	curr = get_cpulocal_var(proc_ptr);
+	if (curr->p_endpoint != IDLE) {
 		RTS_SET(curr, RTS_PREEMPTED);
 	}
-	sched_ipi_data[cpuid].flags = 0;
 }
 
