@@ -167,8 +167,8 @@ int rdonly,
 char mount_label[LABEL_MAX] )
 {
   int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
-  int i, r = OK, found, isroot, mount_root, con_reqs;
-  struct fproc *tfp;
+  int i, r = OK, found, isroot, mount_root, con_reqs, slot;
+  struct fproc *tfp, *rfp;
   struct dmap *dp;
   struct vnode *root_node, *vp = NULL;
   struct vmnt *new_vmp, *parent_vmp;
@@ -248,6 +248,12 @@ char mount_label[LABEL_MAX] )
   }
 
   lock_vnode(root_node, VNODE_OPCL);
+
+  /* Record process as a system process */
+  if (isokendpt(fs_e, &slot) != OK)
+	return(EINVAL);
+  rfp = &fproc[slot];
+  rfp->fp_flags |= FP_SYS_PROC;	/* Process is an FS */
 
   /* Store some essential vmnt data first */
   new_vmp->m_fs_e = fs_e;

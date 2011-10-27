@@ -77,7 +77,7 @@ PUBLIC int main(void)
   /* SEF local startup. */
   sef_local_startup();
 
-  printf("Started AVFS\n");
+  printf("Started AVFS: %d worker thread(s)\n", NR_WTHREADS);
   verbose = 0;
 
   /* This is the main loop that gets work, processes it, and sends replies. */
@@ -140,12 +140,16 @@ PRIVATE void handle_work(void *(*func)(void *arg))
 {
 /* Handle asynchronous device replies and new system calls. If the originating
  * endpoint is an FS endpoint, take extra care not to get in deadlock. */
- struct vmnt *vmp;
+  struct vmnt *vmp = NULL;
 
   if ((vmp = find_vmnt(who_e)) != NULL) {
-	/* A back call or dev result from an FS endpoint */
+	/* A call back or dev result from an FS endpoint */
 
-	/* When an FS point has to make a callback in order to mount, force
+	/* Set call back flag. We assume that an FS does only one call back
+	 * at a time */
+	vmp->m_flags |= VMNT_CALLBACK;
+
+	/* When an FS point has to make a call back in order to mount, force
 	 * its device to a "none device" so block reads/writes will be handled
 	 * by ROOT_FS_E.
 	 */
@@ -157,6 +161,7 @@ PRIVATE void handle_work(void *(*func)(void *arg))
 		if (deadlock_resolving) {
 			/* Already trying to resolve a deadlock, can't
 			 * handle more, sorry */
+			vmp->m_flags &= ~VMNT_CALLBACK;
 			reply(who_e, EAGAIN);
 			return;
 		}
@@ -206,6 +211,13 @@ PRIVATE void *do_async_dev_result(void *arg)
   if (deadlock_resolving) {
 	if (fp != NULL && fp->fp_wtid == dl_worker.w_tid)
 		deadlock_resolving = 0;
+  }
+
+  if (fp != NULL && (fp->fp_flags & FP_SYS_PROC)) {
+	struct vmnt *vmp;
+
+	if ((vmp = find_vmnt(fp->fp_endpoint)) != NULL)
+		vmp->m_flags &= ~VMNT_CALLBACK;
   }
 
   thread_cleanup(NULL);
@@ -425,6 +437,14 @@ PRIVATE void *do_work(void *arg)
 
   /* Copy the results back to the user and send reply. */
   if (error != SUSPEND) {
+
+	if ((fp->fp_flags & FP_SYS_PROC)) {
+		struct vmnt *vmp;
+
+		if ((vmp = find_vmnt(fp->fp_endpoint)) != NULL)
+			vmp->m_flags &= ~VMNT_CALLBACK;
+	}
+
 	if (deadlock_resolving) {
 		if (fp->fp_wtid == dl_worker.w_tid)
 			deadlock_resolving = 0;

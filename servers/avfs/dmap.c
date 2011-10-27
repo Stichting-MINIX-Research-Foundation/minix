@@ -96,7 +96,7 @@ int flags;			/* device flags */
   dp = &dmap[major];
 
   /* Check if we're supposed to unmap it. */
- if(proc_nr_e == NONE) {
+ if (proc_nr_e == NONE) {
 	dp->dmap_opcl = no_dev;
 	dp->dmap_io = no_dev_io;
 	dp->dmap_driver = NONE;
@@ -106,8 +106,13 @@ int flags;			/* device flags */
 
   /* Check process number of new driver if it was alive before mapping */
   if (! (flags & DRV_FORCED)) {
+	struct fproc *rfp;
+
 	if (isokendpt(proc_nr_e, &slot) != OK)
 		return(EINVAL);
+
+	rfp = &fproc[slot];
+	rfp->fp_flags |= FP_SYS_PROC;	/* Process is a driver */
   }
 
   if (label != NULL) {

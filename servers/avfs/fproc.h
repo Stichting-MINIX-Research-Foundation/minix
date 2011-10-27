@@ -58,11 +58,12 @@ EXTERN struct fproc {
 #define FP_SUSP_REOPEN	01	/* Process is suspended until the reopens are
 				 * completed (after the restart of a driver).
 				 */
-#define FP_REVIVED	02	/* Indicates process is being revived */
-#define FP_SESLDR	04	/* Set if process is session leader */
-#define FP_PENDING	010	/* Set if process has pending work */
-#define FP_EXITING	020	/* Set if process is exiting */
-#define FP_PM_PENDING	040	/* Set if process has pending PM request */
+#define FP_REVIVED	 0002	/* Indicates process is being revived */
+#define FP_SESLDR	 0004	/* Set if process is session leader */
+#define FP_PENDING	 0010	/* Set if process has pending work */
+#define FP_EXITING	 0020	/* Set if process is exiting */
+#define FP_PM_PENDING	 0040	/* Set if process has pending PM request */
+#define FP_SYS_PROC	 0100	/* Set if process is a driver or FS */
 
 /* Field values. */
 #define NOT_REVIVING       0xC0FFEEE	/* process is not being revived */

@@ -62,7 +62,7 @@ PUBLIC void fs_sendmore(struct vmnt *vmp)
 	return;
   if (vmp->m_comm.c_cur_reqs >= vmp->m_comm.c_max_reqs)/*No room to send more*/
 	return;
-  if (vmp->m_flags & VMNT_BACKCALL)	/* Hold off for now */
+  if (vmp->m_flags & VMNT_CALLBACK)	/* Hold off for now */
 	return;
 
   vmp->m_comm.c_req_queue = worker->w_next; /* Remove head */
@@ -88,7 +88,7 @@ PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqmp)
 	fp->fp_sendrec = reqmp;	/* Where to store request and reply */
 
 	/* Find out whether we can send right away or have to enqueue */
-	if (	!(vmp->m_flags & VMNT_BACKCALL) &&
+	if (	!(vmp->m_flags & VMNT_CALLBACK) &&
 		vmp->m_comm.c_cur_reqs < vmp->m_comm.c_max_reqs) {
 		/* There's still room to send more and no proc is queued */
 		r = sendmsg(vmp, fp);
