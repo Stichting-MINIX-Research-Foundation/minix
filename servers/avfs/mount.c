@@ -381,6 +381,7 @@ PUBLIC void mount_pfs(void)
 
   dev_t dev;
   struct vmnt *vmp;
+  struct fproc *rfp;
 
   if ((dev = find_free_nonedev()) == NO_DEV)
 	panic("VFS: no nonedev to initialize PFS");
@@ -393,6 +394,9 @@ PUBLIC void mount_pfs(void)
   vmp->m_dev = dev;
   vmp->m_fs_e = PFS_PROC_NR;
   strcpy(vmp->m_label, "pfs");
+
+  rfp = &fproc[_ENDPOINT_P(PFS_PROC_NR)];
+  rfp->fp_flags |= FP_SYS_PROC;	/* PFS is a driver and an FS */
 }
 
 /*===========================================================================*
