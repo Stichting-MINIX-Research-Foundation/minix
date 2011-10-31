@@ -702,7 +702,7 @@ endpoint_t src_dst_e;				/* src or dst process */
 /*===========================================================================*
  *				has_pending				     * 
  *===========================================================================*/
-PUBLIC int has_pending(sys_map_t *map, int src_p)
+PRIVATE int has_pending(sys_map_t *map, int src_p, int asynm)
 {
 /* Check to see if there is a pending message from the desired source
  * available.
@@ -732,6 +732,33 @@ PUBLIC int has_pending(sys_map_t *map, int src_p)
   }
 
   return(id);
+}
+
+/*===========================================================================*
+ *				has_pending_notify			     *
+ *===========================================================================*/
+PUBLIC int has_pending_notify(struct proc * caller, int src_p)
+{
+	sys_map_t * map = &priv(caller)->s_notify_pending;
+	return has_pending(map, src_p, 0);
+}
+
+/*===========================================================================*
+ *				has_pending_asend			     *
+ *===========================================================================*/
+PUBLIC int has_pending_asend(struct proc * caller, int src_p)
+{
+	sys_map_t * map = &priv(caller)->s_asyn_pending;
+	return has_pending(map, src_p, 1);
+}
+
+/*===========================================================================*
+ *				unset_notify_pending			     *
+ *===========================================================================*/
+PUBLIC void unset_notify_pending(struct proc * caller, int src_p)
+{
+	sys_map_t * map = &priv(caller)->s_notify_pending;
+	unset_sys_bit(*map, src_p);
 }
 
 /*===========================================================================*
@@ -844,7 +871,6 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
  * is available block the caller.
  */
   register struct proc **xpp;
-  sys_map_t *map;
   int r, src_id, src_proc_nr, src_p;
 
   assert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
@@ -871,10 +897,9 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 
     /* Check if there are pending notifications, except for SENDREC. */
     if (! (caller_ptr->p_misc_flags & MF_REPLY_PEND)) {
-        map = &priv(caller_ptr)->s_notify_pending;
 
 	/* Check for pending notifications */
-        if ((src_id = has_pending(map, src_p)) != NULL_PRIV_ID) {
+        if ((src_id = has_pending_notify(caller_ptr, src_p)) != NULL_PRIV_ID) {
             endpoint_t hisep;
 
             src_proc_nr = id_to_nr(src_id);		/* get source proc */
@@ -883,7 +908,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
 		printf("mini_receive: sending notify from NONE\n");
 	    }
 #endif
-            unset_sys_bit(*map, src_id);		/* no longer pending */
+            unset_notify_pending(caller_ptr, src_id);	/* no longer pending */
 
             /* Found a suitable source, deliver the notification message. */
 	    hisep = proc_addr(src_proc_nr)->p_endpoint;
@@ -902,9 +927,7 @@ PRIVATE int mini_receive(struct proc * caller_ptr,
     }
 
     /* Check for pending asynchronous messages */
-    map = &priv(caller_ptr)->s_asyn_pending;
-
-    if (has_pending(map, src_p) != NULL_PRIV_ID) {
+    if (has_pending_asend(caller_ptr, src_p) != NULL_PRIV_ID) {
         if (src_p != ANY)
         	r = try_one(proc_addr(src_p), caller_ptr);
         else

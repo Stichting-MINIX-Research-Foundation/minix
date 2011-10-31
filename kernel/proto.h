@@ -47,8 +47,10 @@ _PROTOTYPE( void bsp_finish_booting, (void)				);
 
 _PROTOTYPE( int do_ipc, (reg_t r1, reg_t r2, reg_t r3)			);
 _PROTOTYPE( void proc_init, (void)					);
-_PROTOTYPE( int has_pending, (sys_map_t *map, int src_p)		);
 _PROTOTYPE( int cancel_async, (struct proc *src, struct proc *dst)	);
+_PROTOTYPE( int has_pending_notify, (struct proc * caller, int src_p)	);
+_PROTOTYPE( int has_pending_asend, (struct proc * caller, int src_p)	);
+_PROTOTYPE( void unset_notify_pending, (struct proc * caller, int src_p));
 _PROTOTYPE( int mini_notify, (const struct proc *src, endpoint_t dst)	);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (struct proc *rp)				);
