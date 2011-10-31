@@ -1079,7 +1079,7 @@ field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
  *===========================================================================*/
 PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 {
-  int r = OK, dst_p, done, do_notify;
+  int r, dst_p, done, do_notify;
   unsigned int i;
   unsigned flags;
   endpoint_t dst;
@@ -1129,6 +1129,7 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 	if (!(flags & AMF_VALID)) return(EINVAL); /* Must contain message */
 	if (flags & AMF_DONE) continue;	/* Already done processing */
 
+	r = OK;
 	if (!isokendpt(tabent.dst, &dst_p)) 
 		r = EDEADSRCDST; /* Bad destination, report the error */
 	else if (iskerneln(dst_p)) 
