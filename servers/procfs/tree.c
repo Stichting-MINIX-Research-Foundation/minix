@@ -157,6 +157,11 @@ PRIVATE void construct_pid_dirs(void)
 	/* Regenerate the set of PID directories in the root directory of the
 	 * file system. Add new directories and delete old directories as
 	 * appropriate; leave unchanged those that should remain the same.
+	 *
+	 * We have to make two passes. Otherwise, we would trigger a vtreefs
+	 * assert when we add an entry for a PID before deleting the previous
+	 * entry for that PID. While rare, such rapid PID reuse does occur in
+	 * practice.
 	 */
 	struct inode *root, *node;
 	struct inode_stat stat;
@@ -166,21 +171,23 @@ PRIVATE void construct_pid_dirs(void)
 
 	root = get_root_inode();
 
+	/* First pass: delete old entries. */
 	for (i = 0; i < NR_PROCS + NR_TASKS; i++) {
 		/* Do we already have an inode associated with this slot? */
 		node = get_inode_by_index(root, i);
+		if (node == NULL)
+			continue;
 
 		/* If the process slot is not in use, delete the associated
-		 * inode if there was one, and skip this slot entirely.
+		 * inode.
 		 */
 		if (!slot_in_use(i)) {
-			if (node != NULL)
-				delete_inode(node);
+			delete_inode(node);
 
 			continue;
 		}
 
-		/* Get the process ID. */
+		/* Otherwise, get the process ID. */
 		if (i < NR_TASKS)
 			pid = (pid_t) (i - NR_TASKS);
 		else
@@ -193,13 +200,28 @@ PRIVATE void construct_pid_dirs(void)
 		 * process could keep open a file or directory across the owner
 		 * change, it might be able to access information it shouldn't.
 		 */
-		if (node != NULL) {
-			if (pid == (pid_t) get_inode_cbdata(node) &&
-					check_owner(node, i))
-				continue;
-
+		if (pid != (pid_t) get_inode_cbdata(node) ||
+				!check_owner(node, i))
 			delete_inode(node);
-		}
+	}
+
+	/* Second pass: add new entries. */
+	for (i = 0; i < NR_PROCS + NR_TASKS; i++) {
+		/* If the process slot is not in use, skip this slot. */
+		if (!slot_in_use(i))
+			continue;
+
+		/* If we have an inode associated with this slot, we have
+		 * already checked it to be up-to-date above.
+		 */
+		if (get_inode_by_index(root, i) != NULL)
+			continue;
+
+		/* Get the process ID. */
+		if (i < NR_TASKS)
+			pid = (pid_t) (i - NR_TASKS);
+		else
+			pid = mproc[i - NR_TASKS].mp_pid;
 
 		/* Add the entry for the process slot. */
 		sprintf(name, "%d", pid);
