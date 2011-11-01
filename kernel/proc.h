@@ -233,7 +233,6 @@ struct proc {
 				   We need to resume the kernel call execution
 				   now
 				 */
-#define MF_ASYNMSG	0x010	/* Asynchrous message pending */
 #define MF_FULLVM	0x020
 #define MF_DELIVERMSG	0x040	/* Copy message for him before running */
 #define MF_SIG_DELAY	0x080	/* Send signal when no longer sending */

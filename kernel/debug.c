@@ -175,7 +175,6 @@ miscflagstr(const u32_t flags)
 	str[0] = '\0';
 
 	FLAG(MF_REPLY_PEND);
-	FLAG(MF_ASYNMSG);
 	FLAG(MF_FULLVM);
 	FLAG(MF_DELIVERMSG);
 	FLAG(MF_KCALL_RESUME);

@@ -137,7 +137,6 @@ PRIVATE void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
   rp->p_nr = from_rp->p_nr;
   rp->p_priv = from_rp->p_priv;
   priv(rp)->s_proc_nr = from_rp->p_nr;
-  rp->p_misc_flags |= (from_rp->p_misc_flags & MF_ASYNMSG);
   rp->p_caller_q = from_rp->p_caller_q;
 }
 
