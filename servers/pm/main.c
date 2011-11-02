@@ -46,7 +46,9 @@ FORWARD _PROTOTYPE( void handle_vfs_reply, (void)			);
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
+#if !defined(__ELF__)
 extern int unmap_ok;
+#endif
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -307,8 +309,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   * it on startup. It's best that it's there as crtso.o knows exactly
   * what the ranges are of the filler data.
   */
-  unmap_ok = 1;
 #if !defined(__ELF__)
+  unmap_ok = 1;
   _minix_unmapzero();
 #endif
 
