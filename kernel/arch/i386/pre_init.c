@@ -33,9 +33,6 @@
 /* String length used for mb_itoa */
 #define ITOA_BUFFER_SIZE 20
 
-/* Info on boot modules */
-phys_bytes mulitboot_modules_addr;
-
 #define mb_load_phymem(buf, phy, len) \
 		phys_copy((phy), (u32_t)(buf), (len))
 
