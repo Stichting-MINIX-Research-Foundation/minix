@@ -270,6 +270,7 @@ enum {
 #define FLAG_BARRIER		0x00000040	/* no access until unset */
 #define FLAG_HAS_WCACHE		0x00000080	/* is a write cache present? */
 #define FLAG_HAS_FLUSH		0x00000100	/* is FLUSH CACHE supported? */
+#define FLAG_SUSPENDED		0x00000200	/* is the thread suspended? */
 
 /* Mapping between devices and ports. */
 #define NO_PORT		-1	/* this device maps to no port */

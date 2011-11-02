@@ -1,17 +1,12 @@
-/* This file contains device independent device driver interface.
- *
- * Changes:
- *   Jul 25, 2005   added SYS_SIG type for signals  (Jorrit N. Herder)
- *   Sep 15, 2004   added SYN_ALARM type for timeouts  (Jorrit N. Herder)
- *   Jul 23, 2004   removed kernel dependencies  (Jorrit N. Herder)
- *   Apr 02, 1992   constructed from AT wini and floppy driver  (Kees J. Bot)
- *
+/* This file contains the common part of the device driver interface.
+ * In addition, callers get to choose between the singlethreaded API
+ * (in driver_st.c) and the multithreaded API (in driver_mt.c).
  *
  * The drivers support the following operations (using message format m2):
  *
  *    m_type         DEVICE  USER_ENDPT  COUNT   POSITION  HIGHPOS   IO_GRANT
  * ----------------------------------------------------------------------------
- * | DEV_OPEN      | device | proc nr |         |        |        |           |
+ * | DEV_OPEN      | device | proc nr |  mode   |        |        |           |
  * |---------------+--------+---------+---------+--------+--------+-----------|
  * | DEV_CLOSE     | device | proc nr |         |        |        |           |
  * |---------------+--------+---------+---------+--------+--------+-----------|
@@ -25,83 +20,65 @@
  * |---------------+--------+---------+---------+--------+--------+-----------|
  * | DEV_IOCTL_S   | device | proc nr | request |        |        | buf grant |
  * |---------------+--------+---------+---------+--------+--------+-----------|
- * | CANCEL        | device | proc nr |   r/w   |        |        |           |
+ * | CANCEL        | device | proc nr |   r/w   |        |        |   grant   |
+ * |---------------+--------+---------+---------+--------+--------+-----------|
+ * | DEV_SELECT    | device |   ops   |         |        |        |           |
  * ----------------------------------------------------------------------------
  *
- * The file contains the following entry points:
- *
- *   driver_announce:	called by a device driver to announce it is up
- *   driver_receive:	receive() interface for drivers
- *   driver_receive_mq:	receive() interface for drivers with message queueing
- *   driver_task:	called by the device dependent task entry
- *   driver_init_buffer: initialize a DMA buffer
- *   driver_mq_queue:	queue an incoming message for later processing
+ * Changes:
+ *   Aug 27, 2011   split common functions into driver_common.c (A. Welzel)
+ *   Jul 25, 2005   added SYS_SIG type for signals  (Jorrit N. Herder)
+ *   Sep 15, 2004   added SYN_ALARM type for timeouts  (Jorrit N. Herder)
+ *   Jul 23, 2004   removed kernel dependencies  (Jorrit N. Herder)
+ *   Apr 02, 1992   constructed from AT wini and floppy driver  (Kees J. Bot)
  */
 
 #include <minix/drivers.h>
 #include <sys/ioc_disk.h>
-#include <minix/mq.h>
-#include <minix/endpoint.h>
 #include <minix/driver.h>
 #include <minix/ds.h>
 
-/* Claim space for variables. */
-u8_t *tmp_buf = NULL;		/* the DMA buffer eventually */
-phys_bytes tmp_phys;		/* phys address of DMA buffer */
+#include "driver.h"
+#include "mq.h"
 
-FORWARD _PROTOTYPE( void clear_open_devs, (void) );
-FORWARD _PROTOTYPE( int is_open_dev, (int device) );
-FORWARD _PROTOTYPE( void set_open_dev, (int device) );
-
-FORWARD _PROTOTYPE( void asyn_reply, (message *mess, int r) );
-FORWARD _PROTOTYPE( int driver_reply, (endpoint_t caller_e, int caller_status,
-	message *m_ptr) );
-FORWARD _PROTOTYPE( int driver_spurious_reply, (endpoint_t caller_e,
-	int caller_status, message *m_ptr) );
-FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp) );
-FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp) );
-
-PRIVATE endpoint_t device_caller;
-PUBLIC endpoint_t device_endpt;		/* used externally by log driver */
-PRIVATE mq_t *queue_head = NULL;
+/* Management data for opened devices. */
 PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
 PRIVATE int next_open_devs_slot = 0;
-PRIVATE int driver_running;
 
 /*===========================================================================*
- *			     clear_open_devs				     *
+ *				clear_open_devs				     *
  *===========================================================================*/
-PRIVATE void clear_open_devs()
+PRIVATE void clear_open_devs(void)
 {
+/* Reset the set of previously opened minor devices. */
   next_open_devs_slot = 0;
 }
 
 /*===========================================================================*
- *			       is_open_dev				     *
+ *				is_open_dev				     *
  *===========================================================================*/
 PRIVATE int is_open_dev(int device)
 {
-  int i, open_dev_found;
+/* Check whether the given minor device has previously been opened. */
+  int i;
 
-  open_dev_found = FALSE;
-  for(i=0;i<next_open_devs_slot;i++) {
-	if(open_devs[i] == device) {
-		open_dev_found = TRUE;
-		break;
-	}
-  }
+  for (i = 0; i < next_open_devs_slot; i++)
+	if (open_devs[i] == device)
+		return TRUE;
 
-  return open_dev_found;
+  return FALSE;
 }
 
 /*===========================================================================*
- *			       set_open_dev				     *
+ *				set_open_dev				     *
  *===========================================================================*/
 PRIVATE void set_open_dev(int device)
 {
-  if(next_open_devs_slot >= MAX_NR_OPEN_DEVICES) {
-      panic("out of slots for open devices");
-  }
+/* Mark the given minor device as having been opened. */
+
+  if (next_open_devs_slot >= MAX_NR_OPEN_DEVICES)
+	panic("out of slots for open devices");
+
   open_devs[next_open_devs_slot] = device;
   next_open_devs_slot++;
 }
@@ -109,24 +86,28 @@ PRIVATE void set_open_dev(int device)
 /*===========================================================================*
  *				asyn_reply				     *
  *===========================================================================*/
-PRIVATE void asyn_reply(mess, r)
-message *mess;
-int r;
+PRIVATE void asyn_reply(message *mess, int r)
 {
-/* Send a reply using the new asynchronous character device protocol.
- */
+/* Send a reply using the asynchronous character device protocol. */
   message reply_mess;
+
+  /* Do not reply with ERESTART in this protocol. The only possible caller,
+   * VFS, will find out through other means when we have restarted, and is not
+   * (fully) ready to deal with ERESTART errors.
+   */
+  if (r == ERESTART)
+	return;
 
   switch (mess->m_type) {
   case DEV_OPEN:
 	reply_mess.m_type = DEV_REVIVE;
-	reply_mess.REP_ENDPT = device_endpt;
+	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	reply_mess.REP_STATUS = r;
 	break;
 
   case DEV_CLOSE:
 	reply_mess.m_type = DEV_CLOSE_REPL;
-	reply_mess.REP_ENDPT = device_endpt;
+	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	reply_mess.REP_STATUS = r;
 	break;
 
@@ -135,10 +116,10 @@ int r;
   case DEV_IOCTL_S:
 	if (r == SUSPEND)
 		printf("driver_task: reviving %d (%d) with SUSPEND\n",
-			device_caller, device_endpt);
+			mess->m_source, mess->USER_ENDPT);
 
 	reply_mess.m_type = DEV_REVIVE;
-	reply_mess.REP_ENDPT = device_endpt;
+	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	reply_mess.REP_IO_GRANT = (cp_grant_id_t) mess->IO_GRANT;
 	reply_mess.REP_STATUS = r;
 	break;
@@ -155,70 +136,76 @@ int r;
 
   default:
 	reply_mess.m_type = TASK_REPLY;
-	reply_mess.REP_ENDPT = device_endpt;
+	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	/* Status is # of bytes transferred or error code. */
 	reply_mess.REP_STATUS = r;
 	break;
   }
 
-  r= asynsend(device_caller, &reply_mess);
+  r = asynsend(mess->m_source, &reply_mess);
+
   if (r != OK)
-  {
-	printf("driver_task: unable to asynsend to %d: %d\n",
-		device_caller, r);
-  }
+	printf("asyn_reply: unable to asynsend reply to %d: %d\n",
+		mess->m_source, r);
 }
 
 /*===========================================================================*
- *			       driver_reply				     *
+ *				standard_reply				     *
  *===========================================================================*/
-PRIVATE int driver_reply(caller_e, caller_status, m_ptr)
-endpoint_t caller_e;
-int caller_status;
-message *m_ptr;
+PRIVATE void standard_reply(message *m_ptr, int ipc_status, int reply)
 {
 /* Reply to a message sent to the driver. */
+  endpoint_t caller_e, user_e;
   int r;
 
-  /* Use sendnb if caller is guaranteed to be blocked, asynsend otherwise. */
-  if(IPC_STATUS_CALL(caller_status) == SENDREC) {
-      r = sendnb(caller_e, m_ptr);
-  }
-  else {
-      r = asynsend(caller_e, m_ptr);
-  }
-
-  return r;
-}
-
-/*===========================================================================*
- *			    driver_spurious_reply			     *
- *===========================================================================*/
-PRIVATE int driver_spurious_reply(caller_e, caller_status, m_ptr)
-endpoint_t caller_e;
-int caller_status;
-message *m_ptr;
-{
-/* Reply to a spurious message pretending to be dead. */
-  int r;
+  caller_e = m_ptr->m_source;
+  user_e = m_ptr->USER_ENDPT;
 
   m_ptr->m_type = TASK_REPLY;
-  m_ptr->REP_ENDPT = m_ptr->USER_ENDPT;
-  m_ptr->REP_STATUS = ERESTART;
+  m_ptr->REP_ENDPT = user_e;
+  m_ptr->REP_STATUS = reply;
 
-  r = driver_reply(caller_e, caller_status, m_ptr);
-  if(r != OK) {
-	printf("unable to reply to spurious message from %d\n",
-		caller_e);
-  }
+  /* If we would block sending the message, send it asynchronously. */
+  if (IPC_STATUS_CALL(ipc_status) == SENDREC)
+	r = sendnb(caller_e, m_ptr);
+  else
+	r = asynsend(caller_e, m_ptr);
 
-  return r;
+  if (r != OK)
+	printf("driver_reply: unable to send reply to %d: %d\n", caller_e, r);
 }
 
 /*===========================================================================*
- *			      driver_announce				     *
+ *				driver_reply				     *
  *===========================================================================*/
-PUBLIC void driver_announce()
+PUBLIC void driver_reply(int driver_type, message *m_ptr, int ipc_status,
+  int reply)
+{
+/* Prepare and send a reply message. */
+
+  if (reply == EDONTREPLY)
+	return;
+
+  switch (driver_type) {
+  case DRIVER_STD:
+	standard_reply(m_ptr, ipc_status, reply);
+
+	break;
+
+  case DRIVER_ASYN:
+	asyn_reply(m_ptr, reply);
+
+	break;
+
+  default:
+	panic("unknown driver type: %d", driver_type);
+  }
+}
+
+/*===========================================================================*
+ *				driver_announce				     *
+ *===========================================================================*/
+PUBLIC void driver_announce(void)
 {
 /* Announce we are up after a fresh start or restart. */
   int r;
@@ -250,233 +237,14 @@ PUBLIC void driver_announce()
 
   /* Expect a DEV_OPEN for any device before serving regular driver requests. */
   clear_open_devs();
-}
 
-/*===========================================================================*
- *				driver_receive				     *
- *===========================================================================*/
-PUBLIC int driver_receive(src, m_ptr, status_ptr)
-endpoint_t src;
-message *m_ptr;
-int *status_ptr;
-{
-/* receive() interface for drivers. */
-  int r;
-  int ipc_status;
-
-  while (TRUE) {
-	/* Wait for a request. */
-	r = sef_receive_status(src, m_ptr, &ipc_status);
-	*status_ptr = ipc_status;
-	if (r != OK) {
-		return r;
-	}
-
-	/* See if only DEV_OPEN is to be expected for this device. */
-	if(IS_DEV_MINOR_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
-		if(m_ptr->m_type != DEV_OPEN) {
-			if(!is_ipc_asynch(ipc_status)) {
-				driver_spurious_reply(m_ptr->m_source,
-					ipc_status, m_ptr);
-			}
-			continue;
-		}
-		set_open_dev(m_ptr->DEVICE);
-	}
-
-	break;
-  }
-
-  return OK;
-}
-
-/*===========================================================================*
- *			       driver_receive_mq			     *
- *===========================================================================*/
-PUBLIC int driver_receive_mq(m_ptr, status_ptr)
-message *m_ptr;
-int *status_ptr;
-{
-/* receive() interface for drivers with message queueing. */
-  int ipc_status;
-
-  /* Any queued messages? Oldest are at the head. */
-  while(queue_head) {
-  	mq_t *mq;
-  	mq = queue_head;
-  	memcpy(m_ptr, &mq->mq_mess, sizeof(mq->mq_mess));
-  	ipc_status = mq->mq_mess_status;
-  	*status_ptr = ipc_status;
-  	queue_head = queue_head->mq_next;
-  	mq_free(mq);
-
-  	/* See if only DEV_OPEN is to be expected for this device. */
-  	if(IS_DEV_MINOR_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
-  		if(m_ptr->m_type != DEV_OPEN) {
-  			if(!is_ipc_asynch(ipc_status)) {
-				driver_spurious_reply(m_ptr->m_source,
-					ipc_status, m_ptr);
-  			}
-  			continue;
-  		}
-  		set_open_dev(m_ptr->DEVICE);
-  	}
-
-  	return OK;
-  }
-
-	/* Fall back to standard receive() interface for drivers. */
-	return driver_receive(ANY, m_ptr, status_ptr);
-}
-
-/*===========================================================================*
- *				driver_terminate			     *
- *===========================================================================*/
-PUBLIC void driver_terminate(void)
-{
-/* Break out of the main driver loop after finishing the current request.
- */
-
-  driver_running = FALSE;
-}
-
-/*===========================================================================*
- *				driver_task				     *
- *===========================================================================*/
-PUBLIC void driver_task(dp, type)
-struct driver *dp;	/* Device dependent entry points. */
-int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
-{
-/* Main program of any device driver task. */
-
-  int r, ipc_status;
-  message mess;
-
-  driver_running = TRUE;
-
-  /* Here is the main loop of the disk task.  It waits for a message, carries
-   * it out, and sends a reply.
-   */
-  while (driver_running) {
-	if ((r=driver_receive_mq(&mess, &ipc_status)) != OK) {
-		panic("driver_receive_mq failed: %d", r);
-	}
-	driver_handle_msg(dp, type, &mess, ipc_status);
-  }
-}
-
-/*===========================================================================*
- *                driver_handle_msg                                          *
- *===========================================================================*/
-PUBLIC int driver_handle_msg(dp, type, m_ptr, ipc_status)
-struct driver *dp;	/* Device dependent entry points. */
-int type; /* Driver type (DRIVER_STD or DRIVER_ASYN) */
-message *m_ptr; /* Pointer to message to handle */
-int ipc_status; 
-{
-  int r;
-
-  device_caller = m_ptr->m_source;
-  device_endpt = m_ptr->USER_ENDPT;
-  if (is_ipc_notify(ipc_status)) {
-	switch (_ENDPOINT_P(m_ptr->m_source)) {
-		case HARDWARE:
-			/* leftover interrupt or expired timer. */
-			if(dp->dr_hw_int) {
-				(*dp->dr_hw_int)(dp, m_ptr);
-			}
-			break;
-		case CLOCK:
-			(*dp->dr_alarm)(dp, m_ptr);	
-			break;
-		default:		
-			if(dp->dr_other)
-				r = (*dp->dr_other)(dp, m_ptr);
-			else	
-				r = EINVAL;
-		    goto send_reply;
-	}
-	return 0;
-  }
-
-  switch(m_ptr->m_type) {
-	case DEV_OPEN:		r = (*dp->dr_open)(dp, m_ptr);	break;	
-	case DEV_CLOSE:		r = (*dp->dr_close)(dp, m_ptr);	break;
-	case DEV_IOCTL_S:	r = (*dp->dr_ioctl)(dp, m_ptr); break;
-	case CANCEL:		r = (*dp->dr_cancel)(dp, m_ptr);break;
-	case DEV_SELECT:	r = (*dp->dr_select)(dp, m_ptr);break;
-	case DEV_READ_S:	
-	case DEV_WRITE_S:  	r = do_rdwt(dp, m_ptr); break;
-	case DEV_GATHER_S: 
-	case DEV_SCATTER_S: 	r = do_vrdwt(dp, m_ptr); break;
-	default:		
-		if(dp->dr_other)
-			r = (*dp->dr_other)(dp, m_ptr);
-		else	
-			r = EINVAL;
-		break;
-  }
- 
-send_reply:
-  /* Clean up leftover state. */
-  (*dp->dr_cleanup)();
-  
-  /* Finally, prepare and send the reply message. */
-  if (r == EDONTREPLY)
-	return 0;
-
-  switch (type) {
-	case DRIVER_STD:
-		m_ptr->m_type = TASK_REPLY;
-		m_ptr->REP_ENDPT = device_endpt;
-		/* Status is # of bytes transferred or error code. */
-		m_ptr->REP_STATUS = r;
-
-		r = driver_reply(device_caller, ipc_status, m_ptr);
-		
-		if (r != OK) {
-			printf("driver_task: unable to send reply to %d: %d\n",
-			device_caller, r);
-		}
-		
-		break;
-
-	case DRIVER_ASYN:
-		asyn_reply(m_ptr, r);
-
-		break;
-		
-	default:
-		panic("unknown driver type: %d", type);
-  }
-  return 0;
-}
-
-/*===========================================================================*
- *			     driver_init_buffer				     *
- *===========================================================================*/
-PUBLIC void driver_init_buffer(void)
-{
-/* Select a buffer that can safely be used for DMA transfers.  It may also
- * be used to read partition tables and such.  Its absolute address is
- * 'tmp_phys', the normal address is 'tmp_buf'.
- */
-  vir_bytes size;
-
-  if (tmp_buf == NULL) {
-  	size = MAX(2*DMA_BUF_SIZE, CD_SECTOR_SIZE);
-
-	if(!(tmp_buf = alloc_contig(size, AC_ALIGN4K, &tmp_phys)))
-		panic("can't allocate tmp_buf: %lu", size);
-  }
+  driver_mq_init();
 }
 
 /*===========================================================================*
  *				do_rdwt					     *
  *===========================================================================*/
-PRIVATE int do_rdwt(dp, mp)
-struct driver *dp;		/* device dependent entry points */
-message *mp;			/* pointer to read or write message */
+PRIVATE int do_rdwt(struct driver *dp, message *mp)
 {
 /* Carry out a single read or write request. */
   iovec_t iovec1;
@@ -501,21 +269,19 @@ message *mp;			/* pointer to read or write message */
   r = (*dp->dr_transfer)(mp->m_source, opcode, position, &iovec1, 1);
 
   /* Return the number of bytes transferred or an error code. */
-  return(r == OK ? (mp->COUNT - iovec1.iov_size) : r);
+  return(r == OK ? (int) (mp->COUNT - iovec1.iov_size) : r);
 }
 
-/*==========================================================================*
- *				do_vrdwt				    *
- *==========================================================================*/
-PRIVATE int do_vrdwt(dp, mp)
-struct driver *dp;	/* device dependent entry points */
-message *mp;		/* pointer to read or write message */
+/*===========================================================================*
+ *				do_vrdwt				     *
+ *===========================================================================*/
+PRIVATE int do_vrdwt(struct driver *dp, message *mp)
 {
 /* Carry out an device read or write to/from a vector of user addresses.
  * The "user addresses" are assumed to be safe, i.e. FS transferring to/from
  * its own buffers, so they are not checked.
  */
-  static iovec_t iovec[NR_IOREQS];
+  iovec_t iovec[NR_IOREQS];
   phys_bytes iovec_size;
   unsigned nr_req;
   int r, opcode;
@@ -552,9 +318,84 @@ message *mp;		/* pointer to read or write message */
 }
 
 /*===========================================================================*
+ *				driver_handle_notify			     *
+ *===========================================================================*/
+PUBLIC void driver_handle_notify(struct driver *dp, message *m_ptr)
+{
+/* Take care of the notifications (interrupt and clock messages) by calling the
+ * appropiate callback functions. Never send a reply.
+ */
+
+  /* Call the appropriate function for this notification. */
+  switch (_ENDPOINT_P(m_ptr->m_source)) {
+  case HARDWARE:
+	if (dp->dr_hw_int)
+		dp->dr_hw_int(dp, m_ptr);
+	break;
+
+  case CLOCK:
+	if (dp->dr_alarm)
+		dp->dr_alarm(dp, m_ptr);
+	break;
+
+  default:
+	if (dp->dr_other)
+		(void) dp->dr_other(dp, m_ptr);
+  }
+}
+
+/*===========================================================================*
+ *				driver_handle_request			     *
+ *===========================================================================*/
+PUBLIC int driver_handle_request(struct driver *dp, message *m_ptr)
+{
+/* Call the appropiate driver function, based on the type of request. Return
+ * the result code that is to be sent back to the caller, or EDONTREPLY if no
+ * reply is to be sent.
+ */
+  int r;
+
+  /* We might get spurious requests if the driver has been restarted. Deny any
+   * requests on devices that have not previously been opened, signaling the
+   * caller that something went wrong.
+   */
+  if (IS_DEV_MINOR_RQ(m_ptr->m_type) && !is_open_dev(m_ptr->DEVICE)) {
+	/* Reply ERESTART to spurious requests for unopened devices. */
+	if (m_ptr->m_type != DEV_OPEN)
+		return ERESTART;
+
+	/* Mark the device as opened otherwise. */
+	set_open_dev(m_ptr->DEVICE);
+  }
+
+  /* Call the appropriate function(s) for this request. */
+  switch (m_ptr->m_type) {
+  case DEV_OPEN:	r = (*dp->dr_open)(dp, m_ptr);		break;	
+  case DEV_CLOSE:	r = (*dp->dr_close)(dp, m_ptr);		break;
+  case DEV_IOCTL_S:	r = (*dp->dr_ioctl)(dp, m_ptr);		break;
+  case CANCEL:		r = (*dp->dr_cancel)(dp, m_ptr);	break;
+  case DEV_SELECT:	r = (*dp->dr_select)(dp, m_ptr);	break;
+  case DEV_READ_S:
+  case DEV_WRITE_S:	r = do_rdwt(dp, m_ptr);			break;
+  case DEV_GATHER_S:
+  case DEV_SCATTER_S:	r = do_vrdwt(dp, m_ptr);		break;
+  default:
+	if (dp->dr_other)
+		r = dp->dr_other(dp, m_ptr);
+	else
+		r = EINVAL;
+  }
+
+  /* Let the driver perform any cleanup. */
+  (*dp->dr_cleanup)();
+
+  return r;
+}
+
+/*===========================================================================*
  *				no_name					     *
  *===========================================================================*/
-PUBLIC char *no_name()
+PUBLIC char *no_name(void)
 {
 /* Use this default name if there is no specific name for the device. This was
  * originally done by fetching the name from the task table for this process: 
@@ -566,12 +407,10 @@ PUBLIC char *no_name()
   return name;
 }
 
-/*============================================================================*
- *				do_nop					      *
- *============================================================================*/
-PUBLIC int do_nop(dp, mp)
-struct driver *dp;
-message *mp;
+/*===========================================================================*
+ *				do_nop					     *
+ *===========================================================================*/
+PUBLIC int do_nop(struct driver *UNUSED(dp), message *mp)
 {
 /* Nothing there, or nothing to do. */
 
@@ -584,22 +423,18 @@ message *mp;
   }
 }
 
-/*============================================================================*
- *				nop_ioctl				      *
- *============================================================================*/
-PUBLIC int nop_ioctl(dp, mp)
-struct driver *dp;
-message *mp;
+/*===========================================================================*
+ *				nop_ioctl				     *
+ *===========================================================================*/
+PUBLIC int nop_ioctl(struct driver *UNUSED(dp), message *UNUSED(mp))
 {
   return(ENOTTY);
 }
 
-/*============================================================================*
- *				nop_alarm				      *
- *============================================================================*/
-PUBLIC void nop_alarm(dp, mp)
-struct driver *dp;
-message *mp;
+/*===========================================================================*
+ *				nop_alarm				     *
+ *===========================================================================*/
+PUBLIC void nop_alarm(struct driver *UNUSED(dp), message *UNUSED(mp))
 {
 /* Ignore the leftover alarm. */
 }
@@ -607,7 +442,7 @@ message *mp;
 /*===========================================================================*
  *				nop_prepare				     *
  *===========================================================================*/
-PUBLIC struct device *nop_prepare(int device)
+PUBLIC struct device *nop_prepare(int UNUSED(device))
 {
 /* Nothing to prepare for. */
   return(NULL);
@@ -616,7 +451,7 @@ PUBLIC struct device *nop_prepare(int device)
 /*===========================================================================*
  *				nop_cleanup				     *
  *===========================================================================*/
-PUBLIC void nop_cleanup()
+PUBLIC void nop_cleanup(void)
 {
 /* Nothing to clean up. */
 }
@@ -624,7 +459,7 @@ PUBLIC void nop_cleanup()
 /*===========================================================================*
  *				nop_cancel				     *
  *===========================================================================*/
-PUBLIC int nop_cancel(struct driver *dr, message *m)
+PUBLIC int nop_cancel(struct driver *UNUSED(dr), message *UNUSED(m))
 {
 /* Nothing to do for cancel. */
    return(OK);
@@ -633,34 +468,36 @@ PUBLIC int nop_cancel(struct driver *dr, message *m)
 /*===========================================================================*
  *				nop_select				     *
  *===========================================================================*/
-PUBLIC int nop_select(struct driver *dr, message *m)
+PUBLIC int nop_select(struct driver *UNUSED(dr), message *UNUSED(m))
 {
 /* Nothing to do for select. */
    return(OK);
 }
 
-/*============================================================================*
- *				do_diocntl				      *
- *============================================================================*/
-PUBLIC int do_diocntl(dp, mp)
-struct driver *dp;
-message *mp;			/* pointer to ioctl request */
+/*===========================================================================*
+ *				do_diocntl				     *
+ *===========================================================================*/
+PUBLIC int do_diocntl(struct driver *dp, message *mp)
 {
 /* Carry out a partition setting/getting request. */
   struct device *dv;
   struct partition entry;
+  unsigned int request;
   int s;
 
-  if (mp->REQUEST != DIOCSETP && mp->REQUEST != DIOCGETP) {
-  	if(dp->dr_other) {
-  		return dp->dr_other(dp, mp);
-  	} else return(ENOTTY);
+  request = mp->REQUEST;
+
+  if (request != DIOCSETP && request != DIOCGETP) {
+  	if(dp->dr_other)
+		return dp->dr_other(dp, mp);
+  	else
+		return(ENOTTY);
   }
 
   /* Decode the message parameters. */
   if ((dv = (*dp->dr_prepare)(mp->DEVICE)) == NULL) return(ENXIO);
 
-  if (mp->REQUEST == DIOCSETP) {
+  if (request == DIOCSETP) {
 	/* Copy just this one partition table entry. */
 	s=sys_safecopyfrom(mp->m_source, (vir_bytes) mp->IO_GRANT, 
 		0, (vir_bytes) &entry, sizeof(entry), D);
@@ -680,34 +517,3 @@ message *mp;			/* pointer to ioctl request */
   }
   return(OK);
 }
-
-/*===========================================================================*
- *			      driver_mq_queue				     *
- *===========================================================================*/
-PUBLIC int driver_mq_queue(message *m, int status)
-{
-	mq_t *mq, *mi;
-	static int mq_initialized = FALSE;
-
-	if(!mq_initialized) {
-        	/* Init MQ library. */
-        	mq_init();
-        	mq_initialized = TRUE;
-        }
-
-	if(!(mq = mq_get()))
-        	panic("driver_mq_queue: mq_get failed");
-	memcpy(&mq->mq_mess, m, sizeof(mq->mq_mess));
-	mq->mq_mess_status = status;
-	mq->mq_next = NULL;
-	if(!queue_head) {
-		queue_head = mq;
-	} else {
-		for(mi = queue_head; mi->mq_next; mi = mi->mq_next)
-			;
-		mi->mq_next = mq;
-	}
-
-	return OK;
-}
-

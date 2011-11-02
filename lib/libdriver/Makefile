@@ -3,7 +3,7 @@
 
 LIB=	driver
 
-SRCS=	driver.c drvlib.c mq.c
+SRCS=	driver.c drvlib.c driver_st.c driver_mt.c mq.c event.c
 
 .if ${USE_STATECTL} != "no"
 CPPFLAGS+= -DUSE_STATECTL

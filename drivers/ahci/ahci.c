@@ -8,19 +8,15 @@
  *
  * The driver supports device hot-plug, active device status tracking,
  * nonremovable ATA and removable ATAPI devices, custom logical sector sizes,
- * and sector-unaligned reads.
+ * sector-unaligned reads, and parallel requests to different devices.
  *
  * It does not implement transparent failure recovery, power management, native
- * command queuing, port multipliers, or any form of parallelism with respect
- * to incoming requests.
+ * command queuing, or port multipliers.
  */
 /*
  * An AHCI controller exposes a number of ports (up to 32), each of which may
  * or may not have one device attached (port multipliers are not supported).
- * Each port is maintained independently, although due to the synchronous
- * nature of libdriver, an ongoing request for one port will block subsequent
- * requests for all other ports as well. It should be relatively easy to remove
- * this limitation in the future.
+ * Each port is maintained independently.
  *
  * The following figure depicts the possible transitions between port states.
  * The NO_PORT state is not included; no transitions can be made from or to it.
@@ -80,10 +76,10 @@
  * other state.
  *
  * Normally, the BUSY flag is used to indicate whether a command is in
- * progress. Again, due to the synchronous nature of libdriver, there is no
- * support for native command queuing yet. To allow this limitation to be
- * removed in the future, there is already some support in the code for
- * specifying a command number, even though it will currently always be zero.
+ * progress. There is no support for native command queuing yet. To allow this
+ * limitation to be removed in the future, there is already some support in the
+ * code for specifying a command number, even though it will currently always
+ * be zero.
  */
 /*
  * The maximum byte size of a single transfer (MAX_TRANSFER) is currently set
@@ -108,7 +104,7 @@
  *   vectors completely filled with 64KB-blocks.
  */
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/driver_mt.h>
 #include <minix/drvlib.h>
 #include <minix/u64.h>
 #include <machine/pci.h>
@@ -210,7 +206,9 @@ PRIVATE int ahci_transfer(endpoint_t endpt, int opcode, u64_t position,
 PRIVATE void ahci_geometry(struct partition *part);
 PRIVATE void ahci_alarm(struct driver *UNUSED(dp), message *m);
 PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m);
-PRIVATE int ahci_intr(struct driver *UNUSED(dr), message *m);
+PRIVATE void ahci_intr(struct driver *UNUSED(dp), message *m);
+PRIVATE int ahci_thread(dev_t minor, thread_id_t *id);
+PRIVATE struct port_state *ahci_get_port(dev_t minor);
 
 /* AHCI driver table. */
 PRIVATE struct driver ahci_dtab = {
@@ -226,7 +224,8 @@ PRIVATE struct driver ahci_dtab = {
 	nop_cancel,
 	nop_select,
 	ahci_other,
-	ahci_intr
+	ahci_intr,
+	ahci_thread
 };
 
 /*===========================================================================*
@@ -249,7 +248,7 @@ PRIVATE int atapi_exec(struct port_state *ps, int cmd,
 	memset(&fis, 0, sizeof(fis));
 	fis.cf_cmd = ATA_CMD_PACKET;
 
-	if (size > 0) {	
+	if (size > 0) {
 		fis.cf_feat = ATA_FEAT_PACKET_DMA;
 		if (!write && (ps->flags & FLAG_USE_DMADIR))
 			fis.cf_feat |= ATA_FEAT_PACKET_DMADIR;
@@ -350,14 +349,14 @@ PRIVATE int atapi_read_capacity(struct port_state *ps, int cmd)
 		(buf[4] << 24) | (buf[5] << 16) | (buf[6] << 8) | buf[7];
 
 	if (ps->sector_size == 0 || (ps->sector_size & 1)) {
-		dprintf(V_ERR, ("%s: invalid medium sector size %lu\n",
+		dprintf(V_ERR, ("%s: invalid medium sector size %u\n",
 			ahci_portname(ps), ps->sector_size));
 
 		return EINVAL;
 	}
 
 	dprintf(V_INFO,
-		("%s: medium detected (%lu byte sectors, %lu MB size)\n",
+		("%s: medium detected (%u byte sectors, %lu MB size)\n",
 		ahci_portname(ps), ps->sector_size,
 		div64u(mul64(ps->lba_count, cvu64(ps->sector_size)),
 		1024*1024)));
@@ -537,7 +536,7 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
 		ps->sector_size = ATA_SECTOR_SIZE;
 
 	if (ps->sector_size < ATA_SECTOR_SIZE) {
-		dprintf(V_ERR, ("%s: invalid sector size %lu\n",
+		dprintf(V_ERR, ("%s: invalid sector size %u\n",
 			ahci_portname(ps), ps->sector_size));
 
 		return FALSE;
@@ -844,8 +843,8 @@ PRIVATE int port_get_padbuf(struct port_state *ps, size_t size)
 /*===========================================================================*
  *				sum_iovec				     *
  *===========================================================================*/
-PRIVATE int sum_iovec(endpoint_t endpt, iovec_s_t *iovec, int nr_req,
-	vir_bytes *total)
+PRIVATE int sum_iovec(struct port_state *ps, endpoint_t endpt,
+	iovec_s_t *iovec, int nr_req, vir_bytes *total)
 {
 	/* Retrieve the total size of the given I/O vector. Check for alignment
 	 * requirements along the way. Return OK (and the total request size)
@@ -861,7 +860,7 @@ PRIVATE int sum_iovec(endpoint_t endpt, iovec_s_t *iovec, int nr_req,
 
 		if (size == 0 || (size & 1) || size > LONG_MAX) {
 			dprintf(V_ERR, ("%s: bad size %lu in iovec from %d\n",
-				ahci_name(), size, endpt));
+				ahci_portname(ps), size, endpt));
 			return EINVAL;
 		}
 
@@ -869,7 +868,7 @@ PRIVATE int sum_iovec(endpoint_t endpt, iovec_s_t *iovec, int nr_req,
 
 		if (bytes > LONG_MAX) {
 			dprintf(V_ERR, ("%s: iovec size overflow from %d\n",
-				ahci_name(), endpt));
+				ahci_portname(ps), endpt));
 			return EINVAL;
 		}
 	}
@@ -922,12 +921,12 @@ PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
 
 		if (r != OK) {
 			dprintf(V_ERR, ("%s: unable to map area from %d "
-				"(%d)\n", ahci_name(), endpt, r));
+				"(%d)\n", ahci_portname(ps), endpt, r));
 			return EINVAL;
 		}
 		if (phys & 1) {
 			dprintf(V_ERR, ("%s: bad physical address from %d\n",
-				ahci_name(), endpt));
+				ahci_portname(ps), endpt));
 			return EINVAL;
 		}
 
@@ -957,19 +956,19 @@ PRIVATE int port_transfer(struct port_state *ps, int cmd, u64_t pos, u64_t eof,
 {
 	/* Perform an I/O transfer on a port.
 	 */
-	static prd_t prdt[NR_PRDS];
+	prd_t prdt[NR_PRDS];
 	vir_bytes size, lead, chunk;
 	unsigned int count, nr_prds;
 	u64_t start_lba;
 	int i, r;
 
 	/* Get the total request size from the I/O vector. */
-	if ((r = sum_iovec(endpt, iovec, nr_req, &size)) != OK)
+	if ((r = sum_iovec(ps, endpt, iovec, nr_req, &size)) != OK)
 		return r;
 
 	dprintf(V_REQ, ("%s: %s for %lu bytes at pos %08lx%08lx\n",
 		ahci_portname(ps), write ? "write" : "read", size,
-		ex64hi(pos), ex64lo(pos))); 
+		ex64hi(pos), ex64lo(pos)));
 
 	assert(ps->state == STATE_GOOD_DEV);
 	assert(ps->flags & FLAG_HAS_MEDIUM);
@@ -1206,7 +1205,7 @@ PRIVATE void port_sig_check(struct port_state *ps)
 	sig = ps->reg[AHCI_PORT_SIG];
 
 	if (sig != ATA_SIG_ATA && sig != ATA_SIG_ATAPI) {
-		dprintf(V_ERR, ("%s: unsupported signature (%08lx)\n",
+		dprintf(V_ERR, ("%s: unsupported signature (%08x)\n",
 			ahci_portname(ps), sig));
 
 		port_stop(ps);
@@ -1218,11 +1217,11 @@ PRIVATE void port_sig_check(struct port_state *ps)
 	}
 
 	/* Clear all state flags except the busy flag, which may be relevant if
-	 * a DEV_OPEN call is waiting for the device to become ready, and the
+	 * a DEV_OPEN call is waiting for the device to become ready, the
 	 * barrier flag, which prevents access to the device until it is
-	 * completely closed and (re)opened.
+	 * completely closed and (re)opened, and the thread suspension flag.
 	 */
-	ps->flags &= FLAG_BUSY | FLAG_BARRIER;
+	ps->flags &= (FLAG_BUSY | FLAG_BARRIER | FLAG_SUSPENDED);
 
 	if (sig == ATA_SIG_ATAPI)
 		ps->flags |= FLAG_ATAPI;
@@ -1322,7 +1321,7 @@ PRIVATE void port_id_check(struct port_state *ps)
 		}
 
 		if (ps->flags & FLAG_HAS_MEDIUM)
-			printf(", %lu byte sectors, %lu MB size",
+			printf(", %u byte sectors, %lu MB size",
 				ps->sector_size, div64u(mul64(ps->lba_count,
 				cvu64(ps->sector_size)), 1024*1024));
 
@@ -1412,7 +1411,7 @@ PRIVATE void port_intr(struct port_state *ps)
 	/* Clear the interrupt flags that we saw were set. */
 	ps->reg[AHCI_PORT_IS] = smask;
 
-	dprintf(V_REQ, ("%s: interrupt (%08lx)\n", ahci_portname(ps), smask));
+	dprintf(V_REQ, ("%s: interrupt (%08x)\n", ahci_portname(ps), smask));
 
 	if (emask & AHCI_PORT_IS_PRCS) {
 		/* Clear the N diagnostics bit to clear this interrupt. */
@@ -1475,6 +1474,12 @@ PRIVATE void port_timeout(struct timer *tp)
 	assert(port >= 0 && port < hba_state.nr_ports);
 
 	ps = &port_state[port];
+
+	/* Regardless of the outcome of this timeout, wake up the thread if it
+	 * is suspended.
+	 */
+	if (ps->flags & FLAG_SUSPENDED)
+		driver_mt_wakeup(ps->device);
 
 	/* If detection of a device after startup timed out, give up on initial
 	 * detection and only look for hot plug events from now on.
@@ -1543,35 +1548,16 @@ PRIVATE void port_timeout(struct timer *tp)
  *===========================================================================*/
 PRIVATE void port_wait(struct port_state *ps)
 {
-	/* Receive and process incoming messages until the given port is no
-	 * longer busy (due to command completion or timeout). Queue any new
-	 * requests for later processing.
+	/* Suspend the current thread until the given port is no longer busy,
+	 * due to either command completion or timeout.
 	 */
-	message m;
-	int r, ipc_status;
 
-	while (ps->flags & FLAG_BUSY) {
-		if ((r = driver_receive(ANY, &m, &ipc_status)) != OK)
-			panic("driver_receive failed: %d", r);
+	ps->flags |= FLAG_SUSPENDED;
 
-		if (is_ipc_notify(ipc_status)) {
-			switch (m.m_source) {
-			case HARDWARE:
-				ahci_intr(NULL, &m);
-				break;
+	while (ps->flags & FLAG_BUSY)
+		driver_mt_sleep();
 
-			case CLOCK:
-				ahci_alarm(NULL, &m);
-				break;
-
-			default:
-				driver_mq_queue(&m, ipc_status);
-			}
-		}
-		else {
-			driver_mq_queue(&m, ipc_status);
-		}
-	}
+	ps->flags &= ~FLAG_SUSPENDED;
 }
 
 /*===========================================================================*
@@ -1885,7 +1871,7 @@ PRIVATE void ahci_init(int devind)
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1,
 		(cap & AHCI_HBA_CAP_SNCQ) ? "supports" : "no",
 		hba_state.irq));
-	dprintf(V_INFO, ("%s: CAP %08lx, CAP2 %08lx, PI %08lx\n",
+	dprintf(V_INFO, ("%s: CAP %08x, CAP2 %08x, PI %08x\n",
 		ahci_name(), cap, hba_state.base[AHCI_HBA_CAP2],
 		hba_state.base[AHCI_HBA_PI]));
 
@@ -1908,16 +1894,16 @@ PRIVATE void ahci_stop(void)
 {
 	/* Disable AHCI, and clean up resources to the extent possible.
 	 */
+	struct port_state *ps;
 	int r, port;
 
 	for (port = 0; port < hba_state.nr_ports; port++) {
-		if (port_state[port].state != STATE_NO_PORT) {
-			if (port_state[port].state == STATE_GOOD_DEV)
-				(void) gen_flush_wcache(&port_state[port], 0);
+		ps = &port_state[port];
 
-			port_stop(&port_state[port]);
+		if (ps->state != STATE_NO_PORT) {
+			port_stop(ps);
 
-			port_free(&port_state[port]);
+			port_free(ps);
 		}
 	}
 
@@ -1945,19 +1931,31 @@ PRIVATE void ahci_alarm(struct driver *UNUSED(dp), message *m)
 /*===========================================================================*
  *				ahci_intr				     *
  *===========================================================================*/
-PRIVATE int ahci_intr(struct driver *UNUSED(dr), message *UNUSED(m))
+PRIVATE void ahci_intr(struct driver *UNUSED(dr), message *UNUSED(m))
 {
 	/* Process an interrupt.
 	 */
+	struct port_state *ps;
 	u32_t mask;
 	int r, port;
 
 	/* Handle an interrupt for each port that has the interrupt bit set. */
 	mask = hba_state.base[AHCI_HBA_IS];
 
-	for (port = 0; port < hba_state.nr_ports; port++)
-		if (mask & (1L << port))
-			port_intr(&port_state[port]);
+	for (port = 0; port < hba_state.nr_ports; port++) {
+		if (mask & (1L << port)) {
+			ps = &port_state[port];
+
+			port_intr(ps);
+
+			/* After processing an interrupt, wake up the device
+			 * thread if it is suspended and now no longer busy.
+			 */
+			if ((ps->flags & (FLAG_SUSPENDED | FLAG_BUSY)) ==
+					FLAG_SUSPENDED)
+				driver_mt_wakeup(ps->device);
+		}
+	}
 
 	/* Clear the bits that we processed. */
 	hba_state.base[AHCI_HBA_IS] = mask;
@@ -1965,8 +1963,6 @@ PRIVATE int ahci_intr(struct driver *UNUSED(dr), message *UNUSED(m))
 	/* Reenable the interrupt. */
 	if ((r = sys_irqenable(&hba_state.hook_id)) != OK)
 		panic("unable to enable IRQ: %d", r);
-
-	return OK;
 }
 
 /*===========================================================================*
@@ -2149,13 +2145,10 @@ PRIVATE void sef_local_startup(void)
  *===========================================================================*/
 PRIVATE char *ahci_name(void)
 {
-	/* Return a printable name for the controller and possibly the
-	 * currently selected port.
+	/* Return a printable name for the controller. We avoid the use of the
+	 * currently selected port, as it may not be accurate.
 	 */
 	static char name[] = "AHCI0";
-
-	if (current_port != NULL)
-		return ahci_portname(current_port);
 
 	name[4] = '0' + ahci_instance;
 
@@ -2231,61 +2224,70 @@ PRIVATE int ahci_open(struct driver *UNUSED(dp), message *m)
 {
 	/* Open a device.
 	 */
+	struct port_state *ps;
 	int r;
 
-	if (ahci_prepare(m->DEVICE) == NULL)
-		return ENXIO;
+	ps = ahci_get_port(m->DEVICE);
 
 	/* If we are still in the process of initializing this port or device,
 	 * wait for completion of that phase first.
 	 */
-	if (current_port->flags & FLAG_BUSY)
-		port_wait(current_port);
+	if (ps->flags & FLAG_BUSY)
+		port_wait(ps);
 
 	/* The device may only be opened if it is now properly functioning. */
-	if (current_port->state != STATE_GOOD_DEV)
-		return ENXIO;
+	if (ps->state != STATE_GOOD_DEV) {
+		r = ENXIO;
+		goto err_stop;
+	}
 
 	/* Some devices may only be opened in read-only mode. */
-	if ((current_port->flags & FLAG_READONLY) && (m->COUNT & W_BIT))
-		return EACCES;
+	if ((ps->flags & FLAG_READONLY) && (m->COUNT & W_BIT)) {
+		r = EACCES;
+		goto err_stop;
+	}
 
-	if (current_port->open_count == 0) {
+	if (ps->open_count == 0) {
 		/* The first open request. Clear the barrier flag, if set. */
-		current_port->flags &= ~FLAG_BARRIER;
+		ps->flags &= ~FLAG_BARRIER;
 
 		/* Recheck media only when nobody is using the device. */
-		if ((current_port->flags & FLAG_ATAPI) && 
-			(r = atapi_check_medium(current_port, 0)) != OK)
-			return r;
+		if ((ps->flags & FLAG_ATAPI) &&
+			(r = atapi_check_medium(ps, 0)) != OK)
+			goto err_stop;
 
 		/* After rechecking the media, the partition table must always
 		 * be read. This is also a convenient time to do it for
 		 * nonremovable devices. Start by resetting the partition
 		 * tables and setting the working size of the entire device.
 		 */
-		memset(current_port->part, 0, sizeof(current_port->part));
-		memset(current_port->subpart, 0,
-			sizeof(current_port->subpart));
+		memset(ps->part, 0, sizeof(ps->part));
+		memset(ps->subpart, 0, sizeof(ps->subpart));
 
-		current_port->part[0].dv_size =
-			mul64(current_port->lba_count,
-			cvu64(current_port->sector_size));
+		ps->part[0].dv_size =
+			mul64(ps->lba_count, cvu64(ps->sector_size));
 
-		partition(&ahci_dtab, current_port->device * DEV_PER_DRIVE,
-			P_PRIMARY, !!(current_port->flags & FLAG_ATAPI));
+		partition(&ahci_dtab, ps->device * DEV_PER_DRIVE, P_PRIMARY,
+			!!(ps->flags & FLAG_ATAPI));
 	}
 	else {
 		/* If the barrier flag is set, deny new open requests until the
 		 * device is fully closed first.
 		 */
-		if (current_port->flags & FLAG_BARRIER)
+		if (ps->flags & FLAG_BARRIER)
 			return ENXIO;
 	}
 
-	current_port->open_count++;
+	ps->open_count++;
 
 	return OK;
+
+err_stop:
+	/* Stop the thread if the device is now fully closed. */
+	if (ps->open_count == 0)
+		driver_mt_stop();
+
+	return r;
 }
 
 /*===========================================================================*
@@ -2295,22 +2297,39 @@ PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
 {
 	/* Close a device.
 	 */
+	struct port_state *ps;
 	int port;
 
-	if (ahci_prepare(m->DEVICE) == NULL)
-		return ENXIO;
+	ps = ahci_get_port(m->DEVICE);
 
-	if (current_port->open_count <= 0) {
+	/* Decrease the open count. */
+	if (ps->open_count <= 0) {
 		dprintf(V_ERR, ("%s: closing already-closed port\n",
-			ahci_portname(current_port)));
+			ahci_portname(ps)));
 
 		return EINVAL;
 	}
 
-	current_port->open_count--;
+	ps->open_count--;
 
-	/* If we've been told to terminate, check whether all devices are now
-	 * closed. If so, tell libdriver to quit after replying to the close.
+	if (ps->open_count > 0)
+		return OK;
+
+	/* The device is now fully closed. That also means that the thread for
+	 * this device is not needed anymore.
+	 */
+	driver_mt_stop();
+
+	if (ps->state == STATE_GOOD_DEV && !(ps->flags & FLAG_BARRIER)) {
+		dprintf(V_INFO, ("%s: flushing write cache\n",
+			ahci_portname(ps)));
+
+		(void) gen_flush_wcache(ps, 0);
+	}
+
+	/* If the entire driver has been told to terminate, check whether all
+	 * devices are now closed. If so, tell libdriver to quit after replying
+	 * to the close request.
 	 */
 	if (ahci_exiting) {
 		for (port = 0; port < hba_state.nr_ports; port++)
@@ -2320,7 +2339,7 @@ PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
 		if (port == hba_state.nr_ports) {
 			ahci_stop();
 
-			driver_terminate();
+			driver_mt_terminate();
 		}
 	}
 
@@ -2337,6 +2356,11 @@ PRIVATE int ahci_transfer(endpoint_t endpt, int opcode, u64_t position,
 	 */
 	u64_t pos, eof;
 
+	/* We can safely use current_port, as we won't get interrupted until
+	 * the call to port_transfer(), after which it is no longer used.
+	 * Nonpreemptive threading guarantees that we will not be descheduled
+	 * before then.
+	 */
 	assert(current_port != NULL);
 	assert(current_dev != NULL);
 
@@ -2386,37 +2410,37 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 	/* Process any messages not covered by the other calls.
 	 * This function only implements IOCTLs.
 	 */
+	struct port_state *ps;
 	int r, val;
 
 	if (m->m_type != DEV_IOCTL_S)
 		return EINVAL;
 
-	if (ahci_prepare(m->DEVICE) == NULL)
-		return ENXIO;
+	ps = ahci_get_port(m->DEVICE);
 
 	switch (m->REQUEST) {
 	case DIOCEJECT:
-		if (current_port->state != STATE_GOOD_DEV)
+		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
-		if (!(current_port->flags & FLAG_ATAPI))
+		if (!(ps->flags & FLAG_ATAPI))
 			return EINVAL;
 
-		return atapi_load_eject(current_port, 0, FALSE /*load*/);
+		return atapi_load_eject(ps, 0, FALSE /*load*/);
 
 	case DIOCOPENCT:
 		return sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
-			0, (vir_bytes) &current_port->open_count,
-			sizeof(current_port->open_count), D);
+			0, (vir_bytes) &ps->open_count, sizeof(ps->open_count),
+			D);
 
 	case DIOCFLUSH:
-		if (current_port->state != STATE_GOOD_DEV)
+		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
-		return gen_flush_wcache(current_port, 0);
+		return gen_flush_wcache(ps, 0);
 
 	case DIOCSETWC:
-		if (current_port->state != STATE_GOOD_DEV)
+		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
 		if ((r = sys_safecopyfrom(m->m_source,
@@ -2424,13 +2448,13 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 			sizeof(val), D)) != OK)
 			return r;
 
-		return gen_set_wcache(current_port, 0, val);
+		return gen_set_wcache(ps, 0, val);
 
 	case DIOCGETWC:
-		if (current_port->state != STATE_GOOD_DEV)
+		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
-		if ((r = gen_get_wcache(current_port, 0, &val)) != OK)
+		if ((r = gen_get_wcache(ps, 0, &val)) != OK)
 			return r;
 
 		return sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
@@ -2438,6 +2462,38 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 	}
 
 	return EINVAL;
+}
+
+/*===========================================================================*
+ *				ahci_thread				     *
+ *===========================================================================*/
+PRIVATE int ahci_thread(dev_t minor, thread_id_t *id)
+{
+	/* Map a device number to a worker thread number. 
+	 */
+
+	if (ahci_prepare(minor) == NULL)
+		return ENXIO;
+
+	*id = current_port->device;
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				ahci_get_port				     *
+ *===========================================================================*/
+PRIVATE struct port_state *ahci_get_port(dev_t minor)
+{
+	/* Get the port structure associated with the given minor device.
+	 * Called only from worker threads, so the minor device is already
+	 * guaranteed to map to a port.
+	 */
+
+	if (ahci_prepare(minor) == NULL)
+		panic("device mapping for minor %d disappeared", minor);
+
+	return current_port;
 }
 
 /*===========================================================================*
@@ -2451,7 +2507,7 @@ PUBLIC int main(int argc, char **argv)
 	env_setargs(argc, argv);
 	sef_local_startup();
 
-	driver_task(&ahci_dtab, DRIVER_STD);
+	driver_mt_task(&ahci_dtab, DRIVER_STD);
 
 	return 0;
 }

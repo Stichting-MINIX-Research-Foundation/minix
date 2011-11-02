@@ -31,6 +31,8 @@
 #include <minix/partition.h>
 #include <minix/u64.h>
 
+typedef int thread_id_t;
+
 /* Info about and entry points into the device dependent code. */
 struct driver {
   _PROTOTYPE( char *(*dr_name), (void) );
@@ -46,7 +48,8 @@ struct driver {
   _PROTOTYPE( int (*dr_cancel), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_select), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_other), (struct driver *dp, message *m_ptr) );
-  _PROTOTYPE( int (*dr_hw_int), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( void (*dr_hw_int), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_thread), (dev_t dev, thread_id_t *threadp) );
 };
 
 /* Base and size of a partition in bytes. */
@@ -55,7 +58,6 @@ struct device {
   u64_t dv_size;
 };
 
-
 #define DRIVER_STD	0	/* Use the standard reply protocol */
 #define DRIVER_ASYN	1	/* Use the new asynchronous protocol */
 
@@ -63,17 +65,10 @@ struct device {
 
 #define IS_DEV_MINOR_RQ(type) (IS_DEV_RQ(type) && (type) != DEV_STATUS)
 
-/* Functions defined by driver.c: */
+/* Functions defined by libdriver. These can be used for both singlethreaded
+ * and multithreaded drivers.
+ */
 _PROTOTYPE( void driver_announce, (void) );
-_PROTOTYPE( int driver_receive, (endpoint_t src, message *m_ptr,
-	int *status_ptr) );
-_PROTOTYPE( int driver_receive_mq, (message *m_ptr, int *status_ptr) );
-_PROTOTYPE( int driver_handle_msg, (struct driver *dp, int type, message *m_ptr,
-	int ipc_status));
-_PROTOTYPE( void driver_terminate, (void) );
-_PROTOTYPE( void driver_task, (struct driver *dr, int type) );
-_PROTOTYPE( int driver_mq_queue, (message *m_ptr, int status) );
-_PROTOTYPE( void driver_init_buffer, (void) );
 _PROTOTYPE( char *no_name, (void) );
 _PROTOTYPE( int do_nop, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( struct device *nop_prepare, (int device) );
@@ -85,6 +80,22 @@ _PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_ioctl, (struct driver *dp, message *m_ptr) );
 
+#ifndef _DRIVER_MT_API
+/* Additional functions for the singlethreaded version. These allow the driver
+ * to either use the stock driver_task(), or implement its own message loop.
+ * To avoid accidents, these functions are not exposed when minix/driver_mt.h
+ * has been included previously.
+ */
+_PROTOTYPE( int driver_receive, (endpoint_t src, message *m_ptr,
+	int *status_ptr) );
+_PROTOTYPE( int driver_receive_mq, (message *m_ptr, int *status_ptr) );
+_PROTOTYPE( void driver_handle_msg, (struct driver *dp, int type,
+	message *m_ptr, int ipc_status) );
+_PROTOTYPE( void driver_terminate, (void) );
+_PROTOTYPE( void driver_task, (struct driver *dr, int type) );
+_PROTOTYPE( int driver_mq_queue, (message *m_ptr, int status) );
+#endif /* !_DRIVER_MT_API */
+
 /* Parameters for the disk drive. */
 #define SECTOR_SIZE      512	/* physical sector size in bytes */
 #define SECTOR_SHIFT       9	/* for division */
@@ -93,14 +104,6 @@ _PROTOTYPE( int nop_ioctl, (struct driver *dp, message *m_ptr) );
 #define CD_SECTOR_SIZE  2048	/* sector size of a CD-ROM in bytes */
 
 /* Size of the DMA buffer buffer in bytes. */
-#define USE_EXTRA_DMA_BUF  0	/* usually not needed */
 #define DMA_BUF_SIZE	(DMA_SECTORS * SECTOR_SIZE)
-
-#if (CHIP == INTEL)
-extern u8_t *tmp_buf;			/* the DMA buffer */
-#else
-extern u8_t tmp_buf[];			/* the DMA buffer */
-#endif
-extern phys_bytes tmp_phys;		/* phys address of DMA buffer */
 
 #endif /* __MINIX_DRIVER_H__ */

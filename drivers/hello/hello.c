@@ -38,7 +38,8 @@ PRIVATE struct driver hello_tab =
     nop_cancel,
     nop_select,
     nop_ioctl,
-    do_nop,
+    NULL,
+    NULL
 };
 
 /** Represents the /dev/hello device. */

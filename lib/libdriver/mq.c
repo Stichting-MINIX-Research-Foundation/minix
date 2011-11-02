@@ -1,61 +1,98 @@
-/*
-inet/mq.c
+/* This file contains a simple message queue implementation to support both
+ * the singlethread and the multithreaded driver implementation.
+ *
+ * Changes:
+ *   Oct 27, 2011   rewritten to use sys/queue.h (D.C. van Moolenbroek)
+ *   Aug 27, 2011   integrated into libdriver (A. Welzel)
+ */
 
-Created:	Jan 3, 1992 by Philip Homburg
-
-Copyright 1995 Philip Homburg
-*/
-
-#include <minix/ansi.h>
+#include <minix/driver_mt.h>
+#include <sys/queue.h>
 #include <assert.h>
 
-#include <minix/config.h>
-#include <minix/const.h>
-#include <minix/type.h>
-#include <minix/ipc.h>
-#include <minix/mq.h>
+#include "mq.h"
 
 #define MQ_SIZE		128
 
-PRIVATE mq_t mq_list[MQ_SIZE];
-PRIVATE mq_t *mq_freelist;
+struct mq_cell {
+  message mess;
+  int ipc_status;
+  STAILQ_ENTRY(mq_cell) next;
+};
 
-void mq_init()
+PRIVATE struct mq_cell pool[MQ_SIZE];
+
+PRIVATE STAILQ_HEAD(queue, mq_cell) queue[DRIVER_MT_MAX_WORKERS];
+PRIVATE STAILQ_HEAD(free_list, mq_cell) free_list;
+
+/*===========================================================================*
+ *				driver_mq_init				     *
+ *===========================================================================*/
+PUBLIC void driver_mq_init(void)
 {
-	int i;
-
-	mq_freelist= NULL;
-	for (i= 0; i<MQ_SIZE; i++)
-	{
-		mq_list[i].mq_next= mq_freelist;
-		mq_freelist= &mq_list[i];
-		mq_list[i].mq_allocated= 0;
-	}
-}
-
-mq_t *mq_get()
-{
-	mq_t *mq;
-
-	mq= mq_freelist;
-	assert(mq != NULL);
-
-	mq_freelist= mq->mq_next;
-	mq->mq_next= NULL;
-	assert(mq->mq_allocated == 0);
-	mq->mq_allocated= 1;
-	return mq;
-}
-
-void mq_free(mq)
-mq_t *mq;
-{
-	mq->mq_next= mq_freelist;
-	mq_freelist= mq;
-	assert(mq->mq_allocated == 1);
-	mq->mq_allocated= 0;
-}
-
-/*
- * $PchId: mq.c,v 1.7 1998/10/23 20:10:47 philip Exp $
+/* Initialize the message queues and message cells. 
  */
+  int i;
+
+  STAILQ_INIT(&free_list);
+
+  for (i = 0; i < DRIVER_MT_MAX_WORKERS; i++)
+	STAILQ_INIT(&queue[i]);
+
+  for (i = 0; i < MQ_SIZE; i++)
+	STAILQ_INSERT_HEAD(&free_list, &pool[i], next);
+}
+
+/*===========================================================================*
+ *				driver_mq_enqueue			     *
+ *===========================================================================*/
+PUBLIC int driver_mq_enqueue(thread_id_t thread_id, const message *mess,
+  int ipc_status)
+{
+/* Add a message, including its IPC status, to the message queue of a thread.
+ * Return TRUE iff the message was added successfully.
+ */
+  struct mq_cell *cell;
+
+  assert(thread_id >= 0 && thread_id < DRIVER_MT_MAX_WORKERS);
+
+  if (STAILQ_EMPTY(&free_list))
+	return FALSE;
+
+  cell = STAILQ_FIRST(&free_list);
+  STAILQ_REMOVE_HEAD(&free_list, next);
+
+  cell->mess = *mess;
+  cell->ipc_status = ipc_status;
+
+  STAILQ_INSERT_TAIL(&queue[thread_id], cell, next);
+
+  return TRUE;
+}
+
+/*===========================================================================*
+ *				driver_mq_dequeue			     *
+ *===========================================================================*/
+PUBLIC int driver_mq_dequeue(thread_id_t thread_id, message *mess,
+  int *ipc_status)
+{
+/* Return and remove a message, including its IPC status, from the message
+ * queue of a thread. Return TRUE iff a message was available.
+ */
+  struct mq_cell *cell;
+
+  assert(thread_id >= 0 && thread_id < DRIVER_MT_MAX_WORKERS);
+
+  if (STAILQ_EMPTY(&queue[thread_id]))
+	return FALSE;
+
+  cell = STAILQ_FIRST(&queue[thread_id]);
+  STAILQ_REMOVE_HEAD(&queue[thread_id], next);
+
+  *mess = cell->mess;
+  *ipc_status = cell->ipc_status;
+
+  STAILQ_INSERT_HEAD(&free_list, cell, next);
+
+  return TRUE;
+}

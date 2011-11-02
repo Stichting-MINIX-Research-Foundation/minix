@@ -3,7 +3,7 @@ PROG=	ahci
 SRCS=	ahci.c
 
 DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys -ltimers
+LDADD+=	-ldriver -lsys -ltimers -lmthread
 
 MAN=
 

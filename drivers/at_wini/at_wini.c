@@ -98,9 +98,8 @@ PUBLIC int w_command;			/* current command in execution */
 PRIVATE int w_drive;			/* selected drive */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
-/* Unfortunately, DMA_SECTORS and DMA_BUF_SIZE are already defined libdriver
- * for 'tmp_buf'.
- */
+PRIVATE u8_t *tmp_buf;
+
 #define ATA_DMA_SECTORS	64
 #define ATA_DMA_BUF_SIZE	(ATA_DMA_SECTORS*SECTOR_SIZE)
 
@@ -158,7 +157,7 @@ FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
 FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr)	);
 FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr)	);
-FORWARD _PROTOTYPE( int w_hw_int, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( void w_hw_int, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) 		);
 FORWARD _PROTOTYPE( void w_timeout, (void) 				);
 FORWARD _PROTOTYPE( int w_reset, (void) 				);
@@ -260,7 +259,8 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 /* Initialize the at_wini driver. */
   system_hz = sys_hz();
 
-  driver_init_buffer();
+  if (!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, AC_ALIGN4K, NULL)))
+	panic("unable to allocate temporary buffer");
 
   w_identify_wakeup_ticks = WAKEUP_TICKS;
   wakeup_ticks = WAKEUP_TICKS;
@@ -2259,14 +2259,12 @@ message *m;
 /*===========================================================================*
  *				w_hw_int				     *
  *===========================================================================*/
-PRIVATE int w_hw_int(dr, m)
+PRIVATE void w_hw_int(dr, m)
 struct driver *dr;
 message *m;
 {
   /* Leftover interrupt(s) received; ack it/them. */
   ack_irqs(m->NOTIFY_ARG);
-
-  return OK;
 }
 
 

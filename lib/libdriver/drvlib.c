@@ -11,10 +11,12 @@
 /* Extended partition? */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
+FORWARD _PROTOTYPE( void parse_part_table, (struct driver *dp, int device,
+				int style, int atapi, u8_t *tmp_buf) );
 FORWARD _PROTOTYPE( void extpartition, (struct driver *dp, int extdev,
-						unsigned long extbase) );
+				unsigned long extbase, u8_t *tmp_buf) );
 FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
-			unsigned long offset, struct part_entry *table));
+	unsigned long offset, struct part_entry *table, u8_t *tmp_buf) );
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
 
 /*============================================================================*
@@ -27,7 +29,37 @@ int style;		/* partitioning style: floppy, primary, sub. */
 int atapi;		/* atapi device */
 {
 /* This routine is called on first open to initialize the partition tables
- * of a device.  It makes sure that each partition falls safely within the
+ * of a device.
+ */
+  u8_t *tmp_buf;
+
+  if ((*dp->dr_prepare)(device) == NULL)
+	return;
+
+  /* For multithreaded drivers, multiple partition() calls may be made on
+   * different devices in parallel. Hence we need a separate temporary buffer
+   * for each request.
+   */
+  if (!(tmp_buf = alloc_contig(CD_SECTOR_SIZE, AC_ALIGN4K, NULL)))
+	panic("partition: unable to allocate temporary buffer");
+
+  parse_part_table(dp, device, style, atapi, tmp_buf);
+
+  free_contig(tmp_buf, CD_SECTOR_SIZE);
+}
+
+/*============================================================================*
+ *				parse_part_table			      *
+ *============================================================================*/
+PRIVATE void parse_part_table(dp, device, style, atapi, tmp_buf)
+struct driver *dp;	/* device dependent entry points */
+int device;		/* device to partition */
+int style;		/* partitioning style: floppy, primary, sub. */
+int atapi;		/* atapi device */
+u8_t *tmp_buf;		/* temporary buffer */
+{
+/* This routine reads and parses a partition table.  It may be called
+ * recursively.  It makes sure that each partition falls safely within the
  * device's limits.  Depending on the partition style we are either making
  * floppy partitions, primary partitions or subpartitions.  Only primary
  * partitions are sorted, because they are shared with other operating
@@ -45,7 +77,7 @@ int atapi;		/* atapi device */
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
 
   /* Read the partition table for the device. */
-  if(!get_part_table(dp, device, 0L, table)) {
+  if(!get_part_table(dp, device, 0L, table, tmp_buf)) {
 	  return;
   }
 
@@ -83,11 +115,12 @@ int atapi;		/* atapi device */
 	if (style == P_PRIMARY) {
 		/* Each Minix primary partition can be subpartitioned. */
 		if (pe->sysind == MINIX_PART)
-			partition(dp, device + par, P_SUB, atapi);
+			parse_part_table(dp, device + par, P_SUB, atapi,
+				tmp_buf);
 
 		/* An extended partition has logical partitions. */
 		if (ext_part(pe->sysind))
-			extpartition(dp, device + par, pe->lowsec);
+			extpartition(dp, device + par, pe->lowsec, tmp_buf);
 	}
   }
 }
@@ -95,10 +128,11 @@ int atapi;		/* atapi device */
 /*============================================================================*
  *				extpartition				      *
  *============================================================================*/
-PRIVATE void extpartition(dp, extdev, extbase)
+PRIVATE void extpartition(dp, extdev, extbase, tmp_buf)
 struct driver *dp;	/* device dependent entry points */
 int extdev;		/* extended partition to scan */
 unsigned long extbase;	/* sector offset of the base extended partition */
+u8_t *tmp_buf;		/* temporary buffer */
 {
 /* Extended partitions cannot be ignored alas, because people like to move
  * files to and from DOS partitions.  Avoid reading this code, it's no fun.
@@ -114,7 +148,7 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 
   offset = 0;
   do {
-	if (!get_part_table(dp, extdev, offset, table)) return;
+	if (!get_part_table(dp, extdev, offset, table, tmp_buf)) return;
 	sort(table);
 
 	/* The table should contain one logical partition and optionally
@@ -143,19 +177,18 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 /*============================================================================*
  *				get_part_table				      *
  *============================================================================*/
-PRIVATE int get_part_table(dp, device, offset, table)
+PRIVATE int get_part_table(dp, device, offset, table, tmp_buf)
 struct driver *dp;
 int device;
 unsigned long offset;		/* sector offset to the table */
 struct part_entry *table;	/* four entries */
+u8_t *tmp_buf;			/* temporary buffer */
 {
 /* Read the partition table for the device, return true iff there were no
  * errors.
  */
   iovec_t iovec1;
   u64_t position;
-
-  driver_init_buffer();
 
   position = mul64u(offset, SECTOR_SIZE);
   iovec1.iov_addr = (vir_bytes) tmp_buf;
