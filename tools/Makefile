@@ -93,8 +93,13 @@ services: includes kernel servers .WAIT drivers
 kernel: includes
 	$(MAKE) -C ../kernel 
 
+.if ${COMPILER_TYPE} == "gnu"
+servers: includes
+	$(MAKE) -C ../servers all install
+.else
 servers: includes
 	$(MAKE) -C ../servers all
+.endif
 
 drivers: includes servers
 	$(MAKE) -C ../drivers all install
