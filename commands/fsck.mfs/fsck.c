@@ -1557,6 +1557,7 @@ char **argv;
   prog = *argv++;
   while ((arg = *argv++) != 0)
 	if (arg[0] == '-' && arg[1] != 0 && arg[2] == 0) switch (arg[1]) {
+		    case 'p':
 		    case 'a':	automatic ^= 1;	break;
 		    case 'c':
 			clist = getlist(&argv, "inode");
@@ -1581,7 +1582,7 @@ char **argv;
 		devgiven = 1;
 	}
   if (!devgiven) {
-	printf("Usage: fsck [-acilrsz] file\n");
+	printf("Usage: fsck [-pacilrsz] file\n");
 	exit(1);
   }
   return(0);
