@@ -74,7 +74,7 @@ DECLARE_CPULOCAL(struct proc *, ptproc);
 /* CPU private run queues */
 DECLARE_CPULOCAL(struct proc *, run_q_head[NR_SCHED_QUEUES]); /* ptrs to ready list headers */
 DECLARE_CPULOCAL(struct proc *, run_q_tail[NR_SCHED_QUEUES]); /* ptrs to ready list tails */
-DECLARE_CPULOCAL(int, cpu_is_idle); /* let the others know that you are idle */
+DECLARE_CPULOCAL(volatile int, cpu_is_idle); /* let the others know that you are idle */
 
 DECLARE_CPULOCAL(volatile int, idle_interrupted); /* to interrupt busy-idle
 						     while profiling */
