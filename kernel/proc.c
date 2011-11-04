@@ -1184,21 +1184,18 @@ PRIVATE int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t size)
 		set_sys_bit(priv(dst_ptr)->s_asyn_pending, 
 			    priv(caller_ptr)->s_id); 
 		pending_recv = TRUE;
+		done = FALSE;
+		continue;
 	} 
-
-	if (!pending_recv) flags |= AMF_DONE; /* Done handling message */
 
 	/* Store results */
 	tabent.result = r;
-	tabent.flags = flags;
-	if (flags & AMF_DONE) {
-		if (flags & AMF_NOTIFY)
-			do_notify = TRUE; 
-		else if (r != OK && (flags & AMF_NOTIFY_ERR))
-			do_notify = TRUE;
-		A_INSRT(i);	/* Copy results to caller */
-	} else
-		done = FALSE;
+	tabent.flags = flags | AMF_DONE;
+	if (flags & AMF_NOTIFY)
+		do_notify = TRUE;
+	else if (r != OK && (flags & AMF_NOTIFY_ERR))
+		do_notify = TRUE;
+	A_INSRT(i);	/* Copy results to caller */
   }
 
   if (do_notify) 
