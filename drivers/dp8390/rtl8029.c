@@ -193,7 +193,7 @@ dpeth_t *dep;
 #endif
 	}
 
-#if DEBUG
+#if 0
 	for (i= 0; i<64; i++)
 		printf("%x ", get_ee_word(dep, i));
 	printf("\n");

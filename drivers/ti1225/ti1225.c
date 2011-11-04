@@ -187,6 +187,9 @@ PRIVATE void hw_init(struct port *pp)
 	u8_t v8;
 	u16_t v16;
 	u32_t v32;
+#if USE_INTS
+	int r, irq;
+#endif
 
 	devind= pp->p_devind;
 	if (debug)
@@ -316,6 +319,9 @@ PRIVATE void do_int(struct port *pp)
 	u32_t csr_event, csr_present, csr_control;
 	u8_t v8;
 	u16_t v16;
+#if USE_INTS
+	int r;
+#endif
 
 	devind= pp->p_devind;
 	v8= pci_attr_r8(devind, TI_CARD_CTRL);

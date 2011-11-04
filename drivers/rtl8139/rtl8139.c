@@ -461,6 +461,9 @@ int skip;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
+#if VERBOSE
+	char *dname;
+#endif
 
 	if ((rep->re_pcibus | rep->re_pcidev | rep->re_pcifunc) != 0)
 	{

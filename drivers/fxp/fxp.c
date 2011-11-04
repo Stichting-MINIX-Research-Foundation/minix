@@ -632,6 +632,9 @@ static int fxp_probe(fxp_t *fp, int skip)
 static void fxp_conf_hw(fxp_t *fp)
 {
 	int mwi, ext_stat1, ext_stat2, lim_fifo, i82503, fc;
+#if VERBOSE
+	int i;
+#endif
 
 	fp->fxp_mode= FM_DISABLED;	/* Superfluous */
 

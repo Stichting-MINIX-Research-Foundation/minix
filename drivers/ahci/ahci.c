@@ -106,7 +106,6 @@
 #include <minix/drivers.h>
 #include <minix/driver_mt.h>
 #include <minix/drvlib.h>
-#include <minix/u64.h>
 #include <machine/pci.h>
 #include <sys/ioc_disk.h>
 #include <sys/mman.h>

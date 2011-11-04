@@ -646,6 +646,9 @@ static void ec_init(ec)
 ether_card_t *ec;
 {
    int r;
+#if VERBOSE
+   int i;
+#endif
 
    /* General initialization */
    ec->flags = ECF_EMPTY;
