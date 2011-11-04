@@ -62,12 +62,6 @@ PUBLIC void smp_ipi_halt_handler(void)
 
 PUBLIC void smp_schedule(unsigned cpu)
 {
-	/*
-	 * check if the cpu is processing some other ipi already. If yes, no
-	 * need to wake it up
-	 */
-	if (sched_ipi_data[cpu].flags != 0)
-		return;
 	arch_send_smp_schedule_ipi(cpu);
 }
 
