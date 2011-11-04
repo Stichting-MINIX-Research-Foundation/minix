@@ -116,7 +116,7 @@
 
 /* Host Bus Adapter (HBA) state. */
 PRIVATE struct {
-	u32_t *base;		/* base address of memory-mapped registers */
+	volatile u32_t *base;	/* base address of memory-mapped registers */
 	size_t size;		/* size of memory-mapped register area */
 
 	int nr_ports;		/* addressable number of ports (1..NR_PORTS) */
@@ -131,7 +131,7 @@ PRIVATE struct port_state {
 	int state;		/* port state */
 	unsigned int flags;	/* port flags */
 
-	u32_t *reg;		/* memory-mapped port registers */
+	volatile u32_t *reg;	/* memory-mapped port registers */
 
 	u8_t *mem_base;		/* primary memory buffer virtual address */
 	phys_bytes mem_phys;	/* primary memory buffer physical address */
@@ -1573,6 +1573,11 @@ PRIVATE void port_issue(struct port_state *ps, int cmd, clock_t timeout)
 	ps->reg[AHCI_PORT_SERR] = ~0L;
 	ps->reg[AHCI_PORT_IS] = ~0L;
 
+	/* Make sure that the compiler does not delay any previous write
+	 * operations until after the write to the CI register.
+	 */
+	__insn_barrier();
+
 	/* Tell the controller that a new command is ready. */
 	ps->reg[AHCI_PORT_CI] = (1L << cmd);
 
@@ -1909,7 +1914,8 @@ PRIVATE void ahci_stop(void)
 
 	ahci_reset();
 
-	if ((r = vm_unmap_phys(SELF, hba_state.base, hba_state.size)) != OK)
+	if ((r = vm_unmap_phys(SELF, (void *) hba_state.base,
+			hba_state.size)) != OK)
 		panic("unable to unmap HBA memory: %d", r);
 
 	if ((r = sys_irqrmpolicy(&hba_state.hook_id)) != OK)
