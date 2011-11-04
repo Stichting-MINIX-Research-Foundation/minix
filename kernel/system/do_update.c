@@ -127,6 +127,11 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
   printf("do_update: curr ptproc %d\n", get_cpulocal_var(ptproc)->p_endpoint);
 #endif
 
+#ifdef CONFIG_SMP
+  bits_fill(src_rp->p_stale_tlb, CONFIG_MAX_CPUS);
+  bits_fill(dst_rp->p_stale_tlb, CONFIG_MAX_CPUS);
+#endif
+
   return OK;
 }
 

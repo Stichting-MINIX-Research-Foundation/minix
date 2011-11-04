@@ -159,6 +159,16 @@ PUBLIC int do_vmctl(struct proc * caller, message * m_ptr)
 		 * cpu
 		 */
 		RTS_UNSET(p, RTS_VMINHIBIT);
+#ifdef CONFIG_SMP
+		/*
+		 * We don't know whether kernel has the changed mapping
+		 * installed to access userspace memory. And if so, on what CPU.
+		 * More over we don't know what mapping has changed and how and
+		 * therefore we must invalidate all mappings we have anywhere.
+		 * Next time we map memory, we map it fresh.
+		 */
+		bits_fill(p->p_stale_tlb, CONFIG_MAX_CPUS);
+#endif
 		return OK;
   }
 

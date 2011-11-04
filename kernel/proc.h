@@ -38,6 +38,11 @@ struct proc {
   bitchunk_t p_cpu_mask[BITMAP_CHUNKS(CONFIG_MAX_CPUS)]; /* what CPUs is hte
 							    process allowed to
 							    run on */
+  bitchunk_t p_stale_tlb[BITMAP_CHUNKS(CONFIG_MAX_CPUS)]; /* On which cpu are
+				possibly stale entries from this process and has
+				to be fresed the next kernel touches this
+				processes memory
+				 */
 #endif
 
   /* Accounting statistics that get passed to the process' scheduler */

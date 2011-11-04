@@ -138,8 +138,8 @@ PRIVATE phys_bytes createpde(
 /*===========================================================================*
  *				lin_lin_copy				     *
  *===========================================================================*/
-PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr, 
-	const struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
+PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
+	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
 {
 	u32_t addr;
 	proc_nr_t procslot;
@@ -166,6 +166,19 @@ PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr,
 		phys_bytes srcptr, dstptr;
 		vir_bytes chunk = bytes;
 		int changed = 0;
+
+#ifdef CONFIG_SMP
+		unsigned cpu = cpuid;
+
+		if (GET_BIT(srcproc->p_stale_tlb, cpu)) {
+			changed = 1;
+			UNSET_BIT(srcproc->p_stale_tlb, cpu);
+		}
+		if (GET_BIT(dstproc->p_stale_tlb, cpu)) {
+			changed = 1;
+			UNSET_BIT(dstproc->p_stale_tlb, cpu);
+		}
+#endif
 
 		/* Set up 4MB ranges. */
 		srcptr = createpde(srcproc, srclinaddr, &chunk, 0, &changed);

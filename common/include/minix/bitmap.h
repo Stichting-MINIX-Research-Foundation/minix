@@ -17,4 +17,18 @@
 #define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) ))
 #define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) ))
 
+#if defined(CONFIG_SMP) && defined(__GNUC__)
+#ifndef __ASSEMBLY__
+static inline bits_fill(bitchunk_t * chunks, unsigned bits)
+{
+	unsigned c, cnt;
+
+	cnt = BITMAP_CHUNKS(bits);
+	for (c = 0; c < cnt; c++)
+		bit_fill(chunks[c]);
+}
+#endif
+#endif
+
+
 #endif	/* _BITMAP_H */
