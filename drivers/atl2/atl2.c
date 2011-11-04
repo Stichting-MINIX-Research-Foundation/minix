@@ -37,7 +37,7 @@ PRIVATE struct {
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
 	int mode;		/* datalink mode */
-	char *base;		/* base address of memory-mapped registers */
+	volatile u8_t *base;	/* base address of memory-mapped registers */
 	u32_t size;		/* size of memory-mapped area */
 	u32_t hwaddr[2];	/* MAC address, in register representation */
 
@@ -628,25 +628,27 @@ PRIVATE int atl2_tx_advance(void)
 		 */
 		size = stat & ATL2_TXS_SIZE_MASK;
 
-		assert(state.txd_tail <= ATL2_TXD_BUFSIZE - sizeof(u32_t));
+		assert((u32_t) state.txd_tail <=
+			ATL2_TXD_BUFSIZE - sizeof(u32_t));
 		dsize = * (u32_t *) (state.txd_base + state.txd_tail);
 		if (size != dsize)
-			printf("ATL2: TxD/TxS size mismatch (%lx vs %lx)\n",
+			printf("ATL2: TxD/TxS size mismatch (%x vs %x)\n",
 				size, dsize);
 
 		/* Advance tails accordingly. */
 		size = sizeof(u32_t) + ATL2_ALIGN_32(dsize);
-		assert(state.txd_num >= size);
+		assert((u32_t) state.txd_num >= size);
 		state.txd_tail = (state.txd_tail + size) % ATL2_TXD_BUFSIZE;
 		state.txd_num -= size;
 
 		state.txs_tail = (state.txs_tail + 1) % ATL2_TXS_COUNT;
 		state.txs_num--;
 
-		if (stat & ATL2_TXS_SUCCESS)
+		if (stat & ATL2_TXS_SUCCESS) {
 			ATL2_DEBUG(("ATL2: successfully sent packet\n"));
-		else
+		} else {
 			ATL2_DEBUG(("ATL2: failed to send packet\n"));
+		}
 
 		/* Update statistics. */
 		atl2_tx_stat(stat);
@@ -718,8 +720,11 @@ PRIVATE void atl2_rx_advance(int next)
 	}
 
 	/* If new RxD descriptors are now up for reuse, tell the device. */
-	if (update_tail)
+	if (update_tail) {
+		__insn_barrier();
+
 		ATL2_WRITE_U32(ATL2_RXD_IDX_REG, state.rxd_tail);
+	}
 }
 
 /*===========================================================================*
@@ -935,13 +940,16 @@ PRIVATE void atl2_writev(const message *m, int from_int)
 	/* Update the TxD head. */
 	state.txd_num += sizeof(u32_t) + ATL2_ALIGN_32(count);
 	pos = ATL2_ALIGN_32(pos) % ATL2_TXD_BUFSIZE;
-	assert(pos == (state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE);
+	assert((int) pos ==
+		(state.txd_tail + state.txd_num) % ATL2_TXD_BUFSIZE);
 
 	/* Initialize and update the TxS head. */
 	state.txs_base[(state.txs_tail + state.txs_num) % ATL2_TXS_COUNT] = 0;
 	state.txs_num++;
 
 	/* Tell the device about our new position. */
+	__insn_barrier();
+
 	ATL2_WRITE_U32(ATL2_TXD_IDX_REG, pos / sizeof(u32_t));
 
 	/* We have now successfully set up the transmission of a packet. */
@@ -971,7 +979,7 @@ suspend:
 /*===========================================================================*
  *				atl2_intr				     *
  *===========================================================================*/
-PRIVATE void atl2_intr(const message *m)
+PRIVATE void atl2_intr(const message *UNUSED(m))
 {
 	/* Interrupt received.
 	 */
@@ -1030,21 +1038,21 @@ PRIVATE void atl2_conf(message *m)
 {
 	/* Configure the mode of the card.
 	 */
-	ether_addr_t *addr;
+	ether_addr_t addr;
 	int r;
 
 	state.mode = m->DL_MODE;
 
 	atl2_set_mode();
 
-	addr = (ether_addr_t *) m->DL_HWADDR;
+	addr.ea_addr[0] = state.hwaddr[1] >> 8;
+	addr.ea_addr[1] = state.hwaddr[1] & 0xff;
+	addr.ea_addr[2] = state.hwaddr[0] >> 24;
+	addr.ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
+	addr.ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
+	addr.ea_addr[5] = state.hwaddr[0] & 0xff;
 
-	addr->ea_addr[0] = state.hwaddr[1] >> 8;
-	addr->ea_addr[1] = state.hwaddr[1] & 0xff;
-	addr->ea_addr[2] = state.hwaddr[0] >> 24;
-	addr->ea_addr[3] = (state.hwaddr[0] >> 16) & 0xff;
-	addr->ea_addr[4] = (state.hwaddr[0] >> 8) & 0xff;
-	addr->ea_addr[5] = state.hwaddr[0] & 0xff;
+	memcpy(m->DL_HWADDR, &addr, sizeof(addr));
 
 	m->m_type = DL_CONF_REPLY;
 	m->DL_STAT = OK;
@@ -1155,7 +1163,7 @@ PRIVATE void atl2_dump(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the atl2 driver.
 	 */
@@ -1216,7 +1224,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 	free_contig(state.rxd_base_u,
 		state.rxd_align + ATL2_RXD_COUNT * ATL2_RXD_SIZE);
 
-	vm_unmap_phys(SELF, state.base, state.size);
+	vm_unmap_phys(SELF, (void *) state.base, state.size);
 
 	/* We cannot free the PCI device at this time. */
 
