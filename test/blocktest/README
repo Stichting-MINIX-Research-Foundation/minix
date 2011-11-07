@@ -1,0 +1,10 @@
+Instructions on how to use blocktest:
+
+1) compile it by running 'make'
+2) read test.sh
+3) edit and uncomment one line from test.sh
+4) run './test.sh'
+5) read the output in /var/log/messages
+
+WARNING: while this tool works with both VFS and AVFS, it has been configured
+to use AVFS's headers. Either use with AVFS, or edit blocktest.c first.
