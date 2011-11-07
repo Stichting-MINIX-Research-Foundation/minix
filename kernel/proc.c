@@ -1737,8 +1737,8 @@ PUBLIC void proc_no_time(struct proc * p)
 		 */
 		p->p_cpu_time_left = ms_2_cpu_time(p->p_quantum_size_ms);
 #if DEBUG_RACE
-		RTS_SET(proc_ptr, RTS_PREEMPTED);
-		RTS_UNSET(proc_ptr, RTS_PREEMPTED);
+		RTS_SET(p, RTS_PREEMPTED);
+		RTS_UNSET(p, RTS_PREEMPTED);
 #endif
 	}
 }
