@@ -8,11 +8,10 @@
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
 #include <minix/vfsif.h>
+#include <minix/optset.h>
 #include "buf.h"
 #include "inode.h"
 #include "drivers.h"
-#include "optset.h"
-
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);

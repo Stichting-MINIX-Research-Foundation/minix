@@ -23,6 +23,7 @@ SRCS=  \
 	kprintf.c \
 	kputc.c \
 	kputs.c \
+	optset.c \
 	panic.c \
 	pci_attr_r16.c \
 	pci_attr_r32.c \

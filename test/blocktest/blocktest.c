@@ -6,14 +6,13 @@
 #include <minix/dmap.h>
 #include <minix/sysinfo.h>
 #include <minix/ds.h>
+#include <minix/optset.h>
 #include <sys/ioc_disk.h>
 #include <assert.h>
 
 /* FIXME: use servers/vfs/.. with VFS */
 #include "servers/avfs/const.h"
 #include "servers/avfs/dmap.h"
-
-#include "optset.h"
 
 enum {
 	RESULT_OK,			/* exactly as expected */

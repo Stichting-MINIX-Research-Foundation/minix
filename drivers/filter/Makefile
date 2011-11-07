@@ -1,6 +1,6 @@
 # Makefile for filter driver
 PROG=	filter
-SRCS=	main.c sum.c driver.c util.c optset.c crc.c md5.c
+SRCS=	main.c sum.c driver.c util.c crc.c md5.c
 
 DPADD+= ${LIBDRIVER} ${LIBSYS}
 LDADD+=	-ldriver -lsys

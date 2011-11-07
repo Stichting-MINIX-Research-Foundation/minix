@@ -17,8 +17,7 @@
 #include <string.h>
 #include <minix/config.h>
 #include <minix/const.h>
-
-#include "optset.h"
+#include <minix/optset.h>
 
 FORWARD _PROTOTYPE( void optset_parse_entry, (struct optset *entry,
 						char *ptr, int len)	);
@@ -116,7 +115,7 @@ char *string;
 	 * otherwise.
 	 */
 	for (i = 0; table[i].os_name != NULL; i++) {
-		if (strlen(table[i].os_name) == klen &&
+		if ((int) strlen(table[i].os_name) == klen &&
 			!strncasecmp(table[i].os_name, kptr, klen)) {
 
 			optset_parse_entry(&table[i], vptr, vlen);

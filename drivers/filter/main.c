@@ -8,7 +8,6 @@
  */
 
 #include "inc.h"
-#include "optset.h"
 
 #define _POSIX_SOURCE 1
 #include <signal.h>

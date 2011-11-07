@@ -13,6 +13,7 @@
 #include <minix/ds.h>
 #include <minix/callnr.h>
 #include <minix/driver.h>
+#include <minix/optset.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

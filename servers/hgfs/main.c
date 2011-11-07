@@ -9,8 +9,6 @@
 
 #include "inc.h"
 
-#include "optset.h"
-
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>

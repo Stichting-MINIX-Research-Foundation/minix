@@ -12,7 +12,7 @@ INCS+= 	minix/acpi.h minix/ansi.h minix/audio_fw.h minix/bitmap.h \
 	minix/endpoint.h minix/fslib.h minix/gcov.h minix/hash.h \
 	minix/ioctl.h minix/input.h minix/ipc.h minix/ipcconst.h \
 	minix/keymap.h minix/limits.h minix/mthread.h minix/minlib.h \
-	minix/netdriver.h minix/partition.h minix/portio.h \
+	minix/netdriver.h minix/optset.h minix/partition.h minix/portio.h \
 	minix/priv.h minix/procfs.h minix/profile.h minix/queryparam.h \
 	minix/rs.h minix/safecopies.h minix/sched.h minix/sef.h \
 	minix/sound.h minix/spin.h minix/sys_config.h minix/sysinfo.h \
