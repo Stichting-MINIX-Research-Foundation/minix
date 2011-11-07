@@ -543,7 +543,6 @@ eth_port_t *eth_port;
 			errno));
 	}
 	m.m_type= DL_WRITEV_S;
-	m.DL_ENDPT_LEGACY= this_proc;	/* FIXME: legacy support */
 	m.DL_COUNT= i;
 	m.DL_GRANT= eth_port->etp_osdep.etp_wr_vec_grant;
 
@@ -710,7 +709,6 @@ eth_port_t *eth_port;
 	}
 
 	mess.m_type= DL_READV_S;
-	mess.DL_ENDPT_LEGACY= this_proc;	/* FIXME: legacy support */
 	mess.DL_COUNT= i;
 	mess.DL_GRANT= eth_port->etp_osdep.etp_rd_vec_grant;
 
@@ -822,7 +820,6 @@ eth_port_t *eth_port;
 	message mess;
 
 	mess.m_type= DL_GETSTAT_S;
-	mess.DL_ENDPT_LEGACY= this_proc;	/* FIXME: legacy support */
 	mess.DL_GRANT= eth_port->etp_osdep.etp_stat_gid;
 
 	assert(eth_port->etp_osdep.etp_state == OEPS_IDLE);

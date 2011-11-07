@@ -106,7 +106,6 @@
 #define is_notify(a)		  ((unsigned) ((a) - NOTIFY_MESSAGE) < 0x100)
 #define is_ipc_asynch(ipc_status) \
     (is_ipc_notify(ipc_status) || IPC_STATUS_CALL(ipc_status) == SENDA)
-#define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
 
 /* Shorthands for message parameters passed with notifications. */
 #define NOTIFY_ARG		m2_l1
@@ -182,7 +181,6 @@
 							 */
 
 
-
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
  *===========================================================================*/
@@ -194,8 +192,6 @@
 #define CANCEL       	(DEV_RQ_BASE +  0) /* force a task to cancel */
 #define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
 #define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
-#define TTY_SETPGRP 	(DEV_RQ_BASE + 10) /* set process group */
-#define TTY_EXIT	(DEV_RQ_BASE + 11) /* process group leader exited */	
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
 #define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
 #define DEV_REOPEN     	(DEV_RQ_BASE + 14) /* reopen a minor device */
@@ -205,12 +201,9 @@
 #define DEV_SCATTER_S  	(DEV_RQ_BASE + 22) /* (safecopy) write from a vector */
 #define DEV_GATHER_S   	(DEV_RQ_BASE + 23) /* (safecopy) read into a vector */
 #define DEV_IOCTL_S    	(DEV_RQ_BASE + 24) /* (safecopy) I/O control code */
-#define DEV_MMAP_S     	(DEV_RQ_BASE + 25) /* (safecopy) mmap interface */
 
 #define IS_DEV_RQ(type) (((type) & ~0xff) == DEV_RQ_BASE)
 
-#define DEV_REPLY       (DEV_RS_BASE + 0) /* general task reply */
-#define DEV_CLONED      (DEV_RS_BASE + 1) /* return cloned minor */
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
 #define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
 #define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
@@ -248,21 +241,6 @@
 #define TTY_SPEK	POSITION/* message parameter: ioctl speed, erasing */
 #define TTY_PGRP 	m2_i3	/* message parameter: process group */	
 
-/* Field names for the QIC 02 status reply from tape driver */
-#define TAPE_STAT0	m2_l1
-#define TAPE_STAT1	m2_l2
-
-/* Field names for the fstatvfs call */
-#define FSTATVFS_FD m1_i1
-#define FSTATVFS_BUF m1_p1
-
-/* Field names for the statvfs call */
-#define STATVFS_LEN m1_i1
-#define STATVFS_NAME m1_p1
-#define STATVFS_BUF m1_p2
-
-#define PM_GETSID_PID	m1_i1
-
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
  *===========================================================================*/
@@ -291,7 +269,6 @@
 #define DL_TASK_REPLY	(DL_RS_BASE + 2)
 
 /* Field names for data link layer messages. */
-#define DL_ENDPT_LEGACY	m2_i2	/* obsolete; will be removed */
 #define DL_COUNT	m2_i3
 #define DL_MODE		m2_l1
 #define DL_FLAGS	m2_l1
@@ -854,35 +831,8 @@
 					 */
 
 /*===========================================================================*
- *                Miscellaneous field names				     *
+ *                Common requests and miscellaneous field names		     *
  *===========================================================================*/
-
-/* PM field names */
-/* BRK */
-#define PMBRK_ADDR				m1_p1
-
-/* TRACE */
-#define PMTRACE_ADDR				m2_l1
-
-#define PM_ENDPT				m1_i1
-#define PM_PENDPT				m1_i2
-
-#define PM_NUID					m2_i1
-#define PM_NGID					m2_i2
-
-/* Field names for GETSYSINFO_UP (PM) (obsolete). */
-#define SIU_WHAT	m2_i1
-#  define SIU_LOADINFO	1		/* retrieve load info data */
-#  define SIU_SYSTEMHZ	2		/* retrieve system clock frequency */
-#define SIU_LEN		m2_i2
-#define SIU_WHERE	m2_p1
-
-/* Field names for SELECT (FS). */
-#define SEL_NFDS       m8_i1
-#define SEL_READFDS    m8_p1
-#define SEL_WRITEFDS   m8_p2
-#define SEL_ERRORFDS   m8_p3
-#define SEL_TIMEOUT    m8_p4
 
 #define COMMON_RQ_BASE		0xE00
 
@@ -897,13 +847,41 @@
 #	define GCOV_BUFF_P  m1_p1
 #	define GCOV_BUFF_SZ m1_i1
 
-/* Common request to several system servers: retrieve system information.
- * The GETSYSINFO userland call is an (old and deprecated) alias of this, so do
- * not change the fields or old userland applications may break.
- */
+/* Common request to several system servers: retrieve system information. */
 #define COMMON_GETSYSINFO	(COMMON_RQ_BASE+2)
 #	define SI_WHAT		m1_i1
 #	define SI_WHERE		m1_p1
+
+/* PM field names */
+/* BRK */
+#define PMBRK_ADDR				m1_p1
+
+/* TRACE */
+#define PMTRACE_ADDR				m2_l1
+
+#define PM_ENDPT				m1_i1
+#define PM_PENDPT				m1_i2
+
+#define PM_NUID					m2_i1
+#define PM_NGID					m2_i2
+
+#define PM_GETSID_PID				m1_i1
+
+/* Field names for SELECT (FS). */
+#define SEL_NFDS       m8_i1
+#define SEL_READFDS    m8_p1
+#define SEL_WRITEFDS   m8_p2
+#define SEL_ERRORFDS   m8_p3
+#define SEL_TIMEOUT    m8_p4
+
+/* Field names for the fstatvfs call */
+#define FSTATVFS_FD m1_i1
+#define FSTATVFS_BUF m1_p1
+
+/* Field names for the statvfs call */
+#define STATVFS_LEN m1_i1
+#define STATVFS_NAME m1_p1
+#define STATVFS_BUF m1_p2
 
 /*===========================================================================*
  *                Messages for VM server				     *

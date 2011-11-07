@@ -159,22 +159,15 @@ PUBLIC int do_getsysinfo()
   size_t len;
   int s;
 
-  /* This call leaks important information (the contents of registers). */
+  /* This call leaks important information. In the future, requests from
+   * non-system processes should be denied.
+   */
   if (mp->mp_effuid != 0)
   {
 	printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
 		mp->mp_endpoint, mp->mp_name);
 	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
-  }
-
-  /* This call should no longer be used by user applications. In the future,
-   * requests from non-system processes should be denied. For now, just warn.
-   */
-  if (call_nr == GETSYSINFO)
-  {
-	printf("PM: obsolete call of do_getsysinfo() by proc %d '%s'\n",
-		mp->mp_endpoint, mp->mp_name);
   }
 
   switch(m_in.info_what) {
@@ -201,45 +194,6 @@ PUBLIC int do_getsysinfo()
   if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
   	return(s);
   return(OK);
-}
-
-/*===========================================================================*
- *				do_getsysinfo_up		       	     *
- *===========================================================================*/
-PUBLIC int do_getsysinfo_up()
-{
-  vir_bytes src_addr, dst_addr;
-  struct loadinfo loadinfo;
-  size_t len, real_len;
-  int s;
-
-  printf("PM: obsolete call of do_getsysinfo_up() by proc %d '%s'\n",
-	mp->mp_endpoint, mp->mp_name);
-
-  switch(m_in.SIU_WHAT) {
-  case SIU_LOADINFO:			/* loadinfo is obtained via PM */
-        if ((s = sys_getloadinfo(&loadinfo)) != OK)
-        	return s;
-        src_addr = (vir_bytes) &loadinfo;
-        real_len = sizeof(struct loadinfo);
-        break;
-  case SIU_SYSTEMHZ:
-        src_addr = (vir_bytes) &system_hz;
-        real_len = sizeof(system_hz);
-	break;
-  default:
-  	return(EINVAL);
-  }
-
-  /* Let application know what the length was. */
-  len = real_len;
-  if(len > m_in.SIU_LEN)
-	len = m_in.SIU_LEN;
-
-  dst_addr = (vir_bytes) m_in.SIU_WHERE;
-  if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
-  	return(s);
-  return(real_len);
 }
 
 /*===========================================================================*

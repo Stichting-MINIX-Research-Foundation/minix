@@ -105,7 +105,7 @@ PRIVATE void set_idle_name(char * name, int n)
 #define PICK_HIGHERONLY	2
 
 #define BuildNotifyMessage(m_ptr, src, dst_ptr) \
-	(m_ptr)->m_type = NOTIFY_FROM(src);				\
+	(m_ptr)->m_type = NOTIFY_MESSAGE;				\
 	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
 	switch (src) {							\
 	case HARDWARE:							\

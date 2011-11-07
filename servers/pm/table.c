@@ -90,7 +90,7 @@ _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_reboot,	/* 76 = reboot	*/
 	do_svrctl,	/* 77 = svrctl	*/
 	do_sysuname,	/* 78 = sysuname */
-	do_getsysinfo,	/* 79 = getsysinfo */
+	no_sys,		/* 79 = unused */
 	no_sys,		/* 80 = (getdents) */
 	no_sys, 	/* 81 = unused */
 	no_sys, 	/* 82 = (fstatfs) */
@@ -108,7 +108,7 @@ _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 94 = (ftruncate) */
 	no_sys,		/* 95 = (fchmod) */
 	no_sys,		/* 96 = (fchown) */
-	do_getsysinfo_up,/* 97 = getsysinfo_up */
+	no_sys,		/* 97 = unused */
 	do_sprofile,	/* 98 = sprofile */
 	do_cprofile,	/* 99 = cprofile */
 	/* THE MINIX3 ABI ENDS HERE */

@@ -94,7 +94,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 76 = (reboot) */
 	do_svrctl,	/* 77 = svrctl */
 	no_sys,		/* 78 = (sysuname) */
-	do_getsysinfo,  /* 79 = getsysinfo */
+	no_sys,		/* 79 = unused */
 	do_getdents,	/* 80 = getdents */
 	do_llseek,	/* 81 = llseek */
 	do_fstatfs,	/* 82 = fstatfs */
@@ -112,7 +112,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_ftruncate,	/* 94 = truncate */
 	do_chmod,	/* 95 = fchmod */
 	do_chown,	/* 96 = fchown */
-	no_sys,		/* 97 = (getsysinfo_up) */
+	no_sys,		/* 97 = unused */
 	no_sys,		/* 98 = (sprofile) */
 	no_sys,		/* 99 = (cprofile) */
 	/* THE MINIX3 ABI ENDS HERE */

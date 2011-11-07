@@ -68,18 +68,11 @@ PUBLIC int do_getsysinfo()
   int s;
 
   /* Only su may call do_getsysinfo. This call may leak information (and is not
-   * stable enough to be part of the API/ABI). 
+   * stable enough to be part of the API/ABI). In the future, requests from
+   * non-system processes should be denied.
    */
 
   if (!super_user) return(EPERM);
-
-  /* This call should no longer be used by user applications. In the future,
-   * requests from non-system processes should be denied. For now, just warn.
-   */
-  if (call_nr == GETSYSINFO) {
-	printf("VFS: obsolete call of do_getsysinfo() by proc %d\n",
-		fp->fp_endpoint);
-  }
 
   switch(m_in.info_what) {
   case SI_PROC_TAB:
