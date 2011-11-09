@@ -1557,6 +1557,7 @@ char **argv;
   prog = *argv++;
   while ((arg = *argv++) != 0)
 	if (arg[0] == '-' && arg[1] != 0 && arg[2] == 0) switch (arg[1]) {
+	            case 'y':
 		    case 'p':
 		    case 'a':	automatic ^= 1;	break;
 		    case 'c':
@@ -1571,6 +1572,7 @@ char **argv;
 		    case 'r':	repair ^= 1;	break;
 		    case 'l':	listing ^= 1;	break;
 		    case 's':	listsuper ^= 1;	break;
+		    case 'f':	break;
 		    default:
 			printf("%s: unknown flag '%s'\n", prog, arg);
 		}
@@ -1582,7 +1584,7 @@ char **argv;
 		devgiven = 1;
 	}
   if (!devgiven) {
-	printf("Usage: fsck [-pacilrsz] file\n");
+	printf("Usage: fsck [-yfpacilrsz] file\n");
 	exit(1);
   }
   return(0);

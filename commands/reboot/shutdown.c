@@ -36,9 +36,9 @@
 #include <unistd.h>
 #include <utmp.h>
 #include <errno.h>
-#undef WTMP
 
-static char WTMP[] =		"/usr/adm/wtmp";
+#include "wtmp.h"
+
 static char SHUT_PID[] =	"/usr/run/shutdown.pid";
 static char NOLOGIN[] =		"/etc/nologin";
 
@@ -387,11 +387,15 @@ void write_pid()
 int crash_check()
 {
   struct utmp last;
-  int fd, crashed;
+  int fd = -1, crashed;
   struct stat st;
 
-  if (stat(WTMP, &st) < 0 || st.st_size == 0) return 0;
-  if ((fd = open(WTMP, O_RDONLY)) < 0) return 0;
+  if (stat(STR_ROOT_WTMP, &st) < 0 || st.st_size == 0) {
+  	if (stat(STR_WTMP, &st) < 0 || st.st_size == 0) {
+		return 0;
+	}
+	if ((fd = open(STR_WTMP, O_RDONLY)) < 0) return 0;
+  } else if ((fd = open(STR_ROOT_WTMP, O_RDONLY)) < 0) return 0;
 
   crashed = (lseek(fd, - (off_t) sizeof(last), SEEK_END) == -1
     || read(fd, (void *) &last, sizeof(last)) != sizeof(last)

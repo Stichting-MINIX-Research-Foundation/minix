@@ -17,13 +17,18 @@ case "$#:$1" in
 esac
 
 # Get the device table.
-. /etc/fstab
+FSTAB=/etc/fstab
+touch $FSTAB
+if grep -q "Poor man" $FSTAB
+then	. $FSTAB
+else	root="`awk <$FSTAB '{ if($2=="/") { print $1 } }'`"
+fi
 
 # The real root device may be the RAM disk.
 realroot=`printroot -r`
 
 # If it's an initial fstab, pretend root is real root
-if [ $root = "/dev/ROOT" ]
+if [ "$root" = "/dev/ROOT" -o -z "$root" ]
 then	root=$realroot
 fi
 

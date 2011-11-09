@@ -469,7 +469,7 @@ mkfs.mfs -B $blocksizebytes /dev/$usr || exit
 
 if [ "$nohome" = 0 ]
 then
-	fshome="home=/dev/$home"
+	fshome="/dev/$home	/home	mfs	rw	0	2"
 else	fshome=""
 fi
 
@@ -503,11 +503,8 @@ ln -s /usr/log /mnt/var/log
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
-echo >/mnt/etc/fstab "\
-# Poor man's File System Table.
-
-root=/dev/$root
-usr=/dev/$usr
+echo >/mnt/etc/fstab "/dev/$root	/	mfs	rw	0	1
+/dev/$usr	/usr	mfs	rw	0	2
 $fshome"
 
 					# National keyboard map.

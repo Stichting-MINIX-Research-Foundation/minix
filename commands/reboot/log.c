@@ -19,9 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/utsname.h>
-#undef WTMP
 
-static char WTMP[] = "/usr/adm/wtmp";	/* Record of logins and logouts. */
 static char SHUT_LOG[] = "/usr/adm/log";
 
 char who[8];
@@ -29,9 +27,7 @@ extern char *prog;
 static char *month[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-void write_log _ARGS(( void ));
-
-void write_log()
+void write_log(char *wtmpfile)
 {
   int fd;
   static struct utmp wtmp;
@@ -52,7 +48,7 @@ void write_log()
     strcpy (who,"root");
   else
     strcpy (who,pwd->pw_name);
-  fd = open(WTMP,O_APPEND|O_WRONLY,1);
+  fd = open(wtmpfile,O_APPEND|O_WRONLY|O_CREAT,1);
   if (fd) {
     if (strcmp(prog,"reboot"))
 #ifdef __NBSD_LIBC

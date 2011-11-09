@@ -2,7 +2,6 @@
 
 RANDOM_FILE=/usr/adm/random.dat
 LOCAL_FILE=/usr/etc/rc.local
-LOCAL_FSTAB=/etc/fstab.local
 
 case "$#:$1" in
 1:start|1:stop|1:down)
@@ -188,30 +187,6 @@ start)
 
     # Run the daily cleanup on systems that are not on at night.
     test -f /usr/etc/daily && sh /usr/etc/daily boot &
-
-    # Mount non-standard filesystems
-    [ -f $LOCAL_FSTAB ] && cat $LOCAL_FSTAB | grep -v '^#' | while read fsline
-    do	set $fsline
-	if [ $# -lt 3 ]; then echo "$LOCAL_FSTAB: short line"; continue; fi
-
-	# This line's parameters
-	dev="$1"; mp="$2"; fstype="$3"
-
-	# Sanity checks
-	if mount | fgrep "$dev"; then echo "$dev mounted."; continue; fi
-	if [ ! -b $dev ]; then	echo "$dev missing"; continue; fi
-	if [ ! -d $mp ]; then echo "$mp missing"; continue; fi
-
-	# Do fsck if necessary
-	if shutdown -C
-	then	echo "Checking $fstype $dev"
-		if ! fsck.$fstype -p $dev; then echo "$dev fail"; continue; fi
-	fi
-
-	# Do actual mount command
-	echo "$fstype $dev on $mp:"
-	mount -t $fstype $dev $mp
-   done
 ;;
 stop|down)
     	# Save random data, if /usr is mounted rw.

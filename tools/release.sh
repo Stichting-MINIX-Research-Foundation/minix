@@ -308,19 +308,22 @@ extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -print -path $RELEASEDIR/usr -prune | wc -l >$RELEASEDIR/.rootfiles
 
+fstab_marker="# Poor man's File System Table."
 echo " * Writing fstab"
 if [ "$USB" -ne 0 ]
 then
 	echo \
-'root=/dev/c0d7p0s0
+"$fstab_marker
+root=/dev/c0d7p0s0
 usr=/dev/c0d7p0s2
-' > $RELEASEDIR/etc/fstab
+" > $RELEASEDIR/etc/fstab
 elif [ "$HDEMU" -ne 0 ]
 then
 	echo \
-'root=/dev/c0d7p0s0
+"$fstab_marker
+root=/dev/c0d7p0s0
 usr=/dev/c0d7p0s2
-usr_roflag="-r"' > $RELEASEDIR/etc/fstab
+usr_roflag=\"-r\"" > $RELEASEDIR/etc/fstab
 fi
 
 echo " * Mounting $TMPDISKROOT as $RELEASEMNTDIR"

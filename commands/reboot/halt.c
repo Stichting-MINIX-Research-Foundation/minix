@@ -22,7 +22,9 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-void write_log _ARGS(( void ));
+#include "wtmp.h"
+
+void write_log _ARGS(( char *fn ));
 void usage _ARGS(( void ));
 int main _ARGS(( int argc, char *argv[] ));
 
@@ -127,7 +129,8 @@ char **argv;
   kill(-1, SIGTERM);
   sleep(1);
 
-  write_log();
+  write_log(STR_WTMP);
+  write_log(STR_ROOT_WTMP);
 
   sync();
 

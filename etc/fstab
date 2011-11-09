@@ -1,4 +1,0 @@
-# Poor man's File System Table.
-
-root=/dev/ROOT
-usr=/dev/USR

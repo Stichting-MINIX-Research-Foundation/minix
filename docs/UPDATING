@@ -1,3 +1,13 @@
+20111109:
+	fstab format change. /etc/rc reads both formats for a while.
+	Please convert your /etc/fstab to the new format though as
+	the system will assume the new format in the future.
+
+	A helper script is in etc/. Example:
+	# sh etc/newfstab.sh /etc/fstab >newfstab
+	(Don't redirect to /etc/fstab directly as the shell will
+	truncate it before it can be read.)
+
 20110928:
 	Update your /usr/etc/daily and /etc/man.conf if you
 	want to fully enjoy the manpage fixes.

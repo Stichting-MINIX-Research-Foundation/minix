@@ -28,7 +28,7 @@ SUBDIR=	aal add_route adduser arp ash at autil awk \
 	sleep slip sort spell split srccrc ackstrip \
 	stty su sum svclog swifi sync synctree sysenv \
 	syslogd tail tar tcpd tcpdp tcpstat tee telnet \
-	telnetd term termcap tget time tinyhalt touch tr \
+	telnetd term termcap tget time touch tr \
 	truncate tsort tty udpstat umount uname unexpand \
 	unstack update uud uue version vol wc \
 	whereis which who write writeisofs fetch \
