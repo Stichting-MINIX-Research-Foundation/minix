@@ -9,7 +9,6 @@
 #include <minix/vfsif.h>
 #include "buf.h"
 #include "inode.h"
-#include "drivers.h"
 
 
 /* Declare some local functions. */
@@ -118,10 +117,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	
   init_inode_cache();
 
-  /* Init driver mapping */
-  for (i = 0; i < NR_DEVICES; ++i) 
-	driver_endpoints[i].driver_e = NONE;
-	
   SELF_E = getprocnr();
   buf_pool(DEFAULT_NR_BUFS);
   fs_block_size = _MIN_BLOCK_SIZE;

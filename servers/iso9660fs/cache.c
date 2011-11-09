@@ -14,6 +14,7 @@
 #include "inc.h"
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <minix/bdev.h>
 #include "buf.h"
 
 FORWARD _PROTOTYPE(int read_block, (struct buf *));
@@ -89,7 +90,7 @@ register struct buf *bp;	/* pointer to the buffer to be released */
 PRIVATE int read_block(bp)
 register struct buf *bp;	/* buffer pointer */
 {
-  int r, op;
+  int r;
   u64_t pos;
   int block_size;
 
@@ -98,8 +99,7 @@ register struct buf *bp;	/* buffer pointer */
 
 
   pos = mul64u(bp->b_blocknr, block_size); /* get absolute position */
-  op = MFS_DEV_READ;		/* flag to read */
-  r = block_dev_io(op, fs_dev, SELF_E, bp->b_data, pos, block_size, 0);
+  r = bdev_read(fs_dev, pos, bp->b_data, block_size, BDEV_NOFLAGS);
   if (r != block_size) {
     if (r >= 0) r = END_OF_FILE;
     if (r != END_OF_FILE)

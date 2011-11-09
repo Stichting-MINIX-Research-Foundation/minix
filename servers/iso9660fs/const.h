@@ -55,11 +55,6 @@
 /* maximum size of length of name file used in dir records */
 #define ISO9660_MAX_FILE_ID_LEN 32
 
-#define MFS_DEV_READ    10001
-#define MFS_DEV_WRITE   10002
-#define MFS_DEV_SCATTER 10003
-#define MFS_DEV_GATHER  10004
-
 #define END_OF_FILE   (-104)	/* eof detected */
 
 /* Miscellaneous constants */

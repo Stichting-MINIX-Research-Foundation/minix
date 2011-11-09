@@ -16,6 +16,7 @@
 
 #include "fs.h"
 #include <minix/u64.h>
+#include <minix/bdev.h>
 #include <sys/param.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -326,7 +327,7 @@ int rw_flag;			/* READING or WRITING */
  * is not reported to the caller.  If the error occurred while purging a block
  * from the cache, it is not clear what the caller could do about it anyway.
  */
-  int r, op, op_failed;
+  int r, op_failed;
   u64_t pos;
   dev_t dev;
 
@@ -334,8 +335,12 @@ int rw_flag;			/* READING or WRITING */
 
   if ( (dev = bp->b_dev) != NO_DEV) {
 	pos = mul64u(bp->b_blocknr, fs_block_size);
-	op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
-	r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, fs_block_size);
+	if (rw_flag == READING)
+		r = bdev_read(dev, pos, bp->b_data, fs_block_size,
+			BDEV_NOFLAGS);
+	else
+		r = bdev_write(dev, pos, bp->b_data, fs_block_size,
+			BDEV_NOFLAGS);
 	if (r < 0) {
 		printf("MFS(%d) I/O error on device %d/%d, block %u\n",
 		SELF_E, major(dev), minor(dev), bp->b_blocknr);
@@ -420,6 +425,8 @@ PUBLIC void rw_scattered(
   register int i;
   register iovec_t *iop;
   static iovec_t *iovec = NULL;
+  vir_bytes size;
+  u64_t pos;
   int j, r;
 
   STATICINIT(iovec, NR_IOREQS);
@@ -442,9 +449,9 @@ PUBLIC void rw_scattered(
 	}
   }
 
-  /* Set up I/O vector and do I/O.  The result of dev_io is OK if everything
+  /* Set up I/O vector and do I/O.  The result of bdev I/O is OK if everything
    * went fine, otherwise the error code for the first failed transfer.
-   */  
+   */
   while (bufqsize > 0) {
 	for (j = 0, iop = iovec; j < NR_IOREQS && j < bufqsize; j++, iop++) {
 		bp = bufq[j];
@@ -452,16 +459,18 @@ PUBLIC void rw_scattered(
 		iop->iov_addr = (vir_bytes) bp->b_data;
 		iop->iov_size = (vir_bytes) fs_block_size;
 	}
-	r = block_dev_io(rw_flag == WRITING ? MFS_DEV_SCATTER : MFS_DEV_GATHER,
-			 dev, SELF_E, iovec,
-			 mul64u(bufq[0]->b_blocknr, fs_block_size), j);
+	pos = mul64u(bufq[0]->b_blocknr, fs_block_size);
+	if (rw_flag == READING)
+		r = bdev_gather(dev, pos, iovec, j, BDEV_NOFLAGS, &size);
+	else
+		r = bdev_scatter(dev, pos, iovec, j, BDEV_NOFLAGS, &size);
 
-	/* Harvest the results.  Dev_io reports the first error it may have
+	/* Harvest the results.  libbdev reports the first error it may have
 	 * encountered, but we only care if it's the first block that failed.
 	 */
 	for (i = 0, iop = iovec; i < j; i++, iop++) {
 		bp = bufq[i];
-		if (iop->iov_size != 0) {
+		if (size < iop->iov_size) {
 			/* Transfer failed. An error? Do we care? */
 			if (r != OK && i == 0) {
 				printf(
@@ -478,6 +487,7 @@ PUBLIC void rw_scattered(
 		} else {
 			bp->b_dirt = CLEAN;
 		}
+		size -= iop->iov_size;
 	}
 	bufq += i;
 	bufqsize -= i;

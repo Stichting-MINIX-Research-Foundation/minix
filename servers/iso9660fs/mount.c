@@ -1,6 +1,7 @@
 #include "inc.h"
 #include <minix/vfsif.h>
 #include <minix/ds.h>
+#include <minix/bdev.h>
 #include "const.h"
 #include "glo.h"
 
@@ -39,18 +40,19 @@ PUBLIC int fs_readsuper() {
   }
 
   /* Map the driver endpoint for this major */
-  driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e =  driver_e;
+  bdev_driver(fs_dev, driver_e);
 
   /* Open the device the file system lives on */
-  if (dev_open(driver_e, fs_dev, driver_e,
-	readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
+  if (bdev_open(fs_dev, readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
         return(EINVAL);
   }
 
   /* Read the superblock */
   r = read_vds(&v_pri, fs_dev);
-  if (r != OK)
+  if (r != OK) {
+	bdev_close(fs_dev);
 	return(r);
+  }
 
   /* Return some root inode properties */
   fs_m_out.RES_INODE_NR = ID_DIR_RECORD(v_pri.dir_rec_root);
@@ -102,7 +104,7 @@ PUBLIC int fs_mountpoint()
  *===========================================================================*/
 PUBLIC int fs_unmount(void) {
   release_v_pri(&v_pri);	/* Release the super block */
-  dev_close(driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e, fs_dev);
+  bdev_close(fs_dev);
   unmountdone = TRUE;
   return(OK);
 }

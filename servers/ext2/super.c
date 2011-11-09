@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <minix/bdev.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -92,10 +93,9 @@ register struct super_block *sp; /* pointer to a superblock */
 	panic("can't allocate memory for super_block buffers");
 
   assert(_MIN_BLOCK_SIZE <= sizeof(*ondisk_superblock));
-  r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
-		   (char*) ondisk_superblock, cvu64(super_block_offset),
-		   _MIN_BLOCK_SIZE);
-		   
+  r = bdev_read(dev, cvu64(super_block_offset), (char*) ondisk_superblock,
+	_MIN_BLOCK_SIZE, BDEV_NOFLAGS);
+
   if (r != _MIN_BLOCK_SIZE)
 	return(EINVAL);
 
@@ -178,9 +178,8 @@ register struct super_block *sp; /* pointer to a superblock */
 	gdt_position = (opt.block_with_super + 1) * 1024;
   }
 
-  r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
-                   (char*) ondisk_group_descs, cvu64(gdt_position),
-                   gd_size);
+  r = bdev_read(dev, cvu64(gdt_position), (char*) ondisk_group_descs,
+	gd_size, BDEV_NOFLAGS);
   if (r != gd_size) {
 	printf("Can not read group descriptors\n");
 	return(EINVAL);
@@ -232,8 +231,8 @@ struct super_block *sp; /* pointer to a superblock */
 
   super_copy(ondisk_superblock, sp);
 
-  r = block_dev_io(MFS_DEV_WRITE, sp->s_dev, SELF_E,
-                   sp, cvu64(super_block_offset), SUPER_SIZE_D);
+  r = bdev_write(sp->s_dev, cvu64(super_block_offset), (char *) sp,
+	SUPER_SIZE_D, BDEV_NOFLAGS);
   if (r != SUPER_SIZE_D)
 	printf("ext2: Warning, failed to write superblock to the disk!\n");
 
@@ -250,9 +249,8 @@ struct super_block *sp; /* pointer to a superblock */
         copy_group_descriptors(ondisk_group_descs, sp->s_group_desc,
 			       sp->s_groups_count);
 
-	r = block_dev_io(MFS_DEV_WRITE, sp->s_dev, SELF_E,
-			 (char*) ondisk_group_descs, cvu64(gdt_position),
-			 gd_size);
+	r = bdev_write(sp->s_dev, cvu64(gdt_position),
+		(char*) ondisk_group_descs, gd_size, BDEV_NOFLAGS);
 	if (r != gd_size) {
 		printf("Can not write group descriptors\n");
 	}

@@ -13,14 +13,6 @@ _PROTOTYPE( void reply, (int who, message *m_out)			);
 _PROTOTYPE(struct buf *get_block,(block_t block));
 _PROTOTYPE(void put_block,(struct buf *bp));
 
-/* device.c */
-_PROTOTYPE( int block_dev_io, (int op, dev_t dev, int proc, void *buf,
-			       u64_t pos, int bytes, int flags)		);
-_PROTOTYPE( int dev_open, (endpoint_t driver_e, dev_t dev, int proc,
-			   int flags)					);
-_PROTOTYPE( void dev_close, (endpoint_t driver_e, dev_t dev)		);
-_PROTOTYPE( int fs_new_driver, (void)					);
-
 /* inode.c */
 _PROTOTYPE( int create_dir_record,(struct dir_record *dir, char *buffer,
 				   u32_t address)			);
@@ -35,6 +27,7 @@ _PROTOTYPE( int release_dir_record, (struct dir_record *dir)		);
 
 /* misc.c */
 _PROTOTYPE( int fs_sync, (void)						);
+_PROTOTYPE( int fs_new_driver, (void)					);
 
 /* mount.c */
 _PROTOTYPE( int fs_readsuper, (void)					);

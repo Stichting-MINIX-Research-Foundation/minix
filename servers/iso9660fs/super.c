@@ -5,6 +5,7 @@
 #include <string.h>
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <minix/bdev.h>
 
 /* This function is called when the filesystem is umounted. It releases the 
  * super block. */
@@ -94,7 +95,7 @@ PUBLIC int read_vds(
   while (!vol_ok && i++<MAX_ATTEMPTS) {
 
     /* Read the sector of the super block. */
-    r = block_dev_io(MFS_DEV_READ, dev, SELF_E, sbbuf, offset, ISO9660_MIN_BLOCK_SIZE, 0);
+    r = bdev_read(dev, offset, sbbuf, ISO9660_MIN_BLOCK_SIZE, BDEV_NOFLAGS);
 
     if (r != ISO9660_MIN_BLOCK_SIZE) /* Damaged sector or what? */
       continue;

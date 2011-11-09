@@ -21,6 +21,7 @@
 #include "inode.h"
 #include "super.h"
 #include <minix/vfsif.h>
+#include <minix/libminixfs.h>
 
 PUBLIC char dot1[2] = ".";	/* used for search_dir to bypass the access */
 PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */

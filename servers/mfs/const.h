@@ -98,11 +98,5 @@
 
 #define NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))
 
-/* Args to dev_bio/dev_io */ 
-#define MFS_DEV_READ    10001
-#define MFS_DEV_WRITE   10002 
-#define MFS_DEV_SCATTER 10003
-#define MFS_DEV_GATHER  10004
-
 #endif
 

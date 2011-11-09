@@ -1,5 +1,3 @@
-
-
 /* This file contains the main directory for the server. It waits for a 
  * request and then send a response. */
 
@@ -101,11 +99,7 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the iso9660fs server. */
-   int i;
 
-   /* Init driver mapping */
-   for (i = 0; i < NR_DEVICES; ++i) 
-       driver_endpoints[i].driver_e = NONE;
    /* SELF_E will contain the id of this process */
    SELF_E = getprocnr();
 /*    hash_init(); */			/* Init the table with the ids */

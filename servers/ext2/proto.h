@@ -26,14 +26,6 @@ _PROTOTYPE( void set_blocksize, (unsigned int blocksize, u32_t blocks,
 _PROTOTYPE( void rw_scattered, (dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
 
-/* device.c */
-_PROTOTYPE( int block_dev_io, (int op, dev_t dev, endpoint_t proc_e,
-                               void *buf, u64_t pos, size_t bytes)     );
-_PROTOTYPE( int dev_open, (endpoint_t driver_e, dev_t dev, endpoint_t proc_e,
-				int flags)      );
-_PROTOTYPE( void dev_close, (endpoint_t driver_e, dev_t dev)		);
-_PROTOTYPE( int fs_new_driver, (void)					);
-
 /* ialloc.c */
 _PROTOTYPE( struct inode *alloc_inode, (struct inode *parent, mode_t bits));
 _PROTOTYPE( void free_inode, (struct inode *rip)			);
@@ -59,6 +51,7 @@ _PROTOTYPE( int truncate_inode, (struct inode *rip, off_t len)		);
 /* misc.c */
 _PROTOTYPE( int fs_flush, (void)					);
 _PROTOTYPE( int fs_sync, (void)						);
+_PROTOTYPE( int fs_new_driver, (void)					);
 
 /* mount.c */
 _PROTOTYPE( int fs_mountpoint, (void)					);

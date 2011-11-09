@@ -5,6 +5,7 @@
 #include "fs.h"
 #include <assert.h>
 #include <minix/vfsif.h>
+#include <minix/bdev.h>
 #include "inode.h"
 #include "super.h"
 
@@ -59,6 +60,23 @@ PUBLIC int fs_flush()
 
   flushall(dev);
   invalidate(dev);
+
+  return(OK);
+}
+
+/*===========================================================================*
+ *				fs_new_driver				     *
+ *===========================================================================*/
+PUBLIC int fs_new_driver(void)
+{
+/* Set a new driver endpoint for this device. */
+  dev_t dev;
+  endpoint_t endpt;
+
+  dev = (dev_t) fs_m_in.REQ_DEV;
+  endpt = (endpoint_t) fs_m_in.REQ_DRIVER_E;
+
+  bdev_driver(dev, endpt);
 
   return(OK);
 }

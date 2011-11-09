@@ -11,7 +11,6 @@
 #include <minix/optset.h>
 #include "buf.h"
 #include "inode.h"
-#include "drivers.h"
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
@@ -101,6 +100,8 @@ PUBLIC int main(int argc, char *argv[])
 	if (error == OK)
 		read_ahead(); /* do block read ahead */
   }
+
+  return 0;
 }
 
 /*===========================================================================*
@@ -150,10 +151,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   }
 
   init_inode_cache();
-
-  /* Init driver mapping */
-  for (i = 0; i < NR_DEVICES; ++i)
-	driver_endpoints[i].driver_e = NONE;
 
   SELF_E = getprocnr();
 

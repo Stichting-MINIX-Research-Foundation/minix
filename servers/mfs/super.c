@@ -15,6 +15,7 @@
 #include <string.h>
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <minix/bdev.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -194,8 +195,8 @@ register struct super_block *sp; /* pointer to a superblock */
   if (dev == NO_DEV)
   	panic("request for super_block of NO_DEV");
   
-  r = block_dev_io(MFS_DEV_READ, dev, SELF_E, sbbuf, cvu64(SUPER_BLOCK_BYTES),
-  		   _MIN_BLOCK_SIZE);
+  r = bdev_read(dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
+	BDEV_NOFLAGS);
   if (r != _MIN_BLOCK_SIZE) 
   	return(EINVAL);
   

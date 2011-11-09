@@ -9,7 +9,6 @@
 #include "inode.h"
 #include "buf.h"
 #include "super.h"
-#include "drivers.h"
 
 PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         no_sys,             /* 0   not used */
@@ -44,6 +43,6 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         no_sys,		    /* 29  */		/* Was: fs_newnode */
         fs_rdlink,	    /* 30  */
         fs_getdents,	    /* 31  */
-        fs_statvfs,    /* 32 */
+        fs_statvfs,         /* 32  */
 };
 

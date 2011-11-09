@@ -11,7 +11,6 @@
 #include "inode.h"
 #include "buf.h"
 #include "super.h"
-#include "drivers.h"
 
 PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
     no_sys,             /* 0   not used */

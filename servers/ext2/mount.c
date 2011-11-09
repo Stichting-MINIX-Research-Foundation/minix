@@ -10,9 +10,9 @@
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
-#include "drivers.h"
 #include <minix/ds.h>
 #include <minix/vfsif.h>
+#include <minix/bdev.h>
 
 
 /*===========================================================================*
@@ -61,11 +61,10 @@ PUBLIC int fs_readsuper()
   }
 
   /* Map the driver endpoint for this major */
-  driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e =  driver_e;
+  bdev_driver(fs_dev, driver_e);
 
   /* Open the device the file system lives on. */
-  if (dev_open(driver_e, fs_dev, driver_e,
-	readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
+  if (bdev_open(fs_dev, readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {
         return(EINVAL);
   }
 
@@ -79,7 +78,7 @@ PUBLIC int fs_readsuper()
   /* Is it recognized as a Minix filesystem? */
   if (r != OK) {
 	superblock->s_dev = NO_DEV;
-	dev_close(driver_e, fs_dev);
+	bdev_close(fs_dev);
 	return(r);
   }
 
@@ -120,7 +119,7 @@ PUBLIC int fs_readsuper()
   if (superblock->s_state == EXT2_ERROR_FS) {
 	printf("ext2: filesystem wasn't cleanly unmounted previous time\n");
         superblock->s_dev = NO_DEV;
-	dev_close(driver_e, fs_dev);
+	bdev_close(fs_dev);
 	return(EINVAL);
   }
 
@@ -133,17 +132,17 @@ PUBLIC int fs_readsuper()
   /* Get the root inode of the mounted file system. */
   if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NULL)  {
 	printf("ext2: couldn't get root inode\n");
-	  superblock->s_dev = NO_DEV;
-	  dev_close(driver_e, fs_dev);
-	  return(EINVAL);
+	superblock->s_dev = NO_DEV;
+	bdev_close(fs_dev);
+	return(EINVAL);
   }
 
   if (root_ip != NULL && root_ip->i_mode == 0) {
-	  printf("%s:%d zero mode for root inode?\n", __FILE__, __LINE__);
-	  put_inode(root_ip);
-	  superblock->s_dev = NO_DEV;
-	  dev_close(driver_e, fs_dev);
-	  return(EINVAL);
+	printf("%s:%d zero mode for root inode?\n", __FILE__, __LINE__);
+	put_inode(root_ip);
+	superblock->s_dev = NO_DEV;
+	bdev_close(fs_dev);
+	return(EINVAL);
   }
 
   if (root_ip != NULL && (root_ip->i_mode & I_TYPE) != I_DIRECTORY) {
@@ -151,7 +150,7 @@ PUBLIC int fs_readsuper()
 		 __FILE__, __LINE__);
 	put_inode(root_ip);
 	superblock->s_dev = NO_DEV;
-	dev_close(driver_e, fs_dev);
+	bdev_close(fs_dev);
 	return(EINVAL);
   }
 
@@ -253,7 +252,7 @@ PUBLIC int fs_unmount()
   }
 
   /* Close the device the file system lives on. */
-  dev_close(driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e, fs_dev);
+  bdev_close(fs_dev);
 
   /* Finish off the unmount. */
   superblock->s_dev = NO_DEV;
