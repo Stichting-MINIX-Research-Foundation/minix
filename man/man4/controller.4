@@ -239,50 +239,6 @@ look like a sequence of files.
 If a tape has been written to or opened in write-only mode, then a filemark
 is written if the tape is closed or if a space command is issued.  No extra
 filemark is written if the drive is instructed to write filemarks.
-.SS "Raw Access Devices"
-Under Minix-vmd one can use the raw access devices to program a SCSI
-device entirely from user mode.  The disk and tape devices probe for devices
-when opened, start disks and load tapes, but the raw access devices do
-nothing at all.  Given an open file descriptor to any SCSI character device
-(not just the raw access devices) one can use the following ioctl:
-.PP
-.RS
-ioctl(fd, SCIOCCMD, &scsicmd)
-.RE
-.PP
-The structure whose address is passed as the third argument is defined
-in <sys/scsi.h> as follows:
-.PP
-.RS
-.nf
-struct scsicmd {
-	void	*cmd;
-	size_t	cmdlen;
-	void	*buf;
-	size_t	buflen;
-	void	*sense;
-	size_t	senselen;
-	int	dir;
-};
-.fi
-.RE
-.PP
-.B Cmd
-and
-.B cmdlen
-hold the address and length of an object holding a Group 0 or Group 1
-SCSI command.  The next two fields describe a buffer of at most 8 kilobytes
-used in the data in or out phase.
-.B Dir
-is 0 if data is to be read from the device, 1 if data is written to the
-device.  If the ioctl succeeds then 0 is returned, otherwise -1 with
-.B errno
-set to
-.B EIO
-and the request sense info returned in the buffer described by the sense and
-senselen fields.  If the sense key is zero on error then a host adapter
-error occurred, this means that the device is most likely turned off or not
-present.
 .SH DRIVERS
 By setting the Boot variables
 .BR c0
