@@ -14,18 +14,6 @@
  * The `f' and `e' options were added by Kees Bot for the convenience of 
  * Solaris users accustomed to these options. The `e' option is equivalent to 
  * `a' and `f' is equivalent to  -l. These do not appear in the usage message.
- *
- * VERY IMPORTANT NOTE:
- *	To compile ps, the kernel/, fs/ and pm/ source directories must be in
- *	../../ relative to the directory where ps is compiled (normally the
- *	tools source directory).
- *
- *	If you want your ps to be useable by anyone, you can arrange the
- *	following access permissions (note the protected memory files and set
- *	*group* id on ps):
- *	-rwxr-sr-x  1 bin   kmem       11916 Jul  4 15:31 /bin/ps
- *	crw-r-----  1 bin   kmem      1,   1 Jan  1  1970 /dev/mem
- *	crw-r-----  1 bin   kmem      1,   2 Jan  1  1970 /dev/kmem
  */
 
 /* Some technical comments on this implementation:
