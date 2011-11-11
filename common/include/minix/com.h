@@ -245,14 +245,6 @@
  *                  	   Messages for networking layer		     *
  *===========================================================================*/
 
-/* Message types for network layer requests. This layer acts like a driver. */
-#define NW_OPEN		DEV_OPEN
-#define NW_CLOSE	DEV_CLOSE
-#define NW_READ		DEV_READ
-#define NW_WRITE	DEV_WRITE
-#define NW_IOCTL	DEV_IOCTL
-#define NW_CANCEL	CANCEL
-
 /* Base type for data link layer requests and responses. */
 #define DL_RQ_BASE	0x200		
 #define DL_RS_BASE	0x280		

@@ -11,22 +11,22 @@ from FS:
 | m_type	|   DEVICE  | PROC_NR |	COUNT |	POSITION | ADDRESS |
 |_______________|___________|_________|_______|__________|_________|
 |		|           |         |       |          |         |
-| NW_OPEN 	| minor dev | proc nr | mode  |          |         |
+| DEV_OPEN 	| minor dev | proc nr | mode  |          |         |
 |_______________|___________|_________|_______|__________|_________|
 |		|           |         |       |          |         |
-| NW_CLOSE 	| minor dev | proc nr |       |          |         |
+| DEV_CLOSE 	| minor dev | proc nr |       |          |         |
 |_______________|___________|_________|_______|__________|_________|
 |		|           |         |       |          |         |
-| NW_IOCTL	| minor dev | proc nr |       |	NWIO..	 | address |
+| DEV_IOCTL_S	| minor dev | proc nr |       |	NWIO..	 | address |
 |_______________|___________|_________|_______|__________|_________|
 |		|           |         |       |          |         |
-| NW_READ	| minor dev | proc nr |	count |          | address |
+| DEV_READ_S	| minor dev | proc nr |	count |          | address |
 |_______________|___________|_________|_______|__________|_________|
 |		|           |         |       |          |         |
-| NW_WRITE	| minor dev | proc nr |	count |          | address |
+| DEV_WRITE_S	| minor dev | proc nr |	count |          | address |
 |_______________|___________|_________|_______|__________|_________|
 |		|           |         |       |          |         |
-| NW_CANCEL	| minor dev | proc nr |       |          |         |
+| CANCEL	| minor dev | proc nr |       |          |         |
 |_______________|___________|_________|_______|__________|_________|
 
 from DL_ETH:
