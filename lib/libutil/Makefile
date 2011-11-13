@@ -17,13 +17,12 @@ SRCS=	efun.c getbootfile.c \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
 	raise_default_signal.c \
 	secure_path.c snprintb.c \
-	ttyaction.c  login_cap.c
+	ttyaction.c  login_cap.c stat_flags.c \
 	#disklabel_dkcksum.c disklabel_scan.c \
 	#if_media.c \
 	#sockaddr_snprintf.c
 	#getlabelsector.c
 	#getmaxpartitions.c
-	#stat_flags.c
 	#getrawpartition.c
 	#ttymsg.c
 	#parsedate.y
