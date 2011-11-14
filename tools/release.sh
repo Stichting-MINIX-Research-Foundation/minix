@@ -68,6 +68,8 @@ REVTAG=""
 PACKAGES=1
 MINIMAL=0
 MAKEMAP=0
+EXTRAS_INSTALL=0
+EXTRAS_PATH=
 
 # Do we have git?
 if git --version >/dev/null
@@ -79,11 +81,11 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "j:ls:pmMchu?r:f:L:" c
+while getopts "j:ls:pmMchu?r:f:L:e:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>]" >&2
+		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
 		exit 1
 	;;
 	h)
@@ -125,6 +127,9 @@ do
 		;;
 	L)	PKG_ADD_URL="$OPTARG"
 		CUSTOM_PACKAGES=1
+		;;
+	e)	EXTRAS_INSTALL=1
+		EXTRAS_PATH="$OPTARG"
 		;;
 	esac
 done
@@ -293,6 +298,11 @@ then
 		$RELEASEDIR/usr/share/zoneinfo* $RELEASEDIR/usr/src
 	mkdir -p $RELEASEDIR/usr/src/tools
 	ln $RELEASEDIR/boot/image_big $RELEASEDIR/boot/image/$version
+fi
+
+if [ $EXTRAS_INSTALL -ne 0 ] ; then
+    echo " * Copying files from $EXTRAS_PATH"
+    cp -Rv $EXTRAS_PATH/* $RELEASEDIR
 fi
 
 # If we are making a jail, all is done!
