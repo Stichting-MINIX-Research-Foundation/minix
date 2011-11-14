@@ -185,7 +185,7 @@ static void readmtab(const char *type)
 							  devname[0] != 0) {
 	if (strcmp(type, "dev") == 0) {
 		if (strcmp(version, "1") != 0 && strcmp(version, "2") != 0 &&
-		 	strcmp(version, "3"))
+		 	strcmp(version, "3") && strcmp(version, "MFSv3"))
 			continue;
 	} else {
 		if (strcmp(type, version) != 0) continue;
