@@ -13,6 +13,7 @@
 
 #include "syslib.h"
 #include <timers.h>
+#include <minix/sysutil.h>
 
 PRIVATE timer_t *timers = NULL;
 PRIVATE int expiring = 0;

@@ -6,6 +6,7 @@
 #include <minix/const.h>
 #include <minix/ipc.h>
 #include <minix/com.h>
+#include <minix/syslib.h>
 #include "vassert.h"
 
 VAssert_StateWrapper vassert_state ALIGNED(VASSERT_PAGE_SIZE);
@@ -38,6 +39,9 @@ typedef uint32 VA;
 #endif
 
 static sigjmp_buf segv_jmp;
+
+void libvassert_process_backdoor(uint32, uint32, uint32, reg_t *, reg_t *,
+				 reg_t *, reg_t *);
 
 /*
  *---------------------------------------------------------------------
@@ -143,7 +147,7 @@ VAssert_Init(void)
     * to adjust the given address for segments)
     */
 
-   if(sys_umap(SELF, D, page_address, 1, &ph)) {
+   if(sys_umap(SELF, D, page_address, 1, (phys_bytes *) &ph)) {
    	printf("VAssert_Init: sys_umap failed\n");
 	return -1;
    }

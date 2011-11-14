@@ -111,8 +111,8 @@ static int getnameinfo_atalk __P((const struct sockaddr *, socklen_t, char *,
 
 static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int));
-#endif /* __minix */
 static int hexname __P((const u_int8_t *, size_t, char *, socklen_t));
+#endif /* __minix */
 
 /*
  * Top-level getnameinfo() code.  Look at the address family, and pick an
@@ -579,7 +579,6 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		    (size_t)sdl->sdl_alen, host, hostlen);
 	}
 }
-#endif /* !__minix */
 
 static int
 hexname(cp, len, host, hostlen)
@@ -605,3 +604,4 @@ hexname(cp, len, host, hostlen)
 	}
 	return 0;
 }
+#endif /* !__minix */

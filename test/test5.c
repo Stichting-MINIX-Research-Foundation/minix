@@ -11,13 +11,13 @@
 #include <string.h>
 
 #define ITERATIONS 2
-#define MAX_ERROR 4
+#define MAX_ERROR 3
 
-int errct;
 int subtest;
 int zero[1024];
-
 int sigmap[5] = {9, 10, 11};
+
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv[]));
 _PROTOTYPE(void test5a, (void));
@@ -37,17 +37,6 @@ _PROTOTYPE(void funcalrm, (int s));
 _PROTOTYPE(void test5h, (void));
 _PROTOTYPE(void test5i, (void));
 _PROTOTYPE(void ex, (void));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
-
-#ifdef _ANSI
-void (*Signal(int _sig, void (*_func)(int)))(int);
-#define SIG_ZERO	((void (*)(int))0)	/* default signal handling */
-#else
-sighandler_t Signal();
-/* void (*Signal()) (); */
-#define SIG_ZERO	((void (*)())0)		/* default signal handling */
-#endif
 
 _VOLATILE int childsigs, parsigs, alarms;
 
@@ -57,11 +46,7 @@ char *argv[];
 {
   int i, m = 0x7777;
 
-  printf("Test  5 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_05; mkdir DIR_05");
-  chdir("DIR_05");
+  start(5);
 
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 0001) test5a();
@@ -87,17 +72,17 @@ void test5a()
   for (zp = &zero[0]; zp < &zero[1024]; zp++)
 	if (*zp != 0) flag = 1;
   if (flag) e(0);		/* check if bss is cleared to 0 */
-  if (Signal(1, func1) ==  SIG_ERR) e(1);
-  if (Signal(10, func10) < SIG_ZERO) e(2);
+  if (signal(1, func1) ==  SIG_ERR) e(1);
+  if (signal(10, func10) == SIG_ERR) e(2);
   parpid = getpid();
-  if (childpid = fork()) {
+  if ((childpid = fork()) != 0) {
 	if (childpid < 0) ex();
 	parent(childpid);
   } else {
 	child(parpid);
   }
-  if (Signal(1, SIG_DFL) <  SIG_ZERO) e(4);
-  if (Signal(10, SIG_DFL) < SIG_ZERO) e(5);
+  if (signal(1, SIG_DFL) == SIG_ERR) e(4);
+  if (signal(10, SIG_DFL) == SIG_ERR) e(5);
 }
 
 void parent(childpid)
@@ -131,7 +116,7 @@ int parpid;
 void func1(s)
 int s;				/* for ANSI */
 {
-  if (Signal(1, func1) < SIG_ZERO) e(10);
+  if (signal(1, func1) == SIG_ERR) e(10);
   childsigs++;
 }
 
@@ -143,7 +128,7 @@ int s;
 void func10(s)
 int s;				/* for ANSI */
 {
-  if (Signal(10, func10) < SIG_ZERO) e(11);
+  if (signal(10, func10) == SIG_ERR) e(11);
   parsigs++;
 }
 
@@ -158,11 +143,11 @@ void test5b()
   int cpid, n, pid;
 
   subtest = 1;
-  if ((pid = fork())) {
+  if ((pid = fork()) != 0) {
 	if (pid < 0) ex();
-	if ((pid = fork())) {
+	if ((pid = fork()) != 0) {
 		if (pid < 0) ex();
-		if (cpid = fork()) {
+		if ((cpid = fork()) != 0) {
 			if (cpid < 0) ex();
 			if (kill(cpid, 9) < 0) e(12);
 			if (wait(&n) < 0) e(13);
@@ -187,7 +172,7 @@ void test5c()
   /* Test exit status codes for processes killed by signals. */
   subtest = 3;
   for (i = 0; i < 2; i++) {
-	if (pid = fork()) {
+	if ((pid = fork()) != 0) {
 		if (pid < 0) ex();
 		sleep(2);	/* wait for child to pause */
 		if (kill(pid, sigmap[i]) < 0) {
@@ -213,7 +198,7 @@ void test5d()
   subtest = 4;
   alarms = 0;
   for (i = 0; i < 8; i++) {
-	Signal(SIGALRM, funcalrm);
+	signal(SIGALRM, funcalrm);
 	alarm(1);
 	pause();
 	if (alarms != i + 1) e(24);
@@ -228,14 +213,14 @@ void test5e()
   int n, j;
 
   subtest = 5;
-  if (Signal(8, func8) < SIG_ZERO) e(25);
-  if (n = fork()) {
+  if (signal(8, func8) == SIG_ERR) e(25);
+  if ((n = fork()) != 0) {
 	/* Parent must delay to give child a chance to pause. */
 	if (n < 0) ex();
 	sleep(1);
 	if (kill(n, 8) < 0) e(26);
 	if (wait(&n) < 0) e(27);
-	if (Signal(8, SIG_DFL) < SIG_ZERO) e(28);
+	if (signal(8, SIG_DFL) == SIG_ERR) e(28);
   } else {
 	j = pause();
 	if (errno != EINTR && -errno != EINTR) e(29);
@@ -279,11 +264,11 @@ void test5g()
   int n;
 
   subtest = 7;
-  Signal(11, func11);
-  Signal(11, SIG_IGN);
+  signal(11, func11);
+  signal(11, SIG_IGN);
   n = getpid();
   if (kill(n, 11) != 0) e(1);
-  Signal(11, SIG_DFL);
+  signal(11, SIG_DFL);
 }
 
 void funcalrm(s)
@@ -301,9 +286,9 @@ void test5h()
 
   subtest = 8;
   unlink("XXX.test5");
-  if (Signal(8, func8) < SIG_ZERO) e(1);
+  if (signal(8, func8) == SIG_ERR) e(1);
   pipe(fd);
-  if (n = fork()) {
+  if ((n = fork()) != 0) {
 	/* Parent must delay to give child a chance to pause. */
 	if (n < 0) ex();
 	while (access("XXX.test5", 0) != 0) /* just wait */ ;
@@ -311,7 +296,7 @@ void test5h()
  	unlink("XXX.test5");
 	if (kill(n, 8) < 0) e(2);
 	if (wait(&n) < 0) e(3);
-	if (Signal(8, SIG_DFL) < SIG_ZERO) e(4);
+	if (signal(8, SIG_DFL) == SIG_ERR) e(4);
 	if (close(fd[0]) != 0) e(5);
 	if (close(fd[1]) != 0) e(6);
   } else {
@@ -330,7 +315,7 @@ void test5i()
   pipe(fd);
   unlink("XXXxxxXXX");
 
-  if ( (pid = fork())) {
+  if ((pid = fork()) != 0) {
 	/* Parent */
 	/* Wait until child has started and has created the XXXxxxXXX file. */
 	while (access("XXXxxxXXX", 0) != 0) /* loop */ ;
@@ -354,47 +339,3 @@ void ex()
   exit(1);
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}
-
-#ifdef _ANSI
-void (*Signal(int a, void (*b)(int)))(int)
-#else
-sighandler_t Signal(a, b)
-int a;
-void (*b)();
-#endif
-{
-  if (signal(a, (void (*) ()) b) == (void (*)()) -1)
-	return(SIG_ERR);
-  else
-	return(SIG_ZERO);
-}
-
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

@@ -226,9 +226,7 @@ int	 nice(int);
 __aconst char *crypt(const char *, const char *);
 int	 encrypt(char *, int);
 char	*getpass(const char *);
-#ifndef __minix
 pid_t	 getsid(pid_t);
-#endif /* !__minix */
 #endif
 
 
@@ -356,12 +354,12 @@ int      issetugid(void);
 int	 nfssvc(int, void *);
 #ifndef __minix
 int	 profil(char *, size_t, u_long, u_int);
+#endif /* !__minix */
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in signal.h */
 void	psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
-#endif /* !__minix */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
 #ifdef __minix
 int	 reboot(int, ...);

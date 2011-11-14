@@ -11,5 +11,5 @@ int fputs(const char *s, FILE *fp)
 {
 	assert(fp == stdout || fp == stderr);
 
-	puts(s);
+	return puts(s);
 }

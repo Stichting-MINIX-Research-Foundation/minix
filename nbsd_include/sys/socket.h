@@ -274,6 +274,9 @@ struct cmsghdr {
 
 #include <sys/cdefs.h>
 
+__BEGIN_DECLS
+int	__cmsg_alignbytes(void);
+__END_DECLS
 
 __BEGIN_DECLS
 int	accept(int, struct sockaddr * __restrict, socklen_t * __restrict);

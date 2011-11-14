@@ -4,7 +4,6 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 
-#define _MINIX
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>

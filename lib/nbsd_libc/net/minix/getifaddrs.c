@@ -27,7 +27,7 @@ getifaddrs(struct ifaddrs **ifap)
 	memset(&addr, 0, sizeof(addr));
 	memset(&netmask, 0, sizeof(netmask));
 	ifa.ifa_next = NULL;
-	ifa.ifa_name = "ip";
+	ifa.ifa_name = __UNCONST("ip");
 	addr.sin_family = netmask.sin_family = AF_INET;
 	ifa.ifa_addr = (struct sockaddr *) &addr;
 	ifa.ifa_netmask = (struct sockaddr *) &netmask;
@@ -36,8 +36,9 @@ getifaddrs(struct ifaddrs **ifap)
 
 	if(fd < 0) {
 		char *ipd;
-		if(!(ipd=getenv("IP_DEVICE")))
-			ipd="/dev/ip";
+
+		if(!(ipd = getenv("IP_DEVICE")))
+			ipd = __UNCONST("/dev/ip");
 		if((fd = open(ipd, O_RDWR)) < 0)
 			return -1;
 	}

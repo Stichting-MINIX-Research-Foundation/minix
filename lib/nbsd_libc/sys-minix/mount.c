@@ -46,8 +46,8 @@ int mountflags;
   int use_existing = 0;
 
   /* Default values. */
-  if (type == NULL) type = FSDEFAULT;
-  if (args == NULL) args = "";
+  if (type == NULL) type = __UNCONST(FSDEFAULT);
+  if (args == NULL) args = __UNCONST("");
   reuse = 0;
 
   /* Check mount flags */
@@ -79,7 +79,7 @@ int mountflags;
 		sprintf(label, "fs_%.12s", p);
 	} else {
 		if (stat(name, &statbuf) < 0) return -1;
-		sprintf(label, "fs_%04x%x", statbuf.st_dev, statbuf.st_ino);
+		sprintf(label, "fs_%04x%llx", statbuf.st_dev, statbuf.st_ino);
 	}
   } else {
 		/* label to long? */

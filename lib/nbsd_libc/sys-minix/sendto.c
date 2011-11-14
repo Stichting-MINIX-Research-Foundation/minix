@@ -38,7 +38,6 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
 	int r;
 	nwio_tcpopt_t tcpopt;
 	nwio_udpopt_t udpopt;
-	struct sockaddr_un uds_addr;
 	int uds_sotype = -1;
 
 	r= ioctl(sock, NWIOGTCPOPT, &tcpopt);

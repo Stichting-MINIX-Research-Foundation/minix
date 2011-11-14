@@ -1,6 +1,7 @@
 #define _SYSTEM 1
 #include <lib.h>
 #include <unistd.h>
+#include <string.h>
 
 /* return -1, when the query itself or the processing of query has errors.
  * return 1, when there are more processes waiting to be queried.
@@ -25,7 +26,6 @@ PUBLIC int vm_query_exit(int *endpt)
 PUBLIC int vm_watch_exit(endpoint_t ep)
 {
 	message m;
-	int r;
 
 	memset(&m, 0, sizeof(m));
 	m.VM_WE_EP = ep;

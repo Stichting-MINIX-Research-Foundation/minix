@@ -7,6 +7,8 @@
 #include <minix/const.h>
 #include <minix/devman.h>
 #include <minix/safecopies.h>
+#include <minix/sysutil.h>
+#include <minix/ds.h>
 
 #include "local.h"
 
@@ -192,7 +194,6 @@ PUBLIC endpoint_t devman_get_ep()
 PUBLIC int devman_init() 
 {
 	int res;
-	message msg;
 
 	/* get the endpoint of the HCD */
 	res = ds_retrieve_label_endpt("devman", &devman_ep);

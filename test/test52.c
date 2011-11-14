@@ -89,7 +89,8 @@ void dead_child(int n)
 {
   int status;
   subtest = 4;
-  n = n;
+
+  (void) n; /* Avoid warning about unused parameter */
 
   if (wait(&status) == -1) err(1);
 

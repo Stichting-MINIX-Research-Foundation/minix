@@ -8,17 +8,19 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define MAX_ERROR 4
+#define MAX_ERROR 3
 #define NB 30L
 #define NBOUNDS 6
 
-int errct, subtest, passes, pipesigs;
+int subtest, passes, pipesigs;
 long t1;
 
 char aa[100];
 char b[4] = {0, 1, 2, 3}, c[4] = {10, 20, 30, 40}, d[4] = {6, 7, 8, 9};
 long bounds[NBOUNDS] = {7, 9, 50, 519, 520, 40000L};
 char buff[30000];
+
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv[]));
 _PROTOTYPE(void test19a, (void));
@@ -30,23 +32,17 @@ _PROTOTYPE(void test19f, (void));
 _PROTOTYPE(void test19g, (void));
 _PROTOTYPE(void clraa, (void));
 _PROTOTYPE(void pipecatcher, (int s));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
 
 int main(argc, argv)
 int argc;
 char *argv[];
 {
-  char buffer[PATH_MAX + 1];
   int i, m;
+
+  start(19);
 
   m = (argc == 2 ? atoi(argv[1]) : 0xFFFF);
 
-  system("rm -rf DIR_19; mkdir DIR_19");
-  chdir("DIR_19");
-
-  printf("Test 19 ");
-  fflush(stdout);
   for (i = 0; i < 4; i++) {
 	if (m & 0001) test19a();
 	if (m & 0002) test19b();
@@ -478,41 +474,5 @@ void pipecatcher(s)
 int s;				/* it is supposed to have an arg */
 {
   pipesigs++;
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  fflush(stdout);		/* aargh!  Most results go to stdout and are
-				 * messed up by perror going to stderr.
-				 * Should replace perror by printf and strerror
-				 * in all the tests.
-				 */
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}
-
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
 }
 

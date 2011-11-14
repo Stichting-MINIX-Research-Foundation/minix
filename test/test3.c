@@ -12,42 +12,32 @@
 #include <stdio.h>
 
 #define ITERATIONS 10
-#define MAX_ERROR 4
+#define MAX_ERROR 3
 #define SIZE 64
 
-int errct, subtest;
+int subtest;
 char el_weirdo[] = "\n\t\\\e@@!!##\e\e\n\n";
+
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void test3a, (void));
-_PROTOTYPE(void test3b, (void));
 _PROTOTYPE(void test3c, (void));
 _PROTOTYPE(void test3d, (void));
 _PROTOTYPE(void test3e, (void));
-_PROTOTYPE(void quit, (void));
 _PROTOTYPE(void e, (int n));
 
 int main(argc, argv)
 int argc;
 char *argv[];
 {
-  char buffer[PATH_MAX + 1];
   int i, m = 0xFFFF;
 
-  sync();
-
-
+  start(3);
   if (argc == 2) m = atoi(argv[1]);
-
-  printf("Test  3 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_03; mkdir DIR_03");
-  chdir("DIR_03");
 
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 0001) test3a();
-	if (m & 0002) test3b();
 	if (m & 0004) test3c();
 	if (m & 0010) test3d();
 	if (m & 0020) test3e();
@@ -139,21 +129,6 @@ void test3a()
 
 }
 
-void test3b()
-{
-/* Test uname. */
-
-  struct utsname u;		/* contains all kinds of system ids */
-
-  subtest = 2;
-#if 0
-  errno = -2000;		/* None of these calls set errno. */
-  if (uname(&u) != 0) e(1);
-  if (strcmp(u.sysname, "MINIX") != 0
-	&& strcmp(u.sysname, "Minix") != 0) e(2);    /* only one defined */
-#endif
-}
-
 void test3c()
 {
 /* Test getenv.  Asume HOME, PATH, and LOGNAME exist (not strictly required).*/
@@ -221,32 +196,3 @@ void test3e()
   if (sysconf(_SC_JOB_CONTROL) >= 0) e(5);	/* no job control! */
 }
 
-void quit()
-{
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(4);
-  }
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Test aborted.  Too many errors: ");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}

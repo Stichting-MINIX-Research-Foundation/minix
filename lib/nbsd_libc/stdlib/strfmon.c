@@ -36,7 +36,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.7 2009/01/30 23:46:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__minix)
 #include "namespace.h"
 #include <monetary.h>
 #endif

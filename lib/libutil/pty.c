@@ -117,9 +117,13 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 			linep = line;
 			if (chown(line, getuid(), ttygid) == 0 &&
 			    chmod(line, mode) == 0 &&
+#ifndef __minix
 			    revoke(line) == 0 &&
+#endif
 			    (slave = open(line, O_RDWR, 0)) != -1) {
+#ifndef __minix
 gotit:
+#endif
 				*amaster = master;
 				*aslave = slave;
 				if (name)

@@ -252,14 +252,6 @@ void test27c()
   Chdir("DIR_27");		/* back to test dir */
 
   /* Check on ToLongName etc. */
-#ifdef _POSIX_NO_TRUNC
-# if _POSIX_NO_TRUNC - 0 != -1
-  if (stat(ToLongName, &st) != -1) e(4);	/* name is too long */
-  if (errno != ENAMETOOLONG) e(5);
-# endif
-#else
-# include "error, this case requires dynamic checks and is not handled"
-#endif
   if (stat(ToLongPath, &st) != -1) e(6);	/* path is too long */
   if (errno != ENAMETOOLONG) e(7);
 

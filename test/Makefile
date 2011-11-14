@@ -1,7 +1,7 @@
 # Makefile for the tests.
 
 GCC?=gcc
-CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE  -g 
+CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE  -g  -Wall -Werror
 .if ${COMPILER_TYPE} == "gnu"
 CFLAGS+= -D_NETBSD_SOURCE
 LIBS+= -lm -lcompat_minix
@@ -15,12 +15,12 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	       test21 test22 test23        test25 test26 test27 test28 test29 \
 	test30 test31 test32        test34 test35 test36 test37 test38 \
 	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
-	test42 test45 test47 test48 test49 test50 test51 test52 test53 \
-	test54 test55 test56 test58
+	test42 test45 test47 test49 test50 test51 test52 test53 \
+	test54 test56 test58
 
 BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43 test44 test46
-GCCOBJ=  test45-gcc test49-gcc 
+GCCOBJ=  test45-gcc test48 test49-gcc test55
 GCCFPUOBJ= test51-gcc test52-gcc
 OTHEROBJ= test57 test59
 

@@ -219,7 +219,10 @@ void do_child(int childno) {
 }
 
 void do_parent(void) {
-  int fd_sock, fd_new, yes = 1, exitstatus;
+#ifndef _MINIX
+  int yes = 1;
+#endif
+  int fd_sock, fd_new, exitstatus;
   int sockets[NUMCHILDREN], i;
   fd_set fds_read, fds_write, fds_error;
   fd_set fds_compare_read, fds_compare_write;
@@ -239,7 +242,7 @@ void do_parent(void) {
   my_addr.sin_port = htons(MYPORT); /* Short, network byte order */
   my_addr.sin_addr.s_addr = INADDR_ANY;
   /* Normally we'd zerofill sin_zero, but there is no such thing on Minix */
-#ifndef _MINIX  
+#ifndef _MINIX
   memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
 #endif
   

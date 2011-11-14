@@ -80,7 +80,7 @@ int
 main(int argc, char **argv)
 {
 	int i, ch;
-	GElf_Addr startaddr, endaddr;
+	GElf_Addr startaddr;
 
 	startaddr = BOOTPROG_LOAD_START;
 

@@ -164,8 +164,6 @@ void test28b()
   int other = 0, dot = 0, dotdot = 0;	/* dirent counters */
   int r;			/* Intermediate result */
   int rmdir_result;		/* tmp var */
-  nlink_t nlink;
-  static char bar[20];
   int stat_loc, does_truncate;
 
   subtest = 2;
@@ -210,19 +208,6 @@ void test28b()
 
   if (mkdir("foo", 0777) != 0) e(21);
   System("touch foo/xyzzy");
-#if 0
-  /* Test what happens if the parent link count > LINK_MAX. */
-  /* This takes too long. */
-  for (nlink = 1; nlink < LINK_MAX; nlink++) {	/* make all */
-  	sprintf(bar, "foo/bar.%d", nlink);
-	if (link("foo/xyzzy", bar) != 0) e(24);
-  }
-  if (stat("foo/xyzzy", &st) != 0) e(25);	/* foo now */
-  if (st.st_nlink != LINK_MAX) e(26);	/* is full */
-  if (link("foo/xyzzy", "nono") != -1) e(27);	/* no more */
-  if (errno != EMLINK) e(28);	/* entrys. */
-  System("rm -rf foo/nono");	/* Just in case. */
-#endif
 
   /* Test if rmdir removes only empty dirs */
   if (rmdir("foo") != -1) e(29);/* not empty */

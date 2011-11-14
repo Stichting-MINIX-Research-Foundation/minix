@@ -144,9 +144,10 @@ jmp_buf env;
 char *
  addr()
 {
-  char a;
+  char a, *ret;
 
-  return &a;
+  ret = &a;
+  return(ret);
 }
 
 void garbage()

@@ -1,7 +1,9 @@
 
 #include <minix/vfsif.h>
 #include <minix/type.h>
+#include <minix/syslib.h>
 #include <assert.h>
+#include <string.h>
 
 #include "minixfs.h"
 

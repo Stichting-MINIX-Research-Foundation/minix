@@ -14,7 +14,6 @@
 #include	<errno.h>
 #include	<assert.h>
 
-static int no_debug = -1;
 #define CHECK_DBG(statement)
 
 #if _EM_WSIZE == _EM_PSIZE

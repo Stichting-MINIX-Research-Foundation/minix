@@ -168,10 +168,10 @@ struct tar {
 	int64_t			 entry_padding;
 	int64_t			 realsize;
 #else
-	size_t			 entry_bytes_remaining;
+	int32_t			 entry_bytes_remaining;
 	off_t			 entry_offset;
 	off_t			 entry_padding;
-	size_t			 realsize;
+	int32_t			 realsize;
 #endif
 	struct sparse_block	*sparse_list;
 	struct sparse_block	*sparse_last;
@@ -538,7 +538,7 @@ archive_read_format_tar_skip(struct archive_read *a)
 #ifndef __minix
 	int64_t bytes_skipped;
 #else
-	size_t	bytes_skipped;
+	int32_t	bytes_skipped;
 #endif
 	struct tar* tar;
 

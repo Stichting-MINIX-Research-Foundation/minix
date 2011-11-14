@@ -17,7 +17,7 @@ PUBLIC int getgroups(int ngroups, gid_t *arr)
 {
   message m;
   m.m1_i1 = ngroups;
-  m.m1_p1 = arr;
+  m.m1_p1 = (char *) arr;
 
   return(_syscall(PM_PROC_NR, GETGROUPS, &m));
 }

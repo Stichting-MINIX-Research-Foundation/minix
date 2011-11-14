@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
+
 #define MAX_ERROR 4
 static int errct;
 

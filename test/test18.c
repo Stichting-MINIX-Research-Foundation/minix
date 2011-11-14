@@ -124,7 +124,6 @@ _PROTOTYPE(void quit, (void));
  ****************************************************************************/
 int main(int argc, char **argv)
 {
-  char buffer[PATH_MAX + 1];
   int n, i;
 
   /* Create filenames for MAXOPEN files, the *file[] array. */

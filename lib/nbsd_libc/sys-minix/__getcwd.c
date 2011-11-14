@@ -15,6 +15,9 @@
 #include <limits.h>
 #include <string.h>
 
+/* libc-private interface */
+int __getcwd(char *, size_t);
+
 static int addpath(const char *path, char **ap, const char *entry)
 /* Add the name of a directory entry at the front of the path being built.
  * Note that the result always starts with a slash.
@@ -59,7 +62,8 @@ int __getcwd(char *path, size_t size)
 	struct stat above, current, tmp;
 	struct dirent *entry;
 	DIR *d;
-	char *p, *up, *dotdot;
+	char *p, *up;
+	const char *dotdot = "..";
 	int cycle;
 
 	if (path == NULL || size <= 1) { errno= EINVAL; return -1; }
@@ -70,7 +74,6 @@ int __getcwd(char *path, size_t size)
 	if (stat(".", &current) < 0) return -1;
 
 	while (1) {
-		dotdot= "..";
 		if (stat(dotdot, &above) < 0) { recover(p); return -1; }
 
 		if (above.st_dev == current.st_dev

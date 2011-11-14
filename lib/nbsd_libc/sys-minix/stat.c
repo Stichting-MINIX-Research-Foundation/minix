@@ -31,10 +31,9 @@ static void prev_stat2new_stat(struct stat *new, struct minix_prev_stat *prev)
   new->st_ctimespec.tv_sec = prev->st_ctime;
 }
 
+int _stat(const char *name, struct stat *buffer);
 
-int _stat(name, buffer)
-const char *name;
-struct stat *buffer;
+int _stat(const char *name, struct stat *buffer)
 {
   message m;
   int r;
@@ -65,9 +64,9 @@ struct stat *buffer;
   return r;
 }
 
-int _fstat(fd, buffer)
-int fd;
-struct stat *buffer;
+int _fstat(int fd, struct stat *buffer);
+
+int _fstat(int fd, struct stat *buffer)
 {
   message m;
   int r;
@@ -96,9 +95,9 @@ struct stat *buffer;
   return r;
 }
 
-int _lstat(name, buffer)
-const char *name;
-struct stat *buffer;
+int _lstat(const char *name, struct stat *buffer);
+
+int _lstat(const char *name, struct stat *buffer)
 {
   message m;
   int r;

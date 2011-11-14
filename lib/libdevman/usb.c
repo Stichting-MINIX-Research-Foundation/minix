@@ -6,6 +6,7 @@
 #include <minix/const.h>
 #include <minix/devman.h>
 #include <minix/usb.h>
+#include <minix/sysutil.h>
 
 #include "local.h"
 
@@ -291,7 +292,7 @@ PUBLIC int devman_usb_device_remove(struct devman_usb_dev *dev)
 /****************************************************************************
  *     devman_usb_init                                                      *
  ***************************************************************************/
-PUBLIC int devman_usb_init
+PUBLIC void devman_usb_init
 (int (*_bind_cb)   (struct devman_usb_bind_cb_data *data, endpoint_t ep),
  int (*_unbind_cb) (struct devman_usb_bind_cb_data *data, endpoint_t ep))
 {

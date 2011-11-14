@@ -26,8 +26,8 @@ void util_timer_start(util_timingdata_t *timingdata, char *name)
 		return;
 	}
 
-	read_tsc(&timingdata->starttimes[HIGHCOUNT],
-		&timingdata->starttimes[LOWCOUNT]);
+	read_tsc((u32_t *) &timingdata->starttimes[HIGHCOUNT],
+		 (u32_t *) &timingdata->starttimes[LOWCOUNT]);
 }
 
 void util_timer_end(util_timingdata_t *timingdata)
@@ -35,7 +35,7 @@ void util_timer_end(util_timingdata_t *timingdata)
 	unsigned long h, l, d = 0;
 	int bin;
 
-	read_tsc(&h, &l);
+	read_tsc((u32_t *) &h, (u32_t *) &l);
 	if (!timingdata->starttimes[HIGHCOUNT]) {
 		panic("timer stopped but not started");
 		return;

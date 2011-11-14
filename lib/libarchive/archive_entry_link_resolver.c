@@ -169,7 +169,9 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
     struct archive_entry **e, struct archive_entry **f)
 {
 	struct links_entry *le;
+#ifndef __minix
 	struct archive_entry *t;
+#endif
 
 	*f = NULL; /* Default: Don't return a second entry. */
 

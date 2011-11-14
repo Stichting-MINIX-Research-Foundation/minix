@@ -53,7 +53,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int i, j, m = 0xFFFF;
+  int j, m = 0xFFFF;
 
   start(50);
   prepare();
@@ -109,7 +109,7 @@ int make_file(size)
 off_t size;
 {
   off_t off;
-  int i, fd, r;
+  int fd, r;
 
   if ((fd = open(TESTFILE, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) e(1001);
 
@@ -476,7 +476,7 @@ void sub50g(osize, nsize)
 off_t osize;
 off_t nsize;
 {
-  int fd, r;
+  int fd;
 
   fd = make_file(osize);
 

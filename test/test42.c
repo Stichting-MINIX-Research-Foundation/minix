@@ -883,7 +883,6 @@ void test_attach_child()
 void test_attach()
 {
   pid_t pid;
-  int r, status;
 
   subtest = 9;
 

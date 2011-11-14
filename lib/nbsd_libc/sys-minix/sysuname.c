@@ -5,6 +5,7 @@
 #include <sys/cdefs.h>
 #include "namespace.h"
 #include <lib.h>
+#include <sys/utsname.h>
 
 int sysuname(int req, int field, char *value, size_t len)
 {

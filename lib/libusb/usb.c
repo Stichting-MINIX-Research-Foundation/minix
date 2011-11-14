@@ -187,7 +187,7 @@ PRIVATE void _usb_urb_complete(struct usb_driver *ud, long urb_id)
 #endif
 		ud->urb_completion(urb);
 	} else {
-		printf("WARN: _usb_urb_complete: did not find URB with ID %d", urb_id);
+		printf("WARN: _usb_urb_complete: did not find URB with ID %ld", urb_id);
 	}
 }
 

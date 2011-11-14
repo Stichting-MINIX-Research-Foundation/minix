@@ -38,6 +38,8 @@ __RCSID("$NetBSD: memmove_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 
 #undef memmove
 
+#if __SSP_FORTIFY_LEVEL > 0
+
 void *
 __memmove_chk(void *dst, void *src, size_t len,
     size_t slen)
@@ -46,3 +48,5 @@ __memmove_chk(void *dst, void *src, size_t len,
 		__chk_fail();
 	return memmove(dst, src, len);
 }
+
+#endif

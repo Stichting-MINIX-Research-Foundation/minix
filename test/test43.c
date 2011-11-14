@@ -11,38 +11,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_ERROR 4
+#define MAX_ERROR 3
 
-static int errct = 0;
-static const char *executable, *subtest;
+int subtest;
+static const char *executable;
+
+#include "common.c"
 
 #define ERR (e(__LINE__))
-
-static void e(int n)
-{
-	printf("File %s, error line %d, errno %d: %s\n",
-		subtest, n, errno, strerror(errno));
-
-	if (errct++ > MAX_ERROR) 
-	{
-		printf("Too many errors; test aborted\n");
-		exit(1);
-	}
-}
-
-static void quit(void)
-{
-	if (errct == 0) 
-	{
-		printf("ok\n");
-		exit(0);
-	} 
-	else 
-	{
-		printf("%d errors\n", errct);
-		exit(1);
-	}
-}
 
 static char *remove_last_path_component(char *path)
 {
@@ -113,7 +89,6 @@ static void check_realpath(const char *path, int expected_errno)
 	expected_errno2 = check_path_components(path);
 	
 	/* run realpath */
-	subtest = path;
 	errno = 0;
 	resolved_path = realpath(path, buffer);
 
@@ -122,7 +97,6 @@ static void check_realpath(const char *path, int expected_errno)
 	{
 		if (resolved_path) ERR;
 		if (errno != expected_errno && errno != expected_errno2) ERR;
-		subtest = NULL;
 		return;
 	}
 
@@ -130,7 +104,6 @@ static void check_realpath(const char *path, int expected_errno)
 	if (!resolved_path)
 	{
 		ERR;
-		subtest = NULL;
 		return;
 	}
 	errno = 0;
@@ -157,7 +130,6 @@ static void check_realpath(const char *path, int expected_errno)
 		if (lstat(resolved_path, &statbuf[1]) < 0) { ERR; return; }
 		if ((statbuf[1].st_mode & S_IFMT) != S_IFDIR) ERR;
 	}
-	subtest = NULL;
 }
 
 static void check_realpath_step_by_step(const char *path, int expected_errno)
@@ -227,11 +199,17 @@ static void check_realpath_recurse(const char *path, int depth)
 	/* loop through subdirectories (including . and ..) */
 	if (!(dir = opendir(path))) 
 	{
-		if (errno != ENOENT && errno != ENOTDIR)
+		/* Opening some special files might result in errors when the
+		 * corresponding hardware is not present, or simply when access
+		 * rights prohibit access (e.g., /dev/log).
+		 */
+		if (errno != ENOTDIR
+		    && errno != ENXIO && errno != EIO && errno != EACCES) {
 			ERR;
+		}
 		return;
 	}
-	while (dirent = readdir(dir))
+	while ((dirent = readdir(dir)) != NULL)
 	{
 		/* build path */
 		if (!pathncat(pathsub, sizeof(pathsub), path, dirent->d_name))
@@ -247,7 +225,7 @@ static void check_realpath_recurse(const char *path, int depth)
 }
 
 #define PATH_DEPTH 4
-#define PATH_BASE "/t43"
+#define PATH_BASE "/."
 #define L(x) PATH_BASE "/link_" #x ".tmp"
 
 static char basepath[PATH_MAX + 1];
@@ -255,7 +233,6 @@ static char basepath[PATH_MAX + 1];
 static char *addbasepath(char *buffer, const char *path)
 {
 	size_t basepathlen, pathlen;
-	int slashlen;
 	
 	/* assumption: both start with slash and neither end with it */
 	assert(basepath[0] == '/');
@@ -277,56 +254,6 @@ static char *addbasepath(char *buffer, const char *path)
 	memcpy(buffer, basepath, basepathlen);
 	memcpy(buffer + basepathlen, path, pathlen + 1);
 	return buffer;
-}
-
-static void cleanup(const char *path)
-{
-	DIR *dir;
-	struct dirent *dirent;
-	char pathsub[PATH_MAX + 1];
-	struct stat statbuf;
-	
-	/* determine file type, avoid following links */
-	if (lstat(path, &statbuf) < 0)
-	{
-		if (errno != ENOENT) ERR;
-		return;
-	}
-
-	/* only recursively process directories (NOT symlinks!) */
-	if ((statbuf.st_mode & S_IFMT) != S_IFDIR)
-	{
-		if (unlink(path) < 0) ERR;
-		return;	
-	}
-
-	/* loop through subdirectories (excluding . and ..) */
-	if (!(dir = opendir(path))) 
-	{
-		ERR;
-		return;
-	}
-	while (dirent = readdir(dir))
-	{
-		/* ignore current and parent directories */
-		if (strcmp(dirent->d_name, ".") == 0 || 
-			strcmp(dirent->d_name, "..") == 0)
-			continue;
-			
-		/* build path */
-		if (!pathncat(pathsub, sizeof(pathsub), path, dirent->d_name))
-		{
-			ERR;
-			continue;
-		}
-
-		/* delete path */
-		cleanup(pathsub);
-	}
-	if (closedir(dir) < 0) ERR;
-
-	/* remove the (now empty) directory itself */
-	if (rmdir(path) < 0) ERR;
 }
 
 static void test_dirname(const char *path, const char *exp)
@@ -362,16 +289,14 @@ static void test_dirname(const char *path, const char *exp)
 int main(int argc, char **argv)
 {
 	char buffer1[PATH_MAX + 1], buffer2[PATH_MAX + 1];
+	subtest = 1;
 
 	/* initialize */
-	printf("Test 43 ");
-	fflush(stdout);
+	start(43);
 	executable = argv[0];
 	getcwd(basepath, sizeof(basepath));
-	cleanup(addbasepath(buffer1, PATH_BASE));
 
 	/* prepare some symlinks to make it more difficult */
-	if (mkdir(addbasepath(buffer1, PATH_BASE), S_IRWXU) < 0) ERR;
 	if (symlink("/",      addbasepath(buffer1, L(1))) < 0) ERR;
 	if (symlink(basepath, addbasepath(buffer1, L(2))) < 0) ERR;
 
@@ -387,7 +312,7 @@ int main(int argc, char **argv)
 	check_realpath_step_by_step(addbasepath(buffer1, L(5)), ELOOP);
 
 	/* delete the symlinks */
-	cleanup(addbasepath(buffer1, PATH_BASE));
+	cleanup();
 
 	/* also test dirname */
 	test_dirname("", ".");	

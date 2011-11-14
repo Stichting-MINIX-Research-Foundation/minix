@@ -180,37 +180,6 @@ static int _udp_bind(int sock, const struct sockaddr *address,
 	return r;
 }
 
-static int in_group(uid_t uid, gid_t gid)
-{
-	int r, i;
-	int size;
-	gid_t *list;
-
-	size = sysconf(_SC_NGROUPS_MAX);
-	list = malloc(size * sizeof(gid_t));
-
-	if (list == NULL) {
-		return 0;
-	}
-
-	r= getgroups(size, list);
-	if (r == -1) {
-		free(list);
-		return 0;
-	}
-
-	for (i = 0; i < r; i++) {
-		if (gid == list[i]) {
-			free(list);
-			return 1;
-		}
-	}
-
-	free(list);
-	return 0;
-}
-
-
 static int _uds_bind(int sock, const struct sockaddr *address,
 	socklen_t address_len, struct sockaddr_un *uds_addr)
 {

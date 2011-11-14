@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <limits.h>
+#include <string.h>
 
 /* vprintf() uses kputc() to print characters. */
 void kputc(int c);
@@ -210,12 +211,12 @@ __xfputc(int c, void *arg)
 
 int _vprintf(const char *fmt, va_list argp)
 {
-	__fvprintf(__xfputc, fmt, argp, stdout);
+	return __fvprintf(__xfputc, fmt, argp, stdout);
 }
 
 int _vfprintf(FILE *fp, const char *fmt, va_list argp)
 {
-	__fvprintf(__xfputc, fmt, argp, fp);
+	return	__fvprintf(__xfputc, fmt, argp, fp);
 }
 #endif
 

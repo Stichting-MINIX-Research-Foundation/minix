@@ -117,7 +117,6 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  char buffer[PATH_MAX + 1];
   int n, mask, i;
 
   /* Create filenames for MAXOPEN files, the *filenames[] array. */

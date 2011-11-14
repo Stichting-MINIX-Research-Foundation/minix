@@ -19,27 +19,26 @@ void do_test(void)
 	size_t size;
 	ssize_t nwritten;
 	ssize_t nread;
-	char *filename;
+	char *filename = "pwrite_test_XXXXXXX";
 	int i;
 
 	subtest = 1;
 
-	if((filename = mktemp("pwrite_test_XXXXXXX")) == NULL) e(1);
-	if((fd = open(filename, O_CREAT|O_RDWR)) < 0) e(2);
+	if ((fd = mkstemp(filename)) < 0) e(1);
 
 	size = 1 + rand() % 4096;
 	off = rand();
 
-	if((wbuf = malloc(sizeof(char)*size)) == NULL) e(3);
+	if((wbuf = malloc(sizeof(char)*size)) == NULL) e(2);
 
 	for(i = 0; i < size; i++) {
 		wbuf[i] = 1 + rand()%127;
 	}
 	
-	if((nwritten = pwrite(fd, wbuf, size, off)) < 0) e(4);
-	if((rbuf = malloc(sizeof(char)*nwritten)) == NULL) e(5);
-	if((nread = pread(fd, rbuf, nwritten, off)) < 0) e(6);
-	if(strncmp(rbuf, wbuf, nread) != 0) e(7);
+	if ((nwritten = pwrite(fd, wbuf, size, off)) < 0) e(3);
+	if ((rbuf = malloc(sizeof(char)*nwritten)) == NULL) e(4);
+	if ((nread = pread(fd, rbuf, nwritten, off)) < 0) e(5);
+	if (strncmp(rbuf, wbuf, nread) != 0) e(6);
 
 	close(fd);
 	free(wbuf);

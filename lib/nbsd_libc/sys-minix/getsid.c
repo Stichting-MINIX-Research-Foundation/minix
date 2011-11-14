@@ -1,8 +1,9 @@
 #include <sys/cdefs.h>
-#include <lib.h>
 #include "namespace.h"
+#include <lib.h>
 
 #include <unistd.h>
+#include <string.h>
 
 pid_t getsid(pid_t p)
 {

@@ -209,9 +209,9 @@ pw_cont(int sig)
 void
 pw_init(void)
 {
+#ifndef __minix
 	struct rlimit rlim;
 
-#ifndef __minix
 	/* Unlimited resource limits. */
 	rlim.rlim_cur = rlim.rlim_max = RLIM_INFINITY;
 	(void)setrlimit(RLIMIT_CPU, &rlim);

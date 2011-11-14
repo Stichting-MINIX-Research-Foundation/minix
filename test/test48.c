@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_ERRORS 8
+#define MAX_ERRORS 3
 
 static int errct;
 
@@ -139,7 +139,9 @@ static void test_getnameinfo_err_nr(
 
 static void test_getaddrinfo(
 	const char *nodename, 
+	int nodename_numerical,
 	const char *servname, 
+	int servname_numerical,
 	int passhints, 
 	int flags, 
 	int family,
@@ -153,18 +155,22 @@ static void test_getaddrinfo(
 	struct addrinfo hints;
 	struct sockaddr_in *sockaddr_in;
 	int ai_count_dgram, ai_count_stream, r;
-	
+
 	/* some parameters are only meaningful with hints */
 	assert(passhints || !flags);
 	assert(passhints || family == AF_UNSPEC);
 	assert(passhints || !socktype);
+
+	/* a combination of parameters don't make sense to test */
+	if (nodename == NULL && servname == NULL) return;
+	if (nodename == NULL && (flags & AI_NUMERICHOST)) return;
+	if (servname == NULL && (flags & AI_NUMERICSERV)) return;
 
 	/* initialize hints */
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = flags;
 	hints.ai_family = family;
 	hints.ai_socktype = socktype;
-	hints.ai_family = family;
 
 	/* perform query and test result */
 	ai = (struct addrinfo *) 0xDEADBEEF;
@@ -217,30 +223,45 @@ static void test_getaddrinfo(
 					ntohs(sockaddr_in->sin_port));
 		}
 
-		/* is canonical supplied? */
-		if (exp_canonname && 
-			(!ai_cur->ai_canonname || !*ai_cur->ai_canonname))
-			test_getaddrinfo_err(7, 
-				TEST_GETADDRINFO_ERR_PARAMS, 
-				"(anything)", ai_cur->ai_canonname);
+		/* If a hostname is numeric, there can't be a canonical name.
+		 * Instead, the returned canonname (if requested) will be
+		 * identical to the supplied hostname */
+		if (nodename != NULL && nodename_numerical &&
+		    (flags & AI_CANONNAME)) {
+			if (strncmp(ai_cur->ai_canonname, nodename,
+					strlen(nodename)))
+			test_getaddrinfo_err(11,
+				TEST_GETADDRINFO_ERR_PARAMS,
+				nodename, ai_cur->ai_canonname);
+		} else {
+			/* is canonical supplied? */
+			if (exp_canonname && nodename &&
+			    (!ai_cur->ai_canonname || !*ai_cur->ai_canonname))
+				test_getaddrinfo_err(7,
+					TEST_GETADDRINFO_ERR_PARAMS,
+					"(anything)", ai_cur->ai_canonname);
 
-		if (!exp_canonname && ai_cur->ai_canonname)
-			test_getaddrinfo_err(8, 
-				TEST_GETADDRINFO_ERR_PARAMS, 
-				NULL, ai_cur->ai_canonname);
+			if (!exp_canonname && ai_cur->ai_canonname)
+				test_getaddrinfo_err(8,
+					TEST_GETADDRINFO_ERR_PARAMS,
+					NULL, ai_cur->ai_canonname);
 	
+		}
 		/* move to next result */
 		ai_cur = ai_cur->ai_next;
 	}
 	
-	/* check number of results */
-	if (ai_count_dgram != ((socktype == SOCK_STREAM) ? 0 : 1))
-		test_getaddrinfo_err_nr(9, TEST_GETADDRINFO_ERR_PARAMS, 
+	/* If socket type is non-zero, make sure we got what we wanted. Else
+	 * any result is okay. */
+	if (socktype) {
+		if (ai_count_dgram != ((socktype == SOCK_STREAM) ? 0 : 1))
+			test_getaddrinfo_err_nr(9, TEST_GETADDRINFO_ERR_PARAMS,
 			(socktype == SOCK_STREAM) ? 0 : 1, ai_count_dgram);
 
-	if (ai_count_stream != ((socktype == SOCK_DGRAM) ? 0 : 1))
-		test_getaddrinfo_err_nr(10, TEST_GETADDRINFO_ERR_PARAMS, 
+		if (ai_count_stream != ((socktype == SOCK_DGRAM) ? 0 : 1))
+			test_getaddrinfo_err_nr(10, TEST_GETADDRINFO_ERR_PARAMS,
 			(socktype == SOCK_DGRAM) ? 0 : 1, ai_count_stream);
+	}
 
 	/* clean up */
 	freeaddrinfo(ai);
@@ -308,18 +329,18 @@ static struct
 	int need_network;
 	int exp_result;
 } hosts[] = {
-	{ NULL,              0x7f000001, 1, 1, 0, 0                 },
-	{ "0.0.0.0",         0x00000000, 1, 0, 0, 0,                },
-	{ "0.0.0.255",       0x000000ff, 1, 0, 0, 0,                },
-	{ "0.0.255.0",       0x0000ff00, 1, 0, 0, 0,                },
-	{ "0.255.0.0",       0x00ff0000, 1, 0, 0, 0,                },
-	{ "255.0.0.0",       0xff000000, 1, 0, 0, 0,                },
-	{ "127.0.0.1",       0x7f000001, 1, 0, 0, 0,                },
-	{ "localhost",       0x7f000001, 0, 1, 0, 0,                },
-	{ "minix3.org",      0x82251414, 0, 1, 1, 0,                },
-	{ "",                0x00000000, 1, 0, 0, (1 << EAI_NONAME) },
-	{ "256.256.256.256", 0x00000000, 1, 0, 0, (1 << EAI_NONAME) },
-	{ "minix3.xxx",      0x00000000, 0, 0, 1, (1 << EAI_NONAME) }};
+	{ NULL,             0x7f000001, 1, 1, 0, 0                 },
+	{ "0.0.0.0",        0x00000000, 1, 0, 0, 0                 },
+	{ "0.0.0.255",      0x000000ff, 1, 0, 0, 0                 },
+	{ "0.0.255.0",      0x0000ff00, 1, 0, 0, 0                 },
+	{ "0.255.0.0",      0x00ff0000, 1, 0, 0, 0                 },
+	{ "255.0.0.0",      0xff000000, 1, 0, 0, 0                 },
+	{ "127.0.0.1",      0x7f000001, 1, 0, 0, 0                 },
+	{ "localhost",      0x7f000001, 0, 1, 0, 0,                },
+	{ "minix3.org",     0x82251414, 0, 1, 1, 0,                },
+	{ "",               0x00000000, 1, 0, 0, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)},
+	{ "256.256.256.256",0x00000000, 1, 0, 0, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)},
+	{ "minix3.xxx",     0x00000000, 0, 0, 1, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)}};
 
 static struct
 {
@@ -338,8 +359,8 @@ static struct
 	{ "echo",      7, 0, 0,           0                  },
 	{ "ftp",      21, 0, SOCK_STREAM, 0                  },
 	{ "tftp",     69, 0, SOCK_DGRAM , 0                  },
-	{ "-1",        0, 1, 0,           (1 << EAI_SERVICE) },
-	{ "",          0, 1, 0,           (1 << EAI_SERVICE) },
+	{ "-1",        0, 1, 0,           (1<<EAI_NONAME) | (1<<EAI_SERVICE) },
+	{ "",          0, 1, 0,           (1<<EAI_NONAME) | (1<<EAI_SERVICE) },
 	{ "65537",     0, 1, 0,           (1 << EAI_SERVICE) },
 	{ "XXX",       0, 0, 0,           (1 << EAI_SERVICE) }};
 
@@ -350,7 +371,7 @@ static struct
 } families[] = { 
 	{ AF_UNSPEC,               0                 },
 	{ AF_INET,                 0                 },
-	{ AF_UNSPEC + AF_INET + 1, (1 << EAI_FAMILY) }};
+	{ AF_UNSPEC + AF_INET + 1, (1 << EAI_FAMILY)    }};
 
 static struct 
 {
@@ -360,14 +381,15 @@ static struct
 	{ 0,                            0                   },
 	{ SOCK_STREAM,                  0                   },
 	{ SOCK_DGRAM,                   0                   },
-	{ SOCK_STREAM + SOCK_DGRAM + 1, (1 << EAI_SOCKTYPE) }};
+	{ SOCK_STREAM + SOCK_DGRAM + 1,
+		(1 << EAI_SOCKTYPE) | (1 << EAI_FAIL) | (1 << EAI_NONAME) }};
 
 #define LENGTH(a) (sizeof((a)) / sizeof((a)[0]))
 
 static void test_getaddrinfo_all(int use_network)
 {
 	int flag_PASSIVE, flag_CANONNAME, flag_NUMERICHOST, flag_NUMERICSERV;
-	int exp_results, flags, i, j, k, l, needhints, passhints;
+	int exp_results, flags, i, j, k, l, passhints;
 	unsigned long ipaddr;
 
 	/* loop through various parameter values */
@@ -379,6 +401,7 @@ static void test_getaddrinfo_all(int use_network)
 	for (flag_CANONNAME   = 0; flag_CANONNAME < 2;   flag_CANONNAME++)
 	for (flag_NUMERICHOST = 0; flag_NUMERICHOST < 2; flag_NUMERICHOST++)
 	for (flag_NUMERICSERV = 0; flag_NUMERICSERV < 2; flag_NUMERICSERV++)
+	for (passhints = 0; passhints < 2; passhints++)
 	{
 		/* skip tests that need but cannot use network */
 		if (!use_network && hosts[i].need_network)
@@ -389,6 +412,12 @@ static void test_getaddrinfo_all(int use_network)
 			(flag_CANONNAME   ? AI_CANONNAME : 0) |
 			(flag_NUMERICHOST ? AI_NUMERICHOST : 0) |
 			(flag_NUMERICSERV ? AI_NUMERICSERV : 0);
+
+		/* some options require hints */
+		if (families[k].value != AF_UNSPEC ||
+		    socktypes[l].value != 0 || flags)  {
+			passhints = 1;
+		}
 
 		/* flags may influence IP address */
 		ipaddr = hosts[i].ipaddr;
@@ -408,33 +437,39 @@ static void test_getaddrinfo_all(int use_network)
 			exp_results |= (1 << EAI_NONAME);
 
 		if (flag_NUMERICSERV && !services[j].numeric)
-			exp_results |= (1 << EAI_SERVICE);
+			exp_results |= (1 << EAI_NONAME);
 
-		if (services[j].socktype && socktypes[l].value != services[j].socktype)
-			exp_results |= (1 << EAI_SERVICE);
+		/* When we don't pass hints, getaddrinfo will find suitable
+		 * settings for us. If we do pass hints, there might be
+		 * conflicts.
+		 */
+		if (passhints) {
+			/* Can't have conflicting socket types */
+			if (services[j].socktype &&
+			    socktypes[l].value &&
+			    socktypes[l].value != services[j].socktype) {
+				exp_results |= (1 << EAI_SERVICE);
+			}
+		}
 
 		/* with no reason for failure, we demand success */
 		if (!exp_results)
 			exp_results |= (1 << 0);
 
-		/* some options require hints */
-		needhints = (families[k].value != AF_UNSPEC || 
-			socktypes[l].value != 0 || flags) ? 1 : 0;
-		for (passhints = needhints; passhints < 2; passhints++)
-		{
-			/* test getaddrinfo function */
-			test_getaddrinfo(
-				hosts[i].nodename, 
-				services[j].servname, 
-				passhints, 
-				flags, 
-				families[k].value, 
-				socktypes[l].value, 
-				exp_results, 
-				htonl(ipaddr), 
-				flag_CANONNAME && hosts[i].canonname,  
-				htons(services[j].port));
-		}
+		/* test getaddrinfo function */
+		test_getaddrinfo(
+			hosts[i].nodename,
+			hosts[i].numeric,
+			services[j].servname,
+			services[j].numeric,
+			passhints,
+			flags,
+			families[k].value,
+			socktypes[l].value,
+			exp_results,
+			htonl(ipaddr),
+			flag_CANONNAME && hosts[i].canonname,
+			htons(services[j].port));
 	}
 }
 
@@ -496,12 +531,10 @@ static void test_getnameinfo_all(void)
 
 		/* determine expected result */
 		exp_results = 0;
-		if (!buflens[k] && !buflens[l])
-			exp_results |= (1 << EAI_NONAME);
 		
 		nodename = flag_NUMERICHOST ? ipaddrs[i].nodenum : ipaddrs[i].nodename;
 		if (buflens[k] > 0 && buflens[k] <= strlen(nodename))
-			exp_results |= (1 << EAI_OVERFLOW);
+			exp_results |= (1 << EAI_OVERFLOW) | (1 << EAI_MEMORY);
 
 		socktypemismatch =
 			(flag_DGRAM && ports[j].socktype == SOCK_STREAM) ||
@@ -509,9 +542,9 @@ static void test_getnameinfo_all(void)
 		servname = (flag_NUMERICSERV || socktypemismatch) ? 
 			ports[j].servnum : ports[j].servname;
 		if (buflens[l] > 0 && buflens[l] <= strlen(servname))
-			exp_results |= (1 << EAI_OVERFLOW);
+			exp_results |= (1 << EAI_OVERFLOW) | (1 << EAI_MEMORY);
 
-		if (flag_NAMEREQD && (!ipaddrs[i].havename | flag_NUMERICHOST) && buflens[k])
+		if (flag_NAMEREQD && (!ipaddrs[i].havename || flag_NUMERICHOST) && buflens[k])
 			exp_results |= (1 << EAI_NONAME);
 
 		/* with no reason for failure, we demand success */
@@ -533,7 +566,6 @@ static void test_getnameinfo_all(void)
 
 static int can_use_network(void)
 {
-	pid_t pid;
 	int status;
 
 	/* try to ping minix3.org */
@@ -557,7 +589,6 @@ int main(void)
 	use_network = can_use_network();
 	if (!use_network)
 		printf("Warning: no network\n");
-
 	test_getaddrinfo_all(use_network);
 	test_getnameinfo_all();
 

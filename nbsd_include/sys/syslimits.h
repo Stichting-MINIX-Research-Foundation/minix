@@ -33,7 +33,7 @@
 #define	OPEN_MAX __MINIX_OPEN_MAX /* max open files per process */
 #endif
 #define PATH_MAX __MINIX_PATH_MAX /* # chars in a path name */
-#define PIPE_BUF          7168	/* # bytes in atomic write to a pipe */
+#define PIPE_BUF        32768	/* # bytes in atomic write to a pipe */
 
 #define	BC_BASE_MAX	      INT_MAX	/* max ibase/obase values in bc(1) */
 #define	BC_DIM_MAX		65535	/* max array elements in bc(1) */

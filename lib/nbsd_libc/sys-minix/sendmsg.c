@@ -92,7 +92,7 @@ static ssize_t _uds_sendmsg_dgram(int sock, const struct msghdr *msg,
 {
 	struct msg_control msg_ctrl;
 	struct sockaddr_un *dest_addr;
-	int i, r;
+	int r;
 
 	if (flags != 0) {
 #if DEBUG

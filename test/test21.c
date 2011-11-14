@@ -16,7 +16,7 @@
 #include <stdio.h>
 
 #define ITERATIONS        1
-#define MAX_ERROR 4
+#define MAX_ERROR 3
 
 #include "common.c"
 
@@ -42,14 +42,12 @@ int argc;
 char *argv[];
 {
 
-  char buffer[PATH_MAX + 1];
   int i, m = 0xFFFF;
 
-  sync();
+  start(21);
 
   if (argc == 2) m = atoi(argv[1]);
 
-  start(21);
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 00001) test21a();
 	if (m & 00002) test21b();

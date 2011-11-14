@@ -51,9 +51,7 @@ __RCSID("$NetBSD: strmode.c,v 1.18 2006/10/07 22:04:18 apb Exp $");
 
 #if !HAVE_STRMODE
 void
-strmode(mode, p)
-	mode_t mode;
-	char *p;
+strmode(mode_t mode, char *p)
 {
 
 	_DIAGASSERT(p != NULL);

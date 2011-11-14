@@ -72,20 +72,20 @@ struct {
 } __link_set_all_categories = {
 	.__ls_length = 7,
 	.__ls_items = {
-		[0] = &_generic_LC_ALL_desc,
-		[1] = &_dummy_LC_COLLATE_desc,
+		[0] = __UNCONST(&_generic_LC_ALL_desc),
+		[1] = __UNCONST(&_dummy_LC_COLLATE_desc),
 #ifdef WITH_RUNE
-		[2] = &_citrus_LC_CTYPE_desc,
-		[3] = &_citrus_LC_MONETARY_desc,
-		[4] = &_citrus_LC_NUMERIC_desc,
-		[5] = &_citrus_LC_TIME_desc,
-		[6] = &_citrus_LC_MESSAGES_desc,
+		[2] = __UNCONST(&_citrus_LC_CTYPE_desc),
+		[3] = __UNCONST(&_citrus_LC_MONETARY_desc),
+		[4] = __UNCONST(&_citrus_LC_NUMERIC_desc),
+		[5] = __UNCONST(&_citrus_LC_TIME_desc),
+		[6] = __UNCONST(&_citrus_LC_MESSAGES_desc),
 #else
-		[2] = &_localeio_LC_CTYPE_desc,
-		[3] = &_localeio_LC_MONETARY_desc,
-		[4] = &_localeio_LC_NUMERIC_desc,
-		[5] = &_localeio_LC_TIME_desc,
-		[6] = &_localeio_LC_MESSAGES_desc,
+		[2] = __UNCONST(&_localeio_LC_CTYPE_desc),
+		[3] = __UNCONST(&_localeio_LC_MONETARY_desc),
+		[4] = __UNCONST(&_localeio_LC_NUMERIC_desc),
+		[5] = __UNCONST(&_localeio_LC_TIME_desc),
+		[6] = __UNCONST(&_localeio_LC_MESSAGES_desc),
 #endif
 	},
 };

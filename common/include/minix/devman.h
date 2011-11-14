@@ -64,8 +64,8 @@ _PROTOTYPE( int devman_usb_device_add,       (struct devman_usb_dev *dev));
 _PROTOTYPE( int devman_usb_device_remove,    (struct devman_usb_dev *dev));
 _PROTOTYPE( void devman_usb_device_delete,  (struct devman_usb_dev *udev));
 _PROTOTYPE( int devman_handle_msg,                           (message *m));
-_PROTOTYPE( int devman_usb_init,(devman_usb_bind_cb_t bind_cb,
-                                 devman_usb_bind_cb_t unbind_cb));
+_PROTOTYPE( void devman_usb_init, (devman_usb_bind_cb_t bind_cb,
+				   devman_usb_bind_cb_t unbind_cb)	);
 
 #endif
 

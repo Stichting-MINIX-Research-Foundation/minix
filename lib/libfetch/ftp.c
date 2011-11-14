@@ -903,8 +903,8 @@ retry_mode:
 		int arg;
 #endif
 		int d;
-		char *ap;
 #ifdef INET6
+		char *ap;
 		char hname[INET6_ADDRSTRLEN];
 #endif
 

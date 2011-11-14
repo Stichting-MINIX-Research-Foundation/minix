@@ -147,7 +147,8 @@ void test11c()
   int n, etc_uid;
   uid_t ruid, euid;
   char *lnamep, *cnamep, *p;
-  char array[L_cuserid], save[L_cuserid], save2[L_cuserid];
+#define MAXLINELEN 200
+  char array[MAXLINELEN], save[L_cuserid], save2[L_cuserid];
   FILE *stream;
 
   subtest = 3;
@@ -176,7 +177,7 @@ void test11c()
   /* Check login against passwd file. First lookup login in /etc/passwd. */
   if (n == 0) return;		/* if login not found, don't look it up */
   if ( (stream = fopen(passwd_file, "r")) == NULL) e(8);
-  while (fgets(array, L_cuserid, stream) != NULL) {
+  while (fgets(array, sizeof(array), stream) != NULL) {
 	if (strncmp(array, save, n) == 0) {
 		p = &array[0];		/* hunt for uid */
 		while (*p != ':') p++;

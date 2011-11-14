@@ -55,7 +55,9 @@ tcsetattr(fd, opt, t)
 	int fd, opt;
 	const struct termios *t;
 {
+#ifndef __minix
 	struct termios localterm;
+#endif
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(t != NULL);
@@ -71,11 +73,11 @@ tcsetattr(fd, opt, t)
 #endif /* __minix */
 	switch (opt & ~TCSASOFT) {
 	case TCSANOW:
-		return (ioctl(fd, TIOCSETA, t));
+		return (ioctl(fd, TIOCSETA, __UNCONST(t)));
 	case TCSADRAIN:
-		return (ioctl(fd, TIOCSETAW, t));
+		return (ioctl(fd, TIOCSETAW, __UNCONST(t)));
 	case TCSAFLUSH:
-		return (ioctl(fd, TIOCSETAF, t));
+		return (ioctl(fd, TIOCSETAF, __UNCONST(t)));
 	default:
 		errno = EINVAL;
 		return (-1);

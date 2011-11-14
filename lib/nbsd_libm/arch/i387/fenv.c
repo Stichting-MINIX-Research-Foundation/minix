@@ -119,10 +119,10 @@ static void __test_sse(void) __attribute__ ((constructor));
 
 static void __test_sse(void)
 {
+#ifndef __minix
 	size_t oldlen = sizeof(__HAS_SSE);
 	int rv;
 
-#ifndef __minix
 	rv = sysctlbyname("machdep.sse", &__HAS_SSE, &oldlen, NULL, 0);
 	if (rv == -1)
 #endif

@@ -8,7 +8,6 @@ ssize_t asyn_write(asynchio_t *asyn, int fd, const void *buf, size_t len)
 /* Nonblocking write().  (See asyn_read()). */
 {
 	asynfd_t *afd;
-	ssize_t result;
 
 	asyn->asyn_more++;
 

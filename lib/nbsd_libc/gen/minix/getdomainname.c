@@ -11,17 +11,19 @@
 __weak_alias(getdomainname, _getdomainname)
 #endif
 
-int getdomainname(char *domain, size_t size)
+int getdomainname(char *result, size_t size)
 {
 	char nodename[256];
-	char *dot;
+	char *domain;
 
 	if (gethostname(nodename, sizeof(nodename)) < 0)
 		return -1;
 	nodename[sizeof(nodename)-1]= 0;
-	if ((dot= strchr(nodename, '.')) == nil) dot= ".";
+	if ((domain = strchr(nodename, '.')) != NULL)
+		strncpy(result, domain+1, size);
+	else
+		result[0] = '\0';
 
-	strncpy(domain, dot+1, size);
-	if (size > 0) domain[size-1]= 0;
+	if (size > 0) result[size-1]= 0;
 	return 0;
 }

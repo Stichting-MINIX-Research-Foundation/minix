@@ -204,7 +204,7 @@ static void test_round_values(void)
 static void test_remainder_value(double x, double y)
 {
 	int mode_old;
-	double r1, r2, z;
+	double r1, r2;
 
 	assert(y != 0);
 

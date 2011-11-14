@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
+#include <stdio.h>
 
 /*
  * group_from_gid()

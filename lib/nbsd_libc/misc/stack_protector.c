@@ -58,8 +58,8 @@ __guard_setup(void)
 {
 #ifndef __minix
 	int mib[2];
-#endif
 	size_t len;
+#endif
 
 	if (__stack_chk_guard[0] != 0)
 		return;

@@ -98,7 +98,7 @@ getttyent(void)
 		line = fparseln(tf, &len, &lineno, NULL, FPARSELN_UNESCALL);
 		if (line == NULL) {
 			if (errno != 0)
-				warn(__func__);
+				warn("%s", __func__);
 			return NULL;
 		}
 		for (p = line; *p && isspace((unsigned char)*p); p++)

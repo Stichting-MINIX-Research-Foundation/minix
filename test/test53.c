@@ -20,7 +20,7 @@ static jmp_buf jmpbuf_SIGFPE, jmpbuf_main;
 static void err(int line)
 {
 	/* print error information */
-	printf("error line %d; i=0x%.8x%.8x; j=0x%.8x%.8x; k=0x%.8x%.8x\n", 
+	printf("error line %d; i=0x%.8lx%.8lx; j=0x%.8lx%.8lx; k=0x%.8lx%.8lx\n", 
 		line, 
 		ex64hi(i), ex64lo(i), 
 		ex64hi(j), ex64lo(j),

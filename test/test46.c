@@ -97,7 +97,7 @@ void api_test() {
   * must have super user privileges.
   */
 
-  int r, i, nogroups;
+  int i;
   gid_t *grouplist, *grouplist2;
   long ngroups_max;
 
@@ -197,7 +197,7 @@ void group_test() {
  * the imaginary group, and readable, writable, and both by everyone else (2). 
  */
 
-  int r, i, round, test_result;
+  int i, round;
   gid_t *grouplist;
   long ngroups_max;
 #define ROUNDS 8

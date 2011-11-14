@@ -572,7 +572,6 @@ void test_bind(void)
 
 void test_listen(void)
 {
-	int sd;
 	int rc;
 
 	debug("entering test_listen()");
@@ -718,7 +717,6 @@ void test_sockopts(void)
 	int rc;
 	int sd;
 	int option_value;
-	int option_value_orig;
 	socklen_t option_len;
 
 	debug("entering test_sockopts()");
@@ -984,7 +982,6 @@ void test_dup2(void)
  */
 void test_xfer_server(pid_t pid)
 {
-	struct ucred credentials;
 	socklen_t ucred_length;
 	int i;
 	int on;
@@ -998,8 +995,6 @@ void test_xfer_server(pid_t pid)
 	int client_sd;
 	struct sockaddr_un addr;
 	struct sockaddr_un client_addr;
-	uid_t euid;
-	gid_t egid;
 
 	on = 1;
 	status = 0;
@@ -1203,8 +1198,6 @@ void test_xfer_client(void)
 	int sd;
 	int rc;
 	char buf[BUFSIZE];
-	uid_t uid;
-	gid_t gid;
 
 	debug("[client] entering test_xfer_client()");
 	errct = 0;	/* reset error count */

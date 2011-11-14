@@ -74,7 +74,7 @@ int n;
 {
   int pid, k;
 
-  if (pid = fork()) {
+  if ((pid = fork()) != 0) {
 	wait(&n);		/* wait for some child (any one) */
   } else {
 	k = execl(name[n], (char *) 0);

@@ -7,9 +7,7 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H
 
-#ifndef _MINIX_ANSI_H
 #include <minix/ansi.h>
-#endif
 
 extern char	__ctype[];	/* property array defined in chartab.c */
 
@@ -39,13 +37,13 @@ _PROTOTYPE( int toupper, (int  _c)  );	/* convert to upper-case */
 _PROTOTYPE( int toascii, (int  _c)  );	/* convert to 7-bit ASCII */
 
 /* Macros for identifying character classes. */
-#define isalnum(c)	((__ctype+1)[c]&(_U|_L|_N))
-#define isalpha(c)	((__ctype+1)[c]&(_U|_L))
-#define iscntrl(c)	((__ctype+1)[c]&_C)
-#define isgraph(c)	((__ctype+1)[c]&(_P|_U|_L|_N))
-#define ispunct(c)	((__ctype+1)[c]&_P)
-#define isspace(c)	((__ctype+1)[c]&_S)
-#define isxdigit(c)	((__ctype+1)[c]&(_N|_X))
+#define isalnum(c)	((__ctype+1)[(unsigned char)(c)]&(_U|_L|_N))
+#define isalpha(c)	((__ctype+1)[(unsigned char)(c)]&(_U|_L))
+#define iscntrl(c)	((__ctype+1)[(unsigned char)(c)]&_C)
+#define isgraph(c)	((__ctype+1)[(unsigned char)(c)]&(_P|_U|_L|_N))
+#define ispunct(c)	((__ctype+1)[(unsigned char)(c)]&_P)
+#define isspace(c)	((__ctype+1)[(unsigned char)(c)]&_S)
+#define isxdigit(c)	((__ctype+1)[(unsigned char)(c)]&(_N|_X))
 
 #define isdigit(c)	((unsigned) ((c)-'0') < 10)
 #define islower(c)	((unsigned) ((c)-'a') < 26)

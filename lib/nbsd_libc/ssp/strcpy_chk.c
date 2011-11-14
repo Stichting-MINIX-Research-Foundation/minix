@@ -38,6 +38,8 @@ __RCSID("$NetBSD: strcpy_chk.c,v 1.5 2010/12/28 16:19:25 christos Exp $");
 
 #undef memcpy
 
+#if __SSP_FORTIFY_LEVEL > 0
+
 char *
 __strcpy_chk(char * __restrict dst, const char * __restrict src, size_t slen)
 {
@@ -48,3 +50,5 @@ __strcpy_chk(char * __restrict dst, const char * __restrict src, size_t slen)
 
 	return memcpy(dst, src, len + 1);
 }
+
+#endif

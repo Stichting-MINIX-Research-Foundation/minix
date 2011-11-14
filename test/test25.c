@@ -43,7 +43,6 @@ _PROTOTYPE(void makelongnames, (void));
 
 int main(int argc, char *argv[])
 {
-  char buffer[PATH_MAX + 1];
   int i, m = 0xFFFF;
 
   sync();
