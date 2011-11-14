@@ -10,10 +10,12 @@
 #include <minix/syslib.h>
 #include <minix/rs.h>
 #include <paths.h>
+#include <unistd.h>
 #define OK	0
 
-#define FSPATH "/sbin/"
 #define FSDEFAULT "mfs"
+
+static char fspath[] = "/sbin/:/usr/pkg/bin/"; /* Must include trailing '/' */
 
 PRIVATE int rs_down(char *label)
 {
@@ -32,7 +34,7 @@ int mountflags;
   message m;
   struct stat statbuf;
   char label[16];
-  char path[60];
+  char path[PATH_MAX];
   char cmd[200];
   char *p;
   int reuse = 0;
@@ -42,6 +44,7 @@ int mountflags;
   if (type == NULL) type = FSDEFAULT;
   if (args == NULL) args = "";
   reuse = 0;
+  memset(path, '\0', sizeof(path));
 
   /* Check mount flags */
   if(mountflags & MS_REUSE) {
@@ -87,8 +90,6 @@ int mountflags;
   /* Tell VFS that we are passing in a 16-byte label. */
   mountflags |= MS_LABEL16;
 
-
-
   /* Sanity check on user input. */
   if(strchr(args, '\'')) {
   	errno = EINVAL;
@@ -97,28 +98,40 @@ int mountflags;
   /* start the fs-server if not using existing one */
   if (!use_existing) {
 	/* See if the given type is even remotely valid. */
-    if(strlen(FSPATH)+strlen(type) >= sizeof(path)) {
-		errno = E2BIG;
-		return -1;
-	}
-	strcpy(path, FSPATH);
-	strcat(path, type);
-  
-	if(stat(path, &statbuf) != 0) {
+
+	char *testpath;
+	testpath = strtok(fspath, ":");
+
+	do {
+		if (strlen(testpath) + strlen(type) >= sizeof(path)) {
+			errno = E2BIG;
+			return(-1);
+		}
+
+		strcpy(path, testpath);
+		strcat(path, type);
+
+		if (access(path, F_OK) == 0) break;
+
+	} while ((testpath = strtok(NULL, ":")) != NULL);
+
+	if (testpath == NULL) {
+		/* We were not able to find type somewhere in "fspath" */
 		errno = EINVAL;
-		return -1;
+		return(-1);
 	}
-	
-	if(strlen(_PATH_SERVICE)+strlen(path)+strlen(label)+
-		strlen(args)+50 >= sizeof(cmd)) {
+
+	if (strlen(_PATH_SERVICE) + strlen(path) + strlen(label) +
+	    strlen(args) + 50 >= sizeof(cmd)) {
 		errno = E2BIG;
 		return -1;
 	}
 
-	sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -args '%s%s'",
-		reuse ? "-r ": "", path, label, args[0] ? "-o " : "", args);
+	sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -args '%s %s %s%s'",
+		reuse ? "-r ": "", path, label, special, name,
+		args[0] ? "-o " : "", args);
 
-	if((r = system(cmd)) != 0) {
+	if ((r = system(cmd)) != 0) {
 		fprintf(stderr, "mount: couldn't run %s\n", cmd);
 		errno = r;
 		return -1;
@@ -134,8 +147,8 @@ int mountflags;
   m.m1_p3 = label;
   r = _syscall(VFS_PROC_NR, MOUNT, &m);
 
-  if(r != OK && !use_existing) {
-	/* If mount() failed, tell RS to shutdown MFS process.
+  if (r != OK && !use_existing) {
+	/* If mount() failed, tell RS to shutdown FS process.
 	 * No error check - won't do anything with this error anyway.
 	 */
 	rs_down(label);

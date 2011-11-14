@@ -1,0 +1,167 @@
+.\"	$NetBSD: puffs_cred.3,v 1.3.12.1 2009/02/24 03:45:56 snj Exp $
+.\"
+.\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd October 18, 2007
+.Dt PUFFS_CRED 3
+.Os
+.Sh NAME
+.Nm puffs_cred
+.Nd puffs credential and access control routines
+.Sh LIBRARY
+.Lb libpuffs
+.Sh SYNOPSIS
+.In puffs.h
+.Ft int
+.Fn puffs_cred_getuid "const struct puffs_cred *pcr" "uid_t *uid
+.Ft int
+.Fn puffs_cred_getgid "const struct puffs_cred *pcr" "gid_t *gid"
+.Ft int
+.Fo puffs_cred_getgroups
+.Fa "const struct puffs_cred *pcr" "gid_t *gids" "short *ngids"
+.Fc
+.Pp
+.Ft bool
+.Fn puffs_cred_isuid "const struct puffs_cred *pcr" "uid_t uid"
+.Ft bool
+.Fn puffs_cred_hasgroup "const struct puffs_cred *pcr" "gid_t gid"
+.Ft bool
+.Fn puffs_cred_iskernel "const struct puffs_cred *pcr"
+.Ft bool
+.Fn puffs_cred_isfs "const struct puffs_cred *pcr"
+.Ft bool
+.Fn puffs_cred_isjuggernaut "const struct puffs_cred *pcr"
+.Pp
+.Ft int
+.Fo puffs_access
+.Fa "enum vtype type" "mode_t file_mode" "uid_t owner" "gid_t group"
+.Fa "mode_t access_mode" "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_access_chown
+.Fa "uid_t owner" "gid_t group" "uid_t newowner" "gid_t newgroup"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_access_chmod
+.Fa "uid_t owner" "gid_t group" "enum vtype type" "mode_t newmode"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_access_times
+.Fa "uid_t owner" "gid_t group" "mode_t file_mode" "int va_utimes_null"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Sh DESCRIPTION
+These functions can be used to check operation credentials and perform
+access control.
+The structure
+.Vt struct puffs_cred
+can contain two types of credentials: ones belonging to users and
+ones belonging to the kernel.
+The latter is further divided into generic kernel credentials and
+file system credentials.
+The general rule is that these should be treated as more powerful
+than superuser credentials, but the file system is free to treat
+them as it sees fit.
+.Ss Credentials
+The
+.Fn puffs_cred_get
+family of functions fetch the uid or gid(s) from the given credential
+cookie.
+They return 0 for success or \-1 for an error and set
+.Va errno .
+An error happens when the credentials represent kernel or file system
+credentials and do not contain an uid or gid(s).
+.Pp
+For
+.Fn puffs_cred_getgroups ,
+the argument
+.Fa gids
+should point to an array with room for
+.Fa *ngids
+elements.
+.Pp
+The
+.Fn puffs_cred_is
+family of functions return 1 if the truth value of the function for
+.Fa pcr
+is true and 0 if it is false.
+The function
+.Fn puffs_cred_isjuggernaut
+is true if
+.Fa pcr
+describes superuser, kernel or file system credentials.
+.Ss Access Control
+To help the programmers task of emulating normal kernel file system
+access control semantics, several helper functions are provided to
+check if access is allowed.
+They return 0 if access should be permitted or an errno value to
+indicate that access should be denied with the returned value.
+.Pp
+.Fn puffs_access
+is equivalent to the kernel
+.Fn vaccess
+function.
+The arguments specify current information of the file to be
+tested with the exception of
+.Fa access_mode ,
+which is a combination of
+.Dv PUFFS_VREAD ,
+.Dv PUFFS_VWRITE
+and
+.Dv PUFFS_VEXEC
+indicating the desired file access mode.
+.Pp
+The rest of the functions provide UFS semantics for operations.
+.Fn puffs_access_chown
+checks if it is permissible to chown a file with the current uid
+and gid to the new uid and gid with the credentials of
+.Fa pcr .
+.Pp
+.Fn puffs_access_chmod
+checks against permission to chmod a file of type
+.Fa type
+to the mode
+.Fa newmode .
+.Pp
+Finally,
+.Fn puffs_access_times
+checks if it is allowable to update the timestamps of a file.
+The argument
+.Fa va_utimes_null
+signals if the flags
+.Dv VA_UTIMES_NULL
+was set in
+.Fa va_vaflags
+of
+.Va struct vattr .
+If coming from a path where this information is unavailable, passing
+0 as this argument restricts the permission of modification to the
+owner and superuser.
+Otherwise the function checks for write permissions to the node and
+returns success if the caller has write permissions.
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr vnode 9

@@ -1,0 +1,25 @@
+	$NetBSD: TODO,v 1.3 2007/05/03 21:02:54 agc Exp $
+
+To Do
+=====
+address all XXX
+implement all fuse_opt
+implement proper lookup (pending some libpuffs stuff)
+support fuse_mt (i.e. worker threads, but that'll probably be smarter
+		 to do inside of libpuffs)
+support fuse_ll (i.e. "raw" vfs/vnode export)
+implement all sorts of compat tweaks to appease various file systems
+do proper implementations of dirfillers
+statfs - some fuse file systems want struct statfs and we only have
+         statvfs available natively
+
+Done
+====
+statvfs
+sync
+WARNS=4
+address lint
+special directory handling in open()
+Finish off manual page
+fuse_setup
+fuse_teardown

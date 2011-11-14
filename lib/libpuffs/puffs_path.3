@@ -1,0 +1,125 @@
+.\"	$NetBSD: puffs_path.3,v 1.3.10.1 2009/02/24 03:45:56 snj Exp $
+.\"
+.\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 27, 2007
+.Dt PUFFS_PATH 3
+.Os
+.Sh NAME
+.Nm puffs_path
+.Nd puffs pathbuilding routines
+.Sh LIBRARY
+.Lb libpuffs
+.Sh SYNOPSIS
+.In puffs.h
+.Ft int
+.Fo pu_pathbuild_fn
+.Fa "struct puffs_usermount *pu" "const struct puffs_pathobj *po_dir"
+.Fa "const struct puffs_pathobj *po_comp" "size_t offset"
+.Fa "struct puffs_pathobj *po_new"
+.Fc
+.Ft int
+.Fo pu_pathtransform_fn
+.Fa "struct puffs_usermount *pu" "const struct puffs_pathobj *po_base"
+.Fa "const struct puffs_cn *pcn" "struct puffs_pathobj *po_new"
+.Fc
+.Ft int
+.Fo pu_pathcmp_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_pathobj *po1"
+.Fa "struct puffs_pathobj *po2" "size_t checklen" "int checkprefix"
+.Fc
+.Ft void
+.Fn pu_pathfree_fn "struct puffs_usermount *pu" "struct puffs_pathobj *po"
+.Ft int
+.Fo pu_namemod_fn
+.Fa "struct puffs_usermount *pu" "struct puffs_pathobj *po_dir"
+.Fa "struct puffs_cn *pcn"
+.Fc
+.Ft struct puffs_pathobj *
+.Fn puffs_getrootpathobj "struct puffs_usermount *pu"
+.Sh DESCRIPTION
+The puffs library has the ability to provide full pathnames for backends
+which require them.
+Normal file systems should be constructed without the file system
+node tied to a file name and should not used routines described herein.
+An example of a file system where the backend requires filenames is
+.Xr mount_psshfs 8 .
+.Pp
+The features described here are enabled by passing
+.Dv PUFFS_FLAG_BUILDPATH
+to
+.Fn puffs_init .
+This facility requires to use puffs nodes to store the contents of the
+pathname.
+Either the address of the operation cookie must directly be that of the
+puffs node, or
+.Fn puffs_set_cmap
+must be used to set a mapping function from the cookie to the puffs
+node associated with the cookie.
+Finally, the root node for the file system must be set using
+.Fn puffs_setroot
+and the root path object retrieved using
+.Fn puffs_getrootpathobj
+and initialized.
+.Pp
+There are two different places a filename can be retrieved from.
+It is available for each puffs node after the node has been registered
+with the framework, i.e.
+.Em after
+the routine creating the node returns.
+In other words, there is a window between the node is created and
+when the pathname is available and multithreaded file systems must
+take this into account.
+The second place where a pathname is available is from the componentname
+.Vt struct puffs_pcn
+in operations which are passed one.
+These can be retrieved using the convenience macros
+.Fn PNPATH
+and
+.Fn PCNPATH
+for node and componentname, respectively.
+The type of object they return is
+.Vt void * .
+.Pp
+By default the framework manages "regular" filenames, which consist
+of directory names separated by "/" and a final component.
+If the file system wishes to use pathnames of this format, all it
+has to do it enable the feature.
+Everything else, including bookkeeping for node and directory renames,
+is done by the library.
+The callback routines described next provide the ability to build
+non-standard pathnames.
+A
+.Fn pu_foo_fn
+callback is set using the
+.Fn puffs_set_foo
+routine.
+.Pp
+This manual page is still unfinished.
+Please take a number and wait in line.
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr puffs_node 3 ,
+.Xr mount_psshfs 8 ,
+.Xr mount_sysctlfs 8

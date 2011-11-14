@@ -1,0 +1,243 @@
+.\"	$NetBSD: refuse.3,v 1.7 2007/11/08 17:08:46 pooka Exp $
+.\"
+.\" Copyright © 2007 Alistair Crooks.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 30, 2007
+.Dt REFUSE 3
+.Os
+.Sh NAME
+.Nm refuse
+.Nd Re-implementation of a file system in userspace system
+.Sh LIBRARY
+.Lb librefuse
+.Sh SYNOPSIS
+.In fuse.h
+.Ft int
+.Fo fuse_main
+.Fa "int argc" "char **argv" "const struct fuse_operations *"
+.Fc
+.Ft int
+.Fo fuse_opt_add_arg
+.Fa "struct fuse_args *args" "const char *arg"
+.Fc
+.Ft int
+.Fo fuse_opt_parse
+.Fa "struct fuse_args *args" "void *userdata"
+.Fa "const struct fuse_opt *descriptions" "fuse_opt_proc_t processingfunc"
+.Fc
+.Ft int
+.Fo fuse_teardown
+.Fa "struct fuse *fuse" "char *mountpoint"
+.Fc
+.Ft struct fuse *
+.Fo fuse_setup
+.Fa "int argc" "char **argv" "const struct fuse_operations *ops"
+.Fa "size_t opssize" "char **mountpoint" "int *multithreaded" "int *fd"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_getattr
+.Fa "const char *path" "struct stat *attrs"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_readlink
+.Fa "const char *path" "char *output" "size_t outlen"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_mknod
+.Fa "const char *path" "mode_t permissions" "dev_t devicenumber"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_mkdir
+.Fa "const char *path" "mode_t permissions"
+.Fc
+.Ft int
+.Fo puffs_fuse_unlink
+.Fa "const char *path"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_rmdir
+.Fa "const char *path"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_symlink
+.Fa "const char *path" "const char *target"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_rename
+.Fa "const char *from" "const char *to"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_link
+.Fa "const char *from" "const char *to"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_chmod
+.Fa "const char *path" "mode_t permissions"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_own
+.Fa "const char *path" "uid_t owner" "gid_t group"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_truncate
+.Fa "const char *path" "off_t newsize"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_utime
+.Fa "const char *path" "struct utimbuf *newtimes"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_open
+.Fa "const char *path" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_read
+.Fa "const char *path" "char *buffer" "size_t bufferlen" "off_t startoffset"
+.Fa "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_write
+.Fa "const char *path" "char *buffer" "size_t bufferlen" "off_t startoffset"
+.Fa "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_fs_statfs
+.Fa "const char *path" "struct statvfs *vfsinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_flush
+.Fa "const char *path" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_fsync
+.Fa "const char *path" "int flags" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_setxattr
+.Fa "const char *path" "const char *attrname" "const char *attrvalue"
+.Fa "size_t attrsize" "int flags"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_getxattr
+.Fa "const char *path" "const char *attrname" "const char *attrvalue"
+.Fa "size_t attrvaluesize"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_listxattr
+.Fa "const char *path" "const char *attrname"
+.Fa "size_t attrvaluesize"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_removexattr
+.Fa "const char *path" "const char *attrname"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_opendir
+.Fa "const char *path" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_readdir
+.Fa "const char *path" "void *data" "fuse_fill_dir_t fillinfo"
+.Fa "off_t offset" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_releasedir
+.Fa "const char *path" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_fsyncdir
+.Fa "const char *path" "int flags" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft void *
+.Fo puffs_fuse_fs_init
+.Fa "struct fuse_conn_info *connectioninfo"
+.Fc
+.Ft void
+.Fo puffs_fuse_node_destroy
+.Fa "void *connection"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_access
+.Fa "const char *path" "int accesstype"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_create
+.Fa "const char *path" "mode_t permissions" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_ftruncate
+.Fa "const char *path" "off_t offset" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_fgetattr
+.Fa "const char *path" "struct stat *attrs" "struct fuse_file_info *fileinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_lock
+.Fa "const char *path" "struct fuse_file_info *fileinfo"
+.Fa "int locktype" "struct flock *lockinfo"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_utimens
+.Fa "const char *path" "const struct timespec *newtimes"
+.Fc
+.Ft int
+.Fo puffs_fuse_node_bmap
+.Fa "const char *path" "size_t mapsize" "uint64_t offset"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a reimplementation of the file system in user space subsystem.
+Operations are transported from the kernel virtual file system layer
+to the concrete implementation behind
+.Nm ,
+where they are processed and results are sent back to the kernel.
+.Pp
+It uses the framework provided by the
+.Xr puffs 3
+subsystem, and, through that, the kernel interface provided by
+.Xr puffs 4 .
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr puffs 4
+.Rs
+.%A Antti Kantee
+.%A Alistair Crooks
+.%D September 2007
+.%J EuroBSDCon 2007
+.%T ReFUSE: Userspace FUSE Reimplementation Using puffs
+.Re
+.Sh HISTORY
+An unsupported experimental version of
+.Nm
+first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq agc@NetBSD.org ,
+.An Antti Kantee Aq pooka@NetBSD.org
+.Sh BUGS
+Many, legion, but well-loved.

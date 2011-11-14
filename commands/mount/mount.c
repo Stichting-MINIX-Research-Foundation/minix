@@ -28,7 +28,7 @@ char *argv[];
 {
   int i, n, v = 0, mountflags, write_mtab;
   char **ap, *vs, *opt, *err, *type, *args, *device;
-  char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
+  char special[PATH_MAX], mounted_on[PATH_MAX], version[10], rw_flag[10];
 
   if (argc == 1) list();	/* just list /etc/mtab */
   mountflags = 0;
@@ -104,9 +104,9 @@ char *argv[];
   /* For MFS, use a version number. Otherwise, use the FS type name. */
   if (!strcmp(type, MINIX_FS_TYPE)) {
 	switch (v) {
-		case FSVERSION_MFS1: vs = "1"; break;
-		case FSVERSION_MFS2: vs = "2"; break;
-		case FSVERSION_MFS3: vs = "3"; break;		
+		case FSVERSION_MFS1: vs = "MFSv1"; break;
+		case FSVERSION_MFS2: vs = "MFSv2"; break;
+		case FSVERSION_MFS3: vs = "MFSv3"; break;
 		default: vs = "0"; break;
 	}
   } else {
@@ -131,7 +131,7 @@ char *argv[];
 void list()
 {
   int n;
-  char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
+  char special[PATH_MAX], mounted_on[PATH_MAX], version[10], rw_flag[10];
 
   /* Read and print /etc/mtab. */
   n = load_mtab("mount");

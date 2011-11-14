@@ -1,0 +1,763 @@
+.\"	$NetBSD: puffs_ops.3,v 1.21.4.2 2009/04/12 02:24:16 snj Exp $
+.\"
+.\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 16, 2007
+.Dt PUFFS_OPS 3
+.Os
+.Sh NAME
+.Nm puffs_ops
+.Nd puffs callback operations
+.Sh LIBRARY
+.Lb libpuffs
+.Sh SYNOPSIS
+.In puffs.h
+.Ft int
+.Fo puffs_fs_statvfs
+.Fa "struct puffs_usermount *pu" "struct statvfs *sbp"
+.Fc
+.Ft int
+.Fo puffs_fs_sync
+.Fa "struct puffs_usermount *pu" "int waitfor" "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_fs_fhtonode
+.Fa "struct puffs_usermount *pu" "void *fid" "size_t fidsize"
+.Fa "struct puffs_newinfo *pni"
+.Fc
+.Ft int
+.Fo puffs_fs_nodetofh
+.Fa "struct puffs_usermount *pu" "puffs_cooie_t cookie" "void *fid"
+.Fa "size_t *fidsize"
+.Fc
+.Ft void
+.Fn puffs_fs_suspend "struct puffs_usermount *pu" "int status"
+.Ft int
+.Fo puffs_fs_unmount
+.Fa "struct puffs_usermount *pu" "int flags"
+.Fc
+.Ft int
+.Fo puffs_node_lookup
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_create
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fa "const struct vattr *vap"
+.Fc
+.Ft int
+.Fo puffs_node_mknod
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fa "const struct vattr *vap"
+.Fc
+.Ft int
+.Fo puffs_node_open
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int mode"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_close
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int flags"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_access
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int mode"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_getattr
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "struct vattr *vap"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_setattr
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "const struct vattr *vap"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_poll
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int *events"
+.Fc
+.Ft int
+.Fo puffs_node_mmap
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int flags"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_fsync
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "const struct puffs_cred *pcr" "int flags" "off_t offlo" "off_t offhi"
+.Fc
+.Ft int
+.Fo puffs_node_seek
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "off_t oldoff"
+.Fa "off_t newoff" "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_remove
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t targ"
+.Fa "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_link
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t targ"
+.Fa "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_rename
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t src"
+.Fa "const struct puffs_cn *pcn_src" "puffs_cookie_t targ_dir"
+.Fa "puffs_cookie_t targ" "const struct puffs_cn *pcn_targ"
+.Fc
+.Ft int
+.Fo puffs_node_mkdir
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fa "const struct vattr *vap"
+.Fc
+.Ft int
+.Fo puffs_node_rmdir
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t targ"
+.Fa "const struct puffs_cn *pcn"
+.Fc
+.Ft int
+.Fo puffs_node_readdir
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "struct dirent *dent"
+.Fa "off_t *readoff" "size_t *reslen" "const struct puffs_cred *pcr"
+.Fa "int *eofflag" "off_t *cookies" "size_t *ncookies"
+.Fc
+.Ft int
+.Fo puffs_node_symlink
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni"
+.Fa "const struct puffs_cn *pcn_src" "const struct vattr *vap"
+.Fa "const char *link_target"
+.Fc
+.Ft int
+.Fo puffs_node_readlink
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "const struct puffs_cred *pcr" "char *link" "size_t *linklen"
+.Fc
+.Ft int
+.Fo puffs_node_read
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "uint8_t *buf"
+.Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
+.Fc
+.Ft int
+.Fo puffs_node_write
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "uint8_t *buf"
+.Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
+.Fc
+.Ft int
+.Fn puffs_node_print "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Ft int
+.Fo puffs_node_reclaim
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fc
+.Ft int
+.Fo puffs_node_inactive
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fc
+.Ft void
+.Fn puffs_setback "struct puffs_cc *pcc" "int op"
+.Ft void
+.Fn puffs_newinfo_setcookie "struct puffs_newinfo *pni" "puffs_cookie_t cookie"
+.Ft void
+.Fn puffs_newinfo_setvtype "struct puffs_newinfo *pni" "enum vtype vtype"
+.Ft void
+.Fn puffs_newinfo_setsize "struct puffs_newinfo *pni" "voff_t size"
+.Ft void
+.Fn puffs_newinfo_setrdev "struct puffs_newinfo *pni" "dev_t rdev"
+.Sh DESCRIPTION
+The operations
+.Nm puffs
+requires to function can be divided into two categories: file system
+callbacks and node callbacks.
+The former affect the entire file system while the latter are targeted
+at a file or a directory and a file.
+They are roughly equivalent to the vfs and vnode operations in the
+kernel.
+.Pp
+All callbacks can be prototyped with the file system name and operation
+name using the macro
+.Fn PUFFSOP_PROTOS fsname .
+.Ss File system callbacks (puffs_fs)
+.Bl -tag -width xxxx
+.It Fn puffs_fs_statvfs "pu" "sbp"
+The following fields of the argument
+.Fa sbp
+need to be filled:
+.Bd -literal
+ * unsigned long  f_bsize;     file system block size
+ * unsigned long  f_frsize;    fundamental file system block size
+ * fsblkcnt_t     f_blocks;    number of blocks in file system,
+ *                                      (in units of f_frsize)
+ *
+ * fsblkcnt_t     f_bfree;     free blocks avail in file system
+ * fsblkcnt_t     f_bavail;    free blocks avail to non-root
+ * fsblkcnt_t     f_bresvd;    blocks reserved for root
+
+ * fsfilcnt_t     f_files;     total file nodes in file system
+ * fsfilcnt_t     f_ffree;     free file nodes in file system
+ * fsfilcnt_t     f_favail;    free file nodes avail to non-root
+ * fsfilcnt_t     f_fresvd;    file nodes reserved for root
+
+.Ed
+.It Fn puffs_fs_sync "pu" "waitfor" "pcr"
+All the dirty buffers that have been cached at the file server
+level including metadata should be committed to stable storage.
+The
+.Fa waitfor
+parameter affects the operation.
+Possible values are:
+.Bl -tag -width XMNT_NOWAITX
+.It Dv MNT_WAIT
+Wait for all I/O for complete until returning.
+.It Dv MNT_NOWAIT
+Initiate I/O, but do not wait for completion.
+.It Dv MNT_LAZY
+Synchorize data not synchoronized by the file system syncer,
+i.e. data not written when
+.Fn node_fsync
+is called with
+.Dv FSYNC_LAZY .
+.El
+.Pp
+The credentials for the initiator of the sync operation are present in
+.Fa pcr
+and will usually be either file system or kernel credentials, but might
+also be user credentials.
+However, most of the time it is advisable to sync regardless of the
+credentials of the caller.
+.It Fn puffs_fs_fhtonode "pu" "fid" "fidsize" "pni"
+Translates a file handle
+.Fa fid
+to a node.
+The parameter
+.Fa fidsize
+indicates how large the file handle is.
+In case the file system's handles are static length, this parameter can
+be ignored as the kernel guarantees all file handles passed to the file
+server are of correct length.
+For dynamic length handles the field should be examined and
+.Er EINVAL
+returned in case the file handle length is not correct.
+.Pp
+This function provides essentially the same information to the kernel as
+.Fn puffs_node_lookup .
+The information is necessary for creating a new vnode corresponding to
+the file handle.
+.It Fn puffs_fs_nodetofh "pu" "cookie" "fid" "fidsize"
+Create a file handle from the node described by
+.Fa cookie .
+The file handle should contain enough information to reliably identify
+the node even after reboots and the pathname/inode being replaced by
+another file.
+If this is not possible, it is up to the author of the file system to
+act responsibly and decide if the file system can support file handles
+at all.
+.Pp
+For file systems which want dynamic length file handles, this function
+must check if the file handle space indicated by
+.Fa fidsize
+is large enough to accommodate the file handle for the node.
+If not, it must fill in the correct size and return
+.Er E2BIG .
+In either case, the handle length should be supplied to the kernel in
+.Fa fidsize .
+File systems with static length handles can ignore the size parameter as
+the kernel always supplies the correct size buffer.
+.It Fn puffs_fs_suspend "pu" "status"
+Called when file system suspension reaches various phases.
+See
+.Xr puffs_suspend 3
+for more information.
+.It Fn puffs_fs_unmount "pu" "flags"
+Unmount the file system.
+The kernel has assumedly flushed all cached data when this callback
+is executed.
+If the file system cannot currently be safely be unmounted, for whatever
+reason, the kernel will honor an error value and not forcibly unmount.
+However, if the flag
+.Dv MNT_FORCE
+is not honored by the file server, the kernel will forcibly unmount
+the file system.
+.El
+.Ss Node callbacks
+These operations operate in the level of individual files.
+The file cookie is always provided as the second argument
+.Fa opc .
+If the operation is for a file, it will be the cookie of the file.
+The case the operation involves a directory (such as
+.Dq create file in directory ) ,
+the cookie will be for the directory.
+Some operations take additional cookies to describe the rest of
+the operands.
+The return value 0 signals success, else an appropriate errno value
+should be returned.
+Please note that neither this list nor the descriptions are complete.
+.Bl -tag -width xxxx
+.It Fn puffs_node_lookup "pu" "opc" "pni" "pcn"
+This function is used to locate nodes, or in other words translate
+pathname components to file system data structures.
+The implementation should match the name in
+.Fa pcn
+against the existing entries in the directory provided by the cookie
+.Fa opc .
+If found, the cookie for the located node should be set in
+.Fa pni
+using
+.Fn puffs_newinfo_setcookie .
+Additionally, the vnode type and size (latter applicable to regular files only)
+should be set using
+.Fn puffs_newinfo_setvtype
+and
+.Fn puffs_newinfo_setsize ,
+respectively.
+If the located entry is a block device or character device file,
+the dev_t for the entry should be set using
+.Fn puffs_newinfo_setrdev .
+.Pp
+The type of operation is found from
+.Va pcn-\*[Gt]pcn_nameiop :
+.Bl -tag -width XPUFFSLOOKUP_LOOKUPX
+.It Dv PUFFSLOOKUP_LOOKUP
+Normal lookup operation.
+.It Dv PUFFSLOOKUP_CREATE
+Lookup to create a node.
+.It Dv PUFFSLOOKUP_DELETE
+Lookup for node deletion.
+.It Dv PUFFSLOOKUP_RENAME
+Lookup for the target of a rename operation (source will be looked
+up using
+.Dv PUFFSLOOKUP_DELETE ) .
+.El
+.Pp
+The final component from a pathname lookup usually requires special
+treatment.
+It can be identified by looking at the
+.Va pcn-\*[Gt]pcn_flags
+fields for the flag
+.Dv PUFFSLOOKUP_ISLASTCN .
+For example, in most cases the lookup operation will want to check if
+a delete, rename or create operation has enough credentials to perform
+the operation.
+.Pp
+The return value 0 signals a found node and a nonzero value signals
+an errno.
+As a special case,
+.Er ENOENT
+signals "success" for cases where the lookup operation is
+.Dv PUFFSLOOKUP_CREATE
+or
+.Dv PUFFSLOOKUP_RENAME .
+Failure in these cases can be signalled by returning another appropriate
+error code, for example
+.Er EACCESS .
+.Pp
+Usually a null-terminated string for the next pathname component is
+provided in
+.Ar pcn-\*[Gt]pcn_name .
+In case the file system is using the option
+.Dv PUFFS_KFLAG_LOOKUP_FULLPNBUF ,
+the remainder of the complete pathname under lookup is found in
+the same location.
+.Ar pcn-\*[Gt]pcn_namelen
+always specifies the length of the next component.
+If operating with a full path, the file system is allowed to consume
+more than the next component's length in node lookup.
+This is done by setting
+.Ar pcn-\*[Gt]pcn_consume
+to indicate the amount of
+.Em extra
+characters in addition to
+.Ar pcn-\*[Gt]pcn_namelen
+processed.
+.It Fn puffs_node_create "pu" "opc" "pni" "pcn" "va"
+.It Fn puffs_node_mkdir "pu" "opc" "pni" "pcn" "va"
+.It Fn puffs_node_mknod "pu" "opc" "pni" "pcn" "va"
+A file node is created in the directory denoted by the cookie
+.Fa opc
+by any of the above callbacks.
+The name of the new file can be found from
+.Fa pcn
+and the attributes are specified by
+.Fa va
+and the cookie for the newly created node should be set in
+.Fa pni .
+The only difference between these three is that they create a regular
+file, directory and device special file, respectively.
+.Pp
+In case of mknod, the device identifier can be found in
+.Fa va-\*[Gt]va_rdev .
+.It Fn puffs_node_open "pu" "opc" "mode" "pcr"
+Open the node denoted by the cookie
+.Fa opc .
+The parameter
+.Fa mode
+specifies the flags that
+.Xr open 2
+was called with, e.g.
+.Dv O_APPEND
+and
+.Dv O_NONBLOCK .
+.It Fn puffs_node_close "pu" "opc" "flags" "pcr"
+Close a node.
+The parameter
+.Fa flags
+parameter describes the flags that the file was opened with.
+.It Fn puffs_node_access "pu" "opc" "mode" "pcr"
+Check if the credentials of
+.Fa pcr
+have the right to perform the operation specified by
+.Fa mode
+onto the node
+.Fa opc .
+The argument
+.Fa mode
+can specify read, write or execute by
+.Dv PUFFS_VREAD ,
+.Dv PUFFS_VWRITE ,
+and
+.Dv PUFFS_VEXEC ,
+respectively.
+.It Fn puffs_node_getattr "pu" "opc" "va" "pcr"
+The attributes of the node specified by
+.Fa opc
+must be copied to the space pointed by
+.Fa va .
+.It Fn puffs_node_setattr "pu" "opc" "va" "pcr"
+The attributes for the node specified by
+.Fa opc
+must be set to those contained in
+.Fa va .
+Only fields of
+.Fa va
+which contain a value different from
+.Dv PUFFS_VNOVAL
+(typecast to the field's type!) contain a valid value.
+.It Fn puffs_node_poll "pu" "opc" "events"
+Poll for events on node
+.Ar opc .
+If
+.Xr poll 2
+events specified in
+.Ar events
+are available, the function should set the bitmask to match available
+events and return immediately.
+Otherwise, the function should block (yield) until some events in
+.Ar events
+become available and only then set the
+.Ar events
+bitmask and return.
+.Pp
+In case this function returns an error,
+.Dv POLLERR
+(or it's
+.Xr select 2
+equivalent) will be delivered to the calling process.
+.Pp
+.Em NOTE!
+The system call interface for
+.Fn poll
+contains a timeout parameter.
+At this level, however, the timeout is not supplied.
+In case input does not arrive, the file system should periodically
+unblock and return 0 new events to avoid hanging forever.
+This will hopefully be better supported by libpuffs in the future.
+.It Fn puffs_node_mmap "pu" "opc" "flags" "pcr"
+Called when a regular file is being memory mapped by
+.Xr mmap 2 .
+.Fa flags
+is currently always 0.
+.It Fn puffs_node_fsync "pu" "opc" "pcr" "flags" "offlo" "offhi"
+Sychronize a node's contents onto stable storage.
+This is necessary only if the file server caches some information
+before committing it.
+The parameter
+.Fa flags
+specifies the minimum level of sychronization required (XXX: they are
+not yet available).
+The parameters
+.Fa offlo
+and
+.Fa offhi
+specify the data offsets requiring to be synced.
+A high offset of 0 means sync from
+.Fa offlo
+to the end of the file.
+.It Fn puffs_node_seek "pu" "opc" "oldoff" "newoff" "pcr"
+Test if the node
+.Ar opc
+is seekable to the location
+.Ar newoff .
+The argument
+.Ar oldoff
+specifies the offset we are starting the seek from.
+Most file systems dealing only with regular will choose to not
+implement this.
+However, it is useful for example in cases where files are
+unseekable streams.
+.It Fn puffs_node_remove "pu" "opc" "targ" "pcn"
+.It Fn puffs_node_rmdir "pu" "opc" "targ" "pcn"
+Remove the node
+.Fa targ
+from the directory indicated by
+.Fa opc .
+The directory entry name to be removed is provided by
+.Fa pcn .
+The rmdir operation removes only directories, while the remove
+operation removes all other types except directories.
+.Pp
+It is paramount to note that the file system may not remove the
+node data structures at this point, only the directory entry and prevent
+lookups from finding the node again.
+This is to retain the
+.Ux
+open file semantics.
+The data may be removed only when
+.Fn puffs_node_reclaim
+is called for the node, as this assures there are no further users.
+.It Fn puffs_node_link "pu" "opc" "targ" "pcn"
+Create a hard link for the node
+.Fa targ
+into the directory
+.Fa opc .
+The argument
+.Fa pcn
+provides the directory entry name for the new link.
+.It Fn puffs_node_rename "pu" "src_dir" "src" "pcn_src" "targ_dir" "targ" "pcn_targ"
+Rename the node
+.Fa src
+with the name specified by
+.Fa pcn_src
+from the directory
+.Fa src_dir .
+The target directory and target name are given by
+.Fa targ_dir
+and
+.Fa pcn_targ ,
+respectively.
+.Em If
+the target node already exists, it is specified by
+.Fa targ
+and must be replaced atomically.
+Otherwise
+.Fa targ
+is gives as
+.Dv NULL .
+.Pp
+It is legal to replace a directory node by another directory node with
+the means of rename if the target directory is empty, otherwise
+.Er ENOTEMPTY
+should be returned.
+All other types can replace all other types.
+In case a rename between incompatible types is attempted, the errors
+.Er ENOTDIR
+or
+.Er EISDIR
+should be returned, depending on the target type.
+.It Fn puffs_node_readdir "pu" "opc" "dent" "readoff" "reslen" "pcr" "eofflag" "cookies" "ncookies"
+To read directory entries,
+.Fn puffs_node_readdir
+is called.
+It should store directories as
+.Va struct dirent
+in the space pointed to by
+.Fa dent .
+The amount of space available is given by
+.Fa reslen
+and before returning it should be set to the amount of space
+.Em remaining
+in the buffer.
+The argument
+.Fa offset
+is used to specify the offset to the directory.
+Its intepretation is up to the file system and it should be set to
+signal the continuation point when there is no more room for the next
+entry in
+.Fa dent .
+It is most performant to return the maximal amount of directory
+entries each call.
+It is easiest to generate directory entries by using
+.Fn puffs_nextdent ,
+which also automatically advances the necessary pointers.
+.Pp
+In case end-of-directory is reached,
+.Fa eofflag
+should be set to one.
+Note that even a new call to readdir may start where
+.Fa readoff
+points to end-of-directory.
+.Pp
+If the file system supports file handles, the arguments
+.Fa cookies
+and
+.Fa ncookies
+must be filled out.
+.Fa cookies
+is a vector for offsets corresponding to read offsets.
+One cookie should be filled out for each directory entry.
+The value of the cookie should equal the offset of the
+.Em next
+directory entry, i.e. which offset should be passed to readdir for
+the first entry read to be the entry following the current one.
+.Fa ncookies
+is the number of slots for cookies in the cookie vector upon entry to
+the function and must be set to the amount of cookies stored in the
+vector (i.e. amount of directory entries read) upon exit.
+There is always enough space in the cookie vector for the maximal number
+of entries that will fit into the directory entry buffer.
+For filling out the vector, the helper function
+.Fn PUFFS_STORE_DCOOKIE cookies ncookies offset
+can be used.
+This properly checks against
+.Fa cookies
+being
+.Dv NULL .
+Note that
+.Fa ncookies
+must be initialized to zero before the first call to
+.Fn PUFFS_STORE_DCOOKIE .
+.It Fn puffs_node_symlink "pu" "opc" "pni" "pcn_src" "va" "link_target"
+Create a symbolic link into the directory
+.Fa opc
+with the name in
+.Fa pcn_src
+and the initial attributes in
+.Fa va .
+The argument
+.Ar link_target
+contains a null-terminated string for the link target.
+The created node cookie should be set in
+.Fa pni .
+.It Fn puffs_node_readlink "pu" "opc" "pcr" "link" "linklen"
+Read the target of a symbolic link
+.Fa opc .
+The result is placed in the buffer pointed to by
+.Fa link .
+This buffer's length is given in
+.Fa linklen
+and it must be updated to reflect the real link length.
+A terminating nul character should not be put into the buffer and
+.Em "must not"
+be included in the link length.
+.It Fn puffs_node_read "pu" "opc" "buf" "offset" "resid" "pcr" "ioflag"
+Read the contents of a file
+.Fa opc .
+It will gather the data from
+.Fa offset
+in the file and read the number
+.Fa resid
+octets.
+The buffer is guaranteed to have this much space.
+The amount of data requested by
+.Fa resid
+should be read, except in the case of eof-of-file or an error.
+The parameter
+.Fa resid
+should be set to indicate the amount of request NOT completed.
+In the normal case this should be 0.
+.It Fn puffs_node_write "pu" "opc" "buf" "offset" "resid" "pcr" "ioflag"
+.Fn puffs_node_write
+Write data to a file
+.Fa opc
+at
+.Fa offset
+and extend the file if necessary.
+The number of octets written is indicated by
+.Fa resid ;
+everything must be written or an error will be generated.
+The parameter must be set to indicate the amount of data NOT written.
+In case the flag
+.Dv PUFFS_IO_APPEND
+is specified, the data should be appended to the end of the file.
+.It Fn puffs_node_print "pu" "opc"
+Print information about node.  This is used only for kernel-initiated
+diagnostic purposes.
+.It Fn puffs_node_reclaim "pu" "opc"
+The kernel will no longer reference the cookie and resources associated
+with it may be freed.
+In case the file
+.Fa opc
+has a link count of zero, it may be safely removed now.
+.It Fn puffs_node_inactive "pu" "opc"
+The node
+.Fa opc
+has lost its last reference in the kernel.
+However, the cookie must still remain valid until
+.Fn puffs_node_reclaim
+is called.
+.It Fn puffs_setback "pcc" "op"
+Issue a "setback" operation which will be handled when the request response
+is returned to the kernel.
+Currently this can be only called from mmap, open, remove and rmdir.
+The valid parameters for
+.Ar op
+are
+.Dv PUFFS_SETBACK_INACT_N1
+and
+.Dv PUFFS_SETBACK_INACT_N2 .
+These signal that a file system mounted with
+.Dv PUFFS_KFLAG_IAONDEMAND
+should call the file system inactive method for the specified node.
+The node number 1 always means the operation cookie
+.Ar opc ,
+while the node number 2 can be used to specify the second node argument
+present in some methods, e.g. remove.
+.It Fn puffs_newinfo_setcookie pni cookie
+Set cookie for node provided by this method to
+.Ar cookie .
+.It Fn puffs_newinfo_setvtype pni vtype
+Set the type of the newly located node to
+.Ar vtype .
+This call is valid only for
+.Fn lookup
+and
+.Fn fhtonode .
+.It Fn puffs_newinfo_setsize pni size
+Set the size of the newly located node to
+.Ar size .
+If left unset, the value defaults to 0.
+This call is valid only for
+.Fn lookup
+and
+.Fn fhtovp .
+.It Fn puffs_newinfo_setrdev pni rdev
+Set the type of the newly located node to
+.Ar vtype .
+This call is valid only for
+.Fn lookup
+and
+.Fn fhtovp
+producing device type nodes.
+.El
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr vfsops 9 ,
+.Xr vnodeops 9

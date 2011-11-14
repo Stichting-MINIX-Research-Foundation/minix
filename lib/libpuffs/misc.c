@@ -1,0 +1,53 @@
+/* Created (MFS based):
+ *   June 2011 (Evgeniy Ivanov)
+ */
+
+#include "fs.h"
+#include <assert.h>
+#include <minix/vfsif.h>
+
+#include "puffs.h"
+#include "puffs_priv.h"
+
+/*===========================================================================*
+ *				fs_sync					     *
+ *===========================================================================*/
+PUBLIC int fs_sync()
+{
+/* Perform the sync() system call.  Flush all the tables.
+ * The order in which the various tables are flushed is critical.
+ */
+  int r;
+  PUFFS_MAKECRED(pcr, &global_kcred);
+
+  if (is_readonly_fs)
+	return(OK); /* nothing to sync */
+
+  r = global_pu->pu_ops.puffs_fs_sync(global_pu, MNT_WAIT, pcr);
+  if (r) {
+	lpuffs_debug("Warning: sync failed!\n");
+  }
+
+  return(OK);		/* sync() can't fail */
+}
+
+
+/*===========================================================================*
+ *				fs_flush				     *
+ *===========================================================================*/
+PUBLIC int fs_flush()
+{
+/* Flush the blocks of a device from the cache after writing any dirty blocks
+ * to disk.
+ */
+#if 0
+  dev_t dev = (dev_t) fs_m_in.REQ_DEV;
+
+  if(dev == fs_dev) return(EBUSY);
+
+  flushall(dev);
+  invalidate(dev);
+#endif
+
+  return(OK);
+}

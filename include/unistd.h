@@ -202,6 +202,9 @@ _PROTOTYPE( pid_t getnpid, (endpoint_t proc_ep)				);
 _PROTOTYPE( uid_t getnuid, (endpoint_t proc_ep)				);
 _PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);
 _PROTOTYPE( int getnucred, (endpoint_t proc_ep, struct ucred *ucred)	);
+_PROTOTYPE( ssize_t pread64, (int fd, void *buf, size_t count, u64_t where));
+_PROTOTYPE( ssize_t pwrite64, (int fd, const void *buf, size_t count,
+				u64_t where));
 
 #endif
 
