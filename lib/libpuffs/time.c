@@ -16,7 +16,6 @@
  *===========================================================================*/
 PUBLIC int fs_utime()
 {
-  int r;
   struct puffs_node *pn;
   struct vattr va;
   PUFFS_MAKECRED(pcr, &global_kcred);

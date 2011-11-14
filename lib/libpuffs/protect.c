@@ -17,7 +17,6 @@ FORWARD _PROTOTYPE( int in_group, (gid_t grp)				);
 PUBLIC int fs_chmod()
 {
 /* Perform the chmod(name, mode) system call. */
-  int r;
   struct puffs_node *pn;
   mode_t mode;
   struct vattr va;
@@ -52,7 +51,6 @@ PUBLIC int fs_chmod()
  *===========================================================================*/
 PUBLIC int fs_chown()
 {
-  int r;
   struct puffs_node *pn;
   struct vattr va;
   PUFFS_MAKECRED(pcr, &global_kcred);

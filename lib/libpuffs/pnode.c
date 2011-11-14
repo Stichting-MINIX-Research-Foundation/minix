@@ -30,6 +30,7 @@
 __RCSID("$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $");
 #endif /* !lint */
 
+#include <minix/type.h>
 #include <sys/types.h>
 
 #include <assert.h>
@@ -39,6 +40,7 @@ __RCSID("$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $");
 
 #include "puffs.h"
 #include "puffs_priv.h"
+#include "proto.h"
 
 /*
  * Well, you're probably wondering why this isn't optimized.
