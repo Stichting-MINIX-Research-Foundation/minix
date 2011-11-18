@@ -36,7 +36,9 @@ CC?=		cc
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
-DBG?=	-O2
+#DBG?=	-O2
+#MINIX: use -O for now
+DBG?=	-O
 .elif ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 DBG?=	-Os -freorder-blocks
