@@ -157,7 +157,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			/* not a valid conversion just eat a char */
 			wc = *bytes;
 			n = 1;
-			(void)memset(&st, 0, sizeof(&st));
+			(void)memset(&st, 0, sizeof(st));
 		} else if (wc == 0) {
 			break;
 		}
