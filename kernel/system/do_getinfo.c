@@ -44,6 +44,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
   vir_bytes src_vir; 
   int nr_e, nr, r;
   int wipe_rnd_bin = -1;
+  struct proc *p;
 #if !defined(__ELF__)
   struct exec e_hdr;
 #endif
@@ -110,6 +111,15 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         length = sizeof(struct priv);
         src_vir = (vir_bytes) priv_addr(nr_to_id(nr));
+        break;
+    }
+    case GET_REGS: {
+        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
+            caller->p_endpoint : m_ptr->I_VAL_LEN2_E;
+        if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
+        p = proc_addr(nr);
+        length = sizeof(p->p_reg);
+        src_vir = (vir_bytes) &p->p_reg;
         break;
     }
     case GET_WHOAMI: {

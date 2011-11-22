@@ -7,12 +7,6 @@
 #include <machine/elf.h>
 #include "param.h"
 
-#include <machine/archtypes.h>
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
-
 /* Include ELF headers */
 #include <sys/elf_core.h>
 #include <sys/procfs.h>
@@ -29,6 +23,8 @@ FORWARD _PROTOTYPE( void adjust_offsets, (Elf32_Phdr phdrs[], int phnum)   );
 FORWARD _PROTOTYPE( void dump_elf_header, (Elf32_Ehdr elf_header)          );
 FORWARD _PROTOTYPE( void dump_notes, (Elf32_Nhdr nhdrs[], int csig,
 	char *exe_name)                                                    );
+FORWARD _PROTOTYPE( void dump_program_headers, (Elf_Phdr phdrs[],
+	int phnum)                                                         );
 FORWARD _PROTOTYPE( void dump_segments, (Elf32_Phdr phdrs[], int phnum)    );
 
 /*===========================================================================*
@@ -236,13 +232,13 @@ PRIVATE void dump_notes(Elf_Nhdr nhdrs[], int csig, char *exe_name)
   minix_elfcore_info_t mei;
   int mei_len = sizeof(minix_elfcore_info_t);
   int gregs_len = sizeof(gregset_t);
-  struct proc p;
+  struct stackframe_s regs;
   char proc_name[PROC_NAME_LEN];
 
   /* Get process's name */
   if (sys_datacopy(PM_PROC_NR, (vir_bytes) exe_name,
 		VFS_PROC_NR, (vir_bytes) proc_name, PROC_NAME_LEN) != OK)
-	printf("VFS: Cannot get porcess's name\n");
+	printf("VFS: Cannot get process's name\n");
 
   /* Dump first note entry */
   mei.mei_version = MINIX_ELFCORE_VERSION;
@@ -257,16 +253,18 @@ PRIVATE void dump_notes(Elf_Nhdr nhdrs[], int csig, char *exe_name)
   write_buf((char *)&mei, mei_len);
   write_buf(pad, PAD_LEN(mei_len) - mei_len);
 
-  /* XXX: Other way to read registries ? */
   /* Get registers */
-  if (sys_getproc(&p, fp->fp_endpoint) != OK)
+  if (sys_getregs(&regs, fp->fp_endpoint) != OK)
 	printf("VFS: Could not read registers\n");
+
+  if (sizeof(regs) != gregs_len)
+	printf("VFS: Wrong core register structure size\n");
 
   /* Dump second note entry - the general registers */
   write_buf((char *)&nhdrs[1], sizeof(Elf_Nhdr));
   write_buf(note_name, nhdrs[1].n_namesz);
   write_buf(pad, PAD_LEN(nhdrs[1].n_namesz) - nhdrs[1].n_namesz);
-  write_buf((char *)&(p.p_reg), gregs_len);
+  write_buf((char *)&regs, gregs_len);
   write_buf(pad, PAD_LEN(gregs_len) - gregs_len);
 }
 
