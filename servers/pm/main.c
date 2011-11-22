@@ -477,7 +477,15 @@ PRIVATE void handle_vfs_reply()
 	if (m_in.PM_STATUS == OK)
 		rmp->mp_sigstatus |= DUMPED;
 
-	exit_restart(rmp, TRUE /*dump_core*/);
+	if (m_in.PM_PROC == m_in.PM_TRACED_PROC)
+		/* The reply is to a core dump request
+		 * for a killed process */
+		exit_restart(rmp, TRUE /*dump_core*/);
+	else
+		/* The reply is to a core dump request
+		 * for a traced process (T_DUMPCORE) */
+		/* Wake up the original caller */
+		setreply(rmp-mproc, rmp->mp_procgrp);
 
 	break;
 

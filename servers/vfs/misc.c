@@ -581,8 +581,9 @@ int csig;
 char *exe_name;
 {
   int proc_s, r, old_who_e;
-	
-  okendpt(proc_e, &proc_s);
+  int traced_proc_e = m_in.PM_TRACED_PROC;
+
+  okendpt(traced_proc_e, &proc_s);
   fp = &fproc[proc_s];
 
   /* Open the core file */
@@ -603,10 +604,12 @@ char *exe_name;
   close_fd(fp, r);
 
   /* Terminate the process */
-  free_proc(&fproc[proc_s], FP_EXITING);
+  if (traced_proc_e == proc_e)
+	free_proc(&fproc[proc_s], FP_EXITING);
 
   /* Restore the important variables that have been overwritten */
   m_in.PM_PROC = proc_e;
+  m_in.PM_TRACED_PROC = traced_proc_e;
   who_e = old_who_e;
 
   return OK;

@@ -12,7 +12,7 @@ SUBDIR=	aal add_route arp ash at autil awk \
 	dhrystone diff dirname  dis386 dis88 diskctl du dumpcore \
 	ed eject elle elvis env expand factor file \
 	find finger fingerd fix fold format fortune fsck.mfs \
-	ftp101 gcov-pull getty grep head hexdump host \
+	ftp101 gcore gcov-pull getty grep head hexdump host \
 	hostaddr id ifconfig ifdef install \
 	intr ipcrm ipcs irdpd isoread join kill last leave \
 	less lex loadkeys loadramdisk logger login look lp \
