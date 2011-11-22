@@ -307,7 +307,7 @@ PRIVATE void rw_block(
 		printf("Ext2(%d) I/O error on device %d/%d, block %u\n",
 			SELF_E, major(dev), minor(dev), bp->b_blocknr);
 		op_failed = 1;
-	} else if( (unsigned) r != fs_block_size) {
+	} else if (r != (ssize_t) fs_block_size) {
 		r = END_OF_FILE;
 		op_failed = 1;
 	}
@@ -387,7 +387,6 @@ PUBLIC void rw_scattered(
   register int i;
   register iovec_t *iop;
   static iovec_t *iovec = NULL;
-  vir_bytes size;
   u64_t pos;
   int j, r;
 
@@ -423,21 +422,22 @@ PUBLIC void rw_scattered(
 	}
 	pos = mul64u(bufq[0]->b_blocknr, fs_block_size);
 	if (rw_flag == READING)
-		r = bdev_gather(dev, pos, iovec, j, BDEV_NOFLAGS, &size);
+		r = bdev_gather(dev, pos, iovec, j, BDEV_NOFLAGS);
 	else
-		r = bdev_scatter(dev, pos, iovec, j, BDEV_NOFLAGS, &size);
+		r = bdev_scatter(dev, pos, iovec, j, BDEV_NOFLAGS);
 
-	/* Harvest the results.  Dev_io reports the first error it may have
-	 * encountered, but we only care if it's the first block that failed.
+	/* Harvest the results.  The driver may have returned an error, or it
+	 * may have done less than what we asked for.
 	 */
-	for (i = 0, iop = iovec; i < j; i++, iop++) {
+	if (r < 0) {
+		printf("ext2: I/O error %d on device %d/%d, block %u\n",
+			r, major(dev), minor(dev), bufq[0]->b_blocknr);
+	}
+	for (i = 0; i < j; i++) {
 		bp = bufq[i];
-		if (size < iop->iov_size) {
-			/* Transfer failed. An error? Do we care? */
-			if (r != OK && i == 0) {
-				printf(
-				"fs: I/O error on device %d/%d, block %u\n",
-					major(dev), minor(dev), bp->b_blocknr);
+		if (r < (ssize_t) fs_block_size) {
+			/* Transfer failed. */
+			if (i == 0) {
 				bp->b_dev = NO_DEV;	/* invalidate block */
 				vm_forgetblocks();
 			}
@@ -449,7 +449,7 @@ PUBLIC void rw_scattered(
 		} else {
 			bp->b_dirt = CLEAN;
 		}
-		size -= iop->iov_size;
+		r -= fs_block_size;
 	}
 	bufq += i;
 	bufqsize -= i;

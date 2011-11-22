@@ -11,8 +11,8 @@ SRCS=	lwip.c		\
 
 .PATH:	${.CURDIR}/generic
 
-DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBMINIXUTIL} ${LIBLWIP}
-LDADD+=	-ldriver -lsys -lminixutil -ltimers -llwip
+DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBMINIXUTIL} ${LIBTIMERS} ${LIBLWIP}
+LDADD+=	-lchardriver -lsys -lminixutil -ltimers -llwip
 
 MAN=
 

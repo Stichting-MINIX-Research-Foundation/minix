@@ -34,7 +34,7 @@
 
 #include <minix/endpoint.h>
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/chardriver.h>
 
 /* Control bits (in port_base + 2).  "+" means positive logic and "-" means
  * negative logic.  Most of the signals are negative logic on the pins but
@@ -122,7 +122,7 @@ PUBLIC int is_status_msg_expected = FALSE;
 /*===========================================================================*
  *				printer_task				     *
  *===========================================================================*/
-PUBLIC int main(int argc, char *argv[])
+PUBLIC int main(void)
 {
 /* Main routine of the printer task. */
   message pr_mess;		/* buffer for all incoming messages */
@@ -190,11 +190,11 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the printer driver. */
   /* Announce we are up! */
-  driver_announce();
+  chardriver_announce();
 
   return OK;
 }

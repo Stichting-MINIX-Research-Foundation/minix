@@ -481,8 +481,7 @@ int scode;
 /*===========================================================================*
  *				kbd_interrupt				     *
  *===========================================================================*/
-PUBLIC void kbd_interrupt(m_ptr)
-message *m_ptr;
+PUBLIC void kbd_interrupt(message *UNUSED(m_ptr))
 {
 /* A keyboard interrupt has occurred.  Process it. */
   int o, isaux;
@@ -911,9 +910,9 @@ PRIVATE int kbc_read()
 			if(sys_inb(KEYBD, &byte) != OK)
 				printf("kbc_read: 2 sys_inb failed\n");
 			if (st & KB_AUX_BYTE)
-				printf("kbc_read: aux byte 0x%x\n", byte);
+				printf("kbc_read: aux byte 0x%lx\n", byte);
 #if DEBUG
-			printf("keyboard`kbc_read: returning byte 0x%x\n",
+			printf("keyboard`kbc_read: returning byte 0x%lx\n",
 				byte);
 #endif
 			return byte;
@@ -1296,8 +1295,7 @@ int *isauxp;
 /*===========================================================================*
  *				kbd_watchdog 				     *
  *===========================================================================*/
-PRIVATE void kbd_watchdog(tmrp)
-timer_t *tmrp;
+PRIVATE void kbd_watchdog(timer_t *UNUSED(tmrp))
 {
 
 	kbd_watchdog_set= 0;

@@ -190,7 +190,7 @@ PUBLIC int drv_stop(int sub_dev) {
 
 
 
-PUBLIC int drv_set_dma(u32_t dma, u32_t length, int chan) {
+PUBLIC int drv_set_dma(u32_t dma, u32_t UNUSED(length), int UNUSED(chan)) {
 	Dprint(("drv_set_dma():\n"));
 	DmaPhys = dma;
 	return OK;
@@ -198,7 +198,7 @@ PUBLIC int drv_set_dma(u32_t dma, u32_t length, int chan) {
 
 
 
-PUBLIC int drv_reenable_int(int chan) {
+PUBLIC int drv_reenable_int(int UNUSED(chan)) {
 	Dprint(("drv_reenable_int()\n"));
 	sb16_inb((DspBits == 8 ? DSP_DATA_AVL : DSP_DATA16_AVL));
 	return OK;
@@ -225,7 +225,7 @@ PUBLIC int drv_pause(int chan) {
 
 
 
-PUBLIC int drv_resume(int chan) {
+PUBLIC int drv_resume(int UNUSED(chan)) {
 	dsp_command((DspBits == 8 ? DSP_CMD_DMA8CONT : DSP_CMD_DMA16CONT));
 	return OK;
 }
@@ -254,7 +254,7 @@ PUBLIC int drv_get_irq(char *irq) {
 
 
 
-PUBLIC int drv_get_frag_size(u32_t *frag_size, int sub_dev) {
+PUBLIC int drv_get_frag_size(u32_t *frag_size, int UNUSED(sub_dev)) {
 	Dprint(("drv_get_frag_size():\n"));
 	*frag_size = DspFragmentSize;
 	return OK;

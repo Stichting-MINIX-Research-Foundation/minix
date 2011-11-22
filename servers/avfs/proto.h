@@ -29,6 +29,8 @@ _PROTOTYPE(void send_work, (void)					);
 _PROTOTYPE( int dev_open, (dev_t dev, endpoint_t proc_e, int flags)	);
 _PROTOTYPE( int dev_reopen, (dev_t dev, int filp_no, int flags)		);
 _PROTOTYPE( int dev_close, (dev_t dev, int filp_no)			);
+_PROTOTYPE( int bdev_open, (dev_t dev, int access)			);
+_PROTOTYPE( int bdev_close, (dev_t dev)					);
 _PROTOTYPE( int dev_io, (int op, dev_t dev, endpoint_t proc_e, void *buf,
 		u64_t pos, size_t bytes, int flags, int suspend_reopen)	);
 _PROTOTYPE( int gen_opcl, (int op, dev_t dev, endpoint_t task_nr, int flags));
@@ -43,7 +45,8 @@ _PROTOTYPE( int ctty_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int do_ioctl, (void)					);
 _PROTOTYPE( void pm_setsid, (int proc_e)				);
 _PROTOTYPE( void dev_status, (message *)				);
-_PROTOTYPE( void dev_up, (int major)					);
+_PROTOTYPE( void bdev_up, (int major)					);
+_PROTOTYPE( void cdev_up, (int major)					);
 _PROTOTYPE( endpoint_t find_suspended_ep, (endpoint_t driver,
 					   cp_grant_id_t g)		);
 _PROTOTYPE( void reopen_reply, (void)					);
@@ -53,7 +56,7 @@ _PROTOTYPE( void open_reply, (void)					);
 _PROTOTYPE( int do_mapdriver, (void)					);
 _PROTOTYPE( void init_dmap, (void)					);
 _PROTOTYPE( int dmap_driver_match, (endpoint_t proc, int major)		);
-_PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
+_PROTOTYPE( void dmap_endpt_up, (int proc_nr, int is_blk)		);
 _PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
 _PROTOTYPE( struct dmap *get_dmap, (endpoint_t proc_e)			);
 _PROTOTYPE( int do_mapdriver, (void)					);

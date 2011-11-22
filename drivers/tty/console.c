@@ -896,8 +896,7 @@ clock_t dur;
 /*===========================================================================*
  *				stop_beep				     *
  *===========================================================================*/
-PRIVATE void stop_beep(tmrp)
-timer_t *tmrp;
+PRIVATE void stop_beep(timer_t *UNUSED(tmrp))
 {
 /* Turn off the beeper by turning off bits 0 and 1 in PORT_B. */
   unsigned long port_b_val;
@@ -1234,9 +1233,7 @@ struct sequence *seq;
 /*===========================================================================*
  *				cons_ioctl				     *
  *===========================================================================*/
-PRIVATE int cons_ioctl(tp, try)
-tty_t *tp;
-int try;
+PRIVATE int cons_ioctl(tty_t *tp, int UNUSED(try))
 {
 /* Set the screen dimensions. */
 

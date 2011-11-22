@@ -83,7 +83,7 @@ EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
 PUBLIC int is_status_msg_expected = FALSE;
 
-PUBLIC int main(int argc, char *argv[]) 
+PUBLIC int main(void)
 {
 	int r, caller;
 	message mess, repl_mess;
@@ -255,7 +255,7 @@ PRIVATE int init_driver(void) {
 	irq_hook_set = TRUE; /* now signal handler knows it must unregister policy*/
 
 	/* Announce we are up! */
-	driver_announce();
+	chardriver_announce();
 
 	return OK;
 }

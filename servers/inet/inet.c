@@ -42,7 +42,7 @@ from DL_ETH:
 #include <sys/svrctl.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
-#include <minix/driver.h>
+#include <minix/chardriver.h>
 
 #include "mq.h"
 #include "qp.h"
@@ -282,9 +282,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	}
 
 	/* Announce we are up. INET announces its presence to VFS just like
-	 * any other driver.
+	 * any other character driver.
 	 */
-	driver_announce();
+	chardriver_announce();
 
 	return(OK);
 }

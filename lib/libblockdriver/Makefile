@@ -1,7 +1,7 @@
-# Makefile for libdriver
+# Makefile for libblockdriver
 .include <bsd.own.mk>
 
-LIB=	driver
+LIB=	blockdriver
 
 SRCS=	driver.c drvlib.c driver_st.c driver_mt.c mq.c event.c
 

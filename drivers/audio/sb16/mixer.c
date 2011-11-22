@@ -13,7 +13,7 @@ FORWARD _PROTOTYPE( int get_set_output, (struct inout_ctrl *output, int flag));
 /*=========================================================================*
  *				mixer_ioctl				   	
  *=========================================================================*/
-PUBLIC int mixer_ioctl(int request, void *val, int *len) {
+PUBLIC int mixer_ioctl(int request, void *val, int *UNUSED(len)) {
 	int status;
 
 	switch(request) {

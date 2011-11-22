@@ -4,7 +4,7 @@
 EXTERN u16_t f_busy;
 EXTERN int motor_status;
 EXTERN unsigned f_drive;
-EXTERN int last_transfer_opcode;
+EXTERN int last_was_write;
 #define BSY_IO      1   /* busy doing I/O */
 
 /* State management helpers. */
@@ -63,8 +63,7 @@ PUBLIC void sef_cb_lu_state_dump(int state)
   sef_lu_dprint("floppy: f_busy = %d\n", f_busy);
   sef_lu_dprint("floppy: motor_status = 0x%02X\n", motor_status);
   sef_lu_dprint("floppy: f_drive = %d\n", f_drive);
-  sef_lu_dprint("floppy: last_transfer_opcode = 0x%02X\n",
-      last_transfer_opcode);
+  sef_lu_dprint("floppy: last_was_write = %d\n", last_was_write);
 
   sef_lu_dprint("floppy: SEF_LU_STATE_WORK_FREE(%d) reached = %d\n",
       SEF_LU_STATE_WORK_FREE, TRUE);

@@ -2,8 +2,8 @@
 PROG=	readclock.drv
 SRCS=	readclock.c
 
-DPADD+= ${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+= ${LIBSYS}
+LDADD+=	-lsys
 
 MAN=
 

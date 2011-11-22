@@ -104,7 +104,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the ti1225 driver. */
 	int c, i, r, first, devind, port;
@@ -174,9 +174,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 			continue;
 		hw_init(&ports[i]);
 	}
-
-	/* Announce we are up! */
-	driver_announce();
 
 	return(OK);
 }

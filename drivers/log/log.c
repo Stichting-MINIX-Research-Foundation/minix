@@ -22,35 +22,30 @@ PUBLIC struct logdevice logdevices[NR_DEVS];
 PRIVATE struct device log_geom[NR_DEVS];  	/* base and size of devices */
 PRIVATE int log_device = -1;	 		/* current device */
 
-FORWARD _PROTOTYPE( char *log_name, (void) );
-FORWARD _PROTOTYPE( struct device *log_prepare, (int device) );
-FORWARD _PROTOTYPE( int log_transfer, (int proc_nr, int opcode, u64_t position,
-			iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( int log_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int log_cancel, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int log_select, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, cp_grant_id_t grant, size_t) );
+FORWARD _PROTOTYPE( struct device *log_prepare, (dev_t device) );
+FORWARD _PROTOTYPE( int log_transfer, (endpoint_t endpt, int opcode,
+	u64_t position, iovec_t *iov, unsigned int nr_req,
+	endpoint_t user_endpt) );
+FORWARD _PROTOTYPE( int log_do_open, (message *m_ptr) );
+FORWARD _PROTOTYPE( int log_cancel, (message *m_ptr) );
+FORWARD _PROTOTYPE( int log_select, (message *m_ptr) );
+FORWARD _PROTOTYPE( int log_other, (message *m_ptr) );
+FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count,
+	endpoint_t endpt, cp_grant_id_t grant, size_t) );
 
 /* Entry points to this driver. */
-PRIVATE struct driver log_dtab = {
-  log_name,	/* current device's name */
+PRIVATE struct chardriver log_dtab = {
   log_do_open,	/* open or mount */
   do_nop,	/* nothing on a close */
   nop_ioctl,	/* ioctl nop */
   log_prepare,	/* prepare for I/O on a given minor device */
   log_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
-  log_geometry,	/* geometry */
-  nop_alarm, 	/* no alarm */
+  nop_alarm,	/* no alarm */
   log_cancel,	/* CANCEL request */
   log_select,	/* DEV_SELECT request */
-  log_other,	/* Unrecognized messages */
-  NULL		/* HW int */
+  log_other	/* Unrecognized messages */
 };
-
-extern int device_endpt;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -69,7 +64,7 @@ PUBLIC int main(void)
   sef_local_startup();
 
   /* Call the generic receive loop. */
-  driver_task(&log_dtab, DRIVER_ASYN);
+  chardriver_task(&log_dtab, CHARDRIVER_ASYNC);
 
   return(OK);
 }
@@ -99,7 +94,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the log driver. */
   int i;
@@ -132,25 +127,14 @@ PRIVATE void sef_cb_signal_handler(int signo)
 }
 
 /*===========================================================================*
- *				 log_name				     *
- *===========================================================================*/
-PRIVATE char *log_name()
-{
-/* Return a name for the current device. */
-  static char name[] = "log";
-  return name;  
-}
-
-/*===========================================================================*
  *				log_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *log_prepare(device)
-int device;
+PRIVATE struct device *log_prepare(dev_t device)
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
 
-  if (device < 0 || device >= NR_DEVS) return(NULL);
-  log_device = device;
+  if (device >= NR_DEVS) return(NULL);
+  log_device = (int) device;
 
   return(&log_geom[device]);
 }
@@ -159,7 +143,7 @@ int device;
  *				subwrite				     *
  *===========================================================================*/
 PRIVATE int
-subwrite(struct logdevice *log, int count, int proc_nr,
+subwrite(struct logdevice *log, int count, endpoint_t endpt,
 	cp_grant_id_t grant, size_t offset, char *localbuf)
 {
 	int d, r;
@@ -174,7 +158,7 @@ subwrite(struct logdevice *log, int count, int proc_nr,
 		memcpy(buf, localbuf, count);
 	}
 	else {
-		if((r=sys_safecopyfrom(proc_nr, grant, offset,
+		if((r=sys_safecopyfrom(endpt, grant, offset,
 			(vir_bytes)buf, count, D)) != OK)
 			return r;
 	}
@@ -267,7 +251,7 @@ log_append(char *buf, int count)
  *				subread					     *
  *===========================================================================*/
 PRIVATE int
-subread(struct logdevice *log, int count, int proc_nr,
+subread(struct logdevice *log, int count, endpoint_t endpt,
 	cp_grant_id_t grant, size_t offset)
 {
 	char *buf;
@@ -278,7 +262,7 @@ subread(struct logdevice *log, int count, int proc_nr,
         	count = LOG_SIZE - log->log_read;
 
     	buf = log->log_buffer + log->log_read;
-	if((r=sys_safecopyto(proc_nr, grant, offset,
+	if((r=sys_safecopyto(endpt, grant, offset,
 		(vir_bytes)buf, count, D)) != OK)
 		return r;
 
@@ -291,12 +275,14 @@ subread(struct logdevice *log, int count, int proc_nr,
 /*===========================================================================*
  *				log_transfer				     *
  *===========================================================================*/
-PRIVATE int log_transfer(proc_nr, opcode, position, iov, nr_req)
-int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
-u64_t position;			/* offset on device to read or write */
-iovec_t *iov;			/* pointer to read or write request vector */
-unsigned nr_req;		/* length of request vector */
+PRIVATE int log_transfer(
+  endpoint_t endpt,		/* endpoint of grant owner */
+  int opcode,			/* DEV_GATHER_S or DEV_SCATTER_S */
+  u64_t UNUSED(position),	/* offset on device to read or write */
+  iovec_t *iov,			/* pointer to read or write request vector */
+  unsigned int nr_req,		/* length of request vector */
+  endpoint_t user_endpt		/* endpoint of user process */
+)
 {
 /* Read or write one the driver's minor devices. */
   int count;
@@ -331,27 +317,25 @@ unsigned nr_req;		/* length of request vector */
 	    		if(accumulated_read)
 	    			return OK;
 	    		/* No data available; let caller block. */
-	    		log->log_source = proc_nr;
+			log->log_source = endpt;
 	    		log->log_iosize = count;
 	    		log->log_user_grant = grant;
 	    		log->log_user_offset = 0;
 	    		log->log_revive_alerted = 0;
-
-			/* device_endpt is a global in drivers library. */
-	    		log->log_proc_nr = device_endpt;
+			log->log_proc_nr = user_endpt;
 #if LOG_DEBUG
 	    		printf("blocked %d (%d)\n", 
 	    			log->log_source, log->log_proc_nr);
 #endif
 	    		return(EDONTREPLY);
 	    	}
-	    	count = subread(log, count, proc_nr, grant, vir_offset);
+		count = subread(log, count, endpt, grant, vir_offset);
 	    	if(count < 0) {
 	    		return count;
 	    	}
 	    	accumulated_read += count;
 	    } else {
-	    	count = subwrite(log, count, proc_nr, grant, vir_offset, NULL);
+		count = subwrite(log, count, endpt, grant, vir_offset, NULL);
 	    	if(count < 0)
 	    		return count;
 	    }
@@ -371,33 +355,16 @@ unsigned nr_req;		/* length of request vector */
 /*============================================================================*
  *				log_do_open				      *
  *============================================================================*/
-PRIVATE int log_do_open(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int log_do_open(message *m_ptr)
 {
   if (log_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
   return(OK);
 }
 
 /*============================================================================*
- *				log_geometry				      *
- *============================================================================*/
-PRIVATE void log_geometry(entry)
-struct partition *entry;
-{
-  /* take a page from the fake memory device geometry */
-  entry->heads = 64;
-  entry->sectors = 32;
-  entry->cylinders = div64u(log_geom[log_device].dv_size, SECTOR_SIZE) /
-  	(entry->heads * entry->sectors);
-}
-
-/*============================================================================*
  *				log_cancel				      *
  *============================================================================*/
-PRIVATE int log_cancel(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int log_cancel(message *m_ptr)
 {
   int d;
   d = m_ptr->TTY_LINE;
@@ -411,9 +378,7 @@ message *m_ptr;
 /*============================================================================*
  *				log_other				      *
  *============================================================================*/
-PRIVATE int log_other(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int log_other(message *m_ptr)
 {
 	int r;
 
@@ -440,9 +405,7 @@ message *m_ptr;
 /*============================================================================*
  *				log_select				      *
  *============================================================================*/
-PRIVATE int log_select(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int log_select(message *m_ptr)
 {
   int d, ready_ops = 0, ops = 0;
   d = m_ptr->TTY_LINE;
@@ -455,15 +418,15 @@ message *m_ptr;
 
   ops = m_ptr->USER_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
 
-  	/* Read blocks when there is no log. */
+  /* Read blocks when there is no log. */
   if((m_ptr->USER_ENDPT & SEL_RD) && logdevices[d].log_size > 0) {
 #if LOG_DEBUG
   	printf("log can read; size %d\n", logdevices[d].log_size);
 #endif
   	ready_ops |= SEL_RD; /* writes never block */
- }
+  }
 
-  	/* Write never blocks. */
+  /* Write never blocks. */
   if(m_ptr->USER_ENDPT & SEL_WR) ready_ops |= SEL_WR;
 
 	/* Enable select calback if no operations were

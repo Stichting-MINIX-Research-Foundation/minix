@@ -405,7 +405,7 @@ PRIVATE int pty_read(tty_t *tp, int try)
 /*===========================================================================*
  *				pty_close				     *
  *===========================================================================*/
-PRIVATE int pty_close(tty_t *tp, int try)
+PRIVATE int pty_close(tty_t *tp, int UNUSED(try))
 {
 /* The tty side has closed, so shut down the pty side. */
   pty_t *pp = tp->tty_priv;
@@ -430,7 +430,7 @@ PRIVATE int pty_close(tty_t *tp, int try)
 /*===========================================================================*
  *				pty_icancel				     *
  *===========================================================================*/
-PRIVATE int pty_icancel(tty_t *tp, int try)
+PRIVATE int pty_icancel(tty_t *tp, int UNUSED(try))
 {
 /* Discard waiting input. */
   pty_t *pp = tp->tty_priv;
@@ -447,7 +447,7 @@ PRIVATE int pty_icancel(tty_t *tp, int try)
 /*===========================================================================*
  *				pty_ocancel				     *
  *===========================================================================*/
-PRIVATE int pty_ocancel(tty_t *tp, int try)
+PRIVATE int pty_ocancel(tty_t *tp, int UNUSED(try))
 {
 /* Drain the output buffer. */
   pty_t *pp = tp->tty_priv;

@@ -3,10 +3,10 @@
  *
  * Changes:
  *   Oct 27, 2011   rewritten to use sys/queue.h (D.C. van Moolenbroek)
- *   Aug 27, 2011   integrated into libdriver (A. Welzel)
+ *   Aug 27, 2011   integrated into libblockdriver (A. Welzel)
  */
 
-#include <minix/driver_mt.h>
+#include <minix/blockdriver_mt.h>
 #include <sys/queue.h>
 #include <assert.h>
 
@@ -26,11 +26,11 @@ PRIVATE STAILQ_HEAD(queue, mq_cell) queue[DRIVER_MT_MAX_WORKERS];
 PRIVATE STAILQ_HEAD(free_list, mq_cell) free_list;
 
 /*===========================================================================*
- *				driver_mq_init				     *
+ *				mq_init					     *
  *===========================================================================*/
-PUBLIC void driver_mq_init(void)
+PUBLIC void mq_init(void)
 {
-/* Initialize the message queues and message cells. 
+/* Initialize the message queues and message cells.
  */
   int i;
 
@@ -44,9 +44,9 @@ PUBLIC void driver_mq_init(void)
 }
 
 /*===========================================================================*
- *				driver_mq_enqueue			     *
+ *				mq_enqueue				     *
  *===========================================================================*/
-PUBLIC int driver_mq_enqueue(thread_id_t thread_id, const message *mess,
+PUBLIC int mq_enqueue(thread_id_t thread_id, const message *mess,
   int ipc_status)
 {
 /* Add a message, including its IPC status, to the message queue of a thread.
@@ -71,10 +71,9 @@ PUBLIC int driver_mq_enqueue(thread_id_t thread_id, const message *mess,
 }
 
 /*===========================================================================*
- *				driver_mq_dequeue			     *
+ *				mq_dequeue				     *
  *===========================================================================*/
-PUBLIC int driver_mq_dequeue(thread_id_t thread_id, message *mess,
-  int *ipc_status)
+PUBLIC int mq_dequeue(thread_id_t thread_id, message *mess, int *ipc_status)
 {
 /* Return and remove a message, including its IPC status, from the message
  * queue of a thread. Return TRUE iff a message was available.

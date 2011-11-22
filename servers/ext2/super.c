@@ -180,7 +180,7 @@ register struct super_block *sp; /* pointer to a superblock */
 
   r = bdev_read(dev, cvu64(gdt_position), (char*) ondisk_group_descs,
 	gd_size, BDEV_NOFLAGS);
-  if (r != gd_size) {
+  if (r != (ssize_t) gd_size) {
 	printf("Can not read group descriptors\n");
 	return(EINVAL);
   }
@@ -251,7 +251,7 @@ struct super_block *sp; /* pointer to a superblock */
 
 	r = bdev_write(sp->s_dev, cvu64(gdt_position),
 		(char*) ondisk_group_descs, gd_size, BDEV_NOFLAGS);
-	if (r != gd_size) {
+	if (r != (ssize_t) gd_size) {
 		printf("Can not write group descriptors\n");
 	}
 	group_descriptors_dirty = CLEAN;
@@ -275,7 +275,7 @@ struct group_desc* get_group_desc(unsigned int bnum)
 PRIVATE u32_t ext2_count_dirs(struct super_block *sp)
 {
   u32_t count = 0;
-  int i;
+  unsigned int i;
 
   for (i = 0; i < sp->s_groups_count; i++) {
 	struct group_desc *desc = get_group_desc(i);
@@ -441,7 +441,7 @@ PRIVATE void copy_group_descriptors(
   unsigned int ngroups
 )
 {
-  int i;
+  unsigned int i;
   for (i = 0; i < ngroups; i++)
 	gd_copy(&dest_array[i], &source_array[i]);
 }

@@ -2,8 +2,8 @@
 PROG=	pci
 SRCS=	main.c pci.c pci_table.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBTIMERS}
-LDADD+=	-ldriver -lsys -ltimers
+DPADD+=	${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lsys -ltimers
 
 MAN=
 

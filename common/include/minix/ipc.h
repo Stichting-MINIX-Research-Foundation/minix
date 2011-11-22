@@ -29,6 +29,8 @@ typedef struct {int m7i1, m7i2, m7i3, m7i4, m7i5; char *m7p1, *m7p2;} mess_7;
 typedef struct {int m8i1, m8i2; char *m8p1, *m8p2, *m8p3, *m8p4;} mess_8;
 typedef struct {long m9l1, m9l2, m9l3, m9l4, m9l5;
 	short m9s1, m9s2, m9s3, m9s4; } mess_9;
+typedef struct {int m10i1, m10i2, m10i3, m10i4;
+	long m10l1, m10l2, m10l3; } mess_10;
 
 typedef struct {
   endpoint_t m_source;		/* who sent the message */
@@ -43,6 +45,7 @@ typedef struct {
 	mess_8 m_m8;
 	mess_6 m_m6;
 	mess_9 m_m9;
+	mess_10 m_m10;
   } m_u;
 } message;
 
@@ -117,6 +120,14 @@ typedef struct {
 #define m9_s2  m_u.m_m9.m9s2
 #define m9_s3  m_u.m_m9.m9s3
 #define m9_s4  m_u.m_m9.m9s4
+
+#define m10_i1 m_u.m_m10.m10i1
+#define m10_i2 m_u.m_m10.m10i2
+#define m10_i3 m_u.m_m10.m10i3
+#define m10_i4 m_u.m_m10.m10i4
+#define m10_l1 m_u.m_m10.m10l1
+#define m10_l2 m_u.m_m10.m10l2
+#define m10_l3 m_u.m_m10.m10l3
 
 /*==========================================================================* 
  * Minix run-time system (IPC). 					    *

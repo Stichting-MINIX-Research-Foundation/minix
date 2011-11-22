@@ -2,8 +2,8 @@
 PROG=	hello
 SRCS=	hello.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
+LDADD+=	-lchardriver -lsys
 
 MAN=
 

@@ -232,16 +232,19 @@ PUBLIC int dmap_driver_match(endpoint_t proc, int major)
 /*===========================================================================*
  *				dmap_endpt_up		 		     *
  *===========================================================================*/ 
-PUBLIC void dmap_endpt_up(int proc_e)
+PUBLIC void dmap_endpt_up(int proc_e, int is_blk)
 {
 	int i;
 	for (i=0; i<NR_DEVICES; i++) {
 		if(dmap[i].dmap_driver != NONE
 			&& dmap[i].dmap_driver == proc_e) {
-			dev_up(i);
+
+			if (is_blk)
+				bdev_up(i);
+			else
+				cdev_up(i);
 		}
 	}
-	return;
 }
 
 /*===========================================================================*

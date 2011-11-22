@@ -324,7 +324,7 @@ int c;				/* character to echo */
 /*===========================================================================*
  *				rs_ioctl				     *
  *===========================================================================*/
-PRIVATE int rs_ioctl(tty_t *tp, int dummy)
+PRIVATE int rs_ioctl(tty_t *tp, int UNUSED(dummy))
 /* tp;			which TTY */
 {
 /* Reconfigure the line as soon as the output has drained. */
@@ -544,7 +544,7 @@ PUBLIC void rs_interrupt(message *m)
 /*===========================================================================*
  *				rs_icancel				     *
  *===========================================================================*/
-PRIVATE int rs_icancel(tty_t *tp, int dummy)
+PRIVATE int rs_icancel(tty_t *tp, int UNUSED(dummy))
 {
 /* Cancel waiting input. */
   rs232_t *rs = tp->tty_priv;
@@ -561,7 +561,7 @@ PRIVATE int rs_icancel(tty_t *tp, int dummy)
 /*===========================================================================*
  *				rs_ocancel				     *
  *===========================================================================*/
-PRIVATE int rs_ocancel(tty_t *tp, int dummy)
+PRIVATE int rs_ocancel(tty_t *tp, int UNUSED(dummy))
 {
 /* Cancel pending output. */
   rs232_t *rs = tp->tty_priv;
@@ -636,7 +636,7 @@ PRIVATE void rs_ostart(rs232_t *rs)
 /*===========================================================================*
  *				rs_break				     *
  *===========================================================================*/
-PRIVATE int rs_break(tty_t *tp, int dummy)
+PRIVATE int rs_break(tty_t *tp, int UNUSED(dummy))
 {
 /* Generate a break condition by setting the BREAK bit for 0.4 sec. */
   rs232_t *rs = tp->tty_priv;
@@ -654,7 +654,7 @@ PRIVATE int rs_break(tty_t *tp, int dummy)
 /*===========================================================================*
  *				rs_close				     *
  *===========================================================================*/
-PRIVATE int rs_close(tty_t *tp, int dummy)
+PRIVATE int rs_close(tty_t *tp, int UNUSED(dummy))
 {
 /* The line is closed; optionally hang up. */
   rs232_t *rs = tp->tty_priv;

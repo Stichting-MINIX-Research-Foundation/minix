@@ -12,7 +12,8 @@ static void bdev_cancel(dev_t dev)
  * permanently unusable, and clean up any associated calls and resources.
  */
 
-  printf("bdev: driver for major %d crashed\n", major(dev));
+  printf("bdev: driver for major %d (endpoint %d) crashed\n",
+	major(dev), bdev_driver_get(dev));
 
   /* Mark the driver as unusable. */
   bdev_driver_clear(dev);
@@ -27,18 +28,13 @@ void bdev_update(dev_t dev, endpoint_t endpt)
   old_endpt = bdev_driver_get(dev);
 
   bdev_driver_set(dev, endpt);
-
-  /* If updating the driver causes an endpoint change, the driver has
-   * restarted.
-   */
-  if (old_endpt != NONE && old_endpt != endpt)
-	bdev_cancel(dev);
 }
 
 int bdev_sendrec(dev_t dev, const message *m_orig)
 {
 /* Send a request to the given device, and wait for the reply.
  */
+  static long id = 0;
   endpoint_t endpt;
   message m;
   int r;
@@ -49,7 +45,7 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
 
   /* Send the request and block until we receive a reply. */
   m = *m_orig;
-  m.USER_ENDPT = (endpoint_t) -1; /* synchronous request; no ID */
+  m.BDEV_ID = ++id;
 
   r = sendrec(endpt, &m);
 
@@ -65,25 +61,25 @@ int bdev_sendrec(dev_t dev, const message *m_orig)
 	return r;
   }
 
-  if (m.m_type != TASK_REPLY) {
+  if (m.m_type != BDEV_REPLY) {
 	printf("bdev: driver (%d) sent weird response (%d)\n",
 		endpt, m.m_type);
 	return EIO;
   }
 
   /* ERESTART signifies a driver restart. Again, we do not support this yet. */
-  if (m.REP_STATUS == ERESTART) {
+  if (m.BDEV_STATUS == ERESTART) {
 	bdev_cancel(dev);
 
 	return EDEADSRCDST;
   }
 
-  if (m.REP_ENDPT != (endpoint_t) -1) {
-	printf("bdev: driver (%d) sent invalid response (%d)\n",
-		endpt, m.REP_ENDPT);
+  if (m.BDEV_ID != id) {
+	printf("bdev: driver (%d) sent invalid response (%ld)\n",
+		endpt, m.BDEV_ID);
 	return EIO;
   }
 
-  /* We got a reply to our request. */
-  return m.REP_STATUS;
+  /* Return the result of our request. */
+  return m.BDEV_STATUS;
 }

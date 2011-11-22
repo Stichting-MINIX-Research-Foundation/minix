@@ -60,14 +60,14 @@ PRIVATE struct optset optset_table[] = {
   { "timeout",	OPT_INT,	&DRIVER_TIMEOUT,	10		},
   { "T",	OPT_INT,	&DRIVER_TIMEOUT,	10		},
   { "chunk",	OPT_INT,	&CHUNK_SIZE,		10		},
-  { NULL								}
+  { NULL,	0,		NULL,			0		}
 };
 
 /* Request message. */
 static message m_in;
 static endpoint_t who_e;			/* m_source */
-static endpoint_t proc_e;			/* USER_ENDPT */
-static cp_grant_id_t grant_id;			/* IO_GRANT */
+static long req_id;				/* BDEV_ID */
+static cp_grant_id_t grant_id;			/* BDEV_GRANT */
 
 /* Data buffers. */
 static char *buf_array, *buffer;		/* contiguous buffer */
@@ -136,8 +136,8 @@ static int do_rdwt(int flag_rw)
 	u64_t pos;
 	int r;
 
-	pos = make64(m_in.POSITION, m_in.HIGHPOS);
-	size = m_in.COUNT;
+	pos = make64(m_in.BDEV_POS_LO, m_in.BDEV_POS_HI);
+	size = m_in.BDEV_COUNT;
 
 	if (rem64u(pos, SECTOR_SIZE) != 0 || size % SECTOR_SIZE != 0) {
 		printf("Filter: unaligned request from caller!\n");
@@ -169,7 +169,11 @@ static int do_rdwt(int flag_rw)
 		carry(size_ret, flag_rw);
 
 	flt_free(buffer, size, buf_array);
-	return r != OK ? r : size_ret;
+
+	if (r != OK)
+		return r;
+
+	return size_ret;
 }
 
 /*===========================================================================*
@@ -177,20 +181,20 @@ static int do_rdwt(int flag_rw)
  *===========================================================================*/
 static int do_vrdwt(int flag_rw)
 {
-	size_t size, size_ret, bytes;
+	size_t size, size_ret;
 	int grants;
 	int r, i;
 	u64_t pos;
 	iovec_t iov_proc[NR_IOREQS];
 
 	/* Extract informations. */
-	grants = m_in.COUNT;
+	grants = m_in.BDEV_COUNT;
 	if((r = sys_safecopyfrom(who_e, grant_id, 0, (vir_bytes) iov_proc,
 		grants * sizeof(iovec_t), D)) != OK) {
 		panic("copying in grant vector failed: %d", r);
 	}
 
-	pos = make64(m_in.POSITION, m_in.HIGHPOS);
+	pos = make64(m_in.BDEV_POS_LO, m_in.BDEV_POS_HI);
 	for(size = 0, i = 0; i < grants; i++)
 		size += iov_proc[i].iov_size;
 
@@ -227,22 +231,9 @@ static int do_vrdwt(int flag_rw)
 	if(flag_rw == FLT_READ)
 		vcarry(grants, iov_proc, flag_rw, size_ret);
 
-	/* Set the result-iovec. */
-	for(i = 0; i < grants && size_ret > 0; i++) {
-		bytes = MIN(size_ret, iov_proc[i].iov_size);
-
-		iov_proc[i].iov_size -= bytes;
-		size_ret -= bytes;
-	}
-
-	/* Copy the caller's grant-table back. */
-	if((r = sys_safecopyto(who_e, grant_id, 0, (vir_bytes) iov_proc,
-		grants * sizeof(iovec_t), D)) != OK) {
-		panic("copying out grant vector failed: %d", r);
-	}
-
 	flt_free(buffer, size, buf_array);
-	return OK;
+
+	return size_ret;
 }
 
 /*===========================================================================*
@@ -252,7 +243,7 @@ static int do_ioctl(message *m)
 {
 	struct partition sizepart;
 
-	switch(m->REQUEST) {
+	switch(m->BDEV_REQUEST) {
 	case DIOCSETP:
 	case DIOCTIMEOUT:
 	case DIOCOPENCT:
@@ -276,7 +267,8 @@ static int do_ioctl(message *m)
 		break;
 
 	default:
-		printf("Filter: unknown ioctl request: %d!\n", m->REQUEST);
+		printf("Filter: unknown ioctl request: %d!\n",
+			m->BDEV_REQUEST);
 		return EINVAL;
 	}
 
@@ -372,8 +364,8 @@ static int parse_arguments(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	message m_out;
-	int ipc_status;
-	int r;
+	int r, ipc_status;
+	size_t size;
 
 	/* SEF local startup. */
 	env_setargs(argc, argv);
@@ -396,18 +388,19 @@ int main(int argc, char *argv[])
 		}
 
 		who_e = m_in.m_source;
-		proc_e = m_in.USER_ENDPT;
-		grant_id = (cp_grant_id_t) m_in.IO_GRANT;
+		req_id = m_in.BDEV_ID;
+		grant_id = m_in.BDEV_GRANT;
+		size = 0;
 
 		/* Forword the request message to the drivers. */
 		switch(m_in.m_type) {
-		case DEV_OPEN:		/* open/close is a noop for filter. */
-		case DEV_CLOSE:		r = OK;				break;
-		case DEV_READ_S:	r = do_rdwt(FLT_READ);		break;
-		case DEV_WRITE_S:	r = do_rdwt(FLT_WRITE);		break;
-		case DEV_GATHER_S:	r = do_vrdwt(FLT_READ);		break;
-		case DEV_SCATTER_S:	r = do_vrdwt(FLT_WRITE);	break;
-		case DEV_IOCTL_S:	r = do_ioctl(&m_in);		break;
+		case BDEV_OPEN:		/* open/close is a noop for filter. */
+		case BDEV_CLOSE:	r = OK;				break;
+		case BDEV_READ:		r = do_rdwt(FLT_READ);		break;
+		case BDEV_WRITE:	r = do_rdwt(FLT_WRITE);		break;
+		case BDEV_GATHER:	r = do_vrdwt(FLT_READ);		break;
+		case BDEV_SCATTER:	r = do_vrdwt(FLT_WRITE);	break;
+		case BDEV_IOCTL:	r = do_ioctl(&m_in);		break;
 
 		default:
 			printf("Filter: ignoring unknown request %d from %d\n", 
@@ -420,9 +413,9 @@ int main(int argc, char *argv[])
 #endif
 
 		/* Send back reply message. */
-		m_out.m_type = TASK_REPLY;
-		m_out.REP_ENDPT = proc_e;
-		m_out.REP_STATUS = r;
+		m_out.m_type = BDEV_REPLY;
+		m_out.BDEV_ID = req_id;
+		m_out.BDEV_STATUS = r;
 		send(who_e, &m_out);
 	}
 
@@ -450,7 +443,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the filter driver. */
 	int r;
@@ -468,14 +461,14 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	driver_init();
 
-	/* Subscribe to driver events for VFS drivers. */
-	r = ds_subscribe("drv\\.vfs\\..*", DSF_INITIAL | DSF_OVERWRITE);
+	/* Subscribe to block driver events. */
+	r = ds_subscribe("drv\\.blk\\..*", DSF_INITIAL | DSF_OVERWRITE);
 	if(r != OK) {
 		panic("Filter: can't subscribe to driver events");
 	}
 
 	/* Announce we are up! */
-	driver_announce();
+	blockdriver_announce();
 
 	return(OK);
 }

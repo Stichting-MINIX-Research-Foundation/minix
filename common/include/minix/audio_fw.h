@@ -2,7 +2,7 @@
 #define AUDIO_FW_H
 
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/chardriver.h>
 #include <sys/ioc_sound.h>
 
 

@@ -59,7 +59,7 @@ static void calc_sum(unsigned sector, char *data, char *sum)
 		memset(sum, 0, SUM_SIZE);
 		for(i = 0; i < SECTOR_SIZE / SUM_SIZE; i++) {
 			q = (unsigned long *) sum;
-			for(j = 0; j < SUM_SIZE / sizeof(*p); j++) {
+			for(j = 0; (size_t) j < SUM_SIZE / sizeof(*p); j++) {
 				*q ^= *p;
 				q++;
 				p++;

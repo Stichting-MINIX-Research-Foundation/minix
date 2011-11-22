@@ -138,8 +138,8 @@ ACPICA_SRCS= \
 
 SRCS+=${ACPICA_SRCS} 
 
-DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+=	${LIBSYS}
+LDADD+=	-lsys
 
 CPPFLAGS += -I${.CURDIR}/include
 CFLAGS += -DACPI_LIBRARY

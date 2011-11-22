@@ -48,8 +48,8 @@ char *print64(u64_t p)
 	static char buf[NB][100];
 	u32_t lo = ex64lo(p), hi = ex64hi(p);
 	n = (n+1) % NB;
-	if(!hi) sprintf(buf[n], "%lx", lo);
-	else sprintf(buf[n], "%lx%08lx", hi, lo);
+	if(!hi) sprintf(buf[n], "%x", lo);
+	else sprintf(buf[n], "%x%08x", hi, lo);
 	return buf[n];
 }
 

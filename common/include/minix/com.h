@@ -8,8 +8,8 @@
  *        1 -   0xFF	POSIX requests (see callnr.h)
  *    0x200 -  0x2FF	Data link layer requests and responses
  *    0x300 -  0x3FF	Bus controller requests and responses
- *    0x400 -  0x4FF	Block and character device requests
- *    0x500 -  0x5FF	Block and character device responses
+ *    0x400 -  0x4FF	Character device requests
+ *    0x500 -  0x5FF	Character device responses
  *    0x600 -  0x6FF	Kernel calls to SYSTEM task
  *    0x700 -  0x7FF	Reincarnation Server (RS) requests
  *    0x800 -  0x8FF	Data Store (DS) requests
@@ -25,6 +25,7 @@
  *   0x1200 - 0x12FF    Devman
  *   0x1300 - 0x13FF    TTY Input
  *   0x1400 - 0x14FF	VFS-FS transaction IDs
+ *   0x1500 - 0x15FF	Block device requests and responses
  *
  * Zero and negative values are widely used for OK and error responses.
  */
@@ -182,12 +183,12 @@
 
 
 /*===========================================================================*
- *                Messages for BLOCK and CHARACTER device drivers	     *
+ *                Messages for CHARACTER device drivers			     *
  *===========================================================================*/
 
-/* Message types for device drivers. */
-#define DEV_RQ_BASE   0x400	/* base for device request types */
-#define DEV_RS_BASE   0x500	/* base for device response types */
+/* Message types for character device drivers. */
+#define DEV_RQ_BASE   0x400	/* base for character device request types */
+#define DEV_RS_BASE   0x500	/* base for character device response types */
 
 #define CANCEL       	(DEV_RQ_BASE +  0) /* force a task to cancel */
 #define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
@@ -215,7 +216,7 @@
 
 #define IS_DEV_RS(type) (((type) & ~0xff) == DEV_RS_BASE)
 
-/* Field names for messages to block and character device drivers. */
+/* Field names for messages to character device drivers. */
 #define DEVICE    	m2_i1	/* major-minor device */
 #define USER_ENDPT	m2_i2	/* which endpoint initiated this call? */
 #define COUNT   	m2_i3	/* how many bytes to transfer */
@@ -225,7 +226,7 @@
 #define ADDRESS 	m2_p1	/* core buffer address */
 #define IO_GRANT 	m2_p1	/* grant id (for DEV_*_S variants) */
 
-/* Field names for DEV_SELECT messages to device drivers. */
+/* Field names for DEV_SELECT messages to character device drivers. */
 #define DEV_MINOR	m2_i1	/* minor device */
 #define DEV_SEL_OPS	m2_i2	/* which select operations are requested */
 
@@ -1215,5 +1216,44 @@
 
 #define VFS_TRANSID	(VFS_TRANSACTION_BASE + 1)
 #define IS_VFS_FS_TRANSID(type) (((type) & ~0xff) == VFS_TRANSACTION_BASE)
+
+/*===========================================================================*
+ *			Messages for block devices			     *
+ *===========================================================================*/
+
+/* Base type for block device requests and responses. */
+#define BDEV_RQ_BASE	0x1500
+#define BDEV_RS_BASE	0x1580
+
+#define IS_BDEV_RQ(type) (((type) & ~0x7f) == BDEV_RQ_BASE)
+#define IS_BDEV_RS(type) (((type) & ~0x7f) == BDEV_RS_BASE)
+
+/* Message types for block device requests. */
+#define BDEV_OPEN	(BDEV_RQ_BASE + 0)	/* open a minor device */
+#define BDEV_CLOSE	(BDEV_RQ_BASE + 1)	/* close a minor device */
+#define BDEV_READ	(BDEV_RQ_BASE + 2)	/* read into a buffer */
+#define BDEV_WRITE	(BDEV_RQ_BASE + 3)	/* write from a buffer */
+#define BDEV_GATHER	(BDEV_RQ_BASE + 4)	/* read into a vector */
+#define BDEV_SCATTER	(BDEV_RQ_BASE + 5)	/* write from a vector */
+#define BDEV_IOCTL	(BDEV_RQ_BASE + 6)	/* I/O control operation */
+
+/* Message types for block device responses. */
+#define BDEV_REPLY	(BDEV_RS_BASE + 0)	/* general reply code */
+
+/* Field names for block device messages. */
+#define BDEV_MINOR	m10_i1	/* minor device number */
+#define BDEV_STATUS	m10_i1	/* OK or error code */
+#define BDEV_ACCESS	m10_i2	/* access bits for open requests */
+#define BDEV_REQUEST	m10_i2	/* I/O control request */
+#define BDEV_COUNT	m10_i2	/* number of bytes or elements in transfer */
+#define BDEV_GRANT	m10_i3	/* grant ID of buffer or vector */
+#define BDEV_FLAGS	m10_i4	/* transfer flags */
+#define BDEV_ID		m10_l1	/* opaque request ID */
+#define BDEV_POS_LO	m10_l2	/* transfer position (low bits) */
+#define BDEV_POS_HI	m10_l3	/* transfer position (high bits) */
+
+/* Bits in 'BDEV_FLAGS' field of block device transfer requests. */
+#  define BDEV_NOFLAGS		0x00	/* no flags are set */
+#  define BDEV_FORCEWRITE	0x01	/* force write to disk immediately */
 
 /* _MINIX_COM_H */

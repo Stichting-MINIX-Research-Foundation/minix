@@ -232,17 +232,21 @@ PUBLIC int dmap_driver_match(endpoint_t proc, int major)
 /*===========================================================================*
  *				dmap_endpt_up		 		     *
  *===========================================================================*/
-PUBLIC void dmap_endpt_up(endpoint_t proc_e)
+PUBLIC void dmap_endpt_up(endpoint_t proc_e, int is_blk)
 {
 /* A device driver with endpoint proc_e has been restarted. Go tell everyone
  * that might be blocking on it that this device is 'up'.
  */
 
   int major;
-  for (major = 0; major < NR_DEVICES; major++)
-	if (dmap_driver_match(proc_e, major))
-		dev_up(major);
-
+  for (major = 0; major < NR_DEVICES; major++) {
+	if (dmap_driver_match(proc_e, major)) {
+		if (is_blk)
+			bdev_up(major);
+		else
+			cdev_up(major);
+	}
+  }
 }
 
 /*===========================================================================*

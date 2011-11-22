@@ -2,8 +2,8 @@
 PROG=	amddev
 SRCS=	amddev.c
 
-DPADD+= ${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+= ${LIBSYS}
+LDADD+=	-lsys
 
 MAN=
 

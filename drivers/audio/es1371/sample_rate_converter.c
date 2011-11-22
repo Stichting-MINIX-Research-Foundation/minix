@@ -170,7 +170,7 @@ void src_set_rate(const DEV_STRUCT * DSP, char base, u16_t rate) {
 
 		src_reg_write(DSP, base + SRC_INT_REGS_OFF,
 				(wtemp & 0x00ffU) |
-				(u16_t) (freq >> 6) & 0xfc00);
+				((u16_t) (freq >> 6) & 0xfc00));
 
 		src_reg_write(DSP, base + SRC_VFREQ_FRAC_OFF, (u16_t) freq >> 1);
 
@@ -226,7 +226,7 @@ void src_set_rate(const DEV_STRUCT * DSP, char base, u16_t rate) {
 		src_reg_read(DSP, base + SRC_INT_REGS_OFF, &wtemp);
 		src_reg_write(DSP, base + SRC_INT_REGS_OFF,
 				(wtemp & 0x00ffU) |
-				(u16_t) (freq >> 6) & 0xfc00);
+				((u16_t) (freq >> 6) & 0xfc00));
 		src_reg_write(DSP, base + SRC_VFREQ_FRAC_OFF, (u16_t) freq >> 1);
 
 		/* un-freeze the channel */

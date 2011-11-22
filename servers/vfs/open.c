@@ -140,7 +140,7 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 		   case I_BLOCK_SPECIAL:
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
-			r = dev_open(dev, who_e, bits | (oflags & ~O_ACCMODE));
+			r = bdev_open(dev, bits);
 			if (r != OK) break;
 
 			/* Check whether the device is mounted or not. If so,
@@ -152,18 +152,15 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 					vp->v_bfs_e = vmp->m_fs_e;
 
 			/* Get the driver endpoint of the block spec device */
-			dp = &dmap[(vp->v_sdev >> MAJOR) & BYTE];
-			if (dp->dmap_driver == NONE) {
-				printf("VFS: driver not found for device %d\n",
-					vp->v_sdev);
-				r = ENXIO;
-				break;
-			}
+			dp = &dmap[major(vp->v_sdev)];
 
-			/* Send the driver endpoint (even when known already)*/
+			/* Send the driver endpoint to the file system (even
+			 * when known already).
+			 */
 			if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev,
 					       dp->dmap_driver)) != OK) {
 				printf("VFS: error sending driver endpoint\n");
+				bdev_close(dev);
 				r = ENXIO;
 			}
 			break;

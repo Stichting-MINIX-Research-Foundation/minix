@@ -2,8 +2,8 @@
 PROG=	log
 SRCS=	log.c diag.c liveupdate.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+=	${LIBCHARDRIVER} ${LIBSYS}
+LDADD+=	-lchardriver -lsys
 
 MAN=
 

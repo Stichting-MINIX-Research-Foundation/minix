@@ -70,7 +70,7 @@ PRIVATE int ak4531_write (u8_t address, u8_t data) {
 	u16_t to_be_written;
 
 
-	if (address < MASTER_VOLUME_LCH || address > MIC_AMP_GAIN) return -1;
+	if (address > MIC_AMP_GAIN) return -1;
 
 	to_be_written = (u16_t)((address << 8) | data);
 

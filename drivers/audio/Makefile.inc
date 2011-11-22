@@ -1,7 +1,7 @@
 .include <bsd.own.mk>
 
-DPADD+= ${LIBAUDIODRIVER} ${LIBDRIVER} ${LIBSYS}
-LDADD+= -laudiodriver -ldriver -lsys
+DPADD+= ${LIBAUDIODRIVER} ${LIBCHARDRIVER} ${LIBSYS}
+LDADD+= -laudiodriver -lchardriver -lsys
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

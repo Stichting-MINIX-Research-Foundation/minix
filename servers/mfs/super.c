@@ -197,7 +197,7 @@ register struct super_block *sp; /* pointer to a superblock */
   
   r = bdev_read(dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
 	BDEV_NOFLAGS);
-  if (r != _MIN_BLOCK_SIZE) 
+  if (r != _MIN_BLOCK_SIZE)
   	return(EINVAL);
   
   memcpy(sp, sbbuf, sizeof(*sp));

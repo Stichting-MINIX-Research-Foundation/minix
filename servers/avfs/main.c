@@ -538,10 +538,9 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	}
   }
 
-  /* Subscribe to driver events for VFS drivers. */
-  if ((s = ds_subscribe("drv\\.vfs\\..*", DSF_INITIAL | DSF_OVERWRITE) != OK)){
-	panic("VFS: can't subscribe to driver events (%d)", s);
-  }
+  /* Subscribe to block and character driver events. */
+  s = ds_subscribe("drv\\.[bc]..\\..*", DSF_INITIAL | DSF_OVERWRITE);
+  if (s != OK) panic("VFS: can't subscribe to driver events (%d)", s);
 
 #if DO_SANITYCHECKS
   FIXME("VFS: DO_SANITYCHECKS is on");

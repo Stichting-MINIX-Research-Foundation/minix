@@ -2,8 +2,8 @@
 PROG=	memory
 SRCS=	memory.c imgrd.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+=	${LIBBLOCKDRIVER} ${LIBCHARDRIVER} ${LIBSYS}
+LDADD+=	-lblockdriver -lchardriver -lsys
 
 MAN=
 

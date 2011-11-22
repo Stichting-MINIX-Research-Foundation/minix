@@ -77,7 +77,7 @@ unsigned long compute_crc(const unsigned char *b, size_t n)
       /* Replace an intermediate zero with the next value
        * from the sequence */
       i = aux++;
-      if (aux >= sizeof(crctab) / sizeof(crctab[0])) aux = 0;
+      if ((size_t) aux >= sizeof(crctab) / sizeof(crctab[0])) aux = 0;
     }
 
     /* New checksum value */

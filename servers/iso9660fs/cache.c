@@ -92,7 +92,7 @@ register struct buf *bp;	/* buffer pointer */
 {
   int r;
   u64_t pos;
-  int block_size;
+  vir_bytes block_size;
 
   block_size = v_pri.logical_block_size_l; /* The block size is indicated by
 					    * the superblock */
@@ -100,10 +100,9 @@ register struct buf *bp;	/* buffer pointer */
 
   pos = mul64u(bp->b_blocknr, block_size); /* get absolute position */
   r = bdev_read(fs_dev, pos, bp->b_data, block_size, BDEV_NOFLAGS);
-  if (r != block_size) {
-    if (r >= 0) r = END_OF_FILE;
-    if (r != END_OF_FILE)
-      printf("ISOFS(%d) I/O error on device %d/%d, block %u\n",
+  if (r != (ssize_t) block_size) {
+    if (r == OK) r = END_OF_FILE;
+    else printf("ISOFS(%d) I/O error on device %d/%d, block %u\n",
 	     SELF_E, (fs_dev>>MAJOR)&BYTE, (fs_dev>>MINOR)&BYTE,
 	     bp->b_blocknr);
 

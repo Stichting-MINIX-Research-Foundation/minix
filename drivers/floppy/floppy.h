@@ -1,4 +1,4 @@
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/blockdriver.h>
 #include <minix/drvlib.h>
 

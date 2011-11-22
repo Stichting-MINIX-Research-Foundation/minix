@@ -2,8 +2,8 @@
 PROG=	floppy
 SRCS=	floppy.c liveupdate.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBTIMERS}
-LDADD+=	-ldriver -lsys -ltimers
+DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lblockdriver -lsys -ltimers
 
 MAN=
 

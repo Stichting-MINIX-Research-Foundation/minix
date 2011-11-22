@@ -1,7 +1,7 @@
 /* Block Device Driver Test driver, by D.C. van Moolenbroek */
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <minix/driver.h>
+#include <minix/blockdriver.h>
 #include <minix/drvlib.h>
 #include <minix/dmap.h>
 #include <minix/sysinfo.h>
@@ -18,10 +18,9 @@ enum {
 	RESULT_OK,			/* exactly as expected */
 	RESULT_COMMFAIL,		/* communication failed */
 	RESULT_BADTYPE,			/* bad type in message */
-	RESULT_BADENDPT,		/* bad endpoint in message */
+	RESULT_BADID,			/* bad request ID in message */
 	RESULT_BADSTATUS,		/* bad/unexpected status in message */
 	RESULT_TRUNC,			/* request truncated unexpectedly */
-	RESULT_TOUCHED,			/* result iovec changed unexpectedly */
 	RESULT_CORRUPT,			/* buffer touched erroneously */
 	RESULT_MISSING,			/* buffer left untouched erroneously */
 	RESULT_OVERFLOW,		/* area around buffer touched */
@@ -37,7 +36,6 @@ PRIVATE char device_path[PATH_MAX];	/* path to device node to use */
 PRIVATE char driver_label[LABEL_MAX];	/* driver DS label */
 PRIVATE dev_t driver_minor;		/* driver's partition minor to use */
 PRIVATE endpoint_t driver_endpt;	/* driver endpoint */
-PRIVATE endpoint_t my_endpt;		/* this process's endpoint */
 
 PRIVATE int may_write = FALSE;		/* may we write to the device? */
 PRIVATE int sector_size = 512;		/* size of a single disk sector */
@@ -110,8 +108,8 @@ PRIVATE void got_result(result_t *res, char *desc)
 	case RESULT_BADTYPE:
 		printf("- bad type %d in reply message\n", res->value);
 		break;
-	case RESULT_BADENDPT:
-		printf("- bad endpoint %u in reply message\n", res->value);
+	case RESULT_BADID:
+		printf("- mismatched ID %d in reply message\n", res->value);
 		break;
 	case RESULT_BADSTATUS:
 		printf("- bad or unexpected status %d in reply message\n",
@@ -120,9 +118,6 @@ PRIVATE void got_result(result_t *res, char *desc)
 	case RESULT_TRUNC:
 		printf("- result size not as expected (%u bytes left)\n",
 			res->value);
-		break;
-	case RESULT_TOUCHED:
-		printf("- resulting I/O vector changed unexpectedly\n");
 		break;
 	case RESULT_CORRUPT:
 		printf("- buffer has been modified erroneously\n");
@@ -158,10 +153,11 @@ PRIVATE void reopen_device(dev_t minor)
 	 */
 	message m;
 
-	m.m_type = DEV_OPEN;
-	m.DEVICE = minor;
-	m.USER_ENDPT = my_endpt;
-	m.COUNT = (may_write) ? (R_BIT | W_BIT) : R_BIT;
+	memset(&m, 0, sizeof(m));
+	m.m_type = BDEV_OPEN;
+	m.BDEV_MINOR = minor;
+	m.BDEV_ACCESS = (may_write) ? (R_BIT | W_BIT) : R_BIT;
+	m.BDEV_ID = 0;
 
 	(void) sendrec(driver_endpt, &m);
 }
@@ -185,14 +181,13 @@ PRIVATE int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 		if (r != OK)
 			return set_result(res, RESULT_COMMFAIL, r);
 
-		if (m_ptr->m_type != TASK_REPLY)
+		if (m_ptr->m_type != BDEV_REPLY)
 			return set_result(res, RESULT_BADTYPE, m_ptr->m_type);
 
-		if (m_ptr->REP_ENDPT != m_orig.USER_ENDPT)
-			return set_result(res, RESULT_BADENDPT,
-				m_ptr->REP_ENDPT);
+		if (m_ptr->BDEV_ID != m_orig.BDEV_ID)
+			return set_result(res, RESULT_BADID, m_ptr->BDEV_ID);
 
-		if (m_ptr->REP_STATUS != ERESTART) break;
+		if (m_ptr->BDEV_STATUS != ERESTART) break;
 
 		/* The driver has died. Reopen all devices that we opened
 		 * earlier, and resend the request. Up to three times.
@@ -212,9 +207,9 @@ PRIVATE int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 		exit(1);
 	}
 
-	if ((exp < 0 && m_ptr->REP_STATUS == 0) ||
-			(exp >= 0 && m_ptr->REP_STATUS != 0))
-		return set_result(res, RESULT_BADSTATUS, m_ptr->REP_STATUS);
+	if ((exp < 0 && m_ptr->BDEV_STATUS >= 0) ||
+			(exp >= 0 && m_ptr->BDEV_STATUS < 0))
+		return set_result(res, RESULT_BADSTATUS, m_ptr->BDEV_STATUS);
 
 	return set_result(res, RESULT_OK, 0);
 }
@@ -225,29 +220,24 @@ PRIVATE int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	/* Perform a transfer with a safecopy iovec already supplied.
 	 */
 	cp_grant_id_t grant;
-	iovec_s_t iov_orig[NR_IOREQS];
 	message m;
-	ssize_t left;
-	int i, r;
+	int r;
 
 	assert(nr_req <= NR_IOREQS);
 	assert(!write || may_write);
 
-	memcpy(iov_orig, iovec, sizeof(*iovec) * nr_req);
-
 	if ((grant = cpf_grant_direct(driver_endpt, (vir_bytes) iovec,
-			sizeof(*iovec) * nr_req, CPF_READ | CPF_WRITE)) ==
-			GRANT_INVALID)
+			sizeof(*iovec) * nr_req, CPF_READ)) == GRANT_INVALID)
 		panic("unable to allocate grant");
 
 	memset(&m, 0, sizeof(m));
-	m.m_type = write ? DEV_SCATTER_S : DEV_GATHER_S;
-	m.DEVICE = minor;
-	m.POSITION = ex64lo(pos);
-	m.HIGHPOS = ex64hi(pos);
-	m.COUNT = nr_req;
-	m.USER_ENDPT = my_endpt;
-	m.IO_GRANT = (void *) grant;
+	m.m_type = write ? BDEV_SCATTER : BDEV_GATHER;
+	m.BDEV_MINOR = minor;
+	m.BDEV_POS_LO = ex64lo(pos);
+	m.BDEV_POS_HI = ex64hi(pos);
+	m.BDEV_COUNT = nr_req;
+	m.BDEV_GRANT = grant;
+	m.BDEV_ID = rand();
 
 	r = sendrec_driver(&m, exp, res);
 
@@ -257,38 +247,8 @@ PRIVATE int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	if (r != RESULT_OK)
 		return r;
 
-	if (exp >= 0) {
-		left = exp;
-
-		for (i = 0; i < nr_req; i++) {
-			if (iov_orig[i].iov_grant != iovec[i].iov_grant) {
-				/* Don't panic because we can't free them. */
-				for ( ; i < nr_req; i++)
-					iovec[i].iov_grant =
-						iov_orig[i].iov_grant;
-
-				return set_result(res, RESULT_TOUCHED, 0);
-			}
-
-			if ((left == 0 &&
-				iov_orig[i].iov_size != iovec[i].iov_size) ||
-				((vir_bytes) left >= iov_orig[i].iov_size &&
-				iovec[i].iov_size != 0) ||
-				((vir_bytes) left < iov_orig[i].iov_size &&
-				iov_orig[i].iov_size - iovec[i].iov_size >
-				(vir_bytes) left)) {
-
-				return set_result(res, RESULT_TRUNC, left);
-			}
-
-			left -= iov_orig[i].iov_size - iovec[i].iov_size;
-		}
-
-		/* do we need this? */
-		if (left != 0) return set_result(res, RESULT_TRUNC, left);
-	}
-	else if (memcmp(iovec, iov_orig, sizeof(*iovec) * nr_req))
-		return set_result(res, RESULT_TOUCHED, 0);
+	if (m.BDEV_STATUS != exp)
+		return set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
 
 	return r;
 }
@@ -382,20 +342,20 @@ PRIVATE void bad_read1(void)
 	alloc_buf_and_grant(&buf_ptr, &grant2, buf_size, CPF_WRITE);
 
 	if ((grant = cpf_grant_direct(driver_endpt, (vir_bytes) &iov,
-			sizeof(iov), CPF_READ | CPF_WRITE)) == GRANT_INVALID)
+			sizeof(iov), CPF_READ)) == GRANT_INVALID)
 		panic("unable to allocate grant");
 
 	/* Initialize the defaults for some of the tests.
 	 * This is a legitimate request for the first block of the partition.
 	 */
 	memset(&mt, 0, sizeof(mt));
-	mt.m_type = DEV_GATHER_S;
-	mt.DEVICE = driver_minor;
-	mt.POSITION = 0L;
-	mt.HIGHPOS = 0L;
-	mt.COUNT = 1;
-	mt.USER_ENDPT = my_endpt;
-	mt.IO_GRANT = (void *) grant;
+	mt.m_type = BDEV_GATHER;
+	mt.BDEV_MINOR = driver_minor;
+	mt.BDEV_POS_LO = 0L;
+	mt.BDEV_POS_HI = 0L;
+	mt.BDEV_COUNT = 1;
+	mt.BDEV_GRANT = grant;
+	mt.BDEV_ID = rand();
 
 	memset(&iovt, 0, sizeof(iovt));
 	iovt.iov_grant = grant2;
@@ -407,9 +367,9 @@ PRIVATE void bad_read1(void)
 
 	sendrec_driver(&m, OK, &res);
 
-	if (res.type == RESULT_OK && iov.iov_size != 0) {
+	if (res.type == RESULT_OK && m.BDEV_STATUS != (ssize_t) iov.iov_size) {
 		res.type = RESULT_TRUNC;
-		res.value = iov.iov_size;
+		res.value = m.BDEV_STATUS;
 	}
 
 	got_result(&res, "normal request");
@@ -418,7 +378,7 @@ PRIVATE void bad_read1(void)
 	m = mt;
 	iov = iovt;
 
-	m.COUNT = 0;
+	m.BDEV_COUNT = 0;
 
 	sendrec_driver(&m, EINVAL, &res);
 
@@ -427,7 +387,7 @@ PRIVATE void bad_read1(void)
 	/* Test bad iovec grant. */
 	m = mt;
 
-	m.IO_GRANT = (void *) GRANT_INVALID;
+	m.BDEV_GRANT = GRANT_INVALID;
 
 	sendrec_driver(&m, EINVAL, &res);
 
@@ -438,32 +398,16 @@ PRIVATE void bad_read1(void)
 	iov = iovt;
 
 	if ((grant3 = cpf_grant_direct(driver_endpt, (vir_bytes) &iov,
-			sizeof(iov), CPF_READ | CPF_WRITE)) == GRANT_INVALID)
+			sizeof(iov), CPF_READ)) == GRANT_INVALID)
 		panic("unable to allocate grant");
 
 	cpf_revoke(grant3);
 
-	m.IO_GRANT = (void *) grant3;
+	m.BDEV_GRANT = grant3;
 
 	sendrec_driver(&m, EINVAL, &res);
 
 	got_result(&res, "revoked iovec grant");
-
-	/* Test read-only iovec grant. */
-	m = mt;
-	iov = iovt;
-
-	if ((grant3 = cpf_grant_direct(driver_endpt, (vir_bytes) &iov,
-			sizeof(iov), CPF_READ)) == GRANT_INVALID)
-		panic("unable to allocate grant");
-
-	m.IO_GRANT = (void *) grant3;
-
-	sendrec_driver(&m, EINVAL, &res);
-
-	got_result(&res, "read-only iovec grant");
-
-	cpf_revoke(grant3);
 
 	/* Test normal request (final check). */
 	m = mt;
@@ -471,9 +415,9 @@ PRIVATE void bad_read1(void)
 
 	sendrec_driver(&m, OK, &res);
 
-	if (res.type == RESULT_OK && iov.iov_size != 0) {
+	if (res.type == RESULT_OK && m.BDEV_STATUS != (ssize_t) iov.iov_size) {
 		res.type = RESULT_TRUNC;
-		res.value = iov.iov_size;
+		res.value = m.BDEV_STATUS;
 	}
 
 	got_result(&res, "normal request");
@@ -1036,10 +980,11 @@ PRIVATE void open_device(dev_t minor)
 	message m;
 	result_t res;
 
-	m.m_type = DEV_OPEN;
-	m.DEVICE = minor;
-	m.USER_ENDPT = my_endpt;
-	m.COUNT = (may_write) ? (R_BIT | W_BIT) : R_BIT;
+	memset(&m, 0, sizeof(m));
+	m.m_type = BDEV_OPEN;
+	m.BDEV_MINOR = minor;
+	m.BDEV_ACCESS = may_write ? (R_BIT | W_BIT) : R_BIT;
+	m.BDEV_ID = rand();
 
 	sendrec_driver(&m, OK, &res);
 
@@ -1062,10 +1007,10 @@ PRIVATE void close_device(dev_t minor)
 	result_t res;
 	int i;
 
-	m.m_type = DEV_CLOSE;
-	m.DEVICE = minor;
-	m.USER_ENDPT = my_endpt;
-	m.COUNT = 0;
+	memset(&m, 0, sizeof(m));
+	m.m_type = BDEV_CLOSE;
+	m.BDEV_MINOR = minor;
+	m.BDEV_ID = rand();
 
 	sendrec_driver(&m, OK, &res);
 
@@ -1100,13 +1045,14 @@ PRIVATE int vir_ioctl(dev_t minor, int req, void *ptr, ssize_t exp,
 			_MINIX_IOCTL_SIZE(req), perm)) == GRANT_INVALID)
 		panic("unable to allocate grant");
 
-	m.m_type = DEV_IOCTL_S;
-	m.DEVICE = minor;
-	m.POSITION = 0L;
-	m.HIGHPOS = 0L;
-	m.REQUEST = req;
-	m.USER_ENDPT = my_endpt;
-	m.IO_GRANT = (void *) grant;
+	memset(&m, 0, sizeof(m));
+	m.m_type = BDEV_IOCTL;
+	m.BDEV_MINOR = minor;
+	m.BDEV_POS_LO = 0L;
+	m.BDEV_POS_HI = 0L;
+	m.BDEV_REQUEST = req;
+	m.BDEV_GRANT = grant;
+	m.BDEV_ID = rand();
 
 	r = sendrec_driver(&m, exp, res);
 
@@ -2662,16 +2608,8 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize.
 	 */
-	char name[32];
-	int r, flags;
+	int r;
 	clock_t now;
-
-	/* Get my own endpoint, to use as grant owner. This means that we
-	 * cannot test whether a driver correctly distinguishes between senders
-	 * and grant holders.
-	 */
-	if ((r = sys_whoami(&my_endpt, name, sizeof(name), &flags)) != OK)
-		panic("whoami failed: %d", r);
 
 	if (env_argc > 1)
 		optset_parse(optset_table, env_argv[1]);

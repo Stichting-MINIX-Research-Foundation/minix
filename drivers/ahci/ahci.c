@@ -104,7 +104,7 @@
  *   vectors completely filled with 64KB-blocks.
  */
 #include <minix/drivers.h>
-#include <minix/driver_mt.h>
+#include <minix/blockdriver_mt.h>
 #include <minix/drvlib.h>
 #include <machine/pci.h>
 #include <sys/ioc_disk.h>
@@ -180,9 +180,6 @@ PRIVATE int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
 
 PRIVATE int ahci_exiting = FALSE;		/* exit after last close? */
 
-PRIVATE struct port_state *current_port;	/* currently selected port */
-PRIVATE struct device *current_dev;		/* currently selected device */
-
 #define dprintf(v,s) do {		\
 	if (ahci_verbose >= (v))	\
 		printf s;		\
@@ -195,35 +192,32 @@ PRIVATE int port_exec(struct port_state *ps, int cmd, clock_t timeout);
 PRIVATE void port_timeout(struct timer *tp);
 PRIVATE void port_disconnect(struct port_state *ps);
 
-PRIVATE char *ahci_name(void);
 PRIVATE char *ahci_portname(struct port_state *ps);
-PRIVATE int ahci_open(struct driver *UNUSED(dp), message *m);
-PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m);
-PRIVATE struct device *ahci_prepare(int minor);
-PRIVATE int ahci_transfer(endpoint_t endpt, int opcode, u64_t position,
-	iovec_t *iovec, unsigned int nr_req);
-PRIVATE void ahci_geometry(struct partition *part);
-PRIVATE void ahci_alarm(struct driver *UNUSED(dp), message *m);
-PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m);
-PRIVATE void ahci_intr(struct driver *UNUSED(dp), message *m);
+PRIVATE int ahci_open(dev_t minor, int access);
+PRIVATE int ahci_close(dev_t minor);
+PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
+	endpoint_t endpt, iovec_t *iovec, unsigned int count,
+	int flags);
+PRIVATE struct device *ahci_part(dev_t minor);
+PRIVATE void ahci_alarm(clock_t stamp);
+PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+	cp_grant_id_t grant);
+PRIVATE void ahci_intr(unsigned int irqs);
 PRIVATE int ahci_thread(dev_t minor, thread_id_t *id);
 PRIVATE struct port_state *ahci_get_port(dev_t minor);
 
 /* AHCI driver table. */
-PRIVATE struct driver ahci_dtab = {
-	ahci_name,
+PRIVATE struct blockdriver ahci_dtab = {
 	ahci_open,
 	ahci_close,
-	do_diocntl,
-	ahci_prepare,
 	ahci_transfer,
-	nop_cleanup,
-	ahci_geometry,
-	ahci_alarm,
-	nop_cancel,
-	nop_select,
-	ahci_other,
+	ahci_ioctl,
+	NULL,		/* bdr_cleanup */
+	ahci_part,
+	NULL,		/* bdr_geometry */
 	ahci_intr,
+	ahci_alarm,
+	NULL,		/* bdr_other */
 	ahci_thread
 };
 
@@ -950,16 +944,16 @@ PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
 /*===========================================================================*
  *				port_transfer				     *
  *===========================================================================*/
-PRIVATE int port_transfer(struct port_state *ps, int cmd, u64_t pos, u64_t eof,
-	endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write)
+PRIVATE ssize_t port_transfer(struct port_state *ps, int cmd, u64_t pos,
+	u64_t eof, endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write)
 {
 	/* Perform an I/O transfer on a port.
 	 */
 	prd_t prdt[NR_PRDS];
-	vir_bytes size, lead, chunk;
+	vir_bytes size, lead;
 	unsigned int count, nr_prds;
 	u64_t start_lba;
-	int i, r;
+	int r;
 
 	/* Get the total request size from the I/O vector. */
 	if ((r = sum_iovec(ps, endpt, iovec, nr_req, &size)) != OK)
@@ -996,7 +990,7 @@ PRIVATE int port_transfer(struct port_state *ps, int cmd, u64_t pos, u64_t eof,
 	if ((lead & 1) || (write && lead != 0)) {
 		dprintf(V_ERR, ("%s: unaligned position from %d\n",
 			ahci_portname(ps), endpt));
-		return EIO;
+		return EINVAL;
 	}
 
 	/* Write requests must be sector-aligned. Word alignment of the size is
@@ -1005,7 +999,7 @@ PRIVATE int port_transfer(struct port_state *ps, int cmd, u64_t pos, u64_t eof,
 	if (write && (size % ps->sector_size) != 0) {
 		dprintf(V_ERR, ("%s: unaligned size %lu from %d\n",
 			ahci_portname(ps), size, endpt));
-		return EIO;
+		return EINVAL;
 	}
 
 	/* Create a vector of physical addresses and sizes for the transfer. */
@@ -1021,17 +1015,9 @@ PRIVATE int port_transfer(struct port_state *ps, int cmd, u64_t pos, u64_t eof,
 		r = ata_transfer(ps, cmd, start_lba, count, write, prdt,
 			nr_prds);
 
-	if (r < 0) return r;
+	if (r != OK) return r;
 
-	/* The entire operation succeeded; update the original vector. */
-	for (i = 0; i < nr_req && size > 0; i++) {
-		chunk = MIN(iovec[i].iov_size, size);
-
-		iovec[i].iov_size -= chunk;
-		size -= chunk;
-	}
-
-	return OK;
+	return size;
 }
 
 /*===========================================================================*
@@ -1478,7 +1464,7 @@ PRIVATE void port_timeout(struct timer *tp)
 	 * is suspended.
 	 */
 	if (ps->flags & FLAG_SUSPENDED)
-		driver_mt_wakeup(ps->device);
+		blockdriver_mt_wakeup(ps->device);
 
 	/* If detection of a device after startup timed out, give up on initial
 	 * detection and only look for hot plug events from now on.
@@ -1554,7 +1540,7 @@ PRIVATE void port_wait(struct port_state *ps)
 	ps->flags |= FLAG_SUSPENDED;
 
 	while (ps->flags & FLAG_BUSY)
-		driver_mt_sleep();
+		blockdriver_mt_sleep();
 
 	ps->flags &= ~FLAG_SUSPENDED;
 }
@@ -1865,9 +1851,9 @@ PRIVATE void ahci_init(int devind)
 	hba_state.nr_cmds = MIN(NR_CMDS,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1);
 
-	dprintf(V_INFO, ("%s: HBA v%d.%d%d, %ld ports, %ld commands, "
+	dprintf(V_INFO, ("AHCI%u: HBA v%d.%d%d, %ld ports, %ld commands, "
 		"%s queuing, IRQ %d\n",
-		ahci_name(),
+		ahci_instance,
 		(int) (hba_state.base[AHCI_HBA_VS] >> 16),
 		(int) ((hba_state.base[AHCI_HBA_VS] >> 8) & 0xFF),
 		(int) (hba_state.base[AHCI_HBA_VS] & 0xFF),
@@ -1875,8 +1861,8 @@ PRIVATE void ahci_init(int devind)
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1,
 		(cap & AHCI_HBA_CAP_SNCQ) ? "supports" : "no",
 		hba_state.irq));
-	dprintf(V_INFO, ("%s: CAP %08x, CAP2 %08x, PI %08x\n",
-		ahci_name(), cap, hba_state.base[AHCI_HBA_CAP2],
+	dprintf(V_INFO, ("AHCI%u: CAP %08x, CAP2 %08x, PI %08x\n",
+		ahci_instance, cap, hba_state.base[AHCI_HBA_CAP2],
 		hba_state.base[AHCI_HBA_PI]));
 
 	/* Initialize each of the implemented ports. We ignore CAP.NP. */
@@ -1924,19 +1910,19 @@ PRIVATE void ahci_stop(void)
 /*===========================================================================*
  *				ahci_alarm				     *
  *===========================================================================*/
-PRIVATE void ahci_alarm(struct driver *UNUSED(dp), message *m)
+PRIVATE void ahci_alarm(clock_t stamp)
 {
 	/* Process an alarm.
 	 */
 
 	/* Call the port-specific handler for each port that timed out. */
-	expire_timers(m->NOTIFY_TIMESTAMP);
+	expire_timers(stamp);
 }
 
 /*===========================================================================*
  *				ahci_intr				     *
  *===========================================================================*/
-PRIVATE void ahci_intr(struct driver *UNUSED(dr), message *UNUSED(m))
+PRIVATE void ahci_intr(unsigned int UNUSED(irqs))
 {
 	/* Process an interrupt.
 	 */
@@ -1958,7 +1944,7 @@ PRIVATE void ahci_intr(struct driver *UNUSED(dr), message *UNUSED(m))
 			 */
 			if ((ps->flags & (FLAG_SUSPENDED | FLAG_BUSY)) ==
 					FLAG_SUSPENDED)
-				driver_mt_wakeup(ps->device);
+				blockdriver_mt_wakeup(ps->device);
 		}
 	}
 
@@ -2093,8 +2079,8 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	/* Create a mapping from device nodes to port numbers. */
 	ahci_set_mapping();
 
-	/* Announce we are up. */
-	driver_announce();
+	/* Announce that we are up. */
+	blockdriver_announce();
 
 	return OK;
 }
@@ -2146,21 +2132,6 @@ PRIVATE void sef_local_startup(void)
 }
 
 /*===========================================================================*
- *				ahci_name				     *
- *===========================================================================*/
-PRIVATE char *ahci_name(void)
-{
-	/* Return a printable name for the controller. We avoid the use of the
-	 * currently selected port, as it may not be accurate.
-	 */
-	static char name[] = "AHCI0";
-
-	name[4] = '0' + ahci_instance;
-
-	return name;
-}
-
-/*===========================================================================*
  *				ahci_portname				     *
  *===========================================================================*/
 PRIVATE char *ahci_portname(struct port_state *ps)
@@ -2188,17 +2159,18 @@ PRIVATE char *ahci_portname(struct port_state *ps)
 }
 
 /*===========================================================================*
- *				ahci_prepare				     *
+ *				ahci_map_minor				     *
  *===========================================================================*/
-PRIVATE struct device *ahci_prepare(int minor)
+PRIVATE struct port_state *ahci_map_minor(dev_t minor, struct device **dvp)
 {
-	/* Select a device, in the form of a port and (sub)partition, based on
-	 * the given minor device number and the device-to-port mapping.
+	/* Map a minor device number to a port and a pointer to the partition's
+	 * device structure. Return NULL if this minor device number does not
+	 * identify an actual device.
 	 */
+	struct port_state *ps;
 	int port;
 
-	current_port = NULL;
-	current_dev = NULL;
+	ps = NULL;
 
 	if (minor < NR_MINORS) {
 		port = ahci_map[minor / DEV_PER_DRIVE];
@@ -2206,8 +2178,8 @@ PRIVATE struct device *ahci_prepare(int minor)
 		if (port == NO_PORT)
 			return NULL;
 
-		current_port = &port_state[port];
-		current_dev = &current_port->part[minor % DEV_PER_DRIVE];
+		ps = &port_state[port];
+		*dvp = &ps->part[minor % DEV_PER_DRIVE];
 	}
 	else if ((unsigned) (minor -= MINOR_d0p0s0) < NR_SUBDEVS) {
 		port = ahci_map[minor / SUB_PER_DRIVE];
@@ -2215,24 +2187,40 @@ PRIVATE struct device *ahci_prepare(int minor)
 		if (port == NO_PORT)
 			return NULL;
 
-		current_port = &port_state[port];
-		current_dev = &current_port->subpart[minor % SUB_PER_DRIVE];
+		ps = &port_state[port];
+		*dvp = &ps->subpart[minor % SUB_PER_DRIVE];
 	}
 
-	return current_dev;
+	return ps;
+}
+
+/*===========================================================================*
+ *				ahci_part				     *
+ *===========================================================================*/
+PRIVATE struct device *ahci_part(dev_t minor)
+{
+	/* Return a pointer to the partition information structure of the given
+	 * minor device.
+	 */
+	struct device *dv;
+
+	if (ahci_map_minor(minor, &dv) == NULL)
+		return NULL;
+
+	return dv;
 }
 
 /*===========================================================================*
  *				ahci_open				     *
  *===========================================================================*/
-PRIVATE int ahci_open(struct driver *UNUSED(dp), message *m)
+PRIVATE int ahci_open(dev_t minor, int access)
 {
 	/* Open a device.
 	 */
 	struct port_state *ps;
 	int r;
 
-	ps = ahci_get_port(m->DEVICE);
+	ps = ahci_get_port(minor);
 
 	/* If we are still in the process of initializing this port or device,
 	 * wait for completion of that phase first.
@@ -2247,7 +2235,7 @@ PRIVATE int ahci_open(struct driver *UNUSED(dp), message *m)
 	}
 
 	/* Some devices may only be opened in read-only mode. */
-	if ((ps->flags & FLAG_READONLY) && (m->COUNT & W_BIT)) {
+	if ((ps->flags & FLAG_READONLY) && (access & W_BIT)) {
 		r = EACCES;
 		goto err_stop;
 	}
@@ -2290,7 +2278,7 @@ PRIVATE int ahci_open(struct driver *UNUSED(dp), message *m)
 err_stop:
 	/* Stop the thread if the device is now fully closed. */
 	if (ps->open_count == 0)
-		driver_mt_stop();
+		blockdriver_mt_stop();
 
 	return r;
 }
@@ -2298,14 +2286,14 @@ err_stop:
 /*===========================================================================*
  *				ahci_close				     *
  *===========================================================================*/
-PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
+PRIVATE int ahci_close(dev_t minor)
 {
 	/* Close a device.
 	 */
 	struct port_state *ps;
 	int port;
 
-	ps = ahci_get_port(m->DEVICE);
+	ps = ahci_get_port(minor);
 
 	/* Decrease the open count. */
 	if (ps->open_count <= 0) {
@@ -2323,7 +2311,7 @@ PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
 	/* The device is now fully closed. That also means that the thread for
 	 * this device is not needed anymore.
 	 */
-	driver_mt_stop();
+	blockdriver_mt_stop();
 
 	if (ps->state == STATE_GOOD_DEV && !(ps->flags & FLAG_BARRIER)) {
 		dprintf(V_INFO, ("%s: flushing write cache\n",
@@ -2333,8 +2321,8 @@ PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
 	}
 
 	/* If the entire driver has been told to terminate, check whether all
-	 * devices are now closed. If so, tell libdriver to quit after replying
-	 * to the close request.
+	 * devices are now closed. If so, tell libblockdriver to quit after
+	 * replying to the close request.
 	 */
 	if (ahci_exiting) {
 		for (port = 0; port < hba_state.nr_ports; port++)
@@ -2344,7 +2332,7 @@ PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
 		if (port == hba_state.nr_ports) {
 			ahci_stop();
 
-			driver_mt_terminate();
+			blockdriver_mt_terminate();
 		}
 	}
 
@@ -2354,76 +2342,53 @@ PRIVATE int ahci_close(struct driver *UNUSED(dp), message *m)
 /*===========================================================================*
  *				ahci_transfer				     *
  *===========================================================================*/
-PRIVATE int ahci_transfer(endpoint_t endpt, int opcode, u64_t position,
-	iovec_t *iovec, unsigned int nr_req)
+PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
+	endpoint_t endpt, iovec_t *iovec, unsigned int count,
+	int UNUSED(flags))
 {
 	/* Perform data transfer on the selected device.
 	 */
+	struct port_state *ps;
+	struct device *dv;
 	u64_t pos, eof;
 
-	/* We can safely use current_port, as we won't get interrupted until
-	 * the call to port_transfer(), after which it is no longer used.
-	 * Nonpreemptive threading guarantees that we will not be descheduled
-	 * before then.
-	 */
-	assert(current_port != NULL);
-	assert(current_dev != NULL);
+	ps = ahci_get_port(minor);
+	dv = ahci_part(minor);
 
-	if (current_port->state != STATE_GOOD_DEV ||
-		(current_port->flags & FLAG_BARRIER))
+	if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 		return EIO;
 
-	if (nr_req > NR_IOREQS)
+	if (count > NR_IOREQS)
 		return EINVAL;
 
 	/* Check for basic end-of-partition condition: if the start position of
 	 * the request is outside the partition, return success immediately.
 	 * The size of the request is obtained, and possibly reduced, later.
 	 */
-	if (cmp64(position, current_dev->dv_size) >= 0)
+	if (cmp64(position, dv->dv_size) >= 0)
 		return OK;
 
-	pos = add64(current_dev->dv_base, position);
-	eof = add64(current_dev->dv_base, current_dev->dv_size);
+	pos = add64(dv->dv_base, position);
+	eof = add64(dv->dv_base, dv->dv_size);
 
-	return port_transfer(current_port, 0, pos, eof, endpt,
-		(iovec_s_t *) iovec, nr_req, opcode == DEV_SCATTER_S);
+	return port_transfer(ps, 0, pos, eof, endpt, (iovec_s_t *) iovec,
+		count, do_write);
 }
 
 /*===========================================================================*
- *				ahci_geometry				     *
+ *				ahci_ioctl				     *
  *===========================================================================*/
-PRIVATE void ahci_geometry(struct partition *part)
+PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-	/* Fill in old-style geometry. We have to supply nonzero numbers, or
-	 * part(8) crashes.
-	 */
-
-	assert(current_port->sector_size != 0);
-
-	part->cylinders = div64u(current_port->part[0].dv_size,
-		current_port->sector_size) / (64 * 32);
-	part->heads = 64;
-	part->sectors = 32;
-}
-
-/*===========================================================================*
- *				ahci_other				     *
- *===========================================================================*/
-PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
-{
-	/* Process any messages not covered by the other calls.
-	 * This function only implements IOCTLs.
+	/* Process I/O control requests.
 	 */
 	struct port_state *ps;
 	int r, val;
 
-	if (m->m_type != DEV_IOCTL_S)
-		return EINVAL;
+	ps = ahci_get_port(minor);
 
-	ps = ahci_get_port(m->DEVICE);
-
-	switch (m->REQUEST) {
+	switch (request) {
 	case DIOCEJECT:
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
@@ -2434,9 +2399,8 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		return atapi_load_eject(ps, 0, FALSE /*load*/);
 
 	case DIOCOPENCT:
-		return sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
-			0, (vir_bytes) &ps->open_count, sizeof(ps->open_count),
-			D);
+		return sys_safecopyto(endpt, grant, 0,
+			(vir_bytes) &ps->open_count, sizeof(ps->open_count), D);
 
 	case DIOCFLUSH:
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
@@ -2448,8 +2412,7 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
-		if ((r = sys_safecopyfrom(m->m_source,
-			(cp_grant_id_t) m->IO_GRANT, 0, (vir_bytes) &val,
+		if ((r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &val,
 			sizeof(val), D)) != OK)
 			return r;
 
@@ -2462,8 +2425,8 @@ PRIVATE int ahci_other(struct driver *UNUSED(dp), message *m)
 		if ((r = gen_get_wcache(ps, 0, &val)) != OK)
 			return r;
 
-		return sys_safecopyto(m->m_source, (cp_grant_id_t) m->IO_GRANT,
-			0, (vir_bytes) &val, sizeof(val), D);
+		return sys_safecopyto(endpt, grant, 0, (vir_bytes) &val,
+			sizeof(val), D);
 	}
 
 	return EINVAL;
@@ -2476,11 +2439,13 @@ PRIVATE int ahci_thread(dev_t minor, thread_id_t *id)
 {
 	/* Map a device number to a worker thread number. 
 	 */
+	struct port_state *ps;
+	struct device *dv;
 
-	if (ahci_prepare(minor) == NULL)
+	if ((ps = ahci_map_minor(minor, &dv)) == NULL)
 		return ENXIO;
 
-	*id = current_port->device;
+	*id = ps->device;
 
 	return OK;
 }
@@ -2494,11 +2459,13 @@ PRIVATE struct port_state *ahci_get_port(dev_t minor)
 	 * Called only from worker threads, so the minor device is already
 	 * guaranteed to map to a port.
 	 */
+	struct port_state *ps;
+	struct device *dv;
 
-	if (ahci_prepare(minor) == NULL)
+	if ((ps = ahci_map_minor(minor, &dv)) == NULL)
 		panic("device mapping for minor %d disappeared", minor);
 
-	return current_port;
+	return ps;
 }
 
 /*===========================================================================*
@@ -2512,7 +2479,7 @@ PUBLIC int main(int argc, char **argv)
 	env_setargs(argc, argv);
 	sef_local_startup();
 
-	driver_mt_task(&ahci_dtab, DRIVER_STD);
+	blockdriver_mt_task(&ahci_dtab);
 
 	return 0;
 }

@@ -12,8 +12,8 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 
 .PATH:	${.CURDIR}/generic
 
-DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBMINIXUTIL}
-LDADD+=	-ldriver -lsys -lminixutil
+DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBMINIXUTIL}
+LDADD+=	-lchardriver -lsys -lminixutil
 
 MAN=
 

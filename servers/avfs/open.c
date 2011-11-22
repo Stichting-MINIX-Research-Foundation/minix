@@ -169,9 +169,18 @@ PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
-			r = dev_open(dev, who_e, bits | (oflags & ~O_ACCMODE));
+			r = bdev_open(dev, bits);
 			if (r != OK) {
 				unlock_bsf();
+				break;
+			}
+
+			major_dev = major(vp->v_sdev);
+			dp = &dmap[major_dev];
+			if (dp->dmap_driver == NONE) {
+				printf("VFS: block driver disappeared!\n");
+				unlock_bsf();
+				r = ENXIO;
 				break;
 			}
 
@@ -185,29 +194,21 @@ PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 					vp->v_bfs_e = vmp->m_fs_e;
 				}
 
-			/* Get the driver endpoint of the block spec device */
-			major_dev = major(vp->v_sdev);
-			if (major_dev < 0 || major_dev >= NR_DEVICES)
-				r = ENXIO;
-			else
-				dp = &dmap[major_dev];
-			if (r != OK || dp->dmap_driver == NONE) {
-				printf("VFS: driver not found for device %d\n",
-					vp->v_sdev);
-				r = ENXIO;
+			/* Send the driver endpoint to the file system that
+			 * will handle the block I/O requests (even when its
+			 * endpoint is known already), but only when it is the
+			 * root file system. Other file systems will already
+			 * have it anyway.
+			 */
+			if (vp->v_bfs_e != ROOT_FS_E) {
 				unlock_bsf();
 				break;
 			}
 
-			/* Send the driver endpoint (even when known already)*/
-			if (vp->v_bfs_e != ROOT_FS_E) {
-				/* but only when it's the ROOT_FS */
-				unlock_bsf();
-				break;
-			}
-			if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev,
-					       dp->dmap_driver)) != OK) {
+			if (req_newdriver(vp->v_bfs_e, vp->v_sdev,
+					       dp->dmap_driver) != OK) {
 				printf("VFS: error sending driver endpoint\n");
+				bdev_close(dev);
 				r = ENXIO;
 			}
 			unlock_bsf();

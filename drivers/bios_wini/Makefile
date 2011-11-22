@@ -2,8 +2,8 @@
 PROG=	bios_wini
 SRCS=	bios_wini.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS} ${LIBTIMERS}
-LDADD+=	-ldriver -lsys -ltimers
+DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBTIMERS}
+LDADD+=	-lblockdriver -lsys -ltimers
 
 MAN=
 

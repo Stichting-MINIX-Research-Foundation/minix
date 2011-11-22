@@ -2,8 +2,8 @@
 PROG=	filter
 SRCS=	main.c sum.c driver.c util.c crc.c md5.c
 
-DPADD+= ${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys
+DPADD+= ${LIBBLOCKDRIVER} ${LIBSYS}
+LDADD+=	-lblockdriver -lsys
 
 MAN=
 

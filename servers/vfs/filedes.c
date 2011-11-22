@@ -322,9 +322,14 @@ struct filp *fp;
           			req_flush(vp->v_bfs_e, dev);
           		}
 		}
-		/* Do any special processing on device close. */
-		(void) dev_close(dev, fp-filp);
-		/* Ignore any errors, even SUSPEND. */
+
+		/* Do any special processing on device close.
+		 * Ignore any errors, even SUSPEND.
+		 */
+		if (mode_word == I_BLOCK_SPECIAL)
+			(void) bdev_close(dev);
+		else
+			(void) dev_close(dev, fp-filp);
 
 		fp->filp_mode = FILP_CLOSED;
 	}

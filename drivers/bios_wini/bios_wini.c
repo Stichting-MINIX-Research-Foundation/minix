@@ -21,15 +21,13 @@
  */
 
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/blockdriver.h>
 #include <minix/drvlib.h>
 #include <minix/sysutil.h>
 #include <minix/safecopies.h>
 #include <sys/ioc_disk.h>
 #include <machine/int86.h>
 #include <assert.h>
-
-#define ME "BIOS_WINI"
 
 /* Parameters for the disk drive. */
 #define MAX_DRIVES         8	/* this driver supports 8 drives (d0 - d7)*/
@@ -58,31 +56,31 @@ PRIVATE int remap_first = 0;		/* Remap drives for CD HD emulation */
 #define BIOSBUF 16384
 
 _PROTOTYPE(int main, (void) );
-FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
-FORWARD _PROTOTYPE( char *w_name, (void) );
-FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, u64_t position,
-				iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( struct device *w_prepare, (dev_t device) );
+FORWARD _PROTOTYPE( struct device *w_part, (dev_t minor) );
+FORWARD _PROTOTYPE( ssize_t w_transfer, (dev_t minor, int do_write,
+	u64_t position, endpoint_t endpt, iovec_t *iov, unsigned int nr_req,
+	int flags) );
+FORWARD _PROTOTYPE( int w_do_open, (dev_t minor, int access) );
+FORWARD _PROTOTYPE( int w_do_close, (dev_t minor) );
 FORWARD _PROTOTYPE( void w_init, (void) );
-FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry));
-FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( void w_geometry, (dev_t minor, struct partition *entry));
+FORWARD _PROTOTYPE( int w_ioctl, (dev_t minor, unsigned int request,
+	endpoint_t endpt, cp_grant_id_t grant) );
 
 /* Entry points to this driver. */
-PRIVATE struct driver w_dtab = {
-  w_name,	/* current device's name */
+PRIVATE struct blockdriver w_dtab = {
   w_do_open,	/* open or mount request, initialize device */
   w_do_close,	/* release device */
-  do_diocntl,	/* get or set a partition's geometry */
-  w_prepare,	/* prepare for I/O on a given minor device */
   w_transfer,	/* do the I/O */
-  nop_cleanup,	/* no cleanup needed */
+  w_ioctl,	/* I/O control */
+  NULL,		/* no cleanup needed */
+  w_part,	/* return partition information structure */
   w_geometry,	/* tell the geometry of the disk */
-  nop_alarm,		/* ignore leftover alarms */
-  nop_cancel,		/* ignore CANCELs */
-  nop_select,		/* ignore selects */
-  w_other,		/* catch-all for unrecognized commands and ioctls */
-  NULL			/* leftover hardware interrupts */
+  NULL,		/* leftover hardware interrupts */
+  NULL,		/* ignore leftover alarms */
+  NULL,		/* catch-all for unrecognized commands */
+  NULL		/* no threading support */
 };
 
 /* SEF functions and variables. */
@@ -92,13 +90,13 @@ FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 /*===========================================================================*
  *				bios_winchester_task			     *
  *===========================================================================*/
-PUBLIC int main()
+PUBLIC int main(void)
 {
   /* SEF local startup. */
   sef_local_startup();
 
   /* Call the generic receive loop. */
-  driver_task(&w_dtab, DRIVER_STD);
+  blockdriver_task(&w_dtab);
 
   return(OK);
 }
@@ -106,7 +104,7 @@ PUBLIC int main()
 /*===========================================================================*
  *			       sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+PRIVATE void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
@@ -124,7 +122,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the bios_wini driver. */
   long v;
@@ -134,7 +132,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
   remap_first = v;
 
   /* Announce we are up! */
-  driver_announce();
+  blockdriver_announce();
 
   return(OK);
 }
@@ -142,8 +140,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 /*===========================================================================*
  *				w_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *w_prepare(device)
-int device;
+PRIVATE struct device *w_prepare(dev_t device)
 {
 /* Prepare for I/O on a device. */
 
@@ -165,35 +162,36 @@ int device;
 }
 
 /*===========================================================================*
- *				w_name					     *
+ *				w_part					     *
  *===========================================================================*/
-PRIVATE char *w_name()
+PRIVATE struct device *w_part(dev_t minor)
 {
-/* Return a name for the current device. */
-  static char name[] = "bios-d0";
+/* Return a pointer to the partition information of the given minor device. */
 
-  name[6] = '0' + w_drive;
-  return name;
+  return w_prepare(minor);
 }
 
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
-PRIVATE int w_transfer(proc_nr, opcode, pos64, iov, nr_req)
-int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
-u64_t pos64;			/* offset on device to read or write */
-iovec_t *iov;			/* pointer to read or write request vector */
-unsigned nr_req;		/* length of request vector */
+PRIVATE ssize_t w_transfer(
+  dev_t minor,			/* minor device number */
+  int do_write,			/* read or write? */
+  u64_t pos64,			/* offset on device to read or write */
+  endpoint_t proc_nr,		/* process doing the request */
+  iovec_t *iov,			/* pointer to read or write request vector */
+  unsigned int nr_req,		/* length of request vector */
+  int UNUSED(flags)		/* transfer flags */
+)
 {
-  struct wini *wn = w_wn;
+  struct wini *wn;
   iovec_t *iop, *iov_end = iov + nr_req;
   int r, errors;
   unsigned count;
   vir_bytes chunk, nbytes;
   unsigned long block;
   vir_bytes i13e_rw_off, rem_buf_size;
-  unsigned secspcyl = wn->heads * wn->sectors;
+  unsigned secspcyl;
   struct int13ext_rw {
 	u8_t	len;
 	u8_t	res1;
@@ -203,12 +201,19 @@ unsigned nr_req;		/* length of request vector */
   } *i13e_rw;
   struct reg86u reg86;
   u32_t lopos;
+  ssize_t total;
+
+  if (w_prepare(minor) == NULL) return(ENXIO);
+
+  wn = w_wn;
+  secspcyl = wn->heads * wn->sectors;
 
   lopos= ex64lo(pos64);
 
   /* Check disk address. */
   if ((lopos & SECTOR_MASK) != 0) return(EINVAL);
 
+  total = 0;
   errors = 0;
 
   i13e_rw_off= BIOSBUF-sizeof(*i13e_rw);
@@ -230,7 +235,7 @@ unsigned nr_req;		/* length of request vector */
 	if ((nbytes & SECTOR_MASK) != 0) return(EINVAL);
 
 	/* Which block on disk and how close to EOF? */
-	if (cmp64(pos64, w_dv->dv_size) >= 0) return(OK);	/* At EOF */
+	if (cmp64(pos64, w_dv->dv_size) >= 0) return(total);	/* At EOF */
 	if (cmp64(add64u(pos64, nbytes), w_dv->dv_size) > 0) {
 		u64_t n;
 		n = sub64(w_dv->dv_size, pos64);
@@ -242,7 +247,7 @@ unsigned nr_req;		/* length of request vector */
 	/* Degrade to per-sector mode if there were errors. */
 	if (errors > 0) nbytes = SECTOR_SIZE;
 
-	if (opcode == DEV_SCATTER_S) {
+	if (do_write) {
 		/* Copy from user space to the DMA buffer. */
 		count = 0;
 		for (iop = iov; count < nbytes; iop++) {
@@ -277,7 +282,7 @@ unsigned nr_req;		/* length of request vector */
 
 		/* Set up an extended read or write BIOS call. */
 		reg86.u.b.intno = 0x13;
-		reg86.u.w.ax = opcode == DEV_SCATTER_S ? 0x4300 : 0x4200;
+		reg86.u.w.ax = do_write ? 0x4300 : 0x4200;
 		reg86.u.b.dl = wn->drive_id;
 		reg86.u.w.si = (bios_buf_phys + i13e_rw_off) % HCLICK_SIZE;
 		reg86.u.w.ds = (bios_buf_phys + i13e_rw_off) / HCLICK_SIZE;
@@ -288,7 +293,7 @@ unsigned nr_req;		/* length of request vector */
 		unsigned head = (block % secspcyl) / wn->sectors;
 
 		reg86.u.b.intno = 0x13;
-		reg86.u.b.ah = opcode == DEV_SCATTER_S ? 0x03 : 0x02;
+		reg86.u.b.ah = do_write ? 0x03 : 0x02;
 		reg86.u.b.al = nbytes >> SECTOR_SHIFT;
 		reg86.u.w.bx = bios_buf_phys % HCLICK_SIZE;
 		reg86.u.w.es = bios_buf_phys / HCLICK_SIZE;
@@ -308,7 +313,7 @@ unsigned nr_req;		/* length of request vector */
 		continue;
 	}
 
-	if (opcode == DEV_GATHER_S) {
+	if (!do_write) {
 		/* Copy from the DMA buffer to user space. */
 		count = 0;
 		for (iop = iov; count < nbytes; iop++) {
@@ -333,7 +338,8 @@ unsigned nr_req;		/* length of request vector */
 
 	/* Book the bytes successfully transferred. */
 	pos64 = add64ul(pos64, nbytes);
-	for (;;) {
+	total += nbytes;
+	while (nbytes > 0) {
 		if (nbytes < iov->iov_size) {
 			/* Not done with this one yet. */
 			iov->iov_size -= nbytes;
@@ -341,25 +347,17 @@ unsigned nr_req;		/* length of request vector */
 		}
 		nbytes -= iov->iov_size;
 		iov->iov_size = 0;
-		if (nbytes == 0) {
-			/* The rest is optional, so we return to give FS a
-			 * chance to think it over.
-			 */
-			return(OK);
-		}
 		iov++;
 		nr_req--;
 	}
   }
-  return(OK);
+  return(total);
 }
 
 /*============================================================================*
  *				w_do_open				      *
  *============================================================================*/
-PRIVATE int w_do_open(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int w_do_open(dev_t minor, int UNUSED(access))
 {
 /* Device open: Initialize the controller and read the partition table. */
 
@@ -367,7 +365,7 @@ message *m_ptr;
 
   if (!init_done) { w_init(); init_done = TRUE; }
 
-  if (w_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
+  if (w_prepare(minor) == NULL) return(ENXIO);
 
   if (w_wn->open_ct++ == 0) {
 	/* Partition the disk. */
@@ -379,13 +377,11 @@ message *m_ptr;
 /*============================================================================*
  *				w_do_close				      *
  *============================================================================*/
-PRIVATE int w_do_close(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int w_do_close(dev_t minor)
 {
 /* Device close: Release a device. */
 
-  if (w_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
+  if (w_prepare(minor) == NULL) return(ENXIO);
   w_wn->open_ct--;
   return(OK);
 }
@@ -393,7 +389,7 @@ message *m_ptr;
 /*===========================================================================*
  *				w_init					     *
  *===========================================================================*/
-PRIVATE void w_init()
+PRIVATE void w_init(void)
 {
 /* This routine is called at startup to initialize the drive parameters. */
 
@@ -490,10 +486,11 @@ PRIVATE void w_init()
 	}
 
 	if (wn->int13ext) {
-		printf("%s: %lu sectors\n", w_name(), capacity);
+		printf("bios-d%u: %lu sectors\n", w_drive, capacity);
 	} else {
-		printf("%s: %d cylinders, %d heads, %d sectors per track\n",
-			w_name(), wn->cylinders, wn->heads, wn->sectors);
+		printf("bios-d%u: %d cylinders, %d heads, "
+			"%d sectors per track\n",
+			w_drive, wn->cylinders, wn->heads, wn->sectors);
 	}
 	wn->part[0].dv_size = mul64u(capacity, SECTOR_SIZE);
   }
@@ -502,37 +499,30 @@ PRIVATE void w_init()
 /*============================================================================*
  *				w_geometry				      *
  *============================================================================*/
-PRIVATE void w_geometry(entry)
-struct partition *entry;
+PRIVATE void w_geometry(dev_t minor, struct partition *entry)
 {
+  if (w_prepare(minor) == NULL) return;
+
   entry->cylinders = w_wn->cylinders;
   entry->heads = w_wn->heads;
   entry->sectors = w_wn->sectors;
 }
 
 /*============================================================================*
- *				w_other				      *
+ *				w_ioctl					      *
  *============================================================================*/
-PRIVATE int w_other(struct driver *UNUSED(dr), message *m)
+PRIVATE int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+	cp_grant_id_t grant)
 {
-        int r;
+	int count;
 
-        if (m->m_type != DEV_IOCTL_S )
-                return EINVAL;
+	if (w_prepare(minor) == NULL) return ENXIO;
 
-	if (m->REQUEST == DIOCOPENCT) {
-                int count;
-                if (w_prepare(m->DEVICE) == NULL) return ENXIO;
-                count = w_wn->open_ct;
-	        r=sys_safecopyto(m->m_source, (cp_grant_id_t)m->IO_GRANT,
-		       0, (vir_bytes)&count, sizeof(count), D);
+	if (request == DIOCOPENCT) {
+		count = w_wn->open_ct;
+		return sys_safecopyto(endpt, grant, 0, (vir_bytes)&count,
+			sizeof(count), D);
+	}
 
-		if(r != OK)
-                        return r;
-                return OK;
-        }
-
-        return EINVAL;
+	return EINVAL;
 }
-
-

@@ -113,7 +113,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the amddev driver. */
 	int r, n_maps, n_domains, revision;
@@ -150,9 +150,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 
 	printf("after write: DEVF_CR: 0x%x\n", read_reg(DEVF_CR, 0));
 
-	/* Announce we are up! */
-	driver_announce();
-
 	return(OK);
 }
 
@@ -184,7 +181,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 		}
 
 		printf(
-		"amddev: deleting 0x%x@0x%x for proc %d\n",
+		"amddev: deleting 0x%lx@0x%lx for proc %d\n",
 			size, base, proc_e);
 		del_range(base, size);
 		r= deldma(proc_e, base, size);
@@ -302,7 +299,7 @@ static void init_domain(int index)
 		memset(table, 0x00, size);
 	}
 
-printf("init_domain: busaddr = %p\n", busaddr);
+printf("init_domain: busaddr = 0x%lx\n", busaddr);
 
 	write_reg(DEVF_BASE_HI, index, 0);
 	write_reg(DEVF_BASE_LO, index, busaddr | 3);
@@ -387,12 +384,12 @@ static int do_add4pci(const message *m)
 	pci_func= m->m1_i3;
 
 	printf(
-"amddev`do_add4pci: got request for 0x%x@0x%x from %d for pci dev %u.%u.%u\n",
+"amddev`do_add4pci: got request for 0x%x@0x%lx from %d for pci dev %u.%u.%u\n",
 		size, start, proc, pci_bus, pci_dev, pci_func);
 
 	if (start % I386_PAGE_SIZE)
 	{
-		printf("amddev`do_add4pci: bad start 0x%x from proc %d\n",
+		printf("amddev`do_add4pci: bad start 0x%lx from proc %d\n",
 			start, proc);
 		return EINVAL;
 	}
@@ -409,7 +406,7 @@ static int do_add4pci(const message *m)
 	if (r != OK)
 	{
 		printf(
-		"amddev`do_add4pci: umap failed for 0x%x@0x%x, proc %d: %d\n",
+		"amddev`do_add4pci: umap failed for 0x%x@0x%lx, proc %d: %d\n",
 			size, start, proc, r);
 		return r;
 	}
@@ -419,7 +416,7 @@ static int do_add4pci(const message *m)
 	{
 		r= -errno;
 		printf(
-		"amddev`do_add4pci: adddma failed for 0x%x@0x%x, proc %d: %d\n",
+		"amddev`do_add4pci: adddma failed for 0x%x@0x%lx, proc %d: %d\n",
 			size, start, proc, r);
 		return r;
 	}

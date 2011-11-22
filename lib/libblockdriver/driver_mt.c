@@ -1,17 +1,17 @@
-/* This file contains the multithreaded device independent driver interface.
+/* This file contains the multithreaded driver interface.
  *
  * Changes:
  *   Aug 27, 2011   created (A. Welzel)
  *
  * The entry points into this file are:
- *   driver_mt_task:		the main message loop of the driver
- *   driver_mt_terminate:	break out of the main message loop
- *   driver_mt_sleep:		put the current thread to sleep
- *   driver_mt_wakeup:		wake up a sleeping thread
- *   driver_mt_stop:		put up the current thread for termination
+ *   blockdriver_mt_task:	the main message loop of the driver
+ *   blockdriver_mt_terminate:	break out of the main message loop
+ *   blockdriver_mt_sleep:	put the current thread to sleep
+ *   blockdriver_mt_wakeup:	wake up a sleeping thread
+ *   blockdriver_mt_stop:	put up the current thread for termination
  */
 
-#include <minix/driver_mt.h>
+#include <minix/blockdriver_mt.h>
 #include <minix/mthread.h>
 #include <assert.h>
 
@@ -35,9 +35,8 @@ typedef struct {
   event_t sleep_event;
 } worker_t;
 
-PRIVATE struct driver *driver_cb;
-PRIVATE int driver_mt_type;
-PRIVATE int driver_mt_running = FALSE;
+PRIVATE struct blockdriver *bdtab;
+PRIVATE int running = FALSE;
 
 PRIVATE mthread_key_t worker_key;
 
@@ -57,10 +56,10 @@ PRIVATE void enqueue(worker_t *wp, const message *m_src, int ipc_status)
 
   assert(wp->state == STATE_RUNNING || wp->state == STATE_STOPPING);
 
-  if (!driver_mq_enqueue(wp->id, m_src, ipc_status))
-	panic("driver_mt: enqueue failed (message queue full)");
+  if (!mq_enqueue(wp->id, m_src, ipc_status))
+	panic("blockdriver_mt: enqueue failed (message queue full)");
 
-  driver_event_fire(&wp->queue_event);
+  event_fire(&wp->queue_event);
 }
 
 /*===========================================================================*
@@ -73,7 +72,7 @@ PRIVATE int try_dequeue(worker_t *wp, message *m_dst, int *ipc_status)
  * called from a worker thread. Does not block.
  */
 
-  return driver_mq_dequeue(wp->id, m_dst, ipc_status);
+  return mq_dequeue(wp->id, m_dst, ipc_status);
 }
 
 /*===========================================================================*
@@ -86,7 +85,7 @@ PRIVATE void dequeue(worker_t *wp, message *m_dst, int *ipc_status)
  */
 
   while (!try_dequeue(wp, m_dst, ipc_status))
-	driver_event_wait(&wp->queue_event);
+	event_wait(&wp->queue_event);
 }
 
 /*===========================================================================*
@@ -102,14 +101,14 @@ PRIVATE void *worker_thread(void *param)
   worker_t *wp;
   message m;
   int ipc_status, r;
- 
+
   wp = (worker_t *) param;
   assert(wp != NULL);
 
   if (mthread_setspecific(worker_key, wp))
-	panic("driver_mt: could not save local thread pointer");
+	panic("blockdriver_mt: could not save local thread pointer");
 
-  while (driver_mt_running) {
+  while (running) {
 	/* See if a new message is available right away. */
 	if (!try_dequeue(wp, &m, &ipc_status)) {
 		/* If not, and this thread should be stopped, stop now. */
@@ -119,7 +118,7 @@ PRIVATE void *worker_thread(void *param)
 		/* Otherwise, block waiting for a new message. */
 		dequeue(wp, &m, &ipc_status);
 
-		if (!driver_mt_running)
+		if (!running)
 			break;
 	}
 
@@ -127,14 +126,14 @@ PRIVATE void *worker_thread(void *param)
 	wp->state = STATE_RUNNING;
 
 	/* Handle the request, and send a reply. */
-	r = driver_handle_request(driver_cb, &m);
+	r = blockdriver_handle_request(bdtab, &m);
 
-	driver_reply(driver_mt_type, &m, ipc_status, r);
+	blockdriver_reply(&m, ipc_status, r);
   }
 
   /* Clean up and terminate this thread. */
   if (mthread_setspecific(worker_key, NULL))
-	panic("driver_mt: could not delete local thread pointer");
+	panic("blockdriver_mt: could not delete local thread pointer");
 
   wp->state = STATE_EXITED;
 
@@ -156,13 +155,13 @@ PRIVATE void master_create_worker(worker_t *wp, thread_id_t id)
   wp->state = STATE_RUNNING;
 
   /* Initialize synchronization primitives. */
-  driver_event_init(&wp->queue_event);
-  driver_event_init(&wp->sleep_event);
+  event_init(&wp->queue_event);
+  event_init(&wp->sleep_event);
 
   r = mthread_create(&wp->mthread, NULL /*attr*/, worker_thread, (void *) wp);
 
   if (r != 0)
-	panic("driver_mt: could not start thread %d (%d)", id, r);
+	panic("blockdriver_mt: could not start thread %d (%d)", id, r);
 }
 
 /*===========================================================================*
@@ -177,15 +176,15 @@ PRIVATE void master_destroy_worker(worker_t *wp)
 
   assert(wp != NULL);
   assert(wp->state == STATE_EXITED);
-  assert(!driver_mq_dequeue(wp->id, &m, &ipc_status));
+  assert(!mq_dequeue(wp->id, &m, &ipc_status));
 
   /* Join the thread. */
   if (mthread_join(wp->mthread, NULL))
-	panic("driver_mt: could not join thread %d", wp->id);
+	panic("blockdriver_mt: could not join thread %d", wp->id);
 
   /* Destroy resources. */
-  driver_event_destroy(&wp->sleep_event);
-  driver_event_destroy(&wp->queue_event);
+  event_destroy(&wp->sleep_event);
+  event_destroy(&wp->queue_event);
 
   wp->state = STATE_DEAD;
 }
@@ -218,26 +217,24 @@ PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
   worker_t *wp;
   int r;
 
-  /* If this is not a request that has a minor device associated with it, we
-   * can not tell which thread should process it either. In that case, the
-   * master thread has to handle it instead.
+  /* If this is not a block driver request, we cannot get the minor device
+   * associated with it, and thus we can not tell which thread should process
+   * it either. In that case, the master thread has to handle it instead.
    */
-  if (!IS_DEV_MINOR_RQ(m_ptr->m_type)) {
-	if (driver_cb->dr_other)
-		r = (*driver_cb->dr_other)(driver_cb, m_ptr);
-	else
-		r = EINVAL;
+  if (!IS_BDEV_RQ(m_ptr->m_type)) {
+	/* Process as 'other' message. */
+	r = blockdriver_handle_request(bdtab, m_ptr);
 
-	driver_reply(driver_mt_type, m_ptr, ipc_status, r);
+	blockdriver_reply(m_ptr, ipc_status, r);
 
 	return;
   }
 
   /* Query the thread ID. Upon failure, send the error code to the caller. */
-  r = driver_cb->dr_thread(m_ptr->DEVICE, &thread_id);
+  r = (*bdtab->bdr_thread)(m_ptr->DEVICE, &thread_id);
 
   if (r != OK) {
-	driver_reply(driver_mt_type, m_ptr, ipc_status, r);
+	blockdriver_reply(m_ptr, ipc_status, r);
 
 	return;
   }
@@ -259,19 +256,18 @@ PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
 /*===========================================================================*
  *				master_init				     *
  *===========================================================================*/
-PRIVATE void master_init(struct driver *dp, int type)
+PRIVATE void master_init(struct blockdriver *bdp)
 {
 /* Initialize the state of the master thread.
  */
   int i;
 
-  assert(dp != NULL);
-  assert(dp->dr_thread != NULL);
+  assert(bdp != NULL);
+  assert(bdp->bdr_thread != NULL);
 
   mthread_init();
 
-  driver_mt_type = type;
-  driver_cb = dp;
+  bdtab = bdp;
 
   for (i = 0; i < DRIVER_MT_MAX_WORKERS; i++)
 	worker[i].state = STATE_DEAD;
@@ -280,13 +276,13 @@ PRIVATE void master_init(struct driver *dp, int type)
    * reference to the worker structure.
    */
   if (mthread_key_create(&worker_key, NULL))
-	panic("driver_mt: error initializing worker key");
+	panic("blockdriver_mt: error initializing worker key");
 }
 
 /*===========================================================================*
- *				driver_mt_receive			     *
+ *				blockdriver_mt_receive			     *
  *===========================================================================*/
-PRIVATE void driver_mt_receive(message *m_ptr, int *ipc_status)
+PRIVATE void blockdriver_mt_receive(message *m_ptr, int *ipc_status)
 {
 /* Receive a message.
  */
@@ -295,13 +291,13 @@ PRIVATE void driver_mt_receive(message *m_ptr, int *ipc_status)
   r = sef_receive_status(ANY, m_ptr, ipc_status);
 
   if (r != OK)
-	panic("driver_mt: sef_receive_status() returned %d", r);
+	panic("blockdriver_mt: sef_receive_status() returned %d", r);
 }
 
 /*===========================================================================*
- *				driver_mt_task				     *
+ *				blockdriver_mt_task			     *
  *===========================================================================*/
-PUBLIC void driver_mt_task(struct driver *driver_p, int driver_type)
+PUBLIC void blockdriver_mt_task(struct blockdriver *driver_tab)
 {
 /* The multithreaded driver task.
  */
@@ -309,20 +305,20 @@ PUBLIC void driver_mt_task(struct driver *driver_p, int driver_type)
   message mess;
 
   /* Initialize first if necessary. */
-  if (!driver_mt_running) {
-	master_init(driver_p, driver_type);
+  if (!running) {
+	master_init(driver_tab);
 
-	driver_mt_running = TRUE;
+	running = TRUE;
   }
 
   /* The main message loop. */
-  while (driver_mt_running) {
+  while (running) {
 	/* Receive a message. */
-	driver_mt_receive(&mess, &ipc_status);
+	blockdriver_mt_receive(&mess, &ipc_status);
 
 	/* Dispatch the message. */
 	if (is_ipc_notify(ipc_status))
-		driver_handle_notify(driver_cb, &mess);
+		blockdriver_handle_notify(bdtab, &mess);
 	else
 		master_handle_request(&mess, ipc_status);
 
@@ -336,20 +332,20 @@ PUBLIC void driver_mt_task(struct driver *driver_p, int driver_type)
 }
 
 /*===========================================================================*
- *				driver_mt_terminate			     *
+ *				blockdriver_mt_terminate		     *
  *===========================================================================*/
-PUBLIC void driver_mt_terminate(void)
+PUBLIC void blockdriver_mt_terminate(void)
 {
-/* Instruct libdriver to shut down.
+/* Instruct libblockdriver to shut down.
  */
 
-  driver_mt_running = FALSE;
+  running = FALSE;
 }
 
 /*===========================================================================*
- *				driver_mt_sleep				     *
+ *				blockdriver_mt_sleep			     *
  *===========================================================================*/
-PUBLIC void driver_mt_sleep(void)
+PUBLIC void blockdriver_mt_sleep(void)
 {
 /* Let the current thread sleep until it gets woken up by the master thread.
  */
@@ -358,15 +354,15 @@ PUBLIC void driver_mt_sleep(void)
   wp = (worker_t *) mthread_getspecific(worker_key);
 
   if (wp == NULL)
-	panic("driver_mt: master thread cannot sleep");
+	panic("blockdriver_mt: master thread cannot sleep");
 
-  driver_event_wait(&wp->sleep_event);
+  event_wait(&wp->sleep_event);
 }
 
 /*===========================================================================*
- *				driver_mt_wakeup			     *
+ *				blockdriver_mt_wakeup			     *
  *===========================================================================*/
-PUBLIC void driver_mt_wakeup(thread_id_t id)
+PUBLIC void blockdriver_mt_wakeup(thread_id_t id)
 {
 /* Wake up a sleeping worker thread from the master thread.
  */
@@ -378,13 +374,13 @@ PUBLIC void driver_mt_wakeup(thread_id_t id)
 
   assert(wp->state == STATE_RUNNING || wp->state == STATE_STOPPING);
 
-  driver_event_fire(&wp->sleep_event);
+  event_fire(&wp->sleep_event);
 }
 
 /*===========================================================================*
- *				driver_mt_stop				     *
+ *				blockdriver_mt_stop			     *
  *===========================================================================*/
-PUBLIC void driver_mt_stop(void)
+PUBLIC void blockdriver_mt_stop(void)
 {
 /* Put up the current worker thread for termination. Once the current dispatch
  * call has finished, and there are no more messages in the thread's message
@@ -392,7 +388,7 @@ PUBLIC void driver_mt_stop(void)
  * the effect of this call.
  */
   worker_t *wp;
-	
+
   wp = (worker_t *) mthread_getspecific(worker_key);
 
   assert(wp != NULL);

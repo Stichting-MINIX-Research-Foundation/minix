@@ -4,36 +4,36 @@
  *   partition:	partition a disk to the partition table(s) on it.
  */
 
-#include <minix/driver.h>
+#include <minix/blockdriver.h>
 #include <minix/drvlib.h>
 #include <unistd.h>
 
 /* Extended partition? */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
-FORWARD _PROTOTYPE( void parse_part_table, (struct driver *dp, int device,
-				int style, int atapi, u8_t *tmp_buf) );
-FORWARD _PROTOTYPE( void extpartition, (struct driver *dp, int extdev,
-				unsigned long extbase, u8_t *tmp_buf) );
-FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
+FORWARD _PROTOTYPE( void parse_part_table, (struct blockdriver *bdp,
+	int device, int style, int atapi, u8_t *tmp_buf) );
+FORWARD _PROTOTYPE( void extpartition, (struct blockdriver *bdp, int extdev,
+	unsigned long extbase, u8_t *tmp_buf) );
+FORWARD _PROTOTYPE( int get_part_table, (struct blockdriver *bdp, int device,
 	unsigned long offset, struct part_entry *table, u8_t *tmp_buf) );
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
 
 /*============================================================================*
  *				partition				      *
  *============================================================================*/
-PUBLIC void partition(dp, device, style, atapi)
-struct driver *dp;	/* device dependent entry points */
-int device;		/* device to partition */
-int style;		/* partitioning style: floppy, primary, sub. */
-int atapi;		/* atapi device */
+PUBLIC void partition(bdp, device, style, atapi)
+struct blockdriver *bdp;	/* device dependent entry points */
+int device;			/* device to partition */
+int style;			/* partitioning style: floppy, primary, sub. */
+int atapi;			/* atapi device */
 {
 /* This routine is called on first open to initialize the partition tables
  * of a device.
  */
   u8_t *tmp_buf;
 
-  if ((*dp->dr_prepare)(device) == NULL)
+  if ((*bdp->bdr_part)(device) == NULL)
 	return;
 
   /* For multithreaded drivers, multiple partition() calls may be made on
@@ -43,7 +43,7 @@ int atapi;		/* atapi device */
   if (!(tmp_buf = alloc_contig(CD_SECTOR_SIZE, AC_ALIGN4K, NULL)))
 	panic("partition: unable to allocate temporary buffer");
 
-  parse_part_table(dp, device, style, atapi, tmp_buf);
+  parse_part_table(bdp, device, style, atapi, tmp_buf);
 
   free_contig(tmp_buf, CD_SECTOR_SIZE);
 }
@@ -51,12 +51,12 @@ int atapi;		/* atapi device */
 /*============================================================================*
  *				parse_part_table			      *
  *============================================================================*/
-PRIVATE void parse_part_table(dp, device, style, atapi, tmp_buf)
-struct driver *dp;	/* device dependent entry points */
-int device;		/* device to partition */
-int style;		/* partitioning style: floppy, primary, sub. */
-int atapi;		/* atapi device */
-u8_t *tmp_buf;		/* temporary buffer */
+PRIVATE void parse_part_table(bdp, device, style, atapi, tmp_buf)
+struct blockdriver *bdp;	/* device dependent entry points */
+int device;			/* device to partition */
+int style;			/* partitioning style: floppy, primary, sub. */
+int atapi;			/* atapi device */
+u8_t *tmp_buf;			/* temporary buffer */
 {
 /* This routine reads and parses a partition table.  It may be called
  * recursively.  It makes sure that each partition falls safely within the
@@ -71,13 +71,13 @@ u8_t *tmp_buf;		/* temporary buffer */
   unsigned long base, limit, part_limit;
 
   /* Get the geometry of the device to partition */
-  if ((dv = (*dp->dr_prepare)(device)) == NULL
+  if ((dv = (*bdp->bdr_part)(device)) == NULL
 				|| cmp64u(dv->dv_size, 0) == 0) return;
   base = div64u(dv->dv_base, SECTOR_SIZE);
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
 
   /* Read the partition table for the device. */
-  if(!get_part_table(dp, device, 0L, table, tmp_buf)) {
+  if(!get_part_table(bdp, device, 0L, table, tmp_buf)) {
 	  return;
   }
 
@@ -97,7 +97,7 @@ u8_t *tmp_buf;		/* temporary buffer */
   }
 
   /* Find an array of devices. */
-  if ((dv = (*dp->dr_prepare)(device)) == NULL) return;
+  if ((dv = (*bdp->bdr_part)(device)) == NULL) return;
 
   /* Set the geometry of the partitions from the partition table. */
   for (par = 0; par < NR_PARTITIONS; par++, dv++) {
@@ -115,12 +115,12 @@ u8_t *tmp_buf;		/* temporary buffer */
 	if (style == P_PRIMARY) {
 		/* Each Minix primary partition can be subpartitioned. */
 		if (pe->sysind == MINIX_PART)
-			parse_part_table(dp, device + par, P_SUB, atapi,
+			parse_part_table(bdp, device + par, P_SUB, atapi,
 				tmp_buf);
 
 		/* An extended partition has logical partitions. */
 		if (ext_part(pe->sysind))
-			extpartition(dp, device + par, pe->lowsec, tmp_buf);
+			extpartition(bdp, device + par, pe->lowsec, tmp_buf);
 	}
   }
 }
@@ -128,11 +128,11 @@ u8_t *tmp_buf;		/* temporary buffer */
 /*============================================================================*
  *				extpartition				      *
  *============================================================================*/
-PRIVATE void extpartition(dp, extdev, extbase, tmp_buf)
-struct driver *dp;	/* device dependent entry points */
-int extdev;		/* extended partition to scan */
-unsigned long extbase;	/* sector offset of the base extended partition */
-u8_t *tmp_buf;		/* temporary buffer */
+PRIVATE void extpartition(bdp, extdev, extbase, tmp_buf)
+struct blockdriver *bdp;	/* device dependent entry points */
+int extdev;			/* extended partition to scan */
+unsigned long extbase;		/* sector offset of the base ext. partition */
+u8_t *tmp_buf;			/* temporary buffer */
 {
 /* Extended partitions cannot be ignored alas, because people like to move
  * files to and from DOS partitions.  Avoid reading this code, it's no fun.
@@ -148,7 +148,7 @@ u8_t *tmp_buf;		/* temporary buffer */
 
   offset = 0;
   do {
-	if (!get_part_table(dp, extdev, offset, table, tmp_buf)) return;
+	if (!get_part_table(bdp, extdev, offset, table, tmp_buf)) return;
 	sort(table);
 
 	/* The table should contain one logical partition and optionally
@@ -161,7 +161,7 @@ u8_t *tmp_buf;		/* temporary buffer */
 			nextoffset = pe->lowsec;
 		} else
 		if (pe->sysind != NO_PART) {
-			if ((dv = (*dp->dr_prepare)(subdev)) == NULL) return;
+			if ((dv = (*bdp->bdr_part)(subdev)) == NULL) return;
 
 			dv->dv_base = mul64u(extbase + offset + pe->lowsec,
 								SECTOR_SIZE);
@@ -177,8 +177,8 @@ u8_t *tmp_buf;		/* temporary buffer */
 /*============================================================================*
  *				get_part_table				      *
  *============================================================================*/
-PRIVATE int get_part_table(dp, device, offset, table, tmp_buf)
-struct driver *dp;
+PRIVATE int get_part_table(bdp, device, offset, table, tmp_buf)
+struct blockdriver *bdp;
 int device;
 unsigned long offset;		/* sector offset to the table */
 struct part_entry *table;	/* four entries */
@@ -189,14 +189,14 @@ u8_t *tmp_buf;			/* temporary buffer */
  */
   iovec_t iovec1;
   u64_t position;
+  int r;
 
   position = mul64u(offset, SECTOR_SIZE);
   iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = CD_SECTOR_SIZE;
-  if ((*dp->dr_prepare)(device) != NULL) {
-	(void) (*dp->dr_transfer)(SELF, DEV_GATHER_S, position, &iovec1, 1);
-  }
-  if (iovec1.iov_size != 0) {
+  r = (*bdp->bdr_transfer)(device, FALSE /*do_write*/, position, SELF,
+	&iovec1, 1, BDEV_NOFLAGS);
+  if (r != CD_SECTOR_SIZE) {
 	return 0;
   }
   if (tmp_buf[510] != 0x55 || tmp_buf[511] != 0xAA) {

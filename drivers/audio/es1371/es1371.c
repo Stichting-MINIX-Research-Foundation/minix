@@ -227,7 +227,7 @@ int drv_reset() {
 }
 
 
-int drv_start(int sub_dev, int DmaMode) {
+int drv_start(int sub_dev, int UNUSED(DmaMode)) {
 	u32_t enable_bit, result = 0;
 
 	/* Write default values to device in case user failed to configure.
@@ -504,7 +504,7 @@ PRIVATE int set_stereo(u32_t stereo, int sub_dev) {
 }
 
 
-PRIVATE int set_sign(u32_t val, int sub_dev) {
+PRIVATE int set_sign(u32_t UNUSED(val), int UNUSED(sub_dev)) {
 	return OK;
 }
 

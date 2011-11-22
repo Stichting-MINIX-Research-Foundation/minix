@@ -32,9 +32,10 @@ static int bdev_opcl(int req, dev_t dev, int access)
  */
   message m;
 
+  memset(&m, 0, sizeof(m));
   m.m_type = req;
-  m.DEVICE = minor(dev);
-  m.COUNT = access;
+  m.BDEV_MINOR = minor(dev);
+  m.BDEV_ACCESS = access;
 
   return bdev_sendrec(dev, &m);
 }
@@ -45,7 +46,7 @@ int bdev_open(dev_t dev, int access)
  * File system usage note: typically called from mount, after bdev_driver.
  */
 
-  return bdev_opcl(DEV_OPEN, dev, access);
+  return bdev_opcl(BDEV_OPEN, dev, access);
 }
 
 int bdev_close(dev_t dev)
@@ -54,11 +55,11 @@ int bdev_close(dev_t dev)
  * File system usage note: typically called from unmount.
  */
 
-  return bdev_opcl(DEV_CLOSE, dev, 0);
+  return bdev_opcl(BDEV_CLOSE, dev, 0);
 }
 
-static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf, int count,
-  int UNUSED(flags), message *m)
+static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf,
+  size_t count, int flags, message *m)
 {
 /* Set up a single-buffer read/write request.
  */
@@ -66,10 +67,12 @@ static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf, int count,
   cp_grant_id_t grant;
   int access;
 
+  assert((ssize_t) count >= 0);
+
   if ((endpt = bdev_driver_get(dev)) == NONE)
 	return EDEADSRCDST;
 
-  access = (req == DEV_READ_S) ? CPF_WRITE : CPF_READ;
+  access = (req == BDEV_READ) ? CPF_WRITE : CPF_READ;
 
   grant = cpf_grant_direct(endpt, (vir_bytes) buf, count, access);
 
@@ -78,12 +81,14 @@ static int bdev_rdwt_setup(int req, dev_t dev, u64_t pos, char *buf, int count,
 	return EINVAL;
   }
 
+  memset(m, 0, sizeof(*m));
   m->m_type = req;
-  m->DEVICE = minor(dev);
-  m->POSITION = ex64lo(pos);
-  m->HIGHPOS = ex64hi(pos);
-  m->COUNT = count;
-  m->IO_GRANT = (void *) grant;
+  m->BDEV_MINOR = minor(dev);
+  m->BDEV_POS_LO = ex64lo(pos);
+  m->BDEV_POS_HI = ex64hi(pos);
+  m->BDEV_COUNT = count;
+  m->BDEV_GRANT = grant;
+  m->BDEV_FLAGS = flags;
 
   return OK;
 }
@@ -92,15 +97,12 @@ static void bdev_rdwt_cleanup(message *m)
 {
 /* Clean up a single-buffer read/write request.
  */
-  cp_grant_id_t grant;
 
-  grant = (cp_grant_id_t) m->IO_GRANT;
-
-  cpf_revoke(grant);
+  cpf_revoke(m->BDEV_GRANT);
 }
 
-static int bdev_rdwt(int req, dev_t dev, u64_t pos, char *buf, int count,
-  int flags)
+static ssize_t bdev_rdwt(int req, dev_t dev, u64_t pos, char *buf,
+  size_t count, int flags)
 {
 /* Perform a read or write call using a single buffer.
  */
@@ -118,11 +120,11 @@ static int bdev_rdwt(int req, dev_t dev, u64_t pos, char *buf, int count,
 }
 
 static int bdev_vrdwt_setup(int req, dev_t dev, u64_t pos, iovec_t *vec,
-  int count, int UNUSED(flags), message *m, iovec_s_t *gvec,
-  cp_grant_id_t *grants, vir_bytes *size)
+  int count, int flags, message *m, iovec_s_t *gvec)
 {
 /* Set up a vectored read/write request.
  */
+  ssize_t size;
   endpoint_t endpt;
   cp_grant_id_t grant;
   int i, access;
@@ -132,154 +134,118 @@ static int bdev_vrdwt_setup(int req, dev_t dev, u64_t pos, iovec_t *vec,
   if ((endpt = bdev_driver_get(dev)) == NONE)
 	return EDEADSRCDST;
 
-  access = (req == DEV_GATHER_S) ? CPF_WRITE : CPF_READ;
-  *size = 0;
+  access = (req == BDEV_GATHER) ? CPF_WRITE : CPF_READ;
+  size = 0;
 
   for (i = 0; i < count; i++) {
-	grants[i] = cpf_grant_direct(endpt, vec[i].iov_addr, vec[i].iov_size,
+	grant = cpf_grant_direct(endpt, vec[i].iov_addr, vec[i].iov_size,
 		access);
 
-	if (!GRANT_VALID(grants[i])) {
+	if (!GRANT_VALID(grant)) {
 		printf("bdev: unable to allocate grant!\n");
 
 		for (i--; i >= 0; i--)
-			cpf_revoke(grants[i]);
+			cpf_revoke(gvec[i].iov_grant);
 
 		return EINVAL;
 	}
 
-	/* We keep a separate grants array to prevent local leaks if the driver
-	 * ends up clobbering the grant vector. Future protocol updates should
-	 * make the grant for the vector read-only.
-	 */
-	gvec[i].iov_grant = grants[i];
+	gvec[i].iov_grant = grant;
 	gvec[i].iov_size = vec[i].iov_size;
 
-	assert(*size + vec[i].iov_size > *size);
+	assert((ssize_t) (size + vec[i].iov_size) > size);
 
-	*size += vec[i].iov_size;
+	size += vec[i].iov_size;
   }
 
   grant = cpf_grant_direct(endpt, (vir_bytes) gvec, sizeof(gvec[0]) * count,
-	CPF_READ | CPF_WRITE);
+	CPF_READ);
 
   if (!GRANT_VALID(grant)) {
 	printf("bdev: unable to allocate grant!\n");
 
 	for (i = count - 1; i >= 0; i--)
-		cpf_revoke(grants[i]);
+		cpf_revoke(gvec[i].iov_grant);
 
 	return EINVAL;
   }
 
+  memset(m, 0, sizeof(*m));
   m->m_type = req;
-  m->DEVICE = minor(dev);
-  m->POSITION = ex64lo(pos);
-  m->HIGHPOS = ex64hi(pos);
-  m->COUNT = count;
-  m->IO_GRANT = (void *) grant;
+  m->BDEV_MINOR = minor(dev);
+  m->BDEV_POS_LO = ex64lo(pos);
+  m->BDEV_POS_HI = ex64hi(pos);
+  m->BDEV_COUNT = count;
+  m->BDEV_GRANT = grant;
+  m->BDEV_FLAGS = flags;
 
   return OK;
 }
 
-static void bdev_vrdwt_cleanup(message *m, cp_grant_id_t *grants)
+static void bdev_vrdwt_cleanup(message *m, iovec_s_t *gvec)
 {
 /* Clean up a vectored read/write request.
  */
   cp_grant_id_t grant;
   int i;
 
-  grant = (cp_grant_id_t) m->IO_GRANT;
+  grant = m->BDEV_GRANT;
 
   cpf_revoke(grant);
 
-  for (i = m->COUNT - 1; i >= 0; i--)
-	cpf_revoke(grants[i]);
+  for (i = m->BDEV_COUNT - 1; i >= 0; i--)
+	cpf_revoke(gvec[i].iov_grant);
 }
 
-static int bdev_vrdwt_adjust(dev_t dev, iovec_s_t *gvec, int count,
-  vir_bytes *size)
+static ssize_t bdev_vrdwt(int req, dev_t dev, u64_t pos, iovec_t *vec,
+  int count, int flags)
 {
-/* Adjust the number of bytes transferred, by subtracting from it the number of
- * bytes *not* transferred according to the result vector.
- */
-  int i;
-
-  for (i = 0; i < count; i++) {
-	if (*size < gvec[i].iov_size) {
-		printf("bdev: driver (%d) returned bad vector\n",
-			bdev_driver_get(dev));
-
-		return FALSE;
-	}
-
-	*size -= gvec[i].iov_size;
-  }
-
-  return TRUE;
-}
-
-static int bdev_vrdwt(int req, dev_t dev, u64_t pos, iovec_t *vec, int count,
-  int flags, vir_bytes *size)
-{
-/* Perform a read or write call using a vector of buffer.
+/* Perform a read or write call using a vector of buffers.
  */
   iovec_s_t gvec[NR_IOREQS];
-  cp_grant_id_t grants[NR_IOREQS];
   message m;
   int r;
 
-  if ((r = bdev_vrdwt_setup(req, dev, pos, vec, count, flags, &m, gvec,
-		grants, size)) != OK) {
-	*size = 0;
+  if ((r = bdev_vrdwt_setup(req, dev, pos, vec, count, flags, &m, gvec)) != OK)
 	return r;
-  }
 
   r = bdev_sendrec(dev, &m);
 
-  bdev_vrdwt_cleanup(&m, grants);
-
-  /* Also return the number of bytes transferred. */
-  if (!bdev_vrdwt_adjust(dev, gvec, count, size)) {
-	*size = 0;
-	r = EIO;
-  }
+  bdev_vrdwt_cleanup(&m, gvec);
 
   return r;
 }
 
-int bdev_read(dev_t dev, u64_t pos, char *buf, int count, int flags)
+ssize_t bdev_read(dev_t dev, u64_t pos, char *buf, size_t count, int flags)
 {
 /* Perform a read call into a single buffer.
  */
 
-  return bdev_rdwt(DEV_READ_S, dev, pos, buf, count, flags);
+  return bdev_rdwt(BDEV_READ, dev, pos, buf, count, flags);
 }
 
-int bdev_write(dev_t dev, u64_t pos, char *buf, int count, int flags)
+ssize_t bdev_write(dev_t dev, u64_t pos, char *buf, size_t count, int flags)
 {
 /* Perform a write call from a single buffer.
  */
 
-  return bdev_rdwt(DEV_WRITE_S, dev, pos, buf, count, flags);
+  return bdev_rdwt(BDEV_WRITE, dev, pos, buf, count, flags);
 }
 
-int bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags,
-  vir_bytes *size)
+ssize_t bdev_gather(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
 /* Perform a read call into a vector of buffers.
  */
 
-  return bdev_vrdwt(DEV_GATHER_S, dev, pos, vec, count, flags, size);
+  return bdev_vrdwt(BDEV_GATHER, dev, pos, vec, count, flags);
 }
 
-int bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags,
-  vir_bytes *size)
+ssize_t bdev_scatter(dev_t dev, u64_t pos, iovec_t *vec, int count, int flags)
 {
 /* Perform a write call from a vector of buffers.
  */
 
-  return bdev_vrdwt(DEV_SCATTER_S, dev, pos, vec, count, flags, size);
+  return bdev_vrdwt(BDEV_SCATTER, dev, pos, vec, count, flags);
 }
 
 static int bdev_ioctl_setup(dev_t dev, int request, void *buf, message *m)
@@ -311,10 +277,11 @@ static int bdev_ioctl_setup(dev_t dev, int request, void *buf, message *m)
 	return EINVAL;
   }
 
-  m->m_type = DEV_IOCTL_S;
-  m->DEVICE = minor(dev);
-  m->REQUEST = request;
-  m->IO_GRANT = (void *) grant;
+  memset(m, 0, sizeof(*m));
+  m->m_type = BDEV_IOCTL;
+  m->BDEV_MINOR = minor(dev);
+  m->BDEV_REQUEST = request;
+  m->BDEV_GRANT = grant;
 
   return OK;
 }
@@ -323,11 +290,8 @@ static void bdev_ioctl_cleanup(message *m)
 {
 /* Clean up an I/O control request.
  */
-  cp_grant_id_t grant;
 
-  grant = (cp_grant_id_t) m->IO_GRANT;
-
-  cpf_revoke(grant);
+  cpf_revoke(m->BDEV_GRANT);
 }
 
 int bdev_ioctl(dev_t dev, int request, void *buf)

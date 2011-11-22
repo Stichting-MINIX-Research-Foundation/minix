@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <minix/chardriver.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/timers.h>
@@ -28,29 +29,6 @@ static timer_t tcp_ftmr, tcp_stmr, arp_tmr;
 static int arp_ticks, tcp_fticks, tcp_sticks;
 
 static struct netif * netif_lo;
-
-static void driver_announce()
-{
-	/* Announce we are up after a fresh start or restart. */
-	int err;
-	char key[DS_MAX_KEYLEN];
-	char label[DS_MAX_KEYLEN];
-	char *driver_prefix = "drv.vfs.";
-
-	/* Callers are allowed to use sendrec to communicate with drivers.
-	 * For this reason, there may blocked callers when a driver restarts.
-	 * Ask the kernel to unblock them (if any).
-	 */
-	if ((err = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK)
-		panic("LWIP : sys_statectl failed: %d\n", err);
-
-	/* Publish a driver up event. */
-	if ((err = ds_retrieve_label_name(label, getprocnr())) != OK)
-		panic("LWIP : unable to get own label: %d\n", err);
-	snprintf(key, DS_MAX_KEYLEN, "%s%s", driver_prefix, label);
-	if ((err = ds_publish_u32(key, DS_DRIVER_UP, DSF_OVERWRITE)))
-		panic("LWIP : unable to publish driver up event: %d\n", err);
-}
 
 void sys_init(void)
 {
@@ -155,10 +133,10 @@ static int sef_cb_init_fresh(__unused int type, __unused sef_init_info_t *info)
 					DSF_INITIAL | DSF_OVERWRITE)) != OK)
 		panic(("inet: can't subscribe to driver events"));
 
-	/* Announce we are up. INET announces its presence to VFS just like
-	 * any other driver.
+	/* Announce we are up. LWIP announces its presence to VFS just like
+	 * any other character driver.
 	 */
-	driver_announce();
+	chardriver_announce();
 
 	return(OK);
 }

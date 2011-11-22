@@ -1,5 +1,5 @@
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/blockdriver.h>
 #include <minix/drvlib.h>
 
 #define VERBOSE		   0	/* display identify messages during boot */
@@ -217,3 +217,8 @@
 
 #define NO_DMA_VAR 	"ata_no_dma"
 
+/* BIOS parameter table layout. */
+#define bp_cylinders(t)	(t[0] | (t[1] << 8))
+#define bp_heads(t)	(t[2])
+#define bp_precomp(t)	(t[5] | (t[6] << 8))
+#define bp_sectors(t)	(t[14])

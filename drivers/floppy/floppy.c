@@ -135,7 +135,7 @@
 #define UNCALIBRATED       0	/* drive needs to be calibrated at next use */
 #define CALIBRATED         1	/* no calibration needed */
 #define BASE_SECTOR        1	/* sectors are numbered starting at 1 */
-#define NO_SECTOR        (-1)	/* current sector unknown */
+#define NO_SECTOR ((unsigned) -1)	/* current sector unknown */
 #define NO_CYL		 (-1)	/* current cylinder unknown, must seek */
 #define NO_DENS		 100	/* current media unknown */
 #define BSY_IDLE	   0	/* busy doing nothing */
@@ -238,19 +238,20 @@ PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
  */
 PRIVATE timer_t f_tmr_timeout;		/* timer for various timeouts */
 PRIVATE u32_t system_hz;		/* system clock frequency */
-FORWARD _PROTOTYPE( void f_expire_tmrs, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( void f_expire_tmrs, (clock_t stamp)			);
 FORWARD _PROTOTYPE( void stop_motor, (timer_t *tp) 			);
 FORWARD _PROTOTYPE( void f_timeout, (timer_t *tp) 			);
 
-FORWARD _PROTOTYPE( struct device *f_prepare, (int device) 		);
-FORWARD _PROTOTYPE( char *f_name, (void) 				);
+FORWARD _PROTOTYPE( struct device *f_prepare, (dev_t device) 		);
+FORWARD _PROTOTYPE( struct device *f_part, (dev_t minor) 		);
 FORWARD _PROTOTYPE( void f_cleanup, (void) 				);
-FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, u64_t position,
-					iovec_t *iov, unsigned nr_req) 	);
-FORWARD _PROTOTYPE( int dma_setup, (int opcode) 			);
+FORWARD _PROTOTYPE( ssize_t f_transfer, (dev_t minor, int do_write,
+	u64_t position, endpoint_t proc_nr, iovec_t *iov,
+	unsigned int nr_req, int flags)					);
+FORWARD _PROTOTYPE( int dma_setup, (int do_write) 			);
 FORWARD _PROTOTYPE( void start_motor, (void) 				);
 FORWARD _PROTOTYPE( int seek, (void) 					);
-FORWARD _PROTOTYPE( int fdc_transfer, (int opcode) 			);
+FORWARD _PROTOTYPE( int fdc_transfer, (int do_write) 			);
 FORWARD _PROTOTYPE( int fdc_results, (void) 				);
 FORWARD _PROTOTYPE( int fdc_command, (const u8_t *cmd, int len) 	);
 FORWARD _PROTOTYPE( void fdc_out, (int val) 				);
@@ -258,25 +259,25 @@ FORWARD _PROTOTYPE( int recalibrate, (void) 				);
 FORWARD _PROTOTYPE( void f_reset, (void) 				);
 FORWARD _PROTOTYPE( int f_intr_wait, (void) 				);
 FORWARD _PROTOTYPE( int read_id, (void) 				);
-FORWARD _PROTOTYPE( int f_do_open, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( int f_do_open, (dev_t minor, int access)		);
+FORWARD _PROTOTYPE( int f_do_close, (dev_t minor)			);
 FORWARD _PROTOTYPE( int test_read, (int density)	 		);
-FORWARD _PROTOTYPE( void f_geometry, (struct partition *entry)		);
+FORWARD _PROTOTYPE( void f_geometry, (dev_t minor,
+	struct partition *entry)					);
 
 /* Entry points to this driver. */
-PRIVATE struct driver f_dtab = {
-  f_name,	/* current device's name */
+PRIVATE struct blockdriver f_dtab = {
   f_do_open,	/* open or mount request, sense type of diskette */
-  do_nop,	/* nothing on a close */
-  do_diocntl,	/* get or set a partitions geometry */
-  f_prepare,	/* prepare for I/O on a given minor device */
+  f_do_close,	/* nothing on a close */
   f_transfer,	/* do the I/O */
+  NULL,		/* no other I/O control requests are supported */
   f_cleanup,	/* cleanup before sending reply to user process */
+  f_part,	/* return partition information structure */
   f_geometry,	/* tell the geometry of the diskette */
+  NULL,		/* no processing of hardware interrupts */
   f_expire_tmrs,/* expire all alarm timers */
-  nop_cancel,
-  nop_select,
-  NULL,
-  NULL
+  NULL,		/* no processing of other messages */
+  NULL		/* no threading support */
 };
 
 static char *floppy_buf;
@@ -289,7 +290,7 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
 EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
 EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
-PUBLIC int last_transfer_opcode;
+PUBLIC int last_was_write;
 
 /*===========================================================================*
  *				floppy_task				     *
@@ -300,7 +301,7 @@ PUBLIC int main(void)
   sef_local_startup();
 
   /* Call the generic receive loop. */
-  driver_task(&f_dtab, DRIVER_STD);
+  blockdriver_task(&f_dtab);
 
   return(OK);
 }
@@ -330,7 +331,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the floppy driver. */
   struct floppy *fp;
@@ -362,7 +363,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   	panic("Couldn't enable IRQs: %d", s);
 
   /* Announce we are up! */
-  driver_announce();
+  blockdriver_announce();
 
   return(OK);
 }
@@ -386,25 +387,25 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				f_expire_tmrs				     *
  *===========================================================================*/
-PRIVATE void f_expire_tmrs(struct driver *dp, message *m_ptr)
+PRIVATE void f_expire_tmrs(clock_t stamp)
 {
 /* A synchronous alarm message was received. Call the watchdog function for
  * each expired timer, if any.
  */
 
-  expire_timers(m_ptr->NOTIFY_TIMESTAMP);
+  expire_timers(stamp);
 }
 
 /*===========================================================================*
  *				f_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *f_prepare(int device)
+PRIVATE struct device *f_prepare(dev_t device)
 {
 /* Prepare for I/O on a device. */
 
   f_device = device;
   f_drive = device & ~(DEV_TYPE_BITS | FORMAT_DEV_BIT);
-  if (f_drive < 0 || f_drive >= NR_DRIVES) return(NULL);
+  if (f_drive >= NR_DRIVES) return(NULL);
 
   f_fp = &floppy[f_drive];
   f_dv = &f_fp->fl_geom;
@@ -423,15 +424,13 @@ PRIVATE struct device *f_prepare(int device)
 }
 
 /*===========================================================================*
- *				f_name					     *
+ *				f_part					     *
  *===========================================================================*/
-PRIVATE char *f_name(void)
+PRIVATE struct device *f_part(dev_t minor)
 {
-/* Return a name for the current device. */
-  static char name[] = "fd0";
+/* Return a pointer to the partition information of the given minor device. */
 
-  name[2] = '0' + f_drive;
-  return name;
+  return f_prepare(minor);
 }
 
 /*===========================================================================*
@@ -449,32 +448,41 @@ PRIVATE void f_cleanup(void)
 /*===========================================================================*
  *				f_transfer				     *
  *===========================================================================*/
-PRIVATE int f_transfer(proc_nr, opcode, pos64, iov, nr_req)
-int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
-u64_t pos64;			/* offset on device to read or write */
-iovec_t *iov;			/* pointer to read or write request vector */
-unsigned nr_req;		/* length of request vector */
+PRIVATE ssize_t f_transfer(
+  dev_t minor,			/* minor device number */
+  int do_write,			/* read or write? */
+  u64_t pos64,			/* offset on device to read or write */
+  endpoint_t proc_nr,		/* process doing the request */
+  iovec_t *iov,			/* pointer to read or write request vector */
+  unsigned int nr_req,		/* length of request vector */
+  int UNUSED(flags)		/* transfer flags */
+)
 {
 #define NO_OFFSET -1
-  struct floppy *fp = f_fp;
+  struct floppy *fp;
   iovec_t *iop, *iov_end = iov + nr_req;
   int s, r, errors, nr;
-  unsigned block;	/* Seen any 32M floppies lately? */
-  unsigned nbytes, count, chunk, sector;
-  unsigned long dv_size = cv64ul(f_dv->dv_size);
+  unsigned block, nbytes, count, chunk, sector;
+  unsigned long dv_size;
   vir_bytes user_offset, iov_offset = 0, iop_offset;
-  off_t position;
+  unsigned long position;
   signed long uoffsets[MAX_SECTORS], *up;
-  cp_grant_id_t ugrants[MAX_SECTORS], *ug;
+  cp_grant_id_t ugrants[MAX_SECTORS], *ug = NULL;
   u8_t cmd[3];
+  ssize_t total;
+
+  if (f_prepare(minor) == NULL) return(ENXIO);
+
+  fp = f_fp;
+  dv_size = cv64ul(f_dv->dv_size);
 
   if (ex64hi(pos64) != 0)
 	return OK;	/* Way beyond EOF */
   position= cv64ul(pos64);
+  total = 0;
 
-  /* Record the opcode of the last transfer performed. */
-  last_transfer_opcode = opcode;
+  /* Record the direction of the last transfer performed. */
+  last_was_write = do_write;
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
@@ -492,7 +500,7 @@ unsigned nr_req;		/* length of request vector */
 	for (iop = iov; iop < iov_end; iop++) nbytes += iop->iov_size;
 
 	/* Which block on disk and how close to EOF? */
-	if (position >= dv_size) return(OK);		/* At EOF */
+	if (position >= dv_size) return(total);		/* At EOF */
 	if (position + nbytes > dv_size) nbytes = dv_size - position;
 	block = div64u(add64ul(f_dv->dv_base, position), SECTOR_SIZE);
 
@@ -500,7 +508,7 @@ unsigned nr_req;		/* length of request vector */
 
 	/* Using a formatting device? */
 	if (f_device & FORMAT_DEV_BIT) {
-		if (opcode != DEV_SCATTER_S) return(EIO);
+		if (!do_write) return(EIO);
 		if (iov->iov_size < SECTOR_SIZE + sizeof(fmt_param))
 			return(EINVAL);
 
@@ -607,7 +615,7 @@ unsigned nr_req;		/* length of request vector */
 				fp->fl_sector++;
 			}
 
-			if (opcode == DEV_SCATTER_S) {
+			if (do_write) {
 				/* Copy the user bytes to the DMA buffer. */
 				if(proc_nr != SELF) {
 				   s=sys_safecopyfrom(proc_nr, *ug, *up,
@@ -623,17 +631,17 @@ unsigned nr_req;		/* length of request vector */
 
 		/* Set up the DMA chip and perform the transfer. */
 		if (r == OK) {
-			if (dma_setup(opcode) != OK) {
+			if (dma_setup(do_write) != OK) {
 				/* This can only fail for addresses above 16MB
 				 * that cannot be handled by the controller, 
  				 * because it uses 24-bit addressing.
 				 */
 				return(EIO);
 			}
-			r = fdc_transfer(opcode);
+			r = fdc_transfer(do_write);
 		}
 
-		if (r == OK && opcode == DEV_GATHER_S) {
+		if (r == OK && !do_write) {
 			/* Copy the DMA buffer to user space. */
 			if(proc_nr != SELF) {
 		   	   s=sys_safecopyto(proc_nr, *ug, *up,
@@ -663,7 +671,8 @@ unsigned nr_req;		/* length of request vector */
 
 	/* Book the bytes successfully transferred. */
 	position += nbytes;
-	for (;;) {
+	total += nbytes;
+	while (nbytes > 0) {
 		if (nbytes < iov->iov_size) {
 			/* Not done with this one yet. */
 			iov_offset += nbytes;
@@ -673,25 +682,17 @@ unsigned nr_req;		/* length of request vector */
 		iov_offset = 0;
 		nbytes -= iov->iov_size;
 		iov->iov_size = 0;
-		if (nbytes == 0) {
-			/* The rest is optional, so we return to give FS a
-			 * chance to think it over.
-			 */
-			return(OK);
-		}
 		iov++;
 		nr_req--;
 	}
   }
-  return(OK);
+  return(total);
 }
 
 /*===========================================================================*
  *				dma_setup				     *
  *===========================================================================*/
-PRIVATE int dma_setup(
-  int opcode			/* DEV_GATHER_S or DEV_SCATTER_S */
-)
+PRIVATE int dma_setup(int do_write)
 {
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
  * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
@@ -719,7 +720,7 @@ PRIVATE int dma_setup(
    */
   pv_set(byte_out[0], DMA_INIT, DMA_RESET_VAL);	/* reset the dma controller */
   pv_set(byte_out[1], DMA_FLIPFLOP, 0);		/* write anything to reset it */
-  pv_set(byte_out[2], DMA_MODE, opcode == DEV_SCATTER_S ? DMA_WRITE : DMA_READ);
+  pv_set(byte_out[2], DMA_MODE, do_write ? DMA_WRITE : DMA_READ);
   pv_set(byte_out[3], DMA_ADDR, (unsigned) (floppy_buf_phys >>  0) & 0xff);
   pv_set(byte_out[4], DMA_ADDR, (unsigned) (floppy_buf_phys >>  8) & 0xff);
   pv_set(byte_out[5], DMA_TOP,  (unsigned) (floppy_buf_phys >> 16) & 0xff);
@@ -773,7 +774,7 @@ PRIVATE void start_motor(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(NULL, &mess);
+				f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -848,7 +849,7 @@ PRIVATE int seek(void)
 		if (is_ipc_notify(ipc_status)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case CLOCK:
-					f_expire_tmrs(NULL, &mess);
+					f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
 					break;
 				default :
 					f_busy = BSY_IDLE;
@@ -867,9 +868,7 @@ PRIVATE int seek(void)
 /*===========================================================================*
  *				fdc_transfer				     *
  *===========================================================================*/
-PRIVATE int fdc_transfer(
-  int opcode			/* DEV_GATHER_S or DEV_SCATTER_S */
-)
+PRIVATE int fdc_transfer(int do_write)
 {
 /* The drive is now on the proper cylinder.  Read, write or format 1 block. */
 
@@ -892,7 +891,7 @@ PRIVATE int fdc_transfer(
 	cmd[5] = fmt_param.fill_byte_for_format;
 	if (fdc_command(cmd, 6) != OK) return(ERR_TRANSFER);
   } else {
-	cmd[0] = opcode == DEV_SCATTER_S ? FDC_WRITE : FDC_READ;
+	cmd[0] = do_write ? FDC_WRITE : FDC_READ;
 	cmd[1] = (fp->fl_head << 2) | f_drive;
 	cmd[2] = fp->fl_cylinder;
 	cmd[3] = fp->fl_head;
@@ -906,7 +905,7 @@ PRIVATE int fdc_transfer(
 
   /* Block, waiting for disk interrupt. */
   if (f_intr_wait() != OK) {
-	printf("%s: disk interrupt timed out.\n", f_name());
+	printf("fd%u: disk interrupt timed out.\n", f_drive);
   	return(ERR_TIMEOUT);
   }
 
@@ -915,7 +914,7 @@ PRIVATE int fdc_transfer(
   if (r != OK) return(r);
 
   if (f_results[ST1] & WRITE_PROTECT) {
-	printf("%s: diskette is write protected.\n", f_name());
+	printf("fd%u: diskette is write protected.\n", f_drive);
 	return(ERR_WR_PROTECT);
   }
 
@@ -1127,7 +1126,7 @@ PRIVATE void f_reset(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(NULL, &mess);
+				f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -1177,7 +1176,7 @@ PRIVATE int f_intr_wait(void)
 	if (is_ipc_notify(ipc_status)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
-				f_expire_tmrs(NULL, &mess);
+				f_expire_tmrs(mess.NOTIFY_TIMESTAMP);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -1202,7 +1201,7 @@ PRIVATE int f_intr_wait(void)
 /*===========================================================================*
  *				f_timeout				     *
  *===========================================================================*/
-PRIVATE void f_timeout(timer_t *tp)
+PRIVATE void f_timeout(timer_t *UNUSED(tp))
 {
 /* This routine is called when a timer expires.  Usually to tell that a
  * motor has spun up, but also to forge an interrupt when it takes too long
@@ -1250,9 +1249,7 @@ PRIVATE int read_id(void)
 /*===========================================================================*
  *				f_do_open				     *
  *===========================================================================*/
-PRIVATE int f_do_open(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;			/* pointer to open message */
+PRIVATE int f_do_open(dev_t minor, int UNUSED(access))
 {
 /* Handle an open on a floppy.  Determine diskette type if need be. */
 
@@ -1260,7 +1257,7 @@ message *m_ptr;			/* pointer to open message */
   struct test_order *top;
 
   /* Decode the message parameters. */
-  if (f_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
+  if (f_prepare(minor) == NULL) return(ENXIO);
 
   dtype = f_device & DEV_TYPE_BITS;	/* get density from minor dev */
   if (dtype >= MINOR_fd0p0) dtype = 0;
@@ -1309,6 +1306,16 @@ message *m_ptr;			/* pointer to open message */
 }
 
 /*===========================================================================*
+ *				f_do_close				     *
+ *===========================================================================*/
+PRIVATE int f_do_close(dev_t UNUSED(minor))
+{
+/* Handle a close on a floppy.  Nothing to do here. */
+
+  return(OK);
+}
+
+/*===========================================================================*
  *				test_read				     *
  *===========================================================================*/
 PRIVATE int test_read(int density)
@@ -1320,7 +1327,7 @@ PRIVATE int test_read(int density)
   int device;
   off_t position;
   iovec_t iovec1;
-  int result;
+  ssize_t result;
 
   f_fp->fl_density = density;
   device = ((density + 1) << DEV_TYPE_SHIFT) + f_drive;
@@ -1329,9 +1336,10 @@ PRIVATE int test_read(int density)
   position = (off_t) f_dp->test << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) floppy_buf;
   iovec1.iov_size = SECTOR_SIZE;
-  result = f_transfer(SELF, DEV_GATHER_S, cvul64(position), &iovec1, 1);
+  result = f_transfer(device, FALSE /*do_write*/, cvul64(position), SELF,
+	&iovec1, 1, BDEV_NOFLAGS);
 
-  if (iovec1.iov_size != 0) return(EIO);
+  if (result != SECTOR_SIZE) return(EIO);
 
   partition(&f_dtab, f_drive, P_FLOPPY, 0);
   return(OK);
@@ -1340,11 +1348,11 @@ PRIVATE int test_read(int density)
 /*===========================================================================*
  *				f_geometry				     *
  *===========================================================================*/
-PRIVATE void f_geometry(struct partition *entry)
+PRIVATE void f_geometry(dev_t minor, struct partition *entry)
 {
+  if (f_prepare(minor) == NULL) return;
+
   entry->cylinders = f_dp->cyls;
   entry->heads = NR_HEADS;
   entry->sectors = f_sectors;
 }
-
-

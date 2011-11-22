@@ -309,7 +309,7 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the tty driver. */
   int r;
@@ -1524,7 +1524,7 @@ register tty_t *tp;
 /*===========================================================================*
  *				tty_devnop				     *
  *===========================================================================*/
-PRIVATE int tty_devnop(tty_t *tp, int try)
+PRIVATE int tty_devnop(tty_t *UNUSED(tp), int UNUSED(try))
 {
   /* Some functions need not be implemented at the device level. */
   return 0;

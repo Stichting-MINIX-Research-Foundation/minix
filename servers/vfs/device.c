@@ -2,8 +2,11 @@
  * Special character files also require I/O.  The routines for these are here.
  *
  * The entry points in this file are:
- *   dev_open:   FS opens a device
- *   dev_close:  FS closes a device
+ *   dev_open:   open a character device
+ *   dev_reopen: reopen a character device after a driver crash
+ *   dev_close:  close a character device
+ *   bdev_open:  open a block device
+ *   bdev_close: close a block device
  *   dev_io:	 FS does a read or write on a device
  *   dev_status: FS processes callback request alert
  *   gen_opcl:   generic call to a task to perform an open/close
@@ -18,6 +21,7 @@
  */
 
 #include "fs.h"
+#include <string.h>
 #include <fcntl.h>
 #include <assert.h>
 #include <sys/stat.h>
@@ -56,10 +60,11 @@ PUBLIC int dev_open(
   int flags			/* mode bits and flags */
 )
 {
+/* Open a character device. */
   int major, r;
   struct dmap *dp;
 
-  /* Determine the major device number call the device class specific
+  /* Determine the major device number so as to call the device class specific
    * open/close routine.  (This is the only routine that must check the
    * device number for being in range.  All others can trust this check.)
    */
@@ -81,6 +86,7 @@ PUBLIC int dev_reopen(
   int flags			/* mode bits and flags */
 )
 {
+/* Reopen a character device after a failing device driver. */
   int major, r;
   struct dmap *dp;
 
@@ -107,12 +113,97 @@ PUBLIC int dev_close(
   int filp_no
 )
 {
+/* Close a character device. */
   int r;
 
   /* See if driver is roughly valid. */
   if (dmap[(dev >> MAJOR)].dmap_driver == NONE) return(ENXIO);
   r = (*dmap[(dev >> MAJOR) & BYTE].dmap_opcl)(DEV_CLOSE, dev, filp_no, 0);
   return(r);
+}
+
+
+/*===========================================================================*
+ *				bdev_open				     *
+ *===========================================================================*/
+PUBLIC int bdev_open(dev_t dev, int access)
+{
+/* Open a block device. */
+  int major;
+
+  major = major(dev);
+  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
+  if (dmap[major].dmap_driver == NONE) return(ENXIO);
+
+  return (*dmap[major].dmap_opcl)(BDEV_OPEN, dev, 0, access);
+}
+
+
+/*===========================================================================*
+ *				bdev_close				     *
+ *===========================================================================*/
+PUBLIC int bdev_close(dev_t dev)
+{
+/* Close a block device. */
+  int major;
+
+  major = major(dev);
+  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
+  if (dmap[major].dmap_driver == NONE) return(ENXIO);
+
+  return (*dmap[major].dmap_opcl)(BDEV_CLOSE, dev, 0, 0);
+}
+
+
+/*===========================================================================*
+ *				bdev_ioctl				     *
+ *===========================================================================*/
+PRIVATE int bdev_ioctl(dev_t dev, endpoint_t proc_e, int req, void *buf)
+{
+/* Perform an I/O control operation on a block device. */
+  struct dmap *dp;
+  u32_t dummy;
+  cp_grant_id_t gid;
+  message dev_mess;
+  int op, safe, major_dev, minor_dev, vec_grants;
+
+  major_dev = major(dev);
+  minor_dev = minor(dev);
+
+  /* Determine task dmap. */
+  dp = &dmap[major_dev];
+  if (dp->dmap_driver == NONE) {
+	printf("VFS: dev_io: no driver for major %d\n", major_dev);
+	return(ENXIO);
+  }
+
+  /* Set up a grant if necessary. */
+  op = VFS_DEV_IOCTL;
+  safe = safe_io_conversion(dp->dmap_driver, &gid, &op, NULL, 0, &proc_e, &buf,
+	&vec_grants, 0, &dummy);
+
+  /* Set up the message passed to the task. */
+  memset(&dev_mess, 0, sizeof(dev_mess));
+
+  dev_mess.m_type = BDEV_IOCTL;
+  dev_mess.BDEV_MINOR = minor_dev;
+  dev_mess.BDEV_REQUEST = req;
+  dev_mess.BDEV_GRANT = gid;
+  dev_mess.BDEV_ID = 0;
+
+  /* Call the task. */
+  (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+
+  /* Clean up. */
+  if (safe) safe_io_cleanup(gid, NULL, vec_grants);
+
+  if (dp->dmap_driver == NONE) {
+	printf("VFS: block driver gone!?\n");
+	return(EIO);
+  }
+
+  /* Return the result. */
+  return dev_mess.BDEV_STATUS;
 }
 
 
@@ -477,24 +568,34 @@ PUBLIC int dev_io(
  *				gen_opcl				     *
  *===========================================================================*/
 PUBLIC int gen_opcl(
-  int op,			/* operation, DEV_OPEN or DEV_CLOSE */
+  int op,			/* operation, (B)DEV_OPEN or (B)DEV_CLOSE */
   dev_t dev,			/* device to open or close */
   int proc_e,			/* process to open/close for */
   int flags			/* mode bits and flags */
 )
 {
 /* Called from the dmap struct in table.c on opens & closes of special files.*/
-  int r;
+  int r, is_bdev;
   struct dmap *dp;
   message dev_mess;
 
   /* Determine task dmap. */
-  dp = &dmap[(dev >> MAJOR) & BYTE];
+  dp = &dmap[major(dev)];
 
-  dev_mess.m_type   = op;
-  dev_mess.DEVICE   = (dev >> MINOR) & BYTE;
-  dev_mess.USER_ENDPT = proc_e;
-  dev_mess.COUNT    = flags;
+  is_bdev = IS_BDEV_RQ(op);
+
+  if (is_bdev) {
+	memset(&dev_mess, 0, sizeof(dev_mess));
+	dev_mess.m_type = op;
+	dev_mess.BDEV_MINOR = minor(dev);
+	dev_mess.BDEV_ACCESS = flags;
+	dev_mess.BDEV_ID = 0;
+  } else {
+	dev_mess.m_type = op;
+	dev_mess.DEVICE = minor(dev);
+	dev_mess.USER_ENDPT = proc_e;
+	dev_mess.COUNT = flags;
+  }
 
   if (dp->dmap_driver == NONE) {
 	printf("FS: gen_opcl: no driver for dev %x\n", dev);
@@ -505,7 +606,10 @@ PUBLIC int gen_opcl(
   r= (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
   if (r != OK) return(r);
 
-  return(dev_mess.REP_STATUS);
+  if (is_bdev)
+	return(dev_mess.BDEV_STATUS);
+  else
+	return(dev_mess.REP_STATUS);
 }
 
 /*===========================================================================*
@@ -522,6 +626,8 @@ PUBLIC int tty_opcl(
  
   int r;
   register struct fproc *rfp;
+
+  assert(!IS_BDEV_RQ(op));
 
   /* Add O_NOCTTY to the flags if this process is not a session leader, or
    * if it already has a controlling tty, or if it is someone elses
@@ -561,6 +667,8 @@ PUBLIC int ctty_opcl(
  * /dev/tty, the magic device that translates to the controlling tty.
  */
  
+  assert(!IS_BDEV_RQ(op));
+
   return(fp->fp_tty == 0 ? ENXIO : OK);
 }
 
@@ -604,6 +712,9 @@ PUBLIC int do_ioctl()
   suspend_reopen= (f->filp_state != FS_NORMAL);
   dev = (dev_t) vp->v_sdev;
 
+  if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL)
+	return bdev_ioctl(dev, who_e, m_in.REQUEST, m_in.ADDRESS);
+
   return dev_io(VFS_DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0),
 		m_in.REQUEST, f->filp_flags, suspend_reopen);
 }
@@ -620,18 +731,26 @@ message *mess_ptr;		/* pointer to message for task */
  * pairs.  These lead to calls on the following routines via the dmap table.
  */
 
-  int r, proc_e;
+  int r, status, proc_e, is_bdev;
 
   if(task_nr == SYSTEM) {
 	printf("VFS: sending %d to SYSTEM\n", mess_ptr->m_type);
   }
 
-  proc_e = mess_ptr->USER_ENDPT;
+  is_bdev = IS_BDEV_RQ(mess_ptr->m_type);
+
+  if (!is_bdev) proc_e = mess_ptr->USER_ENDPT;
 
   for (;;) {
 
 	r = sendrec(task_nr, mess_ptr);
-	if(r == OK && mess_ptr->REP_STATUS == ERESTART) r = EDEADEPT;
+	if(r == OK) {
+		if (is_bdev)
+			status = mess_ptr->BDEV_STATUS;
+		else
+			status = mess_ptr->REP_STATUS;
+		if (status == ERESTART) r = EDEADEPT;
+	}
 	if (r != OK) {
 		if (r == EDEADSRCDST || r == EDEADEPT) {
 			printf("fs: dead driver %d\n", task_nr);
@@ -646,7 +765,8 @@ message *mess_ptr;		/* pointer to message for task */
 	}
 
 	/* Did the process we did the sendrec() for get a result? */
-	if (mess_ptr->REP_ENDPT != proc_e && VFS_PROC_NR != proc_e) {
+	if (!is_bdev &&
+		mess_ptr->REP_ENDPT != proc_e && VFS_PROC_NR != proc_e) {
 
 		printf("fs: strange device reply from %d, type = %d, "
 		"proc = %d (not %d) (2) ignored\n", mess_ptr->m_source, 
@@ -657,6 +777,7 @@ message *mess_ptr;		/* pointer to message for task */
 
 	if (mess_ptr->m_type == TASK_REPLY ||
 		IS_DEV_RS(mess_ptr->m_type) ||
+		IS_BDEV_RS(mess_ptr->m_type) ||
 		mess_ptr->m_type <= 0) {
 
 		break; /* reply */
@@ -682,6 +803,8 @@ message *mess_ptr;		/* pointer to message for task */
  */
 
   int r;
+
+  assert(!IS_BDEV_RQ(mess_ptr->m_type));
 
   r = asynsend(task_nr, mess_ptr);
   if (r != OK) panic("asyn_io: asynsend failed: %d", r);
@@ -774,6 +897,8 @@ PUBLIC int clone_opcl(
   int r, minor;
   message dev_mess;
 
+  assert(!IS_BDEV_RQ(op));
+
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
   minor = (dev >> MINOR) & BYTE;
@@ -844,23 +969,18 @@ PUBLIC int clone_opcl(
 
 
 /*===========================================================================*
- *				dev_up					     *
+ *				bdev_up					     *
  *===========================================================================*/
-PUBLIC void dev_up(int maj)
+PUBLIC void bdev_up(int maj)
 {
-  /* A new device driver has been mapped in. This function
-   * checks if any filesystems are mounted on it, and if so,
-   * dev_open()s them so the filesystem can be reused.
-  */
-  int r, new_driver_e, needs_reopen, fd_nr, found;
+  /* A new block device driver has been mapped in. This may affect both mounted
+   * file systems and open block-special files.
+   */
+  int r, new_driver_e, found;
   struct filp *fp;
   struct vmnt *vmp;
-  struct fproc *rfp;
   struct vnode *vp;
 
-  /* First deal with block devices. We need to consider both mounted file
-   * systems and open block-special files.
-   */
   new_driver_e = dmap[maj].dmap_driver;
 
   /* Tell each affected mounted file system about the new endpoint. This code
@@ -885,7 +1005,7 @@ PUBLIC void dev_up(int maj)
 	if(!S_ISBLK(vp->v_mode)) continue;
 
 	/* Reopen the device on the driver, once per filp. */
-	if ((r = dev_open(vp->v_sdev, VFS_PROC_NR, fp->filp_mode)) != OK)
+	if ((r = bdev_open(vp->v_sdev, fp->filp_mode & O_ACCMODE)) != OK)
 		printf("VFS: mounted dev %d/%d re-open failed: %d.\n",
 			maj, minor(vp->v_sdev), r);
 
@@ -902,9 +1022,22 @@ PUBLIC void dev_up(int maj)
 		printf("VFSdev_up: error sending new driver endpoint."
 		       " FS_e: %d req_nr: %d\n", ROOT_FS_E, REQ_NEW_DRIVER);
   }
+}
 
-  /* The rest of the code deals with character-special files. To start with,
-   * look for processes that are suspened in an OPEN call. Set SUSP_REOPEN
+
+/*===========================================================================*
+ *				cdev_up					     *
+ *===========================================================================*/
+PUBLIC void cdev_up(int maj)
+{
+  /* A new character device driver has been mapped in.
+   */
+  int needs_reopen, fd_nr;
+  struct filp *fp;
+  struct fproc *rfp;
+  struct vnode *vp;
+
+  /* Look for processes that are suspened in an OPEN call. Set SUSP_REOPEN
    * to indicate that this process was suspended before the call to dev_up.
    */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
@@ -935,7 +1068,6 @@ PUBLIC void dev_up(int maj)
 
   if (needs_reopen)
 	restart_reopen(maj);
-
 }
 
 

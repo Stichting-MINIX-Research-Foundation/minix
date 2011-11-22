@@ -521,9 +521,15 @@ struct filp *f;
 			}
 			unlock_bsf();
 		}
-		/* Do any special processing on device close. */
-		(void) dev_close(dev, f-filp); /* Ignore any errors, even
-						 * SUSPEND. */
+
+		/* Do any special processing on device close.
+		 * Ignore any errors, even SUSPEND.
+		  */
+		if (mode_word == I_BLOCK_SPECIAL)
+			(void) bdev_close(dev);
+		else
+			(void) dev_close(dev, f-filp);
+
 		f->filp_mode = FILP_CLOSED;
 	}
   }

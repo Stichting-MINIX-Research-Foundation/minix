@@ -135,8 +135,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   SELF_E = getprocnr();
   buf_pool();
 
-  driver_announce();
-
   return(OK);
 }
 

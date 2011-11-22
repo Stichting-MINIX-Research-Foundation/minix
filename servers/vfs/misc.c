@@ -618,14 +618,15 @@ char *exe_name;
 /*===========================================================================*
  *				 ds_event				     *
  *===========================================================================*/
-PUBLIC void ds_event()
+PUBLIC void ds_event(void)
 {
 	char key[DS_MAX_KEYLEN];
-	char *driver_prefix = "drv.vfs.";
+	char *blkdrv_prefix = "drv.blk.";
+	char *chrdrv_prefix = "drv.chr.";
 	u32_t value;
 	int type;
 	endpoint_t owner_endpoint;
-	int r;
+	int r, is_blk;
 
 	/* Get the event and the owner from DS. */
 	r = ds_check(key, &type, &owner_endpoint);
@@ -634,19 +635,24 @@ PUBLIC void ds_event()
 			printf("vfs: ds_event: ds_check failed: %d\n", r);
 		return;
 	}
+
+	/* Only check for block and character driver up events. */
+	if (!strncmp(key, blkdrv_prefix, strlen(blkdrv_prefix))) {
+		is_blk = TRUE;
+	} else if (!strncmp(key, chrdrv_prefix, strlen(chrdrv_prefix))) {
+		is_blk = FALSE;
+	} else {
+		return;		/* neither block nor character driver */
+	}
+
 	r = ds_retrieve_u32(key, &value);
 	if(r != OK) {
 		printf("vfs: ds_event: ds_retrieve_u32 failed\n");
 		return;
 	}
-
-	/* Only check for VFS driver up events. */
-	if(strncmp(key, driver_prefix, sizeof(driver_prefix))
-	   || value != DS_DRIVER_UP) {
-		return;
-	}
+	if (value != DS_DRIVER_UP) return;
 
 	/* Perform up. */
-	dmap_endpt_up(owner_endpoint);
+	dmap_endpt_up(owner_endpoint, is_blk);
 }
 

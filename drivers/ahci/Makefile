@@ -2,8 +2,12 @@
 PROG=	ahci
 SRCS=	ahci.c
 
-DPADD+=	${LIBDRIVER} ${LIBSYS}
-LDADD+=	-ldriver -lsys -ltimers -lmthread
+DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBTIMERS} ${LIBMTHREAD}
+LDADD+=	-lblockdriver -lsys -ltimers -lmthread
+
+.if ${COMPILER_TYPE} == "gnu"
+LDADD+=	-lc
+.endif
 
 MAN=
 

@@ -4,7 +4,7 @@
  */
 
 #include <minix/drivers.h>
-#include <minix/driver.h>
+#include <minix/chardriver.h>
 #include <minix/type.h>
 
 #include "assert.h"
@@ -16,35 +16,31 @@
 #define KRANDOM_PERIOD    1 		/* ticks between krandom calls */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
-PRIVATE int m_device;			/* current device */
+PRIVATE dev_t m_device;			/* current device */
 
 extern int errno;			/* error number for PM calls */
 
-FORWARD _PROTOTYPE( char *r_name, (void) );
-FORWARD _PROTOTYPE( struct device *r_prepare, (int device) );
-FORWARD _PROTOTYPE( int r_transfer, (int proc_nr, int opcode, u64_t position,
-				iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( int r_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int r_ioctl, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void r_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( void r_random, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void r_updatebin, (int source, struct k_randomness_bin *rb));
+FORWARD _PROTOTYPE( struct device *r_prepare, (dev_t device) );
+FORWARD _PROTOTYPE( int r_transfer, (endpoint_t endpt, int opcode,
+	u64_t position, iovec_t *iov, unsigned int nr_req,
+	endpoint_t user_endpt) );
+FORWARD _PROTOTYPE( int r_do_open, (message *m_ptr) );
+FORWARD _PROTOTYPE( void r_random, (message *m_ptr) );
+FORWARD _PROTOTYPE( void r_updatebin, (int source,
+	struct k_randomness_bin *rb) );
 
 /* Entry points to this driver. */
-PRIVATE struct driver r_dtab = {
-  r_name,	/* current device's name */
+PRIVATE struct chardriver r_dtab = {
   r_do_open,	/* open or mount */
   do_nop,	/* nothing on a close */
-  r_ioctl,	/* specify ram disk geometry */
+  nop_ioctl,	/* no I/O controls supported */
   r_prepare,	/* prepare for I/O on a given minor device */
   r_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
-  r_geometry,	/* device "geometry" */
   r_random, 	/* get randomness from kernel (alarm) */
-  nop_cancel,
-  nop_select,
-  NULL,
-  NULL
+  nop_cancel,	/* cancel not supported */
+  nop_select,	/* select not supported */
+  NULL,		/* other messages not supported */
 };
 
 /* Buffer for the /dev/random number generator. */
@@ -64,7 +60,7 @@ PUBLIC int main(void)
   sef_local_startup();
 
   /* Call the generic receive loop. */
-  driver_task(&r_dtab, DRIVER_ASYN);
+  chardriver_task(&r_dtab, CHARDRIVER_ASYNC);
 
   return(OK);
 }
@@ -90,14 +86,14 @@ PRIVATE void sef_local_startup()
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the random driver. */
   static struct k_randomness krandom;
   int i, s;
 
   random_init();
-  r_random(NULL, NULL);				/* also set periodic timer */
+  r_random(NULL);				/* also set periodic timer */
 
   /* Retrieve first randomness buffer with parameters. */
   if (OK != (s=sys_getrandomness(&krandom))) {
@@ -119,30 +115,19 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	r_updatebin(i, &krandom.bin[i]);
 
   /* Announce we are up! */
-  driver_announce();
+  chardriver_announce();
 
   return(OK);
 }
 
 /*===========================================================================*
- *				 r_name					     *
- *===========================================================================*/
-PRIVATE char *r_name()
-{
-/* Return a name for the current device. */
-  static char name[] = "random";
-  return name;  
-}
-
-/*===========================================================================*
  *				r_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *r_prepare(device)
-int device;
+PRIVATE struct device *r_prepare(dev_t device)
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
 
-  if (device < 0 || device >= NR_DEVS) return(NULL);
+  if (device >= NR_DEVS) return(NULL);
   m_device = device;
 
   return(&m_geom[device]);
@@ -151,16 +136,18 @@ int device;
 /*===========================================================================*
  *				r_transfer				     *
  *===========================================================================*/
-PRIVATE int r_transfer(proc_nr, opcode, position, iov, nr_req)
-int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
-u64_t position;			/* offset on device to read or write */
-iovec_t *iov;			/* pointer to read or write request vector */
-unsigned nr_req;		/* length of request vector */
+PRIVATE int r_transfer(
+  endpoint_t endpt,		/* endpoint of grant owner */
+  int opcode,			/* DEV_GATHER or DEV_SCATTER */
+  u64_t position,		/* offset on device to read or write */
+  iovec_t *iov,			/* pointer to read or write request vector */
+  unsigned int nr_req,		/* length of request vector */
+  endpoint_t UNUSED(user_endpt)	/* endpoint of user process */
+)
 {
 /* Read or write one the driver's minor devices. */
   unsigned count, left, chunk;
-  vir_bytes user_vir;
+  cp_grant_id_t grant;
   struct device *dv;
   int r;
   size_t vir_offset = 0;
@@ -172,7 +159,7 @@ unsigned nr_req;		/* length of request vector */
 
 	/* How much to transfer and where to / from. */
 	count = iov->iov_size;
-	user_vir = iov->iov_addr;
+	grant = (cp_grant_id_t) iov->iov_addr;
 
 	switch (m_device) {
 
@@ -185,23 +172,21 @@ unsigned nr_req;		/* length of request vector */
 	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
  	        if (opcode == DEV_GATHER_S) {
 		    random_getbytes(random_buf, chunk);
-		    r= sys_safecopyto(proc_nr, user_vir, vir_offset,
+		    r= sys_safecopyto(endpt, grant, vir_offset,
 			(vir_bytes) random_buf, chunk, D);
 		    if (r != OK)
 		    {
-			printf(
-			"random: sys_safecopyto failed for proc %d, grant %d\n",
-				proc_nr, user_vir);
+			printf("random: sys_safecopyto failed for proc %d, "
+				"grant %d\n", endpt, grant);
 			return r;
 		    }
  	        } else if (opcode == DEV_SCATTER_S) {
-		    r= sys_safecopyfrom(proc_nr, user_vir, vir_offset,
+		    r= sys_safecopyfrom(endpt, grant, vir_offset,
 			(vir_bytes) random_buf, chunk, D);
 		    if (r != OK)
 		    {
-			printf(
-		"random: sys_safecopyfrom failed for proc %d, grant %d\n",
-				proc_nr, user_vir);
+			printf("random: sys_safecopyfrom failed for proc %d, "
+				"grant %d\n", endpt, grant);
 			return r;
 		    }
 	    	    random_putbytes(random_buf, chunk);
@@ -224,34 +209,15 @@ unsigned nr_req;		/* length of request vector */
   return(OK);
 }
 
-/*============================================================================*
- *				r_do_open				      *
- *============================================================================*/
-PRIVATE int r_do_open(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+/*===========================================================================*
+ *				r_do_open				     *
+ *===========================================================================*/
+PRIVATE int r_do_open(message *m_ptr)
 {
-/* Check device number on open.  
+/* Check device number on open.
  */
   if (r_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
 
-  return(OK);
-}
-
-/*===========================================================================*
- *				r_ioctl					     *
- *===========================================================================*/
-PRIVATE int r_ioctl(dp, m_ptr)
-struct driver *dp;			/* pointer to driver structure */
-message *m_ptr;				/* pointer to control message */
-{
-  if (r_prepare(m_ptr->DEVICE) == NULL) return(ENXIO);
-
-  switch (m_ptr->REQUEST) {
-
-    default:
-  	return(do_diocntl(&r_dtab, m_ptr));
-  }
   return(OK);
 }
 
@@ -270,6 +236,9 @@ message *m_ptr;				/* pointer to control message */
 		}							\
 }
 
+/*===========================================================================*
+ *				r_updatebin				     *
+ *===========================================================================*/
 PRIVATE void r_updatebin(int source, struct k_randomness_bin *rb)
 {
   	int r_next, r_size, r_high;
@@ -293,12 +262,10 @@ PRIVATE void r_updatebin(int source, struct k_randomness_bin *rb)
 	return;
 }
 
-/*============================================================================*
- *				r_random				      *
- *============================================================================*/
-PRIVATE void r_random(dp, m_ptr)
-struct driver *dp;			/* pointer to driver structure */
-message *m_ptr;				/* pointer to alarm message */
+/*===========================================================================*
+ *				r_random				     *
+ *===========================================================================*/
+PRIVATE void r_random(message *UNUSED(m_ptr))
 {
   /* Fetch random information from the kernel to update /dev/random. */
   int s;
@@ -320,16 +287,5 @@ message *m_ptr;				/* pointer to alarm message */
   /* Schedule new alarm for next m_random call. */
   if (OK != (s=sys_setalarm(KRANDOM_PERIOD, 0)))
   	printf("RANDOM: sys_setalarm failed: %d\n", s);
-}
-
-/*============================================================================*
- *				r_geometry				      *
- *============================================================================*/
-PRIVATE void r_geometry(struct partition *entry)
-{
-  /* Memory devices don't have a geometry, but the outside world insists. */
-  entry->cylinders = div64u(m_geom[m_device].dv_size, SECTOR_SIZE) / (64 * 32);
-  entry->heads = 64;
-  entry->sectors = 32;
 }
 
