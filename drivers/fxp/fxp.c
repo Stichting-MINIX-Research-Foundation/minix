@@ -55,7 +55,7 @@ PRIVATE struct pcitab pcitab_fxp[]=
 	{ 0x8086, 0x1064, 0 },		/* Intel 82562 */
 	{ 0x8086, 0x1031, 0 },		/* Intel 82801CAM VE */
 	{ 0x8086, 0x1032, 0 },		/* Intel 82801CAM VE */
-
+	{ 0x8086, 0x1209, 0 },		/* Intel 82551IT */
 	{ 0x0000, 0x0000, 0 }
 };
 
