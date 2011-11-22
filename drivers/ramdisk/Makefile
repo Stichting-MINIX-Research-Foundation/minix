@@ -149,11 +149,14 @@ ext2: ../../servers/ext2/ext2
 system.conf: ../../etc/system.conf
 	install ${STRIPFLAG} ../../etc/$@ $@
 
-passwd: ../../etc/master.passwd
+passwd: ../../etc/master.passwd ../../usr.sbin/pwd_mkdb/pwd_mkdb
 	rm -f ../../etc/master.passwd.orig ../../etc/passwd.orig
 	rm -f ../../etc/pwd.db.tmp ../../etc/spwd.db.tmp
 	../../usr.sbin/pwd_mkdb/pwd_mkdb -V 0 -p -d ../../ ../../etc/master.passwd
 	install ${STRIPFLAG} ../../etc/$@ $@
+
+../../usr.sbin/pwd_mkdb/pwd_mkdb:
+	$(MAKE) -C ../../usr.sbin/pwd_mkdb
 
 master.passwd: ../../etc/master.passwd
 	install ${STRIPFLAG} ../../etc/$@ $@
