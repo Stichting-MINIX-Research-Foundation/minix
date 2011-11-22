@@ -65,5 +65,6 @@ _PROTOTYPE(int create_v_pri, (struct iso9660_vd_pri *v_pri, char *buffer,
 			      unsigned long address)			);
 
 /* utility.c */
-_PROTOTYPE(int no_sys, (void));
+_PROTOTYPE(int do_noop, (void)						);
+_PROTOTYPE(int no_sys, (void)						);
 
