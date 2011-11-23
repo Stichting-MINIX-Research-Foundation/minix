@@ -10,7 +10,7 @@ FILES1=group hostname.file inet.conf motd.install mtab profile \
 
 PWFILES=master.passwd
 FILES3=daily dhcptags.conf rc 
-DEFAULTFILES=minix.rc.conf
+DEFAULTFILES=rc.conf minix.rc.conf
 USRFILES=Makefile
 
 TOOL_PWD_MKDB= pwd_mkdb
@@ -25,7 +25,7 @@ install:: installpw	# installpw needed to bootstrap pw db
 	@echo "Making hierarchy.."
 	sh mtree.sh mtree/minix.tree
 	@for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then :; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done
-	for f in $(DEFAULTFILES); do cp $$f $(DEFAULTS); chmod 644 $(DEFAULTS)/$$f; done
+	for f in $(DEFAULTFILES); do cp defaults/$$f $(DEFAULTS)/; chmod 644 $(DEFAULTS)/$$f; done
 	@echo "Making devices.."
 	p=`pwd` && cd /dev && sh $$p/../commands/MAKEDEV/MAKEDEV.sh null
 	p=`pwd` && cd /dev && sh $$p/../commands/MAKEDEV/MAKEDEV.sh std  2>/dev/null
