@@ -141,6 +141,10 @@ start)
     fi
     up -n printer -dev /dev/lp -period 10HZ
     up -n ipc
+    # start VirtualBox time sync driver if the device is there
+    if grep '^[^ ]* [^ ]* 80EE:CAFE ' /proc/pci >/dev/null; then
+      up -n vbox -period 10HZ
+    fi
     echo .
 
     # Network initialization.

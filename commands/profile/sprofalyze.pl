@@ -68,6 +68,7 @@ drivers/rtl8139/rtl8139
 drivers/rtl8169/rtl8169
 drivers/ti1225/ti1225
 drivers/tty/tty
+drivers/vbox/vbox
 	);
 
 # 8< ----------- no user configurable parameters below this line ----------- >8

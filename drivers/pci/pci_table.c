@@ -47,6 +47,7 @@ struct pci_vendor pci_vendor_table[]=
 	{ 0x1969, "Atheros Communications" },
 	{ 0x5333, "S3" },
 	{ 0x8086, "Intel" },
+	{ 0x80ee, "Oracle" },
 	{ 0x9004, "Adaptec" },
 	{ 0x9005, "Adaptec" },
 	{ 0x0000, NULL }
@@ -170,6 +171,7 @@ struct pci_device pci_device_table[]=
 	{ 0x8086, 0x7190, "Intel 82443BX" },
 	{ 0x8086, 0x7191, "Intel 82443BX (AGP bridge)" },
 	{ 0x8086, 0x7192, "Intel 82443BX (Host-to-PCI bridge)" },
+	{ 0x80ee, 0xcafe, "Oracle VirtualBox backdoor device" },
 	{ 0x9004, 0x8178, "Adaptec AHA-2940U/2940UW Ultra/Ultra-Wide SCSI Ctrlr" },
 	{ 0x9005, 0x0080, "Adaptec AIC-7892A Ultra160/m PCI SCSI Controller" },
 	{ 0x0000, 0x0000, NULL }
