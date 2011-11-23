@@ -103,6 +103,9 @@ first_pcicard=4
 
 cards()
 {
+    # Run lspci once to a temp file for use in 'card' function
+    lspci >$LSPCI || exit
+
     card 0 "No Ethernet card (no networking)"
     card 1 "3Com 501 or 3Com 509 based card"
     card 2 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
@@ -116,6 +119,9 @@ cards()
     done
 
     card $first_after_pci "Different Ethernet card (no networking)"
+
+    # Remove temporary lspci output
+    rm -f $LSPCI
 }
 
 warn()
@@ -312,9 +318,6 @@ while getopts ":qe:p:aH:i:n:g:d:s:hc" arg; do
     esac
 done
 
-# Run lspci once to a temp file
-lspci >$LSPCI || exit
-
 # Verify parameter count
 if [ "$dhcp" != "yes" ] ; then
     if [ $manual_opts -gt 0 ] ; then
@@ -365,9 +368,6 @@ else
 fi
 echo "$driverargs" > $LOCALRC
 
-# Remove temporary lspci output
-rm -f $LSPCI
-
 if [ -n "$manual" ]
     then
     # Backup config file if it exists and we're not running from CD
@@ -395,4 +395,5 @@ fi
 
 test "$cd" != "yes" && test "$v" = 1 && echo "
 You might have to reboot for the changes to take effect."
+
 exit 0
