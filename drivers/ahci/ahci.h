@@ -30,6 +30,7 @@
 #define ATA_H2D_CMD			2	/* Command */
 #define 	ATA_CMD_READ_DMA_EXT	0x25	/* READ DMA EXT */
 #define 	ATA_CMD_WRITE_DMA_EXT	0x35	/* WRITE DMA EXT */
+#define 	ATA_CMD_WRITE_DMA_FUA_EXT	0x3D	/* WRITE DMA FUA EXT */
 #define 	ATA_CMD_PACKET		0xA0	/* PACKET */
 #define 	ATA_CMD_IDENTIFY_PACKET	0xA1	/* IDENTIFY PACKET DEVICE */
 #define 	ATA_CMD_FLUSH_CACHE	0xE7	/* FLUSH CACHE */
@@ -84,6 +85,7 @@
 #define ATA_ID_ENA2		87		/* Features enabled (3/3) */
 #define ATA_ID_ENA2_VALID_MASK	0xC000		/* Word validity mask */
 #define ATA_ID_ENA2_VALID	0x4000		/* Word contents are valid */
+#define ATA_ID_ENA2_FUA		0x0040		/* Forced Unit Access sup. */
 #define ATA_ID_LBA0		100		/* Max. LBA48 address (LSW) */
 #define ATA_ID_LBA1		101		/* Max. LBA48 address */
 #define ATA_ID_LBA2		102		/* Max. LBA48 address */
@@ -271,6 +273,7 @@ enum {
 #define FLAG_HAS_WCACHE		0x00000080	/* is a write cache present? */
 #define FLAG_HAS_FLUSH		0x00000100	/* is FLUSH CACHE supported? */
 #define FLAG_SUSPENDED		0x00000200	/* is the thread suspended? */
+#define FLAG_HAS_FUA		0x00000400	/* is WRITE DMA FUA EX sup.? */
 
 /* Mapping between devices and ports. */
 #define NO_PORT		-1	/* this device maps to no port */

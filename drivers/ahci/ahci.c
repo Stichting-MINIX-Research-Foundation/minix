@@ -541,6 +541,11 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
 	if (buf[ATA_ID_SUP0] & ATA_ID_SUP0_WCACHE)
 		ps->flags |= FLAG_HAS_WCACHE;
 
+	/* Check Force Unit Access capability of the device. */
+	if ((buf[ATA_ID_ENA2] & (ATA_ID_ENA2_VALID_MASK | ATA_ID_ENA2_FUA)) ==
+		(ATA_ID_ENA2_VALID | ATA_ID_ENA2_FUA))
+		ps->flags |= FLAG_HAS_FUA;
+
 	return TRUE;
 }
 
@@ -548,11 +553,12 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
  *				ata_transfer				     *
  *===========================================================================*/
 PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
-	unsigned int count, int write, prd_t *prdt, int nr_prds)
+	unsigned int count, int write, int force, prd_t *prdt, int nr_prds)
 {
 	/* Perform data transfer from or to an ATA device.
 	 */
 	cmd_fis_t fis;
+	u8_t opcode;
 
 	assert(count <= ATA_MAX_SECTORS);
 
@@ -561,8 +567,13 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 		count = 0;
 
 	/* Fill in a transfer command. */
+	if (write && force && (ps->flags & FLAG_HAS_FUA))
+		opcode = ATA_CMD_WRITE_DMA_FUA_EXT;
+	else
+		opcode = write ? ATA_CMD_WRITE_DMA_EXT : ATA_CMD_READ_DMA_EXT;
+
 	memset(&fis, 0, sizeof(fis));
-	fis.cf_cmd = write ? ATA_CMD_WRITE_DMA_EXT : ATA_CMD_READ_DMA_EXT;
+	fis.cf_cmd = opcode;
 	fis.cf_lba = ex64lo(start_lba) & 0x00FFFFFFL;
 	fis.cf_dev = ATA_DEV_LBA;
 	fis.cf_lba_exp = ex64lo(rshift64(start_lba, 24)) & 0x00FFFFFFL;
@@ -945,7 +956,8 @@ PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
  *				port_transfer				     *
  *===========================================================================*/
 PRIVATE ssize_t port_transfer(struct port_state *ps, int cmd, u64_t pos,
-	u64_t eof, endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write)
+	u64_t eof, endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write,
+	int flags)
 {
 	/* Perform an I/O transfer on a port.
 	 */
@@ -1012,8 +1024,8 @@ PRIVATE ssize_t port_transfer(struct port_state *ps, int cmd, u64_t pos,
 		r = atapi_transfer(ps, cmd, start_lba, count, write, prdt,
 			nr_prds);
 	else
-		r = ata_transfer(ps, cmd, start_lba, count, write, prdt,
-			nr_prds);
+		r = ata_transfer(ps, cmd, start_lba, count, write,
+			!!(flags & BDEV_FORCEWRITE), prdt, nr_prds);
 
 	if (r != OK) return r;
 
@@ -2343,8 +2355,7 @@ PRIVATE int ahci_close(dev_t minor)
  *				ahci_transfer				     *
  *===========================================================================*/
 PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
-	endpoint_t endpt, iovec_t *iovec, unsigned int count,
-	int UNUSED(flags))
+	endpoint_t endpt, iovec_t *iovec, unsigned int count, int flags)
 {
 	/* Perform data transfer on the selected device.
 	 */
@@ -2372,7 +2383,7 @@ PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 	eof = add64(dv->dv_base, dv->dv_size);
 
 	return port_transfer(ps, 0, pos, eof, endpt, (iovec_s_t *) iovec,
-		count, do_write);
+		count, do_write, flags);
 }
 
 /*===========================================================================*
