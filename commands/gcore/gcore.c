@@ -1,15 +1,9 @@
 /* gcore - create core file of running process */
 
-#include <fcntl.h>
-#include <unistd.h>	
-#include <minix/config.h>
-#include <minix/type.h>
-#include <minix/ipc.h>
-#include <minix/const.h>
+#include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <timers.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +12,7 @@
 int main(int argc, char *argv[])
 {
   pid_t pid;
-  int r, status;
+  int status;
 
   if(argc != 2) {
 	printf("usage: %s <pid>\n", argv[0]);
@@ -53,14 +47,12 @@ int main(int argc, char *argv[])
   }
 
   if (ptrace(T_DUMPCORE, pid, 0, 0)) {
-	fprintf(stderr, "warning, dumpcore failed (%s)\n",
-	strerror(errno));
+	fprintf(stderr, "warning, dumpcore failed (%s)\n", strerror(errno));
   }
 
   if (ptrace(T_DETACH, pid, 0, 0)) {
-	fprintf(stderr, "warning, detaching failed (%s)\n",
-	strerror(errno));
+	fprintf(stderr, "warning, detaching failed (%s)\n", strerror(errno));
   }
 
-  return r;
+  return 0;
 }
