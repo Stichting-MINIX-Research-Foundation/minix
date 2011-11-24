@@ -829,6 +829,7 @@ PRIVATE void service_pm_postponed(void)
 	/* Reply status to PM */
 	m_out.m_type = PM_CORE_REPLY;
 	m_out.PM_PROC = m_in.PM_PROC;
+	m_out.PM_TRACED_PROC = m_in.PM_TRACED_PROC;
 	m_out.PM_STATUS = r;
 
 	break;
