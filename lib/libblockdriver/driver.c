@@ -40,10 +40,12 @@
 #include <minix/drivers.h>
 #include <minix/blockdriver.h>
 #include <minix/ds.h>
+#include <sys/ioc_block.h>
 #include <sys/ioc_disk.h>
 
 #include "driver.h"
 #include "mq.h"
+#include "trace.h"
 
 /* Management data for opened devices. */
 PRIVATE int open_devs[MAX_NR_OPEN_DEVICES];
@@ -207,7 +209,7 @@ PRIVATE int do_rdwt(struct blockdriver *bdp, message *mp)
 /*===========================================================================*
  *				do_vrdwt				     *
  *===========================================================================*/
-PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp)
+PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 {
 /* Carry out an device read or write to/from a vector of buffers. */
   iovec_t iovec[NR_IOREQS];
@@ -226,11 +228,13 @@ PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp)
 	return EINVAL;
   }
 
-  /* Check for overflow condition. */
+  /* Check for overflow condition, and update the size for block tracing. */
   for (i = size = 0; i < nr_req; i++) {
 	if ((ssize_t) (size + iovec[i].iov_size) < size) return EINVAL;
 	size += iovec[i].iov_size;
   }
+
+  trace_setsize(id, size);
 
   /* Transfer bytes from/to the device. */
   do_write = (mp->m_type == BDEV_SCATTER);
@@ -249,7 +253,10 @@ PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp)
 PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
 {
 /* Carry out an I/O control request. For now, we handle setting/getting
- * partitions here, and let the driver handle any other requests.
+ * partitions here, forward block trace control requests to the tracing module,
+ * and let the driver handle any other requests. In the future, a stricter
+ * separation between block and disk I/O controls may become desirable, but we
+ * do not have any non-"disk" block drivers at this time.
  */
   struct device *dv;
   struct partition entry;
@@ -263,6 +270,14 @@ PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
   grant = mp->BDEV_GRANT;
 
   switch (request) {
+  case BIOCTRACEBUF:
+  case BIOCTRACECTL:
+  case BIOCTRACEGET:
+	/* Block trace control. */
+	r = trace_ctl(minor, request, mp->m_source, grant);
+
+	break;
+
   case DIOCSETP:
 	/* Copy just this one partition table entry. */
 	r = sys_safecopyfrom(mp->m_source, grant, 0, (vir_bytes) &entry,
@@ -337,7 +352,8 @@ PUBLIC void blockdriver_handle_notify(struct blockdriver *bdp, message *m_ptr)
 /*===========================================================================*
  *				blockdriver_handle_request		     *
  *===========================================================================*/
-PUBLIC int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr)
+PUBLIC int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr,
+	thread_id_t id)
 {
 /* Call the appropiate driver function, based on the type of request. Return
  * the result code that is to be sent back to the caller, or EDONTREPLY if no
@@ -358,6 +374,8 @@ PUBLIC int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr)
 	set_open_dev(m_ptr->BDEV_MINOR);
   }
 
+  trace_start(id, m_ptr);
+
   /* Call the appropriate function(s) for this request. */
   switch (m_ptr->m_type) {
   case BDEV_OPEN:	r = do_open(bdp, m_ptr);	break;
@@ -365,7 +383,7 @@ PUBLIC int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr)
   case BDEV_READ:
   case BDEV_WRITE:	r = do_rdwt(bdp, m_ptr);	break;
   case BDEV_GATHER:
-  case BDEV_SCATTER:	r = do_vrdwt(bdp, m_ptr);	break;
+  case BDEV_SCATTER:	r = do_vrdwt(bdp, m_ptr, id);	break;
   case BDEV_IOCTL:	r = do_ioctl(bdp, m_ptr);	break;
   default:
 	if (bdp->bdr_other)
@@ -377,6 +395,8 @@ PUBLIC int blockdriver_handle_request(struct blockdriver *bdp, message *m_ptr)
   /* Let the driver perform any cleanup. */
   if (bdp->bdr_cleanup != NULL)
 	(*bdp->bdr_cleanup)();
+
+  trace_finish(id, r);
 
   return r;
 }

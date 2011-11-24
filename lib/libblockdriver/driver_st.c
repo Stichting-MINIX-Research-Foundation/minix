@@ -27,7 +27,7 @@ PUBLIC int blockdriver_receive_mq(message *m_ptr, int *status_ptr)
 /* receive() interface for drivers with message queueing. */
 
   /* Any queued messages? */
-  if (mq_dequeue(MQ_SINGLE, m_ptr, status_ptr))
+  if (mq_dequeue(SINGLE_THREAD, m_ptr, status_ptr))
 	return OK;
 
   /* Fall back to standard receive() interface otherwise. */
@@ -81,7 +81,7 @@ PUBLIC void blockdriver_process(struct blockdriver *bdp, message *m_ptr,
 
 	/* Do not reply to notifications. */
   } else {
-	r = blockdriver_handle_request(bdp, m_ptr);
+	r = blockdriver_handle_request(bdp, m_ptr, SINGLE_THREAD);
 
 	blockdriver_reply(m_ptr, ipc_status, r);
   }
@@ -94,5 +94,5 @@ PUBLIC int blockdriver_mq_queue(message *m, int status)
 {
 /* Queue a message for later processing. */
 
-  return mq_enqueue(MQ_SINGLE, m, status);
+  return mq_enqueue(SINGLE_THREAD, m, status);
 }

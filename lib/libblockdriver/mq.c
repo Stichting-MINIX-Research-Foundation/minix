@@ -22,7 +22,7 @@ struct mq_cell {
 
 PRIVATE struct mq_cell pool[MQ_SIZE];
 
-PRIVATE STAILQ_HEAD(queue, mq_cell) queue[DRIVER_MT_MAX_WORKERS];
+PRIVATE STAILQ_HEAD(queue, mq_cell) queue[BLOCKDRIVER_MT_MAX_WORKERS];
 PRIVATE STAILQ_HEAD(free_list, mq_cell) free_list;
 
 /*===========================================================================*
@@ -36,7 +36,7 @@ PUBLIC void mq_init(void)
 
   STAILQ_INIT(&free_list);
 
-  for (i = 0; i < DRIVER_MT_MAX_WORKERS; i++)
+  for (i = 0; i < BLOCKDRIVER_MT_MAX_WORKERS; i++)
 	STAILQ_INIT(&queue[i]);
 
   for (i = 0; i < MQ_SIZE; i++)
@@ -54,7 +54,7 @@ PUBLIC int mq_enqueue(thread_id_t thread_id, const message *mess,
  */
   struct mq_cell *cell;
 
-  assert(thread_id >= 0 && thread_id < DRIVER_MT_MAX_WORKERS);
+  assert(thread_id >= 0 && thread_id < BLOCKDRIVER_MT_MAX_WORKERS);
 
   if (STAILQ_EMPTY(&free_list))
 	return FALSE;
@@ -80,7 +80,7 @@ PUBLIC int mq_dequeue(thread_id_t thread_id, message *mess, int *ipc_status)
  */
   struct mq_cell *cell;
 
-  assert(thread_id >= 0 && thread_id < DRIVER_MT_MAX_WORKERS);
+  assert(thread_id >= 0 && thread_id < BLOCKDRIVER_MT_MAX_WORKERS);
 
   if (STAILQ_EMPTY(&queue[thread_id]))
 	return FALSE;

@@ -1,0 +1,59 @@
+.TH BTRACE 8
+.SH NAME
+btrace \- block-level tracing interface
+.SH SYNOPSIS
+\fBbtrace\fR \fBstart\fR \fIdevice\fR \fIentries\fR
+.PP
+\fBbtrace\fR \fBstop\fR \fIdevice\fR \fIfile\fR
+.PP
+\fBbtrace\fR \fBreset\fR \fIdevice\fR
+.PP
+\fBbtrace\fR \fBdump\fR \fIfile\fR
+.SH DESCRIPTION
+The \fBbtrace\fR tool is the user interface to MINIX3's block-level tracing
+facility. It allows one to start, stop, and reset tracing, and dump a trace
+output file in a somewhat human-readable format.
+.SH COMMANDS
+.TP 10
+\fBstart\fR
+This command starts tracing all block requests on the given \fIdevice\fR. Each
+block request takes up one entry in the log. The \fIentries\fR parameter
+specifies the allocation side of the log in the driver process, in number of
+(32-byte) entries. Once the log is full, no more entries will be added.
+.TP 10
+\fBstop\fR
+This command stops tracing on the given \fIdevice\fR, and dumps the resulting
+log to the given output \fIfile\fR.
+.TP 10
+\fBreset\fR
+This command stops tracing on the given \fIdevice\fR and resets the state of
+the block tracer. This should be useful only in emergency situations.
+.TP 10
+\fBdump\fR
+Dump the contents of a log file generated earlier with \fBbtrace stop\fR, in
+human-readable format. Heavy users of the block tracing facility will probably
+want to write their own tools for parsing and visualizing dump files.
+.SH LIMITATIONS
+Only one block device can be traced per driver at once. It is therefore also
+not possible to trace a device and all its partitions at the same time. The
+tracing facility has been designed for tracing activity of a single file
+system, in which case these limitations are not important.
+.PP
+The log will always start with a \fIclose\fR operation on the device, since
+\fBbtrace\fR closes the file descriptor used to instruct the driver to start
+tracing. Similarly, for logs that have not already filled up during tracing,
+the last entry will be a \fBbtrace\fR-triggered \fIopen\fR operation.
+.SH EXAMPLES
+.TP 35
+.B btrace start /dev/c2d0 10240
+# Start a block trace on c2d0.
+.TP 35
+.B btrace stop /dev/c2d0 outfile
+# Stop the block trace on c2d0.
+.TP 35
+.B btrace dump outfile
+# View the output of the trace.
+.SH "SEE ALSO"
+.BR ioctl (2).
+.SH AUTHOR
+David van Moolenbroek <david@minix3.org>

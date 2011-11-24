@@ -4,7 +4,7 @@
 
 SUBDIR=	aal add_route arp ash at autil awk \
 	backup badblocks banner basename binpackage \
-	binpackages cal calendar \
+	binpackages btrace cal calendar \
 	cat cawf cd  cdprobe checkhier chmem \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut date \

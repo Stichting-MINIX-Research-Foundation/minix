@@ -27,7 +27,7 @@ struct blockdriver {
  */
 _PROTOTYPE( void blockdriver_announce, (void) );
 
-#ifndef _DRIVER_MT_API
+#ifndef _BLOCKDRIVER_MT_API
 /* Additional functions for the singlethreaded version. These allow the driver
  * to either use the stock driver_task(), or implement its own message loop.
  * To avoid accidents, these functions are not exposed when minix/driver_mt.h
@@ -39,7 +39,7 @@ _PROTOTYPE( void blockdriver_process, (struct blockdriver *dp, message *m_ptr,
 _PROTOTYPE( void blockdriver_terminate, (void) );
 _PROTOTYPE( void blockdriver_task, (struct blockdriver *bdp) );
 _PROTOTYPE( int blockdriver_mq_queue, (message *m_ptr, int status) );
-#endif /* !_DRIVER_MT_API */
+#endif /* !_BLOCKDRIVER_MT_API */
 
 /* Parameters for the disk drive. */
 #define SECTOR_SIZE      512	/* physical sector size in bytes */

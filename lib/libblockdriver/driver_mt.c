@@ -40,9 +40,9 @@ PRIVATE int running = FALSE;
 
 PRIVATE mthread_key_t worker_key;
 
-PRIVATE worker_t worker[DRIVER_MT_MAX_WORKERS];
+PRIVATE worker_t worker[BLOCKDRIVER_MT_MAX_WORKERS];
 
-PRIVATE worker_t *exited[DRIVER_MT_MAX_WORKERS];
+PRIVATE worker_t *exited[BLOCKDRIVER_MT_MAX_WORKERS];
 PRIVATE int num_exited = 0;
 
 /*===========================================================================*
@@ -126,7 +126,7 @@ PRIVATE void *worker_thread(void *param)
 	wp->state = STATE_RUNNING;
 
 	/* Handle the request, and send a reply. */
-	r = blockdriver_handle_request(bdtab, &m);
+	r = blockdriver_handle_request(bdtab, &m, wp->id);
 
 	blockdriver_reply(&m, ipc_status, r);
   }
@@ -223,7 +223,7 @@ PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
    */
   if (!IS_BDEV_RQ(m_ptr->m_type)) {
 	/* Process as 'other' message. */
-	r = blockdriver_handle_request(bdtab, m_ptr);
+	r = blockdriver_handle_request(bdtab, m_ptr, MAIN_THREAD);
 
 	blockdriver_reply(m_ptr, ipc_status, r);
 
@@ -240,7 +240,7 @@ PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
   }
 
   /* Start the thread if it is not already running. */
-  assert(thread_id >= 0 && thread_id < DRIVER_MT_MAX_WORKERS);
+  assert(thread_id >= 0 && thread_id < BLOCKDRIVER_MT_MAX_WORKERS);
 
   wp = &worker[thread_id];
 
@@ -269,7 +269,7 @@ PRIVATE void master_init(struct blockdriver *bdp)
 
   bdtab = bdp;
 
-  for (i = 0; i < DRIVER_MT_MAX_WORKERS; i++)
+  for (i = 0; i < BLOCKDRIVER_MT_MAX_WORKERS; i++)
 	worker[i].state = STATE_DEAD;
 
   /* Initialize a per-thread key, where each worker thread stores its own
@@ -368,7 +368,7 @@ PUBLIC void blockdriver_mt_wakeup(thread_id_t id)
  */
   worker_t *wp;
 
-  assert(id >= 0 && id < DRIVER_MT_MAX_WORKERS);
+  assert(id >= 0 && id < BLOCKDRIVER_MT_MAX_WORKERS);
 
   wp = &worker[id];
 
