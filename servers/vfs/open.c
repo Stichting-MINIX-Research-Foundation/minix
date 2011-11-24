@@ -28,7 +28,7 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
+PUBLIC char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 FORWARD _PROTOTYPE( struct vnode *new_node, (int oflags, mode_t bits)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
@@ -134,7 +134,8 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 		   case I_CHAR_SPECIAL:
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
-			r = dev_open(dev, who_e, bits | (oflags & ~O_ACCMODE));
+			/* TTY needs to know about the O_NOCTTY flag. */
+			r = dev_open(dev, who_e, bits | (oflags & O_NOCTTY));
 		   	if (r == SUSPEND) suspend(FP_BLOCKED_ON_DOPEN);
 		   	break;
 		   case I_BLOCK_SPECIAL:

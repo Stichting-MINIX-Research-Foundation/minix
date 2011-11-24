@@ -31,7 +31,7 @@
 #include "vmnt.h"
 #include "path.h"
 
-PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
+PUBLIC char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 FORWARD _PROTOTYPE( int common_open, (char path[PATH_MAX], int oflags,
 				      mode_t omode)			);
@@ -158,7 +158,8 @@ PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 		   case I_CHAR_SPECIAL:
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
-			r = dev_open(dev, who_e, bits | (oflags & ~O_ACCMODE));
+			/* TTY needs to know about the O_NOCTTY flag. */
+			r = dev_open(dev, who_e, bits | (oflags & O_NOCTTY));
 			if (r == SUSPEND) suspend(FP_BLOCKED_ON_DOPEN);
 			else vp = filp->filp_vno; /* Might be updated by
 						   * dev_open/clone_opcl */

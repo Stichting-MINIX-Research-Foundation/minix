@@ -976,7 +976,7 @@ PUBLIC void bdev_up(int maj)
   /* A new block device driver has been mapped in. This may affect both mounted
    * file systems and open block-special files.
    */
-  int r, new_driver_e, found;
+  int r, new_driver_e, found, bits;
   struct filp *fp;
   struct vmnt *vmp;
   struct vnode *vp;
@@ -1005,7 +1005,8 @@ PUBLIC void bdev_up(int maj)
 	if(!S_ISBLK(vp->v_mode)) continue;
 
 	/* Reopen the device on the driver, once per filp. */
-	if ((r = bdev_open(vp->v_sdev, fp->filp_mode & O_ACCMODE)) != OK)
+	bits = mode_map[fp->filp_mode & O_ACCMODE];
+	if ((r = bdev_open(vp->v_sdev, bits)) != OK)
 		printf("VFS: mounted dev %d/%d re-open failed: %d.\n",
 			maj, minor(vp->v_sdev), r);
 
