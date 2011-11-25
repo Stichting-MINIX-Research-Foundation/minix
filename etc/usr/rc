@@ -11,6 +11,9 @@ if [ ! "$SERVICES_DIRS" ]
 then	SERVICES_DIRS=/usr/sbin
 fi
 
+# Booting from cd?
+bootcd="`/bin/sysenv bootcd`"
+
 case "$#:$1" in
 1:start|1:stop|1:down)
     action=$1
@@ -227,7 +230,7 @@ d=
 # Let packages run their own scripts
 for d in /usr/local/etc/rc.d /usr/pkg/etc/rc.d
 do
-if [ -d "$d" ]
+if [ -d "$d" -a -z "$bootcd" ]
 then	( if cd $d
 	then
 		echo -n "Local packages ($action): "
