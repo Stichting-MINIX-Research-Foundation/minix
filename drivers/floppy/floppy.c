@@ -267,6 +267,7 @@ FORWARD _PROTOTYPE( void f_geometry, (dev_t minor,
 
 /* Entry points to this driver. */
 PRIVATE struct blockdriver f_dtab = {
+  BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
   f_do_open,	/* open or mount request, sense type of diskette */
   f_do_close,	/* nothing on a close */
   f_transfer,	/* do the I/O */

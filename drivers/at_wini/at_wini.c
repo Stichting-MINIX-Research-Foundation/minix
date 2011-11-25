@@ -200,6 +200,7 @@ FORWARD _PROTOTYPE( int at_in, (int line, u32_t port, unsigned long *value,
 
 /* Entry points to this driver. */
 PRIVATE struct blockdriver w_dtab = {
+  BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
   w_do_open,		/* open or mount request, initialize device */
   w_do_close,		/* release device */
   w_transfer,		/* do the I/O */

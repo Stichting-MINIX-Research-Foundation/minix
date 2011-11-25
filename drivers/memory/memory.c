@@ -76,6 +76,7 @@ PRIVATE struct chardriver m_cdtab = {
 
 /* Entry points to the BLOCK part of this driver. */
 PRIVATE struct blockdriver m_bdtab = {
+  BLOCKDRIVER_TYPE_DISK,/* handle partition requests */
   m_block_open,		/* open or mount */
   m_block_close,	/* nothing on a close */
   m_block_transfer,	/* do the I/O */

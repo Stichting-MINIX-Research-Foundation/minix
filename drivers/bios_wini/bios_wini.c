@@ -70,6 +70,7 @@ FORWARD _PROTOTYPE( int w_ioctl, (dev_t minor, unsigned int request,
 
 /* Entry points to this driver. */
 PRIVATE struct blockdriver w_dtab = {
+  BLOCKDRIVER_TYPE_DISK,	/* handle partition requests */
   w_do_open,	/* open or mount request, initialize device */
   w_do_close,	/* release device */
   w_transfer,	/* do the I/O */

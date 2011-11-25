@@ -208,6 +208,7 @@ PRIVATE struct port_state *ahci_get_port(dev_t minor);
 
 /* AHCI driver table. */
 PRIVATE struct blockdriver ahci_dtab = {
+	BLOCKDRIVER_TYPE_DISK,
 	ahci_open,
 	ahci_close,
 	ahci_transfer,

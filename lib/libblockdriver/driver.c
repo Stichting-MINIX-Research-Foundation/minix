@@ -248,39 +248,20 @@ PRIVATE int do_vrdwt(struct blockdriver *bdp, message *mp, thread_id_t id)
 }
 
 /*===========================================================================*
- *				do_ioctl				     *
+ *				do_dioctl				     *
  *===========================================================================*/
-PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
+PRIVATE int do_dioctl(struct blockdriver *bdp, dev_t minor,
+  unsigned int request, endpoint_t endpt, cp_grant_id_t grant)
 {
-/* Carry out an I/O control request. For now, we handle setting/getting
- * partitions here, forward block trace control requests to the tracing module,
- * and let the driver handle any other requests. In the future, a stricter
- * separation between block and disk I/O controls may become desirable, but we
- * do not have any non-"disk" block drivers at this time.
- */
+/* Carry out a disk-specific I/O control request. */
   struct device *dv;
   struct partition entry;
-  unsigned int request;
-  cp_grant_id_t grant;
-  dev_t minor;
-  int r;
-
-  minor = mp->BDEV_MINOR;
-  request = mp->BDEV_REQUEST;
-  grant = mp->BDEV_GRANT;
+  int r = EINVAL;
 
   switch (request) {
-  case BIOCTRACEBUF:
-  case BIOCTRACECTL:
-  case BIOCTRACEGET:
-	/* Block trace control. */
-	r = trace_ctl(minor, request, mp->m_source, grant);
-
-	break;
-
   case DIOCSETP:
 	/* Copy just this one partition table entry. */
-	r = sys_safecopyfrom(mp->m_source, grant, 0, (vir_bytes) &entry,
+	r = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) &entry,
 		sizeof(entry), D);
 	if (r != OK)
 		return r;
@@ -307,11 +288,53 @@ PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
 		entry.sectors = 32;
 	}
 
-	r = sys_safecopyto(mp->m_source, grant, 0, (vir_bytes) &entry,
-		sizeof(entry), D);
+	r = sys_safecopyto(endpt, grant, 0, (vir_bytes) &entry, sizeof(entry),
+		D);
+
+	break;
+  }
+
+  return r;
+}
+
+/*===========================================================================*
+ *				do_ioctl				     *
+ *===========================================================================*/
+PRIVATE int do_ioctl(struct blockdriver *bdp, message *mp)
+{
+/* Carry out an I/O control request. We forward block trace control requests
+ * to the tracing module, and handle setting/getting partitions when the driver
+ * has specified that it is a disk driver.
+ */
+  dev_t minor;
+  unsigned int request;
+  cp_grant_id_t grant;
+  int r;
+
+  minor = mp->BDEV_MINOR;
+  request = mp->BDEV_REQUEST;
+  grant = mp->BDEV_GRANT;
+
+  switch (request) {
+  case BIOCTRACEBUF:
+  case BIOCTRACECTL:
+  case BIOCTRACEGET:
+	/* Block trace control. */
+	r = trace_ctl(minor, request, mp->m_source, grant);
 
 	break;
 
+  case DIOCSETP:
+  case DIOCGETP:
+	/* Handle disk-specific IOCTLs only for disk-type drivers. */
+	if (bdp->bdr_type == BLOCKDRIVER_TYPE_DISK) {
+		/* Disk partition control. */
+		r = do_dioctl(bdp, minor, request, mp->m_source, grant);
+
+		break;
+	}
+
+	/* fall-through */
   default:
 	if (bdp->bdr_ioctl)
 		r = (*bdp->bdr_ioctl)(minor, request, mp->m_source, grant);

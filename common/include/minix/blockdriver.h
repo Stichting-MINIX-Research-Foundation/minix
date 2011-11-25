@@ -5,8 +5,15 @@
 
 typedef int thread_id_t;
 
+/* Types supported for the 'type' field of struct blockdriver. */
+typedef enum {
+  BLOCKDRIVER_TYPE_DISK,		/* handle partition requests */
+  BLOCKDRIVER_TYPE_OTHER		/* do not handle partition requests */
+} blockdriver_type_t;
+
 /* Entry points into the device dependent code of block drivers. */
 struct blockdriver {
+  blockdriver_type_t bdr_type;
   _PROTOTYPE( int (*bdr_open), (dev_t minor, int access) );
   _PROTOTYPE( int (*bdr_close), (dev_t minor) );
   _PROTOTYPE( ssize_t (*bdr_transfer), (dev_t minor, int do_write, u64_t pos,
