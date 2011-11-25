@@ -1320,7 +1320,11 @@ int main(int argc, char **argv)
 
     switch (action) {
     case REMOVE:
-	if (i == argc) usage();
+	if (i == argc) {
+	    if (fflag)
+		exit(0);
+	    usage();
+	}
 	break;
     case LINK:
 	/* 'ln dir/file' is to be read as 'ln dir/file .'. */
