@@ -3,8 +3,8 @@ USR=/usr/
 USRETC=/usr/etc/
 DEFAULTS=/etc/defaults
 FILES1=group hostname.file inet.conf motd.install mtab profile \
-	protocols rc services termcap ttytab utmp rc.cd binary_sizes \
-	binary_sizes.big binary_sizes.xxl syslog.conf rc.daemons.dist \
+	protocols rc services termcap ttytab utmp rc.cd  \
+	syslog.conf rc.daemons.dist \
 	rs.inet rs.single make.conf system.conf ttys resolv.conf rc.conf \
 	rc.subr rc.subr.minix man.conf
 
@@ -45,20 +45,20 @@ installpw::
 	@for f in $(PWFILES); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 600 $(ETC)/$$f; fi; done
 	touch /etc/pwd.db; touch /etc/spwd.db; ${TOOL_PWD_MKDB} -p -V 0 /etc/master.passwd
 
-$(ETC)/rc: rc
+$(ETC)/rc: rc .PHONY
 	install -m 755 -o root -g operator $> $@
 
-$(ETC)/rs.inet: rs.inet
+$(ETC)/rs.inet: rs.inet .PHONY
 	install -m 755 -o root -g operator $> $@
 
-$(ETC)/rs.single: rs.single
+$(ETC)/rs.single: rs.single .PHONY
 	install -m 755 -o root -g operator $> $@
 
-$(ETC)/system.conf: system.conf
+$(ETC)/system.conf: system.conf .PHONY
 	install -m 644 -o root -g operator $> $@
 
-$(USRETC)/rc: usr/rc
+$(USRETC)/rc: usr/rc .PHONY
 	install -m 755 -o root -g operator $> $@
 
-$(USR)/Makefile: usr/Makefile
+$(USR)/Makefile: usr/Makefile .PHONY
 	install -m 644 -o root -g operator $> $@
