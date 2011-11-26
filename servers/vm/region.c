@@ -1991,9 +1991,19 @@ PUBLIC int get_region_info(struct vmproc *vmp, struct vm_region_info *vri,
 	if(!(vr = region_get_iter(&v_iter))) return 0;
 
 	for(count = 0; (vr = region_get_iter(&v_iter)) && count < max; count++, vri++) {
-		vri->vri_addr = arch_map2info(vmp, vr->vaddr, &vri->vri_seg,
-			&vri->vri_prot);
-		vri->vri_length = vr->length;
+		struct phys_region *ph1, *ph2;
+
+		/* Report part of the region that's actually in use. */
+
+		/* Get first and last phys_regions, if any */
+		ph1 = physr_search_least(vr->phys);
+		ph2 = physr_search_greatest(vr->phys);
+		if(!ph1 || !ph2) { assert(!ph1 && !ph2); continue; }
+
+		/* Report start+length of region starting from lowest use. */
+		vri->vri_addr = arch_map2info(vmp, vr->vaddr + ph1->offset,
+			&vri->vri_seg, &vri->vri_prot);
+		vri->vri_length = ph2->offset + ph2->ph->length - ph1->offset;
 
 		/* "AND" the provided protection with per-page protection. */
 		if (!(vr->flags & VR_WRITABLE))
