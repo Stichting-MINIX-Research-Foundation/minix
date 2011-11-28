@@ -1,5 +1,4 @@
 #include <sys/cdefs.h>
-#include "namespace.h"
 #include <lib.h>
 
 #include <unistd.h>

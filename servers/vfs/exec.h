@@ -10,7 +10,7 @@ struct exec_info {
     uid_t new_uid;			/* Process UID after exec */
     gid_t new_gid;			/* Process GID after exec */
     int load_text;			/* Load text section? */
-    int allow_setuid;			/* Allow setuid execution? */
+    int setugid;			/* Allow set{u,g}id execution? */
     struct vnode *vp;			/* Exec file's vnode */
     struct stat sb;			/* Exec file's stat structure */
     char progname[PROC_NAME_LEN];	/* Program name */

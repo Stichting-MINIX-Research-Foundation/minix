@@ -81,14 +81,28 @@ PUBLIC int do_exec_newmem()
 	if (r != OK)
 		panic("do_exec_newmem: sys_datacopy failed: %d", r);
 
-	if((r=vm_exec_newmem(proc_e, &args, sizeof(args), &stack_top, &flags)) == OK) {
-		allow_setuid= 0;                /* Do not allow setuid execution */  
+	if ((r = vm_exec_newmem(proc_e, &args, sizeof(args), &stack_top,
+				&flags)) == OK) {
+		allow_setuid = 0;	/* Do not allow setuid execution */
+		rmp->mp_flags &= ~TAINTED;	/* By default not tainted */
 
 		if (rmp->mp_tracer == NO_TRACER) {
 			/* Okay, setuid execution is allowed */
-			allow_setuid= 1;
+			allow_setuid = 1;
+
 			rmp->mp_effuid = args.new_uid;
 			rmp->mp_effgid = args.new_gid;
+		}
+
+		/* A process is considered 'tainted' when it's executing with
+		 * setuid or setgid bit set, or when the real{u,g}id doesn't
+		 * match the eff{u,g}id, respectively. */
+		if (allow_setuid && args.setugid) {
+			/* Program has setuid and/or setgid bits set */
+			rmp->mp_flags |= TAINTED;
+		} else if (rmp->mp_effuid != rmp->mp_realuid ||
+			   rmp->mp_effgid != rmp->mp_realgid) {
+			rmp->mp_flags |= TAINTED;
 		}
 
 		/* System will save command line for debugging, ps(1) output, etc. */

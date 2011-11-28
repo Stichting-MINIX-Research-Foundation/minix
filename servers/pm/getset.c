@@ -18,7 +18,8 @@
  *===========================================================================*/
 PUBLIC int do_get()
 {
-/* Handle GETUID, GETGID, GETGROUPS, GETGROUPS_O, GETPID, GETPGRP, GETSID.
+/* Handle GETUID, GETGID, GETGROUPS, GETGROUPS_O, GETPID, GETPGRP, GETSID,
+   ISSETUGID.
  */
 
   register struct mproc *rmp = mp;
@@ -103,6 +104,10 @@ PUBLIC int do_get()
 			r = target->mp_procgrp;
 		break;
 	}
+	case ISSETUGID:
+		r = !!(rmp->mp_flags & TAINTED);
+		break;
+
 	default:
 		r = EINVAL;
 		break;	

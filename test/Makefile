@@ -16,10 +16,10 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test30 test31 test32        test34 test35 test36 test37 test38 \
 	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
 	test42 test45 test47 test49 test50 test51 test52 test53 \
-	test54 test56 test58
+	test54 test56 test58 t60a t60b
 
 BIGOBJ=  test20 test24
-ROOTOBJ= test11 test33 test43 test44 test46
+ROOTOBJ= test11 test33 test43 test44 test46 test60
 GCCOBJ=  test45-gcc test48 test49-gcc test55
 GCCFPUOBJ= test51-gcc test52-gcc
 OTHEROBJ= test57 test59
@@ -53,7 +53,9 @@ depend: .gitignore
 clean:	
 	$(MAKE) -C select clean
 	-rm -rf *.o *.s *.bak test? test?? test??-gcc t10a t11a t11b \
-		t40a t40b t40c t40d t40e t40f t43 DIR*
+		t40a t40b t40c t40d t40e t40f t43 \
+		t60a t60b \
+		DIR*
 
 test1:	test1.c
 test2:	test2.c
@@ -128,3 +130,6 @@ test57: test57.c test57loop.S
 test58: test58.c
 test59: test59.c
 	$(CC) $(CFLAGS) -o $@ $@.c -lmthread 
+test60: test60.c
+t60a: t60a.c
+t60b: t60b.c

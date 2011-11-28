@@ -116,6 +116,7 @@ _PROTOTYPE( pid_t getpid, (void)					);
 _PROTOTYPE( pid_t getppid, (void)					);
 _PROTOTYPE( uid_t getuid, (void)					);
 _PROTOTYPE( int isatty, (int _fd)					);
+_PROTOTYPE( int issetugid, (void)					);
 _PROTOTYPE( int link, (const char *_existing, const char *_new)		);
 _PROTOTYPE( off_t lseek, (int _fd, off_t _offset, int _whence)		);
 _PROTOTYPE( long pathconf, (const char *_path, int _name)		);

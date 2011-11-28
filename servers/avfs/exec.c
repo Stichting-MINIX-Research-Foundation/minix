@@ -43,7 +43,7 @@ FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_addr, vir_bytes
 		       int is_elf, dev_t st_dev, ino_t st_ino, time_t ctime,
 		       char *progname, int new_uid, int new_gid,
 		       vir_bytes *stack_topp, int *load_textp,
-		       int *allow_setuidp)				);
+		       int *setugidp)					);
 FORWARD _PROTOTYPE( int is_script, (const char *exec_hdr, size_t exec_len));
 FORWARD _PROTOTYPE( int patch_stack, (struct vnode *vp, char stack[ARG_MAX],
 		       vir_bytes *stk_bytes, char path[PATH_MAX])	);
@@ -168,6 +168,7 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 
 	strncpy(execi.progname, cp, PROC_NAME_LEN-1);
 	execi.progname[PROC_NAME_LEN-1] = '\0';
+	execi.setugid = 0;
 
 	/* Open executable */
 	if ((vp = eat_path(&resolve, fp)) == NULL) {
@@ -187,9 +188,15 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 	if (r != OK) goto pm_execfinal;
 
         if (round == 0) {
-            /* Deal with setuid/setgid executables */
-            if (vp->v_mode & I_SET_UID_BIT) execi.new_uid = vp->v_uid;
-            if (vp->v_mode & I_SET_GID_BIT) execi.new_gid = vp->v_gid;
+		/* Deal with setuid/setgid executables */
+		if (vp->v_mode & I_SET_UID_BIT) {
+			execi.new_uid = vp->v_uid;
+			execi.setugid = 1;
+		}
+		if (vp->v_mode & I_SET_GID_BIT) {
+			execi.new_gid = vp->v_gid;
+			execi.setugid = 1;
+		}
         }
 
 	r = map_header(&execi.hdr, execi.vp);
@@ -240,7 +247,9 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
   if (r != OK) goto pm_execfinal;
   clo_exec(rfp);
 
-  if (execi.allow_setuid) {
+  if (execi.setugid) {
+	/* If after loading the image we're still allowed to run with
+	 * setuid or setgid, change credentials now */
 	rfp->fp_effuid = execi.new_uid;
 	rfp->fp_effgid = execi.new_gid;
   }
@@ -286,7 +295,7 @@ PRIVATE int load_aout(struct exec_info *execi)
 		  execi->frame_len, sep_id, 0 /* is_elf */, vp->v_dev, vp->v_inode_nr,
 		  execi->sb.st_ctime,
 		  execi->progname, execi->new_uid, execi->new_gid,
-		  &execi->stack_top, &execi->load_text, &execi->allow_setuid);
+		  &execi->stack_top, &execi->load_text, &execi->setugid);
 
   if (r != OK) {
         printf("VFS: load_aout: exec_newmem failed: %d\n", r);
@@ -343,7 +352,7 @@ PRIVATE int load_elf(struct exec_info *execi)
 		  tot_bytes, execi->frame_len, sep_id, is_elf,
 		  vp->v_dev, vp->v_inode_nr, execi->sb.st_ctime,
 		  execi->progname, execi->new_uid, execi->new_gid,
-		  &execi->stack_top, &execi->load_text, &execi->allow_setuid);
+		  &execi->stack_top, &execi->load_text, &execi->setugid);
 
   if (r != OK) {
         printf("VFS: load_elf: exec_newmem failed: %d\n", r);
@@ -381,13 +390,15 @@ PRIVATE int exec_newmem(
   int new_gid,
   vir_bytes *stack_topp,
   int *load_textp,
-  int *allow_setuidp
+  int *setugidp
 )
 {
 /* Allocate a new memory map for a process that tries to exec */
   int r;
   struct exec_newmem e;
   message m;
+
+  assert(setugidp != NULL);
 
   e.text_addr = text_addr;
   e.text_bytes = text_bytes;
@@ -402,6 +413,7 @@ PRIVATE int exec_newmem(
   e.enst_ctime = ctime;
   e.new_uid    = new_uid;
   e.new_gid    = new_gid;
+  e.setugid    = *setugidp;
   strncpy(e.progname, progname, sizeof(e.progname)-1);
   e.progname[sizeof(e.progname)-1] = '\0';
 
@@ -412,7 +424,7 @@ PRIVATE int exec_newmem(
 
   *stack_topp = m.m1_i1;
   *load_textp = !!(m.m1_i2 & EXC_NM_RF_LOAD_TEXT);
-  *allow_setuidp = !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
+  *setugidp = !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
 
   return(m.m_type);
 }

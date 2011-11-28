@@ -69,6 +69,7 @@ SRCS+=  \
 	hypot.c \
 	index.c \
 	initgroups.c \
+	issetugid.c \
 	itoa.c \
 	loadname.c \
 	lock.c \
