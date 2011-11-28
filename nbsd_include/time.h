@@ -99,7 +99,11 @@ clock_t clock(void);
 char *ctime(const time_t *) __RENAME(__ctime50);
 double difftime(time_t, time_t) __RENAME(__difftime50);
 struct tm *gmtime(const time_t *) __RENAME(__gmtime50);
+#ifndef __MINIX
 struct tm *localtime(const time_t *) __RENAME(__locatime50);
+#else
+struct tm *localtime(const time_t *) __RENAME(__localtime50);
+#endif
 time_t time(time_t *) __RENAME(__time50);
 time_t mktime(struct tm *) __RENAME(__mktime50);
 #endif

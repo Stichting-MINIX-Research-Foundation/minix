@@ -33,6 +33,8 @@ munlock
 munlockall
 modctl
 mprotect
+mq_timedreceive
+mq_timedsend
 mremap
 msgctl
 msgget
@@ -68,6 +70,7 @@ swapon
 sysarch
 timer_create
 timer_delete
+timer_gettime
 timer_settime
 undelete
 utimes

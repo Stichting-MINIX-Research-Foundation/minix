@@ -44,7 +44,6 @@ assym.h: ${ARCHDIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 .endif
 
-.if !defined(__MINIX)
 # The following controls how to build compatibility code for old NetBSD
 # binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
 # we include the code in libc.
@@ -53,11 +52,8 @@ BUILDCOLD?= no
 SUBDIR=compat
 .include <bsd.subdir.mk>
 .else
-COMPATDIR=${.CURDIR}/compat
-.include "${.CURDIR}/compat/Makefile.inc"
-.endif
-.else
-BUILDCOLD= no
+COMPATDIR= ${.CURDIR}/compat-minix
+.include "${.CURDIR}/compat-minix/Makefile.inc"
 .endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"

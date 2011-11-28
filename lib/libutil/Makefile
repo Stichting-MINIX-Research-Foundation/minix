@@ -10,22 +10,17 @@ USE_SHLIBDIR=	yes
 WARNS=	4
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
-SRCS=	efun.c getbootfile.c \
-	getmntopts.c \
-	login.c loginx.c login_tty.c logout.c logoutx.c \
-	logwtmp.c logwtmpx.c opendisk.c \
+.if !defined(__MINIX)
+SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
+	getmntopts.c getrawpartition.c \
+	disklabel_dkcksum.c disklabel_scan.c \
+	if_media.c \
+	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
+	logwtmp.c logwtmpx.c opendisk.c parsedate.y \
 	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
 	raise_default_signal.c \
-	secure_path.c snprintb.c \
-	ttyaction.c  login_cap.c stat_flags.c \
-	#disklabel_dkcksum.c disklabel_scan.c \
-	#if_media.c \
-	#sockaddr_snprintf.c
-	#getlabelsector.c
-	#getmaxpartitions.c
-	#getrawpartition.c
-	#ttymsg.c
-	#parsedate.y
+	secure_path.c sockaddr_snprintf.c stat_flags.c \
+	ttyaction.c ttymsg.c \
 
 MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
 	getmntopts.3 \
@@ -38,13 +33,39 @@ MAN=	efun.3 getbootfile.3 getlabelsector.3 getmaxpartitions.3 \
 	snprintb.3 sockaddr_snprintf.3 stat_flags.3 ttyaction.3 \
 	ttymsg.3 util.3
 
+.else
+SRCS+=	efun.c getbootfile.c \
+	getmntopts.c \
+	login.c loginx.c login_cap.c login_tty.c logout.c logoutx.c \
+	logwtmp.c logwtmpx.c opendisk.c \
+	passwd.c pw_scan.c pidfile.c pidlock.c pty.c \
+	raise_default_signal.c \
+	secure_path.c stat_flags.c \
+	ttyaction.c \
+
+MAN=	efun.3 getbootfile.3 \
+	getmntopts.3 \
+	login.3 login_cap.3 loginx.3 \
+	opendisk.3 openpty.3 pidfile.3 pidlock.3 \
+	pw_getconf.3 pw_init.3 pw_lock.3 secure_path.3 \
+	raise_default_signal.3 \
+	snprintb.3 stat_flags.3 ttyaction.3 \
+	util.3
+.endif
+
 YPREFIX=__pd
 #.PATH:	${NETBSDSRCDIR}/lib/libc/gen
 .PATH:	${NETBSDSRCDIR}/lib/nbsd_libc/gen
 
-#.include "compat/Makefile.inc"
+.if defined(__MINIX)
+.include "compat-minix/Makefile.inc"
+.else
+.include "compat/Makefile.inc"
+.endif
 
+.if !defined(__MINIX)
 MLINKS+=getlabelsector.3 getlabeloffset.3
+.endif
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
 MLINKS+=login_cap.3 login_getclass.3

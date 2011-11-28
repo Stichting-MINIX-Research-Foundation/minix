@@ -283,13 +283,9 @@ int	 symlink(const char *, const char *);
 void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);
 int	 usleep(useconds_t);
-#ifndef __minix
 #ifndef __LIBC12_SOURCE__
 pid_t	 vfork(void) __RENAME(__vfork14);
 #endif
-#else
-pid_t	 vfork(void);
-#endif /* !__minix */
 
 #ifndef __AUDIT__
 char	*getwd(char *);				/* obsoleted by getcwd() */
