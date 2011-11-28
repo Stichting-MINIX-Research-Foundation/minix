@@ -63,6 +63,8 @@ int main(int argc, char *argv[])
 	if (m & 020) test25e();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test25a()

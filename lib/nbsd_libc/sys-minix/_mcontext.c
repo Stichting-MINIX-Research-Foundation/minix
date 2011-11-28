@@ -12,7 +12,7 @@ PUBLIC int setmcontext(const mcontext_t *mcp)
 {
   message m;
 
-  m.m1_p1 = (char *) mcp;
+  m.m1_p1 = (char *) __UNCONST(mcp);
 
   return(_syscall(PM_PROC_NR, SETMCONTEXT, &m));
 }

@@ -279,6 +279,8 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 	char *buf;
 	int i, rv = 0;
 
+	memset(&foo, '\0', sizeof(foo));
+
 	if (!args || !args->argv || !args->argc || !proc)
 		return 0;
 

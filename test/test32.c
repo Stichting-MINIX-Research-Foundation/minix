@@ -49,6 +49,8 @@ int main(int argc, char *argv[])
 	if (m & 0004) test32c();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 #define BUF_SIZE 1024

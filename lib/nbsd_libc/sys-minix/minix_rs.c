@@ -28,7 +28,7 @@ int minix_rs_lookup(const char *name, endpoint_t *value)
 
 	len_key = strlen(name)+1;
 
-	m.RS_NAME = (char *) name;
+	m.RS_NAME = (char *) __UNCONST(name);
 	m.RS_NAME_LEN = len_key;
 
 	if (_syscall(RS_PROC_NR, RS_LOOKUP, &m) != -1) {

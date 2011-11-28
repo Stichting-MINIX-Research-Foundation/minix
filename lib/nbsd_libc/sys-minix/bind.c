@@ -92,7 +92,7 @@ static int _tcp_bind(int sock, const struct sockaddr *address,
 	nwio_tcpconf_t tcpconf;
 	struct sockaddr_in *sinp;
 
-	sinp= (struct sockaddr_in *)address;
+	sinp= (struct sockaddr_in *) __UNCONST(address);
 	if (sinp->sin_family != AF_INET || address_len < sizeof(*sinp))
 	{
 #if DEBUG
@@ -132,7 +132,7 @@ static int _udp_bind(int sock, const struct sockaddr *address,
 	nwio_udpopt_t udpopt;
 	struct sockaddr_in *sinp;
 
-	sinp= (struct sockaddr_in *)address;
+	sinp= (struct sockaddr_in *) __UNCONST(address);
 	if (sinp->sin_family != AF_INET || address_len < sizeof(*sinp))
 	{
 #if DEBUG
@@ -193,7 +193,7 @@ static int _uds_bind(int sock, const struct sockaddr *address,
 
 	did_mknod = 0;
 
-	r = mknod(((struct sockaddr_un *) address)->sun_path,
+	r = mknod(((struct sockaddr_un *) __UNCONST(address))->sun_path,
 		S_IFSOCK|S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH, 0);
 
 	if (r == -1 && errno != EEXIST) {
@@ -203,14 +203,14 @@ static int _uds_bind(int sock, const struct sockaddr *address,
 	}
 
 	/* perform the bind */
-	r= ioctl(sock, NWIOSUDSADDR, (void *) address);
+	r= ioctl(sock, NWIOSUDSADDR, (void *) __UNCONST(address));
 
 	if (r == -1 && did_mknod) {
 
 		/* bind() failed in pfs, so we roll back the 
 		 * file system change
 		 */
-		unlink(((struct sockaddr_un *) address)->sun_path);
+		unlink(((struct sockaddr_un *) __UNCONST(address))->sun_path);
 	}
 
 	return r;

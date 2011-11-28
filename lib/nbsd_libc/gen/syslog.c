@@ -422,8 +422,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	}
 
 	/* Get connected, output the message to the local logger. */
+#ifndef __minix
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
+#endif
 	opened = !data->opened;
 	if (opened)
 		openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
@@ -460,8 +462,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 		(void)close(fd);
 	}
 
+#ifndef __minix
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
+#endif
 
 	if (data != &sdata && opened) {
 		/* preserve log tag */
@@ -541,24 +545,32 @@ openlog_unlocked_r(const char *ident, int logstat, int logfac,
 void
 openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
 {
+#ifndef __minix
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
+#endif
 	openlog_unlocked_r(ident, logstat, logfac, data);
+#ifndef __minix
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
+#endif
 }
 
 void
 closelog_r(struct syslog_data *data)
 {
+#ifndef __minix
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
+#endif
 	(void)close(data->log_file);
 	data->log_file = -1;
 	data->connected = 0;
 	data->log_tag = NULL;
+#ifndef __minix
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
+#endif
 }
 
 int

@@ -18,7 +18,7 @@
 #include <setjmp.h>
 
 #define ITERATIONS        4
-#define MAX_ERROR 4
+#define MAX_ERROR 3
 #define ITEMS  32
 #define READ   10
 #define WRITE  20
@@ -28,7 +28,9 @@
 
 char buf[ITEMS] = {0,1,2,3,4,5,6,7,8,9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9};
 
-int subtest, errct, xfd;
+#include "common.c"
+
+int subtes, xfd;
 int whence = SEEK_SET, func_code = F_SETLK;
 extern char **environ;
 
@@ -50,9 +52,7 @@ _PROTOTYPE(void test7j, (void));
 _PROTOTYPE(void cloexec_test, (void));
 _PROTOTYPE(int set, (int how, int first, int last));
 _PROTOTYPE(int locked, (int b));
-_PROTOTYPE(void e, (int n));
 _PROTOTYPE(void sigfunc, (int s));
-_PROTOTYPE(void quit, (void));
 
 int main(argc, argv)
 int argc;
@@ -61,15 +61,10 @@ char *argv[];
 
   int i, m = 0xFFFF;
 
-  sync();
-
   if (argc == 2) m = atoi(argv[1]);
   if (m == 0) cloexec_test();	/* important; do not remove this! */
-  printf("Test  7 ");
-  fflush(stdout);
 
-  system("rm -rf DIR_07; mkdir DIR_07");
-  chdir("DIR_07");
+  start(7);
 
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 00001) timed_test(test7a);
@@ -690,39 +685,8 @@ int b;
   return(WEXITSTATUS(status));
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  fflush(stdout);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}
-
 void sigfunc(s)
 int s;				/* for ANSI */
 {
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

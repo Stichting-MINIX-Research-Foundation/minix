@@ -27,7 +27,7 @@ PRIVATE u32_t get_hz(void)
 
   if ((fp = fopen(_PATH_PROC "hz", "r")) != NULL)
   {
-	r = fscanf(fp, "%lu", &hz);
+	r = fscanf(fp, "%u", &hz);
 
 	fclose(fp);
 

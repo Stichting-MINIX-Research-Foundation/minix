@@ -27,7 +27,7 @@ PUBLIC int open(const char *name, int flags)
 	 * an int, the mode was passed as an int.
 	 */
 	m.m1_i3 = va_arg(argp, int);
-	m.m1_p1 = (char *) name;
+	m.m1_p1 = (char *) __UNCONST(name);
   } else {
 	_loadname(name, &m);
 	m.m3_i2 = flags;

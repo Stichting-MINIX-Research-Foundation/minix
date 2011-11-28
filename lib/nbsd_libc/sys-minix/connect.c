@@ -94,7 +94,7 @@ static int _tcp_connect(int sock, const struct sockaddr *address,
 		errno= EINVAL;
 		return -1;
 	}
-	sinp= (struct sockaddr_in *)address;
+	sinp= (struct sockaddr_in *) __UNCONST(address);
 	if (sinp->sin_family != AF_INET)
 	{
 		errno= EINVAL;
@@ -148,7 +148,7 @@ static int _udp_connect(int sock, const struct sockaddr *address,
 		errno= EINVAL;
 		return -1;
 	}
-	sinp= (struct sockaddr_in *)address;
+	sinp= (struct sockaddr_in *) __UNCONST(address);
 	if (sinp->sin_family != AF_INET)
 	{
 		errno= EINVAL;
@@ -174,5 +174,5 @@ static int _uds_connect(int sock, const struct sockaddr *address,
 	}
 
 	/* perform the connect */
-	return ioctl(sock, NWIOSUDSCONN, (void *) address);
+	return ioctl(sock, NWIOSUDSCONN, (void *) __UNCONST(address));
 }

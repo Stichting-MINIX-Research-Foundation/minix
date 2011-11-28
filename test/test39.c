@@ -10,7 +10,9 @@ _PROTOTYPE( void test39a, (void)						);
 int main(int argc, char *argv[])
 {
   start(39);
+  test39a();
   quit();
+  return(-1);	/* Unreachable */
 }
 
 void test39a()

@@ -40,7 +40,7 @@ int _stat(const char *name, struct stat *buffer)
   struct minix_prev_stat old_sb;
 
   m.m1_i1 = strlen(name) + 1;
-  m.m1_p1 = (char *) name;
+  m.m1_p1 = (char *) __UNCONST(name);
   m.m1_p2 = (char *) buffer;
 
   if((r = _syscall(VFS_PROC_NR, STAT, &m)) >= 0 || errno != ENOSYS)
@@ -52,7 +52,7 @@ int _stat(const char *name, struct stat *buffer)
    * User has struct stat (buffer), VFS still fills minix_prev_stat.
    */
   m.m1_i1 = strlen(name) + 1;
-  m.m1_p1 = (char *) name;
+  m.m1_p1 = (char *) __UNCONST(name);
   m.m1_p2 = (char *) &old_sb;
 
   if((r = _syscall(VFS_PROC_NR, PREV_STAT, &m)) < 0)
@@ -104,7 +104,7 @@ int _lstat(const char *name, struct stat *buffer)
   struct minix_prev_stat old_sb;
 
   m.m1_i1 = strlen(name) + 1;
-  m.m1_p1 = (char *) name;
+  m.m1_p1 = (char *) __UNCONST(name);
   m.m1_p2 = (char *) buffer;
 
   if((r = _syscall(VFS_PROC_NR, LSTAT, &m)) >= 0 || errno != ENOSYS)
@@ -116,7 +116,7 @@ int _lstat(const char *name, struct stat *buffer)
    * User has struct stat (buffer), VFS still fills minix_prev_stat.
    */
   m.m1_i1 = strlen(name) + 1;
-  m.m1_p1 = (char *) name;
+  m.m1_p1 = (char *) __UNCONST(name);
   m.m1_p2 = (char *) &old_sb;
 
   if((r = _syscall(VFS_PROC_NR, PREV_LSTAT, &m)) < 0)

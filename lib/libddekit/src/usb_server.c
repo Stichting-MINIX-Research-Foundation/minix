@@ -546,7 +546,7 @@ device_connect_callback
 			break;
 	}
 
-	if (_devices[i].dev!= NULL) {
+	if (i >= MAX_DEVS) {
 		DEBUG_MSG("Too much devices...");
 	} else {
 		_devices[i].dev = dev;

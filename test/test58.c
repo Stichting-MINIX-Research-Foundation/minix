@@ -175,6 +175,7 @@ int main(int argc, char* argv[])
   start(58);
   do_test();
   quit();
+  return(-1);	/* Unreachable */
 }
 
 

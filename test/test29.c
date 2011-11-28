@@ -58,6 +58,8 @@ int main(int argc, char *argv[])
 	if (m & 0004) test29c();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test29a()

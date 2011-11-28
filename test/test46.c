@@ -60,6 +60,8 @@ int main(int argc, char *argv[])
   group_test();	/* Perform some tests that mimic actual use */
 
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void limit_test() {

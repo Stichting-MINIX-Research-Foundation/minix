@@ -137,7 +137,7 @@ static ssize_t _udp_sendto(int sock, const void *message, size_t length,
 			errno= EINVAL;
 			return -1;
 		}
-		sinp= (struct sockaddr_in *)dest_addr;
+		sinp= (struct sockaddr_in *) __UNCONST(dest_addr);
 		if (sinp->sin_family != AF_INET)
 		{
 			errno= EAFNOSUPPORT;
@@ -226,7 +226,7 @@ static ssize_t _uds_sendto_dgram(int sock, const void *message, size_t length,
 	}
 
 	/* set the target address */
-	r= ioctl(sock, NWIOSUDSTADDR, (void *) dest_addr);
+	r= ioctl(sock, NWIOSUDSTADDR, (void *) __UNCONST(dest_addr));
 	if (r == -1) {
 		return r;
 	}

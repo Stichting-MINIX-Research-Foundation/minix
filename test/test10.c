@@ -38,22 +38,22 @@ int main()
 
   if (getpid() == pid)
 	if (fork() == 0) {
-		execl("t10a", (char *) 0);
+		execl("t10a", "t10a", (char *) 0);
 		exit(0);
 	}
   if (getpid() == pid)
 	if (fork() == 0) {
-		execl("t10b", (char *) 0);
+		execl("t10b", "t10b", (char *) 0);
 		exit(0);
 	}
   if (getpid() == pid)
 	if (fork() == 0) {
-		execl("t10c", (char *) 0);
+		execl("t10c", "t10c", (char *) 0);
 		exit(0);
 	}
   if (getpid() == pid)
 	if (fork() == 0) {
-		execl("t10d", (char *) 0);
+		execl("t10d", "t10d", (char *) 0);
 		exit(0);
 	}
 
@@ -77,7 +77,7 @@ int n;
   if ((pid = fork()) != 0) {
 	wait(&n);		/* wait for some child (any one) */
   } else {
-	k = execl(name[n], (char *) 0);
+	k = execl(name[n], name[n], (char *) 0);
 	errct++;
 	printf("Child execl didn't take. file=%s errno=%d\n", name[n], errno);
 	rmfiles();

@@ -7,9 +7,7 @@
 #include <string.h>
 #include <utime.h>
 
-PUBLIC int utime(name, timp)
-_CONST char *name;
-_CONST struct utimbuf *timp;
+PUBLIC int utime(const char *name, const struct utimbuf *timp)
 {
   message m;
 
@@ -21,6 +19,6 @@ _CONST struct utimbuf *timp;
 	m.m2_l2 = timp->modtime;
 	m.m2_i1 = strlen(name) + 1;
   }
-  m.m2_p1 = (char *) name;
+  m.m2_p1 = (char *) __UNCONST(name);
   return(_syscall(VFS_PROC_NR, UTIME, &m));
 }

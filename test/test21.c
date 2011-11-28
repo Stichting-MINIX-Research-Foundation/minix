@@ -65,6 +65,8 @@ char *argv[];
 	if (m & 020000) test21o();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test21a()

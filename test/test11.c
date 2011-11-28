@@ -88,7 +88,7 @@ void test11a()
 	 * bits on. If a bug lets it unexpectedly succeed, the child
 	 * will print an error message since the arguments are wrong.
  	 */
-	execl("t11a", (char *) 0, envp);	/* should fail -- no X bits */
+	execl("t11a", "t11a", (char *) 0); /* should fail -- no X bits */
 
 	/* Control should come here after the failed execl(). */
 	chmod("t11a", 06555);

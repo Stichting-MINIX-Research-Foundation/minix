@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
 	if (m & 0004) test30c();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test30a()

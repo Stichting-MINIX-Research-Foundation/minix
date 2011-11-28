@@ -63,6 +63,8 @@ int main(int argc, char *argv[])
 	test20d();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test20a()

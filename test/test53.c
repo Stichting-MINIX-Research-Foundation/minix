@@ -276,4 +276,6 @@ int main(void)
 
 	/* this was all */
 	quit();
+
+	return(-1);	/* Unreachable */
 }

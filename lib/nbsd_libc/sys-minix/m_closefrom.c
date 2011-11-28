@@ -6,7 +6,7 @@
 
 PUBLIC int closefrom(int fd)
 {
-	int f, ok = 0, e;
+	int f, ok = 0, e = 0;
 	for(f = fd; f < __MINIX_OPEN_MAX; f++) {
 		if(close(f) >= 0)
 			ok = 1;

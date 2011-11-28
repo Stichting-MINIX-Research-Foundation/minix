@@ -177,7 +177,7 @@ static struct block *block_find(const void *ptr)
 
 	/* locate block based on pointer, then check whether it is valid */
 	block = (struct block *) page_round_down(
-		(unsigned long) ((struct block *) ptr - 1));
+		(unsigned long) ((struct block *) __UNCONST(ptr) - 1));
 	block_check(block);
 	LOG(("block_find; block=0x%x\n", block));
 	return block;

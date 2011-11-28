@@ -102,6 +102,8 @@ char *argv[];
   }
 
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test37a()

@@ -90,7 +90,7 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (!i)
 		{
 			/* At the moment there is no way to turn off 
@@ -108,7 +108,7 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (!i)
 		{
 			/* At the moment there is no way to turn off 
@@ -126,7 +126,7 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (i > 32*1024)
 		{
 			/* The receive buffer is limited to 32K at the moment.
@@ -146,7 +146,7 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (i > 32*1024)
 		{
 			/* The send buffer is limited to 32K at the moment.
@@ -166,7 +166,7 @@ static int _tcp_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (i)
 		{
 			/* At the moment there is no way to turn on 
@@ -212,7 +212,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		size= *(size_t *)option_value;
+		size= *(const size_t *)option_value;
 		return ioctl(sock, NWIOSUDSRCVBUF, &size);
 	}
 
@@ -223,7 +223,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		size= *(size_t *)option_value;
+		size= *(const size_t *)option_value;
 		return ioctl(sock, NWIOSUDSSNDBUF, &size);
 	}
 
@@ -234,7 +234,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (!i)
 		{
 			/* At the moment there is no way to turn off 
@@ -253,7 +253,7 @@ static int _uds_setsockopt(int sock, int level, int option_name,
 			errno= EINVAL;
 			return -1;
 		}
-		i= *(int *)option_value;
+		i= *(const int *)option_value;
 		if (!i)
 		{
 			/* credentials can always be received. */

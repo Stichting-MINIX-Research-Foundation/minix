@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
   }
 
   quit();
+
+  return (-1);	/* Unreachable */
 }
 
 void test22a()

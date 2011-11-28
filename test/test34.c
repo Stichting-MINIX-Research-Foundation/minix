@@ -77,6 +77,8 @@ int main(int argc, char *argv[])
 	if (m & 0004) test34c();
   }
   quit();
+
+  return(-1);	/* Unreachable */
 }
 
 void test34a()

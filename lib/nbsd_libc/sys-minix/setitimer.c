@@ -19,7 +19,7 @@ int setitimer(int which, const struct itimerval *_RESTRICT value,
   if (value == NULL) return(EINVAL);
 
   m.m1_i1 = which;
-  m.m1_p1 = (char *) value;
+  m.m1_p1 = (char *) __UNCONST(value);
   m.m1_p2 = (char *) ovalue;
 
   return _syscall(PM_PROC_NR, ITIMER, &m);

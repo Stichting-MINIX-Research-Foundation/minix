@@ -51,4 +51,5 @@ int main(void)
 	start(54);
 	do_test();
 	quit();
+	return(-1);	/* Unreachable */
 }
