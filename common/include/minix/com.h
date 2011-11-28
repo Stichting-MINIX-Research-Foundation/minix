@@ -999,6 +999,7 @@
 #	define VMRE_SA			m1_p2
 #	define VMRE_RETA		m1_p3
 #	define VMRE_SIZE		m1_i3
+#	define VMRE_FLAGS		m1_i3
 
 #define VM_SHM_UNMAP		(VM_RQ_BASE+34)
 #	define VMUN_ENDPT		m2_i1
@@ -1051,8 +1052,11 @@
 #define VM_WATCH_EXIT		(VM_RQ_BASE+43)
 #	define VM_WE_EP		m1_i1
 
+#define VM_REMAP_RO		(VM_RQ_BASE+44)
+/* same args as VM_REMAP */
+
 /* Total. */
-#define NR_VM_CALLS				44
+#define NR_VM_CALLS				45
 #define VM_CALL_MASK_SIZE			BITMAP_CHUNKS(NR_VM_CALLS)
 
 /* not handled as a normal VM call, thus at the end of the reserved rage */

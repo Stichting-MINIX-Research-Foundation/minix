@@ -169,7 +169,7 @@ _PROTOTYPE(struct vir_region * map_region_lookup_tag, (struct vmproc *vmp, u32_t
 _PROTOTYPE(void map_region_set_tag, (struct vir_region *vr, u32_t tag));
 _PROTOTYPE(u32_t map_region_get_tag, (struct vir_region *vr));
 _PROTOTYPE(int map_remap, (struct vmproc *dvmp, vir_bytes da, size_t size,
-	struct vir_region *region, vir_bytes *r));
+	struct vir_region *region, vir_bytes *r, int ro));
 _PROTOTYPE(int map_get_phys, (struct vmproc *vmp, vir_bytes addr, phys_bytes *r));
 _PROTOTYPE(int map_get_ref, (struct vmproc *vmp, vir_bytes addr, u8_t *cnt));
 

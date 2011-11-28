@@ -36,8 +36,9 @@ PRIVATE yielded_t *lru_youngest = NULL, *lru_oldest = NULL;
 
 /* Should a physblock be mapped writable? */
 #define WRITABLE(r, pb) \
-	(((r)->flags & (VR_DIRECT | VR_SHARED)) ||	\
-	 (((r)->flags & VR_WRITABLE) && (pb)->refcount == 1))
+	(((r)->flags & VR_WRITABLE) && 			\
+		(((r)->flags & (VR_DIRECT | VR_SHARED)) ||	\
+		 (pb)->refcount == 1))
 
 FORWARD _PROTOTYPE(int map_new_physblock, (struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, vir_bytes length,
@@ -1426,6 +1427,7 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 		newvr->lower = newvr->higher = NULL;
 		newvr->phys = phavl;
 	);
+
 	physr_init(newvr->phys);
 
 	physr_start_iter_least(vr->phys, &iter);
@@ -1806,7 +1808,7 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *r,
  *				map_remap				  *
  *========================================================================*/
 PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
-		struct vir_region *region, vir_bytes *r)
+		struct vir_region *region, vir_bytes *r, int readonly)
 {
 	struct vir_region *vr;
 	struct phys_region *ph;
@@ -1843,7 +1845,11 @@ PUBLIC int map_remap(struct vmproc *dvmp, vir_bytes da, size_t size,
 	vr->length = size;
 	vr->flags = region->flags;
 	vr->tag = VRT_NONE;
-	vr->parent = dvmp;);
+	vr->parent = dvmp;
+	  if(readonly) {
+		vr->flags &= ~VR_WRITABLE;
+	  }
+	);
 	assert(vr->flags & VR_SHARED);
 
 	region_insert(&dvmp->vm_regions_avl, vr);

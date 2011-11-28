@@ -361,6 +361,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Generic calls. */
 	CALLMAP(VM_REMAP, do_remap);
+	CALLMAP(VM_REMAP_RO, do_remap);
 	CALLMAP(VM_GETPHYS, do_get_phys);
 	CALLMAP(VM_SHM_UNMAP, do_shared_unmap);
 	CALLMAP(VM_GETREF, do_get_refcount);

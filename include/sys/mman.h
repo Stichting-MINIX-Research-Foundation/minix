@@ -30,6 +30,8 @@ _PROTOTYPE( int minix_munmap, (void *, size_t));
 _PROTOTYPE( int minix_munmap_text, (void *, size_t));
 _PROTOTYPE( void *vm_remap, (endpoint_t d, endpoint_t s, void *da,
 				void *sa, size_t si));
+_PROTOTYPE( void *vm_remap_ro, (endpoint_t d, endpoint_t s, void *da,
+				void *sa, size_t si));
 _PROTOTYPE( int vm_unmap, (endpoint_t endpt, void *addr));
 _PROTOTYPE( unsigned long vm_getphys, (endpoint_t endpt, void *addr));
 _PROTOTYPE( u8_t vm_getrefcount, (endpoint_t endpt, void *addr));

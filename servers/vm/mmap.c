@@ -231,6 +231,13 @@ PUBLIC int do_remap(message *m)
 	struct vir_region *region;
 	struct vmproc *dvmp, *svmp;
 	int r;
+	int readonly;
+
+	if(m->m_type == VM_REMAP)
+		readonly = 0;
+	else if(m->m_type == VM_REMAP_RO)
+		readonly = 1;
+	else panic("do_remap: can't be");
 
 	da = (vir_bytes) m->VMRE_DA;
 	sa = (vir_bytes) m->VMRE_SA;
@@ -275,7 +282,7 @@ PUBLIC int do_remap(message *m)
 		return EFAULT;
 	}
 
-	if ((r = map_remap(dvmp, da, size, region, &startv)) != OK)
+	if ((r = map_remap(dvmp, da, size, region, &startv, readonly)) != OK)
 		return r;
 
 	m->VMRE_RETA = (char *) arch_map2vir(dvmp, startv);

@@ -86,11 +86,6 @@ PUBLIC void do_pagefaults(message *m)
 	 */
 	assert(!(region->flags & VR_NOPF));
 
-	/* We do not allow shared memory to cause pagefaults.
-	 * These pages have to be pre-allocated.
-	 */
-	assert(!(region->flags & VR_SHARED));
-
 	/* If process was writing, see if it's writable. */
 	if(!(region->flags & VR_WRITABLE) && wr) {
 		printf("VM: pagefault: SIGSEGV %d ro map 0x%lx %s\n",

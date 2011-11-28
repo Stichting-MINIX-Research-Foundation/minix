@@ -76,6 +76,28 @@ PUBLIC void *vm_remap(endpoint_t d,
 	return (void *) m.VMRE_RETA;
 }
 
+PUBLIC void *vm_remap_ro(endpoint_t d,
+			endpoint_t s,
+			void *da,
+			void *sa,
+			size_t size)
+{
+	message m;
+	int r;
+
+	m.VMRE_D = d;
+	m.VMRE_S = s;
+	m.VMRE_DA = (char *) da;
+	m.VMRE_SA = (char *) sa;
+	m.VMRE_SIZE = size;
+
+	r = _syscall(VM_PROC_NR, VM_REMAP_RO, &m);
+	if (r != OK)
+		return MAP_FAILED;
+	return (void *) m.VMRE_RETA;
+}
+
+
 PUBLIC int vm_unmap(endpoint_t endpt, void *addr)
 {
 	message m;

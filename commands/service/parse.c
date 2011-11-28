@@ -716,6 +716,7 @@ struct
 	{ "DELDMA",		VM_DELDMA },
 	{ "GETDMA",		VM_GETDMA },
 	{ "REMAP",		VM_REMAP },
+	{ "REMAP_RO",		VM_REMAP_RO },
 	{ "SHM_UNMAP",		VM_SHM_UNMAP },
 	{ "GETPHYS",		VM_GETPHYS },
 	{ "GETREF",		VM_GETREF },
