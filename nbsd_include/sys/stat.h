@@ -176,13 +176,17 @@ __BEGIN_DECLS
 int	chmod(const char *, mode_t);
 int	mkdir(const char *, mode_t);
 int	mkfifo(const char *, mode_t);
-int	stat(const char *, struct stat *) __RENAME(_stat);
-int	fstat(int, struct stat *) __RENAME(_fstat);
-int	lstat(const char *, struct stat *) __RENAME(_lstat);
+#ifndef __LIBC12_SOURCE__
+int	stat(const char *, struct stat *) __RENAME(__stat50);
+int	fstat(int, struct stat *) __RENAME(__fstat50);
+#endif
 mode_t	umask(mode_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	fchmod(int, mode_t);
+#ifndef __LIBC12_SOURCE__
+int	lstat(const char *, struct stat *) __RENAME(__lstat50);
 int	mknod(const char *, mode_t, dev_t) __RENAME(__mknod50);
+#endif
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 __END_DECLS
 

@@ -24,6 +24,7 @@ ASM=	compat__opendir230.S compat__alphasort30.S compat__ctime50.S \
 	compat__sigfillset14.S compat__sigismember14.S compat__siglongjmp14.S \
 	compat__sigpending14.S compat__sigprocmask14.S compat__sigsetjmp14.S \
 	compat__sigsuspend14.S compat__time50.S compat__time2posix50.S \
+	compat__stat50.S compat__fstat50.S compat__lstat50.S \
 	compat__time2posix_z50.S compat__timegm50.S compat__timelocal50.S \
 	compat__timelocal_z50.S compat__timeoff50.S compat__tzalloc50.S \
 	compat__tzfree50.S compat__tzgetname50.S compat__tzset50.S \

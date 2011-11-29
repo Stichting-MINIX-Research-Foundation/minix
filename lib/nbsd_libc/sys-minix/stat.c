@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <string.h>
 
-
 /* XXX until that st_Xtime macroses used, we have to undefine them,
  * because of minix_prev_stat
  */
@@ -31,9 +30,7 @@ static void prev_stat2new_stat(struct stat *new, struct minix_prev_stat *prev)
   new->st_ctimespec.tv_sec = prev->st_ctime;
 }
 
-int _stat(const char *name, struct stat *buffer);
-
-int _stat(const char *name, struct stat *buffer)
+int stat(const char *name, struct stat *buffer)
 {
   message m;
   int r;
@@ -64,9 +61,7 @@ int _stat(const char *name, struct stat *buffer)
   return r;
 }
 
-int _fstat(int fd, struct stat *buffer);
-
-int _fstat(int fd, struct stat *buffer)
+int fstat(int fd, struct stat *buffer)
 {
   message m;
   int r;
@@ -95,9 +90,7 @@ int _fstat(int fd, struct stat *buffer)
   return r;
 }
 
-int _lstat(const char *name, struct stat *buffer);
-
-int _lstat(const char *name, struct stat *buffer)
+int lstat(const char *name, struct stat *buffer)
 {
   message m;
   int r;
