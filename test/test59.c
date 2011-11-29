@@ -11,6 +11,8 @@
 #define once_t mthread_once_t
 #define attr_t mthread_attr_t
 #define key_t mthread_key_t
+#define event_t mthread_event_t
+#define rwlock_t mthread_rwlock_t
 
 #define MAX_ERROR 5
 #include "common.c"
@@ -26,6 +28,24 @@ PRIVATE once_t once;
 PRIVATE key_t key[MTHREAD_KEYS_MAX+1];
 PRIVATE int values[4];
 PRIVATE int first;
+PRIVATE event_t event;
+PRIVATE int event_a_step, event_b_step;
+PRIVATE rwlock_t rwlock;
+PRIVATE int rwlock_a_step, rwlock_b_step;
+
+#define VERIFY_RWLOCK(a, b, esub, eno) \
+	GEN_VERIFY(rwlock_a_step, a, rwlock_b_step, b, esub, eno)
+
+#define VERIFY_EVENT(a, b, esub, eno) \
+	GEN_VERIFY(event_a_step, a, event_b_step, b, esub, eno)
+
+#define GEN_VERIFY(acta, a, actb, b, esub, eno)	do { \
+	if (acta != a) { \
+		printf("Expected %d %d, got: %d %d\n", \
+			a, b, acta, actb); \
+		err(esub, eno); \
+	} else if (actb != b) err(esub, eno); \
+					} while(0)
 
 #define VERIFY_MUTEX(a,b,c,esub,eno)	do { \
 	if (mutex_a_step != a) { \
@@ -921,6 +941,157 @@ PRIVATE void test_keys(void)
 }
 
 /*===========================================================================*
+ *				event_a					     *
+ *===========================================================================*/
+PRIVATE void *event_a(void *arg)
+{
+  VERIFY_EVENT(0, 0, 21, 1);
+
+  if (mthread_event_wait(&event) != 0) err(21, 2);
+
+  event_a_step = 1;
+
+  if (mthread_event_fire(&event) != 0) err(21, 3);
+
+  mthread_yield();
+
+  VERIFY_EVENT(1, 1, 21, 4);
+
+  return(NULL);
+}
+
+/*===========================================================================*
+ *				event_b					     *
+ *===========================================================================*/
+PRIVATE void *event_b(void *arg)
+{
+  VERIFY_EVENT(0, 0, 22, 1);
+
+  if (mthread_event_wait(&event) != 0) err(22, 2);
+
+  VERIFY_EVENT(1, 0, 22, 3);
+
+  event_b_step = 1;
+
+  return(NULL);
+}
+
+/*===========================================================================*
+ *				test_event				     *
+ *===========================================================================*/
+PRIVATE void test_event(void)
+{
+  thread_t t[2];
+  int i;
+
+  if (mthread_event_init(&event) != 0) err(23, 1);
+
+  /* Try with faulty memory locations */
+  if (mthread_event_wait(NULL) == 0) err(23, 2);
+  if (mthread_event_fire(NULL) == 0) err(23, 3);
+
+  if (mthread_create(&t[0], NULL, event_a, NULL) != 0) err(23, 4);
+  if (mthread_create(&t[1], NULL, event_b, NULL) != 0) err(23, 5);
+
+  mthread_yield_all();
+
+  VERIFY_EVENT(0, 0, 23, 6);
+
+  if (mthread_event_fire(&event) != 0) err(23, 7);
+
+  mthread_yield_all();
+
+  for (i = 0; i < 2; i++)
+	if (mthread_join(t[i], NULL) != 0) err(23, 8);
+
+  if (mthread_event_destroy(&event) != 0) err(23, 9);
+}
+
+/*===========================================================================*
+ *				rwlock_a				     *
+ *===========================================================================*/
+PRIVATE void *rwlock_a(void *arg)
+{
+  /* acquire read lock */
+  VERIFY_RWLOCK(0, 0, 24, 1);
+  if (mthread_rwlock_rdlock(&rwlock) != 0) err(24, 2);
+  rwlock_a_step = 1;
+  mthread_yield();
+
+  /* release read lock */
+  VERIFY_RWLOCK(1, 1, 24, 3);
+  if (mthread_rwlock_unlock(&rwlock) != 0) err(24, 4);
+  rwlock_a_step = 2;
+
+  /* get write lock */
+  if (mthread_rwlock_wrlock(&rwlock) != 0) err(24, 5);
+  rwlock_a_step = 3;
+  VERIFY_RWLOCK(3, 2, 24, 6);
+
+  /* release write lock */
+  if (mthread_rwlock_unlock(&rwlock) != 0) err(24, 7);
+  mthread_yield();
+
+  VERIFY_RWLOCK(3, 3, 24, 8);
+
+  return(NULL);
+}
+
+/*===========================================================================*
+ *				rwlock_b				     *
+ *===========================================================================*/
+PRIVATE void *rwlock_b(void *arg)
+{
+  /* Step 1: acquire the read lock */
+  VERIFY_RWLOCK(1, 0, 25, 1);
+  if (mthread_rwlock_rdlock(&rwlock) != 0) err(25, 2);
+  rwlock_b_step = 1;
+  mthread_yield();
+
+  /* We return back with first thread blocked on wrlock */
+  VERIFY_RWLOCK(2, 1, 25, 3);
+  rwlock_b_step = 2;
+
+  /* Release read lock and acquire write lock */
+  if (mthread_rwlock_unlock(&rwlock) != 0) err(25, 4);
+  if (mthread_rwlock_wrlock(&rwlock) != 0) err(25, 5);
+  rwlock_b_step = 3;
+
+  VERIFY_RWLOCK(3, 3, 25, 6);
+  if (mthread_rwlock_unlock(&rwlock) != 0) err(25, 6);
+
+  return(NULL);
+}
+
+/*===========================================================================*
+ *				test_rwlock				     *
+ *===========================================================================*/
+PRIVATE void test_rwlock(void)
+{
+  thread_t t[2];
+  int i;
+
+  if (mthread_rwlock_init(&rwlock) != 0) err(26, 1);
+
+  /* Try with faulty memory locations */
+  if (mthread_rwlock_rdlock(NULL) == 0) err(26, 2);
+  if (mthread_rwlock_wrlock(NULL) == 0) err(26, 3);
+  if (mthread_rwlock_unlock(NULL) == 0) err(26, 4);
+
+  /* Create the threads and start testing */
+  if (mthread_create(&t[0], NULL, rwlock_a, NULL) != 0) err(26, 5);
+  if (mthread_create(&t[1], NULL, rwlock_b, NULL) != 0) err(26, 6);
+
+  mthread_yield_all();
+
+  for (i = 0; i < 2; i++)
+	if (mthread_join(t[i], NULL) != 0) err(26, 7);
+
+  if (mthread_rwlock_destroy(&rwlock) != 0) err(26, 8);
+}
+
+
+/*===========================================================================*
  *				main					     *
  *===========================================================================*/
 int main(void)
@@ -928,12 +1099,16 @@ int main(void)
   errct = 0;
   th_a = th_b = th_c = th_d = th_e = th_f = th_g = th_h = 0;
   mutex_a_step = mutex_b_step = mutex_c_step = 0;
+  event_a_step = event_b_step = 0;
+  rwlock_a_step = rwlock_b_step = 0;
   once = MTHREAD_ONCE_INIT;
 
   start(59);
   mthread_init(); 
   test_scheduling();
   test_mutex();
+  test_event();
+  test_rwlock();
   test_condition();
   test_attributes();
   test_keys();

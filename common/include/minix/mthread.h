@@ -56,6 +56,18 @@ struct __mthread_attr {
 }; 
 typedef struct __mthread_attr *mthread_attr_t;
 
+typedef struct {
+  mthread_mutex_t mutex;
+  mthread_cond_t cond;
+} mthread_event_t;
+
+typedef struct {
+  unsigned int readers;
+  mthread_thread_t writer;
+  mthread_mutex_t queue;
+  mthread_event_t drain;
+} mthread_rwlock_t; 
+
 #define MTHREAD_CREATE_JOINABLE 001
 #define MTHREAD_CREATE_DETACHED 002
 #define MTHREAD_ONCE_INIT 0
@@ -121,6 +133,19 @@ _PROTOTYPE( int mthread_mutex_init, (mthread_mutex_t *mutex,
 _PROTOTYPE( int mthread_mutex_lock, (mthread_mutex_t *mutex)		);
 _PROTOTYPE( int mthread_mutex_trylock, (mthread_mutex_t *mutex)	);
 _PROTOTYPE( int mthread_mutex_unlock, (mthread_mutex_t *mutex)	);
+
+/* event.c */
+_PROTOTYPE( int mthread_event_destroy, (mthread_event_t *event)	);
+_PROTOTYPE( int mthread_event_init, (mthread_event_t *event)	);
+_PROTOTYPE( int mthread_event_wait, (mthread_event_t *event)	);
+_PROTOTYPE( int mthread_event_fire, (mthread_event_t *event)	);
+
+/* rwlock.c */
+_PROTOTYPE( int mthread_rwlock_destroy, (mthread_rwlock_t *rwlock)	);
+_PROTOTYPE( int mthread_rwlock_init, (mthread_rwlock_t *rwlock)		);
+_PROTOTYPE( int mthread_rwlock_rdlock, (mthread_rwlock_t *rwlock)	);
+_PROTOTYPE( int mthread_rwlock_wrlock, (mthread_rwlock_t *rwlock)	);
+_PROTOTYPE( int mthread_rwlock_unlock, (mthread_rwlock_t *rwlock)	);
 
 /* schedule.c */
 _PROTOTYPE( void mthread_init, (void)					);

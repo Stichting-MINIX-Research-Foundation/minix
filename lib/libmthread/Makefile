@@ -8,6 +8,8 @@ SRCS=	\
 	allocate.c \
 	attribute.c \
 	mutex.c \
+	event.c \
+	rwlock.c \
 	misc.c \
 	queue.c \
 	condition.c \
