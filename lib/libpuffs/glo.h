@@ -11,7 +11,6 @@
 #include <minix/vfsif.h>
 
 #include "puffs_msgif.h"
-#include "drivers.h"
 
 EXTERN struct puffs_usermount *global_pu;
 
@@ -50,9 +49,6 @@ EXTERN char user_path[PATH_MAX+1];  /* pathname to be processed */
 
 EXTERN dev_t fs_dev;              /* The device that is handled by this FS proc
                                    */
-EXTERN char fs_dev_label[16];    /* Name of the device driver that is handled
-                                  * by this FS proc.
-                                  */
 EXTERN char fs_name[PATH_MAX+1];
 
 EXTERN int unmountdone;
