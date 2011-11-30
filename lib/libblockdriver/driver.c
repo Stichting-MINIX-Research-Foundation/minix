@@ -146,11 +146,15 @@ PUBLIC void blockdriver_reply(message *m_ptr, int ipc_status, int reply)
   m_ptr->BDEV_STATUS = reply;
   m_ptr->BDEV_ID = id;
 
-  /* If we would block sending the message, send it asynchronously. */
+  /* If we would block sending the message, send it asynchronously. The NOREPLY
+   * flag is set because the caller may also issue a SENDREC (mixing sync and
+   * async comm), and the asynchronous reply could otherwise end up satisfying
+   * the SENDREC's receive part, after which our next SENDNB call would fail.
+   */
   if (IPC_STATUS_CALL(ipc_status) == SENDREC)
 	r = sendnb(caller_e, m_ptr);
   else
-	r = asynsend(caller_e, m_ptr);
+	r = asynsend3(caller_e, m_ptr, AMF_NOREPLY);
 
   if (r != OK)
 	printf("blockdriver_reply: unable to send reply to %d: %d\n",
