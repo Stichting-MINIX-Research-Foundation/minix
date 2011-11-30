@@ -911,13 +911,14 @@ PUBLIC void bdev_up(int maj)
   /* A new block device driver has been mapped in. This may affect both mounted
    * file systems and open block-special files.
    */
-  int r, new_driver_e, found, bits;
+  int r, found, bits;
   struct filp *rfilp;
   struct vmnt *vmp;
   struct vnode *vp;
+  char *label;
 
   if (maj < 0 || maj >= NR_DEVICES) panic("VFS: out-of-bound major");
-  new_driver_e = dmap[maj].dmap_driver;
+  label = dmap[maj].dmap_label;
 
   /* Tell each affected mounted file system about the new endpoint. This code
    * is currently useless, as driver endpoints do not change across restarts.
@@ -925,10 +926,10 @@ PUBLIC void bdev_up(int maj)
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
 	if (major(vmp->m_dev) != maj) continue;
 
-	/* Send the new driver endpoint to the mounted file system. */
-	if (OK != req_newdriver(vmp->m_fs_e, vmp->m_dev, new_driver_e))
-		printf("VFS dev_up: error sending new driver endpoint."
-		       " FS_e: %d req_nr: %d\n", vmp->m_fs_e, REQ_NEW_DRIVER);
+	/* Send the driver label to the mounted file system. */
+	if (OK != req_newdriver(vmp->m_fs_e, vmp->m_dev, label))
+		printf("VFS dev_up: error sending new driver label to %d\n",
+		       vmp->m_fs_e);
   }
 
   /* For each block-special file that was previously opened on the affected
@@ -950,14 +951,14 @@ PUBLIC void bdev_up(int maj)
   }
 
   /* If any block-special file was open for this major at all, also inform the
-   * root file system about the new endpoint of the driver. We do this even if
-   * the block-special file is linked to another mounted file system, merely
+   * root file system about the new driver. We do this even if the
+   * block-special file is linked to another mounted file system, merely
    * because it is more work to check for that case.
    */
   if (found) {
-	if (OK != req_newdriver(ROOT_FS_E, makedev(maj, 0), new_driver_e))
-		printf("VFSdev_up: error sending new driver endpoint."
-		       " FS_e: %d req_nr: %d\n", ROOT_FS_E, REQ_NEW_DRIVER);
+	if (OK != req_newdriver(ROOT_FS_E, makedev(maj, 0), label))
+		printf("VFSdev_up: error sending new driver label to %d\n",
+			ROOT_FS_E);
   }
 }
 

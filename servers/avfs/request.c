@@ -556,7 +556,6 @@ PUBLIC int req_mknod(
 PUBLIC int req_mountpoint(endpoint_t fs_e, ino_t inode_nr)
 {
   message m;
-  int r;
 
   /* Fill in request message */
   m.m_type = REQ_MOUNTPOINT;
@@ -610,7 +609,7 @@ PUBLIC int req_newnode(
 PUBLIC int req_newdriver(
   endpoint_t fs_e,
   dev_t dev,
-  endpoint_t driver_e
+  char *label
 )
 {
 /* Note: this is the only request function that doesn't use the
@@ -618,23 +617,33 @@ PUBLIC int req_newdriver(
  * driver recovery mechanism here. This function is actually called
  * during the recovery.
  */
+  cp_grant_id_t grant_id;
+  size_t len;
   message m;
   int r;
+
+  /* Grant access to label */
+  len = strlen(label) + 1;
+  grant_id = cpf_grant_direct(fs_e, (vir_bytes) label, len, CPF_READ);
+  if (grant_id == -1)
+	panic("req_newdriver: cpf_grant_direct failed");
 
   /* Fill in request message */
   m.m_type = REQ_NEW_DRIVER;
   m.REQ_DEV = dev;
-  m.REQ_DRIVER_E = driver_e;
+  m.REQ_GRANT = grant_id;
+  m.REQ_PATH_LEN = len;
 
   /* Issue request */
   if((r = sendrec(fs_e, &m)) != OK) {
 	  printf("%s:%d VFS req_newdriver: error sending message %d to %d\n",
 		 __FILE__, __LINE__, r, fs_e);
 	  util_stacktrace();
-	  return(r);
   }
 
-  return(OK);
+  cpf_revoke(grant_id);
+
+  return(r);
 }
 
 

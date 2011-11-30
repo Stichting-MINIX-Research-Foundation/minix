@@ -145,22 +145,21 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 			if (r != OK) break;
 
 			/* Check whether the device is mounted or not. If so,
-			   then that FS is responsible for this device. Else
-			   we default to ROOT_FS. */
+			 * then that FS is responsible for this device.
+			 * Otherwise we default to ROOT_FS.
+			 */
 			vp->v_bfs_e = ROOT_FS_E; /* By default */
 			for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) 
 				if (vmp->m_dev == vp->v_sdev) 
 					vp->v_bfs_e = vmp->m_fs_e;
 
-			/* Get the driver endpoint of the block spec device */
-			dp = &dmap[major(vp->v_sdev)];
-
-			/* Send the driver endpoint to the file system (even
-			 * when known already).
+			/* Send the driver label to the file system (even when
+			 * known already).
 			 */
+			dp = &dmap[major(vp->v_sdev)];
 			if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev,
-					       dp->dmap_driver)) != OK) {
-				printf("VFS: error sending driver endpoint\n");
+					dp->dmap_label)) != OK) {
+				printf("VFS: error sending driver label\n");
 				bdev_close(dev);
 				r = ENXIO;
 			}

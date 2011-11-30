@@ -1,6 +1,5 @@
 #include "inc.h"
 #include <minix/vfsif.h>
-#include <minix/ds.h>
 #include <minix/bdev.h>
 #include "const.h"
 #include "glo.h"
@@ -32,15 +31,8 @@ PUBLIC int fs_readsuper() {
 	return(EINVAL);
   }
 
-  r = ds_retrieve_label_endpt(fs_dev_label, &driver_e);
-  if (r != OK) {
-	printf("ISOFS %s:%d ds_retrieve_label_endpt failed for '%s': %d\n",
-		__FILE__, __LINE__, fs_dev_label, r);
-	return(EINVAL);
-  }
-
-  /* Map the driver endpoint for this major */
-  bdev_driver(fs_dev, driver_e);
+  /* Map the driver label for this major */
+  bdev_driver(fs_dev, fs_dev_label);
 
   /* Open the device the file system lives on */
   if (bdev_open(fs_dev, readonly ? R_BIT : (R_BIT|W_BIT)) != OK) {

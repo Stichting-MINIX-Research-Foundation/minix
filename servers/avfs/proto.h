@@ -277,7 +277,7 @@ _PROTOTYPE( int req_unmount, (endpoint_t fs_e)                          );
 _PROTOTYPE( int req_utime, (endpoint_t fs_e, ino_t inode_nr,
 					time_t actime, time_t modtime)	);
 _PROTOTYPE( int req_newdriver, (endpoint_t fs_e, dev_t dev,
-            endpoint_t driver_e)                                        );
+            char *label)						);
 
 /* stadir.c */
 _PROTOTYPE( int do_chdir, (void)					);

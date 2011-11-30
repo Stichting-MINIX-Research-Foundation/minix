@@ -19,15 +19,19 @@ static void bdev_cancel(dev_t dev)
   bdev_driver_clear(dev);
 }
 
-void bdev_update(dev_t dev, endpoint_t endpt)
+void bdev_update(dev_t dev, char *label)
 {
 /* Set the endpoint for a driver. Perform recovery if necessary.
  */
-  endpoint_t old_endpt;
+  endpoint_t endpt, old_endpt;
 
   old_endpt = bdev_driver_get(dev);
 
-  bdev_driver_set(dev, endpt);
+  endpt = bdev_driver_set(dev, label);
+
+  /* If updating the driver causes an endpoint change, we need to perform
+   * recovery, but not update the endpoint yet again.
+   */
 }
 
 int bdev_sendrec(dev_t dev, const message *m_orig)

@@ -65,22 +65,21 @@ PRIVATE void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 		if (send_drv_e) {
 			major = major(dev);
 			if (major < 0 || major >= NR_DEVICES) {
-				/* Can't update driver endpoint for out of
-				 * range major */
+				/* Can't update for out-of-range major */
 				continue;
 			}
 			dp = &dmap[major(dev)];
 			if (dp->dmap_driver == NONE) {
-				/* Can't send new driver endpoint for
-				 * vanished driver */
-				printf("VFS: can't send new driver endpt\n");
+				/* Can't update for vanished driver */
+				printf("VFS: can't send new driver label\n");
 				continue;
 			}
 
 			if ((r = req_newdriver(fs_e, vp->v_sdev,
-						dp->dmap_driver)) != OK) {
-				printf("VFS: Failed to send new driver endpoint"
-				       " for moved block special file\n");
+					dp->dmap_label)) != OK) {
+				printf("VFS: Failed to send new driver label"
+				       " for moved block special file to %d\n",
+				       fs_e);
 			}
 		}
 	}

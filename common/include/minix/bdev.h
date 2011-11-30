@@ -1,7 +1,7 @@
 #ifndef __MINIX_BDEV_H
 #define __MINIX_BDEV_H
 
-extern void bdev_driver(dev_t dev, endpoint_t endpt);
+extern void bdev_driver(dev_t dev, char *label);
 
 extern int bdev_open(dev_t dev, int access);
 extern int bdev_close(dev_t dev);

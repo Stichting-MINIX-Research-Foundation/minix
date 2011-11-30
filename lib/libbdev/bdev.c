@@ -9,7 +9,7 @@
 
 #include "proto.h"
 
-void bdev_driver(dev_t dev, endpoint_t endpt)
+void bdev_driver(dev_t dev, char *label)
 {
 /* Associate a driver with the given (major) device, using its endpoint.
  * File system usage note: typically called from mount and newdriver.
@@ -23,7 +23,7 @@ void bdev_driver(dev_t dev, endpoint_t endpt)
 	first = FALSE;
   }
 
-  bdev_update(dev, endpt);
+  bdev_update(dev, label);
 }
 
 static int bdev_opcl(int req, dev_t dev, int access)

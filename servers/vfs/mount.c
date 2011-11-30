@@ -452,11 +452,11 @@ PUBLIC int unmount(
 		printf("VFS: umount moving block spec %d to root FS\n", dev);
 		vp->v_bfs_e = ROOT_FS_E;
 			
-		  /* Send the (potentially new) driver endpoint */
-		r = req_newdriver(vp->v_bfs_e, vp->v_sdev, dp->dmap_driver);
+		/* Send the driver label */
+		r = req_newdriver(vp->v_bfs_e, vp->v_sdev, dp->dmap_label);
 		if (r != OK) 
-			printf("VFS: error sending driver endpoint for"
-				" moved block spec\n");
+			printf("VFS: error sending driver label for"
+				" moved block spec to %d\n", vp->v_bfs_e);
 		  
 	}
   }

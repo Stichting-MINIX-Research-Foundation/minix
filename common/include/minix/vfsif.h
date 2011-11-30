@@ -10,7 +10,6 @@
 #define REQ_DEV			m9_l5
 #define REQ_DEV2		m9_l1
 #define REQ_DIR_INO   		m9_l3
-#define REQ_DRIVER_E		m9_l2
 #define REQ_FLAGS		m9_s3
 #define REQ_GID			m9_s1
 #define REQ_GRANT		m9_l2

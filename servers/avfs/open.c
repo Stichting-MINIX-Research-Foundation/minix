@@ -186,8 +186,9 @@ PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			}
 
 			/* Check whether the device is mounted or not. If so,
-			 * then that FS is responsible for this device. Else
-			 * we default to ROOT_FS. */
+			 * then that FS is responsible for this device.
+			 * Otherwise we default to ROOT_FS.
+			 */
 			vp->v_bfs_e = ROOT_FS_E; /* By default */
 			for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)
 				if (vmp->m_dev == vp->v_sdev &&
@@ -195,11 +196,11 @@ PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 					vp->v_bfs_e = vmp->m_fs_e;
 				}
 
-			/* Send the driver endpoint to the file system that
-			 * will handle the block I/O requests (even when its
-			 * endpoint is known already), but only when it is the
-			 * root file system. Other file systems will already
-			 * have it anyway.
+			/* Send the driver label to the file system that will
+			 * handle the block I/O requests (even when its label
+			 * and endpoint are known already), but only when it is
+			 * the root file system. Other file systems will
+			 * already have it anyway.
 			 */
 			if (vp->v_bfs_e != ROOT_FS_E) {
 				unlock_bsf();
@@ -207,8 +208,8 @@ PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 			}
 
 			if (req_newdriver(vp->v_bfs_e, vp->v_sdev,
-					       dp->dmap_driver) != OK) {
-				printf("VFS: error sending driver endpoint\n");
+					dp->dmap_label) != OK) {
+				printf("VFS: error sending driver label\n");
 				bdev_close(dev);
 				r = ENXIO;
 			}
