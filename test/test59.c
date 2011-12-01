@@ -947,16 +947,20 @@ PRIVATE void *event_a(void *arg)
 {
   VERIFY_EVENT(0, 0, 21, 1);
 
+  /* Wait for main thread to signal us */
   if (mthread_event_wait(&event) != 0) err(21, 2);
 
+  /* Mark state transition and wakeup thread b */
   event_a_step = 1;
-
   if (mthread_event_fire(&event) != 0) err(21, 3);
-
   mthread_yield();
-
   VERIFY_EVENT(1, 1, 21, 4);
 
+  /* Wait for main thread to signal again with fireall  */
+  if (mthread_event_wait(&event) != 0) err(21, 5);
+
+  /* Marks state transition and exit */
+  event_a_step = 2;
   return(NULL);
 }
 
@@ -967,12 +971,16 @@ PRIVATE void *event_b(void *arg)
 {
   VERIFY_EVENT(0, 0, 22, 1);
 
+  /* Wait for thread a to signal us */
   if (mthread_event_wait(&event) != 0) err(22, 2);
-
   VERIFY_EVENT(1, 0, 22, 3);
 
+  /* Mark state transition and wait again, this time for main thread */
   event_b_step = 1;
+  if (mthread_event_wait(&event) != 0) err(21, 5);
 
+  /* Marks state transition and exit */
+  event_b_step = 2;
   return(NULL);
 }
 
@@ -990,21 +998,29 @@ PRIVATE void test_event(void)
   if (mthread_event_wait(NULL) == 0) err(23, 2);
   if (mthread_event_fire(NULL) == 0) err(23, 3);
 
+  /* create threads */
   if (mthread_create(&t[0], NULL, event_a, NULL) != 0) err(23, 4);
   if (mthread_create(&t[1], NULL, event_b, NULL) != 0) err(23, 5);
 
+  /* wait for them to block on event */
   mthread_yield_all();
-
   VERIFY_EVENT(0, 0, 23, 6);
 
+  /* Fire event to wakeup thread a */
   if (mthread_event_fire(&event) != 0) err(23, 7);
-
   mthread_yield_all();
+  VERIFY_EVENT(1, 1, 23, 6);
 
+  /* Fire all to wakeup both a and b */
+  if (mthread_event_fire_all(&event) != 0) err(23, 7);
+  mthread_yield_all();
+  VERIFY_EVENT(2, 2, 23, 8);
+
+  /* We are done here */
   for (i = 0; i < 2; i++)
-	if (mthread_join(t[i], NULL) != 0) err(23, 8);
+	if (mthread_join(t[i], NULL) != 0) err(23, 9);
 
-  if (mthread_event_destroy(&event) != 0) err(23, 9);
+  if (mthread_event_destroy(&event) != 0) err(23, 10);
 }
 
 /*===========================================================================*

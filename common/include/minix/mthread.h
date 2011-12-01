@@ -139,6 +139,7 @@ _PROTOTYPE( int mthread_event_destroy, (mthread_event_t *event)	);
 _PROTOTYPE( int mthread_event_init, (mthread_event_t *event)	);
 _PROTOTYPE( int mthread_event_wait, (mthread_event_t *event)	);
 _PROTOTYPE( int mthread_event_fire, (mthread_event_t *event)	);
+_PROTOTYPE( int mthread_event_fire_all, (mthread_event_t *event));
 
 /* rwlock.c */
 _PROTOTYPE( int mthread_rwlock_destroy, (mthread_rwlock_t *rwlock)	);
