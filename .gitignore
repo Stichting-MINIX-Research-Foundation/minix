@@ -35,3 +35,8 @@ minix-port.patch
 *.worldstone.log
 .worldstone*
 usr.bin/mdocml/man/*.7
+etc/passwd
+etc/pwd.db
+etc/spwd.db
+tools/image
+tools/kernel
