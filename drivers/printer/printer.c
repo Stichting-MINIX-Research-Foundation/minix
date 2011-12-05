@@ -107,6 +107,7 @@ FORWARD _PROTOTYPE( void output_done, (void) );
 FORWARD _PROTOTYPE( void do_write, (message *m_ptr) );
 FORWARD _PROTOTYPE( void do_status, (message *m_ptr) );
 FORWARD _PROTOTYPE( void prepare_output, (void) );
+FORWARD _PROTOTYPE( int do_probe, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
 FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
@@ -193,6 +194,11 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the printer driver. */
+
+  /* If no printer is present, do not start. */
+  if (!do_probe())
+	return ENODEV;	/* arbitrary error code */
+
   /* Announce we are up! */
   chardriver_announce();
 
@@ -353,6 +359,23 @@ int status;			/* number of  chars printed or error code */
 }
 
 /*===========================================================================*
+ *				do_probe				     *
+ *===========================================================================*/
+PRIVATE int do_probe(void)
+{
+/* See if there is a printer at all. */
+
+  /* Get the base port for first printer. */
+  if(sys_vircopy(SELF, BIOS_SEG, LPT1_IO_PORT_ADDR,
+	SELF, D, (vir_bytes) &port_base, LPT1_IO_PORT_SIZE) != OK) {
+	panic("do_initialize: sys_vircopy failed");
+  }
+
+  /* If the port is zero, the parallel port is not available at all. */
+  return (port_base != 0);
+}
+
+/*===========================================================================*
  *				do_initialize				     *
  *===========================================================================*/
 PRIVATE void do_initialize()
@@ -362,11 +385,6 @@ PRIVATE void do_initialize()
   if (initialized) return;
   initialized = TRUE;
   
-  /* Get the base port for first printer.  */
-  if(sys_vircopy(SELF, BIOS_SEG, LPT1_IO_PORT_ADDR, 
-  	SELF, D, (vir_bytes) &port_base, LPT1_IO_PORT_SIZE) != OK) {
-	panic("do_initialize: sys_vircopy failed");
-  }
   if(sys_outb(port_base + 2, INIT_PRINTER) != OK) {
 	printf("printer: sys_outb of %x failed\n", port_base+2);
 	panic("do_initialize: sys_outb init failed");
