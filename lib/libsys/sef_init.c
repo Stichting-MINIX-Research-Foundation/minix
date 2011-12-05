@@ -182,6 +182,15 @@ PUBLIC int sef_cb_init_fail(int UNUSED(type), sef_init_info_t *UNUSED(info))
 }
 
 /*===========================================================================*
+ *      	              sef_cb_init_reset                              *
+ *===========================================================================*/
+PUBLIC int sef_cb_init_reset(int UNUSED(type), sef_init_info_t *UNUSED(info))
+{
+  /* Tell RS to reincarnate us, with no old resources, and a new endpoint. */
+  return ERESTART;
+}
+
+/*===========================================================================*
  *      	              sef_cb_init_crash                              *
  *===========================================================================*/
 PUBLIC int sef_cb_init_crash(int UNUSED(type), sef_init_info_t *UNUSED(info))

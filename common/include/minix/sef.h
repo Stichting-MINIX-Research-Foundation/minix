@@ -48,6 +48,7 @@ _PROTOTYPE( int sef_cb_init_null, (int type, sef_init_info_t *info) );
 _PROTOTYPE( int sef_cb_init_response_null, (message *m_ptr) );
 
 _PROTOTYPE( int sef_cb_init_fail, (int type, sef_init_info_t *info) );
+_PROTOTYPE( int sef_cb_init_reset, (int type, sef_init_info_t *info) );
 _PROTOTYPE( int sef_cb_init_crash, (int type, sef_init_info_t *info) );
 _PROTOTYPE( int sef_cb_init_response_rs_reply, (message *m_ptr) );
 
@@ -59,7 +60,7 @@ _PROTOTYPE( int sef_cb_init_response_rs_reply, (message *m_ptr) );
 
 #define SEF_CB_INIT_FRESH_DEFAULT       sef_cb_init_null
 #define SEF_CB_INIT_LU_DEFAULT          sef_cb_init_null
-#define SEF_CB_INIT_RESTART_DEFAULT     sef_cb_init_null
+#define SEF_CB_INIT_RESTART_DEFAULT     sef_cb_init_reset
 #define SEF_CB_INIT_RESPONSE_DEFAULT    sef_cb_init_response_rs_reply
 
 /* Init types. */
