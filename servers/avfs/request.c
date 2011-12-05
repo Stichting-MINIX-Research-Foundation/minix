@@ -1,10 +1,8 @@
-/* This file contains the wrapper functions for issueing a request
+/* This file contains the wrapper functions for issuing a request
  * and receiving response from FS processes.
  * Each function builds a request message according to the request
- * parameter, calls the most low-level fs_sendrec and copies
+ * parameter, calls the most low-level fs_sendrec, and copies
  * back the response.
- * The low-level fs_sendrec handles the recovery mechanism from
- * a dead driver and reissues the request.
  */
 
 #include "fs.h"
@@ -612,11 +610,6 @@ PUBLIC int req_newdriver(
   char *label
 )
 {
-/* Note: this is the only request function that doesn't use the
- * fs_sendrec internal routine, since we want to avoid the dead
- * driver recovery mechanism here. This function is actually called
- * during the recovery.
- */
   cp_grant_id_t grant_id;
   size_t len;
   message m;
@@ -635,17 +628,12 @@ PUBLIC int req_newdriver(
   m.REQ_PATH_LEN = len;
 
   /* Issue request */
-  if((r = sendrec(fs_e, &m)) != OK) {
-	  printf("%s:%d VFS req_newdriver: error sending message %d to %d\n",
-		 __FILE__, __LINE__, r, fs_e);
-	  util_stacktrace();
-  }
+  r = fs_sendrec(fs_e, &m);
 
   cpf_revoke(grant_id);
 
   return(r);
 }
-
 
 
 /*===========================================================================*

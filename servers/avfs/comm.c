@@ -125,10 +125,7 @@ PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqmp)
 	}
   }
 
-  if (reqmp->m_type == -EENTERMOUNT || reqmp->m_type == -ELEAVEMOUNT ||
-      reqmp->m_type == -ESYMLINK) {
-	reqmp->m_type = -reqmp->m_type;
-  } else if (force_sync != 0 && reqmp->m_type > 0) {
+  if (force_sync != 0 && reqmp->m_type > 0) {
 	/* XXX: Keep this as long as we're interested in having support
 	 * for synchronous communication. */
 	nested_fs_call(reqmp);
