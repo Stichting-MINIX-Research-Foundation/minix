@@ -1,0 +1,52 @@
+Development notes regarding libbdev, by David van Moolenbroek.
+
+
+GENERAL MODEL
+
+This library is designed mainly for use by file servers. It essentially covers
+two use cases: 1) use of the block device that contains the file system itself,
+and 2) use of any block device for raw block I/O (on unmounted file systems)
+performed by the root file server. In the first case, the file server is
+responsible for opening and closing the block device, and recovery from a
+driver restart involves reopening those minor devices. Regular file systems
+should have one or at most two (for a separate journal) block devices open at
+the same time, which is why NR_OPEN_DEVS is set to a value that is quite low.
+In the second case, VFS is responsible for opening and closing the block device
+(and performing IOCTLs), as well as reopening the block device on a driver
+restart -- the root file server only gets raw I/O (and flush) requests.
+
+At this time, libbdev considers only clean crashes (a crash-only model), and
+does not support recovery from behavioral errors. Protocol errors are passed to
+the user process, and generally do not have an effect on the overall state of
+the library.
+
+
+RETRY MODEL
+
+The philosophy for recovering from driver restarts in libbdev can be formulated
+as follows: we want to tolerate an unlimited number of driver restarts over a
+long time, but we do not want to keep retrying individual requests across
+driver restarts. As such, we do not keep track of driver restarts on a per-
+driver basis, because that would mean we put a hard limit on the number of
+restarts for that driver in total. Instead, there are two limits: a driver
+restart limit that is kept on a per-request basis, failing only that request
+when the limit is reached, and a driver restart limit that is kept during
+recovery, limiting the number of restarts and eventually giving up on the
+entire driver when even the recovery keeps failing (as no progress is made in
+that case).
+
+Each transfer request also has a transfer retry count. The assumption here is
+that when a transfer request returns EIO, it can be retried and possibly
+succeed upon repetition. The driver restart and transfer retry counts are
+tracked independently and thus the first to hit the limit will fail the
+request. The behavior should be the same for synchronous and asynchronous
+requests in this respect.
+
+It could happen that a new driver gets loaded after we have decided that the
+current driver is unusable. This could be due to a race condition (VFS sends a
+new-driver request after we've given up) or due to user interaction (the user
+loads a replacement driver). The latter case may occur legitimately with raw
+I/O on the root file server, so we must not mark the driver as unusable
+forever. On the other hand, in the former case, we must not continue to send
+I/O without first reopening the minor devices. For this reason, we do not clean
+up the record of the minor devices when we mark a driver as unusable.

@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "const.h"
+#include "type.h"
 #include "proto.h"
 
 static struct {
