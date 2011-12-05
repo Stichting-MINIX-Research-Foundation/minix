@@ -90,6 +90,7 @@ PRIVATE void kernel_call_finish(struct proc * caller, message *msg, int result)
 					  caller->p_delivermsg_vir,
 					  caller->p_name,
 					  caller->p_endpoint);
+			  cause_sig(proc_nr(caller), SIGSEGV);
 		  }
 	  }
   }
@@ -154,7 +155,8 @@ PUBLIC void kernel_call(message *m_user, struct proc * caller)
   else {
 	  printf("WARNING wrong user pointer 0x%08x from process %s / %d\n",
 			  m_user, caller->p_name, caller->p_endpoint);
-	  result = EBADREQUEST;
+	  cause_sig(proc_nr(caller), SIGSEGV);
+	  return;
   }
 
   
