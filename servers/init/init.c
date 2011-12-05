@@ -42,6 +42,7 @@ struct ttyent TT_REBOOT = { "console", "-", REBOOT_CMD, NULL };
 
 char PATH_UTMP[] = "/etc/utmp";		/* current logins */
 char PATH_WTMP[] = "/usr/adm/wtmp";	/* login/logout history */
+char PATH_ROOT_WTMP[] = "/etc/wtmp";	/* wtmp for system up/down events */
 
 #define PIDSLOTS	32		/* first this many ttys can be on */
 
@@ -473,6 +474,14 @@ pid_t pid;			/* pid of process */
 
   switch (type) {
   case BOOT_TIME:
+	/* Add new root wtmp entry. */
+	if ((fd = open(PATH_ROOT_WTMP, O_WRONLY | O_APPEND)) < 0
+		  || write(fd, &utmp, sizeof(utmp)) == -1
+	) {
+		if (errno != ENOENT) report(2, PATH_ROOT_WTMP);
+	}
+	if (fd != -1) close(fd);
+	/* fall-through */
   case DEAD_PROCESS:
 	/* Add new wtmp entry. */
 	if ((fd = open(PATH_WTMP, O_WRONLY | O_APPEND)) < 0
