@@ -23,16 +23,16 @@ static int load_aout(struct exec_info *execi);
 static int load_elf(struct exec_info *execi);
 
 /* Array of loaders for different object formats */
-struct exec_loaders {
+static struct exec_loaders {
 	int (*load_object)(struct exec_info *);
-} static const exec_loaders[] = {
+} const exec_loaders[] = {
 	{ load_aout },
 	{ load_elf },
 	{ NULL }
 };
 
 int srv_execve(int proc_e, char *exec, size_t exec_len, char **argv,
-	char **Xenvp)
+	char **UNUSED(Xenvp))
 {
 	char * const *ap;
 	char * const *ep;

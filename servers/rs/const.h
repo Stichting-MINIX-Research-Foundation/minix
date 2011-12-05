@@ -33,6 +33,7 @@
 #define RS_INITIALIZING 0x040    /* set when init is in progress */
 #define RS_UPDATING     0x080    /* set when update is in progress */
 #define RS_ACTIVE       0x100    /* set for the active instance of a service */
+#define RS_REINCARNATE  0x200    /* after exit, restart with a new endpoint */
 
 /* Sys flag values. */
 #define SF_CORE_SRV     0x001    /* set for core system services */

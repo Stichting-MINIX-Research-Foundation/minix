@@ -426,6 +426,8 @@ PUBLIC int do_init_ready(message *m_ptr)
       if(rs_verbose)
           printf("RS: %s initialization error: %s\n", srv_to_string(rp),
               init_strerror(result));
+      if (result == ERESTART)
+          rp->r_flags |= RS_REINCARNATE;
       crash_service(rp); /* simulate crash */
       return EDONTREPLY;
   }

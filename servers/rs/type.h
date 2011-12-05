@@ -67,6 +67,12 @@ struct rproc {
   int r_quantum;
   int r_cpu;
 
+  /* Backup values from the privilege structure. */
+  struct io_range r_io_tab[NR_IO_RANGE];
+  int r_nr_io_range;
+  int r_irq_tab[NR_IRQ];
+  int r_nr_irq;
+
   char r_ipc_list[MAX_IPC_LIST];
   int r_nr_control;
   char r_control[RS_NR_CONTROL][RS_MAX_LABEL_LEN];

@@ -423,8 +423,9 @@ struct rproc *rp;
       srv_kill(rp->r_pid, SIGKILL);
   }
 
-  /* Free slot */
-  free_slot(rp);
+  /* Free slot, unless we're about to reuse it */
+  if (!(rp->r_flags & RS_REINCARNATE))
+      free_slot(rp);
 }
 
 /*===========================================================================*
@@ -942,6 +943,40 @@ PUBLIC void activate_service(struct rproc *rp, struct rproc *ex_rp)
 }
 
 /*===========================================================================*
+ *			      reincarnate_service			     *
+ *===========================================================================*/
+PUBLIC void reincarnate_service(struct rproc *rp)
+{
+/* Restart a service as if it were never started before. */
+  struct rprocpub *rpub;
+  int i;
+
+  rpub = rp->r_pub;
+
+  rp->r_flags &= RS_IN_USE;
+  rp->r_pid = -1;
+  rproc_ptr[_ENDPOINT_P(rpub->endpoint)] = NULL;
+
+  /* Restore original IRQ and I/O range tables in the priv struct. This is the
+   * only part of the privilege structure that can be modified by processes
+   * other than RS itself.
+   */
+  rp->r_priv.s_nr_irq = rp->r_nr_irq;
+  for (i = 0; i < rp->r_nr_irq; i++)
+      rp->r_priv.s_irq_tab[i] = rp->r_irq_tab[i];
+  rp->r_priv.s_nr_io_range = rp->r_nr_io_range;
+  for (i = 0; i < rp->r_nr_io_range; i++)
+      rp->r_priv.s_io_tab[i] = rp->r_io_tab[i];
+
+  rp->r_old_rp = NULL;
+  rp->r_new_rp = NULL;
+  rp->r_prev_rp = NULL;
+  rp->r_next_rp = NULL;
+
+  start_service(rp);
+}
+
+/*===========================================================================*
  *			      terminate_service				     *
  *===========================================================================*/
 PUBLIC void terminate_service(struct rproc *rp)
@@ -959,9 +994,10 @@ PUBLIC void terminate_service(struct rproc *rp)
 
   /* Deal with failures during initialization. */
   if(rp->r_flags & RS_INITIALIZING) {
-      printf("RS: service '%s' exited during initialization\n", rpub->label);
+      if(rs_verbose)
+          printf("RS: service '%s' exited during initialization\n",
+              rpub->label);
       rp->r_flags |= RS_EXITING; /* don't restart. */
-      sys_sysctl_stacktrace(rp->r_pub->endpoint);
 
       /* If updating, rollback. */
       if(rp->r_flags & RS_UPDATING) {
@@ -994,6 +1030,14 @@ PUBLIC void terminate_service(struct rproc *rp)
       get_service_instances(rp, &rps, &nr_rps);
       for(i=0;i<nr_rps;i++) {
           cleanup_service(rps[i]);
+      }
+
+      /* If the service is reincarnating, its slot has not been cleaned up.
+       * Check for this flag now, and attempt to start the service again.
+       * If this fails, start_service() itself will perform cleanup.
+       */
+      if (rp->r_flags & RS_REINCARNATE) {
+          reincarnate_service(rp);
       }
   }
   else if(rp->r_flags & RS_REFRESHING) {
@@ -1335,9 +1379,9 @@ endpoint_t source;
       printf("RS: edit_slot: too many IRQs requested\n");
       return EINVAL;
   }
-  rp->r_priv.s_nr_irq= rs_start->rss_nr_irq;
+  rp->r_nr_irq= rp->r_priv.s_nr_irq= rs_start->rss_nr_irq;
   for (i= 0; i<rp->r_priv.s_nr_irq; i++) {
-      rp->r_priv.s_irq_tab[i]= rs_start->rss_irq[i];
+      rp->r_irq_tab[i]= rp->r_priv.s_irq_tab[i]= rs_start->rss_irq[i];
       if(rs_verbose)
           printf("RS: edit_slot: IRQ %d\n", rp->r_priv.s_irq_tab[i]);
   }
@@ -1353,11 +1397,12 @@ endpoint_t source;
       printf("RS: edit_slot: too many I/O ranges requested\n");
       return EINVAL;
   }
-  rp->r_priv.s_nr_io_range= rs_start->rss_nr_io;
+  rp->r_nr_io_range= rp->r_priv.s_nr_io_range= rs_start->rss_nr_io;
   for (i= 0; i<rp->r_priv.s_nr_io_range; i++) {
       rp->r_priv.s_io_tab[i].ior_base= rs_start->rss_io[i].base;
       rp->r_priv.s_io_tab[i].ior_limit=
           rs_start->rss_io[i].base+rs_start->rss_io[i].len-1;
+      rp->r_io_tab[i] = rp->r_priv.s_io_tab[i];
       if(rs_verbose)
           printf("RS: edit_slot: I/O [%x..%x]\n",
               rp->r_priv.s_io_tab[i].ior_base,
