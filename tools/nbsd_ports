@@ -28,4 +28,4 @@ usr.sbin/vipw		src/usr.sbin/vipw
 usr.bin/bzip2		src/usr.bin/bzip2
 usr.bin/bzip2recover	src/usr.bin/bzip2recover
 libexec/makewhatis	src/libexec/makewhatis
-dist/bzip2		dist/bzip2
+dist/bzip2		src/dist/bzip2
