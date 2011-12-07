@@ -188,12 +188,22 @@ static void check_realpath_recurse(const char *path, int depth)
 	DIR *dir;
 	struct dirent *dirent;
 	char pathsub[PATH_MAX + 1];
+	struct stat st;
 
 	/* check with the path itself */
 	check_realpath_step_by_step(path, 0);
 
 	/* don't go too deep */
 	if (depth < 1)
+		return;
+
+	/* don't bother with non-directories. Due to timeouts in drivers we
+	 * might not get expected results and takes way too long */
+	if (stat(path, &st) != 0) {
+		ERR;
+		return;
+	}
+	if (!S_ISDIR(st.st_mode))
 		return;
 
 	/* loop through subdirectories (including . and ..) */
