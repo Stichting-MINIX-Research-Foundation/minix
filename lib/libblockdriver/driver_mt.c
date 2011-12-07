@@ -8,84 +8,132 @@
  *   blockdriver_mt_terminate:	break out of the main message loop
  *   blockdriver_mt_sleep:	put the current thread to sleep
  *   blockdriver_mt_wakeup:	wake up a sleeping thread
- *   blockdriver_mt_stop:	put up the current thread for termination
+ *   blockdriver_mt_set_workers:set the number of worker threads
  */
 
 #include <minix/blockdriver_mt.h>
 #include <minix/mthread.h>
 #include <assert.h>
 
+#include "const.h"
 #include "driver.h"
 #include "mq.h"
-#include "event.h"
+
+/* A thread ID is composed of a device ID and a per-device worker thread ID.
+ * All thread IDs must be in the range 0..(MAX_THREADS-1) inclusive.
+ */
+#define MAKE_TID(did, wid)	((did) * MAX_WORKERS + (wid))
+#define TID_DEVICE(tid)		((tid) / MAX_WORKERS)
+#define TID_WORKER(tid)		((tid) % MAX_WORKERS)
+
+typedef int worker_id_t;
 
 typedef enum {
   STATE_DEAD,
   STATE_RUNNING,
-  STATE_STOPPING,
+  STATE_BUSY,
   STATE_EXITED
 } worker_state;
 
-/* Structure to handle running worker threads. */
+/* Structure with information about a worker thread. */
 typedef struct {
-  thread_id_t id;
+  device_id_t device_id;
+  worker_id_t worker_id;
   worker_state state;
   mthread_thread_t mthread;
-  event_t queue_event;
-  event_t sleep_event;
+  mthread_event_t sleep_event;
 } worker_t;
+
+/* Structure with information about a device. */
+typedef struct {
+  device_id_t id;
+  unsigned int workers;
+  worker_t worker[MAX_WORKERS];
+  mthread_event_t queue_event;
+  mthread_rwlock_t barrier;
+} device_t;
 
 PRIVATE struct blockdriver *bdtab;
 PRIVATE int running = FALSE;
 
 PRIVATE mthread_key_t worker_key;
 
-PRIVATE worker_t worker[BLOCKDRIVER_MT_MAX_WORKERS];
+PRIVATE device_t device[MAX_DEVICES];
 
-PRIVATE worker_t *exited[BLOCKDRIVER_MT_MAX_WORKERS];
+PRIVATE worker_t *exited[MAX_THREADS];
 PRIVATE int num_exited = 0;
 
 /*===========================================================================*
  *				enqueue					     *
  *===========================================================================*/
-PRIVATE void enqueue(worker_t *wp, const message *m_src, int ipc_status)
+PRIVATE void enqueue(device_t *dp, const message *m_src, int ipc_status)
 {
-/* Enqueue a message into a worker thread's queue, and signal the thread.
+/* Enqueue a message into the device's queue, and signal the event.
  * Must be called from the master thread.
  */
 
-  assert(wp->state == STATE_RUNNING || wp->state == STATE_STOPPING);
-
-  if (!mq_enqueue(wp->id, m_src, ipc_status))
+  if (!mq_enqueue(dp->id, m_src, ipc_status))
 	panic("blockdriver_mt: enqueue failed (message queue full)");
 
-  event_fire(&wp->queue_event);
+  mthread_event_fire(&dp->queue_event);
 }
 
 /*===========================================================================*
  *				try_dequeue				     *
  *===========================================================================*/
-PRIVATE int try_dequeue(worker_t *wp, message *m_dst, int *ipc_status)
+PRIVATE int try_dequeue(device_t *dp, message *m_dst, int *ipc_status)
 {
-/* See if a message can be dequeued from the current worker thread's queue. If
- * so, dequeue the message and return TRUE. If not, return FALSE. Must be
- * called from a worker thread. Does not block.
+/* See if a message can be dequeued from the current worker thread's device
+ * queue. If so, dequeue the message and return TRUE. If not, return FALSE.
+ * Must be called from a worker thread. Does not block.
  */
 
-  return mq_dequeue(wp->id, m_dst, ipc_status);
+  return mq_dequeue(dp->id, m_dst, ipc_status);
 }
 
 /*===========================================================================*
  *				dequeue					     *
  *===========================================================================*/
-PRIVATE void dequeue(worker_t *wp, message *m_dst, int *ipc_status)
+PRIVATE int dequeue(device_t *dp, worker_t *wp, message *m_dst,
+  int *ipc_status)
 {
-/* Dequeue a message from the current worker thread's queue. Block the current
- * thread if necessary. Must be called from a worker thread. Always successful.
+/* Dequeue a message from the current worker thread's device queue. Block the
+ * current thread if necessary. Must be called from a worker thread. Either
+ * succeeds with a message (TRUE) or indicates that the thread should be
+ * terminated (FALSE).
  */
 
-  while (!try_dequeue(wp, m_dst, ipc_status))
-	event_wait(&wp->queue_event);
+  do {
+	mthread_event_wait(&dp->queue_event);
+
+	/* If we were woken up as a result of terminate or set_workers, break
+	 * out of the loop and terminate the thread.
+	 */
+	if (!running || wp->worker_id >= dp->workers)
+		return FALSE;
+  } while (!try_dequeue(dp, m_dst, ipc_status));
+
+  return TRUE;
+}
+
+/*===========================================================================*
+ *				is_transfer_req				     *
+ *===========================================================================*/
+PRIVATE int is_transfer_req(int type)
+{
+/* Return whether the given block device request is a transfer request.
+ */
+
+  switch (type) {
+  case BDEV_READ:
+  case BDEV_WRITE:
+  case BDEV_GATHER:
+  case BDEV_SCATTER:
+	return TRUE;
+
+  default:
+	return FALSE;
+  }
 }
 
 /*===========================================================================*
@@ -99,36 +147,50 @@ PRIVATE void *worker_thread(void *param)
  * for this condition and exit if so.
  */
   worker_t *wp;
+  device_t *dp;
+  thread_id_t tid;
   message m;
   int ipc_status, r;
 
   wp = (worker_t *) param;
   assert(wp != NULL);
+  dp = &device[wp->device_id];
+  tid = MAKE_TID(wp->device_id, wp->worker_id);
 
   if (mthread_setspecific(worker_key, wp))
 	panic("blockdriver_mt: could not save local thread pointer");
 
-  while (running) {
+  while (running && wp->worker_id < dp->workers) {
+
 	/* See if a new message is available right away. */
-	if (!try_dequeue(wp, &m, &ipc_status)) {
-		/* If not, and this thread should be stopped, stop now. */
-		if (wp->state == STATE_STOPPING)
-			break;
+	if (!try_dequeue(dp, &m, &ipc_status)) {
 
-		/* Otherwise, block waiting for a new message. */
-		dequeue(wp, &m, &ipc_status);
-
-		if (!running)
+		/* If not, block waiting for a new message or a thread
+		 * termination event.
+		 */
+		if (!dequeue(dp, wp, &m, &ipc_status))
 			break;
 	}
 
 	/* Even if the thread was stopped before, a new message resumes it. */
-	wp->state = STATE_RUNNING;
+	wp->state = STATE_BUSY;
 
-	/* Handle the request, and send a reply. */
-	r = blockdriver_handle_request(bdtab, &m, wp->id);
+	/* If the request is a transfer request, we acquire the read barrier
+	 * lock. Otherwise, we acquire the write lock.
+	 */
+	if (is_transfer_req(m.m_type))
+		mthread_rwlock_rdlock(&dp->barrier);
+	else
+		mthread_rwlock_wrlock(&dp->barrier);
+
+	/* Handle the request and send a reply. */
+	r = blockdriver_handle_request(bdtab, &m, tid);
 
 	blockdriver_reply(&m, ipc_status, r);
+
+	/* Switch the thread back to running state, and unlock the barrier. */
+	wp->state = STATE_RUNNING;
+	mthread_rwlock_unlock(&dp->barrier);
   }
 
   /* Clean up and terminate this thread. */
@@ -145,23 +207,24 @@ PRIVATE void *worker_thread(void *param)
 /*===========================================================================*
  *				master_create_worker			     *
  *===========================================================================*/
-PRIVATE void master_create_worker(worker_t *wp, thread_id_t id)
+PRIVATE void master_create_worker(worker_t *wp, worker_id_t worker_id,
+  device_id_t device_id)
 {
 /* Start a new worker thread.
  */
   int r;
 
-  wp->id = id;
+  wp->device_id = device_id;
+  wp->worker_id = worker_id;
   wp->state = STATE_RUNNING;
 
   /* Initialize synchronization primitives. */
-  event_init(&wp->queue_event);
-  event_init(&wp->sleep_event);
+  mthread_event_init(&wp->sleep_event);
 
   r = mthread_create(&wp->mthread, NULL /*attr*/, worker_thread, (void *) wp);
 
   if (r != 0)
-	panic("blockdriver_mt: could not start thread %d (%d)", id, r);
+	panic("blockdriver_mt: could not start thread %d (%d)", worker_id, r);
 }
 
 /*===========================================================================*
@@ -171,20 +234,16 @@ PRIVATE void master_destroy_worker(worker_t *wp)
 {
 /* Clean up resources used by an exited worker thread.
  */
-  message m;
-  int ipc_status;
 
   assert(wp != NULL);
   assert(wp->state == STATE_EXITED);
-  assert(!mq_dequeue(wp->id, &m, &ipc_status));
 
   /* Join the thread. */
   if (mthread_join(wp->mthread, NULL))
-	panic("blockdriver_mt: could not join thread %d", wp->id);
+	panic("blockdriver_mt: could not join thread %d", wp->worker_id);
 
   /* Destroy resources. */
-  event_destroy(&wp->sleep_event);
-  event_destroy(&wp->queue_event);
+  mthread_event_destroy(&wp->sleep_event);
 
   wp->state = STATE_DEAD;
 }
@@ -209,13 +268,14 @@ PRIVATE void master_handle_exits(void)
  *===========================================================================*/
 PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
 {
-/* For real request messages, query the thread ID, start a thread if one with
- * that ID is not already running, and enqueue the message in the thread's
- * message queue.
+/* For real request messages, query the device ID, start a thread if none is
+ * free and the maximum number of threads for that device has not yet been
+ * reached, and enqueue the message in the devices's message queue.
  */
-  thread_id_t thread_id;
+  device_id_t id;
   worker_t *wp;
-  int r;
+  device_t *dp;
+  int r, wid;
 
   /* If this is not a block driver request, we cannot get the minor device
    * associated with it, and thus we can not tell which thread should process
@@ -230,27 +290,38 @@ PRIVATE void master_handle_request(message *m_ptr, int ipc_status)
 	return;
   }
 
-  /* Query the thread ID. Upon failure, send the error code to the caller. */
-  r = (*bdtab->bdr_thread)(m_ptr->DEVICE, &thread_id);
-
+  /* Query the device ID. Upon failure, send the error code to the caller. */
+  r = (*bdtab->bdr_device)(m_ptr->BDEV_MINOR, &id);
   if (r != OK) {
 	blockdriver_reply(m_ptr, ipc_status, r);
 
 	return;
   }
 
-  /* Start the thread if it is not already running. */
-  assert(thread_id >= 0 && thread_id < BLOCKDRIVER_MT_MAX_WORKERS);
+  /* Look up the device control block. */
+  assert(id >= 0 && id < MAX_DEVICES);
+  dp = &device[id];
 
-  wp = &worker[thread_id];
+  /* Find the first non-busy worker thread. */
+  for (wid = 0; wid < dp->workers; wid++)
+	if (dp->worker[wid].state != STATE_BUSY)
+		break;
 
-  assert(wp->state != STATE_EXITED);
+  /* If the worker thread is dead, start a thread now, unless we have already
+   * reached the maximum number of threads.
+   */
+  if (wid < dp->workers) {
+	wp = &dp->worker[wid];
 
-  if (wp->state == STATE_DEAD)
-	master_create_worker(wp, thread_id);
+	assert(wp->state != STATE_EXITED);
 
-  /* Enqueue the message for the thread, and possibly wake it up. */
-  enqueue(wp, m_ptr, ipc_status);
+	/* If the non-busy thread has not yet been created, create one now. */
+	if (wp->state == STATE_DEAD)
+		master_create_worker(wp, wid, dp->id);
+  }
+
+  /* Enqueue the message at the device queue. */
+  enqueue(dp, m_ptr, ipc_status);
 }
 
 /*===========================================================================*
@@ -260,23 +331,48 @@ PRIVATE void master_init(struct blockdriver *bdp)
 {
 /* Initialize the state of the master thread.
  */
-  int i;
+  int i, j;
 
   assert(bdp != NULL);
-  assert(bdp->bdr_thread != NULL);
+  assert(bdp->bdr_device != NULL);
 
   mthread_init();
 
   bdtab = bdp;
 
-  for (i = 0; i < BLOCKDRIVER_MT_MAX_WORKERS; i++)
-	worker[i].state = STATE_DEAD;
+  /* Initialize device-specific data structures. */
+  for (i = 0; i < MAX_DEVICES; i++) {
+	device[i].id = i;
+	device[i].workers = 1;
+	mthread_event_init(&device[i].queue_event);
+	mthread_rwlock_init(&device[i].barrier);
+
+	for (j = 0; j < MAX_WORKERS; j++)
+		device[i].worker[j].state = STATE_DEAD;
+  }
 
   /* Initialize a per-thread key, where each worker thread stores its own
    * reference to the worker structure.
    */
   if (mthread_key_create(&worker_key, NULL))
 	panic("blockdriver_mt: error initializing worker key");
+}
+
+/*===========================================================================*
+ *				blockdriver_mt_get_tid			     *
+ *===========================================================================*/
+PUBLIC thread_id_t blockdriver_mt_get_tid(void)
+{
+/* Return back the ID of this thread.
+ */
+  worker_t *wp;
+
+  wp = (worker_t *) mthread_getspecific(worker_key);
+
+  if (wp == NULL)
+	panic("blockdriver_mt: master thread cannot query thread ID\n");
+
+  return MAKE_TID(wp->device_id, wp->worker_id);
 }
 
 /*===========================================================================*
@@ -301,7 +397,7 @@ PUBLIC void blockdriver_mt_task(struct blockdriver *driver_tab)
 {
 /* The multithreaded driver task.
  */
-  int ipc_status;
+  int ipc_status, i;
   message mess;
 
   /* Initialize first if necessary. */
@@ -329,6 +425,10 @@ PUBLIC void blockdriver_mt_task(struct blockdriver *driver_tab)
 	if (num_exited > 0)
 		master_handle_exits();
   }
+
+  /* Free up resources. */
+  for (i = 0; i < MAX_DEVICES; i++)
+	mthread_event_destroy(&device[i].queue_event);
 }
 
 /*===========================================================================*
@@ -356,7 +456,7 @@ PUBLIC void blockdriver_mt_sleep(void)
   if (wp == NULL)
 	panic("blockdriver_mt: master thread cannot sleep");
 
-  event_wait(&wp->sleep_event);
+  mthread_event_wait(&wp->sleep_event);
 }
 
 /*===========================================================================*
@@ -367,32 +467,41 @@ PUBLIC void blockdriver_mt_wakeup(thread_id_t id)
 /* Wake up a sleeping worker thread from the master thread.
  */
   worker_t *wp;
+  device_id_t device_id;
+  worker_id_t worker_id;
 
-  assert(id >= 0 && id < BLOCKDRIVER_MT_MAX_WORKERS);
+  device_id = TID_DEVICE(id);
+  worker_id = TID_WORKER(id);
 
-  wp = &worker[id];
+  assert(device_id >= 0 && device_id < MAX_DEVICES);
+  assert(worker_id >= 0 && worker_id < MAX_WORKERS);
 
-  assert(wp->state == STATE_RUNNING || wp->state == STATE_STOPPING);
+  wp = &device[device_id].worker[worker_id];
 
-  event_fire(&wp->sleep_event);
+  assert(wp->state == STATE_RUNNING || wp->state == STATE_BUSY);
+
+  mthread_event_fire(&wp->sleep_event);
 }
 
 /*===========================================================================*
- *				blockdriver_mt_stop			     *
+ *				blockdriver_mt_set_workers		     *
  *===========================================================================*/
-PUBLIC void blockdriver_mt_stop(void)
+PUBLIC void blockdriver_mt_set_workers(device_id_t id, int workers)
 {
-/* Put up the current worker thread for termination. Once the current dispatch
- * call has finished, and there are no more messages in the thread's message
- * queue, the thread will be terminated. Any messages in the queue will undo
- * the effect of this call.
+/* Set the number of worker threads for the given device.
  */
-  worker_t *wp;
+  device_t *dp;
 
-  wp = (worker_t *) mthread_getspecific(worker_key);
+  assert(id >= 0 && id < MAX_DEVICES);
 
-  assert(wp != NULL);
-  assert(wp->state == STATE_RUNNING || wp->state == STATE_STOPPING);
+  if (workers > MAX_WORKERS)
+	workers = MAX_WORKERS;
 
-  wp->state = STATE_STOPPING;
+  dp = &device[id];
+
+  /* If we are cleaning up, wake up all threads waiting on a queue event. */
+  if (workers == 1 && dp->workers > workers)
+	mthread_event_fire_all(&dp->queue_event);
+
+  dp->workers = workers;
 }

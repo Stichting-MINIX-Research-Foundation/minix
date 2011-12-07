@@ -3,6 +3,7 @@
 
 #include <minix/driver.h>
 
+typedef int device_id_t;
 typedef int thread_id_t;
 
 /* Types supported for the 'type' field of struct blockdriver. */
@@ -26,7 +27,7 @@ struct blockdriver {
   _PROTOTYPE( void (*bdr_intr), (unsigned int irqs) );
   _PROTOTYPE( void (*bdr_alarm), (clock_t stamp) );
   _PROTOTYPE( int (*bdr_other), (message *m_ptr) );
-  _PROTOTYPE( int (*bdr_thread), (dev_t minor, thread_id_t *threadp) );
+  _PROTOTYPE( int (*bdr_device), (dev_t minor, device_id_t *id) );
 };
 
 /* Functions defined by libblockdriver. These can be used for both

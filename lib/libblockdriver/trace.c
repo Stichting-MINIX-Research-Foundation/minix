@@ -7,6 +7,7 @@
 #include <minix/minlib.h>
 #include <assert.h>
 
+#include "const.h"
 #include "trace.h"
 
 #define NO_TRACEDEV		((dev_t) -1)
@@ -24,7 +25,7 @@ PRIVATE u64_t trace_tsc;
  * plus one for the main thread). Each pointer is set to NULL whenever no
  * operation is currently being traced for that thread, for whatever reason.
  */
-PRIVATE btrace_entry *trace_ptr[BLOCKDRIVER_MT_MAX_WORKERS + 1] = { NULL };
+PRIVATE btrace_entry *trace_ptr[MAX_THREADS + 1] = { NULL };
 
 /*===========================================================================*
  *				trace_gettime				     *
@@ -175,7 +176,7 @@ PUBLIC void trace_start(thread_id_t id, message *m_ptr)
 
   if (!trace_enabled || trace_dev != m_ptr->BDEV_MINOR) return;
 
-  assert(id >= 0 && id < BLOCKDRIVER_MT_MAX_WORKERS + 1);
+  assert(id >= 0 && id < MAX_THREADS + 1);
 
   if (trace_pos == trace_size)
 	return;
@@ -254,7 +255,7 @@ PUBLIC void trace_setsize(thread_id_t id, size_t size)
 
   if (!trace_enabled) return;
 
-  assert(id >= 0 && id < BLOCKDRIVER_MT_MAX_WORKERS + 1);
+  assert(id >= 0 && id < MAX_THREADS + 1);
 
   if ((entry = trace_ptr[id]) == NULL) return;
 
@@ -272,7 +273,7 @@ PUBLIC void trace_finish(thread_id_t id, int result)
 
   if (!trace_enabled) return;
 
-  assert(id >= 0 && id < BLOCKDRIVER_MT_MAX_WORKERS + 1);
+  assert(id >= 0 && id < MAX_THREADS + 1);
 
   if ((entry = trace_ptr[id]) == NULL) return;
 

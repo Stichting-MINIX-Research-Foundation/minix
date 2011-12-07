@@ -14,6 +14,7 @@
 #include <minix/drivers.h>
 #include <minix/blockdriver.h>
 
+#include "const.h"
 #include "driver.h"
 #include "mq.h"
 

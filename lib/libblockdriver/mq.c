@@ -10,6 +10,7 @@
 #include <sys/queue.h>
 #include <assert.h>
 
+#include "const.h"
 #include "mq.h"
 
 #define MQ_SIZE		128
@@ -21,8 +22,7 @@ struct mq_cell {
 };
 
 PRIVATE struct mq_cell pool[MQ_SIZE];
-
-PRIVATE STAILQ_HEAD(queue, mq_cell) queue[BLOCKDRIVER_MT_MAX_WORKERS];
+PRIVATE STAILQ_HEAD(queue, mq_cell) queue[MAX_DEVICES];
 PRIVATE STAILQ_HEAD(free_list, mq_cell) free_list;
 
 /*===========================================================================*
@@ -36,7 +36,7 @@ PUBLIC void mq_init(void)
 
   STAILQ_INIT(&free_list);
 
-  for (i = 0; i < BLOCKDRIVER_MT_MAX_WORKERS; i++)
+  for (i = 0; i < MAX_DEVICES; i++)
 	STAILQ_INIT(&queue[i]);
 
   for (i = 0; i < MQ_SIZE; i++)
@@ -46,15 +46,15 @@ PUBLIC void mq_init(void)
 /*===========================================================================*
  *				mq_enqueue				     *
  *===========================================================================*/
-PUBLIC int mq_enqueue(thread_id_t thread_id, const message *mess,
+PUBLIC int mq_enqueue(device_id_t device_id, const message *mess,
   int ipc_status)
 {
-/* Add a message, including its IPC status, to the message queue of a thread.
+/* Add a message, including its IPC status, to the message queue of a device.
  * Return TRUE iff the message was added successfully.
  */
   struct mq_cell *cell;
 
-  assert(thread_id >= 0 && thread_id < BLOCKDRIVER_MT_MAX_WORKERS);
+  assert(device_id >= 0 && device_id < MAX_DEVICES);
 
   if (STAILQ_EMPTY(&free_list))
 	return FALSE;
@@ -65,7 +65,7 @@ PUBLIC int mq_enqueue(thread_id_t thread_id, const message *mess,
   cell->mess = *mess;
   cell->ipc_status = ipc_status;
 
-  STAILQ_INSERT_TAIL(&queue[thread_id], cell, next);
+  STAILQ_INSERT_TAIL(&queue[device_id], cell, next);
 
   return TRUE;
 }
@@ -73,20 +73,20 @@ PUBLIC int mq_enqueue(thread_id_t thread_id, const message *mess,
 /*===========================================================================*
  *				mq_dequeue				     *
  *===========================================================================*/
-PUBLIC int mq_dequeue(thread_id_t thread_id, message *mess, int *ipc_status)
+PUBLIC int mq_dequeue(device_id_t device_id, message *mess, int *ipc_status)
 {
 /* Return and remove a message, including its IPC status, from the message
  * queue of a thread. Return TRUE iff a message was available.
  */
   struct mq_cell *cell;
 
-  assert(thread_id >= 0 && thread_id < BLOCKDRIVER_MT_MAX_WORKERS);
+  assert(device_id >= 0 && device_id < MAX_DEVICES);
 
-  if (STAILQ_EMPTY(&queue[thread_id]))
+  if (STAILQ_EMPTY(&queue[device_id]))
 	return FALSE;
 
-  cell = STAILQ_FIRST(&queue[thread_id]);
-  STAILQ_REMOVE_HEAD(&queue[thread_id], next);
+  cell = STAILQ_FIRST(&queue[device_id]);
+  STAILQ_REMOVE_HEAD(&queue[device_id], next);
 
   *mess = cell->mess;
   *ipc_status = cell->ipc_status;

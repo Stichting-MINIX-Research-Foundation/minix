@@ -4,13 +4,13 @@
 #include <minix/drivers.h>
 
 #define NR_PORTS 32		/* maximum number of ports */
-#define NR_CMDS 1		/* maximum number of queued commands */
+#define NR_CMDS 32		/* maximum number of queued commands */
 
 /* Time values that can be set with options. */
 #define SPINUP_TIMEOUT		5000	/* initial spin-up time (ms) */
 #define SIG_TIMEOUT		250	/* time between signature checks (ms) */
 #define NR_SIG_CHECKS		60	/* maximum number of times to check */
-#define COMMAND_TIMEOUT		5000	/* time to wait for non-I/O cmd (ms) */
+#define COMMAND_TIMEOUT		10000	/* time to wait for non-I/O cmd (ms) */
 #define TRANSFER_TIMEOUT	30000	/* time to wait for I/O cmd (ms) */
 #define FLUSH_TIMEOUT		60000	/* time to wait for flush cmd (ms) */
 
@@ -30,6 +30,8 @@
 #define ATA_H2D_CMD			2	/* Command */
 #define 	ATA_CMD_READ_DMA_EXT	0x25	/* READ DMA EXT */
 #define 	ATA_CMD_WRITE_DMA_EXT	0x35	/* WRITE DMA EXT */
+#define 	ATA_CMD_READ_FPDMA_QUEUED	0x60	/* READ FPDMA QUEUED */
+#define 	ATA_CMD_WRITE_FPDMA_QUEUED	0x61	/* WRITE FPDMA QUEUED */
 #define 	ATA_CMD_WRITE_DMA_FUA_EXT	0x3D	/* WRITE DMA FUA EXT */
 #define 	ATA_CMD_PACKET		0xA0	/* PACKET */
 #define 	ATA_CMD_IDENTIFY_PACKET	0xA1	/* IDENTIFY PACKET DEVICE */
@@ -44,13 +46,19 @@
 #define ATA_H2D_LBA_HIGH		6	/* LBA High */
 #define ATA_H2D_DEV			7	/* Device */
 #define 	ATA_DEV_LBA		0x40	/* use LBA addressing */
+#define 	ATA_DEV_FUA		0x80	/* Force Unit Access (FPDMA) */
 #define ATA_H2D_LBA_LOW_EXP		8	/* LBA Low (exp) */
 #define ATA_H2D_LBA_MID_EXP		9	/* LBA Mid (exp) */
 #define ATA_H2D_LBA_HIGH_EXP		10	/* LBA High (exp) */
 #define ATA_H2D_FEAT_EXP		11	/* Features (exp) */
 #define ATA_H2D_SEC			12	/* Sector Count */
+#define 	ATA_SEC_TAG_SHIFT	3	/* NCQ command tag */
 #define ATA_H2D_SEC_EXP			13	/* Sector Count (exp) */
 #define ATA_H2D_CTL			15	/* Control */
+
+#define ATA_IS_FPDMA_CMD(c)			\
+	((c) == ATA_CMD_READ_FPDMA_QUEUED ||	\
+	 (c) == ATA_CMD_WRITE_FPDMA_QUEUED)
 
 /* ATA constants. */
 #define ATA_SECTOR_SIZE		512		/* default sector size */
@@ -73,6 +81,10 @@
 #define ATA_ID_DMADIR		62		/* DMADIR */
 #define ATA_ID_DMADIR_DMADIR	0x8000		/* DMADIR required */
 #define ATA_ID_DMADIR_DMA	0x0400		/* DMA supported (DMADIR) */
+#define ATA_ID_QDEPTH		75		/* NCQ queue depth */
+#define ATA_ID_QDEPTH_MASK	0x000F		/* NCQ queue depth mask */
+#define ATA_ID_SATA_CAP		76		/* SATA capabilities */
+#define ATA_ID_SATA_CAP_NCQ	0x0100		/* NCQ support */
 #define ATA_ID_SUP0		82		/* Features supported (1/3) */
 #define ATA_ID_SUP0_WCACHE	0x0020		/* Write cache supported */
 #define ATA_ID_SUP1		83		/* Features supported (2/3) */
@@ -160,6 +172,7 @@
 #define 	AHCI_PORT_IS_IFS	(1L << 27)	/* Interface Fatal */
 #define 	AHCI_PORT_IS_PRCS	(1L << 22)	/* PhyRdy Change */
 #define 	AHCI_PORT_IS_PCS	(1L <<  6)	/* Port Conn Change */
+#define 	AHCI_PORT_IS_SDBS	(1L <<  3)	/* Set Device Bits FIS */
 #define 	AHCI_PORT_IS_PSS	(1L <<  1)	/* PIO Setup FIS */
 #define 	AHCI_PORT_IS_DHRS	(1L <<  0)	/* D2H Register FIS */
 #define AHCI_PORT_IS_RESTART \
@@ -167,7 +180,7 @@
 	 AHCI_PORT_IS_IFS)
 #define AHCI_PORT_IS_MASK \
 	(AHCI_PORT_IS_RESTART | AHCI_PORT_IS_PRCS | AHCI_PORT_IS_PCS | \
-	 AHCI_PORT_IS_DHRS | AHCI_PORT_IS_PSS)
+	 AHCI_PORT_IS_DHRS | AHCI_PORT_IS_PSS | AHCI_PORT_IS_SDBS)
 #define AHCI_PORT_IE	5		/* Interrupt Enable */
 #define 	AHCI_PORT_IE_MASK	AHCI_PORT_IS_MASK
 #define 	AHCI_PORT_IE_PRCE	AHCI_PORT_IS_PRCS
@@ -196,6 +209,7 @@
 #define 	AHCI_PORT_SCTL_DET_NONE	0x00000000L	/* No Action Req'd */
 #define AHCI_PORT_SERR	12		/* Serial ATA Error */
 #define 	AHCI_PORT_SERR_DIAG_N	(1L << 16)	/* PhyRdy Change */
+#define AHCI_PORT_SACT	13		/* Serial ATA Active */
 #define AHCI_PORT_CI	14		/* Command Issue */
 
 /* Number of Physical Region Descriptors (PRDs). Must be at least NR_IOREQS+2,
@@ -262,6 +276,12 @@ enum {
 	STATE_GOOD_DEV		/* a usable device has been detected */
 };
 
+/* Command results. */
+enum {
+	RESULT_FAILURE,
+	RESULT_SUCCESS
+};
+
 /* Port flags. */
 #define FLAG_ATAPI		0x00000001	/* is this an ATAPI device? */
 #define FLAG_HAS_MEDIUM		0x00000002	/* is a medium present? */
@@ -274,6 +294,8 @@ enum {
 #define FLAG_HAS_FLUSH		0x00000100	/* is FLUSH CACHE supported? */
 #define FLAG_SUSPENDED		0x00000200	/* is the thread suspended? */
 #define FLAG_HAS_FUA		0x00000400	/* is WRITE DMA FUA EX sup.? */
+#define FLAG_HAS_NCQ		0x00000800	/* is NCQ supported? */
+#define FLAG_NCQ_MODE		0x00001000	/* issuing NCQ commands? */
 
 /* Mapping between devices and ports. */
 #define NO_PORT		-1	/* this device maps to no port */

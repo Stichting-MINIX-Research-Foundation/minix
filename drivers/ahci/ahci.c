@@ -1,4 +1,7 @@
-/* Advanced Host Controller Interface (AHCI) driver, by D.C. van Moolenbroek */
+/* Advanced Host Controller Interface (AHCI) driver, by D.C. van Moolenbroek
+ * - Multithreading support by Arne Welzel
+ * - Native Command Queuing support by Raja Appuswamy
+ */
 /*
  * This driver is based on the following specifications:
  * - Serial ATA Advanced Host Controller Interface (AHCI) 1.3
@@ -8,10 +11,11 @@
  *
  * The driver supports device hot-plug, active device status tracking,
  * nonremovable ATA and removable ATAPI devices, custom logical sector sizes,
- * sector-unaligned reads, and parallel requests to different devices.
+ * sector-unaligned reads, native command queuing and parallel requests to
+ * different devices.
  *
- * It does not implement transparent failure recovery, power management, native
- * command queuing, or port multipliers.
+ * It does not implement transparent failure recovery, power management, or
+ * port multiplier support.
  */
 /*
  * An AHCI controller exposes a number of ports (up to 32), each of which may
@@ -33,9 +37,9 @@
  *        +----------------+----------------+----------------+--------+
  *
  * At driver startup, all physically present ports are put in SPIN_UP state.
- * This state differs from NO_DEV in that DEV_OPEN calls will be deferred
+ * This state differs from NO_DEV in that BDEV_OPEN calls will be deferred
  * until either the spin-up timer expires, or a device has been identified on
- * that port. This prevents early DEV_OPEN calls from failing erroneously at
+ * that port. This prevents early BDEV_OPEN calls from failing erroneously at
  * startup time if the device has not yet been able to announce its presence.
  *
  * If a device is detected, either at startup time or after hot-plug, its
@@ -58,9 +62,9 @@
  *
  * The following table lists for each state, whether the port is started
  * (PxCMD.ST is set), whether a timer is running, what the PxIE mask is to be
- * set to, and what DEV_OPEN calls on this port should return.
+ * set to, and what BDEV_OPEN calls on this port should return.
  *
- *   State       Started     Timer       PxIE        DEV_OPEN
+ *   State       Started     Timer       PxIE        BDEV_OPEN
  *   ---------   ---------   ---------   ---------   ---------
  *   NO_PORT     no          no          (none)      ENXIO
  *   SPIN_UP     no          yes         PRCE        (wait)
@@ -68,18 +72,12 @@
  *   WAIT_SIG    yes         yes         PRCE        (wait)
  *   WAIT_ID     yes         yes         (all)       (wait)
  *   BAD_DEV     no          no          PRCE        ENXIO
- *   GOOD_DEV    yes         when busy   (all)       OK
+ *   GOOD_DEV    yes         per-command (all)       OK
  *
- * In order to continue deferred DEV_OPEN calls, the BUSY flag must be unset
+ * In order to continue deferred BDEV_OPEN calls, the BUSY flag must be unset
  * when changing from SPIN_UP to any state but WAIT_SIG, and when changing from
  * WAIT_SIG to any state but WAIT_ID, and when changing from WAIT_ID to any
  * other state.
- *
- * Normally, the BUSY flag is used to indicate whether a command is in
- * progress. There is no support for native command queuing yet. To allow this
- * limitation to be removed in the future, there is already some support in the
- * code for specifying a command number, even though it will currently always
- * be zero.
  */
 /*
  * The maximum byte size of a single transfer (MAX_TRANSFER) is currently set
@@ -120,6 +118,7 @@ PRIVATE struct {
 
 	int nr_ports;		/* addressable number of ports (1..NR_PORTS) */
 	int nr_cmds;		/* maximum number of commands per port */
+	int has_ncq;		/* NCQ support flag */
 
 	int irq;		/* IRQ number */
 	int hook_id;		/* IRQ hook ID */
@@ -162,6 +161,14 @@ PRIVATE struct port_state {
 	timer_t timer;		/* port-specific timeout timer */
 	int left;		/* number of tries left before giving up */
 				/* (only used for signature probing) */
+
+	int queue_depth;	/* NCQ queue depth */
+	u32_t pend_mask;	/* commands not yet complete */
+	struct {
+		thread_id_t tid;/* ID of the worker thread */
+		timer_t timer;	/* timer associated with each request */
+		int result;	/* success/failure result of the commands */
+	} cmd_info[NR_CMDS];
 } port_state[NR_PORTS];
 
 PRIVATE int ahci_instance;			/* driver instance number */
@@ -179,6 +186,10 @@ PRIVATE long ahci_flush_timeout = FLUSH_TIMEOUT;
 PRIVATE int ahci_map[MAX_DRIVES];		/* device-to-port mapping */
 
 PRIVATE int ahci_exiting = FALSE;		/* exit after last close? */
+
+#define BUILD_ARG(port, tag)	(((port) << 8) | (tag))
+#define GET_PORT(arg)		((arg) >> 8)
+#define GET_TAG(arg)		((arg) & 0xFF)
 
 #define dprintf(v,s) do {		\
 	if (ahci_verbose >= (v))	\
@@ -203,7 +214,7 @@ PRIVATE void ahci_alarm(clock_t stamp);
 PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 	cp_grant_id_t grant);
 PRIVATE void ahci_intr(unsigned int irqs);
-PRIVATE int ahci_thread(dev_t minor, thread_id_t *id);
+PRIVATE int ahci_device(dev_t minor, device_id_t *id);
 PRIVATE struct port_state *ahci_get_port(dev_t minor);
 
 /* AHCI driver table. */
@@ -219,7 +230,7 @@ PRIVATE struct blockdriver ahci_dtab = {
 	ahci_intr,
 	ahci_alarm,
 	NULL,		/* bdr_other */
-	ahci_thread
+	ahci_device
 };
 
 /*===========================================================================*
@@ -313,7 +324,7 @@ PRIVATE int atapi_load_eject(struct port_state *ps, int cmd, int load)
 
 	memset(packet, 0, sizeof(packet));
 	packet[0] = ATAPI_CMD_START_STOP;
-	packet[4] = (load) ? ATAPI_START_STOP_LOAD : ATAPI_START_STOP_EJECT;
+	packet[4] = load ? ATAPI_START_STOP_LOAD : ATAPI_START_STOP_EJECT;
 
 	return atapi_exec(ps, cmd, packet, 0, FALSE);
 }
@@ -519,6 +530,16 @@ PRIVATE int ata_id_check(struct port_state *ps, u16_t *buf)
 	ps->lba_count = make64((buf[ATA_ID_LBA1] << 16) | buf[ATA_ID_LBA0],
 			(buf[ATA_ID_LBA3] << 16) | buf[ATA_ID_LBA2]);
 
+	/* Determine the queue depth of the device. */
+	if (hba_state.has_ncq &&
+			(buf[ATA_ID_SATA_CAP] & ATA_ID_SATA_CAP_NCQ)) {
+		ps->flags |= FLAG_HAS_NCQ;
+		ps->queue_depth =
+			(buf[ATA_ID_QDEPTH] & ATA_ID_QDEPTH_MASK) + 1;
+		if (ps->queue_depth > hba_state.nr_cmds)
+			ps->queue_depth = hba_state.nr_cmds;
+	}
+
 	/* For now, we only support long logical sectors. Long physical sector
 	 * support may be added later. Note that the given value is in words.
 	 */
@@ -559,7 +580,6 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	/* Perform data transfer from or to an ATA device.
 	 */
 	cmd_fis_t fis;
-	u8_t opcode;
 
 	assert(count <= ATA_MAX_SECTORS);
 
@@ -567,16 +587,30 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 	if (count == ATA_MAX_SECTORS)
 		count = 0;
 
-	/* Fill in a transfer command. */
-	if (write && force && (ps->flags & FLAG_HAS_FUA))
-		opcode = ATA_CMD_WRITE_DMA_FUA_EXT;
-	else
-		opcode = write ? ATA_CMD_WRITE_DMA_EXT : ATA_CMD_READ_DMA_EXT;
-
 	memset(&fis, 0, sizeof(fis));
-	fis.cf_cmd = opcode;
-	fis.cf_lba = ex64lo(start_lba) & 0x00FFFFFFL;
 	fis.cf_dev = ATA_DEV_LBA;
+	if (ps->flags & FLAG_HAS_NCQ) {
+		if (write) {
+			if (force && (ps->flags & FLAG_HAS_FUA))
+				fis.cf_dev |= ATA_DEV_FUA;
+
+			fis.cf_cmd = ATA_CMD_WRITE_FPDMA_QUEUED;
+		} else {
+			fis.cf_cmd = ATA_CMD_READ_FPDMA_QUEUED;
+		}
+	}
+	else {
+		if (write) {
+			if (force && (ps->flags & FLAG_HAS_FUA))
+				fis.cf_cmd = ATA_CMD_WRITE_DMA_FUA_EXT;
+			else
+				fis.cf_cmd = ATA_CMD_WRITE_DMA_EXT;
+		}
+		else {
+			fis.cf_cmd = ATA_CMD_READ_DMA_EXT;
+		}
+	}
+	fis.cf_lba = ex64lo(start_lba) & 0x00FFFFFFL;
 	fis.cf_lba_exp = ex64lo(rshift64(start_lba, 24)) & 0x00FFFFFFL;
 	fis.cf_sec = count & 0xFF;
 	fis.cf_sec_exp = (count >> 8) & 0xFF;
@@ -590,7 +624,7 @@ PRIVATE int ata_transfer(struct port_state *ps, int cmd, u64_t start_lba,
 /*===========================================================================*
  *				gen_identify				     *
  *===========================================================================*/
-PRIVATE int gen_identify(struct port_state *ps, int cmd, int blocking)
+PRIVATE int gen_identify(struct port_state *ps, int blocking)
 {
 	/* Identify an ATA or ATAPI device. If the blocking flag is set, block
 	 * until the command has completed; otherwise return immediately.
@@ -610,12 +644,12 @@ PRIVATE int gen_identify(struct port_state *ps, int cmd, int blocking)
 	prd.prd_size = ATA_ID_SIZE;
 
 	/* Start the command, and possibly wait for the result. */
-	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
+	port_set_cmd(ps, 0, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
 
 	if (blocking)
-		return port_exec(ps, cmd, ahci_command_timeout);
+		return port_exec(ps, 0, ahci_command_timeout);
 
-	port_issue(ps, cmd, ahci_command_timeout);
+	port_issue(ps, 0, ahci_command_timeout);
 
 	return OK;
 }
@@ -623,7 +657,7 @@ PRIVATE int gen_identify(struct port_state *ps, int cmd, int blocking)
 /*===========================================================================*
  *				gen_flush_wcache			     *
  *===========================================================================*/
-PRIVATE int gen_flush_wcache(struct port_state *ps, int cmd)
+PRIVATE int gen_flush_wcache(struct port_state *ps)
 {
 	/* Flush the device's write cache.
 	 */
@@ -647,16 +681,16 @@ PRIVATE int gen_flush_wcache(struct port_state *ps, int cmd)
 	/* Start the command, and wait for it to complete or fail.
 	 * The flush command may take longer than regular I/O commands.
 	 */
-	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, NULL /*prdt*/, 0,
+	port_set_cmd(ps, 0, &fis, NULL /*packet*/, NULL /*prdt*/, 0,
 		FALSE /*write*/);
 
-	return port_exec(ps, cmd, ahci_flush_timeout);
+	return port_exec(ps, 0, ahci_flush_timeout);
 }
 
 /*===========================================================================*
  *				gen_get_wcache				     *
  *===========================================================================*/
-PRIVATE int gen_get_wcache(struct port_state *ps, int cmd, int *val)
+PRIVATE int gen_get_wcache(struct port_state *ps, int *val)
 {
 	/* Retrieve the status of the device's write cache.
 	 */
@@ -667,7 +701,7 @@ PRIVATE int gen_get_wcache(struct port_state *ps, int cmd, int *val)
 		return EINVAL;
 
 	/* Retrieve information about the device. */
-	if ((r = gen_identify(ps, cmd, TRUE /*blocking*/)) != OK)
+	if ((r = gen_identify(ps, TRUE /*blocking*/)) != OK)
 		return r;
 
 	/* Return the current setting. */
@@ -679,7 +713,7 @@ PRIVATE int gen_get_wcache(struct port_state *ps, int cmd, int *val)
 /*===========================================================================*
  *				gen_set_wcache				     *
  *===========================================================================*/
-PRIVATE int gen_set_wcache(struct port_state *ps, int cmd, int enable)
+PRIVATE int gen_set_wcache(struct port_state *ps, int enable)
 {
 	/* Enable or disable the device's write cache.
 	 */
@@ -701,16 +735,16 @@ PRIVATE int gen_set_wcache(struct port_state *ps, int cmd, int enable)
 	fis.cf_feat = enable ? ATA_SF_EN_WCACHE : ATA_SF_DI_WCACHE;
 
 	/* Start the command, and wait for it to complete or fail. */
-	port_set_cmd(ps, cmd, &fis, NULL /*packet*/, NULL /*prdt*/, 0,
+	port_set_cmd(ps, 0, &fis, NULL /*packet*/, NULL /*prdt*/, 0,
 		FALSE /*write*/);
 
-	return port_exec(ps, cmd, timeout);
+	return port_exec(ps, 0, timeout);
 }
 
 /*===========================================================================*
  *				ct_set_fis				     *
  *===========================================================================*/
-PRIVATE vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis)
+PRIVATE vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis, unsigned int tag)
 {
 	/* Fill in the Frame Information Structure part of a command table,
 	 * and return the resulting FIS size (in bytes). We only support the
@@ -721,7 +755,6 @@ PRIVATE vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis)
 	ct[ATA_FIS_TYPE] = ATA_FIS_TYPE_H2D;
 	ct[ATA_H2D_FLAGS] = ATA_H2D_FLAGS_C;
 	ct[ATA_H2D_CMD] = fis->cf_cmd;
-	ct[ATA_H2D_FEAT] = fis->cf_feat;
 	ct[ATA_H2D_LBA_LOW] = fis->cf_lba & 0xFF;
 	ct[ATA_H2D_LBA_MID] = (fis->cf_lba >> 8) & 0xFF;
 	ct[ATA_H2D_LBA_HIGH] = (fis->cf_lba >> 16) & 0xFF;
@@ -729,10 +762,19 @@ PRIVATE vir_bytes ct_set_fis(u8_t *ct, cmd_fis_t *fis)
 	ct[ATA_H2D_LBA_LOW_EXP] = fis->cf_lba_exp & 0xFF;
 	ct[ATA_H2D_LBA_MID_EXP] = (fis->cf_lba_exp >> 8) & 0xFF;
 	ct[ATA_H2D_LBA_HIGH_EXP] = (fis->cf_lba_exp >> 16) & 0xFF;
-	ct[ATA_H2D_FEAT_EXP] = fis->cf_feat_exp;
-	ct[ATA_H2D_SEC] = fis->cf_sec;
-	ct[ATA_H2D_SEC_EXP] = fis->cf_sec_exp;
 	ct[ATA_H2D_CTL] = fis->cf_ctl;
+
+	if (ATA_IS_FPDMA_CMD(fis->cf_cmd)) {
+		ct[ATA_H2D_FEAT] = fis->cf_sec;
+		ct[ATA_H2D_FEAT_EXP] = fis->cf_sec_exp;
+		ct[ATA_H2D_SEC] = tag << ATA_SEC_TAG_SHIFT;
+		ct[ATA_H2D_SEC_EXP] = 0;
+	} else {
+		ct[ATA_H2D_FEAT] = fis->cf_feat;
+		ct[ATA_H2D_FEAT_EXP] = fis->cf_feat_exp;
+		ct[ATA_H2D_SEC] = fis->cf_sec;
+		ct[ATA_H2D_SEC_EXP] = fis->cf_sec_exp;
+	}
 
 	return ATA_H2D_SIZE;
 }
@@ -762,8 +804,8 @@ PRIVATE void ct_set_prdt(u8_t *ct, prd_t *prdt, int nr_prds)
 
 	for (i = 0; i < nr_prds; i++, prdt++) {
 		*p++ = prdt->prd_phys;
-		*p++ = 0L;
-		*p++ = 0L;
+		*p++ = 0;
+		*p++ = 0;
 		*p++ = prdt->prd_size - 1;
 	}
 }
@@ -781,6 +823,16 @@ PRIVATE void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 	u32_t *cl;
 	vir_bytes size;
 
+	/* Set a port-specific flag that tells us if the command being
+	 * processed is a NCQ command or not.
+	 */
+	if (ATA_IS_FPDMA_CMD(fis->cf_cmd)) {
+		ps->flags |= FLAG_NCQ_MODE;
+	} else {
+		assert(!ps->pend_mask);
+		ps->flags &= ~FLAG_NCQ_MODE;
+	}
+
 	/* Construct a command table, consisting of a command FIS, optionally
 	 * a packet, and optionally a number of PRDs (making up the actual PRD
 	 * table).
@@ -790,7 +842,7 @@ PRIVATE void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 	assert(ct != NULL);
 	assert(nr_prds <= NR_PRDS);
 
-	size = ct_set_fis(ct, fis);
+	size = ct_set_fis(ct, fis, cmd);
 
 	if (packet != NULL)
 		ct_set_packet(ct, packet);
@@ -799,17 +851,104 @@ PRIVATE void port_set_cmd(struct port_state *ps, int cmd, cmd_fis_t *fis,
 
 	/* Construct a command list entry, pointing to the command's table.
 	 * Current assumptions: callers always provide a Register - Host to
-	 * Device type FIS, and all commands are prefetchable.
+	 * Device type FIS, and all non-NCQ commands are prefetchable.
 	 */
 	cl = &ps->cl_base[cmd * AHCI_CL_ENTRY_DWORDS];
 
 	memset(cl, 0, AHCI_CL_ENTRY_SIZE);
 	cl[0] = (nr_prds << AHCI_CL_PRDTL_SHIFT) |
-		((nr_prds > 0 || packet != NULL) ? AHCI_CL_PREFETCHABLE : 0) |
+		((!ATA_IS_FPDMA_CMD(fis->cf_cmd) &&
+		(nr_prds > 0 || packet != NULL)) ? AHCI_CL_PREFETCHABLE : 0) |
 		(write ? AHCI_CL_WRITE : 0) |
 		((packet != NULL) ? AHCI_CL_ATAPI : 0) |
 		((size / sizeof(u32_t)) << AHCI_CL_CFL_SHIFT);
 	cl[2] = ps->ct_phys[cmd];
+}
+
+/*===========================================================================*
+ *				port_finish_cmd				     *
+ *===========================================================================*/
+PRIVATE void port_finish_cmd(struct port_state *ps, int cmd, int result)
+{
+	/* Finish a command that has either succeeded or failed.
+	 */
+
+	assert(cmd < ps->queue_depth);
+
+	dprintf(V_REQ, ("%s: command %d %s\n", ahci_portname(ps),
+		cmd, (result == RESULT_SUCCESS) ? "succeeded" : "failed"));
+
+	/* Update the command result, and clear it from the pending list. */
+	ps->cmd_info[cmd].result = result;
+
+	assert(ps->pend_mask & (1 << cmd));
+	ps->pend_mask &= ~(1 << cmd);
+
+	/* Wake up the thread, unless it is the main thread. This can happen
+	 * during initialization, as the gen_identify function is called by the
+	 * main thread itself.
+	 */
+	if (ps->state != STATE_WAIT_ID)
+		blockdriver_mt_wakeup(ps->cmd_info[cmd].tid);
+}
+
+/*===========================================================================*
+ *				port_fail_cmds				     *
+ *===========================================================================*/
+PRIVATE void port_fail_cmds(struct port_state *ps)
+{
+	/* Fail all ongoing commands for a device.
+	 */
+	int i;
+
+	for (i = 0; ps->pend_mask != 0 && i < ps->queue_depth; i++)
+		if (ps->pend_mask & (1 << i))
+			port_finish_cmd(ps, i, RESULT_FAILURE);
+}
+
+/*===========================================================================*
+ *				port_check_cmds				     *
+ *===========================================================================*/
+PRIVATE void port_check_cmds(struct port_state *ps)
+{
+	/* Check what commands have completed, and finish them.
+	 */
+	u32_t mask, done;
+	int i;
+
+	/* See which commands have completed. */
+	if (ps->flags & FLAG_NCQ_MODE)
+		mask = ps->reg[AHCI_PORT_SACT];
+	else
+		mask = ps->reg[AHCI_PORT_CI];
+
+	/* Wake up threads corresponding to completed commands. */
+	done = ps->pend_mask & ~mask;
+
+	for (i = 0; i < ps->queue_depth; i++)
+		if (done & (1 << i))
+			port_finish_cmd(ps, i, RESULT_SUCCESS);
+}
+
+/*===========================================================================*
+ *				port_find_cmd				     *
+ *===========================================================================*/
+PRIVATE int port_find_cmd(struct port_state *ps)
+{
+	/* Find a free command tag to queue the current request.
+	 */
+	int i;
+
+	for (i = 0; i < ps->queue_depth; i++)
+		if (!(ps->pend_mask & (1 << i)))
+			break;
+
+	/* We should always be able to find a free slot, since a thread runs
+	 * only when it is free, and thus, only because a slot is available.
+	 */
+	assert(i < ps->queue_depth);
+
+	return i;
 }
 
 /*===========================================================================*
@@ -956,9 +1095,8 @@ PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
 /*===========================================================================*
  *				port_transfer				     *
  *===========================================================================*/
-PRIVATE ssize_t port_transfer(struct port_state *ps, int cmd, u64_t pos,
-	u64_t eof, endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write,
-	int flags)
+PRIVATE ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
+	endpoint_t endpt, iovec_s_t *iovec, int nr_req, int write, int flags)
 {
 	/* Perform an I/O transfer on a port.
 	 */
@@ -966,7 +1104,7 @@ PRIVATE ssize_t port_transfer(struct port_state *ps, int cmd, u64_t pos,
 	vir_bytes size, lead;
 	unsigned int count, nr_prds;
 	u64_t start_lba;
-	int r;
+	int r, cmd;
 
 	/* Get the total request size from the I/O vector. */
 	if ((r = sum_iovec(ps, endpt, iovec, nr_req, &size)) != OK)
@@ -1021,6 +1159,8 @@ PRIVATE ssize_t port_transfer(struct port_state *ps, int cmd, u64_t pos,
 	if (r < 0) return r;
 
 	/* Perform the actual transfer. */
+	cmd = port_find_cmd(ps);
+
 	if (ps->flags & FLAG_ATAPI)
 		r = atapi_transfer(ps, cmd, start_lba, count, write, prdt,
 			nr_prds);
@@ -1048,8 +1188,8 @@ PRIVATE void port_start(struct port_state *ps)
 	ps->reg[AHCI_PORT_CMD] = cmd | AHCI_PORT_CMD_FRE;
 
 	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0L;
-	ps->reg[AHCI_PORT_IS] = ~0L;
+	ps->reg[AHCI_PORT_SERR] = ~0;
+	ps->reg[AHCI_PORT_IS] = ~0;
 
 	/* Start the port. */
 	cmd = ps->reg[AHCI_PORT_CMD];
@@ -1067,6 +1207,9 @@ PRIVATE void port_restart(struct port_state *ps)
 	 */
 	u32_t cmd;
 
+	/* Fail all outstanding commands. */
+	port_fail_cmds(ps);
+
 	/* Stop the port. */
 	cmd = ps->reg[AHCI_PORT_CMD];
 	ps->reg[AHCI_PORT_CMD] = cmd & ~AHCI_PORT_CMD_ST;
@@ -1075,8 +1218,8 @@ PRIVATE void port_restart(struct port_state *ps)
 		PORTREG_DELAY);
 
 	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0L;
-	ps->reg[AHCI_PORT_IS] = ~0L;
+	ps->reg[AHCI_PORT_SERR] = ~0;
+	ps->reg[AHCI_PORT_IS] = ~0;
 
 	/* If the BSY and/or DRQ flags are set, reset the port. */
 	if (ps->reg[AHCI_PORT_TFD] &
@@ -1146,8 +1289,8 @@ PRIVATE void port_stop(struct port_state *ps)
 	}
 
 	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0L;
-	ps->reg[AHCI_PORT_IS] = ~0L;
+	ps->reg[AHCI_PORT_SERR] = ~0;
+	ps->reg[AHCI_PORT_IS] = ~0;
 }
 
 /*===========================================================================*
@@ -1170,8 +1313,8 @@ PRIVATE void port_sig_check(struct port_state *ps)
 		/* Try for a while before giving up. It may take seconds. */
 		if (ps->left > 0) {
 			ps->left--;
-			set_timer(&ps->timer, ahci_sig_timeout, port_timeout,
-				ps - port_state);
+			set_timer(&ps->cmd_info[0].timer, ahci_sig_timeout,
+				port_timeout, BUILD_ARG(ps - port_state, 0));
 			return;
 		}
 
@@ -1215,9 +1358,9 @@ PRIVATE void port_sig_check(struct port_state *ps)
 	}
 
 	/* Clear all state flags except the busy flag, which may be relevant if
-	 * a DEV_OPEN call is waiting for the device to become ready, the
+	 * a BDEV_OPEN call is waiting for the device to become ready; the
 	 * barrier flag, which prevents access to the device until it is
-	 * completely closed and (re)opened, and the thread suspension flag.
+	 * completely closed and (re)opened; and, the thread suspension flag.
 	 */
 	ps->flags &= (FLAG_BUSY | FLAG_BARRIER | FLAG_SUSPENDED);
 
@@ -1231,7 +1374,7 @@ PRIVATE void port_sig_check(struct port_state *ps)
 	ps->state = STATE_WAIT_ID;
 	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_MASK;
 
-	(void) gen_identify(ps, 0, FALSE /*blocking*/);
+	(void) gen_identify(ps, FALSE /*blocking*/);
 }
 
 /*===========================================================================*
@@ -1258,42 +1401,39 @@ PRIVATE void print_string(u16_t *buf, int start, int end)
 /*===========================================================================*
  *				port_id_check				     *
  *===========================================================================*/
-PRIVATE void port_id_check(struct port_state *ps)
+PRIVATE void port_id_check(struct port_state *ps, int success)
 {
 	/* The device identification command has either completed or timed out.
 	 * Decide whether this device is usable or not, and store some of its
 	 * properties.
 	 */
 	u16_t *buf;
-	int r;
-
-	cancel_timer(&ps->timer);
 
 	assert(ps->state == STATE_WAIT_ID);
 	assert(!(ps->flags & FLAG_BUSY));	/* unset by callers */
 
-	r = !(ps->flags & FLAG_FAILURE);
+	cancel_timer(&ps->cmd_info[0].timer);
 
-	if (r != TRUE)
+	if (!success)
 		dprintf(V_ERR,
 			("%s: unable to identify\n", ahci_portname(ps)));
 
 	/* If the identify command itself succeeded, check the results and
 	 * store some properties.
 	 */
-	if (r == TRUE) {
+	if (success) {
 		buf = (u16_t *) ps->tmp_base;
 
 		if (ps->flags & FLAG_ATAPI)
-			r = atapi_id_check(ps, buf);
+			success = atapi_id_check(ps, buf);
 		else
-			r = ata_id_check(ps, buf);
+			success = ata_id_check(ps, buf);
 	}
 
 	/* If the device has not been identified successfully, mark it as an
 	 * unusable device.
 	 */
-	if (r != TRUE) {
+	if (!success) {
 		port_stop(ps);
 
 		ps->state = STATE_BAD_DEV;
@@ -1339,13 +1479,12 @@ PRIVATE void port_connect(struct port_state *ps)
 	dprintf(V_INFO, ("%s: device connected\n", ahci_portname(ps)));
 
 	if (ps->state == STATE_SPIN_UP)
-		cancel_timer(&ps->timer);
+		cancel_timer(&ps->cmd_info[0].timer);
 
 	port_start(ps);
 
 	ps->state = STATE_WAIT_SIG;
 	ps->left = ahci_sig_checks;
-	ps->flags |= FLAG_BUSY;
 
 	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_PRCE;
 
@@ -1358,32 +1497,29 @@ PRIVATE void port_connect(struct port_state *ps)
  *===========================================================================*/
 PRIVATE void port_disconnect(struct port_state *ps)
 {
-	/* The device has detached from this port. Stop the port if necessary,
-	 * and abort any ongoing command.
+	/* The device has detached from this port. Stop the port if necessary.
 	 */
 
 	dprintf(V_INFO, ("%s: device disconnected\n", ahci_portname(ps)));
-
-	if (ps->flags & FLAG_BUSY)
-		cancel_timer(&ps->timer);
 
 	if (ps->state != STATE_BAD_DEV)
 		port_stop(ps);
 
 	ps->state = STATE_NO_DEV;
 	ps->reg[AHCI_PORT_IE] = AHCI_PORT_IE_PRCE;
+	ps->flags &= ~FLAG_BUSY;
 
-	/* Fail any ongoing request. */
-	if (ps->flags & FLAG_BUSY) {
-		ps->flags &= ~FLAG_BUSY;
-		ps->flags |= FLAG_FAILURE;
-	}
+	/* Fail any ongoing request. The caller may already have done this. */
+	port_fail_cmds(ps);
 
 	/* Block any further access until the device is completely closed and
 	 * reopened. This prevents arbitrary I/O to a newly plugged-in device
 	 * without upper layers noticing.
 	 */
 	ps->flags |= FLAG_BARRIER;
+
+	/* Inform the blockdriver library to reduce the number of threads. */
+	blockdriver_mt_set_workers(ps->device, 1);
 }
 
 /*===========================================================================*
@@ -1411,6 +1547,9 @@ PRIVATE void port_intr(struct port_state *ps)
 
 	dprintf(V_REQ, ("%s: interrupt (%08x)\n", ahci_portname(ps), smask));
 
+	/* Check if any commands have completed. */
+	port_check_cmds(ps);
+
 	if (emask & AHCI_PORT_IS_PRCS) {
 		/* Clear the N diagnostics bit to clear this interrupt. */
 		ps->reg[AHCI_PORT_SERR] = AHCI_PORT_SERR_DIAG_N;
@@ -1433,26 +1572,34 @@ PRIVATE void port_intr(struct port_state *ps)
 
 			port_connect(ps);
 		}
-	}
-	else if ((ps->flags & FLAG_BUSY) && (smask & AHCI_PORT_IS_MASK) &&
-		(!(ps->reg[AHCI_PORT_TFD] & AHCI_PORT_TFD_STS_BSY) ||
-		(ps->reg[AHCI_PORT_TFD] & (AHCI_PORT_TFD_STS_ERR |
-		AHCI_PORT_TFD_STS_DF)))) {
+	} else if (smask & AHCI_PORT_IS_MASK) {
+		/* We assume that any other interrupt indicates command
+		 * completion or (command or device) failure. Unfortunately, if
+		 * an NCQ command failed, we cannot easily determine which one
+		 * it was. For that reason, after completing all successfully
+		 * finished commands (above), we fail all other outstanding
+		 * commands and restart the port. This can possibly be improved
+		 * later by obtaining per-command status results from the HBA.
+		 */
 
-		assert(!(ps->flags & FLAG_FAILURE));
+		/* If we were waiting for ID verification, check now. */
+		if (ps->state == STATE_WAIT_ID) {
+			ps->flags &= ~FLAG_BUSY;
+			port_id_check(ps, !(ps->reg[AHCI_PORT_TFD] &
+				(AHCI_PORT_TFD_STS_ERR |
+				AHCI_PORT_TFD_STS_DF)));
+		}
 
-		/* Command completed or failed. */
-		ps->flags &= ~FLAG_BUSY;
-		if (ps->reg[AHCI_PORT_TFD] & (AHCI_PORT_TFD_STS_ERR |
-			AHCI_PORT_TFD_STS_DF))
-			ps->flags |= FLAG_FAILURE;
-
-		/* Some error cases require a port restart. */
-		if (smask & AHCI_PORT_IS_RESTART)
-			port_restart(ps);
-
-		if (ps->state == STATE_WAIT_ID)
-			port_id_check(ps);
+		/* Check now for failure. There are fatal failures, and there
+		 * are failures that set the TFD.STS.ERR field using a D2H
+		 * FIS. In both cases, we just restart the port, failing all
+		 * commands in the process.
+		 */
+		if ((ps->reg[AHCI_PORT_TFD] &
+			(AHCI_PORT_TFD_STS_ERR | AHCI_PORT_TFD_STS_DF)) ||
+			(smask & AHCI_PORT_IS_RESTART)) {
+				port_restart(ps);
+		}
 	}
 }
 
@@ -1465,19 +1612,22 @@ PRIVATE void port_timeout(struct timer *tp)
 	 * for, and take appropriate action.
 	 */
 	struct port_state *ps;
-	int port;
+	int port, cmd;
 
-	port = tmr_arg(tp)->ta_int;
+	port = GET_PORT(tmr_arg(tp)->ta_int);
+	cmd = GET_TAG(tmr_arg(tp)->ta_int);
 
 	assert(port >= 0 && port < hba_state.nr_ports);
 
 	ps = &port_state[port];
 
 	/* Regardless of the outcome of this timeout, wake up the thread if it
-	 * is suspended.
+	 * is suspended. This applies only during the initialization.
 	 */
-	if (ps->flags & FLAG_SUSPENDED)
-		blockdriver_mt_wakeup(ps->device);
+	if (ps->flags & FLAG_SUSPENDED) {
+		assert(cmd == 0);
+		blockdriver_mt_wakeup(ps->cmd_info[0].tid);
+	}
 
 	/* If detection of a device after startup timed out, give up on initial
 	 * detection and only look for hot plug events from now on.
@@ -1499,7 +1649,7 @@ PRIVATE void port_timeout(struct timer *tp)
 			dprintf(V_INFO, ("%s: spin-up timeout\n",
 				ahci_portname(ps)));
 
-			/* If the busy flag is set, a DEV_OPEN request is
+			/* If the busy flag is set, a BDEV_OPEN request is
 			 * waiting for the detection to finish; clear the busy
 			 * flag to return an error to the caller.
 			 */
@@ -1519,26 +1669,24 @@ PRIVATE void port_timeout(struct timer *tp)
 		return;
 	}
 
-	/* Any other timeout can only occur while busy. */
-	if (!(ps->flags & FLAG_BUSY))
-		return;
-
-	ps->flags &= ~FLAG_BUSY;
-	ps->flags |= FLAG_FAILURE;
+	/* The only case where the busy flag will be set after this is for a
+	 * failed identify operation. During this operation, the port will be
+	 * in the WAIT_ID state. In that case, we clear the BUSY flag, fail the
+	 * command by setting its state, restart port and finish identify op.
+	 */
+	if (ps->flags & FLAG_BUSY) {
+		assert(ps->state == STATE_WAIT_ID);
+		ps->flags &= ~FLAG_BUSY;
+	}
 
 	dprintf(V_ERR, ("%s: timeout\n", ahci_portname(ps)));
 
-	/* Restart the port, so that hopefully at least the next command has a
-	 * chance to succeed again.
-	 */
+	/* Restart the port, failing all current commands. */
 	port_restart(ps);
 
-	/* If an I/O operation failed, the caller will know because the busy
-	 * flag has been unset. If an identify operation failed, finish up the
-	 * operation now.
-	 */
+	/* Finish up the identify operation. */
 	if (ps->state == STATE_WAIT_ID)
-		port_id_check(ps);
+		port_id_check(ps, FALSE);
 }
 
 /*===========================================================================*
@@ -1563,28 +1711,28 @@ PRIVATE void port_wait(struct port_state *ps)
  *===========================================================================*/
 PRIVATE void port_issue(struct port_state *ps, int cmd, clock_t timeout)
 {
-	/* Issue a command to the port, mark the port as busy, and set a timer
-	 * to trigger a timeout if the command takes too long to complete.
+	/* Issue a command to the port, and set a timer to trigger a timeout
+	 * if the command takes too long to complete.
 	 */
 
-	/* Reset status registers. */
-	ps->reg[AHCI_PORT_SERR] = ~0L;
-	ps->reg[AHCI_PORT_IS] = ~0L;
+	/* Set the corresponding NCQ command bit, if applicable. */
+	if (ps->flags & FLAG_HAS_NCQ)
+		ps->reg[AHCI_PORT_SACT] = (1 << cmd);
 
 	/* Make sure that the compiler does not delay any previous write
-	 * operations until after the write to the CI register.
+	 * operations until after the write to the command issue register.
 	 */
 	__insn_barrier();
 
 	/* Tell the controller that a new command is ready. */
-	ps->reg[AHCI_PORT_CI] = (1L << cmd);
+	ps->reg[AHCI_PORT_CI] = (1 << cmd);
 
-	/* Mark the port as executing a command. */
-	ps->flags |= FLAG_BUSY;
-	ps->flags &= ~FLAG_FAILURE;
+	/* Update pending commands. */
+	ps->pend_mask |= 1 << cmd;
 
 	/* Set a timer in case the command does not complete at all. */
-	set_timer(&ps->timer, timeout, port_timeout, ps - port_state);
+	set_timer(&ps->cmd_info[cmd].timer, timeout, port_timeout,
+		BUILD_ARG(ps - port_state, cmd));
 }
 
 /*===========================================================================*
@@ -1598,22 +1746,28 @@ PRIVATE int port_exec(struct port_state *ps, int cmd, clock_t timeout)
 
 	port_issue(ps, cmd, timeout);
 
-	port_wait(ps);
+	/* Put the thread to sleep until a timeout or a command completion
+	 * happens. Earlier, we used to call port_wait which set the suspended
+	 * flag. We now abandon it since the flag has to work on a per-thread,
+	 * and hence per-tag basis and not on a per-port basis. Instead, we
+	 * retain that call only to defer open calls during device/driver
+	 * initialization. Instead, we call sleep here directly. Before
+	 * sleeping, we register the thread.
+	 */
+	ps->cmd_info[cmd].tid = blockdriver_mt_get_tid();
+
+	blockdriver_mt_sleep();
 
 	/* Cancelling a timer that just triggered, does no harm. */
-	cancel_timer(&ps->timer);
+	cancel_timer(&ps->cmd_info[cmd].timer);
 
 	assert(!(ps->flags & FLAG_BUSY));
 
 	dprintf(V_REQ, ("%s: end of command -- %s\n", ahci_portname(ps),
-		(ps->flags & (FLAG_FAILURE | FLAG_BARRIER)) ?
+		(ps->cmd_info[cmd].result == RESULT_FAILURE) ?
 		"failure" : "success"));
 
-	/* The barrier flag may have been set if a device was disconnected; the
-	 * failure flag may have already been cleared if a new device has
-	 * connected afterwards. Hence, check both.
-	 */
-	if (ps->flags & (FLAG_FAILURE | FLAG_BARRIER))
+	if (ps->cmd_info[cmd].result == RESULT_FAILURE)
 		return EIO;
 
 	return OK;
@@ -1627,9 +1781,12 @@ PRIVATE void port_alloc(struct port_state *ps)
 	/* Allocate memory for the given port. We try to cram everything into
 	 * one 4K-page in order to limit memory usage as much as possible.
 	 * More memory may be allocated on demand later, but allocation failure
-	 * should be fatal only here.
+	 * should be fatal only here. Note that we do not allocate memory for
+	 * sector padding here, because we do not know the device's sector size
+	 * yet.
 	 */
 	size_t fis_off, tmp_off, ct_off; int i;
+	size_t ct_offs[NR_CMDS];
 
 	fis_off = AHCI_CL_SIZE + AHCI_FIS_SIZE - 1;
 	fis_off -= fis_off % AHCI_FIS_SIZE;
@@ -1637,10 +1794,16 @@ PRIVATE void port_alloc(struct port_state *ps)
 	tmp_off = fis_off + AHCI_FIS_SIZE + AHCI_TMP_ALIGN - 1;
 	tmp_off -= tmp_off % AHCI_TMP_ALIGN;
 
-	ct_off = tmp_off + AHCI_TMP_SIZE + AHCI_CT_ALIGN - 1;
-	ct_off -= ct_off % AHCI_CT_ALIGN;
+	/* Allocate memory for all the commands. */
+	ct_off = tmp_off + AHCI_TMP_SIZE;
+	for (i = 0; i < NR_CMDS; i++) {
+		ct_off += AHCI_CT_ALIGN - 1;
+		ct_off -= ct_off % AHCI_CT_ALIGN;
+		ct_offs[i] = ct_off;
+		ps->mem_size = ct_off + AHCI_CT_SIZE;
+		ct_off = ps->mem_size;
+	}
 
-	ps->mem_size = ct_off + AHCI_CT_SIZE;
 	ps->mem_base = alloc_contig(ps->mem_size, AC_ALIGN4K, &ps->mem_phys);
 	if (ps->mem_base == NULL)
 		panic("unable to allocate port memory");
@@ -1658,24 +1821,18 @@ PRIVATE void port_alloc(struct port_state *ps)
 	ps->tmp_phys = ps->mem_phys + tmp_off;
 	assert(ps->tmp_phys % AHCI_TMP_ALIGN == 0);
 
-	ps->ct_base[0] = ps->mem_base + ct_off;
-	ps->ct_phys[0] = ps->mem_phys + ct_off;
-	assert(ps->ct_phys[0] % AHCI_CT_ALIGN == 0);
+	for (i = 0; i < NR_CMDS; i++) {
+		ps->ct_base[i] = ps->mem_base + ct_offs[i];
+		ps->ct_phys[i] = ps->mem_phys + ct_offs[i];
+		assert(ps->ct_phys[i] % AHCI_CT_ALIGN == 0);
+	}
 
 	/* Tell the controller about some of the physical addresses. */
-	ps->reg[AHCI_PORT_FBU] = 0L;
+	ps->reg[AHCI_PORT_FBU] = 0;
 	ps->reg[AHCI_PORT_FB] = ps->fis_phys;
 
-	ps->reg[AHCI_PORT_CLBU] = 0L;
+	ps->reg[AHCI_PORT_CLBU] = 0;
 	ps->reg[AHCI_PORT_CLB] = ps->cl_phys;
-
-	/* Do not yet allocate memory for other commands or the sector padding
-	 * buffer. We currently only use one command anyway, and we cannot
-	 * allocate the sector padding buffer until we know the medium's sector
-	 * size (nor will we always need one).
-	 */
-	for (i = 1; i < hba_state.nr_cmds; i++)
-		ps->ct_base[i] = NULL;
 
 	ps->pad_base = NULL;
 	ps->pad_size = 0;
@@ -1709,13 +1866,17 @@ PRIVATE void port_init(struct port_state *ps)
 	/* Initialize the given port.
 	 */
 	u32_t cmd;
+	int i;
 
 	/* Initialize the port state structure. */
+	ps->queue_depth = 1;
 	ps->state = STATE_SPIN_UP;
 	ps->flags = FLAG_BUSY;
-	ps->sector_size = 0L;
+	ps->sector_size = 0;
 	ps->open_count = 0;
-	init_timer(&ps->timer);
+	ps->pend_mask = 0;
+	for (i = 0; i < NR_CMDS; i++)
+		init_timer(&ps->cmd_info[i].timer);
 
 	ps->reg = (u32_t *) ((u8_t *) hba_state.base +
 		AHCI_MEM_BASE_SIZE + AHCI_MEM_PORT_SIZE * (ps - port_state));
@@ -1737,8 +1898,8 @@ PRIVATE void port_init(struct port_state *ps)
 	micro_delay(SPINUP_DELAY * 1000);	/* SPINUP_DELAY is in ms */
 	ps->reg[AHCI_PORT_SCTL] = AHCI_PORT_SCTL_DET_NONE;
 
-	set_timer(&ps->timer, ahci_spinup_timeout, port_timeout,
-		ps - port_state);
+	set_timer(&ps->cmd_info[0].timer, ahci_spinup_timeout,
+		port_timeout, BUILD_ARG(ps - port_state, 0));
 }
 
 /*===========================================================================*
@@ -1861,6 +2022,7 @@ PRIVATE void ahci_init(int devind)
 	/* Limit the maximum number of commands to the controller's value. */
 	/* Note that we currently use only one command anyway. */
 	cap = hba_state.base[AHCI_HBA_CAP];
+	hba_state.has_ncq = !!(cap & AHCI_HBA_CAP_SNCQ);
 	hba_state.nr_cmds = MIN(NR_CMDS,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1);
 
@@ -1872,8 +2034,8 @@ PRIVATE void ahci_init(int devind)
 		(int) (hba_state.base[AHCI_HBA_VS] & 0xFF),
 		((cap >> AHCI_HBA_CAP_NP_SHIFT) & AHCI_HBA_CAP_NP_MASK) + 1,
 		((cap >> AHCI_HBA_CAP_NCS_SHIFT) & AHCI_HBA_CAP_NCS_MASK) + 1,
-		(cap & AHCI_HBA_CAP_SNCQ) ? "supports" : "no",
-		hba_state.irq));
+		hba_state.has_ncq ? "supports" : "no", hba_state.irq));
+
 	dprintf(V_INFO, ("AHCI%u: CAP %08x, CAP2 %08x, PI %08x\n",
 		ahci_instance, cap, hba_state.base[AHCI_HBA_CAP2],
 		hba_state.base[AHCI_HBA_PI]));
@@ -1885,7 +2047,7 @@ PRIVATE void ahci_init(int devind)
 		port_state[port].device = NO_DEVICE;
 		port_state[port].state = STATE_NO_PORT;
 
-		if (mask & (1L << port))
+		if (mask & (1 << port))
 			port_init(&port_state[port]);
 	}
 }
@@ -1947,7 +2109,7 @@ PRIVATE void ahci_intr(unsigned int UNUSED(irqs))
 	mask = hba_state.base[AHCI_HBA_IS];
 
 	for (port = 0; port < hba_state.nr_ports; port++) {
-		if (mask & (1L << port)) {
+		if (mask & (1 << port)) {
 			ps = &port_state[port];
 
 			port_intr(ps);
@@ -1957,7 +2119,7 @@ PRIVATE void ahci_intr(unsigned int UNUSED(irqs))
 			 */
 			if ((ps->flags & (FLAG_SUSPENDED | FLAG_BUSY)) ==
 					FLAG_SUSPENDED)
-				blockdriver_mt_wakeup(ps->device);
+				blockdriver_mt_wakeup(ps->cmd_info[0].tid);
 		}
 	}
 
@@ -2234,6 +2396,12 @@ PRIVATE int ahci_open(dev_t minor, int access)
 
 	ps = ahci_get_port(minor);
 
+	/* Only one open request can be processed at a time, due to the fact
+	 * that it is an exclusive operation. The thread that handles this call
+	 * can therefore freely register itself at slot zero.
+	 */
+	ps->cmd_info[0].tid = blockdriver_mt_get_tid();
+
 	/* If we are still in the process of initializing this port or device,
 	 * wait for completion of that phase first.
 	 */
@@ -2241,16 +2409,12 @@ PRIVATE int ahci_open(dev_t minor, int access)
 		port_wait(ps);
 
 	/* The device may only be opened if it is now properly functioning. */
-	if (ps->state != STATE_GOOD_DEV) {
-		r = ENXIO;
-		goto err_stop;
-	}
+	if (ps->state != STATE_GOOD_DEV)
+		return ENXIO;
 
 	/* Some devices may only be opened in read-only mode. */
-	if ((ps->flags & FLAG_READONLY) && (access & W_BIT)) {
-		r = EACCES;
-		goto err_stop;
-	}
+	if ((ps->flags & FLAG_READONLY) && (access & W_BIT))
+		return EACCES;
 
 	if (ps->open_count == 0) {
 		/* The first open request. Clear the barrier flag, if set. */
@@ -2259,7 +2423,7 @@ PRIVATE int ahci_open(dev_t minor, int access)
 		/* Recheck media only when nobody is using the device. */
 		if ((ps->flags & FLAG_ATAPI) &&
 			(r = atapi_check_medium(ps, 0)) != OK)
-			goto err_stop;
+			return r;
 
 		/* After rechecking the media, the partition table must always
 		 * be read. This is also a convenient time to do it for
@@ -2274,6 +2438,8 @@ PRIVATE int ahci_open(dev_t minor, int access)
 
 		partition(&ahci_dtab, ps->device * DEV_PER_DRIVE, P_PRIMARY,
 			!!(ps->flags & FLAG_ATAPI));
+
+		blockdriver_mt_set_workers(ps->device, ps->queue_depth);
 	}
 	else {
 		/* If the barrier flag is set, deny new open requests until the
@@ -2286,13 +2452,6 @@ PRIVATE int ahci_open(dev_t minor, int access)
 	ps->open_count++;
 
 	return OK;
-
-err_stop:
-	/* Stop the thread if the device is now fully closed. */
-	if (ps->open_count == 0)
-		blockdriver_mt_stop();
-
-	return r;
 }
 
 /*===========================================================================*
@@ -2320,16 +2479,16 @@ PRIVATE int ahci_close(dev_t minor)
 	if (ps->open_count > 0)
 		return OK;
 
-	/* The device is now fully closed. That also means that the thread for
-	 * this device is not needed anymore.
+	/* The device is now fully closed. That also means that the threads for
+	 * this device are not needed anymore, so we reduce the count to one.
 	 */
-	blockdriver_mt_stop();
+	blockdriver_mt_set_workers(ps->device, 1);
 
 	if (ps->state == STATE_GOOD_DEV && !(ps->flags & FLAG_BARRIER)) {
 		dprintf(V_INFO, ("%s: flushing write cache\n",
 			ahci_portname(ps)));
 
-		(void) gen_flush_wcache(ps, 0);
+		(void) gen_flush_wcache(ps);
 	}
 
 	/* If the entire driver has been told to terminate, check whether all
@@ -2382,8 +2541,8 @@ PRIVATE ssize_t ahci_transfer(dev_t minor, int do_write, u64_t position,
 	pos = add64(dv->dv_base, position);
 	eof = add64(dv->dv_base, dv->dv_size);
 
-	return port_transfer(ps, 0, pos, eof, endpt, (iovec_s_t *) iovec,
-		count, do_write, flags);
+	return port_transfer(ps, pos, eof, endpt, (iovec_s_t *) iovec, count,
+		do_write, flags);
 }
 
 /*===========================================================================*
@@ -2417,7 +2576,7 @@ PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
-		return gen_flush_wcache(ps, 0);
+		return gen_flush_wcache(ps);
 
 	case DIOCSETWC:
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
@@ -2427,13 +2586,13 @@ PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 			sizeof(val), D)) != OK)
 			return r;
 
-		return gen_set_wcache(ps, 0, val);
+		return gen_set_wcache(ps, val);
 
 	case DIOCGETWC:
 		if (ps->state != STATE_GOOD_DEV || (ps->flags & FLAG_BARRIER))
 			return EIO;
 
-		if ((r = gen_get_wcache(ps, 0, &val)) != OK)
+		if ((r = gen_get_wcache(ps, &val)) != OK)
 			return r;
 
 		return sys_safecopyto(endpt, grant, 0, (vir_bytes) &val,
@@ -2444,11 +2603,11 @@ PRIVATE int ahci_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
 }
 
 /*===========================================================================*
- *				ahci_thread				     *
+ *				ahci_device				     *
  *===========================================================================*/
-PRIVATE int ahci_thread(dev_t minor, thread_id_t *id)
+PRIVATE int ahci_device(dev_t minor, device_id_t *id)
 {
-	/* Map a device number to a worker thread number. 
+	/* Map a minor device number to a device ID.
 	 */
 	struct port_state *ps;
 	struct device *dv;
