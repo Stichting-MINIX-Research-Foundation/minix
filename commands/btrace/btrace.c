@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <minix/types.h>
 #include <minix/btrace.h>
+#include <minix/u64.h>
 #include <sys/ioc_block.h>
 
 static void usage(char *name)
@@ -135,7 +136,7 @@ static void dump_entry(btrace_entry *entry)
 
   switch (entry->request) {
   case BTREQ_OPEN:
-	printf("- access:\t%lx\n", entry->size);
+	printf("- access:\t%x\n", entry->size);
 	break;
   case BTREQ_READ:
   case BTREQ_WRITE:
