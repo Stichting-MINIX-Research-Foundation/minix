@@ -34,9 +34,8 @@ int read_int(void)
 int main(int argc, char *argv[])
 {
   FILE *fd = NULL;
-  int i, server_nr, command, size, result;
+  int server_nr, command, size, result;
   char buff[BUFF_SZ]; /* Buffer for all the metadata and file data sent */
-  message msg; /* message sent to vfs */
 
   if(argc!=2 || sscanf(argv[1], "%d", &server_nr)!=1) {
   	fprintf(stderr, "Usage: %s <pid>\n", argv[0]);
