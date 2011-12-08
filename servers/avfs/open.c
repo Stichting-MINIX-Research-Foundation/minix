@@ -326,7 +326,6 @@ PRIVATE struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
   /* The combination of a symlink with absolute path followed by a danglink
    * symlink results in a new path that needs to be re-resolved entirely. */
   if (path[0] == '/') {
-printf("XXX: dangling symlink needs re-resolving\n");
 	unlock_vnode(dirp);
 	unlock_vmnt(dir_vmp);
 	put_vnode(dirp);
@@ -391,15 +390,19 @@ printf("XXX: dangling symlink needs re-resolving\n");
 			/* Try to create the inode the dangling symlink was
 			 * pointing to. We have to use dirp as starting point
 			 * as there might be multiple successive symlinks
-			 * crossing multiple mountpoints. */
+			 * crossing multiple mountpoints.
+			 * Unlock vnodes and vmnts as we're going to recurse.
+			 */
+			unlock_vnode(dirp);
+			unlock_vnode(vp);
+			unlock_vmnt(dir_vmp);
+
 			old_wd = fp->fp_wd; /* Save orig. working dirp */
 			fp->fp_wd = dirp;
 			vp = new_node(resolve, oflags, bits);
 			fp->fp_wd = old_wd; /* Restore */
 
 			if (vp != NULL) {
-				unlock_vnode(dirp);
-				unlock_vmnt(dir_vmp);
 				put_vnode(dirp);
 				*(resolve->l_vnode) = vp;
 				return(vp);

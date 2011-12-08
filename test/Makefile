@@ -19,7 +19,7 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test54 test56 test58 t60a t60b
 
 BIGOBJ=  test20 test24
-ROOTOBJ= test11 test33 test43 test44 test46 test60
+ROOTOBJ= test11 test33 test43 test44 test46 test60 test61
 GCCOBJ=  test45-gcc test48 test49-gcc test55
 GCCFPUOBJ= test51-gcc test52-gcc
 OTHEROBJ= test57 test59
@@ -133,3 +133,4 @@ test59: test59.c
 test60: test60.c
 t60a: t60a.c
 t60b: t60b.c
+test61: test61.c
