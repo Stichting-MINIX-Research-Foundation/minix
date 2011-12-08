@@ -33,8 +33,6 @@
 
 PUBLIC char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD _PROTOTYPE( int common_open, (char path[PATH_MAX], int oflags,
-				      mode_t omode)			);
 FORWARD _PROTOTYPE( struct vnode *new_node, (struct lookup *resolve,
 					     int oflags, mode_t bits)	);
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp, mode_t bits,
@@ -84,7 +82,7 @@ PUBLIC int do_open()
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-PRIVATE int common_open(char path[PATH_MAX], int oflags, mode_t omode)
+PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
   int b, r, exist = TRUE, major_dev;
@@ -463,8 +461,7 @@ printf("XXX: dangling symlink needs re-resolving\n");
 /*===========================================================================*
  *				pipe_open				     *
  *===========================================================================*/
-PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
-	register int oflags)
+PRIVATE int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 {
 /*  This function is called from common_open. It checks if
  *  there is at least one reader/writer pair for the pipe, if not
@@ -474,7 +471,7 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
 
   vp->v_pipe = I_PIPE;
 
-  if((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) return(ENXIO);
+  if ((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) return(ENXIO);
 
   /* Find the reader/writer at the other end of the pipe */
   if (find_filp(vp, bits & W_BIT ? R_BIT : W_BIT) == NULL) {
@@ -483,7 +480,7 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
 		if (bits & W_BIT) return(ENXIO);
 	} else {
 		/* Let's wait for the other side to show up */
-		suspend(FP_BLOCKED_ON_POPEN);	/* suspend caller */
+		suspend(FP_BLOCKED_ON_POPEN);
 		return(SUSPEND);
 	}
   } else if (susp_count > 0) { /* revive blocked processes */

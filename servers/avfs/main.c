@@ -337,9 +337,9 @@ PRIVATE void *do_pm(void *arg)
  *===========================================================================*/
 PRIVATE void *do_pending_pipe(void *arg)
 {
-  int r, fd_nr;
-  struct filp *f;
+  int r, op;
   struct job my_job;
+  struct filp *f;
   tll_access_t locktype;
 
   my_job = *((struct job *) arg);
@@ -348,13 +348,15 @@ PRIVATE void *do_pending_pipe(void *arg)
 
   lock_proc(fp, 1 /* force lock */);
 
-  fd_nr = fp->fp_block_fd;
-  locktype = (call_nr == READ) ? VNODE_READ : VNODE_WRITE;
-  f = get_filp(fd_nr, locktype);
+  f = fp->fp_blocked.bfilp;
   assert(f != NULL);
+  fp->fp_blocked.bfilp = NULL;
 
-  r = rw_pipe((call_nr == READ) ? READING : WRITING, who_e, fd_nr, f,
-	      fp->fp_buffer, fp->fp_nbytes);
+  locktype = (call_nr == READ) ? VNODE_READ : VNODE_WRITE;
+  op = (call_nr == READ) ? READING : WRITING;
+  lock_filp(f, locktype);
+
+  r = rw_pipe(op, who_e, f, fp->fp_buffer, fp->fp_nbytes);
 
   if (r != SUSPEND)  /* Do we have results to report? */
 	reply(who_e, r);
@@ -391,9 +393,8 @@ PUBLIC void *do_dummy(void *arg)
  *===========================================================================*/
 PRIVATE void *do_work(void *arg)
 {
-  int error, i;
+  int error;
   struct job my_job;
-  struct fproc *rfp;
 
   my_job = *((struct job *) arg);
   fp = my_job.j_fp;
@@ -792,14 +793,6 @@ PRIVATE void service_pm_postponed(void)
   int r;
   vir_bytes pc;
 
-#if 0
-  printf("executing postponed: ");
-  if (call_nr == PM_EXEC)	printf("PM_EXEC");
-  if (call_nr == PM_EXIT)	printf("PM_EXIT");
-  if (call_nr == PM_DUMPCORE)	printf("PM_DUMPCORE");
-  printf("\n");
-#endif
-
   switch(call_nr) {
     case PM_EXEC:
 	r = pm_exec(m_in.PM_PROC, m_in.PM_PATH, m_in.PM_PATH_LEN,
@@ -823,13 +816,17 @@ PRIVATE void service_pm_postponed(void)
 	break;
 
     case PM_DUMPCORE:
-	r = pm_dumpcore(m_in.PM_PROC,
-			NULL /* (struct mem_map *) m_in.PM_SEGPTR */);
-
-	/* Reply status to PM */
+	/* Copy parameters first. m_in gets overwritten when creating core
+	 * file.
+	 */
 	m_out.m_type = PM_CORE_REPLY;
 	m_out.PM_PROC = m_in.PM_PROC;
 	m_out.PM_TRACED_PROC = m_in.PM_TRACED_PROC;
+
+	r = pm_dumpcore(m_in.PM_PROC, m_in.PM_TERM_SIG,
+			(vir_bytes) m_in.PM_PATH);
+
+	/* Reply status to PM */
 	m_out.PM_STATUS = r;
 
 	break;
@@ -885,14 +882,6 @@ PRIVATE void service_pm()
 	assert(!(fp->fp_flags & FP_PENDING));
 	fp->fp_job.j_m_in = m_in;
 	fp->fp_flags |= FP_PM_PENDING;
-
-#if 0
-	printf("Postponing: ");
-	if (call_nr == PM_EXEC)		printf("PM_EXEC");
-	if (call_nr == PM_EXIT)		printf("PM_EXIT");
-	if (call_nr == PM_DUMPCORE)	printf("PM_DUMPCORE");
-	printf("\n");
-#endif
 
         /* PM requests on behalf of a proc are handled after the system call
          * that might be in progress for that proc has finished. If the proc
@@ -962,7 +951,7 @@ struct fproc *rfp;
   fp = rfp;
   blocked_on = rfp->fp_blocked_on;
   m_in.m_type = rfp->fp_block_callnr;
-  m_in.fd = rfp->fp_block_fd;
+  m_in.fd = rfp->fp_blocked.fd_nr;
   m_in.buffer = rfp->fp_buffer;
   m_in.nbytes = rfp->fp_nbytes;
 

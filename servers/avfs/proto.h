@@ -67,6 +67,10 @@ _PROTOTYPE( int map_driver, (const char *label, int major, endpoint_t proc_nr,
 	int dev_style, int flags)					);
 _PROTOTYPE( int map_service, (struct rprocpub *rpub)			);
 
+/* elf_core_dump.c */
+_PROTOTYPE( void write_elf_core_file, (struct filp *f, int csig,
+				       char *exe_name)			);
+
 /* exec.c */
 _PROTOTYPE( int pm_exec, (int proc_e, char *path, vir_bytes path_len,
 			  char *frame, vir_bytes frame_len, vir_bytes *pc));
@@ -137,7 +141,8 @@ _PROTOTYPE( int do_fsync, (void)					);
 _PROTOTYPE( void pm_reboot, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
-_PROTOTYPE( int pm_dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
+_PROTOTYPE( int pm_dumpcore, (endpoint_t proc_e, int sig,
+				vir_bytes exe_name)			);
 _PROTOTYPE( void ds_event, (void)					);
 
 /* mount.c */
@@ -156,6 +161,8 @@ _PROTOTYPE( void unmount_all, (void)					);
 _PROTOTYPE( int do_close, (void)					);
 _PROTOTYPE( int close_fd, (struct fproc *rfp, int fd_nr)		);
 _PROTOTYPE( void close_reply, (void)					);
+_PROTOTYPE( int common_open, (char path[PATH_MAX], int oflags,
+				mode_t omode)				);
 _PROTOTYPE( int do_creat, (void)					);
 _PROTOTYPE( int do_lseek, (void)					);
 _PROTOTYPE( int do_llseek, (void)					);
@@ -189,8 +196,8 @@ _PROTOTYPE( int pipe_check, (struct vnode *vp, int rw_flag,
 _PROTOTYPE( void release, (struct vnode *vp, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
-_PROTOTYPE( void pipe_suspend, (int rw_flag, int fd_nr, char *buf,
-							size_t size)	);
+_PROTOTYPE( void pipe_suspend, (int rw_flag, struct filp *rfilp,
+				 char *buf, size_t size)		);
 _PROTOTYPE( void unsuspend_by_endpt, (endpoint_t)			);
 _PROTOTYPE( void wait_for, (endpoint_t)					);
 #if DO_SANITYCHECKS
@@ -210,9 +217,11 @@ _PROTOTYPE( int do_read, (void)						);
 _PROTOTYPE( int do_getdents, (void)					);
 _PROTOTYPE( void lock_bsf, (void)					);
 _PROTOTYPE( void unlock_bsf, (void)					);
-_PROTOTYPE( int read_write, (int rw_flag)				);
-_PROTOTYPE( int rw_pipe, (int rw_flag, endpoint_t usr,
-		int fd_nr, struct filp *f, char *buf, size_t req_size)	);
+_PROTOTYPE( int do_read_write, (int rw_flag)				);
+_PROTOTYPE( int read_write, (int rw_flag, struct filp *f, char *buffer,
+			     size_t nbytes, endpoint_t for_e)				);
+_PROTOTYPE( int rw_pipe, (int rw_flag, endpoint_t usr, struct filp *f,
+			 char *buf, size_t req_size)	);
 
 /* request.c */
 _PROTOTYPE( int req_breadwrite, (endpoint_t fs_e, endpoint_t user_e,
@@ -372,6 +381,7 @@ _PROTOTYPE( struct worker_thread *worker_self, (void)			);
 _PROTOTYPE( void worker_signal, (struct worker_thread *worker)		);
 _PROTOTYPE( void worker_start, (void *(*func)(void *arg))		);
 _PROTOTYPE( void worker_stop, (struct worker_thread *worker)		);
+_PROTOTYPE( void worker_stop_by_endpt, (endpoint_t proc_e)		);
 _PROTOTYPE( void worker_wait, (void)					);
 _PROTOTYPE( void sys_worker_start, (void *(*func)(void *arg))		);
 _PROTOTYPE( void dl_worker_start, (void *(*func)(void *arg))		);

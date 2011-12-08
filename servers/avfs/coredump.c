@@ -10,30 +10,32 @@
 /* Include ELF headers */
 #include <sys/elf_core.h>
 
-FORWARD _PROTOTYPE( void fill_elf_header, (Elf32_Ehdr *elf_header,
-		int phnum)                                                 );
+FORWARD _PROTOTYPE( void fill_elf_header, (Elf32_Ehdr *elf_header, int phnum));
 FORWARD _PROTOTYPE( void fill_prog_header, (Elf32_Phdr *prog_header,
 	Elf32_Word p_type, Elf32_Off p_offset, Elf32_Addr p_vaddr,
-	Elf32_Word p_flags, Elf32_Word p_filesz, Elf32_Word p_memsz)       );
-FORWARD _PROTOTYPE( int get_memory_regions, (Elf32_Phdr phdrs[])           );
+	Elf32_Word p_flags, Elf32_Word p_filesz, Elf32_Word p_memsz)	);
+FORWARD _PROTOTYPE( int get_memory_regions, (Elf32_Phdr phdrs[])	);
 FORWARD _PROTOTYPE( void fill_note_segment_and_entries_hdrs,
-	(Elf32_Phdr phdrs[], Elf32_Nhdr nhdrs[])                              );
-FORWARD _PROTOTYPE( void adjust_offsets, (Elf32_Phdr phdrs[], int phnum)   );
-FORWARD _PROTOTYPE( void dump_elf_header, (Elf32_Ehdr elf_header)          );
-FORWARD _PROTOTYPE( void dump_notes, (Elf32_Nhdr nhdrs[], int csig,
-	char *exe_name)                                                    );
-FORWARD _PROTOTYPE( void dump_program_headers, (Elf_Phdr phdrs[],
-	int phnum)                                                         );
-FORWARD _PROTOTYPE( void dump_segments, (Elf32_Phdr phdrs[], int phnum)    );
+				(Elf32_Phdr phdrs[], Elf32_Nhdr nhdrs[]));
+FORWARD _PROTOTYPE( void adjust_offsets, (Elf32_Phdr phdrs[], int phnum));
+FORWARD _PROTOTYPE( void dump_elf_header, (struct filp *f,
+					   Elf32_Ehdr elf_header)	);
+FORWARD _PROTOTYPE( void dump_notes, (struct filp *f, Elf32_Nhdr nhdrs[],
+				      int csig, char *proc_name)	);
+FORWARD _PROTOTYPE( void dump_program_headers, (struct filp *f,
+					        Elf_Phdr phdrs[], int phnum));
+FORWARD _PROTOTYPE( void dump_segments, (struct filp *f, Elf32_Phdr phdrs[],
+					 int phnum)			);
+FORWARD _PROTOTYPE( void write_buf, (struct filp *f, char *buf, size_t size));
 
 /*===========================================================================*
  *				write_elf_core_file			     *
  *===========================================================================*/
+PUBLIC void write_elf_core_file(struct filp *f, int csig, char *proc_name)
+{
 /* First, fill in all the required headers, second, adjust the offsets,
  * third, dump everything into the core file
  */
-PUBLIC void write_elf_core_file(int csig, char *exe_name)
-{
 #define MAX_REGIONS 20
 #define NR_NOTE_ENTRIES 2
   Elf_Ehdr elf_header;
@@ -60,16 +62,16 @@ PUBLIC void write_elf_core_file(int csig, char *exe_name)
   adjust_offsets(phdrs, phnum);
 
   /* Write ELF header */
-  dump_elf_header(elf_header);
+  dump_elf_header(f, elf_header);
 
   /* Write Program headers (Including the NOTE) */
-  dump_program_headers(phdrs, phnum);
+  dump_program_headers(f, phdrs, phnum);
 
   /* Write NOTE contents */
-  dump_notes(nhdrs, csig, exe_name);
+  dump_notes(f, nhdrs, csig, proc_name);
 
   /* Write segments' contents */
-  dump_segments(phdrs, phnum);
+  dump_segments(f, phdrs, phnum);
 }
 
 /*===========================================================================*
@@ -171,20 +173,19 @@ PRIVATE void adjust_offsets(Elf_Phdr phdrs[], int phnum)
 /*===========================================================================*
  *				write_buf       			     *
  *===========================================================================*/
-PRIVATE void write_buf(char *buf, int size)
+PRIVATE void write_buf(struct filp *f, char *buf, size_t size)
 {
-  m_in.buffer = buf;
-  m_in.nbytes = size;
-  read_write(WRITING);
+  read_write(WRITING, f, buf, size, VFS_PROC_NR);
 }
 
 /*===========================================================================*
  *				get_memory_regions			     *
  *===========================================================================*/
-/* The same as dump_regions from procfs/pid.c */
 PRIVATE int get_memory_regions(Elf_Phdr phdrs[])
 {
   /* Print the virtual memory regions of a process. */
+
+  /* The same as dump_regions from procfs/pid.c */
   struct vm_region_info vri[MAX_VRI_COUNT];
   vir_bytes next;
   int i, r, count;
@@ -194,14 +195,12 @@ PRIVATE int get_memory_regions(Elf_Phdr phdrs[])
   next = 0;
 
   do {
-	r = vm_info_region(fp->fp_endpoint, vri, MAX_VRI_COUNT,
-			&next);
+	r = vm_info_region(fp->fp_endpoint, vri, MAX_VRI_COUNT, &next);
 	if (r < 0) return r;
 	if (r == 0) break;
 
 	for (i = 0; i < r; i++) {
-
-		pflags = (vri[i].vri_prot & PROT_READ ? PF_R : 0)
+		pflags =  (vri[i].vri_prot & PROT_READ ? PF_R : 0)
 			| (vri[i].vri_prot & PROT_WRITE ? PF_W : 0)
 			| (vri[i].vri_prot & PROT_EXEC ? PF_X : 0);
 
@@ -213,18 +212,19 @@ PRIVATE int get_memory_regions(Elf_Phdr phdrs[])
 		if (count >= MAX_REGIONS) {
 			printf("VFS: get_memory_regions Warning: "
 				"Program has too many regions\n");
-			return count;
+			return(count);
 		}
 	}
   } while (r == MAX_VRI_COUNT);
 
-  return count;
+  return(count);
 }
 
 /*===========================================================================*
  *				dump_notes			             *
  *===========================================================================*/
-PRIVATE void dump_notes(Elf_Nhdr nhdrs[], int csig, char *exe_name)
+PRIVATE void dump_notes(struct filp *f, Elf_Nhdr nhdrs[], int csig,
+			 char *proc_name)
 {
   char *note_name = ELF_NOTE_MINIX_ELFCORE_NAME "\0";
   char pad[4];
@@ -232,12 +232,6 @@ PRIVATE void dump_notes(Elf_Nhdr nhdrs[], int csig, char *exe_name)
   int mei_len = sizeof(minix_elfcore_info_t);
   int gregs_len = sizeof(gregset_t);
   struct stackframe_s regs;
-  char proc_name[PROC_NAME_LEN];
-
-  /* Get process's name */
-  if (sys_datacopy(PM_PROC_NR, (vir_bytes) exe_name,
-		VFS_PROC_NR, (vir_bytes) proc_name, PROC_NAME_LEN) != OK)
-	printf("VFS: Cannot get process's name\n");
 
   /* Dump first note entry */
   mei.mei_version = MINIX_ELFCORE_VERSION;
@@ -246,11 +240,11 @@ PRIVATE void dump_notes(Elf_Nhdr nhdrs[], int csig, char *exe_name)
   mei.mei_pid = fp->fp_pid;
   memcpy(mei.mei_command, proc_name, sizeof(mei.mei_command));
 
-  write_buf((char *)&nhdrs[0], sizeof(Elf_Nhdr));
-  write_buf(note_name, nhdrs[0].n_namesz);
-  write_buf(pad, PAD_LEN(nhdrs[0].n_namesz) - nhdrs[0].n_namesz);
-  write_buf((char *)&mei, mei_len);
-  write_buf(pad, PAD_LEN(mei_len) - mei_len);
+  write_buf(f, (char *) &nhdrs[0], sizeof(Elf_Nhdr));
+  write_buf(f, note_name, nhdrs[0].n_namesz);
+  write_buf(f, pad, PAD_LEN(nhdrs[0].n_namesz) - nhdrs[0].n_namesz);
+  write_buf(f, (char *) &mei, mei_len);
+  write_buf(f, pad, PAD_LEN(mei_len) - mei_len);
 
   /* Get registers */
   if (sys_getregs(&regs, fp->fp_endpoint) != OK)
@@ -260,36 +254,37 @@ PRIVATE void dump_notes(Elf_Nhdr nhdrs[], int csig, char *exe_name)
 	printf("VFS: Wrong core register structure size\n");
 
   /* Dump second note entry - the general registers */
-  write_buf((char *)&nhdrs[1], sizeof(Elf_Nhdr));
-  write_buf(note_name, nhdrs[1].n_namesz);
-  write_buf(pad, PAD_LEN(nhdrs[1].n_namesz) - nhdrs[1].n_namesz);
-  write_buf((char *)&regs, gregs_len);
-  write_buf(pad, PAD_LEN(gregs_len) - gregs_len);
+  write_buf(f, (char *) &nhdrs[1], sizeof(Elf_Nhdr));
+
+  write_buf(f, note_name, nhdrs[1].n_namesz);
+  write_buf(f, pad, PAD_LEN(nhdrs[1].n_namesz) - nhdrs[1].n_namesz);
+  write_buf(f, (char *) &regs, gregs_len);
+  write_buf(f, pad, PAD_LEN(gregs_len) - gregs_len);
 }
 
 /*===========================================================================*
  *				dump_elf_header			             *
  *===========================================================================*/
-PRIVATE void dump_elf_header(Elf_Ehdr elf_header)
+PRIVATE void dump_elf_header(struct filp *f, Elf_Ehdr elf_header)
 {
-  write_buf((char *)&elf_header, sizeof(Elf_Ehdr));
+  write_buf(f, (char *) &elf_header, sizeof(Elf_Ehdr));
 }
 
 /*===========================================================================*
  *			  dump_program_headers			             *
  *===========================================================================*/
-PRIVATE void dump_program_headers(Elf_Phdr phdrs[], int phnum)
+PRIVATE void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int phnum)
 {
   int i;
 
   for (i = 0; i < phnum; i++)
-	write_buf((char *)&phdrs[i], sizeof(Elf_Phdr));
+	write_buf(f, (char *) &phdrs[i], sizeof(Elf_Phdr));
 }
 
 /*===========================================================================*
  *			      dump_segments 			             *
  *===========================================================================*/
-PRIVATE void dump_segments(Elf_Phdr phdrs[], int phnum)
+PRIVATE void dump_segments(struct filp *f, Elf_Phdr phdrs[], int phnum)
 {
   int i;
   vir_bytes len;
@@ -307,7 +302,7 @@ PRIVATE void dump_segments(Elf_Phdr phdrs[], int phnum)
 			SELF, D, (vir_bytes) buf,
 			(phys_bytes) CLICK_SIZE);
 
-		write_buf((char *)buf, (off + CLICK_SIZE <= len) ?
+		write_buf(f, (char *) buf, (off + CLICK_SIZE <= len) ?
 					CLICK_SIZE : (len - off));
 	}
   }

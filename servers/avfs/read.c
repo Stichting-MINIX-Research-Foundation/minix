@@ -30,7 +30,7 @@
  *===========================================================================*/
 PUBLIC int do_read()
 {
-  return(read_write(READING));
+  return(do_read_write(READING));
 }
 
 
@@ -64,22 +64,19 @@ PUBLIC void unlock_bsf(void)
 }
 
 /*===========================================================================*
- *				read_write				     *
+ *				do_read_write				     *
  *===========================================================================*/
-PUBLIC int read_write(rw_flag)
+PUBLIC int do_read_write(rw_flag)
 int rw_flag;			/* READING or WRITING */
 {
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
-  register struct filp *f;
-  register struct vnode *vp;
-  u64_t position, res_pos, new_pos;
-  unsigned int cum_io, cum_io_incr, res_cum_io;
-  int op, oflags, r, block_spec, char_spec, regular;
+  struct filp *f;
   tll_access_t locktype;
-  mode_t mode_word;
+  int r;
 
   /* If the file descriptor is valid, get the vnode, size and mode. */
   if (m_in.nbytes < 0) return(EINVAL);
+
   locktype = (rw_flag == READING) ? VNODE_READ : VNODE_WRITE;
   if ((f = get_filp(m_in.fd, locktype)) == NULL) return(err_code);
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
@@ -91,6 +88,24 @@ int rw_flag;			/* READING or WRITING */
 	return(0);	/* so char special files need not check for 0*/
   }
 
+  r = read_write(rw_flag, f, m_in.buffer, m_in.nbytes, who_e);
+
+  unlock_filp(f);
+  return(r);
+}
+
+/*===========================================================================*
+ *				read_write				     *
+ *===========================================================================*/
+PUBLIC int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
+		      endpoint_t for_e)
+{
+  register struct vnode *vp;
+  u64_t position, res_pos, new_pos;
+  unsigned int cum_io, cum_io_incr, res_cum_io;
+  int op, oflags, r, block_spec, char_spec, regular;
+  mode_t mode_word;
+
   position = f->filp_pos;
   oflags = f->filp_flags;
   vp = f->filp_vno;
@@ -101,8 +116,7 @@ int rw_flag;			/* READING or WRITING */
 	if (fp->fp_cum_io_partial != 0) {
 		panic("VFS: read_write: fp_cum_io_partial not clear");
 	}
-	r = rw_pipe(rw_flag, who_e, m_in.fd, f, m_in.buffer, m_in.nbytes);
-	unlock_filp(f);
+	r = rw_pipe(rw_flag, for_e, f, buf, size);
 	return(r);
   }
 
@@ -127,7 +141,7 @@ int rw_flag;			/* READING or WRITING */
 	suspend_reopen = (f->filp_state != FS_NORMAL);
 	dev = (dev_t) vp->v_sdev;
 
-	r = dev_io(op, dev, who_e, m_in.buffer, position, m_in.nbytes, oflags,
+	r = dev_io(op, dev, for_e, buf, position, size, oflags,
 		   suspend_reopen);
 	if (r >= 0) {
 		cum_io = r;
@@ -137,8 +151,8 @@ int rw_flag;			/* READING or WRITING */
   } else if (block_spec) {		/* Block special files. */
 	lock_bsf();
 
-	r = req_breadwrite(vp->v_bfs_e, who_e, vp->v_sdev, position,
-		m_in.nbytes, m_in.buffer, rw_flag, &res_pos, &res_cum_io);
+	r = req_breadwrite(vp->v_bfs_e, for_e, vp->v_sdev, position, size,
+			   buf, rw_flag, &res_pos, &res_cum_io);
 	if (r == OK) {
 		position = res_pos;
 		cum_io += res_cum_io;
@@ -152,8 +166,8 @@ int rw_flag;			/* READING or WRITING */
 	}
 
 	/* Issue request */
-	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, who_e,
-			  m_in.buffer, m_in.nbytes, &new_pos, &cum_io_incr);
+	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, for_e,
+			  buf, size, &new_pos, &cum_io_incr);
 
 	if (r >= 0) {
 		if (ex64hi(new_pos))
@@ -177,12 +191,10 @@ int rw_flag;			/* READING or WRITING */
   }
 
   f->filp_pos = position;
-  unlock_filp(f);
 
   if (r == OK) return(cum_io);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_getdents				     *
@@ -220,10 +232,9 @@ PUBLIC int do_getdents()
 /*===========================================================================*
  *				rw_pipe					     *
  *===========================================================================*/
-PUBLIC int rw_pipe(rw_flag, usr_e, fd_nr, f, buf, req_size)
+PUBLIC int rw_pipe(rw_flag, usr_e, f, buf, req_size)
 int rw_flag;			/* READING or WRITING */
 endpoint_t usr_e;
-int fd_nr;
 struct filp *f;
 char *buf;
 size_t req_size;
@@ -246,7 +257,7 @@ size_t req_size;
 
   r = pipe_check(vp, rw_flag, oflags, req_size, position, 0);
   if (r <= 0) {
-	if (r == SUSPEND) pipe_suspend(rw_flag, fd_nr, buf, req_size);
+	if (r == SUSPEND) pipe_suspend(rw_flag, f, buf, req_size);
 	return(r);
   }
 
@@ -314,7 +325,7 @@ size_t req_size;
 			 * non-atomic
 			 */
 			fp->fp_cum_io_partial = cum_io;
-			pipe_suspend(rw_flag, fd_nr, buf, req_size);
+			pipe_suspend(rw_flag, f, buf, req_size);
 			return(SUSPEND);
 		}
 	}

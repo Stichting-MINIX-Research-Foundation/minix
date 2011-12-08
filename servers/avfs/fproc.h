@@ -25,13 +25,16 @@ EXTERN struct fproc {
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
 
   dev_t fp_tty;			/* major/minor of controlling tty */
-  int fp_block_fd;		/* place to save fd if rd/wr can't finish */
+  int fp_blocked_on;		/* what is it blocked on */
   int fp_block_callnr;		/* blocked call if rd/wr can't finish */
+  union blocked {
+	int fd_nr;		/* place to save fd if rd/wr can't finish */
+	struct filp *bfilp;	/* place to save filp if rd/wr can't finish */
+  } fp_blocked;
   char *fp_buffer;		/* place to save buffer if rd/wr can't finish*/
   int  fp_nbytes;		/* place to save bytes if rd/wr can't finish */
   int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
   endpoint_t fp_task;		/* which task is proc suspended on */
-  int fp_blocked_on;		/* what is it blocked on */
   endpoint_t fp_ioproc;		/* proc no. in suspended-on i/o message */
 
   cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */

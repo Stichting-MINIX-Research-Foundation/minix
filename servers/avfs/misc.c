@@ -586,14 +586,33 @@ PUBLIC int do_svrctl()
 /*===========================================================================*
  *				pm_dumpcore				     *
  *===========================================================================*/
-PUBLIC int pm_dumpcore(proc_e, seg_ptr)
-int proc_e;
-struct mem_map *seg_ptr;
+PUBLIC int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
 {
-  int slot;
+  int slot, r, core_fd;
+  struct filp *f;
+  char core_path[PATH_MAX];
+  char proc_name[PROC_NAME_LEN];
 
   okendpt(proc_e, &slot);
-  free_proc(&fproc[slot], FP_EXITING);
+  fp = &fproc[slot];
+
+  /* open core file */
+  snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
+  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
+  if (core_fd < 0) return(core_fd);
+
+  /* get process' name */
+  r = sys_datacopy(PM_PROC_NR, exe_name, VFS_PROC_NR, (vir_bytes) proc_name,
+			PROC_NAME_LEN);
+  if (r != OK) return(r);
+  proc_name[PROC_NAME_LEN - 1] = '\0';
+
+  if ((f = get_filp(core_fd, VNODE_WRITE)) == NULL) return(EBADF);
+  write_elf_core_file(f, csig, proc_name);
+  unlock_filp(f);
+  (void) close_fd(fp, core_fd);	/* ignore failure, we're exiting anyway */
+
+  free_proc(fp, FP_EXITING);
   return(OK);
 }
 

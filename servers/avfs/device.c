@@ -983,8 +983,8 @@ PUBLIC void cdev_up(int maj)
 	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN) continue;
 
 	printf("VFS: dev_up: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
-		rfp->fp_block_fd);
-	fd_nr = rfp->fp_block_fd;
+		rfp->fp_blocked.fd_nr);
+	fd_nr = rfp->fp_blocked.fd_nr;
 	rfilp = rfp->fp_filp[fd_nr];
 	vp = rfilp->filp_vno;
 	if (!vp) panic("VFS: restart_reopen: no vp");
@@ -1090,9 +1090,9 @@ int maj;
 	if (rfp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
 	    !(rfp->fp_flags & FP_SUSP_REOPEN)) continue;
 
-	printf("VFS: restart_reopen: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
-		rfp->fp_block_fd);
-	fd_nr =	rfp->fp_block_fd;
+	fd_nr =	rfp->fp_blocked.fd_nr;
+	printf("VFS: restart_reopen: process in FP_BLOCKED_ON_DOPEN fd=%d\n",
+		fd_nr);
 	rfilp = rfp->fp_filp[fd_nr];
 
 	if (!rfilp) {

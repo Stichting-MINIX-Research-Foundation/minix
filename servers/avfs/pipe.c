@@ -295,12 +295,17 @@ PUBLIC void suspend(int why)
 #endif
 
   if (why == FP_BLOCKED_ON_POPEN)
-	  /* #procs susp'ed on pipe*/
-	  susp_count++;
+	/* #procs susp'ed on pipe*/
+	susp_count++;
+
+  if (why == FP_BLOCKED_ON_POPEN || why == FP_BLOCKED_ON_DOPEN ||
+	why == FP_BLOCKED_ON_LOCK || why == FP_BLOCKED_ON_OTHER)
+	fp->fp_blocked.fd_nr = m_in.fd;
+  else
+	fp->fp_blocked.fd_nr = 0;
 
   fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
-  fp->fp_block_fd = m_in.fd;
   fp->fp_block_callnr = call_nr;
   fp->fp_flags &= ~FP_SUSP_REOPEN;		/* Clear this flag. The caller
 						 * can set it when needed.
@@ -329,9 +334,9 @@ PUBLIC void wait_for(endpoint_t who)
 /*===========================================================================*
  *				pipe_suspend					     *
  *===========================================================================*/
-PUBLIC void pipe_suspend(rw_flag, fd_nr, buf, size)
+PUBLIC void pipe_suspend(rw_flag, filp, buf, size)
 int rw_flag;
-int fd_nr;
+struct filp *filp;
 char *buf;
 size_t size;
 {
@@ -349,8 +354,8 @@ size_t size;
   susp_count++;					/* #procs susp'ed on pipe*/
   fp->fp_blocked_on = FP_BLOCKED_ON_PIPE;
   assert(!GRANT_VALID(fp->fp_grant));
-  fp->fp_block_fd = fd_nr;
-  fp->fp_block_callnr = ((rw_flag == READING) ? READ : WRITE);
+  fp->fp_blocked.bfilp = filp;
+  fp->fp_block_callnr = (rw_flag == READING) ? READ : WRITE;
   fp->fp_buffer = buf;
   fp->fp_nbytes = size;
 }
@@ -387,9 +392,8 @@ register struct vnode *vp;	/* inode of pipe */
 int op;				/* READ, WRITE, OPEN or CREAT */
 int count;			/* max number of processes to release */
 {
-/* Check to see if any process is hanging on the pipe whose inode is in 'ip'.
- * If one is, and it was trying to perform the call indicated by 'call_nr',
- * release it.
+/* Check to see if any process is hanging on vnode 'vp'. If one is, and it
+ * was trying to perform the call indicated by 'call_nr', release it.
  */
 
   register struct fproc *rp;
@@ -417,9 +421,27 @@ int count;			/* max number of processes to release */
   /* Search the proc table. */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS] && count > 0; rp++) {
 	if (rp->fp_pid != PID_FREE && fp_is_blocked(rp) &&
-	    !(rp->fp_flags & FP_REVIVED) && rp->fp_block_callnr == op &&
-	    rp->fp_filp[rp->fp_block_fd] != NULL &&
-	    rp->fp_filp[rp->fp_block_fd]->filp_vno == vp) {
+	    !(rp->fp_flags & FP_REVIVED) && rp->fp_block_callnr == op) {
+		/* Find the vnode. Depending on the reason the process was
+		 * suspended, there are different ways of finding it.
+		 */
+
+		if (rp->fp_blocked_on == FP_BLOCKED_ON_POPEN ||
+		    rp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
+		    rp->fp_blocked_on == FP_BLOCKED_ON_LOCK ||
+		    rp->fp_blocked_on == FP_BLOCKED_ON_OTHER) {
+			if (rp->fp_filp[rp->fp_blocked.fd_nr] == NULL)
+				continue;
+			if (rp->fp_filp[rp->fp_blocked.fd_nr]->filp_vno != vp)
+				continue;
+		} else {
+			if (rp->fp_blocked.bfilp == NULL)
+				continue;
+			if (rp->fp_blocked.bfilp->filp_vno != vp)
+				continue;
+		}
+
+		/* We found the vnode. Revive process. */
 		revive(rp->fp_endpoint, 0);
 		susp_count--;	/* keep track of who is suspended */
 		if(susp_count < 0)
@@ -456,13 +478,14 @@ int returned;			/* if hanging on task, how many bytes read */
    * the proc must be restarted so it can try again.
    */
   blocked_on = rfp->fp_blocked_on;
+  fd_nr = rfp->fp_blocked.fd_nr;
   if (blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_LOCK) {
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_flags |= FP_REVIVED;
 	reviving++;		/* process was waiting on pipe or lock */
   } else if (blocked_on == FP_BLOCKED_ON_DOPEN) {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	fd_nr = rfp->fp_block_fd;
+	rfp->fp_blocked.fd_nr = 0;
 	if (returned < 0) {
 		fil_ptr = rfp->fp_filp[fd_nr];
 		lock_filp(fil_ptr, VNODE_OPCL);
@@ -482,9 +505,10 @@ int returned;			/* if hanging on task, how many bytes read */
 	}
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
+	rfp->fp_blocked.fd_nr = 0;
 	if (blocked_on == FP_BLOCKED_ON_POPEN) {
 		/* process blocked in open or create */
-		reply(proc_nr_e, rfp->fp_block_fd);
+		reply(proc_nr_e, fd_nr);
 	} else if (blocked_on == FP_BLOCKED_ON_SELECT) {
 		reply(proc_nr_e, returned);
 	} else {
@@ -568,7 +592,7 @@ int proc_nr_e;
 			break;
 		}
 
-		fild = rfp->fp_block_fd;
+		fild = rfp->fp_blocked.fd_nr;
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("file descriptor out-of-range");
 		f = rfp->fp_filp[fild];

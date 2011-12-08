@@ -7,7 +7,7 @@ SRCS=	main.c open.c read.c write.c pipe.c dmap.c \
 	filedes.c stadir.c protect.c time.c \
 	lock.c misc.c utility.c select.c table.c \
 	vnode.c vmnt.c request.c fscall.c \
-	tll.c comm.c worker.c
+	tll.c comm.c worker.c coredump.c
 
 .if ${MKCOVERAGE} != "no"
 SRCS+=  gcov.c
