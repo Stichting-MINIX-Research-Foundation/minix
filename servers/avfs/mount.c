@@ -237,20 +237,27 @@ char mount_label[LABEL_MAX] )
 	}
   }
 
-/* XXX: move this upwards before lookup after proper locking. */
   /* We'll need a vnode for the root inode */
   if ((root_node = get_free_vnode()) == NULL || dev == 266) {
-	unlock_vnode(vp);
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
 	unlock_vmnt(new_vmp);
-	put_vnode(vp);
 	return(err_code);
   }
-
   lock_vnode(root_node, VNODE_OPCL);
 
   /* Record process as a system process */
-  if (isokendpt(fs_e, &slot) != OK)
+  if (isokendpt(fs_e, &slot) != OK) {
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
+	unlock_vnode(root_node);
+	unlock_vmnt(new_vmp);
 	return(EINVAL);
+  }
   rfp = &fproc[slot];
   rfp->fp_flags |= FP_SYS_PROC;	/* Process is an FS */
 
@@ -269,9 +276,11 @@ char mount_label[LABEL_MAX] )
 	new_vmp->m_fs_e = NONE;
 	new_vmp->m_dev = NO_DEV;
 	unlock_vnode(root_node);
-	unlock_vnode(vp);
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
 	unlock_vmnt(new_vmp);
-	put_vnode(vp);
 	return(r);
   }
 
