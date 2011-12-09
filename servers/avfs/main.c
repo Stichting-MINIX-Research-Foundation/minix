@@ -881,9 +881,15 @@ PRIVATE void service_pm()
 	okendpt(m_in.PM_PROC, &slot);
 	fp = &fproc[slot];
 
-	assert(!(fp->fp_flags & FP_PENDING));
-	fp->fp_job.j_m_in = m_in;
-	fp->fp_flags |= FP_PM_PENDING;
+	if (fp->fp_flags & FP_PENDING) {
+		/* This process has a request pending, but PM wants it gone.
+		 * Forget about the pending request and satisfy PM's request
+		 * instead. Note that a pending request AND an EXEC request
+		 * are mutually exclusive. Also, PM should send only one
+		 * request/process at a time.
+		 */
+		 assert(fp->fp_job.j_m_in.m_source != PM_PROC_NR);
+	}
 
         /* PM requests on behalf of a proc are handled after the system call
          * that might be in progress for that proc has finished. If the proc
@@ -891,8 +897,10 @@ PRIVATE void service_pm()
 	if (!(fp->fp_flags & FP_PENDING) && mutex_trylock(&fp->fp_lock) == 0) {
 		mutex_unlock(&fp->fp_lock);
 		worker_start(do_dummy);
-		yield();
         }
+
+	fp->fp_job.j_m_in = m_in;
+	fp->fp_flags |= FP_PM_PENDING;
 
 	return;
 
