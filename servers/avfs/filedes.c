@@ -262,7 +262,10 @@ tll_access_t locktype;
 	org_m_in = m_in;
 	org_fp = fp;
 	org_self = self;
-	assert(mutex_lock(&filp->filp_lock) == 0);
+
+	if (mutex_lock(&filp->filp_lock) != 0)
+		panic("unable to obtain lock on filp");
+
 	m_in = org_m_in;
 	fp = org_fp;
 	self = org_self;
@@ -292,7 +295,8 @@ struct filp *filp;
   }
 
   filp->filp_softlock = NULL;
-  assert(mutex_unlock(&filp->filp_lock) == 0);
+  if (mutex_unlock(&filp->filp_lock) != 0)
+	panic("unable to release lock on filp");
 }
 
 /*===========================================================================*
@@ -321,8 +325,10 @@ struct filp *filp2;
 
   filp1->filp_softlock = NULL;
   filp2->filp_softlock = NULL;
-  assert(mutex_unlock(&filp2->filp_lock) == 0);
-  assert(mutex_unlock(&filp1->filp_lock) == 0);
+  if (mutex_unlock(&filp2->filp_lock) != 0)
+	panic("unable to release filp lock on filp2");
+  if (mutex_unlock(&filp1->filp_lock) != 0)
+	panic("unable to release filp lock on filp1");
 }
 
 /*===========================================================================*

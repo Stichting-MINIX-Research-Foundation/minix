@@ -564,7 +564,8 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   /* Initialize event resources for boot procs and locks for all procs */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	assert(mutex_init(&rfp->fp_lock, NULL) == 0);
+	if (mutex_init(&rfp->fp_lock, NULL) != 0)
+		panic("unable to initialize fproc lock");
 #if LOCK_DEBUG
 	rfp->fp_vp_rdlocks = 0;
 	rfp->fp_vmnt_rdlocks = 0;
@@ -636,7 +637,8 @@ PUBLIC void lock_proc(struct fproc *rfp, int force_lock)
   org_m_in = m_in;
   org_fp = fp;
   org_self = self;
-  assert(mutex_lock(&rfp->fp_lock) == 0);
+  if (mutex_lock(&rfp->fp_lock) != 0)
+	panic("unable to lock fproc lock");
   m_in = org_m_in;
   fp = org_fp;
   self = org_self;

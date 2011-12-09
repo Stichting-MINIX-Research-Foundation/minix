@@ -33,7 +33,8 @@ PUBLIC void worker_init(struct worker_thread *wp)
 /* Initialize worker thread */
   if (!init) {
 	threads_init();
-	assert(mthread_attr_init(&tattr) == 0);
+	if (mthread_attr_init(&tattr) != 0)
+		panic("failed to initialize attribute");
 	if (mthread_attr_setstacksize(&tattr, TH_STACKSIZE) != 0)
 		panic("couldn't set default thread stack size");
 	if (mthread_attr_setdetachstate(&tattr, MTHREAD_CREATE_DETACHED) != 0)
@@ -46,9 +47,12 @@ PUBLIC void worker_init(struct worker_thread *wp)
 
   wp->w_job.j_func = NULL;		/* Mark not in use */
   wp->w_next = NULL;
-  assert(mutex_init(&wp->w_event_mutex, NULL) == 0);
-  assert(cond_init(&wp->w_event, NULL) == 0);
-  assert(mthread_create(&wp->w_tid, &tattr, worker_main, (void *) wp) == 0);
+  if (mutex_init(&wp->w_event_mutex, NULL) != 0)
+	panic("failed to initialize mutex");
+  if (cond_init(&wp->w_event, NULL) != 0)
+	panic("failed to initialize conditional variable");
+  if (mthread_create(&wp->w_tid, &tattr, worker_main, (void *) wp) != 0)
+	panic("unable to start thread");
   yield();
 }
 
@@ -247,9 +251,12 @@ PRIVATE void worker_sleep(struct worker_thread *worker)
 {
   ASSERTW(worker);
   assert(self == worker);
-  assert(mutex_lock(&worker->w_event_mutex) == 0);
-  assert(cond_wait(&worker->w_event, &worker->w_event_mutex) == 0);
-  assert(mutex_unlock(&worker->w_event_mutex) == 0);
+  if (mutex_lock(&worker->w_event_mutex) != 0)
+	panic("unable to lock event mutex");
+  if (cond_wait(&worker->w_event, &worker->w_event_mutex) != 0)
+	panic("could not wait on conditional variable");
+  if (mutex_unlock(&worker->w_event_mutex) != 0)
+	panic("unable to unlock event mutex");
   self = worker;
 }
 
@@ -260,9 +267,12 @@ PRIVATE void worker_wake(struct worker_thread *worker)
 {
 /* Signal a worker to wake up */
   ASSERTW(worker);
-  assert(mutex_lock(&worker->w_event_mutex) == 0);
-  assert(cond_signal(&worker->w_event) == 0);
-  assert(mutex_unlock(&worker->w_event_mutex) == 0);
+  if (mutex_lock(&worker->w_event_mutex) != 0)
+	panic("unable to lock event mutex");
+  if (cond_signal(&worker->w_event) != 0)
+	panic("unable to signal conditional variable");
+  if (mutex_unlock(&worker->w_event_mutex) != 0)
+	panic("unable to unlock event mutex");
 }
 
 /*===========================================================================*

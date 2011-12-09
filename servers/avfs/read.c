@@ -49,7 +49,10 @@ PUBLIC void lock_bsf(void)
   org_m_in = m_in;
   org_fp = fp;
   org_self = self;
-  assert(mutex_lock(&bsf_lock) == 0);
+
+  if (mutex_lock(&bsf_lock) != 0)
+	panic("unable to lock block special file lock");
+
   m_in = org_m_in;
   fp = org_fp;
   self = org_self;
@@ -60,7 +63,8 @@ PUBLIC void lock_bsf(void)
  *===========================================================================*/
 PUBLIC void unlock_bsf(void)
 {
-  assert(mutex_unlock(&bsf_lock) == 0);
+  if (mutex_unlock(&bsf_lock) != 0)
+	panic("failed to unlock block special file lock");
 }
 
 /*===========================================================================*

@@ -559,8 +559,10 @@ struct fproc *rfp;
 		put_vnode(dir_vp);
 		dir_vp = dir_vp->v_vmnt->m_mounted_on;
 		dir_vmp = dir_vp->v_vmnt;
-		assert(lock_vmnt(dir_vmp, VMNT_READ) == OK);
-		assert(lock_vnode(dir_vp, VNODE_READ) == OK);
+		if (lock_vmnt(dir_vmp, VMNT_READ) != OK)
+			panic("failed to lock vmnt");
+		if (lock_vnode(dir_vp, VNODE_READ) != OK)
+			panic("failed to lock vnode");
 		dup_vnode(dir_vp);
 	}
 
