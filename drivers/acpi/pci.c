@@ -91,6 +91,7 @@ map_error:
 	((struct acpi_map_bridge_resp *)m)->err = err;
 }
 
+#if 0
 PRIVATE ACPI_STATUS device_get_int(ACPI_HANDLE handle,
 				char * name,
 				ACPI_INTEGER * val)
@@ -110,6 +111,7 @@ PRIVATE ACPI_STATUS device_get_int(ACPI_HANDLE handle,
 
 	return status;
 }
+#endif
 
 PUBLIC void do_get_irq(message *m)
 {
@@ -217,7 +219,7 @@ PRIVATE ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 			continue;
 		}
 		ires.bridge = bridge;
-		ires,tbl = tbl;
+		ires.tbl = tbl;
 		status = AcpiWalkResources(src_handle, METHOD_NAME__CRS,
 				get_irq_resource, &ires);
 		if (ACPI_FAILURE(status)) {

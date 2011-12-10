@@ -123,7 +123,7 @@ extern struct machine machine;
 
 
 PRIVATE unsigned pci_inb(u16_t port) {
-	u32_t value;
+	unsigned long value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("ACPI: warning, sys_inb failed: %d\n", s);
@@ -131,7 +131,7 @@ PRIVATE unsigned pci_inb(u16_t port) {
 }
 
 PRIVATE unsigned pci_inw(u16_t port) {
-	u32_t value;
+	unsigned long value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("ACPI: warning, sys_inw failed: %d\n", s);
@@ -139,7 +139,7 @@ PRIVATE unsigned pci_inw(u16_t port) {
 }
 
 PRIVATE unsigned pci_inl(u16_t port) {
-	u32_t value;
+	unsigned long value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
 		printf("ACPI: warning, sys_inl failed: %d\n", s);
@@ -355,9 +355,6 @@ AcpiOsVprintf (
     const char              *Fmt,
     va_list                 Args)
 {
-	INT32                   Count = 0;
-	UINT8                   Flags;
-
 
 	vprintf (Fmt, Args);
 	printf("\n");
