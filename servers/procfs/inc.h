@@ -53,9 +53,11 @@
 #if defined(_USEAVFS)
 # include "avfs/const.h"
 # include "avfs/fproc.h"
+# include "avfs/dmap.h"
 #else
 # include "vfs/const.h"
 # include "vfs/fproc.h"
+# include "vfs/dmap.h"
 #endif
 
 #include <minix/vtreefs.h>

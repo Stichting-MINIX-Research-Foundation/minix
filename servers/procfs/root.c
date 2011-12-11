@@ -2,6 +2,7 @@
 
 #include "inc.h"
 #include <machine/pci.h>
+#include <minix/dmap.h>
 #include "cpuinfo.h"
 
 FORWARD _PROTOTYPE( void root_hz, (void)				);
@@ -10,6 +11,7 @@ FORWARD _PROTOTYPE( void root_loadavg, (void)				);
 FORWARD _PROTOTYPE( void root_kinfo, (void)				);
 FORWARD _PROTOTYPE( void root_meminfo, (void)				);
 FORWARD _PROTOTYPE( void root_pci, (void)				);
+FORWARD _PROTOTYPE( void root_dmap, (void)				);
 
 struct file root_files[] = {
 	{ "hz",		REG_ALL_MODE,	(data_t) root_hz	},
@@ -18,6 +20,7 @@ struct file root_files[] = {
 	{ "kinfo",	REG_ALL_MODE,	(data_t) root_kinfo	},
 	{ "meminfo",	REG_ALL_MODE,	(data_t) root_meminfo	},
 	{ "pci",	REG_ALL_MODE,	(data_t) root_pci	},
+	{ "dmap",	REG_ALL_MODE,	(data_t) root_dmap	},
 	{ "cpuinfo",	REG_ALL_MODE,	(data_t) root_cpuinfo	},
 	{ NULL,		0,		NULL			}
 };
@@ -138,5 +141,25 @@ PRIVATE void root_pci(void)
 			dev_name ? dev_name : "");
 
 		r = pci_next_dev(&devind, &vid, &did);
+	}
+}
+
+/*===========================================================================*
+ *				root_dmap				     *
+ *===========================================================================*/
+PRIVATE void root_dmap(void)
+{
+	struct dmap dmap[NR_DEVICES];
+	int i;
+
+	if (getsysinfo(VFS_PROC_NR, SI_DMAP_TAB, dmap, sizeof(dmap)) != OK)
+		return;
+
+	for (i = 0; i < NR_DEVICES; i++) {
+		if (dmap[i].dmap_driver == NONE)
+			continue;
+
+		buf_printf("%u %s %u\n", i, dmap[i].dmap_label,
+			dmap[i].dmap_driver);
 	}
 }
