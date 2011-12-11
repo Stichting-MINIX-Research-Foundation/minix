@@ -32,10 +32,6 @@ PRIVATE struct {
 
 PRIVATE int depth = 0;			/* current globals stack level */
 
-#if ENABLE_SYSCALL_STATS
-EXTERN unsigned long calls_stats[NCALLS];
-#endif
-
 FORWARD _PROTOTYPE( int push_globals, (void)				);
 FORWARD _PROTOTYPE( void pop_globals, (void)				);
 FORWARD _PROTOTYPE( void set_globals, (message *m)			);

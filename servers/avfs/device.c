@@ -597,9 +597,9 @@ PUBLIC int tty_opcl(
  *===========================================================================*/
 PUBLIC int ctty_opcl(
   int op,			/* operation, DEV_OPEN or DEV_CLOSE */
-  dev_t dev,			/* device to open or close */
-  endpoint_t proc_e,		/* process to open/close for */
-  int flags			/* mode bits and flags */
+  dev_t UNUSED(dev),		/* device to open or close */
+  endpoint_t UNUSED(proc_e),	/* process to open/close for */
+  int UNUSED(flags)		/* mode bits and flags */
 )
 {
 /* This procedure is called from the dmap struct on opening or closing
@@ -747,9 +747,10 @@ message *mess_ptr;		/* pointer to message for task */
 /*===========================================================================*
  *				ctty_io					     *
  *===========================================================================*/
-PUBLIC int ctty_io(task_nr, mess_ptr)
-int task_nr;			/* not used - for compatibility with dmap_t */
-message *mess_ptr;		/* pointer to message for task */
+PUBLIC int ctty_io(
+  endpoint_t UNUSED(task_nr),	/* not used - for compatibility with dmap_t */
+  message *mess_ptr		/* pointer to message for task */
+)
 {
 /* This routine is only called for one device, namely /dev/tty.  Its job
  * is to change the message to use the controlling terminal, instead of the
@@ -800,7 +801,7 @@ PUBLIC int no_dev(
 /*===========================================================================*
  *				no_dev_io				     *
  *===========================================================================*/
-PUBLIC int no_dev_io(int proc, message *m)
+PUBLIC int no_dev_io(endpoint_t UNUSED(proc), message *UNUSED(m))
 {
 /* Called when doing i/o on a nonexistent device. */
   printf("VFS: I/O on unmapped device number\n");

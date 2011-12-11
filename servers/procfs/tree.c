@@ -371,7 +371,7 @@ PRIVATE void pid_read(struct inode *node)
 /*===========================================================================*
  *				pid_link				     *
  *===========================================================================*/
-PRIVATE int pid_link(struct inode *node, char *ptr, int max)
+PRIVATE int pid_link(struct inode *UNUSED(node), char *ptr, int UNUSED(max))
 {
 	/* The contents of a symbolic link in a PID directory are requested.
 	 * This function is a placeholder for future use.
@@ -386,7 +386,8 @@ PRIVATE int pid_link(struct inode *node, char *ptr, int max)
 /*===========================================================================*
  *				lookup_hook				     *
  *===========================================================================*/
-PUBLIC int lookup_hook(struct inode *parent, char *name, cbdata_t cbdata)
+PUBLIC int lookup_hook(struct inode *parent, char *name,
+	cbdata_t UNUSED(cbdata))
 {
 	/* Path name resolution hook, for a specific parent and name pair.
 	 * If needed, update our own view of the system first; after that,
@@ -432,7 +433,7 @@ PUBLIC int lookup_hook(struct inode *parent, char *name, cbdata_t cbdata)
 /*===========================================================================*
  *				getdents_hook				     *
  *===========================================================================*/
-PUBLIC int getdents_hook(struct inode *node, cbdata_t cbdata)
+PUBLIC int getdents_hook(struct inode *node, cbdata_t UNUSED(cbdata))
 {
 	/* Directory entry retrieval hook, for potentially all files in a
 	 * directory. Make sure that all files that are supposed to be
@@ -478,7 +479,7 @@ PUBLIC int read_hook(struct inode *node, off_t off, char **ptr,
  *				rdlink_hook				     *
  *===========================================================================*/
 PUBLIC int rdlink_hook(struct inode *node, char *ptr, size_t max,
-	cbdata_t cbdata)
+	cbdata_t UNUSED(cbdata))
 {
 	/* Symbolic link resolution hook. Not used yet.
 	 */

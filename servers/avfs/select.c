@@ -398,7 +398,8 @@ PRIVATE int select_request_async(struct filp *f, int *ops, int block)
 /*===========================================================================*
  *				select_request_file			     *
  *===========================================================================*/
-PRIVATE int select_request_file(struct filp *f, int *ops, int block)
+PRIVATE int select_request_file(struct filp *UNUSED(f), int *UNUSED(ops),
+  int UNUSED(block))
 {
   /* Files are always ready, so output *ops is input *ops */
   return(SEL_OK);

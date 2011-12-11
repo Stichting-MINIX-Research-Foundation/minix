@@ -252,7 +252,7 @@ PRIVATE int map_service(const struct rprocpub *rpub)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PUBLIC int sef_cb_init_fresh(int type, sef_init_info_t *info)
+PUBLIC int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
 {
 /* Initialize the data store server. */
 	int i, r;

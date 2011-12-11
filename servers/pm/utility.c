@@ -106,8 +106,10 @@ PUBLIC int nice_to_priority(int nice, unsigned* new_q)
 
 	*new_q = MAX_USER_Q + (nice-PRIO_MIN) * (MIN_USER_Q-MAX_USER_Q+1) /
 	    (PRIO_MAX-PRIO_MIN+1);
-	if (*new_q < MAX_USER_Q) *new_q = MAX_USER_Q;	/* shouldn't happen */
-	if (*new_q > MIN_USER_Q) *new_q = MIN_USER_Q;	/* shouldn't happen */
+
+	/* Neither of these should ever happen. */
+	if ((signed) *new_q < MAX_USER_Q) *new_q = MAX_USER_Q;
+	if (*new_q > MIN_USER_Q) *new_q = MIN_USER_Q;
 
 	return (OK);
 }

@@ -69,7 +69,7 @@ PRIVATE void init_hook(void)
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main(int argc, char *argv[])
+PUBLIC int main(void)
 {
 	/* ProcFS entry point.
 	 */
