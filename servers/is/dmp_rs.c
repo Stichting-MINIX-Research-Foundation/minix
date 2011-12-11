@@ -29,8 +29,11 @@ PUBLIC void rproc_dmp()
   int i, n=0;
   static int prev_i=0;
 
-  getsysinfo(RS_PROC_NR, SI_PROCPUB_TAB, rprocpub);
-  getsysinfo(RS_PROC_NR, SI_PROC_TAB, rproc);
+  if (getsysinfo(RS_PROC_NR, SI_PROCPUB_TAB, rprocpub, sizeof(rprocpub)) != OK
+	|| getsysinfo(RS_PROC_NR, SI_PROC_TAB, rproc, sizeof(rproc)) != OK) {
+	printf("Error obtaining table from RS. Perhaps recompile IS?\n");
+	return;
+  }
 
   printf("Reincarnation Server (RS) system process table dump\n");
   printf("----label---- endpoint- -pid- flags- -dev- -T- alive_tm starts command\n");

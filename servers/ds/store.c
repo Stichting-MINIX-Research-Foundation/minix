@@ -776,21 +776,20 @@ PUBLIC int do_getsysinfo(const message *m_ptr)
   size_t length;
   int s;
 
-  switch(m_ptr->m1_i1) {
+  switch(m_ptr->SI_WHAT) {
   case SI_DATA_STORE:
 	src_addr = (vir_bytes)ds_store;
 	length = sizeof(struct data_store) * NR_DS_KEYS;
-	break;
-  case SI_SUBSCRIPTION:
-	src_addr = (vir_bytes)ds_subs;
-	length = sizeof(struct subscription) * NR_DS_SUBS;
 	break;
   default:
   	return EINVAL;
   }
 
+  if (length != m_ptr->SI_SIZE)
+	return EINVAL;
+
   if (OK != (s=sys_datacopy(SELF, src_addr,
-		m_ptr->m_source, (vir_bytes)m_ptr->m1_p1, length))) {
+		m_ptr->m_source, (vir_bytes)m_ptr->SI_WHERE, length))) {
 	printf("DS: copy failed: %d\n", s);
 	return s;
   }

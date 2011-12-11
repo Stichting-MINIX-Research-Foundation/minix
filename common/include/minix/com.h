@@ -849,6 +849,7 @@
 #define COMMON_GETSYSINFO	(COMMON_RQ_BASE+2)
 #	define SI_WHAT		m1_i1
 #	define SI_WHERE		m1_p1
+#	define SI_SIZE		m1_i2
 
 /* PM field names */
 /* BRK */

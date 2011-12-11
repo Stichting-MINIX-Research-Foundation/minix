@@ -26,8 +26,6 @@
 #define sig_set		m2_l1
 #define sig_how		m2_i1
 #define sig_context	m2_p1
-#define info_what	m1_i1
-#define info_where	m1_p1
 #define reboot_flag	m1_i1
 #define reboot_code	m1_p1
 #define reboot_strlen	m1_i2

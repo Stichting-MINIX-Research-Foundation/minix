@@ -155,9 +155,7 @@ PUBLIC int do_sysuname()
 PUBLIC int do_getsysinfo()
 {
   vir_bytes src_addr, dst_addr;
-  struct loadinfo loadinfo;
   size_t len;
-  int s;
 
   /* This call leaks important information. In the future, requests from
    * non-system processes should be denied.
@@ -170,15 +168,10 @@ PUBLIC int do_getsysinfo()
 	return EPERM;
   }
 
-  switch(m_in.info_what) {
+  switch(m_in.SI_WHAT) {
   case SI_PROC_TAB:			/* copy entire process table */
         src_addr = (vir_bytes) mproc;
         len = sizeof(struct mproc) * NR_PROCS;
-        break;
-  case SI_LOADINFO:			/* loadinfo is obtained via PM */
-        sys_getloadinfo(&loadinfo);
-        src_addr = (vir_bytes) &loadinfo;
-        len = sizeof(struct loadinfo);
         break;
 #if ENABLE_SYSCALL_STATS
   case SI_CALL_STATS:
@@ -190,10 +183,11 @@ PUBLIC int do_getsysinfo()
   	return(EINVAL);
   }
 
-  dst_addr = (vir_bytes) m_in.info_where;
-  if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
-  	return(s);
-  return(OK);
+  if (len != m_in.SI_SIZE)
+	return(EINVAL);
+
+  dst_addr = (vir_bytes) m_in.SI_WHERE;
+  return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
 }
 
 /*===========================================================================*

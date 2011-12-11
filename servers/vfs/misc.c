@@ -65,7 +65,6 @@ PUBLIC int do_getsysinfo()
 {
   vir_bytes src_addr, dst_addr;
   size_t len;
-  int s;
 
   /* Only su may call do_getsysinfo. This call may leak information (and is not
    * stable enough to be part of the API/ABI). In the future, requests from
@@ -74,7 +73,7 @@ PUBLIC int do_getsysinfo()
 
   if (!super_user) return(EPERM);
 
-  switch(m_in.info_what) {
+  switch(m_in.SI_WHAT) {
   case SI_PROC_TAB:
   	src_addr = (vir_bytes) fproc;
   	len = sizeof(struct fproc) * NR_PROCS;
@@ -93,10 +92,11 @@ PUBLIC int do_getsysinfo()
   	return(EINVAL);
   }
 
-  dst_addr = (vir_bytes) m_in.info_where;
-  if (OK != (s = sys_datacopy(SELF, src_addr, who_e, dst_addr, len))) return(s);
-  return(OK);
+  if (len != m_in.SI_SIZE)
+	return(EINVAL);
 
+  dst_addr = (vir_bytes) m_in.SI_WHERE;
+  return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
 }
 
 /*===========================================================================*

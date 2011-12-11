@@ -33,7 +33,10 @@ PUBLIC void fproc_dmp()
   int i, n=0;
   static int prev_i;
 
-  getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc);
+  if (getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc, sizeof(fproc)) != OK) {
+	printf("Error obtaining table from VFS. Perhaps recompile IS?\n");
+	return;
+  }
 
   printf("File System (FS) process table dump\n");
   printf("-nr- -pid- -tty- -umask- --uid-- --gid-- -ldr- -sus-rev-proc-\n");
@@ -107,7 +110,10 @@ PUBLIC void dtab_dmp()
 {
     int i;
 
-    getsysinfo(VFS_PROC_NR, SI_DMAP_TAB, dmap);
+    if (getsysinfo(VFS_PROC_NR, SI_DMAP_TAB, dmap, sizeof(dmap)) != OK) {
+        printf("Error obtaining table from VFS. Perhaps recompile IS?\n");
+        return;
+    }
     
     printf("File System (FS) device <-> driver mappings\n");
     printf("    Label     Major Driver ept Flags     Style   \n");

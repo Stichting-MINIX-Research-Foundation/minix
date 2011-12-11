@@ -70,7 +70,7 @@ PUBLIC int do_getsysinfo()
 
   if (!super_user) return(EPERM);
 
-  switch(m_in.info_what) {
+  switch(m_in.SI_WHAT) {
     case SI_PROC_TAB:
 	src_addr = (vir_bytes) fproc;
 	len = sizeof(struct fproc) * NR_PROCS;
@@ -89,7 +89,10 @@ PUBLIC int do_getsysinfo()
 	return(EINVAL);
   }
 
-  dst_addr = (vir_bytes) m_in.info_where;
+  if (len != m_in.SI_SIZE)
+	return(EINVAL);
+
+  dst_addr = (vir_bytes) m_in.SI_WHERE;
   return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
 }
 

@@ -45,10 +45,12 @@ PUBLIC void mproc_dmp()
   int i, n=0;
   static int prev_i = 0;
 
+  if (getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc, sizeof(mproc)) != OK) {
+	printf("Error obtaining table from PM. Perhaps recompile IS?\n");
+	return;
+  }
+
   printf("Process manager (PM) process table dump\n");
-
-  getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc);
-
   printf("-process- -nr-pnr-tnr- --pid--ppid--pgrp- -uid--  -gid--  -nice- -flags-------\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];
@@ -77,11 +79,13 @@ PUBLIC void sigaction_dmp()
   static int prev_i = 0;
   clock_t uptime;
 
-  printf("Process manager (PM) signal action dump\n");
-
-  getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc);
+  if (getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc, sizeof(mproc)) != OK) {
+	printf("Error obtaining table from PM. Perhaps recompile IS?\n");
+	return;
+  }
   getuptime(&uptime);
 
+  printf("Process manager (PM) signal action dump\n");
   printf("-process- -nr- --ignore- --catch- --block- -pending- -alarm---\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];

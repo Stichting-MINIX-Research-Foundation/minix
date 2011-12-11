@@ -77,29 +77,13 @@ PRIVATE int dir_is_pid(struct inode *node)
 		get_inode_index(node) != NO_INDEX);
 }
 
-PRIVATE int mproc_ok(struct mproc *tab, int slots)
-{
-	int i;
-
-	/* sanity check of mproc */
-
-	for(i = 0; i < slots; i++) {
-		if(tab[i].mp_magic != MP_MAGIC) {
-			printf("procfs: mproc table magic number mismatch\n");
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
 /*===========================================================================*
- *				update_tables				     *
+ *				update_proc_table			     *
  *===========================================================================*/
-PRIVATE int update_tables(void)
+PRIVATE int update_proc_table(void)
 {
-	/* Get the process tables from the kernel, PM, and VFS.
-	 * Check the magic number in the kernel table entries.
+	/* Get the process table from the kernel.
+	 * Check the magic number in the table entries.
 	 */
 	int r, slot;
 
@@ -113,11 +97,58 @@ PRIVATE int update_tables(void)
 		}
 	}
 
-	if ((r = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) return r;
+	return OK;
+}
 
-	if(!mproc_ok(mproc, NR_PROCS)) return EINVAL;
+/*===========================================================================*
+ *				update_mproc_table			     *
+ *===========================================================================*/
+PRIVATE int update_mproc_table(void)
+{
+	/* Get the process table from PM.
+	 * Check the magic number in the table entries.
+	 */
+	int r, slot;
 
-	if ((r = getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc)) != OK) return r;
+	r = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc, sizeof(mproc));
+	if (r != OK) return r;
+
+	for (slot = 0; slot < NR_PROCS; slot++) {
+		if (mproc[slot].mp_magic != MP_MAGIC) {
+			printf("PROCFS: PM version mismatch!\n");
+
+			return EINVAL;
+		}
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				update_fproc_table			     *
+ *===========================================================================*/
+PRIVATE int update_fproc_table(void)
+{
+	/* Get the process table from VFS.
+	 */
+
+	return getsysinfo(VFS_PROC_NR, SI_PROC_TAB, fproc, sizeof(fproc));
+}
+
+/*===========================================================================*
+ *				update_tables				     *
+ *===========================================================================*/
+PRIVATE int update_tables(void)
+{
+	/* Get the process tables from the kernel, PM, and VFS.
+	 */
+	int r;
+
+	if ((r = update_proc_table()) != OK) return r;
+
+	if ((r = update_mproc_table()) != OK) return r;
+
+	if ((r = update_fproc_table()) != OK) return r;
 
 	return OK;
 }

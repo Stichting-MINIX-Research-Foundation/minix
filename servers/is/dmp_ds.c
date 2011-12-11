@@ -9,10 +9,10 @@ PUBLIC void data_store_dmp()
 {
   struct data_store *p;
   static int prev_i = 0;
-  int r, i, n = 0;
+  int i, n = 0;
 
-  if((r=getsysinfo(DS_PROC_NR, SI_DATA_STORE, ds_store)) != OK) {
-	printf("Couldn't talk to DS: %d.\n", r);
+  if (getsysinfo(DS_PROC_NR, SI_DATA_STORE, ds_store, sizeof(ds_store)) != OK) {
+	printf("Error obtaining table from DS. Perhaps recompile IS?\n");
 	return;
   }
 

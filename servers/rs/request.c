@@ -879,7 +879,7 @@ message *m_ptr;
   if((s = check_call_permission(m_ptr->m_source, 0, NULL)) != OK)
       return s;
 
-  switch(m_ptr->m1_i1) {
+  switch(m_ptr->SI_WHAT) {
   case SI_PROC_TAB:
   	src_addr = (vir_bytes) rproc;
   	len = sizeof(struct rproc) * NR_SYS_PROCS;
@@ -892,11 +892,12 @@ message *m_ptr;
   	return(EINVAL);
   }
 
+  if (len != m_ptr->SI_SIZE)
+	return(EINVAL);
+
   dst_proc = m_ptr->m_source;
-  dst_addr = (vir_bytes) m_ptr->m1_p1;
-  if (OK != (s=sys_datacopy(SELF, src_addr, dst_proc, dst_addr, len)))
-  	return(s);
-  return(OK);
+  dst_addr = (vir_bytes) m_ptr->SI_WHERE;
+  return sys_datacopy(SELF, src_addr, dst_proc, dst_addr, len);
 }
 
 /*===========================================================================*
