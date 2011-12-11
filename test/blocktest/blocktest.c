@@ -1,18 +1,11 @@
 /* Block Device Driver Test driver, by D.C. van Moolenbroek */
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <minix/blockdriver.h>
 #include <minix/drvlib.h>
-#include <minix/dmap.h>
-#include <minix/sysinfo.h>
 #include <minix/ds.h>
 #include <minix/optset.h>
 #include <sys/ioc_disk.h>
 #include <assert.h>
-
-/* FIXME: use servers/vfs/.. with VFS */
-#include "servers/avfs/const.h"
-#include "servers/avfs/dmap.h"
 
 enum {
 	RESULT_OK,			/* exactly as expected */
@@ -32,9 +25,8 @@ typedef struct {
 	ssize_t value;
 } result_t;
 
-PRIVATE char device_path[PATH_MAX];	/* path to device node to use */
-PRIVATE char driver_label[LABEL_MAX];	/* driver DS label */
-PRIVATE dev_t driver_minor;		/* driver's partition minor to use */
+PRIVATE char driver_label[32] = "";	/* driver DS label */
+PRIVATE dev_t driver_minor = -1;	/* driver's partition minor to use */
 PRIVATE endpoint_t driver_endpt;	/* driver endpoint */
 
 PRIVATE int may_write = FALSE;		/* may we write to the device? */
@@ -60,7 +52,8 @@ PRIVATE int driver_deaths = 0;		/* number of restarts that we saw */
 
 /* Options supported by this driver. */
 PRIVATE struct optset optset_table[] = {
-	{ "device",	OPT_STRING,	device_path,	sizeof(device_path)  },
+	{ "label",	OPT_STRING,	driver_label,	sizeof(driver_label) },
+	{ "minor",	OPT_INT,	&driver_minor,	10		     },
 	{ "rw",		OPT_BOOL,	&may_write,	TRUE		     },
 	{ "ro",		OPT_BOOL,	&may_write,	FALSE		     },
 	{ "sector",	OPT_INT,	&sector_size,	10		     },
@@ -2569,41 +2562,6 @@ PRIVATE void do_tests(void)
 	close_primary();
 }
 
-PRIVATE void map_device(char *path)
-{
-	/* Map a device node to a label, endpoint, and minor device number.
-	 * This should be replaced with something better some day. For now,
-	 * it seems this is the only working approach.
-	 */
-	static struct dmap dmap[NR_DEVICES];
-	struct stat statbuf;
-	dev_t major;
-	int r;
-
-	if ((r = stat(path, &statbuf)) != OK)
-		panic("unable to stat '%s'", path);
-
-	if (!S_ISBLK(statbuf.st_mode) || major(statbuf.st_rdev) >= NR_DEVICES)
-		panic("'%s' is not a block device", path);
-
-	major = major(statbuf.st_rdev);
-	driver_minor = minor(statbuf.st_rdev);
-
-	if ((r = getsysinfo(VFS_PROC_NR, SI_DMAP_TAB, dmap)) != OK)
-		panic("unable to get dmap table from VFS: %d", r);
-
-	if (driver_endpt == NONE || !dmap[major].dmap_label[0])
-		panic("no driver present for given device");
-
-	strcpy(driver_label, dmap[major].dmap_label);
-
-	if (ds_retrieve_label_endpt(driver_label, &driver_endpt))
-		panic("unable to resolve label");
-
-	if (driver_endpt != dmap[major].dmap_driver)
-		panic("endpoint mismatch between VFS and DS");
-}
-
 PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 	/* Initialize.
@@ -2614,10 +2572,14 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	if (env_argc > 1)
 		optset_parse(optset_table, env_argv[1]);
 
-	if (device_path[0] == '\0')
-		panic("no device path given");
+	if (driver_label[0] == '\0')
+		panic("no driver label given");
 
-	map_device(device_path);
+	if (ds_retrieve_label_endpt(driver_label, &driver_endpt))
+		panic("unable to resolve driver label");
+
+	if (driver_minor > 255)
+		panic("invalid or no driver minor given");
 
 	if ((r = getuptime(&now)) != OK)
 		panic("unable to get uptime: %d", r);

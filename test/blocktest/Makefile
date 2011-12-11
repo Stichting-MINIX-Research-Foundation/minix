@@ -4,10 +4,10 @@ SRCS=	blocktest.c
 
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys
-CPPFLAGS+=-I${MINIXSRCDIR}
 
 MAN=
 
 BINDIR?= /usr/sbin
 
-.include <bsd.prog.mk>
+.include "Makefile.inc"
+.include <minix.service.mk>
