@@ -9,6 +9,7 @@
 
 enum {
 	RESULT_OK,			/* exactly as expected */
+	RESULT_DEATH,			/* driver died */
 	RESULT_COMMFAIL,		/* communication failed */
 	RESULT_BADTYPE,			/* bad type in message */
 	RESULT_BADID,			/* bad request ID in message */
@@ -94,6 +95,9 @@ PRIVATE void got_result(result_t *res, char *desc)
 		(res->type == RESULT_OK) ? "PASS" : "FAIL");
 
 	switch (res->type) {
+	case RESULT_DEATH:
+		printf("- driver died\n");
+		break;
 	case RESULT_COMMFAIL:
 		printf("- communication failed; sendrec returned %d\n",
 			res->value);
@@ -159,46 +163,51 @@ PRIVATE int sendrec_driver(message *m_ptr, ssize_t exp, result_t *res)
 {
 	/* Make a call to the driver, and perform basic checks on the return
 	 * message. Fill in the result structure, wiping out what was in there
-	 * before. If the driver reports being restarted, reopen all previously
-	 * opened devices and retry the call.
+	 * before. If the driver dies in the process, attempt to recover but
+	 * fail the request.
 	 */
 	message m_orig;
-	int i, r, retry;
+	endpoint_t last_endpt;
+	int i, r;
 
 	m_orig = *m_ptr;
-	retry = 0;
 
-	do {
-		r = sendrec(driver_endpt, m_ptr);
+	r = sendrec(driver_endpt, m_ptr);
 
-		if (r != OK)
-			return set_result(res, RESULT_COMMFAIL, r);
-
-		if (m_ptr->m_type != BDEV_REPLY)
-			return set_result(res, RESULT_BADTYPE, m_ptr->m_type);
-
-		if (m_ptr->BDEV_ID != m_orig.BDEV_ID)
-			return set_result(res, RESULT_BADID, m_ptr->BDEV_ID);
-
-		if (m_ptr->BDEV_STATUS != ERESTART) break;
-
-		/* The driver has died. Reopen all devices that we opened
-		 * earlier, and resend the request. Up to three times.
+	if (r == EDEADSRCDST) {
+		/* The driver has died. Find its new endpoint, and reopen all
+		 * devices that we opened earlier. Then return failure.
 		 */
 		printf("WARNING: driver has died, attempting to proceed\n");
 
 		driver_deaths++;
 
+		/* Keep trying until we get a new endpoint. */
+		last_endpt = driver_endpt;
+		for (;;) {
+			r = ds_retrieve_label_endpt(driver_label,
+				&driver_endpt);
+
+			if (r == OK && last_endpt != driver_endpt)
+				break;
+
+			micro_delay(100000);
+		}
+
 		for (i = 0; i < nr_opened; i++)
 			reopen_device(opened[i]);
 
-		*m_ptr = m_orig;
-	} while (++retry < 3);
-
-	if (retry == 3) {
-		printf("FATAL: driver has died three times in a row\n");
-		exit(1);
+		return set_result(res, RESULT_DEATH, 0);
 	}
+
+	if (r != OK)
+		return set_result(res, RESULT_COMMFAIL, r);
+
+	if (m_ptr->m_type != BDEV_REPLY)
+		return set_result(res, RESULT_BADTYPE, m_ptr->m_type);
+
+	if (m_ptr->BDEV_ID != m_orig.BDEV_ID)
+		return set_result(res, RESULT_BADID, m_ptr->BDEV_ID);
 
 	if ((exp < 0 && m_ptr->BDEV_STATUS >= 0) ||
 			(exp >= 0 && m_ptr->BDEV_STATUS < 0))
