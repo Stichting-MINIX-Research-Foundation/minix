@@ -38,7 +38,7 @@ static int bdev_recover(dev_t dev, int update_endpt)
   endpoint_t endpt;
   int r, nr_tries;
 
-  printf("bdev: recovering from a driver crash on major %d\n", major(dev));
+  printf("bdev: recovering from a driver restart on major %d\n", major(dev));
 
   for (nr_tries = 0; nr_tries < RECOVER_TRIES; nr_tries++) {
 	/* First update the endpoint, if necessary. */

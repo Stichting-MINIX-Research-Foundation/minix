@@ -1,0 +1,109 @@
+.TH FBDCTL 8
+.SH NAME
+fbdctl \- Faulty Block Device rule management interface
+.SH SYNOPSIS
+\fBfbdctl\fR \fBadd\fR [\fB-d\fR \fIdevice\fR]
+[\fB-a\fR \fIstart\fR[\fB-\fR\fIend\fR]] [\fB-s\fR \fIskip\fR]
+[\fB-c\fR \fIcount\fR] [\fB-rw\fR] \fIaction\fR [\fIparams\fR]
+.PP
+\fBfbdctl\fR \fBdel\fR [\fB-d\fR \fIdevice\fR] \fIrulenum\fR
+.PP
+\fBfbdctl\fR \fBlist\fR [\fB-d\fR \fIdevice\fR]
+.SH DESCRIPTION
+The Faulty Block Device (FBD) driver is an interposing block device driver
+which can simulate certain disk-level I/O corruption and errors, based on a
+user-provided set of rules. The \fBfbdctl\fR tool allows one to add, delete,
+and list rules on a running FBD driver instance.
+.PP
+The \fBadd\fR subcommand adds a new rule, which will perform a predefined
+faulty action on a disk transfer when triggered. See the ACTIONS subsection
+below. The \fBdel\fR subcommands deletes an existing rule, based on its rule
+number. All currently active rules and their corresponding rule numbers can be
+viewed with the \fBlist\fR subcommand.
+.SH OPTIONS
+.TP 10
+\fB-d\fR \fIdevice\fR
+By default, \fBfbdctl\fR operates on \fB/dev/fbd\fR. With this option, one can
+specify a different device node. This is useful when using multiple FBD
+instances at the same time. The user would have to create extra device nodes
+first in that case.
+.TP 10
+\fB-a\fR [\fIstart\fR[\fB-\fR\fIend\fR]]
+When adding a rule, this option specifies the disk address range for which the
+rule triggers. That is, the rule will trigger when an I/O operation overlaps
+with the given range. Both \fIstart\fR and \fIend\fR are expected to be
+hexadecimal numbers, without a "0x" prefix. The \fIend\fR address is exclusive.
+If no \fIend\fR address is given, the rule will affect the disk from the
+starting address to the disk end. If this option is not provided at all,
+the rule will affect the entire disk.
+.TP 10
+\fB-s\fR \fIskip\fR
+This option makes the new rule refrain from triggering for the given number
+of times it matches. The \fIskip\fR value must be a positive decimal number.
+If this option is omitted, the value is set to zero, meaning the rule will
+start triggering immediately.
+.TP 10
+\fB-c\fR \fIcount\fR
+This option makes the new rule trigger for this many I/O operations when
+matched, after which it will be removed automatically. The \fIcount\fR value
+must be a positive decimal number. If this option is omitted, or a value of
+zero is given, the rule is permanent and will not be removed automatically.
+.TP 10
+\fB-r\fR, \fB-w\fR
+These options allow one to make the new rule trigger on read or write
+operations only. By default, or when both are specified, the new rule will
+trigger for both read and write I/O operations.
+.SH ACTIONS
+The following actions are supported. They are executed when the rule matches
+for a transfer request, and is triggered as a result. Note that the exact
+meaning of the rule's disk address range (as given by the \fB-a\fR option)
+depends on the action type.
+.TP 10
+\fBcorrupt\fR [\fBzero\fR|\fBpersist\fR|\fBrandom\fR]
+In the part of the transfer that matches the disk address range given for the
+rule (i.e., the intersection of the rule range and the transfer range), the
+data will be corrupted. The following corruption policies are supported: the
+data is set to \fBzero\fR, it is \fBpersist\fRently set to the same garbage
+data for the same disk locations, or it is set to different \fBrandom\fR data
+in every transfer.
+.TP 10
+\fBerror\fR [\fBOK\fR|\fBEIO\fR]
+Only the part of the transfer up to the start of the rule's disk address range
+will be performed, after which the given error code is returned. The \fBOK\fR
+code effectively simulates an end-of-disk condition, whereas the \fBEIO\fR code
+simulates generic disk-level I/O failure.
+.TP 10
+\fBmisdir\fR \fIstart\fR\fB-\fR\fIend\fR \fIalign\fR
+Transfer requests that match this rule, will be \fBmisdirected\fR in their
+entirety, to a random location in the given address range, and with the given
+disk byte alignment within that range. The \fIstart\fR and \fIend\fR parameters
+are specified just like the \fB-a\fR option, although the \fIend\fR parameter
+is compulsory here (since the driver does not know the disk end). The
+\fIalign\fR value must be a positive nonzero decimal number, and should be a
+multiple of the medium sector size; a typical value would be 4096.
+.TP 10
+\fBlost\fR
+Transfer requests that match this rule, will be \fBlost\fR in their entirety.
+That is, they will not actually be performed, and yet report successful
+completion.
+.TP 10
+\fBtorn\fR \fIlead\fR
+Transfer requests that match this rule, will be \fBtorn\fR: only the first
+\fIlead\fR bytes of the transfer request will actually be performed, and yet
+completion of the full transfer is reported. The \fIlead\fR value must be a
+positive nonzero decimal number. A \fBtorn\fR action with a \fIlead\fR value of
+zero would be the same as the \fBlost\fR action.
+.SH EXAMPLES
+.TP 10
+.B fbdctl add -a 2000-3000 corrupt zero
+# Zero out the 4096 bytes starting from disk address 0x2000 in any transfer
+that involves any of those bytes.
+.TP 10
+.B fbdctl add -s 9 -c 1 -r error EIO
+# Fail the tenth read request with an I/O error.
+.TP 10
+.B fbdctl add -a A0000-B0000 -w misdir D0000-E0000 4096
+# Misdirect write requests that overlap with the first range, to fall somewhere
+in the second range, at 4K-block-granular alignment.
+.SH AUTHOR
+David van Moolenbroek <david@minix3.org>

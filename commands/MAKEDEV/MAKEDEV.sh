@@ -23,7 +23,7 @@ case $#:$1 in
 	ttypa ttypb ttypc ttypd ttype ttypf \
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
-	eth klog random uds filter hello
+	eth klog random uds filter fbd hello
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -49,6 +49,7 @@ Where key is one of the following:
   kbd                     # Make /dev/kbd
   kbdaux                  # Make /dev/kbdaux
   filter                  # Make /dev/filter
+  fbd                     # Make /dev/fbd
   hello                   # Make /dev/hello
   video                   # Make /dev/video
   std			  # All standard devices
@@ -266,6 +267,11 @@ do
 	# filter driver
 	$e mknod filter b 11 0
 	$e chmod 644 filter
+	;;
+    fbd)
+	# faulty block device driver
+	$e mknod fbd b 14 0
+	$e chmod 600 fbd
 	;;
     hello)
 	# hello driver

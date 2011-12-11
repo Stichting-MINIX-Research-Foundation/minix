@@ -182,7 +182,7 @@ do
 	des="audio" dev=audio
 	;;
     14,0)
-	des="audio mixer" dev=mixer
+	des="faulty block device driver" dev=fbd
 	;;
     15,0)
 	des="kernel log" dev=klog

@@ -30,7 +30,7 @@ enum dev_style { STYLE_NDEV, STYLE_DEV, STYLE_DEVA, STYLE_TTY, STYLE_CTTY,
 #define FILTER_MAJOR		  11	/* 11 = /dev/filter (filter driver)   */
 					/* 12 = /dev/c3                       */
 #define AUDIO_MAJOR		  13	/* 13 = /dev/audio  (audio driver)    */
-					/* 14 = not used                      */
+#define FBD_MAJOR		  14	/* 14 = /dev/fbd    (faulty block dev)*/
 #define LOG_MAJOR		  15	/* 15 = /dev/klog   (log driver)      */
 #define RANDOM_MAJOR		  16	/* 16 = /dev/random (random driver)   */
 #define HELLO_MAJOR		  17	/* 17 = /dev/hello  (hello driver)    */

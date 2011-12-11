@@ -54,6 +54,7 @@ drivers/dec21140A/dec21140A
 drivers/dp8390/dp8390
 drivers/dpeth/dpeth
 drivers/e1000/e1000
+drivers/fbd/fbd
 drivers/filter/filter
 drivers/floppy/floppy
 drivers/fxp/fxp
