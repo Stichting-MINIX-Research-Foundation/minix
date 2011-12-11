@@ -23,4 +23,9 @@ CFLAGS+= -D_USEAVFS
 CFLAGS+= -D_USEVFS
 .endif
 
+# This setting must match the kernel's, as it affects the IRQ hooks table size.
+.if ${USE_APIC} != "no"
+CFLAGS+= -DUSE_APIC
+.endif
+
 .include <minix.service.mk>
