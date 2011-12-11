@@ -32,7 +32,7 @@ struct blockdriver {
 /* Functions defined by libblockdriver. These can be used for both
  * singlethreaded and multithreaded drivers.
  */
-_PROTOTYPE( void blockdriver_announce, (void) );
+_PROTOTYPE( void blockdriver_announce, (int type) );
 
 #ifndef _BLOCKDRIVER_MT_API
 /* Additional functions for the singlethreaded version. These allow the driver

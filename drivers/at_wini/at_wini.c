@@ -257,7 +257,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the at_wini driver. */
   system_hz = sys_hz();
@@ -272,7 +272,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   init_params();
 
   /* Announce we are up! */
-  blockdriver_announce();
+  blockdriver_announce(type);
 
   return(OK);
 }

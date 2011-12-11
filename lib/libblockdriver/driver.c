@@ -92,7 +92,7 @@ PRIVATE void set_open_dev(int device)
 /*===========================================================================*
  *				blockdriver_announce			     *
  *===========================================================================*/
-PUBLIC void blockdriver_announce(void)
+PUBLIC void blockdriver_announce(int type)
 {
 /* Announce we are up after a fresh start or a restart. */
   int r;
@@ -102,12 +102,15 @@ PUBLIC void blockdriver_announce(void)
 
   /* Callers are allowed to use sendrec to communicate with drivers.
    * For this reason, there may blocked callers when a driver restarts.
-   * Ask the kernel to unblock them (if any).
+   * Ask the kernel to unblock them (if any). Note that most block drivers
+   * will not restart statefully, and thus will skip this code.
    */
+  if (type == SEF_INIT_RESTART) {
 #if USE_STATECTL
-  if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK)
-	panic("blockdriver_init: sys_statectl failed: %d", r);
+	if ((r = sys_statectl(SYS_STATE_CLEAR_IPC_REFS)) != OK)
+		panic("blockdriver_init: sys_statectl failed: %d", r);
 #endif
+  }
 
   /* Publish a driver up event. */
   if ((r = ds_retrieve_label_name(label, getprocnr())) != OK)

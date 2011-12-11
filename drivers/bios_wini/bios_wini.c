@@ -122,7 +122,7 @@ PRIVATE void sef_local_startup(void)
 /*===========================================================================*
  *		            sef_cb_init_fresh                                *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 /* Initialize the bios_wini driver. */
   long v;
@@ -132,7 +132,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   remap_first = v;
 
   /* Announce we are up! */
-  blockdriver_announce();
+  blockdriver_announce(type);
 
   return(OK);
 }

@@ -2071,7 +2071,7 @@ PRIVATE void ahci_set_mapping(void)
 /*===========================================================================*
  *				sef_cb_init_fresh			     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
+PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *UNUSED(info))
 {
 	/* Initialize the driver.
 	 */
@@ -2093,7 +2093,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	ahci_set_mapping();
 
 	/* Announce that we are up. */
-	blockdriver_announce();
+	blockdriver_announce(type);
 
 	return OK;
 }
