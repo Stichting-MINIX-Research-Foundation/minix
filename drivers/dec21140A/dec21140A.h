@@ -11,7 +11,7 @@ Created: 09/01/2009   Nicolas Tittley (first.last @ gmail DOT com)
 
 #include <sys/null.h>
 
-#define DE_FKEY 8  /* Shitf+ this value will dump info on console */
+#define DE_FKEY 7  /* Shift+ this value will dump info on console */
 
 #define NOT(x) (~(x))
 
