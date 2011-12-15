@@ -908,7 +908,6 @@ PUBLIC int arch_phys_map(const int index,
 		if(lapic_addr)
 			lapic_mapping_index = freeidx++;
 		if (ioapic_enabled) {
-			int i;
 			ioapic_first_index = freeidx;
 			assert(nioapics > 0);
 			freeidx += nioapics;

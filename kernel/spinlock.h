@@ -28,6 +28,8 @@ typedef struct spinlock {
 #define spinlock_lock(sl)
 #define spinlock_unlock(sl)
 #else
+void arch_spinlock_lock(atomic_t * sl);
+void arch_spinlock_unlock(atomic_t * sl);
 #define spinlock_lock(sl)	arch_spinlock_lock((atomic_t*) sl)
 #define spinlock_unlock(sl)	arch_spinlock_unlock((atomic_t*) sl)
 #endif

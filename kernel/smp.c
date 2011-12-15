@@ -2,6 +2,7 @@
 
 #include "smp.h"
 #include "interrupt.h"
+#include "clock.h"
 
 unsigned ncpus;
 unsigned ht_per_core;

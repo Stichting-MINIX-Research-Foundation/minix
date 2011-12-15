@@ -178,6 +178,7 @@ extern void * k_stacks;
 #define get_k_stack_top(cpu)	((void *)(((char*)(k_stacks)) \
 					+ 2 * ((cpu) + 1) * K_STACK_SIZE))
 
+_PROTOTYPE( void, mfence(void));
 #define barrier()	do { mfence(); } while(0)
 
 

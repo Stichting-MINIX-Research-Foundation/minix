@@ -53,6 +53,7 @@ SPINLOCK_DECLARE(boot_lock)
 	
 _PROTOTYPE(void wait_for_APs_to_finish_booting, (void));
 _PROTOTYPE(void ap_boot_finished, (unsigned cpu));
+_PROTOTYPE(void smp_shutdown_aps, (void ));
 
 /* IPI handlers */
 _PROTOTYPE(void smp_ipi_halt_handler, (void));

@@ -11,6 +11,7 @@
 #include "arch_proto.h"
 #include "kernel/glo.h"
 #include <unistd.h>
+#include <stdlib.h>
 #include <machine/cmos.h>
 #include <machine/bios.h>
 #include <minix/portio.h>
@@ -19,6 +20,7 @@
 #include "kernel/smp.h"
 #include "apic.h"
 #include "acpi.h"
+#include "clock.h"
 
 #include "glo.h"
 
@@ -46,7 +48,6 @@ PUBLIC unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
 SPINLOCK_DEFINE(smp_cpu_lock)
 SPINLOCK_DEFINE(dispq_lock)
 
-FORWARD _PROTOTYPE(void smp_init_vars, (void));
 FORWARD _PROTOTYPE(void smp_reinit_vars, (void));
 
 /*
@@ -55,15 +56,14 @@ FORWARD _PROTOTYPE(void smp_reinit_vars, (void));
 PRIVATE phys_bytes copy_trampoline(void)
 {
 	char * s, *end;
-	phys_bytes tramp_base;
+	phys_bytes tramp_base = 0;
 	unsigned tramp_size;
 
 	tramp_size = (unsigned) &__trampoline_end - (unsigned)&trampoline;
 	s = env_get("memory");
-	s = (char *) get_value(params_buffer, "memory");
 	if (!s)
 		return 0;
-	
+
 	while (*s != 0) {
 		phys_bytes base = 0xfffffff;
 		unsigned size;
@@ -175,12 +175,10 @@ PUBLIC void smp_halt_cpu (void)
 PUBLIC void smp_shutdown_aps(void)
 {
 	unsigned cpu;
-	unsigned aid = apicid();
-	unsigned local_cpu = cpuid;
-	
+
 	if (ncpus == 1)
 		goto exit_shutdown_aps;
-	
+
 	/* we must let the other cpus enter the kernel mode */
 	BKL_UNLOCK();
 
@@ -267,7 +265,6 @@ PUBLIC void smp_ap_boot(void)
 
 PRIVATE void smp_reinit_vars(void)
 {
-	int i;
 	lapic_addr = lapic_eoi_addr = 0;
 	ioapic_enabled = 0;
 

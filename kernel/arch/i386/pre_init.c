@@ -226,7 +226,7 @@ PRIVATE int mb_set_param(char *name, char *value)
 PRIVATE void get_parameters(multiboot_info_t *mbi) 
 {
 	char mem_value[40], temp[ITOA_BUFFER_SIZE];
-	int i, processor;
+	int i;
 	int dev;
 	int ctrlr;
 	int disk, prim, sub;

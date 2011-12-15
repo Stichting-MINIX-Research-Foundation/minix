@@ -185,6 +185,10 @@ PUBLIC int register_local_timer_handler(const irq_handler_t handler)
 
 PUBLIC void cycles_accounting_init(void)
 {
+#ifdef CONFIG_SMP
+	unsigned cpu = cpuid;
+#endif
+
 	read_tsc_64(get_cpu_var_ptr(cpu, tsc_ctr_switch));
 
 	make_zero64(get_cpu_var(cpu, cpu_last_tsc));

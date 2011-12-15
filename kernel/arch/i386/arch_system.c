@@ -511,8 +511,6 @@ PRIVATE void dump_bkl_usage(void)
 
 PRIVATE void reset_bkl_usage(void)
 {
-	unsigned cpu;
-
 	memset(kernel_ticks, 0, sizeof(kernel_ticks));
 	memset(bkl_ticks, 0, sizeof(bkl_ticks));
 	memset(bkl_tries, 0, sizeof(bkl_tries));
