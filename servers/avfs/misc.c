@@ -168,6 +168,7 @@ PUBLIC int do_fcntl()
 	else if ((r = get_fd(m_in.addr, 0, &new_fd, NULL)) == OK) {
 		f->filp_count++;
 		fp->fp_filp[new_fd] = f;
+		FD_SET(new_fd, &fp->fp_filp_inuse);
 		r = new_fd;
 	}
 	break;
