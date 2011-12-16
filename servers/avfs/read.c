@@ -78,9 +78,6 @@ int rw_flag;			/* READING or WRITING */
   tll_access_t locktype;
   int r;
 
-  /* If the file descriptor is valid, get the vnode, size and mode. */
-  if (m_in.nbytes < 0) return(EINVAL);
-
   locktype = (rw_flag == READING) ? VNODE_READ : VNODE_WRITE;
   if ((f = get_filp(m_in.fd, locktype)) == NULL) return(err_code);
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
@@ -115,6 +112,8 @@ PUBLIC int read_write(int rw_flag, struct filp *f, char *buf, size_t size,
   vp = f->filp_vno;
   r = OK;
   cum_io = 0;
+
+  if (size > SSIZE_MAX) return(EINVAL);
 
   if (vp->v_pipe == I_PIPE) {
 	if (fp->fp_cum_io_partial != 0) {
