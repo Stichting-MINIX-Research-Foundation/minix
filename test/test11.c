@@ -17,12 +17,13 @@ int errct, subtest;
 char *envp[3] = {"spring", "summer", 0};
 char *passwd_file = "/etc/passwd";
 
+#include "common.c"
+
 _PROTOTYPE(int main, (int argc, char *argv[]));
 _PROTOTYPE(void test11a, (void));
 _PROTOTYPE(void test11b, (void));
 _PROTOTYPE(void test11c, (void));
 _PROTOTYPE(void test11d, (void));
-_PROTOTYPE(void e, (int n));
 
 int main(argc, argv)
 int argc;
@@ -32,8 +33,10 @@ char *argv[];
 
   if (argc == 2) m = atoi(argv[1]);
 
-  printf("Test 11 ");
-  fflush(stdout);		/* have to flush for child's benefit */
+  start(11);
+
+  system("cp ../t11a .");
+  system("cp ../t11b .");
 
   if (geteuid() != 0) {
 	printf("must be setuid root; test aborted\n");
@@ -44,27 +47,14 @@ char *argv[];
        exit(1);
   }
 
-/*
-  system("rm -rf DIR_11; mkdir DIR_11");
-  chdir("DIR_11");
-*/
-
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 0001) test11a();
 	if (m & 0002) test11b();
 	if (m & 0004) test11c();
 	if (m & 0010) test11d();
   }
-  if (errct == 0)
-	printf("ok\n");
-  else
-	printf(" %d errors\n", errct);
-
-/*
-  chdir("..");
-  system("rm -rf DIR_11");
-*/
-  return(0);
+  quit();
+  return(-1);
 }
 
 void test11a()
@@ -208,18 +198,3 @@ void test11d()
   if (unlink("T11.1") != 0) e(7);
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}

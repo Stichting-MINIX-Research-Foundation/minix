@@ -8,12 +8,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 pid_t pid0, pid1, pid2, pid3;
-int s, i, fd, nextb, errct = 0;
+int s, i, fd, nextb;
 char *tempfile = "test4.temp";
 char buf[1024];
-extern int errno;
+
+#define MAX_ERROR 2
+
+#include "common.c"
 
 _PROTOTYPE(int main, (void));
 _PROTOTYPE(void subr, (void));
@@ -24,11 +28,7 @@ int main()
 {
   int k;
 
-  printf("Test  4 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_04; mkdir DIR_04");
-  chdir("DIR_04");
+  start(4);
 
   creat(tempfile, 0777);
   for (k = 0; k < 20; k++) {
@@ -87,17 +87,3 @@ void nofork()
   exit(1);
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

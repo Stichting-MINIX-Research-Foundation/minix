@@ -18,33 +18,25 @@
 #define Fstat(a,b)	if (fstat(a,b) != 0) printf("Can't fstat %d\n", a)
 #define Time(t)		if (time(t) == (time_t)-1) printf("Time error\n")
 
-int errct = 0;
-int subtest = 1;
-char MaxName[NAME_MAX + 1];	/* Name of maximum length */
-char MaxPath[PATH_MAX];		/* Same for path */
-char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
-char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
+#include "common.c"
+
+int subtest;
 
 _PROTOTYPE(void test8a, (void));
 _PROTOTYPE(void test8b, (void));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
 
 int main(int argc, char *argv[])
 {
   int i, m = 0xFFFF;
 
-  sync();
   if (argc == 2) m = atoi(argv[1]);
-  printf("Test  8 ");
-  fflush(stdout);
-
+  start(8);
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 0001) test8a();
 	if (m & 0002) test8b();
   }
   quit();
-  return 1;
+  return(-1);	/* Unreachable */
 }
 
 void test8a()
@@ -234,30 +226,3 @@ void test8b()
   for (i = 3; i < OPEN_MAX; i++) (void) close(i);
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* Save in case printf clobbers it. */
-
-  printf("Subtest %d,  error %d  errno=%d: ", subtest, n, errno);
-  errno = err_num;
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-  errno = 0;
-}
-
-void quit()
-{
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

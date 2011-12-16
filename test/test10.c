@@ -10,9 +10,11 @@
 
 char *name[] = {"t10a", "t10b", "t10c", "t10d", "t10e", "t10f", "t10g", 
 						      "t10h", "t10i", "t10j"};
-int errct;
 long prog[300];
 int psize;
+
+#define MAX_ERROR 2
+#include "common.c"
 
 _PROTOTYPE(int main, (void));
 _PROTOTYPE(void spawn, (int n));
@@ -25,12 +27,8 @@ int main()
 {
   int i, n, pid, r;
 
-  printf("Test 10 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_10; mkdir DIR_10; cp t10a DIR_10");
-  chdir("DIR_10");
-
+  start(10);
+  system("cp ../t10a .");
   pid = getpid();
 
   /* Create files t10b ... t10h */
@@ -136,17 +134,3 @@ void rmfiles()
   unlink("t10j");
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

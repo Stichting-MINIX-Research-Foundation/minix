@@ -13,9 +13,11 @@
 #define ITERATIONS 5
 #define MAX_ERROR 4
 
-int is, array[4], parsigs, parcum, sigct, cumsig, errct, subtest;
-int iteration, kk = 0, errct = 0;
+int is, array[4], parsigs, parcum, sigct, cumsig, subtest;
+int iteration, kk = 0;
 char buf[2048];
+
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void test2a, (void));
@@ -26,8 +28,6 @@ _PROTOTYPE(void test2e, (void));
 _PROTOTYPE(void test2f, (void));
 _PROTOTYPE(void test2g, (void));
 _PROTOTYPE(void sigpip, (int s));
-_PROTOTYPE(void quit, (void));
-_PROTOTYPE(void e, (int n));
 
 int main(argc, argv)
 int argc;
@@ -35,15 +35,7 @@ char *argv[];
 {
   int i, m = 0xFFFF;
 
-  sync();
-
-  if (argc == 2) m = atoi(argv[1]);
-
-  printf("Test  2 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_02; mkdir DIR_02");
-  chdir("DIR_02");
+  start(2);
 
   for (i = 0; i < ITERATIONS; i++) {
 	iteration = i;
@@ -362,33 +354,3 @@ int s;				/* for ANSI */
   cumsig++;
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(4);
-  }
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors;  test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}

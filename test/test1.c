@@ -15,6 +15,7 @@
 _VOLATILE int glov, gct;
 int errct;
 int subtest;
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void test1a, (void));
@@ -24,8 +25,6 @@ _PROTOTYPE(void test1b, (void));
 _PROTOTYPE(void parent1, (int childpid));
 _PROTOTYPE(void func, (int s));
 _PROTOTYPE(void child1, (void));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
 
 int main(argc, argv)
 int argc;
@@ -33,15 +32,9 @@ char *argv[];
 {
   int i, m = 0xFFFF;
 
-  sync();
+  start(1);
 
   if (argc == 2) m = atoi(argv[1]);
-
-  printf("Test  1 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_01; mkdir DIR_01");
-  chdir("DIR_01");
 
   for (i = 0; i < ITERATIONS; i++) {
 	if (m & 00001) test1a();
@@ -132,17 +125,3 @@ void child1()
   exit(gct);
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

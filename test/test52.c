@@ -11,9 +11,11 @@
 #define SWAPS 40
 #define MAX_ERROR 5
 
+#include "common.c"
+
 int pipefdc[2];
 int pipefdp[2];
-int subtest = 0, errct = 0;
+int subtest = 0;
 int child_is_dead = 0;
 
 void dead_child(int n);
@@ -25,23 +27,7 @@ void quit(void);
 
 void err(int n)
 {
-  printf("Subtest %d, error %d\n", subtest, n);
-
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	exit(1);
-  }
-}
-
-void quit(void)
-{
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
+  e(n);
 }
 
 void do_calcs(void)
@@ -162,10 +148,11 @@ int main(void)
   pid_t r;
   subtest = 1;
 
+  start(52);
 #ifdef __GNUC__
-	printf("Test 52 (GCC) ");
+	printf("(GCC) ");
 #else
-	printf("Test 52 (ACK) ");
+	printf("(ACK) ");
 #endif
   fflush(stdout);
 

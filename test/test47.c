@@ -8,36 +8,12 @@
 #include <sys/sigcontext.h>
 
 #define MAX_ERROR 4
-static int errct;
+#include "common.c"
 
 /* maximum allowed FP difference for our tests */ 
 #define EPSILON 0.00000000023283064365386962890625 /* 2^(-32) */
 
-static void quit(void)
-{
-	if (errct == 0) 
-	{
-		printf("ok\n");
-		exit(0);
-	} 
-	else 
-	{
-		printf("%d errors\n", errct);
-		exit(1);
-	}
-}
-
 #define ERR(x, y) e(__LINE__, (x), (y))
-
-static void e(int n, double x, double y)
-{
-	printf("Line %d, x=%.20g, y=%.20g\n", n, x, y);
-	if (errct++ > MAX_ERROR) 
-	{
-		printf("Too many errors; test aborted\n");
-		exit(1);
-	}
-}
 
 static void signal_handler(int signum)
 {
@@ -49,7 +25,7 @@ static void signal_handler(int signum)
 	printf("Signal %d at 0x%x\n", signum, sigframe->sf_scp->sc_regs.pc);
 	
 	/* count as error */
-	ERR(0, 0);
+	e(0);
 	fflush(stdout);
 	
 	/* handle signa again next time */
@@ -59,14 +35,14 @@ static void signal_handler(int signum)
 static void test_fpclassify(double value, int class, int test_sign)
 {
 	/* test fpclassify */
-	if (fpclassify(value) != class) ERR(value, 0);
+	if (fpclassify(value) != class) e(101);
 	if (test_sign) 
 	{
-		if (fpclassify(-value) != class) ERR(-value, 0);
+		if (fpclassify(-value) != class) e(102);
 
 		/* test signbit */
-		if (signbit(value))   ERR(value, 0);
-		if (!signbit(-value)) ERR(-value, 0);
+		if (signbit(value))   e(103);
+		if (!signbit(-value)) e(104);
 	}
 }
 
@@ -103,7 +79,7 @@ static void test_fpclassify_values(void)
 	 */
 	assert(sizeof(negzero) == sizeof(double));
 	test_fpclassify(*(double *) negzero, FP_ZERO, 0);
-	if (!signbit(*(double *) negzero)) ERR(0, 0);
+	if (!signbit(*(double *) negzero)) e(4);
 
 	/* test other small numbers for fpclassify and signbit */
 	d = 1;
@@ -141,7 +117,7 @@ static void test_round_value_mode_func(double value, int mode, double (*func)(do
 	/* update and check rounding mode */
 	mode_old = fegetround();
 	fesetround(mode);
-	if (fegetround() != mode) ERR(0, 0);
+	if (fegetround() != mode) e(5);
 
 	/* perform rounding */
 	rounded = func(value);
@@ -149,20 +125,20 @@ static void test_round_value_mode_func(double value, int mode, double (*func)(do
 	/* check direction of rounding */
 	switch (exp)
 	{
-		case ROUND_EQ: if (rounded != value) ERR(value, rounded); break;
-		case ROUND_DN: if (rounded >= value) ERR(value, rounded); break;
-		case ROUND_UP: if (rounded <= value) ERR(value, rounded); break;
+		case ROUND_EQ: if (rounded != value) e(6); break;
+		case ROUND_DN: if (rounded >= value) e(7); break;
+		case ROUND_UP: if (rounded <= value) e(8); break;
 		default:       assert(0); 
 	}
 
 	/* check whether the number is sufficiently close */
-	if (fabs(value - rounded) >= 1) ERR(value, rounded);
+	if (fabs(value - rounded) >= 1) e(9);
 
 	/* check whether the number is integer */
-	if (remainder(rounded, 1)) ERR(value, rounded);
+	if (remainder(rounded, 1)) e(10);
 
 	/* re-check and restore rounding mode */
-	if (fegetround() != mode) ERR(0, 0);
+	if (fegetround() != mode) e(11);
 	fesetround(mode_old);
 }
 
@@ -221,7 +197,7 @@ static void test_remainder_value(double x, double y)
 	if (fabs(r1 - r2) > EPSILON && fabs(r1 + r2) > EPSILON) 
 	{
 		printf("%.20g != %.20g\n", r1, r2);
-		ERR(x, y);
+		e(13);
 	}
 }
 
@@ -257,11 +233,10 @@ int main(int argc, char **argv)
 	fenv_t fenv;
 	int i;
 	
-	printf("Test 47 ");
-	fflush(stdout);
+	start(47);
 
 	/* no FPU errors, please */
-	if (feholdexcept(&fenv) < 0) ERR(0, 0);
+	if (feholdexcept(&fenv) < 0) e(14);
 
 	/* some signals count as errors */
 	for (i = 0; i < _NSIG; i++)

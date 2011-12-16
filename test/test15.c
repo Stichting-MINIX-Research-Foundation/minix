@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-_PROTOTYPE( int chdir, (char *_path));		/* from <unistd.h> */
 
 #define	STREQ(a, b)	(strcmp((a), (b)) == 0)
 
@@ -24,12 +23,14 @@ int waserror = 0;		/* For exit status. */
 char uctest[] = "\004\203";	/* For testing signedness of chars. */
 int charsigned;			/* Result. */
 
+#define MAX_ERROR 2
+#include "common.c"
+
 _PROTOTYPE(void check, (int thing, int number));
 _PROTOTYPE(void equal, (char *a, char *b, int number));
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void first, (void));
 _PROTOTYPE(void second, (void));
-_PROTOTYPE(void quit, (void));
 
 /*
  - check - complain if condition is not true
@@ -76,11 +77,9 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  printf("Test 15 ");
-  fflush(stdout);
 
-  system("rm -rf DIR_15; mkdir DIR_15");
-  chdir("DIR_15");
+  start(15);
+
   /* First, establish whether chars are signed. */
   if (uctest[0] < uctest[1])
 	charsigned = 0;
@@ -688,17 +687,3 @@ void second()
 #endif
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

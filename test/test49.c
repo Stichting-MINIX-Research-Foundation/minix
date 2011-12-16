@@ -10,45 +10,25 @@
 #define TEST_64_BIT
 #endif
 
-#define ERR err(__LINE__)
+#define ERR e(__LINE__)
 
 #define MAX_ERROR 4
-static int errct;
-
-static void quit(void)
-{
-	if (errct == 0) 
-	{
-		printf("ok\n");
-		exit(0);
-	} 
-	else 
-	{
-		printf("%d errors\n", errct);
-		exit(1);
-	}
-}
-
-static void err(int line)
-{
-	printf("error at line %d\n", line);
-	if (++errct >= MAX_ERROR)
-		quit();
-}
+#include "common.c"
 
 #define TEST_PRINTF(type, macro, value, result)				\
 {									\
 	char buffer[256];						\
 	snprintf(buffer, sizeof(buffer), "%" macro, (type) value);	\
-	if (strcmp(buffer, result) != 0) err(__LINE__);			\
+	if (strcmp(buffer, result) != 0) ERR;			\
 }
 
 int main(void)
 {
+	start(49);
 #ifdef __LONG_LONG_SUPPORTED
-	printf("Test 49 (GCC) ");
+	printf("(GCC) ");
 #else
-	printf("Test 49 (ACK) ");
+	printf("(ACK) ");
 #endif
 	fflush(stdout);
 
@@ -207,6 +187,5 @@ int main(void)
 
 	/* done */
 	quit();
-	assert(0);
 	return -1;
 }

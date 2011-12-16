@@ -11,8 +11,9 @@
 #define MAX_ERROR 4
 
 char name[20] = {"TMP14."};
-int errct;
 int subtest = 1;
+
+#include "common.c"
 
 _PROTOTYPE(int main, (void));
 _PROTOTYPE(void e, (int n));
@@ -22,11 +23,7 @@ int main()
 {
   int fd0, i, pid;
 
-  printf("Test 14 ");
-  fflush(stdout);
-
-  system("rm -rf DIR_14; mkdir DIR_14");
-  chdir("DIR_14");
+  start(14);
 
   pid = getpid();
   sprintf(&name[6], "%x", pid);
@@ -45,33 +42,3 @@ int main()
   return(-1);			/* impossible */
 }
 
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}
-
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

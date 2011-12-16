@@ -30,12 +30,14 @@ _PROTOTYPE( void just_exit, (void)					);
 _PROTOTYPE( void test_brk, (void)					);
 _PROTOTYPE( void verify_main_reenter, (void)				);
 
-#define ERROR_MAX 5
+#define MAX_ERROR 5
 #define SSIZE 32768
 #define ROUNDS 10
 #define SWAPS 10
 
-int errct = 0;
+#include "common.c"
+
+int subtest;
 ucontext_t ctx[3];
 int entered_func1, entered_func2, reentered_main, entered_overflow;
 
@@ -99,6 +101,7 @@ void do_child(void)
 	do_calcs();
 	if (fegetround() != FE_DOWNWARD) err(9, 4);
   }
+  quit();
 }
 
 void do_parent(void)
@@ -181,16 +184,16 @@ void test_brk(void)
 void verify_main_reenter(void)
 {
   if (reentered_main == 0) err(4, 1);
-  if (errct == 0) printf("ok\n");
 }
 
 
 int main(void)
 {
+  start(51);
 #ifdef __GNUC__
-  printf("Test 51 (GCC) ");
+  printf("(GCC) ");
 #else
-  printf("Test 51 (ACK) ");
+  printf("(ACK) ");
 #endif
   fflush(stdout);
 
@@ -306,19 +309,16 @@ int main(void)
   makecontext(&ctx[2], (void (*) (void)) do_child, 0);
   if (swapcontext(&ctx[0], &ctx[2]) == -1) err(1, 16);
 
-  return(0);
+  quit();
+  return(-1);
 }
 
 /* We can't use a global subtest variable reliably, because threads might
    change the value when we reenter a thread (i.e., report wrong subtest
    number). */
-void err(int subtest, int error_no)
+void err(int sub, int error_no)
 {
-  printf("Subtest %d, error %d\n", subtest, error_no);
-
-  if (errct++ > ERROR_MAX) {
-	printf("Too many errors, test aborted\n");
-	exit(1);
-  }
+  subtest = sub;
+  e(error_no);
 }
 

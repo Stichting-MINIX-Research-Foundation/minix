@@ -13,6 +13,7 @@
 
 #define ITERATIONS 3
 #define MAX_ERROR 4
+#include "common.c"
 
 #define _WIFSTOPPED(s) (WIFSTOPPED(s) && !WIFSIGNALED(s) && !WIFEXITED(s))
 #define _WIFSIGNALED(s) (!WIFSTOPPED(s) && WIFSIGNALED(s) && !WIFEXITED(s))
@@ -69,11 +70,9 @@ _PROTOTYPE(void test_noexec, (void));
 _PROTOTYPE(void test_defexec, (void));
 _PROTOTYPE(void test_reattach_child, (void));
 _PROTOTYPE(void test_reattach, (void));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
+_PROTOTYPE(void my_e, (int n));
 
 static char *executable;
-static int errct = 0, subtest;
 static int child = 0, attach;
 static pid_t ppid;
 static int pfd[4];
@@ -84,15 +83,18 @@ int argc;
 char **argv;
 {
   int i, m = 0xFFFFFF, n = 0xF;
+  char cp_cmd[NAME_MAX + 10];
 
   if (strcmp(argv[0], "DO CHECK") == 0) {
 	exit(42);
   }
 
-  printf("Test 42 ");
-  fflush(stdout);
+  start(42);
 
   executable = argv[0];
+
+  snprintf(cp_cmd, sizeof(cp_cmd), "cp ../%s .", executable);
+  system(cp_cmd);
 
   if (argc >= 2) m = atoi(argv[1]);
   if (argc >= 3) n = atoi(argv[2]);
@@ -140,7 +142,7 @@ static jmp_buf timed_test_context;
 void timed_test_timeout(int signum)
 {
   longjmp(timed_test_context, -1);
-  e(700);
+  my_e(700);
   quit();
   exit(-1);
 }
@@ -150,7 +152,7 @@ void timed_test_func(const char *s, void (* func)(void))
   if (setjmp(timed_test_context) == 0)
   {
     /* the function gets 60 seconds to complete */
-    if (signal(SIGALRM, timed_test_timeout) == SIG_ERR) { e(701); return; }
+    if (signal(SIGALRM, timed_test_timeout) == SIG_ERR) { my_e(701); return; }
     alarm(60);
     func();
     alarm(0);
@@ -159,7 +161,7 @@ void timed_test_func(const char *s, void (* func)(void))
   {
     /* report timeout as error */
     printf("timeout in %s\n", s);
-    e(702);
+    my_e(702);
   }
 }
 
@@ -169,53 +171,53 @@ _PROTOTYPE(void (*c), (void));
   pid_t pid;
   int r, status;
 
-  if (pipe(pfd) != 0) e(200);
-  if (pipe(&pfd[2]) != 0) e(201);
+  if (pipe(pfd) != 0) my_e(200);
+  if (pipe(&pfd[2]) != 0) my_e(201);
 
   switch (attach) {
   case 0:			/* let child volunteer to be traced */
   	pid = fork();
 
-  	if (pid < 0) e(202);
+  	if (pid < 0) my_e(202);
 
   	if (pid == 0) {
 		child = 1;
 
-		if (ptrace(T_OK, 0, 0, 0) != 0) e(203);
+		if (ptrace(T_OK, 0, 0, 0) != 0) my_e(203);
 
 		WRITE(0);
 
 		c();
 
-		e(204);
+		my_e(204);
   	}
 
-  	if (READ() != 0) e(205);
+  	if (READ() != 0) my_e(205);
 
   	break;
 
   case 1:			/* attach to child process */
 	pid = fork();
 
-	if (pid < 0) e(206);
+	if (pid < 0) my_e(206);
 
 	if (pid == 0) {
 		child = 1;
 
-		if (READ() != 0) e(207);
+		if (READ() != 0) my_e(207);
 
 		c();
 
-		e(208);
+		my_e(208);
 	}
 
-	if (ptrace(T_ATTACH, pid, 0, 0) != 0) e(209);
+	if (ptrace(T_ATTACH, pid, 0, 0) != 0) my_e(209);
 
-	if (waitpid(pid, &status, 0) != pid) e(210);
-	if (!_WIFSTOPPED(status)) e(211);
-	if (WSTOPSIG(status) != SIGSTOP) e(212);
+	if (waitpid(pid, &status, 0) != pid) my_e(210);
+	if (!_WIFSTOPPED(status)) my_e(211);
+	if (WSTOPSIG(status) != SIGSTOP) my_e(212);
 
-	if (ptrace(T_RESUME, pid, 0, 0) != 0) e(213);
+	if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(213);
 
 	WRITE(0);
 
@@ -224,7 +226,7 @@ _PROTOTYPE(void (*c), (void));
   case 2:			/* attach to non-child process */
 	ppid = fork();
 
-	if (ppid < 0) e(214);
+	if (ppid < 0) my_e(214);
 
 	if (ppid == 0) {
 		pid = fork();
@@ -234,33 +236,33 @@ _PROTOTYPE(void (*c), (void));
 		if (pid == 0) {
 			child = 1;
 
-			if (READ() != 0) e(216);
+			if (READ() != 0) my_e(216);
 
 			c();
 
-			e(217);
+			my_e(217);
 		}
 
 		child = 1;
 
 		WRITE(pid);
 
-		if (waitpid(pid, &status, 0) != pid) e(218);
-		if (_WIFSTOPPED(status)) e(219);
-		if (_WIFEXITED(status) && (r = WEXITSTATUS(status)) != 42) e(r);
+		if (waitpid(pid, &status, 0) != pid) my_e(218);
+		if (_WIFSTOPPED(status)) my_e(219);
+		if (_WIFEXITED(status) && (r = WEXITSTATUS(status)) != 42) my_e(r);
 
 		exit(0);
 	}
 
 	pid = READ();
 
-	if (ptrace(T_ATTACH, pid, 0, 0) != 0) e(220);
+	if (ptrace(T_ATTACH, pid, 0, 0) != 0) my_e(220);
 
-	if (waitpid(pid, &status, 0) != pid) e(221);
-	if (!_WIFSTOPPED(status)) e(222);
-	if (WSTOPSIG(status) != SIGSTOP) e(223);
+	if (waitpid(pid, &status, 0) != pid) my_e(221);
+	if (!_WIFSTOPPED(status)) my_e(222);
+	if (WSTOPSIG(status) != SIGSTOP) my_e(223);
 
-	if (ptrace(T_RESUME, pid, 0, 0) != 0) e(224);
+	if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(224);
 
 	WRITE(0);
 
@@ -269,58 +271,58 @@ _PROTOTYPE(void (*c), (void));
   case 3:			/* attach by forking from child */
 	ppid = fork();
 
-	if (ppid < 0) e(225);
+	if (ppid < 0) my_e(225);
 
 	if (ppid == 0) {
 		child = 1;
 
-		if (ptrace(T_OK, 0, 0, 0) != 0) e(226);
+		if (ptrace(T_OK, 0, 0, 0) != 0) my_e(226);
 
 		WRITE(0);
 
-		if (READ() != 0) e(227);
+		if (READ() != 0) my_e(227);
 
 		pid = fork();
 
-		if (pid < 0) e(228);
+		if (pid < 0) my_e(228);
 
 		if (pid == 0) {
 			c();
 
-			e(229);
+			my_e(229);
 		}
 
 		WRITE(pid);
 
-		if (waitpid(pid, &status, 0) != pid) e(230);
-		if (_WIFSTOPPED(status)) e(231);
-		if (_WIFEXITED(status) && (r = WEXITSTATUS(status)) != 42) e(r);
+		if (waitpid(pid, &status, 0) != pid) my_e(230);
+		if (_WIFSTOPPED(status)) my_e(231);
+		if (_WIFEXITED(status) && (r = WEXITSTATUS(status)) != 42) my_e(r);
 
 		exit(0);
 	}
 
-	if (READ() != 0) e(232);
+	if (READ() != 0) my_e(232);
 
-	if (kill(ppid, SIGSTOP) != 0) e(233);
+	if (kill(ppid, SIGSTOP) != 0) my_e(233);
 
-	if (waitpid(ppid, &status, 0) != ppid) e(234);
-	if (!_WIFSTOPPED(status)) e(235);
-	if (WSTOPSIG(status) != SIGSTOP) e(236);
+	if (waitpid(ppid, &status, 0) != ppid) my_e(234);
+	if (!_WIFSTOPPED(status)) my_e(235);
+	if (WSTOPSIG(status) != SIGSTOP) my_e(236);
 
-	if (ptrace(T_SETOPT, ppid, 0, TO_TRACEFORK) != 0) e(237);
+	if (ptrace(T_SETOPT, ppid, 0, TO_TRACEFORK) != 0) my_e(237);
 
-	if (ptrace(T_RESUME, ppid, 0, 0) != 0) e(238);
+	if (ptrace(T_RESUME, ppid, 0, 0) != 0) my_e(238);
 
 	WRITE(0);
 
 	pid = READ();
 
-	if (waitpid(pid, &status, 0) != pid) e(239);
-	if (!_WIFSTOPPED(status)) e(240);
-	if (WSTOPSIG(status) != SIGSTOP) e(241);
+	if (waitpid(pid, &status, 0) != pid) my_e(239);
+	if (!_WIFSTOPPED(status)) my_e(240);
+	if (WSTOPSIG(status) != SIGSTOP) my_e(241);
 
-	if (ptrace(T_SETOPT, pid, 0, 0) != 0) e(242);
-	if (ptrace(T_RESUME, pid, 0, 0) != 0) e(243);
+	if (ptrace(T_SETOPT, pid, 0, 0) != 0) my_e(242);
+	if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(243);
 
 	detach_running(ppid);
 
@@ -335,19 +337,19 @@ _PROTOTYPE(void (*c), (void));
 {
   pid_t pid;
 
-  if (pipe(pfd) != 0) e(300);
-  if (pipe(&pfd[2]) != 0) e(301);
+  if (pipe(pfd) != 0) my_e(300);
+  if (pipe(&pfd[2]) != 0) my_e(301);
 
   pid = fork();
 
-  if (pid < 0) e(302);
+  if (pid < 0) my_e(302);
 
   if (pid == 0) {
 	child = 1;
 
 	c();
 
-	e(303);
+	my_e(303);
   }
 
   return pid;
@@ -356,14 +358,14 @@ _PROTOTYPE(void (*c), (void));
 void WRITE(value)
 int value;
 {
-  if (write(pfd[child*2+1], &value, sizeof(value)) != sizeof(value)) e(400);
+  if (write(pfd[child*2+1], &value, sizeof(value)) != sizeof(value)) my_e(400);
 }
 
 int READ()
 {
   int value;
 
-  if (read(pfd[2-child*2], &value, sizeof(value)) != sizeof(value)) e(401);
+  if (read(pfd[2-child*2], &value, sizeof(value)) != sizeof(value)) my_e(401);
 
   return value;
 }
@@ -373,9 +375,9 @@ void traced_wait()
   int r, status;
 
   if (attach == 2) {
-	if (waitpid(ppid, &status, 0) != ppid) e(500);
-	if (!_WIFEXITED(status)) e(501);
-	if ((r = WEXITSTATUS(status)) != 0) e(r);
+	if (waitpid(ppid, &status, 0) != ppid) my_e(500);
+	if (!_WIFEXITED(status)) my_e(501);
+	if ((r = WEXITSTATUS(status)) != 0) my_e(r);
   }
   else {
 	/* Quick hack to clean up detached children */
@@ -403,27 +405,27 @@ pid_t pid;
  */
   int status;
 
-  if (kill(pid, SIGSTOP) != 0) e(600);
+  if (kill(pid, SIGSTOP) != 0) my_e(600);
 
-  if (waitpid(pid, &status, 0) != pid) e(601);
+  if (waitpid(pid, &status, 0) != pid) my_e(601);
 
   while (_WIFSTOPPED(status)) {
 	if (WSTOPSIG(status) == SIGSTOP) {
-		if (ptrace(T_DETACH, pid, 0, 0) != 0) e(602);
+		if (ptrace(T_DETACH, pid, 0, 0) != 0) my_e(602);
 
 		return;
 	}
 
-	if (ptrace(T_RESUME, pid, 0, WSTOPSIG(status)) != 0) e(603);
+	if (ptrace(T_RESUME, pid, 0, WSTOPSIG(status)) != 0) my_e(603);
 
-	if (waitpid(pid, &status, 0) != pid) e(604);
+	if (waitpid(pid, &status, 0) != pid) my_e(604);
   }
 
   /* Apparently the process exited. */
-  if (!_WIFEXITED(status) && !_WIFSIGNALED(status)) e(605);
+  if (!_WIFEXITED(status) && !_WIFSIGNALED(status)) my_e(605);
 
   /* In our tests, that should not happen. */
-  e(606);
+  my_e(606);
 }
 
 void dummy_handler(sig)
@@ -453,13 +455,13 @@ int sig;
   case SIGUSR1: bit = 1; break;
   case SIGUSR2: bit = 2; break;
   case SIGTERM: bit = 4; break;
-  default: e(100);
+  default: my_e(100);
   }
 
   sigfillset(&set);
   sigprocmask(SIG_SETMASK, &set, NULL);
 
-  if (caught & bit) e(101);
+  if (caught & bit) my_e(101);
   caught |= bit;
 }
 
@@ -477,20 +479,20 @@ void test_wait()
 
   pid = traced_fork(test_wait_child);
 
-  if (waitpid(pid, &status, 0) != pid) e(1);
-  if (!_WIFEXITED(status)) e(2);
-  if (WEXITSTATUS(status) != 42) e(3);
+  if (waitpid(pid, &status, 0) != pid) my_e(1);
+  if (!_WIFEXITED(status)) my_e(2);
+  if (WEXITSTATUS(status) != 42) my_e(3);
 
   traced_wait();
 }
 
 void test_exec_child()
 {
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
   execl(executable, "DO CHECK", NULL);
 
-  e(101);
+  my_e(101);
 }
 
 void test_exec()
@@ -508,15 +510,15 @@ void test_exec()
   WRITE(0);
 
   /* An exec() should result in a trap signal. */
-  if (waitpid(pid, &status, 0) != pid) e(1);
-  if (!_WIFSTOPPED(status)) e(2);
-  if (WSTOPSIG(status) != SIGTRAP) e(3);
+  if (waitpid(pid, &status, 0) != pid) my_e(1);
+  if (!_WIFSTOPPED(status)) my_e(2);
+  if (WSTOPSIG(status) != SIGTRAP) my_e(3);
 
-  if (ptrace(T_RESUME, pid, 0, 0) != 0) e(4);
+  if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(4);
 
-  if (waitpid(pid, &status, 0) != pid) e(5);
-  if (!_WIFEXITED(status)) e(6);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (waitpid(pid, &status, 0) != pid) my_e(5);
+  if (!_WIFEXITED(status)) my_e(6);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   traced_wait();
 }
@@ -529,7 +531,7 @@ void test_step_child()
 
   WRITE(0);
 
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
   /* It must not be possible for the child to stop the single-step signal. */
   signal(SIGTRAP, SIG_IGN);
@@ -548,35 +550,35 @@ void test_step()
 
   pid = traced_fork(test_step_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
   /* While the child is running, neither waitpid() nor ptrace() should work. */
-  if (waitpid(pid, &status, WNOHANG) != 0) e(2);
-  if (ptrace(T_RESUME, pid, 0, 0) != -1) e(3);
-  if (errno != EBUSY) e(4);
+  if (waitpid(pid, &status, WNOHANG) != 0) my_e(2);
+  if (ptrace(T_RESUME, pid, 0, 0) != -1) my_e(3);
+  if (errno != EBUSY) my_e(4);
 
-  if (kill(pid, SIGUSR1) != 0) e(5);
+  if (kill(pid, SIGUSR1) != 0) my_e(5);
 
   WRITE(0);
 
   /* A kill() signal (other than SIGKILL) should be delivered to the tracer. */
-  if (waitpid(pid, &status, 0) != pid) e(6);
-  if (!_WIFSTOPPED(status)) e(7);
-  if (WSTOPSIG(status) != SIGUSR1) e(8);
+  if (waitpid(pid, &status, 0) != pid) my_e(6);
+  if (!_WIFSTOPPED(status)) my_e(7);
+  if (WSTOPSIG(status) != SIGUSR1) my_e(8);
 
   /* ptrace(T_STEP) should result in instruction-wise progress. */
   for (count = 0; ; count++) {
-	if (ptrace(T_STEP, pid, 0, 0) != 0) e(9);
+	if (ptrace(T_STEP, pid, 0, 0) != 0) my_e(9);
 
-	if (waitpid(pid, &status, 0) != pid) e(10);
+	if (waitpid(pid, &status, 0) != pid) my_e(10);
 	if (_WIFEXITED(status)) break;
-	if (!_WIFSTOPPED(status)) e(11);
-	if (WSTOPSIG(status) != SIGTRAP) e(12);
+	if (!_WIFSTOPPED(status)) my_e(11);
+	if (WSTOPSIG(status) != SIGTRAP) my_e(12);
   }
 
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
-  if (count < 10) e(13); /* in practice: hundreds */
+  if (count < 10) my_e(13); /* in practice: hundreds */
 
   traced_wait();
 }
@@ -585,11 +587,11 @@ void test_sig_child()
 {
   signal(SIGUSR1, exit_handler);
 
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
   pause();
 
-  e(101);
+  my_e(101);
 }
 
 void test_sig()
@@ -606,58 +608,58 @@ void test_sig()
   /* allow the child to enter the pause */
   sleep(1);
 
-  if (kill(pid, SIGUSR1) != 0) e(1);
-  if (kill(pid, SIGUSR2) != 0) e(2);
+  if (kill(pid, SIGUSR1) != 0) my_e(1);
+  if (kill(pid, SIGUSR2) != 0) my_e(2);
 
   /* All signals should arrive at the tracer, although in "random" order. */
-  if (waitpid(pid, &status, 0) != pid) e(3);
-  if (!_WIFSTOPPED(status)) e(4);
-  if (WSTOPSIG(status) != SIGUSR1 && WSTOPSIG(status) != SIGUSR2) e(5);
+  if (waitpid(pid, &status, 0) != pid) my_e(3);
+  if (!_WIFSTOPPED(status)) my_e(4);
+  if (WSTOPSIG(status) != SIGUSR1 && WSTOPSIG(status) != SIGUSR2) my_e(5);
 
   /* The tracer should see kills arriving while the tracee is stopped. */
-  if (kill(pid, WSTOPSIG(status)) != 0) e(6);
+  if (kill(pid, WSTOPSIG(status)) != 0) my_e(6);
 
-  if (waitpid(pid, &status, WNOHANG) != pid) e(7);
-  if (!_WIFSTOPPED(status)) e(8);
-  if (WSTOPSIG(status) != SIGUSR1 && WSTOPSIG(status) != SIGUSR2) e(9);
+  if (waitpid(pid, &status, WNOHANG) != pid) my_e(7);
+  if (!_WIFSTOPPED(status)) my_e(8);
+  if (WSTOPSIG(status) != SIGUSR1 && WSTOPSIG(status) != SIGUSR2) my_e(9);
   sig = (WSTOPSIG(status) == SIGUSR1) ? SIGUSR2 : SIGUSR1;
 
-  if (ptrace(T_RESUME, pid, 0, 0) != 0) e(10);
+  if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(10);
 
-  if (waitpid(pid, &status, 0) != pid) e(11);
-  if (!_WIFSTOPPED(status)) e(12);
-  if (WSTOPSIG(status) != sig) e(13);
+  if (waitpid(pid, &status, 0) != pid) my_e(11);
+  if (!_WIFSTOPPED(status)) my_e(12);
+  if (WSTOPSIG(status) != sig) my_e(13);
 
-  if (waitpid(pid, &status, WNOHANG) != 0) e(14);
+  if (waitpid(pid, &status, WNOHANG) != 0) my_e(14);
 
-  if (ptrace(T_RESUME, pid, 0, 0) != 0) e(15);
+  if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(15);
 
   /* Ignored signals passed via ptrace() should be ignored. */
-  if (kill(pid, SIGUSR1) != 0) e(16);
+  if (kill(pid, SIGUSR1) != 0) my_e(16);
 
-  if (waitpid(pid, &status, 0) != pid) e(17);
-  if (!_WIFSTOPPED(status)) e(18);
-  if (WSTOPSIG(status) != SIGUSR1) e(19);
+  if (waitpid(pid, &status, 0) != pid) my_e(17);
+  if (!_WIFSTOPPED(status)) my_e(18);
+  if (WSTOPSIG(status) != SIGUSR1) my_e(19);
 
-  if (ptrace(T_RESUME, pid, 0, SIGCHLD) != 0) e(20);
+  if (ptrace(T_RESUME, pid, 0, SIGCHLD) != 0) my_e(20);
 
   /* if the pause has been aborted (shouldn't happen!), let the child exit */
   sleep(1);
 
-  if (waitpid(pid, &status, WNOHANG) != 0) e(21);
+  if (waitpid(pid, &status, WNOHANG) != 0) my_e(21);
 
   /* Caught signals passed via ptrace() should invoke their signal handlers. */
-  if (kill(pid, SIGUSR1) != 0) e(22);
+  if (kill(pid, SIGUSR1) != 0) my_e(22);
 
-  if (waitpid(pid, &status, 0) != pid) e(23);
-  if (!_WIFSTOPPED(status)) e(24);
-  if (WSTOPSIG(status) != SIGUSR1) e(25);
+  if (waitpid(pid, &status, 0) != pid) my_e(23);
+  if (!_WIFSTOPPED(status)) my_e(24);
+  if (WSTOPSIG(status) != SIGUSR1) my_e(25);
 
-  if (ptrace(T_RESUME, pid, 0, SIGUSR1) != 0) e(26);
+  if (ptrace(T_RESUME, pid, 0, SIGUSR1) != 0) my_e(26);
 
-  if (waitpid(pid, &status, 0) != pid) e(27);
-  if (!_WIFEXITED(status)) e(28);
-  if ((r = WEXITSTATUS(status)) != 42) e(29);
+  if (waitpid(pid, &status, 0) != pid) my_e(27);
+  if (!_WIFEXITED(status)) my_e(28);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(29);
 
   traced_wait();
 }
@@ -678,25 +680,25 @@ void test_exit()
 
   pid = traced_fork(test_exit_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
   sleep(1);
 
-  if (kill(pid, SIGSTOP) != 0) e(2);
+  if (kill(pid, SIGSTOP) != 0) my_e(2);
 
-  if (waitpid(pid, &status, 0) != pid) e(3);
-  if (!_WIFSTOPPED(status)) e(4);
-  if (WSTOPSIG(status) != SIGSTOP) e(5);
+  if (waitpid(pid, &status, 0) != pid) my_e(3);
+  if (!_WIFSTOPPED(status)) my_e(4);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(5);
 
   /* There should be no more signals pending for the tracer now. */
-  if (waitpid(pid, &status, WNOHANG) != 0) e(6);
+  if (waitpid(pid, &status, WNOHANG) != 0) my_e(6);
 
   /* ptrace(T_EXIT) should terminate the process with the given exit value. */
-  if (ptrace(T_EXIT, pid, 0, 42) != 0) e(7);
+  if (ptrace(T_EXIT, pid, 0, 42) != 0) my_e(7);
 
-  if (waitpid(pid, &status, 0) != pid) e(8);
-  if (!_WIFEXITED(status)) e(9);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (waitpid(pid, &status, 0) != pid) my_e(8);
+  if (!_WIFEXITED(status)) my_e(9);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   traced_wait();
 }
@@ -710,7 +712,7 @@ void test_term_child()
 
   pause();
 
-  e(100);
+  my_e(100);
 }
 
 void test_term()
@@ -722,30 +724,30 @@ void test_term()
 
   pid = traced_fork(test_term_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
   /* If the first of two signals terminates the traced child, the second signal
    * may or may not be delivered to the tracer - this is merely a policy issue.
    * However, nothing unexpected should happen.
    */
-  if (kill(pid, SIGUSR1) != 0) e(2);
-  if (kill(pid, SIGUSR2) != 0) e(3);
+  if (kill(pid, SIGUSR1) != 0) my_e(2);
+  if (kill(pid, SIGUSR2) != 0) my_e(3);
 
-  if (waitpid(pid, &status, 0) != pid) e(4);
-  if (!_WIFSTOPPED(status)) e(5);
+  if (waitpid(pid, &status, 0) != pid) my_e(4);
+  if (!_WIFSTOPPED(status)) my_e(5);
 
-  if (ptrace(T_RESUME, pid, 0, SIGUSR1) != 0) e(6);
+  if (ptrace(T_RESUME, pid, 0, SIGUSR1) != 0) my_e(6);
 
-  if (waitpid(pid, &status, 0) != pid) e(7);
+  if (waitpid(pid, &status, 0) != pid) my_e(7);
 
   if (_WIFSTOPPED(status)) {
-	if (ptrace(T_RESUME, pid, 0, SIGUSR1) != 0) e(8);
+	if (ptrace(T_RESUME, pid, 0, SIGUSR1) != 0) my_e(8);
 
-	if (waitpid(pid, &status, 0) != pid) e(9);
+	if (waitpid(pid, &status, 0) != pid) my_e(9);
   }
 
-  if (!_WIFSIGNALED(status)) e(10);
-  if (WTERMSIG(status) != SIGUSR1) e(11);
+  if (!_WIFSIGNALED(status)) my_e(10);
+  if (WTERMSIG(status) != SIGUSR1) my_e(11);
 
   traced_wait();
 }
@@ -784,46 +786,46 @@ void test_catch()
 
   pid = traced_fork(test_catch_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
-  if (kill(pid, SIGUSR1) != 0) e(2);
-  if (kill(pid, SIGUSR2) != 0) e(3);
+  if (kill(pid, SIGUSR1) != 0) my_e(2);
+  if (kill(pid, SIGUSR2) != 0) my_e(3);
 
-  if (waitpid(pid, &status, 0) != pid) e(4);
-  if (!_WIFSTOPPED(status)) e(5);
-  if (WSTOPSIG(status) != SIGUSR1 && WSTOPSIG(status) != SIGUSR2) e(6);
+  if (waitpid(pid, &status, 0) != pid) my_e(4);
+  if (!_WIFSTOPPED(status)) my_e(5);
+  if (WSTOPSIG(status) != SIGUSR1 && WSTOPSIG(status) != SIGUSR2) my_e(6);
   sig = (WSTOPSIG(status) == SIGUSR1) ? SIGUSR2 : SIGUSR1;
 
-  if (ptrace(T_RESUME, pid, 0, WSTOPSIG(status)) != 0) e(7);
+  if (ptrace(T_RESUME, pid, 0, WSTOPSIG(status)) != 0) my_e(7);
 
-  if (kill(pid, SIGTERM) != 0) e(8);
+  if (kill(pid, SIGTERM) != 0) my_e(8);
 
-  if (waitpid(pid, &status, 0) != pid) e(9);
-  if (!_WIFSTOPPED(status)) e(10);
-  if (WSTOPSIG(status) != sig && WSTOPSIG(status) != SIGTERM) e(11);
+  if (waitpid(pid, &status, 0) != pid) my_e(9);
+  if (!_WIFSTOPPED(status)) my_e(10);
+  if (WSTOPSIG(status) != sig && WSTOPSIG(status) != SIGTERM) my_e(11);
   if (WSTOPSIG(status) == sig) sig = SIGTERM;
 
-  if (ptrace(T_RESUME, pid, 0, WSTOPSIG(status)) != 0) e(12);
+  if (ptrace(T_RESUME, pid, 0, WSTOPSIG(status)) != 0) my_e(12);
 
-  if (kill(pid, SIGBUS) != 0) e(13);
+  if (kill(pid, SIGBUS) != 0) my_e(13);
 
-  if (waitpid(pid, &status, 0) != pid) e(14);
-  if (!_WIFSTOPPED(status)) e(15);
-  if (WSTOPSIG(status) != sig && WSTOPSIG(status) != SIGBUS) e(16);
+  if (waitpid(pid, &status, 0) != pid) my_e(14);
+  if (!_WIFSTOPPED(status)) my_e(15);
+  if (WSTOPSIG(status) != sig && WSTOPSIG(status) != SIGBUS) my_e(16);
 
-  if (ptrace(T_RESUME, pid, 0, sig) != 0) e(17);
+  if (ptrace(T_RESUME, pid, 0, sig) != 0) my_e(17);
 
   if (WSTOPSIG(status) == sig) sig = SIGBUS;
 
-  if (waitpid(pid, &status, 0) != pid) e(18);
-  if (!_WIFSTOPPED(status)) e(19);
-  if (WSTOPSIG(status) != sig) e(20);
+  if (waitpid(pid, &status, 0) != pid) my_e(18);
+  if (!_WIFSTOPPED(status)) my_e(19);
+  if (WSTOPSIG(status) != sig) my_e(20);
 
-  if (ptrace(T_RESUME, pid, 0, 0) != 0) e(21);
+  if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(21);
 
-  if (waitpid(pid, &status, 0) != pid) e(22);
-  if (!_WIFEXITED(status)) e(23);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (waitpid(pid, &status, 0) != pid) my_e(22);
+  if (!_WIFEXITED(status)) my_e(23);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   traced_wait();
 }
@@ -840,7 +842,7 @@ void test_kill_child()
 
   pause();
 
-  e(100);
+  my_e(100);
 }
 
 void test_kill()
@@ -852,30 +854,30 @@ void test_kill()
 
   pid = traced_fork(test_kill_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
   /* SIGKILL must be unstoppable in every way. */
-  if (kill(pid, SIGKILL) != 0) e(2);
+  if (kill(pid, SIGKILL) != 0) my_e(2);
 
-  if (waitpid(pid, &status, 0) != pid) e(3);
-  if (!_WIFSIGNALED(status)) e(4);
-  if (WTERMSIG(status) != SIGKILL) e(5);
+  if (waitpid(pid, &status, 0) != pid) my_e(3);
+  if (!_WIFSIGNALED(status)) my_e(4);
+  if (WTERMSIG(status) != SIGKILL) my_e(5);
 
   /* After termination, the child must no longer be visible to the tracer. */
-  if (waitpid(pid, &status, WNOHANG) != -1) e(6);
-  if (errno != ECHILD) e(7);
+  if (waitpid(pid, &status, WNOHANG) != -1) my_e(6);
+  if (errno != ECHILD) my_e(7);
 
   traced_wait();
 }
 
 void test_attach_child()
 {
-  if (ptrace(T_OK, 0, 0, 0) != -1) e(100);
-  if (errno != EBUSY) e(101);
+  if (ptrace(T_OK, 0, 0, 0) != -1) my_e(100);
+  if (errno != EBUSY) my_e(101);
 
   WRITE(0);
 
-  if (READ() != 0) e(102);
+  if (READ() != 0) my_e(102);
 
   exit(42);
 }
@@ -887,31 +889,31 @@ void test_attach()
   subtest = 9;
 
   /* Attaching to kernel processes is not allowed. */
-  if (ptrace(T_ATTACH, -1, 0, 0) != -1) e(1);
-  if (errno != ESRCH) e(2);
+  if (ptrace(T_ATTACH, -1, 0, 0) != -1) my_e(1);
+  if (errno != ESRCH) my_e(2);
 
   /* Attaching to self is not allowed. */
-  if (ptrace(T_ATTACH, getpid(), 0, 0) != -1) e(3);
-  if (errno != EPERM) e(4);
+  if (ptrace(T_ATTACH, getpid(), 0, 0) != -1) my_e(3);
+  if (errno != EPERM) my_e(4);
 
   /* Attaching to PM is not allowed. */
 #if 0
   /* FIXME: disabled until we can reliably determine PM's pid */
-  if (ptrace(T_ATTACH, 0, 0, 0) != -1) e(5);
-  if (errno != EPERM) e(6);
+  if (ptrace(T_ATTACH, 0, 0, 0) != -1) my_e(5);
+  if (errno != EPERM) my_e(6);
 #endif
 
   pid = traced_fork(test_attach_child);
 
   /* Attaching more than once is not allowed. */
-  if (ptrace(T_ATTACH, pid, 0, 0) != -1) e(7);
-  if (errno != EBUSY) e(8);
+  if (ptrace(T_ATTACH, pid, 0, 0) != -1) my_e(7);
+  if (errno != EBUSY) my_e(8);
 
-  if (READ() != 0) e(9);
+  if (READ() != 0) my_e(9);
 
   /* Detaching a running child should not succeed. */
-  if (ptrace(T_DETACH, pid, 0, 0) == 0) e(10);
-  if (errno != EBUSY) e(11);
+  if (ptrace(T_DETACH, pid, 0, 0) == 0) my_e(10);
+  if (errno != EBUSY) my_e(11);
 
   detach_running(pid);
 
@@ -943,12 +945,12 @@ void test_detach_child()
 
   WRITE(0);
 
-  if (sigsuspend(&sset) != -1) e(102);
-  if (errno != EINTR) e(103);
+  if (sigsuspend(&sset) != -1) my_e(102);
+  if (errno != EINTR) my_e(103);
 
-  if (caught != 1) e(104);
+  if (caught != 1) my_e(104);
 
-  if (READ() != 0) e(105);
+  if (READ() != 0) my_e(105);
 
   while (caught != 7) sigsuspend(&oset);
 
@@ -967,36 +969,36 @@ void test_detach()
 
   pid = traced_pfork(test_detach_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
   /* The tracer should not see signals sent to the process before attaching. */
-  if (kill(pid, SIGUSR2) != 0) e(2);
+  if (kill(pid, SIGUSR2) != 0) my_e(2);
 
-  if (ptrace(T_ATTACH, pid, 0, 0) != 0) e(3);
+  if (ptrace(T_ATTACH, pid, 0, 0) != 0) my_e(3);
 
-  if (waitpid(pid, &status, 0) != pid) e(4);
-  if (!_WIFSTOPPED(status)) e(5);
-  if (WSTOPSIG(status) != SIGSTOP) e(6);
+  if (waitpid(pid, &status, 0) != pid) my_e(4);
+  if (!_WIFSTOPPED(status)) my_e(5);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(6);
 
-  if (ptrace(T_RESUME, pid, 0, 0) != 0) e(7);
+  if (ptrace(T_RESUME, pid, 0, 0) != 0) my_e(7);
 
-  if (kill(pid, SIGUSR1) != 0) e(8);
+  if (kill(pid, SIGUSR1) != 0) my_e(8);
 
-  if (waitpid(pid, &status, 0) != pid) e(9);
-  if (!_WIFSTOPPED(status)) e(10);
-  if (WSTOPSIG(status) != SIGUSR1) e(11);
+  if (waitpid(pid, &status, 0) != pid) my_e(9);
+  if (!_WIFSTOPPED(status)) my_e(10);
+  if (WSTOPSIG(status) != SIGUSR1) my_e(11);
 
   /* Signals pending at the tracer should be passed on after detaching. */
-  if (kill(pid, SIGTERM) != 0) e(12);
+  if (kill(pid, SIGTERM) != 0) my_e(12);
 
   /* A signal may be passed with the detach request. */
-  if (ptrace(T_DETACH, pid, 0, SIGUSR1) != 0) e(13);
+  if (ptrace(T_DETACH, pid, 0, SIGUSR1) != 0) my_e(13);
 
   WRITE(0);
 
-  if (waitpid(pid, &status, 0) != pid) e(14);
-  if (!_WIFEXITED(status)) e(15);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (waitpid(pid, &status, 0) != pid) my_e(14);
+  if (!_WIFEXITED(status)) my_e(15);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   traced_wait();
 }
@@ -1007,7 +1009,7 @@ void test_death_child()
 
   pid = fork();
 
-  if (pid < 0) e(100);
+  if (pid < 0) my_e(100);
 
   if (pid == 0) {
 	ptrace(T_OK, 0, 0, 0);
@@ -1017,11 +1019,11 @@ void test_death_child()
   	for (;;) pause();
   }
 
-  if (READ() != 0) e(101);
+  if (READ() != 0) my_e(101);
 
   kill(getpid(), SIGKILL);
 
-  e(102);
+  my_e(102);
 }
 
 void test_death()
@@ -1035,24 +1037,24 @@ void test_death()
 
   cpid = READ();
 
-  if (kill(cpid, 0) != 0) e(1);
+  if (kill(cpid, 0) != 0) my_e(1);
 
   WRITE(0);
 
-  if (waitpid(pid, &status, 0) != pid) e(2);
-  if (!_WIFSIGNALED(status)) e(3);
-  if (WTERMSIG(status) != SIGKILL) e(4);
+  if (waitpid(pid, &status, 0) != pid) my_e(2);
+  if (!_WIFSIGNALED(status)) my_e(3);
+  if (WTERMSIG(status) != SIGKILL) my_e(4);
 
   /* The children of killed tracers should be terminated. */
   while (kill(cpid, 0) == 0) sleep(1);
-  if (errno != ESRCH) e(5);
+  if (errno != ESRCH) my_e(5);
 
   traced_wait();
 }
 
 void test_zdeath_child()
 {
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
   exit(42);
 }
@@ -1071,7 +1073,7 @@ void test_zdeath()
 
   tpid = fork();
 
-  if (tpid < 0) e(1);
+  if (tpid < 0) my_e(1);
 
   if (tpid == 0) {
 	if (ptrace(T_ATTACH, pid, 0, 0) != 0) exit(101);
@@ -1093,15 +1095,15 @@ void test_zdeath()
   sleep(1);
 
   /* However, that should only happen once the tracer has actually died. */
-  if (waitpid(pid, &status, WNOHANG) != 0) e(2);
+  if (waitpid(pid, &status, WNOHANG) != 0) my_e(2);
 
-  if (waitpid(tpid, &status, 0) != tpid) e(3);
-  if (!_WIFEXITED(status)) e(4);
-  if ((r = WEXITSTATUS(status)) != 84) e(r);
+  if (waitpid(tpid, &status, 0) != tpid) my_e(3);
+  if (!_WIFEXITED(status)) my_e(4);
+  if ((r = WEXITSTATUS(status)) != 84) my_e(r);
 
-  if (waitpid(pid, &status, 0) != pid) e(5);
-  if (!_WIFEXITED(status)) e(6);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (waitpid(pid, &status, 0) != pid) my_e(5);
+  if (!_WIFEXITED(status)) my_e(6);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   traced_wait();
 }
@@ -1115,14 +1117,14 @@ void test_syscall_child()
 
   WRITE(0);
 
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
   /* Three calls (may fail) */
   setuid(0);
   close(123);
   getpid();
 
-  if (sigs != 2) e(101);
+  if (sigs != 2) my_e(101);
 
   exit(42);
 }
@@ -1136,42 +1138,42 @@ void test_syscall()
 
   pid = traced_fork(test_syscall_child);
 
-  if (READ() != 0) e(1);
+  if (READ() != 0) my_e(1);
 
-  if (kill(pid, SIGSTOP) != 0) e(2);
+  if (kill(pid, SIGSTOP) != 0) my_e(2);
 
-  if (waitpid(pid, &status, 0) != pid) e(3);
-  if (!_WIFSTOPPED(status)) e(4);
-  if (WSTOPSIG(status) != SIGSTOP) e(5);
+  if (waitpid(pid, &status, 0) != pid) my_e(3);
+  if (!_WIFSTOPPED(status)) my_e(4);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(5);
 
   WRITE(0);
 
   /* Upon resuming a first system call, no syscall leave event must be sent. */
-  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(6);
+  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(6);
 
-  if (waitpid(pid, &status, 0) != pid) e(7);
+  if (waitpid(pid, &status, 0) != pid) my_e(7);
 
   for (i = 0; _WIFSTOPPED(status); i++) {
-	if (WSTOPSIG(status) != SIGTRAP) e(8);
+	if (WSTOPSIG(status) != SIGTRAP) my_e(8);
 
 	/* Signals passed via T_SYSCALL should arrive, on enter and exit. */
 	if (i == 3) sig = SIGUSR1;
 	else if (i == 6) sig = SIGUSR2;
 	else sig = 0;
 
-	if (ptrace(T_SYSCALL, pid, 0, sig) != 0) e(9);
+	if (ptrace(T_SYSCALL, pid, 0, sig) != 0) my_e(9);
 
-	if (waitpid(pid, &status, 0) != pid) e(10);
+	if (waitpid(pid, &status, 0) != pid) my_e(10);
   }
 
-  if (!_WIFEXITED(status)) e(11);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (!_WIFEXITED(status)) my_e(11);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   /* The number of events seen is deterministic but libc-dependent. */
-  if (i < 10 || i > 100) e(12);
+  if (i < 10 || i > 100) my_e(12);
 
   /* The last system call event must be for entering exit(). */
-  if (!(i % 2)) e(13);
+  if (!(i % 2)) my_e(13);
 
   traced_wait();
 }
@@ -1186,9 +1188,9 @@ void test_tracefork_child()
 
   WRITE(pid);
 
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
-  if ((pid = fork()) < 0) e(101);
+  if ((pid = fork()) < 0) my_e(101);
 
   exit(pid > 0 ? 42 : 84);
 }
@@ -1202,19 +1204,19 @@ void test_tracefork()
 
   ppid = traced_fork(test_tracefork_child);
 
-  if ((pgrp = READ()) <= 0) e(1);
+  if ((pgrp = READ()) <= 0) my_e(1);
 
-  if (kill(ppid, SIGSTOP) != 0) e(2);
+  if (kill(ppid, SIGSTOP) != 0) my_e(2);
 
-  if (waitpid(ppid, &status, 0) != ppid) e(3);
-  if (!_WIFSTOPPED(status)) e(4);
-  if (WSTOPSIG(status) != SIGSTOP) e(5);
+  if (waitpid(ppid, &status, 0) != ppid) my_e(3);
+  if (!_WIFSTOPPED(status)) my_e(4);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(5);
 
-  if (ptrace(T_SETOPT, ppid, 0, TO_TRACEFORK) != 0) e(6);
+  if (ptrace(T_SETOPT, ppid, 0, TO_TRACEFORK) != 0) my_e(6);
 
   WRITE(0);
 
-  if (ptrace(T_SYSCALL, ppid, 0, 0) != 0) e(7);
+  if (ptrace(T_SYSCALL, ppid, 0, 0) != 0) my_e(7);
 
   cpid = -1;
   gotstop = -1;
@@ -1223,33 +1225,33 @@ void test_tracefork()
   for (ptraps = ctraps = 0; ppid || cpid; ) {
 	wpid = waitpid(-pgrp, &status, 0);
 
-	if (wpid <= 0) e(8);
+	if (wpid <= 0) my_e(8);
 	if (cpid < 0 && wpid != ppid) {
 		cpid = wpid;
 		gotstop = 0;
 	}
-	if (wpid != ppid && wpid != cpid) e(9);
+	if (wpid != ppid && wpid != cpid) my_e(9);
 
 	if (_WIFEXITED(status)) {
 		if (wpid == ppid) {
-			if ((r = WEXITSTATUS(status)) != 42) e(r);
+			if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 			ppid = 0;
 		}
 		else {
-			if ((r = WEXITSTATUS(status)) != 84) e(r);
+			if ((r = WEXITSTATUS(status)) != 84) my_e(r);
 			cpid = 0;
 		}
 	}
 	else {
-		if (!_WIFSTOPPED(status)) e(10);
+		if (!_WIFSTOPPED(status)) my_e(10);
 
 		switch (WSTOPSIG(status)) {
 		case SIGCHLD:
 		case SIGHUP:
 			break;
 		case SIGSTOP:
-			if (wpid != cpid) e(11);
-			if (gotstop) e(12);
+			if (wpid != cpid) my_e(11);
+			if (gotstop) my_e(12);
 			gotstop = 1;
 			break;
 		case SIGTRAP: 
@@ -1257,10 +1259,10 @@ void test_tracefork()
 			else ctraps++;
 			break;
 		default:
-			e(13);
+			my_e(13);
 		}
 
-		if (ptrace(T_SYSCALL, wpid, 0, 0) != 0) e(14);
+		if (ptrace(T_SYSCALL, wpid, 0, 0) != 0) my_e(14);
 	}
   }
 
@@ -1268,15 +1270,15 @@ void test_tracefork()
    * enter trap (typically for the fork()), the last one is the syscall enter
    * trap for its exit().
    */
-  if (ptraps < 3) e(15);
-  if (!(ptraps % 2)) e(16);
+  if (ptraps < 3) my_e(15);
+  if (!(ptraps % 2)) my_e(16);
 
   /* The child should get an even number of traps: the first one is a syscall
    * leave trap from the fork(), the last one is the syscall enter trap for
    * its exit().
    */
-  if (ctraps < 2) e(17);
-  if (ctraps % 2) e(18);
+  if (ctraps < 2) my_e(17);
+  if (ctraps % 2) my_e(18);
 
   traced_wait();
 }
@@ -1292,44 +1294,44 @@ int *stop;
 
   pid = traced_fork(test_exec_child);
 
-  if (kill(pid, SIGSTOP) != 0) e(1);
+  if (kill(pid, SIGSTOP) != 0) my_e(1);
 
-  if (waitpid(pid, &status, 0) != pid) e(2);
-  if (!_WIFSTOPPED(status)) e(3);
-  if (WSTOPSIG(status) != SIGSTOP) e(4);
+  if (waitpid(pid, &status, 0) != pid) my_e(2);
+  if (!_WIFSTOPPED(status)) my_e(3);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(4);
 
-  if (setflag && ptrace(T_SETOPT, pid, 0, opt) != 0) e(5);
+  if (setflag && ptrace(T_SETOPT, pid, 0, opt) != 0) my_e(5);
 
   WRITE(0);
 
-  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(6);
+  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(6);
 
   *traps = 0;
   *stop = -1;
 
   for (;;) {
-  	if (waitpid(pid, &status, 0) != pid) e(7);
+  	if (waitpid(pid, &status, 0) != pid) my_e(7);
 
   	if (_WIFEXITED(status)) break;
 
-  	if (!_WIFSTOPPED(status)) e(8);
+  	if (!_WIFSTOPPED(status)) my_e(8);
 
   	switch (WSTOPSIG(status)) {
   	case SIGTRAP:
 		(*traps)++;
 		break;
   	case SIGSTOP:
-  		if (*stop >= 0) e(9);
+  		if (*stop >= 0) my_e(9);
   		*stop = *traps;
   		break;
   	default:
-		e(10);
+		my_e(10);
   	}
 
-  	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(11);
+  	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(11);
   }
 
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   traced_wait();
 }
@@ -1347,9 +1349,9 @@ void test_trapexec()
    * indistinguishable from a syscall trap, especially when considering failed
    * exec() calls and immediately following signal handler invocations.
    */
-  if (traps < 4) e(12);
-  if (traps % 2) e(13);
-  if (stop >= 0) e(14);
+  if (traps < 4) my_e(12);
+  if (traps % 2) my_e(13);
+  if (stop >= 0) my_e(14);
 }
 
 void test_altexec()
@@ -1364,10 +1366,10 @@ void test_altexec()
    * for each system call, plus one for the final exit(). The stop must have
    * taken place after a syscall enter event, i.e. must be odd as well.
    */
-  if (traps < 3) e(12);
-  if (!(traps % 2)) e(13);
-  if (stop < 0) e(14);
-  if (!(stop % 2)) e(15);
+  if (traps < 3) my_e(12);
+  if (!(traps % 2)) my_e(13);
+  if (stop < 0) my_e(14);
+  if (!(stop % 2)) my_e(15);
 }
 
 void test_noexec()
@@ -1379,9 +1381,9 @@ void test_noexec()
   sigexec(1, TO_NOEXEC, &traps, &stop);
 
   /* The exec causes no signal at all. As above, but without the SIGSTOPs. */
-  if (traps < 3) e(12);
-  if (!(traps % 2)) e(13);
-  if (stop >= 0) e(14);
+  if (traps < 3) my_e(12);
+  if (!(traps % 2)) my_e(13);
+  if (stop >= 0) my_e(14);
 }
 
 void test_defexec()
@@ -1398,14 +1400,14 @@ void test_defexec()
 
   /* See above. */
   if (attach == 0) {
-	if (traps < 4) e(12);
-	if (traps % 2) e(13);
-	if (stop >= 0) e(14);
+	if (traps < 4) my_e(12);
+	if (traps % 2) my_e(13);
+	if (stop >= 0) my_e(14);
   }
   else {
-	if (traps < 3) e(15);
-	if (!(traps % 2)) e(16);
-	if (stop >= 0) e(17);
+	if (traps < 3) my_e(15);
+	if (!(traps % 2)) my_e(16);
+	if (stop >= 0) my_e(17);
   }
 }
 
@@ -1413,11 +1415,11 @@ void test_reattach_child()
 {
   struct timeval tv;
 
-  if (READ() != 0) e(100);
+  if (READ() != 0) my_e(100);
 
   tv.tv_sec = 2;
   tv.tv_usec = 0;
-  if (select(0, NULL, NULL, NULL, &tv) != 0) e(101);
+  if (select(0, NULL, NULL, NULL, &tv) != 0) my_e(101);
 
   exit(42);
 }
@@ -1431,11 +1433,11 @@ void test_reattach()
 
   pid = traced_fork(test_reattach_child);
 
-  if (kill(pid, SIGSTOP) != 0) e(1);
+  if (kill(pid, SIGSTOP) != 0) my_e(1);
 
-  if (waitpid(pid, &status, 0) != pid) e(2);
-  if (!_WIFSTOPPED(status)) e(3);
-  if (WSTOPSIG(status) != SIGSTOP) e(4);
+  if (waitpid(pid, &status, 0) != pid) my_e(2);
+  if (!_WIFSTOPPED(status)) my_e(3);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(4);
 
   WRITE(0);
 
@@ -1448,76 +1450,61 @@ void test_reattach()
    * within a second, despite being traced. If this is not the case, the test
    * may hang or fail, and the child may die from a SIGTRAP.
    */
-  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(5);
+  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(5);
 
   for (count = 0; (r = waitpid(pid, &status, 0)) == pid; count++) {
-	if (!_WIFSTOPPED(status)) e(6);
-	if (WSTOPSIG(status) != SIGTRAP) e(7);
+	if (!_WIFSTOPPED(status)) my_e(6);
+	if (WSTOPSIG(status) != SIGTRAP) my_e(7);
 
-	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(8);
+	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(8);
   }
 
-  if (r != -1 || errno != EINTR) e(9);
+  if (r != -1 || errno != EINTR) my_e(9);
 
   /* We always start with syscall enter event; the last event we should have
    * seen before the alarm was entering the select() call.
    */
-  if (!(count % 2)) e(10);
+  if (!(count % 2)) my_e(10);
 
   /* Detach, and immediately attach again. */
   detach_running(pid);
 
-  if (ptrace(T_ATTACH, pid, 0, 0) != 0) e(11);
+  if (ptrace(T_ATTACH, pid, 0, 0) != 0) my_e(11);
 
-  if (waitpid(pid, &status, 0) != pid) e(12);
-  if (!_WIFSTOPPED(status)) e(13);
-  if (WSTOPSIG(status) != SIGSTOP) e(14);
+  if (waitpid(pid, &status, 0) != pid) my_e(12);
+  if (!_WIFSTOPPED(status)) my_e(13);
+  if (WSTOPSIG(status) != SIGSTOP) my_e(14);
 
-  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(15);
+  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(15);
 
-  if (waitpid(pid, &status, 0) != pid) e(16);
+  if (waitpid(pid, &status, 0) != pid) my_e(16);
 
   for (count = 0; _WIFSTOPPED(status); count++) {
-	if (WSTOPSIG(status) != SIGTRAP) e(17);
+	if (WSTOPSIG(status) != SIGTRAP) my_e(17);
 
-	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(18);
+	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) my_e(18);
 
-	if (waitpid(pid, &status, 0) != pid) e(19);
+	if (waitpid(pid, &status, 0) != pid) my_e(19);
   }
 
-  if (!_WIFEXITED(status)) e(20);
-  if ((r = WEXITSTATUS(status)) != 42) e(r);
+  if (!_WIFEXITED(status)) my_e(20);
+  if ((r = WEXITSTATUS(status)) != 42) my_e(r);
 
   /* We must not have seen the select()'s syscall leave event, and the last
    * event will be the syscall enter for the exit().
    */
-  if (!(count % 2)) e(21);
+  if (!(count % 2)) my_e(21);
 
   traced_wait();
 }
 
-void e(n)
+void my_e(n)
 int n;
 {
 
   if (child) exit(n);
 
-  printf("Subtest %d, attach type %d, error %d, errno %d: %s\n",
-	subtest, attach, n, errno, strerror(errno));
-
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	exit(1);
-  }
+  printf("Attach type %d, ", attach);
+  e(n);
 }
 
-void quit()
-{
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

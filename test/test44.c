@@ -7,6 +7,11 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 
+#define MAX_ERROR 2
+#include "common.c"
+
+int subtest = 0;
+
 int
 main(int argc, char *argv[])
 {
@@ -22,8 +27,7 @@ main(int argc, char *argv[])
 	ssize_t l;
 	pid_t f;
 
-	printf("Test 44 ");
-	fflush(stdout);
+	start(44);
 
 	for(i = 0; i < CHUNKS; i++) {
 		v[i] = minix_mmap(vaddr, CHUNKSIZE, PROT_READ|PROT_WRITE, 0,
@@ -31,13 +35,13 @@ main(int argc, char *argv[])
 		if(v[i] == MAP_FAILED) {
 			perror("minix_mmap");
 			fprintf(stderr, "minix_mmap failed\n");
-			exit(1);
+			quit();
 		}
 		if(v[i] != vaddr) {
 			fprintf(stderr,
 				"minix_mmap said 0x%p but i wanted 0x%p\n",
 				v[i], vaddr);
-			exit(1);
+			quit();
 		}
 		vaddr += CHUNKSIZE;
 	}
@@ -46,14 +50,14 @@ main(int argc, char *argv[])
 	if((fd=open(DEV_ZERO, O_RDONLY)) < 0) {
 		perror("open");
 		fprintf(stderr, "open failed for %s\n", DEV_ZERO);
-		exit(1);
+		quit();
 	}
 
 #define TOTAL1 (CHUNKS1*CHUNKSIZE)
 	/* Make single read cross region boundary. */
 	if((l=read(fd, v[0], TOTAL1)) != TOTAL1) {
 		fprintf(stderr, "read %d but expected %d\n", l, TOTAL1);
-		exit(1);
+		quit();
 	}
 
 	/* Force single copy to cross region boundary. */
@@ -62,14 +66,14 @@ main(int argc, char *argv[])
 		t = v[CHUNKS1]+CHUNKSIZE-2;
 		if((l=read(fd, t, CHUNKSIZE)) != CHUNKSIZE) {
 			fprintf(stderr, "read %d but expected %d\n", l, CHUNKSIZE);
-			exit(1);
+			quit();
 		}
 	}
 
 	/* Now start a child to test bogus memory access */
 	if((f = fork()) == -1) {
 		perror("fork");
-		exit(1);
+		quit();
 	}
 
 	if(f > 0) {
@@ -77,15 +81,15 @@ main(int argc, char *argv[])
 		/* Parent waits. */
 		if(waitpid(f, &st, 0) < 0) {
 			perror("waitpid");
-			exit(1);
+			quit();
 		}
 		if(!WIFEXITED(st)) {
 			fprintf(stderr, "child not signaled\n");
-			exit(1);
+			quit();
 		}
 		if(WEXITSTATUS(st) != 0) {
 			fprintf(stderr, "child exited with nonzero status\n");
-			exit(1);
+			quit();
 		}
 	} else {
 		/* Child performs bogus read */
@@ -95,16 +99,15 @@ main(int argc, char *argv[])
 		res = read(fd, buf, LARGESIZE);
 		if(res >= 0)  {
 			fprintf(stderr, "res %d\n", res);
-			exit(1);
+			quit();
 		}
 		if(errno != EFAULT) {
 			fprintf(stderr, "errno %d\n", errno);
-			exit(1);
+			quit();
 		}
-		exit(0);
+		return(0);
 	}
 
-	printf("ok\n");
-
-	exit(0);
+	quit();
+	return(-1);
 }

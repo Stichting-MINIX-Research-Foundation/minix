@@ -17,7 +17,7 @@
 
 #define NOCRASH 1		/* test11(), 2nd pipe */
 #define PDPNOHANG  1		/* test03(), write_standards() */
-#define MAXERR 2
+#define MAX_ERROR 2
 
 #define USER_ID   12
 #define GROUP_ID   1
@@ -76,6 +76,8 @@ char *mode_fnames[MODES] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rw
 
 /* "test.c", created by Rene Montsma and Menno Wilcke */
 
+#include "common.c"
+
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void test, (int mask));
 _PROTOTYPE(void test01, (void));
@@ -87,13 +89,9 @@ _PROTOTYPE(int link_alot, (char *bigboss));
 _PROTOTYPE(int unlink_alot, (int number));
 _PROTOTYPE(void get_new, (char name []));
 _PROTOTYPE(void test11, (void));
-_PROTOTYPE(void comp_stats, (struct stat *stbf1, struct stat *stbf2));
-_PROTOTYPE(void comp_inodes, (int m, int m1));
-_PROTOTYPE(void e, (char *string));
 _PROTOTYPE(void nlcr, (void));
 _PROTOTYPE(void str, (char *s));
-_PROTOTYPE(void err, (int number, char *scall, char *name));
-_PROTOTYPE(void make_and_fill_dirs, (void));
+_PROTOTYPE(void test03, (void));
 _PROTOTYPE(void put_file_in_dir, (char *dirname, int mode));
 _PROTOTYPE(void init_array, (char *a));
 _PROTOTYPE(void clear_array, (char *b));
@@ -118,42 +116,32 @@ int argc;
 char *argv[];
 {
   int n, mask, i;
+  pid_t child;
+
+  start(17);
 
   /* Create filenames for MAXOPEN files, the *filenames[] array. */
   for(i = 0; i < MAXOPEN; i++) {
 	if(asprintf(&filenames[i], "file%d", i) == -1) {
 		fprintf(stderr, "asprintf failed\n");
-		return 1;
+		quit();
 	}
   }
 
-  sync();
-
-#define DIR "DIR17"
-  system("rm -rf " DIR);
-
-  if(mkdir(DIR, 0755) != 0) {
-	perror("mkdir");
-	return 1;
-  }
-
-  if(chdir(DIR) < 0) {
-	perror("chdir");
-	return 1;
-  }
 
   mask = (argc == 2 ? atoi(argv[1]) : 0xFFFF);
-
-  if (fork()) {
-	printf("Test 17 ");
-	fflush(stdout);
-
-	wait(&n);
+  subtest = 0;
+  child = fork();
+  if (child == -1) {
+  	e(1);
+  	quit();
+  } else if (child == 0) {
+  	test(mask);
+  	return(0);
+  } else {
+  	wait(&n);
 	clean_up_the_mess();
 	quit();
-  } else {
-	test(mask);
-	exit(0);
   }
   return(-1);			/* impossible */
 }
@@ -164,7 +152,7 @@ int mask;
   umask(0);			/* not honest, but i always forget */
 
   if (mask & 00001) test01();
-  if (mask & 00002) make_and_fill_dirs();
+  if (mask & 00002) test03();
   if (mask & 00004) test02();
   if (mask & 00010) test08();
   if (mask & 00020) test09();
@@ -183,29 +171,30 @@ void test01()
   int oldvalue, newvalue, tempvalue;
   int nr;
 
-  if ((oldvalue = umask(0777)) != 0) err(0, UMASK, NIL);
+  subtest = 1;
+  if ((oldvalue = umask(0777)) != 0) e(1);
 
   /* Special test: only the lower 9 bits (protection bits) may part- *
    * icipate. ~0777 means: 111 000 000 000. Giving this to umask must*
    * not change any value.                                           */
 
-  if ((newvalue = umask(~0777)) != 0777) err(1, UMASK, "illegal");
-  if (oldvalue == newvalue) err(11, UMASK, "not change mask");
+  if ((newvalue = umask(~0777)) != 0777) e(2);
+  if (oldvalue == newvalue) e(3);
 
-  if ((tempvalue = umask(0)) != 0) err(2, UMASK, "values");
+  if ((tempvalue = umask(0)) != 0) e(4);
 
   /* Now test all possible modes of umask on a file */
   for (newvalue = MASK; newvalue >= 0; newvalue -= 0111) {
 	tempvalue = umask(newvalue);
 	if (tempvalue != oldvalue) {
-		err(1, UMASK, "illegal");
+		e(5);
 		break;		/* no use trying more */
 	} else if ((nr = creat("file01", 0777)) < 0)
-		err(5, CREAT, "'file01'");
+		e(6);
 	else {
 		try_close(nr, "'file01'");
 		if (get_mode("file01") != (MASK & ~newvalue))
-			err(7, UMASK, "mode computed");
+			e(7);
 		try_unlink("file01");
 	}
 	oldvalue = newvalue;
@@ -213,7 +202,7 @@ void test01()
 
   /* The loop has terminated with umask(0) */
   if ((tempvalue = umask(0)) != 0)
-	err(7, UMASK, "umask may influence rest of tests!");
+	e(8);
 }				/* test01 */
 
 /*****************************************************************************
@@ -225,71 +214,66 @@ void test02()
   char a[ARSIZE], b[ARSIZE];
   struct stat stbf1;
 
+  subtest = 2;
   mode = 0;
-  /* Create twenty files, check filedes */
+
   for (n = 0; n < MAXOPEN; n++) {
 	if (creat(filenames[n], mode) != FF + n)
-		err(13, CREAT, filenames[n]);
+		e(1);
 	else {
 		if (get_mode(filenames[n]) != mode)
-			err(7, CREAT, "mode set while creating many files");
+			e(2);
 
 		/* Change  mode of file to standard mode, we want to *
 		 * use a lot (20) of files to be opened later, see   *
 		 * open_alot(), close_alot().                        */
-		if (chmod(filenames[n], 0700) != OK) err(5, CHMOD, filenames[n]);
+		if (chmod(filenames[n], 0700) != OK) e(3);
 	}
 	mode = (mode + 0100) % 01000;
   }
 
   /* Already twenty files opened; opening another has to fail */
   if (creat("file02", 0777) != FAIL)
-	err(9, CREAT, "created");
+	e(4);
   else
-	check(CREAT, EMFILE);
+  	if (errno != EMFILE) e(5);
 
   /* Close all files: seems blunt, but it isn't because we've  *
    * checked all fd's already                                  */
-  if ((n = close_alot(MAXOPEN)) < MAXOPEN) err(5, CLOSE, "MAXOPEN files");
+  if ((n = close_alot(MAXOPEN)) < MAXOPEN) e(6);
 
   /* Creat 1 file twice; check */
   if ((n = creat("file02", 0777)) < 0)
-	err(5, CREAT, "'file02'");
+	e(7);
   else {
 	init_array(a);
-	if (write(n, a, ARSIZE) != ARSIZE) err(1, WRITE, "bad");
+	if (write(n, a, ARSIZE) != ARSIZE) e(8);
 
 	if ((n1 = creat("file02", 0755)) < 0)	/* receate 'file02' */
-		err(5, CREAT, "'file02' (2nd time)");
+		e(9);
 	else {
 		/* Fd should be at the top after recreation */
 		if (lseek(n1, 0L, SEEK_END) != 0)
-			err(11, CREAT, "not truncate file by recreation");
+			e(10);
 		else {
 			/* Try to write on recreated file */
 			clear_array(b);
 
-			if (lseek(n1, 0L, SEEK_SET) != 0)
-				err(5, LSEEK, "to top of 2nd fd 'file02'");
-			if (write(n1, a, ARSIZE) != ARSIZE)
-				err(1, WRITE, "(2) bad");
+			if (lseek(n1, 0L, SEEK_SET) != 0) e(11);
+			if (write(n1, a, ARSIZE) != ARSIZE) e(12);
 
 			/* In order to read we've to close and open again */
 			try_close(n1, "'file02'  (2nd creation)");
 			if ((n1 = open("file02", RW)) < 0)
-				err(5, OPEN, "'file02'  (2nd recreation)");
+				e(13);
 
 			/* Continue */
-			if (lseek(n1, 0L, SEEK_SET) != 0)
-				err(5, LSEEK, "to top 'file02'(2nd fd) (2)");
-			if (read(n1, b, ARSIZE) != ARSIZE)
-				err(1, READ, "wrong");
+			if (lseek(n1, 0L, SEEK_SET) != 0) e(14);
+			if (read(n1, b, ARSIZE) != ARSIZE) e(15);
 
-			if (comp_array(a, b, ARSIZE) != OK) err(11, CREAT,
-				    "not really truncate file by recreation");
+			if (comp_array(a, b, ARSIZE) != OK) e(16);
 		}
-		if (get_mode("file02") != 0777)
-			err(11, CREAT, "not maintain mode by recreation");
+		if (get_mode("file02") != 0777) e(17);
 		try_close(n1, "recreated 'file02'");
 
 	}
@@ -297,30 +281,26 @@ void test02()
   }
 
   /* Give 'creat' wrong input: dir not searchable */
-  if (creat("drw-/file02", 0777) != FAIL)
-	err(4, CREAT, "'drw-'");
+  if (creat("drw-/file02", 0777) != FAIL) e(18);
   else
-	check(CREAT, EACCES);
+  	if (errno != EACCES) e(19);
 
   /* Dir not writable */
-  if (creat("dr-x/file02", 0777) != FAIL)
-	err(12, CREAT, "'dr-x/file02'");
+  if (creat("dr-x/file02", 0777) != FAIL) e(20);
   else
-	check(CREAT, EACCES);
+	if (errno != EACCES) e(21);
 
   /* File not writable */
-  if (creat("drwx/r-x", 0777) != FAIL)
-	err(11, CREAT, "recreate non-writable file");
+  if (creat("drwx/r-x", 0777) != FAIL) e(22);
   else
-	check(CREAT, EACCES);
+  	if (errno != EACCES) e(23);
 
   /* Try to creat a dir */
   if ((n = creat("dir", 040777)) != FAIL) {
-	if (fstat(n, &stbf1) != OK)
-		err(5, FSTAT, "'dir'");
+	if (fstat(n, &stbf1) != OK) e(24);
 	else if (stbf1.st_mode != (mode_t) 0100777)
 				/* cast because mode is negative :-( */
-		err(11, CREAT, "'creat' a new directory");
+		e(25);
 	Remove(n, "dir");
   }
 
@@ -328,62 +308,50 @@ void test02()
    * tricky modes                */
 
   /* File is an existing dir */
-  if (creat("drwx", 0777) != FAIL)
-	err(11, CREAT, "create an existing dir!");
+  if (creat("drwx", 0777) != FAIL) e(26);
   else
-	check(CREAT, EISDIR);
+	if (errno != EISDIR) e(27);
 }				/* test02 */
 
 void test08()
 {
+  subtest = 8;
+
   /* Test chdir to searchable dir */
-  if (chdir("drwx") != OK)
-	err(5, CHDIR, "to accessible dir");
-  else if (chdir("..") != OK)
-	err(11, CHDIR, "not return to '..'");
+  if (chdir("drwx") != OK) e(1);
+  else if (chdir("..") != OK) e(2);
 
   /* Check the chdir(".") and chdir("..") mechanism */
-  if (chdir("drwx") != OK)
-	err(5, CHDIR, "to 'drwx'");
+  if (chdir("drwx") != OK) e(3);
   else {
-	if (chdir(".") != OK) err(5, CHDIR, "to working dir (.)");
+	if (chdir(".") != OK) e(4);
 
 	/* If we still are in 'drwx' , we should be able to access *
 	 * file 'rwx'.                                              */
-	if (access("rwx", 0) != OK) err(5, CHDIR, "rightly to '.'");
+	if (access("rwx", 0) != OK) e(5);
 
 	/* Try to return to previous dir ('/' !!) */
-	if (chdir("././../././d--x/../d--x/././..") != OK)
-		err(5, CHDIR, "to motherdir (..)");
+	if (chdir("././../././d--x/../d--x/././..") != OK) e(6);
 
 	/* Check whether we are back in '/' */
-	if (chdir("d--x") != OK) err(5, CHDIR, "rightly to  a '..'");
-  }
+	if (chdir("d--x") != OK) e(7);
+  }  /* Return to '..' */
+  if (chdir("..") != OK) e(8);
 
-  /* Return to '..' */
-  if (chdir("..") != OK) err(5, CHDIR, "to '..'");
-
-  if (chdir("././././drwx") != OK)
-	err(11, CHDIR, "not follow a path");
-  else if (chdir("././././..") != OK)
-	err(11, CHDIR, "not return to path");
+  if (chdir("././././drwx") != OK) e(9);
+  else if (chdir("././././..") != OK) e(10);
 
   /* Try giving chdir wrong parameters */
-  if (chdir("drwx/rwx") != FAIL)
-	err(11, CHDIR, "chdir to a file");
+  if (chdir("drwx/rwx") != FAIL) e(11);
   else
-	check(CHDIR, ENOTDIR);
+	if (errno != ENOTDIR) e(12);
 
-  if (chdir("drw-") != FAIL)
-	err(4, CHDIR, "'/drw-'");
+  if (chdir("drw-") != FAIL) e(13);
   else
-	check(CHDIR, EACCES);
+	if (errno != EACCES) e(14);
 
-  /* To be sure: return to root */
-  /* If (chdir("/") != OK) err(5, CHDIR, "to '/' (2nd time)"); */
 }				/* test08 */
 
-/* New page */
 /*****************************************************************************
  *                              test CHMOD                                   *
  ****************************************************************************/
@@ -391,64 +359,58 @@ void test09()
 {
   int n;
 
+  subtest = 9;
+
   /* Prepare file09 */
-  if ((n = creat("drwx/file09", 0644)) != FF) err(5, CREAT, "'drwx/file09'");
+  if ((n = creat("drwx/file09", 0644)) != FF) e(1);
 
   try_close(n, "'file09'");
 
   /* Try to chmod a file, check and restore old values, check */
-  if (chmod("drwx/file09", 0700) != OK)
-	err(5, CHMOD, "'drwx/file09'");	/* set rwx */
+  if (chmod("drwx/file09", 0700) != OK) e(2);
   else {
 	/* Check protection */
-	if (get_mode("drwx/file09") != 0700) err(7, CHMOD, "mode");
+	if (get_mode("drwx/file09") != 0700) e(3);
 
 	/* Test if chmod accepts just filenames too */
-	if (chdir("drwx") != OK)
-		err(5, CHDIR, "to '/drwx'");
-	else if (chmod("file09", 0177) != OK)	/* restore oldies */
-		err(5, CHMOD, "'h1'");
+	if (chdir("drwx") != OK) e(4);
+	else if (chmod("file09", 0177) != OK) e(5);
 	else
 		/* Check if value has been restored */
-	if (get_mode("../drwx/file09") != 0177)
-		err(7, CHMOD, "restored mode");
+	if (get_mode("../drwx/file09") != 0177) e(6);
   }
 
   /* Try setuid and setgid */
   if ((chmod("file09", 04777) != OK) || (get_mode("file09") != 04777))
-	err(11, CHMOD, "not set uid-bit");
+	e(7);
   if ((chmod("file09", 02777) != OK) || (get_mode("file09") != 02777))
-	err(11, CHMOD, "not set gid-bit");
+	e(8);
 
   /* Remove testfile */
   try_unlink("file09");
 
-  if (chdir("..") != OK) err(5, CHDIR, "to '..'");
+  if (chdir("..") != OK) e(9);
 
   /* Try to chmod directory */
-  if (chmod("d---", 0777) != OK)
-	err(5, CHMOD, "dir 'd---'");
+  if (chmod("d---", 0777) != OK) e(10);
   else {
-	if (get_mode("d---") != 0777) err(7, CHMOD, "protection value");
-	if (chmod("d---", 0000) != OK) err(5, CHMOD, "dir 'a' 2nd time");
+	if (get_mode("d---") != 0777) e(11);
+	if (chmod("d---", 0000) != OK) e(12);
 
 	/* Check if old value has been restored */
-	if (get_mode("d---") != 0000)
-		err(7, CHMOD, "restored protection value");
+	if (get_mode("d---") != 0000) e(13);
   }
 
   /* Try to make chmod failures */
 
   /* We still are in dir root */
   /* Wrong filename */
-  if (chmod("non-file", 0777) != FAIL)
-	err(3, CHMOD, NIL);
+  if (chmod("non-file", 0777) != FAIL) e(14);
   else
-	check(CHMOD, ENOENT);
+	if (errno != ENOENT) e(15);
 
 }				/* test 09 */
 
-/* New page */
 
 /* "t4.c", created by Rene Montsma and Menno Wilcke */
 
@@ -460,26 +422,25 @@ void test10()
   int n, n1;
   char a[ARSIZE], b[ARSIZE], *f, *lf;
 
+  subtest = 10;
+
   f = "anotherfile10";
   lf = "linkfile10";
 
-  if ((n = creat(f, 0702)) != FF)	/* no other open files */
-	err(13, CREAT, f);
+  if ((n = creat(f, 0702)) != FF) e(1);	/* no other open files */
   else {
 	/* Now link correctly */
-	if (link(f, lf) != OK)
-		err(5, LINK, lf);
-	else if ((n1 = open(lf, RW)) < 0)
-		err(5, OPEN, "'linkfile10'");
+	if (link(f, lf) != OK) e(2);
+	else if ((n1 = open(lf, RW)) < 0) e(3);
 	else {
 		init_array(a);
 		clear_array(b);
 
 		/* Write on 'file10' means being able to    * read
 		 * through linked filedescriptor       */
-		if (write(n, a, ARSIZE) != ARSIZE) err(1, WRITE, "bad");
-		if (read(n1, b, ARSIZE) != ARSIZE) err(1, READ, "bad");
-		if (comp_array(a, b, ARSIZE) != OK) err(8, "r/w", NIL);
+		if (write(n, a, ARSIZE) != ARSIZE) e(4);
+		if (read(n1, b, ARSIZE) != ARSIZE) e(5);
+		if (comp_array(a, b, ARSIZE) != OK) e(6);
 
 		/* Clean up: unlink and close (twice): */
 		Remove(n, f);
@@ -487,16 +448,13 @@ void test10()
 
 		/* Check if "linkfile" exists and the info    * on it
 		 * is correct ('file' has been deleted) */
-		if ((n1 = open(lf, R)) < 0)
-			err(5, OPEN, "'linkfile10'");
+		if ((n1 = open(lf, R)) < 0) e(7);
 		else {
 			/* See if 'linkfile' still contains 0..511 ? */
 
 			clear_array(b);
-			if (read(n1, b, ARSIZE) != ARSIZE)
-				err(1, READ, "bad");
-			if (comp_array(a, b, ARSIZE) != OK)
-				err(8, "r/w", NIL);
+			if (read(n1, b, ARSIZE) != ARSIZE) e(8);
+			if (comp_array(a, b, ARSIZE) != OK) e(9);
 
 			try_close(n1, "'linkfile10' 2nd time");
 			try_unlink(lf);
@@ -506,55 +464,48 @@ void test10()
 
   /* Try if unlink fails with incorrect parameters */
   /* File does not exist: */
-  if (unlink("non-file") != FAIL)
-	err(2, UNLINK, "name");
+  if (unlink("non-file") != FAIL) e(10);
   else
-	check(UNLINK, ENOENT);
+  	if (errno != ENOENT) e(11);
 
   /* Dir can't be written */
-  if (unlink("dr-x/rwx") != FAIL)
-	err(11, UNLINK, "could unlink in non-writable dir.");
+  if (unlink("dr-x/rwx") != FAIL) e(12);
   else
-	check(UNLINK, EACCES);
+  	if (errno != EACCES) e(13);
 
   /* Try to unlink a dir being user */
-  if (unlink("drwx") != FAIL)
-	err(11, UNLINK, "unlink dir's as user");
+  if (unlink("drwx") != FAIL) e(14);
   else
-	check(UNLINK, EPERM);
+	if (errno != EPERM) e(15);
 
   /* Try giving link wrong input */
 
   /* First try if link fails with incorrect parameters * name1 does not
    * exist.                             */
-  if (link("non-file", "linkfile") != FAIL)
-	err(2, LINK, "1st name");
+  if (link("non-file", "linkfile") != FAIL) e(16);
   else
-	check(LINK, ENOENT);
+	if (errno != ENOENT) e(17);
 
   /* Name2 exists already */
-  if (link("drwx/rwx", "drwx/rw-") != FAIL)
-	err(2, LINK, "2nd name");
+  if (link("drwx/rwx", "drwx/rw-") != FAIL) e(18);
   else
-	check(LINK, EEXIST);
+	if (errno != EEXIST) e(19);
 
   /* Directory of name2 not writable:  */
-  if (link("drwx/rwx", "dr-x/linkfile") != FAIL)
-	err(11, LINK, "link non-writable  file");
+  if (link("drwx/rwx", "dr-x/linkfile") != FAIL) e(20);
   else
-	check(LINK, EACCES);
+	if (errno != EACCES) e(21);
 
   /* Try to link a dir, being a user */
-  if (link("drwx", "linkfile") != FAIL)
-	err(11, LINK, "link a dir without superuser!");
+  if (link("drwx", "linkfile") != FAIL) e(22);
   else
-	check(LINK, EPERM);
+	if (errno != EPERM) e(23);
 
   /* File has too many links */
   if ((n = link_alot("drwx/rwx")) != LINKCOUNT - 1)	/* file already has one
 							 * link */
-	err(5, LINK, "many files");
-  if (unlink_alot(n) != n) err(5, UNLINK, "all linked files");
+	e(24);
+  if (unlink_alot(n) != n) e(25);
 
 }				/* test10 */
 
@@ -608,7 +559,6 @@ char name[];
 	}
 }				/* get_new */
 
-/* New page */
 
 /*****************************************************************************
  *                              test PIPE                                    *
@@ -618,56 +568,47 @@ void test11()
   int n, fd[2];
   char a[ARSIZE], b[ARSIZE];
 
-  if (pipe(fd) != OK)
-	err(13, PIPE, NIL);
+  subtest = 11;
+
+  if (pipe(fd) != OK) e(1);
   else {
 	/* Try reading and writing on a pipe */
 	init_array(a);
 	clear_array(b);
 
-	if (write(fd[1], a, ARSIZE) != ARSIZE)
-		err(5, WRITE, "on pipe");
-	else if (read(fd[0], b, (ARSIZE / 2)) != (ARSIZE / 2))
-		err(5, READ, "on pipe (2nd time)");
-	else if (comp_array(a, b, (ARSIZE / 2)) != OK)
-		err(7, PIPE, "values read/written");
-	else if (read(fd[0], b, (ARSIZE / 2)) != (ARSIZE / 2))
-		err(5, READ, "on pipe 2");
-	else if (comp_array(&a[ARSIZE / 2], b, (ARSIZE / 2)) != OK)
-		err(7, PIPE, "pipe created");
+	if (write(fd[1], a, ARSIZE) != ARSIZE) e(2);
+	else if (read(fd[0], b, (ARSIZE / 2)) != (ARSIZE / 2)) e(3);
+	else if (comp_array(a, b, (ARSIZE / 2)) != OK) e(4);
+	else if (read(fd[0], b, (ARSIZE / 2)) != (ARSIZE / 2)) e(5);
+	else if (comp_array(&a[ARSIZE / 2], b, (ARSIZE / 2)) != OK) e(6);
 
 	/* Try to let the pipe make a mistake */
-	if (write(fd[0], a, ARSIZE) != FAIL)
-		err(11, WRITE, "write on fd[0]");
-	if (read(fd[1], b, ARSIZE) != FAIL) err(11, READ, "read on fd[1]");
+	if (write(fd[0], a, ARSIZE) != FAIL) e(7);
+	if (read(fd[1], b, ARSIZE) != FAIL) e(8);
 
 	try_close(fd[1], "'fd[1]'");
 
 	/* Now we shouldn't be able to read, because fd[1] has been closed */
-	if (read(fd[0], b, ARSIZE) != END_FILE) err(2, PIPE, "'fd[1]'");
+	if (read(fd[0], b, ARSIZE) != END_FILE) e(9);
 
 	try_close(fd[0], "'fd[0]'");
   }
-  if (pipe(fd) < 0)
-	err(5, PIPE, "2nd time");
+  if (pipe(fd) < 0) e(10);
   else {
 	/* Test lseek on a pipe: should fail */
-	if (write(fd[1], a, ARSIZE) != ARSIZE)
-		err(5, WRITE, "on pipe (2nd time)");
-	if (lseek(fd[1], 10L, SEEK_SET) != FAIL)
-		err(11, LSEEK, "lseek on a pipe");
+	if (write(fd[1], a, ARSIZE) != ARSIZE) e(11);
+	if (lseek(fd[1], 10L, SEEK_SET) != FAIL) e(12);
 	else
-		check(PIPE, ESPIPE);
+		if (errno != ESPIPE) e(13);
 
 	/* Eat half of the pipe: no writing should be possible */
 	try_close(fd[0], "'fd[0]'  (2nd time)");
 
 	/* This makes UNIX crash: omit it if pdp or VAX */
 #ifndef NOCRASH
-	if (write(fd[1], a, ARSIZE) != FAIL)
-		err(11, WRITE, "write on wrong pipe");
+	if (write(fd[1], a, ARSIZE) != FAIL) e(14);
 	else
-		check(PIPE, EPIPE);
+		if (errno != EPIPE) e(15);
 #endif
 	try_close(fd[1], "'fd[1]'  (2nd time)");
   }
@@ -678,196 +619,31 @@ void test11()
    * Monix system crashed when we tried to write more then 3584 bytes *
    * (3.5K) on a pipe. That's why we try to write only 3.5K in the    *
    * folowing test.                                                   */
-  if (pipe(fd) < 0)
-	err(5, PIPE, "3rd time");
+  if (pipe(fd) < 0) e(16);
   else {
 	for (n = 0; n < (PIPESIZE / ARSIZE); n++)
-		if (write(fd[1], a, ARSIZE) != ARSIZE)
-			err(5, WRITE, "on pipe (3rd time) 4K");
+		if (write(fd[1], a, ARSIZE) != ARSIZE) e(17);
 	try_close(fd[1], "'fd[1]' (3rd time)");
 
 	for (n = 0; n < (PIPESIZE / ARSIZE); n++)
-		if (read(fd[0], b, ARSIZE) != ARSIZE)
-			err(5, READ, "from pipe (3rd time) 4K");
+		if (read(fd[0], b, ARSIZE) != ARSIZE) e(18);
 	try_close(fd[0], "'fd[0]' (3rd time)");
   }
 
   /* Test opening a lot of files */
-  if ((n = open_alot()) != MAXOPEN) err(5, OPEN, "MAXOPEN files");
-  if (pipe(fd) != FAIL)
-	err(9, PIPE, "open");
+  if ((n = open_alot()) != MAXOPEN) e(19);
+  if (pipe(fd) != FAIL) e(20);
   else
-	check(PIPE, EMFILE);
-  if (close_alot(n) != n) err(5, CLOSE, "all opened files");
+	if (errno != EMFILE) e(21);
+  if (close_alot(n) != n) e(22);
 }				/* test11 */
 
-/* New page */
 
-void comp_stats(stbf1, stbf2)
-struct stat *stbf1, *stbf2;
-{
-  if (stbf1->st_dev != stbf2->st_dev) err(7, "st/fst", "'dev'");
-  if (stbf1->st_ino != stbf2->st_ino) err(7, "st/fst", "'ino'");
-  if (stbf1->st_mode != stbf2->st_mode) err(7, "st/fst", "'mode'");
-  if (stbf1->st_nlink != stbf2->st_nlink) err(7, "st/fst", "'nlink'");
-  if (stbf1->st_uid != stbf2->st_uid) err(7, "st/fst", "'uid'");
-  if (stbf1->st_gid != stbf2->st_gid) err(7, "st/fst", "'gid'");
-  if (stbf1->st_rdev != stbf2->st_rdev) err(7, "st/fst", "'rdev'");
-  if (stbf1->st_size != stbf2->st_size) err(7, "st/fst", "'size'");
-  if (stbf1->st_atime != stbf2->st_atime) err(7, "st/fst", "'atime'");
-  if (stbf1->st_mtime != stbf2->st_mtime) err(7, "st/fst", "'mtime'");
-}				/* comp_stats */
-
-/* New page */
-
-/* "t5.c", created by Rene Montsma and Menno Wilcke */
-
-void comp_inodes(m, m1)
-int m, m1;			/* twee filedes's */
-{
-  struct stat stbf1, stbf2;
-
-  if (fstat(m, &stbf1) == OK)
-	if (fstat(m1, &stbf2) == OK) {
-		if (stbf1.st_ino != stbf2.st_ino)
-			err(7, DUP, "inode number");
-	} else
-		err(100, "comp_inodes", "cannot 'fstat' (m1)");
-  else
-	err(100, "comp_inodes", "cannot 'fstat' (m)");
-}				/* comp_inodes */
-
-/* "support.c", created by Rene Montsma and Menno Wilcke */
-
-/* Err, make_and_fill_dirs, init_array, clear_array, comp_array,
+/* Err, test03, init_array, clear_array, comp_array,
    try_close, try_unlink, Remove, get_mode, check, open_alot,
    close_alot, clean_up_the_mess.
 */
 
-/***********************************************************************
- *				EXTENDED FIONS			       *
- **********************************************************************/
-/* First extended functions (i.e. not oldfashioned monixcalls.
-   e(), nlcr(), octal.*/
-
-void e(string)
-char *string;
-{
-  printf("Error: %s ", string);
-}
-
-void nlcr()
-{
-  fputs("\n",stdout);
-}
-
-void str(char *s)
-{
-  fputs(s,stdout);
-}
-
-/*****************************************************************************
-*                                                                            *
-*                               ERR(or) messages                             *
-*                                                                            *
-*****************************************************************************/
-void err(number, scall, name)
- /* Give nice error messages */
-
-char *scall, *name;
-int number;
-
-{
-  errct++;
-  if (errct > MAXERR) {
-	printf("Too many errors;  test aborted\n");
-	quit();
-  }
-  e("");
-  str("\t");
-  switch (number) {
-      case 0:
-	str(scall);
-	str(": illegal initial value.");
-	break;
-      case 1:
-	str(scall);
-	str(": ");
-	str(name);
-	str(" value returned.");
-	break;
-      case 2:
-	str(scall);
-	str(": accepting illegal ");
-	str(name);
-	str(".");
-	break;
-      case 3:
-	str(scall);
-	str(": accepting non-existing file.");
-	break;
-      case 4:
-	str(scall);
-	str(": could search non-searchable dir (");
-	str(name);
-	str(").");
-	break;
-      case 5:
-	str(scall);
-	str(": cannot ");
-	str(scall);
-	str(" ");
-	str(name);
-	str(".");
-	break;
-      case 7:
-	str(scall);
-	str(": incorrect ");
-	str(name);
-	str(".");
-	break;
-      case 8:
-	str(scall);
-	str(": wrong values.");
-	break;
-      case 9:
-	str(scall);
-	str(": accepting too many ");
-	str(name);
-	str(" files.");
-	break;
-      case 10:
-	str(scall);
-	str(": even a superuser can't do anything!");
-	break;
-      case 11:
-	str(scall);
-	str(": could ");
-	str(name);
-	str(".");
-	break;
-      case 12:
-	str(scall);
-	str(": could write in non-writable dir (");
-	str(name);
-	str(").");
-	break;
-      case 13:
-	str(scall);
-	str(": wrong filedes returned (");
-	str(name);
-	str(").");
-	break;
-      case 100:
-	str(scall);		/* very common */
-	str(": ");
-	str(name);
-	str(".");
-	break;
-      default:	str("errornumber does not exist!\n");
-  }
-  nlcr();
-}				/* err */
 
 /*****************************************************************************
 *                                                                            *
@@ -875,13 +651,13 @@ int number;
 *                                                                            *
 *****************************************************************************/
 
-void make_and_fill_dirs()
+void test03()
  /* Create 8 dir.'s: "d---", "d--x", "d-w-", "d-wx", "dr--", "dr-x",     *
   * "drw-", "drwx".                                     * Then create 8 files
   * in "drwx", and some needed files in other dirs.  */
 {
   int mode, i;
-
+  subtest = 3;
   for (i = 0; i < MODES; i++) {
 	mkdir(mode_dir[i], 0700);
 	chown(mode_dir[i], USER_ID, GROUP_ID);
@@ -897,7 +673,7 @@ void make_and_fill_dirs()
 
   chmod_8_dirs(8);		/* 8 means; 8 different modes */
 
-}				/* make_and_fill_dirs */
+}				/* test03 */
 
 void put_file_in_dir(dirname, mode)
 char *dirname;
@@ -906,19 +682,16 @@ int mode;
 {
   int nr;
 
-  if (chdir(dirname) != OK)
-	err(5, CHDIR, "to dirname (put_f_in_dir)");
+  if (chdir(dirname) != OK) e(1);
   else {
 	/* Creat the file */
 	assert(mode >= 0 && mode < MODES);
-	if ((nr = creat(mode_fnames[mode], mode * 0100)) < 0)
-		err(13, CREAT, mode_fnames[mode]);
+	if ((nr = creat(mode_fnames[mode], mode * 0100)) < 0) e(2);
 	else {
 		try_close(nr, mode_fnames[mode]);
 	}
 
-	if (chdir("..") != OK)
-		err(5, CHDIR, "to previous dir (put_f_in_dir)");
+	if (chdir("..") != OK) e(3);
   }
 }				/* put_file_in_dir */
 
@@ -953,29 +726,25 @@ int comp_array(a, b, range)
 char *a, *b;
 int range;
 {
-  if ((range < 0) || (range > ARSIZE)) {
-	err(100, "comp_array", "illegal range");
+  assert(range >= 0 && range <= ARSIZE);
+  while (range-- && (*a++ == *b++));
+  if (*--a == *--b)
+	return(OK);
+  else
 	return(FAIL);
-  } else {
-	while (range-- && (*a++ == *b++));
-	if (*--a == *--b)
-		return(OK);
-	else
-		return(FAIL);
-  }
 }				/* comp_array */
 
 void try_close(filedes, name)
 int filedes;
 char *name;
 {
-  if (close(filedes) != OK) err(5, CLOSE, name);
+  if (close(filedes) != OK) e(90);
 }				/* try_close */
 
 void try_unlink(fname)
 char *fname;
 {
-  if (unlink(fname) != 0) err(5, UNLINK, fname);
+  if (unlink(fname) != 0) e(91);
 }				/* try_unlink */
 
 void Remove(fdes, fname)
@@ -992,7 +761,7 @@ char *name;
   struct stat stbf1;
 
   if (stat(name, &stbf1) != OK) {
-	err(5, STAT, name);
+	e(92);
 	return(stbf1.st_mode);	/* return a mode which will cause *
 				 * error in the calling function  *
 				 * (file/dir bit)                 */
@@ -1000,69 +769,6 @@ char *name;
 	return(stbf1.st_mode & 07777);	/* take last 4 bits */
 }				/* get_mode */
 
-/*****************************************************************************
-*                                                                            *
-*                                  CHECK                                     *
-*                                                                            *
-*****************************************************************************/
-
-void check(scall, number)
-int number;
-char *scall;
-{
-  if (errno != number) {
-	e(NIL);
-	str("\t");
-	str(scall);
-	str(": bad errno-value: ");
-	put(errno);
-	str(" should have been: ");
-	put(number);
-	nlcr();
-  }
-}				/* check */
-
-void put(nr)
-int nr;
-{
-  switch (nr) {
-      case 0:	str("unused");	  	break;
-      case 1:	str("EPERM");	  	break;
-      case 2:	str("ENOENT");	  	break;
-      case 3:	str("ESRCH");	  	break;
-      case 4:	str("EINTR");	  	break;
-      case 5:	str("EIO");	  	break;
-      case 6:	str("ENXIO");	  	break;
-      case 7:	str("E2BIG");	  	break;
-      case 8:	str("ENOEXEC");	  	break;
-      case 9:	str("EBADF");	  	break;
-      case 10:	str("ECHILD");	  	break;
-      case 11:	str("EAGAIN");	  	break;
-      case 12:	str("ENOMEM");	  	break;
-      case 13:	str("EACCES");	  	break;
-      case 14:	str("EFAULT");	  	break;
-      case 15:	str("ENOTBLK");	  	break;
-      case 16:	str("EBUSY");	  	break;
-      case 17:	str("EEXIST");	  	break;
-      case 18:	str("EXDEV");	  	break;
-      case 19:	str("ENODEV");	  	break;
-      case 20:	str("ENOTDIR");	  	break;
-      case 21:	str("EISDIR");	  	break;
-      case 22:	str("EINVAL");	  	break;
-      case 23:	str("ENFILE");	  	break;
-      case 24:	str("EMFILE");	  	break;
-      case 25:	str("ENOTTY");	  	break;
-      case 26:	str("ETXTBSY");	  	break;
-      case 27:	str("EFBIG");	  	break;
-      case 28:	str("ENOSPC");	  	break;
-      case 29:	str("ESPIPE");	  	break;
-      case 30:	str("EROFS");	  	break;
-      case 31:	str("EMLINK");	  	break;
-      case 32:	str("EPIPE");	  	break;
-      case 33:	str("EDOM");	  	break;
-      case 34:	str("ERANGE");	  	break;
-  }
-}
 
 /*****************************************************************************
 *                                                                            *
@@ -1076,7 +782,7 @@ int open_alot()
 
   for (i = 0; i < MAXOPEN; i++)
 	if (open(filenames[i], R) == FAIL) break;
-  if (i == 0) err(5, "open_alot", "at all");
+  if (i == 0) e(93);
   return(i);
 }				/* open_alot */
 
@@ -1086,7 +792,7 @@ int number;
   int i, count = 0;
 
   if (number > MAXOPEN)
-	err(5, "close_alot", "accept this argument");
+	e(94);
   else
 	for (i = FF; i < number + FF; i++)
 		if (close(i) != OK) count++;
@@ -1112,12 +818,12 @@ void clean_up_the_mess()
 
   /* Unlink the files in dir 'drwx' */
   if (chdir("drwx") != OK)
-	err(5, CHDIR, "to 'drwx'");
+	e(95);
   else {
 	for (i = 0; i < MODES; i++) {
 		try_unlink(mode_fnames[i]);
 	}
-	if (chdir("..") != OK) err(5, CHDIR, "to '..'");
+	if (chdir("..") != OK) e(96);
   }
 
   /* Before unlinking files in some dirs, make them writable */
@@ -1158,17 +864,3 @@ int sw;				/* if switch == 8, give all different
   }
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

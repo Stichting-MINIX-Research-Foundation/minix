@@ -25,6 +25,7 @@ void start(test_nr)
 int test_nr;
 {
   char buf[64];
+  int i;
 
   common_test_nr = test_nr;
   printf("Test %2d ", test_nr);
@@ -40,6 +41,11 @@ int test_nr;
   if (chdir(buf) != 0) {
 	e(6666);
 	quit();
+  }
+
+  for (i = 3; i < OPEN_MAX; ++i) {
+	/* Close all files except stdin, stdout, and stderr */
+	(void) close(i);
   }
 }
 

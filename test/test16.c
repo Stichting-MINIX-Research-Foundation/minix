@@ -11,13 +11,13 @@
 
 #define MAX_ERROR 4
 
-int errct, subtest, passes;
+int subtest, passes;
+
+#include "common.c"
 
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(void test16a, (void));
 _PROTOTYPE(void get_times, (char *name, time_t *a, time_t *c, time_t *m));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
 
 int main(argc, argv)
 int argc;
@@ -25,13 +25,11 @@ char *argv[];
 {
   int i, m;
 
+  start(16);
+
   m = (argc == 2 ? atoi(argv[1]) : 0xFFFF);
 
-  system("rm -rf DIR_16; mkdir DIR_16");
-  chdir("DIR_16");
 
-  printf("Test 16 ");
-  fflush(stdout);
   for (i = 0; i < 4; i++) {
 	if (m & 0001) test16a();
 	passes++;
@@ -225,36 +223,5 @@ time_t *a, *c, *m;
   *a = s.st_atime;
   *c = s.st_ctime;
   *m = s.st_mtime;
-}
-
-void e(n)
-int n;
-{
-  int err_num = errno;		/* save errno in case printf clobbers it */
-
-  printf("Subtest %d,  error %d  errno=%d  ", subtest, n, errno);
-  errno = err_num;		/* restore errno, just in case */
-  perror("");
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	chdir("..");
-	system("rm -rf DIR*");
-	exit(1);
-  }
-}
-
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
 }
 

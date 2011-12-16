@@ -9,7 +9,7 @@
 #endif
 
 #define MAX_ERROR 4
-static int errct;
+#include "common.c"
 
 /* test strtol */
 #define	TYPE        long
@@ -51,26 +51,13 @@ static int errct;
 
 #endif /* defined(__LONG_LONG_SUPPORTED) */
 
-static void quit(void)
-{
-	if (errct == 0) 
-	{
-		printf("ok\n");
-		exit(0);
-	} 
-	else 
-	{
-		printf("%d errors\n", errct);
-		exit(1);
-	}
-}
-
 int main(int argc, char **argv)
 {
+	start(45);
 #ifdef __LONG_LONG_SUPPORTED
-	printf("Test 45 (GCC) ");
+	printf("(GCC) ");
 #else
-	printf("Test 45 (ACK) ");
+	printf("(ACK) ");
 #endif
 	fflush(stdout);
 

@@ -17,6 +17,8 @@
 #define ITERATIONS 3
 #define MAX_ERROR 4
 
+#include "common.c"
+
 /* we have to keep in mind the millisecond values are rounded up */
 #define UPPERUSEC(us) ((us)+(1000000/system_hz))
 #define EQUSEC(l,r) \
@@ -53,13 +55,11 @@ _PROTOTYPE(void test_exec, (void));
 _PROTOTYPE(int do_check, (void));
 _PROTOTYPE(void got_alarm, (int sig));
 _PROTOTYPE(void busy_wait, (int secs));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
+_PROTOTYPE(void my_e, (int n));
 
 static char *executable;
 static int signals;
 static int timer;
-static int errct = 0, subtest;
 static long system_hz;
 
 static int sigs[] = { SIGALRM, SIGVTALRM, SIGPROF };
@@ -70,6 +70,7 @@ int argc;
 char **argv;
 {
   int i, m = 0xFFFF, n = 0xF;
+  char cp_cmd[NAME_MAX+10];
 
   system_hz = sysconf(_SC_CLK_TCK);
 
@@ -79,10 +80,12 @@ char **argv;
 	exit(do_check());
   }
 
-  printf("Test 41 ");
-  fflush(stdout);
-
   executable = argv[0];
+
+  start(41);
+
+  snprintf(cp_cmd, sizeof(cp_cmd), "cp ../%s .", executable);
+  system(cp_cmd);
 
   if (argc >= 2) m = atoi(argv[1]);
   if (argc >= 3) n = atoi(argv[2]);
@@ -120,9 +123,9 @@ void test_which()
 
   subtest = 0;
 
-  errno = 0; if (!getitimer(-1, &it) || errno != EINVAL) e(1);
-  errno = 0; if ( getitimer(timer, &it)                ) e(2);
-  errno = 0; if (!getitimer( 3, &it) || errno != EINVAL) e(3);
+  errno = 0; if (!getitimer(-1, &it) || errno != EINVAL) my_e(1);
+  errno = 0; if ( getitimer(timer, &it)                ) my_e(2);
+  errno = 0; if (!getitimer( 3, &it) || errno != EINVAL) my_e(3);
 }
 
 /* test if we get back what we set */
@@ -133,29 +136,29 @@ void test_getset()
   subtest = 1;
 
   /* no alarm should be set initially */
-  if (getitimer(timer, &it)) e(1);
-  if (!EQITIMER(it, 0, 0, 0, 0)) e(2);
+  if (getitimer(timer, &it)) my_e(1);
+  if (!EQITIMER(it, 0, 0, 0, 0)) my_e(2);
 
-  if (setitimer(timer, &it, &oit)) e(3);
-  if (setitimer(timer, &oit, NULL)) e(4);
-  if (!EQITIMER(oit, 0, 0, 0, 0)) e(5);
+  if (setitimer(timer, &it, &oit)) my_e(3);
+  if (setitimer(timer, &oit, NULL)) my_e(4);
+  if (!EQITIMER(oit, 0, 0, 0, 0)) my_e(5);
 
   FILLITIMER(it, 123, 0, 456, 0);
-  if (setitimer(timer, &it, NULL)) e(6);
+  if (setitimer(timer, &it, NULL)) my_e(6);
 
   FILLITIMER(it, 987, 0, 654, 0);
-  if (setitimer(timer, &it, &oit)) e(7);
-  if (!LEITIMER(oit, 123, 0, 456, 0)) e(8);
+  if (setitimer(timer, &it, &oit)) my_e(7);
+  if (!LEITIMER(oit, 123, 0, 456, 0)) my_e(8);
 
-  if (getitimer(timer, &oit)) e(9);
-  if (!LEITIMER(oit, 987, 0, 654, 0)) e(10);
+  if (getitimer(timer, &oit)) my_e(9);
+  if (!LEITIMER(oit, 987, 0, 654, 0)) my_e(10);
 
   FILLITIMER(it, 0, 0, 0, 0);
-  if (setitimer(timer, &it, &oit)) e(11);
-  if (!LEITIMER(oit, 987, 0, 654, 0)) e(12);
+  if (setitimer(timer, &it, &oit)) my_e(11);
+  if (!LEITIMER(oit, 987, 0, 654, 0)) my_e(12);
 
-  if (getitimer(timer, &oit)) e(13);
-  if (!EQITIMER(oit, 0, 0, 0, 0)) e(14);
+  if (getitimer(timer, &oit)) my_e(13);
+  if (!EQITIMER(oit, 0, 0, 0, 0)) my_e(14);
 }
 
 /* test negative/large values */
@@ -166,31 +169,31 @@ void test_neglarge()
   subtest = 2;
 
   FILLITIMER(it, 4, 0, 5, 0);
-  if (setitimer(timer, &it, NULL)) e(1);
+  if (setitimer(timer, &it, NULL)) my_e(1);
 
   FILLITIMER(it, 1000000000, 0, 0, 0);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(2);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(2);
 
   FILLITIMER(it, 0, 1000000, 0, 0);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(3);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(3);
 
   FILLITIMER(it, 0, 0, 0, 1000000);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(4);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(4);
 
   FILLITIMER(it, -1, 0, 0, 0);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(5);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(5);
 
   FILLITIMER(it, 0, -1, 0, 0);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(6);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(6);
 
   FILLITIMER(it, 0, 0, -1, 0);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(7);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(7);
 
   FILLITIMER(it, 0, 0, 0, -1);
-  if (!setitimer(timer, &it, NULL) || errno != EINVAL) e(8);
+  if (!setitimer(timer, &it, NULL) || errno != EINVAL) my_e(8);
 
-  if (getitimer(timer, &it)) e(9);
-  if (!LEITIMER(it, 4, 0, 5, 0)) e(10);
+  if (getitimer(timer, &it)) my_e(9);
+  if (!LEITIMER(it, 4, 0, 5, 0)) my_e(10);
 }
 
 /* setitimer with a zero timer has to set the interval to zero as well */
@@ -205,9 +208,9 @@ void test_zero()
   it.it_interval.tv_sec = 1;
   it.it_interval.tv_usec = 1;
 
-  if (setitimer(timer, &it, NULL)) e(1);
-  if (getitimer(timer, &it)) e(2);
-  if (!EQITIMER(it, 0, 0, 0, 0)) e(3);
+  if (setitimer(timer, &it, NULL)) my_e(1);
+  if (getitimer(timer, &it)) my_e(2);
+  if (!EQITIMER(it, 0, 0, 0, 0)) my_e(3);
 }
 
 /* test actual timer functioning */
@@ -217,41 +220,41 @@ void test_timer()
 
   subtest = 4;
 
-  if (signal(sigs[timer], got_alarm) == SIG_ERR) e(1);
+  if (signal(sigs[timer], got_alarm) == SIG_ERR) my_e(1);
 
   FILLITIMER(it, 0, 1, 0, 1);
 
-  if (setitimer(timer, &it, NULL)) e(2);
+  if (setitimer(timer, &it, NULL)) my_e(2);
 
   signals = 0;
   busy_wait(1);
 
   FILLITIMER(it, 0, 0, 0, 0);
-  if (setitimer(timer, &it, NULL)) e(3);
+  if (setitimer(timer, &it, NULL)) my_e(3);
 
   /* we don't know how many signals we'll actually get in practice,
    * so these checks more or less cover the extremes of the acceptable */
-  if (signals < 2) e(4);
-  if (signals > system_hz * 2) e(5);
+  if (signals < 2) my_e(4);
+  if (signals > system_hz * 2) my_e(5);
 
   /* only for REAL timer can we check against the clock */
   if (timer == ITIMER_REAL) {
 	FILLITIMER(it, 1, 0, 0, 0);
-	if (setitimer(timer, &it, NULL)) e(6);
+	if (setitimer(timer, &it, NULL)) my_e(6);
 
 	signals = 0;
 	busy_wait(1);
 
   	FILLITIMER(it, 0, 0, 0, 0);
-  	if (setitimer(timer, &it, NULL)) e(7);
+  	if (setitimer(timer, &it, NULL)) my_e(7);
 
-	if (signals != 1) e(8);
+	if (signals != 1) my_e(8);
   }
 
   signals = 0;
   busy_wait(1);
 
-  if (signals != 0) e(9);
+  if (signals != 0) my_e(9);
 }
 
 /* test itimer/alarm interaction */
@@ -263,23 +266,23 @@ void test_alarm(void) {
 
   subtest = 5;
 
-  if (signal(SIGALRM, got_alarm) == SIG_ERR) e(1);
+  if (signal(SIGALRM, got_alarm) == SIG_ERR) my_e(1);
 
   FILLITIMER(it, 3, 0, 1, 0);
-  if (setitimer(timer, &it, NULL)) e(2);
+  if (setitimer(timer, &it, NULL)) my_e(2);
 
-  if (alarm(2) != 3) e(3);
+  if (alarm(2) != 3) my_e(3);
 
-  if (getitimer(timer, &it)) e(4);
-  if (!LEITIMER(it, 2, 0, 0, 0)) e(5);
+  if (getitimer(timer, &it)) my_e(4);
+  if (!LEITIMER(it, 2, 0, 0, 0)) my_e(5);
 
   signals = 0;
   busy_wait(5);
 
-  if (signals != 1) e(6);
+  if (signals != 1) my_e(6);
 
-  if (getitimer(timer, &it)) e(7);
-  if (!EQITIMER(it, 0, 0, 0, 0)) e(8);
+  if (getitimer(timer, &it)) my_e(7);
+  if (!EQITIMER(it, 0, 0, 0, 0)) my_e(8);
 }
 
 /* test that the timer is reset on forking */
@@ -292,10 +295,10 @@ void test_fork(void) {
 
   FILLITIMER(it, 12, 34, 56, 78);
 
-  if (setitimer(timer, &it, NULL)) e(1);
+  if (setitimer(timer, &it, NULL)) my_e(1);
 
   pid = fork();
-  if (pid < 0) e(2);
+  if (pid < 0) my_e(2);
 
   if (pid == 0) {
     if (getitimer(timer, &it)) exit(5);
@@ -304,13 +307,13 @@ void test_fork(void) {
     exit(0);
   }
 
-  if (wait(&status) != pid) e(3);
-  if (!WIFEXITED(status)) e(4);
-  if (WEXITSTATUS(status) != 0) e(WEXITSTATUS(status));
+  if (wait(&status) != pid) my_e(3);
+  if (!WIFEXITED(status)) my_e(4);
+  if (WEXITSTATUS(status) != 0) my_e(WEXITSTATUS(status));
 
   FILLITIMER(it, 0, 0, 0, 0);
-  if (setitimer(timer, &it, &oit)) e(7);
-  if (!LEITIMER(oit, 12, 34, 56, 78)) e(8);
+  if (setitimer(timer, &it, &oit)) my_e(7);
+  if (!LEITIMER(oit, 12, 34, 56, 78)) my_e(8);
 }
 
 /* test if timer is carried over to exec()'ed process */
@@ -323,7 +326,7 @@ void test_exec(void) {
   subtest = 7;
 
   pid = fork();
-  if (pid < 0) e(1);
+  if (pid < 0) my_e(1);
 
   if (pid == 0) {
     FILLITIMER(it, 3, 0, 1, 0);
@@ -335,14 +338,14 @@ void test_exec(void) {
     exit(3);
   }
 
-  if (wait(&status) != pid) e(4);
+  if (wait(&status) != pid) my_e(4);
   if (WIFSIGNALED(status)) {
     /* process should have died from corresponding signal */
-    if (WTERMSIG(status) != sigs[timer]) e(5);
+    if (WTERMSIG(status) != sigs[timer]) my_e(5);
   }
   else {
-    if (WIFEXITED(status)) e(WEXITSTATUS(status));
-    else e(6);
+    if (WIFEXITED(status)) my_e(WEXITSTATUS(status));
+    else my_e(6);
   }
 }
 
@@ -377,32 +380,15 @@ int secs;
 void got_alarm(sig)
 int sig;
 {
-  if (sig != sigs[timer]) e(1001);
+  if (sig != sigs[timer]) my_e(1001);
 
   signals++;
 }
 
-void e(n)
+void my_e(n)
 int n;
 {
 
-  printf("Timer %s, subtest %d, error %d, errno %d: %s\n",
-	names[timer], subtest, n, errno, strerror(errno));
-
-  if (errct++ > MAX_ERROR) {
-	printf("Too many errors; test aborted\n");
-	exit(1);
-  }
-}
-
-void quit()
-{
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
+  printf("Timer %s, ", names[timer]);
+  e(n);
 }

@@ -15,8 +15,10 @@
 #define BLOCK_SIZE 	1000
 #define NUM_BLOCKS	1000
 
-int errct = 0;
 char buffer[BLOCK_SIZE];
+
+#define MAX_ERROR 2
+#include "common.c"
 
 _PROTOTYPE(int main, (void));
 _PROTOTYPE(void quit, (void));
@@ -25,13 +27,8 @@ int main()
 {
   int stat_loc, pipefd[2];
   register int i;
-  pipe(pipefd);
 
-  printf("Test 13 ");
-  fflush(stdout);		/* have to flush for child's benefit */
-
-  system("rm -rf DIR_13; mkdir DIR_13");
-  chdir("DIR_13");
+  start(13);
 
   pipe(pipefd);
 
@@ -56,17 +53,3 @@ int main()
   return(-1);			/* impossible */
 }
 
-void quit()
-{
-
-  chdir("..");
-  system("rm -rf DIR*");
-
-  if (errct == 0) {
-	printf("ok\n");
-	exit(0);
-  } else {
-	printf("%d errors\n", errct);
-	exit(1);
-  }
-}

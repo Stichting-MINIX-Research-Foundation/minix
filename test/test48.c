@@ -6,32 +6,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_ERRORS 3
-
-static int errct;
-
-static void quit(void)
-{
-	if (errct > 0)
-	{
-		printf("%d errors\n", errct);
-		exit(1);
-	}
-	else
-	{
-		printf("ok\n");
-		exit(0);
-	}
-}
-
-static void err(void)
-{
-	if (++errct >= MAX_ERRORS)
-	{
-		printf("aborted, too many errors\n");
-		quit();
-	}
-}
+#define MAX_ERROR 3
+#define err() e(__LINE__)
+#include "common.c"
 
 static void printstr(const char *s)
 {
@@ -583,8 +560,7 @@ int main(void)
 {
 	int use_network;
 
-	printf("Test 48 ");
-	fflush(stdout);
+	start(48);
 
 	use_network = can_use_network();
 	if (!use_network)
