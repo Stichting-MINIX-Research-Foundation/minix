@@ -1598,7 +1598,7 @@ int enable;			/* set timer if true, otherwise unset */
   	ticks = tty_ptr->tty_termios.c_cc[VTIME] * (system_hz/10);
 
  	/* Set a new timer for enabling the TTY events flags. */
-	set_timer(&tty_ptr->tty_tmr, ticks, tty_timed_out, 0);
+	set_timer(&tty_ptr->tty_tmr, ticks, tty_timed_out, tty_ptr->tty_index);
   } else {
   	/* Remove the timer from the active and expired lists. */
   	cancel_timer(&tty_ptr->tty_tmr);
