@@ -263,9 +263,9 @@ PUBLIC zone_t alloc_zone(
 {
 /* Allocate a new zone on the indicated device and return its number. */
 
-  int major, minor;
   bit_t b, bit;
   struct super_block *sp;
+  static int print_oos_msg = 1;
 
   /* Note that the routine alloc_bit() returns 1 for the lowest possible
    * zone, which corresponds to sp->s_firstdatazone.  To convert a value
@@ -285,11 +285,13 @@ PUBLIC zone_t alloc_zone(
   b = alloc_bit(sp, ZMAP, bit);
   if (b == NO_BIT) {
 	err_code = ENOSPC;
-	major = (int) (sp->s_dev >> MAJOR) & BYTE;
-	minor = (int) (sp->s_dev >> MINOR) & BYTE;
-	printf("No space on device %d/%d\n", major, minor);
+	if (print_oos_msg)
+		printf("No space on device %d/%d\n", major(sp->s_dev),
+			minor(sp->s_dev));
+	print_oos_msg = 0;	/* Don't repeat message */
 	return(NO_ZONE);
   }
+  print_oos_msg = 1;
   if (z == sp->s_firstdatazone) sp->s_zsearch = b;	/* for next time */
   return( (zone_t) (sp->s_firstdatazone - 1) + (zone_t) b);
 }

@@ -37,8 +37,9 @@ PUBLIC struct inode *alloc_inode(struct inode *parent, mode_t bits)
 
   register struct inode *rip;
   register struct super_block *sp;
-  int major, minor, inumb;
+  int inumb;
   bit_t b;
+  static int print_oos_msg = 1;
 
   sp = get_super(parent->i_dev);    /* get pointer to super_block */
   if (sp->s_rd_only) {    /* can't allocate an inode on a read only device. */
@@ -50,11 +51,13 @@ PUBLIC struct inode *alloc_inode(struct inode *parent, mode_t bits)
   b = alloc_inode_bit(sp, parent, (bits & I_TYPE) == I_DIRECTORY);
   if (b == NO_BIT) {
 	err_code = ENOSPC;
-	major = (int) (sp->s_dev >> MAJOR) & BYTE;
-	minor = (int) (sp->s_dev >> MINOR) & BYTE;
-	ext2_debug("Out of i-nodes on device %d/%d\n", major, minor);
+	if (print_oos_msg)
+		ext2_debug("Out of i-nodes on device %d/%d\n",
+			   major(sp->s_dev), minor(sp->s_dev));
+	print_oos_msg = 0;	/* Don't repeat message */
 	return(NULL);
   }
+  print_oos_msg = 1;
 
   inumb = (int) b;        /* be careful not to pass unshort as param */
 
@@ -79,7 +82,7 @@ PUBLIC struct inode *alloc_inode(struct inode *parent, mode_t bits)
 	wipe_inode(rip);
   }
 
-	return(rip);
+  return(rip);
 }
 
 

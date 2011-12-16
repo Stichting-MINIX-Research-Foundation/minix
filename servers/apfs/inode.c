@@ -245,14 +245,18 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
   register struct inode *rip;
   bit_t b;
   ino_t i_num;
+  int print_oos_msg = 1;
 
   b = alloc_bit();
   if (b == NO_BIT) {
 	err_code = ENOSPC;
-	printf("PipeFS is out of inodes\n");
+	if (print_oos_msg)
+		printf("PipeFS is out of inodes\n");
+	print_oos_msg = 0;	/* Don't repeat message */
 	return(NULL);
   }
   i_num = (ino_t) b;
+  print_oos_msg = 1;
 
 
   /* Try to acquire a slot in the inode table. */
