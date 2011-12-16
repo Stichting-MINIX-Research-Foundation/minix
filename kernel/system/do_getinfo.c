@@ -19,6 +19,9 @@
 
 #include <minix/u64.h>
 
+/*===========================================================================*
+ *			        update_idle_time			     *
+ *===========================================================================*/
 PRIVATE void update_idle_time(void)
 {
 	int i;
@@ -180,7 +183,7 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
     }
     case GET_IDLETSC: {
 	struct proc * idl;
-
+	update_idle_time();
 	idl = proc_addr(IDLE);
         length = sizeof(idl->p_cycles);
         src_vir = (vir_bytes) &idl->p_cycles;

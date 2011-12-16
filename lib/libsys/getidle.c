@@ -11,7 +11,6 @@
  *
  * Notes:
  * - This functionality can only be used by system processes.
- * - The kernel has to be compiled with CONFIG_IDLE_TSC support.
  * - Only one getidle() run is allowed per process at a time.
  *
  */
