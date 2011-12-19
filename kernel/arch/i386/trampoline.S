@@ -20,7 +20,7 @@ ENTRY(trampoline)
 	orb	$1, %al
 	mov	%eax, %cr0
 
-	ljmp	$CS_SELECTOR, $_C_LABEL(startup_ap_32)
+	ljmpl	$CS_SELECTOR, $_C_LABEL(startup_ap_32)
 
 .balign 4
 LABEL(__ap_id)
