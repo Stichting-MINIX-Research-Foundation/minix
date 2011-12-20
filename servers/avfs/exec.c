@@ -503,6 +503,9 @@ char path[PATH_MAX];		/* path to script file */
 	}
   }
 
+  if(!interp)
+  	return ENOEXEC;
+
   /* Round *stk_bytes up to the size of a pointer for alignment contraints. */
   *stk_bytes= ((*stk_bytes + PTRSIZE - 1) / PTRSIZE) * PTRSIZE;
 
