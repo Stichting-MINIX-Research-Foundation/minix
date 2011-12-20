@@ -157,6 +157,7 @@ PRIVATE ACPI_STATUS get_irq_resource(ACPI_RESOURCE *res, void *context)
 	} else if (res->Type == ACPI_RESOURCE_TYPE_EXTENDED_IRQ) {
 		ACPI_RESOURCE_EXTENDED_IRQ *irq;
 
+		irq = &res->Data.ExtendedIrq;
 		add_irq(ires->bridge, ires->tbl->Address >> 16, ires->tbl->Pin,
 				irq->Interrupts[ires->tbl->SourceIndex]);
 	}
