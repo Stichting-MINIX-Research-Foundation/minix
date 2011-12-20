@@ -199,8 +199,6 @@ PRIVATE ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 
 	for (i = 0; i < PCI_MAX_DEVICES; i++)
 		bridge->children[i] = NULL;
-	for (i = 0; i < IRQ_TABLE_ENTRIES; i++)
-		bridge->irqtable[i] = -1;
 
 	for (tbl = (ACPI_PCI_ROUTING_TABLE *)abuff.Pointer; tbl->Length;
 			tbl = (ACPI_PCI_ROUTING_TABLE *)
@@ -230,6 +228,14 @@ PRIVATE ACPI_STATUS get_pci_irq_routing(struct pci_bridge * bridge)
 	}
 
 	return AE_OK;
+}
+
+PRIVATE void bridge_init_irqtable(struct pci_bridge * bridge)
+{
+	int i;
+
+	for (i = 0; i < IRQ_TABLE_ENTRIES; i++)
+		bridge->irqtable[i] = -1;
 }
 
 PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
@@ -264,6 +270,7 @@ PRIVATE ACPI_STATUS add_pci_dev(ACPI_HANDLE handle,
 		return AE_NO_MEMORY;
 	bridge->handle = handle;
 	bridge->parent = parent_bridge;
+	bridge_init_irqtable(bridge);
 
 	status =  get_pci_irq_routing(bridge);
 	if (!(ACPI_SUCCESS(status))) {
@@ -293,6 +300,7 @@ PRIVATE ACPI_STATUS add_pci_root_dev(ACPI_HANDLE handle,
 	pci_root_bridge.primary_bus = -1; /* undefined */
 	pci_root_bridge.secondary_bus = 0; /* root bus is 0 in a single root
 					      system */
+	bridge_init_irqtable(&pci_root_bridge);
 
 	status = get_pci_irq_routing(&pci_root_bridge);
 	if (!ACPI_SUCCESS(status))
