@@ -6,6 +6,7 @@
 
 /* VFS/FS request fields */
 #define REQ_ACTIME		m9_l2
+#define REQ_ACNSEC		m9_l4
 #define REQ_COUNT		m9_l2
 #define REQ_DEV			m9_l5
 #define REQ_DEV2		m9_l1
@@ -19,6 +20,7 @@
 #define REQ_MEM_SIZE		m9_l5
 #define REQ_MODE		m9_s3
 #define REQ_MODTIME		m9_l3
+#define REQ_MODNSEC		m9_l5
 #define REQ_NBYTES		m9_l5
 #define REQ_PATH_LEN		m9_s2
 #define REQ_PATH_SIZE		m9_l5

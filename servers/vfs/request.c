@@ -17,7 +17,7 @@
 #include <minix/endpoint.h>
 #include <minix/u64.h>
 #include <unistd.h>
-#include <minix/vfsif.h>
+#include <time.h>
 #include "fproc.h"
 #include "vmnt.h"
 #include "vnode.h"
@@ -1038,19 +1038,21 @@ endpoint_t fs_e;
 /*===========================================================================*
  *				req_utime	      			     *
  *===========================================================================*/
-int req_utime(fs_e, inode_nr, actime, modtime)
-endpoint_t fs_e;
-ino_t inode_nr;
-time_t actime;
-time_t modtime;
+int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actimespec,
+	struct timespec * modtimespec)
 {
   message m;
+
+  assert(actimespec != NULL);
+  assert(modtimespec != NULL);
 
   /* Fill in request message */
   m.m_type = REQ_UTIME;
   m.REQ_INODE_NR = inode_nr;
-  m.REQ_ACTIME = actime;
-  m.REQ_MODTIME = modtime;
+  m.REQ_ACTIME = actimespec->tv_sec;
+  m.REQ_MODTIME = modtimespec->tv_sec;
+  m.REQ_ACNSEC = actimespec->tv_nsec;
+  m.REQ_MODNSEC = modtimespec->tv_nsec;
 
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);

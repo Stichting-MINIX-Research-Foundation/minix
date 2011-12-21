@@ -7,6 +7,7 @@
 #include "fs.h"
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <time.h>
 #include "file.h"
 #include "fproc.h"
 #include "path.h"
@@ -22,7 +23,7 @@ int do_utime()
 {
 /* Perform the utime(name, timep) system call. */
   int r;
-  time_t actime, modtime, newactime, newmodtime;
+  struct timespec actim, modtim, newactim, newmodtim;
   struct vnode *vp;
   struct vmnt *vmp;
   char fullpath[PATH_MAX];
@@ -32,8 +33,9 @@ int do_utime()
 
   vname = (vir_bytes) job_m_in.utime_file;
   vname_length = (size_t) job_m_in.utime_length;
-  actime = job_m_in.utime_actime;
-  modtime = job_m_in.utime_modtime;
+  actim.tv_sec = job_m_in.utime_actime;
+  modtim.tv_sec = job_m_in.utime_modtime;
+  actim.tv_nsec = modtim.tv_nsec = 0;
 
   /* Adjust for case of 'timep' being NULL;
    * utime_strlen then holds the actual size: strlen(name)+1 */
@@ -48,7 +50,7 @@ int do_utime()
   if (fetch_name(vname, len, fullpath) != OK) return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
-  /* Only the owner of a file or the super user can change its name. */
+  /* Only the owner of a file or the super user can change timestamps. */
   r = OK;
   if (vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) r = EPERM;
   if (vname_length == 0 && r != OK) r = forbidden(fp, vp, W_BIT);
@@ -56,12 +58,12 @@ int do_utime()
   if (r == OK) {
 	/* Issue request */
 	if (vname_length == 0) {
-		newactime = newmodtime = clock_time();
+		newactim = newmodtim = clock_timespec();
 	} else {
-		newactime = actime;
-		newmodtime = modtime;
+		newactim = actim;
+		newmodtim = modtim;
 	}
-	r = req_utime(vp->v_fs_e, vp->v_inode_nr, newactime, newmodtime);
+	r = req_utime(vp->v_fs_e, vp->v_inode_nr, &newactim, &newmodtim);
   }
 
   unlock_vnode(vp);
