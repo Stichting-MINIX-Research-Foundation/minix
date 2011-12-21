@@ -158,11 +158,39 @@ int do_utime()
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  attr.a_mask = SFFS_ATTR_ATIME | SFFS_ATTR_MTIME;
-  attr.a_atime.tv_sec = m_in.REQ_ACTIME;
-  attr.a_atime.tv_nsec = 0;
-  attr.a_mtime.tv_sec = m_in.REQ_MODTIME;
-  attr.a_mtime.tv_nsec = 0;
+  attr.a_mask = 0;
 
+  switch(m_in.REQ_ACNSEC) {
+  case UTIME_OMIT: /* do not touch */
+	break;
+  case UTIME_NOW:
+	/* XXX VFS should have time() into ACTIME, for compat; we trust it! */
+	m_in.REQ_ACNSEC = 0;
+	/*FALLTHROUGH*/
+  default:
+	/* cases m_in.REQ_ACNSEC < 0 || m_in.REQ_ACNSEC >= 1E9
+	 * are caught by VFS to cooperate with old instances of EXT2
+	 */
+	attr.a_atime.tv_sec = m_in.REQ_ACTIME;
+	attr.a_atime.tv_nsec = m_in.REQ_ACNSEC;
+	attr.a_mask |= SFFS_ATTR_ATIME;
+	break;
+  }
+  switch(m_in.REQ_MODNSEC) {
+  case UTIME_OMIT: /* do not touch */
+	break;
+  case UTIME_NOW:
+	/* XXX VFS should have time() into MODTIME, for compat; we trust it! */
+	m_in.REQ_MODNSEC = 0;
+	/*FALLTHROUGH*/
+  default:
+	/* cases m_in.REQ_MODNSEC < 0 || m_in.REQ_MODNSEC >= 1E9
+	 * are caught by VFS to cooperate with old instances
+	 */
+	attr.a_mtime.tv_sec = m_in.REQ_MODTIME;
+	attr.a_mtime.tv_nsec = m_in.REQ_MODNSEC;
+	attr.a_mask |= SFFS_ATTR_MTIME;
+	break;
+  }
   return sffs_table->t_setattr(path, &attr);
 }

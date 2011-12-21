@@ -12,6 +12,7 @@
 /* Structs used in prototypes must be declared as such first. */
 struct filp;
 struct fproc;
+struct timespec;
 struct vmnt;
 struct vnode;
 struct lookup;
@@ -261,7 +262,8 @@ int req_stat(endpoint_t fs_e, ino_t inode_nr, endpoint_t proc_e, vir_bytes buf);
 int req_sync(endpoint_t fs_e);
 int req_unlink(endpoint_t fs_e, ino_t inode_nr, char *lastc);
 int req_unmount(endpoint_t fs_e);
-int req_utime(endpoint_t fs_e, ino_t inode_nr, time_t actime, time_t modtime);
+int req_utime(endpoint_t fs_e, ino_t inode_nr, struct timespec * actv,
+	struct timespec * modtv);
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
 /* stadir.c */
@@ -291,7 +293,7 @@ int tll_unlock(tll_t *tllp);
 void tll_upgrade(tll_t *tllp);
 
 /* utility.c */
-time_t clock_time(void);
+struct timespec clock_timespec(void);
 unsigned conv2(int norm, int w);
 long conv4(int norm, long x);
 int copy_name(size_t len, char *dest);
