@@ -29,6 +29,7 @@
 #include "file.h"
 #include "dmap.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "vmnt.h"
 #include "vnode.h"
 #include "job.h"
@@ -348,15 +349,15 @@ PRIVATE void *do_pending_pipe(void *arg)
 
   lock_proc(fp, 1 /* force lock */);
 
-  f = fp->fp_blocked.bfilp;
+  f = scratch(fp).file.filp;
   assert(f != NULL);
-  fp->fp_blocked.bfilp = NULL;
+  scratch(fp).file.filp = NULL;
 
   locktype = (call_nr == READ) ? VNODE_READ : VNODE_WRITE;
   op = (call_nr == READ) ? READING : WRITING;
   lock_filp(f, locktype);
 
-  r = rw_pipe(op, who_e, f, fp->fp_buffer, fp->fp_nbytes);
+  r = rw_pipe(op, who_e, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes);
 
   if (r != SUSPEND)  /* Do we have results to report? */
 	reply(who_e, r);
@@ -821,14 +822,14 @@ PRIVATE void service_pm_postponed(void)
 	/* Copy parameters first. m_in gets overwritten when creating core
 	 * file.
 	 */
-	m_out.m_type = PM_CORE_REPLY;
-	m_out.PM_PROC = m_in.PM_PROC;
-	m_out.PM_TRACED_PROC = m_in.PM_TRACED_PROC;
 
 	r = pm_dumpcore(m_in.PM_PROC, m_in.PM_TERM_SIG,
 			(vir_bytes) m_in.PM_PATH);
 
 	/* Reply status to PM */
+	m_out.m_type = PM_CORE_REPLY;
+	m_out.PM_PROC = m_in.PM_PROC;
+	m_out.PM_TRACED_PROC = m_in.PM_TRACED_PROC;
 	m_out.PM_STATUS = r;
 
 	break;
@@ -961,9 +962,9 @@ struct fproc *rfp;
   fp = rfp;
   blocked_on = rfp->fp_blocked_on;
   m_in.m_type = rfp->fp_block_callnr;
-  m_in.fd = rfp->fp_blocked.fd_nr;
-  m_in.buffer = rfp->fp_buffer;
-  m_in.nbytes = rfp->fp_nbytes;
+  m_in.fd = scratch(fp).file.fd_nr;
+  m_in.buffer = scratch(fp).io.io_buffer;
+  m_in.nbytes = scratch(fp).io.io_nbytes;
 
   rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;	/* no longer blocked */
   rfp->fp_flags &= ~FP_REVIVED;

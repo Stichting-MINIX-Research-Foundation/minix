@@ -196,8 +196,7 @@ _PROTOTYPE( int pipe_check, (struct vnode *vp, int rw_flag,
 _PROTOTYPE( void release, (struct vnode *vp, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
-_PROTOTYPE( void pipe_suspend, (int rw_flag, struct filp *rfilp,
-				 char *buf, size_t size)		);
+_PROTOTYPE( void pipe_suspend, (struct filp *rfilp, char *buf, size_t size));
 _PROTOTYPE( void unsuspend_by_endpt, (endpoint_t)			);
 _PROTOTYPE( void wait_for, (endpoint_t)					);
 #if DO_SANITYCHECKS

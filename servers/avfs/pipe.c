@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "dmap.h"
 #include "param.h"
 #include "select.h"
@@ -284,9 +285,6 @@ PUBLIC void suspend(int why)
  */
 
 #if DO_SANITYCHECKS
-  if (why == FP_BLOCKED_ON_PIPE)
-	panic("suspend: called for FP_BLOCKED_ON_PIPE");
-
   if(fp_is_blocked(fp))
 	panic("suspend: called for suspended process");
 
@@ -294,15 +292,9 @@ PUBLIC void suspend(int why)
 	panic("suspend: called for FP_BLOCKED_ON_NONE");
 #endif
 
-  if (why == FP_BLOCKED_ON_POPEN)
+  if (why == FP_BLOCKED_ON_POPEN || why == FP_BLOCKED_ON_PIPE)
 	/* #procs susp'ed on pipe*/
 	susp_count++;
-
-  if (why == FP_BLOCKED_ON_POPEN || why == FP_BLOCKED_ON_DOPEN ||
-	why == FP_BLOCKED_ON_LOCK || why == FP_BLOCKED_ON_OTHER)
-	fp->fp_blocked.fd_nr = m_in.fd;
-  else
-	fp->fp_blocked.fd_nr = 0;
 
   fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
@@ -310,13 +302,6 @@ PUBLIC void suspend(int why)
   fp->fp_flags &= ~FP_SUSP_REOPEN;		/* Clear this flag. The caller
 						 * can set it when needed.
 						 */
-  if (why == FP_BLOCKED_ON_LOCK) {
-	fp->fp_buffer = (char *) m_in.name1;	/* third arg to fcntl() */
-	fp->fp_nbytes = m_in.request;		/* second arg to fcntl() */
-  } else {
-	fp->fp_buffer = m_in.buffer;		/* for reads and writes */
-	fp->fp_nbytes = m_in.nbytes;
-  }
 }
 
 /*===========================================================================*
@@ -334,30 +319,23 @@ PUBLIC void wait_for(endpoint_t who)
 /*===========================================================================*
  *				pipe_suspend					     *
  *===========================================================================*/
-PUBLIC void pipe_suspend(rw_flag, filp, buf, size)
-int rw_flag;
+PUBLIC void pipe_suspend(filp, buf, size)
 struct filp *filp;
 char *buf;
 size_t size;
 {
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
- * (Actually they are not used when a process is waiting for an I/O device,
- * but they are needed for pipes, and it is not worth making the distinction.)
- * The SUSPEND pseudo error should be returned after calling suspend().
  */
 #if DO_SANITYCHECKS
   if(fp_is_blocked(fp))
 	panic("pipe_suspend: called for suspended process");
 #endif
 
-  susp_count++;					/* #procs susp'ed on pipe*/
-  fp->fp_blocked_on = FP_BLOCKED_ON_PIPE;
-  assert(!GRANT_VALID(fp->fp_grant));
-  fp->fp_blocked.bfilp = filp;
-  fp->fp_block_callnr = (rw_flag == READING) ? READ : WRITE;
-  fp->fp_buffer = buf;
-  fp->fp_nbytes = size;
+  scratch(fp).file.filp = filp;
+  scratch(fp).io.io_buffer = buf;
+  scratch(fp).io.io_nbytes = size;
+  suspend(FP_BLOCKED_ON_PIPE);
 }
 
 
@@ -430,16 +408,18 @@ int count;			/* max number of processes to release */
 		    rp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_LOCK ||
 		    rp->fp_blocked_on == FP_BLOCKED_ON_OTHER) {
-			if (rp->fp_filp[rp->fp_blocked.fd_nr] == NULL)
+			if (!FD_ISSET(scratch(rp).file.fd_nr,
+							&rp->fp_filp_inuse))
 				continue;
-			if (rp->fp_filp[rp->fp_blocked.fd_nr]->filp_vno != vp)
+			if (rp->fp_filp[scratch(rp).file.fd_nr]->filp_vno != vp)
 				continue;
-		} else {
-			if (rp->fp_blocked.bfilp == NULL)
+		} else if (rp->fp_blocked_on == FP_BLOCKED_ON_PIPE) {
+			if (scratch(rp).file.filp == NULL)
 				continue;
-			if (rp->fp_blocked.bfilp->filp_vno != vp)
+			if (scratch(rp).file.filp->filp_vno != vp)
 				continue;
-		}
+		} else
+			continue;
 
 		/* We found the vnode. Revive process. */
 		revive(rp->fp_endpoint, 0);
@@ -478,14 +458,14 @@ int returned;			/* if hanging on task, how many bytes read */
    * the proc must be restarted so it can try again.
    */
   blocked_on = rfp->fp_blocked_on;
-  fd_nr = rfp->fp_blocked.fd_nr;
+  fd_nr = scratch(rfp).file.fd_nr;
   if (blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_LOCK) {
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_flags |= FP_REVIVED;
 	reviving++;		/* process was waiting on pipe or lock */
   } else if (blocked_on == FP_BLOCKED_ON_DOPEN) {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	rfp->fp_blocked.fd_nr = 0;
+	scratch(rfp).file.fd_nr = 0;
 	if (returned < 0) {
 		fil_ptr = rfp->fp_filp[fd_nr];
 		lock_filp(fil_ptr, VNODE_OPCL);
@@ -505,7 +485,7 @@ int returned;			/* if hanging on task, how many bytes read */
 	}
   } else {
 	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
-	rfp->fp_blocked.fd_nr = 0;
+	scratch(rfp).file.fd_nr = 0;
 	if (blocked_on == FP_BLOCKED_ON_POPEN) {
 		/* process blocked in open or create */
 		reply(proc_nr_e, fd_nr);
@@ -515,7 +495,7 @@ int returned;			/* if hanging on task, how many bytes read */
 		/* Revive a process suspended on TTY or other device.
 		 * Pretend it wants only what there is.
 		 */
-		rfp->fp_nbytes = returned;
+		scratch(rfp).io.io_nbytes = returned;
 		/* If a grant has been issued by FS for this I/O, revoke
 		 * it again now that I/O is done.
 		 */
@@ -592,7 +572,7 @@ int proc_nr_e;
 			break;
 		}
 
-		fild = rfp->fp_blocked.fd_nr;
+		fild = scratch(rfp).file.fd_nr;
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic("file descriptor out-of-range");
 		f = rfp->fp_filp[fild];

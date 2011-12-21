@@ -33,6 +33,7 @@ EXTERN message m_out;		/* the output message used for reply */
 #endif
 # define call_nr	(m_in.m_type)
 # define super_user	(fp->fp_effuid == SU_UID ? 1 : 0)
+# define scratch(p)		(scratchpad[((int) ((p) - fproc))])
 EXTERN struct worker_thread *self;
 EXTERN endpoint_t receive_from;/* endpoint with pending reply */
 EXTERN int force_sync;		/* toggle forced synchronous communication */

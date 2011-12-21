@@ -32,6 +32,7 @@
 #include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -878,7 +879,8 @@ PUBLIC int clone_opcl(
                 }
 
                 /* Drop old node and use the new values */
-                vp = fp->fp_filp[m_in.fd]->filp_vno;
+                assert(FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse));
+                vp = fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno;
 
 		unlock_vnode(vp);
                 put_vnode(vp);
@@ -896,7 +898,7 @@ PUBLIC int clone_opcl(
                 vp->v_sdev = dev;
                 vp->v_fs_count = 1;
                 vp->v_ref_count = 1;
-		fp->fp_filp[m_in.fd]->filp_vno = vp;
+		fp->fp_filp[scratch(fp).file.fd_nr]->filp_vno = vp;
 	}
 	dev_mess.REP_STATUS = OK;
   }
@@ -983,9 +985,9 @@ PUBLIC void cdev_up(int maj)
 	if(rfp->fp_pid == PID_FREE) continue;
 	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN) continue;
 
+	fd_nr = scratch(rfp).file.fd_nr;
 	printf("VFS: dev_up: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
-		rfp->fp_blocked.fd_nr);
-	fd_nr = rfp->fp_blocked.fd_nr;
+		fd_nr);
 	rfilp = rfp->fp_filp[fd_nr];
 	vp = rfilp->filp_vno;
 	if (!vp) panic("VFS: restart_reopen: no vp");
@@ -1091,7 +1093,7 @@ int maj;
 	if (rfp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
 	    !(rfp->fp_flags & FP_SUSP_REOPEN)) continue;
 
-	fd_nr =	rfp->fp_blocked.fd_nr;
+	fd_nr =	scratch(rfp).file.fd_nr;
 	printf("VFS: restart_reopen: process in FP_BLOCKED_ON_DOPEN fd=%d\n",
 		fd_nr);
 	rfilp = rfp->fp_filp[fd_nr];

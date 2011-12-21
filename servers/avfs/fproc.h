@@ -25,14 +25,9 @@ EXTERN struct fproc {
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
 
   dev_t fp_tty;			/* major/minor of controlling tty */
+
   int fp_blocked_on;		/* what is it blocked on */
   int fp_block_callnr;		/* blocked call if rd/wr can't finish */
-  union blocked {
-	int fd_nr;		/* place to save fd if rd/wr can't finish */
-	struct filp *bfilp;	/* place to save filp if rd/wr can't finish */
-  } fp_blocked;
-  char *fp_buffer;		/* place to save buffer if rd/wr can't finish*/
-  int  fp_nbytes;		/* place to save bytes if rd/wr can't finish */
   int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
   endpoint_t fp_task;		/* which task is proc suspended on */
   endpoint_t fp_ioproc;		/* proc no. in suspended-on i/o message */
@@ -46,6 +41,7 @@ EXTERN struct fproc {
   int fp_ngroups;		/* number of supplemental groups */
   gid_t fp_sgroups[NGROUPS_MAX];/* supplemental groups */
   mode_t fp_umask;		/* mask set by umask system call */
+
   message *fp_sendrec;		/* request/reply to/from FS/driver */
   mutex_t fp_lock;		/* mutex to lock fproc object */
   struct job fp_job;		/* pending job */

@@ -17,6 +17,7 @@
 #include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "param.h"
 #include <dirent.h>
 #include <assert.h>
@@ -78,18 +79,24 @@ int rw_flag;			/* READING or WRITING */
   tll_access_t locktype;
   int r;
 
+  scratch(fp).file.fd_nr = m_in.fd;
+  scratch(fp).io.io_buffer = m_in.buffer;
+  scratch(fp).io.io_nbytes = (size_t) m_in.nbytes;
+
   locktype = (rw_flag == READING) ? VNODE_READ : VNODE_WRITE;
-  if ((f = get_filp(m_in.fd, locktype)) == NULL) return(err_code);
+  if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
+	return(err_code);
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
 	unlock_filp(f);
 	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
-  if (m_in.nbytes == 0) {
+  if (scratch(fp).io.io_nbytes == 0) {
 	unlock_filp(f);
 	return(0);	/* so char special files need not check for 0*/
   }
 
-  r = read_write(rw_flag, f, m_in.buffer, m_in.nbytes, who_e);
+  r = read_write(rw_flag, f, scratch(fp).io.io_buffer, scratch(fp).io.io_nbytes,
+		 who_e);
 
   unlock_filp(f);
   return(r);
@@ -260,7 +267,7 @@ size_t req_size;
 
   r = pipe_check(vp, rw_flag, oflags, req_size, position, 0);
   if (r <= 0) {
-	if (r == SUSPEND) pipe_suspend(rw_flag, f, buf, req_size);
+	if (r == SUSPEND) pipe_suspend(f, buf, req_size);
 	return(r);
   }
 
@@ -328,7 +335,7 @@ size_t req_size;
 			 * non-atomic
 			 */
 			fp->fp_cum_io_partial = cum_io;
-			pipe_suspend(rw_flag, f, buf, req_size);
+			pipe_suspend(f, buf, req_size);
 			return(SUSPEND);
 		}
 	}

@@ -10,6 +10,7 @@
 #include "file.h"
 #include "fproc.h"
 #include "lock.h"
+#include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
 

@@ -33,6 +33,7 @@
 #include <sys/svrctl.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -157,9 +158,14 @@ PUBLIC int do_fcntl()
   int new_fd, fl, r = OK;
   tll_access_t locktype;
 
+  scratch(fp).file.fd_nr = m_in.fd;
+  scratch(fp).io.io_buffer = m_in.buffer;
+  scratch(fp).io.io_nbytes = m_in.nbytes;	/* a.k.a. m_in.request */
+
   /* Is the file descriptor valid? */
   locktype = (m_in.request == F_FREESP) ? VNODE_WRITE : VNODE_READ;
-  if ((f = get_filp(m_in.fd, locktype)) == NULL) return(err_code);
+  if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
+	return(err_code);
 
   switch (m_in.request) {
     case F_DUPFD:
@@ -175,15 +181,17 @@ PUBLIC int do_fcntl()
 
     case F_GETFD:
 	/* Get close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
-	r = FD_ISSET(m_in.fd, &fp->fp_cloexec_set) ? FD_CLOEXEC : 0;
+	r = 0;
+	if (FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set))
+		r = FD_CLOEXEC;
 	break;
 
     case F_SETFD:
 	/* Set close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
 	if(m_in.addr & FD_CLOEXEC)
-		FD_SET(m_in.fd, &fp->fp_cloexec_set);
+		FD_SET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
 	else
-		FD_CLR(m_in.fd, &fp->fp_cloexec_set);
+		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
 	break;
 
     case F_GETFL:
@@ -207,9 +215,7 @@ PUBLIC int do_fcntl()
 
     case F_FREESP:
      {
-	/* Free a section of a file. Preparation is done here, actual freeing
-	 * in freesp_inode().
-	 */
+	/* Free a section of a file */
 	off_t start, end;
 	struct flock flock_arg;
 	signed long offset;

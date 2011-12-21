@@ -21,6 +21,7 @@
 #include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "dmap.h"
 #include "lock.h"
 #include "param.h"
@@ -99,7 +100,7 @@ PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   if (!bits) return(EINVAL);
 
   /* See if file descriptor and filp slots are available. */
-  if ((r = get_fd(0, bits, &m_in.fd, &filp)) != OK) return(r);
+  if ((r = get_fd(0, bits, &(scratch(fp).file.fd_nr), &filp)) != OK) return(r);
 
   lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
 
@@ -129,8 +130,8 @@ PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   }
 
   /* Claim the file descriptor and filp slot and fill them in. */
-  fp->fp_filp[m_in.fd] = filp;
-  FD_SET(m_in.fd, &fp->fp_filp_inuse);
+  fp->fp_filp[scratch(fp).file.fd_nr] = filp;
+  FD_SET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
   filp->filp_count = 1;
   filp->filp_vno = vp;
   filp->filp_flags = oflags;
@@ -242,7 +243,7 @@ PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 				filp->filp_count = 0; /* don't find self */
 				if ((filp2 = find_filp(vp, b)) != NULL) {
 					/* Co-reader or writer found. Use it.*/
-					fp->fp_filp[m_in.fd] = filp2;
+					fp->fp_filp[scratch(fp).file.fd_nr] = filp2;
 					filp2->filp_count++;
 					filp2->filp_vno = vp;
 					filp2->filp_flags = oflags;
@@ -271,14 +272,14 @@ PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   /* If error, release inode. */
   if (r != OK) {
 	if (r != SUSPEND) {
-		fp->fp_filp[m_in.fd] = NULL;
-		FD_CLR(m_in.fd, &fp->fp_filp_inuse);
+		fp->fp_filp[scratch(fp).file.fd_nr] = NULL;
+		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
 		filp->filp_count = 0;
 		filp->filp_vno = NULL;
 		put_vnode(vp);
 	}
   } else {
-	r = m_in.fd;
+	r = scratch(fp).file.fd_nr;
   }
 
   return(r);
