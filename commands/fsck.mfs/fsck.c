@@ -58,6 +58,8 @@
 #include <tools.h>
 #include <dirent.h>
 
+#include "exitvalues.h"
+
 #undef N_DATA
 
 unsigned int fs_version = 2, block_size = 0;
@@ -238,7 +240,7 @@ void fatal(s)
 char *s;
 {
   printf("%s\nfatal\n", s);
-  exit(-1);
+  exit(FSCK_EXIT_CHECK_FAILED);
 }
 
 /* Test for end of line. */
@@ -267,7 +269,7 @@ char *question;
 	return(1);
   }
   fflush(stdout);
-  if ((c = answerchar = getchar()) == 'q' || c == 'Q') exit(1);
+  if ((c = answerchar = getchar()) == 'q' || c == 'Q') exit(FSCK_EXIT_CHECK_FAILED);
   if(c == 'A') { automatic = 1; c = 'y'; }
   while (!eoln(c)) c = getchar();
   yes = !(answerchar == 'n' || answerchar == 'N');
@@ -551,7 +553,7 @@ void lsuper()
 	if(sb.s_flags & MFSFLAG_CLEAN) printf("CLEAN "); else printf("DIRTY ");
 	printf("\n");
   } while (yes("Do you want to try again"));
-  if (repair) exit(0);
+  if (repair) exit(FSCK_EXIT_OK);
 }
 
 /* Get the super block from either disk or user.  Do some initial checks. */
@@ -1589,6 +1591,7 @@ char *f, **clist, **ilist, **zlist;
 
   /* If we were told to repair the FS, and the user never stopped us from
    * doing it, and the FS wasn't marked clean, we can mark the FS as clean.
+   * If we were stopped from repairing, tell user about it.
    */
   if(repair && !(sb.s_flags & MFSFLAG_CLEAN)) {
   	if(notrepaired) {
@@ -1609,13 +1612,14 @@ int argc;
 char **argv;
 {
   register char **clist = 0, **ilist = 0, **zlist = 0;
+  int badflag = 0;
 
   register devgiven = 0;
   register char *arg;
 
   if ((1 << BITSHIFT) != 8 * sizeof(bitchunk_t)) {
 	printf("Fsck was compiled with the wrong BITSHIFT!\n");
-	exit(1);
+	exit(FSCK_EXIT_CHECK_FAILED);
   }
 
   sync();
@@ -1641,6 +1645,7 @@ char **argv;
 		    case 'f':	break;
 		    default:
 			printf("%s: unknown flag '%s'\n", prog, arg);
+			badflag = 1;
 		}
 	else {
 		chkdev(arg, clist, ilist, zlist);
@@ -1649,9 +1654,9 @@ char **argv;
 		zlist = 0;
 		devgiven = 1;
 	}
-  if (!devgiven) {
+  if (!devgiven || badflag) {
 	printf("Usage: fsck [-dyfpacilrsz] file\n");
-	exit(1);
+	exit(FSCK_EXIT_USAGE);
   }
   return(0);
 }

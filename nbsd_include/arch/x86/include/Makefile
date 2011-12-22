@@ -5,6 +5,7 @@ INCSDIR=/usr/include/x86
 INCS=	float.h \
 	ieee.h \
 	ieeefp.h \
-	math.h 
+	math.h 	\
+	mutex.h
 
 .include <bsd.kinc.mk>

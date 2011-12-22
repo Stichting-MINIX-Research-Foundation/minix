@@ -381,36 +381,20 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
 block_t sizeup(device)
 char *device;
 {
-  int fd;
-  struct partition entry;
+  u64_t bytes, resize;
   block_t d;
-  struct stat st;
-  unsigned int rem;
-  u64_t resize;
+  u32_t rem;
 
-
-  if ((fd = open(device, O_RDONLY)) == -1) {
-       if (errno != ENOENT)
-               perror("sizeup open");
+  if(minix_sizeup(device, &bytes) < 0) {
+       perror("sizeup");
        return 0;
   }
-  if (ioctl(fd, DIOCGETP, &entry) == -1) {
-       perror("sizeup ioctl");
-       if(fstat(fd, &st) < 0) {
-               perror("fstat");
-               entry.size = cvu64(0);
-       } else {
-               fprintf(stderr, "used fstat instead\n");
-               entry.size = cvu64(st.st_size);
-       }
-  }
 
-  close(fd);
-  d = div64u(entry.size, block_size);
-  rem = rem64u(entry.size, block_size);
+  d = div64u(bytes, block_size);
+  rem = rem64u(bytes, block_size);
 
   resize = add64u(mul64u(d, block_size), rem);
-  if(cmp64(resize, entry.size) != 0) {
+  if(cmp64(resize, bytes) != 0) {
 	d = ULONG_MAX;
 	fprintf(stderr, "mkfs: truncating FS at %lu blocks\n", d);
   }

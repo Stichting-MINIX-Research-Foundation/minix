@@ -1,4 +1,11 @@
-common/lib/libprop      src/common/lib/libprop
+common/lib/libprop		src/common/lib/libprop
+nbsd_include/ufs	src/sys/ufs
+sbin/newfs_ext2fs	src/sbin/newfs_ext2fs
+sbin/fsck_ext2fs	src/sbin/fsck_ext2fs
+lib/libprop		src/lib/libprop
+common/include/arch/x86		src/sys/arch/x86/include
+common/include/arch/i386	src/sys/arch/i386/include
+common/include		src/common/include
 common/lib/libc		src/common/lib/libc
 lib/nbsd_libc		src/lib/libc
 lib/nbsd_libm		src/lib/libm
@@ -10,6 +17,7 @@ common/lib/libutil	src/common/lib/libutil
 lib/libbz2		src/lib/libbz2
 nbsd_include		src/include
 bin/mkdir		src/bin/mkdir
+usr.sbin/fsck		src/usr.sbin/fsck
 usr.bin/chpass		src/usr.bin/chpass
 usr.bin/m4		src/usr.bin/m4
 usr.bin/indent		src/usr.bin/indent

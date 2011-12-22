@@ -66,6 +66,9 @@
 #define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif
 
+#define DEV_BSHIFT      9               /* log2(DEV_BSIZE) */
+#define DEV_BSIZE       (1 << DEV_BSHIFT)
+
 /*
  * Mach derived conversion macros
  */

@@ -61,14 +61,17 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 		return (-1);
 	}
 
+#ifndef __minix
 	rawpart = getrawpartition();
 	if (rawpart < 0)
 		return (-1);	/* sysctl(3) in getrawpartition sets errno */
+#endif
 
 	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
 		return (f);
 
+#ifndef __minix
 	snprintf(buf, buflen, "%s%c", path, 'a' + rawpart);
 	f = ofn(buf, flags, 0);
 	if (f != -1 || errno != ENOENT)
@@ -85,6 +88,7 @@ __opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked,
 	snprintf(buf, buflen, "%s%s%s%c", _PATH_DEV, iscooked ? "" : "r", path,
 	    'a' + rawpart);
 	f = ofn(buf, flags, 0);
+#endif
 	return (f);
 }
 

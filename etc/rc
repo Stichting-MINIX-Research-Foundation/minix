@@ -114,8 +114,10 @@ start)
 
     # options for fsck. default is -r, which prompts the user for repairs.
     fsckopts="`sysenv fsckopts`"
-    if [ ! "$fsckopts" ]
-    then	fsckopts=-r
+    optname=fsckopts
+    fsckopts=-p
+    if sysenv $optname >/dev/null
+    then       fsckopts="`sysenv $optname`"
     fi
 
     if [ "`sysenv debug_fkeys`" != 0 ]
@@ -160,7 +162,8 @@ start)
 		read <$FSTAB fstabline
 		if [ "$fstabline" = "# Poor man's File System Table." ]
 		then	mountfstab_poorman	# Old minix /etc/fstab
-		else	mountfstab $fflag -o"$fsckopts" $FSTAB	
+		else	fsck -x / $fflag $fsckopts
+			mountfstab $FSTAB
 		fi
     fi
 

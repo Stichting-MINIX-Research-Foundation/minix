@@ -60,6 +60,7 @@ elf-libraries: includes
 commands: includes libraries
 	$(MAKE) -C commands all
 	$(MAKE) -C bin all
+	$(MAKE) -C sbin all
 	$(MAKE) -C usr.bin all
 	$(MAKE) -C libexec all
 	$(MAKE) -C usr.sbin all
@@ -68,6 +69,7 @@ dep-all:
 	$(MAKE) CC=cc -C boot dependall
 	$(MAKE) -C commands dependall
 	$(MAKE) -C bin dependall
+	$(MAKE) -C sbin dependall
 	$(MAKE) -C usr.bin dependall
 	$(MAKE) -C libexec dependall
 	$(MAKE) -C usr.sbin dependall
@@ -85,6 +87,7 @@ all:
 	$(MAKE) CC=cc -C boot all
 	$(MAKE) -C commands all
 	$(MAKE) -C bin all
+	$(MAKE) -C sbin all
 	$(MAKE) -C usr.bin all
 	$(MAKE) -C libexec all
 	$(MAKE) -C usr.sbin all
@@ -96,6 +99,7 @@ install:
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
 	$(MAKE) -C bin install
+	$(MAKE) -C sbin install
 	$(MAKE) -C usr.bin install
 	$(MAKE) -C usr.sbin install
 	$(MAKE) -C servers install
@@ -106,6 +110,7 @@ clean: mkfiles
 	$(MAKE) -C boot clean
 	$(MAKE) -C commands clean
 	$(MAKE) -C bin clean
+	$(MAKE) -C sbin clean
 	$(MAKE) -C usr.bin clean
 	$(MAKE) -C libexec clean
 	$(MAKE) -C usr.sbin clean
@@ -118,6 +123,7 @@ cleandepend: mkfiles
 	$(MAKE) -C boot cleandepend
 	$(MAKE) -C commands cleandepend
 	$(MAKE) -C bin cleandepend
+	$(MAKE) -C sbin cleandepend
 	$(MAKE) -C usr.bin cleandepend
 	$(MAKE) -C libexec cleandepend
 	$(MAKE) -C usr.sbin cleandepend

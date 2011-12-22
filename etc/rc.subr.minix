@@ -1,21 +1,6 @@
 
 mountfstab()
 {
-	fsck_opts=""
-	fflag="-p"
-
-	while getopts "fo:" opt
-	do	case $opt
-		in	f)	fflag="-f"
-				;;
-			o)	fsck_opts="$OPTARG"
-				;;
-			*)	echo "mountfstab: odd"
-				return 1
-				;;
-		esac
-	done
-
 	shift `expr $OPTIND - 1`
 
 	fstabfile="$1"
@@ -37,22 +22,12 @@ mountfstab()
 		# This line's parameters
 		dev="$1"; mp="$2"; fstype="$3"
 
-		# Don't fsck / as it's already mounted
+		# Don't mount / as it's already mounted
 		if [ "$mp" = "/" ]; then continue; fi
 
 		# Sanity checks
 		if [ ! -b $dev ]; then	echo "$dev missing"; continue; fi
 		if [ ! -d $mp ]; then echo "$mp missing"; continue; fi
-
-		# Do fsck if necessary or requested
-		if [ -n "$fflag" ]
-		then	fsck.$fstype $fflag $fsck_opts $dev
-		fi
-
-		# Skip the actual mount for /, it's already mounted
-		if [ "$mp" = / ]
-		then	continue
-		fi
 
 		# Do actual mount command
 		mount -t $fstype $dev $mp
