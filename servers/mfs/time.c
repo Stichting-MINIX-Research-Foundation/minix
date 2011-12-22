@@ -22,7 +22,7 @@ PUBLIC int fs_utime()
 	  rip->i_atime = fs_m_in.REQ_ACTIME;
 	  rip->i_mtime = fs_m_in.REQ_MODTIME;
 	  rip->i_update = CTIME; /* discard any stale ATIME and MTIME flags */
-	  rip->i_dirt = DIRTY;
+	  IN_MARKDIRTY(rip);
   }
 
   put_inode(rip);

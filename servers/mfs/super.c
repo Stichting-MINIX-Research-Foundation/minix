@@ -88,7 +88,7 @@ bit_t origin;			/* number of bit to start searching at */
 		/* Allocate and return bit number. */
 		k |= 1 << i;
 		*wptr = (bitchunk_t) conv4(sp->s_native, (int) k);
-		bp->b_dirt = DIRTY;
+		MARKDIRTY(bp);
 		put_block(bp, MAP_BLOCK);
 		return(b);
 	}
@@ -140,7 +140,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 
   k &= ~mask;
   bp->b_bitmap[word] = (bitchunk_t) conv4(sp->s_native, (int) k);
-  bp->b_dirt = DIRTY;
+  MARKDIRTY(bp);
 
   put_block(bp, MAP_BLOCK);
 }

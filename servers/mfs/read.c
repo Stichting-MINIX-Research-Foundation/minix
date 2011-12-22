@@ -117,7 +117,7 @@ PUBLIC int fs_readwrite(void)
   if (r == OK) {
 	  if (rw_flag == READING) rip->i_update |= ATIME;
 	  if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
-	  rip->i_dirt = DIRTY;		/* inode is thus now dirty */
+	  IN_MARKDIRTY(rip);		/* inode is thus now dirty */
   }
   
   fs_m_out.RES_NBYTES = cum_io;
@@ -267,7 +267,7 @@ int *completed;			/* number of bytes copied */
 	/* Copy a chunk from user space to the block buffer. */
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
 			     (vir_bytes) (bp->b_data+off), (size_t) chunk, D);
-	bp->b_dirt = DIRTY;
+	MARKDIRTY(bp);
   }
   
   n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
@@ -643,7 +643,7 @@ PUBLIC int fs_getdents(void)
 	  fs_m_out.RES_NBYTES = userbuf_off;
 	  fs_m_out.RES_SEEK_POS_LO = new_pos;
 	  rip->i_update |= ATIME;
-	  rip->i_dirt = DIRTY;
+	  IN_MARKDIRTY(rip);
 	  r = OK;
   }
 

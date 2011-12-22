@@ -136,7 +136,7 @@ PUBLIC struct buf *get_block(
    * Avoid hysteresis by flushing all other dirty blocks for the same device.
    */
   if (bp->b_dev != NO_DEV) {
-	if (bp->b_dirt == DIRTY) flushall(bp->b_dev);
+	if (ISDIRTY(bp)) flushall(bp->b_dev);
 
 	/* Are we throwing out a block that contained something?
 	 * Give it to VM for the second-layer cache.
@@ -360,8 +360,7 @@ int rw_flag;			/* READING or WRITING */
 	}
   }
 
-  bp->b_dirt = CLEAN;
-
+  MARKCLEAN(bp);
 }
 
 /*===========================================================================*
@@ -406,7 +405,7 @@ PUBLIC void flushall(
   }
 
   for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++)
-	if (bp->b_dirt == DIRTY && bp->b_dev == dev) dirty[ndirty++] = bp;
+	if (ISDIRTY(bp) && bp->b_dev == dev) dirty[ndirty++] = bp;
   rw_scattered(dev, dirty, ndirty, WRITING);
 }
 
@@ -487,7 +486,7 @@ PUBLIC void rw_scattered(
 			bp->b_dev = dev;	/* validate block */
 			put_block(bp, PARTIAL_DATA_BLOCK);
 		} else {
-			bp->b_dirt = CLEAN;
+			MARKCLEAN(bp);
 		}
 		r -= fs_block_size;
 	}

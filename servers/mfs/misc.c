@@ -3,7 +3,7 @@
 #include <minix/vfsif.h>
 #include <minix/bdev.h>
 #include "inode.h"
-
+#include "clean.h"
 
 /*===========================================================================*
  *				fs_sync					     *
@@ -23,11 +23,11 @@ PUBLIC int fs_sync()
 
   /* Write all the dirty inodes to the disk. */
   for(rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
-	  if(rip->i_count > 0 && rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
+	  if(rip->i_count > 0 && IN_ISDIRTY(rip)) rw_inode(rip, WRITING);
 
   /* Write all the dirty blocks to the disk, one drive at a time. */
   for(bp = &buf[0]; bp < &buf[nr_bufs]; bp++)
-	  if(bp->b_dev != NO_DEV && bp->b_dirt == DIRTY) 
+	  if(bp->b_dev != NO_DEV && ISDIRTY(bp)) 
 		  flushall(bp->b_dev);
 
   return(OK);		/* sync() can't fail */

@@ -150,7 +150,7 @@ PUBLIC int fs_mkdir()
 	  /* Normal case.  It was possible to enter . and .. in the new dir. */
 	  rip->i_nlinks++;	/* this accounts for . */
 	  ldirp->i_nlinks++;	/* this accounts for .. */
-	  ldirp->i_dirt = DIRTY;	/* mark parent's inode as dirty */
+	  IN_MARKDIRTY(ldirp);	/* mark parent's inode as dirty */
   } else {
 	  /* It was not possible to enter . or .. probably disk was full -
 	   * links counts haven't been touched. */
@@ -158,7 +158,7 @@ PUBLIC int fs_mkdir()
 		  panic("Dir disappeared: %ul", rip->i_num);
 	  rip->i_nlinks--;	/* undo the increment done in new_node() */
   }
-  rip->i_dirt = DIRTY;		/* either way, i_nlinks has changed */
+  IN_MARKDIRTY(rip);		/* either way, i_nlinks has changed */
 
   put_inode(ldirp);		/* return the inode of the parent dir */
   put_inode(rip);		/* return the inode of the newly made dir */
@@ -293,7 +293,7 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
 	/* New inode acquired.  Try to make directory entry. */
 	if((r=search_dir(ldirp, string, &rip->i_num, ENTER, IGN_PERM)) != OK) {
 		rip->i_nlinks--;	/* pity, have to free disk inode */
-		rip->i_dirt = DIRTY;	/* dirty inodes are written out */
+		IN_MARKDIRTY(rip);	/* dirty inodes are written out */
 		put_inode(rip);	/* this call frees the inode */
 		err_code = r;
 		return(NULL);

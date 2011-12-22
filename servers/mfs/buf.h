@@ -1,6 +1,8 @@
 #ifndef __MFS_BUF_H__
 #define __MFS_BUF_H__
 
+#include "clean.h"
+
 /* Buffer (block) cache.  To acquire a block, a routine calls get_block(),
  * telling which block it wants.  The block is then regarded as "in use"
  * and has its 'b_count' field incremented.  All the blocks that are not

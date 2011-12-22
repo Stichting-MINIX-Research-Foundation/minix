@@ -233,12 +233,12 @@ register struct inode *rip;	/* pointer to inode to be released */
 		 */
 		(void) truncate_inode(rip, (off_t) 0); 
 		rip->i_mode = I_NOT_ALLOC;     /* clear I_TYPE field */
-		rip->i_dirt = DIRTY;
+		IN_MARKDIRTY(rip);
 		free_inode(rip->i_dev, rip->i_num);
 	} 
 
         rip->i_mountpoint = FALSE;
-	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
+	if (IN_ISDIRTY(rip)) rw_inode(rip, WRITING);
 
 	if (rip->i_nlinks == NO_LINK) {
 		/* free, put at the front of the LRU list */
@@ -325,7 +325,7 @@ register struct inode *rip;	/* the inode to be erased */
 
   rip->i_size = 0;
   rip->i_update = ATIME | CTIME | MTIME;	/* update all times later */
-  rip->i_dirt = DIRTY;
+  IN_MARKDIRTY(rip);
   for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
 }
 
@@ -405,7 +405,7 @@ int rw_flag;			/* READING or WRITING */
   /* Do the read or write. */
   if (rw_flag == WRITING) {
 	if (rip->i_update) update_times(rip);	/* times need updating */
-	if (sp->s_rd_only == FALSE) bp->b_dirt = DIRTY;
+	if (sp->s_rd_only == FALSE) MARKDIRTY(bp);
   }
 
   /* Copy the inode from the disk block to the in-core table or vice versa.
@@ -417,7 +417,7 @@ int rw_flag;			/* READING or WRITING */
 	new_icopy(rip, dip2, rw_flag, sp->s_native);
   
   put_block(bp, INODE_BLOCK);
-  rip->i_dirt = CLEAN;
+  IN_MARKCLEAN(rip);
 }
 
 

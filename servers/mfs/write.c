@@ -44,7 +44,7 @@ int op;				/* special actions */
   long excess, zone;
   struct buf *bp_dindir = NULL, *bp = NULL;
 
-  rip->i_dirt = DIRTY;		/* inode will be changed */
+  IN_MARKDIRTY(rip);
   scale = rip->i_sp->s_log_zone_size;		/* for zone-block conversion */
   	/* relative zone # to insert */
   zone = (position/rip->i_sp->s_block_size) >> scale;
@@ -119,7 +119,7 @@ int op;				/* special actions */
 
 	new_ind = TRUE;
 	/* If double ind, it is dirty. */
-	if (bp_dindir != NULL) bp_dindir->b_dirt = DIRTY;
+	if (bp_dindir != NULL) MARKDIRTY(bp_dindir);
 	if (z1 == NO_ZONE) {
 		/* Release dbl indirect blk. */
 		put_block(bp_dindir, INDIRECT_BLOCK);
@@ -155,14 +155,14 @@ int op;				/* special actions */
 				rip->i_zone[zones] = z1;
 			} else {
 				wr_indir(bp_dindir, ind_ex, z1);
-				bp_dindir->b_dirt = DIRTY;
+				MARKDIRTY(bp_dindir);
 			}
 		}
 	} else {
 		wr_indir(bp, ex, new_zone);
 	}
 	/* z1 equals NO_ZONE only when we are freeing up the indirect block. */
-	bp->b_dirt = (z1 == NO_ZONE) ? CLEAN : DIRTY;
+	if(z1 == NO_ZONE) { MARKCLEAN(bp); } else { MARKDIRTY(bp); }
 	put_block(bp, INDIRECT_BLOCK);
   }
 
@@ -172,7 +172,7 @@ int op;				/* special actions */
    */
   if(z1 == NO_ZONE && !single && z2 != NO_ZONE &&
      empty_indir(bp_dindir, rip->i_sp)) {
-	bp_dindir->b_dirt = CLEAN;
+     	MARKCLEAN(bp_dindir);
 	free_zone(rip->i_dev, z2);
 	rip->i_zone[zones+1] = NO_ZONE;
   }
@@ -332,6 +332,6 @@ register struct buf *bp;	/* pointer to buffer to zero */
   ASSERT(bp->b_bytes > 0);
   ASSERT(bp->bp);
   memset(bp->b_data, 0, (size_t) bp->b_bytes);
-  bp->b_dirt = DIRTY;
+  MARKDIRTY(bp);
 }
 

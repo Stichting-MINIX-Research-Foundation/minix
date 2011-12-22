@@ -62,4 +62,10 @@ EXTERN unsigned int inode_cache_miss;
 #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
 #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
 
+#define IN_MARKCLEAN(i) i->i_dirt = IN_CLEAN
+#define IN_MARKDIRTY(i) i->i_dirt = IN_DIRTY
+
+#define IN_ISCLEAN(i) i->i_dirt == IN_CLEAN
+#define IN_ISDIRTY(i) i->i_dirt == IN_DIRTY
+
 #endif
