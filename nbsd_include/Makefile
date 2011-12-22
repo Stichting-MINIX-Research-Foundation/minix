@@ -24,6 +24,20 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	strings.h stringlist.h struct.h sysexits.h tar.h time.h \
 	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
 	utmpx.h uuid.h varargs.h vis.h wchar.h wctype.h wordexp.h
+
+INCS +=	ufs/chfs/chfs.h ufs/chfs/chfs_args.h ufs/chfs/chfs_inode.h \
+	ufs/chfs/chfs_pool.h ufs/chfs/debug.h ufs/chfs/ebh.h \
+	ufs/chfs/ebh_media.h ufs/chfs/ebh_misc.h ufs/chfs/media.h \
+	ufs/ext2fs/ext2fs.h ufs/ext2fs/ext2fs_dinode.h \
+	ufs/ext2fs/ext2fs_dir.h ufs/ext2fs/ext2fs_extern.h \
+	ufs/ffs/ffs_extern.h ufs/ffs/fs.h ufs/lfs/lfs.h \
+	ufs/lfs/lfs_extern.h ufs/mfs/mfs_extern.h ufs/mfs/mfsnode.h \
+	ufs/ufs/dinode.h ufs/ufs/dir.h ufs/ufs/dirhash.h \
+	ufs/ufs/extattr.h ufs/ufs/inode.h ufs/ufs/quota.h \
+	ufs/ufs/quota1.h ufs/ufs/quota2.h ufs/ufs/ufs_bswap.h \
+	ufs/ufs/ufs_extern.h ufs/ufs/ufs_quota.h ufs/ufs/ufs_wapbl.h \
+	ufs/ufs/ufsmount.h \
+
 .else
 INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	bitstring.h bm.h cdbr.h cdbw.h complex.h cpio.h ctype.h \

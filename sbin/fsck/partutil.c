@@ -92,6 +92,9 @@ dict2geom(struct disk_geom *geo, prop_dictionary_t dict)
 static void
 part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
 {
+#ifdef __minix
+	errx(1, "minix doesn't know about wedges");
+#else
 	struct stat sb;
 	const struct partition *pp;
 	int ptn;
@@ -150,6 +153,7 @@ part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
 		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_NTFS);
 		break;
 	}
+#endif
 }
 
 int

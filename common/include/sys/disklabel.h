@@ -180,6 +180,7 @@ struct disklabel {
 	uint16_t d_npartitions;	/* number of partitions in following */
 	uint32_t d_bbsize;		/* size of boot area at sn0, bytes */
 	uint32_t d_sbsize;		/* max size of fs superblock, bytes */
+#ifndef __minix
 	struct	partition {		/* the partition table */
 		uint32_t p_size;	/* number of sectors in partition */
 		uint32_t p_offset;	/* starting sector */
@@ -199,6 +200,7 @@ struct disklabel {
 #define	p_cpg	__partition_u1.cpg
 #define	p_sgs	__partition_u1.sgs
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
+#endif
 };
 
 #if defined(__HAVE_OLD_DISKLABEL) && !HAVE_NBTOOL_CONFIG_H

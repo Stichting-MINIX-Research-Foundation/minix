@@ -183,6 +183,11 @@ main(int argc, char *argv[])
 	if (flags & CHECK_PROGRESS)
 		maxrun = 1;
 
+#ifdef __minix
+	/* parallel checking heuristic doesn't work for minix currently */
+	maxrun = 1;
+#endif
+
 	argc -= optind;
 	argv += optind;
 
@@ -552,6 +557,9 @@ mangle(char *opts, int *argcp, const char ** volatile *argvp, int *maxargcp)
 static const char *
 getfslab(const char *str)
 {
+#ifdef __minix
+	errx(1, "cannot determine vfstype under minix");
+#else
 	static struct dkwedge_info dkw;
 	struct disklabel dl;
 	int fd;
@@ -589,6 +597,7 @@ getfslab(const char *str)
 		    fstypenames[t], str);
 
 	return vfstype;
+#endif
 }
 
 

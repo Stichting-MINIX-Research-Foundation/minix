@@ -23,6 +23,10 @@ TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 ROOTFILES="`cat /.rootfiles`"
 USRFILES="`cat /.usrfiles`"
 
+if [ -z "$FSTYPE" ]
+then	FSTYPE=mfs
+fi
+
 if [ "$TOTALMB" -lt 1 ]
 then	 
 	echo "Are you really running from CD?"
@@ -459,17 +463,17 @@ if [ "$nohome" = 0 ]
 then
 	if [ ! "$auto" = r ]
 	then	echo "Creating /dev/$home for /home .."
-		mkfs.mfs -B $blocksizebytes /dev/$home || exit
+		mkfs.$FSTYPE -B $blocksizebytes /dev/$home || exit
 	fi
 else	echo "Skipping /home"
 fi
 
 echo "Creating /dev/$usr for /usr .."
-mkfs.mfs -B $blocksizebytes /dev/$usr || exit
+mkfs.$FSTYPE -B $blocksizebytes /dev/$usr || exit
 
 if [ "$nohome" = 0 ]
 then
-	fshome="/dev/$home	/home	mfs	rw	0	2"
+	fshome="/dev/$home	/home	$FSTYPE	rw	0	2"
 else	fshome=""
 fi
 
@@ -504,7 +508,7 @@ ln -s /usr/log /mnt/var/log
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
 echo >/mnt/etc/fstab "/dev/$root	/	mfs	rw	0	1
-/dev/$usr	/usr	mfs	rw	0	2
+/dev/$usr	/usr	$FSTYPE	rw	0	2
 $fshome"
 
 					# National keyboard map.
