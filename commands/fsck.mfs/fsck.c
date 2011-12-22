@@ -146,7 +146,8 @@ int nfreeinode, nregular, ndirectory, nblkspec, ncharspec, nbadinode;
 int nsock, npipe, nsyml, ztype[NLEVEL];
 long nfreezone;
 
-int repair, automatic, listing, listsuper;	/* flags */
+int repair, notrepaired = 0, automatic, listing, listsuper;	/* flags */
+int preen = 0, markdirty = 0;
 int firstlist;			/* has the listing header been printed? */
 unsigned part_offset;		/* sector offset for this partition */
 char answer[] = "Answer questions with y or n.  Then hit RETURN";
@@ -172,7 +173,9 @@ _PROTOTYPE(void lpr, (char *fmt, long cnt, char *s, char *p));
 _PROTOTYPE(bit_nr getnumber, (char *s));
 _PROTOTYPE(char **getlist, (char ***argv, char *type));
 _PROTOTYPE(void lsuper, (void));
-_PROTOTYPE(void getsuper, (void));
+#define SUPER_GET	0
+#define SUPER_PUT	1
+_PROTOTYPE(void rw_super, (int mode));
 _PROTOTYPE(void chksuper, (void));
 _PROTOTYPE(void lsi, (char **clist));
 _PROTOTYPE(bitchunk_t *allocbitmap, (int nblk));
@@ -251,6 +254,7 @@ char *question;
 {
   register int c, answerchar;
   static int note = 0;
+  int yes;
 
   if (!repair) {
 	printf("\n");
@@ -266,7 +270,9 @@ char *question;
   if ((c = answerchar = getchar()) == 'q' || c == 'Q') exit(1);
   if(c == 'A') { automatic = 1; c = 'y'; }
   while (!eoln(c)) c = getchar();
-  return !(answerchar == 'n' || answerchar == 'N');
+  yes = !(answerchar == 'n' || answerchar == 'N');
+  if(!yes) notrepaired = 1;
+  return yes;
 }
 
 /* Convert string to integer.  Representation is octal. */
@@ -373,7 +379,8 @@ int nlcr;
 /* Open the device.  */
 void devopen()
 {
-  if ((dev = open(fsck_device, repair ? O_RDWR : O_RDONLY)) < 0) {
+  if ((dev = open(fsck_device,
+    (repair || markdirty) ? O_RDWR : O_RDONLY)) < 0) {
 	perror(fsck_device);
 	fatal("couldn't open device to fsck");
   }
@@ -540,16 +547,25 @@ void lsuper()
 		devwrite(0, OFFSET_SUPER_BLOCK, (char *) &sb, sizeof(sb));
 		return;
 	}
+	printf("flags         = ");
+	if(sb.s_flags & MFSFLAG_CLEAN) printf("CLEAN "); else printf("DIRTY ");
+	printf("\n");
   } while (yes("Do you want to try again"));
   if (repair) exit(0);
 }
 
 /* Get the super block from either disk or user.  Do some initial checks. */
-void getsuper()
+void rw_super(int put)
 {
   if(lseek(dev, OFFSET_SUPER_BLOCK, SEEK_SET) < 0) {
   	perror("lseek");
   	fatal("couldn't seek to super block.");
+  }
+  if(put == SUPER_PUT)  {
+    if(write(dev, &sb, sizeof(sb)) != sizeof(sb)) {
+  	fatal("couldn't write super block.");
+    }
+    return;
   }
   if(read(dev, &sb, sizeof(sb)) != sizeof(sb)) {
   	fatal("couldn't read super block.");
@@ -627,6 +643,10 @@ void chksuper()
   if (sb.s_max_size != maxsize) {
 	printf("warning: expected max size to be %ld ", maxsize);
 	printf("instead of %ld\n", sb.s_max_size);
+  }
+
+  if(sb.s_flags & MFSFLAG_MANDATORY_MASK) {
+  	fatal("unsupported feature bits - newer fsck needed");
   }
 }
 
@@ -795,7 +815,9 @@ char *type;
   int w = nblk * WORDS_PER_BLOCK;
   bit_nr phys = 0;
 
-  printf("Checking %s map\n", type);
+  printf("Checking %s map. ", type);
+  if(!preen) printf("\n");
+  fflush(stdout);
   loadbitmap(dmap, blkno, nblk);
   do {
 	if (*p != *q) chkword(*p, *q, bit, type, &nerr, &report, phys);
@@ -817,7 +839,9 @@ void chkilist()
   register ino_t ino = 1;
   mode_t mode;
 
-  printf("Checking inode list\n");
+  printf("Checking inode list. ");
+  if(!preen) printf("\n");
+  fflush(stdout);
   do
 	if (!bitset(imap, (bit_nr) ino)) {
 		devread(inoblock(ino), inooff(ino), (char *) &mode,
@@ -829,7 +853,7 @@ void chkilist()
 		}
 	}
   while (++ino <= sb.s_ninodes && ino != 0);
-  printf("\n");
+  if(!preen) printf("\n");
 }
 
 /* Allocate an array to maintain the inode reference counts in. */
@@ -1471,6 +1495,12 @@ void chktree()
 /* Print the totals of all the objects found. */
 void printtotal()
 {
+  if(preen) {
+  	printf("%d files, %d directories, %d free inodes, %d free zones\n",
+	  	nregular, ndirectory, nfreeinode, nfreezone);
+	return;
+  }
+
   printf("blocksize = %5d        ", block_size);
   printf("zonesize  = %5d\n", ZONE_SIZE);
   printf("\n");
@@ -1506,7 +1536,7 @@ char *f, **clist, **ilist, **zlist;
 
   devopen();
 
-  getsuper();
+  rw_super(SUPER_GET);
 
   if(block_size < _MIN_BLOCK_SIZE)
   	fatal("funny block size");
@@ -1516,6 +1546,25 @@ char *f, **clist, **ilist, **zlist;
   memset(nullbuf, 0, block_size);
 
   chksuper();
+
+  if(markdirty) {
+  	if(sb.s_flags & MFSFLAG_CLEAN) {
+	  	sb.s_flags &= ~MFSFLAG_CLEAN;
+  		rw_super(SUPER_PUT);
+  		printf("\n----- FILE SYSTEM MARKED DIRTY -----\n\n");
+	} else {
+  		printf("Filesystem is already dirty.\n");
+	}
+  }
+
+  /* If preening, skip fsck if clean flag is on. */
+  if(preen) {
+  	if(sb.s_flags & MFSFLAG_CLEAN) {
+	  	printf("%s: clean\n", f);
+		return;
+	} 
+	printf("%s: dirty, performing fsck\n", f);
+  }
 
   lsi(clist);
 
@@ -1530,13 +1579,29 @@ char *f, **clist, **ilist, **zlist;
   chkcount();
   chkmap(imap, spec_imap, (bit_nr) 0, BLK_IMAP, N_IMAP, "inode");
   chkilist();
+  if(preen) printf("\n");
   printtotal();
 
   putbitmaps();
   freecount();
-  devclose();
 
-  if (changed) printf("----- FILE SYSTEM HAS BEEN MODIFIED -----\n\n");
+  if (changed) printf("\n----- FILE SYSTEM HAS BEEN MODIFIED -----\n\n");
+
+  /* If we were told to repair the FS, and the user never stopped us from
+   * doing it, and the FS wasn't marked clean, we can mark the FS as clean.
+   */
+  if(repair && !(sb.s_flags & MFSFLAG_CLEAN)) {
+  	if(notrepaired) {
+  		printf("\n----- FILE SYSTEM STILL DIRTY -----\n\n");
+	} else {
+		sync();	/* update FS on disk before clean flag */
+	  	sb.s_flags |= MFSFLAG_CLEAN;
+  		rw_super(SUPER_PUT);
+  		printf("\n----- FILE SYSTEM MARKED CLEAN -----\n\n");
+	}
+  }
+
+  devclose();
 }
 
 int main(argc, argv)
@@ -1557,8 +1622,9 @@ char **argv;
   prog = *argv++;
   while ((arg = *argv++) != 0)
 	if (arg[0] == '-' && arg[1] != 0 && arg[2] == 0) switch (arg[1]) {
+		    case 'd':	markdirty = 1;	break;
+		    case 'p':	preen = repair = automatic = 1; break;
 	            case 'y':
-		    case 'p':
 		    case 'a':	automatic ^= 1;	break;
 		    case 'c':
 			clist = getlist(&argv, "inode");
@@ -1584,7 +1650,7 @@ char **argv;
 		devgiven = 1;
 	}
   if (!devgiven) {
-	printf("Usage: fsck [-yfpacilrsz] file\n");
+	printf("Usage: fsck [-dyfpacilrsz] file\n");
 	exit(1);
   }
   return(0);

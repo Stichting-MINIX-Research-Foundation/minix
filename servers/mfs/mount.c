@@ -4,6 +4,7 @@
 #include <minix/vfsif.h>
 #include <minix/bdev.h>
 
+PRIVATE int cleanmount = 1;
 
 /*===========================================================================*
  *				fs_readsuper				     *
@@ -58,6 +59,25 @@ PUBLIC int fs_readsuper()
 	return(r);
   }
 
+  /* Remember whether we were mounted cleanly so we know what to
+   * do at unmount time
+   */
+  if(superblock.s_flags & MFSFLAG_CLEAN)
+	cleanmount = 1;
+
+  /* clean check: if rw and not clean, switch to readonly */
+  if(!(superblock.s_flags & MFSFLAG_CLEAN) && !readonly) {
+	if(bdev_close(fs_dev) != OK)
+		panic("couldn't bdev_close after found unclean FS");
+	readonly = 1;
+
+	if (bdev_open(fs_dev, R_BIT) != OK) {
+		panic("couldn't bdev_open after found unclean FS");
+		return(EINVAL);
+  	}
+	printf("MFS: WARNING: FS 0x%x unclean, mounting readonly\n", fs_dev);
+  }
+  
   set_blocksize(&superblock);
   
   /* Get the root inode of the mounted file system. */
@@ -87,6 +107,13 @@ PUBLIC int fs_readsuper()
   fs_m_out.RES_GID = root_ip->i_gid;
 
   fs_m_out.RES_CONREQS = 1;	/* We can handle only 1 request at a time */
+
+  /* Mark it dirty */
+  if(!superblock.s_rd_only) {
+	  superblock.s_flags &= ~MFSFLAG_CLEAN;
+	  if(write_super(&superblock) != OK)
+		panic("mounting: couldn't write dirty superblock");
+  }
 
   return(r);
 }
@@ -150,6 +177,12 @@ PUBLIC int fs_unmount()
 
   /* force any cached blocks out of memory */
   (void) fs_sync();
+
+  /* Mark it clean if we're allowed to write _and_ it was clean originally. */
+  if(cleanmount && !superblock.s_rd_only) {
+	superblock.s_flags |= MFSFLAG_CLEAN;
+	write_super(&superblock);
+  }
 
   /* Close the device the file system lives on. */
   bdev_close(fs_dev);

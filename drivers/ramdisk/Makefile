@@ -3,7 +3,7 @@
 .include <bsd.own.mk>
 
 PROGRAMS= at_wini bios_wini cdprobe dev2name floppy loadramdisk mount \
-	pci procfs sh service sysenv mfs
+	pci procfs sh service sysenv mfs fsck.mfs
 SCRIPTS=newroot
 
 .if ${MKSMALL} != "yes"
@@ -43,6 +43,11 @@ bintoc:	bintoc.c
 
 image:	proto.gen mtab rc $(EXTRA)
 	mkfs.mfs image proto.gen || { rm -f image; false; }
+	if fsck.mfs -s image | grep -q CLEAN;	\
+	then	: ;	\
+	else	echo "CLEAN sanity check of image failed."	;	\
+		echo "(Perhaps install current mkfs and fsck.)" ;	\
+	fi
 
 ahci: ../ahci/ahci
 	install ${STRIPFLAG} ../$@/$@ $@
@@ -103,6 +108,12 @@ mount:  ../../commands/mount/mount
 
 ../../commands/mount/mount:
 	$(MAKE) -C ../../commands/mount
+
+fsck.mfs:  ../../commands/fsck.mfs/fsck.mfs
+	install ${STRIPFLAG} ../../commands/$@/$@ $@
+
+../../commands/fsck.mfs/fsck.mfs:
+	$(MAKE) -C ../../commands/fsck.mfs
 
 newroot:  ../../commands/newroot/newroot.sh
 	install ${STRIPFLAG} ../../commands/$@/$@.sh $@

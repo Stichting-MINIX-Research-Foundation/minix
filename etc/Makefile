@@ -38,7 +38,7 @@ install:: installpw	# installpw needed to bootstrap pw db
 	install -m 644 -o root -g operator descr /usr/lib/
 
 
-installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(USRETC)/rc $(USR)/Makefile installpw
+installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(ETC)/rc.subr.minix $(USRETC)/rc $(USR)/Makefile installpw
 
 installpw::
 	if [ ! -d $(ETC) ]; then mkdir $(ETC); chmod 755 $(ETC); fi
@@ -55,6 +55,9 @@ $(ETC)/rs.single: rs.single .PHONY
 	install -m 755 -o root -g operator $> $@
 
 $(ETC)/system.conf: system.conf .PHONY
+	install -m 644 -o root -g operator $> $@
+
+$(ETC)/rc.subr.minix: rc.subr.minix .PHONY
 	install -m 644 -o root -g operator $> $@
 
 $(USRETC)/rc: usr/rc .PHONY

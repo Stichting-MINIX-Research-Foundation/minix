@@ -13,6 +13,7 @@
 
 #include "fs.h"
 #include <string.h>
+#include <assert.h>
 #include <minix/com.h>
 #include <minix/u64.h>
 #include <minix/bdev.h>
@@ -157,7 +158,7 @@ PUBLIC struct super_block *get_super(
   	panic("request for super_block of NO_DEV");
 
   if(superblock.s_dev != dev)
-  	panic("wrong superblock: %d", (int) dev);
+  	panic("wrong superblock: 0x%x", (int) dev);
 
   return(&superblock);
 }
@@ -177,31 +178,62 @@ PUBLIC unsigned int get_block_size(dev_t dev)
 
 
 /*===========================================================================*
- *				read_super				     *
+ *				rw_super				     *
  *===========================================================================*/
-PUBLIC int read_super(sp)
-register struct super_block *sp; /* pointer to a superblock */
+PRIVATE int rw_super(struct super_block *sp, int writing)
 {
-/* Read a superblock. */
-  dev_t dev;
-  unsigned int magic;
-  int version, native, r;
+/* Read/write a superblock. */
+  int r;
   static char *sbbuf;
-  block_t offset;
+  dev_t save_dev = sp->s_dev;
+
+/* To keep the 1kb on disk clean, only read/write up to and including
+ * this field.
+ */
+#define LAST_ONDISK_FIELD s_disk_version
+  int ondisk_bytes = (int) ((char *) &sp->LAST_ONDISK_FIELD - (char *) sp)
+  	+ sizeof(sp->LAST_ONDISK_FIELD);
 
   STATICINIT(sbbuf, _MIN_BLOCK_SIZE);
 
-  dev = sp->s_dev;		/* save device (will be overwritten by copy) */
-  if (dev == NO_DEV)
+  assert(ondisk_bytes > 0);
+  assert(ondisk_bytes < _MIN_BLOCK_SIZE);
+  assert(ondisk_bytes < sizeof(struct super_block));
+
+  if (sp->s_dev == NO_DEV)
   	panic("request for super_block of NO_DEV");
-  
-  r = bdev_read(dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
-	BDEV_NOFLAGS);
+
+  if(writing) {
+  	memset(sbbuf, 0, _MIN_BLOCK_SIZE);
+  	memcpy(sbbuf, sp, ondisk_bytes);
+  	r = bdev_write(sp->s_dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
+		BDEV_NOFLAGS);
+  } else {
+  	r = bdev_read(sp->s_dev, cvu64(SUPER_BLOCK_BYTES), sbbuf, _MIN_BLOCK_SIZE,
+		BDEV_NOFLAGS);
+	memset(sp, 0, sizeof(*sp));
+  	memcpy(sp, sbbuf, ondisk_bytes);
+  	sp->s_dev = save_dev;
+  }
+
   if (r != _MIN_BLOCK_SIZE)
   	return(EINVAL);
-  
-  memcpy(sp, sbbuf, sizeof(*sp));
-  sp->s_dev = NO_DEV;		/* restore later */
+
+  return OK;
+}
+
+/*===========================================================================*
+ *				read_super				     *
+ *===========================================================================*/
+PUBLIC int read_super(struct super_block *sp)
+{
+  unsigned int magic;
+  block_t offset;
+  int version, native, r;
+
+  if((r=rw_super(sp, 0)) != OK)
+  	return r;
+
   magic = sp->s_magic;		/* determines file system type */
 
   /* Get file system version and type. */
@@ -306,7 +338,27 @@ register struct super_block *sp; /* pointer to a superblock */
   		"or invalid first data zone, or zone size too large\n");
 	return(EINVAL);
   }
-  sp->s_dev = dev;		/* restore device number */
+
+
+  /* Check any flags we don't understand but are required to. Currently
+   * these don't exist so all such unknown bits are fatal.
+   */
+  if(sp->s_flags & MFSFLAG_MANDATORY_MASK) {
+  	printf("MFS: unsupported feature flags on this FS.\n"
+		"Please use a newer MFS to mount it.\n");
+	return(EINVAL);
+  }
+
   return(OK);
+}
+
+/*===========================================================================*
+ *				write_super				     *
+ *===========================================================================*/
+PUBLIC int write_super(struct super_block *sp)
+{
+  if(sp->s_rd_only)
+  	panic("can't write superblock of readonly filesystem");
+  return rw_super(sp, 1);
 }
 

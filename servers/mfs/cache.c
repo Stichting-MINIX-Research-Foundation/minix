@@ -11,7 +11,7 @@
  *   invalidate:  remove all the cache blocks on some device
  *
  * Private functions:
- *   rw_block:    read or write a block from the disk itself
+ *   read_block:    read or write a block from the disk itself
  */
 
 #include "fs.h"
@@ -27,9 +27,11 @@
 #include "inode.h"
 
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
-FORWARD _PROTOTYPE( void rw_block, (struct buf *, int) );
+FORWARD _PROTOTYPE( void read_block, (struct buf *) );
 
 PRIVATE int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
+
+PRIVATE block_t super_start = 0, super_end = 0; 
 
 /*===========================================================================*
  *				get_block				     *
@@ -183,7 +185,7 @@ PUBLIC struct buf *get_block(
 	/* PREFETCH: don't do i/o. */
 	bp->b_dev = NO_DEV;
   } else if (only_search == NORMAL) {
-	rw_block(bp, READING);
+	read_block(bp);
   } else if(only_search == NO_READ) {
 	/* we want this block, but its contents
 	 * will be overwritten. VM has to forget
@@ -318,11 +320,10 @@ PUBLIC void free_zone(
 }
 
 /*===========================================================================*
- *				rw_block				     *
+ *				read_block				     *
  *===========================================================================*/
-PRIVATE void rw_block(bp, rw_flag)
+PRIVATE void read_block(bp)
 register struct buf *bp;	/* buffer pointer */
-int rw_flag;			/* READING or WRITING */
 {
 /* Read or write a disk block. This is the only routine in which actual disk
  * I/O is invoked. If an error occurs, a message is printed here, but the error
@@ -337,12 +338,8 @@ int rw_flag;			/* READING or WRITING */
 
   if ( (dev = bp->b_dev) != NO_DEV) {
 	pos = mul64u(bp->b_blocknr, fs_block_size);
-	if (rw_flag == READING)
-		r = bdev_read(dev, pos, bp->b_data, fs_block_size,
-			BDEV_NOFLAGS);
-	else
-		r = bdev_write(dev, pos, bp->b_data, fs_block_size,
-			BDEV_NOFLAGS);
+	r = bdev_read(dev, pos, bp->b_data, fs_block_size,
+		BDEV_NOFLAGS);
 	if (r < 0) {
 		printf("MFS(%d) I/O error on device %d/%d, block %u\n",
 		SELF_E, major(dev), minor(dev), bp->b_blocknr);
@@ -356,11 +353,9 @@ int rw_flag;			/* READING or WRITING */
 		bp->b_dev = NO_DEV;	/* invalidate block */
 
 		/* Report read errors to interested parties. */
-		if (rw_flag == READING) rdwt_err = r;
+		rdwt_err = r;
 	}
   }
-
-  MARKCLEAN(bp);
 }
 
 /*===========================================================================*
@@ -378,6 +373,27 @@ PUBLIC void invalidate(
 	if (bp->b_dev == device) bp->b_dev = NO_DEV;
 
   vm_forgetblocks();
+}
+
+/*===========================================================================*
+ *				block_write_ok				     *
+ *===========================================================================*/
+int block_write_ok(struct buf *bp)
+{
+	if(superblock.s_dev != bp->b_dev) return 1;
+
+	if(bp->b_blocknr >= super_start && bp->b_blocknr <= super_end) {
+		printf("MFS: blocking write to superblock on mounted filesystem dev 0x%x.\n", bp->b_dev);
+		return 0;
+	}
+
+	if(superblock.s_rd_only) {
+		printf("MFS: blocking write to mounted readonly filesystem 0x%x.\n", bp->b_dev);
+		printf("This shouldn't happen.\n");
+		return 0;
+	}
+
+	return 1;
 }
 
 /*===========================================================================*
@@ -404,8 +420,16 @@ PUBLIC void flushall(
 	dirtylistsize = nr_bufs;
   }
 
-  for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++)
-	if (ISDIRTY(bp) && bp->b_dev == dev) dirty[ndirty++] = bp;
+  for (bp = &buf[0], ndirty = 0; bp < &buf[nr_bufs]; bp++) {
+       if (ISDIRTY(bp) && bp->b_dev == dev) {
+               if(!block_write_ok(bp)) {
+                       printf("MFS: LATE: ignoring changes in block %d\n", bp->b_blocknr);
+                       MARKCLEAN(bp);
+                       continue;
+               }
+               dirty[ndirty++] = bp;
+       }
+  }
   rw_scattered(dev, dirty, ndirty, WRITING);
 }
 
@@ -556,6 +580,8 @@ PRIVATE void cache_resize(unsigned int blocksize, unsigned int bufs)
   buf_pool(bufs);
 
   fs_block_size = blocksize;
+  super_start = SUPER_BLOCK_BYTES / fs_block_size;
+  super_end = (SUPER_BLOCK_BYTES + _MIN_BLOCK_SIZE - 1) / fs_block_size;
 }
 
 /*===========================================================================*

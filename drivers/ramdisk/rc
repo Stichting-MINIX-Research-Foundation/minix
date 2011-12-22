@@ -5,6 +5,7 @@ exec >/dev/log
 exec 2>/dev/log
 exec </dev/null
 
+FSCK=/bin/fsck.mfs
 ACPI=/sbin/acpi
 if [ -e $ACPI -a -n "`sysenv acpi`" ]
 then
@@ -56,6 +57,10 @@ then
 	loadramdisk "$ramimagename"
 fi
 echo "Root device name is $rootdevname"
+if [ -e $FSCK ]
+then	$FSCK -p $rootdevname
+fi
 /bin/newroot $bin_img"$rootdevname"
 /bin/mount -e -t procfs none /proc || echo "WARNING: couldn't mount procfs"
+
 exec /bin/sh /etc/rc "$@"

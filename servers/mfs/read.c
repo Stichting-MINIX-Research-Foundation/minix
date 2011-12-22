@@ -282,6 +282,10 @@ int *completed;			/* number of bytes copied */
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
 			   (vir_bytes) (bp->b_data+off), (size_t) chunk, D);
+  } else if(!block_write_ok(bp)) {
+  	/* Let cache layer veto writing to this block */
+  	printf("MFS: block write not allowed\n");
+	r = EPERM;
   } else {
 	/* Copy a chunk from user space to the block buffer. */
 	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,

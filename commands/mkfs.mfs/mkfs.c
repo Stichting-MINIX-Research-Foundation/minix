@@ -388,21 +388,23 @@ char *device;
   unsigned int rem;
   u64_t resize;
 
+
   if ((fd = open(device, O_RDONLY)) == -1) {
-	if (errno != ENOENT)
-		perror("sizeup open");
-  	return 0;
+       if (errno != ENOENT)
+               perror("sizeup open");
+       return 0;
   }
   if (ioctl(fd, DIOCGETP, &entry) == -1) {
-  	perror("sizeup ioctl");
-  	if(fstat(fd, &st) < 0) {
-  		perror("fstat");
-	  	entry.size = cvu64(0);
-  	} else {
-  		fprintf(stderr, "used fstat instead\n");
-	  	entry.size = cvu64(st.st_size);
-  	}
+       perror("sizeup ioctl");
+       if(fstat(fd, &st) < 0) {
+               perror("fstat");
+               entry.size = cvu64(0);
+       } else {
+               fprintf(stderr, "used fstat instead\n");
+               entry.size = cvu64(st.st_size);
+       }
   }
+
   close(fd);
   d = div64u(entry.size, block_size);
   rem = rem64u(entry.size, block_size);
@@ -438,6 +440,9 @@ ino_t inodes;
 
   for (cp = buf; cp < &buf[block_size]; cp++) *cp = 0;
   sup = (struct super_block *) buf;	/* lint - might use a union */
+
+  /* The assumption is that mkfs will create a clean FS. */
+  sup->s_flags = MFSFLAG_CLEAN;
 
   sup->s_ninodes = inodes;
   if (fs_version == 1) {

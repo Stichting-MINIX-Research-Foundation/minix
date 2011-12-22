@@ -2,7 +2,7 @@
 mountfstab()
 {
 	fsck_opts=""
-	fflag=""
+	fflag="-p"
 
 	while getopts "fo:" opt
 	do	case $opt
@@ -17,13 +17,6 @@ mountfstab()
 	done
 
 	shift `expr $OPTIND - 1`
-
-	# Make fsck necessary for unclean shutdown
-	msg="The system was not properly shut down.  Checking file systems."
-	if shutdown -C
-	then	echo "$msg"
-		fflag="-f"
-	fi
 
 	fstabfile="$1"
 
@@ -44,17 +37,16 @@ mountfstab()
 		# This line's parameters
 		dev="$1"; mp="$2"; fstype="$3"
 
+		# Don't fsck / as it's already mounted
+		if [ "$mp" = "/" ]; then continue; fi
+
 		# Sanity checks
 		if [ ! -b $dev ]; then	echo "$dev missing"; continue; fi
 		if [ ! -d $mp ]; then echo "$mp missing"; continue; fi
 
 		# Do fsck if necessary or requested
 		if [ -n "$fflag" ]
-		then	echo "Checking $fstype $dev"
-			if ! fsck.$fstype $fflag $fsck_opts -p $dev
-			then	echo "$dev fail"
-				continue
-			fi
+		then	fsck.$fstype $fflag $fsck_opts $dev
 		fi
 
 		# Skip the actual mount for /, it's already mounted

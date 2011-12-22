@@ -28,7 +28,7 @@ EXTERN struct super_block {
   short s_zmap_blocks;		/* # of blocks used by zone bit map */
   zone1_t s_firstdatazone_old;	/* number of first data zone (small) */
   short s_log_zone_size;	/* log2 of blocks/zone */
-  short s_pad;			/* try to avoid compiler-dependent padding */
+  unsigned short s_flags;	/* FS state flags */
   off_t s_max_size;		/* maximum file size on this device */
   zone_t s_zones;		/* number of zones (replaces s_nzones in V2) */
   short s_magic;		/* magic number to recognize super-blocks */
@@ -43,7 +43,11 @@ EXTERN struct super_block {
   unsigned short s_block_size;	/* block size in bytes. */
   char s_disk_version;		/* filesystem format sub-version */
 
-  /* The following items are only used when the super_block is in memory. */
+  /* The following items are only used when the super_block is in memory.
+   * If this ever changes, i.e. more fields after s_disk_version has to go to
+   * disk, update LAST_ONDISK_FIELD in super.c as that controls which part of the
+   * struct is copied to and from disk.
+   */
   
   /*struct inode *s_isup;*/	/* inode for root dir of mounted file sys */
   /*struct inode *s_imount;*/   /* inode mounted on */
@@ -62,6 +66,18 @@ EXTERN struct super_block {
 
 #define IMAP		0	/* operating on the inode bit map */
 #define ZMAP		1	/* operating on the zone bit map */
+
+/* s_flags contents; undefined flags are guaranteed to be zero on disk
+ * (not counting future versions of mfs setting them!)
+ */
+#define MFSFLAG_CLEAN	(1L << 0) /* 0: dirty; 1: FS was unmounted cleanly */
+
+/* Future compatability (or at least, graceful failure):
+ * if any of these bits are on, and the MFS or fsck
+ * implementation doesn't understand them, do not mount/fsck
+ * the FS.
+ */
+#define MFSFLAG_MANDATORY_MASK 0xff00
 
 #endif
 

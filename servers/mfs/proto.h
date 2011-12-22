@@ -21,6 +21,7 @@ _PROTOTYPE( void put_block, (struct buf *bp, int block_type)		);
 _PROTOTYPE( void set_blocksize, (struct super_block *)			);
 _PROTOTYPE( void rw_scattered, (dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
+_PROTOTYPE( int block_write_ok, (struct buf *bp)			);
 
 /* inode.c */
 _PROTOTYPE( struct inode *alloc_inode, (dev_t dev, mode_t bits)		);
@@ -93,6 +94,7 @@ _PROTOTYPE( void free_bit, (struct super_block *sp, int map,
 _PROTOTYPE( unsigned int get_block_size, (dev_t dev)				);
 _PROTOTYPE( struct super_block *get_super, (dev_t dev)			);
 _PROTOTYPE( int read_super, (struct super_block *sp)			);
+_PROTOTYPE( int write_super, (struct super_block *sp)			);
 
 /* stats.c */
 _PROTOTYPE( bit_t count_free_bits, (struct super_block *sp, int map));
