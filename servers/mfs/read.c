@@ -62,7 +62,11 @@ PUBLIC int fs_readwrite(void)
   
   rdwt_err = OK;		/* set to EIO if disk error occurs */
 
+  /* If this is file i/o, check we can write */
   if (rw_flag == WRITING && !block_spec) {
+  	  if(rip->i_sp->s_rd_only) 
+		  return EROFS;
+
 	  /* Check in advance to see if file will grow too big. */
 	  if (position > (off_t) (rip->i_sp->s_max_size - nrbytes))
 		  return(EFBIG);
@@ -73,6 +77,11 @@ PUBLIC int fs_readwrite(void)
 	   */
 	  if(position > f_size) clear_zone(rip, f_size, 0);
   }
+
+  /* If this is block i/o, check we can write */
+  if(block_spec && rw_flag == WRITING &&
+  	(dev_t) rip->i_zone[0] == superblock.s_dev && superblock.s_rd_only)
+		return EROFS;
 	      
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
@@ -114,7 +123,10 @@ PUBLIC int fs_readwrite(void)
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
 
-  if (r == OK) {
+  /* even on a ROFS, writing to a device node on it is fine, 
+   * just don't update the inode stats for it. And dito for reading.
+   */
+  if (r == OK && !rip->i_sp->s_rd_only) {
 	  if (rw_flag == READING) rip->i_update |= ATIME;
 	  if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
 	  IN_MARKDIRTY(rip);		/* inode is thus now dirty */
@@ -136,11 +148,14 @@ PUBLIC int fs_breadwrite(void)
   u64_t position;
   unsigned int off, cum_io, chunk, block_size;
   size_t nrbytes;
+  dev_t target_dev;
 
   /* Pseudo inode for rw_chunk */
   struct inode rip;
   
   r = OK;
+
+  target_dev = (dev_t) fs_m_in.REQ_DEV2;
   
   /* Get the values from the request message */ 
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
@@ -149,9 +164,13 @@ PUBLIC int fs_breadwrite(void)
   		    (unsigned long) fs_m_in.REQ_SEEK_POS_HI);
   nrbytes = (size_t) fs_m_in.REQ_NBYTES;
   
-  block_size = get_block_size( (dev_t) fs_m_in.REQ_DEV2);
+  block_size = get_block_size(target_dev);
 
-  rip.i_zone[0] = (zone_t) fs_m_in.REQ_DEV2;
+  /* Don't block-write to a RO-mounted filesystem. */
+  if(superblock.s_dev == target_dev && superblock.s_rd_only)
+  	return EROFS;
+
+  rip.i_zone[0] = (zone_t) target_dev;
   rip.i_mode = I_BLOCK_SPECIAL;
   rip.i_size = 0;
 
@@ -642,8 +661,10 @@ PUBLIC int fs_getdents(void)
   else {
 	  fs_m_out.RES_NBYTES = userbuf_off;
 	  fs_m_out.RES_SEEK_POS_LO = new_pos;
-	  rip->i_update |= ATIME;
-	  IN_MARKDIRTY(rip);
+	  if(!rip->i_sp->s_rd_only) {
+		  rip->i_update |= ATIME;
+		  IN_MARKDIRTY(rip);
+	  }
 	  r = OK;
   }
 

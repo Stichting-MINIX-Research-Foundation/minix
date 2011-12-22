@@ -148,8 +148,10 @@ PUBLIC int fs_unlink()
 	return(r);
   }
   
+  if(rip->i_sp->s_rd_only) {
+  	r = EROFS;
+  }  else if(fs_m_in.m_type == REQ_UNLINK) {
   /* Now test if the call is allowed, separately for unlink() and rmdir(). */
-  if(fs_m_in.m_type == REQ_UNLINK) {
 	  /* Only the su may unlink directories, but the su can unlink any
 	   * dir.*/
 	  if( (rip->i_mode & I_TYPE) == I_DIRECTORY) r = EPERM;
@@ -496,14 +498,18 @@ PUBLIC int fs_ftrunc(void)
   if( (rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
 
-  start = fs_m_in.REQ_TRC_START_LO;
-  end = fs_m_in.REQ_TRC_END_LO;
+  if(rip->i_sp->s_rd_only) {
+  	r = EROFS;
+  } else {
+    start = fs_m_in.REQ_TRC_START_LO;
+    end = fs_m_in.REQ_TRC_END_LO;
 
-  if (end == 0)
+    if (end == 0)
 	  r = truncate_inode(rip, start);
-  else 
+    else 
 	  r = freesp_inode(rip, start, end);
-  
+  }
+
   return(r);
 }
     

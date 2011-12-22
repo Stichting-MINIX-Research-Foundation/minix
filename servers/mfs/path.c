@@ -494,6 +494,9 @@ int check_permissions;		 /* check permissions when flag is !IS_EMPTY */
   if ( (ldir_ptr->i_mode & I_TYPE) != I_DIRECTORY)  {
 	return(ENOTDIR);
    }
+
+  if((flag == DELETE || flag == ENTER) && ldir_ptr->i_sp->s_rd_only)
+	return EROFS;
   
   r = OK;
 

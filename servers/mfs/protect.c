@@ -21,6 +21,11 @@ PUBLIC int fs_chmod()
   /* Temporarily open the file. */
   if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
 	  return(EINVAL);
+ 
+  if(rip->i_sp->s_rd_only) {
+  	put_inode(rip);
+	return EROFS;
+  }
 
   /* Now make the change. Clear setgid bit if file is not in caller's grp */
   rip->i_mode = (rip->i_mode & ~ALL_MODES) | (mode & ALL_MODES);

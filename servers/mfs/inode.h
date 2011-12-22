@@ -16,6 +16,8 @@
 
 #include <sys/queue.h>
 
+#include "super.h"
+
 EXTERN struct inode {
   u16_t i_mode;		/* file type, protection, etc. */
   u16_t i_nlinks;		/* how many links to this file */
@@ -63,7 +65,7 @@ EXTERN unsigned int inode_cache_miss;
 #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
 
 #define IN_MARKCLEAN(i) i->i_dirt = IN_CLEAN
-#define IN_MARKDIRTY(i) i->i_dirt = IN_DIRTY
+#define IN_MARKDIRTY(i) do { if(i->i_sp->s_rd_only) { printf("%s:%d: dirty inode on rofs ", __FILE__, __LINE__); util_stacktrace(); } else { i->i_dirt = IN_DIRTY; } } while(0)
 
 #define IN_ISCLEAN(i) i->i_dirt == IN_CLEAN
 #define IN_ISDIRTY(i) i->i_dirt == IN_DIRTY
