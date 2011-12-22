@@ -1,0 +1,228 @@
+.\"	$NetBSD: prop_array_util.3,v 1.7 2011/10/17 09:24:54 wiz Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 12, 2011
+.Dt PROP_ARRAY_UTIL 3
+.Os
+.Sh NAME
+.Nm prop_array_util ,
+.Nm prop_array_get_bool ,
+.Nm prop_array_set_bool ,
+.Nm prop_array_get_int8 ,
+.Nm prop_array_get_uint8 ,
+.Nm prop_array_set_int8 ,
+.Nm prop_array_set_uint8 ,
+.Nm prop_array_get_int16 ,
+.Nm prop_array_get_uint16 ,
+.Nm prop_array_set_int16 ,
+.Nm prop_array_set_uint16 ,
+.Nm prop_array_get_int32 ,
+.Nm prop_array_get_uint32 ,
+.Nm prop_array_set_int32 ,
+.Nm prop_array_set_uint32 ,
+.Nm prop_array_get_int64 ,
+.Nm prop_array_get_uint64 ,
+.Nm prop_array_set_int64 ,
+.Nm prop_array_set_uint64 ,
+.Nm prop_array_add_int8 ,
+.Nm prop_array_add_uint8 ,
+.Nm prop_array_add_int16 ,
+.Nm prop_array_add_uint16 ,
+.Nm prop_array_add_int32 ,
+.Nm prop_array_add_uint32 ,
+.Nm prop_array_add_int64 ,
+.Nm prop_array_add_uint64 ,
+.Nm prop_array_get_cstring ,
+.Nm prop_array_set_cstring ,
+.Nm prop_array_get_cstring_nocopy ,
+.Nm prop_array_set_cstring_nocopy ,
+.Nm prop_array_add_and_rel
+.Nd array property collection object utility functions
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft bool
+.Fn prop_array_get_bool "prop_array_t dict" "unsigned int indx" \
+    "bool *valp"
+.Ft bool
+.Fn prop_array_set_bool "prop_array_t dict" "unsigned int indx" \
+    "bool val"
+.\"
+.Ft bool
+.Fn prop_array_get_int8 "prop_array_t dict" "unsigned int indx" \
+    "int8_t *valp"
+.Ft bool
+.Fn prop_array_get_uint8 "prop_array_t dict" "unsigned int indx" \
+    "uint8_t *valp"
+.Ft bool
+.Fn prop_array_set_int8 "prop_array_t dict" "unsigned int indx" \
+    "int8_t val"
+.Ft bool
+.Fn prop_array_set_uint8 "prop_array_t dict" "unsigned int indx" \
+    "uint8_t val"
+.\"
+.Ft bool
+.Fn prop_array_get_int16 "prop_array_t dict" "unsigned int indx" \
+    "int16_t *valp"
+.Ft bool
+.Fn prop_array_get_uint16 "prop_array_t dict" "unsigned int indx" \
+    "uint16_t *valp"
+.Ft bool
+.Fn prop_array_set_int16 "prop_array_t dict" "unsigned int indx" \
+    "int16_t val"
+.Ft bool
+.Fn prop_array_set_uint16 "prop_array_t dict" "unsigned int indx" \
+    "uint16_t val"
+.\"
+.Ft bool
+.Fn prop_array_get_int32 "prop_array_t dict" "unsigned int indx" \
+    "int32_t *valp"
+.Ft bool
+.Fn prop_array_get_uint32 "prop_array_t dict" "unsigned int indx" \
+    "uint32_t *valp"
+.Ft bool
+.Fn prop_array_set_int32 "prop_array_t dict" "unsigned int indx" \
+    "int32_t val"
+.Ft bool
+.Fn prop_array_set_uint32 "prop_array_t dict" "unsigned int indx" \
+    "uint32_t val"
+.\"
+.Ft bool
+.Fn prop_array_get_int64 "prop_array_t dict" "unsigned int indx" \
+    "int64_t *valp"
+.Ft bool
+.Fn prop_array_get_uint64 "prop_array_t dict" "unsigned int indx" \
+    "uint64_t *valp"
+.Ft bool
+.Fn prop_array_set_int64 "prop_array_t dict" "unsigned int indx" \
+    "int64_t val"
+.Ft bool
+.Fn prop_array_set_uint64 "prop_array_t dict" "unsigned int indx" \
+    "uint64_t val"
+.\"
+.Ft bool
+.Fn prop_array_set_int32 "prop_array_t dict" "unsigned int indx" \
+    "int32_t val"
+.Ft bool
+.Fn prop_array_set_uint32 "prop_array_t dict" "unsigned int indx" \
+    "uint32_t val"
+.\"
+.Ft bool
+.Fn prop_array_add_int8 "prop_array_t dict" "int8_t val"
+.Ft bool
+.Fn prop_array_add_uint8 "prop_array_t dict" "uint8_t val"
+.Ft bool
+.Fn prop_array_add_int16 "prop_array_t dict"  "int16_t val"
+.Ft bool
+.Fn prop_array_add_uint16 "prop_array_t dict" "uint16_t val"
+.Ft bool
+.Fn prop_array_add_int32 "prop_array_t dict" "int32_t val"
+.Ft bool
+.Fn prop_array_add_uint32 "prop_array_t dict" "uint32_t val"
+.Ft bool
+.Fn prop_array_add_int64 "prop_array_t dict"  "int64_t val"
+.Ft bool
+.Fn prop_array_add_uint64 "prop_array_t dict" "uint64_t val"
+.\"
+.Ft bool
+.Fn prop_array_get_cstring "prop_array_t dict" "unsigned int indx" \
+    "char **strp"
+.Ft bool
+.Fn prop_array_set_cstring "prop_array_t dict" "unsigned int indx" \
+    "const char *str"
+.\"
+.Ft bool
+.Fn prop_array_get_cstring_nocopy "prop_array_t dict" \
+    "unsigned int indx" "const char **strp"
+.Ft bool
+.Fn prop_array_set_cstring_nocopy "prop_array_t dict" \
+    "unsigned int indx" "const char *strp"
+.Ft bool
+.Fn prop_array_add_and_rel "prop_array_t dict" \
+    "prop_object_t obj"
+.Sh DESCRIPTION
+The
+.Nm prop_array_util
+family of functions are provided to make getting and setting values in
+arrays more convenient in some applications.
+.Pp
+The getters check the type of the returned object and, in some cases, also
+ensure that the returned value is within the range implied by the getter's
+value type.
+.Pp
+The setters handle object creation and release for the caller.
+.Pp
+The
+.Fn prop_array_get_cstring
+function returns dynamically allocated memory.
+See
+.Xr prop_string 3
+for more information.
+.Pp
+The
+.Fn prop_array_get_cstring_nocopy
+and
+.Fn prop_array_set_cstring_nocopy
+functions do not copy the string that is set or returned.
+See
+.Xr prop_string 3
+for more information.
+.Pp
+The
+.Fn prop_array_add_and_rel
+function adds the object to the end of the array and releases it.
+The object is also released on failure.
+.Sh RETURN VALUES
+The
+.Nm prop_array_util
+getter functions return
+.Dv true
+if the object exists in the array and the value is in-range, or
+.Dv false
+otherwise.
+.Pp
+The
+.Nm prop_array_util
+setter functions return
+.Dv true
+if creating the object and storing it in the array is successful, or
+.Dv false
+otherwise.
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_number 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

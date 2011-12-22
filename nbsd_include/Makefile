@@ -67,7 +67,9 @@ INCSDIR=	/usr/include
 .else
 SUBDIR=		rpc
 .endif
-.if !defined(__MINIX)
+.if defined(__MINIX)
+SUBDIR+=       prop
+.else
 SUBDIR+=	../common/include/prop
 .endif
 

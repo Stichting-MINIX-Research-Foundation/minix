@@ -1,0 +1,210 @@
+.\"	$NetBSD: prop_number.3,v 1.10 2011/01/20 10:44:42 wiz Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 21, 2008
+.Dt PROP_NUMBER 3
+.Os
+.Sh NAME
+.Nm prop_number ,
+.Nm prop_number_create_integer ,
+.Nm prop_number_create_unsigned_integer ,
+.Nm prop_number_copy ,
+.Nm prop_number_size ,
+.Nm prop_number_unsigned ,
+.Nm prop_number_integer_value ,
+.Nm prop_number_unsigned_integer_value ,
+.Nm prop_number_equals ,
+.Nm prop_number_equals_integer ,
+.Nm prop_number_equals_unsigned_integer
+.Nd numeric value property object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_number_t
+.Fn prop_number_create_integer "int64_t val"
+.Ft prop_number_t
+.Fn prop_number_create_unsigned_integer "uint64_t val"
+.Ft prop_number_t
+.Fn prop_number_copy "prop_number_t number"
+.\"
+.Ft int
+.Fn prop_number_size "prop_number_t number"
+.Ft bool
+.Fn prop_number_unsigned "prop_number_t number"
+.Ft int64_t
+.Fn prop_number_integer_value "prop_number_t number"
+.Ft uint64_t
+.Fn prop_number_unsigned_integer_value "prop_number_t number"
+.\"
+.Ft bool
+.Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
+.Ft bool
+.Fn prop_number_equals_integer "prop_number_t number" "int64_t val"
+.Ft bool
+.Fn prop_number_equals_unsigned_integer "prop_number_t number" "uint64_t val"
+.Sh DESCRIPTION
+The
+.Nm prop_number
+family of functions operate on a numeric value property object type.
+Values are either signed or unsigned, and promoted to a 64-bit type
+.Pq int64_t or uint64_t , respectively .
+.Pp
+It is possible to compare number objects that differ in sign.
+Such comparisons first test to see if each object is within the valid
+number range of the other:
+.Bl -bullet
+.It
+Signed numbers that are greater than or equal to 0 can be compared to
+unsigned numbers.
+.It
+Unsigned numbers that are less than or equal to the largest signed 64-bit
+value
+.Pq Dv INT64_MAX
+can be compared to signed numbers.
+.El
+.Pp
+Number objects have a different externalized representation depending
+on their sign:
+.Bl -bullet
+.It
+Signed numbers are externalized in base-10
+.Pq decimal .
+.It
+Unsigned numbers are externalized in base-16
+.Pq hexadecimal .
+.El
+.Pp
+When numbers are internalized, the sign of the resulting number object
+.Pq and thus its valid range
+is determined by a set of rules evaluated in the following order:
+.Bl -bullet
+.It
+If the first character of the number is a
+.Sq -
+then the number is signed.
+.It
+If the first two characters of the number are
+.Sq 0x
+then the number is unsigned.
+.It
+If the number value fits into the range of a signed number then the
+number is signed.
+.It
+In all other cases, the number is unsigned.
+.El
+.Bl -tag -width "xxxxx"
+.It Fn prop_number_create_integer "int64_t val"
+Create a numeric value object with the signed value
+.Fa val .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_number_create_unsigned_integer "uint64_t val"
+Create a numeric value object with the unsigned value
+.Fa val .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_number_copy "prop_number_t number"
+Copy a numeric value object.
+If the supplied object isn't a numeric value,
+.Dv NULL
+is returned.
+.It Fn prop_number_size "prop_number_t number"
+Returns 8, 16, 32, or 64, representing the number of bits required to
+hold the value of the object.
+If the supplied object isn't a numeric value,
+.Dv NULL
+is returned.
+.It Fn prop_number_unsigned "prop_number_t number"
+Returns
+.Dv true
+if the numeric value object has an unsigned value.
+.It Fn prop_number_integer_value "prop_number_t number"
+Returns the signed integer value of the numeric value object.
+If the supplied object isn't a numeric value, zero is returned.
+Thus,
+it is not possible to distinguish between
+.Dq not a prop_number_t
+and
+.Dq prop_number_t has a value of 0 .
+.It Fn prop_number_unsigned_integer_value "prop_number_t number"
+Returns the unsigned integer value of the numeric value object.
+If the supplied object isn't a numeric value, zero is returned.
+Thus,
+it is not possible to distinguish between
+.Dq not a prop_number_t
+and
+.Dq prop_number_t has a value of 0 .
+.It Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
+Returns
+.Dv true
+if the two numeric value objects are equivalent.
+If at least one of the supplied objects isn't a numeric value,
+.Dv false
+is returned.
+.It Fn prop_number_equals_integer "prop_number_t number" "int64_t val"
+Returns
+.Dv true
+if the object's value is equivalent to the signed value
+.Fa val .
+If the supplied object isn't a numerical value or if
+.Fa val
+exceeds
+.Dv INT64_MAX ,
+.Dv false
+is returned.
+.It Fn prop_number_equals_unsigned_integer "prop_number_t number" \
+    "uint64_t val"
+Returns
+.Dv true
+if the object's value is equivalent to the unsigned value
+.Fa val .
+If the supplied object isn't a numerical value or if
+.Fa val
+exceeds
+.Dv INT64_MAX ,
+.Dv false
+is returned.
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_object 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

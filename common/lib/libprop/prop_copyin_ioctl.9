@@ -1,0 +1,194 @@
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.9 2011/01/20 10:47:33 wiz Exp $
+.\"
+.\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 17, 2011
+.Dt PROP_COPYIN_IOCTL 9
+.Os
+.Sh NAME
+.Nm prop_array_copyin_ioctl ,
+.Nm prop_array_copyout_ioctl ,
+.Nm prop_array_copyin ,
+.Nm prop_array_copyout ,
+.Nm prop_dictionary_copyin_ioctl ,
+.Nm prop_dictionary_copyout_ioctl ,
+.Nm prop_dictionary_copyin ,
+.Nm prop_dictionary_copyout
+.Nd Copy property lists to and from kernel space
+.Sh SYNOPSIS
+.In prop/proplib.h
+.Ft int
+.Fn prop_array_copyin_ioctl "const struct plistref *pref" \
+    "const u_long cmd" "prop_array_t *arrayp"
+.Ft int
+.Fn prop_array_copyin "const struct plistref *pref" \
+    "prop_array_t *arrayp"
+.Ft int
+.Fn prop_array_copyout_ioctl "struct plistref *pref" \
+    "const u_long cmd" "prop_array_t array"
+.Ft int
+.Fn prop_array_copyout "struct plistref *pref" \
+    "prop_array_t array"
+.Ft int
+.Fn prop_dictionary_copyin_ioctl "const struct plistref *pref" \
+    "const u_long cmd" "prop_dictionary_t *dictp"
+.Ft int
+.Fn prop_dictionary_copyin "const struct plistref *pref" \
+    "prop_dictionary_t *dictp"
+.Ft int
+.Fn prop_dictionary_copyout_ioctl "struct plistref *pref" \
+    "const u_long cmd" "prop_dictionary_t dict"
+.Ft int
+.Fn prop_dictionary_copyout "struct plistref *pref" \
+    "prop_dictionary_t dict"
+.Sh DESCRIPTION
+The
+.Nm prop_array_copyin_ioctl ,
+.Nm prop_array_copyout_ioctl ,
+.Nm prop_dictionary_copyin_ioctl ,
+and
+.Nm prop_dictionary_copyout_ioctl
+functions implement the kernel side of a protocol for copying property lists
+to and from the kernel using
+.Xr ioctl 2 .
+The functions
+.Nm prop_array_copyin ,
+.Nm prop_array_copyout ,
+.Nm prop_dictionary_copyin ,
+and
+.Nm prop_dictionary_copyout
+implement the kernel side of a protocol for copying property lists to the
+kernel as arguments of normal system calls.
+.Pp
+A kernel routine receiving or returning a property list will be passed a
+pointer to a
+.Vt struct plistref .
+This structure encapsulates the reference to the property list in externalized
+form.
+.Sh RETURN VALUES
+If successful, functions return zero.
+Otherwise, an error number will be returned to indicate the error.
+.Sh EXAMPLES
+The following
+.Pq simplified
+example demonstrates using
+.Fn prop_dictionary_copyin_ioctl
+and
+.Fn prop_dictionary_copyout_ioctl
+in an ioctl routine:
+.Bd -literal
+extern prop_dictionary_t fooprops;
+
+int
+fooioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+{
+    prop_dictionary_t dict, odict;
+    int error;
+
+    switch (cmd) {
+    case FOOSETPROPS: {
+	const struct plistref *pref = (const struct plistref *) data;
+	error = prop_dictionary_copyin_ioctl(pref, cmd, \*[Am]dict);
+	if (error)
+		return (error);
+	odict = fooprops;
+	fooprops = dict;
+	prop_object_release(odict);
+	break;
+      }
+
+    case FOOGETPROPS: {
+	struct plistref *pref = (struct plistref *) data;
+	error = prop_dictionary_copyout_ioctl(pref, cmd, fooprops);
+	break;
+      }
+
+    default:
+	return (EPASSTHROUGH);
+    }
+    return (error);
+}
+.Ed
+.Pp
+The following
+.Pq simplified
+example demonstrates using
+.Fn prop_array_copyin
+in a routine:
+.Bd -literal
+int
+foocopyin(const struct plistref *pref))
+{
+    prop_array_t array;
+    int error;
+
+    error = prop_array_copyin(pref, \*[Am]array);
+    if (error)
+	    return (error);
+    ...
+}
+.Ed
+.Sh ERRORS
+.Fn prop_array_copyin_ioctl
+and
+.Fn prop_dictionary_copyin_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Bad address
+.It Bq Er EIO
+Input/output error
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
+.Pp
+.Fn prop_array_copyout_ioctl
+and
+.Fn prop_dictionary_copyout_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Bad address
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_send_ioctl 3 ,
+.Xr prop_send_syscall 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

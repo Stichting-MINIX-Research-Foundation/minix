@@ -24,7 +24,7 @@ SUBDIR= csu ${LIBCOMPAT_DIR} ${LIBC_DIR} libblockdriver libchardriver     \
 
 .if defined(NBSD_LIBC) && (${NBSD_LIBC} != "no")
 SUBDIR+= libelf libminc libcrypt libterminfo libcurses libvassert libutil \
-	 libpuffs librefuse libbz2 libarchive
+	 libpuffs librefuse libbz2 libarchive libprop
 .endif
 
 .if ${COMPILER_TYPE} == "ack"

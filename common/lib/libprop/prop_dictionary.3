@@ -1,0 +1,353 @@
+.\"	$NetBSD: prop_dictionary.3,v 1.18 2011/09/30 22:08:18 jym Exp $
+.\"
+.\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 5, 2009
+.Dt PROP_DICTIONARY 3
+.Os
+.Sh NAME
+.Nm prop_dictionary ,
+.Nm prop_dictionary_create ,
+.Nm prop_dictionary_create_with_capacity ,
+.Nm prop_dictionary_copy ,
+.Nm prop_dictionary_copy_mutable ,
+.Nm prop_dictionary_count ,
+.Nm prop_dictionary_ensure_capacity ,
+.Nm prop_dictionary_iterator ,
+.Nm prop_dictionary_all_keys ,
+.Nm prop_dictionary_make_immutable ,
+.Nm prop_dictionary_mutable ,
+.Nm prop_dictionary_get ,
+.Nm prop_dictionary_set ,
+.Nm prop_dictionary_remove ,
+.Nm prop_dictionary_get_keysym ,
+.Nm prop_dictionary_set_keysym ,
+.Nm prop_dictionary_remove_keysym ,
+.Nm prop_dictionary_externalize ,
+.Nm prop_dictionary_internalize ,
+.Nm prop_dictionary_externalize_to_file ,
+.Nm prop_dictionary_internalize_from_file ,
+.Nm prop_dictionary_externalize_to_pref ,
+.Nm prop_dictionary_internalize_from_pref ,
+.Nm prop_dictionary_equals ,
+.Nm prop_dictionary_keysym_cstring_nocopy ,
+.Nm prop_dictionary_keysym_equals
+.Nd dictionary property collection object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_dictionary_t
+.Fn prop_dictionary_create "void"
+.Ft prop_dictionary_t
+.Fn prop_dictionary_create_with_capacity "unsigned int capacity"
+.\"
+.Ft prop_dictionary_t
+.Fn prop_dictionary_copy "prop_dictionary_t dict"
+.Ft prop_dictionary_t
+.Fn prop_dictionary_copy_mutable "prop_dictionary_t dict"
+.\"
+.Ft unsigned int
+.Fn prop_dictionary_count "prop_dictionary_t dict"
+.Ft bool
+.Fn prop_dictionary_ensure_capacity "prop_dictionary_t dict" \
+    "unsigned int capacity"
+.\"
+.Ft prop_object_iterator_t
+.Fn prop_dictionary_iterator "prop_dictionary_t dict"
+.Ft prop_array_t
+.Fn prop_dictionary_all_keys "prop_dictionary_t dict"
+.\"
+.Ft void
+.Fn prop_dictionary_make_immutable "prop_dictionary_t dict"
+.Ft bool
+.Fn prop_dictionary_mutable "prop_dictionary_t dict"
+.\"
+.Ft prop_object_t
+.Fn prop_dictionary_get "prop_dictionary_t dict" "const char *key"
+.Ft bool
+.Fn prop_dictionary_set "prop_dictionary_t dict" "const char *key" \
+    "prop_object_t obj"
+.Ft void
+.Fn prop_dictionary_remove "prop_dictionary_t dict" "const char *key"
+.\"
+.Ft prop_object_t
+.Fn prop_dictionary_get_keysym "prop_dictionary_t dict" \
+    "prop_dictionary_keysym_t keysym"
+.Ft bool
+.Fn prop_dictionary_set_keysym "prop_dictionary_t dict" \
+    "prop_dictionary_keysym_t keysym" "prop_object_t obj"
+.Ft void
+.Fn prop_dictionary_remove_keysym "prop_dictionary_t dict" \
+    "prop_dictionary_keysym_t keysym"
+.\"
+.Ft bool
+.Fn prop_dictionary_equals "prop_dictionary_t dict1" "prop_dictionary_t dict2"
+.\"
+.Ft const char *
+.Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t sym"
+.\"
+.Ft bool
+.Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
+    "prop_dictionary_keysym_t keysym2"
+.\"
+.Ft char *
+.Fn prop_dictionary_externalize "prop_dictionary_t dict"
+.Ft prop_dictionary_t
+.Fn prop_dictionary_internalize "const char *xml"
+.\"
+.Ft bool
+.Fn prop_dictionary_externalize_to_file "prop_dictionary_t dict" \
+    "const char *path"
+.Ft prop_dictionary_t
+.Fn prop_dictionary_internalize_from_file "const char *path"
+.\"
+.Ft bool
+.Fn prop_dictionary_externalize_to_pref "prop_dictionary_t dict" \
+    "struct plistref *pref"
+.Ft bool
+.Fn prop_dictionary_internalize_from_pref "const struct plistref *pref" \
+    "prop_dictionary_t *dictp"
+.\"
+.Sh DESCRIPTION
+The
+.Nm prop_dictionary
+family of functions operate on the dictionary property collection object type.
+A dictionary is an unordered set of objects stored as key-value pairs.
+.Bl -tag -width "xxxxx"
+.It Fn prop_dictionary_create "void"
+Create an empty dictionary.
+The dictionary initially has no capacity.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_dictionary_create_with_capacity "unsigned int capacity"
+Create a dictionary with the capacity to store
+.Fa capacity
+objects.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_dictionary_copy "prop_dictionary_t dict"
+Copy a dictionary.
+The new dictionary has an initial capacity equal to the number of objects
+stored in the dictionary being copied.
+The new dictionary contains references to the original dictionary's objects,
+not copies of those objects
+.Pq i.e. a shallow copy is made .
+If the original dictionary is immutable, the resulting dictionary is also
+immutable.
+.It Fn prop_dictionary_copy_mutable "prop_dictionary_t dict"
+Like
+.Fn prop_dictionary_copy ,
+except the resulting dictionary is always mutable.
+.It Fn prop_dictionary_count "prop_dictionary_t dict"
+Returns the number of objects stored in the dictionary.
+.It Fn prop_dictionary_ensure_capacity "prop_dictionary_t dict" \
+    "unsigned int capacity"
+Ensure that the dictionary has a total capacity of
+.Fa capacity ,
+including objects already stored in the dictionary.
+Returns
+.Dv true
+if the capacity of the dictionary is greater or equal to
+.Fa capacity
+or if the expansion of the dictionary's capacity was successful
+and
+.Dv false
+otherwise.
+If the supplied object isn't a dictionary,
+.Dv false
+is returned.
+.It Fn prop_dictionary_iterator "prop_dictionary_t dict"
+Create an iterator for the dictionary.
+The dictionary is retained by the iterator.
+A dictionary iterator returns the key symbols used to look up objects stored
+in the dictionary; to get the object itself, a dictionary lookup using this
+key symbol must be performed.
+Storing to or removing from the dictionary invalidates any active iterators for
+the dictionary.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_dictionary_all_keys "prop_dictionary_t dict"
+Return an array of all of the dictionary key symbols
+.Pq prop_dictionary_keysym_t
+in the dictionary.
+This provides a way to iterate over the items in the dictionary while
+retaining the ability to mutate the dictionary; instead of iterating
+over the dictionary itself, iterate over the array of keys.
+The caller is responsible for releasing the array.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_dictionary_make_immutable "prop_dictionary_t dict"
+Make
+.Fa dict
+immutable.
+.It Fn prop_dictionary_mutable "prop_dictionary_t dict"
+Returns
+.Dv true
+if the dictionary is mutable.
+.It Fn prop_dictionary_get "prop_dictionary_t dict" "const char *key"
+Return the object stored in the dictionary with the key
+.Fa key .
+If no object is stored with the specified key,
+.Dv NULL
+is returned.
+.It Fn prop_dictionary_set "prop_dictionary_t dict" "const char *key" \
+       "prop_object_t obj"
+Store a reference to the object
+.Fa obj
+with the key
+.Fa key .
+The object will be retained by the dictionary.
+If the key already exists in the dictionary, the object associated with
+that key will be released and replaced with the new object.
+Returns
+.Dv true
+if storing the object was successful and
+.Dv false
+otherwise.
+.It Fn prop_dictionary_remove "prop_dictionary_t dict" "const char *key"
+Remove the reference to the object stored in the dictionary with the key
+.Fa key .
+The object will be released.
+.It Fn prop_dictionary_get_keysym "prop_dictionary_t dict" \
+    "prop_dictionary_keysym_t sym"
+Like
+.Fn prop_dictionary_get ,
+but the lookup is performed using a key symbol returned by a dictionary
+iterator.
+The results are undefined if the iterator used to obtain the key symbol
+is not associated with
+.Fa dict .
+.It Fn prop_dictionary_set_keysym "prop_dictionary_t dict" \
+    "prop_dictionary_keysym_t sym" "prop_object_t obj"
+Like
+.Fn prop_dictionary_set ,
+but the lookup of the object to replace is performed using a key symbol
+returned by a dictionary iterator.
+The results are undefined if the iterator used to obtain the key symbol
+is not associated with
+.Fa dict .
+.It Fn prop_dictionary_remove_keysym "prop_dictionary_t dict" \
+    "prop_dictionary_keysym_t sym"
+Like
+.Fn prop_dictionary_remove ,
+but the lookup of the object to remove is performed using a key symbol
+returned by a dictionary iterator.
+The results are undefined if the iterator used to obtain the key symbol
+is not associated with
+.Fa dict .
+.It Fn prop_dictionary_equals "prop_dictionary_t dict1" \
+    "prop_dictionary_t dict2"
+Returns
+.Dv true
+if the two dictionaries are equivalent.
+Note: Objects contained in the dictionary are compared by value, not by
+reference.
+.It Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t keysym"
+Returns an immutable reference to the dictionary key symbol's string value.
+.It Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
+    "prop_dictionary_keysym_t keysym2"
+Returns
+.Dv true
+if the two dictionary key symbols are equivalent.
+.It Fn prop_dictionary_externalize "prop_dictionary_t dict"
+Externalizes a dictionary, returning a NUL-terminated buffer containing
+the XML representation of the dictionary.
+The caller is responsible for freeing the returned buffer.
+If converting to the external representation fails for any reason,
+.Dv NULL
+is returned.
+.Pp
+In user space, the buffer is allocated using
+.Xr malloc 3 .
+In the kernel, the buffer is allocated using
+.Xr malloc 9
+using the malloc type
+.Dv M_TEMP .
+.It Fn prop_dictionary_internalize "const char *xml"
+Parse the XML representation of a property list in the NUL-terminated
+buffer
+.Fa xml
+and return the corresponding dictionary.
+Returns
+.Dv NULL
+if parsing fails for any reason.
+.It Fn prop_dictionary_externalize_to_file "prop_dictionary_t dict" \
+    "const char *path"
+Externalizes a dictionary and writes it to the file specified by
+.Fa path .
+The file is saved with the mode
+.Dv 0666
+as modified by the process's file creation mask
+.Pq see Xr umask 2
+and is written atomically.
+Returns
+.Dv false
+if externalizing or writing the dictionary fails for any reason.
+.It Fn prop_dictionary_internalize_from_file "const char *path"
+Reads the XML property list contained in the file specified by
+.Fa path ,
+internalizes it, and returns the corresponding dictionary.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_dictionary_externalize_to_pref "prop_dictionary_t dict" \
+    "struct plistref *pref"
+Externalizes a dictionary and packs it into the plistref specified by
+.Fa pref .
+Returns
+.Dv false
+if externalizing the dictionary fails for any reason.
+.It Fn prop_dictionary_internalize_from_pref "const struct plistref *pref" \
+    "prop_dictionary_t *dictp"
+Reads the plistref specified by
+.Fa pref ,
+internalizes it, and returns the corresponding dictionary.
+Returns
+.Dv false
+if internalizing or writing the dictionary fails for any reason.
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary_util 3 ,
+.Xr prop_number 3 ,
+.Xr prop_object 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

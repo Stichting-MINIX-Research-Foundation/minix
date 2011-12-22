@@ -61,6 +61,7 @@
 755  root    operator  /usr/include/arpa
 755  root    operator  /usr/include/compat
 755  root    operator  /usr/include/compat/machine
+755  root    operator  /usr/include/prop
 755  root    operator  /usr/include/ddekit
 755  root    operator  /usr/include/ddekit/minix
 755  root    operator  /usr/include/minix

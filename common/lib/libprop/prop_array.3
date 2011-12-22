@@ -1,0 +1,308 @@
+.\"	$NetBSD: prop_array.3,v 1.13 2011/09/30 22:08:18 jym Exp $
+.\"
+.\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 10, 2009
+.Dt PROP_ARRAY 3
+.Os
+.Sh NAME
+.Nm prop_array ,
+.Nm prop_array_create ,
+.Nm prop_array_create_with_capacity ,
+.Nm prop_array_copy ,
+.Nm prop_array_copy_mutable ,
+.Nm prop_array_capacity ,
+.Nm prop_array_count ,
+.Nm prop_array_ensure_capacity ,
+.Nm prop_array_iterator ,
+.Nm prop_array_make_immutable ,
+.Nm prop_array_mutable ,
+.Nm prop_array_get ,
+.Nm prop_array_set ,
+.Nm prop_array_add ,
+.Nm prop_array_remove ,
+.Nm prop_array_externalize ,
+.Nm prop_array_internalize ,
+.Nm prop_array_externalize_to_file ,
+.Nm prop_array_internalize_from_file ,
+.Nm prop_array_externalize_to_pref ,
+.Nm prop_array_internalize_from_pref ,
+.Nm prop_array_equals
+.Nd array property collection object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_array_t
+.Fn prop_array_create "void"
+.Ft prop_array_t
+.Fn prop_array_create_with_capacity "unsigned int capacity"
+.\"
+.Ft prop_array_t
+.Fn prop_array_copy "prop_array_t array"
+.Ft prop_array_t
+.Fn prop_array_copy_mutable "prop_array_t array"
+.\"
+.Ft unsigned int
+.Fn prop_array_capacity "prop_array_t array"
+.Ft unsigned int
+.Fn prop_array_count "prop_array_t array"
+.Ft bool
+.Fn prop_array_ensure_capacity "prop_array_t array" "unsigned int capacity"
+.\"
+.Ft prop_object_iterator_t
+.Fn prop_array_iterator "prop_array_t array"
+.\"
+.Ft void
+.Fn prop_array_make_immutable "prop_array_t array"
+.Ft bool
+.Fn prop_array_mutable "prop_array_t array"
+.\"
+.Ft prop_object_t
+.Fn prop_array_get "prop_array_t array" "unsigned int index"
+.Ft bool
+.Fn prop_array_set "prop_array_t array" "unsigned int index" "prop_object_t obj"
+.Ft bool
+.Fn prop_array_add "prop_array_t array" "prop_object_t obj"
+.Ft void
+.Fn prop_array_remove "prop_array_t array" "unsigned int index"
+.\"
+.Ft char *
+.Fn prop_array_externalize "prop_array_t array"
+.Ft prop_array_t
+.Fn prop_array_internalize "const char *xml"
+.\"
+.Ft bool
+.Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
+.Ft prop_array_t
+.Fn prop_array_internalize_from_file "const char *path"
+.\"
+.Ft bool
+.Fn prop_array_externalize_to_pref "prop_array_t array" "struct plistref *pref"
+.Ft bool
+.Fn prop_array_internalize_from_pref "const struct plistref *pref" \
+    "prop_array_t *arrayp"
+.\"
+.Ft bool
+.Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
+.Sh DESCRIPTION
+The
+.Nm prop_array
+family of functions operate on the array property collection object type.
+An array is an ordered set; an iterated array will return objects in the
+same order with which they were stored.
+.Bl -tag -width "xxxxx"
+.It Fn prop_array_create "void"
+Create an empty array.
+The array initially has no capacity.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_array_create_with_capacity "unsigned int capacity"
+Create an array with the capacity to store
+.Fa capacity
+objects.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_array_copy "prop_array_t array"
+Copy an array.
+The new array has an initial capacity equal to the number of objects stored
+in the array being copied.
+The new array contains references to the original array's objects, not
+copies of those objects
+.Pq i.e. a shallow copy is made .
+If the original array is immutable, the resulting array is also immutable.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_array_copy_mutable "prop_array_t array"
+Like
+.Fn prop_array_copy ,
+except the resulting array is always mutable.
+.It Fn prop_array_capacity "prop_array_t array"
+Returns the total capacity of the array, including objects already stored
+in the array.
+If the supplied object isn't an array, zero is returned.
+.It Fn prop_array_count "prop_array_t array"
+Returns the number of objects stored in the array.
+If the supplied object isn't an array, zero is returned.
+.It Fn prop_array_ensure_capacity "prop_array_t array" "unsigned int capacity"
+Ensure that the array has a total capacity of
+.Fa capacity ,
+including objects already stored in the array.
+Returns
+.Dv true
+if the capacity of the array is greater or equal to
+.Fa capacity
+or if expansion of the array's capacity was successful
+and
+.Dv false
+otherwise.
+.It Fn prop_array_iterator "prop_array_t array"
+Create an iterator for the array.
+The array is retained by the iterator.
+An array iterator returns the object references stored in the array.
+Storing to or removing from the array invalidates any active iterators for
+the array.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_array_make_immutable "prop_array_t array"
+Make
+.Fa array
+immutable.
+.It Fn prop_array_mutable "prop_array_t array"
+Returns
+.Dv true
+if the array is mutable.
+.It Fn prop_array_get "prop_array_t array" "unsigned int index"
+Return the object stored at the array index
+.Fa index .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_array_set "prop_array_t array" "unsigned int index" \
+       "prop_object_t obj"
+Store a reference to the object
+.Fa obj
+at the array index
+.Fa index .
+This function is not allowed to create holes in the array;
+the caller must either be setting the object just beyond the existing
+count or replacing an already existing object reference.
+The object will be retained by the array.
+If an existing object reference is being replaced, that object will be
+released.
+Returns
+.Dv true
+if storing the object was successful and
+.Dv false
+otherwise.
+.It Fn prop_array_add "prop_array_t array" "prop_object_t obj"
+Add a reference to the object
+.Fa obj
+to the array, appending to the end and growing the array's capacity if
+necessary.
+The object will be retained by the array.
+Returns
+.Dv true
+if storing the object was successful and
+.Dv false
+otherwise.
+.Pp
+During expansion, array's capacity is augmented by the
+.Dv EXPAND_STEP
+constant, as defined in
+.Pa libprop/prop_array.c
+file, e.g.
+.Pp
+.Dl #define	EXPAND_STEP		16
+.It Fn prop_array_remove "prop_array_t array" "unsigned int index"
+Remove the reference to the object stored at array index
+.Fa index .
+The object will be released and the array compacted following
+the removal.
+.It Fn prop_array_externalize "prop_array_t array"
+Externalizes an array, returning a NUL-terminated buffer containing
+the XML representation of the array.
+The caller is responsible for freeing the returned buffer.
+If converting to the external representation fails for any reason,
+.Dv NULL
+is returned.
+.Pp
+In user space, the buffer is allocated using
+.Xr malloc 3 .
+In the kernel, the buffer is allocated using
+.Xr malloc 9
+using the malloc type
+.Dv M_TEMP .
+.It Fn prop_array_internalize "const char *xml"
+Parse the XML representation of a property list in the NUL-terminated
+buffer
+.Fa xml
+and return the corresponding array.
+Returns
+.Dv NULL
+if parsing fails for any reason.
+.It Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
+Externalizes an array and writes it to the file specified by
+.Fa path .
+The file is saved with the mode
+.Dv 0666
+as modified by the process's file creation mask
+.Pq see Xr umask 2
+and is written atomically.
+Returns
+.Dv false
+if externalizing or writing the array fails for any reason.
+.It Fn prop_array_internalize_from_file "const char *path"
+Reads the XML property list contained in the file specified by
+.Fa path ,
+internalizes it, and returns the corresponding array.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_array_externalize_to_pref "prop_array_t array" \
+    "struct plistref *pref"
+Externalizes an array and packs it into the plistref specified by
+.Fa pref .
+Returns
+.Dv false
+if externalizing the array fails for any reason.
+.It Fn prop_array_internalize_from_pref "const struct plistref *pref" \
+    "prop_array_t *arrayp"
+Reads the plistref specified by
+.Fa pref ,
+internalizes it, and returns the corresponding array.
+Returns
+.Dv false
+if internalizing or writing the array fails for any reason.
+.It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
+Returns
+.Dv true
+if the two arrays are equivalent.
+If at least one of the supplied objects isn't an array,
+.Dv false
+is returned.
+Note: Objects contained in the array are compared by value, not by reference.
+.El
+.Sh SEE ALSO
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_number 3 ,
+.Xr prop_object 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

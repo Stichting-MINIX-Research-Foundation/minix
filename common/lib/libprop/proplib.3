@@ -1,0 +1,139 @@
+.\"	$NetBSD: proplib.3,v 1.7 2011/01/19 20:34:23 bouyer Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 17, 2011
+.Dt PROPLIB 3
+.Os
+.Sh NAME
+.Nm proplib
+.Nd property container object library
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.Sh DESCRIPTION
+The
+.Nm
+library provides an abstract interface for creating and manipulating
+property lists.
+Property lists have object types for boolean values, opaque data, numbers,
+and strings.
+Structure is provided by the array and dictionary collection types.
+.Pp
+Property lists can be passed across protection boundaries by translating
+them to an external representation.
+This external representation is an XML document whose format is described
+by the following DTD:
+.Bd -literal -offset indent
+http://www.apple.com/DTDs/PropertyList-1.0.dtd
+.Ed
+.Pp
+Property container objects are reference counted.
+When an object is created, its reference count is set to 1.
+Any code that keeps a reference to an object, including the collection
+types
+.Pq arrays and dictionaries ,
+must
+.Dq retain
+the object
+.Pq increment its reference count .
+When that reference is dropped, the object must be
+.Dq released
+.Pq reference count decremented .
+When an object's reference count drops to 0, it is automatically freed.
+.Pp
+The rules for managing reference counts are very simple:
+.Bl -bullet
+.It
+If you create an object and do not explicitly maintain a reference to it,
+you must release it.
+.It
+If you get a reference to an object from other code and wish to maintain
+a reference to it, you must retain the object.
+You are responsible for
+releasing the object once you drop that reference.
+.It
+You must never release an object unless you create it or retain it.
+.El
+.Pp
+Object collections may be iterated by creating a special iterator object.
+Iterator objects are special; they may not be retained, and they are
+released using an iterator-specific release function.
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_dictionary_util 3 ,
+.Xr prop_number 3 ,
+.Xr prop_object 3 ,
+.Xr prop_send_ioctl 3 ,
+.Xr prop_send_syscall 3 ,
+.Xr prop_string 3
+.Sh HISTORY
+The
+.Nm
+property container object library first appeared in
+.Nx 4.0 .
+.Sh CAVEATS
+.Nm
+does not have a
+.Sq date
+object type, and thus will not parse
+.Sq date
+elements from an Apple XML property list.
+.Pp
+The
+.Nm
+.Sq number
+object type differs from the Apple XML property list format in the following
+ways:
+.Bl -bullet
+.It
+The external representation is in base 16, not base 10.
+.Nm
+is able to parse base 8, base 10, and base 16
+.Sq integer
+elements.
+.It
+Internally, integers are always stored as unsigned numbers
+.Pq uint64_t .
+Therefore, the external representation will never be negative.
+.It
+Because floating point numbers are not supported,
+.Sq real
+elements from an Apple XML property list will not be parsed.
+.El
+.Pp
+In order to facilitate use of
+.Nm
+in kernel, standalone, and user space environments, the
+.Nm
+parser is not a real XML parser.
+It is hard-coded to parse only the property list external representation.

@@ -1,0 +1,151 @@
+.\"	$NetBSD: prop_send_ioctl.3,v 1.8 2011/09/27 11:12:49 jym Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 21, 2008
+.Dt PROP_SEND_IOCTL 3
+.Os
+.Sh NAME
+.Nm prop_array_send_ioctl ,
+.Nm prop_array_recv_ioctl ,
+.Nm prop_dictionary_send_ioctl ,
+.Nm prop_dictionary_recv_ioctl ,
+.Nm prop_dictionary_sendrecv_ioctl
+.Nd Send and receive propertly lists to and from the kernel using ioctl
+.Sh SYNOPSIS
+.In prop/proplib.h
+.Ft int
+.Fn prop_array_send_ioctl "prop_array_t array" "int fd" "unsigned long cmd"
+.Ft int
+.Fn prop_array_recv_ioctl "int fd" "unsigned long cmd" "prop_array_t *arrayp"
+.Ft int
+.Fn prop_dictionary_send_ioctl "prop_dictionary_t dict" "int fd" \
+    "unsigned long cmd"
+.Ft int
+.Fn prop_dictionary_recv_ioctl "int fd" "unsigned long cmd" \
+    "prop_dictionary_t *dictp"
+.Ft int
+.Fn prop_dictionary_sendrecv_ioctl "prop_dictionary_t dict" "int fd" \
+    "unsigned long cmd" "prop_dictionary_t *dictp"
+.Sh DESCRIPTION
+The
+.Nm prop_array_send_ioctl ,
+.Nm prop_array_recv_ioctl ,
+.Nm prop_dictionary_send_ioctl ,
+.Nm prop_dictionary_recv_ioctl ,
+and
+.Nm prop_dictionary_sendrecv_ioctl
+functions implement the user space side of a protocol for sending property
+lists to and from the kernel using
+.Xr ioctl 2 .
+.Sh RETURN VALUES
+If successful, functions return zero.
+Otherwise, an error number is returned to indicate the error.
+.Sh EXAMPLES
+The following
+.Pq simplified
+example demonstrates using
+.Fn prop_dictionary_send_ioctl
+and
+.Fn prop_dictionary_recv_ioctl
+in an application:
+.Bd -literal
+void
+foo_setprops(prop_dictionary_t dict)
+{
+    int fd;
+
+    fd = open("/dev/foo", O_RDWR, 0640);
+    if (fd == -1)
+        return;
+
+    (void) prop_dictionary_send_ioctl(dict, fd, FOOSETPROPS);
+
+    (void) close(fd);
+}
+
+prop_dictionary_t
+foo_getprops(void)
+{
+    prop_dictionary_t dict;
+    int fd;
+
+    fd = open("/dev/foo", O_RDONLY, 0640);
+    if (fd == -1)
+	return (NULL);
+
+    if (prop_dictionary_recv_ioctl(fd, FOOGETPROPS, \*[Am]dict) != 0)
+        return (NULL);
+
+    (void) close(fd);
+
+    return (dict);
+}
+.Ed
+.Pp
+The
+.Nm prop_dictionary_sendrecv_ioctl
+function combines the send and receive functionality, allowing for
+ioctls that require two-way communication
+.Pq for example to specify arguments for the ioctl operation .
+.Sh ERRORS
+.Fn prop_array_send_ioctl
+and
+.Fn prop_dictionary_send_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
+.Pp
+.Fn prop_array_recv_ioctl
+and
+.Fn prop_dictionary_recv_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EIO
+Input/output error
+.It Bq Er ENOTSUP
+Not supported
+.El
+.Pp
+In addition to these,
+.Xr ioctl 2
+errors may be returned.
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_dictionary 3 ,
+.Xr proplib 3 ,
+.Xr prop_copyin_ioctl 9
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

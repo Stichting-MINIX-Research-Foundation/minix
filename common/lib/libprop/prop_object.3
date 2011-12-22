@@ -1,0 +1,141 @@
+.\"	$NetBSD: prop_object.3,v 1.8 2011/01/20 10:44:42 wiz Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 21, 2006
+.Dt PROP_OBJECT 3
+.Os
+.Sh NAME
+.Nm prop_object ,
+.Nm prop_object_retain ,
+.Nm prop_object_release ,
+.Nm prop_object_type ,
+.Nm prop_object_equals ,
+.Nm prop_object_iterator_next ,
+.Nm prop_object_iterator_reset ,
+.Nm prop_object_iterator_release
+.Nd general property container object functions
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft void
+.Fn prop_object_retain "prop_object_t obj"
+.Ft void
+.Fn prop_object_release "prop_object_t obj"
+.\"
+.Ft prop_type_t
+.Fn prop_object_type "prop_object_t obj"
+.Ft bool
+.Fn prop_object_equals "prop_object_t obj1" "prop_object_t obj2"
+.\"
+.Ft prop_object_t
+.Fn prop_object_iterator_next "prop_object_iterator_t iter"
+.Ft void
+.Fn prop_object_iterator_reset "prop_object_iterator_t iter"
+.Ft void
+.Fn prop_object_iterator_release "prop_object_iterator_t iter"
+.Sh DESCRIPTION
+The
+.Nm prop_object
+family of functions operate on all property container object types.
+.Bl -tag -width ""
+.It Fn prop_object_retain "prop_object_t obj"
+Increment the reference count on an object.
+.It Fn prop_object_release "prop_object_t obj"
+Decrement the reference count on an object.
+If the last reference is dropped, the object is freed.
+.It Fn prop_object_type "prop_object_t obj"
+Determine the type of the object.
+Objects are one of the following types:
+.Pp
+.Bl -tag -width "PROP_TYPE_DICT_KEYSYM" -compact
+.It Dv PROP_TYPE_BOOL
+Boolean value
+.Pq prop_bool_t
+.It Dv PROP_TYPE_NUMBER
+Number
+.Pq prop_number_t
+.It Dv PROP_TYPE_STRING
+String
+.Pq prop_string_t
+.It Dv PROP_TYPE_DATA
+Opaque data
+.Pq prop_data_t
+.It Dv PROP_TYPE_ARRAY
+Array
+.Pq prop_array_t
+.It Dv PROP_TYPE_DICTIONARY
+Dictionary
+.Pq prop_dictionary_t
+.It Dv PROP_TYPE_DICT_KEYSYM
+Dictionary key symbol
+.Pq prop_dictionary_keysym_t
+.El
+.Pp
+If
+.Fa obj
+is
+.Dv NULL ,
+then
+.Dv PROP_TYPE_UNKNOWN
+is returned.
+.It Fn prop_object_equals "prop_object_t obj1" "prop_object_t obj2"
+Returns
+.Dv true
+if the two objects are of the same type and are equivalent.
+.It Fn prop_object_iterator_next "prop_object_iterator_t iter"
+Return the next object in the collection
+.Pq array or dictionary
+being iterated by the iterator
+.Fa iter .
+If there are no more objects in the collection,
+.Dv NULL
+is returned.
+.It Fn prop_object_iterator_reset "prop_object_iterator_t iter"
+Reset the iterator to the first object in the collection being iterated
+by the iterator
+.Fa iter .
+.It Fn prop_object_iterator_release "prop_object_iterator_t iter"
+Release the iterator
+.Fa iter .
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_number 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

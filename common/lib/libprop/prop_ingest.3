@@ -1,0 +1,181 @@
+.\"	$NetBSD: prop_ingest.3,v 1.6 2010/02/18 14:00:39 wiz Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 21, 2008
+.Dt PROP_INGEST 3
+.Os
+.Sh NAME
+.Nm prop_ingest_context_alloc ,
+.Nm prop_ingest_context_free ,
+.Nm prop_ingest_context_error ,
+.Nm prop_ingest_context_type ,
+.Nm prop_ingest_context_key ,
+.Nm prop_ingest_context_private ,
+.Nm prop_dictionary_ingest
+.Nd Ingest a dictionary into an arbitrary binary format
+.Sh SYNOPSIS
+.In prop/proplib.h
+.Ft prop_ingest_context_t
+.Fn prop_ingest_context_alloc "void *private"
+.Ft void
+.Fn prop_ingest_context_free "prop_ingest_context_t ctx"
+.Ft prop_ingest_error_t
+.Fn prop_ingest_context_error "prop_ingest_context_t ctx"
+.Ft prop_type_t
+.Fn prop_ingest_context_type "prop_ingest_context_t ctx"
+.Ft const char *
+.Fn prop_ingest_context_key "prop_ingest_context_t ctx"
+.Ft void *
+.Fn prop_ingest_context_private "prop_ingest_context_t ctx"
+.Ft bool
+.Fn prop_dictionary_ingest "prop_dictionary_t dict" \
+    "const prop_ingest_table_entry rules[]" \
+    "prop_ingest_context_t ctx"
+.Pp
+.Ft typedef bool
+.Fn (*prop_ingest_handler_t) "prop_ingest_context_t" "prop_object_t"
+.Sh DESCRIPTION
+The
+.Nm prop_dictionary_ingest
+function provides a convenient way to convert a property list into
+an arbitrary binary format or to extract values from dictionaries in a
+way that is convenient to an application
+.Pq for configuration files, for example .
+.Pp
+.Nm prop_dictionary_ingest
+is driven by a table of rules provided by the application.
+Each rule consists of three items:
+.Bl -bullet
+.It
+A C string containing a key to be looked up in the dictionary.
+.It
+The expected property type of the object associated with the key
+(or
+.Dv PROP_TYPE_UNKNOWN
+to specify that any type is allowed).
+.It
+A callback function of type
+.Dv prop_ingest_handler_t
+that will perform the translation for the application.
+.El
+.Pp
+The table is constructed using a series of macros as follows:
+.Bd -literal
+static const prop_ingest_table_entry ingest_rules[] = {
+	PROP_INGEST("file-name", PROP_TYPE_STRING, ingest_filename),
+	PROP_INGEST("count", PROP_TYPE_NUMBER, ingest_count),
+	PROP_INGEST_OPTIONAL("required", PROP_TYPE_BOOL, ingest_required),
+	PROP_INGEST_OPTIONAL("extra", PROP_TYPE_UNKNOWN, ingest_extra),
+	PROP_INGEST_END
+};
+.Ed
+.Pp
+The
+.Dv PROP_INGEST
+macro specifies that the key is required to be present in the dictionary.
+The
+.Dv PROP_INGEST_OPTIONAL
+macro specifies that the presence of the key in the dictionary is optional.
+The
+.Dv PROP_INGEST_END
+macro marks the end of the rules table.
+.Pp
+In each case,
+.Nm prop_dictionary_ingest
+looks up the rule's key in the dictionary.
+If an object is present in the dictionary at that key, its type is checked
+against the type specified in the rule.
+A type specification of
+.Dv PROP_TYPE_UNKNOWN
+allows the object to be of any type.
+If the object does not exist and the rule is not marked as optional, then
+an error is returned.
+Otherwise, the handler specified in the rule is invoked with the ingest
+context and the object
+(or
+.Dv NULL
+if the key does not exist in the dictionary).
+The handler should return
+.Dv false
+if the value of the object is invalid to indicate failure and
+.Dv true
+otherwise.
+.Pp
+The ingest context contains several pieces of information that are
+useful during the ingest process.
+The context also provides specific error information should the ingest
+fail.
+.Bl -tag -width "xxxxx"
+.It Fn prop_ingest_context_alloc "void *private"
+Allocate an ingest context.
+The argument
+.Fa private
+may be used to pass application-specific context to the ingest handlers.
+Note that an ingest context can be re-used to perform multiple ingests.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_ingest_context_free "prop_ingest_context_t ctx"
+Free an ingest context.
+.It Fn prop_ingest_context_error "prop_ingest_context_t ctx"
+Returns the code indicating the error encountered during ingest.
+The following error codes are defined:
+.Pp
+.Bl -tag -width "PROP_INGEST_ERROR_HANDLER_FAILED" -compact
+.It Dv PROP_INGEST_ERROR_NO_ERROR
+No error was encountered during ingest.
+.It Dv PROP_INGEST_ERROR_NO_KEY
+A non-optional key was not found in the dictionary.
+.It Dv PROP_INGEST_ERROR_WRONG_TYPE
+An object in the dictionary was not the same type specified in the rules.
+.It Dv PROP_INGEST_ERROR_HANDLER_FAILED
+An object's handler returned
+.Dv false .
+.El
+.Pp
+.It Fn prop_ingest_context_type "prop_ingest_context_t ctx"
+Returns the type of the last object visited during an ingest.
+When called by an ingest handler, it returns the type of the object
+currently being processed.
+.It Fn prop_ingest_context_key "prop_ingest_context_t ctx"
+Returns the last dictionary key looked up during an ingest.
+When called by an ingest handler, it returns the dictionary key corresponding
+to the object currently being processed.
+.It Fn prop_ingest_context_private "prop_ingest_context_t ctx"
+Returns the private data set when the context was allocated with
+.Fn prop_ingest_context_alloc .
+.El
+.Sh SEE ALSO
+.Xr prop_dictionary 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

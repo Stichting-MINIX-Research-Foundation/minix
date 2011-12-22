@@ -1,0 +1,82 @@
+.\"	$NetBSD: prop_bool.3,v 1.6 2008/08/03 03:11:28 thorpej Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 22, 2006
+.Dt PROP_BOOL 3
+.Os
+.Sh NAME
+.Nm prop_bool ,
+.Nm prop_bool_create ,
+.Nm prop_bool_copy ,
+.Nm prop_bool_true
+.Nd boolean value property object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_bool_t
+.Fn prop_bool_create "bool val"
+.Ft prop_bool_t
+.Fn prop_bool_copy "prop_bool_t bool"
+.\"
+.Ft bool
+.Fn prop_bool_true "prop_bool_t bool"
+.Sh DESCRIPTION
+The
+.Nm prop_bool
+family of functions operate on a boolean value property object type.
+.Bl -tag -width "xxxxx"
+.It Fn prop_bool_create "bool val"
+Create a boolean value object with the value
+.Fa val .
+.It Fn prop_bool_copy "prop_bool_t bool"
+Copy a boolean value object.
+If the supplied object isn't a boolean,
+.Dv NULL
+is returned.
+.It Fn prop_bool_true "prop_bool_t bool"
+Returns the value of the boolean value object.
+If the supplied object isn't a boolean,
+.Dv false
+is returned.
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_number 3 ,
+.Xr prop_object 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

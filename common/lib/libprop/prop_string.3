@@ -1,0 +1,193 @@
+.\"	$NetBSD: prop_string.3,v 1.8 2011/02/26 12:56:36 wiz Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 21, 2008
+.Dt PROP_STRING 3
+.Os
+.Sh NAME
+.Nm prop_string ,
+.Nm prop_string_create ,
+.Nm prop_string_create_cstring ,
+.Nm prop_string_create_cstring_nocopy ,
+.Nm prop_string_copy ,
+.Nm prop_string_copy_mutable ,
+.Nm prop_string_size ,
+.Nm prop_string_mutable ,
+.Nm prop_string_cstring ,
+.Nm prop_string_cstring_nocopy ,
+.Nm prop_string_append ,
+.Nm prop_string_append_cstring ,
+.Nm prop_string_equals ,
+.Nm prop_string_equals_cstring
+.Nd string value property object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_string_t
+.Fn prop_string_create "void"
+.Ft prop_string_t
+.Fn prop_string_create_cstring "const char *cstring"
+.Ft prop_string_t
+.Fn prop_string_create_cstring_nocopy "const char *cstring"
+.\"
+.Ft prop_string_t
+.Fn prop_string_copy "prop_string_t string"
+.Ft prop_string_t
+.Fn prop_string_copy_mutable "prop_string_t string"
+.\"
+.Ft size_t
+.Fn prop_string_size "prop_string_t string"
+.Ft bool
+.Fn prop_string_mutable "prop_string_t string"
+.\"
+.Ft char *
+.Fn prop_string_cstring "prop_string_t string"
+.Ft const char *
+.Fn prop_string_cstring_nocopy "prop_string_t string"
+.\"
+.Ft bool
+.Fn prop_string_append "prop_string_t str1" "prop_string_t str2"
+.Ft bool
+.Fn prop_string_append_cstring "prop_string_t string" "const char *cstring"
+.\"
+.Ft bool
+.Fn prop_string_equals "prop_string_t str1" "prop_string_t str2"
+.Ft bool
+.Fn prop_string_equals_cstring "prop_string_t string" "const char *cstring"
+.Sh DESCRIPTION
+The
+.Nm prop_string
+family of functions operate on a string value property object type.
+.Bl -tag -width "xxxxx"
+.It Fn prop_string_create "void"
+Create an empty mutable string.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_string_create_cstring "const char *cstring"
+Create a mutable string that contains a copy of
+.Fa cstring .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_string_create_cstring_nocopy "const char *cstring"
+Create an immutable string that contains a reference to
+.Fa cstring .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_string_copy "prop_string_t string"
+Copy a string.
+If the string being copied is an immutable external C string reference,
+then the copy is also immutable and references the same external C string.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_string_copy_mutable "prop_string_t string"
+Copy a string, always creating a mutable copy.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_string_size "prop_string_t string"
+Returns the size of the string, not including the terminating NUL.
+If the supplied object isn't a string, zero is returned.
+.It Fn prop_string_mutable "prop_string_t string"
+Returns
+.Dv true
+if the string is mutable.
+If the supplied object isn't a string,
+.Dv false
+is returned.
+.It Fn prop_string_cstring "prop_string_t string"
+Returns a copy of the string's contents as a C string.
+The caller is responsible for freeing the returned buffer.
+.Pp
+In user space, the buffer is allocated using
+.Xr malloc 3 .
+In the kernel, the buffer is allocated using
+.Xr malloc 9
+using the malloc type
+.Dv M_TEMP .
+.Pp
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_string_cstring_nocopy "prop_string_t string"
+Returns an immutable reference to the contents of the string as a
+C string.
+If the supplied object isn't a string,
+.Dv NULL
+is returned.
+.It Fn prop_string_append "prop_string_t str1" "prop_string_t str2"
+Append the contents of
+.Fa str2
+to
+.Fa str1 ,
+which must be mutable.
+Returns
+.Dv true
+upon success and
+.Dv false
+otherwise.
+.It Fn prop_string_append_cstring "prop_string_t string" "const char *cstring"
+Append the C string
+.Fa cstring
+to
+.Fa string ,
+which must be mutable.
+Returns
+.Dv true
+upon success and
+.Dv false
+otherwise.
+.It Fn prop_string_equals "prop_string_t str1" "prop_string_t str2"
+Returns
+.Dv true
+if the two string objects are equivalent.
+.It Fn prop_string_equals_cstring "prop_string_t string" "const char *cstring"
+Returns
+.Dv true
+if the string's value is equivalent to
+.Fa cstring .
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_number 3 ,
+.Xr prop_object 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .

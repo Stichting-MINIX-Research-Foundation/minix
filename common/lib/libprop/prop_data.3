@@ -1,0 +1,148 @@
+.\"	$NetBSD: prop_data.3,v 1.7 2009/12/14 06:03:23 dholland Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 22, 2006
+.Dt PROP_DATA 3
+.Os
+.Sh NAME
+.Nm prop_data ,
+.Nm prop_data_create_data ,
+.Nm prop_data_create_data_nocopy ,
+.Nm prop_data_copy ,
+.Nm prop_data_size ,
+.Nm prop_data_data ,
+.Nm prop_data_data_nocopy ,
+.Nm prop_data_equals ,
+.Nm prop_data_equals_data
+.Nd opaque data value property object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_data_t
+.Fn prop_data_create_data "const void *blob" "size_t len"
+.Ft prop_data_t
+.Fn prop_data_create_data_nocopy "const void *blob" "size_t len"
+.\"
+.Ft prop_data_t
+.Fn prop_data_copy "prop_data_t data"
+.\"
+.Ft size_t
+.Fn prop_data_size "prop_data_t data"
+.Ft void *
+.Fn prop_data_data "prop_data_t data"
+.Ft const void *
+.Fn prop_data_data_nocopy "prop_data_t data"
+.\"
+.Ft bool
+.Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
+.Ft bool
+.Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
+.Sh DESCRIPTION
+The
+.Nm prop_data
+family of functions operate on an opaque data value property object type.
+.Bl -tag -width "xxxxx"
+.It Fn prop_data_create_data "const void *blob" "size_t len"
+Create a data object that contains a copy of
+.Fa blob
+with size
+.Fa len .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_data_create_data_nocopy "const void *blob" "size_t len"
+Create a data object that contains a reference to
+.Fa blob
+with size
+.Fa len .
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_data_copy "prop_data_t data"
+Copy a data object.
+If the data object being copied is an external data reference,
+then the copy also references the same external data.
+Returns
+.Dv NULL
+on failure.
+.It Fn prop_data_size "prop_data_t data"
+Returns the size of the data object.
+If the supplied object isn't a data object, zero is returned.
+.It Fn prop_data_data "prop_data_t data"
+Returns a copy of the data object's contents.
+The caller is responsible for freeing the returned buffer.
+If the supplied object isn't a data object or
+if the data container is empty,
+.Dv NULL
+is returned.
+.Pp
+In user space, the buffer is allocated using
+.Xr malloc 3 .
+In the kernel, the buffer is allocated using
+.Xr malloc 9
+using the malloc type
+.Dv M_TEMP .
+.It Fn prop_data_data_nocopy "prop_data_t data"
+Returns an immutable reference to the contents of the data object.
+If the supplied object isn't a data object,
+.Dv NULL
+is returned.
+.It Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
+Returns
+.Dv true
+if the two data objects are equivalent.
+If at least one of the supplied objects isn't a data object,
+.Dv false
+is returned.
+.It Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
+Returns
+.Dv true
+if the data object's value is equivalent to
+.Fa blob
+with size
+.Fa len .
+If the supplied object isn't a data object,
+.Dv false
+is returned.
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_number 3 ,
+.Xr prop_object 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .
