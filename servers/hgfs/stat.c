@@ -157,7 +157,8 @@ PUBLIC int do_utime()
   if ((r = verify_inode(ino, path, NULL)) != OK)
 	return r;
 
-  attr.a_mask = HGFS_ATTR_ATIME | HGFS_ATTR_MTIME;
+  attr.a_mask = HGFS_ATTR_ATIME | HGFS_ATTR_MTIME | HGFS_ATTR_ATIME_SET |
+	HGFS_ATTR_MTIME_SET;
   attr.a_atime = m_in.REQ_ACTIME;
   attr.a_mtime = m_in.REQ_MODTIME;
 

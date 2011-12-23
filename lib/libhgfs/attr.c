@@ -74,8 +74,8 @@ struct hgfs_attr *attr;
   RPC_NEXT32 = ex64hi(attr->a_size);
 
   time_put((attr->a_mask & HGFS_ATTR_CRTIME) ? &attr->a_crtime : NULL);
-  time_put((attr->a_mask & HGFS_ATTR_ATIME) ? &attr->a_atime : NULL);
-  time_put((attr->a_mask & HGFS_ATTR_MTIME) ? &attr->a_mtime : NULL);
+  time_put((attr->a_mask & HGFS_ATTR_ATIME_SET) ? &attr->a_atime : NULL);
+  time_put((attr->a_mask & HGFS_ATTR_MTIME_SET) ? &attr->a_mtime : NULL);
   time_put((attr->a_mask & HGFS_ATTR_CTIME) ? &attr->a_ctime : NULL);
 
   RPC_NEXT8 = HGFS_MODE_TO_PERM(attr->a_mode);
