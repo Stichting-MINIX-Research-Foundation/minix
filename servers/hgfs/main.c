@@ -24,7 +24,7 @@ PRIVATE struct optset optset_table[] = {
   { "dmask",    OPT_INT,    &opt.dir_mask,    8                  },
   { "icase",    OPT_BOOL,   &opt.case_insens, TRUE               },
   { "noicase",  OPT_BOOL,   &opt.case_insens, FALSE              },
-  { NULL                                                         }
+  { NULL,       0,          NULL,             0                  }
 };
 
 /* SEF functions and variables. */
@@ -35,9 +35,7 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
 /*===========================================================================*
  *			      sef_cb_init_fresh				     *
  *===========================================================================*/
-PRIVATE int sef_cb_init_fresh(type, info)
-int type;
-sef_init_info_t *info;
+PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize this file server. Called at startup time.
  */
@@ -96,7 +94,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 /*===========================================================================*
  *				sef_local_startup			     *
  *===========================================================================*/
-PRIVATE void sef_local_startup()
+PRIVATE void sef_local_startup(void)
 {
   /* Register init callbacks. */
   sef_setcb_init_fresh(sef_cb_init_fresh);
