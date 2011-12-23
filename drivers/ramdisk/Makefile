@@ -47,6 +47,7 @@ image:	proto.gen mtab rc $(EXTRA)
 	then	: ;	\
 	else	echo "CLEAN sanity check of image failed."	;	\
 		echo "(Perhaps install current mkfs and fsck.)" ;	\
+		rm -f image; false;             \
 	fi
 
 ahci: ../ahci/ahci

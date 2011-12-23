@@ -526,6 +526,7 @@ PRIVATE int m_block_close(dev_t minor)
   }
   openct[minor]--;
 
+#if 0
   /* Special case: free initial ramdisk after it's been unmounted once. */
   if(minor == IMGRD_DEV && openct[minor] == 0 && m_vaddrs[IMGRD_DEV]) {
 	vir_bytes vaddr, vlen;
@@ -547,6 +548,7 @@ PRIVATE int m_block_close(dev_t minor)
 	m_geom[IMGRD_DEV].dv_size= cvul64(0);
 	m_vaddrs[IMGRD_DEV] = 0;
   }
+#endif
 
   return(OK);
 }
