@@ -11,7 +11,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "hgfs.h"
+#include <minix/hgfs.h>
 
 #define PREFIX(x) __libhgfs_##x
 

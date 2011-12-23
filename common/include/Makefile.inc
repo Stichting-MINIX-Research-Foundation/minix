@@ -2,7 +2,7 @@
 
 .PATH: ${MINIXSRCDIR}/common/include
 
-INCS+=  env.h fetch.h hgfs.h lib.h libutil.h timers.h
+INCS+=  env.h fetch.h lib.h libutil.h timers.h
 
 INCS+= 	minix/acpi.h minix/ansi.h minix/audio_fw.h minix/bitmap.h \
 	minix/bdev.h minix/blockdriver.h minix/blockdriver_mt.h \
@@ -12,7 +12,7 @@ INCS+= 	minix/acpi.h minix/ansi.h minix/audio_fw.h minix/bitmap.h \
 	minix/debug.h minix/devio.h minix/devman.h minix/dmap.h \
 	minix/driver.h minix/drivers.h minix/drvlib.h minix/ds.h \
 	minix/endpoint.h minix/fslib.h minix/gcov.h minix/hash.h \
-	minix/ioctl.h minix/input.h minix/ipc.h minix/ipcconst.h \
+	minix/hgfs.h minix/ioctl.h minix/input.h minix/ipc.h minix/ipcconst.h \
 	minix/keymap.h minix/limits.h minix/mthread.h minix/minlib.h \
 	minix/netdriver.h minix/optset.h minix/partition.h minix/portio.h \
 	minix/priv.h minix/procfs.h minix/profile.h minix/queryparam.h \
