@@ -69,9 +69,6 @@ timer_delete
 timer_gettime
 timer_settime
 undelete
-utimes
-lutimes
-futimes
 utrace
 uuidgen
 vadvise

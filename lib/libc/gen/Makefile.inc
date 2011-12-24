@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.184 2012/04/12 22:08:32 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.185 2012/11/03 19:39:21 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -48,8 +48,8 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c \
 	syslog.c telldir.c time.c \
-	times.c toascii.c tolower_.c ttyname.c ttyslot.c \
-	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
+	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
+	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c waitpid.c warn.c warnx.c \
 	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
 .endif

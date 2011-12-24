@@ -142,10 +142,12 @@ lchown(const char *path, uid_t owner, gid_t group)
 #endif
 
 static int
-utimes(const char *path, const struct timeval times[2])
+fake_utimes(const char *path, const struct timeval times[2])
 {
 	return -1;
 }
+#undef utimes
+#define utimes(path, times) fake_utimes(path, times)
 #endif
 
 int

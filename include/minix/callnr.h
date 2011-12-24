@@ -97,6 +97,7 @@
 #define GETPROCNR	104	/* to PM */
 #define ISSETUGID	106	/* to PM: ask if process is tainted */
 #define GETEPINFO_O	107	/* to PM: get pid/uid/gid of an endpoint */
+#define UTIMENS		108	/* to FS: [f]utimens(); also [fl]utimes */
 #define SRV_KILL  	111	/* to PM: special kill call for RS */
 
 #define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */
