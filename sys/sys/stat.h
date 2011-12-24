@@ -295,7 +295,6 @@ int	lchflags(const char *, unsigned long);
 int	lchmod(const char *, mode_t);
 #endif /* defined(_NETBSD_SOURCE) && !defined(__minix) */
 
-#ifndef __minix
 #ifndef __LIBC12_SOURCE__
 /*
  * X/Open Extended API set 2 (a.k.a. C063)
@@ -315,7 +314,6 @@ int lutimens(const char *, const struct timespec *);
 int futimens(int, const struct timespec *);
 #endif
 #endif
-#endif /* !__minix */
 
 __END_DECLS
 
