@@ -280,6 +280,7 @@ int do_lstat(void);
 
 /* time.c */
 int do_utime(void);
+int do_utimens(void);
 
 /* tll.c */
 void tll_downgrade(tll_t *tllp);

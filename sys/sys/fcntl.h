@@ -185,13 +185,17 @@ struct flock {
 
 /*
  * Constants for X/Open Extended API set 2 (a.k.a. C063)
+ * linkat(2) - also part of Posix-2008/XPG7
  */
-#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+#if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL) || defined(__minix)
 #define	AT_FDCWD		-100	/* Use cwd for relative link target */
-#define	AT_EACCESS		0x100	/* Use euig/egid for access checks */
+#define	AT_EACCESS		0x100	/* Use euid/egid for access checks */
 #define	AT_SYMLINK_NOFOLLOW	0x200	/* Do not follow symlinks */
 #define	AT_SYMLINK_FOLLOW	0x400	/* Follow symlinks */
 #define	AT_REMOVEDIR		0x800	/* Remove directory only */
+#endif
 #endif
 
 
