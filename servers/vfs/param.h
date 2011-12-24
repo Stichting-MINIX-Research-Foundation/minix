@@ -43,6 +43,10 @@
 #define utime_file    m2_p1
 #define utime_length  m2_i1
 #define utime_strlen  m2_i2
+#define utimens_fd    m2_i1
+#define utimens_ansec m2_i2
+#define utimens_mnsec m2_i3
+#define utimens_flags m2_s1
 #define whence	      m2_i2
 #define svrctl_req    m2_i1
 #define svrctl_argp   m2_p1

@@ -779,7 +779,6 @@ fetch(char *URL, const char *path)
 	 */
  signal:
 	/* set mtime of local file */
-#ifndef __minix
 	if (!n_flag && us.mtime && !o_stdout && of != NULL &&
 	    (stat(path, &sb) != -1) && sb.st_mode & S_IFREG) {
 		struct timeval tv[2];
@@ -791,19 +790,6 @@ fetch(char *URL, const char *path)
 		if (utimes(tmppath ? tmppath : path, tv))
 			warn("%s: utimes()", tmppath ? tmppath : path);
 	}
-#else
-	if (!n_flag && us.mtime && !o_stdout && of != NULL &&
-			(stat(path, &sb) != -1) && sb.st_mode & S_IFREG) {
-		struct utimbuf ut;
-
-		fflush(of);
-		ut.actime = (us.atime ? us.atime : us.mtime);
-		ut.modtime = us.mtime;
-
-		if (utime(tmppath ? tmppath : path, &ut))
-			warn("%s: utime()", tmppath ? tmppath : path);
-	}
-#endif
 
 	/* timed out or interrupted? */
 	if (fetchLastErrCode == FETCH_TIMEOUT)

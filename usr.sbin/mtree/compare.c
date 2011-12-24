@@ -140,12 +140,6 @@ lchown(const char *path, uid_t owner, gid_t group)
 	return -1;
 }
 #endif
-
-static int
-utimes(const char *path, const struct timeval times[2])
-{
-	return -1;
-}
 #endif
 
 int

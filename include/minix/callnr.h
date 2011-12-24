@@ -106,6 +106,9 @@
 #define CLOCK_GETTIME	115	/* clock_gettime() */
 #define CLOCK_SETTIME	116	/* clock_settime() */
 
+/* Use a tentaive number to avoid collision */
+#define UTIMENS		105	/* to FS: [f]utimens(); also [fl]utimes */
+
 #define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
 				 * really a standalone call.
 				 */
