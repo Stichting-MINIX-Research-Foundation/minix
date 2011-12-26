@@ -6,10 +6,10 @@ SECTIONS
 	.text . : AT (ADDR(.text) - 0x0000) {
 		*(.text)
 		*(.text.*)
-		. = ALIGN(4096);
 	}
 	_etext = .;
 	etext = .;
+	. = ALIGN(4096);
 
 	.data . : AT (ADDR(.data) - 0x0000) {
 		_rodata = .;
@@ -39,5 +39,6 @@ SECTIONS
 		*(.comment.*)
 		*(.note)
 		*(.note.*)
+		*(.ident)
 	}
 }
