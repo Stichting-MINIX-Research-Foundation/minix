@@ -31,7 +31,7 @@ PUBLIC int i386_paging_enabled = 0;
 
 PRIVATE int psok = 0;
 
-#define FREE_PDES_PER_CPU	3
+#define FREE_PDES_PER_CPU	2
 #define MAX_FREEPDES		(FREE_PDES_PER_CPU * CONFIG_MAX_CPUS)
 PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
@@ -145,7 +145,7 @@ PRIVATE int lin_lin_copy(const struct proc *srcproc, vir_bytes srclinaddr,
 	proc_nr_t procslot;
 
 	assert(vm_running);
-	assert(nfreepdes >= 3);
+	assert(nfreepdes >= 2);
 
 	assert(get_cpulocal_var(ptproc));
 	assert(get_cpulocal_var(proc_ptr));
@@ -645,7 +645,7 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 		return OK;
 	}
 
-	assert(nfreepdes >= 3);
+	assert(nfreepdes >= 2);
 
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 

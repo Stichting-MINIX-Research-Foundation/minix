@@ -36,6 +36,10 @@
 
 #include "memory.h"
 
+/* Free PDE slots we tell kernel about */
+#define FREE_PDES	2
+PRIVATE int first_free_pde = -1;
+
 /* PDE used to map in kernel, kernel physical address. */
 PRIVATE int id_map_high_pde = -1, pagedir_pde = -1;
 PRIVATE u32_t global_bit = 0, pagedir_pde_val;
@@ -638,6 +642,18 @@ PUBLIC int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	return OK;
 }
 
+PUBLIC int pt_clearmapcache(void)
+{
+	int f;
+	/* Make sure kernel will invalidate tlb when using current
+	 * pagetable (i.e. vm's) to make new mappings before new cr3
+	 * is loaded.
+	 */
+	for(f = first_free_pde; f < first_free_pde+FREE_PDES; f++) {
+		vmprocess->vm_pt.pt_dir[f] = 0;
+	}
+}
+
 /*===========================================================================*
  *				pt_writemap		     		     *
  *===========================================================================*/
@@ -876,6 +892,7 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	vir_bytes sparepages_mem;
 	phys_bytes sparepages_ph;
 	vir_bytes ptr;
+	int f = 0;
 
         /* Shorthand. */
         newpt = &vmprocess->vm_pt;
@@ -1030,10 +1047,12 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
 
 	/* Tell kernel about free pde's. */
-	while(free_pde*I386_BIG_PAGE_SIZE < VM_PROCSTART) {
+	first_free_pde = free_pde;
+	while(free_pde*I386_BIG_PAGE_SIZE < VM_PROCSTART && f < FREE_PDES) {
 		if((r=sys_vmctl(SELF, VMCTL_I386_FREEPDE, free_pde++)) != OK) {
 			panic("VMCTL_I386_FREEPDE failed: %d", r);
 		}
+		f++;
 	}
 
 	/* first pde in use by process. */

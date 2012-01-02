@@ -112,6 +112,7 @@ PUBLIC int main(void)
 					"message!\n", msg.m_source);
 		}
 		do_pagefaults(&msg);
+		pt_clearmapcache();
 		/*
 		 * do not reply to this call, the caller is unblocked by
 		 * a sys_vmctl() call in do_pagefaults if success. VM panics
@@ -419,6 +420,8 @@ PRIVATE void sef_cb_signal_handler(int signo)
 	if(missing_spares > 0) {
 		pt_cycle();	/* pagetable code wants to be called */
 	}
+
+	pt_clearmapcache();
 }
 
 /*===========================================================================*
