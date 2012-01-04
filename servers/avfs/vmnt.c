@@ -180,15 +180,3 @@ PUBLIC void unlock_vmnt(struct vmnt *vmp)
 #endif
 
 }
-
-/*===========================================================================*
- *                             vmnt_unmap_by_endpoint			     *
- *===========================================================================*/
-PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
-{
-  struct vmnt *vmp;
-
-  if ((vmp = find_vmnt(proc_e)) != NULL)
-	clear_vmnt(vmp);
-
-}

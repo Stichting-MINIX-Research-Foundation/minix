@@ -350,9 +350,6 @@ PUBLIC void pm_reboot()
 	rfp = &fproc[i];
 	if (rfp->fp_endpoint == NONE) continue;
 
-	/* Let FSes exit themselves */
-	if (find_vmnt(rfp->fp_endpoint) != NULL) continue;
-
 	/* Don't just free the proc right away, but let it finish what it was
 	 * doing first */
 	lock_proc(rfp, 0);
@@ -460,7 +457,6 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
    */
   unsuspend_by_endpt(exiter->fp_endpoint);
   dmap_unmap_by_endpt(exiter->fp_endpoint);
-  vmnt_unmap_by_endpt(exiter->fp_endpoint);
   worker_stop_by_endpt(exiter->fp_endpoint);
 
   /* Release root and working directories. */

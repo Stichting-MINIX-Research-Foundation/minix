@@ -334,7 +334,6 @@ _PROTOTYPE( struct vmnt *get_locked_vmnt, (struct fproc *rfp)		);
 _PROTOTYPE( void init_vmnts, (void)					);
 _PROTOTYPE( int lock_vmnt, (struct vmnt *vp, tll_access_t locktype)	);
 _PROTOTYPE( void unlock_vmnt, (struct vmnt *vp)				);
-_PROTOTYPE( void vmnt_unmap_by_endpt, (endpoint_t proc_e)		);
 
 /* vnode.c */
 _PROTOTYPE( void check_vnode_locks, (void)				);
