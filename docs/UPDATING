@@ -1,3 +1,15 @@
+20111222:
+	The latest mkfs.mfs and fsck.mfs must be installed in
+	/sbin when building a new image, and booting with the new mfs,
+	and the new system rc script must be installed that invokes the new
+	fsck driver.
+
+	Do this BEFORE a 'make world':
+	# make clean etcfiles includes libraries
+	# make -C commands/mkfs.mfs clean install
+	# make -C commands/fsck.mfs clean install
+	Then 'make clean world' as usual.
+
 20111212:
 	After a successful "make world", issue the following commands:
 	# cd /dev
