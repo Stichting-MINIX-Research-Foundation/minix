@@ -5,7 +5,7 @@
 	fsck driver.
 
 	Do this BEFORE a 'make world':
-	# make clean etcfiles includes libraries
+	# make clean etcfiles etcforce includes libraries
 	# make -C commands/mkfs.mfs clean install
 	# make -C commands/fsck.mfs clean install
 	Then 'make clean world' as usual.
