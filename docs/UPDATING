@@ -1,4 +1,6 @@
 20111222:
+	This update requires /etc/fstab having the new format.
+
 	The latest mkfs.mfs and fsck.mfs must be installed in
 	/sbin when building a new image, and booting with the new mfs,
 	and the new system rc script must be installed that invokes the new
