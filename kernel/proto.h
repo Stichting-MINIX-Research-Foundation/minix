@@ -211,6 +211,8 @@ _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (const struct proc *proc, vir_bytes virtual, phys_bytes *result, u32_t *ptent));
 _PROTOTYPE( size_t vm_lookup_range, (const struct proc *proc,
 	vir_bytes vir_addr, phys_bytes *phys_addr, size_t bytes)	);
+_PROTOTYPE( int vm_check_range, (struct proc *caller,
+	struct proc *target, vir_bytes vir_addr, size_t bytes)		);
 _PROTOTYPE( void delivermsg, (struct proc *target));
 _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,

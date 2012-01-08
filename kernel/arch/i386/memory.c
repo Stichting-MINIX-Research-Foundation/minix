@@ -532,6 +532,34 @@ PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
 }
 
 /*===========================================================================*
+ *				vm_check_range				     *
+ *===========================================================================*/
+PUBLIC int vm_check_range(struct proc *caller, struct proc *target,
+	vir_bytes vir_addr, size_t bytes)
+{
+	/* Public interface to vm_suspend(), for use by kernel calls. On behalf
+	 * of 'caller', call into VM to check linear virtual address range of
+	 * process 'target', starting at 'vir_addr', for 'bytes' bytes. This
+	 * function assumes that it will called twice if VM returned an error
+	 * the first time (since nothing has changed in that case), and will
+	 * then return the error code resulting from the first call. Upon the
+	 * first call, a non-success error code is returned as well.
+	 */
+	int r;
+
+	if (!vm_running)
+		return EFAULT;
+
+	if ((caller->p_misc_flags & MF_KCALL_RESUME) &&
+			(r = caller->p_vmrequest.vmresult) != OK)
+		return r;
+
+	vm_suspend(caller, target, vir_addr, bytes, VMSTYPE_KERNELCALL);
+
+	return VMSUSPEND;
+}
+
+/*===========================================================================*
  *                              delivermsg                                *
  *===========================================================================*/
 PUBLIC void delivermsg(struct proc *rp)
