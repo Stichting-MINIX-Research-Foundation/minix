@@ -279,8 +279,12 @@ PUBLIC int read_super(struct super_block *sp)
 	sp->s_ndzones = V1_NR_DZONES;
 	sp->s_nindirs = V1_INDIRECTS;
   } else {
-  	if (version == V2)
+	if (version == V2) {
   		sp->s_block_size = _STATIC_BLOCK_SIZE;
+	} else {
+		sp->s_block_size = (unsigned short)
+				conv2(native,(int) sp->s_block_size);
+	}
   	if (sp->s_block_size < _MIN_BLOCK_SIZE) {
   		return EINVAL;
 	}
