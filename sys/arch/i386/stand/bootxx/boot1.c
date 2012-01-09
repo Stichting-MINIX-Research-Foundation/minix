@@ -56,7 +56,11 @@ extern struct disklabel ptn_disklabel;
 static int
 ob(void)
 {
+#ifndef __minix
 	return open("boot", 0);
+#else
+	return open("boot_monitor", 0);
+#endif
 }
 
 const char *
@@ -93,7 +97,7 @@ boot1(uint32_t biosdev, uint64_t *sector)
 
 #ifdef BOOT_FROM_MINIXFS3
 	bios_sector -= RF_PROTECTED_SECTORS;
-	bios_sector += 32; /* XXX put somewhere as constant */
+	bios_sector += MINIX3_FIRST_SUBP_OFFSET;
 	*sector = bios_sector;
 
 	fd = ob();
@@ -118,8 +122,13 @@ boot1(uint32_t biosdev, uint64_t *sector)
 
 done:
 	/* if we fail here, so will fstat, so keep going */
-	if (fd == -1 || fstat(fd, &sb) == -1)
+	if (fd == -1 || fstat(fd, &sb) == -1) {
+#ifndef __minix
 		return "Can't open /boot\r\n";
+#else
+		return "Can't open /boot_monitor\r\n";
+#endif
+	}
 
 	biosdev = (uint32_t)sb.st_size;
 #if 0
@@ -127,11 +136,21 @@ done:
 		return "/boot too large\r\n";
 #endif
 
-	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, biosdev) != biosdev)
+	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, biosdev) != biosdev) {
+#ifndef __minix
 		return "/boot load failed\r\n";
+#else
+		return "/boot_monitor load failed\r\n";
+#endif
+	}
 
-	if (*(uint32_t *)(SECONDARY_LOAD_ADDRESS + 4) != X86_BOOT_MAGIC_2)
+	if (*(uint32_t *)(SECONDARY_LOAD_ADDRESS + 4) != X86_BOOT_MAGIC_2) {
+#ifndef __minix
 		return "Invalid /boot file format\r\n";
+#else
+		return "Invalid /boot_monitor file format\r\n";
+#endif
+	}
 
 	/* We need to jump to the secondary bootstrap in realmode */
 	return 0;

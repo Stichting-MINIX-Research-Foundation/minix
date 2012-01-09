@@ -50,12 +50,16 @@ CPPFLAGS+= -DXXfs_close=${FS}_close
 CPPFLAGS+= -DXXfs_read=${FS}_read
 CPPFLAGS+= -DXXfs_stat=${FS}_stat
 CPPFLAGS+= -DFS=${FS}
+# clang generates too big bootxx_xxx
+.if (${CC} == "clang")
+CPPFLAGS+= -Os
+.endif
 # CPPFLAGS+= -DBOOT_MSG_COM0
 
 # Make sure we override any optimization options specified by the user
-.include "${.PARSEDIR}/../Makefile.inc"
-COPTS=	${OPT_SIZE.${ACTIVE_CC}}
-DBG=
+#.include "${.PARSEDIR}/../Makefile.inc"
+#COPTS=	${OPT_SIZE.${ACTIVE_CC}}
+#DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
 
