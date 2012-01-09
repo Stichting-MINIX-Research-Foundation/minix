@@ -1,0 +1,49 @@
+$NetBSD: version,v 1.15 2011/02/09 04:37:54 jmcneill Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+2.0:	Change over to Matthias Drochner's two-stage boot system.
+	All code is completely new.
+2.1:	New welcoming banner.
+2.2:	Use common menu / parsing functions with other bootloaders.
+	New framework to pass information to the kernel.
+2.3:	Switch to new NetBSD MBR partition ID.
+2.4:	Support BIOS Int13-Extensions.
+2.5:	Support ustarfs boot.
+2.6:	Support ELF boot.
+2.7:	Support on-the-fly switching of console devices.
+2.8:	Support verbose/quiet boot.
+2.9:	Recognize PS/2 L40 at runtime and use appropriate gate A20
+	initialization (rather than using a compile flag).
+	Recognize ESDI disks and identify them as ed(4) for COMPAT_OLDBOOT.
+2.10:	g/c COMPAT_OLDBOOT.
+2.11:	loadfile() update:  ELF symbols no longer need backward seeks.
+2.12:	loadfile() update to avoid backwards seeks for ELF Program Headers.
+2.13:	Support boot from 1.44MB floppies in 2.88MB floppy drives.
+2.14:	Add a quirk for BIOSes which report extended memory size
+	in slightly nonstandard way in int15, function 0xE801.
+2.15:	Use int15/0xc7 to get memory information on machines which support
+	it, like later IBM PS/2 machines.
+2.16:	Move 16bit %ss to allow >64k for code, data and stack.
+	Default partition to that passed in by mbr code.
+	Support limited filename globbing in 'ls' command.
+	Use .code16 and .code32 directives
+3.0:	Separate out into bootxx and boot
+3.1:	Rename to /usr/mdec/boot.
+	Leave space in bootxx for FAT32 BPB and MBR partition table.
+	Keep MBR's existing BPB and partition table when installing bootxx.
+3.2:	Add support for passing boot wedge information to the kernel.
+3.3:	Add support for cd9660 file system.
+5.0:	Support for boot menu, modules.
+5.1:	Change boot messages to replace build date with kernel version.
+5.2:	Support for multiboot.
+5.3:	Autoload kernel module for root file system.
+5.4:	The VESA VBE mode number is now passed to the kernel so it can be
+	restored on ACPI resume.
+5.5:	Adjust stack and heap areas to not overlap.
+5.6:	GUID Partition Table support.
+5.7:	Recognize 64-bit LBA from bootxx.
+5.8:	Support for splash images.
+5.9:	VESA VBE/DDC EDID support.

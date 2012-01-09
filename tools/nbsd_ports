@@ -42,3 +42,8 @@ usr.bin/bzip2recover	src/usr.bin/bzip2recover
 libexec/makewhatis	src/libexec/makewhatis
 dist/bzip2		src/dist/bzip2
 share/zoneinfo		src/share/zoneinfo
+sys/arch/i386/stand/bootxx	src/sys/arch/i386/stand/bootxx
+sys/arch/i386/stand/boot	src/sys/arch/i386/stand/boot
+sys/arch/i386/stand/lib		src/sys/arch/i386/stand/lib
+sys/lib/libsa		src/sys/lib/libsa
+sys/lib/libz		src/sys/lib/libz

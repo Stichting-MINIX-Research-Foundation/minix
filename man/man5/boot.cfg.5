@@ -1,0 +1,247 @@
+.\"	$NetBSD: boot.cfg.5,v 1.24 2011/11/28 09:38:45 wiz Exp $
+.\"
+.\" Copyright (c) 2007 Stephen Borrill
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 28, 2011
+.Dt BOOT.CFG 5
+.Os
+.Sh NAME
+.Nm boot.cfg
+.Nd configuration file for /boot
+.Sh DESCRIPTION
+The file
+.Pa /boot.cfg
+is used to alter the behaviour of the standard boot loader described in
+.Xr boot 8 .
+Configuration changes include setting the timeout, choosing a console device,
+altering the banner text and displaying a menu allowing boot commands to be
+easily chosen.
+If a
+.Nm
+file is not present, the system will boot as normal.
+.Ss FILE FORMAT
+The format of the file is a series of lines containing keyword/value pairs
+separated by an equals sign
+.Pq Sq = .
+There should be no whitespace surrounding the equals sign.
+Lines beginning with a hash
+.Pq Sq #
+are comments and will be ignored.
+.Pp
+Some keywords can be present multiple times in the file to define additional
+items.
+Such keywords are noted below.
+.Pp
+.Bl -tag -width timeout
+.It Sy banner
+(may be present multiple times)
+The text from banner lines is displayed instead of the standard welcome text
+by the boot loader.
+Up to 10 lines can be defined.
+No special character sequences are recognised, so to specify a blank line, a
+banner line with no value should be given.
+.It Sy clear
+If nonzero, clear the screen before printing the banner.
+If zero, do not clear the screen (the default).
+.It Sy consdev
+Changes the console device to that specified in the value.
+Valid values are any of those that could be specified at the normal boot
+prompt with the consdev command.
+.It Sy default
+Used to specify the default menu item  which will be chosen in the case of
+Return being pressed or the timeout timer reaching zero.
+The value is the number of the menu item as displayed.
+As described above, the menu items are counted from 1 in the order listed in
+.Nm .
+If not specified, the default value will be option 1, i.e. the first item.
+.It Sy format
+Changes how the menu options are displayed.
+Should be set to one of
+.Sq a
+for automatic,
+.Sq l
+for letters and
+.Sq n
+for numbers.
+If set to automatic (the default), menu options will be displayed numerically
+unless there are more than 9 options and the timeout is greater than zero.
+If there are more than 9 options with a timeout greater than zero and
+the format is set to number, only the first 9 options will be available.
+.It Sy load
+Used to load kernel modules, which will be passed on to the kernel for
+initialization during early boot.
+The argument is either the complete path and file name of the module to be
+loaded, or a symbolic module name.
+When the argument is not an absolute path, the boot loader will first
+attempt to load
+.Pa /stand/\*[Lt]machine\*[Gt]/\*[Lt]kernel_version\*[Gt]/modules/\*[Lt]name\*[Gt]/\*[Lt]name\*[Gt].kmod .
+If that file does not exist, it will then attempt to load
+.Pa /\*[Lt]name\*[Gt] .
+May be used as many times as needed.
+.It Sy menu
+(may be present multiple times)
+Used to define a menu item to be displayed to the end-user at boot time
+which allows a series of boot commands to be run without further typing.
+The value consists of the required menu text, followed by a colon
+.Pq Sq \&:
+and then the desired command(s).
+Multiple commands can be specified separated by a semi-colon.
+If the specified menu text is empty
+(the colon appears immediately after the equals sign),
+then the displayed menu text is the same as the command.
+For example:
+.Bd -literal
+menu=Boot normally:boot
+menu=Boot single-user:boot -s
+menu=Boot with module foo:load /foo.kmod;boot
+menu=Boot with serial console:consdev com0;boot
+menu=:boot hd1a:netbsd -as
+.Ed
+.Pp
+Each menu item will be prefixed by an ascending number when displayed,
+i.e. the order in the
+.Nm
+file is important.
+.Pp
+Each command is executed just as though the user had typed it in
+and so can be any valid command that would be accepted at the
+normal boot prompt.
+In addition,
+.Dq Ic prompt
+can be used to drop to the normal boot prompt.
+.It Sy timeout
+If the value is greater than zero, this specifies the time in seconds
+that the boot loader will wait for the end-user to choose a menu item.
+During the countdown period, they may press Return to choose the default
+option or press a number key corresponding to a menu option.
+If any other key is pressed, the countdown will stop and the user will be
+prompted to choose a menu option with no further time limit.
+If the timeout value is set to zero, the default option will be booted
+immediately.
+If the timeout value is negative or is not a number, there will be no
+time limit for the user to choose an option.
+.It Sy userconf
+Passes a
+.Xr userconf 4
+command to the kernel at boot time .
+.It Sy rndseed
+Takes the path to a random-seed file as written by the
+.Fl S
+flag to
+.Xr rndctl 8
+as an argument.
+This file is used to seed the kernel entropy pool
+.Xr rnd 9
+very early in kernel startup, so that high quality randomness is
+available to all kernel modules.
+This argument should be supplied
+before any
+.Dq Ic load
+commands that may load executable modules.
+.El
+.Sh EXAMPLES
+Here is an example
+.Nm
+file:
+.Bd -literal -offset indent
+banner=Welcome to NetBSD
+banner==================
+banner=
+banner=Please choose an option from the following menu:
+menu=Boot normally:boot
+menu=Boot single-user:boot -s
+menu=Boot from second disk:boot hd1a:
+menu=Boot with module foo:load /foo.kmod;boot
+menu=Boot with modules foo and bar:load /foo.kmod;load /bar.kmod;boot
+menu=Boot Xen with 256MB for dom0:load /netbsd-XEN3_DOM0 console=pc;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M
+menu=Boot Xen with 256MB for dom0 (serial):load /netbsd-XEN3_DOM0 console=com0;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M console=com1 com1=115200,8n1
+menu=Boot Xen with dom0 in single-user mode:load /netbsd-XEN3_DOM0 -s;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M
+menu=Go to command line (advanced users only):prompt
+clear=1
+timeout=-1
+default=1
+userconf disable ehci*
+# Always load ramdisk module
+load=/miniroot.kmod
+.Ed
+.Pp
+N.B. Xen counts serial ports from com1 upwards, but
+.Nx
+counts from com0, so the appropriate device name must be used.
+Please see the Xen with serial console example above.
+.Pp
+This will clear the screen and display:
+.Bd -literal -offset indent
+Welcome to NetBSD
+=================
+
+Please choose an option from the following menu:
+
+      1. Boot normally
+      2. Boot single-user
+      3. Boot from second disk
+      4. Boot with module foo
+      5. Boot with modules foo and bar
+      6. Boot Xen with 256 MB for dom0
+      7. Boot Xen with 256 MB for dom0 (serial)
+      8. Boot Xen with dom0 in single-user mode
+      9. Go to command line (advanced users only)
+
+Option [1]:
+.Ed
+.Pp
+It will then wait for the user to type 1, 2, 3, 4, 5, 6, 7, 8 or 9 followed by
+Return.
+Pressing Return by itself will run option 1.
+There will be no timeout.
+.Sh SEE ALSO
+.Xr boot 8 ,
+.Xr boothowto 9
+.Sh HISTORY
+The
+.Nm
+file appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+The
+.Nm
+extensions to
+.Xr boot 8
+were written by
+.An Stephen Borrill
+.Aq sborrill@NetBSD.org .
+.Sh BUGS
+Support for
+.Nm
+is currently for
+.Nx Ns /i386
+and
+.Nx Ns /amd64
+only.
+It is hoped that its use will be extended to other appropriate ports that
+use the
+.Xr boot 8
+interface.

@@ -1,524 +1,649 @@
-.TH BOOT 8
-.SH NAME
-boot \- from power on to the login prompt
-.SH DESCRIPTION
-.de SP
-.if t .sp 0.4
-.if n .sp
-..
-At power on the machine reads the first sector of the boot device into memory
-and executes it.  This bootstrap code loads
-.BR /boot/boot ,
-the MINIX 3 Boot Monitor.  The monitor loads the kernel binaries from
-.BR /boot/image ,
-or the newest file in
-.B /boot/image
-if it is a directory.
-.PP
-The MINIX 3 system is now running, the different tasks initialize themselves
-and control is transferred to the last one,
-.BR init .
-.PP
-.B Init
-is the grandparent of all MINIX 3 processes, it is responsible for starting
-login processes on each terminal, but first it runs
-.BR /etc/rc .
-.PP
-.B /etc/rc
-checks the state of the system and starts daemons.  First it sets the
-keyboard translation to the mapping in
-.B /etc/keymap
-if present, followed by a call to
-.BR readclock (8)
-to set MINIX 3 time from the hardware clock.  Next the file systems are checked
-if necessary and the
-.B /usr
-file system is mounted.
-.PP
-The system is now ready for multiuser startup,
-.B /etc/rc
-calls
-.B /usr/etc/rc
-that cleans out /tmp, /usr/tmp, and resets or cycles log files by running
-.BR /usr/etc/daily ,
-starts the
-.BR update (8)
+.\"	$NetBSD: boot.8,v 1.58 2011/05/31 03:43:47 uebayasi Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software written and contributed
+.\" to Berkeley by William Jolitz.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd May 26, 2011
+.Dt BOOT 8 i386
+.Os
+.Sh NAME
+.Nm boot
+.Nd
+system bootstrapping procedures
+.Sh DESCRIPTION
+.Tn IA-32
+computers
+.Po
+the
+.Tn IBM PC
+and its clones
+.Pc
+that can run
+.Nx Ns /i386
+can use any of the following boot procedures, depending on what the hardware and
+.Tn BIOS
+support:
+.Pp
+.Bl -tag -width "pxeboot(8)"
+.It boot
+bootstrap
+.Nx
+from the system
+.Tn BIOS
+.It Xr dosboot 8
+bootstrap
+.Nx
+from
+.Tn MS-DOS
+.It Xr w95boot 8
+bootstrap
+.Nx
+from
+.Tn Windows 95
+.It Xr pxeboot 8
+network bootstrap
+.Nx
+from a
+.Tn TCP/IP
+.Tn LAN
+with
+.Tn DHCP ,
+.Tn TFTP ,
 and
-.BR cron (8)
-daemons, and initializes the network services.
-.B /etc/rc
-finally runs
-.BR /usr/local/etc
-to initialize the system in a site or host dependent way.
-.PP
-.B Init
-reads
-.B /etc/ttytab
-and starts a
-.BR getty (8)
-for each enabled terminal line to allow a user to log in.
-.SH OPTIONS
-.TP
-.B bootopts=\-s
-The value of the boot variable
-.B bootopts
-is passed to
-.BR /etc/rc .
-If it contains
-.B \-s
-then the system will run a single user shell before continuing with multiuser
-startup.  (Note that one normally uses
-.B boot \-s
-instead of setting
-.BR bootopts .)
-.TP
-.B bootopts=\-a
-This flag tells that
-.B /etc/fstab
-must be ignored.  The system asks for a device to use as /usr instead.  This
-will also be done if the root device is not as mentioned in
-.BR /etc/fstab .
-.TP
-.B bootopts=\-f
-Force a file system check, even if the system was shut down properly.  (Do
-this once in a while to be sure about the state of the file systems.)
-.TP
-.BI servers= program\fR[,\fIprogram\fR...]
-Names the special servers that must be started in /usr/etc/rc.  The setting
-.BR "servers=inet"
-will start the TCP/IP server.
-.SH "BOOT ENVIRONMENT"
-Many features of the drivers inside the kernel are controlled by settings in
-the boot environmenti, like
-.B bootopts
-above does for
-.BR /etc/rc .
-The values of these variables are usually colon or comma separated
-numbers configuring the driver.
-.B "DPETH0 = 300:10"
-tells the DP ethernet driver to use I/O address 0x300, interrupt request
-10, and the default memory address (0xD0000, values may be omitted) for the
-first ethernet board.  (Note that IRQ 2 is redirected to IRQ 9 on AT's and
-PS/2's, so use 9 if a device is jumpered for 2.)
-.PP
-Variables that are special to both the monitor and the kernel are described
-in
-.BR monitor (8).
-This section lists extra variables or variable settings:
-.TP
-\fBc\fIn\fR = \fBat\fR | \fBbios\fR | \fBesdi\fR | \fBxt\fR | \fBaha1540\fR | \fBdosfile\fR | \fBfatfile\fR
-Choose the driver that is to be used as controller
-.IR n ,
-in order: IBM/AT (classic AT or newer IDE), BIOS (any disk), ESDI
-(some PS/2s), IBM/XT, Adaptec 154x, MINIX 3 under DOS "file as disk",
-FAT file system "file as disk".
-By default
-.B at
-is used on AT bus systems,
-.B bios
-on PS/2s and XTs, and
-.B dosfile
-when running under DOS.
-Most drivers are present in the kernel as distributed, but may be taken out
-by modifying
-.BR /usr/include/minix/config.h .
+.Tn NFS .
+.El
+.Ss Power fail and crash recovery
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed,
+and unless this fails, the system will resume multi-user operations.
+.Ss Cold starts
+The 386
+.Tn "PC AT"
+clones attempt to boot the floppy disk drive A (otherwise known as drive
+0) first, and failing that, attempt to boot the hard disk C (otherwise
+known as hard disk controller 1, drive 0).
+The
+.Nx
+bootblocks are loaded and started either by the
+.Tn BIOS ,
+or by a boot selector program (such as OS-BS, BOOTEASY, the OS/2 Boot Menu or
+.Nx Ns 's
+.No boot-selecting
+master boot record - see
+.Xr mbr 8 ) .
+.Ss Normal Operation
+Once running, a banner similar to the following will appear:
+.Bd -unfilled -offset indent
+\*[Gt]\*[Gt] NetBSD BIOS Boot, revision 3.0
+\*[Gt]\*[Gt] (user@buildhost, builddate)
+\*[Gt]\*[Gt] Memory: 637/15360 k
+Press return to boot now, any other key for boot menu
+booting hd0a:netbsd - starting in 5
+.Ed
+.Pp
+After a countdown, the system image listed will be loaded.
+In the example above, it will be
+.Dq Li hd0a:netbsd
+which is the file
+.Nm netbsd
+on partition
+.Dq a
+of the
+.Nx
+.Tn MBR
+partition of the first hard disk known to the
+.Tn BIOS
+.Po
+which is an
+.Tn IDE
+or similar device - see the
+.Sx BUGS
+section
+.Pc .
+.Pp
+Pressing a key within the time limit, or before the boot program starts, will
+enter interactive mode.
+When using a short or 0 timeout, it is often useful to interrupt the boot
+by holding down a shift key, as some BIOSes and BIOS extensions will drain the
+keystroke buffer at various points during POST.
+.Pp
+If present, the file
+.Pa /boot.cfg
+will be used to configure the behaviour of the boot loader including
+setting the timeout, choosing a console device, altering the banner
+text and displaying a menu allowing boot commands to be easily chosen.
 See
-.BR controller (4).
-(An XT should always use the BIOS driver, not the XT driver, because BIOS
-calls are cheap on an XT.  The XT driver can be used on AT machines with an
-old XT controller.)
-.TP
-\fBDPETH\fIn\fR = \fBon\fR | \fBoff\fR
-Turn an ethernet board on or off.  The driver is by default in "sink" mode
-for all boards.  The sink mode allows one to use the driver without an
-ethernet board installed.  The driver will play /dev/null for that device,
-i.e. nothing comes in, and anything send out is dropped on the floor.  If
-the board is turned on then the driver will use it to send out packets, if
-it is turned off then the driver will fail for that board.
-.PP
-.if n .ta \w'DPETHn = I/O-addr:irq:mem_addr:mem_size'u+2m
-.if t .ta \w'\fBDPETH\fIn\fR = \fII/O-addr\fR:\fIirq\fR:\fImem_addr\fR:\fImem_size\fR'u+2m
-\fBDPETH\fIn\fR = \fII/O-addr\fR:\fIirq\fR:\fImem_addr\fR:\fImem_size\fR	(WD80x3)
-.br
-\fBDPETH\fIn\fR = \fII/O-addr\fR:\fIirq\fR:\fB0\fR	(NE2000)
-.br
-\fBDPETH\fIn\fR = \fII/O-addr\fR:\fIirq\fR:\fIflags\fR	(3c503)
-.RS
-Set the I/O address (hex), IRQ (decimal), memory address (hex), memory
-size (hex), or flags (hex) of the
-.IR n -th
-ethernet board and turn it on.  By default they are configured as
-280:3:D0000 and 300:5:C8000 with the memory size set to 2000, 4000, or 8000
-depending on the type of board found.
-For the Western Digital cards the IRQ must be what the board expects,
-but the memory address is programmed into the board by the driver.
-The SMC EtherEZ board, a WD8013 successor, has only 8K
-memory.  This confuses the driver, so you need to explicitly specify the
-board size as being 2000.
-The memory address and size have no meaning for the Novell ethernet boards,
-but the address may be explicitly set to zero to indicate that the board
-.B is
-a Novell ethernet board.
-For the 3Com 3c503 the third parameter are flags, with the low bit indicates
-that the on-board tranceiver must be used if 0 (thin ethernet), or that an
-external tranceiver is used on the AUI port if set to 1.
-The IRQ is software settable, and must be specified as 2 (XT), 3, 4, 5,
-or 9 (AT).  The memory address is set on the board by jumpers.  The driver
-does not support I/O mode for the 3c503.
-(Note the little differences between board types.  For the 8003/8013 and
-NE1000/NE2000 the IRQ is fixed and the memory address variable, for the
-3c503 the IRQ is variable and the memory address is fixed, but need not be
-specified.  Messy.)
-.RE
-.TP
-\fBDPETH\fIn\fB_EA\fR = \fIe0\fR:\fIe1\fR:\fIe2\fR:\fIe3\fR:\fIe4\fR:\fIe5\fR
-Set the ethernet address of the
-.IR n -th
-ethernet board.  The address is normally obtained from the ethernet board,
-so only in exceptional circumstances is this setting ever needed.  (Use the
-address of the main server if you want a career change.)
-.TP
-\fBAHA0\fR = \fII/O-addr\fR:\fIbus-on\fR:\fIbus-off\fR:\fItr-speed\fR
-Configure the Adaptec 154xA SCSI host adapter to use the given I/O address
-(hex), Bus-on time (decimal), Bus-off time (decimal) and transfer speed
-(hex).  The default is 330:15:1:00.  The default transfer speed is always
-5.0 Mb/s (code 00) ignoring the jumper settings.
-.TP
-\fBaha1540-d\fIn\fR = \fIsleep-time\fR:\fItarget\fR,\fIlun\fR
-Program SCSI disk
-.I n
-to have the given target and logical unit number.  The target and lun
-of a tape or other SCSI device may be changed by setting the
-.BI aha1540-d n
-variable that would be used had it been a disk.  So tape device c0t7 can be
-set to target 4, lun 1 with aha1540-d7=:4,1.
-(The
-.I sleep-time
-parameter is present but ignored to be compatible with Minix-vmd.)
-.TP
-\fBdosfile-d\fIn\fR = \fIfile\fR
-Tells the DOS virtual disk driver for disk
-.I n
-to use a given file as a disk.  The file is a DOS file name that the
-boot monitor must be able to open.
-.TP
-\fBfatfile-d\fIn\fR = \fIdriver:minor:file\fR
-Tells the FAT virtual disk driver for disk
-.I n
-to use a given file as a disk.  The
-.I driver
-parameter is the name of driver that handles the disk, and
-.I minor
-is the device number of the partition where the file is found.  See
-.BR controller (4)
-for names and numbers.
+.Xr boot.cfg 5 .
+.Pp
 The
-.I file
-argument is the path to the file from the root directory down.  The driver
-named must also be tied to a controller with a
-.BI c n
-variable, so that the FAT file driver can find it.
-A handy way to find the proper minor number is to run
-.B "ls\ \-l"
-on the device where the file is found.  As a example, we assume the most
-common situation of a disk file on the first partition of the first drive
-on an ATA (IDE) controller:
-.SP
-.in +5
-.ft B
-.nf
-c0 = fatfile
-c1 = at
-fatfile-d0 = at:1:/minix/minix.mnx
-.fi
-.ft P
-.in -5
-.TP
-.BR TZ " = " GMT0
-This sets the time zone the hardware clock is running in.
-.B Readclock
-uses this to correctly obtain the time of the clock.  The timezone of the
-system is set in
-.BR /etc/profile .
-This boot variable is normally not set, only a few UNIX die-hards who
-don't care about the time Windows sees and don't want to change the clock
-twice a year for daylight savings use this option.  (Set Windows time to the
-time zone of Casablanca to match.)
-.SH "TCP/IP CONFIGURATION"
-To use TCP/IP you need to run the
-.B inet
-server, and unless you are running standalone you have to enable the
-ethernet driver.  See the
-.B servers
+.Nx Ns /i386
+boot loader can boot a kernel using either the native
+.Nx
+boot protocol, or the
+.Dq multiboot
+protocol (which is compatible with some other operating systems).
+In the native
+.Nx
+boot protocol, options are passed from the boot loader
+to the kernel via flag bits in the
+.Va boothowto
+variable (see
+.Xr boothowto 9 ) .
+In the multiboot protocol, options are passed from the boot loader
+to the kernel as strings.
+.Ss Diagnostic Output
+If the first stage boot fails to load the boot, it will print a terse
+message indicating the reason for the failure.
+The possible error messages and their cause are listed in
+.Xr mbr 8 .
+.Pp
+If the first stage boot succeeds, the banner will be shown and the
+error messages should be self-explanatory.
+.Ss Interactive mode
+In interactive mode, the boot loader will present a prompt, allowing
+input of these commands:
+.\" NOTE: much of this text is duplicated in the MI boot.8.
+.\" Some of it is
+.\" also duplicated in the i386-specific dosboot.8 and pxeboot.8;
+.\" please try to keep all relevant files synchronized.
+.Bl -tag -width 04n -offset 04n
+.It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
+The default
+.Va device
+will be set to the disk that the boot loader was
+loaded from.
+To boot from an alternate disk, the full name of the device should
+be given at the prompt.
+.Va device
+is of the form
+.Xo Va xd
+.Op Va N Ns Op Va x
+.Xc
+where
+.Va xd
+is the device from which to boot,
+.Va N
+is the unit number, and
+.Va x
+is the partition letter.
+.Pp
+The following list of supported devices may vary from installation to
+installation:
+.Pp
+.Bl -hang -compact
+.It hd
+Hard disks as numbered by the BIOS.
+This includes ST506, IDE, ESDI, RLL disks on a WD100[2367] or
+lookalike controller(s), and SCSI disks
+on SCSI controllers recognized by the BIOS.
+.It fd
+Floppy drives as numbered by the BIOS.
+.El
+.Pp
+The default
+.Va filename
+is
+.Pa netbsd ;
+if the boot loader fails to successfully
+open that image, it then tries
+.Pa netbsd.gz
+(expected to be a kernel image compressed by gzip), followed by
+.Pa netbsd.old ,
+.Pa netbsd.old.gz ,
+.Pa onetbsd ,
+and finally
+.Pa onetbsd.gz .
+Alternate system images can be loaded by just specifying the name of the image.
+.Pp
+Options are:
+.Bl -tag -width xxx
+.It Fl 1
+Sets the machine-dependent flag
+.Sy RB_MD1
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this disables multiprocessor boot;
+the kernel will boot in uniprocessor mode.
+.It Fl 2
+Sets the machine-dependent flag
+.Sy RB_MD2
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this disables ACPI.
+.It Fl 3
+Sets the machine-dependent flag
+.Sy RB_MD3
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this has no effect.
+.It Fl 4
+Sets the machine-dependent flag
+.Sy RB_MD4
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this has no effect.
+.It Fl a
+Sets the
+.Sy RB_ASKNAME
+flag in
+.Va boothowto .
+This causes the kernel to prompt for the root file system device,
+the system crash dump device, and the path to
+.Xr init 8 .
+.It Fl b
+Sets the
+.Sy RB_HALT
+flag in
+.Va boothowto .
+This causes subsequent reboot attempts to halt instead of rebooting.
+.It Fl c
+Sets the
+.Sy RB_USERCONF
+flag in
+.Va boothowto .
+This causes the kernel to enter the
+.Xr userconf 4
+device configuration manager as soon as possible during the boot.
+.Xr userconf 4
+allows devices to be enabled or disabled, and allows device locators
+(such as hardware addresses or bus numbers)
+to be modified before the kernel attempts to attach the devices.
+.It Fl d
+Sets the
+.Sy RB_KDB
+flag in
+.Va boothowto .
+Requests the kernel to enter debug mode, in which it
+waits for a connection from a kernel debugger; see
+.Xr ddb 4 .
+.It Fl m
+Sets the
+.Sy RB_MINIROOT
+flag in
+.Va boothowto .
+Informs the kernel that a mini-root file system is present in memory.
+.It Fl q
+Sets the
+.Sy AB_QUIET
+flag in
+.Va boothowto .
+Boot the system in quiet mode.
+.It Fl s
+Sets the
+.Sy RB_SINGLE
+flag in
+.Va boothowto .
+Boot the system in single-user mode.
+.It Fl v
+Sets the
+.Sy AB_VERBOSE
+flag in
+.Va boothowto .
+Boot the system in verbose mode.
+.It Fl x
+Sets the
+.Sy AB_DEBUG
+flag in
+.Va boothowto .
+Boot the system with debug messages enabled.
+.It Fl z
+Sets the
+.Sy AB_SILENT
+flag in
+.Va boothowto .
+Boot the system in silent mode.
+.El
+.It Ic consdev Va dev
+Immediately switch the console to the specified device
+.Va dev
+and reprint the banner.
+.Va dev
+must be one of
+.\" .Bl -item -width com[0123]kbd -offset indent -compact
+.Ar pc , com0 , com1 , com2 ,
+.Ar com3 , com0kbd , com1kbd , com2kbd ,
+.Ar com3kbd ,
+or
+.Ar auto .
+See
+.Sx Console Selection Policy
+in
+.Xr boot_console 8 .
+.It Ic dev Op Va device
+Set the default drive and partition for subsequent filesystem
+operations.
+Without an argument, print the current setting.
+.Va device
+is of the form specified in
+.Cm boot .
+.It Ic help
+Print an overview about commands and arguments.
+.It Ic load Va module Op Ar arguments
+Load the specified kernel
+.Va module ,
+and pass it the specified
+.Ar arguments .
+If the module name is not an absolute path,
+.Pa /stand/ Xo Ns
+.Aq Sy arch Ns
+.Pa / Ns
+.Aq Sy osversion Ns
+.Pa /modules/ Ns
+.Aq Sy module Ns
+.Pa / Ns
+.Aq Sy module Ns
+.Pa .kmod
+.Xc
+is used.
+Possible used of the
+.Ic load
+command include loading a memory disk image before booting a kernel,
+or loading a
+.Tn Xen
+DOM0 kernel before booting the
+.Tn Xen
+hypervisor.
+See
+.Xr boot.cfg 5
+for examples.
+.Pp
+In addition to the
+.Cm boot
+options specified above, the DOM0 kernel accepts
+.Po Ar arguments
+being separated with spaces
+.Pc :
+.Bl -tag -width xxx
+.It Ic bootdev Ns = Ns Ar dev Po or Ic root Ns = Ns Ar dev Pc
+Override the default boot device.
+.Ar dev
+can be a unit name
+.Po Dq wd0
+.Pc ,
+or an interface name
+.Po Dq bge0 ,
+.Dq wm0 ,
+.Ns ...
+.Pc ,
+for cases where the root file system has to be loaded
+from network (see the
+.Sx BUGS
+section in
+.Xr pxeboot 8 ) .
+.It Ic console Ns = Ns Ar dev
+Console used by DOM0 kernel during boot.
+.Ar dev
+accepts the same values as the ones given for the
+.Cm consdev
+command.
+See
+.Sx Console Selection Policy
+in
+.Xr boot_console 8 .
+.It Xo Ic ip Ns = Ns
+.Ar my_ip Ns : Ns Ar serv_ip Ns : Ns Ar gw_ip Ns : Ns
+.Ar mask Ns : Ns Ar host Ns : Ns Ar iface
+.Xc
+Specify various parameters for a network boot (IPs are in
+dot notation),
+each one separated by a colon:
+.Bl -tag -width xxxxxxx
+.It Va my_ip
+address of the host
+.It Va serv_ip
+address of the NFS server
+.It Va gw_ip
+address of the gateway
+.It Va mask
+network mask
+.It Va host
+address of the host
+.It Va iface
+interface
+.Po e.g. Dq xennet0
+or
+.Dq eth0
+.Pc
+.El
+.It Ic nfsroot Ns = Ns Ar address Ns : Ns Ar rootpath
+Boot the system with root on NFS.
+.Ar address
+is the address of the NFS server, and
+.Ar rootpath
+is the remote mount point for the root file system.
+.It Ic pciback.hide Ns = Ns Ar pcidevs
+Pass a list of PCI IDs for use with the PCI backend driver,
+.Xr pciback 4 .
+.Ar pcidevs
+is formed of multiple IDs (in bus:device.function notation),
+each ID being surrounded with brackets.
+PCI domain IDs are currently ignored.
+See
+.Xr pciback 4 .
+.El
+.It Ic ls Op Pa path
+Print a directory listing of
+.Pa path ,
+containing inode number, filename, and file type.
+.Pa path
+can contain a device specification.
+.It Ic modules Bro Ar on | off | enabled | disabled Brc
+The values
+.Ar enabled , on
+will enable module loading for
+.Cm boot
 and
-.BI DPETH n
-boot variables above.  The driver supports these ethernet cards:  Western
-Digital 8003, Western Digital 8013, SMC Elite Ultra 16,
-Novell NE1000 and NE2000, 3Com Etherlink II (3c503).  Many newer
-variants of the WD8013, now under the SMC brand, may also work.
-A common PCI reimplementation of the NE2000 using the Realtek 80 chipset is
-also supported.  Make sure it's just a 10 mbit device and that it has a
-chip marked "RTL 8029".
-.PP
-You are likely to use TCP/IP in one of three situations:
-.PP
-.RS
-Standalone with no connection to a network.
-.SP
-In a small network with no support from a "big" host.
-.SP
-Connected to a large network with address and name servers.
-.RE
-.PP
-In each situation you need a different set of configuration files.
-.SS Standalone
-All you need is a name and an IP address.  Suppose the name is "flotsam"
-and the IP address is 192.168.0.1 from the private IP space, then this is
-put in
-.BR /etc/hosts :
-.PP
-.RS
-.ta +\w'192.168.0.1'u+3n
-192.168.0.1	flotsam
-.RE
-.PP
-And this in
-.BR /etc/dhcp.conf :
-.PP
-.RS
-.nf
-host 192.168.0.0/24 {};
-interface ip0 flotsam;
-.fi
-.RE
-.SS "Small Network"
-A network requires an ethernet driver.  You need to enable one in
-<minix/config.h> and you need to tell
-.B inet
-that it should use that driver by making
-.B /etc/inet.conf
-look like this:
-.PP
-.RS
-.nf
-eth0 DP8390 0 { default; };
-.fi
-.RE
-.PP
-The second word (DP8390) must the name of the ethernet driver you've enabled.
-It can also be seen among the drivers in the output of
-.BR "ps ax" .
-See also
-.BR inet (8).
-.PP
-In a small network there may not be a DHCP server for MINIX 3 to obtain its IP
-address and name from, so you need specify the ethernet address of your machine
-and host names of all machines in the hosts and DHCP configuration files.
-Suppose your machine is to be named "flotsam", and another machine in the
-network is named "jetsam", and let's use network 192.168.0.0/24 again.  The
-file
-.B /etc/hosts
-now looks like this:
-.PP
-.RS
-.ta +\w'192.168.0.1'u+3n
-.nf
-192.168.0.1	flotsam
-192.168.0.2	jetsam
-.fi
-.RE
-.PP
-And
-.B /etc/dhcp.conf
-like this:
-.PP
-.RS
-.nf
-host 192.168.0.0/24 {};
-client 0:1:1b:a:68:ce flotsam;
-.fi
-.RE
-.PP
-Use
-.B hostaddr \-e
-to find out what the ethernet address of your network card is.  (The address
-above is an example.)
-.PP
-A host needs to have all hostnames used on your little network in its
-host file.  In the DHCP configuration you only need the client entry of the
-system itself, but it may be useful to add all client entries to make them all
-the same.
-.PP
-If one of the machines is always on when any of the others is, then you can let
-it be a DHCP server.  The other machines don't need a hosts or DHCP file
-anymore.  If flotsam is the server then its
-.BR /etc/dhcp.conf
-looks like this:
-.PP
-.RS
-.nf
-.ta +4m
-host 192.168.0.0/24 {
-	DNSserver flotsam;
-};
-client 0:1:1b:a:68:ce flotsam { option server; };
-client 0:0:c0:3a:12:10 jetsam;
-.fi
-.RE
-.SS "Large Network"
-In a network with a central network administration your machine's IP address
-and name are given by the DHCP server.  You don't need any configuration
-files.  If you want your machine to do more, like being a router or
-something, then see
-.BR inet (8)
-on setting up more than one network interface.
-.PP
-.SS "Simpler configuration tools"
+.Cm multiboot ,
+whereas
+.Ar disabled , off
+will turn off the feature.
+.It Ic multiboot Va kernel Op Ar arguments
+Boot the specified
+.Va kernel ,
+using the
+.Dq multiboot
+protocol instead of the native
+.Nx
+boot protocol.
 The
-.BR dhcpd
-and
-.BR nonamed
-daemons are complex little programs that try to obtain information about
-their surroundings automatically to tell the machine what its place in the
-network is.  It should come as no surprise that there are simpler utilities
-to configure a machine.  On a memory starved machine it may even be wise to
-configure a machine statically to get rid of the daemons.  The first daemon,
-.BR dhcpd ,
-can be replaced by:
-.PP
-.RS
-.B ifconfig \-h
-.I host-IP-address
-.B \-n
-.I netmask
-.br
-.B add_route \-g
-.I gateway-IP-address
-.RE
-.PP
-to set the IP address and netmask of the machine.  Note that you can only
-do this if the machine has a static IP address, or chaos will follow.  Remove
-.BR /usr/adm/dhcp.cache
-if the DHCP daemon has run before.
-.PP
-The name daemon,
-.BR nonamed ,
-can be replaced by an entry in
-.B /etc/resolv.conf
-that specifies an external name daemon:
-.PP
-.RS
-.B nameserver
-.I nameserver-IP-address
-.RE
-.PP
+.Va kernel
+is specified in the same way as with the
+.Ic boot
+command.
+.Pp
+The multiboot protocol may be used in the following cases:
+.Bl -tag -width indent
+.It Nx Ns / Ns  Xen No kernels
 The
-.B ifconfig
+.Tn Xen
+DOM0 kernel must be loaded as a module using the
+.Ic load
+command, and the
+.Tn Xen
+hypervisor must be booted using the
+.Ic multiboot
+command.
+Options for the DOM0 kernel (such as
+.Dq -s
+for single user mode) must be passed as options to the
+.Ic load
+command.
+Options for the hypervisor (such as
+.Dq dom0_mem=256M
+to reserve 256 MB of memory for DOM0)
+must be passed as options to the
+.Ic multiboot
+command.
+See
+.Xr boot.cfg 5
+for examples on how to boot
+.Nx Ns / Ns  Xen.
+.It Nx No multiboot kernels
+A
+.Nx
+kernel that was built with
+.Cd options MULTIBOOT
+(see
+.Xr multiboot 8 )
+may be booted with either the
+.Ic boot
+or
+.Ic multiboot
+command, passing the same
+.Ar arguments
+in either case.
+.It Non- Ns Nx No kernels
+A kernel for a
+.No non- Ns Nx
+operating system that expects to be booted using the
+multiboot protocol (such as by the GNU
+.Dq GRUB
+boot loader)
+may be booted using the
+.Ic multiboot
+command.
+See the foreign operating system's documentation for the available
+.Ar arguments .
+.El
+.It Ic quit
+Reboot the system.
+.It Ic userconf Va command
+Pass the
+.Va command
+to
+.Xr userconf 4
+at boot time .
+These commands are processed before the interactive
+.Xr userconf 4
+shell is executed, if requested .
+.It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
+Initialise the video card to the specified resolution and bit depth.
+The
+.Va modenum
+should be in the form of
+.Ar 0x100 , 800x600 , 800x600x32 .
+The values
+.Ar enabled , on
+put the display into the default mode, and
+.Ar disabled , off
+returns the display into standard vga mode.
+The value
+.Ar list
+lists all supported modes.
+.El
+.Pp
+In an emergency, the bootstrap methods described in the
+.Nx
+installation notes for the i386 architecture
+can be used to boot from floppy or other media,
+or over the network.
+.Sh FILES
+.Bl -tag -width /usr/mdec/bootxx_fstype -compact
+.It Pa /boot
+boot program code loaded by the primary bootstrap
+.It Pa /boot.cfg
+optional configuration file
+.It Pa /netbsd
+system code
+.It Pa /netbsd.gz
+gzip-compressed system code
+.It Pa /usr/mdec/boot
+master copy of the boot program (copy to /boot)
+.It Pa /usr/mdec/bootxx_fstype
+primary bootstrap for filesystem type fstype, copied to the start of
+the
+.Nx
+partition by
+.Xr installboot 8 .
+.El
+.Sh SEE ALSO
+.Xr ddb 4 ,
+.Xr pciback 4 ,
+.Xr userconf 4 ,
+.Xr boot.cfg 5 ,
+.Xr boot_console 8 ,
+.Xr dosboot 8 ,
+.Xr halt 8 ,
+.Xr installboot 8 ,
+.Xr mbr 8 ,
+.Xr multiboot 8 ,
+.Xr pxeboot 8 ,
+.Xr reboot 8 ,
+.Xr shutdown 8 ,
+.Xr w95boot 8 ,
+.Xr boothowto 9
+.Sh BUGS
+The kernel file name must be specified before, not after, the boot options.
+Any
+.Ar filename
+specified after the boot options, e.g.:
+.Pp
+.Bd -unfilled -offset indent -compact
+.Cm boot -d netbsd.test
+.Ed
+.Pp
+is ignored, and the default kernel is booted.
+.Pp
+Hard disks are always accessed by
+.Tn BIOS
+functions.
+Unit numbers are
+.Tn BIOS
+device numbers which might differ from numbering in the
+.Nx
+kernel or physical parameters
+.Po
+e.g.,
+.Tn SCSI
+slave numbers
+.Pc .
+There isn't any distinction between
+.Dq sd
 and
-.B add_route
-calls can be placed in the file
-.BR /etc/rc.net .
-Check
-.B /usr/etc/rc
-to see how
-.BR /etc/rc.net
-can be used to override running the normal series of network deamons.
-Note that
-.BR /etc/rc.net
-is sourced, so you can use the same variables and functions that
-.BR /usr/etc/rc
-uses.
-These changes undo all the efforts to make MINIX 3 TCP/IP
-autoconfigurable.  Make very sure that all the IP addresses are correct, and
-that the IP address of your machine is unique.  (Mistakenly using the
-address of a main server will make all other machines look at your machine,
-and will make all the users of all other machines look at you.)
-.SH FILES
-.TP 20n
-/boot
-MINIX 3 Boot Monitor.
-.TP
-/minix
-Kernel image, or directory containing them.
-.TP
-/etc/rc
-Basic system initialization.
-.TP
-/usr/etc/rc
-Complete system initialization.
-.TP
-/etc/rc.net
-Specialized network initialization.
-.TP
-/usr/local/etc/rc
-Per site initialization.
-.TP
-/etc/hosts
-Name to IP address mapping.
-.TP
-/etc/dhcp.conf
-Network initialization.
-.TP
-/etc/resolv.conf
-Name resolver configuration.
-.SH "SEE ALSO"
-.BR monitor (8),
-.BR init (8),
-.BR inet (8),
-.BR loadkeys (8),
-.BR readclock (8),
-.BR fsck (1),
-.BR fstab (5),
-.BR update (8),
-.BR cron (8),
-.BR ttytab (5),
-.BR getty (8),
-.BR hostaddr (1),
-.BR ifconfig (8),
-.BR dhcpd (8),
-.BR nonamed (8),
-.BR tcpd (8),
-.BR hosts (5),
-.BR ethers (5),
-.BR resolv.conf (5),
-.BR inet (8).
-.SH DIAGNOSTICS
-.TP 5n
-Checking File Systems.
-If the system has crashed then
-.B fsck
-is called for the root and /usr file systems.  It is wise to reboot if the
-root file system must be fixed.
-.TP
-Finish the name of device to mount as /usr: /dev/
-The prompt for the
-.B \-a
-option, or if the name of the /usr file system has not been set in /etc/fstab.
-You can type a device name, say
-.BR fd0 .
-.TP
-Unable to obtain an IP address after 10 seconds.
-TCP/IP misconfiguration.  The DHCP daemon may have failed because the ethernet
-address of the machine is not known to the DHCP server, the DHCP
-configuration is not filled in properly, or the DHCP server can not be reached.
-Either talk to your Network Administrator, or make a dhcp.conf
-and a hosts file.
-.TP
-1.2.3.4 login:
-If you see an IP address instead of a host name then the system failed to
-translate the IP address.  Either talk to your Network Administrator to
-have the reverse address translation tables fixed, or make a hosts file.
-.SH NOTES
-The 10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16 networks can be used for
-private networks.  (This so-called CIDR notation names an IP address and
-the number of bits in the network number.  So 172.16.0.0/12 includes all
-addresses from 172.16.0.0 to 172.31.255.255.)
-RFC-1597 will tell you why private networks are good, and RFC-1627 why
-they are bad.
-.SH BUGS
-Indefinite hangs are possible if I/O addresses or IRQ's are wrong.  A driver
-may babble about addresses and IRQ's, but that does not mean that what it
-says is true, it may just be configured that way.  It is very difficult to
-find peripherals on a PC automatically, and MINIX 3 doesn't even try.
-.SH AUTHOR
-Kees J. Bot <kjb@cs.vu.nl>
+.Dq wd
+devices at the bootloader level.
+This is less a bug of the bootloader code than
+a shortcoming of the PC architecture.
+The default disk device's name printed in the starting message
+is derived from the
+.Dq type
+field of the
+.Nx
+disklabel (if it is a hard disk).

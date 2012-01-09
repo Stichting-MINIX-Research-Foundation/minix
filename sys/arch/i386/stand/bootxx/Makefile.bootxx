@@ -1,0 +1,154 @@
+# $NetBSD: Makefile.bootxx,v 1.42 2011/06/20 06:52:38 mrg Exp $
+
+S=	${.CURDIR}/../../../../..
+
+AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
+NOMAN=
+PROG?= bootxx_${FS}
+BINDIR= /usr/mdec
+BINMODE= 0444
+
+PRIMARY_LOAD_ADDRESS=0x1000
+SECONDARY_LOAD_ADDRESS=0x10000
+
+# We ought (need?) to fit into track 0 of a 1.2M floppy.
+# This restricts us to 15 sectors (including pbr and label)
+BOOTXX_SECTORS?=15
+BOOTXX_MAXSIZE?= $$(( ${BOOTXX_SECTORS} * 512 ))
+
+SRCS= pbr.S label.S bootxx.S boot1.c
+
+.include <bsd.own.mk>
+
+STRIPFLAG=	# nothing
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+BINDIR=/usr/mdec
+BINMODE=444
+
+.PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
+
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start
+CPPFLAGS+= -DBOOTXX
+# CPPFLAGS+= -D__daddr_t=int32_t
+CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
+CPPFLAGS+= -DBOOTXX_SECTORS=${BOOTXX_SECTORS}
+CPPFLAGS+= -DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
+CPPFLAGS+= -DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
+CPPFLAGS+= -DXXfs_open=${FS}_open
+CPPFLAGS+= -DXXfs_close=${FS}_close
+CPPFLAGS+= -DXXfs_read=${FS}_read
+CPPFLAGS+= -DXXfs_stat=${FS}_stat
+CPPFLAGS+= -DFS=${FS}
+# CPPFLAGS+= -DBOOT_MSG_COM0
+
+# Make sure we override any optimization options specified by the user
+.include "${.PARSEDIR}/../Makefile.inc"
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
+DBG=
+
+CPPFLAGS+= -DNO_LBA_CHECK
+
+.if defined(HAVE_GCC)
+.if ${MACHINE_ARCH} == "x86_64"
+LDFLAGS+=  -Wl,-m,elf_i386
+AFLAGS+=   -m32
+CPUFLAGS=  -m32
+LIBKERN_ARCH=i386
+KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+.else
+CPPFLAGS+= -DEPIA_HACK
+CPUFLAGS=  -march=i386 -mtune=i386
+.endif
+.endif
+
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
+CPPFLAGS+= -nostdinc -D_STANDALONE
+CPPFLAGS+= -I$S
+
+CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
+		-DLIBSA_NO_TWIDDLE \
+		-DLIBSA_NO_FD_CHECKING \
+		-DLIBSA_NO_RAW_ACCESS \
+		-DLIBSA_NO_FS_WRITE \
+		-DLIBSA_NO_FS_SEEK \
+		-DLIBSA_SINGLE_DEVICE=blkdev \
+		-DLIBKERN_OPTIMISE_SPACE \
+		-D"blkdevioctl(x,y,z)=EINVAL" \
+		-D"blkdevclose(f)=0" \
+		-D"devopen(f,n,fl)=(*(fl)=(void *)n,0)" \
+		-DLIBSA_NO_DISKLABEL_MSGS
+
+# -DLIBSA_FS_SINGLECOMPONENT 
+
+# CPPFLAGS+= -DBOOTXX_RAID1_SUPPORT
+
+I386_STAND_DIR?= $S/arch/i386/stand
+
+CLEANFILES+= machine x86
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	-rm -f machine && ln -s $S/arch/i386/include machine
+	-rm -f x86 && ln -s $S/arch/x86/include x86
+.ifdef LIBOBJ
+	-rm -f lib && ln -s ${LIBOBJ}/lib lib
+	mkdir -p ${LIBOBJ}/lib
+.endif
+.endif
+
+### find out what to use for libi386
+I386DIR= ${I386_STAND_DIR}/lib
+.include "${I386DIR}/Makefile.inc"
+LIBI386= ${I386LIB}
+
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
+
+### find out what to use for libkern
+KERN_AS=        library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=        ${KERNLIB}
+
+
+cleandir distclean: .WAIT cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+LIBLIST= ${LIBI386} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
+
+CLEANFILES+= ${PROG}.sym ${PROG}.map
+
+${PROG}: ${OBJS} ${LIBLIST}
+	${_MKTARGET_LINK}
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
+	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
+	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
+	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
+		echo "### ${PROG} size $$sz is larger than ${BOOTXX_MAXSIZE}" >&2; \
+		rm ${PROG}; \
+		! :; \
+	else \
+		: pad to sector boundary; \
+		pad=$$(( 512 - ( $$sz & 511 ) )); \
+		[ $$pad = 512 ] || \
+		    dd if=/dev/zero bs=1 count=$$pad >>${PROG} 2>/dev/null; \
+		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
+	fi
+
+.include <bsd.prog.mk>

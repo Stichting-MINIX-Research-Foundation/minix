@@ -1,0 +1,36 @@
+# $NetBSD: Makefile.satest,v 1.2 1999/02/19 19:53:01 drochner Exp $
+
+I386_STAND_DIR?= $S/arch/i386/stand
+
+.PATH: ${I386_STAND_DIR}/lib/test ${I386_STAND_DIR}/lib ${I386_STAND_DIR}/libsa
+
+SRCS+= stand_user.c
+
+# Separate libsa's namespace from userland libraries.
+# Should comply to "sanamespace.h".
+CPPFLAGS+= -Dmain=samain -Dexit=saexit -Dfree=safree
+CPPFLAGS+= -Dopen=saopen -Dclose=saclose -Dread=saread -Dwrite=sawrite
+CPPFLAGS+= -Dioctl=saioctl -Dlseek=salseek
+CPPFLAGS+= -Dprintf=saprintf -Dsprintf=sasprintf -Dvprintf=savprintf
+CPPFLAGS+= -Dputchar=saputchar -Dgets=sagets
+CPPFLAGS+= -Dstrerror=sastrerror  -Derrno=saerrno
+
+CPPFLAGS+= -I$S/lib/libsa -I${I386_STAND_DIR}/libsa -I${I386_STAND_DIR}/lib
+CPPFLAGS+= -I${I386_STAND_DIR}/lib/test -I$S
+
+CPPFLAGS+= -DHEAP_VARIABLE
+
+CFLAGS= -O -g -Wall -fwritable-strings
+
+LDFLAGS= -g -static -Xlinker -M
+LDADD= ${LIBSA} -lz -lkvm -li386 >${PROG}.list 2>&1
+CLEANFILES+= ${PROG}.list
+
+.include <bsd.prog.mk>
+
+### find out what to use for libsa
+SA_AS=		library
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+${PROG}: ${LIBSA}
