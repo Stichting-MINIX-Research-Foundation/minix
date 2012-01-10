@@ -56,27 +56,14 @@ edit()
 # /etc/fstab, and fscks and mounts its filesystems.
 mountfstab_poorman()
 {
-    # /etc/fstab lists the root, tmp and usr devices.
+    echo "WARNING: old fstab format, please upgrade!"
+
+    # /etc/fstab lists the root, home, and usr devices.
     . $FSTAB
 
-    # Check if the system crashed.
-    if shutdown -C
-    then
-	echo
-	echo "The system was not properly shut down.  Checking file systems."
-	fflag=-f
-    fi
-
-    if [ -n "$fflag" ]
-    then
-	echo "fsck.mfs / - $root"
-	intr fsck.mfs $fsckopts $root
-	echo "fsck.mfs /usr - $usr"
-	intr fsck.mfs $fsckopts $usr
-	if [ ! -z "$home" ]
-	then	echo "fsck.mfs /home - $home"
-		intr fsck.mfs $fsckopts $home
-	fi
+    intr fsck.mfs $fsckopts $usr
+    if [ ! -z "$home" ]
+    then intr fsck.mfs $fsckopts $home
     fi
 
     # mount /usr
@@ -113,7 +100,6 @@ start)
     test -f /etc/keymap && loadkeys /etc/keymap
 
     # options for fsck. default is -r, which prompts the user for repairs.
-    fsckopts="`sysenv fsckopts`"
     optname=fsckopts
     fsckopts=-p
     if sysenv $optname >/dev/null
