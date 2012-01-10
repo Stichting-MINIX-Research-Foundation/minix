@@ -31,7 +31,8 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c \
 	tables.c tar.c tty_subs.c fgetln.c
 
 MAN=	pax.1 cpio.1
-
+BINDIR=/bin
+SYMLINKS+= $(BINDIR)/$(PROG) /usr/bin/$(PROG)
 LINKS+= ${BINDIR}/pax ${BINDIR}/cpio
 
 CPPFLAGS+= -DNET2_STAT=1
