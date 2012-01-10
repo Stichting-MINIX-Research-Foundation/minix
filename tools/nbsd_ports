@@ -33,6 +33,7 @@ usr.bin/seq		src/usr.bin/seq
 usr.bin/man		src/usr.bin/man
 usr.bin/apropos		src/usr.bin/apropos
 usr.bin/mdocml		src/external/bsd/mdocml
+usr.sbin/installboot	src/usr.sbin/installboot
 usr.sbin/pwd_mkdb	src/usr.sbin/pwd_mkdb
 usr.sbin/user		src/usr.sbin/user
 usr.sbin/vipw		src/usr.sbin/vipw
