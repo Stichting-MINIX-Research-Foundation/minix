@@ -515,7 +515,14 @@ do_read:
 */
 	movl	%ebp, %esi
 	pop	%dx			/* recover drive # */
+#ifdef __minix
+	/* There some bug in MINIX tools, which causes to
+	 * generate wrong code for "jmp BOOTADDR" (relocation issue).
+	 */
+	jmp	start - LOADADDR + BOOTADDR
+#else
 	jmp	BOOTADDR
+#endif
 
 
 #ifndef NO_CHS
