@@ -1,0 +1,56 @@
+#	$NetBSD: Makefile.mbr,v 1.18 2011/05/20 15:05:02 joerg Exp $
+
+S=		${.CURDIR}/../../../../..
+
+NOMAN=		# defined
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
+
+.include <bsd.own.mk>
+
+STRIPFLAG=	# override
+
+SRCS?=		mbr.S
+
+BINDIR=		/usr/mdec
+BINMODE=	444
+
+.PATH:		${.CURDIR}/..
+
+LDFLAGS+=	-nostdlib -Wl,-e,start
+CPPFLAGS+=	-I. -I${.CURDIR}/../../lib -I${S}
+
+.if ${MACHINE_ARCH} == "x86_64"
+LDFLAGS+=	-Wl,-m,elf_i386
+AFLAGS+=	-m32
+.endif
+
+BUILDSYMLINKS+=	$S/arch/i386/include	machine \
+		$S/arch/x86/include	x86
+
+DPSRCS+=	machine x86
+
+CLEANFILES+=	${PROG}.tmp
+
+LOADADDR=	0x8800
+
+AFLAGS.mbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.gpt.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+${PROG}: ${OBJS}
+	${_MKTARGET_LINK}
+	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${LOADADDR} ${OBJS}
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' \
+		    | ${TOOL_SED} 's/^0*//'  ); \
+		echo "#### There are $$1 free bytes in ${PROG}"
+	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
+	rm -f ${PROG}.tmp
+
+.include <bsd.prog.mk>
