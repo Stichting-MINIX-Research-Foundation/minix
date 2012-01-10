@@ -1,6 +1,6 @@
 # installboot: install the boot package; runs on the installer's machine
 
-PROG=	installboot
+PROG=	installboot_minix
 BINDIR=	/usr/bin
 
 SRCS=	installboot.c rawfs.c

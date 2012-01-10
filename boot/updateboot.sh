@@ -24,5 +24,5 @@ echo Installing boot monitor into $BOOT.
 cp $MDEC/boot $BOOT
 
 echo Patching position of $BOOT into $ROOT.
-installboot -d "$ROOT" $MDEC/bootblock $BOOT
+installboot_minix -d "$ROOT" $MDEC/bootblock $BOOT
 sync

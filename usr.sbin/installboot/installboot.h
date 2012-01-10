@@ -161,6 +161,15 @@ int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 int		ext2fs_match(ib_params *);
 int		ext2fs_findstage2(ib_params *, uint32_t *, ib_block *);
 
+	/* install_master.c */
+void		install_master(const char *device, char *masterboot, char **guide);
+int		isoption(const char *option, const char *test);
+
+	/* minixfs3.c */
+int minixfs3_is_minix_partition(const char* partition);
+int minixfs3_has_bootblock_space(const char* partition);
+
+
 	/* machines.c */
 extern struct ib_mach ib_mach_alpha;
 extern struct ib_mach ib_mach_amd64;
@@ -169,6 +178,9 @@ extern struct ib_mach ib_mach_ews4800mips;
 extern struct ib_mach ib_mach_hp300;
 extern struct ib_mach ib_mach_hp700;
 extern struct ib_mach ib_mach_i386;
+#ifdef __minix
+extern struct ib_mach ib_mach_i386;
+#endif
 extern struct ib_mach ib_mach_landisk;
 extern struct ib_mach ib_mach_macppc;
 extern struct ib_mach ib_mach_news68k;

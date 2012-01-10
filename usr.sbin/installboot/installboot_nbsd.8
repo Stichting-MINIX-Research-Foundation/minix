@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.79 2011/11/03 20:09:18 martin Exp $
+.\"	$NetBSD: installboot_nbsd.8,v 1.79 2011/11/03 20:09:18 martin Exp $
 .\"
 .\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
-.Nm installboot
+.Nm installboot_nbsd
 .Nd install disk bootstrap software
 .
 .Sh SYNOPSIS
@@ -39,7 +39,6 @@
 .Op Fl fnv
 .Op Fl B Ar s2bno
 .Op Fl b Ar s1bno
-.Op Fl m Ar machine
 .Op Fl o Ar options
 .Op Fl t Ar fstype
 .Ar filesystem
@@ -48,16 +47,18 @@
 .Nm
 .Fl c
 .Op Fl fnv
-.Op Fl m Ar machine
 .Op Fl o Ar options
 .Op Fl t Ar fstype
 .Ar filesystem
 .Nm
 .Fl e
 .Op Fl fnv
-.Op Fl m Ar machine
 .Op Fl o Ar options
 .Ar bootstrap
+.Nm
+.Fl m(aster)
+.Ar device 
+.Ar masterboot
 .
 .Sh DESCRIPTION
 The
@@ -188,39 +189,6 @@ show the current options.
 Forces
 .Nm
 to ignore some errors.
-.
-.It Fl m Ar machine
-Use
-.Ar machine
-as the target machine type.
-The default machine is determined from
-.Xr uname 3
-and then
-.Ev MACHINE .
-The following machines are currently supported by
-.Nm :
-.Bd -ragged -offset indent
-.Sy alpha ,
-.Sy amd64 ,
-.Sy amiga ,
-.Sy ews4800mips ,
-.Sy hp300 ,
-.Sy hp700 ,
-.Sy i386 ,
-.Sy landisk ,
-.Sy macppc ,
-.Sy news68k ,
-.Sy newsmips ,
-.Sy next68k ,
-.Sy pmax ,
-.Sy sparc ,
-.Sy sparc64 ,
-.Sy sun2 ,
-.Sy sun3 ,
-.Sy vax ,
-.Sy x68k
-.Ed
-.
 .
 .It Fl n
 Do not write to
@@ -574,7 +542,7 @@ secondary bootstrap.
 .Ss common
 Verbosely install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
-.Dl Ic installboot -v /dev/rsd0c /usr/mdec/bootxx_ffs
+.Dl Ic installboot_nbsd -v /dev/rsd0c /usr/mdec/bootxx_ffs
 Note: the
 .Dq whole disk
 partition (c on some ports, d on others) is used here, since the a partition
@@ -586,12 +554,12 @@ would not be able to access it.
 .Pp
 Remove the primary bootstrap from disk
 .Sq sd1 :
-.Dl Ic installboot -c /dev/rsd1c
+.Dl Ic installboot_nbsd -c /dev/rsd1c
 .
 .Ss Nx Ns Tn /amiga
 Modify the command line to change the default from "netbsd -ASn2" to
 "netbsd -S":
-.Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
+.Dl Ic installboot_nbsd -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
 .
 .Ss Nx Ns Tn /ews4800mips
 Install the System V Boot File System primary bootstrap on to disk
@@ -599,7 +567,7 @@ Install the System V Boot File System primary bootstrap on to disk
 with the secondary bootstrap
 .Sq Pa /boot
 already present in the SysVBFS partition on the disk:
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_bfs
+.Dl Ic installboot_nbsd /dev/rsd0c /usr/mdec/bootxx_bfs
 .
 .Ss Nx Ns Tn /i386 and Nx Ns Tn /amd64
 Install new boot blocks on an existing mounted root file system on
@@ -607,7 +575,7 @@ Install new boot blocks on an existing mounted root file system on
 setting the timeout to five seconds, after copying a new secondary
 bootstrap:
 .Dl Ic cp /usr/mdec/boot /boot
-.Dl Ic installboot -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv1
+.Dl Ic installboot_nbsd -v -o timeout=5 /dev/rwd0a /usr/mdec/bootxx_ffsv1
 .
 .Pp
 Create a bootable CD-ROM with an ISO9660
@@ -616,7 +584,7 @@ file system for an i386 system with a serial console:
 .Dl Ic cp sys/arch/i386/compile/mykernel/netbsd cdrom/netbsd
 .Dl Ic cp /usr/mdec/boot cdrom/boot
 .Dl Ic cp /usr/mdec/bootxx_cd9660 bootxx
-.Dl Ic installboot -o console=com0,speed=19200 -m i386 -e bootxx
+.Dl Ic installboot_nbsd -o console=com0,speed=19200 -m i386 -e bootxx
 .Dl Ic makefs -t cd9660 -o 'bootimage=i386;bootxx,no-emul-boot' boot.iso \
 	cdrom
 .
@@ -636,7 +604,7 @@ which is not a problem for a floppy disk.
 .Dl Ic cp /usr/mdec/boot /mnt/boot
 .Dl Ic gzip -9 \*[Lt] sys/arch/i386/compile/mykernel/netbsd \*[Gt] /mnt/netbsd.gz
 .Dl Ic umount /mnt
-.Dl Ic installboot -v /dev/rfd0a /usr/mdec/bootxx_ffsv1
+.Dl Ic installboot_nbsd -v /dev/rfd0a /usr/mdec/bootxx_ffsv1
 .
 .Pp
 Create a bootable FAT file system on
@@ -664,7 +632,7 @@ changed to this value.
 .Dl Ic cp /usr/mdec/boot /mnt/boot
 .Dl Ic cp path/to/kernel /mnt/netbsd
 .Dl Ic umount /mnt
-.Dl Ic installboot -t raw /dev/rwd1a /usr/mdec/bootxx_msdos
+.Dl Ic installboot_nbsd -t raw /dev/rwd1a /usr/mdec/bootxx_msdos
 .Pp
 Make the existing FAT16 filesystem on
 .Sq sd0e
@@ -675,7 +643,7 @@ sectors and that the manufacturer correctly initialised the file system.
 .Dl Ic cp /usr/mdec/boot /mnt/boot
 .Dl Ic cp path/to/kernel /mnt/netbsd
 .Dl Ic umount /mnt
-.Dl Ic installboot /dev/rsd0e /usr/mdec/bootxx_fat16
+.Dl Ic installboot_nbsd /dev/rsd0e /usr/mdec/bootxx_fat16
 It may also be necessary to use
 .Nm fdisk
 to make the device itself bootable.
@@ -683,7 +651,7 @@ to make the device itself bootable.
 .Pp
 Switch the existing installed bootstrap to use a serial console without
 reinstalling or altering other options such as timeout.
-.Dl Ic installboot -e -o console=com0 /dev/rwd0a
+.Dl Ic installboot_nbsd -e -o console=com0 /dev/rwd0a
 .Ss Nx Ns Tn /macppc
 Note the
 .Nm
@@ -694,7 +662,7 @@ map.
 .Pp
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq wd0 :
-.Dl Ic installboot /dev/rwd0c /usr/mdec/bootxx /ofwboot
+.Dl Ic installboot_nbsd /dev/rwd0c /usr/mdec/bootxx /ofwboot
 .Pp
 The secondary
 .Nx Ns Tn /macppc
@@ -709,20 +677,20 @@ which is used for the OpenFirmware to load kernels.
 .Ss Nx Ns Tn /next68k
 Install the bootstrap on to disk
 .Sq sd0 :
-.Dl Ic installboot /dev/rsd0c /usr/mdec/boot
+.Dl Ic installboot_nbsd /dev/rsd0c /usr/mdec/boot
 .Pp
 .
 .Ss Nx Ns Tn /pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
+.Dl Ic installboot_nbsd /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
 .Nx Ns Tn /pmax
 requires that this file system starts at block 0 of the disk.
 .Pp
 Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image :
-.Dl Ic installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
+.Dl Ic installboot_nbsd -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
 .Pp
 Make an ISO 9660 filesystem in the file
 .Pa /tmp/cd-image
@@ -736,7 +704,7 @@ and the secondary bootstrap
 .Dl ...
 .Dl 48 51 iso-source-dir/bootxx_cd9660
 .Dl ...
-.Dl Ic installboot -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
+.Dl Ic installboot_nbsd -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
 .
 .Ss Nx Ns Tn /sparc
 Install the Berkeley Fast File System primary bootstrap on to disk
@@ -744,12 +712,12 @@ Install the Berkeley Fast File System primary bootstrap on to disk
 with the secondary bootstrap
 .Sq Pa /boot
 already present:
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.Dl Ic installboot_nbsd /dev/rsd0c /usr/mdec/bootxx /boot
 .
 .Ss Nx Ns Tn /sparc64
 Install the primary bootstrap on to disk
 .Sq sd0 :
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootblk
+.Dl Ic installboot_nbsd /dev/rsd0c /usr/mdec/bootblk
 .Pp
 The secondary
 .Nx Ns Tn /sparc64
@@ -762,7 +730,7 @@ Install the Berkeley Fast File System primary bootstrap on to disk
 with the secondary bootstrap
 .Sq Pa /boot
 already present:
-.Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
+.Dl Ic installboot_nbsd /dev/rsd0c /usr/mdec/bootxx /boot
 .
 .Sh SEE ALSO
 .Xr uname 3 ,

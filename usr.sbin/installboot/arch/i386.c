@@ -81,6 +81,14 @@ struct ib_mach ib_mach_i386 =
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
 		IB_MODULES | IB_BOOTCONF };
 
+#ifdef __minix
+struct ib_mach ib_mach_i686 =
+	{ "i686", i386_setboot, no_clearboot, i386_editboot,
+		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
+		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
+		IB_MODULES | IB_BOOTCONF };
+#endif
+
 struct ib_mach ib_mach_amd64 =
 	{ "amd64", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |

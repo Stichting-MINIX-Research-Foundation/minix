@@ -40,6 +40,7 @@ __RCSID("$NetBSD: installboot.c,v 1.36 2011/11/03 20:46:41 martin Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
+#include <sys/ttycom.h>
 
 #include <assert.h>
 #include <err.h>
@@ -105,6 +106,12 @@ main(int argc, char *argv[])
 	char 		*p;
 	const char	*op;
 	ib_flags	unsupported_flags;
+
+	/* XXX Temp stuff for MINIX until fdisk is ported */
+	if ((4 <= argc && argc <= 6) && isoption(argv[1], "-master")) {
+		install_master(argv[2], argv[3], argv + 4);
+		exit(0);
+	}
 
 	setprogname(argv[0]);
 	params = &installboot_params;
@@ -237,6 +244,20 @@ main(int argc, char *argv[])
 		op = "write";
 		mode = O_RDWR;
 	}
+
+	if (minixfs3_is_minix_partition(params->filesystem)) {
+		/* Old setups has just 1 sector for bootblock,
+		 * but bootxx_minixfs is ~8Kb, so we require new setups
+		 * to have 32 sectors before the first subpartition.
+		 * This prevents from overwriting FS on old setups.
+		 */
+		if (!minixfs3_has_bootblock_space(params->filesystem)) {
+			err(1, "No space for bootxx, you should have 32 sectors"
+				" before the first subpartition on %s",
+				params->filesystem);
+		}
+	}
+
 	/* XXX should be specified via option */
 	params->sectorsize = DFL_SECSIZE;
 	if ((params->fsfd = open(params->filesystem, mode, 0600)) == -1)

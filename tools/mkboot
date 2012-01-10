@@ -51,7 +51,7 @@ bootable)
 	# Install the boot monitor on the root device and make it bootable.
 	install -cs -m 644 $mdec/boot $rootdir/boot/boot || exit
 	sync
-	installboot -device $root $mdec/bootblock /boot/boot || exit
+	installboot_minix -device $root $mdec/bootblock /boot/boot || exit
 	test $realroot != $root && umount $root
 	;;
 hdboot)
@@ -163,7 +163,7 @@ fdboot)
 	umount $dev || exit
 
 	# Make bootable and copy the boot parameters.
-	installboot -d $dev $mdec/bootblock /boot/boot || exit
+	installboot_minix -d $dev $mdec/bootblock /boot/boot || exit
 	pfile=fdbootparams
 	if [ -f $pfile ]
 	then	echo "Using floppy boot parameters from file $pfile."

@@ -406,7 +406,7 @@ else
 			dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
 		mv m $IMG
 		# Make CD partition table
-		installboot -m $IMG /usr/mdec/masterboot
+		installboot_minix -m $IMG /usr/mdec/masterboot
 		# Make sure there is no hole..! Otherwise the ISO format is
 		# unreadable.
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS

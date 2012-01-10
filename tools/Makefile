@@ -75,7 +75,7 @@ image: includes services
 .else
 image:  includes services
 	${PAD_KERNEL_TEXT}
-	installboot -image $@ $(KERNEL) $(PROGRAMS)
+	installboot_minix -image $@ $(KERNEL) $(PROGRAMS)
 .endif
 
 # rebuild the program or system libraries

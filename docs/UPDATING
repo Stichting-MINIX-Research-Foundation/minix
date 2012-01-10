@@ -1,3 +1,12 @@
+20120202
+	Rename installboot to installboot_minix.
+
+	Do this BEFORE a 'make world':
+	# rm -f /usr/bin/installboot /usr/sbin/installboot
+	# make -C boot/installboot clean install
+	# make -C usr.sbin/installboot clean install
+	Then 'make clean world' as usual.
+
 20120119:
 	Follow up to previous entry. The same problem also exists for
 	the man pages.
