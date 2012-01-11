@@ -258,8 +258,8 @@ PRIVATE int atapi_exec(struct port_state *ps, int cmd,
 		if (!write && (ps->flags & FLAG_USE_DMADIR))
 			fis.cf_feat |= ATA_FEAT_PACKET_DMADIR;
 
-		prd.prd_phys = ps->tmp_phys;
-		prd.prd_size = size;
+		prd.vp_addr = ps->tmp_phys;
+		prd.vp_size = size;
 		nr_prds++;
 	}
 
@@ -640,8 +640,8 @@ PRIVATE int gen_identify(struct port_state *ps, int blocking)
 	else
 		fis.cf_cmd = ATA_CMD_IDENTIFY;
 
-	prd.prd_phys = ps->tmp_phys;
-	prd.prd_size = ATA_ID_SIZE;
+	prd.vp_addr = ps->tmp_phys;
+	prd.vp_size = ATA_ID_SIZE;
 
 	/* Start the command, and possibly wait for the result. */
 	port_set_cmd(ps, 0, &fis, NULL /*packet*/, &prd, 1, FALSE /*write*/);
@@ -803,10 +803,10 @@ PRIVATE void ct_set_prdt(u8_t *ct, prd_t *prdt, int nr_prds)
 	p = (u32_t *) &ct[AHCI_CT_PRDT_OFF];
 
 	for (i = 0; i < nr_prds; i++, prdt++) {
-		*p++ = prdt->prd_phys;
+		*p++ = prdt->vp_addr;
 		*p++ = 0;
 		*p++ = 0;
-		*p++ = prdt->prd_size - 1;
+		*p++ = prdt->vp_size - 1;
 	}
 }
 
@@ -1026,7 +1026,7 @@ PRIVATE int sum_iovec(struct port_state *ps, endpoint_t endpt,
  *===========================================================================*/
 PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
 	iovec_s_t *iovec, int nr_req, vir_bytes size, vir_bytes lead,
-	prd_t *prdt)
+	int write, prd_t *prdt)
 {
 	/* Convert (the first part of) an I/O vector to a Physical Region
 	 * Descriptor Table describing array that can later be used to set the
@@ -1035,57 +1035,69 @@ PRIVATE int setup_prdt(struct port_state *ps, endpoint_t endpt,
 	 * used for padding as appropriate. Return the number of PRD entries,
 	 * or a negative error code.
 	 */
-	vir_bytes bytes, trail;
-	phys_bytes phys;
-	int i, r, nr_prds = 0;
+	struct vumap_vir vvec[NR_PRDS];
+	size_t bytes, trail;
+	int i, r, pcount, nr_prds = 0;
 
 	if (lead > 0) {
 		/* Allocate a buffer for the data we don't want. */
 		if ((r = port_get_padbuf(ps, ps->sector_size)) != OK)
 			return r;
 
-		prdt[nr_prds].prd_phys = ps->pad_phys;
-		prdt[nr_prds].prd_size = lead;
+		prdt[nr_prds].vp_addr = ps->pad_phys;
+		prdt[nr_prds].vp_size = lead;
 		nr_prds++;
 	}
 
 	/* The sum of lead, size, trail has to be sector-aligned. */
 	trail = (ps->sector_size - (lead + size)) % ps->sector_size;
 
+	/* Get the physical addresses of the given buffers. */
 	for (i = 0; i < nr_req && size > 0; i++) {
 		bytes = MIN(iovec[i].iov_size, size);
 
-		/* Get the physical address of the given buffer. */
 		if (endpt == SELF)
-			r = sys_umap(endpt, VM_D,
-				(vir_bytes) iovec[i].iov_grant, bytes, &phys);
+			vvec[i].vv_addr = (vir_bytes) iovec[i].iov_grant;
 		else
-			r = sys_umap(endpt, VM_GRANT, iovec[i].iov_grant,
-				bytes, &phys);
+			vvec[i].vv_grant = iovec[i].iov_grant;
 
-		if (r != OK) {
-			dprintf(V_ERR, ("%s: unable to map area from %d "
-				"(%d)\n", ahci_portname(ps), endpt, r));
+		vvec[i].vv_size = bytes;
+
+		size -= bytes;
+	}
+
+	pcount = i;
+
+	if ((r = sys_vumap(endpt, vvec, i, 0, write ? VUA_READ : VUA_WRITE,
+			&prdt[nr_prds], &pcount)) != OK) {
+		dprintf(V_ERR, ("%s: unable to map memory from %d (%d)\n",
+			ahci_portname(ps), endpt, r));
+		return r;
+	}
+
+	assert(pcount > 0 && pcount <= i);
+
+	/* Make sure all buffers are physically contiguous and word-aligned. */
+	for (i = 0; i < pcount; i++) {
+		if (vvec[i].vv_size != prdt[nr_prds].vp_size) {
+			dprintf(V_ERR, ("%s: non-contiguous memory from %d\n",
+				ahci_portname(ps), endpt));
 			return EINVAL;
 		}
-		if (phys & 1) {
+
+		if (prdt[nr_prds].vp_addr & 1) {
 			dprintf(V_ERR, ("%s: bad physical address from %d\n",
 				ahci_portname(ps), endpt));
 			return EINVAL;
 		}
 
-		assert(nr_prds < NR_PRDS);
-		prdt[nr_prds].prd_phys = phys;
-		prdt[nr_prds].prd_size = bytes;
 		nr_prds++;
-
-		size -= bytes;
 	}
 
 	if (trail > 0) {
 		assert(nr_prds < NR_PRDS);
-		prdt[nr_prds].prd_phys = ps->pad_phys + lead;
-		prdt[nr_prds].prd_size = trail;
+		prdt[nr_prds].vp_addr = ps->pad_phys + lead;
+		prdt[nr_prds].vp_size = trail;
 		nr_prds++;
 	}
 
@@ -1154,7 +1166,8 @@ PRIVATE ssize_t port_transfer(struct port_state *ps, u64_t pos, u64_t eof,
 	}
 
 	/* Create a vector of physical addresses and sizes for the transfer. */
-	nr_prds = r = setup_prdt(ps, endpt, iovec, nr_req, size, lead, prdt);
+	nr_prds = r = setup_prdt(ps, endpt, iovec, nr_req, size, lead, write,
+		prdt);
 
 	if (r < 0) return r;
 

@@ -247,13 +247,10 @@ typedef struct {
 	u8_t cf_ctl;		/* Control */
 } cmd_fis_t;
 
-/* Physical Region Descriptor (PRD). For internal use only;
+/* Physical Region Descriptor (PRD). For internal and sys_vumap() use only;
  * the contents of this structure are later converted to an actual PRD.
  */
-typedef struct {
-	phys_bytes prd_phys;
-	vir_bytes prd_size;
-} prd_t;
+typedef struct vumap_phys prd_t;
 
 /* These are from at_wini, as this driver is a drop-in replacement for at_wini.
  * Practically speaking this is already the upper limit with 256 minor device
