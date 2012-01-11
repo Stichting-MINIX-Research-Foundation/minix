@@ -6,7 +6,7 @@ FILES1=group hostname.file inet.conf motd.install mtab profile \
 	protocols rc services termcap ttytab utmp rc.cd  \
 	syslog.conf rc.daemons.dist \
 	rs.inet rs.single make.conf system.conf ttys resolv.conf rc.conf \
-	rc.subr rc.subr.minix man.conf
+	rc.subr rc.subr.minix man.conf shells
 
 PWFILES=master.passwd
 FILES3=daily dhcptags.conf rc 
