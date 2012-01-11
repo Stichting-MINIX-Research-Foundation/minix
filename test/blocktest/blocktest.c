@@ -75,6 +75,16 @@ PRIVATE int set_result(result_t *res, int type, ssize_t value)
 	return type;
 }
 
+PRIVATE void accept_result(result_t *res, int type, ssize_t value)
+{
+	/* If the result is of the given type and value, reset it to a success
+	 * result. This allows for a logical OR on error codes.
+	 */
+
+	if (res->type == type && res->value == value)
+		set_result(res, RESULT_OK, 0);
+}
+
 PRIVATE void got_result(result_t *res, char *desc)
 {
 	/* Process the result of a test. Keep statistics.
@@ -249,10 +259,13 @@ PRIVATE int raw_xfer(dev_t minor, u64_t pos, iovec_s_t *iovec, int nr_req,
 	if (r != RESULT_OK)
 		return r;
 
-	if (m.BDEV_STATUS != exp)
-		return set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
+	if (m.BDEV_STATUS == exp)
+		return r;
 
-	return r;
+	if (exp < 0)
+		return set_result(res, RESULT_BADSTATUS, m.BDEV_STATUS);
+	else
+		return set_result(res, RESULT_TRUNC, exp - m.BDEV_STATUS);
 }
 
 PRIVATE int vir_xfer(dev_t minor, u64_t pos, iovec_t *iovec, int nr_req,
@@ -408,6 +421,8 @@ PRIVATE void bad_read1(void)
 	m.BDEV_GRANT = grant3;
 
 	sendrec_driver(&m, EINVAL, &res);
+
+	accept_result(&res, RESULT_BADSTATUS, EPERM);
 
 	got_result(&res, "revoked iovec grant");
 
@@ -624,13 +639,13 @@ PRIVATE void bad_read2(void)
 
 	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, EINVAL, &res);
 
+	accept_result(&res, RESULT_BADSTATUS, EPERM);
+
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
 	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
 
 	got_result(&res, "revoked grant in iovec element");
-
-#if 0	/* DISABLED because it is impossible to get this right at the moment */
 
 	/* Test read-only grant in iovec element. */
 	memcpy(iov, iovt, sizeof(iovt));
@@ -646,6 +661,8 @@ PRIVATE void bad_read2(void)
 
 	raw_xfer(driver_minor, cvu64(0), iov, 3, FALSE, EINVAL, &res);
 
+	accept_result(&res, RESULT_BADSTATUS, EPERM);
+
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
 	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
@@ -653,7 +670,6 @@ PRIVATE void bad_read2(void)
 	got_result(&res, "read-only grant in iovec element");
 
 	cpf_revoke(grant);
-#endif
 
 	/* Test word-unaligned iovec element buffer. */
 	memcpy(iov, iovt, sizeof(iovt));
@@ -726,9 +742,7 @@ PRIVATE void bad_write(void)
 	u8_t *buf_ptr, *buf2_ptr, *buf3_ptr;
 	size_t buf_size, buf2_size, buf3_size;
 	cp_grant_id_t buf_grant, buf2_grant, buf3_grant;
-#if 0
 	cp_grant_id_t grant;
-#endif
 	u32_t buf_sum, buf2_sum, buf3_sum;
 	iovec_s_t iov[3], iovt[3];
 	result_t res;
@@ -783,8 +797,6 @@ PRIVATE void bad_write(void)
 
 	got_result(&res, "sector-unaligned write size");
 
-#if 0	/* DISABLED because it is impossible to get this right at the moment */
-
 	/* Test write-only grant in iovec element. */
 	memcpy(iov, iovt, sizeof(iovt));
 	if ((grant = cpf_grant_direct(driver_endpt, (vir_bytes) buf2_ptr,
@@ -799,6 +811,8 @@ PRIVATE void bad_write(void)
 
 	raw_xfer(driver_minor, cvu64(0), iov, 3, TRUE, EINVAL, &res);
 
+	accept_result(&res, RESULT_BADSTATUS, EPERM);
+
 	test_sum(buf_ptr, buf_size, buf_sum, TRUE, &res);
 	test_sum(buf2_ptr, buf2_size, buf2_sum, TRUE, &res);
 	test_sum(buf3_ptr, buf3_size, buf3_sum, TRUE, &res);
@@ -806,7 +820,6 @@ PRIVATE void bad_write(void)
 	got_result(&res, "write-only grant in iovec element");
 
 	cpf_revoke(grant);
-#endif
 
 	/* Clean up. */
 	free_buf_and_grant(buf3_ptr, buf3_grant, buf3_size);
