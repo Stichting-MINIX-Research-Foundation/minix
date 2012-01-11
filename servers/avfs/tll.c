@@ -93,6 +93,7 @@ PUBLIC void tll_downgrade(tll_t *tllp)
     case TLL_READSER:
 	/* If nothing is queued on write-only, but there is a pending lock
 	 * requesting read-serialized, grant it and keep the lock type. */
+
 	if (tllp->t_write == NULL && tllp->t_serial != NULL) {
 		tllp->t_owner = tllp->t_serial;
 		tllp->t_serial = tllp->t_serial->w_next; /* Remove head */
@@ -108,6 +109,9 @@ PUBLIC void tll_downgrade(tll_t *tllp)
 	break;
     default: panic("VFS: Incorrect lock state");
   }
+
+  if (tllp->t_current != TLL_WRITE && tllp->t_current != TLL_READSER)
+	assert(tllp->t_owner == NULL);
 }
 
 PUBLIC void tll_init(tll_t *tllp)
@@ -233,6 +237,7 @@ PUBLIC int tll_unlock(tll_t *tllp)
 	/* This unlock must have been done by a read-only lock */
 	tllp->t_readonly--;
 	assert(tllp->t_readonly >= 0);
+	assert(tllp->t_current == TLL_READ || tllp->t_current == TLL_READSER);
 
 	/* If a read-serialized lock is trying to upgrade and there are no more
 	 * read-only locks, the lock can now be upgraded to write-only */
@@ -269,8 +274,12 @@ PUBLIC int tll_unlock(tll_t *tllp)
   }
 
   /* If no one is using this lock, mark it as not in use */
-  if (tllp->t_owner == NULL && tllp->t_readonly == 0)
-	tllp->t_current = TLL_NONE;
+  if (tllp->t_owner == NULL) {
+	if (tllp->t_readonly == 0)
+		tllp->t_current = TLL_NONE;
+	else
+		tllp->t_current = TLL_READ;
+  }
 
   if (tllp->t_current == TLL_NONE || tllp->t_current == TLL_READ) {
 	if (!signal_owner) {
