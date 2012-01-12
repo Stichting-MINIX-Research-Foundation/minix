@@ -19,7 +19,7 @@ PRIVATE mthread_attr_t tattr;
 #ifdef MKCOVERAGE
 # define TH_STACKSIZE (10 * 1024)
 #else
-# define TH_STACKSIZE (6 * 1024)
+# define TH_STACKSIZE (7 * 1024)
 #endif
 
 #define ASSERTW(w) assert((w) == &sys_worker || (w) == &dl_worker || \
