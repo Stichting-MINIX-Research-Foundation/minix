@@ -1,5 +1,6 @@
 #define NCALLS		 114	/* number of system calls allowed */
 
+/* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
 #define FORK		   2 
 #define READ		   3 
@@ -48,6 +49,9 @@
 #define SIGNAL		  48
 #define RDLNK		  49
 #define PREV_LSTAT	  50
+#define STAT		  51
+#define FSTAT		  52
+#define LSTAT		  53
 #define IOCTL		  54
 #define FCNTL		  55
 #define FS_READY	  57
@@ -104,11 +108,6 @@
 #define SRV_KILL  	111	/* to PM: special kill call for RS */
 
 #define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */
-
-/* Numbers reused intentionally */
-#define STAT		65
-#define FSTAT		66
-#define LSTAT		67
 
 #define PM_GETSID	113	/* PM getsid() */
 
