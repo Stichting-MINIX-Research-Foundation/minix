@@ -322,7 +322,9 @@ PRIVATE struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
   findnode.l_vnode_lock = (oflags & O_TRUNC) ? VNODE_WRITE : VNODE_OPCL;
   vp = advance(dirp, &findnode, fp);
   assert(vp_vmp == NULL);	/* Lookup to last dir should have yielded lock
-				 * on vmp or final component does not exist. */
+				 * on vmp or final component does not exist.
+				 * Either way, vp_vmp ought to be not set.
+				 */
 
   /* The combination of a symlink with absolute path followed by a danglink
    * symlink results in a new path that needs to be re-resolved entirely. */

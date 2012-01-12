@@ -97,7 +97,7 @@ PUBLIC int do_unlink()
   char fullpath[PATH_MAX];
   struct lookup resolve;
 
-  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &dirp);
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &dirp);
   resolve.l_vmnt_lock = VMNT_WRITE;
   resolve.l_vnode_lock = VNODE_READ;
 
@@ -106,6 +106,7 @@ PUBLIC int do_unlink()
 	return(err_code);
 
   if ((dirp = last_dir(&resolve, fp)) == NULL) return(err_code);
+  assert(vmp != NULL);
 
   /* Make sure that the object is a directory */
   if ((dirp->v_mode & I_TYPE) != I_DIRECTORY) {
@@ -149,9 +150,10 @@ PUBLIC int do_unlink()
 	}
   }
 
+  assert(vmp != NULL);
   tll_upgrade(&vmp->m_lock);
 
-  if(call_nr == UNLINK)
+  if (call_nr == UNLINK)
 	  r = req_unlink(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
   else
 	  r = req_rmdir(dirp->v_fs_e, dirp->v_inode_nr, fullpath);

@@ -133,7 +133,6 @@ struct fproc *rfp;
   return(vp);
 }
 
-
 /*===========================================================================*
  *				eat_path				     *
  *===========================================================================*/
@@ -147,7 +146,6 @@ struct fproc *rfp;
   start_dir = (resolve->l_path[0] == '/' ? rfp->fp_rd : rfp->fp_wd);
   return advance(start_dir, resolve, rfp);
 }
-
 
 /*===========================================================================*
  *				last_dir				     *
@@ -168,72 +166,187 @@ struct fproc *rfp;
   size_t len;
   char *cp;
   char dir_entry[NAME_MAX+1];
-  struct vnode *start_dir, *res;
-  int r;
+  struct vnode *start_dir, *res_vp, *sym_vp, *new_res_vp, *loop_start;
+  struct vmnt *sym_vmp = NULL;
+  int r, symloop = 0, ret_on_symlink = 0;
+  struct lookup symlink;
 
   *resolve->l_vnode = NULL;
   *resolve->l_vmp = NULL;
+  loop_start = NULL;
+  sym_vp = NULL;
 
-  /* Is the path absolute or relative? Initialize 'start_dir' accordingly. */
-  start_dir = (resolve->l_path[0] == '/' ? rfp->fp_rd : rfp->fp_wd);
+  ret_on_symlink = !!(resolve->l_flags & PATH_RET_SYMLINK);
 
-  len = strlen(resolve->l_path);
+  do {
+	/* Is the path absolute or relative? Initialize 'start_dir'
+	 * accordingly. Use loop_start in case we're looping.
+	 */
+	if (loop_start != NULL)
+		start_dir = loop_start;
+	else
+		start_dir = (resolve->l_path[0] == '/' ? rfp->fp_rd:rfp->fp_wd);
 
-  /* If path is empty, return ENOENT. */
-  if (len == 0)	{
-	err_code = ENOENT;
-	return(NULL);
-  }
+	len = strlen(resolve->l_path);
+
+	/* If path is empty, return ENOENT. */
+	if (len == 0)	{
+		err_code = ENOENT;
+		res_vp = NULL;
+		break;
+	}
 
 #if !DO_POSIX_PATHNAME_RES
-  /* Remove trailing slashes */
-  while (len > 1 && resolve->l_path[len-1] == '/') {
-	  len--;
-	  resolve->l_path[len]= '\0';
-  }
+	/* Remove trailing slashes */
+	while (len > 1 && resolve->l_path[len-1] == '/') {
+		len--;
+		resolve->l_path[len]= '\0';
+	}
 #endif
 
-  cp = strrchr(resolve->l_path, '/');
-  if (cp == NULL) {
-	/* Just one entry in the current working directory */
-	struct vmnt *vmp;
+	cp = strrchr(resolve->l_path, '/');
+	if (cp == NULL) {
+		/* Just an entry in the current working directory */
+		struct vmnt *vmp;
 
-	vmp = find_vmnt(start_dir->v_fs_e);
-	r = lock_vmnt(vmp, resolve->l_vmnt_lock);
-	if (r == EDEADLK)
-		return(NULL);
-	else if (r == OK)
-		*resolve->l_vmp = vmp;
+		vmp = find_vmnt(start_dir->v_fs_e);
+		r = lock_vmnt(vmp, resolve->l_vmnt_lock);
+		if (r == EDEADLK) {
+			res_vp = NULL;
+			break;
+		} else if (r == OK)
+			*resolve->l_vmp = vmp;
 
-	lock_vnode(start_dir, resolve->l_vnode_lock);
-	*resolve->l_vnode = start_dir;
-	dup_vnode(start_dir);
-	return(start_dir);
+		lock_vnode(start_dir, resolve->l_vnode_lock);
+		*resolve->l_vnode = start_dir;
+		dup_vnode(start_dir);
+		if (loop_start != NULL) {
+			unlock_vnode(loop_start);
+			put_vnode(loop_start);
+		}
+		return(start_dir);
+	} else if (cp[1] == '\0') {
+		/* Path ends in a slash. The directory entry is '.' */
+		strcpy(dir_entry, ".");
+	} else {
+		/* A path name for the directory and a directory entry */
+		strncpy(dir_entry, cp+1, NAME_MAX);
+		cp[1] = '\0';
+		dir_entry[NAME_MAX] = '\0';
+	}
 
-  } else if (cp[1] == '\0') {
-	/* Path ends in a slash. The directory entry is '.' */
-	strcpy(dir_entry, ".");
-  } else {
-	/* A path name for the directory and a directory entry */
-	strncpy(dir_entry, cp+1, NAME_MAX);
-	cp[1] = '\0';
-	dir_entry[NAME_MAX] = '\0';
+	/* Remove trailing slashes */
+	while (cp > resolve->l_path && cp[0] == '/') {
+		cp[0]= '\0';
+		cp--;
+	}
+
+	/* Resolve up to and including the last directory of the path. Turn off
+	 * PATH_RET_SYMLINK, because we do want to follow the symlink in this
+	 * case. That is, the flag is meant for the actual filename of the path,
+	 * not the last directory.
+	 */
+	resolve->l_flags &= ~PATH_RET_SYMLINK;
+	if ((res_vp = advance(start_dir, resolve, rfp)) == NULL) {
+		break;
+	}
+
+	/* If the directory entry is not a symlink we're done now. If it is a
+	 * symlink, then we're not at the last directory, yet. */
+
+	/* Copy the directory entry back to user_fullpath */
+	strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
+
+	/* Look up the directory entry, but do not follow the symlink when it
+	 * is one.
+	 */
+	lookup_init(&symlink, resolve->l_path,
+		    resolve->l_flags|PATH_RET_SYMLINK, &sym_vmp, &sym_vp);
+	symlink.l_vnode_lock = VNODE_READ;
+	symlink.l_vmnt_lock = VMNT_READ;
+	sym_vp = advance(res_vp, &symlink, rfp);
+
+	/* Advance caused us to either switch to a different vmnt or we're
+	 * still at the same vmnt. The former might've yielded a new vmnt lock,
+	 * the latter should not have. Verify. */
+	if (sym_vmp != NULL) {
+		/* We got a vmnt lock, so the endpoints of the vnodes must
+		 * differ.
+		 */
+		assert(sym_vp->v_fs_e != res_vp->v_fs_e);
+	}
+
+	if (sym_vp != NULL && S_ISLNK(sym_vp->v_mode)) {
+		/* Last component is a symlink, but if we've been asked to not
+		 * resolve it, return now.
+		 */
+		if (ret_on_symlink) {
+			break;
+		}
+
+		r = req_rdlink(sym_vp->v_fs_e, sym_vp->v_inode_nr, NONE,
+				resolve->l_path, PATH_MAX - 1, 1);
+
+		if (r < 0) {
+			/* Failed to read link */
+			err_code = r;
+			unlock_vnode(res_vp);
+			unlock_vmnt(*resolve->l_vmp);
+			put_vnode(res_vp);
+			*resolve->l_vmp = NULL;
+			*resolve->l_vnode = NULL;
+			res_vp = NULL;
+			break;
+		}
+		resolve->l_path[r] = '\0';
+
+		if (strrchr(resolve->l_path, '/') != NULL) {
+			unlock_vnode(sym_vp);
+			unlock_vmnt(*resolve->l_vmp);
+			if (sym_vmp != NULL)
+				unlock_vmnt(sym_vmp);
+			*resolve->l_vmp = NULL;
+			put_vnode(sym_vp);
+			sym_vp = NULL;
+
+			symloop++;
+
+			/* Relative symlinks are relative to res_vp, not cwd */
+			if (resolve->l_path[0] != '/') {
+				loop_start = res_vp;
+			} else {
+				/* Absolute symlink, forget about res_vp */
+				unlock_vnode(res_vp);
+				put_vnode(res_vp);
+			}
+
+			continue;
+		}
+	}
+	break;
+  } while (symloop < SYMLOOP_MAX);
+
+  if (symloop >= SYMLOOP_MAX) {
+	err_code = ELOOP;
+	res_vp = NULL;
   }
 
-  /* Remove trailing slashes */
-  while(cp > resolve->l_path && cp[0] == '/') {
-	cp[0]= '\0';
-	cp--;
+  if (sym_vp != NULL) {
+	unlock_vnode(sym_vp);
+	if (sym_vmp != NULL) {
+		unlock_vmnt(sym_vmp);
+	}
+	put_vnode(sym_vp);
   }
 
-  resolve->l_flags = PATH_NOFLAGS;
-  res = advance(start_dir, resolve, rfp);
-  if (res == NULL) return(NULL);
+  if (loop_start != NULL) {
+	unlock_vnode(loop_start);
+	put_vnode(loop_start);
+  }
 
   /* Copy the directory entry back to user_fullpath */
   strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
-
-  return(res);
+  return(res_vp);
 }
 
 /*===========================================================================*
