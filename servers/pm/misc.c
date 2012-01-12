@@ -2,7 +2,6 @@
  *								31 Mar 2000
  * The entry points into this file are:
  *   do_reboot: kill all processes, then reboot system
- *   do_procstat: request process status  (Jorrit N. Herder)
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
  *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
  *   do_getepinfo: get the pid/uid/gid of a process given its endpoint
@@ -59,31 +58,6 @@ PRIVATE char *uts_tbl[] = {
 #if ENABLE_SYSCALL_STATS
 PUBLIC unsigned long calls_stats[NCALLS];
 #endif
-
-/*===========================================================================*
- *				do_procstat				     *
- *===========================================================================*/
-PUBLIC int do_procstat()
-{ 
-  /* For the moment, this is only used to return pending signals to 
-   * system processes that request the PM for their own status. 
-   *
-   * Future use might include the VFS requesting for process status of
-   * any user process. 
-   */
-  
-  /* This call should be removed, or made more general. */
-
-  if (m_in.stat_nr == SELF) {
-      mp->mp_reply.sig_set = mp->mp_sigpending;
-      (void) sigemptyset(&mp->mp_sigpending);
-      (void) sigemptyset(&mp->mp_ksigpending);
-  } 
-  else {
-      return(ENOSYS);
-  }
-  return(OK);
-}
 
 /*===========================================================================*
  *				do_sysuname				     *

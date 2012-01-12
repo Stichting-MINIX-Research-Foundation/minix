@@ -310,7 +310,6 @@ int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
 #if defined(_MINIX)
 #include <minix/type.h>
 
-int getsigset(sigset_t *sigset);
 int getprocnr(void);
 int getnprocnr(pid_t pid);
 int getpprocnr(void);

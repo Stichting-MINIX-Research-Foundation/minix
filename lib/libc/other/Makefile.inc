@@ -19,7 +19,6 @@ SRCS+=  \
 	_getnprocnr.c \
 	_getpprocnr.c \
 	_getprocnr.c \
-	_getsigset.c \
 	_lseek64.c \
 	_mapdriver.c \
 	_mcontext.c \

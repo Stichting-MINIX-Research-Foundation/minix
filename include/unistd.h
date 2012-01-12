@@ -184,8 +184,6 @@ _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 #include <minix/type.h>
 #endif
 
-
-_PROTOTYPE( int getsigset, (sigset_t *sigset)				);
 _PROTOTYPE( int getprocnr, (void)					);
 _PROTOTYPE( int getnprocnr, (pid_t pid)					);
 _PROTOTYPE( int getpprocnr, (void)					);

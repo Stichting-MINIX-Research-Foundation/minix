@@ -55,7 +55,6 @@ SRCS+=  \
 	getppid.S \
 	getpprocnr.S \
 	getprocnr.S \
-	getsigset.S \
 	getuid.S \
 	ioctl.S \
 	isatty.S \

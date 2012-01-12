@@ -98,7 +98,6 @@
 				 */
 #define SRV_FORK  	101	/* to PM: special fork call for RS */
 #define EXEC_RESTART	102	/* to PM: final part of exec for RS */
-#define PROCSTAT	103	/* to PM */
 #define GETPROCNR	104	/* to PM */
 #define ISSETUGID	106	/* to PM: ask if process is tainted */
 #define GETEPINFO_O	107	/* to PM: get pid/uid/gid of an endpoint */
