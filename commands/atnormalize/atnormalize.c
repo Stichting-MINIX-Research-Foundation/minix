@@ -12,7 +12,6 @@
 #include <time.h>
 #include <dirent.h>
 #include <limits.h>
-#include <a.out.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
