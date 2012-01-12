@@ -166,7 +166,7 @@ struct fproc *rfp;
   size_t len;
   char *cp;
   char dir_entry[NAME_MAX+1];
-  struct vnode *start_dir, *res_vp, *sym_vp, *new_res_vp, *loop_start;
+  struct vnode *start_dir, *res_vp, *sym_vp, *loop_start;
   struct vmnt *sym_vmp = NULL;
   int r, symloop = 0, ret_on_symlink = 0;
   struct lookup symlink;
