@@ -622,12 +622,11 @@ PRIVATE struct dmatab
  *===========================================================================*/
 PUBLIC int do_adddma(message *msg)
 {
-	endpoint_t req_proc_e, target_proc_e;
+	endpoint_t target_proc_e;
 	int i, proc_n;
 	phys_bytes base, size;
 	struct vmproc *vmp;
 
-	req_proc_e= msg->VMAD_REQ;
 	target_proc_e= msg->VMAD_EP;
 	base= msg->VMAD_START;
 	size= msg->VMAD_SIZE;
@@ -675,11 +674,10 @@ PUBLIC int do_adddma(message *msg)
  *===========================================================================*/
 PUBLIC int do_deldma(message *msg)
 {
-	endpoint_t req_proc_e, target_proc_e;
+	endpoint_t target_proc_e;
 	int i, j;
 	phys_bytes base, size;
 
-	req_proc_e= msg->VMDD_REQ;
 	target_proc_e= msg->VMDD_EP;
 	base= msg->VMDD_START;
 	size= msg->VMDD_SIZE;

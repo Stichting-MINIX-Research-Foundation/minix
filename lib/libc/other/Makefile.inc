@@ -6,12 +6,9 @@ CPPFLAGS.fsversion.c+=-I${.CURDIR}/../../servers
 
 SRCS+=  \
 	__pm_findproc.c \
-	_adddma.c \
 	_brk.c \
 	_cprofile.c \
-	_deldma.c \
 	_getdents.c \
-	_getdma.c \
 	_getnpid.c \
 	_getnucred.c \
 	_getnuid.c \
@@ -30,7 +27,6 @@ SRCS+=  \
 	_sprofile.c \
 	_svrctl.c \
 	_sysuname.c \
-	_vm_dmacalls.c \
 	_vm_memctl.c \
 	_vm_set_priv.c \
 	_vm_update.c \

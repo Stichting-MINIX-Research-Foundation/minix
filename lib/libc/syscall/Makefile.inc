@@ -5,7 +5,6 @@ SRCS+=  \
 	_exit.S \
 	_pm_findproc.S \
 	access.S \
-	adddma.S \
 	alarm.S \
 	brk.S \
 	cfgetispeed.S \
@@ -20,7 +19,6 @@ SRCS+=  \
 	closedir.S \
 	cprofile.S \
 	creat.S \
-	deldma.S \
 	dup.S \
 	dup2.S \
 	execl.S \
@@ -39,7 +37,6 @@ SRCS+=  \
 	fstatvfs.S \
 	getcwd.S \
 	getdents.S \
-	getdma.S \
 	getegid.S \
 	geteuid.S \
 	getgid.S \
@@ -134,7 +131,6 @@ SRCS+=  \
 	uname.S \
 	unlink.S \
 	utime.S \
-	vm_dmacalls.S \
 	wait.S \
 	waitpid.S \
 	write.S

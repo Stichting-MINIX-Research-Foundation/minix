@@ -116,6 +116,7 @@ SRCS=  \
 	timing.c \
 	tsc_util.c \
 	vm_brk.c \
+	vm_dmacalls.c \
 	vm_exec_newmem.c \
 	vm_exit.c \
 	vm_fork.c \

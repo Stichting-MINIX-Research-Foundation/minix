@@ -168,13 +168,13 @@ PRIVATE void sef_cb_signal_handler(int signo)
 
 	for (;;)
 	{
-		r= getdma(&proc_e, &base, &size);
+		r= vm_getdma(&proc_e, &base, &size);
 		if (r == -1)
 		{
 			if (errno != -EAGAIN)
 			{
 				printf(
-				"amddev: getdma failed: %d\n",
+				"amddev: vm_getdma failed: %d\n",
 					errno);
 			}
 			break;
@@ -184,10 +184,10 @@ PRIVATE void sef_cb_signal_handler(int signo)
 		"amddev: deleting 0x%lx@0x%lx for proc %d\n",
 			size, base, proc_e);
 		del_range(base, size);
-		r= deldma(proc_e, base, size);
+		r= vm_deldma(proc_e, base, size);
 		if (r == -1)
 		{
-			printf("amddev: deldma failed: %d\n",
+			printf("amddev: vm_deldma failed: %d\n",
 				errno);
 			break;
 		}
@@ -411,13 +411,12 @@ static int do_add4pci(const message *m)
 		return r;
 	}
 
-	r= adddma(proc, start, size);
+	r= vm_adddma(proc, start, size);
 	if (r != 0)
 	{
 		r= -errno;
-		printf(
-		"amddev`do_add4pci: adddma failed for 0x%x@0x%lx, proc %d: %d\n",
-			size, start, proc, r);
+		printf("amddev`do_add4pci: vm_adddma failed for 0x%x@0x%lx, "
+			"proc %d: %d\n", size, start, proc, r);
 		return r;
 	}
 

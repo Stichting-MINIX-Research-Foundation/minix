@@ -101,16 +101,6 @@
 #define GETPROCNR	104	/* to PM */
 #define ISSETUGID	106	/* to PM: ask if process is tainted */
 #define GETEPINFO_O	107	/* to PM: get pid/uid/gid of an endpoint */
-#define ADDDMA		108	/* to PM: inform PM about a region of memory
-				 * that is used for bus-master DMA
-				 */
-#define DELDMA		109	/* to PM: inform PM that a region of memory
-				 * that is no longer used for bus-master DMA
-				 */
-#define GETDMA		110	/* to PM: ask PM for a region of memory
-				 * that should not be used for bus-master DMA
-				 * any longer
-				 */
 #define SRV_KILL  	111	/* to PM: special kill call for RS */
 
 #define GCOV_FLUSH	112	/* flush gcov data from server to gcov files */

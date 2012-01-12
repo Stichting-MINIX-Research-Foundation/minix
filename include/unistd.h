@@ -190,13 +190,6 @@ _PROTOTYPE( int getpprocnr, (void)					);
 _PROTOTYPE( int _pm_findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int mapdriver, (char *label, int major, int style,
 							int flags)	);
-_PROTOTYPE(int adddma, (endpoint_t proc_e,
-				phys_bytes start, phys_bytes size)	);
-_PROTOTYPE(int deldma, (endpoint_t proc_e,
-				phys_bytes start, phys_bytes size)	);
-_PROTOTYPE(int getdma, (endpoint_t *procp, phys_bytes *basep, 
-						phys_bytes *sizep)	);
-
 _PROTOTYPE( pid_t getnpid, (endpoint_t proc_ep)				);
 _PROTOTYPE( uid_t getnuid, (endpoint_t proc_ep)				);
 _PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);

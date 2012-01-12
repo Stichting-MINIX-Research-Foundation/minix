@@ -929,7 +929,6 @@
  * bus-master DMA
  */
 #define VM_ADDDMA	(VM_RQ_BASE+12)
-#	define VMAD_REQ			m2_i2
 #	define VMAD_EP			m2_i1
 #	define VMAD_START		m2_l1
 #	define VMAD_SIZE		m2_l2
@@ -938,7 +937,6 @@
  * used for bus-master DMA
  */
 #define VM_DELDMA       (VM_RQ_BASE+13)
-#	define VMDD_REQ			m2_i2
 #	define VMDD_EP			m2_i1
 #	define VMDD_START		m2_l1
 #	define VMDD_SIZE		m2_l2
@@ -947,7 +945,6 @@
  * be used for bus-master DMA any longer
  */
 #define VM_GETDMA       (VM_RQ_BASE+14)
-#	define VMGD_REQ			m2_i2
 #	define VMGD_PROCP		m2_i1
 #	define VMGD_BASEP		m2_l1
 #	define VMGD_SIZEP		m2_l2

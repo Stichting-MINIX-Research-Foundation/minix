@@ -16,11 +16,6 @@ _PROTOTYPE( void check_vtimer, (int proc_nr, int sig)			);
 /* break.c */
 _PROTOTYPE( int do_brk, (void)						);
 
-/* dma.c */
-_PROTOTYPE( int do_adddma, (void)					);
-_PROTOTYPE( int do_deldma, (void)					);
-_PROTOTYPE( int do_getdma, (void)					);
-
 /* exec.c */
 _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( int do_exec_newmem, (void)					);

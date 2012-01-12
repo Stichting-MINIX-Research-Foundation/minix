@@ -26,10 +26,8 @@ SRCS+= servxcheck.c
 SRCS+= paramvalue.c
 
 # Minix servers/drivers syscall.
-SRCS+= 	adddma.c getdma.c deldma.c getngid.c getnpid.c \
-	getnprocnr.c getnucred.c getnuid.c getprocnr.c \
-	mapdriver.c vm_dmacalls.c vm_memctl.c \
-	vm_set_priv.c vm_query_exit.c vm_update.c
+SRCS+= 	getngid.c getnpid.c getnprocnr.c getnucred.c getnuid.c getprocnr.c \
+	mapdriver.c vm_memctl.c vm_set_priv.c vm_query_exit.c vm_update.c
 
 INCS+= tools.h
 
