@@ -109,6 +109,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 #include "acpi.h"
 #include "accommon.h"
@@ -644,7 +646,7 @@ AcpiOsRemoveInterruptHandler (
     UINT32                  InterruptNumber,
     ACPI_OSD_HANDLER        ServiceRoutine)
 {
-	panic("NOTIMPLEMENTED %s\n", __func__);
+	printf("AcpiOsRemoveInterruptHandler NOT SUPPORTED\n");
 	return AE_OK;
 }
 
@@ -711,7 +713,9 @@ void
 AcpiOsStall (
     UINT32                  microseconds)
 {
-	panic("NOTIMPLEMENTED %s\n", __func__);
+	if (microseconds > 0)
+		usleep (microseconds);
+
 	return;
 }
 
@@ -732,7 +736,12 @@ void
 AcpiOsSleep (
     ACPI_INTEGER            milliseconds)
 {
-	panic("NOTIMPLEMENTED %s\n", __func__);
+	if ((milliseconds / 1000) > 0)
+		sleep (milliseconds / 1000);
+
+	if ((milliseconds % 1000) > 0)
+		usleep ((milliseconds % 1000) * 1000);
+
 	return;
 }
 
@@ -751,8 +760,11 @@ AcpiOsSleep (
 UINT64
 AcpiOsGetTimer (void)
 {
-	panic("NOTIMPLEMENTED %s\n", __func__);
-	return 0;
+	struct timeval	time;
+
+	gettimeofday (&time, NULL);
+	return (((UINT64) time.tv_sec * 10000000) +
+		((UINT64) time.tv_usec * 10));
 }
 
 
