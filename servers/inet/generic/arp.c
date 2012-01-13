@@ -850,8 +850,11 @@ arp_func_t arp_func;
 	arp_port->ap_sendpkt= NULL;
 	arp_port->ap_sendlist= NULL;
 	arp_port->ap_reclist= NULL;
-	for (i= 0; i<AP_REQ_NR; i++)
+	for (i= 0; i<AP_REQ_NR; i++) {
 		arp_port->ap_req[i].ar_entry= -1;
+		arp_port->ap_req[i].ar_timer.tim_active= 0;
+	}
+
 	ev_init(&arp_port->ap_event);
 
 	arp_main(arp_port);
