@@ -8,4 +8,7 @@
 #define ISDIRTY(b)	((b)->b_dirt == BP_DIRTY)
 #define ISCLEAN(b)	((b)->b_dirt == BP_CLEAN)
 
+#define BP_SETDEV(b, dev) do { assert((dev) != NO_DEV); (b)->b_dev = (dev); } while(0)
+#define BP_CLEARDEV(b) do { (b)->b_dev = NO_DEV; MARKCLEAN(b); } while(0)
+
 #endif
