@@ -36,6 +36,8 @@ LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 .endif
 
+AFLAGS+=	-Wa,--divide
+
 BUILDSYMLINKS+=	$S/arch/i386/include	machine \
 		$S/arch/x86/include	x86
 
