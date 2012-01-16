@@ -32,7 +32,7 @@ SUBDIR=	aal add_route arp ash at autil awk \
 	truncate tsort tty udpstat umount uname unexpand \
 	unstack update uud uue version vol wc \
 	whereis which who write writeisofs fetch \
-	xargs yacc yes zdump zic zmodem pkgin_cd \
+	xargs yacc yes zdump zmodem pkgin_cd \
 	mktemp worldstone
 
 .if ${COMPILER_TYPE} == "gnu"

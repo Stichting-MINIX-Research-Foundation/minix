@@ -1,4 +1,4 @@
-# @(#)Makefile	7.109
+#	$NetBSD: Makefile,v 1.43 2009/04/10 16:16:12 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -6,34 +6,20 @@
 # the time zone files, or adding it to a time zone file).
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -l rightzone
-# to correct things.
-# Use the command
-#	make zonenames
-# to get a list of the values you can use for LOCALTIME.
-
-LOCALTIME=	GMT
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
 # change the line below (after finding the zone you want in the
 # time zone files, or adding it to a time zone file).
-# (When a POSIX-style environment variable is handled, the rules in the
-# template file are used to determine "spring forward" and "fall back" days and
-# times; the environment variable itself specifies UTC offsets of standard and
-# summer time.)
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -p rightzone
-# to correct things.
-# Use the command
-#	make zonenames
-# to get a list of the values you can use for POSIXRULES.
-# If you want POSIX compatibility, use "America/New_York".
 
-POSIXRULES=	America/New_York
+POSIXRULES=	US/Pacific
 
 # Use an absolute path name for TZDIR unless you're just testing the software.
+# Note: ${DESTDIR} is prepended to this for the actual copy.
 
-TZDIR=	${DESTDIR}/usr/share/zoneinfo
+TZDIR=	/usr/share/zoneinfo
 
 # If you always want time values interpreted as "seconds since the epoch
 # (not counting leap seconds)", use
@@ -49,7 +35,7 @@ TZDIR=	${DESTDIR}/usr/share/zoneinfo
 #	REDO=		right_posix
 # below.
 
-REDO=		posix_right
+REDO=		posix_only
 
 # Since "." may not be in PATH...
 YEARISTYPE=	"${HOST_SH} ${.CURDIR}/yearistype.sh"
@@ -64,34 +50,30 @@ TABDATA=	iso3166.tab zone.tab
 DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
+TZBUILDDIR=	${.OBJDIR}/builddir
+
 .PHONY:	posix_only
 posix_only: ${TDATA}
 	${_MKTARGET_CREATE}
+	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
 	${_MKTARGET_CREATE}
+	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZDDIR} -L leapseconds ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
 
-# In earlier versions of this makefile, the other two directories were
-# subdirectories of $(TZDIR).  However, this led to configuration errors.
-# For example, with posix_right under the earlier scheme,
-# TZ='right/Australia/Adelaide' got you localtime with leap seconds,
-# but gmtime without leap seconds, which led to problems with applications
-# like sendmail that subtract gmtime from localtime.
-# Therefore, the other two directories are now siblings of $(TZDIR).
-# You must replace all of $(TZDIR) to switch from not using leap seconds
-# to using them, or vice versa.
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
 	${_MKTARGET_CREATE}
+	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZDIR}-posix -L /dev/null ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
 	cd ${.CURDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZDIR}-leaps -L leapseconds ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
 
 .PHONY:	posix_right
 posix_right: posix_only other_two
@@ -99,14 +81,53 @@ posix_right: posix_only other_two
 .PHONY:	right_posix
 right_posix: right_only other_two
 
+.if ${MKUNPRIVED} == "no"
+TOOL_PAX.unpriv=-pe
+.else
+TOOL_PAX.unpriv=
+.endif
+
+.if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO} ${TABDATA}
 	${_MKMSG_CREATE} ${POSIXRULES}
+	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${TOOL_ZIC} -y ${YEARISTYPE} \
-		-d ${TZDIR} -l ${LOCALTIME} -p ${POSIXRULES}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
+	cd ${TZBUILDDIR} && \
+	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
+	| while read devino tzfile; do \
+		destfile=${DESTDIR}${TZDIR}/$${tzfile#./}; \
+		if [ "$$devino" = "$$lastdevino" ]; then \
+			if  ldevino=`${TOOL_STAT} -qf '%d %i' $$lastfile` && \
+			    tdevino=`${TOOL_STAT} -qf '%d %i' $$destfile` && \
+			    [ "$$ldevino" = "$$tdevino" ]; then \
+				continue; \
+			fi; \
+			${_MKSHMSG_INSTALL} $$destfile; \
+			${_MKSHECHO} ${INSTALL_LINK} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$lastfile $$destfile; \
+			${INSTALL_LINK} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$lastfile $$destfile; \
+		else \
+			lastdevino=$$devino; \
+			lastfile=$$destfile; \
+			cmp -s $$tzfile $$destfile >/dev/null 2>&1 && continue;\
+			${_MKSHMSG_INSTALL} $$destfile; \
+			${_MKSHECHO} ${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$tzfile $$destfile; \
+			${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$tzfile $$destfile; \
+		fi; \
+	done
 	for f in ${TABDATA}; do \
 		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 			${.CURDIR}/$$f ${DESTDIR}${TZDIR}; \
 	done
+.else	# ${MKSHARE} == "no"
+afterinstall:
+.endif	# ${MKSHARE} == "no"
+
+clean:
+	-rm -rf ${TZBUILDDIR}
 
 .include <bsd.prog.mk>

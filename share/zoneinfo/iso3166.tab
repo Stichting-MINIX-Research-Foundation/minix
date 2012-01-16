@@ -1,12 +1,14 @@
+# <pre>
+# @(#)iso3166.tab	8.11
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 # ISO 3166 alpha-2 country codes
-#
-# @(#)iso3166.tab	8.4
 #
 # From Paul Eggert (2006-09-27):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166-1 alpha-2 country code, current as of
-#     ISO 3166-1 Newsletter No. V-12 (2006-09-26).  See:
+#     ISO 3166-1 Newsletter VI-1 (2007-09-21).  See:
 #     <a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">
 #     ISO 3166 Maintenance agency (ISO 3166/MA)
 #     </a>.
@@ -19,6 +21,9 @@
 #
 # Lines beginning with `#' are comments.
 #
+# From Arthur David Olson (2011-08-17):
+# Resynchronized today with the ISO 3166 site (adding SS for South Sudan).
+#
 #country-
 #code	country name
 AD	Andorra
@@ -28,7 +33,6 @@ AG	Antigua & Barbuda
 AI	Anguilla
 AL	Albania
 AM	Armenia
-AN	Netherlands Antilles
 AO	Angola
 AQ	Antarctica
 AR	Argentina
@@ -47,9 +51,11 @@ BG	Bulgaria
 BH	Bahrain
 BI	Burundi
 BJ	Benin
+BL	St Barthelemy
 BM	Bermuda
 BN	Brunei
 BO	Bolivia
+BQ	Bonaire Sint Eustatius & Saba
 BR	Brazil
 BS	Bahamas
 BT	Bhutan
@@ -72,6 +78,7 @@ CO	Colombia
 CR	Costa Rica
 CU	Cuba
 CV	Cape Verde
+CW	Curacao
 CX	Christmas Island
 CY	Cyprus
 CZ	Czech Republic
@@ -159,6 +166,7 @@ MA	Morocco
 MC	Monaco
 MD	Moldova
 ME	Montenegro
+MF	St Martin (French part)
 MG	Madagascar
 MH	Marshall Islands
 MK	Macedonia
@@ -225,8 +233,10 @@ SM	San Marino
 SN	Senegal
 SO	Somalia
 SR	Suriname
+SS	South Sudan
 ST	Sao Tome & Principe
 SV	El Salvador
+SX	Sint Maarten
 SY	Syria
 SZ	Swaziland
 TC	Turks & Caicos Is

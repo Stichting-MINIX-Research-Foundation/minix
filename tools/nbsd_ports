@@ -36,7 +36,9 @@ usr.bin/mdocml		src/external/bsd/mdocml
 usr.sbin/pwd_mkdb	src/usr.sbin/pwd_mkdb
 usr.sbin/user		src/usr.sbin/user
 usr.sbin/vipw		src/usr.sbin/vipw
+usr.sbin/zic		src/usr.sbin/zic
 usr.bin/bzip2		src/usr.bin/bzip2
 usr.bin/bzip2recover	src/usr.bin/bzip2recover
 libexec/makewhatis	src/libexec/makewhatis
 dist/bzip2		src/dist/bzip2
+share/zoneinfo		src/share/zoneinfo
