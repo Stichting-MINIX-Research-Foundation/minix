@@ -313,7 +313,7 @@ off_t position;			/* position in file whose blk wanted */
 
   struct buf *bp;
   zone_t z;
-  int scale, boff, index, zind, ex;
+  int scale, boff, index, zind;
   unsigned int dzones, nr_indirects;
   block_t b;
   unsigned long excess, zone, block_pos;
@@ -346,8 +346,10 @@ off_t position;			/* position in file whose blk wanted */
 	excess -= nr_indirects;			/* single indir doesn't count*/
 	b = (block_t) z << scale;
 	ASSERT(rip->i_dev != NO_DEV);
-	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
 	index = (int) (excess/nr_indirects);
+	if ((unsigned int) index > rip->i_nindirs)
+		return(NO_BLOCK);	/* Can't go beyond double indirects */
+	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
 	ASSERT(bp->b_dev != NO_DEV);
 	ASSERT(bp->b_dev == rip->i_dev);
 	z = rd_indir(bp, index);		/* z= zone for single*/
@@ -359,8 +361,7 @@ off_t position;			/* position in file whose blk wanted */
   if (z == NO_ZONE) return(NO_BLOCK);
   b = (block_t) z << scale;			/* b is blk # for single ind */
   bp = get_block(rip->i_dev, b, NORMAL);	/* get single indirect block */
-  ex = (int) excess;				/* need an integer */
-  z = rd_indir(bp, ex);				/* get block pointed to */
+  z = rd_indir(bp, (int) excess);		/* get block pointed to */
   put_block(bp, INDIRECT_BLOCK);		/* release single indir blk */
   if (z == NO_ZONE) return(NO_BLOCK);
   b = (block_t) ((z << scale) + boff);
