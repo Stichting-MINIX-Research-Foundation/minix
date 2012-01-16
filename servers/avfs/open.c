@@ -612,9 +612,11 @@ PUBLIC int do_lseek()
 	newpos = sub64ul(pos, -offset);
 
   /* Check for overflow. */
-  if (ex64hi(newpos) != 0)
-	r = EINVAL;
-  else {
+  if (ex64hi(newpos) != 0) {
+	r = EOVERFLOW;
+  } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
+	r = EOVERFLOW;
+  } else {
 	rfilp->filp_pos = newpos;
 
 	/* insert the new position into the output message */
