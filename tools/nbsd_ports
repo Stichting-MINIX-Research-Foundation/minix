@@ -17,6 +17,8 @@ common/lib/libutil	src/common/lib/libutil
 lib/libbz2		src/lib/libbz2
 nbsd_include		src/include
 bin/mkdir		src/bin/mkdir
+bin/rm			src/bin/rm
+bin/rmdir		src/bin/rmdir
 usr.sbin/fsck		src/usr.sbin/fsck
 usr.bin/chpass		src/usr.bin/chpass
 usr.bin/m4		src/usr.bin/m4

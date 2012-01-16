@@ -1,3 +1,14 @@
+20120112:
+	Replace our native rm and rmdir with NetBSD version.
+
+	As our native rm is a hard link to cp, simply overwriting rm with
+	the new version would cause mv, cp, ln, etc to stop working.
+
+	Do this BEFORE a 'make world':
+	# rm /bin/rm
+	# cp /bin/cp /bin/rm
+	Then 'make clean world' as usual.
+
 20111222:
 	This update requires /etc/fstab having the new format.
 

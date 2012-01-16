@@ -1,0 +1,207 @@
+.\"	$NetBSD: rm.1,v 1.24 2006/09/02 23:28:32 wiz Exp $
+.\"
+.\" Copyright (c) 1990, 1993, 1994, 2003
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Institute of Electrical and Electronics Engineers, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
+.\"
+.Dd August 25, 2006
+.Dt RM 1
+.Os
+.Sh NAME
+.Nm rm
+.Nd remove directory entries
+.Sh SYNOPSIS
+.Nm
+.Op Fl f | Fl i
+.Op Fl dPRrvW
+.Ar
+.Sh DESCRIPTION
+The
+.Nm
+utility attempts to remove the non-directory type files specified on the
+command line.
+If the permissions of the file do not permit writing, and the standard
+input device is a terminal, the user is prompted (on the standard error
+output) for confirmation.
+.Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl d
+Attempt to remove directories as well as other types of files.
+.It Fl f
+Attempt to remove the files without prompting for confirmation,
+regardless of the file's permissions.
+If the file does not exist, do not display a diagnostic message or modify
+the exit status to reflect an error.
+The
+.Fl f
+option overrides any previous
+.Fl i
+options.
+.It Fl i
+Request confirmation before attempting to remove each file, regardless of
+the file's permissions, or whether or not the standard input device is a
+terminal.
+The
+.Fl i
+option overrides any previous
+.Fl f
+options.
+.It Fl P
+Overwrite regular files before deleting them.
+Files are overwritten three times, first with the byte pattern 0xff,
+then 0x00, and then with random data, before they are deleted.
+Some care is taken to ensure that the data are actually written to
+disk, but this cannot be guaranteed, even on traditional filesystems;
+on log-structured filesystems or if any block-journaling scheme is
+in use, this option is completely useless.
+If the file cannot be
+overwritten, it will not be removed.
+.It Fl R
+Attempt to remove the file hierarchy rooted in each file argument.
+The
+.Fl R
+option implies the
+.Fl d
+option.
+If the
+.Fl i
+option is specified, the user is prompted for confirmation before
+each directory's contents are processed (as well as before the attempt
+is made to remove the directory).
+If the user does not respond affirmatively, the file hierarchy rooted in
+that directory is skipped.
+.Pp
+.It Fl r
+Equivalent to
+.Fl R .
+.It Fl v
+Cause
+.Nm
+to be verbose, showing files as they are processed.
+.It Fl W
+Attempts to undelete the named files.
+Currently, this option can only be used to recover
+files covered by whiteouts.
+.El
+.Pp
+The
+.Nm
+utility removes symbolic links, not the files referenced by the links.
+.Pp
+It is an error to attempt to remove the files ``.'' and ``..''.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 if all of the named files or file hierarchies were removed,
+or if the
+.Fl f
+option was specified and all of the existing files or file hierarchies were
+removed.
+If an error occurs,
+.Nm
+exits with a value \*[Gt]0.
+.Sh EXAMPLES
+.Nm
+uses
+.Xr getopt 3
+standard argument processing.
+Removing filenames that begin with a dash
+.Pq e.g., Ar -file
+in the current directory which might otherwise be taken as option flags to
+.Nm
+can be accomplished as follows:
+.Pp
+.Ic "rm -- -file"
+.Pp
+or
+.Pp
+.Ic "rm ./-file"
+.Sh SEE ALSO
+.Xr rmdir 1 ,
+.Xr undelete 2 ,
+.Xr unlink 2 ,
+.Xr fts 3 ,
+.Xr getopt 3 ,
+.Xr symlink 7
+.Sh BUGS
+The
+.Fl P
+option assumes that the underlying file system is a fixed-block file
+system.
+FFS is a fixed-block file system, LFS is not.
+In addition, only regular files are overwritten, other types of files
+are not.
+Recent research indicates that as many as 35 overwrite passes with
+carefully chosen data patterns may be necessary to actually prevent
+recovery of data from a magnetic disk.
+Thus the
+.Fl P
+option is likely both insufficient for its design purpose and far
+too costly for default operation.
+However, it will at least prevent the recovery of data from FFS
+volumes with
+.Xr fsdb 8 .
+.Sh COMPATIBILITY
+The
+.Nm
+utility differs from historical implementations in that the
+.Fl f
+option only masks attempts to remove non-existent files instead of
+masking a large variety of errors.
+.Pp
+Also, historical
+.Bx
+implementations prompted on the standard output,
+not the standard error output.
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be
+.St -p1003.2
+compatible.
+The
+.Fl v
+option is an extension.
+.Pp
+The
+.Fl P
+option attempts to conform to U.S. DoD 5220-22.M, "National Industrial
+Security Program Operating Manual" ("NISPOM") as updated by Change
+2 and the July 23, 2003 "Clearing \*[Am] Sanitization Matrix".
+However, unlike earlier revisions of NISPOM, the 2003 matrix imposes
+requirements which make it clear that the standard does not and
+can not apply to the erasure of individual files, in particular
+requirements relating to spare sector management for an entire
+magnetic disk.
+.Em Because these requirements are not met, the
+.Fl P
+.Em option does not conform to the standard .

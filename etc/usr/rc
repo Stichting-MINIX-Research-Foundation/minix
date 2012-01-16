@@ -113,7 +113,7 @@ start)
     test -f /etc/font && loadfont /etc/font </dev/console
 
     # Cleanup.
-    rm -rf /tmp/. /usr/run/. /usr/spool/lpd/. /usr/spool/locks/.
+    rm -rf /tmp/* /usr/run/* /usr/spool/lpd/* /usr/spool/locks/*
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"

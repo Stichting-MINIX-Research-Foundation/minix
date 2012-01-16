@@ -221,7 +221,7 @@ void group_test() {
   	}
 	setgroups(round+1, grouplist);
 
-	system("rm -r DIR_046 > /dev/null 2>&1");
+	system("rm -rf DIR_046 > /dev/null 2>&1");
 	system("mkdir DIR_046");
 	system("chmod u=rwx,g=,o= DIR_046"); /* Only access for superuser */
 	system("chgrp "IMAGINARY_GID_STR" DIR_046"); /* Make imaginary group
@@ -275,7 +275,7 @@ void group_test() {
 	system("chmod g+r DIR_046");
 	if(dotest(group_test_5) == 0) e(18);
   }
-  system("rm -r DIR_046");
+  system("rm -rf DIR_046");
   free(grouplist);
 }
 
