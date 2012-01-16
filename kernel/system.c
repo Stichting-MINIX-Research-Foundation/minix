@@ -374,7 +374,7 @@ PUBLIC void send_sig(endpoint_t ep, int sig_nr)
 	panic("send_sig to empty process: %d",  ep);
 
   rp = proc_addr(proc_nr);
-  (void) sigaddset(&priv(rp)->s_sig_pending, sig_nr);
+  sigaddset(&priv(rp)->s_sig_pending, sig_nr);
   mini_notify(proc_addr(SYSTEM), rp->p_endpoint);
 }
 
@@ -425,14 +425,14 @@ int sig_nr;			/* signal to be sent */
            panic("cause_sig: sig manager %d gets lethal signal %d for itself",
 	   	rp->p_endpoint, sig_nr);
        }
-       (void) sigaddset(&priv(rp)->s_sig_pending, sig_nr);
+       sigaddset(&priv(rp)->s_sig_pending, sig_nr);
        send_sig(rp->p_endpoint, SIGKSIGSM);
        return;
   }
 
   /* Check if the signal is already pending. Process it otherwise. */
   if (! sigismember(&rp->p_pending, sig_nr)) {
-      (void) sigaddset(&rp->p_pending, sig_nr);
+      sigaddset(&rp->p_pending, sig_nr);
       if (! (RTS_ISSET(rp, RTS_SIGNALED))) {		/* other pending */
 	  RTS_SET(rp, RTS_SIGNALED | RTS_SIG_PENDING);
           send_sig(sig_mgr, SIGKSIG);

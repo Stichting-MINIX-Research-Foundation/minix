@@ -182,9 +182,9 @@ vir_bytes pc;
 	 */
 	for (sn = 1; sn < _NSIG; sn++) {
 		if (sigismember(&rmp->mp_catch, sn)) {
-			(void) sigdelset(&rmp->mp_catch, sn);
+			sigdelset(&rmp->mp_catch, sn);
 			rmp->mp_sigact[sn].sa_handler = SIG_DFL;
-			(void) sigemptyset(&rmp->mp_sigact[sn].sa_mask);
+			sigemptyset(&rmp->mp_sigact[sn].sa_mask);
 		}
 	}
 

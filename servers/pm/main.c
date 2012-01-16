@@ -213,15 +213,15 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
   /* Build the set of signals which cause core dumps, and the set of signals
    * that are by default ignored.
    */
-  (void) sigemptyset(&core_sset);
+  sigemptyset(&core_sset);
   for (sig_ptr = core_sigs; sig_ptr < core_sigs+sizeof(core_sigs); sig_ptr++)
-	(void) sigaddset(&core_sset, *sig_ptr);
-  (void) sigemptyset(&ign_sset);
+	sigaddset(&core_sset, *sig_ptr);
+  sigemptyset(&ign_sset);
   for (sig_ptr = ign_sigs; sig_ptr < ign_sigs+sizeof(ign_sigs); sig_ptr++)
-	(void) sigaddset(&ign_sset, *sig_ptr);
-  (void) sigemptyset(&noign_sset);
+	sigaddset(&ign_sset, *sig_ptr);
+  sigemptyset(&noign_sset);
   for (sig_ptr = noign_sigs; sig_ptr < noign_sigs+sizeof(noign_sigs); sig_ptr++)
-	(void) sigaddset(&noign_sset, *sig_ptr);
+	sigaddset(&noign_sset, *sig_ptr);
 
   /* Obtain a copy of the boot monitor parameters and the kernel info struct.  
    * Parse the list of free memory chunks. This list is what the boot monitor 

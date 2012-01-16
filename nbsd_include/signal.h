@@ -79,11 +79,19 @@ int	__libc_thr_sigsetmask(int, const sigset_t * __restrict,
 #ifndef __LIBC12_SOURCE__
 int	sigaction(int, const struct sigaction * __restrict,
     struct sigaction * __restrict) __RENAME(__sigaction14);
+#if defined(__minix) && defined(_SYSTEM)
+#define sigaddset(set, sig)	__sigaddset((set), (sig))
+#define sigdelset(set, sig)	__sigdelset((set), (sig))
+#define sigemptyset(set)	__sigemptyset((set))
+#define sigfillset(set)		__sigfillset((set))
+#define sigismember(set, sig)	__sigismember((set), (sig))
+#else
 int	sigaddset(sigset_t *, int) __RENAME(__sigaddset14);
 int	sigdelset(sigset_t *, int) __RENAME(__sigdelset14);
 int	sigemptyset(sigset_t *) __RENAME(__sigemptyset14);
 int	sigfillset(sigset_t *) __RENAME(__sigfillset14);
 int	sigismember(const sigset_t *, int) __RENAME(__sigismember14);
+#endif
 int	sigpending(sigset_t *) __RENAME(__sigpending14);
 int	sigprocmask(int, const sigset_t * __restrict, sigset_t * __restrict)
     __RENAME(__sigprocmask14);
@@ -107,6 +115,7 @@ int *__errno(void);
 #define ___errno (*__errno())
 #endif
 
+#if !defined(__minix) || !defined(_SYSTEM)
 __c99inline int
 sigaddset(sigset_t *set, int signo)
 {
@@ -152,6 +161,7 @@ sigfillset(sigset_t *set)
 	__sigfillset(set);
 	return (0);
 }
+#endif /* !defined(__minix) || !defined(_SYSTEM) */
 #endif /* __c99inline */
 #endif /* !__LIBC12_SOURCE__ */
 

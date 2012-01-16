@@ -488,7 +488,7 @@ PUBLIC int do_waitpid()
 			 */
 			for (i = 1; i < _NSIG; i++) {
 				if (sigismember(&rp->mp_sigtrace, i)) {
-					(void) sigdelset(&rp->mp_sigtrace, i);
+					sigdelset(&rp->mp_sigtrace, i);
 
 					mp->mp_reply.reply_res2 =
 						0177 | (i << 8);

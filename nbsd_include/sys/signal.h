@@ -4,14 +4,8 @@
 #include <sys/featuretest.h>
 #include <sys/sigtypes.h>
 
-#ifdef _SYSTEM
-#define _NSIG		31
-#else
-#define _NSIG		27
-#endif
-#if defined(_NETBSD_SOURCE)
+#define _NSIG		26
 #define NSIG _NSIG
-#endif /* _NETBSD_SOURCE */
 
 
 /* Regular signals. */

@@ -213,7 +213,7 @@ PUBLIC int do_trace()
 	/* Let all tracer-pending signals through the filter. */
 	for (i = 1; i < _NSIG; i++) {
 		if (sigismember(&child->mp_sigtrace, i)) {
-			(void) sigdelset(&child->mp_sigtrace, i);
+			sigdelset(&child->mp_sigtrace, i);
 			check_sig(child->mp_pid, i, FALSE /* ksig */);
 		}
 	}
@@ -281,7 +281,7 @@ int signo;
  
   rmp->mp_flags |= STOPPED;
   if (wait_test(rpmp, rmp)) {
-	(void) sigdelset(&rmp->mp_sigtrace, signo);
+	sigdelset(&rmp->mp_sigtrace, signo);
 
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
 	rpmp->mp_reply.reply_res2 = 0177 | (signo << 8);
