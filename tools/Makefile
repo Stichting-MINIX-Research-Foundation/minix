@@ -90,11 +90,12 @@ hdboot: image
 	cp $$i $$newname;				\
 	if [ -d /boot/image ];				\
 	then	ln -f $$newname /boot/`basename $$i`;	\
-	else	gzip $$newname;				\
+	else	strip -s $$newname;			\
+		gzip $$newname;				\
 	fi						\
 	done
 	cp ../kernel/kernel /boot/minix/.temp/
-	strip -s /boot/minix/.temp/*
+	strip -s /boot/minix/.temp/kernel
 	[ -d /boot/image ] && ln -f /boot/minix/.temp/kernel /boot/kernel || true
 	sh mkboot $@ minix
 	exec sh update_bootcfg.sh

@@ -23,19 +23,11 @@ PROTO= proto.small
 EXTRA=system.conf master.passwd passwd pwd.db spwd.db rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}
-CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) bintoc image image.c t proto.gen
+CLEANFILES += $(PROGRAMS) $(SCRIPTS) $(EXTRA) image image.c t proto.gen
 
 install: all
 
-realall: image.c
-
-image.c:	bintoc image
-	./bintoc -o $@ image
-
-# Note for cross compilation: this executable has to be compiled for the
-# host system
-bintoc:	bintoc.c
-	$(CC) -o $@ bintoc.c
+realall: image
 
 image:	proto.gen mtab rc $(EXTRA)
 	mkfs.mfs image proto.gen || { rm -f image; false; }
