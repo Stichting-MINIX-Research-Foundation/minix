@@ -1549,6 +1549,7 @@ int c;
 	case 'C': return(RT);
 	case 'D': return(LF);
 #if defined(__i386__)
+	case '@': return(MA);
 	case 'G': return(FS);
 	case 'S': return(SR);
 	case 'T': return(SF);
