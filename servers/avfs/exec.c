@@ -146,7 +146,6 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 
   /* Fetch the stack from the user before destroying the old core image. */
   if (frame_len > ARG_MAX) {
-		printf("VFS: pm_exec: stack too big\n");
 		r = ENOMEM; /* stack too big */
 		goto pm_execfinal;
   }
@@ -208,8 +207,8 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 	/* Get fresh copy of the file name. */
 	if ((r = fetch_name(path, path_len, 0, fullpath)) != OK)
 		printf("VFS pm_exec: 2nd fetch_name failed\n");
-	else if ((r = patch_stack(vp, mbuf, &frame_len, fullpath)) != OK)
-		printf("VFS pm_exec: patch_stack failed\n");
+	else
+		r = patch_stack(vp, mbuf, &frame_len, fullpath);
 
 	unlock_vnode(vp);
 	put_vnode(vp);
