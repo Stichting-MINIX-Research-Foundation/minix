@@ -1,3 +1,12 @@
+20120119:
+	Follow up to previous entry. The same problem also exists for
+	the man pages.
+
+	Do this BEFORE a 'make world':
+	# rm /usr/man/man1/rm.1
+	# cp /usr/man/man1/cp.1 /usr/man/man1/rm.1
+	Then 'make clean world' as usual.
+
 20120112:
 	Replace our native rm and rmdir with NetBSD version.
 
