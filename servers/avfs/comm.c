@@ -50,6 +50,22 @@ PUBLIC void send_work(void)
 }
 
 /*===========================================================================*
+ *				fs_cancel				     *
+ *===========================================================================*/
+PUBLIC void fs_cancel(struct vmnt *vmp)
+{
+/* Cancel all pending requests for this vmp */
+  struct worker_thread *worker;
+
+  while ((worker = vmp->m_comm.c_req_queue) != NULL) {
+	vmp->m_comm.c_req_queue = worker->w_next;
+	worker->w_next = NULL;
+	sending--;
+	worker_stop(worker);
+  }
+}
+
+/*===========================================================================*
  *				fs_sendmore				     *
  *===========================================================================*/
 PUBLIC void fs_sendmore(struct vmnt *vmp)
@@ -80,8 +96,10 @@ PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqmp)
   struct vmnt *vmp;
   int r;
 
-  if ((vmp = find_vmnt(fs_e)) == NULL)
-	panic("Trying to talk to non-existent FS");
+  if ((vmp = find_vmnt(fs_e)) == NULL) {
+	printf("Trying to talk to non-existent FS endpoint %d\n", fs_e);
+	return(EIO);
+  }
   if (fs_e == fp->fp_endpoint) return(EDEADLK);
 
   if (!force_sync) {

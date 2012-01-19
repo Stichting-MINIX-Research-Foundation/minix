@@ -990,7 +990,7 @@ PUBLIC void cdev_up(int maj)
 		fd_nr);
 	rfilp = rfp->fp_filp[fd_nr];
 	vp = rfilp->filp_vno;
-	if (!vp) panic("VFS: restart_reopen: no vp");
+	if (!vp) panic("VFS: cdev_up: no vp");
 	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
 	if (major(vp->v_sdev) != maj) continue;
 
@@ -1051,7 +1051,7 @@ int maj;
 
 	if (!(rfilp->filp_flags & O_REOPEN)) {
 		/* File descriptor is to be closed when driver restarts. */
-		n = invalidate(rfilp);
+		n = invalidate_filp(rfilp);
 		if (n != rfilp->filp_count) {
 			printf("VFS: warning: invalidate/count "
 			       "discrepancy (%d, %d)\n", n, rfilp->filp_count);
@@ -1064,7 +1064,7 @@ int maj;
 	if (r == OK) return;
 
 	/* Device could not be reopened. Invalidate all filps on that device.*/
-	n = invalidate(rfilp);
+	n = invalidate_filp(rfilp);
 	if (n != rfilp->filp_count) {
 		printf("VFS: warning: invalidate/count "
 			"discrepancy (%d, %d)\n", n, rfilp->filp_count);

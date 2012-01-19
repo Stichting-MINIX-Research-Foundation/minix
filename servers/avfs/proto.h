@@ -21,6 +21,7 @@ struct job;
 typedef struct filp * filp_id_t;
 
 /* comm.c */
+_PROTOTYPE(void fs_cancel, (struct vmnt *vmp)				);
 _PROTOTYPE(int fs_sendrec, (endpoint_t fs_e, message *reqm)		);
 _PROTOTYPE(void fs_sendmore, (struct vmnt *vmp)				);
 _PROTOTYPE(void send_work, (void)					);
@@ -92,7 +93,8 @@ _PROTOTYPE( struct filp *get_filp2, (struct fproc *rfp, int fild,
 _PROTOTYPE( void lock_filp, (struct filp *filp, tll_access_t locktype)	);
 _PROTOTYPE( void unlock_filp, (struct filp *filp)			);
 _PROTOTYPE( void unlock_filps, (struct filp *filp1, struct filp *filp2)	);
-_PROTOTYPE( int invalidate, (struct filp *)				);
+_PROTOTYPE( int invalidate_filp, (struct filp *)			);
+_PROTOTYPE( void invalidate_filp_by_endpt, (endpoint_t proc_e)		);
 _PROTOTYPE( int do_verify_fd, (void)					);
 _PROTOTYPE( int set_filp, (filp_id_t sfilp)				);
 _PROTOTYPE( int do_set_filp, (void)					);
@@ -334,6 +336,7 @@ _PROTOTYPE( struct vmnt *get_locked_vmnt, (struct fproc *rfp)		);
 _PROTOTYPE( void init_vmnts, (void)					);
 _PROTOTYPE( int lock_vmnt, (struct vmnt *vp, tll_access_t locktype)	);
 _PROTOTYPE( void unlock_vmnt, (struct vmnt *vp)				);
+_PROTOTYPE( void vmnt_unmap_by_endpt, (endpoint_t proc_e)		);
 
 /* vnode.c */
 _PROTOTYPE( void check_vnode_locks, (void)				);

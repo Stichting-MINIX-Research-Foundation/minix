@@ -450,6 +450,13 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 	(void) close_fd(exiter, i);
   }
 
+  /* Release root and working directories. */
+  if (exiter->fp_rd) { put_vnode(exiter->fp_rd); exiter->fp_rd = NULL; }
+  if (exiter->fp_wd) { put_vnode(exiter->fp_wd); exiter->fp_wd = NULL; }
+
+  /* The rest of these actions is only done when processes actually exit. */
+  if (!(flags & FP_EXITING)) return;
+
   /* Check if any process is SUSPENDed on this driver.
    * If a driver exits, unmap its entries in the dmap table.
    * (unmapping has to be done after the first step, because the
@@ -457,14 +464,10 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
    */
   unsuspend_by_endpt(exiter->fp_endpoint);
   dmap_unmap_by_endpt(exiter->fp_endpoint);
-  worker_stop_by_endpt(exiter->fp_endpoint);
 
-  /* Release root and working directories. */
-  if (exiter->fp_rd) { put_vnode(exiter->fp_rd); exiter->fp_rd = NULL; }
-  if (exiter->fp_wd) { put_vnode(exiter->fp_wd); exiter->fp_wd = NULL; }
-
-  /* The rest of these actions is only done when processes actually exit. */
-  if (!(flags & FP_EXITING)) return;
+  worker_stop_by_endpt(exiter->fp_endpoint); /* Unblock waiting threads */
+  vmnt_unmap_by_endpt(exiter->fp_endpoint); /* Invalidate open files if this
+					     * was an active FS */
 
   /* Invalidate endpoint number for error and sanity checks. */
   exiter->fp_endpoint = NONE;

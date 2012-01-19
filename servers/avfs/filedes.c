@@ -201,18 +201,18 @@ PUBLIC struct filp *find_filp(struct vnode *vp, mode_t bits)
 }
 
 /*===========================================================================*
- *				invalidate				     *
+ *				invalidate_filp				     *
  *===========================================================================*/
-PUBLIC int invalidate(struct filp *fp)
+PUBLIC int invalidate_filp(struct filp *rfilp)
 {
 /* Invalidate filp. fp_filp_inuse is not cleared, so filp can't be reused
    until it is closed first. */
 
   int f, fd, n = 0;
-  for(f = 0; f < NR_PROCS; f++) {
-	if(fproc[f].fp_pid == PID_FREE) continue;
-	for(fd = 0; fd < OPEN_MAX; fd++) {
-		if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == fp) {
+  for (f = 0; f < NR_PROCS; f++) {
+	if (fproc[f].fp_pid == PID_FREE) continue;
+	for (fd = 0; fd < OPEN_MAX; fd++) {
+		if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == rfilp) {
 			fproc[f].fp_filp[fd] = NULL;
 			n++;
 		}
@@ -220,6 +220,21 @@ PUBLIC int invalidate(struct filp *fp)
   }
 
   return(n);	/* Report back how often this filp has been invalidated. */
+}
+
+/*===========================================================================*
+ *			invalidate_filp_by_endpt			     *
+ *===========================================================================*/
+PUBLIC void invalidate_filp_by_endpt(endpoint_t proc_e)
+{
+  struct filp *f;
+
+  for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+	if (f->filp_count != 0 && f->filp_vno != NULL) {
+		if (f->filp_vno->v_fs_e == proc_e)
+			(void) invalidate_filp(f);
+	}
+  }
 }
 
 /*===========================================================================*

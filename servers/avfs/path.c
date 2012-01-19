@@ -210,6 +210,11 @@ struct fproc *rfp;
 		struct vmnt *vmp;
 
 		vmp = find_vmnt(start_dir->v_fs_e);
+		if (vmp == NULL) {
+			r = EIO;
+			res_vp = NULL;
+			break;
+		}
 		r = lock_vmnt(vmp, resolve->l_vmnt_lock);
 		if (r == EDEADLK) {
 			res_vp = NULL;
@@ -390,6 +395,8 @@ struct fproc *rfp;
   dir_ino = start_node->v_inode_nr;
   vmpres = find_vmnt(fs_e);
 
+  if (vmpres == NULL) return(EIO);	/* mountpoint vanished? */
+
   /* Is the process' root directory on the same partition?,
    * if so, set the chroot directory too. */
   if (rfp->fp_rd->v_dev == rfp->fp_wd->v_dev)
@@ -500,6 +507,7 @@ struct fproc *rfp;
 	/* Unlock a previously locked vmnt if locked and lock new vmnt */
 	if (vmpres) unlock_vmnt(vmpres);
 	vmpres = find_vmnt(fs_e);
+	if (vmpres == NULL) return(EIO);	/* mount point vanished? */
 	if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
 		if (r == EBUSY)
 			vmpres = NULL;	/* Already locked */

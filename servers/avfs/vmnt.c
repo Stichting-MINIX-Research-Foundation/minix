@@ -160,6 +160,21 @@ PUBLIC int lock_vmnt(struct vmnt *vmp, tll_access_t locktype)
 }
 
 /*===========================================================================*
+ *                             vmnt_unmap_by_endpoint			     *
+ *===========================================================================*/
+PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
+{
+  struct vmnt *vmp;
+
+  if ((vmp = find_vmnt(proc_e)) != NULL) {
+	fs_cancel(vmp);
+	invalidate_filp_by_endpt(proc_e);
+	put_vnode(vmp->m_mounted_on);
+	clear_vmnt(vmp);
+  }
+}
+
+/*===========================================================================*
  *                             unlock_vmnt				     *
  *===========================================================================*/
 PUBLIC void unlock_vmnt(struct vmnt *vmp)
