@@ -40,6 +40,7 @@ PUBLIC int do_mmap(message *m)
 	int r, n;
 	struct vmproc *vmp;
 	int mfflags = 0;
+	vir_bytes addr;
 	struct vir_region *vr = NULL;
 
 	if((r=vm_isokendpt(m->m_source, &n)) != OK) {
@@ -81,10 +82,20 @@ PUBLIC int do_mmap(message *m)
 		if(len % VM_PAGE_SIZE)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
-		if(!(vr = map_page_region(vmp,
-			arch_vir2map(vmp,
-				m->VMM_ADDR ? m->VMM_ADDR : vmp->vm_stacktop),
-			VM_DATATOP, len, MAP_NONE, vrflags, mfflags))) {
+		vr = NULL;
+		if (m->VMM_ADDR) {
+			/* An address is given, first try at that address. */
+			addr = arch_vir2map(vmp, m->VMM_ADDR);
+			vr = map_page_region(vmp, addr, 0, len, MAP_NONE,
+				vrflags, mfflags);
+		}
+		if (!vr) {
+			/* No address given or address already in use. */
+			addr = arch_vir2map(vmp, vmp->vm_stacktop);
+			vr = map_page_region(vmp, addr, VM_DATATOP, len,
+				MAP_NONE, vrflags, mfflags);
+		}
+		if (!vr) {
 			return ENOMEM;
 		}
 	} else {
