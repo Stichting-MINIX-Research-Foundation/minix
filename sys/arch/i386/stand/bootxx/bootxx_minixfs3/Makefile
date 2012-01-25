@@ -2,6 +2,7 @@
 
 PROG=bootxx_minixfs3
 FS=minixfs3
+CLEANFILES= lib
 
 MINIX3_FIRST_SUBP_OFFSET=32
 

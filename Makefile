@@ -67,6 +67,7 @@ commands: includes libraries
 
 dep-all:
 	$(MAKE) CC=cc -C boot dependall
+	$(MAKE) CC=clang -C sys dependall
 	$(MAKE) -C commands dependall
 	$(MAKE) -C bin dependall
 	$(MAKE) -C sbin dependall
@@ -85,6 +86,7 @@ etcforce:
 
 all:
 	$(MAKE) CC=cc -C boot all
+	$(MAKE) CC=clang -C sys all
 	$(MAKE) -C commands all
 	$(MAKE) -C bin all
 	$(MAKE) -C sbin all
@@ -95,6 +97,7 @@ all:
 
 install:
 	$(MAKE) CC=cc -C boot install
+	$(MAKE) CC=clang -C sys install
 	$(MAKE) -C libexec install
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
@@ -108,6 +111,7 @@ install:
 
 clean: mkfiles
 	$(MAKE) -C boot clean
+	$(MAKE) -C sys clean
 	$(MAKE) -C commands clean
 	$(MAKE) -C bin clean
 	$(MAKE) -C sbin clean
@@ -121,6 +125,7 @@ clean: mkfiles
 cleandepend: mkfiles
 	$(MAKE) -C lib cleandepend_all
 	$(MAKE) -C boot cleandepend
+	$(MAKE) -C sys cleandepend
 	$(MAKE) -C commands cleandepend
 	$(MAKE) -C bin cleandepend
 	$(MAKE) -C sbin cleandepend

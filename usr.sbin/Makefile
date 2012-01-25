@@ -3,6 +3,6 @@
 .include <bsd.own.mk>
 
 # NetBSD imports
-SUBDIR= pwd_mkdb user vipw zic
+SUBDIR= installboot pwd_mkdb user vipw zic
 
 .include <bsd.subdir.mk>
