@@ -2,6 +2,7 @@
 
 S=	${.CURDIR}/../../../../..
 
+ACTIVE_CC?= ${CC}
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
@@ -79,6 +80,10 @@ CPUFLAGS=  -march=i386 -mtune=i386
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
+.if defined(__MINIX)
+CPPFLAGS+= -I${DESTDIR}/usr/include
+CPPFLAGS+= -I${.CURDIR}/../../../../../../
+.endif
 
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_TWIDDLE \
@@ -119,14 +124,21 @@ LIBI386= ${I386LIB}
 ### find out what to use for libsa
 SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+.if defined(__MINIX)
+SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
+.endif
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
+.if !defined(__MINIX)
 ### find out what to use for libkern
 KERN_AS=        library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=        ${KERNLIB}
-
+.else
+# MINIX
+LIBKERN= # use MINIX minc
+.endif
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -140,7 +152,7 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST} ${LDADD}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
@@ -155,4 +167,8 @@ ${PROG}: ${OBJS} ${LIBLIST}
 		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
 	fi
 
+.ifndef __MINIX
 .include <bsd.prog.mk>
+.else
+.include <minix.service.mk>
+.endif

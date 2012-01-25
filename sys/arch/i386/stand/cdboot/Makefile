@@ -1,13 +1,13 @@
 #	$NetBSD: Makefile,v 1.12 2011/05/20 22:29:55 joerg Exp $
 
-S=		${.CURDIR}/../../../..
-
 AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 NOMAN=		# defined
 .include <bsd.own.mk>
 
 STRIPFLAG=	# nothing
+TOOL_SED?=	sed
+NM?=		nm
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -26,7 +26,7 @@ BINMODE=	444
 .PATH:		${.CURDIR}/..
 
 LDFLAGS+=	-nostdlib -Wl,-e,start
-CPPFLAGS+=	-I. -I${.CURDIR}/../lib -I${S}
+CPPFLAGS+=	-I. -I${.CURDIR}/../lib # -I${S}
 CPPFLAGS+=	-DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DDISABLE_KEYPRESS
@@ -36,12 +36,18 @@ LDFLAGS+=	-Wl,-m,elf_i386
 AFLAGS+=	-m32
 .endif
 
-AFLAGS+=	-Wa,--divide
-
+.if defined(_NetBSD_)
+# NetBSD can be compiled from a foreign host, MINIX do not. So commented out.
+# Make sys/ a local thing for benefit of cross-compilers
+S=		${.CURDIR}/../../../../..
+CPPFLAGS+=	-I${S}
+# And same for machine/; need a bit more work because of symlink
 BUILDSYMLINKS+=	$S/arch/i386/include	machine \
 		$S/arch/x86/include	x86
-
 DPSRCS+=	machine x86
+.endif
+
+AFLAGS+=	-Wa,--divide
 
 CLEANFILES+=	${PROG}.tmp
 
@@ -49,7 +55,7 @@ ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
 	    ${OBJS}
-	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<free_space\>' \
+	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep 'free_space' \
 		| ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}

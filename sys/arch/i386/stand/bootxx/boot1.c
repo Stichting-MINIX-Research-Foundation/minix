@@ -39,7 +39,11 @@ __RCSID("$NetBSD: boot1.c,v 1.20 2011/01/06 01:08:48 jakllsch Exp $");
 #include <sys/param.h>
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
+#ifndef __minix
 #include <dev/raidframe/raidframevar.h>	/* For RF_PROTECTED_SECTORS */
+#else
+#define RF_PROTECTED_SECTORS 64
+#endif
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -72,7 +76,11 @@ boot1(uint32_t biosdev, uint64_t *sector)
 	bios_sector = *sector;
 	d.dev = biosdev;
 
+#ifdef __minix
+	putstr("\r\nMINIX/x86 " STR(FS) " Primary Bootstrap\r\n");
+#else
 	putstr("\r\nNetBSD/x86 " STR(FS) " Primary Bootstrap\r\n");
+#endif
 
 	if (set_geometry(&d, NULL))
 		return "set_geometry\r\n";

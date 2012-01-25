@@ -21,7 +21,11 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 
 .include <bsd.own.mk>
 
+.ifndef __MINIX
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
+.else
+.PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/md
+.endif
 
 # stand routines
 SRCS+=	alloc.c errno.c exit.c files.c \
@@ -29,7 +33,7 @@ SRCS+=	alloc.c errno.c exit.c files.c \
 	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c \
 	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
 
-.if (${MACHINE_CPU} != "mips")
+.if (${MACHINE_CPU} != "mips") && !defined(__MINIX)
 SRCS+=	exec.c
 .endif
 
@@ -37,7 +41,7 @@ SRCS+=	exec.c
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
 SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
 .endif
-SRCS+=	bcopy.c bzero.c	# Remove me eventually.
+##SRCS+=	bcopy.c bzero.c	# Remove me eventually.
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
@@ -51,9 +55,10 @@ SRCS+= ls.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
-SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c lookup_elf32.c \
-	loadfile_elf64.c lookup_elf64.c
-.if (${MACHINE_CPU} != "mips")
+#SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c lookup_elf32.c \
+#	loadfile_elf64.c lookup_elf64.c
+SRCS+=	loadfile.c loadfile_elf32.c loadfile_elf64.c
+.if (${MACHINE_CPU} != "mips") && !defined(__MINIX)
 SRCS+=	loadfile_aout.c
 .endif
 .endif
@@ -69,8 +74,10 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	nfs.c tftp.c
 .endif
 
+.ifndef __MINIX_w
 SRCS+=	ffsv1.c ffsv2.c
 SRCS+=	lfsv1.c lfsv2.c
+.endif
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c
 SRCS+=	dosfs.c
@@ -78,6 +85,14 @@ SRCS+=	ext2fs.c
 SRCS+=	minixfs3.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
+
+.if defined(__MINIX)
+# NetBSD has it in libkern, MINIX lacks it
+SRCS+=	xlat_mbr_fstype.c
+
+# NetBSD has it in libkern, MINIX has it in libc but not libminc...
+SRCS+=	md5c.c
+.endif
 
 # only needed during build
 libinstall::

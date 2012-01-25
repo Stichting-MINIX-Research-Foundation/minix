@@ -1,8 +1,8 @@
-/*	$NetBSD: saerrno.h,v 1.11 2007/12/03 09:51:31 isaki Exp $	*/
+/*	$NetBSD: ns16550reg.h,v 1.7 2005/12/11 12:21:28 christos Exp $	*/
 
-/*
- * Copyright (c) 1988, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,28 +28,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)saerrno.h	8.1 (Berkeley) 6/11/93
+ *	@(#)ns16550.h	7.1 (Berkeley) 5/9/91
  */
 
-#include <sys/errno.h>
+/*
+ * NS16550 UART registers
+ */
 
-#ifndef	ELAST
-#define	ELAST	256	/* XXX temporary hack... need revisiting! */
-#endif
-
-extern int errno;
-
-/* special stand error codes */
-#define	EADAPT	(ELAST+1)	/* bad adaptor */
-#define	ECTLR	(ELAST+2)	/* bad controller */
-#define	EUNIT	(ELAST+3)	/* bad drive */
-#define	EPART	(ELAST+4)	/* bad partition */
-#define	ERDLAB	(ELAST+5)	/* can't read disk label */
-#define	EUNLAB	(ELAST+6)	/* unlabeled disk */
-#define	EOFFSET	(ELAST+7)	/* relative seek not supported */
-#define	ECMD	(ELAST+8)	/* undefined driver command */
-#define	EBSE	(ELAST+9)	/* bad sector error */
-#define	EWCK	(ELAST+10)	/* write check error */
-#define	EECC	(ELAST+11)	/* uncorrectable ecc error */
-#define	EHER	(ELAST+12)	/* hard error */
-#define	ESALAST	(ELAST+12)	/* */
+#define	com_data	0	/* data register (R/W) */
+#define	com_dlbl	0	/* divisor latch low (W) */
+#define	com_dlbh	1	/* divisor latch high (W) */
+#define	com_ier		1	/* interrupt enable (W) */
+#define	com_iir		2	/* interrupt identification (R) */
+#define	com_fifo	2	/* FIFO control (W) */
+#define	com_lctl	3	/* line control register (R/W) */
+#define	com_cfcr	3	/* line control register (R/W) */
+#define	com_mcr		4	/* modem control register (R/W) */
+#define	com_lsr		5	/* line status register (R/W) */
+#define	com_msr		6	/* modem status register (R/W) */
+#define	com_scratch	7	/* scratch register (R/W) */

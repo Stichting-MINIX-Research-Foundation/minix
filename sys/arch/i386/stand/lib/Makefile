@@ -11,6 +11,7 @@ I386_INCLUDE_DOS?= no
 I386_INCLUDE_BUS?= no
 I386_INCLUDE_PS2?= yes
 
+ACTIVE_CC?= ${CC}
 AFLAGS.biosdelay.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.biosgetrtc.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.biosgetsystime.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}

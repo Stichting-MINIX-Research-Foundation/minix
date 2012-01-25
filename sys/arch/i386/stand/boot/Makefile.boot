@@ -7,6 +7,7 @@ PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
 
+ACTIVE_CC?= ${CC}
 AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
@@ -57,6 +58,10 @@ COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
+.if defined(__MINIX)
+CPPFLAGS+= -I${DESTDIR}/usr/include
+CPPFLAGS+= -I${.CURDIR}/../../../../../../
+.endif
 
 CPPFLAGS+= -DSUPPORT_PS2
 CPPFLAGS+= -DDIRECT_SERIAL
@@ -119,15 +124,21 @@ SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
+.ifndef __MINIX
 ### find out what to use for libkern
 KERN_AS= library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN= ${KERNLIB}
+.else
+# MINIX
+LIBKERN= # use MINIX minc
+.endif
 
 ### find out what to use for libz
 Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
+## XXX ??? LIBZ is set up as usual, we use the regular one
 
 
 cleandir distclean: .WAIT cleanlibdir
@@ -149,7 +160,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
 	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
-	    ${OBJS} ${LIBLIST} | ( \
+	    ${OBJS} ${LIBLIST} ${LDADD} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
 			[ "$$symbol" = real_to_prot ] && break; \
@@ -165,7 +176,11 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		done; \
 	) )"; \
 	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST} ${LDADD}
 	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
+.ifndef	__MINIX
 .include <bsd.prog.mk>
+.else
+.include <minix.service.mk>
+.endif

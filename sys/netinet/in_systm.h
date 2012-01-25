@@ -1,7 +1,7 @@
-/*	$NetBSD: saerrno.h,v 1.11 2007/12/03 09:51:31 isaki Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.13 2005/12/10 23:36:23 elad Exp $	*/
 
 /*
- * Copyright (c) 1988, 1993
+ * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,28 +28,32 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)saerrno.h	8.1 (Berkeley) 6/11/93
+ *	@(#)in_systm.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/errno.h>
+#ifndef _NETINET_IN_SYSTM_H_
+#define _NETINET_IN_SYSTM_H_
 
-#ifndef	ELAST
-#define	ELAST	256	/* XXX temporary hack... need revisiting! */
+/*
+ * Miscellaneous internetwork
+ * definitions for kernel.
+ */
+
+/*
+ * Network types.
+ *
+ * Internally the system keeps counters in the headers with the bytes
+ * swapped so that VAX instructions will work on them.  It reverses
+ * the bytes before transmission at each protocol level.  The n_ types
+ * represent the types with the bytes in ``high-ender'' order.
+ */
+typedef u_int16_t n_short;		/* short as received from the net */
+typedef u_int32_t n_long;		/* long as received from the net */
+
+typedef u_int32_t n_time;		/* ms since 00:00 GMT, byte rev */
+
+#ifdef _KERNEL
+n_time	 iptime (void);
 #endif
 
-extern int errno;
-
-/* special stand error codes */
-#define	EADAPT	(ELAST+1)	/* bad adaptor */
-#define	ECTLR	(ELAST+2)	/* bad controller */
-#define	EUNIT	(ELAST+3)	/* bad drive */
-#define	EPART	(ELAST+4)	/* bad partition */
-#define	ERDLAB	(ELAST+5)	/* can't read disk label */
-#define	EUNLAB	(ELAST+6)	/* unlabeled disk */
-#define	EOFFSET	(ELAST+7)	/* relative seek not supported */
-#define	ECMD	(ELAST+8)	/* undefined driver command */
-#define	EBSE	(ELAST+9)	/* bad sector error */
-#define	EWCK	(ELAST+10)	/* write check error */
-#define	EECC	(ELAST+11)	/* uncorrectable ecc error */
-#define	EHER	(ELAST+12)	/* hard error */
-#define	ESALAST	(ELAST+12)	/* */
+#endif /* !_NETINET_IN_SYSTM_H_ */

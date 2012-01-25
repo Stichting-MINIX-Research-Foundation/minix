@@ -33,9 +33,11 @@
 
 FS_DEF(minixfs3);
 
+#ifndef __minix
 typedef uint32_t zone_t;
 typedef uint16_t zone1_t;
 typedef uint32_t block_t;
+#endif
 
 #define NR_DZONES	7	/* # direct zone numbers in an inode */
 #define NR_TZONES	10	/* total # zone numbers in an inode */

@@ -1,7 +1,7 @@
-/*	$NetBSD: saerrno.h,v 1.11 2007/12/03 09:51:31 isaki Exp $	*/
+/*	$NetBSD: udp.h,v 1.15 2012/01/07 20:20:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1993
+ * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,28 +28,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)saerrno.h	8.1 (Berkeley) 6/11/93
+ *	@(#)udp.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/errno.h>
+#ifndef _NETINET_UDP_H_
+#define _NETINET_UDP_H_
 
-#ifndef	ELAST
-#define	ELAST	256	/* XXX temporary hack... need revisiting! */
-#endif
+#include <sys/types.h>
+/*
+ * Udp protocol header.
+ * Per RFC 768, September, 1981.
+ */
+struct udphdr {
+	uint16_t uh_sport;		/* source port */
+	uint16_t uh_dport;		/* destination port */
+	uint16_t uh_ulen;		/* udp length */
+	uint16_t uh_sum;		/* udp checksum */
+} __packed;
 
-extern int errno;
+/* socket options for UDP */
+#define	UDP_ENCAP	100
+#define	UDP_RFC6056ALGO	200
 
-/* special stand error codes */
-#define	EADAPT	(ELAST+1)	/* bad adaptor */
-#define	ECTLR	(ELAST+2)	/* bad controller */
-#define	EUNIT	(ELAST+3)	/* bad drive */
-#define	EPART	(ELAST+4)	/* bad partition */
-#define	ERDLAB	(ELAST+5)	/* can't read disk label */
-#define	EUNLAB	(ELAST+6)	/* unlabeled disk */
-#define	EOFFSET	(ELAST+7)	/* relative seek not supported */
-#define	ECMD	(ELAST+8)	/* undefined driver command */
-#define	EBSE	(ELAST+9)	/* bad sector error */
-#define	EWCK	(ELAST+10)	/* write check error */
-#define	EECC	(ELAST+11)	/* uncorrectable ecc error */
-#define	EHER	(ELAST+12)	/* hard error */
-#define	ESALAST	(ELAST+12)	/* */
+/* Encapsulation types */
+#define UDP_ENCAP_ESPINUDP_NON_IKE 	1 /* draft-ietf-ipsec-nat-t-ike-00/01 */
+#define UDP_ENCAP_ESPINUDP		2 /* draft-ietf-ipsec-udp-encaps-06 */
+
+/* Default encapsulation port */
+#define UDP_ENCAP_ESPINUDP_PORT		500
+
+/* Maximum UDP fragment size for ESP over UDP */
+#define UDP_ENCAP_ESPINUDP_MAXFRAGLEN	552
+
+#endif /* !_NETINET_UDP_H_ */
