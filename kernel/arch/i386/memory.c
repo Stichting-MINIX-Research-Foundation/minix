@@ -31,8 +31,7 @@ PUBLIC int i386_paging_enabled = 0;
 
 PRIVATE int psok = 0;
 
-#define FREE_PDES_PER_CPU	2
-#define MAX_FREEPDES		(FREE_PDES_PER_CPU * CONFIG_MAX_CPUS)
+#define MAX_FREEPDES	2
 PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
@@ -80,12 +79,7 @@ PRIVATE phys_bytes createpde(
 	phys_bytes offset;
 	int pde;
 
-	assert(free_pde_idx >= 0 && free_pde_idx < FREE_PDES_PER_CPU);
-
-	/* make the index CPU local */
-	free_pde_idx += cpuid * FREE_PDES_PER_CPU;
-	assert(free_pde_idx < nfreepdes);
-
+	assert(free_pde_idx >= 0 && free_pde_idx < nfreepdes);
 	pde = freepdes[free_pde_idx];
 	assert(pde >= 0 && pde < 1024);
 
@@ -145,7 +139,7 @@ PRIVATE int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	proc_nr_t procslot;
 
 	assert(vm_running);
-	assert(nfreepdes >= 2);
+	assert(nfreepdes >= MAX_FREEPDES);
 
 	assert(get_cpulocal_var(ptproc));
 	assert(get_cpulocal_var(proc_ptr));
@@ -658,7 +652,7 @@ int vm_phys_memset(phys_bytes ph, const u8_t c, phys_bytes bytes)
 		return OK;
 	}
 
-	assert(nfreepdes >= 2);
+	assert(nfreepdes >= MAX_FREEPDES);
 
 	assert(get_cpulocal_var(ptproc)->p_seg.p_cr3_v);
 
