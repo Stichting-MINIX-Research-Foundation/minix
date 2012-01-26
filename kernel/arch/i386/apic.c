@@ -428,13 +428,22 @@ PRIVATE int calib_clk_handler(irq_hook_t * UNUSED(hook))
 	return 1;
 }
 
+PRIVATE int spurious_irq_handler(irq_hook_t * UNUSED(hook))
+{
+	/*
+	 * Do nothing, only unlock the kernel so we do not deadlock!
+	 */
+	BKL_UNLOCK();
+	return 1;
+}
+
 PRIVATE void apic_calibrate_clocks(unsigned cpu)
 {
 	u32_t lvtt, val, lapic_delta;
 	u64_t tsc_delta;
 	u64_t cpu_freq;
 
-	irq_hook_t calib_clk;
+	irq_hook_t calib_clk, spurious_irq;
 
 	BOOT_VERBOSE(printf("Calibrating clock\n"));
 	/*
@@ -467,6 +476,14 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 	/* set the probe, we use the legacy timer, IRQ 0 */
 	put_irq_handler(&calib_clk, CLOCK_IRQ, calib_clk_handler);
 
+	/*
+	 * A spurious interrupt may occur during the clock calibration. Since we
+	 * do this calibration in kernel, we need a special handler which will
+	 * leave the BKL unlocked like the clock handler. This is a corner case,
+	 * boot time only situation
+	 */
+	put_irq_handler(&spurious_irq, SPURIOUS_IRQ, spurious_irq_handler);
+
 	/* set the PIC timer to get some time */
 	init_8253A_timer(system_hz);
 
@@ -489,6 +506,7 @@ PRIVATE void apic_calibrate_clocks(unsigned cpu)
 
 	/* remove the probe */
 	rm_irq_handler(&calib_clk);
+	rm_irq_handler(&spurious_irq);
 
 	lapic_delta = lapic_tctr0 - lapic_tctr1;
 	tsc_delta = sub64(tsc1, tsc0);
