@@ -436,8 +436,8 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
       panic("unable to clone current RS instance: %d", s);
   }
 
-  /* Fork a new RS instance. */
-  pid = srv_fork();
+  /* Fork a new RS instance with root:operator. */
+  pid = srv_fork(0, 0);
   if(pid == -1) {
       panic("unable to fork a new RS instance");
   }

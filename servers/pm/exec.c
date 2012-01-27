@@ -89,7 +89,9 @@ PUBLIC int do_exec_newmem()
 		if (rmp->mp_tracer == NO_TRACER) {
 			/* Okay, setuid execution is allowed */
 			allow_setuid = 1;
+		}
 
+		if (allow_setuid && args.setugid) {
 			rmp->mp_effuid = args.new_uid;
 			rmp->mp_effgid = args.new_gid;
 		}
@@ -118,7 +120,7 @@ PUBLIC int do_exec_newmem()
 
 		mp->mp_reply.reply_res2= (vir_bytes) stack_top;
 		mp->mp_reply.reply_res3= flags;
-		if (allow_setuid)
+		if (allow_setuid && args.setugid)
 			mp->mp_reply.reply_res3 |= EXC_NM_RF_ALLOW_SETUID;
 	} else {
 		printf("PM: newmem failed for %s\n", args.progname);

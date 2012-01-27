@@ -120,6 +120,8 @@ PUBLIC int do_fork()
   m.PM_PROC = rmc->mp_endpoint;
   m.PM_PPROC = rmp->mp_endpoint;
   m.PM_CPID = rmc->mp_pid;
+  m.PM_REUID = -1;	/* Not used by PM_FORK */
+  m.PM_REGID = -1;	/* Not used by PM_FORK */
 
   tell_vfs(rmc, &m);
 
@@ -198,6 +200,10 @@ PUBLIC int do_srv_fork()
   rmc->mp_exitstatus = 0;
   rmc->mp_sigstatus = 0;
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
+  rmc->mp_realuid = (uid_t) m_in.m1_i1;
+  rmc->mp_effuid = (uid_t) m_in.m1_i1;
+  rmc->mp_realgid = (uid_t) m_in.m1_i2;
+  rmc->mp_effgid = (uid_t) m_in.m1_i2;
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
 
@@ -209,6 +215,8 @@ PUBLIC int do_srv_fork()
   m.PM_PROC = rmc->mp_endpoint;
   m.PM_PPROC = rmp->mp_endpoint;
   m.PM_CPID = rmc->mp_pid;
+  m.PM_REUID = m_in.m1_i1;
+  m.PM_REGID = m_in.m1_i2;
 
   tell_vfs(rmc, &m);
 

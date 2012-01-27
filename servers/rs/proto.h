@@ -34,7 +34,7 @@ _PROTOTYPE( int copy_rs_start, (endpoint_t src_e, char *src_rs_start,
 _PROTOTYPE( int copy_label, (endpoint_t src_e, char *src_label, size_t src_len,
 	char *dst_label, size_t dst_len) );
 _PROTOTYPE( void build_cmd_dep, (struct rproc *rp) );
-_PROTOTYPE( int srv_fork, (void) );
+_PROTOTYPE( int srv_fork, (uid_t reuid, gid_t regid) );
 _PROTOTYPE( int srv_kill, (pid_t pid, int sig) );
 _PROTOTYPE( int srv_update, (endpoint_t src_e, endpoint_t dst_e) );
 #define kill_service(rp, errstr, err) \

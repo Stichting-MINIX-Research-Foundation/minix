@@ -764,39 +764,41 @@
 #define PM_SETGROUPS_REPLY	(PM_RS_BASE + 11)
 
 /* Standard parameters for all requests and replies, except PM_REBOOT */
-#  define PM_PROC		m1_i1	/* process endpoint */
+#  define PM_PROC		m7_i1	/* process endpoint */
 
 /* Additional parameters for PM_INIT */
-#  define PM_SLOT		m1_i2	/* process slot number */
-#  define PM_PID		m1_i3	/* process pid */
+#  define PM_SLOT		m7_i2	/* process slot number */
+#  define PM_PID		m7_i3	/* process pid */
 
 /* Additional parameters for PM_SETUID and PM_SETGID */
-#  define PM_EID		m1_i2	/* effective user/group id */
-#  define PM_RID		m1_i3	/* real user/group id */
+#  define PM_EID		m7_i2	/* effective user/group id */
+#  define PM_RID		m7_i3	/* real user/group id */
 
 /* Additional parameter for PM_SETGROUPS */
-#  define PM_GROUP_NO		m1_i2	/* number of groups */
-#  define PM_GROUP_ADDR		m1_p1	/* struct holding group data */
+#  define PM_GROUP_NO		m7_i2	/* number of groups */
+#  define PM_GROUP_ADDR		m7_p1	/* struct holding group data */
 
 /* Additional parameters for PM_EXEC */
-#  define PM_PATH		m1_p1	/* executable */
-#  define PM_PATH_LEN		m1_i2	/* length of path including
+#  define PM_PATH		m7_p1	/* executable */
+#  define PM_PATH_LEN		m7_i2	/* length of path including
 					 * terminating null character
 					 */
-#  define PM_FRAME		m1_p2	/* arguments and environment */
-#  define PM_FRAME_LEN		m1_i3	/* size of frame */
+#  define PM_FRAME		m7_p2	/* arguments and environment */
+#  define PM_FRAME_LEN		m7_i3	/* size of frame */
 
 /* Additional parameters for PM_EXEC_REPLY and PM_CORE_REPLY */
-#  define PM_STATUS		m1_i2	/* OK or failure */
-#  define PM_PC	        m1_p1	/* program counter */
+#  define PM_STATUS		m7_i2	/* OK or failure */
+#  define PM_PC			m7_p1	/* program counter */
 
 /* Additional parameters for PM_FORK and PM_SRV_FORK */
-#  define PM_PPROC		m1_i2	/* parent process endpoint */
-#  define PM_CPID		m1_i3	/* child pid */
+#  define PM_PPROC		m7_i2	/* parent process endpoint */
+#  define PM_CPID		m7_i3	/* child pid */
+#  define PM_REUID		m7_i4	/* real and effective uid */
+#  define PM_REGID		m7_i5	/* real and effective gid */
 
 /* Additional parameters for PM_DUMPCORE */
-#  define PM_TERM_SIG		m1_i2	/* process's termination signal */
-#  define PM_TRACED_PROC	m1_i3	/* required for T_DUMPCORE */
+#  define PM_TERM_SIG		m7_i2	/* process's termination signal */
+#  define PM_TRACED_PROC	m7_i3	/* required for T_DUMPCORE */
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */

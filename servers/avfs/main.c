@@ -908,8 +908,14 @@ PRIVATE void service_pm()
     case PM_FORK:
     case PM_SRV_FORK:
 	pm_fork(m_in.PM_PPROC, m_in.PM_PROC, m_in.PM_CPID);
+	m_out.m_type = PM_FORK_REPLY;
 
-	m_out.m_type = (call_nr == PM_FORK) ? PM_FORK_REPLY : PM_SRV_FORK_REPLY;
+	if (call_nr == PM_SRV_FORK) {
+		m_out.m_type = PM_SRV_FORK_REPLY;
+		pm_setuid(m_in.PM_PROC, m_in.PM_REUID, m_in.PM_REUID);
+		pm_setgid(m_in.PM_PROC, m_in.PM_REGID, m_in.PM_REGID);
+	}
+
 	m_out.PM_PROC = m_in.PM_PROC;
 
 	break;

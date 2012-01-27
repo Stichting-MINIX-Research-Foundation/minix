@@ -193,6 +193,7 @@ static int load_aout(struct exec_info *execi)
 
 	new_uid= getuid();
 	new_gid= getgid();
+	allow_setuid = 0;
 
 	/* XXX what should we use to identify the executable? */
 	r= exec_newmem(proc_e, 0 /*text_addr*/, text_bytes,
@@ -263,6 +264,7 @@ static int load_elf(struct exec_info *execi)
 
   new_uid= getuid();
   new_gid= getgid();
+  allow_setuid = 0;
 
   sep_id = 0;
   is_elf = 1;
@@ -347,6 +349,7 @@ static int exec_newmem(
 	e.enst_ctime= ctime;
 	e.new_uid= new_uid;
 	e.new_gid= new_gid;
+	e.setugid= *allow_setuidp;
 	strncpy(e.progname, progname, sizeof(e.progname)-1);
 	e.progname[sizeof(e.progname)-1]= '\0';
 

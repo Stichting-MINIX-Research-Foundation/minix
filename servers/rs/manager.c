@@ -211,11 +211,13 @@ PUBLIC void build_cmd_dep(struct rproc *rp)
 /*===========================================================================*
  *				 srv_fork				     *
  *===========================================================================*/
-PUBLIC pid_t srv_fork()
+PUBLIC pid_t srv_fork(uid_t reuid, gid_t regid)
 {
   message m;
 
-  return(_syscall(PM_PROC_NR, SRV_FORK, &m));
+  m.m1_i1 = (int) reuid;
+  m.m1_i2 = (int) regid;
+  return _syscall(PM_PROC_NR, SRV_FORK, &m);
 }
 
 /*===========================================================================*
@@ -476,7 +478,7 @@ struct rproc *rp;
    */
   if(rs_verbose)
       printf("RS: forking child with srv_fork()...\n");
-  child_pid= srv_fork();
+  child_pid= srv_fork(rp->r_uid, 0);	/* Force group to operator for now */
   if(child_pid == -1) {
       printf("RS: srv_fork() failed (error %d)\n", errno);
       free_slot(rp);
