@@ -198,7 +198,7 @@ PUBLIC int do_access()
 	return(err_code);
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
-  r = forbidden(vp, m_in.mode);
+  r = forbidden(fp, vp, m_in.mode);
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);
@@ -211,7 +211,7 @@ PUBLIC int do_access()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
+PUBLIC int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
 {
 /* Given a pointer to an vnode, 'vp', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -228,8 +228,8 @@ PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
 
   /* Isolate the relevant rwx bits from the mode. */
   bits = vp->v_mode;
-  uid = (call_nr == ACCESS ? fp->fp_realuid : fp->fp_effuid);
-  gid = (call_nr == ACCESS ? fp->fp_realgid : fp->fp_effgid);
+  uid = (call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   if (uid == SU_UID) {
 	/* Grant read and write permission.  Grant search permission for

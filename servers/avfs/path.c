@@ -795,7 +795,7 @@ size_t pathlen;
   if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
   /* check permissions */
-  r = forbidden(vp, (R_BIT | W_BIT));
+  r = forbidden(rfp, vp, (R_BIT | W_BIT));
 
   unlock_vnode(vp);
   unlock_vmnt(vmp);

@@ -66,7 +66,7 @@ PUBLIC int do_link()
   if (vp->v_fs_e != dirp->v_fs_e)
 	r = EXDEV;
   else
-	r = forbidden(dirp, W_BIT | X_BIT);
+	r = forbidden(fp, dirp, W_BIT | X_BIT);
 
   if (r == OK)
 	r = req_link(vp->v_fs_e, dirp->v_inode_nr, fullpath,
@@ -117,7 +117,7 @@ PUBLIC int do_unlink()
   }
 
   /* The caller must have both search and execute permission */
-  if ((r = forbidden(dirp, X_BIT | W_BIT)) != OK) {
+  if ((r = forbidden(fp, dirp, X_BIT | W_BIT)) != OK) {
 	unlock_vnode(dirp);
 	unlock_vmnt(vmp);
 	put_vnode(dirp);
@@ -243,8 +243,8 @@ PUBLIC int do_rename()
   if (old_dirp->v_fs_e != new_dirp->v_fs_e) r = EXDEV;
 
   /* Parent dirs must be writable, searchable and on a writable device */
-  if ((r1 = forbidden(old_dirp, W_BIT|X_BIT)) != OK ||
-      (r1 = forbidden(new_dirp, W_BIT|X_BIT)) != OK) r = r1;
+  if ((r1 = forbidden(fp, old_dirp, W_BIT|X_BIT)) != OK ||
+      (r1 = forbidden(fp, new_dirp, W_BIT|X_BIT)) != OK) r = r1;
 
   if (r == OK) {
 	tll_upgrade(&oldvmp->m_lock); /* Upgrade to exclusive access */
@@ -289,7 +289,7 @@ PUBLIC int do_truncate()
   if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   /* Ask FS to truncate the file */
-  if ((r = forbidden(vp, W_BIT)) == OK)
+  if ((r = forbidden(fp, vp, W_BIT)) == OK)
 	r = truncate_vnode(vp, m_in.flength);
 
   unlock_vnode(vp);
@@ -366,7 +366,7 @@ PUBLIC int do_slink()
 
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
-  if ((r = forbidden(vp, W_BIT|X_BIT)) == OK) {
+  if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_slink(vp->v_fs_e, vp->v_inode_nr, fullpath, who_e,
 		      m_in.name1, m_in.name1_length - 1, fp->fp_effuid,
 		      fp->fp_effgid);
