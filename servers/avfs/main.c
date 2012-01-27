@@ -62,6 +62,7 @@ FORWARD _PROTOTYPE( int unblock, (struct fproc *rfp)			);
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
 PRIVATE mutex_t pm_lock;
+PRIVATE endpoint_t receive_from;
 
 /*===========================================================================*
  *				main					     *
@@ -485,6 +486,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   struct rprocpub rprocpub[NR_BOOT_PROCS];
 
   force_sync = 0;
+  receive_from = ANY;
 
   /* Initialize proc endpoints to NONE */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
@@ -579,6 +581,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *info)
   init_filps();			/* Init filp structures */
   mount_pfs();			/* mount Pipe File Server */
   worker_start(do_init_root);	/* mount initial ramdisk as file system root */
+  yield();			/* force do_init_root to start */
 
   return(OK);
 }
@@ -607,8 +610,10 @@ PRIVATE void *do_init_root(void *arg)
 	rfp->fp_wd = NULL;
   }
 
+  receive_from = MFS_PROC_NR;
   if ((r = mount_fs(DEV_IMGRD, "/", MFS_PROC_NR, 0, mount_label)) != OK)
 	panic("Failed to initialize root");
+  receive_from = ANY;
 
   unlock_pm();
   thread_cleanup(fp);
@@ -729,7 +734,7 @@ PRIVATE void get_work()
 
   for(;;) {
 	/* Normal case.  No one to revive. Get a useful request. */
-	if ((r = sef_receive(ANY, &m_in)) != OK) {
+	if ((r = sef_receive(receive_from, &m_in)) != OK) {
 		panic("VFS: sef_receive error: %d", r);
 	}
 
