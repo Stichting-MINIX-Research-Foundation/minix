@@ -4,7 +4,10 @@
 #include <minix/dmap.h>
 #include <minix/driver.h>
 #include <minix/endpoint.h>
+#include <minix/rs.h>
 #include <minix/vfsif.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include "buf.h"
 #include "inode.h"
 #include "uds.h"
@@ -119,6 +122,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the pipe file server. */
   int i;
+  struct passwd *pw;
 
   /* Initialize main loop parameters. */
   exitsignaled = 0;	/* No exit request seen yet. */
@@ -131,9 +135,13 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
   init_inode_cache();
   uds_init();
-
-  SELF_E = getprocnr();
   buf_pool();
+
+  if ((pw = getpwnam(SERVICE_LOGIN)) == NULL)
+	panic("unable to retrieve uid of SERVICE_LOGIN");
+  if (setuid(pw->pw_uid) != 0)
+	panic("unable to drop privileges");
+  SELF_E = getprocnr();
 
   return(OK);
 }

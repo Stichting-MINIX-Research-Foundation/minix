@@ -237,14 +237,6 @@ PUBLIC int do_getepinfo()
   register struct mproc *rmp;
   endpoint_t ep;
 
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0) {
-	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
   ep = m_in.PM_ENDPT;
 
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {

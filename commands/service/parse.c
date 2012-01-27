@@ -37,8 +37,6 @@ PRIVATE int class_recurs;       /* Nesting level of class statements */
 
 #include "parse.h"
 
-#define SERVICE_LOGIN   "service"       /* passwd file entry for services */
-
 FORWARD void do_service(config_t *cpe, config_t *config, struct rs_config *);
 
 PRIVATE void do_class(config_t *cpe, config_t *config, struct rs_config *rs_config)

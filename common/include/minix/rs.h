@@ -10,6 +10,8 @@ Interface to the reincarnation server
 #include <minix/bitmap.h>
 #include <minix/com.h>
 
+#define SERVICE_LOGIN	"service"	/* passwd file entry for services */
+
 /* RSS definitions. */
 #define RSS_NR_IRQ		16
 #define RSS_NR_IO		16
