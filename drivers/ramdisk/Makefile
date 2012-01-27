@@ -183,7 +183,7 @@ rs.single: ../../etc/rs.single
 	install ${STRIPFLAG} ../../etc/$@ $@
 
 proto.gen: $(PROGRAMS) $(SCRIPTS) proto.sh ${PROTO}
-	for p in $(PROGRAMS); do file $$p | grep -q ELF && strip -s $$p; done
+	for p in $(PROGRAMS); do file $$p | grep -q ELF && strip -s $$p || true; done
 	sh -e proto.sh ${PROTO} >proto.gen
 
 .include <minix.service.mk>
