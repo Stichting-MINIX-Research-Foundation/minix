@@ -43,6 +43,9 @@ from DL_ETH:
 #include <minix/ds.h>
 #include <minix/endpoint.h>
 #include <minix/chardriver.h>
+#include <minix/rs.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include "mq.h"
 #include "qp.h"
@@ -207,6 +210,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	int timerand, fd;
 	u8_t randbits[32];
 	struct timeval tv;
+	struct passwd *pw;
 
 #if DEBUG
 	printf("Starting inet...\n");
@@ -280,6 +284,12 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 	if(r != OK) {
 		ip_panic(("inet: can't subscribe to driver events"));
 	}
+
+	/* Drop root privileges */
+	if ((pw = getpwnam(SERVICE_LOGIN)) == NULL)
+		ip_panic(("inet: unable to retrieve uid of SERVICE_LOGIN"));
+	if (setuid(pw->pw_uid) != 0)
+		ip_panic(("inet: unable to drop privileges"));
 
 	/* Announce we are up. INET announces its presence to VFS just like
 	 * any other character driver.
