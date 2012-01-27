@@ -116,13 +116,13 @@ PUBLIC int common_open(register int oflags, mode_t omode)
   /* Only do the normal open code if we didn't just create the file. */
   if(exist) {
 	/* Check protections. */
-	if ((r = forbidden(vp, bits)) == OK) {
+	if ((r = forbidden(fp, vp, bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
 		switch (vp->v_mode & I_TYPE) {
 		   case I_REGULAR:
 		   	/* Truncate regular file if O_TRUNC. */
 		   	if (oflags & O_TRUNC) {
-		   		if ((r = forbidden(vp, W_BIT)) != OK)
+		   		if ((r = forbidden(fp, vp, W_BIT)) != OK)
 		   			break;
 		   		truncate_vnode(vp, 0);
 		   	}
@@ -266,7 +266,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 		put_vnode(dirp);	
 		return(NULL);
 	}
-	if ((r = forbidden(dirp, W_BIT|X_BIT)) != OK ||
+	if ((r = forbidden(fp, dirp, W_BIT|X_BIT)) != OK ||
 	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
 			    fp->fp_effgid, user_fullpath, &res)) != OK ) {
 		/* Can't create inode either due to permissions or some other
@@ -410,7 +410,7 @@ PUBLIC int do_mknod()
 	  return(ENOTDIR);
   }
 
-  if ((r = forbidden(vp, W_BIT|X_BIT)) == OK) {
+  if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, user_fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits, m_in.mk_z0);
   }
@@ -443,7 +443,7 @@ PUBLIC int do_mkdir()
 	  return(ENOTDIR);
   }
 
-  if ((r = forbidden(vp, W_BIT|X_BIT)) == OK) {
+  if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, user_fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits);
   }

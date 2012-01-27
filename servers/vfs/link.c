@@ -50,7 +50,7 @@ PUBLIC int do_link()
   if(vp->v_fs_e != vp_d->v_fs_e)
   	r = EXDEV;
   else 
-	r = forbidden(vp_d, W_BIT | X_BIT);
+	r = forbidden(fp, vp_d, W_BIT | X_BIT);
 
   if (r == OK)
 	r = req_link(vp->v_fs_e, vp_d->v_inode_nr, user_fullpath,
@@ -85,7 +85,7 @@ PUBLIC int do_unlink()
   }
 
   /* The caller must have both search and execute permission */
-  if ((r = forbidden(vldirp, X_BIT | W_BIT)) != OK) {
+  if ((r = forbidden(fp, vldirp, X_BIT | W_BIT)) != OK) {
 	put_vnode(vldirp);
 	return(r);
   }
@@ -169,8 +169,8 @@ PUBLIC int do_rename()
   if(old_dirp->v_fs_e != new_dirp->v_fs_e) r = EXDEV; 
 
   /* Parent dirs must be writable, searchable and on a writable device */
-  if ((r1 = forbidden(old_dirp, W_BIT|X_BIT)) != OK ||
-      (r1 = forbidden(new_dirp, W_BIT|X_BIT)) != OK) r = r1;
+  if ((r1 = forbidden(fp, old_dirp, W_BIT|X_BIT)) != OK ||
+      (r1 = forbidden(fp, new_dirp, W_BIT|X_BIT)) != OK) r = r1;
   
   if(r == OK)
 	  r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
@@ -201,7 +201,7 @@ PUBLIC int do_truncate()
   if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
   
   /* Ask FS to truncate the file */
-  if ((r = forbidden(vp, W_BIT)) == OK)
+  if ((r = forbidden(fp, vp, W_BIT)) == OK)
   	r = truncate_vnode(vp, m_in.flength);
   
   put_vnode(vp);
@@ -261,7 +261,7 @@ PUBLIC int do_slink()
   if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) return(err_code);
   if ((vp = last_dir(fp)) == NULL) return(err_code);
 
-  if ((r = forbidden(vp, W_BIT|X_BIT)) == OK) {
+  if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_slink(vp->v_fs_e, vp->v_inode_nr, user_fullpath, who_e,
 		      m_in.name1, m_in.name1_length - 1, fp->fp_effuid,
 		      fp->fp_effgid);

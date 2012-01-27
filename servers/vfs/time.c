@@ -37,7 +37,7 @@ PUBLIC int do_utime()
   /* Only the owner of a file or the super user can change its name. */  
   r = OK;
   if (vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) r = EPERM;
-  if (m_in.utime_length == 0 && r != OK) r = forbidden(vp, W_BIT);
+  if (m_in.utime_length == 0 && r != OK) r = forbidden(fp, vp, W_BIT);
   if (read_only(vp) != OK) r = EROFS; /* Not even su can touch if R/O */ 
   if (r == OK) {
 	/* Issue request */

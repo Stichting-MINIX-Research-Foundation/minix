@@ -436,8 +436,6 @@ void test_getsockname(void)
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, TEST_SUN_PATH, sizeof(addr.sun_path) - 1);
 
-	debug("Test bind() success");
-
 	SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
 	rc = bind(sd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un));
 	if (rc == -1) {
@@ -2473,6 +2471,94 @@ void test_fd_passing_parent(int sd)
 	}
 }
 
+void test_permissions(void) {
+	/* Test bind and connect for permission verification
+	 *
+	 * After creating a UDS socket we change user credentials. At that
+	 * point we should not be allowed to bind or connect to the UDS socket
+	 */
+
+	pid_t pid;
+	int sd, rc, status;
+	struct sockaddr_un addr, client_addr;
+	char buf[10];
+	socklen_t client_addr_size;
+
+	client_addr_size = sizeof(struct sockaddr_un);
+
+	memset(&addr, '\0', sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, TEST_SUN_PATH, sizeof(addr.sun_path) - 1);
+
+	UNLINK(TEST_SUN_PATH);
+
+	pid = fork();
+	if (pid < 0) test_fail("unable to fork");
+	else if (pid == 0) {
+		SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
+		if (setuid(999) != 0) test_fail("unable to chance uid");
+		rc = bind(sd, (struct sockaddr *) &addr,
+				 sizeof(struct sockaddr_un));
+		if (rc != -1) {
+			test_fail("bind() should not have worked");
+		}
+		exit(errct);
+	} else {
+		rc = waitpid(pid, &status, 0);
+		errct += WEXITSTATUS(status);
+	}
+
+	/* the signal handler is only used by the client, but we have to
+	 * install it now. if we don't the server may signal the client
+	 * before the handler is installed.
+	 */
+	debug("installing signal handler");
+	if (signal(SIGUSR1, test_xfer_sighdlr) == SIG_ERR) {
+		test_fail("signal(SIGUSR1, test_xfer_sighdlr) failed");
+	}
+
+	debug("signal handler installed");
+
+	server_ready = 0;
+
+	pid = fork();
+	if (pid < 0) test_fail("unable to fork");
+	else if (pid == 0) {
+		while (server_ready == 0) {
+			debug("[client] waiting for the server to signal");
+			sleep(1);
+		}
+		SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
+		if (setuid(999) != 0) test_fail("unable to chance uid");
+		rc = connect(sd, (struct sockaddr *) &addr,
+						sizeof(struct sockaddr_un));
+		if (rc != -1)
+			test_fail("connect should not have worked");
+		exit(errct);
+	} else {
+		int client_sd;
+		SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
+		rc = bind(sd, (struct sockaddr *) &addr,
+				 sizeof(struct sockaddr_un));
+		if (rc == -1) {
+			test_fail("bind() should have worked");
+		}
+
+		rc = listen(sd, 8);
+		if (rc == -1) {
+			test_fail("listen(sd, 8) should have worked");
+		}
+		kill(pid, SIGUSR1);
+		sleep(1);
+		CLOSE(sd);
+
+		rc = waitpid(pid, &status, 0);
+		errct += WEXITSTATUS(status);
+	}
+
+	UNLINK(TEST_SUN_PATH);
+}
+
 void test_fd_passing(void) {
 	int status;
 	int sv[2];
@@ -2536,11 +2622,13 @@ int main(int argc, char *argv[])
 	start(56);
 
 	test_socket();
+	test_bind();
 	test_listen();
 	test_getsockname();
 	test_header();
 	test_shutdown();
 	test_close();
+	test_permissions();
 	test_dup();
 	test_dup2();
 	test_socketpair();
@@ -2549,7 +2637,6 @@ int main(int argc, char *argv[])
 	test_write();
 	test_sockopts();
 	test_ucred();
-	test_bind();
 	test_xfer();
 
 	for (i = 0; i < 3; i++) {
@@ -2564,7 +2651,6 @@ int main(int argc, char *argv[])
 	test_multiproc_write();
 	test_scm_credentials();
 	test_fd_passing();
-
 	quit();
 
 	return -1;	/* we should never get here */

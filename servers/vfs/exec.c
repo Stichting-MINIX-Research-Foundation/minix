@@ -126,7 +126,7 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
 
 	if ((vp->v_mode & I_TYPE) != I_REGULAR) 
 		r = ENOEXEC;
-	else if ((r1 = forbidden(vp, X_BIT)) != OK)
+	else if ((r1 = forbidden(fp, vp, X_BIT)) != OK)
 		r = r1;
 	else
 		r = req_stat(vp->v_fs_e, vp->v_inode_nr, VFS_PROC_NR,

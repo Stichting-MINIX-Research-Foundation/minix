@@ -166,7 +166,8 @@ _PROTOTYPE( int do_access, (void)					);
 _PROTOTYPE( int do_chmod, (void)					);
 _PROTOTYPE( int do_chown, (void)					);
 _PROTOTYPE( int do_umask, (void)					);
-_PROTOTYPE( int forbidden, (struct vnode *vp, mode_t access_desired)	);
+_PROTOTYPE( int forbidden, (struct fproc *rfp, struct vnode *vp,
+			    mode_t access_desired)			);
 _PROTOTYPE( int read_only, (struct vnode *vp)				);
 
 /* read.c */

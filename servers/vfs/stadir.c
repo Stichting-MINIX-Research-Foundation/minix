@@ -99,7 +99,7 @@ struct vnode *vp;		/* this is what the inode has to become */
   if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
   	r = ENOTDIR;
   else
-	r = forbidden(vp, X_BIT);	/* Check if dir is searchable*/
+	r = forbidden(fp, vp, X_BIT);	/* Check if dir is searchable*/
 
   /* If error, return vnode */
   if (r != OK) {

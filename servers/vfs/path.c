@@ -524,7 +524,7 @@ int pathlen;
   }
 
   /* check permissions */
-  r = forbidden(vp, (R_BIT | W_BIT));
+  r = forbidden(rfp, vp, (R_BIT | W_BIT));
 
   put_vnode(vp);
   return(r);
