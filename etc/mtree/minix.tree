@@ -8,6 +8,7 @@
 755 root    operator /etc/system.conf.d
 755 root    operator /boot
 755 root    operator /boot/image
+755 root    operator /boot/minix
 555 root    operator /mnt
 555 root    operator /proc
 700 root    operator /root

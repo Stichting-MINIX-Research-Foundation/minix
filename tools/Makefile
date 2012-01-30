@@ -17,6 +17,7 @@ VFS= vfs
 PFS= pfs
 .endif
 KERNEL= kernel
+# PROGRAMS are in the order they should be loaded by boot
 PROGRAMS= \
 	../servers/ds/ds \
 	../servers/rs/rs \
@@ -70,8 +71,7 @@ PAD_KERNEL_TEXT := padtext ../kernel/kernel kernel
 image: includes services
 	${PAD_KERNEL_TEXT}
 	mkimage $(PROGRAMS)
-	cp ${KERNEL} ${PROGRAMS} /boot
-	strip -s ${KERNEL:T:S/^/\/boot\//} ${PROGRAMS:T:S/^/\/boot\//}
+	strip -s ${KERNEL} ${PROGRAMS}
 .else
 image:  includes services
 	${PAD_KERNEL_TEXT}
@@ -113,9 +113,20 @@ bootable:
 
 .if ${OBJECT_FMT} == "ELF"
 hdboot: image
+	rm -rf /boot/minix/.temp/
+	mkdir -p /boot/minix/.temp
+# mod_0 is used to make alphabetical order equal to the boot order
+	for i in ${PROGRAMS};					\
+	do							\
+	let n=n+1 >/dev/null;					\
+	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
+	cp $$i /boot/minix/.temp/$${prefix}$${n}_`basename $$i`;\
+	done
+	cp kernel /boot/minix/.temp/
+	exec sh mkboot $@ minix
 .else
 hdboot:	image
-	exec sh mkboot $@
+	exec sh mkboot $@ image
 	@sync
 .endif
 
