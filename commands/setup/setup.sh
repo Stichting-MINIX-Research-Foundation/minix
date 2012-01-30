@@ -48,7 +48,7 @@ then
 	exit 1
 fi
 
-PATH=/bin:/sbin:/usr/bin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
 
@@ -441,6 +441,24 @@ else
 	blocksize=$blockdefault
 fi
 
+usenewboot=1
+bootsectors=32
+if [ ! "$auto" = "r" ]
+then
+	echo ""
+echo " --- Step 7: Select a boot scheme --------------------------------------"
+	echo ""
+
+	echo -n "Do you want to use new boot? [Y] "
+	read ok
+	if [ "$ok" != Y -a "$ok" != y -a "$ok" != "" ]
+	then
+		usenewboot=0
+		bootsectors=1
+	fi
+fi
+
+
 blocksizebytes="`expr $blocksize '*' 1024`"
 
 echo "
@@ -452,9 +470,14 @@ The following subpartitions are now being created on /dev/$primary:
     /usr subpartition:	/dev/$usr	rest of $primary
 "
 					# Secondary master bootstrap.
-installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
+# New boot doesn't require mbr on pN (bootxx will be there)
+# When necessarily mbr is installed on dN by partition.
+if [ "$usenewboot" = 0 ]
+then
+	installboot_minix -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
+fi
 					# Partition the primary.
-partition /dev/$primary 1 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
+partition /dev/$primary $bootsectors 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
 
 echo "Creating /dev/$root for / .."
 mkfs.mfs /dev/$root || exit
@@ -514,13 +537,30 @@ $fshome"
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
+# Make bootable.
+if [ "$usenewboot" = 1 ]
+then
+	# XXX we have to use "-f" here, because installboot worries about BPB, which
+	# we don't have...
+	installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
+	cat >/mnt/boot.cfg <<END_BOOT_CFG
+menu=Start MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel rootdevname=$root
+menu=Start Custom MINIX 3:load_mods /boot/minix_latest/mod*;multiboot /boot/minix_latest/kernel rootdevname=$root
+menu=Drop to boot prompt:prompt
+clear=1
+timeout=5
+default=2
+END_BOOT_CFG
 umount /dev/$root >/dev/null || exit 	# Unmount the new root.
+
+else
+	umount /dev/$root >/dev/null || exit 	# Unmount the new root.
+	installboot_minix -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
+	edparams /dev/$root "rootdev=$root; ramimagedev=$root; minix(1,Start MINIX 3) { image=/boot/image_big; boot; }; newminix(2,Start Custom MINIX 3) { unset image; boot }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
+fi
+
 mount /dev/$usr /mnt >/dev/null || exit
 
-# Make bootable.
-installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; minix(1,Start MINIX 3) { image=/boot/image_big; boot; }; newminix(2,Start Custom MINIX 3) { unset image; boot }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
 pfile="/mnt/src/tools/fdbootparams"
 echo "rootdev=$root; ramimagedev=$root; save" >$pfile
 # Save name of CD drive
