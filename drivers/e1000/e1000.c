@@ -47,7 +47,7 @@ _PROTOTYPE( PRIVATE void e1000_readv_s, (message *mp, int from_int)	);
 _PROTOTYPE( PRIVATE void e1000_getstat_s, (message *mp)			);
 _PROTOTYPE( PRIVATE void e1000_interrupt, (message *mp)			);
 _PROTOTYPE( PRIVATE int  e1000_link_changed, (e1000_t *e)		);
-_PROTOTYPE( PRIVATE void e1000_stop, (void)                             );
+_PROTOTYPE( PRIVATE void e1000_stop, (e1000_t *e)                       );
 _PROTOTYPE( PRIVATE uint32_t e1000_reg_read, (e1000_t *e, uint32_t reg) );
 _PROTOTYPE( PRIVATE void e1000_reg_write, (e1000_t *e, uint32_t reg,
 					  uint32_t value)               );					  
@@ -169,12 +169,15 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
  *===========================================================================*/
 PRIVATE void sef_cb_signal_handler(int signo)
 {
-    E1000_DEBUG(3, ("e1000: got signal\n"));
+    e1000_t *e;
+    e = &e1000_state;
+
+    E1000_DEBUG(3, ("%s: got signal\n", e->name));
 
     /* Only check for termination signal, ignore anything else. */
     if (signo != SIGTERM) return;
 
-    e1000_stop();
+    e1000_stop(e);
 }
 
 /*===========================================================================*
@@ -862,9 +865,13 @@ e1000_t *e;
 /*===========================================================================*
  *				e1000_stop				     *
  *===========================================================================*/
-PRIVATE void e1000_stop()
+PRIVATE void e1000_stop(e)
+e1000_t *e;
 {
-    E1000_DEBUG(3, ("e1000: stop()\n"));
+    E1000_DEBUG(3, ("%s: stop()\n", e->name));
+
+    e1000_reset_hw(e);
+
     exit(EXIT_SUCCESS);
 }
 
