@@ -137,10 +137,15 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   uds_init();
   buf_pool();
 
-  if ((pw = getpwnam(SERVICE_LOGIN)) == NULL)
-	panic("unable to retrieve uid of SERVICE_LOGIN");
-  if (setuid(pw->pw_uid) != 0)
+
+  /* Drop root privileges */
+  if ((pw = getpwnam(SERVICE_LOGIN)) == NULL) {
+	printf("PFS: unable to retrieve uid of SERVICE_LOGIN, "
+		"still running as root");
+  } else if (setuid(pw->pw_uid) != 0) {
 	panic("unable to drop privileges");
+  }
+
   SELF_E = getprocnr();
 
   return(OK);
