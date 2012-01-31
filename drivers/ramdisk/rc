@@ -28,9 +28,14 @@ fi
 /bin/service -c edit /sbin/mfs -label fs_imgrd
 /bin/service up /sbin/procfs || echo "WARNING: couldn't start procfs"
 
-rootdev=`sysenv rootdev` || echo 'No rootdev?'
-rootdevname=`/bin/dev2name "$rootdev"` ||
-	{ echo 'No device name for root device'; exit 1; }
+if /bin/sysenv rootdevname >/dev/null
+then
+	rootdevname=/dev/`/bin/sysenv rootdevname`
+else
+	rootdev=`/bin/sysenv rootdev` || echo 'No rootdev?'
+	rootdevname=`/bin/dev2name "$rootdev"` ||
+		{ echo 'No device name for root device'; exit 1; }
+fi
 
 if [ "`sysenv bin_img`" = 1 ]
 then
@@ -49,12 +54,18 @@ then
 	loadramdisk "$cddev"p1
 elif [ "$rootdevname" = "/dev/ram" ]
 then
-	ramimagedev=`sysenv ramimagedev` ||
-		{ echo 'ramimagedev not found'; exit 1; }
-	ramimagename=`/bin/dev2name "$ramimagedev"` ||
-		{ echo 'No device name for ramimagedev'; exit 1; }
+	if /bin/sysenv rootdevname >/dev/null
+	then
+		ramimagename=/dev/`/bin/sysenv ramimagename`
+	else
+		ramimagedev=`/bin/sysenv ramimagedev` ||
+			{ echo 'ramimagedev not found'; exit 1; }
+		ramimagename=`/bin/dev2name "$ramimagedev"` ||
+			{ echo 'No device name for ramimagedev'; exit 1; }
+	fi
+
 	echo "Loading ramdisk from $ramimagename"
-	loadramdisk "$ramimagename"
+	loadramdisk "$ramimagename" || echo "WARNING: loadramdisk failed"
 fi
 echo "Root device name is $rootdevname"
 if [ -e $FSCK ]
