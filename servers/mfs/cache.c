@@ -381,6 +381,11 @@ PUBLIC void invalidate(
  *===========================================================================*/
 int block_write_ok(struct buf *bp)
 {
+	/* XXX this check is temporarily disabled as it's incompatible with
+	 * updating the sector list in the bootcode. This will change when
+	 * we switch to the netbsd-based bootloader.
+	 */
+#if 0
 	if(superblock.s_dev != bp->b_dev) return 1;
 
 	if(bp->b_blocknr >= super_start && bp->b_blocknr <= super_end) {
@@ -393,6 +398,7 @@ int block_write_ok(struct buf *bp)
 		printf("This shouldn't happen.\n");
 		return 0;
 	}
+#endif
 
 	return 1;
 }
