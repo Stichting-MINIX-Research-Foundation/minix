@@ -15,10 +15,14 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBMINIXUTIL}
 LDADD+=	-lchardriver -lsys -lminixutil
 
+.if ${COMPILER_TYPE} == "gnu"
+LDADD+= -lc
+.endif
+
 MAN=
 
 BINDIR?= /usr/sbin
 
-CPPFLAGS+=  -I${.CURDIR} -D_MINIX
+CPPFLAGS+=  -I${.CURDIR} -D_MINIX -Wall -Werror
 
 .include <minix.service.mk>

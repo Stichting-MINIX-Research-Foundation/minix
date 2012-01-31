@@ -118,7 +118,7 @@ PUBLIC void sr_rec(m)
 mq_t *m;
 {
 	int result;
-	int send_reply, free_mess;
+	int send_reply = 0, free_mess = 0;
 
 	if (repl_queue)
 	{

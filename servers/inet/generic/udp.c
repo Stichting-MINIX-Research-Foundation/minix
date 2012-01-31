@@ -874,11 +874,12 @@ udp_fd_t *udp_fd;
 	result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd,
 		(size_t)0, pack, FALSE);
 
-	if (result >= 0)
+	if (result >= 0) {
 		if (size > transf_size)
 			result= EPACKSIZE;
 		else
 			result= transf_size;
+	}
 
 	udp_fd->uf_flags &= ~UFF_READ_IP;
 	result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd, result,

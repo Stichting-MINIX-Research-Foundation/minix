@@ -227,9 +227,8 @@ int bf_linkcheck ARGS(( acc_t *acc ));
  * the underlying buffer.
  */
 
-#define ptr2acc_data(/* acc_t * */ a) (bf_temporary_acc=(a), \
-	(&bf_temporary_acc->acc_buffer->buf_data_p[bf_temporary_acc-> \
-		acc_offset]))
+#define ptr2acc_data(/* acc_t * */ a) (&((acc_t *)(a))->acc_buffer-> \
+				buf_data_p[((acc_t *)(a))->acc_offset])
 
 #define bf_chkbuf(buf) ((buf)? (compare((buf)->acc_linkC,>,0), \
 	compare((buf)->acc_buffer, !=, 0), \

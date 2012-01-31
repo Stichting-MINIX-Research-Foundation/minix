@@ -213,7 +213,7 @@ SYN-SENT:
 		if (tcp_hdr_flags & THF_ACK)
 		{
 			if (tcp_LEmod4G(seg_ack, tcp_conn->tc_ISS) ||
-				tcp_Gmod4G(seg_ack, tcp_conn->tc_SND_NXT))
+				tcp_Gmod4G(seg_ack, tcp_conn->tc_SND_NXT)) {
 				if (tcp_hdr_flags & THF_RST)
 					break;
 				else
@@ -227,6 +227,7 @@ SYN-SENT:
 					tcp_conn_write(tcp_conn, 1);
 					break;
 				}
+			}
 			acceptable_ACK= (tcp_LEmod4G(tcp_conn->tc_SND_UNA,
 				seg_ack) && tcp_LEmod4G(seg_ack,
 				tcp_conn->tc_SND_NXT));

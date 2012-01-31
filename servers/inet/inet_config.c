@@ -247,7 +247,7 @@ static unsigned number(char *str, unsigned max)
 
 void read_conf(void)
 {
-	int i, j, ifno, type, port, enable;
+	int i, j, ifno = -1, type = -1, port = -1, enable;
 	struct eth_conf *ecp;
 	struct psip_conf *pcp;
 	struct ip_conf *icp;
@@ -304,8 +304,7 @@ void read_conf(void)
 			}
 			ecp++;
 			eth_conf_nr++;
-		} else
-		if (strncmp(word, "psip", 4) == 0) {
+		} else if (strncmp(word, "psip", 4) == 0) {
 			pcp->pc_ifno= ifno= number(word+4, IP_PORT_MAX-1);
 			type= NETTYPE_PSIP;
 			port= psip_conf_nr;
@@ -315,6 +314,12 @@ void read_conf(void)
 			printf("inet: Unknown device '%s'\n", word);
 			error();
 		}
+
+		if (type == -1 || ifno == -1 || port == -1) {
+			printf("inet: faulty configuration\n");
+			exit(1);
+		}
+
 		iftype[ifno]= type;
 		icp->ic_ifno= ifno;
 		icp->ic_devtype= type;
