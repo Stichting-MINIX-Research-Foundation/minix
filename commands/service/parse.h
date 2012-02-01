@@ -1,5 +1,6 @@
 #define KW_SERVICE	"service"
 #define KW_UID		"uid"
+#define KW_SELF		"SELF"
 #define KW_SIGMGR	"sigmgr"
 #define KW_SCHEDULER	"scheduler"
 #define KW_PRIORITY	"priority"

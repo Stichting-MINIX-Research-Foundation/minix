@@ -42,10 +42,12 @@ where \fI<program_name>\fR is the name of the program used to start the
 given system service. In each service entry, the following options can
 be used:
 .PP
-\fBuid\fR \fI<uid|user name>\fR\fB;\fR
+\fBuid\fR \fI<uid|SELF|user name>\fR\fB;\fR
 .PP
 .RS
 specifies the user id or the user name to use to run the system service.
+\fISELF\fR can be used when the service has to start with the realuid of
+the user who's executing the \fBservice\fR utility.
 Many system services run with root privileges (uid \fB0\fR).
 The default user is service (uid \fB12\fR).
 .RE

@@ -138,11 +138,17 @@ PRIVATE void do_uid(config_t *cpe, struct rs_start *rs_start)
 		uid= pw->pw_uid;
 	else
 	{
-		uid= strtol(cpe->word, &check, 0);
-		if (check[0] != '\0')
+		if (!strncmp(cpe->word, KW_SELF, strlen(KW_SELF)+1))
 		{
-			fatal("do_uid: bad uid/login '%s' at %s:%d",
-				cpe->word, cpe->file, cpe->line);
+			uid= getuid();	/* Real uid */
+		}
+		else {
+			uid= strtol(cpe->word, &check, 0);
+			if (check[0] != '\0')
+			{
+				fatal("do_uid: bad uid/login '%s' at %s:%d",
+					cpe->word, cpe->file, cpe->line);
+			}
 		}
 	}
 
