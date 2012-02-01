@@ -169,7 +169,11 @@ PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
   if ((vmp = find_vmnt(proc_e)) != NULL) {
 	fs_cancel(vmp);
 	invalidate_filp_by_endpt(proc_e);
-	put_vnode(vmp->m_mounted_on);
+	if (vmp->m_mounted_on) {
+		/* Only put mount point when it was actually used as mount
+		 * point. That is, the mount was succesful. */
+		put_vnode(vmp->m_mounted_on);
+	}
 	clear_vmnt(vmp);
   }
 }
