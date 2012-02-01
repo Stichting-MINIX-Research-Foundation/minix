@@ -14,6 +14,7 @@
 /* The following are so basic, all the *.c files get them automatically. */
 #include <minix/config.h>	/* MUST be first */
 #include <minix/ansi.h>		/* MUST be second */
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>

@@ -32,7 +32,7 @@ PUBLIC int fs_readwrite(void)
   int r = OK, rw_flag;
   cp_grant_id_t gid;
   off_t pos;
-  size_t nrbytes, bytes_left, bytes_done;
+  size_t nrbytes, bytes_left, bytes_done = 0;
   struct puffs_node *pn;
   struct vattr va;
   PUFFS_MAKECRED(pcr, &global_kcred);
@@ -51,7 +51,7 @@ PUBLIC int fs_readwrite(void)
   if (nrbytes > RW_BUFSIZ)
 	nrbytes = bytes_left = RW_BUFSIZ;
 
-  memset(getdents_buf, '\0', RW_BUFSIZ);  /* Avoid leaking any data */
+  memset(getdents_buf, '\0', GETDENTS_BUFSIZ);  /* Avoid leaking any data */
 
   if (rw_flag == READING) {
 	if (global_pu->pu_ops.puffs_node_read == NULL)

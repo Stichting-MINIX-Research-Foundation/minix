@@ -24,7 +24,7 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *                              mfs_nul                                      *
  *===========================================================================*/
-PUBLIC void mfs_nul_f(char *file, int line, char *str, unsigned int len,
+PUBLIC void mfs_nul_f(const char *file, int line, char *str, unsigned int len,
                       unsigned int maxlen)
 {
   if (len < maxlen && str[len-1] != '\0') {
@@ -103,7 +103,7 @@ PUBLIC int update_times(struct puffs_node *pn, int flags, time_t t)
 /*===========================================================================*
  *				lpuffs_debug				     *
  *===========================================================================*/
-PUBLIC void lpuffs_debug(char *format, ...)
+PUBLIC void lpuffs_debug(const char *format, ...)
 {   
   char buffer[256];
   va_list args;

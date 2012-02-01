@@ -54,6 +54,7 @@ puffs_path_pcnbuild(struct puffs_usermount *pu, struct puffs_cn *pcn,
 
 	assert(pn_parent->pn_po.po_path != NULL);
 	assert(pu->pu_flags & PUFFS_FLAG_BUILDPATH);
+	pcn_orig = *pcn;
 
 	if (pu->pu_pathtransform) {
 		rv = pu->pu_pathtransform(pu, &pn_parent->pn_po, pcn, &po);
@@ -65,8 +66,6 @@ puffs_path_pcnbuild(struct puffs_usermount *pu, struct puffs_cn *pcn,
 	}
 
 	if (pu->pu_namemod) {
-		/* XXX: gcc complains if I do assignment */
-		memcpy(&pcn_orig, pcn, sizeof(pcn_orig));
 		rv = pu->pu_namemod(pu, &pn_parent->pn_po, pcn);
 		if (rv)
 			return rv;

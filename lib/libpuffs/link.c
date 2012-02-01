@@ -79,7 +79,7 @@ PUBLIC int fs_link()
   time_t cur_time;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
-  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *)pcr, {0}};
+  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
 
   if (global_pu->pu_ops.puffs_node_link == NULL)
   	return(OK);
@@ -157,7 +157,7 @@ PUBLIC int fs_rdlink()
   register int r;              /* return value */
   size_t copylen;
   struct puffs_node *pn;
-  char user_path[PATH_MAX];
+  char path[PATH_MAX];
   PUFFS_MAKECRED(pcr, &global_kcred);
 
   copylen = fs_m_in.REQ_MEM_SIZE < UMAX_FILE_POS ?
@@ -174,7 +174,7 @@ PUBLIC int fs_rdlink()
   if (global_pu->pu_ops.puffs_node_readlink == NULL)
 	return(EINVAL);
 
-  r = global_pu->pu_ops.puffs_node_readlink(global_pu, pn, pcr, user_path,
+  r = global_pu->pu_ops.puffs_node_readlink(global_pu, pn, pcr, path,
 						&copylen);
   if (r != OK) {
 	if (r > 0) r = -r;
@@ -182,16 +182,13 @@ PUBLIC int fs_rdlink()
   }
 
   r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
-		  (vir_bytes) 0, (vir_bytes) user_path, (size_t) copylen, D);
+		  (vir_bytes) 0, (vir_bytes) path, (size_t) copylen, D);
   if (r == OK)
 	  fs_m_out.RES_NBYTES = copylen;
 
   return(r);
 }
 
-
-FORWARD _PROTOTYPE( void release_node, (struct puffs_usermount *pu,
-                        struct puffs_node *pn ));
 
 /*===========================================================================*
  *                              fs_rename                                    *
@@ -203,10 +200,10 @@ PUBLIC int fs_rename()
   struct puffs_node *new_dirp, *new_ip;      /* ptrs to new dir, file pnodes */
   struct puffs_kcn pkcnp_src;
   PUFFS_MAKECRED(pcr_src, &global_kcred);
-  struct puffs_cn pcn_src = {&pkcnp_src, (struct puffs_cred *) pcr_src, {0}};
+  struct puffs_cn pcn_src = {&pkcnp_src, (struct puffs_cred *) __UNCONST(pcr_src), {0,0,0}};
   struct puffs_kcn pkcnp_dest;
   PUFFS_MAKECRED(pcr_dest, &global_kcred);
-  struct puffs_cn pcn_targ = {&pkcnp_dest, (struct puffs_cred *) pcr_dest, {0}};
+  struct puffs_cn pcn_targ = {&pkcnp_dest, (struct puffs_cred *) __UNCONST(pcr_dest), {0,0,0}};
   int r = OK;                           /* error flag; initially no error */
   int odir, ndir;                       /* TRUE iff {old|new} file is dir */
   int same_pdir;                        /* TRUE iff parent dirs are the same */
@@ -406,7 +403,7 @@ PUBLIC int fs_unlink()
   struct puffs_node *pn, *pn_dir;
   time_t cur_time;
   struct puffs_kcn pkcnp;
-  struct puffs_cn pcn = {&pkcnp, 0, {0}};
+  struct puffs_cn pcn = {&pkcnp, 0, {0,0,0}};
   PUFFS_KCREDTOCRED(pcn.pcn_cred, &global_kcred);
   int len;
 

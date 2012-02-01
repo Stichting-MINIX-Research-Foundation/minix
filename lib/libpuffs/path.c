@@ -372,7 +372,7 @@ int chk_perm;			/* check permissions when string is looked up*/
 
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
-  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) pcr, {0}};
+  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
 
   enum vtype node_vtype;
   voff_t size;

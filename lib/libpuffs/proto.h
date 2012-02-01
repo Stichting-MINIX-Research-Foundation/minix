@@ -1,12 +1,17 @@
 #ifndef PUFFS_PROTO_H
 #define PUFFS_PROTO_H
 
+struct puffs_usermount;
+struct puffs_node;
+
 /* Function prototypes. */
 
 _PROTOTYPE( int fs_new_driver, (void)					);
 
 /* inode.c */
 _PROTOTYPE( int fs_putnode, (void)					);
+_PROTOTYPE( void release_node, (struct puffs_usermount *pu,
+	                        struct puffs_node *pn )			);
 
 /* device.c */
 _PROTOTYPE( int dev_open, (endpoint_t driver_e, dev_t dev,
@@ -62,10 +67,10 @@ _PROTOTYPE( int fs_utime, (void)					);
 
 /* utility.c */
 _PROTOTYPE( int no_sys, (void)                                          );
-_PROTOTYPE( void mfs_nul_f, (char *file, int line, char *str,
+_PROTOTYPE( void mfs_nul_f, (const char *file, int line, char *str,
                              unsigned int len, unsigned int maxlen)     );
 _PROTOTYPE( time_t clock_time, (void)					);
 _PROTOTYPE( int update_times, (struct puffs_node *pn, int fl, time_t t) );
-_PROTOTYPE( void lpuffs_debug, (char *format, ...)			);
+_PROTOTYPE( void lpuffs_debug, (const char *format, ...)			);
 
 #endif /* PUFFS_PROTO_H */

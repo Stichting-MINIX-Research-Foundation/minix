@@ -25,7 +25,7 @@ PUBLIC int fs_create()
   struct puffs_newinfo pni;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
-  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) pcr, {0}};
+  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
   struct vattr va;
   time_t cur_time;
   int len;
@@ -122,7 +122,7 @@ PUBLIC int fs_mknod()
   struct puffs_newinfo pni;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
-  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) pcr, {0}};
+  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
   struct vattr va;
   time_t cur_time;
   int len;
@@ -205,7 +205,7 @@ PUBLIC int fs_mkdir()
   struct puffs_newinfo pni;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
-  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) pcr, {0}};
+  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
   struct vattr va;
   time_t cur_time;
   int len;
@@ -289,7 +289,7 @@ PUBLIC int fs_slink()
   struct puffs_newinfo pni;
   struct puffs_kcn pkcnp;
   PUFFS_MAKECRED(pcr, &global_kcred);
-  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) pcr, {0}};
+  struct puffs_cn pcn = {&pkcnp, (struct puffs_cred *) __UNCONST(pcr), {0,0,0}};
   struct vattr va;
   int len;
 

@@ -66,7 +66,9 @@ processvattr(const char *path, const struct vattr *va, int regular)
 		if (chown(path, va->va_uid, va->va_gid) == -1)
 			return errno;
 
+#ifndef __minix
 	if (va->va_mode != (unsigned)PUFFS_VNOVAL)
+#endif
                 /* FIXME: lchmod */
 		if (chmod(path, va->va_mode) == -1)
 			return errno;
