@@ -1322,11 +1322,6 @@ int error;
 	tcp_conn->tc_state= TCS_CLOSED;
 	DBLOCK(0x10, tcp_print_state(tcp_conn); printf("\n"));
 
-	if (tcp_fd) {
-		assert(!tcp_conn->tc_connInprogress ||
-					(tcp_fd->tf_flags & TFF_LISTENQ));
-	}
-
 	if (tcp_fd && (tcp_fd->tf_flags & TFF_LISTENQ))
 	{
 		for (i= 0; i<TFL_LISTEN_MAX; i++)
@@ -1372,6 +1367,7 @@ int error;
 
 		if (tcp_conn->tc_connInprogress)
 			tcp_restart_connect(tcp_conn);
+		assert(!tcp_conn->tc_connInprogress);
 		assert (!(tcp_fd->tf_flags & TFF_IOCTL_IP) ||
 			(printf("req= 0x%lx\n",
 			(unsigned long)tcp_fd->tf_ioreq), 0));
