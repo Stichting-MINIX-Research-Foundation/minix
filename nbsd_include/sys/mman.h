@@ -72,6 +72,7 @@ void *	minix_mmap(void *, size_t, int, int, int, off_t);
 int	minix_munmap(void *, size_t);
 int 		minix_munmap_text(void *, size_t);
 void *		vm_remap(int d, int s, void *da, void *sa, size_t si);
+void *		vm_remap_ro(int d, int s, void *da, void *sa, size_t si);
 int 		vm_unmap(int endpt, void *addr);
 unsigned long 	vm_getphys(int endpt, void *addr);
 u8_t 		vm_getrefcount(int endpt, void *addr);
