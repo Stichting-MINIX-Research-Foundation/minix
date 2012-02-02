@@ -2480,8 +2480,7 @@ void test_permissions(void) {
 
 	pid_t pid;
 	int sd, rc, status;
-	struct sockaddr_un addr, client_addr;
-	char buf[10];
+	struct sockaddr_un addr;
 	socklen_t client_addr_size;
 
 	client_addr_size = sizeof(struct sockaddr_un);
@@ -2536,7 +2535,6 @@ void test_permissions(void) {
 			test_fail("connect should not have worked");
 		exit(errct);
 	} else {
-		int client_sd;
 		SOCKET(sd, PF_UNIX, SOCK_STREAM, 0);
 		rc = bind(sd, (struct sockaddr *) &addr,
 				 sizeof(struct sockaddr_un));
