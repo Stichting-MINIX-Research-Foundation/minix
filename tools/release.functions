@@ -12,7 +12,7 @@ make_hdimage()
 	# installboot -m needs at least 1KB 
 	dd < /dev/zero >tmpimage count=2
 	partition -fm tmpimage 2 81:$rootsects* 0:0 81:$usrsects
-	installboot_minix -m tmpimage /usr/mdec/masterboot
+	installboot_nbsd -m tmpimage /usr/mdec/mbr
 	dd < tmpimage > subpart count=1
 
 	primsects=`expr 1 + $rootsects + $usrsects`
@@ -26,7 +26,7 @@ make_hdimage()
 		dd < /dev/zero count=$padsects
 	} > hdimage
 	partition -m hdimage 81:`expr $primsects + $padsects`*
-	installboot_minix -m hdimage /usr/mdec/masterboot
+	installboot_nbsd -m hdimage /usr/mdec/mbr
 }
 
 retrieve()
@@ -46,46 +46,72 @@ retrieve()
 
 cd_root_changes()
 {
-	edparams $TMPDISKROOT 'unset bootopts;
-unset servers;
-unset rootdev;
-unset leader;
-unset image;
-disable=inet;
-bootcd=1;
-cdproberoot=1;
-ata_id_timeout=2;
-bootbig(1, Regular MINIX 3) { unset image; boot }
-leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
-save' 
+cat >$CDFILES/boot.cfg <<END_BOOT_CFG
+menu=Regular MINIX 3:multiboot /kernel bootcd=1 cdproberoot=1 rootdevname=ram disable=inet
+menu=Drop to boot prompt:prompt
+clear=1
+timeout=10
+default=1
+load=/mod01_ds
+load=/mod02_rs
+load=/mod03_pm
+load=/mod04_sched
+load=/mod05_vfs
+load=/mod06_memory
+load=/mod07_log
+load=/mod08_tty
+load=/mod09_mfs
+load=/mod10_vm
+load=/mod11_pfs
+load=/mod12_init
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+# This space intentionally left blank - leave to appease bootloader!
+END_BOOT_CFG
 }
+
 
 hdemu_root_changes()
 {
-	$RELEASEDIR/usr/bin/installboot_minix -d $TMPDISKROOT \
-		$RELEASEDIR/usr/mdec/bootblock boot/boot
-	echo \
-'bootcd=2
-disable=inet
-bios_wini=yes
-bios_remap_first=1
-ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
-main() { trap 10000 boot ; menu; }
-save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
+	$RELEASEDIR/usr/sbin/installboot_nbsd $TMPDISKROOT \
+		$RELEASEDIR/usr/mdec/bootxx_minixfs3
+
+cat >$RELEASEMNTDIR/boot.cfg <<END_BOOT_CFG
+menu=Regular MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel bootcd=2 disable=inet bios_wini=yes bios_remap_first=1 ramimagedev=c0d7p0s0
+menu=Drop to boot prompt:prompt
+clear=1
+timeout=10
+default=1
+END_BOOT_CFG
 }
 
 usb_root_changes()
 {
-	$RELEASEDIR/usr/bin/installboot_minix -d $TMPDISKROOT \
-		$RELEASEDIR/usr/mdec/bootblock boot/boot
+	$RELEASEDIR/usr/sbin/installboot_nbsd $TMPDISKROOT \
+		$RELEASEDIR/usr/mdec/bootxx_minixfs3
 	echo \
-'bios_wini=yes
-bios_remap_first=1
-rootdev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
-leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; main(){trap 10000 boot; menu; };
-save'	| $RELEASEDIR/usr/bin/edparams $TMPDISKROOT
+cat >$RELEASEMNTDIR/boot.cfg <<END_BOOT_CFG
+menu=Regular MINIX 3:load_mods /boot/minix_default/mod*;multiboot /boot/minix_default/kernel bios_wini=yes bios_remap_first=1 rootdevname=c0d7p0s0
+menu=Drop to boot prompt:prompt
+clear=1
+timeout=10
+default=1
+END_BOOT_CFG
 }
 
 copy_local_packages()

@@ -53,7 +53,7 @@ RELEASEDIR=/usr/r-staging
 RELEASEMNTDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 
-IMAGE=../boot/cdbootblock/cdbootblock
+IMAGE=/usr/mdec/bootxx_cd9660
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
@@ -272,8 +272,6 @@ fi
 
 echo " * Chroot build"
 chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
-# Copy built images for cd booting
-cp $RELEASEDIR/boot/image_big image
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN
@@ -355,9 +353,6 @@ expr `df $TMPDISKUSR | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEMNTDIR/
 
 echo " * Unmounting $TMPDISKUSR from $RELEASEMNTDIR/usr"
 umount $TMPDISKUSR || exit
-echo " * Unmounting $TMPDISKROOT from $RELEASEMNTDIR"
-umount $TMPDISKROOT || exit
-rm -r $RELEASEMNTDIR
 
 echo " * Making image bootable"
 if [ "$USB" -ne 0 ]
@@ -370,10 +365,10 @@ else
 	cd_root_changes
 fi
 
-# Clean up: RELEASEDIR no longer needed
-rm -r $RELEASEDIR
+echo " * Unmounting $TMPDISKROOT from $RELEASEMNTDIR"
+umount $TMPDISKROOT || exit
+rm -r $RELEASEMNTDIR
 
-(cd ../boot && make)
 dd if=$TMPDISKROOT of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 cp release/cd/* $CDFILES || true
 echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
@@ -389,8 +384,9 @@ fi
 if [ "$USB" -ne 0 ]; then
 	mv $bootimage $IMG
 else
-	cp ../boot/boot/boot $CDFILES
-	writeisofs -s0x0 -l MINIX -a boot -b $bootimage $boottype $CDFILES $IMG || exit 1
+	cp $RELEASEDIR/usr/mdec/boot_monitor $CDFILES/boot
+	cp -rf $RELEASEDIR/boot/minix_default/* $CDFILES/
+	writeisofs -s0x0 -l MINIX -B $bootimage $boottype $CDFILES $IMG || exit 1
 
 	if [ "$HDEMU" -eq 0 ]
 	then
@@ -406,12 +402,16 @@ else
 			dd if=$TMPDISKUSR bs=$BS count=$USRBLOCKS ) >m
 		mv m $IMG
 		# Make CD partition table
-		installboot_minix -m $IMG /usr/mdec/masterboot
+		installboot_nbsd -m $IMG /usr/mdec/mbr
 		# Make sure there is no hole..! Otherwise the ISO format is
 		# unreadable.
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 	fi
 fi
+
+# Clean up: RELEASEDIR no longer needed
+rm -r $RELEASEDIR
+
 echo "${ZIP}ping $IMG"
 $ZIP -f $IMG
 
