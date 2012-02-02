@@ -7,6 +7,10 @@ SRCS=	open.c table.c inode.c main.c super.c link.c \
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys
 
+.if ${COMPILER_TYPE} == "gnu"
+LDADD+= -lc
+.endif
+
 MAN=
 
 BINDIR?= /usr/sbin
