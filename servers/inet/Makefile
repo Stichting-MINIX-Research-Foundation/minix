@@ -13,10 +13,12 @@ SRCS=	buf.c clock.c inet.c inet_config.c \
 .PATH:	${.CURDIR}/generic
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBMINIXUTIL}
-LDADD+=	-lchardriver -lsys -lminixutil
+LDADD+=	-lchardriver -lsys
 
 .if ${COMPILER_TYPE} == "gnu"
 LDADD+= -lc
+.else
+LDADD+= -lminixutil
 .endif
 
 MAN=
