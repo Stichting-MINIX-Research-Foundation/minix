@@ -37,7 +37,7 @@ typedef unsigned long int u_int32_t;
 #include <sys/stat.h>
 
 #define NAMELEN		(NAME_MAX+5)
-#define ISONAMELEN	12
+#define ISONAMELEN	12	/* XXX could easily be 31 */
 #define PLATFORM_80X86	0
 
 #define ISO_SECTOR 2048
@@ -63,7 +63,7 @@ struct pvd {
 	u_int16_t setsize[2];
 	u_int16_t seq[2];
 	u_int16_t sectorsize[2];
-	u_int32_t pathtable[2];
+	u_int32_t pathtablesize[2];
 	u_int32_t first_little_pathtable_start;
 	u_int32_t second_little_pathtable_start;
 	u_int32_t first_big_pathtable_start;
@@ -157,6 +157,7 @@ struct dir {
 
 struct node {
 	char name[NAMELEN];
+	time_t timestamp;
 	int isdir;
 	int pathtablerecord;
 	struct node *firstchild, *nextchild;
@@ -354,7 +355,8 @@ maketree(struct node *thisdir, char *name, int level)
 			child->isdir = 0;
 			child->firstchild = NULL;
 		}
-		strncpy(child->name, e->d_name, sizeof(child->name));
+		strlcpy(child->name, e->d_name, sizeof(child->name));
+		child->timestamp = st.st_mtime;
 
 		child++;
 	}
@@ -517,32 +519,35 @@ makepathtables(struct node *root, int littleendian, int *bytes, int fd)
 }
 
 ssize_t
-write_direntry(char *origname, u_int32_t sector, u_int32_t size, int isdir,
-	int fd)
+write_direntry(struct node * n, char *origname, int fd)
 {
 	int namelen, total = 0;
 	struct dir entry;
 	char copyname[NAMELEN];
+	struct tm tm;
 
 	memset(&entry, 0, sizeof(entry));
 
 	if(!strcmp(origname, CURRENTDIR)) {
+		entry.name[0] = '\000';
 		namelen = 1;
 	} else if(!strcmp(origname, PARENTDIR)) {
 		entry.name[0] = '\001';
 		namelen = 1;
 	} else {
 		int i;
-		strcpy(copyname, origname);
+		strlcpy(copyname, origname, sizeof(copyname));
 		namelen = strlen(copyname);
 
+		/* XXX No check for 8+3 ? (DOS compatibility) */
+		assert(ISONAMELEN <= NAMELEN-2);
 		if(namelen > ISONAMELEN) {
 			fprintf(stderr, "%s: truncated, too long for iso9660\n", copyname);
 			namelen = ISONAMELEN;
 			copyname[namelen] = '\0';
 		}
 
-		strcpy(entry.name, copyname);
+		strlcpy(entry.name, copyname, namelen+1);
 		for(i = 0; i < namelen; i++)
 			entry.name[i] = toupper(entry.name[i]);
 
@@ -557,12 +562,19 @@ write_direntry(char *origname, u_int32_t sector, u_int32_t size, int isdir,
 
 	/* XXX 2 extra bytes for 'system use'.. */
 	entry.recordsize = 33 + namelen;
-	both32((unsigned char *) entry.datasector, sector);
-	both32((unsigned char *) entry.filesize, size);
+	both32((unsigned char *) entry.datasector, n->startsector);
+	both32((unsigned char *) entry.filesize, n->bytesize);
 
-	if(isdir) entry.flags = FLAG_DIR;
+	if(n->isdir) entry.flags = FLAG_DIR;
 
-	/* XXX node date */
+	memcpy(&tm, gmtime(&n->timestamp), sizeof(tm));
+	entry.year = (unsigned)tm.tm_year > 255 ? 255 : tm.tm_year;
+	entry.month = tm.tm_mon + 1;
+	entry.day = tm.tm_mday;
+	entry.hour = tm.tm_hour;
+	entry.minute = tm.tm_min;
+	entry.second = tm.tm_sec;
+	entry.offset = 0;	/* Posix uses UTC timestamps! */
 
 	both16((unsigned char *) entry.sequence, 1);
 	
@@ -624,22 +636,18 @@ writedata(struct node *parent, struct node *root,
 		/* dir */
 		written = 0;
 		root->startsector = *currentsector;
-		written += write_direntry(CURRENTDIR, root->startsector,
-			root->bytesize, root->isdir, fd);
+		written += write_direntry(root, CURRENTDIR, fd);
 		if(parent) {
-			written += write_direntry(PARENTDIR, parent->startsector,
-				root->bytesize, root->isdir, fd);
+			written += write_direntry(parent, PARENTDIR, fd);
 		} else {
-			written += write_direntry(PARENTDIR, root->startsector,
-				root->bytesize, root->isdir, fd);
+			written += write_direntry(root, PARENTDIR, fd);
 		}
 		for(c = root->firstchild; c; c = c->nextchild) {
 			off_t cur1, cur2;
 			ssize_t written_before;
 			cur1 = Lseek(fd, 0, SEEK_CUR);
 			written_before = written;
-			written += write_direntry(c->name,
-				c->startsector, c->bytesize, c->isdir, fd);
+			written += write_direntry(c, c->name, fd);
 			cur2 = Lseek(fd, 0, SEEK_CUR);
 			if(cur1/ISO_SECTOR != (cur2-1)/ISO_SECTOR) {
 				/* passed a sector boundary, argh! */
@@ -649,8 +657,7 @@ writedata(struct node *parent, struct node *root,
 				memset(buf, 0, rest);
 				Write(fd, buf, rest);
 				written += rest;
-				written += write_direntry(c->name,
-				  c->startsector, c->bytesize, c->isdir, fd);
+				written += write_direntry(c, c->name, fd);
 			}
 		}
 		root->bytesize = written;
@@ -828,18 +835,18 @@ writebootimage(char *bootimage, int bootfd, int fd, int *currentsector,
 
 		fprintf(stderr, " * appended sector info: 0x%lx len 0x%lx\n",
 			bap[0].sector, bap[0].length);
+
+		addr = buf;
+		addr[0] = bap[0].length;
+		assert(addr[0] > 0);
+		addr[1] = (bap[0].sector >>  0) & 0xFF;
+		addr[2] = (bap[0].sector >>  8) & 0xFF;
+		addr[3] = (bap[0].sector >> 16) & 0xFF;
+		addr[4] = 0;
+		addr[5] = 0;
+
+		written += Write(fd, addr, 6);
 	}
-
-	addr = buf;
-	addr[0] = bap[0].length;	assert(addr[0] > 0);
-	addr[1] = (bap[0].sector >>  0) & 0xFF;
-	addr[2] = (bap[0].sector >>  8) & 0xFF;
-	addr[3] = (bap[0].sector >> 16) & 0xFF;
-	addr[4] = 0;
-	addr[5] = 0;
-
-	/* Always save space for sector info after the boot image. */
-	written += Write(fd, addr, 6);
 
         virtuals = ROUNDUP(written, VIRTUAL_SECTOR);
         assert(virtuals * VIRTUAL_SECTOR >= written);                           
@@ -1129,6 +1136,10 @@ main(int argc, char *argv[])
 	littlepath = currentsector;
 	currentsector += makepathtables(&root, 1, &pathbytes, fd);
 
+	both32((unsigned char *) pvd.pathtablesize, pathbytes);
+	little32((unsigned char *) &pvd.first_little_pathtable_start, littlepath);
+	big32((unsigned char *) &pvd.first_big_pathtable_start, bigpath);
+
 	/* this is the size of the iso filesystem for use in the pvd later */
 
 	nsectors = currentsector;
@@ -1140,15 +1151,10 @@ main(int argc, char *argv[])
 	fprintf(stderr, " * rewriting pvd\n");
 	seekwritesector(fd, pvdsector, (char *) &pvd, &currentsector);
 
-	both32((unsigned char *) pvd.pathtable, pathbytes);
-	little32((unsigned char *) &pvd.first_little_pathtable_start, littlepath);
-	little32((unsigned char *) &pvd.first_big_pathtable_start, bigpath);
-
 	/* write root dir entry in pvd */
 	seeksector(fd, pvdsector, &currentsector);
 	Lseek(fd, (int)((char *) &pvd.rootrecord - (char *) &pvd), SEEK_CUR);
-	if(write_direntry(CURRENTDIR, root.startsector, root.bytesize,
-		root.isdir, fd) > sizeof(pvd.rootrecord)) {
+	if(write_direntry(&root, CURRENTDIR, fd) > sizeof(pvd.rootrecord)) {
 		fprintf(stderr, "warning: unexpectedly large root record\n");
 	}
 
