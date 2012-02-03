@@ -339,6 +339,9 @@ PRIVATE void ds_event()
 	int type;
 	endpoint_t owner_endpoint;
 	int r;
+	int prefix_len;
+
+	prefix_len = strlen(driver_prefix);
 
 	/* We may get one notification for multiple updates from DS. Get events
 	 * and owners from DS, until DS tells us that there are no more.
@@ -351,13 +354,13 @@ PRIVATE void ds_event()
 		}
 
 		/* Only check for network driver up events. */
-		if(strncmp(key, driver_prefix, sizeof(driver_prefix))
+		if(strncmp(key, driver_prefix, prefix_len)
 		   || value != DS_DRIVER_UP) {
 			return;
 		}
 
 		/* The driver label comes after the prefix. */
-		label = key + strlen(driver_prefix);
+		label = key + prefix_len;
 
 		/* A driver is (re)started. */
 		eth_check_driver(label, owner_endpoint);
