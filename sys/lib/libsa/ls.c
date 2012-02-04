@@ -108,6 +108,7 @@ ls(const char *path)
 		fname = strrchr(path, '/');
 		if (fname) {
 			size = fname - path;
+			fname++;
 			p = alloc(size + 1);
 			if (!p)
 				goto out;
