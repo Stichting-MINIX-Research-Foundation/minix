@@ -89,13 +89,13 @@
 #include <lib/libkern/libkern.h>
 
 void
-ls(const char *path)
+ls(const char *path, void (*funcp)(char* arg))
 {
 	int             fd;
 	struct stat     sb;
 	size_t          size;
 	const char	*fname = 0;
-	char		*p;
+	char		*p = NULL;
 	struct open_file *f;
 
 	if ((fd = open(path, 0)) < 0
@@ -115,7 +115,6 @@ ls(const char *path)
 			memcpy(p, path, size);
 			p[size] = 0;
 			fd = open(p, 0);
-			dealloc(p, size + 1);
 		} else {
 			fd = open("", 0);
 			fname = path;
@@ -153,10 +152,12 @@ ls(const char *path)
 #endif
 
 	if (FS_LS(f->f_ops) != NULL)
-		FS_LS(f->f_ops)(f, fname);
+		FS_LS(f->f_ops)(f, fname, funcp, p);
 	else
 		printf("no ls support for this file system\n");
 
 out:
+	if (p != NULL)
+		dealloc(p, size + 1);
 	close(fd);
 }

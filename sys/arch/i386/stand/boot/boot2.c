@@ -122,6 +122,7 @@ void	command_dev(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
 void	command_multiboot(char *);
+void	command_load_mods(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -133,6 +134,7 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ "modules",	command_modules },
 	{ "load",	module_add },
+	{ "load_mods",  command_load_mods },
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
@@ -261,11 +263,18 @@ print_banner(void)
 			printf("%s\n", bootconf.banner[n]);
 	} else {
 #endif /* !SMALL */
+#ifndef __minix
 		printf("\n"
 		       ">> %s, Revision %s (from NetBSD %s)\n"
 		       ">> Memory: %d/%d k\n",
 		       bootprog_name, bootprog_rev, bootprog_kernrev,
 		       getbasemem(), getextmem());
+#else
+		printf("\n"
+			"--- Welcome to MINIX 3. This is the boot monitor. ---\n"
+			"Memory: %d/%d k\n",
+			getbasemem(), getextmem());
+#endif
 
 #ifndef SMALL
 	}
@@ -396,6 +405,7 @@ command_help(char *arg)
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
+	       "load_mods {path_to_modules}, pattern might be used\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
@@ -409,7 +419,17 @@ command_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ls(arg);
+	ls(arg, NULL);
+	default_filename = save;
+}
+
+void
+command_load_mods(char *arg)
+{
+	const char *save = default_filename;
+
+	default_filename = "/";
+	ls(arg, module_add);
 	default_filename = save;
 }
 

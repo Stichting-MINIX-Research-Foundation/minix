@@ -914,7 +914,8 @@ ufs_stat(struct open_file *f, struct stat *sb)
 
 #if defined(LIBSA_ENABLE_LS_OP)
 __compactcall void
-ufs_ls(struct open_file *f, const char *pattern)
+ufs_ls(struct open_file *f, const char *pattern,
+	void (*funcp)(char* arg), char* path)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	char *buf;

@@ -858,7 +858,8 @@ ext2fs_stat(struct open_file *f, struct stat *sb)
 
 #if defined(LIBSA_ENABLE_LS_OP)
 __compactcall void
-ext2fs_ls(struct open_file *f, const char *pattern)
+ext2fs_ls(struct open_file *f, const char *pattern,
+		void (*funcp)(char* arg), char* path)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	size_t block_size = fp->f_fs->e2fs_bsize;

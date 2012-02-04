@@ -540,7 +540,8 @@ ustarfs_stat(struct open_file *f, struct stat *sb)
 
 #if defined(LIBSA_ENABLE_LS_OP)
 __compactcall void
-ustarfs_ls(struct open_file *f, const char *pattern)
+ustarfs_ls(struct open_file *f, const char *pattern,
+		void (*funcp)(char* arg), char* path)
 {
 	printf("Currently ls command is unsupported by ustarfs\n");
 	return;

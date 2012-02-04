@@ -100,7 +100,8 @@ struct open_file;
 #if defined(LIBSA_ENABLE_LS_OP)
 #define FS_DEF(fs) \
 	FS_DEF_BASE(fs);\
-	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *)
+	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *,\
+							void (*)(char* arg), char*)
 #else
 #define FS_DEF(fs) FS_DEF_BASE(fs)
 #endif
@@ -122,7 +123,8 @@ struct fs_ops {
 	__compactcall off_t	(*seek)(struct open_file *, off_t, int);
 	__compactcall int	(*stat)(struct open_file *, struct stat *);
 #if defined(LIBSA_ENABLE_LS_OP)
-	__compactcall void	(*ls)(struct open_file *, const char *);
+	__compactcall void	(*ls)(struct open_file *, const char *,
+					void (*)(char* arg), char*);
 #endif
 };
 
@@ -286,7 +288,7 @@ int	ioctl(int, u_long, char *);
 int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
 #if defined(LIBSA_ENABLE_LS_OP)
-void	ls(const char *);
+void	ls(const char *, void (*funcp)(char* arg));
 #endif
 
 typedef int cmp_t(const void *, const void *);

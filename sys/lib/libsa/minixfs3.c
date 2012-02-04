@@ -861,7 +861,8 @@ minixfs3_stat(struct open_file *f, struct stat *sb)
 
 #if defined(LIBSA_ENABLE_LS_OP)
 __compactcall void
-minixfs3_ls(struct open_file *f, const char *pattern)
+minixfs3_ls(struct open_file *f, const char *pattern,
+		void (*funcp)(char* arg), char* path)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct mfs_sblock *fs = fp->f_fs;
@@ -927,8 +928,24 @@ minixfs3_ls(struct open_file *f, const char *pattern)
 		entry_t *p_names = names;
 		do {
 			n = p_names;
-			printf("%d: %s\n",
-				n->e_ino, n->e_name);
+			if (funcp) {
+				/* Call handler for each file instead of
+				 * printing. Used by load_mods command.
+				 */
+				char namebuf[MAXPATHLEN+1];
+				namebuf[0] = '\0';
+				if (path != pattern) {
+					strcpy(namebuf, path);
+					namebuf[strlen(path)] = '/';
+					namebuf[strlen(path) + 1] = '\0';
+				}
+				strcat(namebuf, n->e_name);
+
+				funcp(namebuf);
+			} else {
+				printf("%d: %s\n",
+					n->e_ino, n->e_name);
+			}
 			p_names = n->e_next;
 		} while (p_names);
 	} else {
