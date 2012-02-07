@@ -245,8 +245,7 @@ PUBLIC void dev_status(message *m)
   if (major >= NR_DEVICES)	/* Device endpoint not found; nothing to do */
 	return;
 
-  if (dmap[major].dmap_style == STYLE_DEVA ||
-      dmap[major].dmap_style == STYLE_CLONE_A) {
+  if (dev_style_asyn(dmap[major].dmap_style)) {
 	printf("VFS: not doing dev_status for async driver %d\n", m->m_source);
 	return;
   }
@@ -477,8 +476,7 @@ PUBLIC int dev_io(
 
   /* Task has completed.  See if call completed. */
   if (ret == SUSPEND) {
-	if ((flags & O_NONBLOCK) && !(dp->dmap_style == STYLE_DEVA ||
-				      dp->dmap_style == STYLE_CLONE_A)) {
+	if ((flags & O_NONBLOCK) && !dev_style_asyn(dp->dmap_style)) {
 		/* Not supposed to block. */
 		ret = cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
 		if (ret == EINTR)
@@ -868,7 +866,7 @@ PUBLIC int clone_opcl(
   r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
   if (r != OK) return(r);
 
-  if (op == DEV_OPEN && dp->dmap_style == STYLE_CLONE_A) {
+  if (op == DEV_OPEN && dev_style_asyn(dp->dmap_style)) {
 	/* Wait for reply when driver is asynchronous */
 	fp->fp_task = dp->dmap_driver;
 	worker_wait();
