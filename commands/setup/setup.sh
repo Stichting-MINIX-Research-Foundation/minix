@@ -466,6 +466,30 @@ if [ "$ok" != Y -a "$ok" != y -a "$ok" != "" ]
 then
 	usenewboot=0
 	bootsectors=1
+else
+	# check for potential problems with old mbr.
+	# space for bootxx has been checked earlier.
+	minix_primaries=`echo -n "" | fdisk /dev/$primary | grep "MINIX" | wc -l`
+	if [ "$minix_primaries" -gt 1 ]
+	then
+		# old mbr + bootxx will not work with several partitions of
+		# the same type.
+		disk=`echo -n "/dev/$primary" | sed 's/p[0-3]//'`
+		dd if=/usr/mdec/mbr of=temp_mbr_netbsd bs=1 count=440 2>/dev/null
+		dd if="$disk" bs=1 count=440 | cmp - temp_mbr_netbsd >/dev/null
+		if [ "$?" -ne 0 ]
+		then
+			echo "Warning: you have MBR which doesn't support multiple MINIX 3 partitions!"
+			echo "You will be able to boot from the first one only!"
+			echo -n "Do you want to install new MBR into $disk? [Y] "
+			read ok
+			if [ "$ok" = Y -o "$ok" = y -o "$ok" = "" ]
+			then
+				installboot_nbsd -m "$disk" /usr/mdec/mbr >/dev/null
+			fi
+		fi
+		rm temp_mbr_netbsd
+	fi
 fi
 
 echo "
