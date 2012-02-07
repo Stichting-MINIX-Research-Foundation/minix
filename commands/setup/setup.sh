@@ -12,6 +12,7 @@ LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
 ROOTMB=64
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
+BOOTXXSECTS=32
 USRKBFILE=/.usrkb
 if [ ! -f "$USRKBFILE" ]
 then	echo "Are you really running from CD?"
@@ -391,9 +392,19 @@ else
 	ROOTMB="`expr $ROOTSECTS / 2048`"
 	if [ $ROOTSECTS -ne $ROOTSECTSDEFAULT ]
 	then
+		# Check if we 
 		echo "Root partition size `expr $ROOTSECTS / 2`kb differs from default `expr $ROOTSECTSDEFAULT / 2`kb."
 		echo "This is not a problem, but you may want to do a fresh install at some point to"
 		echo "be able to benefit from the new default."
+	fi
+
+	# Check if enough space for new boot (even if old used)
+	let bootspace=`devsize /dev/$primary`-`devsize /dev/$root`-`devsize /dev/$home`-`devsize /dev/$usr` >/dev/null
+	if [ $bootspace -lt $BOOTXXSECTS ]
+	then
+		echo "Root partition size will be reduced by up to 16Kb to fit new bootloader."
+		echo "This is not a problem."
+		ROOTSECTS=`expr $ROOTSECTS - $BOOTXXSECTS + $bootspace`
 	fi
 
 	# Recompute totals based on root size
@@ -441,25 +452,21 @@ else
 	blocksize=$blockdefault
 fi
 
-usenewboot=1
-bootsectors=32
-if [ ! "$auto" = "r" ]
-then
-	echo ""
-echo " --- Step 7: Select a boot scheme --------------------------------------"
-	echo ""
-
-	echo -n "Do you want to use new boot? [Y] "
-	read ok
-	if [ "$ok" != Y -a "$ok" != y -a "$ok" != "" ]
-	then
-		usenewboot=0
-		bootsectors=1
-	fi
-fi
-
-
 blocksizebytes="`expr $blocksize '*' 1024`"
+
+usenewboot=1
+bootsectors=$BOOTXXSECTS
+echo ""
+echo " --- Step 7: Select a boot scheme --------------------------------------"
+echo ""
+
+echo -n "Do you want to use new boot? [Y] "
+read ok
+if [ "$ok" != Y -a "$ok" != y -a "$ok" != "" ]
+then
+	usenewboot=0
+	bootsectors=1
+fi
 
 echo "
 You have selected to (re)install MINIX 3 in the partition /dev/$primary.
