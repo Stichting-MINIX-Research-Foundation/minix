@@ -634,10 +634,8 @@ umount /dev/$usr && echo Unmounted $usr
 umount /dev/$root && echo Unmounted $root
 
 echo "
-Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
-the boot monitor prompt, type 'boot $bios', where X is the bios drive
-number of the drive you installed on, to try your new MINIX system.
-$biosdrivename
+Please type 'shutdown' to exit MINIX 3 and reboot. To boot into your new
+system, you might have to remove installation media.
 
 This ends the MINIX 3 setup script.  After booting your newly set up system,
 you can run the test suites as indicated in the setup manual.  You also 
