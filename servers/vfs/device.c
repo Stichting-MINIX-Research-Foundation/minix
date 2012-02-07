@@ -362,6 +362,32 @@ u32_t *pos_lo;
   return(0);
 }
 
+PRIVATE int cancel_nblock(struct dmap * dp,
+			int minor,
+			int call,
+			endpoint_t ioproc,
+			cp_grant_id_t gid)
+{
+  message dev_mess;
+
+  dev_mess.m_type = CANCEL;
+  dev_mess.USER_ENDPT = ioproc;
+  dev_mess.IO_GRANT = (char *) gid;
+
+  /* This R_BIT/W_BIT check taken from suspend()/unpause()
+   * logic. Mode is expected in the COUNT field.
+   */
+  dev_mess.COUNT = 0;
+  if (call == READ)
+	  dev_mess.COUNT = R_BIT;
+  else if (call == WRITE)
+	  dev_mess.COUNT = W_BIT;
+  dev_mess.DEVICE = minor;
+  (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  
+  return dev_mess.REP_STATUS;
+}
+
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
@@ -384,6 +410,7 @@ PUBLIC int dev_io(
   int safe, minor_dev, major_dev;
   void *buf_used;
   endpoint_t ioproc;
+  int ret;
 
   pos_lo = ex64lo(pos);
   pos_high = ex64hi(pos);
@@ -446,24 +473,16 @@ PUBLIC int dev_io(
 	return(EIO);
   }
 
+  ret = dev_mess.REP_STATUS;
+
   /* Task has completed.  See if call completed. */
-  if (dev_mess.REP_STATUS == SUSPEND) {
+  if (ret == SUSPEND) {
 	if ((flags & O_NONBLOCK) && !(dp->dmap_style == STYLE_DEVA ||
 				      dp->dmap_style == STYLE_CLONE_A)) {
 		/* Not supposed to block. */
-		dev_mess.m_type = CANCEL;
-		dev_mess.USER_ENDPT = ioproc;
-		dev_mess.IO_GRANT = (char *) gid;
-
-		/* This R_BIT/W_BIT check taken from suspend()/unpause()
-		 * logic. Mode is expected in the COUNT field.
-		 */
-		dev_mess.COUNT = 0;
-		if (call_nr == READ) 		dev_mess.COUNT = R_BIT;
-		else if (call_nr == WRITE)	dev_mess.COUNT = W_BIT;
-		dev_mess.DEVICE = minor_dev;
-		(*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-		if (dev_mess.REP_STATUS == EINTR) dev_mess.REP_STATUS = EAGAIN;
+		ret = cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
+		if (ret == EINTR)
+			ret = EAGAIN;
 	} else {
 		/* select() will do suspending itself. */
 		if(op != DEV_SELECT) {
@@ -476,20 +495,11 @@ PUBLIC int dev_io(
 
 		if (flags & O_NONBLOCK) {
 			/* Not supposed to block, send cancel message */
-			dev_mess.m_type = CANCEL;
-			dev_mess.USER_ENDPT = ioproc;
-			dev_mess.IO_GRANT = (char *) gid;
-
-			/* This R_BIT/W_BIT check taken from suspend()/unpause()
-			 * logic. Mode is expected in the COUNT field.
+			cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
+			/*
+			 * FIXME Should do something about EINTR -> EAGAIN
+			 * mapping
 			 */
-			dev_mess.COUNT = 0;
-			if(call_nr == READ) 		dev_mess.COUNT = R_BIT;
-			else if(call_nr == WRITE)	dev_mess.COUNT = W_BIT;
-			dev_mess.DEVICE = minor_dev;
-			(*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-
-			/* Should do something about EINTR -> EAGAIN mapping */
 		}
 		return(SUSPEND);
 	}
@@ -498,7 +508,7 @@ PUBLIC int dev_io(
   /* No suspend, or cancelled suspend, so I/O is over and can be cleaned up. */
   if(safe) cpf_revoke(gid);
 
-  return(dev_mess.REP_STATUS);
+  return ret;
 }
 
 /*===========================================================================*
