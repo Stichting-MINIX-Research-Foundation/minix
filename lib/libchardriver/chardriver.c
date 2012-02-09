@@ -133,7 +133,7 @@ PRIVATE void async_reply(message *mess, int r)
 
   switch (mess->m_type) {
   case DEV_OPEN:
-	reply_mess.m_type = DEV_REVIVE;
+	reply_mess.m_type = DEV_OPEN_REPL;
 	reply_mess.REP_ENDPT = mess->USER_ENDPT;
 	reply_mess.REP_STATUS = r;
 	break;

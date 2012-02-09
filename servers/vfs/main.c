@@ -66,6 +66,9 @@ PUBLIC int main(void)
 	SANITYCHECK;
 	get_work();		/* sets who and call_nr */
 
+	if (call_nr == DEV_OPEN_REPL)	/* XXX: hack to make DEV_OPEN_REPL */
+		call_nr = DEV_REVIVE;	/* work on synchronous VFS */
+
 	if (call_nr == DEV_REVIVE)
 	{
 		endpoint_t endpt;

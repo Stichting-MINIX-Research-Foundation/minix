@@ -545,6 +545,11 @@ PUBLIC int gen_opcl(
   r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
   if (r != OK) return(r);
 
+  if (op == DEV_OPEN && dp->dmap_style == STYLE_DEVA) {
+	fp->fp_task = dp->dmap_driver;
+	worker_wait(dp->dmap_driver);
+  }
+
   if (is_bdev)
 	return(dev_mess.BDEV_STATUS);
   else
