@@ -593,9 +593,6 @@ PRIVATE void select_cancel_all(struct selectentry *se)
   int fd;
   struct filp *f;
 
-  /* Always await results of asynchronous requests */
-  assert(!is_deferred(se));
-
   for (fd = 0; fd < se->nfds; fd++) {
 	if ((f = se->filps[fd]) == NULL) continue;
 	se->filps[fd] = NULL;
@@ -620,6 +617,7 @@ PRIVATE void select_cancel_filp(struct filp *f)
   assert(f);
   assert(f->filp_selectors >= 0);
   if (f->filp_selectors == 0) return;
+  if (f->filp_count == 0) return;
 
   select_lock_filp(f, f->filp_select_ops);
 
@@ -644,6 +642,7 @@ PRIVATE void select_return(struct selectentry *se)
   assert(!is_deferred(se));	/* Not done yet, first wait for async reply */
 
   select_cancel_all(se);
+
   r1 = copy_fdsets(se, se->nfds, TO_PROC);
   if (r1 != OK)
 	r = r1;
@@ -737,6 +736,11 @@ PUBLIC void select_unsuspend_by_endpt(endpoint_t proc_e)
 	int wakehim = 0;
 	se = &selecttab[s];
 	if (se->requestor == NULL) continue;
+	if (se->requestor->fp_endpoint == proc_e) {
+		assert(se->requestor->fp_flags & FP_EXITING);
+		select_cancel_all(se);
+		continue;
+	}
 
 	for (fd = 0; fd < se->nfds; fd++) {
 		if ((f = se->filps[fd]) == NULL || f->filp_vno == NULL)
@@ -755,7 +759,6 @@ PUBLIC void select_unsuspend_by_endpt(endpoint_t proc_e)
 		select_return(se);
   }
 }
-
 
 /*===========================================================================*
  *				select_reply1				     *
@@ -800,39 +803,51 @@ int status;
 	}
   }
 
-  select_lock_filp(f, f->filp_select_ops);
-
   /* No longer waiting for a reply from this device */
-  f->filp_select_flags &= ~FSF_BUSY;
   dp->dmap_sel_filp = NULL;
 
-  /* The select call is done now, except when
-   * - another process started a select on the same filp with possibly a
-   *   different set of operations.
-   * - a process does a select on the same filp but using different file
-   *   descriptors.
-   * - the select has a timeout. Upon receiving this reply the operations might
-   *   not be ready yet, so we want to wait for that to ultimately happen.
-   *   Therefore we need to keep remembering what the operations are. */
-  if (!(f->filp_select_flags & (FSF_UPDATE|FSF_BLOCKED)))
-	f->filp_select_ops = 0;		/* done selecting */
-  else if (!(f->filp_select_flags & FSF_UPDATE))
-	f->filp_select_ops &= ~status;	/* there may be operations pending */
+  /* Process select result only if requestor is still around. That is, the
+   * corresponding filp is still in use.
+   */
+  if (f->filp_count >= 1) {
+	select_lock_filp(f, f->filp_select_ops);
+	f->filp_select_flags &= ~FSF_BUSY;
 
-  /* Tell filp owners about result unless we need to wait longer */
-  if (!(status == 0 && (f->filp_select_flags & FSF_BLOCKED))) {
-	if (status > 0) {	/* operations ready */
-		if (status & SEL_RD) f->filp_select_flags &= ~FSF_RD_BLOCK;
-		if (status & SEL_WR) f->filp_select_flags &= ~FSF_WR_BLOCK;
-		if (status & SEL_ERR) f->filp_select_flags &= ~FSF_ERR_BLOCK;
-	} else if (status < 0) { /* error */
-		f->filp_select_flags &= ~FSF_BLOCKED; /* No longer blocking */
+	/* The select call is done now, except when
+	 * - another process started a select on the same filp with possibly a
+	 *   different set of operations.
+	 * - a process does a select on the same filp but using different file
+	 *   descriptors.
+	 * - the select has a timeout. Upon receiving this reply the operations
+	 *   might not be ready yet, so we want to wait for that to ultimately
+	 *   happen.
+	 *   Therefore we need to keep remembering what the operations are.
+	 */
+	if (!(f->filp_select_flags & (FSF_UPDATE|FSF_BLOCKED)))
+		f->filp_select_ops = 0;		/* done selecting */
+	else if (!(f->filp_select_flags & FSF_UPDATE))
+		/* there may be operations pending */
+		f->filp_select_ops &= ~status;
+
+	/* Tell filp owners about result unless we need to wait longer */
+	if (!(status == 0 && (f->filp_select_flags & FSF_BLOCKED))) {
+		if (status > 0) {	/* operations ready */
+			if (status & SEL_RD)
+				f->filp_select_flags &= ~FSF_RD_BLOCK;
+			if (status & SEL_WR)
+				f->filp_select_flags &= ~FSF_WR_BLOCK;
+			if (status & SEL_ERR)
+				f->filp_select_flags &= ~FSF_ERR_BLOCK;
+		} else if (status < 0) { /* error */
+			/* Always unblock upon error */
+			f->filp_select_flags &= ~FSF_BLOCKED;
+		}
+
+		unlock_filp(f);
+		filp_status(f, status); /* Tell filp owners about the results */
+	} else {
+		unlock_filp(f);
 	}
-
-	unlock_filp(f);
-	filp_status(f, status); /* Tell filp owners about the results */
-  } else {
-	unlock_filp(f);
   }
 
   select_restart_filps();

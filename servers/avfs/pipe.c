@@ -515,8 +515,7 @@ int returned;			/* if hanging on task, how many bytes read */
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-PUBLIC void unpause(proc_nr_e)
-int proc_nr_e;
+PUBLIC void unpause(endpoint_t proc_e)
 {
 /* A signal has been sent to a user who is paused on the file system.
  * Abort the system call with the EINTR error message.
@@ -529,8 +528,8 @@ int proc_nr_e;
   message mess;
   int wasreviving = 0;
 
-  if (isokendpt(proc_nr_e, &slot) != OK) {
-	printf("VFS: ignoring unpause for bogus endpoint %d\n", proc_nr_e);
+  if (isokendpt(proc_e, &slot) != OK) {
+	printf("VFS: ignoring unpause for bogus endpoint %d\n", proc_e);
 	return;
   }
 
@@ -552,7 +551,7 @@ int proc_nr_e;
 		break;
 
 	case FP_BLOCKED_ON_SELECT:/* process blocking on select() */
-		select_forget(proc_nr_e);
+		select_forget(proc_e);
 		break;
 
 	case FP_BLOCKED_ON_POPEN:	/* process trying to open a fifo */
@@ -614,7 +613,7 @@ int proc_nr_e;
 	susp_count--;
   }
 
-  reply(proc_nr_e, status);	/* signal interrupted call */
+  reply(proc_e, status);	/* signal interrupted call */
 }
 
 #if DO_SANITYCHECKS

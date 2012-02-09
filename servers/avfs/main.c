@@ -272,10 +272,11 @@ PRIVATE void *do_fs_reply(struct job *job)
 	return(NULL);
   }
 
+  if (rfp->fp_task != who_e)
+	printf("AVFS: expected %d to reply, not %d\n", rfp->fp_task, who_e);
   *rfp->fp_sendrec = m_in;
   rfp->fp_task = NONE;
   vmp->m_comm.c_cur_reqs--;	/* We've got our reply, make room for others */
-
   worker_signal(worker_get(rfp->fp_wtid));/* Continue this worker thread */
   return(NULL);
 }
@@ -424,8 +425,6 @@ PRIVATE void *do_work(void *arg)
 	 */
 	if (call_nr < 0 || call_nr >= NCALLS) {
 		error = ENOSYS;
-	} else if (fp->fp_flags & FP_EXITING) {
-		error = SUSPEND;
 	} else if (fp->fp_pid == PID_FREE) {
 		/* Process vanished before we were able to handle request.
 		 * Replying has no use. Just drop it. */
@@ -643,8 +642,8 @@ PUBLIC void lock_proc(struct fproc *rfp, int force_lock)
   org_m_in = m_in;
   org_fp = fp;
   org_self = self;
-  if (mutex_lock(&rfp->fp_lock) != 0)
-	panic("unable to lock fproc lock");
+  if ((r = mutex_lock(&rfp->fp_lock)) != 0)
+	panic("unable to lock fproc lock: %d", r);
   m_in = org_m_in;
   fp = org_fp;
   self = org_self;
@@ -696,7 +695,10 @@ PRIVATE void thread_cleanup_f(struct fproc *rfp, char *f, int l)
   }
 #endif
 
-  if (rfp != NULL) unlock_proc(rfp);
+  if (rfp != NULL) {
+	rfp->fp_flags &= ~FP_DROP_WORK;
+	unlock_proc(rfp);
+  }
 
 #if 0
   mthread_exit(NULL);
@@ -903,6 +905,7 @@ PRIVATE void service_pm()
 	if (!(fp->fp_flags & FP_PENDING) && mutex_trylock(&fp->fp_lock) == 0) {
 		mutex_unlock(&fp->fp_lock);
 		worker_start(do_dummy);
+		fp->fp_flags |= FP_DROP_WORK;
         }
 
 	fp->fp_job.j_m_in = m_in;

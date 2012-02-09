@@ -547,7 +547,7 @@ PUBLIC int gen_opcl(
 
   if (op == DEV_OPEN && dp->dmap_style == STYLE_DEVA) {
 	fp->fp_task = dp->dmap_driver;
-	worker_wait(dp->dmap_driver);
+	worker_wait();
   }
 
   if (is_bdev)
@@ -650,7 +650,10 @@ PUBLIC int do_ioctl()
   register struct vnode *vp;
   dev_t dev;
 
-  if ((f = get_filp(m_in.ls_fd, VNODE_READ)) == NULL) return(err_code);
+  scratch(fp).file.fd_nr = m_in.ls_fd;
+
+  if ((f = get_filp(scratch(fp).file.fd_nr, VNODE_READ)) == NULL)
+	return(err_code);
   vp = f->filp_vno;		/* get vnode pointer */
   if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL &&
       (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) {
@@ -860,6 +863,7 @@ PUBLIC int clone_opcl(
 
   if (op == DEV_OPEN && dp->dmap_style == STYLE_CLONE_A) {
 	/* Wait for reply when driver is asynchronous */
+	fp->fp_task = dp->dmap_driver;
 	worker_wait();
   }
 

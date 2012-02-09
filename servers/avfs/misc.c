@@ -457,6 +457,8 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   /* The rest of these actions is only done when processes actually exit. */
   if (!(flags & FP_EXITING)) return;
 
+  exiter->fp_flags |= FP_EXITING;
+
   /* Check if any process is SUSPENDed on this driver.
    * If a driver exits, unmap its entries in the dmap table.
    * (unmapping has to be done after the first step, because the
@@ -471,7 +473,6 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 
   /* Invalidate endpoint number for error and sanity checks. */
   exiter->fp_endpoint = NONE;
-  exiter->fp_flags |= FP_EXITING;
 
   /* If a session leader exits and it has a controlling tty, then revoke
    * access to its controlling tty from all other processes using it.

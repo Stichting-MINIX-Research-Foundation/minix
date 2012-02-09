@@ -208,6 +208,10 @@ PUBLIC void worker_start(void *(*func)(void *arg))
   int i;
   struct worker_thread *worker;
 
+  if (fp->fp_flags & FP_DROP_WORK) {
+	return;	/* This process is not allowed to accept new work */
+  }
+
   worker = NULL;
   for (i = 0; i < NR_WTHREADS; i++) {
 	if (workers[i].w_job.j_func == NULL) {
