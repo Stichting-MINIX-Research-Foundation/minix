@@ -118,6 +118,7 @@ clean: mkfiles
 	$(MAKE) -C usr.bin clean
 	$(MAKE) -C libexec clean
 	$(MAKE) -C usr.sbin clean
+	$(MAKE) -C share clean
 	$(MAKE) -C tools clean
 	$(MAKE) -C lib clean_all
 	$(MAKE) -C test clean
