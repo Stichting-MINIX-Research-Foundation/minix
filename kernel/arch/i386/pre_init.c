@@ -13,7 +13,6 @@
 #include <minix/com.h>
 #include <sys/param.h>
 #include <machine/partition.h>
-#include "../../../boot/image.h"
 #include "string.h"
 #include "arch_proto.h"
 #include "libexec.h"
@@ -147,6 +146,8 @@ PRIVATE void mb_print(char *str)
 	while (*str) {
 		if (*str == '\n') {
 			str++;
+			while (print_col < MULTIBOOT_CONSOLE_COLS)
+				mb_put_char(' ', print_line, print_col++);
 			print_line++;
 			print_col = 0;
 			continue;
@@ -283,10 +284,10 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 			value_i = 0;
 			while (*p == ' ') p++;
 			if (!*p) break;
-			while (*p && *p != '=' && var_i < GRAN - 1) 
+			while (*p && *p != '=' && *p != ' ' && var_i < GRAN - 1) 
 				var[var_i++] = *p++ ;
 			var[var_i] = 0;
-			p++; /* skip '=' */
+			if (*p++ != '=') continue; /* skip if not name=value */
 			while (*p && *p != ' ' && value_i < GRAN - 1) 
 				value[value_i++] = *p++ ;
 			value[value_i] = 0;
