@@ -212,6 +212,7 @@ PRIVATE void master_create_worker(worker_t *wp, worker_id_t worker_id,
 {
 /* Start a new worker thread.
  */
+  mthread_attr_t attr;
   int r;
 
   wp->device_id = device_id;
@@ -221,8 +222,15 @@ PRIVATE void master_create_worker(worker_t *wp, worker_id_t worker_id,
   /* Initialize synchronization primitives. */
   mthread_event_init(&wp->sleep_event);
 
-  r = mthread_create(&wp->mthread, NULL /*attr*/, worker_thread, (void *) wp);
+  r = mthread_attr_init(&attr);
+  if (r != 0)
+	panic("blockdriver_mt: could not initialize attributes (%d)", r);
 
+  r = mthread_attr_setstacksize(&attr, STACK_SIZE);
+  if (r != 0)
+	panic("blockdriver_mt: could not set stack size (%d)", r);
+
+  r = mthread_create(&wp->mthread, &attr, worker_thread, (void *) wp);
   if (r != 0)
 	panic("blockdriver_mt: could not start thread %d (%d)", worker_id, r);
 }

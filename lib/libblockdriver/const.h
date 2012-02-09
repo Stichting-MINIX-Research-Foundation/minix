@@ -1,6 +1,9 @@
 #ifndef _BLOCKDRIVER_CONST_H
 #define _BLOCKDRIVER_CONST_H
 
+/* Thread stack size. */
+#define STACK_SIZE	8192
+
 /* Maximum number of devices supported. */
 #define MAX_DEVICES	32
 
