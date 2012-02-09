@@ -238,7 +238,7 @@ char mount_label[LABEL_MAX] )
   }
 
   /* We'll need a vnode for the root inode */
-  if ((root_node = get_free_vnode()) == NULL || dev == 266) {
+  if ((root_node = get_free_vnode()) == NULL) {
 	if (vp != NULL) {
 		unlock_vnode(vp);
 		put_vnode(vp);

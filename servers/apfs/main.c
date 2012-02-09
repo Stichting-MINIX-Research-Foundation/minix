@@ -36,7 +36,6 @@ PUBLIC int main(int argc, char *argv[])
   env_setargs(argc, argv);
   sef_local_startup();
 
-  printf("Started APFS\n");
   while(!unmountdone || !exitsignaled) {
 	endpoint_t src;
 

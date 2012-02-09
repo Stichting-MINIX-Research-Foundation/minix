@@ -80,7 +80,6 @@ PUBLIC int main(void)
   sef_local_startup();
 
   printf("Started AVFS: %d worker thread(s)\n", NR_WTHREADS);
-  verbose = 0;
 
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
@@ -261,7 +260,6 @@ PRIVATE void *do_fs_reply(struct job *job)
   struct vmnt *vmp;
   struct fproc *rfp;
 
-  if (verbose) printf("VFS: reply to request!\n");
   if ((vmp = find_vmnt(who_e)) == NULL)
 	panic("Couldn't find vmnt for endpoint %d", who_e);
 
@@ -668,9 +666,6 @@ PRIVATE void thread_cleanup_f(struct fproc *rfp, char *f, int l)
 /* Clean up worker thread. Skip parts if this thread is not associated
  * with a particular process (i.e., rfp is NULL) */
 
-  if (verbose) printf("AVFS: thread %d is cleaning up for fp=%p (%s:%d)\n",
-			mthread_self(), rfp, f, l);
-
   assert(mthread_self() != -1);
 
 #if LOCK_DEBUG
@@ -716,8 +711,6 @@ PRIVATE void get_work()
   int r, found_one, proc_p;
   register struct fproc *rp;
 
-  if (verbose) printf("VFS: get_work looking for work\n");
-
   while (reviving != 0) {
 	found_one = FALSE;
 
@@ -745,9 +738,6 @@ PRIVATE void get_work()
 	else fp = &fproc[proc_p];
 
 	if (m_in.m_type == EDEADSRCDST) return;	/* Failed 'sendrec' */
-
-	if (verbose) printf("AVFS: got work from %d (fp=%p)\n", m_in.m_source,
-			    fp);
 
 	/* Negative who_p is never used to access the fproc array. Negative
 	 * numbers (kernel tasks) are treated in a special way.
@@ -857,7 +847,6 @@ PRIVATE void service_pm()
 {
   int r, slot;
 
-  if (verbose) printf("service_pm: %d (%d)\n", call_nr, mthread_self());
   switch (call_nr) {
     case PM_SETUID:
 	pm_setuid(m_in.PM_PROC, m_in.PM_EID, m_in.PM_RID);

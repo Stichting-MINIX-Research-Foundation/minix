@@ -50,11 +50,6 @@ PRIVATE int tll_append(tll_t *tllp, tll_access_t locktype)
 	tllp->t_owner = NULL;
   }
 
-  if (verbose) {
-	printf("got lock on tllp=%p with type %d (self=%p)\n", tllp,
-			locktype, self);
-  }
-
   /* Due to the way upgrading and downgrading works, read-only requests are
    * scheduled to run after a downgraded lock is released (because they are
    * queued on the write-only queue which has priority). This results from the

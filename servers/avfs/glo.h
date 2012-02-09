@@ -36,7 +36,6 @@ EXTERN message m_out;		/* the output message used for reply */
 # define scratch(p)		(scratchpad[((int) ((p) - fproc))])
 EXTERN struct worker_thread *self;
 EXTERN int force_sync;		/* toggle forced synchronous communication */
-EXTERN int verbose;
 EXTERN int deadlock_resolving;
 EXTERN mutex_t exec_lock;
 EXTERN mutex_t bsf_lock;/* Global lock for access to block special files */

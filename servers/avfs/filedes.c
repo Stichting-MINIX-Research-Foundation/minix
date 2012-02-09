@@ -121,7 +121,6 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	assert(f->filp_count >= 0);
 	if (f->filp_count == 0 && mutex_trylock(&f->filp_lock) == 0) {
-		if (verbose) printf("get_fd: locking filp=%p\n", f);
 		f->filp_mode = bits;
 		f->filp_pos = cvu64(0);
 		f->filp_selectors = 0;
@@ -252,10 +251,6 @@ tll_access_t locktype;
   assert(filp->filp_count > 0);
   vp = filp->filp_vno;
   assert(vp != NULL);
-
-  if (verbose)
-	printf("lock_filp: filp=%p locking vnode %p with locktype %d\n", filp,
-		vp, locktype);
 
   /* Lock vnode only if we haven't already locked it. If already locked by us,
    * we're allowed to have one additional 'soft' lock. */
