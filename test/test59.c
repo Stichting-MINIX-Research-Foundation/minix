@@ -633,9 +633,6 @@ PRIVATE void test_attributes(void)
   if (stackaddr != newstackaddr) err(11, 14);
   if (stacksize != newstacksize) err(11, 15);
   if (mthread_attr_destroy(&tattr) != 0) err(11, 16);
-  /* Freeing the stack. Note that this is only possible because it wasn't
-   * actually used yet by a thread. If it was, mthread would clean it up after
-   * usage and this free would do something undefined. */
   free(newstackaddr);
 
   /* Try to allocate too small a stack; it should fail and the attribute 
@@ -652,7 +649,6 @@ PRIVATE void test_attributes(void)
   if (stackaddr == newstackaddr) err(11, 22);
   if (stacksize == newstacksize) err(11, 23);
   if (mthread_attr_destroy(&tattr) != 0) err(11, 24);
-  /* Again, freeing because we can. Shouldn't do it if it was actually used. */
   free(newstackaddr);
 
   /* Tell attribute to let the system allocate a stack for the thread and only
@@ -742,9 +738,8 @@ PRIVATE void test_attributes(void)
   if (mthread_mutex_unlock(condition_mutex) != 0) err(11, 65);
 
   /* Verify stack hypothesis; we assume a stack is used from the top and grows
-   * downwards. At this point the stack should still exist, because we haven't
-   * 'joined' yet. After joining, the stack is cleaned up and this test becomes
-   * useless. */
+   * downwards.
+   */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   if (stackp[0] != MAGIC) err(11, 66); /* End of the stack */
   for (i = no_ints - 1 - 16; i < no_ints; i++)
@@ -760,6 +755,7 @@ PRIVATE void test_attributes(void)
   if (mthread_attr_destroy(&tattr) != 0) err(11, 71); 
   if (mthread_mutex_destroy(condition_mutex) != 0) err(11, 72);
   if (mthread_cond_destroy(&condition) != 0) err(11, 73);
+  free(stackaddr);
 
 #ifdef MDEBUG
   mthread_verify();

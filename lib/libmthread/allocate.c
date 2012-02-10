@@ -422,9 +422,10 @@ mthread_thread_t thread;
   rt->m_arg = NULL;
   rt->m_result = NULL;
   rt->m_cond = NULL;
-  if (rt->m_context.uc_stack.ss_sp) {
-  	free(rt->m_context.uc_stack.ss_sp); /* Free allocated stack */
-  	rt->m_context.uc_stack.ss_sp = NULL;
+  if (rt->m_attr.ma_stackaddr == NULL) { /* We allocated stack space */
+	if (rt->m_context.uc_stack.ss_sp)
+		free(rt->m_context.uc_stack.ss_sp); /* Free allocated stack */
+	rt->m_context.uc_stack.ss_sp = NULL;
   }
   rt->m_context.uc_stack.ss_size = 0;
   rt->m_context.uc_link = NULL;
