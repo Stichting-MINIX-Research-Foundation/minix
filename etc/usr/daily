@@ -66,8 +66,8 @@ do
     fi
 done
 
-# Update manpage index
-/usr/libexec/makewhatis
+# Update manpage index but don't warn about nonexistant dirs
+/usr/libexec/makewhatis 2>/dev/null
 
 # Continue with a local script if present.
 test -f /usr/local/etc/daily && sh /usr/local/etc/daily $caller
