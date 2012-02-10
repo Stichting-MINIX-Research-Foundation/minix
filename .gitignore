@@ -40,3 +40,4 @@ etc/pwd.db
 etc/spwd.db
 tools/image
 tools/kernel
+share/zoneinfo/builddir
