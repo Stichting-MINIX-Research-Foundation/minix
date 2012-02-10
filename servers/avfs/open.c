@@ -317,8 +317,8 @@ PRIVATE struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
   if ((dirp = last_dir(&findnode, fp)) == NULL) return(NULL);
 
   /* The final directory is accessible. Get final component of the path. */
-  findnode.l_vmp = &vp_vmp;
-  findnode.l_vnode = &vp;
+  lookup_init(&findnode, findnode.l_path, findnode.l_flags, &vp_vmp, &vp);
+  findnode.l_vmnt_lock = VMNT_WRITE;
   findnode.l_vnode_lock = (oflags & O_TRUNC) ? VNODE_WRITE : VNODE_OPCL;
   vp = advance(dirp, &findnode, fp);
   assert(vp_vmp == NULL);	/* Lookup to last dir should have yielded lock

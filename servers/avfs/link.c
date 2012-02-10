@@ -191,12 +191,9 @@ PUBLIC int do_rename()
      user is allowed to rename */
   if ((old_dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
-	resolve.l_flags = PATH_RET_SYMLINK;
-	resolve.l_vmp = &vmp2;	/* Shouldn't actually get locked */
+	lookup_init(&resolve, resolve.l_path, PATH_RET_SYMLINK, &vmp2, &vp);
 	resolve.l_vmnt_lock = VMNT_READ;
-	resolve.l_vnode = &vp;
 	resolve.l_vnode_lock = VNODE_READ;
-	resolve.l_flags = PATH_RET_SYMLINK;
 	vp = advance(old_dirp, &resolve, fp);
 	assert(vmp2 == NULL);
 	if (vp != NULL) {
