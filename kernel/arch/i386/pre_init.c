@@ -40,6 +40,9 @@
 #define mb_save_phymem(buf, phy, len) \
 		phys_copy((u32_t)(buf), (phy), (len))
 
+#define mb_clear_memrange(start, end) \
+		phys_memset((start), 0, (end)-(start))
+
 PRIVATE void mb_itoa(u32_t val, char * out) 
 {
 	char ret[ITOA_BUFFER_SIZE];
@@ -349,18 +352,6 @@ PRIVATE void get_parameters(multiboot_info_t *mbi)
 			mb_set_param(var, value);
 		}
 	}
-}
-
-PRIVATE int mb_clear_memrange(phys_bytes start, phys_bytes end)
-{
-	int empty = 0;
-	int i;
-
-	/* FIXME: use faster function */
-	for (i = start; i < end; i++)
-		phys_copy((phys_bytes)&empty, i, 1);
-
-	return 0;
 }
 
 PRIVATE void mb_extract_image(multiboot_info_t mbi)
