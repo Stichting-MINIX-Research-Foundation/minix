@@ -32,9 +32,9 @@
 #ifndef _NBCOMPAT_POLL_H_
 #define	_NBCOMPAT_POLL_H_
 
-#include <sys/cdefs.h>
-
 typedef unsigned int	nfds_t;
+
+#define INFTIM -1
 
 struct pollfd {
 	int	fd;		/* file descriptor */

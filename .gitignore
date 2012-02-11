@@ -14,11 +14,6 @@ cscope.*
 *.d
 .depend
 nbsdsrc/*
-obj-ack
-obj-gnu
-obj-elf-base
-obj-elfbase-nbsd
-obj-gnu-nbsd
 tools/revision
 TAGS
 tags
@@ -41,3 +36,4 @@ etc/spwd.db
 tools/image
 tools/kernel
 share/zoneinfo/builddir
+lib/libc/compat__*

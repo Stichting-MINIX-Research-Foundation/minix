@@ -1,120 +1,121 @@
-/* The <limits.h> header defines some basic sizes, both of the language types 
- * (e.g., the number of bits in an integer), and of the operating system (e.g.
- * the number of characters in a file name.
+/*	$NetBSD: limits.h,v 1.29 2010/06/07 13:52:29 tnozaki Exp $	*/
+
+/*
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)limits.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef _LIMITS_H
-#define _LIMITS_H
+#ifndef _LIMITS_H_
+#define	_LIMITS_H_
 
-#include <minix/limits.h>
+#include <sys/featuretest.h>
 
-/* Definitions about chars (8 bits in MINIX, and signed). */
-#define CHAR_BIT           8	/* # bits in a char */
-#define CHAR_MIN        -128	/* minimum value of a char */
-#define CHAR_MAX         127	/* maximum value of a char */
-#define SCHAR_MIN       -128	/* minimum value of a signed char */
-#define SCHAR_MAX        127	/* maximum value of a signed char */
-#define UCHAR_MAX        255	/* maximum value of an unsigned char */
-#define MB_LEN_MAX         1	/* maximum length of a multibyte char */
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#define	_POSIX_AIO_LISTIO_MAX	2
+#define	_POSIX_AIO_MAX		1
+#define	_POSIX_ARG_MAX		4096
+#define	_POSIX_CHILD_MAX	25
+#define	_POSIX_HOST_NAME_MAX	255
+#define	_POSIX_LINK_MAX		8
+#define	_POSIX_LOGIN_NAME_MAX	9
+#define	_POSIX_MAX_CANON	255
+#define	_POSIX_MAX_INPUT	255
+#define	_POSIX_MQ_OPEN_MAX	8
+#define	_POSIX_MQ_PRIO_MAX	32
+#define	_POSIX_NAME_MAX		14
+#define	_POSIX_NGROUPS_MAX	8
+#define	_POSIX_OPEN_MAX		20
+#define	_POSIX_PATH_MAX		256
+#define	_POSIX_PIPE_BUF		512
+#define	_POSIX_RE_DUP_MAX	255
+#define	_POSIX_SSIZE_MAX	32767
+#define	_POSIX_STREAM_MAX	8
+#define	_POSIX_SYMLINK_MAX	255
+#define	_POSIX_SYMLOOP_MAX	8
+#define	_POSIX_THREAD_DESTRUCTOR_ITERATIONS	4
+#define	_POSIX_THREAD_KEYS_MAX	128
+#define	_POSIX_THREAD_THREADS_MAX		64
+#define	_POSIX_TIMER_MAX	32
+#define	_POSIX_TTY_NAME_MAX	9
+#define	_POSIX_TZNAME_MAX	6
 
-/* Definitions about shorts (16 bits in MINIX). */
-#define SHRT_MIN  (-32767-1)	/* minimum value of a short */
-#define SHRT_MAX       32767	/* maximum value of a short */
-#define USHRT_MAX     0xFFFF	/* maximum value of unsigned short */
+#define	_POSIX2_BC_BASE_MAX	99
+#define	_POSIX2_BC_DIM_MAX	2048
+#define	_POSIX2_BC_SCALE_MAX	99
+#define	_POSIX2_BC_STRING_MAX	1000
+#define	_POSIX2_CHARCLASS_NAME_MAX	14
+#define	_POSIX2_COLL_WEIGHTS_MAX	2
+#define	_POSIX2_EXPR_NEST_MAX	32
+#define	_POSIX2_LINE_MAX	2048
+#define	_POSIX2_RE_DUP_MAX	255
 
-/* _EM_WSIZE is a compiler-generated symbol giving the word size in bytes. */
-#if _EM_WSIZE == 2
-#define INT_MIN   (-32767-1)	/* minimum value of a 16-bit int */
-#define INT_MAX        32767	/* maximum value of a 16-bit int */
-#define UINT_MAX      0xFFFF	/* maximum value of an unsigned 16-bit int */
+/*
+ * X/Open CAE Specifications,
+ * adopted in IEEE Std 1003.1-2001 XSI.
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+#define	_XOPEN_IOV_MAX		16
+#define	_XOPEN_NAME_MAX		256
+#define	_XOPEN_PATH_MAX		1024
+
+#define PASS_MAX		128		/* Legacy */
+
+#define CHARCLASS_NAME_MAX	14
+#define NL_ARGMAX		9
+#define NL_LANGMAX		14
+#define NL_MSGMAX		32767
+#define NL_NMAX			1
+#define NL_SETMAX		255
+#define NL_TEXTMAX		2048
+
+	/* IEEE Std 1003.1-2001 TSF */
+#define	_GETGR_R_SIZE_MAX	1024
+#define	_GETPW_R_SIZE_MAX	1024
+
+/* Always ensure that this is consistent with <stdio.h> */
+#ifndef TMP_MAX
+#define TMP_MAX			308915776	/* Legacy */
+#endif
+#endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+#define MB_LEN_MAX		32	/* Allow ISO/IEC 2022 */
+
+#include <machine/limits.h>
+#include <sys/syslimits.h>
+
+#ifdef __minix
+#define SYMLOOP_MAX		16
+#define SYMLINK_MAX		1024
 #endif
 
-#if _EM_WSIZE == 4
-#define INT_MIN (-2147483647-1)	/* minimum value of a 32-bit int */
-#define INT_MAX   2147483647	/* maximum value of a 32-bit int */
-#define UINT_MAX  0xFFFFFFFF	/* maximum value of an unsigned 32-bit int */
-#endif
-
-/*Definitions about longs (32 bits in MINIX). */
-#define LONG_MIN (-2147483647L-1)/* minimum value of a long */
-#define LONG_MAX  2147483647L	/* maximum value of a long */
-#define ULONG_MAX 0xFFFFFFFFL	/* maximum value of an unsigned long */
-
-/*Definitions about long longs (64 bits, may not be supported). */
-#ifdef __LONG_LONG_SUPPORTED
-#define LLONG_MIN  (-0x7FFFFFFFFFFFFFFFLL-1)	/* minimum value of a 
-						 * long long 
-						 */
-#define LLONG_MAX  0x7FFFFFFFFFFFFFFFLL		/* maximum value of a 
-						 * long long 
-						 */
-#define ULLONG_MAX 0xFFFFFFFFFFFFFFFFULL	/* maximum value of an
-						 * unsigned long long
-						 */
-#endif
-
-/* Minimum sizes required by the POSIX P1003.1 standard (Table 2-3). */
-#ifdef _POSIX_SOURCE		/* these are only visible for POSIX */
-#define _POSIX_ARG_MAX    4096	/* exec() may have 4K worth of args */
-#define _POSIX_CHILD_MAX     6	/* a process may have 6 children */
-#define _POSIX_LINK_MAX      8	/* a file may have 8 links */
-#define _POSIX_MAX_CANON   255	/* size of the canonical input queue */
-#define _POSIX_MAX_INPUT   255	/* you can type 255 chars ahead */
-#define _POSIX_NAME_MAX NAME_MAX /* max. file name length */
-#define _POSIX_NGROUPS_MAX   8	/* max. number of supplemental groups */
-
-/* a process may have this many files open */
-#define _POSIX_OPEN_MAX  __MINIX_OPEN_MAX
-
-/* a pathname may contain at most this many chars */
-#define _POSIX_PATH_MAX    __MINIX_PATH_MAX
-
-#define _POSIX_PIPE_BUF    512	/* pipes writes of 512 bytes must be atomic */
-#define _POSIX_STREAM_MAX    8	/* at least 8 FILEs can be open at once */
-#define _POSIX_TZNAME_MAX    3	/* time zone names can be at least 3 chars */
-#define _POSIX_SSIZE_MAX 32767	/* read() must support 32767 byte reads */
-#define _POSIX_SYMLOOP_MAX   8	/* The number of symbolic links that can be
-				 * traversed in the resolution of a pathname
-				 * in the absence of a loop.
-				 */
-#define _POSIX_SYMLINK_MAX 255	/* The number of bytes in a symbolic link */
-
-/* Values actually implemented by MINIX (Tables 2-4, 2-5, 2-6, and 2-7). */
-/* Some of these old names had better be defined when not POSIX. */
-#define _NO_LIMIT          100	/* arbitrary number; limit not enforced */
-
-#if _EM_WSIZE > 2
-#define ARG_MAX          262144 /* # bytes of args + environ for exec() */
-#else
-#define ARG_MAX           4096	/* args + environ on small machines */
-#endif
-#define CHILD_MAX    _NO_LIMIT	/* MINIX does not limit children */
-#define OPEN_MAX  __MINIX_OPEN_MAX	/* # open files a process may have */
-#if 0			/* V1 file system */
-#define LINK_MAX      CHAR_MAX	/* # links a file may have */
-#else			/* V2 or better file system */
-#define LINK_MAX      SHRT_MAX	/* # links a file may have */
-#endif
-#define MAX_CANON          255	/* size of the canonical input queue */
-#define MAX_INPUT          255	/* size of the type-ahead buffer */
-#define NAME_MAX       	   255	/* system-wide filename limit (up to fs) */
-#define PATH_MAX  __MINIX_PATH_MAX	/* # chars in a path name */
-#define PIPE_BUF         32768	/* # bytes in atomic write to a pipe */
-#define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
-#define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */
-#define SSIZE_MAX     INT_MAX /* max defined byte count for read() */
-#define SIZE_MAX      UINT_MAX
-#define SYMLINK_MAX       1024 	/* # bytes in a symbolic link */ 
-#define SYMLOOP_MAX	    16	/* maximum number of symbolic links that can
-				 * be reliably traversed in the resolution of
-				 * a pathname in the absence of a loop.
-				 */
-#define IOV_MAX        INT_MAX  /* maximum number of buffers for readv/writev */
-#endif /* _POSIX_SOURCE */
-
-#define NGROUPS_MAX          8	/* max. number of supplemental groups */
-
-#define GID_MAX		USHRT_MAX
-#define UID_MAX		USHRT_MAX
-
-#endif /* _LIMITS_H */
+#endif /* !_LIMITS_H_ */

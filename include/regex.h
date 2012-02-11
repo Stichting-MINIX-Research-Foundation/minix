@@ -1,7 +1,41 @@
+/*	$NetBSD: regex.h,v 1.13 2005/09/13 01:44:32 christos Exp $	*/
+
 /*-
- * Copyright (c) 1992 Henry Spencer.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Henry Spencer of the University of Toronto.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)regex.h	8.2 (Berkeley) 1/3/94
+ */
+
+/*-
+ * Copyright (c) 1992 Henry Spencer.
  *
  * This code is derived from software contributed to Berkeley by
  * Henry Spencer of the University of Toronto.
@@ -40,9 +74,8 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/cdefs.h>
+#include <sys/types.h>
 
 /* types */
 typedef off_t regoff_t;
@@ -86,6 +119,7 @@ typedef struct {
 #define	REG_EMPTY	14
 #define	REG_ASSERT	15
 #define	REG_INVARG	16
+#define	REG_ENOSYS	17
 #define	REG_ATOI	255	/* convert name to number (!) */
 #define	REG_ITOA	0400	/* convert number to name (!) */
 
@@ -97,9 +131,12 @@ typedef struct {
 #define	REG_LARGE	01000	/* force large representation */
 #define	REG_BACKR	02000	/* force use of backref code */
 
-int regcomp(regex_t *, const char *, int);
-size_t regerror(int, const regex_t *, char *, size_t);
-int regexec(const regex_t *, const char *, size_t, regmatch_t [], int);
-void regfree(regex_t *);
+__BEGIN_DECLS
+int	regcomp(regex_t * __restrict, const char * __restrict, int);
+size_t	regerror(int, const regex_t * __restrict, char * __restrict, size_t);
+int	regexec(const regex_t * __restrict,
+	    const char * __restrict, size_t, regmatch_t [], int);
+void	regfree(regex_t *);
+__END_DECLS
 
 #endif /* !_REGEX_H_ */

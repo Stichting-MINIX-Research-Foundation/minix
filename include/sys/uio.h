@@ -1,23 +1,37 @@
-/*
-sys/uio.h
+#ifndef _SYS_UIO_H_
+#define	_SYS_UIO_H_
 
-definitions for vector I/O operations
-*/
+#include <machine/ansi.h>
+#include <sys/featuretest.h>
 
-#ifndef _SYS_UIO_H
-#define _SYS_UIO_H
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
 
-/* Open Group Base Specifications Issue 6 (not complete) */
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
+#endif
 
-struct iovec
-{
-	void	*iov_base;
-	size_t	iov_len;
+struct iovec {
+	void	*iov_base;	/* Base address. */
+	size_t	 iov_len;	/* Length. */
 };
 
-_PROTOTYPE(ssize_t readv, (int _fildes, const struct iovec *_iov,
-							int _iovcnt)	);
-_PROTOTYPE(ssize_t writev, (int _fildes, const struct iovec *_iov,
-							int iovcnt)	);
+#if defined(_NETBSD_SOURCE)
+/*
+ * Limits
+ */
+/* Deprecated: use IOV_MAX from <limits.h> instead. */
+#define UIO_MAXIOV	1024		/* max 1K of iov's */
+#endif /* _NETBSD_SOURCE */
 
-#endif /* _SYS_UIO_H */
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+ssize_t	readv(int, const struct iovec *, int);
+ssize_t	writev(int, const struct iovec *, int);
+__END_DECLS
+
+#endif /* !_SYS_UIO_H_ */

@@ -37,9 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: hash_func.c,v 1.13 2008/09/10 17:52:35 joerg Exp $");
-#endif
 
 #include <sys/types.h>
 

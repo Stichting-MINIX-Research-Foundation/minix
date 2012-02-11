@@ -185,19 +185,14 @@ mkdir -p $RELEASEPACKAGE
 
 echo " * Transfering bootstrap dirs to $RELEASEDIR"
 cp -p /bin/* /usr/bin/* /usr/sbin/* /sbin/* $RELEASEDIR/$XBIN
-cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/sh /bin/echo /bin/install /bin/rm \
     /bin/date /bin/ls $RELEASEDIR/bin
-cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex /usr/bin/asmconv \
+cp -rp /usr/bin/make /usr/bin/yacc /usr/bin/lex \
 	/usr/bin/grep /usr/bin/egrep /usr/bin/awk /usr/bin/sed $RELEASEDIR/usr/bin
 
-CONFIGHEADER=$RELEASEDIR/usr/src/common/include/minix/sys_config.h
+CONFIGHEADER=$RELEASEDIR/usr/src/include/minix/sys_config.h
 
 copy_local_packages
-
-# Make sure compilers and libraries are root-owned
-chown -R root $RELEASEDIR/usr/lib
-chmod -R u+w $RELEASEDIR/usr/lib
 
 if [ "$COPY" -ne 1 ]
 then
@@ -235,16 +230,6 @@ else
 	IMG=${IMG_BASE}_copy.iso
 fi
 
-echo " * Fixups for owners and modes of dirs and files"
-chown -R root $RELEASEDIR/usr/$SRC
-chmod -R u+w $RELEASEDIR/usr/$SRC 
-find $RELEASEDIR/usr/$SRC -type d | xargs chmod 755
-find $RELEASEDIR/usr/$SRC -type f | xargs chmod 644
-find $RELEASEDIR/usr/$SRC -name configure | xargs chmod 755
-find $RELEASEDIR/usr/$SRC/commands -name build | xargs chmod 755
-# Bug tracking system not for on cd
-rm -rf $RELEASEDIR/usr/$SRC/doc/bugs
-
 # Make sure the CD knows it's a CD, unless it's not
 if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
@@ -278,6 +263,9 @@ rm -rf $RELEASEDIR/$XBIN
 # The build process leaves some file in $SRC as bin.
 chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
+
+echo " * Resetting timestamps"
+find $RELEASEDIR | xargs touch
 
 echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
 rm -rf $RELEASEDIR/tmp/*

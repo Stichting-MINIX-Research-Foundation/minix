@@ -1,25 +1,24 @@
-/* The <times.h> header is for time times() system call. */
+#ifndef	_SYS_TIMES_H_
+#define	_SYS_TIMES_H_
 
-#ifndef _TIMES_H
-#define _TIMES_H
+#include <machine/ansi.h>
 
-#ifndef _CLOCK_T
-#define _CLOCK_T
-typedef long clock_t;		/* unit for system accounting */
+#ifdef	_BSD_CLOCK_T_
+typedef	_BSD_CLOCK_T_	clock_t;
+#undef	_BSD_CLOCK_T_
 #endif
 
 struct tms {
-  clock_t tms_utime;
-  clock_t tms_stime;
-  clock_t tms_cutime;
-  clock_t tms_cstime;
+	clock_t tms_utime;	/* User CPU time */
+	clock_t tms_stime;	/* System CPU time */
+	clock_t tms_cutime;	/* User CPU time of terminated child procs */
+	clock_t tms_cstime;	/* System CPU time of terminated child procs */
 };
 
-/* Function Prototypes. */
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
-#endif
+#include <sys/cdefs.h>
 
-_PROTOTYPE( clock_t times, (struct tms *_buffer)			);
+__BEGIN_DECLS
+clock_t times(struct tms *);
+__END_DECLS
 
-#endif /* _TIMES_H */
+#endif /* !_SYS_TIMES_H_ */

@@ -11,9 +11,8 @@ FILES=	bsd.dep.mk bsd.files.mk \
 	sys.mk
 
 # MINIX-specific files
-FILES+= minix.bootprog.mk minix.service.mk minix.ackdep.mk \
-	minix.ack.mk minix.gcc.mk minix.gcov.mk pkgsrchooks.mk \
-	minix.newlibc.mk
+FILES+= minix.bootprog.mk minix.service.mk \
+	minix.gcc.mk minix.gcov.mk pkgsrchooks.mk 
 
 FILESDIR=/usr/share/mk
 .endif

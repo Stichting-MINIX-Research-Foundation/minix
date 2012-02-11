@@ -1,92 +1,48 @@
-/* The <sgtty.h> header contains data structures for ioctl(). */
+/*	$NetBSD: sgtty.h,v 1.8 2005/02/03 04:39:32 perry Exp $	*/
 
-#ifndef _SGTTY_H
-#define _SGTTY_H
-
-/* Should not be used, nor extended. Termios.h is the replacement for
- * sgtty.h for tty functions, and ioctl replaced code should be moved to
- * sys/ioctl.h and specific header files in the sys, or minix directory.
+/*
+ * Copyright (c) 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)sgtty.h	8.1 (Berkeley) 6/2/93
  */
-#include <sys/ioctl.h>		/* Ouch. */
 
-struct sgttyb {
-  char sg_ispeed;		/* input speed */
-  char sg_ospeed;		/* output speed */
-  char sg_erase;		/* erase character */
-  char sg_kill;			/* kill character */
-  int  sg_flags;		/* mode flags */
-};
+#ifndef _SGTTY_H_
+#define _SGTTY_H_
 
-struct tchars {
-  char t_intrc;			/* SIGINT char */
-  char t_quitc;			/* SIGQUIT char */
-  char t_startc;		/* start output (initially CTRL-Q) */
-  char t_stopc;			/* stop output	(initially CTRL-S) */
-  char t_eofc;			/* EOF (initially CTRL-D) */
-  char t_brkc;			/* input delimiter (like nl) */
-};
+#ifndef USE_OLD_TTY
+#define	USE_OLD_TTY
+#endif
+#include <sys/ioctl.h>
+#include <sys/cdefs.h>
 
-#if !_SYSTEM			/* the kernel doesn't want to see the rest */
+__BEGIN_DECLS
+int gtty(int, struct sgttyb *);
+int stty(int, struct sgttyb *);
+__END_DECLS
 
-/* Field names */
-#define XTABS	     0006000	/* do tab expansion */
-#define BITS8        0001400	/* 8 bits/char */
-#define BITS7        0001000	/* 7 bits/char */
-#define BITS6        0000400	/* 6 bits/char */
-#define BITS5        0000000	/* 5 bits/char */
-#define EVENP        0000200	/* even parity */
-#define ODDP         0000100	/* odd parity */
-#define RAW	     0000040	/* enable raw mode */
-#define CRMOD	     0000020	/* map lf to cr + lf */
-#define ECHO	     0000010	/* echo input */
-#define CBREAK	     0000002	/* enable cbreak mode */
-#define COOKED       0000000	/* neither CBREAK nor RAW */
-
-#define DCD          0100000	/* Data Carrier Detect */
-
-/* Line speeds */
-#define B0		   0	/* code for line-hangup */
-#define B110		   1
-#define B300		   3
-#define B1200		  12
-#define B2400		  24
-#define B4800		  48
-#define B9600 		  96
-#define B19200		 192
-#define B38400		 195
-#define B57600		 194
-#define B115200		 193
-
-/* Things Minix supports but not properly */
-/* the divide-by-100 encoding ain't too hot */
-#define ANYP         0000300
-#define B50                0
-#define B75                0
-#define B134               0
-#define B150               0
-#define B200               2
-#define B600               6
-#define B1800             18
-#define B3600             36
-#define B7200             72
-#define EXTA             192
-#define EXTB               0
-
-/* Things Minix doesn't support but are fairly harmless if used */
-#define NLDELAY      0001400
-#define TBDELAY      0006000
-#define CRDELAY      0030000
-#define VTDELAY      0040000
-#define BSDELAY      0100000
-#define ALLDELAY     0177400
-
-/* Copied from termios.h: */
-struct winsize
-{
-	unsigned short	ws_row;		/* rows, in characters */
-	unsigned short	ws_col;		/* columns, in characters */
-	unsigned short	ws_xpixel;	/* horizontal size, pixels */
-	unsigned short	ws_ypixel;	/* vertical size, pixels */
-};
-#endif /* !_SYSTEM */
-#endif /* _SGTTY_H */
+#endif /* _SGTTY_H_ */

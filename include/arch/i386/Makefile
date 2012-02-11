@@ -1,7 +1,6 @@
-INCSDIR= /usr/include.ack/i386
+#	$NetBSD: Makefile,v 1.38 2009/08/30 02:00:56 dyoung Exp $
 
-INCS+=	_align.h asm.h mcontext.h multiboot.h param.h
 
-.include "../../../common/include/arch/i386/Makefile.inc"
+SUBDIR=	include ../x86/include
 
-.include <bsd.kinc.mk>
+.include <bsd.subdir.mk>

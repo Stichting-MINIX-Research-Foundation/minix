@@ -60,10 +60,6 @@ SRCS= 	archive_check_magic.c \
 		archive_write_set_format_zip.c \
 		filter_fork.c
 
-.if ${COMPILER_TYPE} == "ack"
-SRCS+=  minix_utils.c
-.endif
-
 CPPFLAGS+= -DHAVE_CONFIG_H
 .if ${NBSD_LIBC} == "yes"
 INCSDIR= /usr/include

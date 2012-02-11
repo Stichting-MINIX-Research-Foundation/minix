@@ -1,4 +1,4 @@
-MAN=	ACK.7 ascii.7 environ.7 hier.7 man.7  \
+MAN=	ascii.7 environ.7 hier.7 man.7  \
 	    \
 	    \
 	    \

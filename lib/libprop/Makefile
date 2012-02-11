@@ -10,7 +10,7 @@ PROPLIBDIR=${NETBSDSRCDIR}/common/lib/libprop
 .include "${PROPLIBDIR}/Makefile.inc"
 
 CPPFLAGS+=-D_LIBPROP
-CPPFLAGS+= -I${NETBSDSRCDIR}/lib/nbsd_libc/include # -D_REENTRANT
+CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libc/include # -D_REENTRANT
 
 LINTFLAGS+=-w
 LIB=	prop

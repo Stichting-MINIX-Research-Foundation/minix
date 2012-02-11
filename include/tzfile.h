@@ -1,51 +1,55 @@
-#ifndef TZFILE_H
-
-#define TZFILE_H
+/*	$NetBSD: tzfile.h,v 1.7 2003/08/07 09:44:11 agc Exp $	*/
 
 /*
-** This file is in the public domain, so clarified as of
-** 1996-06-05 by Arthur David Olson.
-*/
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Arthur David Olson of the National Cancer Institute.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)tzfile.h	8.1 (Berkeley) 6/2/93
+ */
+
+#ifndef _TZFILE_H_
+#define	_TZFILE_H_
 
 /*
-** This header is for use ONLY with the time conversion code.
-** There is no guarantee that it will remain unchanged,
-** or that it will remain at all.
-** Do NOT copy it to any system include directory.
-** Thank you!
-*/
-
-/*
-** ID
-*/
-
-#ifndef lint
-#ifndef NOID
-static char	tzfilehid[] = "@(#)tzfile.h	7.18";
-#endif /* !defined NOID */
-#endif /* !defined lint */
-
-/*
-** Information about time zone files.
-*/
-
-#ifndef TZDIR
-#define TZDIR	"/usr/share/zoneinfo" /* Time zone object file directory */
-#endif /* !defined TZDIR */
-
-#ifndef TZDEFAULT
-#define TZDEFAULT	"localtime"
-#endif /* !defined TZDEFAULT */
-
-#ifndef TZDEFRULES
+ * Information about time zone files.
+ */
+			/* Time zone object file directory */
+#define TZDIR		"/usr/share/zoneinfo"
+#define TZDEFAULT	"/etc/localtime"
 #define TZDEFRULES	"posixrules"
-#endif /* !defined TZDEFRULES */
 
 /*
 ** Each file begins with. . .
 */
 
-#define	TZ_MAGIC	"TZif"
+#define TZ_MAGIC	"TZif"
 
 struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
@@ -78,7 +82,7 @@ struct tzhead {
 **					assumed to be wall clock time
 **	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
 **					time is UTC, if FALSE,
-**					transition time is local time
+**					transition time is wall clock time
 **					if absent, transition times are
 **					assumed to be local time
 */
@@ -88,7 +92,6 @@ struct tzhead {
 ** exceed any of the limits below.
 */
 
-#ifndef TZ_MAX_TIMES
 /*
 ** The TZ_MAX_TIMES value below is enough to handle a bit more than a
 ** year's worth of solar time (corrected daily to the nearest second) or
@@ -96,29 +99,18 @@ struct tzhead {
 ** (where there are three time zone transitions every fourth year).
 */
 #define TZ_MAX_TIMES	370
-#endif /* !defined TZ_MAX_TIMES */
 
-#ifndef TZ_MAX_TYPES
+#define NOSOLAR			/* 4BSD doesn't currently handle solar time */
+
 #ifndef NOSOLAR
-#define TZ_MAX_TYPES	256 /* Limited by what (unsigned char)'s can hold */
-#endif /* !defined NOSOLAR */
-#ifdef NOSOLAR
-/*
-** Must be at least 14 for Europe/Riga as of Jan 12 1995,
-** as noted by Earl Chew.
-*/
-#define TZ_MAX_TYPES	20	/* Maximum number of local time types */
-#endif /* !defined NOSOLAR */
-#endif /* !defined TZ_MAX_TYPES */
+#define TZ_MAX_TYPES	256	/* Limited by what (unsigned char)'s can hold */
+#else
+#define TZ_MAX_TYPES	10	/* Maximum number of local time types */
+#endif
 
-#ifndef TZ_MAX_CHARS
 #define TZ_MAX_CHARS	50	/* Maximum number of abbreviation characters */
-				/* (limited by what unsigned chars can hold) */
-#endif /* !defined TZ_MAX_CHARS */
 
-#ifndef TZ_MAX_LEAPS
-#define TZ_MAX_LEAPS	50	/* Maximum number of leap second corrections */
-#endif /* !defined TZ_MAX_LEAPS */
+#define	TZ_MAX_LEAPS	50	/* Maximum number of leap second corrections */
 
 #define SECSPERMIN	60
 #define MINSPERHOUR	60
@@ -156,20 +148,11 @@ struct tzhead {
 #define EPOCH_YEAR	1970
 #define EPOCH_WDAY	TM_THURSDAY
 
-#define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
-
 /*
-** Since everything in isleap is modulo 400 (or a factor of 400), we know that
-**	isleap(y) == isleap(y % 400)
-** and so
-**	isleap(a + b) == isleap((a + b) % 400)
-** or
-**	isleap(a + b) == isleap(a % 400 + b % 400)
-** This is true even if % means modulo rather than Fortran remainder
-** (which is allowed by C89 but not C99).
-** We use this to avoid addition overflow problems.
+** Accurate only for the past couple of centuries;
+** that will probably do.
 */
 
-#define isleap_sum(a, b)	isleap((a) % 400 + (b) % 400)
+#define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
 
-#endif /* !defined TZFILE_H */
+#endif /* !_TZFILE_H_ */

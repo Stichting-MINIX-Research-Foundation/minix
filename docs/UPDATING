@@ -1,3 +1,27 @@
+20120214:
+	Full switch to clang/ELF. ack is no longer supported.
+
+	clang is the ELF-generating compiler in the base system, gcc is
+	available as a package.
+
+	To boot ELF-format images, either reinstall your whole system,
+	thereby getting the netbsd-based boot loader, or use the boot
+	monitor as documented at
+		http://wiki.minix3.org/en/UsersGuide/BootMonitor
+
+	Single copies of ELF boot files are also stored in /boot on
+	make hdboot as a boot monitor compatability measure. In short,
+	to boot the ELF image in /boot using the boot monitor,
+	do "mb=1" and "kernel=/boot/kernel", then "boot" in the boot
+	monitor.
+
+	Workaround for header file timestamps causing perpetual recompiles:
+	# find /usr/pkg -name '*.h' | xargs touch
+
+	Now that CC is clang instead of ack (cc), the depend files will
+	be out of date, so to make world, do:
+	# make cleandepend clean world
+
 20120213
 	Replace VFS with AVFS
 

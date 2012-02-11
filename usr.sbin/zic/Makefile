@@ -9,6 +9,6 @@ SRCS=	zic.c scheck.c ialloc.c
 MAN=	zic.8
 CPPFLAGS+=-Dunix
 
-.PATH: ${NETBSDSRCDIR}/lib/nbsd_libc/time
+.PATH: ${NETBSDSRCDIR}/lib/libc/time
 
 .include <bsd.prog.mk>

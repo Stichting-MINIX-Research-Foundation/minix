@@ -153,14 +153,5 @@ LINKSMODE?= ${LIBMODE}
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
-.if ${COMPILER_TYPE} == "ack"
-.include <minix.ackdep.mk>
-.elif ${COMPILER_TYPE} == "gnu"
 .include <bsd.dep.mk>
-.endif
-
-.if ${COMPILER_TYPE} == "ack"
-.include <minix.ack.mk>
-.elif ${COMPILER_TYPE} == "gnu"
 .include <minix.gcc.mk>
-.endif

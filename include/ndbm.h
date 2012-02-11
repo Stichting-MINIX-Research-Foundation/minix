@@ -38,9 +38,7 @@
 #define	_NDBM_H_
 
 #include <sys/cdefs.h>
-#ifndef __minix
 #include <sys/featuretest.h>
-#endif
 #include <stdint.h>
 #include <db.h>
 
@@ -53,7 +51,7 @@
 #define DBM_INSERT      0
 #define DBM_REPLACE     1
 
-#if defined(_NETBSD_SOURCE) || defined(_MINIX)
+#if defined(_NETBSD_SOURCE)
 /*
  * The db(3) support for ndbm(3) always appends this suffix to the
  * file name to avoid overwriting the user's original database.
@@ -67,32 +65,25 @@ typedef struct {
 } datum;
 
 typedef DB DBM;
-#if defined(_NETBSD_SOURCE) || defined(_MINIX)
+#if defined(_NETBSD_SOURCE)
 #define	dbm_pagfno(a)	DBM_PAGFNO_NOT_AVAILABLE
 #endif
 
-/* __BEGIN_DECLS */
+__BEGIN_DECLS
 void	 dbm_close(DBM *);
 DBM	*dbm_open(const char *, int, mode_t);
 int	 dbm_error(DBM *);
 int	 dbm_clearerr(DBM *);
-#if defined(_NETBSD_SOURCE) || defined(_MINIX)
+#if defined(_NETBSD_SOURCE)
 int	 dbm_dirfno(DBM *);
 #endif
-#if !defined(__LIBC12_SOURCE__) && !defined(__minix)
+#ifndef __LIBC12_SOURCE__
 int	 dbm_delete(DBM *, datum)		__RENAME(__dbm_delete13);
 datum	 dbm_fetch(DBM *, datum)		__RENAME(__dbm_fetch13);
 datum	 dbm_firstkey(DBM *)			__RENAME(__dbm_firstkey13);
 datum	 dbm_nextkey(DBM *)			__RENAME(__dbm_nextkey13);
 int	 dbm_store(DBM *, datum, datum, int)	__RENAME(__dbm_store13);
 #endif
-#if defined(__minix)
-int	 dbm_delete(DBM *, datum);
-datum	 dbm_fetch(DBM *, datum);
-datum	 dbm_firstkey(DBM *);
-datum	 dbm_nextkey(DBM *);
-int	 dbm_store(DBM *, datum, datum, int);
-#endif
-/* __END_DECLS */
+__END_DECLS
 
 #endif /* !_NDBM_H_ */

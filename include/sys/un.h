@@ -1,18 +1,21 @@
-#ifndef SYS_UN_H
-#define SYS_UN_H
+#ifndef _SYS_UN_H_
+#define _SYS_UN_H_
 
-#include <stdint.h>
+#include <sys/ansi.h>
+#include <sys/featuretest.h>
+#include <sys/types.h>
 
-#ifndef _SA_FAMILY_T
-#define _SA_FAMILY_T
-/* Should match corresponding typedef in <sys/socket.h> */
-typedef uint8_t		sa_family_t;
-#endif /* _SA_FAMILY_T */
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	__sa_family_t
+#endif
 
 #define UNIX_PATH_MAX 127
 
-struct sockaddr_un
-{
+/*
+ * Definitions for UNIX IPC domain.
+ */
+struct	sockaddr_un {
 	sa_family_t	sun_family;
 	char		sun_path[UNIX_PATH_MAX];
 };
@@ -28,4 +31,4 @@ struct sockaddr_un
 #define SUN_LEN(unp) \
 ((size_t)((sizeof(*(unp)) - sizeof((unp)->sun_path)) + strlen((unp)->sun_path)))
 
-#endif
+#endif /* _SYS_UN_H_ */

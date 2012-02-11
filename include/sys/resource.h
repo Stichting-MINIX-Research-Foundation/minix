@@ -1,25 +1,34 @@
-#ifndef _SYS_RESOURCE_H
-#define _SYS_RESOURCE_H
+#ifndef _SYS_RESOURCE_H_
+#define	_SYS_RESOURCE_H_
 
-/* Priority range for the get/setpriority() interface.
- * It isn't a mapping on the internal minix scheduling
- * priority.
- */
-#define PRIO_MIN	-20
-#define PRIO_MAX	 20
-
-#define PRIO_PROCESS	0
-#define PRIO_PGRP	1
-#define PRIO_USER	2
-
-int getpriority(int, int);
-int setpriority(int, int, int);
-
-#ifdef _POSIX_SOURCE
-
+#include <sys/featuretest.h>
 #include <sys/time.h>
 
-typedef unsigned long rlim_t;
+/*
+ * Process priority specifications to get/setpriority.
+ */
+#define	PRIO_MIN	-20
+#define	PRIO_MAX	20
+
+#define	PRIO_PROCESS	0
+#define	PRIO_PGRP	1
+#define	PRIO_USER	2
+
+/*
+ * Resource limits
+ */
+#define RLIMIT_CORE	1
+#define RLIMIT_CPU	2
+#define RLIMIT_DATA	3
+#define RLIMIT_FSIZE	4
+#define RLIMIT_NOFILE	5
+#define RLIMIT_STACK	6
+#define RLIMIT_AS	7
+#define	RLIMIT_VMEM	RLIMIT_AS	/* common alias */
+
+#if defined(_NETBSD_SOURCE)
+#define	RLIM_NLIMITS	8		/* number of resource limits */
+#endif
 
 #define RLIM_INFINITY ((rlim_t) -1)
 #define RLIM_SAVED_CUR RLIM_INFINITY
@@ -31,17 +40,12 @@ struct rlimit
 	rlim_t rlim_max;
 };
 
-#define RLIMIT_CORE	1
-#define RLIMIT_CPU	2
-#define RLIMIT_DATA	3
-#define RLIMIT_FSIZE	4
-#define RLIMIT_NOFILE	5
-#define RLIMIT_STACK	6
-#define RLIMIT_AS	7
+#include <sys/cdefs.h>
 
-#define RLIM_NLIMITS 8
-int getrlimit(int resource, struct rlimit *rlp);
+__BEGIN_DECLS
+int	getpriority(int, int);
+int	getrlimit(int, struct rlimit *);
+int	setpriority(int, int, int);
+__END_DECLS
 
-#endif /* defined(_POSIX_SOURCE) */
-
-#endif
+#endif	/* !_SYS_RESOURCE_H_ */

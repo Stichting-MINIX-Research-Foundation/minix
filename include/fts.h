@@ -1,3 +1,5 @@
+/*	$NetBSD: fts.h,v 1.19 2009/08/16 19:33:38 christos Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -10,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,11 +29,32 @@
  * SUCH DAMAGE.
  *
  *	@(#)fts.h	8.3 (Berkeley) 8/14/94
- * $FreeBSD: src/include/fts.h,v 1.11 2005/01/07 00:06:20 pjd Exp $
  */
 
 #ifndef	_FTS_H_
 #define	_FTS_H_
+
+#ifndef	__fts_stat_t
+#define	__fts_stat_t	struct stat
+#endif
+#ifndef	__fts_nlink_t
+#define	__fts_nlink_t	nlink_t
+#endif
+#ifndef	__fts_ino_t
+#define	__fts_ino_t	ino_t
+#endif
+#ifndef	__fts_length_t
+#define	__fts_length_t	unsigned int
+#endif
+#ifndef	__fts_number_t
+#define	__fts_number_t	int64_t
+#endif
+#ifndef	__fts_dev_t
+#define	__fts_dev_t	dev_t
+#endif
+#ifndef	__fts_level_t
+#define	__fts_level_t	int
+#endif
 
 typedef struct {
 	struct _ftsent *fts_cur;	/* current node */
@@ -44,10 +63,10 @@ typedef struct {
 	dev_t fts_dev;			/* starting device # */
 	char *fts_path;			/* path for this descent */
 	int fts_rfd;			/* fd for root */
-	int fts_pathlen;		/* sizeof(path) */
-	int fts_nitems;			/* elements in the sort array */
+	unsigned int fts_pathlen;	/* sizeof(path) */
+	unsigned int fts_nitems;	/* elements in the sort array */
 	int (*fts_compar)		/* compare function */
-	    (const struct _ftsent * const *, const struct _ftsent * const *);
+		(const struct _ftsent **, const struct _ftsent **);
 
 #define	FTS_COMFOLLOW	0x001		/* follow command line symlinks */
 #define	FTS_LOGICAL	0x002		/* logical walk */
@@ -56,44 +75,36 @@ typedef struct {
 #define	FTS_PHYSICAL	0x010		/* physical walk */
 #define	FTS_SEEDOT	0x020		/* return dot and dot-dot */
 #define	FTS_XDEV	0x040		/* don't cross devices */
+#ifndef __minix
+#define	FTS_WHITEOUT	0x080		/* return whiteout information */
+#endif 
 #define	FTS_OPTIONMASK	0x0ff		/* valid user option mask */
 
 #define	FTS_NAMEONLY	0x100		/* (private) child names only */
 #define	FTS_STOP	0x200		/* (private) unrecoverable error */
 	int fts_options;		/* fts_open options, global flags */
-	void *fts_clientptr;		/* thunk for sort function */
 } FTS;
 
 typedef struct _ftsent {
 	struct _ftsent *fts_cycle;	/* cycle node */
 	struct _ftsent *fts_parent;	/* parent directory */
 	struct _ftsent *fts_link;	/* next file in directory */
-	union {
-		struct {
-			long __fts_number;	/* local numeric value */
-			void *__fts_pointer;	/* local address value */
-		} __struct_ftsent;
-#if 0
-		int64_t __fts_bignum;
-#endif
-	} __union_ftsent;
-#define	fts_number	__union_ftsent.__struct_ftsent.__fts_number
-#define	fts_pointer	__union_ftsent.__struct_ftsent.__fts_pointer
-#define	fts_bignum	__union_ftsent.__fts_bignum
+	__fts_number_t fts_number;      /* local numeric value */
+	void *fts_pointer;	        /* local address value */
 	char *fts_accpath;		/* access path */
 	char *fts_path;			/* root path */
 	int fts_errno;			/* errno for this node */
 	int fts_symfd;			/* fd for symlink */
-	u_short fts_pathlen;		/* strlen(fts_path) */
-	u_short fts_namelen;		/* strlen(fts_name) */
+	__fts_length_t fts_pathlen;	/* strlen(fts_path) */
+	__fts_length_t fts_namelen;	/* strlen(fts_name) */
 
-	ino_t fts_ino;			/* inode */
-	dev_t fts_dev;			/* device */
-	nlink_t fts_nlink;		/* link count */
+	__fts_ino_t fts_ino;		/* inode */
+	__fts_dev_t fts_dev;		/* device */
+	__fts_nlink_t fts_nlink;	/* link count */
 
 #define	FTS_ROOTPARENTLEVEL	-1
 #define	FTS_ROOTLEVEL		 0
-	short fts_level;		/* depth (-1 to N) */
+	__fts_level_t fts_level;		/* depth (-1 to N) */
 
 #define	FTS_D		 1		/* preorder directory */
 #define	FTS_DC		 2		/* directory that causes cycles */
@@ -109,34 +120,34 @@ typedef struct _ftsent {
 #define	FTS_SL		12		/* symbolic link */
 #define	FTS_SLNONE	13		/* symbolic link without target */
 #define	FTS_W		14		/* whiteout object */
-	u_short fts_info;		/* user flags for FTSENT structure */
+	unsigned short fts_info;	/* user flags for FTSENT structure */
 
 #define	FTS_DONTCHDIR	 0x01		/* don't chdir .. to the parent */
 #define	FTS_SYMFOLLOW	 0x02		/* followed a symlink to get here */
 #define	FTS_ISW		 0x04		/* this is a whiteout object */
-	u_short fts_flags;		/* private flags for FTSENT structure */
+	unsigned short fts_flags;	/* private flags for FTSENT structure */
 
 #define	FTS_AGAIN	 1		/* read node again */
 #define	FTS_FOLLOW	 2		/* follow symbolic link */
 #define	FTS_NOINSTR	 3		/* no instructions */
 #define	FTS_SKIP	 4		/* discard node */
-	u_short fts_instr;		/* fts_set() instructions */
+	unsigned short fts_instr;	/* fts_set() instructions */
 
-	struct stat *fts_statp;		/* stat(2) information */
-	char *fts_name;			/* file name */
-	FTS *fts_fts;			/* back pointer to main FTS */
+	__fts_stat_t *fts_statp;	/* stat(2) information */
+	char fts_name[1];		/* file name */
 } FTSENT;
 
-FTSENT	*fts_children(FTS *, int);
-int	 fts_close(FTS *);
-void	*fts_get_clientptr(FTS *);
-#define	 fts_get_clientptr(fts)	((fts)->fts_clientptr)
-FTS	*fts_get_stream(FTSENT *);
-#define	 fts_get_stream(ftsent)	((ftsent)->fts_fts)
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+#ifndef	__LIBC12_SOURCE__
+FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children60);
+int	 fts_close(FTS *)			__RENAME(__fts_close60);
 FTS	*fts_open(char * const *, int,
-	    int (*)(const FTSENT * const *, const FTSENT * const *));
-FTSENT	*fts_read(FTS *);
-int	 fts_set(FTS *, FTSENT *, int);
-void	 fts_set_clientptr(FTS *, void *);
+    int (*)(const FTSENT **, const FTSENT **))	__RENAME(__fts_open60);
+FTSENT	*fts_read(FTS *)			__RENAME(__fts_read60);
+int	 fts_set(FTS *, FTSENT *, int)		__RENAME(__fts_set60);
+#endif
+__END_DECLS
 
 #endif /* !_FTS_H_ */

@@ -8,19 +8,11 @@ PROG=	chpass
 SRCS=	chpass.c edit.c field.c table.c util.c
 BINOWN=	root
 BINMODE=4555
-.ifdef __MINIX
-.PATH:  ${NETBSDSRCDIR}/lib/nbsd_libc/gen
-.else
 .PATH:	${NETBSDSRCDIR}/lib/libc/gen
-.endif
 LINKS=	${BINDIR}/chpass ${BINDIR}/chfn ${BINDIR}/chpass ${BINDIR}/chsh
 MLINKS=	chpass.1 chfn.1 chpass.1 chsh.1
 
-.ifdef __MINIX
-CPPFLAGS+=-I${NETBSDSRCDIR}/lib/nbsd_libc/include
-.else
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib/libc/include
-.endif
 
 .if defined(__MINIX)
 USE_YP=	no

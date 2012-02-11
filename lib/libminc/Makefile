@@ -8,7 +8,7 @@ LIB=		minc
 
 CPPFLAGS.sched_start.c+=	-I${MINIXSRCDIR}
 
-LIBCSRCDIR=${MINIXSRCDIR}/lib/nbsd_libc
+LIBCSRCDIR=${MINIXSRCDIR}/lib/libc
 
 MACHINE_ARCH=${MACHINE}
 
@@ -74,8 +74,8 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/stdlib -I${LIBCSRCDIR}/include
 # Import from gen
 
 errlist.c: ${LIBCSRCDIR}/gen/errlist.awk \
-	   ${MINIXSRCDIR}/nbsd_include/sys/errno.h
-	cat ${MINIXSRCDIR}/nbsd_include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCSRCDIR}/gen/errlist.awk > ${.TARGET}
+	   ${MINIXSRCDIR}/include/sys/errno.h
+	cat ${MINIXSRCDIR}/include/sys/errno.h | ${TOOL_SED} 's/(_SIGN//' | ${TOOL_AWK} -f ${LIBCSRCDIR}/gen/errlist.awk > ${.TARGET}
 
 .for i in assert.c _errno.c errno.c _env.c errlist.c \
 	execle.c getprogname.c sleep.c time.c \

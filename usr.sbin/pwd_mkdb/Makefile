@@ -5,11 +5,7 @@
 
 PROG=	pwd_mkdb
 MAN=	pwd_mkdb.8
-.if defined(__MINIX)
-CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/nbsd_libc/include
-.else
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include
-.endif
 
 .ifndef HOSTPROG
 LDADD+=	-lutil

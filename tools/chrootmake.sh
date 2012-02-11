@@ -12,15 +12,12 @@ make world
 
 cd tools 
 rm revision
-rm /boot/image/*
 make install
-cp /boot/image/* /boot/image_big  # Make big image accessible by this name
-cp ../boot/boot/boot /boot/boot
 
-CC=clang make cleandepend clean depend image
+make cleandepend clean depend image
 rm revision
 rm -rf /boot/minix/* # on old systems might not be present
-CC=clang make install
+make install
 cp ../sys/arch/i386/stand/boot/biosboot/boot_monitor /
 cp -rf /boot/minix/* /boot/minix_default
 
@@ -30,4 +27,3 @@ if [ $MAKEMAP -ne 0 ]; then
 fi
 make clean
 make cleandepend
-find . -name 'obj-*' -type d|xargs rm -rf

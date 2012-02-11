@@ -34,13 +34,9 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: mpool.c,v 1.19 2009/04/22 18:44:06 christos Exp $");
-#endif
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/queue.h>
 #include <sys/stat.h>
 

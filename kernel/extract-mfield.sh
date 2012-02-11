@@ -4,7 +4,7 @@ set -e
 
 find_files_and_lines()
 (
-	find  ../lib/libc/other ../lib/libc/posix ../lib/libsys -name '*.c' | \
+	find  ../lib/libc/sys-minix ../lib/libsys -name '*.c' | \
 	xargs egrep -n '((_syscall|_taskcall)\([^,][^,]*,[ 	]*|_kernel_call\()[A-Z_][A-Z0-9_]*,[ 	]*&m\)' | \
 	cut -d: -f1,2
 )

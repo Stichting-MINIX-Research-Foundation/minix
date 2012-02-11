@@ -23,7 +23,7 @@ LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
-CC?=		cc
+CC?=		clang
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "x86_64" || \
@@ -232,22 +232,11 @@ YACC.y?=	${YACC} ${YFLAGS}
 
 # MINIX
 
-.if !empty(CC:Mcc) || !empty(CC:Macd) || !empty(CC:M*acc)
-COMPILER_TYPE=ack
-AR?=	aal
-.elif !empty(CC:M*gcc) || !empty(CC:M*clang) || !empty(CC:M*pcc) || !empty(CC:M*ccc-analyzer)
 COMPILER_TYPE=gnu
-AR?=	ar
-.endif
-
-# Set NBSD_LIBC to either "yes" or "no".
-.if ${COMPILER_TYPE} == "ack"
-NBSD_LIBC=	no
-.else
+AR?=   ar
 NBSD_LIBC=	yes
-.endif
 
-.if ${COMPILER_TYPE} == "gnu" && defined(MKSMALL) && ${MKSMALL} == "yes"
+.if defined(MKSMALL) && ${MKSMALL} == "yes"
 DBG=	-Os
 CFLAGS+= -DNDEBUG
 .endif

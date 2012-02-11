@@ -34,13 +34,9 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: db.c,v 1.16 2008/09/11 12:58:00 joerg Exp $");
-#endif
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/types.h>
 
 #include <errno.h>
@@ -60,18 +56,16 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
     const void *openinfo)
 {
 
-#ifndef O_EXLOCK
-#define O_EXLOCK 0
-#endif
-
-#ifndef O_SHLOCK
-#define O_SHLOCK 0
-#endif
-
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
+#ifdef __minix
+#define USE_OPEN_FLAGS 							\
+	(O_CREAT | O_EXCL | O_NONBLOCK | O_RDONLY |			\
+	 O_RDWR | O_TRUNC)
+#else /* !__minix */
 #define	USE_OPEN_FLAGS							\
 	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
 	 O_RDWR | O_SHLOCK | O_TRUNC)
+#endif /* __minix */
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {

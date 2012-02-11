@@ -1,3 +1,5 @@
+/*	$NetBSD: mktemp.c,v 1.19 2003/08/07 16:43:28 agc Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -10,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,128 +29,42 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: mktemp.c,v 1.19 2003/08/07 16:43:28 agc Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
-#include <ctype.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include "reentrant.h"
+#include "local.h"
 
-static int _gettemp(char*,int*,int);
-
-int
-mkstemp(path)
+char *
+_mktemp(path)
 	char *path;
 {
-	int fd;
 
-	return (_gettemp(path, &fd, 0) ? fd : -1);
+	_DIAGASSERT(path != NULL);
+
+	return (__gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
 }
+
+__warn_references(mktemp,
+    "warning: mktemp() possibly used unsafely, use mkstemp() or mkdtemp()")
 
 char *
 mktemp(path)
 	char *path;
 {
-	return(_gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
+
+	_DIAGASSERT(path != NULL);
+
+	return (__gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
 }
-
-char *
-mkdtemp(path)
-	char *path;
-{
-	return(_gettemp(path, (int *)NULL, 1) ? path : (char *)NULL);
-}
-
-static int
-_gettemp(path, doopen, domkdir)
-	char *path;
-	register int *doopen;
-	int domkdir;
-{
-	extern int errno;
-	register char *start, *trv;
-	struct stat sbuf;
-	u_int pid;
-	static int lastnames = 0;
-	int names = 0;
-
-	pid = getpid();
-	for (trv = path; *trv; ++trv);		/* extra X's get set to 0's */
-	while (*--trv == 'X') {
-		*trv = (pid % 10) + '0';
-		pid /= 10;
-	}
-
-	/*
-	 * check the target directory; if you have six X's and it
-	 * doesn't exist this runs for a *very* long time.
-	 */
-	for (start = trv + 1;; --trv) {
-		if (trv <= path)
-			break;
-		if (*trv == '/') {
-			*trv = '\0';
-			if (stat(path, &sbuf))
-				return(0);
-			if (!S_ISDIR(sbuf.st_mode)) {
-				errno = ENOTDIR;
-				return(0);
-			}
-			*trv = '/';
-			break;
-		}
-	}
-
-	for (;;) {
-		/* tricky little algorithm for backward compatibility */
-		for (trv = start;;) {
-			if (!*trv)
-				return(0);
-			if (*trv == 'z')
-				*trv++ = 'a';
-			else {
-				if (isdigit(*trv))
-					*trv = 'a';
-				else
-					++*trv;
-				break;
-			}
-		}
-
-		names++;
-
-		if(names <= lastnames)
-			continue;
-
-		lastnames = names;
-
-		if (doopen) {
-			if ((*doopen =
-			    open(path, O_CREAT|O_EXCL|O_RDWR, 0600)) >= 0) {
-				return(1);
-			    }
-			if (errno != EEXIST) {
-				return(0);
-			}
-		} else if(domkdir) {
-			if (mkdir(path, 0700) >= 0)
-				return (1);
-			if (errno != EEXIST)
-				return (0);
-		} else if (stat(path, &sbuf)) {
-			return(errno == ENOENT ? 1 : 0);
-		}
-
-	}
-	/*NOTREACHED*/
-}
-
-/*
- * $PchId: mktemp.c,v 1.3 1995/11/20 19:10:39 philip Exp $
- */

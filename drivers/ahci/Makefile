@@ -5,9 +5,7 @@ SRCS=	ahci.c
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBTIMERS} ${LIBMTHREAD}
 LDADD+=	-lblockdriver -lsys -ltimers -lmthread
 
-.if ${COMPILER_TYPE} == "gnu"
 LDADD+=	-lc
-.endif
 
 MAN=
 

@@ -37,9 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $");
-#endif
 
 /*
  * PACKAGE:  hashing
@@ -57,9 +55,7 @@ __RCSID("$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $");
  *	open_temp
  */
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 
 #include <sys/types.h>
 
@@ -70,33 +66,13 @@ __RCSID("$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifndef __minix
 #include <paths.h>
-#else
-#define _PATH_TMP "/tmp/"
-#endif
 #include <assert.h>
 
 #include <db.h>
 #include "hash.h"
 #include "page.h"
 #include "extern.h"
-
-#ifndef LITTLE_ENDIAN
-# define LITTLE_ENDIAN	1234
-#endif
-
-#ifndef BIG_ENDIAN
-# define BIG_ENDIAN	4321
-#endif
-
-#ifndef BYTE_ORDER
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
-
-#ifndef _DIAGASSERT
-#define _DIAGASSERT assert
-#endif
 
 static uint32_t	*fetch_bitmap(HTAB *, int);
 static uint32_t	 first_free(uint32_t);
@@ -894,14 +870,11 @@ open_temp(HTAB *hashp)
 	char *envtmp;
 	char namestr[PATH_MAX];
 
-#ifndef __minix
 	if (issetugid())
 		envtmp = NULL;
 	else
 		envtmp = getenv("TMPDIR");
-#else
-	envtmp = getenv("TMPDIR");
-#endif
+
 	if (-1 == snprintf(namestr, sizeof(namestr), "%s/_hashXXXXXX",
 	    envtmp ? envtmp : _PATH_TMP))
 		return -1;

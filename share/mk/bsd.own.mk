@@ -87,13 +87,13 @@ PRINTOBJDIR=	echo # prevent infinite recursion
 
 #
 # Determine if running in the MINIX source tree by checking for the
-# existence of boot/ and tools/ in the current or a parent directory,
+# existence of usr.bin and tools/ in the current or a parent directory,
 # and setting _MSRC_TOP_ to the result.
 #
 .if !defined(_MSRC_TOP_)		# {
 _MSRC_TOP_!= cd ${.CURDIR}; while :; do \
 		here=`pwd`; \
-		[ -d boot  ] && [ -d tools ] && { echo $$here; break; }; \
+		[ -d usr.bin ] && [ -d tools ] && { echo $$here; break; }; \
 		case $$here in /) echo ""; break;; esac; \
 		cd ..; done
 
@@ -484,9 +484,6 @@ INFOOWN?=	root
 INFOMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
-.if ${COMPILER_TYPE} == "ack"
-LIBDIR=		/usr/lib/i386
-.endif
 
 LINTLIBDIR?=	/usr/libdata/lint
 LIBGRP?=	${BINGRP}
@@ -533,12 +530,7 @@ DEBUGMODE?=	${NONBINMODE}
 #
 # All platforms are ELF.
 #
-#OBJECT_FMT=	ELF
-.if ${COMPILER_TYPE} == "gnu"
 OBJECT_FMT=	ELF
-.else
-OBJECT_FMT=	a.out
-.endif
 
 #
 # If this platform's toolchain is missing, we obviously cannot build it.

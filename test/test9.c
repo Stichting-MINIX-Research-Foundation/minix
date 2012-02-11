@@ -154,7 +154,7 @@ void garbage()
 {
   register int i, j, k;
   register char *p, *q, *r;
-  char *a;
+  char *a = NULL;
 
   p = &buf[300];
   q = &buf[400];

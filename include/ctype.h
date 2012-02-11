@@ -1,57 +1,77 @@
-/* The <ctype.h> header file defines some macros used to identify characters.
- * It works by using a table stored in chartab.c. When a character is presented
- * to one of these macros, the character is used as an index into the table
- * (__ctype) to retrieve a byte.  The relevant bit is then extracted.
+/*	$NetBSD: ctype.h,v 1.31 2010/06/01 13:52:08 tnozaki Exp $	*/
+
+/*
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)ctype.h	5.3 (Berkeley) 4/3/91
  */
 
-#ifndef _CTYPE_H
-#define _CTYPE_H
+#ifndef _CTYPE_H_
+#define _CTYPE_H_
 
-#include <minix/ansi.h>
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
-extern char	__ctype[];	/* property array defined in chartab.c */
+__BEGIN_DECLS
+int	isalnum(int);
+int	isalpha(int);
+int	iscntrl(int);
+int	isdigit(int);
+int	isgraph(int);
+int	islower(int);
+int	isprint(int);
+int	ispunct(int);
+int	isspace(int);
+int	isupper(int);
+int	isxdigit(int);
+int	tolower(int);
+int	toupper(int);
 
-#define _U		0x01	/* this bit is for upper-case letters [A-Z] */
-#define _L		0x02	/* this bit is for lower-case letters [a-z] */
-#define _N		0x04	/* this bit is for numbers [0-9] */
-#define _S		0x08	/* this bit is for white space \t \n \f etc */
-#define _P		0x10	/* this bit is for punctuation characters */
-#define _C		0x20	/* this bit is for control characters */
-#define _X		0x40	/* this bit is for hex digits [a-f] and [A-F]*/
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+int	isascii(int);
+int	toascii(int);
+int	_tolower(int);
+int	_toupper(int);
+#endif
 
-/* Function Prototypes (have to go before the macros). */
-_PROTOTYPE( int isalnum, (int  _c)  );	/* alphanumeric [a-z], [A-Z], [0-9] */
-_PROTOTYPE( int isalpha, (int  _c)  );	/* alphabetic */
-_PROTOTYPE( int isblank, (int  _c)  );	/* blank space */
-_PROTOTYPE( int iscntrl, (int  _c)  );	/* control characters */
-_PROTOTYPE( int isdigit, (int  _c)  );	/* digit [0-9] */
-_PROTOTYPE( int isgraph, (int  _c)  );	/* graphic character */
-_PROTOTYPE( int islower, (int  _c)  );	/* lower-case letter [a-z] */
-_PROTOTYPE( int isprint, (int  _c)  );	/* printable character */
-_PROTOTYPE( int ispunct, (int  _c)  );	/* punctuation mark */
-_PROTOTYPE( int isspace, (int  _c)  );	/* white space sp, \f, \n, \r, \t, \v*/
-_PROTOTYPE( int isupper, (int  _c)  );	/* upper-case letter [A-Z] */
-_PROTOTYPE( int isxdigit,(int  _c)  );	/* hex digit [0-9], [a-f], [A-F] */
-_PROTOTYPE( int tolower, (int  _c)  );	/* convert to lower-case */
-_PROTOTYPE( int toupper, (int  _c)  );	/* convert to upper-case */
-_PROTOTYPE( int toascii, (int  _c)  );	/* convert to 7-bit ASCII */
+#if defined(_ISOC99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
+    (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
+int	isblank(int);
+#endif
+__END_DECLS
 
-/* Macros for identifying character classes. */
-#define isalnum(c)	((__ctype+1)[(unsigned char)(c)]&(_U|_L|_N))
-#define isalpha(c)	((__ctype+1)[(unsigned char)(c)]&(_U|_L))
-#define iscntrl(c)	((__ctype+1)[(unsigned char)(c)]&_C)
-#define isgraph(c)	((__ctype+1)[(unsigned char)(c)]&(_P|_U|_L|_N))
-#define ispunct(c)	((__ctype+1)[(unsigned char)(c)]&_P)
-#define isspace(c)	((__ctype+1)[(unsigned char)(c)]&_S)
-#define isxdigit(c)	((__ctype+1)[(unsigned char)(c)]&(_N|_X))
+#if defined(_NETBSD_SOURCE) && !defined(_CTYPE_NOINLINE)
+#include <sys/ctype_inline.h>
+#endif
 
-#define isdigit(c)	((unsigned) ((c)-'0') < 10)
-#define islower(c)	((unsigned) ((c)-'a') < 26)
-#define isupper(c)	((unsigned) ((c)-'A') < 26)
-#define isprint(c)	((unsigned) ((c)-' ') < 95)
-#define isascii(c)	((unsigned) (c) < 128)
-#define isblank(c)	((c) == ' ' || (c) == '\t')
-
-#define toascii(c)	((c) & 0x7f)
-
-#endif /* _CTYPE_H */
+#endif /* !_CTYPE_H_ */

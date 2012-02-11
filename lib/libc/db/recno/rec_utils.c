@@ -34,9 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: rec_utils.c,v 1.12 2008/09/10 17:52:36 joerg Exp $");
-#endif
 
 #include <sys/param.h>
 

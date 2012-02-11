@@ -1,5 +1,3 @@
-NEED_NBSDLIBC= yes
-
 .include <bsd.own.mk>
 
 PROG=	bsdtar

@@ -1,9 +1,4 @@
 # The ACPI driver is compilable only with a "gnu" type compiler
-.if ${COMPILER_TYPE} != "gnu"
-CC:=clang
-COMPILER_TYPE:=gnu
-.endif
-
 PROG=	acpi
 
 SRCS= \

@@ -1,32 +1,33 @@
-/* The <sys/utsname.h> header gives the system name. */
+#ifndef	_SYS_UTSNAME_H_
+#define	_SYS_UTSNAME_H_
 
-#ifndef _UTSNAME_H
-#define _UTSNAME_H
+#include <sys/featuretest.h>
 
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
+#define	_SYS_NMLN	256
+
+#if defined(_NETBSD_SOURCE)
+#define	SYS_NMLN	_SYS_NMLN
 #endif
 
-#include <minix/types.h>
-
 struct utsname {
-  char sysname[15+1];
-  char nodename[255+1];
-  char release[11+1];
-  char version[7+1];
-  char machine[11+1];
-  char arch[11+1];
+	char	sysname[_SYS_NMLN];	/* Name of this OS. */
+	char	nodename[_SYS_NMLN];	/* Name of this network node. */
+	char	release[_SYS_NMLN];	/* Release level. */
+	char	version[_SYS_NMLN];	/* Version level. */
+	char	machine[_SYS_NMLN];	/* Hardware type. */
+	char	arch[_SYS_NMLN];
 };
 
-/* Function Prototypes. */
-_PROTOTYPE( int uname, (struct utsname *_name)				);
+#include <sys/cdefs.h>
 
-#ifdef _MINIX
-/* Uname() is implemented with sysuname(). */
+__BEGIN_DECLS
+int	uname(struct utsname *);
+#ifdef __minix
+int 	sysuname(int _req, int _field, char *_value, size_t _len);
+#endif
+__END_DECLS
 
-_PROTOTYPE( int sysuname, (int _req, int _field, char *_value, 
-							size_t _len));
-
+#ifdef __minix
 /* req: Get or set a string. */
 #define _UTS_GET	0
 #define _UTS_SET	1
@@ -42,6 +43,6 @@ _PROTOTYPE( int sysuname, (int _req, int _field, char *_value,
 #define _UTS_SYSNAME	7
 #define _UTS_BUS	8
 #define _UTS_MAX	9	/* Number of strings. */
-#endif /* _MINIX */
+#endif /* __minix */
 
-#endif /* _UTSNAME_H */
+#endif	/* !_SYS_UTSNAME_H_ */

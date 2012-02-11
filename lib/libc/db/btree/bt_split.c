@@ -37,13 +37,9 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: bt_split.c,v 1.19 2009/04/22 18:44:06 christos Exp $");
-#endif
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/types.h>
 
 #include <assert.h>

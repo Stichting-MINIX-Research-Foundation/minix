@@ -1,11 +1,4 @@
-/*	rindex()					Author: Kees J. Bot */
-/*								2 Jan 1994 */
+/* $NetBSD: rindex.S,v 1.14 2005/02/09 18:15:16 christos Exp $ */
 
-/* char *rindex(const char *s, int c) */
-/*	Look for the last occurrence a character in a string.  Has suffered */
-/*	from a hostile takeover by strrchr(). */
-/* */
-#include <machine/asm.h>
-
-ENTRY(rindex)
-	jmp	_C_LABEL(strrchr)
+#define RINDEX
+#include "strrchr.S"

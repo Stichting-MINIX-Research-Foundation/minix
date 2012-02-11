@@ -34,9 +34,6 @@ install:: installpw	# installpw needed to bootstrap pw db
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 	@echo "Installing fonts.."
 	install -m 644 -o root -g operator fonts/*.fnt /usr/lib/fonts/
-	@echo "Installing /usr/lib/descr.."
-	install -m 644 -o root -g operator descr /usr/lib/
-
 
 installforce:: $(ETC)/rc $(ETC)/rs.inet $(ETC)/rs.single $(ETC)/system.conf $(ETC)/rc.subr.minix $(USRETC)/rc $(USR)/Makefile installpw
 

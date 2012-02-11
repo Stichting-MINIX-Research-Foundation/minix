@@ -37,9 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: hash_buf.c,v 1.18 2009/04/23 22:09:23 christos Exp $");
-#endif
 
 /*
  * PACKAGE: hash
@@ -92,10 +90,6 @@ static BUFHEAD *newbuf(HTAB *, uint32_t, BUFHEAD *);
 
 #define MRU_INSERT(B)	BUF_INSERT((B), &hashp->bufhead)
 #define LRU_INSERT(B)	BUF_INSERT((B), LRU)
-
-#ifndef _DIAGASSERT
-#define _DIAGASSERT assert
-#endif
 
 /*
  * We are looking for a buffer with address "addr".  If prev_bp is NULL, then

@@ -1,4 +1,4 @@
-MAN=	as.1x awk.1x dis88.1x elle.1x elvis.1x kermit.1x \
+MAN=	awk.1x dis88.1x elle.1x elvis.1x kermit.1x \
 	macros.1x mined.1x
 
 .include <bsd.man.mk>

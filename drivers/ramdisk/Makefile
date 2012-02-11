@@ -20,10 +20,6 @@ PROTO= proto
 PROTO= proto.small
 .endif
 
-.if ${OBJECT_FMT} == "a.out"
-STRIPFLAG+= -s
-.endif
-
 EXTRA=system.conf master.passwd passwd pwd.db spwd.db rs.single
 
 CPPFLAGS+= -I${MINIXSRCDIR}/servers -I${MINIXSRCDIR}

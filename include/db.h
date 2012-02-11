@@ -36,11 +36,8 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
-#include <assert.h>
 
 #include <limits.h>
-
-#include <stdint.h>
 
 #define	RET_ERROR	-1		/* Return values. */
 #define	RET_SUCCESS	 0
@@ -217,20 +214,8 @@ DB *dbopen(const char *, int, mode_t, DBTYPE, const void *);
 
 #ifdef __DBINTERFACE_PRIVATE
 
-#ifndef __minix
 #define _DBMASK(a) (~((1ULL << (sizeof(a) * NBBY)) - 1))
-#define _DBFIT(a, t) assert(((a) & _DBMASK(t)) == 0)
-#else
-#define NBBY 8
-#define _DBMASK(a) (~((1UL << (sizeof(a) * NBBY)) - 1))
-/* When compiled with ack, 1 << 32 does not evalute to 0.
- * So we need a seperate check for the case when sizeof(t)
- * is 4. 
- */
-#define _DBMASK32 0xffffffff
-#define _DBFIT(a, t) \
-	assert((sizeof(t) == 4) ||((sizeof(t) < 4) && (((a) & _DBMASK(t)) == 0)))
-#endif
+#define _DBFIT(a, t) _DIAGASSERT(((a) & _DBMASK(t)) == 0)
 
 DB	*__bt_open(const char *, int, mode_t, const BTREEINFO *, int);
 DB	*__hash_open(const char *, int, mode_t, const HASHINFO *, int);

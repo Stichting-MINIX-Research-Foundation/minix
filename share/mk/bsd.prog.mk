@@ -62,11 +62,6 @@ MKDEP_SUFFIXES?=	.o .ln
 	bz2 l hgfs audiodriver exec ddekit devman usb elf bdev
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
-.if ${COMPILER_TYPE} == "ack"
-LIB${_lib:tu}=	${DESTDIR}/usr/lib/i386/lib${_lib}.a
-.elif ${COMPILER_TYPE} == "gnu"
-LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
-.endif
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
@@ -360,17 +355,8 @@ LINKSMODE?= ${BINMODE}
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.sys.mk>
-.if ${COMPILER_TYPE} == "ack"
-.include <minix.ackdep.mk>
-.elif ${COMPILER_TYPE} == "gnu"
 .include <bsd.dep.mk>
-.endif
-
-.if ${COMPILER_TYPE} == "ack"
-.include <minix.ack.mk>
-.elif ${COMPILER_TYPE} == "gnu"
 .include <minix.gcc.mk>
-.endif
 
 
 cleanextra: .PHONY
@@ -379,14 +365,6 @@ cleanextra: .PHONY
 .endif
 
 ${TARGETS}:	# ensure existence
-
-###### Minix rule to set up mem allocations for boot image services
-.if defined(INSTALLFLAGS) && ${COMPILER_TYPE} == "ack"
-all: .PHONY memalloc
-
-memalloc: realall
-	${INSTALL} ${INSTALLFLAGS} ${PROG}
-.endif
 
 ${.CURDIR}/.gitignore: Makefile
 	echo $(CLEANFILES) $(PROGS) | tr ' ' '\n' >${.TARGET}

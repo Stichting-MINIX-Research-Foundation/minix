@@ -37,9 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $");
-#endif
 
 /*
  * Implementation of btree access method for 4.4BSD.
@@ -49,9 +47,7 @@ __RCSID("$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $");
  * is wholly independent of the Postgres code.
  */
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/stat.h>
 
 #include <assert.h>
@@ -63,11 +59,7 @@ __RCSID("$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifndef __minix
 #include <paths.h>
-#else
-#define _PATH_TMP "/tmp/"
-#endif
 
 #include <db.h>
 #include "btree.h"
@@ -75,18 +67,6 @@ __RCSID("$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $");
 #ifdef DEBUG
 #undef	MINPSIZE
 #define	MINPSIZE	128
-#endif
-
-#ifndef LITTLE_ENDIAN
-# define LITTLE_ENDIAN	1234
-#endif
-
-#ifndef BIG_ENDIAN
-# define BIG_ENDIAN	4321
-#endif
-
-#ifndef BYTE_ORDER
-#define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
 static int byteorder(void);
@@ -282,11 +262,16 @@ __bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
 		 * Don't overflow the page offset type.
 		 */
 		if (b.psize == 0) {
-#ifndef __minix
-			b.psize = sb.st_blksize;
-#else
-			b.psize = 4096;
+#ifdef __minix
+			if (sb.st_blksize == 0) {
+				/* 0 in 2 cases: upgrade from old to new struct stat or
+				 * there is a bug in underlying fs.
+				 */
+				b.psize = MINIX_ST_BLKSIZE;
+			} else
 #endif
+				b.psize = sb.st_blksize;
+
 			if (b.psize < MINPSIZE)
 				b.psize = MINPSIZE;
 			if (b.psize > MAX_PAGE_OFFSET + 1)
@@ -420,14 +405,10 @@ tmp(void)
 	char *envtmp;
 	char path[PATH_MAX];
 
-#ifndef __minix
 	if (issetugid())
 		envtmp = NULL;
 	else
 		envtmp = getenv("TMPDIR");
-#else
-	envtmp = getenv("TMPDIR");
-#endif
 
 	len = snprintf(path,
 	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : _PATH_TMP);

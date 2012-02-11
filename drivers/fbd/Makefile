@@ -10,11 +10,6 @@ LDADD+=	-lblockdriver -lsys -lc
 CPPFLAGS+=	-DDEBUG=0
 
 # The FBD driver requires NetBSD libc.
-.if ${COMPILER_TYPE} != "gnu"
-CC:=clang
-COMPILER_TYPE:=gnu
-.endif
-
 MAN=
 
 BINDIR?= /usr/sbin

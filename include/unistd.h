@@ -1,207 +1,414 @@
-/* The <unistd.h> header contains a few miscellaneous manifest constants. */
+/*	$NetBSD: unistd.h,v 1.125 2011/01/19 19:21:29 christos Exp $	*/
 
-#ifndef _UNISTD_H
-#define _UNISTD_H
+/*-
+ * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Klaus Klein.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
-#ifndef _TYPES_H
-#include <minix/types.h>
+/*
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)unistd.h	8.12 (Berkeley) 4/27/95
+ */
+
+#ifndef _UNISTD_H_
+#define	_UNISTD_H_
+
+#include <machine/ansi.h>
+#include <machine/int_types.h>
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <sys/types.h>
+#include <sys/unistd.h>
+
+#if _FORTIFY_SOURCE > 0
+#include <ssp/unistd.h>
 #endif
 
-#include <sys/ucred.h>
+/*
+ * IEEE Std 1003.1-90
+ */
+#define	STDIN_FILENO	0	/* standard input file descriptor */
+#define	STDOUT_FILENO	1	/* standard output file descriptor */
+#define	STDERR_FILENO	2	/* standard error file descriptor */
 
-/* Values used by access().  POSIX Table 2-8. */
-#define F_OK               0	/* test if file exists */
-#define X_OK               1	/* test if file is executable */
-#define W_OK               2	/* test if file is writable */
-#define R_OK               4	/* test if file is readable */
-
-/* Values used for whence in lseek(fd, offset, whence).  POSIX Table 2-9. */
-#define SEEK_SET           0	/* offset is absolute  */
-#define SEEK_CUR           1	/* offset is relative to current position */
-#define SEEK_END           2	/* offset is relative to end of file */
-
-/* This value is required by POSIX Table 2-10. */
-#define _POSIX_VERSION 199009L	/* which standard is being conformed to */
-
-/* These three definitions are required by POSIX Sec. 8.2.1.2. */
-#define STDIN_FILENO       0	/* file descriptor for stdin */
-#define STDOUT_FILENO      1	/* file descriptor for stdout */
-#define STDERR_FILENO      2	/* file descriptor for stderr */
-
-#ifdef _MINIX
-/* How to exit the system or stop a server process. */
-#define RBT_HALT	   0	/* shutdown and return to monitor */
-#define RBT_REBOOT	   1	/* reboot the system through the monitor */
-#define RBT_PANIC	   2	/* a server panics */
-#define RBT_MONITOR	   3	/* let the monitor do this */
-#define RBT_RESET	   4	/* hard reset the system */
-#define RBT_DEFAULT	   5	/* return to monitor, reset if not possible */
-#define RBT_INVALID	   6	/* first invalid reboot flag */
-
-#define _PM_SEG_FLAG (1L << 30)	/* for read() and write() to FS by PM */
-#endif
-
-/* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #include <sys/null.h>
 
-/* The following relate to configurable system variables. POSIX Table 4-2. */
-#define _SC_ARG_MAX	   1
-#define _SC_CHILD_MAX	   2
-#define _SC_CLOCKS_PER_SEC 3
-#define _SC_CLK_TCK	   3
-#define _SC_NGROUPS_MAX	   4
-#define _SC_OPEN_MAX	   5
-#define _SC_JOB_CONTROL	   6
-#define _SC_SAVED_IDS	   7
-#define _SC_VERSION	   8
-#define _SC_STREAM_MAX	   9
-#define _SC_TZNAME_MAX    10
-#define _SC_PAGESIZE	  11
-#define _SC_PAGE_SIZE	  _SC_PAGESIZE
+__BEGIN_DECLS
+__dead	 void _exit(int);
+int	 access(const char *, int);
+unsigned int alarm(unsigned int);
+int	 chdir(const char *);
+#if !defined(__minix) && (defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE))
+int	chown(const char *, uid_t, gid_t) __RENAME(__posix_chown);
+#else
+int	chown(const char *, uid_t, gid_t);
+#endif /* defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
+int	 close(int);
+size_t	 confstr(int, char *, size_t);
+#ifndef __CUSERID_DECLARED
+#define __CUSERID_DECLARED
+/* also declared in stdio.h */
+char	*cuserid(char *);	/* obsolete */
+#endif /* __CUSERID_DECLARED */
+int	 dup(int);
+int	 dup2(int, int);
+int	 execl(const char *, const char *, ...);
+int	 execle(const char *, const char *, ...);
+int	 execlp(const char *, const char *, ...);
+int	 execv(const char *, char * const *);
+int	 execve(const char *, char * const *, char * const *);
+int	 execvp(const char *, char * const *);
+pid_t	 fork(void);
+long	 fpathconf(int, int);
+#if __SSP_FORTIFY_LEVEL == 0
+char	*getcwd(char *, size_t);
+#endif
+gid_t	 getegid(void);
+uid_t	 geteuid(void);
+gid_t	 getgid(void);
+int	 getgroups(int, gid_t []);
+__aconst char *getlogin(void);
+int	 getlogin_r(char *, size_t);
+pid_t	 getpgrp(void);
+pid_t	 getpid(void);
+pid_t	 getppid(void);
+uid_t	 getuid(void);
+int	 isatty(int);
+int	 link(const char *, const char *);
+long	 pathconf(const char *, int);
+int	 pause(void);
+int	 pipe(int *);
+#if __SSP_FORTIFY_LEVEL == 0
+ssize_t	 read(int, void *, size_t);
+#endif
+int	 rmdir(const char *);
+int	 setgid(gid_t);
+#ifndef __minix
+int	 setpgid(pid_t, pid_t);
+#endif /* !__minix */
+pid_t	 setsid(void);
+int	 setuid(uid_t);
+unsigned int	 sleep(unsigned int);
+long	 sysconf(int);
+pid_t	 tcgetpgrp(int);
+int	 tcsetpgrp(int, pid_t);
+__aconst char *ttyname(int);
+int	 unlink(const char *);
+ssize_t	 write(int, const void *, size_t);
 
-/* The following relate to configurable pathname variables. POSIX Table 5-2. */
-#define _PC_LINK_MAX	   1	/* link count */
-#define _PC_MAX_CANON	   2	/* size of the canonical input queue */
-#define _PC_MAX_INPUT	   3	/* type-ahead buffer size */
-#define _PC_NAME_MAX	   4	/* file name size */
-#define _PC_PATH_MAX	   5	/* pathname size */
-#define _PC_PIPE_BUF	   6	/* pipe size */
-#define _PC_NO_TRUNC	   7	/* treatment of long name components */
-#define _PC_VDISABLE	   8	/* tty disable */
-#define _PC_CHOWN_RESTRICTED 9	/* chown restricted or not */
 
-/* POSIX defines several options that may be implemented or not, at the
- * implementer's whim.  This implementer has made the following choices:
- *
- * _POSIX_JOB_CONTROL	    not defined:	no job control
- * _POSIX_SAVED_IDS 	    not defined:	no saved uid/gid
- * _POSIX_NO_TRUNC	    defined as -1:	long path names are truncated
- * _POSIX_CHOWN_RESTRICTED  defined:		you can't give away files
- * _POSIX_VDISABLE	    defined:		tty functions can be disabled
+/*
+ * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
  */
-#define _POSIX_NO_TRUNC       (-1)
-#define _POSIX_CHOWN_RESTRICTED  1
+#if (_POSIX_C_SOURCE - 0) >= 2 || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
+int	 getopt(int, char * const [], const char *);
 
-/* Function Prototypes. */
-_PROTOTYPE( void _exit, (int _status)					);
-_PROTOTYPE( int access, (const char *_path, int _amode)			);
-_PROTOTYPE( unsigned int alarm, (unsigned int _seconds)			);
-_PROTOTYPE( int chdir, (const char *_path)				);
-_PROTOTYPE( int fchdir, (int fd)					);
-_PROTOTYPE( int chown, (const char *_path, uid_t _owner, gid_t _group)	);
-_PROTOTYPE( int fchown, (int fd, uid_t _owner, gid_t _group)	);
-_PROTOTYPE( int close, (int _fd)					);
-_PROTOTYPE( char *ctermid, (char *_s)					);
-_PROTOTYPE( char *cuserid, (char *_s)					);
-_PROTOTYPE( int dup, (int _fd)						);
-_PROTOTYPE( int dup2, (int _fd, int _fd2)				);
-_PROTOTYPE( int execl, (const char *_path, const char *_arg, ...)	);
-_PROTOTYPE( int execle, (const char *_path, const char *_arg, ...)	);
-_PROTOTYPE( int execlp, (const char *_file, const char *arg, ...)	);
-_PROTOTYPE( int execv, (const char *_path, char *const _argv[])		);
-_PROTOTYPE( int execve, (const char *_path, char *const _argv[], 
-						char *const _envp[])	);
-_PROTOTYPE( int execvp, (const char *_file, char *const _argv[])	);
-_PROTOTYPE( pid_t fork, (void)						);
-_PROTOTYPE( long fpathconf, (int _fd, int _name)			);
-_PROTOTYPE( char *getcwd, (char *_buf, size_t _size)			);
-_PROTOTYPE( gid_t getegid, (void)					);
-_PROTOTYPE( uid_t geteuid, (void)					);
-_PROTOTYPE( gid_t getgid, (void)					);
-_PROTOTYPE( int getgroups, (int _gidsetsize, gid_t _grouplist[])	);
-_PROTOTYPE( int setgroups, (int _ngroups, gid_t const *grps)		);
-_PROTOTYPE( char *getlogin, (void)					);
-_PROTOTYPE( pid_t getpgrp, (void)					);
-_PROTOTYPE( pid_t getpid, (void)					);
-_PROTOTYPE( pid_t getppid, (void)					);
-_PROTOTYPE( uid_t getuid, (void)					);
-_PROTOTYPE( int isatty, (int _fd)					);
-_PROTOTYPE( int issetugid, (void)					);
-_PROTOTYPE( int link, (const char *_existing, const char *_new)		);
-_PROTOTYPE( off_t lseek, (int _fd, off_t _offset, int _whence)		);
-_PROTOTYPE( long pathconf, (const char *_path, int _name)		);
-_PROTOTYPE( int pause, (void)						);
-_PROTOTYPE( int pipe, (int _fildes[2])					);
-_PROTOTYPE( ssize_t read, (int _fd, void *_buf, size_t _n)		);
-_PROTOTYPE( ssize_t pread, (int, void *, size_t, off_t)			);
-_PROTOTYPE( int rmdir, (const char *_path)				);
-_PROTOTYPE( int setgid, (gid_t _gid)				);
-_PROTOTYPE( int setegid, (gid_t _gid)				);
-_PROTOTYPE( pid_t setsid, (void)					);
-_PROTOTYPE( int setuid, (uid_t _uid)				);
-_PROTOTYPE( int seteuid, (uid_t _uid)				);
-_PROTOTYPE( unsigned int sleep, (unsigned int _seconds)			);
-_PROTOTYPE( long sysconf, (int _name)					);
-_PROTOTYPE( pid_t tcgetpgrp, (int _fd)					);
-_PROTOTYPE( int tcsetpgrp, (int _fd, pid_t _pgrp_id)			);
-_PROTOTYPE( char *ttyname, (int _fd)					);
-_PROTOTYPE( int unlink, (const char *_path)				);
-_PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
-_PROTOTYPE( ssize_t pwrite, (int _fd, const void *_buf, size_t _n, off_t _offset));
-_PROTOTYPE( int truncate, (const char *_path, off_t _length)		);
-_PROTOTYPE( int ftruncate, (int _fd, off_t _length)			);
-_PROTOTYPE( int nice, (int _incr)					);
+extern	 char *optarg;			/* getopt(3) external variables */
+extern	 int opterr;
+extern	 int optind;
+extern	 int optopt;
+#endif
 
-/* Open Group Base Specifications Issue 6 (not complete) */
-_PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
-_PROTOTYPE( int readlink, (const char *, char *, size_t)		);
-_PROTOTYPE( int getopt, (int _argc, char * const _argv[], char const *_opts)		);
-extern char *optarg;
-extern int optreset;	/* Reset getopt state */
-extern int optind, opterr, optopt;
-_PROTOTYPE( int usleep, (useconds_t _useconds)				);
+/*
+ * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
+    defined(_NETBSD_SOURCE)
+int	 setegid(gid_t);
+int	 seteuid(uid_t);
+#endif
 
-_PROTOTYPE( int brk, (char *_addr)					);
-_PROTOTYPE( int chroot, (const char *_name)				);
-_PROTOTYPE( int lseek64, (int _fd, u64_t _offset, int _whence,
-						u64_t *_newpos)		);
-_PROTOTYPE( int mknod, (const char *_name, mode_t _mode, dev_t _addr)	);
-_PROTOTYPE( int mknod4, (const char *_name, mode_t _mode, dev_t _addr,
-	    long _size)							);
-_PROTOTYPE( char *mktemp, (char *_template)				);
-_PROTOTYPE( long ptrace, (int _req, pid_t _pid, long _addr, long _data)	);
-_PROTOTYPE( char *sbrk, (int _incr)					);
-_PROTOTYPE( int sync, (void)						);
-_PROTOTYPE( int fsync, (int fd)						);
-_PROTOTYPE( int reboot, (int _how, ...)					);
-_PROTOTYPE( int gethostname, (char *_hostname, size_t _len)		);
-_PROTOTYPE( int getdomainname, (char *_domain, size_t _len)		);
+/*
+ * The following three syscalls are also defined in <sys/types.h>
+ * We protect them against double declarations.
+ */
+#ifndef __OFF_T_SYSCALLS_DECLARED
+#define __OFF_T_SYSCALLS_DECLARED
+off_t	 lseek(int, off_t, int);
+int	 truncate(const char *, off_t);
+/*
+ * IEEE Std 1003.1b-93,
+ * also found in X/Open Portability Guide >= Issue 4 Verion 2
+ */
+#if (_POSIX_C_SOURCE - 0) >= 199309L || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+int	 ftruncate(int, off_t);
+#endif
+#endif /* __OFF_T_SYSCALLS_DECLARED */
 
 
-/* For compatibility with other Unix systems */
-_PROTOTYPE( int getpagesize, (void)					);
-_PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
-_PROTOTYPE( int initgroups, (const char *name, gid_t basegid)		);
-_PROTOTYPE( void *setmode, (const char *)				);
-_PROTOTYPE( mode_t  getmode, (const void *, mode_t)			);
-_PROTOTYPE( void    strmode, (mode_t, char *)				);
-_PROTOTYPE( int ttyslot, (void)						);
-_PROTOTYPE( int fttyslot, (int _fd)					);
-_PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
+/*
+ * IEEE Std 1003.1b-93, adopted in X/Open CAE Specification Issue 5 Version 2
+ */
+#if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
+#ifndef __minix 
+int	 fdatasync(int);
+#endif /* !__minix */
+int	 fsync(int);
+#endif
 
-#ifdef _MINIX
-#ifndef _TYPE_H
+
+/*
+ * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
+ */
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+int	 ttyname_r(int, char *, size_t);
+int	 pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
+#endif
+
+/*
+ * X/Open Portability Guide, all issues
+ */
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+int	 chroot(const char *);
+int	 nice(int);
+#endif
+
+
+/*
+ * X/Open Portability Guide >= Issue 4
+ */
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+__aconst char *crypt(const char *, const char *);
+int	 encrypt(char *, int);
+char	*getpass(const char *);
+pid_t	 getsid(pid_t);
+#endif
+
+
+/*
+ * X/Open Portability Guide >= Issue 4 Version 2
+ */
+#if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#ifndef	intptr_t
+typedef	__intptr_t	intptr_t;
+#define	intptr_t	__intptr_t
+#endif
+
+#define F_ULOCK		0
+#define F_LOCK		1
+#define F_TLOCK		2
+#define F_TEST		3
+
+int	 brk(void *);
+int	 fchdir(int);
+#if !defined(__minix) && defined(_XOPEN_SOURCE)
+int	 fchown(int, uid_t, gid_t) __RENAME(__posix_fchown);
+#else
+int	 fchown(int, uid_t, gid_t);
+#endif
+int	 getdtablesize(void);
+long	 gethostid(void);
+int	 gethostname(char *, size_t);
+__pure int
+	 getpagesize(void);		/* legacy */
+#ifndef __minix
+pid_t	 getpgid(pid_t);
+#endif /* !__minix */
+#ifndef __minix
+#if defined(_XOPEN_SOURCE)
+int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
+#else
+int	 lchown(const char *, uid_t, gid_t);
+#endif
+#endif /* !__minix */
+int	 lockf(int, int, off_t);
+#if __SSP_FORTIFY_LEVEL == 0
+ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
+#endif
+void	*sbrk(intptr_t);
+#ifndef __minix
+/* XXX prototype wrong! */
+int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
+int	 setregid(gid_t, gid_t);
+int	 setreuid(uid_t, uid_t);
+#endif /* !__minix */
+void	 swab(const void * __restrict, void * __restrict, ssize_t);
+int	 symlink(const char *, const char *);
+void	 sync(void);
+useconds_t ualarm(useconds_t, useconds_t);
+int	 usleep(useconds_t);
+#ifndef __LIBC12_SOURCE__
+pid_t	 vfork(void) __RENAME(__vfork14);
+#endif
+
+#ifndef __AUDIT__
+char	*getwd(char *);				/* obsoleted by getcwd() */
+#endif
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+
+
+/*
+ * X/Open CAE Specification Issue 5 Version 2
+ */
+#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+ssize_t	 pread(int, void *, size_t, off_t);
+ssize_t	 pwrite(int, const void *, size_t, off_t);
+#endif
+
+
+/*
+ * Implementation-defined extensions
+ */
+#ifdef __minix
+int lseek64(int fd, u64_t _offset, int _whence, u64_t *_newpos);
+#if defined(_MINIX)
 #include <minix/type.h>
+
+int getprocnr(void);
+int getnprocnr(pid_t pid);
+int getpprocnr(void);
+int _pm_findproc(char *proc_name, int *proc_nr);
+int mapdriver(char *label, int major, int style, int flags);
+pid_t getnpid(endpoint_t proc_ep);
+uid_t getnuid(endpoint_t proc_ep);
+gid_t getngid(endpoint_t proc_ep);
+int getnucred(endpoint_t proc_ep, struct ucred *ucred);
+ssize_t pread64(int fd, void *buf, size_t count, u64_t where);
+ssize_t pwrite64(int fd, const void *buf, size_t count, u64_t where);
+#endif /* __MINIX */
+#endif /* __minix */
+
+#if defined(_NETBSD_SOURCE)
+#ifndef __minix
+int	 acct(const char *);
+#endif /* !__minix */
+int	 closefrom(int);
+int	 des_cipher(const char *, char *, long, int);
+int	 des_setkey(const char *);
+void	 endusershell(void);
+int	 exect(const char *, char * const *, char * const *);
+int	 fchroot(int);
+int	 fsync_range(int, int, off_t, off_t);
+int	 getdomainname(char *, size_t);
+int	 getgrouplist(const char *, gid_t, gid_t *, int *);
+int	 getgroupmembership(const char *, gid_t, gid_t *, int, int *);
+mode_t	 getmode(const void *, mode_t);
+int	 getpeereid(int, uid_t *, gid_t *);
+int	 getsubopt(char **, char * const *, char **);
+__aconst char *getusershell(void);
+int	 initgroups(const char *, gid_t);
+int	 iruserok(uint32_t, int, const char *, const char *);
+int      issetugid(void);
+int	 nfssvc(int, void *);
+#ifndef __minix
+int	 profil(char *, size_t, u_long, u_int);
+#endif /* !__minix */
+#ifndef __PSIGNAL_DECLARED
+#define __PSIGNAL_DECLARED
+/* also in signal.h */
+void	psignal(int, const char *);
+#endif /* __PSIGNAL_DECLARED */
+int	 rcmd(char **, int, const char *, const char *, const char *, int *);
+#ifdef __minix
+int	 reboot(int, ...);
+#else
+int	 reboot(int, char *);
+#endif
+#ifndef __minix
+int	 revoke(const char *);
+#endif
+int	 rresvport(int *);
+int	 ruserok(const char *, int, const char *, const char *);
+int	 setdomainname(const char *, size_t);
+int	 setgroups(int, const gid_t *);
+int	 sethostid(long);
+int	 sethostname(const char *, size_t);
+int	 setlogin(const char *);
+void	*setmode(const char *);
+int	 setrgid(gid_t);
+int	 setruid(uid_t);
+void	 setusershell(void);
+void	 strmode(mode_t, char *);
+#ifndef __STRSIGNAL_DECLARED
+#define __STRSIGNAL_DECLARED
+/* backwards-compatibility; also in string.h */
+__aconst char *strsignal(int);
+#endif /* __STRSIGNAL_DECLARED */
+#ifndef __minix
+int	 swapctl(int, void *, int);
+int	 swapon(const char *);			/* obsoleted by swapctl() */
+#endif /* !__minix */
+int	 syscall(int, ...);
+quad_t	 __syscall(quad_t, ...);
+int	 undelete(const char *);
+
+#if 1 /*INET6*/
+int	 rcmd_af(char **, int, const char *,
+	    const char *, const char *, int *, int);
+int	 rresvport_af(int *, int);
+int	 iruserok_sa(const void *, int, int, const char *, const char *);
 #endif
 
-_PROTOTYPE( int getprocnr, (void)					);
-_PROTOTYPE( int getnprocnr, (pid_t pid)					);
-_PROTOTYPE( int getpprocnr, (void)					);
-_PROTOTYPE( int _pm_findproc, (char *proc_name, int *proc_nr)		);
-_PROTOTYPE( int mapdriver, (char *label, int major, int style,
-							int flags)	);
-_PROTOTYPE( pid_t getnpid, (endpoint_t proc_ep)				);
-_PROTOTYPE( uid_t getnuid, (endpoint_t proc_ep)				);
-_PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);
-_PROTOTYPE( int getnucred, (endpoint_t proc_ep, struct ucred *ucred)	);
-_PROTOTYPE( ssize_t pread64, (int fd, void *buf, size_t count, u64_t where));
-_PROTOTYPE( ssize_t pwrite64, (int fd, const void *buf, size_t count,
-				u64_t where));
-
+#ifndef __SYS_SIGLIST_DECLARED
+#define __SYS_SIGLIST_DECLARED
+/* also in signal.h */
+extern const char *const *sys_siglist __RENAME(__sys_siglist14);
+#endif /* __SYS_SIGLIST_DECLARED */
+extern	 int optreset;		/* getopt(3) external variable */
+extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
-#ifdef _POSIX_SOURCE
-_PROTOTYPE( int getdtablesize, (void)                                   );
+__END_DECLS
+
+#ifdef __minix
+/* Minix expects RBT_* flags to be included with <unistd.h> */
+#include <sys/reboot.h>
 #endif
 
-#endif /* _UNISTD_H */
+#endif /* !_UNISTD_H_ */

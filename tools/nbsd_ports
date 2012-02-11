@@ -1,5 +1,6 @@
+bin/date		src/bin/date
 common/lib/libprop		src/common/lib/libprop
-nbsd_include/ufs	src/sys/ufs
+include/ufs		src/sys/ufs
 sbin/newfs_ext2fs	src/sbin/newfs_ext2fs
 sbin/fsck_ext2fs	src/sbin/fsck_ext2fs
 lib/libprop		src/lib/libprop
@@ -7,15 +8,15 @@ common/include/arch/x86		src/sys/arch/x86/include
 common/include/arch/i386	src/sys/arch/i386/include
 common/include		src/common/include
 common/lib/libc		src/common/lib/libc
-lib/nbsd_libc		src/lib/libc
-lib/nbsd_libm		src/lib/libm
+lib/libc		src/lib/libc
+lib/libm		src/lib/libm
 lib/libcrypt		src/lib/libcrypt
 lib/libterminfo		src/lib/libterminfo
 lib/libcurses		src/lib/libcurses
 lib/libutil		src/lib/libutil
 common/lib/libutil	src/common/lib/libutil
 lib/libbz2		src/lib/libbz2
-nbsd_include		src/include
+include			src/include
 bin/mkdir		src/bin/mkdir
 bin/rm			src/bin/rm
 bin/rmdir		src/bin/rmdir

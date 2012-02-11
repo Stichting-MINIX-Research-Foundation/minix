@@ -50,10 +50,10 @@ struct ptrace_range {
 };
 
 /* Function Prototypes. */
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
-#endif
+#include <sys/cdefs.h>
 
-_PROTOTYPE( long ptrace, (int _req, pid_t _pid, long _addr, long _data) );
+__BEGIN_DECLS
+long ptrace(int _req, pid_t _pid, long _addr, long _data);
+__END_DECLS
 
 #endif /* _PTRACE_H */

@@ -54,8 +54,7 @@ MAN=	efun.3 getbootfile.3 \
 .endif
 
 YPREFIX=__pd
-#.PATH:	${NETBSDSRCDIR}/lib/libc/gen
-.PATH:	${NETBSDSRCDIR}/lib/nbsd_libc/gen
+.PATH:	${NETBSDSRCDIR}/lib/libc/gen
 
 .if defined(__MINIX)
 .include "compat-minix/Makefile.inc"

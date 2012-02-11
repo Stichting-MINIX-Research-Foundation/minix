@@ -1,4 +1,3 @@
-.if ${COMPILER_TYPE} == "gnu"
 LIB=		ddekit_usb_client
 
 SRC_DIR = ${MINIXSRCDIR}/lib/libddekit/src 
@@ -9,6 +8,5 @@ SRCS = usb_client.c
 
 CFLAGS += -Wall 
 
-.endif
 .include <bsd.lib.mk>
 

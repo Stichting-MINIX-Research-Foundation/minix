@@ -1,12 +1,35 @@
-/* Statvfs implementation corresponding to:
- * http://www.opengroup.org/onlinepubs/009695399/basedefs/sys/statvfs.h.html
- */
+#ifndef	_SYS_STATVFS_H_
+#define	_SYS_STATVFS_H_
 
-#ifndef _STATVFS_H
-#define _STATVFS_H
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <sys/stdint.h>
+#include <machine/ansi.h>
+#include <sys/ansi.h>
 
-#include <minix/types.h>
+#define	_VFS_NAMELEN	32
+#define	_VFS_MNAMELEN	1024
 
+#ifndef	fsblkcnt_t
+typedef	__fsblkcnt_t	fsblkcnt_t;	/* fs block count (statvfs) */
+#define	fsblkcnt_t	__fsblkcnt_t
+#endif
+
+#ifndef	fsfilcnt_t
+typedef	__fsfilcnt_t	fsfilcnt_t;	/* fs file count */
+#define	fsfilcnt_t	__fsfilcnt_t
+#endif
+
+#ifndef	uid_t
+typedef	__uid_t		uid_t;		/* user id */
+#define	uid_t		__uid_t
+#endif
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_		size_t;
+#define	_SIZE_T
+#undef	_BSD_SIZE_T_
+#endif
 
 struct statvfs {
 	unsigned long f_bsize;  /* File system block size. */
@@ -26,14 +49,16 @@ struct statvfs {
 	unsigned char __padding[32]; /* Padding for future compatibility */
 };
 
-_PROTOTYPE( int fstatvfs, (int fd, struct statvfs *st)		    );
-_PROTOTYPE( int statvfs,  (const char *path, struct statvfs *st));
-
 /* Possible values for statvfs->f_flag */
-#define ST_RDONLY	0x001	/* Read-only file system */
-#define ST_NOSUID	0x002	/* Does not support the semantics of the
-				 * ST_ISUID and ST_ISGID file mode bits. */
-#define ST_NOTRUNC	0x004	/* File system does not truncate file names
-				 * longer than NAME_MAX */
+#define ST_RDONLY 0x1
+#define ST_NOSUID 0x2
+#ifdef __minix
+#define ST_NOTRUNC 0x4
+#endif /* !__minix*/
 
-#endif /* _STAVTFS_H */
+__BEGIN_DECLS
+int	statvfs(const char *__restrict, struct statvfs *__restrict);
+int	fstatvfs(int, struct statvfs *);
+__END_DECLS
+
+#endif /* _SYS_STATVFS_H_ */

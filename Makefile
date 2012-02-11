@@ -12,8 +12,7 @@ usage:
 	@echo "Usage:" 
 	@echo "	make world         # Compile everything (libraries & commands)"
 	@echo "	make includes      # Install include files from src/"
-	@echo "	make libraries     # Compile and install libraries (ack)"
-	@echo "	make elf-libraries # Compile and install gcc/clang elf libs"
+	@echo "	make libraries     # Compile and install libraries"
 	@echo "	make commands      # Compile all, commands, but don't install"
 	@echo "	make install       # Compile and install commands"
 	@echo "	make gnu-includes  # Install include files for GCC"
@@ -30,32 +29,21 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-.if ${COMPILER_TYPE} == "ack"
-world: mkfiles etcfiles includes libraries elf-libraries dep-all install etcforce
-.else
-world: mkfiles etcfiles includes elf-libraries dep-all install etcforce
-.endif
+world: mkfiles etcfiles includes libraries dep-all install etcforce
 
 mkfiles:
 	make -C share/mk install
 
 includes:
-	$(MAKE) -C nbsd_include includes
 	$(MAKE) -C include includes
 	$(MAKE) -C lib includes NBSD_LIBC=yes
-.if ${COMPILER_TYPE} == "ack"
-	$(MAKE) -C lib includes NBSD_LIBC=no
-.endif
-
-libraries: includes
-	$(MAKE) -C lib build_ack
 
 MKHEADERSS=/usr/pkg/gcc*/libexec/gcc/*/*/install-tools/mkheaders
 gnu-includes: includes
 	SHELL=/bin/sh; for d in $(MKHEADERSS); do if [ -f $$d ] ; then sh -e $$d ; fi; done
 
-elf-libraries: includes
-	$(MAKE) -C lib build_elf
+libraries: includes
+	$(MAKE) -C lib dependall install
 
 commands: includes libraries
 	$(MAKE) -C commands all
@@ -66,8 +54,7 @@ commands: includes libraries
 	$(MAKE) -C usr.sbin all
 
 dep-all:
-	$(MAKE) CC=cc -C boot dependall
-	$(MAKE) CC=clang -C sys dependall
+	$(MAKE) -C sys dependall
 	$(MAKE) -C commands dependall
 	$(MAKE) -C bin dependall
 	$(MAKE) -C sbin dependall
@@ -85,8 +72,7 @@ etcforce:
 	$(MAKE) -C etc installforce
 
 all:
-	$(MAKE) CC=cc -C boot all
-	$(MAKE) CC=clang -C sys all
+	$(MAKE) -C sys all
 	$(MAKE) -C commands all
 	$(MAKE) -C bin all
 	$(MAKE) -C sbin all
@@ -96,8 +82,7 @@ all:
 	$(MAKE) -C tools all
 
 install:
-	$(MAKE) CC=cc -C boot install
-	$(MAKE) CC=clang -C sys install
+	$(MAKE) -C sys install
 	$(MAKE) -C libexec install
 	$(MAKE) -C man install makedb
 	$(MAKE) -C commands install
@@ -110,7 +95,6 @@ install:
 	$(MAKE) -C tools install
 
 clean: mkfiles
-	$(MAKE) -C boot clean
 	$(MAKE) -C sys clean
 	$(MAKE) -C commands clean
 	$(MAKE) -C bin clean
@@ -120,12 +104,11 @@ clean: mkfiles
 	$(MAKE) -C usr.sbin clean
 	$(MAKE) -C share clean
 	$(MAKE) -C tools clean
-	$(MAKE) -C lib clean_all
+	$(MAKE) -C lib clean
 	$(MAKE) -C test clean
 
 cleandepend: mkfiles
-	$(MAKE) -C lib cleandepend_all
-	$(MAKE) -C boot cleandepend
+	$(MAKE) -C lib cleandepend
 	$(MAKE) -C sys cleandepend
 	$(MAKE) -C commands cleandepend
 	$(MAKE) -C bin cleandepend
@@ -134,3 +117,8 @@ cleandepend: mkfiles
 	$(MAKE) -C libexec cleandepend
 	$(MAKE) -C usr.sbin cleandepend
 	$(MAKE) -C tools cleandepend
+
+# Warn usage change
+elf-libraries:
+	echo "That target is just libraries now."
+	false

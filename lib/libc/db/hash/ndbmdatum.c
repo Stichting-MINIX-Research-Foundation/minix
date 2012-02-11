@@ -38,17 +38,13 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: ndbmdatum.c,v 1.4 2008/09/11 12:58:00 joerg Exp $");
-#endif
 
 /*
  * This package provides a dbm compatible interface to the new hashing
  * package described in db(3).
  */
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/param.h>
 
 #include <fcntl.h>

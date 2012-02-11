@@ -1,29 +1,6 @@
-# string sources
-.PATH: ${.CURDIR}/arch/${ARCH}/string
+#	$NetBSD: Makefile.inc,v 1.5 2009/07/30 20:57:16 dsl Exp $
 
-SRCS+=  \
-	_memmove.S \
-	_strncat.S \
-	_strncmp.S \
-	_strncpy.S \
-	_strnlen.S \
-	bcmp.S \
-	bcopy.S \
-	bzero.S \
-	index.S \
-	memchr.S \
-	memcmp.S \
-	memcpy.S \
-	memmove.S \
-	memset.S \
-	rindex.S \
-	strcat.S \
-	strchr.S \
-	strcmp.S \
-	strcpy.S \
-	strlen.S \
-	strncat.S \
-	strncmp.S \
-	strncpy.S \
-	strnlen.S \
-	strrchr.S
+# objects built from assembler sources
+SRCS+=	bcmp.S bcopy.S bzero.S ffs.S memchr.S memcmp.S \
+	memcpy.S memmove.S memset.S strcat.S strchr.S \
+	strcmp.S strcpy.S strlen.S strncmp.S strrchr.S swab.S

@@ -3,12 +3,7 @@
 
 PROG=	cut
 
-.if ${COMPILER_TYPE} != "gnu"
-LDADD+=	-lminixutil
-DPADD+=	${LIBMINIXUTIL}
-.else
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
-.endif
 
 .include <bsd.prog.mk>

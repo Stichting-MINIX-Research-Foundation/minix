@@ -37,13 +37,9 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: bt_put.c,v 1.19 2009/02/12 06:40:14 lukem Exp $");
-#endif
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/types.h>
 
 #include <assert.h>

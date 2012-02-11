@@ -11,9 +11,7 @@
 #ifndef _DIRENT_H
 #define _DIRENT_H
 
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+#include <sys/cdefs.h>
 
 	/* Name of length len needs _EXTENT(len) extra slots. */
 #define _EXTENT(len)	(((len) + 5) >> 3)
@@ -32,42 +30,5 @@
 
 /* This is the block size for the fixed versions of the filesystem (V1/V2) */
 #define _STATIC_BLOCK_SIZE	1024
-
-/* Definitions for the directory(3) routines: */
-typedef struct {
-	int		_fd;	/* Filedescriptor of open directory */
-	unsigned	_count;	/* This many bytes in _buf */
-	unsigned	_pos;	/* Position in _buf */
-	char		 _buf[_MAX_BLOCK_SIZE]; /* The size does not really
-						 * matter as long as the
-						 * buffer is big enough
-						 * to contain at least one
-						 * entry.
-						 */
-} DIR;
-
-struct dirent {		/* Largest entry (8 slots) */
-	ino_t		d_ino;		/* I-node number */
-	off_t 		d_off;		/* Offset in directory */
-	unsigned short	d_reclen;	/* Length of this record */
-	char		d_name[1];	/* Null terminated name */
-};
-
-/* Function Prototypes. */
-_PROTOTYPE( int closedir, (DIR *_dirp)					);
-_PROTOTYPE( DIR *opendir, (const char *_dirname)			);
-_PROTOTYPE( struct dirent *readdir, (DIR *_dirp)			);
-_PROTOTYPE( void rewinddir, (DIR *_dirp)				);
-
-#ifdef _MINIX
-_PROTOTYPE( int seekdir, (DIR *_dirp, off_t _loc)			);
-_PROTOTYPE( off_t telldir, (DIR *_dirp)					);
-
-#define   dirfd(dirp)     ((dirp)->_fd)
-
-_PROTOTYPE( int getdents, (int _fildes, struct dirent *_buf,
-							size_t _nbyte)	);
-
-#endif
 
 #endif /* _DIRENT_H */

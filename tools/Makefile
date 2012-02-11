@@ -33,7 +33,6 @@ usage:
 	@echo "Usage:" >&2
 	@echo "	make includes   # Install include files" >&2
 	@echo "	make depend     # Generate dependency files" >&2
-	@echo "	make libraries  # Make system libraries" >&2
 	@echo "	make services   # Compile and install all services" >&2
 	@echo "	make image      # Make needed services and create boot image" >&2
 	@echo "	make install    # Make image, and install to hard disk" >&2
@@ -51,25 +50,10 @@ usage:
 
 all: services image
 
-# Pad the kernel text only if ACK compiler is used. padtext does not work for
-# gnu-like compilers as they generate common I&D and a linker script can do the
-# same in a nicer way
-.if ${COMPILER_TYPE} == "gnu"
-PAD_KERNEL_TEXT := cp ../kernel/kernel kernel
-.else
-PAD_KERNEL_TEXT := padtext ../kernel/kernel kernel
-.endif
-
-.if ${OBJECT_FMT} == "ELF"
 image: includes services
-	${PAD_KERNEL_TEXT}
+	cp ../kernel/kernel kernel
 	mkimage $(PROGRAMS)
 	strip -s ${KERNEL} ${PROGRAMS}
-.else
-image:  includes services
-	${PAD_KERNEL_TEXT}
-	installboot_minix -image $@ $(KERNEL) $(PROGRAMS)
-.endif
 
 # rebuild the program or system libraries
 includes:
@@ -86,25 +70,16 @@ services: includes kernel servers .WAIT drivers
 kernel: includes
 	$(MAKE) -C ../kernel 
 
-.if ${COMPILER_TYPE} == "gnu"
 servers: includes
 	$(MAKE) -C ../servers all install
-.else
-servers: includes
-	$(MAKE) -C ../servers all
-.endif
 
 drivers: includes servers
 	$(MAKE) -C ../drivers all install
-
-libraries: includes
-	cd ../lib && sh ack_build.sh clean obj depend all install
 
 # make bootable and place system images
 bootable:
 	exec su root mkboot bootable
 
-.if ${OBJECT_FMT} == "ELF"
 hdboot: image
 	rm -rf /boot/minix/.temp/
 	mkdir -p /boot/minix/.temp
@@ -113,15 +88,13 @@ hdboot: image
 	do							\
 	let n=n+1 >/dev/null;					\
 	[ "$$n" -ge 10 ] && prefix="mod" || prefix="mod0";	\
-	cp $$i /boot/minix/.temp/$${prefix}$${n}_`basename $$i`;\
+	newname="/boot/minix/.temp/$${prefix}$${n}_`basename $$i`"; \
+	cp $$i $$newname;				\
+	[ -d /boot/image ] && ln -f $$newname /boot/`basename $$i` || true ;		\
 	done
 	cp kernel /boot/minix/.temp/
+	[ -d /boot/image ] && ln -f /boot/minix/.temp/kernel /boot/kernel || true
 	exec sh mkboot $@ minix
-.else
-hdboot:	image
-	exec sh mkboot $@ image
-	@sync
-.endif
 
 fdboot:	image
 	exec su root mkboot $@

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.78 2009/10/02 21:05:28 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.81 2010/12/25 22:30:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -56,33 +56,19 @@
 #define	__GNUC_PREREQ__(x, y)	0
 #endif
 
-#if 0
 #include <machine/cdefs.h>
 #ifdef __ELF__
 #include <sys/cdefs_elf.h>
 #else
 #include <sys/cdefs_aout.h>
 #endif
-#endif
-
-#if defined(__cplusplus)
-#define	__BEGIN_DECLS		extern "C" {
-#define	__END_DECLS		}
-#define	__static_cast(x,y)	static_cast<x>(y)
-#else
-#define	__BEGIN_DECLS
-#define	__END_DECLS
-#define	__static_cast(x,y)	(x)y
-#endif
 
 /*
  * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
  * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
- * The __CONCAT macro is a bit tricky to use if it must work in non-ANSI
- * mode -- there must be no spaces between its arguments, and for nested
- * __CONCAT's, all the __CONCAT's must be at the left.  __CONCAT can also
- * concatenate double-quoted strings produced by the __STRING macro, but
- * this only works with ANSI C.
+ * The __CONCAT macro is a bit tricky -- make sure you don't put spaces
+ * in between its arguments.  __CONCAT can also concatenate double-quoted
+ * strings produced by the __STRING macro, but this only works with ANSI C.
  */
 
 #define	___STRING(x)	__STRING(x)
@@ -90,8 +76,7 @@
 
 #if __STDC__ || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
-#define	__CONCAT1(x,y)	x ## y
-#define	__CONCAT(x,y)	__CONCAT1(x,y)
+#define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)	#x
 
 #define	__const		const		/* define reserved names to standard */
@@ -233,6 +218,54 @@
 #define	__used		__unused
 #endif
 
+#if defined(__cplusplus)
+#define	__BEGIN_EXTERN_C	extern "C" {
+#define	__END_EXTERN_C		}
+#define	__static_cast(x,y)	static_cast<x>(y)
+#else
+#define	__BEGIN_EXTERN_C
+#define	__END_EXTERN_C
+#define	__static_cast(x,y)	(x)y
+#endif
+
+#if __GNUC_PREREQ__(4, 0)
+#  define __dso_public	__attribute__((__visibility__("default")))
+#  define __dso_hidden	__attribute__((__visibility__("hidden")))
+#  define __BEGIN_PUBLIC_DECLS	\
+	_Pragma("GCC visibility push(default)") __BEGIN_EXTERN_C
+#  define __END_PUBLIC_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
+#  define __BEGIN_HIDDEN_DECLS	\
+	_Pragma("GCC visibility push(hidden)") __BEGIN_EXTERN_C
+#  define __END_HIDDEN_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
+#else
+#  define __dso_public
+#  define __dso_hidden
+#  define __BEGIN_PUBLIC_DECLS	__BEGIN_EXTERN_C
+#  define __END_PUBLIC_DECLS	__END_EXTERN_C
+#  define __BEGIN_HIDDEN_DECLS	__BEGIN_EXTERN_C
+#  define __END_HIDDEN_DECLS	__END_EXTERN_C
+#endif
+
+#define	__BEGIN_DECLS		__BEGIN_PUBLIC_DECLS
+#define	__END_DECLS		__END_PUBLIC_DECLS
+
+/*
+ * Non-static C99 inline functions are optional bodies.  They don't
+ * create global symbols if not used, but can be replaced if desirable.
+ * This differs from the behavior of GCC before version 4.3.  The nearest
+ * equivalent for older GCC is `extern inline'.  For newer GCC, use the
+ * gnu_inline attribute additionally to get the old behavior.
+ *
+ * For C99 compilers other than GCC, the C99 behavior is expected.
+ */
+#if defined(__GNUC__) && defined(__GNUC_STDC_INLINE__)
+#define	__c99inline	extern __attribute__((__gnu_inline__)) __inline
+#elif defined(__GNUC__)
+#define	__c99inline	extern __inline
+#elif defined(__STDC_VERSION__)
+#define	__c99inline	__inline
+#endif
+
 #if defined(__lint__)
 #define	__packed	__packed
 #define	__aligned(x)	/* delete */
@@ -284,7 +317,6 @@
 #endif /* NO_KERNEL_RCSIDS */
 #endif /* _KERNEL */
 
-#if 0
 #if !defined(_STANDALONE) && !defined(_KERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
 #define	__RENAME(x)	___RENAME(x)
@@ -298,7 +330,7 @@
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
 #endif
-#endif
+
 /*
  * A barrier to stop the optimizer from moving code or assume live
  * register values. This is gcc specific, the version is more or less
@@ -345,25 +377,6 @@
 #define	__predict_true(exp)	(exp)
 #define	__predict_false(exp)	(exp)
 #endif
-
-/*
- * We define this here since <stddef.h>, <sys/queue.h>, and <sys/types.h>
- * require it.
- */
-#if __GNUC_PREREQ__(4, 1)
-#define __offsetof(type, field)  __builtin_offsetof(type, field)
-#else
-#ifndef __cplusplus
-#define __offsetof(type, field) ((size_t)(&((type *)0)->field))
-#else
-#define __offsetof(type, field)                                 \
-  (__offsetof__ (reinterpret_cast <size_t>                      \
-                 (&reinterpret_cast <const volatile char &>     \
-                  (static_cast<type *> (0)->field))))
-#endif
-#endif
-#define __rangeof(type, start, end) \
-        (__offsetof(type, end) - __offsetof(type, start))
 
 /*
  * Compiler-dependent macros to declare that functions take printf-like
@@ -467,6 +480,11 @@
 #define __CAST(__dt, __st)	static_cast<__dt>(__st)
 #else
 #define __CAST(__dt, __st)	((__dt)(__st))
+#endif
+
+#ifdef _MINIX
+/* If compiling in Minix tree, Minix ANSI definitions are always useful. */
+#include <minix/ansi.h>
 #endif
 
 #endif /* !_SYS_CDEFS_H_ */

@@ -18,12 +18,6 @@ MLINKS= grep.1 egrep.1 \
 LDADD=  -lz
 DPADD=  ${LIBZ}
 
-.if ${COMPILER_TYPE} == "gnu"
 CFLAGS+= -Wall
-.endif
 
-.if ${OPSYS} == "Minix"
 .include <bsd.prog.mk>
-.else
-.include <bsd.prog.mk>
-.endif

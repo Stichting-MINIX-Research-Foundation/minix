@@ -14,11 +14,19 @@
  */
 
 #include <sys/ioc_tty.h>	/* 'T' 't' 'k'		*/
-#include <net/ioctl.h>		/* 'n'			*/
+#include <sys/ioc_net.h>	/* 'n'			*/
 #include <sys/ioc_disk.h>	/* 'd'			*/
 #include <sys/ioc_file.h>	/* 'f'			*/
 #include <sys/ioc_memory.h>	/* 'm'			*/
 #include <sys/ioc_tape.h>	/* 'M'			*/
 #include <sys/ioc_sound.h>	/* 's'			*/
+
+#if defined(_NETBSD_SOURCE)
+#define		TIOCDRAIN 	TCDRAIN
+#define		TIOCGETA	TCGETS
+#define		TIOCSETA	TCSETS
+#define		TIOCSETAW	TCSETSW
+#define		TIOCSETAF	TCSETSF
+#endif
 
 #endif /* _S_IOCTL_H */

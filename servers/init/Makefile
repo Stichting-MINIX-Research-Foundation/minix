@@ -9,8 +9,6 @@ MAN=
 BINDIR?= /usr/sbin
 INSTALLFLAGS+=	-S 64k
 
-.if ${OBJECT_FMT} == "ELF"
 LDFLAGS+= -Wl,--section-start=.init=0x0
-.endif
 
 .include <bsd.prog.mk>

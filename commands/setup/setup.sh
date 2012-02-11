@@ -454,19 +454,8 @@ fi
 
 blocksizebytes="`expr $blocksize '*' 1024`"
 
-usenewboot=1
 bootsectors=$BOOTXXSECTS
-echo ""
-echo " --- Step 7: Select a boot scheme --------------------------------------"
-echo ""
 
-echo -n "Do you want to use new boot? [Y] "
-read ok
-if [ "$ok" != Y -a "$ok" != y -a "$ok" != "" ]
-then
-	usenewboot=0
-	bootsectors=1
-else
 	# check for potential problems with old mbr.
 	# space for bootxx has been checked earlier.
 	minix_primaries=`echo -n "" | fdisk /dev/$primary | grep "MINIX" | wc -l`
@@ -490,7 +479,6 @@ else
 		fi
 		rm temp_mbr_netbsd
 	fi
-fi
 
 echo "
 You have selected to (re)install MINIX 3 in the partition /dev/$primary.
@@ -503,10 +491,6 @@ The following subpartitions are now being created on /dev/$primary:
 					# Secondary master bootstrap.
 # New boot doesn't require mbr on pN (bootxx will be there)
 # When necessarily mbr is installed on dN by partition.
-if [ "$usenewboot" = 0 ]
-then
-	installboot_minix -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
-fi
 					# Partition the primary.
 partition /dev/$primary $bootsectors 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
 
@@ -569,8 +553,6 @@ $fshome"
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
 # Make bootable.
-if [ "$usenewboot" = 1 ]
-then
 	# XXX we have to use "-f" here, because installboot worries about BPB, which
 	# we don't have...
 	installboot_nbsd -f /dev/$primary /usr/mdec/bootxx_minixfs3 >/dev/null || exit
@@ -583,13 +565,6 @@ timeout=5
 default=2
 END_BOOT_CFG
 umount /dev/$root >/dev/null || exit 	# Unmount the new root.
-
-else
-	umount /dev/$root >/dev/null || exit 	# Unmount the new root.
-	installboot_minix -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-	edparams /dev/$root "rootdev=$root; ramimagedev=$root; minix(1,Start MINIX 3) { image=/boot/image_big; boot; }; newminix(2,Start Custom MINIX 3) { unset image; boot }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
-fi
-
 mount /dev/$usr /mnt >/dev/null || exit
 
 pfile="/mnt/src/tools/fdbootparams"

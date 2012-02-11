@@ -1,10 +1,5 @@
 #	$NetBSD: Makefile.mbr,v 1.17 2009/11/20 17:28:19 dsl Exp $
 
-.if !defined(COMPILER_TYPE) || ${COMPILER_TYPE} != "gnu"
-CC:=clang
-COMPILER_TYPE:=gnu
-.endif
-
 NOMAN=		# defined
 
 LIBCRT0=	# nothing

@@ -1,42 +1,51 @@
-#ifndef _SYS_IPC_H
-#define _SYS_IPC_H
+/*
+ * SVID compatible ipc.h file
+ */
 
-/* For gid_t, uid_t */
+#ifndef _SYS_IPC_H_
+#define _SYS_IPC_H_
+
+#include <sys/featuretest.h>
 #include <sys/types.h>
-
-/* Mode bits for `msgget', `semget', and `shmget'. */
-/* Create key if key does not exist. */
-#define IPC_CREAT	01000
-/* Fail if key exists. */
-#define IPC_EXCL	02000
-/* Return error on wait. */
-#define IPC_NOWAIT	04000
-
-/* Control commands for `msgctl', `semctl', and `shmctl'. */
-/* Remove identifier. */
-#define IPC_RMID	0
-/* Set `ipc_perm' options. */
-#define IPC_SET		1
-/* Get `ipc_perm' options. */
-#define IPC_STAT	2
-#define IPC_INFO	3	/* See ipcs. */
-
-/* Special key values. */
-/* Private key. */
-#define IPC_PRIVATE	((key_t) 0)
 
 /* Data structure used to pass permission information to IPC operations. */
 struct ipc_perm
 {
-	key_t key;	/* Key. */
-	uid_t uid;		/* Owner's user ID. */
-	gid_t gid;		/* Owner's group ID. */
-	uid_t cuid;		/* Creator's user ID. */
-	gid_t cgid;		/* Creator's group ID. */
+	key_t key;			/* Key. */
+	uid_t uid;			/* Owner's user ID. */
+	gid_t  gid;			/* Owner's group ID. */
+	uid_t cuid;			/* Creator's user ID. */
+	gid_t  cgid;			/* Creator's group ID. */
 	unsigned short int mode;	/* Reader/write permission. */
 	unsigned short int __seq;	/* Sequence number. */
 };
 
-_PROTOTYPE( key_t ftok, (const char *__path, int __id));
+/* X/Open required constants (same values as system 5) */
+#define	IPC_CREAT	001000	/* create entry if key does not exist */
+#define	IPC_EXCL	002000	/* fail if key exists */
+#define	IPC_NOWAIT	004000	/* error if request must wait */
 
-#endif /* _SYS_IPC_H */
+#define	IPC_PRIVATE	(key_t)0 /* private key */
+
+#define	IPC_RMID	0	/* remove identifier */
+#define	IPC_SET		1	/* set options */
+#define	IPC_STAT	2	/* get options */
+
+#ifdef __minix
+#define IPC_INFO	3	/* See ipcs. */
+#endif /* !__minix */
+
+/*
+ * Macro to convert between ipc ids and array indices or sequence ids.
+ */
+#if defined(_NETBSD_SOURCE)
+#define	IXSEQ_TO_IPCID(ix,perm)	(((perm._seq) << 16) | (ix & 0xffff))
+#endif
+
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+key_t	ftok(const char *, int);
+__END_DECLS
+
+#endif /* !_SYS_IPC_H_ */

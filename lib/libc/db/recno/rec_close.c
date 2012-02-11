@@ -34,13 +34,9 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: rec_close.c,v 1.15 2008/09/11 12:58:00 joerg Exp $");
-#endif
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/mman.h>
@@ -82,8 +78,12 @@ __rec_close(DB *dbp)
 
 	/* Committed to closing. */
 	status = RET_SUCCESS;
+#ifndef __minix
 	if (F_ISSET(t, R_MEMMAPPED) && munmap(t->bt_smap, t->bt_msize))
 		status = RET_ERROR;
+#else
+	assert(!F_ISSET(t, R_MEMMAPPED));
+#endif
 
 	if (!F_ISSET(t, R_INMEM)) {
 		if (F_ISSET(t, R_CLOSEFP)) {

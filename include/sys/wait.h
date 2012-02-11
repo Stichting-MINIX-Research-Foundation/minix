@@ -1,3 +1,10 @@
+#ifndef _SYS_WAIT_H_
+#define _SYS_WAIT_H_
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/featuretest.h>
+
 /* The <sys/wait.h> header contains macros related to wait(). The value
  * returned by wait() and waitpid() depends on whether the process 
  * terminated by an exit() call, was killed by a signal, or was stopped
@@ -13,18 +20,13 @@
  *				+---------------------+
  */
 
-#ifndef _WAIT_H
-#define _WAIT_H
-
-#ifndef _TYPES_H
-#include <minix/types.h>
-#endif
+/*
+ * Macros to test the exit status returned by wait
+ * and extract the relevant values.
+ */
 
 #define _LOW(v)		( (v) & 0377)
 #define _HIGH(v)	( ((v) >> 8) & 0377)
-
-#define WNOHANG         1	/* do not wait for child to exit */
-#define WUNTRACED       2	/* for job control; not implemented */
 
 #define WIFEXITED(s)	(_LOW(s) == 0)			    /* normal exit */
 #define WEXITSTATUS(s)	(_HIGH(s))			    /* exit status */
@@ -33,8 +35,30 @@
 #define WIFSTOPPED(s)	(_LOW(s) == 0177)		    /* stopped */
 #define WSTOPSIG(s)	(_HIGH(s) & 0377)		    /* stop signal */
 
-/* Function Prototypes. */
-_PROTOTYPE( pid_t wait, (int *_stat_loc)			   	   );
-_PROTOTYPE( pid_t waitpid, (pid_t _pid, int *_stat_loc, int _options)	   );
+/*
+ * Option bits for the third argument of waitpid.  WNOHANG causes the
+ * wait to not hang if there are no stopped or terminated processes, rather
+ * returning an error indication in this case (pid==0).  WUNTRACED
+ * indicates that the caller should receive status about untraced children
+ * which stop due to signals.  If children are stopped and a wait without
+ * this option is done, it is as though they were still running... nothing
+ * about them is returned.
+ */
+#define WNOHANG		0x00000001	/* don't hang in wait */
+#define WUNTRACED	0x00000002	/* tell about stopped,
+					   untraced children */
 
-#endif /* _WAIT_H */
+/* POSIX extensions and 4.2/4.3 compatibility: */
+
+/*
+ * Tokens for special values of the "pid" parameter to waitpid.
+ */
+#define	WAIT_ANY	(-1)	/* any process */
+#define	WAIT_MYPGRP	0	/* any process in my process group */
+
+__BEGIN_DECLS
+pid_t	wait(int *);
+pid_t	waitpid(pid_t, int *, int);
+__END_DECLS
+
+#endif /* !_SYS_WAIT_H_ */

@@ -37,9 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: hash_bigkey.c,v 1.23 2009/02/12 06:33:13 lukem Exp $");
-#endif
 
 /*
  * PACKAGE: hash
@@ -71,10 +69,6 @@ __RCSID("$NetBSD: hash_bigkey.c,v 1.23 2009/02/12 06:33:13 lukem Exp $");
 #include "hash.h"
 #include "page.h"
 #include "extern.h"
-
-#ifndef _DIAGASSERT
-#define _DIAGASSERT
-#endif
 
 static int collect_key(HTAB *, BUFHEAD *, int, DBT *, int);
 static int collect_data(HTAB *, BUFHEAD *, int, int);

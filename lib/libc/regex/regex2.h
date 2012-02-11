@@ -1,7 +1,41 @@
+/*	$NetBSD: regex2.h,v 1.12 2009/02/12 05:06:54 lukem Exp $	*/
+
 /*-
- * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Henry Spencer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)regex2.h	8.4 (Berkeley) 3/20/94
+ */
+
+/*-
+ * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  *
  * This code is derived from software contributed to Berkeley by
  * Henry Spencer.
@@ -75,36 +109,38 @@
  * In state representations, an operator's bit is on to signify a state
  * immediately *preceding* "execution" of that operator.
  */
-typedef unsigned long sop;	/* strip operator */
-typedef long sopno;
-#define	OPRMASK	0xf8000000
-#define	OPDMASK	0x07ffffff
+typedef u_int32_t sop;	/* strip operator */
+typedef int sopno;
+#define	OPRMASK	((u_int32_t)0xf8000000UL)
+#define	OPDMASK	((u_int32_t)0x07ffffffUL)
 #define	OPSHIFT	((unsigned)27)
 #define	OP(n)	((n)&OPRMASK)
-#define	OPND(n)	((n)&OPDMASK)
+#define	OPND(n)	((int)((n)&OPDMASK))
 #define	SOP(op, opnd)	((op)|(opnd))
-/* operators			   meaning	operand			*/
-/*						(back, fwd are offsets)	*/
-#define	OEND	(1<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	(2<<OPSHIFT)	/* character	unsigned char		*/
-#define	OBOL	(3<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	(4<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	(5<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	(6<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	(7<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	(8<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	(9<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	(10<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	(11<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	(12<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	(13<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	(14<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	(15<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	(16<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	(17<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	(18<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	(19<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	(20<<OPSHIFT)	/* end word	-			*/
+
+#define OPC(n)	(((u_int32_t)(n))<<OPSHIFT)
+/* operators		   meaning	operand			*/
+/*					(back, fwd are offsets)	*/
+#define	OEND	OPC(1)	/* endmarker	-			*/
+#define	OCHAR	OPC(2)	/* character	unsigned char		*/
+#define	OBOL	OPC(3)	/* left anchor	-			*/
+#define	OEOL	OPC(4)	/* right anchor	-			*/
+#define	OANY	OPC(5)	/* .		-			*/
+#define	OANYOF	OPC(6)	/* [...]	set number		*/
+#define	OBACK_	OPC(7)	/* begin \d	paren number		*/
+#define	O_BACK	OPC(8)	/* end \d	paren number		*/
+#define	OPLUS_	OPC(9)	/* + prefix	fwd to suffix		*/
+#define	O_PLUS	OPC(10)	/* + suffix	back to prefix		*/
+#define	OQUEST_	OPC(11)	/* ? prefix	fwd to suffix		*/
+#define	O_QUEST	OPC(12)	/* ? suffix	back to prefix		*/
+#define	OLPAREN	OPC(13)	/* (		fwd to )		*/
+#define	ORPAREN	OPC(14)	/* )		back to (		*/
+#define	OCH_	OPC(15)	/* begin choice	fwd to OOR2		*/
+#define	OOR1	OPC(16)	/* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	OPC(17)	/* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	OPC(18)	/* end choice	back to OOR1		*/
+#define	OBOW	OPC(19)	/* begin word	-			*/
+#define	OEOW	OPC(20)	/* end word	-			*/
 
 /*
  * Structure for [] character-set representation.  Character sets are
@@ -170,4 +206,4 @@ struct re_guts {
 
 /* misc utilities */
 #define	OUT	(CHAR_MAX+1)	/* a non-character value */
-#define	ISWORD(c)	(isalnum(c) || (c) == '_')
+#define	ISWORD(c)	(isalnum((unsigned char)c) || (c) == '_')

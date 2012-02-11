@@ -1,76 +1,116 @@
-/* The <string.h> header contains prototypes for the string handling 
- * functions.
+/*	$NetBSD: string.h,v 1.39 2009/07/22 19:48:27 kleink Exp $	*/
+
+/*-
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)string.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _STRING_H
-#define _STRING_H
+#ifndef _STRING_H_
+#define	_STRING_H_
+#include <machine/ansi.h>
 
-/* Not strictly necessary, but some sources, in particular
- * llvm, assume the defines in stdint.h are available when
- * string.h is include.
- */
-#include <stdint.h>
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
+
 #include <sys/null.h>
 
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned int size_t;	/* type returned by sizeof */
-#endif /*_SIZE_T */
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
-/* Function Prototypes. */
-#ifndef _MINIX_ANSI_H
-#include <minix/ansi.h>
+__BEGIN_DECLS
+void	*memchr(const void *, int, size_t);
+int	 memcmp(const void *, const void *, size_t);
+void	*memcpy(void * __restrict, const void * __restrict, size_t);
+void	*memmove(void *, const void *, size_t);
+void	*memset(void *, int, size_t);
+char	*strcat(char * __restrict, const char * __restrict);
+char	*strchr(const char *, int);
+int	 strcmp(const char *, const char *);
+int	 strcoll(const char *, const char *);
+char	*strcpy(char * __restrict, const char * __restrict);
+size_t	 strcspn(const char *, const char *);
+__aconst char *strerror(int);
+size_t	 strlen(const char *);
+char	*strncat(char * __restrict, const char * __restrict, size_t);
+int	 strncmp(const char *, const char *, size_t);
+char	*strncpy(char * __restrict, const char * __restrict, size_t);
+char	*strpbrk(const char *, const char *);
+char	*strrchr(const char *, int);
+size_t	 strspn(const char *, const char *);
+char	*strstr(const char *, const char *);
+char	*strtok(char * __restrict, const char * __restrict);
+#if (_POSIX_C_SOURCE - 0 >= 199506L) || (_XOPEN_SOURCE - 0 >= 500) || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+char	*strtok_r(char *, const char *, char **);
+int	 strerror_r(int, char *, size_t);
+#endif /* _POSIX_C_SOURCE >= 199506 || XOPEN_SOURCE >= 500 || ... */
+size_t	 strxfrm(char * __restrict, const char * __restrict, size_t);
+
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+void	*memccpy(void *, const void *, int, size_t);
+char	*strdup(const char *);
 #endif
 
-_PROTOTYPE( void *memchr, (const void *_s, int _c, size_t _n)		);
-_PROTOTYPE( int memcmp, (const void *_s1, const void *_s2, size_t _n)	);
-_PROTOTYPE( void *memcpy, (void *_s1, const void *_s2, size_t _n)	);
-_PROTOTYPE( void *memmove, (void *_s1, const void *_s2, size_t _n)	);
-_PROTOTYPE( void *memset, (void *_s, int _c, size_t _n)			);
-_PROTOTYPE( char *strcat, (char *_s1, const char *_s2)			);
-_PROTOTYPE( char *strchr, (const char *_s, int _c)			);
-_PROTOTYPE( int strncmp, (const char *_s1, const char *_s2, size_t _n)	);
-_PROTOTYPE( int strcmp, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( int strcoll, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( char *strcpy, (char *_s1, const char *_s2)			);
-_PROTOTYPE( size_t strcspn, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( char *strerror, (int _errnum)				);
-_PROTOTYPE( size_t strlen, (const char *_s)				);
-_PROTOTYPE( char *strncat, (char *_s1, const char *_s2, size_t _n)	);
-_PROTOTYPE( char *strncpy, (char *_s1, const char *_s2, size_t _n)	);
-_PROTOTYPE( char *strpbrk, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( char *strrchr, (const char *_s, int _c)			);
-_PROTOTYPE( size_t strspn, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( char *strstr, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( char *strtok, (char *_s1, const char *_s2)			);
-_PROTOTYPE( size_t strxfrm, (char *_s1, const char *_s2, size_t _n)	);
-
-#ifdef _POSIX_SOURCE
-/* Open Group Base Specifications Issue 6 (not complete) */
- char *strdup(const char *_s1);
+#if (_POSIX_C_SOURCE - 0 >= 200809L) || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_NETBSD_SOURCE)
+char	*stpcpy(char * __restrict, const char * __restrict);
+char	*stpncpy(char * __restrict, const char * __restrict, size_t);
+size_t	strnlen(const char *, size_t);
+#ifndef __STRSIGNAL_DECLARED
+#define __STRSIGNAL_DECLARED
+/* also in unistd.h */
+__aconst char *strsignal(int);
+#endif /* __STRSIGNAL_DECLARED */
+/*
+ * For POSIX compliance, we still need:
+ * strcoll_l
+ * strerror_l
+ * strxfrm_l
+ */
 #endif
 
-#ifdef _MINIX
-/* For backward compatibility. */
-_PROTOTYPE( char *index, (const char *_s, int _charwanted)		);
-_PROTOTYPE( char *rindex, (const char *_s, int _charwanted)		);
-_PROTOTYPE( void bcopy, (const void *_src, void *_dst, size_t _length)	);
-_PROTOTYPE( int bcmp, (const void *_s1, const void *_s2, size_t _length));
-_PROTOTYPE( void bzero, (void *_dst, size_t _length)			);
-_PROTOTYPE( void *memccpy, (char *_dst, const char *_src, int _ucharstop,
-						    size_t _size)	);
-
-/* Misc. extra functions */
-_PROTOTYPE( int strcasecmp, (const char *_s1, const char *_s2)		);
-_PROTOTYPE( int strncasecmp, (const char *_s1, const char *_s2,
-							size_t _len)	);
-_PROTOTYPE( size_t strnlen, (const char *_s, size_t _n)			);
-_PROTOTYPE( size_t strlcat, (char *_dst, const char *_src, size_t _siz) );
-_PROTOTYPE( size_t strlcpy, (char *_dst, const char *_src, size_t _siz) );
-_PROTOTYPE( char * strsep, (char **stringp, const char *delim) );
-_PROTOTYPE( char *strcasestr, (const char *, const char *));
-_PROTOTYPE( char *strnstr, (const char *, const char *, size_t));
-
+#if defined(_NETBSD_SOURCE)
+#include <strings.h>		/* for backwards-compatibilty */
+void	*memmem(const void *, size_t, const void *, size_t);
+char	*strcasestr(const char *, const char *);
+size_t	 strlcat(char *, const char *, size_t);
+size_t	 strlcpy(char *, const char *, size_t);
+char	*strsep(char **, const char *);
+char	*stresep(char **, const char *, int);
+char	*strndup(const char *, size_t);
+void	*memrchr(const void *, int, size_t);
 #endif
+__END_DECLS
 
-#endif /* _STRING_H */
+#if _FORTIFY_SOURCE > 0
+#include <ssp/string.h>
+#endif
+#endif /* !defined(_STRING_H_) */

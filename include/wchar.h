@@ -1,3 +1,5 @@
+/*	$NetBSD: wchar.h,v 1.29 2010/03/27 22:14:09 tnozaki Exp $	*/
+
 /*-
  * Copyright (c)1999 Citrus Project,
  * All rights reserved.
@@ -56,39 +58,37 @@
 #ifndef _WCHAR_H_
 #define _WCHAR_H_
 
-#include <minix/ansi.h>
-#include <stdarg.h>
-#include <stddef.h>
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <machine/wchar_limits.h>
+#include <sys/ansi.h>
+#include <sys/null.h>
 
 #include <stdio.h> /* for FILE* */
 
-/* mbstate_t is an opaque object to keep conversion state in wide-char
- * conversion. Do not refer to the contents in user programs.
- * (Based on NETBSD implementation.)
- */
-typedef union {
-    long int __mbstateL;   /* For alignment. NETBSD uses int64_t. */
-    char __mbstate8[128];
-} __mbstate_t;
-
-#ifndef	_MBSTATE_T
-#define	_MBSTATE_T
-typedef	__mbstate_t mbstate_t;
-#define _GLIBCXX_HAVE_MBSTATE_T 1
+#if defined(_BSD_WCHAR_T_) && !defined(__cplusplus)
+typedef	_BSD_WCHAR_T_	wchar_t;
+#undef	_BSD_WCHAR_T_
 #endif
 
-#ifndef	_WINT_T
-#define	_WINT_T
-typedef	int wint_t;
+#ifdef	_BSD_MBSTATE_T_
+typedef	_BSD_MBSTATE_T_	mbstate_t;
+#undef	_BSD_MBSTATE_T_
 #endif
 
+#ifdef	_BSD_WINT_T_
+typedef	_BSD_WINT_T_	wint_t;
+#undef	_BSD_WINT_T_
+#endif
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
 
 struct tm;
 
-#ifdef __ACK__
-#define __restrict
-#endif
-
+__BEGIN_DECLS
 wint_t	btowc(int);
 size_t	mbrlen(const char * __restrict, size_t, mbstate_t * __restrict);
 size_t	mbrtowc(wchar_t * __restrict, const char * __restrict, size_t,
@@ -167,18 +167,18 @@ int fwprintf(FILE * __restrict, const wchar_t * __restrict, ...);
 int fwscanf(FILE * __restrict, const wchar_t * __restrict, ...);
 int swprintf(wchar_t * __restrict, size_t n, const wchar_t * __restrict, ...);
 int swscanf(const wchar_t * __restrict, const wchar_t * __restrict, ...);
-int vfwprintf(FILE * __restrict, const wchar_t * __restrict, va_list);
+int vfwprintf(FILE * __restrict, const wchar_t * __restrict, _BSD_VA_LIST_);
 int vswprintf(wchar_t * __restrict, size_t, const wchar_t * __restrict,
-    va_list);
-int vwprintf(const wchar_t * __restrict, va_list);
+    _BSD_VA_LIST_);
+int vwprintf(const wchar_t * __restrict, _BSD_VA_LIST_);
 int wprintf(const wchar_t * __restrict, ...);
 int wscanf(const wchar_t * __restrict, ...);
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
     defined(_NETBSD_SOURCE)
-int vfwscanf(FILE * __restrict, const wchar_t * __restrict, va_list);
+int vfwscanf(FILE * __restrict, const wchar_t * __restrict, _BSD_VA_LIST_);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict,
-    va_list);
-int vwscanf(const wchar_t * __restrict, va_list);
+    _BSD_VA_LIST_);
+int vwscanf(const wchar_t * __restrict, _BSD_VA_LIST_);
 #endif
 #if defined(_NETBSD_SOURCE)
 struct tinfo;
@@ -188,6 +188,7 @@ wchar_t *wcsdup (const wchar_t *);
 int wcsncasecmp (const wchar_t *, const wchar_t *, size_t);
 int wcscasecmp(const wchar_t *, const wchar_t *);
 #endif
+__END_DECLS
 
 #ifndef WEOF
 #define	WEOF 	((wint_t)-1)

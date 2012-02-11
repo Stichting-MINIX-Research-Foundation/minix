@@ -76,13 +76,6 @@ bootable | hdboot)
 esac
 
 case $action in
-bootable)
-	# Install the boot monitor on the root device and make it bootable.
-	install -cs -m 644 $mdec/boot $rootdir/boot/boot || exit
-	sync
-	installboot_minix -device $root $mdec/bootblock /boot/boot || exit
-	test $realroot != $root && umount $root
-	;;
 hdboot)
 	# Install a new image on the root device.
 	if [ -e $rootdir/boot/$hdboot_t -a ! -d $rootdir/boot/$hdboot_t ]
@@ -136,14 +129,6 @@ hdboot)
 		mv /boot/minix/.temp /boot/minix/"$target"
 		rm -f /boot/minix_latest
 		ln -s /boot/minix/"$target" /boot/minix_latest 
-
-		# XXX for compatibility with old boot
-		ln -f /boot/minix_latest/kernel /boot/kernel
-		for i in /boot/minix_latest/mod*
-		do
-			lname=`basename $i | sed 's/.*_//'`
-			ln -f "$i" "/boot/$lname"
-		done
 	else
 		# Install the new image.
 		echo "install $hdboot_t $root:/boot/$hdboot_t/$target"
@@ -158,52 +143,6 @@ hdboot)
 
 	test $realroot != $root && umount $root
 	echo "Done."
-	;;
-fdboot)
-	# fdboot: Make a boot floppy.
-
-	if [ -z "$dev" ]
-	then
-		echo -n \
-"Finish the name of the floppy device to write (by default 'fd0'): /dev/";
-		read dev
-		case "$dev" in
-		'')	dev=/dev/fd0
-			;;
-		/dev/*)
-			;;
-		*)	dev=/dev/$dev
-		esac
-	fi
-
-	# Make a file system.
-	umount $dev 2>/dev/null
-	if mkfs -B 1024 -i 512 $dev
-	then	:
-	else
-		echo "mkfs of $dev failed."
-		exit 1;
-	fi
-
-	# Install /dev, /boot/boot and /boot/image.
-	mount $dev /mnt || exit
-	mkdir -p /mnt/boot/image || exit
-	cpdir /dev /mnt/dev || exit
-	cp -p $mdec/boot /mnt/boot/boot || exit
-	cp -p image /mnt/boot/image/ || exit
-	umount $dev || exit
-
-	# Make bootable and copy the boot parameters.
-	installboot_minix -d $dev $mdec/bootblock /boot/boot || exit
-	pfile=fdbootparams
-	if [ -f $pfile ]
-	then	echo "Using floppy boot parameters from file $pfile."
-		edparams $dev "`cat $pfile`" || exit
-	else	echo "Copying floppy boot parameters from $root."
-		dd if=$root of=$dev skip=1 seek=1 count=1 conv=silent || exit
-	fi
-	edparams $dev 'main(){delay 2000;boot}; save' || exit
-	echo "Test kernel installed on $dev"
 	;;
 esac
 sync

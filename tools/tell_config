@@ -4,10 +4,10 @@
 #						Author: Kees J. Bot
 
 echo "
-#include \"../common/include/minix/config.h\"
+#include \"../include/minix/config.h\"
 $*
 " >/tmp/tell.$$
 exec </tmp/tell.$$
 rm /tmp/tell.$$
 
-exec cc -P -E -
+exec clang -P -E -

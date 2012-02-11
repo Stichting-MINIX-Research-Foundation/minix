@@ -1,4 +1,4 @@
-.\"	$NetBSD: mpool.3,v 1.9 2003/08/07 16:42:43 agc Exp $
+.\"	$NetBSD: mpool.3,v 1.10 2010/12/16 11:49:35 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mpool.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 17, 2003
+.Dd December 16, 2010
 .Dt MPOOL 3
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ management of files.
 The buffers may be shared between processes.
 .Pp
 The function
-.Nm mpool_open
+.Fn mpool_open
 initializes a memory pool.
 The
 .Fa key
@@ -105,7 +105,7 @@ file's buffers, but will be the largest value specified by any of the
 processes sharing the file.
 .Pp
 The
-.Nm mpool_filter
+.Fn mpool_filter
 function is intended to make transparent input and output processing
 of the pages possible.
 If the
@@ -122,7 +122,7 @@ pointer, the page number and a pointer to the page to being read or
 written.
 .Pp
 The function
-.Nm mpool_new
+.Fn mpool_new
 takes an MPOOL pointer and an address as arguments.
 If a new page can be allocated, a pointer to the page is returned and
 the page number is stored into the
@@ -133,7 +133,7 @@ Otherwise,
 is returned and errno is set.
 .Pp
 The function
-.Nm mpool_get
+.Fn mpool_get
 takes a MPOOL pointer and a page number as arguments.
 If the page exists, a pointer to the page is returned.
 Otherwise,
@@ -142,14 +142,14 @@ is returned and errno is set.
 The flags parameter is not currently used.
 .Pp
 The function
-.Nm mpool_put
+.Fn mpool_put
 unpins the page referenced by
 .Fa pgaddr .
 .Fa pgaddr
 must be an address previously returned by
-.Nm mpool_get
+.Fn mpool_get
 or
-.Nm mpool_new .
+.Fn mpool_new .
 The flag value is specified by or'ing any of the following values:
 .Bl -tag -width MPOOL_DIRTYX -offset indent
 .It Dv MPOOL_DIRTY
@@ -157,35 +157,35 @@ The page has been modified and needs to be written to the backing
 file.
 .El
 .Pp
-.Nm mpool_put
+.Fn mpool_put
 returns 0 on success and \-1 if an error occurs.
 .Pp
 The function
-.Nm mpool_sync
+.Fn mpool_sync
 writes all modified pages associated with the MPOOL pointer to the
 backing file.
-.Nm mpool_sync
+.Fn mpool_sync
 returns 0 on success and \-1 if an error occurs.
 .Pp
 The
-.Nm mpool_close
+.Fn mpool_close
 function frees up any allocated memory associated with the memory pool
 cookie.
 Modified pages are
 .Em not
 written to the backing file.
-.Nm mpool_close
+.Fn mpool_close
 returns 0 on success and \-1 if an error occurs.
 .Sh ERRORS
 The
-.Nm mpool_open
+.Fn mpool_open
 function may fail and set
 .Va errno
 for any of the errors specified for the library routine
 .Xr malloc 3 .
 .Pp
 The
-.Nm mpool_get
+.Fn mpool_get
 function may fail and set
 .Va errno
 for the following:
@@ -195,9 +195,9 @@ The requested record doesn't exist.
 .El
 .Pp
 The
-.Nm mpool_new
+.Fn mpool_new
 and
-.Nm mpool_get
+.Fn mpool_get
 functions may fail and set
 .Va errno
 for any of the errors specified for the library routines
@@ -207,14 +207,14 @@ and
 .Xr malloc 3 .
 .Pp
 The
-.Nm mpool_sync
+.Fn mpool_sync
 function may fail and set
 .Va errno
 for any of the errors specified for the library routine
 .Xr write 2 .
 .Pp
 The
-.Nm mpool_close
+.Fn mpool_close
 function may fail and set
 .Va errno
 for any of the errors specified for the library routine

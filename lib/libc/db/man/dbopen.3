@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbopen.3,v 1.18 2010/03/22 19:30:53 joerg Exp $
+.\"	$NetBSD: dbopen.3,v 1.19 2010/12/16 12:08:16 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)dbopen.3	8.5 (Berkeley) 1/2/94
 .\"
-.Dd April 17, 2003
+.Dd December 16, 2010
 .Dt DBOPEN 3
 .Os
 .Sh NAME
@@ -60,8 +60,9 @@ detail in their respective manual pages
 and
 .Xr recno 3 .
 .Pp
-.Nm
-opens
+The
+.Fn dbopen
+function opens
 .Fa file
 for reading and/or writing.
 Files never intended to be preserved on disk may be created by setting
@@ -134,15 +135,16 @@ is
 .Dv NULL ,
 each access method will use defaults appropriate for the system and
 the access method.
-.Pp
-.Nm
-returns a pointer to a DB structure on success and
+.Ss The DB Structure
+The
+.Fn dbopen
+function returns a pointer to a DB structure on success and
 .Dv NULL
 on error.
 The DB structure is defined in the
 .In db.h
 include file, and contains at least the following fields:
-.Bd -literal
+.Bd -literal -offset indent
 typedef struct {
 	DBTYPE type;
 	int (*close)(const DB *db);
@@ -162,7 +164,7 @@ These functions take a pointer to a structure as returned by
 .Nm ,
 and sometimes one or more pointers to key/data structures and a flag
 value.
-.Bl -tag -width closex
+.Bl -tag -width closex -offset indent
 .It Fa type
 The type of the underlying access method (and file format).
 .It Fa close
@@ -420,10 +422,10 @@ routines return \-1 on error (setting
 .Va errno )
 and 0 on success.
 .El
-.Ss KEY/DATA PAIRS
+.Ss Key/data Pairs
 Access to all file types is based on key/data pairs.
 Both keys and data are represented by the following data structure:
-.Bd -literal
+.Bd -literal -offset indent
 typedef struct {
 	void *data;
 	size_t size;
@@ -431,7 +433,7 @@ typedef struct {
 .Ed
 .Pp
 The elements of the DBT structure are defined as follows:
-.Bl -tag -width datax
+.Bl -tag -width datax -offset indent
 .It Fa data
 A pointer to a byte string.
 .It Fa size
@@ -515,11 +517,13 @@ for any of the errors specified for the library routine
 .Xr recno 3
 .Pp
 .Rs
-.%T "LIBTP: Portable, Modular Transactions for UNIX"
+.%T LIBTP: Portable, Modular Transactions for UNIX
 .%A Margo Seltzer
 .%A Michael Olson
-.%J USENIX proceedings
-.%D Winter 1992
+.%I USENIX Association
+.%B Proceedings of the 1992 Winter USENIX Technical Conference
+.%D 1992
+.%P 9-25
 .Re
 .Sh BUGS
 The typedef DBT is a mnemonic for

@@ -37,9 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: bt_conv.c,v 1.14 2008/09/10 17:52:35 joerg Exp $");
-#endif
 
 #include <assert.h>
 #include <stdio.h>

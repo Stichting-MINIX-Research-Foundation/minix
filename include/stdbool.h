@@ -46,8 +46,4 @@
 
 #define	__bool_true_false_are_defined	1
 
-#if __STDC_VERSION__ < 199901L && __GNUC__ < 3
-typedef int     _Bool;
-#endif
-
 #endif /* _STDBOOL_H_ */

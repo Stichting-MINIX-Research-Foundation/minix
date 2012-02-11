@@ -37,13 +37,9 @@
 #endif
 
 #include <sys/cdefs.h>
-#ifndef __minix
 __RCSID("$NetBSD: hash.c,v 1.31 2009/02/12 06:35:54 lukem Exp $");
-#endif
 
-#ifndef __minix
 #include "namespace.h"
-#endif
 #include <sys/param.h>
 #include <sys/stat.h>
 
@@ -60,33 +56,17 @@ __RCSID("$NetBSD: hash.c,v 1.31 2009/02/12 06:35:54 lukem Exp $");
 #include "page.h"
 #include "extern.h"
 
-#ifndef LITTLE_ENDIAN
-# define LITTLE_ENDIAN	1234
-#endif
-
-#ifndef BIG_ENDIAN
-# define BIG_ENDIAN	4321
-#endif
-
-#ifndef BYTE_ORDER
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
-
-#ifndef _DIAGASSERT
-#define _DIAGASSERT
-#endif
-
 static int   alloc_segs(HTAB *, int);
 static int   flush_meta(HTAB *);
 static int   hash_access(HTAB *, ACTION, DBT *, DBT *);
 static int   hash_close(DB *);
-static int   hash_delete(const DB *, const DBT *, unsigned int);
+static int   hash_delete(const DB *, const DBT *, uint32_t);
 static int   hash_fd(const DB *);
-static int   hash_get(const DB *, const DBT *, DBT *, unsigned int);
-static int   hash_put(const DB *, DBT *, const DBT *, unsigned int);
+static int   hash_get(const DB *, const DBT *, DBT *, uint32_t);
+static int   hash_put(const DB *, DBT *, const DBT *, uint32_t);
 static void *hash_realloc(SEGMENT **, size_t, size_t);
-static int   hash_seq(const DB *, DBT *, DBT *, unsigned int);
-static int   hash_sync(const DB *, unsigned int);
+static int   hash_seq(const DB *, DBT *, DBT *, uint32_t);
+static int   hash_sync(const DB *, uint32_t);
 static int   hdestroy(HTAB *);
 static HTAB *init_hash(HTAB *, const char *, const HASHINFO *);
 static int   init_htab(HTAB *, size_t);
@@ -321,11 +301,16 @@ init_hash(HTAB *hashp, const char *file, const HASHINFO *info)
 	if (file != NULL) {
 		if (stat(file, &statbuf))
 			return (NULL);
-#ifndef __minix
-		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
-#else
-		hashp->BSIZE = MIN(4096, MAX_BSIZE);
+#ifdef __minix
+		if (statbuf.st_blksize == 0) {
+			/* 0 in 2 cases: upgrade from old to new struct stat or
+			 * there is a bug in underlying fs.
+			 */
+			hashp->BSIZE = MIN(MINIX_ST_BLKSIZE, MAX_BSIZE);
+		} else
 #endif
+			hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
+
 		hashp->BSHIFT = __log2((uint32_t)hashp->BSIZE);
 	}
 
@@ -473,7 +458,7 @@ hdestroy(HTAB *hashp)
  *	-1 ERROR
  */
 static int
-hash_sync(const DB *dbp, unsigned int flags)
+hash_sync(const DB *dbp, uint32_t flags)
 {
 	HTAB *hashp;
 
@@ -547,7 +532,7 @@ flush_meta(HTAB *hashp)
  *	-1 to indicate an internal ERROR (i.e. out of memory, etc)
  */
 static int
-hash_get(const DB *dbp, const DBT *key, DBT *data, unsigned int flag)
+hash_get(const DB *dbp, const DBT *key, DBT *data, uint32_t flag)
 {
 	HTAB *hashp;
 
@@ -560,7 +545,7 @@ hash_get(const DB *dbp, const DBT *key, DBT *data, unsigned int flag)
 }
 
 static int
-hash_put(const DB *dbp, DBT *key, const DBT *data, unsigned int flag)
+hash_put(const DB *dbp, DBT *key, const DBT *data, uint32_t flag)
 {
 	HTAB *hashp;
 
@@ -579,7 +564,7 @@ hash_put(const DB *dbp, DBT *key, const DBT *data, unsigned int flag)
 }
 
 static int
-hash_delete(const DB *dbp, const DBT *key, unsigned int flag)
+hash_delete(const DB *dbp, const DBT *key, uint32_t flag)
 {
 	HTAB *hashp;
 
@@ -727,7 +712,7 @@ found:
 }
 
 static int
-hash_seq(const DB *dbp, DBT *key, DBT *data, unsigned int flag)
+hash_seq(const DB *dbp, DBT *key, DBT *data, uint32_t flag)
 {
 	uint32_t bucket;
 	BUFHEAD *bufp = NULL; /* XXX: gcc */

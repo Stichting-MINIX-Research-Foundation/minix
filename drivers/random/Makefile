@@ -6,9 +6,6 @@ SRCS=	main.c random.c rijndael_api.c rijndael_alg.c
 
 DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBMINIXUTIL}
 LDADD+=	-lchardriver -lsys 
-.if ${COMPILER_TYPE} != "gnu"
-LDADD+= -lminixutil
-.endif
 
 MAN=
 
