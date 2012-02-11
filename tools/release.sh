@@ -170,7 +170,7 @@ then	echo " * Cleanup old files"
 	umount $RELEASEMNTDIR || true
 fi
 
-rm -rf $RELEASEDIR $RELEASEMNTDIR $IMG $ROOTIMAGE $CDFILES image*
+rm -rf $RELEASEDIR $RELEASEMNTDIR $IMG $ROOTIMAGE $CDFILES image* || true
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR $RELEASEMNTDIR 
 mkdir -m 755 $RELEASEDIR/usr
