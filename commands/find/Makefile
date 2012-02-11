@@ -6,7 +6,12 @@
 PROG=	find
 SRCS=	find.c function.c ls.c main.c misc.c operator.c option.c
 
+.if ${COMPILER_TYPE} != "gnu"
 LDADD+=-lminixutil
 DPADD+=${LIBMINIXUTIL}
+.else
+LDADD+=        -lutil
+DPADD+=        ${LIBUTIL}
+.endif
 
 .include <bsd.prog.mk>

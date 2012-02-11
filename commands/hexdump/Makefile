@@ -6,8 +6,14 @@ SRCS=	conv.c display.c hexdump.c hexsyntax.c odsyntax.c parse.c
 MAN=	hexdump.1 #od.1
 
 .ifndef HOSTPROG
+
+.if ${COMPILER_TYPE} != "gnu"
 LDADD+=-lminixutil
 DPADD+=${LIBMINIXUTIL}
+.else
+LDADD+=        -lutil
+DPADD+=        ${LIBUTIL}
+.endif
 
 #LINKS=	${BINDIR}/hexdump ${BINDIR}/od
 .endif
