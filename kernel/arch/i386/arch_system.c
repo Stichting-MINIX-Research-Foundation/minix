@@ -25,6 +25,7 @@
 #include "oxpcie.h"
 #include "kernel/proc.h"
 #include "kernel/debug.h"
+#include "mb_utils.h"
 #include <machine/multiboot.h>
 
 #include "glo.h"
@@ -85,15 +86,14 @@ PUBLIC int cpu_has_tsc;
 
 PUBLIC __dead void arch_shutdown(int how)
 {
-	static char mybuffer[sizeof(params_buffer)];
 	u16_t magic;
 	vm_stop();
 
 	/* Mask all interrupts, including the clock. */
 	outb( INT_CTLMASK, ~0);
 
-#if USE_BOOTPARAM
 	if(minix_panicing) {
+		unsigned char unused_ch;
 		/* We're panicing? Then retrieve and decode currently
 		 * loaded segment selectors.
 		 */
@@ -102,8 +102,22 @@ PUBLIC __dead void arch_shutdown(int how)
 		if(read_ds() != read_ss()) {
 			printseg("ss: ", 0, NULL, read_ss());
 		}
+
+		/* Printing is done synchronously over serial. */
+		if (do_serial_debug)
+			reset();
+
+		/* Print accumulated diagnostics buffer and reset. */
+		mb_cls();
+		mb_print("Minix panic. System diagnostics buffer:\n\n");
+		mb_print(kmess_buf);
+		mb_print("\nSystem has panicked, press any key to reboot");
+		while (!mb_read_char(&unused_ch))
+			;
+		reset();
 	}
 
+#if USE_BOOTPARAM
 	if (how == RBT_DEFAULT) {
 		how = mon_return ? RBT_HALT : RBT_RESET;
 	}
@@ -119,37 +133,7 @@ PUBLIC __dead void arch_shutdown(int how)
 		 */
 		if (how != RBT_MONITOR)
 			arch_set_params("", 1);
-		if(minix_panicing) {
-			int source, dest;
-			const char *lead = "echo \\n*** kernel messages:\\n";
-			const int leadlen = strlen(lead);
-			strcpy(mybuffer, lead);
 
-#define DECSOURCE source = (source - 1 + _KMESS_BUF_SIZE) % _KMESS_BUF_SIZE
-
-			dest = sizeof(mybuffer)-1;
-			mybuffer[dest--] = '\0';
-
-			source = kmess.km_next;
-			DECSOURCE; 
-
-			while(dest >= leadlen) {
-				const char c = kmess.km_buf[source];
-				if(c == '\n') {
-					mybuffer[dest--] = 'n';
-					mybuffer[dest] = '\\';
-				} else if(isprint(c) &&
-					c != '\'' && c != '"' &&
-					c != '\\' && c != ';') {
-					mybuffer[dest] = c;
-				} else	mybuffer[dest] = ' ';
-
-				DECSOURCE;
-				dest--;
-			}
-
-			arch_set_params(mybuffer, strlen(mybuffer)+1);
-		}
 		if (mon_return)
 			arch_monitor();
 
@@ -157,14 +141,7 @@ PUBLIC __dead void arch_shutdown(int how)
 		 * depending on the parameters
 		 */
 		if (how == RBT_MONITOR) {
-			mybuffer[0] = '\0';
-			arch_get_params(mybuffer, sizeof(mybuffer));
-			if (strstr(mybuffer, "boot") ||
-				strstr(mybuffer, "menu") ||	
-				strstr(mybuffer, "reset"))
-				how = RBT_RESET;
-			else
-				how = RBT_HALT;
+			how = RBT_RESET;
 		}
 	}
 
@@ -642,8 +619,6 @@ PUBLIC void arch_ack_profile_clock(void)
 }
 
 #endif
-
-#define COLOR_BASE	0xB8000L
 
 /* Saved by mpx386.s into these variables. */
 u32_t params_size, params_offset, mon_ds;

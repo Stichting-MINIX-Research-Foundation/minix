@@ -16,6 +16,8 @@
 #include "string.h"
 #include "arch_proto.h"
 #include "libexec.h"
+#include "mb_utils.h"
+#include "serial.h"
 #include <machine/multiboot.h>
 
 #if USE_SYSDEBUG
@@ -37,8 +39,6 @@
 
 #define mb_save_phymem(buf, phy, len) \
 		phys_copy((u32_t)(buf), (phy), (len))
-
-FORWARD _PROTOTYPE(void mb_print, (char *str));
 
 PRIVATE void mb_itoa(u32_t val, char * out) 
 {
@@ -117,50 +117,104 @@ PRIVATE char mb_get_char(int line, int col)
 
 /* Give non-zero values to avoid them in BSS */
 PRIVATE int print_line = 1, print_col = 1;
+
+#include <sys/video.h>
 	
-PRIVATE void mb_cls(void) 
+PUBLIC void mb_cls(void)
 {
-#if MULTIBOOT_VERBOSE
 	int i, j;
 	/* Clear screen */
 	for (i = 0; i < MULTIBOOT_CONSOLE_LINES; i++ )
 		for (j = 0; j < MULTIBOOT_CONSOLE_COLS; j++ )
 			mb_put_char(0, i, j);
 	print_line = print_col = 0;
-#endif
+
+	/* Tell video hardware origin is 0. */
+	outb(C_6845+INDEX, VID_ORG);
+	outb(C_6845+DATA, 0);
+	outb(C_6845+INDEX, VID_ORG+1);
+	outb(C_6845+DATA, 0);
 }
 
 PRIVATE void mb_scroll_up(int lines) 
 {
 	int i, j;
-	for (i = 0; i < MULTIBOOT_CONSOLE_LINES - lines; i++ ) {
-		for (j = 0; j < MULTIBOOT_CONSOLE_COLS; j++ )
-			mb_put_char(mb_get_char(i + lines, j), i, j);
+	for (i = 0; i < MULTIBOOT_CONSOLE_LINES; i++ ) {
+		for (j = 0; j < MULTIBOOT_CONSOLE_COLS; j++ ) {
+			char c = 0;
+			if(i < MULTIBOOT_CONSOLE_LINES-lines)
+				c = mb_get_char(i + lines, j);
+			mb_put_char(c, i, j);
+		}
 	}
 	print_line-= lines;
 }
 
-PRIVATE void mb_print(char *str) 
+PUBLIC void mb_print_char(char c)
 {
-#if MULTIBOOT_VERBOSE
-	while (*str) {
-		if (*str == '\n') {
-			str++;
-			while (print_col < MULTIBOOT_CONSOLE_COLS)
-				mb_put_char(' ', print_line, print_col++);
-			print_line++;
-			print_col = 0;
-			continue;
-		}
-		mb_put_char(*str++, print_line, print_col++);
-		if (print_col >= MULTIBOOT_CONSOLE_COLS) {
-			print_line++;
-			print_col = 0;
-		}
-		while (print_line >= MULTIBOOT_CONSOLE_LINES)
-			mb_scroll_up(1);
+	while (print_line >= MULTIBOOT_CONSOLE_LINES)
+		mb_scroll_up(1);
+
+	if (c == '\n') {
+		while (print_col < MULTIBOOT_CONSOLE_COLS)
+			mb_put_char(' ', print_line, print_col++);
+		print_line++;
+		print_col = 0;
+		return;
 	}
-#endif /* MULTIBOOT_VERBOSE */
+
+	mb_put_char(c, print_line, print_col++);
+
+	if (print_col >= MULTIBOOT_CONSOLE_COLS) {
+		print_line++;
+		print_col = 0;
+	}
+
+	while (print_line >= MULTIBOOT_CONSOLE_LINES)
+		mb_scroll_up(1);
+}
+
+PUBLIC void mb_print(char *str)
+{
+	while (*str) {
+		mb_print_char(*str);
+		str++;
+	}
+}
+
+/* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
+#define KEYBD		0x60	/* I/O port for keyboard data */
+#define KB_STATUS	0x64	/* I/O port for status on AT */
+#define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
+#define KB_AUX_BYTE	0x20	/* Auxiliary Device Output Buffer Full */
+
+PUBLIC int mb_read_char(unsigned char *ch)
+{
+	unsigned long b, sb;
+#ifdef DEBUG_SERIAL
+	u8_t c, lsr;
+
+	if (do_serial_debug) {
+		lsr= inb(COM1_LSR);
+		if (!(lsr & LSR_DR))
+			return 0;
+		c = inb(COM1_RBR);
+		return 1;
+	}
+#endif /* DEBUG_SERIAL */
+
+	sb = inb(KB_STATUS);
+
+	if (!(sb & KB_OUT_FULL)) {
+		return 0;
+	}
+
+	b = inb(KEYBD);
+
+	if (!(sb & KB_AUX_BYTE))
+		return 1;
+
+	return 0;
 }
 
 PRIVATE void mb_print_hex(u32_t value) 

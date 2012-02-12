@@ -23,7 +23,7 @@ PUBLIC void panic(const char *fmt, ...)
   va_list arg;
   /* The system has run aground of a fatal kernel error. Terminate execution. */
   if (minix_panicing == ARE_PANICING) {
-	arch_monitor();
+  	reset();
   }
   minix_panicing = ARE_PANICING;
   if (fmt != NULL) {
@@ -53,6 +53,8 @@ int c;					/* character to append */
  * to the output driver if an END_OF_KMESS is encountered. 
  */
   if (c != END_OF_KMESS) {
+      static int blpos = 0;
+      int maxblpos = sizeof(kmess_buf) - 2;
 #ifdef DEBUG_SERIAL
       if (do_serial_debug) {
 	if(c == '\n')
@@ -61,9 +63,13 @@ int c;					/* character to append */
       }
 #endif
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
+      kmess_buf[blpos] = c;
       if (kmess.km_size < sizeof(kmess.km_buf))
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
+      if(blpos == maxblpos) {
+      	memmove(kmess_buf, kmess_buf+1, sizeof(kmess_buf)-1);
+      } else blpos++;
   } else {
       int p;
       endpoint_t outprocs[] = OUTPUT_PROCS_ARRAY;

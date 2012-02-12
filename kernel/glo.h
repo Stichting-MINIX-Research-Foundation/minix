@@ -22,6 +22,7 @@
 EXTERN struct kinfo kinfo;		/* kernel information for users */
 EXTERN struct machine machine;		/* machine information for users */
 EXTERN struct kmessages kmess;  	/* diagnostic messages in kernel */
+EXTERN char kmess_buf[80*25];		/* printable copy of message buffer */
 EXTERN struct k_randomness krandom;	/* gather kernel random information */
 EXTERN struct loadinfo kloadinfo;	/* status of load average */
 
