@@ -20,7 +20,7 @@
 PUBLIC bit_t alloc_bit(void)
 {
 /* Allocate a bit from a bit map and return its bit number. */
-  bitchunk_t *wptr, *wlim; 
+  bitchunk_t *wptr, *wlim;
   bit_t b;
   unsigned int i, bcount;
 
@@ -28,24 +28,24 @@ PUBLIC bit_t alloc_bit(void)
   wlim = &inodemap[bcount]; /* Point to last chunk in inodemap. */
 
   for (wptr = &inodemap[0]; wptr < wlim; wptr++) {
-  	/* Does this word contain a free bit? */
-  	if (*wptr == (bitchunk_t) ~0) continue; /* No. Go to next word */
+	/* Does this word contain a free bit? */
+	if (*wptr == (bitchunk_t) ~0) continue; /* No. Go to next word */
 
-  	/* Find and allocate the free bit. */
-  	for (i = 0; (*wptr & (1 << i)) != 0; ++i) {}
+	/* Find and allocate the free bit. */
+	for (i = 0; (*wptr & (1 << i)) != 0; ++i) {}
 
 	/* Get inode number */
-  	b = (bit_t) ((wptr - &inodemap[0]) * FS_BITCHUNK_BITS + i);
-  	
-  	/* Don't allocate bits beyond end of map. */ 
-  	if (b >= NR_INODES) break;
+	b = (bit_t) ((wptr - &inodemap[0]) * FS_BITCHUNK_BITS + i);
 
-  	/* Allocate and return bit number. */
-  	*wptr |= 1 << i;
+	/* Don't allocate bits beyond end of map. */
+	if (b >= NR_INODES) break;
+
+	/* Allocate and return bit number. */
+	*wptr |= 1 << i;
 
 	/* Mark server 'busy' */
 	busy++;
-  	return(b);
+	return(b);
   }
 
   return(NO_BIT);			/* no bit could be allocated */
@@ -73,5 +73,3 @@ bit_t bit_returned;		/* number of bit to insert into the inode map*/
 
   busy--; /* One inode less in use. */
 }
-
-

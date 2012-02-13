@@ -1,3 +1,10 @@
+20120213
+	Replace VFS with AVFS
+
+	In case you were running AVFS by doing
+	'BUILDAVFS=yes make clean world', you now have to do a
+	'make clean cleandepend world' instead of a normal 'make clean world'.
+
 20120202
 	Rename installboot to installboot_minix.
 

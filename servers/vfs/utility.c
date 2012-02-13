@@ -25,10 +25,11 @@
 /*===========================================================================*
  *				fetch_name				     *
  *===========================================================================*/
-PUBLIC int fetch_name(path, len, flag)
+PUBLIC int fetch_name(path, len, flag, dest)
 char *path;			/* pointer to the path in user space */
 int len;			/* path length, including 0 byte */
 int flag;			/* M3 means path may be in message */
+char *dest;			/* pointer to where path is to be stored */
 {
 /* Go get path and put it in 'user_fullpath'.
  * If 'flag' = M3 and 'len' <= M3_STRING, the path is present in 'message'.
@@ -42,9 +43,6 @@ int flag;			/* M3 means path may be in message */
 	return(EGENERIC);
   }
 
-  if (len > sizeof(user_fullpath))
-	panic("fetch_name: len too much for user_fullpath: %d", len);
-
   /* Check name length for validity. */
   if (len <= 0) {
 	err_code = EINVAL;
@@ -53,7 +51,7 @@ int flag;			/* M3 means path may be in message */
 
   if (flag == M3 && len <= M3_STRING) {
 	/* Just copy the path from the message to 'user_fullpath'. */
-	rpu = &user_fullpath[0];
+	rpu = &dest[0];
 	rpm = m_in.pathname;		/* contained in input message */
 	count = len;
 	do { *rpu++ = *rpm++; } while (--count);
@@ -61,12 +59,12 @@ int flag;			/* M3 means path may be in message */
   } else {
 	/* String is not contained in the message.  Get it from user space. */
 	r = sys_datacopy(who_e, (vir_bytes) path,
-		VFS_PROC_NR, (vir_bytes) user_fullpath, (phys_bytes) len);
+		VFS_PROC_NR, (vir_bytes) dest, (phys_bytes) len);
   }
 
-  if (user_fullpath[len - 1] != '\0') {
-  	err_code = ENAMETOOLONG;
-  	return(EGENERIC);
+  if (dest[len - 1] != '\0') {
+	err_code = ENAMETOOLONG;
+	return(EGENERIC);
   }
 
   return(r);
@@ -91,20 +89,20 @@ PUBLIC int isokendpt_f(char *file, int line, endpoint_t endpoint, int *proc, int
   int failed = 0;
   endpoint_t ke;
   *proc = _ENDPOINT_P(endpoint);
-  if(endpoint == NONE) {
-	printf("vfs:%s:%d: endpoint is NONE\n", file, line);
+  if (endpoint == NONE) {
+	printf("VFS %s:%d: endpoint is NONE\n", file, line);
 	failed = 1;
-  } else if(*proc < 0 || *proc >= NR_PROCS) {
-	printf("vfs:%s:%d: proc (%d) from endpoint (%d) out of range\n",
+  } else if (*proc < 0 || *proc >= NR_PROCS) {
+	printf("VFS %s:%d: proc (%d) from endpoint (%d) out of range\n",
 		file, line, *proc, endpoint);
 	failed = 1;
-  } else if((ke=fproc[*proc].fp_endpoint) != endpoint) {
+  } else if ((ke = fproc[*proc].fp_endpoint) != endpoint) {
 	if(ke == NONE) {
-		printf("vfs:%s:%d: endpoint (%d) points to NONE slot (%d)\n",
-                	file, line, endpoint, *proc);
+		printf("VFS %s:%d: endpoint (%d) points to NONE slot (%d)\n",
+			file, line, endpoint, *proc);
 		assert(fproc[*proc].fp_pid == PID_FREE);
-  	} else {
-		printf("vfs:%s:%d: proc (%d) from endpoint (%d) doesn't match "
+	} else {
+		printf("VFS %s:%d: proc (%d) from endpoint (%d) doesn't match "
 			"known endpoint (%d)\n", file, line, *proc, endpoint,
 			fproc[*proc].fp_endpoint);
 		assert(fproc[*proc].fp_pid != PID_FREE);
@@ -147,12 +145,9 @@ PUBLIC int in_group(struct fproc *rfp, gid_t grp)
 {
   int i;
 
-  for (i = 0; i < rfp->fp_ngroups; i++) {
-	if (rfp->fp_sgroups[i] == grp) {
+  for (i = 0; i < rfp->fp_ngroups; i++)
+	if (rfp->fp_sgroups[i] == grp)
 		return(OK);
-	}
-  }
 
   return(EINVAL);
 }
-

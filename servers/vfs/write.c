@@ -7,7 +7,6 @@
 
 #include "fs.h"
 #include "file.h"
-#include "fproc.h"
 
 
 /*===========================================================================*
@@ -16,6 +15,5 @@
 PUBLIC int do_write()
 {
 /* Perform the write(fd, buffer, nbytes) system call. */
-  return(read_write(WRITING));
+  return(do_read_write(WRITING));
 }
-

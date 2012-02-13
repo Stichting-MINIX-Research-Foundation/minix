@@ -1,7 +1,7 @@
 #ifndef __PFS_INODE_H__
 #define __PFS_INODE_H__
 
-/* Inode table.  This table holds inodes that are currently in use. 
+/* Inode table.  This table holds inodes that are currently in use.
  */
 
 #include <sys/queue.h>
@@ -15,7 +15,7 @@ EXTERN struct inode {
   time_t i_atime;		/* time of last access (V2 only) */
   time_t i_mtime;		/* when was file data last changed */
   time_t i_ctime;		/* when was inode itself changed (V2 only)*/
-  
+
   /* The following items are not present on the disk. */
   dev_t i_dev;			/* which device is the inode on */
   dev_t i_rdev;			/* which special device is the inode on */
@@ -26,10 +26,10 @@ EXTERN struct inode {
   LIST_ENTRY(inode) i_hash;     /* hash list */
   TAILQ_ENTRY(inode) i_unused;  /* free and unused list */
 
-  
+
 } inode[NR_INODES];
 
-/* list of unused/free inodes */ 
+/* list of unused/free inodes */
 EXTERN TAILQ_HEAD(unused_inodes_t, inode)  unused_inodes;
 
 /* inode hashtable */

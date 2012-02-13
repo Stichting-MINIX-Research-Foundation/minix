@@ -43,8 +43,8 @@ struct uds_fd {
 		/* OR it is UDS_INUSE and can't be allocated. */
 		UDS_INUSE = 1
 
-	/* state is set to UDS_INUSE in uds_open(). state is Set to 
-	 * UDS_FREE in uds_init() and uds_close(). state should be 
+	/* state is set to UDS_INUSE in uds_open(). state is Set to
+	 * UDS_FREE in uds_init() and uds_close(). state should be
 	 * checked prior to all operations.
 	 */
 	} state;
@@ -103,7 +103,7 @@ struct uds_fd {
 	unsigned char backlog_size;
 
 	/* index of peer in uds_fd_table for connected sockets.
-	 * -1 is used to mean no peer. Assumptions: peer != -1 means 
+	 * -1 is used to mean no peer. Assumptions: peer != -1 means
 	 * connected.
 	 */
 	int peer;
@@ -131,7 +131,7 @@ struct uds_fd {
 	 */
 	int listening;
 
-	/* stores file pointers and credentials being sent between 
+	/* stores file pointers and credentials being sent between
 	 * processes with sendmsg(2) and recvmsg(2).
 	 */
 	struct ancillary ancillary_data;
@@ -144,7 +144,7 @@ struct uds_fd {
 
 /* Suspend/Revive Housekeeping */
 
-	
+
 	/* SUSPEND State Flags */
 	enum UDS_SUSPENDED {
 
@@ -232,11 +232,20 @@ EXTERN uds_fd_t uds_fd_table[NR_FDS];
  */
 #define uds_set_reply(msg,type,endpoint,io_gr,status)	\
 	do {						\
-		msg->m_type = type;			\
-		msg->REP_ENDPT = endpoint;		\
-		msg->REP_IO_GRANT = io_gr;		\
-		msg->REP_STATUS = status;		\
+		(msg)->m_type = type;			\
+		(msg)->REP_ENDPT = endpoint;		\
+		(msg)->REP_IO_GRANT = io_gr;		\
+		(msg)->REP_STATUS = status;		\
 	} while (0)
+
+#define uds_sel_reply(msg,type,minor,ops)		\
+	do {						\
+		(msg)->m_type = type;			\
+		(msg)->DEV_MINOR = minor;			\
+		(msg)->DEV_SEL_OPS = ops;			\
+	} while (0)
+
+
 
 
 #endif

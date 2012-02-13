@@ -17,12 +17,6 @@ CPPFLAGS.dmp_kernel.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.dmp_rs.c+=	-I${MINIXSRCDIR}
 CPPFLAGS.dmp_vm.c+=	-I${MINIXSRCDIR}
 
-.if ${BUILDAVFS} == "yes"
-CFLAGS+= -D_USEAVFS
-.else
-CFLAGS+= -D_USEVFS
-.endif
-
 # This setting must match the kernel's, as it affects the IRQ hooks table size.
 .if ${USE_APIC} != "no"
 CFLAGS+= -DUSE_APIC

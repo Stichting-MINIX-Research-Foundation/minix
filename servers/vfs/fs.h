@@ -1,3 +1,6 @@
+#ifndef __VFS_FS_H__
+#define __VFS_FS_H__
+
 /* This is the master header for fs.  It includes some other files
  * and defines the principal constants.
  */
@@ -40,4 +43,9 @@
 #include "const.h"
 #include "dmap.h"
 #include "proto.h"
+#include "threads.h"
 #include "glo.h"
+#include "comm.h"
+#include "vmnt.h"
+
+#endif

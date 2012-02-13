@@ -10,9 +10,9 @@
 #include "file.h"
 #include "fproc.h"
 #include "lock.h"
+#include "scratchpad.h"
 #include "vnode.h"
 #include "vmnt.h"
-
 
 PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/*  0 = unused	*/
@@ -46,11 +46,11 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_fstat,	/* 28 = fstat (prev)*/
 	no_sys,		/* 29 = pause	*/
 	do_utime,	/* 30 = utime	*/
-	no_sys,		/* 31 = unused	*/
-	no_sys,		/* 32 = unused	*/
+	no_sys,		/* 31 = (stty)	*/
+	no_sys,		/* 32 = (gtty)	*/
 	do_access,	/* 33 = access	*/
-	no_sys,		/* 34 = unused	*/
-	no_sys,		/* 35 = unused	*/
+	no_sys,		/* 34 = (nice)	*/
+	no_sys,		/* 35 = (ftime)	*/
 	do_sync,	/* 36 = sync	*/
 	no_sys,		/* 37 = kill	*/
 	do_rename,	/* 38 = rename	*/
@@ -59,7 +59,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_dup,		/* 41 = dup	*/
 	do_pipe,	/* 42 = pipe	*/
 	no_sys,		/* 43 = times	*/
-	no_sys,		/* 44 = unused	*/
+	no_sys,		/* 44 = (prof)	*/
 	do_slink,	/* 45 = symlink	*/
 	no_sys,		/* 46 = (setgid)*/
 	no_sys,		/* 47 = getgid	*/
@@ -71,8 +71,8 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_lstat,	/* 53 = lstat	*/
 	do_ioctl,	/* 54 = ioctl	*/
 	do_fcntl,	/* 55 = fcntl	*/
-	no_sys,		/* 56 = unused	*/
-	do_fslogin,	/* 57 = FS proc login */
+	no_sys,		/* 56 = (mpx)	*/
+	do_fsready,	/* 57 = FS proc ready */
 	no_sys,		/* 58 = unused	*/
 	no_sys,		/* 59 = (execve)*/
 	do_umask,	/* 60 = umask	*/
@@ -137,7 +137,7 @@ PUBLIC _PROTOTYPE (int (*pfs_call_vec[]), (void) ) = {
 
 	no_sys,		/* 0 */
 	do_check_perms,	/* 1 */
-	do_verify_fd,	/* 2 */ 
+	do_verify_fd,	/* 2 */
 	do_set_filp,	/* 3 */
 	do_copy_filp,	/* 4 */
 	do_put_filp,	/* 5 */

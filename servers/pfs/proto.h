@@ -39,6 +39,9 @@ _PROTOTYPE( void reply, (endpoint_t who, message *m_out)		);
 /* misc.c */
 _PROTOTYPE( int fs_sync, (message *fs_m_in, message *fs_m_out)		);
 
+/* mount.c */
+_PROTOTYPE( int fs_unmount, (message *fs_m_in, message *fs_m_out)	);
+
 /* open.c */
 _PROTOTYPE( int fs_newnode, (message *fs_m_in, message *fs_m_out)	);
 
@@ -63,7 +66,7 @@ _PROTOTYPE( int uds_read, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int uds_write, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int uds_ioctl, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int uds_select, (message *dev_m_in, message *dev_m_out)	);
-_PROTOTYPE( int uds_status, (message *dev_m_in, message *dev_m_out)	);
+_PROTOTYPE( int uds_unsuspend, (endpoint_t m_source, int minor)		);
 _PROTOTYPE( int uds_cancel, (message *dev_m_in, message *dev_m_out)	);
 
 /* uds.c */
@@ -97,8 +100,8 @@ _PROTOTYPE( int do_recvfrom, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_sendmsg, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int do_recvmsg, (message *dev_m_in, message *dev_m_out)	);
 _PROTOTYPE( int perform_connection,
-				(message *dev_m_in, message *dev_m_out, 
-				struct sockaddr_un *addr, int minorx, 
+				(message *dev_m_in, message *dev_m_out,
+				struct sockaddr_un *addr, int minorx,
 				int minory)				);
 _PROTOTYPE( int clear_fds, (int minor, struct ancillary *data)		);
 #endif

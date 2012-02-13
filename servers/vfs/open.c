@@ -8,6 +8,7 @@
  *   do_mkdir:	perform the MKDIR system call
  *   do_close:	perform the CLOSE system call
  *   do_lseek:  perform the LSEEK system call
+ *   do_llseek: perform the LLSEEK system call
  */
 
 #include "fs.h"
@@ -20,6 +21,8 @@
 #include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
+#include "dmap.h"
 #include "lock.h"
 #include "param.h"
 #include <dirent.h>
@@ -27,11 +30,14 @@
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
+#include "path.h"
 
 PUBLIC char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD _PROTOTYPE( struct vnode *new_node, (int oflags, mode_t bits)		);
-FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
+FORWARD _PROTOTYPE( struct vnode *new_node, (struct lookup *resolve,
+					     int oflags, mode_t bits)	);
+FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp, mode_t bits,
+				    int oflags)				);
 
 
 /*===========================================================================*
@@ -41,9 +47,11 @@ PUBLIC int do_creat()
 {
 /* Perform the creat(name, mode) system call. */
   int r;
+  char fullpath[PATH_MAX];
 
-  if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  r = common_open(O_WRONLY | O_CREAT | O_TRUNC, (mode_t) m_in.mode);
+  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
+	return(err_code);
+  r = common_open(fullpath, O_WRONLY | O_CREAT | O_TRUNC, (mode_t) m_in.mode);
   return(r);
 }
 
@@ -56,17 +64,18 @@ PUBLIC int do_open()
 /* Perform the open(name, flags,...) system call. */
   int create_mode = 0;		/* is really mode_t but this gives problems */
   int r;
+  char fullpath[PATH_MAX];
 
   /* If O_CREAT is set, open has three parameters, otherwise two. */
   if (m_in.mode & O_CREAT) {
-	create_mode = m_in.c_mode;	
-	r = fetch_name(m_in.c_name, m_in.name1_length, M1);
+	create_mode = m_in.c_mode;
+	r = fetch_name(m_in.c_name, m_in.name1_length, M1, fullpath);
   } else {
-	r = fetch_name(m_in.name, m_in.name_length, M3);
+	r = fetch_name(m_in.name, m_in.name_length, M3, fullpath);
   }
 
   if (r != OK) return(err_code); /* name was bad */
-  r = common_open(m_in.mode, create_mode);
+  r = common_open(fullpath, m_in.mode, create_mode);
   return(r);
 }
 
@@ -74,101 +83,143 @@ PUBLIC int do_open()
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-PUBLIC int common_open(register int oflags, mode_t omode)
+PUBLIC int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
-  int b, r, exist = TRUE;
+  int b, r, exist = TRUE, major_dev;
   dev_t dev;
   mode_t bits;
-  struct filp *fil_ptr, *filp2;
+  struct filp *filp, *filp2;
   struct vnode *vp;
   struct vmnt *vmp;
   struct dmap *dp;
+  struct lookup resolve;
 
   /* Remap the bottom two bits of oflags. */
   bits = (mode_t) mode_map[oflags & O_ACCMODE];
   if (!bits) return(EINVAL);
 
   /* See if file descriptor and filp slots are available. */
-  if ((r = get_fd(0, bits, &m_in.fd, &fil_ptr)) != OK) return(r);
+  if ((r = get_fd(0, bits, &(scratch(fp).file.fd_nr), &filp)) != OK) return(r);
+
+  lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
 
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
         omode = I_REGULAR | (omode & ALL_MODES & fp->fp_umask);
-	vp = new_node(oflags, omode);
+	vp = new_node(&resolve, oflags, omode);
 	r = err_code;
-	if (r == OK) exist = FALSE; /* We just created the file */
-	else if (r != EEXIST) return(r);  /* other error */ 
-	else exist = !(oflags & O_EXCL);  /* file exists, if the O_EXCL
-					     flag is set this is an error */
+	if (r == OK) exist = FALSE;	/* We just created the file */
+	else if (r != EEXIST) {		/* other error */
+		if (vp) unlock_vnode(vp);
+		unlock_filp(filp);
+		return(r);
+	}
+	else exist = !(oflags & O_EXCL);/* file exists, if the O_EXCL
+					   flag is set this is an error */
   } else {
 	/* Scan path name */
-	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_OPCL;
+	if ((vp = eat_path(&resolve, fp)) == NULL) {
+		unlock_filp(filp);
+		return(err_code);
+	}
+
+	if (vmp != NULL) unlock_vmnt(vmp);
   }
 
   /* Claim the file descriptor and filp slot and fill them in. */
-  fp->fp_filp[m_in.fd] = fil_ptr;
-  FD_SET(m_in.fd, &fp->fp_filp_inuse);
-  fil_ptr->filp_count = 1;
-  fil_ptr->filp_vno = vp;
-  fil_ptr->filp_flags = oflags;
+  fp->fp_filp[scratch(fp).file.fd_nr] = filp;
+  FD_SET(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
+  filp->filp_count = 1;
+  filp->filp_vno = vp;
+  filp->filp_flags = oflags;
 
   /* Only do the normal open code if we didn't just create the file. */
-  if(exist) {
+  if (exist) {
 	/* Check protections. */
 	if ((r = forbidden(fp, vp, bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
 		switch (vp->v_mode & I_TYPE) {
 		   case I_REGULAR:
-		   	/* Truncate regular file if O_TRUNC. */
-		   	if (oflags & O_TRUNC) {
-		   		if ((r = forbidden(fp, vp, W_BIT)) != OK)
-		   			break;
-		   		truncate_vnode(vp, 0);
-		   	}
-		   	break;
+			/* Truncate regular file if O_TRUNC. */
+			if (oflags & O_TRUNC) {
+				if ((r = forbidden(fp, vp, W_BIT)) != OK)
+					break;
+				truncate_vnode(vp, 0);
+			}
+			break;
 		   case I_DIRECTORY:
-		   	/* Directories may be read but not written. */
-		   	r = (bits & W_BIT ? EISDIR : OK);
-		   	break;
+			/* Directories may be read but not written. */
+			r = (bits & W_BIT ? EISDIR : OK);
+			break;
 		   case I_CHAR_SPECIAL:
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			/* TTY needs to know about the O_NOCTTY flag. */
 			r = dev_open(dev, who_e, bits | (oflags & O_NOCTTY));
-		   	if (r == SUSPEND) suspend(FP_BLOCKED_ON_DOPEN);
-		   	break;
+			if (r == SUSPEND) suspend(FP_BLOCKED_ON_DOPEN);
+			else vp = filp->filp_vno; /* Might be updated by
+						   * dev_open/clone_opcl */
+			break;
 		   case I_BLOCK_SPECIAL:
+
+			lock_bsf();
+
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) vp->v_sdev;
 			r = bdev_open(dev, bits);
-			if (r != OK) break;
+			if (r != OK) {
+				unlock_bsf();
+				break;
+			}
+
+			major_dev = major(vp->v_sdev);
+			dp = &dmap[major_dev];
+			if (dp->dmap_driver == NONE) {
+				printf("VFS: block driver disappeared!\n");
+				unlock_bsf();
+				r = ENXIO;
+				break;
+			}
 
 			/* Check whether the device is mounted or not. If so,
 			 * then that FS is responsible for this device.
 			 * Otherwise we default to ROOT_FS.
 			 */
 			vp->v_bfs_e = ROOT_FS_E; /* By default */
-			for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) 
-				if (vmp->m_dev == vp->v_sdev) 
+			for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)
+				if (vmp->m_dev == vp->v_sdev &&
+				    !(vmp->m_flags & VMNT_FORCEROOTBSF)) {
 					vp->v_bfs_e = vmp->m_fs_e;
+				}
 
-			/* Send the driver label to the file system (even when
-			 * known already).
+			/* Send the driver label to the file system that will
+			 * handle the block I/O requests (even when its label
+			 * and endpoint are known already), but only when it is
+			 * the root file system. Other file systems will
+			 * already have it anyway.
 			 */
-			dp = &dmap[major(vp->v_sdev)];
-			if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev,
-					dp->dmap_label)) != OK) {
+			if (vp->v_bfs_e != ROOT_FS_E) {
+				unlock_bsf();
+				break;
+			}
+
+			if (req_newdriver(vp->v_bfs_e, vp->v_sdev,
+					dp->dmap_label) != OK) {
 				printf("VFS: error sending driver label\n");
 				bdev_close(dev);
 				r = ENXIO;
 			}
+			unlock_bsf();
 			break;
 
 		   case I_NAMED_PIPE:
 			/* Create a mapped inode on PFS which handles reads
 			   and writes to this named pipe. */
-			r = map_vnode(vp);
+			tll_upgrade(&vp->v_lock);
+			r = map_vnode(vp, PFS_PROC_NR);
 			if (r == OK) {
 				vp->v_pipe = I_PIPE;
 				if (vp->v_ref_count == 1) {
@@ -178,7 +229,7 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 						r = truncate_vnode(vp, 0);
 				}
 				oflags |= O_APPEND;	/* force append mode */
-				fil_ptr->filp_flags = oflags;
+				filp->filp_flags = oflags;
 			}
 			if (r == OK) {
 				r = pipe_open(vp, bits, oflags);
@@ -189,10 +240,10 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 				 * file position will be automatically shared.
 				 */
 				b = (bits & R_BIT ? R_BIT : W_BIT);
-				fil_ptr->filp_count = 0; /* don't find self */
+				filp->filp_count = 0; /* don't find self */
 				if ((filp2 = find_filp(vp, b)) != NULL) {
 					/* Co-reader or writer found. Use it.*/
-					fp->fp_filp[m_in.fd] = filp2;
+					fp->fp_filp[scratch(fp).file.fd_nr] = filp2;
 					filp2->filp_count++;
 					filp2->filp_vno = vp;
 					filp2->filp_flags = oflags;
@@ -204,71 +255,105 @@ PUBLIC int common_open(register int oflags, mode_t omode)
 					 * existing filp entry.  Correct this
 					 * error.
 					 */
+					unlock_vnode(vp);
 					put_vnode(vp);
 				} else {
 					/* Nobody else found. Restore filp. */
-					fil_ptr->filp_count = 1;
+					filp->filp_count = 1;
 				}
-			} 
+			}
 			break;
 		}
 	}
   }
 
+  unlock_filp(filp);
+
   /* If error, release inode. */
   if (r != OK) {
-	if (r == SUSPEND) return(r);		/* Oops, just suspended */
-	fp->fp_filp[m_in.fd] = NULL;
-  	FD_CLR(m_in.fd, &fp->fp_filp_inuse);
-	fil_ptr->filp_count= 0;
-	put_vnode(vp);     
-	fil_ptr->filp_vno = NULL;
-	return(r);
+	if (r != SUSPEND) {
+		fp->fp_filp[scratch(fp).file.fd_nr] = NULL;
+		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_filp_inuse);
+		filp->filp_count = 0;
+		filp->filp_vno = NULL;
+		put_vnode(vp);
+	}
+  } else {
+	r = scratch(fp).file.fd_nr;
   }
-  
-  return(m_in.fd);
+
+  return(r);
 }
 
 
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct vnode *new_node(int oflags, mode_t bits)
+PRIVATE struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 {
 /* Try to create a new inode and return a pointer to it. If the inode already
    exists, return a pointer to it as well, but set err_code accordingly.
    NULL is returned if the path cannot be resolved up to the last
    directory, or when the inode cannot be created due to permissions or
-   otherwise. */ 
+   otherwise. */
   struct vnode *dirp, *vp;
-  int r, flags;
+  struct vmnt *dir_vmp, *vp_vmp;
+  int r;
   struct node_details res;
+  struct lookup findnode;
+  char *path;
+
+  path = resolve->l_path;	/* For easy access */
+
+  lookup_init(&findnode, path, resolve->l_flags, &dir_vmp, &dirp);
+  findnode.l_vmnt_lock = VMNT_WRITE;
+  findnode.l_vnode_lock = VNODE_WRITE; /* dir node */
 
   /* When O_CREAT and O_EXCL flags are set, the path may not be named by a
    * symbolic link. */
-  flags = PATH_NOFLAGS;
-  if (oflags & O_EXCL) flags |= PATH_RET_SYMLINK;
+  if (oflags & O_EXCL) findnode.l_flags |= PATH_RET_SYMLINK;
 
   /* See if the path can be opened down to the last directory. */
-  if ((dirp = last_dir(fp)) == NULL) return(NULL);
+  if ((dirp = last_dir(&findnode, fp)) == NULL) return(NULL);
 
   /* The final directory is accessible. Get final component of the path. */
-  vp = advance(dirp, flags, fp);
+  lookup_init(&findnode, findnode.l_path, findnode.l_flags, &vp_vmp, &vp);
+  findnode.l_vmnt_lock = VMNT_WRITE;
+  findnode.l_vnode_lock = (oflags & O_TRUNC) ? VNODE_WRITE : VNODE_OPCL;
+  vp = advance(dirp, &findnode, fp);
+  assert(vp_vmp == NULL);	/* Lookup to last dir should have yielded lock
+				 * on vmp or final component does not exist.
+				 * Either way, vp_vmp ought to be not set.
+				 */
 
   /* The combination of a symlink with absolute path followed by a danglink
    * symlink results in a new path that needs to be re-resolved entirely. */
-  if (user_fullpath[0] == '/') return new_node(oflags, bits);
+  if (path[0] == '/') {
+	unlock_vnode(dirp);
+	unlock_vmnt(dir_vmp);
+	put_vnode(dirp);
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
+	return new_node(resolve, oflags, bits);
+  }
 
   if (vp == NULL && err_code == ENOENT) {
 	/* Last path component does not exist. Make a new directory entry. */
 	if ((vp = get_free_vnode()) == NULL) {
-		/* Can't create new vnode: out of vnodes. */
-		put_vnode(dirp);	
+		/* Can't create new entry: out of vnodes. */
+		unlock_vnode(dirp);
+		unlock_vmnt(dir_vmp);
+		put_vnode(dirp);
 		return(NULL);
 	}
+
+	lock_vnode(vp, VNODE_OPCL);
+
 	if ((r = forbidden(fp, dirp, W_BIT|X_BIT)) != OK ||
 	    (r = req_create(dirp->v_fs_e, dirp->v_inode_nr,bits, fp->fp_effuid,
-			    fp->fp_effgid, user_fullpath, &res)) != OK ) {
+			    fp->fp_effgid, path, &res)) != OK ) {
 		/* Can't create inode either due to permissions or some other
 		 * problem. In case r is EEXIST, we might be dealing with a
 		 * dangling symlink.*/
@@ -276,58 +361,74 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 			struct vnode *slp, *old_wd;
 
 			/* Resolve path up to symlink */
-			slp = advance(dirp, PATH_RET_SYMLINK, fp);
+			findnode.l_flags = PATH_RET_SYMLINK;
+			findnode.l_vnode_lock = VNODE_READ;
+			findnode.l_vnode = &slp;
+			slp = advance(dirp, &findnode, fp);
 			if (slp != NULL) {
 				if (S_ISLNK(slp->v_mode)) {
 					/* Get contents of link */
 
-					int max_linklen;
-					max_linklen = sizeof(user_fullpath)-1;
 					r = req_rdlink(slp->v_fs_e,
 						       slp->v_inode_nr,
-					   	       VFS_PROC_NR,
-					   	       user_fullpath,
-					   	       max_linklen, 0);
+						       VFS_PROC_NR,
+						       path,
+						       PATH_MAX - 1, 0);
 					if (r < 0) {
 						/* Failed to read link */
+						unlock_vnode(slp);
+						unlock_vnode(dirp);
+						unlock_vmnt(dir_vmp);
 						put_vnode(slp);
 						put_vnode(dirp);
 						err_code = r;
 						return(NULL);
 					}
-					user_fullpath[r] = '\0';/* Term. path*/
-				} 
+					path[r] = '\0'; /* Terminate path */
+				}
+				unlock_vnode(slp);
 				put_vnode(slp);
 			}
 
 			/* Try to create the inode the dangling symlink was
 			 * pointing to. We have to use dirp as starting point
 			 * as there might be multiple successive symlinks
-			 * crossing multiple mountpoints. */
+			 * crossing multiple mountpoints.
+			 * Unlock vnodes and vmnts as we're going to recurse.
+			 */
+			unlock_vnode(dirp);
+			unlock_vnode(vp);
+			unlock_vmnt(dir_vmp);
+
 			old_wd = fp->fp_wd; /* Save orig. working dirp */
 			fp->fp_wd = dirp;
-			vp = new_node(oflags, bits);
+			vp = new_node(resolve, oflags, bits);
 			fp->fp_wd = old_wd; /* Restore */
 
 			if (vp != NULL) {
 				put_vnode(dirp);
+				*(resolve->l_vnode) = vp;
 				return(vp);
 			}
 			r = err_code;
-		} 
+		}
 
-		if (r == EEXIST) 
+		if (r == EEXIST)
 			err_code = EIO; /* Impossible, we have verified that
 					 * the last component doesn't exist and
 					 * is not a dangling symlink. */
 		else
 			err_code = r;
 
+		unlock_vnode(dirp);
+		unlock_vnode(vp);
+		unlock_vmnt(dir_vmp);
 		put_vnode(dirp);
 		return(NULL);
 	}
-	
+
 	/* Store results and mark vnode in use */
+
 	vp->v_fs_e = res.fs_e;
 	vp->v_inode_nr = res.inode_nr;
 	vp->v_mode = res.fmode;
@@ -340,16 +441,25 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 	vp->v_fs_count = 1;
 	vp->v_ref_count = 1;
   } else {
-  	/* Either last component exists, or there is some other problem. */
-  	if (vp != NULL)
-  		r = EEXIST;	/* File exists or a symlink names a file while
-  				 * O_EXCL is set. */ 
-  	else
+	/* Either last component exists, or there is some other problem. */
+	if (vp != NULL) {
+		r = EEXIST;	/* File exists or a symlink names a file while
+				 * O_EXCL is set. */
+	} else
 		r = err_code;	/* Other problem. */
   }
 
   err_code = r;
+  /* When dirp equals vp, we shouldn't release the lock as a vp is locked only
+   * once. Releasing the lock would cause the resulting vp not be locked and
+   * cause mayhem later on. */
+  if (dirp != vp) {
+	unlock_vnode(dirp);
+  }
+  unlock_vmnt(dir_vmp);
   put_vnode(dirp);
+
+  *(resolve->l_vnode) = vp;
   return(vp);
 }
 
@@ -357,8 +467,7 @@ PRIVATE struct vnode *new_node(int oflags, mode_t bits)
 /*===========================================================================*
  *				pipe_open				     *
  *===========================================================================*/
-PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
-	register int oflags)
+PRIVATE int pipe_open(struct vnode *vp, mode_t bits, int oflags)
 {
 /*  This function is called from common_open. It checks if
  *  there is at least one reader/writer pair for the pipe, if not
@@ -366,15 +475,18 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
  *  processes hanging on the pipe.
  */
 
-  vp->v_pipe = I_PIPE; 
+  vp->v_pipe = I_PIPE;
 
-  if((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) return(ENXIO);
+  if ((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) return(ENXIO);
 
-  if (find_filp(vp, bits & W_BIT ? R_BIT : W_BIT) == NULL) { 
+  /* Find the reader/writer at the other end of the pipe */
+  if (find_filp(vp, bits & W_BIT ? R_BIT : W_BIT) == NULL) {
+	/* Not found */
 	if (oflags & O_NONBLOCK) {
 		if (bits & W_BIT) return(ENXIO);
 	} else {
-		suspend(FP_BLOCKED_ON_POPEN);	/* suspend caller */
+		/* Let's wait for the other side to show up */
+		suspend(FP_BLOCKED_ON_POPEN);
 		return(SUSPEND);
 	}
   } else if (susp_count > 0) { /* revive blocked processes */
@@ -394,31 +506,40 @@ PUBLIC int do_mknod()
   register mode_t bits, mode_bits;
   int r;
   struct vnode *vp;
-  
+  struct vmnt *vmp;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_READ;
+
   /* Only the super_user may make nodes other than fifos. */
   mode_bits = (mode_t) m_in.mk_mode;		/* mode of the inode */
-  if(!super_user && (((mode_bits & I_TYPE) != I_NAMED_PIPE) && ((mode_bits & I_TYPE) != I_UNIX_SOCKET))) return(EPERM);
+  if (!super_user && (((mode_bits & I_TYPE) != I_NAMED_PIPE) &&
+      ((mode_bits & I_TYPE) != I_UNIX_SOCKET))) {
+	return(EPERM);
+  }
   bits = (mode_bits & I_TYPE) | (mode_bits & ALL_MODES & fp->fp_umask);
 
   /* Open directory that's going to hold the new node. */
-  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if((vp = last_dir(fp)) == NULL) return(err_code);
+  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	return(err_code);
+  if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
-  if((vp->v_mode & I_TYPE) != I_DIRECTORY) {
-	  put_vnode(vp);
-	  return(ENOTDIR);
-  }
-
-  if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
-	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, user_fullpath, fp->fp_effuid,
+  if ((vp->v_mode & I_TYPE) != I_DIRECTORY) {
+	r = ENOTDIR;
+  } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
+	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits, m_in.mk_z0);
   }
 
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_mkdir				     *
@@ -429,29 +550,32 @@ PUBLIC int do_mkdir()
   mode_t bits;			/* mode bits for the new inode */
   int r;
   struct vnode *vp;
+  struct vmnt *vmp;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
 
-  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_READ;
 
+  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	return(err_code);
   bits = I_DIRECTORY | (m_in.mode & RWX_MODES & fp->fp_umask);
-
-  /* Request lookup */
-  if((vp = last_dir(fp)) == NULL) return(err_code);
+  if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure that the object is a directory */
   if ((vp->v_mode & I_TYPE) != I_DIRECTORY) {
-	  put_vnode(vp);
-	  return(ENOTDIR);
-  }
-
-  if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
-	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, user_fullpath, fp->fp_effuid,
+	r = ENOTDIR;
+  } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
+	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits);
   }
 
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_lseek				     *
@@ -460,47 +584,54 @@ PUBLIC int do_lseek()
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
-  int r;
+  int r = OK;
   long offset;
   u64_t pos, newpos;
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(m_in.ls_fd)) == NULL) return(err_code);
+  if ( (rfilp = get_filp(m_in.ls_fd, VNODE_READ)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
-  if (rfilp->filp_vno->v_pipe == I_PIPE) return(ESPIPE);
+  if (rfilp->filp_vno->v_pipe == I_PIPE) {
+	unlock_filp(rfilp);
+	return(ESPIPE);
+  }
 
   /* The value of 'whence' determines the start position to use. */
   switch(m_in.whence) {
-      case SEEK_SET: pos = cvu64(0);	break;
-      case SEEK_CUR: pos = rfilp->filp_pos;	break;
-      case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
-      default: return(EINVAL);
+    case SEEK_SET: pos = cvu64(0);	break;
+    case SEEK_CUR: pos = rfilp->filp_pos;	break;
+    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    default: unlock_filp(rfilp); return(EINVAL);
   }
 
   offset = m_in.offset_lo;
   if (offset >= 0)
-	newpos= add64ul(pos, offset);
+	newpos = add64ul(pos, offset);
   else
-	newpos= sub64ul(pos, -offset);
+	newpos = sub64ul(pos, -offset);
 
   /* Check for overflow. */
-  if (ex64hi(newpos) != 0)
-	return(EINVAL);
+  if (ex64hi(newpos) != 0) {
+	r = EOVERFLOW;
+  } else if ((off_t) ex64lo(newpos) < 0) { /* no negative file size */
+	r = EOVERFLOW;
+  } else {
+	rfilp->filp_pos = newpos;
 
-  if (cmp64(newpos, rfilp->filp_pos) != 0) { /* Inhibit read ahead request */
-      r = req_inhibread(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr);
-      if (r != OK) return(r);
+	/* insert the new position into the output message */
+	m_out.reply_l1 = ex64lo(newpos);
+
+	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+		/* Inhibit read ahead request */
+		r = req_inhibread(rfilp->filp_vno->v_fs_e,
+				  rfilp->filp_vno->v_inode_nr);
+	}
   }
 
-  rfilp->filp_pos = newpos;
-
-  /* insert the new position into the output message */
-  m_out.reply_l1 = ex64lo(newpos);
-
-  return(OK);
+  unlock_filp(rfilp);
+  return(r);
 }
-
 
 /*===========================================================================*
  *				do_llseek				     *
@@ -510,41 +641,49 @@ PUBLIC int do_llseek()
 /* Perform the llseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
   u64_t pos, newpos;
-  int r;
+  int r = OK;
 
   /* Check to see if the file descriptor is valid. */
-  if ( (rfilp = get_filp(m_in.ls_fd)) == NULL) return(err_code);
+  if ( (rfilp = get_filp(m_in.ls_fd, VNODE_READ)) == NULL) return(err_code);
 
   /* No lseek on pipes. */
-  if (rfilp->filp_vno->v_pipe == I_PIPE) return(ESPIPE);
+  if (rfilp->filp_vno->v_pipe == I_PIPE) {
+	unlock_filp(rfilp);
+	return(ESPIPE);
+  }
 
   /* The value of 'whence' determines the start position to use. */
   switch(m_in.whence) {
-      case SEEK_SET: pos = cvu64(0);	break;
-      case SEEK_CUR: pos = rfilp->filp_pos;	break;
-      case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
-      default: return(EINVAL);
+    case SEEK_SET: pos = cvu64(0);	break;
+    case SEEK_CUR: pos = rfilp->filp_pos;	break;
+    case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+    default: unlock_filp(rfilp); return(EINVAL);
   }
 
   newpos = add64(pos, make64(m_in.offset_lo, m_in.offset_high));
 
   /* Check for overflow. */
-  if (((long)m_in.offset_high > 0) && cmp64(newpos, pos) < 0) 
-      return(EINVAL);
-  if (((long)m_in.offset_high < 0) && cmp64(newpos, pos) > 0) 
-      return(EINVAL);
+  if (( (long) m_in.offset_high > 0) && cmp64(newpos, pos) < 0)
+      r = EINVAL;
+  else if (( (long) m_in.offset_high < 0) && cmp64(newpos, pos) > 0)
+      r = EINVAL;
+  else {
+	rfilp->filp_pos = newpos;
 
-  if (cmp64(newpos, rfilp->filp_pos) != 0) { /* Inhibit read ahead request */
-      r = req_inhibread(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr);
-      if (r != OK) return(r);
+	/* insert the new position into the output message */
+	m_out.reply_l1 = ex64lo(newpos);
+	m_out.reply_l2 = ex64hi(newpos);
+
+	if (cmp64(newpos, rfilp->filp_pos) != 0) {
+		/* Inhibit read ahead request */
+		r = req_inhibread(rfilp->filp_vno->v_fs_e,
+				  rfilp->filp_vno->v_inode_nr);
+	}
   }
 
-  rfilp->filp_pos = newpos;
-  m_out.reply_l1 = ex64lo(newpos);
-  m_out.reply_l2 = ex64hi(newpos);
-  return(OK);
+  unlock_filp(rfilp);
+  return(r);
 }
-
 
 /*===========================================================================*
  *				do_close				     *
@@ -552,6 +691,7 @@ PUBLIC int do_llseek()
 PUBLIC int do_close()
 {
 /* Perform the close(fd) system call. */
+
   return close_fd(fp, m_in.fd);
 }
 
@@ -570,25 +710,28 @@ int fd_nr;
   int lock_count;
 
   /* First locate the vnode that belongs to the file descriptor. */
-  if ( (rfilp = get_filp2(rfp, fd_nr)) == NULL) return(err_code);
+  if ( (rfilp = get_filp2(rfp, fd_nr, VNODE_OPCL)) == NULL) return(err_code);
   vp = rfilp->filp_vno;
-  close_filp(rfilp);
 
-  FD_CLR(fd_nr, &rfp->fp_cloexec_set);
+  close_filp(rfilp);
   rfp->fp_filp[fd_nr] = NULL;
+  FD_CLR(fd_nr, &rfp->fp_cloexec_set);
   FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */
-  if (nr_locks == 0) return(OK);
-  lock_count = nr_locks;	/* save count of locks */
-  for (flp = &file_lock[0]; flp < &file_lock[NR_LOCKS]; flp++) {
-	if (flp->lock_type == 0) continue;	/* slot not in use */
-	if (flp->lock_vnode == vp && flp->lock_pid == rfp->fp_pid) {
-		flp->lock_type = 0;
-		nr_locks--;
+  if (nr_locks > 0) {
+	lock_count = nr_locks;	/* save count of locks */
+	for (flp = &file_lock[0]; flp < &file_lock[NR_LOCKS]; flp++) {
+		if (flp->lock_type == 0) continue;	/* slot not in use */
+		if (flp->lock_vnode == vp && flp->lock_pid == rfp->fp_pid) {
+			flp->lock_type = 0;
+			nr_locks--;
+		}
 	}
+	if (nr_locks < lock_count)
+		lock_revive();	/* one or more locks released */
   }
-  if (nr_locks < lock_count) lock_revive();	/* lock released */
+
   return(OK);
 }
 
@@ -599,4 +742,3 @@ PUBLIC void close_reply()
 {
 	/* No need to do anything */
 }
-

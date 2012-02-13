@@ -39,4 +39,3 @@
 #include <signal.h>
 
 #include "proto.h"
-

@@ -1,5 +1,5 @@
-#ifndef _FS_SELECT_H
-#define _FS_SELECT_H 1
+#ifndef __VFS_SELECT_H__
+#define __VFS_SELECT_H__
 
 /* return codes for select_request_* and select_cancel_* */
 #define SEL_OK		0	/* ready */
@@ -7,4 +7,3 @@
 #define SEL_DEFERRED	2	/* request is sent to driver */
 
 #endif
-

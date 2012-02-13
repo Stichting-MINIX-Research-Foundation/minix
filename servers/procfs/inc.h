@@ -50,15 +50,9 @@
 #include "kernel/type.h"
 #include "kernel/proc.h"
 #include "pm/mproc.h"
-#if defined(_USEAVFS)
-# include "avfs/const.h"
-# include "avfs/fproc.h"
-# include "avfs/dmap.h"
-#else
-# include "vfs/const.h"
-# include "vfs/fproc.h"
-# include "vfs/dmap.h"
-#endif
+#include "vfs/const.h"
+#include "vfs/fproc.h"
+#include "vfs/dmap.h"
 
 #include <minix/vtreefs.h>
 #include <minix/procfs.h>

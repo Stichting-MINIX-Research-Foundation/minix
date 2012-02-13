@@ -12,8 +12,6 @@ SMP_FLAGS += -DCONFIG_MAX_CPUS=${CONFIG_MAX_CPUS}
 
 CPPFLAGS+= ${SMP_FLAGS}
 
-BUILDAVFS?= "no"
-
 MAKECONF?=	/etc/make.conf
 .-include "${MAKECONF}"
 

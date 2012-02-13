@@ -1,3 +1,6 @@
+#ifndef __VFS_PARAM_H__
+#define __VFS_PARAM_H__
+
 /* The following names are synonyms for the variables in the input message. */
 #define addr	      m1_i3
 #define buffer	      m1_p1
@@ -54,3 +57,5 @@
 #define reply_l2      m2_l2
 #define reply_i1      m1_i1
 #define reply_i2      m1_i2
+
+#endif

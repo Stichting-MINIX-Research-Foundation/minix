@@ -48,8 +48,8 @@ PRIVATE int stat_inode(
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
-  		(size_t) sizeof(statbuf), D);
-  
+		(size_t) sizeof(statbuf), D);
+
   return(r);
 }
 
@@ -63,9 +63,8 @@ PUBLIC int fs_stat(message *fs_m_in, message *fs_m_out)
   register struct inode *rip;  /* target inode */
 
   if( (rip = find_inode(fs_m_in->REQ_INODE_NR)) == NULL) return(EINVAL);
-  get_inode(rip->i_dev, rip->i_num);	/* mark inode in use */  
+  get_inode(rip->i_dev, rip->i_num);	/* mark inode in use */
   r = stat_inode(rip, fs_m_in->m_source, (cp_grant_id_t) fs_m_in->REQ_GRANT);
   put_inode(rip);			/* release the inode */
   return(r);
 }
-

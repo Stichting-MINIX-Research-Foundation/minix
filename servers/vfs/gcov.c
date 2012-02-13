@@ -16,58 +16,51 @@ PUBLIC int do_gcov_flush()
  * makes the target copy its buffer to the caller (incl vfs
  * itself).
  */
-	struct fproc *rfp;
-	ssize_t size;
-	cp_grant_id_t grantid;
-	int r;
-	int n;
-	pid_t target;
+  struct fproc *rfp;
+  ssize_t size;
+  cp_grant_id_t grantid;
+  int r, n;
+  pid_t target;
+  message m;
 
-	size = m_in.GCOV_BUFF_SZ;
-	target = m_in.GCOV_PID;
+  size = m_in.GCOV_BUFF_SZ;
+  target = m_in.GCOV_PID;
 
-	/* If the wrong process is sent to, the system hangs;
-	 * so make this root-only.
-	 */
+  /* If the wrong process is sent to, the system hangs; so make this root-only.
+   */
 
-	if (!super_user) return(EPERM);
+  if (!super_user) return(EPERM);
 
-	/* Find target gcov process. */
+  /* Find target gcov process. */
+  for(n = 0; n < NR_PROCS; n++) {
+	if(fproc[n].fp_endpoint != NONE && fproc[n].fp_pid == target)
+		 break;
+  }
+  if(n >= NR_PROCS) {
+	printf("VFS: gcov process %d not found\n", target);
+	return(ESRCH);
+  }
+  rfp = &fproc[n];
 
-	for(n = 0; n < NR_PROCS; n++) {
-		 if(fproc[n].fp_endpoint != NONE &&
-			 fproc[n].fp_pid == target)
-				 break;
-	}
+  /* Grant target process to requestor's buffer. */
+  if ((grantid = cpf_grant_magic(rfp->fp_endpoint, who_e,
+				 (vir_bytes) m_in.GCOV_BUFF_P, size,
+				 CPF_WRITE)) < 0) {
+	printf("VFS: gcov_flush: grant failed\n");
+	return(ENOMEM);
+  }
 
-	if(n >= NR_PROCS) {
-		 printf("VFS: gcov proccess %d not found.\n", target);
-		 return ESRCH;
-	}
+  if(rfp->fp_endpoint == VFS_PROC_NR) {
+	/* Request is for VFS itself. */
+	r = gcov_flush(grantid, size);
+  } else {
+	/* Perform generic GCOV request. */
+	m.GCOV_GRANT = grantid;
+	m.GCOV_BUFF_SZ = size;
+	r = _taskcall(rfp->fp_endpoint, COMMON_REQ_GCOV_DATA, &m);
+  }
 
-	rfp = &fproc[n];
+  cpf_revoke(grantid);
 
-	/* Grant target process to requestor's buffer. */
-
-	if((grantid = cpf_grant_magic(rfp->fp_endpoint,
-		 who_e, (vir_bytes) m_in.GCOV_BUFF_P,
-		 size, CPF_WRITE)) < 0) {
-		 printf("VFS: gcov_flush: grant failed\n");
-		 return ENOMEM;
-	}
-
-	if(target == getpid()) {
-		 /* Request is for VFS itself. */
-		r = gcov_flush(grantid, size);
-	} else {
-		/* Perform generic GCOV request. */
-		m_out.GCOV_GRANT = grantid;
-		m_out.GCOV_BUFF_SZ = size;
-		r = _taskcall(rfp->fp_endpoint, COMMON_REQ_GCOV_DATA, &m_out);
-	}
-
-	cpf_revoke(grantid);
-
-	return r;
+  return(r);
 }
-

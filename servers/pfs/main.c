@@ -4,7 +4,10 @@
 #include <minix/dmap.h>
 #include <minix/driver.h>
 #include <minix/endpoint.h>
+#include <minix/rs.h>
 #include <minix/vfsif.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include "buf.h"
 #include "inode.h"
 #include "uds.h"
@@ -21,11 +24,11 @@ FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
  *===========================================================================*/
 PUBLIC int main(int argc, char *argv[])
 {
-/* This is the main routine of this service. The main loop consists of 
+/* This is the main routine of this service. The main loop consists of
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int ind, transid;
+  int ind, do_reply, transid;
   message pfs_m_in;
   message pfs_m_out;
 
@@ -33,9 +36,10 @@ PUBLIC int main(int argc, char *argv[])
   env_setargs(argc, argv);
   sef_local_startup();
 
-  while(!exitsignaled || busy) {
+  while(!unmountdone || !exitsignaled) {
 	endpoint_t src;
 
+	do_reply = 1;
 	/* Wait for request message. */
 	get_work(&pfs_m_in);
 
@@ -59,7 +63,13 @@ PUBLIC int main(int argc, char *argv[])
 			printf("pfs: bad DEV request %d\n", req_nr);
 			pfs_m_out.m_type = EINVAL;
 		} else {
-			(*dev_call_vec[ind])(&pfs_m_in, &pfs_m_out);
+			int result;
+			result = (*dev_call_vec[ind])(&pfs_m_in, &pfs_m_out);
+			if (pfs_m_out.REP_STATUS == SUSPEND ||
+			    result == SUSPEND) {
+				/* Nothing to tell, so not replying */
+				do_reply = 0;
+			}
 		}
 	} else if (IS_VFS_RQ(req_nr)) {
 		ind = req_nr - VFS_BASE;
@@ -75,10 +85,13 @@ PUBLIC int main(int argc, char *argv[])
 		pfs_m_out.m_type = EINVAL;
 	}
 
-	if (IS_VFS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
-		pfs_m_out.m_type = TRNS_ADD_ID(pfs_m_out.m_type, transid);
+	if (do_reply) {
+		if (IS_VFS_RQ(req_nr) && IS_VFS_FS_TRANSID(transid)) {
+			pfs_m_out.m_type = TRNS_ADD_ID(pfs_m_out.m_type,
+							transid);
+		}
+		reply(src, &pfs_m_out);
 	}
-	reply(src, &pfs_m_out);
   }
   return(OK);
 }
@@ -108,6 +121,7 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 {
 /* Initialize the pipe file server. */
   int i;
+  struct passwd *pw;
 
   /* Initialize main loop parameters. */
   exitsignaled = 0;	/* No exit request seen yet. */
@@ -117,12 +131,21 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
   for (i = 0; i < NR_INODES; ++i) {
 	inode[i].i_count = 0;
   }
-	
+
   init_inode_cache();
   uds_init();
+  buf_pool();
+
+
+  /* Drop root privileges */
+  if ((pw = getpwnam(SERVICE_LOGIN)) == NULL) {
+	printf("PFS: unable to retrieve uid of SERVICE_LOGIN, "
+		"still running as root");
+  } else if (setuid(pw->pw_uid) != 0) {
+	panic("unable to drop privileges");
+  }
 
   SELF_E = getprocnr();
-  buf_pool();
 
   return(OK);
 }
@@ -134,6 +157,7 @@ PRIVATE void sef_cb_signal_handler(int signo)
 {
   /* Only check for termination signal, ignore anything else. */
   if (signo != SIGTERM) return;
+
 
   exitsignaled = 1;
 }
@@ -148,7 +172,7 @@ message *m_in;				/* pointer to message */
   endpoint_t src;
 
   do {
- 	/* wait for a message */
+	/* wait for a message */
 	if ((r = sef_receive_status(ANY, m_in, &status)) != OK)
 		panic("sef_receive_status failed: %d", r);
 	src = m_in->m_source;
@@ -165,7 +189,7 @@ message *m_in;				/* pointer to message */
  *				reply					     *
  *===========================================================================*/
 PUBLIC void reply(who, m_out)
-endpoint_t who;	
+endpoint_t who;
 message *m_out;                       	/* report result */
 {
   if (OK != send(who, m_out))	/* send the message */

@@ -19,7 +19,7 @@
 #include "inode.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( void addhash_inode, (struct inode * const node)		); 
+FORWARD _PROTOTYPE( void addhash_inode, (struct inode * const node)		);
 FORWARD _PROTOTYPE( void unhash_inode, (struct inode * const node) 		);
 
 
@@ -34,7 +34,7 @@ PUBLIC int fs_putnode(message *fs_m_in, message *fs_m_out)
   int count;
   dev_t dev;
   ino_t inum;
-  
+
   rip = find_inode( (ino_t) fs_m_in->REQ_INODE_NR);
 
   if(!rip) {
@@ -55,7 +55,7 @@ PUBLIC int fs_putnode(message *fs_m_in, message *fs_m_out)
   }
 
   /* Decrease reference counter, but keep one reference; it will be consumed by
-   * put_inode(). */ 
+   * put_inode(). */
   rip->i_count -= count - 1;
   dev = rip->i_dev;
   inum = rip->i_num;
@@ -75,9 +75,9 @@ PUBLIC void init_inode_cache()
 
   /* init free/unused list */
   TAILQ_INIT(&unused_inodes);
-  
+
   /* init hash lists */
-  for (rlp = &hash_inodes[0]; rlp < &hash_inodes[INODE_HASH_SIZE]; ++rlp) 
+  for (rlp = &hash_inodes[0]; rlp < &hash_inodes[INODE_HASH_SIZE]; ++rlp)
       LIST_INIT(rlp);
 
   /* add free inodes to unused/free list */
@@ -95,10 +95,10 @@ PUBLIC void init_inode_cache()
 /*===========================================================================*
  *				addhash_inode   			     *
  *===========================================================================*/
-PRIVATE void addhash_inode(struct inode * const node) 
+PRIVATE void addhash_inode(struct inode * const node)
 {
   int hashi = (int) (node->i_num & INODE_HASH_MASK);
-  
+
   /* insert into hash table */
   LIST_INSERT_HEAD(&hash_inodes[hashi], node, i_hash);
 }
@@ -107,7 +107,7 @@ PRIVATE void addhash_inode(struct inode * const node)
 /*===========================================================================*
  *				unhash_inode      			     *
  *===========================================================================*/
-PRIVATE void unhash_inode(struct inode * const node) 
+PRIVATE void unhash_inode(struct inode * const node)
 {
   /* remove from hash table */
   LIST_REMOVE(node, i_hash);
@@ -123,7 +123,7 @@ PUBLIC struct inode *get_inode(
 )
 {
 /* Find the inode in the hash table. If it is not there, get a free inode
- * load it from the disk if it's necessary and put on the hash list 
+ * load it from the disk if it's necessary and put on the hash list
  */
   register struct inode *rip;
   int hashi;
@@ -152,7 +152,7 @@ PUBLIC struct inode *get_inode(
 
   /* If not free unhash it */
   if (rip->i_num != NO_ENTRY) unhash_inode(rip);
-  
+
   /* Inode is not unused any more */
   TAILQ_REMOVE(&unused_inodes, rip, i_unused);
 
@@ -165,7 +165,7 @@ PUBLIC struct inode *get_inode(
   /* Add to hash */
   addhash_inode(rip);
 
-  
+
   return(rip);
 }
 
@@ -189,7 +189,7 @@ ino_t numb;		/* inode number */
           return(rip);
       }
   }
-  
+
   return(NULL);
 }
 
@@ -245,15 +245,19 @@ PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
   register struct inode *rip;
   bit_t b;
   ino_t i_num;
+  int print_oos_msg = 1;
 
   b = alloc_bit();
   if (b == NO_BIT) {
-  	err_code = ENOSPC;
-  	printf("PipeFS is out of inodes\n");
-  	return(NULL);
+	err_code = ENOSPC;
+	if (print_oos_msg)
+		printf("PipeFS is out of inodes\n");
+	print_oos_msg = 0;	/* Don't repeat message */
+	return(NULL);
   }
   i_num = (ino_t) b;
-  
+  print_oos_msg = 1;
+
 
   /* Try to acquire a slot in the inode table. */
   if ((rip = get_inode(dev, i_num)) == NULL) {
@@ -320,7 +324,7 @@ struct inode *rip;	/* pointer to inode to be read/written */
 /* Various system calls are required by the standard to update atime, ctime,
  * or mtime.  Since updating a time requires sending a message to the clock
  * task--an expensive business--the times are marked for update by setting
- * bits in i_update.  When a stat, fstat, or sync is done, or an inode is 
+ * bits in i_update.  When a stat, fstat, or sync is done, or an inode is
  * released, update_times() may be called to actually fill in the times.
  */
 
@@ -332,4 +336,3 @@ struct inode *rip;	/* pointer to inode to be read/written */
   if (rip->i_update & MTIME) rip->i_mtime = cur_time;
   rip->i_update = 0;		/* they are all up-to-date now */
 }
-

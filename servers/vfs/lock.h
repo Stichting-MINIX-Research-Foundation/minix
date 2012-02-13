@@ -1,3 +1,6 @@
+#ifndef __VFS_LOCK_H__
+#define __VFS_LOCK_H__
+
 /* This is the file locking table.  Like the filp table, it points to the
  * inode table, however, in this case to achieve advisory locking.
  */
@@ -9,4 +12,4 @@ EXTERN struct file_lock {
   off_t lock_last;		/* offset of last byte locked */
 } file_lock[NR_LOCKS];
 
-
+#endif

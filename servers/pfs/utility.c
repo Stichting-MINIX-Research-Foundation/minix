@@ -28,7 +28,6 @@ PUBLIC time_t clock_time()
 
   if ((r = getuptime2(&uptime, &boottime)) != OK)
 		panic("clock_time: getuptme2 failed: %d", r);
-  
+
   return( (time_t) (boottime + (uptime/sys_hz())));
 }
-

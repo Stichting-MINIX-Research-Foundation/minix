@@ -16,12 +16,14 @@
 #include <string.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <minix/vfsif.h>
 #include <dirent.h>
+#include <assert.h>
 #include "file.h"
 #include "fproc.h"
-#include "param.h"
-#include <minix/vfsif.h>
+#include "path.h"
 #include "vnode.h"
+#include "param.h"
 
 /*===========================================================================*
  *				do_link					     *
@@ -30,34 +32,52 @@ PUBLIC int do_link()
 {
 /* Perform the link(name1, name2) system call. */
   int r = OK;
-  struct vnode *vp = NULL, *vp_d = NULL;
+  struct vnode *vp = NULL, *dirp = NULL;
+  struct vmnt *vmp1 = NULL, *vmp2 = NULL;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
 
-  /* See if 'name1' (file to be linked to) exists. */ 
-  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp1, &vp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_READ;
+
+  /* See if 'name1' (file to be linked to) exists. */
+  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	return(err_code);
+  if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   /* Does the final directory of 'name2' exist? */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) 
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp2, &dirp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+  if (fetch_name(m_in.name2, m_in.name2_length, M1, fullpath) != OK)
 	r = err_code;
-  else if ((vp_d = last_dir(fp)) == NULL)
-	r = err_code; 
+  else if ((dirp = last_dir(&resolve, fp)) == NULL)
+	r = err_code;
+
   if (r != OK) {
-	  put_vnode(vp);
-	  return(r);
+	unlock_vnode(vp);
+	unlock_vmnt(vmp1);
+	put_vnode(vp);
+	return(r);
   }
 
   /* Check for links across devices. */
-  if(vp->v_fs_e != vp_d->v_fs_e)
-  	r = EXDEV;
-  else 
-	r = forbidden(fp, vp_d, W_BIT | X_BIT);
+  if (vp->v_fs_e != dirp->v_fs_e)
+	r = EXDEV;
+  else
+	r = forbidden(fp, dirp, W_BIT | X_BIT);
 
   if (r == OK)
-	r = req_link(vp->v_fs_e, vp_d->v_inode_nr, user_fullpath,
+	r = req_link(vp->v_fs_e, dirp->v_inode_nr, fullpath,
 		     vp->v_inode_nr);
 
+  unlock_vnode(vp);
+  unlock_vnode(dirp);
+  if (vmp2 != NULL) unlock_vmnt(vmp2);
+  unlock_vmnt(vmp1);
   put_vnode(vp);
-  put_vnode(vp_d);
+  put_vnode(dirp);
   return(r);
 }
 
@@ -71,51 +91,77 @@ PUBLIC int do_unlink()
  * is almost the same.  They differ only in some condition testing.  Unlink()
  * may be used by the superuser to do dangerous things; rmdir() may not.
  */
-  struct vnode *vldirp, *vp;
+  struct vnode *dirp, *vp;
+  struct vmnt *vmp, *vmp2;
   int r;
-  
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &dirp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_READ;
+
   /* Get the last directory in the path. */
-  if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if ((vldirp = last_dir(fp)) == NULL) return(err_code);
+  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
+	return(err_code);
+
+  if ((dirp = last_dir(&resolve, fp)) == NULL) return(err_code);
+  assert(vmp != NULL);
 
   /* Make sure that the object is a directory */
-  if((vldirp->v_mode & I_TYPE) != I_DIRECTORY) {
-	  put_vnode(vldirp);
-	  return(ENOTDIR);
+  if ((dirp->v_mode & I_TYPE) != I_DIRECTORY) {
+	unlock_vnode(dirp);
+	unlock_vmnt(vmp);
+	put_vnode(dirp);
+	return(ENOTDIR);
   }
 
   /* The caller must have both search and execute permission */
-  if ((r = forbidden(fp, vldirp, X_BIT | W_BIT)) != OK) {
-	put_vnode(vldirp);
+  if ((r = forbidden(fp, dirp, X_BIT | W_BIT)) != OK) {
+	unlock_vnode(dirp);
+	unlock_vmnt(vmp);
+	put_vnode(dirp);
 	return(r);
   }
-  
+
   /* Also, if the sticky bit is set, only the owner of the file or a privileged
      user is allowed to unlink */
-  if ((vldirp->v_mode & S_ISVTX) == S_ISVTX) {
+  if ((dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
-	vp = advance(vldirp, PATH_RET_SYMLINK, fp);
+	resolve.l_flags = PATH_RET_SYMLINK;
+	resolve.l_vmp = &vmp2;	/* Shouldn't actually get locked */
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode = &vp;
+	resolve.l_vnode_lock = VNODE_READ;
+	vp = advance(dirp, &resolve, fp);
+	assert(vmp2 == NULL);
 	if (vp != NULL) {
-		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) 
+		if (vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID)
 			r = EPERM;
+		unlock_vnode(vp);
 		put_vnode(vp);
 	} else
 		r = err_code;
 	if (r != OK) {
-		put_vnode(vldirp);
+		unlock_vnode(dirp);
+		unlock_vmnt(vmp);
+		put_vnode(dirp);
 		return(r);
 	}
   }
-  
-  if(call_nr == UNLINK) 
-	  r = req_unlink(vldirp->v_fs_e, vldirp->v_inode_nr, user_fullpath);
-  else 
-	  r = req_rmdir(vldirp->v_fs_e, vldirp->v_inode_nr, user_fullpath);
-  
-  put_vnode(vldirp);
+
+  assert(vmp != NULL);
+  tll_upgrade(&vmp->m_lock);
+
+  if (call_nr == UNLINK)
+	  r = req_unlink(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
+  else
+	  r = req_rmdir(dirp->v_fs_e, dirp->v_inode_nr, fullpath);
+  unlock_vnode(dirp);
+  unlock_vmnt(vmp);
+  put_vnode(dirp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_rename				     *
@@ -125,61 +171,93 @@ PUBLIC int do_rename()
 /* Perform the rename(name1, name2) system call. */
   int r = OK, r1;
   struct vnode *old_dirp, *new_dirp = NULL, *vp;
+  struct vmnt *oldvmp, *newvmp, *vmp2;
   char old_name[PATH_MAX];
-  
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &oldvmp, &old_dirp);
+  /* Do not yet request exclusive lock on vmnt to prevent deadlocks later on */
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_READ;
+
   /* See if 'name1' (existing file) exists.  Get dir and file inodes. */
-  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((old_dirp = last_dir(fp)) == NULL) return(err_code);
+  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	return(err_code);
+  if ((old_dirp = last_dir(&resolve, fp)) == NULL)
+	return(err_code);
 
   /* If the sticky bit is set, only the owner of the file or a privileged
      user is allowed to rename */
-  if((old_dirp->v_mode & S_ISVTX) == S_ISVTX) {
+  if ((old_dirp->v_mode & S_ISVTX) == S_ISVTX) {
 	/* Look up inode of file to unlink to retrieve owner */
-	vp = advance(old_dirp, PATH_RET_SYMLINK, fp);
+	lookup_init(&resolve, resolve.l_path, PATH_RET_SYMLINK, &vmp2, &vp);
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_READ;
+	vp = advance(old_dirp, &resolve, fp);
+	assert(vmp2 == NULL);
 	if (vp != NULL) {
-		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) 
+		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID)
 			r = EPERM;
+		unlock_vnode(vp);
 		put_vnode(vp);
 	} else
 		r = err_code;
-	if (r != OK) {	
+	if (r != OK) {
+		unlock_vnode(old_dirp);
+		unlock_vmnt(oldvmp);
 		put_vnode(old_dirp);
 		return(r);
 	}
   }
-  
+
   /* Save the last component of the old name */
-  if(strlen(user_fullpath) >= sizeof(old_name)) {
+  if(strlen(fullpath) >= sizeof(old_name)) {
+	unlock_vnode(old_dirp);
+	unlock_vmnt(oldvmp);
 	put_vnode(old_dirp);
 	return(ENAMETOOLONG);
   }
-  strcpy(old_name, user_fullpath);
-  
+  strcpy(old_name, fullpath);
+
   /* See if 'name2' (new name) exists.  Get dir inode */
-  if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) 
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &newvmp, &new_dirp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+  if (fetch_name(m_in.name2, m_in.name2_length, M1, fullpath) != OK)
 	r = err_code;
-  else if ((new_dirp = last_dir(fp)) == NULL)
-	r = err_code; 
+  else if ((new_dirp = last_dir(&resolve, fp)) == NULL)
+	r = err_code;
+
   if (r != OK) {
-  	put_vnode(old_dirp);
-  	return r;
+	unlock_vnode(old_dirp);
+	unlock_vmnt(oldvmp);
+	put_vnode(old_dirp);
+	return(r);
   }
 
   /* Both parent directories must be on the same device. */
-  if(old_dirp->v_fs_e != new_dirp->v_fs_e) r = EXDEV; 
+  if (old_dirp->v_fs_e != new_dirp->v_fs_e) r = EXDEV;
 
   /* Parent dirs must be writable, searchable and on a writable device */
   if ((r1 = forbidden(fp, old_dirp, W_BIT|X_BIT)) != OK ||
       (r1 = forbidden(fp, new_dirp, W_BIT|X_BIT)) != OK) r = r1;
-  
-  if(r == OK)
-	  r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
-  			 new_dirp->v_inode_nr, user_fullpath);
+
+  if (r == OK) {
+	tll_upgrade(&oldvmp->m_lock); /* Upgrade to exclusive access */
+	r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
+		       new_dirp->v_inode_nr, fullpath);
+  }
+  unlock_vnode(old_dirp);
+  unlock_vnode(new_dirp);
+  unlock_vmnt(oldvmp);
+  if (newvmp) unlock_vmnt(newvmp);
+
   put_vnode(old_dirp);
   put_vnode(new_dirp);
+
   return(r);
 }
-  
 
 /*===========================================================================*
  *				do_truncate				     *
@@ -192,22 +270,30 @@ PUBLIC int do_truncate()
  * work.
  */
   struct vnode *vp;
+  struct vmnt *vmp;
   int r;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_EXCL;
+  resolve.l_vnode_lock = VNODE_WRITE;
 
   if ((off_t) m_in.flength < 0) return(EINVAL);
 
   /* Temporarily open file */
-  if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
-  
+  if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1, fullpath) != OK) return(err_code);
+  if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
+
   /* Ask FS to truncate the file */
   if ((r = forbidden(fp, vp, W_BIT)) == OK)
-  	r = truncate_vnode(vp, m_in.flength);
-  
+	r = truncate_vnode(vp, m_in.flength);
+
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_ftruncate				     *
@@ -216,13 +302,20 @@ PUBLIC int do_ftruncate()
 {
 /* As with do_truncate(), truncate_vnode() does the actual work. */
   struct filp *rfilp;
-  
+  int r;
+
   if ((off_t) m_in.flength < 0) return(EINVAL);
 
   /* File is already opened; get a vnode pointer from filp */
-  if ((rfilp = get_filp(m_in.m2_i1)) == NULL) return(err_code);
-  if (!(rfilp->filp_mode & W_BIT)) return(EBADF);
-  return truncate_vnode(rfilp->filp_vno, m_in.flength);
+  if ((rfilp = get_filp(m_in.m2_i1, VNODE_WRITE)) == NULL) return(err_code);
+
+  if (!(rfilp->filp_mode & W_BIT))
+	r = EBADF;
+  else
+	r = truncate_vnode(rfilp->filp_vno, m_in.flength);
+
+  unlock_filp(rfilp);
+  return(r);
 }
 
 
@@ -233,14 +326,14 @@ PUBLIC int truncate_vnode(vp, newsize)
 struct vnode *vp;
 off_t newsize;
 {
+/* Truncate a regular file or a pipe */
   int r, file_type;
 
+  assert(tll_locked_by_me(&vp->v_lock));
   file_type = vp->v_mode & I_TYPE;
   if (file_type != I_REGULAR && file_type != I_NAMED_PIPE) return(EINVAL);
-        
   if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0)) == OK)
 	vp->v_size = newsize;
-
   return(r);
 }
 
@@ -253,21 +346,33 @@ PUBLIC int do_slink()
 /* Perform the symlink(name1, name2) system call. */
   int r;
   struct vnode *vp;
+  struct vmnt *vmp;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
 
-  if(m_in.name1_length <= 1) return(ENOENT);
-  if(m_in.name1_length >= SYMLINK_MAX) return(ENAMETOOLONG);
-  
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_READ;
+
+  if (m_in.name1_length <= 1) return(ENOENT);
+  if (m_in.name1_length >= SYMLINK_MAX) return(ENAMETOOLONG);
+
   /* Get dir inode of 'name2' */
-  if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) return(err_code);
-  if ((vp = last_dir(fp)) == NULL) return(err_code);
+  if (fetch_name(m_in.name2, m_in.name2_length, M1, fullpath) != OK)
+	return(err_code);
+
+  if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
 
   if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
-	r = req_slink(vp->v_fs_e, vp->v_inode_nr, user_fullpath, who_e,
+	r = req_slink(vp->v_fs_e, vp->v_inode_nr, fullpath, who_e,
 		      m_in.name1, m_in.name1_length - 1, fp->fp_effuid,
 		      fp->fp_effgid);
   }
 
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
+
   return(r);
 }
 
@@ -276,55 +381,75 @@ PUBLIC int do_slink()
  *===========================================================================*/
 PUBLIC int rdlink_direct(orig_path, link_path, rfp)
 char *orig_path;
-char *link_path; /* should have length PATH_MAX */
+char link_path[PATH_MAX]; /* should have length PATH_MAX */
 struct fproc *rfp;
 {
 /* Perform a readlink()-like call from within the VFS */
   int r;
   struct vnode *vp;
+  struct vmnt *vmp;
+  struct lookup resolve;
 
-  /* Temporarily open the file containing the symbolic link */
-  orig_path[PATH_MAX - 1] = '\0';
-  strncpy(user_fullpath, orig_path, PATH_MAX);
-  if ((vp = eat_path(PATH_RET_SYMLINK, rfp)) == NULL) return(err_code);
+  lookup_init(&resolve, link_path, PATH_RET_SYMLINK, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+
+  /* Temporarily open the file containing the symbolic link. Use link_path
+   * for temporary storage to keep orig_path untouched. */
+  strncpy(link_path, orig_path, PATH_MAX);	/* PATH_MAX includes '\0' */
+  link_path[PATH_MAX - 1] = '\0';
+  if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
   /* Make sure this is a symbolic link */
-  if((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK)
+  if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK)
 	r = EINVAL;
   else
-	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, (endpoint_t) 0,
-						link_path, PATH_MAX - 1, 1);
-  if (r > 0) link_path[r] = '\0';
+	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, NONE, link_path,
+		       PATH_MAX - 1, 1);
 
+  if (r > 0) link_path[r] = '\0';	/* Terminate string when succesful */
+
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
+
   return r;
 }
 
 /*===========================================================================*
- *                             do_rdlink                                    *
+ *                             do_rdlink				     *
  *===========================================================================*/
 PUBLIC int do_rdlink()
 {
 /* Perform the readlink(name, buf, bufsize) system call. */
   int r, copylen;
   struct vnode *vp;
-  
+  struct vmnt *vmp;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  lookup_init(&resolve, fullpath, PATH_RET_SYMLINK, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+
   copylen = m_in.nbytes;
-  if(copylen < 0) return(EINVAL);
+  if (copylen < 0) return(EINVAL);
 
   /* Temporarily open the file containing the symbolic link */
-  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ((vp = eat_path(PATH_RET_SYMLINK, fp)) == NULL) return(err_code);
+  if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+	return(err_code);
+  if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   /* Make sure this is a symbolic link */
-  if((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK) 
+  if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK)
 	r = EINVAL;
   else
 	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2,
-								copylen, 0);
+		       copylen, 0);
 
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
+
   return(r);
 }
-
-

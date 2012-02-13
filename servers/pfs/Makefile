@@ -1,15 +1,18 @@
 # Makefile for Pipe File System (PFS)
 PROG=	pfs
 SRCS=	open.c table.c inode.c main.c super.c link.c \
-	buffer.c read.c misc.c utility.c stadir.c \
+	buffer.c read.c misc.c mount.c utility.c stadir.c \
 	uds.c dev_uds.c
 
 DPADD+=	${LIBSYS}
 LDADD+=	-lsys
 
+.if ${COMPILER_TYPE} == "gnu"
+LDADD+= -lc
+.endif
+
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 128k
 
 .include <minix.bootprog.mk>

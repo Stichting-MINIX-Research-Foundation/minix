@@ -11,8 +11,8 @@ dmap.h
 
 /* Device table.  This table is indexed by major device number.  It provides
  * the link between major device numbers and the routines that process them.
- * The table can be update dynamically. The field 'dmap_flags' describe an 
- * entry's current status and determines what control options are possible. 
+ * The table can be update dynamically. The field 'dmap_flags' describe an
+ * entry's current status and determines what control options are possible.
  */
 
 extern struct dmap {

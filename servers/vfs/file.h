@@ -12,6 +12,10 @@ EXTERN struct filp {
   int filp_count;		/* how many file descriptors share this slot?*/
   struct vnode *filp_vno;	/* vnode belonging to this file */
   u64_t filp_pos;		/* file position */
+  mutex_t filp_lock;		/* lock to gain exclusive access */
+  struct fproc *filp_softlock;	/* if not NULL; this filp didn't lock the
+				 * vnode. Another filp already holds a lock
+				 * for this thread */
 
   /* the following fields are for select() and are owned by the generic
    * select() code (i.e., fd-type-specific select() code can't touch these).
@@ -32,14 +36,13 @@ EXTERN struct filp {
 #define FSF_UPDATE	001	/* The driver should be informed about new
 				 * state.
 				 */
-#define FSF_BUSY	002	/* Select operation sent to driver but no 
+#define FSF_BUSY	002	/* Select operation sent to driver but no
 				 * reply yet.
 				 */
-#define FSF_RD_BLOCK	010	/* Read request is blocking, the driver should 
+#define FSF_RD_BLOCK	010	/* Read request is blocking, the driver should
 				 * keep state.
 				 */
 #define FSF_WR_BLOCK	020	/* Write request is blocking */
 #define FSF_ERR_BLOCK	040	/* Exception request is blocking */
 #define FSF_BLOCKED	070
 #endif
-

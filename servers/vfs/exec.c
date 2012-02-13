@@ -27,44 +27,86 @@
 #include <dirent.h>
 #include <sys/param.h>
 #include "fproc.h"
+#include "path.h"
 #include "param.h"
 #include "vnode.h"
-#include "vmnt.h"
 #include <minix/vfsif.h>
 #include <assert.h>
 #include <libexec.h>
 #include "exec.h"
 
-static int exec_newmem(int proc_e, vir_bytes text_addr, vir_bytes text_bytes,
+FORWARD _PROTOTYPE( void lock_exec, (void)				);
+FORWARD _PROTOTYPE( void unlock_exec, (void)				);
+FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_addr, vir_bytes text_bytes,
 		       vir_bytes data_addr, vir_bytes data_bytes,
 		       vir_bytes tot_bytes, vir_bytes frame_len, int sep_id,
 		       int is_elf, dev_t st_dev, ino_t st_ino, time_t ctime,
 		       char *progname, int new_uid, int new_gid,
 		       vir_bytes *stack_topp, int *load_textp,
-		       int *setugidp);
-static int is_script(const char *exec_hdr, size_t exec_len);
-static int patch_stack(struct vnode *vp, char stack[ARG_MAX],
-		       vir_bytes *stk_bytes);
-static int insert_arg(char stack[ARG_MAX], vir_bytes *stk_bytes, char *arg,
-		      int replace);
-static void patch_ptr(char stack[ARG_MAX], vir_bytes base);
-static void clo_exec(struct fproc *rfp);
-static int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
-		    vir_bytes seg_addr, phys_bytes seg_bytes);
-static int load_aout(struct exec_info *execi);
-static int load_elf(struct exec_info *execi);
-static int map_header(char **exec_hdr, const struct vnode *vp);
+		       int *setugidp)					);
+FORWARD _PROTOTYPE( int is_script, (const char *exec_hdr, size_t exec_len));
+FORWARD _PROTOTYPE( int patch_stack, (struct vnode *vp, char stack[ARG_MAX],
+		       vir_bytes *stk_bytes, char path[PATH_MAX])	);
+FORWARD _PROTOTYPE( int insert_arg, (char stack[ARG_MAX], vir_bytes *stk_bytes,
+					char *arg, int replace)		);
+FORWARD _PROTOTYPE( void patch_ptr, (char stack[ARG_MAX], vir_bytes base));
+FORWARD _PROTOTYPE( void clo_exec, (struct fproc *rfp)			);
+FORWARD _PROTOTYPE( int read_seg, (struct vnode *vp, off_t off, int proc_e,
+					int seg, vir_bytes seg_addr,
+					phys_bytes seg_bytes)		);
+FORWARD _PROTOTYPE( int load_aout, (struct exec_info *execi)		);
+FORWARD _PROTOTYPE( int load_elf, (struct exec_info *execi)		);
+FORWARD _PROTOTYPE( int map_header, (char **exec_hdr,
+					const struct vnode *vp)		);
 
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
 
 /* Array of loaders for different object file formats */
 struct exec_loaders {
 	int (*load_object)(struct exec_info *);
-} static const exec_loaders[] = {
+};
+
+PRIVATE const struct exec_loaders exec_loaders[] = {
 	{ load_aout },
 	{ load_elf },
 	{ NULL }
 };
+
+PRIVATE char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
+
+/*===========================================================================*
+ *				lock_exec				     *
+ *===========================================================================*/
+PRIVATE void lock_exec(void)
+{
+  message org_m_in;
+  struct fproc *org_fp;
+  struct worker_thread *org_self;
+
+  /* First try to get it right off the bat */
+  if (mutex_trylock(&exec_lock) == 0)
+	return;
+
+  org_m_in = m_in;
+  org_fp = fp;
+  org_self = self;
+
+  if (mutex_lock(&exec_lock) != 0)
+	panic("Could not obtain lock on exec");
+
+  m_in = org_m_in;
+  fp = org_fp;
+  self = org_self;
+}
+
+/*===========================================================================*
+ *				unlock_exec				     *
+ *===========================================================================*/
+PRIVATE void unlock_exec(void)
+{
+  if (mutex_unlock(&exec_lock) != 0)
+	panic("Could not release lock on exec");
+}
 
 /*===========================================================================*
  *				pm_exec					     *
@@ -76,65 +118,73 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside VFS, and then to the new core image.
  */
-  int r, r1, round, proc_s;
+  int r, r1, round, slot;
   vir_bytes vsp;
   struct fproc *rfp;
   struct vnode *vp;
+  struct vmnt *vmp;
   char *cp;
   static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
   struct exec_info execi;
   int i;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
 
-  okendpt(proc_e, &proc_s);
-  rfp = fp = &fproc[proc_s];
-  who_e = proc_e;
-  who_p = proc_s;
-  super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
+  lock_exec();
+
+  okendpt(proc_e, &slot);
+  rfp = fp = &fproc[slot];
+  vp = NULL;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
 
   /* Get the exec file name. */
-  if ((r = fetch_name(path, path_len, 0)) != OK) return(r);
+  if ((r = fetch_name(path, path_len, 0, fullpath)) != OK)
+	goto pm_execfinal;
 
   /* Fetch the stack from the user before destroying the old core image. */
   if (frame_len > ARG_MAX) {
-		printf("VFS: pm_exec: stack too big\n");
-		return(ENOMEM);	/* stack too big */
-	}
+		r = ENOMEM; /* stack too big */
+		goto pm_execfinal;
+  }
   r = sys_datacopy(proc_e, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
-  		   (phys_bytes) frame_len);
+		   (phys_bytes) frame_len);
   if (r != OK) { /* can't fetch stack (e.g. bad virtual addr) */
-        printf("pm_exec: sys_datacopy failed\n");
-        return(r);	
+        printf("VFS: pm_exec: sys_datacopy failed\n");
+        goto pm_execfinal;
   }
 
   /* The default is to keep the original user and group IDs */
   execi.new_uid = rfp->fp_effuid;
   execi.new_gid = rfp->fp_effgid;
 
-  for (round= 0; round < 2; round++) {
+  for (round = 0; round < 2; round++) {
 	/* round = 0 (first attempt), or 1 (interpreted script) */
-
 	/* Save the name of the program */
-	(cp= strrchr(user_fullpath, '/')) ? cp++ : (cp= user_fullpath);
+	(cp = strrchr(fullpath, '/')) ? cp++ : (cp = fullpath);
 
 	strncpy(execi.progname, cp, PROC_NAME_LEN-1);
 	execi.progname[PROC_NAME_LEN-1] = '\0';
 	execi.setugid = 0;
 
 	/* Open executable */
-	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+	if ((vp = eat_path(&resolve, fp)) == NULL) {
+		r = err_code;
+		goto pm_execfinal;
+	}
 	execi.vp = vp;
+	unlock_vmnt(vmp);
 
-	if ((vp->v_mode & I_TYPE) != I_REGULAR) 
+	if ((vp->v_mode & I_TYPE) != I_REGULAR)
 		r = ENOEXEC;
 	else if ((r1 = forbidden(fp, vp, X_BIT)) != OK)
 		r = r1;
 	else
 		r = req_stat(vp->v_fs_e, vp->v_inode_nr, VFS_PROC_NR,
 			     (char *) &(execi.sb), 0, 0);
-	if (r != OK) {
-	    put_vnode(vp);
-	    return(r);
-	}
+	if (r != OK) goto pm_execfinal;
 
         if (round == 0) {
 		/* Deal with setuid/setgid executables */
@@ -149,36 +199,35 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
         }
 
 	r = map_header(&execi.hdr, execi.vp);
-	if (r != OK) {
-	    put_vnode(vp);
-	    return(r);
-	}
+	if (r != OK) goto pm_execfinal;
 
 	if (!is_script(execi.hdr, execi.vp->v_size) || round != 0)
 		break;
 
 	/* Get fresh copy of the file name. */
-	if ((r = fetch_name(path, path_len, 0)) != OK) 
+	if ((r = fetch_name(path, path_len, 0, fullpath)) != OK)
 		printf("VFS pm_exec: 2nd fetch_name failed\n");
-	else if ((r = patch_stack(vp, mbuf, &frame_len)) != OK) 
-		printf("VFS pm_exec: patch_stack failed\n");
+	else
+		r = patch_stack(vp, mbuf, &frame_len, fullpath);
+
+	unlock_vnode(vp);
 	put_vnode(vp);
-	if (r != OK) return(r);
+	vp = NULL;
+	if (r != OK) goto pm_execfinal;
   }
 
   execi.proc_e = proc_e;
   execi.frame_len = frame_len;
 
-  for(i = 0; exec_loaders[i].load_object != NULL; i++) {
+  for (i = 0; exec_loaders[i].load_object != NULL; i++) {
       r = (*exec_loaders[i].load_object)(&execi);
       /* Loaded successfully, so no need to try other loaders */
       if (r == OK) break;
   }
-  put_vnode(vp);
 
-  /* No exec loader could load the object */
-  if (r != OK) {
-	return(ENOEXEC);
+  if (r != OK) {   /* No exec loader could load the object */
+	r = ENOEXEC;
+	goto pm_execfinal;
   }
 
   /* Save off PC */
@@ -191,26 +240,32 @@ PUBLIC int pm_exec(int proc_e, char *path, vir_bytes path_len, char *frame,
   if ((r = sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
 		   (phys_bytes)frame_len)) != OK) {
 	printf("VFS: datacopy failed (%d) trying to copy to %lu\n", r, vsp);
-	return(r);
+	goto pm_execfinal;
   }
 
-  if (r != OK) return(r);
+  if (r != OK) goto pm_execfinal;
   clo_exec(rfp);
 
   if (execi.setugid) {
 	/* If after loading the image we're still allowed to run with
-	 * setuid or setgid, change the credentials now */
+	 * setuid or setgid, change credentials now */
 	rfp->fp_effuid = execi.new_uid;
 	rfp->fp_effgid = execi.new_gid;
   }
 
-  /* This child has now exec()ced. */
-  rfp->fp_execced = 1;
-
-  return(OK);
+pm_execfinal:
+  if (vp != NULL) {
+	unlock_vnode(vp);
+	put_vnode(vp);
+  }
+  unlock_exec();
+  return(r);
 }
 
-static int load_aout(struct exec_info *execi)
+/*===========================================================================*
+ *				load_aout				     *
+ *===========================================================================*/
+PRIVATE int load_aout(struct exec_info *execi)
 {
   int r;
   struct vnode *vp;
@@ -249,14 +304,19 @@ static int load_aout(struct exec_info *execi)
   off = hdrlen;
 
   /* Read in text and data segments. */
-  if (execi->load_text) r = read_seg(vp, off, proc_e, T, 0, text_bytes);
+  if (execi->load_text)
+	r = read_seg(vp, off, proc_e, T, 0, text_bytes);
   off += text_bytes;
-  if (r == OK) r = read_seg(vp, off, proc_e, D, 0, data_bytes);
+  if (r == OK)
+	r = read_seg(vp, off, proc_e, D, 0, data_bytes);
 
-  return (r);
+  return(r);
 }
 
-static int load_elf(struct exec_info *execi)
+/*===========================================================================*
+ *				load_elf				     *
+ *===========================================================================*/
+PRIVATE int load_elf(struct exec_info *execi)
 {
   int r;
   struct vnode *vp;
@@ -311,7 +371,7 @@ static int load_elf(struct exec_info *execi)
 /*===========================================================================*
  *				exec_newmem				     *
  *===========================================================================*/
-static int exec_newmem(
+PRIVATE int exec_newmem(
   int proc_e,
   vir_bytes text_addr,
   vir_bytes text_bytes,
@@ -332,6 +392,7 @@ static int exec_newmem(
   int *setugidp
 )
 {
+/* Allocate a new memory map for a process that tries to exec */
   int r;
   struct exec_newmem e;
   message m;
@@ -367,25 +428,25 @@ static int exec_newmem(
   return(m.m_type);
 }
 
-/* Is Interpreted script? */
-static int is_script(const char *exec_hdr, size_t exec_len)
+/*===========================================================================*
+ *				is_script				     *
+ *===========================================================================*/
+PRIVATE int is_script(const char *exec_hdr, size_t exec_len)
 {
+/* Is Interpreted script? */
   assert(exec_hdr != NULL);
 
-  if (exec_hdr[0] == '#' && exec_hdr[1] == '!' && exec_len >= 2)
-      return(TRUE);
-  else
-      return(FALSE);
+  return(exec_hdr[0] == '#' && exec_hdr[1] == '!' && exec_len >= 2);
 }
 
 /*===========================================================================*
  *				patch_stack				     *
  *===========================================================================*/
-static int patch_stack(
-struct vnode *vp,		/* pointer for open script file */
-char stack[ARG_MAX],		/* pointer to stack image within VFS */
-vir_bytes *stk_bytes		/* size of initial stack */
-)
+PRIVATE int patch_stack(vp, stack, stk_bytes, path)
+struct vnode *vp;		/* pointer for open script file */
+char stack[ARG_MAX];		/* pointer to stack image within VFS */
+vir_bytes *stk_bytes;		/* size of initial stack */
+char path[PATH_MAX];		/* path to script file */
 {
 /* Patch the argument vector to include the path name of the script to be
  * interpreted, and all strings on the #! line.  Returns the path name of
@@ -399,43 +460,40 @@ vir_bytes *stk_bytes		/* size of initial stack */
   unsigned int cum_io;
   char buf[_MAX_BLOCK_SIZE];
 
-  /* Make user_fullpath the new argv[0]. */
-  if (!insert_arg(stack, stk_bytes, user_fullpath, REPLACE)) {
-		printf("VFS: patch_stack: insert_arg for argv[0] failed\n");
-		return(ENOMEM);
-	}
+  /* Make 'path' the new argv[0]. */
+  if (!insert_arg(stack, stk_bytes, path, REPLACE)) return(ENOMEM);
 
   pos = 0;	/* Read from the start of the file */
 
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
-  		    VFS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
+		    VFS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
   if (r != OK) return(r);
-  
+
   n = vp->v_size;
   if (n > _MAX_BLOCK_SIZE)
 	n = _MAX_BLOCK_SIZE;
   if (n < 2) return ENOEXEC;
-  
+
   sp = &(buf[2]);				/* just behind the #! */
   n -= 2;
   if (n > PATH_MAX) n = PATH_MAX;
 
-  /* Use the user_fullpath variable for temporary storage */
-  memcpy(user_fullpath, sp, n);
+  /* Use the 'path' variable for temporary storage */
+  memcpy(path, sp, n);
 
-  if ((sp = memchr(user_fullpath, '\n', n)) == NULL) /* must be a proper line */
+  if ((sp = memchr(path, '\n', n)) == NULL) /* must be a proper line */
 	return(ENOEXEC);
 
   /* Move sp backwards through script[], prepending each string to stack. */
   for (;;) {
 	/* skip spaces behind argument. */
-	while (sp > user_fullpath && (*--sp == ' ' || *sp == '\t')) {}
-	if (sp == user_fullpath) break;
+	while (sp > path && (*--sp == ' ' || *sp == '\t')) {}
+	if (sp == path) break;
 
 	sp[1] = 0;
 	/* Move to the start of the argument. */
-	while (sp > user_fullpath && sp[-1] != ' ' && sp[-1] != '\t') --sp;
+	while (sp > path && sp[-1] != ' ' && sp[-1] != '\t') --sp;
 
 	interp = sp;
 	if (!insert_arg(stack, stk_bytes, sp, INSERT)) {
@@ -450,15 +508,15 @@ vir_bytes *stk_bytes		/* size of initial stack */
   /* Round *stk_bytes up to the size of a pointer for alignment contraints. */
   *stk_bytes= ((*stk_bytes + PTRSIZE - 1) / PTRSIZE) * PTRSIZE;
 
-  if (interp != user_fullpath)
-	memmove(user_fullpath, interp, strlen(interp)+1);
+  if (interp != path)
+	memmove(path, interp, strlen(interp)+1);
   return(OK);
 }
 
 /*===========================================================================*
  *				insert_arg				     *
  *===========================================================================*/
-static int insert_arg(
+PRIVATE int insert_arg(
 char stack[ARG_MAX],		/* pointer to stack image within PM */
 vir_bytes *stk_bytes,		/* size of initial stack */
 char *arg,			/* argument to prepend/replace as new argv[0] */
@@ -516,7 +574,7 @@ int replace
 /*===========================================================================*
  *				patch_ptr				     *
  *===========================================================================*/
-static void patch_ptr(
+PRIVATE void patch_ptr(
 char stack[ARG_MAX],		/* pointer to stack image within PM */
 vir_bytes base			/* virtual address of stack base inside user */
 )
@@ -549,7 +607,7 @@ vir_bytes base			/* virtual address of stack base inside user */
 /*===========================================================================*
  *				read_seg				     *
  *===========================================================================*/
-static int read_seg(
+PRIVATE int read_seg(
 struct vnode *vp, 		/* inode descriptor to read from */
 off_t off,			/* offset in file */
 int proc_e,			/* process number (endpoint) */
@@ -612,7 +670,7 @@ phys_bytes seg_bytes		/* how much is to be transferred? */
 	    printf("VFS: read_seg: req_readwrite failed (data)\n");
 	    return(r);
 	}
-  
+
 	if (r == OK && cum_io != seg_bytes)
 	    printf("VFS: read_seg segment has not been read properly by exec()\n");
 
@@ -626,9 +684,9 @@ phys_bytes seg_bytes		/* how much is to be transferred? */
 /*===========================================================================*
  *				clo_exec				     *
  *===========================================================================*/
-static void clo_exec(struct fproc *rfp)
+PRIVATE void clo_exec(struct fproc *rfp)
 {
-/* Files can be marked with the FD_CLOEXEC bit (in fp->fp_cloexec).  
+/* Files can be marked with the FD_CLOEXEC bit (in fp->fp_cloexec).
  */
   int i;
 
@@ -638,13 +696,15 @@ static void clo_exec(struct fproc *rfp)
 		(void) close_fd(rfp, i);
 }
 
-static int map_header(char **exec_hdr, const struct vnode *vp)
+/*===========================================================================*
+ *				map_header				     *
+ *===========================================================================*/
+PRIVATE int map_header(char **exec_hdr, const struct vnode *vp)
 {
   int r;
   u64_t new_pos;
   unsigned int cum_io;
   off_t pos;
-  static char hdr[PAGE_SIZE]; /* Assume that header is not larger than a page */
 
   pos = 0;	/* Read from the start of the file */
 

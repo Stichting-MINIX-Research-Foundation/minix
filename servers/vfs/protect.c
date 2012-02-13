@@ -13,6 +13,7 @@
 #include <minix/callnr.h>
 #include "file.h"
 #include "fproc.h"
+#include "path.h"
 #include "param.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -27,19 +28,30 @@ PUBLIC int do_chmod()
 
   struct filp *flp;
   struct vnode *vp;
+  struct vmnt *vmp;
   int r;
   mode_t new_mode;
-    
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  flp = NULL;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_WRITE;
+
   if (call_nr == CHMOD) {
-  	/* Temporarily open the file */
-	if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+	/* Temporarily open the file */
+	if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
+		return(err_code);
+	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
   } else {	/* call_nr == FCHMOD */
 	/* File is already opened; get a pointer to vnode from filp. */
-	if (!(flp = get_filp(m_in.fd))) return(err_code);
+	if ((flp = get_filp(m_in.fd, VNODE_WRITE)) == NULL)
+		return(err_code);
 	vp = flp->filp_vno;
 	dup_vnode(vp);
-  } 
+  }
 
   /* Only the owner or the super_user may change the mode of a file.
    * No one may change the mode of a file on a read-only file system.
@@ -49,21 +61,26 @@ PUBLIC int do_chmod()
   else
 	r = read_only(vp);
 
-  /* If error, return inode. */
-  if (r != OK)	{
-	put_vnode(vp);
-	return(r);
+  if (r == OK) {
+	/* Now make the change. Clear setgid bit if file is not in caller's
+	 * group */
+	if (fp->fp_effuid != SU_UID && vp->v_gid != fp->fp_effgid)
+		m_in.mode &= ~I_SET_GID_BIT;
+
+	r = req_chmod(vp->v_fs_e, vp->v_inode_nr, m_in.mode, &new_mode);
+	if (r == OK)
+		vp->v_mode = new_mode;
   }
 
-  /* Now make the change. Clear setgid bit if file is not in caller's grp */
-  if (fp->fp_effuid != SU_UID && vp->v_gid != fp->fp_effgid) 
-	  m_in.mode &= ~I_SET_GID_BIT;
-
-  if ((r = req_chmod(vp->v_fs_e, vp->v_inode_nr, m_in.mode, &new_mode)) == OK)
-	vp->v_mode = new_mode;
+  if (call_nr == CHMOD) {
+	unlock_vnode(vp);
+	unlock_vmnt(vmp);
+  } else {	/* FCHMOD */
+	unlock_filp(flp);
+  }
 
   put_vnode(vp);
-  return(OK);
+  return(r);
 }
 
 
@@ -72,23 +89,35 @@ PUBLIC int do_chmod()
  *===========================================================================*/
 PUBLIC int do_chown()
 {
-/* Perform the chmod(name, mode) and fchmod(fd, mode) system calls. */
+/* Perform the chown(path, owner, group) and fchmod(fd, owner, group) system
+ * calls. */
   struct filp *flp;
   struct vnode *vp;
+  struct vmnt *vmp;
   int r;
   uid_t uid;
   gid_t gid;
   mode_t new_mode;
-  
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  flp = NULL;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_WRITE;
+  resolve.l_vnode_lock = VNODE_WRITE;
+
   if (call_nr == CHOWN) {
 	/* Temporarily open the file. */
-      if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-      if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+	if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
+		return(err_code);
+	if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
   } else {	/* call_nr == FCHOWN */
-  	/* File is already opened; get a pointer to the vnode from filp. */
-      if (!(flp = get_filp(m_in.fd))) return(err_code);
-      vp = flp->filp_vno;
-      dup_vnode(vp);
+	/* File is already opened; get a pointer to the vnode from filp. */
+	if ((flp = get_filp(m_in.fd, VNODE_WRITE)) == NULL)
+		return(err_code);
+	vp = flp->filp_vno;
+	dup_vnode(vp);
   }
 
   r = read_only(vp);
@@ -98,7 +127,7 @@ PUBLIC int do_chown()
 	   a regular user. */
 	if (fp->fp_effuid != SU_UID) {
 		/* Regular users can only change groups of their own files. */
-		if (vp->v_uid != fp->fp_effuid) r = EPERM;	
+		if (vp->v_uid != fp->fp_effuid) r = EPERM;
 		if (vp->v_uid != m_in.owner) r = EPERM;	/* no giving away */
 		if (fp->fp_effgid != m_in.group) r = EPERM;
 	}
@@ -113,16 +142,22 @@ PUBLIC int do_chown()
 		r = EINVAL;
 	else if ((r = req_chown(vp->v_fs_e, vp->v_inode_nr, uid, gid,
 				&new_mode)) == OK) {
-	  	vp->v_uid = uid;
+		vp->v_uid = uid;
 		vp->v_gid = gid;
 		vp->v_mode = new_mode;
 	}
   }
 
+  if (call_nr == CHOWN) {
+	unlock_vnode(vp);
+	unlock_vmnt(vmp);
+  } else {	/* FCHOWN */
+	unlock_filp(flp);
+  }
+
   put_vnode(vp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_umask				     *
@@ -146,16 +181,28 @@ PUBLIC int do_access()
 /* Perform the access(name, mode) system call. */
   int r;
   struct vnode *vp;
-    
+  struct vmnt *vmp;
+  char fullpath[PATH_MAX];
+  struct lookup resolve;
+
+  lookup_init(&resolve, fullpath, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+
   /* First check to see if the mode is correct. */
   if ( (m_in.mode & ~(R_OK | W_OK | X_OK)) != 0 && m_in.mode != F_OK)
 	return(EINVAL);
 
   /* Temporarily open the file. */
-  if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
+	return(err_code);
+  if ((vp = eat_path(&resolve, fp)) == NULL) return(err_code);
 
   r = forbidden(fp, vp, m_in.mode);
+
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
+
   put_vnode(vp);
   return(r);
 }
@@ -211,7 +258,7 @@ PUBLIC int forbidden(struct fproc *rfp, struct vnode *vp, mode_t access_desired)
    */
   if (r == OK)
 	if (access_desired & W_BIT)
-	 	r = read_only(vp);
+		r = read_only(vp);
 
   return(r);
 }
@@ -225,10 +272,5 @@ struct vnode *vp;		/* ptr to inode whose file sys is to be cked */
 /* Check to see if the file system on which the inode 'ip' resides is mounted
  * read only.  If so, return EROFS, else return OK.
  */
-  register struct vmnt *mp;
-
-  mp = vp->v_vmnt;
-  return(mp->m_flags ? EROFS : OK);
+  return((vp->v_vmnt->m_flags & VMNT_READONLY) ? EROFS : OK);
 }
-
-

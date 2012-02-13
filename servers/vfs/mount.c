@@ -1,7 +1,7 @@
 /* This file performs the MOUNT and UMOUNT system calls.
  *
  * The entry points into this file are
- *   do_fslogin:	perform the FSLOGIN system call
+ *   do_fsready:	perform the FS_READY system call
  *   do_mount:		perform the MOUNT system call
  *   do_umount:		perform the UMOUNT system call
  *   unmount:		unmount a file system
@@ -22,15 +22,18 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <dirent.h>
+#include <assert.h>
 #include "file.h"
 #include "fproc.h"
-#include "param.h"
+#include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
+#include "path.h"
+#include "param.h"
 
 /* Allow the root to be replaced before the first 'real' mount. */
-PRIVATE int allow_newroot = 1;
+PRIVATE int have_root = 0;
 
 /* Bitmap of in-use "none" pseudo devices. */
 PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
@@ -38,49 +41,75 @@ PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 #define alloc_nonedev(dev) SET_BIT(nonedev, minor(dev) - 1)
 #define free_nonedev(dev) UNSET_BIT(nonedev, minor(dev) - 1)
 
-FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt)		);
-FORWARD _PROTOTYPE( int mount_fs, (endpoint_t fs_e)			);
-FORWARD _PROTOTYPE( int is_nonedev, (dev_t dev)				);
+FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt,
+					char path[PATH_MAX])		);
 FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)			);
+FORWARD _PROTOTYPE( void update_bspec, (dev_t dev, endpoint_t fs_e,
+				      int send_drv_e)			);
 
 /*===========================================================================*
  *				update_bspec				     *
  *===========================================================================*/
-PRIVATE void update_bspec(dev_t dev, endpoint_t fs_e)
+PRIVATE void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e)
 {
 /* Update all block special files for a certain device, to use a new FS endpt
  * to route raw block I/O requests through.
  */
   struct vnode *vp;
+  struct dmap *dp;
+  int r, major;
 
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; ++vp)
-	if (vp->v_ref_count > 0 && S_ISBLK(vp->v_mode) && vp->v_sdev == dev)
+	if (vp->v_ref_count > 0 && S_ISBLK(vp->v_mode) && vp->v_sdev == dev) {
 		vp->v_bfs_e = fs_e;
+		if (send_drv_e) {
+			major = major(dev);
+			if (major < 0 || major >= NR_DEVICES) {
+				/* Can't update for out-of-range major */
+				continue;
+			}
+			dp = &dmap[major(dev)];
+			if (dp->dmap_driver == NONE) {
+				/* Can't update for vanished driver */
+				printf("VFS: can't send new driver label\n");
+				continue;
+			}
+
+			if ((r = req_newdriver(fs_e, vp->v_sdev,
+					dp->dmap_label)) != OK) {
+				printf("VFS: Failed to send new driver label"
+				       " for moved block special file to %d\n",
+				       fs_e);
+			}
+		}
+	}
 }
 
-
 /*===========================================================================*
- *                              do_fslogin                                   *
+ *                              do_fsready                                   *
  *===========================================================================*/
-PUBLIC int do_fslogin()
+PUBLIC int do_fsready()
 {
   /* deprecated */
   return(SUSPEND);
 }
-
 
 /*===========================================================================*
  *                              do_mount                                     *
  *===========================================================================*/
 PUBLIC int do_mount()
 {
+/* Perform the mount(name, mfile, mount_flags) system call. */
   endpoint_t fs_e;
-  int r, proc_nr;
+  int r, slot, rdonly, nodev;
+  char fullpath[PATH_MAX];
+  char mount_label[LABEL_MAX];
+  dev_t dev;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
-	
-  /* FS process' endpoint number */ 
+
+  /* FS process' endpoint number */
   if (m_in.mount_flags & MS_LABEL16) {
 	/* Get the label from the caller, and ask DS for the endpoint. */
 	r = sys_datacopy(who_e, (vir_bytes) m_in.fs_label, SELF,
@@ -91,8 +120,6 @@ PUBLIC int do_mount()
 
 	r = ds_retrieve_label_endpt(mount_label, &fs_e);
 	if (r != OK) return(r);
-
-	if (isokendpt(fs_e, &proc_nr) != OK) return(EINVAL);
   } else {
 	/* Legacy support: get the endpoint from the request itself. */
 	fs_e = (endpoint_t) m_in.fs_label;
@@ -100,47 +127,18 @@ PUBLIC int do_mount()
   }
 
   /* Sanity check on process number. */
-  if(fs_e <= 0) {
-	printf("VFS: warning: got process number %d for mount call.\n", fs_e);
-	return EINVAL;
-  }
+  if (isokendpt(fs_e, &slot) != OK) return(EINVAL);
 
-  /* Do the actual job */
-  return mount_fs(fs_e);
-}
-
-
-/*===========================================================================*
- *                              mount                                        *
- *===========================================================================*/
-PRIVATE int mount_fs(endpoint_t fs_e)
-{
-/* Perform the mount(name, mfile, mount_flags) system call. */
-  int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
-  int i, r, found, rdonly, nodev, isroot, replace_root;
-  struct fproc *tfp;
-  struct dmap *dp;
-  dev_t dev;
-  struct vnode *root_node, *vp = NULL, *bspec;
-  struct vmnt *vmp;
-  char *label;
-  struct node_details res;
-
-  /* Only the super-user may do MOUNT. */
-  if (!super_user) return(EPERM);
-
-  /* Clear endpoint field */
   /* Should the file system be mounted read-only? */
   rdonly = (m_in.mount_flags & MS_RDONLY);
 
   /* A null string for block special device means don't use a device at all. */
   nodev = (m_in.name1_length == 0);
-
   if (!nodev) {
 	/* If 'name' is not for a block special file, return error. */
-	if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK)
+	if (fetch_name(m_in.name1, m_in.name1_length, M1, fullpath) != OK)
 		return(err_code);
-	if ((dev = name_to_dev(FALSE /*allow_mountpt*/)) == NO_DEV)
+	if ((dev = name_to_dev(FALSE /*allow_mountpt*/, fullpath)) == NO_DEV)
 		return(err_code);
   } else {
 	/* Find a free pseudo-device as substitute for an actual device. */
@@ -148,123 +146,145 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 		return(err_code);
   }
 
-  /* Check whether there is a block special file open which uses the 
-   * same device (partition) */
-  for (bspec = &vnode[0]; bspec < &vnode[NR_VNODES]; ++bspec) {
-	if (bspec->v_ref_count > 0 && bspec->v_sdev == dev) {
-		/* Found, flush and invalidate any blocks for this device. */
-		req_flush(bspec->v_fs_e, dev);
-		break;
-	}
-  }
-  
-  /* Scan vmnt table to see if dev already mounted. If not, find a free slot.*/
-  found = FALSE; 
-  vmp = NULL;
-  for (i = 0; i < NR_MNTS; ++i) {
-	  if (vmnt[i].m_dev == dev) {
-		  vmp = &vmnt[i];
-		  found = TRUE;
-		  break;
-	  } else if (!vmp && vmnt[i].m_dev == NO_DEV) {
-		  vmp = &vmnt[i];
-	  }
-  }
-
-  /* Partition was/is already mounted */
-  if (found) {
-	/* It is possible that we have an old root lying around that 
-	 * needs to be remounted. This could for example be a boot
-	 * ramdisk that has already been replaced by the real root.
-	 */
-	if(vmp->m_mounted_on || root_dev == vmp->m_dev) {
-		return(EBUSY);   /* not a root or still mounted */
-	}
-  
-	/* Now get the inode of the file to be mounted on. */
-	if (fetch_name(m_in.name2, m_in.name2_length, M1)!=OK) return(err_code);
-	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
-	if (vp->v_ref_count != 1) {
-		put_vnode(vp);
-		return(EBUSY);
-	}
-
-	/* Tell FS on which vnode it is mounted (glue into mount tree) */
-	if ((r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr)) == OK) {
-		root_node = vmp->m_root_node;
-
-		/* File types of 'vp' and 'root_node' may not conflict. */
-		mdir = ((vp->v_mode & I_TYPE) == I_DIRECTORY);/* TRUE iff dir*/
-		rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
-		if(!mdir && rdir) r = EISDIR;
-	}
-
-	if (r != OK) {
-		put_vnode(vp);
-		return(r);
-	}
-
-	/* Nothing else can go wrong.  Perform the mount. */
-	vmp->m_mounted_on = vp;
-	vmp->m_flags = rdonly;
-	strcpy(vmp->m_label, mount_label);
-	allow_newroot = 0;             	/* The root is now fixed */
-	if (nodev) alloc_nonedev(dev);	/* Make the allocation final */
-	update_bspec(dev, fs_e);	/* Update open block-special files */
-
-	return(OK);
-  } else if (vmp == NULL) {
-  	/* No free slot available, bail out */
-  	return(ENOMEM);
-  }
-
   /* Fetch the name of the mountpoint */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) return(err_code);
-  isroot = (strcmp(user_fullpath, "/") == 0);
-  replace_root = (isroot && allow_newroot);
+  if (fetch_name(m_in.name2, m_in.name2_length, M1, fullpath) != OK)
+	return(err_code);
 
-  if(!replace_root) {
-  	/* Get vnode of mountpoint */
-	if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) return(err_code);
+  /* Do the actual job */
+  return mount_fs(dev, fullpath, fs_e, rdonly, mount_label);
+}
 
-	if (vp->v_ref_count != 1) {
-		put_vnode(vp);
-		return(EBUSY);
-	}
 
-	/* Tell FS on which vnode it is mounted (glue into mount tree) */
-	if ((r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr)) != OK) {
-		put_vnode(vp);
-		return r;
-	}
-  }
+/*===========================================================================*
+ *                              mount_fs				     *
+ *===========================================================================*/
+PUBLIC int mount_fs(
+dev_t dev,
+char mountpoint[PATH_MAX],
+endpoint_t fs_e,
+int rdonly,
+char mount_label[LABEL_MAX] )
+{
+  int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
+  int i, r = OK, found, isroot, mount_root, con_reqs, slot;
+  struct fproc *tfp, *rfp;
+  struct dmap *dp;
+  struct vnode *root_node, *vp = NULL;
+  struct vmnt *new_vmp, *parent_vmp;
+  char *label;
+  struct node_details res;
+  struct lookup resolve;
 
-  /* We'll need a vnode for the root inode, check whether there is one */
-  if ((root_node = get_free_vnode()) == NULL) {
-	if (vp != NULL) put_vnode(vp);
-	return(ENFILE);
-  }
-
+  /* Look up block device driver label when dev is not a pseudo-device */
   label = "";
-  if (!nodev) {
+  if (!is_nonedev(dev)) {
 	/* Get driver process' endpoint */
-	dp = &dmap[(dev >> MAJOR) & BYTE];
+	dp = &dmap[major(dev)];
 	if (dp->dmap_driver == NONE) {
-		printf("VFS: no driver for dev %x\n", dev);
-		if (vp != NULL) put_vnode(vp);
+		printf("VFS: no driver for dev %d\n", dev);
 		return(EINVAL);
 	}
 
 	label = dp->dmap_label;
-	if (strlen(label) == 0)
-		panic("VFS mount_fs: no label for major: 0x%x", dev >> MAJOR);
+	assert(strlen(label) > 0);
   }
 
+  /* Scan vmnt table to see if dev already mounted. If not, find a free slot.*/
+  found = FALSE;
+  for (i = 0; i < NR_MNTS; ++i) {
+	if (vmnt[i].m_dev == dev) found = TRUE;
+  }
+  if (found) {
+	return(EBUSY);
+  } else if ((new_vmp = get_free_vmnt()) == NULL) {
+	return(ENOMEM);
+  }
+
+  if ((r = lock_vmnt(new_vmp, VMNT_EXCL)) != OK) return(r);
+
+  isroot = (strcmp(mountpoint, "/") == 0);
+  mount_root = (isroot && have_root < 2); /* Root can be mounted twice:
+					   * 1: ramdisk
+					   * 2: boot disk (e.g., harddisk)
+					   */
+
+  if (!mount_root) {
+	/* Get vnode of mountpoint */
+	lookup_init(&resolve, mountpoint, PATH_NOFLAGS, &parent_vmp, &vp);
+	resolve.l_vmnt_lock = VMNT_EXCL;
+	resolve.l_vnode_lock = VNODE_WRITE;
+	if ((vp = eat_path(&resolve, fp)) == NULL)
+		r = err_code;
+	else if (vp->v_ref_count == 1) {
+		/*Tell FS on which vnode it is mounted (glue into mount tree)*/
+		r = req_mountpoint(vp->v_fs_e, vp->v_inode_nr);
+	} else
+		r = EBUSY;
+
+	if (vp != NULL)	{
+		/* Quickly unlock to allow back calls (from e.g. FUSE) to
+		 * relock */
+		unlock_vmnt(parent_vmp);
+	}
+
+	if (r != OK) {
+		if (vp != NULL) {
+			unlock_vnode(vp);
+			put_vnode(vp);
+		}
+		unlock_vmnt(new_vmp);
+		return(r);
+	}
+  }
+
+  /* We'll need a vnode for the root inode */
+  if ((root_node = get_free_vnode()) == NULL) {
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
+	unlock_vmnt(new_vmp);
+	return(err_code);
+  }
+  lock_vnode(root_node, VNODE_OPCL);
+
+  /* Record process as a system process */
+  if (isokendpt(fs_e, &slot) != OK) {
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
+	unlock_vnode(root_node);
+	unlock_vmnt(new_vmp);
+	return(EINVAL);
+  }
+  rfp = &fproc[slot];
+  rfp->fp_flags |= FP_SYS_PROC;	/* Process is an FS */
+
+  /* Store some essential vmnt data first */
+  new_vmp->m_fs_e = fs_e;
+  new_vmp->m_dev = dev;
+  if (rdonly) new_vmp->m_flags |= VMNT_READONLY;
+  else new_vmp->m_flags &= ~VMNT_READONLY;
+
   /* Tell FS which device to mount */
-  if ((r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res)) != OK) {
-	if (vp != NULL) put_vnode(vp);
+  new_vmp->m_flags |= VMNT_MOUNTING;
+  r = req_readsuper(fs_e, label, dev, rdonly, isroot, &res, &con_reqs);
+  new_vmp->m_flags &= ~VMNT_MOUNTING;
+
+  if (r != OK) {
+	new_vmp->m_fs_e = NONE;
+	new_vmp->m_dev = NO_DEV;
+	unlock_vnode(root_node);
+	if (vp != NULL) {
+		unlock_vnode(vp);
+		put_vnode(vp);
+	}
+	unlock_vmnt(new_vmp);
 	return(r);
   }
+
+  lock_bsf();
 
   /* Fill in root node's fields */
   root_node->v_fs_e = res.fs_e;
@@ -276,46 +296,50 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   root_node->v_sdev = NO_DEV;
   root_node->v_fs_count = 1;
   root_node->v_ref_count = 1;
-  
-  /* Fill in max file size and blocksize for the vmnt */
-  vmp->m_fs_e = res.fs_e;
-  vmp->m_dev = dev;
-  vmp->m_flags = rdonly;
-  
-  /* Root node is indeed on the partition */
-  root_node->v_vmnt = vmp;
-  root_node->v_dev = vmp->m_dev;
-  
-  if(replace_root) {
-	/* Superblock and root node already read. 
-	 * Nothing else can go wrong. Perform the mount. */
-	vmp->m_root_node = root_node;
-	vmp->m_mounted_on = NULL;
-	strcpy(vmp->m_label, mount_label);
-	if (nodev) alloc_nonedev(dev);
-	update_bspec(dev, fs_e);
 
-	root_dev = dev;
+  /* Root node is indeed on the partition */
+  root_node->v_vmnt = new_vmp;
+  root_node->v_dev = new_vmp->m_dev;
+  if (con_reqs == 0)
+	new_vmp->m_comm.c_max_reqs = 1;	/* Default if FS doesn't tell us */
+  else
+	new_vmp->m_comm.c_max_reqs = con_reqs;
+  new_vmp->m_comm.c_cur_reqs = 0;
+
+  if (mount_root) {
+	/* Superblock and root node already read.
+	 * Nothing else can go wrong. Perform the mount. */
+	new_vmp->m_root_node = root_node;
+	new_vmp->m_mounted_on = NULL;
+	strcpy(new_vmp->m_label, mount_label);
+	if (is_nonedev(dev)) alloc_nonedev(dev);
+	update_bspec(dev, fs_e, 0 /* Don't send new driver endpoint */);
+
+	ROOT_DEV = dev;
 	ROOT_FS_E = fs_e;
 
 	/* Replace all root and working directories */
-	for (i= 0, tfp= fproc; i<NR_PROCS; i++, tfp++) {
+	for (i = 0, tfp = fproc; i < NR_PROCS; i++, tfp++) {
 		if (tfp->fp_pid == PID_FREE)
 			continue;
 
-#define MAKEROOT(what) { 		\
-		put_vnode(what);	\
-		dup_vnode(root_node);	\
-		what = root_node;	\
+#define		MAKEROOT(what) { 			\
+			if (what) put_vnode(what);	\
+			dup_vnode(root_node);		\
+			what = root_node;		\
+		}
+
+		MAKEROOT(tfp->fp_rd);
+		MAKEROOT(tfp->fp_wd);
 	}
 
-		if(tfp->fp_rd) MAKEROOT(tfp->fp_rd);
-		if(tfp->fp_wd) MAKEROOT(tfp->fp_wd);
-	}
-
+	unlock_vnode(root_node);
+	unlock_vmnt(new_vmp);
+	have_root++; /* We have a (new) root */
+	unlock_bsf();
 	return(OK);
   }
-  
+
   /* File types may not conflict. */
   mdir = ((vp->v_mode & I_TYPE) == I_DIRECTORY); /*TRUE iff dir*/
   rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
@@ -323,29 +347,65 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   /* If error, return the super block and both inodes; release the vmnt. */
   if (r != OK) {
+	unlock_vnode(vp);
+	unlock_vnode(root_node);
+	unlock_vmnt(new_vmp);
 	put_vnode(vp);
 	put_vnode(root_node);
-	vmp->m_dev = NO_DEV;
+	new_vmp->m_dev = NO_DEV;
+	new_vmp->m_flags = 0;
+	unlock_bsf();
 	return(r);
   }
 
   /* Nothing else can go wrong.  Perform the mount. */
-  vmp->m_mounted_on = vp;
-  vmp->m_root_node = root_node;
-  strcpy(vmp->m_label, mount_label);
-  
-  /* The root is now fixed */
-  allow_newroot = 0;
+  new_vmp->m_mounted_on = vp;
+  new_vmp->m_root_node = root_node;
+  strcpy(new_vmp->m_label, mount_label);
 
   /* Allocate the pseudo device that was found, if not using a real device. */
-  if (nodev) alloc_nonedev(dev);
+  if (is_nonedev(dev)) alloc_nonedev(dev);
 
   /* The new FS will handle block I/O requests for its device now. */
-  update_bspec(dev, fs_e);
+  if (!(new_vmp->m_flags & VMNT_FORCEROOTBSF))
+	update_bspec(dev, fs_e, 0 /* Don't send new driver endpoint */);
+
+  unlock_vnode(vp);
+  unlock_vnode(root_node);
+  unlock_vmnt(new_vmp);
+  unlock_bsf();
 
   return(OK);
 }
 
+
+/*===========================================================================*
+ *				mount_pfs				     *
+ *===========================================================================*/
+PUBLIC void mount_pfs(void)
+{
+/* Mount the Pipe File Server. It's not really mounted onto the file system,
+   but it's necessary it has a vmnt entry to make locking easier */
+
+  dev_t dev;
+  struct vmnt *vmp;
+  struct fproc *rfp;
+
+  if ((dev = find_free_nonedev()) == NO_DEV)
+	panic("VFS: no nonedev to initialize PFS");
+
+  if ((vmp = get_free_vmnt()) == NULL)
+	panic("VFS: no vmnt to initialize PFS");
+
+  alloc_nonedev(dev);
+
+  vmp->m_dev = dev;
+  vmp->m_fs_e = PFS_PROC_NR;
+  strcpy(vmp->m_label, "pfs");
+
+  rfp = &fproc[_ENDPOINT_P(PFS_PROC_NR)];
+  rfp->fp_flags |= FP_SYS_PROC;	/* PFS is a driver and an FS */
+}
 
 /*===========================================================================*
  *                              do_umount                                    *
@@ -356,15 +416,18 @@ PUBLIC int do_umount(void)
   char label[LABEL_MAX];
   dev_t dev;
   int r;
-	
+  char fullpath[PATH_MAX];
+
   /* Only the super-user may do umount. */
   if (!super_user) return(EPERM);
-	
-  /* If 'name' is not for a block special file or mountpoint, return error. */
-  if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if((dev = name_to_dev(TRUE /*allow_mountpt*/)) == NO_DEV) return(err_code);
 
-  if((r = unmount(dev, label)) != OK) return(r);
+  /* If 'name' is not for a block special file or mountpoint, return error. */
+  if (fetch_name(m_in.name, m_in.name_length, M3, fullpath) != OK)
+	return(err_code);
+  if ((dev = name_to_dev(TRUE /*allow_mountpt*/, fullpath)) == NO_DEV)
+	return(err_code);
+
+  if ((r = unmount(dev, label)) != OK) return(r);
 
   /* Return the label of the mounted file system, so that the caller
    * can shut down the corresponding server process.
@@ -386,11 +449,10 @@ PUBLIC int unmount(
 {
   struct vnode *vp;
   struct vmnt *vmp_i = NULL, *vmp = NULL;
-  struct dmap *dp;
-  int count, r;
-  
+  int count, locks, r;
+
   /* Find vmnt that is to be unmounted */
-  for(vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
+  for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
 	  if (vmp_i->m_dev == dev) {
 		  if(vmp) panic("device mounted more than once: %d", dev);
 		  vmp = vmp_i;
@@ -399,15 +461,23 @@ PUBLIC int unmount(
 
   /* Did we find the vmnt (i.e., was dev a mounted device)? */
   if(!vmp) return(EINVAL);
-  
+
+  if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK) return(r);
+
   /* See if the mounted device is busy.  Only 1 vnode using it should be
    * open -- the root vnode -- and that inode only 1 time. */
-  count = 0;
-  for(vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++)
-	  if(vp->v_ref_count > 0 && vp->v_dev == dev) count += vp->v_ref_count;
+  locks = count = 0;
+  for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++)
+	  if (vp->v_ref_count > 0 && vp->v_dev == dev) {
+		count += vp->v_ref_count;
+		if (is_vnode_locked(vp)) locks++;
+	  }
 
-  if(count > 1) return(EBUSY);    /* can't umount a busy file system */
-  
+  if (count > 1 || locks > 1 || tll_haspendinglock(&vmp->m_lock)) {
+	unlock_vmnt(vmp);
+	return(EBUSY);    /* can't umount a busy file system */
+  }
+
   /* Tell FS to drop all inode references for root inode except 1. */
   vnode_clean_refs(vmp->m_root_node);
 
@@ -416,59 +486,69 @@ PUBLIC int unmount(
 	vmp->m_mounted_on = NULL;
   }
 
+  vmp->m_comm.c_max_reqs = 1;	/* Force max concurrent reqs to just one, so
+				 * we won't send any messages after the
+				 * unmount request */
+
   /* Tell FS to unmount */
-  if(vmp->m_fs_e <= 0 || vmp->m_fs_e == NONE)
-	panic("unmount: strange fs endpoint: %d", vmp->m_fs_e);
-
   if ((r = req_unmount(vmp->m_fs_e)) != OK)              /* Not recoverable. */
-	printf("VFS: ignoring failed umount attempt (%d) fs pid: %d\n", r,
-						_ENDPOINT_P(vmp->m_fs_e));
+	printf("VFS: ignoring failed umount attempt FS endpoint: %d (%d)\n",
+	       vmp->m_fs_e, r);
 
-  if (is_nonedev(vmp->m_dev))
-	free_nonedev(vmp->m_dev);
+  if (is_nonedev(vmp->m_dev)) free_nonedev(vmp->m_dev);
 
-  if (label != NULL)
-	strcpy(label, vmp->m_label);
- 
-  vmp->m_root_node->v_ref_count = 0;
-  vmp->m_root_node->v_fs_count = 0;
-  vmp->m_root_node->v_sdev = NO_DEV;
-  vmp->m_root_node = NULL;
+  if (label != NULL) strcpy(label, vmp->m_label);
+
+  if (vmp->m_root_node) {	/* PFS lacks a root node */
+	vmp->m_root_node->v_ref_count = 0;
+	vmp->m_root_node->v_fs_count = 0;
+	vmp->m_root_node->v_sdev = NO_DEV;
+	vmp->m_root_node = NULL;
+  }
   vmp->m_dev = NO_DEV;
   vmp->m_fs_e = NONE;
-	
-  /* Is there a block special file that was handled by that partition? */
-  for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
-	if(vp->v_ref_count > 0 && S_ISBLK(vp->v_mode) &&
-			vp->v_bfs_e == vmp->m_fs_e) {
 
-		/* Get the driver endpoint of the block spec device */
-		dp = &dmap[(dev >> MAJOR) & BYTE];
-		if (dp->dmap_driver == NONE) {
-			printf("VFS: driver not found for device %d\n", dev);
-			continue;
-		}
+  unlock_vmnt(vmp);
 
-		printf("VFS: umount moving block spec %d to root FS\n", dev);
-		vp->v_bfs_e = ROOT_FS_E;
-			
-		/* Send the driver label */
-		r = req_newdriver(vp->v_bfs_e, vp->v_sdev, dp->dmap_label);
-		if (r != OK) 
-			printf("VFS: error sending driver label for"
-				" moved block spec to %d\n", vp->v_bfs_e);
-		  
-	}
-  }
-  
+  /* The root FS will handle block I/O requests for this device now. */
+  lock_bsf();
+  update_bspec(dev, ROOT_FS_E, 1 /* send new driver endpoint */);
+  unlock_bsf();
+
   return(OK);
 }
 
 
 /*===========================================================================*
+ *				unmount_all				     *
+ *===========================================================================*/
+PUBLIC void unmount_all(void)
+{
+/* Unmount all filesystems.  File systems are mounted on other file systems,
+ * so you have to pull off the loose bits repeatedly to get it all undone.
+ */
+
+  int i;
+  struct vmnt *vmp;
+
+  /* Now unmount the rest */
+  for (i = 0; i < NR_MNTS; i++) {
+	/* Unmount at least one. */
+	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
+		if (vmp->m_dev != NO_DEV)
+			unmount(vmp->m_dev, NULL);
+	}
+  }
+  check_vnode_locks();
+  check_vmnt_locks();
+  check_filp_locks();
+  check_bsf_lock();
+}
+
+/*===========================================================================*
  *                              name_to_dev                                  *
  *===========================================================================*/
-PRIVATE dev_t name_to_dev(int allow_mountpt)
+PRIVATE dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX])
 {
 /* Convert the block special file in 'user_fullpath' to a device number.
  * If the given path is not a block special file, but 'allow_mountpt' is set
@@ -477,21 +557,27 @@ PRIVATE dev_t name_to_dev(int allow_mountpt)
  */
   dev_t dev;
   struct vnode *vp;
-  
+  struct vmnt *vmp;
+  struct lookup resolve;
+
+  lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+
   /* Request lookup */
-  if ((vp = eat_path(PATH_NOFLAGS, fp)) == NULL) {
-	return(NO_DEV);
-  }
+  if ((vp = eat_path(&resolve, fp)) == NULL) return(NO_DEV);
 
   if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL) {
 	dev = vp->v_sdev;
   } else if (allow_mountpt && vp->v_vmnt->m_root_node == vp) {
 	dev = vp->v_dev;
   } else {
-  	err_code = ENOTBLK;
+	err_code = ENOTBLK;
 	dev = NO_DEV;
   }
 
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
   put_vnode(vp);
   return(dev);
 }
@@ -500,7 +586,7 @@ PRIVATE dev_t name_to_dev(int allow_mountpt)
 /*===========================================================================*
  *                              is_nonedev				     *
  *===========================================================================*/
-PRIVATE int is_nonedev(dev_t dev)
+PUBLIC int is_nonedev(dev_t dev)
 {
 /* Return whether the given device is a "none" pseudo device.
  */

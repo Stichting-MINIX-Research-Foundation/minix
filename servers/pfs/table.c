@@ -29,7 +29,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]),
         no_sys,             /* 12  */
         no_sys,	            /* 13  */
         no_sys,             /* 14  */
-        no_sys,             /* 15  */
+        fs_unmount,         /* 15  */
 	fs_sync,            /* 16  */
         no_sys,             /* 17  */
         no_sys,	            /* 18  */
@@ -53,30 +53,30 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]),
 PUBLIC _PROTOTYPE (int (*dev_call_vec[]),
 				(message *dev_m_in, message *dev_m_out) ) = {
 
-        uds_cancel,         /* 0   */
+        uds_cancel,         /* 0  CANCEL */
         no_sys,             /* 1   */
         no_sys,             /* 2   */
         no_sys,             /* 3   */
         no_sys,             /* 4   */
         no_sys,             /* 5   */
-	uds_open,           /* 6   */
-        uds_close,          /* 7   */
+	uds_open,           /* 6  DEV_OPEN */
+        uds_close,          /* 7  DEV_CLOSE */
         no_sys,             /* 8   */
         no_sys,             /* 9   */
-        no_sys,             /* 10  */
-        no_sys,             /* 11  */
-        uds_select,         /* 12  */
-        uds_status,         /* 13  */
-        uds_open,           /* 14  */
+        no_sys,             /* 10 TTY_SETPGRP */
+        no_sys,             /* 11 TTY_EXIT */
+        uds_select,         /* 12 DEV_SELECT */
+        no_sys,             /* 13 DEV_STATUS */
+        uds_open,           /* 14 DEV_REOPEN */
         no_sys,             /* 15  */
 	no_sys,             /* 16  */
         no_sys,             /* 17  */
         no_sys,	            /* 18  */
         no_sys,		    /* 19  */
-        uds_read,	    /* 20  */
-        uds_write,          /* 21  */
-        no_sys,             /* 22  */
-        no_sys,             /* 23  */
-        uds_ioctl,          /* 24  */
-        no_sys,             /* 25  */
+        uds_read,	    /* 20 DEV_READ_S */
+        uds_write,          /* 21 DEV_WRITE_S */
+        no_sys,             /* 22 DEV_SCATTER_S */
+        no_sys,             /* 23 DEV_GATHER_S */
+        uds_ioctl,          /* 24 DEV_IOCTL_S */
+        no_sys,             /* 25 DEV_MMAP_S */
 };

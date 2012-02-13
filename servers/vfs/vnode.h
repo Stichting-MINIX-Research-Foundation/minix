@@ -1,4 +1,5 @@
-
+#ifndef __VFS_VNODE_H__
+#define __VFS_VNODE_H__
 
 EXTERN struct vnode {
   endpoint_t v_fs_e;            /* FS process' endpoint number */
@@ -20,10 +21,11 @@ EXTERN struct vnode {
   off_t v_pipe_wr_pos;
   endpoint_t v_bfs_e;		/* endpoint number for the FS proces in case
 				   of a block special file */
-  dev_t v_dev;                  /* device number on which the corresponding 
+  dev_t v_dev;                  /* device number on which the corresponding
                                    inode resides */
   dev_t v_sdev;                 /* device number for special files */
   struct vmnt *v_vmnt;          /* vmnt object of the partition */
+  tll_t v_lock;			/* three-level-lock */
 } vnode[NR_VNODES];
 
 
@@ -31,3 +33,8 @@ EXTERN struct vnode {
 #define NO_PIPE            0	/* i_pipe is NO_PIPE if inode is not a pipe */
 #define I_PIPE             1	/* i_pipe is I_PIPE if inode is a pipe */
 
+/* vnode lock types mapping */
+#define VNODE_READ TLL_READ
+#define VNODE_OPCL TLL_READSER
+#define VNODE_WRITE TLL_WRITE
+#endif

@@ -24,8 +24,8 @@ PUBLIC int fs_newnode(message *fs_m_in, message *fs_m_out)
   if( (rip = alloc_inode(dev, bits) ) == NULL) return(err_code);
 
   switch (bits & S_IFMT) {
-  	case S_IFBLK:
-  	case S_IFCHR:
+	case S_IFBLK:
+	case S_IFCHR:
 		rip->i_rdev = dev;		/* Major/minor dev numbers */
 		break;
 	case S_IFIFO:
@@ -50,4 +50,3 @@ PUBLIC int fs_newnode(message *fs_m_in, message *fs_m_out)
 
   return(r);
 }
-

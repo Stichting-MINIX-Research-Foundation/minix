@@ -6,15 +6,20 @@ SRCS=	main.c open.c read.c write.c pipe.c dmap.c \
 	path.c device.c mount.c link.c exec.c \
 	filedes.c stadir.c protect.c time.c \
 	lock.c misc.c utility.c select.c table.c \
-	vnode.c vmnt.c request.c fscall.c elf_core_dump.c
+	vnode.c vmnt.c request.c fscall.c \
+	tll.c comm.c worker.c coredump.c
 
 .if ${MKCOVERAGE} != "no"
-SRCS+=	gcov.c
+SRCS+=  gcov.c
 CPPFLAGS+= -DUSE_COVERAGE
 .endif
 
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
-LDADD+=	-lsys -ltimers -lexec
+LDADD+=	-lsys -ltimers -lexec -lmthread
+
+.if ${COMPILER_TYPE} == "gnu"
+LDADD+=	-lc
+.endif
 
 MAN=
 

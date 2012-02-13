@@ -1,7 +1,7 @@
 #ifndef __PFS_BUF_H__
 #define __PFS_BUF_H__
 
-/* Buffer (block) cache.  
+/* Buffer (block) cache.
  */
 
 struct buf {

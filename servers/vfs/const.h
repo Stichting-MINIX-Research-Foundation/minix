@@ -1,8 +1,12 @@
+#ifndef __VFS_CONST_H__
+#define __VFS_CONST_H__
+
 /* Tables sizes */
 #define NR_FILPS         512	/* # slots in filp table */
 #define NR_LOCKS           8	/* # slots in the file locking table */
-#define NR_MNTS            16 	/* # slots in mount table */
-#define NR_VNODES         512	/* # slots in vnode table */
+#define NR_MNTS           16 	/* # slots in mount table */
+#define NR_VNODES        512	/* # slots in vnode table */
+#define NR_WTHREADS	   8	/* # slots in worker thread table */
 
 #define NR_NONEDEVS	NR_MNTS	/* # slots in nonedev bitmap */
 
@@ -17,7 +21,7 @@
 #define FP_BLOCKED_ON_POPEN	3 /* susp'd on pipe open */
 #define FP_BLOCKED_ON_SELECT	4 /* susp'd on select */
 #define FP_BLOCKED_ON_DOPEN	5 /* susp'd on device open */
-#define FP_BLOCKED_ON_OTHER	6 /* blocked on other process, check 
+#define FP_BLOCKED_ON_OTHER	6 /* blocked on other process, check
 				     fp_task to find out */
 
 /* test if the process is blocked on something */
@@ -28,7 +32,7 @@
 #define LOOK_UP            0 /* tells search_dir to lookup string */
 #define ENTER              1 /* tells search_dir to make dir entry */
 #define DELETE             2 /* tells search_dir to delete entry */
-#define IS_EMPTY           3 /* tells search_dir to ret. OK or ENOTEMPTY */  
+#define IS_EMPTY           3 /* tells search_dir to ret. OK or ENOTEMPTY */
 
 #define SYMLOOP		16
 
@@ -40,7 +44,7 @@
 /* Args to dev_io */
 #define VFS_DEV_READ	2001
 #define	VFS_DEV_WRITE	2002
-#define VFS_DEV_SCATTER	2003
-#define VFS_DEV_GATHER	2004
 #define VFS_DEV_IOCTL	2005
 #define VFS_DEV_SELECT	2006
+
+#endif

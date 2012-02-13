@@ -3,7 +3,7 @@
 
 #define NR_INODES        256 	/* # slots in "in core" inode table */
 
-/* Size of descriptor table for unix domain sockets. This should be 
+/* Size of descriptor table for unix domain sockets. This should be
  * equal to the maximum number of minor devices (currently 256).
  */
 #define NR_FDS           256
@@ -40,4 +40,3 @@
 #define DEV_CALL_VEC_SIZE 25
 
 #endif
-

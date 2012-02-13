@@ -11,7 +11,7 @@ PUBLIC int fs_ftrunc(message *fs_m_in, message *fs_m_out)
   struct inode *rip;
   off_t start, end;
   ino_t inumb;
-  
+
   inumb = (ino_t) fs_m_in->REQ_INODE_NR;
 
   if( (rip = find_inode(inumb)) == NULL) return(EINVAL);
@@ -21,7 +21,7 @@ PUBLIC int fs_ftrunc(message *fs_m_in, message *fs_m_out)
 
   return truncate_inode(rip, start);
 }
-    
+
 
 /*===========================================================================*
  *				truncate_inode				     *
@@ -35,17 +35,16 @@ off_t newsize;			/* inode must become this size */
  * extra space is a hole that reads as zeroes.
  *
  * Nothing special has to happen to file pointers if inode is opened in
- * O_APPEND mode, as this is different per fd and is checked when 
+ * O_APPEND mode, as this is different per fd and is checked when
  * writing is done.
  */
 
   /* Pipes can shrink, so adjust size to make sure all zones are removed. */
   if(newsize != 0) return(EINVAL);	/* Only truncate pipes to 0. */
   rip->i_size = newsize;
-  
+
   /* Next correct the inode size. */
   wipe_inode(rip);	/* Pipes can only be truncated to 0. */
 
   return(OK);
 }
-

@@ -10,5 +10,3 @@ PUBLIC int fs_sync(message *fs_m_in, message *fs_m_out)
 
   return(OK);		/* sync() can't fail */
 }
-
-

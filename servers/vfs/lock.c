@@ -12,9 +12,10 @@
 #include <unistd.h>
 #include "file.h"
 #include "fproc.h"
+#include "scratchpad.h"
 #include "lock.h"
-#include "param.h"
 #include "vnode.h"
+#include "param.h"
 
 /*===========================================================================*
  *				lock_op					     *
@@ -29,13 +30,11 @@ int req;			/* either F_SETLK or F_SETLKW */
   mode_t mo;
   off_t first, last;
   struct flock flock;
-  vir_bytes user_flock;
   struct file_lock *flp, *flp2, *empty;
 
   /* Fetch the flock structure from user space. */
-  user_flock = (vir_bytes) m_in.name1;
-  r = sys_datacopy(who_e, (vir_bytes) user_flock, VFS_PROC_NR,
-		   (vir_bytes) &flock, (phys_bytes) sizeof(flock));
+  r = sys_datacopy(who_e, (vir_bytes) scratch(fp).io.io_buffer, VFS_PROC_NR,
+		   (vir_bytes) &flock, sizeof(flock));
   if (r != OK) return(EINVAL);
 
   /* Make some error checks. */
@@ -43,26 +42,27 @@ int req;			/* either F_SETLK or F_SETLKW */
   mo = f->filp_mode;
   if (ltype != F_UNLCK && ltype != F_RDLCK && ltype != F_WRLCK) return(EINVAL);
   if (req == F_GETLK && ltype == F_UNLCK) return(EINVAL);
-  if ( (f->filp_vno->v_mode & I_TYPE) != I_REGULAR) return(EINVAL);
+  if ( (f->filp_vno->v_mode & I_TYPE) != I_REGULAR &&
+	(f->filp_vno->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(EINVAL);
   if (req != F_GETLK && ltype == F_RDLCK && (mo & R_BIT) == 0) return(EBADF);
   if (req != F_GETLK && ltype == F_WRLCK && (mo & W_BIT) == 0) return(EBADF);
 
   /* Compute the first and last bytes in the lock region. */
   switch (flock.l_whence) {
-	case SEEK_SET:	first = 0; break;
-	case SEEK_CUR:
-	   if (ex64hi(f->filp_pos) != 0) 
+    case SEEK_SET:	first = 0; break;
+    case SEEK_CUR:
+	if (ex64hi(f->filp_pos) != 0)
 		panic("lock_op: position in file too high");
-	   first = ex64lo(f->filp_pos);
-	   break;
-	case SEEK_END:	first = f->filp_vno->v_size; break;
-	default:	return(EINVAL);
+	first = ex64lo(f->filp_pos);
+	break;
+    case SEEK_END:	first = f->filp_vno->v_size; break;
+    default:	return(EINVAL);
   }
 
   /* Check for overflow. */
-  if (((long)flock.l_start > 0) && ((first + flock.l_start) < first))
+  if (((long) flock.l_start > 0) && ((first + flock.l_start) < first))
 	return(EINVAL);
-  if (((long)flock.l_start < 0) && ((first + flock.l_start) > first))
+  if (((long) flock.l_start < 0) && ((first + flock.l_start) > first))
 	return(EINVAL);
   first = first + flock.l_start;
   last = first + flock.l_len - 1;
@@ -81,7 +81,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 	if (first > flp->lock_last) continue;	/* new one is afterwards */
 	if (ltype == F_RDLCK && flp->lock_type == F_RDLCK) continue;
 	if (ltype != F_UNLCK && flp->lock_pid == fp->fp_pid) continue;
-  
+
 	/* There might be a conflict.  Process it. */
 	conflict = 1;
 	if (req == F_GETLK) break;
@@ -116,7 +116,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 		flp->lock_last = first - 1;
 		continue;
 	}
-	
+
 	/* Bad luck. A lock has been split in two by unlocking the middle. */
 	if (nr_locks == NR_LOCKS) return(ENOLCK);
 	for (i = 0; i < NR_LOCKS; i++)
@@ -148,7 +148,7 @@ int req;			/* either F_SETLK or F_SETLKW */
 
 	/* Copy the flock structure back to the caller. */
 	r = sys_datacopy(VFS_PROC_NR, (vir_bytes) &flock,
-		who_e, (vir_bytes) user_flock, (phys_bytes) sizeof(flock));
+		who_e, (vir_bytes) scratch(fp).io.io_buffer, sizeof(flock));
 	return(r);
   }
 
@@ -171,22 +171,21 @@ int req;			/* either F_SETLK or F_SETLKW */
  *===========================================================================*/
 PUBLIC void lock_revive()
 {
-/* Go find all the processes that are waiting for any kind of lock and 
- * revive them all.  The ones that are still blocked will block again when 
- * they run.  The others will complete.  This strategy is a space-time 
- * tradeoff.  Figuring out exactly which ones to unblock now would take 
- * extra code, and the only thing it would win would be some performance in 
- * extremely rare circumstances (namely, that somebody actually used 
+/* Go find all the processes that are waiting for any kind of lock and
+ * revive them all.  The ones that are still blocked will block again when
+ * they run.  The others will complete.  This strategy is a space-time
+ * tradeoff.  Figuring out exactly which ones to unblock now would take
+ * extra code, and the only thing it would win would be some performance in
+ * extremely rare circumstances (namely, that somebody actually used
  * locking).
  */
 
   struct fproc *fptr;
 
   for (fptr = &fproc[0]; fptr < &fproc[NR_PROCS]; fptr++){
-	if(fptr->fp_pid == PID_FREE) continue;
+	if (fptr->fp_pid == PID_FREE) continue;
 	if (fptr->fp_blocked_on == FP_BLOCKED_ON_LOCK) {
 		revive(fptr->fp_endpoint, 0);
 	}
   }
 }
-

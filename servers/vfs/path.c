@@ -1,4 +1,4 @@
-/* lookup() is the main routine that controls the path name lookup. It  
+/* lookup() is the main routine that controls the path name lookup. It
  * handles mountpoints and symbolic links. The actual lookup requests
  * are sent through the req_lookup wrapper function.
  */
@@ -16,9 +16,11 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <dirent.h>
-#include "fproc.h"
+#include "threads.h"
 #include "vmnt.h"
 #include "vnode.h"
+#include "path.h"
+#include "fproc.h"
 #include "param.h"
 
 /* Set to following define to 1 if you really want to use the POSIX definition
@@ -31,157 +33,337 @@
  */
 #define DO_POSIX_PATHNAME_RES	0
 
-FORWARD _PROTOTYPE( int lookup, (struct vnode *dirp, int flags,
+FORWARD _PROTOTYPE( int lookup, (struct vnode *dirp, struct lookup *resolve,
 				 node_details_t *node, struct fproc *rfp));
+FORWARD _PROTOTYPE( int check_perms, (endpoint_t ep, cp_grant_id_t io_gr,
+				      size_t pathlen)			);
 
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-PUBLIC struct vnode *advance(dirp, flags, rfp)
+PUBLIC struct vnode *advance(dirp, resolve, rfp)
 struct vnode *dirp;
-int flags;
+struct lookup *resolve;
 struct fproc *rfp;
 {
-/* Resolve a pathname (in user_fullpath) starting at dirp to a vnode. */
+/* Resolve a path name starting at dirp to a vnode. */
   int r;
+  int do_downgrade = 1;
   struct vnode *new_vp, *vp;
   struct vmnt *vmp;
   struct node_details res = {0,0,0,0,0,0,0};
+  tll_access_t initial_locktype;
 
   assert(dirp);
+  assert(resolve->l_vnode_lock != TLL_NONE);
+  assert(resolve->l_vmnt_lock != TLL_NONE);
 
-  /* Get a free vnode */
-  if((new_vp = get_free_vnode()) == NULL) return(NULL);
-  
+  if (resolve->l_vnode_lock == VNODE_READ)
+	initial_locktype = VNODE_OPCL;
+  else
+	initial_locktype = resolve->l_vnode_lock;
+
+  /* Get a free vnode and lock it */
+  if ((new_vp = get_free_vnode()) == NULL) return(NULL);
+  lock_vnode(new_vp, initial_locktype);
+
   /* Lookup vnode belonging to the file. */
-  if ((r = lookup(dirp, flags, &res, rfp)) != OK) {
+  if ((r = lookup(dirp, resolve, &res, rfp)) != OK) {
 	err_code = r;
+	unlock_vnode(new_vp);
 	return(NULL);
   }
-  
-  /* Check whether vnode is already in use or not */
+
+  /* Check whether we already have a vnode for that file */
   if ((vp = find_vnode(res.fs_e, res.inode_nr)) != NULL) {
-	  dup_vnode(vp);
-	  vp->v_fs_count++;	/* We got a reference from the FS */
-	  return(vp);
+	unlock_vnode(new_vp);	/* Don't need this anymore */
+	do_downgrade = (lock_vnode(vp, initial_locktype) != EBUSY);
+
+	/* Unfortunately, by the time we get the lock, another thread might've
+	 * rid of the vnode (e.g., find_vnode found the vnode while a
+	 * req_putnode was being processed). */
+	if (vp->v_ref_count == 0) { /* vnode vanished! */
+		/* As the lookup before increased the usage counters in the FS,
+		 * we can simply set the usage counters to 1 and proceed as
+		 * normal, because the putnode resulted in a use count of 1 in
+		 * the FS. Other data is still valid, because the vnode was
+		 * marked as pending lock, so get_free_vnode hasn't
+		 * reinitialized the vnode yet. */
+		vp->v_fs_count = 1;
+		if (vp->v_mapfs_e != NONE) vp->v_mapfs_count = 1;
+	} else {
+		vp->v_fs_count++;	/* We got a reference from the FS */
+	}
+
+  } else {
+	/* Vnode not found, fill in the free vnode's fields */
+
+	new_vp->v_fs_e = res.fs_e;
+	new_vp->v_inode_nr = res.inode_nr;
+	new_vp->v_mode = res.fmode;
+	new_vp->v_size = res.fsize;
+	new_vp->v_uid = res.uid;
+	new_vp->v_gid = res.gid;
+	new_vp->v_sdev = res.dev;
+
+	if( (vmp = find_vmnt(new_vp->v_fs_e)) == NULL)
+		  panic("advance: vmnt not found");
+
+	new_vp->v_vmnt = vmp;
+	new_vp->v_dev = vmp->m_dev;
+	new_vp->v_fs_count = 1;
+
+	vp = new_vp;
   }
 
-  /* Fill in the free vnode's fields */
-  new_vp->v_fs_e = res.fs_e;
-  new_vp->v_inode_nr = res.inode_nr;
-  new_vp->v_mode = res.fmode;
-  new_vp->v_size = res.fsize;
-  new_vp->v_uid = res.uid;
-  new_vp->v_gid = res.gid;
-  new_vp->v_sdev = res.dev;
-  
-  if( (vmp = find_vmnt(new_vp->v_fs_e)) == NULL)
-	  panic("VFS advance: vmnt not found");
+  dup_vnode(vp);
+  if (do_downgrade) {
+	/* Only downgrade a lock if we managed to lock it in the first place */
+	*(resolve->l_vnode) = vp;
 
-  new_vp->v_vmnt = vmp; 
-  new_vp->v_dev = vmp->m_dev;
-  new_vp->v_fs_count = 1;
-  new_vp->v_ref_count = 1;
-  
-  return(new_vp);
+	if (initial_locktype != resolve->l_vnode_lock)
+		tll_downgrade(&vp->v_lock);
+
+#if LOCK_DEBUG
+	if (resolve->l_vnode_lock == VNODE_READ)
+		fp->fp_vp_rdlocks++;
+#endif
+  }
+
+  return(vp);
 }
-
 
 /*===========================================================================*
  *				eat_path				     *
  *===========================================================================*/
-PUBLIC struct vnode *eat_path(flags, rfp)
-int flags;
+PUBLIC struct vnode *eat_path(resolve, rfp)
+struct lookup *resolve;
 struct fproc *rfp;
 {
-/* Resolve 'user_fullpath' to a vnode. advance does the actual work. */
-  struct vnode *vp;
+/* Resolve path to a vnode. advance does the actual work. */
+  struct vnode *start_dir;
 
-  vp = (user_fullpath[0] == '/' ? rfp->fp_rd : rfp->fp_wd);
-  return advance(vp, flags, rfp);
+  start_dir = (resolve->l_path[0] == '/' ? rfp->fp_rd : rfp->fp_wd);
+  return advance(start_dir, resolve, rfp);
 }
-
 
 /*===========================================================================*
  *				last_dir				     *
  *===========================================================================*/
-PUBLIC struct vnode *last_dir(rfp)
+PUBLIC struct vnode *last_dir(resolve, rfp)
+struct lookup *resolve;
 struct fproc *rfp;
 {
-/* Parse a path, 'user_fullpath', as far as the last directory, fetch the vnode
+/* Parse a path, as far as the last directory, fetch the vnode
  * for the last directory into the vnode table, and return a pointer to the
  * vnode. In addition, return the final component of the path in 'string'. If
  * the last directory can't be opened, return NULL and the reason for
  * failure in 'err_code'. We can't parse component by component as that would
  * be too expensive. Alternatively, we cut off the last component of the path,
  * and parse the path up to the penultimate component.
- */  
+ */
 
   size_t len;
   char *cp;
   char dir_entry[NAME_MAX+1];
-  struct vnode *vp, *res;
-  
-  /* Is the path absolute or relative? Initialize 'vp' accordingly. */
-  vp = (user_fullpath[0] == '/' ? rfp->fp_rd : rfp->fp_wd);
+  struct vnode *start_dir, *res_vp, *sym_vp, *loop_start;
+  struct vmnt *sym_vmp = NULL;
+  int r, symloop = 0, ret_on_symlink = 0;
+  struct lookup symlink;
 
-  len = strlen(user_fullpath);
+  *resolve->l_vnode = NULL;
+  *resolve->l_vmp = NULL;
+  loop_start = NULL;
+  sym_vp = NULL;
 
-  /* If path is empty, return ENOENT. */
-  if (len == 0)	{
-	err_code = ENOENT;
-	return(NULL); 
-  }
+  ret_on_symlink = !!(resolve->l_flags & PATH_RET_SYMLINK);
+
+  do {
+	/* Is the path absolute or relative? Initialize 'start_dir'
+	 * accordingly. Use loop_start in case we're looping.
+	 */
+	if (loop_start != NULL)
+		start_dir = loop_start;
+	else
+		start_dir = (resolve->l_path[0] == '/' ? rfp->fp_rd:rfp->fp_wd);
+
+	len = strlen(resolve->l_path);
+
+	/* If path is empty, return ENOENT. */
+	if (len == 0)	{
+		err_code = ENOENT;
+		res_vp = NULL;
+		break;
+	}
 
 #if !DO_POSIX_PATHNAME_RES
-  /* Remove trailing slashes */
-  while (len > 1 && user_fullpath[len-1] == '/') {
-	  len--;
-	  user_fullpath[len]= '\0';
-  }
+	/* Remove trailing slashes */
+	while (len > 1 && resolve->l_path[len-1] == '/') {
+		len--;
+		resolve->l_path[len]= '\0';
+	}
 #endif
 
-  cp = strrchr(user_fullpath, '/');
-  if (cp == NULL) {
-	  /* Just one entry in the current working directory */
-	  dup_vnode(vp);
-	  return(vp);
-  } else if (cp[1] == '\0') {
-	  /* Path ends in a slash. The directory entry is '.' */
-	  strcpy(dir_entry, ".");
-  } else {
-	  /* A path name for the directory and a directory entry */
-	  strncpy(dir_entry, cp+1, NAME_MAX);
-	  cp[1]= '\0';
-	  dir_entry[NAME_MAX] = '\0';
+	cp = strrchr(resolve->l_path, '/');
+	if (cp == NULL) {
+		/* Just an entry in the current working directory */
+		struct vmnt *vmp;
+
+		vmp = find_vmnt(start_dir->v_fs_e);
+		if (vmp == NULL) {
+			r = EIO;
+			res_vp = NULL;
+			break;
+		}
+		r = lock_vmnt(vmp, resolve->l_vmnt_lock);
+		if (r == EDEADLK) {
+			res_vp = NULL;
+			break;
+		} else if (r == OK)
+			*resolve->l_vmp = vmp;
+
+		lock_vnode(start_dir, resolve->l_vnode_lock);
+		*resolve->l_vnode = start_dir;
+		dup_vnode(start_dir);
+		if (loop_start != NULL) {
+			unlock_vnode(loop_start);
+			put_vnode(loop_start);
+		}
+		return(start_dir);
+	} else if (cp[1] == '\0') {
+		/* Path ends in a slash. The directory entry is '.' */
+		strcpy(dir_entry, ".");
+	} else {
+		/* A path name for the directory and a directory entry */
+		strncpy(dir_entry, cp+1, NAME_MAX);
+		cp[1] = '\0';
+		dir_entry[NAME_MAX] = '\0';
+	}
+
+	/* Remove trailing slashes */
+	while (cp > resolve->l_path && cp[0] == '/') {
+		cp[0]= '\0';
+		cp--;
+	}
+
+	/* Resolve up to and including the last directory of the path. Turn off
+	 * PATH_RET_SYMLINK, because we do want to follow the symlink in this
+	 * case. That is, the flag is meant for the actual filename of the path,
+	 * not the last directory.
+	 */
+	resolve->l_flags &= ~PATH_RET_SYMLINK;
+	if ((res_vp = advance(start_dir, resolve, rfp)) == NULL) {
+		break;
+	}
+
+	/* If the directory entry is not a symlink we're done now. If it is a
+	 * symlink, then we're not at the last directory, yet. */
+
+	/* Copy the directory entry back to user_fullpath */
+	strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
+
+	/* Look up the directory entry, but do not follow the symlink when it
+	 * is one.
+	 */
+	lookup_init(&symlink, resolve->l_path,
+		    resolve->l_flags|PATH_RET_SYMLINK, &sym_vmp, &sym_vp);
+	symlink.l_vnode_lock = VNODE_READ;
+	symlink.l_vmnt_lock = VMNT_READ;
+	sym_vp = advance(res_vp, &symlink, rfp);
+
+	/* Advance caused us to either switch to a different vmnt or we're
+	 * still at the same vmnt. The former might've yielded a new vmnt lock,
+	 * the latter should not have. Verify. */
+	if (sym_vmp != NULL) {
+		/* We got a vmnt lock, so the endpoints of the vnodes must
+		 * differ.
+		 */
+		assert(sym_vp->v_fs_e != res_vp->v_fs_e);
+	}
+
+	if (sym_vp != NULL && S_ISLNK(sym_vp->v_mode)) {
+		/* Last component is a symlink, but if we've been asked to not
+		 * resolve it, return now.
+		 */
+		if (ret_on_symlink) {
+			break;
+		}
+
+		r = req_rdlink(sym_vp->v_fs_e, sym_vp->v_inode_nr, NONE,
+				resolve->l_path, PATH_MAX - 1, 1);
+
+		if (r < 0) {
+			/* Failed to read link */
+			err_code = r;
+			unlock_vnode(res_vp);
+			unlock_vmnt(*resolve->l_vmp);
+			put_vnode(res_vp);
+			*resolve->l_vmp = NULL;
+			*resolve->l_vnode = NULL;
+			res_vp = NULL;
+			break;
+		}
+		resolve->l_path[r] = '\0';
+
+		if (strrchr(resolve->l_path, '/') != NULL) {
+			unlock_vnode(sym_vp);
+			unlock_vmnt(*resolve->l_vmp);
+			if (sym_vmp != NULL)
+				unlock_vmnt(sym_vmp);
+			*resolve->l_vmp = NULL;
+			put_vnode(sym_vp);
+			sym_vp = NULL;
+
+			symloop++;
+
+			/* Relative symlinks are relative to res_vp, not cwd */
+			if (resolve->l_path[0] != '/') {
+				loop_start = res_vp;
+			} else {
+				/* Absolute symlink, forget about res_vp */
+				unlock_vnode(res_vp);
+				put_vnode(res_vp);
+			}
+
+			continue;
+		}
+	}
+	break;
+  } while (symloop < SYMLOOP_MAX);
+
+  if (symloop >= SYMLOOP_MAX) {
+	err_code = ELOOP;
+	res_vp = NULL;
   }
 
-  /* Remove trailing slashes */
-  while(cp > user_fullpath && cp[0] == '/') {
-	  cp[0]= '\0';
-	  cp--;
+  if (sym_vp != NULL) {
+	unlock_vnode(sym_vp);
+	if (sym_vmp != NULL) {
+		unlock_vmnt(sym_vmp);
+	}
+	put_vnode(sym_vp);
   }
 
-  res = advance(vp, PATH_NOFLAGS, rfp);
-  if (res == NULL) return(NULL);
+  if (loop_start != NULL) {
+	unlock_vnode(loop_start);
+	put_vnode(loop_start);
+  }
 
   /* Copy the directory entry back to user_fullpath */
-  strncpy(user_fullpath, dir_entry, NAME_MAX);
-  
-  return(res);
+  strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
+  return(res_vp);
 }
-
 
 /*===========================================================================*
  *				lookup					     *
  *===========================================================================*/
-PRIVATE int lookup(start_node, flags, node, rfp)
+PRIVATE int lookup(start_node, resolve, result_node, rfp)
 struct vnode *start_node;
-int flags;
-node_details_t *node;
+struct lookup *resolve;
+node_details_t *result_node;
 struct fproc *rfp;
 {
-/* Resolve a pathname (in user_fullpath) relative to start_node. */
+/* Resolve a path name relative to start_node. */
 
   int r, symloop;
   endpoint_t fs_e;
@@ -190,62 +372,86 @@ struct fproc *rfp;
   uid_t uid;
   gid_t gid;
   struct vnode *dir_vp;
-  struct vmnt *vmp;
+  struct vmnt *vmp, *vmpres;
   struct lookup_res res;
 
+  assert(resolve->l_vmp);
+  assert(resolve->l_vnode);
+
+  *(resolve->l_vmp) = vmpres = NULL; /* No vmnt found nor locked yet */
+
   /* Empty (start) path? */
-  if (user_fullpath[0] == '\0') {
-	node->inode_nr = 0;
+  if (resolve->l_path[0] == '\0') {
+	result_node->inode_nr = 0;
 	return(ENOENT);
   }
 
-  if(!rfp->fp_rd || !rfp->fp_wd) {
-	printf("VFS: lookup_rel %d: no rd/wd\n", rfp->fp_endpoint);
+  if (!rfp->fp_rd || !rfp->fp_wd) {
+	printf("VFS: lookup %d: no rd/wd\n", rfp->fp_endpoint);
 	return(ENOENT);
   }
 
   fs_e = start_node->v_fs_e;
   dir_ino = start_node->v_inode_nr;
- 
+  vmpres = find_vmnt(fs_e);
+
+  if (vmpres == NULL) return(EIO);	/* mountpoint vanished? */
+
   /* Is the process' root directory on the same partition?,
    * if so, set the chroot directory too. */
   if (rfp->fp_rd->v_dev == rfp->fp_wd->v_dev)
-	root_ino = rfp->fp_rd->v_inode_nr; 
+	root_ino = rfp->fp_rd->v_inode_nr;
   else
 	root_ino = 0;
 
   /* Set user and group ids according to the system call */
-  uid = (call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid); 
-  gid = (call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid); 
+  uid = (call_nr == ACCESS ? rfp->fp_realuid : rfp->fp_effuid);
+  gid = (call_nr == ACCESS ? rfp->fp_realgid : rfp->fp_effgid);
 
   symloop = 0;	/* Number of symlinks seen so far */
 
+  /* Lock vmnt */
+  if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
+	if (r == EBUSY) /* vmnt already locked */
+		vmpres = NULL;
+	else
+		return(r);
+  }
+  *(resolve->l_vmp) = vmpres;
+
   /* Issue the request */
-  r = req_lookup(fs_e, dir_ino, root_ino, uid, gid, flags, &res, rfp);
+  r = req_lookup(fs_e, dir_ino, root_ino, uid, gid, resolve, &res, rfp);
 
-  if (r != OK && r != EENTERMOUNT && r != ELEAVEMOUNT && r != ESYMLINK)
+  if (r != OK && r != EENTERMOUNT && r != ELEAVEMOUNT && r != ESYMLINK) {
+	if (vmpres) unlock_vmnt(vmpres);
+	*(resolve->l_vmp) = NULL;
 	return(r); /* i.e., an error occured */
+  }
 
-  /* While the response is related to mount control set the 
+  /* While the response is related to mount control set the
    * new requests respectively */
-  while(r == EENTERMOUNT || r == ELEAVEMOUNT || r == ESYMLINK) {
+  while (r == EENTERMOUNT || r == ELEAVEMOUNT || r == ESYMLINK) {
 	/* Update user_fullpath to reflect what's left to be parsed. */
 	path_off = res.char_processed;
-	path_left_len = strlen(&user_fullpath[path_off]);
-	memmove(user_fullpath, &user_fullpath[path_off], path_left_len);
-	user_fullpath[path_left_len] = '\0'; /* terminate string */ 
+	path_left_len = strlen(&resolve->l_path[path_off]);
+	memmove(resolve->l_path, &resolve->l_path[path_off], path_left_len);
+	resolve->l_path[path_left_len] = '\0'; /* terminate string */
 
 	/* Update the current value of the symloop counter */
 	symloop += res.symloop;
-	if (symloop > SYMLOOP_MAX)
+	if (symloop > SYMLOOP_MAX) {
+		if (vmpres) unlock_vmnt(vmpres);
+		*(resolve->l_vmp) = NULL;
 		return(ELOOP);
+	}
 
 	/* Symlink encountered with absolute path */
 	if (r == ESYMLINK) {
 		dir_vp = rfp->fp_rd;
+		vmp = NULL;
 	} else if (r == EENTERMOUNT) {
 		/* Entering a new partition */
-		dir_vp = 0;
+		dir_vp = NULL;
 		/* Start node is now the mounted partition's root node */
 		for (vmp = &vmnt[0]; vmp != &vmnt[NR_MNTS]; ++vmp) {
 			if (vmp->m_dev != NO_DEV && vmp->m_mounted_on) {
@@ -256,22 +462,29 @@ struct fproc *rfp;
 			   }
 			}
 		}
-		assert(dir_vp);
+		if (dir_vp == NULL) {
+			printf("VFS: path lookup error; root node not found\n");
+			if (vmpres) unlock_vmnt(vmpres);
+			*(resolve->l_vmp) = NULL;
+			return(EIO);
+		}
 	} else {
 		/* Climbing up mount */
 		/* Find the vmnt that represents the partition on
 		 * which we "climb up". */
 		if ((vmp = find_vmnt(res.fs_e)) == NULL) {
 			panic("VFS lookup: can't find parent vmnt");
-		}	  
+		}
 
 		/* Make sure that the child FS does not feed a bogus path
 		 * to the parent FS. That is, when we climb up the tree, we
 		 * must've encountered ".." in the path, and that is exactly
 		 * what we're going to feed to the parent */
-		if(strncmp(user_fullpath, "..", 2) != 0 ||
-			(user_fullpath[2] != '\0' && user_fullpath[2] != '/')) {
-			printf("VFS: bogus path: %s\n", user_fullpath);
+		if(strncmp(resolve->l_path, "..", 2) != 0 ||
+		   (resolve->l_path[2] != '\0' && resolve->l_path[2] != '/')) {
+			printf("VFS: bogus path: %s\n", resolve->l_path);
+			if (vmpres) unlock_vmnt(vmpres);
+			*(resolve->l_vmp) = NULL;
 			return(ENOENT);
 		}
 
@@ -286,27 +499,65 @@ struct fproc *rfp;
 
 	/* Is the process' root directory on the same partition?,
 	 * if so, set the chroot directory too. */
-	if(dir_vp->v_dev == rfp->fp_rd->v_dev)
-		root_ino = rfp->fp_rd->v_inode_nr; 
+	if (dir_vp->v_dev == rfp->fp_rd->v_dev)
+		root_ino = rfp->fp_rd->v_inode_nr;
 	else
 		root_ino = 0;
 
-	r = req_lookup(fs_e, dir_ino, root_ino, uid, gid, flags, &res, rfp);
+	/* Unlock a previously locked vmnt if locked and lock new vmnt */
+	if (vmpres) unlock_vmnt(vmpres);
+	vmpres = find_vmnt(fs_e);
+	if (vmpres == NULL) return(EIO);	/* mount point vanished? */
+	if ((r = lock_vmnt(vmpres, resolve->l_vmnt_lock)) != OK) {
+		if (r == EBUSY)
+			vmpres = NULL;	/* Already locked */
+		else
+			return(r);
+	}
+	*(resolve->l_vmp) = vmpres;
 
-	if(r != OK && r != EENTERMOUNT && r != ELEAVEMOUNT && r != ESYMLINK)
+	r = req_lookup(fs_e, dir_ino, root_ino, uid, gid, resolve, &res, rfp);
+
+	if (r != OK && r != EENTERMOUNT && r != ELEAVEMOUNT && r != ESYMLINK) {
+		if (vmpres) unlock_vmnt(vmpres);
+		*(resolve->l_vmp) = NULL;
 		return(r);
+	}
   }
 
   /* Fill in response fields */
-  node->inode_nr = res.inode_nr;
-  node->fmode = res.fmode;
-  node->fsize = res.fsize;
-  node->dev = res.dev;
-  node->fs_e = res.fs_e;
-  node->uid = res.uid;
-  node->gid = res.gid;
-  
+  result_node->inode_nr = res.inode_nr;
+  result_node->fmode = res.fmode;
+  result_node->fsize = res.fsize;
+  result_node->dev = res.dev;
+  result_node->fs_e = res.fs_e;
+  result_node->uid = res.uid;
+  result_node->gid = res.gid;
+
   return(r);
+}
+
+/*===========================================================================*
+ *				lookup_init				     *
+ *===========================================================================*/
+PUBLIC void lookup_init(resolve, path, flags, vmp, vp)
+struct lookup *resolve;
+char *path;
+int flags;
+struct vmnt **vmp;
+struct vnode **vp;
+{
+  assert(vmp != NULL);
+  assert(vp != NULL);
+
+  resolve->l_path = path;
+  resolve->l_flags = flags;
+  resolve->l_vmp = vmp;
+  resolve->l_vnode = vp;
+  resolve->l_vmnt_lock = TLL_NONE;
+  resolve->l_vnode_lock = TLL_NONE;
+  *vmp = NULL;	/* Initialize lookup result to NULL */
+  *vp = NULL;
 }
 
 /*===========================================================================*
@@ -329,8 +580,8 @@ char ename[NAME_MAX + 1];
   }
 
   do {
-	r = req_getdents(dirp->v_fs_e, dirp->v_inode_nr, pos, 
-						buf, sizeof(buf), &new_pos, 1);
+	r = req_getdents(dirp->v_fs_e, dirp->v_inode_nr, pos, buf, sizeof(buf),
+			 &new_pos, 1);
 
 	if (r == 0) {
 		return(ENOENT); /* end of entries -- matching inode !found */
@@ -361,108 +612,143 @@ char ename[NAME_MAX + 1];
 /*===========================================================================*
  *				canonical_path				     *
  *===========================================================================*/
-PUBLIC int canonical_path(orig_path, canon_path, rfp)
-char *orig_path;
-char *canon_path; /* should have length PATH_MAX */
+PUBLIC int canonical_path(orig_path, rfp)
+char orig_path[PATH_MAX];
 struct fproc *rfp;
 {
+/* Find canonical path of a given path */
   int len = 0;
   int r, symloop = 0;
   struct vnode *dir_vp, *parent_dir;
-  char component[NAME_MAX+1];
-  char link_path[PATH_MAX];
+  struct vmnt *dir_vmp, *parent_vmp;
+  char component[NAME_MAX+1];	/* NAME_MAX does /not/ include '\0' */
+  char temp_path[PATH_MAX];
+  struct lookup resolve;
 
   dir_vp = NULL;
-  orig_path[PATH_MAX - 1] = '\0';
-  strncpy(user_fullpath, orig_path, PATH_MAX);
+  strncpy(temp_path, orig_path, PATH_MAX);
+  temp_path[PATH_MAX - 1] = '\0';
 
+  /* First resolve path to the last directory holding the file */
   do {
-	if (dir_vp) put_vnode(dir_vp);
-
-	/* Resolve to the last directory holding the socket file */
-	if ((dir_vp = last_dir(rfp)) == NULL) {
-		return(err_code);
+	if (dir_vp) {
+		unlock_vnode(dir_vp);
+		unlock_vmnt(dir_vmp);
+		put_vnode(dir_vp);
 	}
 
-	/* dir_vp points to dir and user_fullpath now contains only the
+	lookup_init(&resolve, temp_path, PATH_NOFLAGS, &dir_vmp, &dir_vp);
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_READ;
+	if ((dir_vp = last_dir(&resolve, rfp)) == NULL) return(err_code);
+
+	/* dir_vp points to dir and resolve path now contains only the
 	 * filename.
 	 */
-	strcpy(canon_path, user_fullpath); /* Store file name */
+	strncpy(orig_path, temp_path, NAME_MAX);	/* Store file name */
 
 	/* check if the file is a symlink, if so resolve it */
-	r = rdlink_direct(canon_path, link_path, rfp);
-	if (r <= 0) {
-		strcpy(user_fullpath, canon_path);
+	r = rdlink_direct(orig_path, temp_path, rfp);
+
+	if (r <= 0)
 		break;
-	}
 
 	/* encountered a symlink -- loop again */
-	strcpy(user_fullpath, link_path);
-
+	strncpy(orig_path, temp_path, PATH_MAX - 1);
 	symloop++;
   } while (symloop < SYMLOOP_MAX);
 
   if (symloop >= SYMLOOP_MAX) {
-	if (dir_vp) put_vnode(dir_vp);
-	return ELOOP;
+	if (dir_vp) {
+		unlock_vnode(dir_vp);
+		unlock_vmnt(dir_vmp);
+		put_vnode(dir_vp);
+	}
+	return(ELOOP);
   }
 
-  while(dir_vp != rfp->fp_rd) {
+  /* We've got the filename and the actual directory holding the file. From
+   * here we start building up the canonical path by climbing up the tree */
+  while (dir_vp != rfp->fp_rd) {
 
-	strcpy(user_fullpath, "..");
+	strcpy(temp_path, "..");
 
 	/* check if we're at the root node of the file system */
 	if (dir_vp->v_vmnt->m_root_node == dir_vp) {
+		unlock_vnode(dir_vp);
+		unlock_vmnt(dir_vmp);
 		put_vnode(dir_vp);
 		dir_vp = dir_vp->v_vmnt->m_mounted_on;
+		dir_vmp = dir_vp->v_vmnt;
+		if (lock_vmnt(dir_vmp, VMNT_READ) != OK)
+			panic("failed to lock vmnt");
+		if (lock_vnode(dir_vp, VNODE_READ) != OK)
+			panic("failed to lock vnode");
 		dup_vnode(dir_vp);
 	}
 
-	if ((parent_dir = advance(dir_vp, PATH_NOFLAGS, rfp)) == NULL) {
+	lookup_init(&resolve, temp_path, PATH_NOFLAGS, &parent_vmp,
+		    &parent_dir);
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_READ;
+
+	if ((parent_dir = advance(dir_vp, &resolve, rfp)) == NULL) {
+		unlock_vnode(dir_vp);
+		unlock_vmnt(dir_vmp);
 		put_vnode(dir_vp);
 		return(err_code);
 	}
 
 	/* now we have to retrieve the name of the parent directory */
 	if (get_name(parent_dir, dir_vp, component) != OK) {
-		put_vnode(dir_vp);
+		unlock_vnode(parent_dir);
+		unlock_vmnt(parent_vmp);
+		unlock_vnode(dir_vp);
+		unlock_vmnt(dir_vmp);
 		put_vnode(parent_dir);
+		put_vnode(dir_vp);
 		return(ENOENT);
 	}
 
 	len += strlen(component) + 1;
 	if (len >= PATH_MAX) {
-		/* adding the component to canon_path would exceed PATH_MAX */
-		put_vnode(dir_vp);
+		/* adding the component to orig_path would exceed PATH_MAX */
+		unlock_vnode(parent_dir);
+		unlock_vmnt(parent_vmp);
+		unlock_vnode(dir_vp);
+		unlock_vmnt(dir_vmp);
 		put_vnode(parent_dir);
+		put_vnode(dir_vp);
 		return(ENOMEM);
 	}
 
-	/* store result of component in canon_path */
-
-	/* first make space by moving the contents of canon_path to
-	 * the right. Move strlen + 1 bytes to include the terminating '\0'.
+	/* Store result of component in orig_path. First make space by moving
+	 * the contents of orig_path to the right. Move strlen + 1 bytes to
+	 * include the terminating '\0'. Move to strlen + 1 bytes to reserve
+	 * space for the slash.
 	 */
-	memmove(canon_path+strlen(component)+1, canon_path, 
-						strlen(canon_path) + 1);
-
+	memmove(orig_path+strlen(component)+1, orig_path, strlen(orig_path)+1);
 	/* Copy component into canon_path */
-	memmove(canon_path, component, strlen(component));
-
+	memmove(orig_path, component, strlen(component));
 	/* Put slash into place */
-	canon_path[strlen(component)] = '/';
+	orig_path[strlen(component)] = '/';
 
 	/* Store parent_dir result, and continue the loop once more */
+	unlock_vnode(dir_vp);
+	unlock_vmnt(dir_vmp);
 	put_vnode(dir_vp);
 	dir_vp = parent_dir;
   }
 
+  unlock_vnode(dir_vp);
+  unlock_vmnt(parent_vmp);
+
   put_vnode(dir_vp);
 
   /* add the leading slash */
-  if (strlen(canon_path) >= PATH_MAX) return(ENAMETOOLONG);
-  memmove(canon_path+1, canon_path, strlen(canon_path));
-  canon_path[0] = '/';
+  if (strlen(orig_path) >= PATH_MAX) return(ENAMETOOLONG);
+  memmove(orig_path+1, orig_path, strlen(orig_path));
+  orig_path[0] = '/';
 
   return(OK);
 }
@@ -470,61 +756,49 @@ struct fproc *rfp;
 /*===========================================================================*
  *				check_perms				     *
  *===========================================================================*/
-PUBLIC int check_perms(ep, io_gr, pathlen)
+PRIVATE int check_perms(ep, io_gr, pathlen)
 endpoint_t ep;
 cp_grant_id_t io_gr;
-int pathlen;
+size_t pathlen;
 {
-  int r, i;
+  int r, slot;
   struct vnode *vp;
+  struct vmnt *vmp;
   struct fproc *rfp;
-  char orig_path[PATH_MAX];
   char canon_path[PATH_MAX];
+  struct lookup resolve;
 
-  i = _ENDPOINT_P(ep);
-  if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX || i < 0 || i >= NR_PROCS)
-	return EINVAL;
+  if (isokendpt(ep, &slot) != OK) return(EINVAL);
+  if (pathlen < UNIX_PATH_MAX || pathlen >= PATH_MAX) return(EINVAL);
 
-  rfp = &(fproc[i]);
-
-  memset(canon_path, '\0', PATH_MAX);
-
+  rfp = &(fproc[slot]);
   r = sys_safecopyfrom(PFS_PROC_NR, io_gr, (vir_bytes) 0,
-				(vir_bytes) &user_fullpath, pathlen, D);
-  if (r != OK) {
-	return r;
-  }
-  user_fullpath[pathlen] = '\0';
+				(vir_bytes) canon_path, pathlen, D);
+  if (r != OK) return(r);
+  canon_path[pathlen] = '\0';
 
-  /* save path from pfs before permissions checking modifies it */
-  memcpy(orig_path, user_fullpath, PATH_MAX);
+  /* Turn path into canonical path to the socket file */
+  if ((r = canonical_path(canon_path, rfp)) != OK)
+	return(r);
 
-  /* get the canonical path to the socket file */
-  r = canonical_path(orig_path, canon_path, rfp);
-  if (r != OK) {
-	return r;
-  }
-
-  if (strlen(canon_path) >= pathlen) {
-	return ENAMETOOLONG;
-  }
+  if (strlen(canon_path) >= pathlen) return(ENAMETOOLONG);
 
   /* copy canon_path back to PFS */
-  r = sys_safecopyto(PFS_PROC_NR, (cp_grant_id_t) io_gr, (vir_bytes) 0, 
-				(vir_bytes) canon_path, strlen(canon_path)+1,
-				D);
-  if (r != OK) {
-	return r;
-  }
+  r = sys_safecopyto(PFS_PROC_NR, (cp_grant_id_t) io_gr, (vir_bytes) 0,
+				(vir_bytes) canon_path, pathlen, D);
+  if (r != OK) return(r);
 
-  /* reload user_fullpath for permissions checking */
-  memcpy(user_fullpath, orig_path, PATH_MAX);
-  if ((vp = eat_path(PATH_NOFLAGS, rfp)) == NULL) {
-	return(err_code);
-  }
+  /* Now do permissions checking */
+  lookup_init(&resolve, canon_path, PATH_NOFLAGS, &vmp, &vp);
+  resolve.l_vmnt_lock = VMNT_READ;
+  resolve.l_vnode_lock = VNODE_READ;
+  if ((vp = eat_path(&resolve, rfp)) == NULL) return(err_code);
 
   /* check permissions */
   r = forbidden(rfp, vp, (R_BIT | W_BIT));
+
+  unlock_vnode(vp);
+  unlock_vmnt(vmp);
 
   put_vnode(vp);
   return(r);
@@ -536,5 +810,5 @@ int pathlen;
 PUBLIC int do_check_perms(void)
 {
   return check_perms(m_in.USER_ENDPT, (cp_grant_id_t) m_in.IO_GRANT,
-	m_in.COUNT);
+		     (size_t) m_in.COUNT);
 }

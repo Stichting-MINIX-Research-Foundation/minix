@@ -21,12 +21,8 @@
 #include "fproc.h"
 #include "vmnt.h"
 #include "vnode.h"
+#include "path.h"
 #include "param.h"
-
-FORWARD _PROTOTYPE(int fs_sendrec_f, (char *file, int line, endpoint_t fs_e,
-				      message *reqm)			);
-
-#define fs_sendrec(e, m) fs_sendrec_f(__FILE__, __LINE__, (e), (m))
 
 
 /*===========================================================================*
@@ -94,7 +90,7 @@ PUBLIC int req_chmod(
 
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
-  
+
   /* Copy back actual mode. */
   *new_modep = m.RES_MODE;
 
@@ -151,7 +147,7 @@ PUBLIC int req_create(
   message m;
 
   if (path[0] == '/')
-  	panic("req_create: filename starts with '/'");
+	panic("req_create: filename starts with '/'");
 
   len = strlen(path) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) path, len, CPF_READ);
@@ -180,7 +176,7 @@ PUBLIC int req_create(
   res->uid	= m.RES_UID;
   res->gid	= m.RES_GID;
   res->dev	= m.RES_DEV;
-  
+
   return(OK);
 }
 
@@ -195,7 +191,7 @@ PUBLIC int req_flush(endpoint_t fs_e, dev_t dev)
   /* Fill in request message */
   m.m_type = REQ_FLUSH;
   m.REQ_DEV = dev;
-    
+
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
 }
@@ -204,15 +200,15 @@ PUBLIC int req_flush(endpoint_t fs_e, dev_t dev)
 /*===========================================================================*
  *				req_fstatfs	    			     *
  *===========================================================================*/
-PUBLIC int req_fstatfs(int fs_e, int who_e, char *buf)
+PUBLIC int req_fstatfs(int fs_e, int proc_e, char *buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, sizeof(struct statfs),
+  grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf, sizeof(struct statfs),
 			CPF_WRITE);
-  if(grant_id == -1) 
+  if(grant_id == -1)
 	  panic("req_fstatfs: cpf_grant_magic failed");
 
   /* Fill in request message */
@@ -230,15 +226,15 @@ PUBLIC int req_fstatfs(int fs_e, int who_e, char *buf)
 /*===========================================================================*
  *				req_statvfs	    			     *
  *===========================================================================*/
-PUBLIC int req_statvfs(int fs_e, int who_e, char *buf)
+PUBLIC int req_statvfs(int fs_e, int proc_e, char *buf)
 {
   int r;
   cp_grant_id_t grant_id;
   message m;
 
-  grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, sizeof(struct statvfs),
+  grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf, sizeof(struct statvfs),
 			CPF_WRITE);
-  if(grant_id == -1) 
+  if(grant_id == -1)
 	  panic("req_statvfs: cpf_grant_magic failed");
 
   /* Fill in request message */
@@ -267,7 +263,7 @@ PUBLIC int req_ftrunc(endpoint_t fs_e, ino_t inode_nr, off_t start, off_t end)
   m.REQ_TRC_START_HI = 0;	/* Not used for now, so clear it. */
   m.REQ_TRC_END_LO = end;
   m.REQ_TRC_END_HI = 0;		/* Not used for now, so clear it. */
-  
+
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
 }
@@ -299,7 +295,7 @@ PUBLIC int req_getdents(
   }
 
   if (grant_id < 0)
-  	panic("req_getdents: cpf_grant_direct/cpf_grant_magic failed: %d",
+	panic("req_getdents: cpf_grant_direct/cpf_grant_magic failed: %d",
 								grant_id);
 
   m.m_type = REQ_GETDENTS;
@@ -308,10 +304,10 @@ PUBLIC int req_getdents(
   m.REQ_MEM_SIZE = size;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
-  
+
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  
+
   if (r == OK) {
 	  *new_pos = cvul64(m.RES_SEEK_POS_LO);
 	  r = m.RES_NBYTES;
@@ -330,7 +326,7 @@ PUBLIC int req_inhibread(endpoint_t fs_e, ino_t inode_nr)
   /* Fill in request message */
   m.m_type = REQ_INHIBREAD;
   m.REQ_INODE_NR = inode_nr;
-  
+
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
 }
@@ -365,10 +361,10 @@ PUBLIC int req_link(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  
+
   return(r);
 }
-    
+
 
 /*===========================================================================*
  *				req_lookup	                   	     *
@@ -379,7 +375,7 @@ PUBLIC int req_lookup(
   ino_t root_ino,
   uid_t uid,
   gid_t gid,
-  int flags,
+  struct lookup *resolve,
   lookup_res_t *res,
   struct fproc *rfp
 )
@@ -389,31 +385,33 @@ PUBLIC int req_lookup(
   cp_grant_id_t grant_id=0, grant_id2=0;
   message m;
   vfs_ucred_t credentials;
+  int flags;
 
-  grant_id = cpf_grant_direct(fs_e, (vir_bytes) user_fullpath,
-			      sizeof(user_fullpath), CPF_READ | CPF_WRITE);
+  grant_id = cpf_grant_direct(fs_e, (vir_bytes) resolve->l_path, PATH_MAX,
+			      CPF_READ | CPF_WRITE);
   if(grant_id == -1)
 	  panic("req_lookup: cpf_grant_direct failed");
 
-  len = strlen(user_fullpath) + 1;
+  flags = resolve->l_flags;
+  len = strlen(resolve->l_path) + 1;
 
   m.m_type		= REQ_LOOKUP;
   m.REQ_GRANT		= grant_id;
   m.REQ_PATH_LEN 	= len;
-  m.REQ_PATH_SIZE 	= sizeof(user_fullpath);
+  m.REQ_PATH_SIZE 	= PATH_MAX + 1;
   m.REQ_DIR_INO 	= dir_ino;
   m.REQ_ROOT_INO 	= root_ino;
 
   if(rfp->fp_ngroups > 0) { /* Is the process member of multiple groups? */
-  	/* In that case the FS has to copy the uid/gid credentials */
-  	int i;
+	/* In that case the FS has to copy the uid/gid credentials */
+	int i;
 
-  	/* Set credentials */
-  	credentials.vu_uid = rfp->fp_effuid;
-  	credentials.vu_gid = rfp->fp_effgid;
-  	credentials.vu_ngroups = rfp->fp_ngroups;
-  	for (i = 0; i < rfp->fp_ngroups; i++) 
-  		credentials.vu_sgroups[i] = rfp->fp_sgroups[i];
+	/* Set credentials */
+	credentials.vu_uid = rfp->fp_effuid;
+	credentials.vu_gid = rfp->fp_effgid;
+	credentials.vu_ngroups = rfp->fp_ngroups;
+	for (i = 0; i < rfp->fp_ngroups; i++)
+		credentials.vu_sgroups[i] = rfp->fp_sgroups[i];
 
 	grant_id2 = cpf_grant_direct(fs_e, (vir_bytes) &credentials,
 				     sizeof(credentials), CPF_READ);
@@ -422,9 +420,9 @@ PUBLIC int req_lookup(
 
 	m.REQ_GRANT2	= grant_id2;
 	m.REQ_UCRED_SIZE= sizeof(credentials);
-  	flags		|= PATH_GET_UCRED;
+	flags		|= PATH_GET_UCRED;
   } else {
-  	/* When there's only one gid, we can send it directly */
+	/* When there's only one gid, we can send it directly */
 	m.REQ_UID	= uid;
 	m.REQ_GID	= gid;
 	flags		&= ~PATH_GET_UCRED;
@@ -435,7 +433,7 @@ PUBLIC int req_lookup(
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  if(rfp->fp_ngroups > 0) cpf_revoke(grant_id2); 
+  if(rfp->fp_ngroups > 0) cpf_revoke(grant_id2);
 
   /* Fill in response according to the return value */
   res->fs_e = m.m_source;
@@ -465,7 +463,7 @@ PUBLIC int req_lookup(
   default:
 	  break;
   }
-  
+
   return(r);
 }
 
@@ -486,7 +484,7 @@ PUBLIC int req_mkdir(
   cp_grant_id_t grant_id;
   size_t len;
   message m;
-  
+
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
@@ -526,7 +524,7 @@ PUBLIC int req_mknod(
   size_t len;
   cp_grant_id_t grant_id;
   message m;
-  
+
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
   if(grant_id == -1)
@@ -541,11 +539,11 @@ PUBLIC int req_mknod(
   m.REQ_GID = gid;
   m.REQ_GRANT = grant_id;
   m.REQ_PATH_LEN = len;
-  
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  
+
   return(r);
 }
 
@@ -661,10 +659,10 @@ int count;
 /*===========================================================================*
  *				req_rdlink	     			     *
  *===========================================================================*/
-PUBLIC int req_rdlink(fs_e, inode_nr, who_e, buf, len, direct)
+PUBLIC int req_rdlink(fs_e, inode_nr, proc_e, buf, len, direct)
 endpoint_t fs_e;
 ino_t inode_nr;
-endpoint_t who_e;
+endpoint_t proc_e;
 char *buf;
 size_t len;
 int direct; /* set to 1 to use direct grants instead of magic grants */
@@ -676,7 +674,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   if (direct) {
 	grant_id = cpf_grant_direct(fs_e, (vir_bytes) buf, len, CPF_WRITE);
   } else {
-	grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf, len,
+	grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf, len,
 								CPF_WRITE);
   }
   if(grant_id == -1)
@@ -687,7 +685,7 @@ int direct; /* set to 1 to use direct grants instead of magic grants */
   m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = grant_id;
   m.REQ_MEM_SIZE = len;
-  
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
@@ -707,14 +705,15 @@ PUBLIC int req_readsuper(
   dev_t dev,
   int readonly,
   int isroot,
-  struct node_details *res_nodep
+  struct node_details *res_nodep,
+  int *con_reqs
 )
 {
   int r;
   cp_grant_id_t grant_id;
   size_t len;
   message m;
-  
+
   len = strlen(label)+1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) label, len, CPF_READ);
   if (grant_id == -1)
@@ -724,11 +723,11 @@ PUBLIC int req_readsuper(
   m.m_type = REQ_READSUPER;
   m.REQ_FLAGS = 0;
   if(readonly) m.REQ_FLAGS |= REQ_RDONLY;
-  if(isroot)   m.REQ_FLAGS |= REQ_ISROOT;   
+  if(isroot)   m.REQ_FLAGS |= REQ_ISROOT;
   m.REQ_GRANT = grant_id;
   m.REQ_DEV = dev;
   m.REQ_PATH_LEN = len;
-  
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
@@ -741,6 +740,7 @@ PUBLIC int req_readsuper(
 	res_nodep->fsize = m.RES_FILE_SIZE_LO;
 	res_nodep->uid = m.RES_UID;
 	res_nodep->gid = m.RES_GID;
+	*con_reqs = m.RES_CONREQS;
   }
 
   return(r);
@@ -770,7 +770,7 @@ unsigned int *cum_iop;
 	  panic("req_readwrite: pos too large");
 
   grant_id = cpf_grant_magic(fs_e, user_e, (vir_bytes) user_addr, num_of_bytes,
-  			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
+			     (rw_flag==READING ? CPF_WRITE:CPF_READ));
   if (grant_id == -1)
 	  panic("req_readwrite: cpf_grant_magic failed");
 
@@ -781,7 +781,7 @@ unsigned int *cum_iop;
   m.REQ_SEEK_POS_LO = ex64lo(pos);
   m.REQ_SEEK_POS_HI = 0;	/* Not used for now, so clear it. */
   m.REQ_NBYTES = num_of_bytes;
-  
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
@@ -791,7 +791,7 @@ unsigned int *cum_iop;
 	*new_posp = cvul64(m.RES_SEEK_POS_LO);
 	*cum_iop = m.RES_NBYTES;
   }
-  
+
   return(r);
 }
 
@@ -829,7 +829,7 @@ char *new_name;
   m.REQ_REN_LEN_OLD = len_old;
   m.REQ_REN_GRANT_NEW = gid_new;
   m.REQ_REN_LEN_NEW = len_new;
-  
+
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(gid_old);
@@ -851,7 +851,7 @@ char *lastc;
   cp_grant_id_t grant_id;
   size_t len;
   message m;
-  
+
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(grant_id == -1)
@@ -878,7 +878,7 @@ PUBLIC int req_slink(
   endpoint_t fs_e,
   ino_t inode_nr,
   char *lastc,
-  endpoint_t who_e,
+  endpoint_t proc_e,
   char *path_addr,
   unsigned short path_length,
   uid_t uid,
@@ -895,7 +895,7 @@ PUBLIC int req_slink(
   if(gid_name == -1)
 	  panic("req_slink: cpf_grant_direct failed");
 
-  gid_buf = cpf_grant_magic(fs_e, who_e, (vir_bytes) path_addr, path_length,
+  gid_buf = cpf_grant_magic(fs_e, proc_e, (vir_bytes) path_addr, path_length,
 			    CPF_READ);
   if(gid_buf == -1) {
 	  cpf_revoke(gid_name);
@@ -924,10 +924,10 @@ PUBLIC int req_slink(
 /*===========================================================================*
  *				req_stat	       			     *
  *===========================================================================*/
-PUBLIC int req_stat(fs_e, inode_nr, who_e, buf, pos, stat_version)
+PUBLIC int req_stat(fs_e, inode_nr, proc_e, buf, pos, stat_version)
 int fs_e;
 ino_t inode_nr;
-int who_e;
+int proc_e;
 char *buf;
 int pos;
 int stat_version;
@@ -940,9 +940,9 @@ int stat_version;
 
   if (pos != 0 || stat_version != 0)
 	  grant_id = cpf_grant_direct(fs_e, (vir_bytes) &sb,
-	  			      sizeof(struct stat), CPF_WRITE);
+				      sizeof(struct stat), CPF_WRITE);
   else
-	  grant_id = cpf_grant_magic(fs_e, who_e, (vir_bytes) buf,
+	  grant_id = cpf_grant_magic(fs_e, proc_e, (vir_bytes) buf,
 				sizeof(struct stat), CPF_WRITE);
 
   if (grant_id < 0)
@@ -963,7 +963,7 @@ int stat_version;
   if (pos != 0)
 	sb.st_size -= pos;
   if (stat_version == 0) {
-	r = sys_vircopy(SELF, D, (vir_bytes) &sb, who_e, D, (vir_bytes) buf, 
+	r = sys_vircopy(SELF, D, (vir_bytes) &sb, proc_e, D, (vir_bytes) buf,
 			sizeof(struct stat));
 	return(r);
   }
@@ -971,7 +971,7 @@ int stat_version;
   /* User needs old struct stat.
    * Just 1 prev version at this moment */
   assert(stat_version == 1);
- 
+
 /* XXX until that st_Xtime macroses used, we have to undefine them,
  * because of minix_prev_stat
  */
@@ -1000,9 +1000,9 @@ int stat_version;
   old_sb.st_ctime = sb.st_ctime;
 #endif
 
-  r = sys_vircopy(SELF, D, (vir_bytes) &old_sb, who_e, D, (vir_bytes) buf, 
+  r = sys_vircopy(SELF, D, (vir_bytes) &old_sb, proc_e, D, (vir_bytes) buf,
 		  sizeof(struct minix_prev_stat));
-  
+
   return(r);
 }
 
@@ -1011,13 +1011,13 @@ int stat_version;
  *				req_sync	       			     *
  *===========================================================================*/
 PUBLIC int req_sync(fs_e)
-endpoint_t fs_e; 
+endpoint_t fs_e;
 {
   message m;
 
   /* Fill in request message */
   m.m_type = REQ_SYNC;
-  
+
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
 }
@@ -1035,7 +1035,7 @@ char *lastc;
   size_t len;
   int r;
   message m;
-  
+
   len = strlen(lastc) + 1;
   grant_id = cpf_grant_direct(fs_e, (vir_bytes) lastc, len, CPF_READ);
   if(grant_id == -1)
@@ -1050,7 +1050,7 @@ char *lastc;
   /* Send/rec request */
   r = fs_sendrec(fs_e, &m);
   cpf_revoke(grant_id);
-  
+
   return(r);
 }
 
@@ -1059,13 +1059,13 @@ char *lastc;
  *				req_unmount	    			     *
  *===========================================================================*/
 PUBLIC int req_unmount(fs_e)
-endpoint_t fs_e; 
+endpoint_t fs_e;
 {
   message m;
 
   /* Fill in request message */
   m.m_type = REQ_UNMOUNT;
-    
+
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
 }
@@ -1087,62 +1087,7 @@ time_t modtime;
   m.REQ_INODE_NR = inode_nr;
   m.REQ_ACTIME = actime;
   m.REQ_MODTIME = modtime;
-  
+
   /* Send/rec request */
   return fs_sendrec(fs_e, &m);
 }
-
-
-/*===========================================================================*
- *				fs_sendrec				     *
- *===========================================================================*/
-PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
-{
-/* This is the low level function that sends requests to FS processes.
- * It also handles driver recovery mechanism and reissuing the
- * request which failed due to a dead driver.
- */
-  int r;
-  message origm;
-
-  if(fs_e <= 0 || fs_e == NONE)
-	panic("talking to bogus endpoint: %d", fs_e);
-
-  /* Make a copy of the request so that we can load it back in
-   * case of a dead driver */
-  origm = *reqm;
-
-  /* In response to the request we sent, some file systems may send back their
-   * own VFS request, instead of a reply. VFS currently offers limited support
-   * for this. As long as the FS keeps sending requests, we process them and
-   * send back a reply. We break out of the loop as soon as the FS sends a
-   * reply to the original request.
-   *
-   * There is no form of locking or whatever on global data structures, so it
-   * is quite easy to mess things up; hence, 'limited' support. A future async
-   * VFS will solve this problem for good.
-   */
-  for (;;) {
-	/* Do the actual send, receive */
-	if (OK != (r = sendrec(fs_e, reqm))) {
-		printf("VFS:fs_sendrec:%s:%d: error sending message. "
-		       "FS_e: %d req_nr: %d err: %d\n", file, line, fs_e,
-		       reqm->m_type, r);
-		util_stacktrace();
-		return(r);
-	}
-
-	/* If the type field is 0 (OK) or negative (E*), this is a reply. If it
-	 * contains a positive nonzero value, this is a request.
-	 */
-	if (reqm->m_type <= 0)
-		break; /* Reply */
-
-	/* Request */
-	nested_fs_call(reqm);
-  }
-
-  /* Return message type */
-  return(reqm->m_type);
-}
-

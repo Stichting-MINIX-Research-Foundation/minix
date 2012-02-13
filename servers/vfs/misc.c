@@ -7,7 +7,7 @@
  *   do_fcntl:	  perform the FCNTL system call
  *   do_sync:	  perform the SYNC system call
  *   do_fsync:	  perform the FSYNC system call
- *   do_reboot:	  sync disks and prepare for shutdown
+ *   pm_reboot:	  sync disks and prepare for shutdown
  *   pm_fork:	  adjust the tables after PM has performed a FORK system call
  *   do_exec:	  handle files with FD_CLOEXEC on after PM has done an EXEC
  *   do_exit:	  a process has exited; note that in the tables
@@ -33,10 +33,12 @@
 #include <sys/svrctl.h>
 #include "file.h"
 #include "fproc.h"
-#include "param.h"
+#include "scratchpad.h"
+#include "dmap.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
+#include "param.h"
 
 #define CORE_NAME	"core"
 #define CORE_MODE	0777	/* mode to use on core image files */
@@ -46,7 +48,6 @@ PUBLIC unsigned long calls_stats[NCALLS];
 #endif
 
 FORWARD _PROTOTYPE( void free_proc, (struct fproc *freed, int flags)	);
-FORWARD _PROTOTYPE( void unmount_all, (void)				);
 /*
 FORWARD _PROTOTYPE( int dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
 FORWARD _PROTOTYPE( int write_bytes, (struct inode *rip, off_t off,
@@ -54,9 +55,6 @@ FORWARD _PROTOTYPE( int write_bytes, (struct inode *rip, off_t off,
 FORWARD _PROTOTYPE( int write_seg, (struct inode *rip, off_t off, int proc_e,
 			int seg, off_t seg_off, phys_bytes seg_bytes)	);
 */
-
-#define FP_EXITING	1
-
 
 /*===========================================================================*
  *				do_getsysinfo				     *
@@ -74,22 +72,22 @@ PUBLIC int do_getsysinfo()
   if (!super_user) return(EPERM);
 
   switch(m_in.SI_WHAT) {
-  case SI_PROC_TAB:
-  	src_addr = (vir_bytes) fproc;
-  	len = sizeof(struct fproc) * NR_PROCS;
-  	break; 
-  case SI_DMAP_TAB:
-  	src_addr = (vir_bytes) dmap;
-  	len = sizeof(struct dmap) * NR_DEVICES;
-  	break; 
+    case SI_PROC_TAB:
+	src_addr = (vir_bytes) fproc;
+	len = sizeof(struct fproc) * NR_PROCS;
+	break;
+    case SI_DMAP_TAB:
+	src_addr = (vir_bytes) dmap;
+	len = sizeof(struct dmap) * NR_DEVICES;
+	break;
 #if ENABLE_SYSCALL_STATS
-  case SI_CALL_STATS:
-  	src_addr = (vir_bytes) calls_stats;
-  	len = sizeof(calls_stats);
-  	break; 
+    case SI_CALL_STATS:
+	src_addr = (vir_bytes) calls_stats;
+	len = sizeof(calls_stats);
+	break;
 #endif
-  default:
-  	return(EINVAL);
+    default:
+	return(EINVAL);
   }
 
   if (len != m_in.SI_SIZE)
@@ -112,32 +110,42 @@ PUBLIC int do_dup()
 
   register int rfd;
   register struct filp *f;
-  struct filp *dummy;
-  int r;
+  int r = OK;
 
   /* Is the file descriptor valid? */
   rfd = m_in.fd & ~DUP_MASK;		/* kill off dup2 bit, if on */
-  if ((f = get_filp(rfd)) == NULL) return(err_code);
+  if ((f = get_filp(rfd, VNODE_READ)) == NULL) return(err_code);
 
   /* Distinguish between dup and dup2. */
   if (m_in.fd == rfd) {			/* bit not on */
 	/* dup(fd) */
-	if ((r = get_fd(0, 0, &m_in.fd2, &dummy)) != OK) return(r);
+	r = get_fd(0, 0, &m_in.fd2, NULL);
   } else {
-	/* dup2(fd, fd2) */
-	if (m_in.fd2 < 0 || m_in.fd2 >= OPEN_MAX) return(EBADF);
-	if (rfd == m_in.fd2) return(m_in.fd2);	/* ignore the call: dup2(x, x) */
-	m_in.fd = m_in.fd2;		/* prepare to close fd2 */
-	(void) do_close();	/* cannot fail */
+	/* dup2(old_fd, new_fd) */
+	if (m_in.fd2 < 0 || m_in.fd2 >= OPEN_MAX) {
+		r = EBADF;
+	} else if (rfd == m_in.fd2) {	/* ignore the call: dup2(x, x) */
+		r = m_in.fd2;
+	} else {
+		/* All is fine, close new_fd if necessary */
+		m_in.fd = m_in.fd2;	/* prepare to close fd2 */
+		unlock_filp(f);		/* or it might deadlock on do_close */
+		(void) do_close();	/* cannot fail */
+		f = get_filp(rfd, VNODE_READ); /* lock old_fd again */
+	}
   }
 
-  /* Success. Set up new file descriptors. */
-  f->filp_count++;
-  fp->fp_filp[m_in.fd2] = f;
-  FD_SET(m_in.fd2, &fp->fp_filp_inuse);
-  return(m_in.fd2);
-}
+  if (r == OK) {
+	/* Success. Set up new file descriptors. */
+	f->filp_count++;
+	fp->fp_filp[m_in.fd2] = f;
+	FD_SET(m_in.fd2, &fp->fp_filp_inuse);
+	r = m_in.fd2;
+  }
 
+  unlock_filp(f);
+  return(r);
+}
 
 /*===========================================================================*
  *				do_fcntl				     *
@@ -147,113 +155,131 @@ PUBLIC int do_fcntl()
 /* Perform the fcntl(fd, request, ...) system call. */
 
   register struct filp *f;
-  int new_fd, r, fl;
-  struct filp *dummy;
+  int new_fd, fl, r = OK;
+  tll_access_t locktype;
+
+  scratch(fp).file.fd_nr = m_in.fd;
+  scratch(fp).io.io_buffer = m_in.buffer;
+  scratch(fp).io.io_nbytes = m_in.nbytes;	/* a.k.a. m_in.request */
 
   /* Is the file descriptor valid? */
-  if ((f = get_filp(m_in.fd)) == NULL) return(err_code);
-  
+  locktype = (m_in.request == F_FREESP) ? VNODE_WRITE : VNODE_READ;
+  if ((f = get_filp(scratch(fp).file.fd_nr, locktype)) == NULL)
+	return(err_code);
+
   switch (m_in.request) {
-     case F_DUPFD:
+    case F_DUPFD:
 	/* This replaces the old dup() system call. */
-	if (m_in.addr < 0 || m_in.addr >= OPEN_MAX) return(EINVAL);
-	if ((r = get_fd(m_in.addr, 0, &new_fd, &dummy)) != OK) return(r);
-	f->filp_count++;
-	fp->fp_filp[new_fd] = f;
-	return(new_fd);
+	if (m_in.addr < 0 || m_in.addr >= OPEN_MAX) r = EINVAL;
+	else if ((r = get_fd(m_in.addr, 0, &new_fd, NULL)) == OK) {
+		f->filp_count++;
+		fp->fp_filp[new_fd] = f;
+		FD_SET(new_fd, &fp->fp_filp_inuse);
+		r = new_fd;
+	}
+	break;
 
-     case F_GETFD:
+    case F_GETFD:
 	/* Get close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
-	return( FD_ISSET(m_in.fd, &fp->fp_cloexec_set) ? FD_CLOEXEC : 0);
+	r = 0;
+	if (FD_ISSET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set))
+		r = FD_CLOEXEC;
+	break;
 
-     case F_SETFD:
+    case F_SETFD:
 	/* Set close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
 	if(m_in.addr & FD_CLOEXEC)
-		FD_SET(m_in.fd, &fp->fp_cloexec_set);
+		FD_SET(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
 	else
-		FD_CLR(m_in.fd, &fp->fp_cloexec_set);
-	return(OK);
+		FD_CLR(scratch(fp).file.fd_nr, &fp->fp_cloexec_set);
+	break;
 
-     case F_GETFL:
+    case F_GETFL:
 	/* Get file status flags (O_NONBLOCK and O_APPEND). */
 	fl = f->filp_flags & (O_NONBLOCK | O_APPEND | O_ACCMODE);
-	return(fl);	
+	r = fl;
+	break;
 
-     case F_SETFL:
+    case F_SETFL:
 	/* Set file status flags (O_NONBLOCK and O_APPEND). */
 	fl = O_NONBLOCK | O_APPEND | O_REOPEN;
 	f->filp_flags = (f->filp_flags & ~fl) | (m_in.addr & fl);
-	return(OK);
+	break;
 
-     case F_GETLK:
-     case F_SETLK:
-     case F_SETLKW:
+    case F_GETLK:
+    case F_SETLK:
+    case F_SETLKW:
 	/* Set or clear a file lock. */
 	r = lock_op(f, m_in.request);
-	return(r);
+	break;
 
-     case F_FREESP:
+    case F_FREESP:
      {
-	/* Free a section of a file. Preparation is done here, actual freeing
-	 * in freesp_inode().
-	 */
+	/* Free a section of a file */
 	off_t start, end;
 	struct flock flock_arg;
 	signed long offset;
 
 	/* Check if it's a regular file. */
-	if((f->filp_vno->v_mode & I_TYPE) != I_REGULAR) return(EINVAL);
-	if (!(f->filp_mode & W_BIT)) return(EBADF);
+	if ((f->filp_vno->v_mode & I_TYPE) != I_REGULAR) r = EINVAL;
+	else if (!(f->filp_mode & W_BIT)) r = EBADF;
+	else
+		/* Copy flock data from userspace. */
+		r = sys_datacopy(who_e, (vir_bytes) m_in.name1, SELF,
+				 (vir_bytes) &flock_arg,
+				 (phys_bytes) sizeof(flock_arg));
 
-	/* Copy flock data from userspace. */
-	if((r = sys_datacopy(who_e, (vir_bytes) m_in.name1, SELF, 
-	     (vir_bytes) &flock_arg, (phys_bytes) sizeof(flock_arg))) != OK)
-		return(r);
+	if (r != OK) break;
 
 	/* Convert starting offset to signed. */
 	offset = (signed long) flock_arg.l_start;
 
 	/* Figure out starting position base. */
 	switch(flock_arg.l_whence) {
-	   case SEEK_SET: start = 0; break;
-	   case SEEK_CUR:
-	      if (ex64hi(f->filp_pos) != 0) 
+	  case SEEK_SET: start = 0; break;
+	  case SEEK_CUR:
+		if (ex64hi(f->filp_pos) != 0)
 			panic("do_fcntl: position in file too high");
-	      start = ex64lo(f->filp_pos);
-	      break;
-	   case SEEK_END: start = f->filp_vno->v_size; break;
-	   default: return EINVAL;
+		start = ex64lo(f->filp_pos);
+		break;
+	  case SEEK_END: start = f->filp_vno->v_size; break;
+	  default: r = EINVAL;
 	}
+	if (r != OK) break;
 
 	/* Check for overflow or underflow. */
-	if(offset > 0 && start + offset < start) return EINVAL;
-	if(offset < 0 && start + offset > start) return EINVAL; 
-	start += offset;
-	if(start < 0) return EINVAL;
+	if (offset > 0 && start + offset < start) r = EINVAL;
+	else if (offset < 0 && start + offset > start) r = EINVAL;
+	else {
+		start += offset;
+		if (start < 0) r = EINVAL;
+	}
+	if (r != OK) break;
 
-	if(flock_arg.l_len != 0) {
-		if(start >= f->filp_vno->v_size) return EINVAL;
-		end = start + flock_arg.l_len;
-		if(end <= start) return EINVAL;
-		if(end > f->filp_vno->v_size) end = f->filp_vno->v_size;
+	if (flock_arg.l_len != 0) {
+		if (start >= f->filp_vno->v_size) r = EINVAL;
+		else if ((end = start + flock_arg.l_len) <= start) r = EINVAL;
+		else if (end > f->filp_vno->v_size) end = f->filp_vno->v_size;
 	} else {
                 end = 0;
 	}
+	if (r != OK) break;
 
-	r = req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr, start,
-		end);
+	r = req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr,start,end);
 
-	if(r == OK && flock_arg.l_len == 0)
+	if (r == OK && flock_arg.l_len == 0)
 		f->filp_vno->v_size = start;
 
-	return(r);
+	break;
      }
 
-     default:
-	return(EINVAL);
+    default:
+	r = EINVAL;
   }
-}
 
+  unlock_filp(f);
+  return(r);
+}
 
 /*===========================================================================*
  *				do_sync					     *
@@ -261,11 +287,19 @@ PUBLIC int do_fcntl()
 PUBLIC int do_sync()
 {
   struct vmnt *vmp;
-  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) 
-	  if (vmp->m_dev != NO_DEV) 
-                  req_sync(vmp->m_fs_e);
+  int r = OK;
 
-  return(OK);
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
+	if (vmp->m_dev != NO_DEV && vmp->m_fs_e != NONE &&
+		 vmp->m_root_node != NULL) {
+		if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
+			break;
+		req_sync(vmp->m_fs_e);
+		unlock_vmnt(vmp);
+	}
+  }
+
+  return(r);
 }
 
 /*===========================================================================*
@@ -273,31 +307,28 @@ PUBLIC int do_sync()
  *===========================================================================*/
 PUBLIC int do_fsync()
 {
-/* Perform the fsync() system call. For now, don't be unnecessarily smart. */
+/* Perform the fsync() system call. */
+  struct filp *rfilp;
+  struct vmnt *vmp;
+  dev_t dev;
+  int r = OK;
 
-  do_sync();
-  return(OK);
-}
+  if ((rfilp = get_filp(m_in.m1_i1, VNODE_READ)) == NULL) return(err_code);
+  dev = rfilp->filp_vno->v_dev;
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
+	if (vmp->m_dev != NO_DEV && vmp->m_dev == dev &&
+		vmp->m_fs_e != NONE && vmp->m_root_node != NULL) {
 
-/*===========================================================================*
- *				unmount_all				     *
- *===========================================================================*/
-PRIVATE void unmount_all(void)
-{
-/* Unmount all filesystems.  File systems are mounted on other file systems,
- * so you have to pull off the loose bits repeatedly to get it all undone.
- */
-
-  int i;
-  for (i= 0; i < NR_MNTS; i++) {
-  	struct vmnt *vmp;
-
-	/* Unmount at least one. */
-	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
-		if (vmp->m_dev != NO_DEV) 
-			unmount(vmp->m_dev, NULL);
+		if ((r = lock_vmnt(vmp, VMNT_EXCL)) != OK)
+			break;
+		req_sync(vmp->m_fs_e);
+		unlock_vmnt(vmp);
 	}
   }
+
+  unlock_filp(rfilp);
+
+  return(r);
 }
 
 /*===========================================================================*
@@ -305,32 +336,29 @@ PRIVATE void unmount_all(void)
  *===========================================================================*/
 PUBLIC void pm_reboot()
 {
-  /* Perform the FS side of the reboot call. */
+  /* Perform the VFS side of the reboot call. */
   int i;
+  struct fproc *rfp;
 
   do_sync();
-
-  SANITYCHECK;
 
   /* Do exit processing for all leftover processes and servers,
    * but don't actually exit them (if they were really gone, PM
    * will tell us about it).
    */
-  for (i = 0; i < NR_PROCS; i++)
-	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE) {
-		/* No FP_EXITING, just free the resources, otherwise
-		 * consistency check for fp_endpoint (set to NONE) will
-		 * fail if process wants to do something in the (short)
-		 * future.
-		 */
-		free_proc(&fproc[i], 0);
-	}
-  SANITYCHECK;
+  for (i = 0; i < NR_PROCS; i++) {
+	rfp = &fproc[i];
+	if (rfp->fp_endpoint == NONE) continue;
 
+	/* Don't just free the proc right away, but let it finish what it was
+	 * doing first */
+	lock_proc(rfp, 0);
+	free_proc(rfp, 0);
+	unlock_proc(rfp);
+  }
+
+  do_sync();
   unmount_all();
-
-  SANITYCHECK;
-
 }
 
 /*===========================================================================*
@@ -347,8 +375,9 @@ int cpid;	/* Child process id */
  * system uses the same slot numbers as the kernel.  Only PM makes this call.
  */
 
-  register struct fproc *cp;
+  register struct fproc *cp, *pp;
   int i, parentno, childno;
+  mutex_t c_fp_lock;
 
   /* Check up-to-dateness of fproc. */
   okendpt(pproc, &parentno);
@@ -358,17 +387,20 @@ int cpid;	/* Child process id */
    * number is correct in fproc, which it won't be.
    */
   childno = _ENDPOINT_P(cproc);
-  if(childno < 0 || childno >= NR_PROCS)
-	panic("FS: bogus child for forking: %d", m_in.child_endpt);
-  if(fproc[childno].fp_pid != PID_FREE)
-	panic("FS: forking on top of in-use child: %d", childno);
+  if (childno < 0 || childno >= NR_PROCS)
+	panic("VFS: bogus child for forking: %d", m_in.child_endpt);
+  if (fproc[childno].fp_pid != PID_FREE)
+	panic("VFS: forking on top of in-use child: %d", childno);
 
   /* Copy the parent's fproc struct to the child. */
+  /* However, the mutex variables belong to a slot and must stay the same. */
+  c_fp_lock = fproc[childno].fp_lock;
   fproc[childno] = fproc[parentno];
+  fproc[childno].fp_lock = c_fp_lock;
 
   /* Increase the counters in the 'filp' table. */
   cp = &fproc[childno];
-  fp = &fproc[parentno];
+  pp = &fproc[parentno];
 
   for (i = 0; i < OPEN_MAX; i++)
 	if (cp->fp_filp[i] != NULL) cp->fp_filp[i]->filp_count++;
@@ -377,27 +409,23 @@ int cpid;	/* Child process id */
   cp->fp_pid = cpid;
   cp->fp_endpoint = cproc;
 
-  /* A forking process never has an outstanding grant,
-   * as it isn't blocking on i/o.
-   */
-  if(GRANT_VALID(fp->fp_grant)) {
-	printf("vfs: fork: fp (endpoint %d) has grant %d\n", fp->fp_endpoint, fp->fp_grant);
-	panic("fp contains valid grant");
+  /* A forking process never has an outstanding grant, as it isn't blocking on
+   * I/O. */
+  if(GRANT_VALID(pp->fp_grant)) {
+	panic("VFS: fork: pp (endpoint %d) has grant %d\n", pp->fp_endpoint,
+	       pp->fp_grant);
   }
   if(GRANT_VALID(cp->fp_grant)) {
-	printf("vfs: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint, cp->fp_grant);
-	panic("cp contains valid grant");
+	panic("VFS: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint,
+	       cp->fp_grant);
   }
 
-  /* A child is not a process leader. */
-  cp->fp_sesldr = 0;
-
-  /* This child has not exec()ced yet. */
-  cp->fp_execced = 0;
+  /* A child is not a process leader, not being revived, etc. */
+  cp->fp_flags = FP_NOFLAGS;
 
   /* Record the fact that both root and working dir have another user. */
-  if(cp->fp_rd) dup_vnode(cp->fp_rd);
-  if(cp->fp_wd) dup_vnode(cp->fp_wd);
+  if (cp->fp_rd) dup_vnode(cp->fp_rd);
+  if (cp->fp_wd) dup_vnode(cp->fp_wd);
 }
 
 /*===========================================================================*
@@ -411,56 +439,46 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   register struct vnode *vp;
   dev_t dev;
 
- SANITYCHECK;
-
-  fp = exiter;		/* get_filp() needs 'fp' */
-
-  if(fp->fp_endpoint == NONE) {
+  if (exiter->fp_endpoint == NONE)
 	panic("free_proc: already free");
-  }
 
-  if (fp_is_blocked(fp)) {
- 	SANITYCHECK;
-	unpause(fp->fp_endpoint);
- 	SANITYCHECK;
-  }
-
- SANITYCHECK;
+  if (fp_is_blocked(exiter))
+	unpause(exiter->fp_endpoint);
 
   /* Loop on file descriptors, closing any that are open. */
   for (i = 0; i < OPEN_MAX; i++) {
-	(void) close_fd(fp, i);
+	(void) close_fd(exiter, i);
   }
-  
+
+  /* Release root and working directories. */
+  if (exiter->fp_rd) { put_vnode(exiter->fp_rd); exiter->fp_rd = NULL; }
+  if (exiter->fp_wd) { put_vnode(exiter->fp_wd); exiter->fp_wd = NULL; }
+
+  /* The rest of these actions is only done when processes actually exit. */
+  if (!(flags & FP_EXITING)) return;
+
+  exiter->fp_flags |= FP_EXITING;
+
   /* Check if any process is SUSPENDed on this driver.
    * If a driver exits, unmap its entries in the dmap table.
    * (unmapping has to be done after the first step, because the
    * dmap table is used in the first step.)
    */
-  unsuspend_by_endpt(fp->fp_endpoint);
+  unsuspend_by_endpt(exiter->fp_endpoint);
+  dmap_unmap_by_endpt(exiter->fp_endpoint);
 
-  /* Release root and working directories. */
-  if(fp->fp_rd) { put_vnode(fp->fp_rd); fp->fp_rd = NULL; }
-  if(fp->fp_wd) { put_vnode(fp->fp_wd); fp->fp_wd = NULL; }
-
-  /* The rest of these actions is only done when processes actually
-   * exit.
-   */
-  if(!(flags & FP_EXITING)) {
- 	SANITYCHECK;
-	return;
-  }
+  worker_stop_by_endpt(exiter->fp_endpoint); /* Unblock waiting threads */
+  vmnt_unmap_by_endpt(exiter->fp_endpoint); /* Invalidate open files if this
+					     * was an active FS */
 
   /* Invalidate endpoint number for error and sanity checks. */
-  fp->fp_endpoint = NONE;
+  exiter->fp_endpoint = NONE;
 
-  /* If a session leader exits and it has a controlling tty, then revoke 
+  /* If a session leader exits and it has a controlling tty, then revoke
    * access to its controlling tty from all other processes using it.
    */
-  if (fp->fp_sesldr && fp->fp_tty != 0) {
-
-      dev = fp->fp_tty;
-
+  if ((exiter->fp_flags & FP_SESLDR) && exiter->fp_tty != 0) {
+      dev = exiter->fp_tty;
       for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	  if(rfp->fp_pid == PID_FREE) continue;
           if (rfp->fp_tty == dev) rfp->fp_tty = 0;
@@ -471,19 +489,21 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 		vp = rfilp->filp_vno;
 		if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
 		if ((dev_t) vp->v_sdev != dev) continue;
-
-		(void) dev_close(dev, rfilp-filp);
-		/* Ignore any errors, even SUSPEND. */
+		lock_filp(rfilp, VNODE_READ);
+		(void) dev_close(dev, rfilp-filp); /* Ignore any errors, even
+						    * SUSPEND. */
 
 		rfilp->filp_mode = FILP_CLOSED;
+		unlock_filp(rfilp);
           }
       }
   }
 
   /* Exit done. Mark slot as free. */
-  fp->fp_pid = PID_FREE;
-
-  SANITYCHECK;
+  exiter->fp_pid = PID_FREE;
+  if (exiter->fp_flags & FP_PENDING)
+	pending--;	/* No longer pending job, not going to do it */
+  exiter->fp_flags = FP_NOFLAGS;
 }
 
 /*===========================================================================*
@@ -492,12 +512,13 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 PUBLIC void pm_exit(proc)
 int proc;
 {
-  int exitee_p;
 /* Perform the file system portion of the exit(status) system call. */
+  int exitee_p;
 
   /* Nevertheless, pretend that the call came from the user. */
   okendpt(proc, &exitee_p);
-  free_proc(&fproc[exitee_p], FP_EXITING);
+  fp = &fproc[exitee_p];
+  free_proc(fp, FP_EXITING);
 }
 
 /*===========================================================================*
@@ -533,12 +554,12 @@ gid_t *groups;
   okendpt(proc_e, &slot);
   rfp = &fproc[slot];
   if (ngroups * sizeof(gid_t) > sizeof(rfp->fp_sgroups))
-  	panic("VFS: pm_setgroups: too much data to copy");
-  if(sys_datacopy(who_e, (vir_bytes) groups, SELF, (vir_bytes) rfp->fp_sgroups,
-  		   ngroups * sizeof(gid_t)) == OK) {
+	panic("VFS: pm_setgroups: too much data to copy");
+  if (sys_datacopy(who_e, (vir_bytes) groups, SELF, (vir_bytes) rfp->fp_sgroups,
+		   ngroups * sizeof(gid_t)) == OK) {
 	rfp->fp_ngroups = ngroups;
   } else
-  	panic("VFS: pm_setgroups: datacopy failed");
+	panic("VFS: pm_setgroups: datacopy failed");
 }
 
 
@@ -550,7 +571,7 @@ int proc_e;
 int euid;
 int ruid;
 {
-  register struct fproc *tfp;
+  struct fproc *tfp;
   int slot;
 
   okendpt(proc_e, &slot);
@@ -567,7 +588,7 @@ PUBLIC int do_svrctl()
 {
   switch (m_in.svrctl_req) {
   /* No control request implemented yet. */
-  default:
+    default:
 	return(EINVAL);
   }
 }
@@ -575,44 +596,34 @@ PUBLIC int do_svrctl()
 /*===========================================================================*
  *				pm_dumpcore				     *
  *===========================================================================*/
-PUBLIC int pm_dumpcore(proc_e, csig, exe_name)
-int proc_e;
-int csig;
-char *exe_name;
+PUBLIC int pm_dumpcore(endpoint_t proc_e, int csig, vir_bytes exe_name)
 {
-  int proc_s, r, old_who_e;
-  int traced_proc_e = m_in.PM_TRACED_PROC;
+  int slot, r, core_fd;
+  struct filp *f;
+  char core_path[PATH_MAX];
+  char proc_name[PROC_NAME_LEN];
 
-  okendpt(traced_proc_e, &proc_s);
-  fp = &fproc[proc_s];
+  okendpt(proc_e, &slot);
+  fp = &fproc[slot];
 
-  /* Open the core file */
-  sprintf(user_fullpath, "%s.%d", CORE_NAME, fproc[proc_s].fp_pid);
-  r = common_open(O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
-  if (r < 0) {
-	printf("VFS: Cannot open file to dump core\n");
-	return r;
-  }
+  /* open core file */
+  snprintf(core_path, PATH_MAX, "%s.%d", CORE_NAME, fp->fp_pid);
+  core_fd = common_open(core_path, O_WRONLY | O_CREAT | O_TRUNC, CORE_MODE);
+  if (core_fd < 0) return(core_fd);
 
-  old_who_e = who_e;
-  who_e = VFS_PROC_NR;
+  /* get process' name */
+  r = sys_datacopy(PM_PROC_NR, exe_name, VFS_PROC_NR, (vir_bytes) proc_name,
+			PROC_NAME_LEN);
+  if (r != OK) return(r);
+  proc_name[PROC_NAME_LEN - 1] = '\0';
 
-  /* Write the core file in ELF format */
-  write_elf_core_file(csig, exe_name);
+  if ((f = get_filp(core_fd, VNODE_WRITE)) == NULL) return(EBADF);
+  write_elf_core_file(f, csig, proc_name);
+  unlock_filp(f);
+  (void) close_fd(fp, core_fd);	/* ignore failure, we're exiting anyway */
 
-  /* Close file */
-  close_fd(fp, r);
-
-  /* Terminate the process */
-  if (traced_proc_e == proc_e)
-	free_proc(&fproc[proc_s], FP_EXITING);
-
-  /* Restore the important variables that have been overwritten */
-  m_in.PM_PROC = proc_e;
-  m_in.PM_TRACED_PROC = traced_proc_e;
-  who_e = old_who_e;
-
-  return OK;
+  free_proc(fp, FP_EXITING);
+  return(OK);
 }
 
 /*===========================================================================*
@@ -620,39 +631,33 @@ char *exe_name;
  *===========================================================================*/
 PUBLIC void ds_event(void)
 {
-	char key[DS_MAX_KEYLEN];
-	char *blkdrv_prefix = "drv.blk.";
-	char *chrdrv_prefix = "drv.chr.";
-	u32_t value;
-	int type;
-	endpoint_t owner_endpoint;
-	int r, is_blk;
+  char key[DS_MAX_KEYLEN];
+  char *blkdrv_prefix = "drv.blk.";
+  char *chrdrv_prefix = "drv.chr.";
+  u32_t value;
+  int type, r, is_blk;
+  endpoint_t owner_endpoint;
 
-	/* Get the event and the owner from DS. */
-	r = ds_check(key, &type, &owner_endpoint);
-	if(r != OK) {
-		if(r != ENOENT)
-			printf("vfs: ds_event: ds_check failed: %d\n", r);
-		return;
-	}
-
+  /* Get the event and the owner from DS. */
+  while ((r = ds_check(key, &type, &owner_endpoint)) == OK) {
 	/* Only check for block and character driver up events. */
 	if (!strncmp(key, blkdrv_prefix, strlen(blkdrv_prefix))) {
 		is_blk = TRUE;
 	} else if (!strncmp(key, chrdrv_prefix, strlen(chrdrv_prefix))) {
 		is_blk = FALSE;
 	} else {
-		return;		/* neither block nor character driver */
+		continue;
 	}
 
-	r = ds_retrieve_u32(key, &value);
-	if(r != OK) {
-		printf("vfs: ds_event: ds_retrieve_u32 failed\n");
+	if ((r = ds_retrieve_u32(key, &value)) != OK) {
+		printf("VFS: ds_event: ds_retrieve_u32 failed\n");
 		return;
 	}
-	if (value != DS_DRIVER_UP) return;
+	if (value != DS_DRIVER_UP) continue;
 
 	/* Perform up. */
 	dmap_endpt_up(owner_endpoint, is_blk);
-}
+  }
 
+  if (r != ENOENT) printf("VFS: ds_event: ds_check failed: %d\n", r);
+}
