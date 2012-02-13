@@ -6,11 +6,11 @@ FILES1=group hostname.file inet.conf motd.install mtab profile \
 	protocols rc services termcap ttytab utmp rc.cd  \
 	syslog.conf rc.daemons.dist \
 	rs.inet rs.single make.conf system.conf ttys resolv.conf rc.conf \
-	rc.subr rc.subr.minix man.conf shells
+	rc.subr rc.subr.minix man.conf shells boot.cfg.default
 
 PWFILES=master.passwd
 FILES3=daily dhcptags.conf rc 
-DEFAULTFILES=rc.conf minix.rc.conf
+DEFAULTFILES=rc.conf minix.rc.conf 
 USRFILES=Makefile
 
 TOOL_PWD_MKDB= pwd_mkdb
