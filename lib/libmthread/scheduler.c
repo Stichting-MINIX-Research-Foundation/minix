@@ -151,8 +151,22 @@ mthread_thread_t thread; /* Thread to make runnable */
 PUBLIC int mthread_yield(void)
 {
 /* Defer further execution of the current thread and let another thread run. */
+  mthread_tcb_t *tcb;
+  mthread_thread_t t;
 
   mthread_init();	/* Make sure libmthread is initialized */
+
+  /* Detached threads cannot clean themselves up. This is a perfect moment to
+   * do it */
+  for (t = (mthread_thread_t) 0; need_reset > 0 && t < no_threads; t++) {
+	tcb = mthread_find_tcb(t);
+	if (tcb->m_state == MS_NEEDRESET) {
+		mthread_thread_reset(t);
+		used_threads--;
+		need_reset--;
+		mthread_queue_add(&free_threads, t);
+	}
+  }
 
   if (mthread_queue_isempty(&run_queue)) {	/* No point in yielding. */
   	return(-1);

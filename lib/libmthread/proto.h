@@ -3,6 +3,7 @@
 
 /* allocate.c */
 _PROTOTYPE( mthread_tcb_t * mthread_find_tcb, (mthread_thread_t thread)	);
+_PROTOTYPE( void mthread_thread_reset, (mthread_thread_t thread)	);
 
 /* attribute.c */
 _PROTOTYPE( void mthread_init_valid_attributes, (void)			);

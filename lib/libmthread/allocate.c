@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <minix/mthread.h>
 #include <string.h>
+#include <machine/param.h>
+#include <sys/mman.h>
 #include "global.h"
 #include "proto.h"
 
@@ -11,11 +13,14 @@ FORWARD _PROTOTYPE( void mthread_thread_init, (mthread_thread_t thread,
 					       void *(*proc)(void *),
 					       void *arg)		);
 
-FORWARD _PROTOTYPE( void mthread_thread_reset, (mthread_thread_t thread));
 FORWARD _PROTOTYPE( void mthread_thread_stop, (mthread_thread_t thread));
 FORWARD _PROTOTYPE( void mthread_trampoline, (void)			);
 
 PRIVATE int initialized = 0;
+#ifndef PGSHIFT
+# define PGSHIFT	12	/* XXX: temporarily for ACK */
+#endif
+#define MTHREAD_GUARDSIZE 	(1 << PGSHIFT) 	/* 1 page */
 
 PRIVATE struct __mthread_attr default_attr = {	MTHREAD_STACK_MIN,
 						NULL,
@@ -229,6 +234,7 @@ PUBLIC void mthread_init(void)
   if (!initialized) {
   	no_threads = 0;
   	used_threads = 0;
+	need_reset = 0;
   	running_main_thread = 1;/* mthread_init can only be called from the
   				 * main thread. Calling it from a thread will
   				 * not enter this clause.
@@ -385,14 +391,51 @@ void *arg;
   stacksize = tcb->m_attr.ma_stacksize;
   stackaddr = tcb->m_attr.ma_stackaddr;
 
-  if (stacksize == (size_t) 0)
+  if (stacksize == (size_t) 0) {
+	/* User provided too small a stack size. Forget about that stack and
+	 * allocate a new one ourselves.
+	 */
 	stacksize = (size_t) MTHREAD_STACK_MIN;
+	tcb->m_attr.ma_stackaddr = stackaddr = NULL;
+  }
 
   if (stackaddr == NULL) {
 	/* Allocate stack space */
-  	tcb->m_context.uc_stack.ss_sp = malloc(stacksize);
-	if (tcb->m_context.uc_stack.ss_sp == NULL)
+	size_t guarded_stacksize;
+	char *guard_start, *guard_end;
+
+	stacksize = round_page(stacksize + MTHREAD_GUARDSIZE);
+	stackaddr = minix_mmap(NULL, stacksize,
+			       PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+			       -1, 0);
+	if (stackaddr == NULL)
   		mthread_panic("Failed to allocate stack to thread");
+
+#if (_MINIX_CHIP == _CHIP_INTEL)
+	guard_start = stackaddr;
+	guard_end = stackaddr + MTHREAD_GUARDSIZE;
+	guarded_stacksize = stackaddr + stacksize - guard_end;
+
+	/* The stack will be used from (stackaddr+stacksize) to stackaddr. That
+	 * is, growing downwards. So the "top" of the stack may not grow into
+	 * stackaddr+TH_GUARDSIZE.
+	 *
+	 * +-------+ stackaddr + stacksize
+	 * |       |
+	 * |   |   |
+	 * |  \|/  |
+	 * |       |
+	 * +-------+ stackaddr + TH_GUARDSIZE
+	 * | GUARD |
+	 * +-------+ stackaddr
+	 */
+#else
+# error "Unsupported platform"
+#endif
+	stacksize = guarded_stacksize;
+	if (minix_munmap(guard_start, MTHREAD_GUARDSIZE) != 0)
+		mthread_panic("unable to unmap stack space for guard");
+	tcb->m_context.uc_stack.ss_sp = guard_end;
   } else
   	tcb->m_context.uc_stack.ss_sp = stackaddr;
 
@@ -406,7 +449,7 @@ void *arg;
 /*===========================================================================*
  *				mthread_thread_reset			     *
  *===========================================================================*/
-PRIVATE void mthread_thread_reset(thread)
+PUBLIC void mthread_thread_reset(thread)
 mthread_thread_t thread;
 {
 /* Reset the thread to its default values. Free the allocated stack space. */
@@ -423,8 +466,12 @@ mthread_thread_t thread;
   rt->m_result = NULL;
   rt->m_cond = NULL;
   if (rt->m_attr.ma_stackaddr == NULL) { /* We allocated stack space */
-	if (rt->m_context.uc_stack.ss_sp)
-		free(rt->m_context.uc_stack.ss_sp); /* Free allocated stack */
+	if (rt->m_context.uc_stack.ss_sp) {
+		if (minix_munmap(rt->m_context.uc_stack.ss_sp,
+				 rt->m_context.uc_stack.ss_size) != 0) {
+			mthread_panic("unable to unmap memory");
+		}
+	}
 	rt->m_context.uc_stack.ss_sp = NULL;
   }
   rt->m_context.uc_stack.ss_size = 0;
@@ -450,13 +497,18 @@ mthread_thread_t thread;
   	return;
   }
 
-  mthread_thread_reset(thread);
- 
   if (mthread_cond_destroy(&(stop_thread->m_exited)) != 0)
   	mthread_panic("Could not destroy condition at thread deallocation\n");
 
-  used_threads--;
-  mthread_queue_add(&free_threads, thread);
+  /* Can't deallocate ourselves (i.e., we're a detached thread) */
+  if (thread == current_thread) {
+	stop_thread->m_state = MS_NEEDRESET;
+	need_reset++;
+  } else {
+	mthread_thread_reset(thread);
+	used_threads--;
+	mthread_queue_add(&free_threads, thread);
+  }
 }
 
 
