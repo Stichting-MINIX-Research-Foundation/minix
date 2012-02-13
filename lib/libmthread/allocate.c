@@ -418,14 +418,14 @@ void *arg;
 
 	/* The stack will be used from (stackaddr+stacksize) to stackaddr. That
 	 * is, growing downwards. So the "top" of the stack may not grow into
-	 * stackaddr+TH_GUARDSIZE.
+	 * stackaddr+MTHREAD_GUARDSIZE.
 	 *
 	 * +-------+ stackaddr + stacksize
 	 * |       |
 	 * |   |   |
 	 * |  \|/  |
 	 * |       |
-	 * +-------+ stackaddr + TH_GUARDSIZE
+	 * +-------+ stackaddr + MTHREAD_GUARDSIZE
 	 * | GUARD |
 	 * +-------+ stackaddr
 	 */
