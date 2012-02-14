@@ -136,6 +136,14 @@ hdboot)
 		mv /boot/minix/.temp /boot/minix/"$target"
 		rm -f /boot/minix_latest
 		ln -s /boot/minix/"$target" /boot/minix_latest 
+
+		# XXX for compatibility with old boot
+		ln -f /boot/minix_latest/kernel /boot/kernel
+		for i in /boot/minix_latest/mod*
+		do
+			lname=`basename $i | sed 's/.*_//'`
+			ln -f "$i" "/boot/$lname"
+		done
 	else
 		# Install the new image.
 		echo "install $hdboot_t $root:/boot/$hdboot_t/$target"
