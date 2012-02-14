@@ -72,6 +72,6 @@ if [ -e $FSCK ]
 then	$FSCK -p $rootdevname
 fi
 /bin/newroot $bin_img"$rootdevname"
-/bin/mount -e -t procfs none /proc || echo "WARNING: couldn't mount procfs"
+/bin/mount -e -n -t procfs none /proc || echo "WARNING: couldn't mount procfs"
 
 exec /bin/sh /etc/rc "$@"
