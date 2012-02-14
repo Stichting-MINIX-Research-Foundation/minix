@@ -117,12 +117,6 @@ PUBLIC int main(void)
   register struct proc *rp;	/* process pointer */
   register int i, j;
   size_t argsz;			/* size of arguments passed to crtso on stack */
-#if !defined(__ELF__)
-  vir_clicks text_clicks, data_clicks, st_clicks;
-  phys_clicks text_base;
-  int hdrindex;			/* index to array of a.out headers */
-  struct exec e_hdr;		/* for a copy of an a.out header */
-#endif
 
   BKL_LOCK();
    /* Global value to test segment sanity. */
@@ -209,7 +203,6 @@ PUBLIC int main(void)
 	    /* Don't let the process run for now. */
             RTS_SET(rp, RTS_NO_PRIV | RTS_NO_QUANTUM);
 	}
-#if defined(__ELF__)
 	rp->p_memmap[T].mem_vir  = ABS2CLICK(ip->memmap.text_vaddr);
 	rp->p_memmap[T].mem_phys = ABS2CLICK(ip->memmap.text_paddr);
 	rp->p_memmap[T].mem_len  = ABS2CLICK(ip->memmap.text_bytes);
@@ -223,38 +216,6 @@ PUBLIC int main(void)
 					     ip->memmap.data_bytes +
 					     ip->memmap.stack_bytes);
 	rp->p_memmap[S].mem_len  = 0;
-#else
-	if (iskerneln(proc_nr)) {		/* part of the kernel? */ 
-		hdrindex = 0;		/* all use the first a.out header */
-	} else {
-		hdrindex = 1 + i-NR_TASKS;	/* system/user processes */
-	}
-
-	/* Architecture-specific way to find out aout header of this
-	 * boot process.
-	 */
-	arch_get_aout_headers(hdrindex, &e_hdr);
-
-	/* Convert addresses to clicks and build process memory map */
-	text_base = e_hdr.a_syms >> CLICK_SHIFT;
-	text_clicks = (vir_clicks) (CLICK_CEIL(e_hdr.a_text) >> CLICK_SHIFT);
-	data_clicks = (vir_clicks) (CLICK_CEIL(e_hdr.a_data
-		+ e_hdr.a_bss) >> CLICK_SHIFT);
-	st_clicks = (vir_clicks) (CLICK_CEIL(e_hdr.a_total) >> CLICK_SHIFT);
-	if (!(e_hdr.a_flags & A_SEP))
-	{
-		data_clicks = (vir_clicks) (CLICK_CEIL(e_hdr.a_text +
-			e_hdr.a_data + e_hdr.a_bss) >> CLICK_SHIFT);
-		text_clicks = 0;	   /* common I&D */
-	}
-	rp->p_memmap[T].mem_phys = text_base;
-	rp->p_memmap[T].mem_len  = text_clicks;
-	rp->p_memmap[D].mem_phys = text_base + text_clicks;
-	rp->p_memmap[D].mem_len  = data_clicks;
-	rp->p_memmap[S].mem_phys = text_base + text_clicks + st_clicks;
-	rp->p_memmap[S].mem_vir  = st_clicks;
-	rp->p_memmap[S].mem_len  = 0;
-#endif
 
 	/* Set initial register values.  The processor status word for tasks 
 	 * is different from that of other processes because tasks can

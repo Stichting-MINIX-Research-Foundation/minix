@@ -46,10 +46,6 @@ FORWARD _PROTOTYPE( void handle_vfs_reply, (void)			);
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
-#if !defined(__ELF__)
-extern int unmap_ok;
-#endif
-
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
@@ -301,19 +297,6 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 #endif  
 
  system_hz = sys_hz();
-
- /* Map out our own text and data. This is normally done in crtso.o
-  * but PM is an exception - we don't get to talk to VM so early on.
-  * That's why we override munmap() and munmap_text() in utility.c.
-  *
-  * _minix_unmapzero() is the same code in crtso.o that normally does
-  * it on startup. It's best that it's there as crtso.o knows exactly
-  * what the ranges are of the filler data.
-  */
-#if !defined(__ELF__)
-  unmap_ok = 1;
-  _minix_unmapzero();
-#endif
 
   /* Initialize user-space scheduling. */
   sched_init();

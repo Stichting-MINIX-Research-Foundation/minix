@@ -10,8 +10,6 @@
  */
 #include "inc.h"
 #include <fcntl.h>
-#include <a.out.h>
-#include <minix/crtso.h>
 #include "kernel/const.h"
 #include "kernel/type.h"
 #include "kernel/proc.h"
@@ -23,9 +21,6 @@ FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
     struct boot_image_sys **sp, struct boot_image_dev **dp)             );
 FORWARD _PROTOTYPE(void catch_boot_init_ready, (endpoint_t endpoint)	);
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr, int *status_ptr)	);
-
-/* Flag set when memory unmapping can be done. */
-EXTERN int unmap_ok;
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void)                      );
@@ -458,12 +453,6 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
       /* Clean up the old RS instance, the new instance will take over. */
       cleanup_service(rp);
-
-      /* Map out our own text and data. */
-      unmap_ok = 1;
-#if !defined(__ELF__)
-      _minix_unmapzero();
-#endif
 
       /* Ask VM to pin memory for the new RS instance. */
       if((s = vm_memctl(RS_PROC_NR, VM_RS_MEM_PIN)) != OK) {

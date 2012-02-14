@@ -196,9 +196,6 @@ _PROTOTYPE( int is_fpu, (void)						);
 _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( __dead void arch_shutdown, (int)				);
 _PROTOTYPE( __dead void arch_monitor, (void)				);
-#if !defined(__ELF__)
-_PROTOTYPE( void arch_get_aout_headers, (int i, struct exec *h)		);
-#endif
 _PROTOTYPE( void restore_user_context, (struct proc * p)                );
 _PROTOTYPE( void read_tsc, (u32_t *high, u32_t *low)    );
 _PROTOTYPE( int arch_init_profile_clock, (u32_t freq)			);

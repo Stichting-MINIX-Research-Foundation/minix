@@ -48,9 +48,6 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
   int nr_e, nr, r;
   int wipe_rnd_bin = -1;
   struct proc *p;
-#if !defined(__ELF__)
-  struct exec e_hdr;
-#endif
 
   /* Set source address and length based on request type. */
   switch (m_ptr->I_REQUEST) {
@@ -189,23 +186,6 @@ PUBLIC int do_getinfo(struct proc * caller, message * m_ptr)
         src_vir = (vir_bytes) &idl->p_cycles;
         break;
     }
-#if !defined(__ELF__)
-    case GET_AOUTHEADER: {
-        int hdrindex, index = m_ptr->I_VAL_LEN2_E;
-        if(index < 0 || index >= NR_BOOT_PROCS) {
-            return EINVAL;
-        }
-        if (iskerneln(_ENDPOINT_P(image[index].endpoint))) { 
-            hdrindex = 0;
-        } else {
-            hdrindex = 1 + index-NR_TASKS;
-        }
-        arch_get_aout_headers(hdrindex, &e_hdr);
-        length = sizeof(e_hdr);
-        src_vir = (vir_bytes) &e_hdr;
-        break;
-    }
-#endif
     default:
 	printf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
         return(EINVAL);

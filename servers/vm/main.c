@@ -61,8 +61,6 @@ struct {
 FORWARD _PROTOTYPE(int map_service, (struct rprocpub *rpub));
 FORWARD _PROTOTYPE(int vm_acl_ok, (endpoint_t caller, int call));
 
-extern int unmap_ok;
-
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
@@ -378,12 +376,6 @@ PRIVATE int sef_cb_init_fresh(int type, sef_init_info_t *info)
 
 	/* Initialize the structures for queryexit */
 	init_query_exit();
-
-	/* Unmap our own low pages. */
-	unmap_ok = 1;
-#if !defined(__ELF__)
-	_minix_unmapzero();
-#endif
 
 	/* Map all the services in the boot image. */
 	if((s = sys_safecopyfrom(RS_PROC_NR, info->rproctab_gid, 0,

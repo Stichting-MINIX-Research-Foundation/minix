@@ -2,7 +2,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	add_route arp ash at autil awk \
+SUBDIR=	add_route arp ash at awk \
 	backup badblocks banner basename \
 	btrace cal calendar \
 	cat cawf cd  cdprobe checkhier \

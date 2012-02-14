@@ -149,7 +149,3 @@ message *m_ptr;
 
   rmp->mp_flags |= VFS_CALL;
 }
-
-#if !defined(__ELF__)
-int unmap_ok = 0;
-#endif

@@ -94,7 +94,7 @@ hdboot: image
 	done
 	cp kernel /boot/minix/.temp/
 	[ -d /boot/image ] && ln -f /boot/minix/.temp/kernel /boot/kernel || true
-	exec sh mkboot $@ minix
+	sh mkboot $@ minix
 	exec sh update_bootcfg.sh
 
 fdboot:	image

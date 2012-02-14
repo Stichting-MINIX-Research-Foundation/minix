@@ -19,9 +19,6 @@ Contains the utility programs; see also \fB/sbin/\fP, \fB/usr/bin/\fP, \fB/usr/s
 	  ...
 .fi
 .TP
-.I /boot/
-Contains images and files which are needed during the boot process. See \fBmonitor\fP(8).
-.TP
 .I /dev/
 Contains device, block, or other special files. See
 .BR mknod(2).	
@@ -29,7 +26,7 @@ Contains device, block, or other special files. See
 .nf
 	  \fBconsole\fP computer's console device, \fBtty\fP(4)
 	  \fBfd*\fP     floppy disk, \fBfd\fP(4)
-	  \fBhd*\fP     hard disk, \fBhd\fP(4)
+	  \fBc?d*\fP    hard disk, \fBhd\fP(4)
 	  \fBnull\fP    accetps and discards all input; produces no output
 	  \fBtty*\fP    terminal device, \fBtty\fP(4)
 	  \fBzero\fP    the zero device; produces null bytes
@@ -121,7 +118,6 @@ Contains source and majority of system utilities and files
 
 	  \fIbin/\fP	Common user programs and utilities.
 
-		  	\fBcc\fP     	MINIX 3 c compiler, \fBcc\fP(1)
 		  	\fBman\fP  	show manual pages, \fBman\fP(1)
 		  	...
 
@@ -146,19 +142,7 @@ Contains source and majority of system utilities and files
    		 \fBcawf/\fP	text formatter support files, \fBcawf\fP(1)
    		 \fBcrontab\fP	cron jobs, \fBcron\fP(8)
    		 \fBdict/\fP	word lists
-   		 \fBlibc.a\fP	C library (Minix-8086 only), \fBcc\fP(1)
-   		 \fBarch\fP    	per architecture compiler binaries and 
-    				 libaries, \fBcc\fP(1)
-   		 ...
-
-  	\fIlocal/\fP
-   		 Contains programs which are related to local softwares.
-    
-  		 \fBbin/\fP  	utilities for locally installed programs
-   		 \fBetc/\fP  	local configuration and data files
-   		 \fBrc\fP   	local system startup
-   		 \fBman/\fP  	manual pages associated with local programs
-   		 \fBsrc/\fP  	local sources
+   		 \fBlibc.a\fP	C library
    		 ...
 
   	 \fIman/\fP	Contains manual pages in subdirectories according to 
@@ -183,6 +167,14 @@ Contains source and majority of system utilities and files
 	    	\fBboot\fP  	bootstrap code, \fBinstallboot\fP(8)
 	    	...
 
+  	\fIpkg/\fP
+   		 Contains programs which are related to local softwares.
+    
+  		 \fBbin/\fP  	utilities for locally installed programs
+   		 \fBetc/\fP  	local configuration and data files
+   		 \fBman/\fP  	manual pages associated with local programs
+   		 ...
+
      	 \fIpreserve/\fP
 	   	Contains saved elvis editor buffers. 
 	    	See \fBelvprsv\fP(8), \fBelvrec\fP(1).
@@ -206,12 +198,10 @@ Contains source and majority of system utilities and files
 			    	utilities and boot files
 	    	\fBbenchmarks/\fP
 			    	test programs for system and graphic tests
-	    	\fBboot/\fP	source files for boot monitor package
 	    	\fBcommands/\fP	source file for command utilities
 	    	\fBcommon/\fP	
 			\fBinclude/\fP	includes common to NetBSD and Minix
 			\fBlib/\fP	lib files common to NetBSD kernel and libc
-	    	\fBcrclist\fP	CRC checksums of the source tree, \fBsrccrc\fP(8)
 	    	\fBdocs/\fP	documents related to recent source changes
 	    	\fBdrivers/\fP	source files for various device drivers
 	    	\fBetc/\fP  	source for files in /etc/	

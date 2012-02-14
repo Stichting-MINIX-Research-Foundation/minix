@@ -1,5 +1,4 @@
-/*
- * This file is part of the lowest layer of the MINIX kernel.  (The other part 
+/* This file is part of the lowest layer of the MINIX kernel.  (The other part 
  * is "proc.c".)  The lowest layer does process switching and message handling. 
  * Furthermore it contains the assembler startup code for Minix and the 32-bit 
  * interrupt handlers.  It cooperates with the code in "start.c" to set up a  
@@ -83,23 +82,8 @@ IMPORT(multiboot_init)
 MINIX:
 /* this is the entry point for the MINIX kernel */
 
-#if defined(__ELF__)
 	jmp _C_LABEL(multiboot_init)
-#endif
 
-	jmp	over_flags	/* skip over the next few bytes */
-.short	CLICK_SHIFT	/* for the monitor: memory granularity */
-
-flags:
-/* boot monitor flags:
- *	call in 386 mode, make bss, make stack, 
- *	load high, don't patch, will return, 
- *	uses generic INT, memory vector, 
- *	new boot code return 
- */
-.short	0x03FD	
-	nop	/* extra byte to sync up disassembler */
-	
 /* Multiboot header here*/
 
 .balign 8
@@ -124,11 +108,6 @@ multiboot_height:
 	.long MULTIBOOT_CONSOLE_LINES
 multiboot_depth:
 	.long 0
-
-over_flags:
-/* Set up a C stack frame on the monitor stack.  (The monitor sets cs and ds */
-/* right.  The ss descriptor still references the monitor data segment.) */
-	movzwl	%sp, %esp	/* monitor stack is a 16 bit stack */
 
 .globl kernel_init
 kernel_init: /* after pre-init*/
@@ -165,9 +144,6 @@ copygdt:
 	mov	8(%ebp), %ebx	/* boot parameters offset */
 	mov	12(%ebp), %edx	/* boot parameters length */
 	mov	16(%ebp), %eax	/* address of a.out headers */
-#if !defined(__ELF__)
-	movl	%eax, _C_LABEL(aout)
-#endif
 	mov	%ds, %ax	/* kernel data */
 	mov	%ax, %es
 	mov	%ax, %fs
