@@ -1,4 +1,10 @@
 20120214:
+	Compiling everything with clang (previous entry) depends on a
+	relatively new clang package. Please make sure you have at
+	least clang-2.9nb3 installed. The symptom of an old clang being 
+	used is an assert(inited) firing, e.g. after rebuilding make.
+
+20120214:
 	Full switch to clang/ELF. ack is no longer supported.
 
 	clang is the ELF-generating compiler in the base system, gcc is
