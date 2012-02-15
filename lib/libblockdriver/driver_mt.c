@@ -233,6 +233,8 @@ PRIVATE void master_create_worker(worker_t *wp, worker_id_t worker_id,
   r = mthread_create(&wp->mthread, &attr, worker_thread, (void *) wp);
   if (r != 0)
 	panic("blockdriver_mt: could not start thread %d (%d)", worker_id, r);
+
+  mthread_attr_destroy(&attr);
 }
 
 /*===========================================================================*
