@@ -128,7 +128,7 @@ hdboot)
 		[ -d /boot/minix/.temp ] || exit 1
 		mv /boot/minix/.temp /boot/minix/"$target"
 		rm -f /boot/minix_latest
-		ln -s /boot/minix/"$target" /boot/minix_latest 
+		ln -s minix/"$target" /boot/minix_latest 
 	else
 		# Install the new image.
 		echo "install $hdboot_t $root:/boot/$hdboot_t/$target"

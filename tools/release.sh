@@ -241,6 +241,7 @@ mkdir -p $RELEASEDIR/usr/share/mk
 chmod 755 $RELEASEDIR/usr/share/mk
 cp $RELEASEDIR/usr/src/share/mk/* $RELEASEDIR/usr/share/mk/
 chown -R root $RELEASEDIR/usr/share/mk
+rm -f $RELEASEDIR/usr/$SRC/tools/revision
 cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
 
 echo " * Make hierarchy"
@@ -255,6 +256,8 @@ if [ "$CUSTOM_PACKAGES" ]
 then	echo $PKG_ADD_URL >$RELEASEDIR/usr/pkg/etc/pkgin/repositories.conf
 fi
 
+echo " * Resetting timestamps"
+find $RELEASEDIR | xargs touch
 echo " * Chroot build"
 chroot $RELEASEDIR "PATH=/$XBIN:/usr/pkg/bin MAKEMAP=$MAKEMAP sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 echo " * Chroot build done"
@@ -263,9 +266,6 @@ rm -rf $RELEASEDIR/$XBIN
 # The build process leaves some file in $SRC as bin.
 chown -R root $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
-
-echo " * Resetting timestamps"
-find $RELEASEDIR | xargs touch
 
 echo $version_pretty, SVN revision $REVISION, generated `date` >$RELEASEDIR/etc/version
 rm -rf $RELEASEDIR/tmp/*
@@ -373,7 +373,7 @@ if [ "$USB" -ne 0 ]; then
 	mv $bootimage $IMG
 else
 	cp $RELEASEDIR/usr/mdec/boot_monitor $CDFILES/boot
-	cp -rf $RELEASEDIR/boot/minix_default/* $CDFILES/
+	cp -rf $RELEASEDIR/boot/minix_latest/* $CDFILES/
 	writeisofs -s0x0 -l MINIX -B $bootimage $boottype $CDFILES $IMG || exit 1
 
 	if [ "$HDEMU" -eq 0 ]

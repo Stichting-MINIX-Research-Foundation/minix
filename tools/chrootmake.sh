@@ -7,23 +7,11 @@ if [ $# -gt 0 ]
 then	make $@
 	exit $?
 fi
-
 make world
+cp /usr/mdec/boot_monitor /
+cp /boot/minix_latest/* /boot/minix_default/
 
-cd tools 
-rm revision
-make install
-
-make cleandepend clean depend image
-rm revision
-rm -rf /boot/minix/* # on old systems might not be present
-make install
-cp ../sys/arch/i386/stand/boot/biosboot/boot_monitor /
-cp -rf /boot/minix/* /boot/minix_default
-
-cd /usr/src 
 if [ $MAKEMAP -ne 0 ]; then
 	find . -type f -perm 755 | xargs nm -n 2> /dev/null > symbols.txt
 fi
-make clean
-make cleandepend
+make clean cleandepend
