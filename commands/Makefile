@@ -33,7 +33,7 @@ SUBDIR=	add_route arp ash at autil awk \
 	unstack update uud uue version vol wc \
 	whereis which who write writeisofs fetch \
 	xargs yacc yes zdump zmodem pkgin_cd \
-	mktemp worldstone
+	mktemp worldstone updateboot
 
 .if ${ARCH} == "i386"
 SUBDIR+=	atnormalize dosread fdisk loadfont \
