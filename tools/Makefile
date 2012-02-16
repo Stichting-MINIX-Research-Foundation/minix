@@ -98,7 +98,7 @@ hdboot: image
 	strip -s /boot/minix/.temp/kernel
 	[ -d /boot/image ] && ln -f /boot/minix/.temp/kernel /boot/kernel || true
 	sh mkboot $@ minix
-	exec sh update_bootcfg.sh
+	sh ../commands/update_bootcfg/update_bootcfg.sh
 
 fdboot:	image
 	exec su root mkboot $@
