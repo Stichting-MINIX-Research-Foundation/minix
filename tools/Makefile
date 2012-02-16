@@ -51,9 +51,7 @@ usage:
 all: services image
 
 image: includes services
-	cp ../kernel/kernel kernel
 	mkimage $(PROGRAMS)
-	strip -s ${KERNEL} ${PROGRAMS}
 
 # rebuild the program or system libraries
 includes:
@@ -92,7 +90,8 @@ hdboot: image
 	cp $$i $$newname;				\
 	[ -d /boot/image ] && ln -f $$newname /boot/`basename $$i` || true ;		\
 	done
-	cp kernel /boot/minix/.temp/
+	cp ../kernel/kernel /boot/minix/.temp/
+	strip -s /boot/minix/.temp/*
 	[ -d /boot/image ] && ln -f /boot/minix/.temp/kernel /boot/kernel || true
 	sh mkboot $@ minix
 	exec sh update_bootcfg.sh
