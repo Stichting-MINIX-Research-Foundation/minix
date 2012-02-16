@@ -11,7 +11,6 @@ MAN=	add_route.8 backup.8 badblocks.8 boot.8 btrace.8 \
 	setup.8 shutdown.8 slip.8 srccrc.8 sync.8 syslogd.8 tcpd.8 \
 	unix.8 update.8 usage.8 
 
-MLINKS += ftpd.8 in.ftpd.8
 MLINKS += httpd.8 in.httpd.8
 
 .include <bsd.man.mk>
