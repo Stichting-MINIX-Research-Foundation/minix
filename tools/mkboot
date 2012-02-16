@@ -126,6 +126,7 @@ hdboot)
 	if [ "$hdboot_t" = "minix" ]
 	then
 		[ -d /boot/minix/.temp ] || exit 1
+		rm -rf /boot/minix/"$target"/
 		mv /boot/minix/.temp /boot/minix/"$target"
 		rm -f /boot/minix_latest
 		ln -s minix/"$target" /boot/minix_latest 
