@@ -1,3 +1,5 @@
+external/public-domain/xz	src/external/public-domain/xz
+usr.bin/gzip		src/usr.bin/gzip
 bin/date		src/bin/date
 common/lib/libprop		src/common/lib/libprop
 include/ufs		src/sys/ufs

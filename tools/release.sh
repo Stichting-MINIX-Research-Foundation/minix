@@ -374,6 +374,7 @@ if [ "$USB" -ne 0 ]; then
 else
 	cp $RELEASEDIR/usr/mdec/boot_monitor $CDFILES/boot
 	cp -rf $RELEASEDIR/boot/minix_latest/* $CDFILES/
+	gzip -d $CDFILES/*gz
 	writeisofs -s0x0 -l MINIX -B $bootimage $boottype $CDFILES $IMG || exit 1
 
 	if [ "$HDEMU" -eq 0 ]

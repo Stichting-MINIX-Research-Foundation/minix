@@ -52,6 +52,7 @@
 755  root    operator  /usr/include/prop
 755  root    operator  /usr/include/ddekit
 755  root    operator  /usr/include/ddekit/minix
+755  root    operator  /usr/include/lzma
 755  root    operator  /usr/include/minix
 755  root    operator  /usr/include/net
 755  root    operator  /usr/include/net/gen

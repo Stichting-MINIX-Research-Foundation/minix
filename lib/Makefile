@@ -7,4 +7,6 @@ SUBDIR= csu libcompat_minix libc libblockdriver libchardriver     \
 	libddekit libminixfs libbdev libelf libminc libcrypt libterminfo \
 	libcurses libvassert libutil libpuffs librefuse libbz2 libarchive libprop
 
+SUBDIR+=        ../external/public-domain/xz/lib
+
 .include <bsd.subdir.mk>
