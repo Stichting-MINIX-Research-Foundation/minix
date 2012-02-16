@@ -39,28 +39,6 @@ if cmp -s x1 x2; then : ; else echo Error on cat test 1; fi
 cat <y >z
 if cmp -s y z; then : ; else echo Error on cat test 2; fi
 
-#Test aal
-cat passwd >p
-cp passwd q
-if cmp -s p q; then : ; else echo Error on aal test 1; fi
-date >r
-aal r x.a p q r 2>/dev/null
-aal r x.a /bin/cp
-aal r x.a /bin/cat
-rm p q
-mv r R
-aal x x.a
-if cmp -s p /etc/passwd; then : ; else Error on aal test 2; fi
-if cmp -s q /etc/passwd; then : ; else Error on aal test 3; fi
-if cmp -s r R; then : ; else Error on aal test 4; fi
-if cmp -s cp /bin/cp; then : ; else Error on aal test 5; fi
-if cmp -s cat /bin/cat; then : ; else Error on aal test 6; fi
-rm cp cat p q r
-aal d x.a r >/dev/null
-aal x x.a
-if test -r r; then echo Error on aal test 7; fi
-rm -rf p q r R
-
 #Test basename
 if test `basename /usr/ast/foo.c .c` != 'foo'
    then echo Error on basename test 1

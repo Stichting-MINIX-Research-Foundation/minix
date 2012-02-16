@@ -6,7 +6,7 @@ PATH=:/bin:/usr/bin:/usr/pkg/bin
 export PATH
 
 # CC="exec cc -wo -F"		# nonstandard flags for ACK :-(
-CC=cc
+CC=clang
 
 ARCH=`arch`
 
