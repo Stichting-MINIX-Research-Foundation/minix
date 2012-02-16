@@ -8,7 +8,6 @@ LDADD+=	-lsys -lexec
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 8125k
 
 CPPFLAGS+=	-I${MINIXSRCDIR}
 

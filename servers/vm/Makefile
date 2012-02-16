@@ -12,7 +12,6 @@ LDADD+=	-lsys
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 128k
 
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${ARCH}
 CPPFLAGS+=	-I${MINIXSRCDIR}

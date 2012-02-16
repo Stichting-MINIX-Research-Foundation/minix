@@ -7,7 +7,6 @@ SRCS=	init.c
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 64k
 
 LDFLAGS+= -Wl,--section-start=.init=0x0
 

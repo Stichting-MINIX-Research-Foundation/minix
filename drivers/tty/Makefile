@@ -9,7 +9,6 @@ LDADD+=	-lsys -ltimers
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 16k
 
 SUBDIR= keymaps
 

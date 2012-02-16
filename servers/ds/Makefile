@@ -8,6 +8,5 @@ LDADD+=	-lsys
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 16k
 
 .include <minix.bootprog.mk>

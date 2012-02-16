@@ -11,6 +11,5 @@ LDADD+= -lminixfs -lbdev -lsys
 MAN=
 
 BINDIR?= /sbin
-INSTALLFLAGS+= -S 128k
 
 .include <minix.service.mk>

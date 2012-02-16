@@ -8,6 +8,5 @@ LDADD+=	-lchardriver -lsys
 MAN=
 
 BINDIR?= /usr/sbin
-INSTALLFLAGS+=	-S 32k
 
 .include <minix.bootprog.mk>
