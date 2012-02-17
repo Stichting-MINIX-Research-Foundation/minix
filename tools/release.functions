@@ -33,15 +33,25 @@ retrieve()
 {
 	dir=$1
 	list=`pwd`/$2
-	url=${PACKAGEURL}
-	(	
-		cd $dir || exit 1
-		echo  " * Updating $dir
-   from $url
-   with $list"
-		files=`awk <$list '{ print "'$url'/" $1 ".tgz" }'`
-		fetch -r $files || true
+	URLS=""
+	echo "Retrieving packages form $PACKAGEURL"
+	(
+	cd $dir || exit 1
+	SUMMARY=pkg_summary
+	rm -f pkg_summary* || true
+	fetch $PACKAGEURL/$SUMMARY.bz2
+	bzip2 -d $SUMMARY.bz2
+	cat $list | while read name
+	do	pkgname="`fgrep PKGNAME=${name} $SUMMARY | sed 's/PKGNAME=//g'`"
+		if [ `echo $pkgname | wc -w` -ne 1 ]
+		then	echo " *** Could not resolve $name (not found or too many matches: $pkgname) ***"
+		else	echo Getting $pkgname
+			fetch -r ${PACKAGEURL}/${pkgname}.tgz
+		fi
+		echo -n "."
+	done
 	)
+	echo done
 }
 
 cd_root_changes()
@@ -135,17 +145,18 @@ copy_local_packages()
 		echo "" >$PACKAGEDIR/All/$index
 	
 	        echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
-	        for p in `cat $PACKAGELIST`
-	        do	if [ -f $PACKAGEDIR/All/$p.tgz ]
+	        for pkgprefix in `cat $PACKAGELIST`
+	        do	realfn="`echo $PACKAGEDIR/All/${pkgprefix}*.tgz`"
+			if [ -f "$realfn" ]
 	               then
 			  # Copy package and create package's index
 			  (
+			      p="`basename $realfn`"
 			      cd $PACKAGEDIR/All
-			      cp $p.tgz $RELEASEPACKAGE/
+			      cp $p $RELEASEPACKAGE/
 	
-			      f=$p.tgz
-			      indexname=$indexpath/$f.$index
-			      pkg_info -X $f >$indexname
+			      indexname=$indexpath/$p.$index
+			      pkg_info -X $p >$indexname
 	
 			      if [ ! -f $indexname ]
 			      then	echo Missing $indexname.
@@ -161,7 +172,7 @@ copy_local_packages()
 			      cat $indexname >>$PACKAGEDIR/All/$index
 			  )
 	               else
-	                  echo "Can't copy $PACKAGEDIR/$p.tgz. Missing."
+	                  echo "Can't find $pkgprefix Missing."
 	               fi
 	        done
 	
