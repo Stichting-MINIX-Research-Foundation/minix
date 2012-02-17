@@ -110,6 +110,7 @@ _PROTOTYPE( int pt_map_in_range, (struct vmproc *src_vmp, struct vmproc *dst_vmp
 _PROTOTYPE( int pt_ptmap, (struct vmproc *src_vmp, struct vmproc *dst_vmp) );
 _PROTOTYPE( int pt_ptalloc_in_range, (pt_t *pt, vir_bytes start, vir_bytes end,
         u32_t flags, int verify));
+_PROTOTYPE( void pt_clearmapcache, (void)                               );
 _PROTOTYPE( int pt_writemap, (struct vmproc * vmp, pt_t *pt, vir_bytes v,
 			phys_bytes physaddr, size_t bytes, u32_t flags,
 			u32_t writemapflags));

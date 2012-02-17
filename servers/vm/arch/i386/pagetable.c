@@ -642,7 +642,7 @@ PUBLIC int pt_ptmap(struct vmproc *src_vmp, struct vmproc *dst_vmp)
 	return OK;
 }
 
-PUBLIC int pt_clearmapcache(void)
+PUBLIC void pt_clearmapcache(void)
 {
 	int f;
 	/* Make sure kernel will invalidate tlb when using current

@@ -13,7 +13,6 @@ PUBLIC int fs_readsuper() {
   cp_grant_id_t label_gid;
   size_t label_len;
   int r = OK;
-  endpoint_t driver_e;
   int readonly;
 
   fs_dev    = fs_m_in.REQ_DEV;
