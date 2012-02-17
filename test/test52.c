@@ -149,12 +149,6 @@ int main(void)
   subtest = 1;
 
   start(52);
-#ifdef __GNUC__
-	printf("(GCC) ");
-#else
-	printf("(ACK) ");
-#endif
-  fflush(stdout);
 
   if (pipe(pipefdc) == -1) err(1);
   if (pipe(pipefdp) == -1) err(2);

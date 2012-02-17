@@ -54,22 +54,14 @@
 int main(int argc, char **argv)
 {
 	start(45);
-#ifdef __LONG_LONG_SUPPORTED
-	printf("(GCC) ");
-#else
-	printf("(ACK) ");
-#endif
-	fflush(stdout);
 
 	/* run long/unsigned long tests */
 	test_strtol();
 	test_strtoul();
 
-	/* run long long/unsigned long long tests (GCC only) */
-#ifdef __LONG_LONG_SUPPORTED
+	/* run long long/unsigned long long tests */
 	test_strtoll();
 	test_strtoull();
-#endif /* defined(__LONG_LONG_SUPPORTED) */
 
 	quit();
 	return -1; /* never happens */

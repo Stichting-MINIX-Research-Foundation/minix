@@ -25,12 +25,6 @@
 int main(void)
 {
 	start(49);
-#ifdef __LONG_LONG_SUPPORTED
-	printf("(GCC) ");
-#else
-	printf("(ACK) ");
-#endif
-	fflush(stdout);
 
 	/* test integer sizes */
 	if (sizeof(int8_t) != 1) ERR;

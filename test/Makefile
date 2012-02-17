@@ -1,41 +1,25 @@
 # Makefile for the tests.
 
-GCC?=gcc
 CFLAGS= -O0 -D_MINIX -D_POSIX_SOURCE  -g  -Wall -Werror
 CFLAGS+= -D_NETBSD_SOURCE -fno-builtin
 LIBS+= -lm -lcompat_minix
-CFLAGS-GCC= $(CFLAGS) -Wall  -D_NETBSD_SOURCE 
-CFLAGS-GCCFPU= $(CFLAGS) -Wall -mhard-float 
-CFLAGS-GCCFPU= $(CFLAGS-GCC) -W -mhard-float
 
-OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
+OBJ=	       test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test10        test12 test13 test14 test15 test16 test17 test18 test19 \
-	       test21 test22 test23        test25 test26 test27 test28 test29 \
-	test30 test31 test32        test34 test35 test36 test37 test38 \
-	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
-	test42 test45 test47 test49 test50 test51 test52 test53 \
-	test54 test58 t60a t60b
+	test20 test21 test22 test23 test24 test25 test26 test27 test28 test29 \
+	test30 test31 test32        test34 test35 test36 test37 test38 test39 \
+	test40 test41 test42               test45        test47 test48 test49 \
+	test50               test53 test54 test55               test58        \
+	t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b \
 
-BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43 test44 test46 test56 test60 test61
-GCCOBJ=  test45-gcc test48 test49-gcc test55
-GCCFPUOBJ= test51-gcc test52-gcc
-OTHEROBJ= test57 test59
+OTHEROBJ= test51 test52 test57 test59
 
-all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(ROOTOBJ) $(OTHEROBJ) depend
+all:	$(OBJ) $(ROOTOBJ) $(OTHEROBJ) depend
 	chmod 755 *.sh run
 
 $(OBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c $(LIBS)
-
-$(BIGOBJ):
-	$(CC) $(CFLAGS) -o $@ $@.c $(LIBS)
-
-$(GCCOBJ):
-	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ ${@:S/-gcc//}.c; fi
-
-$(GCCFPUOBJ):
-	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCCFPU) -o $@ ${@:S/-gcc//}.c -lm; fi
 
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c $(LIBS)
@@ -45,13 +29,12 @@ $(ROOTOBJ):
 depend: .gitignore
 
 .gitignore: Makefile
-	echo $(OBJ) $(BIGOBJ) $(ROOTOBJ) $(GCCOBJ) $(GCCFPUOBJ) $(OTHEROBJ) | \
-	tr ' ' '\n' >.gitignore
+	echo $(OBJ) $(OTHEROBJ) $(ROOTOBJ) | tr ' ' '\n' >.gitignore
 
 clean:	
 	$(MAKE) -C select clean
-	-rm -rf *.o *.s *.bak test? test?? test??-gcc t10a t11a t11b \
-		t40a t40b t40c t40d t40e t40f t43 \
+	-rm -rf *.o *.s *.bak test? test?? t10a t11a t11b \
+		t40a t40b t40c t40d t40e t40f \
 		t60a t60b \
 		DIR*
 
@@ -109,22 +92,20 @@ test42: test42.c
 test43: test43.c
 test44: test44.c
 test45: test45.c test45.h
-test45-gcc: test45.c test45.h
 test46: test46.c
 test47: test47.c
 test48: test48.c
 test49: test49.c
-test49-gcc: test49.c
 test50: test50.c
 test51: test51.c
-test51-gcc: test51.c
+	$(CC) $(CFLAGS) -mhard-float -o $@ $@.c -lm; fi
 test52: test52.c
-test52-gcc: test52.c
+	$(CC) $(CFLAGS) -mhard-float -o $@ $@.c -lm; fi
 test54: test54.c
 test55: test55.c
 test56: test56.c
 test57: test57.c test57loop.S
-	if which $(GCC) >/dev/null 2>&1; then $(GCC) $(CFLAGS-GCC) -o $@ test57.c test57loop.S; fi
+	$(CC) $(CFLAGS) -o $@ $@.c test57loop.S;
 test58: test58.c
 test59: test59.c
 	$(CC) $(CFLAGS) -o $@ $@.c -lmthread 

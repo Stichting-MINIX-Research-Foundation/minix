@@ -190,12 +190,6 @@ void verify_main_reenter(void)
 int main(void)
 {
   start(51);
-#ifdef __GNUC__
-  printf("(GCC) ");
-#else
-  printf("(ACK) ");
-#endif
-  fflush(stdout);
 
   atexit(verify_main_reenter);
 
