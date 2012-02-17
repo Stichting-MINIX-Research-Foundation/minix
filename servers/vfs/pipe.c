@@ -30,7 +30,6 @@
 #include "scratchpad.h"
 #include "dmap.h"
 #include "param.h"
-#include "select.h"
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"

@@ -14,7 +14,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "select.h"
 #include "file.h"
 #include "fproc.h"
 #include "dmap.h"
@@ -211,15 +210,13 @@ PUBLIC int do_select(void)
 	/* Test filp for select operations if not already done so. e.g.,
 	 * processes sharing a filp and both doing a select on that filp. */
 	f = se->filps[fd];
-	select_lock_filp(f, f->filp_select_ops | ops);
 	if ((f->filp_select_ops & ops) != ops) {
 		int wantops;
 
 		wantops = (f->filp_select_ops |= ops);
 		r = do_select_request(se, fd, &wantops);
-		unlock_filp(f);
-		if (r != SEL_OK) {
-			if (r == SEL_DEFERRED) continue;
+		if (r != OK) {
+			if (r == SUSPEND) continue;
 			else break; /* Error or bogus return code; abort */
 		}
 
@@ -228,8 +225,6 @@ PUBLIC int do_select(void)
 		 * Either way, we might have a result and we need to store them
 		 * in the select table entry. */
 		if (wantops & ops) ops2tab(wantops, fd, se);
-	} else {
-		unlock_filp(f);
 	}
   }
 
@@ -358,7 +353,7 @@ PRIVATE int select_request_async(struct filp *f, int *ops, int block)
 		if (!(rops & (SEL_RD|SEL_WR|SEL_ERR))) {
 			/* Nothing left to do */
 			*ops = 0;
-			return(SEL_OK);
+			return(OK);
 		}
 	}
   }
@@ -372,19 +367,19 @@ PRIVATE int select_request_async(struct filp *f, int *ops, int block)
   }
 
   if (f->filp_select_flags & FSF_BUSY)
-	return(SEL_DEFERRED);
+	return(SUSPEND);
 
   major = major(f->filp_vno->v_sdev);
-  if (major < 0 || major >= NR_DEVICES) return(SEL_ERROR);
+  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
   dp = &dmap[major];
   if (dp->dmap_sel_filp)
-	return(SEL_DEFERRED);
+	return(SUSPEND);
 
   f->filp_select_flags &= ~FSF_UPDATE;
   r = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
 	     cvu64(0), 0, 0, FALSE);
   if (r < 0 && r != SUSPEND)
-	return(SEL_ERROR);
+	return(r);
 
   if (r != SUSPEND)
 	panic("select_request_asynch: expected SUSPEND got: %d", r);
@@ -392,7 +387,7 @@ PRIVATE int select_request_async(struct filp *f, int *ops, int block)
   dp->dmap_sel_filp = f;
   f->filp_select_flags |= FSF_BUSY;
 
-  return(SEL_DEFERRED);
+  return(SUSPEND);
 }
 
 /*===========================================================================*
@@ -402,7 +397,7 @@ PRIVATE int select_request_file(struct filp *UNUSED(f), int *UNUSED(ops),
   int UNUSED(block))
 {
   /* Files are always ready, so output *ops is input *ops */
-  return(SEL_OK);
+  return(OK);
 }
 
 /*===========================================================================*
@@ -413,7 +408,7 @@ PRIVATE int select_request_major(struct filp *f, int *ops, int block)
   int major, r;
 
   major = major(f->filp_vno->v_sdev);
-  if (major < 0 || major >= NR_DEVICES) return(SEL_ERROR);
+  if (major < 0 || major >= NR_DEVICES) return(ENXIO);
 
   if (dmap[major].dmap_style == STYLE_DEVA ||
       dmap[major].dmap_style == STYLE_CLONE_A)
@@ -436,9 +431,9 @@ PRIVATE int select_request_sync(struct filp *f, int *ops, int block)
   *ops = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
 		cvu64(0), 0, 0, FALSE);
   if (*ops < 0)
-	return(SEL_ERROR);
+	return(*ops);
 
-  return(SEL_OK);
+  return(OK);
 }
 
 /*===========================================================================*
@@ -486,7 +481,7 @@ PRIVATE int select_request_pipe(struct filp *f, int *ops, int block)
   if (!*ops && block)
 	f->filp_pipe_select_ops |= orig_ops;
 
-  return(SEL_OK);
+  return(OK);
 }
 
 /*===========================================================================*
@@ -829,7 +824,7 @@ int status;
 		/* there may be operations pending */
 		f->filp_select_ops &= ~status;
 
-	/* Tell filp owners about result unless we need to wait longer */
+	/* Record new filp status */
 	if (!(status == 0 && (f->filp_select_flags & FSF_BLOCKED))) {
 		if (status > 0) {	/* operations ready */
 			if (status & SEL_RD)
@@ -842,12 +837,10 @@ int status;
 			/* Always unblock upon error */
 			f->filp_select_flags &= ~FSF_BLOCKED;
 		}
-
-		unlock_filp(f);
-		filp_status(f, status); /* Tell filp owners about the results */
-	} else {
-		unlock_filp(f);
 	}
+
+	unlock_filp(f);
+	filp_status(f, status); /* Tell filp owners about the results */
   }
 
   select_restart_filps();
@@ -956,13 +949,11 @@ PRIVATE void select_restart_filps()
 			continue;			  /* 'update' state */
 
 		wantops = ops = f->filp_select_ops;
-		select_lock_filp(f, ops);
 		vp = f->filp_vno;
 		assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL);
 		r = do_select_request(se, fd, &wantops);
-		unlock_filp(f);
-		if (r != SEL_OK) {
-			if (r == SEL_DEFERRED) continue;
+		if (r != OK) {
+			if (r == SUSPEND) continue;
 			else break; /* Error or bogus return code; abort */
 		}
 		if (wantops & ops) ops2tab(wantops, fd, se);
@@ -985,8 +976,10 @@ int *ops;
 
   type = se->type[fd];
   f = se->filps[fd];
+  select_lock_filp(f, *ops);
   r = fdtypes[type].select_request(f, ops, se->block);
-  if (r != SEL_OK && r != SEL_DEFERRED) {
+  unlock_filp(f);
+  if (r != OK && r != SUSPEND) {
 	se->error = EINTR;
 	se->block = 0;	/* Stop blocking to return asap */
 	if (!is_deferred(se)) select_cancel_all(se);

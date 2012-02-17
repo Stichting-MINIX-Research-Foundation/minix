@@ -394,10 +394,7 @@ PUBLIC int dev_io(
   dp = &dmap[major_dev];
 
   /* See if driver is roughly valid. */
-  if (dp->dmap_driver == NONE) {
-	printf("VFS: dev_io: no driver for major %d\n", major_dev);
-	return(ENXIO);
-  }
+  if (dp->dmap_driver == NONE) return(ENXIO);
 
   if (suspend_reopen) {
 	/* Suspend user. */
