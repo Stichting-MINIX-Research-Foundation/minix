@@ -5,11 +5,13 @@
 
 #include "kernel.h"
 #include "proc.h"
+#include "arch_proto.h"
 
 #include <minix/syslib.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <string.h>
 
 #include <minix/sys_config.h>
 
