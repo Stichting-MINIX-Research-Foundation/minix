@@ -12,7 +12,6 @@ bison-
 curl-
 diffutils-
 digest-
-doom1-
 expat-
 f2c-
 figlet-2
@@ -24,7 +23,6 @@ gettext-tools-
 gmake-
 gmp-
 grep-
-groff-
 gsed-
 gtexinfo-
 gzip-
@@ -36,6 +34,7 @@ libtool-base-
 lua-
 m4-
 mdf2iso-
+minix-all
 mpfr-
 naim-
 nano-
@@ -51,6 +50,7 @@ p5-pkgsrc-Dewey-
 patch-
 pax-
 pdksh-
+perl-5
 pkg-config-
 pkg_install-info-
 pkg_leaves-
