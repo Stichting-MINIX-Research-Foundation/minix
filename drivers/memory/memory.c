@@ -47,7 +47,7 @@ PRIVATE int openct[NR_DEVS];
 FORWARD _PROTOTYPE( struct device *m_prepare, (dev_t device)		);
 FORWARD _PROTOTYPE( int m_transfer, (endpoint_t endpt, int opcode,
 	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt)						);
+	endpoint_t user_endpt, unsigned int flags)			);
 FORWARD _PROTOTYPE( int m_do_open, (message *m_ptr)			);
 FORWARD _PROTOTYPE( int m_do_close, (message *m_ptr)			);
 
@@ -231,7 +231,8 @@ PRIVATE int m_transfer(
   u64_t pos64,			/* offset on device to read or write */
   iovec_t *iov,			/* pointer to read or write request vector */
   unsigned int nr_req,		/* length of request vector */
-  endpoint_t UNUSED(user_endpt)	/* endpoint of user process */
+  endpoint_t UNUSED(user_endpt),/* endpoint of user process */
+  unsigned int UNUSED(flags)
 )
 {
 /* Read or write one the driver's character devices. */

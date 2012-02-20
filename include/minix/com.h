@@ -225,6 +225,9 @@
 #define HIGHPOS		m2_l2	/* file offset (high 4 bytes) */
 #define ADDRESS 	m2_p1	/* core buffer address */
 #define IO_GRANT 	m2_p1	/* grant id (for DEV_*_S variants) */
+#define FLAGS		m2_s1   /* operation flags */
+
+#define FLG_OP_NONBLOCK	0x1 /* operation is non blocking */
 
 /* Field names for DEV_SELECT messages to character device drivers. */
 #define DEV_MINOR	m2_i1	/* minor device */

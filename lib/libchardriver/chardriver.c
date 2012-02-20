@@ -241,8 +241,10 @@ PRIVATE int do_rdwt(struct chardriver *cdp, message *mp)
   if ((*cdp->cdr_prepare)(mp->DEVICE) == NULL) return(ENXIO);
 
   /* Create a one element scatter/gather vector for the buffer. */
-  if(mp->m_type == DEV_READ_S) opcode = DEV_GATHER_S;
-  else	opcode =  DEV_SCATTER_S;
+  if(mp->m_type == DEV_READ_S)
+	  opcode = DEV_GATHER_S;
+  else
+	  opcode =  DEV_SCATTER_S;
 
   iovec1.iov_addr = (vir_bytes) mp->IO_GRANT;
   iovec1.iov_size = mp->COUNT;
@@ -250,7 +252,7 @@ PRIVATE int do_rdwt(struct chardriver *cdp, message *mp)
   /* Transfer bytes from/to the device. */
   position= make64(mp->POSITION, mp->HIGHPOS);
   r = (*cdp->cdr_transfer)(mp->m_source, opcode, position, &iovec1, 1,
-	mp->USER_ENDPT);
+	mp->USER_ENDPT, mp->FLAGS);
 
   /* Return the number of bytes transferred or an error code. */
   return(r == OK ? (int) (mp->COUNT - iovec1.iov_size) : r);
@@ -290,7 +292,7 @@ PRIVATE int do_vrdwt(struct chardriver *cdp, message *mp)
   opcode = mp->m_type;
   position= make64(mp->POSITION, mp->HIGHPOS);
   r = (*cdp->cdr_transfer)(mp->m_source, opcode, position, iovec, nr_req,
-	mp->USER_ENDPT);
+	mp->USER_ENDPT, mp->FLAGS);
 
   /* Copy the I/O vector back to the caller. */
   if (OK != sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT,

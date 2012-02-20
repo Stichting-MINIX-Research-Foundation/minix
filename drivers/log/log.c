@@ -25,7 +25,7 @@ PRIVATE int log_device = -1;	 		/* current device */
 FORWARD _PROTOTYPE( struct device *log_prepare, (dev_t device) );
 FORWARD _PROTOTYPE( int log_transfer, (endpoint_t endpt, int opcode,
 	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt) );
+	endpoint_t user_endpt, unsigned int flags) );
 FORWARD _PROTOTYPE( int log_do_open, (message *m_ptr) );
 FORWARD _PROTOTYPE( int log_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( int log_select, (message *m_ptr) );
@@ -281,7 +281,8 @@ PRIVATE int log_transfer(
   u64_t UNUSED(position),	/* offset on device to read or write */
   iovec_t *iov,			/* pointer to read or write request vector */
   unsigned int nr_req,		/* length of request vector */
-  endpoint_t user_endpt		/* endpoint of user process */
+  endpoint_t user_endpt,	/* endpoint of user process */
+  unsigned int UNUSED(flags)
 )
 {
 /* Read or write one the driver's minor devices. */

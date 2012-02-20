@@ -14,7 +14,8 @@ FORWARD _PROTOTYPE( struct device * hello_prepare, (dev_t device) );
 FORWARD _PROTOTYPE( int hello_transfer,  (endpoint_t endpt, int opcode,
                                           u64_t position, iovec_t *iov,
                                           unsigned int nr_req,
-                                          endpoint_t user_endpt) );
+                                          endpoint_t user_endpt,
+					  unsigned int flags) );
 
 /* SEF functions and variables. */
 FORWARD _PROTOTYPE( void sef_local_startup, (void) );
@@ -63,7 +64,8 @@ PRIVATE struct device * hello_prepare(dev_t UNUSED(dev))
 }
 
 PRIVATE int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
-    iovec_t *iov, unsigned nr_req, endpoint_t UNUSED(user_endpt))
+    iovec_t *iov, unsigned nr_req, endpoint_t UNUSED(user_endpt),
+    unsigned int UNUSED(flags))
 {
     int bytes, ret;
 

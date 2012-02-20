@@ -409,7 +409,7 @@ PUBLIC int dev_io(
   int safe, minor_dev, major_dev;
   void *buf_used;
   endpoint_t ioproc;
-  int ret;
+  int ret, is_asyn;
 
   pos_lo = ex64lo(pos);
   pos_high = ex64hi(pos);
@@ -447,6 +447,8 @@ PUBLIC int dev_io(
 			    (endpoint_t *) &dev_mess.USER_ENDPT, &buf_used,
 			    bytes, &pos_lo);
 
+  is_asyn = dev_style_asyn(dp->dmap_style);
+
   /* If the safe conversion was done, set the IO_GRANT to
    * the grant id.
    */
@@ -458,6 +460,10 @@ PUBLIC int dev_io(
   dev_mess.POSITION = pos_lo;
   dev_mess.COUNT    = bytes;
   dev_mess.HIGHPOS  = pos_high;
+  dev_mess.FLAGS    = 0;
+
+  if (flags & O_NONBLOCK)
+	  dev_mess.FLAGS |= FLG_OP_NONBLOCK;
 
   /* This will be used if the i/o is suspended. */
   ioproc = dev_mess.USER_ENDPT;
@@ -476,7 +482,7 @@ PUBLIC int dev_io(
 
   /* Task has completed.  See if call completed. */
   if (ret == SUSPEND) {
-	if ((flags & O_NONBLOCK) && !dev_style_asyn(dp->dmap_style)) {
+	if ((flags & O_NONBLOCK) && !is_asyn) {
 		/* Not supposed to block. */
 		ret = cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
 		if (ret == EINTR)
@@ -491,7 +497,7 @@ PUBLIC int dev_io(
 		fp->fp_grant = gid;	/* revoke this when unsuspended. */
 		fp->fp_ioproc = ioproc;
 
-		if (flags & O_NONBLOCK) {
+		if ((flags & O_NONBLOCK) && !is_asyn) {
 			/* Not supposed to block, send cancel message */
 			cancel_nblock(dp, minor_dev, call_nr, ioproc, gid);
 			/*

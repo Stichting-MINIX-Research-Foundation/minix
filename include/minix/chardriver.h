@@ -11,7 +11,7 @@ struct chardriver {
   _PROTOTYPE( struct device *(*cdr_prepare), (dev_t device) );
   _PROTOTYPE( int (*cdr_transfer), (endpoint_t endpt, int opcode,
 	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt) );
+	endpoint_t user_endpt, unsigned int flags) );
   _PROTOTYPE( void (*cdr_cleanup), (void) );
   _PROTOTYPE( void (*cdr_alarm), (message *m_ptr) );
   _PROTOTYPE( int (*cdr_cancel), (message *m_ptr) );

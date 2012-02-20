@@ -23,7 +23,7 @@ extern int errno;			/* error number for PM calls */
 FORWARD _PROTOTYPE( struct device *r_prepare, (dev_t device) );
 FORWARD _PROTOTYPE( int r_transfer, (endpoint_t endpt, int opcode,
 	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt) );
+	endpoint_t user_endpt, unsigned int flags) );
 FORWARD _PROTOTYPE( int r_do_open, (message *m_ptr) );
 FORWARD _PROTOTYPE( void r_random, (message *m_ptr) );
 FORWARD _PROTOTYPE( void r_updatebin, (int source,
@@ -142,7 +142,8 @@ PRIVATE int r_transfer(
   u64_t position,		/* offset on device to read or write */
   iovec_t *iov,			/* pointer to read or write request vector */
   unsigned int nr_req,		/* length of request vector */
-  endpoint_t UNUSED(user_endpt)	/* endpoint of user process */
+  endpoint_t UNUSED(user_endpt),/* endpoint of user process */
+  unsigned int UNUSED(flags)
 )
 {
 /* Read or write one the driver's minor devices. */
