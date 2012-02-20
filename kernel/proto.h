@@ -230,6 +230,7 @@ _PROTOTYPE(void disable_fpu_exception, (void));
 _PROTOTYPE(void release_fpu, (struct proc * p));
 _PROTOTYPE(void arch_pause,(void));
 _PROTOTYPE(short cpu_load, (void));
+_PROTOTYPE(void busy_delay_ms, (int ms));
 
 /* utility.c */
 _PROTOTYPE( void cpu_print_freq, (unsigned cpu));

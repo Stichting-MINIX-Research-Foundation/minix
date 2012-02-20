@@ -364,3 +364,13 @@ PUBLIC short cpu_load(void)
 	*last_idle = *current_idle;
 	return load;
 }
+
+PUBLIC void busy_delay_ms(int ms)
+{
+	u64_t cycles = ms_2_cpu_time(ms), tsc0, tsc, tsc1;
+	read_tsc_64(&tsc0);
+	tsc1 = tsc0 + cycles;
+	do { read_tsc_64(&tsc); } while(tsc < tsc1);
+	return;
+}
+
