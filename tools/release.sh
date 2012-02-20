@@ -11,6 +11,7 @@ PACKAGEDIR=/usr/pkgsrc/packages/$version_pretty/`uname -m`
 XBIN=usr/xbin
 SRC=src
 REPO=git://git.minix3.org/minix
+GITBRANCH=master
 
 # List of packages included on installation media
 PACKAGELIST=packages.install
@@ -81,13 +82,16 @@ fi
 
 FILENAMEOUT=""
 
-while getopts "j:ls:pmMchu?r:f:L:e:" c
+while getopts "b:j:ls:pmMchu?r:f:L:e:" c
 do
 	case "$c" in
 	\?)
 		echo "Usage: $0 [-l] [-p] [-c] [-h] [-m] [-M] [-r <tag>] [-u] [-f <filename>] [-s <username>] -j<jaildir> [-L <packageurl>] [-e <extras-path>]" >&2
 		exit 1
 	;;
+	b)
+		GITBRANCH=$OPTARG
+		;;
 	h)
 		echo " * Making HD image"
 		IMG_BASE=minix${version}_bios
@@ -196,9 +200,9 @@ copy_local_packages
 
 if [ "$COPY" -ne 1 ]
 then
-	echo "Retrieving latest minix repo from $REPO."
+	echo "Retrieving latest minix repo from $REPO branch $GITBRANCH."
 	srcdir=$RELEASEDIR/usr/src
-	git clone $REPO $srcdir
+	git clone -b $GITBRANCH $REPO $srcdir
 	if [ "$REVTAG" ]
 	then	echo "Doing checkout of $REVTAG."
 		(cd $srcdir && git checkout $REVTAG )
