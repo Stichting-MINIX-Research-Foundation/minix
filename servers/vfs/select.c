@@ -215,10 +215,8 @@ PUBLIC int do_select(void)
 
 		wantops = (f->filp_select_ops |= ops);
 		r = do_select_request(se, fd, &wantops);
-		if (r != OK) {
-			if (r == SUSPEND) continue;
-			else break; /* Error or bogus return code; abort */
-		}
+		if (r != OK && r != SUSPEND)
+			break; /* Error or bogus return code; abort */
 
 		/* The select request above might have turned on/off some
 		 * operations because they were 'ready' or not meaningful.
@@ -339,6 +337,9 @@ PRIVATE int select_request_async(struct filp *f, int *ops, int block)
 
   rops = *ops;
 
+  /* By default, nothing to do */
+  *ops = 0;
+
   if (!block && (f->filp_select_flags & FSF_BLOCKED)) {
 	/* This filp is blocked waiting for a reply, but we don't want to
 	 * block ourselves. Unless we're awaiting the initial reply, these
@@ -350,11 +351,8 @@ PRIVATE int select_request_async(struct filp *f, int *ops, int block)
 			rops &= ~SEL_WR;
 		if ((rops & SEL_ERR) && (f->filp_select_flags & FSF_ERR_BLOCK))
 			rops &= ~SEL_ERR;
-		if (!(rops & (SEL_RD|SEL_WR|SEL_ERR))) {
-			/* Nothing left to do */
-			*ops = 0;
+		if (!(rops & (SEL_RD|SEL_WR|SEL_ERR)))
 			return(OK);
-		}
 	}
   }
 
@@ -952,10 +950,8 @@ PRIVATE void select_restart_filps()
 		vp = f->filp_vno;
 		assert((vp->v_mode & I_TYPE) == I_CHAR_SPECIAL);
 		r = do_select_request(se, fd, &wantops);
-		if (r != OK) {
-			if (r == SUSPEND) continue;
-			else break; /* Error or bogus return code; abort */
-		}
+		if (r != OK && r != SUSPEND)
+			break; /* Error or bogus return code; abort */
 		if (wantops & ops) ops2tab(wantops, fd, se);
 	}
   }
