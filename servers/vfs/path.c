@@ -271,16 +271,6 @@ struct fproc *rfp;
 	symlink.l_vmnt_lock = VMNT_READ;
 	sym_vp = advance(res_vp, &symlink, rfp);
 
-	/* Advance caused us to either switch to a different vmnt or we're
-	 * still at the same vmnt. The former might've yielded a new vmnt lock,
-	 * the latter should not have. Verify. */
-	if (sym_vmp != NULL) {
-		/* We got a vmnt lock, so the endpoints of the vnodes must
-		 * differ.
-		 */
-		assert(sym_vp->v_fs_e != res_vp->v_fs_e);
-	}
-
 	if (sym_vp != NULL && S_ISLNK(sym_vp->v_mode)) {
 		/* Last component is a symlink, but if we've been asked to not
 		 * resolve it, return now.
