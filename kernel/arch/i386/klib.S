@@ -499,13 +499,13 @@ ENTRY(mem_rdw)
 
 
 /*===========================================================================*/
-/*				reset					     */
+/*				x86_triplefault				     */
 /*===========================================================================*/
 /*
- * PUBLIC void reset(); 
+ * PUBLIC void x86_triplefault(); 
  * Reset the system by loading IDT with offset 0 and interrupting. 
  */
-ENTRY(reset)
+ENTRY(x86_triplefault)
 	lidt	idt_zero
 	int	$3	/* anything goes, the 386 will not like it */
 .data
