@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#define BOOTPROG_LOAD_START 0x05000000ULL
+#define BOOTPROG_LOAD_START 0x00800000ULL
 
 int nflag = 0;
 
