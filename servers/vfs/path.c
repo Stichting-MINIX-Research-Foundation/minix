@@ -206,30 +206,13 @@ struct fproc *rfp;
 
 	cp = strrchr(resolve->l_path, '/');
 	if (cp == NULL) {
-		/* Just an entry in the current working directory */
-		struct vmnt *vmp;
-
-		vmp = find_vmnt(start_dir->v_fs_e);
-		if (vmp == NULL) {
-			r = EIO;
-			res_vp = NULL;
-			break;
-		}
-		r = lock_vmnt(vmp, resolve->l_vmnt_lock);
-		if (r == EDEADLK) {
-			res_vp = NULL;
-			break;
-		} else if (r == OK)
-			*resolve->l_vmp = vmp;
-
-		lock_vnode(start_dir, resolve->l_vnode_lock);
-		*resolve->l_vnode = start_dir;
-		dup_vnode(start_dir);
-		if (loop_start != NULL) {
-			unlock_vnode(loop_start);
-			put_vnode(loop_start);
-		}
-		return(start_dir);
+		/* Just an entry in the current working directory. Prepend
+		 * "./" in front of the path and resolve it.
+		 */
+		strncpy(dir_entry, resolve->l_path, NAME_MAX);
+		dir_entry[NAME_MAX] = '\0';
+		resolve->l_path[0] = '.';
+		resolve->l_path[1] = '\0';
 	} else if (cp[1] == '\0') {
 		/* Path ends in a slash. The directory entry is '.' */
 		strcpy(dir_entry, ".");
@@ -341,6 +324,10 @@ struct fproc *rfp;
 
   /* Copy the directory entry back to user_fullpath */
   strncpy(resolve->l_path, dir_entry, NAME_MAX + 1);
+
+  /* Turn PATH_RET_SYMLINK flag back on if it was on */
+  if (ret_on_symlink) resolve->l_flags |= PATH_RET_SYMLINK;
+
   return(res_vp);
 }
 
