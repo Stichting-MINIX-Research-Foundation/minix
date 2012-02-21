@@ -206,8 +206,8 @@ then
 	if [ "$REVTAG" ]
 	then	echo "Doing checkout of $REVTAG."
 		(cd $srcdir && git checkout $REVTAG )
-	else	REVTAG=`(cd $srcdir && git show-ref HEAD -s10)`
-		echo "Retrieved repository head is $REVTAG."
+	else	REVTAG=`(cd $srcdir && git rev-parse --short HEAD)`
+		echo "Retrieved repository head in $srcdir is $REVTAG."
 	fi
 	if [ $MINIMAL -ne 0 ]
 	then	rm -r $srcdir/.git
