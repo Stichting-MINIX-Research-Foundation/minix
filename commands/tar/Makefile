@@ -11,8 +11,8 @@ SRCS=	bsdtar.c \
 		write.c
 .include "${.CURDIR}/libarchive_fe/Makefile.inc"
 
-DPADD+= ${LIBARCHIVE} ${LIBZ} ${LIBBZ2}
-LDADD+=	-larchive -lbz2 -lz
+DPADD+= ${LIBARCHIVE} ${LIBZ} ${LIBBZ2} ${LIBLZMA}
+LDADD+=	-larchive -lbz2 -lz -llzma
 CPPFLAGS+= -DHAVE_CONFIG_H
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/libarchive_fe
 
