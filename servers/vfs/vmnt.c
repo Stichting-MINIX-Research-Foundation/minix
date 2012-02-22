@@ -60,6 +60,17 @@ PUBLIC void check_vmnt_locks()
 }
 
 /*===========================================================================*
+ *                             mark_vmnt_free				     *
+ *===========================================================================*/
+PUBLIC void mark_vmnt_free(struct vmnt *vmp)
+{
+  ASSERTVMP(vmp);
+
+  vmp->m_fs_e = NONE;
+  vmp->m_dev = NO_DEV;
+}
+
+/*===========================================================================*
  *                             clear_vmnt				     *
  *===========================================================================*/
 PRIVATE void clear_vmnt(struct vmnt *vmp)
@@ -83,10 +94,14 @@ PRIVATE void clear_vmnt(struct vmnt *vmp)
  *===========================================================================*/
 PUBLIC struct vmnt *get_free_vmnt(void)
 {
-  struct vmnt *vp;
+  struct vmnt *vmp;
 
-  for (vp = &vmnt[0]; vp < &vmnt[NR_MNTS]; ++vp)
-      if (vp->m_dev == NO_DEV) return(vp);
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
+	if (vmp->m_dev == NO_DEV) {
+		clear_vmnt(vmp);
+		return(vmp);
+	}
+  }
 
   return(NULL);
 }
@@ -167,6 +182,7 @@ PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
   struct vmnt *vmp;
 
   if ((vmp = find_vmnt(proc_e)) != NULL) {
+	mark_vmnt_free(vmp);
 	fs_cancel(vmp);
 	invalidate_filp_by_endpt(proc_e);
 	if (vmp->m_mounted_on) {
@@ -174,7 +190,6 @@ PUBLIC void vmnt_unmap_by_endpt(endpoint_t proc_e)
 		 * point. That is, the mount was succesful. */
 		put_vnode(vmp->m_mounted_on);
 	}
-	clear_vmnt(vmp);
   }
 }
 

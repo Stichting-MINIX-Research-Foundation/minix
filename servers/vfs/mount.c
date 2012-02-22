@@ -273,8 +273,7 @@ char mount_label[LABEL_MAX] )
   new_vmp->m_flags &= ~VMNT_MOUNTING;
 
   if (r != OK) {
-	new_vmp->m_fs_e = NONE;
-	new_vmp->m_dev = NO_DEV;
+	mark_vmnt_free(new_vmp);
 	unlock_vnode(root_node);
 	if (vp != NULL) {
 		unlock_vnode(vp);
@@ -349,11 +348,10 @@ char mount_label[LABEL_MAX] )
   if (r != OK) {
 	unlock_vnode(vp);
 	unlock_vnode(root_node);
+	mark_vmnt_free(new_vmp);
 	unlock_vmnt(new_vmp);
 	put_vnode(vp);
 	put_vnode(root_node);
-	new_vmp->m_dev = NO_DEV;
-	new_vmp->m_flags = 0;
 	unlock_bsf();
 	return(r);
   }
@@ -505,8 +503,7 @@ PUBLIC int unmount(
 	vmp->m_root_node->v_sdev = NO_DEV;
 	vmp->m_root_node = NULL;
   }
-  vmp->m_dev = NO_DEV;
-  vmp->m_fs_e = NONE;
+  mark_vmnt_free(vmp);
 
   unlock_vmnt(vmp);
 

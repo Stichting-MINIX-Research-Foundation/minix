@@ -331,6 +331,7 @@ _PROTOTYPE( int in_group, (struct fproc *rfp, gid_t grp)		);
 /* vmnt.c */
 _PROTOTYPE( void check_vmnt_locks, (void)				);
 _PROTOTYPE( void check_vmnt_locks_by_me, (struct fproc *rfp)		);
+_PROTOTYPE( void mark_vmnt_free, (struct vmnt *vmp)			);
 _PROTOTYPE( struct vmnt *get_free_vmnt, (void)				);
 _PROTOTYPE( struct vmnt *find_vmnt, (endpoint_t fs_e)			);
 _PROTOTYPE( struct vmnt *get_locked_vmnt, (struct fproc *rfp)		);
