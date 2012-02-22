@@ -316,7 +316,7 @@ PRIVATE void announce(void)
 #ifdef _VCS_REVISION
 	"(" _VCS_REVISION ")\n"
 #endif
-      "Copyright 2010, Vrije Universiteit, Amsterdam, The Netherlands\n",
+      "Copyright 2012, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
   printf("MINIX is open source software, see http://www.minix3.org\n");
 }
