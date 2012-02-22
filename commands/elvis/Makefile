@@ -29,6 +29,10 @@ BINDIR= /usr/bin
 LINKS+= ${BINDIR}/elvis ${BINDIR}/vi
 .endif
 
+.if !exists(${BINDIR}/ex)
+LINKS+= ${BINDIR}/elvis ${BINDIR}/ex
+.endif
+
 MAN.elvis=
 MAN.ctags=
 MAN.ref=
