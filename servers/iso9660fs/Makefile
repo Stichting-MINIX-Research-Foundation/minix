@@ -4,7 +4,7 @@ SRCS=	main.c table.c mount.c super.c inode.c \
 	utility.c misc.c path.c read.c stadir.c cache.c
 
 DPADD+=	${LIBBDEV} ${LIBSYS}
-LDADD+=	-lbdev -lsys
+LDADD+=	-lbdev -lsys -lc
 
 MAN=
 
