@@ -665,31 +665,9 @@ u32_t params_size, params_offset, mon_ds;
 
 PUBLIC int arch_get_params(char *params, int maxsize)
 {
-	int size = 0;
-
-#ifdef CONFIG_SMP
-	/*
-	 * FIXME
-	 * This is a TEMPORARY change until we can pass boot
-	 * command line to multiboot kernels from the boot
-	 * monitor
-	 *
-	 * '\0' separated list of command line options
-	 */
-	char cmdline[] = "no_apic=0\0acpi=1";
-
-	if (maxsize < sizeof(cmdline) - 1)
-		panic("cmdline (%d) exceeds maxsize (%d)",
-				sizeof(cmdline), maxsize);
-	memcpy(params, cmdline, sizeof(cmdline));
-	size = sizeof(cmdline);
-	params[size+1] = '\0';
-#endif
-
-	phys_copy(seg2phys(mon_ds) + params_offset, vir2phys(params + size),
-		MIN(maxsize - size, params_size));
+	phys_copy(seg2phys(mon_ds) + params_offset, vir2phys(params),
+		MIN(maxsize, params_size));
 	params[maxsize-1] = '\0';
-
 	return OK;
 }
 
