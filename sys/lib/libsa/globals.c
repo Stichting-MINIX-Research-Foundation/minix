@@ -19,7 +19,11 @@ u_char	bcea[6] = BA;			/* broadcast ethernet address */
 char	rootpath[FNAME_SIZE];		/* root mount path */
 char	bootfile[FNAME_SIZE];		/* bootp says to boot this */
 char	hostname[FNAME_SIZE];		/* our hostname */
+#ifdef __minix
+char    *fsmod = NULL;
+#else
 char	*fsmod =  "ffs";		/* guessed file system module name */
+#endif
 char	*fsmod2;			/* a requisite module */
 struct	in_addr myip;			/* my ip address */
 struct	in_addr rootip;			/* root ip address */
