@@ -1,11 +1,16 @@
-#ifndef __LWIP_SERVER_SOCKET_H__
-#define __LWIP_SERVER_SOCKET_H__
+#ifndef __NET_SERVER_SOCKET_H__
+#define __NET_SERVER_SOCKET_H__
+
+#include <stdlib.h>
 
 #include <minix/ipc.h>
 #include <minix/endpoint.h>
 
-#include "inet_config.h"
-#include "proto.h"
+/*
+ * User can set this variable to make the debugging output differ between
+ * various users, e.g. "TCP" or "UDP"
+ */
+extern char * netsock_user_name;
 
 #define SOCK_TYPE_IP	0
 #define SOCK_TYPE_TCP	1
@@ -15,14 +20,15 @@
 struct socket;
 
 typedef void (* sock_op_t)(struct socket *, message *);
+typedef void (* sock_op_io_t)(struct socket *, message *, int blk);
 typedef int (* sock_op_open_t)(struct socket *, message *);
 
 struct sock_ops {
 	sock_op_open_t	open;
 	sock_op_t	close;
-	sock_op_t	read;
-	sock_op_t	write;
-	sock_op_t	ioctl;
+	sock_op_io_t	read;
+	sock_op_io_t	write;
+	sock_op_io_t	ioctl;
 	sock_op_t	select;
 	sock_op_t	select_reply;
 };
@@ -33,8 +39,7 @@ struct recv_q {
 };
 
 #define SOCK_FLG_OP_PENDING	0x1
-#define SOCK_FLG_OP_REVIVING	0x2
-#define SOCK_FLG_OP_SUSPENDED	0x4	/* set when processing a suspended op */
+#define SOCK_FLG_OP_IOCTL	0x10
 #define SOCK_FLG_OP_LISTENING	0x100	/* tcp socket is in a listening mode */
 #define	SOCK_FLG_OP_CONNECTING	0x200	/* set when waiting for a connect */
 #define SOCK_FLG_OP_READING	0x400	/* reading operation in progress */
@@ -45,7 +50,6 @@ struct recv_q {
 #define SOCK_FLG_SEL_WRITE	0x100000
 #define SOCK_FLG_SEL_READ	0x200000
 #define SOCK_FLG_SEL_ERROR	0x400000
-#define SOCK_FLG_SEL_CHECK	0x800000 /* select satisfied, go and check it */
 
 #define sock_select_set(sock)	((sock)->flags & (SOCK_FLG_SEL_WRITE |	\
 				SOCK_FLG_SEL_READ | SOCK_FLG_SEL_ERROR))
@@ -54,10 +58,9 @@ struct recv_q {
 #define sock_select_rw_set(sock)	((sock)->flags & (SOCK_FLG_SEL_READ | \
 							SOCK_FLG_SEL_WRITE))
 #define sock_select_error_set(sock)	((sock)->flags & SOCK_FLG_SEL_ERROR)
-#define sock_select_check_set(sock)	((sock)->flags & SOCK_FLG_SEL_CHECK)
 #define sock_clear_select(sock)	do {					\
 	(sock)->flags &= ~(SOCK_FLG_SEL_READ | SOCK_FLG_SEL_WRITE |	\
-			SOCK_FLG_SEL_ERROR | SOCK_FLG_SEL_CHECK);	\
+						SOCK_FLG_SEL_ERROR);	\
 } while (0)
 
 struct socket {
@@ -71,6 +74,8 @@ struct socket {
 	message			mess; /* store the message which initiated the
 					 last operation on this socket in case
 					 we have to suspend the operation */
+	void *			shm;
+	size_t			shm_size;
 	endpoint_t		select_ep;
 	struct recv_q *		recv_head;
 	struct recv_q *		recv_tail;
@@ -78,9 +83,11 @@ struct socket {
 	void *			data;
 };
 
-extern struct sock_ops sock_udp_ops;
-extern struct sock_ops sock_tcp_ops;
-extern struct sock_ops sock_raw_ip_ops;
+/*
+ * Each component needs to provide a method how to initially open a socket.
+ * The rest is handled byt the socket library.
+ */
+void socket_open(message * m);
 
 #define get_sock_num(x) ((long int) ((x) - socket))
 #define is_valid_sock_num(x) (x < MAX_SOCKETS)
@@ -101,8 +108,11 @@ struct socket * get_unused_sock(void);
 struct socket * get_nic_sock(unsigned dev);
 
 void send_reply(message * m, int status);
+void send_reply_open(message * m, int status);
+void send_reply_close(message * m, int status);
 void sock_reply(struct socket * sock, int status);
-void sock_revive(struct socket * sock, int status);
+void sock_reply_close(struct socket * sock, int status);
+void sock_reply_select(struct socket * sock, unsigned selops);
 
 typedef void (* recv_data_free_fn)(void *);
 
@@ -132,4 +142,9 @@ static inline void * debug_malloc(size_t s)
 void generic_op_select(struct socket * sock, message * m);
 void generic_op_select_reply(struct socket * sock, message * m);
 
-#endif /* __LWIP_SERVER_SOCKET_H__ */
+int mq_enqueue(message * m);
+
+/* a function thr user has to provide to reply to the posix server */
+void posix_reply(endpoint_t ep, message * m);
+
+#endif /* __NET_SERVER_SOCKET_H__ */

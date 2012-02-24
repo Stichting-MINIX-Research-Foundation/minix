@@ -12,9 +12,9 @@
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
 #include <minix/timers.h>
+#include <minix/netsock.h>
 
 #include "proto.h"
-#include "socket.h"
 
 #include <lwip/mem.h>
 #include <lwip/pbuf.h>
@@ -29,6 +29,10 @@ static timer_t tcp_ftmr, tcp_stmr, arp_tmr;
 static int arp_ticks, tcp_fticks, tcp_sticks;
 
 static struct netif * netif_lo;
+
+extern struct sock_ops sock_udp_ops;
+extern struct sock_ops sock_tcp_ops;
+extern struct sock_ops sock_raw_ip_ops;
 
 void sys_init(void)
 {
@@ -196,6 +200,56 @@ static void netif_poll_lo(void)
 
 	while (netif_lo->loop_first)
 		netif_poll(netif_lo);
+}
+
+void socket_open(message * m)
+{
+        struct sock_ops * ops;
+        struct socket * sock;
+        int ret = OK;
+
+        switch (m->DEVICE) {
+        case SOCK_TYPE_TCP:
+                ops = &sock_tcp_ops;
+                break;
+        case SOCK_TYPE_UDP:
+                ops = &sock_udp_ops;
+                break;
+        case SOCK_TYPE_IP:
+                ops = &sock_raw_ip_ops;
+                break;
+        default:
+                if (m->DEVICE - SOCK_TYPES  < MAX_DEVS) {
+                        m->DEVICE -= SOCK_TYPES;
+                        nic_open(m);
+                        return;
+                }
+                printf("LWIP unknown socket type %d\n", m->DEVICE);
+                send_reply_open(m, EINVAL);
+                return;
+        }
+
+        sock = get_unused_sock();
+        if (!sock) {
+                printf("LWIP : no free socket\n");
+                send_reply_open(m, EAGAIN);
+                return;
+        }
+
+        sock->ops = ops;
+        sock->select_ep = NONE;
+        sock->recv_data_size = 0;
+
+        if (sock->ops && sock->ops->open)
+                ret = sock->ops->open(sock, m);
+
+        if (ret == OK) {
+                debug_print("new socket %ld", get_sock_num(sock));
+                send_reply_open(m, get_sock_num(sock));
+        } else {
+                debug_print("failed %d", ret);
+                send_reply_open(m, ret);
+        }
 }
 
 int main(__unused int argc, __unused char ** argv)

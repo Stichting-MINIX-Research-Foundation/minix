@@ -11,7 +11,7 @@
 #include <lwip/udp.h>
 #include <lwip/ip_addr.h>
 
-#include "socket.h"
+#include <minix/netsock.h>
 #include "proto.h"
 
 #define UDP_BUF_SIZE	(4 << 10)
@@ -72,7 +72,7 @@ static void udp_op_close(struct socket * sock, __unused message * m)
 	/* mark it as unused */
 	sock->ops = NULL;
 
-	sock_reply(sock, OK);
+	sock_reply_close(sock, OK);
 }
 
 static int udp_do_receive(struct socket * sock,
@@ -151,11 +151,11 @@ static void udp_recv_callback(void *arg,
 
 		if (ret > 0) {
 			pbuf_free(pbuf);
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			return;
 		} else {
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 		}
 	}
@@ -193,7 +193,7 @@ static void udp_recv_callback(void *arg,
 		sock_select_notify(sock);
 }
 
-static void udp_op_read(struct socket * sock, message * m)
+static void udp_op_read(struct socket * sock, message * m, int blk)
 {
 	debug_udp_print("socket num %ld", get_sock_num(sock));
 
@@ -214,14 +214,15 @@ static void udp_op_read(struct socket * sock, message * m)
 			udp_recv_free(data);
 		}
 		sock_reply(sock, ret);
-	} else {
+	} else if (!blk)
+		sock_reply(sock, EAGAIN);
+	else {
 		/* store the message so we know how to reply */
 		sock->mess = *m;
 		/* operation is being processes */
 		sock->flags |= SOCK_FLG_OP_PENDING;
 
 		debug_udp_print("no data to read, suspending\n");
-		sock_reply(sock, SUSPEND);
 	}
 }
 
@@ -262,7 +263,7 @@ static int udp_op_sendto(struct socket * sock, struct pbuf * pbuf, message * m)
 	}
 }
 
-static void udp_op_write(struct socket * sock, message * m)
+static void udp_op_write(struct socket * sock, message * m, __unused int blk)
 {
 	int ret;
 	struct pbuf * pbuf;
@@ -385,7 +386,7 @@ static void udp_get_opt(struct socket * sock, message * m)
 	sock_reply(sock, OK);
 }
 
-static void udp_op_ioctl(struct socket * sock, message * m)
+static void udp_op_ioctl(struct socket * sock, message * m, __unused int blk)
 {
 	debug_udp_print("socket num %ld req %c %d %d",
 			get_sock_num(sock),

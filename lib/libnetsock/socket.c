@@ -10,25 +10,37 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <minix/sysutil.h>
+#include <minix/netsock.h>
 
 #include <lwip/tcp.h>
 
 #include <sys/ioc_net.h>
 
-#include "inet_config.h"
-#include "proto.h"
-#include "socket.h"
+char * netsock_user_name = NULL;
+#define NETSOCK_USER_NAME (netsock_user_name ? netsock_user_name : "NETSOCK")
+
+#define debug_print(str, ...) printf("%s : %s:%d : " str "\n",	\
+		NETSOCK_USER_NAME, __func__, __LINE__, ##__VA_ARGS__)
 
 #if 0
-#define debug_sock_print(str, ...) printf("LWIP %s:%d : " str "\n", \
-		__func__, __LINE__, ##__VA_ARGS__)
+#define debug_sock_print(...)	debug_print(__VA_ARGS__)
 #else
-#define debug_sock_print(...) debug_print(__VA_ARGS__)
+#define debug_sock_print(...)
 #endif
+
+#if 0
+#define debug_sock_select_print(...)	debug_print(__VA_ARGS__)
+#else
+#define debug_sock_select_print(...)	debug_sock_print(__VA_ARGS__)
+#endif
+
+#define netsock_panic(str, ...) panic("%s : " str, NETSOCK_USER_NAME, \
+							##__VA_ARGS__)
+#define netsock_error(str, ...) printf("%s : " str, NETSOCK_USER_NAME, \
+							##__VA_ARGS__)
 
 
 struct socket socket[MAX_SOCKETS];
-static int notified;
 
 #define recv_q_alloc()	debug_malloc(sizeof(struct recv_q))
 #define recv_q_free	debug_free
@@ -44,7 +56,7 @@ struct mq {
 
 static struct mq * mq_head, *mq_tail;
 
-static int mq_enqueue(message * m)
+int mq_enqueue(message * m)
 {
 	struct mq * mq;
 
@@ -84,7 +96,7 @@ __unused static struct mq * mq_dequeue_head(void)
 		mq_head->prev = NULL;
 	} else
 		mq_head = mq_tail = NULL;
-	
+
 	debug_sock_print("socket %d\n", ret->m.DEVICE);
 
 	return ret;
@@ -121,8 +133,10 @@ static int mq_cancel(message * m)
 		}
 	}
 
-	mq_dequeue(mq);
-	mq_free(mq);
+	if (mq) {
+		mq_dequeue(mq);
+		mq_free(mq);
+	}
 
 	return 1;
 }
@@ -189,102 +203,99 @@ static void set_reply_msg(message * m, int status)
 	m->REP_IO_GRANT= ref;
 }
 
-void send_reply(message * m, int status)
+void send_reply_type(message * m, int type, int status)
 {
 	int result;
 
-	debug_sock_print("status %d", status);
 	set_reply_msg(m, status);
-	
-	m->m_type = TASK_REPLY;
+
+	m->m_type = type;
 	result = send(m->m_source, m);
 	if (result != OK)
-		panic("LWIP : unable to send (err %d)", result);
+		netsock_panic("unable to send (err %d)", result);
 }
 
-void sock_revive(struct socket * sock, int status)
+void send_reply(message * m, int status)
+{
+	debug_sock_print("status %d", status);
+	send_reply_type(m, DEV_REVIVE, status);
+}
+
+void send_reply_open(message * m, int status)
+{
+	debug_sock_print("status %d", status);
+	send_reply_type(m, DEV_OPEN_REPL, status);
+}
+
+void send_reply_close(message * m, int status)
+{
+	debug_sock_print("status %d", status);
+	send_reply_type(m, DEV_CLOSE_REPL, status);
+}
+
+void sock_reply_select(struct socket * sock, unsigned selops)
 {
 	int result;
+	message msg;
 
-	assert(!(sock->flags & SOCK_FLG_OP_REVIVING));
-	assert(sock->flags & (SOCK_FLG_OP_PENDING | SOCK_FLG_OP_SUSPENDED));
+	debug_sock_select_print("selops %d", selops);
 
-	if (notified) {
-		debug_sock_print("already notified");
-		return;
-	}
-	else {
-		assert(sock->mess.m_type != DEV_REVIVE);
-		notified = 1;
-	}
-	
-	debug_sock_print("socket num %ld, status %d",
-			get_sock_num(sock), status);
+	msg.m_type = DEV_SEL_REPL1;
+	msg.DEV_MINOR = get_sock_num(sock);
+	msg.DEV_SEL_OPS = selops;
 
-	sock->mess.m_type = DEV_REVIVE;
-	set_reply_msg(&sock->mess, status);
-	
-	result = notify(sock->mess.m_source);
+	result = send(sock->select_ep, &msg);
 	if (result != OK)
-		panic("LWIP : unable to notify (err %d)", result);
-
-	sock->flags |= SOCK_FLG_OP_REVIVING;
+		netsock_panic("unable to send (err %d)", result);
 }
 
 void sock_select_notify(struct socket * sock)
 {
 	int result;
+	message msg;
 
-	debug_sock_print("socket num %ld", get_sock_num(sock));
+	debug_sock_select_print("socket num %ld", get_sock_num(sock));
 	assert(sock->select_ep != NONE);
 
-	sock->flags |= SOCK_FLG_SEL_CHECK;
-	if (notified) {
-		debug_sock_print("already notified");
+	msg.DEV_SEL_OPS = 0;
+	sock->ops->select_reply(sock, &msg);
+	if (msg.DEV_SEL_OPS == 0) {
+		debug_sock_select_print("called from %p sflags 0x%x TXsz %d RXsz %d\n",
+				__builtin_return_address(0), sock->flags,
+				sock->buf_size, sock->recv_data_size);
 		return;
 	}
-	else
-		notified = 1;
-	
-	result = notify(sock->select_ep);
+
+	msg.m_type = DEV_SEL_REPL2;
+	msg.DEV_MINOR = get_sock_num(sock);
+
+	debug_sock_select_print("socket num %d select result 0x%x sent",
+			msg.DEV_MINOR, msg.DEV_SEL_OPS);
+	result = send(sock->select_ep, &msg);
 	if (result != OK)
-		panic("LWIP : unable to notify (err %d)", result);
+		netsock_panic("unable to send (err %d)", result);
+
+	sock_clear_select(sock);
+	sock->select_ep = NONE;
+}
+
+static void sock_reply_type(struct socket * sock, int type, int status)
+{
+	sock->mess.m_type = type;
+
+	send_reply_type(&sock->mess, type, status);
+}
+
+void sock_reply_close(struct socket * sock, int status)
+{
+	debug_sock_print("sock %ld status %d", get_sock_num(sock), status);
+	sock_reply_type(sock, DEV_CLOSE_REPL, status);
 }
 
 void sock_reply(struct socket * sock, int status)
 {
-	debug_sock_print("socket num %ld status %d type %d",
-			get_sock_num(sock), status, sock->mess.m_type);
-	/*
-	 * If the status is SUSPEND send the
-	 * message only if this operation wasn't
-	 * suspended already, e.g. by enqueing the
-	 * message when the socket was busy
-	 * because of another pending message
-	 *
-	 * If there is a pending operation or we a reprocessing a suspended
-	 * operation, revive.
-	 *
-	 * Otherwise send a message straightaway
-	 */
-	if (status == SUSPEND) {
-		if (sock->flags & SOCK_FLG_OP_SUSPENDED) {
-			debug_sock_print("suspended before");
-			sock->flags &= ~SOCK_FLG_OP_SUSPENDED;
-			return;
-		}
-		message m = sock->mess;
-		debug_sock_print("SUSPEND");
-		send_reply(&m, status);
-	} else if (sock->flags & (SOCK_FLG_OP_PENDING | SOCK_FLG_OP_SUSPENDED)) {
-		sock_revive(sock, status);
-		/*
-		 * From now on, we process suspended calls as any other. The
-		 * status is set and will be collected
-		 */
-		sock->flags &= ~SOCK_FLG_OP_SUSPENDED;
-	} else
-		send_reply(&sock->mess, status);
+	debug_sock_print("sock %ld status %d", get_sock_num(sock), status);
+	sock_reply_type(sock, DEV_REVIVE, status);
 }
 
 struct socket * get_unused_sock(void)
@@ -302,157 +313,31 @@ struct socket * get_unused_sock(void)
 	return NULL;
 }
 
-struct socket * get_nic_sock(unsigned dev)
-{
-	if (dev < MAX_DEVS)
-		return &socket[dev + SOCK_TYPES];
-	else
-		return NULL;
-}
-
-static void socket_open(message * m)
-{
-	struct sock_ops * ops;
-	struct socket * sock;
-	int ret = OK;
-
-	switch (m->DEVICE) {
-	case SOCK_TYPE_TCP:
-		ops = &sock_tcp_ops;
-		break;
-	case SOCK_TYPE_UDP:
-		ops = &sock_udp_ops;
-		break;
-	case SOCK_TYPE_IP:
-		ops = &sock_raw_ip_ops;
-		break;
-	default:
-		if (m->DEVICE - SOCK_TYPES  < MAX_DEVS) {
-			m->DEVICE -= SOCK_TYPES;
-			nic_open(m);
-			return;
-		}
-		printf("LWIP unknown socket type %d\n", m->DEVICE);
-		send_reply(m, EINVAL);
-		return;
-	}
-	
-	sock = get_unused_sock();
-	if (!sock) {
-		printf("LWIP : no free socket\n");
-		send_reply(m, EAGAIN);
-		return;
-	}
-
-	sock->ops = ops;
-	sock->select_ep = NONE;
-	sock->recv_data_size = 0;
-
-	if (sock->ops && sock->ops->open)
-		ret = sock->ops->open(sock, m);
-	
-	if (ret == OK) {
-		debug_sock_print("new socket %ld", get_sock_num(sock));
-		send_reply(m, get_sock_num(sock));
-	} else {
-		debug_sock_print("failed %d", ret);
-		send_reply(m, ret);
-	}
-}
-
-static void do_status(message * m)
-{
-	int i;
-
-	debug_sock_print("called");
-
-	notified = 0;
-
-	for (i = 0; i < MAX_SOCKETS; i++) {
-		struct socket * sock = &socket[i];
-		if (!sock->ops) {
-			continue;
-		}
-		if (sock->flags & (SOCK_FLG_OP_REVIVING)) {
-			/*
-			 * We send the reply and we are done with this request
-			 */
-			debug_sock_print("status %d ep %d sent sock %ld type %d", 
-					sock->mess.REP_STATUS,
-					sock->mess.REP_ENDPT,
-					get_sock_num(sock),
-					sock->mess.m_type);
-			send(m->m_source, &sock->mess);
-			/*
-			 * Remove only the reviving flag, i.e. the status has
-			 * been consumed. SOCK_FLG_OP_PENDING may stay set. For
-			 * instance in case of a TCP write, the application is
-			 * already notified while the process of sending is
-			 * still going on
-			 */
-			sock->flags &= ~SOCK_FLG_OP_REVIVING;
-			return;
-		}
-
-		/*
-		 * We check select AFTER possible reviving an operation,
-		 * otherwise the select will fail as the socket is still
-		 * blocking
-		 */
-		if (sock_select_check_set(sock)) {
-			if (sock->ops && sock->ops->select_reply) {
-				message msg;
-				msg.m_type = DEV_IO_READY;
-				msg.DEV_MINOR = get_sock_num(sock);
-				msg.DEV_SEL_OPS = 0;
-				sock->ops->select_reply(sock, &msg);
-				if (msg.DEV_SEL_OPS) {
-					int result;
-
-					debug_sock_print("socket num %d select "
-						"result 0x%x sent",
-						msg.DEV_MINOR,
-						msg.DEV_SEL_OPS);
-					result = send(sock->select_ep, &msg);
-					if (result != OK)
-						panic("LWIP : unable to send "
-							"(err %d)", result);
-					sock_clear_select(sock);
-					sock->select_ep = NONE;
-					return;
-				}
-			}
-		}
-	}
-
-	debug_sock_print("no status");
-	m->m_type = DEV_NO_STATUS;
-	send(m->m_source, m);
-}
-
 static void socket_request_socket(struct socket * sock, message * m)
 {
+	int blocking = m->FLAGS & FLG_OP_NONBLOCK ? 0 : 1;
+
 	switch (m->m_type) {
 	case DEV_READ_S:
 		if (sock && sock->ops && sock->ops->read)
-			sock->ops->read(sock, m);
+			sock->ops->read(sock, m, blocking);
 		else
 			send_reply(m, EINVAL);
 		return;
 	case DEV_WRITE_S:
 		if (sock && sock->ops && sock->ops->write)
-			sock->ops->write(sock, m);
+			sock->ops->write(sock, m, blocking);
 		else
 			send_reply(m, EINVAL);
 		return;
 	case DEV_IOCTL_S:
 		if (sock && sock->ops && sock->ops->ioctl)
-			sock->ops->ioctl(sock, m);
+			sock->ops->ioctl(sock, m, blocking);
 		else
 			send_reply(m, EINVAL);
 		return;
 	default:
-		panic("LWIP : cannot happen!");
+		netsock_panic("cannot happen!");
 	}
 }
 
@@ -460,6 +345,7 @@ void socket_request(message * m)
 {
 	struct socket * sock;
 
+	debug_sock_print("request %d", m->m_type);
 	switch (m->m_type) {
 	case DEV_OPEN:
 		socket_open(m);
@@ -471,7 +357,7 @@ void socket_request(message * m)
 			sock->mess = *m;
 			sock->ops->close(sock, m);
 		} else
-			send_reply(m, EINVAL);
+			send_reply_close(m, EINVAL);
 		return;
 	case DEV_READ_S:
 	case DEV_WRITE_S:
@@ -485,7 +371,7 @@ void socket_request(message * m)
 		 * If an operation is pending (blocking operation) or writing is
 		 * still going and we want to read, suspend the new operation
 		 */
-		if ((sock->flags & (SOCK_FLG_OP_PENDING | SOCK_FLG_OP_REVIVING)) |
+		if ((sock->flags & SOCK_FLG_OP_PENDING) ||
 				(m->m_type == DEV_READ_S &&
 				 sock->flags & SOCK_FLG_OP_WRITING)) {
 			char * o = "\0";
@@ -495,11 +381,9 @@ void socket_request(message * m)
 				o = "WRITE";
 			else
 				o = "non R/W op";
-			debug_sock_print("socket %ld is busy by %s\n",
-					get_sock_num(sock), o);
-			if (mq_enqueue(m) == 0) {
-				send_reply(m, SUSPEND);
-			} else {
+			debug_sock_print("socket %ld is busy by %s flgs 0x%x\n",
+					get_sock_num(sock), o, sock->flags);
+			if (mq_enqueue(m) != 0) {
 				debug_sock_print("Enqueuing suspended "
 							"call failed");
 				send_reply(m, ENOMEM);
@@ -511,6 +395,7 @@ void socket_request(message * m)
 		return;
 	case CANCEL:
 		sock = get_sock(m->DEVICE);
+		printf("socket num %ld\n", get_sock_num(sock));
 		debug_sock_print("socket num %ld", get_sock_num(sock));
 		/* Cancel the last operation in the queue */
 		if (mq_cancel(m)) {
@@ -522,37 +407,28 @@ void socket_request(message * m)
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			send_reply(m, EINTR);
 			return;
-		/*
-		 * .. or return the status of the operation which was finished
-		 * before canceled
-		 */
-		} else if (sock->flags & SOCK_FLG_OP_REVIVING) {
-			sock->flags &= ~SOCK_FLG_OP_REVIVING;
-			send_reply(m, sock->mess.REP_STATUS);
 		} else
-			panic("LWIP : no operation to cancel");
+			netsock_panic("no operation to cancel");
 
 		return;
 	case DEV_SELECT:
-		/* 
+		/*
 		 * Select is always executed immediately and is never suspended.
 		 * Although, it sets actions which must be monitored
 		 */
 		sock = get_sock(m->DEVICE);
 		assert(sock->select_ep == NONE || sock->select_ep == m->m_source);
-		
+
 		if (sock && sock->ops && sock->ops->select) {
+			sock->select_ep = m->m_source;
 			sock->ops->select(sock, m);
-			if (sock_select_set(sock))
-				sock->select_ep = m->m_source;
+			if (!sock_select_set(sock))
+				sock->select_ep = NONE;
 		} else
 			send_reply(m, EINVAL);
 		return;
-	case DEV_STATUS:
-		do_status(m);
-		return;
 	default:
-		printf("LWIP : unknown message from VFS, type %d\n",
+		netsock_error("unknown message from VFS, type %d\n",
 							m->m_type);
 	}
 	send_reply(m, EGENERIC);
@@ -567,13 +443,11 @@ void mq_process(void)
 
 	while(mq) {
 		struct mq * next = mq->next;
-	
+
 		sock = get_sock(mq->m.DEVICE);
-		if (!(sock->flags &
-				(SOCK_FLG_OP_PENDING | SOCK_FLG_OP_REVIVING)) &&
+		if (!(sock->flags & SOCK_FLG_OP_PENDING) &&
 				!(mq->m.m_type == DEV_READ_S &&
-				 sock->flags & SOCK_FLG_OP_WRITING)) {
-			sock->flags = SOCK_FLG_OP_SUSPENDED;
+					sock->flags & SOCK_FLG_OP_WRITING)) {
 			debug_sock_print("resuming op on sock %ld\n",
 					get_sock_num(sock));
 			sock->mess = mq->m;
@@ -591,7 +465,7 @@ void generic_op_select(struct socket * sock, message * m)
 {
 	int retsel = 0, sel;
 
-	debug_print("socket num %ld 0x%x", get_sock_num(sock), m->USER_ENDPT);
+	debug_sock_print("socket num %ld 0x%x", get_sock_num(sock), m->USER_ENDPT);
 
 	sel = m->USER_ENDPT;
 
@@ -604,7 +478,7 @@ void generic_op_select(struct socket * sock, message * m)
 				sock->flags |= SOCK_FLG_SEL_WRITE;
 			/* FIXME we do not monitor error */
 		}
-		send_reply(m, 0);
+		sock_reply_select(sock, 0);
 		return;
 	}
 
@@ -619,26 +493,26 @@ void generic_op_select(struct socket * sock, message * m)
 		retsel |= SEL_WR;
 	/* FIXME SEL_ERR is ignored, we do not generate exceptions */
 
-	send_reply(m, retsel);
+	sock_reply_select(sock, retsel);
 }
 
 void generic_op_select_reply(struct socket * sock, __unused message * m)
 {
 	assert(sock->select_ep != NONE);
-	debug_print("socket num %ld", get_sock_num(sock));
+	debug_sock_print("socket num %ld", get_sock_num(sock));
 
 	/* unused for generic packet socket, see generic_op_select() */
 	assert((sock->flags & (SOCK_FLG_SEL_WRITE | SOCK_FLG_SEL_ERROR)) == 0);
 
-	if (sock->flags & (SOCK_FLG_OP_PENDING | SOCK_FLG_OP_REVIVING)) {
-		debug_print("WARNING socket still blocking!");
+	if (sock->flags & SOCK_FLG_OP_PENDING) {
+		debug_sock_print("WARNING socket still blocking!");
 		return;
 	}
 
 	if (sock->flags & SOCK_FLG_SEL_READ && sock->recv_head)
 		m->DEV_SEL_OPS |= SEL_RD;
-	
-	if (m->DEV_SEL_OPS) 
+
+	if (m->DEV_SEL_OPS)
 		sock->flags &= ~(SOCK_FLG_SEL_WRITE | SOCK_FLG_SEL_READ |
 							SOCK_FLG_SEL_ERROR);
 }

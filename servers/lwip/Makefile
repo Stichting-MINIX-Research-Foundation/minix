@@ -1,7 +1,6 @@
 # Makefile for inet.
 PROG=	lwip
 SRCS=	lwip.c		\
-	socket.c	\
 	driver.c	\
 	udp.c		\
 	tcp.c		\
@@ -11,8 +10,8 @@ SRCS=	lwip.c		\
 
 .PATH:	${.CURDIR}/generic
 
-DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS} ${LIBLWIP}
-LDADD+=	-lchardriver -lsys -ltimers -llwip
+DPADD+=	${LIBCHARDRIVER} ${LIBSYS} ${LIBTIMERS} ${LIBLWIP} ${LIBNETSOCK}
+LDADD+=	-lchardriver -lsys -ltimers -llwip -lnetsock
 
 MAN=
 

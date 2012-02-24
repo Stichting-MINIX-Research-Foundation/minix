@@ -11,7 +11,7 @@
 #include <lwip/tcp_impl.h>
 #include <lwip/ip_addr.h>
 
-#include "socket.h"
+#include <minix/netsock.h>
 #include "proto.h"
 
 #define TCP_BUF_SIZE	(32 << 10)
@@ -67,7 +67,7 @@ static void tcp_error_callback(void *arg, err_t err)
 	}
 	
 	if (sock->flags & SOCK_FLG_OP_PENDING) {
-		sock_revive(sock, perr);
+		sock_reply(sock, perr);
 		sock->flags &= ~SOCK_FLG_OP_PENDING;
 	} else if (sock_select_set(sock))
 		sock_select_notify(sock);
@@ -173,9 +173,9 @@ static void tcp_op_close(struct socket * sock, __unused message * m)
 	}
 	debug_tcp_print("freed TX data");
 
-	sock_reply(sock, OK);
+	sock_reply_close(sock, OK);
 	debug_tcp_print("socket unused");
-	
+
 	/* mark it as unused */
 	sock->ops = NULL;
 }
@@ -290,7 +290,7 @@ cp_error:
 		return EFAULT;
 }
 
-static void tcp_op_read(struct socket * sock, message * m)
+static void tcp_op_read(struct socket * sock, message * m, int blk)
 {
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
@@ -313,9 +313,13 @@ static void tcp_op_read(struct socket * sock, message * m)
 			sock_reply(sock, 0);
 			return;
 		}
+                if (!blk) {
+                        debug_tcp_print("reading would block -> EAGAIN");
+                        sock_reply(sock, EAGAIN);
+                        return;
+                }
 		/* operation is being processed */
 		debug_tcp_print("no data to read, suspending");
-		sock_reply(sock, SUSPEND);
 		sock->flags |= SOCK_FLG_OP_PENDING | SOCK_FLG_OP_READING;
 	}
 }
@@ -383,7 +387,7 @@ static struct wbuf * wbuf_ack_sent(struct socket * sock, unsigned sz)
 	return wc->head;
 }
 
-static void tcp_op_write(struct socket * sock, message * m)
+static void tcp_op_write(struct socket * sock, message * m, __unused int blk)
 {
 	int ret;
 	struct wbuf * wbuf;
@@ -620,9 +624,8 @@ static err_t tcp_recv_callback(void *arg,
 
 		/* wake up the reader and report EOF */
 		if (sock->flags & SOCK_FLG_OP_PENDING &&
-				sock->flags & SOCK_FLG_OP_READING &&
-				!(sock->flags & SOCK_FLG_OP_REVIVING)) {
-			sock_revive(sock, 0);
+				sock->flags & SOCK_FLG_OP_READING) {
+			sock_reply(sock, 0);
 			sock->flags &= ~(SOCK_FLG_OP_PENDING |
 					SOCK_FLG_OP_READING);
 		}
@@ -652,7 +655,7 @@ static err_t tcp_recv_callback(void *arg,
 		if (sock->flags & SOCK_FLG_OP_READING) {
 			ret = read_from_tcp(sock, &sock->mess);
 			debug_tcp_print("read op finished");
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~(SOCK_FLG_OP_PENDING |
 					SOCK_FLG_OP_READING);
 		}
@@ -792,7 +795,7 @@ static err_t tcp_connected_callback(void *arg,
 
 	tcp_sent(tpcb, tcp_sent_callback);
 	tcp_recv(tpcb, tcp_recv_callback);
-	sock_revive(sock, OK);
+	sock_reply(sock, OK);
 	sock->flags &= ~(SOCK_FLG_OP_PENDING | SOCK_FLG_OP_CONNECTING);
 
 	/* revive does the sock_select_notify() for us */
@@ -811,7 +814,6 @@ static void tcp_op_connect(struct socket * sock)
 	 * Connecting is going to send some packets. Unless an immediate error
 	 * occurs this operation is going to block
 	 */
-	sock_reply(sock, SUSPEND);
 	sock->flags |= SOCK_FLG_OP_PENDING | SOCK_FLG_OP_CONNECTING;
 
 	/* try to connect now */
@@ -874,7 +876,7 @@ static err_t tcp_accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err)
 		int ret;
 
 		ret = tcp_do_accept(sock, &sock->mess, newpcb);
-		sock_revive(sock, ret);
+		sock_reply(sock, ret);
 		sock->flags &= ~SOCK_FLG_OP_PENDING;
 		if (ret == OK) {
 			return ERR_OK;
@@ -951,7 +953,6 @@ static void tcp_op_accept(struct socket * sock, message * m)
 
 	debug_tcp_print("no ready connection, suspending\n");
 
-	sock_reply(sock, SUSPEND);
 	sock->flags |= SOCK_FLG_OP_PENDING;
 }
 
@@ -1040,7 +1041,7 @@ static void tcp_set_opt(struct socket * sock, message * m)
 	sock_reply(sock, OK);
 }
 
-static void tcp_op_ioctl(struct socket * sock, message * m)
+static void tcp_op_ioctl(struct socket * sock, message * m, __unused int blk)
 {
 	if (!sock->pcb) {
 		sock_reply(sock, ENOTCONN);
@@ -1109,7 +1110,7 @@ static void tcp_op_select(struct socket * sock, __unused message * m)
 			if (sel & SEL_ERR)
 				sock->flags |= SOCK_FLG_SEL_ERROR;
 		}
-		send_reply(m, 0);
+		sock_reply_select(sock, 0);
 		return;
 	}
 
@@ -1155,7 +1156,7 @@ static void tcp_op_select(struct socket * sock, __unused message * m)
 	if (sel & SEL_ERR && sel & SEL_NOTIFY)
 		sock->flags |= SOCK_FLG_SEL_ERROR;
 
-	send_reply(m, retsel);
+	sock_reply_select(sock, retsel);
 }
 
 static void tcp_op_select_reply(struct socket * sock, message * m)
@@ -1164,7 +1165,7 @@ static void tcp_op_select_reply(struct socket * sock, message * m)
 	debug_tcp_print("socket num %ld", get_sock_num(sock));
 
 
-	if (sock->flags & (SOCK_FLG_OP_PENDING | SOCK_FLG_OP_REVIVING)) {
+	if (sock->flags & SOCK_FLG_OP_PENDING) {
 		debug_tcp_print("WARNING socket still blocking!");
 		return;
 	}

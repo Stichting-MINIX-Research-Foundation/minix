@@ -7,7 +7,7 @@
 #include <lwip/raw.h>
 #include <lwip/ip_addr.h>
 
-#include "socket.h"
+#include <minix/netsock.h>
 #include "proto.h"
 
 #define RAW_IP_BUF_SIZE	(32 << 10)
@@ -62,7 +62,7 @@ static void raw_ip_op_close(struct socket * sock, __unused message * m)
 
 	raw_ip_close(sock);
 
-	sock_reply(sock, OK);
+	sock_reply_close(sock, OK);
 }
 
 static int raw_ip_do_receive(message * m,
@@ -111,7 +111,7 @@ static u8_t raw_ip_op_receive(void *arg,
 		ret = raw_ip_do_receive(&sock->mess, pbuf);
 
 		if (ret > 0) {
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			if (sock->usr_flags & NWIO_EXCL) {
 				pbuf_free(pbuf);
@@ -119,7 +119,7 @@ static u8_t raw_ip_op_receive(void *arg,
 			} else
 				return 0;
 		} else {
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 		}
 	}
@@ -170,7 +170,7 @@ static u8_t raw_ip_op_receive(void *arg,
 	return ret;
 }
 
-static void raw_ip_op_read(struct socket * sock, message * m)
+static void raw_ip_op_read(struct socket * sock, message * m, int blk)
 {
 	debug_print("socket num %ld", get_sock_num(sock));
 
@@ -195,18 +195,19 @@ static void raw_ip_op_read(struct socket * sock, message * m)
 			raw_ip_recv_free(data);
 		}
 		sock_reply(sock, ret);
-	} else {
+	} else if (!blk)
+		sock_reply(sock, EAGAIN);
+	else {
 		/* store the message so we know how to reply */
 		sock->mess = *m;
 		/* operation is being processes */
 		sock->flags |= SOCK_FLG_OP_PENDING;
 
 		debug_print("no data to read, suspending");
-		sock_reply(sock, SUSPEND);
 	}
 }
 
-static void raw_ip_op_write(struct socket * sock, message * m)
+static void raw_ip_op_write(struct socket * sock, message * m, __unused int blk)
 {
 	int ret;
 	struct pbuf * pbuf;
@@ -332,7 +333,7 @@ static void raw_ip_get_opt(struct socket * sock, message * m)
 	sock_reply(sock, OK);
 }
 
-static void raw_ip_op_ioctl(struct socket * sock, message * m)
+static void raw_ip_op_ioctl(struct socket * sock, message * m, __unused int blk)
 {
 	debug_print("socket num %ld req %c %d %d",
 			get_sock_num(sock),

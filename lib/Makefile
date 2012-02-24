@@ -5,7 +5,8 @@ SUBDIR= csu libcompat_minix libc libblockdriver libchardriver     \
 	libl libhgfs libz libfetch libvtreefs libaudiodriver libmthread   \
 	libexec libdevman libusb libminlib libasyn          \
 	libddekit libminixfs libbdev libelf libminc libcrypt libterminfo \
-	libcurses libvassert libutil libpuffs librefuse libbz2 libarchive libprop
+	libcurses libvassert libutil libpuffs librefuse libbz2 libarchive libprop \
+	libnetsock
 
 SUBDIR+=        ../external/public-domain/xz/lib
 

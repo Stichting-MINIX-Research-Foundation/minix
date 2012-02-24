@@ -25,7 +25,7 @@ Copyright 1995 Philip Homburg
 #include "inet_config.h"
 
 #include "proto.h"
-#include "socket.h"
+#include <minix/netsock.h>
 
 
 struct eth_conf eth_conf[IP_PORT_MAX];

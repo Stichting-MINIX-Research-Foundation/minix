@@ -9,6 +9,7 @@
 #include <minix/com.h>
 #include <minix/sysutil.h>
 #include <minix/safecopies.h>
+#include <minix/netsock.h>
 
 #include <sys/ioc_net.h>
 #include <net/gen/in.h>
@@ -22,7 +23,6 @@
 #include <netif/etharp.h>
 
 #include "proto.h"
-#include "socket.h"
 #include "driver.h"
 
 #if 0
@@ -303,11 +303,11 @@ int raw_socket_input(struct pbuf * pbuf, struct nic * nic)
 		ret = raw_receive(&sock->mess, pbuf);
 
 		if (ret > 0) {
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 			return 0;
 		} else {
-			sock_revive(sock, ret);
+			sock_reply(sock, ret);
 			sock->flags &= ~SOCK_FLG_OP_PENDING;
 		}
 	}
@@ -456,7 +456,7 @@ static void nic_op_close(struct socket * sock, __unused message * m)
 		debug_drv_print("no active raw sock at %s", nic->name);
 	}
 
-	sock_reply(sock, OK);
+	sock_reply_close(sock, OK);
 }
 
 static void nic_ioctl_set_conf(__unused struct socket * sock,
@@ -643,12 +643,12 @@ void nic_default_ioctl(message *m)
 	nic_do_ioctl(NULL, nic, m);
 }
 
-static void nic_op_ioctl(struct socket * sock, message * m)
+static void nic_op_ioctl(struct socket * sock, message * m, __unused int blk)
 {
 	nic_do_ioctl(sock, (struct nic *)sock->data, m);
 }
 
-static void nic_op_read(struct socket * sock, message * m)
+static void nic_op_read(struct socket * sock, message * m, int blk)
 {
 	debug_drv_print("sock num %d", get_sock_num(sock));
 
@@ -668,18 +668,19 @@ static void nic_op_read(struct socket * sock, message * m)
 			pbuf_free(pbuf);
 		}
 		sock_reply(sock, ret);
-	} else {
+	} else if (!blk)
+		send_reply(m, EAGAIN);
+	else {
 		/* store the message so we know how to reply */
 		sock->mess = *m;
 		/* operation is being processes */
 		sock->flags |= SOCK_FLG_OP_PENDING;
 
 		debug_print("no data to read, suspending");
-		sock_reply(sock, SUSPEND);
 	}
 }
 
-static void nic_op_write(struct socket * sock, message * m)
+static void nic_op_write(struct socket * sock, message * m, __unused int blk)
 {
 	int ret;
 	struct pbuf * pbuf;
@@ -730,7 +731,7 @@ void nic_open(message *m)
 	debug_print("device %d", m->DEVICE);
 
 	if (m->DEVICE > MAX_DEVS || devices[m->DEVICE].drv_ep == NONE) {
-		send_reply(m, ENODEV);
+		send_reply_open(m, ENODEV);
 		return;
 	}
 
@@ -750,7 +751,7 @@ void nic_open(message *m)
 	sock->recv_data_size = 0;
 	sock->data = &devices[m->DEVICE];
 
-	send_reply(m, get_sock_num(sock));
+	send_reply_open(m, get_sock_num(sock));
 }
 
 static int driver_pkt_enqueue(struct packet_q ** head,
