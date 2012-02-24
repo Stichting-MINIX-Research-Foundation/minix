@@ -298,8 +298,9 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 	close(fd);
 
 	/* Now we know the root fs type, load modules for it. */
-	module_add(fsmod);
-	if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
+	if (fsmod != NULL)
+		module_add(fsmod);
+	if (fsmod !=NULL && fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
 		module_add(fsmod2);
 
 	/*
