@@ -304,7 +304,7 @@ then	echo "Created new minix install in $RELEASEDIR."
 fi
 
 echo " * Counting files"
-extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
+extrakb=`du -ks $RELEASEDIR/usr/install | awk '{ print $1 }'`
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -print -path $RELEASEDIR/usr -prune | wc -l >$RELEASEDIR/.rootfiles
 

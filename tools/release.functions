@@ -194,9 +194,9 @@ fitfs()
 	inodes="`expr $inodes + $extra_inodes`"
 
 	# Determine number of data zones
-	zonekbs=`du -Fs $path | cut -d'	' -f1`
+	zonekbs=`du -ks $path | cut -d'	' -f1`
 	zonekbsignore=0
-	[ ! -d $path/usr ] || zonekbsignore=`du -Fs $path/usr | cut -d"	" -f1`
+	[ ! -d $path/usr ] || zonekbsignore=`du -ks $path/usr | cut -d"	" -f1`
 	zones="`expr \( $zonekbs - $zonekbsignore \) / \( $BS / 1024 \) + $extra_zones`"
 
 	# Determine file system size

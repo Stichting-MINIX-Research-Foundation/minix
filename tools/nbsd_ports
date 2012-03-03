@@ -33,6 +33,7 @@ usr.bin/mkdep		src/usr.bin/mkdep
 usr.bin/newgrp		src/usr.bin/newgrp
 usr.bin/uniq		src/usr.bin/uniq
 usr.bin/seq		src/usr.bin/seq
+usr.bin/du		src/usr.bin/du
 usr.bin/man		src/usr.bin/man
 usr.bin/apropos		src/usr.bin/apropos
 usr.bin/mdocml		src/external/bsd/mdocml
