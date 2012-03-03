@@ -23,6 +23,8 @@ FORWARD _PROTOTYPE(void adjust_proc_slot, (struct proc *rp,
     struct proc *from_rp));
 FORWARD _PROTOTYPE(void adjust_priv_slot, (struct priv *privp,
     struct priv *from_privp));
+FORWARD _PROTOTYPE(void swap_fpu_state, (struct proc *a_rp,
+    struct proc *b_orig_rp, struct proc *b_copy_rp));
 FORWARD _PROTOTYPE(void swap_proc_slot_pointer, (struct proc **rpp,
     struct proc *src_rp, struct proc *dst_rp));
 
@@ -109,6 +111,10 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
   adjust_priv_slot(priv(src_rp), &orig_src_priv);
   adjust_priv_slot(priv(dst_rp), &orig_dst_priv);
 
+  /* Swap FPU state. Can only be done after adjusting the process slots. */
+  swap_fpu_state(src_rp, dst_rp, &orig_dst_proc);
+  swap_fpu_state(dst_rp, src_rp, &orig_src_proc);
+
   /* Swap global process slot addresses. */
   swap_proc_slot_pointer(get_cpulocal_var_ptr(ptproc), src_rp, dst_rp);
 
@@ -140,12 +146,13 @@ PUBLIC int do_update(struct proc * caller, message * m_ptr)
  *===========================================================================*/
 PRIVATE void adjust_proc_slot(struct proc *rp, struct proc *from_rp)
 {
-  /* Preserve endpoints, slot numbers, priv structure, and IPC. */
+  /* Preserve endpoints, slot numbers, priv structure, IPC, FPU pointer. */
   rp->p_endpoint = from_rp->p_endpoint;
   rp->p_nr = from_rp->p_nr;
   rp->p_priv = from_rp->p_priv;
   priv(rp)->s_proc_nr = from_rp->p_nr;
   rp->p_caller_q = from_rp->p_caller_q;
+  rp->p_fpu_state.fpu_save_area_p = from_rp->p_fpu_state.fpu_save_area_p;
 
   /* preserve scheduling */
   rp->p_scheduler = from_rp->p_scheduler;
@@ -167,6 +174,24 @@ PRIVATE void adjust_priv_slot(struct priv *privp, struct priv *from_privp)
   privp->s_int_pending = from_privp->s_int_pending;
   privp->s_sig_pending = from_privp->s_sig_pending;
   privp->s_alarm_timer = from_privp->s_alarm_timer;
+}
+
+/*===========================================================================*
+ *				swap_fpu_state				     *
+ *===========================================================================*/
+PRIVATE void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
+    struct proc *b_copy_rp)
+{
+  /* Copy the FPU state from process B's copied slot, using B's original FPU
+   * save area alignment, into process A's slot.
+   */
+  int align;
+
+  align = (int) ((char *) b_orig_rp->p_fpu_state.fpu_save_area_p -
+	(char *) &b_orig_rp->p_fpu_state.fpu_image);
+
+  memcpy(a_rp->p_fpu_state.fpu_save_area_p,
+	b_copy_rp->p_fpu_state.fpu_image + align, FPU_XFP_SIZE);
 }
 
 /*===========================================================================*
