@@ -34,7 +34,7 @@ _PROTOTYPE( void context_stop, (struct proc * p)			);
 _PROTOTYPE( void context_stop_idle, (void)				);
 _PROTOTYPE( int restore_fpu, (struct proc *)				);
 _PROTOTYPE( void save_fpu, (struct proc *)				);
-_PROTOTYPE( void save_local_fpu, (struct proc *)			);
+_PROTOTYPE( void save_local_fpu, (struct proc *, int retain)		);
 _PROTOTYPE( void fpu_sigcontext, (struct proc *, struct sigframe *fr, struct sigcontext *sc)	);
 
 /* main.c */

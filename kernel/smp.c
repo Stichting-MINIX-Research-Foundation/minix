@@ -168,12 +168,12 @@ PUBLIC void smp_sched_handler(void)
 			RTS_SET(p, RTS_PROC_STOP);
 		}
 		if (flgs & SCHED_IPI_SAVE_CTX) {
-			/* all context have been save already,  FPU remains */
+			/* all context has been saved already, FPU remains */
 			if (proc_used_fpu(p) &&
 					get_cpulocal_var(fpu_owner) == p) {
 				disable_fpu_exception();
-				save_local_fpu(p);
-				/* we re preparing to migrate somewhere else */
+				save_local_fpu(p, FALSE /*retain*/);
+				/* we're preparing to migrate somewhere else */
 				release_fpu(p);
 			}
 		}

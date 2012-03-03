@@ -274,24 +274,27 @@ PUBLIC void fpu_init(void)
         }
 }
 
-PUBLIC void save_local_fpu(struct proc *pr)
+PUBLIC void save_local_fpu(struct proc *pr, int retain)
 {
+	/* Save process FPU context. If the 'retain' flag is set, keep the FPU
+	 * state as is. If the flag is not set, the state is undefined upon
+	 * return, and the caller is responsible for reloading a proper state.
+	 */
+
 	if(!is_fpu())
 		return;
 
-	/* Save changed FPU context. */
 	if(osfxsr_feature) {
 		fxsave(pr->p_fpu_state.fpu_save_area_p);
-		fninit();
 	} else {
 		fnsave(pr->p_fpu_state.fpu_save_area_p);
+		if (retain)
+			(void) frstor(pr->p_fpu_state.fpu_save_area_p);
 	}
 }
 
 PUBLIC void save_fpu(struct proc *pr)
 {
-	int r;
-
 #ifdef CONFIG_SMP
 	if (cpuid != pr->p_cpu) {
 		int stopped;
@@ -316,13 +319,7 @@ PUBLIC void save_fpu(struct proc *pr)
 
 	if (get_cpulocal_var(fpu_owner) == pr) {
 		disable_fpu_exception();
-		save_local_fpu(pr);
-
-		/* The state may now be reset, and the caller does not expect
-		 * this. Immediately restore the saved state.
-		 */
-		r = restore_fpu(pr);
-		assert(r == OK);
+		save_local_fpu(pr, TRUE /*retain*/);
 	}
 }
 
