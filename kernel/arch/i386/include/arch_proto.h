@@ -99,8 +99,11 @@ _PROTOTYPE( void fninit, (void));
 _PROTOTYPE( void clts, (void));
 _PROTOTYPE( void fxsave, (void *));
 _PROTOTYPE( void fnsave, (void *));
-_PROTOTYPE( void fxrstor, (void *));
-_PROTOTYPE( void frstor, (void *));
+_PROTOTYPE( int fxrstor, (void *));
+_PROTOTYPE( int __fxrstor_end, (void *));
+_PROTOTYPE( int frstor, (void *));
+_PROTOTYPE( int __frstor_end, (void *));
+_PROTOTYPE( int __frstor_failure, (void *));
 _PROTOTYPE( unsigned short fnstsw, (void));
 _PROTOTYPE( void fnstcw, (unsigned short* cw));
 

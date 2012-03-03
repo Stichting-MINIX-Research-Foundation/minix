@@ -608,21 +608,29 @@ ENTRY(fnsave)
 	ret
 
 /*===========================================================================*/
-/*			      fxrstor			     		*/
+/*				fxrstor					     */
 /*===========================================================================*/
 ENTRY(fxrstor)
 	mov	4(%esp), %eax
-	fxrstor	(%eax)		/* Do not change the operand! (gas2ack) */
+	fxrstor	(%eax)
+ENTRY(__fxrstor_end)
+	xor     %eax, %eax
 	ret
 
 /*===========================================================================*/
-/*			      frstor			     		*/
+/*				frstor					     */
 /*===========================================================================*/
 ENTRY(frstor)
 	mov	4(%esp), %eax
-	frstor	(%eax)		/* Do not change the operand! (gas2ack) */
+	frstor	(%eax)
+ENTRY(__frstor_end)
+	xor     %eax, %eax
 	ret
 
+/* Shared exception handler for both fxrstor and frstor. */
+ENTRY(__frstor_failure)
+	mov	$1, %eax
+	ret
 
 /*===========================================================================*/
 /*			      read_cr0					     */

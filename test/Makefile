@@ -10,6 +10,7 @@ OBJ=	       test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test30 test31 test32        test34 test35 test36 test37 test38 test39 \
 	test40 test41 test42               test45        test47 test48 test49 \
 	test50               test53 test54 test55               test58        \
+	              test62                                                  \
 	t10a t11a t11b t40a t40b t40c t40d t40e t40f t60a t60b \
 
 ROOTOBJ= test11 test33 test43 test44 test46 test56 test60 test61
@@ -113,3 +114,4 @@ test60: test60.c
 t60a: t60a.c
 t60b: t60b.c
 test61: test61.c
+test62: test62.c

@@ -322,18 +322,24 @@ PUBLIC void save_fpu(struct proc *pr)
 #endif
 }
 
-PUBLIC void restore_fpu(struct proc *pr)
+PUBLIC int restore_fpu(struct proc *pr)
 {
+	int failed;
+
 	if(!proc_used_fpu(pr)) {
 		fninit();
 		pr->p_misc_flags |= MF_FPU_INITIALIZED;
 	} else {
 		if(osfxsr_feature) {
-			fxrstor(pr->p_fpu_state.fpu_save_area_p);
+			failed = fxrstor(pr->p_fpu_state.fpu_save_area_p);
 		} else {
-			frstor(pr->p_fpu_state.fpu_save_area_p);
+			failed = frstor(pr->p_fpu_state.fpu_save_area_p);
 		}
+
+		if (failed) return EINVAL;
 	}
+
+	return OK;
 }
 
 PUBLIC void cpu_identify(void)

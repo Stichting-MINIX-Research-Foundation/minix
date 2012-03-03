@@ -548,7 +548,9 @@ LABEL(copr_not_available)
 	push	%ebp
 	mov	$0, %ebp
 	call	_C_LABEL(context_stop)
-	jmp	_C_LABEL(copr_not_available_handler)
+	call	_C_LABEL(copr_not_available_handler)
+	/* reached upon failure only */
+	jmp	_C_LABEL(switch_to_user)
 
 copr_not_available_in_kernel:
 	pushl	$0
