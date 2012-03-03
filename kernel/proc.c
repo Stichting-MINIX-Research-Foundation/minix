@@ -1878,7 +1878,7 @@ PUBLIC void copr_not_available_handler(void)
 	local_fpu_owner = get_cpulocal_var_ptr(fpu_owner);
 	if (*local_fpu_owner != NULL) {
 		assert(*local_fpu_owner != p);
-		save_local_fpu(*local_fpu_owner);
+		save_local_fpu(*local_fpu_owner, FALSE /*retain*/);
 	}
 
 	/*
@@ -1889,7 +1889,7 @@ PUBLIC void copr_not_available_handler(void)
 		/* Restoring FPU state failed. This is always the process's own
 		 * fault. Send a signal, and schedule another process instead.
 		 */
-		*local_fpu_owner = NULL;
+		*local_fpu_owner = NULL;		/* release FPU */
 		cause_sig(proc_nr(p), SIGFPE);
 		return;
 	}
