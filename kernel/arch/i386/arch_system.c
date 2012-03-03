@@ -290,20 +290,16 @@ PUBLIC void save_local_fpu(struct proc *pr)
 
 PUBLIC void save_fpu(struct proc *pr)
 {
+	int r;
+
 #ifdef CONFIG_SMP
-	if (cpuid == pr->p_cpu) {
-		if (get_cpulocal_var(fpu_owner) == pr) {
-			disable_fpu_exception();
-			save_local_fpu(pr);
-		}
-	}
-	else {
+	if (cpuid != pr->p_cpu) {
 		int stopped;
 
 		/* remember if the process was already stopped */
 		stopped = RTS_ISSET(pr, RTS_PROC_STOP);
 
-		/* stop the remote process and force it's context to be saved */
+		/* stop the remote process and force its context to be saved */
 		smp_schedule_stop_proc_save_ctx(pr);
 
 		/*
@@ -313,13 +309,21 @@ PUBLIC void save_fpu(struct proc *pr)
 		 */
 		if (!stopped)
 			RTS_UNSET(pr, RTS_PROC_STOP);
+
+		return;
 	}
-#else
+#endif
+
 	if (get_cpulocal_var(fpu_owner) == pr) {
 		disable_fpu_exception();
 		save_local_fpu(pr);
+
+		/* The state may now be reset, and the caller does not expect
+		 * this. Immediately restore the saved state.
+		 */
+		r = restore_fpu(pr);
+		assert(r == OK);
 	}
-#endif
 }
 
 PUBLIC int restore_fpu(struct proc *pr)

@@ -106,6 +106,7 @@ void do_child(void)
 
 void do_parent(void)
 {
+  ucontext_t dummy;
   int s;
   s = 1;
 
@@ -116,11 +117,16 @@ void do_parent(void)
      between context swaps. */
   if (fesetround(FE_UPWARD) != 0) err(10, 2);
 
+  /* Quick check to make sure that getcontext does not reset the FPU state. */
+  getcontext(&dummy);
+
+  if (fegetround() != FE_UPWARD) err(10, 3);
+
   while(s < SWAPS) {
 	do_calcs();
-  	if (fegetround() != FE_UPWARD) err(10, 3);
+	if (fegetround() != FE_UPWARD) err(10, 4);
 	s++;
-	if (swapcontext(&ctx[1], &ctx[2]) == -1) err(10, 4);
+	if (swapcontext(&ctx[1], &ctx[2]) == -1) err(10, 5);
   }
   /* Returning to main thread through uc_link */
 }
