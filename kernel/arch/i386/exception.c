@@ -224,6 +224,17 @@ PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 			panic("Copy involving a user pointer failed unexpectedly!");
 		}
 	}
+
+	/* Pass any error resulting from restoring FPU state, as a FPU
+	 * exception to the process.
+	 */
+	if (((void*)frame->eip >= (void*)fxrstor &&
+			(void *)frame->eip <= (void*)__fxrstor_end) ||
+			((void*)frame->eip >= (void*)frstor &&
+			(void *)frame->eip <= (void*)__frstor_end)) {
+		frame->eip = (reg_t) __frstor_failure;
+		return;
+	}
   }
 
   if(frame->vector == PAGE_FAULT_VECTOR) {

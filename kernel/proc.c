@@ -1885,7 +1885,15 @@ PUBLIC void copr_not_available_handler(void)
 	 * restore the current process' state and let it run again, do not
 	 * schedule!
 	 */
-	restore_fpu(p);
+	if (restore_fpu(p) != OK) {
+		/* Restoring FPU state failed. This is always the process's own
+		 * fault. Send a signal, and schedule another process instead.
+		 */
+		*local_fpu_owner = NULL;
+		cause_sig(proc_nr(p), SIGFPE);
+		return;
+	}
+
 	*local_fpu_owner = p;
 	context_stop(proc_addr(KERNEL));
 	restore_user_context(p);
