@@ -235,7 +235,7 @@ int hermes_init (hermes_t * hw)
 	}
 
 	if (!(reg & HERMES_EV_CMD)) {
-		printf("hermes @ %lx: Timeout waiting for card to reset\n",
+		printf("hermes @ %x: Timeout waiting for card to reset\n",
 			hw->iobase);
 		return -ETIMEDOUT;
 	}
@@ -250,7 +250,7 @@ int hermes_init (hermes_t * hw)
 	/* Was the status, the result of the issued command, ok? */
 	/* The expression below should be zero. Non-zero means an error */
 	if (status & HERMES_STATUS_RESULT) {
-		printf("Hermes:Result of INIT_CMD wrong.error value: 0x%lx\n",
+		printf("Hermes:Result of INIT_CMD wrong.error value: 0x%x\n",
 			(status & HERMES_STATUS_RESULT) >> 8);
 		err = -EIO;
 	}
@@ -272,7 +272,7 @@ int hermes_docmd_wait (hermes_t * hw, u16_t cmd, u16_t parm0,
 
 	err = hermes_issue_cmd (hw, cmd, parm0);
 	if (err) {
-		printf("hermes @ %lx: Error %d issuing command.\n",
+		printf("hermes @ %x: Error %d issuing command.\n",
 			 hw->iobase, err);
 		return err;
 	}
@@ -290,7 +290,7 @@ int hermes_docmd_wait (hermes_t * hw, u16_t cmd, u16_t parm0,
 
 	/* check for a timeout: has the command still not completed? */
 	if (!(reg & HERMES_EV_CMD)) {
-		printf("hermes @ %lx: Timeout waiting for command \
+		printf("hermes @ %x: Timeout waiting for command \
 		completion.\n", hw->iobase);
 		err = -ETIMEDOUT;
 		return err;
@@ -361,7 +361,7 @@ int hermes_allocate (hermes_t * hw, u16_t size, u16_t * fid) {
 
 	/* tired of waiting to complete. Abort. */
 	if (!(reg & HERMES_EV_ALLOC)) {
-		printf("hermes @ %lx:Timeout waiting for frame allocation\n",
+		printf("hermes @ %x:Timeout waiting for frame allocation\n",
 			 hw->iobase);
 		return -ETIMEDOUT;
 	}
@@ -622,13 +622,13 @@ int hermes_read_ltv (hermes_t * hw, int bap, u16_t rid, unsigned bufsize,
 		*length = rlength;
 
 	if (rtype != rid) {
-		printf("hermes @ %lx: hermes_read_ltv(): rid  (0x%04x)",
+		printf("hermes @ %x: hermes_read_ltv(): rid  (0x%04x)",
 			hw->iobase, rid);
 		printf("does not match type (0x%04x)\n", rtype);
 	}
 
 	if (HERMES_RECLEN_TO_BYTES (rlength) > bufsize) {
-		printf("hermes @ %lx: Truncating LTV record from ",
+		printf("hermes @ %x: Truncating LTV record from ",
 			hw->iobase);
 		printf("%d to %d bytes. (rid=0x%04x, len=0x%04x)\n",
 			HERMES_RECLEN_TO_BYTES (rlength), bufsize, rid,

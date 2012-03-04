@@ -430,7 +430,7 @@ PUBLIC int dsp_command(int value) {
 
 PUBLIC int sb16_inb(int port) {	
 	int s;
-	unsigned long value;
+	u32_t value;
 
 	if ((s=sys_inb(port, &value)) != OK)
 		panic("sys_inb() failed: %d", s);

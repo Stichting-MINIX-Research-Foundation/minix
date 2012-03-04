@@ -761,7 +761,7 @@ fxp_t *fp;
 {
 	int i, r, isr;
 	port_t port;
-	u32_t bus_addr;
+	phys_bytes bus_addr;
 
 	port= fp->fxp_base_port;
 
@@ -825,7 +825,7 @@ fxp_t *fp;
 {
 	size_t rx_totbufsize, tx_totbufsize, tot_bufsize, alloc_bufsize;
 	char *alloc_buf;
-	phys_bytes buf;
+	phys_bytes buf, bus_addr;
 	int i, r;
 	struct rfd *rfdp;
 	struct tx *txp;
@@ -856,9 +856,10 @@ fxp_t *fp;
 
 	fp->fxp_rx_buf= (struct rfd *)&tmpbufp[1];
 	r= sys_umap(SELF, VM_D, (vir_bytes)fp->fxp_rx_buf, rx_totbufsize,
-		&fp->fxp_rx_busaddr);
+		&bus_addr);
 	if (r != OK)
 		panic("sys_umap failed: %d", r);
+	fp->fxp_rx_busaddr= bus_addr;
 
 #if 0
 	printf("fxp_init_buf: got phys 0x%x for vir 0x%x\n",
@@ -872,9 +873,10 @@ fxp_t *fp;
 		if (i != fp->fxp_rx_nbuf-1)
 		{
 			r= sys_umap(SELF, VM_D, (vir_bytes)&rfdp[1],
-				sizeof(rfdp[1]), &rfdp->rfd_linkaddr);
+				sizeof(rfdp[1]), &bus_addr);
 			if (r != OK)
 				panic("sys_umap failed: %d", r);
+			rfdp->rfd_linkaddr= bus_addr;
 		}
 		else
 		{
@@ -901,10 +903,10 @@ fxp_t *fp;
 		if (i != fp->fxp_tx_nbuf-1)
 		{
 			r= sys_umap(SELF, VM_D, (vir_bytes)&txp[1],
-				(phys_bytes)sizeof(txp[1]),
-				&txp->tx_linkaddr);
+				(phys_bytes)sizeof(txp[1]), &bus_addr);
 			if (r != OK)
 				panic("sys_umap failed: %d", r);
+			txp->tx_linkaddr= bus_addr;
 		}
 		else
 		{
@@ -951,7 +953,7 @@ static void fxp_confaddr(fxp_t *fp)
 	static char eakey[]= FXP_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
 	int i, r;
-	u32_t bus_addr;
+	phys_bytes bus_addr;
 	long v;
 
 	/* User defined ethernet address? */
@@ -1354,7 +1356,7 @@ static void fxp_do_conf(fp)
 fxp_t *fp;
 {
 	int r;
-	u32_t bus_addr;
+	phys_bytes bus_addr;
 
 	/* Configure device */
 	tmpbufp->cc.cc_status= 0;

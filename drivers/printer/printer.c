@@ -215,7 +215,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 
     register int r = SUSPEND;
     int retries;
-    unsigned long status;
+    u32_t status;
 
     /* Reject command if last write is not yet finished, the count is not
      * positive, or the user address is bad.
@@ -435,7 +435,7 @@ PRIVATE void do_printer_output()
  * IRQ yet! 
  */
 
-  unsigned long status;
+  u32_t status;
   pvb_pair_t char_out[3];
 
   if (oleft == 0) {

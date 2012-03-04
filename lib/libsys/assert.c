@@ -7,6 +7,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <minix/sysutil.h>
 
 void
 __assert13(file, line, function, failedexpr)

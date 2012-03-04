@@ -189,9 +189,9 @@ FORWARD _PROTOTYPE( int at_vinb, (pvb_pair_t *, int n));
 #undef sys_inb
 #undef sys_outl
 
-FORWARD _PROTOTYPE( int at_out, (int line, u32_t port, unsigned long value,
+FORWARD _PROTOTYPE( int at_out, (int line, u32_t port, u32_t value,
 	char *typename, int type));
-FORWARD _PROTOTYPE( int at_in, (int line, u32_t port, unsigned long *value,
+FORWARD _PROTOTYPE( int at_in, (int line, u32_t port, u32_t *value,
 	char *typename, int type));
 
 #define sys_outb(p, v) at_out(__LINE__, (p), (v), "outb", _DIO_BYTE)
@@ -688,8 +688,7 @@ PRIVATE struct device *w_part(dev_t device)
 PRIVATE void
 check_dma(struct wini *wn)
 {
-	unsigned long dma_status = 0;
-	u32_t dma_base;
+	u32_t dma_status, dma_base;
 	int id_dma, ultra_dma;
 	u16_t w;
 
@@ -1131,7 +1130,7 @@ PRIVATE void start_dma(const struct wini *wn, int do_write)
 PRIVATE int error_dma(const struct wini *wn)
 {
 	int r;
-	unsigned long v;
+	u32_t v;
 
 #define DMAERR(msg) \
 	printf("at_wini%ld: bad DMA: %s. Disabling DMA for drive %d.\n",	\
@@ -1176,7 +1175,8 @@ PRIVATE ssize_t w_transfer(
   struct wini *wn;
   iovec_t *iop, *iov_end = iov + nr_req;
   int n, r, s, errors, do_dma;
-  unsigned long block, w_status;
+  unsigned long block;
+  u32_t w_status;
   u64_t dv_size;
   unsigned nbytes;
   unsigned dma_buf_offset;
@@ -1502,7 +1502,7 @@ PRIVATE int setup_dma(
 	phys_bytes user_phys;
 	unsigned n, offset, size;
 	int i, j, r;
-	unsigned long v;
+	u32_t v;
 	struct wini *wn = w_wn;
 	int verbose = 0;
 
@@ -1746,7 +1746,7 @@ PRIVATE void w_intr_wait(void)
 /* Wait for a task completion interrupt. */
 
   int r;
-  unsigned long w_status;
+  u32_t w_status;
   message m;
   int ipc_status;
 
@@ -1802,7 +1802,7 @@ PRIVATE int at_intr_wait(void)
 {
 /* Wait for an interrupt, study the status bits and return error/success. */
   int r, s;
-  unsigned long inbval;
+  u32_t inbval;
 
   w_intr_wait();
   if ((w_wn->w_status & (STATUS_BSY | STATUS_WF | STATUS_ERR)) == 0) {
@@ -1829,7 +1829,7 @@ int value;			/* required status */
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
  */
-  unsigned long w_status;
+  u32_t w_status;
   spin_t spin;
   int s;
 
@@ -1855,7 +1855,7 @@ int value;			/* required status */
 {
 /* Wait until controller is in the required state.  Return zero on timeout.
  */
-  unsigned long w_status;
+  u32_t w_status;
   spin_t spin;
   int s;
 
@@ -2302,7 +2302,7 @@ PRIVATE void w_hw_int(unsigned int irqs)
 PRIVATE void ack_irqs(unsigned int irqs)
 {
   unsigned int drive;
-  unsigned long w_status;
+  u32_t w_status;
 
   for (drive = 0; drive < MAX_DRIVES; drive++) {
   	if (!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
@@ -2457,21 +2457,19 @@ PRIVATE int at_vinb(pvb_pair_t *pvb, int n)
   panic("sys_vinb failed");
 }
 
-PRIVATE int at_out(int line, u32_t port, unsigned long value,
-	char *typename, int type)
+PRIVATE int at_out(int line, u32_t port, u32_t value, char *typename, int type)
 {
 	int s;
 	s = sys_out(port, value, type);
 	if(s == OK)
 		return OK;
-	printf("at_wini%ld: line %d: %s failed: %d; %lx -> %x\n",
+	printf("at_wini%ld: line %d: %s failed: %d; %x -> %x\n",
 		w_instance, line, typename, s, value, port);
         panic("sys_out failed");
 }
 
 
-PRIVATE int at_in(int line, u32_t port, unsigned long *value,
-	char *typename, int type)
+PRIVATE int at_in(int line, u32_t port, u32_t *value, char *typename, int type)
 {
 	int s;
 	s = sys_in(port, value, type);

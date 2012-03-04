@@ -947,7 +947,7 @@ PRIVATE int fdc_results(void)
  */
 
   int s, result_nr;
-  unsigned long status;
+  u32_t status;
   spin_t spin;
 
   /* Extract bytes from FDC until it says it has no more.  The loop is
@@ -964,7 +964,7 @@ PRIVATE int fdc_results(void)
 		panic("Sys_inb in fdc_results() failed: %d", s);
 	status &= (MASTER | DIRECTION | CTL_BUSY);
 	if (status == (MASTER | DIRECTION | CTL_BUSY)) {
-		unsigned long tmp_r;
+		u32_t tmp_r;
 		if (result_nr >= MAX_RESULTS) break;	/* too many results */
 		if ((s=sys_inb(FDC_DATA, &tmp_r)) != OK)
 		   panic("Sys_inb in fdc_results() failed: %d", s);
@@ -1024,7 +1024,7 @@ PRIVATE void fdc_out(
  */
   spin_t spin;
   int s;
-  unsigned long status;
+  u32_t status;
 
   if (need_reset) return;	/* if controller is not listening, return */
 

@@ -923,8 +923,8 @@ static void rl_readv_s(const message *mp, int from_int)
 
 	if (!(rxstat & RL_RXS_ROK))
 	{
-		printf("rxstat = 0x%08lx\n", rxstat);
-		printf("d_start: 0x%x, d_end: 0x%x, rxstat: 0x%lx\n",
+		printf("rxstat = 0x%08x\n", rxstat);
+		printf("d_start: 0x%x, d_end: 0x%x, rxstat: 0x%x\n",
 			d_start, d_end, rxstat);
 		panic("received packet not OK");
 	}
@@ -933,10 +933,10 @@ static void rl_readv_s(const message *mp, int from_int)
 	{
 		/* Someting went wrong */
 		printf(
-		"rl_readv: bad length (%u) in status 0x%08lx at offset 0x%x\n",
+		"rl_readv: bad length (%u) in status 0x%08x at offset 0x%x\n",
 			totlen, rxstat, d_start);
 		printf(
-		"d_start: 0x%x, d_end: 0x%x, totlen: %d, rxstat: 0x%lx\n",
+		"d_start: 0x%x, d_end: 0x%x, totlen: %d, rxstat: 0x%x\n",
 			d_start, d_end, totlen, rxstat);
 		panic(NULL);
 	}
@@ -1935,7 +1935,7 @@ static int rl_handler(re_t *rep)
 			}
 			else
 			{
-				printf("TSD%d = 0x%04lx\n", i, tsd);
+				printf("TSD%d = 0x%04x\n", i, tsd);
 
 				/* Set head and tail to this buffer */
 				rep->re_tx_head= rep->re_tx_tail= i;
@@ -1982,7 +1982,7 @@ static int rl_handler(re_t *rep)
 				rep->re_stat.ets_carrSense++;
 			if (tsd & RL_TSD_TABT)
 			{
-				printf("rl_handler, TABT, TSD%d = 0x%04lx\n",
+				printf("rl_handler, TABT, TSD%d = 0x%04x\n",
 					tx_tail, tsd);
 				assert(0);	/* CLRABT is not all that
 						 * effective, why not?
@@ -2010,7 +2010,7 @@ static int rl_handler(re_t *rep)
 				ertxth &= RL_TSD_ERTXTH_M;
 				if (debug && ertxth > rep->re_ertxth)
 				{
-					printf("%s: new ertxth: %ld bytes\n",
+					printf("%s: new ertxth: %d bytes\n",
 						rep->re_name,
 						(ertxth >> RL_TSD_ERTXTH_S) *
 						32);

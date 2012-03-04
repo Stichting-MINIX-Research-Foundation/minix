@@ -14,8 +14,8 @@
 /*===========================================================================*
  *			helper functions for I/O										 *
  *===========================================================================*/
-PUBLIC unsigned pci_inb(u16_t port) {
-	unsigned long value;
+PUBLIC u32_t pci_inb(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("%s: warning, sys_inb failed: %d\n", DRIVER_NAME, s);
@@ -23,8 +23,8 @@ PUBLIC unsigned pci_inb(u16_t port) {
 }
 
 
-PUBLIC unsigned pci_inw(u16_t port) {
-	unsigned long value;
+PUBLIC u32_t pci_inw(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("%s: warning, sys_inw failed: %d\n", DRIVER_NAME, s);
@@ -32,8 +32,8 @@ PUBLIC unsigned pci_inw(u16_t port) {
 }
 
 
-PUBLIC unsigned pci_inl(u16_t port) {
-	unsigned long value;
+PUBLIC u32_t pci_inl(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
 		printf("%s: warning, sys_inl failed: %d\n", DRIVER_NAME, s);

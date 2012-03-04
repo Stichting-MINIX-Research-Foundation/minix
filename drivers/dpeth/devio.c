@@ -27,7 +27,7 @@ static void warning(const char *type, int err)
 */
 PUBLIC unsigned int inb(unsigned short port)
 {
-  unsigned long value;
+  u32_t value;
   int rc;
 
   if ((rc = sys_inb(port, &value)) != OK) warning("inb", rc);
@@ -40,7 +40,7 @@ PUBLIC unsigned int inb(unsigned short port)
 */
 PUBLIC unsigned int inw(unsigned short port)
 {
-  unsigned long value;
+  u32_t value;
   int rc;
 
   if ((rc = sys_inw(port, &value)) != OK) warning("inw", rc);

@@ -201,7 +201,7 @@ PRIVATE void unlock(void) {}
 PRIVATE int my_inb(port_t port)
 {
 	int r;
-	unsigned long v = 0;
+	u32_t v = 0;
 	r = sys_inb(port, &v);
 	if (r != OK)
 		printf("RS232 warning: failed inb 0x%x\n", port);
@@ -426,7 +426,7 @@ PRIVATE void rs_config(rs232_t *rs)
 PUBLIC void rs_init(tty_t *tp)
 /* tp			which TTY */
 {
-  unsigned long dummy;
+  u32_t dummy;
 /* Initialize RS232 for one line. */
 
   register rs232_t *rs;
@@ -640,7 +640,7 @@ PRIVATE int rs_break(tty_t *tp, int UNUSED(dummy))
 {
 /* Generate a break condition by setting the BREAK bit for 0.4 sec. */
   rs232_t *rs = tp->tty_priv;
-  unsigned long line_controls;
+  u32_t line_controls;
 
   sys_inb(rs->line_ctl_port, &line_controls);
   sys_outb(rs->line_ctl_port, line_controls | LC_BREAK);
@@ -675,7 +675,7 @@ PRIVATE void rs232_handler(struct rs232 *rs)
 /* Interrupt hander for RS232. */
 
   while (TRUE) {
-  	unsigned long v;
+	u32_t v;
 	/* Loop to pick up ALL pending interrupts for device.
 	 * This usually just wastes time unless the hardware has a buffer
 	 * (and then we have to worry about being stuck in the loop too long).
@@ -713,7 +713,7 @@ PRIVATE void in_int(register rs232_t *rs)
  * Set a flag for the clock interrupt handler to eventually notify TTY.
  */
 
-  unsigned long c;
+  u32_t c;
 
 #if 0	/* Enable this if you want serial input in the kernel */
   return;
@@ -756,7 +756,7 @@ PRIVATE void line_int(register rs232_t *rs)
 {
 /* Check for and record errors. */
 
-  unsigned long s;
+  u32_t s;
   sys_inb(rs->line_status_port, &s);
   rs->lstatus = s;
   if (rs->lstatus & LS_FRAMING_ERR) ++rs->framing_errors;

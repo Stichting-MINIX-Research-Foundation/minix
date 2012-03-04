@@ -10,7 +10,7 @@
  *===========================================================================*/
 PUBLIC void ser_putc(char c)
 {
-        unsigned long b;
+        u32_t b;
         int i;
         int lsr, thr;
   

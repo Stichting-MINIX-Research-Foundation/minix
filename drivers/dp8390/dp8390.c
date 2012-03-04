@@ -1844,7 +1844,7 @@ u8_t inb(port_t port)
 u16_t inw(port_t port)
 {
 	int r;
-	unsigned long value;
+	u32_t value;
 
 	r= sys_inw(port, &value);
 	if (r != OK)

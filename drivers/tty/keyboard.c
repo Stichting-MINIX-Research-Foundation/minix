@@ -675,7 +675,7 @@ int try;
  *===========================================================================*/
 PRIVATE void kbd_send()
 {
-	unsigned long sb;
+	u32_t sb;
 	int r;
 
 	if (!kbdout.avail)
@@ -688,7 +688,7 @@ PRIVATE void kbd_send()
 	}
 	if (sb & (KB_OUT_FULL|KB_IN_FULL))
 	{
-		printf("not sending 1: sb = 0x%lx\n", sb);
+		printf("not sending 1: sb = 0x%x\n", sb);
 		return;
 	}
 	micro_delay(KBC_IN_DELAY);
@@ -697,7 +697,7 @@ PRIVATE void kbd_send()
 	}
 	if (sb & (KB_OUT_FULL|KB_IN_FULL))
 	{
-		printf("not sending 2: sb = 0x%lx\n", sb);
+		printf("not sending 2: sb = 0x%x\n", sb);
 		return;
 	}
 
@@ -706,7 +706,7 @@ PRIVATE void kbd_send()
 	printf("sending byte 0x%x to keyboard\n", kbdout.buf[kbdout.offset]);
 #endif
 	if((r=sys_outb(KEYBD, kbdout.buf[kbdout.offset])) != OK) {
-		printf("kbd_send: 3 sys_inb() failed: %d\n", r);
+		printf("kbd_send: 3 sys_outb() failed: %d\n", r);
 	}
 	kbdout.offset++;
 	kbdout.avail--;
@@ -884,7 +884,7 @@ int data;
 PRIVATE int kbc_read()
 {
 	int i;
-	unsigned long byte, st;
+	u32_t byte, st;
 #if 0
 	struct micro_state ms;
 #endif
@@ -897,7 +897,7 @@ PRIVATE int kbc_read()
 	* the kbd controller, return -1 on a timeout.
 	*/
 	for (i= 0; i<1000000; i++)
- #if 0
+#if 0
 	micro_start(&ms);
 	do
 #endif
@@ -910,9 +910,9 @@ PRIVATE int kbc_read()
 			if(sys_inb(KEYBD, &byte) != OK)
 				printf("kbc_read: 2 sys_inb failed\n");
 			if (st & KB_AUX_BYTE)
-				printf("kbc_read: aux byte 0x%lx\n", byte);
+				printf("kbc_read: aux byte 0x%x\n", byte);
 #if DEBUG
-			printf("keyboard`kbc_read: returning byte 0x%lx\n",
+			printf("keyboard`kbc_read: returning byte 0x%x\n",
 				byte);
 #endif
 			return byte;
@@ -934,7 +934,7 @@ PRIVATE int kb_wait()
 /* Wait until the controller is ready; return zero if this times out. */
 
   int retries;
-  unsigned long status;
+  u32_t status;
   int s, isaux;
   unsigned char byte;
 
@@ -965,8 +965,7 @@ PRIVATE int kb_ack()
 /* Wait until kbd acknowledges last command; return zero if this times out. */
 
   int retries, s;
-  unsigned long u8val;
-
+  u32_t u8val;
 
   retries = MAX_KB_ACK_RETRIES + 1;
   do {
@@ -1254,7 +1253,7 @@ PRIVATE int scan_keyboard(bp, isauxp)
 unsigned char *bp;
 int *isauxp;
 {
-  unsigned long b, sb;
+  u32_t b, sb;
 
   if(sys_inb(KB_STATUS, &sb) != OK)
 	printf("scan_keyboard: sys_inb failed\n");

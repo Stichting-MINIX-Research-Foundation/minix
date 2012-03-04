@@ -878,7 +878,7 @@ re_t *rep;
 	if ((s = sys_irqenable(&rep->re_hook_id)) != OK)
 		printf("RTL8169: error, couldn't enable interrupts: %d\n", s);
 
-	printf("%s: model: %s mac: 0x%08lx\n",
+	printf("%s: model: %s mac: 0x%08x\n",
 		rep->re_name, rep->re_model, rep->re_mac);
 
 	rl_confaddr(rep);
@@ -1290,7 +1290,7 @@ readvs_loop:
 	totlen = rxstat & DESC_RX_LENMASK;
 	if (totlen < 8 || totlen > 2 * ETH_MAX_PACK_SIZE) {
 		/* Someting went wrong */
-		printf("rl_readv_s: bad length (%u) in status 0x%08lx\n",
+		printf("rl_readv_s: bad length (%u) in status 0x%08x\n",
 			totlen, rxstat);
 		panic(NULL);
 	}

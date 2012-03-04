@@ -124,24 +124,24 @@
 extern struct machine machine;
 
 
-PRIVATE unsigned pci_inb(u16_t port) {
-	unsigned long value;
+PRIVATE u32_t pci_inb(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("ACPI: warning, sys_inb failed: %d\n", s);
 	return value;
 }
 
-PRIVATE unsigned pci_inw(u16_t port) {
-	unsigned long value;
+PRIVATE u32_t pci_inw(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("ACPI: warning, sys_inw failed: %d\n", s);
 	return value;
 }
 
-PRIVATE unsigned pci_inl(u16_t port) {
-	unsigned long value;
+PRIVATE u32_t pci_inl(u16_t port) {
+	u32_t value;
 	int s;
 	if ((s=sys_inl(port, &value)) !=OK)
 		printf("ACPI: warning, sys_inl failed: %d\n", s);
@@ -823,13 +823,13 @@ AcpiOsReadPort (
 	*Value = 0;
 	switch (Width) {
 		case 8:
-			sys_inb(Address, (unsigned long *)Value);
+			sys_inb(Address, Value);
 			break;
 		case 16:
-			sys_inw(Address, (unsigned long *)Value);
+			sys_inw(Address, Value);
 			break;
 		case 32:
-			sys_inl(Address, (unsigned long *)Value);
+			sys_inl(Address, Value);
 			break;
 	}
 	return AE_OK;

@@ -696,7 +696,7 @@ static u32_t or_get_bar (int devind, t_or * orp)
 				    HERMES_16BIT_REGSPACING);
 
 		if (debug) {
-			printf ("%s: using I/O space address 0x%lx, IRQ %d\n",
+			printf ("%s: using I/O space address 0x%x, IRQ %d\n",
 				orp->or_name, bar, orp->or_irq);
 		}
 
@@ -720,7 +720,7 @@ static u32_t or_get_bar (int devind, t_or * orp)
 		if (debug){
 			printf ("%s: using shared memory address",
 				orp->or_name);
-			printf (" 0x%lx, IRQ %d\n", bar, orp->or_irq);
+			printf (" 0x%x, IRQ %d\n", bar, orp->or_irq);
 		}
 
 		return bar;

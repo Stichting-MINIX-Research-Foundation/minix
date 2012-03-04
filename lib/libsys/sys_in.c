@@ -5,7 +5,7 @@
  *===========================================================================*/
 PUBLIC int sys_in(port, value, type)
 int port; 				/* port address to read from */
-unsigned long *value;			/* pointer where to store value */
+u32_t *value;				/* pointer where to store value */
 int type;				/* byte, word, long */
 {
     message m_io;

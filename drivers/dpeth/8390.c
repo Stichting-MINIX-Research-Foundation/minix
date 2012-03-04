@@ -413,7 +413,8 @@ static void ns_recv(dpeth_t *dep, int fromint, int size)
 	next = header.dr_next;
 
 	if (length < ETH_MIN_PACK_SIZE || length > ETH_MAX_PACK_SIZE) {
-		printf("%s: packet with strange length arrived: %d\n", dep->de_name, length);
+		printf("%s: packet with strange length arrived: %ld\n",
+			dep->de_name, length);
 		dep->de_stat.ets_recvErr += 1;
 		next = curr;
 

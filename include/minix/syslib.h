@@ -224,16 +224,16 @@ _PROTOTYPE(int sys_vinw, (pvw_pair_t *pvw_pairs, int nr_ports)		);
 _PROTOTYPE(int sys_vinl, (pvl_pair_t *pvl_pairs, int nr_ports)		);
 
 /* Shorthands for sys_out() system call. */
-#define sys_outb(p,v)	sys_out((p), (unsigned long) (v), _DIO_BYTE)
-#define sys_outw(p,v)	sys_out((p), (unsigned long) (v), _DIO_WORD)
-#define sys_outl(p,v)	sys_out((p), (unsigned long) (v), _DIO_LONG)
-_PROTOTYPE(int sys_out, (int port, unsigned long value, int type)	); 
+#define sys_outb(p,v)	sys_out((p), (u32_t) (v), _DIO_BYTE)
+#define sys_outw(p,v)	sys_out((p), (u32_t) (v), _DIO_WORD)
+#define sys_outl(p,v)	sys_out((p), (u32_t) (v), _DIO_LONG)
+_PROTOTYPE(int sys_out, (int port, u32_t value, int type)	);
 
 /* Shorthands for sys_in() system call. */
 #define sys_inb(p,v)	sys_in((p), (v), _DIO_BYTE)
 #define sys_inw(p,v)	sys_in((p), (v), _DIO_WORD)
 #define sys_inl(p,v)	sys_in((p), (v), _DIO_LONG)
-_PROTOTYPE(int sys_in, (int port, unsigned long *value, int type)	);
+_PROTOTYPE(int sys_in, (int port, u32_t *value, int type)	);
 
 /* pci.c */
 _PROTOTYPE( void pci_init, (void)					);
