@@ -9,6 +9,36 @@
 #include <minix/vfsif.h>
 
 /*===========================================================================*
+ *				estimate_blocks				     *
+ *===========================================================================*/
+PRIVATE blkcnt_t estimate_blocks(struct inode *rip)
+{
+/* Return the number of 512-byte blocks used by this file. This includes space
+ * used by data zones and indirect blocks (actually also zones). Reading in all
+ * indirect blocks is too costly for a stat call, so we disregard holes and
+ * return a conservative estimation.
+ */
+  unsigned int zone_size, zones, sindirs, dindirs, nr_indirs, sq_indirs;
+
+  /* Compute the number of zones used by the file. */
+  zone_size = rip->i_sp->s_block_size << rip->i_sp->s_log_zone_size;
+
+  zones = (rip->i_size + zone_size - 1) / zone_size;
+
+  /* Compute the number of indirect blocks needed for that zone count. */
+  nr_indirs = rip->i_nindirs;
+  sq_indirs = nr_indirs * nr_indirs;
+
+  sindirs = (zones - rip->i_ndzones + nr_indirs - 1) / nr_indirs;
+  dindirs = (sindirs - 1 + sq_indirs - 1) / sq_indirs;
+
+  /* Return the number of 512-byte blocks corresponding to the number of data
+   * zones and indirect blocks.
+   */
+  return (zones + sindirs + dindirs) * (zone_size / 512);
+}
+
+/*===========================================================================*
  *				stat_inode				     *
  *===========================================================================*/
 PRIVATE int stat_inode(
@@ -22,7 +52,6 @@ PRIVATE int stat_inode(
   struct stat statbuf;
   mode_t mo;
   int r, s;
-  u32_t blocks; /* The unit of this is 512 */
 
   /* Update the atime, ctime, and mtime fields in the inode, if need be. */
   if (rip->i_update) update_times(rip);
@@ -32,10 +61,6 @@ PRIVATE int stat_inode(
 
   /* true iff special */
   s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);
-
-  blocks = rip->i_size / 512;
-  if (rip->i_size % 512 != 0)
-	blocks += 1;
 
   memset(&statbuf, 0, sizeof(struct stat));
 
@@ -51,7 +76,7 @@ PRIVATE int stat_inode(
   statbuf.st_mtime = rip->i_mtime;
   statbuf.st_ctime = rip->i_ctime;
   statbuf.st_blksize = fs_block_size;
-  statbuf.st_blocks = blocks;
+  statbuf.st_blocks = estimate_blocks(rip);
 
   /* Copy the struct to user space. */
   r = sys_safecopyto(who_e, gid, (vir_bytes) 0, (vir_bytes) &statbuf,
