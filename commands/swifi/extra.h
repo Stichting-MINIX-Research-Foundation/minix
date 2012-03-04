@@ -2,7 +2,7 @@
 Compatibility with the linux kernel environment 
 */
 
-#include <a.out.h>
+#include <nlist.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>

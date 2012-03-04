@@ -148,8 +148,8 @@ sys_inject_fault(char * module_name,
   char * kern_name = NULL;
 #if 0
   struct module * mod = NULL;
-#endif
   int found = 0;
+#endif
   pswifi_result_t res = NULL;
 
   if (argNumFaults > SWIFI_MAX_FAULTS) {
@@ -1058,7 +1058,7 @@ if (len == 0)
 	int i;
 
 	printf(
-	"text_fault: bad length at address 0x%x, c = 0x%x, fault type %d\n",
+	"text_fault: bad length at address %p, c = %p, fault type %ld\n",
 		addr, c, faultType);
 	printf("bytes:");
 	for (i= 0; i<16; i++)

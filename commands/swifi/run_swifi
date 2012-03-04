@@ -1,10 +1,16 @@
 #!/bin/sh
 
-LABEL=dp8390
-EXEDIR=/usr/build/drivers/dp8390
-EXE=$EXEDIR/$LABEL
+LABEL=e1000_0
+NAME=e1000
+EXEDIR=/usr/src/drivers/$NAME
+EXE=$EXEDIR/$NAME
 
 :>log
+
+start_driver()
+{
+	service up $EXE -label $LABEL -script /etc/rs.single -period 3HZ
+}
 
 do_one()
 {
@@ -12,7 +18,7 @@ do_one()
 	pid=''
 	while [ X"$pid" = X ]
 	do
-		pid=`ps ax | grep $LABEL | grep -v grep |
+		pid=`ps ax | grep $NAME | grep -v grep |
 			sed 's,^[ 	]*,,;s,[ 	].*,,`
 		if [ X"$pid" != X ]
 		then
@@ -24,7 +30,8 @@ do_one()
 	./swifi -f $EXE $pid $1 $2 $3 >/tmp/out
 	sleep 1
 	kill -0 $pid &&
-		echo "driver failed to die, params: test $1, count $2, seed $3"
+		echo "driver survived, params: test $1, count $2, seed $3" ||
+		start_driver
 }
 
 one_round()
@@ -46,7 +53,7 @@ one_round()
 # Start our own driver.
 service down $LABEL
 sleep 10	# Allow driver to die
-service up $EXE -script `pwd`/rs.restart_imm -period 3HZ
+start_driver
 
 i=0
 i=4000

@@ -26,14 +26,14 @@ void free_page(unsigned long page) { assert(0); }
 void vfree(void *mem) { assert(0); }
 
 size_t strncpy_from_user(char *addr, const char *user_name, size_t size)
-{ assert(0); }
+{ assert(0); return 0; }
 
 /* void lock_kernel(void) { assert(0); } */
 /* void unlock_kernel(void) { assert(0); } */
 /* void __asm__(char *str) { assert(0); } */
 
 extern void *__vmalloc(unsigned long size, int gfp_mask, pgprot_t prot)
-{ assert(0); }
+{ assert(0); return NULL; }
 
 #if 0
 void kallsyms_sections(void *infop,
@@ -43,9 +43,9 @@ void kallsyms_sections(void *infop,
 #endif
 
 unsigned long __generic_copy_to_user(void *x, const void *y, unsigned long z)
-{ assert(0); }
+{ assert(0); return -1; }
 unsigned long __generic_copy_from_user(void *x, const void *y, unsigned long z)
-{ assert(0); }
+{ assert(0); return -1; }
 
 /* void read_lock(struct lock *lock) { assert(0); } */
 /* void read_unlock(struct lock *lock) { assert(0); } */
@@ -72,7 +72,7 @@ int kallsyms_address_to_symbol(db_expr_t off,
     const char * *sec_name, unsigned long *sec_start, unsigned long *sec_end, 
     const char * *sym_name, unsigned long *sym_start, unsigned long *sym_end)
 {
-	static char name[sizeof(((struct nlist *)0)->n_name)+1];
+	static char name[64];
 
 	int i;
 	unsigned long btext, etext;
@@ -83,7 +83,7 @@ int kallsyms_address_to_symbol(db_expr_t off,
 	below= above= NULL;
 	for (i= 0; i<exe_nlist_n; i++)
 	{
-		if ((exe_nlist[i].n_sclass & N_SECT) != N_TEXT)
+		if (exe_nlist[i].n_type != N_TEXT)
 			continue;
 		if (exe_nlist[i].n_value <= off)
 		{
@@ -99,13 +99,11 @@ int kallsyms_address_to_symbol(db_expr_t off,
 #if 0
 	if (below)
 	{
-		printf("found '%.*s' at 0x%x\n", sizeof(below->n_name),
-			below->n_name, below->n_value);
+		printf("found '%s' at 0x%x\n", below->n_name, below->n_value);
 	}
 	if (above)
 	{
-		printf("found '%.*s' at 0x%x\n", sizeof(above->n_name),
-			above->n_name, above->n_value);
+		printf("found '%s' at 0x%x\n", above->n_name, above->n_value);
 	}
 #endif
 
@@ -121,8 +119,8 @@ int kallsyms_address_to_symbol(db_expr_t off,
 
 	assert(below && above);
 
-	memcpy(name, below->n_name, sizeof(below->n_name));
-	name[sizeof(below->n_name)]= '\0';
+	strncpy(name, below->n_name, sizeof(name)-1);
+	name[sizeof(name)-1]= '\0';
 	*sym_name= name;
 
 	*sym_start= below->n_value | TRAP_BIT;
@@ -158,7 +156,7 @@ unsigned char text_read_ub(void *addr)
 	if (v < 0)
 	{
 		fprintf(stderr,
-	"text_read_ub: trace T_READB_INS failed on pid %d, addr 0x%x: %s\n",
+	"text_read_ub: trace T_READB_INS failed on pid %d, addr 0x%lx: %s\n",
 			victim_pid, vaddr, strerror(errno));
 		exit(1);
 	}
@@ -186,7 +184,7 @@ void text_write_ub(void *addr, unsigned char value)
 	if (v < 0)
 	{
 		fprintf(stderr,
-	"text_read_ub: trace T_WRITEB_INS failed on pid %d, addr 0x%x: %s\n",
+	"text_read_ub: trace T_WRITEB_INS failed on pid %d, addr 0x%lx: %s\n",
 			victim_pid, vaddr, strerror(errno));
 		exit(1);
 	}
@@ -225,7 +223,7 @@ unsigned long *etextp;
 	btext= (unsigned long)-1;
 	for (i= 0; i<exe_nlist_n; i++)
 	{
-		if ((exe_nlist[i].n_sclass & N_SECT) != N_TEXT)
+		if (exe_nlist[i].n_type != N_TEXT)
 			continue;
 		if (exe_nlist[i].n_value < btext)
 			btext= exe_nlist[i].n_value;
@@ -235,7 +233,7 @@ unsigned long *etextp;
 
 	if (btext >= etext)
 	{
-		fprintf(stderr, "Bad btext (0x%x) or etext (0x%x) in %d\n",
+		fprintf(stderr, "Bad btext (0x%lx) or etext (0x%lx) in %s\n",
 			btext, etext, exe_name);
 		exit(1);
 	}
