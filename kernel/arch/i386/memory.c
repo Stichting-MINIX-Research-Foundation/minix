@@ -540,7 +540,7 @@ PRIVATE void vm_suspend(struct proc *caller, const struct proc *target,
  *===========================================================================*/
 PUBLIC void delivermsg(struct proc *rp)
 {
-	int r;
+	int r = OK;
 
 	assert(rp->p_misc_flags & MF_DELIVERMSG);
 	assert(rp->p_delivermsg.m_source != NONE);
@@ -553,12 +553,11 @@ PUBLIC void delivermsg(struct proc *rp)
 				rp->p_name,
 				rp->p_endpoint);
 		r = EFAULT;
-	} else {
-		/* Indicate message has been delivered; address is 'used'. */
-		rp->p_delivermsg.m_source = NONE;
-		rp->p_misc_flags &= ~MF_DELIVERMSG;
-		r = OK;
 	}
+
+	/* Indicate message has been delivered; address is 'used'. */
+	rp->p_delivermsg.m_source = NONE;
+	rp->p_misc_flags &= ~MF_DELIVERMSG;
 
 	if(!(rp->p_misc_flags & MF_CONTEXT_SET)) {
 		rp->p_reg.retreg = r;
