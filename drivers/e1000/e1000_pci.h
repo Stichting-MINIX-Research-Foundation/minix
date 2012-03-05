@@ -31,6 +31,7 @@
 #define E1000_DEV_ID_82544GC_COPPER           0x100C
 #define E1000_DEV_ID_82544GC_LOM              0x100D
 #define E1000_DEV_ID_82540EM                  0x100E
+#define E1000_DEV_ID_82545EM                  0x100F
 #define E1000_DEV_ID_82540EM_LOM              0x1015
 #define E1000_DEV_ID_82540EP_LOM              0x1016
 #define E1000_DEV_ID_82540EP                  0x1017

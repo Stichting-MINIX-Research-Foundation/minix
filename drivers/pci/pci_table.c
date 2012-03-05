@@ -133,6 +133,7 @@ struct pci_device pci_device_table[]=
 	{ 0x5333, 0x8a01, "S3 Virge/DX or /GX" },
 	{ 0x8086, 0x1004, "Intel 82543GC Gigabit Ethernet Controller" },
 	{ 0x8086, 0x100E, "Intel PRO/1000 MT Desktop Adapter" },
+	{ 0x8086, 0x100F, "Intel PRO/1000 MT 82545EM" },
  	{ 0x8086, 0x1029, "Intel EtherExpressPro100 ID1029" },
  	{ 0x8086, 0x1030, "Intel Corporation 82559 InBusiness 10/100" },
 	{ 0x8086, 0x1031, "Intel Corporation 82801CAM PRO/100 VE" },

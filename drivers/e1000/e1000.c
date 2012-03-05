@@ -21,17 +21,6 @@
 #include "e1000_reg.h"
 #include "e1000_pci.h"
 
-PRIVATE u16_t pcitab_e1000[] =
-{
-    E1000_DEV_ID_82540EM,
-    E1000_DEV_ID_82541GI_LF,
-    E1000_DEV_ID_ICH10_D_BM_LM,
-    E1000_DEV_ID_ICH10_R_BM_LF,
-    E1000_DEV_ID_82574L,
-    E1000_DEV_ID_82571EB_COPPER,
-    0,
-};
-
 PRIVATE int e1000_instance;
 PRIVATE e1000_t e1000_state;
 
@@ -236,9 +225,10 @@ PRIVATE void e1000_init_pci()
  *===========================================================================*/
 PRIVATE int e1000_probe(e1000_t *e, int skip)
 {
-    int i, r, devind;
-    u16_t vid, did;
+    int r, devind, ioflag;
+    u16_t vid, did, cr;
     u32_t status[2];
+    u32_t base, size;
     u32_t gfpreg, sector_base_addr;
     char *dname;
 
@@ -256,24 +246,11 @@ PRIVATE int e1000_probe(e1000_t *e, int skip)
     {
 	E1000_DEBUG(3, ("%s: probe() devind %d vid 0x%x did 0x%x\n",
 				e->name, devind, vid, did));
-	if (vid != 0x8086)
-		goto get_next;
 
-	for (i = 0; pcitab_e1000[i] != 0; i++)
-	{
-	    if (did != pcitab_e1000[i])
-		continue;
-	    else
+	if (!skip)
 		break;
-	}
-	if (pcitab_e1000[i] != 0)
-	{
-	    if (!skip)
-		break;
-	    skip--;
-	}
+	skip--;
 
-get_next:
 	if (!(r = pci_next_dev(&devind, &vid, &did)))
 	{
 	    return FALSE;
@@ -296,6 +273,7 @@ get_next:
             break;
 
     	case E1000_DEV_ID_82540EM:
+	case E1000_DEV_ID_82545EM:
 	    e->eeprom_done_bit = (1 << 4);
 	    e->eeprom_addr_off =  8;
 	    break;
@@ -322,15 +300,26 @@ get_next:
     }
     /* Read PCI configuration. */
     e->irq   = pci_attr_r8(devind, PCI_ILR);
-    e->regs  = vm_map_phys(SELF, (void *) pci_attr_r32(devind, PCI_BAR), 
-			   0x20000);
-			   
-    /* Verify mapped registers. */
+
+    if ((r = pci_get_bar(devind, PCI_BAR, &base, &size, &ioflag)) != OK)
+		panic("failed to get PCI BAR (%d)", r);
+    if (ioflag) panic("PCI BAR is not for memory");
+
+    e->regs  = vm_map_phys(SELF, (void *) base, size);
     if (e->regs == (u8_t *) -1) {
 		panic("failed to map hardware registers from PCI");
     }
+
+    /* FIXME: enable DMA bus mastering if necessary. This is disabled by
+     * default on VMware. Eventually, the PCI driver should deal with this.
+     */
+    cr = pci_attr_r16(devind, PCI_CR);
+    if (!(cr & PCI_CR_MAST_EN))
+		pci_attr_w16(devind, PCI_CR, cr | PCI_CR_MAST_EN);
+
     /* Optionally map flash memory. */
     if (did != E1000_DEV_ID_82540EM &&
+	did != E1000_DEV_ID_82545EM &&
 	did != E1000_DEV_ID_82540EP &&
 	pci_attr_r32(devind, PCI_BAR_2))
     {
@@ -556,7 +545,7 @@ e1000_t *e;
 	    panic("failed to allocate TX buffers");
 	}
 	/* Setup transmit descriptors. */
-	for (i = 0; i < E1000_RXDESC_NR; i++)
+	for (i = 0; i < E1000_TXDESC_NR; i++)
 	{
 	    e->tx_desc[i].buffer = tx_buff_p + (i * E1000_IOBUF_SIZE);
 	}
