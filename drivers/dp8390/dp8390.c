@@ -324,11 +324,9 @@ void dp8390_dump()
  *===========================================================================*/
 static void pci_conf()
 {
-	int confnr;
 	char envvar[16];
 	struct dpeth *dep;
-	static char envfmt[] = "*:d.d.d";
-	long v;
+	int i, pci_instance;
 	static int first_time= 1;
 
 	if (!first_time)
@@ -337,30 +335,22 @@ static void pci_conf()
 
 	dep= &de_state;
 
-	/* Pick a default configuration for this instance. */
-	confnr= MIN(de_instance, DP_CONF_NR-1);
-
 	strcpy(envvar, "DPETH0");
 	envvar[5] += de_instance;
 	if (!(dep->de_pci= env_prefix(envvar, "pci")))
 		return;	/* no PCI config */
-	v= 0;
-	(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
-	dep->de_pcibus= v;
-	v= 0;
-	(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
-	dep->de_pcidev= v;
-	v= 0;
-	(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
-	dep->de_pcifunc= v;
 
-	if (!dep->de_pci) {
-		printf("%s: no pci for instance %d\n", dep->de_name,
-			de_instance);
-		return;
+	/* Count the number of dp instances before this one that are configured
+	 * for PCI, so that we can skip that many when enumerating PCI devices.
+	 */
+	pci_instance= 0;
+	for (i= 0; i < de_instance; i++) {
+		envvar[5]= i;
+		if (env_prefix(envvar, "pci"))
+			pci_instance++;
 	}
 
-	if (!rtl_probe(dep, de_instance))
+	if (!rtl_probe(dep, pci_instance))
 		dep->de_pci= -1;
 }
 #endif /* ENABLE_PCI */

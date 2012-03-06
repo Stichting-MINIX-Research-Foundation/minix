@@ -257,9 +257,6 @@ typedef struct dpeth
 #if ENABLE_PCI
 	/* PCI config */
 	char de_pci;			/* TRUE iff PCI device */
-	u8_t de_pcibus;	
-	u8_t de_pcidev;	
-	u8_t de_pcifunc;	
 #endif
 
 	/* Do it yourself send queue */

@@ -32,8 +32,6 @@ Created: 09/01/2009   Nicolas Tittley (first.last @ gmail DOT com)
 #define DE_MIN_BASE_ADDR    0x0400
 #define DE_SROM_EA_OFFSET   20
 #define DE_SETUP_FRAME_SIZE 192
-#define DEC21140A_VID       0x1011
-#define DEC21140A_DID       0x0009
 
 
 typedef struct iovec_dat_s {

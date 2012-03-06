@@ -285,7 +285,8 @@ PRIVATE void do_watchdog(void *UNUSED(message))
   return;
 }
 
-PRIVATE int de_probe(dpeth_t *dep, int skip){
+PRIVATE int de_probe(dpeth_t *dep, int skip)
+{
   int i, r, devind;
   u16_t vid, did, temp16;
 
@@ -295,16 +296,8 @@ PRIVATE int de_probe(dpeth_t *dep, int skip){
   if (r == 0)
     return FALSE;
 
-  for(;;)
+  while (skip--)
     {
-      if ( DEC21140A_VID == vid && 
-	   DEC21140A_DID == did)
-	{
-	  if (!skip)
-	    break;
-	  skip--;
-	}
-
       r= pci_next_dev(&devind, &vid, &did);
       if (!r)
 	return FALSE;

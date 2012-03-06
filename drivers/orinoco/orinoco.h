@@ -16,7 +16,6 @@
 #define			LARGE_KEY_LENGTH 13
 #define                 IW_ESSID_MAX_SIZE 32
 #define			IOVEC_NR 16	
-#define			OR_ENVVAR "ORETH"
 #define			OR_NAME "orinoco#n"
 
 #define			IEEE802_11_HLEN		30
@@ -82,9 +81,6 @@ typedef struct s_or
 
 	/* PCI related */
 	int or_seen;		
-	u8_t or_pci_bus;
-	u8_t or_pci_dev;
-	u8_t or_pci_func;
 	int devind;
 
 	/* 'large' items */

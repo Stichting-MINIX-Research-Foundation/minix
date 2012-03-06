@@ -16,9 +16,6 @@
 
 #define PCI_COMMAND_MASTER		0x4
 
-#define PCI_VENDOR_ID_AMD	0x1022
-#define PCI_DEVICE_ID_AMD_LANCE	0x2000
-
 
 /* macros for 'mode' */
 #define EC_DISABLED    0x0
@@ -81,10 +78,6 @@ typedef struct ether_card
   int ec_hook;
 
   int ec_ramsize;
-  /* PCI */
-  u8_t ec_pcibus;	
-  u8_t ec_pcidev;	
-  u8_t ec_pcifunc;	
  
   /* Addrassing */
   u16_t ec_memseg;

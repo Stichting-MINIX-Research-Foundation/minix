@@ -25,17 +25,6 @@
 
 #define		VERBOSE		1	/* display message during init */
 
-PRIVATE struct pcitab {
-	u16_t vid;
-	u16_t did;
-	int checkclass;
-} pcitab[]=
-{
-	{ 0x1260, 0x3873, 0 },	
-	{ 0x1186, 0x1300, 0 },	
-	{ 0x0000, 0x0000, 0 }
-};
-
 
 #include 	<stdio.h>
 #include	<stdlib.h>
@@ -488,11 +477,7 @@ static void or_init (message * mp) {
  * can be searched (at the end: or_probe function)                           *
  *****************************************************************************/
 static void or_pci_conf () {
-	long v;
 	t_or *orp;
-	static char envfmt[] = "*:d.d.d";
-	static char envvar[] = OR_ENVVAR "#";
-	static char val[128];
 
 	/* extract information from the boot monitor about the pci 
 	 * configuration if provided */
@@ -501,22 +486,6 @@ static void or_pci_conf () {
 	strncpy (orp->or_name, OR_NAME, sizeof(OR_NAME));
 	orp->or_name[sizeof(OR_NAME) - 2] = or_instance + '0';
 	orp->or_seen = FALSE;
-	/* whats this envvar; whats the definition;*/
-	/* i guess this whole loop could be removed*/
-	envvar[sizeof (OR_ENVVAR) - 1] = '0' + or_instance;
-	if (0 == env_get_param(envvar, val, sizeof(val)) && 
-		! env_prefix(envvar, "pci")) {
-		env_panic(envvar);
-	}
-	v = 0;
-	(void) env_parse (envvar, envfmt, 1, &v, 0, 255);
-	orp->or_pci_bus = v;
-	v = 0;
-	(void) env_parse (envvar, envfmt, 2, &v, 0, 255);
-	orp->or_pci_dev = v;
-	v = 0;
-	(void) env_parse (envvar, envfmt, 3, &v, 0, 255);
-	orp->or_pci_func = v;
 
 	/* Initialize the pci bus, bridges and cards, if not yet done */
 	pci_init ();
@@ -538,67 +507,15 @@ static int or_probe (t_or * orp, int skip)
 	u32_t bar;
 	char *dname;
 	u16_t vid, did;
-	int i, r, devind, just_one;
+	int r, devind;
 
-	if ((orp->or_pci_bus | orp->or_pci_dev | orp->or_pci_func) != 0) {
-		/* The monitor has provided us with clues about where the 
-                 * device is. Try to find it at that place */
-		r = pci_find_dev (orp->or_pci_bus, orp->or_pci_dev,
-				  orp->or_pci_func, &devind);
-		if (r == 0)	{
-			printf ("%s: no PCI found at %d.%d.%d\n",
-				orp->or_name, orp->or_pci_bus,
-				orp->or_pci_dev, orp->or_pci_func);
-			return (0);
-		}
-		/* get the information about the card, vendor id and device
-		 * id */
-		pci_ids (devind, &vid, &did);
-		just_one = TRUE;
-	} else {
-		/* no clue where the card is. Start looking from the
-		 * beginning */
-		r = pci_first_dev (&devind, &vid, &did);
-		if (r == 0)
-			return (0);
-		just_one = FALSE;
-	}
+	/* Start looking from the beginning */
+	r = pci_first_dev (&devind, &vid, &did);
+	if (r == 0)
+		return (0);
 
-	while (TRUE) {
-		/* loop through the pcitab to find a maching entry. The match
-		 * being between one of the values in pcitab and the 
-		 * information provided by the pci bus */
-		for (i = 0; pcitab[i].vid != 0; i++) {
-			if (pcitab[i].vid != vid)
-				continue;
-			if (pcitab[i].did != did)
-				continue;
-			if (pcitab[i].checkclass) {
-				panic("or_probe:class check not implmnted");
-			}
-			/* we have found the card in the pci bus */
-			break;
-		}
-
-		/* unless we are looking for a specific device, we may have to
-		 * skip a number of cards because they are already reserved for
-		 * other (lower) ports of this driver */
-		if (pcitab[i].vid != 0) {
-			if (just_one || !skip)
-				break;
-			skip--;
-		}
-
-		if (just_one) {
-			printf ("%s: wrong PCI device", orp->or_name);
-			printf (" (%04x/%04x) found at %d.%d.%d\n", vid, did,
-				orp->or_pci_bus, orp->or_pci_dev,
-				orp->or_pci_func);
-			return (0);
-		}
-
-		/* if the pci device which was under consideration was not
-		 * of the desired brand or type, get the next device */
+	/* Skip as many instances as requested */
+	while (skip--) {
 		r = pci_next_dev (&devind, &vid, &did);
 		if (!r)
 			return (0);

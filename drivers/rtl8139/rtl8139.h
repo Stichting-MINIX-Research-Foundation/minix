@@ -502,9 +502,6 @@ typedef struct re
 
 	/* PCI related */
 	int re_seen;			/* TRUE iff device available */
-	u8_t re_pcibus;	
-	u8_t re_pcidev;	
-	u8_t re_pcifunc;	
 
 	/* 'large' items */
 	int re_hook_id;			/* IRQ hook id at kernel */

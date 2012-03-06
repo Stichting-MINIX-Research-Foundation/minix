@@ -48,31 +48,6 @@
 
 #define RL_ENVVAR	"RTLETH"	/* Configuration */
 
-PRIVATE struct pcitab
-{
-	u16_t vid;
-	u16_t did;
-	int checkclass;
-} pcitab[] =
-{
-	{ 0x10ec, 0x8129, 0 },	/* Realtek RTL8129 */
-	{ 0x10ec, 0x8167, 0 },	/* Realtek RTL8169/8110 Family Gigabit NIC */
-	{ 0x10ec, 0x8169, 0 },	/* Realtek RTL8169 */
-	{ 0x10ec, 0x8168, 0 },
-
-	{ 0x1186, 0x4300, 0 },	/* D-Link DGE-528T Gigabit adaptor */
-
-	{ 0x1259, 0xc107, 0 },	/* Allied Telesyn International Gigabit Ethernet Adapter */
-
-	{ 0x1385, 0x8169, 0 },	/* Netgear Gigabit Ethernet Adapter */
-
-	{ 0x16ec, 0x0116, 0 },	/* US Robotics Realtek 8169S chip */
-
-	{ 0x1737, 0x1032, 0 },	/* Linksys Instant Gigabit Desktop Network Interface */
-
-	{ 0x0000, 0x0000, 0 }
-};
-
 typedef struct re_desc
 {
 	u32_t status;		/* command/status */
@@ -143,9 +118,6 @@ typedef struct re {
 
 	/* PCI related */
 	int re_seen;		/* TRUE iff device available */
-	u8_t re_pcibus;
-	u8_t re_pcidev;
-	u8_t re_pcifunc;
 
 	/* 'large' items */
 	int re_hook_id;		/* IRQ hook id at kernel */
@@ -623,31 +595,12 @@ message *mp;
 static void rl_pci_conf()
 {
 	re_t *rep;
-	static char envvar[] = RL_ENVVAR "#";
-	static char envfmt[] = "*:d.d.d";
-	static char val[128];
-	long v;
 
 	rep = &re_state;
 
 	strcpy(rep->re_name, "rtl8169#0");
 	rep->re_name[8] += re_instance;
 	rep->re_seen = FALSE;
-	envvar[sizeof(RL_ENVVAR)-1] = '0' + re_instance;
-	if (0 == env_get_param(envvar, val, sizeof(val)) &&
-		!env_prefix(envvar, "pci"))
-	{
-		env_panic(envvar);
-	}
-	v = 0;
-	(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
-	rep->re_pcibus = v;
-	v = 0;
-	(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
-	rep->re_pcidev = v;
-	v = 0;
-	(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
-	rep->re_pcifunc = v;
 
 	pci_init();
 
@@ -662,56 +615,17 @@ static int rl_probe(rep, skip)
 re_t *rep;
 int skip;
 {
-	int i, r, devind, just_one;
+	int r, devind;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
 	char *dname;
 
-	if ((rep->re_pcibus | rep->re_pcidev | rep->re_pcifunc) != 0) {
-		/* Look for specific PCI device */
-		r = pci_find_dev(rep->re_pcibus, rep->re_pcidev,
-			rep->re_pcifunc, &devind);
-		if (r == 0) {
-			printf("%s: no PCI found at %d.%d.%d\n",
-				rep->re_name, rep->re_pcibus,
-				rep->re_pcidev, rep->re_pcifunc);
-			return 0;
-		}
-		pci_ids(devind, &vid, &did);
-		just_one = TRUE;
-	} else {
-		r = pci_first_dev(&devind, &vid, &did);
-		if (r == 0)
-			return 0;
-		just_one = FALSE;
-	}
+	r = pci_first_dev(&devind, &vid, &did);
+	if (r == 0)
+		return 0;
 
-	for (;;) {
-		for (i = 0; pcitab[i].vid != 0; i++) {
-			if (pcitab[i].vid != vid)
-				continue;
-			if (pcitab[i].did != did)
-				continue;
-			if (pcitab[i].checkclass) {
-				panic("class check not implemented");
-			}
-			break;
-		}
-		if (pcitab[i].vid != 0) {
-			if (just_one || !skip)
-				break;
-			skip--;
-		}
-
-		if (just_one) {
-			printf("%s: wrong PCI device (%04x/%04x) found at %d.%d.%d\n",
-				rep->re_name, vid, did,
-				rep->re_pcibus,
-				rep->re_pcidev, rep->re_pcifunc);
-			return 0;
-		}
-
+	while (skip--) {
 		r = pci_next_dev(&devind, &vid, &did);
 		if (!r)
 			return 0;

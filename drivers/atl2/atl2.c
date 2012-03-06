@@ -84,14 +84,6 @@ PRIVATE struct {
 
 PRIVATE iovec_s_t iovec[NR_IOREQS];
 
-PRIVATE struct {
-	u16_t vid;
-	u16_t did;
-} pcitab[] = {
-	{ 0x1969, 0x2048 },	/* Attansic Technology Corp, L2 FastEthernet */
-	{ 0x0000, 0x0000 }
-};
-
 PRIVATE int instance;
 
 /*===========================================================================*
@@ -465,13 +457,13 @@ PRIVATE int atl2_setup(void)
 /*===========================================================================*
  *				atl2_probe				     *
  *===========================================================================*/
-PRIVATE int atl2_probe(int instance)
+PRIVATE int atl2_probe(int skip)
 {
 	/* Find a matching PCI device.
 	 */
 	u16_t vid, did;
 	char *dname;
-	int i, r, devind, skip;
+	int r, devind;
 
 	pci_init();
 
@@ -479,19 +471,7 @@ PRIVATE int atl2_probe(int instance)
 	if (r <= 0)
 		return -1;
 
-	skip = 0;
-
-	for (;;) {
-		for (i = 0; pcitab[i].vid != 0; i++)
-			if (pcitab[i].vid == vid && pcitab[i].did == did)
-				break;
-
-		if (pcitab[i].vid != 0) {
-			if (skip == instance) break;
-
-			skip++;
-		}
-
+	while (skip--) {
 		r = pci_next_dev(&devind, &vid, &did);
 		if (r <= 0)
 			return -1;

@@ -22,18 +22,6 @@ Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 #if ENABLE_PCI
 
-PRIVATE struct pcitab
-{
-	u16_t vid;
-	u16_t did;
-	int checkclass;
-} pcitab[]=
-{
-	{ 0x10ec, 0x8029, 0 },		/* Realtek RTL8029 */
-
-	{ 0x0000, 0x0000, 0 }
-};
-
 _PROTOTYPE( static void rtl_init, (struct dpeth *dep)			);
 #if 0
 _PROTOTYPE( static u16_t get_ee_word, (dpeth_t *dep, int a)		);
@@ -46,7 +34,7 @@ PUBLIC int rtl_probe(dep, skip)
 struct dpeth *dep;
 int skip;
 {
-	int i, r, devind, just_one;
+	int r, devind;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
@@ -54,58 +42,12 @@ int skip;
 
 	pci_init();
 
-	if ((dep->de_pcibus | dep->de_pcidev | dep->de_pcifunc) != 0)
-	{
-		/* Look for specific PCI device */
-		r= pci_find_dev(dep->de_pcibus, dep->de_pcidev,
-			dep->de_pcifunc, &devind);
-		if (r == 0)
-		{
-			printf("%s: no PCI found at %d.%d.%d\n",
-				dep->de_name, dep->de_pcibus,
-				dep->de_pcidev, dep->de_pcifunc);
-			return 0;
-		}
-		pci_ids(devind, &vid, &did);
-		just_one= TRUE;
-	}
-	else
-	{
-		r= pci_first_dev(&devind, &vid, &did);
-		if (r == 0)
-			return 0;
-		just_one= FALSE;
-	}
+	r= pci_first_dev(&devind, &vid, &did);
+	if (r == 0)
+		return 0;
 
-	for(;;)
+	while (skip--)
 	{
-		for (i= 0; pcitab[i].vid != 0 || pcitab[i].did != 0; i++)
-		{
-			if (pcitab[i].vid != vid)
-				continue;
-			if (pcitab[i].did != did)
-				continue;
-			if (pcitab[i].checkclass) {
-				panic("rtl_probe: class check not implemented");
-			}
-			break;
-		}
-		if (pcitab[i].vid != 0 || pcitab[i].did != 0) {
-			if (just_one || !skip)
-				break;
-			skip--;
-		}
-
-		if (just_one)
-		{
-			printf(
-		"%s: wrong PCI device (%04X/%04X) found at %d.%d.%d\n",
-				dep->de_name, vid, did,
-				dep->de_pcibus,
-				dep->de_pcidev, dep->de_pcifunc);
-			return 0;
-		}
-
 		r= pci_next_dev(&devind, &vid, &did);
 		if (!r)
 			return 0;

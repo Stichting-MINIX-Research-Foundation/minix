@@ -40,25 +40,6 @@
 /* Configuration */
 #define FXP_ENVVAR	"FXPETH"
 
-struct pcitab
-{
-	u16_t vid;
-	u16_t did;
-	int checkclass;
-};
-
-PRIVATE struct pcitab pcitab_fxp[]=
-{
-	{ 0x8086, 0x1229, 0 },		/* Intel 82557, etc. */
-	{ 0x8086, 0x2449, 0 },		/* Intel 82801BA/BAM/CA/CAM */
-	{ 0x8086, 0x103d, 0 },		/* Intel 82801DB */
-	{ 0x8086, 0x1064, 0 },		/* Intel 82562 */
-	{ 0x8086, 0x1031, 0 },		/* Intel 82801CAM VE */
-	{ 0x8086, 0x1032, 0 },		/* Intel 82801CAM VE */
-	{ 0x8086, 0x1209, 0 },		/* Intel 82551IT */
-	{ 0x0000, 0x0000, 0 }
-};
-
 typedef int irq_hook_t;
 
 /* ignore interrupt for the moment */
@@ -116,9 +97,6 @@ typedef struct fxp
 
 	/* PCI related */
 	int fxp_seen;			/* TRUE iff device available */
-	u8_t fxp_pcibus;	
-	u8_t fxp_pcidev;	
-	u8_t fxp_pcifunc;	
 
 	/* 'large' items */
 	irq_hook_t fxp_hook;
@@ -422,10 +400,7 @@ message *mp;
  *===========================================================================*/
 static void fxp_pci_conf()
 {
-	static char envvar[] = FXP_ENVVAR "#";
-
 	fxp_t *fp;
-	long v;
 
 	fp= fxp_state;
 
@@ -433,39 +408,8 @@ static void fxp_pci_conf()
 	fp->fxp_name[4] += fxp_instance;
 	fp->fxp_seen= FALSE;
 	fp->fxp_features= FFE_NONE;
-	envvar[sizeof(FXP_ENVVAR)-1]= '0'+fxp_instance;
-#if 0
-	if (getenv(envvar) != NULL)
-	{
-		if (strcmp(getenv(envvar), "off") == 0)
-		{
-			fp->fxp_pcibus= 255;
-		}
-		if (!env_prefix(envvar, "pci"))
-			env_panic(envvar);
-	}
-#endif
 
 	pci_init();
-
-	if (fp->fxp_pcibus == 255)
-		return;
-
-	v= 0;
-#if 0
-	(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
-#endif
-	fp->fxp_pcibus= v;
-	v= 0;
-#if 0
-	(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
-#endif
-	fp->fxp_pcidev= v;
-	v= 0;
-#if 0
-	(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
-#endif
-	fp->fxp_pcifunc= v;
 
 	if (fxp_probe(fp, fxp_instance))
 		fp->fxp_seen= TRUE;
@@ -476,65 +420,18 @@ static void fxp_pci_conf()
  *===========================================================================*/
 static int fxp_probe(fxp_t *fp, int skip)
 {
-	int i, r, devind, just_one;
+	int r, devind;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr, rev;
 	char *dname, *str;
 
-	if ((fp->fxp_pcibus | fp->fxp_pcidev | fp->fxp_pcifunc) != 0)
-	{
-		/* Look for specific PCI device */
-		r= pci_find_dev(fp->fxp_pcibus, fp->fxp_pcidev,
-			fp->fxp_pcifunc, &devind);
-		if (r == 0)
-		{
-			printf("%s: no PCI device found at %d.%d.%d\n",
-				fp->fxp_name, fp->fxp_pcibus,
-				fp->fxp_pcidev, fp->fxp_pcifunc);
-			return FALSE;
-		}
-		pci_ids(devind, &vid, &did);
-		just_one= TRUE;
-	}
-	else
-	{
-		r= pci_first_dev(&devind, &vid, &did);
-		if (r == 0)
-			return FALSE;
-		just_one= FALSE;
-	}
+	r= pci_first_dev(&devind, &vid, &did);
+	if (r == 0)
+		return FALSE;
 
-	for(;;)
+	while (skip--)
 	{
-		for (i= 0; pcitab_fxp[i].vid != 0; i++)
-		{
-			if (pcitab_fxp[i].vid != vid)
-				continue;
-			if (pcitab_fxp[i].did != did)
-				continue;
-			if (pcitab_fxp[i].checkclass) {
-				panic("fxp_probe: class check not implemented");
-			}
-			break;
-		}
-		if (pcitab_fxp[i].vid != 0)
-		{
-			if (just_one || !skip)
-				break;
-			skip--;
-		}
-
-		if (just_one)
-		{
-			printf(
-		"%s: wrong PCI device (%04x/%04x) found at %d.%d.%d\n",
-				fp->fxp_name, vid, did,
-				fp->fxp_pcibus,
-				fp->fxp_pcidev, fp->fxp_pcifunc);
-			return FALSE;
-		}
-
 		r= pci_next_dev(&devind, &vid, &did);
 		if (!r)
 			return FALSE;

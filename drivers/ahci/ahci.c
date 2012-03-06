@@ -1905,14 +1905,12 @@ PRIVATE void port_init(struct port_state *ps)
 /*===========================================================================*
  *				ahci_probe				     *
  *===========================================================================*/
-PRIVATE int ahci_probe(int instance)
+PRIVATE int ahci_probe(int skip)
 {
 	/* Find a matching PCI device.
 	 */
-	int r, skip, devind;
+	int r, devind;
 	u16_t vid, did;
-	u8_t bcr, scr, pir;
-	u32_t t3;
 
 	pci_init();
 
@@ -1920,25 +1918,7 @@ PRIVATE int ahci_probe(int instance)
 	if (r <= 0)
 		return -1;
 
-	skip = 0;
-
-	for (;;) {
-		/* Get the class register values. */
-		bcr = pci_attr_r8(devind, PCI_BCR);
-		scr = pci_attr_r8(devind, PCI_SCR);
-		pir = pci_attr_r8(devind, PCI_PIFR);
-
-		t3 = (bcr << 16) | (scr << 8) | pir;
-
-		/* If the device is a match, see if we have to leave it to
-		 * another driver instance.
-		 */
-		if (t3 == PCI_T3_AHCI) {
-			if (skip == instance)
-				break;
-			skip++;
-		}
-
+	while (skip--) {
 		r = pci_next_dev(&devind, &vid, &did);
 		if (r <= 0)
 			return -1;

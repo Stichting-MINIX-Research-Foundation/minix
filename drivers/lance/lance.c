@@ -79,19 +79,6 @@ ec_conf_t ec_conf[EC_CONF_NR]=    /* Card addresses */
    {  0x0000,     0,    0x00000,     },
 };
 
-/* Actually, we use PCI-BIOS info. */
-PRIVATE struct pcitab
-{
-   u16_t vid;
-   u16_t did;
-   int checkclass;
-} pcitab[]=
-{
-   { PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_LANCE, 0 },    /* AMD LANCE */
-
-   { 0x0000, 0x0000, 0 }
-};
-
 /* General */
 _PROTOTYPE( static void do_init, (message *mp)                          );
 _PROTOTYPE( static void ec_init, (ether_card_t *ec)                     );
@@ -1405,63 +1392,15 @@ int skip;
    unsigned short    pci_cmd;
    unsigned short    ioaddr;
    int               lance_version, chip_version;
-   int devind, just_one, i, r;
-
+   int devind, r;
    u16_t vid, did;
 
-   if ((ec->ec_pcibus | ec->ec_pcidev | ec->ec_pcifunc) != 0)
-   {
-      /* Look for specific PCI device */
-      r= pci_find_dev(ec->ec_pcibus, ec->ec_pcidev,
-                      ec->ec_pcifunc, &devind);
-      if (r == 0)
-      {
-         printf("%s: no PCI found at %d.%d.%d\n",
-                ec->port_name, ec->ec_pcibus,
-                ec->ec_pcidev, ec->ec_pcifunc);
-         return 0;
-      }
-      pci_ids(devind, &vid, &did);
-      just_one= TRUE;
-   }
-   else
-   {
-      r= pci_first_dev(&devind, &vid, &did);
-      if (r == 0)
-         return 0;
-      just_one= FALSE;
-   }
+   r= pci_first_dev(&devind, &vid, &did);
+   if (r == 0)
+      return 0;
 
-   for(;;)
+   while (skip--)
    {
-      for (i= 0; pcitab[i].vid != 0; i++)
-      {
-         if (pcitab[i].vid != vid)
-            continue;
-         if (pcitab[i].did != did)
-            continue;
-         if (pcitab[i].checkclass) {
-		panic("class check not implemented");
-         }
-         break;
-      }
-      if (pcitab[i].vid != 0)
-      {
-	 if (just_one || !skip)
-            break;
-	 skip--;
-      }
-
-      if (just_one)
-      {
-         printf(
-            "%s: wrong PCI device (%04x/%04x) found at %d.%d.%d\n",
-            ec->port_name, vid, did,
-            ec->ec_pcibus,
-            ec->ec_pcidev, ec->ec_pcifunc);
-         return 0;
-      }
-
       r= pci_next_dev(&devind, &vid, &did);
       if (!r)
          return 0;

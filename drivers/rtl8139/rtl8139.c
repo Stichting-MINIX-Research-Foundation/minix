@@ -16,36 +16,6 @@
 
 #include "rtl8139.h"
 
-PRIVATE struct pcitab
-{
-	u16_t vid;
-	u16_t did;
-	int checkclass;
-} pcitab[]=
-{
-	{ 0x10ec, 0x8139, 0 },	/* Realtek RTL8139 */
-
-	/* Alternative IDs */
-	{ 0x02ac, 0x1012, 0 },	/* SpeedStream 1012 PCMCIA 10/100 */
-	{ 0x1065, 0x8139, 0 },	/* Texas Microsystems 8139C Network Card */
-	{ 0x1113, 0x1211, 0 },	/* Accton MPX5030 or SMC1211TX EZCard 10/100 */
-	{ 0x1186, 0x1300, 0 },	/* D-Link DFE530TX+/DFE538TX */
-	{ 0x1186, 0x1340, 0 },	/* D-Link DFE690TXD */
-	{ 0x11db, 0x1234, 0 },	/* Sega Dreamcast HIT-400 */
-	{ 0x1259, 0xa117, 0 },	/* Allied Telesyn 8139 */
-	{ 0x1259, 0xa11e, 0 },	/* Allied Telesyn 8139 */
-	{ 0x126c, 0x1211, 0 },	/* Northern Telecom 10/100BaseTX*/
-	{ 0x13d1, 0xab06, 0 },	/* AboCom FE2000VX */
-	{ 0x1432, 0x9130, 0 },	/* Edimax Computer Co. RTL81xx */
-	{ 0x14ea, 0xab06, 0 },	/* Planex FNW-3603-TX */
-	{ 0x14ea, 0xab07, 0 },	/* Planex FNW-3800-TX */
-	{ 0x1500, 0x1360, 0 },	/* Delta Electronics RealTek Ethernet */
-	{ 0x1743, 0x8139, 0 },	/* Peppercon AG 8139  ROL/F-100 */
-	{ 0x4033, 0x1360, 0 },	/* Addtron Technology 8139 */
-
-	{ 0x0000, 0x0000, 0 }
-};
-
 PUBLIC re_t re_state;
 
 static int re_instance;
@@ -419,30 +389,12 @@ message *mp;
 static void rl_pci_conf()
 {
 	re_t *rep;
-	static char envvar[] = RL_ENVVAR "#";
-	static char envfmt[] = "*:d.d.d";
-	static char val[128];
-	long v;
 
 	rep= &re_state;
 
 	strcpy(rep->re_name, "rtl8139#0");
 	rep->re_name[8] += re_instance;
 	rep->re_seen= FALSE;
-	envvar[sizeof(RL_ENVVAR)-1]= '0'+re_instance;
-	if (0 == env_get_param(envvar, val, sizeof(val)) && 
-			! env_prefix(envvar, "pci")) {
-		env_panic(envvar);
-	}
-	v= 0;
-	(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
-	rep->re_pcibus= v;
-	v= 0;
-	(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
-	rep->re_pcidev= v;
-	v= 0;
-	(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
-	rep->re_pcifunc= v;
 
 	pci_init();
 
@@ -457,7 +409,7 @@ static int rl_probe(rep, skip)
 re_t *rep;
 int skip;
 {
-	int i, r, devind, just_one;
+	int r, devind;
 	u16_t vid, did;
 	u32_t bar;
 	u8_t ilr;
@@ -465,59 +417,12 @@ int skip;
 	char *dname;
 #endif
 
-	if ((rep->re_pcibus | rep->re_pcidev | rep->re_pcifunc) != 0)
-	{
-		/* Look for specific PCI device */
-		r= pci_find_dev(rep->re_pcibus, rep->re_pcidev,
-			rep->re_pcifunc, &devind);
-		if (r == 0)
-		{
-			printf("%s: no PCI found at %d.%d.%d\n",
-				rep->re_name, rep->re_pcibus,
-				rep->re_pcidev, rep->re_pcifunc);
-			return 0;
-		}
-		pci_ids(devind, &vid, &did);
-		just_one= TRUE;
-	}
-	else
-	{
-		r= pci_first_dev(&devind, &vid, &did);
-		if (r == 0)
-			return 0;
-		just_one= FALSE;
-	}
+	r= pci_first_dev(&devind, &vid, &did);
+	if (r == 0)
+		return 0;
 
-	for(;;)
+	while (skip--)
 	{
-		for (i= 0; pcitab[i].vid != 0; i++)
-		{
-			if (pcitab[i].vid != vid)
-				continue;
-			if (pcitab[i].did != did)
-				continue;
-			if (pcitab[i].checkclass) {
-				panic("class check not implemented");
-			}
-			break;
-		}
-		if (pcitab[i].vid != 0)
-		{
-			if (just_one || !skip)
-				break;
-			skip--;
-		}
-
-		if (just_one)
-		{
-			printf(
-		"%s: wrong PCI device (%04x/%04x) found at %d.%d.%d\n",
-				rep->re_name, vid, did,
-				rep->re_pcibus,
-				rep->re_pcidev, rep->re_pcifunc);
-			return 0;
-		}
-
 		r= pci_next_dev(&devind, &vid, &did);
 		if (!r)
 			return 0;
@@ -617,8 +522,7 @@ re_t *rep;
 		buf += BUF_ALIGNMENT - off;
 	}
 
-	tell_dev((vir_bytes)mallocbuf, tot_bufsize, rep->re_pcibus, 
-		rep->re_pcidev, rep->re_pcifunc);
+	tell_dev((vir_bytes)mallocbuf, tot_bufsize, 0, 0, 0);
 
 	for (i= 0; i<N_TX_BUF; i++)
 	{

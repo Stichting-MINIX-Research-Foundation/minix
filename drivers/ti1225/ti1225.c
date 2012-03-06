@@ -16,11 +16,8 @@ Created:	Dec 2005 by Philip Homburg
 /* The use of interrupts is not yet ready for prime time */
 #define USE_INTS	0
 
-#define NR_PORTS 2
-
 PRIVATE struct port
 {
-	unsigned p_flags;
 	int p_devind;
 	u8_t p_cb_busnr;
 	u16_t p_exca_port;
@@ -29,26 +26,13 @@ PRIVATE struct port
 	int p_hook;
 #endif
 	volatile struct csr *csr_ptr;
-} ports[NR_PORTS];
+} port;
 
-#define PF_PRESENT	1
-
-struct pcitab
-{
-	u16_t vid;
-	u16_t did;
-	int checkclass;
-};
-
-PRIVATE struct pcitab pcitab_ti[]=
-{
-	{ 0x104C, 0xAC1C, 0 },		/* TI PCI1225 */
-
-	{ 0x0000, 0x0000, 0 }
-};
+PRIVATE int instance;
 PRIVATE int debug;
 
-FORWARD _PROTOTYPE( void hw_init, (struct port *pp)			);
+FORWARD _PROTOTYPE( int hw_probe, (int skip)				);
+FORWARD _PROTOTYPE( void hw_init, (struct port *pp, int devind)		);
 FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
 
 /* SEF functions and variables. */
@@ -84,17 +68,17 @@ int main(int argc, char *argv[])
  *===========================================================================*/
 PRIVATE void sef_local_startup()
 {
-  /* Register init callbacks. */
-  sef_setcb_init_fresh(sef_cb_init_fresh);
-  sef_setcb_init_lu(sef_cb_init_fresh);
-  sef_setcb_init_restart(sef_cb_init_fresh);
+	/* Register init callbacks. */
+	sef_setcb_init_fresh(sef_cb_init_fresh);
+	sef_setcb_init_lu(sef_cb_init_fresh);
+	sef_setcb_init_restart(sef_cb_init_fresh);
 
-  /* Register live update callbacks. */
-  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
-  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+	/* Register live update callbacks. */
+	sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+	sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
 
-  /* Let SEF perform startup. */
-  sef_startup();
+	/* Let SEF perform startup. */
+	sef_startup();
 }
 
 /*===========================================================================*
@@ -103,77 +87,60 @@ PRIVATE void sef_local_startup()
 PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 {
 /* Initialize the ti1225 driver. */
-	int c, i, r, first, devind, port;
-	u16_t vid, did;
+	int r, devind;
+	long v;
 
 	if((r=tsc_calibrate()) != OK)
 		panic("tsc_calibrate failed: %d", r);
 
-	debug= 0;
-	while (c= getopt(env_argc, env_argv, "d?"), c != -1)
-	{
-		switch(c)
-		{
-		case '?': panic("Usage: ti1225 [-d]");
-		case 'd': debug++; break;
-		default: panic("getopt failed");
-		}
-	}
+	v = 0;
+	(void) env_parse("instance", "d", 0, &v, 0, 255);
+	instance = (int) v;
 
-	pci_init();
+	v = 0;
+	(void) env_parse("debug", "d", 0, &v, 0, 1);
+	debug = (int) v;
 
-	first= 1;
-	port= 0;
-	for (;;)
-	{
-		if (first)
-		{
-			first= 0;
-			r= pci_first_dev(&devind, &vid, &did);
-		}
-		else
-			r= pci_next_dev(&devind, &vid, &did);
-		if (r != 1)
-			break;
+	devind = hw_probe(instance);
 
-		for (i= 0; pcitab_ti[i].vid != 0; i++)
-		{
-			if (pcitab_ti[i].vid != vid)
-				continue;
-			if (pcitab_ti[i].did != did)
-				continue;
-			if (pcitab_ti[i].checkclass) {
-				panic("fxp_probe: class check not implemented");
-			}
-			break;
-		}
-		if (pcitab_ti[i].vid == 0)
-			continue;
+	if (devind < 0)
+		return(ENODEV);
 
-		pci_reserve(devind);
-
-		if (debug)
-			printf("ti1225: found device %04x/%04x\n", vid, did);
-		ports[port].p_devind= devind;
-		ports[port].p_flags |= PF_PRESENT;
-		port++;
-		if (port >= NR_PORTS)
-			break;
-	}
-
-	for (i= 0; i<NR_PORTS; i++)
-	{
-		if (!(ports[i].p_flags & PF_PRESENT))
-			continue;
-		hw_init(&ports[i]);
-	}
+	hw_init(&port, devind);
 
 	return(OK);
 }
 
-PRIVATE void hw_init(struct port *pp)
+/*===========================================================================*
+ *				hw_probe				     *
+ *===========================================================================*/
+PRIVATE int hw_probe(int skip)
 {
+	u16_t vid, did;
 	int devind;
+
+	pci_init();
+
+	if (pci_first_dev(&devind, &vid, &did) != 1)
+		return(-1);
+
+	while (skip--)
+		if (pci_next_dev(&devind, &vid, &did) != 1)
+			return(-1);
+
+	pci_reserve(devind);
+
+	if (debug)
+		printf("ti1225: found device %04x/%04x\n", vid, did);
+
+	return(devind);
+}
+
+/*===========================================================================*
+ *				hw_init					     *
+ *===========================================================================*/
+PRIVATE void hw_init(struct port *pp, int devind)
+{
 	u8_t v8;
 	u16_t v16;
 	u32_t v32;
@@ -181,7 +148,7 @@ PRIVATE void hw_init(struct port *pp)
 	int r, irq;
 #endif
 
-	devind= pp->p_devind;
+	pp->p_devind= devind;
 	if (debug)
 		printf("hw_init: devind = %d\n", devind);
 
@@ -277,6 +244,9 @@ PRIVATE void hw_init(struct port *pp)
 #endif
 }
 
+/*===========================================================================*
+ *				do_int					     *
+ *===========================================================================*/
 PRIVATE void do_int(struct port *pp)
 {
 	int devind, vcc_5v, vcc_3v, vcc_Xv, vcc_Yv,
