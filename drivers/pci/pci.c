@@ -1,7 +1,5 @@
-#define USER_SPACE 1
 /*
 pci.c
-#define USER_SPACE 1
 
 Configure devices on the PCI bus
 
@@ -687,12 +685,8 @@ PRIVATE void pci_intel_init()
 
 	vid= PCII_RREG16_(bus, dev, func, PCI_VID);
 	did= PCII_RREG16_(bus, dev, func, PCI_DID);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 
 #if 0
 	if (vid == 0xffff && did == 0xffff)
@@ -2042,15 +2036,10 @@ PRIVATE int do_piix(int devind)
 #if DEBUG
 	printf("in piix\n");
 #endif
-#if USER_SPACE
 	if (OK != (s=sys_inb(PIIX_ELCR1, &elcr1)))
 		printf("Warning, sys_inb failed: %d\n", s);
 	if (OK != (s=sys_inb(PIIX_ELCR2, &elcr2)))
 		printf("Warning, sys_inb failed: %d\n", s);
-#else
-	elcr1= inb(PIIX_ELCR1);
-	elcr2= inb(PIIX_ELCR2);
-#endif
 	elcr= elcr1 | (elcr2 << 8);
 	for (i= 0; i<4; i++)
 	{
@@ -2461,12 +2450,8 @@ int port;
 	v= PCII_RREG8_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 #if 0
 	printf("pcii_rreg8(%d, %d, 0x%X): %d.%d.%d= 0x%X\n",
 		busind, devind, port,
@@ -2487,12 +2472,8 @@ PRIVATE u16_t pcii_rreg16(int busind, int devind, int port)
 	v= PCII_RREG16_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 #if 0
 	printf("pcii_rreg16(%d, %d, 0x%X): %d.%d.%d= 0x%X\n",
 		busind, devind, port,
@@ -2513,12 +2494,8 @@ PRIVATE u32_t pcii_rreg32(int busind, int devind, int port)
 	v= PCII_RREG32_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 #if 0
 	printf("pcii_rreg32(%d, %d, 0x%X): %d.%d.%d= 0x%X\n",
 		busind, devind, port,
@@ -2548,12 +2525,8 @@ PRIVATE void pcii_wreg8(
 	PCII_WREG8_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 }
 
 /*===========================================================================*
@@ -2576,12 +2549,8 @@ PRIVATE void pcii_wreg16(
 	PCII_WREG16_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 }
 
 /*===========================================================================*
@@ -2604,12 +2573,8 @@ PRIVATE void pcii_wreg32(
 	PCII_WREG32_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n",s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 }
 
 /*===========================================================================*
@@ -2621,12 +2586,8 @@ PRIVATE u16_t pcii_rsts(int busind)
 	int s;
 
 	v= PCII_RREG16_(pcibus[busind].pb_busnr, 0, 0, PCI_SR);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 	return v;
 }
 
@@ -2637,12 +2598,8 @@ PRIVATE void pcii_wsts(int busind, u16_t value)
 {
 	int s;
 	PCII_WREG16_(pcibus[busind].pb_busnr, 0, 0, PCI_SR, value);
-#if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
-#else
-	outl(PCII_CONFADD, PCII_UNSEL);
-#endif
 }
 
 
