@@ -1,3 +1,9 @@
+20120306:
+	The base system only looks in /usr/pkg/compiler-rt/lib now, so
+	-L/usr/pkg/lib is gone.
+	Please make sure you have the latest compiler-rt package
+	installed.
+
 20120214:
 	Compiling everything with clang (previous entry) depends on a
 	relatively new clang package. Please make sure you have at

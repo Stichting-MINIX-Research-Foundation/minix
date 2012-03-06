@@ -26,7 +26,7 @@ DPADD+= ${LIBMINLIB}
 .if ${CC} == "gcc"
 LDADD+=	-lgcc -lsys -lgcc -lminc
 .elif ${CC} == "clang"
-LDADD+= -L/usr/pkg/lib -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic -lminc
+LDADD+= -L/usr/pkg/compiler-rt/lib -lCompilerRT-Generic -lsys -lCompilerRT-Generic -lminc
 DPADD+=	${LIBC}
 .endif
 
