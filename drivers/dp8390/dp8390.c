@@ -24,6 +24,7 @@
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <machine/vm.h>
+#include <sys/mman.h>
 #include "assert.h"
 
 #include "local.h"
@@ -1690,9 +1691,6 @@ dp_conf_t *dcp;
 static void map_hw_buffer(dep)
 dpeth_t *dep;
 {
-	int r;
-	size_t o, size;
-	char *buf, *abuf;
 
 	if (dep->de_prog_IO)
 	{
@@ -1704,25 +1702,10 @@ dpeth_t *dep;
 		return;
 	}
 
-	size = dep->de_ramsize + I386_PAGE_SIZE;	/* Add I386_PAGE_SIZE for
-						 * alignment
-						 */
-	buf= malloc(size);
-	if (buf == NULL)
-		panic("map_hw_buffer: cannot malloc size: %d", size);
-	o= I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
-	abuf= buf + o;
-	printf("buf at %p, abuf at %p\n", buf, abuf);
-
-#if 0
-	r= sys_vm_map(SELF, 1 /* map */, (vir_bytes)abuf,
-			dep->de_ramsize, (phys_bytes)dep->de_linmem);
-#else
-	r = ENOSYS;
-#endif
-	if (r != OK)
-		panic("map_hw_buffer: sys_vm_map failed: %d", r);
-	dep->de_locmem = abuf;
+	dep->de_locmem=
+		vm_map_phys(SELF, (void *) dep->de_linmem, dep->de_ramsize);
+	if (dep->de_locmem == MAP_FAILED)
+		panic("map_hw_buffer: vm_map_phys failed");
 }
 
 /*===========================================================================*

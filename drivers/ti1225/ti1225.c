@@ -8,6 +8,7 @@ Created:	Dec 2005 by Philip Homburg
 #include <minix/driver.h>
 #include <machine/pci.h>
 #include <machine/vm.h>
+#include <sys/mman.h>
 
 #include "ti1225.h"
 #include "i82365.h"
@@ -27,10 +28,7 @@ PRIVATE struct port
 	int p_irq;
 	int p_hook;
 #endif
-	char *base_ptr;
 	volatile struct csr *csr_ptr;
-
-	char buffer[2*I386_PAGE_SIZE];
 } ports[NR_PORTS];
 
 #define PF_PRESENT	1
@@ -51,7 +49,6 @@ PRIVATE struct pcitab pcitab_ti[]=
 PRIVATE int debug;
 
 FORWARD _PROTOTYPE( void hw_init, (struct port *pp)			);
-FORWARD _PROTOTYPE( void map_regs, (struct port *pp, u32_t base)	);
 FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
 
 /* SEF functions and variables. */
@@ -197,8 +194,12 @@ PRIVATE void hw_init(struct port *pp)
 	v32= pci_attr_r32(devind, TI_CB_BASEADDR);
 	if (debug)
 		printf("ti1225: Cardbus/ExCA base address 0x%x\n", v32);
-	map_regs(pp, v32);
-	pp->csr_ptr= (struct csr *)pp->base_ptr;
+	v32 &= ~(u32_t)0xF;	/* Clear low order bits in base */
+
+	pp->csr_ptr=
+		(struct csr *) vm_map_phys(SELF, (void *) v32, I386_PAGE_SIZE);
+	if (pp->csr_ptr == MAP_FAILED)
+		panic("hw_init: vm_map_phys failed");
 
 	if (debug)
 	{
@@ -274,34 +275,6 @@ PRIVATE void hw_init(struct port *pp)
 	if (r != OK)
 		panic("unable enable interrupts: %d", r);
 #endif
-}
-
-PRIVATE void map_regs(struct port *pp, u32_t base)
-{
-	int r;
-	vir_bytes buf_base;
-
-	buf_base= (vir_bytes)pp->buffer;
-	if (buf_base % I386_PAGE_SIZE)
-		buf_base += I386_PAGE_SIZE-(buf_base % I386_PAGE_SIZE);
-	pp->base_ptr= (char *)buf_base;
-	if (debug)
-	{
-		printf("ti1225: map_regs: using %p for %p\n",
-			pp->base_ptr, pp->buffer);
-	}
-
-	/* Clear low order bits in base */
-	base &= ~(u32_t)0xF;
-
-#if 0
-	r= sys_vm_map(SELF, 1 /* map */, (vir_bytes)pp->base_ptr,
-		I386_PAGE_SIZE, (phys_bytes)base);
-#else
-	r = ENOSYS;
-#endif
-	if (r != OK)
-		panic("map_regs: sys_vm_map failed: %d", r);
 }
 
 PRIVATE void do_int(struct port *pp)
