@@ -48,7 +48,6 @@ PRIVATE struct pcitab pcitab_ti[]=
 
 	{ 0x0000, 0x0000, 0 }
 };
-PRIVATE char *progname;
 PRIVATE int debug;
 
 FORWARD _PROTOTYPE( void hw_init, (struct port *pp)			);
@@ -110,9 +109,6 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 	int c, i, r, first, devind, port;
 	u16_t vid, did;
 
-	(progname=strrchr(env_argv[0],'/')) ? progname++
-		: (progname=env_argv[0]);
-
 	if((r=tsc_calibrate()) != OK)
 		panic("tsc_calibrate failed: %d", r);
 
@@ -127,7 +123,7 @@ PRIVATE int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		}
 	}
 
-	pci_init1(progname);
+	pci_init();
 
 	first= 1;
 	port= 0;

@@ -55,7 +55,7 @@ PUBLIC void ddekit_pci_init_only_one(int skip)
 
 	DDEBUG_MSG_INFO("Initializing PCI subsystem...");
 
-	pci_init1("symbol clash");
+	pci_init();
 
 	/*
 	 * Iterate the PCI-bus

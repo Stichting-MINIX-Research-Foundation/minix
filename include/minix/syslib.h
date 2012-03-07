@@ -237,7 +237,6 @@ _PROTOTYPE(int sys_in, (int port, u32_t *value, int type)	);
 
 /* pci.c */
 _PROTOTYPE( void pci_init, (void)					);
-_PROTOTYPE( void pci_init1, (char *name)				);
 _PROTOTYPE( int pci_first_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_next_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_find_dev, (u8_t bus, u8_t dev, u8_t func,
