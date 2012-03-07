@@ -358,11 +358,12 @@ PUBLIC int pci_next_dev_a(
 }
 
 /*===========================================================================*
- *				pci_reserve2				     *
+ *				pci_reserve_a				     *
  *===========================================================================*/
-PUBLIC int pci_reserve2(devind, proc)
+PUBLIC int pci_reserve_a(devind, proc, aclp)
 int devind;
 endpoint_t proc;
+struct rs_pci *aclp;
 {
 	int i, r;
 	int ilr;
@@ -371,9 +372,16 @@ endpoint_t proc;
 
 	if (devind < 0 || devind >= nr_pcidev)
 	{
-		printf("pci:pci_reserve2: bad devind: %d\n", devind);
+		printf("pci_reserve_a: bad devind: %d\n", devind);
 		return EINVAL;
 	}
+	if (!visible(aclp, devind))
+	{
+		printf("pci_reserve_a: %u is not allowed to reserve %d\n",
+			proc, devind);
+		return EPERM;
+	}
+
 	if(pcidev[devind].pd_inuse && pcidev[devind].pd_proc != proc)
 		return EBUSY;
 	pcidev[devind].pd_inuse= 1;
@@ -383,7 +391,7 @@ endpoint_t proc;
 	{
 		if (pcidev[devind].pd_bar[i].pb_flags & PBF_INCOMPLETE)
 		{
-			printf("pci_reserve3: BAR %d is incomplete\n", i);
+			printf("pci_reserve_a: BAR %d is incomplete\n", i);
 			continue;
 		}
 		if (pcidev[devind].pd_bar[i].pb_flags & PBF_IO)
@@ -394,7 +402,7 @@ endpoint_t proc;
 
 			if(debug) {
 			   printf(
-		"pci_reserve3: for proc %d, adding I/O range [0x%x..0x%x]\n",
+		"pci_reserve_a: for proc %d, adding I/O range [0x%x..0x%x]\n",
 				proc, ior.ior_base, ior.ior_limit);
 			}
 			r= sys_privctl(proc, SYS_PRIV_ADD_IO, &ior);
@@ -421,7 +429,7 @@ endpoint_t proc;
 	ilr= pcidev[devind].pd_ilr;
 	if (ilr != PCI_ILR_UNKNOWN)
 	{
-		if(debug) printf("pci_reserve3: adding IRQ %d\n", ilr);
+		if(debug) printf("pci_reserve_a: adding IRQ %d\n", ilr);
 		r= sys_privctl(proc, SYS_PRIV_ADD_IRQ, &ilr);
 		if (r != OK)
 		{
@@ -2667,7 +2675,8 @@ int devind;
 
 	if (!aclp)
 		return TRUE;	/* Should be changed when ACLs become
-				 * mandatory.
+				 * mandatory. Do note that procfs relies
+				 * on being able to see all devices.
 				 */
 	/* Check whether the caller is allowed to get this device. */
 	for (i= 0; i<aclp->rsp_nr_device; i++)

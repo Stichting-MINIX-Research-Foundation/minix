@@ -96,7 +96,8 @@ extern struct pci_pcibridge pci_pcibridge[];
 /* Function prototypes. */
 _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) 	);
 _PROTOTYPE( int map_service, (struct rprocpub *rpub)			);
-_PROTOTYPE( int pci_reserve2, (int devind, endpoint_t proc)		);
+_PROTOTYPE( int pci_reserve_a, (int devind, endpoint_t proc,
+					struct rs_pci *aclp)		);
 _PROTOTYPE( void pci_release, (endpoint_t proc)				);
 _PROTOTYPE( int pci_first_dev_a, (struct rs_pci *aclp, int *devindp,
 					u16_t *vidp, u16_t *didp)	);

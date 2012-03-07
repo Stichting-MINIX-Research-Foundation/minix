@@ -380,11 +380,14 @@ PRIVATE void do_del_acl(message *mp)
 
 PRIVATE void do_reserve(message *mp)
 {
+	struct rs_pci *aclp;
 	int r, devind;
 
 	devind= mp->m1_i1;
-	
-	mp->m_type= pci_reserve2(devind, mp->m_source);
+
+	aclp= find_acl(mp->m_source);
+
+	mp->m_type= pci_reserve_a(devind, mp->m_source, aclp);
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
