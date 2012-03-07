@@ -161,7 +161,7 @@ PRIVATE void hw_init(struct port *pp, int devind)
 	v32= pci_attr_r32(devind, TI_CB_BASEADDR);
 	if (debug)
 		printf("ti1225: Cardbus/ExCA base address 0x%x\n", v32);
-	v32 &= ~(u32_t)0xF;	/* Clear low order bits in base */
+	v32 &= PCI_BAR_MEM_MASK;	/* Clear low order bits in base */
 
 	pp->csr_ptr=
 		(struct csr *) vm_map_phys(SELF, (void *) v32, I386_PAGE_SIZE);

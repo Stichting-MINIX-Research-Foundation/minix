@@ -36,6 +36,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define	        PCI_TYPE_32_1M	0x00000002	/* 32-bit below 1MB (legacy) */
 #define	        PCI_TYPE_64	0x00000004	/* 64-bit BAR */
 #define	    PCI_BAR_PREFETCH	0x00000008	/* Memory is prefetchable */
+#define	    PCI_BAR_IO_MASK	0xFFFFFFFC	/* I/O address mask */
+#define	    PCI_BAR_MEM_MASK	0xFFFFFFF0	/* Memory address mask */
 #define PCI_BAR_2	0x14	/* Base Address Register */
 #define PCI_BAR_3	0x18	/* Base Address Register */
 #define PCI_BAR_4	0x1C	/* Base Address Register */

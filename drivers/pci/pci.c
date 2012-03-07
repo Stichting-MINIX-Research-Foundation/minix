@@ -1291,8 +1291,8 @@ int last;
 		pci_attr_w32(devind, reg, bar);
 		pci_attr_w16(devind, PCI_CR, cmd);
 
-		bar &= ~(u32_t)3;	/* Clear non-address bits */
-		bar2 &= ~(u32_t)3;
+		bar &= PCI_BAR_IO_MASK;		/* Clear non-address bits */
+		bar2 &= PCI_BAR_IO_MASK;
 		bar2= (~bar2 & 0xffff)+1;
 		if (debug)
 		{
@@ -1379,8 +1379,8 @@ int last;
 			return width;	/* Reg. is not implemented */
 
 		prefetch= !!(bar & PCI_BAR_PREFETCH);
-		bar &= ~(u32_t)0xf;	/* Clear non-address bits */
-		bar2 &= ~(u32_t)0xf;
+		bar &= PCI_BAR_MEM_MASK;	/* Clear non-address bits */
+		bar2 &= PCI_BAR_MEM_MASK;
 		bar2= (~bar2)+1;
 		if (debug)
 		{

@@ -1360,21 +1360,20 @@ ether_card_t *ec;
    unsigned int      membase, ioaddr;
    int reg, irq;
 
-   for (reg = PCI_BASE_ADDRESS_0; reg <= PCI_BASE_ADDRESS_5; reg += 4)
+   for (reg = PCI_BAR; reg <= PCI_BAR_6; reg += 4)
    {
       ioaddr = pci_attr_r32(devind, reg);
 
-      if ((ioaddr & PCI_BASE_ADDRESS_IO_MASK) == 0
-          || (ioaddr & PCI_BASE_ADDRESS_SPACE_IO) == 0)
+      if ((ioaddr & PCI_BAR_IO_MASK) == 0 || (ioaddr & PCI_BAR_IO) == 0)
          continue;
       /* Strip the I/O address out of the returned value */
-      ioaddr &= PCI_BASE_ADDRESS_IO_MASK;
+      ioaddr &= PCI_BAR_IO_MASK;
       /* Get the memory base address */
-      membase = pci_attr_r32(devind, PCI_BASE_ADDRESS_1);
+      membase = pci_attr_r32(devind, PCI_BAR_2);
       /* KK: Get the IRQ number */
-      irq = pci_attr_r8(devind, PCI_INTERRUPT_PIN);
+      irq = pci_attr_r8(devind, PCI_IPR);
       if (irq)
-         irq = pci_attr_r8(devind, PCI_INTERRUPT_LINE);
+         irq = pci_attr_r8(devind, PCI_ILR);
 
       ec->ec_linmem = membase;
       ec->ec_port = ioaddr;
@@ -1413,8 +1412,8 @@ int skip;
 
    /* ===== Bus Master ? ===== */
    pci_cmd = pci_attr_r32(devind, PCI_CR);
-   if (!(pci_cmd & PCI_COMMAND_MASTER)) {
-      pci_cmd |= PCI_COMMAND_MASTER;
+   if (!(pci_cmd & PCI_CR_MAST_EN)) {
+      pci_cmd |= PCI_CR_MAST_EN;
       pci_attr_w32(devind, PCI_CR, pci_cmd);
    }
 

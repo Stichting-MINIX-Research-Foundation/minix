@@ -75,9 +75,9 @@ PRIVATE int vbox_init(int UNUSED(type), sef_init_info_t *UNUSED(info))
 		r = pci_next_dev(&devind, &vid, &did);
 	}
 
-	port = pci_attr_r16(devind, PCI_BAR) & 0xfffc;
-
 	pci_reserve(devind);
+
+	port = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
 
 	if ((vir_ptr = alloc_contig(VMMDEV_BUF_SIZE, 0, &phys_ptr)) == NULL)
 		panic("unable to allocate memory");

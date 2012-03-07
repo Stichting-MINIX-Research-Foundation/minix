@@ -1,21 +1,3 @@
-#include <net/gen/ether.h>
-#include <net/gen/eth_io.h>
-
-/* PCI STUFF */
-#define PCI_BASE_ADDRESS_0		0x10
-#define PCI_BASE_ADDRESS_1		0x14
-#define PCI_BASE_ADDRESS_2		0x18
-#define PCI_BASE_ADDRESS_3		0x1c
-#define PCI_BASE_ADDRESS_4		0x20
-#define PCI_BASE_ADDRESS_5		0x24
-
-#define PCI_BASE_ADDRESS_IO_MASK	(~0x03)
-#define PCI_BASE_ADDRESS_SPACE_IO	0x01
-#define PCI_INTERRUPT_LINE		0x3c
-#define PCI_INTERRUPT_PIN		0x3d
-
-#define PCI_COMMAND_MASTER		0x4
-
 
 /* macros for 'mode' */
 #define EC_DISABLED    0x0

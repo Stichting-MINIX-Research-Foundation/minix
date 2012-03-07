@@ -489,14 +489,14 @@ PRIVATE void init_params_pci(int skip)
 		}
   	} 
 
-  	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
+	base_dma = pci_attr_r32(devind, PCI_BAR_5) & PCI_BAR_IO_MASK;
 
   	/* Primary channel not in compatability mode? */
   	if (quirk || (interface & ATA_IF_NOTCOMPAT1)) {
   		u32_t base_cmd, base_ctl;
 
-  		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xfffffffc;
-  		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & 0xfffffffc;
+		base_cmd = pci_attr_r32(devind, PCI_BAR) & PCI_BAR_IO_MASK;
+		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & PCI_BAR_IO_MASK;
   		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
 	  		init_drive(&wini[w_next_drive],
 	  			base_cmd, base_ctl+PCI_CTL_OFF,
@@ -529,8 +529,8 @@ PRIVATE void init_params_pci(int skip)
   	if (quirk || (interface & ATA_IF_NOTCOMPAT2)) {
   		u32_t base_cmd, base_ctl;
 
-  		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xfffffffc;
-  		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & 0xfffffffc;
+		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & PCI_BAR_IO_MASK;
+		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & PCI_BAR_IO_MASK;
 		if (base_dma != 0)
 			base_dma += PCI_DMA_2ND_OFF;
   		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
