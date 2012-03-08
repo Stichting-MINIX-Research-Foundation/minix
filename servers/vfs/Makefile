@@ -17,8 +17,6 @@ CPPFLAGS+= -DUSE_COVERAGE
 DPADD+=	${LIBSYS} ${LIBTIMERS} ${LIBEXEC}
 LDADD+=	-lsys -ltimers -lexec -lmthread
 
-LDADD+=	-lc
-
 MAN=
 
 BINDIR?= /usr/sbin

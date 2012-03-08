@@ -134,7 +134,7 @@ ACPICA_SRCS= \
 SRCS+=${ACPICA_SRCS} 
 
 DPADD+=	${LIBSYS}
-LDADD+=	-lsys -lc
+LDADD+=	-lsys
 
 CPPFLAGS += -I${.CURDIR}/include
 CFLAGS += -DACPI_LIBRARY

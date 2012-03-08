@@ -5,8 +5,6 @@ SRCS=	ahci.c
 DPADD+=	${LIBBLOCKDRIVER} ${LIBSYS} ${LIBTIMERS} ${LIBMTHREAD}
 LDADD+=	-lblockdriver -lsys -ltimers -lmthread
 
-LDADD+=	-lc
-
 MAN=
 
 BINDIR?= /sbin

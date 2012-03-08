@@ -59,14 +59,15 @@ CPPFLAGS.fputs.c+= -I${LIBCSRCDIR}/include
 #
 
 # Import from stdio
-.for i in sprintf.c fprintf.c perror.c vsnprintf.c snprintf.c
+.for i in sprintf.c fprintf.c perror.c vsnprintf.c snprintf.c \
+	_rand48.c lrand48.c srand48.c
 .PATH.c: ${LIBCSRCDIR}/stdio
 CPPFLAGS.${i}= -I${LIBCSRCDIR}/stdio -I${LIBCSRCDIR}/include
 SRCS+=	${i}
 .endfor
 # Import from stdlib
 .for i in abort.c atexit.c atoi.c exit.c getenv.c \
-	getopt.c ldiv.c setenv.c
+	getopt.c ldiv.c
 .PATH.c: ${LIBCSRCDIR}/stdlib
 SRCS+= ${i}
 CPPFLAGS.${i}+= -I${LIBCSRCDIR}/stdlib -I${LIBCSRCDIR}/include 
@@ -79,7 +80,7 @@ errlist.c: ${LIBCSRCDIR}/gen/errlist.awk \
 
 .for i in assert.c _errno.c errno.c _env.c errlist.c \
 	execle.c getprogname.c sleep.c time.c \
-	ctype_.c isctype.c tolower_.c toupper_.c \
+	ctype_.c isctype.c tolower_.c toupper_.c usleep.c \
 	infinityf_ieee754.c infinity_ieee754.c \
 	fpclassifyf_ieee754.c fpclassifyd_ieee754.c \
 	isinff_ieee754.c isinfd_ieee754.c \
@@ -126,10 +127,10 @@ CPPFLAGS.${i}+= -I${LIBCSRCDIR}/include -I${LIBCSRCDIR}/locale
 # Import from sys-minix
 .for i in access.c brk.c close.c environ.c execve.c fork.c \
 	getgid.c getpid.c getuid.c gettimeofday.c loadname.c \
-	link.c mknod.c mmap.c nanosleep.c open.c read.c sbrk.c \
-	select.c setuid.c stat.c stime.c syscall.c umask.c \
-	unlink.c waitpid.c \
-	brksize.S _ipc.S _senda.S
+	link.c _mcontext.c mknod.c mmap.c nanosleep.c open.c \
+	read.c sbrk.c select.c setuid.c sigprocmask.c stat.c \
+	stime.c syscall.c _ucontext.c umask.c unlink.c waitpid.c \
+	brksize.S _ipc.S _senda.S ucontext.S
 .PATH.c: ${LIBCSRCDIR}/sys-minix
 .PATH.S: ${LIBCSRCDIR}/arch/${MACHINE}/sys-minix
 SRCS+= ${i}
