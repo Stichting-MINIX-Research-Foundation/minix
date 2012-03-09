@@ -314,10 +314,11 @@ static struct
 	{ "255.0.0.0",      0xff000000, 1, 0, 0, 0                 },
 	{ "127.0.0.1",      0x7f000001, 1, 0, 0, 0                 },
 	{ "localhost",      0x7f000001, 0, 1, 0, 0,                },
-	{ "minix3.org",     0x82251414, 0, 1, 1, 0,                },
+	/* FIXME: allocate a subdomain for this */
+	/* { "minix3.org",     0x82251414, 0, 1, 1, 0,                }, */
 	{ "",               0x00000000, 1, 0, 0, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)},
 	{ "256.256.256.256",0x00000000, 1, 0, 0, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)},
-	{ "minix3.xxx",     0x00000000, 0, 0, 1, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)}};
+	{ "minix3.xyz",     0x00000000, 0, 0, 1, (1<<EAI_NONAME)|(1<<EAI_FAIL)|(1<<EAI_NODATA)}};
 
 static struct
 {
