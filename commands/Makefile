@@ -10,7 +10,7 @@ SUBDIR=	add_route arp ash at awk \
 	comm compress cp crc cron crontab cut \
 	dd decomp16 DESCRIBE dev2name devsize df dhcpd \
 	dhrystone diff dirname diskctl dumpcore \
-	ed eject elvis env expand factor fbdctl file \
+	eject elvis env expand factor fbdctl file \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	ftp101 gcore gcov-pull getty grep head hexdump host \
 	hostaddr id ifconfig ifdef install \
