@@ -110,14 +110,21 @@ install: includes services hdboot
 nbsd_fetch:
 	export CVS_RSH=ssh; 							\
 	echo "retrieving hierarchies from ${NBSD_CVSROOT}";			\
-	for d in `awk '{print $$2;}' < nbsd_ports`;				\
-	do	echo "retrieving $$d ..";					\
-		cd ${MINIXSRCDIR} && cvs -q -d ${NBSD_CVSROOT} co -N -d nbsdsrc $$d; \
+	IFS=,;									\
+	cat nbsd_ports | grep -v '^#' | while read port ;			\
+	do	set $$port;							\
+		date=$$1; minixpath=$$2; origpath=$$3;				\
+		if [ $$# -lt 3 ]; then origpath=$$2; fi;			\
+		echo "retrieving $$origpath ..";				\
+		cd ${MINIXSRCDIR} && cvs -q -d ${NBSD_CVSROOT} co -N -D "$$date UTC" -d nbsdsrc "src/$$origpath" ; \
 	done
 
 nbsd_diff:
-	cd ${MINIXSRCDIR} && awk '{ system("sh tools/nbsd_diff.sh " \
-	   "nbsdsrc/"$$2" "$$1" "$$1"/minix-port.patch");}' < tools/nbsd_ports
+	find ${MINIXSRCDIR} -name minix-port.patch | xargs rm
+	cat nbsd_ports | grep -v '^#' | \
+	( cd ${MINIXSRCDIR} && awk -F, '{ minixpath=$$2; origpath=$$3; if(NF < 3) { origpath=$$2; } system("sh tools/nbsd_diff.sh " \
+	   "nbsdsrc/src/"origpath" "minixpath" "minixpath"/minix-port.patch");}' )
+	find ${MINIXSRCDIR} -name minix-port.patch | xargs wc -l | sort -n
 
 
 # clean up compile results
