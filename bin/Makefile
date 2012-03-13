@@ -2,6 +2,6 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= date ed mkdir rm rmdir
+SUBDIR= cat date ed mkdir rm rmdir
 
 .include <bsd.subdir.mk>
