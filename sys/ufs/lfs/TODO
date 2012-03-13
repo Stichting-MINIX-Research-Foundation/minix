@@ -1,0 +1,109 @@
+#   $NetBSD: TODO,v 1.10 2005/12/11 12:25:26 christos Exp $
+
+- Lock audit.  Need to check locking for multiprocessor case in particular.
+
+- Get rid of lfs_segclean(); the kernel should clean a dirty segment IFF it
+  has passed two checkpoints containing zero live bytes.
+
+- Now that our cache is basically all of physical memory, we need to make
+  sure that segwrite is not starving other important things.  Need a way
+  to prioritize which blocks are most important to write, and write only
+  those, saving the rest for later.  Does this change our notion of what
+  a checkpoint is?
+
+- Investigate alternate inode locking strategy: Inode locks are useful
+  for locking against simultaneous changes to inode size (balloc,
+  truncate, write) but because the assignment of disk blocks is also
+  covered by the segment lock, we don't really need to pay attention to
+  the inode lock when writing a segment, right?  If this is true, the
+  locking problem in lfs_{bmapv,markv} goes away and lfs_reserve can go,
+  too.
+
+- Get rid of DEV_BSIZE, pay attention to the media block size at mount time.
+
+- More fs ops need to call lfs_imtime.  Which ones?  (Blackwell et al., 1995)
+
+- lfs_vunref_head exists so that vnodes loaded solely for cleaning can
+  be put back on the *head* of the vnode free list.  Make sure we
+  actually do this, since we now take IN_CLEANING off during segment write.
+
+- The cleaner could be enhanced to be controlled from other processes,
+  and possibly perform additional tasks:
+
+  - Backups.  At a minimum, turn the cleaner off and on to allow
+    effective live backups.  More aggressively, the cleaner itself could
+    be the backup agent, and dump_lfs would merely be a controller.
+
+  - Cleaning time policies.  Be able to tweak the cleaner's thresholds
+    to allow more thorough cleaning during policy-determined idle
+    periods (regardless of actual idleness) or put off until later
+    during short, intensive write periods.
+
+  - File coalescing and placement.  During periods we expect to be idle,
+    coalesce fragmented files into one place on disk for better read
+    performance.  Ideally, move files that have not been accessed in a
+    while to the extremes of the disk, thereby shortening seek times for
+    files that are accessed more frequently (though how the cleaner
+    should communicate "please put this near the beginning or end of the
+    disk" to the kernel is a very good question; flags to lfs_markv?).
+
+  - Versioning.  When it cleans a segment it could write data for files
+    that were less than n versions old to tape or elsewhere.  Perhaps it
+    could even write them back onto the disk, although that requires
+    more thought (and kernel mods).
+
+- Move lfs_countlocked() into vfs_bio.c, to replace count_locked_queue;
+  perhaps keep the name, replace the function.  Could it count referenced
+  vnodes as well, if it was in vfs_subr.c instead?
+
+- Why not delete the lfs_bmapv call, just mark everything dirty that
+  isn't deleted/truncated?  Get some numbers about what percentage of
+  the stuff that the cleaner thinks might be live is live.  If it's
+  high, get rid of lfs_bmapv.
+
+- There is a nasty problem in that it may take *more* room to write the
+  data to clean a segment than is returned by the new segment because of
+  indirect blocks in segment 2 being dirtied by the data being copied
+  into the log from segment 1.  The suggested solution at this point is
+  to detect it when we have no space left on the filesystem, write the
+  extra data into the last segment (leaving no clean ones), make it a
+  checkpoint and shut down the file system for fixing by a utility
+  reading the raw partition.  Argument is that this should never happen
+  and is practically impossible to fix since the cleaner would have to
+  theoretically build a model of the entire filesystem in memory to
+  detect the condition occurring.  A file coalescing cleaner will help
+  avoid the problem, and one that reads/writes from the raw disk could
+  fix it.
+
+- Need to keep vnode v_numoutput up to date for pending writes?
+
+- If delete a file that's being executed, the version number isn't
+  updated, and fsck_lfs has to figure this out; case is the same as if
+  have an inode that no directory references, so the file should be
+  reattached into lost+found.
+
+- Currently there's no notion of write error checking.
+  + Failed data/inode writes should be rescheduled (kernel level bad blocking).
+  + Failed superblock writes should cause selection of new superblock
+  for checkpointing.
+
+- Future fantasies:
+  - unrm, versioning
+  - transactions
+  - extended cleaner policies (hot/cold data, data placement)
+
+- Problem with the concept of multiple buffer headers referencing the segment:
+  Positives:
+    Don't lock down 1 segment per file system of physical memory.
+    Don't copy from buffers to segment memory.
+    Don't tie down the bus to transfer 1M.
+    Works on controllers supporting less than large transfers.
+    Disk can start writing immediately instead of waiting 1/2 rotation
+        and the full transfer.
+  Negatives:
+    Have to do segment write then segment summary write, since the latter
+    is what verifies that the segment is okay.  (Is there another way
+    to do this?)
+
+- The algorithm for selecting the disk addresses of the super-blocks
+  has to be available to the user program which checks the file system.

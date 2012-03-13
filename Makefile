@@ -37,6 +37,7 @@ mkfiles:
 includes:
 	$(MAKE) -C include includes
 	$(MAKE) -C lib includes NBSD_LIBC=yes
+	$(MAKE) -C sys includes
 
 MKHEADERSS=/usr/pkg/gcc*/libexec/gcc/*/*/install-tools/mkheaders
 gnu-includes: includes
@@ -50,6 +51,7 @@ commands: includes libraries
 	$(MAKE) -C bin all
 	$(MAKE) -C sbin all
 	$(MAKE) -C usr.bin all
+	$(MAKE) -C external all
 	$(MAKE) -C libexec all
 	$(MAKE) -C usr.sbin all
 
@@ -59,6 +61,7 @@ dep-all:
 	$(MAKE) -C bin dependall
 	$(MAKE) -C sbin dependall
 	$(MAKE) -C usr.bin dependall
+	$(MAKE) -C external dependall
 	$(MAKE) -C libexec dependall
 	$(MAKE) -C usr.sbin dependall
 	$(MAKE) -C kernel dependall
@@ -77,6 +80,7 @@ all:
 	$(MAKE) -C bin all
 	$(MAKE) -C sbin all
 	$(MAKE) -C usr.bin all
+	$(MAKE) -C external all
 	$(MAKE) -C libexec all
 	$(MAKE) -C usr.sbin all
 	$(MAKE) -C tools all
@@ -89,6 +93,7 @@ install:
 	$(MAKE) -C bin install
 	$(MAKE) -C sbin install
 	$(MAKE) -C usr.bin install
+	$(MAKE) -C external install
 	$(MAKE) -C usr.sbin install
 	$(MAKE) -C servers install
 	$(MAKE) -C share install
@@ -100,6 +105,7 @@ clean: mkfiles
 	$(MAKE) -C bin clean
 	$(MAKE) -C sbin clean
 	$(MAKE) -C usr.bin clean
+	$(MAKE) -C external clean
 	$(MAKE) -C libexec clean
 	$(MAKE) -C usr.sbin clean
 	$(MAKE) -C share clean
@@ -114,6 +120,7 @@ cleandepend: mkfiles
 	$(MAKE) -C bin cleandepend
 	$(MAKE) -C sbin cleandepend
 	$(MAKE) -C usr.bin cleandepend
+	$(MAKE) -C external cleandepend
 	$(MAKE) -C libexec cleandepend
 	$(MAKE) -C usr.sbin cleandepend
 	$(MAKE) -C tools cleandepend

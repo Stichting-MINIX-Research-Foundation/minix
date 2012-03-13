@@ -1,0 +1,169 @@
+#   $NetBSD: CHANGES,v 1.5 2005/12/11 12:25:26 christos Exp $
+
+kernel:
+
+- Instead of blindly continuing when it encounters an Inode that is
+  locked by another process, lfs_markv will process the rest of the
+  inodes passed to it and then return EAGAIN.  The cleaner will
+  recognize this and not mark the segment clean.  When the cleaner runs
+  again, the segment containg the (formerly) locked inode will sort high
+  for cleaning, since it is now almost entirely empty.
+
+- A beginning has been made to test keeping atime information in the
+  Ifile, instead of on the inodes.  This should make read-mostly
+  filesystems significantly faster, since the inodes will then remain
+  close to the data blocks on disk; but of course the ifile will be
+  somewhat larger.  This code is not enabled, as it makes the format of
+  IFILEs change.
+
+- The superblock has been broken into two components: an on-disk
+  superblock using fixed-size types, exactly 512 bytes regardless of
+  architecture (or could be enlarged in multiples of the media block
+  size up to LFS_SBPAD); and an in-memory superblock containing the
+  information only useful to a running LFS, including segment pointers,
+  etc.  The superblock checksumming code has been modified to make
+  future changes to the superblock format easier.
+
+- Because of the way that lfs_writeseg works, buffers are freed before
+  they are really written to disk: their contents are copied into large
+  buffers which are written async.  Because the buffer cache does not
+  serve to throttle these writes, and malloced memory is used to hold them,
+  there is a danger of running out of kmem_map.  To avoid this, a new
+  compile-time parameter, LFS_THROTTLE, is used as an upper bound for the
+  number of partial-segments allowed to be in progress writing at any
+  given time.
+
+- If the system crashes between the point that a checkpoint is scheduled
+  for writing and the time that the write completes, the filesystem
+  could be left in an inconsistent state (no valid checkpoints on
+  disk).  To avoid this, we toggle between the first two superblocks
+  when checkpointing, and (if it is indicated that no roll-forward agent
+  exists) do not allow one checkpoint to occur before the last one has
+  completed.  When the filesystem is mounted, it uses the *older* of the
+  first two superblocks.
+
+- DIROPs:
+
+  The design of the LFS includes segregating vnodes used in directory
+  operations, so that they can be written at the same time during a
+  checkpoint, avoiding filesystem inconsistency after a crash.  Code for
+  this was partially written for BSD4.4, but was not complete or enabled.
+
+  In particular, vnodes marked VDIROP could be flushed by getnewvnode at
+  any time, negating the usefulness of marking a vnode VDIROP, since if
+  the filesystem then crashed it would be inconsistent.  Now, when a
+  vnode is first marked VDIROP it is also referenced.  To avoid running
+  out of vnodes, an attempt to mark more than LFS_MAXDIROP vnodes wth
+  VDIROP will sleep, and trigger a partial-segment write when no dirops
+  are active.
+
+- LFS maintains a linked list of free inode numbers in the Ifile;
+  accesses to this list are now protected by a simple lock.
+
+- lfs_vfree is not allowed to run while an inode has blocks scheduled
+  for writing, since that could trigger a miscounting in lfs_truncate.
+
+- lfs_balloc now correctly extends fragments, if a block is written
+  beyond the current end-of-file.
+
+- Blocks which have already been gathered into a partial-segment are not
+  allowed to be extended, since if they were, any blocks following them
+  would either be written in the wrong place, or overwrite other blocks.
+
+- The LFS buffer-header accounting, which triggers a partial-segment
+  write if too many buffer-headers are in use by the LFS subystem, has
+  been expanded to include *bytes* used in LFS buffers as well.
+
+- Reads of the Ifile, which almost always come from the cleaner, can no
+  longer trigger a partial-segment write, since this could cause a
+  deadlock.
+
+- Support has been added (but not tested, and currently disabled by
+  default) for true read-only filesystems.  Currently, if a filesystem
+  is mounted read-only the cleaner can still operate on it, but this
+  obviously would not be true for read-only media.  (I think the
+  original plan was for the roll-forward agent to operate using this
+  "feature"?)
+
+- If a fake buffer is created by lfs_markv and another process draws the
+  same block in and changes it, the fake buffer is now discarded and
+  replaced by the "real" buffer containing the new data.
+
+- An inode which has blocks gathered no longer has IN_MODIFIED set, but
+  still does in fact have dirty blocks attached.  lfs_update will now
+  wait for such an inode's writes to complete before it runs,
+  suppressing a panic in vinvalbuf.
+
+- Many filesystem operations now update the Ifile's mtime, allowing the
+  cleaner to detect when the filesystem is idle, and clean more
+  vigorously during such times (cf. Blackwell et al., 1995).
+
+- When writing a partial-segment, make sure that the current segment is
+  still marked ACTIVE afterward (otherwise the cleaner might try to
+  clean it, since it might well be mostly empty).
+
+- Don't trust the cleaner so much.  Sort the blocks during gathering,
+  even if they came from the cleaner; verify the location of on-disk
+  inodes, even if the cleaner says it knows where they came from.
+
+- The cleaning code (lfs_markv in particular) has been entirely
+  rewritten, and the partial-segment writing code changed to match.
+  Lfs_markv no longer uses its own implementation of lfs_segwrite, but
+  marks inodes with IN_CLEANING to differentiate them from the
+  non-cleaning inodes.  This change fixes numerous problems with the old
+  cleaner, including a buffer overrun, and lost extensions in active
+  fragments.  lfs_bmapv looks up and returns the addresses of inode
+  blocks, so the cleaner can do something intelligent with them.
+
+  If IN_CLEANING is set on an inode during partial-segment write, only fake
+  buffers will be written, and IN_MODIFIED will not be cleared, saving
+  us from a panic in vinvalbuf.  The addition of IN_CLEANING also allows
+  dirops to be active while cleaning is in progress; since otherwise
+  buffers engaged in active dirops might be written ahead of schedule,
+  and cause an inconsistent checkpoint to be written to disk.
+
+  (XXX - even now, DIROP blocks can sometimes be written to disk, if we
+  are cleaning the same blocks as are active?  Grr, I don't see a good
+  solution for this!)
+
+- Added sysctl entries for LFS.  In particular, `writeindir' controls
+  whether indirect blocks are written during non-checkpoint writes.
+  (Since there is no roll-forward agent as yet, there is no penalty in
+  not writing indirect blocks.)
+
+- Wake up the cleaner at fs-unmount time, so it can die (if we unmount
+  and then remount, we could conceivably get more than one cleaner
+  operating at once).
+
+newfs_lfs:
+
+- The ifile inode is now created with the schg flag set, since nothing
+  ever modifies it.  This could be a pain for the roll-forward agent,
+  but since that should really run *before* the filesystem is mounted,
+  I don't care.
+
+- For large disks, it may be necessary to write one or more indirect
+  blocks when the ifile inode is created.  Newlfs has been changed to
+  write the first indirect block, if necessary.  It should instead just
+  build a set of inodes and blocks, and then use the partial-segment
+  writing routine mentioned above to write an ifile of whatever size is
+  desired.
+
+lfs_cleanerd:
+
+- Now writes information to the syslog.
+
+- Can now deal properly with fragments.
+
+- Sometimes, the cleaner can die.  (Why?)  If this happens and we don't
+  notice, we're screwed, since the fs will overfill.  So, the invoked
+  cleaner now spawns itself repeatedly, a la init(8), to ensure that a
+  cleaner is always present to clean the fs.
+
+- Added a flag to clean more actively, not on low load average but
+  filesystem inactivity; a la Blackwell et al., 1995.
+
+fsck_lfs:
+
+- Exists, although it currently cannot actually fix anything (it is a
+  diagnostic tool only at this point).
