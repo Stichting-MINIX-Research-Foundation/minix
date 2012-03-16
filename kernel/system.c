@@ -42,7 +42,6 @@
 #include <assert.h>
 #include <signal.h>
 #include <unistd.h>
-#include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
 

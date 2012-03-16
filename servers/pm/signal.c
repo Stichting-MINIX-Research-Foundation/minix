@@ -28,7 +28,6 @@
 #include <minix/vm.h>
 #include <signal.h>
 #include <sys/resource.h>
-#include <sys/sigcontext.h>
 #include <string.h>
 #include "mproc.h"
 #include "param.h"

@@ -1,6 +1,5 @@
 MAN=	ash.1 at.1 banner.1 basename.1 \
-	bsfilt.1 cal.1 \
-	calendar.1 cawf.1 chgrp.1 \
+	bsfilt.1 cal.1 cawf.1 chgrp.1 \
 	chmod.1 cksum.1 clear.1 cmp.1 comm.1 compress.1 \
 	cp.1 crc.1 crontab.1 ctags.1 dd.1 dev2name.1 \
 	df.1 dhrystone.1 dosdir.1 dosread.1 doswrite.1 \
@@ -9,10 +8,10 @@ MAN=	ash.1 at.1 banner.1 basename.1 \
 	finger.1 flexdoc.1 fmt.1 fold.1 format.1 fortune.1 \
 	fsck.mfs.1 head.1 host.1 hostaddr.1 ifdef.1 \
 	install.1 isodir.1 isoinfo.1 isoread.1 join.1 kill.1 \
-	last.1 leave.1 loadfont.1 loadkeys.1 logger.1 login.1 \
+	last.1 loadfont.1 loadkeys.1 logger.1 login.1 \
 	look.1 lp.1 ls.1 lspci.1 mail.1  \
 	mesg.1 mixer.1 mkfs.1 \
-	mkproto.1 modem.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
+	mkproto.1 mount.1 mt.1 nice.1 nm.1 nohup.1 od.1 \
 	paste.1 ping.1 playwave.1 pr.1 prep.1 \
 	profile.1 ps.1 pwd.1 rcp.1 readall.1 recwave.1 \
 	ref.1 remsync.1 rget.1 rlogin.1 rsh.1 rz.1 \

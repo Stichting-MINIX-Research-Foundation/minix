@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/sigcontext.h>
 
 #define MAX_ERROR 4
 #include "common.c"

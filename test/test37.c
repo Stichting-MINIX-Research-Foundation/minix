@@ -2,9 +2,6 @@
 
 #include <sys/types.h>
 #include <sys/times.h>
-#ifdef _MINIX
-#include <sys/sigcontext.h>
-#endif
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>

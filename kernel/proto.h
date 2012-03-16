@@ -8,7 +8,6 @@
 
 #include <minix/safecopies.h>
 #include <machine/archtypes.h>
-#include <sys/sigcontext.h>
 #include <a.out.h>
 
 /* Struct declarations. */

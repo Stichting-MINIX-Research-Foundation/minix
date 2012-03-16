@@ -4,7 +4,7 @@
 
 SUBDIR=	add_route arp ash at awk \
 	backup badblocks banner basename \
-	btrace cal calendar \
+	btrace cal \
 	cawf cd  cdprobe checkhier cpp \
 	chmod chown chroot ci cksum cleantmp clear cmp co \
 	comm compress cp crc cron crontab cut \
@@ -14,16 +14,16 @@ SUBDIR=	add_route arp ash at awk \
 	find finger fingerd fix fold format fortune fsck.mfs \
 	ftp101 gcore gcov-pull getty grep head hexdump host \
 	hostaddr id ifconfig ifdef install \
-	intr ipcrm ipcs irdpd isoread join kill last leave \
+	intr ipcrm ipcs irdpd isoread join kill last \
 	less lex loadkeys loadramdisk logger login look lp \
 	lpd ls lspci mail make  MAKEDEV \
 	mdb  mesg mined mkfifo mkfs.mfs mknod \
-	mkproto modem mount mt netconf newroot nice acknm nohup \
+	mkproto mount mt netconf newroot nice acknm nohup \
 	nonamed od paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
 	profile progressbar proto pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
-	reboot remsync rev rget rlogin rlogind \
+	reboot remsync rev rget rlogin \
 	rotate rsh rshd sed service setup shar acksize \
 	sleep slip sort spell split srccrc \
 	stty su sum svclog swifi sync synctree sysenv \

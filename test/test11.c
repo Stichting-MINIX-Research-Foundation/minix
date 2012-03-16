@@ -132,37 +132,28 @@ void test11b()
 
 void test11c()
 {
-/* Test getlogin() and cuserid().  This test  MUST run setuid root. */
+/* Test getlogin().  This test  MUST run setuid root. */
 
   int n, etc_uid;
   uid_t ruid, euid;
-  char *lnamep, *cnamep, *p;
+  char *lnamep, *p;
 #define MAXLINELEN 200
-  char array[MAXLINELEN], save[L_cuserid], save2[L_cuserid];
+  char array[MAXLINELEN], save[L_cuserid];
   FILE *stream;
 
   subtest = 3;
   errno = -2000;		/* None of these calls set errno. */
-  array[0] = '@';
-  array[1] = '0';
   save[0] = '#';
   save[1] = '0';
   ruid = getuid();
   euid = geteuid();
   lnamep = getlogin();
   strcpy(save, lnamep);
-  cnamep = cuserid(array);
-  strcpy(save2, cnamep);
 
-  /* Because we are setuid root, cuser == array == 'root';  login != 'root' */
+  /* Because we are setuid, login != 'root' */
   if (euid != 0) e(1);
   if (ruid == 0) e(2);
-  if (strcmp(cnamep, "root") != 0) e(3);
-  if (strcmp(array, "root") != 0) e(4);
   if ( (n = strlen(save)) == 0) e(5);
-  if (strcmp(save, cnamep) == 0) e(6);		/* they must be different */
-  cnamep = cuserid(NULL);
-  if (strcmp(cnamep, save2) != 0) e(7);
 
   /* Check login against passwd file. First lookup login in /etc/passwd. */
   if (n == 0) return;		/* if login not found, don't look it up */

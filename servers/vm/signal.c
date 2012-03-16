@@ -14,7 +14,7 @@
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/bitmap.h>
-#include <sys/sigcontext.h>
+#include <sys/signal.h>
 
 #include <errno.h>
 #include <env.h>
