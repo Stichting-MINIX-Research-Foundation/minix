@@ -1,0 +1,36 @@
+.\"	$NetBSD: mdoc.template,v 1.7 2002/07/10 11:57:12 yamt Exp $
+.\"
+.\" Copyright notice
+.\"
+.\" The uncommented requests are required for all man pages.
+.\" The commented requests should be uncommented and used where appropriate.
+.Dd Month day, year
+.Dt DOCUMENT_TITLE SECTION [MACHINE]
+.Os
+.Sh NAME
+.\" The next request should be used for sections 2 and 3 only.
+.\" .Sh LIBRARY
+.Sh SYNOPSIS
+.Sh DESCRIPTION
+.\" This next request is for sections 1 and 8 exit statuses only.
+.\" .Sh EXIT STATUS
+.\" This next request is for sections 2 and 3 function return values only.
+.\" .Sh RETURN VALUES
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
+.\" .Sh EXAMPLES
+.\" This next request is for sections 1, 6, 7 & 8 only
+.\"     (command return values (to shell) and fprintf/stderr type diagnostics).
+.\" .Sh DIAGNOSTICS
+.\" The next request is for sections 2 and 3 error and signal handling only.
+.\" .Sh ERRORS
+.\" .Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.\" .Sh AUTHORS
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS

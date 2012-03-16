@@ -4,6 +4,7 @@
 # netbsdpath: path in BSD source tree (starting from src/)
 2011/12/25 06:09:09,sys/arch/i386/stand
 2012/02/10 16:16:12,share/zoneinfo
+2012/02/10 16:16:12,share/misc
 2011/05/26 00:00:00,external/public-domain/xz
 2011/09/30 01:32:21,usr.bin/gzip
 2011/08/27 12:55:09,bin/date

@@ -1,0 +1,89 @@
+# $NetBSD: na.postal,v 1.1 2003/03/26 15:57:54 tsarna Exp $
+#
+# North American postal region (State/Province/Territory/etc) codes.
+#
+# Two-Letter Region Code:State/Prov./Terr.:Abbrev.:2-Letter Country code
+#
+# From:	http://www.usps.com/ncsc/lookups/abbr_state.txt
+# 	http://www.itl.nist.gov/fipspubs/fip5-2.htm
+# 	http://www.oconus.com/ZipCodes.asp
+# 	http://www.infoplease.com/ipa/A0110468.html
+# 	http://www.canadapost.ca/personal/tools/pg/manual/b03-e.asp
+# 	http://www.psychology.uoguelph.ca/where/prov_abr.html
+#
+AA:Armed Forces Americas:AA:US
+AB:Alberta:Alta.:CA
+AE:Armed Forces Europe:AE:US
+AK:Alaska:Alaska:US
+AL:Alabama:Ala.:US
+AP:Armed Forces Pacific:AP:US
+AR:Arkansas:Ark.:US
+AS:American Samoa:American Samoa:US
+AZ:Arizona:Ariz.:US
+BC:British Columbia:B.C.:CA
+CA:California:Calif.:US
+CO:Colorado:Colo.:US
+CT:Connecticut:Conn.:US
+DC:District of Columbia:D.C.:US
+DE:Delaware:Del.:US
+FL:Florida:Fla.:US
+FM:Micronesia:Micronesia:FM
+GA:Georgia:Ga.:US
+GU:Guam:Guam:US
+HI:Hawaii:Hawaii:US
+IA:Iowa:Iowa:US
+ID:Idaho:Idaho:US
+IL:Illinois:Ill.:US
+IN:Indiana:Ind.:US
+KS:Kansas:Kans.:US
+KY:Kentucky:Ky.:US
+LA:Louisiana:La.:US
+MA:Massachusetts:Mass.:US
+MB:Manitoba:Man.:CA
+MD:Maryland:Md.:US
+ME:Maine:Maine:US
+MH:Marshall Islands:Marshall Isl.:MH
+MI:Michigan:Mich.:US
+MN:Minnesota:Minn.:US
+MO:Missouri:Mo.:US
+MP:Northern Mariana Islands:N. Mariana Isl.:MP
+MS:Mississippi:Miss.:US
+MT:Montana:Mont.:US
+NB:New Brunswick:N.B.:CA
+NC:North Carolina:N.C.:US
+ND:North Dakota:N.D.:US
+NE:Nebraska:Nebr.:US
+NF:Newfoundland:Nfld.:CA
+NH:New Hampshire:N.H.:US
+NJ:New Jersey:N.J.:US
+NM:New Mexico:N.M.:US
+NS:Nova Scotia:N.S.:CA
+NT:Northwest Territories:N.W.T.:CA
+NU:Nunavut:Nun.:CA
+NV:Nevada:Nev.:US
+NY:New York:N.Y.:US
+OH:Ohio:Ohio:US
+OK:Oklahoma:Okla.:US
+ON:Ontario:Ont.:CA
+OR:Oregon:Ore.:US
+PA:Pennsylvania:Pa.:US
+PE:Prince Edward Island:P.E.I.:CA
+PR:Puerto Rico:P.R.:US
+PW:Palau:Palau:PW
+QC:Quebec:Que.:CA
+RI:Rhode Island:R.I.:US
+SC:South Carolina:S.C.:US
+SD:South Dakota:S.D.:US
+SK:Saskatchewan:Sask.:CA
+TN:Tennessee:Tenn.:US
+TX:Texas:Tex.:US
+UM:Minor Outlying Islands:Minor Outlying Islands:US
+UT:Utah:Utah:US
+VA:Virginia:Va.:US
+VI:Virgin Islands:V.I.:US
+VT:Vermont:Vt.:US
+WA:Washington:Wash.:US
+WI:Wisconsin:Wis.:US
+WV:West Virginia:W.Va.:US
+WY:Wyoming:Wyo.:US
+YT:Yukon Territory:Y.T.:CA

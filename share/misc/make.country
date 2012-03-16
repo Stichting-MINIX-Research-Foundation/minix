@@ -1,0 +1,56 @@
+#!/bin/sh
+
+hdr() {
+echo '#' '$'NetBSD'$'
+cat << _EOF
+#
+# ISO 3166-1 Country Codes
+#
+# The format of an entry is:
+# <Name><TAB><Alpha-2-code><TAB><Alpha-3-code><TAB><Numeric-3-code><TAB><FIPS>
+#
+# Further information can be found at the ISO 3166 Maintenance Agency
+# (ISO 3166/MA) web site,
+# <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
+#
+# FIPS 10-4 codes compiled from several sources, including
+# http://www.statoids.com/wab.html
+#
+# ISO 3166-1 entities without exactly one corresponding FIPS code have a
+# blank entry in the column. FIPS 10-4 codes without a corresponding
+# ISO 3166-1 entity are excluded.
+#
+# This list is up-to-date as of $(date +%Y-%m-%d)
+#
+_EOF
+}
+
+I1=http://www.statoids.com/wab.html
+O1=/tmp/wab.$$
+I2=http://www.iso.org/iso/list-en1-semic-3.txt
+O2=/tmp/list.$$
+trap "rm -f wab.html list-en1-semic-3.txt $O1 $O2" 0 1 2 3 15
+ftp $I1
+ftp $I2
+
+grep '<tr class="[oe]">' wab.html |
+sed -e 's,<tr class="."><td>,,g' \
+    -e 's,\&nbsp;,,g' \
+    -e 's,<code>,,g' \
+    -e 's,</code>,,g' \
+    -e 's,<br>, ,g' \
+    -e 's,</td><td>,	,g' \
+    -e 's,Å,Aa,g' \
+    -e 's,ô,o,g' \
+    -e 's,</td></tr>,,g' |
+awk -F'\t' '{ printf("%s\t%s\t%s\t%s\t%s\n", $2, $3, $4, $6, $1); }' |
+grep -v href= |
+sort > $O1
+
+grep ';[A-Z][A-Z]' list-en1-semic-3.txt |
+tr -d '\015' |
+awk -F ';' '{ print $2 }' |
+sort > $O2
+
+hdr
+join -t '	' -o 1.5,1.1,1.2,1.3,1.4 -1 1 -2 1 $O1 $O2 | sort

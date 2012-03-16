@@ -1,0 +1,1283 @@
+$NetBSD: acronyms.comp,v 1.127 2011/08/29 16:28:38 jruoho Exp $
+
+3WHS	three-way handshake
+8VSB	8-state vestigial side band modulation
+AA	anti-aliasing
+AAA	authentication, authorization, accounting
+AAT	average access time
+ABI	application binary interface
+ABR	available bit rate
+AC	alternating current
+ACI	adjacent channel interferer
+ACID	atomicity, consistency, isolation, durability
+ACK	acknowledgement
+ACK	Amsterdam compiler kit
+ACL	access control list
+ACL	active current loop
+ACP	auxillary control {program, process}
+ACPI	advanced configuration and power interface
+ACS	access control set
+ACU	automatic calling unit
+ADB	Apple desktop bus
+ADC	analog [to] digital converter
+ADD	acronym driven development
+ADP	automatic data processing
+ADT	abstract data type
+ADO	active data objects
+ADP	automatic data processing
+ADPCM	adaptive differential pulse code modulation
+ADS	alternate data stream
+ADSL	asymmetric digital subscriber line
+AES	Advanced Encryption Standard
+AFS	Andrew File System
+AGC	automatic gain control
+AGP	accelerated graphics port
+AI	analog input
+AI	artificial intelligence
+AL	access list
+AL	active link
+ALE	address latch enable
+ALS	ambient light sensor
+ALU	arithmetic and logical unit
+AM	access method
+AM	amplitude modulation
+AM	alignment mask
+AMI	alternate mark inversion
+AMT	active management technology
+AN	Arabic number
+ANSI	American National Standards Institute
+AO	analog output
+AOL	alert on LAN
+AOS	add or subtract
+AP	access point
+AP	application processor
+API	application programming interface
+APIC	advanced programmable interrupt controller
+AQM	active queue management
+ARAT	always running APIC timer
+ARC	adaptive replacement cache
+ARM	Advanced RISC Machines
+ARP	address resolution protocol
+ARPA	Advanced Research Projects Agency
+ARQ	automatic repeat request
+ARR	address range register
+ARU	audio response unit
+AS	autonomous system
+ASC	advanced smart cache
+ASCII	American standard code for information interchange
+ASD	agile software development
+ASE	advanced software environment
+ASIC	application-specific integrated circuit
+ASK	amplitude shif keying
+ASLR	address space layout randomization
+ASPM	active state power management
+ASN	autonomous system number
+ASQ	automated software quality
+ASR	address space register
+AST	abstract syntax tree
+AST	asynchronous trap
+AT	access time
+AT	advanced technology
+ATA	advanced technology attachment
+ATAPI	advanced technology attachment packet interface
+ATC	address translation cache
+ATM	asynchronous transfer mode
+ATX	advanced technology extended
+AV	anti virus
+AVL	Adelson-Velsky-Landis
+AVX	advanced vector extensions
+AWK	Aho, Werner, and Kernighan
+BA	byte align
+BAL	basic assembly language
+BAR	base address register
+BBS	bulletin board system
+BCC	blind carbon copy
+BCD	binary coded decimal
+BCR	byte counte register
+BCS	base configuration space
+BD	baud
+BDD	binary decision diagram
+BDI	bit deinterleave
+BDUF	big design up front
+BEDO	burst extended data output
+BER	basic encoding rules
+BER	bit error {rate, ratio}
+BFD	binary {file, format} descriptor
+BFKL	big fscking kernel lock
+BFS	breadth-first search
+BFT	binary file transfer
+BGA	ball grid array
+BGP	border gateway protocol
+BIND	Berkeley Internet Name Daemon
+BIOS	basic input/output system
+BIST	built-in self-test
+BIU	bus interface unit
+BKDG	BIOS and kernel developer's guide
+BLAS	basic linear algebra subprograms
+BLOB	binary large object
+BLC	back light control
+BM	bus master
+BMC	baseboard management controller
+BMIC	bus master interface controller
+BN	boundary neutral
+BNF	Backus-Naur form
+BO	binary output
+BOF	beginning of file
+BOM	byte order mark
+BOM	beginning of message
+BP	base pointer
+BP	boot processor
+BPB	BIOS parameter block
+BPF	Berkeley packet filter
+BPI	bits per inch
+BPM	business process modelling
+BPS	bits per second
+BPSK	binary phase shift keying
+BQS	Berkeley quality software
+BRE	basic regular expression
+BS	binary sequence
+BSD	Berkeley software distribution
+BSF	bit scan forward
+BSOD	blue screen of death
+BSP	binary space partition
+BSP	bootstrap processor
+BSR	bit scan reverse
+BSS	block started by symbol
+BT	Bluetooth
+BT	BitTorrent
+BT	bit test
+BTC	bit test [and] complement
+BTR	bit test [and] reset
+BTS	bit test [and] set
+BTS	bits per second
+BW	bandwidth
+BWM	block-write mode
+CA	certificate authority
+CAD	computer-aided design
+CAM	computer assisted manufacturing
+CAM	content addressable memory
+CAM	conditional access module
+CARP	common address redundancy protocol
+CAS	(atomic) compare and swap
+CAS	computer algebra system
+CAS	column address strobe
+CASE	computer aided software engineering
+CAU	control access unit
+CAV	constant angular velocity (as opposed to CLV)
+CBC	cipher block chaining
+CBR	constant bit rate
+CCD	charge coupled device
+CCI	co-channel interferer
+CC	carbon coby
+CD	compact disc
+CD	cache disable
+CDDA	compact disc digital audio
+CDMA	code division multiple access
+CDRAM	cache dynamic random access memory
+CER	canonical encoding rules
+CF	compact flash
+CFG	context-free grammar
+CFG	control-flow graph
+CG	control gate
+CGA	color graphics {array,adapter}
+CGI	common gateway interface
+CHAP	challenge-handshake authentication protocol
+CHS	cylinder/head/sector
+CI	{common, component} interface
+CI	continuous integration
+CIDR	classless inter-domain routing
+CIFS	common internet file system
+CIL	common intermediate language
+CIR	carrier to interference ratio
+CIS	contact image sensor
+CJK	Chinese, Japanese, and Korean
+CLF	common log format
+CLI	command line interface
+CLR	common language runtime
+CLTT	closed loop thermal throttling
+CLUT	color look-up table
+CLV	constant linear velocity (as opposed to CAV)
+CM	configuration management
+CMA	concert multithread architecture
+CMI	control management interface
+CMI	control method interface
+CMOS	complementary metal-oxide-semiconductor
+CMP	chip multi-processing
+CMS	content management system
+CMYK	cyan magenta yellow black
+CN	{common, canonical} name
+CNC	computer numerical control
+CNR	carrier to noise ratio
+COF	current operating frequency
+COFDM	coded orthogonal frequency division multiplexing
+COFF	common object file format
+COM	component object model
+COMA	cache-only memory architecture
+CORBA	common object request broker architecture
+COW	copy-on-write
+CP	continuous pilot
+CPB	core performance boost
+CPE	common phase error
+CPG	clock pulse generator
+CPL	current privilege level
+CPLD	complex programmable logic device
+CPS	characters per second
+CPT	command pass through
+CPU	central processing unit
+CR	carriage return
+CRC	cyclic redundancy check
+CRL	carrier recovery loop
+CRLF	carriage return line feed
+CRT	cathode ray tube
+CS	computer science
+CS	cable select
+CS	chip select
+CS	code segment
+CSI	common system interface
+CSI	channel state information
+CSMA	carrier sense multiple access
+CSMA/CA	carrier sense multiple access with collision avoidance
+CSMA/CD	carrier sense multiple access with collision detection
+CSR	control [and] status registers
+CSS	cascading style sheets
+CSV	comma-separated values
+CTM	close to metal
+CTS	clear to send
+CUA	common user access
+CUT	coordinated universal time
+CV	control voltage
+CVS	concurrent versions system
+DA	destination address
+DAA	distributed application architecture
+DAB	digital audio broadcasting
+DAC	discretionary access control
+DAC	digital [to] analog converter
+DAO	disk at once
+DAP	directory access protocol
+DAT	digital audio tape
+DAT	dynamic acceleration technology
+DB	database
+DBA	dynamic bandwidth allocation
+DBB	data bus buffer
+DBC	design by contract
+DBL	dynamic buffer limiting
+DBMS	database management system
+DBS	database server
+DC	direct current
+DCC	direct client [to] client
+DCC	direct cable connect
+DCD	data carrier detect
+DCE	data control equipment
+DCE	distributed computing environment
+DCOM	distributed component object model
+DCOP	desktop communication protocol
+DCS	data collection systems
+DCT	discrete cosine transform
+DCU	data cache unit
+DDC	display data channel
+DDE	dynamic data exchange
+DDK	device driver kit
+DDL	data description language
+DDR	double data rate
+DDS	direct digital sound
+DDWG	digital display working group
+DE	desktop environment
+DE	debugging extensions
+DEA	data encryption algorithm
+DEK	data encryption key
+DEP	data execution prevention
+DER	distinguished encoding rules
+DES	Data Encryption Standard
+DF	don't fragment
+DFA	deterministic finite automaton
+DFC	data flow control
+DFS	depth first search
+DFS	distributed file system
+DFT	discrete Fourier transform
+DFT	diagnostic function test
+DGL	data generation language
+DH	Diffie-Hellman
+DHCP	dynamic host configuration protocol
+DIFS	distributed inter-frame space
+DIMM	dual inline memory module
+DIRT	design in real time
+DL	download
+DL	diode logic
+DLE	data link escape
+DLL	dynamic link library
+DMA	direct memory access
+DMI	desktop management interface
+DMS	document management system
+DMT	discrete multitone modulation
+DNARD	Digital network appliance reference design
+DNS	domain name system
+DOE	distributed object environment
+DOF	data over fibre
+DOM	document object model
+DOS	denial of service
+DOS	disk operating system
+DPC	deferred procedure call
+DPCM	differential pulse code modulation
+DPD	dead peer detection
+DPI	dots per inch
+DPI	deep packet inspection
+DPL	descriptor privilege level
+DPST	display power savings technology
+DRAM	dynamic random access memory
+DRI	direct rendering infrastructure
+DRM	digital rights management
+DRRS	display refresh rate switching
+DS	debug store
+DSB	double-sideband modulation
+DSDT	differentiated system descriptor table
+DSL	digital subscriber line
+DSL	domain specific language
+DSLAM	digital subscriber line access multiplexer
+DSN	delivery status notification
+DSO	dynamic shared object
+DSP	digital signal processor
+DSSS	direct sequence spread spectrum
+DTD	document type definition
+DTE	data terminal equipment
+DTE	dumb terminal emulator
+DTL	diode-transistor logic
+DTS	digital thermal sensor
+DUT	device under test
+DVB	digital video broadcasting
+DVCS	distributed version control system
+DVD	digital versatile disc
+DVFS	dynamic voltage and frequency scaling
+DVR	digital video recorder
+DVI	digital visual interface
+E-XER	extended XML encoding rules
+EABI	embedded-application binary interface
+EAP	extensible authentication protocol
+EBR	extended boot record
+ECC	error correction code
+ECL	emitter-coupled logic
+ECN	explicit congestion notification
+ECP	enhanced capability port
+ECS	enhanced chip set
+ECS	extended configuration space
+EDAT	enhanced dynamic acceleration technology
+EDGE	explicit data graph execution
+EDID	extended display identification data
+EDO	extended data out
+EDS	electronical data sheet
+EEPROM	electrically erasable programmable read only memory
+EFI	extensible firmware interface
+EFL	emitter follower logic
+EFM	eight to fourteen modulation
+EGA	enhanced graphics {array,adapter}
+EGP	exterior gateway protocol
+EH	extension header
+EIDE	enchanced IDE
+EISA	extended industry standard architecture
+ELF	executable and linking format
+ELS	entry level system
+EMI	electro-magnetic interference
+EMP	electro-magnetic pulse
+EMR	electro-magnetic radiation
+EOF	end of file
+EOI	end of interrupt
+EOL	end of line
+EOL	end of life
+EOT	end of transmission
+EPIC	explicitly parallel instruction computing
+EPP	enhanced parallel port
+EPRML	extended partial response, maximum likelihood
+EPROM	erasable programmable read only memory
+ERD	emergency recovery disk
+ERE	extended regular expression
+ESDRAM	enhanced synchronous dynamic random access memory
+ESS	electronic switching system
+EST	enhanced speedstep
+ETL	extract, transform, load
+EU	execution unit
+EULA	end user license agreement
+FAT	file allocation table
+FBRAM	frame buffer random access memory
+FCL	fiber channel loop
+FCFS	first come, first served
+FCS	frame check sequence
+FDC	floppy disk controller
+FDD	floppy disk drive
+FDDI	fiber distributed data interface
+FDE	full disk encryption
+FEA	finite element analysis
+FEC	forward error correction
+FET	field-effect transistor
+FFH	functional fixed hardware
+FFI	foreign function interface
+FFM	focus follows mouse
+FFS	fast file system
+FFS	find first set
+FFT	fast Fourier transform
+FG	floating gate
+FHSS	frequency hop spread spectrum
+FID	frequency identifier
+FIFO	first in, first out
+FILO	first in, last out
+FIR	fast infrared
+FLOPS	floating [point] operations per second
+FLOSS	free / libre / open source software
+FM	frequency modulation
+FMR	false match rate
+FOSS	free / open source software
+FPGA	field programmable gate array
+FPM	fast page mode
+FPR	floating point register
+FPU	floating point unit
+FQDN	fully qualified domain name
+FRR	false rejection rate
+FRU	field replaceable unit
+FS	file system
+FSB	front side bus
+FSCK	file system check
+FSK	frequency shift keying
+FSM	finite-state machine
+FTA	fault tree analysis
+FTP	file transfer protocol
+FTPS	file transfer protocol, secure
+FUS	fast user switching
+FWH	firmware hub
+FWS	folding white space
+GAL	generic array logic
+GAS	generic address structure
+GC	garbage collector
+GCR	group-coded recording
+GDT	global descriptor table
+GEM	graphics execution manager
+GEM	graphics environment manager
+GENA	general event notification architecture
+GHC	Glasgow Haskell compiler
+GID	group identifier
+GIF	graphics interchange format
+GMCH	graphics and memory controller hub
+GNU	GNU's not Unix
+GOT	global offset table
+GPE	general purpose event
+GPF	general protection fault
+GPL	GNU/general public license
+GPR	general purpose register
+GPS	generalized processor sharing
+GPT	GUID partition table
+GPU	graphics processing unit
+GR	golden ratio
+GRE	generic routing encapsulation
+GSI	global system interrupt
+GUI	graphics user interface
+GUID	globally unique identifier
+HA	high availability
+HAL	hardware abstraction layer
+HAT	hashed array tree
+HBA	host bus adapter
+HCI	host controller interface
+HCI	human-computer interaction
+HCL	hardware compatibility list
+HCF	halt and catch fire
+HDD	hard disk drive
+HDCP	high-bandwidth digital content protection
+HDL	hardware description language
+HDTV	high-definition television
+HF	high frequency
+HFM	highest frequency mode
+HID	human interface device
+HLL	high-level language
+HMA	high memory area
+HMI	human-machine interface
+HP	Hewlett-Packard
+HOOD	hierarchical object oriented design
+HPC	high performance computing
+HPET	high precision event timer
+HT	hyper-threading
+HTC	hardware thermal control
+HTCC	high temperature co-fired ceramic
+HTML	hyper-text markup language
+HTT	hyper-threading technology
+HTTP	hyper-text transfer protocol
+HTTPS	hyper-text transfer protocol, secure
+HVM	hardware virtual machine
+HZ	Hertz
+I2O	intelligent input/output
+IA	information assurance
+IANA	Internet assigned numbers authority
+IBC	iterated block cipher
+IBM	International Business Machines
+IBS	instruction based sampling
+ICA	independent computer architecture
+IC	integrated circuit
+ICB	Internet citizen's band
+ICE	in-circuit emulator
+ICH	I/O controller hub
+ICE	internal compiler error
+ICE	in-circuit emulator
+ICMP	Internet control message protocol
+ICT	information and communications technology
+ICW	initialization command word
+IDA	Intel dynamic acceleration
+IDE	integrated drive electronics
+IDE	integrated development environment
+IDPS	intrusion detection [and] prevention system
+IDRP	inter-domain routing protocol
+IDS	intrusion detection system
+IDT	interrupt descriptor table
+IE	Internet Explorer
+IEC	international electrotechnical commission
+IEEE	Institute [of] Electrical [and] Electronics Engineers
+IESG	Internet Engineering Steering Group
+IETF	Internet Engineering Task Force
+IF	intermediate frequency
+IFCM	isochronous flow control mode
+IGD	Internet gateway device
+IGMP	Internet group management protocol
+IGP	interior gateway protocol
+IHV	independent hardware vendor
+IKE	Internet key exchange
+ILM	internal loopback mode
+ILP	instruction level parallelism
+IM	instant messaging
+IMC	integrated memory controller
+IMCR	interrupt mode configuration register
+IMAP	Internet mail access protocol
+IMR	interrupt mask register
+IMS	information management system
+INCITS	international committee on information technology standards
+IO	input/output
+IOCTL	input/output control
+IOMMU	input/output memory management unit
+IP	Internet Protocol
+IP	intellectual property
+IPC	interprocess communication
+IPE	integrated programming environment
+IPI	interprocessor interrupt
+IPNG	Internet protocol, next generation
+IPS	intrusion prevention system
+IPS	in-plane switching
+IPSEC	Internet protocol security
+IRC	Internet relay chat
+IRDA	infrared data association
+IRQ	interrupt request
+IRQL	interrupt request level
+IRR	interrupt request register
+IRTF	Internet research task force
+IS	information system
+ISA	industry standard architecture
+ISA	instruction set architecture
+ISDN	integrated services digital network
+ISI	inter-symbol interference
+ISM	industrial, scientific and medical
+ISN	initial serial number
+ISO	international standards organization
+ISOC	Internet society
+ISP	Internet service provider
+ISR	interrupt service routine
+ISR	in-service register
+IST	interrupt stack table
+ISV	independent software vendor
+IT	information technology
+ITB	Intel turbo boost
+IV	initialization vector
+IVT	interrupt vector table
+JBOD	just a bunch of disks
+JFET	junction [gate] field-effect transistor
+JIT	just in time
+JPEG	joint photographic experts group
+JRE	Java runtime environment
+JTAG	joint test action group
+KB	keyboard
+KB	kilobyte
+KBD	keyboard
+KBD	kilobaud
+KLOC	thousand lines of code
+KMS	kernel-mode setting
+KPI	kernel programming interface
+KVA	kernel virtual address
+KVM	kernel virtual memory
+KVM	keyboard, video, mouse switch
+LAMP	Linux Apache MySQL {Perl,PHP,Python}
+LAN	local area network
+LAPIC	local advanced programmable interrupt controller
+LAR	load access rights
+LBA	logical block addressing
+LBS	location-based service
+LCD	liquid crystal display
+LCP	link control protocol
+LDA	local delivery agent
+LDAP	lightweight directory access protocol
+LDR	light-dependent resistor
+LDT	local descriptor table
+LE	logical extent
+LED	light emitting diode
+LER	label edge router
+LF	line feed
+LF	low frequency
+LFM	lowest frequency mode
+LFN	long file names
+LFO	low-frequency oscillation
+LFS	log-structured file system
+LFU	least frequently used
+LHP	loop heat pipe
+LIFO	last in, first out
+LILO	last in, last out
+LILO	Linux loader
+LINT	local interrupt
+LIR	local Internet registry
+LKM	{Linux, loadable} kernel module
+LKML	Linux kernel mailing list
+LL	load linked
+LL/SC	load linked / store conditional
+LLC	logical link control
+LLF	low level format
+LLMNR	link-local multicast name resolution
+LLVM	Low Level Virtual Machine
+LM	long mode
+LMM	link management mode
+LNO	loop nest optimization
+LOC	lines of code
+LPC	low pin count
+LPS	local positioning system
+LRC	longitudinal redundancy check
+LRM	left-to-right mark
+LRO	left-to-right override
+LRU	least recently used
+LSB	least significant bit [or: byte]
+LSB	Linux standards base
+LSI	large scale integration
+LSL	load segment limit
+LSR	label switch router
+LTCC	low temperature co-fired ceramic
+LTR	left to right
+LTR	load task register
+LUN	logical unit number
+LV	logical volume
+LVM	logical volume management
+LVT	local vector table
+LWP	light-weight process
+LZW	Lempel Ziv Welch
+MAC	medium access control
+MAC	mandatory access control
+MADT	multiple APIC descriptor table
+MB	megabyte
+MBR	master boot record
+MBS	megabits per second
+MC	memory controller
+MCA	machine check architecture
+MCC	multiversion concurrency control
+MCE	machine check exception
+MCGA	multicolor graphics adapter
+MCH	memory controller hub
+MCM	multi-chip module
+MCQ	memory controlled queue
+MD	machine-dependent
+MDA	mail delivery agent
+MDA	monochrome display adapter
+MDRAM	multibank dynamic random access memory
+MESI	modified, exclusive, shared, invalid
+MFC	merge from current
+MFM	modified frequency modulation
+MI	machine-independent
+MIB	management information base
+MID	mobile internet device
+MIDI	musical instrument digital interface
+MIF	management information format
+MIMD	multiple instruction stream, multiple data stream
+MIME	multipurpose Internet mail extensions
+MIMO	multiple input multiple output
+MIPS	million instructions per second
+MISD	multiple instruction, single data
+MIT	Massachusetts Institute of Technology
+ML	mailing list
+ML	machine language
+ML	machine learning
+ML	markup language
+ML	maximum likelihood
+MLC	multi-level cell
+MLHP	micro loop heat pipe
+MMIC	monolithic microwave integrated circuit
+MMIO	memory mapped input/output
+MMU	memory management unit
+MMX	multimedia extension
+MMX	multiple math extension
+MMX	matrix math extension
+MO	magneto-optical
+MOESI	modified, owned, exclusive, shared, invalid
+MOF	maximum operating frequency
+MOSFET	metal-oxide-semiconductor field-effect transistor
+MOSI	modified, owned, shared, invalid
+MP	multiprocessor
+MP	multiprocessing
+MP	multi-platform
+MP	multiplayer
+MPEG	moving picture experts group
+MPI	message passing interface
+MPLS	multiprotocol label switching
+MPP	massively parallel processor
+MPS	multiprocessor specification
+MPS	memory pool system
+MR	modem ready
+MRU	most recently used
+MS	Microsoft
+MSB	most significant bit [or: byte]
+MSE	mean square error
+MSF	minutes seconds frames
+MSI	message signaled interrupt
+MSI	modified, shared, invalid
+MSR	machine state register
+MSS	maximum segment size
+MT	machine translation
+MTA	mail transfer agent
+MTBF	mean time between failures
+MTRR	memory type range register
+MTTF	mean time to failure
+MTU	maximum transmission unit
+MUA	mail user agent
+MUD	multi-user domain
+MVCC	multiversion concurrency control
+MWE	module width encoding
+MX	mail exchange
+NACK	negative acknowledgement
+NAN	not a number
+NAS	network attached storage
+NAT	network address translation
+NAV	network allocation vector
+NC	numerical control
+NCO	numerically-controlled oscillator
+NCP	network control protocol
+NCQ	native command queuing
+ND	neighbor discovery
+NE	numeric error
+NFA	nondeterministic finite automaton
+NFS	network file system
+NIA	next instruction address
+NIC	network interface card
+NIP	network interface protocol
+NIS	network information service
+NLS	native language support
+NMI	non-maskable interrupt
+NNTP	network news transfer protocol
+NOP	no operation
+NP	nondeterministic polynomial time
+NRZ	non-return to zero
+NSA	National Security Agency
+NTM	non-deterministic Turing machine
+NTP	network time protocol
+NUMA	non-uniform memory access
+NVRAM	non-volatile random access memory
+NW	not write-through
+NX	no execute
+OAEP	optimal asymmetric encryption padding
+OBO	off by one
+OBOE	off by one error
+OCL	object constraint language
+OCR	optical character recognition
+ODCM	on-demand clock modulation
+ODT	on-die termination
+OEM	original equipment manufacturer
+OFDM	orthogonal frequency division multiplexing
+OFET	organic field-effect transistor
+OLE	object linking and embedding
+ONFI	open nand flash interface
+OO	object oriented
+OO	OpenOffice
+OOB	out of band
+OOE	out of order execution
+OOM	out of memory
+OOP	object oriented programming
+OOSE	object oriented software engineering
+OPS	operations per second
+OPM	operations per minute
+OQL	object query language
+ORM	object-relational mapping
+OS	operating system
+OSD	open source definition
+OSF	open software foundation
+OSI	open systems interconnection
+OSI	open-source initiative
+OSPF	open shortest path first
+OSPM	OS power management
+OSS	open source software
+OSS	open sound system
+OSVW	operating system visible workarounds
+OTP	one time password
+OU	organizational unit
+OUI	organizationally unique identifier
+OWL	Web ontology language
+P2P	peer to peer
+P2P	PCI to PCI
+PA	physical address
+PA	phase accumulator
+PAC	phase-amplitude converter
+PAE	physical address extension
+PAL	programmable array logic
+PAL	phase alternating line
+PAM	pluggable authentication modules
+PAM	pulse amplitude modulation
+PAP	password authentication protocol
+PAT	page attribute table
+PAT	port address translation
+PATA	parallel ATA
+PAX	portable archive exchange
+PBE	pending break encoding
+PBE	programming by example
+PC	personal computer
+PC	program counter
+PCB	printed circuit board
+PCC	Portable C Compiler
+PCD	page-level cache disable
+PCE	performance-monitor counter enable
+PCI	peripheral component interconnect
+PCM	phase change memory
+PCM	pulse code modulation
+PCMCIA	personal computer memory card international association
+PD	public domain
+PDA	personal digital assistant
+PDA	pushdown automaton
+PDAG	propositional directed acyclic graph
+PDB	power distribution board
+PDF	portable document format
+PDM	pulse-duration modulation
+PDN	pull-down network
+PDP	page descriptor page
+PDS	product data sheet
+PDU	protocol data unit
+PE	protection enable
+PECI	platform environment control interface
+PEP	protocol extension protocol
+PER	packed encoding rules
+PERL	practical extraction [and] report language
+PFS	perfect forward secrecy
+PGAS	partitioned global address space
+PGE	page global enable
+PGP	pretty good privacy
+PHB	PCI host bridge
+PIC	programmable interrupt controller
+PIC	position independent code
+PID	process id
+PIE	position independent executable
+PIM	personal information manager
+PIM	platform-independent model
+PIN	personal identification number
+PIO	programmed input/output
+PIPT	physically indexed, physically tagged
+PIQ	prefetch input queue
+PIT	programmable interrupt timer
+PIV	personal identity verification
+PKI	public key infrastructure
+PKCS	public-key cryptography standards
+PLC	programmable logic controller
+PLD	programmable logic device
+PLL	phase locked loop
+PLRU	pseudo LRU
+PLTM	package level thermal management
+PM	power management
+PM	{phase, pulse} modulation
+PME	power management event
+PMI	platform management interrupt
+PMIO	port-mapped input/output
+PMT	photo-multiplier tube
+PMU	power management unit
+PNG	portable network graphics
+PNP	plug and play
+POE	power over ethernet
+POF	probability of failure
+POP	post office protocol
+POP	power on password
+POSIX	portable operating system interface [for] Unix
+POST	power on self test
+POTS	plain old telephone system
+PP	pair programming
+PPC	PowerPC
+PPB	PCI [to] PCI bridge
+PPI	pixels per inch
+PPM	pages per minute
+PPP	point-to-point protocol
+PPPOA	point-to-point protocol over ATM
+PPPOE	point-to-point protocol over ethernet
+PPU	physics processing unit
+PRBS	pseudo-random bit sequence
+PRML	partial response, maximum likelihood
+PRN	pseudo random {number, noise}
+PRNG	pseudo random number generator
+PROM	programmable read only memory
+PSD	power spectral density
+PSE	page size extensions
+PSK	pre-shared key
+PSK	phase shift keying
+PSTN	public switched telephone network
+PSW	program status word
+PTE	page table entry
+PTLA	pseudo top level aggregator
+PTP	page table page
+PTV	perceived target value
+PU	processing unit
+PUN	physical unit number
+PV	physical volume
+PVG	physical volume group
+PVI	protected-mode virtual interrupt
+PWM	pulse width modulation
+PXE	preboot execution environment
+QA	quality assurance
+QAM	quality assurance management
+QAM	quadrature amplitude modulation
+QBE	query by example
+QC	quality control
+QDI	quasi delay insensitive
+QOS	quality of service
+RA	receiver address
+RA	remote assistance
+RA	router advertisement
+RA	resource affinity
+RAD	rapid application development
+RAID	redundant array of inexpensive disks
+RAM	random access memory
+RAS	restartable atomic sequence
+RAS	remote access service
+RAS	row address strobe
+RBF	radial basis function
+RBT	red-black tree
+RC	release candidate
+RC	remote control
+RCS	revision control system
+RCU	read, copy, update
+RDF	resource description format
+RDM	relational data model
+RDMA	remote direct memory access
+RE	regular expression
+REST	representational state transfer
+RF	radio frequency
+RFI	radio frequency interference
+RFO	request for ownership
+RGB	red green blue
+RH	read hit
+RHL	Red Hat Linux
+RIB	routing information base
+RIFF	Resource Interchange File Format
+RIP	routing information protocol
+RIR	regional Internet registry
+RISC	reduced instruction set computing
+RKM	ROM Kernel Manual
+RLE	run length encoding
+RLL	run length limited
+RLO	right-to-left override
+RM	read miss
+RMI	remote method invocation
+RMPM	rapid memory power management
+RMS	root mean square
+RMW	read, modify, write
+RNG	random number generator
+ROM	read only memory
+RPC	remote procedure call
+RPL	requested privilege level
+RPM	revolutions per minute
+RR	round robin
+RR	random replacement
+RS	relay station
+RSA	Rivest, Shamir and Adleman
+RSS	really simple syndication
+RSS	residual sum of squares
+RT	real time
+RTC	real time clock
+RTC	real time computing
+RTF	rich text format
+RTL	resistor-transistor logic
+RTOS	real time operating system
+RTS	{ready, request} to send
+RTT	round time trip
+RUP	rational unified process
+RWM	read-write memory
+RX	receive, receiver
+S/PDIF	Sony/Phillips digital interface
+SA	security advisory
+SA	security association
+SA	source address
+SA	structured analysis
+SAAS	software as a service
+SACD	super audio compact disc
+SAD	security association database
+SAL	system abstraction layer
+SAM	serial access memory
+SAM	sum addressed memory
+SAN	storage area network
+SAPIC	streamlined advanced programmable interrupt controller
+SASD	structured analysis, structured design
+SASI	shugart associates system interface (predecessor to SCSI)
+SASL	simple authentication [and] security layer
+SATA	serial advanced technology attachment
+SB	sound blaster
+SBU	standard build unit
+SC	store conditional
+SCA	source code analyzer
+SCADA	supervisory control and data acquisition
+SCC	single chip cloud
+SCC	source code control
+SCCS	source code control system
+SCM	software configuration management
+SCM	source code management
+SCP	secure copy
+SCI	system control interrupt
+SCI	scalable coherent interface
+SCSI	small computer system interface
+SCTP	stream control transmission protocol
+SDI	symbol deinterleave
+SDK	software development kit
+SDL	simple declarative language
+SDRAM	synchronous dynamic random access memory
+SDT	syntax-directed translation
+SEGV	segmentation violation
+SFI	simple firmware interface
+SFC	sequential function chart
+SGRAM	synchronous graphics random access memory
+SIFS	short inter-frame space
+SIMD	single instruction, multiple data
+SIMM	single inline memory module
+SIP	session initiation protocol
+SIR	slow infrared
+SISD	single instruction, single data
+SLC	single-level cell
+SLDRAM	synchronous-link dynamic random access memory
+SLI	scalable link interface
+SLI	scan-line interleave
+SLOC	source lines of code
+SLRU	segmented LRU
+SMA	smart memory access
+SMAF	system management action field
+SMART	self-monitoring analysis and reporting technology
+SMBIOS	system management BIOS
+SMC	system management controller
+SMI	system management interrupt
+SMI	structure of management information
+SMM	system management mode
+SMP	symmetric multiprocessing
+SMT	simultaneous multithreading
+SMTP	simple mail transfer protocol
+SMU	system management unit
+SNMP	simple network management protocol
+SNR	signal [to] noise ratio
+SOA	service oriented architecture
+SOAP	simple object access protocol
+SOC	system on chip
+SOF	start of frame
+SOHO	small office / home office
+SOL	serial over LAN
+SP	stack pointer
+SP	service pack
+SPARC	scalable processor architecture
+SPARQL	SPARQL protocol and RDF query language
+SPD	security policy database
+SPD	serial presence detect
+SPI	serial peripheral interface
+SPI	stateful packet inspection
+SPMD	single process, multiple data
+SPR	special purpose register
+SPT	sectors per track
+SQA	software quality assurance
+SQL	structured query language
+SRAM	static random access memory
+SRC	sample rate conversion
+SS	stack segment
+SS	self-snoop
+SSB	single-sideband modulation
+SSD	solid state drive
+SSE	streaming SIMD extensions
+SSFDC	solid state floppy disc card
+SSH	secure shell
+SSI	server side includes
+SSL	secure sockets layer
+SSP	stack smashing protection
+STC	software thermal control
+STD	state transition diagram
+STP	shielded twisted pair
+STP	spanning-tree protocol
+SUS	Single Unix Specification
+SUT	system under test
+SVG	scalable vector graphics
+SVGA	super video graphics {array,adapter}
+SVM	secure virtual machine
+SVM	support vector machine
+SVR	System V Release
+SWF	Shockwave Flash
+SWIG	simplified wrapper [and] interface generator
+SYR	symbol timing recovery
+TA	transmitter address
+TA	test assertion
+TAI	international atomic time
+TAO	track at once
+TAOCP	The Art of Computer Programming
+TAP	test anywhere protocol
+TAS	test and set
+TB	terabyte
+TCB	trace capture buffer
+TCB	trusted computing base
+TCC	thermal control circuit
+TCL	tool command language
+TCP	transmission control protocol
+TCQ	tagged command queueing
+TDC	time [to] digital converter
+TDD	test driven development
+TDD	time division duplex
+TDM	time division multiplexing
+TDMA	time division multiple access
+TDOA	time difference of arrival
+TDP	thermal design {point, power}
+TECO	Text Editor and Corrector
+TFT	thin film transistor
+TFTP	trivial file transfer protocol
+TIAS	try it and see
+TIFF	tagged image file format
+TITS	try it to see
+TK	temporal key
+TLA	top level aggregator
+TLB	transition lookaside buffer
+TLD	top level domain
+TLS	transport layer security
+TLS	thread local storage
+TM	Turing machine
+TM	thermal monitor
+TMDS	transition minimized differential signaling
+TMO	timeout
+TOD	time of day
+TOS	terms of service
+TOS	type of service
+TOS	trusted operating system
+TP	transaction processing
+TPM	trusted platform module
+TPM	transactions per minute
+TPR	task priority register
+TPS	transmission parameters signaling
+TR	token ring
+TR	task register
+TRL	timing recovery loop
+TRNG	true random number generator
+TS	time stamp
+TS	time series
+TS	transport stream
+TS	terminal services
+TSC	time stamp counter
+TSD	time stamp disable
+TSL	test, set, lock
+TSO	time sharing option
+TSP	time stamp protocol
+TSP	time synchronization protocol
+TSP	tunnel setup protocol
+TSP	traveling salesman problem
+TSS	task state segment
+TTL	time to live
+TTL	transistor-transistor logic
+TTM	translation table maps
+TTY	teletype
+TX	transmit out, transmitter
+TZ	time zone
+UAC	user {account, access} control
+UART	universal asynchronous receiver/transmitter
+UAT	user acceptance testing
+UC	uncacheable
+UCS	uniform-cost search
+UDMA	ultra DMA
+UDO	ultra density optical (storage)
+UDP	user datagram protocol
+UFS	Unix file system
+UI	user interface
+UI	unit interval
+UID	user identifier
+UID	unique identifier
+UL	upload
+UMA	uniform memory access
+UMA	upper memory area
+UMB	upper memory block
+UMPC	ultra-mobile PC
+UML	unified modeling language
+UPNP	universal plug and play
+UPS	uninterruptible power supply
+URI	uniform resource identifier
+URL	uniform resource locator
+URN	uniform resource name
+USART	universal synchronous/asynchronous receiver/transmitter
+USB	universal serial bus
+USWC	uncacheable speculative write combining
+UT	unit test
+UTC	coordinated universal time
+UTP	unshielded twisted pair
+UUCP	Unix-to-Unix copy protocol
+UUID	universally unique identifier
+UUOC	useless use of cat
+UUT	unit under test
+VA	volt-ampere
+VA	virtual address
+VA	vertical alignment
+VAX	virtual address extension
+VB	Visual Basic
+VCA	variable-gain amplifier
+VCC	common collector voltage
+VCF	voltage-controlled filter
+VCM	virtual channel memory
+VCO	voltage-controlled oscillator
+VCS	version control system
+VESA	video electronics standards association
+VFO	variable-frequency oscillator
+VG	volume group
+VGA	video graphics {array,adapter}
+VHDCI	very high density cable interconnect
+VID	voltage level identifier
+VIPT	virtually indexed, physically tagged
+VIVT	virtually indexed, virtually tagged
+VLAN	virtual local area network
+VLIW	very long instruction word
+VLSI	very large scale integration
+VLSM	variable length subnet mask
+VOD	video on demand
+VM	virtual {machine,memory}
+VME	virtual mode extension
+VMX	virtual machine extensions
+VMX	vector multimedia extensions
+VPN	virtual private network
+VR	virtual reality
+VRAM	video random access memory
+VRM	voltage regulator module
+VRRP	virtual router redundancy protocol
+W	Watt
+W3C	World Wide Web Consortium
+WAN	wide area network
+WAP	wireless application protocol
+WEP	wired equivalent privacy
+WFI	wait for interrupt
+WFQ	weighted fair queuing
+WH	write hit
+WIFI    wireless fidelity
+WLAN	wireless local area network
+WDT	watchdog timer
+WM	write miss
+WMI	Windows management instrumentation
+WOL	wake on LAN
+WOR	wake on ring
+WORM	write once read many
+WP	write protect
+WP	word processor
+WP	WordPerfect
+WPA	wi-fi protected access
+WRAM	window random access memory
+WS	web services
+WTC	write through caching
+WWAN	wireless wide area network
+WWW	world wide web
+WYSIWYG	what you see is what you get
+XBAR	crossbar
+XER	XML encoding rules
+XGA	extended graphics {array,adapter}
+XIP	execute in place
+XML	extensible markup language
+XOR	exclusive or
+XP	extreme programming
+XSL	extensible stylesheet language
+XSS	cross site scripting
+XT	extended technology
+XUL	XML user interface language
+YACC	yet another compiler compiler
+YAWPFAPR you are welcome; please file a problem report
+YP	yellow pages (aka NIS)
+YTD	year to date
+ZBR	zone bit recording
+ZFOD	zero-filled on demand
+ZIF	zero insertion force
+ZIFS	zero insertion force socket
+ZMA	zone multicast address

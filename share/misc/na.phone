@@ -1,0 +1,385 @@
+# $NetBSD: na.phone,v 1.19 2010/02/16 00:16:28 mrg Exp $
+# Generated from http://www.nanpa.com/area_codes/index.html
+# (with local exceptions)
+# 
+# format:
+#   Area Code : Description : Detail : State/Province Abbrev.
+#   (3rd and 4th fields optional)
+#   A * in the Area Code field indicates a future area code.
+# 
+201:New Jersey (USA):Hackensack, Morristown, Newark and Jersey City:NJ
+202:Washington, D.C. (USA):all locations:DC
+203:Connecticut (USA):Fairfield and New Haven counties in the southern part of the state:CT
+204:Manitoba (Canada):all locations:MB
+205:Alabama (USA):Birmingham, Tuscaloosa:AL
+206:Washington (USA):Seattle, Bainbridge Island:WA
+207:Maine (USA):all locations:ME
+208:Idaho (USA):all locations:ID
+209:California (USA):Modesto, Stockton:CA
+210:Texas (USA):San Antonio:TX
+212:New York (USA):New York City:NY
+213:California (USA):downtown Los Angeles:CA
+214:Texas (USA):Dallas:TX
+215:Pennsylvania (USA):Philadelphia:PA
+216:Ohio (USA):Cleveland:OH
+217:Illinois (USA):Champaign, Springfield:IL
+218:Minnesota (USA):Duluth:MN
+219:Indiana (USA):Gary, Hammond, South Bend, Warsaw:IN
+224:Illinois (USA):suburban Chicago:IL
+225:Louisiana (USA):Baton Rouge, Plaquemine:LA
+226:Ontario:Overlay of 519 effective 02/19/2005
+227*:Maryland:Overlay of 240 and 301 (Pending)
+228:Mississippi (USA):Biloxi, Gulfport, Pascagoula:MS
+229:Georgia (USA):Albany:GA
+231:Michigan (USA):Muskegon, Traverse City:MI
+234:Ohio (USA):Akron, Youngstown:OH
+236*:British Columbia (Canada):Relief for 250 and 778 (Pending)
+239:Florida
+240:Maryland (USA):Rockville, Silver Spring, Bethesda:MD
+242:Bahamas (Caribbean):all locations:
+246:Barbados (Caribbean):all locations:
+248:Michigan (USA):Oakland county:MI
+249*:British Columbia (Canada):Overlay of 704, effective March 2001
+250:British Columbia (Canada):Kamloops, Kelowna, Victoria:BC
+251:Alabama (USA):Greenville, Kitty Hawk, Rocky Mount:AL
+252:North Carolina (USA):Greenville, Morehead City, Rocky Mount:NC
+253:Washington (USA):Auburn, Gig Harbor, Tacoma:WA
+254:Texas (USA):Waco:TX
+256:Alabama (USA):Decatur, Gadsden, Huntsville:AL
+260:Indiana (USA):Fort Wayne, New Haven, Decatur, Angola, Huntington, Wabash:IN
+262:Wisconsin (USA):Kenosha, Racine, Waukesha:WI
+264:Anguilla (Caribbean):all locations:
+267:Pennsylvania (USA):Philadelphia:PA
+268:Antigua and Barbuda (Caribbean):all locations:
+269:Michigan (USA):Battle Creek, Benton Harbor, Allegan, Hastings, Kalamazoo, St Joseph:MI
+270:Kentucky (USA):Bowling Green, Paducah:KY
+276:Virginia (USA):Abingdon, Wytheville, Martinsville, Bluefield:VA
+281:Texas (USA):Houston:TX
+283*:Ohio:Overlay of 513 (Suspended)
+284:British Virgin Islands (Caribbean):all locations:VI
+289:Ontario
+301:Maryland (USA):Rockville, Silver Spring, Bethesda:MD
+302:Delaware (USA):all locations:DE
+303:Colorado (USA):Denver:CO
+304:West Virginia (USA):all locations:WV
+305:Florida (USA):Miami, Key West:FL
+306:Saskatchewan (Canada):all locations:SK
+307:Wyoming (USA):all locations:WY
+308:Nebraska (USA):North Platte:NE
+309:Illinois (USA):Bloomington, Peoria:IL
+310:California (USA):Beverly Hills, Gardena:CA
+312:Illinois (USA):Chicago:IL
+313:Michigan (USA):Ann Arbor, Detroit:MI
+314:Missouri (USA):St. Louis:MO
+315:New York (USA):Syracuse:NY
+316:Kansas (USA):Dodge City, Wichita:KS
+317:Indiana (USA):Indianapolis:IN
+318:Louisiana (USA):Alexandria, Monroe:LA
+319:Iowa (USA):Dubuque:IA
+320:Minnesota (USA):St. Cloud, Willmar:MN
+321:Florida (USA):Cape Canaveral:FL
+323:California (USA):Los Angeles:CA
+325:Texas (USA):Abilene, Sweetwater, Snyder, San Angelo:TX
+327*:Arkansas:Proposed Overlay of 870
+330:Ohio (USA):Akron, Youngstown:OH
+331*:Illinois:Overlay of 630 (Pending)
+334:Alabama (USA):Auburn, Mobile, Montgomery, Selma:AL
+336:North Carolina (USA):Asheboro, Burlington, Greensboro:NC
+337:Louisiana (USA):Lafayette, Lake Charles:LA
+339:Massachusetts (USA):Burlington, Reading, Waltham:MA
+340:U.S. Virgin Islands (Caribbean):all locations:
+341*:California:Split of 510 (Suspended)
+343*:Ontario (Canada):Numbering relief for 613 (beginning 5/17/2010)
+345:Cayman Islands (Caribbean):all locations:
+347:New York (USA):Bronx, Brooklyn, Queens, Staten Island:NY
+351:Massachusetts (USA):Acton, Lowell, North Reading:MA
+352:Florida (USA):Gainesville, Ocala:FL
+360:Washington (USA):Bellingham, Olympia, Vancouver:WA
+361:Texas (USA):Corpus Christi:TX
+364:Kentucky (USA):Fort Campbell, Henderson, Hopkinsville, Madisonville, Murray, Paducah:KT
+369*:California:Split of 707 (Suspended)
+380*:Ohio:Overlay of 614 (Suspended)
+385*:Utah:Split of 801 effective 03/30/2005
+386:Florida (USA):Daytona Beach, Lake City, Live Oak, Crescent City:FL
+401:Rhode Island (USA):all locations:RI
+402:Nebraska (USA):Lincoln, Omaha:NE
+403:Alberta (Canada):Calgary:AB
+404:Georgia (USA):Atlanta:GA
+405:Oklahoma (USA):Norman, Oklahoma City, Stillwater:OK
+406:Montana (USA):all locations:MT
+407:Florida (USA):Orlando, Kissimmee:FL
+408:California (USA):San Jose:CA
+409:Texas (USA):Galveston:TX
+410:Maryland (USA):Baltimore, Towson:MD
+412:Pennsylvania (USA):Pittsburgh:PA
+413:Massachusetts (USA):Springfield:MA
+414:Wisconsin (USA):Milwaukee:WI
+415:California (USA):San Francisco:CA
+416:Ontario (Canada):Toronto:ON
+417:Missouri (USA):Joplin, Springfield:MO
+418:Quebec (Canada):Quebec:QC
+419:Ohio (USA):Toledo:OH
+423:Tennessee (USA):Chattanooga:TN
+424*:California:Split of 310 (Pending)
+425:Washington (USA):Everett, Kent:WA
+430:Texas
+432*:Texas (USA):Big Spring, Midland, Odessa:TX
+434:Virginia (USA):Lynchburg, Danville, Farmville, South Hill, Charlottesville:VA
+435:Utah (USA):Cedar City, St. George:UT
+438*:Quebec:Overlay of 514 effective 09/24/2005
+440:Ohio (USA):Ashtabula, Lorain, Westlake:OH
+441:Bermuda (Caribbean):all locations:
+442:California:Overlaid on 760
+443:Maryland (USA):Baltimore, Towson:MD
+447:Illinois
+450:Quebec (Canada):area outside Montreal:QC
+456:Inbound International
+458:Oregon
+464*:Illinois:Overlay of 708 (Pending)
+469:Texas (USA):Dallas:TX
+470*:Georgia:Overlay of 404/678 and 770/678 (Pending)
+473:Grenada (Caribbean):all locations:
+475:Connecticut:Overlay of 203
+478:Georgia (USA):Macon:GA
+479:Arkansas
+480:Arizona (USA):suburban areas east of Phoenix:AZ
+484:Pennsylvania (USA):Allentown, Bethlehem, Reading:PA
+500:Personal Communication Service
+501:Arkansas (USA):all locations:AR
+502:Kentucky (USA):Louisville:KY
+503:Oregon (USA):Portland and Salem:OR
+504:Louisiana (USA):New Orleans:LA
+505:New Mexico (USA):all locations:NM
+506:New Brunswick (Canada):all locations:NB
+507:Minnesota (USA):Rochester:MN
+508:Massachusetts (USA):Framingham, New Bedford, Plymouth:MA
+509:Washington (USA):Spokane:WA
+510:California (USA):Oakland:CA
+512:Texas (USA):Austin:TX
+513:Ohio (USA):Cincinnati, Dayton:OH
+514:Quebec (Canada):Montreal:QC
+515:Iowa (USA):Des Moines:IA
+516:New York (USA):Nassau County:NY
+517:Michigan (USA):Lansing:MI
+518:New York (USA):Albany, Schenectady:NY
+519:Ontario (Canada):London, Windsor:ON
+520:Arizona (USA):Tucson, Flagstaff, Prescott, Yuma:AZ
+530:California (USA):Chico, Redding, Yreka:CA
+540:Virginia (USA):Covington, Roanoke, Winchester:VA
+541:Oregon (USA):Eugene, Medford:OR
+546:Michigan
+551:New Jersey
+557*:Missouri:Overlay of 314 (Suspended)
+559:California (USA):Fresno, Visalia:CA
+561:Florida (USA):Boca Raton, Stuart, West Palm Beach:FL
+562:California (USA):Santa Monica, Long Beach, Whittier:CA
+563:Iowa
+564*:Washington:Overlay of 360 (Suspended)
+567:Ohio
+570:Pennsylvania (USA):Scranton, Wilkes-Barre, Williamsport:PA
+571:Virginia (USA):Arlington, Fairfax, Vienna:VA
+573:Missouri (USA):Jefferson City, Columbia and other towns outside St. Louis:MO
+574:Indiana
+580:Oklahoma (USA):Ardmore, Enid, Lawton:OK
+585:New York
+586:Michigan (USA):Birmingham, Flint, Pontiac:MI
+590:French West Indies Caribbean Islands
+600:Canadian Services
+601:Mississippi (USA):Hattiesburg, Jackson:MS
+602:Arizona (USA):Phoenix:AZ
+603:New Hampshire (USA):all locations:NH
+604:British Columbia (Canada):Vancouver:BC
+605:South Dakota (USA):all locations:SD
+606:Kentucky (USA):Ashland:KY
+607:New York (USA):Binghamton, Elmira:NY
+608:Wisconsin (USA):Madison:WI
+609:New Jersey (USA):Atlantic City, Princeton, Trenton:NJ
+610:Pennsylvania (USA):Allentown, Bethlehem, Reading, West Chester:PA
+612:Minnesota (USA):Minneapolis:MN
+613:Ontario (Canada):Ottawa:ON
+614:Ohio (USA):Columbus:OH
+615:Tennessee (USA):Nashville:TN
+616:Michigan (USA):Battle Creek, Grand Rapids, Kalamazoo:MI
+617:Massachusetts (USA):Boston:MA
+618:Illinois (USA):Collinsville, Granite City:IL
+619:California (USA):San Diego:CA
+620:Kansas
+623:Arizona (USA):suburban areas west of Phoenix:AZ
+626:California (USA):Alhambra, La Puente, Pasadena:CA
+627:California (USA):Napa, Sonoma counties:CA
+628:California
+630:Illinois (USA):suburban Chicago:IL
+631:New York (USA):Suffolk County:NY
+636:Missouri (USA):Chesterfield, O'Fallon, Gray Summit:MO
+641:Iowa (USA):Creston, Mason City, Osceola:IA
+646:New York (USA):Manhattan:NY
+647:Ontario (Canada):Toronto:ON
+649:Turks and Caicos (Caribbean):all locations:
+650:California (USA):Mountain View, San Mateo:CA
+651:Minnesota (USA):St. Paul:MN
+657:California (USA):Overlay of 714
+660:Missouri (USA):Kirksville, Maryville, Trenton:MO
+661:California (USA):Bakersfield, Lancaster, Palmdale:CA
+662:Mississippi (USA):Greenville, Oxford, Tupelo:MS
+664:Montserrat (Caribbean):all locations:
+669:California (USA):Overlay of 408
+670:Mariana Islands (Pacific):all locations:
+671:Guam (Pacific):all locations:
+678:Georgia (USA):Atlanta and suburban areas:GA
+679:Michigan
+682:Texas (USA):Arlington, Fort Worth, Grapevine:TX
+684:American Samoa:
+689:Florida:Overlay of 407
+700:Interexchange Carrier Services
+701:North Dakota (USA):all locations:ND
+702:Nevada (USA):Las Vegas:NV
+703:Virginia (USA):Arlington, Alexandria, Fairfax, Falls Church:VA
+704:North Carolina (USA):Charlotte:NC
+705:Ontario (Canada):Sault Ste. Marie:ON
+706:Georgia (USA):Augusta, Columbus:GA
+707:California (USA):Crescent City, Eureka:CA
+708:Illinois (USA):Des Plaines, Palatine, Waukegan:IL
+709:Newfoundland (Canada):all locations:NF
+710:US Government
+712:Iowa (USA):Council Bluffs, Sioux City:IA
+713:Texas (USA):Houston:TX
+714:California (USA):Anaheim:CA
+715:Wisconsin (USA):Eau Claire, Wausau:WI
+716:New York (USA):Buffalo, Niagara Falls, Rochester:NY
+717:Pennsylvania (USA):Harrisburg, Hershey, York:PA
+718:New York (USA):Brooklyn, Queens, Staten Island:NY
+719:Colorado (USA):Colorado Springs, Pueblo:CO
+720:Colorado (USA):Denver:CO
+724:Pennsylvania (USA):Latrobe, New Castle:PA
+727:Florida (USA):Clearwater, St. Petersburg:FL
+731:Tennessee
+732:New Jersey (USA):Middlesex, Monmouth, Ocean Counties:NJ
+734:Michigan (USA):Ann Arbor, Livonia, Ypsilanti:MI
+737*:Texas:Overlay of 512 (Suspended)
+740:Ohio (USA):Athens, Lancaster, Marietta:OH
+747*:California:Split of 818 (Suspended)
+752*:California:Split of 909 (Suspended)
+754:Florida
+757:Virginia (USA):Newport News, Norfolk, Virginia Beach:VA
+758:St. Lucia (Caribbean):all locations:
+760:California (USA):Bishop, Needles, Palm Springs:CA
+763:Minnesota (USA):northern and northwestern suburbs of Minneapolis:MN
+764*:California:Split of 650 (Suspended)
+765:Indiana (USA):Kokomo, Lafayette, Richmond:IN
+767:Dominica (Caribbean):all locations:
+770:Georgia (USA):suburban Atlanta (the area outside the Interstate 285 beltway):GA
+772:Florida
+773:Illinois (USA):Chicago:IL
+774:Massachusetts (USA):Framingham, New Bedford, Plymouth:MA
+775:Nevada (USA):Carson City, Reno:NV
+778:British Columbia
+780:Alberta (Canada):Edmonton, Grande Prairie:AB
+781:Massachusetts (USA):Burlington, Reading, Waltham:MA
+784:St. Vincent/Grenadines (Caribbean):all locations:
+785:Kansas (USA):Junction City, Lawrence, Topeka:KS
+786:Florida (USA):Miami, North Dade:FL
+787:Puerto Rico (Caribbean):all locations:PR
+800:Toll-Free
+801:Utah (USA):Salt Lake City:UT
+802:Vermont (USA):all locations:VT
+803:South Carolina (USA):Columbia, Winnsboro:SC
+804:Virginia (USA):Norfolk, Richmond:VA
+805:California (USA):Bakersfield, Santa Barbara:CA
+806:Texas (USA):Amarillo, Lubbock:TX
+807:Ontario (Canada):Thunder Bay:ON
+808:Hawaii (USA):all locations:HI
+809::Islands in the Caribbean, including the Dominican Republic:
+810:Michigan (USA):Birmingham, Flint, Pontiac:MI
+812:Indiana (USA):Bloomington, Evansville, Terra Haute:IN
+813:Florida (USA):Clearwater, St. Petersburg, Tampa:FL
+814:Pennsylvania (USA):Altoona, Erie:PA
+815:Illinois (USA):Joliet, Rockford:IL
+816:Missouri (USA):Kansas City:MO
+817:Texas (USA):Arlington, Fort Worth:TX
+818:California (USA):Burbank, Glendale, San Fernando:CA
+819:Quebec (Canada):Sherbrooke, Trois Rivieres:QC
+822:Toll-Free
+828:North Carolina (USA):Asheville, Hendersonville:NC
+830:Texas (USA):Fredericksburg, New Braunfels, Uvalde:TX
+831:California (USA):Monterey, Salinas:CA
+832:Texas (USA):Houston:TX
+836:Florida
+843:South Carolina (USA):Charleston, Florence:SC
+845:New York (USA):Middletown, Putnam Valley, Woodstock:NY
+847:Illinois (USA):suburban Chicago:IL
+848:New Jersey
+850:Florida (USA):Panama City, Pensacola, Tallahassee:FL
+855:Toll Free:
+856:New Jersey (USA):Camden, Vineland:NJ
+857:Massachusetts (USA):Boston:MA
+858:California (USA):La Jolla, Poway, Rancho Santa Fe:CA
+859:Kentucky (USA):Covington, Lexington:KY
+860:Connecticut (USA):Bloomfield, Canaan, Hartford, Norwich:CT
+862:New Jersey
+861:Florida
+862:New Jersey (USA):Newark Paterson Morristown:NJ
+863:Florida (USA):Arcadia, Lakeland, Sebring:FL
+864:South Carolina (USA):Greenville, Spartanburg:SC
+865:Tennessee (USA):Knoxville:TN
+866:Toll-Free
+867:Yukon/Northwest Territories (Canada):all locations:NT
+868:Trinidad and Tobago (Caribbean):all locations:
+869:St. Kitts/Nevis (Caribbean):all locations:
+870:Arkansas (USA):Jonesboro, Pine Bluff, Texarkana:AR
+872:Illinois:Overlay of 312 and 773
+876:Jamaica (Caribbean):all locations:
+877:Toll-Free
+878:Pennsylvania (USA):overlay of both 412 and 724 area codes:PA
+880:Paid Toll-Free Service
+881:Paid Toll-Free Service
+882:Paid Toll-Free Service
+888:Toll-Free
+900:Premium Services
+901:Tennessee (USA):Memphis:TN
+902:Nova Scotia, Prince Edward Island (Canada):all locations:NS
+903:Texas (USA):Longview, Texarkana, Tyler:TX
+904:Florida (USA):Daytona Beach, Jacksonville:FL
+905:Ontario (Canada):Hamilton, Unionville, Woodbridge:ON
+906:Michigan (USA):Marquette, Sault Ste. Marie:MI
+907:Alaska (USA):all locations:AK
+908:New Jersey (USA):Asbury Park, Elizabeth, New Brunswick, Westfield:NJ
+909:California (USA):Ontario, Pomona, Upland:CA
+910:North Carolina (USA):Fayetteville, Winston-Salem:NC
+912:Georgia (USA):Savannah:GA
+913:Kansas (USA):Kansas City, Topeka:KS
+914:New York (USA):Newburgh, Ossining, Poughkeepsie:NY
+915:Texas (USA):Abilene, El Paso, San Angelo:TX
+916:California (USA):Sacramento:CA
+917:New York (USA):New York City, Queens, Staten Island:NY
+918:Oklahoma (USA):Broken Arrow, Muskogee, Tulsa:OK
+919:North Carolina (USA):Durham, Raleigh:NC
+920:Wisconsin (USA):Appleton, Green Bay, Sheboygan:WI
+925:California (USA):Pleasanton, Walnut Creek:CA
+928:Arizona (USA):Prescott, Flagstaff, Yuma:AZ
+931:Tennessee (USA):Clarksville:TN
+935*:California:Split of 619 (Suspended)
+936:Texas (USA):Conroe, Nacogdoches:TX
+937:Ohio (USA):Dayton, Hamilton:OH
+939:Puerto Rico
+940:Texas (USA):Denton, Wichita Falls:TX
+941:Florida (USA):Bradenton, Ft. Myers, Naples, Sarasota:FL
+947:Michigan (USA):Oakland county:MI
+949:California (USA):Costa Mesa, Irvine, Newport Beach:CA
+951:California:Split of 909
+952:Minnesota (USA):southern and southwestern suburbs of Minneapolis:MN
+954:Florida (USA):Ft. Lauderdale, Broward County:FL
+956:Texas (USA):Brownsville, Laredo, McAllen:TX
+957*:New Mexico (Pending)
+959*:Connecticut:Overlay of 860 (Pending)
+969:Maryland
+970:Colorado (USA):Aspen, Vail:CO
+971:Oregon (USA):Portland, Salem:OR
+972:Texas (USA):Dallas:TX
+973:New Jersey (USA):Morris, Passaic, Essex Counties:NJ
+975:Missouri:Overlay of 816 (Suspended)
+978:Massachusetts (USA):Acton, Lowell, North Reading:MA
+979:Texas (USA):Bryan-College Station, Freeport:TX
+980:North Carolina (USA):Charlotte:NC
+984*:North Carolina:Overlay of 919 (Suspended)
+985:Louisiana
+989:Michigan (USA):Alpena, Midland, Saginaw:MI

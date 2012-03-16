@@ -70,6 +70,7 @@
 700  root    operator  /usr/preserve
 755  root    operator  /usr/run
 755  root    operator  /usr/share
+755  root    operator  /usr/share/misc
 755  root    operator  /usr/share/doc
 755  root    operator  /usr/share/doc/html
 755  root    operator  /usr/share/doc/html/bzip2

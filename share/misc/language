@@ -1,0 +1,475 @@
+# $NetBSD: language,v 1.3 2003/09/13 21:53:19 kleink Exp $
+#
+# ISO 639-1 and 639-2 Language Codes
+#
+# The format of an entry is:
+# <Language name><TAB><ISO-639-2-code><TAB><ISO-639-1-code-optional>
+#
+# Further information can be found at the ISO 639/Joint Advisory Committee
+# (ISO 639/JAC) web site,
+# <http://lcweb.loc.gov/standards/iso639-2/iso639jac.html>.
+# This list is up-to-date as of 2003-08-04.
+#
+Abkhazian	abk	ab
+Achinese	ace	
+Acoli	ach	
+Adangme	ada	
+Adygei; Adyghe	ady	
+Afar	aar	aa
+Afrihili	afh	
+Afrikaans	afr	af
+Afro-Asiatic (Other)	afa	
+Akan	aka	ak
+Akkadian	akk	
+Albanian	alb/sqi	sq
+Aleut	ale	
+Algonquian languages	alg	
+Altaic (Other)	tut	
+Amharic	amh	am
+Apache languages	apa	
+Arabic	ara	ar
+Aragonese	arg	an
+Aramaic	arc	
+Arapaho	arp	
+Araucanian	arn	
+Arawak	arw	
+Armenian	arm/hye	hy
+Artificial (Other)	art	
+Assamese	asm	as
+Asturian; Bable	ast	
+Athapascan languages	ath	
+Australian languages	aus	
+Austronesian (Other)	map	
+Avaric	ava	av
+Avestan	ave	ae
+Awadhi	awa	
+Aymara	aym	ay
+Azerbaijani	aze	az
+Balinese	ban	
+Baltic (Other)	bat	
+Baluchi	bal	
+Bambara	bam	bm
+Bamileke languages	bai	
+Banda	bad	
+Bantu (Other)	bnt	
+Basa	bas	
+Bashkir	bak	ba
+Basque	baq/eus	eu
+Batak (Indonesia)	btk	
+Beja	bej	
+Belarusian	bel	be
+Bemba	bem	
+Bengali	ben	bn
+Berber (Other)	ber	
+Bhojpuri	bho	
+Bihari	bih	bh
+Bikol	bik	
+Bini	bin	
+Bislama	bis	bi
+Bokmaal, Norwegian; Norwegian Bokmaal	nob	nb
+Bosnian	bos	bs
+Braj	bra	
+Breton	bre	br
+Buginese	bug	
+Bulgarian	bul	bg
+Buriat	bua	
+Burmese	bur/mya	my
+Caddo	cad	
+Carib	car	
+Castilian; Spanish	spa	es
+Catalan	cat	ca
+Caucasian (Other)	cau	
+Cebuano	ceb	
+Celtic (Other)	cel	
+Central American Indian (Other)	cai	
+Chagatai	chg	
+Chamic languages	cmc	
+Chamorro	cha	ch
+Chechen	che	ce
+Cherokee	chr	
+Chewa; Chichewa; Nyanja	nya	ny
+Cheyenne	chy	
+Chibcha	chb	
+Chinese	chi/zho	zh
+Chinook jargon	chn	
+Chipewyan	chp	
+Choctaw	cho	
+Church Slavic; Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic	chu	cu
+Chuukese	chk	
+Chuvash	chv	cv
+Coptic	cop	
+Cornish	cor	kw
+Corsican	cos	co
+Cree	cre	cr
+Creek	mus	
+Creoles and pidgins (Other)	crp	
+Creoles and pidgins, English-based (Other)	cpe	
+Creoles and pidgins, French-based (Other)	cpf	
+Creoles and pidgins, Portuguese-based (Other)	cpp	
+Crimean Tatar; Crimean Turkish	crh	
+Croatian	scr/hrv	hr
+Cushitic (Other)	cus	
+Czech	cze/ces	cs
+Dakota	dak	
+Danish	dan	da
+Dargwa	dar	
+Dayak	day	
+Delaware	del	
+Dinka	din	
+Divehi	div	dv
+Dogri	doi	
+Dogrib	dgr	
+Dravidian (Other)	dra	
+Duala	dua	
+Dutch, Middle (ca. 1050-1350)	dum	
+Dutch; Flemish	dut/nld	nl
+Dyula	dyu	
+Dzongkha	dzo	dz
+Efik	efi	
+Egyptian (Ancient)	egy	
+Ekajuk	eka	
+Elamite	elx	
+English	eng	en
+English, Middle (1100-1500)	enm	
+English, Old (ca.450-1100)	ang	
+Erzya	myv	
+Esperanto	epo	eo
+Estonian	est	et
+Ewe	ewe	ee
+Ewondo	ewo	
+Fang	fan	
+Fanti	fat	
+Faroese	fao	fo
+Fijian	fij	fj
+Finnish	fin	fi
+Finno-Ugrian (Other)	fiu	
+Fon	fon	
+French	fre/fra	fr
+French, Middle (ca.1400-1600)	frm	
+French, Old (842-ca.1400)	fro	
+Frisian	fry	fy
+Friulian	fur	
+Fulah	ful	ff
+Ga	gaa	
+Gaelic; Scottish Gaelic	gla	gd
+Gallegan	glg	gl
+Ganda	lug	lg
+Gayo	gay	
+Gbaya	gba	
+Geez	gez	
+Georgian	geo/kat	ka
+German	ger/deu	de
+German, Low; Saxon, Low; Low German; Low Saxon	nds	
+German, Middle High (ca.1050-1500)	gmh	
+German, Old High (ca.750-1050)	goh	
+Germanic (Other)	gem	
+Gikuyu; Kikuyu	kik	ki
+Gilbertese	gil	
+Gondi	gon	
+Gorontalo	gor	
+Gothic	got	
+Grebo	grb	
+Greek, Ancient (to 1453)	grc	
+Greek, Modern (1453-)	gre/ell	el
+Greenlandic; Kalaallisut	kal	kl
+Guarani	grn	gn
+Gujarati	guj	gu
+Gwich'in	gwi	
+Haida	hai	
+Haitian Creole; Haitian	hat	ht
+Hausa	hau	ha
+Hawaiian	haw	
+Hebrew	heb	he
+Herero	her	hz
+Hiligaynon	hil	
+Himachali	him	
+Hindi	hin	hi
+Hiri Motu	hmo	ho
+Hittite	hit	
+Hmong	hmn	
+Hungarian	hun	hu
+Hupa	hup	
+Iban	iba	
+Icelandic	ice/isl	is
+Ido	ido	io
+Igbo	ibo	ig
+Ijo	ijo	
+Iloko	ilo	
+Inari Sami	smn	
+Indic (Other)	inc	
+Indo-European (Other)	ine	
+Indonesian	ind	id
+Ingush	inh	
+Interlingua (International Auxiliary Language Association)	ina	ia
+Interlingue	ile	ie
+Inuktitut	iku	iu
+Inupiaq	ipk	ik
+Iranian (Other)	ira	
+Irish	gle	ga
+Irish, Middle (900-1200)	mga	
+Irish, Old (to 900)	sga	
+Iroquoian languages	iro	
+Italian	ita	it
+Japanese	jpn	ja
+Javanese	jav	jv
+Judeo-Arabic	jrb	
+Judeo-Persian	jpr	
+Kabardian	kbd	
+Kabyle	kab	
+Kachin	kac	
+Kalmyk	xal	
+Kamba	kam	
+Kannada	kan	kn
+Kanuri	kau	kr
+Kara-Kalpak	kaa	
+Karachay-Balkar	krc	
+Karen	kar	
+Kashmiri	kas	ks
+Kashubian	csb	
+Kawi	kaw	
+Kazakh	kaz	kk
+Khasi	kha	
+Khmer	khm	km
+Khoisan (Other)	khi	
+Khotanese	kho	
+Kimbundu	kmb	
+Kinyarwanda	kin	rw
+Kirghiz	kir	ky
+Komi	kom	kv
+Kongo	kon	kg
+Konkani	kok	
+Korean	kor	ko
+Kosraean	kos	
+Kpelle	kpe	
+Kru	kro	
+Kuanyama; Kwanyama	kua	kj
+Kumyk	kum	
+Kurdish	kur	ku
+Kurukh	kru	
+Kutenai	kut	
+Ladino	lad	
+Lahnda	lah	
+Lamba	lam	
+Lao	lao	lo
+Latin	lat	la
+Latvian	lav	lv
+Letzeburgesch; Luxembourgish	ltz	lb
+Lezghian	lez	
+Limburgan; Limburger; Limburgish	lim	li
+Lingala	lin	ln
+Lithuanian	lit	lt
+Lozi	loz	
+Luba-Katanga	lub	lu
+Luba-Lulua	lua	
+Luiseno	lui	
+Lule Sami	smj	
+Lunda	lun	
+Luo (Kenya and Tanzania)	luo	
+Lushai	lus	
+Macedonian	mac/mkd	mk
+Madurese	mad	
+Magahi	mag	
+Maithili	mai	
+Makasar	mak	
+Malagasy	mlg	mg
+Malay	may/msa	ms
+Malayalam	mal	ml
+Maltese	mlt	mt
+Manchu	mnc	
+Mandar	mdr	
+Mandingo	man	
+Manipuri	mni	
+Manobo languages	mno	
+Manx	glv	gv
+Maori	mao/mri	mi
+Marathi	mar	mr
+Mari	chm	
+Marshallese	mah	mh
+Marwari	mwr	
+Masai	mas	
+Mayan languages	myn	
+Mende	men	
+Micmac	mic	
+Minangkabau	min	
+Miscellaneous languages	mis	
+Mohawk	moh	
+Moksha	mdf	
+Moldavian	mol	mo
+Mon-Khmer (Other)	mkh	
+Mongo	lol	
+Mongolian	mon	mn
+Mossi	mos	
+Multiple languages	mul	
+Munda languages	mun	
+Nahuatl	nah	
+Nauru	nau	na
+Navaho, Navajo	nav	nv
+Ndebele, North	nde	nd
+Ndebele, South	nbl	nr
+Ndonga	ndo	ng
+Neapolitan	nap	
+Nepali	nep	ne
+Newari	new	
+Nias	nia	
+Niger-Kordofanian (Other)	nic	
+Nilo-Saharan (Other)	ssa	
+Niuean	niu	
+Nogai	nog	
+Norse, Old	non	
+North American Indian (Other)	nai	
+Northern Sami	sme	se
+Norwegian	nor	no
+Norwegian Nynorsk; Nynorsk, Norwegian	nno	nn
+Nubian languages	nub	
+Nyamwezi	nym	
+Nyankole	nyn	
+Nyoro	nyo	
+Nzima	nzi	
+Occitan (post 1500); Provenc,al	oci	oc
+Ojibwa	oji	oj
+Oriya	ori	or
+Oromo	orm	om
+Osage	osa	
+Ossetian; Ossetic	oss	os
+Otomian languages	oto	
+Pahlavi	pal	
+Palauan	pau	
+Pali	pli	pi
+Pampanga	pam	
+Pangasinan	pag	
+Panjabi	pan	pa
+Papiamento	pap	
+Papuan (Other)	paa	
+Persian	per/fas	fa
+Persian, Old (ca.600-400 B.C.)	peo	
+Philippine (Other)	phi	
+Phoenician	phn	
+Pohnpeian	pon	
+Polish	pol	pl
+Portuguese	por	pt
+Prakrit languages	pra	
+Provenc,al, Old (to 1500)	pro	
+Pushto	pus	ps
+Quechua	que	qu
+Raeto-Romance	roh	rm
+Rajasthani	raj	
+Rapanui	rap	
+Rarotongan	rar	
+Reserved for local use	qaa-qtz	
+Romance (Other)	roa	
+Romanian	rum/ron	ro
+Romany	rom	
+Rundi	run	rn
+Russian	rus	ru
+Salishan languages	sal	
+Samaritan Aramaic	sam	
+Sami languages (Other)	smi	
+Samoan	smo	sm
+Sandawe	sad	
+Sango	sag	sg
+Sanskrit	san	sa
+Santali	sat	
+Sardinian	srd	sc
+Sasak	sas	
+Scots	sco	
+Selkup	sel	
+Semitic (Other)	sem	
+Serbian	scc/srp	sr
+Serer	srr	
+Shan	shn	
+Shona	sna	sn
+Sichuan Yi	iii	ii
+Sidamo	sid	
+Sign languages	sgn	
+Siksika	bla	
+Sindhi	snd	sd
+Sinhalese	sin	si
+Sino-Tibetan (Other)	sit	
+Siouan languages	sio	
+Skolt Sami	sms	
+Slave (Athapascan)	den	
+Slavic (Other)	sla	
+Slovak	slo/slk	sk
+Slovenian	slv	sl
+Sogdian	sog	
+Somali	som	so
+Songhai	son	
+Soninke	snk	
+Sorbian languages	wen	
+Sotho, Northern	nso	
+Sotho, Southern	sot	st
+South American Indian (Other)	sai	
+Southern Sami	sma	
+Sukuma	suk	
+Sumerian	sux	
+Sundanese	sun	su
+Susu	sus	
+Swahili	swa	sw
+Swati	ssw	ss
+Swedish	swe	sv
+Syriac	syr	
+Tagalog	tgl	tl
+Tahitian	tah	ty
+Tai (Other)	tai	
+Tajik	tgk	tg
+Tamashek	tmh	
+Tamil	tam	ta
+Tatar	tat	tt
+Telugu	tel	te
+Tereno	ter	
+Tetum	tet	
+Thai	tha	th
+Tibetan	tib/bod	bo
+Tigre	tig	
+Tigrinya	tir	ti
+Timne	tem	
+Tiv	tiv	
+Tlingit	tli	
+Tok Pisin	tpi	
+Tokelau	tkl	
+Tonga (Nyasa)	tog	
+Tonga (Tonga Islands)	ton	to
+Tsimshian	tsi	
+Tsonga	tso	ts
+Tswana	tsn	tn
+Tumbuka	tum	
+Tupi languages	tup	
+Turkish	tur	tr
+Turkish, Ottoman (1500-1928)	ota	
+Turkmen	tuk	tk
+Tuvalu	tvl	
+Tuvinian	tyv	
+Twi	twi	tw
+Udmurt	udm	
+Ugaritic	uga	
+Uighur	uig	ug
+Ukrainian	ukr	uk
+Umbundu	umb	
+Undetermined	und	
+Urdu	urd	ur
+Uzbek	uzb	uz
+Vai	vai	
+Venda	ven	ve
+Vietnamese	vie	vi
+Volapuek	vol	vo
+Votic	vot	
+Wakashan languages	wak	
+Walamo	wal	
+Walloon	wln	wa
+Waray	war	
+Washo	was	
+Welsh	wel/cym	cy
+Wolof	wol	wo
+Xhosa	xho	xh
+Yakut	sah	
+Yao	yao	
+Yapese	yap	
+Yiddish	yid	yi
+Yoruba	yor	yo
+Yupik languages	ypk	
+Zande	znd	
+Zapotec	zap	
+Zenaga	zen	
+Zhuang; Chuang	zha	za
+Zulu	zul	zu
+Zuni	zun	
