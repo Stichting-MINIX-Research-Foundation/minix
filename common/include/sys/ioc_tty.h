@@ -25,12 +25,6 @@
 #define TIOCSFON_OLD	_IOW('T', 20, u8_t [8192])
 #define TIOCSFON	_IOW_BIG(1, u8_t [8192])
 
-/* Legacy <sgtty.h> */
-#define TIOCGETP	_IOR('t',  1, struct sgttyb)
-#define TIOCSETP	_IOW('t',  2, struct sgttyb)
-#define TIOCGETC	_IOR('t',  3, struct tchars)
-#define TIOCSETC	_IOW('t',  4, struct tchars)
-
 /* Keyboard ioctls. */
 #define KIOCBELL        _IOW('k', 1, struct kio_bell)
 #define KIOCSLEDS       _IOW('k', 2, struct kio_leds)

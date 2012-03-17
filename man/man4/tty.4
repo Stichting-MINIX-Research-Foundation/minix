@@ -712,18 +712,6 @@ set to
 tty input queue to be sent to the pty reader as backspace overstrikes.  Some
 of this output may get lost if the pty reader cannot accept it all at once
 in a single read call.)
-.SS "Backwards compatibility"
-The
-.BR TIOCGETP ,
-.BR TIOCSETP ,
-.BR TIOCGETC
-and
-.BR TIOCSETC
-ioctl functions that are used by the old
-.B sgtty
-terminal interface are still supported by the terminal driver by emulation.
-Note that these old functions cannot control all termios attributes, so the
-terminal must be in a relatively sane state to avoid problems.
 .SH FILES
 The list below shows all devices that MINIX 3 and Minix-vmd have.  Not all of
 these devices are configured in by default, as indicated by the numbers
