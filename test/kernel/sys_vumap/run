@@ -1,0 +1,16 @@
+#!/bin/sh
+
+make >/dev/null
+
+echo -n "Kernel test (sys_vumap): "
+service up `pwd`/vumaprelay -config system.conf -label vumaprelay -script /etc/rs.single
+service up `pwd`/vumaptest -config system.conf -script /etc/rs.single 2>/dev/null
+r=$?
+service down vumaprelay
+
+if [ $r -ne 0 ]; then
+  echo "failure"
+  exit 1
+fi
+
+echo "ok"
