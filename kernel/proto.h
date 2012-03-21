@@ -207,9 +207,10 @@ _PROTOTYPE( void arch_pre_exec, (struct proc *pr, u32_t, u32_t));
 _PROTOTYPE( int arch_umap, (const struct proc *pr, vir_bytes, vir_bytes,
 	int, phys_bytes *));
 _PROTOTYPE( int arch_do_vmctl, (message *m_ptr, struct proc *p)); 
-_PROTOTYPE( int vm_contiguous, (const struct proc *targetproc, vir_bytes vir_buf, size_t count));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (const struct proc *proc, vir_bytes virtual, phys_bytes *result, u32_t *ptent));
+_PROTOTYPE( size_t vm_lookup_range, (const struct proc *proc,
+	vir_bytes vir_addr, phys_bytes *phys_addr, size_t bytes)	);
 _PROTOTYPE( void delivermsg, (struct proc *target));
 _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 _PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,

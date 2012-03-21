@@ -381,7 +381,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	/* Now make sure addresses are contiguous in physical memory
 	 * so that the umap makes sense.
 	 */
-	if(bytes > 0 && !vm_contiguous(rp, linear, bytes)) {
+	if(bytes > 0 && vm_lookup_range(rp, linear, NULL, bytes) != bytes) {
 		printf("umap_virtual: %s: %lu at 0x%lx (vir 0x%lx) not contiguous\n",
 			rp->p_name, bytes, linear, vir_addr);
 		return 0;
@@ -453,59 +453,55 @@ PUBLIC int vm_lookup(const struct proc *proc, const vir_bytes virtual,
 }
 
 /*===========================================================================*
- *                              vm_contiguous                                *
+ *				vm_lookup_range				     *
  *===========================================================================*/
-PUBLIC int vm_contiguous(const struct proc *targetproc, vir_bytes vir_buf, size_t bytes)
+PUBLIC size_t vm_lookup_range(const struct proc *proc, vir_bytes vir_addr,
+	phys_bytes *phys_addr, size_t bytes)
 {
-	int first = 1, r;
-	phys_bytes prev_phys = 0;    /* Keep lints happy. */
-	u32_t po;
+	/* Look up the physical address corresponding to linear virtual address
+	 * 'vir_addr' for process 'proc'. Return the size of the range covered
+	 * by contiguous physical memory starting from that address; this may
+	 * be anywhere between 0 and 'bytes' inclusive. If the return value is
+	 * nonzero, and 'phys_addr' is non-NULL, 'phys_addr' will be set to the
+	 * base physical address of the range. 'vir_addr' and 'bytes' need not
+	 * be page-aligned, but the caller must have verified that the given
+	 * linear range is valid for the given process at all.
+	 */
+	phys_bytes phys, next_phys;
+	size_t len;
 
-	assert(targetproc);
+	assert(proc);
 	assert(bytes > 0);
 
-	if(!HASPT(targetproc))
-		return 1;
+	if (!HASPT(proc))
+		return bytes;
 
-	/* Start and end at page boundary to make logic simpler. */
-	po = vir_buf % I386_PAGE_SIZE;
-	if(po > 0) {
-		bytes += po;
-		vir_buf -= po;
-	}
-	po = (vir_buf + bytes) % I386_PAGE_SIZE;
-	if(po > 0)
-		bytes += I386_PAGE_SIZE - po;
+	/* Look up the first page. */
+	if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
+		return 0;
 
-	/* Keep going as long as we cross a page boundary. */
-	while(bytes > 0) {
-		phys_bytes phys;
+	if (phys_addr != NULL)
+		*phys_addr = phys;
 
-		if((r=vm_lookup(targetproc, vir_buf, &phys, NULL)) != OK) {
-			printf("vm_contiguous: vm_lookup failed, %d\n", r);
-			printf("kernel stack: ");
-			util_stacktrace();
-			return 0;
-		}
+	len = I386_PAGE_SIZE - (vir_addr % I386_PAGE_SIZE);
+	vir_addr += len;
+	next_phys = phys + len;
 
-		if(!first) {
-			if(prev_phys+I386_PAGE_SIZE != phys) {
-				printf("vm_contiguous: no (0x%lx, 0x%lx)\n",
-					prev_phys, phys);
-				printf("kernel stack: ");
-				util_stacktrace();
-				return 0;
-			}
-		}
+	/* Look up any next pages and test physical contiguity. */
+	while (len < bytes) {
+		if (vm_lookup(proc, vir_addr, &phys, NULL) != OK)
+			break;
 
-		first = 0;
+		if (next_phys != phys)
+			break;
 
-		prev_phys = phys;
-		vir_buf += I386_PAGE_SIZE;
-		bytes -= I386_PAGE_SIZE;
+		len += I386_PAGE_SIZE;
+		vir_addr += I386_PAGE_SIZE;
+		next_phys += I386_PAGE_SIZE;
 	}
 
-	return 1;
+	/* We might now have overshot the requested length somewhat. */
+	return MIN(bytes, len);
 }
 
 /*===========================================================================*

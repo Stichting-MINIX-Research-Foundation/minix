@@ -111,7 +111,7 @@ PUBLIC int do_umap_remote(struct proc * caller, message * m_ptr)
       phys_addr = lin_addr;
   }
 
-  if(vm_running && !vm_contiguous(targetpr, lin_addr, count)) {
+  if(vm_running && vm_lookup_range(targetpr, lin_addr, NULL, count) != count) {
 	printf("SYSTEM:do_umap: not contiguous\n");
 	return EFAULT;
   }
