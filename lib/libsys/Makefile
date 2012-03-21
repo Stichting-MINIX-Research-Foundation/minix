@@ -109,6 +109,7 @@ SRCS=  \
 	sys_voutw.c \
 	sys_vsafecopy.c \
 	sys_vtimer.c \
+	sys_vumap.c \
 	taskcall.c \
 	tickdelay.c \
 	timers.c \

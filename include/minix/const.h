@@ -46,9 +46,12 @@
 
 #include <sys/null.h>      /* NULL Pointer */
 
-#define SCPVEC_NR	  64	/* max # of entries in a SYS_VSAFECOPY* request */
-#define NR_IOREQS	  64
-				/* maximum number of entries in an iorequest */
+#define SCPVEC_NR	  64	/* max # of entries in a SYS_VSAFECOPY request */
+#define MAPVEC_NR	  64	/* max # of entries in a SYS_VUMAP request */
+#define NR_IOREQS	  64	/* maximum number of entries in an iorequest */
+
+#define VUA_READ	0x01	/* for SYS_VUMAP: read access */
+#define VUA_WRITE	0x02	/* for SYS_VUMAP: write access */
 
 /* Message passing constants. */
 #define MESS_SIZE (sizeof(message))	/* might need usizeof from FS here */

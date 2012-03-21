@@ -313,6 +313,7 @@
 #  define SYS_VIRCOPY    (KERNEL_CALL + 15)	/* sys_vircopy() */
 #  define SYS_PHYSCOPY   (KERNEL_CALL + 16) 	/* sys_physcopy() */
 #  define SYS_UMAP_REMOTE (KERNEL_CALL + 17)	/* sys_umap_remote() */
+#  define SYS_VUMAP      (KERNEL_CALL + 18)	/* sys_vumap() */
 
 #  define SYS_IRQCTL     (KERNEL_CALL + 19)	/* sys_irqctl() */
 #  define SYS_INT86      (KERNEL_CALL + 20)	/* sys_int86() */
@@ -436,6 +437,16 @@
 #define CP_DST_ENDPT	m5_i2	/* process to copy to */
 #define CP_DST_ADDR	m5_l2	/* address where data go to */
 #define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
+
+/* Field names for SYS_VUMAP. */
+#define VUMAP_ENDPT	m10_i1	/* grant owner, or SELF for local addresses */
+#define VUMAP_VADDR	m10_l1	/* address of virtual (input) vector */
+#define VUMAP_VCOUNT	m10_i2	/* number of elements in virtual vector */
+#define VUMAP_OFFSET	m10_l2	/* offset into first entry of input vector */
+#define VUMAP_ACCESS	m10_i3	/* access requested for input (VUA_ flags) */
+#define VUMAP_PADDR	m10_l3	/* address of physical (output) vector */
+#define VUMAP_PMAX	m10_i4	/* max number of physical vector elements */
+#define VUMAP_PCOUNT	m10_i1	/* upon return: number of elements filled */
 
 /* Field names for SYS_GETINFO. */
 #define I_REQUEST      m7_i3	/* what info to get */

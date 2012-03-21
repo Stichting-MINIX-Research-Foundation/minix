@@ -59,6 +59,23 @@ struct vir_cp_req {
   phys_bytes count;
 };
 
+/* Structures for SYS_VUMAP. */
+struct vumap_vir {
+  union {
+	cp_grant_id_t u_grant;	/* grant identifier, for non-SELF endpoint */
+	vir_bytes u_addr;	/* local virtual address, for SELF endpoint */
+  } vv_u;
+  size_t vv_size;		/* size in bytes */
+};
+#define vv_grant	vv_u.u_grant
+#define vv_addr		vv_u.u_addr
+
+struct vumap_phys {
+  phys_bytes vp_addr;		/* physical address */
+  size_t vp_size;		/* size in bytes */
+};
+
+/* I/O vector structures used in protocols between services. */
 typedef struct {
   vir_bytes iov_addr;		/* address of an I/O buffer */
   vir_bytes iov_size;		/* sizeof an I/O buffer */

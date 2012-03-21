@@ -92,6 +92,11 @@ _PROTOTYPE( int do_umap_remote, (struct proc * caller, message *m_ptr) );
 #define do_umap_remote NULL
 #endif
 
+_PROTOTYPE( int do_vumap, (struct proc * caller, message *m_ptr) );
+#if ! USE_VUMAP
+#define do_vumap NULL
+#endif
+
 _PROTOTYPE( int do_memset, (struct proc * caller, message *m_ptr) );
 #if ! USE_MEMSET
 #define do_memset NULL
