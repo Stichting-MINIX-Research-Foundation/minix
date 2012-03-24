@@ -3,7 +3,7 @@
 #include "file.h"
 #include "fproc.h"
 
-_PROTOTYPE( int gcov_flush, (cp_grant_id_t grantid, size_t size ));
+int gcov_flush(cp_grant_id_t grantid, size_t size );
 
 /*===========================================================================*
  *				do_gcov_flush				*

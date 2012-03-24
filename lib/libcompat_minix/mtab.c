@@ -50,13 +50,13 @@ static char mtab_out[BUF_SIZE+1]; /* buf to build /etc/mtab for output later */
 static char *iptr = mtab_in;	  /* pointer to next line to feed out. */
 static char *optr = mtab_out;	  /* pointer to place where next line goes */
 
-_PROTOTYPE(int load_mtab, (char *prog_name ));
-_PROTOTYPE(int rewrite_mtab, (char *prog_name ));
-_PROTOTYPE(int get_mtab_entry, (char *special, char *mounted_on, 
-					char *version, char *rw_flag));
-_PROTOTYPE(int put_mtab_entry, (char *special, char *mounted_on, 
-					char *version, char *rw_flag));
-PRIVATE _PROTOTYPE(void err, (char *prog_name, char *str ));
+int load_mtab(char *prog_name );
+int rewrite_mtab(char *prog_name );
+int get_mtab_entry(char *special, char *mounted_on, char *version, char
+	*rw_flag);
+int put_mtab_entry(char *special, char *mounted_on, char *version, char
+	*rw_flag);
+PRIVATE void err(char *prog_name, char *str );
 
 
 int load_mtab(prog_name)

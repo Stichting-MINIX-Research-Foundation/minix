@@ -6,15 +6,15 @@
 
 /* AC97 Mixer and Mode control function prototypes */
 
-FORWARD _PROTOTYPE( int  AC97_write, 
-		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
-FORWARD _PROTOTYPE( int  AC97_write_unsynced, 
-		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t wData) );
-FORWARD _PROTOTYPE( int  AC97_read_unsynced, 
-		(const DEV_STRUCT * pCC, u16_t wAddr, u16_t *data) );
-FORWARD _PROTOTYPE( void set_nice_volume, (void) );
-FORWARD _PROTOTYPE( int AC97_get_volume, (struct volume_level *level) );
-FORWARD _PROTOTYPE( int AC97_set_volume, (const struct volume_level *level) );
+FORWARD int AC97_write(const DEV_STRUCT * pCC, u16_t wAddr, u16_t
+	wData);
+FORWARD int AC97_write_unsynced(const DEV_STRUCT * pCC, u16_t wAddr,
+	u16_t wData);
+FORWARD int AC97_read_unsynced(const DEV_STRUCT * pCC, u16_t wAddr,
+	u16_t *data);
+FORWARD void set_nice_volume(void);
+FORWARD int AC97_get_volume(struct volume_level *level);
+FORWARD int AC97_set_volume(const struct volume_level *level);
 
 
 

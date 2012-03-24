@@ -65,14 +65,13 @@ PRIVATE struct hole hole[_NR_HOLES];
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
 PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
 
-FORWARD _PROTOTYPE( void del_slot, (struct hole *prev_ptr, struct hole *hp) );
-FORWARD _PROTOTYPE( void merge, (struct hole *hp)			    );
-FORWARD _PROTOTYPE( void free_pages, (phys_bytes addr, int pages)	    );
-FORWARD _PROTOTYPE( phys_bytes alloc_pages, (int pages, int flags,
-	phys_bytes *ret));
+FORWARD void del_slot(struct hole *prev_ptr, struct hole *hp);
+FORWARD void merge(struct hole *hp);
+FORWARD void free_pages(phys_bytes addr, int pages);
+FORWARD phys_bytes alloc_pages(int pages, int flags, phys_bytes *ret);
 
 #if SANITYCHECKS
-FORWARD _PROTOTYPE( void holes_sanity_f, (char *fn, int line)		    );
+FORWARD void holes_sanity_f(char *fn, int line);
 #define CHECKHOLES holes_sanity_f(__FILE__, __LINE__)
 
 #define PAGESPERGB (1024*1024*1024/VM_PAGE_SIZE) /* 1GB of memory */

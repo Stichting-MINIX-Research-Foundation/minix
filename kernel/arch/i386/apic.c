@@ -188,8 +188,8 @@ PRIVATE void ioapic_write(u32_t ioa_base, u8_t reg, u32_t val)
 	*((u32_t *)(ioa_base + IOAPIC_IOWIN)) = val;
 }
 
-_PROTOTYPE(void lapic_microsec_sleep, (unsigned count));
-_PROTOTYPE(void apic_idt_init, (const int reset));
+void lapic_microsec_sleep(unsigned count);
+void apic_idt_init(const int reset);
 
 PRIVATE void ioapic_enable_pin(vir_bytes ioapic_addr, int pin)
 {

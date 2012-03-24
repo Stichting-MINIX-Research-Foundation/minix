@@ -38,8 +38,8 @@ PUBLIC struct segdesc_s gdt[GDT_SIZE]=		/* used in klib.s and mpx.s */
 PRIVATE struct gatedesc_s idt[IDT_SIZE];	/* zero-init so none present */
 PUBLIC struct tss_s tss[CONFIG_MAX_CPUS];			/* zero init */
 
-FORWARD _PROTOTYPE( void sdesc, (struct segdesc_s *segdp, phys_bytes base,
-		vir_bytes size) );
+FORWARD void sdesc(struct segdesc_s *segdp, phys_bytes base, vir_bytes
+	size);
 
 /*===========================================================================*
  *				enable_iop				     * 

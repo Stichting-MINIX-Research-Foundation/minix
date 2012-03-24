@@ -49,7 +49,7 @@ long Locbit = LLITOUT;	/* Bit SUPPOSED to disable output translations */
 
 #include "zmodem.h"
 
-_PROTOTYPE(static unsigned getspeed , (int code ));
+static unsigned getspeed(int code );
 
 #if HOWMANY  > 255
 Howmany must be 255 or less

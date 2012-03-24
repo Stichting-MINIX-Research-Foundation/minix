@@ -22,8 +22,8 @@
 
 int subtest;
 
-_PROTOTYPE(void test8a, (void));
-_PROTOTYPE(void test8b, (void));
+void test8a(void);
+void test8b(void);
 
 int main(int argc, char *argv[])
 {

@@ -16,7 +16,7 @@
 #include "ftp.h"
 #include "other.h"
 
-_PROTOTYPE(static int docmdargs, (char *cmd, int fa));
+static int docmdargs(char *cmd, int fa);
 
 void FTPinit()
 {

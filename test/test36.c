@@ -23,13 +23,13 @@
 
 int superuser;
 
-_PROTOTYPE(void test36a, (void));
-_PROTOTYPE(void test36b, (void));
-_PROTOTYPE(void test36c, (void));
-_PROTOTYPE(void test36d, (void));
-_PROTOTYPE(int not_provided_option, (int _option));
-_PROTOTYPE(int provided_option, (int _option, int _minimum_value));
-_PROTOTYPE(int variating_option, (int _option, int _minimum_value));
+void test36a(void);
+void test36b(void);
+void test36c(void);
+void test36d(void);
+int not_provided_option(int _option);
+int provided_option(int _option, int _minimum_value);
+int variating_option(int _option, int _minimum_value);
 
 char *testdirs[] = {
 	    "/",

@@ -27,7 +27,7 @@
 #define SUCCESS	0		/* exit code in case of success */
 #define FAILURE 1		/*                   or failure */
 
-_PROTOTYPE(int main, (void));
+int main(void);
 
 static char dir[PATH_MAX + 1];
 static char *errmsg = "pwd: cannot search some directory on the path\n";

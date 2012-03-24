@@ -67,15 +67,15 @@ int partn, lens;
 int debug = 0, nochk = 0, onedone = 0;
 int chtbl[NCHARS], cdlen[NORMLEN + 3];
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(char *getnword, (char *str, int n));
-_PROTOTYPE(void gettable, (void));
-_PROTOTYPE(void decode, (void));
-_PROTOTYPE(void getfile, (char *buf));
-_PROTOTYPE(void format, (char *fp, ...));
-_PROTOTYPE(void doprnt, (char *fp, char *ap));
-_PROTOTYPE(void puti, (unsigned int i, unsigned int r));
-_PROTOTYPE(void outc, (int c));
+int main(int argc, char **argv);
+char *getnword(char *str, int n);
+void gettable(void);
+void decode(void);
+void getfile(char *buf);
+void format(char *fp, ...);
+void doprnt(char *fp, char *ap);
+void puti(unsigned int i, unsigned int r);
+void outc(int c);
 
 int main(argc, argv) int argc; char *argv[];
 {

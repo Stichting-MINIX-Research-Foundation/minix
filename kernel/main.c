@@ -34,7 +34,7 @@
 char *** _penviron;
 
 /* Prototype declarations for PRIVATE functions. */
-FORWARD _PROTOTYPE( void announce, (void));	
+FORWARD void announce(void);
 
 PUBLIC void bsp_finish_booting(void)
 {

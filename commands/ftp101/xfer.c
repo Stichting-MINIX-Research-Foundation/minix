@@ -22,10 +22,10 @@
 #include "ftp.h"
 #include "xfer.h"
 
-_PROTOTYPE(static int asciisend, (int fd, int fdout));
-_PROTOTYPE(static int binarysend, (int fd, int fdout));
-_PROTOTYPE(static int asciirecv, (int fd, int fdin));
-_PROTOTYPE(static int binaryrecv, (int fd, int fdin));
+static int asciisend(int fd, int fdout);
+static int binarysend(int fd, int fdout);
+static int asciirecv(int fd, int fdin);
+static int binaryrecv(int fd, int fdin);
 
 #if (__WORD_SIZE == 4)
 static char buffer[8192];

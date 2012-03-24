@@ -122,55 +122,55 @@ EXTERN unsigned nioapics;
 EXTERN u32_t lapic_addr_vaddr; /* we remember the virtual address here until we
 				  switch to paging */
 
-_PROTOTYPE (int lapic_enable, (unsigned cpu));
-_PROTOTYPE (void ioapic_unmask_irq, (unsigned irq));
-_PROTOTYPE (void ioapic_mask_irq, (unsigned irq));
-_PROTOTYPE (void ioapic_reset_pic, (void));
+int lapic_enable(unsigned cpu);
+void ioapic_unmask_irq(unsigned irq);
+void ioapic_mask_irq(unsigned irq);
+void ioapic_reset_pic(void);
 
 EXTERN int ioapic_enabled;
 EXTERN unsigned nioapics;
 
-_PROTOTYPE (void lapic_microsec_sleep, (unsigned count));
-_PROTOTYPE (void ioapic_disable_irqs, (u32_t irqs));
-_PROTOTYPE (void ioapic_enable_irqs, (u32_t irqs));
+void lapic_microsec_sleep(unsigned count);
+void ioapic_disable_irqs(u32_t irqs);
+void ioapic_enable_irqs(u32_t irqs);
 
-_PROTOTYPE (int lapic_enable, (unsigned cpu));
-_PROTOTYPE (void lapic_disable, (void));
+int lapic_enable(unsigned cpu);
+void lapic_disable(void);
 
-_PROTOTYPE (void ioapic_disable_all, (void));
-_PROTOTYPE (int ioapic_enable_all, (void));
+void ioapic_disable_all(void);
+int ioapic_enable_all(void);
 
-_PROTOTYPE(int detect_ioapics, (void));
-_PROTOTYPE(void apic_idt_init, (int reset));
+int detect_ioapics(void);
+void apic_idt_init(int reset);
 
 #ifdef CONFIG_SMP
-_PROTOTYPE(int apic_send_startup_ipi, (unsigned cpu, phys_bytes trampoline));
-_PROTOTYPE(int apic_send_init_ipi, (unsigned cpu, phys_bytes trampoline));
-_PROTOTYPE(unsigned int apicid, (void));
-_PROTOTYPE(void ioapic_set_id, (u32_t addr, unsigned int id));
+int apic_send_startup_ipi(unsigned cpu, phys_bytes trampoline);
+int apic_send_init_ipi(unsigned cpu, phys_bytes trampoline);
+unsigned int apicid(void);
+void ioapic_set_id(u32_t addr, unsigned int id);
 #else
-_PROTOTYPE(int apic_single_cpu_init, (void));
+int apic_single_cpu_init(void);
 #endif
 
-_PROTOTYPE(void lapic_set_timer_periodic, (const unsigned freq));
-_PROTOTYPE(void lapic_set_timer_one_shot, (const u32_t value));
-_PROTOTYPE(void lapic_stop_timer, (void));
-_PROTOTYPE(void lapic_restart_timer, (void));
+void lapic_set_timer_periodic(const unsigned freq);
+void lapic_set_timer_one_shot(const u32_t value);
+void lapic_stop_timer(void);
+void lapic_restart_timer(void);
 
-_PROTOTYPE(void ioapic_set_irq, (unsigned irq));
-_PROTOTYPE(void ioapic_unset_irq, (unsigned irq));
+void ioapic_set_irq(unsigned irq);
+void ioapic_unset_irq(unsigned irq);
 
 /* signal the end of interrupt handler to apic */
 #define apic_eoi() do { *((volatile u32_t *) lapic_eoi_addr) = 0; } while(0)
 
-_PROTOTYPE(void ioapic_eoi, (int irq));
+void ioapic_eoi(int irq);
 
-_PROTOTYPE(void dump_apic_irq_state, (void));
+void dump_apic_irq_state(void);
 
-_PROTOTYPE(void apic_send_ipi, (unsigned vector, unsigned cpu, int type));
+void apic_send_ipi(unsigned vector, unsigned cpu, int type);
 
-_PROTOTYPE(void apic_ipi_sched_intr, (void));
-_PROTOTYPE(void apic_ipi_halt_intr, (void));
+void apic_ipi_sched_intr(void);
+void apic_ipi_halt_intr(void);
 
 #define APIC_IPI_DEST			0
 #define APIC_IPI_SELF			1

@@ -66,16 +66,16 @@ struct sproc {
 
 static struct sproc * proc_hash[HASH_MOD];
 
-_PROTOTYPE(int handle_args, (int argc, char *argv[]));
-_PROTOTYPE(int start, (void));
-_PROTOTYPE(int stop, (void));
-_PROTOTYPE(int get, (void));
-_PROTOTYPE(int reset, (void));
-_PROTOTYPE(int create_named_pipe, (void));
-_PROTOTYPE(int alloc_mem, (void));
-_PROTOTYPE(int init_outfile, (void));
-_PROTOTYPE(int write_outfile, (void));
-_PROTOTYPE(int detach, (void));
+int handle_args(int argc, char *argv[]);
+int start(void);
+int stop(void);
+int get(void);
+int reset(void);
+int create_named_pipe(void);
+int alloc_mem(void);
+int init_outfile(void);
+int write_outfile(void);
+int detach(void);
 
 int main(int argc, char *argv[])
 {

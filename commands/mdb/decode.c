@@ -14,8 +14,8 @@
 #include <minix/callnr.h>
 #include "proto.h"
 
-FORWARD _PROTOTYPE( void get_message, (message *m, unsigned bx) );
-FORWARD _PROTOTYPE( void get_data, (char *s, unsigned bx, int cnt) );
+FORWARD void get_message(message *m, unsigned bx);
+FORWARD void get_data(char *s, unsigned bx, int cnt);
 
 PRIVATE message sent;
 PRIVATE message recv;

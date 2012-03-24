@@ -24,10 +24,10 @@ int rc = 0;
 
 char *defargv[] = {"-", 0};
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void error, (char *s, char *f));
-_PROTOTYPE(void sum, (int fd, char *fname));
-_PROTOTYPE(void putd, (int number, int fw, int zeros));
+int main(int argc, char **argv);
+void error(char *s, char *f);
+void sum(int fd, char *fname);
+void putd(int number, int fw, int zeros);
 
 int main(argc, argv)
 int argc;

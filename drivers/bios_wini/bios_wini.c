@@ -55,18 +55,17 @@ PRIVATE phys_bytes bios_buf_phys;
 PRIVATE int remap_first = 0;		/* Remap drives for CD HD emulation */
 #define BIOSBUF 16384
 
-_PROTOTYPE(int main, (void) );
-FORWARD _PROTOTYPE( struct device *w_prepare, (dev_t device) );
-FORWARD _PROTOTYPE( struct device *w_part, (dev_t minor) );
-FORWARD _PROTOTYPE( ssize_t w_transfer, (dev_t minor, int do_write,
-	u64_t position, endpoint_t endpt, iovec_t *iov, unsigned int nr_req,
-	int flags) );
-FORWARD _PROTOTYPE( int w_do_open, (dev_t minor, int access) );
-FORWARD _PROTOTYPE( int w_do_close, (dev_t minor) );
-FORWARD _PROTOTYPE( void w_init, (void) );
-FORWARD _PROTOTYPE( void w_geometry, (dev_t minor, struct partition *entry));
-FORWARD _PROTOTYPE( int w_ioctl, (dev_t minor, unsigned int request,
-	endpoint_t endpt, cp_grant_id_t grant) );
+int main(void);
+FORWARD struct device *w_prepare(dev_t device);
+FORWARD struct device *w_part(dev_t minor);
+FORWARD ssize_t w_transfer(dev_t minor, int do_write, u64_t position,
+	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
+FORWARD int w_do_open(dev_t minor, int access);
+FORWARD int w_do_close(dev_t minor);
+FORWARD void w_init(void);
+FORWARD void w_geometry(dev_t minor, struct partition *entry);
+FORWARD int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+	cp_grant_id_t grant);
 
 /* Entry points to this driver. */
 PRIVATE struct blockdriver w_dtab = {
@@ -85,8 +84,8 @@ PRIVATE struct blockdriver w_dtab = {
 };
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				bios_winchester_task			     *

@@ -40,17 +40,16 @@
 struct ddekit_slab;
 
 /* Store user pointer in slab cache */
-_PROTOTYPE( void ddekit_slab_set_data, (struct ddekit_slab * slab,
-                                        void *data));
+void ddekit_slab_set_data(struct ddekit_slab * slab, void *data);
 
 /* Read user pointer from slab cache */
-_PROTOTYPE( void *ddekit_slab_get_data,(struct ddekit_slab * slab));
+void *ddekit_slab_get_data(struct ddekit_slab * slab);
 
 /* Allocate slab in slab cache */
-_PROTOTYPE( void *ddekit_slab_alloc, (struct ddekit_slab * slab));
+void *ddekit_slab_alloc(struct ddekit_slab * slab);
 
 /* Allocate slab in slab cache */
-_PROTOTYPE( void ddekit_slab_free, (struct ddekit_slab * slab, void *objp));
+void ddekit_slab_free(struct ddekit_slab * slab, void *objp);
 
 /*
  * Setup page cache for all slabs
@@ -65,14 +64,14 @@ _PROTOTYPE( void ddekit_slab_free, (struct ddekit_slab * slab, void *objp));
  * will be freed at the memory server. This page cache caches pages from all
  * slabs.
  */
-_PROTOTYPE( void ddekit_slab_setup_page_cache, (unsigned pages));
+void ddekit_slab_setup_page_cache(unsigned pages);
 
 /*
  * Destroy slab cache
  *
  * slab:  pointer to slab cache structure
  */
-_PROTOTYPE( void ddekit_slab_destroy, (struct ddekit_slab * slab));
+void ddekit_slab_destroy(struct ddekit_slab * slab);
 
 /**
  * Initialize slab cache
@@ -82,7 +81,7 @@ _PROTOTYPE( void ddekit_slab_destroy, (struct ddekit_slab * slab));
  *
  * \return pointer to new slab cache or 0 on error
  */
-_PROTOTYPE( struct ddekit_slab * ddekit_slab_init,(unsigned size, int contiguous));
+struct ddekit_slab * ddekit_slab_init(unsigned size, int contiguous);
 
 
 /**********************
@@ -103,22 +102,20 @@ _PROTOTYPE( struct ddekit_slab * ddekit_slab_init,(unsigned size, int contiguous
  * Allocated blocks have valid virt->phys mappings and are physically
  * contiguous.
  */
-_PROTOTYPE( void *ddekit_large_malloc, (int size));
+void *ddekit_large_malloc(int size);
 
 /**
  * Free large memory block
  *
  * \param p  pointer to memory block
  */
-_PROTOTYPE( void  ddekit_large_free, (void *p));
+void ddekit_large_free(void *p);
 
 /** FIXME
  * contig_malloc() is the lowest-level allocator interface one could implement.
  * we should consider to provide vmalloc() too. */
-_PROTOTYPE( void *ddekit_contig_malloc,
-    (unsigned long size, unsigned long low,
-	 unsigned long high, unsigned long alignment,
-	 unsigned long boundary));
+void *ddekit_contig_malloc(unsigned long size, unsigned long low,
+	unsigned long high, unsigned long alignment, unsigned long boundary);
 
 
 /*****************************
@@ -134,13 +131,13 @@ _PROTOTYPE( void *ddekit_contig_malloc,
  * The blocks allocated via this allocator CANNOT be used for DMA or other
  * device operations, i.e., there exists no virt->phys mapping.
  */
-_PROTOTYPE( void *ddekit_simple_malloc, (unsigned size));
+void *ddekit_simple_malloc(unsigned size);
 
 /**
  * Free memory block via simple allocator
  *
  * \param p  pointer to memory block
  */
-_PROTOTYPE( void ddekit_simple_free, (void *p));
+void ddekit_simple_free(void *p);
 
 #endif

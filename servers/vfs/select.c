@@ -39,34 +39,28 @@ PRIVATE struct selectentry {
   timer_t timer;	/* if expiry > 0 */
 } selecttab[MAXSELECTS];
 
-FORWARD _PROTOTYPE(int copy_fdsets, (struct selectentry *se, int nfds,
-				      int direction)			);
-FORWARD _PROTOTYPE(int do_select_request, (struct selectentry *se, int fd,
-					   int *ops)			);
-FORWARD _PROTOTYPE(void filp_status, (struct filp *fp, int status)	);
-FORWARD _PROTOTYPE(int is_deferred, (struct selectentry *se)		);
-FORWARD _PROTOTYPE(void restart_proc, (struct selectentry *se)		);
-FORWARD _PROTOTYPE(void ops2tab, (int ops, int fd, struct selectentry *e));
-FORWARD _PROTOTYPE(int is_regular_file, (struct filp *f)		);
-FORWARD _PROTOTYPE(int is_pipe, (struct filp *f)			);
-FORWARD _PROTOTYPE(int is_supported_major, (struct filp *f)			);
-FORWARD _PROTOTYPE(void select_lock_filp, (struct filp *f, int ops)	);
-FORWARD _PROTOTYPE(int select_request_async, (struct filp *f, int *ops,
-					       int block)		);
-FORWARD _PROTOTYPE(int select_request_file, (struct filp *f, int *ops,
-					     int block)			);
-FORWARD _PROTOTYPE(int select_request_major, (struct filp *f, int *ops,
-					     int block)			);
-FORWARD _PROTOTYPE(int select_request_pipe, (struct filp *f, int *ops,
-					     int block)			);
-FORWARD _PROTOTYPE(int select_request_sync, (struct filp *f, int *ops,
-					        int block)		);
-FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e)	);
-FORWARD _PROTOTYPE(void select_cancel_filp, (struct filp *f)		);
-FORWARD _PROTOTYPE(void select_return, (struct selectentry *)		);
-FORWARD _PROTOTYPE(void select_restart_filps, (void)				);
-FORWARD _PROTOTYPE(int tab2ops, (int fd, struct selectentry *e)		);
-FORWARD _PROTOTYPE(void wipe_select, (struct selectentry *s)		);
+FORWARD int copy_fdsets(struct selectentry *se, int nfds, int
+	direction);
+FORWARD int do_select_request(struct selectentry *se, int fd, int *ops);
+FORWARD void filp_status(struct filp *fp, int status);
+FORWARD int is_deferred(struct selectentry *se);
+FORWARD void restart_proc(struct selectentry *se);
+FORWARD void ops2tab(int ops, int fd, struct selectentry *e);
+FORWARD int is_regular_file(struct filp *f);
+FORWARD int is_pipe(struct filp *f);
+FORWARD int is_supported_major(struct filp *f);
+FORWARD void select_lock_filp(struct filp *f, int ops);
+FORWARD int select_request_async(struct filp *f, int *ops, int block);
+FORWARD int select_request_file(struct filp *f, int *ops, int block);
+FORWARD int select_request_major(struct filp *f, int *ops, int block);
+FORWARD int select_request_pipe(struct filp *f, int *ops, int block);
+FORWARD int select_request_sync(struct filp *f, int *ops, int block);
+FORWARD void select_cancel_all(struct selectentry *e);
+FORWARD void select_cancel_filp(struct filp *f);
+FORWARD void select_return(struct selectentry *);
+FORWARD void select_restart_filps(void);
+FORWARD int tab2ops(int fd, struct selectentry *e);
+FORWARD void wipe_select(struct selectentry *s);
 
 PRIVATE struct fdtype {
 	int (*select_request)(struct filp *, int *ops, int block);

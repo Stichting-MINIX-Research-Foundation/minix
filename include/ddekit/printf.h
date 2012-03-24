@@ -7,17 +7,17 @@
 /** Print message.
  * \ingroup DDEKit_util
  */
-_PROTOTYPE( int ddekit_print,(const char *));
+int ddekit_print(const char *);
 
 /** Print message with format.
  * \ingroup DDEKit_util
  */
-_PROTOTYPE( int ddekit_printf,(const char *fmt, ...));
+int ddekit_printf(const char *fmt, ...);
 
 /** Print message with format list.
  * \ingroup DDEKit_util
  */
-_PROTOTYPE( int ddekit_vprintf, (const char *fmt, va_list va));
+int ddekit_vprintf(const char *fmt, va_list va);
 
 /** Log function and message.
  * \ingroup DDEKit_util

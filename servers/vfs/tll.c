@@ -6,7 +6,7 @@
 #include "threads.h"
 #include <assert.h>
 
-FORWARD _PROTOTYPE( int tll_append, (tll_t *tllp, tll_access_t locktype));
+FORWARD int tll_append(tll_t *tllp, tll_access_t locktype);
 
 PRIVATE int tll_append(tll_t *tllp, tll_access_t locktype)
 {

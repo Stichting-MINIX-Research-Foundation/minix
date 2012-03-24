@@ -25,7 +25,7 @@
 #include "telnet.h"
 #include "telnetd.h"
 
-_PROTOTYPE(void sig_done, (int sig));
+void sig_done(int sig);
 
 static char buff[4096];
 

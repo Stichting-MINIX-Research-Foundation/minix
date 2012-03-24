@@ -37,10 +37,10 @@ char MaxPath[PATH_MAX];
 char *ToLongName;		/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];
 
-_PROTOTYPE(void test28a, (void));
-_PROTOTYPE(void test28c, (void));
-_PROTOTYPE(void test28b, (void));
-_PROTOTYPE(void makelongnames, (void));
+void test28a(void);
+void test28c(void);
+void test28b(void);
+void makelongnames(void);
 
 int main(int argc, char *argv[])
 {

@@ -4,10 +4,10 @@
 #include "es1371.h"
 #include "wait.h"
 
-_PROTOTYPE( int SRCInit, (DEV_STRUCT * DSP) );
-_PROTOTYPE( int SRCRegRead, (DEV_STRUCT * DSP, u16_t reg, u16_t *data) );
-_PROTOTYPE( int SRCRegWrite, (DEV_STRUCT * DSP, u16_t reg, u16_t val) );
-_PROTOTYPE( void SRCSetRate, (DEV_STRUCT * DSP, char src_base, u16_t rate) );
+int SRCInit(DEV_STRUCT * DSP);
+int SRCRegRead(DEV_STRUCT * DSP, u16_t reg, u16_t *data);
+int SRCRegWrite(DEV_STRUCT * DSP, u16_t reg, u16_t val);
+void SRCSetRate(DEV_STRUCT * DSP, char src_base, u16_t rate);
 
 
 /* register/base and control equates for the SRC RAM */

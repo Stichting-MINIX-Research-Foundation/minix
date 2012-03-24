@@ -80,47 +80,43 @@ ec_conf_t ec_conf[EC_CONF_NR]=    /* Card addresses */
 };
 
 /* General */
-_PROTOTYPE( static void do_init, (message *mp)                          );
-_PROTOTYPE( static void ec_init, (ether_card_t *ec)                     );
-_PROTOTYPE( static void ec_confaddr, (ether_card_t *ec)                 );
-_PROTOTYPE( static void ec_reinit, (ether_card_t *ec)                   );
-_PROTOTYPE( static void ec_check_ints, (ether_card_t *ec)               );
-_PROTOTYPE( static void conf_hw, (ether_card_t *ec)                     );
-_PROTOTYPE( static void update_conf, (ether_card_t *ec, ec_conf_t *ecp) );
-_PROTOTYPE( static void mess_reply, (message *req, message *reply)      );
-_PROTOTYPE( static void do_int, (ether_card_t *ec)                      );
-_PROTOTYPE( static void reply, (ether_card_t *ec)                       );
-_PROTOTYPE( static void ec_reset, (ether_card_t *ec)                    );
-_PROTOTYPE( static void ec_send, (ether_card_t *ec)                     );
-_PROTOTYPE( static void ec_recv, (ether_card_t *ec)                     );
-_PROTOTYPE( static void do_vwrite_s, (message *mp, int from_int)        );
-_PROTOTYPE( static void do_vread_s, (const message *mp)                 );
-_PROTOTYPE( static void ec_user2nic,
-            (ether_card_t *dep, iovec_dat_t *iovp,
-             vir_bytes offset, int nic_addr,
-             vir_bytes count)                                           );
-_PROTOTYPE( static void ec_nic2user, 
-            (ether_card_t *ec, int nic_addr,
-             iovec_dat_t *iovp, vir_bytes offset,
-             vir_bytes count)                                           );
-_PROTOTYPE( static int calc_iovec_size, (iovec_dat_t *iovp)             );
-_PROTOTYPE( static void ec_next_iovec, (iovec_dat_t *iovp)              );
-_PROTOTYPE( static void do_getstat_s, (message *mp)                     );
-_PROTOTYPE( static void lance_stop, (ether_card_t *ec)                  );
+static void do_init(message *mp);
+static void ec_init(ether_card_t *ec);
+static void ec_confaddr(ether_card_t *ec);
+static void ec_reinit(ether_card_t *ec);
+static void ec_check_ints(ether_card_t *ec);
+static void conf_hw(ether_card_t *ec);
+static void update_conf(ether_card_t *ec, ec_conf_t *ecp);
+static void mess_reply(message *req, message *reply);
+static void do_int(ether_card_t *ec);
+static void reply(ether_card_t *ec);
+static void ec_reset(ether_card_t *ec);
+static void ec_send(ether_card_t *ec);
+static void ec_recv(ether_card_t *ec);
+static void do_vwrite_s(message *mp, int from_int);
+static void do_vread_s(const message *mp);
+static void ec_user2nic(ether_card_t *dep, iovec_dat_t *iovp, vir_bytes
+	offset, int nic_addr, vir_bytes count);
+static void ec_nic2user(ether_card_t *ec, int nic_addr, iovec_dat_t
+	*iovp, vir_bytes offset, vir_bytes count);
+static int calc_iovec_size(iovec_dat_t *iovp);
+static void ec_next_iovec(iovec_dat_t *iovp);
+static void do_getstat_s(message *mp);
+static void lance_stop(ether_card_t *ec);
 
-_PROTOTYPE( static void lance_dump, (void)                              );
-_PROTOTYPE( static void getAddressing, (int devind, ether_card_t *ec)   );
+static void lance_dump(void);
+static void getAddressing(int devind, ether_card_t *ec);
 
 /* probe+init LANCE cards */
-_PROTOTYPE( static int lance_probe, (ether_card_t *ec, int skip)        );
-_PROTOTYPE( static void lance_init_card, (ether_card_t *ec)             );
+static int lance_probe(ether_card_t *ec, int skip);
+static void lance_init_card(ether_card_t *ec);
 
 /* Accesses Lance Control and Status Registers */
-_PROTOTYPE( static u8_t  in_byte, (port_t port)                         );
-_PROTOTYPE( static u16_t in_word, (port_t port)                         );
-_PROTOTYPE( static void  out_word, (port_t port, u16_t value)           );
-_PROTOTYPE( static u16_t read_csr, (port_t ioaddr, u16_t csrno)         );
-_PROTOTYPE( static void  write_csr, (port_t ioaddr, u16_t csrno, u16_t value));
+static u8_t in_byte(port_t port);
+static u16_t in_word(port_t port);
+static void out_word(port_t port, u16_t value);
+static u16_t read_csr(port_t ioaddr, u16_t csrno);
+static void write_csr(port_t ioaddr, u16_t csrno, u16_t value);
 
 /* --- LANCE --- */
 /* General */
@@ -249,9 +245,9 @@ static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
 phys_bytes lance_buf_phys;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *                              main                                         *

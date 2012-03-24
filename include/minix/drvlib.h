@@ -4,8 +4,8 @@
 
 #include <machine/partition.h>
 
-_PROTOTYPE( void partition, (struct blockdriver *bdr, int device, int style,
-	int atapi) );
+void partition(struct blockdriver *bdr, int device, int style, int
+	atapi);
 
 #define DEV_PER_DRIVE	(1 + NR_PARTITIONS)
 #define MINOR_t0	64

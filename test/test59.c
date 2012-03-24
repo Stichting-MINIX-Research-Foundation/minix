@@ -61,22 +61,22 @@ PRIVATE int rwlock_a_step, rwlock_b_step;
 #define MEG 1024*1024
 #define MAGIC ((signed) 0xb4a3f1c2)
 
-FORWARD _PROTOTYPE( void destr_a, (void *arg)				);
-FORWARD _PROTOTYPE( void destr_b, (void *arg)				);
-FORWARD _PROTOTYPE( void *thread_a, (void *arg)				);
-FORWARD _PROTOTYPE( void *thread_b, (void *arg)				);
-FORWARD _PROTOTYPE( void *thread_c, (void *arg)				);
-FORWARD _PROTOTYPE( void *thread_d, (void *arg)				);
-FORWARD _PROTOTYPE( void thread_e, (void)				);
-FORWARD _PROTOTYPE( void *thread_f, (void *arg)				);
-FORWARD _PROTOTYPE( void *thread_g, (void *arg)				);
-FORWARD _PROTOTYPE( void *thread_h, (void *arg)				);
-FORWARD _PROTOTYPE( void test_scheduling, (void)			);
-FORWARD _PROTOTYPE( void test_mutex, (void)				);
-FORWARD _PROTOTYPE( void test_condition, (void)				);
-FORWARD _PROTOTYPE( void test_attributes, (void)			);
-FORWARD _PROTOTYPE( void test_keys, (void)				);
-FORWARD _PROTOTYPE( void err, (int subtest, int error)			);
+FORWARD void destr_a(void *arg);
+FORWARD void destr_b(void *arg);
+FORWARD void *thread_a(void *arg);
+FORWARD void *thread_b(void *arg);
+FORWARD void *thread_c(void *arg);
+FORWARD void *thread_d(void *arg);
+FORWARD void thread_e(void);
+FORWARD void *thread_f(void *arg);
+FORWARD void *thread_g(void *arg);
+FORWARD void *thread_h(void *arg);
+FORWARD void test_scheduling(void);
+FORWARD void test_mutex(void);
+FORWARD void test_condition(void);
+FORWARD void test_attributes(void);
+FORWARD void test_keys(void);
+FORWARD void err(int subtest, int error);
 
 /*===========================================================================*
  *				thread_a				     *

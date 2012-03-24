@@ -238,32 +238,30 @@ PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
  */
 PRIVATE timer_t f_tmr_timeout;		/* timer for various timeouts */
 PRIVATE u32_t system_hz;		/* system clock frequency */
-FORWARD _PROTOTYPE( void f_expire_tmrs, (clock_t stamp)			);
-FORWARD _PROTOTYPE( void stop_motor, (timer_t *tp) 			);
-FORWARD _PROTOTYPE( void f_timeout, (timer_t *tp) 			);
+FORWARD void f_expire_tmrs(clock_t stamp);
+FORWARD void stop_motor(timer_t *tp);
+FORWARD void f_timeout(timer_t *tp);
 
-FORWARD _PROTOTYPE( struct device *f_prepare, (dev_t device) 		);
-FORWARD _PROTOTYPE( struct device *f_part, (dev_t minor) 		);
-FORWARD _PROTOTYPE( void f_cleanup, (void) 				);
-FORWARD _PROTOTYPE( ssize_t f_transfer, (dev_t minor, int do_write,
-	u64_t position, endpoint_t proc_nr, iovec_t *iov,
-	unsigned int nr_req, int flags)					);
-FORWARD _PROTOTYPE( int dma_setup, (int do_write) 			);
-FORWARD _PROTOTYPE( void start_motor, (void) 				);
-FORWARD _PROTOTYPE( int seek, (void) 					);
-FORWARD _PROTOTYPE( int fdc_transfer, (int do_write) 			);
-FORWARD _PROTOTYPE( int fdc_results, (void) 				);
-FORWARD _PROTOTYPE( int fdc_command, (const u8_t *cmd, int len) 	);
-FORWARD _PROTOTYPE( void fdc_out, (int val) 				);
-FORWARD _PROTOTYPE( int recalibrate, (void) 				);
-FORWARD _PROTOTYPE( void f_reset, (void) 				);
-FORWARD _PROTOTYPE( int f_intr_wait, (void) 				);
-FORWARD _PROTOTYPE( int read_id, (void) 				);
-FORWARD _PROTOTYPE( int f_do_open, (dev_t minor, int access)		);
-FORWARD _PROTOTYPE( int f_do_close, (dev_t minor)			);
-FORWARD _PROTOTYPE( int test_read, (int density)	 		);
-FORWARD _PROTOTYPE( void f_geometry, (dev_t minor,
-	struct partition *entry)					);
+FORWARD struct device *f_prepare(dev_t device);
+FORWARD struct device *f_part(dev_t minor);
+FORWARD void f_cleanup(void);
+FORWARD ssize_t f_transfer(dev_t minor, int do_write, u64_t position,
+	endpoint_t proc_nr, iovec_t *iov, unsigned int nr_req, int flags);
+FORWARD int dma_setup(int do_write);
+FORWARD void start_motor(void);
+FORWARD int seek(void);
+FORWARD int fdc_transfer(int do_write);
+FORWARD int fdc_results(void);
+FORWARD int fdc_command(const u8_t *cmd, int len);
+FORWARD void fdc_out(int val);
+FORWARD int recalibrate(void);
+FORWARD void f_reset(void);
+FORWARD int f_intr_wait(void);
+FORWARD int read_id(void);
+FORWARD int f_do_open(dev_t minor, int access);
+FORWARD int f_do_close(dev_t minor);
+FORWARD int test_read(int density);
+FORWARD void f_geometry(dev_t minor, struct partition *entry);
 
 /* Entry points to this driver. */
 PRIVATE struct blockdriver f_dtab = {
@@ -285,12 +283,12 @@ static char *floppy_buf;
 static phys_bytes floppy_buf_phys;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
-EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
-EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
 PUBLIC int last_was_write;
 
 /*===========================================================================*

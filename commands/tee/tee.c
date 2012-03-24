@@ -12,7 +12,7 @@
 
 int fd[MAXFD];
 
-_PROTOTYPE(int main, (int argc, char **argv));
+int main(int argc, char **argv);
 
 int main(argc, argv)
 int argc;

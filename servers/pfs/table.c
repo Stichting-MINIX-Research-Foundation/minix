@@ -11,8 +11,7 @@
 #include "uds.h"
 
 /* File System Handlers (pfs) */
-PUBLIC _PROTOTYPE (int (*fs_call_vec[]),
-				(message *fs_m_in, message *fs_m_out) ) = {
+PUBLIC int (*fs_call_vec[])(message *fs_m_in, message *fs_m_out) = {
 
         no_sys,             /* 0   not used */
         no_sys,             /* 1   */
@@ -50,8 +49,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]),
 };
 
 /* Device Handlers (/dev/uds) */
-PUBLIC _PROTOTYPE (int (*dev_call_vec[]),
-				(message *dev_m_in, message *dev_m_out) ) = {
+PUBLIC int (*dev_call_vec[])(message *dev_m_in, message *dev_m_out) = {
 
         uds_cancel,         /* 0  CANCEL */
         no_sys,             /* 1   */

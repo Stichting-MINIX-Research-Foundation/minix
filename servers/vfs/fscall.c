@@ -32,9 +32,9 @@ PRIVATE struct {
 
 PRIVATE int depth = 0;			/* current globals stack level */
 
-FORWARD _PROTOTYPE( int push_globals, (void)				);
-FORWARD _PROTOTYPE( void pop_globals, (void)				);
-FORWARD _PROTOTYPE( void set_globals, (message *m)			);
+FORWARD int push_globals(void);
+FORWARD void pop_globals(void);
+FORWARD void set_globals(message *m);
 
 /*===========================================================================*
  *				push_globals				     *

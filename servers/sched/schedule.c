@@ -19,9 +19,8 @@ PRIVATE unsigned balance_timeout;
 
 #define BALANCE_TIMEOUT	5 /* how often to balance queues in seconds */
 
-FORWARD _PROTOTYPE( int schedule_process, (struct schedproc * rmp,
-			unsigned flags));
-FORWARD _PROTOTYPE( void balance_queues, (struct timer *tp)		);
+FORWARD int schedule_process(struct schedproc * rmp, unsigned flags);
+FORWARD void balance_queues(struct timer *tp);
 
 #define SCHEDULE_CHANGE_PRIO	0x1
 #define SCHEDULE_CHANGE_QUANTUM	0x2

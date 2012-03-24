@@ -117,31 +117,33 @@ static unsigned int	cache_size;
 
 
 /* Prototypes. */
-_PROTOTYPE(void usage, (char *prog_name) );
-_PROTOTYPE(unsigned c2u2, (unsigned char *ucarray) );
-_PROTOTYPE(unsigned long c4u4, (unsigned char *ucarray) );
-_PROTOTYPE(void determine, (void));
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(DIRECTORY *directory, (DIRECTORY *dir, int entries, BOOL function, char *pathname) );
-_PROTOTYPE(void extract, (DIRECTORY *entry) );
-_PROTOTYPE(void make_file, (DIRECTORY *dir_ptr, int entries, char *name) );
-_PROTOTYPE(void fill_date, (DIRECTORY *entry) );
-_PROTOTYPE(char *make_name, (DIRECTORY *dir_ptr, int dir_fl) );
-_PROTOTYPE(int fill, (char *buffer, size_t size) );
-_PROTOTYPE(void xmodes, (int mode) );
-_PROTOTYPE(void show, (DIRECTORY *dir_ptr, char *name) );
-_PROTOTYPE(void free_blocks, (void));
-_PROTOTYPE(DIRECTORY *read_cluster, (unsigned int cluster) );
-_PROTOTYPE(unsigned short free_cluster, (BOOL leave_fl) );
-_PROTOTYPE(void link_fat, (unsigned int cl_1, unsigned int cl_2) );
-_PROTOTYPE(unsigned short next_cluster, (unsigned int cl_no) );
-_PROTOTYPE(char *slash, (char *str) );
-_PROTOTYPE(void add_path, (char *file, BOOL slash_fl) );
-_PROTOTYPE(void disk_io, (BOOL op, unsigned long seek, void *address, unsigned bytes) );
-_PROTOTYPE(void flush_fat, (void));
-_PROTOTYPE(void read_fat, (unsigned int cl_no));
-_PROTOTYPE(BOOL free_range, (unsigned short *first, unsigned short *last));
-_PROTOTYPE(long lmin, (long a, long b));
+void usage(char *prog_name);
+unsigned c2u2(unsigned char *ucarray);
+unsigned long c4u4(unsigned char *ucarray);
+void determine(void);
+int main(int argc, char *argv []);
+DIRECTORY *directory(DIRECTORY *dir, int entries, BOOL function, char
+	*pathname);
+void extract(DIRECTORY *entry);
+void make_file(DIRECTORY *dir_ptr, int entries, char *name);
+void fill_date(DIRECTORY *entry);
+char *make_name(DIRECTORY *dir_ptr, int dir_fl);
+int fill(char *buffer, size_t size);
+void xmodes(int mode);
+void show(DIRECTORY *dir_ptr, char *name);
+void free_blocks(void);
+DIRECTORY *read_cluster(unsigned int cluster);
+unsigned short free_cluster(BOOL leave_fl);
+void link_fat(unsigned int cl_1, unsigned int cl_2);
+unsigned short next_cluster(unsigned int cl_no);
+char *slash(char *str);
+void add_path(char *file, BOOL slash_fl);
+void disk_io(BOOL op, unsigned long seek, void *address, unsigned
+	bytes);
+void flush_fat(void);
+void read_fat(unsigned int cl_no);
+BOOL free_range(unsigned short *first, unsigned short *last);
+long lmin(long a, long b);
 
 
 void usage(prog_name)

@@ -19,7 +19,7 @@
 #include "param.h"
 
 #if SPROFILE || CPROFILE
-FORWARD _PROTOTYPE( int check_addrs, (int info_size)               );
+FORWARD int check_addrs(int info_size);
 #endif
 
 /*===========================================================================*

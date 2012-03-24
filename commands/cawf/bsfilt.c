@@ -42,7 +42,7 @@
 
 #include <sys/types.h>
 
-#include "ansi.h"
+#include <minix/ansi.h>
 
 #define MAXLL	2048			/* ridiculous maximum line length */
 
@@ -53,7 +53,7 @@ char *Pname;				/* program name */
 unsigned char Ulb[MAXLL];		/* underline buffer */
 int Ulx = 0;				/* underline buffer index */
 
-_PROTOTYPE(void Putchar,(int ch));
+void Putchar(int ch);
 
 main(argc, argv)
 	int argc;

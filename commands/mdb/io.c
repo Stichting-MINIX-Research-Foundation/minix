@@ -25,7 +25,7 @@ PRIVATE FILE *outfile = stdout;
 PRIVATE FILE *logfile;
 PRIVATE int lineno;
 
-_PROTOTYPE( int _doprnt, (const char *format, va_list ap, FILE *stream ));
+int _doprnt(const char *format, va_list ap, FILE *stream );
 
 PUBLIC char *get_cmd(cbuf, csize)
 char *cbuf;

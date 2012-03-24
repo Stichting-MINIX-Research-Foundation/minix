@@ -17,7 +17,7 @@
 PUBLIC struct rprocpub rprocpub[NR_SYS_PROCS];
 PUBLIC struct rproc rproc[NR_SYS_PROCS];
 
-FORWARD _PROTOTYPE( char *s_flags_str, (int flags, int sys_flags)	);
+FORWARD char *s_flags_str(int flags, int sys_flags);
 
 /*===========================================================================*
  *				rproc_dmp				     *

@@ -71,19 +71,19 @@ int dflag, jflag, mflag, nflag, oflag, rflag, sflag, tflag, vflag, zflag;
 extern int errno;
 extern char **environ;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void maketarget, (char *dir2));
-_PROTOTYPE(int make_dir, (char *dir));
-_PROTOTYPE(int stat_all, (char *dir1, int n));
-_PROTOTYPE(void sort_dir, (int m));
-_PROTOTYPE(void process, (int m, char *dir1, char *dir2));
-_PROTOTYPE(void swap, (struct sorted *sp1, struct sorted *sp2));
-_PROTOTYPE(int copy, (char *dir1, struct sorted *sp, char *cbuf2));
-_PROTOTYPE(int zcopy, (char *src, char *targ));
-_PROTOTYPE(void copydir, (char *dir1, char *dir2, char *namep));
-_PROTOTYPE(void newdisk, (char *dir));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void error, (int type, char *s1, char *s2, char *s3));
+int main(int argc, char **argv);
+void maketarget(char *dir2);
+int make_dir(char *dir);
+int stat_all(char *dir1, int n);
+void sort_dir(int m);
+void process(int m, char *dir1, char *dir2);
+void swap(struct sorted *sp1, struct sorted *sp2);
+int copy(char *dir1, struct sorted *sp, char *cbuf2);
+int zcopy(char *src, char *targ);
+void copydir(char *dir1, char *dir2, char *namep);
+void newdisk(char *dir);
+void usage(void);
+void error(int type, char *s1, char *s2, char *s3);
 
 int main(argc, argv)
 int argc;

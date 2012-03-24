@@ -56,16 +56,16 @@ struct devman_usb_dev {
 
 typedef int (*devman_usb_bind_cb_t)(struct devman_usb_bind_cb_data *data, endpoint_t ep);
 
-_PROTOTYPE( int devman_add_device,               (struct devman_dev *dev));
-_PROTOTYPE( int devman_del_device,               (struct devman_dev *dev)); 
-_PROTOTYPE( int devman_init,                                       (void));
-_PROTOTYPE( struct devman_usb_dev* devman_usb_device_new,    (int dev_id));
-_PROTOTYPE( int devman_usb_device_add,       (struct devman_usb_dev *dev));
-_PROTOTYPE( int devman_usb_device_remove,    (struct devman_usb_dev *dev));
-_PROTOTYPE( void devman_usb_device_delete,  (struct devman_usb_dev *udev));
-_PROTOTYPE( int devman_handle_msg,                           (message *m));
-_PROTOTYPE( void devman_usb_init, (devman_usb_bind_cb_t bind_cb,
-				   devman_usb_bind_cb_t unbind_cb)	);
+int devman_add_device(struct devman_dev *dev);
+int devman_del_device(struct devman_dev *dev);
+int devman_init(void);
+struct devman_usb_dev* devman_usb_device_new(int dev_id);
+int devman_usb_device_add(struct devman_usb_dev *dev);
+int devman_usb_device_remove(struct devman_usb_dev *dev);
+void devman_usb_device_delete(struct devman_usb_dev *udev);
+int devman_handle_msg(message *m);
+void devman_usb_init(devman_usb_bind_cb_t bind_cb, devman_usb_bind_cb_t
+	unbind_cb);
 
 #endif
 

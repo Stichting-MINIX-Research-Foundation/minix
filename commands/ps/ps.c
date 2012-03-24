@@ -120,13 +120,13 @@ struct pstat {			/* structure filled by pstat() */
   char *ps_args;		/* concatenated argument string */
 };
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void plist, (void));
-_PROTOTYPE(int addrread, (int fd, phys_clicks base, vir_bytes addr, 
-						    char *buf, int nbytes ));
-_PROTOTYPE(void usage, (const char *pname ));
-_PROTOTYPE(void err, (const char *s ));
-_PROTOTYPE(int gettynames, (void));
+int main(int argc, char *argv []);
+void plist(void);
+int addrread(int fd, phys_clicks base, vir_bytes addr, char *buf, int
+	nbytes );
+void usage(const char *pname );
+void err(const char *s );
+int gettynames(void);
 
 
 /*

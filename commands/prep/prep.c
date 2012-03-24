@@ -12,10 +12,10 @@
 int lfread;			/* set when last char read was lf */
 int lfwritten = 1;		/* set when last char written was lf */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void skipline, (void));
-_PROTOTYPE(int backslash, (void));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void skipline(void);
+int backslash(void);
+void usage(void);
 
 int main(argc, argv)
 int argc;

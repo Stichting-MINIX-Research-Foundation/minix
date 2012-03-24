@@ -26,8 +26,8 @@
 #include "super.h"
 #include "inode.h"
 
-FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
-FORWARD _PROTOTYPE( void read_block, (struct buf *) );
+FORWARD void rm_lru(struct buf *bp);
+FORWARD void read_block(struct buf *);
 
 PRIVATE int vmcache = 0; /* are we using vm's secondary cache? (initially not) */
 

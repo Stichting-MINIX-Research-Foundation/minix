@@ -67,15 +67,15 @@ typedef struct pty {
 
 PRIVATE pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
-FORWARD _PROTOTYPE( int pty_write, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( void pty_echo, (tty_t *tp, int c)			);
-FORWARD _PROTOTYPE( void pty_start, (pty_t *pp)				);
-FORWARD _PROTOTYPE( void pty_finish, (pty_t *pp)			);
-FORWARD _PROTOTYPE( int pty_read, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( int pty_close, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( int pty_icancel, (tty_t *tp, int try)		);
-FORWARD _PROTOTYPE( int pty_ocancel, (tty_t *tp, int try)		);
-FORWARD _PROTOTYPE( int pty_select, (tty_t *tp, message *m)		);
+FORWARD int pty_write(tty_t *tp, int try);
+FORWARD void pty_echo(tty_t *tp, int c);
+FORWARD void pty_start(pty_t *pp);
+FORWARD void pty_finish(pty_t *pp);
+FORWARD int pty_read(tty_t *tp, int try);
+FORWARD int pty_close(tty_t *tp, int try);
+FORWARD int pty_icancel(tty_t *tp, int try);
+FORWARD int pty_ocancel(tty_t *tp, int try);
+FORWARD int pty_select(tty_t *tp, message *m);
 
 /*===========================================================================*
  *				do_pty					     *

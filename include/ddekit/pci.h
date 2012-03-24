@@ -24,15 +24,14 @@ typedef struct ddekit_pci_resource {
 	unsigned long flags;
 } ddekit_pci_res_t;
 
-_PROTOTYPE( void ddekit_pci_init, (void));
+void ddekit_pci_init(void);
 
-_PROTOTYPE( int ddekit_pci_get_device,(int nr,    int *bus,
-                                       int *slot, int *func));
+int ddekit_pci_get_device(int nr, int *bus, int *slot, int *func);
 
-_PROTOTYPE( int ddekit_pci_read,  (int bus, int slot, int func,
-                                   int pos, int len, ddekit_uint32_t *val));
-_PROTOTYPE( int ddekit_pci_write, (int bus, int slot, int func,
-                                   int pos, int len, ddekit_uint32_t val));
+int ddekit_pci_read(int bus, int slot, int func, int pos, int len,
+	ddekit_uint32_t *val);
+int ddekit_pci_write(int bus, int slot, int func, int pos, int len,
+	ddekit_uint32_t val);
 
 /** Read byte from PCI config space.
  *
@@ -46,8 +45,8 @@ _PROTOTYPE( int ddekit_pci_write, (int bus, int slot, int func,
  *
  * \return 0       success
  */
-_PROTOTYPE( int ddekit_pci_readb, (int bus,  int slot,
-                                   int func, int pos, ddekit_uint8_t  *val));
+int ddekit_pci_readb(int bus, int slot, int func, int pos,
+	ddekit_uint8_t *val);
 
 /** Read word from PCI config space.
  *
@@ -61,8 +60,8 @@ _PROTOTYPE( int ddekit_pci_readb, (int bus,  int slot,
  *
  * \return 0       success
  */
-_PROTOTYPE( int ddekit_pci_readw, (int bus,  int slot,
-                                   int func, int pos, ddekit_uint16_t *val));
+int ddekit_pci_readw(int bus, int slot, int func, int pos,
+	ddekit_uint16_t *val);
 
 /** Read dword from PCI config space.
  *
@@ -76,8 +75,8 @@ _PROTOTYPE( int ddekit_pci_readw, (int bus,  int slot,
  *
  * \return 0       success
  */
-_PROTOTYPE( int ddekit_pci_readl, (int bus,  int slot,
-                                   int func, int pos, ddekit_uint32_t *val));
+int ddekit_pci_readl(int bus, int slot, int func, int pos,
+	ddekit_uint32_t *val);
 
 /** Write byte to PCI config space.
  *
@@ -91,8 +90,8 @@ _PROTOTYPE( int ddekit_pci_readl, (int bus,  int slot,
  *
  * \return 0       success
  */
-_PROTOTYPE( int ddekit_pci_writeb, (int bus,  int slot,
-                                    int func, int pos, ddekit_uint8_t val));
+int ddekit_pci_writeb(int bus, int slot, int func, int pos,
+	ddekit_uint8_t val);
 
 /** Write word to PCI config space.
  *
@@ -106,8 +105,8 @@ _PROTOTYPE( int ddekit_pci_writeb, (int bus,  int slot,
  *
  * \return 0       success
  */
-_PROTOTYPE( int ddekit_pci_writew, (int bus,  int slot,
-                                    int func, int pos, ddekit_uint16_t  val));
+int ddekit_pci_writew(int bus, int slot, int func, int pos,
+	ddekit_uint16_t val);
 
 /** Write word to PCI config space.
  *
@@ -121,8 +120,8 @@ _PROTOTYPE( int ddekit_pci_writew, (int bus,  int slot,
  *
  * \return 0       success
  */
-_PROTOTYPE( int ddekit_pci_writel, (int bus, int slot,
-                                    int func, int pos, ddekit_uint32_t  val));
+int ddekit_pci_writel(int bus, int slot, int func, int pos,
+	ddekit_uint32_t val);
 
 /** Find a PCI device.
  *
@@ -141,77 +140,71 @@ _PROTOTYPE( int ddekit_pci_writel, (int bus, int slot,
  * \return device   a valid PCI device
  * \return NULL     if no device found
  */
-_PROTOTYPE( struct ddekit_pci_dev * ddekit_pci_find_device, 
-            (int *bus, int *slot, int *func, struct ddekit_pci_dev *start));
+struct ddekit_pci_dev * ddekit_pci_find_device(int *bus, int *slot, int
+	*func, struct ddekit_pci_dev *start);
 
 /** Enable PCI device
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( int ddekit_pci_enable_device, (struct ddekit_pci_dev *dev));
+int ddekit_pci_enable_device(struct ddekit_pci_dev *dev);
 
 /** Disable PCI device
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( int ddekit_pci_disable_device, (struct ddekit_pci_dev *dev));
+int ddekit_pci_disable_device(struct ddekit_pci_dev *dev);
 
 /** Enable bus-mastering for device.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( void ddekit_pci_set_master, (struct ddekit_pci_dev *dev));
+void ddekit_pci_set_master(struct ddekit_pci_dev *dev);
 
 /** Get device vendor ID.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( unsigned short ddekit_pci_get_vendor,
-            (struct ddekit_pci_dev *dev));
+unsigned short ddekit_pci_get_vendor(struct ddekit_pci_dev *dev);
 
 /** Get device ID.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( unsigned short ddekit_pci_get_device_id,
-            (struct ddekit_pci_dev *dev));
+unsigned short ddekit_pci_get_device_id(struct ddekit_pci_dev *dev);
 
 /** Get device subvendor ID.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( unsigned short ddekit_pci_get_sub_vendor,
-            (struct ddekit_pci_dev *dev));
+unsigned short ddekit_pci_get_sub_vendor(struct ddekit_pci_dev *dev);
 
 /** Get subdevice ID.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( unsigned short ddekit_pci_get_sub_device,
-            (struct ddekit_pci_dev *dev));
+unsigned short ddekit_pci_get_sub_device(struct ddekit_pci_dev *dev);
 
 /** Get device class ID.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( unsigned ddekit_pci_get_dev_class, 
-            (struct ddekit_pci_dev *dev));
+unsigned ddekit_pci_get_dev_class(struct ddekit_pci_dev *dev);
 
 /** Get device's IRQ number.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( unsigned long ddekit_pci_get_irq,
-            (struct ddekit_pci_dev *dev));
+unsigned long ddekit_pci_get_irq(struct ddekit_pci_dev *dev);
 
 /** Get device name.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( char *ddekit_pci_get_name, (struct ddekit_pci_dev *dev));
+char *ddekit_pci_get_name(struct ddekit_pci_dev *dev);
 
 /** Get device's slot name.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( char *ddekit_pci_get_slot_name, (struct ddekit_pci_dev *dev));
+char *ddekit_pci_get_slot_name(struct ddekit_pci_dev *dev);
 
 /** Get one of the device's resources.
  * \ingroup DDEKit_pci
  */
-_PROTOTYPE( ddekit_pci_res_t *ddekit_pci_get_resource,
-            (struct ddekit_pci_dev *dev, unsigned int idx));
+ddekit_pci_res_t *ddekit_pci_get_resource(struct ddekit_pci_dev *dev,
+	unsigned int idx);
 
-_PROTOTYPE( int ddekit_pci_irq_enable, (int bus,  int slot, 
-                                        int func, int pin, int *irq));
+int ddekit_pci_irq_enable(int bus, int slot, int func, int pin, int
+	*irq);
 
 #endif 

@@ -38,9 +38,9 @@
 
 int superuser;
 
-_PROTOTYPE(void test29a, (void));
-_PROTOTYPE(void test29b, (void));
-_PROTOTYPE(void test29c, (void));
+void test29a(void);
+void test29b(void);
+void test29c(void);
 
 int main(int argc, char *argv[])
 {

@@ -7,8 +7,8 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( struct inode *new_node, (struct inode *ldirp, 
-	char *string, mode_t bits, zone_t z0));
+FORWARD struct inode *new_node(struct inode *ldirp, char *string, mode_t
+	bits, zone_t z0);
 
 /*===========================================================================*
  *				fs_create				     *

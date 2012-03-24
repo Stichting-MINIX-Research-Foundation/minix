@@ -12,8 +12,8 @@ typedef struct {
 } spin_t;
 
 /* Functions. */
-_PROTOTYPE( void spin_init, (spin_t *s, u32_t usecs)			);
-_PROTOTYPE( int spin_check, (spin_t *s)					);
+void spin_init(spin_t *s, u32_t usecs);
+int spin_check(spin_t *s);
 
 /* Macros. */
 

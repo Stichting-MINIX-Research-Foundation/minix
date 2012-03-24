@@ -12,8 +12,8 @@
 /* The following variables are used for returning results to the caller. */
 EXTERN int err_code;		/* temporary storage for error number */
 
-EXTERN _PROTOTYPE (int (*fs_call_vec[]), (message *fs_m_in, message *fs_m_out) ); /* fs call table */
-EXTERN _PROTOTYPE (int (*dev_call_vec[]), (message *fs_m_in, message *fs_m_out) ); /* dev call table */
+EXTERN int(*fs_call_vec[]) (message *fs_m_in, message *fs_m_out);
+EXTERN int(*dev_call_vec[]) (message *fs_m_in, message *fs_m_out);
 
 EXTERN uid_t caller_uid;
 EXTERN gid_t caller_gid;

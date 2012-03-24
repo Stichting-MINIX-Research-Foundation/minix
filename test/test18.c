@@ -80,42 +80,42 @@ char *fnames[8] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx"},
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void test, (void));
-_PROTOTYPE(void test01, (void));
-_PROTOTYPE(void test02, (void));
-_PROTOTYPE(void test03, (void));
-_PROTOTYPE(void write_standards, (int filedes, char a []));
-_PROTOTYPE(void test04, (void));
-_PROTOTYPE(void read_standards, (int filedes, char a []));
-_PROTOTYPE(void read_more, (int filedes, char a []));
-_PROTOTYPE(void test05, (void));
-_PROTOTYPE(void try_open, (char *fname, int mode, int test));
-_PROTOTYPE(void test06, (void));
-_PROTOTYPE(void test07, (void));
-_PROTOTYPE(void access_standards, (void));
-_PROTOTYPE(void test08, (void));
-_PROTOTYPE(static int iovec_is_equal, 
-	(struct iovec *x, struct iovec *y, size_t size));
-_PROTOTYPE(static size_t iovec_setup, 
-	(int pattern, struct iovec *iovec, char *buffer, int count));
-_PROTOTYPE(static int power, (int base, int exponent));
-_PROTOTYPE(void try_access, (char *fname, int mode, int test));
-_PROTOTYPE(void make_and_fill_dirs, (void));
-_PROTOTYPE(void put_file_in_dir, (char *dirname, int mode));
-_PROTOTYPE(void init_array, (char *a));
-_PROTOTYPE(void clear_array, (char *b));
-_PROTOTYPE(int comp_array, (char *a, char *b, int range));
-_PROTOTYPE(void try_close, (int filedes, char *name));
-_PROTOTYPE(void try_unlink, (char *fname));
-_PROTOTYPE(void Remove, (int fdes, char *fname));
-_PROTOTYPE(int get_mode, (char *name));
-_PROTOTYPE(void check, (char *scall, int number));
-_PROTOTYPE(void put, (int nr));
-_PROTOTYPE(int open_alot, (void));
-_PROTOTYPE(int close_alot, (int number));
-_PROTOTYPE(void clean_up_the_mess, (void));
-_PROTOTYPE(void chmod_8_dirs, (int sw));
+int main(int argc, char **argv);
+void test(void);
+void test01(void);
+void test02(void);
+void test03(void);
+void write_standards(int filedes, char a []);
+void test04(void);
+void read_standards(int filedes, char a []);
+void read_more(int filedes, char a []);
+void test05(void);
+void try_open(char *fname, int mode, int test);
+void test06(void);
+void test07(void);
+void access_standards(void);
+void test08(void);
+static int iovec_is_equal(struct iovec *x, struct iovec *y, size_t
+	size);
+static size_t iovec_setup(int pattern, struct iovec *iovec, char
+	*buffer, int count);
+static int power(int base, int exponent);
+void try_access(char *fname, int mode, int test);
+void make_and_fill_dirs(void);
+void put_file_in_dir(char *dirname, int mode);
+void init_array(char *a);
+void clear_array(char *b);
+int comp_array(char *a, char *b, int range);
+void try_close(int filedes, char *name);
+void try_unlink(char *fname);
+void Remove(int fdes, char *fname);
+int get_mode(char *name);
+void check(char *scall, int number);
+void put(int nr);
+int open_alot(void);
+int close_alot(int number);
+void clean_up_the_mess(void);
+void chmod_8_dirs(int sw);
 
 /*****************************************************************************
  *                              TEST                                         *

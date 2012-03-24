@@ -31,7 +31,7 @@
 char sprof_sample_buffer[SAMPLE_BUFFER_SIZE];
 
 /* Function prototype for the profiling clock handler. */ 
-FORWARD _PROTOTYPE( int profile_clock_handler, (irq_hook_t *hook) );
+FORWARD int profile_clock_handler(irq_hook_t *hook);
 
 /* A hook for the profiling clock interrupt handler. */
 PRIVATE irq_hook_t profile_clock_hook;

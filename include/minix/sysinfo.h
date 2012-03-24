@@ -5,8 +5,7 @@
 #include <minix/endpoint.h>
 #include <minix/type.h>
 
-_PROTOTYPE( int getsysinfo, (endpoint_t who, int what, void *where,
-	size_t size) );
+int getsysinfo(endpoint_t who, int what, void *where, size_t size);
 
 /* What system info to retrieve with sysgetinfo(). */
 #define SI_PROC_TAB	   2	/* copy of entire process table */

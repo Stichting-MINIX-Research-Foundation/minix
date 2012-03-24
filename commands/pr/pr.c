@@ -93,14 +93,14 @@ char *line_buf;			/* used in format for multi-column output */
 
 char output[1024];
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(static char *myalloc, (size_t size));
-_PROTOTYPE(char skip_page, (int lines, int width, FILE * filep));
-_PROTOTYPE(void format, (FILE * filep));
-_PROTOTYPE(void print_page, (int pagenr, int maxcol));
-_PROTOTYPE(void print, (FILE * filep));
-_PROTOTYPE(void out_header, (int page));
-_PROTOTYPE(void print_time, (time_t t));
+int main(int argc, char **argv);
+static char *myalloc(size_t size);
+char skip_page(int lines, int width, FILE * filep);
+void format(FILE * filep);
+void print_page(int pagenr, int maxcol);
+void print(FILE * filep);
+void out_header(int page);
+void print_time(time_t t);
 
 int main(argc, argv)
 int argc;

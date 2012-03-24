@@ -25,8 +25,8 @@
 #include "super.h"
 #include "inode.h"
 
-FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
-FORWARD _PROTOTYPE( void rw_block, (struct buf *, int) );
+FORWARD void rm_lru(struct buf *bp);
+FORWARD void rw_block(struct buf *, int);
 
 PRIVATE int vmcache_avail = -1; /* 0 if not available, >0 if available. */
 

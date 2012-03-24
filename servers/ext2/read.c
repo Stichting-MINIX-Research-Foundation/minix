@@ -16,12 +16,11 @@
 #include <sys/param.h>
 
 
-FORWARD _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
-                       u64_t position, unsigned bytes_ahead)           );
-FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, u64_t position,
-        unsigned off, size_t chunk, unsigned left, int rw_flag,
-        cp_grant_id_t gid, unsigned buf_off, unsigned int block_size,
-	int *completed));
+FORWARD struct buf *rahead(struct inode *rip, block_t baseblock, u64_t
+	position, unsigned bytes_ahead);
+FORWARD int rw_chunk(struct inode *rip, u64_t position, unsigned off,
+	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
+	buf_off, unsigned int block_size, int *completed);
 
 PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
 

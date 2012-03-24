@@ -19,8 +19,8 @@
 #include <minix/const.h>
 #include <minix/optset.h>
 
-FORWARD _PROTOTYPE( void optset_parse_entry, (struct optset *entry,
-						char *ptr, int len)	);
+FORWARD void optset_parse_entry(struct optset *entry, char *ptr, int
+	len);
 
 /*===========================================================================*
  *				optset_parse_entry			     *

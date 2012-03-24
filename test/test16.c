@@ -15,9 +15,9 @@ int subtest, passes;
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test16a, (void));
-_PROTOTYPE(void get_times, (char *name, time_t *a, time_t *c, time_t *m));
+int main(int argc, char *argv []);
+void test16a(void);
+void get_times(char *name, time_t *a, time_t *c, time_t *m);
 
 int main(argc, argv)
 int argc;

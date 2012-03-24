@@ -24,37 +24,34 @@
 PRIVATE int e1000_instance;
 PRIVATE e1000_t e1000_state;
 
-_PROTOTYPE( PRIVATE void e1000_init, (message *mp)			);
-_PROTOTYPE( PRIVATE void e1000_init_pci, (void)				);
-_PROTOTYPE( PRIVATE int  e1000_probe, (e1000_t *e, int skip)		);
-_PROTOTYPE( PRIVATE int  e1000_init_hw, (e1000_t *e)			);
-_PROTOTYPE( PRIVATE void e1000_init_addr, (e1000_t *e)		        );
-_PROTOTYPE( PRIVATE void e1000_init_buf,  (e1000_t *e)			);
-_PROTOTYPE( PRIVATE void e1000_reset_hw, (e1000_t *e)			);
-_PROTOTYPE( PRIVATE void e1000_writev_s, (message *mp, int from_int)	);
-_PROTOTYPE( PRIVATE void e1000_readv_s, (message *mp, int from_int)	);
-_PROTOTYPE( PRIVATE void e1000_getstat_s, (message *mp)			);
-_PROTOTYPE( PRIVATE void e1000_interrupt, (message *mp)			);
-_PROTOTYPE( PRIVATE int  e1000_link_changed, (e1000_t *e)		);
-_PROTOTYPE( PRIVATE void e1000_stop, (e1000_t *e)                       );
-_PROTOTYPE( PRIVATE uint32_t e1000_reg_read, (e1000_t *e, uint32_t reg) );
-_PROTOTYPE( PRIVATE void e1000_reg_write, (e1000_t *e, uint32_t reg,
-					  uint32_t value)               );					  
-_PROTOTYPE( PRIVATE void e1000_reg_set,   (e1000_t *e, uint32_t reg,
-					  uint32_t value)               );
-_PROTOTYPE( PRIVATE void e1000_reg_unset, (e1000_t *e, uint32_t reg,
-					   uint32_t value)              );
-_PROTOTYPE( PRIVATE u16_t eeprom_eerd, (void *e, int reg)		);
-_PROTOTYPE( PRIVATE u16_t eeprom_ich,  (void *e, int reg)		);
-_PROTOTYPE( PRIVATE int eeprom_ich_init, (e1000_t *e)		        );
-_PROTOTYPE( PRIVATE int eeprom_ich_cycle, (const e1000_t *e, u32_t timeout) );
-_PROTOTYPE( PRIVATE void reply, (e1000_t *e)				);
-_PROTOTYPE( PRIVATE void mess_reply, (message *req, message *reply)	);
+PRIVATE void e1000_init(message *mp);
+PRIVATE void e1000_init_pci(void);
+PRIVATE int e1000_probe(e1000_t *e, int skip);
+PRIVATE int e1000_init_hw(e1000_t *e);
+PRIVATE void e1000_init_addr(e1000_t *e);
+PRIVATE void e1000_init_buf(e1000_t *e);
+PRIVATE void e1000_reset_hw(e1000_t *e);
+PRIVATE void e1000_writev_s(message *mp, int from_int);
+PRIVATE void e1000_readv_s(message *mp, int from_int);
+PRIVATE void e1000_getstat_s(message *mp);
+PRIVATE void e1000_interrupt(message *mp);
+PRIVATE int e1000_link_changed(e1000_t *e);
+PRIVATE void e1000_stop(e1000_t *e);
+PRIVATE uint32_t e1000_reg_read(e1000_t *e, uint32_t reg);
+PRIVATE void e1000_reg_write(e1000_t *e, uint32_t reg, uint32_t value);
+PRIVATE void e1000_reg_set(e1000_t *e, uint32_t reg, uint32_t value);
+PRIVATE void e1000_reg_unset(e1000_t *e, uint32_t reg, uint32_t value);
+PRIVATE u16_t eeprom_eerd(void *e, int reg);
+PRIVATE u16_t eeprom_ich(void *e, int reg);
+PRIVATE int eeprom_ich_init(e1000_t *e);
+PRIVATE int eeprom_ich_cycle(const e1000_t *e, u32_t timeout);
+PRIVATE void reply(e1000_t *e);
+PRIVATE void mess_reply(message *req, message *reply);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main					     *

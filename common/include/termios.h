@@ -125,17 +125,17 @@ struct termios {
 #include <minix/ansi.h>
 #endif
 
-_PROTOTYPE( int tcsendbreak, (int _fildes, int _duration)		     );
-_PROTOTYPE( int tcdrain, (int _filedes)				   	     );
-_PROTOTYPE( int tcflush, (int _filedes, int _queue_selector)		     );
-_PROTOTYPE( int tcflow, (int _filedes, int _action)			     );
-_PROTOTYPE( speed_t cfgetispeed, (const struct termios *_termios_p)	     );
-_PROTOTYPE( speed_t cfgetospeed, (const struct termios *_termios_p)	     );
-_PROTOTYPE( int cfsetispeed, (struct termios *_termios_p, speed_t _speed)    );
-_PROTOTYPE( int cfsetospeed, (struct termios *_termios_p, speed_t _speed)    );
-_PROTOTYPE( int tcgetattr, (int _filedes, struct termios *_termios_p)        );
-_PROTOTYPE( int tcsetattr, \
-	(int _filedes, int _opt_actions, const struct termios *_termios_p)   );
+int tcsendbreak(int _fildes, int _duration);
+int tcdrain(int _filedes);
+int tcflush(int _filedes, int _queue_selector);
+int tcflow(int _filedes, int _action);
+speed_t cfgetispeed(const struct termios *_termios_p);
+speed_t cfgetospeed(const struct termios *_termios_p);
+int cfsetispeed(struct termios *_termios_p, speed_t _speed);
+int cfsetospeed(struct termios *_termios_p, speed_t _speed);
+int tcgetattr(int _filedes, struct termios *_termios_p);
+int tcsetattr(int _filedes, int _opt_actions, const struct termios
+	*_termios_p);
 
 #ifndef cfgetispeed
 #define cfgetispeed(termios_p)		((termios_p)->c_ispeed)

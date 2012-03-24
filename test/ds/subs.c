@@ -3,7 +3,7 @@
 char *key_u32 = "test_u32";
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD void sef_local_startup(void);
 
 /*===========================================================================*
  *				main					     *

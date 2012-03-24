@@ -19,13 +19,11 @@
 #include "const.h"
 
 
-FORWARD _PROTOTYPE( bit_t alloc_inode_bit, (struct super_block *sp,
-					    struct inode *parent,
-					    int is_dir));
-FORWARD _PROTOTYPE( void free_inode_bit, (struct super_block *sp,
-                                          bit_t bit_returned,
-                                          int is_dir));
-FORWARD _PROTOTYPE( void wipe_inode, (struct inode *rip));
+FORWARD bit_t alloc_inode_bit(struct super_block *sp, struct inode
+	*parent, int is_dir);
+FORWARD void free_inode_bit(struct super_block *sp, bit_t bit_returned,
+	int is_dir);
+FORWARD void wipe_inode(struct inode *rip);
 
 
 /*===========================================================================*
@@ -110,14 +108,14 @@ PUBLIC void free_inode(
 }
 
 
-FORWARD _PROTOTYPE( int find_group_dir, (struct super_block *sp,
-                                         struct inode *parent) );
-FORWARD _PROTOTYPE( int find_group_hashalloc, (struct super_block *sp,
-                                         struct inode *parent) );
-FORWARD _PROTOTYPE( int find_group_any, (struct super_block *sp,
-                                         struct inode *parent) );
-FORWARD _PROTOTYPE( int find_group_orlov, (struct super_block *sp,
-                                         struct inode *parent) );
+FORWARD int find_group_dir(struct super_block *sp, struct inode
+	*parent);
+FORWARD int find_group_hashalloc(struct super_block *sp, struct inode
+	*parent);
+FORWARD int find_group_any(struct super_block *sp, struct inode
+	*parent);
+FORWARD int find_group_orlov(struct super_block *sp, struct inode
+	*parent);
 
 
 /*===========================================================================*

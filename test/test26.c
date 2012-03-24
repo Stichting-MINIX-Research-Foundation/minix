@@ -22,9 +22,9 @@
 
 #include "common.c"
 
-_PROTOTYPE(void test26a, (void));
-_PROTOTYPE(void test26b, (void));
-_PROTOTYPE(void test26c, (void));
+void test26a(void);
+void test26b(void);
+void test26c(void);
 
 int main(int argc, char *argv[])
 {

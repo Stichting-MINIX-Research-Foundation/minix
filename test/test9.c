@@ -10,20 +10,20 @@
 
 char *tmpa;
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test9a, (void));
-_PROTOTYPE(void test9b, (void));
-_PROTOTYPE(void test9c, (void));
-_PROTOTYPE(void test9d, (void));
-_PROTOTYPE(void test9e, (void));
-_PROTOTYPE(void test9f, (void));
-_PROTOTYPE(char *addr, (void));
-_PROTOTYPE(void garbage, (void));
-_PROTOTYPE(void  level1, (void));
-_PROTOTYPE(void level2, (void));
-_PROTOTYPE(void dolev, (void));
-_PROTOTYPE(void catch, (int s));
-_PROTOTYPE(void hard, (void));
+int main(int argc, char *argv []);
+void test9a(void);
+void test9b(void);
+void test9c(void);
+void test9d(void);
+void test9e(void);
+void test9f(void);
+char *addr(void);
+void garbage(void);
+void level1(void);
+void level2(void);
+void dolev(void);
+void catch(int s);
+void hard(void);
 
 int main(argc, argv)
 int argc;

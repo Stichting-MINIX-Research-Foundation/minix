@@ -5,10 +5,9 @@
 
 #include "buf.h"
 
-FORWARD _PROTOTYPE( char *get_name, (char *name, char string[NAME_MAX+1]) );
-FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino, int flags,
-				     struct dir_record **res_inop,
-				     size_t *offsetp)			);
+FORWARD char *get_name(char *name, char string[NAME_MAX+1]);
+FORWARD int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+	dir_record **res_inop, size_t *offsetp);
 
 
 /*===========================================================================*

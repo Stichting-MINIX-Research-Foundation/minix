@@ -118,27 +118,27 @@ struct sequence {
 	unsigned char value;
 };
 
-FORWARD _PROTOTYPE( int cons_write, (struct tty *tp, int try)		);
-FORWARD _PROTOTYPE( void cons_echo, (tty_t *tp, int c)			);
-FORWARD _PROTOTYPE( void out_char, (console_t *cons, int c)		);
-FORWARD _PROTOTYPE( void cons_putk, (int c)				);
-FORWARD _PROTOTYPE( void beep, (void)					);
-FORWARD _PROTOTYPE( void do_escape, (console_t *cons, int c)		);
-FORWARD _PROTOTYPE( void flush, (console_t *cons)			);
-FORWARD _PROTOTYPE( void parse_escape, (console_t *cons, int c)		);
-FORWARD _PROTOTYPE( void scroll_screen, (console_t *cons, int dir)	);
-FORWARD _PROTOTYPE( void set_6845, (int reg, unsigned val)		);
-FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)			);
-FORWARD _PROTOTYPE( void cons_org0, (void)				);
-FORWARD _PROTOTYPE( void disable_console, (void)			);
-FORWARD _PROTOTYPE( void reenable_console, (void)			);
-FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
-FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
-FORWARD _PROTOTYPE( void mem_vid_copy, (vir_bytes src, int dst, int count)	);
-FORWARD _PROTOTYPE( void vid_vid_copy, (int src, int dst, int count)	);
+FORWARD int cons_write(struct tty *tp, int try);
+FORWARD void cons_echo(tty_t *tp, int c);
+FORWARD void out_char(console_t *cons, int c);
+FORWARD void cons_putk(int c);
+FORWARD void beep(void);
+FORWARD void do_escape(console_t *cons, int c);
+FORWARD void flush(console_t *cons);
+FORWARD void parse_escape(console_t *cons, int c);
+FORWARD void scroll_screen(console_t *cons, int dir);
+FORWARD void set_6845(int reg, unsigned val);
+FORWARD void stop_beep(timer_t *tmrp);
+FORWARD void cons_org0(void);
+FORWARD void disable_console(void);
+FORWARD void reenable_console(void);
+FORWARD int ga_program(struct sequence *seq);
+FORWARD int cons_ioctl(tty_t *tp, int);
+FORWARD void mem_vid_copy(vir_bytes src, int dst, int count);
+FORWARD void vid_vid_copy(int src, int dst, int count);
 
 #if 0
-FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
+FORWARD void get_6845(int reg, unsigned *val);
 #endif
 
 /*===========================================================================*

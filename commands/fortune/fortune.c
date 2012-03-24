@@ -12,8 +12,8 @@
 static char *Copyright = "\0Copyright (c) 1990 Bert Reuling";
 static unsigned long seed;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(unsigned long magic, (unsigned long range));
+int main(int argc, char **argv);
+unsigned long magic(unsigned long range);
 
 int main(argc, argv)
 int argc;

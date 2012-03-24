@@ -32,17 +32,16 @@
 #include <ddekit/thread.h>
 
 /** Attach to an interrupt */
-_PROTOTYPE( ddekit_thread_t *ddekit_interrupt_attach,
-          ( int irq, int shared, void(*thread_init)(void *),
-		    void(*handler)(void *), void *priv) );
+ddekit_thread_t *ddekit_interrupt_attach( int irq, int shared,
+	void(*thread_init)(void *), void(*handler)(void *), void *priv);
 
 /* Detach from a previously attached interrupt. */
-_PROTOTYPE( void ddekit_interrupt_detach, (int irq));
+void ddekit_interrupt_detach(int irq);
 
 /* Block interrupt. */
-_PROTOTYPE( void ddekit_interrupt_disable, (int irq));
+void ddekit_interrupt_disable(int irq);
 
 /* Enable interrupt */
-_PROTOTYPE( void ddekit_interrupt_enable, (int irq));
+void ddekit_interrupt_enable(int irq);
 
 #endif

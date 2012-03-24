@@ -16,9 +16,9 @@
 #include <minix/ansi.h>
 #endif
 
-_PROTOTYPE( int mount, (char *_spec, char *_name, int _mountflags,
-                                                char *type, char *args) );
-_PROTOTYPE( int umount, (const char *_name)                             );
-_PROTOTYPE( int umount2, (const char *_name, int flags)                 );
+int mount(char *_spec, char *_name, int _mountflags, char *type, char
+	*args);
+int umount(const char *_name);
+int umount2(const char *_name, int flags);
 
 #endif /* _MOUNT_H */

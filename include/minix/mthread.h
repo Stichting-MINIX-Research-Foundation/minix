@@ -75,82 +75,72 @@ typedef struct {
 #define MTHREAD_KEYS_MAX 128
 
 /* allocate.c */
-_PROTOTYPE( int mthread_create, (mthread_thread_t *thread,
-				 mthread_attr_t *tattr,
-				 void *(*proc)(void *), void *arg)	);
-_PROTOTYPE( int mthread_detach, (mthread_thread_t thread)		);
-_PROTOTYPE( int mthread_equal, (mthread_thread_t l, mthread_thread_t r)	);
-_PROTOTYPE( void mthread_exit, (void *value)				);
-_PROTOTYPE( int mthread_join, (mthread_thread_t thread, void **value)	);
-_PROTOTYPE( int mthread_once, (mthread_once_t *once,
-			       void (*proc)(void))			);
-_PROTOTYPE( mthread_thread_t mthread_self, (void)			);
+int mthread_create(mthread_thread_t *thread, mthread_attr_t *tattr, void
+	*(*proc)(void *), void *arg);
+int mthread_detach(mthread_thread_t thread);
+int mthread_equal(mthread_thread_t l, mthread_thread_t r);
+void mthread_exit(void *value);
+int mthread_join(mthread_thread_t thread, void **value);
+int mthread_once(mthread_once_t *once, void (*proc)(void));
+mthread_thread_t mthread_self(void);
 
 /* attribute.c */
-_PROTOTYPE( int mthread_attr_destroy, (mthread_attr_t *tattr)		);
-_PROTOTYPE( int mthread_attr_getdetachstate, (mthread_attr_t *tattr,
-					      int *detachstate)		);
-_PROTOTYPE( int mthread_attr_getstack, (mthread_attr_t *tattr,
-					void **stackaddr,
-					size_t *stacksize)		);
-_PROTOTYPE( int mthread_attr_getstacksize, (mthread_attr_t *tattr,
-					    size_t *stacksize)		);
-_PROTOTYPE( int mthread_attr_init, (mthread_attr_t *tattr)		);
-_PROTOTYPE( int mthread_attr_setdetachstate, (mthread_attr_t *tattr,
-					      int detachstate)		);
-_PROTOTYPE( int mthread_attr_setstack, (mthread_attr_t *tattr,
-					void *stackaddr,
-					size_t stacksize)		);
-_PROTOTYPE( int mthread_attr_setstacksize, (mthread_attr_t *tattr,
-					    size_t stacksize)		);
+int mthread_attr_destroy(mthread_attr_t *tattr);
+int mthread_attr_getdetachstate(mthread_attr_t *tattr, int
+	*detachstate);
+int mthread_attr_getstack(mthread_attr_t *tattr, void **stackaddr,
+	size_t *stacksize);
+int mthread_attr_getstacksize(mthread_attr_t *tattr, size_t *stacksize);
+int mthread_attr_init(mthread_attr_t *tattr);
+int mthread_attr_setdetachstate(mthread_attr_t *tattr, int detachstate);
+int mthread_attr_setstack(mthread_attr_t *tattr, void *stackaddr, size_t
+	stacksize);
+int mthread_attr_setstacksize(mthread_attr_t *tattr, size_t stacksize);
 
 
 /* condition.c */
-_PROTOTYPE( int mthread_cond_broadcast, (mthread_cond_t *cond)		);
-_PROTOTYPE( int mthread_cond_destroy, (mthread_cond_t *cond)		);
-_PROTOTYPE( int mthread_cond_init, (mthread_cond_t *cond,
-				    mthread_condattr_t *cattr)		);
-_PROTOTYPE( int mthread_cond_signal, (mthread_cond_t *cond)		);
-_PROTOTYPE( int mthread_cond_wait, (mthread_cond_t *cond,
-				    mthread_mutex_t *mutex)		);
+int mthread_cond_broadcast(mthread_cond_t *cond);
+int mthread_cond_destroy(mthread_cond_t *cond);
+int mthread_cond_init(mthread_cond_t *cond, mthread_condattr_t *cattr);
+int mthread_cond_signal(mthread_cond_t *cond);
+int mthread_cond_wait(mthread_cond_t *cond, mthread_mutex_t *mutex);
 
 /* key.c */
-_PROTOTYPE( int mthread_key_create, (mthread_key_t *key,
-				      void (*destructor)(void *))	);
-_PROTOTYPE( int mthread_key_delete, (mthread_key_t key)			);
-_PROTOTYPE( void *mthread_getspecific, (mthread_key_t key)		);
-_PROTOTYPE( int mthread_setspecific, (mthread_key_t key, void *value)	);
+int mthread_key_create(mthread_key_t *key, void (*destructor)(void *));
+int mthread_key_delete(mthread_key_t key);
+void *mthread_getspecific(mthread_key_t key);
+int mthread_setspecific(mthread_key_t key, void *value);
 
 /* misc.c */
-_PROTOTYPE( void mthread_stats, (void)					);
-_PROTOTYPE( void mthread_verify_f, (char *f, int l)					);
+void mthread_stats(void);
+void mthread_verify_f(char *f, int l);
 #define mthread_verify() mthread_verify_f(__FILE__, __LINE__)
 
 /* mutex.c */
-_PROTOTYPE( int mthread_mutex_destroy, (mthread_mutex_t *mutex)	);
-_PROTOTYPE( int mthread_mutex_init, (mthread_mutex_t *mutex,
-				     mthread_mutexattr_t *mattr)	);
-_PROTOTYPE( int mthread_mutex_lock, (mthread_mutex_t *mutex)		);
-_PROTOTYPE( int mthread_mutex_trylock, (mthread_mutex_t *mutex)	);
-_PROTOTYPE( int mthread_mutex_unlock, (mthread_mutex_t *mutex)	);
+int mthread_mutex_destroy(mthread_mutex_t *mutex);
+int mthread_mutex_init(mthread_mutex_t *mutex, mthread_mutexattr_t
+	*mattr);
+int mthread_mutex_lock(mthread_mutex_t *mutex);
+int mthread_mutex_trylock(mthread_mutex_t *mutex);
+int mthread_mutex_unlock(mthread_mutex_t *mutex);
 
 /* event.c */
-_PROTOTYPE( int mthread_event_destroy, (mthread_event_t *event)	);
-_PROTOTYPE( int mthread_event_init, (mthread_event_t *event)	);
-_PROTOTYPE( int mthread_event_wait, (mthread_event_t *event)	);
-_PROTOTYPE( int mthread_event_fire, (mthread_event_t *event)	);
-_PROTOTYPE( int mthread_event_fire_all, (mthread_event_t *event));
+int mthread_event_destroy(mthread_event_t *event);
+int mthread_event_init(mthread_event_t *event);
+int mthread_event_wait(mthread_event_t *event);
+int mthread_event_fire(mthread_event_t *event);
+int mthread_event_fire_all(mthread_event_t *event);
 
 /* rwlock.c */
-_PROTOTYPE( int mthread_rwlock_destroy, (mthread_rwlock_t *rwlock)	);
-_PROTOTYPE( int mthread_rwlock_init, (mthread_rwlock_t *rwlock)		);
-_PROTOTYPE( int mthread_rwlock_rdlock, (mthread_rwlock_t *rwlock)	);
-_PROTOTYPE( int mthread_rwlock_wrlock, (mthread_rwlock_t *rwlock)	);
-_PROTOTYPE( int mthread_rwlock_unlock, (mthread_rwlock_t *rwlock)	);
+int mthread_rwlock_destroy(mthread_rwlock_t *rwlock);
+int mthread_rwlock_init(mthread_rwlock_t *rwlock);
+int mthread_rwlock_rdlock(mthread_rwlock_t *rwlock);
+int mthread_rwlock_wrlock(mthread_rwlock_t *rwlock);
+int mthread_rwlock_unlock(mthread_rwlock_t *rwlock);
 
 /* schedule.c */
-_PROTOTYPE( void mthread_init, (void)					);
-_PROTOTYPE( int mthread_yield, (void)					);
-_PROTOTYPE( void mthread_yield_all, (void)				);
+void mthread_init(void);
+int mthread_yield(void);
+void mthread_yield_all(void);
 
 #endif

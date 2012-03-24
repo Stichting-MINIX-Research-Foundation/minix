@@ -19,10 +19,10 @@
 #include <sys/ioctl.h>
 #include <minix/sound.h>
 
-_PROTOTYPE (int main, (int argc, char **argv));
-_PROTOTYPE (void usage, (void));
-_PROTOTYPE ( void write_wave_header, (void));
-_PROTOTYPE ( void terminate, (int s));
+int main(int argc, char **argv);
+void usage(void);
+void write_wave_header(void);
+void terminate(int s);
 
 
 /******* Wave format definitions *********/

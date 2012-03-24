@@ -20,9 +20,8 @@
 #include "const.h"
 
 
-FORWARD _PROTOTYPE( block_t alloc_block_bit, (struct super_block *sp,
-					      block_t origin,
-					      struct inode *rip));
+FORWARD block_t alloc_block_bit(struct super_block *sp, block_t origin,
+	struct inode *rip);
 
 /*===========================================================================*
  *                      discard_preallocated_blocks                          *
@@ -142,9 +141,8 @@ PUBLIC block_t alloc_block(struct inode *rip, block_t block)
 }
 
 
-FORWARD _PROTOTYPE( void check_block_number, (block_t block,
-					      struct super_block *sp,
-					      struct group_desc *gd) );
+FORWARD void check_block_number(block_t block, struct super_block *sp,
+	struct group_desc *gd);
 
 /*===========================================================================*
  *                              alloc_block_bit                              *

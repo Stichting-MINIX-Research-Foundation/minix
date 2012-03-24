@@ -40,14 +40,14 @@ struct termios ttyold, ttynew;	/* our tty controlling structs */
 
 extern int optind;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(char *finduser, (void));
-_PROTOTYPE(void settty, (char *utty));
-_PROTOTYPE(void sayhello, (void));
-_PROTOTYPE(void escape, (char *cmd));
-_PROTOTYPE(void writetty, (void));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void intr, (int dummy));
+int main(int argc, char **argv);
+char *finduser(void);
+void settty(char *utty);
+void sayhello(void);
+void escape(char *cmd);
+void writetty(void);
+void usage(void);
+void intr(int dummy);
 
 char *finduser()
 {

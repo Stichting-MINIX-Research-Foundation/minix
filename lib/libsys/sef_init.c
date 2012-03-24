@@ -17,11 +17,11 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Init prototypes for sef_startup(). */
-PUBLIC _PROTOTYPE( int do_sef_rs_init, (endpoint_t old_endpoint) );
-PUBLIC _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
+PUBLIC int do_sef_rs_init(endpoint_t old_endpoint);
+PUBLIC int do_sef_init_request(message *m_ptr);
 
 /* Debug. */
-EXTERN _PROTOTYPE( char* sef_debug_header, (void) );
+EXTERN char* sef_debug_header(void);
 
 /* Information about SELF. */
 EXTERN endpoint_t sef_self_endpoint;

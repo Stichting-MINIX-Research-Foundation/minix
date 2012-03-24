@@ -112,8 +112,6 @@ struct {								\
 
 /* Generates prototypes and inline functions */
 
-#define SPLAY_PROTOTYPE(name, type, field, cmp)				\
-void name##_SPLAY(struct name *, struct type *);			\
 void name##_SPLAY_MINMAX(struct name *, int);				\
 struct type *name##_SPLAY_INSERT(struct name *, struct type *);		\
 struct type *name##_SPLAY_REMOVE(struct name *, struct type *);		\
@@ -374,12 +372,6 @@ struct {								\
 } while (/*CONSTCOND*/ 0)
 
 /* Generates prototypes and inline functions */
-#define RB_PROTOTYPE(name, type, field, cmp)				\
-	RB_PROTOTYPE_INTERNAL(name, type, field, cmp,)
-#define	RB_PROTOTYPE_STATIC(name, type, field, cmp)			\
-	RB_PROTOTYPE_INTERNAL(name, type, field, cmp, __unused static)
-#define RB_PROTOTYPE_INTERNAL(name, type, field, cmp, attr)		\
-attr void name##_RB_INSERT_COLOR(struct name *, struct type *);		\
 attr void name##_RB_REMOVE_COLOR(struct name *, struct type *, struct type *);\
 attr struct type *name##_RB_REMOVE(struct name *, struct type *);	\
 attr struct type *name##_RB_INSERT(struct name *, struct type *);	\

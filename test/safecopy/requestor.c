@@ -36,7 +36,7 @@ int test(size_t size)
 }
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD void sef_local_startup(void);
 
 /*===========================================================================*
  *				    main				     *

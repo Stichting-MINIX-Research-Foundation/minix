@@ -9,54 +9,54 @@
 #ifndef __ASSEMBLY__
 
 /* Hardware interrupt handlers. */
-_PROTOTYPE( void hwint00, (void) );
-_PROTOTYPE( void hwint01, (void) );
-_PROTOTYPE( void hwint02, (void) );
-_PROTOTYPE( void hwint03, (void) );
-_PROTOTYPE( void hwint04, (void) );
-_PROTOTYPE( void hwint05, (void) );
-_PROTOTYPE( void hwint06, (void) );
-_PROTOTYPE( void hwint07, (void) );
-_PROTOTYPE( void hwint08, (void) );
-_PROTOTYPE( void hwint09, (void) );
-_PROTOTYPE( void hwint10, (void) );
-_PROTOTYPE( void hwint11, (void) );
-_PROTOTYPE( void hwint12, (void) );
-_PROTOTYPE( void hwint13, (void) );
-_PROTOTYPE( void hwint14, (void) );
-_PROTOTYPE( void hwint15, (void) );
+void hwint00(void);
+void hwint01(void);
+void hwint02(void);
+void hwint03(void);
+void hwint04(void);
+void hwint05(void);
+void hwint06(void);
+void hwint07(void);
+void hwint08(void);
+void hwint09(void);
+void hwint10(void);
+void hwint11(void);
+void hwint12(void);
+void hwint13(void);
+void hwint14(void);
+void hwint15(void);
 
 /* Exception handlers (real or protected mode), in numerical order. */
-void _PROTOTYPE( int00, (void) ), _PROTOTYPE( divide_error, (void) );
-void _PROTOTYPE( int01, (void) ), _PROTOTYPE( single_step_exception, (void) );
-void _PROTOTYPE( int02, (void) ), _PROTOTYPE( nmi, (void) );
-void _PROTOTYPE( int03, (void) ), _PROTOTYPE( breakpoint_exception, (void) );
-void _PROTOTYPE( int04, (void) ), _PROTOTYPE( overflow, (void) );
-void _PROTOTYPE( int05, (void) ), _PROTOTYPE( bounds_check, (void) );
-void _PROTOTYPE( int06, (void) ), _PROTOTYPE( inval_opcode, (void) );
-void _PROTOTYPE( int07, (void) ), _PROTOTYPE( copr_not_available, (void) );
-void                              _PROTOTYPE( double_fault, (void) );
-void                              _PROTOTYPE( copr_seg_overrun, (void) );
-void                              _PROTOTYPE( inval_tss, (void) );
-void                              _PROTOTYPE( segment_not_present, (void) );
-void                              _PROTOTYPE( stack_exception, (void) );
-void                              _PROTOTYPE( general_protection, (void) );
-void                              _PROTOTYPE( page_fault, (void) );
-void                              _PROTOTYPE( copr_error, (void) );
-void                              _PROTOTYPE( alignment_check, (void) );
-void                              _PROTOTYPE( machine_check, (void) );
-void                              _PROTOTYPE( simd_exception, (void) );
+void int00(void), divide_error (void);
+void int01(void), single_step_exception (void);
+void int02(void), nmi (void);
+void int03(void), breakpoint_exception (void);
+void int04(void), overflow (void);
+void int05(void), bounds_check (void);
+void int06(void), inval_opcode (void);
+void int07(void), copr_not_available (void);
+void double_fault(void);
+void copr_seg_overrun(void);
+void inval_tss(void);
+void segment_not_present(void);
+void stack_exception(void);
+void general_protection(void);
+void page_fault(void);
+void copr_error(void);
+void alignment_check(void);
+void machine_check(void);
+void simd_exception(void);
 
 /* Software interrupt handlers, in numerical order. */
-_PROTOTYPE( void trp, (void) );
-_PROTOTYPE( void ipc_entry, (void) );
-_PROTOTYPE( void kernel_call_entry, (void) );
-_PROTOTYPE( void level0_call, (void) );
+void trp(void);
+void ipc_entry(void);
+void kernel_call_entry(void);
+void level0_call(void);
 
 /* memory.c */
-_PROTOTYPE( void segmentation2paging, (struct proc * current));
-_PROTOTYPE( void i386_freepde, (int pde));
-_PROTOTYPE( void getcr3val, (void));
+void segmentation2paging(struct proc * current);
+void i386_freepde(int pde);
+void getcr3val(void);
 
 
 /* exception.c */
@@ -70,54 +70,53 @@ struct exception_frame {
 	reg_t	ss;		/* undefined if trap is nested */
 };
 
-_PROTOTYPE( void exception, (struct exception_frame * frame));
+void exception(struct exception_frame * frame);
 
 /* klib386.s */
-_PROTOTYPE( __dead void monitor, (void)                                 );
-_PROTOTYPE( __dead void reset, (void)                                   );
-_PROTOTYPE( __dead void x86_triplefault, (void)                         );
-_PROTOTYPE( void int86, (void)                     			);
-_PROTOTYPE( reg_t read_cr0, (void)					);
-_PROTOTYPE( reg_t read_cr2, (void)					);
-_PROTOTYPE( void write_cr0, (unsigned long value)                       );
-_PROTOTYPE( unsigned long read_cr4, (void)                              );
-_PROTOTYPE( void write_cr4, (unsigned long value)                       );
-_PROTOTYPE( void write_cr3, (unsigned long value)                       );
-_PROTOTYPE( unsigned long read_cpu_flags, (void)                        );
-_PROTOTYPE( void phys_insb, (u16_t port, phys_bytes buf, size_t count)  );
-_PROTOTYPE( void phys_insw, (u16_t port, phys_bytes buf, size_t count)  );
-_PROTOTYPE( void phys_outsb, (u16_t port, phys_bytes buf, size_t count) );
-_PROTOTYPE( void phys_outsw, (u16_t port, phys_bytes buf, size_t count) );
-_PROTOTYPE( u32_t read_cr3, (void) );
-_PROTOTYPE( void reload_cr3, (void) );
-_PROTOTYPE( void i386_invlpg, (phys_bytes linaddr) );
-_PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes));
-_PROTOTYPE( void reload_ds, (void)					);
-_PROTOTYPE( void ia32_msr_read, (u32_t reg, u32_t * hi, u32_t * lo)	);
-_PROTOTYPE( void ia32_msr_write, (u32_t reg, u32_t hi, u32_t lo)	);
-_PROTOTYPE( void fninit, (void));
-_PROTOTYPE( void clts, (void));
-_PROTOTYPE( void fxsave, (void *));
-_PROTOTYPE( void fnsave, (void *));
-_PROTOTYPE( int fxrstor, (void *));
-_PROTOTYPE( int __fxrstor_end, (void *));
-_PROTOTYPE( int frstor, (void *));
-_PROTOTYPE( int __frstor_end, (void *));
-_PROTOTYPE( int __frstor_failure, (void *));
-_PROTOTYPE( unsigned short fnstsw, (void));
-_PROTOTYPE( void fnstcw, (unsigned short* cw));
+__dead void monitor(void);
+__dead void reset(void);
+__dead void x86_triplefault(void);
+void int86(void);
+reg_t read_cr0(void);
+reg_t read_cr2(void);
+void write_cr0(unsigned long value);
+unsigned long read_cr4(void);
+void write_cr4(unsigned long value);
+void write_cr3(unsigned long value);
+unsigned long read_cpu_flags(void);
+void phys_insb(u16_t port, phys_bytes buf, size_t count);
+void phys_insw(u16_t port, phys_bytes buf, size_t count);
+void phys_outsb(u16_t port, phys_bytes buf, size_t count);
+void phys_outsw(u16_t port, phys_bytes buf, size_t count);
+u32_t read_cr3(void);
+void reload_cr3(void);
+void i386_invlpg(phys_bytes linaddr);
+void phys_memset(phys_bytes ph, u32_t c, phys_bytes bytes);
+void reload_ds(void);
+void ia32_msr_read(u32_t reg, u32_t * hi, u32_t * lo);
+void ia32_msr_write(u32_t reg, u32_t hi, u32_t lo);
+void fninit(void);
+void clts(void);
+void fxsave(void *);
+void fnsave(void *);
+int fxrstor(void *);
+int __fxrstor_end(void *);
+int frstor(void *);
+int __frstor_end(void *);
+int __frstor_failure(void *);
+unsigned short fnstsw(void);
+void fnstcw(unsigned short* cw);
 
-_PROTOTYPE( void switch_k_stack, (void * esp, void (* continuation)(void)));
+void switch_k_stack(void * esp, void (* continuation)(void));
 
-_PROTOTYPE(void __switch_address_space, (struct proc * p,
-						struct proc ** __ptproc));
+void __switch_address_space(struct proc * p, struct proc ** __ptproc);
 #define switch_address_space(proc)	\
 	__switch_address_space(proc, get_cpulocal_var_ptr(ptproc))
 
-_PROTOTYPE(void refresh_tlb, (void));
+void refresh_tlb(void);
 
 /* multiboot.c */
-_PROTOTYPE( void multiboot_init, (void)					);
+void multiboot_init(void);
 
 /* protect.c */
 struct tss_s {
@@ -151,20 +150,20 @@ struct tss_s {
 /* u8_t iomap[0]; */
 };
 
-_PROTOTYPE( void prot_init, (void)                     			);
-_PROTOTYPE( void idt_init, (void)                     			);
-_PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
-                vir_bytes size, int privilege)                          );
-_PROTOTYPE( void enable_iop, (struct proc *pp)                          );
-_PROTOTYPE( int prot_set_kern_seg_limit, (vir_bytes limit)             );
-_PROTOTYPE( void printseg, (char *banner, int iscs, struct proc *pr, u32_t selector)             );
-_PROTOTYPE( u32_t read_cs, (void));
-_PROTOTYPE( u32_t read_ds, (void));
-_PROTOTYPE( u32_t read_ss, (void));
+void prot_init(void);
+void idt_init(void);
+void init_dataseg(struct segdesc_s *segdp, phys_bytes base, vir_bytes
+	size, int privilege);
+void enable_iop(struct proc *pp);
+int prot_set_kern_seg_limit(vir_bytes limit);
+void printseg(char *banner, int iscs, struct proc *pr, u32_t selector);
+u32_t read_cs(void);
+u32_t read_ds(void);
+u32_t read_ss(void);
 
 /* prototype of an interrupt vector table entry */
 struct gate_table_s {
-	_PROTOTYPE( void (*gate), (void) );
+ void(*gate) (void);
 	unsigned char vec_nr;
 	unsigned char privilege;
 };
@@ -172,8 +171,8 @@ struct gate_table_s {
 extern struct gate_table_s gate_table_pic[];
 
 /* copies an array of vectors to the IDT. The last vector must be zero filled */
-_PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
-_PROTOTYPE(void idt_reload,(void));
+void idt_copy_vectors(struct gate_table_s * first);
+void idt_reload(void);
 
 EXTERN void * k_boot_stktop;
 EXTERN void * k_stacks_start;
@@ -182,13 +181,13 @@ extern void * k_stacks;
 #define get_k_stack_top(cpu)	((void *)(((char*)(k_stacks)) \
 					+ 2 * ((cpu) + 1) * K_STACK_SIZE))
 
-_PROTOTYPE( void, mfence(void));
+void mfence(void);
 #define barrier()	do { mfence(); } while(0)
 
 
 #ifndef __GNUC__
 /* call a function to read the stack fram pointer (%ebp) */
-_PROTOTYPE(reg_t read_ebp, (void));
+reg_t read_ebp(void);
 #define get_stack_frame(__X)	((reg_t)read_ebp())
 #else
 /* read %ebp directly */
@@ -198,23 +197,18 @@ _PROTOTYPE(reg_t read_ebp, (void));
 /*
  * sets up TSS for a cpu and assigns kernel stack and cpu id
  */
-_PROTOTYPE(void tss_init, (unsigned cpu, void * kernel_stack));
+void tss_init(unsigned cpu, void * kernel_stack);
 
-_PROTOTYPE( void int_gate, (unsigned vec_nr, vir_bytes offset,
-		unsigned dpl_type) );
+void int_gate(unsigned vec_nr, vir_bytes offset, unsigned dpl_type);
 
-_PROTOTYPE(void __copy_msg_from_user_end, (void));
-_PROTOTYPE(void __copy_msg_to_user_end, (void));
-_PROTOTYPE(void __user_copy_msg_pointer_failure, (void));
+void __copy_msg_from_user_end(void);
+void __copy_msg_to_user_end(void);
+void __user_copy_msg_pointer_failure(void);
 
-_PROTOTYPE(int platform_tbl_checksum_ok, (void *ptr, unsigned int length));
-_PROTOTYPE(int platform_tbl_ptr, (phys_bytes start,
-					phys_bytes end,
-					unsigned increment,
-					void * buff,
-					unsigned size,
-					phys_bytes * phys_addr,
-					int ((* cmp_f)(void *))));
+int platform_tbl_checksum_ok(void *ptr, unsigned int length);
+int platform_tbl_ptr(phys_bytes start, phys_bytes end, unsigned
+	increment, void * buff, unsigned size, phys_bytes * phys_addr, int ((*
+	cmp_f)(void *)));
 
 /* breakpoints.c */
 #define BREAKPOINT_COUNT		4

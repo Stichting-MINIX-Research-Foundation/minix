@@ -22,16 +22,16 @@ PUBLIC struct logdevice logdevices[NR_DEVS];
 PRIVATE struct device log_geom[NR_DEVS];  	/* base and size of devices */
 PRIVATE int log_device = -1;	 		/* current device */
 
-FORWARD _PROTOTYPE( struct device *log_prepare, (dev_t device) );
-FORWARD _PROTOTYPE( int log_transfer, (endpoint_t endpt, int opcode,
-	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt, unsigned int flags) );
-FORWARD _PROTOTYPE( int log_do_open, (message *m_ptr) );
-FORWARD _PROTOTYPE( int log_cancel, (message *m_ptr) );
-FORWARD _PROTOTYPE( int log_select, (message *m_ptr) );
-FORWARD _PROTOTYPE( int log_other, (message *m_ptr) );
-FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count,
-	endpoint_t endpt, cp_grant_id_t grant, size_t) );
+FORWARD struct device *log_prepare(dev_t device);
+FORWARD int log_transfer(endpoint_t endpt, int opcode, u64_t position,
+	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
+	flags);
+FORWARD int log_do_open(message *m_ptr);
+FORWARD int log_cancel(message *m_ptr);
+FORWARD int log_select(message *m_ptr);
+FORWARD int log_other(message *m_ptr);
+FORWARD int subread(struct logdevice *log, int count, endpoint_t endpt,
+	cp_grant_id_t grant, size_t);
 
 /* Entry points to this driver. */
 PRIVATE struct chardriver log_dtab = {
@@ -48,12 +48,12 @@ PRIVATE struct chardriver log_dtab = {
 };
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
-EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
-EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				   main 				     *

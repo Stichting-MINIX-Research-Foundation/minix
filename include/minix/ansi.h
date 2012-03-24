@@ -6,16 +6,6 @@
  * of the rules.  (For consistency with the new '#ifdef _ANSI" tests in
  * the headers, _ANSI should really be defined as nothing, but that would
  * break many library routines that use "#if _ANSI".)
-
- * If _ANSI ends up being defined, a macro
- *
- *	_PROTOTYPE(function, params)
- *
- * is defined.  This macro expands in different ways, generating either
- * ANSI Standard C prototypes or old-style K&R (Kernighan & Ritchie)
- * prototypes, as needed.  Finally, some programs use _CONST, _VOIDSTAR etc
- * in such a way that they are portable over both ANSI and K&R compilers.
- * The appropriate macros are defined here.
  */
 
 #ifndef _MINIX_ANSI_H
@@ -34,8 +24,6 @@
 
 #ifdef _ANSI
 
-/* Keep everything for ANSI prototypes. */
-#define	_PROTOTYPE(function, params)	function params
 #define	_ARGS(params)			params
 
 #define	_CONST		const
@@ -44,8 +32,6 @@
 
 #else
 
-/* Throw away the parameters for K&R prototypes. */
-#define	_PROTOTYPE(function, params)	function()
 #define	_ARGS(params)			()
 
 #define	_CONST

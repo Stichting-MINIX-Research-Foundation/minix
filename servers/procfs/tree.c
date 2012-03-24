@@ -396,7 +396,7 @@ PRIVATE void pid_read(struct inode *node)
 	index = get_inode_index(node);
 
 	/* Call the handler procedure for the file. */
-	((_PROTOTYPE(void (*), (int))) pid_files[index].data)(slot);
+((void (*) (int)) pid_files[index].data)(slot);
 }
 
 /*===========================================================================*
@@ -498,7 +498,7 @@ PUBLIC int read_hook(struct inode *node, off_t off, char **ptr,
 	if (get_inode_index(node) != NO_INDEX) {
 		pid_read(node);
 	} else {
-		((_PROTOTYPE(void (*), (void))) cbdata)();
+ ((void (*) (void)) cbdata)();
 	}
 
 	*len = buf_get(ptr);

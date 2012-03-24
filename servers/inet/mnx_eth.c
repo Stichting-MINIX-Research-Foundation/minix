@@ -21,13 +21,12 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-FORWARD _PROTOTYPE( void setup_read, (eth_port_t *eth_port) );
-FORWARD _PROTOTYPE( void read_int, (eth_port_t *eth_port, int count) );
-FORWARD _PROTOTYPE( void eth_issue_send, (eth_port_t *eth_port) );
-FORWARD _PROTOTYPE( void write_int, (eth_port_t *eth_port) );
-FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port,
-	endpoint_t endpoint) );
-FORWARD _PROTOTYPE( void send_getstat, (eth_port_t *eth_port) );
+FORWARD void setup_read(eth_port_t *eth_port);
+FORWARD void read_int(eth_port_t *eth_port, int count);
+FORWARD void eth_issue_send(eth_port_t *eth_port);
+FORWARD void write_int(eth_port_t *eth_port);
+FORWARD void eth_restart(eth_port_t *eth_port, endpoint_t endpoint);
+FORWARD void send_getstat(eth_port_t *eth_port);
 
 PUBLIC void osdep_eth_init()
 {

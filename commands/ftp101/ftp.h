@@ -33,7 +33,7 @@ extern char reply[1024];
 
 #define	MODE_B_EOF	64
 
-_PROTOTYPE(int readline, (char *prompt, char *buff, int len));
-_PROTOTYPE(int DOgetreply, (void));
-_PROTOTYPE(int DOcmdcheck, (void));
-_PROTOTYPE(int DOcommand, (char *ftpcommand, char *ftparg));
+int readline(char *prompt, char *buff, int len);
+int DOgetreply(void);
+int DOcmdcheck(void);
+int DOcommand(char *ftpcommand, char *ftparg);

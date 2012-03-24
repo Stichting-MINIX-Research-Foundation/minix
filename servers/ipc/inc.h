@@ -28,18 +28,18 @@
 #include <errno.h>
 #include <signal.h>
 
-_PROTOTYPE( int do_shmget, (message *)                                   );
-_PROTOTYPE( int do_shmat, (message *)                                    );
-_PROTOTYPE( int do_shmdt, (message *)                                    );
-_PROTOTYPE( int do_shmctl, (message *)                                   );
-_PROTOTYPE( int check_perm, (struct ipc_perm *, endpoint_t, int)         );
-_PROTOTYPE( void update_refcount_and_destroy, (void)                     );
-_PROTOTYPE( int do_semget, (message *)                                   );
-_PROTOTYPE( int do_semctl, (message *)                                   );
-_PROTOTYPE( int do_semop, (message *)                                    );
-_PROTOTYPE( int is_sem_nil, (void)                                       );
-_PROTOTYPE( int is_shm_nil, (void)                                       );
-_PROTOTYPE( void sem_process_vm_notify, (void)                           );
+int do_shmget(message *);
+int do_shmat(message *);
+int do_shmdt(message *);
+int do_shmctl(message *);
+int check_perm(struct ipc_perm *, endpoint_t, int);
+void update_refcount_and_destroy(void);
+int do_semget(message *);
+int do_semctl(message *);
+int do_semop(message *);
+int is_sem_nil(void);
+int is_shm_nil(void);
+void sem_process_vm_notify(void);
 
 EXTERN int identifier;
 EXTERN endpoint_t who_e;

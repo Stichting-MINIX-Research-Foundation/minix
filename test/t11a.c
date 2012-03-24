@@ -11,9 +11,9 @@
 
 int errct, subtest=1;
 
-_PROTOTYPE(int main, (int argc, char *argv [], char *envp []));
-_PROTOTYPE(int diff, (char *s1, char *s2));
-_PROTOTYPE(void e, (int n));
+int main(int argc, char *argv [], char *envp []);
+int diff(char *s1, char *s2);
+void e(int n);
 
 int main(argc, argv, envp)
 int argc;

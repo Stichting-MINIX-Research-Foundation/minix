@@ -22,12 +22,12 @@ Created:	April 2000 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 #if ENABLE_PCI
 
-_PROTOTYPE( static void rtl_init, (struct dpeth *dep)			);
+static void rtl_init(struct dpeth *dep);
 #if 0
-_PROTOTYPE( static u16_t get_ee_word, (dpeth_t *dep, int a)		);
-_PROTOTYPE( static void ee_wen, (dpeth_t *dep)				);
-_PROTOTYPE( static void set_ee_word, (dpeth_t *dep, int a, u16_t w)	);
-_PROTOTYPE( static void ee_wds, (dpeth_t *dep)				);
+static u16_t get_ee_word(dpeth_t *dep, int a);
+static void ee_wen(dpeth_t *dep);
+static void set_ee_word(dpeth_t *dep, int a, u16_t w);
+static void ee_wds(dpeth_t *dep);
 #endif
 
 PUBLIC int rtl_probe(dep, skip)

@@ -37,15 +37,15 @@ int colflgs[3] = {1, 2, 3};	/* number of tabs + 1: 0 => no column */
 
 static char *umsg = "Usage: comm [-[123]] file1 file2\n";
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void error, (char *s, char *f));
-_PROTOTYPE(void eopen, (char *fn, struct file *file));
-_PROTOTYPE(int getbuf, (struct file *file));
-_PROTOTYPE(int readline, (int fno));
-_PROTOTYPE(void comm, (void));
-_PROTOTYPE(void putcol, (int col, char *buf));
-_PROTOTYPE(void cpycol, (int col));
+int main(int argc, char **argv);
+void usage(void);
+void error(char *s, char *f);
+void eopen(char *fn, struct file *file);
+int getbuf(struct file *file);
+int readline(int fno);
+void comm(void);
+void putcol(int col, char *buf);
+void cpycol(int col);
 
 int main(argc, argv)
 int argc;

@@ -7,14 +7,12 @@
 #include "global.h"
 #include "proto.h"
 
-FORWARD _PROTOTYPE( int mthread_increase_thread_pool, (void)			);
-FORWARD _PROTOTYPE( void mthread_thread_init, (mthread_thread_t thread,
-					       mthread_attr_t *tattr,
-					       void *(*proc)(void *),
-					       void *arg)		);
+FORWARD int mthread_increase_thread_pool(void);
+FORWARD void mthread_thread_init(mthread_thread_t thread, mthread_attr_t
+	*tattr, void *(*proc)(void *), void *arg);
 
-FORWARD _PROTOTYPE( void mthread_thread_stop, (mthread_thread_t thread));
-FORWARD _PROTOTYPE( void mthread_trampoline, (void)			);
+FORWARD void mthread_thread_stop(mthread_thread_t thread);
+FORWARD void mthread_trampoline(void);
 
 PRIVATE int initialized = 0;
 #ifndef PGSHIFT

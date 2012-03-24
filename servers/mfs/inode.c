@@ -22,15 +22,15 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( void addhash_inode, (struct inode *node)		); 
+FORWARD void addhash_inode(struct inode *node);
 
-FORWARD _PROTOTYPE( void free_inode, (dev_t dev, ino_t numb)			);
-FORWARD _PROTOTYPE( void new_icopy, (struct inode *rip, d2_inode *dip,
-						int direction, int norm));
-FORWARD _PROTOTYPE( void old_icopy, (struct inode *rip, d1_inode *dip,
-						int direction, int norm));
-FORWARD _PROTOTYPE( void unhash_inode, (struct inode *node) 		);
-FORWARD _PROTOTYPE( void wipe_inode, (struct inode *rip)			);
+FORWARD void free_inode(dev_t dev, ino_t numb);
+FORWARD void new_icopy(struct inode *rip, d2_inode *dip, int direction,
+	int norm);
+FORWARD void old_icopy(struct inode *rip, d1_inode *dip, int direction,
+	int norm);
+FORWARD void unhash_inode(struct inode *node);
+FORWARD void wipe_inode(struct inode *rip);
 
 
 /*===========================================================================*

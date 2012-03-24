@@ -14,8 +14,8 @@ int spaces = 0;			/* Spaces since last tab stop  	    */
 int leading_blank = 1;		/* Only unexpand leading blanks,	    */
 /* Overruled by -a option	            */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void Unexpand, (FILE *f, int all));
+int main(int argc, char **argv);
+void Unexpand(FILE *f, int all);
 
 int main(argc, argv)
 int argc;

@@ -26,8 +26,8 @@ PRIVATE ddekit_thread_t *sleep_queue;
 /* Handle to the running thread, set in _dde_kit_thread_schedule() */
 PRIVATE ddekit_thread_t *current = NULL;
 
-FORWARD _PROTOTYPE( void _ddekit_thread_start, (ddekit_thread_t *th));
-FORWARD _PROTOTYPE( void _ddekit_thread_sleep, (unsigned long until));
+FORWARD void _ddekit_thread_start(ddekit_thread_t *th);
+FORWARD void _ddekit_thread_sleep(unsigned long until);
 
 /*****************************************************************************
  *    _ddekit_thread_start                                                   *

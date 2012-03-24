@@ -47,13 +47,13 @@
 PUBLIC unsigned long calls_stats[NCALLS];
 #endif
 
-FORWARD _PROTOTYPE( void free_proc, (struct fproc *freed, int flags)	);
+FORWARD void free_proc(struct fproc *freed, int flags);
 /*
-FORWARD _PROTOTYPE( int dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
-FORWARD _PROTOTYPE( int write_bytes, (struct inode *rip, off_t off,
-				      char *buf, size_t bytes)		);
-FORWARD _PROTOTYPE( int write_seg, (struct inode *rip, off_t off, int proc_e,
-			int seg, off_t seg_off, phys_bytes seg_bytes)	);
+FORWARD int dumpcore(int proc_e, struct mem_map *seg_ptr);
+FORWARD int write_bytes(struct inode *rip, off_t off, char *buf, size_t
+	bytes);
+FORWARD int write_seg(struct inode *rip, off_t off, int proc_e, int seg,
+	off_t seg_off, phys_bytes seg_bytes);
 */
 
 /*===========================================================================*

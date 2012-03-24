@@ -154,72 +154,76 @@ int firstlist;			/* has the listing header been printed? */
 unsigned part_offset;		/* sector offset for this partition */
 char answer[] = "Answer questions with y or n.  Then hit RETURN";
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void initvars, (void));
-_PROTOTYPE(void fatal, (char *s));
-_PROTOTYPE(int eoln, (int c));
-_PROTOTYPE(int yes, (char *question));
-_PROTOTYPE(int atoo, (char *s));
-_PROTOTYPE(int input, (char *buf, int size));
-_PROTOTYPE(char *alloc, (unsigned nelem, unsigned elsize));
-_PROTOTYPE(void printname, (char *s));
-_PROTOTYPE(void printrec, (struct stack *sp));
-_PROTOTYPE(void printpath, (int mode, int nlcr));
-_PROTOTYPE(void devopen, (void));
-_PROTOTYPE(void devclose, (void));
-_PROTOTYPE(void devio, (block_nr bno, int dir));
-_PROTOTYPE(void devread, (long block, long offset, char *buf, int size));
-_PROTOTYPE(void devwrite, (long block, long offset, char *buf, int size));
-_PROTOTYPE(void pr, (char *fmt, int cnt, char *s, char *p));
-_PROTOTYPE(void lpr, (char *fmt, long cnt, char *s, char *p));
-_PROTOTYPE(bit_nr getnumber, (char *s));
-_PROTOTYPE(char **getlist, (char ***argv, char *type));
-_PROTOTYPE(void lsuper, (void));
+int main(int argc, char **argv);
+void initvars(void);
+void fatal(char *s);
+int eoln(int c);
+int yes(char *question);
+int atoo(char *s);
+int input(char *buf, int size);
+char *alloc(unsigned nelem, unsigned elsize);
+void printname(char *s);
+void printrec(struct stack *sp);
+void printpath(int mode, int nlcr);
+void devopen(void);
+void devclose(void);
+void devio(block_nr bno, int dir);
+void devread(long block, long offset, char *buf, int size);
+void devwrite(long block, long offset, char *buf, int size);
+void pr(char *fmt, int cnt, char *s, char *p);
+void lpr(char *fmt, long cnt, char *s, char *p);
+bit_nr getnumber(char *s);
+char **getlist(char ***argv, char *type);
+void lsuper(void);
 #define SUPER_GET	0
 #define SUPER_PUT	1
-_PROTOTYPE(void rw_super, (int mode));
-_PROTOTYPE(void chksuper, (void));
-_PROTOTYPE(void lsi, (char **clist));
-_PROTOTYPE(bitchunk_t *allocbitmap, (int nblk));
-_PROTOTYPE(void loadbitmap, (bitchunk_t *bitmap, block_nr bno, int nblk));
-_PROTOTYPE(void dumpbitmap, (bitchunk_t *bitmap, block_nr bno, int nblk));
-_PROTOTYPE(void fillbitmap, (bitchunk_t *bitmap, bit_nr lwb, bit_nr upb, char **list));
-_PROTOTYPE(void freebitmap, (bitchunk_t *p));
-_PROTOTYPE(void getbitmaps, (void));
-_PROTOTYPE(void putbitmaps, (void));
-_PROTOTYPE(void chkword, (unsigned w1, unsigned w2, bit_nr bit, char *type, int *n, int *report, bit_t));
-_PROTOTYPE(void chkmap, (bitchunk_t *cmap, bitchunk_t *dmap, bit_nr bit, block_nr blkno, int nblk, char *type));
-_PROTOTYPE(void chkilist, (void));
-_PROTOTYPE(void getcount, (void));
-_PROTOTYPE(void counterror, (ino_t ino));
-_PROTOTYPE(void chkcount, (void));
-_PROTOTYPE(void freecount, (void));
-_PROTOTYPE(void printperm, (mode_t mode, int shift, int special, int overlay));
-_PROTOTYPE(void list, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int Remove, (dir_struct *dp));
-_PROTOTYPE(void make_printable_name, (char *dst, char *src, int n));
-_PROTOTYPE(int chkdots, (ino_t ino, off_t pos, dir_struct *dp, ino_t exp));
-_PROTOTYPE(int chkname, (ino_t ino, dir_struct *dp));
-_PROTOTYPE(int chkentry, (ino_t ino, off_t pos, dir_struct *dp));
-_PROTOTYPE(int chkdirzone, (ino_t ino, d_inode *ip, off_t pos, zone_nr zno));
-_PROTOTYPE(int chksymlinkzone, (ino_t ino, d_inode *ip, off_t pos,
-								zone_nr zno));
-_PROTOTYPE(void errzone, (char *mess, zone_nr zno, int level, off_t pos));
-_PROTOTYPE(int markzone, (zone_nr zno, int level, off_t pos));
-_PROTOTYPE(int chkindzone, (ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
-_PROTOTYPE(off_t jump, (int level));
-_PROTOTYPE(int zonechk, (ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
-_PROTOTYPE(int chkzones, (ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist, int len, int level));
-_PROTOTYPE(int chkfile, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkdirectory, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int chklink, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkspecial, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkmode, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int chkinode, (ino_t ino, d_inode *ip));
-_PROTOTYPE(int descendtree, (dir_struct *dp));
-_PROTOTYPE(void chktree, (void));
-_PROTOTYPE(void printtotal, (void));
-_PROTOTYPE(void chkdev, (char *f, char **clist, char **ilist, char **zlist));
+void rw_super(int mode);
+void chksuper(void);
+void lsi(char **clist);
+bitchunk_t *allocbitmap(int nblk);
+void loadbitmap(bitchunk_t *bitmap, block_nr bno, int nblk);
+void dumpbitmap(bitchunk_t *bitmap, block_nr bno, int nblk);
+void fillbitmap(bitchunk_t *bitmap, bit_nr lwb, bit_nr upb, char
+	**list);
+void freebitmap(bitchunk_t *p);
+void getbitmaps(void);
+void putbitmaps(void);
+void chkword(unsigned w1, unsigned w2, bit_nr bit, char *type, int *n,
+	int *report, bit_t);
+void chkmap(bitchunk_t *cmap, bitchunk_t *dmap, bit_nr bit, block_nr
+	blkno, int nblk, char *type);
+void chkilist(void);
+void getcount(void);
+void counterror(ino_t ino);
+void chkcount(void);
+void freecount(void);
+void printperm(mode_t mode, int shift, int special, int overlay);
+void list(ino_t ino, d_inode *ip);
+int Remove(dir_struct *dp);
+void make_printable_name(char *dst, char *src, int n);
+int chkdots(ino_t ino, off_t pos, dir_struct *dp, ino_t exp);
+int chkname(ino_t ino, dir_struct *dp);
+int chkentry(ino_t ino, off_t pos, dir_struct *dp);
+int chkdirzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno);
+int chksymlinkzone(ino_t ino, d_inode *ip, off_t pos, zone_nr zno);
+void errzone(char *mess, zone_nr zno, int level, off_t pos);
+int markzone(zone_nr zno, int level, off_t pos);
+int chkindzone(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int
+	level);
+off_t jump(int level);
+int zonechk(ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level);
+int chkzones(ino_t ino, d_inode *ip, off_t *pos, zone_nr *zlist, int
+	len, int level);
+int chkfile(ino_t ino, d_inode *ip);
+int chkdirectory(ino_t ino, d_inode *ip);
+int chklink(ino_t ino, d_inode *ip);
+int chkspecial(ino_t ino, d_inode *ip);
+int chkmode(ino_t ino, d_inode *ip);
+int chkinode(ino_t ino, d_inode *ip);
+int descendtree(dir_struct *dp);
+void chktree(void);
+void printtotal(void);
+void chkdev(char *f, char **clist, char **ilist, char **zlist);
 
 /* Initialize the variables used by this program. */
 void initvars()

@@ -65,21 +65,22 @@ struct vscp_vec {
 #define CPF_VALID	0x001000 /* Grant slot contains valid grant. */
 
 /* Prototypes for functions in libsys. */
-_PROTOTYPE( cp_grant_id_t cpf_grant_direct, (endpoint_t, vir_bytes, size_t, int));
-_PROTOTYPE( cp_grant_id_t cpf_grant_indirect, (endpoint_t, endpoint_t, cp_grant_id_t));
-_PROTOTYPE( cp_grant_id_t cpf_grant_magic, (endpoint_t, endpoint_t, vir_bytes, size_t, int));
-_PROTOTYPE( int cpf_revoke, (cp_grant_id_t grant_id));
-_PROTOTYPE( int cpf_lookup, (cp_grant_id_t g, endpoint_t *ep, endpoint_t *ep2));
+cp_grant_id_t cpf_grant_direct(endpoint_t, vir_bytes, size_t, int);
+cp_grant_id_t cpf_grant_indirect(endpoint_t, endpoint_t, cp_grant_id_t);
+cp_grant_id_t cpf_grant_magic(endpoint_t, endpoint_t, vir_bytes, size_t,
+	int);
+int cpf_revoke(cp_grant_id_t grant_id);
+int cpf_lookup(cp_grant_id_t g, endpoint_t *ep, endpoint_t *ep2);
 
-_PROTOTYPE( int cpf_getgrants, (cp_grant_id_t *grant_ids, int n));
-_PROTOTYPE( int cpf_setgrant_direct, (cp_grant_id_t g, endpoint_t who,
-	vir_bytes addr, size_t size, int access));
-_PROTOTYPE( int cpf_setgrant_indirect, (cp_grant_id_t g, endpoint_t who_to,
-	endpoint_t who_from, cp_grant_id_t his_g));
-_PROTOTYPE( int cpf_setgrant_magic, (cp_grant_id_t g, endpoint_t who_to,
-	endpoint_t who_from, vir_bytes addr, size_t bytes, int access));
-_PROTOTYPE( int cpf_setgrant_disable, (cp_grant_id_t grant_id));
-_PROTOTYPE( void cpf_reload, (void));
+int cpf_getgrants(cp_grant_id_t *grant_ids, int n);
+int cpf_setgrant_direct(cp_grant_id_t g, endpoint_t who, vir_bytes addr,
+	size_t size, int access);
+int cpf_setgrant_indirect(cp_grant_id_t g, endpoint_t who_to, endpoint_t
+	who_from, cp_grant_id_t his_g);
+int cpf_setgrant_magic(cp_grant_id_t g, endpoint_t who_to, endpoint_t
+	who_from, vir_bytes addr, size_t bytes, int access);
+int cpf_setgrant_disable(cp_grant_id_t grant_id);
+void cpf_reload(void);
 
 /* Set a process' grant table location and size (in-kernel only). */
 #define _K_SET_GRANT_TABLE(rp, ptr, entries)	\

@@ -3,9 +3,10 @@
 
 
  
-FORWARD _PROTOTYPE( int get_set_volume, (struct volume_level *level, int flag));
-FORWARD _PROTOTYPE( int get_set_input, (struct inout_ctrl *input, int flag, int channel));
-FORWARD _PROTOTYPE( int get_set_output, (struct inout_ctrl *output, int flag));
+FORWARD int get_set_volume(struct volume_level *level, int flag);
+FORWARD int get_set_input(struct inout_ctrl *input, int flag, int
+	channel);
+FORWARD int get_set_output(struct inout_ctrl *output, int flag);
 
 
 

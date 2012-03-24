@@ -19,15 +19,15 @@ char buf[2048];
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test2a, (void));
-_PROTOTYPE(void test2b, (void));
-_PROTOTYPE(void test2c, (void));
-_PROTOTYPE(void test2d, (void));
-_PROTOTYPE(void test2e, (void));
-_PROTOTYPE(void test2f, (void));
-_PROTOTYPE(void test2g, (void));
-_PROTOTYPE(void sigpip, (int s));
+int main(int argc, char *argv []);
+void test2a(void);
+void test2b(void);
+void test2c(void);
+void test2d(void);
+void test2e(void);
+void test2f(void);
+void test2g(void);
+void sigpip(int s);
 
 int main(argc, argv)
 int argc;

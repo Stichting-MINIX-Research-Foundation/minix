@@ -40,27 +40,26 @@ EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
 /* Thread related prototypes */
-FORWARD _PROTOTYPE( void thread_cleanup_f, (struct fproc *rfp, char *f,
-					    int l)			);
+FORWARD void thread_cleanup_f(struct fproc *rfp, char *f, int l);
 #define thread_cleanup(x) thread_cleanup_f(x, __FILE__, __LINE__)
-FORWARD _PROTOTYPE( void *do_async_dev_result, (void *arg)		);
-FORWARD _PROTOTYPE( void *do_control_msgs, (void *arg)			);
-FORWARD _PROTOTYPE( void *do_fs_reply, (struct job *job)			);
-FORWARD _PROTOTYPE( void *do_work, (void *arg)				);
-FORWARD _PROTOTYPE( void *do_pm, (void *arg)				);
-FORWARD _PROTOTYPE( void *do_init_root, (void *arg)			);
-FORWARD _PROTOTYPE( void handle_work, (void *(*func)(void *arg))		);
+FORWARD void *do_async_dev_result(void *arg);
+FORWARD void *do_control_msgs(void *arg);
+FORWARD void *do_fs_reply(struct job *job);
+FORWARD void *do_work(void *arg);
+FORWARD void *do_pm(void *arg);
+FORWARD void *do_init_root(void *arg);
+FORWARD void handle_work(void *(*func)(void *arg));
 
-FORWARD _PROTOTYPE( void get_work, (void)				);
-FORWARD _PROTOTYPE( void lock_pm, (void)				);
-FORWARD _PROTOTYPE( void unlock_pm, (void)				);
-FORWARD _PROTOTYPE( void service_pm, (void)				);
-FORWARD _PROTOTYPE( void service_pm_postponed, (void)				);
-FORWARD _PROTOTYPE( int unblock, (struct fproc *rfp)			);
+FORWARD void get_work(void);
+FORWARD void lock_pm(void);
+FORWARD void unlock_pm(void);
+FORWARD void service_pm(void);
+FORWARD void service_pm_postponed(void);
+FORWARD int unblock(struct fproc *rfp);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 PRIVATE mutex_t pm_lock;
 PRIVATE endpoint_t receive_from;
 

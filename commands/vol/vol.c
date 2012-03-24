@@ -52,13 +52,12 @@ long volume_size;
 char *str_vol_size;
 int rflag = 0, wflag = 0, oneflag = 0, variable = 0;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(long str2size, (char *name, char *str, long min, long max,
-							int assume_kb));
-_PROTOTYPE(void tape_inquire, (char *name, int fd));
-_PROTOTYPE(void allocate_buffer, (void));
-_PROTOTYPE(void diskio, (int fd1, int fd2, char *file1, char *file2));
+int main(int argc, char **argv);
+void usage(void);
+long str2size(char *name, char *str, long min, long max, int assume_kb);
+void tape_inquire(char *name, int fd);
+void allocate_buffer(void);
+void diskio(int fd1, int fd2, char *file1, char *file2);
 
 int main(argc, argv)
 int argc;

@@ -15,6 +15,6 @@ EXTERN dev_t fs_dev;
 
 EXTERN int fs_mounted;
 
-extern _PROTOTYPE( int (*fs_call_vec[]), (void) );
+extern int(*fs_call_vec[]) (void);
 
 #endif /* _VTREEFS_GLO_H */

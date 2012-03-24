@@ -28,8 +28,8 @@ enum ddekit_pgtab_type
  * \param pages     number of pages in region
  * \param type      pgtab type for region
  */
-_PROTOTYPE( void ddekit_pgtab_set_region,
-            (void *virt, ddekit_addr_t phys, int pages, int type));
+void ddekit_pgtab_set_region(void *virt, ddekit_addr_t phys, int pages,
+	int type);
 
 
 /**
@@ -39,8 +39,8 @@ _PROTOTYPE( void ddekit_pgtab_set_region,
  * with the underlying mechanism and therefore can use this function that takes care
  * of translating a size to an amount of pages.
  */
-_PROTOTYPE( void ddekit_pgtab_set_region_with_size,
-            (void *virt, ddekit_addr_t phys, int size, int type));
+void ddekit_pgtab_set_region_with_size(void *virt, ddekit_addr_t phys,
+	int size, int type);
 
 
 /**
@@ -49,8 +49,7 @@ _PROTOTYPE( void ddekit_pgtab_set_region_with_size,
  * \param virt      virtual start address for region
  * \param type      pgtab type for region
  */
-_PROTOTYPE( void ddekit_pgtab_clear_region,
-            (void *virt, int type));
+void ddekit_pgtab_clear_region(void *virt, int type);
 
 /**
  * Get physical address for virtual address
@@ -59,7 +58,7 @@ _PROTOTYPE( void ddekit_pgtab_clear_region,
  *
  * \return physical address
  */
-_PROTOTYPE( ddekit_addr_t ddekit_pgtab_get_physaddr, (const void *virt));
+ddekit_addr_t ddekit_pgtab_get_physaddr(const void *virt);
 
 /**
  * Get virtual address for physical address
@@ -68,8 +67,7 @@ _PROTOTYPE( ddekit_addr_t ddekit_pgtab_get_physaddr, (const void *virt));
  *
  * \return virtual address
  */
-_PROTOTYPE( ddekit_addr_t ddekit_pgtab_get_virtaddr,
-            (const ddekit_addr_t physical));
+ddekit_addr_t ddekit_pgtab_get_virtaddr(const ddekit_addr_t physical);
 
 /**
  * Get type of VM region.
@@ -78,7 +76,7 @@ _PROTOTYPE( ddekit_addr_t ddekit_pgtab_get_virtaddr,
 
  * \return VM region type
  */
-_PROTOTYPE( int ddekit_pgtab_get_type, (const void *virt));
+int ddekit_pgtab_get_type(const void *virt);
 
 /**
  * Get size of VM region.
@@ -87,6 +85,6 @@ _PROTOTYPE( int ddekit_pgtab_get_type, (const void *virt));
  *
  * \return VM region size (in bytes)
  */
-_PROTOTYPE( int ddekit_pgtab_get_size, (const void *virt));
+int ddekit_pgtab_get_size(const void *virt);
 
 #endif

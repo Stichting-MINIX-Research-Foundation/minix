@@ -34,42 +34,42 @@
 extern int env_argc;
 extern char **env_argv;
 
-_PROTOTYPE( void env_setargs, (int argc, char *argv[])		        );
-_PROTOTYPE( int env_get_param, (char *key, char *value, int max_size)	);
-_PROTOTYPE( int env_prefix, (char *env, char *prefix)			);
-_PROTOTYPE( void env_panic, (char *key)					);
-_PROTOTYPE( int env_parse, (char *env, char *fmt, int field, long *param,
-				long min, long max)			);
+void env_setargs(int argc, char *argv[]);
+int env_get_param(char *key, char *value, int max_size);
+int env_prefix(char *env, char *prefix);
+void env_panic(char *key);
+int env_parse(char *env, char *fmt, int field, long *param, long min,
+	long max);
 
 #define fkey_map(fkeys, sfkeys) fkey_ctl(FKEY_MAP, (fkeys), (sfkeys))
 #define fkey_unmap(fkeys, sfkeys) fkey_ctl(FKEY_UNMAP, (fkeys), (sfkeys))
 #define fkey_events(fkeys, sfkeys) fkey_ctl(FKEY_EVENTS, (fkeys), (sfkeys))
-_PROTOTYPE( int fkey_ctl, (int req, int *fkeys, int *sfkeys)		);
+int fkey_ctl(int req, int *fkeys, int *sfkeys);
 
-_PROTOTYPE( int printf, (const char *fmt, ...));
-_PROTOTYPE( void kputc, (int c));
-_PROTOTYPE( __dead void panic, (const char *fmt, ...));
-_PROTOTYPE( int getuptime, (clock_t *ticks));
-_PROTOTYPE( int getuptime2, (clock_t *ticks, time_t *boottime));
-_PROTOTYPE( int tickdelay, (clock_t ticks));
-_PROTOTYPE( int tsc_calibrate, (void));
-_PROTOTYPE( u32_t sys_hz, (void));
-_PROTOTYPE( double getidle, (void));
-_PROTOTYPE( void util_stacktrace, (void));
-_PROTOTYPE( void util_nstrcat, (char *str, unsigned long n) );
-_PROTOTYPE( void util_stacktrace_strcat, (char *));
-_PROTOTYPE( int micro_delay, (u32_t micros));
-_PROTOTYPE( u32_t tsc_64_to_micros, (u64_t tsc));
-_PROTOTYPE( u32_t tsc_to_micros, (u32_t low, u32_t high));
-_PROTOTYPE( u32_t tsc_get_khz, (void));
-_PROTOTYPE( u32_t micros_to_ticks, (u32_t micros));
-_PROTOTYPE( void ser_putc, (char c));
-_PROTOTYPE( void get_randomness, (struct k_randomness *, int));
-_PROTOTYPE( u32_t sqrt_approx, (u32_t));
+int printf(const char *fmt, ...);
+void kputc(int c);
+__dead void panic(const char *fmt, ...);
+int getuptime(clock_t *ticks);
+int getuptime2(clock_t *ticks, time_t *boottime);
+int tickdelay(clock_t ticks);
+int tsc_calibrate(void);
+u32_t sys_hz(void);
+double getidle(void);
+void util_stacktrace(void);
+void util_nstrcat(char *str, unsigned long n);
+void util_stacktrace_strcat(char *);
+int micro_delay(u32_t micros);
+u32_t tsc_64_to_micros(u64_t tsc);
+u32_t tsc_to_micros(u32_t low, u32_t high);
+u32_t tsc_get_khz(void);
+u32_t micros_to_ticks(u32_t micros);
+void ser_putc(char c);
+void get_randomness(struct k_randomness *, int);
+u32_t sqrt_approx(u32_t);
 
 #define asynsend(ep, msg) asynsend3(ep, msg, 0)
-_PROTOTYPE( int asynsend3, (endpoint_t ep, message *msg, int flags));
-_PROTOTYPE( int asyn_geterror, (endpoint_t *dst, message *msg, int *err));
+int asynsend3(endpoint_t ep, message *msg, int flags);
+int asyn_geterror(endpoint_t *dst, message *msg, int *err);
 
 #define ASSERT(c) if(!(c)) { panic("%s:%d: assert %s failed", __FILE__, __LINE__, #c); }
 

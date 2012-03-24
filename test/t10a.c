@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-_PROTOTYPE(int main, (void));
+int main(void);
 
 int main()
 {

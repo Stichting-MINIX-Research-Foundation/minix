@@ -113,17 +113,17 @@ struct param_s {
 
 #define NIL ((char *) NULL)		/* tell(fd, ..., NIL) */
 
-_PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(int isdialstr, (char *arg));
-_PROTOTYPE(void tell, (int fd, ...));
-_PROTOTYPE(void reader, (int on));
-_PROTOTYPE(void shell, (char *cmd));
-_PROTOTYPE(void lock_device, (char *device));
-_PROTOTYPE(void fatal, (char *label));
-_PROTOTYPE(void setnum, (char *s, int n));
-_PROTOTYPE(void set_uart, (int argc, char *argv[], struct termios *tcp));
-_PROTOTYPE(void set_raw, (struct termios *tcp));
-_PROTOTYPE(void quit, (int code));
+int main(int argc, char *argv[]);
+int isdialstr(char *arg);
+void tell(int fd, ...);
+void reader(int on);
+void shell(char *cmd);
+void lock_device(char *device);
+void fatal(char *label);
+void setnum(char *s, int n);
+void set_uart(int argc, char *argv[], struct termios *tcp);
+void set_raw(struct termios *tcp);
+void quit(int code);
 
 int main(argc, argv)
 int argc;
@@ -345,9 +345,9 @@ void shell(char *cmd)
 
   pid_t pid;
   char *shell, *sh0;
-  _PROTOTYPE(void (*isav), (int));
-  _PROTOTYPE(void (*qsav), (int));
-  _PROTOTYPE(void (*tsav), (int));
+  void(*isav) (int);
+  void(*qsav) (int);
+  void(*tsav) (int);
 
   if (cmd == NULL) {
 	tell(1, "\nExit the shell to return to term, ",

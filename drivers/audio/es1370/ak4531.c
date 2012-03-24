@@ -26,10 +26,10 @@
 #define MUTE							0x80
 
 
-FORWARD _PROTOTYPE( int ak4531_write, (u8_t address, u8_t data) );
-FORWARD _PROTOTYPE( int ak4531_finished, (void) );
-FORWARD _PROTOTYPE( int set_volume, (struct volume_level *level, 
-			int cmd_left, int cmd_right, int max_level) );
+FORWARD int ak4531_write(u8_t address, u8_t data);
+FORWARD int ak4531_finished(void);
+FORWARD int set_volume(struct volume_level *level, int cmd_left, int
+	cmd_right, int max_level);
 
 PRIVATE u16_t base_address; 
 PRIVATE u16_t status_register;

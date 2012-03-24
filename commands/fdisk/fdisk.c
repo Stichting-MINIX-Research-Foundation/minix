@@ -82,31 +82,31 @@ int ncyl = 1024;
 int readonly;
 int override= 0;
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void getgeom, (void));
-_PROTOTYPE(int getboot, (char *buffer));
-_PROTOTYPE(int putboot, (char *buffer));
-_PROTOTYPE(void load_from_file, (void));
-_PROTOTYPE(void save_to_file, (void));
-_PROTOTYPE(int dpl_partitions, (int rawflag));
-_PROTOTYPE(int chk_table, (void));
-_PROTOTYPE(int sec_to_hst, (long logsec, unsigned char *hd, unsigned char *sec,
-							 unsigned char *cyl));
-_PROTOTYPE(int mark_partition, (struct part_entry *pe));
-_PROTOTYPE(void change_partition, (struct part_entry *entry));
-_PROTOTYPE(int get_a_char, (void));
-_PROTOTYPE(int print_menu, (void));
-_PROTOTYPE(void adj_base, (struct part_entry *pe));
-_PROTOTYPE(void adj_size, (struct part_entry *pe));
-_PROTOTYPE(struct part_entry *ask_partition, (void));
-_PROTOTYPE(void footnotes, (void));
-_PROTOTYPE(int get_an_int, (char *prompt, int *intptr));
-_PROTOTYPE(void list_part_types, (void));
-_PROTOTYPE(void mark_npartition, (struct part_entry *pe));
-_PROTOTYPE(int mygets, (char *buf, int length));
-_PROTOTYPE(char *systype, (int type));
-_PROTOTYPE(void toggle_active, (struct part_entry *pe));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char *argv []);
+void getgeom(void);
+int getboot(char *buffer);
+int putboot(char *buffer);
+void load_from_file(void);
+void save_to_file(void);
+int dpl_partitions(int rawflag);
+int chk_table(void);
+int sec_to_hst(long logsec, unsigned char *hd, unsigned char *sec,
+	unsigned char *cyl);
+int mark_partition(struct part_entry *pe);
+void change_partition(struct part_entry *entry);
+int get_a_char(void);
+int print_menu(void);
+void adj_base(struct part_entry *pe);
+void adj_size(struct part_entry *pe);
+struct part_entry *ask_partition(void);
+void footnotes(void);
+int get_an_int(char *prompt, int *intptr);
+void list_part_types(void);
+void mark_npartition(struct part_entry *pe);
+int mygets(char *buf, int length);
+char *systype(int type);
+void toggle_active(struct part_entry *pe);
+void usage(void);
 
 /* One featureful master bootstrap. */
 char bootstrap[] = {

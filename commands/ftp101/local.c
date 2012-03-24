@@ -19,7 +19,7 @@
 
 static char line2[512];
 
-_PROTOTYPE(static void dodir, (char *path, int full));
+static void dodir(char *path, int full);
 
 int DOlpwd()
 {

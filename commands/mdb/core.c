@@ -55,13 +55,13 @@ PRIVATE char def_name[] = "core";	/* Default core name   */
 #define SIZE_KINFO sizeof(struct proc)
 #define SIZE_HEADER SIZE_MP_SEG
 
-FORWARD _PROTOTYPE( int kernel_info , (int fd ));
-FORWARD _PROTOTYPE( void setmap , (struct file *fp ));
-FORWARD _PROTOTYPE( void read_info , (struct file *fp ));
-FORWARD _PROTOTYPE( void ill_addr , (long d , int segment ));
-FORWARD _PROTOTYPE( long map_addr , (long d , int segment ));
-FORWARD _PROTOTYPE( unsigned long c_status, (void));
-FORWARD _PROTOTYPE( long getn, (long d, int s) );
+FORWARD int kernel_info(int fd );
+FORWARD void setmap(struct file *fp );
+FORWARD void read_info(struct file *fp );
+FORWARD void ill_addr(long d , int segment );
+FORWARD long map_addr(long d , int segment );
+FORWARD unsigned long c_status(void);
+FORWARD long getn(long d, int s);
 
 /* 
  * set and display mapping for core file 

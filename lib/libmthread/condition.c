@@ -4,9 +4,9 @@
 
 #ifdef MTHREAD_STRICT
 PRIVATE struct __mthread_cond *vc_front, *vc_rear;
-FORWARD _PROTOTYPE( void mthread_cond_add, (mthread_cond_t *c)		);
-FORWARD _PROTOTYPE( void mthread_cond_remove, (mthread_cond_t *c)	);
-FORWARD _PROTOTYPE( int mthread_cond_valid, (mthread_cond_t *c)	);
+FORWARD void mthread_cond_add(mthread_cond_t *c);
+FORWARD void mthread_cond_remove(mthread_cond_t *c);
+FORWARD int mthread_cond_valid(mthread_cond_t *c);
 #else
 # define mthread_cond_add(c)		((*c)->mc_magic = MTHREAD_INIT_MAGIC)
 # define mthread_cond_remove(c)		((*c)->mc_magic = MTHREAD_NOT_INUSE)

@@ -136,63 +136,59 @@ PRIVATE struct quirk
 	{ 0,	0,	0,	0,	0	}	/* end of list */
 };
 
-FORWARD _PROTOTYPE( void init_params, (void) 				);
-FORWARD _PROTOTYPE( void init_drive, (struct wini *w, int base_cmd,
-	int base_ctl, int base_dma, int irq, int ack, int hook,
-							int drive)	);
-FORWARD _PROTOTYPE( void init_params_pci, (int) 			);
-FORWARD _PROTOTYPE( int w_do_open, (dev_t minor, int access)		);
-FORWARD _PROTOTYPE( struct device *w_prepare, (dev_t dev) 		);
-FORWARD _PROTOTYPE( struct device *w_part, (dev_t minor) 			);
-FORWARD _PROTOTYPE( int w_identify, (void)				);
-FORWARD _PROTOTYPE( char *w_name, (void) 				);
-FORWARD _PROTOTYPE( int w_specify, (void) 				);
-FORWARD _PROTOTYPE( int w_io_test, (void) 				);
-FORWARD _PROTOTYPE( ssize_t w_transfer, (dev_t minor, int do_write,
-	u64_t position, endpoint_t proc_nr, iovec_t *iov,
-	unsigned int nr_req, int flags)					);
-FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
-FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
-FORWARD _PROTOTYPE( int setup_dma, (unsigned *sizep, endpoint_t proc_nr,
-			iovec_t *iov, size_t addr_offset, int do_write)	);
-FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
-FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
-FORWARD _PROTOTYPE( int w_do_close, (dev_t minor)			);
-FORWARD _PROTOTYPE( int w_ioctl, (dev_t minor, unsigned int request,
-	endpoint_t endpt, cp_grant_id_t grant)				);
-FORWARD _PROTOTYPE( void w_hw_int, (unsigned int irqs)			);
-FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) 		);
-FORWARD _PROTOTYPE( void w_timeout, (void) 				);
-FORWARD _PROTOTYPE( int w_reset, (void) 				);
-FORWARD _PROTOTYPE( void w_intr_wait, (void) 				);
-FORWARD _PROTOTYPE( int at_intr_wait, (void) 				);
-FORWARD _PROTOTYPE( int w_waitfor, (int mask, int value) 		);
-FORWARD _PROTOTYPE( int w_waitfor_dma, (int mask, int value) 		);
-FORWARD _PROTOTYPE( void w_geometry, (dev_t minor,
-					struct partition *entry)		);
+FORWARD void init_params(void);
+FORWARD void init_drive(struct wini *w, int base_cmd, int base_ctl, int
+	base_dma, int irq, int ack, int hook, int drive);
+FORWARD void init_params_pci(int);
+FORWARD int w_do_open(dev_t minor, int access);
+FORWARD struct device *w_prepare(dev_t dev);
+FORWARD struct device *w_part(dev_t minor);
+FORWARD int w_identify(void);
+FORWARD char *w_name(void);
+FORWARD int w_specify(void);
+FORWARD int w_io_test(void);
+FORWARD ssize_t w_transfer(dev_t minor, int do_write, u64_t position,
+	endpoint_t proc_nr, iovec_t *iov, unsigned int nr_req, int flags);
+FORWARD int com_out(struct command *cmd);
+FORWARD int com_out_ext(struct command *cmd);
+FORWARD int setup_dma(unsigned *sizep, endpoint_t proc_nr, iovec_t *iov,
+	size_t addr_offset, int do_write);
+FORWARD void w_need_reset(void);
+FORWARD void ack_irqs(unsigned int);
+FORWARD int w_do_close(dev_t minor);
+FORWARD int w_ioctl(dev_t minor, unsigned int request, endpoint_t endpt,
+	cp_grant_id_t grant);
+FORWARD void w_hw_int(unsigned int irqs);
+FORWARD int com_simple(struct command *cmd);
+FORWARD void w_timeout(void);
+FORWARD int w_reset(void);
+FORWARD void w_intr_wait(void);
+FORWARD int at_intr_wait(void);
+FORWARD int w_waitfor(int mask, int value);
+FORWARD int w_waitfor_dma(int mask, int value);
+FORWARD void w_geometry(dev_t minor, struct partition *entry);
 #if ENABLE_ATAPI
-FORWARD _PROTOTYPE( int atapi_sendpacket, (u8_t *packet, unsigned cnt,
-							int do_dma)	);
-FORWARD _PROTOTYPE( int atapi_intr_wait, (int dma, size_t max)		);
-FORWARD _PROTOTYPE( int atapi_open, (void) 				);
-FORWARD _PROTOTYPE( void atapi_close, (void) 				);
-FORWARD _PROTOTYPE( int atapi_transfer, (int do_write, u64_t position,
-	endpoint_t endpt, iovec_t *iov, unsigned int nr_req)		);
+FORWARD int atapi_sendpacket(u8_t *packet, unsigned cnt, int do_dma);
+FORWARD int atapi_intr_wait(int dma, size_t max);
+FORWARD int atapi_open(void);
+FORWARD void atapi_close(void);
+FORWARD int atapi_transfer(int do_write, u64_t position, endpoint_t
+	endpt, iovec_t *iov, unsigned int nr_req);
 #endif
 
 #define sys_voutb(out, n) at_voutb((out), (n))
-FORWARD _PROTOTYPE( int at_voutb, (pvb_pair_t *, int n));
+FORWARD int at_voutb(pvb_pair_t *, int n);
 #define sys_vinb(in, n) at_vinb((in), (n))
-FORWARD _PROTOTYPE( int at_vinb, (pvb_pair_t *, int n));
+FORWARD int at_vinb(pvb_pair_t *, int n);
 
 #undef sys_outb
 #undef sys_inb
 #undef sys_outl
 
-FORWARD _PROTOTYPE( int at_out, (int line, u32_t port, u32_t value,
-	char *typename, int type));
-FORWARD _PROTOTYPE( int at_in, (int line, u32_t port, u32_t *value,
-	char *typename, int type));
+FORWARD int at_out(int line, u32_t port, u32_t value, char *typename,
+	int type);
+FORWARD int at_in(int line, u32_t port, u32_t *value, char *typename,
+	int type);
 
 #define sys_outb(p, v) at_out(__LINE__, (p), (v), "outb", _DIO_BYTE)
 #define sys_inb(p, v) at_in(__LINE__, (p), (v), "inb", _DIO_BYTE)
@@ -215,11 +211,11 @@ PRIVATE struct blockdriver w_dtab = {
 };
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
-EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
-EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
 
 /*===========================================================================*
  *				at_winchester_task			     *

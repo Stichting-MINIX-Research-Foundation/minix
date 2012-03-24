@@ -4,7 +4,7 @@
 PUBLIC int env_argc = 0;
 PUBLIC char **env_argv = NULL;
 
-FORWARD _PROTOTYPE( char *find_key, (const char *params, const char *key));
+FORWARD char *find_key(const char *params, const char *key);
 
 /*===========================================================================*
  *				env_setargs				     *

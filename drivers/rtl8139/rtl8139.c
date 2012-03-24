@@ -64,37 +64,36 @@ static void my_outl(u16_t port, u32_t value) {
 #define rl_outw(port, offset, value)	(my_outw((port) + (offset), (value)))
 #define rl_outl(port, offset, value)	(my_outl((port) + (offset), (value)))
 
-_PROTOTYPE( static void rl_init, (message *mp)				);
-_PROTOTYPE( static void rl_pci_conf, (void)				);
-_PROTOTYPE( static int rl_probe, (re_t *rep, int skip)			);
-_PROTOTYPE( static void rl_conf_hw, (re_t *rep)				);
-_PROTOTYPE( static void rl_init_buf, (re_t *rep)			);
-_PROTOTYPE( static void rl_init_hw, (re_t *rep)				);
-_PROTOTYPE( static void rl_reset_hw, (re_t *rep)			);
-_PROTOTYPE( static void rl_confaddr, (re_t *rep)			);
-_PROTOTYPE( static void rl_rec_mode, (re_t *rep)			);
-_PROTOTYPE( static void rl_readv_s, (const message *mp, int from_int)	);
-_PROTOTYPE( static void rl_writev_s, (const message *mp, int from_int)	);
-_PROTOTYPE( static void rl_check_ints, (re_t *rep)			);
-_PROTOTYPE( static void rl_report_link, (re_t *rep)			);
-_PROTOTYPE( static void mii_print_techab, (u16_t techab)		);
-_PROTOTYPE( static void mii_print_stat_speed, (u16_t stat,
-							u16_t extstat)	);
-_PROTOTYPE( static void rl_clear_rx, (re_t *rep)			);
-_PROTOTYPE( static void rl_do_reset, (re_t *rep)			);
-_PROTOTYPE( static void rl_getstat_s, (message *mp)			);
-_PROTOTYPE( static void reply, (re_t *rep)				);
-_PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
-_PROTOTYPE( static void check_int_events, (void)			);
-_PROTOTYPE( static void do_hard_int, (void)				);
-_PROTOTYPE( static void rtl8139_dump, (message *m)			);
+static void rl_init(message *mp);
+static void rl_pci_conf(void);
+static int rl_probe(re_t *rep, int skip);
+static void rl_conf_hw(re_t *rep);
+static void rl_init_buf(re_t *rep);
+static void rl_init_hw(re_t *rep);
+static void rl_reset_hw(re_t *rep);
+static void rl_confaddr(re_t *rep);
+static void rl_rec_mode(re_t *rep);
+static void rl_readv_s(const message *mp, int from_int);
+static void rl_writev_s(const message *mp, int from_int);
+static void rl_check_ints(re_t *rep);
+static void rl_report_link(re_t *rep);
+static void mii_print_techab(u16_t techab);
+static void mii_print_stat_speed(u16_t stat, u16_t extstat);
+static void rl_clear_rx(re_t *rep);
+static void rl_do_reset(re_t *rep);
+static void rl_getstat_s(message *mp);
+static void reply(re_t *rep);
+static void mess_reply(message *req, message *reply);
+static void check_int_events(void);
+static void do_hard_int(void);
+static void rtl8139_dump(message *m);
 #if 0
-_PROTOTYPE( static void dump_phy, (re_t *rep)				);
+static void dump_phy(re_t *rep);
 #endif
-_PROTOTYPE( static int rl_handler, (re_t *rep)				);
-_PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
-_PROTOTYPE( static void tell_dev, (vir_bytes start, size_t size,
-				int pci_bus, int pci_dev, int pci_func)	);
+static int rl_handler(re_t *rep);
+static void rl_watchdog_f(timer_t *tp);
+static void tell_dev(vir_bytes start, size_t size, int pci_bus, int
+	pci_dev, int pci_func);
 
 /* The message used in the main loop is made global, so that rl_watchdog_f()
  * can change its message type to fake an interrupt message.
@@ -105,12 +104,12 @@ PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 PRIVATE u32_t system_hz;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
-EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
-EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
 
 /*===========================================================================*
  *				main					     *
@@ -2008,11 +2007,11 @@ timer_t *tp;
 
 #if 0
 
-_PROTOTYPE( static void rtl_init, (struct dpeth *dep)			);
-_PROTOTYPE( static u16_t get_ee_word, (dpeth_t *dep, int a)		);
-_PROTOTYPE( static void ee_wen, (dpeth_t *dep)				);
-_PROTOTYPE( static void set_ee_word, (dpeth_t *dep, int a, u16_t w)	);
-_PROTOTYPE( static void ee_wds, (dpeth_t *dep)				);
+static void rtl_init(struct dpeth *dep);
+static u16_t get_ee_word(dpeth_t *dep, int a);
+static void ee_wen(dpeth_t *dep);
+static void set_ee_word(dpeth_t *dep, int a, u16_t w);
+static void ee_wds(dpeth_t *dep);
 
 static void rtl_init(dep)
 dpeth_t *dep;

@@ -50,12 +50,12 @@ char seqc = SEQMAX;
 int split = 0;
 int fileln = 32000;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void maketable, (void));
-_PROTOTYPE(void makename, (void));
-_PROTOTYPE(void encode, (void));
-_PROTOTYPE(void outdec, (char *p));
-_PROTOTYPE(int fr, (char *buf, int cnt));
+int main(int argc, char **argv);
+void maketable(void);
+void makename(void);
+void encode(void);
+void outdec(char *p);
+int fr(char *buf, int cnt);
 
 int main(argc, argv)
 int argc;

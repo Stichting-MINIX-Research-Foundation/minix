@@ -22,8 +22,8 @@ void ddekit_pgtab_init(void);
 static  ddekit_thread_t *dispatch_th = 0;
 
 
-FORWARD _PROTOTYPE(void dispatcher_thread, (void * unused));
-FORWARD _PROTOTYPE(void ddekit_dispatcher_thread_init, (void));
+FORWARD void dispatcher_thread(void * unused);
+FORWARD void ddekit_dispatcher_thread_init(void);
 
 /****************************************************************************/
 /*      dispatcher_thread                                                   */

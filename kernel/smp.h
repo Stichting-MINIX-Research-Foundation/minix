@@ -26,7 +26,7 @@ EXTERN unsigned bsp_cpu_id;
  * suboptimal, the system must be able to run on the bootstrap processor as if
  * it was the only processor in the system
  */
-_PROTOTYPE(void smp_init, (void));
+void smp_init(void);
 
 #define CPU_IS_BSP	1
 #define CPU_IS_READY	2
@@ -51,30 +51,29 @@ SPINLOCK_DECLARE(big_kernel_lock)
  */
 SPINLOCK_DECLARE(boot_lock)
 	
-_PROTOTYPE(void wait_for_APs_to_finish_booting, (void));
-_PROTOTYPE(void ap_boot_finished, (unsigned cpu));
-_PROTOTYPE(void smp_shutdown_aps, (void ));
+void wait_for_APs_to_finish_booting(void);
+void ap_boot_finished(unsigned cpu);
+void smp_shutdown_aps(void );
 
 /* IPI handlers */
-_PROTOTYPE(void smp_ipi_halt_handler, (void));
-_PROTOTYPE(void smp_ipi_sched_handler, (void));
+void smp_ipi_halt_handler(void);
+void smp_ipi_sched_handler(void);
 
-_PROTOTYPE(void smp_schedule, (unsigned cpu));
+void smp_schedule(unsigned cpu);
 /* stop a processes on a different cpu */
-_PROTOTYPE(void smp_schedule_stop_proc, (struct proc * p));
+void smp_schedule_stop_proc(struct proc * p);
 /* stop a process on a different cpu because its adress space is being changed */
-_PROTOTYPE(void smp_schedule_vminhibit, (struct proc * p));
+void smp_schedule_vminhibit(struct proc * p);
 /* stop the process and for saving its full context */
-_PROTOTYPE(void smp_schedule_stop_proc_save_ctx, (struct proc * p));
+void smp_schedule_stop_proc_save_ctx(struct proc * p);
 /* migrate the full context of a process to the destination CPU */
-_PROTOTYPE(void smp_schedule_migrate_proc,
-		(struct proc * p, unsigned dest_cpu));
+void smp_schedule_migrate_proc(struct proc * p, unsigned dest_cpu);
 
-_PROTOTYPE(void arch_send_smp_schedule_ipi, (unsigned cpu));
-_PROTOTYPE(void arch_smp_halt_cpu, (void));
+void arch_send_smp_schedule_ipi(unsigned cpu);
+void arch_smp_halt_cpu(void);
 
 /* deal with x-cpu scheduling event */
-_PROTOTYPE(void smp_sched_handler, (void));
+void smp_sched_handler(void);
 
 #endif /* __ASSEMBLY__ */
 

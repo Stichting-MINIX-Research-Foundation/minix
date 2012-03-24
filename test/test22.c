@@ -18,11 +18,11 @@
 
 #include "common.c"
 
-_PROTOTYPE(void test22a, (void));
-_PROTOTYPE(int mode, (char *filename));
-_PROTOTYPE(int umode, (char *filename));
-_PROTOTYPE(void e, (int number));
-_PROTOTYPE(void quit, (void));
+void test22a(void);
+int mode(char *filename);
+int umode(char *filename);
+void e(int number);
+void quit(void);
 
 int main(int argc, char *argv[])
 {

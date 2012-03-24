@@ -48,22 +48,22 @@
 #include "arch_proto.h"
 
 /* Scheduling and message passing functions */
-FORWARD _PROTOTYPE( void idle, (void));
+FORWARD void idle(void);
 /**
  * Made public for use in clock.c (for user-space scheduling)
-FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, endpoint_t dst_e,
-		message *m_ptr, int flags));
+FORWARD int mini_send(struct proc *caller_ptr, endpoint_t dst_e, message
+	*m_ptr, int flags);
 */
-FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, endpoint_t src,
-		message *m_ptr, int flags));
-FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
-	asynmsg_t *table, size_t size));
-FORWARD _PROTOTYPE( int deadlock, (int function,
-		register struct proc *caller, endpoint_t src_dst_e));
-FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr)		);
-FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
-FORWARD _PROTOTYPE( struct proc * pick_proc, (void));
-FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
+FORWARD int mini_receive(struct proc *caller_ptr, endpoint_t src,
+	message *m_ptr, int flags);
+FORWARD int mini_senda(struct proc *caller_ptr, asynmsg_t *table, size_t
+	size);
+FORWARD int deadlock(int function, register struct proc *caller,
+	endpoint_t src_dst_e);
+FORWARD int try_async(struct proc *caller_ptr);
+FORWARD int try_one(struct proc *src_ptr, struct proc *dst_ptr);
+FORWARD struct proc * pick_proc(void);
+FORWARD void enqueue_head(struct proc *rp);
 
 /* all idles share the same idle_priv structure */
 PRIVATE struct priv idle_priv;

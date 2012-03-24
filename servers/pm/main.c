@@ -39,17 +39,17 @@
 EXTERN unsigned long calls_stats[NCALLS];
 #endif
 
-FORWARD _PROTOTYPE( void sendreply, (void)				);
-FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
-FORWARD _PROTOTYPE( void handle_vfs_reply, (void)			);
+FORWARD void sendreply(void);
+FORWARD int get_nice_value(int queue);
+FORWARD void handle_vfs_reply(void);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( int sef_cb_signal_manager, (endpoint_t target, int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD int sef_cb_signal_manager(endpoint_t target, int signo);
 
 /*===========================================================================*
  *				main					     *

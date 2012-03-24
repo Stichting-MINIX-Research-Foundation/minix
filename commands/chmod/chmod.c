@@ -39,8 +39,8 @@ int rflag, errors;
 struct stat st;
 char path[PATH_MAX + 1];
 
-_PROTOTYPE(int do_change, (char *name));
-_PROTOTYPE(void usage, (void));
+int do_change(char *name);
+void usage(void);
 
 /* Parse a P1003.2 4.7.7-conformant symbolic mode. */
 mode_t parsemode(const char *symbolic, mode_t oldmode)

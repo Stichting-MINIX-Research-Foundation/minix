@@ -31,11 +31,9 @@
 
 #include "memory.h"
 
-FORWARD _PROTOTYPE( int new_mem, (struct vmproc *vmp,
-	vir_bytes text_addr, vir_bytes text_bytes,
-	vir_bytes data_addr, vir_bytes data_bytes,
-	vir_bytes stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top,
-	int is_elf));
+FORWARD int new_mem(struct vmproc *vmp, vir_bytes text_addr, vir_bytes
+	text_bytes, vir_bytes data_addr, vir_bytes data_bytes, vir_bytes
+	stk_bytes, phys_bytes tot_bytes, vir_bytes *stack_top, int is_elf);
 
 /*===========================================================================*
  *				exec_newmem				     *

@@ -9,7 +9,7 @@
 
 #include "fs.h"
 
-PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
+PUBLIC int (*fs_call_vec[])(void) = {
     no_sys,             /* 0   not used */
     no_sys,             /* 1   */       /* Was: fs_getnode */
     fs_putnode,         /* 2   */

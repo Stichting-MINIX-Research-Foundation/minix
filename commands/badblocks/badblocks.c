@@ -39,22 +39,22 @@
 #define EXTERN extern
 #include "mfs/super.h"
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void get_super, (void));
-_PROTOTYPE(void rw_inode, (struct stat * stat_ptr, int rw_mode));
-_PROTOTYPE(void get_inode, (struct stat * stat_ptr));
-_PROTOTYPE(void put_inode, (struct stat * stat_ptr));
-_PROTOTYPE(long rd_cmdline, (int argc, char *argv[]));
-_PROTOTYPE(void modify, (int nr_blocks));
-_PROTOTYPE(void save_blk, (block_t blk_num));
-_PROTOTYPE(void reset_blks, (void));
-_PROTOTYPE(void show_blks, (void));
-_PROTOTYPE(int blk_is_used, (block_t blk_num));
-_PROTOTYPE(int blk_ok, (block_t num));
-_PROTOTYPE(void set_bit, (zone_t num));
-_PROTOTYPE(long rd_num, (void));
-_PROTOTYPE(int ok, (char *str));
-_PROTOTYPE(void done, (int nr));
+int main(int argc, char **argv);
+void get_super(void);
+void rw_inode(struct stat * stat_ptr, int rw_mode);
+void get_inode(struct stat * stat_ptr);
+void put_inode(struct stat * stat_ptr);
+long rd_cmdline(int argc, char *argv[]);
+void modify(int nr_blocks);
+void save_blk(block_t blk_num);
+void reset_blks(void);
+void show_blks(void);
+int blk_is_used(block_t blk_num);
+int blk_ok(block_t num);
+void set_bit(zone_t num);
+long rd_num(void);
+int ok(char *str);
+void done(int nr);
 
 /* 		Super block table.
  *

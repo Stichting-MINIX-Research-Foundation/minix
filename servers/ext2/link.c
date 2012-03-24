@@ -13,15 +13,14 @@
 
 #define SAME 1000
 
-FORWARD _PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st,
-					off_t end)                      );
-FORWARD _PROTOTYPE( int remove_dir, (struct inode *rldirp,
-			struct inode *rip, char dir_name[NAME_MAX + 1])	);
-FORWARD _PROTOTYPE( int unlink_file, (struct inode *dirp,
-			struct inode *rip, char file_name[NAME_MAX + 1]));
-FORWARD _PROTOTYPE( off_t nextblock, (off_t pos, int blocksize)		);
-FORWARD _PROTOTYPE( void zeroblock_half, (struct inode *i, off_t p, int l));
-FORWARD _PROTOTYPE( void zeroblock_range, (struct inode *i, off_t p, off_t h));
+FORWARD int freesp_inode(struct inode *rip, off_t st, off_t end);
+FORWARD int remove_dir(struct inode *rldirp, struct inode *rip, char
+	dir_name[NAME_MAX + 1]);
+FORWARD int unlink_file(struct inode *dirp, struct inode *rip, char
+	file_name[NAME_MAX + 1]);
+FORWARD off_t nextblock(off_t pos, int blocksize);
+FORWARD void zeroblock_half(struct inode *i, off_t p, int l);
+FORWARD void zeroblock_range(struct inode *i, off_t p, off_t h);
 
 /* Args to zeroblock_half() */
 #define FIRST_HALF	0

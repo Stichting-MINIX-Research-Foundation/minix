@@ -35,29 +35,25 @@
 #include <libexec.h>
 #include "exec.h"
 
-FORWARD _PROTOTYPE( void lock_exec, (void)				);
-FORWARD _PROTOTYPE( void unlock_exec, (void)				);
-FORWARD _PROTOTYPE( int exec_newmem, (int proc_e, vir_bytes text_addr, vir_bytes text_bytes,
-		       vir_bytes data_addr, vir_bytes data_bytes,
-		       vir_bytes tot_bytes, vir_bytes frame_len, int sep_id,
-		       int is_elf, dev_t st_dev, ino_t st_ino, time_t ctime,
-		       char *progname, int new_uid, int new_gid,
-		       vir_bytes *stack_topp, int *load_textp,
-		       int *setugidp)					);
-FORWARD _PROTOTYPE( int is_script, (const char *exec_hdr, size_t exec_len));
-FORWARD _PROTOTYPE( int patch_stack, (struct vnode *vp, char stack[ARG_MAX],
-		       vir_bytes *stk_bytes, char path[PATH_MAX])	);
-FORWARD _PROTOTYPE( int insert_arg, (char stack[ARG_MAX], vir_bytes *stk_bytes,
-					char *arg, int replace)		);
-FORWARD _PROTOTYPE( void patch_ptr, (char stack[ARG_MAX], vir_bytes base));
-FORWARD _PROTOTYPE( void clo_exec, (struct fproc *rfp)			);
-FORWARD _PROTOTYPE( int read_seg, (struct vnode *vp, off_t off, int proc_e,
-					int seg, vir_bytes seg_addr,
-					phys_bytes seg_bytes)		);
-FORWARD _PROTOTYPE( int load_aout, (struct exec_info *execi)		);
-FORWARD _PROTOTYPE( int load_elf, (struct exec_info *execi)		);
-FORWARD _PROTOTYPE( int map_header, (char **exec_hdr,
-					const struct vnode *vp)		);
+FORWARD void lock_exec(void);
+FORWARD void unlock_exec(void);
+FORWARD int exec_newmem(int proc_e, vir_bytes text_addr, vir_bytes
+	text_bytes, vir_bytes data_addr, vir_bytes data_bytes, vir_bytes
+	tot_bytes, vir_bytes frame_len, int sep_id, int is_elf, dev_t st_dev,
+	ino_t st_ino, time_t ctime, char *progname, int new_uid, int new_gid,
+	vir_bytes *stack_topp, int *load_textp, int *setugidp);
+FORWARD int is_script(const char *exec_hdr, size_t exec_len);
+FORWARD int patch_stack(struct vnode *vp, char stack[ARG_MAX], vir_bytes
+	*stk_bytes, char path[PATH_MAX]);
+FORWARD int insert_arg(char stack[ARG_MAX], vir_bytes *stk_bytes, char
+	*arg, int replace);
+FORWARD void patch_ptr(char stack[ARG_MAX], vir_bytes base);
+FORWARD void clo_exec(struct fproc *rfp);
+FORWARD int read_seg(struct vnode *vp, off_t off, int proc_e, int seg,
+	vir_bytes seg_addr, phys_bytes seg_bytes);
+FORWARD int load_aout(struct exec_info *execi);
+FORWARD int load_elf(struct exec_info *execi);
+FORWARD int map_header(char **exec_hdr, const struct vnode *vp);
 
 #define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
 

@@ -17,7 +17,7 @@
 
 #define PRIV_DEBUG 0
 
-FORWARD _PROTOTYPE(int update_priv, (struct proc *rp, struct priv *priv));
+FORWARD int update_priv(struct proc *rp, struct priv *priv);
 
 /*===========================================================================*
  *				do_privctl				     *

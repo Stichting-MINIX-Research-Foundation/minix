@@ -73,22 +73,22 @@ struct b_pnt {
   char cmd[1];
 } *b_head, *curpnt;
 
-_PROTOTYPE( int main , (int argc, char *argv[]));
+int main(int argc, char *argv[]);
 
-FORWARD _PROTOTYPE( void cleanup , (void));
-FORWARD _PROTOTYPE( void freepnt , (struct b_pnt *pnt ));
-FORWARD _PROTOTYPE( void findbpnt , (int verbose ));
-FORWARD _PROTOTYPE( int exebpnt , (int restart ));
-FORWARD _PROTOTYPE( void catch , (int sig ));
-FORWARD _PROTOTYPE( int run , (char *name , char *argstr , int tflg ));
-FORWARD _PROTOTYPE( int dowait , (void));
-FORWARD _PROTOTYPE( void backtrace , (int all ));
-FORWARD _PROTOTYPE( void modify , (long addr , int cnt , int verbose , int size ));
-FORWARD _PROTOTYPE( void display , (long addr , int req ));
-FORWARD _PROTOTYPE( void fill , (long addr , int req ));
-FORWARD _PROTOTYPE( void dorun , (char *cmd ));
-FORWARD _PROTOTYPE( void not_for_core , (void));
-FORWARD _PROTOTYPE( void command , (void));
+FORWARD void cleanup(void);
+FORWARD void freepnt(struct b_pnt *pnt );
+FORWARD void findbpnt(int verbose );
+FORWARD int exebpnt(int restart );
+FORWARD void catch(int sig );
+FORWARD int run(char *name , char *argstr , int tflg );
+FORWARD int dowait(void);
+FORWARD void backtrace(int all );
+FORWARD void modify(long addr , int cnt , int verbose , int size );
+FORWARD void display(long addr , int req );
+FORWARD void fill(long addr , int req );
+FORWARD void dorun(char *cmd );
+FORWARD void not_for_core(void);
+FORWARD void command(void);
 
 
 PRIVATE void cleanup()

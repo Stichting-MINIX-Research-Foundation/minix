@@ -19,8 +19,8 @@
 #include "inode.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( void addhash_inode, (struct inode * const node)		);
-FORWARD _PROTOTYPE( void unhash_inode, (struct inode * const node) 		);
+FORWARD void addhash_inode(struct inode * const node);
+FORWARD void unhash_inode(struct inode * const node);
 
 
 /*===========================================================================*

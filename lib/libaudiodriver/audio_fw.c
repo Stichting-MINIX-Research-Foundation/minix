@@ -47,27 +47,27 @@
 #include <minix/ds.h>
 
 
-FORWARD _PROTOTYPE( int msg_open, (int minor_dev_nr) );
-FORWARD _PROTOTYPE( int msg_close, (int minor_dev_nr) );
-FORWARD _PROTOTYPE( int msg_ioctl, (const message *m_ptr) );
-FORWARD _PROTOTYPE( void msg_write, (const message *m_ptr) );
-FORWARD _PROTOTYPE( void msg_read, (message *m_ptr) );
-FORWARD _PROTOTYPE( void msg_hardware, (void) );
-FORWARD _PROTOTYPE( void msg_status, (message *m_ptr) );
-FORWARD _PROTOTYPE( int init_driver, (void) );
-FORWARD _PROTOTYPE( int open_sub_dev, (int sub_dev_nr, int operation) );
-FORWARD _PROTOTYPE( int close_sub_dev, (int sub_dev_nr) );
-FORWARD _PROTOTYPE( void handle_int_write,(int sub_dev_nr) );
-FORWARD _PROTOTYPE( void handle_int_read,(int sub_dev_nr) );
-FORWARD _PROTOTYPE( void data_to_user, (sub_dev_t *sub_dev_ptr) );
-FORWARD _PROTOTYPE( void data_from_user, (sub_dev_t *sub_dev_ptr) );
-FORWARD _PROTOTYPE( int init_buffers, (sub_dev_t *sub_dev_ptr) );
-FORWARD _PROTOTYPE( int get_started, (sub_dev_t *sub_dev_ptr) );
-FORWARD _PROTOTYPE( void reply,(int code, int replyee, int process,int status));
-FORWARD _PROTOTYPE( int io_ctl_length, (int io_request) );
-FORWARD _PROTOTYPE( special_file_t* get_special_file, (int minor_dev_nr) );
-FORWARD _PROTOTYPE( void tell_dev, (vir_bytes buf, size_t size, int pci_bus,
-					int pci_dev, int pci_func) );
+FORWARD int msg_open(int minor_dev_nr);
+FORWARD int msg_close(int minor_dev_nr);
+FORWARD int msg_ioctl(const message *m_ptr);
+FORWARD void msg_write(const message *m_ptr);
+FORWARD void msg_read(message *m_ptr);
+FORWARD void msg_hardware(void);
+FORWARD void msg_status(message *m_ptr);
+FORWARD int init_driver(void);
+FORWARD int open_sub_dev(int sub_dev_nr, int operation);
+FORWARD int close_sub_dev(int sub_dev_nr);
+FORWARD void handle_int_write(int sub_dev_nr);
+FORWARD void handle_int_read(int sub_dev_nr);
+FORWARD void data_to_user(sub_dev_t *sub_dev_ptr);
+FORWARD void data_from_user(sub_dev_t *sub_dev_ptr);
+FORWARD int init_buffers(sub_dev_t *sub_dev_ptr);
+FORWARD int get_started(sub_dev_t *sub_dev_ptr);
+FORWARD void reply(int code, int replyee, int process,int status);
+FORWARD int io_ctl_length(int io_request);
+FORWARD special_file_t* get_special_file(int minor_dev_nr);
+FORWARD void tell_dev(vir_bytes buf, size_t size, int pci_bus, int
+	pci_dev, int pci_func);
 
 PRIVATE char io_ctl_buf[_IOCPARM_MASK];
 PRIVATE int irq_hook_id = 0;	/* id of irq hook at the kernel */
@@ -75,12 +75,12 @@ PRIVATE int irq_hook_set = FALSE;
 PRIVATE int device_available = 0;/*todo*/
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
-EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
-EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
 PUBLIC int is_status_msg_expected = FALSE;
 
 PUBLIC int main(void)

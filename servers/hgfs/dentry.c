@@ -14,9 +14,8 @@
 
 PRIVATE LIST_HEAD(hash_head, inode) hash_table[NUM_HASH_SLOTS];
 
-FORWARD _PROTOTYPE( void del_one_dentry, (struct inode *ino)		);
-FORWARD _PROTOTYPE( unsigned int hash_dentry, (struct inode *parent,
-							char *name)	);
+FORWARD void del_one_dentry(struct inode *ino);
+FORWARD unsigned int hash_dentry(struct inode *parent, char *name);
 
 /*===========================================================================*
  *				init_dentry				     *

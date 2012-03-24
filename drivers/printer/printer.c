@@ -102,22 +102,22 @@ PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
 PUBLIC int writing;		/* nonzero while write is in progress */
 PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
 
-FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
-FORWARD _PROTOTYPE( void output_done, (void) );
-FORWARD _PROTOTYPE( void do_write, (message *m_ptr) );
-FORWARD _PROTOTYPE( void do_status, (message *m_ptr) );
-FORWARD _PROTOTYPE( void prepare_output, (void) );
-FORWARD _PROTOTYPE( int do_probe, (void) );
-FORWARD _PROTOTYPE( void do_initialize, (void) );
-FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
-FORWARD _PROTOTYPE( void do_printer_output, (void) );
+FORWARD void do_cancel(message *m_ptr);
+FORWARD void output_done(void);
+FORWARD void do_write(message *m_ptr);
+FORWARD void do_status(message *m_ptr);
+FORWARD void prepare_output(void);
+FORWARD int do_probe(void);
+FORWARD void do_initialize(void);
+FORWARD void reply(int code,int replyee,int proc,int status);
+FORWARD void do_printer_output(void);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-EXTERN _PROTOTYPE( int sef_cb_lu_prepare, (int state) );
-EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
-EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+EXTERN int sef_cb_lu_prepare(int state);
+EXTERN int sef_cb_lu_state_isvalid(int state);
+EXTERN void sef_cb_lu_state_dump(int state);
 PUBLIC int is_status_msg_expected = FALSE;
 
 /*===========================================================================*

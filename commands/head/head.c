@@ -7,9 +7,9 @@
 
 #define DEFAULT 10
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void do_file, (int n, FILE *f));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void do_file(int n, FILE *f);
+void usage(void);
 
 int main(argc, argv)
 int argc;

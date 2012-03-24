@@ -23,14 +23,14 @@
 #include "debug.h" 
 
 
-FORWARD _PROTOTYPE( void lock_pgtab, (void));
-FORWARD _PROTOTYPE( void unlock_pgtab, (void));
-FORWARD _PROTOTYPE( struct dde_pgtab_region * allocate_region, (void));
-FORWARD _PROTOTYPE( void free_region, (struct dde_pgtab_region *r));
-FORWARD _PROTOTYPE( void add_region, (struct dde_pgtab_region *r));
-FORWARD _PROTOTYPE( void rm_region, (struct dde_pgtab_region *r));
-FORWARD _PROTOTYPE( struct dde_pgtab_region * find_region_virt, (ddekit_addr_t va));
-FORWARD _PROTOTYPE( struct dde_pgtab_region * find_region_phys, (ddekit_addr_t pa));
+FORWARD void lock_pgtab(void);
+FORWARD void unlock_pgtab(void);
+FORWARD struct dde_pgtab_region * allocate_region(void);
+FORWARD void free_region(struct dde_pgtab_region *r);
+FORWARD void add_region(struct dde_pgtab_region *r);
+FORWARD void rm_region(struct dde_pgtab_region *r);
+FORWARD struct dde_pgtab_region * find_region_virt(ddekit_addr_t va);
+FORWARD struct dde_pgtab_region * find_region_phys(ddekit_addr_t pa);
 
 struct dde_pgtab_region {  
 	ddekit_addr_t vm_start; 

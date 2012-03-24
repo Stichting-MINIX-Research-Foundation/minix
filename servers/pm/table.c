@@ -10,7 +10,7 @@
 #include "mproc.h"
 #include "param.h"
 
-_PROTOTYPE (int (*call_vec[]), (void) ) = {
+int (*call_vec[])(void) = {
 	no_sys,		/*  0 = unused	*/
 	do_exit,	/*  1 = exit	*/
 	do_fork,	/*  2 = fork	*/

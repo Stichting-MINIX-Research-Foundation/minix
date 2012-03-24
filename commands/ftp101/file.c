@@ -22,10 +22,10 @@
 #include "file.h"
 #include "net.h"
 
-_PROTOTYPE(static char *dir, (char *path, int full));
-_PROTOTYPE(static int asciisize, (int fd, off_t *filesize));
-_PROTOTYPE(static off_t asciisetsize, (int fd, off_t filesize));
-_PROTOTYPE(static int cloneit, (char *file, int mode));
+static char *dir(char *path, int full);
+static int asciisize(int fd, off_t *filesize);
+static off_t asciisetsize(int fd, off_t filesize);
+static int cloneit(char *file, int mode);
 
 #if (__WORD_SIZE == 4)
 static char buffer[8192];

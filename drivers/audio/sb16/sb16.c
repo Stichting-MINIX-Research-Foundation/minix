@@ -11,15 +11,15 @@
 #include "mixer.h"
 
 
-FORWARD _PROTOTYPE( void dsp_dma_setup, (phys_bytes address, int count, int sub_dev) );
+FORWARD void dsp_dma_setup(phys_bytes address, int count, int sub_dev);
 
-FORWARD _PROTOTYPE( int dsp_ioctl, (int request, void *val, int *len));
-FORWARD _PROTOTYPE( int dsp_set_size, (unsigned int size) );
-FORWARD _PROTOTYPE( int dsp_set_speed, (unsigned int speed) );
-FORWARD _PROTOTYPE( int dsp_set_stereo, (unsigned int stereo) );
-FORWARD _PROTOTYPE( int dsp_set_bits, (unsigned int bits) );
-FORWARD _PROTOTYPE( int dsp_set_sign, (unsigned int sign) );
-FORWARD _PROTOTYPE( int dsp_get_max_frag_size, (u32_t *val, int *len) );
+FORWARD int dsp_ioctl(int request, void *val, int *len);
+FORWARD int dsp_set_size(unsigned int size);
+FORWARD int dsp_set_speed(unsigned int speed);
+FORWARD int dsp_set_stereo(unsigned int stereo);
+FORWARD int dsp_set_bits(unsigned int bits);
+FORWARD int dsp_set_sign(unsigned int sign);
+FORWARD int dsp_get_max_frag_size(u32_t *val, int *len);
 
 
 PRIVATE unsigned int DspStereo = DEFAULT_STEREO;

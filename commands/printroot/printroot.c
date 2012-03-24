@@ -32,8 +32,8 @@ static char MESSAGE[] = " / ";	/* ditto */
 #define ROOT		"/"
 int rflag;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void done, (char *name, int status));
+int main(int argc, char **argv);
+void done(char *name, int status);
 
 int main(argc, argv)
 int argc;

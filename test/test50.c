@@ -15,27 +15,25 @@
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void prepare, (void));
-_PROTOTYPE(int make_file, (off_t size));
-_PROTOTYPE(void check_file, (int fd, off_t size, off_t hole_start,
-	off_t hole_end));
-_PROTOTYPE(void all_sizes,
-	(_PROTOTYPE(void (*call), (off_t osize, off_t nsize))));
-_PROTOTYPE(void test50a, (void));
-_PROTOTYPE(void test50b, (void));
-_PROTOTYPE(void test50c, (void));
-_PROTOTYPE(void test50d, (void));
-_PROTOTYPE(void sub50e, (off_t osize, off_t nsize));
-_PROTOTYPE(void test50e, (void));
-_PROTOTYPE(void sub50f, (off_t osize, off_t nsize));
-_PROTOTYPE(void test50f, (void));
-_PROTOTYPE(void sub50g, (off_t osize, off_t nsize));
-_PROTOTYPE(void test50g, (void));
-_PROTOTYPE(void sub50h, (off_t osize, off_t nsize));
-_PROTOTYPE(void test50h, (void));
-_PROTOTYPE(void sub50i, (off_t size, off_t off, size_t len, int type));
-_PROTOTYPE(void test50i, (void));
+int main(int argc, char *argv[]);
+void prepare(void);
+int make_file(off_t size);
+void check_file(int fd, off_t size, off_t hole_start, off_t hole_end);
+void all_sizes(void (*call) (off_t osize, off_t nsize));
+void test50a(void);
+void test50b(void);
+void test50c(void);
+void test50d(void);
+void sub50e(off_t osize, off_t nsize);
+void test50e(void);
+void sub50f(off_t osize, off_t nsize);
+void test50f(void);
+void sub50g(off_t osize, off_t nsize);
+void test50g(void);
+void sub50h(off_t osize, off_t nsize);
+void test50h(void);
+void sub50i(off_t size, off_t off, size_t len, int type);
+void test50i(void);
 
 /* Some of the sizes have been chosen in such a way that they should be on the
  * edge of direct/single indirect/double indirect switchovers for a MINIX
@@ -96,7 +94,7 @@ void prepare()
 }
 
 void all_sizes(call)
-_PROTOTYPE(void (*call), (off_t osize, off_t nsize));
+void(*call) (off_t osize, off_t nsize);
 {
   int i, j;
 

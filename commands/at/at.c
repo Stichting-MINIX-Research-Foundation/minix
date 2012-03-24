@@ -18,10 +18,10 @@
 #define	NODAY		(-2)
 char CRONPID[]	=	"/usr/run/cron.pid";
 
-_PROTOTYPE(int main, (int argc, char **argv, char **envp));
-_PROTOTYPE(int getltim, (char *t));
-_PROTOTYPE(int getlday, (char *m, char *d));
-_PROTOTYPE(int digitstring, (char *s));
+int main(int argc, char **argv, char **envp);
+int getltim(char *t);
+int getlday(char *m, char *d);
+int digitstring(char *s);
 
 int main(argc, argv, envp)
 int argc;

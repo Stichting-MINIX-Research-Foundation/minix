@@ -26,8 +26,8 @@ struct ddekit_minix_msg_q {
 };
 
 PRIVATE struct ddekit_minix_msg_q * _list = NULL;
-FORWARD _PROTOTYPE(void _ddekit_minix_queue_msg,
-                   (struct ddekit_minix_msg_q *mq, message *m));
+FORWARD void _ddekit_minix_queue_msg(struct ddekit_minix_msg_q *mq,
+	message *m);
 
 /*****************************************************************************
  *      ddekit_minix_create_msg_q                                            *

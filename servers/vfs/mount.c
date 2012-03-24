@@ -41,11 +41,9 @@ PRIVATE bitchunk_t nonedev[BITMAP_CHUNKS(NR_NONEDEVS)] = { 0 };
 #define alloc_nonedev(dev) SET_BIT(nonedev, minor(dev) - 1)
 #define free_nonedev(dev) UNSET_BIT(nonedev, minor(dev) - 1)
 
-FORWARD _PROTOTYPE( dev_t name_to_dev, (int allow_mountpt,
-					char path[PATH_MAX])		);
-FORWARD _PROTOTYPE( dev_t find_free_nonedev, (void)			);
-FORWARD _PROTOTYPE( void update_bspec, (dev_t dev, endpoint_t fs_e,
-				      int send_drv_e)			);
+FORWARD dev_t name_to_dev(int allow_mountpt, char path[PATH_MAX]);
+FORWARD dev_t find_free_nonedev(void);
+FORWARD void update_bspec(dev_t dev, endpoint_t fs_e, int send_drv_e);
 
 /*===========================================================================*
  *				update_bspec				     *

@@ -32,10 +32,10 @@
 #include "glo.h"
 #include "uds.h"
 
-FORWARD _PROTOTYPE( int uds_perform_read, (int minor, endpoint_t m_source,
-	size_t size, int pretend));
-FORWARD _PROTOTYPE( int uds_perform_write, (int minor, endpoint_t m_source,
-	size_t size, int pretend));
+FORWARD int uds_perform_read(int minor, endpoint_t m_source, size_t
+	size, int pretend);
+FORWARD int uds_perform_write(int minor, endpoint_t m_source, size_t
+	size, int pretend);
 
 PUBLIC int uds_open(message *dev_m_in, message *dev_m_out)
 {

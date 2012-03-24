@@ -25,10 +25,10 @@ char *name;
 int digit_seen;
 char a[] = "        . \0";
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void print_time, (clock_t t));
-_PROTOTYPE(void twin, (int n, char *p));
-_PROTOTYPE(void execute, (void));
+int main(int argc, char **argv);
+void print_time(clock_t t);
+void twin(int n, char *p);
+void execute(void);
 
 int main(argc, argv)
 int argc;

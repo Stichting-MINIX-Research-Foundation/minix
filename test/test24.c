@@ -13,11 +13,11 @@
 #include <time.h>
 #include <stdio.h>
 
-_PROTOTYPE(void chk_dir, (DIR * dirpntr));
-_PROTOTYPE(void test24a, (void));
-_PROTOTYPE(void test24b, (void));
-_PROTOTYPE(void test24c, (void));
-_PROTOTYPE(void makelongnames, (void));
+void chk_dir(DIR * dirpntr);
+void test24a(void);
+void test24b(void);
+void test24c(void);
+void makelongnames(void);
 
 #define OVERFLOW_DIR_NR	(OPEN_MAX + 1)
 #define MAX_ERROR	4

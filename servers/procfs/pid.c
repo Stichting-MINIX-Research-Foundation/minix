@@ -9,10 +9,10 @@
 PRIVATE char s_frame[S_FRAME_SIZE];	/* static storage for process frame */
 PRIVATE char *frame;			/* pointer to process frame buffer */
 
-FORWARD _PROTOTYPE( void pid_psinfo, (int slot)				);
-FORWARD _PROTOTYPE( void pid_cmdline, (int slot)			);
-FORWARD _PROTOTYPE( void pid_environ, (int slot)			);
-FORWARD _PROTOTYPE( void pid_map, (int slot)				);
+FORWARD void pid_psinfo(int slot);
+FORWARD void pid_cmdline(int slot);
+FORWARD void pid_environ(int slot);
+FORWARD void pid_map(int slot);
 
 /* The files that are dynamically created in each PID directory. The data field
  * contains each file's read function. Subdirectories are not yet supported.

@@ -24,7 +24,7 @@
 
 #include "glo.h"
 
-_PROTOTYPE(void trampoline, (void));
+void trampoline(void);
 
 /*
  * arguments for trampoline. We need to pass the logical cpu id, gdt and idt.
@@ -48,7 +48,7 @@ PUBLIC unsigned char cpuid2apicid[CONFIG_MAX_CPUS];
 SPINLOCK_DEFINE(smp_cpu_lock)
 SPINLOCK_DEFINE(dispq_lock)
 
-FORWARD _PROTOTYPE(void smp_reinit_vars, (void));
+FORWARD void smp_reinit_vars(void);
 
 /*
  * copies the 16-bit AP trampoline code to the first 1M of memory

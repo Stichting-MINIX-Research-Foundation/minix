@@ -69,8 +69,8 @@ typedef int ioreq_t;
 
 #define THIS_FILE static char *this_file= __FILE__;
 
-_PROTOTYPE( void panic0, (char *file, int line) );
-_PROTOTYPE( void inet_panic, (void) ) _NORETURN; 
+void panic0(char *file, int line);
+void inet_panic(void) _NORETURN;
 
 #define ip_panic(print_list)  \
 	(panic0(this_file, __LINE__), printf print_list, panic())

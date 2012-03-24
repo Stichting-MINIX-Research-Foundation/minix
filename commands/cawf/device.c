@@ -31,9 +31,8 @@
 #include "cawf.h"
 #include <ctype.h>
 
-_PROTOTYPE(static unsigned char *Convstr,(char *s, int *len));
-_PROTOTYPE(static int Convfont,(char *nm, char *s, char **fn,
-	unsigned char **fi));
+static unsigned char *Convstr(char *s, int *len);
+static int Convfont(char *nm, char *s, char **fn, unsigned char **fi);
 
 #ifndef	UNIX
 #define	strcasecmp	strcmpi

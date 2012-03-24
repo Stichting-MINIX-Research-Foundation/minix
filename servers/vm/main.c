@@ -58,13 +58,13 @@ struct {
 			(c) < VM_RQ_BASE + ELEMENTS(vm_calls)) ?	\
 			((c) - VM_RQ_BASE) : -1)
 
-FORWARD _PROTOTYPE(int map_service, (struct rprocpub *rpub));
-FORWARD _PROTOTYPE(int vm_acl_ok, (endpoint_t caller, int call));
+FORWARD int map_service(struct rprocpub *rpub);
+FORWARD int vm_acl_ok(endpoint_t caller, int call);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main					     *

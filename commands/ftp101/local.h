@@ -6,10 +6,10 @@
  * 01/25/96 Initial Release	Michael Temari, <Michael@TemWare.Com>
  */
 
-_PROTOTYPE(int DOlpwd, (void));
-_PROTOTYPE(int DOlcd, (void));
-_PROTOTYPE(int DOlmkdir, (void));
-_PROTOTYPE(int DOlrmdir, (void));
-_PROTOTYPE(int DOllist, (void));
-_PROTOTYPE(int DOlnlst, (void));
-_PROTOTYPE(int DOlshell, (void));
+int DOlpwd(void);
+int DOlcd(void);
+int DOlmkdir(void);
+int DOlrmdir(void);
+int DOllist(void);
+int DOlnlst(void);
+int DOlshell(void);

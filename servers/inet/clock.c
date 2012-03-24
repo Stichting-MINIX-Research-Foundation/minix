@@ -19,8 +19,8 @@ PRIVATE time_t prev_time;
 PRIVATE timer_t *timer_chain;
 PRIVATE time_t next_timeout;
 
-FORWARD _PROTOTYPE( void clck_fast_release, (timer_t *timer) );
-FORWARD _PROTOTYPE( void set_timer, (void) );
+FORWARD void clck_fast_release(timer_t *timer);
+FORWARD void set_timer(void);
 
 PUBLIC void clck_init()
 {

@@ -20,8 +20,8 @@ char buffer[BLOCK_SIZE];
 #define MAX_ERROR 2
 #include "common.c"
 
-_PROTOTYPE(int main, (void));
-_PROTOTYPE(void quit, (void));
+int main(void);
+void quit(void);
 
 int main()
 {

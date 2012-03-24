@@ -12,14 +12,14 @@
 
 int common_test_nr = -1, errct = 0, subtest;
 
-_PROTOTYPE(void cleanup, (void));
-_PROTOTYPE(int does_fs_truncate, (void));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(int name_max, (char *path));
-_PROTOTYPE(void quit, (void));
-_PROTOTYPE(void rm_rf_dir, (int test_nr));
-_PROTOTYPE(void rm_rf_ppdir, (int test_nr));
-_PROTOTYPE(void start, (int test_nr));
+void cleanup(void);
+int does_fs_truncate(void);
+void e(int n);
+int name_max(char *path);
+void quit(void);
+void rm_rf_dir(int test_nr);
+void rm_rf_ppdir(int test_nr);
+void start(int test_nr);
 
 void start(test_nr)
 int test_nr;

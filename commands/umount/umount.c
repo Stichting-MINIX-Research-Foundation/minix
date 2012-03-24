@@ -17,10 +17,10 @@
 #include <sys/mount.h>
 #include <stdio.h>
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int find_mtab_entry, (char *name));
-_PROTOTYPE(void update_mtab, (void));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+int find_mtab_entry(char *name);
+void update_mtab(void);
+void usage(void);
 
 static char device[PATH_MAX+1], mountpoint[PATH_MAX+1], vs[10], rw[10];
 

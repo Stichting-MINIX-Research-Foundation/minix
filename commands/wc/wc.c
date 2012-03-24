@@ -39,9 +39,9 @@ long ltotal;			/* Total count of lines */
 long wtotal;			/* Total count of words */
 long ctotal;			/* Total count of characters */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void count, (FILE *f));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void count(FILE *f);
+void usage(void);
 
 int main(argc, argv)
 int argc;

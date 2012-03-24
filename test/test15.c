@@ -26,11 +26,11 @@ int charsigned;			/* Result. */
 #define MAX_ERROR 2
 #include "common.c"
 
-_PROTOTYPE(void check, (int thing, int number));
-_PROTOTYPE(void equal, (char *a, char *b, int number));
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void first, (void));
-_PROTOTYPE(void second, (void));
+void check(int thing, int number);
+void equal(char *a, char *b, int number);
+int main(int argc, char *argv []);
+void first(void);
+void second(void);
 
 /*
  - check - complain if condition is not true

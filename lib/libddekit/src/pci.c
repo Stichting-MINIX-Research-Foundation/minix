@@ -34,8 +34,8 @@ struct ddekit_pci_dev {
 
 struct ddekit_pci_dev pci_devs[PCI_MAX_DEVS];
 
-FORWARD _PROTOTYPE( struct ddekit_pci_dev * ddekit_get_dev_helper,
-                    (int bus, int slot, int func));
+FORWARD struct ddekit_pci_dev * ddekit_get_dev_helper(int bus, int slot,
+	int func);
 
 /****************************************************************************/
 /*      ddekit_pci_init_only_one                                            */

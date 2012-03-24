@@ -16,9 +16,9 @@
 /*								*/
 /****************************************************************/
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void Print, (char *comment, char *name));
-_PROTOTYPE(void Error, (char *message, char *arg));
+int main(int argc, char **argv);
+void Print(char *comment, char *name);
+void Error(char *message, char *arg);
 
 int main(argc, argv)
 int argc;

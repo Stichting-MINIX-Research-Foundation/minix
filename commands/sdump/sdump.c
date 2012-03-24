@@ -33,11 +33,11 @@
 char *default_core = "core";
 int stack[STACK_BYTES / sizeof (int)];
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void read_segmap, (int fd, struct mproc *mp, long *seg_size));
-_PROTOTYPE(void read_registers, (int fd, struct proc *p));
-_PROTOTYPE(void dump_stack, (int fd, struct mproc *mp, long *seg_size));
-_PROTOTYPE(void error, (char *s1, char *s2));
+int main(int argc, char **argv);
+void read_segmap(int fd, struct mproc *mp, long *seg_size);
+void read_registers(int fd, struct proc *p);
+void dump_stack(int fd, struct mproc *mp, long *seg_size);
+void error(char *s1, char *s2);
 
 int main(argc, argv)
 int argc;

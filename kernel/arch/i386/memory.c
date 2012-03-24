@@ -36,8 +36,8 @@ PRIVATE int nfreepdes = 0, freepdes[MAX_FREEPDES];
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
-FORWARD _PROTOTYPE( u32_t phys_get32, (phys_bytes v)			);
-FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
+FORWARD u32_t phys_get32(phys_bytes v);
+FORWARD void vm_enable_paging(void);
 
 	
 PUBLIC void segmentation2paging(struct proc * current)

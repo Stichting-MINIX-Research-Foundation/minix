@@ -40,9 +40,9 @@ PRIVATE int cprof_announce;			/* announce on n-th execution
 						 * of procentry */
 PRIVATE int cprof_locked;			/* for reentrancy */
 
-FORWARD _PROTOTYPE(void cprof_init, (void) );
-FORWARD _PROTOTYPE(void reset, (void) );
-FORWARD _PROTOTYPE(void clear_tbl, (void) );
+FORWARD void cprof_init(void);
+FORWARD void reset(void);
+FORWARD void clear_tbl(void);
 
 
 PUBLIC void procentry (char *name)

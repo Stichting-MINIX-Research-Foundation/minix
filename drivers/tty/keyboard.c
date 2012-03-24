@@ -153,22 +153,22 @@ PRIVATE long sticky_alt_mode = 0;
 PRIVATE long debug_fkeys = 1;
 PRIVATE timer_t tmr_kbd_wd;
 
-FORWARD _PROTOTYPE( void handle_req, (struct kbd *kbdp, message *m)	);
-FORWARD _PROTOTYPE( int handle_status, (struct kbd *kbdp, message *m)	);
-FORWARD _PROTOTYPE( void kbc_cmd0, (int cmd)				);
-FORWARD _PROTOTYPE( void kbc_cmd1, (int cmd, int data)			);
-FORWARD _PROTOTYPE( int kbc_read, (void)				);
-FORWARD _PROTOTYPE( void kbd_send, (void)				);
-FORWARD _PROTOTYPE( int kb_ack, (void) 					);
-FORWARD _PROTOTYPE( int kb_wait, (void)				 	);
-FORWARD _PROTOTYPE( int func_key, (int scode) 				);
-FORWARD _PROTOTYPE( int scan_keyboard, (unsigned char *bp, int *isauxp)	);
-FORWARD _PROTOTYPE( unsigned make_break, (int scode) 			);
-FORWARD _PROTOTYPE( void set_leds, (void) 				);
-FORWARD _PROTOTYPE( void show_key_mappings, (void) 			);
-FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) 		);
-FORWARD _PROTOTYPE( unsigned map_key, (int scode) 			);
-FORWARD _PROTOTYPE( void kbd_watchdog, (timer_t *tmrp)			);
+FORWARD void handle_req(struct kbd *kbdp, message *m);
+FORWARD int handle_status(struct kbd *kbdp, message *m);
+FORWARD void kbc_cmd0(int cmd);
+FORWARD void kbc_cmd1(int cmd, int data);
+FORWARD int kbc_read(void);
+FORWARD void kbd_send(void);
+FORWARD int kb_ack(void);
+FORWARD int kb_wait(void);
+FORWARD int func_key(int scode);
+FORWARD int scan_keyboard(unsigned char *bp, int *isauxp);
+FORWARD unsigned make_break(int scode);
+FORWARD void set_leds(void);
+FORWARD void show_key_mappings(void);
+FORWARD int kb_read(struct tty *tp, int try);
+FORWARD unsigned map_key(int scode);
+FORWARD void kbd_watchdog(timer_t *tmrp);
 
 int micro_delay(u32_t usecs)
 {

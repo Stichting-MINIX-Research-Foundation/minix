@@ -7,8 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void usage(void);
 
 /* Table of signal names. */
 struct signames {

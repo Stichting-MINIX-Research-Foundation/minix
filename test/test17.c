@@ -78,35 +78,35 @@ char *mode_fnames[MODES] = {"---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rw
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test, (int mask));
-_PROTOTYPE(void test01, (void));
-_PROTOTYPE(void test02, (void));
-_PROTOTYPE(void test08, (void));
-_PROTOTYPE(void test09, (void));
-_PROTOTYPE(void test10, (void));
-_PROTOTYPE(int link_alot, (char *bigboss));
-_PROTOTYPE(int unlink_alot, (int number));
-_PROTOTYPE(void get_new, (char name []));
-_PROTOTYPE(void test11, (void));
-_PROTOTYPE(void nlcr, (void));
-_PROTOTYPE(void str, (char *s));
-_PROTOTYPE(void test03, (void));
-_PROTOTYPE(void put_file_in_dir, (char *dirname, int mode));
-_PROTOTYPE(void init_array, (char *a));
-_PROTOTYPE(void clear_array, (char *b));
-_PROTOTYPE(int comp_array, (char *a, char *b, int range));
-_PROTOTYPE(void try_close, (int filedes, char *name));
-_PROTOTYPE(void try_unlink, (char *fname));
-_PROTOTYPE(void Remove, (int fdes, char *fname));
-_PROTOTYPE(int get_mode, (char *name));
-_PROTOTYPE(void check, (char *scall, int number));
-_PROTOTYPE(void put, (int nr));
-_PROTOTYPE(int open_alot, (void));
-_PROTOTYPE(int close_alot, (int number));
-_PROTOTYPE(void clean_up_the_mess, (void));
-_PROTOTYPE(void chmod_8_dirs, (int sw));
-_PROTOTYPE(void quit, (void));
+int main(int argc, char *argv []);
+void test(int mask);
+void test01(void);
+void test02(void);
+void test08(void);
+void test09(void);
+void test10(void);
+int link_alot(char *bigboss);
+int unlink_alot(int number);
+void get_new(char name []);
+void test11(void);
+void nlcr(void);
+void str(char *s);
+void test03(void);
+void put_file_in_dir(char *dirname, int mode);
+void init_array(char *a);
+void clear_array(char *b);
+int comp_array(char *a, char *b, int range);
+void try_close(int filedes, char *name);
+void try_unlink(char *fname);
+void Remove(int fdes, char *fname);
+int get_mode(char *name);
+void check(char *scall, int number);
+void put(int nr);
+int open_alot(void);
+int close_alot(int number);
+void clean_up_the_mess(void);
+void chmod_8_dirs(int sw);
+void quit(void);
 
 /*****************************************************************************
  *                              TEST                                         *

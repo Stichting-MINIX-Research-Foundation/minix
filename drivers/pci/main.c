@@ -6,31 +6,31 @@ main.c
 
 PUBLIC struct pci_acl pci_acl[NR_DRIVERS];
 
-FORWARD _PROTOTYPE( void do_init, (message *mp)				);
-FORWARD _PROTOTYPE( void do_first_dev, (message *mp)			);
-FORWARD _PROTOTYPE( void do_next_dev, (message *mp)			);
-FORWARD _PROTOTYPE( void do_find_dev, (message *mp)			);
-FORWARD _PROTOTYPE( void do_ids, (message *mp)				);
-FORWARD _PROTOTYPE( void do_dev_name_s, (message *mp)			);
-FORWARD _PROTOTYPE( void do_slot_name_s, (message *mp)			);
-FORWARD _PROTOTYPE( void do_set_acl, (message *mp)			);
-FORWARD _PROTOTYPE( void do_del_acl, (message *mp)			);
-FORWARD _PROTOTYPE( void do_reserve, (message *mp)			);
-FORWARD _PROTOTYPE( void do_attr_r8, (message *mp)			);
-FORWARD _PROTOTYPE( void do_attr_r16, (message *mp)			);
-FORWARD _PROTOTYPE( void do_attr_r32, (message *mp)			);
-FORWARD _PROTOTYPE( void do_attr_w8, (message *mp)			);
-FORWARD _PROTOTYPE( void do_attr_w16, (message *mp)			);
-FORWARD _PROTOTYPE( void do_attr_w32, (message *mp)			);
-FORWARD _PROTOTYPE( void do_get_bar, (message *mp)			);
-FORWARD _PROTOTYPE( void do_rescan_bus, (message *mp)			);
-FORWARD _PROTOTYPE( void reply, (message *mp, int result)		);
-FORWARD _PROTOTYPE( struct rs_pci *find_acl, (int endpoint)		);
+FORWARD void do_init(message *mp);
+FORWARD void do_first_dev(message *mp);
+FORWARD void do_next_dev(message *mp);
+FORWARD void do_find_dev(message *mp);
+FORWARD void do_ids(message *mp);
+FORWARD void do_dev_name_s(message *mp);
+FORWARD void do_slot_name_s(message *mp);
+FORWARD void do_set_acl(message *mp);
+FORWARD void do_del_acl(message *mp);
+FORWARD void do_reserve(message *mp);
+FORWARD void do_attr_r8(message *mp);
+FORWARD void do_attr_r16(message *mp);
+FORWARD void do_attr_r32(message *mp);
+FORWARD void do_attr_w8(message *mp);
+FORWARD void do_attr_w16(message *mp);
+FORWARD void do_attr_w32(message *mp);
+FORWARD void do_get_bar(message *mp);
+FORWARD void do_rescan_bus(message *mp);
+FORWARD void reply(message *mp, int result);
+FORWARD struct rs_pci *find_acl(int endpoint);
 
 extern int debug;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD void sef_local_startup(void);
 
 int main(void)
 {

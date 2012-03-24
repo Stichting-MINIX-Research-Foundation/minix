@@ -26,9 +26,9 @@
 #define U_MACHINE  ((unsigned) 0x10)
 #define ARCH     ((unsigned) 0x20)
 
-_PROTOTYPE(int main, (int argc, char **argv ));
-_PROTOTYPE(void print, (int fd, ... ));
-_PROTOTYPE(void usage, (void ));
+int main(int argc, char **argv );
+void print(int fd, ... );
+void usage(void );
 
 #ifdef __STDC__
 void print(int fd, ...)

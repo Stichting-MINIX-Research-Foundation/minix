@@ -16,8 +16,8 @@
 #include "inode.h"
 #include "super.h"
 
-FORWARD _PROTOTYPE( void wr_indir, (struct buf *bp, int index, block_t block) );
-FORWARD _PROTOTYPE( int empty_indir, (struct buf *, struct super_block *) );
+FORWARD void wr_indir(struct buf *bp, int index, block_t block);
+FORWARD int empty_indir(struct buf *, struct super_block *);
 
 /*===========================================================================*
  *				write_map				     *

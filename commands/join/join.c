@@ -11,24 +11,24 @@
 
 #define MAXFLD	200		/* maximum # of fields to accept */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void error, (char *s, char *t));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void match, (void));
-_PROTOTYPE(void f1_only, (void));
-_PROTOTYPE(void f2_only, (void));
-_PROTOTYPE(void output, (int flag));
-_PROTOTYPE(void outfld, (int file));
-_PROTOTYPE(void outputf, (int flag));
-_PROTOTYPE(int compare, (void));
-_PROTOTYPE(int get1, (void));
-_PROTOTYPE(int get2, (int back));
-_PROTOTYPE(int getrec, (int file));
-_PROTOTYPE(int split, (int file));
-_PROTOTYPE(int atoi, (char *str));
-_PROTOTYPE(int exit, (int val));
-_PROTOTYPE(FILE * efopen, (char *file, char *mode));
-_PROTOTYPE(void (*outfun), (int file));	/* output func: output() or outputf()*/
+int main(int argc, char **argv);
+void error(char *s, char *t);
+void usage(void);
+void match(void);
+void f1_only(void);
+void f2_only(void);
+void output(int flag);
+void outfld(int file);
+void outputf(int flag);
+int compare(void);
+int get1(void);
+int get2(int back);
+int getrec(int file);
+int split(int file);
+int atoi(char *str);
+int exit(int val);
+FILE * efopen(char *file, char *mode);
+void(*outfun) (int file);
 
 #define F1	1
 #define F2	2

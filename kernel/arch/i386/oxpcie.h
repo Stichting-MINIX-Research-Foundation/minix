@@ -1,7 +1,7 @@
 
-_PROTOTYPE( void oxpcie_set_vaddr, (unsigned char *vaddr));
-_PROTOTYPE( void oxpcie_putc, (char c));
-_PROTOTYPE( int oxpcie_in, (void));
+void oxpcie_set_vaddr(unsigned char *vaddr);
+void oxpcie_putc(char c);
+int oxpcie_in(void);
 
 #include "serial.h"
 

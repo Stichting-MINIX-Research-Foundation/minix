@@ -118,6 +118,6 @@ struct rprocpub {
   int devman_id;
 };
 
-_PROTOTYPE( int minix_rs_lookup, (const char *name, endpoint_t *value));
+int minix_rs_lookup(const char *name, endpoint_t *value);
 
 #endif

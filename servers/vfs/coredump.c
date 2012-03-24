@@ -10,23 +10,22 @@
 /* Include ELF headers */
 #include <sys/elf_core.h>
 
-FORWARD _PROTOTYPE( void fill_elf_header, (Elf32_Ehdr *elf_header, int phnum));
-FORWARD _PROTOTYPE( void fill_prog_header, (Elf32_Phdr *prog_header,
-	Elf32_Word p_type, Elf32_Off p_offset, Elf32_Addr p_vaddr,
-	Elf32_Word p_flags, Elf32_Word p_filesz, Elf32_Word p_memsz)	);
-FORWARD _PROTOTYPE( int get_memory_regions, (Elf32_Phdr phdrs[])	);
-FORWARD _PROTOTYPE( void fill_note_segment_and_entries_hdrs,
-				(Elf32_Phdr phdrs[], Elf32_Nhdr nhdrs[]));
-FORWARD _PROTOTYPE( void adjust_offsets, (Elf32_Phdr phdrs[], int phnum));
-FORWARD _PROTOTYPE( void dump_elf_header, (struct filp *f,
-					   Elf32_Ehdr elf_header)	);
-FORWARD _PROTOTYPE( void dump_notes, (struct filp *f, Elf32_Nhdr nhdrs[],
-				      int csig, char *proc_name)	);
-FORWARD _PROTOTYPE( void dump_program_headers, (struct filp *f,
-					        Elf_Phdr phdrs[], int phnum));
-FORWARD _PROTOTYPE( void dump_segments, (struct filp *f, Elf32_Phdr phdrs[],
-					 int phnum)			);
-FORWARD _PROTOTYPE( void write_buf, (struct filp *f, char *buf, size_t size));
+FORWARD void fill_elf_header(Elf32_Ehdr *elf_header, int phnum);
+FORWARD void fill_prog_header(Elf32_Phdr *prog_header, Elf32_Word
+	p_type, Elf32_Off p_offset, Elf32_Addr p_vaddr, Elf32_Word p_flags,
+	Elf32_Word p_filesz, Elf32_Word p_memsz);
+FORWARD int get_memory_regions(Elf32_Phdr phdrs[]);
+FORWARD void fill_note_segment_and_entries_hdrs(Elf32_Phdr phdrs[],
+	Elf32_Nhdr nhdrs[]);
+FORWARD void adjust_offsets(Elf32_Phdr phdrs[], int phnum);
+FORWARD void dump_elf_header(struct filp *f, Elf32_Ehdr elf_header);
+FORWARD void dump_notes(struct filp *f, Elf32_Nhdr nhdrs[], int csig,
+	char *proc_name);
+FORWARD void dump_program_headers(struct filp *f, Elf_Phdr phdrs[], int
+	phnum);
+FORWARD void dump_segments(struct filp *f, Elf32_Phdr phdrs[], int
+	phnum);
+FORWARD void write_buf(struct filp *f, char *buf, size_t size);
 
 /*===========================================================================*
  *				write_elf_core_file			     *

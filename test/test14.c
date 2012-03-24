@@ -15,9 +15,9 @@ int subtest = 1;
 
 #include "common.c"
 
-_PROTOTYPE(int main, (void));
-_PROTOTYPE(void e, (int n));
-_PROTOTYPE(void quit, (void));
+int main(void);
+void e(int n);
+void quit(void);
 
 int main()
 {

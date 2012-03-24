@@ -33,10 +33,10 @@
  */
 #define DO_POSIX_PATHNAME_RES	0
 
-FORWARD _PROTOTYPE( int lookup, (struct vnode *dirp, struct lookup *resolve,
-				 node_details_t *node, struct fproc *rfp));
-FORWARD _PROTOTYPE( int check_perms, (endpoint_t ep, cp_grant_id_t io_gr,
-				      size_t pathlen)			);
+FORWARD int lookup(struct vnode *dirp, struct lookup *resolve,
+	node_details_t *node, struct fproc *rfp);
+FORWARD int check_perms(endpoint_t ep, cp_grant_id_t io_gr, size_t
+	pathlen);
 
 /*===========================================================================*
  *				advance					     *

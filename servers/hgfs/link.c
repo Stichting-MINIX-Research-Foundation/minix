@@ -15,7 +15,7 @@
 
 #include <fcntl.h>
 
-FORWARD _PROTOTYPE( int force_remove, (char *path, int dir)		);
+FORWARD int force_remove(char *path, int dir);
 
 /*===========================================================================*
  *				do_create				     *

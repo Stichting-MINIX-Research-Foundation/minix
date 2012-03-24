@@ -11,13 +11,13 @@
 /* Extended partition? */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
-FORWARD _PROTOTYPE( void parse_part_table, (struct blockdriver *bdp,
-	int device, int style, int atapi, u8_t *tmp_buf) );
-FORWARD _PROTOTYPE( void extpartition, (struct blockdriver *bdp, int extdev,
-	unsigned long extbase, u8_t *tmp_buf) );
-FORWARD _PROTOTYPE( int get_part_table, (struct blockdriver *bdp, int device,
-	unsigned long offset, struct part_entry *table, u8_t *tmp_buf) );
-FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
+FORWARD void parse_part_table(struct blockdriver *bdp, int device, int
+	style, int atapi, u8_t *tmp_buf);
+FORWARD void extpartition(struct blockdriver *bdp, int extdev, unsigned
+	long extbase, u8_t *tmp_buf);
+FORWARD int get_part_table(struct blockdriver *bdp, int device, unsigned
+	long offset, struct part_entry *table, u8_t *tmp_buf);
+FORWARD void sort(struct part_entry *table);
 
 /*============================================================================*
  *				partition				      *

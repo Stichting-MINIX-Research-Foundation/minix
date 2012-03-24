@@ -18,16 +18,16 @@
 
 char *pch, *errorp;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(BOOLEAN is, (char *pc));
-_PROTOTYPE(int num, (void));
-_PROTOTYPE(void puto, (void));
-_PROTOTYPE(void statistics, (void));
-_PROTOTYPE(int ulcase, (int c));
-_PROTOTYPE(void cnull, (int c));
-_PROTOTYPE(void null, (int c));
-_PROTOTYPE(void extra, (void));
-_PROTOTYPE(void over, (int dummy));
+int main(int argc, char **argv);
+BOOLEAN is(char *pc);
+int num(void);
+void puto(void);
+void statistics(void);
+int ulcase(int c);
+void cnull(int c);
+void null(int c);
+void extra(void);
+void over(int dummy);
 
 BOOLEAN is(pc)
 char *pc;

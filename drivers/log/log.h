@@ -31,6 +31,6 @@ struct logdevice {
 };
 
 /* Function prototypes. */
-_PROTOTYPE( void do_new_kmess, (void)					);
-_PROTOTYPE( void log_append, (char *buf, int len)			);
+void do_new_kmess(void);
+void log_append(char *buf, int len);
 

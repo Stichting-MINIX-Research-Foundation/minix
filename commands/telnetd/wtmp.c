@@ -30,9 +30,8 @@
 static char PATH_UTMP[] = "/etc/utmp";
 static char PATH_WTMP[] = "/usr/adm/wtmp";
 
-_PROTOTYPE(void wtmp, (int type, int linenr, char *line, pid_t pid,
-								char *host));
-_PROTOTYPE(void report, (char *label));
+void wtmp(int type, int linenr, char *line, pid_t pid, char *host);
+void report(char *label);
 
 void wtmp(type, linenr, line, pid, host)
 int type;			/* type of entry */

@@ -50,14 +50,13 @@ struct symtab_s
 
 PRIVATE struct symtab_s symtab;
 
-FORWARD _PROTOTYPE( void gnu_sort , (struct newnlist *array ,
-	struct newnlist *top ));
-FORWARD _PROTOTYPE( int gnu_symeq , (char *t , struct newnlist *sp ));
-FORWARD _PROTOTYPE( int gnu_symprefix , (char *t , struct newnlist *sp ));
-FORWARD _PROTOTYPE( struct newnlist *gnu_sname, (char *name, int is_text,
-	int allflag) );
-FORWARD _PROTOTYPE( struct newnlist *gnu_sval, (off_t value, int where) );
-FORWARD _PROTOTYPE( void gnu_sym, (struct newnlist *sp, off_t off) );
+FORWARD void gnu_sort(struct newnlist *array , struct newnlist *top );
+FORWARD int gnu_symeq(char *t , struct newnlist *sp );
+FORWARD int gnu_symprefix(char *t , struct newnlist *sp );
+FORWARD struct newnlist *gnu_sname(char *name, int is_text, int
+	allflag);
+FORWARD struct newnlist *gnu_sval(off_t value, int where);
+FORWARD void gnu_sym(struct newnlist *sp, off_t off);
 
 
 PUBLIC void gnu_init( filename )

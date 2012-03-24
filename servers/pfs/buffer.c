@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-FORWARD _PROTOTYPE( struct buf *new_block, (dev_t dev, ino_t inum)			);
+FORWARD struct buf *new_block(dev_t dev, ino_t inum);
 
 /*===========================================================================*
  *                              buf_pool                                     *

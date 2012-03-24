@@ -20,22 +20,22 @@
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test21a, (void));
-_PROTOTYPE(void test21b, (void));
-_PROTOTYPE(void test21c, (void));
-_PROTOTYPE(void test21d, (void));
-_PROTOTYPE(void test21e, (void));
-_PROTOTYPE(void test21f, (void));
-_PROTOTYPE(void test21g, (void));
-_PROTOTYPE(void test21h, (void));
-_PROTOTYPE(void test21i, (void));
-_PROTOTYPE(void test21k, (void));
-_PROTOTYPE(void test21l, (void));
-_PROTOTYPE(void test21m, (void));
-_PROTOTYPE(void test21n, (void));
-_PROTOTYPE(void test21o, (void));
-_PROTOTYPE(int get_link, (char *name));
+int main(int argc, char *argv []);
+void test21a(void);
+void test21b(void);
+void test21c(void);
+void test21d(void);
+void test21e(void);
+void test21f(void);
+void test21g(void);
+void test21h(void);
+void test21i(void);
+void test21k(void);
+void test21l(void);
+void test21m(void);
+void test21n(void);
+void test21o(void);
+int get_link(char *name);
 
 int main(argc, argv)
 int argc;

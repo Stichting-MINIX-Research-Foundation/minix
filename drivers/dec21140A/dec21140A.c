@@ -26,29 +26,29 @@
 #include "dec21140A.h"
 
 
-_PROTOTYPE( PRIVATE u32_t io_inl,            (u16_t)                        );
-_PROTOTYPE( PRIVATE void  io_outl,           (u16_t, u32_t)                 );
-_PROTOTYPE( PRIVATE void  do_conf,           (const message *)              );
-_PROTOTYPE( PRIVATE void  do_get_stat_s,     (message *)                    );
-_PROTOTYPE( PRIVATE void  do_interrupt,      (const dpeth_t *)              );
-_PROTOTYPE( PRIVATE void  do_reply,          (dpeth_t *)                    );
-_PROTOTYPE( PRIVATE void  do_vread_s,        (const message *, int)         );
-_PROTOTYPE( PRIVATE void  do_watchdog,       (void *)                       );
+PRIVATE u32_t io_inl(u16_t);
+PRIVATE void io_outl(u16_t, u32_t);
+PRIVATE void do_conf(const message *);
+PRIVATE void do_get_stat_s(message *);
+PRIVATE void do_interrupt(const dpeth_t *);
+PRIVATE void do_reply(dpeth_t *);
+PRIVATE void do_vread_s(const message *, int);
+PRIVATE void do_watchdog(void *);
 
-_PROTOTYPE( PRIVATE void  de_update_conf,    (dpeth_t *)                    );
-_PROTOTYPE( PRIVATE int   de_probe,          (dpeth_t *, int skip)          );
-_PROTOTYPE( PRIVATE void  de_conf_addr,      (dpeth_t *)                    );
-_PROTOTYPE( PRIVATE void  de_first_init,     (dpeth_t *)                    );
-_PROTOTYPE( PRIVATE void  de_reset,          (const dpeth_t *)              );
-_PROTOTYPE( PRIVATE void  de_hw_conf,        (const dpeth_t *)              );
-_PROTOTYPE( PRIVATE void  de_start,          (const dpeth_t *)              );
-_PROTOTYPE( PRIVATE void  de_setup_frame,    (const dpeth_t *)              );
-_PROTOTYPE( PRIVATE u16_t de_read_rom,       (const dpeth_t *, u8_t, u8_t)  );
-_PROTOTYPE( PRIVATE int   de_calc_iov_size,  (iovec_dat_s_t *)              );
-_PROTOTYPE( PRIVATE void  de_next_iov,       (iovec_dat_s_t *)              );
-_PROTOTYPE( PRIVATE void  do_vwrite_s,       (const message *, int)         );
-_PROTOTYPE( PRIVATE void  de_get_userdata_s, (int, cp_grant_id_t,
-					     vir_bytes, int, void *)        );
+PRIVATE void de_update_conf(dpeth_t *);
+PRIVATE int de_probe(dpeth_t *, int skip);
+PRIVATE void de_conf_addr(dpeth_t *);
+PRIVATE void de_first_init(dpeth_t *);
+PRIVATE void de_reset(const dpeth_t *);
+PRIVATE void de_hw_conf(const dpeth_t *);
+PRIVATE void de_start(const dpeth_t *);
+PRIVATE void de_setup_frame(const dpeth_t *);
+PRIVATE u16_t de_read_rom(const dpeth_t *, u8_t, u8_t);
+PRIVATE int de_calc_iov_size(iovec_dat_s_t *);
+PRIVATE void de_next_iov(iovec_dat_s_t *);
+PRIVATE void do_vwrite_s(const message *, int);
+PRIVATE void de_get_userdata_s(int, cp_grant_id_t, vir_bytes, int, void
+	*);
 
 /* Error messages */
 static char str_CopyErrMsg[]  = "unable to read/write user data";
@@ -64,8 +64,8 @@ PRIVATE dpeth_t de_state;
 PRIVATE int de_instance;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				main					     *

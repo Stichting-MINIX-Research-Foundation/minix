@@ -65,7 +65,7 @@ PUBLIC void smp_schedule(unsigned cpu)
 	arch_send_smp_schedule_ipi(cpu);
 }
 
-_PROTOTYPE(void smp_sched_handler, (void));
+void smp_sched_handler(void);
 
 /*
  * tell another cpu about a task to do and return only after the cpu acks that

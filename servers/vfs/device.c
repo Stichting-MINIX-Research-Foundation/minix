@@ -39,11 +39,9 @@
 #include "vmnt.h"
 #include "param.h"
 
-FORWARD _PROTOTYPE( void restart_reopen, (int major)			);
-FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t, cp_grant_id_t *,
-					     int *,
-					     endpoint_t *, void **,
-					     size_t, u32_t *)	);
+FORWARD void restart_reopen(int major);
+FORWARD int safe_io_conversion(endpoint_t, cp_grant_id_t *, int *,
+	endpoint_t *, void **, size_t, u32_t *);
 
 PRIVATE int dummyproc;
 

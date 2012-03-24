@@ -79,10 +79,10 @@ extern int optind;
 #define TRUE 1
 
 /* Internal functions - prototyped under Minix */
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int tail, (int count, int bytes, int read_until_killed));
-_PROTOTYPE(int keep_reading, (void));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+int tail(int count, int bytes, int read_until_killed);
+int keep_reading(void);
+void usage(void);
 
 int main(argc, argv)
 int argc;

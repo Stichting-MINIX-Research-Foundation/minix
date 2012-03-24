@@ -25,6 +25,6 @@ void __ddekit_add_initcall(struct __ddekit_initcall_s *dis);
 	__ddekit_add_initcall(&dis); }
 
 /* Runs all registered initcalls. */
-_PROTOTYPE (void ddekit_do_initcalls, (void));
+void ddekit_do_initcalls(void);
 
 #endif

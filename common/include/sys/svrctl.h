@@ -25,6 +25,6 @@ struct sysgetenv {
 	size_t		vallen;		/* Size of return data buffer. */
 };
 
-_PROTOTYPE( int svrctl, (int _request, void *_data)			);
+int svrctl(int _request, void *_data);
 
 #endif /* _SYS__SVRCTL_H */

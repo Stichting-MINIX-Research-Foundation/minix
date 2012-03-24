@@ -25,7 +25,7 @@
 #include "vnode.h"
 
 
-FORWARD _PROTOTYPE( filp_id_t verify_fd, (endpoint_t ep, int fd)	);
+FORWARD filp_id_t verify_fd(endpoint_t ep, int fd);
 
 #if LOCK_DEBUG
 /*===========================================================================*

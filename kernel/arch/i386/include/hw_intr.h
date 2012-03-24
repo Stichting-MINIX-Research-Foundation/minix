@@ -2,13 +2,13 @@
 #define __HW_INTR_X86_H__
 
 #include "kernel/kernel.h"
-_PROTOTYPE(void irq_8259_unmask,(int irq));
-_PROTOTYPE(void irq_8259_mask,(int irq));
-_PROTOTYPE(void irq_8259_eoi, (int irq));
-_PROTOTYPE(void irq_handle,(int irq));
-_PROTOTYPE(void i8259_disable,(void));
-_PROTOTYPE(void eoi_8259_master,(void));
-_PROTOTYPE(void eoi_8259_slave,(void));
+void irq_8259_unmask(int irq);
+void irq_8259_mask(int irq);
+void irq_8259_eoi(int irq);
+void irq_handle(int irq);
+void i8259_disable(void);
+void eoi_8259_master(void);
+void eoi_8259_slave(void);
 
 /* 
  * we don't use IO APIC if not configured for SMP as we cannot read any info

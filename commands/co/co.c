@@ -35,13 +35,13 @@ char *base;			/* basename of file */
 
 char difftemp[PATHLEN];		/* extract() fix/patch input */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void fname, (char *src, char *dst));
-_PROTOTYPE(void svcname, (char *src, char *dst));
-_PROTOTYPE(void extract, (char *script, char *out, int rev));
-_PROTOTYPE(char *basename, (char *name));
-_PROTOTYPE(char *whoami, (void));
-_PROTOTYPE(int getyn, (void));
+int main(int argc, char **argv);
+void fname(char *src, char *dst);
+void svcname(char *src, char *dst);
+void extract(char *script, char *out, int rev);
+char *basename(char *name);
+char *whoami(void);
+int getyn(void);
 
 int main(argc, argv)
 int argc;

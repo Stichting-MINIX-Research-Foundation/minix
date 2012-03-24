@@ -7,8 +7,7 @@
 #include <minix/ipc.h>
 
 /* Functions defined by netdriver.c: */
-_PROTOTYPE( void netdriver_announce, (void) );
-_PROTOTYPE( int netdriver_receive, (endpoint_t src, message *m_ptr,
-	int *status_ptr) );
+void netdriver_announce(void);
+int netdriver_receive(endpoint_t src, message *m_ptr, int *status_ptr);
 
 #endif /* _MINIX_NETDRIVER_H */

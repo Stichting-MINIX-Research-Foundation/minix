@@ -9,7 +9,7 @@
 EXTERN int err_code;		/* temporary storage for error number */
 EXTERN int rdwt_err;		/* status of last disk i/o request */
 
-EXTERN _PROTOTYPE (int (*fs_call_vec[]), (void) ); /* fs call table */
+EXTERN int(*fs_call_vec[]) (void);
 
 EXTERN message fs_m_in;		/* contains the input message of the request */
 EXTERN message fs_m_out;	/* contains the output message of the 

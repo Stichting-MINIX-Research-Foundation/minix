@@ -16,9 +16,9 @@ typedef struct mq
 	int mq_allocated;
 } mq_t;
 
-_PROTOTYPE( mq_t *mq_get, (void) );
-_PROTOTYPE( void mq_free, (mq_t *mq) );
-_PROTOTYPE( void mq_init, (void) );
+mq_t *mq_get(void);
+void mq_free(mq_t *mq);
+void mq_init(void);
 
 #endif /* INET__MQ_H */
 

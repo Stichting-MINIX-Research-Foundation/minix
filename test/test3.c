@@ -20,12 +20,12 @@ char el_weirdo[] = "\n\t\\\e@@!!##\e\e\n\n";
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test3a, (void));
-_PROTOTYPE(void test3c, (void));
-_PROTOTYPE(void test3d, (void));
-_PROTOTYPE(void test3e, (void));
-_PROTOTYPE(void e, (int n));
+int main(int argc, char *argv []);
+void test3a(void);
+void test3c(void);
+void test3d(void);
+void test3e(void);
+void e(int n);
 
 int main(argc, argv)
 int argc;

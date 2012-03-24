@@ -6,10 +6,10 @@
  * 01/25/96 Initial Release	Michael Temari, <Michael@TemWare.Com>
  */
 
-_PROTOTYPE(int NETinit, (void));
-_PROTOTYPE(int DOopen, (void));
-_PROTOTYPE(int DOclose, (void));
-_PROTOTYPE(int DOquit, (void));
-_PROTOTYPE(int DOdata, (char *datacom, char *file, int direction, int fd));
+int NETinit(void);
+int DOopen(void);
+int DOclose(void);
+int DOquit(void);
+int DOdata(char *datacom, char *file, int direction, int fd);
 
 extern int ftpcomm_fd;

@@ -34,10 +34,9 @@
 
 
 
-FORWARD _PROTOTYPE( int src_reg_read, (const DEV_STRUCT * DSP, 
-			u16_t reg, u16_t *data) );
-FORWARD _PROTOTYPE( int src_reg_write, (const DEV_STRUCT * DSP, 
-			u16_t reg, u16_t val) );
+FORWARD int src_reg_read(const DEV_STRUCT * DSP, u16_t reg, u16_t
+	*data);
+FORWARD int src_reg_write(const DEV_STRUCT * DSP, u16_t reg, u16_t val);
 
 
 int src_init ( DEV_STRUCT * DSP ) {

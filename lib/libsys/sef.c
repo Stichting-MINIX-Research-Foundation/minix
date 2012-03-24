@@ -21,26 +21,26 @@ PRIVATE u32_t sef_debug_system_hz = 0;
 PRIVATE time_t sef_debug_time_sec = 0;
 PRIVATE time_t sef_debug_time_us = 0;
 PRIVATE char sef_debug_header_buff[SEF_DEBUG_HEADER_MAXLEN];
-FORWARD _PROTOTYPE( void sef_debug_refresh_params, (void) );
-PUBLIC _PROTOTYPE( char* sef_debug_header, (void) );
+FORWARD void sef_debug_refresh_params(void);
+PUBLIC char* sef_debug_header(void);
 #endif
 
 /* SEF Init prototypes. */
 #ifdef USE_COVERAGE
-EXTERN _PROTOTYPE( int do_sef_gcov_request, (message *m_ptr) );
+EXTERN int do_sef_gcov_request(message *m_ptr);
 #endif
-EXTERN _PROTOTYPE( int do_sef_rs_init, (endpoint_t old_endpoint) );
-EXTERN _PROTOTYPE( int do_sef_init_request, (message *m_ptr) );
+EXTERN int do_sef_rs_init(endpoint_t old_endpoint);
+EXTERN int do_sef_init_request(message *m_ptr);
 
 /* SEF Ping prototypes. */
-EXTERN _PROTOTYPE( int do_sef_ping_request, (message *m_ptr) );
+EXTERN int do_sef_ping_request(message *m_ptr);
 
 /* SEF Live update prototypes. */
-EXTERN _PROTOTYPE( void do_sef_lu_before_receive, (void) );
-EXTERN _PROTOTYPE( int do_sef_lu_request, (message *m_ptr) );
+EXTERN void do_sef_lu_before_receive(void);
+EXTERN int do_sef_lu_request(message *m_ptr);
 
 /* SEF Signal prototypes. */
-EXTERN _PROTOTYPE( int do_sef_signal_request, (message *m_ptr) );
+EXTERN int do_sef_signal_request(message *m_ptr);
 
 /*===========================================================================*
  *				sef_startup				     *

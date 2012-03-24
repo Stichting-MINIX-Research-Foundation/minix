@@ -14,7 +14,7 @@
 
 #if USE_SETALARM
 
-FORWARD _PROTOTYPE( void cause_alarm, (timer_t *tp) );
+FORWARD void cause_alarm(timer_t *tp);
 
 /*===========================================================================*
  *				do_setalarm				     *

@@ -16,11 +16,11 @@ PRIVATE endpoint_t who_e;	/* caller's proc number */
 PRIVATE int callnr;		/* system call number */
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void get_work, (message *m_ptr)			);
-FORWARD _PROTOTYPE(void reply, (endpoint_t whom, message *m_ptr)	);
+FORWARD void get_work(message *m_ptr);
+FORWARD void reply(endpoint_t whom, message *m_ptr);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD void sef_local_startup(void);
 
 /*===========================================================================*
  *				main                                         *

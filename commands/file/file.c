@@ -65,10 +65,10 @@ struct info {
 int tabsize = sizeof(table) / sizeof(struct info);
 int L_flag;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void file, (char *name));
-_PROTOTYPE(void do_strip, (int type));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void file(char *name);
+void do_strip(int type);
+void usage(void);
 
 int main(argc, argv)
 int argc;

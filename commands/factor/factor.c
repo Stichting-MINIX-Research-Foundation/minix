@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(long first, (long k));
+int main(int argc, char **argv);
+long first(long k);
 
 int main(argc, argv)
 int argc;

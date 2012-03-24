@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-_PROTOTYPE( void ctx_start, (void (*)(void), int, ...)			);
+void ctx_start(void (*)(void), int, ...);
 
 /*===========================================================================*
  *				setuctx					     *

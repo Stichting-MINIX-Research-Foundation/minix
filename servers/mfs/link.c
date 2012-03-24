@@ -10,17 +10,15 @@
 #define SAME 1000
 
 
-FORWARD _PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st,
-					off_t end)			);
-FORWARD _PROTOTYPE( int remove_dir, (struct inode *rldirp,
-			struct inode *rip, char dir_name[MFS_NAME_MAX])	);
-FORWARD _PROTOTYPE( int unlink_file, (struct inode *dirp,
-			struct inode *rip, char file_name[MFS_NAME_MAX])	);
-FORWARD _PROTOTYPE( off_t nextblock, (off_t pos, int zone_size)		);
-FORWARD _PROTOTYPE( void zerozone_half, (struct inode *rip, off_t pos,
-			int half, int zone_size)			);
-FORWARD _PROTOTYPE( void zerozone_range, (struct inode *rip, off_t pos,
-			off_t len)					);
+FORWARD int freesp_inode(struct inode *rip, off_t st, off_t end);
+FORWARD int remove_dir(struct inode *rldirp, struct inode *rip, char
+	dir_name[MFS_NAME_MAX]);
+FORWARD int unlink_file(struct inode *dirp, struct inode *rip, char
+	file_name[MFS_NAME_MAX]);
+FORWARD off_t nextblock(off_t pos, int zone_size);
+FORWARD void zerozone_half(struct inode *rip, off_t pos, int half, int
+	zone_size);
+FORWARD void zerozone_range(struct inode *rip, off_t pos, off_t len);
 
 /* Args to zerozone_half() */
 #define FIRST_HALF	0

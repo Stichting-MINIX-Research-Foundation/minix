@@ -38,18 +38,17 @@ struct ddekit_slab {
 	struct ddekit_slab_slab empty;
 };
 
-FORWARD _PROTOTYPE( void ddekit_slab_lock, (struct ddekit_slab * sc) );
-FORWARD _PROTOTYPE( void ddekit_slab_unlock, (struct ddekit_slab * sc) );
-FORWARD _PROTOTYPE( struct ddekit_slab_slab * ddekit_slab_find_slab,
-                    (struct ddekit_slab * sc, void * obj));
-FORWARD _PROTOTYPE(void ddekit_slab_slab_insert,
-                   (struct ddekit_slab_slab *list,
-				    struct ddekit_slab_slab *s));
-FORWARD _PROTOTYPE( void ddekit_slab_slab_remove, (struct ddekit_slab_slab *s));
-FORWARD _PROTOTYPE( void ddekit_slab_grow, (struct ddekit_slab * sc));
-FORWARD _PROTOTYPE( void *ddekit_slab_getobj, (struct ddekit_slab_slab *s));
-FORWARD _PROTOTYPE( void ddekit_slab_free_slab,
-                    (struct ddekit_slab_slab * sl, int cont));
+FORWARD void ddekit_slab_lock(struct ddekit_slab * sc);
+FORWARD void ddekit_slab_unlock(struct ddekit_slab * sc);
+FORWARD struct ddekit_slab_slab * ddekit_slab_find_slab(struct
+	ddekit_slab * sc, void * obj);
+FORWARD void ddekit_slab_slab_insert(struct ddekit_slab_slab *list,
+	struct ddekit_slab_slab *s);
+FORWARD void ddekit_slab_slab_remove(struct ddekit_slab_slab *s);
+FORWARD void ddekit_slab_grow(struct ddekit_slab * sc);
+FORWARD void *ddekit_slab_getobj(struct ddekit_slab_slab *s);
+FORWARD void ddekit_slab_free_slab(struct ddekit_slab_slab * sl, int
+	cont);
 
 /******************************************************************************
  *       ddekit_simple_malloc                                                 *

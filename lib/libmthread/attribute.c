@@ -3,9 +3,9 @@
 #include "proto.h"
 
 PRIVATE struct __mthread_attr *va_front, *va_rear;
-FORWARD _PROTOTYPE( void mthread_attr_add, (mthread_attr_t *a)		);
-FORWARD _PROTOTYPE( void mthread_attr_remove, (mthread_attr_t *a)	);
-FORWARD _PROTOTYPE( int mthread_attr_valid, (mthread_attr_t *a)	);
+FORWARD void mthread_attr_add(mthread_attr_t *a);
+FORWARD void mthread_attr_remove(mthread_attr_t *a);
+FORWARD int mthread_attr_valid(mthread_attr_t *a);
 
 /*===========================================================================*
  *			mthread_init_valid_attributes			     *

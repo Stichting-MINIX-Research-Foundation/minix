@@ -37,41 +37,39 @@
 /* ds.c */
 
 /* U32 */
-_PROTOTYPE( int ds_publish_u32, (const char *name, u32_t val, int flags));
-_PROTOTYPE( int ds_retrieve_u32, (const char *name, u32_t *val));
-_PROTOTYPE( int ds_delete_u32, (const char *ds_name));
+int ds_publish_u32(const char *name, u32_t val, int flags);
+int ds_retrieve_u32(const char *name, u32_t *val);
+int ds_delete_u32(const char *ds_name);
 
 /* STRING */
-_PROTOTYPE( int ds_publish_str, (const char *name, char *val, int flags));
-_PROTOTYPE( int ds_retrieve_str, (const char *name, char *val, size_t len));
-_PROTOTYPE( int ds_delete_str, (const char *ds_name));
+int ds_publish_str(const char *name, char *val, int flags);
+int ds_retrieve_str(const char *name, char *val, size_t len);
+int ds_delete_str(const char *ds_name);
 
 /* MEM */
-_PROTOTYPE( int ds_publish_mem, (const char *ds_name, void *vaddr,
-		size_t length, int flags));
-_PROTOTYPE( int ds_retrieve_mem, (const char *ds_name, char *vaddr,
-		size_t *length));
-_PROTOTYPE( int ds_delete_mem, (const char *ds_name));
+int ds_publish_mem(const char *ds_name, void *vaddr, size_t length, int
+	flags);
+int ds_retrieve_mem(const char *ds_name, char *vaddr, size_t *length);
+int ds_delete_mem(const char *ds_name);
 
 /* MAP */
-_PROTOTYPE( int ds_publish_map, (const char *ds_name, void *vaddr,
-		size_t length, int flags));
-_PROTOTYPE( int ds_snapshot_map, (const char *ds_name, int *nr_snapshot));
-_PROTOTYPE( int ds_retrieve_map, (const char *ds_name, char *vaddr,
-		size_t *length, int nr_snapshot, int flags));
-_PROTOTYPE( int ds_delete_map, (const char *ds_name));
+int ds_publish_map(const char *ds_name, void *vaddr, size_t length, int
+	flags);
+int ds_snapshot_map(const char *ds_name, int *nr_snapshot);
+int ds_retrieve_map(const char *ds_name, char *vaddr, size_t *length,
+	int nr_snapshot, int flags);
+int ds_delete_map(const char *ds_name);
 
 /* LABEL */
-_PROTOTYPE( int ds_publish_label, (const char *ds_name, endpoint_t endpoint,
-		int flags));
-_PROTOTYPE( int ds_retrieve_label_name, (char *ds_name, endpoint_t endpoint));
-_PROTOTYPE( int ds_retrieve_label_endpt, (const char *ds_name,
-		endpoint_t *endpoint));
-_PROTOTYPE( int ds_delete_label, (const char *ds_name));
+int ds_publish_label(const char *ds_name, endpoint_t endpoint, int
+	flags);
+int ds_retrieve_label_name(char *ds_name, endpoint_t endpoint);
+int ds_retrieve_label_endpt(const char *ds_name, endpoint_t *endpoint);
+int ds_delete_label(const char *ds_name);
 
 /* Subscribe and check. */
-_PROTOTYPE( int ds_subscribe, (const char *regex, int flags));
-_PROTOTYPE( int ds_check, (char *ds_name, int *type, endpoint_t *owner_e));
+int ds_subscribe(const char *regex, int flags);
+int ds_check(char *ds_name, int *type, endpoint_t *owner_e);
 
 #endif /* _MINIX_DS_H */
 

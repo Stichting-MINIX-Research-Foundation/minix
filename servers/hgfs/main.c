@@ -13,8 +13,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-FORWARD _PROTOTYPE( void get_work, (endpoint_t *who_e)			);
-FORWARD _PROTOTYPE( void send_reply, (int err, int transid)		);
+FORWARD void get_work(endpoint_t *who_e);
+FORWARD void send_reply(int err, int transid);
 
 PRIVATE struct optset optset_table[] = {
   { "prefix",   OPT_STRING, opt.prefix,       sizeof(opt.prefix) },
@@ -28,9 +28,9 @@ PRIVATE struct optset optset_table[] = {
 };
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *			      sef_cb_init_fresh				     *

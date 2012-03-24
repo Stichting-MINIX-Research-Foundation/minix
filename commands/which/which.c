@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-_PROTOTYPE(int main, (int argc, char **argv));
+int main(int argc, char **argv);
 
 int main(ac, av)
 int ac;

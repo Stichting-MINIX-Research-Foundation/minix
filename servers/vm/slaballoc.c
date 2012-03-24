@@ -130,7 +130,8 @@ PRIVATE struct slabheader {
 	} *list_head[LIST_NUMBER];
 } slabs[SLABSIZES];
 
-FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct slabdata **, int *)); 
+FORWARD int objstats(void *, int, struct slabheader **, struct slabdata
+	**, int *);
 
 #define GETSLAB(b, s) {			\
 	int i;				\

@@ -82,13 +82,13 @@ extern int inet_buf_debug;
 u32_t system_hz;
 #endif
 
-FORWARD _PROTOTYPE( void nw_conf, (void) );
-FORWARD _PROTOTYPE( void nw_init, (void) );
-FORWARD _PROTOTYPE( void ds_event, (void) );
+FORWARD void nw_conf(void);
+FORWARD void nw_init(void);
+FORWARD void ds_event(void);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 PUBLIC int main(int argc, char *argv[])
 {

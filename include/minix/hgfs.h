@@ -32,35 +32,33 @@ struct hgfs_attr {
 	HGFS_ATTR_MTIME | HGFS_ATTR_CTIME | HGFS_ATTR_MODE | \
 	HGFS_ATTR_ATIME_SET | HGFS_ATTR_MTIME_SET)
 
-_PROTOTYPE( int hgfs_init, (void)					);
-_PROTOTYPE( void hgfs_cleanup, (void)					);
+int hgfs_init(void);
+void hgfs_cleanup(void);
 
-_PROTOTYPE( int hgfs_enabled, (void)					);
+int hgfs_enabled(void);
 
-_PROTOTYPE( int hgfs_open, (char *path, int flags, int mode,
-			hgfs_file_t *handle)				);
-_PROTOTYPE( int hgfs_read, (hgfs_file_t handle, char *buf, size_t size,
-			u64_t offset)					);
-_PROTOTYPE( int hgfs_write, (hgfs_file_t handle, const char *buf,
-			size_t len, u64_t offset, int append)		);
-_PROTOTYPE( int hgfs_close, (hgfs_file_t handle)			);
+int hgfs_open(char *path, int flags, int mode, hgfs_file_t *handle);
+int hgfs_read(hgfs_file_t handle, char *buf, size_t size, u64_t offset);
+int hgfs_write(hgfs_file_t handle, const char *buf, size_t len, u64_t
+	offset, int append);
+int hgfs_close(hgfs_file_t handle);
 
-_PROTOTYPE( size_t hgfs_readbuf, (char **ptr)				);
-_PROTOTYPE( size_t hgfs_writebuf, (char **ptr)				);
+size_t hgfs_readbuf(char **ptr);
+size_t hgfs_writebuf(char **ptr);
 
-_PROTOTYPE( int hgfs_opendir, (char *path, hgfs_dir_t *handle)		);
-_PROTOTYPE( int hgfs_readdir, (hgfs_dir_t handle, unsigned int index,
-			char *buf, size_t size, struct hgfs_attr *attr)	);
-_PROTOTYPE( int hgfs_closedir, (hgfs_dir_t handle)			);
+int hgfs_opendir(char *path, hgfs_dir_t *handle);
+int hgfs_readdir(hgfs_dir_t handle, unsigned int index, char *buf,
+	size_t size, struct hgfs_attr *attr);
+int hgfs_closedir(hgfs_dir_t handle);
 
-_PROTOTYPE( int hgfs_getattr, (char *path, struct hgfs_attr *attr)	);
-_PROTOTYPE( int hgfs_setattr, (char *path, struct hgfs_attr *attr)	);
+int hgfs_getattr(char *path, struct hgfs_attr *attr);
+int hgfs_setattr(char *path, struct hgfs_attr *attr);
 
-_PROTOTYPE( int hgfs_mkdir, (char *path, int mode)			);
-_PROTOTYPE( int hgfs_unlink, (char *path)				);
-_PROTOTYPE( int hgfs_rmdir, (char *path)				);
-_PROTOTYPE( int hgfs_rename, (char *opath, char *npath)			);
+int hgfs_mkdir(char *path, int mode);
+int hgfs_unlink(char *path);
+int hgfs_rmdir(char *path);
+int hgfs_rename(char *opath, char *npath);
 
-_PROTOTYPE( int hgfs_queryvol, (char *path, u64_t *free, u64_t *total)	);
+int hgfs_queryvol(char *path, u64_t *free, u64_t *total);
 
 #endif /* _HGFS_H */

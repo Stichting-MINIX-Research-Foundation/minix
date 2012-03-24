@@ -28,19 +28,19 @@ typedef struct __e {
     vertex *v;          /* vertex to which this edge goes   */
 } edge;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void *xmalloc, (size_t siz));
-_PROTOTYPE(edge *new_edge, (vertex *v));
-_PROTOTYPE(char *copyupto, (char *name, char *buf, int stop));
-_PROTOTYPE(int child_of, (vertex *parent, vertex *child));
-_PROTOTYPE(vertex *add_v, (char *s));
-_PROTOTYPE(void readin, (void));
-_PROTOTYPE(void pushname, (char *s));
-_PROTOTYPE(char *popname, (void));
-_PROTOTYPE(void topo, (void));
-_PROTOTYPE(void print_cycle, (vertex *parent, vertex *child));
-_PROTOTYPE(void dfs, (vertex *v));
-_PROTOTYPE(void check_cycles, (void));
+int main(int argc, char **argv);
+void *xmalloc(size_t siz);
+edge *new_edge(vertex *v);
+char *copyupto(char *name, char *buf, int stop);
+int child_of(vertex *parent, vertex *child);
+vertex *add_v(char *s);
+void readin(void);
+void pushname(char *s);
+char *popname(void);
+void topo(void);
+void print_cycle(vertex *parent, vertex *child);
+void dfs(vertex *v);
+void check_cycles(void);
 
 /*
 ** xmalloc -- standard do or die malloc front end.

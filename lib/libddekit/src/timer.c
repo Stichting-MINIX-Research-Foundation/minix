@@ -41,13 +41,13 @@ PRIVATE int _id = 0 ;
 PRIVATE ddekit_thread_t *th;
 PRIVATE  ddekit_lock_t lock;
 
-FORWARD _PROTOTYPE( void lock_timer, (void));
-FORWARD _PROTOTYPE( void unlock_timer, (void));
-FORWARD _PROTOTYPE( clock_t get_current_clock, (void));
-FORWARD _PROTOTYPE( void remove_timer, (int id));
-FORWARD _PROTOTYPE( int insert_timer, (struct ddekit_timer_s *t));
-FORWARD _PROTOTYPE( struct ddekit_timer_s * get_next, ( myclock_t exp ));
-FORWARD _PROTOTYPE( void ddekit_timer_thread, (void *data));
+FORWARD void lock_timer(void);
+FORWARD void unlock_timer(void);
+FORWARD clock_t get_current_clock(void);
+FORWARD void remove_timer(int id);
+FORWARD int insert_timer(struct ddekit_timer_s *t);
+FORWARD struct ddekit_timer_s * get_next( myclock_t exp );
+FORWARD void ddekit_timer_thread(void *data);
 
  /****************************************************************************
  *    Private funtions                                                       *

@@ -6,10 +6,9 @@
 #include <minix/ipc.h>
 
 /* SEF entry points for system processes. */
-_PROTOTYPE( void sef_startup, (void) );
-_PROTOTYPE( int sef_receive_status, (endpoint_t src, message *m_ptr,
-    int *status_ptr) );
-_PROTOTYPE( void sef_exit, (int status) );
+void sef_startup(void);
+int sef_receive_status(endpoint_t src, message *m_ptr, int *status_ptr);
+void sef_exit(int status);
 #define sef_receive(src, m_ptr) sef_receive_status(src, m_ptr, NULL)
 
 /* SEF Debug. */
@@ -38,19 +37,19 @@ typedef int(*sef_cb_init_t)(int type, sef_init_info_t *info);
 typedef int(*sef_cb_init_response_t)(message *m_ptr);
 
 /* Callback registration helpers. */
-_PROTOTYPE( void sef_setcb_init_fresh, (sef_cb_init_t cb));
-_PROTOTYPE( void sef_setcb_init_lu, (sef_cb_init_t cb));
-_PROTOTYPE( void sef_setcb_init_restart, (sef_cb_init_t cb));
-_PROTOTYPE( void sef_setcb_init_response, (sef_cb_init_response_t cb) );
+void sef_setcb_init_fresh(sef_cb_init_t cb);
+void sef_setcb_init_lu(sef_cb_init_t cb);
+void sef_setcb_init_restart(sef_cb_init_t cb);
+void sef_setcb_init_response(sef_cb_init_response_t cb);
 
 /* Predefined callback implementations. */
-_PROTOTYPE( int sef_cb_init_null, (int type, sef_init_info_t *info) );
-_PROTOTYPE( int sef_cb_init_response_null, (message *m_ptr) );
+int sef_cb_init_null(int type, sef_init_info_t *info);
+int sef_cb_init_response_null(message *m_ptr);
 
-_PROTOTYPE( int sef_cb_init_fail, (int type, sef_init_info_t *info) );
-_PROTOTYPE( int sef_cb_init_reset, (int type, sef_init_info_t *info) );
-_PROTOTYPE( int sef_cb_init_crash, (int type, sef_init_info_t *info) );
-_PROTOTYPE( int sef_cb_init_response_rs_reply, (message *m_ptr) );
+int sef_cb_init_fail(int type, sef_init_info_t *info);
+int sef_cb_init_reset(int type, sef_init_info_t *info);
+int sef_cb_init_crash(int type, sef_init_info_t *info);
+int sef_cb_init_response_rs_reply(message *m_ptr);
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_INIT_FRESH_NULL          sef_cb_init_null
@@ -91,12 +90,12 @@ _PROTOTYPE( int sef_cb_init_response_rs_reply, (message *m_ptr) );
 typedef void(*sef_cb_ping_reply_t)(endpoint_t source);
 
 /* Callback registration helpers. */
-_PROTOTYPE( void sef_setcb_ping_reply, (sef_cb_ping_reply_t cb));
+void sef_setcb_ping_reply(sef_cb_ping_reply_t cb);
 
 /* Predefined callback implementations. */
-_PROTOTYPE( void sef_cb_ping_reply_null, (endpoint_t source) );
+void sef_cb_ping_reply_null(endpoint_t source);
 
-_PROTOTYPE( void sef_cb_ping_reply_pong, (endpoint_t source) );
+void sef_cb_ping_reply_pong(endpoint_t source);
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_PING_REPLY_NULL          sef_cb_ping_reply_null
@@ -131,27 +130,27 @@ typedef  int(*sef_cb_lu_state_save_t)(int);
 typedef  int(*sef_cb_lu_response_t)(message *m_ptr);
 
 /* Callback registration helpers. */
-_PROTOTYPE( void sef_setcb_lu_prepare, (sef_cb_lu_prepare_t cb) );
-_PROTOTYPE( void sef_setcb_lu_state_isvalid, (sef_cb_lu_state_isvalid_t cb) );
-_PROTOTYPE( void sef_setcb_lu_state_changed, (sef_cb_lu_state_changed_t cb) );
-_PROTOTYPE( void sef_setcb_lu_state_dump, (sef_cb_lu_state_dump_t cb) );
-_PROTOTYPE( void sef_setcb_lu_state_save, (sef_cb_lu_state_save_t cb) );
-_PROTOTYPE( void sef_setcb_lu_response, (sef_cb_lu_response_t cb) );
+void sef_setcb_lu_prepare(sef_cb_lu_prepare_t cb);
+void sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_t cb);
+void sef_setcb_lu_state_changed(sef_cb_lu_state_changed_t cb);
+void sef_setcb_lu_state_dump(sef_cb_lu_state_dump_t cb);
+void sef_setcb_lu_state_save(sef_cb_lu_state_save_t cb);
+void sef_setcb_lu_response(sef_cb_lu_response_t cb);
 
 /* Predefined callback implementations. */
-_PROTOTYPE(  int sef_cb_lu_prepare_null, (int state) );
-_PROTOTYPE(  int sef_cb_lu_state_isvalid_null, (int state) );
-_PROTOTYPE( void sef_cb_lu_state_changed_null, (int old_state, int state) );
-_PROTOTYPE( void sef_cb_lu_state_dump_null, (int state) );
-_PROTOTYPE(  int sef_cb_lu_state_save_null, (int state) );
-_PROTOTYPE(  int sef_cb_lu_response_null, (message *m_ptr) );
+int sef_cb_lu_prepare_null(int state);
+int sef_cb_lu_state_isvalid_null(int state);
+void sef_cb_lu_state_changed_null(int old_state, int state);
+void sef_cb_lu_state_dump_null(int state);
+int sef_cb_lu_state_save_null(int state);
+int sef_cb_lu_response_null(message *m_ptr);
 
-_PROTOTYPE(  int sef_cb_lu_prepare_always_ready, (int state) );
-_PROTOTYPE(  int sef_cb_lu_prepare_never_ready, (int state) );
-_PROTOTYPE(  int sef_cb_lu_prepare_crash, (int state) );
-_PROTOTYPE(  int sef_cb_lu_state_isvalid_standard, (int state) );
-_PROTOTYPE(  int sef_cb_lu_state_isvalid_workfree, (int state) );
-_PROTOTYPE(  int sef_cb_lu_response_rs_reply, (message *m_ptr) );
+int sef_cb_lu_prepare_always_ready(int state);
+int sef_cb_lu_prepare_never_ready(int state);
+int sef_cb_lu_prepare_crash(int state);
+int sef_cb_lu_state_isvalid_standard(int state);
+int sef_cb_lu_state_isvalid_workfree(int state);
+int sef_cb_lu_response_rs_reply(message *m_ptr);
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_LU_PREPARE_NULL          sef_cb_lu_prepare_null
@@ -203,16 +202,16 @@ typedef  int(*sef_cb_signal_manager_t)(endpoint_t target, int signo);
 typedef  int(*sef_cb_gcov_t)(message *msg);
 
 /* Callback registration helpers. */
-_PROTOTYPE( void sef_setcb_signal_handler, (sef_cb_signal_handler_t cb));
-_PROTOTYPE( void sef_setcb_signal_manager, (sef_cb_signal_manager_t cb));
-_PROTOTYPE( void sef_setcb_gcov, (sef_cb_gcov_t cb));
+void sef_setcb_signal_handler(sef_cb_signal_handler_t cb);
+void sef_setcb_signal_manager(sef_cb_signal_manager_t cb);
+void sef_setcb_gcov(sef_cb_gcov_t cb);
 
 /* Predefined callback implementations. */
-_PROTOTYPE( void sef_cb_signal_handler_null, (int signo) );
-_PROTOTYPE(  int sef_cb_signal_manager_null, (endpoint_t target, int signo) );
+void sef_cb_signal_handler_null(int signo);
+int sef_cb_signal_manager_null(endpoint_t target, int signo);
 
-_PROTOTYPE( void sef_cb_signal_handler_term, (int signo) );
-_PROTOTYPE( void sef_cb_signal_handler_posix_default, (int signo) );
+void sef_cb_signal_handler_term(int signo);
+void sef_cb_signal_handler_posix_default(int signo);
 
 /* Macros for predefined callback implementations. */
 #define SEF_CB_SIGNAL_HANDLER_NULL      sef_cb_signal_handler_null

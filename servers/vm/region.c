@@ -40,22 +40,23 @@ PRIVATE yielded_t *lru_youngest = NULL, *lru_oldest = NULL;
 		(((r)->flags & (VR_DIRECT | VR_SHARED)) ||	\
 		 (pb)->refcount == 1))
 
-FORWARD _PROTOTYPE(int map_new_physblock, (struct vmproc *vmp,
-	struct vir_region *region, vir_bytes offset, vir_bytes length,
-	phys_bytes what, u32_t allocflags, int written));
+FORWARD int map_new_physblock(struct vmproc *vmp, struct vir_region
+	*region, vir_bytes offset, vir_bytes length, phys_bytes what, u32_t
+	allocflags, int written);
 
-FORWARD _PROTOTYPE(int map_ph_writept, (struct vmproc *vmp, struct vir_region *vr,
-	struct phys_region *pr));
+FORWARD int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
+	struct phys_region *pr);
 
-FORWARD _PROTOTYPE(phys_bytes freeyieldednode, (yielded_t *node, int freemem));
+FORWARD phys_bytes freeyieldednode(yielded_t *node, int freemem);
 
-FORWARD _PROTOTYPE(struct vir_region *map_copy_region, (struct vmproc *vmp, struct vir_region *vr));
+FORWARD struct vir_region *map_copy_region(struct vmproc *vmp, struct
+	vir_region *vr);
 
-FORWARD _PROTOTYPE(struct phys_region *map_clone_ph_block, (struct vmproc *vmp,
-        struct vir_region *region, struct phys_region *ph, physr_iter *iter));
+FORWARD struct phys_region *map_clone_ph_block(struct vmproc *vmp,
+	struct vir_region *region, struct phys_region *ph, physr_iter *iter);
 
 #if SANITYCHECKS
-FORWARD _PROTOTYPE(void lrucheck, (void));
+FORWARD void lrucheck(void);
 #endif
 
 /* hash table of yielded blocks */

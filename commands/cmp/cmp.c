@@ -8,10 +8,10 @@
 #include <string.h>
 #include <errno.h>
 
-_PROTOTYPE(void fatal, (char *label));
-_PROTOTYPE(int cmp, (int fd1, int fd2));
-_PROTOTYPE(void Usage, (void));
-_PROTOTYPE(int main, (int argc, char **argv));
+void fatal(char *label);
+int cmp(int fd1, int fd2);
+void Usage(void);
+int main(int argc, char **argv);
 
 #define BLOCK	4096
 

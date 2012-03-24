@@ -23,8 +23,8 @@
 
 #define MEM_TOP 0xFFFFFFFFUL
 
-FORWARD _PROTOTYPE(int safecopy, (struct proc *, endpoint_t, endpoint_t,
-		cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
+FORWARD int safecopy(struct proc *, endpoint_t, endpoint_t,
+	cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int);
 
 #define HASGRANTTABLE(gr) \
 	(priv(gr) && priv(gr)->s_grant_table)

@@ -31,10 +31,10 @@
 int superuser;
 int signumber = 0;
 
-_PROTOTYPE(void test38a, (void));
-_PROTOTYPE(void test38b, (void));
-_PROTOTYPE(void test38c, (void));
-_PROTOTYPE(void setsignumber, (int _signumber));
+void test38a(void);
+void test38b(void);
+void test38c(void);
+void setsignumber(int _signumber);
 
 int main(int argc, char *argv[])
 {

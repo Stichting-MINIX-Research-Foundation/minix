@@ -31,13 +31,13 @@ PRIVATE struct port
 PRIVATE int instance;
 PRIVATE int debug;
 
-FORWARD _PROTOTYPE( int hw_probe, (int skip)				);
-FORWARD _PROTOTYPE( void hw_init, (struct port *pp, int devind)		);
-FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
+FORWARD int hw_probe(int skip);
+FORWARD void hw_init(struct port *pp, int devind);
+FORWARD void do_int(struct port *pp);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				main					     *

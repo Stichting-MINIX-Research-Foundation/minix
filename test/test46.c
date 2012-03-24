@@ -17,16 +17,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-_PROTOTYPE( void api_test, (void)					);
-_PROTOTYPE( void e, (int error_no)					);
-_PROTOTYPE( void group_test, (void)					);
-_PROTOTYPE( void limit_test, (void)					);
-_PROTOTYPE( void group_test_1, (void)					);
-_PROTOTYPE( void group_test_2, (void)					);
-_PROTOTYPE( void group_test_3, (void)					);
-_PROTOTYPE( void group_test_4, (void)					);
-_PROTOTYPE( void group_test_5, (void)					);
-_PROTOTYPE( int dotest, (void (*testfunc)(void))				);
+void api_test(void);
+void e(int error_no);
+void group_test(void);
+void limit_test(void);
+void group_test_1(void);
+void group_test_2(void);
+void group_test_3(void);
+void group_test_4(void);
+void group_test_5(void);
+int dotest(void (*testfunc)(void));
 
 #define MAX_ERROR 5
 #define IMAGINARY_GID 100

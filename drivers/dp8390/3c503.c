@@ -26,9 +26,9 @@ extern u32_t system_hz;
 
 #define MILLIS_TO_TICKS(m)  (((m)*system_hz/1000)+1)
 
-_PROTOTYPE(static void el2_init, (dpeth_t *dep));
-_PROTOTYPE(static void el2_stop, (dpeth_t *dep));
-_PROTOTYPE( static void milli_delay, (unsigned long millis)		);
+static void el2_init(dpeth_t *dep);
+static void el2_stop(dpeth_t *dep);
+static void milli_delay(unsigned long millis);
 
 /*===========================================================================*
  *				el2_init				     *

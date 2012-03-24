@@ -101,25 +101,25 @@ unsigned long rs_irq_set = 0;
 
 struct kmessages kmess;
 
-FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
-FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
-FORWARD _PROTOTYPE( void do_cancel, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_ioctl, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_open, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_close, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_select, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_status, (message *m_ptr)			);
-FORWARD _PROTOTYPE( void in_transfer, (tty_t *tp)			);
-FORWARD _PROTOTYPE( int tty_echo, (tty_t *tp, int ch)			);
-FORWARD _PROTOTYPE( void rawecho, (tty_t *tp, int ch)			);
-FORWARD _PROTOTYPE( int back_over, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void reprint, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void dev_ioctl, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void setattr, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void tty_icancel, (tty_t *tp)			);
-FORWARD _PROTOTYPE( void tty_init, (void)				);
+FORWARD void tty_timed_out(timer_t *tp);
+FORWARD void settimer(tty_t *tty_ptr, int enable);
+FORWARD void do_cancel(tty_t *tp, message *m_ptr);
+FORWARD void do_ioctl(tty_t *tp, message *m_ptr);
+FORWARD void do_open(tty_t *tp, message *m_ptr);
+FORWARD void do_close(tty_t *tp, message *m_ptr);
+FORWARD void do_read(tty_t *tp, message *m_ptr);
+FORWARD void do_write(tty_t *tp, message *m_ptr);
+FORWARD void do_select(tty_t *tp, message *m_ptr);
+FORWARD void do_status(message *m_ptr);
+FORWARD void in_transfer(tty_t *tp);
+FORWARD int tty_echo(tty_t *tp, int ch);
+FORWARD void rawecho(tty_t *tp, int ch);
+FORWARD int back_over(tty_t *tp);
+FORWARD void reprint(tty_t *tp);
+FORWARD void dev_ioctl(tty_t *tp);
+FORWARD void setattr(tty_t *tp);
+FORWARD void tty_icancel(tty_t *tp);
+FORWARD void tty_init(void);
 
 /* Default attributes. */
 PRIVATE struct termios termios_defaults = {
@@ -139,9 +139,9 @@ PUBLIC struct machine machine;		/* kernel environment variables */
 PUBLIC u32_t system_hz;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				tty_task				     *

@@ -2,9 +2,9 @@
 
 #include "inc.h"
 
-FORWARD _PROTOTYPE( int get_work, (void)				);
-FORWARD _PROTOTYPE( void send_reply, (int err, int transid)		);
-FORWARD _PROTOTYPE( void got_signal, (int signal)			);
+FORWARD int get_work(void);
+FORWARD void send_reply(int err, int transid);
+FORWARD void got_signal(int signal);
 
 PRIVATE unsigned int inodes;
 PRIVATE struct inode_stat *root_stat;

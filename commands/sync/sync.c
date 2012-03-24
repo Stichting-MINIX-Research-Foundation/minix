@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-_PROTOTYPE(int main, (void));
+int main(void);
 
 int main()
 {

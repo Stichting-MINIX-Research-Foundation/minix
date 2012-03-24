@@ -164,23 +164,23 @@ STATIC long regsize;		/* Code size. */
 /*
  * Forward declarations for regcomp()'s friends.
  */
-_PROTOTYPE(STATIC unsigned char *reg, (int paren, int *flagp ));
-_PROTOTYPE(STATIC unsigned char *regbranch, (int *flagp ));
-_PROTOTYPE(STATIC unsigned char *regpiece, (int *flagp ));
-_PROTOTYPE(STATIC unsigned char *regatom, (int *flagp ));
-_PROTOTYPE(STATIC unsigned char *regnode, (int op ));
-_PROTOTYPE(STATIC void regc, (int b ));
-_PROTOTYPE(STATIC void reginsert, (int op, unsigned char *opnd ));
-_PROTOTYPE(STATIC void regtail, (unsigned char *p, unsigned char *val ));
-_PROTOTYPE(STATIC void regoptail, (unsigned char *p, unsigned char *val ));
-_PROTOTYPE(STATIC int regtry, (regexp *prog, unsigned char *string ));
-_PROTOTYPE(STATIC int regmatch, (unsigned char *prog ));
-_PROTOTYPE(STATIC int regrepeat, (unsigned char *p ));
-_PROTOTYPE(STATIC unsigned char *regnext, (unsigned char *p ));
-_PROTOTYPE(STATIC unsigned char *regprop, (unsigned char *op ));
+STATIC unsigned char *reg(int paren, int *flagp );
+STATIC unsigned char *regbranch(int *flagp );
+STATIC unsigned char *regpiece(int *flagp );
+STATIC unsigned char *regatom(int *flagp );
+STATIC unsigned char *regnode(int op );
+STATIC void regc(int b );
+STATIC void reginsert(int op, unsigned char *opnd );
+STATIC void regtail(unsigned char *p, unsigned char *val );
+STATIC void regoptail(unsigned char *p, unsigned char *val );
+STATIC int regtry(regexp *prog, unsigned char *string );
+STATIC int regmatch(unsigned char *prog );
+STATIC int regrepeat(unsigned char *p );
+STATIC unsigned char *regnext(unsigned char *p );
+STATIC unsigned char *regprop(unsigned char *op );
 
 #ifdef STRCSPN
-_PROTOTYPE(STATIC int strcspn, (unsigned char *s1, unsigned char *s2 ));
+STATIC int strcspn(unsigned char *s1, unsigned char *s2 );
 #endif
 
 /*

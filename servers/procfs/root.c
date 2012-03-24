@@ -5,13 +5,13 @@
 #include <minix/dmap.h>
 #include "cpuinfo.h"
 
-FORWARD _PROTOTYPE( void root_hz, (void)				);
-FORWARD _PROTOTYPE( void root_uptime, (void)				);
-FORWARD _PROTOTYPE( void root_loadavg, (void)				);
-FORWARD _PROTOTYPE( void root_kinfo, (void)				);
-FORWARD _PROTOTYPE( void root_meminfo, (void)				);
-FORWARD _PROTOTYPE( void root_pci, (void)				);
-FORWARD _PROTOTYPE( void root_dmap, (void)				);
+FORWARD void root_hz(void);
+FORWARD void root_uptime(void);
+FORWARD void root_loadavg(void);
+FORWARD void root_kinfo(void);
+FORWARD void root_meminfo(void);
+FORWARD void root_pci(void);
+FORWARD void root_dmap(void);
 
 struct file root_files[] = {
 	{ "hz",		REG_ALL_MODE,	(data_t) root_hz	},

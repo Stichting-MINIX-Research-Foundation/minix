@@ -36,23 +36,23 @@ extern char **environ;
 
 #define timed_test(func) (timed_test_func(#func, func));
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void timed_test_func, (const char *s, void (* func)(void)));
-_PROTOTYPE(void timed_test_timeout, (int signum));
-_PROTOTYPE(void test7a, (void));
-_PROTOTYPE(void test7b, (void));
-_PROTOTYPE(void test7c, (void));
-_PROTOTYPE(void test7d, (void));
-_PROTOTYPE(void test7e, (void));
-_PROTOTYPE(void test7f, (void));
-_PROTOTYPE(void test7g, (void));
-_PROTOTYPE(void test7h, (void));
-_PROTOTYPE(void test7i, (void));
-_PROTOTYPE(void test7j, (void));
-_PROTOTYPE(void cloexec_test, (void));
-_PROTOTYPE(int set, (int how, int first, int last));
-_PROTOTYPE(int locked, (int b));
-_PROTOTYPE(void sigfunc, (int s));
+int main(int argc, char *argv []);
+void timed_test_func(const char *s, void (* func)(void));
+void timed_test_timeout(int signum);
+void test7a(void);
+void test7b(void);
+void test7c(void);
+void test7d(void);
+void test7e(void);
+void test7f(void);
+void test7g(void);
+void test7h(void);
+void test7i(void);
+void test7j(void);
+void cloexec_test(void);
+int set(int how, int first, int last);
+int locked(int b);
+void sigfunc(int s);
 
 int main(argc, argv)
 int argc;

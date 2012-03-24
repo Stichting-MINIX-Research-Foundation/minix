@@ -29,7 +29,7 @@
 #include "xfer.h"
 #include "net.h"
 
-_PROTOTYPE(void donothing, (int sig));
+void donothing(int sig);
 
 int ftpcomm_fd;
 static ipaddr_t myip;

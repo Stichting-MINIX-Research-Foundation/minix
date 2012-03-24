@@ -205,28 +205,28 @@ static void my_outl(u16_t port, u32_t value)
 #define rl_outw(port, offset, value)	(my_outw((port) + (offset), (value)))
 #define rl_outl(port, offset, value)	(my_outl((port) + (offset), (value)))
 
-_PROTOTYPE( static void rl_init, (message *mp)				);
-_PROTOTYPE( static void rl_pci_conf, (void)				);
-_PROTOTYPE( static int rl_probe, (re_t *rep, int skip)			);
-_PROTOTYPE( static void rl_conf_hw, (re_t *rep)				);
-_PROTOTYPE( static void rl_init_buf, (re_t *rep)			);
-_PROTOTYPE( static void rl_init_hw, (re_t *rep)				);
-_PROTOTYPE( static void rl_reset_hw, (re_t *rep)			);
-_PROTOTYPE( static void rl_confaddr, (re_t *rep)			);
-_PROTOTYPE( static void rl_rec_mode, (re_t *rep)			);
-_PROTOTYPE( static void rl_readv_s, (const message *mp, int from_int)	);
-_PROTOTYPE( static void rl_writev_s, (const message *mp, int from_int)	);
-_PROTOTYPE( static void rl_check_ints, (re_t *rep)			);
-_PROTOTYPE( static void rl_report_link, (re_t *rep)			);
-_PROTOTYPE( static void rl_do_reset, (re_t *rep)			);
-_PROTOTYPE( static void rl_getstat_s, (message *mp)			);
-_PROTOTYPE( static void reply, (re_t *rep)				);
-_PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
-_PROTOTYPE( static void check_int_events, (void)			);
-_PROTOTYPE( static void do_hard_int, (void)				);
-_PROTOTYPE( static void dump_phy, (const re_t *rep)			);
-_PROTOTYPE( static void rl_handler, (re_t *rep)				);
-_PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
+static void rl_init(message *mp);
+static void rl_pci_conf(void);
+static int rl_probe(re_t *rep, int skip);
+static void rl_conf_hw(re_t *rep);
+static void rl_init_buf(re_t *rep);
+static void rl_init_hw(re_t *rep);
+static void rl_reset_hw(re_t *rep);
+static void rl_confaddr(re_t *rep);
+static void rl_rec_mode(re_t *rep);
+static void rl_readv_s(const message *mp, int from_int);
+static void rl_writev_s(const message *mp, int from_int);
+static void rl_check_ints(re_t *rep);
+static void rl_report_link(re_t *rep);
+static void rl_do_reset(re_t *rep);
+static void rl_getstat_s(message *mp);
+static void reply(re_t *rep);
+static void mess_reply(message *req, message *reply);
+static void check_int_events(void);
+static void do_hard_int(void);
+static void dump_phy(const re_t *rep);
+static void rl_handler(re_t *rep);
+static void rl_watchdog_f(timer_t *tp);
 
 /*
  * The message used in the main loop is made global, so that rl_watchdog_f()
@@ -238,9 +238,9 @@ PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 u32_t system_hz;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main					     *

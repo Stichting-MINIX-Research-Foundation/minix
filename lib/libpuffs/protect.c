@@ -8,7 +8,7 @@
 #include "puffs.h"
 #include "puffs_priv.h"
 
-FORWARD _PROTOTYPE( int in_group, (gid_t grp)				);
+FORWARD int in_group(gid_t grp);
 
 
 /*===========================================================================*

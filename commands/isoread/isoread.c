@@ -142,27 +142,27 @@ struct dir_entry
 #define IS_DIR(PTR) (PTR->flags[-High_Sierra] & 2 ? 1 : 0)
 
 
-_PROTOTYPE (int main, (int argc, char **argv));
-_PROTOTYPE (int iso_cmp, (char *name, struct dir_entry *dir_ptr, int dir_flag));
-_PROTOTYPE (void list_dir, (struct dir_entry *dir_ptr));
-_PROTOTYPE (void list_file, (struct dir_entry *dir_ptr));
-_PROTOTYPE (struct dir_entry *look_up, (char *name));
-_PROTOTYPE (void recurse_dir, (char *path, struct dir_entry *dir_ptr));
-_PROTOTYPE (void read_device, (long offset, int nr_of_bytes, char *buffer));
-_PROTOTYPE (int valid_fs, (void) );               
-_PROTOTYPE (void usage, (void) );               
-_PROTOTYPE (void print_date, (char *date));
-_PROTOTYPE (void print_dir_date, (char *date));
-_PROTOTYPE (void iso_info, (struct iso9660_descriptor *vol_desc));
-_PROTOTYPE (void hs_info, (struct high_sierra_descriptor *vol_desc));
-_PROTOTYPE (int iso_711, (char *c));
-_PROTOTYPE (int iso_712, (char *c));
-_PROTOTYPE (int iso_721, (char *c));
-_PROTOTYPE (int iso_722, (char *c));
-_PROTOTYPE (int iso_723, (char *c));
-_PROTOTYPE (long iso_731, (char *c));
-_PROTOTYPE (long iso_732, (char *c));
-_PROTOTYPE (long iso_733, (char *c));
+int main(int argc, char **argv);
+int iso_cmp(char *name, struct dir_entry *dir_ptr, int dir_flag);
+void list_dir(struct dir_entry *dir_ptr);
+void list_file(struct dir_entry *dir_ptr);
+struct dir_entry *look_up(char *name);
+void recurse_dir(char *path, struct dir_entry *dir_ptr);
+void read_device(long offset, int nr_of_bytes, char *buffer);
+int valid_fs(void);
+void usage(void);
+void print_date(char *date);
+void print_dir_date(char *date);
+void iso_info(struct iso9660_descriptor *vol_desc);
+void hs_info(struct high_sierra_descriptor *vol_desc);
+int iso_711(char *c);
+int iso_712(char *c);
+int iso_721(char *c);
+int iso_722(char *c);
+int iso_723(char *c);
+long iso_731(char *c);
+long iso_732(char *c);
+long iso_733(char *c);
 
 
 char Buffer[BLOCK_SIZE];	            /* buffer to hold read data */

@@ -12,8 +12,7 @@
 PRIVATE struct usb_urb * pending_urbs = NULL;
 PRIVATE endpoint_t hcd_ep;
 
-FORWARD _PROTOTYPE( void _usb_urb_complete, 
-                    (struct usb_driver *ud, long urb_id));
+FORWARD void _usb_urb_complete(struct usb_driver *ud, long urb_id);
 
 /*****************************************************************************
  *         usb_send_urb                                                      *

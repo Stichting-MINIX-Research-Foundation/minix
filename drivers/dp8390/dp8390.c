@@ -71,66 +71,62 @@ PRIVATE dp_conf_t dp_conf[DP_CONF_NR]=	/* Card addresses */
 #define CR_EXTRA	CR_STA
 
 #if ENABLE_PCI
-_PROTOTYPE( static void pci_conf, (void)				);
+static void pci_conf(void);
 #endif
-_PROTOTYPE( static void do_vwrite_s, (message *mp, int from_int)	);
-_PROTOTYPE( static void do_vread_s, (message *mp)			);
-_PROTOTYPE( static void do_init, (message *mp)				);
-_PROTOTYPE( static void do_int, (dpeth_t *dep)				);
-_PROTOTYPE( static void do_getstat_s, (message *mp)			);
-_PROTOTYPE( static void dp_stop, (dpeth_t *dep)				);
-_PROTOTYPE( static void dp_init, (dpeth_t *dep)				);
-_PROTOTYPE( static void dp_confaddr, (dpeth_t *dep)			);
-_PROTOTYPE( static void dp_reinit, (dpeth_t *dep)			);
-_PROTOTYPE( static void dp_reset, (dpeth_t *dep)			);
-_PROTOTYPE( static void dp_check_ints, (dpeth_t *dep)			);
-_PROTOTYPE( static void dp_recv, (dpeth_t *dep)				);
-_PROTOTYPE( static void dp_send, (dpeth_t *dep)				);
-_PROTOTYPE( static void dp_getblock, (dpeth_t *dep, int page,
-				size_t offset, size_t size, void *dst)	);
-_PROTOTYPE( static void dp_pio8_getblock, (dpeth_t *dep, int page,
-				size_t offset, size_t size, void *dst)	);
-_PROTOTYPE( static void dp_pio16_getblock, (dpeth_t *dep, int page,
-				size_t offset, size_t size, void *dst)	);
-_PROTOTYPE( static int dp_pkt2user_s, (dpeth_t *dep, int page,
-						vir_bytes length)	);
-_PROTOTYPE( static void dp_user2nic_s, (dpeth_t *dep, iovec_dat_s_t *iovp, 
-		vir_bytes offset, int nic_addr, vir_bytes count)	);
-_PROTOTYPE( static void dp_pio8_user2nic_s, (dpeth_t *dep,
-				iovec_dat_s_t *iovp, vir_bytes offset,
-				int nic_addr, vir_bytes count)		);
-_PROTOTYPE( static void dp_pio16_user2nic_s, (dpeth_t *dep,
-				iovec_dat_s_t *iovp, vir_bytes offset,
-				int nic_addr, vir_bytes count)		);
-_PROTOTYPE( static void dp_nic2user_s, (dpeth_t *dep, int nic_addr, 
-		iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count)	);
-_PROTOTYPE( static void dp_pio8_nic2user_s, (dpeth_t *dep, int nic_addr, 
-		iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count)	);
-_PROTOTYPE( static void dp_pio16_nic2user_s, (dpeth_t *dep, int nic_addr, 
-		iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count)	);
-_PROTOTYPE( static void dp_next_iovec_s, (iovec_dat_s_t *iovp)		);
-_PROTOTYPE( static void conf_hw, (dpeth_t *dep)				);
-_PROTOTYPE( static void update_conf, (dpeth_t *dep, dp_conf_t *dcp)	);
-_PROTOTYPE( static void map_hw_buffer, (dpeth_t *dep)			);
-_PROTOTYPE( static int calc_iovec_size_s, (iovec_dat_s_t *iovp)		);
-_PROTOTYPE( static void reply, (dpeth_t *dep)				);
-_PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
-_PROTOTYPE( static void get_userdata_s, (int user_proc,
-		cp_grant_id_t grant, vir_bytes offset, vir_bytes count,
-		void *loc_addr)	);
-_PROTOTYPE( static void put_userdata_s, (int user_proc,
-		cp_grant_id_t grant, size_t count, void *loc_addr)	);
-_PROTOTYPE( static void insb, (port_t port, void *buf, size_t size)				);
-_PROTOTYPE( static void insw, (port_t port, void *buf, size_t size)				);
-_PROTOTYPE( static void do_vir_insb, (port_t port, int proc,
-					vir_bytes buf, size_t size)	);
-_PROTOTYPE( static void do_vir_insw, (port_t port, int proc,
-					vir_bytes buf, size_t size)	);
+static void do_vwrite_s(message *mp, int from_int);
+static void do_vread_s(message *mp);
+static void do_init(message *mp);
+static void do_int(dpeth_t *dep);
+static void do_getstat_s(message *mp);
+static void dp_stop(dpeth_t *dep);
+static void dp_init(dpeth_t *dep);
+static void dp_confaddr(dpeth_t *dep);
+static void dp_reinit(dpeth_t *dep);
+static void dp_reset(dpeth_t *dep);
+static void dp_check_ints(dpeth_t *dep);
+static void dp_recv(dpeth_t *dep);
+static void dp_send(dpeth_t *dep);
+static void dp_getblock(dpeth_t *dep, int page, size_t offset, size_t
+	size, void *dst);
+static void dp_pio8_getblock(dpeth_t *dep, int page, size_t offset,
+	size_t size, void *dst);
+static void dp_pio16_getblock(dpeth_t *dep, int page, size_t offset,
+	size_t size, void *dst);
+static int dp_pkt2user_s(dpeth_t *dep, int page, vir_bytes length);
+static void dp_user2nic_s(dpeth_t *dep, iovec_dat_s_t *iovp, vir_bytes
+	offset, int nic_addr, vir_bytes count);
+static void dp_pio8_user2nic_s(dpeth_t *dep, iovec_dat_s_t *iovp,
+	vir_bytes offset, int nic_addr, vir_bytes count);
+static void dp_pio16_user2nic_s(dpeth_t *dep, iovec_dat_s_t *iovp,
+	vir_bytes offset, int nic_addr, vir_bytes count);
+static void dp_nic2user_s(dpeth_t *dep, int nic_addr, iovec_dat_s_t
+	*iovp, vir_bytes offset, vir_bytes count);
+static void dp_pio8_nic2user_s(dpeth_t *dep, int nic_addr, iovec_dat_s_t
+	*iovp, vir_bytes offset, vir_bytes count);
+static void dp_pio16_nic2user_s(dpeth_t *dep, int nic_addr,
+	iovec_dat_s_t *iovp, vir_bytes offset, vir_bytes count);
+static void dp_next_iovec_s(iovec_dat_s_t *iovp);
+static void conf_hw(dpeth_t *dep);
+static void update_conf(dpeth_t *dep, dp_conf_t *dcp);
+static void map_hw_buffer(dpeth_t *dep);
+static int calc_iovec_size_s(iovec_dat_s_t *iovp);
+static void reply(dpeth_t *dep);
+static void mess_reply(message *req, message *reply);
+static void get_userdata_s(int user_proc, cp_grant_id_t grant, vir_bytes
+	offset, vir_bytes count, void *loc_addr);
+static void put_userdata_s(int user_proc, cp_grant_id_t grant, size_t
+	count, void *loc_addr);
+static void insb(port_t port, void *buf, size_t size);
+static void insw(port_t port, void *buf, size_t size);
+static void do_vir_insb(port_t port, int proc, vir_bytes buf, size_t
+	size);
+static void do_vir_insw(port_t port, int proc, vir_bytes buf, size_t
+	size);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 PRIVATE void handle_hw_intr(void)
 {

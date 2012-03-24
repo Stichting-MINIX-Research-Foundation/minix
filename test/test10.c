@@ -16,12 +16,12 @@ int psize;
 #define MAX_ERROR 2
 #include "common.c"
 
-_PROTOTYPE(int main, (void));
-_PROTOTYPE(void spawn, (int n));
-_PROTOTYPE(void mkfiles, (void));
-_PROTOTYPE(void cr_file, (char *name, int size));
-_PROTOTYPE(void rmfiles, (void));
-_PROTOTYPE(void quit, (void));
+int main(void);
+void spawn(int n);
+void mkfiles(void);
+void cr_file(char *name, int size);
+void rmfiles(void);
+void quit(void);
 
 int main()
 {

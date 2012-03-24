@@ -27,17 +27,17 @@ extern u32_t system_hz;
 
 #define MILLIS_TO_TICKS(m)  (((m)*system_hz/1000)+1)
 
-_PROTOTYPE( typedef int (*testf_t), (dpeth_t *dep, int pos, u8_t *pat)	);
+typedef int(*testf_t) (dpeth_t *dep, int pos, u8_t *pat);
 
 PRIVATE u8_t	pat0[]= { 0x00, 0x00, 0x00, 0x00 };
 PRIVATE u8_t	pat1[]= { 0xFF, 0xFF, 0xFF, 0xFF };
 PRIVATE u8_t	pat2[]= { 0xA5, 0x5A, 0x69, 0x96 };
 PRIVATE u8_t	pat3[]= { 0x96, 0x69, 0x5A, 0xA5 };
 
-_PROTOTYPE( static int test_8, (dpeth_t *dep, int pos, u8_t *pat)	);
-_PROTOTYPE( static int test_16, (dpeth_t *dep, int pos, u8_t *pat)	);
-_PROTOTYPE( static void ne_stop, (dpeth_t *dep)				);
-_PROTOTYPE( static void milli_delay, (unsigned long millis)		);
+static int test_8(dpeth_t *dep, int pos, u8_t *pat);
+static int test_16(dpeth_t *dep, int pos, u8_t *pat);
+static void ne_stop(dpeth_t *dep);
+static void milli_delay(unsigned long millis);
 
 /*===========================================================================*
  *				ne_probe				     *

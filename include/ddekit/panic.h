@@ -8,11 +8,11 @@
 /** Panic - print error message and enter the kernel debugger.
  * \ingroup DDEKit_util
  */
-_PROTOTYPE (void ddekit_panic, (char *fmt, ...));
+void ddekit_panic(char *fmt, ...);
 
 /** Print a debug message.
  * \ingroup DDEKit_util
  */
-_PROTOTYPE (void ddekit_debug, (char *fmt, ...));
+void ddekit_debug(char *fmt, ...);
 
 #endif

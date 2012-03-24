@@ -32,13 +32,13 @@
 static const int we_int_table[8] = {9, 3, 5, 7, 10, 11, 15, 4};
 static const int we_790int_table[8] = {0, 9, 3, 5, 7, 10, 11, 15};
 
-_PROTOTYPE(static void we_init, (dpeth_t * dep));
-_PROTOTYPE(static void we_stop, (dpeth_t * dep));
-_PROTOTYPE(static int we_aliasing, (dpeth_t * dep));
-_PROTOTYPE(static int we_interface_chip, (dpeth_t * dep));
-_PROTOTYPE(static int we_16bitboard, (dpeth_t * dep));
-_PROTOTYPE(static int we_16bitslot, (dpeth_t * dep));
-_PROTOTYPE(static int we_ultra, (dpeth_t * dep));
+static void we_init(dpeth_t * dep);
+static void we_stop(dpeth_t * dep);
+static int we_aliasing(dpeth_t * dep);
+static int we_interface_chip(dpeth_t * dep);
+static int we_16bitboard(dpeth_t * dep);
+static int we_16bitslot(dpeth_t * dep);
+static int we_ultra(dpeth_t * dep);
 
 /*===========================================================================*
  *				wdeth_probe				     *

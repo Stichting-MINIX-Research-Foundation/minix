@@ -1,11 +1,10 @@
 /* shar - make a shell archive		Author: Michiel Husijes */
 
-#include <stdlib.h>		/* for the nonstd :-( _PROTOTYPE */
+#include <stdlib.h>
 #include <stdio.h>
 
-static _PROTOTYPE( void error, (char *progname, char *operation,
-				char *filename) );
-_PROTOTYPE( int main, (int argc, char **argv) );
+static void error(char *progname, char *operation, char *filename);
+int main(int argc, char **argv);
 
 int main(argc, argv)
 int argc;

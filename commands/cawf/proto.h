@@ -28,7 +28,7 @@
  *	4. This notice may not be removed or altered.
  */
 
-#include "ansi.h"
+#include <minix/ansi.h>
 
 #ifdef	UNIX
 # ifdef	USG
@@ -66,51 +66,51 @@
 #include <malloc.h>
 # endif		/* UNIX */
 #else	/* not STDLIB */
-_PROTOTYPE(char *getenv,(char *name));
+char *getenv(char *name);
 # ifdef	UNIX
 #  ifdef	MALLOCH
 #include <malloc.h>
 #  else		/* not MALLOCH */
-_PROTOTYPE(char *malloc,(unsigned size));
+char *malloc(unsigned size);
 #  endif	/* MALLOCH */
 # else	/* not UNIX */
 #include <malloc.h>
 # endif	/* UNIX */
 #endif	/* STDLIB */
 
-_PROTOTYPE(unsigned char *Asmcode,(unsigned char **s, unsigned char *c));
-_PROTOTYPE(int Asmname,(unsigned char *s, unsigned char *c));
-_PROTOTYPE(void Charput,(int c));
-_PROTOTYPE(int Delmacro,(int mx));
-_PROTOTYPE(int Defdev,());
-_PROTOTYPE(void Delstr,(int sx));
-_PROTOTYPE(void Error,(int t, int l, char *s1, char *s2));
-_PROTOTYPE(void Error3,(int len, char *word, char *sarg, int narg, char *msg));
-_PROTOTYPE(void Expand,(unsigned char *line));
-_PROTOTYPE(void Delnum,(int nx));
-_PROTOTYPE(unsigned char *Field,(int n, unsigned char *p, int c));
-_PROTOTYPE(void Endword,());
-_PROTOTYPE(int Findchar,(unsigned char *nm, int l, unsigned char *s, int e));
-_PROTOTYPE(int Findhy,(unsigned char *s, int l, int e));
-_PROTOTYPE(int Findmacro,(unsigned char *p, int e));
-_PROTOTYPE(int Findnum,(unsigned char *n, int v, int e));
-_PROTOTYPE(int Findparms,(unsigned char *n));
-_PROTOTYPE(int Findscale,(int n, double v, int e));
-_PROTOTYPE(unsigned char *Findstr,(unsigned char *nm, unsigned char *s, int e));
-_PROTOTYPE(int LenprtHF,(unsigned char *s, int p, int t));
-_PROTOTYPE(int main,(int argc, char *argv[]));
-_PROTOTYPE(void Macro,(unsigned char *inp));
-_PROTOTYPE(void Nreq,(unsigned char *line, int brk));
-_PROTOTYPE(void Free,(unsigned char **p));
-_PROTOTYPE(unsigned char *Newstr,(unsigned char *s));
-_PROTOTYPE(void Pass2,(unsigned char *line));
-_PROTOTYPE(void Pass3,(int len, unsigned char *word, unsigned char *sarg, int narg));
-_PROTOTYPE(void regerror,(char *s));
-_PROTOTYPE(unsigned char *reg,(int paren, int *flagp));
-_PROTOTYPE(unsigned char *regatom,(int *flagp));
-_PROTOTYPE(unsigned char *regbranch,(int *flagp));
-_PROTOTYPE(regexp *regcomp,(char *exp));
-_PROTOTYPE(void regdump,(regexp *r));
-_PROTOTYPE(int regexec,(regexp *prog, unsigned char *string));
-_PROTOTYPE(void Stringput,(unsigned char *s));
-_PROTOTYPE(int Str2word,(unsigned char *s, int len));
+unsigned char *Asmcode(unsigned char **s, unsigned char *c);
+int Asmname(unsigned char *s, unsigned char *c);
+void Charput(int c);
+int Delmacro(int mx);
+int Defdev();
+void Delstr(int sx);
+void Error(int t, int l, char *s1, char *s2);
+void Error3(int len, char *word, char *sarg, int narg, char *msg);
+void Expand(unsigned char *line);
+void Delnum(int nx);
+unsigned char *Field(int n, unsigned char *p, int c);
+void Endword();
+int Findchar(unsigned char *nm, int l, unsigned char *s, int e);
+int Findhy(unsigned char *s, int l, int e);
+int Findmacro(unsigned char *p, int e);
+int Findnum(unsigned char *n, int v, int e);
+int Findparms(unsigned char *n);
+int Findscale(int n, double v, int e);
+unsigned char *Findstr(unsigned char *nm, unsigned char *s, int e);
+int LenprtHF(unsigned char *s, int p, int t);
+int main(int argc, char *argv[]);
+void Macro(unsigned char *inp);
+void Nreq(unsigned char *line, int brk);
+void Free(unsigned char **p);
+unsigned char *Newstr(unsigned char *s);
+void Pass2(unsigned char *line);
+void Pass3(int len, unsigned char *word, unsigned char *sarg, int narg);
+void regerror(char *s);
+unsigned char *reg(int paren, int *flagp);
+unsigned char *regatom(int *flagp);
+unsigned char *regbranch(int *flagp);
+regexp *regcomp(char *exp);
+void regdump(regexp *r);
+int regexec(regexp *prog, unsigned char *string);
+void Stringput(unsigned char *s);
+int Str2word(unsigned char *s, int len);

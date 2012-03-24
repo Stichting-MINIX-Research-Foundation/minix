@@ -9,16 +9,14 @@
 
 #include "inc.h"
 
-FORWARD _PROTOTYPE( int get_mask, (vfs_ucred_t *ucred)			);
-FORWARD _PROTOTYPE( int access_as_dir, (struct inode *ino,
-			struct hgfs_attr *attr, int uid, int mask)	);
-FORWARD _PROTOTYPE( int next_name, (char **ptr, char **start,
-			char name[NAME_MAX+1])				);
-FORWARD _PROTOTYPE( int go_up, (char path[PATH_MAX], struct inode *ino,
-			struct inode **res_ino, struct hgfs_attr *attr)	);
-FORWARD _PROTOTYPE( int go_down, (char path[PATH_MAX],
-			struct inode *ino, char *name,
-			struct inode **res_ino, struct hgfs_attr *attr)	);
+FORWARD int get_mask(vfs_ucred_t *ucred);
+FORWARD int access_as_dir(struct inode *ino, struct hgfs_attr *attr, int
+	uid, int mask);
+FORWARD int next_name(char **ptr, char **start, char name[NAME_MAX+1]);
+FORWARD int go_up(char path[PATH_MAX], struct inode *ino, struct inode
+	**res_ino, struct hgfs_attr *attr);
+FORWARD int go_down(char path[PATH_MAX], struct inode *ino, char *name,
+	struct inode **res_ino, struct hgfs_attr *attr);
 
 /*===========================================================================*
  *				get_mask				     *

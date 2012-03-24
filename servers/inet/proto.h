@@ -8,17 +8,17 @@ Copyright 1995 Philip Homburg
 
 /* clock.c */
 
-_PROTOTYPE( void clck_tick, (message *mess) );
+void clck_tick(message *mess);
 
 /* mnx_eth.c */
 
-_PROTOTYPE( void eth_rec, (message *m) );
-_PROTOTYPE( void eth_check_driver, (char *label, endpoint_t endpoint) );
+void eth_rec(message *m);
+void eth_check_driver(char *label, endpoint_t endpoint);
 
 /* sr.c */
 
 struct mq;
-_PROTOTYPE( void sr_rec, (struct mq *m) );
+void sr_rec(struct mq *m);
 
 
 

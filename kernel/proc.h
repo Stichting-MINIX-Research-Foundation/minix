@@ -278,8 +278,8 @@ struct proc {
 
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
 
-_PROTOTYPE( int mini_send, (struct proc *caller_ptr, endpoint_t dst_e,
-		message *m_ptr, int flags));
+int mini_send(struct proc *caller_ptr, endpoint_t dst_e, message *m_ptr,
+	int flags);
 
 #endif /* __ASSEMBLY__ */
 

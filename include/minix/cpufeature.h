@@ -21,6 +21,6 @@
 #define _CPUF_I386_HTT		13	/* Supports HTT */
 #define _CPUF_I386_HTT_MAX_NUM	14	/* Maximal num of threads */
 
-_PROTOTYPE(int _cpufeature, (int featureno));
+int _cpufeature(int featureno);
 
 #endif

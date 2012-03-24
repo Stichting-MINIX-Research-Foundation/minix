@@ -34,22 +34,20 @@
 
 
 /* prototypes of private functions */
-FORWARD _PROTOTYPE( int detect_hw, (void) );  
-FORWARD _PROTOTYPE( int disable_int, (int sub_dev) );
-FORWARD _PROTOTYPE( int set_stereo, (u32_t stereo, int sub_dev) );
-FORWARD _PROTOTYPE( int set_bits, (u32_t nr_of_bits, int sub_dev) );
-FORWARD _PROTOTYPE( int set_sample_rate, (u32_t rate, int sub_dev) );
-FORWARD _PROTOTYPE( int set_sign, (u32_t val, int sub_dev) );
-FORWARD _PROTOTYPE( int get_max_frag_size, 
-		(u32_t * val, int *len, int sub_dev) );
-FORWARD _PROTOTYPE( int set_frag_size, (u32_t fragment_size, int sub_dev) );
-FORWARD _PROTOTYPE( int set_int_cnt, (int sub_dev) );
-FORWARD _PROTOTYPE( int free_buf, (u32_t *val, int *len, int sub_dev) );
-FORWARD _PROTOTYPE( int get_samples_in_buf, 
-		(u32_t *val, int *len, int sub_dev) );
-FORWARD _PROTOTYPE( int get_set_volume, (struct volume_level *level, int *len, 
-			int sub_dev, int flag) );
-FORWARD _PROTOTYPE( int reset, (int sub_dev) );
+FORWARD int detect_hw(void);
+FORWARD int disable_int(int sub_dev);
+FORWARD int set_stereo(u32_t stereo, int sub_dev);
+FORWARD int set_bits(u32_t nr_of_bits, int sub_dev);
+FORWARD int set_sample_rate(u32_t rate, int sub_dev);
+FORWARD int set_sign(u32_t val, int sub_dev);
+FORWARD int get_max_frag_size(u32_t * val, int *len, int sub_dev);
+FORWARD int set_frag_size(u32_t fragment_size, int sub_dev);
+FORWARD int set_int_cnt(int sub_dev);
+FORWARD int free_buf(u32_t *val, int *len, int sub_dev);
+FORWARD int get_samples_in_buf(u32_t *val, int *len, int sub_dev);
+FORWARD int get_set_volume(struct volume_level *level, int *len, int
+	sub_dev, int flag);
+FORWARD int reset(int sub_dev);
 
 
 DEV_STRUCT dev;

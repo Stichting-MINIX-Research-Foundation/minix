@@ -110,14 +110,14 @@ int maxbits;			/* limit on number of bits */
 int clearflg;			/* if set, allow CLEAR */
 int inmod;			/* mod 8 for getbits() */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void ffork, (void));
-_PROTOTYPE(void die, (char *s));
-_PROTOTYPE(void myputc, (unsigned c));
-_PROTOTYPE(unsigned mygetc, (void));
-_PROTOTYPE(void getbits, (void));
-_PROTOTYPE(void getpipe, (void));
-_PROTOTYPE(void putpipe, (unsigned u, int flag));
+int main(int argc, char **argv);
+void ffork(void);
+void die(char *s);
+void myputc(unsigned c);
+unsigned mygetc(void);
+void getbits(void);
+void getpipe(void);
+void putpipe(unsigned u, int flag);
 
 int main(argc, argv)
 int argc;

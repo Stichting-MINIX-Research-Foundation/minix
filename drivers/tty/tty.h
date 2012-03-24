@@ -29,8 +29,8 @@
 #define O_NONBLOCK     04000
 
 struct tty;
-typedef _PROTOTYPE( int (*devfun_t), (struct tty *tp, int try_only) );
-typedef _PROTOTYPE( void (*devfunarg_t), (struct tty *tp, int c) );
+typedef int(*devfun_t) (struct tty *tp, int try_only);
+typedef void(*devfunarg_t) (struct tty *tp, int c);
 
 typedef struct tty {
   int tty_events;		/* set when TTY should inspect this line */
@@ -137,52 +137,51 @@ extern struct kmessages kmess;
 
 /* Function prototypes for TTY driver. */
 /* tty.c */
-_PROTOTYPE( void handle_events, (struct tty *tp)			);
-_PROTOTYPE( void sigchar, (struct tty *tp, int sig, int mayflush)	);
-_PROTOTYPE( void tty_task, (void)					);
-_PROTOTYPE( int in_process, (struct tty *tp, char *buf, int count,
-							int scode)	);
-_PROTOTYPE( void out_process, (struct tty *tp, char *bstart, char *bpos,
-				char *bend, int *icount, int *ocount)	);
-_PROTOTYPE( void tty_wakeup, (clock_t now)				);
+void handle_events(struct tty *tp);
+void sigchar(struct tty *tp, int sig, int mayflush);
+void tty_task(void);
+int in_process(struct tty *tp, char *buf, int count, int scode);
+void out_process(struct tty *tp, char *bstart, char *bpos, char *bend,
+	int *icount, int *ocount);
+void tty_wakeup(clock_t now);
 #define tty_reply(c, r, p, s) tty_reply_f(__FILE__, __LINE__, (c), (r), (p), (s))
-_PROTOTYPE( void tty_reply_f, (char *f, int l, int code, int replyee, int proc_nr,
-							int status)	);
-_PROTOTYPE( int select_try, (struct tty *tp, int ops)			);
-_PROTOTYPE( int select_retry, (struct tty *tp)				);
+void tty_reply_f(char *f, int l, int code, int replyee, int proc_nr, int
+	status);
+int select_try(struct tty *tp, int ops);
+int select_retry(struct tty *tp);
 
 /* rs232.c */
-_PROTOTYPE( void rs_init, (struct tty *tp)				);
-_PROTOTYPE( void rs_interrupt, (message *m)				);
+void rs_init(struct tty *tp);
+void rs_interrupt(message *m);
 
 #if (CHIP == INTEL)
 /* console.c */
-_PROTOTYPE( void kputc, (int c)						);
-_PROTOTYPE( void cons_stop, (void)					);
-_PROTOTYPE( void do_new_kmess, (void)					);
-_PROTOTYPE( void scr_init, (struct tty *tp)				);
-_PROTOTYPE( void toggle_scroll, (void)					);
-_PROTOTYPE( int con_loadfont, (message *m)				);
-_PROTOTYPE( void select_console, (int cons_line)			);
-_PROTOTYPE( void beep_x, ( unsigned freq, clock_t dur)			);
-_PROTOTYPE( void do_video, (message *m)					);
+void kputc(int c);
+void cons_stop(void);
+void do_new_kmess(void);
+void scr_init(struct tty *tp);
+void toggle_scroll(void);
+int con_loadfont(message *m);
+void select_console(int cons_line);
+void beep_x( unsigned freq, clock_t dur);
+void do_video(message *m);
 
 /* keyboard.c */
-_PROTOTYPE( void kb_init, (struct tty *tp)				);
-_PROTOTYPE( void kb_init_once, (void)					);
-_PROTOTYPE( int kbd_loadmap, (message *m)				);
-_PROTOTYPE( void do_fkey_ctl, (message *m)				);
-_PROTOTYPE( void kbd_interrupt, (message *m)				);
-_PROTOTYPE( void do_kbd, (message *m)					);
-_PROTOTYPE( void do_kb_inject, (message *m)             );
-_PROTOTYPE( void do_kbdaux, (message *m)				);
-_PROTOTYPE( int kbd_status, (message *m_ptr)				);
+void kb_init(struct tty *tp);
+void kb_init_once(void);
+int kbd_loadmap(message *m);
+void do_fkey_ctl(message *m);
+void kbd_interrupt(message *m);
+void do_kbd(message *m);
+void do_kb_inject(message *m);
+void do_kbdaux(message *m);
+int kbd_status(message *m_ptr);
 
 /* pty.c */
-_PROTOTYPE( void do_pty, (struct tty *tp, message *m_ptr)		);
-_PROTOTYPE( void pty_init, (struct tty *tp)				);
-_PROTOTYPE( void select_retry_pty, (struct tty *tp)			);
-_PROTOTYPE( int pty_status, (message *m_ptr)				);
+void do_pty(struct tty *tp, message *m_ptr);
+void pty_init(struct tty *tp);
+void select_retry_pty(struct tty *tp);
+int pty_status(message *m_ptr);
 
 #endif /* (CHIP == INTEL) */
 

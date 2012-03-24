@@ -41,10 +41,9 @@ static char *Version = "@(#) telnetd 1.00 (07/26/92)";
 
 int opt_d = 0;				/* debugging output flag	*/
 
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void wtmp, (int type, int linenr, char *line, pid_t pid,
-								char *host));
+void usage(void);
+int main(int argc, char *argv[]);
+void wtmp(int type, int linenr, char *line, pid_t pid, char *host);
 
 void usage()
 {

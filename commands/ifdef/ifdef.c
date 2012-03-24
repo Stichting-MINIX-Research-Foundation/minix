@@ -53,18 +53,18 @@ extern int optind;
 extern char *optarg;
 
 /* Prototypes. */
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(char fgetarg, (FILE *stream, char *cbuf));
-_PROTOTYPE(int find, (char *symd));
-_PROTOTYPE(void defit, (char *sym, int redef, int typed));
-_PROTOTYPE(void stop, (void));
-_PROTOTYPE(void gotoeoln, (void));
-_PROTOTYPE(void prteoln, (void));
-_PROTOTYPE(void printtable, (void));
-_PROTOTYPE(char getendif, (void));
-_PROTOTYPE(void gettable, (void));
-_PROTOTYPE(void parse, (void));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+char fgetarg(FILE *stream, char *cbuf);
+int find(char *symd);
+void defit(char *sym, int redef, int typed);
+void stop(void);
+void gotoeoln(void);
+void prteoln(void);
+void printtable(void);
+char getendif(void);
+void gettable(void);
+void parse(void);
+void usage(void);
 
 #ifdef __STDC__
 char fgetarg ( FILE *stream , char *cbuf )

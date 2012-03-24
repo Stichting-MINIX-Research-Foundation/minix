@@ -22,10 +22,10 @@
 #include "super.h"
 #include <minix/vfsif.h>
 
-FORWARD _PROTOTYPE( void icopy, (struct inode *rip, d_inode *dip,
-				 int direction, int norm));
-FORWARD _PROTOTYPE( void addhash_inode, (struct inode *node)        );
-FORWARD _PROTOTYPE( void unhash_inode, (struct inode *node)         );
+FORWARD void icopy(struct inode *rip, d_inode *dip, int direction, int
+	norm);
+FORWARD void addhash_inode(struct inode *node);
+FORWARD void unhash_inode(struct inode *node);
 
 
 /*===========================================================================*

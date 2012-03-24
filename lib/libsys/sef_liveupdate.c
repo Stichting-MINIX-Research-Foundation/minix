@@ -23,14 +23,14 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Live update prototypes for sef_receive(). */
-PUBLIC _PROTOTYPE( void do_sef_lu_before_receive, (void) );
-PUBLIC _PROTOTYPE( int do_sef_lu_request, (message *m_ptr) );
+PUBLIC void do_sef_lu_before_receive(void);
+PUBLIC int do_sef_lu_request(message *m_ptr);
 
 /* SEF Live update helpers. */
-PRIVATE _PROTOTYPE( void sef_lu_ready, (int result) );
+PRIVATE void sef_lu_ready(int result);
 
 /* Debug. */
-EXTERN _PROTOTYPE( char* sef_debug_header, (void) );
+EXTERN char* sef_debug_header(void);
 PRIVATE int sef_lu_debug_cycle = 0;
 
 /* Information about SELF. */

@@ -22,14 +22,14 @@
  *	\return		>=0	valid timer ID 
  *  \return		< 0	error
  */
-_PROTOTYPE( int ddekit_add_timer, 
-            (void (*fn)(void *), void *args, unsigned long timeout));
+int ddekit_add_timer(void (*fn)(void *), void *args, unsigned long
+	timeout);
 
 /** Delete timer with the corresponding timer id.
  *
  *  \ingroup DDEKit_timer
  */
-_PROTOTYPE( int ddekit_del_timer, (int timer));
+int ddekit_del_timer(int timer);
 
 /** Check whether a timer is pending 
  *
@@ -37,16 +37,16 @@ _PROTOTYPE( int ddekit_del_timer, (int timer));
  *
  * Linux needs this.
  */
-_PROTOTYPE( int ddekit_timer_pending, (int timer));
+int ddekit_timer_pending(int timer);
 
 /** Initialization function, startup timer thread
  *
  *  \ingroup DDEKit_timer
  */
-_PROTOTYPE( void ddekit_init_timers, (void));
+void ddekit_init_timers(void);
 
 /** Get the timer thread.
  */
-_PROTOTYPE( ddekit_thread_t *ddekit_get_timer_thread, (void));
+ddekit_thread_t *ddekit_get_timer_thread(void);
 
 #endif

@@ -31,7 +31,7 @@ int subtest = -1;
 #define TEST_PATH "a/b/c"
 #define INTEGR_MSG "You might want to check fs integrity\n"
 
-_PROTOTYPE( void do_test, (void)					);
+void do_test(void);
 
 void do_test(void)
 {

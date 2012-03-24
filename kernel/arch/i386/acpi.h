@@ -82,15 +82,15 @@ struct acpi_madt_nmi {
 	u32_t	global_int;
 };
 
-_PROTOTYPE(void acpi_init, (void));
+void acpi_init(void);
 
 /* 
  * Returns a pointer to the io acpi structure in the MADT table in ACPI. The
  * pointer is valid only until paging is turned off. No memory is allocated in
  * this function thus no memory needs to be freed
  */
-_PROTOTYPE(struct acpi_madt_ioapic * acpi_get_ioapic_next, (void));
+struct acpi_madt_ioapic * acpi_get_ioapic_next(void);
 /* same as above for local APICs */
-_PROTOTYPE(struct acpi_madt_lapic * acpi_get_lapic_next, (void));
+struct acpi_madt_lapic * acpi_get_lapic_next(void);
 
 #endif /* __ACPI_H__ */

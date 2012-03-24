@@ -99,12 +99,12 @@ char term[128];
 char **env;
 extern char **environ;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void wtmp, (char *user, int uid));
-_PROTOTYPE(void show_file, (char *nam));
-_PROTOTYPE(void Time_out, (int dummy));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void add2env, (char **env, char *entry, int replace));
+int main(int argc, char **argv);
+void wtmp(char *user, int uid);
+void show_file(char *nam);
+void Time_out(int dummy);
+void usage(void);
+void add2env(char **env, char *entry, int replace);
 
 void wtmp(user, uid)
 char *user;			/* user name */

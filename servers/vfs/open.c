@@ -34,10 +34,9 @@
 
 PUBLIC char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD _PROTOTYPE( struct vnode *new_node, (struct lookup *resolve,
-					     int oflags, mode_t bits)	);
-FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp, mode_t bits,
-				    int oflags)				);
+FORWARD struct vnode *new_node(struct lookup *resolve, int oflags,
+	mode_t bits);
+FORWARD int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
 
 /*===========================================================================*

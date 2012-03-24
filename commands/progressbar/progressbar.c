@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 
-_PROTOTYPE(int main, (int argc, char **argv));
+int main(int argc, char **argv);
 
 void
 prettyprogress(long b, long maxb, time_t starttime)

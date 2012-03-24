@@ -11,10 +11,10 @@
 
 extern int opt_d;			/* debugging flag		*/
 
-_PROTOTYPE(int get_pty, (int *, char **));
-_PROTOTYPE(void term_init, (void));
-_PROTOTYPE(void term_inout, (int pty_fd));
-_PROTOTYPE(void tel_init, (void));
-_PROTOTYPE(void telopt, (int fdout, int what, int option));
-_PROTOTYPE(int tel_in, (int fdout, int telout, char *buffer, int len));
-_PROTOTYPE(int tel_out, (int fdout, char *buf, int size));
+int get_pty(int *, char **);
+void term_init(void);
+void term_inout(int pty_fd);
+void tel_init(void);
+void telopt(int fdout, int what, int option);
+int tel_in(int fdout, int telout, char *buffer, int len);
+int tel_out(int fdout, char *buf, int size);

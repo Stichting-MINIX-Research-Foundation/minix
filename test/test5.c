@@ -19,24 +19,24 @@ int sigmap[5] = {9, 10, 11};
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void test5a, (void));
-_PROTOTYPE(void parent, (int childpid));
-_PROTOTYPE(void child, (int parpid));
-_PROTOTYPE(void func1, (int s));
-_PROTOTYPE(void func8, (int s));
-_PROTOTYPE(void func10, (int s));
-_PROTOTYPE(void func11, (int s));
-_PROTOTYPE(void test5b, (void));
-_PROTOTYPE(void test5c, (void));
-_PROTOTYPE(void test5d, (void));
-_PROTOTYPE(void test5e, (void));
-_PROTOTYPE(void test5f, (void));
-_PROTOTYPE(void test5g, (void));
-_PROTOTYPE(void funcalrm, (int s));
-_PROTOTYPE(void test5h, (void));
-_PROTOTYPE(void test5i, (void));
-_PROTOTYPE(void ex, (void));
+int main(int argc, char *argv[]);
+void test5a(void);
+void parent(int childpid);
+void child(int parpid);
+void func1(int s);
+void func8(int s);
+void func10(int s);
+void func11(int s);
+void test5b(void);
+void test5c(void);
+void test5d(void);
+void test5e(void);
+void test5f(void);
+void test5g(void);
+void funcalrm(int s);
+void test5h(void);
+void test5i(void);
+void ex(void);
 
 _VOLATILE int childsigs, parsigs, alarms;
 

@@ -19,17 +19,14 @@
 
 #define US 1000000	/* shortcut for microseconds per second */
 
-FORWARD _PROTOTYPE( clock_t ticks_from_timeval, (struct timeval *tv) 	);
-FORWARD _PROTOTYPE( void timeval_from_ticks, (struct timeval *tv,
-			clock_t ticks)					);
-FORWARD _PROTOTYPE( int is_sane_timeval, (struct timeval *tv)		);
-FORWARD _PROTOTYPE( void getset_vtimer, (struct mproc *mp, int nwhich,
-		struct itimerval *value, struct itimerval *ovalue)	);
-FORWARD _PROTOTYPE( void get_realtimer, (struct mproc *mp,
-					 struct itimerval *value)	);
-FORWARD _PROTOTYPE( void set_realtimer, (struct mproc *mp,
-					 struct itimerval *value)	);
-FORWARD _PROTOTYPE( void cause_sigalrm, (struct timer *tp)		);
+FORWARD clock_t ticks_from_timeval(struct timeval *tv);
+FORWARD void timeval_from_ticks(struct timeval *tv, clock_t ticks);
+FORWARD int is_sane_timeval(struct timeval *tv);
+FORWARD void getset_vtimer(struct mproc *mp, int nwhich, struct
+	itimerval *value, struct itimerval *ovalue);
+FORWARD void get_realtimer(struct mproc *mp, struct itimerval *value);
+FORWARD void set_realtimer(struct mproc *mp, struct itimerval *value);
+FORWARD void cause_sigalrm(struct timer *tp);
 
 /*===========================================================================*
  *				ticks_from_timeval			     * 

@@ -20,14 +20,13 @@ PRIVATE dev_t m_device;			/* current device */
 
 extern int errno;			/* error number for PM calls */
 
-FORWARD _PROTOTYPE( struct device *r_prepare, (dev_t device) );
-FORWARD _PROTOTYPE( int r_transfer, (endpoint_t endpt, int opcode,
-	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt, unsigned int flags) );
-FORWARD _PROTOTYPE( int r_do_open, (message *m_ptr) );
-FORWARD _PROTOTYPE( void r_random, (message *m_ptr) );
-FORWARD _PROTOTYPE( void r_updatebin, (int source,
-	struct k_randomness_bin *rb) );
+FORWARD struct device *r_prepare(dev_t device);
+FORWARD int r_transfer(endpoint_t endpt, int opcode, u64_t position,
+	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
+	flags);
+FORWARD int r_do_open(message *m_ptr);
+FORWARD void r_random(message *m_ptr);
+FORWARD void r_updatebin(int source, struct k_randomness_bin *rb);
 
 /* Entry points to this driver. */
 PRIVATE struct chardriver r_dtab = {
@@ -48,8 +47,8 @@ PRIVATE struct chardriver r_dtab = {
 PRIVATE char random_buf[RANDOM_BUF_SIZE];
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				   main 				     *

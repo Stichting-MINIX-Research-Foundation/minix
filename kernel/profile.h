@@ -17,7 +17,7 @@ EXTERN struct sprof_info_s sprof_info;	/* profiling info for user program */
 EXTERN vir_bytes sprof_data_addr_vir;	/* user address to write data */
 EXTERN endpoint_t sprof_ep;		/* user process */
 
-_PROTOTYPE(void nmi_sprofile_handler, (struct nmi_frame * frame));
+void nmi_sprofile_handler(struct nmi_frame * frame);
 
 #endif /* SPROFILE */
 

@@ -25,6 +25,6 @@ struct optset {
   int os_val;
 };
 
-_PROTOTYPE( void optset_parse, (struct optset *table, char *string)	);
+void optset_parse(struct optset *table, char *string);
 
 #endif /* _MINIX_OPTSET_H */

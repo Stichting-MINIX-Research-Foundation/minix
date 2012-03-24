@@ -12,7 +12,7 @@
 #include <sys/ptrace.h>
 #include "proto.h"
 
-FORWARD _PROTOTYPE( void pr_ascii , (long val , int size ));
+FORWARD void pr_ascii(long val , int size );
 
 /* Print ascii */
 PRIVATE void pr_ascii(val, size)

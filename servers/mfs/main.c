@@ -12,13 +12,13 @@
 
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
-FORWARD _PROTOTYPE( void reply, (endpoint_t who, message *m_out)		);
+FORWARD void get_work(message *m_in);
+FORWARD void reply(endpoint_t who, message *m_out);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
 
 /*===========================================================================*
  *				main                                         *

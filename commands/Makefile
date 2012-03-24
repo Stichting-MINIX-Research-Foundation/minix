@@ -21,7 +21,7 @@ SUBDIR=	add_route arp ash at awk \
 	mkproto mount mt netconf newroot nice acknm nohup \
 	nonamed od paste patch pax \
 	ping postinstall poweroff pr prep printf printroot \
-	profile progressbar proto pr_routes ps pwd pwdauth \
+	profile progressbar pr_routes ps pwd pwdauth \
 	ramdisk rarpd rawspeed rcp rdate readall readclock \
 	reboot remsync rev rget rlogin \
 	rotate rsh rshd sed service setup shar acksize \

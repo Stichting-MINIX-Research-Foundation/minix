@@ -8,8 +8,8 @@
 #include <assert.h>
 #include "fproc.h"
 
-FORWARD _PROTOTYPE( int is_vmnt_locked, (struct vmnt *vmp)		);
-FORWARD _PROTOTYPE( void clear_vmnt, (struct vmnt *vmp)			);
+FORWARD int is_vmnt_locked(struct vmnt *vmp);
+FORWARD void clear_vmnt(struct vmnt *vmp);
 
 /* Is vmp pointer reasonable? */
 #define SANEVMP(v) ((((v) >= &vmnt[0] && (v) < &vmnt[NR_MNTS])))

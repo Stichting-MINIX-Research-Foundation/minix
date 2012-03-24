@@ -27,11 +27,10 @@
 
 PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
 
-FORWARD _PROTOTYPE( char *get_name, (char *name, char string[NAME_MAX+1]) );
-FORWARD _PROTOTYPE( int ltraverse, (struct puffs_node *pn, char *suffix)  );
-FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino,
-					int flags, struct puffs_node **res_inop,
-					size_t *offsetp, int *symlinkp)	  );
+FORWARD char *get_name(char *name, char string[NAME_MAX+1]);
+FORWARD int ltraverse(struct puffs_node *pn, char *suffix);
+FORWARD int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+	puffs_node **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
  *                             fs_lookup				     *

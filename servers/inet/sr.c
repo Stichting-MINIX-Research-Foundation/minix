@@ -75,30 +75,30 @@ PUBLIC sr_fd_t sr_fd_table[FD_NR];
 PRIVATE mq_t *repl_queue, *repl_queue_tail;
 PRIVATE struct vscp_vec s_cp_req[SCPVEC_NR];
 
-FORWARD _PROTOTYPE ( int sr_open, (message *m) );
-FORWARD _PROTOTYPE ( void sr_close, (message *m) );
-FORWARD _PROTOTYPE ( int sr_rwio, (mq_t *m) );
-FORWARD _PROTOTYPE ( int sr_restart_read, (sr_fd_t *fdp) );
-FORWARD _PROTOTYPE ( int sr_restart_write, (sr_fd_t *fdp) );
-FORWARD _PROTOTYPE ( int sr_restart_ioctl, (sr_fd_t *fdp) );
-FORWARD _PROTOTYPE ( int sr_cancel, (message *m) );
-FORWARD _PROTOTYPE ( int sr_select, (message *m) );
-FORWARD _PROTOTYPE ( void sr_status, (message *m) );
-FORWARD _PROTOTYPE ( void sr_reply_, (mq_t *m, int reply, int is_revive) );
-FORWARD _PROTOTYPE ( sr_fd_t *sr_getchannel, (int minor));
-FORWARD _PROTOTYPE ( acc_t *sr_get_userdata, (int fd, size_t offset,
-					size_t count, int for_ioctl) );
-FORWARD _PROTOTYPE ( int sr_put_userdata, (int fd, size_t offset,
-						acc_t *data, int for_ioctl) );
-FORWARD _PROTOTYPE (void sr_select_res, (int fd, unsigned ops) );
-FORWARD _PROTOTYPE ( int sr_repl_queue, (int proc, int ref, int operation) );
-FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t **q_head_ptr, 
-	mq_t **q_tail_ptr, int type, int proc_nr, int ref, int first_flag) );
-FORWARD _PROTOTYPE ( void sr_event, (event_t *evp, ev_arg_t arg) );
-FORWARD _PROTOTYPE ( int cp_u2b, (endpoint_t proc, cp_grant_id_t gid,
-    vir_bytes offset, acc_t **var_acc_ptr, int size) );
-FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, endpoint_t proc,
-    cp_grant_id_t gid, vir_bytes offset) );
+FORWARD int sr_open(message *m);
+FORWARD void sr_close(message *m);
+FORWARD int sr_rwio(mq_t *m);
+FORWARD int sr_restart_read(sr_fd_t *fdp);
+FORWARD int sr_restart_write(sr_fd_t *fdp);
+FORWARD int sr_restart_ioctl(sr_fd_t *fdp);
+FORWARD int sr_cancel(message *m);
+FORWARD int sr_select(message *m);
+FORWARD void sr_status(message *m);
+FORWARD void sr_reply_(mq_t *m, int reply, int is_revive);
+FORWARD sr_fd_t *sr_getchannel(int minor);
+FORWARD acc_t *sr_get_userdata(int fd, size_t offset, size_t count, int
+	for_ioctl);
+FORWARD int sr_put_userdata(int fd, size_t offset, acc_t *data, int
+	for_ioctl);
+FORWARD void sr_select_res(int fd, unsigned ops);
+FORWARD int sr_repl_queue(int proc, int ref, int operation);
+FORWARD int walk_queue(sr_fd_t *sr_fd, mq_t **q_head_ptr, mq_t
+	**q_tail_ptr, int type, int proc_nr, int ref, int first_flag);
+FORWARD void sr_event(event_t *evp, ev_arg_t arg);
+FORWARD int cp_u2b(endpoint_t proc, cp_grant_id_t gid, vir_bytes offset,
+	acc_t **var_acc_ptr, int size);
+FORWARD int cp_b2u(acc_t *acc_ptr, endpoint_t proc, cp_grant_id_t gid,
+	vir_bytes offset);
 
 PUBLIC void sr_init()
 {

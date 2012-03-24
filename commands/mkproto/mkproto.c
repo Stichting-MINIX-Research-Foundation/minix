@@ -35,11 +35,11 @@ FILE *outfile;
 extern int optind;
 extern char *optarg;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void descend, (char *dirname));
-_PROTOTYPE(void display_attrib, (char *name, struct stat *st));
-_PROTOTYPE(void usage, (char *binname));
-_PROTOTYPE(void open_outfile, (void));
+int main(int argc, char **argv);
+void descend(char *dirname);
+void display_attrib(char *name, struct stat *st);
+void usage(char *binname);
+void open_outfile(void);
 
 int main(argc, argv)
 int argc;

@@ -46,15 +46,15 @@ struct stat stb1, stb2;		/* stat buffers for size compare */
 char original[] = "/tmp/cioXXXXXX";	/* previous revision */
 char diffout[] = "/tmp/cidXXXXXX";	/* diffs */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void rundiff, (void));
-_PROTOTYPE(void logmsg, (FILE *fp));
-_PROTOTYPE(void fname, (char *src, char *dst));
-_PROTOTYPE(void svcname, (char *src, char *dst));
-_PROTOTYPE(int lockcheck, (FILE *fp, int rev));
-_PROTOTYPE(void onintr, (int dummy));
-_PROTOTYPE(void clean, (void));
-_PROTOTYPE(char *whoami, (void));
+int main(int argc, char **argv);
+void rundiff(void);
+void logmsg(FILE *fp);
+void fname(char *src, char *dst);
+void svcname(char *src, char *dst);
+int lockcheck(FILE *fp, int rev);
+void onintr(int dummy);
+void clean(void);
+char *whoami(void);
 
 int main(argc, argv)
 int argc;

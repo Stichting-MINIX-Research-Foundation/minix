@@ -21,7 +21,7 @@ struct nmi_frame {
 	reg_t	eflags;
 };
 
-_PROTOTYPE(int i386_watchdog_start, (void));
+int i386_watchdog_start(void);
 
 #define nmi_in_kernel(f)	((f)->cs == CS_SELECTOR)
 

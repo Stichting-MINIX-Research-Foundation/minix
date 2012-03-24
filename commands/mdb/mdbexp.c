@@ -16,8 +16,8 @@
 #include <string.h>
 #include "proto.h"
 
-FORWARD _PROTOTYPE(long value , (char *s , char **s_p , int *seg_p ));
-FORWARD _PROTOTYPE(long lookup , (char *s , char **s_p , int *seg_p ));
+FORWARD long value(char *s , char **s_p , int *seg_p );
+FORWARD long lookup(char *s , char **s_p , int *seg_p );
 
 #define idchar(c) (isalpha(c) || isdigit(c) || (c) == '_')
 

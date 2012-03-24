@@ -10,8 +10,8 @@
 #include "schedproc.h"
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE( void reply, (endpoint_t whom, message *m_ptr)	);
-FORWARD _PROTOTYPE( void sef_local_startup, (void)			);
+FORWARD void reply(endpoint_t whom, message *m_ptr);
+FORWARD void sef_local_startup(void);
 
 PUBLIC struct machine machine;		/* machine info */
 

@@ -17,9 +17,9 @@ int zilch[5000];
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test6a, (void));
-_PROTOTYPE(void test6b, (void));
+int main(int argc, char *argv []);
+void test6a(void);
+void test6b(void);
 
 int main(argc, argv)
 int argc;

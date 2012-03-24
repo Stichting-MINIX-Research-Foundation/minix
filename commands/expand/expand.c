@@ -11,8 +11,8 @@
 
 int column = 0;			/* Current column, retained between files  */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void Expand, (FILE *f, int tab_index, int tabs []));
+int main(int argc, char **argv);
+void Expand(FILE *f, int tab_index, int tabs []);
 
 int main(argc, argv)
 int argc;

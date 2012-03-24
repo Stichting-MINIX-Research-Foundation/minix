@@ -90,11 +90,11 @@ static char default_delims[] = {TAB};	/* default delimiter string	 */
 char *delims;			/* the pointer to the delimiters        */
 int number_of_delims = 1;	/* number of delimiters to use	 	 */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void docol, (int nfiles, char **fnamptr));
-_PROTOTYPE(void doserial, (int nfiles, char **fnamptr));
-_PROTOTYPE(void delimbuild, (char *strptr));
-_PROTOTYPE(void prerr, (int etype, char *estring));
+int main(int argc, char **argv);
+void docol(int nfiles, char **fnamptr);
+void doserial(int nfiles, char **fnamptr);
+void delimbuild(char *strptr);
+void prerr(int etype, char *estring);
 
 int main(argc, argv)
 int argc;

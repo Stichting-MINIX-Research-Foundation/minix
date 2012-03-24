@@ -5,7 +5,7 @@ char buf_buf[BUF_SIZE + CLICK_SIZE];
 int fid_send, fid_get;
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD void sef_local_startup(void);
 
 /*===========================================================================*
  *				    main				     *

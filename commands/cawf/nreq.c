@@ -36,32 +36,32 @@
  * Prototypes for request processing functions.
  */
 
-_PROTOTYPE(static void nr_UL,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_Ub,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_Uc,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_Uf,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_Ur,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_ad,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_bp,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_br,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_ce,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_di,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_ds,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_fi,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_fl,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_ft,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_it,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_na,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_nf,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_ns,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_rm,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_rn,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_rr,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_rs,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_tm,(unsigned char *line, int brk));
-_PROTOTYPE(static void nr_tr,(unsigned char *line, int brk));
+static void nr_UL(unsigned char *line, int brk);
+static void nr_Ub(unsigned char *line, int brk);
+static void nr_Uc(unsigned char *line, int brk);
+static void nr_Uf(unsigned char *line, int brk);
+static void nr_Ur(unsigned char *line, int brk);
+static void nr_ad(unsigned char *line, int brk);
+static void nr_bp(unsigned char *line, int brk);
+static void nr_br(unsigned char *line, int brk);
+static void nr_ce(unsigned char *line, int brk);
+static void nr_di(unsigned char *line, int brk);
+static void nr_ds(unsigned char *line, int brk);
+static void nr_fi(unsigned char *line, int brk);
+static void nr_fl(unsigned char *line, int brk);
+static void nr_ft(unsigned char *line, int brk);
+static void nr_it(unsigned char *line, int brk);
+static void nr_na(unsigned char *line, int brk);
+static void nr_nf(unsigned char *line, int brk);
+static void nr_ns(unsigned char *line, int brk);
+static void nr_rm(unsigned char *line, int brk);
+static void nr_rn(unsigned char *line, int brk);
+static void nr_rr(unsigned char *line, int brk);
+static void nr_rs(unsigned char *line, int brk);
+static void nr_tm(unsigned char *line, int brk);
+static void nr_tr(unsigned char *line, int brk);
 
-_PROTOTYPE(static void nr_nil,(unsigned char *line, int brk));
+static void nr_nil(unsigned char *line, int brk);
 
 
 /*

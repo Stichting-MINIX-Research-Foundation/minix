@@ -191,29 +191,24 @@ typedef int boolean;
 #include <sys/times.h>
 #endif
 
-#ifndef _PROTOTYPE
-#define _PROTOTYPE(fun, args)	fun args
-#endif
+int main(void);
+void prep_timer(void);
+void timeout(int sig);
+void Proc0(void);
+void Proc1(RecordPtr PtrParIn);
+void Proc2(OneToFifty *IntParIO);
+void Proc3(RecordPtr *PtrParOut);
+void Proc4(void);
+void Proc5(void);
+void Proc6(Enumeration EnumParIn, Enumeration *EnumParOut);
+void Proc7(OneToFifty IntParI1, OneToFifty IntParI2, OneToFifty
+	*IntParOut);
+void Proc8(Array1Dim Array1Par, Array2Dim Array2Par, OneToFifty
+	IntParI1, OneToFifty IntParI2);
+boolean Func2(String30 StrParI1, String30 StrParI2);
+boolean Func3(Enumeration EnumParIn);
 
-_PROTOTYPE(int main, (void));
-_PROTOTYPE(void prep_timer, (void));
-_PROTOTYPE(void timeout, (int sig));
-_PROTOTYPE(void Proc0, (void));
-_PROTOTYPE(void Proc1, (RecordPtr PtrParIn));
-_PROTOTYPE(void Proc2, (OneToFifty *IntParIO));
-_PROTOTYPE(void Proc3, (RecordPtr *PtrParOut));
-_PROTOTYPE(void Proc4, (void));
-_PROTOTYPE(void Proc5, (void));
-_PROTOTYPE(void Proc6, (Enumeration EnumParIn, Enumeration *EnumParOut));
-_PROTOTYPE(void Proc7, (OneToFifty IntParI1, OneToFifty IntParI2, 
-						OneToFifty *IntParOut));
-_PROTOTYPE(void Proc8, (Array1Dim Array1Par, Array2Dim Array2Par, 
-				OneToFifty IntParI1, OneToFifty IntParI2));
-/*_PROTOTYPE(Enumeration Func1,(CapitalLetter CharPar1, CapitalLetter CharPar2));*/
-_PROTOTYPE(boolean Func2, (String30 StrParI1, String30 StrParI2));
-_PROTOTYPE(boolean Func3, (Enumeration EnumParIn));
-
-_PROTOTYPE(Enumeration Func1, (int CharPar1, int CharPar2));
+Enumeration Func1(int CharPar1, int CharPar2);
 
 
 int main()

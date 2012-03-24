@@ -2,19 +2,16 @@
 #include "proto.h"
 
 
-FORWARD _PROTOTYPE( struct devman_device*devman_dev_add_child,
-                    (struct devman_device *parent,
-                     struct devman_device_info *devinf)                );
-FORWARD _PROTOTYPE( struct devman_device *_find_dev,
-                    (struct devman_device *dev, int dev_id)            );
-FORWARD _PROTOTYPE( int devman_dev_add_info,
-                    (struct devman_device *dev,
-					 struct devman_device_info_entry *entry,
-					 char *buf)                                        );
-FORWARD _PROTOTYPE( int devman_event_read,
-                    (char **ptr, size_t *len,off_t offset, void *data) );
+FORWARD struct devman_device*devman_dev_add_child(struct devman_device
+	*parent, struct devman_device_info *devinf);
+FORWARD struct devman_device *_find_dev(struct devman_device *dev, int
+	dev_id);
+FORWARD int devman_dev_add_info(struct devman_device *dev, struct
+	devman_device_info_entry *entry, char *buf);
+FORWARD int devman_event_read(char **ptr, size_t *len,off_t offset, void
+	*data);
 
-FORWARD _PROTOTYPE( int devman_del_device, (struct devman_device *dev) );
+FORWARD int devman_del_device(struct devman_device *dev);
 
 PRIVATE int next_device_id = 1;
 

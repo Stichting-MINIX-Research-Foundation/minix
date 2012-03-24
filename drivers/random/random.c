@@ -34,10 +34,9 @@ PRIVATE u8_t random_key[2*AES_BLOCKSIZE];
 PRIVATE u32_t count_lo, count_hi;
 PRIVATE u32_t reseed_count;
 
-FORWARD _PROTOTYPE( void add_sample, (int source, unsigned long sample)	);
-FORWARD _PROTOTYPE( void data_block, (rd_keyinstance *keyp,
-							void *data)	);
-FORWARD _PROTOTYPE( void reseed, (void)					);
+FORWARD void add_sample(int source, unsigned long sample);
+FORWARD void data_block(rd_keyinstance *keyp, void *data);
+FORWARD void reseed(void);
 
 PUBLIC void random_init()
 {

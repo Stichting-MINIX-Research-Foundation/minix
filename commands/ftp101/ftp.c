@@ -50,11 +50,11 @@ char reply[1024];
 #define getline ftp_getline
 #endif
 
-_PROTOTYPE(static void makeargs, (char *buff));
-_PROTOTYPE(int DOver,  (void));
-_PROTOTYPE(int DOhelp, (void));
-_PROTOTYPE(static int getline, (char *line, int len));
-_PROTOTYPE(int main, (int argc, char *argv[]));
+static void makeargs(char *buff);
+int DOver(void);
+int DOhelp(void);
+static int getline(char *line, int len);
+int main(int argc, char *argv[]);
 
 
 static void makeargs(buff)
@@ -310,7 +310,7 @@ char junk[10];
 
 struct commands {
 	char *name;
-	_PROTOTYPE(int (*func), (void));
+ int(*func) (void);
 };
 
 static struct commands commands[] = {

@@ -95,15 +95,15 @@ char *boot_down;		/* "crash" or "down " flag */
 logout *first_link = NULL;	/* List of logout times */
 int interrupt = FALSE;		/* If sigint or sigquit occurs */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void Sigint, (int sig));
-_PROTOTYPE(void Sigquit, (int sig));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void Process, (struct utmp *wtmp));
-_PROTOTYPE(int Print_Record, (struct utmp *wtmp));
-_PROTOTYPE(void Print_Duration, (long from, long to));
-_PROTOTYPE(void Print_Uptime, (void));
-_PROTOTYPE(void Record_Logout_Time, (struct utmp *wtmp));
+int main(int argc, char **argv);
+void Sigint(int sig);
+void Sigquit(int sig);
+void usage(void);
+void Process(struct utmp *wtmp);
+int Print_Record(struct utmp *wtmp);
+void Print_Duration(long from, long to);
+void Print_Uptime(void);
+void Record_Logout_Time(struct utmp *wtmp);
 
 /* Sigint() and Sigquit() Flag occurrence of an interrupt. */
 void Sigint(sig)

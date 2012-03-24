@@ -3,7 +3,7 @@
 #include "inc.h"
 #include "cpuinfo.h"
 
-FORWARD _PROTOTYPE( void init_hook, (void)				);
+FORWARD void init_hook(void);
 
 /* The hook functions that will be called by VTreeFS. */
 PRIVATE struct fs_hooks hooks = {

@@ -32,9 +32,9 @@
 #include "mproc.h"
 #include "param.h"
 
-FORWARD _PROTOTYPE( void unpause, (struct mproc *rmp)			);
-FORWARD _PROTOTYPE( int sig_send, (struct mproc *rmp, int signo)	);
-FORWARD _PROTOTYPE( void sig_proc_exit, (struct mproc *rmp, int signo)	);
+FORWARD void unpause(struct mproc *rmp);
+FORWARD int sig_send(struct mproc *rmp, int signo);
+FORWARD void sig_proc_exit(struct mproc *rmp, int signo);
 
 /*===========================================================================*
  *				do_sigaction				     *

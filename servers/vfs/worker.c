@@ -5,14 +5,13 @@
 #include "job.h"
 #include <assert.h>
 
-FORWARD _PROTOTYPE( void append_job, (struct job *job,
-					void *(*func)(void *arg))	);
-FORWARD _PROTOTYPE( void get_work, (struct worker_thread *worker)	);
-FORWARD _PROTOTYPE( void *worker_main, (void *arg)			);
-FORWARD _PROTOTYPE( void worker_sleep, (struct worker_thread *worker)	);
-FORWARD _PROTOTYPE( void worker_wake, (struct worker_thread *worker)	);
-FORWARD _PROTOTYPE( int worker_waiting_for, (struct worker_thread *worker,
-						endpoint_t proc_e)	);
+FORWARD void append_job(struct job *job, void *(*func)(void *arg));
+FORWARD void get_work(struct worker_thread *worker);
+FORWARD void *worker_main(void *arg);
+FORWARD void worker_sleep(struct worker_thread *worker);
+FORWARD void worker_wake(struct worker_thread *worker);
+FORWARD int worker_waiting_for(struct worker_thread *worker, endpoint_t
+	proc_e);
 PRIVATE int init = 0;
 PRIVATE mthread_attr_t tattr;
 

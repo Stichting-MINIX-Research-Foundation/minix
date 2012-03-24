@@ -22,16 +22,16 @@ char buff[30000];
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void test19a, (void));
-_PROTOTYPE(void test19b, (void));
-_PROTOTYPE(void test19c, (void));
-_PROTOTYPE(void test19d, (void));
-_PROTOTYPE(void test19e, (void));
-_PROTOTYPE(void test19f, (void));
-_PROTOTYPE(void test19g, (void));
-_PROTOTYPE(void clraa, (void));
-_PROTOTYPE(void pipecatcher, (int s));
+int main(int argc, char *argv[]);
+void test19a(void);
+void test19b(void);
+void test19c(void);
+void test19d(void);
+void test19e(void);
+void test19f(void);
+void test19g(void);
+void clraa(void);
+void pipecatcher(int s);
 
 int main(argc, argv)
 int argc;

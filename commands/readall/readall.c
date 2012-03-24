@@ -41,8 +41,8 @@ char *name;			/* name of special file being read */
 char a[CHUNK * BLOCK_SIZE];	/* read buffer */
 long rotten[STORE];		/* list of bad blocks */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-static _PROTOTYPE(void output, (long blocks_read));
+int main(int argc, char **argv);
+static void output(long blocks_read);
 
 /* print pretty progress meter with remaining no. of blocks and ETA on
  * stderr

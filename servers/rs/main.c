@@ -15,18 +15,17 @@
 #include "kernel/proc.h"
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void boot_image_info_lookup, ( endpoint_t endpoint,
-    struct boot_image *image,
-    struct boot_image **ip, struct boot_image_priv **pp,
-    struct boot_image_sys **sp, struct boot_image_dev **dp)             );
-FORWARD _PROTOTYPE(void catch_boot_init_ready, (endpoint_t endpoint)	);
-FORWARD _PROTOTYPE(void get_work, (message *m_ptr, int *status_ptr)	);
+FORWARD void boot_image_info_lookup( endpoint_t endpoint, struct
+	boot_image *image, struct boot_image **ip, struct boot_image_priv **pp,
+	struct boot_image_sys **sp, struct boot_image_dev **dp);
+FORWARD void catch_boot_init_ready(endpoint_t endpoint);
+FORWARD void get_work(message *m_ptr, int *status_ptr);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void)                      );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( void sef_cb_signal_handler, (int signo) );
-FORWARD _PROTOTYPE( int sef_cb_signal_manager, (endpoint_t target, int signo) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
+FORWARD void sef_cb_signal_handler(int signo);
+FORWARD int sef_cb_signal_manager(endpoint_t target, int signo);
 
 
 /*===========================================================================*

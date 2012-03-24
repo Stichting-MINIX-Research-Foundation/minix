@@ -71,9 +71,9 @@ unsigned long crctab[] = {
 	  0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void crc, (int fd, char *name));
-_PROTOTYPE(unsigned long strncrc, (unsigned char *b, int n, unsigned long s));
+int main(int argc, char **argv);
+void crc(int fd, char *name);
+unsigned long strncrc(unsigned char *b, int n, unsigned long s);
 
 static int aux;
 

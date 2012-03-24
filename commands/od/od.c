@@ -15,19 +15,19 @@ char buf[512], buffer[BUFSIZ];
 int next;
 int bytespresent;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(long offset, (int argc, char *argv [], int k));
-_PROTOTYPE(void dumpfile, (void));
-_PROTOTYPE(void wdump, (short *words, int k, int radix));
-_PROTOTYPE(void bdump, (char bytes [16 ], int k, int c));
-_PROTOTYPE(void byte, (int val, int c));
-_PROTOTYPE(int getwords, (short **words));
-_PROTOTYPE(int same, (short *w1, int *w2));
-_PROTOTYPE(void outword, (int val, int radix));
-_PROTOTYPE(void outnum, (int num, int radix));
-_PROTOTYPE(void addrout, (long l));
-_PROTOTYPE(char hexit, (int k));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+long offset(int argc, char *argv [], int k);
+void dumpfile(void);
+void wdump(short *words, int k, int radix);
+void bdump(char bytes [16 ], int k, int c);
+void byte(int val, int c);
+int getwords(short **words);
+int same(short *w1, int *w2);
+void outword(int val, int radix);
+void outnum(int num, int radix);
+void addrout(long l);
+char hexit(int k);
+void usage(void);
 
 int main(argc, argv)
 int argc;

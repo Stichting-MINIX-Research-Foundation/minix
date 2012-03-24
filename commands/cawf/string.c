@@ -31,7 +31,7 @@
 #include "cawf.h"
 #include <ctype.h>
 
-_PROTOTYPE(static void Setroman,());
+static void Setroman();
 
 
 /*

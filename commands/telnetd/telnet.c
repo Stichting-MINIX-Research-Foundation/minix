@@ -27,12 +27,12 @@
 #define	IN_IAC2	3
 #define IN_SB	4
 
-_PROTOTYPE(static void dowill, (int c));
-_PROTOTYPE(static void dowont, (int c));
-_PROTOTYPE(static void dodo, (int c));
-_PROTOTYPE(static void dodont, (int c));
-_PROTOTYPE(static void respond, (int ack, int option));
-_PROTOTYPE(static void respond_really, (int ack, int option));
+static void dowill(int c);
+static void dowont(int c);
+static void dodo(int c);
+static void dodont(int c);
+static void respond(int ack, int option);
+static void respond_really(int ack, int option);
 
 #define	LASTTELOPT	TELOPT_SGA
 

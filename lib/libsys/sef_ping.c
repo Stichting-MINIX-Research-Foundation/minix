@@ -10,10 +10,10 @@ PRIVATE struct sef_cbs {
 };
 
 /* SEF Ping prototypes for sef_receive(). */
-PUBLIC _PROTOTYPE( int do_sef_ping_request, (message *m_ptr) );
+PUBLIC int do_sef_ping_request(message *m_ptr);
 
 /* Debug. */
-EXTERN _PROTOTYPE( char* sef_debug_header, (void) );
+EXTERN char* sef_debug_header(void);
 
 /*===========================================================================*
  *                            do_sef_ping_request             		     *

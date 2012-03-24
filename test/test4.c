@@ -19,10 +19,10 @@ char buf[1024];
 
 #include "common.c"
 
-_PROTOTYPE(int main, (void));
-_PROTOTYPE(void subr, (void));
-_PROTOTYPE(void nofork, (void));
-_PROTOTYPE(void quit, (void));
+int main(void);
+void subr(void);
+void nofork(void);
+void quit(void);
 
 int main()
 {

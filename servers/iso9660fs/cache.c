@@ -17,7 +17,7 @@
 #include <minix/bdev.h>
 #include "buf.h"
 
-FORWARD _PROTOTYPE(int read_block, (struct buf *));
+FORWARD int read_block(struct buf *);
 
 PUBLIC struct buf *bp_to_pickup = buf; /* This is a pointer to the next node in the
 					  * buffer cache to pick up*/

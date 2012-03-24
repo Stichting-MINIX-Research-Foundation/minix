@@ -31,11 +31,11 @@
 
 int superuser;
 
-_PROTOTYPE(void test20a, (void));
-_PROTOTYPE(void test20b, (void));
-_PROTOTYPE(void test20c, (void));
-_PROTOTYPE(void test20d, (void));
-_PROTOTYPE(int do_check, (void));
+void test20a(void);
+void test20b(void);
+void test20c(void);
+void test20d(void);
+int do_check(void);
 
 char executable[1024];
 

@@ -32,11 +32,11 @@ static ddekit_lock_t lock;
  *****************************************************************************/
 
 
-FORWARD _PROTOTYPE( void ddekit_irq_lock, (void));
-FORWARD _PROTOTYPE( void ddekit_irq_unlock, (void));
-FORWARD _PROTOTYPE( struct ddekit_irq_s* find_by_irq, (int irq));
-FORWARD _PROTOTYPE( void ddekit_irq_remove, (struct ddekit_irq_s *irq_s));
-FORWARD _PROTOTYPE( void ddekit_irq_thread, (void *data));
+FORWARD void ddekit_irq_lock(void);
+FORWARD void ddekit_irq_unlock(void);
+FORWARD struct ddekit_irq_s* find_by_irq(int irq);
+FORWARD void ddekit_irq_remove(struct ddekit_irq_s *irq_s);
+FORWARD void ddekit_irq_thread(void *data);
 
 /******************************************************************************
  *       ddekit_irq_lock                                                      *

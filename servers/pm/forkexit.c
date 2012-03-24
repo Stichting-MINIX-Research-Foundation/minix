@@ -31,13 +31,12 @@
 
 #define LAST_FEW            2	/* last few slots reserved for superuser */
 
-FORWARD _PROTOTYPE (void zombify, (struct mproc *rmp) );
-FORWARD _PROTOTYPE (void check_parent, (struct mproc *child,
-	int try_cleanup) );
-FORWARD _PROTOTYPE (void tell_parent, (struct mproc *child) );
-FORWARD _PROTOTYPE (void tell_tracer, (struct mproc *child) );
-FORWARD _PROTOTYPE (void tracer_died, (struct mproc *child) );
-FORWARD _PROTOTYPE (void cleanup, (register struct mproc *rmp) );
+FORWARD void zombify(struct mproc *rmp);
+FORWARD void check_parent(struct mproc *child, int try_cleanup);
+FORWARD void tell_parent(struct mproc *child);
+FORWARD void tell_tracer(struct mproc *child);
+FORWARD void tracer_died(struct mproc *child);
+FORWARD void cleanup(register struct mproc *rmp);
 
 /*===========================================================================*
  *				do_fork					     *

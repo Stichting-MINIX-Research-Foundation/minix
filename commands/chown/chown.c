@@ -36,9 +36,9 @@ char *pgmname, path[PATH_MAX + 1];
 uid_t nuid;
 gid_t ngid;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void do_chown, (char *file));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void do_chown(char *file);
+void usage(void);
 
 /* Main module. If chown(1) is invoked as chgrp(1), the behaviour is nearly
  * identical, except that the default when a single name is given as an

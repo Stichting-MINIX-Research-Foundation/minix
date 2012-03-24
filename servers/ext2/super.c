@@ -20,15 +20,14 @@
 #include "super.h"
 #include "const.h"
 
-FORWARD _PROTOTYPE( off_t ext2_max_size, (int block_size) );
-FORWARD _PROTOTYPE( u32_t ext2_count_dirs, (struct super_block *sp) );
+FORWARD off_t ext2_max_size(int block_size);
+FORWARD u32_t ext2_count_dirs(struct super_block *sp);
 
-FORWARD _PROTOTYPE( void super_copy, (register struct super_block *dest,
-				      register struct super_block *source));
-FORWARD _PROTOTYPE( void copy_group_descriptors,
-				(register struct group_desc *dest_array,
-                                 register struct group_desc *source_array,
-                                 unsigned int ngroups));
+FORWARD void super_copy(register struct super_block *dest, register
+	struct super_block *source);
+FORWARD void copy_group_descriptors(register struct group_desc
+	*dest_array, register struct group_desc *source_array, unsigned int
+	ngroups);
 
 PRIVATE off_t super_block_offset;
 

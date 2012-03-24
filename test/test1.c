@@ -17,14 +17,14 @@ int errct;
 int subtest;
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void test1a, (void));
-_PROTOTYPE(void parent, (void));
-_PROTOTYPE(void child, (int i));
-_PROTOTYPE(void test1b, (void));
-_PROTOTYPE(void parent1, (int childpid));
-_PROTOTYPE(void func, (int s));
-_PROTOTYPE(void child1, (void));
+int main(int argc, char *argv []);
+void test1a(void);
+void parent(void);
+void child(int i);
+void test1b(void);
+void parent1(int childpid);
+void func(int s);
+void child1(void);
 
 int main(argc, argv)
 int argc;

@@ -44,11 +44,11 @@ char io_buf[BUFSIZ];		/* io buffer */
 struct exec header;		/* header of a.out file */
 int stbl_elems;			/* #elements in symbol table */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int nm_sort, (const void *tmp_stbl1, const void *tmp_stbl2));
-_PROTOTYPE(void nm, (char *file));
-_PROTOTYPE(int read_header, (int fd));
-_PROTOTYPE(void nm_print, (char *file, struct nlist *stbl));
+int main(int argc, char **argv);
+int nm_sort(const void *tmp_stbl1, const void *tmp_stbl2);
+void nm(char *file);
+int read_header(int fd);
+void nm_print(char *file, struct nlist *stbl);
 
 int main(argc, argv)
 int argc;

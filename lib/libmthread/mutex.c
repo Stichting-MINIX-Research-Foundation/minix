@@ -4,8 +4,8 @@
 
 #ifdef MTHREAD_STRICT
 PRIVATE struct __mthread_mutex *vm_front, *vm_rear;
-FORWARD _PROTOTYPE( void mthread_mutex_add, (mthread_mutex_t *m)	);
-FORWARD _PROTOTYPE( void mthread_mutex_remove, (mthread_mutex_t *m)	);
+FORWARD void mthread_mutex_add(mthread_mutex_t *m);
+FORWARD void mthread_mutex_remove(mthread_mutex_t *m);
 #else
 # define mthread_mutex_add(m)		((*m)->mm_magic = MTHREAD_INIT_MAGIC)
 # define mthread_mutex_remove(m)	((*m)->mm_magic = MTHREAD_NOT_INUSE)

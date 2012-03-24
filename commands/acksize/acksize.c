@@ -10,8 +10,8 @@
 int heading;			/* set when heading printed */
 int error;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void size, (char *name));
+int main(int argc, char **argv);
+void size(char *name);
 
 int main(argc, argv)
 int argc;

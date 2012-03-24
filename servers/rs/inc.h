@@ -56,4 +56,4 @@
 #include "type.h"
 #include "glo.h"
 
-EXTERN _PROTOTYPE( int do_sef_lu_request, (message *m_ptr) );
+EXTERN int do_sef_lu_request(message *m_ptr);

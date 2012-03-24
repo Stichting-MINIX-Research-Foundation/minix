@@ -27,8 +27,8 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-FORWARD _PROTOTYPE( int change, (struct vnode **iip, char *name_ptr, int len));
-FORWARD _PROTOTYPE( int change_into, (struct vnode **iip, struct vnode *vp));
+FORWARD int change(struct vnode **iip, char *name_ptr, int len);
+FORWARD int change_into(struct vnode **iip, struct vnode *vp);
 
 /*===========================================================================*
  *				do_fchdir				     *

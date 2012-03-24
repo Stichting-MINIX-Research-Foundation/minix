@@ -32,7 +32,7 @@ EXTERN int err_code;        /* temporary storage for error number */
 /* TODO: it duplicates caller_uid and caller_gid */
 EXTERN struct puffs_kcred global_kcred;
 
-extern _PROTOTYPE (int (*fs_call_vec[]), (void) ); /* fs call table */
+extern int(*fs_call_vec[]) (void);
 
 EXTERN message fs_m_in;
 EXTERN message fs_m_out;

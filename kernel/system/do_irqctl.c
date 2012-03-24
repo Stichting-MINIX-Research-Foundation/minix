@@ -16,7 +16,7 @@
 
 #if USE_IRQCTL
 
-FORWARD _PROTOTYPE(int generic_handler, (irq_hook_t *hook));
+FORWARD int generic_handler(irq_hook_t *hook);
 
 /*===========================================================================*
  *				do_irqctl				     *

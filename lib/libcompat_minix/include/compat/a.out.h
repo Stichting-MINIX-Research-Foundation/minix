@@ -113,6 +113,6 @@ struct nlist {			/* symbol table entry */
 #include <minix/ansi.h>
 #endif
 
-_PROTOTYPE( int nlist, (char *_file, struct nlist *_nl)			);
+int nlist(char *_file, struct nlist *_nl);
 
 #endif /* _AOUT_H */

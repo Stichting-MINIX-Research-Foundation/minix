@@ -78,20 +78,18 @@ struct ddekit_usb_urb {
 	void *ddekit_priv;
 };
 
-_PROTOTYPE( int ddekit_usb_dev_set_data, 
-            (struct ddekit_usb_dev *dev, void *data));
-_PROTOTYPE( void *ddekit_usb_dev_get_data, (struct ddekit_usb_dev *dev));
-_PROTOTYPE( void ddekit_usb_get_device_id, (struct ddekit_usb_dev *dev,
-                                            struct ddekit_usb_device_id *id));
-_PROTOTYPE( int ddekit_usb_submit_urb, (struct ddekit_usb_urb *d_urb));
-_PROTOTYPE( int ddekit_usb_cancle_urb, (struct ddekit_usb_urb *d_urb));
+int ddekit_usb_dev_set_data(struct ddekit_usb_dev *dev, void *data);
+void *ddekit_usb_dev_get_data(struct ddekit_usb_dev *dev);
+void ddekit_usb_get_device_id(struct ddekit_usb_dev *dev, struct
+	ddekit_usb_device_id *id);
+int ddekit_usb_submit_urb(struct ddekit_usb_urb *d_urb);
+int ddekit_usb_cancle_urb(struct ddekit_usb_urb *d_urb);
 
 /*
  * This one is only implemented for the client side. For the server side is
  * has to be implemented in the DDELinux/FBSD part.
  */
-_PROTOTYPE( int ddekit_usb_init, (struct ddekit_usb_driver *drv,
-                                  ddekit_usb_malloc_fn *_m,
-								  ddekit_usb_free_fn   *_f));
+int ddekit_usb_init(struct ddekit_usb_driver *drv, ddekit_usb_malloc_fn
+	*_m, ddekit_usb_free_fn *_f);
 
 #endif

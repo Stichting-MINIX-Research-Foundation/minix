@@ -14,7 +14,7 @@
 
 #include "common.c"
 
-_PROTOTYPE(int main, (void));
+int main(void);
 
 int main()
 {

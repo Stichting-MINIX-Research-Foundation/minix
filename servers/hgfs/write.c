@@ -10,8 +10,8 @@
 
 #include "inc.h"
 
-FORWARD _PROTOTYPE( int write_file, (struct inode *ino, u64_t *posp,
-				size_t *countp, cp_grant_id_t *grantp)	);
+FORWARD int write_file(struct inode *ino, u64_t *posp, size_t *countp,
+	cp_grant_id_t *grantp);
 
 /*===========================================================================*
  *				write_file				     *

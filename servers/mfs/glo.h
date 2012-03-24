@@ -18,7 +18,7 @@ EXTERN int cch[NR_INODES];
 extern char dot1[2];   /* dot1 (&dot1[0]) and dot2 (&dot2[0]) have a special */
 extern char dot2[3];   /* meaning to search_dir: no access permission check. */
 
-extern _PROTOTYPE (int (*fs_call_vec[]), (void) ); /* fs call table */
+extern int(*fs_call_vec[]) (void);
 
 EXTERN message fs_m_in;
 EXTERN message fs_m_out;

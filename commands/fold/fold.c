@@ -10,8 +10,8 @@
 
 int column = 0;			/* Current column, retained between files  */
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void Fold, (FILE *f, int width));
+int main(int argc, char **argv);
+void Fold(FILE *f, int width);
 
 int main(argc, argv)
 int argc;

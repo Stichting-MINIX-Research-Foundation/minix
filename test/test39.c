@@ -5,7 +5,7 @@
 #define MAX_ERROR 1
 #include "common.c"
 
-_PROTOTYPE( void test39a, (void)						);
+void test39a(void);
 
 int main(int argc, char *argv[])
 {

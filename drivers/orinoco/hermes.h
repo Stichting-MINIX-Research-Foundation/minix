@@ -301,32 +301,28 @@ struct hermes_idstring
 #define HERMES_RECLEN_TO_BYTES(n) ( ((n)-1) * 2 )
 
 /* Function prototypes */
-_PROTOTYPE (u16_t hermes_read_reg, (const hermes_t * hw, u16_t off));
-_PROTOTYPE (void  hermes_write_reg, (const hermes_t * hw, u16_t off,
-    u16_t val));
-_PROTOTYPE (void  hermes_struct_init, (hermes_t * hw, u32_t address,
-					int io_space, int reg_spacing));
-_PROTOTYPE (int  hermes_init, (hermes_t * hw));
-_PROTOTYPE (int  hermes_docmd_wait, (hermes_t * hw, u16_t cmd,
-					u16_t parm0, hermes_response_t * resp));
-_PROTOTYPE (int  hermes_allocate, (hermes_t * hw, u16_t size, u16_t * fid));
-_PROTOTYPE (int  hermes_bap_pread, (hermes_t * hw, int bap, void *buf,
-					unsigned len, u16_t id, u16_t offset));
-_PROTOTYPE (int  hermes_bap_pwrite, (hermes_t * hw, int bap,
-				    	const void *buf, unsigned len, u16_t id,
-				    u16_t offset));
-_PROTOTYPE (void hermes_read_words, (hermes_t * hw, int off, void *buf,
-				    	unsigned count));
-_PROTOTYPE (int  hermes_read_ltv, (hermes_t * hw, int bap, u16_t rid,
-					unsigned buflen, u16_t * length,
-					void *buf));
-_PROTOTYPE (int  hermes_write_ltv, (hermes_t * hw, int bap, u16_t rid,
-					u16_t length, const void *value));
-_PROTOTYPE (int  hermes_set_irqmask, (hermes_t * hw, u16_t events));
-_PROTOTYPE (u16_t hermes_get_irqmask, (hermes_t * hw));
-_PROTOTYPE (int  hermes_read_wordrec, (hermes_t * hw, int bap, u16_t rid,
-					u16_t * word));
-_PROTOTYPE (int  hermes_write_wordrec, (hermes_t * hw, int bap, u16_t rid,
-				   	u16_t word));
-_PROTOTYPE (int  hermes_cor_reset, (hermes_t *hw));
+u16_t hermes_read_reg(const hermes_t * hw, u16_t off);
+void hermes_write_reg(const hermes_t * hw, u16_t off, u16_t val);
+void hermes_struct_init(hermes_t * hw, u32_t address, int io_space, int
+	reg_spacing);
+int hermes_init(hermes_t * hw);
+int hermes_docmd_wait(hermes_t * hw, u16_t cmd, u16_t parm0,
+	hermes_response_t * resp);
+int hermes_allocate(hermes_t * hw, u16_t size, u16_t * fid);
+int hermes_bap_pread(hermes_t * hw, int bap, void *buf, unsigned len,
+	u16_t id, u16_t offset);
+int hermes_bap_pwrite(hermes_t * hw, int bap, const void *buf, unsigned
+	len, u16_t id, u16_t offset);
+void hermes_read_words(hermes_t * hw, int off, void *buf, unsigned
+	count);
+int hermes_read_ltv(hermes_t * hw, int bap, u16_t rid, unsigned buflen,
+	u16_t * length, void *buf);
+int hermes_write_ltv(hermes_t * hw, int bap, u16_t rid, u16_t length,
+	const void *value);
+int hermes_set_irqmask(hermes_t * hw, u16_t events);
+u16_t hermes_get_irqmask(hermes_t * hw);
+int hermes_read_wordrec(hermes_t * hw, int bap, u16_t rid, u16_t *
+	word);
+int hermes_write_wordrec(hermes_t * hw, int bap, u16_t rid, u16_t word);
+int hermes_cor_reset(hermes_t *hw);
 #endif /* _HERMES_H */

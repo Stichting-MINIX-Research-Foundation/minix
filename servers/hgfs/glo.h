@@ -9,4 +9,4 @@ EXTERN message m_out;			/* reply message */
 EXTERN struct state state;		/* global state */
 EXTERN struct opt opt;			/* global options */
 
-extern _PROTOTYPE( int (*call_vec[]), (void) );
+extern int(*call_vec[]) (void);

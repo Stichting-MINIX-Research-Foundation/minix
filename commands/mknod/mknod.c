@@ -10,11 +10,11 @@
 #include <sys/stat.h>
 #endif
 
-_PROTOTYPE(int main, (int argc, char *argv []));
-_PROTOTYPE(void badcomm, (void));
-_PROTOTYPE(void badfifo, (void));
-_PROTOTYPE(void badchar, (void));
-_PROTOTYPE(void badblock, (void));
+int main(int argc, char *argv []);
+void badcomm(void);
+void badfifo(void);
+void badchar(void);
+void badblock(void);
 
 int main(argc, argv)
 int argc;

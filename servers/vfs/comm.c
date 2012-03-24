@@ -5,8 +5,8 @@
 #include <minix/vfsif.h>
 #include <assert.h>
 
-FORWARD _PROTOTYPE( int sendmsg, (struct vmnt *vmp, struct fproc *rfp)	);
-FORWARD _PROTOTYPE( int queuemsg, (struct vmnt *vmp)			);
+FORWARD int sendmsg(struct vmnt *vmp, struct fproc *rfp);
+FORWARD int queuemsg(struct vmnt *vmp);
 
 /*===========================================================================*
  *				sendmsg					     *

@@ -385,10 +385,10 @@ rename_out:
   return(r);
 }
 
-FORWARD _PROTOTYPE( int remove_dir, (struct puffs_node *pn_dir,
-			struct puffs_node *pn, struct puffs_cn *pcn));
-FORWARD _PROTOTYPE( int unlink_file, (struct puffs_node *dirp,
-			struct puffs_node *pn, struct puffs_cn *pcn));
+FORWARD int remove_dir(struct puffs_node *pn_dir, struct puffs_node *pn,
+	struct puffs_cn *pcn);
+FORWARD int unlink_file(struct puffs_node *dirp, struct puffs_node *pn,
+	struct puffs_cn *pcn);
 
 /*===========================================================================*
  *                              fs_unlink                                    *

@@ -44,21 +44,20 @@ PRIVATE dev_t m_device;			/* current minor character device */
 
 PRIVATE int openct[NR_DEVS];
 
-FORWARD _PROTOTYPE( struct device *m_prepare, (dev_t device)		);
-FORWARD _PROTOTYPE( int m_transfer, (endpoint_t endpt, int opcode,
-	u64_t position, iovec_t *iov, unsigned int nr_req,
-	endpoint_t user_endpt, unsigned int flags)			);
-FORWARD _PROTOTYPE( int m_do_open, (message *m_ptr)			);
-FORWARD _PROTOTYPE( int m_do_close, (message *m_ptr)			);
+FORWARD struct device *m_prepare(dev_t device);
+FORWARD int m_transfer(endpoint_t endpt, int opcode, u64_t position,
+	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
+	flags);
+FORWARD int m_do_open(message *m_ptr);
+FORWARD int m_do_close(message *m_ptr);
 
-FORWARD _PROTOTYPE( struct device *m_block_part, (dev_t minor)		);
-FORWARD _PROTOTYPE( int m_block_transfer, (dev_t minor, int do_write,
-	u64_t position, endpoint_t endpt, iovec_t *iov,
-	unsigned int nr_req, int flags)					);
-FORWARD _PROTOTYPE( int m_block_open, (dev_t minor, int access)		);
-FORWARD _PROTOTYPE( int m_block_close, (dev_t minor)			);
-FORWARD _PROTOTYPE( int m_block_ioctl, (dev_t minor,
-	unsigned int request, endpoint_t endpt, cp_grant_id_t grant)	);
+FORWARD struct device *m_block_part(dev_t minor);
+FORWARD int m_block_transfer(dev_t minor, int do_write, u64_t position,
+	endpoint_t endpt, iovec_t *iov, unsigned int nr_req, int flags);
+FORWARD int m_block_open(dev_t minor, int access);
+FORWARD int m_block_close(dev_t minor);
+FORWARD int m_block_ioctl(dev_t minor, unsigned int request, endpoint_t
+	endpt, cp_grant_id_t grant);
 
 /* Entry points to the CHARACTER part of this driver. */
 PRIVATE struct chardriver m_cdtab = {
@@ -98,8 +97,8 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init_fresh, (int type, sef_init_info_t *info) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init_fresh(int type, sef_init_info_t *info);
 
 /*===========================================================================*
  *				   main 				     *

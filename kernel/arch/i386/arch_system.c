@@ -49,12 +49,12 @@ extern void poweroff16_end();
 
 PUBLIC void * k_stacks;
 
-FORWARD _PROTOTYPE( void ser_debug, (int c));
+FORWARD void ser_debug(int c);
 #ifdef CONFIG_SMP
-FORWARD _PROTOTYPE( void ser_dump_proc_cpu, (void));
+FORWARD void ser_dump_proc_cpu(void);
 #endif
 #if !CONFIG_OXPCIE
-FORWARD _PROTOTYPE( void ser_init, (void));
+FORWARD void ser_init(void);
 #endif
 
 PUBLIC __dead void arch_monitor(void)

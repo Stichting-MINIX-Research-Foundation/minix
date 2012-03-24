@@ -26,11 +26,10 @@
 PUBLIC char dot1[2] = ".";	/* used for search_dir to bypass the access */
 PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
 
-FORWARD _PROTOTYPE( char *get_name, (char *name, char string[NAME_MAX+1]) );
-FORWARD _PROTOTYPE( int ltraverse, (struct inode *rip, char *suffix)	);
-FORWARD _PROTOTYPE( int parse_path, (ino_t dir_ino, ino_t root_ino,
-					int flags, struct inode **res_inop,
-					size_t *offsetp, int *symlinkp)	);
+FORWARD char *get_name(char *name, char string[NAME_MAX+1]);
+FORWARD int ltraverse(struct inode *rip, char *suffix);
+FORWARD int parse_path(ino_t dir_ino, ino_t root_ino, int flags, struct
+	inode **res_inop, size_t *offsetp, int *symlinkp);
 
 /*===========================================================================*
  *                             fs_lookup				     *

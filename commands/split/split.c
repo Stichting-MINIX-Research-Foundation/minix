@@ -14,11 +14,11 @@ int infile;
 char out_file[100];
 char *suffix;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void split, (void));
-_PROTOTYPE(int newfile, (void));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(void quit, (void));
+int main(int argc, char **argv);
+void split(void);
+int newfile(void);
+void usage(void);
+void quit(void);
 
 int main(argc, argv)
 int argc;

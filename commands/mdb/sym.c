@@ -23,13 +23,13 @@ struct symtab_s
 PRIVATE struct symtab_s symtab;
 PRIVATE int type_of_exec;
 
-FORWARD _PROTOTYPE( int check_exec, (struct exec *hdr) );
-FORWARD _PROTOTYPE( void sortsyms , (struct nlist *array , struct nlist *top ));
-FORWARD _PROTOTYPE( int symeq , (char *t , struct nlist *sp ));
-FORWARD _PROTOTYPE( int symprefix , (char *t , struct nlist *sp ));
-FORWARD _PROTOTYPE( struct nlist *findsname, (char *name, int is_text, int allflag) );
-FORWARD _PROTOTYPE( void outsym, (struct nlist *sp, off_t off) );
-FORWARD _PROTOTYPE( struct nlist *findsval, (off_t value, int where) );
+FORWARD int check_exec(struct exec *hdr);
+FORWARD void sortsyms(struct nlist *array , struct nlist *top );
+FORWARD int symeq(char *t , struct nlist *sp );
+FORWARD int symprefix(char *t , struct nlist *sp );
+FORWARD struct nlist *findsname(char *name, int is_text, int allflag);
+FORWARD void outsym(struct nlist *sp, off_t off);
+FORWARD struct nlist *findsval(off_t value, int where);
 
 PUBLIC void syminit( filename )
 char *filename;

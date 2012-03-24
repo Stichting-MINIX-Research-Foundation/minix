@@ -178,21 +178,21 @@ PRIVATE port_t addr_8250[] = {
 };
 #endif
 
-FORWARD _PROTOTYPE( void in_int, (rs232_t *rs)				);
-FORWARD _PROTOTYPE( void line_int, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( void modem_int, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( int rs_write, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( void rs_echo, (tty_t *tp, int c)			);
-FORWARD _PROTOTYPE( int rs_ioctl, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( void rs_config, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( int rs_read, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( int rs_icancel, (tty_t *tp, int try)		);
-FORWARD _PROTOTYPE( int rs_ocancel, (tty_t *tp, int try)		);
-FORWARD _PROTOTYPE( void rs_ostart, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( int rs_break, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( int rs_close, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( void out_int, (rs232_t *rs)				);
-FORWARD _PROTOTYPE( void rs232_handler, (rs232_t *rs)			);
+FORWARD void in_int(rs232_t *rs);
+FORWARD void line_int(rs232_t *rs);
+FORWARD void modem_int(rs232_t *rs);
+FORWARD int rs_write(tty_t *tp, int try);
+FORWARD void rs_echo(tty_t *tp, int c);
+FORWARD int rs_ioctl(tty_t *tp, int try);
+FORWARD void rs_config(rs232_t *rs);
+FORWARD int rs_read(tty_t *tp, int try);
+FORWARD int rs_icancel(tty_t *tp, int try);
+FORWARD int rs_ocancel(tty_t *tp, int try);
+FORWARD void rs_ostart(rs232_t *rs);
+FORWARD int rs_break(tty_t *tp, int try);
+FORWARD int rs_close(tty_t *tp, int try);
+FORWARD void out_int(rs232_t *rs);
+FORWARD void rs232_handler(rs232_t *rs);
 
 /* XXX */
 PRIVATE void lock(void) {}

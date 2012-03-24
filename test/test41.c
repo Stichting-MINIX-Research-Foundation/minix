@@ -42,20 +42,20 @@
    UPPERUSEC(vu))) && \
   (it).it_interval.tv_sec == (is) && EQUSEC((it).it_interval.tv_usec,iu))
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void test, (int m, int t));
-_PROTOTYPE(void test_which, (void));
-_PROTOTYPE(void test_getset, (void));
-_PROTOTYPE(void test_neglarge, (void));
-_PROTOTYPE(void test_zero, (void));
-_PROTOTYPE(void test_timer, (void));
-_PROTOTYPE(void test_alarm, (void));
-_PROTOTYPE(void test_fork, (void));
-_PROTOTYPE(void test_exec, (void));
-_PROTOTYPE(int do_check, (void));
-_PROTOTYPE(void got_alarm, (int sig));
-_PROTOTYPE(void busy_wait, (int secs));
-_PROTOTYPE(void my_e, (int n));
+int main(int argc, char **argv);
+void test(int m, int t);
+void test_which(void);
+void test_getset(void);
+void test_neglarge(void);
+void test_zero(void);
+void test_timer(void);
+void test_alarm(void);
+void test_fork(void);
+void test_exec(void);
+int do_check(void);
+void got_alarm(int sig);
+void busy_wait(int secs);
+void my_e(int n);
 
 static char *executable;
 static int signals;

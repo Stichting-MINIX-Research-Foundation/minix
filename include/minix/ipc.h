@@ -162,14 +162,14 @@ typedef struct asynmsg
 #define sendnb		_sendnb
 #define senda		_senda
 
-_PROTOTYPE( int echo, (message *m_ptr)					);
-_PROTOTYPE( int notify, (endpoint_t dest)				);
-_PROTOTYPE( int sendrec, (endpoint_t src_dest, message *m_ptr)		);
-_PROTOTYPE( int receive, (endpoint_t src, message *m_ptr, int *status_ptr));
-_PROTOTYPE( int send, (endpoint_t dest, message *m_ptr)			);
-_PROTOTYPE( int sendnb, (endpoint_t dest, message *m_ptr)		);
-_PROTOTYPE( int senda, (asynmsg_t *table, size_t count)			);
+int echo(message *m_ptr);
+int notify(endpoint_t dest);
+int sendrec(endpoint_t src_dest, message *m_ptr);
+int receive(endpoint_t src, message *m_ptr, int *status_ptr);
+int send(endpoint_t dest, message *m_ptr);
+int sendnb(endpoint_t dest, message *m_ptr);
+int senda(asynmsg_t *table, size_t count);
 
-_PROTOTYPE( int _do_kernel_call, (message *m_ptr)			);
+int _do_kernel_call(message *m_ptr);
 
 #endif /* _IPC_H */

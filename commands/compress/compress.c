@@ -218,22 +218,22 @@ count_int fsize;
 code_int free_ent = 0;			/* first unused entry */
 int exit_stat = 0;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void Usage, (void));
-_PROTOTYPE(void compress, (void));
-_PROTOTYPE(void onintr, (int dummy));
-_PROTOTYPE(void oops, (int dummy));
-_PROTOTYPE(void output, (code_int code));
-_PROTOTYPE(int foreground, (void));
-_PROTOTYPE(void decompress, (void));
-_PROTOTYPE(code_int getcode, (void)); 
-_PROTOTYPE(void writeerr, (void));
-_PROTOTYPE(void copystat, (char *ifname, char *ofname));
-_PROTOTYPE(int foreground, (void));
-_PROTOTYPE(void cl_block , (void));
-_PROTOTYPE(void cl_hash, (count_int hsize));
-_PROTOTYPE(void prratio, (FILE *stream, long int num, long int den));
-_PROTOTYPE(void version, (void));
+int main(int argc, char **argv);
+void Usage(void);
+void compress(void);
+void onintr(int dummy);
+void oops(int dummy);
+void output(code_int code);
+int foreground(void);
+void decompress(void);
+code_int getcode(void);
+void writeerr(void);
+void copystat(char *ifname, char *ofname);
+int foreground(void);
+void cl_block(void);
+void cl_hash(count_int hsize);
+void prratio(FILE *stream, long int num, long int den);
+void version(void);
 
 void Usage() {
 #ifdef DEBUG

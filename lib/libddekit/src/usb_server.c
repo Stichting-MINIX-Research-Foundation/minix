@@ -58,41 +58,38 @@ struct minix_usb_device {
 	unsigned int interfaces; 
 };
 
-FORWARD _PROTOTYPE( struct minix_usb_driver *find_driver,(endpoint_t ep));
-FORWARD _PROTOTYPE( struct minix_usb_driver *find_unused_driver, (void));
-FORWARD _PROTOTYPE( int add_to_pending_urbs,
-                    (struct minix_usb_driver *drv, struct ddekit_usb_urb *urb));
-FORWARD _PROTOTYPE( int remove_from_pending_urbs,
-                    (struct minix_usb_driver *drv, struct ddekit_usb_urb *urb));
-FORWARD _PROTOTYPE( struct ddekit_usb_urb * find_pending_urb,
-                    (struct minix_usb_driver *drv, unsigned urb_id));
-FORWARD _PROTOTYPE( void register_driver, (message *msg));
-FORWARD _PROTOTYPE( struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb,
-                    (struct usb_urb *mx_urb));
-FORWARD _PROTOTYPE( void submit_urb, (message *msg));
-FORWARD _PROTOTYPE( void cancle_urb, (message *msg));
-FORWARD _PROTOTYPE( void completion_callback, (void *priv));
+FORWARD struct minix_usb_driver *find_driver(endpoint_t ep);
+FORWARD struct minix_usb_driver *find_unused_driver(void);
+FORWARD int add_to_pending_urbs(struct minix_usb_driver *drv, struct
+	ddekit_usb_urb *urb);
+FORWARD int remove_from_pending_urbs(struct minix_usb_driver *drv,
+	struct ddekit_usb_urb *urb);
+FORWARD struct ddekit_usb_urb * find_pending_urb(struct minix_usb_driver
+	*drv, unsigned urb_id);
+FORWARD void register_driver(message *msg);
+FORWARD struct ddekit_usb_urb *ddekit_usb_urb_from_mx_urb(struct usb_urb
+	*mx_urb);
+FORWARD void submit_urb(message *msg);
+FORWARD void cancle_urb(message *msg);
+FORWARD void completion_callback(void *priv);
 
-FORWARD _PROTOTYPE( void prepare_devman_usbdev,
-                    (struct ddekit_usb_dev * dev, int dev_id,
-					 unsigned int interfaces, struct devman_usb_dev *dudev));
-FORWARD _PROTOTYPE( void device_disconnect_callback, (struct ddekit_usb_dev * dev));
-FORWARD _PROTOTYPE( int add_acl,
-                    (int dev_id, unsigned interfaces, endpoint_t ep) );
-FORWARD _PROTOTYPE( int del_acl,
-                    (int dev_id, unsigned interaces, endpoint_t ep) );
-FORWARD _PROTOTYPE( int handle_msg, (message *msg));
-FORWARD _PROTOTYPE( void _ddekit_usb_thread, ());
-FORWARD _PROTOTYPE( void device_connect_callback,
-                    (struct ddekit_usb_dev * dev, unsigned int interfaces));
+FORWARD void prepare_devman_usbdev(struct ddekit_usb_dev * dev, int
+	dev_id, unsigned int interfaces, struct devman_usb_dev *dudev);
+FORWARD void device_disconnect_callback(struct ddekit_usb_dev * dev);
+FORWARD int add_acl(int dev_id, unsigned interfaces, endpoint_t ep);
+FORWARD int del_acl(int dev_id, unsigned interaces, endpoint_t ep);
+FORWARD int handle_msg(message *msg);
+FORWARD void _ddekit_usb_thread();
+FORWARD void device_connect_callback(struct ddekit_usb_dev * dev,
+	unsigned int interfaces);
 
-_PROTOTYPE( char *_ddekit_usb_get_manufacturer, (struct ddekit_usb_dev *ddev));
-_PROTOTYPE( char *_ddekit_usb_get_product, (struct ddekit_usb_dev *ddev));
-_PROTOTYPE( char *_ddekit_usb_get_serial, (struct ddekit_usb_dev *ddev));
-_PROTOTYPE( usb_device_descriptor_t *_ddekit_usb_get_device_desc,
-            (struct ddekit_usb_dev *ddev));
-_PROTOTYPE( usb_interface_descriptor_t *_ddekit_usb_get_interface_desc,
-            (struct ddekit_usb_dev *ddev, int inum));
+char *_ddekit_usb_get_manufacturer(struct ddekit_usb_dev *ddev);
+char *_ddekit_usb_get_product(struct ddekit_usb_dev *ddev);
+char *_ddekit_usb_get_serial(struct ddekit_usb_dev *ddev);
+usb_device_descriptor_t *_ddekit_usb_get_device_desc(struct
+	ddekit_usb_dev *ddev);
+usb_interface_descriptor_t *_ddekit_usb_get_interface_desc(struct
+	ddekit_usb_dev *ddev, int inum);
 
 
 PRIVATE ddekit_usb_malloc_fn my_malloc;

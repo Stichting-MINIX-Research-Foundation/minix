@@ -92,63 +92,58 @@ EXTERN struct pci_acl pci_acl[NR_DRIVERS];
 
 PRIVATE int nr_pcidev= 0;
 
-FORWARD _PROTOTYPE( void pci_intel_init, (void)				);
-FORWARD _PROTOTYPE( void probe_bus, (int busind)			);
-FORWARD _PROTOTYPE( int is_duplicate, (u8_t busnr, u8_t dev, u8_t func)	);
-FORWARD _PROTOTYPE( void record_irq, (int devind)			);
-FORWARD _PROTOTYPE( void record_bars_normal, (int devind)		);
-FORWARD _PROTOTYPE( void record_bars_bridge, (int devind)		);
-FORWARD _PROTOTYPE( void record_bars_cardbus, (int devind)		);
-FORWARD _PROTOTYPE( void record_bars, (int devind, int last_reg)	);
-FORWARD _PROTOTYPE( int record_bar, (int devind, int bar_nr, int last)	);
-FORWARD _PROTOTYPE( void complete_bridges, (void)			);
-FORWARD _PROTOTYPE( void complete_bars, (void)				);
-FORWARD _PROTOTYPE( void update_bridge4dev_io, (int devind,
-					u32_t io_base, u32_t io_size)	);
-FORWARD _PROTOTYPE( int get_freebus, (void)				);
-FORWARD _PROTOTYPE( int do_isabridge, (int busind)			);
-FORWARD _PROTOTYPE( void do_pcibridge, (int busind)			);
-FORWARD _PROTOTYPE( int get_busind, (int busnr)				);
-FORWARD _PROTOTYPE( int do_piix, (int devind)				);
-FORWARD _PROTOTYPE( int do_amd_isabr, (int devind)			);
-FORWARD _PROTOTYPE( int do_sis_isabr, (int devind)			);
-FORWARD _PROTOTYPE( int do_via_isabr, (int devind)			);
+FORWARD void pci_intel_init(void);
+FORWARD void probe_bus(int busind);
+FORWARD int is_duplicate(u8_t busnr, u8_t dev, u8_t func);
+FORWARD void record_irq(int devind);
+FORWARD void record_bars_normal(int devind);
+FORWARD void record_bars_bridge(int devind);
+FORWARD void record_bars_cardbus(int devind);
+FORWARD void record_bars(int devind, int last_reg);
+FORWARD int record_bar(int devind, int bar_nr, int last);
+FORWARD void complete_bridges(void);
+FORWARD void complete_bars(void);
+FORWARD void update_bridge4dev_io(int devind, u32_t io_base, u32_t
+	io_size);
+FORWARD int get_freebus(void);
+FORWARD int do_isabridge(int busind);
+FORWARD void do_pcibridge(int busind);
+FORWARD int get_busind(int busnr);
+FORWARD int do_piix(int devind);
+FORWARD int do_amd_isabr(int devind);
+FORWARD int do_sis_isabr(int devind);
+FORWARD int do_via_isabr(int devind);
 #if 0
-FORWARD _PROTOTYPE( void report_vga, (int devind)			);
+FORWARD void report_vga(int devind);
 #endif
-FORWARD _PROTOTYPE( char *pci_vid_name, (u16_t vid)			);
-FORWARD _PROTOTYPE( char *pci_baseclass_name, (u8_t baseclass)		);
-FORWARD _PROTOTYPE( char *pci_subclass_name, (u8_t baseclass,
-					u8_t subclass, u8_t infclass)	);
-FORWARD _PROTOTYPE( void ntostr, (unsigned n, char **str, char *end)	);
+FORWARD char *pci_vid_name(u16_t vid);
+FORWARD char *pci_baseclass_name(u8_t baseclass);
+FORWARD char *pci_subclass_name(u8_t baseclass, u8_t subclass, u8_t
+	infclass);
+FORWARD void ntostr(unsigned n, char **str, char *end);
 
-FORWARD _PROTOTYPE( u8_t pci_attr_r8_u, (int devind, int port)		);
-FORWARD _PROTOTYPE( u32_t pci_attr_r32_u, (int devind, int port)	);
+FORWARD u8_t pci_attr_r8_u(int devind, int port);
+FORWARD u32_t pci_attr_r32_u(int devind, int port);
 
-FORWARD _PROTOTYPE( u16_t pci_attr_rsts, (int devind)			);
-FORWARD _PROTOTYPE( void pci_attr_wsts, (int devind, u16_t value)	);
-FORWARD _PROTOTYPE( u16_t pcibr_std_rsts, (int busind)		);
-FORWARD _PROTOTYPE( void pcibr_std_wsts, (int busind, u16_t value)	);
-FORWARD _PROTOTYPE( u16_t pcibr_cb_rsts, (int busind)		);
-FORWARD _PROTOTYPE( void pcibr_cb_wsts, (int busind, u16_t value)	);
-FORWARD _PROTOTYPE( u16_t pcibr_via_rsts, (int busind)			);
-FORWARD _PROTOTYPE( void pcibr_via_wsts, (int busind, u16_t value)	);
-FORWARD _PROTOTYPE( u8_t pcii_rreg8, (int busind, int devind, int port)	);
-FORWARD _PROTOTYPE( u16_t pcii_rreg16, (int busind, int devind,
-							int port)	);
-FORWARD _PROTOTYPE( u32_t pcii_rreg32, (int busind, int devind,
-							int port)	);
-FORWARD _PROTOTYPE( void pcii_wreg8, (int busind, int devind, int port,
-							u8_t value)	);
-FORWARD _PROTOTYPE( void pcii_wreg16, (int busind, int devind, int port,
-							u16_t value)	);
-FORWARD _PROTOTYPE( void pcii_wreg32, (int busind, int devind, int port,
-							u32_t value)	);
-FORWARD _PROTOTYPE( u16_t pcii_rsts, (int busind)			);
-FORWARD _PROTOTYPE( void pcii_wsts, (int busind, u16_t value)		);
-FORWARD _PROTOTYPE( void print_capabilities, (int devind)		);
-FORWARD _PROTOTYPE( int visible, (struct rs_pci *aclp, int devind)	);
-FORWARD _PROTOTYPE( void print_hyper_cap, (int devind, u8_t capptr)	);
+FORWARD u16_t pci_attr_rsts(int devind);
+FORWARD void pci_attr_wsts(int devind, u16_t value);
+FORWARD u16_t pcibr_std_rsts(int busind);
+FORWARD void pcibr_std_wsts(int busind, u16_t value);
+FORWARD u16_t pcibr_cb_rsts(int busind);
+FORWARD void pcibr_cb_wsts(int busind, u16_t value);
+FORWARD u16_t pcibr_via_rsts(int busind);
+FORWARD void pcibr_via_wsts(int busind, u16_t value);
+FORWARD u8_t pcii_rreg8(int busind, int devind, int port);
+FORWARD u16_t pcii_rreg16(int busind, int devind, int port);
+FORWARD u32_t pcii_rreg32(int busind, int devind, int port);
+FORWARD void pcii_wreg8(int busind, int devind, int port, u8_t value);
+FORWARD void pcii_wreg16(int busind, int devind, int port, u16_t value);
+FORWARD void pcii_wreg32(int busind, int devind, int port, u32_t value);
+FORWARD u16_t pcii_rsts(int busind);
+FORWARD void pcii_wsts(int busind, u16_t value);
+FORWARD void print_capabilities(int devind);
+FORWARD int visible(struct rs_pci *aclp, int devind);
+FORWARD void print_hyper_cap(int devind, u8_t capptr);
 
 PRIVATE struct machine machine;
 PRIVATE endpoint_t acpi_ep;

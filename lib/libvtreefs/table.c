@@ -3,7 +3,7 @@
 #define _TABLE
 #include "inc.h"
 
-PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
+PUBLIC int (*fs_call_vec[])(void) = {
 	no_sys,		/*  0			*/
 	no_sys,		/*  1	getnode		*/
 	fs_putnode,	/*  2	putnode		*/

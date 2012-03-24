@@ -83,7 +83,7 @@ int dec_to_bcd(int n);
 void usage(void);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+FORWARD void sef_local_startup(void);
 
 int main(int argc, char **argv)
 {

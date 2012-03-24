@@ -8,20 +8,18 @@
 /*
  * Function prototypes for the hello driver.
  */
-FORWARD _PROTOTYPE( int hello_open,      (message *m) );
-FORWARD _PROTOTYPE( int hello_close,     (message *m) );
-FORWARD _PROTOTYPE( struct device * hello_prepare, (dev_t device) );
-FORWARD _PROTOTYPE( int hello_transfer,  (endpoint_t endpt, int opcode,
-                                          u64_t position, iovec_t *iov,
-                                          unsigned int nr_req,
-                                          endpoint_t user_endpt,
-					  unsigned int flags) );
+FORWARD int hello_open(message *m);
+FORWARD int hello_close(message *m);
+FORWARD struct device * hello_prepare(dev_t device);
+FORWARD int hello_transfer(endpoint_t endpt, int opcode, u64_t position,
+	iovec_t *iov, unsigned int nr_req, endpoint_t user_endpt, unsigned int
+	flags);
 
 /* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
-FORWARD _PROTOTYPE( int sef_cb_init, (int type, sef_init_info_t *info) );
-FORWARD _PROTOTYPE( int sef_cb_lu_state_save, (int) );
-FORWARD _PROTOTYPE( int lu_state_restore, (void) );
+FORWARD void sef_local_startup(void);
+FORWARD int sef_cb_init(int type, sef_init_info_t *info);
+FORWARD int sef_cb_lu_state_save(int);
+FORWARD int lu_state_restore(void);
 
 /* Entry points to the hello driver. */
 PRIVATE struct chardriver hello_tab =

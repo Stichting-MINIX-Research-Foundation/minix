@@ -21,56 +21,56 @@
 
 #define timed_test(func) (timed_test_func(#func, func));
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void test, (int m, int a));
-_PROTOTYPE(void timed_test_func, (const char *s, void (* func)(void)));
-_PROTOTYPE(void timed_test_timeout, (int signum));
-_PROTOTYPE(pid_t traced_fork, (_PROTOTYPE(void (*c), (void))));
-_PROTOTYPE(pid_t traced_pfork, (_PROTOTYPE(void (*c), (void))));
-_PROTOTYPE(void WRITE, (int value));
-_PROTOTYPE(int READ, (void));
-_PROTOTYPE(void traced_wait, (void));
-_PROTOTYPE(void detach_running, (pid_t pid));
-_PROTOTYPE(void dummy_handler, (int sig));
-_PROTOTYPE(void exit_handler, (int sig));
-_PROTOTYPE(void count_handler, (int sig));
-_PROTOTYPE(void catch_handler, (int sig));
-_PROTOTYPE(void test_wait_child, (void));
-_PROTOTYPE(void test_wait, (void));
-_PROTOTYPE(void test_exec_child, (void));
-_PROTOTYPE(void test_exec, (void));
-_PROTOTYPE(void test_step_child, (void));
-_PROTOTYPE(void test_step, (void));
-_PROTOTYPE(void test_sig_child, (void));
-_PROTOTYPE(void test_sig, (void));
-_PROTOTYPE(void test_exit_child, (void));
-_PROTOTYPE(void test_exit, (void));
-_PROTOTYPE(void test_term_child, (void));
-_PROTOTYPE(void test_term, (void));
-_PROTOTYPE(void test_catch_child, (void));
-_PROTOTYPE(void test_catch, (void));
-_PROTOTYPE(void test_kill_child, (void));
-_PROTOTYPE(void test_kill, (void));
-_PROTOTYPE(void test_attach_child, (void));
-_PROTOTYPE(void test_attach, (void));
-_PROTOTYPE(void test_detach_child, (void));
-_PROTOTYPE(void test_detach, (void));
-_PROTOTYPE(void test_death_child, (void));
-_PROTOTYPE(void test_death, (void));
-_PROTOTYPE(void test_zdeath_child, (void));
-_PROTOTYPE(void test_zdeath, (void));
-_PROTOTYPE(void test_syscall_child, (void));
-_PROTOTYPE(void test_syscall, (void));
-_PROTOTYPE(void test_tracefork_child, (void));
-_PROTOTYPE(void test_tracefork, (void));
-_PROTOTYPE(void sigexec, (int setflag, int opt, int *traps, int *stop));
-_PROTOTYPE(void test_trapexec, (void));
-_PROTOTYPE(void test_altexec, (void));
-_PROTOTYPE(void test_noexec, (void));
-_PROTOTYPE(void test_defexec, (void));
-_PROTOTYPE(void test_reattach_child, (void));
-_PROTOTYPE(void test_reattach, (void));
-_PROTOTYPE(void my_e, (int n));
+int main(int argc, char **argv);
+void test(int m, int a);
+void timed_test_func(const char *s, void (* func)(void));
+void timed_test_timeout(int signum);
+pid_t traced_fork(void (*c) (void));
+pid_t traced_pfork(void (*c) (void));
+void WRITE(int value);
+int READ(void);
+void traced_wait(void);
+void detach_running(pid_t pid);
+void dummy_handler(int sig);
+void exit_handler(int sig);
+void count_handler(int sig);
+void catch_handler(int sig);
+void test_wait_child(void);
+void test_wait(void);
+void test_exec_child(void);
+void test_exec(void);
+void test_step_child(void);
+void test_step(void);
+void test_sig_child(void);
+void test_sig(void);
+void test_exit_child(void);
+void test_exit(void);
+void test_term_child(void);
+void test_term(void);
+void test_catch_child(void);
+void test_catch(void);
+void test_kill_child(void);
+void test_kill(void);
+void test_attach_child(void);
+void test_attach(void);
+void test_detach_child(void);
+void test_detach(void);
+void test_death_child(void);
+void test_death(void);
+void test_zdeath_child(void);
+void test_zdeath(void);
+void test_syscall_child(void);
+void test_syscall(void);
+void test_tracefork_child(void);
+void test_tracefork(void);
+void sigexec(int setflag, int opt, int *traps, int *stop);
+void test_trapexec(void);
+void test_altexec(void);
+void test_noexec(void);
+void test_defexec(void);
+void test_reattach_child(void);
+void test_reattach(void);
+void my_e(int n);
 
 static char *executable;
 static int child = 0, attach;
@@ -166,7 +166,7 @@ void timed_test_func(const char *s, void (* func)(void))
 }
 
 pid_t traced_fork(c)
-_PROTOTYPE(void (*c), (void));
+void(*c) (void);
 {
   pid_t pid;
   int r, status;
@@ -333,7 +333,7 @@ _PROTOTYPE(void (*c), (void));
 }
 
 pid_t traced_pfork(c)
-_PROTOTYPE(void (*c), (void));
+void(*c) (void);
 {
   pid_t pid;
 

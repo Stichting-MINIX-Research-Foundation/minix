@@ -73,23 +73,23 @@ unsigned oldmask;		/* saved umask() */
 extern int optind;
 extern char *optarg;
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int deliver, (int count, char *vec []));
-_PROTOTYPE(FILE *makerewindable, (void));
-_PROTOTYPE(int copy, (FILE *fromfp, FILE *tofp));
-_PROTOTYPE(void readbox, (void));
-_PROTOTYPE(void printall, (void));
-_PROTOTYPE(void interact, (void));
-_PROTOTYPE(void onint, (int dummy));
-_PROTOTYPE(void savelet, (struct letter *let, char *savefile));
-_PROTOTYPE(void updatebox, (void));
-_PROTOTYPE(void printlet, (struct letter *let, FILE *tofp));
-_PROTOTYPE(void doshell, (char *command));
-_PROTOTYPE(void usage, (void));
-_PROTOTYPE(char *basename, (char *name));
-_PROTOTYPE(char *whoami, (void));
-_PROTOTYPE(void dohelp, (void));
-_PROTOTYPE(int filesize, (char *name));
+int main(int argc, char **argv);
+int deliver(int count, char *vec []);
+FILE *makerewindable(void);
+int copy(FILE *fromfp, FILE *tofp);
+void readbox(void);
+void printall(void);
+void interact(void);
+void onint(int dummy);
+void savelet(struct letter *let, char *savefile);
+void updatebox(void);
+void printlet(struct letter *let, FILE *tofp);
+void doshell(char *command);
+void usage(void);
+char *basename(char *name);
+char *whoami(void);
+void dohelp(void);
+int filesize(char *name);
 
 int main(argc, argv)
 int argc;

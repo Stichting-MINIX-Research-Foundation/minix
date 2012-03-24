@@ -19,14 +19,13 @@
     (RTS_ISSET(p, RTS_NO_PRIV) || RTS_ISSET(p, RTS_SIG_PENDING) \
     || (RTS_ISSET(p, RTS_RECEIVING) && !RTS_ISSET(p, RTS_SENDING)))
 
-FORWARD _PROTOTYPE(void adjust_proc_slot, (struct proc *rp,
-    struct proc *from_rp));
-FORWARD _PROTOTYPE(void adjust_priv_slot, (struct priv *privp,
-    struct priv *from_privp));
-FORWARD _PROTOTYPE(void swap_fpu_state, (struct proc *a_rp,
-    struct proc *b_orig_rp, struct proc *b_copy_rp));
-FORWARD _PROTOTYPE(void swap_proc_slot_pointer, (struct proc **rpp,
-    struct proc *src_rp, struct proc *dst_rp));
+FORWARD void adjust_proc_slot(struct proc *rp, struct proc *from_rp);
+FORWARD void adjust_priv_slot(struct priv *privp, struct priv
+	*from_privp);
+FORWARD void swap_fpu_state(struct proc *a_rp, struct proc *b_orig_rp,
+	struct proc *b_copy_rp);
+FORWARD void swap_proc_slot_pointer(struct proc **rpp, struct proc
+	*src_rp, struct proc *dst_rp);
 
 /*===========================================================================*
  *				do_update				     *

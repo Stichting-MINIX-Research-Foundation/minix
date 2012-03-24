@@ -173,26 +173,22 @@ typedef struct dp_rcvhdr
 struct dpeth;
 struct iovec_dat;
 struct iovec_dat_s;
-_PROTOTYPE( typedef void (*dp_initf_t), (struct dpeth *dep)		);
-_PROTOTYPE( typedef void (*dp_stopf_t), (struct dpeth *dep)		);
-_PROTOTYPE( typedef void (*dp_user2nicf_t), (struct dpeth *dep,
-			struct iovec_dat *iovp, vir_bytes offset,
-			int nic_addr, vir_bytes count)			);
-_PROTOTYPE( typedef void (*dp_user2nicf_s_t), (struct dpeth *dep,
-			struct iovec_dat_s *iovp, vir_bytes offset,
-			int nic_addr, vir_bytes count)			);
-_PROTOTYPE( typedef void (*dp_nic2userf_t), (struct dpeth *dep,
-			int nic_addr, struct iovec_dat *iovp,
-			vir_bytes offset, vir_bytes count)		);
-_PROTOTYPE( typedef void (*dp_nic2userf_s_t), (struct dpeth *dep,
-			int nic_addr, struct iovec_dat_s *iovp,
-			vir_bytes offset, vir_bytes count)		);
+typedef void(*dp_initf_t) (struct dpeth *dep);
+typedef void(*dp_stopf_t) (struct dpeth *dep);
+typedef void(*dp_user2nicf_t) (struct dpeth *dep, struct iovec_dat
+	*iovp, vir_bytes offset, int nic_addr, vir_bytes count);
+typedef void(*dp_user2nicf_s_t) (struct dpeth *dep, struct iovec_dat_s
+	*iovp, vir_bytes offset, int nic_addr, vir_bytes count);
+typedef void(*dp_nic2userf_t) (struct dpeth *dep, int nic_addr, struct
+	iovec_dat *iovp, vir_bytes offset, vir_bytes count);
+typedef void(*dp_nic2userf_s_t) (struct dpeth *dep, int nic_addr, struct
+	iovec_dat_s *iovp, vir_bytes offset, vir_bytes count);
 #if 0
-_PROTOTYPE( typedef void (*dp_getheaderf_t), (struct dpeth *dep,
-			int page, struct dp_rcvhdr *h, u16_t *eth_type)	);
+typedef void(*dp_getheaderf_t) (struct dpeth *dep, int page, struct
+	dp_rcvhdr *h, u16_t *eth_type);
 #endif
-_PROTOTYPE( typedef void (*dp_getblock_t), (struct dpeth *dep,
-		int page, size_t offset, size_t size, void *dst)	);
+typedef void(*dp_getblock_t) (struct dpeth *dep, int page, size_t
+	offset, size_t size, void *dst);
 
 /* iovectors are handled IOVEC_NR entries at a time. */
 #define IOVEC_NR	16

@@ -19,10 +19,10 @@ struct ddekit_usb_dev dev_list_head = {
 
 PRIVATE struct ddekit_usb_driver *d_usb_driver;
 
-FORWARD _PROTOTYPE( void _ddekit_usb_completion, (struct usb_urb *mx));
-FORWARD _PROTOTYPE( void _ddekit_usb_connect, 
-                    ( unsigned int dev_id, unsigned int interfaces));
-FORWARD _PROTOTYPE(void  _ddekit_usb_disconnect, (unsigned dev_id));
+FORWARD void _ddekit_usb_completion(struct usb_urb *mx);
+FORWARD void _ddekit_usb_connect( unsigned int dev_id, unsigned int
+	interfaces);
+FORWARD void _ddekit_usb_disconnect(unsigned dev_id);
 
 struct usb_driver mx_usb_driver = {
 	.urb_completion = _ddekit_usb_completion,

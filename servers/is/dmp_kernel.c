@@ -41,11 +41,11 @@ static int pagelines;
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* Declare some local dump procedures. */
-FORWARD _PROTOTYPE( char *proc_name, (int proc_nr)		);
-FORWARD _PROTOTYPE( char *s_traps_str, (int flags)		);
-FORWARD _PROTOTYPE( char *s_flags_str, (int flags)		);
-FORWARD _PROTOTYPE( char *p_rts_flags_str, (int flags)		);
-FORWARD _PROTOTYPE( char *boot_flags_str, (int flags)		);
+FORWARD char *proc_name(int proc_nr);
+FORWARD char *s_traps_str(int flags);
+FORWARD char *s_flags_str(int flags);
+FORWARD char *p_rts_flags_str(int flags);
+FORWARD char *boot_flags_str(int flags);
 
 /* Some global data that is shared among several dumping procedures. 
  * Note that the process table copy has the same name as in the kernel

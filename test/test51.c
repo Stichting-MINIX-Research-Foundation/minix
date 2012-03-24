@@ -17,18 +17,17 @@
 
 #include <sys/signal.h>
 
-_PROTOTYPE( void do_calcs, (void)					);
-_PROTOTYPE( void do_child, (void)					);
-_PROTOTYPE( void do_parent, (void)					);
-_PROTOTYPE( void err, (int subtest, int error_no)			);
-_PROTOTYPE( void func1, (int a, int b, int c, int d, int e, int f, int g,
-			 int h, int i, int j, int k, int l, int m, int n,
-			 int o, int p, int q, int r, int s, int t, int u,
-			 int v, int w, int x, int y, int z, int aa, int bb));
-_PROTOTYPE( void func2, (void)						);
-_PROTOTYPE( void just_exit, (void)					);
-_PROTOTYPE( void test_brk, (void)					);
-_PROTOTYPE( void verify_main_reenter, (void)				);
+void do_calcs(void);
+void do_child(void);
+void do_parent(void);
+void err(int subtest, int error_no);
+void func1(int a, int b, int c, int d, int e, int f, int g, int h, int
+	i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int s,
+	int t, int u, int v, int w, int x, int y, int z, int aa, int bb);
+void func2(void);
+void just_exit(void);
+void test_brk(void);
+void verify_main_reenter(void);
 
 #define MAX_ERROR 5
 #define SSIZE 32768

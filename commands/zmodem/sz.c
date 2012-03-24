@@ -220,36 +220,36 @@ int Beenhereb4;		/* How many times we've been ZRPOS'd same place */
 jmp_buf tohere;		/* For the interrupt on RX timeout */
 jmp_buf intrjmp;	/* For the interrupt on RX CAN */
 
-_PROTOTYPE(void onintr , (int sig ));
-_PROTOTYPE(int main , (int argc , char *argv []));
-_PROTOTYPE(int wcsend , (int argc , char *argp []));
-_PROTOTYPE(int wcs , (char *oname ));
-_PROTOTYPE(int wctxpn , (char *name ));
-_PROTOTYPE(int getnak , (void));
-_PROTOTYPE(int wctx , (long flen ));
-_PROTOTYPE(int wcputsec , (char *buf , int sectnum , int cseclen ));
-_PROTOTYPE(int filbuf , (char *buf , int count ));
-_PROTOTYPE(int zfilbuf , (void));
-_PROTOTYPE(int fooseek , (FILE *fptr , long pos , int whence ));
-_PROTOTYPE(void alrm , (int sig ));
-_PROTOTYPE(int readline , (int timeout ));
-_PROTOTYPE(void flushmo , (void));
-_PROTOTYPE(void purgeline , (void));
-_PROTOTYPE(void canit , (void));
+void onintr(int sig );
+int main(int argc , char *argv []);
+int wcsend(int argc , char *argp []);
+int wcs(char *oname );
+int wctxpn(char *name );
+int getnak(void);
+int wctx(long flen );
+int wcputsec(char *buf , int sectnum , int cseclen );
+int filbuf(char *buf , int count );
+int zfilbuf(void);
+int fooseek(FILE *fptr , long pos , int whence );
+void alrm(int sig );
+int readline(int timeout );
+void flushmo(void);
+void purgeline(void);
+void canit(void);
 void zperr();
-_PROTOTYPE(char *substr , (char *s , char *t ));
-_PROTOTYPE(int usage , (void));
-_PROTOTYPE(int getzrxinit , (void));
-_PROTOTYPE(int sendzsinit , (void));
-_PROTOTYPE(int zsendfile , (char *buf , int blen ));
-_PROTOTYPE(int zsendfdata , (void));
-_PROTOTYPE(int getinsync , (int flag ));
-_PROTOTYPE(void saybibi , (void));
-_PROTOTYPE(void bttyout , (int c ));
-_PROTOTYPE(int zsendcmd , (char *buf , int blen ));
-_PROTOTYPE(void chkinvok , (char *s ));
-_PROTOTYPE(void countem , (int argc , char **argv ));
-_PROTOTYPE(void chartest , (int m ));
+char *substr(char *s , char *t );
+int usage(void);
+int getzrxinit(void);
+int sendzsinit(void);
+int zsendfile(char *buf , int blen );
+int zsendfdata(void);
+int getinsync(int flag );
+void saybibi(void);
+void bttyout(int c );
+int zsendcmd(char *buf , int blen );
+void chkinvok(char *s );
+void countem(int argc , char **argv );
+void chartest(int m );
 
 /* called by signal interrupt or terminate to clean things up */
 void bibi(n)

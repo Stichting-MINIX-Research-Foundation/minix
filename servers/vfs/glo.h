@@ -48,8 +48,8 @@ EXTERN char mount_label[LABEL_MAX];	/* label of file system to mount */
 EXTERN int err_code;		/* temporary storage for error number */
 
 /* Data initialized elsewhere. */
-extern _PROTOTYPE (int (*call_vec[]), (void) ); /* sys call table */
-extern _PROTOTYPE (int (*pfs_call_vec[]), (void) ); /* pfs callback table */
+extern int(*call_vec[]) (void);
+extern int(*pfs_call_vec[]) (void);
 extern char mode_map[];	/* mapping from O_ACCMODE mask to R_BIT/W_BIT flags */
 
 #endif

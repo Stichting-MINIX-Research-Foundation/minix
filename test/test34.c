@@ -46,12 +46,12 @@ char MaxPath[PATH_MAX];		/* Same for path */
 char *NameTooLong;		/* Name of maximum +1 length */
 char PathTooLong[PATH_MAX + 1];	/* Same for path, both too long */
 
-_PROTOTYPE(void test34a, (void));
-_PROTOTYPE(void test34b, (void));
-_PROTOTYPE(void test34c, (void));
-_PROTOTYPE(mode_t mode, (char *file_name));
-_PROTOTYPE(void makelongnames, (void));
-_PROTOTYPE(void getids, (uid_t * uid, gid_t * gid));
+void test34a(void);
+void test34b(void);
+void test34c(void);
+mode_t mode(char *file_name);
+void makelongnames(void);
+void getids(uid_t * uid, gid_t * gid);
 
 int main(int argc, char *argv[])
 {

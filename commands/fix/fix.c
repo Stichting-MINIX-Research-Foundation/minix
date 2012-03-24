@@ -42,12 +42,13 @@ char *prog = 0, *processing = 0;
 /* getline() already declared in stdio.h */
 #define getline fix_getline
 #endif
-_PROTOTYPE(char *getline, (FILE *fp, char *b));
-_PROTOTYPE(char *range, (char *s, int *p1, int *p2));
-_PROTOTYPE(int getcommand, (FILE *fp, int *o1, int *o2, char *pcmd, int *n1, int *n2));
-_PROTOTYPE(void fatal, (const char *s, ...));
-_PROTOTYPE(int strwcmp, (char *s1, char *s2));
-_PROTOTYPE(int whitespace, (int ch));
+char *getline(FILE *fp, char *b);
+char *range(char *s, int *p1, int *p2);
+int getcommand(FILE *fp, int *o1, int *o2, char *pcmd, int *n1, int
+	*n2);
+void fatal(const char *s, ...);
+int strwcmp(char *s1, char *s2);
+int whitespace(int ch);
 
 char *
 getline(FILE *fp, char *b)

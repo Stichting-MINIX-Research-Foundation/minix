@@ -42,7 +42,7 @@
 
 /* Function prototype for PRIVATE functions.
  */ 
-FORWARD _PROTOTYPE( void load_update, (void));
+FORWARD void load_update(void);
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
  * Each system process possesses a single synchronous alarm timer. If other 

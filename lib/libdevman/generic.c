@@ -14,8 +14,7 @@
 
 PRIVATE endpoint_t devman_ep;
 
-FORWARD _PROTOTYPE( int save_string,
-                    (char *buffer, char *src, size_t *offset));
+FORWARD int save_string(char *buffer, char *src, size_t *offset);
 
 PRIVATE TAILQ_HEAD(devlist_head, devman_dev) dev_list;
 

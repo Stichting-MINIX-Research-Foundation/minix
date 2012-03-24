@@ -19,11 +19,11 @@ char *passwd_file = "/etc/passwd";
 
 #include "common.c"
 
-_PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void test11a, (void));
-_PROTOTYPE(void test11b, (void));
-_PROTOTYPE(void test11c, (void));
-_PROTOTYPE(void test11d, (void));
+int main(int argc, char *argv[]);
+void test11a(void);
+void test11b(void);
+void test11c(void);
+void test11d(void);
 
 int main(argc, argv)
 int argc;

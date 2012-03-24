@@ -18,9 +18,9 @@
 
 #define MINIX_FS_TYPE "mfs"
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void list, (void));
-_PROTOTYPE(void usage, (void));
+int main(int argc, char **argv);
+void list(void);
+void usage(void);
 
 int main(argc, argv)
 int argc;

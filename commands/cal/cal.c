@@ -33,16 +33,16 @@ char *monthname[] = {
 	     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-_PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void doyear, (int year));
-_PROTOTYPE(void domonth, (int year, int month));
-_PROTOTYPE(void output, (int nmonths));
-_PROTOTYPE(void calendar, (int year, int month, int indx));
-_PROTOTYPE(void usage, (char *s));
-_PROTOTYPE(int date, (int year, int month, int week, int wday));
-_PROTOTYPE(void setmonth, (int year, int month));
-_PROTOTYPE(int getdate, (int week, int wday));
-_PROTOTYPE(static int Jan1, (int year));
+int main(int argc, char **argv);
+void doyear(int year);
+void domonth(int year, int month);
+void output(int nmonths);
+void calendar(int year, int month, int indx);
+void usage(char *s);
+int date(int year, int month, int week, int wday);
+void setmonth(int year, int month);
+int getdate(int week, int wday);
+static int Jan1(int year);
 
 int main(argc, argv)
 int argc;

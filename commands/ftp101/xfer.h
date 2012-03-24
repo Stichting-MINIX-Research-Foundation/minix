@@ -4,5 +4,5 @@
  *
  */
 
-_PROTOTYPE(int recvfile, (int fd, int fdin));
-_PROTOTYPE(int sendfile, (int fd, int fdout));
+int recvfile(int fd, int fdin);
+int sendfile(int fd, int fdout);
