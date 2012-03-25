@@ -24,9 +24,9 @@
 
 #include "wtmp.h"
 
-void write_log _ARGS(( char *fn ));
-void usage _ARGS(( void ));
-int main _ARGS(( int argc, char *argv[] ));
+void write_log( char *fn );
+void usage( void );
+int main( int argc, char *argv[] );
 
 char *prog;
 char *reboot_code = "delay; boot";

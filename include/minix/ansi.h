@@ -19,27 +19,6 @@
 #define _ANSI		31459	/* gcc conforms enough even in non-ANSI mode */
 #endif
 
-#define	_VOIDSTAR	void *
-#define	_VOID		void
-
-#ifdef _ANSI
-
-#define	_ARGS(params)			params
-
-#define	_CONST		const
-#define	_VOLATILE	volatile
-#define _SIZET		size_t
-
-#else
-
-#define	_ARGS(params)			()
-
-#define	_CONST
-#define	_VOLATILE
-#define _SIZET		int
-
-#endif /* _ANSI */
-
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__) || __STDC_VERSION__ >= 199901
 #define __LONG_LONG_SUPPORTED 1
 #endif

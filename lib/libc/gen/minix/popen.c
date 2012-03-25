@@ -40,8 +40,8 @@ static int pids[OPEN_MAX];
 
 FILE *
 popen(command, type)
-_CONST char *command;
-_CONST char *type;
+const char *command;
+const char *type;
 {
 	int piped[2];
 	int Xtype = *type == 'r' ? 0 : *type == 'w' ? 1 : 2;

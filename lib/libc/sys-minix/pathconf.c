@@ -13,7 +13,7 @@ __weak_alias(pathconf, _pathconf)
 #endif
 
 long pathconf(path, name)
-_CONST char *path;		/* name of file being interrogated */
+const char *path;		/* name of file being interrogated */
 int name;			/* property being inspected */
 {
 /* POSIX allows some of the values in <limits.h> to be increased at

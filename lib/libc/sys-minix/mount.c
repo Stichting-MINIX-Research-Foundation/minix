@@ -164,13 +164,13 @@ int mountflags;
 }
 
 int umount(name)
-_CONST char *name;
+const char *name;
 {
 	return umount2(name, 0);
 }
 
 int umount2(name, flags)
-_CONST char *name;
+const char *name;
 int flags;
 {
   message m;

@@ -59,11 +59,11 @@ static char sccsid[] = "@(#)rsh.c	5.24 (Berkeley) 7/1/91";
 
 #include <net/netlib.h>
 #include <net/gen/netdb.h>
-int main _ARGS(( int argc, char *argv[] ));
-void usage _ARGS(( void ));
-char *copyargs _ARGS(( char **argv ));
-void sendsig _ARGS(( int signo ));
-void talk _ARGS(( int nflag, long omask, int pid, int rem ));
+int main( int argc, char *argv[] );
+void usage( void );
+char *copyargs( char **argv );
+void sendsig( int signo );
+void talk( int nflag, long omask, int pid, int rem );
 
 #define _PATH_RLOGIN1	"/bin/rlogin"
 #define _PATH_RLOGIN2	"/usr/bin/rlogin"

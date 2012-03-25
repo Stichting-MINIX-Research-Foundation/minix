@@ -20,8 +20,8 @@
 
 static char UTMP[] = "/etc/utmp";	/* Currently logged in users. */
 
-void wall _ARGS(( char *when, char *extra ));
-void crnlcat _ARGS(( char *message, char *more ));
+void wall( char *when, char *extra );
+void crnlcat( char *message, char *more );
 
 void
 wall(when, extra)

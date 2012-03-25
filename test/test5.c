@@ -38,7 +38,7 @@ void test5h(void);
 void test5i(void);
 void ex(void);
 
-_VOLATILE int childsigs, parsigs, alarms;
+volatile int childsigs, parsigs, alarms;
 
 int main(argc, argv)
 int argc;

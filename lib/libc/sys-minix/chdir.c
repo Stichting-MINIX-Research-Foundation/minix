@@ -10,7 +10,7 @@ __weak_alias(fchdir, _fchdir)
 #endif
 
 int chdir(name)
-_CONST char *name;
+const char *name;
 {
   message m;
 

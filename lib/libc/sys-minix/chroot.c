@@ -9,7 +9,7 @@ __weak_alias(chroot, _chroot)
 #endif
 
 int chroot(name)
-_CONST char *name;
+const char *name;
 {
   message m;
 

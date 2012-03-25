@@ -86,7 +86,7 @@ char **argv;
 }
 
 int nm_sort(tmp_stbl1, tmp_stbl2)
-_CONST void *tmp_stbl1, *tmp_stbl2;
+const void *tmp_stbl1, *tmp_stbl2;
 {
 
   struct nlist *stbl1 = (struct nlist *)tmp_stbl1;

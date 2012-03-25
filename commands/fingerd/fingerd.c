@@ -19,8 +19,8 @@ static char sccsid[] = "@(#)in.fingerd.c 1.1 87/12/21 SMI"; /* from UCB 5.1 6/6/
 #include <stdlib.h>
 #include <string.h>
 
-int main _ARGS(( int argc, char *argv[] ));
-void fatal _ARGS(( char *prog, char *s ));
+int main( int argc, char *argv[] );
+void fatal( char *prog, char *s );
 
 int main(argc, argv)
 	char *argv[];

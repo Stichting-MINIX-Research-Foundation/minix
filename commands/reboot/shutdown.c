@@ -47,17 +47,17 @@ static char NOLOGIN[] =		"/etc/nologin";
 #define inform_user      inf_user
 #endif
 
-void usage _ARGS(( void ));
-void write_pid _ARGS(( void ));
-int inform_user_time _ARGS(( void ));
-void inform_user _ARGS(( void ));
-void terminate _ARGS(( void ));
-void wall _ARGS(( char *when, char *extra ));
-int crash_check _ARGS(( void ));
-void parse_time _ARGS(( char *arg ));
-void get_message _ARGS(( void ));
-int main _ARGS(( int argc, char *argv[] ));
-char *itoa _ARGS(( int n ));
+void usage( void );
+void write_pid( void );
+int inform_user_time( void );
+void inform_user( void );
+void terminate( void );
+void wall( char *when, char *extra );
+int crash_check( void );
+void parse_time( char *arg );
+void get_message( void );
+int main( int argc, char *argv[] );
+char *itoa( int n );
 
 long wait_time=0L;
 char message[1024];

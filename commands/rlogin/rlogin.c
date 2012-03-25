@@ -142,45 +142,45 @@ struct	winsize winsize;
 
 #define	get_window_size(fd, wp)	ioctl(fd, TIOCGWINSZ, wp)
 
-extern int main _ARGS(( int argc, char **argv ));
-static void usage _ARGS(( void ));
-static u_char getescape _ARGS(( char *p ));
-static char *speeds2str _ARGS(( speed_t speed ));
-static void lostpeer _ARGS(( int sig ));
-static void doit _ARGS(( void ));
-static void setsignal _ARGS(( int sig, void (*act)(int sig) ));
-static void msg _ARGS(( char *str ));
-static void done _ARGS(( int status ));
+extern int main( int argc, char **argv );
+static void usage( void );
+static u_char getescape( char *p );
+static char *speeds2str( speed_t speed );
+static void lostpeer( int sig );
+static void doit( void );
+static void setsignal( int sig, void (*act)(int sig) );
+static void msg( char *str );
+static void done( int status );
 #if !__minix_vmd
-static int reader _ARGS(( void ));
+static int reader( void );
 #endif
-static void mode _ARGS(( int f ));
+static void mode( int f );
 #if __minix_vmd
-static void mark_async _ARGS(( int fd ));
-static void init_0 _ARGS(( void ));
-static void init_1 _ARGS(( void ));
-static void init_rd_rem _ARGS(( void ));
-static void init_wr_rem _ARGS(( void ));
-static void restart_0 _ARGS(( void ));
-static void restart_1 _ARGS(( void ));
-static void restart_rd_rem _ARGS(( void ));
-static void restart_wr_rem _ARGS(( void ));
-static void completed_0 _ARGS(( int result, int error ));
-static void completed_1 _ARGS(( int result, int error ));
-static void completed_rd_rem _ARGS(( int result, int error ));
-static void completed_wr_rem _ARGS(( int result, int error ));
-static void do_urg _ARGS(( int urg_byte ));
+static void mark_async( int fd );
+static void init_0( void );
+static void init_1( void );
+static void init_rd_rem( void );
+static void init_wr_rem( void );
+static void restart_0( void );
+static void restart_1( void );
+static void restart_rd_rem( void );
+static void restart_wr_rem( void );
+static void completed_0( int result, int error );
+static void completed_1( int result, int error );
+static void completed_rd_rem( int result, int error );
+static void completed_wr_rem( int result, int error );
+static void do_urg( int urg_byte );
 #endif
 #if !__minix_vmd
-static void catch_child _ARGS(( int sig ));
-static void writer _ARGS(( void ));
+static void catch_child( int sig );
+static void writer( void );
 #endif
-static void echo _ARGS(( int c ));
+static void echo( int c );
 #if __minix_vmd
-static void finish _ARGS(( void ));
-static void sendwindow _ARGS(( void ));
-static void sigwinch _ARGS(( int sig ));
-static void subshell _ARGS(( void ));
+static void finish( void );
+static void sendwindow( void );
+static void sigwinch( int sig );
+static void subshell( void );
 #endif
 
 int main(argc, argv)
@@ -540,7 +540,7 @@ printf("fwait: fw_fw= %d, fw_operation= %d, fw_result= %d, fw.fw_errno= %d\n",
 static void
 setsignal(sig, act)
 	int sig;
-	void (*act) _ARGS(( int sig ));
+ void(*act) ( int sig );
 {
 	if (signal(sig, act) == SIG_IGN)
 		(void)signal(sig, SIG_IGN);

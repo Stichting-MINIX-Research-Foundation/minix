@@ -10,7 +10,7 @@ Copyright 1995 Philip Homburg
 #define NWEO_DEFAULT    (NWEO_EN_LOC | NWEO_DI_BROAD | NWEO_DI_MULTI | \
 	NWEO_DI_PROMISC | NWEO_REMANY | NWEO_RWDATALL)
 
-#define eth_addrcmp(a,b) (memcmp((_VOIDSTAR)&a, (_VOIDSTAR)&b, \
+#define eth_addrcmp(a,b) (memcmp((void *)&a, (void *)&b, \
 	sizeof(a)))
 
 /* Forward declatations */

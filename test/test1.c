@@ -12,7 +12,7 @@
 #define MAX_ERROR 4
 #define ITERATIONS 10
 
-_VOLATILE int glov, gct;
+volatile int glov, gct;
 int errct;
 int subtest;
 #include "common.c"

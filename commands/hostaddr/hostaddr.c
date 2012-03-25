@@ -40,8 +40,8 @@ char *prog_name;
 
 char DHCPCACHE[]=_PATH_DHCPCACHE;
 
-int main _ARGS(( int argc, char *argv[] ));
-void usage _ARGS(( void ));
+int main( int argc, char *argv[] );
+void usage( void );
 
 int main(argc, argv)
 int argc;

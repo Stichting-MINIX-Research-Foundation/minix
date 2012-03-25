@@ -104,24 +104,24 @@ int server_specified = 0;
 
 union querybuf;
 
-int main _ARGS(( int c, char *v[] ));
+int main( int c, char *v[] );
 
-static int parsetype _ARGS(( char *s ));
-static int parseclass _ARGS(( char *s ));
-static void hperror _ARGS(( int err_no ));
-static void printanswer _ARGS(( struct hostent *hp ));
-static int ListHosts _ARGS(( char *namePtr, int queryType ));
-static int gethostinfo _ARGS(( char *name ));
-static int getdomaininfo _ARGS(( char *name, char *domain ));
-static int getinfo _ARGS(( char *name, char *domain, int type ));
-static int printinfo _ARGS(( union querybuf *answer, u8_t *eom, int filter, 
-								int isls ));
-static char *DecodeError _ARGS(( int result ));
-static u8_t *pr_rr _ARGS(( u8_t *cp, u8_t *msg, FILE *file, int filter ));
-static u8_t * pr_cdname _ARGS(( u8_t *cp, u8_t *msg, u8_t *name, int namelen ));
-static char *pr_class _ARGS(( int class ));
-static char *pr_type _ARGS(( int type ));
-static int tcpip_writeall _ARGS(( int fd, char *buf, unsigned siz ));
+static int parsetype( char *s );
+static int parseclass( char *s );
+static void hperror( int err_no );
+static void printanswer( struct hostent *hp );
+static int ListHosts( char *namePtr, int queryType );
+static int gethostinfo( char *name );
+static int getdomaininfo( char *name, char *domain );
+static int getinfo( char *name, char *domain, int type );
+static int printinfo( union querybuf *answer, u8_t *eom, int filter, int
+	isls );
+static char *DecodeError( int result );
+static u8_t *pr_rr( u8_t *cp, u8_t *msg, FILE *file, int filter );
+static u8_t * pr_cdname( u8_t *cp, u8_t *msg, u8_t *name, int namelen );
+static char *pr_class( int class );
+static char *pr_type( int type );
+static int tcpip_writeall( int fd, char *buf, unsigned siz );
 
 int
 main(c, v)

@@ -35,11 +35,11 @@ struct export_params {
 					sizeof(((type *)0)->field) }
 #define QP_END()		{ 0, 0, 0 }
 
-void qp_export _ARGS((struct export_params *_ex_params));
-int queryparam _ARGS((int (*_qgetc) _ARGS((void)), void **_paddress,
-							_mnx_size_t *_psize));
-_mnx_size_t paramvalue _ARGS((char **_value, void *_address,
-							_mnx_size_t _size));
+void qp_export(struct export_params *_ex_params);
+int queryparam(int (*_qgetc) (void), void **_paddress, _mnx_size_t
+	*_psize);
+_mnx_size_t paramvalue(char **_value, void *_address, _mnx_size_t
+	_size);
 #endif /* _MINIX__QUERYPARAM_H */
 
 /* $PchId: queryparam.h,v 1.1 2005/06/28 14:31:26 philip Exp $ */

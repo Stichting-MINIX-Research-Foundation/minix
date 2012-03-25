@@ -9,7 +9,7 @@ __weak_alias(access, _access)
 #endif
 
 int access(name, mode)
-_CONST char *name;
+const char *name;
 int mode;
 {
   message m;
